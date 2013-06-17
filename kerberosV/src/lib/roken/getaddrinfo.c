@@ -1,23 +1,23 @@
 /*
- * Copyright (c) 1999 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2001 Kungliga Tekniska HÃ¶gskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,10 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: getaddrinfo.c,v 1.13 2005/04/12 11:28:43 lha Exp $");
-#endif
 
 #include "roken.h"
 
@@ -135,19 +132,19 @@ add_one (int port, int protocol, int socktype,
 static int
 const_v4 (struct addrinfo *a, void *data, int port)
 {
-    struct sockaddr_in *sin;
+    struct sockaddr_in *sin4;
     struct in_addr *addr = (struct in_addr *)data;
 
     a->ai_family  = PF_INET;
-    a->ai_addrlen = sizeof(*sin);
-    a->ai_addr    = malloc (sizeof(*sin));
+    a->ai_addrlen = sizeof(*sin4);
+    a->ai_addr    = malloc (sizeof(*sin4));
     if (a->ai_addr == NULL)
 	return EAI_MEMORY;
-    sin = (struct sockaddr_in *)a->ai_addr;
-    memset (sin, 0, sizeof(*sin));
-    sin->sin_family = AF_INET;
-    sin->sin_port   = port;
-    sin->sin_addr   = *addr;
+    sin4 = (struct sockaddr_in *)a->ai_addr;
+    memset (sin4, 0, sizeof(*sin4));
+    sin4->sin_family = AF_INET;
+    sin4->sin_port   = port;
+    sin4->sin_addr   = *addr;
     return 0;
 }
 
@@ -368,7 +365,7 @@ get_nodes (const char *nodename,
  * };
  */
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 getaddrinfo(const char *nodename,
 	    const char *servname,
 	    const struct addrinfo *hints,

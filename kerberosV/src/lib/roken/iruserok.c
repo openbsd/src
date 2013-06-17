@@ -27,10 +27,7 @@
  * SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: iruserok.c,v 1.25 2005/04/12 11:28:54 lha Exp $");
-#endif
 
 #include <stdio.h>
 #include <ctype.h>
@@ -217,7 +214,7 @@ __ivaliduser(FILE *hostf, unsigned raddr, const char *luser,
  *
  * Returns 0 if ok, -1 if not ok.
  */
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 iruserok(unsigned raddr, int superuser, const char *ruser, const char *luser)
 {
 	char *cp;
@@ -250,7 +247,8 @@ again:
 		 * are protected read/write owner only.
 		 */
 		uid = geteuid();
-		seteuid(pwd->pw_uid);
+		if (seteuid(pwd->pw_uid) < 0)
+			return (-1);
 		hostf = fopen(pbuf, "r");
 		seteuid(uid);
 

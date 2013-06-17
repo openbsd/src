@@ -1,4 +1,4 @@
-.\" Copyright (c) 2000 - 2004 Kungliga Tekniska Högskolan
+.\" Copyright (c) 2000 - 2004 Kungliga Tekniska HÃ¶gskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
 .\" All rights reserved.
 .\"
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $KTH: verify_krb5_conf.8,v 1.11 2004/12/08 17:52:41 lha Exp $
+.\" $Id: verify_krb5_conf.8,v 1.6 2013/06/17 18:57:44 robert Exp $
 .\"
 .Dd December  8, 2004
 .Dt VERIFY_KRB5_CONF 8
@@ -45,7 +45,7 @@
 reads the configuration file
 .Pa krb5.conf ,
 or the file given on the command line,
-and parses it, thereby verifying that the syntax is correct.
+parses it, checking verifying that the syntax is not correctly wrong.
 .Pp
 If the file is syntactically correct,
 .Nm
@@ -54,8 +54,8 @@ tries to verify that the contents of the file is of relevant nature.
 .Ev KRB5_CONFIG
 points to the configuration file to read.
 .Sh FILES
-.Bl -tag -width /etc/kerberosV/krb5.conf -compact
-.It Pa /etc/kerberosV/krb5.conf
+.Bl -tag -width /etc/krb5.conf -compact
+.It Pa /etc/krb5.conf
 Kerberos 5 configuration file
 .El
 .Sh DIAGNOSTICS
@@ -78,8 +78,8 @@ versa, or just that
 .Nm
 is confused.
 .It <path>: unknown entry
-Means that <string> is unknown to
-.Nm Ns .
+Means that <string> is not known by
+.Nm .
 .El
 .Sh SEE ALSO
 .Xr krb5.conf 5

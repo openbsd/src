@@ -1,4 +1,4 @@
-.\" Copyright (c) 2004 Kungliga Tekniska Högskolan
+.\" Copyright (c) 2004 Kungliga Tekniska HÃ¶gskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.\" $KTH: rtbl.3,v 1.2 2004/06/26 16:13:05 lha Exp $
+.\" $Id: rtbl.3,v 1.2 2013/06/17 18:57:45 robert Exp $
 .\"
 .Dd June 26, 2004
 .Dt RTBL 3
@@ -89,7 +89,7 @@ would be output from tools such as
 or
 .Xr netstat 1 ,
 where you have a fixed number of columns, but don't know the column
-widthds before hand.
+widths before hand.
 .Pp
 A table is created with
 .Fn rtbl_create
@@ -102,7 +102,7 @@ and retrieved with
 .Fa rtbl_get_flags .
 At present the only defined flag is
 .Dv RTBL_HEADER_STYLE_NONE
-which supresses printing the header.
+which suppresses printing the header.
 .Pp
 Before adding data to the table, one or more columns need to be
 created. This would normally be done with
@@ -127,7 +127,7 @@ To add data to a column you use
 where the
 .Fa column_id
 is the same as when the column was added (adding data to a
-non-existant column is undefined), and
+non-existent column is undefined), and
 .Fa cell_entry
 is whatever string you wish to include in that cell. It should not
 include newlines.

@@ -1,4 +1,4 @@
-.\" Copyright (c) 2003 - 2004 Kungliga Tekniska Högskolan
+.\" Copyright (c) 2003 - 2006 Kungliga Tekniska HÃ¶gskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
 .\" All rights reserved.
 .\"
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $KTH: krb5_c_make_checksum.3,v 1.8 2004/03/20 11:18:14 lha Exp $
+.\" $Id: krb5_c_make_checksum.3,v 1.4 2013/06/17 18:57:44 robert Exp $
 .\"
-.Dd March 20, 2004
+.Dd Nov  17, 2006
 .Dt KRB5_C_MAKE_CHECKSUM 3
 .Os HEIMDAL
 .Sh NAME
@@ -43,6 +43,7 @@
 .Nm krb5_c_get_checksum ,
 .Nm krb5_c_is_coll_proof_cksum ,
 .Nm krb5_c_is_keyed_cksum ,
+.Nm krb5_c_keylength ,
 .Nm krb5_c_make_checksum ,
 .Nm krb5_c_make_random_key ,
 .Nm krb5_c_set_checksum ,
@@ -111,7 +112,7 @@ Kerberos 5 Library (libkrb5, -lkrb5)
 .Fc
 .Ft krb5_error_code
 .Fo krb5_c_verify_checksum
-.Fa "krb5_context context
+.Fa "krb5_context context"
 .Fa "const krb5_keyblock *key"
 .Fa "krb5_keyusage usage"
 .Fa "const krb5_data *data"
@@ -154,6 +155,13 @@ Kerberos 5 Library (libkrb5, -lkrb5)
 .Fo krb5_c_is_keyed_cksum
 .Fa "krb5_cksumtype ctype"
 .Fc
+.Ft krb5_error_code
+.Fo krb5_c_keylengths
+.Fa "krb5_context context"
+.Fa "krb5_enctype enctype"
+.Fa "size_t *inlength"
+.Fa "size_t *keylength"
+.Fc
 .Sh DESCRIPTION
 The functions starting with krb5_c are compat functions with MIT kerberos.
 .Pp
@@ -177,7 +185,7 @@ decrypts
 .Fa input
 and store the data in
 .Fa output.
-If 
+If
 .Fa ivec
 is
 .Dv NULL
@@ -249,7 +257,7 @@ If some either of
 .Fa data
 or
 .Fa checksum
-is not needed for the application, 
+is not needed for the application,
 .Dv NULL
 can be passed in.
 .Pp
@@ -271,7 +279,17 @@ is a keyed checksum type.
 .Fn krb5_c_is_coll_proof_cksum
 returns true if
 .Fa ctype
-is a collition proof checksum type.
+is a collision proof checksum type.
+.Pp
+.Fn krb5_c_keylengths
+return the minimum length
+.Fa ( inlength )
+bytes needed to create a key and the
+length
+.Fa ( keylength )
+of the resulting key
+for the
+.Fa enctype .
 .Sh SEE ALSO
 .Xr krb5 3 ,
 .Xr krb5_create_checksum 3 ,

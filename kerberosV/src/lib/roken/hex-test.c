@@ -1,23 +1,23 @@
 /*
- * Copyright (c) 1999 - 2001, 2005 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2001, 2005 Kungliga Tekniska HÃ¶gskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,13 +31,9 @@
  * SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
 
-RCSID("$KTH: hex-test.c,v 1.2 2005/04/04 19:23:37 lha Exp $");
-#endif
-
-#include <roken.h>
+#include "roken.h"
 #include <hex.h>
 
 int
@@ -66,7 +62,7 @@ main(int argc, char **argv)
 	int len;
 	len = hex_encode(t->data, t->len, &str);
 	if(strcmp(str, t->result) != 0) {
-	    fprintf(stderr, "failed test %d: %s != %s\n", numtest, 
+	    fprintf(stderr, "failed test %d: %s != %s\n", numtest,
 		    str, t->result);
 	    numerr++;
 	}
@@ -84,6 +80,26 @@ main(int argc, char **argv)
 	}
 	free(str);
 	numtest++;
+    }
+
+    {
+	unsigned char buf[2] = { 0, 0xff } ;
+	int len;
+
+	len = hex_decode("A", buf, 1);
+	if (len != 1) {
+	    fprintf(stderr, "len != 1");
+	    numerr++;
+	}
+	if (buf[0] != 10) {
+	    fprintf(stderr, "buf != 10");
+	    numerr++;
+	}
+	if (buf[1] != 0xff) {
+	    fprintf(stderr, "buf != 0xff");
+	    numerr++;
+	}
+
     }
 
     return numerr;

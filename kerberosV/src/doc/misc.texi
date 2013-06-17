@@ -1,4 +1,4 @@
-@c $KTH: misc.texi,v 1.14 2003/05/04 13:32:37 lha Exp $
+@c $Id: misc.texi,v 1.2 2013/06/17 18:57:41 robert Exp $
 
 @node Things in search for a better place, Kerberos 4 issues, Applications, Top
 @chapter Things in search for a better place

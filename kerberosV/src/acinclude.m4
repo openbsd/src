@@ -1,4 +1,4 @@
-dnl $KTH: acinclude.m4,v 1.16 2004/02/12 14:19:16 lha Exp $
+dnl $Id: acinclude.m4,v 1.2 2013/06/17 18:57:39 robert Exp $
 dnl
 dnl Only put things that for some reason can't live in the `cf'
 dnl directory in this file.

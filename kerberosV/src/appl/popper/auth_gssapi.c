@@ -1,40 +1,40 @@
 /*
- * Copyright (c) 2004 Kungliga Tekniska Högskolan
- * (Royal Institute of Technology, Stockholm, Sweden). 
- * All rights reserved. 
+ * Copyright (c) 2004 Kungliga Tekniska HÃ¶gskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  *
- * 2. Redistributions in binary form must reproduce the above copyright 
- *    notice, this list of conditions and the following disclaimer in the 
- *    documentation and/or other materials provided with the distribution. 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * 3. Neither the name of the Institute nor the names of its contributors 
- *    may be used to endorse or promote products derived from this software 
- *    without specific prior written permission. 
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
- * SUCH DAMAGE. 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include <popper.h>
 #include <base64.h>
 #include <pop_auth.h>
-RCSID("$KTH: auth_gssapi.c,v 1.2 2004/06/15 11:24:21 joda Exp $");
+RCSID("$Id: auth_gssapi.c,v 1.2 2013/06/17 18:57:40 robert Exp $");
 
 
 #if defined(SASL) && defined(KRB5)
@@ -58,19 +58,27 @@ gss_set_error (struct gss_state *gs, int min_stat)
     OM_uint32 ret;
 
     do {
+	char * cstr;
+
 	ret = gss_display_status (&new_stat,
 				  min_stat,
 				  GSS_C_MECH_CODE,
 				  gs->mech_oid,
 				  &msg_ctx,
 				  &status_string);
-	pop_auth_set_error(status_string.value);
+	if (asprintf(&cstr, "%.*s", (int)status_string.length,
+		 (const char *)status_string.value) >= 0) {
+	    pop_auth_set_error(cstr);
+	    free(cstr);
+	} else {
+	    pop_auth_set_error("unknown error");
+	}
 	gss_release_buffer (&new_stat, &status_string);
     } while (!GSS_ERROR(ret) && msg_ctx != 0);
 }
 
 static int
-gss_loop(POP *p, void *state, 
+gss_loop(POP *p, void *state,
 	 /* const */ void *input, size_t input_length,
 	 void **output, size_t *output_length)
 {
@@ -128,12 +136,12 @@ gss_loop(POP *p, void *state,
 	input_token->value = x;
 	input_token->length = 4;
 
-	maj_stat = gss_wrap(&min_stat, 
-			    gs->context_hdl, 
+	maj_stat = gss_wrap(&min_stat,
+			    gs->context_hdl,
 			    FALSE,
 			    GSS_C_QOP_DEFAULT,
-			    input_token, 
-			    NULL, 
+			    input_token,
+			    NULL,
 			    output_token);
 	if (GSS_ERROR(maj_stat)) {
 	    gss_set_error(gs, min_stat);
@@ -157,9 +165,9 @@ gss_loop(POP *p, void *state,
 
 	maj_stat = gss_unwrap (&min_stat,
 			       gs->context_hdl,
-			       input_token, 
+			       input_token,
 			       output_token,
-			       NULL, 
+			       NULL,
 			       NULL);
 	if (GSS_ERROR(maj_stat)) {
 	    gss_set_error(gs, min_stat);

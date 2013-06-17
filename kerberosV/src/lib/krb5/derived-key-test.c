@@ -1,18 +1,18 @@
 /*
- * Copyright (c) 2001 Kungliga Tekniska Högskolan
- * (Royal Institute of Technology, Stockholm, Sweden). 
- * All rights reserved. 
+ * Copyright (c) 2001 Kungliga Tekniska HÃ¶gskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  *
- * 2. Redistributions in binary form must reproduce the above copyright 
- *    notice, this list of conditions and the following disclaimer in the 
- *    documentation and/or other materials provided with the distribution. 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
  * 3. Neither the name of KTH nor the names of its contributors may be
  *    used to endorse or promote products derived from this software without
@@ -32,8 +32,6 @@
 
 #include "krb5_locl.h"
 #include <err.h>
-
-RCSID("$KTH: derived-key-test.c,v 1.3 2005/04/30 15:18:27 lha Exp $");
 
 enum { MAXSIZE = 24 };
 
@@ -77,7 +75,7 @@ static struct testcase {
     {0}
 };
 
-int KRB5_LIB_FUNCTION
+int
 main(int argc, char **argv)
 {
     struct testcase *t;
@@ -115,6 +113,9 @@ main(int argc, char **argv)
 	    printf ("\n");
 	    val = 1;
 	}
+	krb5_free_keyblock(context, dkey);
     }
+    krb5_free_context(context);
+
     return val;
 }

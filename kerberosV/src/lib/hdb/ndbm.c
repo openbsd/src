@@ -1,47 +1,47 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
- * (Royal Institute of Technology, Stockholm, Sweden). 
- * All rights reserved. 
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska HÃ¶gskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  *
- * 2. Redistributions in binary form must reproduce the above copyright 
- *    notice, this list of conditions and the following disclaimer in the 
- *    documentation and/or other materials provided with the distribution. 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * 3. Neither the name of the Institute nor the names of its contributors 
- *    may be used to endorse or promote products derived from this software 
- *    without specific prior written permission. 
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
- * SUCH DAMAGE. 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include "hdb_locl.h"
-
-RCSID("$KTH: ndbm.c,v 1.34 2003/09/19 00:20:43 lha Exp $");
 
 #if HAVE_NDBM
 
 #if defined(HAVE_GDBM_NDBM_H)
 #include <gdbm/ndbm.h>
+#define WRITE_SUPPORT 1
 #elif defined(HAVE_NDBM_H)
 #include <ndbm.h>
 #elif defined(HAVE_DBM_H)
+#define WRITE_SUPPORT 1
 #include <dbm.h>
 #endif
 
@@ -53,9 +53,7 @@ struct ndbm_db {
 static krb5_error_code
 NDBM_destroy(krb5_context context, HDB *db)
 {
-    krb5_error_code ret;
-
-    ret = hdb_clear_master_key (context, db);
+    hdb_clear_master_key (context, db);
     free(db->hdb_name);
     free(db);
     return 0;
@@ -76,8 +74,8 @@ NDBM_unlock(krb5_context context, HDB *db)
 }
 
 static krb5_error_code
-NDBM_seq(krb5_context context, HDB *db, 
-	 unsigned flags, hdb_entry *entry, int first)
+NDBM_seq(krb5_context context, HDB *db,
+	 unsigned flags, hdb_entry_ex *entry, int first)
 
 {
     struct ndbm_db *d = (struct ndbm_db *)db->hdb_db;
@@ -99,21 +97,22 @@ NDBM_seq(krb5_context context, HDB *db,
     db->hdb_unlock(context, db);
     data.data = value.dptr;
     data.length = value.dsize;
-    if(hdb_value2entry(context, &data, entry))
+    memset(entry, 0, sizeof(*entry));
+    if(hdb_value2entry(context, &data, &entry->entry))
 	return NDBM_seq(context, db, flags, entry, 0);
     if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
-	ret = hdb_unseal_keys (context, db, entry);
+	ret = hdb_unseal_keys (context, db, &entry->entry);
 	if (ret)
 	    hdb_free_entry (context, entry);
     }
-    if (entry->principal == NULL) {
-	entry->principal = malloc (sizeof(*entry->principal));
-	if (entry->principal == NULL) {
-	    ret = ENOMEM;
+    if (ret == 0 && entry->entry.principal == NULL) {
+	entry->entry.principal = malloc (sizeof(*entry->entry.principal));
+	if (entry->entry.principal == NULL) {
 	    hdb_free_entry (context, entry);
-	    krb5_set_error_string(context, "malloc: out of memory");
+	    ret = ENOMEM;
+	    krb5_set_error_message(context, ret, "malloc: out of memory");
 	} else {
-	    hdb_key2principal (context, &key_data, entry->principal);
+	    hdb_key2principal (context, &key_data, entry->entry.principal);
 	}
     }
     return ret;
@@ -121,53 +120,72 @@ NDBM_seq(krb5_context context, HDB *db,
 
 
 static krb5_error_code
-NDBM_firstkey(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
+NDBM_firstkey(krb5_context context, HDB *db,unsigned flags,hdb_entry_ex *entry)
 {
     return NDBM_seq(context, db, flags, entry, 1);
 }
 
 
 static krb5_error_code
-NDBM_nextkey(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
+NDBM_nextkey(krb5_context context, HDB *db, unsigned flags,hdb_entry_ex *entry)
 {
     return NDBM_seq(context, db, flags, entry, 0);
 }
 
 static krb5_error_code
-NDBM_rename(krb5_context context, HDB *db, const char *new_name)
+open_lock_file(krb5_context context, const char *db_name, int *fd)
 {
-    /* XXX this function will break */
-    struct ndbm_db *d = db->hdb_db;
-
-    int ret;
-    char *old_dir, *old_pag, *new_dir, *new_pag;
-    char *new_lock;
-    int lock_fd;
+    char *lock_file;
 
     /* lock old and new databases */
-    ret = db->hdb_lock(context, db, HDB_WLOCK);
-    if(ret)
-	return ret;
-    asprintf(&new_lock, "%s.lock", new_name);
-    if(new_lock == NULL) {
-	db->hdb_unlock(context, db);
-	krb5_set_error_string(context, "malloc: out of memory");
+    asprintf(&lock_file, "%s.lock", db_name);
+    if(lock_file == NULL) {
+	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
 	return ENOMEM;
     }
-    lock_fd = open(new_lock, O_RDWR | O_CREAT, 0600);
-    if(lock_fd < 0) {
-	ret = errno;
-	db->hdb_unlock(context, db);
-	krb5_set_error_string(context, "open(%s): %s", new_lock,
-			      strerror(ret));
-	free(new_lock);
+
+    *fd = open(lock_file, O_RDWR | O_CREAT, 0600);
+    free(lock_file);
+    if(*fd < 0) {
+	int ret = errno;
+	krb5_set_error_message(context, ret, "open(%s): %s", lock_file,
+			       strerror(ret));
 	return ret;
     }
-    free(new_lock);
-    ret = hdb_lock(lock_fd, HDB_WLOCK);
+    return 0;
+}
+
+
+static krb5_error_code
+NDBM_rename(krb5_context context, HDB *db, const char *new_name)
+{
+    int ret;
+    char *old_dir, *old_pag, *new_dir, *new_pag;
+    int old_lock_fd, new_lock_fd;
+
+    /* lock old and new databases */
+    ret = open_lock_file(context, db->hdb_name, &old_lock_fd);
+    if (ret)
+	return ret;
+
+    ret = hdb_lock(old_lock_fd, HDB_WLOCK);
     if(ret) {
-	db->hdb_unlock(context, db);
-	close(lock_fd);
+	close(old_lock_fd);
+	return ret;
+    }
+
+    ret = open_lock_file(context, new_name, &new_lock_fd);
+    if (ret) {
+	hdb_unlock(old_lock_fd);
+	close(old_lock_fd);
+	return ret;
+    }
+
+    ret = hdb_lock(new_lock_fd, HDB_WLOCK);
+    if(ret) {
+	hdb_unlock(old_lock_fd);
+	close(old_lock_fd);
+	close(new_lock_fd);
 	return ret;
     }
 
@@ -177,23 +195,26 @@ NDBM_rename(krb5_context context, HDB *db, const char *new_name)
     asprintf(&new_pag, "%s.pag", new_name);
 
     ret = rename(old_dir, new_dir) || rename(old_pag, new_pag);
+    if (ret) {
+	ret = errno;
+	if (ret == 0)
+	    ret = EPERM;
+	krb5_set_error_message(context, ret, "rename: %s", strerror(ret));
+    }
+
     free(old_dir);
     free(old_pag);
     free(new_dir);
     free(new_pag);
-    hdb_unlock(lock_fd);
-    db->hdb_unlock(context, db);
 
-    if(ret) {
-	ret = errno;
-	close(lock_fd);
-	krb5_set_error_string(context, "rename: %s", strerror(ret));
+    hdb_unlock(new_lock_fd);
+    hdb_unlock(old_lock_fd);
+    close(new_lock_fd);
+    close(old_lock_fd);
+
+    if(ret)
 	return ret;
-    }
 
-    close(d->lock_fd);
-    d->lock_fd = lock_fd;
-    
     free(db->hdb_name);
     db->hdb_name = strdup(new_name);
     return 0;
@@ -221,9 +242,10 @@ NDBM__get(krb5_context context, HDB *db, krb5_data key, krb5_data *reply)
 }
 
 static krb5_error_code
-NDBM__put(krb5_context context, HDB *db, int replace, 
+NDBM__put(krb5_context context, HDB *db, int replace,
 	krb5_data key, krb5_data value)
 {
+#ifdef WRITE_SUPPORT
     struct ndbm_db *d = (struct ndbm_db *)db->hdb_db;
     datum k, v;
     int code;
@@ -243,6 +265,9 @@ NDBM__put(krb5_context context, HDB *db, int replace,
     if (code < 0)
 	return code;
     return 0;
+#else
+    return HDB_ERR_NO_WRITE_SUPPORT;
+#endif
 }
 
 static krb5_error_code
@@ -264,52 +289,6 @@ NDBM__del(krb5_context context, HDB *db, krb5_data key)
     return 0;
 }
 
-static krb5_error_code
-NDBM_open(krb5_context context, HDB *db, int flags, mode_t mode)
-{
-    krb5_error_code ret;
-    struct ndbm_db *d = malloc(sizeof(*d));
-    char *lock_file;
-
-    if(d == NULL) {
-	krb5_set_error_string(context, "malloc: out of memory");
-	return ENOMEM;
-    }
-    asprintf(&lock_file, "%s.lock", (char*)db->hdb_name);
-    if(lock_file == NULL) {
-	free(d);
-	krb5_set_error_string(context, "malloc: out of memory");
-	return ENOMEM;
-    }
-    d->db = dbm_open((char*)db->hdb_name, flags, mode);
-    if(d->db == NULL){
-	ret = errno;
-	free(d);
-	free(lock_file);
-	krb5_set_error_string(context, "dbm_open(%s): %s", db->hdb_name,
-			      strerror(ret));
-	return ret;
-    }
-    d->lock_fd = open(lock_file, O_RDWR | O_CREAT, 0600);
-    if(d->lock_fd < 0){
-	ret = errno;
-	dbm_close(d->db);
-	free(d);
-	krb5_set_error_string(context, "open(%s): %s", lock_file,
-			      strerror(ret));
-	free(lock_file);
-	return ret;
-    }
-    free(lock_file);
-    db->hdb_db = d;
-    if((flags & O_ACCMODE) == O_RDONLY)
-	ret = hdb_check_db_format(context, db);
-    else
-	ret = hdb_init_db(context, db);
-    if(ret == HDB_ERR_NOENTRY)
-	return 0;
-    return ret;
-}
 
 static krb5_error_code
 NDBM_close(krb5_context context, HDB *db)
@@ -321,29 +300,77 @@ NDBM_close(krb5_context context, HDB *db)
     return 0;
 }
 
+static krb5_error_code
+NDBM_open(krb5_context context, HDB *db, int flags, mode_t mode)
+{
+    krb5_error_code ret;
+    struct ndbm_db *d = malloc(sizeof(*d));
+
+    if(d == NULL) {
+	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+	return ENOMEM;
+    }
+
+    d->db = dbm_open((char*)db->hdb_name, flags, mode);
+    if(d->db == NULL){
+	ret = errno;
+	free(d);
+	krb5_set_error_message(context, ret, "dbm_open(%s): %s", db->hdb_name,
+			       strerror(ret));
+	return ret;
+    }
+
+    ret = open_lock_file(context, db->hdb_name, &d->lock_fd);
+    if (ret) {
+	ret = errno;
+	dbm_close(d->db);
+	free(d);
+	krb5_set_error_message(context, ret, "open(lock file): %s",
+			       strerror(ret));
+	return ret;
+    }
+
+    db->hdb_db = d;
+    if((flags & O_ACCMODE) == O_RDONLY)
+	ret = hdb_check_db_format(context, db);
+    else
+	ret = hdb_init_db(context, db);
+    if(ret == HDB_ERR_NOENTRY)
+	return 0;
+    if (ret) {
+	NDBM_close(context, db);
+	krb5_set_error_message(context, ret, "hdb_open: failed %s database %s",
+			       (flags & O_ACCMODE) == O_RDONLY ?
+			       "checking format of" : "initialize",
+			       db->hdb_name);
+    }
+    return ret;
+}
+
 krb5_error_code
-hdb_ndbm_create(krb5_context context, HDB **db, 
+hdb_ndbm_create(krb5_context context, HDB **db,
 		const char *filename)
 {
-    *db = malloc(sizeof(**db));
+    *db = calloc(1, sizeof(**db));
     if (*db == NULL) {
-	krb5_set_error_string(context, "malloc: out of memory");
+	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
 	return ENOMEM;
     }
 
     (*db)->hdb_db = NULL;
     (*db)->hdb_name = strdup(filename);
     if ((*db)->hdb_name == NULL) {
-	krb5_set_error_string(context, "malloc: out of memory");
 	free(*db);
 	*db = NULL;
+	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
 	return ENOMEM;
     }
     (*db)->hdb_master_key_set = 0;
     (*db)->hdb_openp = 0;
+    (*db)->hdb_capability_flags = HDB_CAP_F_HANDLE_ENTERPRISE_PRINCIPAL;
     (*db)->hdb_open = NDBM_open;
     (*db)->hdb_close = NDBM_close;
-    (*db)->hdb_fetch = _hdb_fetch;
+    (*db)->hdb_fetch_kvno = _hdb_fetch_kvno;
     (*db)->hdb_store = _hdb_store;
     (*db)->hdb_remove = _hdb_remove;
     (*db)->hdb_firstkey = NDBM_firstkey;

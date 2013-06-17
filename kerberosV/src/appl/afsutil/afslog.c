@@ -1,46 +1,43 @@
 /*
- * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
- * (Royal Institute of Technology, Stockholm, Sweden). 
- * All rights reserved. 
+ * Copyright (c) 1997-2003 Kungliga Tekniska HÃ¶gskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  *
- * 2. Redistributions in binary form must reproduce the above copyright 
- *    notice, this list of conditions and the following disclaimer in the 
- *    documentation and/or other materials provided with the distribution. 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * 3. Neither the name of the Institute nor the names of its contributors 
- *    may be used to endorse or promote products derived from this software 
- *    without specific prior written permission. 
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
- * SUCH DAMAGE. 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: afslog.c,v 1.24 2004/09/03 12:11:40 lha Exp $");
+RCSID("$Id: afslog.c,v 1.9 2013/06/17 18:57:40 robert Exp $");
 #endif
 #include <ctype.h>
 #ifdef KRB5
 #include <krb5.h>
-#endif
-#ifdef KRB4
-#include <krb.h>
 #endif
 #include <kafs.h>
 #include <roken.h>
@@ -49,18 +46,14 @@ RCSID("$KTH: afslog.c,v 1.24 2004/09/03 12:11:40 lha Exp $");
 
 static int help_flag;
 static int version_flag;
-#if 0
-static int create_user;
-#endif
 static getarg_strings cells;
 static char *realm;
 static getarg_strings files;
 static int unlog_flag;
 static int verbose;
-#ifdef KRB4
-static int use_krb4 = 1;
-#endif
 #ifdef KRB5
+static char *client_string;
+static char *cache_string;
 static int use_krb5 = 1;
 #endif
 
@@ -69,14 +62,10 @@ struct getargs args[] = {
     { "file",	'p', arg_strings, &files, "files to get tokens for", "path" },
     { "realm",	'k', arg_string, &realm, "realm for afs cell", "realm" },
     { "unlog",	'u', arg_flag, &unlog_flag, "remove tokens" },
-#ifdef KRB4
-    { "v4",	 0, arg_negative_flag, &use_krb4, "don't use Kerberos 4" },
-#endif
 #ifdef KRB5
-    { "v5",	 0, arg_negative_flag, &use_krb5, "don't use Kerberos 5" },
-#endif
-#if 0
-    { "create-user", 0, arg_flag, &create_user, "create user if not found" },
+    { "principal",'P',arg_string,&client_string,"principal to use","principal"},
+    { "cache",   0,  arg_string, &cache_string, "ccache to use", "cache"},
+    { "v5",	 0,  arg_negative_flag, &use_krb5, "don't use Kerberos 5" },
 #endif
     { "verbose",'v', arg_flag, &verbose },
     { "version", 0,  arg_flag, &version_flag },
@@ -116,10 +105,8 @@ expand_cell_name(const char *cell)
     const char *c;
     const char **fn, *files[] = { _PATH_CELLSERVDB,
 				  _PATH_ARLA_CELLSERVDB,
-#if 0
 				  _PATH_OPENAFS_DEBIAN_CELLSERVDB,
 				  _PATH_ARLA_DEBIAN_CELLSERVDB,
-#endif
 				  NULL };
     for(fn = files; *fn; fn++) {
 	f = fopen(*fn, "r");
@@ -132,43 +119,6 @@ expand_cell_name(const char *cell)
     }
     return cell;
 }
-
-#if 0
-static int
-createuser (char *cell)
-{
-    char cellbuf[64];
-    char name[ANAME_SZ];
-    char instance[INST_SZ];
-    char realm[REALM_SZ];
-    char cmd[1024];
-
-    if (cell == NULL) {
-	FILE *f;
-	int len;
-
-	f = fopen (_PATH_THISCELL, "r");
-	if (f == NULL)
-	    err (1, "open(%s)", _PATH_THISCELL);
-	if (fgets (cellbuf, sizeof(cellbuf), f) == NULL)
-	    err (1, "read cellname from %s", _PATH_THISCELL);
-	len = strlen(cellbuf);
-	if (cellbuf[len-1] == '\n')
-	    cellbuf[len-1] = '\0';
-	cell = cellbuf;
-    }
-
-    if(krb_get_default_principal(name, instance, realm))
-	errx (1, "Could not even figure out who you are");
-
-    snprintf (cmd, sizeof(cmd),
-	      "pts createuser %s%s%s@%s -cell %s",
-	      name, *instance ? "." : "", instance, strlwr(realm),
-	      cell);
-    DEBUG("Executing %s", cmd);
-    return system(cmd);
-}
-#endif
 
 static void
 usage(int ecode)
@@ -230,21 +180,14 @@ afslog_file(const char *path)
 static int
 do_afslog(const char *cell)
 {
-    int k5ret, k4ret;
+    int k5ret;
 
-    k5ret = k4ret = 0;
+    k5ret = 0;
 
 #ifdef KRB5
     if(context != NULL && id != NULL && use_krb5) {
-	k5ret = krb5_afslog(context, id, cell, NULL);
+	k5ret = krb5_afslog(context, id, cell, realm);
 	if(k5ret == 0)
-	    return 0;
-    }
-#endif
-#if KRB4
-    if (use_krb4) {
-	k4ret = krb_afslog(cell, NULL);
-	if(k4ret == 0)
 	    return 0;
     }
 #endif
@@ -252,13 +195,9 @@ do_afslog(const char *cell)
 	cell = "<default cell>";
 #ifdef KRB5
     if (k5ret)
-	warnx("krb5_afslog(%s): %s", cell, krb5_get_err_text(context, k5ret));
+	krb5_warn(context, k5ret, "krb5_afslog(%s)", cell);
 #endif
-#ifdef KRB4
-    if (k4ret)
-	warnx("krb_afslog(%s): %s", cell, krb_get_err_text(k4ret));
-#endif
-    if (k5ret || k4ret)
+    if (k5ret)
 	return 1;
     return 0;
 }
@@ -278,7 +217,9 @@ main(int argc, char **argv)
     int ret = 0;
     int failed = 0;
     struct cell_list *p;
-    
+
+    setprogname(argv[0]);
+
     if(getarg(args, num_args, argc, argv, &optind))
 	usage(1);
     if(help_flag)
@@ -297,11 +238,29 @@ main(int argc, char **argv)
     }
 #ifdef KRB5
     ret = krb5_init_context(&context);
-    if (ret)
+    if (ret) {
 	context = NULL;
-    else
-	if(krb5_cc_default(context, &id) != 0)
-	    id = NULL;
+    } else {
+	if (client_string) {
+	    krb5_principal client;
+
+	    ret = krb5_parse_name(context, client_string, &client);
+	    if (ret == 0)
+		ret = krb5_cc_cache_match(context, client, &id);
+	    if (ret)
+		id = NULL;
+	}
+	if (id == NULL && cache_string) {
+	    if(krb5_cc_resolve(context, cache_string, &id) != 0) {
+		krb5_warnx(context, "failed to open kerberos 5 cache '%s'",
+			   cache_string);
+		id = NULL;
+	    }
+	}
+	if (id == NULL)
+	    if(krb5_cc_default(context, &id) != 0)
+		id = NULL;
+    }
 #endif
 
     if (verbose)
@@ -327,7 +286,7 @@ main(int argc, char **argv)
 	    afslog_file(argv[i]);
 	else
 	    afslog_cell(argv[i], 1);
-    }    
+    }
     if(num == 0) {
 	if(do_afslog(NULL))
 	    failed++;

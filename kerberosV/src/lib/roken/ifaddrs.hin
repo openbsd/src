@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000 Kungliga Tekniska HÃ¶gskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,16 +31,18 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: ifaddrs.hin,v 1.4 2005/04/12 11:28:51 lha Exp $ */
+/* $Id: ifaddrs.hin,v 1.2 2013/06/17 18:57:45 robert Exp $ */
 
 #ifndef __ifaddrs_h__
 #define __ifaddrs_h__
 
 #ifndef ROKEN_LIB_FUNCTION
 #ifdef _WIN32
-#define ROKEN_LIB_FUNCTION _stdcall
+#define ROKEN_LIB_FUNCTION
+#define ROKEN_LIB_CALL _stdcall
 #else
 #define ROKEN_LIB_FUNCTION
+#define ROKEN_LIB_CALL
 #endif
 #endif
 
@@ -66,9 +68,12 @@ struct ifaddrs {
 #endif
 
 int ROKEN_LIB_FUNCTION
-getifaddrs(struct ifaddrs**);
+rk_getifaddrs(struct ifaddrs**);
 
 void ROKEN_LIB_FUNCTION
-freeifaddrs(struct ifaddrs*);
+rk_freeifaddrs(struct ifaddrs*);
+
+#define getifaddrs(a) rk_getifaddrs(a)
+#define freeifaddrs(a) rk_freeifaddrs(a)
 
 #endif /* __ifaddrs_h__ */

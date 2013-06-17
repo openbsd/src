@@ -1,4 +1,4 @@
-# $KTH: Makefile.am.common,v 1.5 2002/05/19 18:35:37 joda Exp $
+# $Id: Makefile.am.common,v 1.2 2013/06/17 18:57:39 robert Exp $
 
 include $(top_srcdir)/cf/Makefile.am.common
 

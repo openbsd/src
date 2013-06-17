@@ -1,4 +1,4 @@
-.\" Copyright (c) 1999-2004 Kungliga Tekniska Högskolan
+.\" Copyright (c) 1999-2005 Kungliga Tekniska HÃ¶gskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
 .\" All rights reserved.
 .\"
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $KTH: krb5_create_checksum.3,v 1.13 2005/01/08 20:52:19 lha Exp $
+.\" $Id: krb5_create_checksum.3,v 1.4 2013/06/17 18:57:44 robert Exp $
 .\"
-.Dd March 20, 2004
+.Dd August 12, 2005
 .Dt NAME 3
 .Os HEIMDAL
 .Sh NAME
@@ -85,7 +85,8 @@ Kerberos 5 Library (libkrb5, -lkrb5)
 .Fo krb5_create_checksum
 .Fa "krb5_context context"
 .Fa "krb5_crypto crypto"
-.Fa "unsigned usage_or_type"
+.Fa "krb5_key_usage usage"
+.Fa "int type"
 .Fa "void *data"
 .Fa "size_t len"
 .Fa "Checksum *result"
@@ -216,9 +217,10 @@ and keyblock
 Note that keyusage is not always used in checksums.
 .Pp
 .Nm krb5_checksum_disable
-globally disables the checksum type. 
+globally disables the checksum type.
 .\" .Sh EXAMPLE
 .\" .Sh BUGS
 .Sh SEE ALSO
 .Xr krb5_crypto_init 3 ,
+.Xr krb5_c_encrypt 3 ,
 .Xr krb5_encrypt 3

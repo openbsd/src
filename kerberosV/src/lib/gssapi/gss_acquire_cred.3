@@ -1,4 +1,4 @@
-.\" Copyright (c) 2003 - 2004 Kungliga Tekniska Högskolan
+.\" Copyright (c) 2003 - 2007 Kungliga Tekniska HÃ¶gskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
 .\" All rights reserved.
 .\"
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $KTH: gss_acquire_cred.3,v 1.23 2004/09/06 07:08:58 lha Exp $
+.\" $Id: gss_acquire_cred.3,v 1.4 2013/06/17 18:57:43 robert Exp $
 .\"
-.Dd September  9, 2003
+.Dd October 26, 2005
 .Dt GSS_ACQUIRE_CRED 3
 .Os HEIMDAL
 .Sh NAME
@@ -62,7 +62,10 @@
 .Nm gss_krb5_ccache_name ,
 .Nm gss_krb5_compat_des3_mic ,
 .Nm gss_krb5_copy_ccache ,
+.Nm gss_krb5_import_cred
 .Nm gsskrb5_extract_authz_data_from_sec_context ,
+.Nm gsskrb5_register_acceptor_identity ,
+.Nm gss_krb5_import_ccache ,
 .Nm gss_krb5_get_tkt_flags ,
 .Nm gss_process_context_token ,
 .Nm gss_release_buffer ,
@@ -293,6 +296,14 @@ GSS-API library (libgssapi, -lgssapi)
 .Fa "krb5_ccache out"
 .Fc
 .Ft OM_uint32
+.Fo gss_krb5_import_cred
+.Fa "OM_uint32 *minor_status"
+.Fa "krb5_ccache id"
+.Fa "krb5_principal keytab_principal"
+.Fa "krb5_keytab keytab"
+.Fa "gss_cred_id_t *cred"
+.Fc
+.Ft OM_uint32
 .Fo gss_krb5_compat_des3_mic
 .Fa "OM_uint32 * minor_status"
 .Fa "gss_ctx_id_t context_handle"
@@ -304,6 +315,17 @@ GSS-API library (libgssapi, -lgssapi)
 .Fa "gss_ctx_id_t context_handle"
 .Fa "int ad_type"
 .Fa "gss_buffer_t ad_data"
+.Fc
+.Ft OM_uint32
+.Fo gsskrb5_register_acceptor_identity
+.Fa "const char *identity"
+.Fc
+.Ft OM_uint32
+.Fo gss_krb5_import_cache
+.Fa "OM_uint32 *minor"
+.Fa "krb5_ccache id"
+.Fa "krb5_keytab keytab"
+.Fa "gss_cred_id_t *cred"
 .Fc
 .Ft OM_uint32
 .Fo gss_krb5_get_tkt_flags
@@ -417,12 +439,15 @@ GSS-API library (libgssapi, -lgssapi)
 .Fc
 .Sh DESCRIPTION
 Generic Security Service API (GSS-API) version 2, and its C binding,
-are described in RFC 2743 and RFC 2744.
-Version 1 (deprecated) of the C binding is described in RFC 1509.
+is described in
+.Li RFC2743
+and
+.Li RFC2744 .
+Version 1 (deprecated) of the C binding is described in
+.Li RFC1509 .
 .Pp
 Heimdals GSS-API implementation supports the following mechanisms
-.Pp
-.Bl -bullet -offset indent -compact
+.Bl -bullet
 .It
 .Li GSS_KRB5_MECHANISM
 .It
@@ -431,8 +456,7 @@ Heimdals GSS-API implementation supports the following mechanisms
 .Pp
 GSS-API have generic name types that all mechanism are supposed to
 implement (if possible):
-.Pp
-.Bl -bullet -offset indent -compact
+.Bl -bullet
 .It
 .Li GSS_C_NT_USER_NAME
 .It
@@ -449,8 +473,7 @@ implement (if possible):
 .Pp
 GSS-API implementations that supports Kerberos 5 have some additional
 name types:
-.Pp
-.Bl -bullet -offset indent -compact
+.Bl -bullet
 .It
 .Li GSS_KRB5_NT_PRINCIPAL_NAME
 .It
@@ -490,7 +513,7 @@ In GSS-API an contiguous string name is stored in a
 .Dv gss_buffer_t .
 .Pp
 Exported names also have the property that they are specified by the
-mechanism itself and compatible between diffrent GSS-API
+mechanism itself and compatible between different GSS-API
 implementations.
 .El
 .Sh ACCESS CONTROL
@@ -612,8 +635,24 @@ mechanism.
 The acceptor receives the delegated token in the last argument to
 .Fn gss_accept_sec_context .
 .Pp
+.Fn gss_krb5_import_cred
+will import the krb5 credentials (both keytab and/or credential cache)
+into gss credential so it can be used withing GSS-API.
+The
+.Fa ccache
+is copied by reference and thus shared, so if the credential is destroyed
+with
+.Fa krb5_cc_destroy ,
+all users of thep
+.Fa gss_cred_id_t
+returned by
+.Fn gss_krb5_import_ccache
+will fail.
+.Pp
 .Fn gsskrb5_register_acceptor_identity
-sets the Kerberos 5 principal that the acceptor will use.
+sets the Kerberos 5 filebased keytab that the acceptor will use.  The
+.Fa identifier
+is the file name.
 .Pp
 .Fn gsskrb5_extract_authz_data_from_sec_context
 extracts the Kerberos authorizationdata that may be stored within the

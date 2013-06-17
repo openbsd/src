@@ -27,11 +27,7 @@
  * SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
-
-RCSID("$KTH: getusershell.c,v 1.14 2005/04/27 08:05:00 lha Exp $");
 
 #ifndef HAVE_GETUSERSHELL
 
@@ -59,7 +55,7 @@ struct aud_rec;
 #ifdef HAVE_USERCONF_H
 #include <userconf.h>
 #endif
-#include <roken.h>
+#include "roken.h"
 
 #ifndef _PATH_SHELLS
 #define _PATH_SHELLS "/etc/shells"
@@ -85,7 +81,7 @@ static char **initshells (void);
 /*
  * Get a list of shells from _PATH_SHELLS, if it exists.
  */
-char * ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 getusershell()
 {
     char *ret;
@@ -98,7 +94,7 @@ getusershell()
     return (ret);
 }
 
-void ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 endusershell()
 {
     if (shells != NULL)
@@ -110,7 +106,7 @@ endusershell()
     curshell = NULL;
 }
 
-void ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 setusershell()
 {
     curshell = initshells();

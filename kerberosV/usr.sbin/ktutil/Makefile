@@ -1,7 +1,4 @@
-# $OpenBSD: Makefile,v 1.17 2012/12/19 09:54:05 espie Exp $
-
-KRBDEPTH=../..
-.include <${.CURDIR}/../../Makefile.inc>
+# $OpenBSD: Makefile,v 1.18 2013/06/17 18:57:46 robert Exp $
 
 PROG=	ktutil
 MAN=	ktutil.8
@@ -9,45 +6,30 @@ MAN=	ktutil.8
 SRCS=	add.c \
 	change.c \
 	copy.c \
+	destroy.c \
 	get.c \
 	ktutil.c \
 	ktutil-commands.c \
+	ktutil-commands.h \
 	list.c \
 	purge.c \
 	remove.c \
-	rename.c \
-	sl.c
-SRCS+=	${PRINTVER}
+	rename.c
 
-.PATH:	${KRB5SRC}/admin
-.PATH:	${KRB5SRC}/lib/sl
-
-slc:	slc-gram.o slc-lex.o ${PRINTVER}
-	$(CC) -o slc $> -lkrb5 -lcrypto
-
-slc-lex.o: y.tab.h
-
-y.tab.h slc-gram.o: 
-	${YACC} -d ${KRB5SRC}/lib/sl/slc-gram.y
-	$(CC) -c ${CFLAGS} -o slc-gram.o y.tab.c
-	rm -f y.tab.c
-	touch $@
-
-SLC=	slc
-
-depend: ktutil-commands.h
-
-ktutil-commands.c ktutil-commands.h:	ktutil-commands.in $(SLC)
-	./$(SLC) $(KRB5SRC)/admin/ktutil-commands.in
-
-CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/kadm5 -I.
-
-DPADD+=	${LIBEDIT} ${LIBCURSES} ${LIBKADM5CLNT} ${LIBKRB5} \
-	${LIBCRYPTO}
-LDADD+=	-ledit -lcurses -lkadm5clnt -lkrb5 \
-	-lcrypto
-
-CLEANFILES+=	ktutil-commands.c slc slc-lex.o \
-		ktutil-commands.h slc-gram.o stamp_grammar
+CFLAGS+=-I${KRB5DIR}/lib/roken -I${KRB5DIR}/lib/sl -I.
+DPADD=	${LIBKADM5CLNT} ${LIBKRB5} ${LIBSL} ${LIBROKEN} ${LIBVERS} \
+	${LIBASN1} ${LIBCRYPTO} ${LIBCRYPT} ${LIBEDIT}
+LDADD=	-lkadm5clnt -lkrb5 ${LIBSL} -lroken ${LIBVERS} -lpthread \
+	-lasn1 -lcrypto -ledit -lheimbase -lhx509 -lwind -lcom_err \
+	-lcurses
 
 .include <bsd.prog.mk>
+
+ktutil-commands.h: ${KRB5DIR}/admin/ktutil-commands.in
+	${SLC} ${.ALLSRC:M*.in}
+
+.for ext in c o
+ktutil-commands.${ext}: ktutil-commands.h
+.endfor
+
+.PATH: ${KRB5DIR}/admin

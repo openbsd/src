@@ -1,23 +1,23 @@
 /*
- * Copyright (c) 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000 Kungliga Tekniska HÃ¶gskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -33,8 +33,6 @@
 
 #include "hprop.h"
 
-RCSID("$KTH: mit_dump.c,v 1.5 2005/06/02 09:55:43 lha Exp $");
-
 /*
 can have any number of princ stanzas.
 format is as follows (only \n indicates newlines)
@@ -42,13 +40,13 @@ princ\t%d\t (%d is KRB5_KDB_V1_BASE_LENGTH, always 38)
 %d\t (strlen of principal e.g. shadow/foo@ANDREW.CMU.EDU)
 %d\t (number of tl_data)
 %d\t (number of key data, e.g. how many keys for this user)
-%d\t (extra data length) 
+%d\t (extra data length)
 %s\t (principal name)
 %d\t (attributes)
 %d\t (max lifetime, seconds)
 %d\t (max renewable life, seconds)
 %d\t (expiration, seconds since epoch or 2145830400 for never)
-%d\t (password expiration, seconds, 0 for never) 
+%d\t (password expiration, seconds, 0 for never)
 %d\t (last successful auth, seconds since epoch)
 %d\t (last failed auth, per above)
 %d\t (failed auth count)
@@ -67,7 +65,7 @@ foreach key 0 to number of keys - 1 as above
       %02x (key data contents[element n])
     except if key_data length is 0
       %d (always -1)
-    \t    
+    \t
 foreach extra data length 0 to length - 1
   %02x (extra data part)
 unless no extra data
@@ -79,7 +77,7 @@ unless no extra data
 static int
 hex_to_octet_string(const char *ptr, krb5_data *data)
 {
-    int i;
+    size_t i;
     unsigned int v;
     for(i = 0; i < data->length; i++) {
 	if(sscanf(ptr + 2 * i, "%02x", &v) != 1)
@@ -137,7 +135,7 @@ attr_to_flags(unsigned attr, HDBFlags *flags)
     /* DUP_SKEY */
     flags->invalid =	       !!(attr & KRB5_KDB_DISALLOW_ALL_TIX);
     flags->require_preauth =   !!(attr & KRB5_KDB_REQUIRES_PRE_AUTH);
-    /* HW_AUTH */
+    flags->require_hwauth =    !!(attr & KRB5_KDB_REQUIRES_HW_AUTH);
     flags->server =		!(attr & KRB5_KDB_DISALLOW_SVR);
     flags->change_pw = 	       !!(attr & KRB5_KDB_PWCHANGE_SERVICE);
     flags->client =	        1; /* XXX */
@@ -167,10 +165,9 @@ fix_salt(krb5_context context, hdb_entry *ent, int key_num)
     case KRB5_KDB_SALTTYPE_NOREALM:
     {
 	size_t len;
-	int i;
-	krb5_error_code ret;
+	size_t i;
 	char *p;
-	    
+
 	len = 0;
 	for (i = 0; i < ent->principal->name.name_string.len; ++i)
 	    len += strlen(ent->principal->name.name_string.val[i]);
@@ -190,8 +187,8 @@ fix_salt(krb5_context context, hdb_entry *ent, int key_num)
     }
     case KRB5_KDB_SALTTYPE_ONLYREALM:
 	krb5_data_free(&salt->salt);
-	ret = krb5_data_copy(&salt->salt, 
-			     ent->principal->realm, 
+	ret = krb5_data_copy(&salt->salt,
+			     ent->principal->realm,
 			     strlen(ent->principal->realm));
 	if(ret)
 	    return ret;
@@ -202,8 +199,8 @@ fix_salt(krb5_context context, hdb_entry *ent, int key_num)
 	break;
     case KRB5_KDB_SALTTYPE_AFS3:
 	krb5_data_free(&salt->salt);
-	ret = krb5_data_copy(&salt->salt, 
-		       ent->principal->realm, 
+	ret = krb5_data_copy(&salt->salt,
+		       ent->principal->realm,
 		       strlen(ent->principal->realm));
 	if(ret)
 	    return ret;
@@ -219,25 +216,25 @@ int
 mit_prop_dump(void *arg, const char *file)
 {
     krb5_error_code ret;
-    char buf [1024];
+    char line [2048];
     FILE *f;
     int lineno = 0;
-    struct hdb_entry ent;
+    struct hdb_entry_ex ent;
 
     struct prop_data *pd = arg;
 
     f = fopen(file, "r");
     if(f == NULL)
 	return errno;
-    
-    while(fgets(buf, sizeof(buf), f)) {
-	char *p = buf, *q;
+
+    while(fgets(line, sizeof(line), f)) {
+	char *p = line, *q;
 
 	int i;
 
 	int num_tl_data;
 	int num_key_data;
-	int extra_data_length;
+	int high_kvno;
 	int attributes;
 
 	int tmp;
@@ -258,8 +255,11 @@ mit_prop_dump(void *arg, const char *file)
 	    q = nexttoken(&p); /* x.0 */
 	    if(sscanf(q, "%d", &major) != 1)
 		errx(1, "line %d: unknown version", lineno);
-	    if(major != 4)
-		errx(1, "unknown dump file format, got %d, expected 4", major);
+	    if(major != 4 && major != 5 && major != 6)
+		errx(1, "unknown dump file format, got %d, expected 4-6",
+		     major);
+	    continue;
+	} else if(strcmp(q, "policy") == 0) {
 	    continue;
 	} else if(strcmp(q, "princ") != 0) {
 	    warnx("line %d: not a principal", lineno);
@@ -270,37 +270,37 @@ mit_prop_dump(void *arg, const char *file)
 	    warnx("line %d: bad base length %d != 38", lineno, tmp);
 	    continue;
 	}
-	q = nexttoken(&p); /* length of principal */
+	nexttoken(&p); /* length of principal */
 	num_tl_data = getint(&p); /* number of tl-data */
 	num_key_data = getint(&p); /* number of key-data */
-	extra_data_length = getint(&p);  /* length of extra data */
+	getint(&p);  /* length of extra data */
 	q = nexttoken(&p); /* principal name */
-	krb5_parse_name(pd->context, q, &ent.principal);
+	krb5_parse_name(pd->context, q, &ent.entry.principal);
 	attributes = getint(&p); /* attributes */
-	attr_to_flags(attributes, &ent.flags);
+	attr_to_flags(attributes, &ent.entry.flags);
 	tmp = getint(&p); /* max life */
 	if(tmp != 0) {
-	    ALLOC(ent.max_life);
-	    *ent.max_life = tmp;
+	    ALLOC(ent.entry.max_life);
+	    *ent.entry.max_life = tmp;
 	}
 	tmp = getint(&p); /* max renewable life */
 	if(tmp != 0) {
-	    ALLOC(ent.max_renew);
-	    *ent.max_renew = tmp;
+	    ALLOC(ent.entry.max_renew);
+	    *ent.entry.max_renew = tmp;
 	}
 	tmp = getint(&p); /* expiration */
 	if(tmp != 0 && tmp != 2145830400) {
-	    ALLOC(ent.valid_end);
-	    *ent.valid_end = tmp;
+	    ALLOC(ent.entry.valid_end);
+	    *ent.entry.valid_end = tmp;
 	}
 	tmp = getint(&p); /* pw expiration */
 	if(tmp != 0) {
-	    ALLOC(ent.pw_end);
-	    *ent.pw_end = tmp;
+	    ALLOC(ent.entry.pw_end);
+	    *ent.entry.pw_end = tmp;
 	}
-	q = nexttoken(&p); /* last auth */
-	q = nexttoken(&p); /* last failed auth */
-	q = nexttoken(&p); /* fail auth count */
+	nexttoken(&p); /* last auth */
+	nexttoken(&p); /* last failed auth */
+	nexttoken(&p); /* fail auth count */
 	for(i = 0; i < num_tl_data; i++) {
 	    unsigned long val;
 	    int tl_type, tl_length;
@@ -313,57 +313,103 @@ mit_prop_dump(void *arg, const char *file)
 #define mit_KRB5_TL_LAST_PWD_CHANGE	1
 #define mit_KRB5_TL_MOD_PRINC		2
 	    switch(tl_type) {
+	    case mit_KRB5_TL_LAST_PWD_CHANGE:
+		buf = malloc(tl_length);
+		if (buf == NULL)
+		    errx(ENOMEM, "malloc");
+		getdata(&p, buf, tl_length); /* data itself */
+		val = buf[0] | (buf[1] << 8) | (buf[2] << 16) | (buf[3] << 24);
+		free(buf);
+		ALLOC(ent.entry.extensions);
+		ALLOC_SEQ(ent.entry.extensions, 1);
+		ent.entry.extensions->val[0].mandatory = 0;
+		ent.entry.extensions->val[0].data.element
+		    = choice_HDB_extension_data_last_pw_change;
+		ent.entry.extensions->val[0].data.u.last_pw_change = val;
+		break;
 	    case mit_KRB5_TL_MOD_PRINC:
 		buf = malloc(tl_length);
+		if (buf == NULL)
+		    errx(ENOMEM, "malloc");
 		getdata(&p, buf, tl_length); /* data itself */
 		val = buf[0] | (buf[1] << 8) | (buf[2] << 16) | (buf[3] << 24);
 		ret = krb5_parse_name(pd->context, (char *)buf + 4, &princ);
+		if (ret)
+		    krb5_err(pd->context, 1, ret,
+			     "parse_name: %s", (char *)buf + 4);
 		free(buf);
-		ALLOC(ent.modified_by);
-		ent.modified_by->time = val;
-		ent.modified_by->principal = princ;
+		ALLOC(ent.entry.modified_by);
+		ent.entry.modified_by->time = val;
+		ent.entry.modified_by->principal = princ;
 		break;
 	    default:
 		nexttoken(&p);
 		break;
 	    }
 	}
-	ALLOC_SEQ(&ent.keys, num_key_data);
+	ALLOC_SEQ(&ent.entry.keys, num_key_data);
+	high_kvno = -1;
 	for(i = 0; i < num_key_data; i++) {
 	    int key_versions;
+	    int kvno;
 	    key_versions = getint(&p); /* key data version */
-	    ent.kvno = getint(&p); /* XXX kvno */
-	    
-	    ALLOC(ent.keys.val[i].mkvno);
-	    *ent.keys.val[i].mkvno = 0;
-	    
+	    kvno = getint(&p);
+
+	    /*
+	     * An MIT dump file may contain multiple sets of keys with
+	     * different kvnos.  Since the Heimdal database can only represent
+	     * one kvno per principal, we only want the highest set.  Assume
+	     * that set will be given first, and discard all keys with lower
+	     * kvnos.
+	     */
+	    if (kvno > high_kvno && high_kvno != -1)
+		errx(1, "line %d: high kvno keys given after low kvno keys",
+		     lineno);
+	    else if (kvno < high_kvno) {
+		nexttoken(&p); /* key type */
+		nexttoken(&p); /* key length */
+		nexttoken(&p); /* key */
+		if (key_versions > 1) {
+		    nexttoken(&p); /* salt type */
+		    nexttoken(&p); /* salt length */
+		    nexttoken(&p); /* salt */
+		}
+		ent.entry.keys.len--;
+		continue;
+	    }
+	    ent.entry.kvno = kvno;
+	    high_kvno = kvno;
+	    ALLOC(ent.entry.keys.val[i].mkvno);
+	    *ent.entry.keys.val[i].mkvno = 1;
+
 	    /* key version 0 -- actual key */
-	    ent.keys.val[i].key.keytype = getint(&p); /* key type */
+	    ent.entry.keys.val[i].key.keytype = getint(&p); /* key type */
 	    tmp = getint(&p); /* key length */
 	    /* the first two bytes of the key is the key length --
 	       skip it */
-	    krb5_data_alloc(&ent.keys.val[i].key.keyvalue, tmp - 2);
+	    krb5_data_alloc(&ent.entry.keys.val[i].key.keyvalue, tmp - 2);
 	    q = nexttoken(&p); /* key itself */
-	    hex_to_octet_string(q + 4, &ent.keys.val[i].key.keyvalue);
+	    hex_to_octet_string(q + 4, &ent.entry.keys.val[i].key.keyvalue);
 
 	    if(key_versions > 1) {
 		/* key version 1 -- optional salt */
-		ALLOC(ent.keys.val[i].salt);
-		ent.keys.val[i].salt->type = getint(&p); /* salt type */
+		ALLOC(ent.entry.keys.val[i].salt);
+		ent.entry.keys.val[i].salt->type = getint(&p); /* salt type */
 		tmp = getint(&p); /* salt length */
 		if(tmp > 0) {
-		    krb5_data_alloc(&ent.keys.val[i].salt->salt, tmp - 2);
+		    krb5_data_alloc(&ent.entry.keys.val[i].salt->salt, tmp - 2);
 		    q = nexttoken(&p); /* salt itself */
-		    hex_to_octet_string(q + 4, &ent.keys.val[i].salt->salt);
+		    hex_to_octet_string(q + 4,
+					&ent.entry.keys.val[i].salt->salt);
 		} else {
-		    ent.keys.val[i].salt->salt.length = 0;
-		    ent.keys.val[i].salt->salt.data = NULL;
-		    tmp = getint(&p);	/* -1, if no data. */
+		    ent.entry.keys.val[i].salt->salt.length = 0;
+		    ent.entry.keys.val[i].salt->salt.data = NULL;
+		    getint(&p);	/* -1, if no data. */
 		}
-		fix_salt(pd->context, &ent, i);
+		fix_salt(pd->context, &ent.entry, i);
 	    }
 	}
-	q = nexttoken(&p); /* extra data */
+	nexttoken(&p); /* extra data */
 	v5_prop(pd->context, NULL, &ent, arg);
     }
     fclose(f);

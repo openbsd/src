@@ -1,21 +1,20 @@
-# $OpenBSD: Makefile,v 1.13 2010/10/13 08:14:22 jsg Exp $
-
-KRBDEPTH=../..
-.include <${.CURDIR}/../../Makefile.inc>
+# $OpenBSD: Makefile,v 1.14 2013/06/17 18:57:39 robert Exp $
 
 PROG=	kadmind
-MAN=	${PROG}.8
+MAN=	kadmind.8
+SRCS=	rpc.c \
+	server.c \
+	kadmind.c \
+	kadm_conn.c
 
-SRCS=	kadmind.c server.c kadm_conn.c
-SRCS+=	${PRINTVER}
-SRCS+=	mini_inetd.c socket.c
-
-.PATH:	${KRB5SRC}/kadmin
-.PATH:	${ROKENSRC}
-
-CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/kdc
-
-DPADD+=	${LIBKADM5SRV} ${LIBKRB5} ${LIBCRYPTO} ${LIBUTIL}
-LDADD+=	-lkadm5srv -lkrb5 -lcrypto -lutil
+CFLAGS+=-I${KRB5DIR}/lib/krb5 -I${KRB5DIR}/lib/asn1 -I${KRB5DIR}/lib/roken \
+	-I/usr/include/kerberosV/gssapi
+DPADD=	${LIBKADM5SRV} ${LIBGSSAPI} ${LIBHDB} ${LIBKRB5} ${LIBROKEN} \
+	${LIBASN1} ${LIBVERS} ${LIBCRYPTO} ${LIBCRYPT} ${LDAPDPADD}
+LDADD=	-lkadm5srv -lgssapi -lhdb -lkrb5 -lroken \
+	-lasn1 ${LIBVERS} -lcrypto  -lheimbase -lwind -lhx509 -lpthread \
+	-lcom_err -lasn1 -lutil -lheimntlm
 
 .include <bsd.prog.mk>
+
+.PATH: ${KRB5DIR}/kadmin

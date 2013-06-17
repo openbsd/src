@@ -1,15 +1,14 @@
-# $OpenBSD: Makefile,v 1.4 2010/10/13 08:14:22 jsg Exp $
-
-KRBDEPTH=../..
-.include <${.CURDIR}/../../Makefile.inc>
+# $OpenBSD: Makefile,v 1.5 2013/06/17 18:57:45 robert Exp $
 
 PROG=	kf
-
-SRCS=	kf.c
-
-.PATH:	${KRB5SRC}/appl/kf
-
-DPADD+= ${LIBKRB5} ${LIBCRYPTO}
-LDADD+=	-lkrb5 -lcrypto
+MAN=	kf.1
+CFLAGS+=	-I${KRB5DIR}/lib/asn1 \
+		-I${KRB5DIR}/lib/roken
+DPADD=	${LIBKRB5} ${LIBROKEN} ${LIBASN1} ${LIBCRYPTO} \
+	${LIBCRYPT} ${LIBVERS}
+LDADD=	-lkrb5 -lroken -lasn1 -lcrypto -lpthread \
+	${LIBVERS} -lhx509 -lheimbase -lwind -lcom_err
 
 .include <bsd.prog.mk>
+
+.PATH: ${KRB5DIR}/appl/kf

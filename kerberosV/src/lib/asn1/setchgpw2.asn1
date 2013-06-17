@@ -1,9 +1,9 @@
--- $KTH: setchgpw2.asn1,v 1.3 2003/05/21 13:43:28 lha Exp $
+-- $Id: setchgpw2.asn1,v 1.2 2013/06/17 18:57:42 robert Exp $
 
 SETCHGPW2 DEFINITIONS ::=
 BEGIN
 
-IMPORTS PrincipalName, Realm FROM krb5;
+IMPORTS PrincipalName, Realm, ENCTYPE FROM krb5;
 
 ProtocolErrorCode ::= ENUMERATED {
 	generic-error(0),
@@ -21,8 +21,6 @@ Key	::= SEQUENCE {
 	key[1]		OCTET STRING,
 	...
 }
-
-Etype ::= INTEGER
 
 Language-Tag	::= UTF8String    -- Constrained by RFC3066
 
@@ -42,14 +40,14 @@ Err-null ::= NULL
 Req-change-pw ::= SEQUENCE {
 	old-pw[0]	UTF8String,
 	new-pw[1]	UTF8String OPTIONAL,
-	etypes[2]	SEQUENCE OF Etype OPTIONAL,
+	etypes[2]	SEQUENCE OF ENCTYPE OPTIONAL,
 	...
 }
 
 Rep-change-pw ::= SEQUENCE {
 	info-text[0]	UTF8String OPTIONAL,
 	new-pw[1]	UTF8String OPTIONAL,
-	etypes[2]	SEQUENCE OF Etype OPTIONAL
+	etypes[2]	SEQUENCE OF ENCTYPE OPTIONAL
 }
 
 Err-change-pw ::= SEQUENCE {
@@ -68,7 +66,7 @@ Err-change-pw ::= SEQUENCE {
 
 -- Change/Set keys
 Req-set-keys ::= SEQUENCE {
-	etypes[0]	SEQUENCE OF Etype,
+	etypes[0]	SEQUENCE OF ENCTYPE,
 	entropy[1]	OCTET STRING,
 	...
 }
@@ -87,7 +85,7 @@ Rep-set-keys ::= SEQUENCE {
 
 Err-set-keys ::= SEQUENCE {
 	help-text[0]		UTF8String OPTIONAL,
-	enctypes[1]		SEQUENCE OF Etype OPTIONAL,
+	enctypes[1]		SEQUENCE OF ENCTYPE OPTIONAL,
 	code[1]		ENUMERATED {
 		etype-no-support(0),
 		...
@@ -125,7 +123,7 @@ Err-get-princ-aliases ::= NULL
 -- Get list of encryption types supported by KDC for new types
 Req-get-supported-etypes ::= NULL
 
-Rep-get-supported-etypes ::= SEQUENCE OF Etype
+Rep-get-supported-etypes ::= SEQUENCE OF ENCTYPE
 
 Err-get-supported-etypes ::= NULL
 
@@ -140,7 +138,7 @@ Op-req ::= CHOICE {
 	get-supported-etypes[5]	Req-get-supported-etypes,
 	...
 }
- 
+
 Op-rep ::= CHOICE {
 	null[0]			Rep-null,
 	change-pw[1]		Rep-change-pw,
@@ -168,25 +166,25 @@ Request ::= [ APPLICATION 0 ] SEQUENCE {
 	languages[2]	SEQUENCE OF Language-Tag OPTIONAL,
 	targ-name[3]	PrincipalName OPTIONAL,
 	targ-realm[4]	Realm OPTIONAL,
---	operation[5]	Op-Req,
+	operation[5]	Op-Req,
 	...
 }
 
-Responce ::= [ APPLICATION 1 ] SEQUENCE {
+Response ::= [ APPLICATION 1 ] SEQUENCE {
 	pvno-major[0]	INTEGER DEFAULT 2,
 	pvno-minor[1]	INTEGER DEFAULT 0,
 	language[2]	Language-Tag DEFAULT "i-default",
---	result[3]	Op-rep OPTIONAL,
+	result[3]	Op-rep OPTIONAL,
 	...
 }
 
-Error-Responce ::= [ APPLICATION 2 ] SEQUENCE {
+Error-Response ::= [ APPLICATION 2 ] SEQUENCE {
 	pvno-major[0]	INTEGER DEFAULT 2,
 	pvno-minor[1]	INTEGER DEFAULT 0,
 	language[2]	Language-Tag DEFAULT "i-default",
 	error-code[3]	ProtocolErrorCode,
 	help-text[4]	UTF8String OPTIONAL,
---	op-error[5]	Op-error OP-ERROR,
+	op-error[5]	Op-error OP-ERROR,
 	...
 }
 

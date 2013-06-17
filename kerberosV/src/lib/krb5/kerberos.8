@@ -1,4 +1,4 @@
-.\" Copyright (c) 2000 Kungliga Tekniska Högskolan
+.\" Copyright (c) 2000 Kungliga Tekniska HÃ¶gskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
 .\" All rights reserved.
 .\"
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $KTH: kerberos.8,v 1.8 2003/07/26 17:05:42 lha Exp $
+.\" $Id: kerberos.8,v 1.6 2013/06/17 18:57:44 robert Exp $
 .\"
 .Dd September 1, 2000
 .Dt KERBEROS 8
@@ -68,7 +68,7 @@ program, you acquire a
 which allows you to get new tickets for other services, such as
 .Ic telnet
 or
-.Ic ssh ,
+.Ic ftp ,
 without giving your password.
 .Pp
 For more information on how Kerberos works, and other general Kerberos
@@ -77,10 +77,11 @@ questions see the Kerberos FAQ at
 .Pp
 For setup instructions see the Heimdal Texinfo manual.
 .Sh SEE ALSO
+.Xr ftp 1 ,
 .Xr kdestroy 1 ,
 .Xr kinit 1 ,
 .Xr klist 1 ,
-.Xr passwd 1 ,
+.Xr kpasswd 1 ,
 .Xr telnet 1
 .Sh HISTORY
 The Kerberos authentication system was developed in the late 1980's as
@@ -93,9 +94,12 @@ filesystem.
 The problems with version 4 are that it has many limitations, the code
 was not too well written (since it had been developed over a long
 time), and it has a number of known security problems. To resolve many
-of these issues work on version five started, and resulted in IETF
-RFC1510 in 1993. Since then much work has been put into the further
-development, and a new RFC will hopefully appear soon.
+of these issues work on version five started, and resulted in IETF RFC
+1510 in 1993. IETF RFC 1510 was obsoleted in 2005 with IETF RFC 4120,
+also known as Kerberos clarifications. With the arrival of IETF RFC
+4120, the work on adding extensibility and internationalization have
+started (Kerberos extensions), and a new RFC will hopefully appear
+soon.
 .Pp
 This manual page is part of the
 .Nm Heimdal

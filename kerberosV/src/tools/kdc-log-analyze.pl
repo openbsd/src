@@ -1,7 +1,7 @@
 #! /usr/pkg/bin/perl
 # -*- mode: perl; perl-indent-level: 8 -*-
 # 
-# Copyright (c) 2003 Kungliga Tekniska Högskolan
+# Copyright (c) 2003 Kungliga Tekniska HÃ¶gskolan
 # (Royal Institute of Technology, Stockholm, Sweden). 
 # All rights reserved. 
 # 
@@ -32,7 +32,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
 # SUCH DAMAGE. 
 #
-# $KTH: kdc-log-analyze.pl,v 1.10 2004/03/07 16:05:15 lha Exp $
+# $Id: kdc-log-analyze.pl,v 1.2 2013/06/17 18:57:45 robert Exp $
 #
 # kdc-log-analyze - Analyze a KDC log file and give a report on the contents
 #
@@ -99,6 +99,8 @@ my %v4_req_addr;
 my %v4_req_addr_nonlocal;
 my $v4_cross = 0;
 my %v4_cross_realm;
+my $v5_cross = 0;
+my %v5_cross_realm;
 my $referrals = 0;
 my %referral_princ;
 my %referral_realm;
@@ -149,6 +151,13 @@ print "\tNumber of V4 cross realms (krb4 and 524) requests: $v4_cross\n";
 if ($v4_cross > 0) {
 	print "\tTop ten realms performing V4 cross requests:\n";
 	topten(\%v4_cross_realm);
+}
+print "\n";
+
+print "\tNumber of V45 cross realms requests: $v5_cross\n";
+if ($v5_cross > 0) {
+	print "\tTop ten realms performing V4 cross requests:\n";
+	topten(\%v5_cross_realm);
 }
 print "\n";
 
@@ -433,7 +442,11 @@ sub process_line {
 		$v4_cross_realm{$1."->".$2}++;
 	} elsif (/cross-realm (.*) -> (.*): no transit through realm (.*)/) {
 	} elsif (/cross-realm (.*) -> (.*) via \[([^\]]+)\]/) {
-	} elsif (/cross-realm (.*) -> (.*)) {
+		$v5_cross++;
+		$v5_cross_realm{$1."->".$2}++;
+	} elsif (/cross-realm (.*) -> (.*)/) {
+		$v5_cross++;
+		$v5_cross_realm{$1."->".$2}++;
 	} elsif (/sending ([0-9]+) bytes to IPv[46]:([0-9\.:a-fA-F]+)/) {
 		$bw_addr{$2} += $1;
 	} elsif (/Using ([-a-z0-9]+)\/([-a-z0-9]+)/) {

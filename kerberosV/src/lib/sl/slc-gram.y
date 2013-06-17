@@ -1,41 +1,38 @@
 %{
 /*
- * Copyright (c) 2004 Kungliga Tekniska Högskolan
- * (Royal Institute of Technology, Stockholm, Sweden). 
- * All rights reserved. 
+ * Copyright (c) 2004-2006 Kungliga Tekniska HÃ¶gskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  *
- * 2. Redistributions in binary form must reproduce the above copyright 
- *    notice, this list of conditions and the following disclaimer in the 
- *    documentation and/or other materials provided with the distribution. 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * 3. Neither the name of the Institute nor the names of its contributors 
- *    may be used to endorse or promote products derived from this software 
- *    without specific prior written permission. 
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
- * SUCH DAMAGE. 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: slc-gram.y,v 1.7 2005/04/19 10:28:28 lha Exp $");
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,11 +40,18 @@ RCSID("$KTH: slc-gram.y,v 1.7 2005/04/19 10:28:28 lha Exp $");
 #include <ctype.h>
 #include <limits.h>
 #include <getarg.h>
+#include <vers.h>
 #include <roken.h>
 
 #include "slc.h"
 extern FILE *yyin;
-extern struct assignment *a;
+extern struct assignment *assignment;
+
+/* Declarations for Bison:
+ */
+#define YYMALLOC        malloc
+#define YYFREE          free
+
 %}
 
 %union {
@@ -65,7 +69,7 @@ extern struct assignment *a;
 
 start		: assignments
 		{
-			a = $1;
+			assignment = $1;
 		}
 		;
 
@@ -101,7 +105,7 @@ assignment	: LITERAL '=' STRING
 char *filename;
 FILE *cfile, *hfile;
 int error_flag;
-struct assignment *a;
+struct assignment *assignment;
 
 
 static void
@@ -122,6 +126,7 @@ check_option(struct assignment *as)
 {
     struct assignment *a;
     int seen_long = 0;
+    int seen_name = 0;
     int seen_short = 0;
     int seen_type = 0;
     int seen_argument = 0;
@@ -134,6 +139,8 @@ check_option(struct assignment *as)
 	    seen_long++;
 	else if(strcmp(a->name, "short") == 0)
 	    seen_short++;
+	else if(strcmp(a->name, "name") == 0)
+	    seen_name++;
 	else if(strcmp(a->name, "type") == 0)
 	    seen_type++;
 	else if(strcmp(a->name, "argument") == 0)
@@ -143,12 +150,16 @@ check_option(struct assignment *as)
 	else if(strcmp(a->name, "default") == 0)
 	    seen_default++;
 	else {
-	    ex(a, "unknown name");
+	    ex(a, "unknown name %s", a->name);
 	    ret++;
 	}
     }
     if(seen_long == 0 && seen_short == 0) {
 	ex(as, "neither long nor short option");
+	ret++;
+    }
+    if (seen_long == 0 && seen_name == 0) {
+	ex(as, "either of long or name option must be used");
 	ret++;
     }
     if(seen_long > 1) {
@@ -205,7 +216,7 @@ check_command(struct assignment *as)
 		} else if(strcmp(a->name, "max_args") == 0) {
 			seen_maxargs++;
 		} else {
-			ex(a, "unknown name");
+			ex(a, "unknown name: %s", a->name);
 			ret++;
 		}
 	}
@@ -233,7 +244,7 @@ check_command(struct assignment *as)
 		ex(as, "multiple max_args strings");
 		ret++;
 	}
-	
+
 	return ret;
 }
 
@@ -355,7 +366,7 @@ make_name(struct assignment *as)
 	lopt = find(as, "name");
     if(lopt == NULL)
 	return NULL;
-    
+
     type = find(as, "type");
     if(strcmp(type->u.value, "-flag") == 0)
 	asprintf(&s, "%s_flag", lopt->u.value);
@@ -365,6 +376,89 @@ make_name(struct assignment *as)
     return s;
 }
 
+
+static void defval_int(const char *name, struct assignment *defval)
+{
+    if(defval != NULL)
+	cprint(1, "opt.%s = %s;\n", name, defval->u.value);
+    else
+	cprint(1, "opt.%s = 0;\n", name);
+}
+static void defval_neg_flag(const char *name, struct assignment *defval)
+{
+    if(defval != NULL)
+	cprint(1, "opt.%s = %s;\n", name, defval->u.value);
+    else
+	cprint(1, "opt.%s = 1;\n", name);
+}
+static void defval_string(const char *name, struct assignment *defval)
+{
+    if(defval != NULL)
+	cprint(1, "opt.%s = (char *)(unsigned long)\"%s\";\n", name, defval->u.value);
+    else
+	cprint(1, "opt.%s = NULL;\n", name);
+}
+static void defval_strings(const char *name, struct assignment *defval)
+{
+    cprint(1, "opt.%s.num_strings = 0;\n", name);
+    cprint(1, "opt.%s.strings = NULL;\n", name);
+}
+
+static void free_strings(const char *name)
+{
+    cprint(1, "free_getarg_strings (&opt.%s);\n", name);
+}
+
+struct type_handler {
+    const char *typename;
+    const char *c_type;
+    const char *getarg_type;
+    void (*defval)(const char*, struct assignment*);
+    void (*free)(const char*);
+} type_handlers[] = {
+	{ "integer",
+	  "int",
+	  "arg_integer",
+	  defval_int,
+	  NULL
+	},
+	{ "string",
+	  "char*",
+	  "arg_string",
+	  defval_string,
+	  NULL
+	},
+	{ "strings",
+	  "struct getarg_strings",
+	  "arg_strings",
+	  defval_strings,
+	  free_strings
+	},
+	{ "flag",
+	  "int",
+	  "arg_flag",
+	  defval_int,
+	  NULL
+	},
+	{ "-flag",
+	  "int",
+	  "arg_negative_flag",
+	  defval_neg_flag,
+	  NULL
+	},
+	{ NULL }
+};
+
+static struct type_handler *find_handler(struct assignment *type)
+{
+    struct type_handler *th;
+    for(th = type_handlers; th->typename != NULL; th++)
+	if(strcmp(type->u.value, th->typename) == 0)
+	    return th;
+    ex(type, "unknown type \"%s\"", type->u.value);
+    exit(1);
+}
+
 static void
 gen_options(struct assignment *opt1, const char *name)
 {
@@ -372,28 +466,17 @@ gen_options(struct assignment *opt1, const char *name)
 
     hprint(0, "struct %s_options {\n", name);
 
-    for(tmp = opt1; 
-	tmp != NULL; 
+    for(tmp = opt1;
+	tmp != NULL;
 	tmp = find_next(tmp, "option")) {
 	struct assignment *type;
+	struct type_handler *th;
 	char *s;
-	
+
 	s = make_name(tmp->u.assignment);
 	type = find(tmp->u.assignment, "type");
-	if(strcmp(type->u.value, "string") == 0)
-	    hprint(1, "char *%s;\n", s);
-	else if(strcmp(type->u.value, "strings") == 0)
-	    hprint(1, "struct getarg_strings %s;\n", s);
-	else if(strcmp(type->u.value, "integer") == 0)
-	    hprint(1, "int %s;\n", s);
-	else if(strcmp(type->u.value, "flag") == 0) 
-	    hprint(1, "int %s;\n", s);
-	else if(strcmp(type->u.value, "-flag") == 0) 
-	    hprint(1, "int %s;\n", s);
-	else {
-	    ex(type, "unknown type \"%s\"", type->u.value);
-	    exit(1);
-	}
+	th = find_handler(type);
+	hprint(1, "%s %s;\n", th->c_type, s);
 	free(s);
     }
     hprint(0, "};\n");
@@ -407,45 +490,50 @@ gen_wrapper(struct assignment *as)
     struct assignment *opt1;
     struct assignment *function;
     struct assignment *tmp;
-    char *f;
+    char *n, *f;
     int nargs = 0;
-    int seen_strings = 0;
+    int narguments = 0;
 
     name = find(as, "name");
+    n = strdup(name->u.value);
+    gen_name(n);
     arg = find(as, "argument");
+    if (arg)
+        narguments++;
     opt1 = find(as, "option");
     function = find(as, "function");
-    if(function == NULL)
-	function = name;
-    f = strdup(name->u.value);
-    gen_name(f);
-       
+    if(function)
+	f = function->u.value;
+    else
+	f = n;
+
+
     if(opt1 != NULL) {
-	gen_options(opt1, name->u.value);
-	hprint(0, "int %s(struct %s_options*, int, char **);\n", 
-	       function->u.value, name->u.value);
+	gen_options(opt1, n);
+	hprint(0, "int %s(struct %s_options*, int, char **);\n", f, n);
     } else {
-	hprint(0, "int %s(void*, int, char **);\n", 
-	       function->u.value);
+	hprint(0, "int %s(void*, int, char **);\n", f);
     }
 
     fprintf(cfile, "static int\n");
-    fprintf(cfile, "%s_wrap(int argc, char **argv)\n", f);
+    fprintf(cfile, "%s_wrap(int argc, char **argv)\n", n);
     fprintf(cfile, "{\n");
     if(opt1 != NULL)
-	cprint(1, "struct %s_options opt;\n", name->u.value);
+	cprint(1, "struct %s_options opt;\n", n);
     cprint(1, "int ret;\n");
-    cprint(1, "int optind = 0;\n");
+    cprint(1, "int optidx = 0;\n");
     cprint(1, "struct getargs args[] = {\n");
-    for(tmp = find(as, "option"); 
-	tmp != NULL; 
+    for(tmp = find(as, "option");
+	tmp != NULL;
 	tmp = find_next(tmp, "option")) {
 	struct assignment *type = find(tmp->u.assignment, "type");
 	struct assignment *lopt = find(tmp->u.assignment, "long");
 	struct assignment *sopt = find(tmp->u.assignment, "short");
-	struct assignment *arg = find(tmp->u.assignment, "argument");
+	struct assignment *aarg = find(tmp->u.assignment, "argument");
 	struct assignment *help = find(tmp->u.assignment, "help");
-	
+
+	struct type_handler *th;
+
 	cprint(2, "{ ");
 	if(lopt)
 	    fprintf(cfile, "\"%s\", ", lopt->u.value);
@@ -455,28 +543,17 @@ gen_wrapper(struct assignment *as)
 	    fprintf(cfile, "'%c', ", *sopt->u.value);
 	else
 	    fprintf(cfile, "0, ");
-	if(strcmp(type->u.value, "string") == 0)
-	    fprintf(cfile, "arg_string, ");
-	else if(strcmp(type->u.value, "strings") == 0)
-	    fprintf(cfile, "arg_strings, ");
-	else if(strcmp(type->u.value, "integer") == 0)
-	    fprintf(cfile, "arg_integer, ");
-	else if(strcmp(type->u.value, "flag") == 0)
-	    fprintf(cfile, "arg_flag, ");
-	else if(strcmp(type->u.value, "-flag") == 0)
-	    fprintf(cfile, "arg_negative_flag, ");
-	else {
-	    ex(type, "unknown type \"%s\"", type->u.value);
-	    exit(1);
-	}
+	th = find_handler(type);
+	fprintf(cfile, "%s, ", th->getarg_type);
 	fprintf(cfile, "NULL, ");
 	if(help)
 	    fprintf(cfile, "\"%s\", ", help->u.value);
 	else
 	    fprintf(cfile, "NULL, ");
-	if(arg)
-	    fprintf(cfile, "\"%s\"", arg->u.value);
-	else
+	if(aarg) {
+	    fprintf(cfile, "\"%s\"", aarg->u.value);
+            narguments++;
+	} else
 	    fprintf(cfile, "NULL");
 	fprintf(cfile, " },\n");
     }
@@ -484,43 +561,24 @@ gen_wrapper(struct assignment *as)
     cprint(1, "};\n");
     cprint(1, "int help_flag = 0;\n");
 
-    for(tmp = find(as, "option"); 
-	tmp != NULL; 
+    for(tmp = find(as, "option");
+	tmp != NULL;
 	tmp = find_next(tmp, "option")) {
 	char *s;
 	struct assignment *type = find(tmp->u.assignment, "type");
 
 	struct assignment *defval = find(tmp->u.assignment, "default");
+
+	struct type_handler *th;
+
 	s = make_name(tmp->u.assignment);
-	if(strcmp(type->u.value, "string") == 0) {
-	    if(defval != NULL)
-		cprint(1, "opt.%s = \"%s\";\n", s, defval->u.value);
-	    else
-		cprint(1, "opt.%s = NULL;\n", s);
-	} else if(strcmp(type->u.value, "strings") == 0) {
-	    seen_strings = 1;
-	    cprint(1, "opt.%s.num_strings = 0;\n", s);
-	    cprint(1, "opt.%s.strings = NULL;\n", s);
-	} else if(strcmp(type->u.value, "integer") == 0) {
-	    if(defval != NULL)
-		cprint(1, "opt.%s = %s;\n", s, defval->u.value);
-	    else
-		cprint(1, "opt.%s = 0;\n", s);
-	} else if(strcmp(type->u.value, "flag") == 0 ||
-		  strcmp(type->u.value, "-flag") == 0) {
-	    if(defval != NULL)
-		cprint(1, "opt.%s = %s;\n", s, defval->u.value);
-	    else
-		cprint(1, "opt.%s = 0;\n", s);
-	} else {
-	    ex(type, "unknown type \"%s\"", type->u.value);
-	    exit(1);
-	}
+	th = find_handler(type);
+	(*th->defval)(s, defval);
 	free(s);
     }
 
-    for(tmp = find(as, "option"); 
-	tmp != NULL; 
+    for(tmp = find(as, "option");
+	tmp != NULL;
 	tmp = find_next(tmp, "option")) {
 	char *s;
 	s = make_name(tmp->u.assignment);
@@ -528,14 +586,14 @@ gen_wrapper(struct assignment *as)
 	free(s);
     }
     cprint(1, "args[%d].value = &help_flag;\n", nargs++);
-    cprint(1, "if(getarg(args, %d, argc, argv, &optind))\n", nargs);
+    cprint(1, "if(getarg(args, %d, argc, argv, &optidx))\n", nargs);
     cprint(2, "goto usage;\n");
 
     {
 	int min_args = -1;
 	int max_args = -1;
 	char *end;
-	if(arg == NULL) {
+	if(narguments == 0) {
 	    max_args = 0;
 	} else {
 	    if((tmp = find(as, "min_args")) != NULL) {
@@ -563,68 +621,66 @@ gen_wrapper(struct assignment *as)
 	}
 	if(min_args != -1 || max_args != -1) {
 	    if(min_args == max_args) {
-		cprint(1, "if(argc - optind != %d) {\n", 
+		cprint(1, "if(argc - optidx != %d) {\n",
 		       min_args);
-		cprint(2, "fprintf(stderr, \"Need exactly %u parameters (%%u given).\\n\\n\", argc - optind);\n", min_args);
+		cprint(2, "fprintf(stderr, \"Need exactly %u parameters (%%u given).\\n\\n\", argc - optidx);\n", min_args);
 		cprint(2, "goto usage;\n");
 		cprint(1, "}\n");
 	    } else {
 		if(max_args != -1) {
-		    cprint(1, "if(argc - optind > %d) {\n", max_args);
-		    cprint(2, "fprintf(stderr, \"Arguments given (%%u) are more than expected (%u).\\n\\n\", argc - optind);\n", max_args);
+		    cprint(1, "if(argc - optidx > %d) {\n", max_args);
+		    cprint(2, "fprintf(stderr, \"Arguments given (%%u) are more than expected (%u).\\n\\n\", argc - optidx);\n", max_args);
 		    cprint(2, "goto usage;\n");
 		    cprint(1, "}\n");
 		}
 		if(min_args != -1) {
-		    cprint(1, "if(argc - optind < %d) {\n", min_args);
-		    cprint(2, "fprintf(stderr, \"Arguments given (%%u) are less than expected (%u).\\n\\n\", argc - optind);\n", min_args);
+		    cprint(1, "if(argc - optidx < %d) {\n", min_args);
+		    cprint(2, "fprintf(stderr, \"Arguments given (%%u) are less than expected (%u).\\n\\n\", argc - optidx);\n", min_args);
 		    cprint(2, "goto usage;\n");
 		    cprint(1, "}\n");
 		}
 	    }
 	}
     }
-    
+
     cprint(1, "if(help_flag)\n");
     cprint(2, "goto usage;\n");
 
-    cprint(1, "ret = %s(%s, argc - optind, argv + optind);\n", 
-	   function->u.value, 
-	   opt1 ? "&opt": "NULL");
-    if(seen_strings) {
-	if(seen_strings) {
-	    for(tmp = find(as, "option"); 
-		tmp != NULL; 
-		tmp = find_next(tmp, "option")) {
-		char *s;
-		struct assignment *type = find(tmp->u.assignment, "type");
-		
-		s = make_name(tmp->u.assignment);
-		if(strcmp(type->u.value, "strings") == 0) {
-		    cprint(1, "free_getarg_strings (&opt.%s);\n", s);
-		} 
-		free(s);
-	    }
-	}
+    cprint(1, "ret = %s(%s, argc - optidx, argv + optidx);\n",
+	   f, opt1 ? "&opt": "NULL");
+
+    /* free allocated data */
+    for(tmp = find(as, "option");
+	tmp != NULL;
+	tmp = find_next(tmp, "option")) {
+	char *s;
+	struct assignment *type = find(tmp->u.assignment, "type");
+	struct type_handler *th;
+	th = find_handler(type);
+	if(th->free == NULL)
+	    continue;
+	s = make_name(tmp->u.assignment);
+	(*th->free)(s);
+	free(s);
     }
     cprint(1, "return ret;\n");
 
     cprint(0, "usage:\n");
-    cprint(1, "arg_printusage (args, %d, \"%s\", \"%s\");\n", nargs, 
+    cprint(1, "arg_printusage (args, %d, \"%s\", \"%s\");\n", nargs,
 	   name->u.value, arg ? arg->u.value : "");
-    if(seen_strings) {
-	for(tmp = find(as, "option"); 
-	    tmp != NULL; 
-	    tmp = find_next(tmp, "option")) {
-	    char *s;
-	    struct assignment *type = find(tmp->u.assignment, "type");
-
-	    s = make_name(tmp->u.assignment);
-	    if(strcmp(type->u.value, "strings") == 0) {
-		cprint(1, "free_getarg_strings (&opt.%s);\n", s);
-	    } 
-	    free(s);
-	}
+    /* free allocated data */
+    for(tmp = find(as, "option");
+	tmp != NULL;
+	tmp = find_next(tmp, "option")) {
+	char *s;
+	struct assignment *type = find(tmp->u.assignment, "type");
+	struct type_handler *th;
+	th = find_handler(type);
+	if(th->free == NULL)
+	    continue;
+	s = make_name(tmp->u.assignment);
+	(*th->free)(s);
+	free(s);
     }
     cprint(1, "return 0;\n");
     cprint(0, "}\n");
@@ -680,9 +736,10 @@ main(int argc, char **argv)
 {
     char *p;
 
-    int optind = 0;
+    int optidx = 0;
 
-    if(getarg(args, num_args, argc, argv, &optind))
+    setprogname(argv[0]);
+    if(getarg(args, num_args, argc, argv, &optidx))
 	usage(1);
     if(help_flag)
 	usage(0);
@@ -690,11 +747,11 @@ main(int argc, char **argv)
 	print_version(NULL);
 	exit(0);
     }
-    
-    if(argc == optind)
+
+    if(argc == optidx)
 	usage(1);
 
-    filename = argv[optind];
+    filename = argv[optidx];
     yyin = fopen(filename, "r");
     if(yyin == NULL)
 	err(1, "%s", filename);
@@ -712,16 +769,17 @@ main(int argc, char **argv)
     yyparse();
     if(error_flag)
 	exit(1);
-    if(check(a) == 0) {
+    if(check(assignment) == 0) {
 	cfile = fopen(cname, "w");
 	if(cfile == NULL)
 	  err(1, "%s", cname);
 	hfile = fopen(hname, "w");
 	if(hfile == NULL)
 	  err(1, "%s", hname);
-	gen(a);
+	gen(assignment);
 	fclose(cfile);
 	fclose(hfile);
     }
+    fclose(yyin);
     return 0;
 }

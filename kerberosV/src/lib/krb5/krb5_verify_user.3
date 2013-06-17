@@ -1,4 +1,4 @@
-.\" Copyright (c) 2001 - 2003 Kungliga Tekniska Högskolan
+.\" Copyright (c) 2001 - 2006 Kungliga Tekniska HÃ¶gskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
 .\" All rights reserved.
 .\"
@@ -29,16 +29,18 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $KTH: krb5_verify_user.3,v 1.13 2004/03/20 18:36:51 lha Exp $
+.\" $Id: krb5_verify_user.3,v 1.7 2013/06/17 18:57:44 robert Exp $
 .\"
-.Dd March 25, 2003
+.Dd May  1, 2006
 .Dt KRB5_VERIFY_USER 3
 .Os HEIMDAL
 .Sh NAME
 .Nm krb5_verify_user ,
 .Nm krb5_verify_user_lrealm ,
 .Nm krb5_verify_user_opt ,
-.Nm krb5_verify_opt_init
+.Nm krb5_verify_opt_init ,
+.Nm krb5_verify_opt_alloc ,
+.Nm krb5_verify_opt_free ,
 .Nm krb5_verify_opt_set_ccache ,
 .Nm krb5_verify_opt_set_flags ,
 .Nm krb5_verify_opt_set_service ,
@@ -55,6 +57,10 @@ Kerberos 5 Library (libkrb5, -lkrb5)
 .Fn "krb5_verify_user_lrealm" "krb5_context context" "krb5_principal principal" "krb5_ccache ccache" "const char *password" "krb5_boolean secure" "const char *service"
 .Ft void
 .Fn krb5_verify_opt_init "krb5_verify_opt *opt"
+.Ft void
+.Fn krb5_verify_opt_alloc "krb5_verify_opt **opt"
+.Ft void
+.Fn krb5_verify_opt_free "krb5_verify_opt *opt"
 .Ft void
 .Fn krb5_verify_opt_set_ccache "krb5_verify_opt *opt" "krb5_ccache ccache"
 .Ft void
@@ -110,7 +116,7 @@ if given as
 ).
 .Pp
 The
-.Nm krb5_verify_user_lrealm
+.Fn krb5_verify_user_lrealm
 function does the same, except that it ignores the realm in
 .Fa principal
 and tries all the local realms (see
@@ -120,11 +126,20 @@ realm. If the call fails, the principal will not be meaningful, and
 should only be freed with
 .Xr krb5_free_principal 3 .
 .Pp
+.Fn krb5_verify_opt_alloc
+and
+.Fn krb5_verify_opt_free
+allocates and frees a
+.Li krb5_verify_opt .
+You should use the the alloc and free function instead of allocation
+the structure yourself, this is because in a future release the
+structure wont be exported.
+.Pp
 .Fn krb5_verify_opt_init
 resets all opt to default values.
 .Pp
 None of the krb5_verify_opt_set function makes a copy of the data
-structure that they are called with. Its up the caller to free them
+structure that they are called with. It's up the caller to free them
 after the
 .Fn krb5_verify_user_opt
 is called.

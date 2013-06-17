@@ -1,4 +1,4 @@
-.\" Copyright (c) 2003 - 2005 Kungliga Tekniska Högskolan
+.\" Copyright (c) 2003 - 2007 Kungliga Tekniska HÃ¶gskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
 .\" All rights reserved.
 .\"
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $KTH: krb5_get_init_creds.3,v 1.10 2005/05/10 09:20:58 lha Exp $
+.\" $Id: krb5_get_init_creds.3,v 1.5 2013/06/17 18:57:44 robert Exp $
 .\"
-.Dd May 10, 2005
+.Dd Sep  16, 2006
 .Dt KRB5_GET_INIT_CREDS 3
 .Os HEIMDAL
 .Sh NAME
@@ -42,6 +42,7 @@
 .Nm krb5_get_init_creds_opt_free ,
 .Nm krb5_get_init_creds_opt_init ,
 .Nm krb5_get_init_creds_opt_set_address_list ,
+.Nm krb5_get_init_creds_opt_set_addressless ,
 .Nm krb5_get_init_creds_opt_set_anonymous ,
 .Nm krb5_get_init_creds_opt_set_default_flags ,
 .Nm krb5_get_init_creds_opt_set_etype_list ,
@@ -53,6 +54,8 @@
 .Nm krb5_get_init_creds_opt_set_renew_life ,
 .Nm krb5_get_init_creds_opt_set_salt ,
 .Nm krb5_get_init_creds_opt_set_tkt_life ,
+.Nm krb5_get_init_creds_opt_set_canonicalize ,
+.Nm krb5_get_init_creds_opt_set_win2k ,
 .Nm krb5_get_init_creds_password ,
 .Nm krb5_prompt ,
 .Nm krb5_prompter_posix
@@ -71,6 +74,7 @@ Kerberos 5 Library (libkrb5, -lkrb5)
 .Fc
 .Ft void
 .Fo krb5_get_init_creds_opt_free
+.Fa "krb5_context context"
 .Fa "krb5_get_init_creds_opt *opt"
 .Fc
 .Ft void
@@ -81,6 +85,11 @@ Kerberos 5 Library (libkrb5, -lkrb5)
 .Fo krb5_get_init_creds_opt_set_address_list
 .Fa "krb5_get_init_creds_opt *opt"
 .Fa "krb5_addresses *addresses"
+.Fc
+.Ft void
+.Fo krb5_get_init_creds_opt_set_addressless
+.Fa "krb5_get_init_creds_opt *opt"
+.Fa "krb5_boolean addressless"
 .Fc
 .Ft void
 .Fo krb5_get_init_creds_opt_set_anonymous
@@ -155,6 +164,18 @@ Kerberos 5 Library (libkrb5, -lkrb5)
 .Fa "krb5_deltat tkt_life"
 .Fc
 .Ft krb5_error_code
+.Fo krb5_get_init_creds_opt_set_canonicalize
+.Fa "krb5_context context"
+.Fa "krb5_get_init_creds_opt *opt"
+.Fa "krb5_boolean req"
+.Fc
+.Ft krb5_error_code
+.Fo krb5_get_init_creds_opt_set_win2k
+.Fa "krb5_context context"
+.Fa "krb5_get_init_creds_opt *opt"
+.Fa "krb5_boolean req"
+.Fc
+.Ft krb5_error_code
 .Fo krb5_get_init_creds
 .Fa "krb5_context context"
 .Fa "krb5_creds *creds"
@@ -201,7 +222,7 @@ Getting initial credential ticket for a principal.
 That may include changing an expired password, and doing preauthentication.
 This interface that replaces the deprecated
 .Fa krb5_in_tkt
-and 
+and
 .Fa krb5_in_cred
 functions.
 .Pp
@@ -269,6 +290,7 @@ element are:
 .It KRB5_PROMPT_TYPE_NEW_PASSWORD
 .It KRB5_PROMPT_TYPE_NEW_PASSWORD_AGAIN
 .It KRB5_PROMPT_TYPE_PREAUTH
+.It KRB5_PROMPT_TYPE_INFO
 .El
 .Pp
 .Fn krb5_prompter_posix
@@ -308,6 +330,11 @@ used if no value is specified in the options structure.
 sets the list of
 .Fa addresses
 that is should be stored in the ticket.
+.Pp
+.Fn krb5_get_init_creds_opt_set_addressless
+controls if the ticket is requested with addresses or not,
+.Fn krb5_get_init_creds_opt_set_address_list
+overrides this option.
 .Pp
 .Fn krb5_get_init_creds_opt_set_anonymous
 make the request anonymous if the
@@ -357,6 +384,12 @@ sets the salt that is going to be used in the request.
 .Pp
 .Fn krb5_get_init_creds_opt_set_tkt_life
 sets requested ticket lifetime.
+.Pp
+.Fn krb5_get_init_creds_opt_set_canonicalize
+requests that the KDC canonicalize the client pricipal if possible.
+.Pp
+.Fn krb5_get_init_creds_opt_set_win2k
+turns on compatibility with Windows 2000.
 .Sh SEE ALSO
 .Xr krb5 3 ,
 .Xr krb5_creds 3 ,

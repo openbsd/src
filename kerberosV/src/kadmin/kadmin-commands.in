@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004 Kungliga Tekniska Högskolan
+ * Copyright (c) 2004 - 2007 Kungliga Tekniska HÃ¶gskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE. 
  */
-/* $KTH: kadmin-commands.in,v 1.5 2004/07/05 11:30:30 joda Exp $ */
+/* $Id: kadmin-commands.in,v 1.2 2013/06/17 18:57:41 robert Exp $ */
 
 command = {
 	name = "stash"
@@ -53,6 +53,11 @@ command = {
 		long = "convert-file"
 		type = "flag"
 		help = "just convert keyfile to new format"
+	}
+	option = {
+		long = "random-password"
+		type = "flag"
+		help = "use a random password (and print the password to stdout)"
 	}
 	option = {
 		long = "master-key-fd"
@@ -89,6 +94,11 @@ command = {
 		type = "string"
 		help = "realm max renewable lifetime"
 	}
+	option = {
+		long = "bare"
+		type = "flag"
+		help = "only create krbtgt for realm"
+	}
 	argument = "realm..."
 	min_args = "1"
 	help = "Initializes the default principals for a realm. Creates the database\nif necessary. Local (-l) mode only."
@@ -109,6 +119,7 @@ command = {
 }
 command = {
 	name = "add"
+	name = "ank"
 	name = "add_new_key"
 	function = "add_new_key"
 	option = {
@@ -219,6 +230,18 @@ command = {
 	help = "Delete all the mentioned enctypes for principal."
 }
 command = {
+	name = "add_enctype"
+	option = {
+		long = "random-key"
+		short = "r"
+		type = "flag"
+		help = "set random key"
+	}
+	argument = "principal enctype..."
+	min_args = "2"
+	help = "Add new enctypes for principal."
+}
+command = {
 	name = "ext_keytab"
 	option = {
 		long = "keytab"
@@ -312,6 +335,24 @@ command = {
 		help = "key version number"
 		default = "-1"
 	}
+	option = {
+		long = "constrained-delegation"
+		type = "strings"
+		argument = "principal"
+		help = "allowed target principals"
+	}
+	option = {
+		long = "alias"
+		type = "strings"
+		argument = "principal"
+		help = "aliases"
+	}
+	option = {
+		long = "pkinit-acl"
+		type = "strings"
+		argument = "subject dn"
+		help = "aliases"
+	}
 	argument = "principal"
 	min_args = "1"
 	max_args = "1"
@@ -356,9 +397,8 @@ command = {
 	min_args = "1"
 	help = "Lists principals in a terse format. Equivalent to \"get -t\"." 
 }
-
 command = {
-	name = "password-quality"
+	name = "verify-password-quality"
 	name = "pwq"
 	function = "password_quality"
 	argument = "principal password"
@@ -366,7 +406,14 @@ command = {
 	max_args = "2"
 	help = "Try run the password quality function locally (not doing RPC out to server)."
 }
-
+command = {
+	name = "check"
+	function = "check"
+	argument = "[realm]"
+	min_args = "0"
+	max_args = "1"
+	help = "Check the realm (if not given, the default realm) for configuration errors."
+}
 command = {
 	name = "help"
 	name = "?"
@@ -375,7 +422,6 @@ command = {
 	max_args = "1"
 	help = "Help! I need somebody."
 }
-
 command = {
 	name = "exit"
 	name = "quit"

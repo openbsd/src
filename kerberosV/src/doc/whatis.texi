@@ -1,4 +1,4 @@
-@c $KTH: whatis.texi,v 1.8 2005/04/24 21:48:45 lha Exp $
+@c $Id: whatis.texi,v 1.2 2013/06/17 18:57:41 robert Exp $
 
 @node What is Kerberos?, Building and Installing, Introduction, Top
 @chapter What is Kerberos?
@@ -42,7 +42,9 @@ services can authenticate each other.
 
 @ifhtml
 @macro sub{arg}
-<\arg\>
+@html
+<sub>\arg\</sub>
+@end html
 @end macro
 @end ifhtml
 
@@ -121,7 +123,7 @@ attack.
 her credentials, @var{C} just pretend to verify them. @var{C} can't
 be sure that she is talking to @var{A}.
 
-@section Defense strategies
+@section Defence strategies
 
 It would be possible to add a @dfn{replay cache}
 @cindex replay cache

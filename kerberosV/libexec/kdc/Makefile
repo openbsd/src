@@ -1,31 +1,20 @@
-# $OpenBSD: Makefile,v 1.13 2010/10/13 08:14:22 jsg Exp $
-
-KRBDEPTH=../..
-.include <${.CURDIR}/../../Makefile.inc>
+# $OpenBSD: Makefile,v 1.14 2013/06/17 18:57:39 robert Exp $
 
 PROG=	kdc
-MAN=	${PROG}.8
+MAN=	kdc.8
 
-SRCS=	524.c \
-	config.c \
+SRCS=	config.c \
 	connect.c \
-	kaserver.c \
-	kdc_locl.h \
-	kerberos5.c \
-	kerberos4.c \
-	log.c \
-	main.c \
-	misc.c \
-	rx.h
-SRCS+=	${PRINTVER}
-SRCS+=	parse_bytes.c
+	announce.c \
+	main.c
 
-.PATH:	${KRB5SRC}/kdc
-.PATH:	${ROKENSRC}
-
-CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/kdc
-
-DPADD+=	${LIBKRB5} ${LIBCRYPTO} ${LIBUTIL}
-LDADD+=	-lkrb5 -lcrypto -lutil
+CFLAGS+=-I${KRB5DIR}/lib/krb5 -I${KRB5DIR}/lib/asn1 -I${KRB5DIR}/lib/roken \
+	-I${KRB5DIR}/kdc ${LDAPCFLAGS}
+DPADD=	${LIBKDC} ${LIBHDB} ${LIBKRB5} ${LIBROKEN} ${LIBASN1} \
+	${LIBCRYPTO} ${LIBCRYPT} ${LIBVERS}
+LDADD=	-lkdc -lhdb -lkrb5 -lroken -lasn1 -lcrypto ${LIBVERS} -lhx509 -lheimbase \
+	-lwind -lcom_err -lheimntlm -lutil -lpthread
 
 .include <bsd.prog.mk>
+
+.PATH: ${KRB5DIR}/kdc

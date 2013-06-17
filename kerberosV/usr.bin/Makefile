@@ -1,16 +1,6 @@
-# $OpenBSD: Makefile,v 1.9 2003/07/14 16:14:44 mho Exp $
+# $OpenBSD: Makefile,v 1.10 2013/06/17 18:57:45 robert Exp $
 
-# XXX asn1_compile is compiled in ../Makefile
-
-# kf - not imported?
-
-SUBDIR=	afslog \
-	kauth \
-	kdestroy \
-	kinit \
-	klist \
-	pagsh \
-	string2key \
-	verify_krb5_conf
+SUBDIR=	hxtool kadmin kcc kdestroy kgetcred kf kinit krb5-config ksu \
+	string2key verify_krb5_conf
 
 .include <bsd.subdir.mk>

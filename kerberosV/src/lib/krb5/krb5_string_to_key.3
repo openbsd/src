@@ -1,4 +1,4 @@
-.\" Copyright (c) 2004 Kungliga Tekniska Högskolan
+.\" Copyright (c) 2004 - 2006 Kungliga Tekniska HÃ¶gskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
 .\" All rights reserved.
 .\"
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $KTH: krb5_string_to_key.3,v 1.3 2004/08/13 13:23:57 lha Exp $
+.\" $Id: krb5_string_to_key.3,v 1.3 2013/06/17 18:57:44 robert Exp $
 .\"
-.Dd August 13, 2004
+.Dd July 10, 2006
 .Dt KRB5_STRING_TO_KEY 3
 .Os HEIMDAL
 .Sh NAME
@@ -39,7 +39,6 @@
 .Nm krb5_string_to_key_data ,
 .Nm krb5_string_to_key_data_salt ,
 .Nm krb5_string_to_key_data_salt_opaque ,
-.Nm krb5_string_to_key_derived ,
 .Nm krb5_string_to_key_salt ,
 .Nm krb5_string_to_key_salt_opaque ,
 .Nm krb5_get_pw_salt ,
@@ -115,7 +114,7 @@ The string to key functions convert a string to a kerberos key.
 .Pp
 .Fn krb5_string_to_key_data_salt_opaque
 is the function that does all the work, the rest of the functions are
-just wrapers around
+just wrappers around
 .Fn krb5_string_to_key_data_salt_opaque
 that calls it with default values.
 .Pp
@@ -150,14 +149,6 @@ to free the salt when done.
 .Fn krb5_free_salt
 frees the content of
 .Fa salt .
-.Pp
-.Fn krb5_string_to_key_derived
-is deprecated, see the BUGS section below.
-.Sh BUGS
-.Fn krb5_string_to_key_derived
-only works for
-.Dv ETYPE_DES3_CBC_SHA1 ,
-if you use on on some other enctypes, it will produce the wrong result.
 .Sh SEE ALSO
 .Xr krb5 3 ,
 .Xr krb5_data 3 ,

@@ -1,3 +1,5 @@
-# $OpenBSD: Makefile.inc,v 1.1 2001/05/25 08:20:32 hin Exp $
+# $OpenBSD: Makefile.inc,v 1.2 2013/06/17 18:57:45 robert Exp $
 
 BINDIR=	/usr/bin
+
+.include "../Makefile.inc"

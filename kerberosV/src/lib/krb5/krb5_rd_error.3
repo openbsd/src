@@ -1,4 +1,4 @@
-.\" Copyright (c) 2004 Kungliga Tekniska Högskolan
+.\" Copyright (c) 2004 Kungliga Tekniska HÃ¶gskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
 .\" All rights reserved.
 .\"
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $KTH: krb5_rd_error.3,v 1.1 2004/07/26 14:29:03 lha Exp $
+.\" $Id: krb5_rd_error.3,v 1.2 2013/06/17 18:57:44 robert Exp $
 .\"
 .Dd July 26, 2004
 .Dt KRB5_RD_ERROR 3
@@ -47,7 +47,7 @@ Kerberos 5 Library (libkrb5, -lkrb5)
 .Ft krb5_error_code
 .Fo krb5_rd_error
 .Fa "krb5_context context"
-.Fa "krb5_data *msg"
+.Fa "const krb5_data *msg"
 .Fa "KRB_ERROR *result"
 .Fc
 .Ft void

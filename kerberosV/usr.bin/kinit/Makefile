@@ -1,17 +1,12 @@
-# $OpenBSD: Makefile,v 1.9 2010/10/13 08:14:22 jsg Exp $
-
-KRBDEPTH=../..
-.include <${.CURDIR}/../../Makefile.inc>
+# $OpenBSD: Makefile,v 1.10 2013/06/17 18:57:45 robert Exp $
 
 PROG=	kinit
-MLINKS=	kinit.1 kauth.1
-
-SRCS=	kinit.c
-SRCS+=	${PRINTVER}
-
-.PATH:	${KRB5SRC}/kuser
-
-DPADD+=	${LIBKRB5} ${LIBCRYPTO}
-LDADD+=	-lkrb5 -lcrypto
+CFLAGS+=-I${KRB5DIR}/lib/roken
+DPADD=	${LIBKAFS5} ${LIBKRB5} ${LIBHEIMNTLM} ${LIBROKEN} ${LIBVERS} \
+	${LIBASN1} ${LIBCRYPTO} ${LIBCRYPT}
+LDADD=	-lkafs5 -lkrb5 -lheimntlm -lroken ${LIBVERS} -lpthread \
+	-lasn1 -lcrypto -lcom_err -lhx509 -lheimbase -lwind
 
 .include <bsd.prog.mk>
+
+.PATH: ${KRB5DIR}/kuser

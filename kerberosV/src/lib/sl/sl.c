@@ -1,23 +1,23 @@
 /*
- * Copyright (c) 1995 - 2004 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2006 Kungliga Tekniska HÃ¶gskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,35 +31,10 @@
  * SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: sl.c,v 1.31 2005/05/09 15:31:43 lha Exp $");
-#endif
 
 #include "sl_locl.h"
 #include <setjmp.h>
-
-extern char *__progname;
-
-static size_t
-print_sl (FILE *stream, int mdoc, int longp, SL_cmd *c)
-    __attribute__ ((unused));
-
-static size_t
-print_sl (FILE *stream, int mdoc, int longp, SL_cmd *c)
-{
-    if(mdoc){
-	if(longp)
-	    fprintf(stream, "= Ns");
-	fprintf(stream, " Ar ");
-    }else
-	if (longp)
-	    putc ('=', stream);
-	else
-	    putc (' ', stream);
-
-    return 1;
-}
 
 static void
 mandoc_template(SL_cmd *cmds,
@@ -78,12 +53,12 @@ mandoc_template(SL_cmd *cmds,
     t = time(NULL);
     strftime(timestr, sizeof(timestr), "%b %d, %Y", localtime(&t));
     printf(".Dd %s\n", timestr);
-    p = strrchr(__progname, '/');
-    if(p) p++; else p = __progname;
+    p = strrchr(getprogname(), '/');
+    if(p) p++; else p = getprogname();
     strncpy(cmd, p, sizeof(cmd));
     cmd[sizeof(cmd)-1] = '\0';
     strupr(cmd);
-       
+
     printf(".Dt %s SECTION\n", cmd);
     printf(".Os OPERATING_SYSTEM\n");
     printf(".Sh NAME\n");
@@ -96,9 +71,8 @@ mandoc_template(SL_cmd *cmds,
 /*	if (c->func == NULL)
 	    continue; */
 	printf(".Op Fl %s", c->name);
-/*	print_sl(stdout, 1, 0, c);*/
 	printf("\n");
-	
+
     }
     if (extra_string && *extra_string)
 	printf (".Ar %s\n", extra_string);
@@ -179,7 +153,7 @@ sl_help (SL_cmd *cmds, int argc, char **argv)
 	if(prev_c)
 	    printf ("\n\t%s%s", prev_c->usage ? prev_c->usage : "",
 		    prev_c->usage ? "\n" : "");
-    } else { 
+    } else {
 	c = sl_match (cmds, argv[1], 0);
 	if (c == NULL)
 	    printf ("No such command: %s. "
@@ -243,20 +217,43 @@ struct sl_data {
 int
 sl_make_argv(char *line, int *ret_argc, char ***ret_argv)
 {
-    char *foo = NULL;
-    char *p;
+    char *p, *begining;
     int argc, nargv;
     char **argv;
-    
+    int quote = 0;
+
     nargv = 10;
     argv = malloc(nargv * sizeof(*argv));
     if(argv == NULL)
 	return ENOMEM;
     argc = 0;
 
-    for(p = strtok_r (line, " \t", &foo);
-	p;
-	p = strtok_r (NULL, " \t", &foo)) {
+    p = line;
+
+    while(isspace((unsigned char)*p))
+	p++;
+    begining = p;
+
+    while (1) {
+	if (*p == '\0') {
+	    ;
+	} else if (*p == '"') {
+	    quote = !quote;
+	    memmove(&p[0], &p[1], strlen(&p[1]) + 1);
+	    continue;
+	} else if (*p == '\\') {
+	    if (p[1] == '\0')
+		goto failed;
+	    memmove(&p[0], &p[1], strlen(&p[1]) + 1);
+	    p += 2;
+	    continue;
+	} else if (quote || !isspace((unsigned char)*p)) {
+	    p++;
+	    continue;
+	} else
+	    *p++ = '\0';
+	if (quote)
+	    goto failed;
 	if(argc == nargv - 1) {
 	    char **tmp;
 	    nargv *= 2;
@@ -267,12 +264,20 @@ sl_make_argv(char *line, int *ret_argc, char ***ret_argv)
 	    }
 	    argv = tmp;
 	}
-	argv[argc++] = p;
+	argv[argc++] = begining;
+	while(isspace((unsigned char)*p))
+	    p++;
+	if (*p == '\0')
+	    break;
+	begining = p;
     }
     argv[argc] = NULL;
     *ret_argc = argc;
     *ret_argv = argv;
     return 0;
+failed:
+    free(argv);
+    return ERANGE;
 }
 
 static jmp_buf sl_jmp;
@@ -289,12 +294,12 @@ static char *sl_readline(const char *prompt)
     old = signal(SIGINT, sl_sigint);
     if(setjmp(sl_jmp))
 	printf("\n");
-    s = readline((char*)prompt);
+    s = readline(rk_UNCONST(prompt));
     signal(SIGINT, old);
     return s;
 }
 
-/* return values: 
+/* return values:
  * 0 on success,
  * -1 on fatal error,
  * -2 if EOF, or
@@ -306,8 +311,7 @@ sl_command_loop(SL_cmd *cmds, const char *prompt, void **data)
     char *buf;
     int argc;
     char **argv;
-	
-    ret = 0;
+
     buf = sl_readline(prompt);
     if(buf == NULL)
 	return -2;
@@ -332,7 +336,7 @@ sl_command_loop(SL_cmd *cmds, const char *prompt, void **data)
     return ret;
 }
 
-int 
+int
 sl_loop(SL_cmd *cmds, const char *prompt)
 {
     void *data = NULL;
@@ -348,4 +352,44 @@ sl_apropos (SL_cmd *cmd, const char *topic)
     for (; cmd->name != NULL; ++cmd)
         if (cmd->usage != NULL && strstr(cmd->usage, topic) != NULL)
 	    printf ("%-20s%s\n", cmd->name, cmd->usage);
+}
+
+/*
+ * Help to be used with slc.
+ */
+
+void
+sl_slc_help (SL_cmd *cmds, int argc, char **argv)
+{
+    if(argc == 0) {
+	sl_help(cmds, 1, argv - 1 /* XXX */);
+    } else {
+	SL_cmd *c = sl_match (cmds, argv[0], 0);
+ 	if(c == NULL) {
+	    fprintf (stderr, "No such command: %s. "
+		     "Try \"help\" for a list of commands\n",
+		     argv[0]);
+	} else {
+	    if(c->func) {
+		static char help[] = "--help";
+		char *fake[3];
+		fake[0] = argv[0];
+		fake[1] = help;
+		fake[2] = NULL;
+		(*c->func)(2, fake);
+		fprintf(stderr, "\n");
+	    }
+	    if(c->help && *c->help)
+		fprintf (stderr, "%s\n", c->help);
+	    if((++c)->name && c->func == NULL) {
+		int f = 0;
+		fprintf (stderr, "Synonyms:");
+		while (c->name && c->func == NULL) {
+		    fprintf (stderr, "%s%s", f ? ", " : " ", (c++)->name);
+		    f = 1;
+		}
+		fprintf (stderr, "\n");
+	    }
+	}
+    }
 }

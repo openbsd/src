@@ -1,10 +1,10 @@
 #! /bin/sh
 # ylwrap - wrapper for lex/yacc invocations.
 
-scriptversion=2003-11-18.20
+scriptversion=2009-04-28.21; # UTC
 
-# Copyright (C) 1996, 1997, 1998, 1999, 2001, 2002, 2003
-#   Free Software Foundation, Inc.
+# Copyright (C) 1996, 1997, 1998, 1999, 2001, 2002, 2003, 2004, 2005,
+# 2007, 2009 Free Software Foundation, Inc.
 #
 # Written by Tom Tromey <tromey@cygnus.com>.
 #
@@ -19,8 +19,7 @@ scriptversion=2003-11-18.20
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # As a special exception to the GNU General Public License, if you
 # distribute this file as part of a program that contains a
@@ -56,11 +55,11 @@ Any number of OUTPUT,DESIRED pairs may be used.
 
 Report bugs to <bug-automake@gnu.org>.
 EOF
-    exit 0
+    exit $?
     ;;
   -v|--v*)
     echo "ylwrap $scriptversion"
-    exit 0
+    exit $?
     ;;
 esac
 
@@ -100,18 +99,18 @@ esac
 # FIXME: add hostname here for parallel makes that run commands on
 # other machines.  But that might take us over the 14-char limit.
 dirname=ylwrap$$
-trap "cd `pwd`; rm -rf $dirname > /dev/null 2>&1" 1 2 3 15
+trap "cd '`pwd`'; rm -rf $dirname > /dev/null 2>&1" 1 2 3 15
 mkdir $dirname || exit 1
 
 cd $dirname
 
 case $# in
-  0) $prog "$input" ;;
-  *) $prog "$@" "$input" ;;
+  0) "$prog" "$input" ;;
+  *) "$prog" "$@" "$input" ;;
 esac
-status=$?
+ret=$?
 
-if test $status -eq 0; then
+if test $ret -eq 0; then
   set X $pairlist
   shift
   first=yes
@@ -177,7 +176,7 @@ if test $status -eq 0; then
             -e 's/[^ABCDEFGHIJKLMNOPQRSTUVWXYZ]/_/g'`
 
       sed -e "/^#/!b" -e "s,$input_rx,," -e "s,$from,$2," \
-          -e "s,$FROM,$TARGET," "$from" >"$target" || status=$?
+          -e "s,$FROM,$TARGET," "$from" >"$target" || ret=$?
 
       # Check whether header files must be updated.
       if test $first = no; then
@@ -195,7 +194,7 @@ if test $status -eq 0; then
       # is not specified, we don't want an error when the header
       # file is "missing".
       if test $first = yes; then
-        status=1
+        ret=1
       fi
     fi
     shift
@@ -203,14 +202,14 @@ if test $status -eq 0; then
     first=no
   done
 else
-  status=$?
+  ret=$?
 fi
 
 # Remove the directory.
 cd ..
 rm -rf $dirname
 
-exit $status
+exit $ret
 
 # Local Variables:
 # mode: shell-script
@@ -218,5 +217,6 @@ exit $status
 # eval: (add-hook 'write-file-hooks 'time-stamp)
 # time-stamp-start: "scriptversion="
 # time-stamp-format: "%:y-%02m-%02d.%02H"
-# time-stamp-end: "$"
+# time-stamp-time-zone: "UTC"
+# time-stamp-end: "; # UTC"
 # End:

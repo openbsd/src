@@ -1,40 +1,38 @@
 /*
- * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
- * (Royal Institute of Technology, Stockholm, Sweden). 
- * All rights reserved. 
+ * Copyright (c) 1997 - 2006 Kungliga Tekniska HÃ¶gskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  *
- * 2. Redistributions in binary form must reproduce the above copyright 
- *    notice, this list of conditions and the following disclaimer in the 
- *    documentation and/or other materials provided with the distribution. 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * 3. Neither the name of the Institute nor the names of its contributors 
- *    may be used to endorse or promote products derived from this software 
- *    without specific prior written permission. 
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
- * SUCH DAMAGE. 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include "kadmin_locl.h"
 #include "kadmin-commands.h"
-
-RCSID("$KTH: ext.c,v 1.11 2004/07/06 04:21:26 lha Exp $");
 
 struct ext_keytab_data {
     krb5_keytab keytab;
@@ -49,8 +47,8 @@ do_ext_keytab(krb5_principal principal, void *data)
     krb5_keytab_entry *keys = NULL;
     krb5_keyblock *k = NULL;
     int i, n_k;
-    
-    ret = kadm5_get_principal(kadm_handle, principal, &princ, 
+
+    ret = kadm5_get_principal(kadm_handle, principal, &princ,
 			      KADM5_PRINCIPAL|KADM5_KVNO|KADM5_KEY_DATA);
     if(ret)
 	return ret;
@@ -59,17 +57,17 @@ do_ext_keytab(krb5_principal principal, void *data)
 	keys = malloc(sizeof(*keys) * princ.n_key_data);
 	if (keys == NULL) {
 	    kadm5_free_principal_ent(kadm_handle, &princ);
-	    krb5_clear_error_string(context);
+	    krb5_clear_error_message(context);
 	    return ENOMEM;
 	}
 	for (i = 0; i < princ.n_key_data; i++) {
-	    krb5_key_data *k = &princ.key_data[i];
+	    krb5_key_data *kd = &princ.key_data[i];
 
 	    keys[i].principal = princ.principal;
-	    keys[i].vno = k->key_data_kvno;
-	    keys[i].keyblock.keytype = k->key_data_type[0];
-	    keys[i].keyblock.keyvalue.length = k->key_data_length[0];
-	    keys[i].keyblock.keyvalue.data = k->key_data_contents[0];
+	    keys[i].vno = kd->key_data_kvno;
+	    keys[i].keyblock.keytype = kd->key_data_type[0];
+	    keys[i].keyblock.keyvalue.length = kd->key_data_length[0];
+	    keys[i].keyblock.keyvalue.data = kd->key_data_contents[0];
 	    keys[i].timestamp = time(NULL);
 	}
 
@@ -83,7 +81,7 @@ do_ext_keytab(krb5_principal principal, void *data)
 	keys = malloc(sizeof(*keys) * n_k);
 	if (keys == NULL) {
 	    kadm5_free_principal_ent(kadm_handle, &princ);
-	    krb5_clear_error_string(context);
+	    krb5_clear_error_message(context);
 	    return ENOMEM;
 	}
 	for (i = 0; i < n_k; i++) {
@@ -124,13 +122,16 @@ ext_keytab(struct ext_keytab_options *opt, int argc, char **argv)
 
     if(ret){
 	krb5_warn(context, ret, "krb5_kt_resolve");
-	return 0;
+	return 1;
     }
 
-    for(i = 0; i < argc; i++) 
-	foreach_principal(argv[i], do_ext_keytab, "ext", &data);
+    for(i = 0; i < argc; i++) {
+	ret = foreach_principal(argv[i], do_ext_keytab, "ext", &data);
+	if (ret)
+	    break;
+    }
 
     krb5_kt_close(context, data.keytab);
 
-    return 0;
+    return ret != 0;
 }

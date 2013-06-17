@@ -45,6 +45,12 @@ static char rcsid[] = "$NetBSD: fnmatch.c,v 1.11 1995/02/27 03:43:06 cgd Exp $";
  * Compares a filename or pathname to a pattern.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <roken.h>
+
 #include <fnmatch.h>
 #include <string.h>
 
@@ -52,8 +58,8 @@ static char rcsid[] = "$NetBSD: fnmatch.c,v 1.11 1995/02/27 03:43:06 cgd Exp $";
 
 static const char *rangematch (const char *, int, int);
 
-int ROKEN_LIB_FUNCTION
-fnmatch(const char *pattern, const char *string, int flags)
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_fnmatch(const char *pattern, const char *string, int flags)
 {
 	const char *stringstart;
 	char c, test;
@@ -99,7 +105,7 @@ fnmatch(const char *pattern, const char *string, int flags)
 
 			/* General case, use recursion. */
 			while ((test = *string) != EOS) {
-				if (!fnmatch(pattern, string, flags & ~FNM_PERIOD))
+				if (!rk_fnmatch(pattern, string, flags & ~FNM_PERIOD))
 					return (0);
 				if (test == '/' && flags & FNM_PATHNAME)
 					break;
@@ -147,13 +153,13 @@ rangematch(const char *pattern, int test, int flags)
 	 */
 	if (negate = (*pattern == '!' || *pattern == '^'))
 		++pattern;
-	
+
 	for (ok = 0; (c = *pattern++) != ']';) {
 		if (c == '\\' && !(flags & FNM_NOESCAPE))
 			c = *pattern++;
 		if (c == EOS)
 			return (NULL);
-		if (*pattern == '-' 
+		if (*pattern == '-'
 		    && (c2 = *(pattern+1)) != EOS && c2 != ']') {
 			pattern += 2;
 			if (c2 == '\\' && !(flags & FNM_NOESCAPE))

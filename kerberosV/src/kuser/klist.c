@@ -1,64 +1,77 @@
 /*
- * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
- * (Royal Institute of Technology, Stockholm, Sweden). 
- * All rights reserved. 
+ * Copyright (c) 1997-2008 Kungliga Tekniska HÃ¶gskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 2. Redistributions in binary form must reproduce the above copyright 
- *    notice, this list of conditions and the following disclaimer in the 
- *    documentation and/or other materials provided with the distribution. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  *
- * 3. Neither the name of the Institute nor the names of its contributors 
- *    may be used to endorse or promote products derived from this software 
- *    without specific prior written permission. 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
- * SUCH DAMAGE. 
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include "kuser_locl.h"
 #include "rtbl.h"
+#include "parse_units.h"
+#include "kcc-commands.h"
 
-RCSID("$KTH: klist.c,v 1.76 2005/04/24 19:47:44 lha Exp $");
+static char*
+printable_time_internal(time_t t, int x)
+{
+    static char s[128];
+    char *p;
+
+    if ((p = ctime(&t)) == NULL)
+	strlcpy(s, "?", sizeof(s));
+    else
+	strlcpy(s, p + 4, sizeof(s));
+    s[x] = 0;
+    return s;
+}
 
 static char*
 printable_time(time_t t)
 {
-    static char s[128];
-    strlcpy(s, ctime(&t)+ 4, sizeof(s));
-    s[15] = 0;
-    return s;
+    return printable_time_internal(t, 20);
 }
 
 static char*
 printable_time_long(time_t t)
 {
-    static char s[128];
-    strlcpy(s, ctime(&t)+ 4, sizeof(s));
-    s[20] = 0;
-    return s;
+    return printable_time_internal(t, 20);
 }
 
-#define COL_ISSUED		"  Issued"
-#define COL_EXPIRES		"  Expires"
-#define COL_FLAGS		"Flags"
-#define COL_PRINCIPAL		"  Principal"
-#define COL_PRINCIPAL_KVNO	"  Principal (kvno)"
+#define COL_ISSUED		NP_("  Issued","")
+#define COL_EXPIRES		NP_("  Expires", "")
+#define COL_FLAGS		NP_("Flags", "")
+#define COL_NAME		NP_("  Name", "")
+#define COL_PRINCIPAL		NP_("  Principal", "in klist output")
+#define COL_PRINCIPAL_KVNO	NP_("  Principal (kvno)", "in klist output")
+#define COL_CACHENAME		NP_("  Cache name", "name in klist output")
+#define COL_DEFCACHE		NP_("", "")
 
 static void
 print_cred(krb5_context context, krb5_creds *cred, rtbl_t ct, int do_flags)
@@ -76,12 +89,12 @@ print_cred(krb5_context context, krb5_creds *cred, rtbl_t ct, int do_flags)
     else
 	rtbl_add_column_entry(ct, COL_ISSUED,
 			      printable_time(cred->times.authtime));
-    
+
     if(cred->times.endtime > sec)
 	rtbl_add_column_entry(ct, COL_EXPIRES,
 			      printable_time(cred->times.endtime));
     else
-	rtbl_add_column_entry(ct, COL_EXPIRES, ">>>Expired<<<");
+	rtbl_add_column_entry(ct, COL_EXPIRES, N_(">>>Expired<<<", ""));
     ret = krb5_unparse_name (context, cred->server, &str);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_unparse_name");
@@ -110,7 +123,7 @@ print_cred(krb5_context context, krb5_creds *cred, rtbl_t ct, int do_flags)
 	    *sp++ = 'A';
 	if(cred->flags.b.hw_authent)
 	    *sp++ = 'H';
-	*sp++ = '\0';
+	*sp = '\0';
 	rtbl_add_column_entry(ct, COL_FLAGS, s);
     }
     free(str);
@@ -119,10 +132,9 @@ print_cred(krb5_context context, krb5_creds *cred, rtbl_t ct, int do_flags)
 static void
 print_cred_verbose(krb5_context context, krb5_creds *cred)
 {
-    int j;
+    size_t j;
     char *str;
     krb5_error_code ret;
-    int first_flag;
     krb5_timestamp sec;
 
     krb5_timeofday (context, &sec);
@@ -130,8 +142,15 @@ print_cred_verbose(krb5_context context, krb5_creds *cred)
     ret = krb5_unparse_name(context, cred->server, &str);
     if(ret)
 	exit(1);
-    printf("Server: %s\n", str);
+    printf(N_("Server: %s\n", ""), str);
     free (str);
+
+    ret = krb5_unparse_name(context, cred->client, &str);
+    if(ret)
+	exit(1);
+    printf(N_("Client: %s\n", ""), str);
+    free (str);
+
     {
 	Ticket t;
 	size_t len;
@@ -139,66 +158,63 @@ print_cred_verbose(krb5_context context, krb5_creds *cred)
 
 	decode_Ticket(cred->ticket.data, cred->ticket.length, &t, &len);
 	ret = krb5_enctype_to_string(context, t.enc_part.etype, &s);
-	printf("Ticket etype: ");
+	printf(N_("Ticket etype: ", ""));
 	if (ret == 0) {
 	    printf("%s", s);
 	    free(s);
 	} else {
-	    printf("unknown(%d)", t.enc_part.etype);
+	    printf(N_("unknown-enctype(%d)", ""), t.enc_part.etype);
 	}
 	if(t.enc_part.kvno)
-	    printf(", kvno %d", *t.enc_part.kvno);
+	    printf(N_(", kvno %d", ""), *t.enc_part.kvno);
 	printf("\n");
 	if(cred->session.keytype != t.enc_part.etype) {
 	    ret = krb5_enctype_to_string(context, cred->session.keytype, &str);
 	    if(ret)
 		krb5_warn(context, ret, "session keytype");
 	    else {
-		printf("Session key: %s\n", str);
+		printf(N_("Session key: %s\n", "enctype"), str);
 		free(str);
 	    }
 	}
 	free_Ticket(&t);
+	printf(N_("Ticket length: %lu\n", ""),
+	       (unsigned long)cred->ticket.length);
     }
-    printf("Auth time:  %s\n", printable_time_long(cred->times.authtime));
+    printf(N_("Auth time:  %s\n", ""),
+	   printable_time_long(cred->times.authtime));
     if(cred->times.authtime != cred->times.starttime)
-	printf("Start time: %s\n", printable_time_long(cred->times.starttime));
-    printf("End time:   %s", printable_time_long(cred->times.endtime));
+	printf(N_("Start time: %s\n", ""),
+	       printable_time_long(cred->times.starttime));
+    printf(N_("End time:   %s", ""),
+	   printable_time_long(cred->times.endtime));
     if(sec > cred->times.endtime)
-	printf(" (expired)");
+	printf(N_(" (expired)", ""));
     printf("\n");
     if(cred->flags.b.renewable)
-	printf("Renew till: %s\n", 
+	printf(N_("Renew till: %s\n", ""),
 	       printable_time_long(cred->times.renew_till));
-    printf("Ticket flags: ");
-#define PRINT_FLAG2(f, s) if(cred->flags.b.f) { if(!first_flag) printf(", "); printf("%s", #s); first_flag = 0; }
-#define PRINT_FLAG(f) PRINT_FLAG2(f, f)
-    first_flag = 1;
-    PRINT_FLAG(forwardable);
-    PRINT_FLAG(forwarded);
-    PRINT_FLAG(proxiable);
-    PRINT_FLAG(proxy);
-    PRINT_FLAG2(may_postdate, may-postdate);
-    PRINT_FLAG(postdated);
-    PRINT_FLAG(invalid);
-    PRINT_FLAG(renewable);
-    PRINT_FLAG(initial);
-    PRINT_FLAG2(pre_authent, pre-authenticated);
-    PRINT_FLAG2(hw_authent, hw-authenticated);
-    PRINT_FLAG2(transited_policy_checked, transited-policy-checked);
-    PRINT_FLAG2(ok_as_delegate, ok-as-delegate);
-    PRINT_FLAG(anonymous);
-    printf("\n");
-    printf("Addresses: ");
-    for(j = 0; j < cred->addresses.len; j++){
-	char buf[128];
-	size_t len;
-	if(j) printf(", ");
-	ret = krb5_print_address(&cred->addresses.val[j], 
-				 buf, sizeof(buf), &len);
+    {
+	char flags[1024];
+	unparse_flags(TicketFlags2int(cred->flags.b),
+		      asn1_TicketFlags_units(),
+		      flags, sizeof(flags));
+	printf(N_("Ticket flags: %s\n", ""), flags);
+    }
+    printf(N_("Addresses: ", ""));
+    if (cred->addresses.len != 0) {
+	for(j = 0; j < cred->addresses.len; j++){
+	    char buf[128];
+	    size_t len;
+	    if(j) printf(", ");
+	    ret = krb5_print_address(&cred->addresses.val[j],
+				     buf, sizeof(buf), &len);
 
-	if(ret == 0)
-	    printf("%s", buf);
+	    if(ret == 0)
+		printf("%s", buf);
+	}
+    } else {
+	printf(N_("addressless", ""));
     }
     printf("\n\n");
 }
@@ -212,12 +228,14 @@ print_tickets (krb5_context context,
 	       krb5_ccache ccache,
 	       krb5_principal principal,
 	       int do_verbose,
-	       int do_flags)
+	       int do_flags,
+	       int do_hidden)
 {
     krb5_error_code ret;
-    char *str;
+    char *str, *name;
     krb5_cc_cursor cursor;
     krb5_creds creds;
+    krb5_deltat sec;
 
     rtbl_t ct = NULL;
 
@@ -225,32 +243,44 @@ print_tickets (krb5_context context,
     if (ret)
 	krb5_err (context, 1, ret, "krb5_unparse_name");
 
-    printf ("%17s: %s:%s\n", 
-	    "Credentials cache",
+    printf ("%17s: %s:%s\n",
+	    N_("Credentials cache", ""),
 	    krb5_cc_get_type(context, ccache),
 	    krb5_cc_get_name(context, ccache));
-    printf ("%17s: %s\n", "Principal", str);
+    printf ("%17s: %s\n", N_("Principal", ""), str);
+
+    ret = krb5_cc_get_friendly_name(context, ccache, &name);
+    if (ret == 0) {
+	if (strcmp(name, str) != 0)
+	    printf ("%17s: %s\n", N_("Friendly name", ""), name);
+	free(name);
+    }
     free (str);
-    
-    if(do_verbose)
-	printf ("%17s: %d\n", "Cache version",
+
+    if(do_verbose) {
+	printf ("%17s: %d\n", N_("Cache version", ""),
 		krb5_cc_get_version(context, ccache));
-    
-    if (do_verbose && context->kdc_sec_offset) {
+    } else {
+        krb5_cc_set_flags(context, ccache, KRB5_TC_NOTICKET);
+    }
+
+    ret = krb5_cc_get_kdc_offset(context, ccache, &sec);
+
+    if (ret == 0 && do_verbose && sec != 0) {
 	char buf[BUFSIZ];
 	int val;
 	int sig;
 
-	val = context->kdc_sec_offset;
+	val = sec;
 	sig = 1;
 	if (val < 0) {
 	    sig = -1;
 	    val = -val;
 	}
-	
+
 	unparse_time (val, buf, sizeof(buf));
 
-	printf ("%17s: %s%s\n", "KDC time offset",
+	printf ("%17s: %s%s\n", N_("KDC time offset", ""),
 		sig == -1 ? "-" : "", buf);
     }
 
@@ -273,7 +303,9 @@ print_tickets (krb5_context context,
 				     ccache,
 				     &cursor,
 				     &creds)) == 0) {
-	if(do_verbose){
+	if (!do_hidden && krb5_is_config_principal(context, creds.server)) {
+	    ;
+	}else if(do_verbose){
 	    print_cred_verbose(context, &creds);
 	}else{
 	    print_cred(context, &creds, ct, do_flags);
@@ -299,184 +331,53 @@ print_tickets (krb5_context context,
 static int
 check_for_tgt (krb5_context context,
 	       krb5_ccache ccache,
-	       krb5_principal principal)
+	       krb5_principal principal,
+	       time_t *expiration)
 {
     krb5_error_code ret;
     krb5_creds pattern;
     krb5_creds creds;
-    krb5_realm *client_realm;
+    krb5_const_realm client_realm;
     int expired;
 
     krb5_cc_clear_mcred(&pattern);
 
-    client_realm = krb5_princ_realm (context, principal);
+    client_realm = krb5_principal_get_realm(context, principal);
 
     ret = krb5_make_principal (context, &pattern.server,
-			       *client_realm, KRB5_TGS_NAME, *client_realm,
-			       NULL);
+			       client_realm, KRB5_TGS_NAME, client_realm, NULL);
     if (ret)
 	krb5_err (context, 1, ret, "krb5_make_principal");
     pattern.client = principal;
 
     ret = krb5_cc_retrieve_cred (context, ccache, 0, &pattern, &creds);
-    expired = time(NULL) > creds.times.endtime;
     krb5_free_principal (context, pattern.server);
-    krb5_free_cred_contents (context, &creds);
     if (ret) {
 	if (ret == KRB5_CC_END)
 	    return 1;
 	krb5_err (context, 1, ret, "krb5_cc_retrieve_cred");
     }
+
+    expired = time(NULL) > creds.times.endtime;
+
+    if (expiration)
+	*expiration = creds.times.endtime;
+
+    krb5_free_cred_contents (context, &creds);
+
     return expired;
 }
-
-#ifdef KRB4
-/* prints the approximate kdc time differential as something human
-   readable */
-
-static void
-print_time_diff(int do_verbose)
-{
-    int d = abs(krb_get_kdc_time_diff());
-    char buf[80];
-
-    if ((do_verbose && d > 0) || d > 60) {
-	unparse_time_approx (d, buf, sizeof(buf));
-	printf ("Time diff:\t%s\n", buf);
-    }
-}
-
-/*
- * return a short representation of `dp' in string form.
- */
-
-static char *
-short_date(int32_t dp)
-{
-    char *cp;
-    time_t t = (time_t)dp;
-
-    if (t == (time_t)(-1L)) return "***  Never  *** ";
-    cp = ctime(&t) + 4;
-    cp[15] = '\0';
-    return (cp);
-}
-
-/*
- * Print a list of all the v4 tickets
- */
-
-static int
-display_v4_tickets (int do_verbose)
-{
-    char *file;
-    int ret;
-    krb_principal princ;
-    CREDENTIALS cred;
-    int found = 0;
-
-    rtbl_t ct;
-
-    file = getenv ("KRBTKFILE");
-    if (file == NULL)
-	file = TKT_FILE;
-
-    printf("%17s: %s\n", "V4-ticket file", file);
-
-    ret = krb_get_tf_realm (file, princ.realm);
-    if (ret) {
-	warnx ("%s", krb_get_err_text(ret));
-	return 1;
-    }
-
-    ret = tf_init (file, R_TKT_FIL);
-    if (ret) {
-	warnx ("tf_init: %s", krb_get_err_text(ret));
-	return 1;
-    }
-    ret = tf_get_pname (princ.name);
-    if (ret) {
-	tf_close ();
-	warnx ("tf_get_pname: %s", krb_get_err_text(ret));
-	return 1;
-    }
-    ret = tf_get_pinst (princ.instance);
-    if (ret) {
-	tf_close ();
-	warnx ("tf_get_pname: %s", krb_get_err_text(ret));
-	return 1;
-    }
-
-    printf ("%17s: %s\n", "Principal", krb_unparse_name(&princ));
-    print_time_diff(do_verbose);
-    printf("\n");
-
-    ct = rtbl_create();
-    rtbl_add_column(ct, COL_ISSUED, 0);
-    rtbl_add_column(ct, COL_EXPIRES, 0);
-    if (do_verbose)
-	rtbl_add_column(ct, COL_PRINCIPAL_KVNO, 0);
-    else
-	rtbl_add_column(ct, COL_PRINCIPAL, 0);
-    rtbl_set_prefix(ct, "  ");
-    rtbl_set_column_prefix(ct, COL_ISSUED, "");
-
-    while ((ret = tf_get_cred(&cred)) == KSUCCESS) {
-	struct timeval tv;
-	char buf1[20], buf2[20];
-	const char *pp;
-
-	found++;
-
-	strlcpy(buf1,
-		short_date(cred.issue_date),
-		sizeof(buf1));
-	cred.issue_date = krb_life_to_time(cred.issue_date, cred.lifetime);
-	krb_kdctimeofday(&tv);
-	if (do_verbose || tv.tv_sec < (unsigned long) cred.issue_date)
-	    strlcpy(buf2,
-		    short_date(cred.issue_date),
-		    sizeof(buf2));
-	else
-	    strlcpy(buf2,
-		    ">>> Expired <<<",
-		    sizeof(buf2));
-	rtbl_add_column_entry(ct, COL_ISSUED, buf1);
-	rtbl_add_column_entry(ct, COL_EXPIRES, buf2);
-	pp = krb_unparse_name_long(cred.service,
-				   cred.instance,
-				   cred.realm);
-	if (do_verbose) {
-	    char *tmp;
-
-	    asprintf(&tmp, "%s (%d)", pp, cred.kvno);
-	    rtbl_add_column_entry(ct, COL_PRINCIPAL_KVNO, tmp);
-	    free(tmp);
-	} else {
-	    rtbl_add_column_entry(ct, COL_PRINCIPAL, pp);
-	}
-    }
-    rtbl_format(ct, stdout);
-    rtbl_destroy(ct);
-    if (!found && ret == EOF)
-	printf("No tickets in file.\n");
-    tf_close();
-    
-    /*
-     * should do NAT stuff here
-     */
-    return 0;
-}
-#endif /* KRB4 */
 
 /*
  * Print a list of all AFS tokens
  */
 
+#ifndef NO_AFS
+
 static void
 display_tokens(int do_verbose)
 {
-    u_int32_t i;
+    uint32_t i;
     unsigned char t[4096];
     struct ViceIoctl parms;
 
@@ -525,163 +426,210 @@ display_tokens(int do_verbose)
 	    strlcpy (buf2, printable_time(ct.EndTimestamp),
 		     sizeof(buf2));
 	else
-	    strlcpy (buf2, ">>> Expired <<<", sizeof(buf2));
+	    strlcpy (buf2, N_(">>> Expired <<<", ""), sizeof(buf2));
 
 	printf("%s  %s  ", buf1, buf2);
 
 	if ((ct.EndTimestamp - ct.BeginTimestamp) & 1)
-	    printf("User's (AFS ID %d) tokens for %s", ct.ViceId, cell);
+	    printf(N_("User's (AFS ID %d) tokens for %s", ""), ct.ViceId, cell);
 	else
-	    printf("Tokens for %s", cell);
+	    printf(N_("Tokens for %s", ""), cell);
 	if (do_verbose)
 	    printf(" (%d)", ct.AuthHandle);
 	putchar('\n');
     }
 }
+#endif
 
 /*
  * display the ccache in `cred_cache'
  */
 
 static int
-display_v5_ccache (const char *cred_cache, int do_test, int do_verbose, 
-		   int do_flags)
+display_v5_ccache (krb5_context context, krb5_ccache ccache,
+		   int do_test, int do_verbose,
+		   int do_flags, int do_hidden)
 {
     krb5_error_code ret;
-    krb5_context context;
-    krb5_ccache ccache;
     krb5_principal principal;
     int exit_status = 0;
 
-    ret = krb5_init_context (&context);
-    if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
-
-    if(cred_cache) {
-	ret = krb5_cc_resolve(context, cred_cache, &ccache);
-	if (ret)
-	    krb5_err (context, 1, ret, "%s", cred_cache);
-    } else {
-	ret = krb5_cc_default (context, &ccache);
-	if (ret)
-	    krb5_err (context, 1, ret, "krb5_cc_resolve");
-    }
 
     ret = krb5_cc_get_principal (context, ccache, &principal);
     if (ret) {
 	if(ret == ENOENT) {
 	    if (!do_test)
-		krb5_warnx(context, "No ticket file: %s",
+		krb5_warnx(context, N_("No ticket file: %s", ""),
 			   krb5_cc_get_name(context, ccache));
 	    return 1;
 	} else
 	    krb5_err (context, 1, ret, "krb5_cc_get_principal");
     }
     if (do_test)
-	exit_status = check_for_tgt (context, ccache, principal);
+	exit_status = check_for_tgt (context, ccache, principal, NULL);
     else
-	print_tickets (context, ccache, principal, do_verbose, do_flags);
+	print_tickets (context, ccache, principal, do_verbose,
+		       do_flags, do_hidden);
 
     ret = krb5_cc_close (context, ccache);
     if (ret)
 	krb5_err (context, 1, ret, "krb5_cc_close");
 
     krb5_free_principal (context, principal);
-    krb5_free_context (context);
+
     return exit_status;
 }
 
-static int version_flag = 0;
-static int help_flag	= 0;
-static int do_verbose	= 0;
-static int do_test	= 0;
-#ifdef KRB4
-static int do_v4	= 1;
-#endif
-static int do_tokens	= 0;
-static int do_v5	= 1;
-static char *cred_cache;
-static int do_flags = 0;
+/*
+ *
+ */
 
-static struct getargs args[] = {
-    { NULL, 'f', arg_flag, &do_flags },
-    { "cache",			'c', arg_string, &cred_cache,
-      "credentials cache to list", "cache" },
-    { "test",			't', arg_flag, &do_test,
-      "test for having tickets", NULL },
-    { NULL,			's', arg_flag, &do_test },
-#ifdef KRB4
-    { "v4",			'4',	arg_flag, &do_v4,
-      "display v4 tickets", NULL },
-#endif
-    { "tokens",			'T',   arg_flag, &do_tokens,
-      "display AFS tokens", NULL },
-    { "v5",			'5',	arg_flag, &do_v5,
-      "display v5 cred cache", NULL},
-    { "verbose",		'v', arg_flag, &do_verbose,
-      "verbose output", NULL },
-    { NULL,			'a', arg_flag, &do_verbose },
-    { NULL,			'n', arg_flag, &do_verbose },
-    { "version", 		0,   arg_flag, &version_flag, 
-      "print version", NULL },
-    { "help",			0,   arg_flag, &help_flag, 
-      NULL, NULL}
-};
-
-static void
-usage (int ret)
+static int
+list_caches(krb5_context context)
 {
-    arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "");
-    exit (ret);
-}
+    krb5_cc_cache_cursor cursor;
+    const char *cdef_name;
+    char *def_name;
+    krb5_error_code ret;
+    krb5_ccache id;
+    rtbl_t ct;
 
-int
-main (int argc, char **argv)
-{
-    int optind = 0;
-    int exit_status = 0;
+    cdef_name = krb5_cc_default_name(context);
+    if (cdef_name == NULL)
+	krb5_errx(context, 1, "krb5_cc_default_name");
+    def_name = strdup(cdef_name);
 
-    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
-	usage(1);
-    
-    if (help_flag)
-	usage (0);
+    ret = krb5_cc_cache_get_first (context, NULL, &cursor);
+    if (ret == KRB5_CC_NOSUPP)
+	return 0;
+    else if (ret)
+	krb5_err (context, 1, ret, "krb5_cc_cache_get_first");
 
-    if(version_flag){
-	print_version(NULL);
-	exit(0);
+    ct = rtbl_create();
+    rtbl_add_column(ct, COL_NAME, 0);
+    rtbl_add_column(ct, COL_CACHENAME, 0);
+    rtbl_add_column(ct, COL_EXPIRES, 0);
+    rtbl_add_column(ct, COL_DEFCACHE, 0);
+    rtbl_set_prefix(ct, "   ");
+    rtbl_set_column_prefix(ct, COL_NAME, "");
+
+    while (krb5_cc_cache_next (context, cursor, &id) == 0) {
+	krb5_principal principal = NULL;
+	int expired = 0;
+	char *name;
+	time_t t;
+
+	ret = krb5_cc_get_principal(context, id, &principal);
+	if (ret)
+	    continue;
+
+	expired = check_for_tgt (context, id, principal, &t);
+
+	ret = krb5_cc_get_friendly_name(context, id, &name);
+	if (ret == 0) {
+	    const char *str;
+	    char *fname;
+	    rtbl_add_column_entry(ct, COL_NAME, name);
+	    rtbl_add_column_entry(ct, COL_CACHENAME,
+				  krb5_cc_get_name(context, id));
+	    if (expired)
+		str = N_(">>> Expired <<<", "");
+	    else
+		str = printable_time(t);
+	    rtbl_add_column_entry(ct, COL_EXPIRES, str);
+	    free(name);
+
+	    ret = krb5_cc_get_full_name(context, id, &fname);
+	    if (ret)
+		krb5_err (context, 1, ret, "krb5_cc_get_full_name");
+
+	    if (strcmp(fname, def_name) == 0)
+		rtbl_add_column_entry(ct, COL_DEFCACHE, "*");
+	    else
+		rtbl_add_column_entry(ct, COL_DEFCACHE, "");
+
+	    krb5_xfree(fname);
+	}
+	krb5_cc_close(context, id);
+
+	krb5_free_principal(context, principal);
     }
 
-    argc -= optind;
-    argv += optind;
+    krb5_cc_cache_end_seq_get(context, cursor);
 
-    if (argc != 0)
-	usage (1);
+    free(def_name);
+    rtbl_format(ct, stdout);
+    rtbl_destroy(ct);
 
-    if (do_v5)
-	exit_status = display_v5_ccache (cred_cache, do_test, 
-					 do_verbose, do_flags);
+    return 0;
+}
+
+/*
+ *
+ */
+
+int
+klist(struct klist_options *opt, int argc, char **argv)
+{
+    krb5_error_code ret;
+    int exit_status = 0;
+
+    int do_verbose =
+	opt->verbose_flag ||
+	opt->a_flag ||
+	opt->n_flag;
+    int do_test =
+	opt->test_flag ||
+	opt->s_flag;
+
+    if (opt->list_all_flag) {
+	exit_status = list_caches(kcc_context);
+	return exit_status;
+    }
+
+    if (opt->v5_flag) {
+	krb5_ccache id;
+
+	if (opt->all_content_flag) {
+	    krb5_cc_cache_cursor cursor;
+
+	    ret = krb5_cc_cache_get_first(kcc_context, NULL, &cursor);
+	    if (ret)
+		krb5_err(kcc_context, 1, ret, "krb5_cc_cache_get_first");
+
+
+	    while (krb5_cc_cache_next(kcc_context, cursor, &id) == 0) {
+		exit_status |= display_v5_ccache(kcc_context, id, do_test,
+						 do_verbose, opt->flags_flag,
+						 opt->hidden_flag);
+		printf("\n\n");
+	    }
+	    krb5_cc_cache_end_seq_get(kcc_context, cursor);
+
+	} else {
+	    if(opt->cache_string) {
+		ret = krb5_cc_resolve(kcc_context, opt->cache_string, &id);
+		if (ret)
+		    krb5_err(kcc_context, 1, ret, "%s", opt->cache_string);
+	    } else {
+		ret = krb5_cc_default(kcc_context, &id);
+		if (ret)
+		    krb5_err(kcc_context, 1, ret, "krb5_cc_resolve");
+	    }
+	    exit_status = display_v5_ccache(kcc_context, id, do_test,
+					    do_verbose, opt->flags_flag,
+					    opt->hidden_flag);
+	}
+    }
 
     if (!do_test) {
-#ifdef KRB4
-	if (do_v4) {
-	    if (do_v5)
-		printf ("\n");
-	    display_v4_tickets (do_verbose);
+#ifndef NO_AFS
+	if (opt->tokens_flag && k_hasafs()) {
+	    if (opt->v5_flag)
+		printf("\n");
+	    display_tokens(opt->verbose_flag);
 	}
 #endif
-	if (do_tokens && k_hasafs ()) {
-	    if (do_v5)
-		printf ("\n");
-#ifdef KRB4
-	    else if (do_v4)
-		printf ("\n");
-#endif
-	    display_tokens (do_verbose);
-	}
     }
 
     return exit_status;

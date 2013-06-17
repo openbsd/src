@@ -3,7 +3,7 @@
 #
 # This might look like a com_err file, but is not
 #
-id "$KTH: kadm5_err.et,v 1.5.10.1 2006/02/02 13:12:48 lha Exp $"
+id "$Id: kadm5_err.et,v 1.2 2013/06/17 18:57:43 robert Exp $"
 
 error_table ovk kadm5
 
@@ -54,6 +54,6 @@ error_code BAD_CLIENT_PARAMS,	"Invalid configuration parameter for remote KADM5 
 error_code BAD_SERVER_PARAMS,	"Invalid configuration parameter for local KADM5 client."
 error_code AUTH_LIST,		"Operation requires `list' privilege"
 error_code AUTH_CHANGEPW,	"Operation requires `change-password' privilege"
-error_code BAD_TL_TYPE,		"Programmer error!  Invalid tagged data list element type"
+error_code BAD_TL_TYPE,		"Invalid tagged data list element type"
 error_code MISSING_CONF_PARAMS,	"Required parameters in kdc.conf missing"
 error_code BAD_SERVER_NAME,	"Bad krb5 admin server hostname"

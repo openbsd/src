@@ -31,11 +31,7 @@
 static char sccsid[] = "@(#)daemon.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
-
-RCSID("$KTH: daemon.c,v 1.5 2005/04/12 11:28:36 lha Exp $");
 
 #ifndef HAVE_DAEMON
 
@@ -51,7 +47,7 @@ RCSID("$KTH: daemon.c,v 1.5 2005/04/12 11:28:36 lha Exp $");
 
 #include "roken.h"
 
-int ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 daemon(int nochdir, int noclose)
 {
     int fd;

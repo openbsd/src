@@ -1,39 +1,51 @@
 /*
- * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
- * (Royal Institute of Technology, Stockholm, Sweden). 
- * All rights reserved. 
+ * Copyright (c) 1997-2005 Kungliga Tekniska HÃ¶gskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  *
- * 2. Redistributions in binary form must reproduce the above copyright 
- *    notice, this list of conditions and the following disclaimer in the 
- *    documentation and/or other materials provided with the distribution. 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * 3. Neither the name of the Institute nor the names of its contributors 
- *    may be used to endorse or promote products derived from this software 
- *    without specific prior written permission. 
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
- * SUCH DAMAGE. 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include "kdc_locl.h"
 
-RCSID("$KTH: connect.c,v 1.104 2005/05/30 20:56:18 joda Exp $");
+/* Should we enable the HTTP hack? */
+int enable_http = -1;
+
+/* Log over requests to the KDC */
+const char *request_log;
+
+/* A string describing on what ports to listen */
+const char *port_str;
+
+krb5_addresses explicit_addresses;
+
+size_t max_request_udp;
+size_t max_request_tcp;
 
 /*
  * a tuple describing on what to listen
@@ -48,17 +60,18 @@ struct port_desc{
 /* the current ones */
 
 static struct port_desc *ports;
-static int num_ports;
+static size_t num_ports;
 
 /*
  * add `family, port, protocol' to the list with duplicate suppresion.
  */
 
 static void
-add_port(int family, int port, const char *protocol)
+add_port(krb5_context context,
+	 int family, int port, const char *protocol)
 {
     int type;
-    int i;
+    size_t i;
 
     if(strcmp(protocol, "udp") == 0)
 	type = SOCK_DGRAM;
@@ -87,11 +100,12 @@ add_port(int family, int port, const char *protocol)
  */
 
 static void
-add_port_service(int family, const char *service, int port,
+add_port_service(krb5_context context,
+		 int family, const char *service, int port,
 		 const char *protocol)
 {
     port = krb5_getportbyname (context, service, protocol, port);
-    add_port (family, port, protocol);
+    add_port (context, family, port, protocol);
 }
 
 /*
@@ -100,22 +114,23 @@ add_port_service(int family, const char *service, int port,
  */
 
 static void
-add_port_string (int family, const char *port_str, const char *protocol)
+add_port_string (krb5_context context,
+		 int family, const char *str, const char *protocol)
 {
     struct servent *sp;
     int port;
 
-    sp = roken_getservbyname (port_str, protocol);
+    sp = roken_getservbyname (str, protocol);
     if (sp != NULL) {
 	port = sp->s_port;
     } else {
 	char *end;
 
-	port = htons(strtol(port_str, &end, 0));
-	if (end == port_str)
+	port = htons(strtol(str, &end, 0));
+	if (end == str)
 	    return;
     }
-    add_port (family, port, protocol);
+    add_port (context, family, port, protocol);
 }
 
 /*
@@ -123,24 +138,21 @@ add_port_string (int family, const char *port_str, const char *protocol)
  */
 
 static void
-add_standard_ports (int family)
+add_standard_ports (krb5_context context,
+		    krb5_kdc_configuration *config,
+		    int family)
 {
-    add_port_service(family, "kerberos", 88, "udp");
-    add_port_service(family, "kerberos", 88, "tcp");
-    add_port_service(family, "kerberos-sec", 88, "udp");
-    add_port_service(family, "kerberos-sec", 88, "tcp");
+    add_port_service(context, family, "kerberos", 88, "udp");
+    add_port_service(context, family, "kerberos", 88, "tcp");
+    add_port_service(context, family, "kerberos-sec", 88, "udp");
+    add_port_service(context, family, "kerberos-sec", 88, "tcp");
     if(enable_http)
-	add_port_service(family, "http", 80, "tcp");
-    if(enable_524) {
-	add_port_service(family, "krb524", 4444, "udp");
-	add_port_service(family, "krb524", 4444, "tcp");
+	add_port_service(context, family, "http", 80, "tcp");
+    if(config->enable_kx509) {
+	add_port_service(context, family, "kca_service", 9878, "udp");
+	add_port_service(context, family, "kca_service", 9878, "tcp");
     }
-    if(enable_v4) {
-	add_port_service(family, "kerberos-iv", 750, "udp");
-	add_port_service(family, "kerberos-iv", 750, "tcp");
-    }
-    if (enable_kaserver)
-	add_port_service(family, "afs3-kaserver", 7004, "udp");
+
 }
 
 /*
@@ -150,7 +162,9 @@ add_standard_ports (int family)
  */
 
 static void
-parse_ports(const char *str)
+parse_ports(krb5_context context,
+	    krb5_kdc_configuration *config,
+	    const char *str)
 {
     char *pos = NULL;
     char *p;
@@ -160,27 +174,27 @@ parse_ports(const char *str)
     while(p != NULL) {
 	if(strcmp(p, "+") == 0) {
 #ifdef HAVE_IPV6
-	    add_standard_ports(AF_INET6);
+	    add_standard_ports(context, config, AF_INET6);
 #endif
-	    add_standard_ports(AF_INET);
+	    add_standard_ports(context, config, AF_INET);
 	} else {
 	    char *q = strchr(p, '/');
 	    if(q){
 		*q++ = 0;
 #ifdef HAVE_IPV6
-		add_port_string(AF_INET6, p, q);
+		add_port_string(context, AF_INET6, p, q);
 #endif
-		add_port_string(AF_INET, p, q);
+		add_port_string(context, AF_INET, p, q);
 	    }else {
 #ifdef HAVE_IPV6
-		add_port_string(AF_INET6, p, "udp");
-		add_port_string(AF_INET6, p, "tcp");
+		add_port_string(context, AF_INET6, p, "udp");
+		add_port_string(context, AF_INET6, p, "tcp");
 #endif
-		add_port_string(AF_INET, p, "udp");
-		add_port_string(AF_INET, p, "tcp");
+		add_port_string(context, AF_INET, p, "udp");
+		add_port_string(context, AF_INET, p, "tcp");
 	    }
 	}
-	    
+
 	p = strtok_r(NULL, " \t", &pos);
     }
     free (str_copy);
@@ -191,7 +205,7 @@ parse_ports(const char *str)
  */
 
 struct descr {
-    int s;
+    krb5_socket_t s;
     int type;
     int port;
     unsigned char *buf;
@@ -209,7 +223,7 @@ init_descr(struct descr *d)
 {
     memset(d, 0, sizeof(*d));
     d->sa = (struct sockaddr *)&d->__ss;
-    d->s = -1;
+    d->s = rk_INVALID_SOCKET;
 }
 
 /*
@@ -229,8 +243,10 @@ reinit_descrs (struct descr *d, int n)
  * Create the socket (family, type, port) in `d'
  */
 
-static void 
-init_socket(struct descr *d, krb5_address *a, int family, int type, int port)
+static void
+init_socket(krb5_context context,
+	    krb5_kdc_configuration *config,
+	    struct descr *d, krb5_address *a, int family, int type, int port)
 {
     krb5_error_code ret;
     struct sockaddr_storage __ss;
@@ -242,8 +258,8 @@ init_socket(struct descr *d, krb5_address *a, int family, int type, int port)
     ret = krb5_addr2sockaddr (context, a, sa, &sa_size, port);
     if (ret) {
 	krb5_warn(context, ret, "krb5_addr2sockaddr");
-	close(d->s);
-	d->s = -1;
+	rk_closesocket(d->s);
+	d->s = rk_INVALID_SOCKET;
 	return;
     }
 
@@ -251,9 +267,9 @@ init_socket(struct descr *d, krb5_address *a, int family, int type, int port)
 	return;
 
     d->s = socket(family, type, 0);
-    if(d->s < 0){
+    if(rk_IS_BAD_SOCKET(d->s)){
 	krb5_warn(context, errno, "socket(%d, %d, 0)", family, type);
-	d->s = -1;
+	d->s = rk_INVALID_SOCKET;
 	return;
     }
 #if defined(HAVE_SETSOCKOPT) && defined(SOL_SOCKET) && defined(SO_REUSEADDR)
@@ -265,24 +281,24 @@ init_socket(struct descr *d, krb5_address *a, int family, int type, int port)
     d->type = type;
     d->port = port;
 
-    if(bind(d->s, sa, sa_size) < 0){
+    if(rk_IS_SOCKET_ERROR(bind(d->s, sa, sa_size))){
 	char a_str[256];
 	size_t len;
 
 	krb5_print_address (a, a_str, sizeof(a_str), &len);
 	krb5_warn(context, errno, "bind %s/%d", a_str, ntohs(port));
-	close(d->s);
-	d->s = -1;
+	rk_closesocket(d->s);
+	d->s = rk_INVALID_SOCKET;
 	return;
     }
-    if(type == SOCK_STREAM && listen(d->s, SOMAXCONN) < 0){
+    if(type == SOCK_STREAM && rk_IS_SOCKET_ERROR(listen(d->s, SOMAXCONN))){
 	char a_str[256];
 	size_t len;
 
 	krb5_print_address (a, a_str, sizeof(a_str), &len);
 	krb5_warn(context, errno, "listen %s/%d", a_str, ntohs(port));
-	close(d->s);
-	d->s = -1;
+	rk_closesocket(d->s);
+	d->s = rk_INVALID_SOCKET;
 	return;
     }
 }
@@ -293,11 +309,13 @@ init_socket(struct descr *d, krb5_address *a, int family, int type, int port)
  */
 
 static int
-init_sockets(struct descr **desc)
+init_sockets(krb5_context context,
+	     krb5_kdc_configuration *config,
+	     struct descr **desc)
 {
     krb5_error_code ret;
-    int i, j;
-    struct descr *d, *tmp;
+    size_t i, j;
+    struct descr *d;
     int num = 0;
     krb5_addresses addresses;
 
@@ -308,7 +326,7 @@ init_sockets(struct descr **desc)
 	if (ret)
 	    krb5_err (context, 1, ret, "krb5_get_all_server_addrs");
     }
-    parse_ports(port_str);
+    parse_ports(context, config, port_str);
     d = malloc(addresses.len * num_ports * sizeof(*d));
     if (d == NULL)
 	krb5_errx(context, 1, "malloc(%lu) failed",
@@ -316,18 +334,18 @@ init_sockets(struct descr **desc)
 
     for (i = 0; i < num_ports; i++){
 	for (j = 0; j < addresses.len; ++j) {
-	    init_socket(&d[num], &addresses.val[j],
+	    init_socket(context, config, &d[num], &addresses.val[j],
 			ports[i].family, ports[i].type, ports[i].port);
-	    if(d[num].s != -1){
+	    if(d[num].s != rk_INVALID_SOCKET){
 		char a_str[80];
 		size_t len;
 
 		krb5_print_address (&addresses.val[j], a_str,
 				    sizeof(a_str), &len);
 
-		kdc_log(5, "listening on %s port %u/%s",
+		kdc_log(context, config, 5, "listening on %s port %u/%s",
 			a_str,
-			ntohs(ports[i].port), 
+			ntohs(ports[i].port),
 			(ports[i].type == SOCK_STREAM) ? "tcp" : "udp");
 		/* XXX */
 		num++;
@@ -335,13 +353,10 @@ init_sockets(struct descr **desc)
 	}
     }
     krb5_free_addresses (context, &addresses);
-    tmp = realloc(d, num * sizeof(*d));
-    if (tmp == NULL && num != 0) {
-	free(d);
+    d = realloc(d, num * sizeof(*d));
+    if (d == NULL && num != 0)
 	krb5_errx(context, 1, "realloc(%lu) failed",
 		  (unsigned long)num * sizeof(*d));
-    }
-    d = tmp;
     reinit_descrs (d, num);
     *desc = d;
     return num;
@@ -361,51 +376,9 @@ descr_type(struct descr *d)
     return "unknown";
 }
 
-/*
- * handle the request in `buf, len', from `addr' (or `from' as a string),
- * sending a reply in `reply'.
- */
-
-static int
-process_request(unsigned char *buf, 
-		size_t len, 
-		krb5_data *reply,
-		krb5_boolean *prependlength,
-		const char *from,
-		struct sockaddr *addr)
-{
-    KDC_REQ req;
-    Ticket ticket;
-    krb5_error_code ret;
-    size_t i;
-
-    gettimeofday(&now, NULL);
-    if(decode_AS_REQ(buf, len, &req, &i) == 0){
-	ret = as_rep(&req, reply, from, addr);
-	free_AS_REQ(&req);
-	return ret;
-    }else if(decode_TGS_REQ(buf, len, &req, &i) == 0){
-	ret = tgs_rep(&req, reply, from, addr);
-	free_TGS_REQ(&req);
-	return ret;
-    }else if(decode_Ticket(buf, len, &ticket, &i) == 0){
-	ret = do_524(&ticket, reply, from, addr);
-	free_Ticket(&ticket);
-	return ret;
-    } else if(maybe_version4(buf, len)){
-	*prependlength = FALSE; /* elbitapmoc sdrawkcab XXX */
-	do_version4(buf, len, reply, from, (struct sockaddr_in*)addr);
-	return 0;
-    } else if (enable_kaserver) {
-	ret = do_kaserver (buf, len, reply, from, (struct sockaddr_in*)addr);
-	return ret;
-    }
-			  
-    return -1;
-}
-
 static void
-addr_to_string(struct sockaddr *addr, size_t addr_len, char *str, size_t len)
+addr_to_string(krb5_context context,
+	       struct sockaddr *addr, size_t addr_len, char *str, size_t len)
 {
     krb5_address a;
     if(krb5_sockaddr2address(context, addr, &a) == 0) {
@@ -419,43 +392,69 @@ addr_to_string(struct sockaddr *addr, size_t addr_len, char *str, size_t len)
 }
 
 /*
+ *
+ */
+
+static void
+send_reply(krb5_context context,
+	   krb5_kdc_configuration *config,
+	   krb5_boolean prependlength,
+	   struct descr *d,
+	   krb5_data *reply)
+{
+    kdc_log(context, config, 5,
+	    "sending %lu bytes to %s", (unsigned long)reply->length,
+	    d->addr_string);
+    if(prependlength){
+	unsigned char l[4];
+	l[0] = (reply->length >> 24) & 0xff;
+	l[1] = (reply->length >> 16) & 0xff;
+	l[2] = (reply->length >> 8) & 0xff;
+	l[3] = reply->length & 0xff;
+	if(rk_IS_SOCKET_ERROR(sendto(d->s, l, sizeof(l), 0, d->sa, d->sock_len))) {
+	    kdc_log (context, config,
+		     0, "sendto(%s): %s", d->addr_string,
+		     strerror(rk_SOCK_ERRNO));
+	    return;
+	}
+    }
+    if(rk_IS_SOCKET_ERROR(sendto(d->s, reply->data, reply->length, 0, d->sa, d->sock_len))) {
+	kdc_log (context, config, 0, "sendto(%s): %s", d->addr_string,
+		 strerror(rk_SOCK_ERRNO));
+	return;
+    }
+}
+
+/*
  * Handle the request in `buf, len' to socket `d'
  */
 
 static void
-do_request(void *buf, size_t len, krb5_boolean prependlength,
+do_request(krb5_context context,
+	   krb5_kdc_configuration *config,
+	   void *buf, size_t len, krb5_boolean prependlength,
 	   struct descr *d)
 {
     krb5_error_code ret;
     krb5_data reply;
-    
-    reply.length = 0;
-    ret = process_request(buf, len, &reply, &prependlength,
-			  d->addr_string, d->sa);
+    int datagram_reply = (d->type == SOCK_DGRAM);
+
+    krb5_kdc_update_time(NULL);
+
+    krb5_data_zero(&reply);
+    ret = krb5_kdc_process_request(context, config,
+				   buf, len, &reply, &prependlength,
+				   d->addr_string, d->sa,
+				   datagram_reply);
+    if(request_log)
+	krb5_kdc_save_request(context, request_log, buf, len, &reply, d->sa);
     if(reply.length){
-	kdc_log(5, "sending %lu bytes to %s", (unsigned long)reply.length,
-		d->addr_string);
-	if(prependlength){
-	    unsigned char len[4];
-	    len[0] = (reply.length >> 24) & 0xff;
-	    len[1] = (reply.length >> 16) & 0xff;
-	    len[2] = (reply.length >> 8) & 0xff;
-	    len[3] = reply.length & 0xff;
-	    if(sendto(d->s, len, sizeof(len), 0, d->sa, d->sock_len) < 0) {
-		kdc_log (0, "sendto(%s): %s", d->addr_string, strerror(errno));
-		krb5_data_free(&reply);
-		return;
-	    }
-	}
-	if(sendto(d->s, reply.data, reply.length, 0, d->sa, d->sock_len) < 0) {
-	    kdc_log (0, "sendto(%s): %s", d->addr_string, strerror(errno));
-	    krb5_data_free(&reply);
-	    return;
-	}
+	send_reply(context, config, prependlength, d, &reply);
 	krb5_data_free(&reply);
     }
     if(ret)
-	kdc_log(0, "Failed processing %lu byte request from %s", 
+	kdc_log(context, config, 0,
+		"Failed processing %lu byte request from %s",
 		(unsigned long)len, d->addr_string);
 }
 
@@ -464,25 +463,45 @@ do_request(void *buf, size_t len, krb5_boolean prependlength,
  */
 
 static void
-handle_udp(struct descr *d)
+handle_udp(krb5_context context,
+	   krb5_kdc_configuration *config,
+	   struct descr *d)
 {
     unsigned char *buf;
-    int n;
+    ssize_t n;
 
-    buf = malloc(max_request);
+    buf = malloc(max_request_udp);
     if(buf == NULL){
-	kdc_log(0, "Failed to allocate %lu bytes", (unsigned long)max_request);
+	kdc_log(context, config, 0, "Failed to allocate %lu bytes", (unsigned long)max_request_udp);
 	return;
     }
 
     d->sock_len = sizeof(d->__ss);
-    n = recvfrom(d->s, buf, max_request, 0, d->sa, &d->sock_len);
-    if(n < 0)
-	krb5_warn(context, errno, "recvfrom");
+    n = recvfrom(d->s, buf, max_request_udp, 0, d->sa, &d->sock_len);
+    if(rk_IS_SOCKET_ERROR(n))
+	krb5_warn(context, rk_SOCK_ERRNO, "recvfrom");
     else {
-	addr_to_string (d->sa, d->sock_len,
+	addr_to_string (context, d->sa, d->sock_len,
 			d->addr_string, sizeof(d->addr_string));
-	do_request(buf, n, FALSE, d);
+	if ((size_t)n == max_request_udp) {
+	    krb5_data data;
+	    krb5_warn(context, errno,
+		      "recvfrom: truncated packet from %s, asking for TCP",
+		      d->addr_string);
+	    krb5_mk_error(context,
+			  KRB5KRB_ERR_RESPONSE_TOO_BIG,
+			  NULL,
+			  NULL,
+			  NULL,
+			  NULL,
+			  NULL,
+			  NULL,
+			  &data);
+	    send_reply(context, config, FALSE, d, &data);
+	    krb5_data_free(&data);
+	} else {
+	    do_request(context, config, buf, n, FALSE, d);
+	}
     }
     free (buf);
 }
@@ -493,9 +512,9 @@ clear_descr(struct descr *d)
     if(d->buf)
 	memset(d->buf, 0, d->size);
     d->len = 0;
-    if(d->s != -1)
-	close(d->s);
-    d->s = -1;
+    if(d->s != rk_INVALID_SOCKET)
+	rk_closesocket(d->s);
+    d->s = rk_INVALID_SOCKET;
 }
 
 
@@ -507,7 +526,7 @@ de_http(char *buf)
     for(p = q = (unsigned char *)buf; *p; p++, q++) {
 	if(*p == '%' && isxdigit(p[1]) && isxdigit(p[2])) {
 	    unsigned int x;
-	    if(sscanf(p + 1, "%2x", &x) != 1)
+	    if(sscanf((char *)p + 1, "%2x", &x) != 1)
 		return -1;
 	    *q = x;
 	    p += 2;
@@ -525,30 +544,35 @@ de_http(char *buf)
  */
 
 static void
-add_new_tcp (struct descr *d, int parent, int child)
+add_new_tcp (krb5_context context,
+	     krb5_kdc_configuration *config,
+	     struct descr *d, int parent, int child)
 {
-    int s;
+    krb5_socket_t s;
 
     if (child == -1)
 	return;
 
     d[child].sock_len = sizeof(d[child].__ss);
     s = accept(d[parent].s, d[child].sa, &d[child].sock_len);
-    if(s < 0) {
-	krb5_warn(context, errno, "accept");
+    if(rk_IS_BAD_SOCKET(s)) {
+	krb5_warn(context, rk_SOCK_ERRNO, "accept");
 	return;
     }
-	    
+
+#ifdef FD_SETSIZE
     if (s >= FD_SETSIZE) {
 	krb5_warnx(context, "socket FD too large");
-	close (s);
+	rk_closesocket (s);
 	return;
     }
+#endif
 
     d[child].s = s;
     d[child].timeout = time(NULL) + TCP_TIMEOUT;
     d[child].type = SOCK_STREAM;
-    addr_to_string (d[child].sa, d[child].sock_len,
+    addr_to_string (context,
+		    d[child].sa, d[child].sock_len,
 		    d[child].addr_string, sizeof(d[child].addr_string));
 }
 
@@ -558,22 +582,24 @@ add_new_tcp (struct descr *d, int parent, int child)
  */
 
 static int
-grow_descr (struct descr *d, size_t n)
+grow_descr (krb5_context context,
+	    krb5_kdc_configuration *config,
+	    struct descr *d, size_t n)
 {
     if (d->size - d->len < n) {
 	unsigned char *tmp;
-	size_t grow; 
+	size_t grow;
 
 	grow = max(1024, d->len + n);
-	if (d->size + grow > max_request) {
-	    kdc_log(0, "Request exceeds max request size (%lu bytes).",
+	if (d->size + grow > max_request_tcp) {
+	    kdc_log(context, config, 0, "Request exceeds max request size (%lu bytes).",
 		    (unsigned long)d->size + grow);
 	    clear_descr(d);
 	    return -1;
 	}
 	tmp = realloc (d->buf, d->size + grow);
 	if (tmp == NULL) {
-	    kdc_log(0, "Failed to re-allocate %lu bytes.",
+	    kdc_log(context, config, 0, "Failed to re-allocate %lu bytes.",
 		    (unsigned long)d->size + grow);
 	    clear_descr(d);
 	    return -1;
@@ -590,20 +616,23 @@ grow_descr (struct descr *d, size_t n)
  */
 
 static int
-handle_vanilla_tcp (struct descr *d)
+handle_vanilla_tcp (krb5_context context,
+		    krb5_kdc_configuration *config,
+		    struct descr *d)
 {
     krb5_storage *sp;
-    int32_t len;
+    uint32_t len;
 
     sp = krb5_storage_from_mem(d->buf, d->len);
     if (sp == NULL) {
-	kdc_log (0, "krb5_storage_from_mem failed");
+	kdc_log (context, config, 0, "krb5_storage_from_mem failed");
 	return -1;
     }
-    krb5_ret_int32(sp, &len);
+    krb5_ret_uint32(sp, &len);
     krb5_storage_free(sp);
     if(d->len - 4 >= len) {
 	memmove(d->buf, d->buf + 4, d->len - 4);
+	d->len -= 4;
 	return 1;
     }
     return 0;
@@ -615,7 +644,9 @@ handle_vanilla_tcp (struct descr *d)
  */
 
 static int
-handle_http_tcp (struct descr *d)
+handle_http_tcp (krb5_context context,
+		 krb5_kdc_configuration *config,
+		 struct descr *d)
 {
     char *s, *p, *t;
     void *data;
@@ -624,47 +655,49 @@ handle_http_tcp (struct descr *d)
 
     s = (char *)d->buf;
 
+    /* If its a multi line query, truncate off the first line */
     p = strstr(s, "\r\n");
-    if (p == NULL) {
-	kdc_log(0, "Malformed HTTP request from %s", d->addr_string);
-	return -1;
-    }
-    *p = 0;
+    if (p)
+	*p = 0;
 
     p = NULL;
     t = strtok_r(s, " \t", &p);
     if (t == NULL) {
-	kdc_log(0, "Malformed HTTP request from %s", d->addr_string);
+	kdc_log(context, config, 0,
+		"Missing HTTP operand (GET) request from %s", d->addr_string);
 	return -1;
     }
+
     t = strtok_r(NULL, " \t", &p);
     if(t == NULL) {
-	kdc_log(0, "Malformed HTTP request from %s", d->addr_string);
+	kdc_log(context, config, 0,
+		"Missing HTTP GET data in request from %s", d->addr_string);
 	return -1;
     }
+
     data = malloc(strlen(t));
     if (data == NULL) {
-	kdc_log(0, "Failed to allocate %lu bytes",
+	kdc_log(context, config, 0, "Failed to allocate %lu bytes",
 		(unsigned long)strlen(t));
 	return -1;
     }
     if(*t == '/')
 	t++;
     if(de_http(t) != 0) {
-	kdc_log(0, "Malformed HTTP request from %s", d->addr_string);
-	kdc_log(5, "HTTP request: %s", t);
+	kdc_log(context, config, 0, "Malformed HTTP request from %s", d->addr_string);
+	kdc_log(context, config, 5, "HTTP request: %s", t);
 	free(data);
 	return -1;
     }
     proto = strtok_r(NULL, " \t", &p);
     if (proto == NULL) {
-	kdc_log(0, "Malformed HTTP request from %s", d->addr_string);
+	kdc_log(context, config, 0, "Malformed HTTP request from %s", d->addr_string);
 	free(data);
 	return -1;
     }
     len = base64_decode(t, data);
     if(len <= 0){
-	const char *msg = 
+	const char *msg =
 	    " 404 Not found\r\n"
 	    "Server: Heimdal/" VERSION "\r\n"
 	    "Cache-Control: no-cache\r\n"
@@ -674,41 +707,45 @@ handle_http_tcp (struct descr *d)
 	    "<TITLE>404 Not found</TITLE>\r\n"
 	    "<H1>404 Not found</H1>\r\n"
 	    "That page doesn't exist, maybe you are looking for "
-	    "<A HREF=\"http://www.pdc.kth.se/heimdal/\">Heimdal</A>?\r\n";
-	kdc_log(0, "HTTP request from %s is non KDC request", d->addr_string);
-	kdc_log(5, "HTTP request: %s", t);
+	    "<A HREF=\"http://www.h5l.org/\">Heimdal</A>?\r\n";
+	kdc_log(context, config, 0, "HTTP request from %s is non KDC request", d->addr_string);
+	kdc_log(context, config, 5, "HTTP request: %s", t);
 	free(data);
-	if (write(d->s, proto, strlen(proto)) < 0) {
-	    kdc_log(0, "HTTP write failed: %s: %s", 
-		    d->addr_string, strerror(errno));
+	if (rk_IS_SOCKET_ERROR(send(d->s, proto, strlen(proto), 0))) {
+	    kdc_log(context, config, 0, "HTTP write failed: %s: %s",
+		    d->addr_string, strerror(rk_SOCK_ERRNO));
 	    return -1;
 	}
-	if (write(d->s, msg, strlen(msg)) < 0) {
-	    kdc_log(0, "HTTP write failed: %s: %s", 
-		    d->addr_string, strerror(errno));
+	if (rk_IS_SOCKET_ERROR(send(d->s, msg, strlen(msg), 0))) {
+	    kdc_log(context, config, 0, "HTTP write failed: %s: %s",
+		    d->addr_string, strerror(rk_SOCK_ERRNO));
 	    return -1;
 	}
 	return -1;
     }
     {
-	const char *msg = 
+	const char *msg =
 	    " 200 OK\r\n"
 	    "Server: Heimdal/" VERSION "\r\n"
 	    "Cache-Control: no-cache\r\n"
 	    "Pragma: no-cache\r\n"
 	    "Content-type: application/octet-stream\r\n"
 	    "Content-transfer-encoding: binary\r\n\r\n";
-	if (write(d->s, proto, strlen(proto)) < 0) {
-	    kdc_log(0, "HTTP write failed: %s: %s", 
-		    d->addr_string, strerror(errno));
+	if (rk_IS_SOCKET_ERROR(send(d->s, proto, strlen(proto), 0))) {
+	    free(data);
+	    kdc_log(context, config, 0, "HTTP write failed: %s: %s",
+		    d->addr_string, strerror(rk_SOCK_ERRNO));
 	    return -1;
 	}
-	if (write(d->s, msg, strlen(msg)) < 0) {
-	    kdc_log(0, "HTTP write failed: %s: %s", 
-		    d->addr_string, strerror(errno));
+	if (rk_IS_SOCKET_ERROR(send(d->s, msg, strlen(msg), 0))) {
+	    free(data);
+	    kdc_log(context, config, 0, "HTTP write failed: %s: %s",
+		    d->addr_string, strerror(rk_SOCK_ERRNO));
 	    return -1;
 	}
     }
+    if ((size_t)len > d->len)
+        len = d->len;
     memcpy(d->buf, data, len);
     d->len = len;
     free(data);
@@ -720,92 +757,126 @@ handle_http_tcp (struct descr *d)
  */
 
 static void
-handle_tcp(struct descr *d, int index, int min_free)
+handle_tcp(krb5_context context,
+	   krb5_kdc_configuration *config,
+	   struct descr *d, int idx, int min_free)
 {
     unsigned char buf[1024];
     int n;
     int ret = 0;
 
-    if (d[index].timeout == 0) {
-	add_new_tcp (d, index, min_free);
+    if (d[idx].timeout == 0) {
+	add_new_tcp (context, config, d, idx, min_free);
 	return;
     }
 
-    n = recvfrom(d[index].s, buf, sizeof(buf), 0, NULL, NULL);
-    if(n < 0){
-	krb5_warn(context, errno, "recvfrom failed from %s to %s/%d",
-		  d[index].addr_string, descr_type(d + index), 
-		  ntohs(d[index].port));
+    n = recvfrom(d[idx].s, buf, sizeof(buf), 0, NULL, NULL);
+    if(rk_IS_SOCKET_ERROR(n)){
+	krb5_warn(context, rk_SOCK_ERRNO, "recvfrom failed from %s to %s/%d",
+		  d[idx].addr_string, descr_type(d + idx),
+		  ntohs(d[idx].port));
 	return;
     } else if (n == 0) {
 	krb5_warnx(context, "connection closed before end of data after %lu "
-		   "bytes from %s to %s/%d", (unsigned long)d[index].len, 
-		   d[index].addr_string, descr_type(d + index), 
-		   ntohs(d[index].port));
-	clear_descr (d + index);
+		   "bytes from %s to %s/%d", (unsigned long)d[idx].len,
+		   d[idx].addr_string, descr_type(d + idx),
+		   ntohs(d[idx].port));
+	clear_descr (d + idx);
 	return;
     }
-    if (grow_descr (&d[index], n))
+    if (grow_descr (context, config, &d[idx], n))
 	return;
-    memcpy(d[index].buf + d[index].len, buf, n);
-    d[index].len += n;
-    if(d[index].len > 4 && d[index].buf[0] == 0) {
-	ret = handle_vanilla_tcp (&d[index]);
+    memcpy(d[idx].buf + d[idx].len, buf, n);
+    d[idx].len += n;
+    if(d[idx].len > 4 && d[idx].buf[0] == 0) {
+	ret = handle_vanilla_tcp (context, config, &d[idx]);
     } else if(enable_http &&
-	      d[index].len >= 4 &&
-	      strncmp((char *)d[index].buf, "GET ", 4) == 0 && 
-	      strncmp((char *)d[index].buf + d[index].len - 4,
+	      d[idx].len >= 4 &&
+	      strncmp((char *)d[idx].buf, "GET ", 4) == 0 &&
+	      strncmp((char *)d[idx].buf + d[idx].len - 4,
 		      "\r\n\r\n", 4) == 0) {
-	ret = handle_http_tcp (&d[index]);
+
+        /* remove the trailing \r\n\r\n so the string is NUL terminated */
+        d[idx].buf[d[idx].len - 4] = '\0';
+
+	ret = handle_http_tcp (context, config, &d[idx]);
 	if (ret < 0)
-	    clear_descr (d + index);
-    } else if (d[index].len > 4) {
-	kdc_log (0, "TCP data of strange type from %s to %s/%d",
-		 d[index].addr_string, descr_type(d + index), 
-		 ntohs(d[index].port));
-	clear_descr(d + index);
+	    clear_descr (d + idx);
+    } else if (d[idx].len > 4) {
+	kdc_log (context, config,
+		 0, "TCP data of strange type from %s to %s/%d",
+		 d[idx].addr_string, descr_type(d + idx),
+		 ntohs(d[idx].port));
+	if (d[idx].buf[0] & 0x80) {
+	    krb5_data reply;
+
+	    kdc_log (context, config, 0, "TCP extension not supported");
+
+	    ret = krb5_mk_error(context,
+				KRB5KRB_ERR_FIELD_TOOLONG,
+				NULL,
+				NULL,
+				NULL,
+				NULL,
+				NULL,
+				NULL,
+				&reply);
+	    if (ret == 0) {
+		send_reply(context, config, TRUE, d + idx, &reply);
+		krb5_data_free(&reply);
+	    }
+	}
+	clear_descr(d + idx);
 	return;
     }
     if (ret < 0)
 	return;
     else if (ret == 1) {
-	do_request(d[index].buf, d[index].len, TRUE, &d[index]);
-	clear_descr(d + index);
+	do_request(context, config,
+		   d[idx].buf, d[idx].len, TRUE, &d[idx]);
+	clear_descr(d + idx);
     }
 }
 
 void
-loop(void)
+loop(krb5_context context,
+     krb5_kdc_configuration *config)
 {
     struct descr *d;
-    int ndescr;
+    unsigned int ndescr;
 
-    ndescr = init_sockets(&d);
+    ndescr = init_sockets(context, config, &d);
     if(ndescr <= 0)
 	krb5_errx(context, 1, "No sockets!");
+    kdc_log(context, config, 0, "KDC started");
     while(exit_flag == 0){
 	struct timeval tmout;
 	fd_set fds;
 	int min_free = -1;
 	int max_fd = 0;
-	int i;
+	size_t i;
 
 	FD_ZERO(&fds);
 	for(i = 0; i < ndescr; i++) {
-	    if(d[i].s >= 0){
-		if(d[i].type == SOCK_STREAM && 
+	    if(!rk_IS_BAD_SOCKET(d[i].s)){
+		if(d[i].type == SOCK_STREAM &&
 		   d[i].timeout && d[i].timeout < time(NULL)) {
-		    kdc_log(1, "TCP-connection from %s expired after %lu bytes",
+		    kdc_log(context, config, 1,
+			    "TCP-connection from %s expired after %lu bytes",
 			    d[i].addr_string, (unsigned long)d[i].len);
 		    clear_descr(&d[i]);
 		    continue;
 		}
+#ifndef NO_LIMIT_FD_SETSIZE
 		if(max_fd < d[i].s)
 		    max_fd = d[i].s;
+#ifdef FD_SETSIZE
 		if (max_fd >= FD_SETSIZE)
 		    krb5_errx(context, 1, "fd too large");
+#endif
+#endif
 		FD_SET(d[i].s, &fds);
-	    } else if(min_free < 0 || i < min_free)
+	    } else if(min_free < 0 || i < (size_t)min_free)
 		min_free = i;
 	}
 	if(min_free == -1){
@@ -823,7 +894,7 @@ loop(void)
 		ndescr += 4;
 	    }
 	}
-    
+
 	tmout.tv_sec = TCP_TIMEOUT;
 	tmout.tv_usec = 0;
 	switch(select(max_fd + 1, &fds, 0, 0, &tmout)){
@@ -831,23 +902,26 @@ loop(void)
 	    break;
 	case -1:
 	    if (errno != EINTR)
-		krb5_warn(context, errno, "select");
+		krb5_warn(context, rk_SOCK_ERRNO, "select");
 	    break;
 	default:
 	    for(i = 0; i < ndescr; i++)
-		if(d[i].s >= 0 && FD_ISSET(d[i].s, &fds)) {
+		if(!rk_IS_BAD_SOCKET(d[i].s) && FD_ISSET(d[i].s, &fds)) {
 		    if(d[i].type == SOCK_DGRAM)
-			handle_udp(&d[i]);
+			handle_udp(context, config, &d[i]);
 		    else if(d[i].type == SOCK_STREAM)
-			handle_tcp(d, i, min_free);
+			handle_tcp(context, config, d, i, min_free);
 		}
 	}
     }
-    if(exit_flag == SIGXCPU)
-	kdc_log(0, "CPU time limit exceeded");
+    if (0);
+#ifdef SIGXCPU
+    else if(exit_flag == SIGXCPU)
+	kdc_log(context, config, 0, "CPU time limit exceeded");
+#endif
     else if(exit_flag == SIGINT || exit_flag == SIGTERM)
-	kdc_log(0, "Terminated");
+	kdc_log(context, config, 0, "Terminated");
     else
-	kdc_log(0, "Unexpected exit reason: %d", exit_flag);
+	kdc_log(context, config, 0, "Unexpected exit reason: %d", exit_flag);
     free (d);
 }

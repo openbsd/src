@@ -32,7 +32,7 @@
 
 #include "kcm_locl.h"
 
-RCSID("$KTH: renew.c,v 1.3 2005/02/06 01:22:49 lukeh Exp $");
+RCSID("$Id: renew.c,v 1.2 2013/06/17 18:57:41 robert Exp $");
 
 krb5_error_code
 kcm_ccache_refresh(krb5_context context,

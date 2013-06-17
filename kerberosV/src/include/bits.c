@@ -1,44 +1,50 @@
 /*
- * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
- * (Royal Institute of Technology, Stockholm, Sweden). 
- * All rights reserved. 
+ * Copyright (c) 1997-2002 Kungliga Tekniska HÃ¶gskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Portions Copyright (c) 2010 Apple Inc. All rights reserved.
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 2. Redistributions in binary form must reproduce the above copyright 
- *    notice, this list of conditions and the following disclaimer in the 
- *    documentation and/or other materials provided with the distribution. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  *
- * 3. Neither the name of the Institute nor the names of its contributors 
- *    may be used to endorse or promote products derived from this software 
- *    without specific prior written permission. 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
- * SUCH DAMAGE. 
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: bits.c,v 1.23 2005/01/05 15:22:02 lha Exp $");
+RCSID("$Id: bits.c,v 1.5 2013/06/17 18:57:41 robert Exp $");
 #endif
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#ifdef WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
 
 #define BITSIZE(TYPE)						\
 {								\
@@ -46,9 +52,9 @@ RCSID("$KTH: bits.c,v 1.23 2005/01/05 15:22:02 lha Exp $");
     char tmp[128], tmp2[128];					\
     while(x){ x <<= 1; b++; if(x < zero) pre=""; }		\
     if(b >= len){						\
-        int tabs;						\
-	snprintf(tmp, sizeof tmp, "%sint%d_t" , pre, len);	\
-	snprintf(tmp2, sizeof tmp2, "typedef %s %s;", #TYPE, tmp);	\
+        size_t tabs;						\
+	sprintf(tmp, "%sint%d_t" , pre, len);			\
+	sprintf(tmp2, "typedef %s %s;", #TYPE, tmp);		\
 	tabs = 5 - strlen(tmp2) / 8;				\
         fprintf(f, "%s", tmp2);					\
 	while(tabs-- > 0) fprintf(f, "\t");			\
@@ -113,7 +119,12 @@ int main(int argc, char **argv)
     FILE *f;
     int flag;
     const char *fn, *hb;
-    
+
+    if (argc > 1 && strcmp(argv[1], "--version") == 0) {
+	printf("some version");
+	return 0;
+    }
+
     if(argc < 2){
 	fn = "bits.h";
 	hb = "__BITS_H__";
@@ -121,7 +132,8 @@ int main(int argc, char **argv)
     } else {
 	char *p;
 	fn = argv[1];
-	asprintf(&p, "__%s__", fn);
+	p = malloc(strlen(fn) + 5);
+	sprintf(p, "__%s__", fn);
 	hb = p;
 	for(; *p; p++){
 	    if(!isalnum((unsigned char)*p))
@@ -130,8 +142,8 @@ int main(int argc, char **argv)
 	f = fopen(argv[1], "w");
     }
     fprintf(f, "/* %s -- this file was generated for %s by\n", fn, HOST);
-    fprintf(f, "   %*s    %s */\n\n", (int)strlen(fn), "", 
-	    "$KTH: bits.c,v 1.23 2005/01/05 15:22:02 lha Exp $");
+    fprintf(f, "   %*s    %s */\n\n", (int)strlen(fn), "",
+	    "$Id: bits.c,v 1.5 2013/06/17 18:57:41 robert Exp $");
     fprintf(f, "#ifndef %s\n", hb);
     fprintf(f, "#define %s\n", hb);
     fprintf(f, "\n");
@@ -151,7 +163,12 @@ int main(int argc, char **argv)
     fprintf(f, "#include <netinet/in6_machtypes.h>\n");
 #endif
 #ifdef HAVE_SOCKLEN_T
+#ifndef WIN32
     fprintf(f, "#include <sys/socket.h>\n");
+#else
+    fprintf(f, "#include <winsock2.h>\n");
+    fprintf(f, "#include <ws2tcpip.h>\n");
+#endif
 #endif
     fprintf(f, "\n");
 
@@ -168,12 +185,10 @@ int main(int argc, char **argv)
     flag = print_bt(f, flag);
     try_signed (f, 32);
 #endif /* HAVE_INT32_T */
-#if 0
 #ifndef HAVE_INT64_T
     flag = print_bt(f, flag);
     try_signed (f, 64);
 #endif /* HAVE_INT64_T */
-#endif
 
 #ifndef HAVE_UINT8_T
     flag = print_bt(f, flag);
@@ -187,12 +202,10 @@ int main(int argc, char **argv)
     flag = print_bt(f, flag);
     try_unsigned (f, 32);
 #endif /* HAVE_UINT32_T */
-#if 0
 #ifndef HAVE_UINT64_T
     flag = print_bt(f, flag);
     try_unsigned (f, 64);
 #endif /* HAVE_UINT64_T */
-#endif
 
 #define X(S) fprintf(f, "typedef uint" #S "_t u_int" #S "_t;\n")
 #ifndef HAVE_U_INT8_T
@@ -207,12 +220,10 @@ int main(int argc, char **argv)
     flag = print_bt(f, flag);
     X(32);
 #endif /* HAVE_U_INT32_T */
-#if 0
 #ifndef HAVE_U_INT64_T
     flag = print_bt(f, flag);
     X(64);
 #endif /* HAVE_U_INT64_T */
-#endif
 
     if(flag){
 	fprintf(f, "\n");
@@ -234,7 +245,53 @@ int main(int argc, char **argv)
     fprintf(f, "typedef int krb5_ssize_t;\n");
 #endif
     fprintf(f, "\n");
+
+#if defined(_WIN32)
+    fprintf(f, "typedef SOCKET krb5_socket_t;\n");
+#else
+    fprintf(f, "typedef int krb5_socket_t;\n");
+#endif
+    fprintf(f, "\n");
+
 #endif /* KRB5 */
+
+    fprintf(f, "#ifndef HEIMDAL_DEPRECATED\n");
+    fprintf(f, "#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))\n");
+    fprintf(f, "#define HEIMDAL_DEPRECATED __attribute__((deprecated))\n");
+    fprintf(f, "#elif defined(_MSC_VER) && (_MSC_VER>1200)\n");
+    fprintf(f, "#define HEIMDAL_DEPRECATED __declspec(deprecated)\n");
+    fprintf(f, "#else\n");
+    fprintf(f, "#define HEIMDAL_DEPRECATED\n");
+    fprintf(f, "#endif\n");
+    fprintf(f, "#endif\n");
+
+    fprintf(f, "#ifndef HEIMDAL_PRINTF_ATTRIBUTE\n");
+    fprintf(f, "#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))\n");
+    fprintf(f, "#define HEIMDAL_PRINTF_ATTRIBUTE(x) __attribute__((format x))\n");
+    fprintf(f, "#else\n");
+    fprintf(f, "#define HEIMDAL_PRINTF_ATTRIBUTE(x)\n");
+    fprintf(f, "#endif\n");
+    fprintf(f, "#endif\n");
+
+    fprintf(f, "#ifndef HEIMDAL_NORETURN_ATTRIBUTE\n");
+    fprintf(f, "#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))\n");
+    fprintf(f, "#define HEIMDAL_NORETURN_ATTRIBUTE __attribute__((noreturn))\n");
+    fprintf(f, "#else\n");
+    fprintf(f, "#define HEIMDAL_NORETURN_ATTRIBUTE\n");
+    fprintf(f, "#endif\n");
+    fprintf(f, "#endif\n");
+
+    fprintf(f, "#ifndef HEIMDAL_UNUSED_ATTRIBUTE\n");
+    fprintf(f, "#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))\n");
+    fprintf(f, "#define HEIMDAL_UNUSED_ATTRIBUTE __attribute__((unused))\n");
+    fprintf(f, "#else\n");
+    fprintf(f, "#define HEIMDAL_UNUSED_ATTRIBUTE\n");
+    fprintf(f, "#endif\n");
+    fprintf(f, "#endif\n");
+
     fprintf(f, "#endif /* %s */\n", hb);
+
+    if (f != stdout)
+	fclose(f);
     return 0;
 }

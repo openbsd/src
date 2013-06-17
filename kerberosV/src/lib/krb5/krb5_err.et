@@ -3,7 +3,7 @@
 #
 # This might look like a com_err file, but is not
 #
-id "$KTH: krb5_err.et,v 1.12 2004/10/14 15:30:29 lha Exp $"
+id "$Id: krb5_err.et,v 1.2 2013/06/17 18:57:44 robert Exp $"
 
 error_table krb5
 
@@ -35,8 +35,10 @@ error_code KEY_EXPIRED,		"Password has expired"
 error_code PREAUTH_FAILED,	"Preauthentication failed"
 error_code PREAUTH_REQUIRED,	"Additional pre-authentication required"
 error_code SERVER_NOMATCH,	"Requested server and ticket don't match"
+error_code KDC_ERR_MUST_USE_USER2USER, "Server principal valid for user2user only"
+error_code PATH_NOT_ACCEPTED,   "KDC Policy rejects transited path"
+error_code SVC_UNAVAILABLE, 	"A service is not available"
 
-# 27-30 are reserved
 index 31
 prefix KRB5KRB_AP
 error_code ERR_BAD_INTEGRITY,	"Decrypt integrity check failed"
@@ -74,35 +76,47 @@ prefix KRB5_KDC_ERR
 error_code CLIENT_NOT_TRUSTED,	"Client not trusted"
 error_code KDC_NOT_TRUSTED,	"KDC not trusted"
 error_code INVALID_SIG,		"Invalid signature"
-error_code KEY_SIZE,		"Key size too small/key too weak"
-error_code CERTIFICATE_MISMATCH, "Certificate mismatch"
+error_code DH_KEY_PARAMETERS_NOT_ACCEPTED, "DH parameters not accepted"
 
+index 68
+prefix KRB5_KDC_ERR
+error_code WRONG_REALM,		"Wrong realm"
+
+index 69
 prefix KRB5_AP_ERR
 error_code USER_TO_USER_REQUIRED, "User to user required"
 
 index 70
-prefix KRB5_KDC_ERROR
+prefix KRB5_KDC_ERR
 error_code CANT_VERIFY_CERTIFICATE, "Cannot verify certificate"
-error_code INVALID_CERTIFICATE,	"Invalid certificate"
-error_code REVOKED_CERTIFICATE,	"Revoked certificate"
+error_code INVALID_CERTIFICATE, "Certificate invalid"
+error_code REVOKED_CERTIFICATE, "Certificate revoked"
 error_code REVOCATION_STATUS_UNKNOWN, "Revocation status unknown"
-error_code REVOCATION_STATUS_UNAVAILABLE, "Revocation status unknown"
-error_code CLIENT_NAME_MISMATCH,	"Client name mismatch"
-index 75
-error_code KDC_NAME_MISMATCH,	"KDC name mismatch"
+error_code REVOCATION_STATUS_UNAVAILABLE, "Revocation status unavaible"
+error_code CLIENT_NAME_MISMATCH, "Client name mismatch in certificate"
+error_code INCONSISTENT_KEY_PURPOSE, "Inconsistent key purpose"
+error_code DIGEST_IN_CERT_NOT_ACCEPTED, "Digest in certificate not accepted"
+error_code PA_CHECKSUM_MUST_BE_INCLUDED, "paChecksum must be included"
+error_code DIGEST_IN_SIGNED_DATA_NOT_ACCEPTED, "Digest in signedData not accepted"
+error_code PUBLIC_KEY_ENCRYPTION_NOT_SUPPORTED, "Public key encryption not supported"
 
-# 76-79 are reserved
+## these are never used
+#index 80
+#prefix KRB5_IAKERB
+#error_code ERR_KDC_NOT_FOUND,	"IAKERB proxy could not find a KDC"
+#error_code ERR_KDC_NO_RESPONSE,	"IAKERB proxy never reeived a response from a KDC"
 
-index 80
-prefix KRB5_IAKERB
-error_code ERR_KDC_NOT_FOUND,	"IAKERB proxy could not find a KDC"
-error_code ERR_KDC_NO_RESPONSE,	"IAKERB proxy never reeived a response from a KDC"
+# 82-93 are reserved
 
-# 82-127 are reserved
+index 94
+error_code INVALID_HASH_ALG, "Invalid OTP digest algorithm"
+error_code INVALID_ITERATION_COUNT, "Invalid OTP iteration count"
+
+# 97-127 are reserved
 
 index 128
 prefix
-error_code KRB5_ERR_RCSID,	"$KTH: krb5_err.et,v 1.12 2004/10/14 15:30:29 lha Exp $"
+error_code KRB5_ERR_RCSID,	"$Id: krb5_err.et,v 1.2 2013/06/17 18:57:44 robert Exp $"
 
 error_code KRB5_LIBOS_BADLOCKFLAG,	"Invalid flag for file lock mode"
 error_code KRB5_LIBOS_CANTREADPWD,	"Cannot read password"
@@ -254,5 +268,7 @@ error_code KRB5_ERR_BAD_S2K_PARAMS, "Invalid key generation parameters from KDC"
 error_code KRB5_ERR_NO_SERVICE,	"Service not available"
 error_code KRB5_CC_NOSUPP,      "Credential cache function not supported"
 error_code KRB5_DELTAT_BADFORMAT,	"Invalid format of Kerberos lifetime or clock skew string"
+error_code KRB5_PLUGIN_NO_HANDLE,	"Supplied data not handled by this plugin"
+error_code KRB5_PLUGIN_OP_NOTSUPP,	"Plugin does not support the operaton"
 
 end

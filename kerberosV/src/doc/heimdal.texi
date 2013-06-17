@@ -1,6 +1,6 @@
 \input texinfo @c -*- texinfo -*-
 @c %**start of header
-@c $KTH: heimdal.texi,v 1.22 2005/04/24 09:18:32 lha Exp $
+@c $Id: heimdal.texi,v 1.5 2013/06/17 18:57:41 robert Exp $
 @setfilename heimdal.info
 @settitle HEIMDAL
 @iftex
@@ -14,13 +14,13 @@
 @syncodeindex pg cp
 @c %**end of header
 
-@c @include version.texi
-@set UPDATED $Date: 2006/04/14 08:15:03 $
-@set EDITION 0.1
-@set VERSION 0.7
+@include vars.texi
+
+@set VERSION @value{PACKAGE_VERSION}
+@set EDITION 1.0
 
 @ifinfo
-@dircategory Heimdal
+@dircategory Security
 @direntry
 * Heimdal: (heimdal).           The Kerberos 5 distribution from KTH
 @end direntry
@@ -31,125 +31,11 @@
 @title Heimdal
 @subtitle Kerberos 5 from KTH
 @subtitle Edition @value{EDITION}, for version @value{VERSION}
-@subtitle 2004
+@subtitle 2008
 @author Johan Danielsson
-@author Love Hörnquist Åstrand
+@author Love HÃ¶rnquist Ã…strand
 @author Assar Westerlund
-@author last updated @value{UPDATED}
 
-@def@copynext{@vskip 20pt plus 1fil@penalty-1000}
-@def@copyrightstart{}
-@def@copyrightend{}
-@page
-@copyrightstart
-Copyright (c) 1997-2005 Kungliga Tekniska Högskolan 
-(Royal Institute of Technology, Stockholm, Sweden).
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-
-3. Neither the name of the Institute nor the names of its contributors
-   may be used to endorse or promote products derived from this software
-   without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGE.
-
-@copynext
-
-Copyright (C) 1990 by the Massachusetts Institute of Technology
-
-Export of this software from the United States of America may
-require a specific license from the United States Government.
-It is the responsibility of any person or organization contemplating
-export to obtain such a license before exporting.
-
-WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
-distribute this software and its documentation for any purpose and
-without fee is hereby granted, provided that the above copyright
-notice appear in all copies and that both that copyright notice and
-this permission notice appear in supporting documentation, and that
-the name of M.I.T. not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.  M.I.T. makes no representations about the suitability of
-this software for any purpose.  It is provided "as is" without express
-or implied warranty.
-
-@copynext
-
-Copyright (c) 1988, 1990, 1993
-     The Regents of the University of California.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-
-3. Neither the name of the University nor the names of its contributors
-   may be used to endorse or promote products derived from this software
-   without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGE.
-
-@copynext
-
-Copyright 1992 Simmule Turner and Rich Salz.  All rights reserved. 
-
-This software is not subject to any license of the American Telephone 
-and Telegraph Company or of the Regents of the University of California. 
-
-Permission is granted to anyone to use this software for any purpose on
-any computer system, and to alter it and redistribute it freely, subject
-to the following restrictions:
-
-1. The authors are not responsible for the consequences of use of this
-   software, no matter how awful, even if they arise from flaws in it.
-
-2. The origin of this software must not be misrepresented, either by
-   explicit claim or by omission.  Since few users ever read sources,
-   credits must appear in the documentation.
-
-3. Altered versions must be plainly marked as such, and must not be
-   misrepresented as being the original software.  Since few users
-   ever read sources, credits must appear in the documentation.
-
-4. This notice may not be removed or altered.
-
-@copyrightend
 @end titlepage
 
 @macro manpage{man, section}
@@ -173,19 +59,73 @@ to the following restrictions:
 @top Heimdal
 @end ifnottex
 
+This manual for version @value{VERSION} of Heimdal.
+
 @menu
 * Introduction::                
 * What is Kerberos?::           
 * Building and Installing::     
 * Setting up a realm::          
-* Applications::          
+* Applications::                
 * Things in search for a better place::  
 * Kerberos 4 issues::           
-* Windows 2000 compatability::
-* Programming with Kerberos::
-* Migration::
+* Windows compatibility::  
+* Programming with Kerberos::   
+* Migration::                   
 * Acknowledgments::             
+* Copyrights and Licenses::
 
+@detailmenu
+ --- The Detailed Node Listing ---
+
+Setting up a realm
+
+* Configuration file::          
+* Creating the database::       
+* Modifying the database::      
+* keytabs::                     
+* Remote administration::       
+* Password changing::           
+* Testing clients and servers::  
+* Slave Servers::               
+* Incremental propagation::     
+* Encryption types and salting::                     
+* Credential cache server - KCM::
+* Cross realm::                 
+* Transit policy::              
+* Setting up DNS::              
+* Using LDAP to store the database::  
+* Providing Kerberos credentials to servers and programs::  
+* Setting up PK-INIT::
+
+Applications
+
+* Authentication modules::      
+* AFS::                         
+
+Authentication modules
+
+* Digital SIA::                 
+* IRIX::                        
+
+Kerberos 4 issues
+
+* Principal conversion issues::  
+* Converting a version 4 database::  
+
+Windows compatibility
+
+* Configuring Windows to use a Heimdal KDC::  
+* Inter-Realm keys (trust) between Windows and a Heimdal KDC::  
+* Create account mappings::     
+* Encryption types::            
+* Authorisation data::          
+* Quirks of Windows 2000 KDC::  
+* Useful links when reading about the Windows::  
+
+Programming with Kerberos
+
+@end detailmenu
 @end menu
 
 @include intro.texi
@@ -199,6 +139,7 @@ to the following restrictions:
 @include programming.texi
 @include migration.texi
 @include ack.texi
+@include copyright.texi
 
 @c @shortcontents
 @contents

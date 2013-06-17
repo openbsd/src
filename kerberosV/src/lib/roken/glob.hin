@@ -37,10 +37,16 @@
 
 #ifndef ROKEN_LIB_FUNCTION
 #ifdef _WIN32
-#define ROKEN_LIB_FUNCTION _stdcall
+#define ROKEN_LIB_FUNCTION
+#define ROKEN_LIB_CALL _stdcall
 #else
 #define ROKEN_LIB_FUNCTION
+#define ROKEN_LIB_CALL
 #endif
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 #define glob_t rk_glob_t
@@ -92,5 +98,9 @@ glob (const char *, int, int (*)(const char *, int), glob_t *);
 
 void ROKEN_LIB_FUNCTION
 globfree (glob_t *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !_GLOB_H_ */
