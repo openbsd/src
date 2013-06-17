@@ -1,8 +1,16 @@
-# $OpenBSD: Makefile,v 1.3 2013/06/17 21:27:16 robert Exp $
+# $OpenBSD: Makefile,v 1.4 2013/06/17 21:47:19 robert Exp $
 
 LIB=	gssapi
 
-GEN=	asn1_ContextFlags.x		\
+GEN_GSSAPI=	asn1_GSSAPIContextToken.x gssapi_asn1-priv.hx gssapi_asn1.hx
+
+GEN_SPNEGO=	asn1_ContextFlags.x asn1_MechType.x asn1_MechTypeList.x asn1_NegHints.x \
+		asn1_NegTokenInit.x asn1_NegTokenInitWin.x asn1_NegTokenResp.x asn1_NegotiationToken.x \
+		asn1_NegotiationTokenWin.x spnego_asn1-priv.hx spnego_asn1.hx
+
+GEN=	${GEN_GSSAPI} ${GEN_SPNEGO}
+
+GGEN=	asn1_ContextFlags.x		\
 	asn1_GSSAPIContextToken.x	\
 	asn1_MechType.x			\
 	asn1_MechTypeList.x		\
@@ -283,13 +291,11 @@ ${i}: ${i:S@__@/@}
 	ln -s ${.ALLSRC} ${.OBJDIR}/${i}
 .endfor
 
-gengssapi: gssapi.asn1
+${GEN_GSSAPI}: gssapi.asn1
 	${ASN1_COMPILE} ${.ALLSRC:M*.asn1} gssapi_asn1
 
-genspnego: spnego.asn1 spnego.opt
+${GEN_SPNEGO}: spnego.asn1 spnego.opt
 	${ASN1_COMPILE} --option-file=${.ALLSRC:M*.opt} ${.ALLSRC:M*.asn1} spnego_asn1
-
-${GEN}: gengssapi genspnego
 
 .SUFFIXES: .h .c .x .hx
 
