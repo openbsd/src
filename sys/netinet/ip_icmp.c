@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.101 2013/06/05 15:22:32 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.102 2013/06/17 02:31:37 lteo Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -1135,13 +1135,8 @@ icmp_do_exthdr(struct mbuf *m, u_int16_t class, u_int8_t ctype, void *buf,
 	n = m_getptr(m, hlen + off, &off);
 	if (n == NULL)
 		panic("icmp_do_exthdr: m_getptr failure");
-	/* this is disgusting, in_cksum() is stupid */
-	n->m_data += off;
-	n->m_len -= off;
-	ieh = mtod(n, struct icmp_ext_hdr *);
-	ieh->ieh_cksum = in_cksum(n, sizeof(hdr) + len);
-	n->m_data -= off;
-	n->m_len += off;
+	ieh = (struct icmp_ext_hdr *)(mtod(n, caddr_t) + off);
+	ieh->ieh_cksum = in4_cksum(n, 0, off, sizeof(hdr) + len);
 
 	ip->ip_len = htons(m->m_pkthdr.len);
 
