@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.51 2013/06/01 20:59:25 dtucker Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.52 2013/06/17 04:48:42 guenther Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -381,6 +381,19 @@ tolocal(int argc, char *argv[])
 	free(user);
 }
 
+int
+do_times(int fd, const struct stat *sb)
+{
+	/* strlen(2^64) == 20; strlen(10^6) == 7 */
+	char buf[(20 + 7 + 2) * 2 + 2];
+
+	(void)snprintf(buf, sizeof(buf), "T%llu 0 %llu 0\n",
+	    (unsigned long long) (sb->st_mtime < 0 ? 0 : sb->st_mtime),
+	    (unsigned long long) (sb->st_atime < 0 ? 0 : sb->st_atime));
+	(void)write(fd, buf, strlen(buf));
+	return (response());
+}
+
 void
 source(int argc, char *argv[])
 {
@@ -427,15 +440,7 @@ syserr:
 		else
 			++last;
 		if (pflag) {
-			/*
-			 * Make it compatible with possible future
-			 * versions expecting microseconds.
-			 */
-			(void)snprintf(buf, sizeof(buf), "T%lu 0 %lu 0\n",
-			    (u_long) (stb.st_mtime < 0 ? 0 : stb.st_mtime),
-			    (u_long) (stb.st_atime < 0 ? 0 : stb.st_atime));
-			(void)write(rem, buf, strlen(buf));
-			if (response() < 0)
+			if (do_times(rem, &stb) < 0)
 				goto next;
 		}
 #define	MODEMASK	(S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
@@ -500,11 +505,7 @@ rsource(char *name, struct stat *statp)
 	else
 		last++;
 	if (pflag) {
-		(void)snprintf(path, sizeof(path), "T%ld 0 %ld 0\n",
-		    (long)statp->st_mtimespec.tv_sec,
-		    (long)statp->st_atimespec.tv_sec);
-		(void)write(rem, path, strlen(path));
-		if (response() < 0) {
+		if (do_times(rem, statp) < 0) {
 			closedir(dirp);
 			return;
 		}
@@ -543,6 +544,7 @@ sink(int argc, char *argv[])
 	enum { YES, NO, DISPLAYED } wrerr;
 	BUF *bp;
 	off_t i, j, size;
+	unsigned long long ull;
 	int amt, count, exists, first, mask, mode, ofd, omode;
 	int setimes, targisdir, wrerrno = 0;
 	char ch, *cp, *np, *targ, *why, *vect[1], buf[BUFSIZ];
@@ -599,17 +601,29 @@ sink(int argc, char *argv[])
 		if (*cp == 'T') {
 			setimes++;
 			cp++;
-			mtime.tv_sec = strtol(cp, &cp, 10);
+			if (!isdigit((unsigned char)*cp))
+				SCREWUP("mtime.sec not present");
+			ull = strtoull(cp, &cp, 10);
 			if (!cp || *cp++ != ' ')
 				SCREWUP("mtime.sec not delimited");
+			if ((time_t)ull < 0 || (time_t)ull != ull)
+				setimes = 0;	/* out of range */
+			mtime.tv_sec = ull;
 			mtime.tv_usec = strtol(cp, &cp, 10);
-			if (!cp || *cp++ != ' ')
+			if (!cp || *cp++ != ' ' || mtime.tv_usec < 0 ||
+			    mtime.tv_usec > 999999)
 				SCREWUP("mtime.usec not delimited");
-			atime.tv_sec = strtol(cp, &cp, 10);
+			if (!isdigit((unsigned char)*cp))
+				SCREWUP("atime.sec not present");
+			ull = strtoull(cp, &cp, 10);
 			if (!cp || *cp++ != ' ')
 				SCREWUP("atime.sec not delimited");
+			if ((time_t)ull < 0 || (time_t)ull != ull)
+				setimes = 0;	/* out of range */
+			atime.tv_sec = ull;
 			atime.tv_usec = strtol(cp, &cp, 10);
-			if (!cp || *cp++ != '\0')
+			if (!cp || *cp++ != '\0' || atime.tv_usec < 0 ||
+			    atime.tv_usec > 999999)
 				SCREWUP("atime.usec not delimited");
 			(void)write(rem, "", 1);
 			continue;
