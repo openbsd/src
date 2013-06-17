@@ -4021,7 +4021,7 @@ EOF
   includeopt="${includeopt} -I$GSSAPI/include/kerberosV"
   # FIXME: This is ugly, but these things don't seem to be standardized.
   if test "$ac_cv_header_gssapi_h" = "yes"; then
-    LIBS="$LIBS -L$GSSAPI/lib -lgssapi -lkrb5 -lcrypto"
+    LIBS="$LIBS -L$GSSAPI/lib -lgssapi -lkrb5 -lcrypto -lheimbase -lhx509 -lasn1 -lwind -lroken -lcom_err -lheimntlm -lpthread"
   else
     LIBS="$LIBS -L$GSSAPI/lib -lgssapi_krb5 -lkrb5 -lcrypto -lcom_err"
   fi
