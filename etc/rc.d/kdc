@@ -1,12 +1,11 @@
 #!/bin/sh
 #
-# $OpenBSD: kdc,v 1.1 2011/07/07 18:17:50 ajacoutot Exp $
+# $OpenBSD: kdc,v 1.2 2013/06/17 19:23:24 ajacoutot Exp $
 
-daemon="/usr/libexec/kdc"
+daemon="/usr/libexec/kdc --detach"
 
 . /etc/rc.d/rc.subr
 
-rc_bg=YES
 rc_reload=NO
 
 rc_cmd $1
