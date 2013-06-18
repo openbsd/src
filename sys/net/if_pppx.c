@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.19 2013/05/31 19:16:52 mpi Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.20 2013/06/18 09:15:13 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -894,7 +894,6 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	ifaddr.sin_addr = req->pr_ip_srcaddr;
 
 	ia = malloc(sizeof (*ia), M_IFADDR, M_WAITOK | M_ZERO);
-	TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
 
 	ia->ia_addr.sin_family = AF_INET;
 	ia->ia_addr.sin_len = sizeof(struct sockaddr_in);
@@ -919,6 +918,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	if (error) {
 		printf("pppx: unable to set addresses for %s, error=%d\n",
 		    ifp->if_xname, error);
+		ifafree(&ia->ia_ifa);
 	} else {
 		dohooks(ifp->if_addrhooks, 0);
 	}
