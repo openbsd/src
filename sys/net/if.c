@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.258 2013/04/02 08:54:37 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.259 2013/06/18 22:42:56 uebayasi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -435,19 +435,13 @@ if_attach_common(struct ifnet *ifp)
 
 	TAILQ_INIT(&ifp->if_addrlist);
 	ifp->if_addrhooks = malloc(sizeof(*ifp->if_addrhooks),
-	    M_TEMP, M_NOWAIT);
-	if (ifp->if_addrhooks == NULL)
-		panic("if_attach_common: malloc");
+	    M_TEMP, M_WAITOK);
 	TAILQ_INIT(ifp->if_addrhooks);
 	ifp->if_linkstatehooks = malloc(sizeof(*ifp->if_linkstatehooks),
-	    M_TEMP, M_NOWAIT);
-	if (ifp->if_linkstatehooks == NULL)
-		panic("if_attach_common: malloc");
+	    M_TEMP, M_WAITOK);
 	TAILQ_INIT(ifp->if_linkstatehooks);
 	ifp->if_detachhooks = malloc(sizeof(*ifp->if_detachhooks),
-	    M_TEMP, M_NOWAIT);
-	if (ifp->if_detachhooks == NULL)
-		panic("if_attach_common: malloc");
+	    M_TEMP, M_WAITOK);
 	TAILQ_INIT(ifp->if_detachhooks);
 }
 
