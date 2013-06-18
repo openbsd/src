@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.206 2013/06/03 17:19:40 yasuoka Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.207 2013/06/18 09:23:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2030,18 +2030,15 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 
 	/* we have to do this by hand to ensure we don't match on ourselves */
 	ia_if = NULL;
-	for (ia = TAILQ_FIRST(&in_ifaddr); ia;
-	    ia = TAILQ_NEXT(ia, ia_list)) {
-
+	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
 		/* and, yeah, we need a multicast-capable iface too */
 		if (ia->ia_ifp != &sc->sc_if &&
 		    ia->ia_ifp->if_type != IFT_CARP &&
 		    (ia->ia_ifp->if_flags & IFF_MULTICAST) &&
 		    ia->ia_ifp->if_rdomain == sc->sc_if.if_rdomain &&
-		    (sin->sin_addr.s_addr & ia->ia_netmask) ==
-		    ia->ia_net) {
-			if (!ia_if)
-				ia_if = ia;
+		    (sin->sin_addr.s_addr & ia->ia_netmask) == ia->ia_net) {
+			ia_if = ia;
+			break;
 		}
 	}
 
