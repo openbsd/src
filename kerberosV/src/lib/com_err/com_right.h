@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: com_right.h,v 1.5 2013/06/17 18:57:42 robert Exp $ */
+/* $Id: com_right.h,v 1.6 2013/06/18 11:02:08 ajacoutot Exp $ */
 
 #ifndef __COM_RIGHT_H__
 #define __COM_RIGHT_H__
@@ -58,6 +58,7 @@
 
 #ifdef __STDC__
 #include <stdarg.h>
+#include <stddef.h>
 #endif
 
 struct error_table {
