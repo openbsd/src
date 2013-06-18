@@ -1292,7 +1292,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE___PROGNAME 1
 
 /* have __sync_add_and_fetch */
-#if defined(__OpenBSD__) && ((defined(__GNUC__) && __GNUC__ < 4) || defined(__arm__) || defined(__hppa__) || defined(__mips__))
+#if defined(__OpenBSD__) && ((defined(__GNUC__) && __GNUC__ < 4) || defined(__arm__) || defined(__hppa__) || defined(__mips__) || defined(__sh__) || (defined(__sparc__) && !defined(__sparc64__)))
 #undef HAVE___SYNC_ADD_AND_FETCH
 #else
 #define HAVE___SYNC_ADD_AND_FETCH 1
