@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.58 2013/06/17 19:23:33 robert Exp $
+#	$OpenBSD: Makefile,v 1.59 2013/06/18 20:27:20 miod Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -26,8 +26,8 @@ CFLAGS+= -DKRB5 -I${DESTDIR}/usr/include/kerberosV -DGSSAPI
 
 .if (${KERBEROS5:L} == "yes")
 DPADD+=  ${LIBGSSAPI} ${LIBKRB5}
-LDADD+=  -lgssapi -lkrb5 -lasn1 -lheimntlm
-LDADD+=  -lhx509 -lwind -lroken -lcom_err -lpthread -lheimbase
+LDADD+=  -lgssapi -lkrb5 -lhx509 -lasn1 -lheimntlm
+LDADD+=  -lwind -lroken -lcom_err -lpthread -lheimbase
 .endif # KERBEROS5
 
 DPADD+=	${LIBCRYPTO} ${LIBZ}

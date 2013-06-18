@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.33 2013/06/17 19:23:33 robert Exp $
+#	$OpenBSD: Makefile,v 1.34 2013/06/18 20:27:20 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -21,8 +21,8 @@ CFLAGS+=-DYP -I${.CURDIR}/../../lib/libc/yp
 SRCS+= krb5_passwd.c
 CFLAGS+= -DKRB5
 DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCRYPTO}
-LDADD+=	-lkrb5 -lasn1 -lcrypto
-LDADD+= -lhx509 -lwind -lroken -lcom_err -lpthread -lheimbase
+LDADD+=	-lkrb5 -lhx509 -lasn1 -lcrypto
+LDADD+= -lwind -lroken -lcom_err -lpthread -lheimbase
 .endif
 
 BINMODE=4555
