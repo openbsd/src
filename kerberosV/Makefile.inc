@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.12 2013/06/18 06:20:14 robert Exp $
+# $OpenBSD: Makefile.inc,v 1.13 2013/06/18 17:27:21 robert Exp $
 
 KRB5DIR=	${.CURDIR}/../../../kerberosV/src
 
@@ -87,7 +87,7 @@ _${group}INS: ${_${group}INCS}
 	    ${.ALLSRC} ${DESTDIR}${${group}DIR}/${${group}NAME}
 .else
 	${INSTALL} -C -o ${${group}OWN} -g ${${group}GRP} -m ${${group}MODE} \
-	    ${.ALLSRC} ${DESTDIR}${${group}DIR}
+	    ${.ALLSRC} ${DESTDIR}${${group}DIR}/
 .endif
 .endif
 
