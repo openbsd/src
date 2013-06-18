@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.232 2013/06/06 15:30:51 bmercer Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.233 2013/06/18 06:18:36 robert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -314,9 +314,19 @@ std             gname=bin uname=root mode=0755
 # ./usr/include/kerberosV
 kerberosV		gname=bin uname=root mode=0755
 
+# ./usr/include/kerberosV/gssapi
+gssapi			gname=bin uname=root mode=0755
+# ./usr/include/kerberosV/gssapi
+..
+
 # ./usr/include/kerberosV/kadm5
 kadm5			gname=bin uname=root mode=0755
 # ./usr/include/kerberosV/kadm5
+..
+
+# ./usr/include/kerberosV/krb5
+krb5			gname=bin uname=root mode=0755
+# ./usr/include/kerberosV/krb5
 ..
 
 # ./usr/include/kerberosV
