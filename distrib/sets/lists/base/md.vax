@@ -7,6 +7,16 @@
 ./usr/lib/gcc-lib/vax-unknown-openbsd5.3/2.95.3/cpp0
 ./usr/lib/gcc-lib/vax-unknown-openbsd5.3/2.95.3/include
 ./usr/lib/gcc-lib/vax-unknown-openbsd5.3/2.95.3/specs
+./usr/lib/libhdb.so.0.0
+./usr/lib/libheimbase.so.0.0
+./usr/lib/libheimntlm.so.0.0
+./usr/lib/libhx509.so.0.0
+./usr/lib/libkadm5clnt.so.0.0
+./usr/lib/libkadm5srv.so.0.0
+./usr/lib/libkafs5.so.0.0
+./usr/lib/libkdc.so.0.0
+./usr/lib/libroken.so.0.0
+./usr/lib/libwind.so.0.0
 ./usr/libdata/perl5/site_perl/vax-openbsd
 ./usr/libdata/perl5/site_perl/vax-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/a.out.ph

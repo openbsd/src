@@ -180,7 +180,6 @@
 ./usr/bin
 ./usr/bin/Mail
 ./usr/bin/a2p
-./usr/bin/afslog
 ./usr/bin/apply
 ./usr/bin/apropos
 ./usr/bin/arch
@@ -282,6 +281,7 @@
 ./usr/bin/hoststat
 ./usr/bin/htdigest
 ./usr/bin/htpasswd
+./usr/bin/hxtool
 ./usr/bin/id
 ./usr/bin/ident
 ./usr/bin/indent
@@ -296,12 +296,18 @@
 ./usr/bin/ipcs
 ./usr/bin/join
 ./usr/bin/jot
-./usr/bin/kauth
+./usr/bin/kadmin
+./usr/bin/kcc
 ./usr/bin/kdestroy
 ./usr/bin/kdump
 ./usr/bin/keynote
+./usr/bin/kf
+./usr/bin/kgetcred
 ./usr/bin/kinit
 ./usr/bin/klist
+./usr/bin/krb5-config
+./usr/bin/ksu
+./usr/bin/kswitch
 ./usr/bin/ktrace
 ./usr/bin/lam
 ./usr/bin/last
@@ -360,7 +366,6 @@
 ./usr/bin/otp-sha1
 ./usr/bin/page
 ./usr/bin/pagesize
-./usr/bin/pagsh
 ./usr/bin/passwd
 ./usr/bin/paste
 ./usr/bin/patch
@@ -425,6 +430,7 @@
 ./usr/bin/skeyinfo
 ./usr/bin/skeyinit
 ./usr/bin/skeyprune
+./usr/bin/slc
 ./usr/bin/slogin
 ./usr/bin/sndiod
 ./usr/bin/sort
@@ -2578,6 +2584,7 @@
 ./usr/libexec/cvs/contrib/rcslock
 ./usr/libexec/cvs/contrib/sccs2rcs
 ./usr/libexec/diff3prog
+./usr/libexec/digest-service
 ./usr/libexec/fingerd
 ./usr/libexec/ftpd
 ./usr/libexec/getty
@@ -2587,7 +2594,11 @@
 ./usr/libexec/ipropd-master
 ./usr/libexec/ipropd-slave
 ./usr/libexec/kadmind
+./usr/libexec/kcm
 ./usr/libexec/kdc
+./usr/libexec/kdigest
+./usr/libexec/kfd
+./usr/libexec/kimpersonate
 ./usr/libexec/kpasswdd
 ./usr/libexec/locate.bigram
 ./usr/libexec/locate.code
@@ -2704,9 +2715,9 @@
 ./usr/sbin/ikectl
 ./usr/sbin/inetd
 ./usr/sbin/iostat
+./usr/sbin/iprop-log
 ./usr/sbin/iscsictl
 ./usr/sbin/iscsid
-./usr/sbin/kadmin
 ./usr/sbin/kstash
 ./usr/sbin/ktutil
 ./usr/sbin/kvm_mkdb
