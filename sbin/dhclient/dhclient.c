@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.256 2013/06/18 00:30:39 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.257 2013/06/18 17:02:41 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -176,6 +176,7 @@ get_ifa(char *cp, int n)
 void
 routehandler(void)
 {
+	char ntoabuf[INET_ADDRSTRLEN];
 	struct in_addr a, b;
 	ssize_t n;
 	int linkstat, rslt;
@@ -236,11 +237,11 @@ routehandler(void)
 		if ((client->flags & IS_RESPONSIBLE) == 0)
 			/* We're not responsible yet! */
 			break;
-		if (adding.s_addr != INADDR_ANY)
-			rslt = asprintf(&errmsg, "%s, not %s, added "
-			    "to %s", inet_ntoa(a), inet_ntoa(adding),
-			    ifi->name);
-		else
+		if (adding.s_addr != INADDR_ANY) {
+			strlcpy(ntoabuf, inet_ntoa(a), sizeof(ntoabuf));
+			rslt = asprintf(&errmsg, "%s, not %s, added to %s",
+			    ntoabuf, inet_ntoa(adding), ifi->name);
+		} else
 			rslt = asprintf(&errmsg, "%s added to %s",
 			    inet_ntoa(a), ifi->name);
 		goto die;
@@ -283,11 +284,11 @@ routehandler(void)
 			quit = INTERNALSIG;
 			break;
 		}
-		if (deleting.s_addr != INADDR_ANY)
-			rslt = asprintf(&errmsg, "%s, not %s, deleted "
-			    "from %s", inet_ntoa(a),
-			    inet_ntoa(deleting), ifi->name);
-		else
+		if (deleting.s_addr != INADDR_ANY) {
+			strlcpy(ntoabuf, inet_ntoa(a), sizeof(ntoabuf));
+			rslt = asprintf(&errmsg, "%s, not %s, deleted from %s",
+			    ntoabuf, inet_ntoa(deleting), ifi->name);
+		} else
 			rslt = asprintf(&errmsg, "%s deleted from %s",
 			    inet_ntoa(a), ifi->name);
 		goto die;
