@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.11 2013/06/17 18:57:39 robert Exp $
+# $OpenBSD: Makefile.inc,v 1.12 2013/06/18 06:20:14 robert Exp $
 
 KRB5DIR=	${.CURDIR}/../../../kerberosV/src
 
@@ -71,11 +71,6 @@ ${group}NAME_${header:T}?=	${header:T}
 .endif
 includes: _${group}INS_${header:T}
 _${group}INS_${header:T}: ${header}
-.if !exists(${${group}DIR})
-	${INSTALL} -d -o root -g bin -m 755 \
-		${${group}DIR}
-.endif
-
 	${INSTALL} -C -o ${${group}OWN_${.ALLSRC:T}} \
 	    -g ${${group}GRP_${.ALLSRC:T}} -m ${${group}MODE_${.ALLSRC:T}} \
 	    ${.ALLSRC} \
@@ -87,10 +82,6 @@ _${group}INCS+= ${header}
 .if !empty(_${group}INCS)
 includes: _${group}INS
 _${group}INS: ${_${group}INCS}
-.if !exists(${${group}DIR})
-	${INSTALL} -d -o root -g bin -m 755 \
-		${${group}DIR}
-.endif
 .if defined(${group}NAME)
 	${INSTALL} -C -o ${${group}OWN} -g ${${group}GRP} -m ${${group}MODE} \
 	    ${.ALLSRC} ${DESTDIR}${${group}DIR}/${${group}NAME}
