@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.186 2013/06/11 16:42:04 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.187 2013/06/18 18:24:15 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -979,6 +979,7 @@ duid_parse(struct disklabel *lp, char *s)
 	if (strlen(s) != 16)
 		return -1;
 
+	memset(duid, 0, sizeof(duid));
 	for (i = 0; i < 16; i++) {
 		c = s[i];
 		if (c >= '0' && c <= '9')
@@ -1359,8 +1360,9 @@ checklabel(struct disklabel *lp)
 		part = 'a' + i;
 		pp = &lp->d_partitions[i];
 		if (DL_GETPSIZE(pp) || DL_GETPOFFSET(pp))
-			warnx("warning, unused partition %c: size %lld offset %lld",
-			    'a' + i, DL_GETPSIZE(pp), DL_GETPOFFSET(pp));
+			warnx("warning, unused partition %c: size %lld "
+			    "offset %lld", part, DL_GETPSIZE(pp),
+			    DL_GETPOFFSET(pp));
 	}
 	return (errors > 0);
 }
