@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.13 2013/06/18 17:27:21 robert Exp $
+# $OpenBSD: Makefile.inc,v 1.14 2013/06/18 17:49:59 robert Exp $
 
 KRB5DIR=	${.CURDIR}/../../../kerberosV/src
 
@@ -71,6 +71,10 @@ ${group}NAME_${header:T}?=	${header:T}
 .endif
 includes: _${group}INS_${header:T}
 _${group}INS_${header:T}: ${header}
+.if !exists(${DESTDIR}${${group}DIR_${.ALLSRC:T}})
+	${INSTALL} -d -o root -g bin -m 755 \
+		${DESTDIR}${${group}DIR_${.ALLSRC:T}}
+.endif
 	${INSTALL} -C -o ${${group}OWN_${.ALLSRC:T}} \
 	    -g ${${group}GRP_${.ALLSRC:T}} -m ${${group}MODE_${.ALLSRC:T}} \
 	    ${.ALLSRC} \
@@ -82,6 +86,10 @@ _${group}INCS+= ${header}
 .if !empty(_${group}INCS)
 includes: _${group}INS
 _${group}INS: ${_${group}INCS}
+.if !exists(${DESTDIR}${${group}DIR})
+	${INSTALL} -d -o root -g bin -m 755 \
+		${DESTDIR}${${group}DIR}
+.endif
 .if defined(${group}NAME)
 	${INSTALL} -C -o ${${group}OWN} -g ${${group}GRP} -m ${${group}MODE} \
 	    ${.ALLSRC} ${DESTDIR}${${group}DIR}/${${group}NAME}
@@ -94,8 +102,5 @@ _${group}INS: ${_${group}INCS}
 .endif # defined(${group}) && !empty(${group})
 .endfor
 .endif
-
-#YACC=bison -by
-#YACC=byacc
 
 .include <bsd.own.mk>
