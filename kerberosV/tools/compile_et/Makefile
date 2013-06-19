@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2013/06/17 19:11:46 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2013/06/19 10:39:00 robert Exp $
 
 PROG=	compile_et
 
@@ -17,6 +17,8 @@ SRCS+=	print_version.c
 
 parse.c parse.h: parse.y
 	${YACC} -d ${.ALLSRC} && mv y.tab.c parse.c && mv y.tab.h parse.h
+
+compile_et.o: parse.h
 
 CFLAGS+= -I${KRB5DIR}/lib/roken -I${KRB5DIR}/lib/com_err -I.
 
