@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2012/08/02 13:38:39 okan Exp $
+#	$OpenBSD: Makefile,v 1.24 2013/06/19 03:51:30 lteo Exp $
 #	$NetBSD: Makefile,v 1.3 1996/05/10 21:54:24 cgd Exp $
 
 LIB=	pcap
@@ -36,7 +36,7 @@ DEFS=	-DHAVE_SYS_IOCCOM_H -DHAVE_SYS_SOCKIO_H -DHAVE_ETHER_HOSTTON \
 
 CFLAGS+=-I. -I${.CURDIR} -Dyylval=pcap_yylval ${DEFS}
 
-HDRS=	pcap.h pcap-int.h pcap-namedb.h
+HDRS=	pcap.h pcap-namedb.h
 SRCS=	pcap.c inet.c gencode.c optimize.c nametoaddr.c etherent.c \
 	savefile.c bpf_filter.c bpf_image.c grammar.y scanner.l \
 	pcap-bpf.c version.c fad-getad.c

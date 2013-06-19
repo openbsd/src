@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.53 2009/11/04 09:43:11 jsing Exp $
+#	$OpenBSD: Makefile,v 1.54 2013/06/19 03:51:30 lteo Exp $
 #
 #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
 # 	The Regents of the University of California.  All rights reserved.
@@ -24,6 +24,9 @@ PROG=	tcpdump
 MAN=	tcpdump.8
 
 CFLAGS+=-Wall -I${.CURDIR}/../../sbin/pfctl -I${.CURDIR}/../hostapd
+
+# for pcap-int.h
+CFLAGS+=-I${.CURDIR}/../../lib/libpcap
 
 CFLAGS+=-DCSLIP -DPPP -DHAVE_FDDI -DETHER_SERVICE -DRETSIGTYPE=void -DHAVE_NET_SLIP_H -DHAVE_ETHER_NTOHOST -DINET6
 
