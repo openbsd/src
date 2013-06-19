@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2013/06/17 19:11:35 robert Exp $
+# $OpenBSD: Makefile,v 1.1 2013/06/19 07:06:22 ajacoutot Exp $
 
 PROG=	kdigest
 MAN=	kdigest.8
