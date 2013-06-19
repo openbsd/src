@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.94 2013/03/14 16:05:19 ajacoutot Exp $
+.\" $OpenBSD: ports.7,v 1.95 2013/06/19 08:59:02 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: March 14 2013 $
+.Dd $Mdocdate: June 19 2013 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -251,6 +251,11 @@ See
 .Ev FETCH_CMD
 and
 .Ev MASTER_SITE_OVERRIDE .
+Use
+.Xr dpb
+with option
+.Fl F
+to quickly fetch distfiles for a subtree.
 .It Ar checksum
 Verify that the fetched distfile matches the one the port was tested against.
 Defining
