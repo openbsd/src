@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.75 2013/06/18 20:27:20 miod Exp $
+#	$OpenBSD: Makefile,v 1.76 2013/06/19 05:27:07 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -19,6 +19,7 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	roaming_common.c roaming_serv.c sandbox-systrace.c
 
 .include <bsd.own.mk> # for KERBEROS and AFS
+KERBEROS5=no
 
 .if (${KERBEROS5:L} == "yes")
 CFLAGS+=-DKRB5 -I${DESTDIR}/usr/include/kerberosV -DGSSAPI
