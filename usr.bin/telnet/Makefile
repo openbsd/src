@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2013/06/18 20:27:20 miod Exp $
+#	$OpenBSD: Makefile,v 1.27 2013/06/19 19:46:43 robert Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -46,8 +46,8 @@ SRCS=	authenc.c commands.c main.c network.c ring.c sys_bsd.c telnet.c \
 .if (${KERBEROS5:L} == "yes")
 CFLAGS+=-DENCRYPTION -DAUTHENTICATION -DKRB5 -DDES_ENCRYPTION
 DPADD+= ${LIBKRB5} ${LIBASN1} ${LIBCRYPTO}
-LDADD+= -lkrb5 -lhx509 -lasn1 -lcrypto
-LDADD+= -lwind -lroken -lcom_err -lpthread -lheimbase
+LDADD+= -lkrb5 -lasn1 -lcrypto
+LDADD+= -lwind -lroken -lcom_err -lheimbase
 SRCS+= kerberos5.c enc_des.c
 .endif
 
