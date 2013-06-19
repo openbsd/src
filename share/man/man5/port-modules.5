@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.160 2013/04/16 13:17:40 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.161 2013/06/19 09:17:29 espie Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 16 2013 $
+.Dd $Mdocdate: June 19 2013 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -207,6 +207,43 @@ right after the normal
 .Ar post-install
 behavior.
 .El
+.Pp
+Some targets, such as
+.Ar do-build
+or
+.Ar do-install ,
+can't be overridden simply.
+A module that, for instance, requires specific
+.Ar do-build
+behavior should do so in two steps:
+.Bl -bullet
+.It
+Define a variable named
+.Ev MODFOO_BUILD_TARGET
+that contains the commands necessary for
+.Ar do-build :
+.Bd -literal -offset indent
+MODFOO_BUILD_TARGET = cmd1; cmd2
+.Ed
+.It
+Override
+.Ar do-build
+only if it's not already defined by the port proper:
+.Bd -literal -offset indent
+\&.if !target(do-build)
+do-build:
+	@${MODFOO_BUILD_TARGET}
+\&.endif
+.Ed
+.El
+That way, if several modules require specific actions for those targets,
+the end user can choose the appropriate order in which to run the actions:
+.Bd -literal -offset indent
+do-build:
+	@${MODBAR_BUILD_TARGET}
+	@${MODFOO_BUILD_TARGET}
+	...
+.Ed
 .Sh OVERRIDING VARIABLE BEHAVIOR
 Some variables can be overridden by modules.
 Be very cautious, as this can make the module difficult to use,
