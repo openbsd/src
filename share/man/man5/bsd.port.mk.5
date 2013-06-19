@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.376 2013/05/09 15:05:52 rpe Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.377 2013/06/19 08:56:32 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 9 2013 $
+.Dd $Mdocdate: June 19 2013 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -332,6 +332,13 @@ which will also retrieve
 .Ev SUPDISTFILES ,
 to fill with supplementary distribution files which are not needed for
 every configuration.
+.Pp
+Note that fetching a significant number of distfiles, or fetching all distfiles
+relevant to a port and dependencies is better accomplished using
+.Xr dpb 8
+with the
+.Fl F
+option.
 .Pp
 Use of
 .Ar {pre,do,post}-fetch
