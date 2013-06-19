@@ -1,4 +1,4 @@
-#	$OpenBSD: regress.t,v 1.13 2013/06/16 12:17:20 millert Exp $
+#	$OpenBSD: regress.t,v 1.14 2013/06/19 12:19:03 millert Exp $
 
 #
 # The first 39 of these tests are from the old Bugs script.
@@ -603,7 +603,6 @@ expected-stdout:
 name: regression-39
 description:
 	set -e: errors in command substitutions aren't ignored
-expected-fail: yes
 arguments: !-e!
 stdin:
 	echo `false; echo hi`
