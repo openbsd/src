@@ -2118,7 +2118,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/x509v3.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/panel.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/paths.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/pcap-namedb.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/pcap.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/pmmintrin.ph

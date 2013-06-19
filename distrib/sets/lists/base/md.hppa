@@ -2084,7 +2084,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/x509v3.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/panel.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/paths.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/pcap-namedb.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/pcap.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/poll.ph

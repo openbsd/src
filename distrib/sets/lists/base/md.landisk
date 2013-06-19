@@ -2036,7 +2036,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/x509v3.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/panel.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/paths.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/pcap-namedb.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/pcap.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/poll.ph

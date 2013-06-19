@@ -1576,7 +1576,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/openssl/x509v3.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/panel.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/paths.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/pcap-namedb.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/pcap.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/poll.ph

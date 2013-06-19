@@ -1312,7 +1312,6 @@
 ./usr/include/openssl/x509v3.h
 ./usr/include/panel.h
 ./usr/include/paths.h
-./usr/include/pcap-int.h
 ./usr/include/pcap-namedb.h
 ./usr/include/pcap.h
 ./usr/include/poll.h

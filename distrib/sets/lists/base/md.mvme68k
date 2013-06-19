@@ -1978,7 +1978,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/openssl/x509v3.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/panel.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/paths.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/pcap-namedb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/pcap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/poll.ph

@@ -1365,7 +1365,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/x509v3.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/panel.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/paths.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/pcap-namedb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/pcap.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/poll.ph

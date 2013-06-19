@@ -2099,7 +2099,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/x509v3.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/panel.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/paths.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/pcap-namedb.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/pcap.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/poll.ph

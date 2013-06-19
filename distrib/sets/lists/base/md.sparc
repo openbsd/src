@@ -1516,7 +1516,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/x509v3.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/panel.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/paths.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/pcap-namedb.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/pcap.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/poll.ph

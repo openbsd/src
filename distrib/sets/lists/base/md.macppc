@@ -2086,7 +2086,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/x509v3.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/panel.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/paths.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/pcap-namedb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/pcap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/poll.ph

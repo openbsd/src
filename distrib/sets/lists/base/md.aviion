@@ -1593,7 +1593,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/x509v3.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/panel.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/paths.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/pcap-namedb.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/pcap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/poll.ph
