@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: get_s.c,v 1.2 2013/06/17 18:57:43 robert Exp $");
+RCSID("$Id: get_s.c,v 1.3 2013/06/19 19:36:53 robert Exp $");
 
 static kadm5_ret_t
 add_tl_data(kadm5_principal_ent_t ent, int16_t type,
@@ -223,7 +223,9 @@ kadm5_s_get_principal(void *server_handle,
     }
     if(mask & KADM5_TL_DATA) {
 	time_t last_pw_expire;
+#ifdef PKINIT
 	const HDB_Ext_PKINIT_acl *acl;
+#endif
 	const HDB_Ext_Aliases *aliases;
 
 	ret = hdb_entry_get_pw_change_time(&ent.entry, &last_pw_expire);
@@ -252,6 +254,7 @@ kadm5_s_get_principal(void *server_handle,
 	    krb5_clear_error_message(context->context);
 	}
 
+#ifdef PKINIT
 	ret = hdb_entry_get_pkinit_acl(&ent.entry, &acl);
 	if (ret == 0 && acl) {
 	    krb5_data buf;
@@ -277,6 +280,7 @@ kadm5_s_get_principal(void *server_handle,
 	    kadm5_free_principal_ent(context, out);
 	    goto out;
 	}
+#endif
 
 	ret = hdb_entry_get_aliases(&ent.entry, &aliases);
 	if (ret == 0 && aliases) {

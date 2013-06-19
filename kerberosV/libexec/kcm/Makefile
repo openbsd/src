@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2013/06/17 19:11:35 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2013/06/19 19:36:48 robert Exp $
 
 PROG=	kcm
 MAN=	kcm.8
@@ -21,8 +21,8 @@ CFLAGS+=-I${KRB5DIR}/lib/krb5 -I${KRB5DIR}/lib/asn1 -I${KRB5DIR}/lib/roken \
 	-I${KRB5DIR}/kcm -I${KRB5DIR}/lib/ipc ${LDAPCFLAGS}
 DPADD=	${LIBHDB} ${LIBKRB5} ${LIBROKEN} ${LIBASN1} ${LIBHEIMNTLM} \
 	${LIBHEIMIPCS} ${LIBCRYPTO} ${LIBCRYPT} ${LIBVERS} ${LDAPDPADD}
-LDADD=	-lhdb -lkrb5 -lroken -lasn1 -lheimntlm ${LIBHEIMIPCS} -lpthread \
-	-lcrypto ${LIBVERS} -lhx509 -lwind -lcom_err -lwind \
+LDADD=	-lhdb -lkrb5 -lroken -lasn1 -lheimntlm ${LIBHEIMIPCS} \
+	-lcrypto ${LIBVERS} -lwind -lcom_err -lwind \
 	-lheimbase -lutil
 
 .include <bsd.prog.mk>

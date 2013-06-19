@@ -203,7 +203,7 @@ hdb_clear_extension(krb5_context context,
     return 0;
 }
 
-
+#ifdef PKINIT
 krb5_error_code
 hdb_entry_get_pkinit_acl(const hdb_entry *entry, const HDB_Ext_PKINIT_acl **a)
 {
@@ -245,6 +245,7 @@ hdb_entry_get_pkinit_cert(const hdb_entry *entry, const HDB_Ext_PKINIT_cert **a)
 
     return 0;
 }
+#endif /* PKINIT */
 
 krb5_error_code
 hdb_entry_get_pw_change_time(const hdb_entry *entry, time_t *t)

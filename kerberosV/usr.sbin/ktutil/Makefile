@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.18 2013/06/17 18:57:46 robert Exp $
+# $OpenBSD: Makefile,v 1.19 2013/06/19 19:37:00 robert Exp $
 
 PROG=	ktutil
 MAN=	ktutil.8
@@ -19,8 +19,8 @@ SRCS=	add.c \
 CFLAGS+=-I${KRB5DIR}/lib/roken -I${KRB5DIR}/lib/sl -I.
 DPADD=	${LIBKADM5CLNT} ${LIBKRB5} ${LIBSL} ${LIBROKEN} ${LIBVERS} \
 	${LIBASN1} ${LIBCRYPTO} ${LIBCRYPT} ${LIBEDIT}
-LDADD=	-lkadm5clnt -lkrb5 ${LIBSL} -lroken ${LIBVERS} -lpthread \
-	-lasn1 -lcrypto -ledit -lheimbase -lhx509 -lwind -lcom_err \
+LDADD=	-lkadm5clnt -lkrb5 ${LIBSL} -lroken ${LIBVERS} \
+	-lasn1 -lcrypto -ledit -lheimbase -lwind -lcom_err \
 	-lcurses
 
 .include <bsd.prog.mk>

@@ -140,6 +140,7 @@ hdb_entry_get_password (
 	const hdb_entry */*entry*/,
 	char **/*p*/);
 
+#ifdef PKINIT
 krb5_error_code
 hdb_entry_get_pkinit_acl (
 	const hdb_entry */*entry*/,
@@ -154,6 +155,7 @@ krb5_error_code
 hdb_entry_get_pkinit_hash (
 	const hdb_entry */*entry*/,
 	const HDB_Ext_PKINIT_hash **/*a*/);
+#endif /* PKINIT */
 
 krb5_error_code
 hdb_entry_get_pw_change_time (

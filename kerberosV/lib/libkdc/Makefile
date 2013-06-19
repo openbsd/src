@@ -1,7 +1,6 @@
-#$OpenBSD: Makefile,v 1.1 2013/06/17 19:11:35 robert Exp $
+#$OpenBSD: Makefile,v 1.2 2013/06/19 19:36:44 robert Exp $
 
 LIB=	kdc
-LDFLAGS=	-Wl,--no-undefined
 
 INCS=	kdc.h \
 	kdc-protos.h
@@ -13,13 +12,10 @@ INCSGROUPS=	INCS KRB5INCS
 SRCS=	\
 	default_config.c \
 	set_dbinfo.c \
-	digest.c \
 	kerberos5.c \
 	krb5tgs.c \
-	pkinit.c \
 	log.c \
 	misc.c \
-	kx509.c \
 	process.c \
 	windc.c
 

@@ -258,6 +258,7 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
 		     (int)tl->tl_data_length,
 		     (const char *)tl->tl_data_contents);
 	    break;
+#ifdef PKINIT
 	case KRB5_TL_PKINIT_ACL: {
 	    HDB_Ext_PKINIT_acl acl;
 	    size_t size;
@@ -291,6 +292,7 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
 	    free_HDB_Ext_PKINIT_acl(&acl);
 	    break;
 	}
+#endif
 	case KRB5_TL_ALIASES: {
 	    HDB_Ext_Aliases alias;
 	    size_t size;

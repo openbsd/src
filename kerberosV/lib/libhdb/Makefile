@@ -1,8 +1,6 @@
-# $OpenBSD: Makefile,v 1.1 2013/06/17 19:11:35 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2013/06/19 19:36:44 robert Exp $
 
 LIB=	hdb
-LDFLAGS=	-Wl,--no-undefined
-VERSION_MAP=	${KRB5DIR}/lib/hdb/version-script.map
 
 MAN=	HDB.3 hdb_entry_ex.3
 
@@ -64,9 +62,6 @@ GEN=	asn1_Salt.x \
 	asn1_Event.x \
 	asn1_HDBFlags.x \
 	asn1_GENERATION.x \
-	asn1_HDB_Ext_PKINIT_acl.x \
-	asn1_HDB_Ext_PKINIT_cert.x \
-	asn1_HDB_Ext_PKINIT_hash.x \
 	asn1_HDB_Ext_Constrained_delegation_acl.x \
 	asn1_HDB_Ext_Lan_Manager_OWF.x \
 	asn1_HDB_Ext_Password.x \
@@ -87,7 +82,7 @@ ${GEN}: hdb.asn1
 
 .SUFFIXES: .h .c .x .hx
 
-.x.c:   
+.x.c:
 	cmp -s ${.IMPSRC} ${.TARGET} 2> /dev/null || cp ${.IMPSRC} ${.TARGET}
 
 .hx.h:

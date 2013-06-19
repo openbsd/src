@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2013/06/17 19:11:46 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2013/06/19 19:36:56 robert Exp $
 
 SCRIPTS=krb5-config
 MAN=	krb5-config.1
@@ -15,15 +15,15 @@ krb5-config: krb5-config.in
 	    -e "s,@LIB_crypt\@,,g" \
 	    -e "s,@LIB_dbopen\@,,g" \
 	    -e "s,@LIB_hcrypto_appl\@,-lcrypto,g" \
-	    -e "s,@LIB_pkinit\@,-lhx509,g" \
+	    -e "s,@LIB_pkinit\@,,g" \
 	    -e "s,@LIB_dlopen\@,,g" \
 	    -e "s,@LIB_door_create\@,,g" \
-	    -e "s,@PTHREAD_LIBADD\@,-lpthread,g" \
+	    -e "s,@PTHREAD_LIBADD\@,,g" \
 	    -e "s,@LIBS\@,,g" \
 	    -e "s,@INCLUDE_hcrypto@,,g" \
 	    ${.ALLSRC} > ${.TARGET}
 
-beforeinstall: ${SCRIPTS} 
+beforeinstall: ${SCRIPTS}
 .for script in ${SCRIPTS}
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 		${.OBJDIR}/${script} ${DESTDIR}${BINDIR}/${script:R}

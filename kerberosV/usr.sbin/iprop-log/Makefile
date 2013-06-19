@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2013/06/17 19:11:46 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2013/06/19 19:36:58 robert Exp $
 
 PROG=	iprop-log
 MAN=	iprop-log.8
@@ -11,7 +11,7 @@ CFLAGS+=	-I${KRB5DIR}/lib/kadm5 \
 DPADD=	${LIBKADM5SRV} ${LIBHDB} ${LIBKRB5} ${LIBASN1} ${LIBCRYPTO} \
 	${LIBCRYPT} ${LIBSL} ${LIBROKEN} ${LIBVERS} ${LIBEDIT}
 LDADD=	-lkadm5srv -lhdb -lkrb5 -lasn1 -lcrypto ${LIBSL} -lroken \
-	${LIBVERS} -ledit -lhx509 -lwind -lheimbase -lpthread \
+	${LIBVERS} -ledit -lwind -lheimbase \
 	-lcurses -lcom_err
 
 iprop-commands.h: iprop-commands.in

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2013/06/17 19:11:35 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2013/06/19 19:36:45 robert Exp $
 
 PROG=	digest-service
 NOMAN=	1
@@ -11,8 +11,8 @@ CFLAGS+=	-I${KRB5DIR}/kdc \
 DPADD=	${LIBHDB} ${LIBKDC} ${LIBHEIMIPCS} ${LIBKRB5} ${LIBROKEN} ${LIBASN1} ${LIBCRYPTO} \
 	${LIBCRYPT} ${LIBVERS}
 LDADD=	-lhdb -lkdc ${LIBHEIMIPCS} -lkrb5 -lroken -lasn1 -lcrypto \
-	${LIBVERS} -lheimntlm -lcom_err -lhx509 \
-	-lheimbase -lwind -lpthread
+	${LIBVERS} -lheimntlm -lcom_err \
+	-lheimbase -lwind
 
 .include <bsd.prog.mk>
 

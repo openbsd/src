@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2013/06/17 19:11:35 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2013/06/19 19:36:45 robert Exp $
 
 LIB=	krb5
 LDFLAGS=	-Wl,--no-undefined
@@ -519,12 +519,10 @@ SRCS=	acache.c \
 	crypto-des3.c \
 	crypto-evp.c \
 	crypto-null.c \
-	crypto-pk.c \
 	crypto-rand.c \
 	crypto.c \
 	data.c \
 	deprecated.c \
-	digest.c \
 	doxygen.c \
 	eai_to_heim_errno.c \
 	error_string.c \

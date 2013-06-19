@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.7 2013/06/19 07:06:20 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.8 2013/06/19 19:36:45 robert Exp $
 
-SUBDIR=	digest-service ipropd-master ipropd-slave hprop hpropd kadmind kdc \
-	kfd kpasswdd kcm
+SUBDIR=	ipropd-master ipropd-slave hprop hpropd kadmind kdc \
+	kfd kpasswdd
 
 .include <bsd.subdir.mk>

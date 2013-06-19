@@ -1,14 +1,14 @@
-# $OpenBSD: Makefile,v 1.4 2013/06/17 21:47:19 robert Exp $
+# $OpenBSD: Makefile,v 1.5 2013/06/19 19:36:43 robert Exp $
 
 LIB=	gssapi
 
 GEN_GSSAPI=	asn1_GSSAPIContextToken.x gssapi_asn1-priv.hx gssapi_asn1.hx
 
-GEN_SPNEGO=	asn1_ContextFlags.x asn1_MechType.x asn1_MechTypeList.x asn1_NegHints.x \
-		asn1_NegTokenInit.x asn1_NegTokenInitWin.x asn1_NegTokenResp.x asn1_NegotiationToken.x \
-		asn1_NegotiationTokenWin.x spnego_asn1-priv.hx spnego_asn1.hx
+#GEN_SPNEGO=	asn1_ContextFlags.x asn1_MechType.x asn1_MechTypeList.x asn1_NegHints.x \
+#		asn1_NegTokenInit.x asn1_NegTokenInitWin.x asn1_NegTokenResp.x asn1_NegotiationToken.x \
+#		asn1_NegotiationTokenWin.x spnego_asn1-priv.hx spnego_asn1.hx
 
-GEN=	${GEN_GSSAPI} ${GEN_SPNEGO}
+GEN=	${GEN_GSSAPI} #${GEN_SPNEGO}
 
 GGEN=	asn1_ContextFlags.x		\
 	asn1_GSSAPIContextToken.x	\
@@ -156,47 +156,13 @@ spnegosrc = \
 	spnego/external.c \
 	spnego/init_sec_context.c
 
-ntlmsrc = \
-	ntlm/accept_sec_context.c \
-	ntlm/acquire_cred.c \
-	ntlm/add_cred.c \
-	ntlm/canonicalize_name.c \
-	ntlm/compare_name.c \
-	ntlm/context_time.c \
-	ntlm/creds.c \
-	ntlm/crypto.c \
-	ntlm/delete_sec_context.c \
-	ntlm/display_name.c \
-	ntlm/display_status.c \
-	ntlm/duplicate_name.c \
-	ntlm/export_name.c \
-	ntlm/export_sec_context.c \
-	ntlm/external.c \
-	ntlm/import_name.c \
-	ntlm/import_sec_context.c \
-	ntlm/indicate_mechs.c \
-	ntlm/init_sec_context.c \
-	ntlm/inquire_context.c \
-	ntlm/inquire_cred_by_mech.c \
-	ntlm/inquire_mechs_for_name.c \
-	ntlm/inquire_names_for_mech.c \
-	ntlm/inquire_sec_context_by_oid.c \
-	ntlm/iter_cred.c \
-	ntlm/process_context_token.c \
-	ntlm/release_cred.c \
-	ntlm/release_name.c \
-	ntlm/kdc.c
-
-NTLMSRC=	${ntlmsrc:S@/@__@}
 KRB5SRC=	${krb5src:S@/@__@}
 MECHSRC=	${mechsrc:S@/@__@}
-SPNEGOSRC=	${spnegosrc:S@/@__@}
+#SPNEGOSRC=	${spnegosrc:S@/@__@}
 
 
 SRCS=	${KRB5SRC} \
 	${MECHSRC} \
-	${SPNEGOSRC} \
-	${NTLMSRC} \
 	gkrb5_err.c \
 	gkrb5_err.h \
 	${GEN:S/.x$/.c/:S/.hx$/.h/}
@@ -209,15 +175,13 @@ OIDINCSDIR=	${INCLUDEDIR}/gssapi
 KRB5INCS=	gssapi.h gssapi_krb5.h
 KRB5INCSDIR=	${INCLUDEDIR}/gssapi
 
-SPNEGOINCS=	gssapi_spnego.h
-SPNEGOINCSDIR=	${INCLUDEDIR}/gssapi
+#SPNEGOINCS=	gssapi_spnego.h
+#SPNEGOINCSDIR=	${INCLUDEDIR}/gssapi
 
-INCSGROUPS=	INCS OIDINCS KRB5INCS SPNEGOINCS
+INCSGROUPS=	INCS OIDINCS KRB5INCS #SPNEGOINCS
 
 GEN+=		gssapi_asn1.hx \
-		gssapi_asn1-priv.hx \
-		spnego_asn1.hx \
-		spnego_asn1-priv.hx
+		gssapi_asn1-priv.hx
 
 MAN=		gssapi.3 \
 		gss_acquire_cred.3 \
@@ -274,8 +238,6 @@ CFLAGS+=-I${KRB5DIR}/lib/gssapi
 CFLAGS+=-I${KRB5DIR}/lib/gssapi/gssapi
 CFLAGS+=-I${KRB5DIR}/lib/gssapi/krb5
 CFLAGS+=-I${KRB5DIR}/lib/gssapi/mech
-CFLAGS+=-I${KRB5DIR}/lib/gssapi/ntlm
-CFLAGS+=-I${KRB5DIR}/lib/gssapi/spnego
 CFLAGS+=-I${KRB5DIR}/lib/krb5
 CFLAGS+=-I${KRB5DIR}/lib/asn1
 CFLAGS+=-I${KRB5DIR}/lib/roken -I.
@@ -283,7 +245,7 @@ CFLAGS+=-I${KRB5DIR}/lib/roken -I.
 CLEANFILES=	${GEN} ${GEN:S/.x$/.c/:S/.hx$/.h/} gssapi_asn1_files spnego_asn1_files \
 		gssapi_asn1-template.c spnego_asn1-template.c
 
-.for i in ${KRB5SRC} ${MECHSRC} ${SPNEGOSRC} ${NTLMSRC}
+.for i in ${KRB5SRC} ${MECHSRC}
 CLEANFILES+=$i
 SRCS+=$i
 
@@ -293,9 +255,6 @@ ${i}: ${i:S@__@/@}
 
 ${GEN_GSSAPI}: gssapi.asn1
 	${ASN1_COMPILE} ${.ALLSRC:M*.asn1} gssapi_asn1
-
-${GEN_SPNEGO}: spnego.asn1 spnego.opt
-	${ASN1_COMPILE} --option-file=${.ALLSRC:M*.opt} ${.ALLSRC:M*.asn1} spnego_asn1
 
 .SUFFIXES: .h .c .x .hx
 
@@ -310,4 +269,4 @@ ${GEN_SPNEGO}: spnego.asn1 spnego.opt
 .SUFFIXES: .h .c .x .hx
 
 .PATH: ${KRB5DIR}/lib/gssapi/gssapi ${KRB5DIR}/lib/gssapi ${KRB5DIR}/lib/gssapi/krb5 ${KRB5DIR}/lib/gssapi/mech \
-	${KRB5DIR}/lib/gssapi/spnego ${KRB5DIR}/lib/ntlm
+	${KRB5DIR}/lib/gssapi/spnego

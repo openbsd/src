@@ -145,6 +145,7 @@ add_aliases(krb5_context contextp, kadm5_principal_ent_rec *princ,
     add_tl(princ, KRB5_TL_EXTENSION, &buf);
 }
 
+#ifdef PKINIT
 static void
 add_pkinit_acl(krb5_context contextp, kadm5_principal_ent_rec *princ,
 	       struct getarg_strings *strings)
@@ -184,6 +185,7 @@ add_pkinit_acl(krb5_context contextp, kadm5_principal_ent_rec *princ,
 
     add_tl(princ, KRB5_TL_EXTENSION, &buf);
 }
+#endif
 
 static int
 do_mod_entry(krb5_principal principal, void *data)
@@ -230,10 +232,12 @@ do_mod_entry(krb5_principal principal, void *data)
 	    add_aliases(context, &princ, &e->alias_strings);
 	    mask |= KADM5_TL_DATA;
 	}
+#ifdef PKINIT
 	if (e->pkinit_acl_strings.num_strings) {
 	    add_pkinit_acl(context, &princ, &e->pkinit_acl_strings);
 	    mask |= KADM5_TL_DATA;
 	}
+#endif
 
     } else
 	ret = edit_entry(&princ, &mask, NULL, 0);

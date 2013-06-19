@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.14 2013/06/18 17:49:59 robert Exp $
+# $OpenBSD: Makefile.inc,v 1.15 2013/06/19 19:36:41 robert Exp $
 
 KRB5DIR=	${.CURDIR}/../../../kerberosV/src
 
@@ -20,7 +20,6 @@ ETSRCS=	\
 	${KRB5DIR}/lib/krb5/krb5_err.et \
 	${KRB5DIR}/lib/krb5/krb_err.et \
 	${KRB5DIR}/lib/gssapi/krb5/gkrb5_err.et \
-	${KRB5DIR}/lib/hx509/hx509_err.et \
 	${KRB5DIR}/lib/wind/wind_err.et \
 	${KRB5DIR}/lib/ntlm/ntlm_err.et
 

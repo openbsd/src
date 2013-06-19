@@ -1,15 +1,14 @@
-# $OpenBSD: Makefile,v 1.1 2013/06/19 07:06:22 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.2 2013/06/19 19:36:59 robert Exp $
 
 PROG=	kimpersonate
 MAN=	kimpersonate.8
-CFLAGS+=	-I${KRB5DIR}/lib/hx509 \
-		-I${KRB5DIR}/lib/asn1 \
+CFLAGS+=	-I${KRB5DIR}/lib/asn1 \
 		-I${KRB5DIR}/lib/roken \
 		-I${KRB5DIR}/lib/sl -I.
 DPADD=	${LIBKAFS5} ${LIBKRB5} ${LIBHEIMNTLM} ${LIBROKEN} ${LIBASN1} ${LIBCRYPTO} \
 	${LIBCRYPT} ${LIBVERS}
-LDADD=	-lkafs5 -lkrb5 -lheimntlm -lroken -lasn1 -lcrypto -lpthread \
-	${LIBVERS} -lhx509 -lcom_err -lheimbase -lwind
+LDADD=	-lkafs5 -lkrb5 -lroken -lasn1 -lcrypto \
+	${LIBVERS} -lcom_err -lheimbase -lwind
 
 .include <bsd.prog.mk>
 

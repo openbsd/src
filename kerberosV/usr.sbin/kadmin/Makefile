@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.22 2013/06/19 07:06:22 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.23 2013/06/19 19:36:58 robert Exp $
 
 PROG=	kadmin
 MAN=	kadmin.8
@@ -30,9 +30,9 @@ DPADD=	${LIBKADM5CLNT} ${LIBKADM5SRV} ${LIBHDB} ${LIBKRB5} ${LIBHX509} \
 	${LIBSL} ${LIBROKEN} ${LIBVERS} ${LIBASN1} \
 	${LIBCRYPTO} ${LIBCRYPT} ${LIBCOM_ERR} \
 	${LIBEDIT} ${LIBNCURSES} ${LDAPDPADD}
-LDADD=	-lkadm5clnt -lkadm5srv -lhdb -lkrb5 -lhx509 \
+LDADD=	-lkadm5clnt -lkadm5srv -lhdb -lkrb5 \
 	${LIBSL} -lroken ${LIBVERS} -lasn1 \
-	-lcrypto -lcom_err -lpthread \
+	-lcrypto -lcom_err \
 	-ledit -lncurses -lwind -lheimbase
 
 .include <bsd.prog.mk>

@@ -76,13 +76,13 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define DIAGNOSTICS 1
 
 /* Define to enable DIGEST. */
-#define DIGEST 1
+/* #undef DIGEST */
 
 /* Define if want to use the weak AFS string to key functions. */
 #define ENABLE_AFS_STRING_TO_KEY 1
 
 /* Define if you want have a thread safe libraries */
-#define ENABLE_PTHREAD_SUPPORT 1
+/* #undef ENABLE_PTHREAD_SUPPORT */
 
 /* Define if you want encryption support in telnet. */
 #define ENCRYPTION 1
@@ -1308,7 +1308,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define KRB5 1
 
 /* Define to enable kx509. */
-#define KX509 1
+/* #undef KX509 */
 
 /* path to lib */
 #define LIBDIR "/usr/lib"
@@ -1466,7 +1466,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define PACKAGE_VERSION "1.5.2"
 
 /* Define to enable PKINIT. */
-#define PKINIT 1
+/* #undef PKINIT */
 
 /* Define if getlogin has POSIX flavour (and not BSD). */
 /* #undef POSIX_GETLOGIN */
@@ -1633,3 +1633,5 @@ struct sockaddr_in;
 #define LOGIN_PATH BINDIR "/login"
 #endif
 
+/* Disable NTLM support */
+#define NO_NTLM 1

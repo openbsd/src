@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2013/06/17 18:57:39 robert Exp $
+# $OpenBSD: Makefile,v 1.8 2013/06/19 19:36:49 robert Exp $
 
 PROG=	kfd
 MAN=	kfd.8
@@ -7,7 +7,7 @@ CFLAGS+=	-I${KRB5DIR}/lib/asn1 \
 DPADD=	${LIBKRB5} ${LIBROKEN} ${LIBASN1} ${LIBCRYPTO} \
 	${LIBCRYPT} ${LIBVERS}
 LDADD=	-lkrb5 -lroken -lasn1 -lcrypto \
-	${LIBVERS} -lhx509 -lcom_err -lpthread \
+	${LIBVERS} -lcom_err \
 	-lwind -lheimbase
 
 .include <bsd.prog.mk>
