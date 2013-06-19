@@ -1,4 +1,4 @@
-#	$OpenBSD: obsd-regress.t,v 1.3 2013/06/16 12:17:20 millert Exp $
+#	$OpenBSD: obsd-regress.t,v 1.4 2013/06/19 14:04:42 millert Exp $
 
 #
 # ksh regression tests from OpenBSD
@@ -256,3 +256,10 @@ expected-stdout:
 	
 ---
 
+name: empty-for-list
+description:
+	A for list which expands to zero items should not execute the body.
+stdin:
+	set foo bar baz ; for out in ; do echo $out ; done
+
+---
