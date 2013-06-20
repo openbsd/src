@@ -1,0 +1,34 @@
+.TH SPACE-ESCT-MAN 1 2013-06-20 OpenBSD
+.SH NAME
+SPACE-T-MAN \- the t escape sequence in pages with man macros
+.SH DESCRIPTION
+In plain text:
+.br
+single	tab
+.br
+single\tescape-t
+.br
+double		tab
+.br
+double\t\tescape-t
+.br
+\tThis line starts with escape-t and comes close to the right margin.
+\tThe next line starts with escape-t as well.
+.sp
+In a literal display:
+.nf
+single	tab
+single\tescape-t
+double		tab
+double\t\tescape-t
+.fi
+.sp
+After the IP macro:
+.IP single	tab 3n
+text
+.IP single\tescape-t 3n
+text
+.PP
+After font macros:
+.br
+.B single\ttab
