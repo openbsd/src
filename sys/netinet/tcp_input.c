@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.263 2013/06/09 22:03:06 yasuoka Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.264 2013/06/20 20:21:20 mikeb Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4020,12 +4020,12 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	if (win > TCP_MAXWIN)
 		win = TCP_MAXWIN;
 
+	bzero(&tb, sizeof(tb));
 #ifdef TCP_SIGNATURE
 	if (optp || (tp->t_flags & TF_SIGNATURE)) {
 #else
 	if (optp) {
 #endif
-		bzero(&tb, sizeof(tb));
 		tb.pf = tp->pf;
 #ifdef TCP_SACK
 		tb.sack_enable = tp->sack_enable;
@@ -4039,8 +4039,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		if (tcp_dooptions(&tb, optp, optlen, th, m, iphlen, oi,
 		    sotoinpcb(so)->inp_rtableid))
 			return (-1);
-	} else
-		tb.t_flags = 0;
+	}
 
 	switch (src->sa_family) {
 #ifdef INET
