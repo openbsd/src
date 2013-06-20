@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.42 2012/10/05 17:17:04 camield Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.43 2013/06/20 09:38:24 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -2017,9 +2017,8 @@ bstp_add(struct bstp_state *bs, struct ifnet *ifp)
 	bstp_update_roles(bs, bp);
 
 	/* Register callback for physical link state changes */
-	if (ifp->if_linkstatehooks != NULL)
-		bp->bp_lhcookie = hook_establish(ifp->if_linkstatehooks, 1,
-		    bstp_ifstate, ifp);
+	bp->bp_lhcookie = hook_establish(&ifp->if_linkstatehooks, 1,
+	    bstp_ifstate, ifp);
 
 	return (bp);
 }
@@ -2033,8 +2032,8 @@ bstp_delete(struct bstp_port *bp)
 	if (!bp->bp_active)
 		panic("not a bstp member");
 
-	if (ifp != NULL && ifp->if_linkstatehooks != NULL)
-		hook_disestablish(ifp->if_linkstatehooks, bp->bp_lhcookie);
+	if (ifp != NULL)
+		hook_disestablish(&ifp->if_linkstatehooks, bp->bp_lhcookie);
 
 	LIST_REMOVE(bp, bp_next);
 	bp->bp_bs = NULL;

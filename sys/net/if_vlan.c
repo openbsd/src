@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.95 2013/04/02 08:54:37 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.96 2013/06/20 09:38:24 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -448,11 +448,11 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	LIST_INSERT_HEAD(&tagh[TAG_HASH(tag)], ifv, ifv_list);
 
 	/* Register callback for physical link state changes */
-	ifv->lh_cookie = hook_establish(p->if_linkstatehooks, 1,
+	ifv->lh_cookie = hook_establish(&p->if_linkstatehooks, 1,
 	    vlan_vlandev_state, ifv);
 
 	/* Register callback if parent wants to unregister */
-	ifv->dh_cookie = hook_establish(p->if_detachhooks, 1,
+	ifv->dh_cookie = hook_establish(&p->if_detachhooks, 1,
 	    vlan_ifdetach, ifv);
 
 	vlan_vlandev_state(ifv);
@@ -484,10 +484,10 @@ vlan_unconfig(struct ifnet *ifp, struct ifnet *newp)
 	s = splnet();
 	LIST_REMOVE(ifv, ifv_list);
 	if (ifv->lh_cookie != NULL)
-		hook_disestablish(p->if_linkstatehooks, ifv->lh_cookie);
+		hook_disestablish(&p->if_linkstatehooks, ifv->lh_cookie);
 	/* The cookie is NULL if disestablished externally */
 	if (ifv->dh_cookie != NULL)
-		hook_disestablish(p->if_detachhooks, ifv->dh_cookie);
+		hook_disestablish(&p->if_detachhooks, ifv->dh_cookie);
 	/* Reset link state */
 	if (newp != NULL) {
 		ifp->if_link_state = LINK_STATE_INVALID;

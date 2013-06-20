@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.207 2013/06/18 09:23:33 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.208 2013/06/20 09:38:24 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -904,7 +904,7 @@ carp_clone_create(ifc, unit)
 #endif
 
 	/* Hook carp_addr_updated to cope with address and route changes. */
-	sc->ah_cookie = hook_establish(sc->sc_if.if_addrhooks, 0,
+	sc->ah_cookie = hook_establish(&sc->sc_if.if_addrhooks, 0,
 	    carp_addr_updated, sc);
 	carp_set_state_all(sc, INIT);
 
@@ -991,10 +991,10 @@ carpdetach(struct carp_softc *sc)
 
 	s = splnet();
 	if (sc->ah_cookie != NULL)
-		hook_disestablish(sc->sc_if.if_addrhooks, sc->ah_cookie);
+		hook_disestablish(&sc->sc_if.if_addrhooks, sc->ah_cookie);
 	if (sc->sc_carpdev != NULL) {
 		if (sc->lh_cookie != NULL)
-			hook_disestablish(sc->sc_carpdev->if_linkstatehooks,
+			hook_disestablish(&sc->sc_carpdev->if_linkstatehooks,
 			    sc->lh_cookie);
 		cif = (struct carp_if *)sc->sc_carpdev->if_carp;
 		TAILQ_REMOVE(&cif->vhif_vrs, sc, sc_list);
@@ -1887,7 +1887,7 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 			sc->sc_if.if_flags |= IFF_UP;
 		carp_set_enaddr(sc);
 		s = splnet();
-		sc->lh_cookie = hook_establish(ifp->if_linkstatehooks, 1,
+		sc->lh_cookie = hook_establish(&ifp->if_linkstatehooks, 1,
 		    carp_carpdev_state, ifp);
 		carp_carpdev_state(ifp);
 		splx(s);

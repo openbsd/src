@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.78 2013/06/17 11:58:16 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.79 2013/06/20 09:38:24 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -343,7 +343,7 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		in_ifscrub(ifp, ia);
 		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), newifaddr);
 		if (!error)
-			dohooks(ifp->if_addrhooks, 0);
+			dohooks(&ifp->if_addrhooks, 0);
 		else if (newifaddr) {
 			splx(s);
 			goto cleanup;
@@ -393,7 +393,7 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 			error = in_ifinit(ifp, ia, &ifra->ifra_addr, newifaddr);
 		}
 		if (!error)
-			dohooks(ifp->if_addrhooks, 0);
+			dohooks(&ifp->if_addrhooks, 0);
 		else if (newifaddr) {
 			splx(s);
 			goto cleanup;
@@ -425,7 +425,7 @@ cleanup:
 		ia->ia_ifp = NULL;
 		ifafree((&ia->ia_ifa));
 		if (!error)
-			dohooks(ifp->if_addrhooks, 0);
+			dohooks(&ifp->if_addrhooks, 0);
 		splx(s);
 		return (error);
 		}

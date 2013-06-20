@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.259 2013/06/18 22:42:56 uebayasi Exp $	*/
+/*	$OpenBSD: if.c,v 1.260 2013/06/20 09:38:24 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -432,17 +432,10 @@ if_attach(struct ifnet *ifp)
 void
 if_attach_common(struct ifnet *ifp)
 {
-
 	TAILQ_INIT(&ifp->if_addrlist);
-	ifp->if_addrhooks = malloc(sizeof(*ifp->if_addrhooks),
-	    M_TEMP, M_WAITOK);
-	TAILQ_INIT(ifp->if_addrhooks);
-	ifp->if_linkstatehooks = malloc(sizeof(*ifp->if_linkstatehooks),
-	    M_TEMP, M_WAITOK);
-	TAILQ_INIT(ifp->if_linkstatehooks);
-	ifp->if_detachhooks = malloc(sizeof(*ifp->if_detachhooks),
-	    M_TEMP, M_WAITOK);
-	TAILQ_INIT(ifp->if_detachhooks);
+	TAILQ_INIT(&ifp->if_addrhooks);
+	TAILQ_INIT(&ifp->if_linkstatehooks);
+	TAILQ_INIT(&ifp->if_detachhooks);
 }
 
 void
@@ -503,7 +496,7 @@ if_detach(struct ifnet *ifp)
 	ifp->if_watchdog = if_detached_watchdog;
 
 	/* Call detach hooks, ie. to remove vlan interfaces */
-	dohooks(ifp->if_detachhooks, HOOK_REMOVE | HOOK_FREE);
+	dohooks(&ifp->if_detachhooks, HOOK_REMOVE | HOOK_FREE);
 
 #if NTRUNK > 0
 	if (ifp->if_type == IFT_IEEE8023ADLAG)
@@ -607,10 +600,6 @@ do { \
 	ifp->if_lladdr->ifa_ifp = NULL;
 	ifafree(ifp->if_lladdr);
 	ifp->if_lladdr = NULL;
-
-	free(ifp->if_addrhooks, M_TEMP);
-	free(ifp->if_linkstatehooks, M_TEMP);
-	free(ifp->if_detachhooks, M_TEMP);
 
 	for (dp = domains; dp; dp = dp->dom_next) {
 		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])
@@ -1118,7 +1107,7 @@ if_link_state_change(struct ifnet *ifp)
 #ifndef SMALL_KERNEL
 	rt_if_track(ifp);
 #endif
-	dohooks(ifp->if_linkstatehooks, 0);
+	dohooks(&ifp->if_linkstatehooks, 0);
 }
 
 /*

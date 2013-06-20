@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.64 2012/12/28 17:52:06 gsoares Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.65 2013/06/20 09:38:24 mpi Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -219,7 +219,7 @@ pfi_attach_ifnet(struct ifnet *ifp)
 	kif->pfik_ifp = ifp;
 	ifp->if_pf_kif = (caddr_t)kif;
 
-	if ((kif->pfik_ah_cookie = hook_establish(ifp->if_addrhooks, 1,
+	if ((kif->pfik_ah_cookie = hook_establish(&ifp->if_addrhooks, 1,
 	    pfi_kifaddr_update, kif)) == NULL)
 		panic("pfi_attach_ifnet: cannot allocate '%s' address hook",
 		    ifp->if_xname);
@@ -240,7 +240,7 @@ pfi_detach_ifnet(struct ifnet *ifp)
 
 	s = splsoftnet();
 	pfi_update++;
-	hook_disestablish(ifp->if_addrhooks, kif->pfik_ah_cookie);
+	hook_disestablish(&ifp->if_addrhooks, kif->pfik_ah_cookie);
 	pfi_kif_update(kif);
 
 	kif->pfik_ifp = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.142 2013/04/02 08:54:37 mpi Exp $	*/
+/*	$OpenBSD: if.h,v 1.143 2013/06/20 09:38:24 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -59,6 +59,7 @@ __END_DECLS
 
 #if __BSD_VISIBLE
 
+#include <sys/systm.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
 
@@ -264,9 +265,9 @@ struct ifnet {				/* and the entries */
 	TAILQ_ENTRY(ifnet) if_txlist;	/* list of ifnets ready to tx */
 	TAILQ_HEAD(, ifaddr) if_addrlist; /* linked list of addresses per if */
 	TAILQ_HEAD(, ifg_list) if_groups; /* linked list of groups per if */
-	struct hook_desc_head *if_addrhooks; /* address change callbacks */
-	struct hook_desc_head *if_linkstatehooks; /* link change callbacks */
-	struct hook_desc_head *if_detachhooks; /* detach callbacks */
+	struct hook_desc_head if_addrhooks; /* address change callbacks */
+	struct hook_desc_head if_linkstatehooks; /* link change callbacks */
+	struct hook_desc_head if_detachhooks; /* detach callbacks */
 	char	if_xname[IFNAMSIZ];	/* external name (name + unit) */
 	int	if_pcount;		/* number of promiscuous listeners */
 	caddr_t	if_bpf;			/* packet filter structure */

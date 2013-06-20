@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.198 2013/05/10 11:36:24 mikeb Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.199 2013/06/20 09:38:24 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -367,7 +367,7 @@ pfsync_clone_destroy(struct ifnet *ifp)
 #endif
 	if (sc->sc_sync_if)
 		hook_disestablish(
-		    sc->sc_sync_if->if_linkstatehooks,
+		    &sc->sc_sync_if->if_linkstatehooks,
 		    sc->sc_lhcookie);
 	if_detach(ifp);
 
@@ -1350,7 +1350,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (pfsyncr.pfsyncr_syncdev[0] == 0) {
 			if (sc->sc_sync_if)
 				hook_disestablish(
-				    sc->sc_sync_if->if_linkstatehooks,
+				    &sc->sc_sync_if->if_linkstatehooks,
 				    sc->sc_lhcookie);
 			sc->sc_sync_if = NULL;
 			if (imo->imo_num_memberships > 0) {
@@ -1375,7 +1375,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		if (sc->sc_sync_if)
 			hook_disestablish(
-			    sc->sc_sync_if->if_linkstatehooks,
+			    &sc->sc_sync_if->if_linkstatehooks,
 			    sc->sc_lhcookie);
 		sc->sc_sync_if = sifp;
 
@@ -1421,7 +1421,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ip->ip_dst.s_addr = sc->sc_sync_peer.s_addr;
 
 		sc->sc_lhcookie =
-		    hook_establish(sc->sc_sync_if->if_linkstatehooks, 1,
+		    hook_establish(&sc->sc_sync_if->if_linkstatehooks, 1,
 		    pfsync_syncdev_state, sc);
 
 		pfsync_request_full_update(sc);
