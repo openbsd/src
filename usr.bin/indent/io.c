@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.11 2009/10/27 23:59:39 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.12 2013/06/20 06:28:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
@@ -458,9 +458,11 @@ pad_output(int current, int target)
 	if (current >= target)
 	    return (current);	/* line is already long enough */
 	curr = current;
-	while ((tcur = ((curr - 1) & tabmask) + tabsize + 1) <= target) {
-	    putc('\t', output);
-	    curr = tcur;
+	if (use_tabs) {
+		while ((tcur = ((curr - 1) & tabmask) + tabsize + 1) <= target) {
+			putc('\t', output);
+			curr = tcur;
+		}
 	}
 	while (curr++ < target)
 	    putc(' ', output);	/* pad with final blanks */

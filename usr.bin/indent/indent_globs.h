@@ -1,4 +1,4 @@
-/* *	$OpenBSD: indent_globs.h,v 1.10 2003/06/25 21:24:53 deraadt Exp $*/
+/* *	$OpenBSD: indent_globs.h,v 1.11 2013/06/20 06:28:15 jsg Exp $*/
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
  * Copyright (c) 1980, 1993
@@ -198,6 +198,8 @@ int         extra_expression_indent;	/* True if continuation lines from the
 					 * indented an extra tab stop so that
 					 * they don't conflict with the code
 					 * that follows */
+int	    use_tabs;			/* set true to use tabs for spacing,
+					 * false uses all spaces */
 
 /* -troff font state information */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent.c,v 1.20 2009/10/27 23:59:39 deraadt Exp $	*/
+/*	$OpenBSD: indent.c,v 1.21 2013/06/20 06:28:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -73,6 +73,7 @@ main(int argc, char **argv)
 				 * without the matching : in a <c>?<s>:<s>
 				 * construct */
     char 	*t_ptr;		/* used for copying tokens */
+    int         tabs_to_var;	/* true if using tabs to indent to var name */
     int         type_code;	/* the type of token, returned by lexi */
 
     int         last_else = 0;	/* true iff last keyword was an else */
@@ -891,6 +892,7 @@ check_type:
 	     * : i);
 	     */
 	    dec_ind = ps.decl_indent > 0 ? ps.decl_indent : i;
+	    tabs_to_var = (use_tabs ? ps.decl_indent > 0 : 0);
 	    goto copy_id;
 
 	case ident:		/* got an identifier or constant */
@@ -907,12 +909,43 @@ check_type:
 			    ps.dumped_decl_indent = 1;
 			    e_code += strlen(e_code);
 			    CHECK_SIZE_CODE;
-			}
-			else
-			    while ((e_code - s_code) < dec_ind) {
+			} else {
+			    int cur_dec_ind;
+			    int pos, startpos;
+
+			    /*
+			     * in order to get the tab math right for
+			     * indentations that are not multiples of 8 we
+			     * need to modify both startpos and dec_ind
+			     * (cur_dec_ind) here by eight minus the
+			     * remainder of the current starting column
+			     * divided by eight. This seems to be a
+			     * properly working fix
+			     */
+			    startpos = e_code - s_code;
+			    cur_dec_ind = dec_ind;
+			    pos = startpos;
+			    if ((ps.ind_level * ps.ind_size) % 8 != 0) {
+				pos += (ps.ind_level * ps.ind_size) % 8;
+				cur_dec_ind += (ps.ind_level * ps.ind_size) % 8;
+			    }
+
+			    if (tabs_to_var) {
+				while ((pos & ~7) + 8 <= cur_dec_ind) {
+				    CHECK_SIZE_CODE;
+				    *e_code++ = '\t';
+				    pos = (pos & ~7) + 8;
+				}
+			    }
+			    while (pos < cur_dec_ind) {
 				CHECK_SIZE_CODE;
 				*e_code++ = ' ';
+				pos++;
 			    }
+			    if (ps.want_blank && e_code - s_code == startpos)
+				*e_code++ = ' ';
+			    ps.want_blank = false;
+			}
 		    }
 		}
 		else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.15 2009/10/27 23:59:39 deraadt Exp $	*/
+/*	$OpenBSD: args.c,v 1.16 2013/06/20 06:28:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -135,6 +135,7 @@ struct pro {
 	{"nps", PRO_BOOL, false, OFF, &pointer_as_binop },
 	{"nsc", PRO_BOOL, true, OFF, &star_comment_cont },
 	{"nsob", PRO_BOOL, false, OFF, &swallow_optional_blanklines },
+	{"nut", PRO_BOOL, true, OFF, &use_tabs},
 	{"nv", PRO_BOOL, false, OFF, &verbose },
 	{"pcs", PRO_BOOL, false, ON, &proc_calls_space },
 	{"psl", PRO_BOOL, true, ON, &procnames_start_line },
@@ -143,6 +144,7 @@ struct pro {
 	{"sob", PRO_BOOL, false, ON, &swallow_optional_blanklines },
 	{"st", PRO_SPECIAL, 0, STDIN, 0 },
 	{"troff", PRO_BOOL, false, ON, &troff },
+	{"ut", PRO_BOOL, true, ON, &use_tabs},
 	{"v", PRO_BOOL, false, ON, &verbose },
 	/* whew! */
 	{ 0, 0, 0, 0, 0 }
