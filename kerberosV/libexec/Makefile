@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.8 2013/06/19 19:36:45 robert Exp $
+# $OpenBSD: Makefile,v 1.9 2013/06/20 07:16:22 robert Exp $
 
 SUBDIR=	ipropd-master ipropd-slave hprop hpropd kadmind kdc \
-	kfd kpasswdd
+	kfd kpasswdd kcm
 
 .include <bsd.subdir.mk>

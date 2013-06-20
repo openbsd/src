@@ -33,7 +33,9 @@
  */
 
 #include "kcm_locl.h"
+#ifndef NO_NTLM
 #include <heimntlm.h>
+#endif
 
 static void
 kcm_drop_default_cache(krb5_context context, kcm_client *client, char *name);
@@ -1410,6 +1412,7 @@ kcm_op_del_ntlm_cred(krb5_context context,
     return ret;
 }
 
+#ifndef NO_NTLM
 /*
  * { "DO_NTLM_AUTH",		NULL },
  *
@@ -1691,6 +1694,7 @@ kcm_op_get_ntlm_user_list(krb5_context context,
     }
     return krb5_store_uint32(response, 0);
 }
+#endif
 
 /*
  *
@@ -1723,9 +1727,11 @@ static struct kcm_op kcm_ops[] = {
     { "SET_KDC_OFFSET",      	kcm_op_set_kdc_offset },
     { "ADD_NTLM_CRED",		kcm_op_add_ntlm_cred },
     { "HAVE_USER_CRED",		kcm_op_have_ntlm_cred },
+#ifndef NO_NTLM
     { "DEL_NTLM_CRED",		kcm_op_del_ntlm_cred },
     { "DO_NTLM_AUTH",		kcm_op_do_ntlm },
     { "GET_NTLM_USER_LIST",	kcm_op_get_ntlm_user_list }
+#endif
 };
 
 
