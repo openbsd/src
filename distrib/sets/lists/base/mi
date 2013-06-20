@@ -281,7 +281,6 @@
 ./usr/bin/hoststat
 ./usr/bin/htdigest
 ./usr/bin/htpasswd
-./usr/bin/hxtool
 ./usr/bin/id
 ./usr/bin/ident
 ./usr/bin/indent
@@ -296,7 +295,6 @@
 ./usr/bin/ipcs
 ./usr/bin/join
 ./usr/bin/jot
-./usr/bin/kadmin
 ./usr/bin/kcc
 ./usr/bin/kdestroy
 ./usr/bin/kdump
@@ -306,7 +304,6 @@
 ./usr/bin/kinit
 ./usr/bin/klist
 ./usr/bin/krb5-config
-./usr/bin/ksu
 ./usr/bin/kswitch
 ./usr/bin/ktrace
 ./usr/bin/lam
@@ -2584,7 +2581,6 @@
 ./usr/libexec/cvs/contrib/rcslock
 ./usr/libexec/cvs/contrib/sccs2rcs
 ./usr/libexec/diff3prog
-./usr/libexec/digest-service
 ./usr/libexec/fingerd
 ./usr/libexec/ftpd
 ./usr/libexec/getty
@@ -2594,11 +2590,8 @@
 ./usr/libexec/ipropd-master
 ./usr/libexec/ipropd-slave
 ./usr/libexec/kadmind
-./usr/libexec/kcm
 ./usr/libexec/kdc
-./usr/libexec/kdigest
 ./usr/libexec/kfd
-./usr/libexec/kimpersonate
 ./usr/libexec/kpasswdd
 ./usr/libexec/locate.bigram
 ./usr/libexec/locate.code
@@ -2718,6 +2711,8 @@
 ./usr/sbin/iprop-log
 ./usr/sbin/iscsictl
 ./usr/sbin/iscsid
+./usr/sbin/kadmin
+./usr/sbin/kimpersonate
 ./usr/sbin/kstash
 ./usr/sbin/ktutil
 ./usr/sbin/kvm_mkdb

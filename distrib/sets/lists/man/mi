@@ -2818,9 +2818,7 @@
 ./usr/share/man/man8/iscsid.8
 ./usr/share/man/man8/kadmin.8
 ./usr/share/man/man8/kadmind.8
-./usr/share/man/man8/kcm.8
 ./usr/share/man/man8/kdc.8
-./usr/share/man/man8/kdigest.8
 ./usr/share/man/man8/kerberos.8
 ./usr/share/man/man8/kfd.8
 ./usr/share/man/man8/kgmon.8
