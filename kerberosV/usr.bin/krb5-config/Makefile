@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2013/06/19 19:36:56 robert Exp $
+# $OpenBSD: Makefile,v 1.3 2013/06/20 08:41:22 ajacoutot Exp $
 
 SCRIPTS=krb5-config
 MAN=	krb5-config.1
@@ -12,6 +12,7 @@ krb5-config: krb5-config.in
 	    -e "s,@exec_prefix\@,/usr,g" \
 	    -e "s,@libdir\@,${LIBDIR},g" \
 	    -e "s,@includedir\@,${INCLUDEDIR},g" \
+	    -e "s,-lheimntlm,,g" \
 	    -e "s,@LIB_crypt\@,,g" \
 	    -e "s,@LIB_dbopen\@,,g" \
 	    -e "s,@LIB_hcrypto_appl\@,-lcrypto,g" \
