@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.82 2013/05/30 08:58:38 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.83 2013/06/20 19:48:32 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ CompatMake(void *gnp,	/* The node to make */
 			return;
 		}
 
-		/* All the children were made ok. Now youngest poinst to
+		/* All the children were made ok. Now youngest points to
 		 * the newest child, we need to find out
 		 * if we exist and when we were modified last. The criteria
 		 * for datedness are defined by the Make_OODate function.  */
