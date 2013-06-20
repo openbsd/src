@@ -115,11 +115,11 @@ static char *Pserver_Repos = NULL;
    CVSROOT/config.  */
 int system_auth = 1;
 
+# endif /* AUTH_SERVER_SUPPORT */
+
 /* Should we disable Update-prog/Checkin-prog? Can be changed by
    CVSROOT/config.  */
 int disable_x_prog = 0;
-
-# endif /* AUTH_SERVER_SUPPORT */
 
 
 /* While processing requests, this buffer accumulates data to be sent to
