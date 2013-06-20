@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.103 2013/06/20 09:38:24 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.104 2013/06/20 12:03:40 mpi Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4751,7 +4751,7 @@ sppp_set_ip_addrs(void *arg1, void *arg2)
 			}
 		}
 		if (!(error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0)))
-			dohooks(&ifp->if_addrhooks, 0);
+			dohooks(ifp->if_addrhooks, 0);
 		if (debug && error) {
 			log(LOG_DEBUG, SPP_FMT "sppp_set_ip_addrs: in_ifinit "
 			" failed, error=%d\n", SPP_ARGS(ifp), error);
@@ -4812,7 +4812,7 @@ sppp_clear_ip_addrs(void *arg1, void *arg2)
 			/* replace peer addr in place */
 			dest->sin_addr.s_addr = sp->ipcp.saved_hisaddr;
 		if (!(error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0)))
-			dohooks(&ifp->if_addrhooks, 0);
+			dohooks(ifp->if_addrhooks, 0);
 		if (debug && error) {
 			log(LOG_DEBUG, SPP_FMT "sppp_clear_ip_addrs: in_ifinit "
 			" failed, error=%d\n", SPP_ARGS(ifp), error);
@@ -4912,7 +4912,7 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 	if (ifa && sin6) {
 		struct sockaddr_in6 new_sin6 = *sin6;
 		bcopy(src, &new_sin6.sin6_addr, sizeof(new_sin6.sin6_addr));
-		dohooks(&ifp->if_addrhooks, 0);
+		dohooks(ifp->if_addrhooks, 0);
 	}
 }
 #endif

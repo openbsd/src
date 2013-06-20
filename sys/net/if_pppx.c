@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.21 2013/06/20 09:38:24 mpi Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.22 2013/06/20 12:03:40 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -920,7 +920,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 		    ifp->if_xname, error);
 		ifafree(&ia->ia_ifa);
 	} else {
-		dohooks(&ifp->if_addrhooks, 0);
+		dohooks(ifp->if_addrhooks, 0);
 	}
 	splx(s);
 
