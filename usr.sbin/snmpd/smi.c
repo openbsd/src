@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.8 2012/09/17 16:43:59 reyk Exp $	*/
+/*	$OpenBSD: smi.c,v 1.9 2013/06/21 07:07:55 gerhard Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -124,6 +124,7 @@ smi_delete(struct oid *oid)
 {
 	struct oid	 key, *value;
 
+	bzero(&key, sizeof(key));
 	bcopy(&oid->o_id, &key.o_id, sizeof(struct ber_oid));
 	if ((value = RB_FIND(oidtree, &smi_oidtree, &key)) != NULL &&
 	    value == oid)
@@ -145,6 +146,7 @@ smi_insert(struct oid *oid)
 	if ((oid->o_flags & OID_TABLE) && oid->o_get == NULL)
 		fatalx("smi_insert: invalid MIB table");
 
+	bzero(&key, sizeof(key));
 	bcopy(&oid->o_id, &key.o_id, sizeof(struct ber_oid));
 	value = RB_FIND(oidtree, &smi_oidtree, &key);
 	if (value != NULL)
