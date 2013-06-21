@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_fork.c,v 1.7 2013/06/01 20:47:40 tedu Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.8 2013/06/21 06:50:49 guenther Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -40,6 +40,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "thread_private.h"	/* in libc/include */
 
@@ -67,6 +68,7 @@ _dofork(int is_vfork)
 	pthread_t me;
 	pid_t (*sys_fork)(void);
 	pid_t newid;
+	sigset_t nmask, omask;
 
 	sys_fork = is_vfork ? &_thread_sys_vfork : &_thread_sys_fork;
 
@@ -93,15 +95,20 @@ _dofork(int is_vfork)
 	_thread_arc4_lock();
 
 #if defined(__ELF__)
-	if (_DYNAMIC)
+	if (_DYNAMIC) {
+		sigfillset(&nmask);
+		_thread_sys_sigprocmask(SIG_BLOCK, &nmask, &omask);
 		_rthread_bind_lock(0);
+	}
 #endif
 
 	newid = sys_fork();
 
 #if defined(__ELF__)
-	if (_DYNAMIC)
+	if (_DYNAMIC) {
 		_rthread_bind_lock(1);
+		_thread_sys_sigprocmask(SIG_SETMASK, &omask, NULL);
+	}
 #endif
 
 	_thread_arc4_unlock();
