@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.16 2013/06/21 14:12:26 ajacoutot Exp $
+# $OpenBSD: Makefile.inc,v 1.17 2013/06/21 17:02:20 robert Exp $
 
 KRB5DIR=	${.CURDIR}/../../../kerberosV/src
 
@@ -24,14 +24,14 @@ ETSRCS=	\
 	${KRB5DIR}/lib/ntlm/ntlm_err.et
 
 .for ET in ${ETSRCS}
-.for _ET in ${ET:T:R}
-.if ${SRCS:M${_ET}.[ch]} != ""
+.  for _ET in ${ET:T:R}
+.    if ${SRCS:M${_ET}.[ch]} != ""
 .ORDER: ${_ET}.c ${_ET}.h
 ${_ET}.c ${_ET}.h: ${ET}
 	${COMPILE_ET} ${.ALLSRC}
 CLEANFILES+=	${_ET}.h ${_ET}.c
-.endif
-.endfor
+.    endif
+.  endfor
 .endfor
 
 .endif # defined(SRCS)
@@ -46,8 +46,8 @@ INCLUDEDIR?=	/usr/include/kerberosV
 INCSDIR?=	${INCLUDEDIR}
 
 .if !target(includes)
-.for group in ${INCSGROUPS}
-.if defined(${group}) && !empty(${group})
+.  for group in ${INCSGROUPS}
+.    if defined(${group}) && !empty(${group})
 
 ${group}OWN?=	${BINOWN}
 ${group}GRP?=	${BINGRP}
@@ -55,51 +55,48 @@ ${group}MODE?=	${BINMODE}
 ${group}DIR?=	/usr/include
 
 _${group}INCS=
-.for header in ${${group}}
-.if defined(${group}OWN_${header:T}) || defined(${group}GRP_${header:T}) || \
+.      for header in ${${group}}
+.        if defined(${group}OWN_${header:T}) || defined(${group}GRP_${header:T}) || \
             defined(${group}MODE_${header:T}) || defined(${group}DIR_${header:T}) || \
             defined(${group}NAME_${header:T})
-${group}OWN_${header:T}?=	${${group}OWN}
-${group}GRP_${header:T}?=	${${group}GRP}
-${group}MODE_${header:T}?=	${${group}MODE}
-${group}DIR_${header:T}?=	${${group}DIR}
-.if defined(${group}NAME)
-${group}NAME_${header:T}?=	${${group}NAME}
-.else
-${group}NAME_${header:T}?=	${header:T}
-.endif
+${group}OWN_${header:T} ?=	${${group}OWN}
+${group}GRP_${header:T} ?=	${${group}GRP}
+${group}MODE_${header:T} ?=	${${group}MODE}
+${group}DIR_${header:T} ?=	${${group}DIR}
+.          if defined(${group}NAME)
+${group}NAME_${header:T} ?=	${${group}NAME}
+.          else
+${group}NAME_${header:T} ?=	${header:T}
+.          endif
 includes: _${group}INS_${header:T}
 _${group}INS_${header:T}: ${header}
-.if !exists(${DESTDIR}${${group}DIR_${.ALLSRC:T}})
-	${INSTALL} -d -o root -g bin -m 755 \
+	test -d ${DESTDIR}${${group}DIR_${.ALLSRC:T}}) || \
+	    ${INSTALL} -d -o root -g bin -m 755 \
 		${DESTDIR}${${group}DIR_${.ALLSRC:T}}
-.endif
 	${INSTALL} -C -o ${${group}OWN_${.ALLSRC:T}} \
 	    -g ${${group}GRP_${.ALLSRC:T}} -m ${${group}MODE_${.ALLSRC:T}} \
 	    ${.ALLSRC} \
 	    ${DESTDIR}${${group}DIR_${.ALLSRC:T}}/${${group}NAME_${.ALLSRC:T}}
-.else
+.        else
 _${group}INCS+= ${header}
-.endif
-.endfor
-.if !empty(_${group}INCS)
+.        endif
+.      endfor
+.      if !empty(_${group}INCS)
 includes: _${group}INS
 _${group}INS: ${_${group}INCS}
-.if !exists(${DESTDIR}${${group}DIR})
-	${INSTALL} -d -o root -g bin -m 755 \
+	test -d ${DESTDIR}${${group}DIR} || \
+	    ${INSTALL} -d -o root -g bin -m 755 \
 		${DESTDIR}${${group}DIR}
-.endif
-.if defined(${group}NAME)
+.        if defined(${group}NAME)
 	${INSTALL} -C -o ${${group}OWN} -g ${${group}GRP} -m ${${group}MODE} \
 	    ${.ALLSRC} ${DESTDIR}${${group}DIR}/${${group}NAME}
-.else
+.        else
 	${INSTALL} -C -o ${${group}OWN} -g ${${group}GRP} -m ${${group}MODE} \
 	    ${.ALLSRC} ${DESTDIR}${${group}DIR}/
-.endif
-.endif
-
-.endif # defined(${group}) && !empty(${group})
-.endfor
+.        endif
+.      endif
+.    endif # defined(${group}) && !empty(${group})
+.  endfor
 .endif
 
 .include <bsd.own.mk>

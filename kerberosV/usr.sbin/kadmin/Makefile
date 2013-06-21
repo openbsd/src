@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.23 2013/06/19 19:36:58 robert Exp $
+# $OpenBSD: Makefile,v 1.24 2013/06/21 17:02:20 robert Exp $
 
 PROG=	kadmin
 MAN=	kadmin.8
@@ -15,7 +15,6 @@ SRCS=	add_enctype.c \
 	init.c \
 	kadmin.c \
 	kadmin-commands.c \
-	kadmin-commands.h \
 	load.c \
 	mod.c \
 	pw_quality.c \
@@ -35,14 +34,13 @@ LDADD=	-lkadm5clnt -lkadm5srv -lhdb -lkrb5 \
 	-lcrypto -lcom_err \
 	-ledit -lncurses -lwind -lheimbase
 
+CLEANFILES+=	kadmin-commands.[ch]*
+
 .include <bsd.prog.mk>
 
-kadmin-commands.h: ${KRB5DIR}/kadmin/kadmin-commands.in
+kadmin-commands.h kadmin-commands.c: ${KRB5DIR}/kadmin/kadmin-commands.in
 	${SLC} ${.ALLSRC:M*.in}
 
-.for ext in o c
-kadmin-commands.${ext}: kadmin-commands.h
-.endfor
+kadmin-commands.o: kadmin-commands.h
 
 .PATH: ${KRB5DIR}/kadmin
-

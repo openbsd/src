@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.19 2013/06/19 19:37:00 robert Exp $
+# $OpenBSD: Makefile,v 1.20 2013/06/21 17:02:20 robert Exp $
 
 PROG=	ktutil
 MAN=	ktutil.8
@@ -10,7 +10,6 @@ SRCS=	add.c \
 	get.c \
 	ktutil.c \
 	ktutil-commands.c \
-	ktutil-commands.h \
 	list.c \
 	purge.c \
 	remove.c \
@@ -23,13 +22,13 @@ LDADD=	-lkadm5clnt -lkrb5 ${LIBSL} -lroken ${LIBVERS} \
 	-lasn1 -lcrypto -ledit -lheimbase -lwind -lcom_err \
 	-lcurses
 
+CLEANFILES+=	ktutil-commands.[ch]*
+
 .include <bsd.prog.mk>
 
-ktutil-commands.h: ${KRB5DIR}/admin/ktutil-commands.in
+ktutil-commands.h ktutil-commands.c: ${KRB5DIR}/admin/ktutil-commands.in
 	${SLC} ${.ALLSRC:M*.in}
 
-.for ext in c o
-ktutil-commands.${ext}: ktutil-commands.h
-.endfor
+ktutil-commands.o: ktutil-commands.h
 
 .PATH: ${KRB5DIR}/admin

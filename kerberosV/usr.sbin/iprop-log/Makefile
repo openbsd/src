@@ -1,8 +1,12 @@
-# $OpenBSD: Makefile,v 1.2 2013/06/19 19:36:58 robert Exp $
+# $OpenBSD: Makefile,v 1.3 2013/06/21 17:02:20 robert Exp $
 
 PROG=	iprop-log
 MAN=	iprop-log.8
-SRCS=	iprop-log.c iprop-commands.c iprop-commands.h kadm5_err.h
+
+SRCS=	iprop-log.c \
+	kadm5_err.h \
+	iprop-commands.c
+
 CFLAGS+=	-I${KRB5DIR}/lib/kadm5 \
 		-I${KRB5DIR}/lib/krb5 \
 		-I${KRB5DIR}/lib/roken \
@@ -14,12 +18,12 @@ LDADD=	-lkadm5srv -lhdb -lkrb5 -lasn1 -lcrypto ${LIBSL} -lroken \
 	${LIBVERS} -ledit -lwind -lheimbase \
 	-lcurses -lcom_err
 
-iprop-commands.h: iprop-commands.in
+CLEANFILES+=	iprop-commands.[ch]*
+
+iprop-commands.h iprop-commands.c: iprop-commands.in
 	${SLC} ${.ALLSRC:M*.in}
 
-.for ext in c o
-iprop-commands.${ext}: iprop-commands.h
-.endfor
+iprop-commands.o: iprop-commands.h kadm5_err.h
 
 .include <bsd.prog.mk>
 

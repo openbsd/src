@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2013/06/21 13:36:31 robert Exp $
+# $OpenBSD: Makefile,v 1.4 2013/06/21 17:02:20 robert Exp $
 
 PROG=	kcc
 MAN=	klist.1
@@ -17,12 +17,12 @@ SRCS=	kcc.c \
 	kswitch.c \
 	copy_cred_cache.c
 
-kcc-commands.h: kcc-commands.in
+CLEANFILES+=	kcc-commands.[ch]*
+
+kcc-commands.h kcc-commands.c: kcc-commands.in
 	${SLC} ${.ALLSRC:M*.in}
 
-.for ext in c o
-kcc-commands.${ext}: kcc-commands.h
-.endfor
+kcc-commands.o: kcc-commands.h
 
 .include <bsd.prog.mk>
 
