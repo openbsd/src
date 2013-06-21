@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile.inc,v 1.15 2013/06/19 19:36:41 robert Exp $
+# $OpenBSD: Makefile.inc,v 1.16 2013/06/21 14:12:26 ajacoutot Exp $
 
 KRB5DIR=	${.CURDIR}/../../../kerberosV/src
 
-CFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/../../include -I/usr/include/kerberosV
+CFLAGS+=	-DHAVE_CONFIG_H -DNO_NTLM -I${.CURDIR}/../../include -I/usr/include/kerberosV
 
 LIBHEIMIPCC=	${.OBJDIR}/../../lib/libheimipcc/libheimipcc.a
 LIBHEIMIPCS=	${.OBJDIR}/../../lib/libheimipcs/libheimipcs.a

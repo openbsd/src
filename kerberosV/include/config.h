@@ -1633,5 +1633,3 @@ struct sockaddr_in;
 #define LOGIN_PATH BINDIR "/login"
 #endif
 
-/* Disable NTLM support */
-#define NO_NTLM 1
