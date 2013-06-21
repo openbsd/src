@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.9 2013/06/12 01:07:33 uebayasi Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.10 2013/06/21 07:52:22 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -154,21 +154,26 @@ void vmxnet3_rxinit(struct vmxnet3_softc *, struct vmxnet3_rxqueue *);
 void vmxnet3_txstop(struct vmxnet3_softc *, struct vmxnet3_txqueue *);
 void vmxnet3_rxstop(struct vmxnet3_softc *, struct vmxnet3_rxqueue *);
 void vmxnet3_link_state(struct vmxnet3_softc *);
+void vmxnet3_enable_all_intrs(struct vmxnet3_softc *);
+void vmxnet3_disable_all_intrs(struct vmxnet3_softc *);
 int vmxnet3_intr(void *);
 void vmxnet3_evintr(struct vmxnet3_softc *);
 void vmxnet3_txintr(struct vmxnet3_softc *, struct vmxnet3_txqueue *);
 void vmxnet3_rxintr(struct vmxnet3_softc *, struct vmxnet3_rxqueue *);
+void vmxnet3_iff(struct vmxnet3_softc *);
 void vmxnet3_rx_csum(struct vmxnet3_rxcompdesc *, struct mbuf *);
 int vmxnet3_getbuf(struct vmxnet3_softc *, struct vmxnet3_rxring *);
+void vmxnet3_stop(struct ifnet *);
 void vmxnet3_reset(struct ifnet *);
 int vmxnet3_init(struct vmxnet3_softc *);
 int vmxnet3_ioctl(struct ifnet *, u_long, caddr_t);
+int vmxnet3_change_mtu(struct vmxnet3_softc *, int);
 void vmxnet3_start(struct ifnet *);
 int vmxnet3_load_mbuf(struct vmxnet3_softc *, struct mbuf *);
 void vmxnet3_watchdog(struct ifnet *);
 void vmxnet3_media_status(struct ifnet *, struct ifmediareq *);
 int vmxnet3_media_change(struct ifnet *);
-static void *dma_allocmem(struct vmxnet3_softc *, u_int, u_int, bus_addr_t *);
+void *dma_allocmem(struct vmxnet3_softc *, u_int, u_int, bus_addr_t *);
 
 const struct pci_matchid vmx_devices[] = {
 	{ PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_NET_3 }
@@ -556,7 +561,7 @@ vmxnet3_disable_intr(struct vmxnet3_softc *sc, int irq)
 	WRITE_BAR0(sc, VMXNET3_BAR0_IMASK(irq), 1);
 }
 
-static void
+void
 vmxnet3_enable_all_intrs(struct vmxnet3_softc *sc)
 {
 	int i;
@@ -566,7 +571,7 @@ vmxnet3_enable_all_intrs(struct vmxnet3_softc *sc)
 		vmxnet3_enable_intr(sc, i);
 }
 
-static void
+void
 vmxnet3_disable_all_intrs(struct vmxnet3_softc *sc)
 {
 	int i;
@@ -760,7 +765,7 @@ skip_buffer:
 	}
 }
 
-static void
+void
 vmxnet3_iff(struct vmxnet3_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -884,7 +889,7 @@ vmxnet3_getbuf(struct vmxnet3_softc *sc, struct vmxnet3_rxring *ring)
 	return 0;
 }
 
-static void
+void
 vmxnet3_stop(struct ifnet *ifp)
 {
 	struct vmxnet3_softc *sc = ifp->if_softc;
@@ -944,7 +949,7 @@ vmxnet3_init(struct vmxnet3_softc *sc)
 	return 0;
 }
 
-static int
+int
 vmxnet3_change_mtu(struct vmxnet3_softc *sc, int mtu)
 {
 	struct vmxnet3_driver_shared *ds = sc->sc_ds;
