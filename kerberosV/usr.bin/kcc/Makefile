@@ -1,9 +1,8 @@
-# $OpenBSD: Makefile,v 1.2 2013/06/19 19:36:54 robert Exp $
+# $OpenBSD: Makefile,v 1.3 2013/06/21 13:36:31 robert Exp $
 
 PROG=	kcc
-MAN=	klist.1 kswitch.1
-LINKS=	${BINDIR}/kcc ${BINDIR}/klist \
-	${BINDIR}/kcc ${BINDIR}/kswitch
+MAN=	klist.1
+LINKS=	${BINDIR}/kcc ${BINDIR}/klist
 CFLAGS+=	-I${KRB5DIR}/lib/asn1 \
 		-I${KRB5DIR}/lib/roken \
 		-I${KRB5DIR}/lib/sl -I.
