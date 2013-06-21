@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.44 2013/06/03 04:33:44 tedu Exp $ */
+/*	$OpenBSD: rthread.h,v 1.45 2013/06/21 06:08:50 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -243,3 +243,5 @@ int	__thrsigdivert(sigset_t, siginfo_t *, const struct timespec *);
 int	sched_yield(void);
 int	_thread_sys_sigaction(int, const struct sigaction *,
 	    struct sigaction *);
+int	_thread_sys_sigprocmask(int, const sigset_t *, sigset_t *);
+
