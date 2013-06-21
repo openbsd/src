@@ -1,8 +1,6 @@
-# $OpenBSD: Makefile,v 1.3 2013/06/21 10:59:40 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.4 2013/06/21 11:01:17 ajacoutot Exp $
 
 LIB=	hdb
-LDFLAGS=	-Wl,--no-undefined
-VERSION_MAP=	${KRB5DIR}/lib/hdb/version-script.map
 
 MAN=	HDB.3 hdb_entry_ex.3
 
