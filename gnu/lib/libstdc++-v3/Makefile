@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libstdc++/Makefile,v 1.63.2.1 2009/08/03 08:13:06 kensmith Exp $
-# $OpenBSD: Makefile,v 1.6 2010/05/15 08:21:03 robert Exp $
+# $OpenBSD: Makefile,v 1.7 2013/06/21 17:07:30 robert Exp $
 
 .include "${.CURDIR}/Makefile.common"
 
@@ -610,12 +610,11 @@ CLEANFILES+=	${VERSION_MAP}
 
 prereq: c++config.h ${THRHDRS}
 
-includes: prereq 
+includes: prereq
 .for group in ${INCSGROUPS}
-.  if !exists(${${group}DIR})
-	${INSTALL} -d -o root -g bin -m 755 \
+	test -d ${${group}DIR} || \
+	    ${INSTALL} -d -o root -g bin -m 755 \
 		${${group}DIR}
-.  endif
 .  for f in ${${group}}
 	${INSTALL} -C -o root -g bin -m 644 \
 		${f} ${${group}DIR}/${${group}NAME_${f:T}}
