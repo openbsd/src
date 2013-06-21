@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.26 2012/06/01 01:43:19 dlg Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.27 2013/06/21 13:35:26 ajacoutot Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 Hans Insulander <hin@openbsd.org>.
@@ -42,11 +42,13 @@ krb5_syslog(krb5_context context, int level, krb5_error_code code, char *fmt, ..
 {
 	va_list ap;
 	char buf[256];
+	const char *s = krb5_get_error_message(context, code);
 
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	syslog(level, "%s: %s", buf, krb5_get_err_text(context, code));
+	syslog(level, "%s: %s", buf, s);
+	krb5_free_error_message(context, s);
 }
 
 static void
@@ -71,7 +73,7 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 		ret = krb5_cc_resolve(context, cc_file, &ccache_store);
 		if (ret != 0) {
 			krb5_syslog(context, LOG_ERR, ret,
-			    "krb5_cc_gen_new");
+			    "krb5_cc_resolve");
 			exit(1);
 		}
 
@@ -170,9 +172,9 @@ krb5_login(char *username, char *invokinguser, char *password, int login,
 		exit(1);
 	}
 
-	ret = krb5_cc_gen_new(context, &krb5_mcc_ops, &ccache);
+	ret = krb5_cc_new_unique(context, krb5_mcc_ops.prefix, NULL, &ccache);
 	if (ret != 0) {
-		krb5_syslog(context, LOG_ERR, ret, "krb5_cc_gen_new");
+		krb5_syslog(context, LOG_ERR, ret, "krb5_cc_new_unique");
 		exit(1);
 	}
 
