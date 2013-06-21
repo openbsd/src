@@ -1,4 +1,4 @@
-/*	$OpenBSD: mavb.c,v 1.15 2013/05/15 08:29:23 ratchov Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.16 2013/06/21 09:34:06 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -522,7 +522,10 @@ mavb_set_params(void *hdl, int setmode, int usemode,
 					return (EINVAL);
 				}
 			} else {
-				return (EINVAL);
+				play->factor = 1;
+				play->sw_code = NULL;
+				play->channels = 2;
+				play->precision = 24;
 			}
 			break;
 		default:
@@ -538,7 +541,7 @@ mavb_set_params(void *hdl, int setmode, int usemode,
 			return (error);
 
 		play->bps = AUDIO_BPS(play->precision);
-		play->msb = 1;
+		play->msb = 0;
 	}
 
 	if (setmode & AUMODE_RECORD) {
@@ -556,7 +559,11 @@ mavb_set_params(void *hdl, int setmode, int usemode,
 				rec->factor = 2;
 				rec->sw_code = linear24_to_linear16_be;
 			} else {
-				return (EINVAL);
+				rec->factor = 1;
+				rec->sw_code = NULL;
+				rec->channels = 2;
+				rec->precision = 24;
+				break;
 			}
 			break;
 		default:
@@ -575,7 +582,7 @@ mavb_set_params(void *hdl, int setmode, int usemode,
 			return (error);
 
 		rec->bps = AUDIO_BPS(rec->precision);
-		rec->msb = 1;
+		rec->msb = 0;
 	}
 
 	return (0);
