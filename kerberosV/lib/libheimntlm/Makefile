@@ -1,12 +1,10 @@
-# $OpenBSD: Makefile,v 1.1 2013/06/17 19:11:35 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2013/06/21 10:59:40 ajacoutot Exp $
 
 LIB=	heimntlm
-LDFLAGS=	-Wl,--no-undefined
 DPADD=	${LIBCRYPTO} ${LIBCOM_ERR} ${LIBKRB5} ${LIBROKEN}
 SRCS=	ntlm.c ntlm_err.c
 INCS=	heimntlm.h heimntlm-protos.h ntlm_err.h
 CFLAGS+=-I${KRB5DIR}/lib/ntlm -I${KRB5DIR}/lib/roken
-VERSION_MAP= ${KRB5DIR}/lib/ntlm/version-script.map
 
 MAN=	ntlm_buf.3 \
 	ntlm_core.3 \
