@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent.c,v 1.21 2013/06/20 06:28:15 jsg Exp $	*/
+/*	$OpenBSD: indent.c,v 1.22 2013/06/21 06:49:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -198,11 +198,10 @@ main(int argc, char **argv)
 	    set_option(argv[i]);
     }				/* end of for */
     if (input == NULL) {
-	fprintf(stderr, "usage: indent input-file [output-file] [options]\n");
-	exit(1);
+	input = stdin;
     }
     if (output == NULL) {
-	if (troff)
+	if (troff || input == stdin)
 	    output = stdout;
 	else {
 	    out_name = in_name;
