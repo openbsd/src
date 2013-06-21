@@ -1,4 +1,4 @@
-#$OpenBSD: Makefile,v 1.4 2013/06/21 11:01:17 ajacoutot Exp $
+#$OpenBSD: Makefile,v 1.5 2013/06/21 12:26:04 ajacoutot Exp $
 
 LIB=	kdc
 
@@ -12,6 +12,7 @@ INCSGROUPS=	INCS KRB5INCS
 SRCS=	\
 	default_config.c \
 	set_dbinfo.c \
+	digest.c \
 	kerberos5.c \
 	krb5tgs.c \
 	log.c \

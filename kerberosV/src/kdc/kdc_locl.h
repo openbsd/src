@@ -32,7 +32,7 @@
  */
 
 /*
- * $Id: kdc_locl.h,v 1.10 2013/06/19 19:36:50 robert Exp $
+ * $Id: kdc_locl.h,v 1.11 2013/06/21 12:26:04 ajacoutot Exp $
  */
 
 #ifndef __KDC_LOCL_H__
@@ -43,6 +43,7 @@
 typedef struct pk_client_params pk_client_params;
 struct DigestREQ;
 struct Kx509Request;
+#include <kdc-private.h>
 
 extern sig_atomic_t exit_flag;
 extern size_t max_request_udp;

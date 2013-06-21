@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2013/06/21 10:59:40 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.4 2013/06/21 12:26:03 ajacoutot Exp $
 
 LIB=	asn1
 INCS=	asn1_err.h asn1-common.h heim_asn1.h der.h der-protos.h der-private.h
@@ -24,16 +24,19 @@ CFLAGS+=-I${KRB5DIR}/lib/asn1 -I${KRB5DIR}/lib/roken -I${KRB5DIR}/lib/com_err -I
 GEN_RFC2459=	asn1_rfc2459_asn1.x rfc2459_asn1.hx rfc2459_asn1-priv.hx
 GEN_CMS= 	asn1_cms_asn1.x cms_asn1.hx cms_asn1-priv.hx
 GEN_K5=		asn1_krb5_asn1.x krb5_asn1.hx krb5_asn1-priv.hx
+GEN_DIGEST=	asn1_digest_asn1.x digest_asn1.hx digest_asn1-priv.hx
 
 GEN+=	${GEN_RFC2459}
 GEN+=	${GEN_CMS}
 GEN+=	${GEN_K5}
+GEN+=	${GEN_DIGEST}
 
 CLEANFILES= ${GEN} ${GEN:S/.x$/.c/:S/.hx$/.h/} *_asn1_files
 
 INCS+=	krb5_asn1.h \
 	cms_asn1.h \
-	rfc2459_asn1.h
+	rfc2459_asn1.h \
+	digest_asn1.h
 
 ${GEN_CMS}: cms.asn1 cms.opt
 	${ASN1_COMPILE} --one-code-file \
@@ -54,6 +57,10 @@ ${GEN_K5}: krb5.asn1 krb5.opt
 		--one-code-file \
 		--option-file=${.ALLSRC:M*.opt} \
 		${.ALLSRC:M*.asn1} krb5_asn1
+
+${GEN_DIGEST}: digest.asn1
+	${ASN1_COMPILE} --one-code-file \
+		${.ALLSRC:M*.asn1} digest_asn1
 
 .SUFFIXES: .h .c .x .hx
 
