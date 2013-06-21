@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.377 2013/06/19 08:56:32 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.378 2013/06/21 13:06:54 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 19 2013 $
+.Dd $Mdocdate: June 21 2013 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -370,7 +370,8 @@ Top-level target, see
 .Xr ports 7 .
 .It Ar install
 Install the package after building.
-See the description of THE FAKE FRAMEWORK
+See the description of
+.Qq THE FAKE FRAMEWORK
 for the non-intuitive details of the way
 .Ar {pre,do,post}-install
 hooks are actually used by the ports tree.
@@ -956,7 +957,7 @@ Read-only.
 User settings.
 Base location for system-wide state directory.
 Defaults to
-.Pa /var .
+.Pa ${VARBASE} .
 See
 .Ev LOCALSTATEDIR .
 .It Ev BASESYSCONFDIR
@@ -1548,6 +1549,14 @@ fake invocation.
 Empty by default.
 Also see
 .Ev ALL_FAKE_FLAGS .
+.It Ev FAKE_SETUP
+List of environment values normally set during fake invocations
+Exposed so that modules may provide their own
+.Ar do-install .
+Read-only,
+see
+.Qq THE FAKE FRAMEWORK
+for details.
 .It Ev FAKE_TARGET
 Target built by ${MAKE_PROGRAM} on fake invocation.
 Defaults to ${INSTALL_TARGET}.
@@ -2343,8 +2352,10 @@ The first cipher that matches in ${CHECKSUM_FILE} is verified.
 .It Ev PREFIX
 Base directory for the current port installation.
 Usually ${LOCALBASE}, though some ports may elect a location under
-.Pa /var ,
+.Pa ${VARBASE} ,
 and some multi-package ports may install under several locations.
+Additionally, firmware files generally install under
+.Pa ${BASESYSCONFDIR} .
 .It Ev PREPARE_CHECK_ONLY
 Build settings.
 Prevent the
@@ -2878,6 +2889,12 @@ automatically based on
 .Ev WANTLIB
 values, there are a few ports (about 20) that require X11 components without
 any library telltale.
+.It Ev VARBASE
+User settings.
+Base location for ports that install stuff outside of
+.Pa ${LOCALBASE} .
+Defaults to
+.Pa /var .
 .It Ev VMEM_WARNING
 Set to
 .Sq Yes
@@ -3262,8 +3279,14 @@ it would be installed if the port's dependencies were present).
 If
 .Ar {pre,do,post}-install
 overrides are present, they are used with some
-important changes: PREFIX is set to ${WRKINST}${PREFIX}, ${DESTDIRNAME}
-is set to ${WRKINST}, and TRUEPREFIX is set to ${PREFIX}.
+important changes, listed in
+.Ev FAKE_SETUP :
+.Bd -literal -offset indent
+TRUEPREFIX=${PREFIX}
+PREFIX=${WRKINST}${PREFIX}
+${DESTDIRNAME}=${WRKINST}
+.Ed
+.Pp
 Essentially, old install targets work transparently, except for a need to
 change PREFIX to TRUEPREFIX for symbolic links and similar path lookups.
 Specific traditional post install work can be simply removed, as it will
@@ -3274,9 +3297,7 @@ If no
 .Ar do-install
 override is present, the port is installed using
 .Bd -literal -offset 2n
-env -i ${MAKE_ENV}
-PREFIX=${WRKINST}${PREFIX} ${DESTDIRNAME}=${WRKINST} TRUEPREFIX=${PREFIX}
-${MAKE_PROGRAM} ${ALL_FAKE_FLAGS} -f ${MAKE_FILE} ${FAKE_TARGET}
+env -i ${MAKE_ENV} ${FAKE_SETUP} ${MAKE_PROGRAM} ${ALL_FAKE_FLAGS} -f ${MAKE_FILE} ${FAKE_TARGET}
 .Ed
 .Pp
 Note that this does set both PREFIX and ${DESTDIRNAME}.
