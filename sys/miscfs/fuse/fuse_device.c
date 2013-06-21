@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.2 2013/06/12 22:55:02 tedu Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.3 2013/06/21 21:30:38 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -27,39 +27,35 @@
 #include "fusefs_node.h"
 #include "fusefs.h"
 
-#define	FUSE_UNIT(dev)	(minor(dev))
-#define FUSE_DEV2SC(a)	(&fuse_softc[FUSE_UNIT(a)])
-#define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
-
 #ifdef	FUSE_DEBUG
-#define	DPRINTF(fmt, arg...)	printf("%s: " fmt, DEVNAME(sc), ##arg)
+#define	DPRINTF(fmt, arg...)	printf("%s: " fmt, "fuse", ##arg)
 #else
 #define	DPRINTF(fmt, arg...)
 #endif
 
 SIMPLEQ_HEAD(fusebuf_head, fusebuf);
 
-struct fuse_softc {
-	struct fusefs_mnt *sc_fmp;
-	struct device sc_dev;
-	int sc_opened;
+struct fuse_d {
+	struct fusefs_mnt *fd_fmp;
+	int fd_unit;
 
-	struct fusebuf_head sc_fbufs_in;
-	struct fusebuf_head sc_fbufs_wait;
+	/*fusebufs queues*/
+	struct fusebuf_head fd_fbufs_in;
+	struct fusebuf_head fd_fbufs_wait;
 
 	/* kq fields */
-	struct selinfo sc_rsel;
+	struct selinfo fd_rsel;
+	LIST_ENTRY(fuse_d) fd_list;
 };
 
-#define FUSE_OPEN 1
-#define FUSE_CLOSE 0
-#define FUSE_DONE 2
-
-struct fuse_softc *fuse_softc;
-static int numfuse = 0;
 int stat_fbufs_in = 0;
 int stat_fbufs_wait = 0;
 int stat_opened_fusedev = 0;
+
+LIST_HEAD(, fuse_d) fuse_d_list;
+struct fuse_d *fuse_create(int);
+struct fuse_d *fuse_lookup(int);
+void	fuse_destroy(dev_t dev, struct fuse_d *fd);
 
 void	fuseattach(int);
 int	fuseopen(dev_t, int, int, struct proc *);
@@ -118,6 +114,41 @@ fuse_dump_buff(char *buff, int len)
 }
 #endif
 
+struct fuse_d *
+fuse_lookup(int unit)
+{
+	struct fuse_d *fd;
+
+	LIST_FOREACH(fd, &fuse_d_list, fd_list)
+		if (fd->fd_unit == unit)
+			return (fd);
+	return (NULL);
+}
+
+struct fuse_d *
+fuse_create(int unit)
+{
+	struct fuse_d *fd;
+
+	if ((fd = fuse_lookup(unit)) != NULL)
+		return (NULL);
+
+	fd = malloc(sizeof(*fd), M_DEVBUF, M_WAITOK | M_ZERO);
+	fd->fd_unit = unit;
+	SIMPLEQ_INIT(&fd->fd_fbufs_in);
+	SIMPLEQ_INIT(&fd->fd_fbufs_wait);
+	LIST_INSERT_HEAD(&fuse_d_list, fd, fd_list);
+	return (fd);
+}
+
+void
+fuse_destroy(dev_t dev, struct fuse_d *fd)
+{
+	LIST_REMOVE(fd, fd_list);
+	fuse_device_cleanup(dev, NULL);
+	free(fd, M_DEVBUF);
+}
+
 /*
  * if fbuf == NULL cleanup all msgs else remove fbuf from
  * sc_fbufs_in and sc_fbufs_wait.
@@ -125,20 +156,19 @@ fuse_dump_buff(char *buff, int len)
 void
 fuse_device_cleanup(dev_t dev, struct fusebuf *fbuf)
 {
-	struct fuse_softc *sc;
+	struct fuse_d *fd;
 	struct fusebuf *f;
 
-	if (FUSE_UNIT(dev) >= numfuse)
+	fd = fuse_lookup(minor(dev));
+	if (fd == NULL)
 		return;
 
-	sc = FUSE_DEV2SC(dev);
-	sc->sc_fmp = NULL;
-
+	fd->fd_fmp = NULL;
 	/* clear FIFO IN*/
-	while ((f = SIMPLEQ_FIRST(&sc->sc_fbufs_in))) {
+	while ((f = SIMPLEQ_FIRST(&fd->fd_fbufs_in))) {
 		if (fbuf == f || fbuf == NULL) {
 			DPRINTF("cleanup unprocessed msg in sc_fbufs_in\n");
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_fbufs_in, fb_next);
+			SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_in, fb_next);
 			stat_fbufs_in--;
 			if (fbuf == NULL)
 				pool_put(&fusefs_fbuf_pool, f);
@@ -146,10 +176,10 @@ fuse_device_cleanup(dev_t dev, struct fusebuf *fbuf)
 	}
 
 	/* clear FIFO WAIT*/
-	while ((f = SIMPLEQ_FIRST(&sc->sc_fbufs_wait))) {
+	while ((f = SIMPLEQ_FIRST(&fd->fd_fbufs_wait))) {
 		if (fbuf == f || fbuf == NULL) {
 			DPRINTF("umount unprocessed msg in sc_fbufs_wait\n");
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_fbufs_wait, fb_next);
+			SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_wait, fb_next);
 			stat_fbufs_wait--;
 			if (fbuf == NULL)
 				pool_put(&fusefs_fbuf_pool, f);
@@ -160,94 +190,66 @@ fuse_device_cleanup(dev_t dev, struct fusebuf *fbuf)
 void
 fuse_device_queue_fbuf(dev_t dev, struct fusebuf *fbuf)
 {
-	struct fuse_softc *sc;
+	struct fuse_d *fd;
 
-	if (FUSE_UNIT(dev) >= numfuse)
+	fd = fuse_lookup(minor(dev));
+	if (fd == NULL)
 		return;
 
-	sc = FUSE_DEV2SC(dev);
-	SIMPLEQ_INSERT_TAIL(&sc->sc_fbufs_in, fbuf, fb_next);
+	SIMPLEQ_INSERT_TAIL(&fd->fd_fbufs_in, fbuf, fb_next);
 	stat_fbufs_in++;
-	selwakeup(&sc->sc_rsel);
+	selwakeup(&fd->fd_rsel);
 }
 
 void
 fuse_device_set_fmp(struct fusefs_mnt *fmp)
 {
-	struct fuse_softc *sc;
+	struct fuse_d *fd;
 
-	if (FUSE_UNIT(fmp->dev) >= numfuse)
+	fd = fuse_lookup(minor(fmp->dev));
+	if (fd == NULL)
 		return;
 
-	sc = FUSE_DEV2SC(fmp->dev);
-	sc->sc_fmp = fmp;
+	fd->fd_fmp = fmp;
 }
 
 void
 fuseattach(int num)
 {
-	char *mem;
-	u_long size;
-	int i;
-
-	if (num <= 0)
-		return;
-	size = num * sizeof(struct fuse_softc);
-	mem = malloc(size, M_FUSEFS, M_NOWAIT | M_ZERO);
-
-	if (mem == NULL) {
-		printf("fuse: WARNING no memory for fuse device\n");
-		return;
-	}
-	fuse_softc = (struct fuse_softc *)mem;
-	for (i = 0; i < num; i++) {
-		struct fuse_softc *sc = &fuse_softc[i];
-
-		SIMPLEQ_INIT(&sc->sc_fbufs_in);
-		SIMPLEQ_INIT(&sc->sc_fbufs_wait);
-		sc->sc_dev.dv_unit = i;
-		snprintf(sc->sc_dev.dv_xname, sizeof(sc->sc_dev.dv_xname),
-		    "fuse%d", i);
-		device_ref(&sc->sc_dev);
-	}
-	numfuse = num;
+	LIST_INIT(&fuse_d_list);
 }
 
 int
 fuseopen(dev_t dev, int flags, int fmt, struct proc * p)
 {
-	struct fuse_softc *sc;
+	struct fuse_d *fd;
 
-	if (FUSE_UNIT(dev) >= numfuse)
-		return (ENXIO);
+	if (flags & O_EXCL)
+		return (EBUSY); /* No exclusive opens */
 
-	sc = FUSE_DEV2SC(dev);
-
-	if (sc->sc_opened != FUSE_CLOSE || sc->sc_fmp)
+	if ((fd = fuse_create(minor(dev))) == NULL)
 		return (EBUSY);
 
-	sc->sc_opened = FUSE_OPEN;
 	stat_opened_fusedev++;
-
 	return (0);
 }
 
 int
 fuseclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
-	struct fuse_softc *sc;
+	struct fuse_d *fd;
 
-	if (FUSE_UNIT(dev) >= numfuse)
-		return (ENXIO);
+	fd = fuse_lookup(minor(dev));
+	if (fd == NULL)
+		return (EINVAL);
 
-	sc = FUSE_DEV2SC(dev);
-	if (sc->sc_fmp) {
+	if (fd->fd_fmp) {
 		printf("libfuse close the device without umount\n");
-		sc->sc_fmp->sess_init = 0;
-		sc->sc_fmp = NULL;
+		fd->fd_fmp->sess_init = 0;
+		fd->fd_fmp = NULL;
 	}
 
-	sc->sc_opened = FUSE_CLOSE;
+	fuse_destroy(dev, fd);
 	stat_opened_fusedev--;
 	return (0);
 }
@@ -255,13 +257,8 @@ fuseclose(dev_t dev, int flags, int fmt, struct proc *p)
 int
 fuseioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 {
-	struct fuse_softc *sc;
 	int error = 0;
 
-	if (FUSE_UNIT(dev) >= numfuse)
-		return (ENXIO);
-
-	sc = FUSE_DEV2SC(dev);
 	switch (cmd) {
 	default:
 		DPRINTF("bad ioctl number %d\n", cmd);
@@ -274,7 +271,7 @@ fuseioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 int
 fuseread(dev_t dev, struct uio *uio, int ioflag)
 {
-	struct fuse_softc *sc;
+	struct fuse_d *fd;
 	struct fusebuf *fbuf;
 	int error = 0;
 	char *F_dat;
@@ -282,20 +279,17 @@ fuseread(dev_t dev, struct uio *uio, int ioflag)
 	int size;
 	size_t len;
 
-	if (FUSE_UNIT(dev) >= numfuse)
+	fd = fuse_lookup(minor(dev));
+	if (fd == NULL)
 		return (ENXIO);
 
-	sc = FUSE_DEV2SC(dev);
-	if (sc->sc_opened != FUSE_OPEN)
-		return (ENODEV);
-
-	if (SIMPLEQ_EMPTY(&sc->sc_fbufs_in)) {
+	if (SIMPLEQ_EMPTY(&fd->fd_fbufs_in)) {
 		if (ioflag & O_NONBLOCK)
 			return (EAGAIN);
 
 		goto end;
 	}
-	fbuf = SIMPLEQ_FIRST(&sc->sc_fbufs_in);
+	fbuf = SIMPLEQ_FIRST(&fd->fd_fbufs_in);
 
 	/*
 	 * If it was not taken by last read
@@ -339,9 +333,9 @@ fuseread(dev_t dev, struct uio *uio, int ioflag)
 	 * fbuf moves from a simpleq to another
 	 */
 	if (remain == 0) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_fbufs_in, fb_next);
+		SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_in, fb_next);
 		stat_fbufs_in--;
-		SIMPLEQ_INSERT_TAIL(&sc->sc_fbufs_wait, fbuf, fb_next);
+		SIMPLEQ_INSERT_TAIL(&fd->fd_fbufs_wait, fbuf, fb_next);
 		stat_fbufs_wait++;
 	}
 
@@ -353,15 +347,15 @@ int
 fusewrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct fusebuf *lastfbuf;
-	struct fuse_softc *sc;
+	struct fuse_d *fd;
 	struct fusebuf *fbuf;
 	struct fb_hdr hdr;
 	int error = 0;
 
-	if (FUSE_UNIT(dev) >= numfuse)
+	fd = fuse_lookup(minor(dev));
+	if (fd == NULL)
 		return (ENXIO);
 
-	sc = FUSE_DEV2SC(dev);
 	if (uio->uio_resid < sizeof(hdr)) {
 		return (EINVAL);
 	}
@@ -372,7 +366,7 @@ fusewrite(dev_t dev, struct uio *uio, int ioflag)
 	if ((error = uiomove(&hdr, sizeof(hdr), uio)) != 0)
 		return (error);
 
-	SIMPLEQ_FOREACH(fbuf, &sc->sc_fbufs_wait, fb_next) {
+	SIMPLEQ_FOREACH(fbuf, &fd->fd_fbufs_wait, fb_next) {
 		if (fbuf->fb_uuid == hdr.fh_uuid) {
 			DPRINTF("catch unique %lu\n", fbuf->fb_uuid);
 			break;
@@ -390,7 +384,7 @@ fusewrite(dev_t dev, struct uio *uio, int ioflag)
 
 		if (uio->uio_resid != hdr.fh_len ||
 		    (uio->uio_resid != 0 && hdr.fh_err) ||
-		    SIMPLEQ_EMPTY(&sc->sc_fbufs_wait)) {
+		    SIMPLEQ_EMPTY(&fd->fd_fbufs_wait)) {
 			printf("corrupted fuse header or queue empty\n");
 			return (EINVAL);
 		}
@@ -407,10 +401,10 @@ fusewrite(dev_t dev, struct uio *uio, int ioflag)
 		if (!error) {
 			switch (fbuf->fb_type) {
 			case FBT_INIT:
-				sc->sc_fmp->sess_init = 1;
+				fd->fd_fmp->sess_init = 1;
 				break ;
 			case FBT_DESTROY:
-				sc->sc_fmp = NULL;
+				fd->fd_fmp = NULL;
 				break ;
 			}
 
@@ -418,10 +412,10 @@ fusewrite(dev_t dev, struct uio *uio, int ioflag)
 		}
 
 		/* the fbuf could not be the HEAD fbuf */
-		if (fbuf == SIMPLEQ_FIRST(&sc->sc_fbufs_wait))
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_fbufs_wait, fb_next);
+		if (fbuf == SIMPLEQ_FIRST(&fd->fd_fbufs_wait))
+			SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_wait, fb_next);
 		else
-			SIMPLEQ_REMOVE_AFTER(&sc->sc_fbufs_wait, lastfbuf,
+			SIMPLEQ_REMOVE_AFTER(&fd->fd_fbufs_wait, lastfbuf,
 			    fb_next);
 		stat_fbufs_wait--;
 
@@ -437,15 +431,15 @@ fusewrite(dev_t dev, struct uio *uio, int ioflag)
 int
 fusepoll(dev_t dev, int events, struct proc *p)
 {
-	struct fuse_softc *sc;
+	struct fuse_d *fd;
 	int revents = 0;
 
-	if (FUSE_UNIT(dev) >= numfuse)
-		return (ENXIO);
+	fd = fuse_lookup(minor(dev));
+	if (fd == NULL)
+		return (EINVAL);
 
-	sc = FUSE_DEV2SC(dev);
 	if (events & (POLLIN | POLLRDNORM))
-		if (!SIMPLEQ_EMPTY(&sc->sc_fbufs_in))
+		if (!SIMPLEQ_EMPTY(&fd->fd_fbufs_in))
 			revents |= events & (POLLIN | POLLRDNORM);
 
 	if (events & (POLLOUT | POLLWRNORM))
@@ -453,7 +447,7 @@ fusepoll(dev_t dev, int events, struct proc *p)
 
 	if (revents == 0)
 		if (events & (POLLIN | POLLRDNORM))
-			selrecord(p, &sc->sc_rsel);
+			selrecord(p, &fd->fd_rsel);
 
 	return (revents);
 }
@@ -461,27 +455,27 @@ fusepoll(dev_t dev, int events, struct proc *p)
 int
 fusekqfilter(dev_t dev, struct knote *kn)
 {
-	struct fuse_softc *sc;
+	struct fuse_d *fd;
 	struct klist *klist;
 
-	if (FUSE_UNIT(dev) >= numfuse)
-		return (ENXIO);
+	fd = fuse_lookup(minor(dev));
+	if (fd == NULL)
+		return (EINVAL);
 
-	sc = FUSE_DEV2SC(dev);
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.si_note;
+		klist = &fd->fd_rsel.si_note;
 		kn->kn_fop = &fuse_rd_filtops;
 		break;
 	case EVFILT_WRITE:
-		klist = &sc->sc_rsel.si_note;
+		klist = &fd->fd_rsel.si_note;
 		kn->kn_fop = &fuse_seltrue_filtops;
 		break;
 	default:
 		return (EINVAL);
 	}
 
-	kn->kn_hook = sc;
+	kn->kn_hook = fd;
 
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 
@@ -491,8 +485,8 @@ fusekqfilter(dev_t dev, struct knote *kn)
 void
 filt_fuse_rdetach(struct knote *kn)
 {
-	struct fuse_softc *sc = kn->kn_hook;
-	struct klist *klist = &sc->sc_rsel.si_note;
+	struct fuse_d *fd = kn->kn_hook;
+	struct klist *klist = &fd->fd_rsel.si_note;
 
 	SLIST_REMOVE(klist, kn, knote, kn_selnext);
 }
@@ -500,10 +494,10 @@ filt_fuse_rdetach(struct knote *kn)
 int
 filt_fuse_read(struct knote *kn, long hint)
 {
-	struct fuse_softc *sc = kn->kn_hook;
+	struct fuse_d *fd = kn->kn_hook;
 	int event = 0;
 
-	if (!SIMPLEQ_EMPTY(&sc->sc_fbufs_in))
+	if (!SIMPLEQ_EMPTY(&fd->fd_fbufs_in))
 		event = 1;
 
 	return (event);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.112 2013/06/11 19:01:20 beck Exp $	*/
+/*	$OpenBSD: mount.h,v 1.113 2013/06/21 21:30:38 syl Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ struct procfs_args {
 struct fusefs_args {
 	char *name;
 	char *url;
-	dev_t dev;
+	int fd;
 	int flags;
 };
 

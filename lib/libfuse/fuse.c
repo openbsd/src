@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.6 2013/06/14 20:49:06 syl Exp $ */
+/* $OpenBSD: fuse.c,v 1.7 2013/06/21 21:30:38 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -96,18 +96,12 @@ fuse_loop(struct fuse *fuse)
 	return (0);
 }
 
-#define	DEVPATH	"/dev/"
-#define	FUSEDEV	DEVPATH "fuse"
-
 struct fuse_chan *
 fuse_mount(const char *dir, unused struct fuse_args *args)
 {
 	struct fusefs_args fargs;
 	struct fuse_chan *fc;
-	struct stat st;
-	char busnode[16];
-	dev_t minor;
-	int i;
+	const char *errcause;
 
 	fc = calloc(1, sizeof(*fc));
 	if (fc == NULL)
@@ -117,41 +111,25 @@ fuse_mount(const char *dir, unused struct fuse_args *args)
 	if (fc->dir == NULL)
 		goto bad;
 
-	for (i = 0; i < 8 ; i++) {
-		minor = -1;
-		snprintf(busnode, sizeof(busnode), FUSEDEV "%d", i);
-
-		DPRINTF("trying %s\n", busnode);
-		if ((fc->fd = open(busnode, O_RDWR)) < 0) {
-			if (errno == EBUSY)
-				DPRINTF("device %s already opened\n", busnode);
-			else if (errno != ENOENT && errno != ENXIO)
-				DPRINTF("could not open %s\n", busnode);
-			continue;
-		}
-
-		if (fstat(fc->fd, &st) != 0)
-			goto bad;
-
-		minor = st.st_rdev;
-		break;
-	}
-
-	if (minor == -1) {
-		fprintf(stderr, "%s: Cannot find a suitable fuse device\n",
-		    __func__);
+	if ((fc->fd = open("/dev/fuse0", O_RDWR)) < 0) {
+		perror(__func__);
 		goto bad;
 	}
 
-	fargs.dev = minor;
+	fargs.fd = fc->fd;
 	if (mount(MOUNT_FUSEFS, dir, 0, &fargs)) {
-		if (errno == EOPNOTSUPP)
-			fprintf(stderr,
-			    "%s: %s: FS not supported by kernel\n", __func__,
-			    dir);
-		else
-			perror("fuse_mount failure:");
-
+		switch (errno) {
+		case EMFILE:
+			errcause = "mount table full";
+			break;
+		case EOPNOTSUPP:
+			errcause = "filesystem not supported by kernel";
+			break;
+		default:
+			errcause = strerror(errno);
+			break;
+		}
+		fprintf(stderr, "%s on %s: %s\n", __func__, dir, errcause);
 		goto bad;
 	}
 
