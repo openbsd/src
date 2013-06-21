@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2013/06/19 19:36:43 robert Exp $
+# $OpenBSD: Makefile,v 1.6 2013/06/21 09:39:50 ajacoutot Exp $
 
 LIB=	gssapi
 
@@ -268,5 +268,4 @@ ${GEN_GSSAPI}: gssapi.asn1
 
 .SUFFIXES: .h .c .x .hx
 
-.PATH: ${KRB5DIR}/lib/gssapi/gssapi ${KRB5DIR}/lib/gssapi ${KRB5DIR}/lib/gssapi/krb5 ${KRB5DIR}/lib/gssapi/mech \
-	${KRB5DIR}/lib/gssapi/spnego
+.PATH: ${KRB5DIR}/lib/gssapi/gssapi ${KRB5DIR}/lib/gssapi ${KRB5DIR}/lib/gssapi/krb5 ${KRB5DIR}/lib/gssapi/mech
