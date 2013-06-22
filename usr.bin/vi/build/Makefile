@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2012/12/20 20:28:12 naddy Exp $
+#	$OpenBSD: Makefile,v 1.18 2013/06/22 18:52:52 miod Exp $
 #	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
 PROG=	vi
@@ -18,6 +18,11 @@ DPADD+= ${LIBCURSES}
 
 LDADD+=-lutil
 DPADD+= ${LIBUTIL}
+
+# incorrect code in vs_msg()
+.if ${MACHINE_ARCH} == "sh"
+CFLAGS+= -fno-tree-dominator-opts
+.endif
 
 SRCS=	cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	cut.c delete.c ex.c ex_abbrev.c ex_append.c ex_args.c ex_argv.c \
