@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.10 2013/06/21 07:52:22 uebayasi Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.11 2013/06/22 00:28:10 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -173,7 +173,7 @@ int vmxnet3_load_mbuf(struct vmxnet3_softc *, struct mbuf *);
 void vmxnet3_watchdog(struct ifnet *);
 void vmxnet3_media_status(struct ifnet *, struct ifmediareq *);
 int vmxnet3_media_change(struct ifnet *);
-void *dma_allocmem(struct vmxnet3_softc *, u_int, u_int, bus_addr_t *);
+void *vmxnet3_dma_allocmem(struct vmxnet3_softc *, u_int, u_int, bus_addr_t *);
 
 const struct pci_matchid vmx_devices[] = {
 	{ PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_NET_3 }
@@ -301,7 +301,7 @@ vmxnet3_dma_init(struct vmxnet3_softc *sc)
 	u_int major, minor, release_code, rev;
 
 	qs_len = NTXQUEUE * sizeof *ts + NRXQUEUE * sizeof *rs;
-	ts = dma_allocmem(sc, qs_len, VMXNET3_DMADESC_ALIGN, &qs_pa);
+	ts = vmxnet3_dma_allocmem(sc, qs_len, VMXNET3_DMADESC_ALIGN, &qs_pa);
 	if (ts == NULL)
 		return -1;
 	for (queue = 0; queue < NTXQUEUE; queue++)
@@ -317,11 +317,11 @@ vmxnet3_dma_init(struct vmxnet3_softc *sc)
 		if (vmxnet3_alloc_rxring(sc, queue))
 			return -1;
 
-	sc->sc_mcast = dma_allocmem(sc, 682 * ETHER_ADDR_LEN, 32, &mcast_pa);
+	sc->sc_mcast = vmxnet3_dma_allocmem(sc, 682 * ETHER_ADDR_LEN, 32, &mcast_pa);
 	if (sc->sc_mcast == NULL)
 		return -1;
 
-	ds = dma_allocmem(sc, sizeof *sc->sc_ds, 8, &ds_pa);
+	ds = vmxnet3_dma_allocmem(sc, sizeof *sc->sc_ds, 8, &ds_pa);
 	if (ds == NULL)
 		return -1;
 	sc->sc_ds = ds;
@@ -380,10 +380,10 @@ vmxnet3_alloc_txring(struct vmxnet3_softc *sc, int queue)
 	bus_addr_t pa, comp_pa;
 	int idx;
 
-	ring->txd = dma_allocmem(sc, NTXDESC * sizeof ring->txd[0], 512, &pa);
+	ring->txd = vmxnet3_dma_allocmem(sc, NTXDESC * sizeof ring->txd[0], 512, &pa);
 	if (ring->txd == NULL)
 		return -1;
-	comp_ring->txcd = dma_allocmem(sc,
+	comp_ring->txcd = vmxnet3_dma_allocmem(sc,
 	    NTXCOMPDESC * sizeof comp_ring->txcd[0], 512, &comp_pa);
 	if (comp_ring->txcd == NULL)
 		return -1;
@@ -422,13 +422,13 @@ vmxnet3_alloc_rxring(struct vmxnet3_softc *sc, int queue)
 
 	for (i = 0; i < 2; i++) {
 		ring = &rq->cmd_ring[i];
-		ring->rxd = dma_allocmem(sc, NRXDESC * sizeof ring->rxd[0],
+		ring->rxd = vmxnet3_dma_allocmem(sc, NRXDESC * sizeof ring->rxd[0],
 		    512, &pa[i]);
 		if (ring->rxd == NULL)
 			return -1;
 	}
 	comp_ring = &rq->comp_ring;
-	comp_ring->rxcd = dma_allocmem(sc,
+	comp_ring->rxcd = vmxnet3_dma_allocmem(sc,
 	    NRXCOMPDESC * sizeof comp_ring->rxcd[0], 512, &comp_pa);
 	if (comp_ring->rxcd == NULL)
 		return -1;
@@ -1190,7 +1190,7 @@ vmxnet3_media_change(struct ifnet *ifp)
 }
 
 void *
-dma_allocmem(struct vmxnet3_softc *sc, u_int size, u_int align, bus_addr_t *pa)
+vmxnet3_dma_allocmem(struct vmxnet3_softc *sc, u_int size, u_int align, bus_addr_t *pa)
 {
 	bus_dma_tag_t t = sc->sc_dmat;
 	bus_dma_segment_t segs[1];
