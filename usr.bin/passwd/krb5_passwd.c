@@ -60,7 +60,7 @@ int
 krb5_passwd(int argc, char **argv)
 {
 	krb5_data result_code_string, result_string;
-	krb5_get_init_creds_opt opt;
+	krb5_get_init_creds_opt *opt;
 	krb5_principal principal;
 	krb5_context context;
 	krb5_error_code ret;
@@ -74,29 +74,36 @@ krb5_passwd(int argc, char **argv)
 		errx(1, "can't drop privileges\n");
 	}
 
-	krb5_get_init_creds_opt_init (&opt);
-
-	krb5_get_init_creds_opt_set_tkt_life (&opt, 300);
-	krb5_get_init_creds_opt_set_forwardable (&opt, FALSE);
-	krb5_get_init_creds_opt_set_proxiable (&opt, FALSE);
-
 	ret = krb5_init_context(&context);
 	if (ret)
 		errx(1, "krb5_init_context failed: %d", ret);
 
+	ret = krb5_get_init_creds_opt_alloc (context, &opt);
+	if (ret)
+		errx(1, "krb5_get_init_creds_opt_alloc failed: %d", ret);
+
+	krb5_get_init_creds_opt_set_tkt_life (opt, 300);
+	krb5_get_init_creds_opt_set_forwardable (opt, FALSE);
+	krb5_get_init_creds_opt_set_proxiable (opt, FALSE);
+
 	if (argv[0]) {
 		ret = krb5_parse_name(context, argv[0], &principal);
-		if (ret)
+		if (ret) {
+			krb5_get_init_creds_opt_free(context, opt);
 			krb5_err(context, 1, ret, "krb5_parse_name");
+		}
 	} else {
 		ret = krb5_get_default_principal (context, &principal);
-		if (ret)
+		if (ret) {
+			krb5_get_init_creds_opt_free(context, opt);
 			krb5_err (context, 1, ret, "krb5_get_default_principal");
+		}
         }
 
 	ret = krb5_get_init_creds_password (context, &cred,
 	    principal, NULL, krb5_prompter_posix, NULL, 0,
-	    "kadmin/changepw", &opt);
+	    "kadmin/changepw", opt);
+	krb5_get_init_creds_opt_free (context, opt);
 	switch (ret) {
 	case 0:
 		break;
@@ -117,18 +124,23 @@ krb5_passwd(int argc, char **argv)
 	    1) != 0)
 		return 1;
 
-	ret = krb5_change_password (context, &cred, pwbuf, &result_code,
-	    &result_code_string, &result_string);
+	ret = krb5_set_password (context, &cred, pwbuf, NULL,
+				 &result_code,
+				 &result_code_string,
+				 &result_string);
 	if (ret)
-		krb5_err(context, 1, ret, "krb5_change_password");
+		krb5_err(context, 1, ret, "krb5_set_password");
 
-	printf("Reply from server: %.*s\n", (int)result_string.length,
-	    (char *)result_string.data);
+	printf ("%s%s%.*s\n",
+	    krb5_passwd_result_to_string(context, result_code),
+	    result_string.length > 0 ? " : " : "",
+	    (int)result_string.length,
+	    result_string.length > 0 ? (char *)result_string.data : "");
 
 	krb5_data_free(&result_code_string);
 	krb5_data_free(&result_string);
 
-	krb5_free_creds_contents(context, &cred);
+	krb5_free_cred_contents(context, &cred);
 	krb5_free_context(context);
 	return result_code;
 }
