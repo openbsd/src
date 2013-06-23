@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.10 2013/03/26 10:54:48 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.11 2013/06/23 12:41:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -55,6 +55,7 @@ control_callback(struct client *c, int closed, unused void *data)
 {
 	char		*line, *cause;
 	struct cmd_list	*cmdlist;
+	struct cmd	*cmd;
 
 	if (closed)
 		c->flags |= CLIENT_EXIT;
@@ -78,6 +79,8 @@ control_callback(struct client *c, int closed, unused void *data)
 
 			free(cause);
 		} else {
+			TAILQ_FOREACH(cmd, &cmdlist->list, qentry)
+				cmd->flags |= CMD_CONTROL;
 			cmdq_run(c->cmdq, cmdlist);
 			cmd_list_free(cmdlist);
 		}

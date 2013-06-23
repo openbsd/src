@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.411 2013/06/02 07:52:15 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.412 2013/06/23 12:41:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1382,6 +1382,9 @@ struct cmd {
 
 	char			*file;
 	u_int			 line;
+
+#define CMD_CONTROL 0x1
+	int			 flags;
 
 	TAILQ_ENTRY(cmd)	 qentry;
 };
