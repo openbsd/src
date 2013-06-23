@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.67 2013/03/30 07:25:20 tedu Exp $
+#	$OpenBSD: Makefile.vax,v 1.68 2013/06/23 20:33:52 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -37,7 +37,8 @@ CMACHFLAGS+=	-fno-stack-protector
 
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
-AFLAGS=		-D_LOCORE -x assembler-with-cpp -traditional-cpp ${CMACHFLAGS}
+AFLAGS=		-D_LOCORE -x assembler-with-cpp -traditional-cpp \
+		${CWARNFLAGS} ${CMACHFLAGS}
 LINKFLAGS=	-N -Ttext 80000000 -e start
 
 .if ${IDENT:M-DDDB_STRUCT}

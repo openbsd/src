@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.55 2013/03/30 07:25:20 tedu Exp $
+#	$OpenBSD: Makefile.amd64,v 1.56 2013/06/23 20:33:51 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -35,10 +35,13 @@ CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
+.if ${IDENT:M-DSMALL_KERNEL}
+CMACHFLAGS+=	-Wa,-n
+.endif
 
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
-AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CMACHFLAGS}
+AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
 LINKFLAGS=	-Ttext 0xffffffff810001e0 -e start --warn-common -nopie
 
 .if ${IDENT:M-DDDB_STRUCT}
