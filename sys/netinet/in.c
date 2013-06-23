@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.80 2013/06/20 12:03:40 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.81 2013/06/23 16:30:46 sthen Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -242,6 +242,7 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		if (ia == NULL) {
 			ia = malloc(sizeof *ia, M_IFADDR, M_WAITOK | M_ZERO);
 			s = splsoftnet();
+			TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
 			ia->ia_addr.sin_family = AF_INET;
 			ia->ia_addr.sin_len = sizeof(ia->ia_addr);
 			ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
@@ -413,10 +414,9 @@ cleanup:
 		 */
 		s = splsoftnet();
 		in_ifscrub(ifp, ia);
-		if (!error) {
+		if (!error)
 			ifa_del(ifp, &ia->ia_ifa);
-			TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
-		}
+		TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
 		if (ia->ia_allhosts != NULL) {
 			in_delmulti(ia->ia_allhosts);
 			ia->ia_allhosts = NULL;
@@ -646,10 +646,8 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 	struct sockaddr_in oldaddr;
 	int s = splnet(), flags = RTF_UP, error;
 
-	if (!newaddr) {
+	if (!newaddr)
 		ifa_del(ifp, &ia->ia_ifa);
-		TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
-	}
 	oldaddr = ia->ia_addr;
 	ia->ia_addr = *sin;
 
@@ -702,8 +700,8 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 		flags |= RTF_HOST;
 	} else if (ifp->if_flags & IFF_POINTOPOINT) {
 		if (ia->ia_dstaddr.sin_family != AF_INET) {
-			error = 0;
-			goto done;
+			ifa_add(ifp, &ia->ia_ifa);
+			return (0);
 		}
 		flags |= RTF_HOST;
 	}
@@ -720,11 +718,8 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 		ia->ia_allhosts = in_addmulti(&addr, ifp);
 	}
 
-done:
-	if (!error) {
-		TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
+	if (!error)
 		ifa_add(ifp, &ia->ia_ifa);
-	}
 
 	return (error);
 }
