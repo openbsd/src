@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.62 2013/03/24 09:18:16 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.63 2013/06/23 12:51:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1333,7 +1333,7 @@ input_csi_dispatch(struct input_ctx *ictx)
 			if (s->mode & MODE_FOCUSON)
 				break;
 			screen_write_mode_set(&ictx->ctx, MODE_FOCUSON);
-			wp->flags &= ~PANE_FOCUSED; /* force update if needed */
+			wp->flags |= PANE_FOCUSPUSH; /* force update */
 			break;
 		case 1005:
 			screen_write_mode_set(&ictx->ctx, MODE_MOUSE_UTF8);

@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.101 2013/04/21 21:32:00 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.102 2013/06/23 12:51:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -548,6 +548,11 @@ server_client_check_focus(struct window_pane *wp)
 {
 	u_int		 i;
 	struct client	*c;
+	int		 push;
+
+	/* Do we need to push the focus state? */
+	push = wp->flags & PANE_FOCUSPUSH;
+	wp->flags &= ~PANE_FOCUSPUSH;
 
 	/* If we don't care about focus, forget it. */
 	if (!(wp->base.mode & MODE_FOCUSON))
@@ -580,13 +585,13 @@ server_client_check_focus(struct window_pane *wp)
 	}
 
 not_focused:
-	if (wp->flags & PANE_FOCUSED)
+	if (push || (wp->flags & PANE_FOCUSED))
 		bufferevent_write(wp->event, "\033[O", 3);
 	wp->flags &= ~PANE_FOCUSED;
 	return;
 
 focused:
-	if (!(wp->flags & PANE_FOCUSED))
+	if (push || !(wp->flags & PANE_FOCUSED))
 		bufferevent_write(wp->event, "\033[I", 3);
 	wp->flags |= PANE_FOCUSED;
 }
