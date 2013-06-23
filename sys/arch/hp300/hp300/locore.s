@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.71 2013/02/02 13:34:29 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.72 2013/06/23 20:15:52 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ ASLOCAL(tmpstk)
  */
 #ifdef __STDC__
 #define	_RELOC(var, ar)			\
-	movel	# var,ar;		\
+	movel	var,ar;		\
 	addl	%a5,ar
 #else
 #define	_RELOC(var, ar)			\
