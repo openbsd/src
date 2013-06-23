@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.42 2013/05/24 07:58:46 ratchov Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.43 2013/06/23 21:23:45 brad Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -1451,7 +1451,7 @@ emuxki_voice_channel_destroy(struct emuxki_voice *voice)
 int
 emuxki_recsrc_reserve(struct emuxki_voice *voice, emuxki_recsrc_t source)
 {
-	if (source < 0 || source >= EMU_NUMRECSRCS) {
+	if (source >= EMU_NUMRECSRCS) {
 #ifdef EMUXKI_DEBUG
 		printf("Tried to reserve invalid source: %d\n", source);
 #endif
