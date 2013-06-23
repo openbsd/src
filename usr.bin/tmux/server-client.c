@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.102 2013/06/23 12:51:28 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.103 2013/06/23 13:10:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -549,6 +549,10 @@ server_client_check_focus(struct window_pane *wp)
 	u_int		 i;
 	struct client	*c;
 	int		 push;
+
+	/* Are focus events off? */
+	if (!options_get_number(&global_options, "focus-events"))
+		return;
 
 	/* Do we need to push the focus state? */
 	push = wp->flags & PANE_FOCUSPUSH;
