@@ -2922,6 +2922,10 @@ get_othercase_range(pcre_uint32 *cptr, pcre_uint32 d, pcre_uint32 *ocptr,
 pcre_uint32 c, othercase, next;
 unsigned int co;
 
+#if defined(__GNUC__) && __GNUC__ == 3
+othercase = 0; /* XXX gcc -Wuninitialized */
+#endif
+
 /* Find the first character that has an other case. If it has multiple other
 cases, return its case offset value. */
 
