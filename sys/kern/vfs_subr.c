@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.203 2013/04/15 15:32:19 jsing Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.204 2013/06/24 18:52:37 beck Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1820,6 +1820,7 @@ vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, struct proc *p,
 		panic("vinvalbuf(): vp isn't locked");
 #endif
 
+loop:
 	if (flags & V_SAVE) {
 		s = splbio();
 		vwaitforio(vp, 0, "vinvalbuf", 0);
@@ -1834,7 +1835,6 @@ vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, struct proc *p,
 		}
 		splx(s);
 	}
-loop:
 	s = splbio();
 	for (;;) {
 		if ((blist = LIST_FIRST(&vp->v_cleanblkhd)) &&
@@ -1857,24 +1857,13 @@ loop:
 				bp->b_flags |= B_WANTED;
 				error = tsleep(bp, slpflag | (PRIBIO + 1),
 				    "vinvalbuf", slptimeo);
+				splx(s);
 				if (error) {
-					splx(s);
 					return (error);
 				}
-				break;
-			}
-			bremfree(bp);
-			/*
-			 * XXX Since there are no node locks for NFS, I believe
-			 * there is a slight chance that a delayed write will
-			 * occur while sleeping just above, so check for it.
-			 */
-			if ((bp->b_flags & B_DELWRI) && (flags & V_SAVE)) {
-				buf_acquire(bp);
-				splx(s);
-				(void) VOP_BWRITE(bp);
 				goto loop;
 			}
+			bremfree(bp);
 			buf_acquire_nomap(bp);
 			bp->b_flags |= B_INVAL;
 			brelse(bp);
