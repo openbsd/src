@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.104 2013/06/15 13:03:41 espie Exp $
+.\"	$OpenBSD: make.1,v 1.105 2013/06/24 15:44:36 jmc Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: June 15 2013 $
+.Dd $Mdocdate: June 24 2013 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -271,8 +271,8 @@ line are compressed into a single space.
 .Sh DEPENDENCY LINES
 Dependency lines consist of one or more targets, an operator, and zero
 or more prerequisites:
-.Bd -literal -offset indent
-.Ar target ... Ns : Ns Op Ar prerequisite ...
+.Bd -ragged -offset indent
+.Ar target ... : Ns Op Ar prerequisite ...
 .Ed
 .Pp
 This creates a relationship where the targets
