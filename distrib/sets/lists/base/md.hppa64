@@ -1668,6 +1668,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/kerberosV/der-private.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/kerberosV/der-protos.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/kerberosV/der.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/kerberosV/digest_asn1.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/kerberosV/getarg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/kerberosV/gssapi
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/kerberosV/gssapi.ph

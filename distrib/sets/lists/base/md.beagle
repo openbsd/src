@@ -1721,6 +1721,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/kerberosV/der-private.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/kerberosV/der-protos.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/kerberosV/der.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/kerberosV/digest_asn1.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/kerberosV/getarg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/kerberosV/gssapi
 ./usr/libdata/perl5/site_perl/arm-openbsd/kerberosV/gssapi.ph

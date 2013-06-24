@@ -304,7 +304,6 @@
 ./usr/bin/kinit
 ./usr/bin/klist
 ./usr/bin/krb5-config
-./usr/bin/kswitch
 ./usr/bin/ktrace
 ./usr/bin/lam
 ./usr/bin/last

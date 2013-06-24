@@ -426,7 +426,6 @@
 ./usr/share/man/man1/klist.1
 ./usr/share/man/man1/krb5-config.1
 ./usr/share/man/man1/ksh.1
-./usr/share/man/man1/kswitch.1
 ./usr/share/man/man1/ktrace.1
 ./usr/share/man/man1/lam.1
 ./usr/share/man/man1/last.1

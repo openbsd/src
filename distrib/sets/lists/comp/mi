@@ -967,6 +967,7 @@
 ./usr/include/kerberosV/der-private.h
 ./usr/include/kerberosV/der-protos.h
 ./usr/include/kerberosV/der.h
+./usr/include/kerberosV/digest_asn1.h
 ./usr/include/kerberosV/getarg.h
 ./usr/include/kerberosV/gssapi
 ./usr/include/kerberosV/gssapi.h

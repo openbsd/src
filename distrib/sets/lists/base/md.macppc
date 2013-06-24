@@ -1684,6 +1684,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/der-private.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/der-protos.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/der.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/digest_asn1.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/getarg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/gssapi
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/gssapi.ph
