@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.378 2013/06/21 13:06:54 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.379 2013/06/24 11:20:47 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 21 2013 $
+.Dd $Mdocdate: June 24 2013 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -3061,15 +3061,6 @@ resulting in a double inclusion.
 This would lead to weird results, such as
 .Ev PKG_ARGS
 being defined twice.
-.It "Fatal: <PORTSDIR> is a symlink. Please set to the real directory"
-A few ports get lost if
-.Pa /usr/ports
-points elsewhere.
-You should set
-.Ev PORTSDIR
-in
-.Pa /etc/mk.conf
-to the real location of the ports directory.
 .It "Fatal: SUBPACKAGES should always begin with -: <offending list>"
 That is the only way to differentiate between
 .Ev FLAVOR
@@ -3078,6 +3069,14 @@ and
 in
 .Xr pkgpath 7
 specifications.
+.It "Fatal: building ports requires correctly installed X11"
+All file sets of the base OS, including xenocara, must be installed
+before building ports.
+.It "Fatal: /usr/local/lib/X11/app-defaults should exist and be a symlink"
+/usr/local/lib/X11/app-defaults is distributed as a symlink in the
+xshare*.tgz file set.
+If xenocara was not fully installed before packages were added, it may
+have been created as a directory instead.
 .It "Fatal: the licencing info for <pkgname> is incomplete..."
 Every port must have explicit defines of all
 .Ev PERMIT_*
