@@ -1,4 +1,4 @@
-.\"	$OpenBSD: indent.1,v 1.22 2013/06/21 06:49:42 jsg Exp $
+.\"	$OpenBSD: indent.1,v 1.23 2013/06/24 16:01:05 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)indent.1	8.1 (Berkeley) 7/1/93
 .\"
-.Dd $Mdocdate: June 21 2013 $
+.Dd $Mdocdate: June 24 2013 $
 .Dt INDENT 1
 .Os
 .Sh NAME
@@ -71,7 +71,7 @@
 .Op Fl \&st
 .Op Fl T Ns Ar typename
 .Op Fl troff
-.Op Fl ut | Fl nut
+.Op Fl ut | nut
 .Op Fl v | \&nv
 .Ek
 .Sh DESCRIPTION
@@ -118,7 +118,7 @@ checks to make sure it is different from
 If no
 .Ar input-file
 is specified
-input is read from stdin and the formatted file is written to stdout. 
+input is read from stdin and the formatted file is written to stdout.
 .Pp
 The options listed below control the formatting style imposed by
 .Nm .

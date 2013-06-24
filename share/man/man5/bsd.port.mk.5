@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.379 2013/06/24 11:20:47 sthen Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.380 2013/06/24 15:56:29 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -335,7 +335,7 @@ every configuration.
 .Pp
 Note that fetching a significant number of distfiles, or fetching all distfiles
 relevant to a port and dependencies is better accomplished using
-.Xr dpb 8
+.Xr dpb 1
 with the
 .Fl F
 option.
@@ -1515,7 +1515,7 @@ cd ${WRKDIR}
 for archive in ${EXTRACT_ONLY}
 do
     case $$archive in
-    	*.tar.xz)
+	*.tar.xz)
 	  xzcat ${FULLDISTDIR}/$$archive| tar xf -;;
 	*.zip)
 	  unzip -q ${FULLDISTDIR}/$$archive -d ${WRKDIR};;
@@ -1550,7 +1550,7 @@ Empty by default.
 Also see
 .Ev ALL_FAKE_FLAGS .
 .It Ev FAKE_SETUP
-List of environment values normally set during fake invocations
+List of environment values normally set during fake invocations.
 Exposed so that modules may provide their own
 .Ar do-install .
 Read-only,
