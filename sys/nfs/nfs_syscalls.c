@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.94 2012/12/10 22:34:53 beck Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.95 2013/06/25 02:53:47 beck Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -610,6 +610,7 @@ nfssvc_iod(void *arg)
 		/* Take one off the front of the list */
 		TAILQ_REMOVE(&nfs_bufq, bp, b_freelist);
 		nfs_bufqlen--;
+		wakeup_one(&nfs_bufqlen);
 		if (bp->b_flags & B_READ)
 		    (void) nfs_doio(bp, NULL);
 		else do {
@@ -643,7 +644,6 @@ nfssvc_iod(void *arg)
 
 		    (void) nfs_doio(bp, NULL);
 		} while ((bp = nbp) != NULL);
-		wakeup_one(&nfs_bufqlen); /* wake up anyone waiting for room to enqueue IO */
 	    }
 	    if (error) {
 		nfs_asyncdaemon[myiod] = NULL;
