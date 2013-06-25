@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.59 2013/06/03 16:10:56 mpi Exp $ */
+/*	$OpenBSD: ucom.c,v 1.60 2013/06/25 13:42:28 mpi Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -585,7 +585,7 @@ int
 ucomread(dev_t dev, struct uio *uio, int flag)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct tty *tp;
 	int error;
 
 	if (sc == NULL || sc->sc_dying)
