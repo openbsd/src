@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.40 2011/07/03 15:47:16 matthew Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.41 2013/06/25 02:27:44 brad Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -94,7 +94,7 @@ mii_phy_setmedia(struct mii_softc *sc)
 	 * Table index is stored in the media entry.
 	 */
 #ifdef DIAGNOSTIC
-	if (ife->ifm_data < 0 || ife->ifm_data >= MII_NMEDIA)
+	if (ife->ifm_data >= MII_NMEDIA)
 		panic("mii_phy_setmedia");
 #endif
 
