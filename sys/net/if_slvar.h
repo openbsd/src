@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_slvar.h,v 1.13 2007/11/26 09:28:33 martynas Exp $	*/
+/*	$OpenBSD: if_slvar.h,v 1.14 2013/06/25 09:16:34 mpi Exp $	*/
 /*	$NetBSD: if_slvar.h,v 1.16 1996/05/07 02:40:46 thorpej Exp $	*/
 
 /*-
@@ -36,40 +36,6 @@
 #define _NET_IF_SLVAR_H_
 
 /*
- * Definitions for SLIP interface data structures
- * 
- * (This exists so programs like slstats can get at the definition
- *  of sl_softc.)
- */
-struct sl_softc {
-	struct	ifnet sc_if;		/* network-visible interface */
-	int	sc_unit;		/* XXX unit number */
-	struct	ifqueue sc_fastq;	/* interactive output queue */
-	struct	tty *sc_ttyp;		/* pointer to tty structure */
-	u_char	*sc_mp;			/* pointer to next available buf char */
-	u_char	*sc_ep;			/* pointer to last available buf char */
-	u_char	*sc_pktstart;		/* pointer to beginning of packet */
-	struct mbuf *sc_mbuf;		/* input buffer */
-	u_int	sc_flags;		/* see below */
-	u_int	sc_escape;	/* =1 if last char input was FRAME_ESCAPE */
-	long	sc_lasttime;		/* last time a char arrived */
-	long	sc_abortcount;		/* number of abort esacpe chars */
-	long	sc_starttime;		/* time of first abort in window */
-	long	sc_oqlen;		/* previous output queue size */
-	long	sc_otimeout;		/* number of times output's stalled */
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	int	sc_oldbufsize;		/* previous output buffer size */
-	int	sc_oldbufquot;		/* previous output buffer quoting */
-#endif
-#ifdef INET				/* XXX */
-	struct	slcompress sc_comp;	/* tcp compression data */
-#endif
-	caddr_t	sc_bpf;			/* BPF data */
-	struct timeval sc_lastpacket;	/* for watchdog */
-	LIST_ENTRY(sl_softc) sc_list;	/* all slip interfaces */
-};
-
-/*
  * Statistics.
  */
 struct slstat	{
@@ -100,6 +66,15 @@ struct ifslstatsreq {
 	struct sl_stats stats;
 };
 
+/*
+ * This is an interface ioctl so that slstats(8) can do it on
+ * a socket without having to open the serial device.
+ */
+#define SIOCGSLSTATS	_IOWR('i', 123, struct ifslstatsreq)
+
+
+#ifdef _KERNEL
+
 /* internal flags */
 #define	SC_ERROR	0x0001		/* had an input error */
 
@@ -109,12 +84,37 @@ struct ifslstatsreq {
 #define	SC_AUTOCOMP	IFF_LINK2	/* auto-enable TCP compression */
 
 /*
- * These two are interface ioctls so that pppstats can do them on
- * a socket without having to open the serial device.
+ * Definitions for SLIP interface data structures
+ * 
+ * (This exists so programs like slstats can get at the definition
+ *  of sl_softc.)
  */
-#define SIOCGSLSTATS	_IOWR('i', 123, struct ifslstatsreq)
+struct sl_softc {
+	struct	ifnet sc_if;		/* network-visible interface */
+	int	sc_unit;		/* XXX unit number */
+	struct	ifqueue sc_fastq;	/* interactive output queue */
+	struct	tty *sc_ttyp;		/* pointer to tty structure */
+	u_char	*sc_mp;			/* pointer to next available buf char */
+	u_char	*sc_ep;			/* pointer to last available buf char */
+	u_char	*sc_pktstart;		/* pointer to beginning of packet */
+	struct mbuf *sc_mbuf;		/* input buffer */
+	u_int	sc_flags;		/* see below */
+	u_int	sc_escape;	/* =1 if last char input was FRAME_ESCAPE */
+	long	sc_lasttime;		/* last time a char arrived */
+	long	sc_abortcount;		/* number of abort esacpe chars */
+	long	sc_starttime;		/* time of first abort in window */
+	long	sc_oqlen;		/* previous output queue size */
+	long	sc_otimeout;		/* number of times output's stalled */
+	int	sc_oldbufsize;		/* previous output buffer size */
+	int	sc_oldbufquot;		/* previous output buffer quoting */
+#ifdef INET				/* XXX */
+	struct	slcompress sc_comp;	/* tcp compression data */
+#endif
+	caddr_t	sc_bpf;			/* BPF data */
+	struct timeval sc_lastpacket;	/* for watchdog */
+	LIST_ENTRY(sl_softc) sc_list;	/* all slip interfaces */
+};
 
-#ifdef _KERNEL
 void	slattach(int);
 void	slclose(struct tty *);
 void	slinput(int, struct tty *);

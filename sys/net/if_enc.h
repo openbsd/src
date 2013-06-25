@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.h,v 1.10 2010/07/01 02:09:45 reyk Exp $	*/
+/*	$OpenBSD: if_enc.h,v 1.11 2013/06/25 09:16:34 mpi Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -22,17 +22,19 @@
 #define ENCMTU		1536		/* XXX should be bigger, maybe LOMTU */
 #define ENC_HDRLEN	12
 
-struct enc_softc {
-	struct ifnet		 sc_if;		/* virtual interface */
-	u_int			 sc_unit;
-};
-
 struct enchdr {
 	u_int32_t af;
 	u_int32_t spi;
 	u_int32_t flags;
 };
 
+#ifdef _KERNEL
+struct enc_softc {
+	struct ifnet		 sc_if;		/* virtual interface */
+	u_int			 sc_unit;
+};
+
 struct ifnet	*enc_getif(u_int, u_int);
+#endif /* _KERNEL */
 
 #endif /* _NET_ENC_H */

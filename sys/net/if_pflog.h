@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pflog.h,v 1.23 2012/07/08 07:58:09 henning Exp $ */
+/* $OpenBSD: if_pflog.h,v 1.24 2013/06/25 09:16:34 mpi Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -28,12 +28,6 @@
 #define _NET_IF_PFLOG_H_
 
 #include <net/pfvar.h>
-
-struct pflog_softc {
-	struct ifnet		sc_if;		/* the interface */
-	int			sc_unit;
-	LIST_ENTRY(pflog_softc)	sc_list;
-};
 
 #define PFLOG_RULESET_NAME_SIZE	16
 
@@ -66,6 +60,13 @@ struct pfloghdr {
 #define PFLOG_OLD_HDRLEN	offsetof(struct pfloghdr, pad)
 
 #ifdef _KERNEL
+
+struct pflog_softc {
+	struct ifnet		sc_if;		/* the interface */
+	int			sc_unit;
+	LIST_ENTRY(pflog_softc)	sc_list;
+};
+
 void	pflog_bpfcopy(const void *, void *, size_t);
 
 #if NPFLOG > 0
