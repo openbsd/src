@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.113 2013/05/30 16:15:02 deraadt Exp $ */
+/*	$OpenBSD: ohci.c,v 1.114 2013/06/25 09:24:34 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -503,7 +503,7 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, struct ohci_softc *sc,
     u_int alen, int rd, struct usbd_xfer *xfer,
     struct ohci_soft_td *sp, struct ohci_soft_td **ep)
 {
-	struct ohci_soft_td *next, *cur;
+	struct ohci_soft_td *next, *cur, *end;
 	ohci_physaddr_t dataphys, dataphysend;
 	u_int32_t tdflags;
 	u_int len, curlen;
@@ -514,6 +514,8 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, struct ohci_softc *sc,
 
 	len = alen;
 	cur = sp;
+	end = NULL;
+
 	dataphys = DMAADDR(dma, 0);
 	dataphysend = OHCI_PAGE(dataphys + len - 1);
 	tdflags = htole32(
@@ -521,7 +523,7 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, struct ohci_softc *sc,
 	    (flags & USBD_SHORT_XFER_OK ? OHCI_TD_R : 0) |
 	    OHCI_TD_NOCC | OHCI_TD_TOGGLE_CARRY | OHCI_TD_NOINTR);
 
-	for (;;) {
+	while (len > 0) {
 		next = ohci_alloc_std(sc);
 		if (next == NULL)
 			goto nomem;
@@ -558,17 +560,15 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, struct ohci_softc *sc,
 		cur->xfer = xfer;
 		DPRINTFN(10,("ohci_alloc_std_chain: cbp=0x%08x be=0x%08x\n",
 			    dataphys, dataphys + curlen - 1));
-		if (len == 0)
-			break;
 		DPRINTFN(10,("ohci_alloc_std_chain: extend chain\n"));
 		dataphys += curlen;
+		end = cur;
 		cur = next;
 	}
-	if (!rd && (flags & USBD_FORCE_SHORT_XFER) &&
+	if (!rd && ((flags & USBD_FORCE_SHORT_XFER) || alen == 0) &&
 	    alen % UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize) == 0) {
 		/* Force a 0 length transfer at the end. */
 
-		cur = next;
 		next = ohci_alloc_std(sc);
 		if (next == NULL)
 			goto nomem;
@@ -582,8 +582,9 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, struct ohci_softc *sc,
 		cur->flags = 0;
 		cur->xfer = xfer;
 		DPRINTFN(2,("ohci_alloc_std_chain: add 0 xfer\n"));
+		end = cur;
 	}
-	*ep = cur;
+	*ep = end;
 
 	return (USBD_NORMAL_COMPLETION);
 
