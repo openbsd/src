@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.835 2013/06/17 19:50:06 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.836 2013/06/26 07:53:59 blambert Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6526,6 +6526,23 @@ pf_counters_inc(int action, struct pf_pdesc *pd, struct pf_state *s,
 			SLIST_FOREACH(ri, &s->match_rules, entry) {
 				ri->r->packets[dirndx]++;
 				ri->r->bytes[dirndx] += pd->tot_len;
+
+				if (ri->r->src.addr.type == PF_ADDR_TABLE)
+					pfr_update_stats(ri->r->src.addr.p.tbl,
+					    &s->key[(s->direction == PF_IN)]->
+						addr[(s->direction == PF_OUT)],
+					    pd->af, pd->tot_len,
+					    pd->dir == PF_OUT,
+					    r->action == PF_PASS,
+					    ri->r->src.neg);
+				if (ri->r->dst.addr.type == PF_ADDR_TABLE)
+					pfr_update_stats(ri->r->dst.addr.p.tbl,
+					    &s->key[(s->direction == PF_IN)]->
+						addr[(s->direction == PF_IN)],
+					    pd->af, pd->tot_len,
+					    pd->dir == PF_OUT,
+					    r->action == PF_PASS,
+					    ri->r->dst.neg);
 			}
 		}
 		if (r->src.addr.type == PF_ADDR_TABLE)
