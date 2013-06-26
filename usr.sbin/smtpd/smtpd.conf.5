@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.96 2013/06/09 08:26:35 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.97 2013/06/26 07:22:20 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 9 2013 $
+.Dd $Mdocdate: June 26 2013 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -640,7 +640,7 @@ In this second example,
 the aim is to permit mail relaying for any user that can authenticate
 using their normal login credentials.
 An RSA certificate must be provided to prove the server's identity.
-The mail server has an external interface bnx0.
+The mail server listens on all interfaces the default route(s) point to.
 Mail with a local destination should be sent to an external mda.
 First, the RSA certificate is created:
 .Bd -literal -offset indent
