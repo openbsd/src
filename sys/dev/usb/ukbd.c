@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.59 2013/04/15 09:23:02 mglocker Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.60 2013/06/26 07:53:20 mpi Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -126,6 +126,8 @@ const kbd_t ukbd_countrylayout[1 + HCC_MAX] = {
 
 struct ukbd_softc {
 	struct uhidev		sc_hdev;
+#define sc_ledsize		sc_hdev.sc_osize
+
 	struct hidkbd		sc_kbd;
 
 	int			sc_spl;
@@ -373,7 +375,7 @@ ukbd_set_leds(void *v, int leds)
 	if (sc->sc_dying)
 		return;
 
-	if (hidkbd_set_leds(kbd, leds, &res) != 0)
+	if (sc->sc_ledsize && hidkbd_set_leds(kbd, leds, &res) != 0)
 		uhidev_set_report_async(&sc->sc_hdev, UHID_OUTPUT_REPORT,
 		    &res, 1);
 }
