@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.383 2013/06/04 19:03:12 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.384 2013/06/26 09:12:39 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1274,7 +1274,12 @@ struct pf_pdesc {
 	u_int8_t	 didx;		/* key index for destination */
 	u_int8_t	 destchg;	/* flag set when destination changed */
 	u_int8_t	 pflog;		/* flags for packet logging */
+	u_int8_t	 csum_status;	/* proto cksum ok/bad/unchecked */
+#define	PF_CSUM_UNKNOWN	0
+#define	PF_CSUM_BAD	1
+#define	PF_CSUM_OK	2
 };
+
 
 /* flags for RDR options */
 #define PF_DPORT_RANGE	0x01		/* Dest port uses range */
@@ -1772,8 +1777,6 @@ extern void			 pf_state_export(struct pfsync_state *,
 				    struct pf_state *);
 extern void			 pf_print_state(struct pf_state *);
 extern void			 pf_print_flags(u_int8_t);
-extern u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t,
-				    u_int8_t);
 
 extern struct ifnet		*sync_ifp;
 extern struct pf_rule		 pf_default_rule;
@@ -1797,7 +1800,9 @@ void	pf_addr_inc(struct pf_addr *, sa_family_t);
 
 void   *pf_pull_hdr(struct mbuf *, int, void *, int, u_short *, u_short *,
 	    sa_family_t);
-void	pf_change_a(void *, u_int16_t *, u_int32_t, u_int8_t);
+void	pf_change_a(struct pf_pdesc *, void *, u_int32_t);
+int	pf_check_proto_cksum(struct pf_pdesc *, int, int, u_int8_t,
+	    sa_family_t);
 int	pflog_packet(struct pf_pdesc *, u_int8_t, struct pf_rule *,
 	    struct pf_rule *, struct pf_ruleset *);
 void	pf_send_deferred_syn(struct pf_state *);
@@ -1834,7 +1839,7 @@ struct pf_state_key *pf_alloc_state_key(int);
 void	pf_pkt_addr_changed(struct mbuf *);
 int	pf_state_key_attach(struct pf_state_key *, struct pf_state *, int);
 int	pf_translate(struct pf_pdesc *, struct pf_addr *, u_int16_t,
-	    struct pf_addr *, u_int16_t, u_int16_t, int);
+	    struct pf_addr *, u_int16_t, u_int16_t, int, struct mbuf *);
 int	pf_translate_af(struct pf_pdesc *);
 void	pf_route(struct mbuf **, struct pf_rule *, int,
 	    struct ifnet *, struct pf_state *);
@@ -1980,6 +1985,8 @@ int			 pf_map_addr(sa_family_t, struct pf_rule *,
 			    struct pf_pool *, enum pf_sn_types);
 
 int			 pf_postprocess_addr(struct pf_state *);
+
+void			 pf_cksum(struct pf_pdesc *, struct mbuf *);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.212 2013/06/13 12:15:52 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.213 2013/06/26 09:12:40 henning Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -505,6 +505,9 @@ ip_ours(struct mbuf *m)
 #endif /* IPSEC */
 
 	hlen = ip->ip_hl << 2;
+
+	/* pf might have modified stuff, might have to chksum */
+	in_proto_cksum_out(m, NULL);
 
 	/*
 	 * If offset or IP_MF are set, must reassemble.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.64 2013/03/28 15:05:32 bluhm Exp $	*/
+/*	$OpenBSD: in6.h,v 1.65 2013/06/26 09:12:40 henning Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -757,6 +757,7 @@ struct ip6_mtuinfo {
 struct cmsghdr;
 
 int	in6_cksum(struct mbuf *, u_int8_t, u_int32_t, u_int32_t);
+extern void in6_proto_cksum_out(struct mbuf *, struct ifnet *);
 int	in6_localaddr(struct in6_addr *);
 int	in6_addrscope(struct in6_addr *);
 struct	in6_ifaddr *in6_ifawithscope(struct ifnet *, struct in6_addr *, u_int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.53 2013/03/26 13:19:25 mpi Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.54 2013/06/26 09:12:39 henning Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -443,7 +443,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	if (pd.virtual_proto != PF_VPROTO_FRAGMENT &&
 	    (pfloghdr->rewritten = pf_translate(&pd, &pfloghdr->saddr,
 	    pfloghdr->sport, &pfloghdr->daddr, pfloghdr->dport, 0,
-	    pfloghdr->dir))) {
+	    pfloghdr->dir, pd.m))) {
 		m_copyback(pd.m, pd.off, min(pd.m->m_len - pd.off, pd.hdrlen),
 		    pd.hdr.any, M_NOWAIT);
 #if INET && INET6
