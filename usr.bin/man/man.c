@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.45 2012/02/05 18:51:18 schwarze Exp $	*/
+/*	$OpenBSD: man.c,v 1.46 2013/06/26 19:56:45 jca Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ static TAG *section;
 extern char *__progname;
 
 static void	 clearlist(TAG *);
-static void	 parse_path(TAG *, char *);
+static void	 parse_path(TAG *, const char *);
 static void	 append_subdirs(TAG *, const char *);
 static void	 build_page(char *, char **);
 static void	 cat(char *);
@@ -218,10 +218,13 @@ main(int argc, char *argv[])
 	 * 4: Append the _subdir list where appropriate,
 	 *    and always append the machine type.
 	 */
-	if (machine || (machine = getenv("MACHINE")))
+	if (machine || (machine = getenv("MACHINE"))) {
+		/* Avoid mangling argv/environment. */
+		if ((machine = strdup(machine)) == NULL)
+			err(1, NULL);
 		for (p = machine; *p; ++p)
 			*p = tolower(*p);
-	else
+	} else
 		machine = MACHINE;
 
 	append_subdirs(searchlist, machine);
@@ -332,12 +335,15 @@ clearlist(TAG *t)
  *	and insert the parts into the searchlist.
  */
 static void
-parse_path(TAG *t, char *path)
+parse_path(TAG *t, const char *path)
 {
 	ENTRY *eplast = NULL, *ep;
-	char *p, *slashp;
+	char *p, *slashp, *path_copy;
 
-	while ((p = strsep(&path, ":")) != NULL) {
+	if ((path_copy = strdup(path)) == NULL)
+		err(1, NULL);
+
+	while ((p = strsep(&path_copy, ":")) != NULL) {
 		/* Skip empty fields */
 		if (*p == '\0')
 			continue;
@@ -372,6 +378,8 @@ parse_path(TAG *t, char *path)
 			TAILQ_INSERT_HEAD(&t->list, ep, q);
 		eplast = ep;
 	}
+
+	free(path_copy);
 }
 
 /*
