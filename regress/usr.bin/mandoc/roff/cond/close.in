@@ -1,0 +1,12 @@
+.TH COND-CLOSE 1 2013-06-27 OpenBSD
+.SH NAME
+cond-close \- closing conditional macros
+.SH DESCRIPTION
+.if t \{.unknown \}
+closing after an unknown macro
+.PP
+.if t \{.ig \}
+closing after an ignored macro
+.PP
+.if t \{text \}
+closing after plain text

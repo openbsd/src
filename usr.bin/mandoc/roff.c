@@ -1,7 +1,7 @@
-/*	$Id: roff.c,v 1.49 2013/05/31 22:08:03 schwarze Exp $ */
+/*	$Id: roff.c,v 1.50 2013/06/27 09:48:22 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1024,57 +1024,45 @@ roff_cond_sub(ROFF_ARGS)
 
 	rr = r->last->rule;
 	roffnode_cleanscope(r);
+	t = roff_parse(r, *bufp, &pos);
 
 	/*
-	 * If the macro is unknown, first check if it contains a closing
-	 * delimiter `\}'.  If it does, close out our scope and return
-	 * the currently-scoped rule (ignore or continue).  Else, drop
-	 * into the currently-scoped rule.
+	 * Fully handle known macros when they are structurally
+	 * required or when the conditional evaluated to true.
 	 */
 
-	if (ROFF_MAX == (t = roff_parse(r, *bufp, &pos))) {
-		ep = &(*bufp)[pos];
-		for ( ; NULL != (ep = strchr(ep, '\\')); ep++) {
-			ep++;
-			if ('}' != *ep)
-				continue;
-
-			/*
-			 * Make the \} go away.
-			 * This is a little haphazard, as it's not quite
-			 * clear how nroff does this.
-			 * If we're at the end of line, then just chop
-			 * off the \} and resize the buffer.
-			 * If we aren't, then conver it to spaces.
-			 */
-
-			if ('\0' == *(ep + 1)) {
-				*--ep = '\0';
-				*szp -= 2;
-			} else
-				*(ep - 1) = *ep = ' ';
-
-			roff_ccond(r, ROFF_ccond, bufp, szp, 
-					ln, pos, pos + 2, offs);
-			break;
-		}
-		return(ROFFRULE_DENY == rr ? ROFF_IGN : ROFF_CONT);
+	if ((ROFF_MAX != t) &&
+	    (ROFF_ccond == t || ROFFRULE_ALLOW == rr ||
+	     ROFFMAC_STRUCT & roffs[t].flags)) {
+		assert(roffs[t].proc);
+		return((*roffs[t].proc)(r, t, bufp, szp,
+					ln, ppos, pos, offs));
 	}
 
-	/*
-	 * A denied conditional must evaluate its children if and only
-	 * if they're either structurally required (such as loops and
-	 * conditionals) or a closing macro.
-	 */
+	/* Always check for the closing delimiter `\}'. */
 
-	if (ROFFRULE_DENY == rr)
-		if ( ! (ROFFMAC_STRUCT & roffs[t].flags))
-			if (ROFF_ccond != t)
-				return(ROFF_IGN);
+	ep = &(*bufp)[pos];
+	while (NULL != (ep = strchr(ep, '\\'))) {
+		if ('}' != *(++ep))
+			continue;
 
-	assert(roffs[t].proc);
-	return((*roffs[t].proc)(r, t, bufp, szp, 
-				ln, ppos, pos, offs));
+		/*
+		 * If we're at the end of line, then just chop
+		 * off the \} and resize the buffer.
+		 * If we aren't, then convert it to spaces.
+		 */
+
+		if ('\0' == *(ep + 1)) {
+			*--ep = '\0';
+			*szp -= 2;
+		} else
+			*(ep - 1) = *ep = ' ';
+
+		roff_ccond(r, ROFF_ccond, bufp, szp, 
+				ln, pos, pos + 2, offs);
+		break;
+	}
+	return(ROFFRULE_DENY == rr ? ROFF_IGN : ROFF_CONT);
 }
 
 /* ARGSUSED */

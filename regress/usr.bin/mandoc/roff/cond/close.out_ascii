@@ -1,0 +1,17 @@
+COND-CLOSE(1)              OpenBSD Reference Manual              COND-CLOSE(1)
+
+
+
+NNAAMMEE
+       cond-close - closing conditional macros
+
+DDEESSCCRRIIPPTTIIOONN
+       closing after an unknown macro
+
+       closing after an ignored macro
+
+       closing after plain text
+
+
+
+OpenBSD                           2013-06-27                     COND-CLOSE(1)
