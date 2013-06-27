@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.26 2013/06/13 15:00:04 tedu Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.27 2013/06/27 00:04:16 beck Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  * Copyright (c) 2012,2013 Bob Beck <beck@openbsd.org>
@@ -168,6 +168,10 @@ buf_release(struct buf *bp)
 		}
 	}
 	CLR(bp->b_flags, B_BUSY);
+	if (ISSET(bp->b_flags, B_WANTED)) {
+		CLR(bp->b_flags, B_WANTED);
+		wakeup(bp);
+	}
 }
 
 /*
