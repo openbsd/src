@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.110 2013/03/17 00:29:16 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.111 2013/06/28 03:24:18 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -668,8 +668,86 @@ void
 sis_miibus_statchg(struct device *self)
 {
 	struct sis_softc	*sc = (struct sis_softc *)self;
+	struct ifnet		*ifp = &sc->arpcom.ac_if;
+	struct mii_data		*mii = &sc->sc_mii;
 
-	sis_init(sc);
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
+
+	sc->sis_link = 0;
+	if ((mii->mii_media_status & (IFM_ACTIVE | IFM_AVALID)) ==
+	    (IFM_ACTIVE | IFM_AVALID)) {
+		switch (IFM_SUBTYPE(mii->mii_media_active)) {
+		case IFM_10_T:
+			CSR_WRITE_4(sc, SIS_TX_CFG, SIS_TXCFG_10);
+			sc->sis_link++;
+			break;
+		case IFM_100_TX:
+			CSR_WRITE_4(sc, SIS_TX_CFG, SIS_TXCFG_100);
+			sc->sis_link++;
+			break;
+		default:
+			break;
+		}
+	}
+
+	if (!sc->sis_link) {
+		/*
+		 * Stopping MACs seem to reset SIS_TX_LISTPTR and
+		 * SIS_RX_LISTPTR which in turn requires resetting
+		 * TX/RX buffers.  So just don't do anything for
+		 * lost link.
+		 */
+		return;
+	}
+
+	/* Set full/half duplex mode. */
+	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) != 0) {
+		SIS_SETBIT(sc, SIS_TX_CFG,
+		    (SIS_TXCFG_IGN_HBEAT | SIS_TXCFG_IGN_CARR));
+		SIS_SETBIT(sc, SIS_RX_CFG, SIS_RXCFG_RX_TXPKTS);
+	} else {
+		SIS_CLRBIT(sc, SIS_TX_CFG,
+		    (SIS_TXCFG_IGN_HBEAT | SIS_TXCFG_IGN_CARR));
+		SIS_CLRBIT(sc, SIS_RX_CFG, SIS_RXCFG_RX_TXPKTS);
+	}
+
+	if (sc->sis_type == SIS_TYPE_83815 && sc->sis_srr >= NS_SRR_16A) {
+		/*
+		 * MPII03.D: Half Duplex Excessive Collisions.
+		 * Also page 49 in 83816 manual
+		 */
+		SIS_SETBIT(sc, SIS_TX_CFG, SIS_TXCFG_MPII03D);
+	}
+
+	/*
+	 * Some DP83815s experience problems when used with short
+	 * (< 30m/100ft) Ethernet cables in 100baseTX mode.  This
+	 * sequence adjusts the DSP's signal attenuation to fix the
+	 * problem.
+	 */
+	if (sc->sis_type == SIS_TYPE_83815 && sc->sis_srr < NS_SRR_16A &&
+	    IFM_SUBTYPE(mii->mii_media_active) == IFM_100_TX) {
+		uint32_t reg;
+
+		CSR_WRITE_4(sc, NS_PHY_PAGE, 0x0001);
+		reg = CSR_READ_4(sc, NS_PHY_DSPCFG) & 0xfff;
+		CSR_WRITE_4(sc, NS_PHY_DSPCFG, reg | 0x1000);
+		DELAY(100);
+		reg = CSR_READ_4(sc, NS_PHY_TDATA) & 0xff;
+		if ((reg & 0x0080) == 0 || (reg > 0xd8 && reg <= 0xff)) {
+#ifdef DEBUG
+			printf("%s: Applying short cable fix (reg=%x)\n",
+			    sc->sc_dev.dv_xname, reg);
+#endif
+			CSR_WRITE_4(sc, NS_PHY_TDATA, 0x00e8);
+			SIS_SETBIT(sc, NS_PHY_DSPCFG, 0x20);
+		}
+		CSR_WRITE_4(sc, NS_PHY_PAGE, 0);
+	}
+	/* Enable TX/RX MACs. */
+	SIS_CLRBIT(sc, SIS_CSR, SIS_CSR_TX_DISABLE | SIS_CSR_RX_DISABLE);
+	SIS_SETBIT(sc, SIS_CSR, SIS_CSR_TX_ENABLE | SIS_CSR_RX_ENABLE);
 }
 
 u_int32_t
@@ -1425,22 +1503,16 @@ sis_tick(void *xsc)
 {
 	struct sis_softc	*sc = (struct sis_softc *)xsc;
 	struct mii_data		*mii;
-	struct ifnet		*ifp;
 	int			s;
 
 	s = splnet();
 
-	ifp = &sc->arpcom.ac_if;
-
 	mii = &sc->sc_mii;
 	mii_tick(mii);
 
-	if (!sc->sis_link && mii->mii_media_status & IFM_ACTIVE &&
-	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-		sc->sis_link++;
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			sis_start(ifp);
-	}
+	if (!sc->sis_link)
+		sis_miibus_statchg(&sc->sc_dev);
+	
 	timeout_add_sec(&sc->sis_timeout, 1);
 
 	splx(s);
@@ -1716,56 +1788,11 @@ sis_init(void *xsc)
 	/* Accept Long Packets for VLAN support */
 	SIS_SETBIT(sc, SIS_RX_CFG, SIS_RXCFG_RX_JABBER);
 
-	/* Set TX configuration */
-	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_10_T)
-		CSR_WRITE_4(sc, SIS_TX_CFG, SIS_TXCFG_10);
-	else
-		CSR_WRITE_4(sc, SIS_TX_CFG, SIS_TXCFG_100);
-
-	/* Set full/half duplex mode. */
-	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX) {
-		SIS_SETBIT(sc, SIS_TX_CFG,
-		    (SIS_TXCFG_IGN_HBEAT|SIS_TXCFG_IGN_CARR));
-		SIS_SETBIT(sc, SIS_RX_CFG, SIS_RXCFG_RX_TXPKTS);
-	} else {
-		SIS_CLRBIT(sc, SIS_TX_CFG,
-		    (SIS_TXCFG_IGN_HBEAT|SIS_TXCFG_IGN_CARR));
-		SIS_CLRBIT(sc, SIS_RX_CFG, SIS_RXCFG_RX_TXPKTS);
-	}
-
-	if (sc->sis_type == SIS_TYPE_83815 && sc->sis_srr >= NS_SRR_16A) {
-		/*
-		 * MPII03.D: Half Duplex Excessive Collisions.
-		 * Also page 49 in 83816 manual
-		 */
-		SIS_SETBIT(sc, SIS_TX_CFG, SIS_TXCFG_MPII03D);
- 	}
-
 	/*
-	 * Some DP83815s experience problems when used with short
-	 * (< 30m/100ft) Ethernet cables in 100baseTX mode.  This
-	 * sequence adjusts the DSP's signal attenuation to fix the
-	 * problem.
+	 * Assume 100Mbps link, actual MAC configuration is done
+	 * after getting a valid link.
 	 */
-	if (sc->sis_type == SIS_TYPE_83815 && sc->sis_srr < NS_SRR_16A &&
-	    IFM_SUBTYPE(mii->mii_media_active) == IFM_100_TX) {
-		uint32_t reg;
-
-		CSR_WRITE_4(sc, NS_PHY_PAGE, 0x0001);
-		reg = CSR_READ_4(sc, NS_PHY_DSPCFG) & 0xfff;
-		CSR_WRITE_4(sc, NS_PHY_DSPCFG, reg | 0x1000);
-		DELAY(100);
-		reg = CSR_READ_4(sc, NS_PHY_TDATA) & 0xff;
-		if ((reg & 0x0080) == 0 || (reg > 0xd8 && reg <= 0xff)) {
-#ifdef DEBUG
-			printf("%s: Applying short cable fix (reg=%x)\n",
-			    sc->sc_dev.dv_xname, reg);
-#endif
-			CSR_WRITE_4(sc, NS_PHY_TDATA, 0x00e8);
-			SIS_SETBIT(sc, NS_PHY_DSPCFG, 0x20);
-		}
-		CSR_WRITE_4(sc, NS_PHY_PAGE, 0);
-	}
+	CSR_WRITE_4(sc, SIS_TX_CFG, SIS_TXCFG_100);
 
 	/*
 	 * Enable interrupts.
@@ -1773,13 +1800,11 @@ sis_init(void *xsc)
 	CSR_WRITE_4(sc, SIS_IMR, SIS_INTRS);
 	CSR_WRITE_4(sc, SIS_IER, 1);
 
-	/* Enable receiver and transmitter. */
-	SIS_CLRBIT(sc, SIS_CSR, SIS_CSR_TX_DISABLE|SIS_CSR_RX_DISABLE);
-	SIS_SETBIT(sc, SIS_CSR, SIS_CSR_RX_ENABLE);
+	/* Clear MAC disable. */
+	SIS_CLRBIT(sc, SIS_CSR, SIS_CSR_TX_DISABLE | SIS_CSR_RX_DISABLE);
 
-#ifdef notdef
+	sc->sis_link = 0;
 	mii_mediachg(mii);
-#endif
 
 	sc->sis_stopped = 0;
 	ifp->if_flags |= IFF_RUNNING;
@@ -1802,7 +1827,6 @@ sis_ifmedia_upd(struct ifnet *ifp)
 	sc = ifp->if_softc;
 
 	mii = &sc->sc_mii;
-	sc->sis_link = 0;
 	if (mii->mii_instance) {
 		struct mii_softc	*miisc;
 		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
@@ -1933,7 +1957,7 @@ sis_stop(struct sis_softc *sc)
 	CSR_WRITE_4(sc, SIS_IER, 0);
 	CSR_WRITE_4(sc, SIS_IMR, 0);
 	CSR_READ_4(sc, SIS_ISR); /* clear any interrupts already pending */
-	SIS_SETBIT(sc, SIS_CSR, SIS_CSR_TX_DISABLE|SIS_CSR_RX_DISABLE);
+	SIS_SETBIT(sc, SIS_CSR, SIS_CSR_TX_DISABLE | SIS_CSR_RX_DISABLE);
 	DELAY(1000);
 	CSR_WRITE_4(sc, SIS_TX_LISTPTR, 0);
 	CSR_WRITE_4(sc, SIS_RX_LISTPTR, 0);
