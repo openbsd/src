@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.336 2013/06/25 10:08:04 mikeb Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.337 2013/06/28 11:59:42 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1623,12 +1623,15 @@ void
 bge_chipinit(struct bge_softc *sc)
 {
 	struct pci_attach_args	*pa = &(sc->bge_pa);
-	u_int32_t dma_rw_ctl, mode_ctl;
+	u_int32_t dma_rw_ctl, misc_ctl, mode_ctl;
 	int i;
 
 	/* Set endianness before we access any non-PCI registers. */
+	misc_ctl = BGE_INIT;
+	if (sc->bge_flags & BGE_TAGGED_STATUS)
+		misc_ctl |= BGE_PCIMISCCTL_TAGGED_STATUS;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
-	    BGE_INIT);
+	    misc_ctl);
 
 	/*
 	 * Clear the MAC statistics block in the NIC's
@@ -2485,15 +2488,6 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	DPRINTFN(5, ("pci_intr_map\n"));
-	if (pci_intr_map(pa, &ih)) {
-		printf(": couldn't map interrupt\n");
-		goto fail_1;
-	}
-
-	DPRINTFN(5, ("pci_intr_string\n"));
-	intrstr = pci_intr_string(pc, ih);
-
 	/*
 	 * Kludge for 5700 Bx bug: a hardware bug (PCIX byte enable?)
 	 * can clobber the chip's PCI config-space power control registers,
@@ -2749,6 +2743,17 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
 		sc->bge_flags |= BGE_CPMU_PRESENT;
 
+	DPRINTFN(5, ("pci_intr_map\n"));
+	if (BGE_IS_5717_PLUS(sc) && pci_intr_map_msi(pa, &ih) == 0)
+		sc->bge_flags |= BGE_TAGGED_STATUS;
+	else if (pci_intr_map(pa, &ih)) {
+		printf(": couldn't map interrupt\n");
+		goto fail_1;
+	}
+
+	DPRINTFN(5, ("pci_intr_string\n"));
+	intrstr = pci_intr_string(pc, ih);
+
 	/* Try to reset the chip. */
 	DPRINTFN(5, ("bge_reset\n"));
 	bge_sig_pre_reset(sc, BGE_RESET_START);
@@ -2934,6 +2939,14 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		    sc->bge_flags |= BGE_PHY_FIBER_TBI;
 		else
 		    sc->bge_flags |= BGE_PHY_FIBER_MII;
+	}
+
+	/* Take advantage of single-shot MSI. */
+	if ((BGE_IS_5717_PLUS(sc) && sc->bge_flags & BGE_TAGGED_STATUS)) {
+		reg = CSR_READ_4(sc, BGE_MSI_MODE);
+		reg &= ~BGE_MSIMODE_ONE_SHOT_DISABLE;
+		reg |= BGE_MSIMODE_ENABLE;
+		CSR_WRITE_4(sc, BGE_MSI_MODE, reg);
 	}
 
 	/* Hookup IRQ last. */
@@ -3505,20 +3518,10 @@ bge_intr(void *xsc)
 {
 	struct bge_softc *sc;
 	struct ifnet *ifp;
-	u_int32_t statusword;
-	u_int32_t intrmask = BGE_PCISTATE_INTR_NOT_ACTIVE;
+	u_int32_t statusword, statustag;
 
 	sc = xsc;
 	ifp = &sc->arpcom.ac_if;
-
-	if (BGE_IS_5717_PLUS(sc))
-		intrmask = 0;
-
-	/* It is possible for the interrupt to arrive before
-	 * the status block is updated prior to the interrupt.
-	 * Reading the PCI State register will confirm whether the
-	 * interrupt is ours and will flush the status block.
-	 */
 
 	/* read status word from status block */
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
@@ -3527,42 +3530,52 @@ bge_intr(void *xsc)
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	statusword = sc->bge_rdata->bge_status_block.bge_status;
+	statustag = sc->bge_rdata->bge_status_block.bge_status_tag << 24;
 
-	if ((statusword & BGE_STATFLAG_UPDATED) ||
-	    (~CSR_READ_4(sc, BGE_PCI_PCISTATE) & intrmask)) {
-
+	if (sc->bge_flags & BGE_TAGGED_STATUS) {
+		if (sc->bge_lasttag == statustag &&
+		    (CSR_READ_4(sc, BGE_PCI_PCISTATE) &
+		     BGE_PCISTATE_INTR_NOT_ACTIVE))
+			return (0);
+		sc->bge_lasttag = statustag;
+	} else {
+		if (!(statusword & BGE_STATFLAG_UPDATED) &&
+		    (CSR_READ_4(sc, BGE_PCI_PCISTATE) &
+		     BGE_PCISTATE_INTR_NOT_ACTIVE))
+			return (0);
 		/* Ack interrupt and stop others from occurring. */
 		bge_writembx(sc, BGE_MBX_IRQ0_LO, 1);
-			
-		/* clear status word */
-		sc->bge_rdata->bge_status_block.bge_status = 0;
+		statustag = 0;
+	}
 
-		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
-		    offsetof(struct bge_ring_data, bge_status_block),
-		    sizeof (struct bge_status_block),
-		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	/* clear status word */
+	sc->bge_rdata->bge_status_block.bge_status = 0;
 
-		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
-		    statusword & BGE_STATFLAG_LINKSTATE_CHANGED ||
-		    BGE_STS_BIT(sc, BGE_STS_LINK_EVT))
-			bge_link_upd(sc);
+	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
+	    offsetof(struct bge_ring_data, bge_status_block),
+	    sizeof (struct bge_status_block),
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-		if (ifp->if_flags & IFF_RUNNING) {
-			/* Check RX return ring producer/consumer */
-			bge_rxeof(sc);
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
+	    statusword & BGE_STATFLAG_LINKSTATE_CHANGED ||
+	    BGE_STS_BIT(sc, BGE_STS_LINK_EVT))
+		bge_link_upd(sc);
 
-			/* Check TX ring producer/consumer */
-			bge_txeof(sc);
-		}
+	/* Re-enable interrupts. */
+	bge_writembx(sc, BGE_MBX_IRQ0_LO, statustag);
 
-		/* Re-enable interrupts. */
-		bge_writembx(sc, BGE_MBX_IRQ0_LO, 0);
+	if (ifp->if_flags & IFF_RUNNING) {
+		/* Check RX return ring producer/consumer */
+		bge_rxeof(sc);
 
-		bge_start(ifp);
+		/* Check TX ring producer/consumer */
+		bge_txeof(sc);
 
-		return (1);
-	} else
-		return (0);
+		if (!IFQ_IS_EMPTY(&ifp->if_snd))
+			bge_start(ifp);
+	}
+
+	return (1);
 }
 
 void
