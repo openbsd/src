@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.43 2013/05/31 19:21:09 jcs Exp $ */
+/* $OpenBSD: pms.c,v 1.44 2013/06/28 18:32:01 jcs Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -2195,7 +2195,7 @@ void
 pms_proc_elantech_v4(struct pms_softc *sc)
 {
 	struct elantech_softc *elantech = sc->elantech;
-	int w, z, delta_x1 = 0, delta_x2 = 0, delta_y1 = 0, delta_y2 = 0;
+	int z, delta_x1 = 0, delta_x2 = 0, delta_y1 = 0, delta_y2 = 0;
 	int i, weight, finger, fingers = 0, id, sid;
 
 	switch (sc->packet[3] & 0x1f) {
@@ -2254,15 +2254,15 @@ pms_proc_elantech_v4(struct pms_softc *sc)
 				fingers++;
 
 		elantech_send_input(sc, elantech->mt[id].x, elantech->mt[id].y,
-		    z, fingers);
+		    1, fingers);
 
 		if (sid >= 0) {
-			elantech->mt[sid].x += delta_x2 * w;
-			elantech->mt[sid].y -= delta_y2 * w;
+			elantech->mt[sid].x += delta_x2 * weight;
+			elantech->mt[sid].y -= delta_y2 * weight;
 			/* XXX: can only send one finger of input */
 			/*
 			elantech_send_input(sc, elantech->mt[sid].x,
-			    elantech->mt[sid].y, z, w);
+			    elantech->mt[sid].y, 1, fingers);
 			*/
 		}
 
