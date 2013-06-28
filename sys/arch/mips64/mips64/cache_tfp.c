@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_tfp.c,v 1.1 2012/09/29 21:37:03 miod Exp $	*/
+/*	$OpenBSD: cache_tfp.c,v 1.2 2013/06/28 18:56:10 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -105,7 +105,7 @@ tfp_SyncCache(struct cpu_info *ci)
 	tfp_InvalidateICache(ci, 0, ci->ci_l1instcachesize);
 
 	sr = disableintr();
-	va = ci->ci_l1datacachesize;
+	eva = ci->ci_l1datacachesize;
 	for (va = 0; va < eva; va += TFP_DCTW_STEP)
 		tfp_dctw_zero(va);
 	setsr(sr);
