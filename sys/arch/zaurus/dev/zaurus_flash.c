@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_flash.c,v 1.10 2013/06/01 22:06:47 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_flash.c,v 1.11 2013/06/28 18:20:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -886,7 +886,7 @@ zflash_oob_set_logno(struct zflash_softc *sc, u_char *oob, u_int logno)
 	u_int16_t bit;
 	u_char lo;
 	u_char hi;
-	int parity;
+	int parity = 0;
 
 	/* Why do we set the most significant bit? */
 	word = ((logno & 0x03ff) << 1) | 0x1000;
