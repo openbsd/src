@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.12 2013/05/17 12:03:12 kettenis Exp $ */
+/*	$OpenBSD: rasops.h,v 1.13 2013/06/28 20:06:50 kettenis Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -55,6 +55,7 @@ struct wsdisplay_font;
 #define	RI_ROTATE_CW	0x0100	/* display is rotated, quarter clockwise */
 #define RI_CFGDONE	0x0200	/* rasops_reconfig() completed successfully */
 #define RI_VCONS	0x0400	/* virtual consoles */
+#define RI_WRONLY	0x0800	/* avoid framebuffer reads */
 
 struct rasops_screen;
 
