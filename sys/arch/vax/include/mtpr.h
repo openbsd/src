@@ -1,4 +1,4 @@
-/*      $OpenBSD: mtpr.h,v 1.7 2011/09/16 17:20:07 miod Exp $     */
+/*      $OpenBSD: mtpr.h,v 1.8 2013/06/29 13:00:05 miod Exp $     */
 /*      $NetBSD: mtpr.h,v 1.12 1999/06/06 19:06:29 ragge Exp $     */
 
 /*
@@ -156,23 +156,26 @@
 #define	AST_NO	  4
 #define	AST_OK	  3
 
-#ifndef	_LOCORE
+#ifndef _LOCORE
 
-#define mtpr(val,reg)                                   \
-{                                                       \
-        __asm__ __volatile ("mtpr %0,%1"                    \
-                        : /* No output */               \
-                        : "g" (val), "g" (reg));        \
+static inline void
+mtpr(register_t val, int reg)
+{
+	__asm__ __volatile ("mtpr %0,%1"
+			: /* No output */
+			: "g" (val), "g" (reg)
+			: "memory");
 }
 
-#define mfpr(reg)                                       \
-({                                                      \
-        register int val;                               \
-        __asm__ __volatile ("mfpr %1,%0"                    \
-                        : "=g" (val)                    \
-                        : "g" (reg));                   \
-        val;                                            \
-})
+static inline register_t
+mfpr(int reg)
+{
+	register_t __val;
+	__asm__ __volatile ("mfpr %1,%0"
+			: "=g" (__val)
+			: "g" (reg));
+	return __val;
+}
 #endif	/* _LOCORE */
 
 #endif /* _MACHINE_MTPR_H_ */
