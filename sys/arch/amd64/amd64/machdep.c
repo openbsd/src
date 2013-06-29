@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.164 2013/06/11 16:42:06 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.165 2013/06/29 21:06:15 brad Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1675,7 +1675,7 @@ amd64_pa_used(paddr_t addr)
 		return 1;
 
 	/* Low memory used for various bootstrap things */
-	if (addr >= 0 && addr < avail_start)
+	if (addr < avail_start)
 		return 1;
 
 	/*
