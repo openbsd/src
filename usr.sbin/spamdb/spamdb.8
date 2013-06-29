@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamdb.8,v 1.16 2012/06/04 15:27:29 jmc Exp $
+.\"	$OpenBSD: spamdb.8,v 1.17 2013/06/29 09:08:41 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2012 $
+.Dd $Mdocdate: June 29 2013 $
 .Dt SPAMDB 8
 .Os
 .Sh NAME
@@ -51,9 +51,7 @@ Delete entries for
 .Ar keys .
 .It Fl T
 Add or delete the keys as SPAMTRAP entries.
-See the
-.Sx GREYTRAPPING
-section of
+See the GREYTRAPPING section of
 .Xr spamd 8
 for more information.
 Must be used in conjunction with the
@@ -63,9 +61,7 @@ or
 option.
 .It Fl t
 Add or delete the keys as TRAPPED entries.
-See the
-.Sx GREYTRAPPING
-section of
+See the GREYTRAPPING section of
 .Xr spamd 8
 for more information.
 Must be used in conjunction with the
