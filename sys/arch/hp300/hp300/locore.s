@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.72 2013/06/23 20:15:52 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.73 2013/06/30 23:47:07 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -114,17 +114,19 @@ ASLOCAL(tmpstk)
  * Macro to relocate a symbol, used before MMU is enabled.
  */
 #ifdef __STDC__
-#define	_RELOC(var, ar)			\
-	movel	var,ar;		\
+#define	RELOC(var, ar)			\
+	moveal	#_C_LABEL(var),ar;	\
+	addl	%a5,ar
+#define	ASRELOC(var, ar)		\
+	moveal	#_ASM_LABEL(var),ar;	\
 	addl	%a5,ar
 #else
 #define	_RELOC(var, ar)			\
 	movel	#var,ar;		\
 	addl	%a5,ar
-#endif
-
 #define	RELOC(var, ar)		_RELOC(_C_LABEL(var), ar)
 #define	ASRELOC(var, ar)	_RELOC(_ASM_LABEL(var), ar)
+#endif
 
 /*
  * Final bits of grunt work required to reboot the system.  The MMU
