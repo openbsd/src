@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.55 2013/05/25 17:49:54 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.56 2013/06/30 10:04:40 aoyama Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, Miodrag Vallat.
  *
@@ -163,6 +163,9 @@ void	m8820x_cmmu_wait(int);
 void	m8820x_cmmu_wb_locked(int, paddr_t, psize_t);
 void	m8820x_cmmu_wbinv_locked(int, paddr_t, psize_t);
 void	m8820x_cmmu_inv_locked(int, paddr_t, psize_t);
+#if defined(__luna88k__) && !defined(MULTIPROCESSOR)
+void	m8820x_enable_other_cmmu_cache(void);
+#endif
 
 /* Flags passed to m8820x_cmmu_set_*() */
 #define MODE_VAL		0x01
@@ -389,6 +392,9 @@ m8820x_init()
 
 	cpu = m8820x_cpu_number();
 	m8820x_initialize_cpu(cpu);
+#if defined(__luna88k__) && !defined(MULTIPROCESSOR)
+	m8820x_enable_other_cmmu_cache();
+#endif
 	return (cpu);
 }
 
@@ -961,5 +967,29 @@ void
 m8820x_dma_cachectl_local(paddr_t pa, psize_t size, int op)
 {
 	/* This function is not used on 88100 systems */
+}
+#endif
+
+#if defined(__luna88k__) && !defined(MULTIPROCESSOR)
+/*
+ * On luna88k, secondary processors are not disabled while the kernel
+ * is initializing.  They are running an infinite loop in
+ * locore.S:secondary_init on non-MULTIPROCESSOR kernel.  Then, after
+ * initializing the CMMUs tied to the currently-running processor, we
+ * turn on the instruction cache of other processors to make them
+ * happier.
+ */
+void
+m8820x_enable_other_cmmu_cache()
+{
+	int cpu, master_cpu = cpu_number();
+
+	for (cpu = 0; cpu < ncpusfound; cpu++) {
+		if (cpu == master_cpu)
+			continue;
+		/* Enable other processor's instruction cache */
+		m8820x_cmmu_set_reg(CMMU_SAPR, CACHE_GLOBAL,
+			MODE_VAL, cpu, INST_CMMU);
+	}
 }
 #endif
