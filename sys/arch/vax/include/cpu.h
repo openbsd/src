@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.45 2013/03/12 09:37:16 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.46 2013/06/30 17:04:46 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $	*/
 
 /*
@@ -134,9 +134,17 @@ extern	int	want_resched;	/* resched() was called */
  */
 #define need_proftick(p) mtpr(AST_OK,PR_ASTLVL)
 
+/*
+ * Temporarily switching to ipl 1 when the kernel is idle allows SIMH
+ * to recognize the system is idle, and relinquish CPU time as well.
+ */
 #define	cpu_idle_enter()	do { /* nothing */ } while (0)
-#define	cpu_idle_cycle()	do { /* nothing */ } while (0)
 #define	cpu_idle_leave()	do { /* nothing */ } while (0)
+#define	cpu_idle_cycle() \
+do { \
+	mtpr(0x01, PR_IPL); \
+	mtpr(0x00, PR_IPL); \
+} while (0)
 
 /*
  * This defines the I/O device register space size in pages.
