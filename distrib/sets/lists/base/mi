@@ -2961,6 +2961,8 @@
 ./usr/share/locale/ISO8859-5/LC_CTYPE
 ./usr/share/locale/ISO8859-7
 ./usr/share/locale/ISO8859-7/LC_CTYPE
+./usr/share/locale/ISO8859-9
+./usr/share/locale/ISO8859-9/LC_CTYPE
 ./usr/share/locale/KOI8-R
 ./usr/share/locale/KOI8-R/LC_CTYPE
 ./usr/share/locale/KOI8-U
