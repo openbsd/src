@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.30 2009/03/29 21:53:53 sthen Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.31 2013/07/01 07:18:23 brad Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -475,14 +475,14 @@ bktr_mmap(dev_t dev, off_t offset, int nprot)
 
 	bktr = bktr_cd.cd_devs[unit];
 
-	if ((vaddr_t)offset < 0)
+	if (offset < 0)
 		return(-1);
 
-	if ((vaddr_t)offset >= bktr->alloc_pages * PAGE_SIZE)
+	if (offset >= bktr->alloc_pages * PAGE_SIZE)
 		return(-1);
 
 	return (bus_dmamem_mmap(bktr->dmat, bktr->dm_mem->dm_segs, 1,
-				(vaddr_t)offset, nprot, BUS_DMA_WAITOK));
+				offset, nprot, BUS_DMA_WAITOK));
 }
 
 #if NRADIO > 0
