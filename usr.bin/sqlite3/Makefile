@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2012/04/14 13:33:10 espie Exp $
+# $OpenBSD: Makefile,v 1.2 2013/07/01 09:56:12 mpi Exp $
 
 PROG = sqlite3
 SRCS = shell.c
@@ -9,10 +9,10 @@ CPPFLAGS +=	-DSQLITE_OMIT_LOAD_EXTENSION=1
 .endif
 
 
-CPPFLAGS +=	-DHAVE_READLINE=1
+CPPFLAGS +=	-I${.CURDIR}/../../lib/libedit -DHAVE_READLINE=1
 
 CFLAGS += -pthread
 LDFLAGS += -pthread
-LDADD += -lsqlite3 -lreadline -lcurses
+LDADD += -lsqlite3 -ledit -lcurses
 
 .include <bsd.prog.mk>
