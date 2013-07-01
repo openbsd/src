@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.38 2013/06/19 12:19:02 millert Exp $	*/
+/*	$OpenBSD: eval.c,v 1.39 2013/07/01 17:25:27 jca Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -505,7 +505,9 @@ expand(char *cp,	/* input word */
 			break;
 
 		case XCOM:
-			if (newlines) {		/* Spit out saved nl's */
+			if (x.u.shf == NULL)	/* $(< ...) failed, fake EOF */
+				c = EOF;
+			else if (newlines) {		/* Spit out saved nl's */
 				c = '\n';
 				--newlines;
 			} else {
@@ -520,9 +522,12 @@ expand(char *cp,	/* input word */
 			}
 			if (c == EOF) {
 				newlines = 0;
-				shf_close(x.u.shf);
+				if (x.u.shf != NULL)
+					shf_close(x.u.shf);
 				if (x.split)
 					subst_exstat = waitlast();
+				else
+					subst_exstat = (x.u.shf == NULL);
 				type = XBASE;
 				if (f&DOBLANK)
 					doblank--;
@@ -860,7 +865,8 @@ comsub(Expand *xp, char *cp)
 		shf = shf_open(name = evalstr(io->name, DOTILDE), O_RDONLY, 0,
 			SHF_MAPHI|SHF_CLEXEC);
 		if (shf == NULL)
-			errorf("%s: cannot open $() input", name);
+			warningf(!Flag(FTALKING),
+			    "%s: cannot open $(<) input", name);
 		xp->split = 0;	/* no waitlast() */
 	} else {
 		int errexit, ofd1, pv[2];
