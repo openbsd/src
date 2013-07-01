@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.52 2012/08/23 06:38:42 deraadt Exp $
+.\"	$OpenBSD: man.1,v 1.53 2013/07/01 17:16:03 jca Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)man.1	8.2 (Berkeley) 1/2/94
 .\"
-.Dd $Mdocdate: August 23 2012 $
+.Dd $Mdocdate: July 1 2013 $
 .Dt MAN 1
 .Os
 .Sh NAME
@@ -289,7 +289,7 @@ option.
 .Ev MACHINE
 is case insensitive.
 .It Ev MANPAGER
-Any non-null value of the environment variable
+Any non-empty value of the environment variable
 .Ev MANPAGER
 will be used instead of the standard pagination program,
 .Xr more 1 .
@@ -313,6 +313,9 @@ configuration file.
 Specifies the pagination program to use when
 .Ev MANPAGER
 is not defined.
+If neither PAGER nor MANPAGER is defined,
+.Pa /usr/bin/more -s
+will be used.
 .El
 .Sh FILES
 .Bl -tag -width /etc/man.conf -compact

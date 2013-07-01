@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.46 2013/06/26 19:56:45 jca Exp $	*/
+/*	$OpenBSD: man.c,v 1.47 2013/07/01 17:16:03 jca Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -78,7 +78,6 @@ static void	 parse_path(TAG *, const char *);
 static void	 append_subdirs(TAG *, const char *);
 static void	 build_page(char *, char **);
 static void	 cat(char *);
-static char	*check_pager(char *);
 static int	 cleanup(int);
 static void	 how(char *);
 static void	 jump(char **, char *, char *);
@@ -167,13 +166,13 @@ main(int argc, char *argv[])
 	if (!f_cat && !f_how && !f_where) {
 		if (!isatty(1))
 			f_cat = 1;
-		else if ((pager = getenv("MANPAGER")) != NULL &&
-				(*pager != '\0'))
-			pager = check_pager(pager);
-		else if ((pager = getenv("PAGER")) != NULL && (*pager != '\0'))
-			pager = check_pager(pager);
-		else
-			pager = _PATH_PAGER;
+		else {
+			pager = getenv("MANPAGER");
+			if (pager == NULL || *pager == '\0')
+				pager = getenv("PAGER");
+			if (pager == NULL || *pager == '\0')
+				pager = _PATH_PAGER;
+		}
 	}
 
 	/* Read the configuration file. */
@@ -851,36 +850,6 @@ cat(char *fname)
 		exit(1);
 	}
 	(void)close(fd);
-}
-
-/*
- * check_pager --
- *	check the user supplied page information
- */
-static char *
-check_pager(char *name)
-{
-	char *p, *save;
-
-	/*
-	 * if the user uses "more", we make it "more -s"; watch out for
-	 * PAGER = "mypager /usr/bin/more"
-	 */
-	for (p = name; *p && !isspace(*p); ++p)
-		;
-	for (; p > name && *p != '/'; --p)
-		;
-	if (p != name)
-		++p;
-
-	/* make sure it's "more", not "morex" */
-	if (!strncmp(p, "more", 4) && (p[4] == '\0' || isspace(p[4]))){
-		save = name;
-		/* allocate space to add the "-s" */
-		if (asprintf(&name, "%s -s", save) == -1)
-			err(1, "asprintf");
-	}
-	return(name);
 }
 
 /*
