@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.11 2013/06/19 19:36:47 robert Exp $
+# $OpenBSD: Makefile,v 1.12 2013/07/01 05:15:24 ajacoutot Exp $
 
 PROG=	ipropd-master
-MAN=	iprop.8
+MPAGES=	iprop.8
+MSRC=	${KRB5DIR}/lib/kadm5
 SRCS=	ipropd_common.c ipropd_master.c kadm5_err.h
 CFLAGS+=-I${KRB5DIR}/lib/krb5 -I${KRB5DIR}/lib/asn1 -I${KRB5DIR}/lib/roken \
 	-I. ${LDAPCFLAGS}

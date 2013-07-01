@@ -1,23 +1,24 @@
-# $OpenBSD: Makefile,v 1.2 2013/06/21 10:59:40 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.3 2013/07/01 05:15:24 ajacoutot Exp $
 
 LIB=	kafs5
 INCS=	kafs.h
-MAN=	kafs5.3
+MPAGES=	kafs.3
+MSRC=	${KRB5DIR}/lib/kafs
 
-MLINKS=	kafs5.3 k_afs_cell_of_file.3 \
-	kafs5.3 k_hasafs.3 \
-	kafs5.3 k_pioctl.3 \
-	kafs5.3 k_setpag.3 \
-	kafs5.3 k_unlog.3 \
-	kafs5.3 kafs.3 \
-	kafs5.3 kafs_set_verbose.3 \
-	kafs5.3 kafs_settoken.3 \
-	kafs5.3 kafs_settoken5.3 \
-	kafs5.3 kafs_settoken_rxkad.3 \
-	kafs5.3 krb5_afslog.3 \
-	kafs5.3 krb5_afslog_uid.3 \
-	kafs5.3 krb_afslog.3 \
-	kafs5.3 krb_afslog_uid.3
+MLINKS=	kafs.3 k_afs_cell_of_file.3 \
+	kafs.3 k_hasafs.3 \
+	kafs.3 k_pioctl.3 \
+	kafs.3 k_setpag.3 \
+	kafs.3 k_unlog.3 \
+	kafs.3 kafs5.3 \
+	kafs.3 kafs_set_verbose.3 \
+	kafs.3 kafs_settoken.3 \
+	kafs.3 kafs_settoken5.3 \
+	kafs.3 kafs_settoken_rxkad.3 \
+	kafs.3 krb5_afslog.3 \
+	kafs.3 krb5_afslog_uid.3 \
+	kafs.3 krb_afslog.3 \
+	kafs.3 krb_afslog_uid.3
 
 SRCS=	afssys.c afskrb5.c common.c krb5_err.h
 SRCS=	afssys.c \

@@ -1,8 +1,9 @@
-# $OpenBSD: Makefile,v 1.4 2013/06/21 11:01:17 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.5 2013/07/01 05:15:23 ajacoutot Exp $
 
 LIB=	hdb
 
-MAN=	HDB.3 hdb_entry_ex.3
+MPAGES=	HDB.3 hdb_entry_ex.3
+MSRC=		${KRB5DIR}/doc/doxyout/hdb/man/man3
 
 MLINKS=	HDB.3 hdb__del.3 \
 	HDB.3 hdb__get.3 \

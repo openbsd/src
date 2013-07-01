@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.1 2013/06/17 19:11:35 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2013/07/01 05:15:23 ajacoutot Exp $
 
 LIB=	hx509
 DPADD=	${LIBASN1} ${LIBCOM_ERR} ${LIBCRYPTO} ${LIBROKEN} ${LIBWIND}
 
-MAN=	hx509.3 \
+MPAGES=	hx509.3 \
 	hx509_ca.3 \
 	hx509_cert.3 \
 	hx509_cms.3 \
@@ -19,6 +19,7 @@ MAN=	hx509.3 \
 	hx509_query.3 \
 	hx509_revoke.3 \
 	hx509_verify.3
+MSRC=	${KRB5DIR}/doc/doxyout/hx509/man/man3
 
 MLINKS=	hx509.3 hx509_context_free.3 \
 	hx509.3 hx509_context_init.3 \

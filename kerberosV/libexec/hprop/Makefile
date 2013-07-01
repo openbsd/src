@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.10 2013/06/19 19:36:46 robert Exp $
+# $OpenBSD: Makefile,v 1.11 2013/07/01 05:15:24 ajacoutot Exp $
 
 PROG=	hprop
-MAN=	hprop.8
+MPAGES=	hprop.8
+MSRC=	${KRB5DIR}/kdc
 SRCS=	hprop.c mit_dump.c
 CFLAGS+=-I${KRB5DIR}/lib/roken
 CFLAGS+=-I${KRB5DIR}/lib/krb5

@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.3 2013/06/21 17:02:20 robert Exp $
+# $OpenBSD: Makefile,v 1.4 2013/07/01 05:15:24 ajacoutot Exp $
 
 PROG=	iprop-log
-MAN=	iprop-log.8
+MPAGES=	iprop-log.8
+MSRC=	${KRB5DIR}/lib/kadm5
 
 SRCS=	iprop-log.c \
 	kadm5_err.h \

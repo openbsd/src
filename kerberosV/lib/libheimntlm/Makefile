@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2013/06/21 10:59:40 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.3 2013/07/01 05:15:23 ajacoutot Exp $
 
 LIB=	heimntlm
 DPADD=	${LIBCRYPTO} ${LIBCOM_ERR} ${LIBKRB5} ${LIBROKEN}
@@ -6,11 +6,12 @@ SRCS=	ntlm.c ntlm_err.c
 INCS=	heimntlm.h heimntlm-protos.h ntlm_err.h
 CFLAGS+=-I${KRB5DIR}/lib/ntlm -I${KRB5DIR}/lib/roken
 
-MAN=	ntlm_buf.3 \
+MPAGES=	ntlm_buf.3 \
 	ntlm_core.3 \
 	ntlm_type1.3 \
 	ntlm_type2.3 \
 	ntlm_type3.3
+MSRC=	${KRB5DIR}/doc/doxyout/ntlm/man/man3
 
 MLINKS=	ntlm_core.3 heim_ntlm_build_ntlm1_master.3 \
 	ntlm_core.3 heim_ntlm_build_ntlm2_master.3 \

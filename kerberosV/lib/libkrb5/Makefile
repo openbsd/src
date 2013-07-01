@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2013/06/21 12:26:04 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.5 2013/07/01 05:15:24 ajacoutot Exp $
 
 LIB=	krb5
 
@@ -20,7 +20,7 @@ KRB5INCS=	locate_plugin.h \
 KRB5INCSDIR=	${INCSDIR}/krb5
 INCSGROUPS=	INCS KRB5INCS
 
-MAN=	krb5.3 \
+MPAGES=	krb5.3 \
 	krb524_convert_creds_kdc.3 \
 	krb5_425_conv_principal.3 \
 	krb5_acl_match_file.3 \
@@ -82,8 +82,11 @@ MAN=	krb5.3 \
 	krb5_verify_init_creds.3 \
 	krb5_verify_user.3
 
-MAN+=	krb5.conf.5
-MAN+=	kerberos.8
+MPAGES+=	krb5.conf.5
+MPAGES+=	kerberos.8
+
+MSRC=	${KRB5DIR}/lib/krb5 \
+	${KRB5DIR}/doc/doxyout/krb5/man/man3
 
 MLINKS=	krb5.3 krb5_add_et_list.3 \
 	krb5.3 krb5_add_extra_addresses.3 \

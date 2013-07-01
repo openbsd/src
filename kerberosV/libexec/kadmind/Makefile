@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.16 2013/06/21 20:34:23 miod Exp $
+# $OpenBSD: Makefile,v 1.17 2013/07/01 05:15:24 ajacoutot Exp $
 
 PROG=	kadmind
-MAN=	kadmind.8
+MPAGES=	kadmind.8
+MSRC=	${KRB5DIR}/kadmin
 SRCS=	rpc.c \
 	server.c \
 	kadmind.c \

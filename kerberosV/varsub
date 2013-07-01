@@ -1,0 +1,2 @@
+s:/etc/krb5:/etc/kerberosV/krb5:g
+s:/usr/heimdal:/usr:g
