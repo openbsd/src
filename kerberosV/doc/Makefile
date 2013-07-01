@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2013/06/21 17:04:01 robert Exp $
+# $OpenBSD: Makefile,v 1.11 2013/07/01 13:50:39 ajacoutot Exp $
 
 KINFOSRC =	${.CURDIR}/../src/doc
 KINFODIR =	${DESTDIR}${SHAREDIR}/info
@@ -15,7 +15,11 @@ SRCS =	heimdal.texi intro.texi whatis.texi install.texi setup.texi apps.texi \
 all: ${INFO}
 
 heimdal.info: ${SRCS}
-	${MAKEINFO} --no-split -I${KINFOSRC} -o ${.TARGET} ${KINFOSRC}/heimdal.texi
+.for t in ${SRCS}
+	sed -f ${.CURDIR}/../varsub ${KINFOSRC}/${t} > ${.OBJDIR}/${t}.tmp && \
+		mv ${.OBJDIR}/${t}.tmp ${.OBJDIR}/${t}
+.endfor
+	${MAKEINFO} --no-split -I${KINFOSRC} -o ${.TARGET} ${.OBJDIR}/heimdal.texi
 
 install: ${INFO}
 	${INSTALL} ${INSTALL_COPY} -m ${DOCMODE} -o ${DOCOWN} -g ${DOCGRP} ${.OBJDIR}/${INFO} ${KINFODIR}
