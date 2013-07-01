@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.47 2013/07/01 17:16:03 jca Exp $	*/
+/*	$OpenBSD: man.c,v 1.48 2013/07/01 18:47:39 schwarze Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static void	 cat(char *);
 static int	 cleanup(int);
 static void	 how(char *);
 static void	 jump(char **, char *, char *);
-static int	 manual(char *, TAG *, glob_t *);
+static int	 manual(const char *, TAG *, glob_t *);
 static void	 check_companion(char **, TAG *);
 static void	 onsig(int);
 static void	 usage(void);
@@ -97,7 +97,8 @@ main(int argc, char *argv[])
 	glob_t pg;
 	size_t len;
 	int ch, f_cat, f_how, found;
-	char **ap, *cmd, *machine, *p, *p_add, *p_path, *pager, *sflag;
+	const char *pager, *p_path;
+	char **ap, *cmd, *machine, *p, *p_add, *sflag;
 	char *conffile;
 
 	if (argv[1] == NULL && strcmp(basename(__progname), "help") == 0) {
@@ -111,7 +112,8 @@ main(int argc, char *argv[])
 
 	machine = sflag = NULL;
 	f_cat = f_how = 0;
-	conffile = p_add = p_path = NULL;
+	conffile = p_add = NULL;
+	p_path = (const char *)NULL;
 	while ((ch = getopt(argc, argv, "aC:cfhkM:m:P:s:S:w-")) != -1)
 		switch (ch) {
 		case 'a':
@@ -440,7 +442,7 @@ append_subdirs(TAG *t, const char *machine)
  *	Search the manuals for the pages.
  */
 static int
-manual(char *page, TAG *tag, glob_t *pg)
+manual(const char *page, TAG *tag, glob_t *pg)
 {
 	ENTRY *ep, *e_sufp, *e_tag;
 	TAG *missp, *sufp;
