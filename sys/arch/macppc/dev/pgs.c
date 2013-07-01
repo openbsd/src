@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgs.c,v 1.2 2011/02/19 22:15:11 kettenis Exp $	*/
+/*	$OpenBSD: pgs.c,v 1.3 2013/07/01 16:53:24 jasper Exp $	*/
 /*
  * Copyright (c) 2010 Jasper Lievisse Adriaanse <jasper@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 /*
  * This driver allows entering DDB by pushing the "Programmers Switch",
- * which can be found on most any modern world MacPPC.
+ * which can be found on many "Old World" and some early "New World" MacPPC.
  */
 
 #include <sys/types.h>
