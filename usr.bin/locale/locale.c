@@ -1,4 +1,4 @@
-/*	$OpenBSD: locale.c,v 1.5 2013/06/16 19:46:59 guenther Exp $	*/
+/*	$OpenBSD: locale.c,v 1.6 2013/07/01 00:39:14 fgsch Exp $	*/
 /*
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
  *
@@ -251,6 +251,8 @@ const char * const some_locales[] = {
 	"sv_SE.ISO8859-1",
 	"sv_SE.ISO8859-15",
 	"sv_SE.UTF-8",
+	"tr_TR.ISO8859-9",
+	"tr_TR.UTF-8",
 	"uk_UA.KOI8-U",
 	"uk_UA.UTF-8",
 	"zh_CN.UTF-8",
