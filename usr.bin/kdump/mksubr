@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.15 2013/06/17 19:11:54 guenther Exp $
+# $OpenBSD: mksubr,v 1.16 2013/07/01 17:16:46 guenther Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -491,7 +491,7 @@ auto_switch_type "clocktypename" "CLOCK_[_A-Z]+[[:space:]]+[0-9]+" "sys/_time.h"
 #auto_switch_type "kldsymcmdname" "KLDSYM_[A-Z]+[[:space:]]+[0-9]+" "sys/linker.h"
 #auto_switch_type "sendfileflagsname" "SF_[A-Z]+[[:space:]]+[0-9]+" "sys/socket.h"
 #auto_switch_type "acltypename" "ACL_TYPE_[A-Z4_]+[[:space:]]+0x[0-9]+" "sys/acl.h"
-auto_switch_type "rusagewho" "RUSAGE_[A-Z]+[[:space:]]+[-0-9]+" "sys/resource.h"
+auto_switch_type "rusagewho" "RUSAGE_[A-Z]+[[:space:]]+[-0-9()]+" "sys/resource.h"
 auto_orz_type "sigactionflagname" "SA_[A-Z]+[[:space:]]+0x[0-9]+" "sys/signal.h"
 auto_switch_type "sigprocmaskhowname" "SIG_[A-Z]+[[:space:]]+[0-9]+" "sys/signal.h"
 auto_switch_type "sigill_name" "ILL_[A-Z]+[[:space:]]+[0-9]+" "sys/siginfo.h"
