@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.30 2013/03/11 14:08:04 mpi Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.31 2013/07/01 14:22:20 bluhm Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -270,8 +270,6 @@ struct nd_prefix {
 	int	ndpr_refcnt;	/* reference counter from addresses */
 };
 
-#define ndpr_next		ndpr_entry.le_next
-
 #define ndpr_raf		ndpr_flags
 #define ndpr_raf_onlink		ndpr_flags.onlink
 #define ndpr_raf_auto		ndpr_flags.autonomous
@@ -305,7 +303,6 @@ struct inet6_ndpr_msghdr {
 
 struct nd_pfxrouter {
 	LIST_ENTRY(nd_pfxrouter) pfr_entry;
-#define pfr_next pfr_entry.le_next
 	struct nd_defrouter *router;
 };
 
