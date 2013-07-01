@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.54 2013/03/20 21:23:05 kettenis Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.55 2013/07/01 10:08:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -183,7 +183,7 @@ acpi_acquire_glk(uint32_t *lock)
 		new = (old & ~GL_BIT_PENDING) | GL_BIT_OWNED;
 		if ((old & GL_BIT_OWNED) != 0)
 			new |= GL_BIT_PENDING;
-	} while (x86_atomic_cas_int32(lock, old, new) == 0);
+	} while (x86_atomic_cas_int32(lock, old, new) != old);
 
 	return ((new & GL_BIT_PENDING) == 0);
 }
@@ -201,7 +201,7 @@ acpi_release_glk(uint32_t *lock)
 	do {
 		old = *lock;
 		new = old & ~(GL_BIT_PENDING | GL_BIT_OWNED);
-	} while (x86_atomic_cas_int32(lock, old, new) == 0);
+	} while (x86_atomic_cas_int32(lock, old, new) != old);
 
 	return ((old & GL_BIT_PENDING) != 0);
 }
