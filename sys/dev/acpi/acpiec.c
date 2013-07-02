@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.47 2013/01/18 06:02:51 pirofti Exp $ */
+/* $OpenBSD: acpiec.c,v 1.48 2013/07/02 18:37:47 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -343,6 +343,8 @@ acpiec_gpehandler(struct acpi_softc *acpi_sc, int gpe, void *arg)
 
 		if (stat & EC_STAT_SCI_EVT)
 			sc->sc_gotsci = 1;
+		else
+			sc->sc_gotsci = 0;
 	} while (sc->sc_gotsci);
 
 	/* Unmask the GPE which was blocked at interrupt time */
