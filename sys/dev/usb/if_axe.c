@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.120 2013/06/03 22:36:15 yuo Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.121 2013/07/02 19:27:15 brad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -1056,7 +1056,7 @@ axe_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			if ((pktlen % 2) != 0)
 				pktlen++;
 
-			if ((total_len - pktlen) < 0)
+			if (total_len < pktlen)
 				total_len = 0;
 			else
 				total_len -= pktlen;

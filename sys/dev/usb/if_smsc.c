@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.7 2013/04/15 09:23:01 mglocker Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.8 2013/07/02 19:27:15 brad Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -1247,7 +1247,7 @@ smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 		buf += sizeof(rxhdr);
 
-		if ((total_len - pktlen) < 0)
+		if (total_len < pktlen)
 			total_len = 0;
 		else
 			total_len -= pktlen;
