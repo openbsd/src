@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.5 2013/07/02 09:28:42 sf Exp $	 */
+/* $OpenBSD: viomb.c,v 1.6 2013/07/02 15:46:14 sf Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 /*
  * Copyright (c) 2012 Talypov Dinar <dinar@i-nk.ru>
@@ -237,7 +237,7 @@ viomb_worker(void *arg1, void *arg2)
 	struct viomb_softc *sc = (struct viomb_softc *)arg1;
 	int s;
 
-	s = splvm();
+	s = splbio();
 	sc->sc_workq_queued = 0;
 	viomb_read_config(sc);
 	if (sc->sc_npages > sc->sc_actual){
