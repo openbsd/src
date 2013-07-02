@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_subr.c,v 1.2 2006/11/14 18:00:27 jmc Exp $	*/
+/*	$OpenBSD: clock_subr.c,v 1.3 2013/07/02 01:58:42 guenther Exp $	*/
 /*	$NetBSD: clock_subr.c,v 1.3 1997/03/15 18:11:16 is Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ clock_ymdhms_to_secs(struct clock_ymdhms *dt)
 	days += (dt->dt_day - 1);
 
 	/* Add hours, minutes, seconds. */
-	secs = ((days
+	secs = (time_t)((days
 	    * 24 + dt->dt_hour)
 	    * 60 + dt->dt_min)
 	    * 60 + dt->dt_sec;
