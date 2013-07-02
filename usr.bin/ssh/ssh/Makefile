@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.60 2013/06/19 05:27:06 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.61 2013/07/02 13:32:38 markus Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -31,5 +31,5 @@ LDADD+=  -lgssapi -lkrb5 -lhx509 -lasn1 -lheimntlm
 LDADD+=  -lwind -lroken -lcom_err -lpthread -lheimbase
 .endif # KERBEROS5
 
-DPADD+=	${LIBCRYPTO} ${LIBZ}
 LDADD+=	-lcrypto -lutil -lz
+DPADD+=	${LIBCRYPTO} ${LIBUTIL} ${LIBZ}

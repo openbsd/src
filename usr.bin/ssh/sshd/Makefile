@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.76 2013/06/19 05:27:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.77 2013/07/02 13:32:38 markus Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -34,8 +34,8 @@ LDADD+= -lwind -lroken -lcom_err -lpthread -lheimbase -lkafs
 DPADD+= ${LIBGSSAPI} ${LIBKRB5}
 .endif
 
-DPADD+=	${LIBCRYPTO} ${LIBUTIL} ${LIBZ}
 LDADD+=	-lcrypto -lutil -lz
+DPADD+=	${LIBCRYPTO} ${LIBUTIL} ${LIBZ}
 
 .if (${TCP_WRAPPERS:L} == "yes")
 CFLAGS+= -DLIBWRAP
