@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.7 2010/12/26 15:40:59 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.8 2013/07/02 04:39:04 guenther Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -67,7 +67,7 @@ struct cfdriver nvram_cd = {
 	NULL, "nvram", DV_DULL
 };
 
-u_long	chiptotime(int, int, int, int, int, int);
+time_t	chiptotime(int, int, int, int, int, int);
 int	nvramrw(caddr_t, int, struct uio *, int);
 
 int
@@ -128,7 +128,7 @@ nvramattach(parent, self, args)
 const int dayyr[12] =
 { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
 
-u_long
+time_t
 chiptotime(sec, min, hour, day, mon, year)
 	int sec, min, hour, day, mon, year;
 {
@@ -162,7 +162,7 @@ chiptotime(sec, min, hour, day, mon, year)
 		days++;
 
 	/* now have days since Jan 1, 1970; the rest is easy... */
-	return (days * SECDAY + hour * 3600 + min * 60 + sec);
+	return ((time_t)days * SECDAY + hour * 3600 + min * 60 + sec);
 }
 
 struct chiptime {
@@ -181,7 +181,8 @@ void
 timetochip(c)
 	struct chiptime *c;
 {
-	int t, t2, t3, now = time_second;
+	time_t t2, now = time_second;
+	int t, t3;
 
 	/* January 1 1970 was a Thursday (4 in unix wdays) */
 	/* compute the days since the epoch */

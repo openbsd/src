@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.22 2012/11/04 13:33:32 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.23 2013/07/02 04:39:04 guenther Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -161,10 +161,10 @@ struct chiptime {
 	int     year;
 };
 
-u_long chiptotime(int, int, int, int, int, int);
+time_t chiptotime(int, int, int, int, int, int);
 void timetochip(struct chiptime *);
 
-u_long
+time_t
 chiptotime(sec, min, hour, day, mon, year)
 	register int sec, min, hour, day, mon, year;
 {
@@ -198,14 +198,15 @@ chiptotime(sec, min, hour, day, mon, year)
 		days++;
 
 	/* now have days since Jan 1, 1970; the rest is easy... */
-	return (days * SECDAY + hour * 3600 + min * 60 + sec);
+	return ((time_t)days * SECDAY + hour * 3600 + min * 60 + sec);
 }
 
 void
 timetochip(c)
 	struct chiptime *c;
 {
-	int t, t2, t3, now = time_second;
+	time_t t2, now = time_second;
+	int t, t3;
 
 	/* January 1 1970 was a Thursday (4 in unix wdays) */
 	/* compute the days since the epoch */
