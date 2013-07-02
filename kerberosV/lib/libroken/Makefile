@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2013/06/21 10:59:40 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.4 2013/07/02 19:00:10 ajacoutot Exp $
 
 LIB=	roken
 DPADD=	${LIBCRYPT}
@@ -74,8 +74,8 @@ SRCS=	base64.c \
 	write_pid.c \
 	xfree.c
 
-CPPFLAGS+=	-DBUILD_ROKEN_LIB
-CFLAGS+=-I${KRB5DIR}/lib/roken -I.
+CFLAGS=		-DBUILD_ROKEN_LIB
+CPPFLAGS=	-I${KRB5DIR}/lib/roken -I.
 
 .include <bsd.lib.mk>
 

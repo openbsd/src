@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2013/06/19 10:39:00 robert Exp $
+# $OpenBSD: Makefile,v 1.3 2013/07/02 19:00:10 ajacoutot Exp $
 
 PROG=	compile_et
 
@@ -20,7 +20,7 @@ parse.c parse.h: parse.y
 
 compile_et.o: parse.h
 
-CFLAGS+= -I${KRB5DIR}/lib/roken -I${KRB5DIR}/lib/com_err -I.
+CPPFLAGS=	-I${KRB5DIR}/lib/roken -I${KRB5DIR}/lib/com_err -I.
 
 CLEANFILES+=	parse.[ch]*
 

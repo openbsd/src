@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2013/06/17 19:11:46 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2013/07/02 19:00:10 ajacoutot Exp $
 
 PROG=	asn1_compile
 NOMAN=
@@ -36,7 +36,7 @@ SRCS+=	ecalloc.c \
 # libvers
 SRCS+=	print_version.c
 
-CFLAGS+=-I${KRB5DIR}/lib/roken -I${KRB5DIR}/lib/asn1 -I${KRB5DIR}/lib/com_err -I.
+CPPFLAGS=	-I${KRB5DIR}/lib/roken -I${KRB5DIR}/lib/asn1 -I${KRB5DIR}/lib/com_err -I.
 
 CLEANFILES= lex.c asn1parse.c asn1parse.h
 

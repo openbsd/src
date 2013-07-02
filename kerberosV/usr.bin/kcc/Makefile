@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.5 2013/07/01 05:15:24 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.6 2013/07/02 19:00:10 ajacoutot Exp $
 
 PROG=	kcc
 MPAGES=	klist.1
 MSRC=	${KRB5DIR}/kuser
 LINKS=	${BINDIR}/kcc ${BINDIR}/klist
-CFLAGS+=	-I${KRB5DIR}/lib/asn1 \
+CPPFLAGS=	-I${KRB5DIR}/lib/asn1 \
 		-I${KRB5DIR}/lib/roken \
 		-I${KRB5DIR}/lib/sl -I.
 DPADD=	${LIBKRB5} ${LIBHEIMNTLM} ${LIBROKEN} ${LIBASN1} ${LIBCRYPTO} \

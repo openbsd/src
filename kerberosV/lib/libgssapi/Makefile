@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2013/07/01 05:15:23 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.8 2013/07/02 19:00:09 ajacoutot Exp $
 
 LIB=	gssapi
 
@@ -237,13 +237,13 @@ MLINKS= \
 		gss_acquire_cred.3	gsskrb5_extract_authz_data_from_sec_context.3 \
 		gss_acquire_cred.3	gsskrb5_register_acceptor_identity.3
 
-CFLAGS+=-I${KRB5DIR}/lib/gssapi
-CFLAGS+=-I${KRB5DIR}/lib/gssapi/gssapi
-CFLAGS+=-I${KRB5DIR}/lib/gssapi/krb5
-CFLAGS+=-I${KRB5DIR}/lib/gssapi/mech
-CFLAGS+=-I${KRB5DIR}/lib/krb5
-CFLAGS+=-I${KRB5DIR}/lib/asn1
-CFLAGS+=-I${KRB5DIR}/lib/roken -I.
+CPPFLAGS=	-I${KRB5DIR}/lib/gssapi \
+		-I${KRB5DIR}/lib/gssapi/gssapi \
+		-I${KRB5DIR}/lib/gssapi/krb5 \
+		-I${KRB5DIR}/lib/gssapi/mech \
+		-I${KRB5DIR}/lib/krb5 \
+		-I${KRB5DIR}/lib/asn1 \
+		-I${KRB5DIR}/lib/roken -I.
 
 CLEANFILES=	${GEN} ${GEN:S/.x$/.c/:S/.hx$/.h/} gssapi_asn1_files spnego_asn1_files \
 		gssapi_asn1-template.c spnego_asn1-template.c

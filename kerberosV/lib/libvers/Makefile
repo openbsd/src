@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.1 2013/06/17 19:11:35 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2013/07/02 19:00:10 ajacoutot Exp $
 
 LIB=	vers
 SRCS=	print_version.c roken.h
-CFLAGS+=-I. -I${KRB5DIR}/lib/roken
+CPPFLAGS=	-I. -I${KRB5DIR}/lib/roken
 
 # skip installation
 install:

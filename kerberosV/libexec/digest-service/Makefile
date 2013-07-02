@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.2 2013/06/19 19:36:45 robert Exp $
+# $OpenBSD: Makefile,v 1.3 2013/07/02 19:00:10 ajacoutot Exp $
 
 PROG=	digest-service
 NOMAN=	1
-CFLAGS+=	-I${KRB5DIR}/kdc \
+CPPFLAGS=	-I${KRB5DIR}/kdc \
 		-I${KRB5DIR}/lib/asn1 \
 		-I${KRB5DIR}/lib/krb5 \
 		-I${KRB5DIR}/lib/ipc \

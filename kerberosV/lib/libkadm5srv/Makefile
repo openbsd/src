@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2013/07/01 05:15:24 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.4 2013/07/02 19:00:10 ajacoutot Exp $
 
 LIB=	kadm5srv
 MPAGES=	kadm5_pwcheck.3
@@ -33,7 +33,7 @@ SRCS=	acl.c \
 	set_keys.c \
 	set_modifier.c
 
-CFLAGS+=-I${KRB5DIR}/lib/kadm5 -I${KRB5DIR}/lib/asn1 -I${KRB5DIR}/lib/roken -I.
+CPPFLAGS=	-I${KRB5DIR}/lib/kadm5 -I${KRB5DIR}/lib/asn1 -I${KRB5DIR}/lib/roken -I.
 
 .include <bsd.lib.mk>
 

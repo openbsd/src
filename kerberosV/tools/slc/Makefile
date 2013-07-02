@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2013/06/17 19:11:46 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2013/07/02 19:00:10 ajacoutot Exp $
 
 PROG=	slc
 NOMAN=
@@ -20,7 +20,7 @@ slc-gram.c slc-gram.h: slc-gram.y
 # libvers
 SRCS+=	print_version.c
 
-CFLAGS+=-I${KRB5DIR}/lib/roken -I${KRB5DIR}/lib/sl -I${KRB5DIR}/lib/vers -I.
+CPPFLAGS=	-I${KRB5DIR}/lib/roken -I${KRB5DIR}/lib/sl -I${KRB5DIR}/lib/vers -I.
 
 CLEANFILES= slc-gram.c slc-lex.c slc-gram.h
 

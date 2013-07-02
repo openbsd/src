@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2013/07/01 05:15:23 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.6 2013/07/02 19:00:09 ajacoutot Exp $
 
 LIB=	hdb
 
@@ -52,11 +52,12 @@ SRCS=	common.c \
 	print.c \
 	${GEN:S/.x$/.c/:S/.hx$/.h/}
 
-CFLAGS+=-I${KRB5DIR}/lib/hdb -I${KRB5DIR}/lib/asn1 \
-	-I${KRB5DIR}/lib/roken \
-	-I${KRB5DIR}/lib/krb5 \
-	-I.
-CFLAGS+=-DHDB_DB_DIR="\"/var/heimdal\""
+CPPFLAGS=	-I${KRB5DIR}/lib/hdb -I${KRB5DIR}/lib/asn1 \
+		-I${KRB5DIR}/lib/roken \
+		-I${KRB5DIR}/lib/krb5 \
+		-I.
+
+CFLAGS=	-DHDB_DB_DIR="\"/var/heimdal\""
 
 GEN=	asn1_Salt.x \
 	asn1_Key.x \

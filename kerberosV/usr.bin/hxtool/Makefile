@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.2 2013/06/19 19:36:53 robert Exp $
+# $OpenBSD: Makefile,v 1.3 2013/07/02 19:00:10 ajacoutot Exp $
 
 PROG=	hxtool
 NOMAN=
-CFLAGS+=	-I${KRB5DIR}/lib/asn1 \
+CPPFLAGS=	-I${KRB5DIR}/lib/asn1 \
 		-I${KRB5DIR}/lib/roken \
 		-I${KRB5DIR}/lib/sl -I.
 DPADD=	${LIBHX509} ${LIBROKEN} ${LIBASN1} ${LIBCRYPTO} ${LIBCRYPT} ${LIBSL} ${LIBVERS} ${LIBEDIT}

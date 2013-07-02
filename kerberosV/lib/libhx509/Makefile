@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2013/07/01 05:15:23 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.3 2013/07/02 19:00:10 ajacoutot Exp $
 
 LIB=	hx509
 DPADD=	${LIBASN1} ${LIBCOM_ERR} ${LIBCRYPTO} ${LIBROKEN} ${LIBWIND}
@@ -208,11 +208,11 @@ SRCS+=	hx509_err.c \
 SRCS+=	${GEN_OCSP:S/.x$/.c/:S/.hx$/.h/} \
 	${GEN_PKCS10:S/.x$/.c/:S/.hx$/.h/}
 
-CFLAGS+=-I${KRB5DIR}/lib/hx509
-CFLAGS+=-I${KRB5DIR}/lib/hx509/ref
-CFLAGS+=-I${KRB5DIR}/lib/asn1
-CFLAGS+=-I${KRB5DIR}/lib/wind
-CFLAGS+=-I${KRB5DIR}/lib/roken -I.
+CPPFLAGS=	-I${KRB5DIR}/lib/hx509 \
+		-I${KRB5DIR}/lib/hx509/ref \
+		-I${KRB5DIR}/lib/asn1 \
+		-I${KRB5DIR}/lib/wind \
+		-I${KRB5DIR}/lib/roken -I.
 
 GEN_OCSP= \
 	asn1_OCSPBasicOCSPResponse.x \

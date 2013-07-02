@@ -1,4 +1,4 @@
-#$OpenBSD: Makefile,v 1.2 2013/06/21 10:59:40 ajacoutot Exp $
+#$OpenBSD: Makefile,v 1.3 2013/07/02 19:00:10 ajacoutot Exp $
 
 LIB=	wind
 
@@ -24,7 +24,7 @@ SRCS=	bidi.c \
 SRCS+=	wind_err.c \
 	wind_err.h
 
-CFLAGS+=-I${KRB5DIR}/lib/roken -I.
+CPPFLAGS=	-I${KRB5DIR}/lib/roken -I.
 
 .include <bsd.lib.mk>
 

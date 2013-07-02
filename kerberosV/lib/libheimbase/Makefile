@@ -1,4 +1,4 @@
-#$OpenBSD: Makefile,v 1.2 2013/06/21 10:59:40 ajacoutot Exp $
+#$OpenBSD: Makefile,v 1.3 2013/07/02 19:00:09 ajacoutot Exp $
 
 LIB=	heimbase
 
@@ -13,7 +13,7 @@ SRCS= \
 	number.c \
 	string.c
 
-CFLAGS+=	-I${KRB5DIR}/include
+CPPFLAGS=	-I${KRB5DIR}/include
 
 .include <bsd.lib.mk>
 

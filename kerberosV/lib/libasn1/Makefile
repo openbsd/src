@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2013/06/21 12:26:03 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.5 2013/07/02 19:00:09 ajacoutot Exp $
 
 LIB=	asn1
 INCS=	asn1_err.h asn1-common.h heim_asn1.h der.h der-protos.h der-private.h
@@ -19,7 +19,7 @@ SRCS=	asn1_err.c \
 	roken.h \
 	${GEN:S/.x$/.c/:S/.hx$/.h/}
 
-CFLAGS+=-I${KRB5DIR}/lib/asn1 -I${KRB5DIR}/lib/roken -I${KRB5DIR}/lib/com_err -I.
+CPPFLAGS=	-I${KRB5DIR}/lib/asn1 -I${KRB5DIR}/lib/roken -I${KRB5DIR}/lib/com_err -I.
 
 GEN_RFC2459=	asn1_rfc2459_asn1.x rfc2459_asn1.hx rfc2459_asn1-priv.hx
 GEN_CMS= 	asn1_cms_asn1.x cms_asn1.hx cms_asn1-priv.hx
