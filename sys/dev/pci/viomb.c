@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.4 2013/07/02 09:24:36 sf Exp $	 */
+/* $OpenBSD: viomb.c,v 1.5 2013/07/02 09:28:42 sf Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 /*
  * Copyright (c) 2012 Talypov Dinar <dinar@i-nk.ru>
@@ -272,7 +272,7 @@ viomb_inflate(struct viomb_softc *sc)
 				     dma_constraint.ucr_high,
 				     0, 0, &b->bl_pglist, nvpages,
 				     UVM_PLA_NOWAIT))) {
-		printf("%s unable to allocate %lu physmem pages,"
+		printf("%s unable to allocate %u physmem pages,"
 		    "error %d\n", DEVNAME(sc), nvpages, error);
 		return;
 	}
@@ -417,7 +417,7 @@ viomb_inflate_intr(struct virtqueue *vq)
 		TAILQ_REMOVE(&b->bl_pglist, p, pageq);
 		TAILQ_INSERT_TAIL(&sc->sc_balloon_pages, p, pageq);
 	}
-	VIOMBDEBUG(sc, "updating sc->sc_actual from %lu to %lu\n",
+	VIOMBDEBUG(sc, "updating sc->sc_actual from %u to %llu\n",
 		   sc->sc_actual, sc->sc_actual + nvpages);
 	virtio_write_device_config_4(vsc, VIRTIO_BALLOON_CONFIG_ACTUAL,
 				     sc->sc_actual + nvpages);
@@ -451,7 +451,7 @@ viomb_deflate_intr(struct virtqueue *vq)
 	if (vsc->sc_features & VIRTIO_BALLOON_F_MUST_TELL_HOST)
 		uvm_pglistfree(&b->bl_pglist);
 
-	VIOMBDEBUG(sc, "updating sc->sc_actual from %lu to %lu\n",
+	VIOMBDEBUG(sc, "updating sc->sc_actual from %u to %llu\n",
 		sc->sc_actual, sc->sc_actual - nvpages);
 	virtio_write_device_config_4(vsc, VIRTIO_BALLOON_CONFIG_ACTUAL,
 				     sc->sc_actual - nvpages);
