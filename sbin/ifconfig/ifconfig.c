@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.264 2013/05/31 19:56:06 yasuoka Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.265 2013/07/02 14:25:08 bluhm Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3390,7 +3390,7 @@ setcarp_passwd(const char *val, int d)
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCGVH");
 
-	/* XXX Should hash the password into the key here, perhaps? */
+	bzero(carpr.carpr_key, CARP_KEY_LEN);
 	strlcpy((char *)carpr.carpr_key, val, CARP_KEY_LEN);
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
