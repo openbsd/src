@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.76 2013/07/02 01:42:01 guenther Exp $
+.\"	$OpenBSD: pf.4,v 1.77 2013/07/02 05:57:37 guenther Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -527,7 +527,7 @@ struct pfr_tstats {
 			     [PFR_DIR_MAX][PFR_OP_TABLE_MAX];
 	u_int64_t	 pfrts_match;
 	u_int64_t	 pfrts_nomatch;
-	time_t		 pfrts_tzero;
+	long		 pfrts_tzero;
 	int		 pfrts_cnt;
 	int		 pfrts_refcnt[PFR_REFCNT_MAX];
 };
@@ -672,7 +672,7 @@ struct pfr_astats {
 			     [PFR_DIR_MAX][PFR_OP_ADDR_MAX];
 	u_int64_t	 pfras_bytes
 			     [PFR_DIR_MAX][PFR_OP_ADDR_MAX];
-	time_t		 pfras_tzero;
+	long		 pfras_tzero;
 };
 .Ed
 .It Dv DIOCRCLRASTATS Fa "struct pfioc_table *io"
@@ -974,7 +974,7 @@ struct pfi_kif {
 	RB_ENTRY(pfi_kif)		 pfik_tree;
 	u_int64_t			 pfik_packets[2][2][2];
 	u_int64_t			 pfik_bytes[2][2][2];
-	time_t				 pfik_tzero;
+	u_int32_t			 pfik_tzero;
 	int				 pfik_flags;
 	int				 pfik_flags_new;
 	void				*pfik_ah_cookie;

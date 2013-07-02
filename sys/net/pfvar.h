@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.385 2013/07/02 01:42:01 guenther Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.386 2013/07/02 05:57:37 guenther Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1060,7 +1060,7 @@ struct pfr_astats {
 	struct pfr_addr	 pfras_a;
 	u_int64_t	 pfras_packets[PFR_DIR_MAX][PFR_OP_ADDR_MAX];
 	u_int64_t	 pfras_bytes[PFR_DIR_MAX][PFR_OP_ADDR_MAX];
-	time_t		 pfras_tzero;
+	long		 pfras_tzero;
 };
 
 enum { PFR_REFCNT_RULE, PFR_REFCNT_ANCHOR, PFR_REFCNT_MAX };
@@ -1071,7 +1071,7 @@ struct pfr_tstats {
 	u_int64_t	 pfrts_bytes[PFR_DIR_MAX][PFR_OP_TABLE_MAX];
 	u_int64_t	 pfrts_match;
 	u_int64_t	 pfrts_nomatch;
-	time_t		 pfrts_tzero;
+	long		 pfrts_tzero;
 	int		 pfrts_cnt;
 	int		 pfrts_refcnt[PFR_REFCNT_MAX];
 };
@@ -1090,7 +1090,7 @@ struct _pfr_kentry {
 	union sockaddr_union	 _pfrke_sa;
 	SLIST_ENTRY(pfr_kentry)	 _pfrke_workq;
 	struct pfr_kcounters	*_pfrke_counters;
-	time_t			 _pfrke_tzero;
+	long			 _pfrke_tzero;
 	u_int8_t		 _pfrke_af;
 	u_int8_t		 _pfrke_net;
 	u_int8_t		 _pfrke_flags;
@@ -1197,7 +1197,7 @@ struct pfi_kif {
 	RB_ENTRY(pfi_kif)		 pfik_tree;
 	u_int64_t			 pfik_packets[2][2][2];
 	u_int64_t			 pfik_bytes[2][2][2];
-	time_t				 pfik_tzero;
+	u_int32_t			 pfik_tzero;
 	int				 pfik_flags;
 	int				 pfik_flags_new;
 	void				*pfik_ah_cookie;
@@ -1869,7 +1869,7 @@ int	pfr_get_tstats(struct pfr_table *, struct pfr_tstats *, int *, int);
 int	pfr_clr_tstats(struct pfr_table *, int, int *, int);
 int	pfr_set_tflags(struct pfr_table *, int, int, int, int *, int *, int);
 int	pfr_clr_addrs(struct pfr_table *, int *, int);
-int	pfr_insert_kentry(struct pfr_ktable *, struct pfr_addr *, time_t);
+int	pfr_insert_kentry(struct pfr_ktable *, struct pfr_addr *, long);
 int	pfr_add_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
 	    int);
 int	pfr_del_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
