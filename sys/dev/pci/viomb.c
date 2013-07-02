@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.3 2013/03/28 04:12:12 deraadt Exp $	 */
+/* $OpenBSD: viomb.c,v 1.4 2013/07/02 09:24:36 sf Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 /*
  * Copyright (c) 2012 Talypov Dinar <dinar@i-nk.ru>
@@ -153,7 +153,7 @@ viomb_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_vqs = &sc->sc_vq[VQ_INFLATE];
 	vsc->sc_nvqs = 0;
 	vsc->sc_child = self;
-	vsc->sc_ipl = IPL_VM;
+	vsc->sc_ipl = IPL_BIO;
 	vsc->sc_config_change = viomb_config_change;
 	vsc->sc_intrhand = virtio_vq_intr;
 
@@ -198,7 +198,7 @@ viomb_attach(struct device *parent, struct device *self, void *aux)
 		goto err_dmamap;
 	}
 
-	viomb_workq = workq_create("viomb", 1, IPL_VM);
+	viomb_workq = workq_create("viomb", 1, IPL_BIO);
 	if (viomb_workq == NULL)
 		goto err_dmamap;
 	printf("\n");
