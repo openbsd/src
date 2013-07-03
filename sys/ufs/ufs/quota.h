@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.h,v 1.11 2013/06/11 16:42:19 deraadt Exp $	*/
+/*	$OpenBSD: quota.h,v 1.12 2013/07/03 04:58:40 guenther Exp $	*/
 /*	$NetBSD: quota.h,v 1.6 1995/03/26 20:38:17 jtc Exp $	*/
 
 /*
@@ -102,8 +102,9 @@ struct dqblk {
 	u_int32_t dqb_ihardlimit;	/* maximum # allocated inodes + 1 */
 	u_int32_t dqb_isoftlimit;	/* preferred inode limit */
 	u_int32_t dqb_curinodes;	/* current # allocated inodes */
-	time_t	  dqb_btime;		/* time limit for excessive disk use */
-	time_t	  dqb_itime;		/* time limit for excessive files */
+					/* XXX 2038 */
+	u_int32_t dqb_btime;		/* time limit for excessive disk use */
+	u_int32_t dqb_itime;		/* time limit for excessive files */
 };
 
 #ifdef _KERNEL
