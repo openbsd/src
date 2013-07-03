@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.57 2013/06/29 13:00:35 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.58 2013/07/03 19:21:55 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -350,8 +350,8 @@ pmap_decpteref(pmap, pte)
 #endif
 	if (pmap->pm_refcnt[index] == 0) {
 		paddr = (*kvtopte(pte) & PG_FRAME) << VAX_PGSHIFT;
-		uvm_pagefree(PHYS_TO_VM_PAGE(paddr));
 		bzero(kvtopte(pte), sizeof(pt_entry_t) * LTOHPN);
+		uvm_pagefree(PHYS_TO_VM_PAGE(paddr));
 	}
 }
 
