@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.15 2007/09/01 11:54:02 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.16 2013/07/03 15:34:48 sf Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /*
@@ -1192,7 +1192,7 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 		if (size == WORD)
 			db_printf("%s", i_name);
 		else
-			db_printf("%s", ip->i_extra);
+			db_printf("%s", (char *)ip->i_extra);
 	} else {
 		db_printf("%s", i_name);
 		if (i_size != NONE) {

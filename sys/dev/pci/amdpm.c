@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.29 2013/05/30 16:15:02 deraadt Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.30 2013/07/03 15:34:48 sf Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -247,7 +247,7 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 		    (cfg_reg & AMDPM_STOPTMR) == 0 &&
 		    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC ||
 		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_8111_PMC)) {
-			printf(": %d-bit timer at %dHz",
+			printf(": %d-bit timer at %lluHz",
 			    (cfg_reg & AMDPM_TMR32) ? 32 : 24,
 			    amdpm_timecounter.tc_frequency);
 

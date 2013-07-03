@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.30 2013/04/02 00:46:47 jcs Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.31 2013/07/03 15:34:48 sf Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -347,7 +347,7 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 			handled = 1;
 			break;
 		default:
-			printf("%s: unknown event 0x%03x\n",
+			printf("%s: unknown event 0x%03llx\n",
 			    DEVNAME(sc), event);
 		}
 	}
