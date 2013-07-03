@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.37 2013/05/03 18:24:01 tedu Exp $	*/
+/*	$OpenBSD: queue.h,v 1.38 2013/07/03 15:05:21 fgsch Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -633,12 +633,12 @@ struct {								\
 #define CIRCLEQ_REPLACE(head, elm, elm2, field) do {			\
 	if (((elm2)->field.cqe_next = (elm)->field.cqe_next) ==		\
 	    CIRCLEQ_END(head))						\
-		(head).cqh_last = (elm2);				\
+		(head)->cqh_last = (elm2);				\
 	else								\
 		(elm2)->field.cqe_next->field.cqe_prev = (elm2);	\
 	if (((elm2)->field.cqe_prev = (elm)->field.cqe_prev) ==		\
 	    CIRCLEQ_END(head))						\
-		(head).cqh_first = (elm2);				\
+		(head)->cqh_first = (elm2);				\
 	else								\
 		(elm2)->field.cqe_prev->field.cqe_next = (elm2);	\
 	_Q_INVALIDATE((elm)->field.cqe_prev);				\
