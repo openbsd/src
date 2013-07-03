@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.82 2013/07/03 06:41:51 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.83 2013/07/03 23:04:33 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -165,6 +165,14 @@ static void atfd(int);
 static void polltimeout(int);
 static void pgid(int);
 static void wait4pid(int);
+static void signame(int);
+static void sigset(int);
+static void semctlname(int);
+static void shmctlname(int);
+static void semgetname(int);
+static void flagsandmodename(int, int);
+static void clockname(int);
+static void sockoptlevelname(int);
 
 int
 main(int argc, char *argv[])
@@ -1675,3 +1683,160 @@ wait4pid(int pid)
 	else
 		pgid(pid);
 }
+
+static void
+signame(int sig)
+{
+	if (sig > 0 && sig < NSIG)
+		(void)printf("SIG%s", sys_signame[sig]);
+	else
+		(void)printf("SIG %d", sig);
+}
+
+static void
+sigset(int ss)
+{
+	int	or = 0;
+	int	cnt = 0;
+	int	i;
+
+	for (i = 1; i < NSIG; i++)
+		if (sigismember(&ss, i))
+			cnt++;
+	if (cnt > (NSIG-1)/2) {
+		ss = ~ss;
+		putchar('~');
+	}
+
+	if (ss == 0) {
+		(void)printf("0<>");
+		return;
+	}
+
+	printf("%#x<", ss);
+	for (i = 1; i < NSIG; i++)
+		if (sigismember(&ss, i)) {
+			if (or) putchar('|'); else or=1;
+			signame(i);
+		}
+	printf(">");
+}
+
+static void
+semctlname(int cmd)
+{
+	switch (cmd) {
+	case GETNCNT:
+		(void)printf("GETNCNT");
+		break;
+	case GETPID:
+		(void)printf("GETPID");
+		break;
+	case GETVAL:
+		(void)printf("GETVAL");
+		break;
+	case GETALL:
+		(void)printf("GETALL");
+		break;
+	case GETZCNT:
+		(void)printf("GETZCNT");
+		break;
+	case SETVAL:
+		(void)printf("SETVAL");
+		break;
+	case SETALL:
+		(void)printf("SETALL");
+		break;
+	case IPC_RMID:
+		(void)printf("IPC_RMID");
+		break;
+	case IPC_SET:
+		(void)printf("IPC_SET");
+		break;
+	case IPC_STAT:
+		(void)printf("IPC_STAT");
+		break;
+	default: /* Should not reach */
+		(void)printf("<invalid=%ld>", (long)cmd);
+	}
+}
+
+static void
+shmctlname(int cmd) {
+	switch (cmd) {
+	case IPC_RMID:
+		(void)printf("IPC_RMID");
+		break;
+	case IPC_SET:
+		(void)printf("IPC_SET");
+		break;
+	case IPC_STAT:
+		(void)printf("IPC_STAT");
+		break;
+	default: /* Should not reach */
+		(void)printf("<invalid=%ld>", (long)cmd);
+	}
+}
+
+
+static void
+semgetname(int flag) {
+	int	or = 0;
+	if_print_or(flag, IPC_CREAT, or);
+	if_print_or(flag, IPC_EXCL, or);
+	if_print_or(flag, SEM_R, or);
+	if_print_or(flag, SEM_A, or);
+	if_print_or(flag, (SEM_R>>3), or);
+	if_print_or(flag, (SEM_A>>3), or);
+	if_print_or(flag, (SEM_R>>6), or);
+	if_print_or(flag, (SEM_A>>6), or);
+}
+
+
+/*
+ * Only used by SYS_open. Unless O_CREAT is set in flags, the
+ * mode argument is unused (and often bogus and misleading).
+ */
+static void
+flagsandmodename(int flags, int mode) {
+	flagsname (flags);
+	if ((flags & O_CREAT) == O_CREAT) {
+		(void)putchar(',');
+		modename (mode);
+	} else if (!fancy) {
+		(void)putchar(',');
+		if (decimal) {
+			(void)printf("<unused>%ld", (long)mode);
+		} else {
+			(void)printf("<unused>%#lx", (long)mode);
+		}
+	}
+}
+
+static void
+clockname(int clockid)
+{
+	clocktypename(__CLOCK_TYPE(clockid));
+	if (__CLOCK_PTID(clockid) != 0)
+		printf("(%d)", __CLOCK_PTID(clockid));
+}
+
+/*
+ * [g|s]etsockopt's level argument can either be SOL_SOCKET or a value
+ * referring to a line in /etc/protocols . It might be appropriate
+ * to use getprotoent(3) here.
+ */
+static void
+sockoptlevelname(int level)
+{
+	if (level == SOL_SOCKET) {
+		(void)printf("SOL_SOCKET");
+	} else {
+		if (decimal) {
+			(void)printf("%ld", (long)level);
+		} else {
+			(void)printf("%#lx", (long)level);
+		}
+	}
+}
+

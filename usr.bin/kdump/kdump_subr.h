@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump_subr.h,v 1.9 2013/06/17 19:11:54 guenther Exp $	*/
+/*	$OpenBSD: kdump_subr.h,v 1.10 2013/07/03 23:04:34 guenther Exp $	*/
 /*
  * Copyright(c) 2006 2006 David Kirchner <dpk@dpk.net>
  *
@@ -17,17 +17,28 @@
 
 /* $FreeBSD: src/usr.bin/kdump/kdump_subr.h,v 1.3 2007/04/09 22:04:27 emaste Exp $ */
 
-void signame(int);
-void sigset(int);
-void semctlname(int);
-void shmctlname(int);
-void semgetname(int);
+
+/*
+ * These are simple support macros. print_or utilizes a variable
+ * defined in the calling function to track whether or not it should
+ * print a logical-OR character ('|') before a string. if_print_or
+ * simply handles the necessary "if" statement used in many lines
+ * of this file.
+ */
+#define print_or(str,orflag) do {                  \
+	if (orflag) putchar('|'); else orflag = 1; \
+	printf ("%s", str); }                      \
+	while (0)
+#define if_print_or(i,flag,orflag) do {            \
+	if ((i & flag) == flag)                    \
+	print_or(#flag,orflag); }                  \
+	while (0)
+
 void fcntlcmdname(int, int);
 void rtprioname(int);
 void modename(int);
 void flagsname(int);
 void atflagsname(int);
-void flagsandmodename(int, int);
 void accessmodename(int);
 void mmapprotname(int);
 void mmapflagsname(int);
@@ -38,7 +49,6 @@ void mountflagsname(int);
 void rebootoptname(int);
 void flockname(int);
 void sockoptname(int);
-void sockoptlevelname(int);
 void sockdomainname(int);
 void sockipprotoname(int);
 void socktypename(int);
@@ -54,7 +64,6 @@ void shutdownhowname(int);
 void prioname(int);
 void madvisebehavname(int);
 void msyncflagsname(int);
-void clockname(int);
 void clocktypename(int);
 void schedpolicyname(int);
 void kldunloadfflagsname(int);
