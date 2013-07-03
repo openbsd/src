@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.101 2012/09/15 13:15:22 miod Exp $
+#  $OpenBSD: Makefile,v 1.102 2013/07/03 04:48:16 espie Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -103,18 +103,18 @@ COMMON_SRCS = b_exp__D.c b_log__D.c b_tgamma.c \
 	k_cos.c k_cosf.c k_rem_pio2.c k_rem_pio2f.c k_sin.c k_sinf.c \
 	k_tan.c k_tanf.c \
 	s_lround.c s_lroundf.c s_llround.c s_llroundf.c \
-	s_asinh.c s_asinhf.c s_atan.c s_atanf.c s_cabs.c s_cabsf.c s_cacos.c \
-	s_cacosf.c s_cacosh.c s_cacoshf.c s_carg.c s_cargf.c s_casin.c \
-	s_casinf.c s_casinh.c s_casinhf.c s_catan.c s_catanf.c s_catanh.c \
-	s_catanhf.c s_cbrt.c s_cbrtf.c s_conj.c s_conjf.c s_ccos.c s_ccosf.c \
-	s_ccosh.c s_ccoshf.c s_ceil.c \
-	s_ceilf.c s_cexp.c s_cexpf.c s_cimag.c s_cimagf.c s_clog.c s_clogf.c \
-	s_copysign.c s_copysignf.c s_cos.c s_cosf.c s_cpow.c s_cpowf.c \
-	s_cproj.c s_cprojf.c s_creal.c s_crealf.c s_csin.c s_csinf.c s_csinh.c \
-	s_csinhf.c s_csqrt.c s_csqrtf.c s_ctan.c s_ctanf.c s_ctanh.c \
+	s_asinh.c s_asinhf.c s_atan.c s_atanf.c s_cabsf.c \
+	s_cacosf.c s_cacoshf.c s_cargf.c \
+	s_casinf.c s_casinhf.c s_catanf.c \
+	s_catanhf.c s_cbrt.c s_cbrtf.c s_ccosf.c \
+	s_ccoshf.c s_ceil.c \
+	s_ceilf.c s_cexpf.c s_clogf.c \
+	s_copysign.c s_copysignf.c s_cos.c s_cosf.c s_cpowf.c \
+	s_cproj.c s_cprojf.c s_csinf.c \
+	s_csinhf.c s_csqrtf.c s_ctanf.c \
 	s_ctanhf.c s_erf.c s_erff.c s_exp2.c s_exp2f.c s_expm1.c s_expm1f.c \
-	s_fabsf.c s_fdim.c s_fma.c s_fmaf.c s_fmax.c s_fmaxf.c s_fmin.c \
-	s_fminf.c s_floor.c s_floorf.c s_frexpf.c s_ilogb.c s_ilogbf.c \
+	s_fabsf.c s_fma.c s_fmaf.c \
+	s_floor.c s_floorf.c s_frexpf.c s_ilogb.c s_ilogbf.c \
 	s_log1p.c \
 	s_log1pf.c s_logb.c s_logbf.c s_llrint.c s_llrintf.c s_lrint.c \
 	s_lrintf.c s_modff.c s_nan.c s_nearbyint.c s_nextafter.c \
@@ -144,22 +144,26 @@ LONG_SRCS = e_acoshl.c e_acosl.c e_asinl.c e_atan2l.c e_atanhl.c \
 
 # math routines for non-IEEE architectures.
 NOIEEE_SRCS = n_acosh.c n_argred.c n_asincos.c n_asinh.c n_atan.c \
-	n_atan2.c n_atanh.c n_cabs.c n_cacos.c n_cacosh.c n_carg.c \
-	n_casin.c n_casinh.c n_catan.c n_catanh.c n_cbrt.c n_ccos.c \
-	n_ccosh.c n_cexp.c n_cimag.c n_cimagf.c n_clog.c n_conj.c \
-	n_conjf.c n_cosh.c n_cpow.c n_cproj.c n_cprojf.c n_creal.c \
-	n_crealf.c n_csin.c n_csinh.c n_csqrt.c n_ctan.c n_ctanh.c \
-	n_erf.c n_exp.c n_exp__E.c n_expm1.c n_fdim.c n_floor.c \
-	n_fmax.c n_fmaxf.c n_fmin.c n_fminf.c n_fmod.c n_hypot.c \
+	n_atan2.c n_atanh.c n_cbrt.c \
+	n_cosh.c n_cproj.c n_cprojf.c \
+	n_erf.c n_exp.c n_exp__E.c n_expm1.c n_floor.c \
+	n_fmod.c n_hypot.c \
 	n_infnan.c n_j0.c n_j1.c n_jn.c n_lgamma.c n_log.c n_log10.c \
 	n_log1p.c n_log__L.c n_nan.c n_pow.c n_round.c n_scalbln.c \
 	n_sincos.c n_sinh.c n_sqrt.c n_support.c n_tan.c n_tanh.c \
 	n_tgamma.c
 
+# math routines that are completely MI
+PURE_SRCS = s_cabs.c s_cacos.c s_cacosh.c s_carg.c s_casin.c \
+	s_casinh.c s_catan.c s_catanh.c s_ccos.c s_ccosh.c s_cexp.c \
+	s_cimag.c s_cimagf.c s_clog.c s_conj.c s_conjf.c s_cpow.c \
+	s_creal.c s_crealf.c s_csin.c s_csinh.c s_csqrt.c s_ctan.c \
+	s_ctanh.c s_fdim.c s_fmax.c s_fmaxf.c s_fmin.c s_fminf.c
+
 .if (${MACHINE_ARCH} == "vax")
-SRCS=	${NOIEEE_SRCS} ${NOIEEE_ARCH}
+SRCS=	${NOIEEE_SRCS} ${NOIEEE_ARCH} ${PURE_SRCS}
 .else
-SRCS=	${COMMON_SRCS}
+SRCS=	${COMMON_SRCS} ${PURE_SRCS}
 .if (${MACHINE_ARCH} == "amd64") || (${MACHINE_ARCH} == "i386") || \
 	(${MACHINE_ARCH} == "m68k")
 .PATH:		${.CURDIR}/src/ld80
