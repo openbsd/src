@@ -325,6 +325,7 @@ static const format_length_info kprintf_length_specs[] =
   { "l", FMT_LEN_l, STD_C89, "ll", FMT_LEN_ll, STD_C9L },
   { "q", FMT_LEN_ll, STD_EXT, NULL, 0, 0 },
   { "z", FMT_LEN_z, STD_C99, NULL, 0, 0 },
+  { "t", FMT_LEN_t, STD_C99, NULL, 0, 0 },
   { NULL, 0, 0, NULL, 0, 0 }
 };
 
@@ -552,9 +553,9 @@ static const format_char_info asm_fprintf_char_table[] =
 static const format_char_info kprint_char_table[] = 
 { 
   /* C89 conversion specifiers.  */ 
-  { "di",  0, STD_C89, { T89_I,   BADLEN, T89_S,   T89_L,   T9L_LL,  BADLEN,  T99_SST, BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN }, "-wp0 +'I", "i", NULL }, 
-  { "oxX", 0, STD_C89, { T89_UI,  BADLEN, T89_US,  T89_UL,  T9L_ULL, BADLEN,  T99_ST,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN }, "-wp0#",    "i", NULL }, 
-  { "u",   0, STD_C89, { T89_UI,  BADLEN, T89_US,  T89_UL,  T9L_ULL, BADLEN,  T99_ST,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN }, "-wp0'I",   "i", NULL }, 
+  { "di",  0, STD_C89, { T89_I,   BADLEN, T89_S,   T89_L,   T9L_LL,  BADLEN,  T99_SST, T99_PD,  BADLEN,  BADLEN,  BADLEN,  BADLEN }, "-wp0 +'I", "i", NULL }, 
+  { "oxX", 0, STD_C89, { T89_UI,  BADLEN, T89_US,  T89_UL,  T9L_ULL, BADLEN,  T99_ST,  T99_UPD,  BADLEN,  BADLEN,  BADLEN,  BADLEN }, "-wp0#",    "i", NULL }, 
+  { "u",   0, STD_C89, { T89_UI,  BADLEN, T89_US,  T89_UL,  T9L_ULL, BADLEN,  T99_ST,  T99_UPD,  BADLEN,  BADLEN,  BADLEN,  BADLEN }, "-wp0'I",   "i", NULL }, 
   { "c",   0, STD_C89, { T89_I,   BADLEN, BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN }, "-w",       "", NULL }, 
   { "s",   1, STD_C89, { T89_C,   BADLEN, BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN }, "-wp",      "cR", NULL }, 
   { "p",   1, STD_C89, { T89_V,   BADLEN, BADLEN,  T89_UL,  T9L_LL,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN,  BADLEN }, "-wp0",     "c", NULL }, 
