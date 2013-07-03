@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.81 2013/06/01 09:51:30 miod Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.82 2013/07/03 06:41:51 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -47,6 +47,7 @@
 #include <sys/vmmeter.h>
 #include <sys/stat.h>
 #include <sys/tty.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #define _KERNEL
@@ -162,6 +163,8 @@ static void setemul(const char *);
 static void usage(void);
 static void atfd(int);
 static void polltimeout(int);
+static void pgid(int);
+static void wait4pid(int);
 
 int
 main(int argc, char *argv[])
@@ -627,7 +630,7 @@ ktrsyscall(struct ktr_syscall *ktr)
 		break;
 	}
 	case SYS_kill:
-		pn(NULL);
+		pn(pgid);
 		pn(signame);
 		break;
 	case SYS_lseek:
@@ -792,7 +795,7 @@ ktrsyscall(struct ktr_syscall *ktr)
 		plln();
 		break;
 	case SYS_wait4:
-		pn(NULL);
+		pn(wait4pid);
 		pn(NULL);
 		pn(wait4optname);
 		break;
@@ -1654,4 +1657,21 @@ polltimeout(int timeout)
 		(void)printf("%d", timeout);
 	else
 		(void)printf("%#x", timeout);
+}
+
+static void
+pgid(int pid)
+{
+	(void)printf("%d", pid);
+}
+
+static void
+wait4pid(int pid)
+{
+	if (pid == WAIT_ANY)
+		(void)printf("WAIT_ANY");
+	else if (pid == WAIT_MYPGRP)
+		(void)printf("WAIT_MYPGRP");
+	else
+		pgid(pid);
 }
