@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.21 2012/12/04 02:24:45 deraadt Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.22 2013/07/03 04:08:29 guenther Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -302,7 +302,6 @@ ul_asc(u_long val, char *str, int len, int base)
 	return(0);
 }
 
-#ifndef LONG_OFF_T
 /*
  * asc_uqd()
  *	convert hex/octal character string into a u_quad_t. We do not have to
@@ -398,7 +397,6 @@ uqd_asc(u_quad_t val, char *str, int len, int base)
 		return(-1);
 	return(0);
 }
-#endif
 
 /*
  * Copy at max min(bufz, fieldsz) chars from field to buf, stopping

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.47 2013/04/11 00:44:26 guenther Exp $	*/
+/*	$OpenBSD: tar.c,v 1.48 2013/07/03 04:08:29 guenther Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -56,9 +56,7 @@ static size_t expandname(char *, size_t, char **, const char *, size_t);
 static u_long tar_chksm(char *, int);
 static char *name_split(char *, int);
 static int ul_oct(u_long, char *, int, int);
-#ifndef LONG_OFF_T
 static int uqd_oct(u_quad_t, char *, int, int);
-#endif
 #ifndef SMALL
 static int rd_xheader(ARCHD *, char *, off_t, char);
 #endif
@@ -199,7 +197,6 @@ ul_oct(u_long val, char *str, int len, int term)
 	return(0);
 }
 
-#ifndef LONG_OFF_T
 /*
  * uqd_oct()
  *	convert an u_quad_t to an octal string. one of many oddball field
@@ -253,7 +250,6 @@ uqd_oct(u_quad_t val, char *str, int len, int term)
 		return(-1);
 	return(0);
 }
-#endif
 
 /*
  * tar_chksm()
@@ -382,6 +378,7 @@ int
 tar_rd(ARCHD *arcn, char *buf)
 {
 	HD_TAR *hd;
+	u_quad_t val;
 	char *pt;
 
 	/*
@@ -412,7 +409,11 @@ tar_rd(ARCHD *arcn, char *buf)
 #else
 	arcn->sb.st_size = (off_t)asc_uqd(hd->size, sizeof(hd->size), OCT);
 #endif
-	arcn->sb.st_mtime = (time_t)asc_ul(hd->mtime, sizeof(hd->mtime), OCT);
+	val = asc_uqd(hd->mtime, sizeof(hd->mtime), OCT);
+	if ((time_t)val < 0 || (time_t)val != val)
+		arcn->sb.st_mtime = INT_MAX;                    /* XXX 2038 */
+	else
+		arcn->sb.st_mtime = val;
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
 
 	/*
@@ -637,7 +638,7 @@ tar_wr(ARCHD *arcn)
 	if (ul_oct((u_long)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 0) ||
 	    ul_oct((u_long)arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 0) ||
 	    ul_oct((u_long)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 0) ||
-	    ul_oct((u_long)(u_int)arcn->sb.st_mtime, hd->mtime, sizeof(hd->mtime), 1))
+	    uqd_oct(arcn->sb.st_mtime, hd->mtime, sizeof(hd->mtime), 1))
 		goto out;
 
 	/*
@@ -746,6 +747,7 @@ ustar_rd(ARCHD *arcn, char *buf)
 	int cnt = 0;
 	dev_t devmajor;
 	dev_t devminor;
+	u_quad_t val;
 
 	/*
 	 * we only get proper sized buffers
@@ -808,7 +810,11 @@ ustar_rd(ARCHD *arcn, char *buf)
 #else
 	arcn->sb.st_size = (off_t)asc_uqd(hd->size, sizeof(hd->size), OCT);
 #endif
-	arcn->sb.st_mtime = (time_t)asc_ul(hd->mtime, sizeof(hd->mtime), OCT);
+	val = asc_uqd(hd->mtime, sizeof(hd->mtime), OCT);
+	if ((time_t)val < 0 || (time_t)val != val)
+		arcn->sb.st_mtime = INT_MAX;                    /* XXX 2038 */
+	else
+		arcn->sb.st_mtime = val;
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
 
 	/*
@@ -1088,7 +1094,7 @@ ustar_wr(ARCHD *arcn)
 			goto out;
 	}
 	if (ul_oct((u_long)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 3) ||
-	    ul_oct((u_long)(u_int)arcn->sb.st_mtime,hd->mtime,sizeof(hd->mtime),3))
+	    uqd_oct(arcn->sb.st_mtime, hd->mtime, sizeof(hd->mtime), 3))
 		goto out;
 	if (!Nflag) {
 		strncpy(hd->uname, name_uid(arcn->sb.st_uid, 0), sizeof(hd->uname));

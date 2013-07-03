@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.21 2013/05/25 13:33:47 lum Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.22 2013/07/03 04:08:29 guenther Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -274,6 +275,7 @@ int
 cpio_rd(ARCHD *arcn, char *buf)
 {
 	int nsz;
+	u_quad_t val;
 	HD_CPIO *hd;
 
 	/*
@@ -296,8 +298,11 @@ cpio_rd(ARCHD *arcn, char *buf)
 	arcn->sb.st_nlink = (nlink_t)asc_ul(hd->c_nlink, sizeof(hd->c_nlink),
 	    OCT);
 	arcn->sb.st_rdev = (dev_t)asc_ul(hd->c_rdev, sizeof(hd->c_rdev), OCT);
-	arcn->sb.st_mtime = (time_t)asc_ul(hd->c_mtime, sizeof(hd->c_mtime),
-	    OCT);
+	val = asc_uqd(hd->c_mtime, sizeof(hd->c_mtime), OCT);
+	if ((time_t)val < 0 || (time_t)val != val)
+		arcn->sb.st_mtime = INT_MAX;			/* XXX 2038 */
+	else
+		arcn->sb.st_mtime = val;
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
 #	ifdef LONG_OFF_T
 	arcn->sb.st_size = (off_t)asc_ul(hd->c_filesize,sizeof(hd->c_filesize),
@@ -448,7 +453,7 @@ cpio_wr(ARCHD *arcn)
 		 OCT) ||
 	    ul_asc((u_long)arcn->sb.st_rdev, hd->c_rdev, sizeof(hd->c_rdev),
 		OCT) ||
-	    ul_asc((u_long)arcn->sb.st_mtime,hd->c_mtime,sizeof(hd->c_mtime),
+	    uqd_asc((u_quad_t)arcn->sb.st_mtime,hd->c_mtime,sizeof(hd->c_mtime),
 		OCT) ||
 	    ul_asc((u_long)nsz, hd->c_namesize, sizeof(hd->c_namesize), OCT))
 		goto out;

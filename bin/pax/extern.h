@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.35 2012/12/04 02:27:00 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.36 2013/07/03 04:08:29 guenther Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -172,10 +172,8 @@ void ls_tty(ARCHD *);
 void safe_print(const char *, FILE *);
 u_long asc_ul(char *, int, int);
 int ul_asc(u_long, char *, int, int);
-#ifndef LONG_OFF_T
 u_quad_t asc_uqd(char *, int, int);
 int uqd_asc(u_quad_t, char *, int, int);
-#endif
 size_t fieldcpy(char *, size_t, const char *, size_t);
 
 /*
