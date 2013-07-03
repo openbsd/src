@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.12 2012/09/11 04:40:14 dtucker Exp $ */
+/*	$OpenBSD: vmt.c,v 1.13 2013/07/03 15:26:02 sf Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -313,8 +313,8 @@ void
 vmt_update_guest_uptime(struct vmt_softc *sc)
 {
 	/* host wants uptime in hundredths of a second */
-	if (vm_rpc_send_rpci_tx(sc, "SetGuestInfo  %d %lu00",
-	    VM_GUEST_INFO_UPTIME, time_uptime) != 0) {
+	if (vm_rpc_send_rpci_tx(sc, "SetGuestInfo  %d %lld00",
+	    VM_GUEST_INFO_UPTIME, (long long)time_uptime) != 0) {
 		printf("%s: unable to set guest uptime", DEVNAME(sc));
 		sc->sc_rpc_error = 1;
 	}

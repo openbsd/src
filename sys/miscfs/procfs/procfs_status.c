@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_status.c,v 1.13 2013/06/03 16:55:22 guenther Exp $	*/
+/*	$OpenBSD: procfs_status.c,v 1.14 2013/07/03 15:26:03 sf Exp $	*/
 /*	$NetBSD: procfs_status.c,v 1.11 1996/03/16 23:52:50 christos Exp $	*/
 
 /*
@@ -117,8 +117,8 @@ procfs_stat_gen(struct proc *p, char *s, int l)
 		COUNTORCAT(s, l, ps, n);
 	}
 
-	snprintf(ps, sizeof(ps), " %ld,%ld",
-	    pr->ps_start.tv_sec, pr->ps_start.tv_nsec/1000);
+	snprintf(ps, sizeof(ps), " %lld,%ld",
+	    (long long)pr->ps_start.tv_sec, pr->ps_start.tv_nsec/1000);
 	COUNTORCAT(s, l, ps, n);
 
 	calcru(&pr->ps_tu, &ut, &st, (void *) 0);
