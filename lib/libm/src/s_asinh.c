@@ -54,6 +54,6 @@ asinh(double x)
 	if(hx>0) return w; else return -w;
 }
 
-#if	LDBL_MANT_DIG == 53
+#if	LDBL_MANT_DIG == DBL_MANT_DIG
 __strong_alias(asinhl, asinh);
-#endif	/* LDBL_MANT_DIG == 53 */
+#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */

@@ -129,6 +129,6 @@ fmod(double x, double y)
 	return x;		/* exact output */
 }
 
-#if	LDBL_MANT_DIG == 53
+#if	LDBL_MANT_DIG == DBL_MANT_DIG
 __strong_alias(fmodl, fmod);
-#endif	/* LDBL_MANT_DIG == 53 */
+#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */

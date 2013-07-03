@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_exp2.c,v 1.6 2013/03/28 18:09:38 martynas Exp $	*/
+/*	$OpenBSD: s_exp2.c,v 1.7 2013/07/03 04:46:36 espie Exp $	*/
 /*-
  * Copyright (c) 2005 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -389,6 +389,6 @@ exp2(double x)
 	}
 }
 
-#if	LDBL_MANT_DIG == 53
+#if	LDBL_MANT_DIG == DBL_MANT_DIG
 __strong_alias(exp2l, exp2);
-#endif	/* LDBL_MANT_DIG == 53 */
+#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */

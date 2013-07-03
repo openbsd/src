@@ -75,6 +75,6 @@ sinh(double x)
 	return x*shuge;
 }
 
-#if	LDBL_MANT_DIG == 53
+#if	LDBL_MANT_DIG == DBL_MANT_DIG
 __strong_alias(sinhl, sinh);
-#endif	/* LDBL_MANT_DIG == 53 */
+#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */

@@ -77,6 +77,6 @@ tanh(double x)
 	return (jx>=0)? z: -z;
 }
 
-#if	LDBL_MANT_DIG == 53
+#if	LDBL_MANT_DIG == DBL_MANT_DIG
 __strong_alias(tanhl, tanh);
-#endif	/* LDBL_MANT_DIG == 53 */
+#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */

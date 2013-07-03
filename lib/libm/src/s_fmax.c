@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fmax.c,v 1.8 2013/03/28 18:09:38 martynas Exp $	*/
+/*	$OpenBSD: s_fmax.c,v 1.9 2013/07/03 04:46:36 espie Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -47,6 +47,6 @@ fmax(double x, double y)
 	return (x > y ? x : y);
 }
 
-#if	LDBL_MANT_DIG == 53
+#if	LDBL_MANT_DIG == DBL_MANT_DIG
 __strong_alias(fmaxl, fmax);
-#endif	/* LDBL_MANT_DIG == 53 */
+#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */

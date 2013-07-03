@@ -1,4 +1,4 @@
-/*	$OpenBSD: isnan.c,v 1.7 2013/03/28 18:09:38 martynas Exp $	*/
+/*	$OpenBSD: isnan.c,v 1.8 2013/07/03 04:46:36 espie Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -36,9 +36,9 @@ __isnanf(float f)
 	return (p->sng_exp == SNG_EXP_INFNAN && p->sng_frac != 0);
 }
 
-#if	LDBL_MANT_DIG == 53
+#if	LDBL_MANT_DIG == DBL_MANT_DIG
 __strong_alias(__isnanl, __isnan);
-#endif	/* LDBL_MANT_DIG == 53 */
+#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
 
 /*
  * 3BSD compatibility aliases.

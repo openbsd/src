@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_cabs.c,v 1.5 2013/03/28 18:09:38 martynas Exp $	*/
+/*	$OpenBSD: s_cabs.c,v 1.6 2013/07/03 04:46:36 espie Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -25,6 +25,6 @@ cabs(double complex z)
 	return hypot(__real__ z, __imag__ z);
 }
 
-#if	LDBL_MANT_DIG == 53
+#if	LDBL_MANT_DIG == DBL_MANT_DIG
 __strong_alias(cabsl, cabs);
-#endif	/* LDBL_MANT_DIG == 53 */
+#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */

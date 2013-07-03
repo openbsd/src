@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldexp.c,v 1.7 2013/03/28 18:09:38 martynas Exp $	*/
+/*	$OpenBSD: ldexp.c,v 1.8 2013/07/03 04:46:36 espie Exp $	*/
 /* @(#)s_scalbn.c 5.1 93/09/24 */
 /* @(#)fdlibm.h 5.1 93/09/24 */
 /*
@@ -121,6 +121,6 @@ ldexp(double x, int n)
         return x*twom54;
 }
 
-#if	LDBL_MANT_DIG == 53
+#if	LDBL_MANT_DIG == DBL_MANT_DIG
 __strong_alias(ldexpl, ldexp);
-#endif	/* LDBL_MANT_DIG == 53 */
+#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_catan.c,v 1.5 2013/03/28 18:09:38 martynas Exp $	*/
+/*	$OpenBSD: s_catan.c,v 1.6 2013/07/03 04:46:36 espie Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -126,6 +126,6 @@ ovrf:
 	return (w);
 }
 
-#if	LDBL_MANT_DIG == 53
+#if	LDBL_MANT_DIG == DBL_MANT_DIG
 __strong_alias(catanl, catan);
-#endif	/* LDBL_MANT_DIG == 53 */
+#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */

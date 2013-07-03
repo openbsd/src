@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_nan.c,v 1.10 2013/03/28 18:09:38 martynas Exp $	*/
+/*	$OpenBSD: s_nan.c,v 1.11 2013/07/03 04:46:36 espie Exp $	*/
 /*-
  * Copyright (c) 2007 David Schultz
  * All rights reserved.
@@ -122,6 +122,6 @@ nanf(const char *s)
 	return (u.f);
 }
 
-#if	LDBL_MANT_DIG == 53
+#if	LDBL_MANT_DIG == DBL_MANT_DIG
 __strong_alias(nanl, nan);
-#endif	/* LDBL_MANT_DIG == 53 */
+#endif	/* LDBL_MANT_DIG == DBL_MANT_DIG */
