@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_slvar.h,v 1.14 2013/06/25 09:16:34 mpi Exp $	*/
+/*	$OpenBSD: if_slvar.h,v 1.15 2013/07/03 03:15:52 guenther Exp $	*/
 /*	$NetBSD: if_slvar.h,v 1.16 1996/05/07 02:40:46 thorpej Exp $	*/
 
 /*-
@@ -100,9 +100,9 @@ struct sl_softc {
 	struct mbuf *sc_mbuf;		/* input buffer */
 	u_int	sc_flags;		/* see below */
 	u_int	sc_escape;	/* =1 if last char input was FRAME_ESCAPE */
-	long	sc_lasttime;		/* last time a char arrived */
+	time_t	sc_lasttime;		/* last time a char arrived */
+	time_t	sc_starttime;		/* time of first abort in window */
 	long	sc_abortcount;		/* number of abort esacpe chars */
-	long	sc_starttime;		/* time of first abort in window */
 	long	sc_oqlen;		/* previous output queue size */
 	long	sc_otimeout;		/* number of times output's stalled */
 	int	sc_oldbufsize;		/* previous output buffer size */
