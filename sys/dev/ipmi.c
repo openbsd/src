@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.68 2013/04/10 01:35:55 guenther Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.69 2013/07/03 15:10:57 bluhm Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -186,7 +186,7 @@ void	ipmi_unmap_regs(struct ipmi_softc *);
 
 void	*scan_sig(long, long, int, int, const void *);
 
-int	ipmi_test_threshold(u_int8_t, u_int8_t, u_int8_t, u_int8_t);
+int	ipmi_test_threshold(u_int8_t, u_int8_t, u_int8_t, u_int8_t, int);
 int	ipmi_sensor_status(struct ipmi_softc *, struct ipmi_sensor *,
     u_int8_t *);
 
@@ -1287,9 +1287,14 @@ ipmi_convert(u_int8_t v, struct sdrtype1 *s1, long adj)
 }
 
 int
-ipmi_test_threshold(u_int8_t v, u_int8_t valid, u_int8_t hi, u_int8_t lo)
+ipmi_test_threshold(u_int8_t v, u_int8_t valid, u_int8_t hi, u_int8_t lo,
+    int sign)
 {
-	dbg_printf(10, "thresh: %.2x %.2x %.2x %d\n", v, lo, hi,valid);
+	dbg_printf(10, "thresh: %.2x %.2x %.2x %d %d\n", v, lo, hi,valid, sign);
+	if (sign)
+		return ((valid & 1 && lo != 0x00 && (int8_t)v <= (int8_t)lo) ||
+		    (valid & 8 && hi != 0xFF && (int8_t)v >= (int8_t)hi));
+
 	return ((valid & 1 && lo != 0x00 && v <= lo) ||
 	    (valid & 8 && hi != 0xFF && v >= hi));
 }
@@ -1301,6 +1306,7 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 	u_int8_t	data[32];
 	struct sdrtype1	*s1 = (struct sdrtype1 *)psensor->i_sdr;
 	int		rxlen, etype;
+	int		sign = s1->units1 >> 7 & 1;
 
 	/* Get reading of sensor */
 	switch (psensor->i_sensor.type) {
@@ -1339,15 +1345,15 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 		    data[6]);
 
 		if (ipmi_test_threshold(*reading, data[0] >> 2 ,
-		    data[6], data[3]))
+		    data[6], data[3], sign))
 			return (SENSOR_S_CRIT);
 
 		if (ipmi_test_threshold(*reading, data[0] >> 1,
-		    data[5], data[2]))
+		    data[5], data[2], sign))
 			return (SENSOR_S_CRIT);
 
 		if (ipmi_test_threshold(*reading, data[0] ,
-		    data[4], data[1]))
+		    data[4], data[1], sign))
 			return (SENSOR_S_WARN);
 
 		break;
