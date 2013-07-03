@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.102 2013/07/03 04:48:16 espie Exp $
+#  $OpenBSD: Makefile,v 1.103 2013/07/03 10:26:49 espie Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -110,7 +110,7 @@ COMMON_SRCS = b_exp__D.c b_log__D.c b_tgamma.c \
 	s_ccoshf.c s_ceil.c \
 	s_ceilf.c s_cexpf.c s_clogf.c \
 	s_copysign.c s_copysignf.c s_cos.c s_cosf.c s_cpowf.c \
-	s_cproj.c s_cprojf.c s_csinf.c \
+	s_csinf.c \
 	s_csinhf.c s_csqrtf.c s_ctanf.c \
 	s_ctanhf.c s_erf.c s_erff.c s_exp2.c s_exp2f.c s_expm1.c s_expm1f.c \
 	s_fabsf.c s_fma.c s_fmaf.c \
@@ -143,22 +143,24 @@ LONG_SRCS = e_acoshl.c e_acosl.c e_asinl.c e_atan2l.c e_atanhl.c \
 	s_tanhl.c s_tanl.c s_truncl.c
 
 # math routines for non-IEEE architectures.
-NOIEEE_SRCS = n_acosh.c n_argred.c n_asincos.c n_asinh.c n_atan.c \
-	n_atan2.c n_atanh.c n_cbrt.c \
-	n_cosh.c n_cproj.c n_cprojf.c \
+NOIEEE_SRCS = n_acosh.c n_asincos.c n_asinh.c n_atan.c \
+	n_atanh.c n_cosh.c \
 	n_erf.c n_exp.c n_exp__E.c n_expm1.c n_floor.c \
-	n_fmod.c n_hypot.c \
-	n_infnan.c n_j0.c n_j1.c n_jn.c n_lgamma.c n_log.c n_log10.c \
+	n_fmod.c \
+	n_j0.c n_j1.c n_jn.c n_lgamma.c n_log.c n_log10.c \
 	n_log1p.c n_log__L.c n_nan.c n_pow.c n_round.c n_scalbln.c \
-	n_sincos.c n_sinh.c n_sqrt.c n_support.c n_tan.c n_tanh.c \
-	n_tgamma.c
+	n_sinh.c n_tanh.c n_tgamma.c
+# there for reference, they're replaced by an asm version on vax
+NOIEEE_SRCS += n_argred.c n_atan2.c n_cbrt.c n_hypot.c n_infnan.c \
+	n_sincos.c n_sqrt.c n_support.c n_tan.c
 
 # math routines that are completely MI
 PURE_SRCS = s_cabs.c s_cacos.c s_cacosh.c s_carg.c s_casin.c \
 	s_casinh.c s_catan.c s_catanh.c s_ccos.c s_ccosh.c s_cexp.c \
 	s_cimag.c s_cimagf.c s_clog.c s_conj.c s_conjf.c s_cpow.c \
 	s_creal.c s_crealf.c s_csin.c s_csinh.c s_csqrt.c s_ctan.c \
-	s_ctanh.c s_fdim.c s_fmax.c s_fmaxf.c s_fmin.c s_fminf.c
+	s_ctanh.c s_fdim.c s_fmax.c s_fmaxf.c s_fmin.c s_fminf.c \
+	s_cproj.c s_cprojf.c
 
 .if (${MACHINE_ARCH} == "vax")
 SRCS=	${NOIEEE_SRCS} ${NOIEEE_ARCH} ${PURE_SRCS}
