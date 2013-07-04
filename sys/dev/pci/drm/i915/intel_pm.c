@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.6 2013/06/01 02:03:30 kettenis Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.7 2013/07/04 09:52:29 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -3789,6 +3789,7 @@ cpt_init_clock_gating(struct drm_device *dev)
 {
 	struct inteldrm_softc *dev_priv = dev->dev_private;
 	int pipe;
+	uint32_t val;
 
 	/*
 	 * On Ibex Peak and Cougar Point, we need to disable clock
@@ -3801,8 +3802,12 @@ cpt_init_clock_gating(struct drm_device *dev)
 	/* The below fixes the weird display corruption, a few pixels shifted
 	 * downward, on (only) LVDS of some HP laptops with IVY.
 	 */
-	for_each_pipe(pipe)
-		I915_WRITE(TRANS_CHICKEN2(pipe), TRANS_CHICKEN2_TIMING_OVERRIDE);
+	for_each_pipe(pipe) {
+		val = TRANS_CHICKEN2_TIMING_OVERRIDE;
+		if (dev_priv->fdi_rx_polarity_inverted)
+			val |= TRANS_CHICKEN2_FDI_POLARITY_REVERSED;
+		I915_WRITE(TRANS_CHICKEN2(pipe), val);
+	}
 	/* WADP0ClockGatingDisable */
 	for_each_pipe(pipe) {
 		I915_WRITE(TRANS_CHICKEN1(pipe),

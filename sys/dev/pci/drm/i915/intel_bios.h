@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_bios.h,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: intel_bios.h,v 1.2 2013/07/04 09:52:29 jsg Exp $	*/
 /*
  * Copyright © 2006 Intel Corporation
  *
@@ -128,7 +128,9 @@ struct bdb_general_features {
         /* bits 3 */
 	u8 disable_smooth_vision:1;
 	u8 single_dvi:1;
-	u8 rsvd9:6; /* finish byte */
+	u8 rsvd9:1;
+	u8 fdi_rx_polarity_inverted:1;
+	u8 rsvd10:4; /* finish byte */
 
         /* bits 4 */
 	u8 legacy_monitor_detect;
