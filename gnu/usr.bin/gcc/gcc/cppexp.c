@@ -178,6 +178,11 @@ cpp_classify_number (pfile, token)
 	  radix = 16;
 	  str++;
 	}
+      else if ((*str == 'b' || *str == 'B') && (str[1] == '0' || str[1] == '1'))
+	{
+	  radix = 2;
+	  str++;
+	}
     }
 
   /* Now scan for a well-formed integer or float.  */
@@ -216,10 +221,22 @@ cpp_classify_number (pfile, token)
     radix = 10;
 
   if (max_digit >= radix)
-    SYNTAX_ERROR2 ("invalid digit \"%c\" in octal constant", '0' + max_digit);
+    {
+      if (radix == 2)
+	SYNTAX_ERROR2 ("invalid digit \"%c\" in binary constant", '0' + max_digit);
+      else
+	SYNTAX_ERROR2 ("invalid digit \"%c\" in octal constant", '0' + max_digit);
+    }
 
   if (float_flag != NOT_FLOAT)
     {
+      if (radix == 2)
+	{
+	  cpp_error (pfile, DL_ERROR,
+		     "invalid prefix \"0b\" for floating constant");
+	  return CPP_N_INVALID;
+	}
+
       if (radix == 16 && CPP_PEDANTIC (pfile) && !CPP_OPTION (pfile, c99))
 	cpp_error (pfile, DL_PEDWARN,
 		   "use of C99 hexadecimal floating constant");
@@ -293,11 +310,15 @@ cpp_classify_number (pfile, token)
 
   if ((result & CPP_N_IMAGINARY) && CPP_PEDANTIC (pfile))
     cpp_error (pfile, DL_PEDWARN, "imaginary constants are a GCC extension");
+  if (radix == 2 && CPP_PEDANTIC (pfile))
+    cpp_error (pfile, DL_PEDWARN, "binary constants are a GCC extension");
 
   if (radix == 10)
     result |= CPP_N_DECIMAL;
   else if (radix == 16)
     result |= CPP_N_HEX;
+  else if (radix == 2)
+    result |= CPP_N_BINARY;
   else
     result |= CPP_N_OCTAL;
 
@@ -348,6 +369,11 @@ cpp_interpret_integer (pfile, token, type)
       else if ((type & CPP_N_RADIX) == CPP_N_HEX)
 	{
 	  base = 16;
+	  p += 2;
+	}
+      else if ((type & CPP_N_RADIX) == CPP_N_BINARY)
+	{
+	  base = 2;
 	  p += 2;
 	}
 
@@ -409,12 +435,25 @@ append_digit (num, digit, base, precision)
      size_t precision;
 {
   cpp_num result;
-  unsigned int shift = 3 + (base == 16);
+  unsigned int shift;
   bool overflow;
   cpp_num_part add_high, add_low;
 
-  /* Multiply by 8 or 16.  Catching this overflow here means we don't
+  /* Multiply by 2, 8 or 16.  Catching this overflow here means we don't
      need to worry about add_high overflowing.  */
+  switch (base)
+    {
+    case 2:
+      shift = 1;
+      break;
+
+    case 16:
+      shift = 4;
+      break;
+
+    default:
+      shift = 3;
+    }
   overflow = !!(num.high >> (PART_PRECISION - shift));
   result.high = num.high << shift;
   result.low = num.low << shift;
