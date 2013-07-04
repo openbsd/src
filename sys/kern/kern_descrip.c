@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.101 2013/06/11 13:00:31 tedu Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.102 2013/07/04 16:55:19 sf Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1061,7 +1061,7 @@ closef(struct file *fp, struct proc *p)
 
 #ifdef DIAGNOSTIC
 	if (fp->f_count < 2)
-		panic("closef: count (%d) < 2", fp->f_count);
+		panic("closef: count (%ld) < 2", fp->f_count);
 #endif
 	fp->f_count--;
 
@@ -1097,7 +1097,7 @@ fdrop(struct file *fp, struct proc *p)
 
 #ifdef DIAGNOSTIC
 	if (fp->f_count != 0)
-		panic("fdrop: count (%d) != 0", fp->f_count);
+		panic("fdrop: count (%ld) != 0", fp->f_count);
 #endif
 
 	if (fp->f_ops)
