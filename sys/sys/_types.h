@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.3 2013/07/04 05:19:40 guenther Exp $	*/
+/*	$OpenBSD: _types.h,v 1.4 2013/07/04 13:57:39 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,33 +36,28 @@
 
 #include <machine/_types.h>
 
-typedef	__int32_t	__clock_t;	/* ticks in CLOCKS_PER_SEC */
-typedef	__int32_t	__clockid_t;	/* CLOCK_* identifiers */
 typedef	unsigned long	__cpuid_t;	/* CPU id */
 typedef	__int32_t	__dev_t;	/* device number */
 typedef	__uint32_t	__fixpt_t;	/* fixed point number */
-typedef	__uint64_t	__fsblkcnt_t;	/* file system block count */
-typedef	__uint64_t	__fsfilcnt_t;	/* file system file count */
 typedef	__uint32_t	__gid_t;	/* group id */
 typedef	__uint32_t	__id_t;		/* may contain pid, uid or gid */
-typedef	__uint32_t	__in_addr_t;	/* base type for internet address */
-typedef	__uint16_t	__in_port_t;	/* IP port type */
+typedef __uint32_t	__in_addr_t;	/* base type for internet address */
+typedef __uint16_t	__in_port_t;	/* IP port type */
 typedef	__uint32_t	__ino_t;	/* inode number */
 typedef	long		__key_t;	/* IPC key (for Sys V IPC) */
 typedef	__uint32_t	__mode_t;	/* permissions */
 typedef	__uint32_t	__nlink_t;	/* link count */
-typedef	__uint64_t	__off_t;	/* file offset or size */
 typedef	__int32_t	__pid_t;	/* process id */
-typedef	__uint64_t	__rlim_t;	/* resource limit */
-typedef	__uint8_t	__sa_family_t;	/* sockaddr address family type */
+typedef __uint64_t	__rlim_t;	/* resource limit */
+typedef __uint8_t	__sa_family_t;	/* sockaddr address family type */
 typedef	__int32_t	__segsz_t;	/* segment size */
-typedef	__uint32_t	__socklen_t;	/* length type for network syscalls */
-typedef	__int32_t	__suseconds_t;	/* microseconds (signed) */
+typedef __uint32_t	__socklen_t;	/* length type for network syscalls */
 typedef	__int32_t	__swblk_t;	/* swap offset */
-typedef	__int32_t	__time_t;	/* epoch time */
-typedef	__int32_t	__timer_t;	/* POSIX timer identifiers */
 typedef	__uint32_t	__uid_t;	/* user id */
 typedef	__uint32_t	__useconds_t;	/* microseconds */
+typedef	__int32_t	__suseconds_t;	/* microseconds (signed) */
+typedef __uint64_t	__fsblkcnt_t;	/* file system block count */
+typedef __uint64_t	__fsfilcnt_t;	/* file system file count */
 
 /*
  * mbstate_t is an opaque object to keep conversion state, during multibyte
