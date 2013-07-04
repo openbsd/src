@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.101 2013/05/31 20:44:10 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.102 2013/07/04 17:35:52 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -375,6 +375,9 @@ free(void *addr, int type)
 #ifdef KMEMSTATS
 	struct kmemstats *ksp = &kmemstats[type];
 #endif
+
+	if (addr == NULL)
+		return;
 
 #ifdef MALLOC_DEBUG
 	if (debug_free(addr, type))
