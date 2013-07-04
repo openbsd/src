@@ -1,4 +1,4 @@
-/*	$OpenBSD: wl.c,v 1.24 2012/11/04 13:33:32 miod Exp $ */
+/*	$OpenBSD: wl.c,v 1.25 2013/07/04 00:25:37 guenther Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -173,7 +173,7 @@ int cl_intr(struct wlsoftc *sc, int);
 int cl_mintr(struct wlsoftc *sc);
 int cl_txintr(struct wlsoftc *sc);
 int cl_rxintr(struct wlsoftc *sc);
-void cl_overflow(struct wlsoftc *sc, int channel, long *ptime, u_char *msg);
+void cl_overflow(struct wlsoftc *sc, int channel, time_t *ptime, u_char *msg);
 void cl_parity(struct wlsoftc *sc, int channel);
 void cl_frame(struct wlsoftc *sc, int channel);
 void cl_break( struct wlsoftc *sc, int channel);
@@ -1313,7 +1313,7 @@ void
 cl_overflow (sc, channel, ptime, msg)
 struct wlsoftc *sc;
 int channel;
-long *ptime;
+time_t *ptime;
 u_char *msg;
 {
 /*
