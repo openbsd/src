@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.35 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: sio_open.3,v 1.36 2013/07/04 21:43:25 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: July 4 2013 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -147,21 +147,21 @@ The set of parameters of the stream that can be controlled
 is given by the following structure:
 .Bd -literal
 struct sio_par {
-	unsigned int bits;		/* bits per sample */
-	unsigned int bps;		/* bytes per sample */
-	unsigned int sig;		/* 1 = signed, 0 = unsigned int */
-	unsigned int le;		/* 1 = LE, 0 = BE byte order */
-	unsigned int msb;		/* 1 = MSB, 0 = LSB aligned */
-	unsigned int rchan;		/* number channels for recording */
-	unsigned int pchan;		/* number channels for playback */
-	unsigned int rate;		/* frames per second */
+	unsigned int bits;	/* bits per sample */
+	unsigned int bps;	/* bytes per sample */
+	unsigned int sig;	/* 1 = signed, 0 = unsigned int */
+	unsigned int le;	/* 1 = LE, 0 = BE byte order */
+	unsigned int msb;	/* 1 = MSB, 0 = LSB aligned */
+	unsigned int rchan;	/* number channels for recording */
+	unsigned int pchan;	/* number channels for playback */
+	unsigned int rate;	/* frames per second */
 	unsigned int appbufsz;	/* minimum buffer size without xruns */
-	unsigned int bufsz;		/* end-to-end buffer size (read-only) */
-	unsigned int round;		/* optimal buffer size divisor */
+	unsigned int bufsz;	/* end-to-end buffer size (read-only) */
+	unsigned int round;	/* optimal buffer size divisor */
 #define SIO_IGNORE	0	/* pause during xrun */
 #define SIO_SYNC	1	/* resync after xrun */
 #define SIO_ERROR	2	/* terminate on xrun */
-	unsigned int xrun;		/* what to do on overrun/underrun */
+	unsigned int xrun;	/* what to do on overrun/underrun */
 };
 .Ed
 .Pp
@@ -307,7 +307,7 @@ Parameters of different configurations
 usable together.
 .Bd -literal
 struct sio_cap {
-	struct sio_enc {			/* allowed encodings */
+	struct sio_enc {		/* allowed encodings */
 		unsigned int bits;
 		unsigned int bps;
 		unsigned int sig;
@@ -319,10 +319,10 @@ struct sio_cap {
 	unsigned int rate[SIO_NRATE];	/* allowed rates */
 	unsigned int nconf;		/* num. of confs[] */
 	struct sio_conf {
-		unsigned int enc;		/* bitmask of enc[] indexes */
-		unsigned int rchan;		/* bitmask of rchan[] indexes */
-		unsigned int pchan;		/* bitmask of pchan[] indexes */
-		unsigned int rate;		/* bitmask of rate[] indexes */
+		unsigned int enc;	/* bitmask of enc[] indexes */
+		unsigned int rchan;	/* bitmask of rchan[] indexes */
+		unsigned int pchan;	/* bitmask of pchan[] indexes */
+		unsigned int rate;	/* bitmask of rate[] indexes */
 	} confs[SIO_NCONF];
 };
 .Ed
