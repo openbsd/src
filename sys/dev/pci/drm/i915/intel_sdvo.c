@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_sdvo.c,v 1.6 2013/03/31 14:18:38 kettenis Exp $	*/
+/*	$OpenBSD: intel_sdvo.c,v 1.7 2013/07/04 09:41:23 jsg Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2007 Intel Corporation
@@ -1370,7 +1370,11 @@ intel_sdvo_connector_get_hw_state(struct intel_connector *connector)
 	struct intel_sdvo_connector *intel_sdvo_connector =
 		to_intel_sdvo_connector(&connector->base);
 	struct intel_sdvo *intel_sdvo = intel_attached_sdvo(&connector->base);
+	struct drm_i915_private *dev_priv = intel_sdvo->base.base.dev->dev_private;
 	u16 active_outputs;
+
+	if (!(I915_READ(intel_sdvo->sdvo_reg) & SDVO_ENABLE))
+		return false;
 
 	intel_sdvo_get_active_outputs(intel_sdvo, &active_outputs);
 
