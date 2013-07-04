@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.92 2013/06/02 16:41:37 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.93 2013/07/04 17:37:05 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -491,8 +491,7 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 bad1:
 	VOP_CLOSE(nd.ni_vp, FREAD, p->p_ucred, p);
 bad:
-	if (ph != NULL)
-		free(ph, M_TEMP);
+	free(ph, M_TEMP);
 
 	*last = addr;
 	vput(nd.ni_vp);
@@ -904,8 +903,7 @@ ELFNAME(os_pt_note)(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
 out3:
 	error = ENOEXEC;
 out2:
-	if (np)
-		free(np, M_TEMP);
+	free(np, M_TEMP);
 out1:
 	free(hph, M_TEMP);
 	return error;
@@ -1080,8 +1078,7 @@ ELFNAMEEND(coredump)(struct proc *p, void *cookie)
 	}
 
 out:
-	if (psections)
-		free(psections, M_TEMP);
+	free(psections, M_TEMP);
 	return (error);
 #endif
 }
