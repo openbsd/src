@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.59 2013/06/26 09:12:40 henning Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.60 2013/07/04 19:10:41 sf Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -160,7 +160,7 @@ reroute:
 	if (mtag != NULL) {
 #ifdef DIAGNOSTIC
 		if (mtag->m_tag_len != sizeof (struct tdb_ident))
-			panic("ip6_forward: tag of length %d (should be %d",
+			panic("ip6_forward: tag of length %hu (should be %zu",
 			    mtag->m_tag_len, sizeof (struct tdb_ident));
 #endif
 		tdbi = (struct tdb_ident *)(mtag + 1);

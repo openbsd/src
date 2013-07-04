@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.242 2013/06/26 09:12:40 henning Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.243 2013/07/04 19:10:40 sf Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -267,7 +267,7 @@ reroute:
 	if (mtag != NULL) {
 #ifdef DIAGNOSTIC
 		if (mtag->m_tag_len != sizeof (struct tdb_ident))
-			panic("ip_output: tag of length %d (should be %d",
+			panic("ip_output: tag of length %hu (should be %zu",
 			    mtag->m_tag_len, sizeof (struct tdb_ident));
 #endif
 		tdbi = (struct tdb_ident *)(mtag + 1);

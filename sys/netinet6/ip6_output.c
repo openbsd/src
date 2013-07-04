@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.141 2013/06/26 09:12:40 henning Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.142 2013/07/04 19:10:41 sf Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -232,7 +232,7 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 	if (mtag != NULL) {
 #ifdef DIAGNOSTIC
 		if (mtag->m_tag_len != sizeof (struct tdb_ident))
-			panic("ip6_output: tag of length %d (should be %d",
+			panic("ip6_output: tag of length %hu (should be %zu",
 			    mtag->m_tag_len, sizeof (struct tdb_ident));
 #endif
 		tdbi = (struct tdb_ident *)(mtag + 1);
