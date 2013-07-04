@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_panel.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: intel_panel.c,v 1.2 2013/07/04 09:55:01 jsg Exp $	*/
 /*
  * Copyright © 2006-2010 Intel Corporation
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -452,6 +452,9 @@ intel_panel_setup_backlight(struct drm_connector *connector)
 
 	intel_panel_init_backlight(dev);
 
+	if (WARN_ON(dev_priv->backlight))
+		return -ENODEV;
+
 	memset(&props, 0, sizeof(props));
 	props.type = BACKLIGHT_RAW;
 	props.max_brightness = _intel_panel_get_max_backlight(dev);
@@ -478,8 +481,10 @@ void
 intel_panel_destroy_backlight(struct drm_device *dev)
 {
 	struct inteldrm_softc *dev_priv = dev->dev_private;
-	if (dev_priv->backlight)
+	if (dev_priv->backlight) {
 		backlight_device_unregister(dev_priv->backlight);
+		dev_priv->backlight = NULL;
+	}
 }
 #else
 int

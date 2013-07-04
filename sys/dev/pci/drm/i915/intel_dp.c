@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_dp.c,v 1.4 2013/04/08 05:46:12 jsg Exp $	*/
+/*	$OpenBSD: intel_dp.c,v 1.5 2013/07/04 09:55:01 jsg Exp $	*/
 /*
  * Copyright © 2008 Intel Corporation
  *
@@ -2635,17 +2635,14 @@ done:
 void
 intel_dp_destroy(struct drm_connector *connector)
 {
-	struct drm_device *dev = connector->dev;
 	struct intel_dp *intel_dp = intel_attached_dp(connector);
 	struct intel_connector *intel_connector = to_intel_connector(connector);
 
 	if (!IS_ERR_OR_NULL(intel_connector->edid))
 		free(intel_connector->edid, M_DRM);
 
-	if (is_edp(intel_dp)) {
-		intel_panel_destroy_backlight(dev);
+	if (is_edp(intel_dp))
 		intel_panel_fini(&intel_connector->panel);
-	}
 
 #ifdef notyet
 	drm_sysfs_connector_remove(connector);

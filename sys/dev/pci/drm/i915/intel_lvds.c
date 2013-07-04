@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_lvds.c,v 1.2 2013/07/04 09:42:46 jsg Exp $	*/
+/*	$OpenBSD: intel_lvds.c,v 1.3 2013/07/04 09:55:01 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -615,7 +615,6 @@ intel_lvds_destroy(struct drm_connector *connector)
 	if (!IS_ERR_OR_NULL(lvds_connector->base.edid))
 		free(lvds_connector->base.edid, M_DRM);
 
-	intel_panel_destroy_backlight(connector->dev);
 	intel_panel_fini(&lvds_connector->base.panel);
 
 #if 0

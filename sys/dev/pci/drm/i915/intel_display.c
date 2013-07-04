@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.5 2013/04/17 20:04:04 kettenis Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.6 2013/07/04 09:55:01 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -10026,6 +10026,9 @@ intel_modeset_cleanup(struct drm_device *dev)
 #ifdef notyet
 	flush_scheduled_work();
 #endif
+
+	/* destroy backlight, if any, before the connectors */
+	intel_panel_destroy_backlight(dev);
 
 	drm_mode_config_cleanup(dev);
 }
