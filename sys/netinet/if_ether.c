@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.101 2013/03/28 23:10:05 tedu Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.102 2013/07/04 08:22:19 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -851,6 +851,35 @@ arplookup(u_int32_t addr, int create, int proxy, u_int tableid)
 		return (0);
 	}
 	return ((struct llinfo_arp *)rt->rt_llinfo);
+}
+
+/*
+ * Check whether we do proxy ARP for this address and we point to ourselves.
+ */
+int
+arpproxy(struct in_addr in, u_int rdomain)
+{
+	struct llinfo_arp *la;
+	struct ifnet *ifp;
+	int found = 0;
+
+	la = arplookup(in.s_addr, 0, SIN_PROXY, rdomain);
+	if (la == NULL)
+		return (0);
+
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+		if (ifp->if_rdomain != rdomain)
+			continue;
+
+		if (!bcmp(LLADDR((struct sockaddr_dl *)la->la_rt->rt_gateway),
+		    LLADDR((struct sockaddr_dl *)ifp->if_lladdr->ifa_addr),
+		    ETHER_ADDR_LEN)) {
+		    	found = 1;
+		    	break;
+		}
+	}
+
+	return (found);
 }
 
 void
