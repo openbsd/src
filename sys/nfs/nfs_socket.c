@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.101 2011/07/05 04:48:02 guenther Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.102 2013/07/04 20:05:55 sf Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -600,7 +600,7 @@ tryagain:
 			} while (error == EWOULDBLOCK);
 			if (!error && auio.uio_resid > 0) {
 			    log(LOG_INFO,
-				 "short receive (%d/%d) from nfs server %s\n",
+				 "short receive (%zu/%zu) from nfs server %s\n",
 				 sizeof(u_int32_t) - auio.uio_resid,
 				 sizeof(u_int32_t),
 				 rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname);
@@ -615,7 +615,7 @@ tryagain:
 			 * and forcing a disconnect/reconnect is all I can do.
 			 */
 			if (len > NFS_MAXPACKET) {
-			    log(LOG_ERR, "%s (%d) from nfs server %s\n",
+			    log(LOG_ERR, "%s (%u) from nfs server %s\n",
 				"impossible packet length",
 				len,
 				rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname);
@@ -631,7 +631,7 @@ tryagain:
 				 error == ERESTART);
 			if (!error && auio.uio_resid > 0) {
 			    log(LOG_INFO,
-				"short receive (%d/%d) from nfs server %s\n",
+				"short receive (%zu/%u) from nfs server %s\n",
 				len - auio.uio_resid, len,
 				rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname);
 			    error = EPIPE;
