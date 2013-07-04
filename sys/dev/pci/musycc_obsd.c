@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc_obsd.c,v 1.10 2011/04/03 15:36:03 jasper Exp $ */
+/*	$OpenBSD: musycc_obsd.c,v 1.11 2013/07/04 16:52:22 sf Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -215,7 +215,7 @@ musycc_ebus_attach(struct device *parent, struct musycc_softc *esc,
 #endif
 
 	if (ebus_attach_device(&rom, sc, 0, 0x400) != 0) {
-		printf(": failed to map rom @ %05p\n", 0);
+		printf(": failed to map rom @ %05x\n", 0);
 		goto failed;
 	}
 
