@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.3 2013/06/11 19:19:43 rapha Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.4 2013/07/04 08:35:52 rapha Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -53,6 +53,8 @@
  * SUCH DAMAGE.
  */
 
+#include "bpfilter.h"
+
 #include <sys/cdefs.h>
 
 #include <sys/param.h>
@@ -75,11 +77,11 @@
 #include <net/if_media.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
+
+#if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -150,9 +152,6 @@ struct cpsw_softc {
 	bus_addr_t sc_rxdescs_pa;
 	struct arpcom sc_ec;
 	struct mii_data sc_mii;
-#ifdef CPSW_POLL
-	struct callout sc_tick_ch;
-#endif
 	void *sc_ih;
 	struct cpsw_ring_data *sc_rdp;
 	volatile u_int sc_txnext;
@@ -170,6 +169,7 @@ struct cpsw_softc {
 	volatile bool sc_rxrun;
 	volatile bool sc_txeoq;
 	volatile bool sc_rxeoq;
+	struct timeout sc_tick;
 };
 
 void	cpsw_get_mac_addr(struct cpsw_softc *);
@@ -184,6 +184,8 @@ void cpsw_stop(struct ifnet *);
 int cpsw_mii_readreg(struct device *, int, int);
 void cpsw_mii_writereg(struct device *, int, int, int);
 void cpsw_mii_statchg(struct device *);
+
+void cpsw_tick(void *);
 
 int cpsw_new_rxbuf(struct cpsw_softc * const, const u_int);
 int	cpsw_mediachange(struct ifnet *);
@@ -348,10 +350,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	int error;
 	u_int i;
 
-#ifdef CPSW_POLL
-	callout_init(&sc->sc_tick_ch, 0);
-	callout_setfunc(&sc->sc_tick_ch, cpsw_tick, sc);
-#endif
+	timeout_set(&sc->sc_tick, cpsw_tick, sc);
 
 	cpsw_get_mac_addr(sc);
 
@@ -366,13 +365,13 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	 	char *name;
 #endif
 	sc->sc_rxthih = arm_intr_establish(oa->oa_dev->irq[0] + CPSW_INTROFF_RXTH, 
-	    IST_LEVEL, cpsw_rxthintr, sc, NULL);
+	    IPL_NET, cpsw_rxthintr, sc, sc->sc_dev.dv_xname);
 	sc->sc_rxih = arm_intr_establish(oa->oa_dev->irq[0] + CPSW_INTROFF_RX,
-	    IST_LEVEL, cpsw_rxintr, sc, NULL);
+	    IPL_NET, cpsw_rxintr, sc, sc->sc_dev.dv_xname);
 	sc->sc_txih = arm_intr_establish(oa->oa_dev->irq[0] + CPSW_INTROFF_TX,
-	    IST_LEVEL, cpsw_txintr, sc, NULL);
+	    IPL_NET, cpsw_txintr, sc, sc->sc_dev.dv_xname);
 	sc->sc_miscih = arm_intr_establish(oa->oa_dev->irq[0] + CPSW_INTROFF_MISC,
-	    IST_LEVEL, cpsw_miscintr, sc, NULL);
+	    IPL_NET, cpsw_miscintr, sc, sc->sc_dev.dv_xname);
 
 	sc->sc_bst = oa->oa_iot;
 	sc->sc_bdt = oa->oa_dmat;
@@ -438,14 +437,15 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(", address %s\n", ether_sprintf(sc->sc_enaddr));
 
-	strlcpy(ifp->if_xname, "cpsw", IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_capabilities = 0;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = cpsw_start;
 	ifp->if_ioctl = cpsw_ioctl;
 	ifp->if_watchdog = cpsw_watchdog;
+	IFQ_SET_MAXLEN(&ifp->if_snd, CPSW_NTXDESCS - 1);
 	IFQ_SET_READY(&ifp->if_snd);
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	cpsw_stop(ifp);
 
@@ -459,7 +459,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	ifmedia_init(&sc->sc_mii.mii_media, 0, cpsw_mediachange,
 	    cpsw_mediastatus);
-	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY, 0, 0);
+	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		printf("no PHY found!\n");
 		ifmedia_add(&sc->sc_mii.mii_media,
@@ -469,6 +469,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	}
 
+	memcpy(sc->sc_ec.ac_enaddr, sc->sc_enaddr, ETHER_ADDR_LEN);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -480,8 +481,9 @@ cpsw_mediachange(struct ifnet *ifp)
 {
 	struct cpsw_softc *sc = ifp->if_softc;
 
-	if (ifp->if_flags & IFF_UP)
+	if (LIST_FIRST(&sc->sc_mii.mii_phys))
 		mii_mediachg(&sc->sc_mii);
+
 	return (0);
 }
 
@@ -490,9 +492,11 @@ cpsw_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
         struct cpsw_softc *sc = ifp->if_softc;
 
-        mii_pollstat(&sc->sc_mii);
-        ifmr->ifm_active = sc->sc_mii.mii_media_active;
-        ifmr->ifm_status = sc->sc_mii.mii_media_status;
+	if (LIST_FIRST(&sc->sc_mii.mii_phys)) {
+        	mii_pollstat(&sc->sc_mii);
+        	ifmr->ifm_active = sc->sc_mii.mii_media_active;
+        	ifmr->ifm_status = sc->sc_mii.mii_media_status;
+	}
 }
 
 void
@@ -592,8 +596,10 @@ cpsw_start(struct ifnet *ifp)
 			eopi = sc->sc_txnext;
 			sc->sc_txnext = TXDESC_NEXT(sc->sc_txnext);
 		}
-
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
 	}
 
 	if (txstart >= 0) {
@@ -618,16 +624,44 @@ int
 cpsw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct cpsw_softc *sc = ifp->if_softc;
-	const int s = splnet();
+	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifreq *ifr = (struct ifreq *)data;
+	int s = splnet();
 	int error = 0;
 
 	switch (cmd) {
-	default:
-		error = ether_ioctl(ifp, &sc->sc_ec, cmd, data);
-		if (error == ENETRESET) {
-			error = 0;
+	case SIOCSIFADDR:
+		ifp->if_flags |= IFF_UP;
+#ifdef INET
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			arp_ifinit(&sc->sc_ec, ifa);
+#endif
+
+	case SIOCSIFFLAGS:
+		if (ifp->if_flags & IFF_UP) {
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
+				cpsw_init(ifp);
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				cpsw_stop(ifp);
 		}
 		break;
+	case SIOCSIFMEDIA:
+		ifr->ifr_media &= ~IFM_ETH_FMASK;
+		/* FALLTHROUGH */
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
+		break;
+	default:
+		error = ether_ioctl(ifp, &sc->sc_ec, cmd, data);
+		break;
+	}
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			cpsw_init(ifp);
+		error = 0;
 	}
 
 	splx(s);
@@ -806,7 +840,7 @@ cpsw_init(struct ifnet *ifp)
 
 		/* Set MACCONTROL for ports 0,1: FULLDUPLEX(1), GMII_EN(5),
 		   IFCTL_A(15), IFCTL_B(16) FIXME */
-		cpsw_write_4(sc, CPSW_SL_MACCONTROL(i), 1 | (1<<5) | (1<<15));
+		cpsw_write_4(sc, CPSW_SL_MACCONTROL(i), 1 | (1<<5) | (1<<15) | (1<<16));
 
 		/* Set ALE port to forwarding(3) */
 		cpsw_write_4(sc, CPSW_ALE_PORTCTL(i+1), 3);
@@ -832,16 +866,17 @@ cpsw_init(struct ifnet *ifp)
 		cpsw_write_4(sc, CPSW_CPDMA_RX_CP(i), 0);
 	}
 
-	bus_space_set_region_4(sc->sc_bst, sc->sc_bsh_txdescs, 0, 0,
-	    CPSW_CPPI_RAM_TXDESCS_SIZE/4);
+	for (i = 0; i < CPSW_CPPI_RAM_TXDESCS_SIZE/4; i++)
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_txdescs, i*4, 0);
 
 	sc->sc_txhead = 0;
 	sc->sc_txnext = 0;
 
 	cpsw_write_4(sc, CPSW_CPDMA_RX_FREEBUFFER(0), 0);
 
-	bus_space_set_region_4(sc->sc_bst, sc->sc_bsh_rxdescs, 0, 0,
-	    CPSW_CPPI_RAM_RXDESCS_SIZE/4);
+	for (i = 0; i < CPSW_CPPI_RAM_RXDESCS_SIZE/4; i++)
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_rxdescs, i*4, 0);
+
 	/* Initialize RX Buffer Descriptors */
 	cpsw_set_rxdesc_next(sc, RXDESC_PREV(0), 0);
 	for (i = 0; i < CPSW_NRXDESCS; i++) {
@@ -891,11 +926,11 @@ cpsw_init(struct ifnet *ifp)
 
 	sc->sc_txrun = true;
 	sc->sc_txeoq = true;
-#ifdef CPSW_POLL
-	callout_schedule(&sc->sc_tick_ch, hz);
-#endif
+
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+
+	timeout_add_sec(&sc->sc_tick, 1);
 
 	return 0;
 }
@@ -914,9 +949,8 @@ cpsw_stop(struct ifnet *ifp)
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
-#ifdef CPSW_POLL
-	callout_stop(&sc->sc_tick_ch);
-#endif
+	timeout_del(&sc->sc_tick);
+
 	mii_down(&sc->sc_mii);
 
 	cpsw_write_4(sc, CPSW_CPDMA_TX_INTMASK_CLEAR, 1);
@@ -936,7 +970,7 @@ cpsw_stop(struct ifnet *ifp)
 			sc->sc_rxrun = false;
 		i++;
 	}
-	printf("%s toredown complete in %u\n", __func__, i);
+	/* printf("%s toredown complete in %u\n", __func__, i); */
 
 	/* Reset wrapper */
 	cpsw_write_4(sc, CPSW_WR_SOFT_RESET, 1);
@@ -1050,7 +1084,10 @@ cpsw_rxintr(void *arg)
 
 		ifp->if_ipackets++;
 
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+#endif
 		ether_input_mbuf(ifp, m);
 
 next:
@@ -1073,6 +1110,19 @@ next:
 	cpsw_write_4(sc, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_RX);
 
 	return 1;
+}
+
+void
+cpsw_tick(void *arg)
+{
+	struct cpsw_softc *sc = arg;
+	int s;
+
+	s = splnet();
+	mii_tick(&sc->sc_mii);
+	splx(s);
+
+	timeout_add_sec(&sc->sc_tick, 1);
 }
 
 int
