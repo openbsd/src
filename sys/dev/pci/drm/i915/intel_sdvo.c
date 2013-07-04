@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_sdvo.c,v 1.7 2013/07/04 09:41:23 jsg Exp $	*/
+/*	$OpenBSD: intel_sdvo.c,v 1.8 2013/07/04 09:45:05 jsg Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2007 Intel Corporation
@@ -1370,11 +1370,7 @@ intel_sdvo_connector_get_hw_state(struct intel_connector *connector)
 	struct intel_sdvo_connector *intel_sdvo_connector =
 		to_intel_sdvo_connector(&connector->base);
 	struct intel_sdvo *intel_sdvo = intel_attached_sdvo(&connector->base);
-	struct drm_i915_private *dev_priv = intel_sdvo->base.base.dev->dev_private;
 	u16 active_outputs;
-
-	if (!(I915_READ(intel_sdvo->sdvo_reg) & SDVO_ENABLE))
-		return false;
 
 	intel_sdvo_get_active_outputs(intel_sdvo, &active_outputs);
 
@@ -1391,11 +1387,13 @@ intel_sdvo_get_hw_state(struct intel_encoder *encoder,
 	struct drm_device *dev = encoder->base.dev;
 	struct inteldrm_softc *dev_priv = dev->dev_private;
 	struct intel_sdvo *intel_sdvo = to_intel_sdvo(&encoder->base);
+	u16 active_outputs;
 	u32 tmp;
 
 	tmp = I915_READ(intel_sdvo->sdvo_reg);
+	intel_sdvo_get_active_outputs(intel_sdvo, &active_outputs);
 
-	if (!(tmp & SDVO_ENABLE))
+	if (!(tmp & SDVO_ENABLE) && (active_outputs == 0))
 		return false;
 
 	if (HAS_PCH_CPT(dev))
@@ -2935,7 +2933,6 @@ intel_sdvo_init(struct drm_device *dev, uint32_t sdvo_reg, bool is_sdvob)
 	struct intel_sdvo *intel_sdvo;
 	u32 hotplug_mask;
 	int i;
-
 	intel_sdvo = malloc(sizeof(struct intel_sdvo), M_DRM,
 	    M_WAITOK | M_ZERO);
 	if (!intel_sdvo)
