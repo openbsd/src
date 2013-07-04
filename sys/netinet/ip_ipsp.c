@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.189 2013/04/11 12:06:25 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.190 2013/07/04 09:48:48 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -981,6 +981,7 @@ tdb_add_inp(struct tdb *tdb, struct inpcb *inp, int inout)
 	}
 }
 
+#ifdef ENCDEBUG
 /* Return a printable string for the IPv4 address. */
 char *
 inet_ntoa4(struct in_addr ina)
@@ -1015,6 +1016,7 @@ ipsp_address(union sockaddr_union sa)
 		return "(unknown address family)";
 	}
 }
+#endif /* ENCDEBUG */
 
 /* Check whether an IP{4,6} address is unspecified. */
 int
