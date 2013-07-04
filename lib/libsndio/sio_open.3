@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.36 2013/07/04 21:43:25 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.37 2013/07/04 21:49:10 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -725,20 +725,6 @@ argument.
 The debug level:
 may be a value between 0 and 2.
 .El
-.Sh FILES
-.Bl -tag -width "/tmp/aucat-<uid>/aucat0" -compact
-.It Pa /tmp/aucat-<uid>/aucat0
-Default path to
-.Xr sndiod 1
-socket to connect to.
-.It Pa /dev/audio
-Default
-.Xr audio 4
-device to use.
-.El
-.\".Sh EXAMPLES
-.\".Bd -literal -offset indent
-.\".Ed
 .Sh SEE ALSO
 .Xr sndiod 1 ,
 .Xr audio 4 ,

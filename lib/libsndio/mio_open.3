@@ -1,4 +1,4 @@
-.\" $OpenBSD: mio_open.3,v 1.12 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: mio_open.3,v 1.13 2013/07/04 21:49:10 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: July 4 2013 $
 .Dt MIO_OPEN 3
 .Os
 .Sh NAME
@@ -241,16 +241,6 @@ value if there's an error.
 .It Ev SNDIO_DEBUG
 The debug level:
 may be a value between 0 and 2.
-.El
-.Sh FILES
-.Bl -tag -width "/tmp/aucat-<uid>/aucat0" -compact
-.It Pa /tmp/aucat-<uid>/aucat0
-Default path to
-.Xr sndiod 1
-socket to connect to.
-.It Pa /dev/rmidiX
-.Xr midi 4
-devices.
 .El
 .Sh SEE ALSO
 .Xr sndiod 1 ,
