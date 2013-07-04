@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.77 2013/07/02 05:57:37 guenther Exp $
+.\"	$OpenBSD: pf.4,v 1.78 2013/07/04 00:18:59 guenther Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 2 2013 $
+.Dd $Mdocdate: July 4 2013 $
 .Dt PF 4
 .Os
 .Sh NAME
@@ -283,10 +283,10 @@ struct pf_status {
 	u_int64_t	pcounters[2][2][3];
 	u_int64_t	bcounters[2][2];
 	u_int64_t	stateid;
+	time_t		since;
 	u_int32_t	running;
 	u_int32_t	states;
 	u_int32_t	src_nodes;
-	u_int32_t	since;
 	u_int32_t	debug;
 	u_int32_t	hostid;
 	u_int32_t	reass;			/* reassembly */
@@ -527,7 +527,7 @@ struct pfr_tstats {
 			     [PFR_DIR_MAX][PFR_OP_TABLE_MAX];
 	u_int64_t	 pfrts_match;
 	u_int64_t	 pfrts_nomatch;
-	long		 pfrts_tzero;
+	time_t		 pfrts_tzero;
 	int		 pfrts_cnt;
 	int		 pfrts_refcnt[PFR_REFCNT_MAX];
 };
@@ -672,7 +672,7 @@ struct pfr_astats {
 			     [PFR_DIR_MAX][PFR_OP_ADDR_MAX];
 	u_int64_t	 pfras_bytes
 			     [PFR_DIR_MAX][PFR_OP_ADDR_MAX];
-	long		 pfras_tzero;
+	time_t		 pfras_tzero;
 };
 .Ed
 .It Dv DIOCRCLRASTATS Fa "struct pfioc_table *io"
@@ -974,7 +974,7 @@ struct pfi_kif {
 	RB_ENTRY(pfi_kif)		 pfik_tree;
 	u_int64_t			 pfik_packets[2][2][2];
 	u_int64_t			 pfik_bytes[2][2][2];
-	u_int32_t			 pfik_tzero;
+	time_t				 pfik_tzero;
 	int				 pfik_flags;
 	int				 pfik_flags_new;
 	void				*pfik_ah_cookie;
