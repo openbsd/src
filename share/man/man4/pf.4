@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.78 2013/07/04 00:18:59 guenther Exp $
+.\"	$OpenBSD: pf.4,v 1.79 2013/07/04 02:11:46 lteo Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -265,13 +265,6 @@ but ignores all fields of the
 .Vt pfioc_state_kill
 structure, except
 .Va psk_ifname .
-.It Dv DIOCSETSTATUSIF Fa "struct pfioc_if *pi"
-Specify the interface for which statistics are accumulated.
-.Bd -literal
-struct pfioc_if {
-	char		 ifname[IFNAMSIZ];
-};
-.Ed
 .It Dv DIOCGETSTATUS Fa "struct pf_status *s"
 Get the internal packet filter statistics.
 .Bd -literal
@@ -986,6 +979,8 @@ struct pfi_kif {
 	TAILQ_HEAD(, pfi_dynaddr)	 pfik_dynaddrs;
 };
 .Ed
+.It Dv DIOCSETSTATUSIF Fa "struct pfioc_iface *pi"
+Specify the interface for which statistics are accumulated.
 .It Dv DIOCSETIFFLAG Fa "struct pfioc_iface *io"
 Set the user settable flags (described above) of the
 .Nm
@@ -999,8 +994,16 @@ The filtering process is the same as for
 Works as
 .Dv DIOCSETIFFLAG
 above but clears the flags.
-.It Dv DIOCKILLSRCNODES Fa "struct pfioc_iface *io"
+.It Dv DIOCKILLSRCNODES Fa "struct pfioc_src_node_kill *psnk"
 Explicitly remove source tracking nodes.
+.Bd -literal
+struct pfioc_src_node_kill {
+	sa_family_t		 psnk_af;
+	struct pf_rule_addr	 psnk_src;
+	struct pf_rule_addr	 psnk_dst;
+	u_int			 psnk_killed;
+};
+.Ed
 .El
 .Sh FILES
 .Bl -tag -width /dev/pf -compact
