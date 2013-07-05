@@ -1,4 +1,4 @@
-.\" $OpenBSD: fusebuf.9,v 1.9 2013/06/12 05:56:53 jmc Exp $
+.\" $OpenBSD: fusebuf.9,v 1.10 2013/07/05 06:45:07 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 12 2013 $
+.Dd $Mdocdate: July 5 2013 $
 .Dt FUSEBUF 9
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@ struct fb_hdr {
 
 struct fb_io {
 	uint64_t		fi_fd;
-	ino_t           	fi_ino;
+	ino_t			fi_ino;
 	off_t			fi_off;
 	size_t			fi_len;
 	mode_t			fi_mode;
@@ -83,15 +83,16 @@ struct fusebuf {
 #define	fb_dat		F_dat.F_databuf
 .Ed
 .Sh DESCRIPTION
-Fusebufs functions provide a way to manage the kernel messaging mechanism
-for file system in userland.
+These functions provide a way to manage the kernel messaging mechanism for
+.Xr fuse 4
+file systems.
 It is based on
 .Xr mbuf 9 .
 .Pp
-Each fuse operation fits in a
+Each FUSE operation fits in a
 .Nm
-except for read, write, and readdirs.
-These operations are split into severals fusebufs with a changing value in
+except for read, write, and readdirs,
+which are split into several fusebufs with a changing value in
 .Fa fb_io_off
 for each.
 The size of a fusebuf is
@@ -114,10 +115,10 @@ Indicates the amount of data in
 .It Fa fh_resid
 Used for partial
 .Xr fuse 4
-read.
-If the read is inferior of the fusebuf, we store the number of bytes of
+reads.
+If the read does not fill the fusebuf, the number of bytes of
 .Fa F_dat
-written in this field.
+written in this field are stored.
 .It Fa fh_err
 Indicates the
 .Xr errno 2
@@ -125,7 +126,7 @@ failure of a fusebuf.
 .It Fa fh_type
 Indicates the type of fusebuf transaction (see below).
 .It Fa fh_ino
-Indicates the ino on which the
+Indicates the inode on which the
 .Xr fuse 4
 operation is done.
 .It Fa fh_uuid
@@ -140,60 +141,60 @@ variable can take the following values:
 .Pp
 .Bl -tag -compact -offset indent -width XXXXXXXXXXXXXXXXXX
 .It Dv FBT_LOOKUP
-the fusebuf is a lookup operation.
+The fusebuf is a lookup operation.
 .It Dv FBT_GETATTR
-the fusebuf is a gettattr operation.
+The fusebuf is a gettattr operation.
 .It Dv FBT_SETATTR
-the fusebuf is a setattr operation.
+The fusebuf is a setattr operation.
 .It Dv FBT_READLINK
-the fusebuf is a readlink operation.
+The fusebuf is a readlink operation.
 .It Dv FBT_SYMLINK
-the fusebuf is a symlink operation.
+The fusebuf is a symlink operation.
 .It Dv FBT_MKNOD
-the fusebuf is a mknod operation.
+The fusebuf is a mknod operation.
 .It Dv FBT_MKDIR
-the fusebuf is a mkdir operation.
+The fusebuf is a mkdir operation.
 .It Dv FBT_UNLINK
-the fusebuf is an unlink operation.
+The fusebuf is an unlink operation.
 .It Dv FBT_RMDIR
-the fusebuf is an rmdir operation.
+The fusebuf is an rmdir operation.
 .It Dv FBT_RENAME
-the fusebuf is a rename operation.
+The fusebuf is a rename operation.
 .It Dv FBT_LINK
-the fusebuf is a link operation.
+The fusebuf is a link operation.
 .It Dv FBT_OPEN
-the fusebuf is an open operation.
+The fusebuf is an open operation.
 .It Dv FBT_READ
-the fusebuf is a read operation.
+The fusebuf is a read operation.
 .It Dv FBT_WRITE
-the fusebuf is a write operation.
+The fusebuf is a write operation.
 .It Dv FBT_STATFS
-the fusebuf is a statfs operation.
+The fusebuf is a statfs operation.
 .It Dv FBT_RELEASE
-the fusebuf is a file close operation.
+The fusebuf is a file close operation.
 .It Dv FBT_FSYNC
-the fusebuf is a file sync operation.
+The fusebuf is a file sync operation.
 .It Dv FBT_FLUSH
-the fusebuf is a flush operation.
+The fusebuf is a flush operation.
 .It Dv FBT_INIT
-the fusebuf initializes the fuse connection.
+The fusebuf initializes the FUSE connection.
 .It Dv FBT_OPENDIR
-the fusebuf is an opendir operation.
+The fusebuf is an opendir operation.
 .It Dv FBT_READDIR
-the fusebuf is a readdir operation.
+The fusebuf is a readdir operation.
 .It Dv FBT_RELEASEDIR
-the fusebuf is a close dir operation.
+The fusebuf is a close dir operation.
 .It Dv FBT_FSYNCDIR
-the fusebuf is a dir sync operation.
+The fusebuf is a dir sync operation.
 .It Dv FBT_ACCESS
-the fusebuf is an access operation.
+The fusebuf is an access operation.
 .It Dv FBT_CREATE
-the fusebuf is a create file operation.
+The fusebuf is a create file operation.
 .It Dv FBT_DESTROY
-the fusebuf closes the fuse connection.
+The fusebuf closes the FUSE connection.
 .El
 .Pp
-All the data needed by the fuse clients is contained in the
+All the data needed by the FUSE clients is contained in the
 .Fa F_dat
 structure.
 This structure contains a union
@@ -207,12 +208,12 @@ The union contains the following elements:
 .It Fa FD_stat
 A struct
 .Xr statvfs 3
-filled in by the fuse client statfs for the fuse VFS statfs code.
+filled in by the FUSE client statfs for the FUSE VFS statfs code.
 .It Fa FD_vattr
 Used by the getattr and setattr calls.
 .It Fa FD_io
-Contains all fields commonly used by fuse client callbacks to
-provide information to fuse vnops.
+Contains all fields commonly used by FUSE client callbacks to
+provide information to FUSE vnops.
 It is used by access, readdir, release, releasedir, read, write, create,
 mkdir, and setattr.
 .El
@@ -226,7 +227,7 @@ with
 .Fa fbtod .
 .Sh SEE ALSO
 .Xr errno 2 ,
-.Xr fuse 3 ,
+.\".Xr fuse 3 ,
 .Xr queue 3 ,
 .Xr statvfs 3 ,
 .Xr fuse 4 ,

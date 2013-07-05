@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse.3,v 1.7 2013/06/14 20:49:06 syl Exp $
+.\" $OpenBSD: fuse.3,v 1.8 2013/07/05 06:45:07 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 14 2013 $
+.Dd $Mdocdate: July 5 2013 $
 .Dt FUSE 3
 .Os
 .Sh NAME
@@ -77,16 +77,17 @@ The
 .Nm
 library provides routines to implement a filesystem in userspace.
 .Pp
-There are two ways of Implementing a Fuse filesystem.
-You can implement a FS by calling only
+There are two ways of implementing a FUSE filesystem:
+by calling only
 .Fn fuse_main
 and passing this function the
 .Em ops
-argument containing all the callbacks of the filesystem.
-Or you can use all others functions.
-.Ss FUNCTIONS
+argument containing all the callbacks of the filesystem,
+or by using the other functions,
+as detailed below.
+.Pp
 .Fn fuse_version
-returns the fuse version number.
+returns the FUSE version number.
 .Pp
 .Fn fuse_new
 returns a
@@ -102,21 +103,21 @@ given by the user and will set
 with a char * containing the mountpoint directory.
 .Pp
 .Fn fuse_mount
-will look for an empty
+looks for an empty
 .Xr fuse 4
 device to create a connection.
-If this function finds an available device it will open it for fuse
-communication with the fuse VFS driver and will mount the filesystem.
+If this function finds an available device it will open it for FUSE
+communication with the FUSE VFS driver and will mount the filesystem.
 This function will return a
 .Fa struct fuse_chan
 that will be needed by
 .Fn fuse_new .
 .Pp
 .Fn fuse_remove_signal_handlers
-I do not know yet what this function is supposed to do...
+is currently undocumented.
 .Pp
 .Fn fuse_set_signal_handlers
-I do not know yet what this function is supposed to do...
+is currently undocumented.
 .Pp
 .Fn fuse_get_session
 returns a pointer to the structure
@@ -127,22 +128,21 @@ contained in a
 .Fn fuse_get_context
 returns a pointer to the structure
 .Fa fuse_context .
-The returned fuse_context is only available during the lifetime of a fuse
+The returned fuse_context is only available during the lifetime of a FUSE
 operation.
 .Pp
 .Fn fuse_is_lib_option
 checks if the string
 .Fa opt
-is an option handled by the libfuse or by the fuse client.
+is an option handled by libfuse or by the FUSE client.
 It returns 1 if it is handled by the lib and 0 otherwise.
 .Pp
 .Fn fuse_loop_mt
-Do not use!
-It is not supported yet (and we will probably never need it...)
+is unsupported.
 .Pp
 .Fn fuse_loop
-is the main loop of a fuse program.
-This function will look for fuse requests from kernel and will respond to them
+is the main loop of a FUSE program.
+This function looks for FUSE requests from the kernel and responds to them
 using the
 .Fa struct fuse_operation
 present in the structure
@@ -163,14 +163,14 @@ unmounts the
 mountpoint.
 .Pp
 .Fn fuse_daemonize
-daemonises the fuse library.
-It will permit to background the fuse program that will continue to handle
-kernel filesystem opcodes.
+daemonises the FUSE library.
+It runs the FUSE program in the background,
+whilst continuing to handle kernel filesystem opcodes.
 .Pp
 .Fn fuse_destroy
-I do not know yet what this function is supposed to do...
+is currently undocumented.
 .Sh EXAMPLES
-Here is a simple example of a fuse implementation:
+Here is a simple example of a FUSE implementation:
 .Bd -literal
 #include <errno.h>
 #include <fuse.h>
@@ -246,9 +246,7 @@ main(int ac, char **av)
 }
 .Ed
 .Sh SEE ALSO
-The
-.Tn FUSE
-specifications and orignal implementation can be found at:
+The FUSE specifications and orignal implementation can be found at:
 .Lk http://fuse.sourceforge.net/
 .Pp
 .Xr fuse 4
