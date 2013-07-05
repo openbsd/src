@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.31 2013/05/31 22:46:47 florian Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.32 2013/07/05 17:14:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -718,6 +718,7 @@ export_pflow(struct pf_state *st)
 			break;
 		case PFLOW_PROTO_9:
 			/* ... fall through ... */
+		case PFLOW_PROTO_10:
 			if( sk->af == AF_INET || sk->af == AF_INET6 )
 				export_pflow_if(st, sk, sc);
 			break;
