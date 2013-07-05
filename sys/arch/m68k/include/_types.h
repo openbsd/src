@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.14 2013/07/04 13:57:41 otto Exp $	*/
+/*	$OpenBSD: _types.h,v 1.15 2013/07/05 19:46:27 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -117,16 +117,11 @@ typedef unsigned long		__vsize_t;
 typedef unsigned long		__psize_t;
 
 /* Standard system types */
-typedef int			__clock_t;
-typedef int			__clockid_t;
 typedef long double		__double_t;
 typedef long double		__float_t;
-typedef long long		__off_t;
 typedef long			__ptrdiff_t;
 typedef	unsigned long		__size_t;
 typedef	long			__ssize_t;
-typedef	int			__time_t;
-typedef int			__timer_t;
 #if defined(__GNUC__) && __GNUC__ >= 3
 typedef	__builtin_va_list	__va_list;
 #else
