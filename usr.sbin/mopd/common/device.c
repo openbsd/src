@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.c,v 1.14 2009/10/27 23:59:52 deraadt Exp $ */
+/*	$OpenBSD: device.c,v 1.15 2013/07/05 21:02:07 miod Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -25,18 +25,12 @@
  */
 
 #include "os.h"
-#include "common/common.h"
-#include "common/mopdef.h"
+#include "common.h"
+#include "device.h"
+#include "mopdef.h"
+#include "pf.h"
 
 struct if_info	*iflist;		/* Interface List		*/
-
-void mopReadDL(void);
-void mopReadRC(void);
-int  mopOpenDL(struct if_info *, int);
-int  mopOpenRC(struct if_info *, int);
-int  pfTrans();
-int  pfInit();
-int  pfWrite();
 
 #ifdef	DEV_NEW_CONF
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopchk.c,v 1.15 2010/05/01 08:14:26 mk Exp $	*/
+/*	$OpenBSD: mopchk.c,v 1.16 2013/07/05 21:02:07 miod Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -56,10 +56,11 @@ main(argc, argv)
 	int     argc;
 	char  **argv;
 {
-	int     op, i, fd;
+	struct dllist dl;
+	int     op, i;
 	char   *filename, *p;
 	struct if_info *ii;
-	int	err, aout;
+	int	error;
 
 	/* All error reporting is done through syslogs. */
 	openlog(__progname, LOG_PID | LOG_CONS, LOG_DAEMON);
@@ -116,28 +117,25 @@ main(argc, argv)
 		i++;
 		filename = argv[optind++];
 		printf("Checking: %s\n",filename);
-		fd = open(filename, O_RDONLY, 0);
-		if (fd == -1) {
+		dl.ldfd = open(filename, O_RDONLY, 0);
+		if (dl.ldfd == -1) {
 			printf("Unknown file.\n");
 		} else {
-			err = CheckAOutFile(fd);
-			if (err == 0) {
-				if (GetAOutFileInfo(fd, 0, 0, 0, 0, 0, 0, 0, 0,
-						    &aout, INFO_PRINT) < 0) {
-					printf("Some failure in GetAOutFileInfo\n");
-					aout = -1;
+			if ((error = CheckElfFile(dl.ldfd)) == 0) {
+				if (GetElfFileInfo(&dl, INFO_PRINT) < 0) {
+					printf("Some failure in GetElfFileInfo\n");
 				}
-			} else {
-				aout = -1;
-			}
-			if (aout == -1)
-				err = CheckMopFile(fd);
-			if (aout == -1 && err == 0) {
-				if (GetMopFileInfo(fd, 0, 0, INFO_PRINT) < 0) {
+			} else if ((error = CheckAOutFile(dl.ldfd)) == 0) {
+				if (GetAOutFileInfo(&dl, INFO_PRINT) < 0) {
+					printf("Some failure in GetAOutFileInfo\n");
+				}
+			} else if ((error = CheckMopFile(dl.ldfd)) == 0) {
+				if (GetMopFileInfo(&dl, INFO_PRINT) < 0) {
 					printf("Some failure in GetMopFileInfo\n");
 				}
 			};
 		}
+		(void)close(dl.ldfd);
 	}
 	return 0;
 }

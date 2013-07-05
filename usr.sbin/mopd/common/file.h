@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.10 2006/04/29 16:26:56 maja Exp $ */
+/*	$OpenBSD: file.h,v 1.11 2013/07/05 21:02:07 miod Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: file.h,v 1.10 2006/04/29 16:26:56 maja Exp $
+ *	$OpenBSD: file.h,v 1.11 2013/07/05 21:02:07 miod Exp $
  *
  */
 
@@ -32,18 +32,24 @@
 
 #define INFO_PRINT 1
 
-void	mopFilePutLX(u_char *, int, u_long, int);
-void	mopFilePutBX(u_char *, int, u_long, int);
-u_long	mopFileGetLX(void *, int, int);
-u_long	mopFileGetBX(void *, int, int);
-void	mopFileSwapX(void *, int, int);
-int	CheckMopFile(int);
-int	GetMopFileInfo(int, u_long *, u_long *, int);
-int	CheckAOutFile(int);
-int	GetAOutFileInfo(int, u_long *, u_long *, u_long *, u_long *,
-			u_long *, u_long *, u_long *, u_long *, int *, int);
-int	GetFileInfo(int, u_long *, u_long *, int *, u_long *, u_long *,
-		    u_long *, u_long *, u_long *, u_long *, int);
-ssize_t mopFileRead(struct dllist *, u_char *);
+const char	*FileTypeName(mopd_imagetype);
+
+void		mopFilePutLX(u_char *, int, u_int32_t, int);
+void		mopFilePutBX(u_char *, int, u_int32_t, int);
+u_int32_t	mopFileGetLX(u_char *, int, int);
+u_int32_t	mopFileGetBX(u_char *, int, int);
+ssize_t		mopFileRead(struct dllist *, u_char *);
+void		mopFileSwapX(u_char *, int, int);
+
+int		CheckMopFile(int);
+int		GetMopFileInfo(struct dllist *, int);
+
+int		CheckElfFile(int);
+int		GetElfFileInfo(struct dllist *, int);
+
+int		CheckAOutFile(int);
+int		GetAOutFileInfo(struct dllist *, int);
+
+int		GetFileInfo(struct dllist *, int);
 
 #endif /* _FILE_H_ */

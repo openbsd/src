@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.7 2004/04/14 20:37:28 henning Exp $ */
+/*	$OpenBSD: device.h,v 1.8 2013/07/05 21:02:07 miod Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: device.h,v 1.7 2004/04/14 20:37:28 henning Exp $
+ *	$OpenBSD: device.h,v 1.8 2013/07/05 21:02:07 miod Exp $
  *
  */
 
@@ -35,5 +35,11 @@ void	deviceEthAddr(char *, u_char *);
 #endif
 void	deviceInitOne(char *);
 void	deviceInitAll(void);
+
+__dead void   Loop(void);
+int  mopOpenDL(struct if_info *, int);
+int  mopOpenRC(struct if_info *, int);
+void mopReadDL(void);
+void mopReadRC(void);
 
 #endif /* _DEVICE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopa.out.c,v 1.11 2010/11/19 21:09:20 miod Exp $ */
+/*	$OpenBSD: mopa.out.c,v 1.12 2013/07/05 21:02:07 miod Exp $ */
 
 /* mopa.out - Convert a Unix format kernel into something that
  * can be transferred via MOP.
@@ -65,14 +65,27 @@
 #define MID_VAX 140
 #endif
 
+#ifndef NOELF
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+#include <sys/exec_elf.h>
+#else
+#define NOELF
+#endif
+#if !defined(EM_VAX)
+#define EM_VAX 75
+#endif
+#endif
+
 u_char header[512];		/* The VAX header we generate is 1 block. */
+#if !defined(NOAOUT)
 struct exec ex, ex_swap;
+#endif
 
 int
 main (int argc, char **argv)
 {
 	FILE   *out;		/* A FILE because that is easier. */
-	int	i;
+	int	i, j;
 	struct dllist dl;
 	
 #ifdef NOAOUT
@@ -86,32 +99,42 @@ main (int argc, char **argv)
 	}
 	
 	dl.ldfd = open (argv[1], O_RDONLY);
-	if (dl.ldfd == -1) {
-		perror (argv[1]);
-		return (2);
-	}
+	if (dl.ldfd == -1)
+		err(2, "open `%s'", argv[1]);
 	
-	GetFileInfo(dl.ldfd,
-		    &dl.loadaddr,
-		    &dl.xferaddr,
-		    &dl.aout,
-		    &dl.a_text,&dl.a_text_fill,
-		    &dl.a_data,&dl.a_data_fill,
-		    &dl.a_bss ,&dl.a_bss_fill, 0);
+	if (GetFileInfo(&dl, 0) == -1)
+		errx(3, "`%s' is an unknown file type", argv[1]);
 
-	if (dl.aout == -1) {
-		fprintf(stderr,"%s: not an a.out file\n",argv[1]);
-		return (3);
-        }
+	switch (dl.image_type) {
+	case IMAGE_TYPE_MOP:
+		errx(3, "`%s' is already a MOP image", argv[1]);
+		break;
 
-	if (dl.aout != MID_VAX) {
-		fprintf(stderr,"%s: file is not a VAX image (mid=%d)\n",
-			argv[1],dl.aout);
-		return (4);
+#ifndef NOELF
+	case IMAGE_TYPE_ELF32:
+		if (dl.e_machine != EM_VAX)
+			printf("WARNING: `%s' is not a VAX image "
+			    "(machine=%d)\n", argv[1], dl.e_machine);
+		for (i = 0, j = 0; j < dl.e_nsec; j++)
+			i += dl.e_sections[j].s_fsize + dl.e_sections[j].s_pad;
+		break;
+#endif
+
+#ifndef NOAOUT
+	case IMAGE_TYPE_AOUT:
+		if (dl.a_mid != MID_VAX)
+			printf("WARNING: `%s' is not a VAX image (mid=%d)\n",
+			    argv[1], dl.a_mid);
+		i = dl.a_text + dl.a_text_fill + dl.a_data + dl.a_data_fill +
+		    dl.a_bss  + dl.a_bss_fill;
+		break;
+#endif
+
+	default:
+		errx(3, "Image type `%s' not supported",
+		    FileTypeName(dl.image_type));
 	}
 
-	i = dl.a_text + dl.a_text_fill + dl.a_data + dl.a_data_fill +
-	    dl.a_bss  + dl.a_bss_fill;
 	i = (i+1) / 512;
 
 	dl.nloadaddr = dl.loadaddr;
@@ -124,24 +147,44 @@ main (int argc, char **argv)
 	mopFilePutLX(header,IHD_W_ACTIVOFF,0x30,2);/* Offset to 1st section.*/
 	mopFilePutLX(header,IHD_W_ALIAS,IHD_C_NATIVE,2);/* It's a VAX image.*/
 	mopFilePutLX(header,IHD_B_HDRBLKCNT,1,1); /* Only one header block. */
+	mopFilePutLX(header,0xd4+ISD_V_VPN,dl.loadaddr/512,2);/* load Addr */
 	mopFilePutLX(header,0x30+IHA_L_TFRADR1,dl.xferaddr,4); /* Xfer Addr */
 	mopFilePutLX(header,0xd4+ISD_W_PAGCNT,i,2);/* Imagesize in blks.*/
 	
 	out = fopen (argv[2], "w");
-	if (!out) {
-		perror (argv[2]);
-		return (2);
-	}
+	if (!out)
+		err(2, "writing `%s'", argv[2]);
 	
 	/* Now we do the actual work. Write VAX MOP-image header */
 	
 	fwrite (header, sizeof (header), 1, out);
 
-	fprintf (stderr, "copying %lu", dl.a_text);
-	fprintf (stderr, "+%lu", dl.a_data);
-	fprintf (stderr, "+%lu", dl.a_bss);
-	fprintf (stderr, "->%lu", dl.xferaddr);
-	fprintf (stderr, "\n");
+	switch (dl.image_type) {
+	case IMAGE_TYPE_MOP:
+		abort();
+
+	case IMAGE_TYPE_ELF32:
+#ifdef NOELF
+		abort();
+#else
+		fprintf(stderr, "copying ");
+		for (j = 0; j < dl.e_nsec; j++)
+			fprintf(stderr, "%s%u+%u", j == 0 ? "" : "+",
+			    dl.e_sections[j].s_fsize,
+			    dl.e_sections[j].s_pad);
+		fprintf(stderr, "->0x%x\n", dl.xferaddr);
+#endif
+		break;
+
+	case IMAGE_TYPE_AOUT:
+#ifdef NOAOUT
+		abort();
+#else
+		fprintf(stderr, "copying %u+%u+%u->0x%x\n", dl.a_text,
+		    dl.a_data, dl.a_bss, dl.xferaddr);
+#endif
+		break;
+	}
 	
 	while ((i = mopFileRead(&dl,header)) > 0) {
 		(void)fwrite(header, i, 1, out);

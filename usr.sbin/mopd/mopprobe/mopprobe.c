@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopprobe.c,v 1.13 2010/05/01 08:14:26 mk Exp $ */
+/*	$OpenBSD: mopprobe.c,v 1.14 2013/07/05 21:02:07 miod Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -45,7 +45,6 @@
  */
 struct if_info *iflist;
 
-__dead void   Loop(void);
 void   Usage(void);
 void   mopProcess(struct if_info *, u_char *);
 

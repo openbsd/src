@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.19 2009/11/12 16:52:22 maja Exp $ */
+/*	$OpenBSD: process.c,v 1.20 2013/07/05 21:02:07 miod Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -185,11 +185,7 @@ mopStartLoad(u_char *dst, u_char *src, struct dllist *dl_rpr, int trans)
 	dllist[slot].status = DL_STATUS_READ_IMGHDR;
 
 	/* Get Load and Transfer Address. */
-	GetFileInfo(dllist[slot].ldfd, &dllist[slot].loadaddr,
-	    &dllist[slot].xferaddr, &dllist[slot].aout,
-	    &dllist[slot].a_text, &dllist[slot].a_text_fill,
-	    &dllist[slot].a_data, &dllist[slot].a_data_fill,
-	    &dllist[slot].a_bss,  &dllist[slot].a_bss_fill, 0);
+	GetFileInfo(&dllist[slot], 0);
 
 	dllist[slot].nloadaddr = dllist[slot].loadaddr;
 	dllist[slot].lseek     = lseek(dllist[slot].ldfd, 0L, SEEK_CUR);
