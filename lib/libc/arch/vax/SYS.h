@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.14 2008/05/21 20:39:30 miod Exp $ */
+/*	$OpenBSD: SYS.h,v 1.15 2013/07/05 21:10:50 miod Exp $ */
 /*	$NetBSD: SYS.h,v 1.4 1997/05/02 18:15:32 kleink Exp $ */
 
 /*
@@ -44,13 +44,13 @@
 #endif
 
 #define	__SYSCALL(p,x,y)						\
-	err:	jmp _C_LABEL(_cerror);					\
+	err:	jmp _C_LABEL(__cerror);					\
 	__ENTRY(p,x);							\
 		__DO_SYSCALL(y);					\
 		jcs err
 
 #define	__PSEUDO(p,x,y)							\
-	err:	jmp _C_LABEL(_cerror);					\
+	err:	jmp _C_LABEL(__cerror);					\
 	__ENTRY(p,x);							\
 		__DO_SYSCALL(y);					\
 		jcs err;						\
@@ -85,4 +85,4 @@
 				__ENTRY(_thread_sys_,x)
 #define	SYSNAME(x)		_CAT(__thread_sys_,x)
 
-	.globl	_C_LABEL(_cerror)
+	.globl	_C_LABEL(__cerror)

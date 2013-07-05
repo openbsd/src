@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.35 2013/07/01 19:45:26 miod Exp $     */
+/*      $OpenBSD: pmap.h,v 1.36 2013/07/05 21:10:50 miod Exp $     */
 /*	$NetBSD: pmap.h,v 1.37 1999/08/01 13:48:07 ragge Exp $	   */
 
 /* 
@@ -125,14 +125,14 @@ extern	struct pmap kernel_pmap_store;
 #define pmap_copy_page(srcpg, dstpg) do {				\
 	paddr_t __src = VM_PAGE_TO_PHYS(srcpg);				\
 	paddr_t __dst = VM_PAGE_TO_PHYS(dstpg);				\
-	__asm__("addl3 $0x80000000,%0,r0;addl3 $0x80000000,%1,r1;	\
-	    movc3 $4096,(r0),(r1)"					\
+	__asm__("addl3 $0x80000000,%0,%%r0;addl3 $0x80000000,%1,%%r1;	\
+	    movc3 $4096,(%%r0),(%%r1)"					\
 	    :: "r"(__src),"r"(__dst):"r0","r1","r2","r3","r4","r5");	\
 } while (0)
 
 #define pmap_zero_page(pg) do {						\
 	paddr_t __pa = VM_PAGE_TO_PHYS(pg);				\
-	__asm__("addl3 $0x80000000,%0,r0;movc5 $0,(r0),$0,$4096,(r0)"	\
+	__asm__("addl3 $0x80000000,%0,%%r0;movc5 $0,(%%r0),$0,$4096,(%%r0)" \
 	    :: "r"(__pa): "r0","r1","r2","r3","r4","r5");		\
 } while (0)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork.S,v 1.4 2005/08/07 16:40:16 espie Exp $ */
+/*	$OpenBSD: fork.S,v 1.5 2013/07/05 21:10:50 miod Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 #include "SYS.h"
 
 SYSCALL(fork)
-	jlbc	r1,1f	# parent, since r1 == 0 in parent, 1 in child
-	clrl	r0
+	jlbc	%r1,1f	# parent, since r1 == 0 in parent, 1 in child
+	clrl	%r0
 1:
 	ret		# pid = fork()

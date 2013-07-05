@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.S,v 1.8 2008/05/21 20:39:32 miod Exp $ */
+/*	$OpenBSD: syscall.S,v 1.9 2013/07/05 21:10:50 miod Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,10 +36,10 @@
 #include "SYS.h"
 
 SYSENTRY(syscall)
-	movl	4(ap),r0	# syscall number
-	subl3	$1,(ap)+,(ap)	# one fewer arguments
-	chmk	r0
+	movl	4(%ap),%r0	# syscall number
+	subl3	$1,(%ap)+,(%ap)	# one fewer arguments
+	chmk	%r0
 	jcs	1f
 	ret
 1:
-	jmp	_C_LABEL(_cerror)
+	jmp	_C_LABEL(__cerror)

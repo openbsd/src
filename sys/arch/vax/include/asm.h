@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.11 2013/03/28 17:41:04 martynas Exp $ */
+/*	$OpenBSD: asm.h,v 1.12 2013/07/05 21:10:50 miod Exp $ */
 /*	$NetBSD: asm.h,v 1.9 1999/01/15 13:31:28 bouyer Exp $ */
 /*
  * Copyright (c) 1982, 1993
@@ -69,11 +69,7 @@
 
 /* let kernels and others override entrypoint alignment */
 #ifndef _ALIGN_TEXT
-# ifdef __ELF__
-#  define _ALIGN_TEXT .align 4
-# else
-#  define _ALIGN_TEXT .align 2
-# endif
+# define _ALIGN_TEXT .align 2
 #endif
 
 #define _ALTENTRY(x) \

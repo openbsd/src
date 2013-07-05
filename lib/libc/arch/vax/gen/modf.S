@@ -1,4 +1,4 @@
-/* $OpenBSD: modf.S,v 1.8 2011/07/08 22:28:33 martynas Exp $ */
+/* $OpenBSD: modf.S,v 1.9 2013/07/05 21:10:50 miod Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,16 +39,16 @@
 #include "DEFS.h"
 
 ENTRY(modf, R2)
-	cvtdl	4(ap),r2
+	cvtdl	4(%ap),%r2
 	bvs	0f
-	cvtld	r2,*12(ap)
-	subd3	*12(ap),4(ap),r0
+	cvtld	%r2,*12(%ap)
+	subd3	*12(%ap),4(%ap),%r0
 	ret
 0:
-	emodd	4(ap),$0,$0f1.0,r2,r0
+	emodd	4(%ap),$0,$0f1.0,%r2,%r0
 	bvs	1f			# integer overflow
-	cvtld	r2,*12(ap)
+	cvtld	%r2,*12(%ap)
 	ret
 1:
-	subd3	r0,4(ap),*12(ap)
+	subd3	%r0,4(%ap),*12(%ap)
 	ret

@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_sqrt.S,v 1.9 2013/03/28 18:09:38 martynas Exp $	*/
+/*	$OpenBSD: n_sqrt.S,v 1.10 2013/07/05 21:10:50 miod Exp $	*/
 /*	$NetBSD: n_sqrt.S,v 1.1 1995/10/10 23:40:29 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -47,8 +47,8 @@
 
 STRONG_ALIAS(sqrtl,sqrt)
 ENTRY(sqrt, R2|R3|R4|R5)
-	movq    4(ap),r0
-dsqrt2:	bicw3	$0x807f,r0,r2	# check exponent of input
+	movq    4(%ap),%r0
+dsqrt2:	bicw3	$0x807f,%r0,%r2	# check exponent of input
 	jeql	noexp		# biased exponent is zero -> 0.0 or reserved
 	bsbb	__libm_dsqrt_r5
 noexp:	ret
@@ -59,30 +59,30 @@ _ALTENTRY(__libm_dsqrt_r5)	/* ENTRY POINT FOR cdabs and cdsqrt	*/
 				/* returns double square root scaled by	*/
 				/* 2^r6	*/
 
-	movd	r0,r4
+	movd	%r0,%r4
 	jleq	nonpos		# argument is not positive
-	movzwl	r4,r2
-	ashl	$-1,r2,r0
-	addw2	$0x203c,r0	# r0 has magic initial approximation
+	movzwl	%r4,%r2
+	ashl	$-1,%r2,%r0
+	addw2	$0x203c,%r0	# r0 has magic initial approximation
 /*
  * Do two steps of Heron's rule
  * ((arg/guess) + guess) / 2 = better guess
  */
-	divf3	r0,r4,r2
-	addf2	r2,r0
-	subw2	$0x80,r0	# divide by two
+	divf3	%r0,%r4,%r2
+	addf2	%r2,%r0
+	subw2	$0x80,%r0	# divide by two
 
-	divf3	r0,r4,r2
-	addf2	r2,r0
-	subw2	$0x80,r0	# divide by two
+	divf3	%r0,%r4,%r2
+	addf2	%r2,%r0
+	subw2	$0x80,%r0	# divide by two
 
 /* Scale argument and approximation to prevent over/underflow */
 
-	bicw3	$0x807f,r4,r1
-	subw2	$0x4080,r1		# r1 contains scaling factor
-	subw2	r1,r4
-	movl	r0,r2
-	subw2	r1,r2
+	bicw3	$0x807f,%r4,%r1
+	subw2	$0x4080,%r1		# r1 contains scaling factor
+	subw2	%r1,%r4
+	movl	%r0,%r2
+	subw2	%r1,%r2
 
 /* Cubic step
  *
@@ -90,16 +90,16 @@ _ALTENTRY(__libm_dsqrt_r5)	/* ENTRY POINT FOR cdabs and cdsqrt	*/
  * a is approximation, and n is the original argument.
  * (let s be scale factor in the following comments)
  */
-	clrl	r1
-	clrl	r3
-	muld2	r0,r2			# r2:r3 = a*a/s
-	subd2	r2,r4			# r4:r5 = n/s - a*a/s
-	addw2	$0x100,r2		# r2:r3 = 4*a*a/s
-	addd2	r4,r2			# r2:r3 = n/s + 3*a*a/s
-	muld2	r0,r4			# r4:r5 = a*n/s - a*a*a/s
-	divd2	r2,r4			# r4:r5 = a*(n-a*a)/(n+3*a*a)
-	addw2	$0x80,r4		# r4:r5 = 2*a*(n-a*a)/(n+3*a*a)
-	addd2	r4,r0			# r0:r1 = a + 2*a*(n-a*a)/(n+3*a*a)
+	clrl	%r1
+	clrl	%r3
+	muld2	%r0,%r2			# r2:r3 = a*a/s
+	subd2	%r2,%r4			# r4:r5 = n/s - a*a/s
+	addw2	$0x100,%r2		# r2:r3 = 4*a*a/s
+	addd2	%r4,%r2			# r2:r3 = n/s + 3*a*a/s
+	muld2	%r0,%r4			# r4:r5 = a*n/s - a*a*a/s
+	divd2	%r2,%r4			# r4:r5 = a*(n-a*a)/(n+3*a*a)
+	addw2	$0x80,%r4		# r4:r5 = 2*a*(n-a*a)/(n+3*a*a)
+	addd2	%r4,%r0			# r0:r1 = a + 2*a*(n-a*a)/(n+3*a*a)
 	rsb				# DONE!
 nonpos:
 	jneq	negarg

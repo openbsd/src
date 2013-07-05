@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.32 2013/03/23 16:12:28 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.33 2013/07/05 21:10:50 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.32 2000/03/07 00:05:59 matt Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@
 #define MAXTSIZ		(8*1024*1024)		/* max text size */
 #endif
 #ifndef MAXDSIZ
-#define MAXDSIZ		(32*1024*1024)		/* max data size */
+#define MAXDSIZ		(40*1024*1024)		/* max data size */
 #endif
 #ifndef MAXSSIZ
 #define MAXSSIZ		(8*1024*1024)		/* max stack size */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.8 2008/05/21 20:39:32 miod Exp $ */
+/*	$OpenBSD: sbrk.S,v 1.9 2013/07/05 21:10:50 miod Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,14 +43,14 @@ __curbrk:
 	.text
 
 ENTRY(sbrk, R3)
-	addl3	__curbrk,4(ap),-(sp)
+	addl3	__curbrk,4(%ap),-(%sp)
 	pushl	$1
-	movl	ap,r3
-	movl	sp,ap
+	movl	%ap,%r3
+	movl	%sp,%ap
 	chmk	$ SYS_break
 	jcs 	err
-	movl	__curbrk,r0
-	addl2	4(r3),__curbrk
+	movl	__curbrk,%r0
+	addl2	4(%r3),__curbrk
 	ret
 err:
-	jmp	_C_LABEL(_cerror)
+	jmp	_C_LABEL(__cerror)

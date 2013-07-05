@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.71 2013/06/01 23:06:26 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.72 2013/07/05 21:10:50 miod Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -184,7 +184,7 @@ _rthread_init(void)
 
 	_rthread_debug(1, "rthread init\n");
 
-#if defined(__ELF__)
+#if defined(__ELF__) && !defined(__vax__)
 	if (_DYNAMIC) {
 		/*
 		 * To avoid recursion problems in ld.so, we need to trigger the

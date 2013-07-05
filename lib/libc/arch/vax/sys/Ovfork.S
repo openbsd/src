@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.7 2008/05/21 20:39:32 miod Exp $ */
+/*	$OpenBSD: Ovfork.S,v 1.8 2013/07/05 21:10:50 miod Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,18 +47,18 @@
  */
 
 SYSENTRY(vfork)
-	movl	16(fp),r2	# save return address before we smash it
-	movab	here,16(fp)
+	movl	16(%fp),%r2	# save return address before we smash it
+	movab	here,16(%fp)
 	ret
 here:
 	chmk	$ SYS_vfork
 	bcs	err		# if failed, set errno and return -1
 	/* this next trick is Chris Torek's fault */
-	mnegl	r1,r1		# r1 = 0xffffffff if child, 0 if parent
-	bicl2	r1,r0		# r0 &= ~r1, i.e., 0 if child, else unchanged
-	jmp	(r2)
+	mnegl	%r1,%r1		# r1 = 0xffffffff if child, 0 if parent
+	bicl2	%r1,%r0		# r0 &= ~r1, i.e., 0 if child, else unchanged
+	jmp	(%r2)
 
 err:
-	movl	r0,_C_LABEL(errno)
-	mnegl	$1,r0
-	jmp	(r2)
+	movl	%r0,_C_LABEL(errno)
+	mnegl	$1,%r0
+	jmp	(%r2)

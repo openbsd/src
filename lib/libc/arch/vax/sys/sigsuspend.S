@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.8 2008/05/21 20:39:32 miod Exp $ */
+/*	$OpenBSD: sigsuspend.S,v 1.9 2013/07/05 21:10:50 miod Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,11 +31,11 @@
 #include "SYS.h"
 
 err:
-	jmp	_C_LABEL(_cerror)
+	jmp	_C_LABEL(__cerror)
 
 SYSENTRY(sigsuspend)
-	movl	*4(ap),4(ap)		# indirect to mask arg
+	movl	*4(%ap),4(%ap)		# indirect to mask arg
 	chmk	$ SYS_sigsuspend
 	jcs	err
-	clrl	r0			# shouldnt happen
+	clrl	%r0			# shouldnt happen
 	ret

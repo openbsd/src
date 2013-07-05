@@ -1,4 +1,4 @@
-/* $OpenBSD: urem.S,v 1.5 2005/08/07 16:40:15 espie Exp $ */
+/* $OpenBSD: urem.S,v 1.6 2013/07/05 21:10:50 miod Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,50 +39,58 @@
  * aurem() takes a pointer to a dividend and an ordinary divisor.
  */
 
-#define	DIVIDEND	4(ap)
-#define	DIVISOR		8(ap)
+#define	DIVIDEND	4(%ap)
+#define	DIVISOR		8(%ap)
 
+#ifdef __ELF__
+ASENTRY(__urem, R2)
+#else
 ASENTRY(urem,R2)
-	movl	DIVISOR,r2
+#endif
+	movl	DIVISOR,%r2
 	jlss	Leasy		# big divisor: settle by comparison
-	movl	DIVIDEND,r0
+	movl	DIVIDEND,%r0
 	jlss	Lhard		# big dividend: need extended division
-	divl3	r2,r0,r1	# small divisor and dividend: signed modulus
-	mull2	r2,r1
-	subl2	r1,r0
+	divl3	%r2,%r0,%r1	# small divisor and dividend: signed modulus
+	mull2	%r2,%r1
+	subl2	%r1,%r0
 	ret
 Lhard:
-	clrl	r1
-	ediv	r2,r0,r1,r0
+	clrl	%r1
+	ediv	%r2,%r0,%r1,%r0
 	ret
 Leasy:
-	subl3	r2,DIVIDEND,r0
+	subl3	%r2,DIVIDEND,%r0
 	jcc	Ldifference	# if divisor goes in once, return difference
-	movl	DIVIDEND,r0	# if divisor is bigger, return dividend
+	movl	DIVIDEND,%r0	# if divisor is bigger, return dividend
 Ldifference:
 	ret
 
+#ifdef __ELF__
+ASENTRY(__aurem, R2|R3)
+#else
 ASENTRY(aurem,R2|R3)
-	movl	DIVIDEND,r3
-	movl	DIVISOR,r2
+#endif
+	movl	DIVIDEND,%r3
+	movl	DIVISOR,%r2
 	jlss	La_easy		# big divisor: settle by comparison
-	movl	(r3),r0
+	movl	(%r3),%r0
 	jlss	La_hard		# big dividend: need extended division
-	divl3	r2,r0,r1	# small divisor and dividend: signed modulus
-	mull2	r2,r1
-	subl2	r1,r0
-	movl	r0,(r3)		# leave the value of the assignment in r0
+	divl3	%r2,%r0,%r1	# small divisor and dividend: signed modulus
+	mull2	%r2,%r1
+	subl2	%r1,%r0
+	movl	%r0,(%r3)	# leave the value of the assignment in r0
 	ret
 La_hard:
-	clrl	r1
-	ediv	r2,r0,r1,r0
-	movl	r0,(r3)
+	clrl	%r1
+	ediv	%r2,%r0,%r1,%r0
+	movl	%r0,(%r3)
 	ret
 La_easy:
-	subl3	r2,(r3),r0
+	subl3	%r2,(%r3),%r0
 	jcs	La_dividend	# if divisor is bigger, leave dividend alone
-	movl	r0,(r3)		# if divisor goes in once, store difference
+	movl	%r0,(%r3)	# if divisor goes in once, store difference
 	ret
 La_dividend:
-	movl	(r3),r0
+	movl	(%r3),%r0
 	ret

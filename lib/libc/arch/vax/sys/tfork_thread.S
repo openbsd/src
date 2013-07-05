@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.2 2012/06/21 00:56:59 guenther Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.3 2013/07/05 21:10:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -34,13 +34,13 @@ ENTRY(__tfork_thread, R2|R3)
 	/*
 	 * Save thread creation arguments into registers.
 	 */
-	movl	12(ap), r2	/* func */
-	movl	16(ap), r3	/* arg */
+	movl	12(%ap), %r2	/* func */
+	movl	16(%ap), %r3	/* arg */
 
 	__DO_SYSCALL(__tfork)
 	jcs	9f
 
-	cmpl	r0, $0
+	cmpl	%r0, $0
 	beql	1f
 
 	/*
@@ -54,9 +54,9 @@ ENTRY(__tfork_thread, R2|R3)
 	 * Note that since we can not pass a register to calls, we need
 	 * to waste 4 bytes of stack in every thread.
 	 */
-	pushl	r2		/* func */
-	pushl	r3		/* arg */
-	calls	$1, *4(sp)	/* func */
+	pushl	%r2		/* func */
+	pushl	%r3		/* arg */
+	calls	$1, *4(%sp)	/* func */
 
 	__DO_SYSCALL(__threxit)
 
@@ -64,4 +64,4 @@ ENTRY(__tfork_thread, R2|R3)
 	/*
 	 * system call failed.
 	 */
-	jmp	_C_LABEL(_cerror)
+	jmp	_C_LABEL(__cerror)

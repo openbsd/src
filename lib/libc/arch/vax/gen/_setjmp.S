@@ -1,4 +1,4 @@
-/* $OpenBSD: _setjmp.S,v 1.5 2008/05/21 20:39:32 miod Exp $ */
+/* $OpenBSD: _setjmp.S,v 1.6 2013/07/05 21:10:50 miod Exp $ */
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,49 +42,49 @@
 #include "DEFS.h"
 
 ENTRY(_setjmp, 0)
-	movl	4(ap),r0
-	movl	12(fp),(r0)		# save frame pointer of caller
-	movl	16(fp),4(r0)		# save pc of caller
-	clrl	r0
+	movl	4(%ap),%r0
+	movl	12(%fp),(%r0)		# save frame pointer of caller
+	movl	16(%fp),4(%r0)		# save pc of caller
+	clrl	%r0
 	ret
 
 ENTRY(_longjmp, 0)
-	movl	8(ap),r0		# return(v)
-	movl	4(ap),r1		# fetch buffer
-	tstl	(r1)
+	movl	8(%ap),%r0		# return(v)
+	movl	4(%ap),%r1		# fetch buffer
+	tstl	(%r1)
 	beql	botch
 loop:
-	bitw	$1,6(fp)		# r0 saved?
+	bitw	$1,6(%fp)		# r0 saved?
 	beql	1f
-	movl	r0,20(fp)
-	bitw	$2,6(fp)		# was r1 saved?
+	movl	%r0,20(%fp)
+	bitw	$2,6(%fp)		# was r1 saved?
 	beql	2f
-	movl	r1,24(fp)
+	movl	%r1,24(%fp)
 	brb	2f
 1:
-	bitw	$2,6(fp)		# was r1 saved?
+	bitw	$2,6(%fp)		# was r1 saved?
 	beql	2f
-	movl	r1,20(fp)
+	movl	%r1,20(%fp)
 2:
-	cmpl	(r1),12(fp)
+	cmpl	(%r1),12(%fp)
 	beql	done
 	blssu	botch
-	movl	$loop,16(fp)
+	movl	$loop,16(%fp)
 	ret				# pop another frame
 
 done:
-	cmpb	*16(fp),reiins		# returning to an "rei"?
+	cmpb	*16(%fp),reiins		# returning to an "rei"?
 	bneq	1f
-	movab	3f,16(fp)		# do return w/ psl-pc pop
+	movab	3f,16(%fp)		# do return w/ psl-pc pop
 	brw	2f
 1:
-	movab	4f,16(fp)		# do standard return
+	movab	4f,16(%fp)		# do standard return
 2:
 	ret				# unwind stack before signals enabled
 3:
-	addl2	$8,sp			# compensate for PSL-PC push
+	addl2	$8,%sp			# compensate for PSL-PC push
 4:
-	jmp	*4(r1)			# done, return....
+	jmp	*4(%r1)			# done, return....
 
 botch:
 	calls	$0,_C_LABEL(longjmperror)

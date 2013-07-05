@@ -1,4 +1,4 @@
-/* $OpenBSD: ldexp.S,v 1.9 2013/03/28 18:09:38 martynas Exp $ */
+/* $OpenBSD: ldexp.S,v 1.10 2013/07/05 21:10:50 miod Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,24 +54,24 @@
 
 STRONG_ALIAS(ldexpl,ldexp)
 ENTRY(ldexp, R2)
-	movd	4(ap),r0	/* fetch "value" */
-	extzv	$7,$8,r0,r2	/* r2 := biased exponent */
+	movd	4(%ap),%r0	/* fetch "value" */
+	extzv	$7,$8,%r0,%r2	/* r2 := biased exponent */
 	jeql	1f		/* if zero, done */
 
-	addl2	12(ap),r2	/* r2 := new biased exponent */
+	addl2	12(%ap),%r2	/* r2 := new biased exponent */
 	jleq	2f		/* if <= 0, underflow */
-	cmpl	r2,$256		/* otherwise check if too big */
+	cmpl	%r2,$256	/* otherwise check if too big */
 	jgeq	3f		/* jump if overflow */
-	insv	r2,$7,$8,r0	/* put exponent back in result */
+	insv	%r2,$7,$8,%r0	/* put exponent back in result */
 1:
 	ret
 2:
-	clrd	r0
+	clrd	%r0
 	jbr	1f
 3:
-	movd	huge,r0		/* largest possible floating magnitude */
-	jbc	$15,4(ap),1f	/* jump if argument was positive */
-	mnegd	r0,r0		/* if arg < 0, make result negative */
+	movd	huge,%r0	/* largest possible floating magnitude */
+	jbc	$15,4(%ap),1f	/* jump if argument was positive */
+	mnegd	%r0,%r0		/* if arg < 0, make result negative */
 1:
 	movl	$ ERANGE,_C_LABEL(errno)
 	ret

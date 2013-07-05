@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.8 2008/05/21 20:39:32 miod Exp $ */
+/*	$OpenBSD: sigprocmask.S,v 1.9 2013/07/05 21:10:50 miod Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,20 +31,20 @@
 #include "SYS.h"
 
 err:
-	jmp	_C_LABEL(_cerror)
+	jmp	_C_LABEL(__cerror)
 
 SYSENTRY(sigprocmask)
-	tstl	8(ap)			# check new sigset pointer
+	tstl	8(%ap)			# check new sigset pointer
 	bneq	1f			# if not null, indirect
-/*	movl	$0,8(ap)		# null mask pointer: block empty set */
-	movl	$1,4(ap)		# SIG_BLOCK
+/*	movl	$0,8(%ap)		# null mask pointer: block empty set */
+	movl	$1,4(%ap)		# SIG_BLOCK
 	jbr	2f
-1:	movl	*8(ap),8(ap)		# indirect to new mask arg
+1:	movl	*8(%ap),8(%ap)		# indirect to new mask arg
 2:	chmk	$ SYS_sigprocmask
 	jcs	err
-	tstl	12(ap)			# test if old mask requested
+	tstl	12(%ap)			# test if old mask requested
 	beql	out
-	movl	r0,*12(ap)		# store old mask
+	movl	%r0,*12(%ap)		# store old mask
 out:
-	clrl	r0
+	clrl	%r0
 	ret

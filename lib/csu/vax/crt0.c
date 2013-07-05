@@ -1,8 +1,12 @@
-/*	$OpenBSD: crt0.c,v 1.9 2005/08/04 16:33:05 espie Exp $	*/
-/*	$NetBSD: crt0.c,v 1.1.2.1 1995/10/15 19:40:04 ragge Exp $	*/
-/*
- * Copyright (c) 1993 Paul Kranenburg
+/*	$OpenBSD: crt0.c,v 1.10 2013/07/05 21:10:50 miod Exp $	*/
+/*	$NetBSD: crt0.c,v 1.14 2002/05/16 19:38:21 wiz Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Paul Kranenburg.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,62 +18,71 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Paul Kranenburg.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-#include <sys/param.h>
 #include <stdlib.h>
+#include <limits.h>
 
-#include "common.h"
+#ifdef MCRT0
+extern void monstartup(u_long, u_long);
+extern void _mcleanup(void);
+extern unsigned char _etext, _eprol;
+#endif
 
-extern void	start(void) asm("start");
+char **environ;
+char *__progname = "";
+char __progname_storage[1 + NAME_MAX];
+
+static char *_strrchr(const char *, char);
+
+struct kframe {
+	int	kargc;
+	char	*kargv[1];	/* size depends on kargc */
+	char	kargstr[1];	/* size varies */
+	char	kenvstr[1];	/* size varies */
+};
+
+	asm("	.text");
+	asm("	.align 2");
+	asm("	.globl _start");
+	asm("	.type _start,@function");
+	asm("	_start:");
+	asm("		.word 0x0101");		/* two nops just in case */
+	asm("		pushl %sp");		/* no registers to save */
+	asm("		calls $1,__start");	/* do the real start */
+	asm("		halt");
 
 void
-start()
+__start(struct kframe *kfp)
 {
-	struct kframe {
-		int	kargc;
-		char	*kargv[1];	/* size depends on kargc */
-		char	kargstr[1];	/* size varies */
-		char	kenvstr[1];	/* size varies */
-	};
-	/*
-	 *	ALL REGISTER VARIABLES!!!
-	 */
-	register struct kframe *kfp;
-	register char **argv, *ap;
+	char **argv, *ap;
 	char *s;
 
-#ifdef lint
-	kfp = 0;
-	initcode = initcode = 0;
-#else /* not lint */
-	/* make kfp point to the arguments on stack */
-	asm ("movl sp, %0" : "=r" (kfp));
-#endif /* not lint */
 	argv = &kfp->kargv[0];
 	environ = argv + kfp->kargc + 1;
 
-	if (ap = argv[0]) {
-		if ((__progname = _strrchr(ap, '/')) == NULL)
-			__progname = ap;
+	if ((__progname = argv[0]) != NULL) {
+		if ((__progname = _strrchr(__progname, '/')) == NULL)
+			__progname = argv[0];
 		else
-			++__progname;
+			__progname++;
 		for (s = __progname_storage; *__progname &&
 		    s < &__progname_storage[sizeof __progname_storage - 1]; )
 			*s++ = *__progname++;
@@ -77,41 +90,29 @@ start()
 		__progname = __progname_storage;
 	}
 
-#ifdef DYNAMIC
-	/* ld(1) convention: if DYNAMIC = 0 then statically linked */
-#ifdef stupid_gcc
-	if (&_DYNAMIC)
-#else
-	if ( ({volatile caddr_t x = (caddr_t)&_DYNAMIC; x; }) )
-#endif
-		__load_rtld(&_DYNAMIC);
-#endif /* DYNAMIC */
-
-asm("eprol:");
-
 #ifdef MCRT0
 	atexit(_mcleanup);
-	monstartup((u_long)&eprol, (u_long)&etext);
+	monstartup((u_long)&_eprol, (u_long)&_etext);
 #endif /* MCRT0 */
+
+	__init();
 
 asm ("__callmain:");		/* Defined for the benefit of debuggers */
 	exit(main(kfp->kargc, argv, environ));
 }
 
-#ifdef DYNAMIC
-	asm("	___syscall:");
-	asm("		.word 0");		/* no registers to save */
-	asm("		movl 4(ap), r0");	/* get syscall number */
-	asm("		subl3 $1,(ap)+,(ap)");	/* n-1 args to syscall */
-	asm("		chmk r0");		/* do system call */
-	asm("		jcs 1f");		/* check error */
-	asm("		ret");			/* return */
-	asm("	1:	movl $-1, r0");
-	asm("		ret");
+static char *
+_strrchr(const char *p, char ch)
+{
+	char *save;
 
-#endif /* DYNAMIC */
-
-#include "common.c"
+	for (save = NULL; ; ++p) {
+		if (*p == ch)
+			save = (char *)p;
+		if (*p == '\0')
+			return (save);
+	}
+}
 
 #ifdef MCRT0
 asm ("	.text");

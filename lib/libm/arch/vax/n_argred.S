@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_argred.S,v 1.3 2008/05/21 20:37:10 miod Exp $	*/
+/*	$OpenBSD: n_argred.S,v 1.4 2013/07/05 21:10:50 miod Exp $	*/
 /*	$NetBSD: n_argred.S,v 1.1 1995/10/10 23:40:21 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -50,11 +50,11 @@ _ALTENTRY(__libm_argred)
  *  Compare the argument with the largest possible that can
  *  be reduced by table lookup.  r3 := |x|  will be used in  table_lookup .
  */
-	movd	r0,r3
+	movd	%r0,%r3
 	bgeq	abs1
-	mnegd	r3,r3
+	mnegd	%r3,%r3
 abs1:
-	cmpd	r3,$0d+4.55530934770520019583e+01
+	cmpd	%r3,$0d+4.55530934770520019583e+01
 	blss	small_arg
 	jsb	trigred
 	rsb
@@ -72,51 +72,51 @@ _ALTENTRY(__libm_sincos)
 /*
  *  Compensate for a cosine entry by adding one to the quadrant number.
  */
-	addl2	r4,r0
+	addl2	%r4,%r0
 /*
  *  Polyd clobbers  r5-r0 ;  save  X  in  r7/r6 .
  *  This can be avoided by rewriting  trigred .
  */
-	movd	r1,r6
+	movd	%r1,%r6
 /*
  *  Likewise, save  alpha  in  r8 .
  *  This can be avoided by rewriting  trigred .
  */
-	movf	r3,r8
+	movf	%r3,%r8
 /*
  *  Odd or even quadrant?  cosine if odd, sine otherwise.
  *  Save  floor(quadrant/2) in  r9  ; it determines the final sign.
  */
-	rotl	$-1,r0,r9
+	rotl	$-1,%r0,%r9
 	blss	cosine
 sine:
-	muld2	r1,r1		# Xsq = X * X
-	cmpw	$0x2480,r1	# [zl] Xsq > 2^-56?
+	muld2	%r1,%r1		# Xsq = X * X
+	cmpw	$0x2480,%r1	# [zl] Xsq > 2^-56?
 	blss	1f		# [zl] yes, go ahead and do polyd
-	clrq	r1		# [zl] work around 11/780 FPA polyd bug
+	clrq	%r1		# [zl] work around 11/780 FPA polyd bug
 1:
-	polyd	r1,$7,sin_coef	# Q = P(Xsq) , of deg 7
-	mulf3	$0f3.0,r8,r4	# beta = 3 * alpha
-	mulf2	r0,r4		# beta = Q * beta
-	addf2	r8,r4		# beta = alpha + beta
-	muld2	r6,r0		# S(X) = X * Q
-/*	cvtfd	r4,r4		... r5 = 0 after a polyd. */
-	addd2	r4,r0		# S(X) = beta + S(X)
-	addd2	r6,r0		# S(X) = X + S(X)
+	polyd	%r1,$7,sin_coef	# Q = P(Xsq) , of deg 7
+	mulf3	$0f3.0,%r8,%r4	# beta = 3 * alpha
+	mulf2	%r0,%r4		# beta = Q * beta
+	addf2	%r8,%r4		# beta = alpha + beta
+	muld2	%r6,%r0		# S(X) = X * Q
+/*	cvtfd	%r4,%r4		... r5 = 0 after a polyd. */
+	addd2	%r4,%r0		# S(X) = beta + S(X)
+	addd2	%r6,%r0		# S(X) = X + S(X)
 	brb	done
 cosine:
-	muld2	r6,r6		# Xsq = X * X
+	muld2	%r6,%r6		# Xsq = X * X
 	beql	zero_arg
-	mulf2	r1,r8		# beta = X * alpha
-	polyd	r6,$7,cos_coef	/* Q = P'(Xsq) , of deg 7 */
-	subd3	r0,r8,r0	# beta = beta - Q
-	subw2	$0x80,r6	# Xsq = Xsq / 2
-	addd2	r0,r6		# Xsq = Xsq + beta
+	mulf2	%r1,%r8		# beta = X * alpha
+	polyd	%r6,$7,cos_coef	/* Q = P'(Xsq) , of deg 7 */
+	subd3	%r0,%r8,%r0	# beta = beta - Q
+	subw2	$0x80,%r6	# Xsq = Xsq / 2
+	addd2	%r0,%r6		# Xsq = Xsq + beta
 zero_arg:
-	subd3	r6,$0d1.0,r0	# C(X) = 1 - Xsq
+	subd3	%r6,$0d1.0,%r0	# C(X) = 1 - Xsq
 done:
-	blbc	r9,even
-	mnegd	r0,r0
+	blbc	%r9,even
+	mnegd	%r0,%r0
 even:
 	rsb
 
@@ -263,31 +263,31 @@ twoOverPi:
 	_ALIGN_TEXT
 
 table_lookup:
-	muld3	r3,twoOverPi,r0
-	cvtrdl	r0,r0			# n = nearest int to ((2/pi)*|x|) rnded
-	mull3	$8,r0,r5
-	subd2	leading(r5),r3		# p = (|x| - leading n*pi/2) exactly
-	subd3	middle(r5),r3,r1	# q = (p - middle  n*pi/2) rounded
-	subd2	r1,r3			# r = (p - q)
-	subd2	middle(r5),r3		# r =  r - middle  n*pi/2
-	subd2	trailing(r5),r3		# r =  r - trailing n*pi/2  rounded
+	muld3	%r3,twoOverPi,%r0
+	cvtrdl	%r0,%r0			# n = nearest int to ((2/pi)*|x|) rnded
+	mull3	$8,%r0,%r5
+	subd2	leading(%r5),%r3	# p = (|x| - leading n*pi/2) exactly
+	subd3	middle(%r5),%r3,%r1	# q = (p - middle  n*pi/2) rounded
+	subd2	%r1,%r3			# r = (p - q)
+	subd2	middle(%r5),%r3		# r =  r - middle  n*pi/2
+	subd2	trailing(%r5),%r3	# r =  r - trailing n*pi/2  rounded
 /*
  *  If the original argument was negative,
  *  negate the reduce argument and
  *  adjust the octant/quadrant number.
  */
-	tstw	4(ap)
+	tstw	4(%ap)
 	bgeq	abs2
-	mnegf	r1,r1
-	mnegf	r3,r3
-/*	subb3	r0,$8,r0	...used for  pi/4  reduction -S.McD */
-	subb3	r0,$4,r0
+	mnegf	%r1,%r1
+	mnegf	%r3,%r3
+/*	subb3	%r0,$8,%r0	...used for  pi/4  reduction -S.McD */
+	subb3	%r0,$4,%r0
 abs2:
 /*
  *  Clear all unneeded octant/quadrant bits.
  */
-/*	bicb2	$0xf8,r0	...used for  pi/4  reduction -S.McD */
-	bicb2	$0xfc,r0
+/*	bicb2	$0xf8,%r0	...used for  pi/4  reduction -S.McD */
+	bicb2	$0xfc,%r0
 	rsb
 /*
  *						p.0
@@ -342,19 +342,19 @@ trigred:
 /*
  *  Save the sign of the input argument.
  */
-	movw	r0,-(sp)
+	movw	%r0,-(%sp)
 /*
  *  Extract the exponent field.
  */
-	extzv	$7,$7,r0,r2
+	extzv	$7,$7,%r0,%r2
 /*
  *  Convert the fraction part of the input
  *  argument into a quadword integer.
  */
-	bicw2	$0xff80,r0
-	bisb2	$0x80,r0	# -S.McD
-	rotl	$16,r0,r0
-	rotl	$16,r1,r1
+	bicw2	$0xff80,%r0
+	bisb2	$0x80,%r0	# -S.McD
+	rotl	$16,%r0,%r0
+	rotl	$16,%r1,%r1
 /*
  *  If  r1  is negative, add  1  to  r0 .  This
  *  adjustment is made so that the two's
@@ -362,7 +362,7 @@ trigred:
  *  will produce unsigned results.
  */
 	bgeq	posmid
-	incl	r0
+	incl	%r0
 posmid:
 /*						p.3
  *
@@ -371,54 +371,54 @@ posmid:
  *  The address is longword aligned to ensure
  *  efficient access.
  */
-	ashl	$-3,r2,r3
-	bicb2	$3,r3
-	subl3	r3,$bits2opi,r3
+	ashl	$-3,%r2,%r3
+	bicb2	$3,%r3
+	subl3	%r3,$bits2opi,%r3
 /*
  *  Set  r2  to the size of the shift needed to 
  *  obtain the correct portion of  2/pi .
  */
-	bicb2	$0xe0,r2
+	bicb2	$0xe0,%r2
 /*						p.4
  *
  *  Move the needed  128  bits of  2/pi  into
  *  r11 - r8 .  Adjust the numbers to allow
  *  for unsigned multiplication.
  */
-	ashq	r2,(r3),r10
+	ashq	%r2,(%r3),%r10
 
-	subl2	$4,r3
-	ashq	r2,(r3),r9
+	subl2	$4,%r3
+	ashq	%r2,(%r3),%r9
 	bgeq	signoff1
-	incl	r11
+	incl	%r11
 signoff1:
-	subl2	$4,r3
-	ashq	r2,(r3),r8
+	subl2	$4,%r3
+	ashq	%r2,(%r3),%r8
 	bgeq	signoff2
-	incl	r10
+	incl	%r10
 signoff2:
-	subl2	$4,r3
-	ashq	r2,(r3),r7
+	subl2	$4,%r3
+	ashq	%r2,(%r3),%r7
 	bgeq	signoff3
-	incl	r9
+	incl	%r9
 signoff3:
 /*						p.5
  *
  *  Multiply the contents of  r0/r1  by the 
  *  slice of  2/pi  in  r11 - r8 .
  */
-	emul	r0,r8,$0,r4
-	emul	r0,r9,r5,r5
-	emul	r0,r10,r6,r6
+	emul	%r0,%r8,$0,%r4
+	emul	%r0,%r9,%r5,%r5
+	emul	%r0,%r10,%r6,%r6
 
-	emul	r1,r8,$0,r7
-	emul	r1,r9,r8,r8
-	emul	r1,r10,r9,r9
-	emul	r1,r11,r10,r10
+	emul	%r1,%r8,$0,%r7
+	emul	%r1,%r9,%r8,%r8
+	emul	%r1,%r10,%r9,%r9
+	emul	%r1,%r11,%r10,%r10
 
-	addl2	r4,r8
-	adwc	r5,r9
-	adwc	r6,r10
+	addl2	%r4,%r8
+	adwc	%r5,%r9
+	adwc	%r6,%r10
 /*						p.6
  *
  *  If there are more than five leading zeros
@@ -427,42 +427,42 @@ signoff3:
  *  two quotient bits, generate more fraction bits.
  *  Otherwise, branch to code to produce the result.
  */
-	bicl3	$0xc1ffffff,r10,r4
+	bicl3	$0xc1ffffff,%r10,%r4
 	beql	more1
-	cmpl	$0x3e000000,r4
+	cmpl	$0x3e000000,%r4
 	bneq	result
 more1:
 /*						p.7
  *
  *  generate another  32  result bits.
  */
-	subl2	$4,r3
-	ashq	r2,(r3),r5
+	subl2	$4,%r3
+	ashq	%r2,(%r3),%r5
 	bgeq	signoff4
 
-	emul	r1,r6,$0,r4
-	addl2	r1,r5
-	emul	r0,r6,r5,r5
-	addl2	r0,r6
+	emul	%r1,%r6,$0,%r4
+	addl2	%r1,%r5
+	emul	%r0,%r6,%r5,%r5
+	addl2	%r0,%r6
 	brb	addbits1
 
 signoff4:
-	emul	r1,r6,$0,r4
-	emul	r0,r6,r5,r5
+	emul	%r1,%r6,$0,%r4
+	emul	%r0,%r6,%r5,%r5
 
 addbits1:
-	addl2	r5,r7
-	adwc	r6,r8
-	adwc	$0,r9
-	adwc	$0,r10
+	addl2	%r5,%r7
+	adwc	%r6,%r8
+	adwc	$0,%r9
+	adwc	$0,%r10
 /*						p.8
  *
  *  Check for massive cancellation.
  */
-	bicl3	$0xc0000000,r10,r6
+	bicl3	$0xc0000000,%r10,%r6
 /*	bneq	more2			-S.McD  Test was backwards */
 	beql	more2
-	cmpl	$0x3fffffff,r6
+	cmpl	$0x3fffffff,%r6
 	bneq	result
 more2:
 /*						p.9
@@ -472,22 +472,22 @@ more2:
  *  Testing has shown there will always be 
  *  enough bits after this point.
  */
-	subl2	$4,r3
-	ashq	r2,(r3),r5
+	subl2	$4,%r3
+	ashq	%r2,(%r3),%r5
 	bgeq	signoff5
 
-	emul	r0,r6,r4,r5
-	addl2	r0,r6
+	emul	%r0,%r6,%r4,%r5
+	addl2	%r0,%r6
 	brb	addbits2
 
 signoff5:
-	emul	r0,r6,r4,r5
+	emul	%r0,%r6,%r4,%r5
 
 addbits2:
-	addl2	r6,r7
-	adwc	$0,r8
-	adwc	$0,r9
-	adwc	$0,r10
+	addl2	%r6,%r7
+	adwc	$0,%r8
+	adwc	$0,%r9
+	adwc	$0,%r10
 /*						p.10
  *
  *  The following code produces the reduced
@@ -498,17 +498,17 @@ result:
 /*
  *  Extract the octant number from  r10 .
  */
-/*	extzv	$29,$3,r10,r0	...used for  pi/4  reduction -S.McD */
-	extzv	$30,$2,r10,r0
+/*	extzv	$29,$3,%r10,%r0		...used for  pi/4  reduction -S.McD */
+	extzv	$30,$2,%r10,%r0
 /*
  *  Clear the octant bits in  r10 .
  */
-/*	bicl2	$0xe0000000,r10	...used for  pi/4  reduction -S.McD */
-	bicl2	$0xc0000000,r10
+/*	bicl2	$0xe0000000,%r10	...used for  pi/4  reduction -S.McD */
+	bicl2	$0xc0000000,%r10
 /*
  *  Zero the sign flag.
  */
-	clrl	r5
+	clrl	%r5
 /*						p.11
  *
  *  Check to see if the fraction is greater than
@@ -517,16 +517,16 @@ result:
  *  on, and replace the fraction with  1 minus
  *  the fraction.
  */
-/*	bitl	$0x10000000,r10		...used for  pi/4  reduction -S.McD */
-	bitl	$0x20000000,r10
+/*	bitl	$0x10000000,%r10	...used for  pi/4  reduction -S.McD */
+	bitl	$0x20000000,%r10
 	beql	small
-	incl	r0
-	incl	r5
-/*	subl3	r10,$0x1fffffff,r10	...used for  pi/4  reduction -S.McD */
-	subl3	r10,$0x3fffffff,r10
-	mcoml	r9,r9
-	mcoml	r8,r8
-	mcoml	r7,r7
+	incl	%r0
+	incl	%r5
+/*	subl3	%r10,$0x1fffffff,%r10	...used for  pi/4  reduction -S.McD */
+	subl3	%r10,$0x3fffffff,%r10
+	mcoml	%r9,%r9
+	mcoml	%r8,%r8
+	mcoml	%r7,%r7
 small:
 /*						p.12
  *
@@ -534,37 +534,37 @@ small:
  *  Test whether the first  30  bits of the 
  *  fraction are zero.
  */
-	tstl	r10
+	tstl	%r10
 	beql	tiny
 /*
  *  Find the position of the first one bit in  r10 .
  */
-	cvtld	r10,r1
-	extzv	$7,$7,r1,r1
+	cvtld	%r10,%r1
+	extzv	$7,$7,%r1,%r1
 /*
  *  Compute the size of the shift needed.
  */
-	subl3	r1,$32,r6
+	subl3	%r1,$32,%r6
 /*
  *  Shift up the high order  64  bits of the
  *  product.
  */
-	ashq	r6,r9,r10
-	ashq	r6,r8,r9
+	ashq	%r6,%r9,%r10
+	ashq	%r6,%r8,%r9
 	brb	mult
 /*						p.13
  *
  *  Test to see if the sign bit of  r9  is on.
  */
 tiny:
-	tstl	r9
+	tstl	%r9
 	bgeq	tinier
 /*
  *  If it is, shift the product bits up  32  bits.
  */
-	movl	$32,r6
-	movq	r8,r10
-	tstl	r10
+	movl	$32,%r6
+	movq	%r8,%r10
+	tstl	%r10
 	brb	mult
 /*						p.14
  *
@@ -578,19 +578,19 @@ tinier:
 /*
  *  Find the position of the first one bit in  r9 .
  */
-	cvtld	r9,r1
-	extzv	$7,$7,r1,r1
+	cvtld	%r9,%r1
+	extzv	$7,$7,%r1,%r1
 /*
  *  Compute the size of the shift needed.
  */
-	subl3	r1,$32,r1
-	addl3	$32,r1,r6
+	subl3	%r1,$32,%r1
+	addl3	$32,%r1,%r6
 /*
  *  Shift up the high order  64  bits of the
  *  product.
  */
-	ashq	r1,r8,r10
-	ashq	r1,r7,r9
+	ashq	%r1,%r8,%r10
+	ashq	%r1,%r7,%r9
 	brb	mult
 /*						p.15
  *
@@ -598,9 +598,9 @@ tinier:
  *  argument to zero.
  */
 zero:
-	clrl	r1
-	clrl	r2
-	clrl	r3
+	clrl	%r1
+	clrl	%r2
+	clrl	%r3
 	brw	return
 /*						p.16
  *
@@ -617,65 +617,65 @@ mult:
 /*
  *  Save  r11/r10  in  r4/r1 .		-S.McD
  */
-	movl	r11,r4
-	movl	r10,r1
+	movl	%r11,%r4
+	movl	%r10,%r1
 /*
  *  If the sign bit of  r10  is on, add  1  to  r11 .
  */
 	bgeq	signoff6
-	incl	r11
+	incl	%r11
 signoff6:
 /*						p.17
  *
  *  Move  pi/2  into  r3/r2 .
  */
-	movq	$0xc90fdaa22168c235,r2
+	movq	$0xc90fdaa22168c235,%r2
 /*
  *  Multiply the fraction by the portion of  pi/2
  *  in  r2 .
  */
-	emul	r2,r10,$0,r7
-	emul	r2,r11,r8,r7
+	emul	%r2,%r10,$0,%r7
+	emul	%r2,%r11,%r8,%r7
 /*
  *  Multiply the fraction by the portion of  pi/2 
  *  in  r3 .
  */
-	emul	r3,r10,$0,r9
-	emul	r3,r11,r10,r10
+	emul	%r3,%r10,$0,%r9
+	emul	%r3,%r11,%r10,%r10
 /*
  *  Add the product bits together.
  */
-	addl2	r7,r9
-	adwc	r8,r10
-	adwc	$0,r11
+	addl2	%r7,%r9
+	adwc	%r8,%r10
+	adwc	$0,%r11
 /*
  *  Compensate for not sign extending  r8  above.-S.McD
  */
-	tstl	r8
+	tstl	%r8
 	bgeq	signoff6a
-	decl	r11
+	decl	%r11
 signoff6a:
 /*
  *  Compensate for  r11/r10  being unsigned.	-S.McD
  */
-	addl2	r2,r10
-	adwc	r3,r11
+	addl2	%r2,%r10
+	adwc	%r3,%r11
 /*
  *  Compensate for  r3/r2  being unsigned.	-S.McD
  */
-	addl2	r1,r10
-	adwc	r4,r11
+	addl2	%r1,%r10
+	adwc	%r4,%r11
 /*						p.18
  *
  *  If the sign bit of  r11  is zero, shift the
  *  product bits up one bit and increment  r6 .
  */
 	blss	signon
-	incl	r6
-	ashq	$1,r10,r10
-	tstl	r9
+	incl	%r6
+	ashq	$1,%r10,%r10
+	tstl	%r9
 	bgeq	signoff7
-	incl	r10
+	incl	%r10
 signoff7:
 signon:
 /*						p.19
@@ -684,19 +684,19 @@ signon:
  *  bits into  r9/r8 .  The sign extension
  *  will be handled later.
  */
-	ashq	$-8,r10,r8
+	ashq	$-8,%r10,%r8
 /*
  *  Convert the low order  8  bits of  r10
  *  into an F-format number.
  */
-	cvtbf	r10,r3
+	cvtbf	%r10,%r3
 /*
  *  If the result of the conversion was
  *  negative, add  1  to  r9/r8 .
  */
 	bgeq	chop
-	incl	r8
-	adwc	$0,r9
+	incl	%r8
+	adwc	$0,%r9
 /*
  *  If  r9  is now zero, branch to special
  *  code to handle that possibility.
@@ -708,27 +708,27 @@ chop:
  *  Convert the number in  r9/r8  into
  *  D-format number in  r2/r1 .
  */
-	rotl	$16,r8,r2
-	rotl	$16,r9,r1
+	rotl	$16,%r8,%r2
+	rotl	$16,%r9,%r1
 /*
  *  Set the exponent field to the appropriate
  *  value.  Note that the extra bits created by
  *  sign extension are now eliminated.
  */
-	subw3	r6,$131,r6
-	insv	r6,$7,$9,r1
+	subw3	%r6,$131,%r6
+	insv	%r6,$7,$9,%r1
 /*
  *  Set the exponent field of the F-format
  *  number in  r3  to the appropriate value.
  */
-	tstf	r3
+	tstf	%r3
 	beql	return
-/*	extzv	$7,$8,r3,r4	-S.McD */
-	extzv	$7,$7,r3,r4
-	addw2	r4,r6
-/*	subw2	$217,r6		-S.McD */
-	subw2	$64,r6
-	insv	r6,$7,$8,r3
+/*	extzv	$7,$8,%r3,%r4	-S.McD */
+	extzv	$7,$7,%r3,%r4
+	addw2	%r4,%r6
+/*	subw2	$217,%r6	-S.McD */
+	subw2	$64,%r6
+	insv	%r6,$7,$8,%r3
 	brb	return
 /*						p.21
  *
@@ -738,16 +738,16 @@ chop:
  *  a carry out.
  */
 carryout:
-	clrl	r1
-	clrl	r2
-	subw3	r6,$132,r6
-	insv	r6,$7,$9,r1
-	tstf	r3
+	clrl	%r1
+	clrl	%r2
+	subw3	%r6,$132,%r6
+	insv	%r6,$7,$9,%r1
+	tstf	%r3
 	beql	return
-	extzv	$7,$8,r3,r4
-	addw2	r4,r6
-	subw2	$218,r6
-	insv	r6,$7,$8,r3
+	extzv	$7,$8,%r3,%r4
+	addw2	%r4,%r6
+	subw2	$218,%r6
+	insv	%r6,$7,$8,%r3
 /*						p.22
  *
  *  The following code makes an needed
@@ -761,9 +761,9 @@ return:
  *  equal to  1/2 .  If so, negate the reduced
  *  argument.
  */
-	blbc	r5,signoff8
-	mnegf	r1,r1
-	mnegf	r3,r3
+	blbc	%r5,signoff8
+	mnegf	%r1,%r1
+	mnegf	%r3,%r3
 signoff8:
 /*						p.23
  *
@@ -771,18 +771,18 @@ signoff8:
  *  negate the reduce argument and
  *  adjust the octant number.
  */
-	tstw	(sp)+
+	tstw	(%sp)+
 	bgeq	signoff9
-	mnegf	r1,r1
-	mnegf	r3,r3
-/*	subb3	r0,$8,r0	...used for  pi/4  reduction -S.McD */
-	subb3	r0,$4,r0
+	mnegf	%r1,%r1
+	mnegf	%r3,%r3
+/*	subb3	%r0,$8,%r0	...used for  pi/4  reduction -S.McD */
+	subb3	%r0,$4,%r0
 signoff9:
 /*
  *  Clear all unneeded octant bits.
  *
- *	bicb2	$0xf8,r0	...used for  pi/4  reduction -S.McD */
-	bicb2	$0xfc,r0
+ *	bicb2	$0xf8,%r0	...used for  pi/4  reduction -S.McD */
+	bicb2	$0xfc,%r0
 /*
  *  Return.
  */

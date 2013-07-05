@@ -1,4 +1,4 @@
-/*	$OpenBSD: exect.S,v 1.8 2008/05/21 20:39:32 miod Exp $ */
+/*	$OpenBSD: exect.S,v 1.9 2013/07/05 21:10:50 miod Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,4 +34,4 @@
 SYSENTRY(exect)
 	bispsw	$PSL_T
 	chmk	$ SYS_execve
-	jmp	_C_LABEL(_cerror)	# exect(file, argv, env)
+	jmp	_C_LABEL(__cerror)	# exect(file, argv, env)

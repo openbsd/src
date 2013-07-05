@@ -1,4 +1,4 @@
-/*	$OpenBSD: insque.S,v 1.3 2009/10/28 06:49:55 deraadt Exp $	*/
+/*	$OpenBSD: insque.S,v 1.4 2013/07/05 21:10:50 miod Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,5 +36,5 @@
 #include "DEFS.h"
 
 ENTRY(insque, 0)
-	insque	*4(ap), *8(ap)
+	insque	*4(%ap), *8(%ap)
 	ret
