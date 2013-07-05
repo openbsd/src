@@ -1679,6 +1679,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/pte.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/ptrace.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/reg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/vax/reloc.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/rpb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/scb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/setjmp.ph

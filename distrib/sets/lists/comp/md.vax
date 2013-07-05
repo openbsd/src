@@ -1,4 +1,7 @@
+./usr/bin/addr2line
+./usr/bin/objcopy
 ./usr/bin/protoize
+./usr/bin/readelf
 ./usr/bin/unprotoize
 ./usr/include/g++/PlotFile.h
 ./usr/include/g++/SFile.h
@@ -153,6 +156,7 @@
 ./usr/include/vax/pte.h
 ./usr/include/vax/ptrace.h
 ./usr/include/vax/reg.h
+./usr/include/vax/reloc.h
 ./usr/include/vax/rpb.h
 ./usr/include/vax/scb.h
 ./usr/include/vax/setjmp.h
@@ -168,6 +172,10 @@
 ./usr/include/vax/vaxfp.h
 ./usr/include/vax/vmparam.h
 ./usr/include/vax/vsbus.h
+./usr/lib/crtbegin.o
+./usr/lib/crtbeginS.o
+./usr/lib/crtend.o
+./usr/lib/crtendS.o
 ./usr/lib/gcc-lib/vax-unknown-openbsd5.3/2.95.3/SYSCALLS.c.X
 ./usr/lib/gcc-lib/vax-unknown-openbsd5.3/2.95.3/cc1obj
 ./usr/lib/gcc-lib/vax-unknown-openbsd5.3/2.95.3/cc1plus
@@ -181,4 +189,19 @@
 ./usr/lib/gcc-lib/vax-unknown-openbsd5.3/2.95.3/include/typeinfo
 ./usr/lib/gcc-lib/vax-unknown-openbsd5.3/2.95.3/libgcc.a
 ./usr/lib/libstdc++_p.a
-./usr/lib/scrt0.o
+./usr/libdata/ldscripts
+./usr/libdata/ldscripts/elf32vax_obsd.x
+./usr/libdata/ldscripts/elf32vax_obsd.xbn
+./usr/libdata/ldscripts/elf32vax_obsd.xc
+./usr/libdata/ldscripts/elf32vax_obsd.xn
+./usr/libdata/ldscripts/elf32vax_obsd.xr
+./usr/libdata/ldscripts/elf32vax_obsd.xs
+./usr/libdata/ldscripts/elf32vax_obsd.xsc
+./usr/libdata/ldscripts/elf32vax_obsd.xu
+./usr/libdata/ldscripts/elf32vax_obsd.xz
+./usr/libdata/ldscripts/vaxnbsd.x
+./usr/libdata/ldscripts/vaxnbsd.xbn
+./usr/libdata/ldscripts/vaxnbsd.xn
+./usr/libdata/ldscripts/vaxnbsd.xr
+./usr/libdata/ldscripts/vaxnbsd.xu
+./usr/libdata/ldscripts/vaxnbsd.xz
