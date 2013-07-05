@@ -1,4 +1,4 @@
-/*	$OpenBSD: memset.S,v 1.1 2009/08/19 19:47:53 miod Exp $ */
+/*	$OpenBSD: memset.S,v 1.2 2013/07/05 21:11:57 miod Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,16 +33,16 @@
 #include <machine/asm.h>
 
 ENTRY(memset, R2|R3|R4|R5)
-	movl	4(ap),r3
+	movl	4(%ap),%r3
 1:
-	movzwl	$65535,r0
-	movq	8(ap),r1
-	cmpl	r2,r0
+	movzwl	$65535,%r0
+	movq	8(%ap),%r1
+	cmpl	%r2,%r0
 	jgtru	2f
-	movc5	$0,(r3),r1,r2,(r3)
-	movl	r1,r0
+	movc5	$0,(%r3),%r1,%r2,(%r3)
+	movl	%r1,%r0
 	ret
 2:
-	subl2	r0,12(ap)
-	movc5	$0,(r3),r1,r0,(r3)
+	subl2	%r0,12(%ap)
+	movc5	$0,(%r3),%r1,%r0,(%r3)
 	jbr	1b

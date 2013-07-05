@@ -1,4 +1,4 @@
-/*	$OpenBSD: memcmp.S,v 1.1 2009/08/19 19:47:53 miod Exp $ */
+/*	$OpenBSD: memcmp.S,v 1.2 2013/07/05 21:11:57 miod Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,33 +33,33 @@
 #include <machine/asm.h>
 
 ENTRY(memcmp, 0)
-	movl	12(ap),r0
+	movl	12(%ap),%r0
 	jeql	9f
-	movq	4(ap),r1
-	ashl	$-2,r0,r3	# convert len to long words
+	movq	4(%ap),%r1
+	ashl	$-2,%r0,%r3	# convert len to long words
 	jeql	2f
 1:
-	cmpl	(r1)+,(r2)+	# no "cmpq" alas
+	cmpl	(%r1)+,(%r2)+	# no "cmpq" alas
 	jneq	7f
-	sobgtr	r3,1b
+	sobgtr	%r3,1b
 2:
-	bicl3	$-4,r0,r3	# handle at most 3 extra bytes
+	bicl3	$-4,%r0,%r3	# handle at most 3 extra bytes
 	jeql	4f
 3:
-	cmpb	(r1)+,(r2)+
+	cmpb	(%r1)+,(%r2)+
 	jneq	8f
-	sobgtr	r3,3b
+	sobgtr	%r3,3b
 4:
-	clrl	r0		# we had a match
+	clrl	%r0		# we had a match
 	ret
 7:				# backup, and do a byte compare
-	tstl	-(r1)
-	tstl	-(r2)
-	movl	$4,r3
+	tstl	-(%r1)
+	tstl	-(%r2)
+	movl	$4,%r3
 	jbr	3b
 8:
-	movzbl	-(r1),r3
-	movzbl	-(r2),r4
-	subl3	r4,r3,r0
+	movzbl	-(%r1),%r3
+	movzbl	-(%r2),%r4
+	subl3	%r4,%r3,%r0
 9:
 	ret

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka49.c,v 1.11 2011/09/15 00:48:24 miod Exp $	*/
+/*	$OpenBSD: ka49.c,v 1.12 2013/07/05 21:11:57 miod Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -181,7 +181,7 @@ ka49_cache_enable()
 		mtpr(0, start);
 
 	/* Flush the pipes (via REI) */
-	asm("movpsl -(sp); movab 1f,-(sp); rei; 1:;");
+	asm("movpsl -(%sp); movab 1f,-(%sp); rei; 1:;");
 
 	/* Enable primary cache */
 	mtpr(PCCTL_P_EN|PCCTL_I_EN|PCCTL_D_EN, PR_PCCTL);

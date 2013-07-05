@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.3 2009/08/19 19:47:53 miod Exp $ */
+/*	$OpenBSD: bzero.S,v 1.4 2013/07/05 21:11:57 miod Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,14 +33,14 @@
 #include <machine/asm.h>
 
 ENTRY(bzero, R2|R3|R4|R5)
-	movl	4(ap),r3
+	movl	4(%ap),%r3
 	jbr	2f
 1:
-	subl2	r0,8(ap)
-	movc5	$0,(r3),$0,r0,(r3)
+	subl2	%r0,8(%ap)
+	movc5	$0,(%r3),$0,%r0,(%r3)
 2:
-	movzwl	$65535,r0
-	cmpl	8(ap),r0
+	movzwl	$65535,%r0
+	cmpl	8(%ap),%r0
 	jgtr	1b
-	movc5	$0,(r3),$0,8(ap),(r3)
+	movc5	$0,(%r3),$0,8(%ap),(%r3)
 	ret

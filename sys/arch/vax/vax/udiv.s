@@ -1,4 +1,4 @@
-/*	$OpenBSD: udiv.s,v 1.4 2005/05/06 18:55:02 miod Exp $	*/
+/*	$OpenBSD: udiv.s,v 1.5 2013/07/05 21:11:57 miod Exp $	*/
 /*	$NetBSD: udiv.s,v 1.2 1994/10/26 08:03:34 cgd Exp $	*/
 
 /*-
@@ -44,25 +44,25 @@
  */
 
 
-#define	DIVIDEND	4(ap)
-#define	DIVISOR		8(ap)
+#define	DIVIDEND	4(%ap)
+#define	DIVISOR		8(%ap)
 
-ASENTRY(udiv, 0)
-	movl	DIVISOR,r2
+ASENTRY(__udiv, 0)
+	movl	DIVISOR,%r2
 	jlss	Leasy		# big divisor: settle by comparison
-	movl	DIVIDEND,r0
+	movl	DIVIDEND,%r0
 	jlss	Lhard		# big dividend: extended division
-	divl2	r2,r0		# small divisor and dividend: signed division
+	divl2	%r2,%r0		# small divisor and dividend: signed division
 	ret
 Lhard:
-	clrl	r1
-	ediv	r2,r0,r0,r1
+	clrl	%r1
+	ediv	%r2,%r0,%r0,%r1
 	ret
 Leasy:
-	cmpl	DIVIDEND,r2
+	cmpl	DIVIDEND,%r2
 	jgequ	Lone		# if dividend is as big or bigger, return 1
-	clrl	r0		# else return 0
+	clrl	%r0		# else return 0
 	ret
 Lone:
-	movl	$1,r0
+	movl	$1,%r0
 	ret

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.68 2013/06/23 20:33:52 miod Exp $
+#	$OpenBSD: Makefile.vax,v 1.69 2013/07/05 21:11:57 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -39,7 +39,7 @@ COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp -traditional-cpp \
 		${CWARNFLAGS} ${CMACHFLAGS}
-LINKFLAGS=	-N -Ttext 80000000 -e start
+LINKFLAGS=	-N -Ttext 80000000 -e __start --warn-common
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h
@@ -78,13 +78,13 @@ SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
-STRIPFLAGS=	-g
+STRIPFLAGS=	-g -x
 SYSTEM_LD_TAIL+=; \
 		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
-LINKFLAGS+=	-S
+LINKFLAGS+=	-S -x
 .endif
 
 %LOAD

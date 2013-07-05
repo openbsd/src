@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.125 2013/06/29 13:00:35 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.126 2013/07/05 21:11:57 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -592,8 +592,8 @@ haltsys:
 
 		mtpr(GC_CONS|GC_BTFL, PR_TXDB);
 	}
-	asm("movl %0, r5":: "g" (showto)); /* How to boot */
-	asm("movl %0, r11":: "r"(showto)); /* ??? */
+	asm("movl %0, %%r5":: "g" (showto)); /* How to boot */
+	asm("movl %0, %%r11":: "r"(showto)); /* ??? */
 	asm("halt");
 	for (;;) ;
 	/* NOTREACHED */
@@ -1048,7 +1048,7 @@ splassert_check(int wantipl, const char *func)
 }
 #endif
 
-void	start(struct rpb *);
+void	_start(struct rpb *);
 void	main(void);
 
 extern	paddr_t avail_end;
@@ -1082,7 +1082,7 @@ extern struct cpu_dep vxt_calls;
  * management is disabled, and no interrupt system is active.
  */
 void
-start(struct rpb *prpb)
+_start(struct rpb *prpb)
 {
 	extern vaddr_t scratch;
 	int preserve_cca = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka680.c,v 1.15 2011/09/19 21:53:02 miod Exp $	*/
+/*	$OpenBSD: ka680.c,v 1.16 2013/07/05 21:11:57 miod Exp $	*/
 /*	$NetBSD: ka680.c,v 1.3 2001/01/28 21:01:53 ragge Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
@@ -225,7 +225,7 @@ ka680_cache_enable()
 		mtpr(0, start);
 
 	/* Flush the pipes (via REI) */
-	asm("movpsl -(sp); movab 1f,-(sp); rei; 1:;");
+	asm("movpsl -(%sp); movab 1f,-(%sp); rei; 1:;");
 
 	/* Enable primary cache */
 	mtpr(PCCTL_P_EN|PCCTL_I_EN|PCCTL_D_EN, PR_PCCTL);

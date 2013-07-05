@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka53.c,v 1.10 2011/09/19 21:53:02 miod Exp $	*/
+/*	$OpenBSD: ka53.c,v 1.11 2013/07/05 21:11:57 miod Exp $	*/
 /*	$NetBSD: ka53.c,v 1.2 2000/06/04 02:19:27 matt Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
@@ -193,7 +193,7 @@ ka53_cache_enable()
 		mtpr(0, start);
 
 	/* Flush the pipes (via REI) */
-	asm("movpsl -(sp); movab 1f,-(sp); rei; 1:;");
+	asm("movpsl -(%sp); movab 1f,-(%sp); rei; 1:;");
 
 	/* Enable primary cache */
 	mtpr(PCCTL_P_EN|PCCTL_I_EN|PCCTL_D_EN, PR_PCCTL);
