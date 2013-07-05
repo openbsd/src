@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_floor.c,v 1.18 2013/07/05 05:41:09 espie Exp $	*/
+/*	$OpenBSD: n_floor.c,v 1.19 2013/07/05 05:44:10 espie Exp $	*/
 /*	$NetBSD: n_floor.c,v 1.1 1995/10/10 23:36:48 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -59,6 +59,8 @@ floor(double x)
 	}
 }
 
+__strong_alias(floorl, floor);
+
 double
 ceil(double x)
 {
@@ -74,6 +76,8 @@ ceil(double x)
 		return x > y ? y+(double)1 : y;
 	}
 }
+
+__strong_alias(ceill, ceil);
 
 float
 floorf(float x)
@@ -146,3 +150,22 @@ rint(double x)
 }
 
 __strong_alias(rintl, rint);
+
+float
+rintf(float x)
+{
+	float s;
+	volatile float t;
+	const float one = 1.0f;
+
+	if (isnanf(x))
+		return (x);
+
+	if (copysignf(x, one) >= F)	/* already an integer */
+		return (x);
+
+	s = copysignf(F,x);
+	t = x + s;				/* x+s rounded to integer */
+	return (t - s);
+}
+
