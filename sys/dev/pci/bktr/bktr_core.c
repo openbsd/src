@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.29 2010/08/06 00:00:16 miod Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.30 2013/07/05 02:37:30 brad Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -1733,12 +1733,12 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 
 	case TVTUNER_SETCHNL:
 		temp_mute( bktr, TRUE );
-		temp = tv_channel( bktr, (int)*(unsigned int *)arg );
-		if ( temp < 0 ) {
+		tmp_int = tv_channel( bktr, (int)*(unsigned int *)arg );
+		if ( tmp_int < 0 ) {
 			temp_mute( bktr, FALSE );
 			return( EINVAL );
 		}
-		*(unsigned int *)arg = temp;
+		*(unsigned int *)arg = tmp_int;
 
 		/* after every channel change, we must restart the MSP34xx */
 		/* audio chip to reselect NICAM STEREO or MONO audio */
@@ -1774,9 +1774,9 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 
 	case TVTUNER_SETFREQ:
 		temp_mute( bktr, TRUE );
-		temp = tv_freq( bktr, (int)*(unsigned int *)arg, TV_FREQUENCY);
+		tmp_int = tv_freq( bktr, (int)*(unsigned int *)arg, TV_FREQUENCY);
 		temp_mute( bktr, FALSE );
-		if ( temp < 0 ) {
+		if ( tmp_int < 0 ) {
 			temp_mute( bktr, FALSE );
 			return( EINVAL );
 		}
@@ -2054,15 +2054,15 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 	      }
 #endif
 	    temp_mute( bktr, TRUE );
-	    temp = tv_freq( bktr, temp, FM_RADIO_FREQUENCY );
+	    tmp_int = tv_freq( bktr, temp, FM_RADIO_FREQUENCY );
 	    temp_mute( bktr, FALSE );
 #ifdef BKTR_RADIO_DEBUG
-  if(temp)
-    printf("%s: tv_freq returned: %d\n", bktr_name(bktr), temp);
+  if(tmp_int)
+    printf("%s: tv_freq returned: %d\n", bktr_name(bktr), tmp_int);
 #endif
-	    if ( temp < 0 )
+	    if ( tmp_int < 0 )
 		    return( EINVAL );
-	    *(unsigned long *)arg = temp;
+	    *(unsigned long *)arg = tmp_int;
 	    break;
 
 	/* Luigi's I2CWR ioctl */
