@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.131 2013/06/17 19:17:15 robert Exp $
+#	$OpenBSD: Makefile,v 1.132 2013/07/05 21:37:19 miod Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR= apply apropos ar arch asa at aucat audioctl awk banner \
+SUBDIR= apply apropos arch asa at aucat audioctl awk banner \
 	basename bc bdes bgplg \
 	biff cal calendar cap_mkdb cdio chpass cmp col colrm \
 	column comm compress cpp crontab csplit ctags cu cut \
@@ -18,7 +18,7 @@ SUBDIR= apply apropos ar arch asa at aucat audioctl awk banner \
 	newsyslog \
 	nfsstat nice nm nohup oldrdist pagesize passwd paste patch pctr \
 	pkg-config pkill \
-	pr printenv printf quota radioctl ranlib rcs rdist rdistd \
+	pr printenv printf quota radioctl rcs rdist rdistd \
 	readlink renice rev rpcgen rpcinfo rs rsh rup ruptime rusers rwall \
 	rwho sdiff script sed sendbug shar showmount skey \
 	skeyaudit skeyinfo skeyinit sndiod \
