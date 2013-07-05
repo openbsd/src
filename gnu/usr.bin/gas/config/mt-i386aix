@@ -1,5 +1,0 @@
-#	$OpenBSD: mt-i386aix,v 1.2 1998/02/15 18:49:22 niklas Exp $
-
-# TDEFINES = -DBFD_HEADERS
-CC = gcc
-MINUS_G = -O

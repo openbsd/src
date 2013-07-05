@@ -1,5 +1,0 @@
-#	$OpenBSD: Makefile.m68k,v 1.2 1998/02/15 18:49:06 niklas Exp $
-#	$NetBSD: Makefile.m68k,v 1.6 1997/10/25 10:10:40 lukem Exp $
-
-CPPFLAGS+=	-DPIC
-SRCS+=		tc-m68k.c atof-ieee.c

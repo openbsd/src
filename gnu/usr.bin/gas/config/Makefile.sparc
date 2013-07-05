@@ -1,6 +1,0 @@
-#	$OpenBSD: Makefile.sparc,v 1.2 1998/02/15 18:49:08 niklas Exp $
-#	$NetBSD: Makefile.sparc,v 1.3 1997/10/25 10:10:46 lukem Exp $
-#	from: @(#)Makefile.i386	6.1 (Berkeley) 3/3/91
-
-CPPFLAGS+=	-DNON_BROKEN_WORDS -DPIC
-SRCS+=		tc-sparc.c atof-ieee.c
