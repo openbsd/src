@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.7 2013/06/21 21:30:38 syl Exp $ */
+/* $OpenBSD: fuse.c,v 1.8 2013/07/05 11:08:15 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -306,6 +306,13 @@ int
 fuse_version(void)
 {
 	return (FUSE_VERSION);
+}
+
+void
+fuse_teardown(struct fuse *fuse, char *mp)
+{
+	fuse_unmount(mp, fuse->fc);
+	fuse_destroy(fuse);
 }
 
 int

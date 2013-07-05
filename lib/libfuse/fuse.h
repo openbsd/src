@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.h,v 1.6 2013/06/14 20:58:28 syl Exp $ */
+/* $OpenBSD: fuse.h,v 1.7 2013/07/05 11:08:15 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -157,6 +157,7 @@ int fuse_chan_fd(struct fuse_chan *);
 void fuse_unmount(const char *, struct fuse_chan *);
 int fuse_daemonize(int);
 void fuse_destroy(struct fuse *);
+void fuse_teardown(struct fuse *, char *);
 
 #ifdef __cplusplus
 }

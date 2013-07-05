@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse.3,v 1.8 2013/07/05 06:45:07 jmc Exp $
+.\" $OpenBSD: fuse.3,v 1.9 2013/07/05 11:08:15 syl Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -34,7 +34,8 @@
 .Nm fuse_chan_fd ,
 .Nm fuse_unmount ,
 .Nm fuse_daemonize ,
-.Nm fuse_destroy
+.Nm fuse_destroy ,
+.Nm fuse_teardown
 .Nd FUSE implementation routines
 .Sh SYNOPSIS
 .In fuse.h
@@ -72,6 +73,8 @@
 .Fn fuse_daemonize "int foreground"
 .Ft void
 .Fn fuse_destroy "struct fuse *f"
+.Ft void
+.Fn fuse_teardown "struct fuse *f" "char *mp"
 .Sh DESCRIPTION
 The
 .Nm
@@ -169,6 +172,12 @@ whilst continuing to handle kernel filesystem opcodes.
 .Pp
 .Fn fuse_destroy
 is currently undocumented.
+.Pp
+.Fn fuse_teardown
+calls
+.Fn fuse_unmount
+and
+.Fn fuse_destroy .
 .Sh EXAMPLES
 Here is a simple example of a FUSE implementation:
 .Bd -literal
