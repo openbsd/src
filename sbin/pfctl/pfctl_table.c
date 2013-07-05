@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.71 2011/07/27 00:26:10 mcbride Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.72 2013/07/05 13:07:57 blambert Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -64,8 +64,8 @@ static void	xprintf(int, const char *, ...);
 static void	print_iface(struct pfi_kif *, int);
 
 static const char	*stats_text[PFR_DIR_MAX][PFR_OP_TABLE_MAX] = {
-	{ "In/Block:",	"In/Pass:",	"In/XPass:" },
-	{ "Out/Block:",	"Out/Pass:",	"Out/XPass:" }
+	{ "In/Block:",	"In/Match:",	"In/Pass:",	"In/XPass:" },
+	{ "Out/Block:",	"Out/Match:",	"Out/Pass:",	"Out/XPass:" }
 };
 
 static const char	*istats_text[2][2][2] = {
@@ -483,7 +483,7 @@ print_astats(struct pfr_astats *as, int dns)
 	int	dir, op;
 
 	print_addrx(&as->pfras_a, NULL, dns);
-	printf("\tCleared:            %s", ctime(&time));
+	printf("\tCleared:     %s", ctime(&time));
 	if (as->pfras_a.pfra_states)
 		printf("\tActive States:      %d\n", as->pfras_a.pfra_states);
 	if (as->pfras_a.pfra_type == PFRKE_COST)
@@ -494,7 +494,7 @@ print_astats(struct pfr_astats *as, int dns)
 		return;
 	for (dir = 0; dir < PFR_DIR_MAX; dir++)
 		for (op = 0; op < PFR_OP_ADDR_MAX; op++)
-			printf("\t%-19s [ Packets: %-18llu Bytes: %-18llu ]\n",
+			printf("\t%-12s [ Packets: %-18llu Bytes: %-18llu ]\n",
 			    stats_text[dir][op],
 			    (unsigned long long)as->pfras_packets[dir][op],
 			    (unsigned long long)as->pfras_bytes[dir][op]);

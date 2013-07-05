@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.387 2013/07/04 00:19:01 guenther Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.388 2013/07/05 13:07:58 blambert Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1053,7 +1053,7 @@ struct pfr_addr {
 #define	pfra_ip6addr	pfra_u._pfra_ip6addr
 
 enum { PFR_DIR_IN, PFR_DIR_OUT, PFR_DIR_MAX };
-enum { PFR_OP_BLOCK, PFR_OP_PASS, PFR_OP_ADDR_MAX, PFR_OP_TABLE_MAX };
+enum { PFR_OP_BLOCK, PFR_OP_MATCH, PFR_OP_PASS, PFR_OP_ADDR_MAX, PFR_OP_TABLE_MAX };
 #define PFR_OP_XPASS	PFR_OP_ADDR_MAX
 
 struct pfr_astats {
@@ -1848,8 +1848,8 @@ void	pf_route6(struct mbuf **, struct pf_rule *, int,
 
 void	pfr_initialize(void);
 int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);
-void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *, sa_family_t,
-	    u_int64_t, int, int, int);
+void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *,
+	    struct pf_pdesc *, int, int);
 int	pfr_pool_get(struct pf_pool *, struct pf_addr **,
 	    struct pf_addr **, sa_family_t);
 int	pfr_states_increase(struct pfr_ktable *, struct pf_addr *, int);

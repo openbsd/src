@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.837 2013/06/26 09:12:39 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.838 2013/07/05 13:07:57 blambert Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6343,18 +6343,12 @@ pf_counters_inc(int action, struct pf_pdesc *pd, struct pf_state *s,
 					pfr_update_stats(ri->r->src.addr.p.tbl,
 					    &s->key[(s->direction == PF_IN)]->
 						addr[(s->direction == PF_OUT)],
-					    pd->af, pd->tot_len,
-					    pd->dir == PF_OUT,
-					    r->action == PF_PASS,
-					    ri->r->src.neg);
+					    pd, ri->r->action, ri->r->src.neg);
 				if (ri->r->dst.addr.type == PF_ADDR_TABLE)
 					pfr_update_stats(ri->r->dst.addr.p.tbl,
 					    &s->key[(s->direction == PF_IN)]->
 						addr[(s->direction == PF_IN)],
-					    pd->af, pd->tot_len,
-					    pd->dir == PF_OUT,
-					    r->action == PF_PASS,
-					    ri->r->dst.neg);
+					    pd, ri->r->action, ri->r->src.neg);
 			}
 		}
 		if (r->src.addr.type == PF_ADDR_TABLE)
@@ -6362,15 +6356,13 @@ pf_counters_inc(int action, struct pf_pdesc *pd, struct pf_state *s,
 			    (s == NULL) ? pd->src :
 			    &s->key[(s->direction == PF_IN)]->
 				addr[(s->direction == PF_OUT)],
-			    pd->af, pd->tot_len, pd->dir == PF_OUT,
-			    r->action == PF_PASS, r->src.neg);
+			    pd, r->action, r->src.neg);
 		if (r->dst.addr.type == PF_ADDR_TABLE)
 			pfr_update_stats(r->dst.addr.p.tbl,
 			    (s == NULL) ? pd->dst :
 			    &s->key[(s->direction == PF_IN)]->
 				addr[(s->direction == PF_IN)],
-			    pd->af, pd->tot_len, pd->dir == PF_OUT,
-			    r->action == PF_PASS, r->dst.neg);
+			    pd, r->action, r->dst.neg);
 	}
 }
 

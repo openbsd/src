@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.100 2013/07/04 00:19:00 guenther Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.101 2013/07/05 13:07:58 blambert Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -2082,10 +2082,14 @@ pfr_match_addr(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af)
 }
 
 void
-pfr_update_stats(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af,
-    u_int64_t len, int dir_out, int op_pass, int notrule)
+pfr_update_stats(struct pfr_ktable *kt, struct pf_addr *a, struct pf_pdesc *pd,
+    int op, int notrule)
 {
 	struct pfr_kentry	*ke = NULL;
+	sa_family_t		 af = pd->af;
+	u_int64_t		 len = pd->tot_len;
+	int			 dir_idx = (pd->dir == PF_OUT);
+	int			 op_idx;
 
 	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE) && kt->pfrkt_root != NULL)
 		kt = kt->pfrkt_root;
@@ -2112,22 +2116,35 @@ pfr_update_stats(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af,
 	default:
 		;
 	}
+
+	switch (op) {
+	case PF_PASS:
+		op_idx = PFR_OP_PASS;
+		break;
+	case PF_MATCH:
+		op_idx = PFR_OP_MATCH;
+		break;
+	case PF_DROP:
+		op_idx = PFR_OP_BLOCK;
+		break;
+	}
+
 	if ((ke == NULL || (ke->pfrke_flags & PFRKE_FLAG_NOT)) != notrule) {
-		if (op_pass != PFR_OP_PASS)
+		if (op_idx != PFR_OP_PASS)
 			DPFPRINTF(LOG_DEBUG,
 			    "pfr_update_stats: assertion failed.");
-		op_pass = PFR_OP_XPASS;
+		op_idx = PFR_OP_XPASS;
 	}
-	kt->pfrkt_packets[dir_out][op_pass]++;
-	kt->pfrkt_bytes[dir_out][op_pass] += len;
-	if (ke != NULL && op_pass != PFR_OP_XPASS &&
+	kt->pfrkt_packets[dir_idx][op_idx]++;
+	kt->pfrkt_bytes[dir_idx][op_idx] += len;
+	if (ke != NULL && op_idx != PFR_OP_XPASS &&
 	    (kt->pfrkt_flags & PFR_TFLAG_COUNTERS)) {
 		if (ke->pfrke_counters == NULL)
 			ke->pfrke_counters = pool_get(&pfr_kcounters_pl,
 			    PR_NOWAIT | PR_ZERO);
 		if (ke->pfrke_counters != NULL) {
-			ke->pfrke_counters->pfrkc_packets[dir_out][op_pass]++;
-			ke->pfrke_counters->pfrkc_bytes[dir_out][op_pass] += len;
+			ke->pfrke_counters->pfrkc_packets[dir_idx][op_idx]++;
+			ke->pfrke_counters->pfrkc_bytes[dir_idx][op_idx] += len;
 		}
 	}
 }
