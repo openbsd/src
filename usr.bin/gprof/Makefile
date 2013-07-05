@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2010/10/17 22:54:37 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.20 2013/07/05 21:29:51 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -10,12 +10,7 @@ SRCS=	gprof.c arcs.c dfn.c lookup.c ${TARGET_MACHINE_CPU}.c hertz.c \
 	printgprof.c printlist.c
 CFLAGS+= -I. -DMD_INCLUDE=\"${TARGET_MACHINE_CPU}.h\"
 
-# XXX - need support for multiple archs.
-.if (${ELF_TOOLCHAIN:L} == "yes")
 SRCS+=elf.c
-.else
-SRCS+=aout.c
-.endif
 
 beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \

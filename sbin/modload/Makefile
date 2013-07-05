@@ -1,17 +1,9 @@
-# $OpenBSD: Makefile,v 1.4 2002/01/08 21:28:38 ericj Exp $
+# $OpenBSD: Makefile,v 1.5 2013/07/05 21:29:51 miod Exp $
 
 PROG=	modload
 MAN=	modload.8
 
 SRCS=	modload.c
-
-.include <bsd.own.mk>	# for ELF_TOOLCHAIN
-
-.if (${ELF_TOOLCHAIN:L} == "yes")
 SRCS+=	elf.c
-.else
-SRCS+=	a.out.c
-CFLAGS+=	-DUSE_AOUT
-.endif
 
 .include <bsd.prog.mk>

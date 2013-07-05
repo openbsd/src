@@ -1,9 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2005/12/27 18:42:24 drahn Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2013/07/05 21:29:51 miod Exp $
 
 .PATH: ${LIBCSRCDIR}/dlfcn
 
 .include <bsd.own.mk>
 
-.if ${ELF_TOOLCHAIN:L} == "yes"
 SRCS+=		dlfcn_stubs.c
-.endif

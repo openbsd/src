@@ -1,11 +1,9 @@
-#	$OpenBSD: Makefile,v 1.44 2013/06/01 09:57:55 miod Exp $
+#	$OpenBSD: Makefile,v 1.45 2013/07/05 21:29:51 miod Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
 
 .include <bsd.own.mk>
-
-.if (${ELF_TOOLCHAIN:L} == "yes")
 
 .if defined(NOPIC)
 NOPROG=
@@ -38,8 +36,6 @@ ELF_LDFLAGS+=--shared -Bsymbolic --no-undefined
 
 $(PROG):
 	$(LD) -x -e _dl_start $(ELF_LDFLAGS) -o $(PROG) $(OBJS) $(LDADD)
-.endif
-
 .endif
 
 .include <bsd.prog.mk>

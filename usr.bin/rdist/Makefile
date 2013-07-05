@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2012/11/12 01:14:41 guenther Exp $
+#	$OpenBSD: Makefile,v 1.17 2013/07/05 21:29:51 miod Exp $
 
 
 PROG=	rdist
@@ -10,8 +10,6 @@ WARNINGS=yes
 
 .include <bsd.prog.mk>
 
-.if ${ELF_TOOLCHAIN:L} == "yes"
 CFLAGS+=-DEXE_TYPE=EXE_ELF
-.endif
 
 .depend: gram.c

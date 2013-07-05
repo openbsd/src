@@ -1,14 +1,13 @@
-#	$OpenBSD: Makefile,v 1.35 2013/06/17 19:11:54 guenther Exp $
+#	$OpenBSD: Makefile,v 1.36 2013/07/05 21:29:51 miod Exp $
 
-# For ``COMPILER_VERSION'' and ``ELF_TOOLCHAIN''
+# For ``COMPILER_VERSION''
 .include <bsd.own.mk>
 
 LIB=pthread
 LIBCSRCDIR=	${.CURDIR}/../libc
 
 CFLAGS+=-Wall -g -Werror -Wshadow
-.if ${COMPILER_VERSION:L} == "gcc4" || \
-    (${COMPILER_VERSION:L} == "gcc3" && ${ELF_TOOLCHAIN:L} == "yes")
+.if ${COMPILER_VERSION:L} == "gcc4" || ${COMPILER_VERSION:L} == "gcc3"
 CFLAGS+=-Wmissing-prototypes
 .endif
 CFLAGS+=-Wstrict-prototypes

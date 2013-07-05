@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.81 2013/07/05 21:09:21 miod Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.82 2013/07/05 21:29:51 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -33,17 +33,12 @@ INST_SUBDIRS+=	gdb
 MAN+=		gdb/gdb.1
 .endif
 
-.if ${ELF_TOOLCHAIN:L} == "yes"
 SUBDIRS+=	binutils ld gas
 CONF_SUBDIRS+=	binutils ld gas
 INST_SUBDIRS+=	binutils ld gas
 MAN+=		binutils/doc/ar.1 binutils/doc/ranlib.1 \
 		binutils/doc/strings.1 binutils/doc/strip.1 \
 		gas/doc/as.1 ld/ld.1
-.  else
-CONF_SUBDIRS=${SUBDIRS}
-CONF_SUBDIRS+= binutils
-.endif
 
 .endif
 
@@ -76,11 +71,6 @@ all:	config.status
 	    ALL_MODULES="${ALL_MODULES}" \
 	    ALL_HOST_MODULES='${ALL_HOST_MODULES}' \
 	    INFO_HOST_MODULES='${INFO_HOST_MODULES}' all info
-.if ${ELF_TOOLCHAIN:L} != "yes"
-	cd ${.OBJDIR}/binutils && \
-	    ${MAKE} CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" \
-	    LDFLAGS=${LDSTATIC} objdump
-.endif
 
 .include <bsd.own.mk>
 
@@ -103,13 +93,11 @@ do-config: .USE
 	cd ${.OBJDIR} && \
 	    ${MAKE} ${CONFIGURE_MODULES}
 
-.if ${ELF_TOOLCHAIN:L} == "yes"
 gas/doc/as.1: config.status
 	cd ${.OBJDIR}/gas/doc && ${MAKE} as.1
 
 ld/ld.1: config.status
 	cd ${.OBJDIR}/ld && ${MAKE} ld.1
-.endif
 
 config: do-config
 .ifndef GLOBAL_AUTOCONF_CACHE
@@ -129,11 +117,6 @@ install: maninstall
 	    INSTALL_PROGRAM='install -c -S' \
 	    INSTALL_INFO_HOST_MODULES='${INSTALL_INFO_HOST_MODULES}' \
 	      install install-info
-.if ${ELF_TOOLCHAIN:L} != "yes" && ${BINUTILS_VERSION} != "binutils-2.17"
-	cd ${.OBJDIR}/binutils && \
-		${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} \
-		    -g ${BINGRP} -m ${BINMODE} objdump ${DESTDIR}${PREFIX}/bin
-.endif
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
