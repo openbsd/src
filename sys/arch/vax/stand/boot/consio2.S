@@ -1,4 +1,4 @@
-/*	$OpenBSD: consio2.S,v 1.2 2008/08/12 17:23:21 miod Exp $ */
+/*	$OpenBSD: consio2.S,v 1.3 2013/07/05 21:13:06 miod Exp $ */
 /*	$NetBSD: consio2.S,v 1.1 2002/02/24 01:04:24 matt Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -36,7 +36,7 @@
  * int rom_putchar (int c)	==> putchar() using ROM-routines
  */
 ENTRY(rom_putchar, R2)
-	movl	4(ap), r2		# move argument to R2
+	movl	4(%ap), %r2		# move argument to R2
 	jsb	*_C_LABEL(rom_putc)	# write it
 	ret				# that is all
 
@@ -47,17 +47,17 @@ ENTRY(rom_putchar, R2)
 ENTRY(rom_getchar, R1)
 loop:					# do {
 	jsb	*_C_LABEL(rom_getc)	#   call the getc-routine
-	tstl	r0			#   check if char ready
+	tstl	%r0			#   check if char ready
 	beql	loop			# } while (R0 == 0)
-	movl	r1, r0			# R1 holds char
+	movl	%r1, %r0		# R1 holds char
 	ret				# we are done
 
 ENTRY(rom_testchar, 0)
-	mnegl	$1,r0
+	mnegl	$1,%r0
 	jsb	*_C_LABEL(rom_getc)
-	tstl	r0
+	tstl	%r0
 	beql	1f
-	movl	r1,r0
+	movl	%r1,%r0
 1:	ret
 
 ENTRY(_rtt, 0)
@@ -68,63 +68,63 @@ ENTRY(_rtt, 0)
  * int ka630_rom_getchar (void) ==> getchar() using ROM-routines on KA630
  */
 ENTRY(ka630_rom_getchar, R11|R1)
-	movl	_C_LABEL(ka630_conspage),r11  # load location of console page
+	movl	_C_LABEL(ka630_conspage),%r11  # load location of console page
 1:					# do {
-	jsb	*0x1C(r11)		#   call the getc-routine (KA630_GETC)
-	blbc	r0,1b			# } while (R0 == 0)
-	movl	r1,r0			# R1 holds char
+	jsb	*0x1C(%r11)		#   call the getc-routine (KA630_GETC)
+	blbc	%r0,1b			# } while (R0 == 0)
+	movl	%r1,%r0			# R1 holds char
 	ret				# we are done
 
 ENTRY(ka630_rom_testchar, R3|R1)
-	movl	_C_LABEL(ka630_conspage),r3
-	jsb	*0x1C(r3)
-	blbc	r0,1f
-	movl	r1,r0
+	movl	_C_LABEL(ka630_conspage),%r3
+	jsb	*0x1C(%r3)
+	blbc	%r0,1f
+	movl	%r1,%r0
 1:	ret
 
 /*
  * int ka630_rom_putchar (int c) ==> putchar() using ROM-routines on KA630
  */
 ENTRY(ka630_rom_putchar, R11|R1)
-	movl	_C_LABEL(ka630_conspage),r11
+	movl	_C_LABEL(ka630_conspage),%r11
 				# load location of console page
 1:				# do {
-	jsb	*0x20(r11)	#   is rom ready? (KA630_PUTC_POLL)
-	blbc	r0,1b		# } while (R0 == 0)
-	movl	4(ap),r1	# R1 holds char
-	jsb	*0x24(r11)	# output character (KA630_PUTC)
+	jsb	*0x20(%r11)	#   is rom ready? (KA630_PUTC_POLL)
+	blbc	%r0,1b		# } while (R0 == 0)
+	movl	4(%ap),%r1	# R1 holds char
+	jsb	*0x24(%r11)	# output character (KA630_PUTC)
 	ret			# we are done
 
 /*
  * int ka53_rom_getchar (void)	==> getchar() using ROM-routines on KA53
  */
 ENTRY(ka53_rom_getchar, R11|R1)
-	movl	_C_LABEL(ka53_conspage),r11
+	movl	_C_LABEL(ka53_conspage),%r11
 				# load location of console page
 1:				# do {
-	jsb	*0x64(r11)	#   test for char
-	blbc	r0,1b		# } while (R0 == 0)
-	jsb	*0x6c(r11)	# get the char
+	jsb	*0x64(%r11)	#   test for char
+	blbc	%r0,1b		# } while (R0 == 0)
+	jsb	*0x6c(%r11)	# get the char
 	ret			# we are done
 
 ENTRY(ka53_rom_testchar, R3|R1)
-	movl	_C_LABEL(ka53_conspage),r3
-	jsb	*0x64(r3)
-	blbc	r0,1f
-	jsb	*0x6c(r3)	# get the char
+	movl	_C_LABEL(ka53_conspage),%r3
+	jsb	*0x64(%r3)
+	blbc	%r0,1f
+	jsb	*0x6c(%r3)	# get the char
 1:	ret
 
 /*
  * int ka53_rom_putchar (int c) ==> putchar() using ROM-routines on KA53
  */
 ENTRY(ka53_rom_putchar, R11|R1)
-	movl	_C_LABEL(ka53_conspage),r11
+	movl	_C_LABEL(ka53_conspage),%r11
 				# load location of console page
 1:				# do {
-	jsb	*0x20(r11)	#   is rom ready?
-	blbc	r0,1b		# } whi	le (R0 == 0)
-	movl	4(ap),r1	# R1 holds char
-	jsb	*0x24(r11)	# output character
+	jsb	*0x20(%r11)	#   is rom ready?
+	blbc	%r0,1b		# } whi	le (R0 == 0)
+	movl	4(%ap),%r1	# R1 holds char
+	jsb	*0x24(%r11)	# output character
 	ret			# we are done
 
 /*
@@ -132,19 +132,19 @@ ENTRY(ka53_rom_putchar, R11|R1)
  */
 ENTRY(ka60_rom_getchar, R11|R10|R9|R8|R7|R6|R5|R4|R3|R2|R1)
 1:
-	movl	_C_LABEL(ka60_conspage),r0
+	movl	_C_LABEL(ka60_conspage),%r0
 				# load location of console page
 				# do {
-	jsb	*0xfc(r0)	#   get the char, if any
-	blbc	r0,1b		# } while (R0 == 0)
-	movl	r1,r0
+	jsb	*0xfc(%r0)	#   get the char, if any
+	blbc	%r0,1b		# } while (R0 == 0)
+	movl	%r1,%r0
 	ret			# we are done
 
 ENTRY(ka60_rom_testchar, R11|R10|R9|R8|R7|R6|R5|R4|R3|R2|R1)
-	movl	_C_LABEL(ka60_conspage),r0
-	jsb	*0xfc(r0)
-	blbc	r0,1f
-	movl	r1,r0
+	movl	_C_LABEL(ka60_conspage),%r0
+	jsb	*0xfc(%r0)
+	blbc	%r0,1f
+	movl	%r1,%r0
 1:	ret
 
 /*
@@ -152,9 +152,9 @@ ENTRY(ka60_rom_testchar, R11|R10|R9|R8|R7|R6|R5|R4|R3|R2|R1)
  */
 ENTRY(ka60_rom_putchar, R11|R10|R9|R8|R7|R6|R5|R4|R3|R2|R1)
 1:
-	movl	_C_LABEL(ka60_conspage),r0
+	movl	_C_LABEL(ka60_conspage),%r0
 				# load location of console page
-	movl	4(ap),r1	# R1 holds char
-	jsb	*0x114(r0)	# output character
-	blbc	r0, 1b		# failed? retry
+	movl	4(%ap),%r1	# R1 holds char
+	jsb	*0x114(%r0)	# output character
+	blbc	%r0, 1b		# failed? retry
 	ret			# we are done

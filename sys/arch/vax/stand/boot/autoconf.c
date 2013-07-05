@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.13 2008/08/18 23:20:43 miod Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.14 2013/07/05 21:13:06 miod Exp $ */
 /*	$NetBSD: autoconf.c,v 1.19 2002/06/01 15:33:22 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -252,9 +252,9 @@ asm("
 " EIDSPTCH ":
 
 " CMN_IDSPTCH ":
-	movl	(sp)+,r0
-	pushl	4(r0)
-	calls	$1,*(r0)
+	movl	(%sp)+,%r0
+	pushl	4(%r0)
+	calls	$1,*(%r0)
 	popr	$0x3f
 	rei
 ");

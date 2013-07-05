@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.2 2011/07/06 18:32:59 miod Exp $ */
+/*	$OpenBSD: srt0.S,v 1.3 2013/07/05 21:13:06 miod Exp $ */
 /*	$NetBSD: srt0.S,v 1.2 2002/03/31 00:11:14 matt Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -42,43 +42,40 @@
  * position set in a.out header.
  */
 
-	.globl	nisse		# pass -e nisse to ld gives OK start addr
-	.set	nisse,0
-
 ALTENTRY(start)
 	nop;nop;
-	movl	$_C_LABEL(start), sp	# Probably safe place for stack
+	movl	$_C_LABEL(start), %sp	# Probably safe place for stack
 	pushr	$0x1fff		# save for later usage
 
-	subl3	$_C_LABEL(start), $_C_LABEL(edata), r0
-	movab	_C_LABEL(start), r1 # get where we are
-	movl	$_C_LABEL(start), r3 # get where we want to be
-	cmpl	r1,r3		# are we where we want to be?
+	subl3	$_C_LABEL(start), $_C_LABEL(edata), %r0
+	movab	_C_LABEL(start), %r1 # get where we are
+	movl	$_C_LABEL(start), %r3 # get where we want to be
+	cmpl	%r1,%r3		# are we where we want to be?
 	beql	relocated	# already relocated, skip copy
-	movc3	r0,(r1),(r3)	# copy
-	subl3	$_C_LABEL(edata), $_C_LABEL(end), r2
-	movc5	$0,(r3),$0,r2,(r3) # Zero bss
+	movc3	%r0,(%r1),(%r3)	# copy
+	subl3	$_C_LABEL(edata), $_C_LABEL(end), %r2
+	movc5	$0,(%r3),$0,%r2,(%r3) # Zero bss
 
-	movpsl	-(sp)
+	movpsl	-(%sp)
 	pushl	$relocated
 	rei
 relocated:	                # now relocation is done !!!
-	movl	sp,_C_LABEL(bootregs)	# *bootregs
+	movl	%sp,_C_LABEL(bootregs)	# *bootregs
 	calls	$0, _C_LABEL(Xmain)	# Were here!
 	halt			# no return
 
 ENTRY(machdep_start, 0)
 	mtpr	$0x1f,$0x12	# Block all interrupts
 	mtpr	$0,$0x18	# stop real time interrupt clock
-	movl	4(ap), r6
-	movl	20(ap), r9	# end of symbol table
-	pushl	8(ap)		# number of symbols
-	pushl	16(ap)		# start of symbols
-	movab	_C_LABEL(bootrpb),r10	# get RPB address
-	pushl	r10		# argument for new boot
-	ashl	$9,76(r10),r8	# memory size (COMPAT)
-	movl	$3,r11		# ask boot (COMPAT)
-	clrl	r10		# no boot dev (COMPAT)
+	movl	4(%ap), %r6
+	movl	20(%ap), %r9	# end of symbol table
+	pushl	8(%ap)		# number of symbols
+	pushl	16(%ap)		# start of symbols
+	movab	_C_LABEL(bootrpb),%r10	# get RPB address
+	pushl	%r10		# argument for new boot
+	ashl	$9,76(%r10),%r8	# memory size (COMPAT)
+	movl	$3,%r11		# ask boot (COMPAT)
+	clrl	%r10		# no boot dev (COMPAT)
 
-	calls	$3,(r6)
+	calls	$3,(%r6)
 	halt

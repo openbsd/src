@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.21 2011/09/19 21:53:02 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.22 2013/07/05 21:13:06 miod Exp $ */
 /*	$NetBSD: boot.c,v 1.18 2002/05/31 15:58:26 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -138,17 +138,7 @@ Xmain(void)
 
 		errno = 0;
 		printf("> boot bsd\n");
-		marks[MARK_START] = 0;
-		err = loadfile("bsd", marks,
-		    LOAD_KERNEL|COUNT_KERNEL);
-		if (err == 0) {
-			machdep_start((char *)marks[MARK_ENTRY],
-					      marks[MARK_NSYM],
-				      (void *)marks[MARK_START],
-				      (void *)marks[MARK_SYM],
-				      (void *)marks[MARK_END]);
-		}
-		printf("bsd: boot failed: %s\n", strerror(errno));
+		boot(NULL);
 	}
 
 	/* If any key pressed, or autoboot failed, go to conversational boot */
@@ -238,7 +228,7 @@ load:
 			      (void *)marks[MARK_SYM],
 			      (void *)marks[MARK_END]);
 	}
-	printf("Boot failed: %s\n", strerror(errno));
+	printf("%s: boot failed: %s\n", fn, strerror(errno));
 }
 
 void

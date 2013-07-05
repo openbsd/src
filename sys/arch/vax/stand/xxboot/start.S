@@ -1,4 +1,4 @@
-/*	$OpenBSD: start.S,v 1.4 2011/09/29 18:02:41 miod Exp $ */
+/*	$OpenBSD: start.S,v 1.5 2013/07/05 21:13:07 miod Exp $ */
 /*	$NetBSD: start.S,v 1.1 2002/02/24 01:04:26 matt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -87,15 +87,15 @@ start_vmb:
 	/*
 	 * Read in block 1-15.
 	 */
-	movl	52(r11), r7	# load iovec/bqo into %r7
-	addl3	(r7), r7, r6	# load qio into %r6
-	pushl	r11		# base of rpb
+	movl	52(%r11), %r7	# load iovec/bqo into %r7
+	addl3	(%r7), %r7, %r6	# load qio into %r6
+	pushl	%r11		# base of rpb
 	pushl	$0		# virtual-flag 
 	pushl	$33		# read-logical-block
 	pushl	$1		# lbn to start reading
 	pushl	$7680		# number of bytes to read
 	pushab	start_uvax	# buffer-address 
-	calls	$6, (r6)	# call the qio-routine
+	calls	$6, (%r6)	# call the qio-routine
 	brw	start_uvax
 
 /*
@@ -124,7 +124,7 @@ start_vmb:
 	.long	(SISIZE + SILOAD + SIOFF)	# sum of previous 3 
 
 
-	.align	2
+	.p2align 2
 	.globl	_C_LABEL(from)
 _C_LABEL(from):
 	.long	0
@@ -144,22 +144,22 @@ start_uvax:
  * to RELOC and loads boot.
  */
 start_all:
-	movl	$_C_LABEL(start), sp	# move stack to a better 
+	movl	$_C_LABEL(start), %sp	# move stack to a better 
 	pushr	$0x1fff			# save all regs, used later.
 
-	subl3	$_C_LABEL(start), $_C_LABEL(edata), r0
+	subl3	$_C_LABEL(start), $_C_LABEL(edata), %r0
 					# get size of text+data (w/o bss)
-	moval	_C_LABEL(start), r1	# get actual base-address of code
-	subl3	$_C_LABEL(start), $_C_LABEL(end), r2
+	moval	_C_LABEL(start), %r1	# get actual base-address of code
+	subl3	$_C_LABEL(start), $_C_LABEL(end), %r2
 					# get complete size (incl. bss)
-	movl	$_C_LABEL(start), r3	# get relocated base-address of code
-	movc5	r0, (r1), $0, r2, (r3)	# copy code to new location
+	movl	$_C_LABEL(start), %r3	# get relocated base-address of code
+	movc5	%r0, (%r1), $0, %r2, (%r3) # copy code to new location
 	
-	movpsl	-(sp)
-	movl	$relocated, -(sp)	# return-address on top of stack 
+	movpsl	-(%sp)
+	movl	$relocated, -(%sp)	# return-address on top of stack 
 	rei				# can be replaced with new address
 relocated:				# now relocation is done !!!
-	movl	sp, _C_LABEL(bootregs)
+	movl	%sp, _C_LABEL(bootregs)
 	calls	$0, _C_LABEL(Xmain)	# call Xmain (gcc workaround)which is 
 	halt				# not intended to return ...
 
@@ -167,22 +167,22 @@ relocated:				# now relocation is done !!!
  * hoppabort() is called when jumping to the newly loaded program.
  */
 ENTRY(hoppabort, 0)
-	movl    4(ap),r6
-	movl	_C_LABEL(rpb),r11
-	mnegl	$1,ap		# Hack to figure out boot device.
-	movpsl	-(sp)
-	pushab	2(r6)
+	movl    4(%ap),%r6
+	movl	_C_LABEL(rpb),%r11
+	mnegl	$1,%ap		# Hack to figure out boot device.
+	movpsl	-(%sp)
+	pushab	2(%r6)
 	mnegl	$1,_C_LABEL(vax_load_failure)
 	rei
-#	calls	$0,(r6)
+#	calls	$0,(%r6)
 	halt
 
 ENTRY(unit_init, R6|R7|R8|R9|R10|R11)
-	mfpr	$17,r7			# Wanted bu KDB
-	movl	4(ap),r0		# init routine address
-	movl	8(ap),r9		# RPB in %r9
-	movl	12(ap),r1		# VMB argument list
-	callg	(r1),(r0)
+	mfpr	$17,%r7			# Wanted bu KDB
+	movl	4(%ap),%r0		# init routine address
+	movl	8(%ap),%r9		# RPB in %r9
+	movl	12(%ap),%r1		# VMB argument list
+	callg	(%r1),(%r0)
 	ret
 
 # A bunch of functions unwanted in boot blocks.

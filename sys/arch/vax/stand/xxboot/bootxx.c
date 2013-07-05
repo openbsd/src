@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.12 2011/07/06 18:32:59 miod Exp $ */
+/*	$OpenBSD: bootxx.c,v 1.13 2013/07/05 21:13:07 miod Exp $ */
 /* $NetBSD: bootxx.c,v 1.16 2002/03/29 05:45:08 matt Exp $ */
 
 /*-
@@ -32,29 +32,29 @@
  *	@(#)boot.c	7.15 (Berkeley) 5/4/91
  */
 
-#include "sys/param.h"
-#include "sys/reboot.h"
-#include "sys/disklabel.h"
-#include "sys/exec.h"
-#include "sys/exec_elf.h"
+#include <sys/param.h>
+#include <sys/reboot.h>
+#include <sys/disklabel.h>
+#include <sys/exec.h>
+#include <sys/exec_elf.h>
 
-#include "lib/libsa/stand.h"
-#include "lib/libsa/ufs.h"
-#include "lib/libsa/cd9660.h"
+#include <lib/libsa/stand.h>
+#include <lib/libsa/ufs.h>
+#include <lib/libsa/cd9660.h>
 
-#include "machine/pte.h"
-#include "machine/sid.h"
-#include "machine/mtpr.h"
-#include "machine/reg.h"
-#include "machine/rpb.h"
-#include "../vax/gencons.h"
+#include <machine/pte.h>
+#include <machine/sid.h>
+#include <machine/mtpr.h>
+#include <machine/reg.h>
+#include <machine/rpb.h>
+#include <arch/vax/vax/gencons.h>
 
 #define NRSP 1 /* Kludge */
 #define NCMD 1 /* Kludge */
 #define LIBSA_TOO_OLD
 
-#include "arch/vax/mscp/mscp.h"
-#include "arch/vax/mscp/mscpreg.h"
+#include <arch/vax/mscp/mscp.h>
+#include <arch/vax/mscp/mscpreg.h>
 
 #include "../boot/data.h"
 
@@ -125,7 +125,7 @@ Xmain(void)
 	if (io < 0)
 		io = open("/boot", 0);
 	if (io < 0)
-		asm("movl $0xbeef1, r0; halt");
+		asm("movl $0xbeef1, %r0; halt");
 
 	read(io, (void *)&hdr.aout, sizeof(hdr.aout));
 	if (N_GETMAGIC(hdr.aout) == OMAGIC && N_GETMID(hdr.aout) == MID_VAX) {
@@ -168,7 +168,7 @@ Xmain(void)
 	}
 	hoppabort(entry);
 die:
-	asm("movl $0xbeef2, r0; halt");
+	asm("movl $0xbeef2, %r0; halt");
 }
 
 /*

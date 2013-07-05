@@ -1,4 +1,4 @@
-/*	$OpenBSD: romread.S,v 1.2 2011/07/06 18:32:59 miod Exp $ */
+/*	$OpenBSD: romread.S,v 1.3 2013/07/05 21:13:06 miod Exp $ */
 /*	$NetBSD: romread.S,v 1.1 2002/02/24 01:04:25 matt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -44,31 +44,31 @@
  * romread_uvax (int lbn, int size, void *buf, struct rpb *rpb)
  */
 ENTRY(romread_uvax, 0xFFE)
-	movl	16(ap),r11	# restore boot-contents of %r11 (rpb)
-	movl    52(r11), r7     # load iovec/bqo into %r7
-	addl3   (r7), r7, r6	# load qio into %r6
-	pushl	r11		# base of rpb
+	movl	16(%ap),%r11	# restore boot-contents of %r11 (rpb)
+	movl    52(%r11), %r7	# load iovec/bqo into %r7
+	addl3   (%r7), %r7, %r6	# load qio into %r6
+	pushl	%r11		# base of rpb
 	pushl	$0		# virtual-flag 
 	pushl	$33		# read-logical-block
-	pushl	4(ap)		# lbn to start reading
-	pushl	8(ap)		# number of bytes to read
-	pushl	12(ap)		# buffer-address 
-	calls	$6, (r6)	# call the qio-routine
+	pushl	4(%ap)		# lbn to start reading
+	pushl	8(%ap)		# number of bytes to read
+	pushl	12(%ap)		# buffer-address 
+	calls	$6, (%r6)	# call the qio-routine
 	ret			# %r0 holds the result
 
 /*
  * romwrite_uvax (int lbn, int size, void *buf, struct rpb *rpb)
  */
 ENTRY(romwrite_uvax, 0xFFE)
-	movl    16(ap), r11	# restore boot-contents of %r11 (rpb)
-	movl    52(r11), r7     # load iovec/bqo into %r7
-	addl3   (r7), r7, r6    # load qio into %r6
-	pushl   r11             # base of rpb
-	pushl   $0              # virtual-flag 
-	pushl   $32             # write-logical-block
-	pushl   4(ap)           # lbn to start reading
-	pushl   8(ap)           # number of bytes to read
-	pushl   12(ap)          # buffer-address 
-	calls   $6, (r6)        # call the qio-routine
-	ret                     # %r0 holds the result
+	movl    16(%ap), %r11	# restore boot-contents of %r11 (rpb)
+	movl    52(%r11), %r7	# load iovec/bqo into %r7
+	addl3   (%r7), %r7, %r6	# load qio into %r6
+	pushl   %r11		# base of rpb
+	pushl   $0		# virtual-flag 
+	pushl   $32		# write-logical-block
+	pushl   4(%ap)		# lbn to start reading
+	pushl   8(%ap)		# number of bytes to read
+	pushl   12(%ap)		# buffer-address 
+	calls   $6, (%r6)	# call the qio-routine
+	ret			# %r0 holds the result
 
