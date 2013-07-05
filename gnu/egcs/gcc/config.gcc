@@ -2768,10 +2768,10 @@ vax-*-netbsd*)
 use_collect2=yes
 	;;
 vax-*-openbsd*)
+	tm_file="vax/openbsdelf.h"
 	tm_file="${tm_file} exec-stack.h"
 	tmake_file="${tmake_file} vax/t-openbsd"
 	float_format=vax
-	use_collect2=yes
 	;;
 vax-*-ultrix*)			# vaxen running ultrix
 	tm_file="${tm_file} vax/ultrix.h"

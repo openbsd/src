@@ -1278,8 +1278,8 @@ case "${targ}" in
     ;;
 
   vax-*-openbsd*)
-    targ_defvec=vaxnetbsd_vec
-    targ_underscore=yes
+    targ_defvec=bfd_elf32_vax_vec
+    targ_selvecs=vaxnetbsd_vec
     ;;
 
   vax-*-linux-gnu*)

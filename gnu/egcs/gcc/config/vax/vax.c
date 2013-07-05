@@ -19,7 +19,7 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 #include "config.h"
-#include <stdio.h>
+#include "system.h"
 #include "rtl.h"
 #include "regs.h"
 #include "hard-reg-set.h"
@@ -32,6 +32,8 @@ Boston, MA 02111-1307, USA.  */
 #ifdef VMS_TARGET
 #include "tree.h"
 #endif
+#include "reload.h"
+#include "recog.h"
 
 /* This is like nonimmediate_operand with a restriction on the type of MEM.  */
 
@@ -43,8 +45,9 @@ split_quadword_operands (operands, low, n)
   int i;
   /* Split operands.  */
 
-  low[0] = low[1] = low[2] = 0;
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < n; i++)
+    low[i] = 0;
+  for (i = 0; i < n; i++)
     {
       if (low[i])
 	/* it's already been figured out */;
@@ -56,7 +59,7 @@ split_quadword_operands (operands, low, n)
 	  if (which_alternative == 0 && i == 0)
 	    {
 	      addr = XEXP (operands[i], 0);
-	      operands[i+1] = low[i+1] = gen_rtx (MEM, SImode, addr);
+	      operands[i+1] = low[i+1] = gen_rtx_MEM (SImode, addr);
 	    }
 	}
       else
@@ -83,15 +86,15 @@ print_operand_address (file, addr)
       goto retry;
 
     case REG:
-      fprintf (file, "(%s)", reg_names[REGNO (addr)]);
+      fprintf (file, "(%s%s)", REGISTER_PREFIX, reg_names[REGNO (addr)]);
       break;
 
     case PRE_DEC:
-      fprintf (file, "-(%s)", reg_names[REGNO (XEXP (addr, 0))]);
+      fprintf (file, "-(%s%s)", REGISTER_PREFIX, reg_names[REGNO (XEXP (addr, 0))]);
       break;
 
     case POST_INC:
-      fprintf (file, "(%s)+", reg_names[REGNO (XEXP (addr, 0))]);
+      fprintf (file, "(%s%s)+", REGISTER_PREFIX, reg_names[REGNO (XEXP (addr, 0))]);
       break;
 
     case PLUS:
@@ -232,7 +235,7 @@ print_operand_address (file, addr)
 	output_address (offset);
 
       if (breg != 0)
-	fprintf (file, "(%s)", reg_names[REGNO (breg)]);
+	fprintf (file, "(%s%s)", REGISTER_PREFIX, reg_names[REGNO (breg)]);
 
       if (ireg != 0)
 	{
@@ -240,7 +243,7 @@ print_operand_address (file, addr)
 	    ireg = XEXP (ireg, 0);
 	  if (GET_CODE (ireg) != REG)
 	    abort ();
-	  fprintf (file, "[%s]", reg_names[REGNO (ireg)]);
+	  fprintf (file, "[%s%s]", REGISTER_PREFIX, reg_names[REGNO (ireg)]);
 	}
       break;
 
@@ -249,7 +252,7 @@ print_operand_address (file, addr)
     }
 }
 
-char *
+const char *
 rev_cond_name (op)
      rtx op;
 {
@@ -286,8 +289,10 @@ vax_float_literal(c)
     register rtx c;
 {
   register enum machine_mode mode;
+#if HOST_FLOAT_FORMAT == VAX_FLOAT_FORMAT
   int i;
   union {double d; int i[2];} val;
+#endif
 
   if (GET_CODE (c) != CONST_DOUBLE)
     return 0;
@@ -323,7 +328,8 @@ vax_float_literal(c)
    2 - indirect */
 
 
-int vax_address_cost(addr)
+int
+vax_address_cost (addr)
     register rtx addr;
 {
   int reg = 0, indexed = 0, indir = 0, offset = 0, predec = 0;
@@ -365,6 +371,8 @@ int vax_address_cost(addr)
       indir = 2;	/* 3 on VAX 2 */
       addr = XEXP (addr, 0);
       goto restart;
+    default:
+      break;
     }
 
   /* Up to 3 things can be added in an address.  They are stored in
@@ -402,7 +410,7 @@ vax_rtx_cost (x)
   enum machine_mode mode = GET_MODE (x);
   register int c;
   int i = 0;				/* may be modified in switch */
-  char *fmt = GET_RTX_FORMAT (code);	/* may be modified in switch */
+  const char *fmt = GET_RTX_FORMAT (code); /* may be modified in switch */
 
   switch (code)
     {
@@ -426,6 +434,8 @@ vax_rtx_cost (x)
 	case HImode:
 	case QImode:
 	  c = 10;		/* 3-4 on VAX 9000, 20-28 on VAX 2 */
+	  break;
+	default:
 	  break;
 	}
       break;
@@ -582,7 +592,7 @@ vax_rtx_cost (x)
 
 /* Check a `double' value for validity for a particular machine mode.  */
 
-static char *float_strings[] =
+static const char *const float_strings[] =
 {
    "1.70141173319264430e+38", /* 2^127 (2^24 - 1) / 2^24 */
   "-1.70141173319264430e+38",
@@ -661,7 +671,7 @@ check_float_value (mode, d, overflow)
 static
 struct extern_list {
   struct extern_list *next;	/* next external */
-  char *name;			/* name of the external */
+  const char *name;		/* name of the external */
   int size;			/* external's actual size */
   int in_const;			/* section type flag */
 } *extern_head = 0, *pending_head = 0;
@@ -672,7 +682,7 @@ struct extern_list {
 void
 vms_check_external (decl, name, pending)
      tree decl;
-     char *name;
+     const char *name;
      int pending;
 {
   register struct extern_list *p, *p0;

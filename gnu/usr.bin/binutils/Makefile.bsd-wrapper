@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.80 2013/03/10 21:06:23 miod Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.81 2013/07/05 21:09:21 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -26,7 +26,7 @@ MAN=		binutils/doc/addr2line.1 binutils/doc/objcopy.1 \
 		binutils/doc/objdump.1 binutils/doc/readelf.1 \
 		c++filt.1
 
-.if !defined(TARGET_ARCH)
+.if !defined(TARGET_ARCH) && !defined(BOOTSTRAP)
 CONF_SUBDIRS+=	gdb
 SUBDIRS+=	gdb
 INST_SUBDIRS+=	gdb

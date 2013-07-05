@@ -4568,7 +4568,7 @@ echo "$as_me: error: Solaris must be configured little endian" >&2;}
       v850e-*-*)			fmt=elf ;;
       v850ea-*-*)			fmt=elf ;;
 
-      vax-*-netbsdelf*)			fmt=elf em=nbsd ;;
+      vax-*-netbsdelf* | vax-*-openbsd*) fmt=elf em=nbsd ;;
       vax-*-netbsd*)			fmt=aout em=nbsd ;;
       vax-*-bsd* | vax-*-ultrix*)	fmt=aout ;;
       vax-*-linux-gnu*)			fmt=elf em=linux bfd_gas=yes ;;

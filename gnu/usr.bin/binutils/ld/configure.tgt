@@ -417,6 +417,8 @@ vax-*-netbsdelf*)	targ_emul=elf32vax
 vax-*-netbsdaout* | vax-*-netbsd*)
 			targ_emul=vaxnbsd
 			targ_extra_emuls=elf32vax ;;
+vax-*-openbsd*)		targ_emul=elf32vax_obsd
+			targ_extra_emuls=vaxnbsd ;;
 vax-*-linux-gnu*)	targ_emul=elf32vax ;;
 mips*-*-pe)		targ_emul=mipspe ;
 			targ_extra_ofiles="deffilep.o pe-dll.o" ;;

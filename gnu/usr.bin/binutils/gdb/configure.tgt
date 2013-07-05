@@ -231,7 +231,6 @@ esac
 case "${target}" in
 *-*-linux*)	gdb_osabi=GDB_OSABI_LINUX ;;
 *-*-nto*)	gdb_osabi=GDB_OSABI_QNXNTO ;;
-vax-*-openbsd*) ;;
 *-*-openbsd*)	gdb_osabi=GDB_OSABI_OPENBSD_ELF ;;
 *-*-solaris*)	gdb_osabi=GDB_OSABI_SOLARIS ;;
 *-*-*-gnu*)	;; # prevent non-GNU kernels to match the Hurd rule below

@@ -25,7 +25,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* If using g-format floating point, alter math.h.  */
 
-#define	CPP_SPEC "%{mg:-DGFLOAT}"
+#define	CPP_SPEC "%{mg:%{!ansi:-DGFLOAT} -D__GFLOAT}"
 
 /* Choose proper libraries depending on float format.
    Note that there are no profiling libraries for g-format.
@@ -51,13 +51,16 @@ extern int target_flags;
 /* Macros used in the machine description to test the flags.  */
 
 /* Nonzero if compiling code that Unix assembler can assemble.  */
-#define TARGET_UNIX_ASM (target_flags & 1)
+#define MASK_UNIX_ASM 1
+#define TARGET_UNIX_ASM (target_flags & MASK_UNIX_ASM)
 
 /* Nonzero if compiling with VAX-11 "C" style structure alignment */
-#define	TARGET_VAXC_ALIGNMENT (target_flags & 2)
+#define	MASK_VAXC_ALIGNMENT 2
+#define	TARGET_VAXC_ALIGNMENT (target_flags & MASK_VAXC_ALIGNMENT)
 
 /* Nonzero if compiling with `G'-format floating point */
-#define TARGET_G_FLOAT (target_flags & 4)
+#define MASK_G_FLOAT 4
+#define TARGET_G_FLOAT (target_flags & MASK_G_FLOAT)
 
 /* Macro to define tables used to set the flags.
    This is a list in braces of pairs in braces,
@@ -66,26 +69,26 @@ extern int target_flags;
    An empty string NAME is used to identify the default VALUE.  */
 
 #define TARGET_SWITCHES  \
-  { {"unix", 1},  \
-    {"gnu", -1},  \
-    {"vaxc-alignment", 2}, \
-    {"g", 4}, \
-    {"g-float", 4}, \
-    {"d", -4},	\
-    {"d-float", -4}, \
-    { "", TARGET_DEFAULT}}
+  { {"unix", MASK_UNIX_ASM, "Generate code for UNIX assembler"},  \
+    {"gnu", -MASK_UNIX_ASM, "Generate code for GNU assembler (gas)"},  \
+    {"vaxc-alignment", MASK_VAXC_ALIGNMENT, "Use VAXC structure conventions"}, \
+    {"g", MASK_G_FLOAT, "Generate GFLOAT double precision code"}, \
+    {"g-float", MASK_G_FLOAT, "Generate GFLOAT double precision code"}, \
+    {"d", -MASK_G_FLOAT, "Generate DFLOAT double precision code"}, \
+    {"d-float", -MASK_G_FLOAT, "Generate DFLOAT double precision code"}, \
+    { "", TARGET_DEFAULT, 0}}
 
 /* Default target_flags if no switches specified.  */
 
 #ifndef TARGET_DEFAULT
-#define TARGET_DEFAULT 1
+#define TARGET_DEFAULT MASK_UNIX_ASM
 #endif
 
 /* Target machine storage layout */
 
 /* Define for software floating point emulation of VAX format
    when cross compiling from a non-VAX host. */
-/* #define REAL_ARITHMETIC */
+#define REAL_ARITHMETIC
 
 /* Define this if most significant bit is lowest numbered
    in instructions that operate on numbered bit-fields.
@@ -258,7 +261,7 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
    This is an initializer for a vector of HARD_REG_SET
    of length N_REG_CLASSES.  */
 
-#define REG_CLASS_CONTENTS {0, 0xffff}
+#define REG_CLASS_CONTENTS {{0}, {0xffff}}
 
 /* The same information, inverted:
    Return the class number of the smallest class containing
@@ -347,8 +350,7 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 /* Given an rtx for the address of a frame,
    return an rtx for the address of the word in the frame
    that holds the dynamic chain--the previous frame's address.  */
-#define DYNAMIC_CHAIN_ADDRESS(frame) \
-gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
+#define DYNAMIC_CHAIN_ADDRESS(FRAME) plus_constant ((FRAME), 12)
 
 /* If we generate an insn to push BYTES bytes,
    this says how many the stack pointer really advances by.
@@ -377,14 +379,14 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
 /* On the Vax the return value is in R0 regardless.  */   
 
 #define FUNCTION_VALUE(VALTYPE, FUNC)  \
-  gen_rtx (REG, TYPE_MODE (VALTYPE), 0)
+  gen_rtx_REG (TYPE_MODE (VALTYPE), 0)
 
 /* Define how to find the value returned by a library function
    assuming the value has mode MODE.  */
 
 /* On the Vax the return value is in R0 regardless.  */   
 
-#define LIBCALL_VALUE(MODE)  gen_rtx (REG, MODE, 0)
+#define LIBCALL_VALUE(MODE)  gen_rtx_REG (MODE, 0)
 
 /* Define this if PCC uses the nonreentrant convention for returning
    structure and union values.  */
@@ -469,10 +471,11 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
   if (warn_stack_larger_than && size > stack_larger_than_size)	\
     warning ("stack usage is %d bytes", size);			\
   if ((size) >= 64)						\
-    fprintf (FILE, "\tmovab %d(sp),sp\n", -size);		\
+    fprintf (FILE, "\tmovab %d(%ssp),%ssp\n", -size,		\
+             REGISTER_PREFIX, REGISTER_PREFIX);			\
   else if (size)						\
-    fprintf (FILE, "\tsubl2 $%d,sp\n", (size));			\
-}
+    fprintf (FILE, "\tsubl2 $%d,%ssp\n",			\
+	     (size), REGISTER_PREFIX); }
 
 /* vms.h redefines this.  */
 #define MAYBE_VMS_FUNCTION_PROLOGUE(FILE)
@@ -500,8 +503,9 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
 */
 
 #define BLOCK_PROFILER(FILE, BLOCKNO)	\
-  fprintf (FILE, "\tmovpsl -(sp)\n\tmovw (sp),2(sp)\n\taddl2 $2,sp\n\taddl2 $1,LPBX2+%d\n\tbicpsw $255\n\tbispsw (sp)+\n", \
-		4 * BLOCKNO)
+  fprintf (FILE, "\tmovpsl -(%ssp)\n\tmovw (%ssp),2(%ssp)\n\taddl2 $2,%ssp\n\taddl2 $1,LPBX2+%d\n\tbicpsw $255\n\tbispsw (%ssp)+\n", \
+	   4 * BLOCKNO, REGISTER_PREFIX, REGISTER_PREFIX, REGISTER_PREFIX, \
+	   REGISTER_PREFIX, REGISTER_PREFIX)
 
 /* EXIT_IGNORE_STACK should be nonzero if, when returning from a function,
    the stack pointer does not matter.  The value is tested only in
@@ -538,10 +542,10 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
 #define TRAMPOLINE_TEMPLATE(FILE)					\
 {									\
   ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
-  ASM_OUTPUT_SHORT (FILE, GEN_INT (0x8fd0));	\
+  ASM_OUTPUT_SHORT (FILE, GEN_INT (0x8fd0));				\
   ASM_OUTPUT_INT (FILE, const0_rtx);					\
-  ASM_OUTPUT_BYTE  (FILE, 0x50+STATIC_CHAIN_REGNUM);			\
-  ASM_OUTPUT_SHORT (FILE, GEN_INT (0x9f17));	\
+  ASM_OUTPUT_BYTE  (FILE, 0x50 + STATIC_CHAIN_REGNUM);			\
+  ASM_OUTPUT_SHORT (FILE, GEN_INT (0x9f17));				\
   ASM_OUTPUT_INT (FILE, const0_rtx);					\
 }
 
@@ -560,16 +564,20 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
    FNADDR is an RTX for the address of the function's pure code.
    CXT is an RTX for the static chain value for the function.  */
 
+/* This is separated out so register prefixes can be added by a target
+   if it requires them */
+#define	VAX_ISTREAM_SYNC	"movpsl -(sp)\n\tpushal 1(pc)\n\trei"
+
 /* We copy the register-mask from the function's pure code
    to the start of the trampoline.  */
+
 #define INITIALIZE_TRAMPOLINE(TRAMP, FNADDR, CXT)			\
 {									\
-  emit_insn (gen_rtx (ASM_INPUT, VOIDmode,				\
-		      "movpsl -(sp)\n\tpushal 1(pc)\n\trei"));		\
-  emit_move_insn (gen_rtx (MEM, HImode, TRAMP),				\
-		  gen_rtx (MEM, HImode, FNADDR));			\
-  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 4)), CXT);\
-  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 11)),	\
+  emit_insn (gen_rtx_ASM_INPUT (VOIDmode, VAX_ISTREAM_SYNC));		\
+  emit_move_insn (gen_rtx_MEM (HImode, TRAMP),				\
+		  gen_rtx_MEM (HImode, FNADDR));			\
+  emit_move_insn (gen_rtx_MEM (SImode, plus_constant (TRAMP, 4)), CXT);\
+  emit_move_insn (gen_rtx_MEM (SImode, plus_constant (TRAMP, 11)),	\
 		  plus_constant (FNADDR, 2));				\
   FINALIZE_TRAMPOLINE(TRAMP);						\
 }
@@ -586,7 +594,7 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
 
 #define RETURN_ADDR_RTX(COUNT, FRAME)	\
   ((COUNT == 0)				\
-   ? gen_rtx (MEM, Pmode, plus_constant (FRAME, RETURN_ADDRESS_OFFSET)) \
+   ? gen_rtx_MEM (Pmode, plus_constant (FRAME, RETURN_ADDRESS_OFFSET)) \
    : (rtx) 0)
 
 
@@ -841,6 +849,10 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
    jumps to the default label instead.  */
 #define CASE_DROPS_THROUGH
 
+/* Indicate that jump tables go in the text section.  This is
+   necessary when compiling PIC code.  */
+#define JUMP_TABLES_IN_TEXT_SECTION 1
+
 /* Specify the tree operation to be used to convert reals to integers.  */
 #define IMPLICIT_FIX_EXPR FIX_ROUND_EXPR
 
@@ -1041,14 +1053,17 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
 
 /* Output before read-only data.  */
 
-#define TEXT_SECTION_ASM_OP ".text"
+#define TEXT_SECTION_ASM_OP "\t.text"
 
 /* Output before writable data.  */
 
-#define DATA_SECTION_ASM_OP ".data"
+#define DATA_SECTION_ASM_OP "\t.data"
 
 /* How to refer to registers in assembler output.
-   This sequence is indexed by compiler's hard-register-number (see above).  */
+   This sequence is indexed by compiler's hard-register-number (see above).
+   The register names will be prefixed by REGISTER_PREFIX, if any.  */
+
+#define	REGISTER_PREFIX ""
 
 #define REGISTER_NAMES \
 {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", \
@@ -1098,7 +1113,7 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
 
 /* The prefix to add to user-visible assembler symbols. */
 
-#define USER_LABEL_PREFIX "_"
+#define USER_LABEL_PREFIX ""
 
 /* This is how to output an internal numbered label where
    PREFIX is the class of label and NUM is the number within the class.  */
@@ -1159,25 +1174,45 @@ do { char dstr[30];							\
    It need not be very fast code.  */
 
 #define ASM_OUTPUT_REG_PUSH(FILE,REGNO)  \
-  fprintf (FILE, "\tpushl %s\n", reg_names[REGNO])
+  fprintf (FILE, "\tpushl %s%s\n", REGISTER_PREFIX, reg_names[REGNO])
 
 /* This is how to output an insn to pop a register from the stack.
    It need not be very fast code.  */
 
 #define ASM_OUTPUT_REG_POP(FILE,REGNO)  \
-  fprintf (FILE, "\tmovl (sp)+,%s\n", reg_names[REGNO])
+  fprintf (FILE, "\tmovl (%ssp)+,%s%s\n", REGISTER_PREFIX, REGISTER_PREFIX, \
+	   reg_names[REGNO])
 
 /* This is how to output an element of a case-vector that is absolute.
    (The Vax does not use such vectors,
    but we must define this macro anyway.)  */
 
-#define ASM_OUTPUT_ADDR_VEC_ELT(FILE, VALUE)  \
-  fprintf (FILE, "\t.long L%d\n", VALUE)
+#define ASM_OUTPUT_ADDR_VEC_ELT(FILE, VALUE)			\
+  do								\
+    {								\
+      char label[256];						\
+      ASM_GENERATE_INTERNAL_LABEL (label, "L", (VALUE));	\
+      fprintf (FILE, "\t.long ");				\
+      assemble_name (FILE, label);				\
+      fprintf (FILE, "\n");					\
+    }								\
+  while (0)
 
 /* This is how to output an element of a case-vector that is relative.  */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)  \
-  fprintf (FILE, "\t.word L%d-L%d\n", VALUE, REL)
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)	\
+  do								\
+    {								\
+      char label[256];						\
+      ASM_GENERATE_INTERNAL_LABEL (label, "L", (VALUE));	\
+      fprintf (FILE, "\t.word ");				\
+      assemble_name (FILE, label);				\
+      ASM_GENERATE_INTERNAL_LABEL (label, "L", (REL));		\
+      fprintf (FILE, "-");					\
+      assemble_name (FILE, label);				\
+      fprintf (FILE, "\n");					\
+    }								\
+  while (0)
 
 /* This is how to output an assembler line
    that says to advance the location counter
@@ -1236,7 +1271,7 @@ do { char dstr[30];							\
 #define ASM_OUTPUT_MI_THUNK(FILE, THUNK_FNDECL, DELTA, FUNCTION) \
 do {						\
   fprintf (FILE, "\t.word 0x0ffc\n");		\
-  fprintf (FILE, "\taddl2 $%d,4(ap)\n", DELTA);	\
+  fprintf (FILE, "\taddl2 $%d,4(%sap)\n", DELTA, REGISTER_PREFIX);	\
   fprintf (FILE, "\tjmp ");			\
   assemble_name (FILE,  XSTR (XEXP (DECL_RTL (FUNCTION), 0), 0)); \
   fprintf (FILE, "+2\n");			\
@@ -1284,7 +1319,7 @@ VAX operand formatting codes:
   ((CODE) == '#')
 
 #define PRINT_OPERAND(FILE, X, CODE)  \
-{ extern char *rev_cond_name ();					\
+{ extern const char *rev_cond_name ();					\
   if (CODE == '#') fputc (ASM_DOUBLE_CHAR, FILE);			\
   else if (CODE == 'C')							\
     fputs (rev_cond_name (X), FILE);					\
@@ -1308,7 +1343,7 @@ VAX operand formatting codes:
   else if (CODE == 'M' && GET_CODE (X) == CONST_INT)			\
     fprintf (FILE, "$%d", ~((1 << INTVAL (x)) - 1));			\
   else if (GET_CODE (X) == REG)						\
-    fprintf (FILE, "%s", reg_names[REGNO (X)]);				\
+    fprintf (FILE, "%s%s", REGISTER_PREFIX, reg_names[REGNO (X)]);	\
   else if (GET_CODE (X) == MEM)						\
     output_address (XEXP (X, 0));					\
   else if (GET_CODE (X) == CONST_DOUBLE && GET_MODE (X) == SFmode)	\
