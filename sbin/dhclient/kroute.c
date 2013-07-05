@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.54 2013/06/09 22:39:51 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.55 2013/07/05 22:13:10 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -43,7 +43,7 @@ void	delete_route(int, int, struct rt_msghdr *);
 #define	ROUTE_LABEL_DHCLIENT_DEAD	6
 
 /*
- * Do equivalent of 
+ * Do equivalent of
  *
  *	route -q $rdomain -n flush -inet -iface $interface
  *	arp -dan
@@ -155,7 +155,7 @@ priv_flush_routes(struct imsg_flush_routes *imsg)
 			/* Delete default routes on our interface. */
 			memset(ifname, 0, sizeof(ifname));
 			if (if_indextoname(rtm->rtm_index, ifname) &&
-			    sa_in && 
+			    sa_in &&
 			    sa_in->sin_addr.s_addr == INADDR_ANY &&
 			    rtm->rtm_tableid == imsg->rdomain &&
 			    strcmp(imsg->ifname, ifname) == 0)
@@ -389,7 +389,7 @@ add_address(char *ifname, int rdomain, struct in_addr addr,
 {
 	struct imsg_add_address imsg;
 	int			rslt;
- 
+
 	memset(&imsg, 0, sizeof(imsg));
 
 	/* Note the address we are adding for RTM_NEWADDR filtering! */
@@ -399,7 +399,7 @@ add_address(char *ifname, int rdomain, struct in_addr addr,
 	imsg.rdomain = rdomain;
 	imsg.addr = addr;
 	imsg.mask = mask;
- 
+
 	rslt = imsg_compose(unpriv_ibuf, IMSG_ADD_ADDRESS, 0, 0, -1, &imsg,
 	    sizeof(imsg));
 

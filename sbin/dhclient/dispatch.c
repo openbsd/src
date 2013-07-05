@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.79 2013/05/10 18:59:22 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.80 2013/07/05 22:13:10 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -363,7 +363,7 @@ set_timeout(time_t when, void (*where)(void))
 void
 set_timeout_interval(time_t secs, void (*where)(void))
 {
-	timeout.when = time(NULL) + secs; 
+	timeout.when = time(NULL) + secs;
 	timeout.func = where;
 }
 
