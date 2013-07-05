@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.117 2013/06/11 16:42:18 deraadt Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.118 2013/07/05 21:28:21 guenther Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -253,7 +253,7 @@ extern struct freelst vnode_free_list;	/* vnode free list */
 extern	struct vnode *rootvnode;	/* root (i.e. "/") vnode */
 extern	int desiredvnodes;		/* XXX number of vnodes desired */
 extern	int maxvnodes;			/* XXX number of vnodes to allocate */
-extern	time_t syncdelay;		/* time to delay syncing vnodes */
+extern	int syncdelay;			/* seconds to delay syncing vnodes */
 extern	int rushjob;			/* # of slots syncer should run ASAP */
 extern void    vhold(struct vnode *);
 extern void    vdrop(struct vnode *);
