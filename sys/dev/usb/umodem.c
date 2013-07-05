@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.49 2013/04/26 13:46:40 mglocker Exp $ */
+/*	$OpenBSD: umodem.c,v 1.50 2013/07/05 07:56:36 mpi Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -765,6 +765,12 @@ umodem_detach(struct device *self, int flags)
 	int rv = 0;
 
 	DPRINTF(("umodem_detach: sc=%p flags=%d\n", sc, flags));
+
+	if (sc->sc_notify_pipe != NULL) {
+		usbd_abort_pipe(sc->sc_notify_pipe);
+		usbd_close_pipe(sc->sc_notify_pipe);
+		sc->sc_notify_pipe = NULL;
+	}
 
 	if (sc->sc_subdev != NULL)
 		rv = config_detach(sc->sc_subdev, flags);
