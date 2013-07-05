@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.92 2013/07/05 14:41:36 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.93 2013/07/05 14:44:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1116,7 +1116,7 @@ window_copy_write_line(
 	struct options			*oo = &wp->window->options;
 	struct grid_cell		 gc;
 	char				 hdr[32];
-	size_t	 			 last, xoff = 0, size = 0;
+	size_t				 last, xoff = 0, size = 0;
 
 	window_mode_attrs(&gc, oo);
 

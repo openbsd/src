@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.106 2013/07/05 14:41:36 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.107 2013/07/05 14:44:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -142,10 +142,8 @@ status_set_window_at(struct client *c, u_int x)
 
 	x += c->wlmouse;
 	RB_FOREACH(wl, winlinks, &s->windows) {
-		if (x < wl->status_width &&
-			session_select(s, wl->idx) == 0) {
+		if (x < wl->status_width && session_select(s, wl->idx) == 0)
 			server_redraw_session(s);
-		}
 		x -= wl->status_width + 1;
 	}
 }

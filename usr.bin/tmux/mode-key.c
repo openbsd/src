@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-key.c,v 1.53 2013/07/05 14:38:22 nicm Exp $ */
+/* $OpenBSD: mode-key.c,v 1.54 2013/07/05 14:44:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -231,8 +231,8 @@ const struct mode_key_entry mode_key_vi_choice[] = {
 	{ KEYC_UP | KEYC_CTRL,	    0, MODEKEYCHOICE_SCROLLUP },
 	{ KEYC_UP,		    0, MODEKEYCHOICE_UP },
 	{ ' ',			    0, MODEKEYCHOICE_TREE_TOGGLE },
-	{ KEYC_LEFT,                0, MODEKEYCHOICE_TREE_COLLAPSE },
-	{ KEYC_RIGHT,               0, MODEKEYCHOICE_TREE_EXPAND },
+	{ KEYC_LEFT,		    0, MODEKEYCHOICE_TREE_COLLAPSE },
+	{ KEYC_RIGHT,		    0, MODEKEYCHOICE_TREE_EXPAND },
 	{ KEYC_LEFT | KEYC_CTRL,    0, MODEKEYCHOICE_TREE_COLLAPSE_ALL },
 	{ KEYC_RIGHT | KEYC_CTRL,   0, MODEKEYCHOICE_TREE_EXPAND_ALL },
 
@@ -373,8 +373,8 @@ const struct mode_key_entry mode_key_emacs_choice[] = {
 	{ KEYC_UP | KEYC_CTRL,	    0, MODEKEYCHOICE_SCROLLUP },
 	{ KEYC_UP,		    0, MODEKEYCHOICE_UP },
 	{ ' ',			    0, MODEKEYCHOICE_TREE_TOGGLE },
-	{ KEYC_LEFT,                0, MODEKEYCHOICE_TREE_COLLAPSE },
-	{ KEYC_RIGHT,               0, MODEKEYCHOICE_TREE_EXPAND },
+	{ KEYC_LEFT,		    0, MODEKEYCHOICE_TREE_COLLAPSE },
+	{ KEYC_RIGHT,		    0, MODEKEYCHOICE_TREE_EXPAND },
 	{ KEYC_LEFT | KEYC_CTRL,    0, MODEKEYCHOICE_TREE_COLLAPSE_ALL },
 	{ KEYC_RIGHT | KEYC_CTRL,   0, MODEKEYCHOICE_TREE_EXPAND_ALL },
 
