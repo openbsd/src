@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2cvar.h,v 1.10 2006/02/08 23:15:58 dlg Exp $	*/
+/*	$OpenBSD: i2cvar.h,v 1.11 2013/07/05 09:32:14 kettenis Exp $	*/
 /*	$NetBSD: i2cvar.h,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -40,6 +40,8 @@
 #define	_DEV_I2C_I2CVAR_H_
 
 #include <dev/i2c/i2c_io.h>
+
+struct device;
 
 /* Flags passed to i2c routines. */
 #define	I2C_F_WRITE		0x00	/* new transfer is a write */
