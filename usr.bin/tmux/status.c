@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.104 2013/05/31 19:56:05 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.105 2013/07/05 14:38:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1099,6 +1099,7 @@ status_prompt_key(struct client *c, int key)
 		}
 		break;
 	case MODEKEYEDIT_DELETE:
+	case MODEKEYEDIT_SWITCHMODESUBSTITUTE:
 		if (c->prompt_index != size) {
 			memmove(c->prompt_buffer + c->prompt_index,
 			    c->prompt_buffer + c->prompt_index + 1,
@@ -1107,11 +1108,13 @@ status_prompt_key(struct client *c, int key)
 		}
 		break;
 	case MODEKEYEDIT_DELETELINE:
+	case MODEKEYEDIT_SWITCHMODESUBSTITUTELINE:
 		*c->prompt_buffer = '\0';
 		c->prompt_index = 0;
 		c->flags |= CLIENT_STATUS;
 		break;
 	case MODEKEYEDIT_DELETETOENDOFLINE:
+	case MODEKEYEDIT_SWITCHMODECHANGELINE:
 		if (c->prompt_index < size) {
 			c->prompt_buffer[c->prompt_index] = '\0';
 			c->flags |= CLIENT_STATUS;
