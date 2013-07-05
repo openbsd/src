@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.27 2012/11/05 13:20:16 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.28 2013/07/05 20:30:56 guenther Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -919,7 +919,7 @@ forward:
 		if (!badbase)
 			resettodr();
 	} else {
-		int deltat = ts.tv_sec - base;
+		time_t deltat = ts.tv_sec - base;
 
 		tc_setclock(&ts);
 		if (deltat < 0)
@@ -928,8 +928,9 @@ forward:
 			return;
 		
 #ifndef SMALL_KERNEL
-		printf("WARNING: clock %s %d days",
-		    ts.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
+		printf("WARNING: clock %s %lld days",
+		    ts.tv_sec < base ? "lost" : "gained",
+		    (long long)(deltat / SECDAY));
 		bad = "";
 #endif
 	}

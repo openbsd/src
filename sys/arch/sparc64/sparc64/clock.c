@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.48 2010/07/07 15:37:22 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.49 2013/07/05 20:30:56 guenther Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -931,7 +931,7 @@ inittodr(base)
 		if (!badbase)
 			resettodr();
 	} else {
-		int deltat = tv.tv_sec - base;
+		time_t deltat = tv.tv_sec - base;
 
 		sparc_clock_time_is_ok = 1;
 
@@ -939,8 +939,9 @@ inittodr(base)
 			deltat = -deltat;
 		if (!(waszero || deltat < 2 * SECDAY)) {
 #ifndef SMALL_KERNEL
-			printf("WARNING: clock %s %ld days",
-			    tv.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
+			printf("WARNING: clock %s %lld days",
+			    tv.tv_sec < base ? "lost" : "gained",
+			    (long long)(deltat / SECDAY));
 			bad = "";
 #endif
 		}
