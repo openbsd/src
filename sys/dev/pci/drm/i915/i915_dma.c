@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_dma.c,v 1.7 2013/04/17 20:04:04 kettenis Exp $	*/
+/*	$OpenBSD: i915_dma.c,v 1.8 2013/07/05 07:20:27 jsg Exp $	*/
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*
@@ -286,7 +286,7 @@ intel_teardown_mchbar(struct inteldrm_softc *dev_priv,
 int
 i915_load_modeset_init(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int ret;
 
 	ret = intel_parse_bios(dev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_sprite.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: intel_sprite.c,v 1.2 2013/07/05 07:20:27 jsg Exp $	*/
 /*
  * Copyright © 2011 Intel Corporation
  *
@@ -77,7 +77,7 @@ ivb_update_plane(struct drm_plane *plane, struct drm_framebuffer *fb,
 		 uint32_t src_w, uint32_t src_h)
 {
 	struct drm_device *dev = plane->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_plane *intel_plane = to_intel_plane(plane);
 	int pipe = intel_plane->pipe;
 	u32 sprctl, sprscale = 0;
@@ -180,7 +180,7 @@ void
 ivb_disable_plane(struct drm_plane *plane)
 {
 	struct drm_device *dev = plane->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_plane *intel_plane = to_intel_plane(plane);
 	int pipe = intel_plane->pipe;
 
@@ -201,7 +201,7 @@ ivb_update_colorkey(struct drm_plane *plane,
 		    struct drm_intel_sprite_colorkey *key)
 {
 	struct drm_device *dev = plane->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_plane *intel_plane;
 	u32 sprctl;
 	int ret = 0;
@@ -229,7 +229,7 @@ void
 ivb_get_colorkey(struct drm_plane *plane, struct drm_intel_sprite_colorkey *key)
 {
 	struct drm_device *dev = plane->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_plane *intel_plane;
 	u32 sprctl;
 
@@ -258,7 +258,7 @@ ilk_update_plane(struct drm_plane *plane, struct drm_framebuffer *fb,
 		 uint32_t src_w, uint32_t src_h)
 {
 	struct drm_device *dev = plane->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_plane *intel_plane = to_intel_plane(plane);
 	int pipe = intel_plane->pipe;
 	unsigned long dvssurf_offset, linear_offset;
@@ -340,7 +340,7 @@ void
 ilk_disable_plane(struct drm_plane *plane)
 {
 	struct drm_device *dev = plane->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_plane *intel_plane = to_intel_plane(plane);
 	int pipe = intel_plane->pipe;
 
@@ -356,7 +356,7 @@ void
 intel_enable_primary(struct drm_crtc *crtc)
 {
 	struct drm_device *dev = crtc->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	int reg = DSPCNTR(intel_crtc->plane);
 
@@ -373,7 +373,7 @@ void
 intel_disable_primary(struct drm_crtc *crtc)
 {
 	struct drm_device *dev = crtc->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	int reg = DSPCNTR(intel_crtc->plane);
 
@@ -391,7 +391,7 @@ ilk_update_colorkey(struct drm_plane *plane,
 		    struct drm_intel_sprite_colorkey *key)
 {
 	struct drm_device *dev = plane->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_plane *intel_plane;
 	u32 dvscntr;
 	int ret = 0;
@@ -419,7 +419,7 @@ void
 ilk_get_colorkey(struct drm_plane *plane, struct drm_intel_sprite_colorkey *key)
 {
 	struct drm_device *dev = plane->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_plane *intel_plane;
 	u32 dvscntr;
 
@@ -448,7 +448,7 @@ intel_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
 		   uint32_t src_w, uint32_t src_h)
 {
 	struct drm_device *dev = plane->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	struct intel_plane *intel_plane = to_intel_plane(plane);
 	struct intel_framebuffer *intel_fb;

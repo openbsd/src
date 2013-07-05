@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_drv.h,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: intel_drv.h,v 1.2 2013/07/05 07:20:27 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
  * Copyright (c) 2007-2008 Intel Corporation
@@ -354,14 +354,14 @@ struct intel_digital_port {
 static inline struct drm_crtc *
 intel_get_crtc_for_pipe(struct drm_device *dev, int pipe)
 {
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	return dev_priv->pipe_to_crtc_mapping[pipe];
 }
 
 static inline struct drm_crtc *
 intel_get_crtc_for_plane(struct drm_device *dev, int plane)
 {
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	return dev_priv->plane_to_crtc_mapping[plane];
 }
 
@@ -441,7 +441,7 @@ extern int intel_edp_target_clock(struct intel_encoder *,
 				  struct drm_display_mode *mode);
 extern bool intel_encoder_is_pch_edp(struct drm_encoder *encoder);
 extern int intel_plane_init(struct drm_device *dev, enum pipe pipe);
-extern void intel_flush_display_plane(drm_i915_private_t *dev_priv,
+extern void intel_flush_display_plane(struct drm_i915_private *dev_priv,
 				      enum plane plane);
 
 /* intel_panel.c */
@@ -525,7 +525,7 @@ extern struct drm_display_mode *intel_crtc_mode_get(struct drm_device *dev,
 int intel_get_pipe_from_crtc_id(struct drm_device *dev, void *data,
 				struct drm_file *file_priv);
 extern enum transcoder
-intel_pipe_to_cpu_transcoder(drm_i915_private_t *dev_priv,
+intel_pipe_to_cpu_transcoder(struct drm_i915_private *dev_priv,
 			     enum pipe pipe);
 extern void intel_wait_for_vblank(struct drm_device *dev, int pipe);
 extern void intel_wait_for_pipe_off(struct drm_device *dev, int pipe);
@@ -576,7 +576,7 @@ extern int intel_overlay_attrs(struct drm_device *dev, void *data,
 extern void intel_fb_output_poll_changed(struct drm_device *dev);
 extern void intel_fb_restore_mode(struct drm_device *dev);
 
-extern void assert_pipe(drm_i915_private_t *dev_priv, enum pipe pipe,
+extern void assert_pipe(struct drm_i915_private *dev_priv, enum pipe pipe,
 			bool state);
 #define assert_pipe_enabled(d, p) assert_pipe(d, p, true)
 #define assert_pipe_disabled(d, p) assert_pipe(d, p, false)
@@ -607,7 +607,7 @@ extern int intel_sprite_set_colorkey(struct drm_device *dev, void *data,
 extern int intel_sprite_get_colorkey(struct drm_device *dev, void *data,
 				     struct drm_file *file_priv);
 
-extern u32 intel_dpio_read(drm_i915_private_t *dev_priv, int reg);
+extern u32 intel_dpio_read(struct drm_i915_private *dev_priv, int reg);
 
 /* Power-related functions, located in intel_pm.c */
 extern void intel_init_pm(struct drm_device *dev);
@@ -616,21 +616,21 @@ extern bool intel_fbc_enabled(struct drm_device *dev);
 extern void intel_enable_fbc(struct drm_crtc *crtc, unsigned long interval);
 extern void intel_update_fbc(struct drm_device *dev);
 /* IPS */
-extern void intel_gpu_ips_init(drm_i915_private_t *dev_priv);
+extern void intel_gpu_ips_init(struct drm_i915_private *dev_priv);
 extern void intel_gpu_ips_teardown(void);
 
 extern void intel_init_power_wells(struct drm_device *dev);
 extern void intel_enable_gt_powersave(struct drm_device *dev);
 extern void intel_disable_gt_powersave(struct drm_device *dev);
-extern void gen6_gt_check_fifodbg(drm_i915_private_t *dev_priv);
+extern void gen6_gt_check_fifodbg(struct drm_i915_private *dev_priv);
 extern void ironlake_teardown_rc6(struct drm_device *dev);
 
 extern bool intel_ddi_get_hw_state(struct intel_encoder *encoder,
 				   enum pipe *pipe);
-extern int intel_ddi_get_cdclk_freq(drm_i915_private_t *dev_priv);
+extern int intel_ddi_get_cdclk_freq(struct drm_i915_private *dev_priv);
 extern void intel_ddi_pll_init(struct drm_device *dev);
 extern void intel_ddi_enable_pipe_func(struct drm_crtc *crtc);
-extern void intel_ddi_disable_transcoder_func(drm_i915_private_t *dev_priv,
+extern void intel_ddi_disable_transcoder_func(struct drm_i915_private *dev_priv,
 					      enum transcoder cpu_transcoder);
 extern void intel_ddi_enable_pipe_clock(struct intel_crtc *intel_crtc);
 extern void intel_ddi_disable_pipe_clock(struct intel_crtc *intel_crtc);

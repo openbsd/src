@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_tv.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: intel_tv.c,v 1.2 2013/07/05 07:20:27 jsg Exp $	*/
 /*
  * Copyright © 2006-2008 Intel Corporation
  *   Jesse Barnes <jesse.barnes@intel.com>
@@ -867,7 +867,7 @@ bool
 intel_tv_get_hw_state(struct intel_encoder *encoder, enum pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 tmp = I915_READ(TV_CTL);
 
 	if (!(tmp & TV_ENC_ENABLE))
@@ -882,7 +882,7 @@ void
 intel_enable_tv(struct intel_encoder *encoder)
 {
 	struct drm_device *dev = encoder->base.dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	I915_WRITE(TV_CTL, I915_READ(TV_CTL) | TV_ENC_ENABLE);
 }
@@ -891,7 +891,7 @@ void
 intel_disable_tv(struct intel_encoder *encoder)
 {
 	struct drm_device *dev = encoder->base.dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	I915_WRITE(TV_CTL, I915_READ(TV_CTL) & ~TV_ENC_ENABLE);
 }
@@ -955,7 +955,7 @@ intel_tv_mode_set(struct drm_encoder *encoder, struct drm_display_mode *mode,
 		  struct drm_display_mode *adjusted_mode)
 {
 	struct drm_device *dev = encoder->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc = encoder->crtc;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	struct intel_tv *intel_tv = enc_to_intel_tv(encoder);
@@ -1198,7 +1198,7 @@ intel_tv_detect_type(struct intel_tv *intel_tv,
 	struct drm_crtc *crtc = encoder->crtc;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	struct drm_device *dev = encoder->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 tv_ctl, save_tv_ctl;
 	u32 tv_dac, save_tv_dac;
 	int type;
@@ -1549,7 +1549,7 @@ static const struct drm_encoder_funcs intel_tv_enc_funcs = {
 int
 tv_is_present_in_vbt(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct child_device_config *p_child;
 	int i, ret;
 
@@ -1579,7 +1579,7 @@ tv_is_present_in_vbt(struct drm_device *dev)
 void
 intel_tv_init(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_connector *connector;
 	struct intel_tv *intel_tv;
 	struct intel_encoder *intel_encoder;

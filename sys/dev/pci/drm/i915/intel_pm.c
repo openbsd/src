@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.7 2013/07/04 09:52:29 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.8 2013/07/05 07:20:27 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -54,7 +54,7 @@ void	 ironlake_enable_fbc(struct drm_crtc *, unsigned long);
 void	 ironlake_disable_fbc(struct drm_device *);
 bool	 ironlake_fbc_enabled(struct drm_device *);
 bool	 intel_fbc_enabled(struct drm_device *);
-void	 intel_cancel_fbc_work(struct inteldrm_softc *);
+void	 intel_cancel_fbc_work(struct drm_i915_private *);
 void	 i915_pineview_get_mem_freq(struct drm_device *);
 void	 i915_ironlake_get_mem_freq(struct drm_device *);
 const struct cxsr_latency *
@@ -107,7 +107,7 @@ struct drm_i915_gem_object *
 	 intel_alloc_context_page(struct drm_device *);
 void	 ironlake_enable_drps(struct drm_device *);
 void	 ironlake_disable_drps(struct drm_device *);
-u32	 gen6_rps_limits(struct inteldrm_softc *, u8 *);
+u32	 gen6_rps_limits(struct drm_i915_private *, u8 *);
 void	 gen6_disable_rps(struct drm_device *);
 void	 gen6_enable_rps(struct drm_device *);
 void	 gen6_update_ring_freq(struct drm_device *);
@@ -115,10 +115,10 @@ void	 ironlake_disable_rc6(struct drm_device *);
 int	 ironlake_setup_rc6(struct drm_device *);
 void	 ironlake_enable_rc6(struct drm_device *);
 unsigned long intel_pxfreq(u32);
-unsigned long __i915_chipset_val(struct inteldrm_softc *);
-u16	 pvid_to_extvid(struct inteldrm_softc *, u8);
-void	 __i915_update_gfx_val(struct inteldrm_softc *);
-unsigned long __i915_gfx_val(struct inteldrm_softc *);
+unsigned long __i915_chipset_val(struct drm_i915_private *);
+u16	 pvid_to_extvid(struct drm_i915_private *, u8);
+void	 __i915_update_gfx_val(struct drm_i915_private *);
+unsigned long __i915_gfx_val(struct drm_i915_private *);
 unsigned long i915_read_mch_val(void);
 bool	 i915_gpu_raise(void);
 bool	 i915_gpu_lower(void);
@@ -129,7 +129,7 @@ void	 ibx_init_clock_gating(struct drm_device *);
 void	 ironlake_init_clock_gating(struct drm_device *);
 void	 cpt_init_clock_gating(struct drm_device *);
 void	 gen6_init_clock_gating(struct drm_device *);
-void	 gen7_setup_fixed_func_scheduler(struct inteldrm_softc *);
+void	 gen7_setup_fixed_func_scheduler(struct drm_i915_private *);
 void	 lpt_init_clock_gating(struct drm_device *);
 void	 haswell_init_clock_gating(struct drm_device *);
 void	 ivybridge_init_clock_gating(struct drm_device *);
@@ -140,12 +140,12 @@ void	 broadwater_init_clock_gating(struct drm_device *);
 void	 gen3_init_clock_gating(struct drm_device *);
 void	 i85x_init_clock_gating(struct drm_device *);
 void	 i830_init_clock_gating(struct drm_device *);
-void	 __gen6_gt_wait_for_thread_c0(struct inteldrm_softc *);
-void	 __gen6_gt_force_wake_reset(struct inteldrm_softc *);
-void	 __gen6_gt_force_wake_mt_reset(struct inteldrm_softc *);
-void	 vlv_force_wake_reset(struct inteldrm_softc *);
-void	 vlv_force_wake_get(struct inteldrm_softc *);
-void	 vlv_force_wake_put(struct inteldrm_softc *);
+void	 __gen6_gt_wait_for_thread_c0(struct drm_i915_private *);
+void	 __gen6_gt_force_wake_reset(struct drm_i915_private *);
+void	 __gen6_gt_force_wake_mt_reset(struct drm_i915_private *);
+void	 vlv_force_wake_reset(struct drm_i915_private *);
+void	 vlv_force_wake_get(struct drm_i915_private *);
+void	 vlv_force_wake_put(struct drm_i915_private *);
 void	 intel_gt_reset(struct drm_device *);
 void	 intel_gt_init(struct drm_device *);
 void	 intel_fbc_work_tick(void *);
@@ -167,7 +167,7 @@ intel_crtc_active(struct drm_crtc *crtc)
 void
 i8xx_disable_fbc(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 fbc_ctl;
 	int retries;
 
@@ -197,7 +197,7 @@ void
 i8xx_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 {
 	struct drm_device *dev = crtc->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_framebuffer *fb = crtc->fb;
 	struct intel_framebuffer *intel_fb = to_intel_framebuffer(fb);
 	struct drm_i915_gem_object *obj = intel_fb->obj;
@@ -240,7 +240,7 @@ i8xx_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 bool
 i8xx_fbc_enabled(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	return I915_READ(FBC_CONTROL) & FBC_CTL_EN;
 }
@@ -249,7 +249,7 @@ void
 g4x_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 {
 	struct drm_device *dev = crtc->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_framebuffer *fb = crtc->fb;
 	struct intel_framebuffer *intel_fb = to_intel_framebuffer(fb);
 	struct drm_i915_gem_object *obj = intel_fb->obj;
@@ -276,7 +276,7 @@ g4x_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 void
 g4x_disable_fbc(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 dpfc_ctl;
 
 	/* Disable compression */
@@ -292,7 +292,7 @@ g4x_disable_fbc(struct drm_device *dev)
 bool
 g4x_fbc_enabled(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	return I915_READ(DPFC_CONTROL) & DPFC_CTL_EN;
 }
@@ -300,7 +300,7 @@ g4x_fbc_enabled(struct drm_device *dev)
 void
 sandybridge_blit_fbc_update(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 blt_ecoskpd;
 
 	/* Make sure blitter notifies FBC of writes */
@@ -322,7 +322,7 @@ void
 ironlake_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 {
 	struct drm_device *dev = crtc->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_framebuffer *fb = crtc->fb;
 	struct intel_framebuffer *intel_fb = to_intel_framebuffer(fb);
 	struct drm_i915_gem_object *obj = intel_fb->obj;
@@ -360,7 +360,7 @@ ironlake_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 void
 ironlake_disable_fbc(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 dpfc_ctl;
 
 	/* Disable compression */
@@ -376,7 +376,7 @@ ironlake_disable_fbc(struct drm_device *dev)
 bool
 ironlake_fbc_enabled(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	return I915_READ(ILK_DPFC_CONTROL) & DPFC_CTL_EN;
 }
@@ -384,7 +384,7 @@ ironlake_fbc_enabled(struct drm_device *dev)
 bool
 intel_fbc_enabled(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (!dev_priv->display.fbc_enabled)
 		return false;
@@ -406,7 +406,7 @@ intel_fbc_work_fn(void *arg1, void *arg2)
 {
 	struct intel_fbc_work *work = arg1;
 	struct drm_device *dev = work->crtc->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	DRM_LOCK();
 	if (work == dev_priv->fbc_work) {
@@ -430,7 +430,7 @@ intel_fbc_work_fn(void *arg1, void *arg2)
 }
 
 void
-intel_cancel_fbc_work(struct inteldrm_softc *dev_priv)
+intel_cancel_fbc_work(struct drm_i915_private *dev_priv)
 {
 	if (dev_priv->fbc_work == NULL)
 		return;
@@ -458,7 +458,7 @@ intel_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 {
 	struct intel_fbc_work *work;
 	struct drm_device *dev = crtc->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (!dev_priv->display.enable_fbc)
 		return;
@@ -497,7 +497,7 @@ intel_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 void
 intel_disable_fbc(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	intel_cancel_fbc_work(dev_priv);
 
@@ -530,7 +530,7 @@ intel_disable_fbc(struct drm_device *dev)
 void
 intel_update_fbc(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc = NULL, *tmp_crtc;
 	struct intel_crtc *intel_crtc;
 	struct drm_framebuffer *fb;
@@ -853,7 +853,7 @@ intel_get_cxsr_latency(int is_desktop,
 void
 pineview_disable_cxsr(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	/* deactivate cxsr */
 	I915_WRITE(DSPFW3, I915_READ(DSPFW3) & ~PINEVIEW_SELF_REFRESH_EN);
@@ -878,7 +878,7 @@ static const int latency_ns = 5000;
 int
 i9xx_get_fifo_size(struct drm_device *dev, int plane)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t dsparb = I915_READ(DSPARB);
 	int size;
 
@@ -895,7 +895,7 @@ i9xx_get_fifo_size(struct drm_device *dev, int plane)
 int
 i85x_get_fifo_size(struct drm_device *dev, int plane)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t dsparb = I915_READ(DSPARB);
 	int size;
 
@@ -913,7 +913,7 @@ i85x_get_fifo_size(struct drm_device *dev, int plane)
 int
 i845_get_fifo_size(struct drm_device *dev, int plane)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t dsparb = I915_READ(DSPARB);
 	int size;
 
@@ -930,7 +930,7 @@ i845_get_fifo_size(struct drm_device *dev, int plane)
 int
 i830_get_fifo_size(struct drm_device *dev, int plane)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t dsparb = I915_READ(DSPARB);
 	int size;
 
@@ -1165,7 +1165,7 @@ single_enabled_crtc(struct drm_device *dev)
 void
 pineview_update_wm(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc;
 	const struct cxsr_latency *latency;
 	u32 reg;
@@ -1411,7 +1411,7 @@ vlv_compute_drain_latency(struct drm_device *dev,
 void
 vlv_update_drain_latency(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int planea_prec, planea_dl, planeb_prec, planeb_dl;
 	int cursora_prec, cursora_dl, cursorb_prec, cursorb_dl;
 	int plane_prec_mult, cursor_prec_mult; /* Precision multiplier is
@@ -1450,7 +1450,7 @@ void
 valleyview_update_wm(struct drm_device *dev)
 {
 	static const int sr_latency_ns = 12000;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int planea_wm, planeb_wm, cursora_wm, cursorb_wm;
 	int plane_sr, cursor_sr;
 	int ignore_plane_sr, ignore_cursor_sr;
@@ -1510,7 +1510,7 @@ void
 g4x_update_wm(struct drm_device *dev)
 {
 	static const int sr_latency_ns = 12000;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int planea_wm, planeb_wm, cursora_wm, cursorb_wm;
 	int plane_sr, cursor_sr;
 	unsigned int enabled = 0;
@@ -1562,7 +1562,7 @@ g4x_update_wm(struct drm_device *dev)
 void
 i965_update_wm(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc;
 	int srwm = 1;
 	int cursor_sr = 16;
@@ -1628,7 +1628,7 @@ i965_update_wm(struct drm_device *dev)
 void
 i9xx_update_wm(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	const struct intel_watermark_params *wm_info;
 	uint32_t fwater_lo;
 	uint32_t fwater_hi;
@@ -1746,7 +1746,7 @@ i9xx_update_wm(struct drm_device *dev)
 void
 i830_update_wm(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc;
 	uint32_t fwater_lo;
 	int planea_wm;
@@ -1782,7 +1782,7 @@ ironlake_check_srwm(struct drm_device *dev, int level,
 				const struct intel_watermark_params *display,
 				const struct intel_watermark_params *cursor)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	DRM_DEBUG_KMS("watermark %d: display plane %d, fbc lines %d,"
 		      " cursor %d\n", level, display_wm, fbc_wm, cursor_wm);
@@ -1875,7 +1875,7 @@ ironlake_compute_srwm(struct drm_device *dev, int level, int plane,
 void
 ironlake_update_wm(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int fbc_wm, plane_wm, cursor_wm;
 	unsigned int enabled;
 
@@ -1959,7 +1959,7 @@ ironlake_update_wm(struct drm_device *dev)
 void
 sandybridge_update_wm(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int latency = SNB_READ_WM0_LATENCY() * 100;	/* In unit 0.1us */
 	u32 val;
 	int fbc_wm, plane_wm, cursor_wm;
@@ -2062,7 +2062,7 @@ sandybridge_update_wm(struct drm_device *dev)
 void
 ivybridge_update_wm(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int latency = SNB_READ_WM0_LATENCY() * 100;	/* In unit 0.1us */
 	u32 val;
 	int fbc_wm, plane_wm, cursor_wm;
@@ -2186,7 +2186,7 @@ void
 haswell_update_linetime_wm(struct drm_device *dev, int pipe,
 				 struct drm_display_mode *mode)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 temp;
 
 	temp = I915_READ(PIPE_WM_LINETIME(pipe));
@@ -2289,7 +2289,7 @@ void
 sandybridge_update_sprite_wm(struct drm_device *dev, int pipe,
 					 uint32_t sprite_width, int pixel_size)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int latency = SNB_READ_WM0_LATENCY() * 100;	/* In unit 0.1us */
 	u32 val;
 	int sprite_wm, reg;
@@ -2400,7 +2400,7 @@ sandybridge_update_sprite_wm(struct drm_device *dev, int pipe,
 void
 intel_update_watermarks(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (dev_priv->display.update_wm)
 		dev_priv->display.update_wm(dev);
@@ -2410,7 +2410,7 @@ void
 intel_update_linetime_watermarks(struct drm_device *dev,
 		int pipe, struct drm_display_mode *mode)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (dev_priv->display.update_linetime_wm)
 		dev_priv->display.update_linetime_wm(dev, pipe, mode);
@@ -2420,7 +2420,7 @@ void
 intel_update_sprite_watermarks(struct drm_device *dev, int pipe,
 				    uint32_t sprite_width, int pixel_size)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (dev_priv->display.update_sprite_wm)
 		dev_priv->display.update_sprite_wm(dev, pipe, sprite_width,
@@ -2466,12 +2466,12 @@ err_unref:
 }
 
 struct mutex mchdev_lock;
-static struct inteldrm_softc *i915_mch_dev;
+static struct drm_i915_private *i915_mch_dev;
 
 bool
 ironlake_set_drps(struct drm_device *dev, u8 val)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u16 rgvswctl;
 
 	MUTEX_ASSERT_LOCKED(&mchdev_lock);
@@ -2496,7 +2496,7 @@ ironlake_set_drps(struct drm_device *dev, u8 val)
 void
 ironlake_enable_drps(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 rgvmodectl = I915_READ(MEMMODECTL);
 	u8 fmax, fmin, fstart, vstart;
 	int retries;
@@ -2571,7 +2571,7 @@ ironlake_enable_drps(struct drm_device *dev)
 void
 ironlake_disable_drps(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u16 rgvswctl;
 
 	mtx_enter(&mchdev_lock);
@@ -2601,7 +2601,7 @@ ironlake_disable_drps(struct drm_device *dev)
  * all limits and the gpu stuck at whatever frequency it is at atm).
  */
 u32
-gen6_rps_limits(struct inteldrm_softc *dev_priv, u8 *val)
+gen6_rps_limits(struct drm_i915_private *dev_priv, u8 *val)
 {
 	u32 limits;
 
@@ -2628,7 +2628,7 @@ gen6_rps_limits(struct inteldrm_softc *dev_priv, u8 *val)
 void
 gen6_set_rps(struct drm_device *dev, u8 val)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 limits = gen6_rps_limits(dev_priv, &val);
 
 	rw_assert_wrlock(&dev_priv->rps.hw_lock);
@@ -2658,7 +2658,7 @@ gen6_set_rps(struct drm_device *dev, u8 val)
 void
 gen6_disable_rps(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	I915_WRITE(GEN6_RC_CONTROL, 0);
 	I915_WRITE(GEN6_RPNSWREQ, 1 << 31);
@@ -2705,7 +2705,7 @@ intel_enable_rc6(const struct drm_device *dev)
 void
 gen6_enable_rps(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_ring_buffer *ring;
 	u32 rp_state_cap;
 	u32 gt_perf_status;
@@ -2851,7 +2851,7 @@ gen6_enable_rps(struct drm_device *dev)
 void
 gen6_update_ring_freq(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int min_freq = 15;
 	int gpu_freq;
 	unsigned int ia_freq, max_ia_freq;
@@ -2906,7 +2906,7 @@ gen6_update_ring_freq(struct drm_device *dev)
 void
 ironlake_teardown_rc6(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (dev_priv->ips.renderctx) {
 		i915_gem_object_unpin(dev_priv->ips.renderctx);
@@ -2924,7 +2924,7 @@ ironlake_teardown_rc6(struct drm_device *dev)
 void
 ironlake_disable_rc6(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int retries;
 
 	if (I915_READ(PWRCTXA)) {
@@ -2947,7 +2947,7 @@ ironlake_disable_rc6(struct drm_device *dev)
 int
 ironlake_setup_rc6(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (dev_priv->ips.renderctx == NULL)
 		dev_priv->ips.renderctx = intel_alloc_context_page(dev);
@@ -2967,7 +2967,7 @@ ironlake_setup_rc6(struct drm_device *dev)
 void
 ironlake_enable_rc6(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_ring_buffer *ring = &dev_priv->ring[RCS];
 	bool was_interruptible;
 	int ret;
@@ -3060,7 +3060,7 @@ static const struct cparams {
 };
 
 unsigned long
-__i915_chipset_val(struct inteldrm_softc *dev_priv)
+__i915_chipset_val(struct drm_i915_private *dev_priv)
 {
 	u64 total_count, diff, ret;
 	u32 count1, count2, count3, m = 0, c = 0;
@@ -3115,7 +3115,7 @@ __i915_chipset_val(struct inteldrm_softc *dev_priv)
 }
 
 unsigned long
-i915_chipset_val(struct inteldrm_softc *dev_priv)
+i915_chipset_val(struct drm_i915_private *dev_priv)
 {
 	unsigned long val;
 
@@ -3132,7 +3132,7 @@ i915_chipset_val(struct inteldrm_softc *dev_priv)
 }
 
 unsigned long
-i915_mch_val(struct inteldrm_softc *dev_priv)
+i915_mch_val(struct drm_i915_private *dev_priv)
 {
 	unsigned long m, x, b;
 	u32 tsfs;
@@ -3148,7 +3148,7 @@ i915_mch_val(struct inteldrm_softc *dev_priv)
 }
 
 u16
-pvid_to_extvid(struct inteldrm_softc *dev_priv, u8 pxvid)
+pvid_to_extvid(struct drm_i915_private *dev_priv, u8 pxvid)
 {
 	static const struct v_table {
 		u16 vd; /* in .1 mil */
@@ -3290,7 +3290,7 @@ pvid_to_extvid(struct inteldrm_softc *dev_priv, u8 pxvid)
 }
 
 void
-__i915_update_gfx_val(struct inteldrm_softc *dev_priv)
+__i915_update_gfx_val(struct drm_i915_private *dev_priv)
 {
 	struct timespec now, diff1;
 	u64 diff;
@@ -3326,7 +3326,7 @@ __i915_update_gfx_val(struct inteldrm_softc *dev_priv)
 }
 
 void
-i915_update_gfx_val(struct inteldrm_softc *dev_priv)
+i915_update_gfx_val(struct drm_i915_private *dev_priv)
 {
 	if (dev_priv->info->gen != 5)
 		return;
@@ -3339,7 +3339,7 @@ i915_update_gfx_val(struct inteldrm_softc *dev_priv)
 }
 
 unsigned long
-__i915_gfx_val(struct inteldrm_softc *dev_priv)
+__i915_gfx_val(struct drm_i915_private *dev_priv)
 {
 	unsigned long t, corr, state1, corr2, state2;
 	u32 pxvid, ext_v;
@@ -3377,7 +3377,7 @@ __i915_gfx_val(struct inteldrm_softc *dev_priv)
 }
 
 unsigned long
-i915_gfx_val(struct inteldrm_softc *dev_priv)
+i915_gfx_val(struct drm_i915_private *dev_priv)
 {
 	unsigned long val;
 
@@ -3402,7 +3402,7 @@ i915_gfx_val(struct inteldrm_softc *dev_priv)
 unsigned long
 i915_read_mch_val(void)
 {
-	struct inteldrm_softc *dev_priv;
+	struct drm_i915_private *dev_priv;
 	unsigned long chipset_val, graphics_val, ret = 0;
 
 	mtx_enter(&mchdev_lock);
@@ -3429,7 +3429,7 @@ out_unlock:
 bool
 i915_gpu_raise(void)
 {
-	struct inteldrm_softc *dev_priv;
+	struct drm_i915_private *dev_priv;
 	bool ret = true;
 
 	mtx_enter(&mchdev_lock);
@@ -3457,7 +3457,7 @@ out_unlock:
 bool
 i915_gpu_lower(void)
 {
-	struct inteldrm_softc *dev_priv;
+	struct drm_i915_private *dev_priv;
 	bool ret = true;
 
 	mtx_enter(&mchdev_lock);
@@ -3484,7 +3484,7 @@ out_unlock:
 bool
 i915_gpu_busy(void)
 {
-	struct inteldrm_softc *dev_priv;
+	struct drm_i915_private *dev_priv;
 	struct intel_ring_buffer *ring;
 	bool ret = false;
 	int i;
@@ -3512,7 +3512,7 @@ out_unlock:
 bool
 i915_gpu_turbo_disable(void)
 {
-	struct inteldrm_softc *dev_priv;
+	struct drm_i915_private *dev_priv;
 	struct drm_device *dev;
 	bool ret = true;
 
@@ -3557,7 +3557,7 @@ ips_ping_for_i915_load(void)
 #endif
 
 void
-intel_gpu_ips_init(struct inteldrm_softc *dev_priv)
+intel_gpu_ips_init(struct drm_i915_private *dev_priv)
 {
 	/* We only register the i915 ips part with intel-ips once everything is
 	 * set up, to avoid intel-ips sneaking in and reading bogus values. */
@@ -3579,7 +3579,7 @@ intel_gpu_ips_teardown(void)
 void
 intel_init_emon(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 lcfuse;
 	u8 pxw[16];
 	int i;
@@ -3651,7 +3651,7 @@ intel_init_emon(struct drm_device *dev)
 void
 intel_disable_gt_powersave(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (IS_IRONLAKE_M(dev)) {
 		ironlake_disable_drps(dev);
@@ -3688,7 +3688,7 @@ intel_gen6_powersave_work(void *arg1, void *arg2)
 void
 intel_enable_gt_powersave(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (IS_IRONLAKE_M(dev)) {
 		ironlake_enable_drps(dev);
@@ -3707,7 +3707,7 @@ intel_enable_gt_powersave(struct drm_device *dev)
 void
 ibx_init_clock_gating(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	/*
 	 * On Ibex Peak and Cougar Point, we need to disable clock
@@ -3720,7 +3720,7 @@ ibx_init_clock_gating(struct drm_device *dev)
 void
 ironlake_init_clock_gating(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t dspclk_gate = ILK_VRHUNIT_CLOCK_GATE_DISABLE;
 
 	/* Required for FBC */
@@ -3787,7 +3787,7 @@ ironlake_init_clock_gating(struct drm_device *dev)
 void
 cpt_init_clock_gating(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int pipe;
 	uint32_t val;
 
@@ -3818,7 +3818,7 @@ cpt_init_clock_gating(struct drm_device *dev)
 void
 gen6_init_clock_gating(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int pipe;
 	uint32_t dspclk_gate = ILK_VRHUNIT_CLOCK_GATE_DISABLE;
 
@@ -3911,7 +3911,7 @@ gen6_init_clock_gating(struct drm_device *dev)
 }
 
 void
-gen7_setup_fixed_func_scheduler(struct inteldrm_softc *dev_priv)
+gen7_setup_fixed_func_scheduler(struct drm_i915_private *dev_priv)
 {
 	uint32_t reg = I915_READ(GEN7_FF_THREAD_MODE);
 
@@ -3926,7 +3926,7 @@ gen7_setup_fixed_func_scheduler(struct inteldrm_softc *dev_priv)
 void
 lpt_init_clock_gating(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	/*
 	 * TODO: this bit should only be enabled when really needed, then
@@ -3941,7 +3941,7 @@ lpt_init_clock_gating(struct drm_device *dev)
 void
 haswell_init_clock_gating(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int pipe;
 
 	I915_WRITE(WM3_LP_ILK, 0);
@@ -4000,7 +4000,7 @@ haswell_init_clock_gating(struct drm_device *dev)
 void
 ivybridge_init_clock_gating(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int pipe;
 	uint32_t snpcr;
 
@@ -4098,7 +4098,7 @@ ivybridge_init_clock_gating(struct drm_device *dev)
 void
 valleyview_init_clock_gating(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int pipe;
 
 	I915_WRITE(WM3_LP_ILK, 0);
@@ -4208,7 +4208,7 @@ valleyview_init_clock_gating(struct drm_device *dev)
 void
 g4x_init_clock_gating(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t dspclk_gate;
 
 	I915_WRITE(RENCLK_GATE_D1, 0);
@@ -4231,7 +4231,7 @@ g4x_init_clock_gating(struct drm_device *dev)
 void
 crestline_init_clock_gating(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	I915_WRITE(RENCLK_GATE_D1, I965_RCC_CLOCK_GATE_DISABLE);
 	I915_WRITE(RENCLK_GATE_D2, 0);
@@ -4243,7 +4243,7 @@ crestline_init_clock_gating(struct drm_device *dev)
 void
 broadwater_init_clock_gating(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	I915_WRITE(RENCLK_GATE_D1, I965_RCZ_CLOCK_GATE_DISABLE |
 		   I965_RCC_CLOCK_GATE_DISABLE |
@@ -4256,7 +4256,7 @@ broadwater_init_clock_gating(struct drm_device *dev)
 void
 gen3_init_clock_gating(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 dstate = I915_READ(D_STATE);
 
 	dstate |= DSTATE_PLL_D3_OFF | DSTATE_GFX_CLOCK_GATING |
@@ -4273,7 +4273,7 @@ gen3_init_clock_gating(struct drm_device *dev)
 void
 i85x_init_clock_gating(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	I915_WRITE(RENCLK_GATE_D1, SV_CLOCK_GATE_DISABLE);
 }
@@ -4281,7 +4281,7 @@ i85x_init_clock_gating(struct drm_device *dev)
 void
 i830_init_clock_gating(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	I915_WRITE(DSPCLK_GATE_D, OVRUNIT_CLOCK_GATE_DISABLE);
 }
@@ -4289,7 +4289,7 @@ i830_init_clock_gating(struct drm_device *dev)
 void
 intel_init_clock_gating(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	dev_priv->display.init_clock_gating(dev);
 }
@@ -4300,7 +4300,7 @@ intel_init_clock_gating(struct drm_device *dev)
 void
 intel_init_power_wells(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	unsigned long power_wells[] = {
 		HSW_PWR_WELL_CTL1,
 		HSW_PWR_WELL_CTL2,
@@ -4335,7 +4335,7 @@ intel_init_power_wells(struct drm_device *dev)
 void
 intel_init_pm(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (I915_HAS_FBC(dev)) {
 		if (HAS_PCH_SPLIT(dev)) {
@@ -4457,7 +4457,7 @@ intel_init_pm(struct drm_device *dev)
 }
 
 void
-__gen6_gt_wait_for_thread_c0(struct inteldrm_softc *dev_priv)
+__gen6_gt_wait_for_thread_c0(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	u32 gt_thread_status_mask;
@@ -4482,14 +4482,14 @@ __gen6_gt_wait_for_thread_c0(struct inteldrm_softc *dev_priv)
 }
 
 void
-__gen6_gt_force_wake_reset(struct inteldrm_softc *dev_priv)
+__gen6_gt_force_wake_reset(struct drm_i915_private *dev_priv)
 {
 	I915_WRITE_NOTRACE(FORCEWAKE, 0);
 	POSTING_READ(ECOBUS); /* something from same cacheline, but !FORCEWAKE */
 }
 
 void
-__gen6_gt_force_wake_get(struct inteldrm_softc *dev_priv)
+__gen6_gt_force_wake_get(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	u32 forcewake_ack;
@@ -4515,7 +4515,7 @@ __gen6_gt_force_wake_get(struct inteldrm_softc *dev_priv)
 }
 
 void
-__gen6_gt_force_wake_mt_reset(struct inteldrm_softc *dev_priv)
+__gen6_gt_force_wake_mt_reset(struct drm_i915_private *dev_priv)
 {
 	I915_WRITE_NOTRACE(FORCEWAKE_MT, _MASKED_BIT_DISABLE(0xffff));
 	/* something from same cacheline, but !FORCEWAKE_MT */
@@ -4523,7 +4523,7 @@ __gen6_gt_force_wake_mt_reset(struct inteldrm_softc *dev_priv)
 }
 
 void
-__gen6_gt_force_wake_mt_get(struct inteldrm_softc *dev_priv)
+__gen6_gt_force_wake_mt_get(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	u32 forcewake_ack;
@@ -4556,7 +4556,7 @@ __gen6_gt_force_wake_mt_get(struct inteldrm_softc *dev_priv)
  * gen6_gt_force_wake_put() at the end of the sequence.
  */
 void
-gen6_gt_force_wake_get(struct inteldrm_softc *dev_priv)
+gen6_gt_force_wake_get(struct drm_i915_private *dev_priv)
 {
 	mtx_enter(&dev_priv->gt_lock);
 	if (dev_priv->forcewake_count++ == 0)
@@ -4565,7 +4565,7 @@ gen6_gt_force_wake_get(struct inteldrm_softc *dev_priv)
 }
 
 void
-gen6_gt_check_fifodbg(struct inteldrm_softc *dev_priv)
+gen6_gt_check_fifodbg(struct drm_i915_private *dev_priv)
 {
 	u32 gtfifodbg;
 	gtfifodbg = I915_READ_NOTRACE(GTFIFODBG);
@@ -4575,7 +4575,7 @@ gen6_gt_check_fifodbg(struct inteldrm_softc *dev_priv)
 }
 
 void
-__gen6_gt_force_wake_put(struct inteldrm_softc *dev_priv)
+__gen6_gt_force_wake_put(struct drm_i915_private *dev_priv)
 {
 	I915_WRITE_NOTRACE(FORCEWAKE, 0);
 	/* something from same cacheline, but !FORCEWAKE */
@@ -4584,7 +4584,7 @@ __gen6_gt_force_wake_put(struct inteldrm_softc *dev_priv)
 }
 
 void
-__gen6_gt_force_wake_mt_put(struct inteldrm_softc *dev_priv)
+__gen6_gt_force_wake_mt_put(struct drm_i915_private *dev_priv)
 {
 	I915_WRITE_NOTRACE(FORCEWAKE_MT, _MASKED_BIT_DISABLE(FORCEWAKE_KERNEL));
 	/* something from same cacheline, but !FORCEWAKE_MT */
@@ -4596,7 +4596,7 @@ __gen6_gt_force_wake_mt_put(struct inteldrm_softc *dev_priv)
  * see gen6_gt_force_wake_get()
  */
 void
-gen6_gt_force_wake_put(struct inteldrm_softc *dev_priv)
+gen6_gt_force_wake_put(struct drm_i915_private *dev_priv)
 {
 	mtx_enter(&dev_priv->gt_lock);
 	if (--dev_priv->forcewake_count == 0)
@@ -4605,7 +4605,7 @@ gen6_gt_force_wake_put(struct inteldrm_softc *dev_priv)
 }
 
 int
-__gen6_gt_wait_for_fifo(struct inteldrm_softc *dev_priv)
+__gen6_gt_wait_for_fifo(struct drm_i915_private *dev_priv)
 {
 	int ret = 0;
 
@@ -4626,7 +4626,7 @@ __gen6_gt_wait_for_fifo(struct inteldrm_softc *dev_priv)
 }
 
 void
-vlv_force_wake_reset(struct inteldrm_softc *dev_priv)
+vlv_force_wake_reset(struct drm_i915_private *dev_priv)
 {
 	I915_WRITE_NOTRACE(FORCEWAKE_VLV, _MASKED_BIT_DISABLE(0xffff));
 	/* something from same cacheline, but !FORCEWAKE_VLV */
@@ -4634,7 +4634,7 @@ vlv_force_wake_reset(struct inteldrm_softc *dev_priv)
 }
 
 void
-vlv_force_wake_get(struct inteldrm_softc *dev_priv)
+vlv_force_wake_get(struct drm_i915_private *dev_priv)
 {
 	int count;
 
@@ -4652,7 +4652,7 @@ vlv_force_wake_get(struct inteldrm_softc *dev_priv)
 }
 
 void
-vlv_force_wake_put(struct inteldrm_softc *dev_priv)
+vlv_force_wake_put(struct drm_i915_private *dev_priv)
 {
 	I915_WRITE_NOTRACE(FORCEWAKE_VLV, _MASKED_BIT_DISABLE(FORCEWAKE_KERNEL));
 	/* something from same cacheline, but !FORCEWAKE_VLV */
@@ -4663,7 +4663,7 @@ vlv_force_wake_put(struct inteldrm_softc *dev_priv)
 void
 intel_gt_reset(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (IS_VALLEYVIEW(dev)) {
 		vlv_force_wake_reset(dev_priv);
@@ -4677,7 +4677,7 @@ intel_gt_reset(struct drm_device *dev)
 void
 intel_gt_init(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	mtx_init(&dev_priv->gt_lock, IPL_TTY);
 
@@ -4698,7 +4698,7 @@ intel_gt_init(struct drm_device *dev)
 }
 
 int
-sandybridge_pcode_read(struct inteldrm_softc *dev_priv, u8 mbox, u32 *val)
+sandybridge_pcode_read(struct drm_i915_private *dev_priv, u8 mbox, u32 *val)
 {
 	int retries;
 	rw_assert_wrlock(&dev_priv->rps.hw_lock);
@@ -4728,7 +4728,7 @@ sandybridge_pcode_read(struct inteldrm_softc *dev_priv, u8 mbox, u32 *val)
 }
 
 int
-sandybridge_pcode_write(struct inteldrm_softc *dev_priv, u8 mbox, u32 val)
+sandybridge_pcode_write(struct drm_i915_private *dev_priv, u8 mbox, u32 val)
 {
 	int retries;
 	rw_assert_wrlock(&dev_priv->rps.hw_lock);

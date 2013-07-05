@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.26 2013/07/04 09:49:00 jsg Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.27 2013/07/05 07:20:27 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -70,7 +70,7 @@ void i915_gem_object_update_fence(struct drm_i915_gem_object *,
     struct drm_i915_fence_reg *, bool);
 int i915_gem_object_flush_fence(struct drm_i915_gem_object *);
 struct drm_i915_fence_reg *i915_find_fence_reg(struct drm_device *);
-void i915_gem_reset_ring_lists(drm_i915_private_t *,
+void i915_gem_reset_ring_lists(struct drm_i915_private *,
     struct intel_ring_buffer *);
 void i915_gem_object_flush_gtt_write_domain(struct drm_i915_gem_object *);
 void i915_gem_request_remove_from_client(struct drm_i915_gem_request *);
@@ -1414,7 +1414,7 @@ i915_gem_request_remove_from_client(struct drm_i915_gem_request *request)
 }
 
 void
-i915_gem_reset_ring_lists(drm_i915_private_t *dev_priv,
+i915_gem_reset_ring_lists(struct drm_i915_private *dev_priv,
 				      struct intel_ring_buffer *ring)
 {
 	while (!list_empty(&ring->request_list)) {
@@ -1919,7 +1919,7 @@ i915_gem_write_fence(struct drm_device *dev, int reg,
 }
 
 static inline int
-fence_number(drm_i915_private_t *dev_priv,
+fence_number(struct drm_i915_private *dev_priv,
 			       struct drm_i915_fence_reg *fence)
 {
 	return fence - dev_priv->fence_regs;
@@ -3152,7 +3152,7 @@ cleanup_render_ring:
 int
 i915_gem_init(struct drm_device *dev)
 {
-	struct inteldrm_softc		*dev_priv = dev->dev_private;
+	struct drm_i915_private		*dev_priv = dev->dev_private;
 	uint64_t			 gtt_start, gtt_end;
 	struct agp_softc		*asc;
 	int				 ret;

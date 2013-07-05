@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.5 2013/04/17 20:04:04 kettenis Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.6 2013/07/05 07:20:27 jsg Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -44,14 +44,14 @@ int	 i915_get_vblank_timestamp(struct drm_device *, int, int *,
 void	 ironlake_handle_rps_change(struct drm_device *);
 void	 notify_ring(struct drm_device *, struct intel_ring_buffer *);
 void	 ivybridge_handle_parity_error(struct drm_device *);
-void	 snb_gt_irq_handler(struct drm_device *, struct inteldrm_softc *, u32);
-void	 snb_gt_irq_handler(struct drm_device *, struct inteldrm_softc *, u32);
-void	 gen6_queue_rps_work(struct inteldrm_softc *, u32);
+void	 snb_gt_irq_handler(struct drm_device *, struct drm_i915_private *, u32);
+void	 snb_gt_irq_handler(struct drm_device *, struct drm_i915_private *, u32);
+void	 gen6_queue_rps_work(struct drm_i915_private *, u32);
 int	 valleyview_intr(void *);
 void	 ibx_irq_handler(struct drm_device *, u32);
 void	 cpt_irq_handler(struct drm_device *, u32);
 int	 ivybridge_intr(void *);
-void	 ilk_gt_irq_handler(struct drm_device *, struct inteldrm_softc *, u32);
+void	 ilk_gt_irq_handler(struct drm_device *, struct drm_i915_private *, u32);
 int	 ironlake_intr(void *);
 void	 i915_get_extra_instdone(struct drm_device *, uint32_t *);
 void	 i915_report_and_clear_eir(struct drm_device *);
@@ -311,7 +311,7 @@ i915_get_vblank_timestamp(struct drm_device *dev, int pipe,
 			      struct timeval *vblank_time,
 			      unsigned flags)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc;
 
 	if (pipe < 0 || pipe >= dev_priv->num_pipe) {
@@ -408,7 +408,7 @@ void
 notify_ring(struct drm_device *dev,
 			struct intel_ring_buffer *ring)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (ring->obj == NULL)
 		return;
@@ -548,7 +548,7 @@ ivybridge_handle_parity_error(struct drm_device *dev)
 
 void
 snb_gt_irq_handler(struct drm_device *dev,
-			       struct inteldrm_softc *dev_priv,
+			       struct drm_i915_private *dev_priv,
 			       u32 gt_iir)
 {
 
@@ -572,7 +572,7 @@ snb_gt_irq_handler(struct drm_device *dev,
 }
 
 void
-gen6_queue_rps_work(struct inteldrm_softc *dev_priv,
+gen6_queue_rps_work(struct drm_i915_private *dev_priv,
 				u32 pm_iir)
 {
 	/*
@@ -821,7 +821,7 @@ ivybridge_intr(void *arg)
 
 void
 ilk_gt_irq_handler(struct drm_device *dev,
-			       struct inteldrm_softc *dev_priv,
+			       struct drm_i915_private *dev_priv,
 			       u32 gt_iir)
 {
 	if (gt_iir & (GT_USER_INTERRUPT | GT_PIPE_NOTIFY))
@@ -946,7 +946,7 @@ void
 i915_get_extra_instdone(struct drm_device *dev,
 				    uint32_t *instdone)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	memset(instdone, 0, sizeof(*instdone) * I915_NUM_INSTDONE_REG);
 
 	switch(INTEL_INFO(dev)->gen) {
@@ -973,7 +973,7 @@ i915_get_extra_instdone(struct drm_device *dev,
 
 #ifdef CONFIG_DEBUG_FS
 struct drm_i915_error_object *
-i915_error_object_create(struct inteldrm_softc *dev_priv,
+i915_error_object_create(struct drm_i915_private *dev_priv,
 			 struct drm_i915_gem_object *src)
 {
 	struct drm_i915_error_object *dst;
@@ -1139,7 +1139,7 @@ void
 i915_gem_record_fences(struct drm_device *dev,
 				   struct drm_i915_error_state *error)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int i;
 
 	/* Fences */
@@ -1167,7 +1167,7 @@ i915_gem_record_fences(struct drm_device *dev,
 }
 
 struct drm_i915_error_object *
-i915_error_first_batchbuffer(struct inteldrm_softc *dev_priv,
+i915_error_first_batchbuffer(struct drm_i915_private *dev_priv,
 			     struct intel_ring_buffer *ring)
 {
 	struct drm_i915_gem_object *obj;
@@ -1213,7 +1213,7 @@ i915_record_ring_state(struct drm_device *dev,
 				   struct drm_i915_error_state *error,
 				   struct intel_ring_buffer *ring)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (INTEL_INFO(dev)->gen >= 6) {
 		error->rc_psmi[ring->id] = I915_READ(ring->mmio_base + 0x50);
@@ -1257,7 +1257,7 @@ void
 i915_gem_record_rings(struct drm_device *dev,
 				  struct drm_i915_error_state *error)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_ring_buffer *ring;
 	struct drm_i915_gem_request *request;
 	int i, count;
@@ -1308,7 +1308,7 @@ i915_gem_record_rings(struct drm_device *dev,
 void
 i915_capture_error_state(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_i915_gem_object *obj;
 	struct drm_i915_error_state *error;
 	unsigned long flags;
@@ -1424,7 +1424,7 @@ i915_capture_error_state(struct drm_device *dev)
 void
 i915_destroy_error_state(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_i915_error_state *error;
 	unsigned long flags;
 
@@ -1443,7 +1443,7 @@ i915_destroy_error_state(struct drm_device *dev)
 void
 i915_report_and_clear_eir(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t instdone[I915_NUM_INSTDONE_REG];
 	u32 eir = I915_READ(EIR);
 	int pipe, i;
@@ -1546,7 +1546,7 @@ i915_report_and_clear_eir(struct drm_device *dev)
 void
 i915_handle_error(struct drm_device *dev, bool wedged)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_ring_buffer *ring;
 	int i;
 
@@ -1786,7 +1786,7 @@ bool
 kick_ring(struct intel_ring_buffer *ring)
 {
 	struct drm_device *dev = ring->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 tmp = I915_READ_CTL(ring);
 	if (tmp & RING_WAIT) {
 		DRM_ERROR("Kicking stuck wait on %s\n",
@@ -1836,7 +1836,7 @@ i915_hangcheck_hung(struct drm_device *dev)
 void
 i915_hangcheck_elapsed(void *arg)
 {
-	struct inteldrm_softc *dev_priv = arg;
+	drm_i915_private_t *dev_priv = arg;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	uint32_t acthd[I915_NUM_RINGS], instdone[I915_NUM_INSTDONE_REG];
 	struct intel_ring_buffer *ring;
@@ -2823,7 +2823,6 @@ i965_irq_uninstall(struct drm_device * dev)
 void
 intel_irq_init(struct drm_device *dev)
 {
-//	struct inteldrm_softc *dev_priv = dev->dev_private;
 
 	dev->driver->get_vblank_counter = i915_get_vblank_counter;
 	dev->max_vblank_count = 0xffffff; /* only 24 bits of frame count */

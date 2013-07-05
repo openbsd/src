@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_fb.c,v 1.4 2013/04/17 20:15:14 kettenis Exp $	*/
+/*	$OpenBSD: intel_fb.c,v 1.5 2013/07/05 07:20:27 jsg Exp $	*/
 /*
  * Copyright © 2007 David Airlie
  *
@@ -44,7 +44,7 @@ intelfb_create(struct intel_fbdev *ifbdev,
     struct drm_fb_helper_surface_size *sizes)
 {
 	struct drm_device *dev = ifbdev->helper.dev;
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 #if 0
 	struct fb_info *info;
 #endif
@@ -255,7 +255,7 @@ int
 intel_fbdev_init(struct drm_device *dev)
 {
 	struct intel_fbdev *ifbdev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	drm_i915_private_t *dev_priv = dev->dev_private;
 	int ret;
 
 	ifbdev = malloc(sizeof(struct intel_fbdev), M_DRM,
@@ -280,7 +280,7 @@ intel_fbdev_init(struct drm_device *dev)
 void
 intel_fbdev_fini(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	drm_i915_private_t *dev_priv = dev->dev_private;
 	if (!dev_priv->fbdev)
 		return;
 
@@ -292,7 +292,7 @@ intel_fbdev_fini(struct drm_device *dev)
 void
 intel_fb_output_poll_changed(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	drm_i915_private_t *dev_priv = dev->dev_private;
 	drm_fb_helper_hotplug_event(&dev_priv->fbdev->helper);
 }
 
@@ -300,7 +300,7 @@ void
 intel_fb_restore_mode(struct drm_device *dev)
 {
 	int ret;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	drm_i915_private_t *dev_priv = dev->dev_private;
 	struct drm_mode_config *config = &dev->mode_config;
 	struct drm_plane *plane;
 

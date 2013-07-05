@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_ns2501.c,v 1.3 2013/03/31 11:43:23 kettenis Exp $	*/
+/*	$OpenBSD: dvo_ns2501.c,v 1.4 2013/07/05 07:20:27 jsg Exp $	*/
 /*
  *
  * Copyright (c) 2012 Gilles Dartiguelongue, Thomas Richter
@@ -111,7 +111,7 @@ enable_dvo(struct intel_dvo_device *dvo)
 	struct intel_gmbus *bus = container_of(adapter,
 					       struct intel_gmbus,
 					       controller);
-	drm_i915_private_t *dev_priv = bus->dev_priv;
+	struct drm_i915_private *dev_priv = bus->dev_priv;
 
 	DRM_DEBUG_KMS("%s: Trying to re-enable the DVO\n", __FUNCTION__);
 
@@ -139,7 +139,7 @@ restore_dvo(struct intel_dvo_device *dvo)
 	struct intel_gmbus *bus = container_of(adapter,
 					       struct intel_gmbus,
 					       controller);
-	drm_i915_private_t *dev_priv = bus->dev_priv;
+	struct drm_i915_private *dev_priv = bus->dev_priv;
 	struct ns2501_priv *ns = (struct ns2501_priv *)(dvo->dev_priv);
 
 	I915_WRITE(DVOC, ns->dvoc);

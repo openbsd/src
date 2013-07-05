@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_hdmi.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: intel_hdmi.c,v 1.2 2013/07/05 07:20:27 jsg Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2009 Intel Corporation
@@ -91,7 +91,7 @@ void
 assert_hdmi_port_disabled(struct intel_hdmi *intel_hdmi)
 {
 	struct drm_device *dev = intel_hdmi_to_dev(intel_hdmi);
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t enabled_bits;
 
 	enabled_bits = IS_HASWELL(dev) ? DDI_BUF_CTL_ENABLE : SDVO_ENABLE;
@@ -192,7 +192,7 @@ g4x_write_infoframe(struct drm_encoder *encoder,
 {
 	uint32_t *data = (uint32_t *)frame;
 	struct drm_device *dev = encoder->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 val = I915_READ(VIDEO_DIP_CTL);
 	unsigned i, len = DIP_HEADER_SIZE + frame->len;
 
@@ -229,7 +229,7 @@ ibx_write_infoframe(struct drm_encoder *encoder,
 {
 	uint32_t *data = (uint32_t *)frame;
 	struct drm_device *dev = encoder->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
 	int reg = TVIDEO_DIP_CTL(intel_crtc->pipe);
 	unsigned i, len = DIP_HEADER_SIZE + frame->len;
@@ -268,7 +268,7 @@ cpt_write_infoframe(struct drm_encoder *encoder,
 {
 	uint32_t *data = (uint32_t *)frame;
 	struct drm_device *dev = encoder->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
 	int reg = TVIDEO_DIP_CTL(intel_crtc->pipe);
 	unsigned i, len = DIP_HEADER_SIZE + frame->len;
@@ -310,7 +310,7 @@ vlv_write_infoframe(struct drm_encoder *encoder,
 {
 	uint32_t *data = (uint32_t *)frame;
 	struct drm_device *dev = encoder->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
 	int reg = VLV_TVIDEO_DIP_CTL(intel_crtc->pipe);
 	unsigned i, len = DIP_HEADER_SIZE + frame->len;
@@ -349,7 +349,7 @@ hsw_write_infoframe(struct drm_encoder *encoder,
 {
 	uint32_t *data = (uint32_t *)frame;
 	struct drm_device *dev = encoder->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
 	u32 ctl_reg = HSW_TVIDEO_DIP_CTL(intel_crtc->pipe);
 	u32 data_reg = hsw_infoframe_data_reg(frame, intel_crtc->pipe);
@@ -425,7 +425,7 @@ void
 g4x_set_infoframes(struct drm_encoder *encoder,
 			       struct drm_display_mode *adjusted_mode)
 {
-	struct inteldrm_softc *dev_priv = encoder->dev->dev_private;
+	struct drm_i915_private *dev_priv = encoder->dev->dev_private;
 	struct intel_hdmi *intel_hdmi = enc_to_intel_hdmi(encoder);
 	u32 reg = VIDEO_DIP_CTL;
 	u32 val = I915_READ(reg);
@@ -489,7 +489,7 @@ void
 ibx_set_infoframes(struct drm_encoder *encoder,
 			       struct drm_display_mode *adjusted_mode)
 {
-	struct inteldrm_softc *dev_priv = encoder->dev->dev_private;
+	struct drm_i915_private *dev_priv = encoder->dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
 	struct intel_hdmi *intel_hdmi = enc_to_intel_hdmi(encoder);
 	u32 reg = TVIDEO_DIP_CTL(intel_crtc->pipe);
@@ -550,7 +550,7 @@ void
 cpt_set_infoframes(struct drm_encoder *encoder,
 			       struct drm_display_mode *adjusted_mode)
 {
-	struct inteldrm_softc *dev_priv = encoder->dev->dev_private;
+	struct drm_i915_private *dev_priv = encoder->dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
 	struct intel_hdmi *intel_hdmi = enc_to_intel_hdmi(encoder);
 	u32 reg = TVIDEO_DIP_CTL(intel_crtc->pipe);
@@ -586,7 +586,7 @@ void
 vlv_set_infoframes(struct drm_encoder *encoder,
 			       struct drm_display_mode *adjusted_mode)
 {
-	struct inteldrm_softc *dev_priv = encoder->dev->dev_private;
+	struct drm_i915_private *dev_priv = encoder->dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
 	struct intel_hdmi *intel_hdmi = enc_to_intel_hdmi(encoder);
 	u32 reg = VLV_TVIDEO_DIP_CTL(intel_crtc->pipe);
@@ -621,7 +621,7 @@ void
 hsw_set_infoframes(struct drm_encoder *encoder,
 			       struct drm_display_mode *adjusted_mode)
 {
-	struct inteldrm_softc *dev_priv = encoder->dev->dev_private;
+	struct drm_i915_private *dev_priv = encoder->dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
 	struct intel_hdmi *intel_hdmi = enc_to_intel_hdmi(encoder);
 	u32 reg = HSW_TVIDEO_DIP_CTL(intel_crtc->pipe);
@@ -651,7 +651,7 @@ intel_hdmi_mode_set(struct drm_encoder *encoder,
 				struct drm_display_mode *adjusted_mode)
 {
 	struct drm_device *dev = encoder->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
 	struct intel_hdmi *intel_hdmi = enc_to_intel_hdmi(encoder);
 	u32 sdvox;
@@ -697,7 +697,7 @@ intel_hdmi_get_hw_state(struct intel_encoder *encoder,
 				    enum pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_hdmi *intel_hdmi = enc_to_intel_hdmi(&encoder->base);
 	u32 tmp;
 
@@ -718,7 +718,7 @@ void
 intel_enable_hdmi(struct intel_encoder *encoder)
 {
 	struct drm_device *dev = encoder->base.dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_hdmi *intel_hdmi = enc_to_intel_hdmi(&encoder->base);
 	u32 temp;
 	u32 enable_bits = SDVO_ENABLE;
@@ -765,7 +765,7 @@ void
 intel_disable_hdmi(struct intel_encoder *encoder)
 {
 	struct drm_device *dev = encoder->base.dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_hdmi *intel_hdmi = enc_to_intel_hdmi(&encoder->base);
 	u32 temp;
 	u32 enable_bits = SDVO_ENABLE | SDVO_AUDIO_ENABLE;
@@ -845,7 +845,7 @@ bool
 g4x_hdmi_connected(struct intel_hdmi *intel_hdmi)
 {
 	struct drm_device *dev = intel_hdmi_to_dev(intel_hdmi);
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t bit;
 
 	switch (intel_hdmi->sdvox_reg) {
@@ -870,7 +870,7 @@ intel_hdmi_detect(struct drm_connector *connector, bool force)
 	struct intel_digital_port *intel_dig_port =
 		hdmi_to_dig_port(intel_hdmi);
 	struct intel_encoder *intel_encoder = &intel_dig_port->base;
-	struct inteldrm_softc *dev_priv = connector->dev->dev_private;
+	struct drm_i915_private *dev_priv = connector->dev->dev_private;
 	struct edid *edid;
 	enum drm_connector_status status = connector_status_disconnected;
 
@@ -908,7 +908,7 @@ int
 intel_hdmi_get_modes(struct drm_connector *connector)
 {
 	struct intel_hdmi *intel_hdmi = intel_attached_hdmi(connector);
-	struct inteldrm_softc *dev_priv = connector->dev->dev_private;
+	struct drm_i915_private *dev_priv = connector->dev->dev_private;
 
 	/* We should parse the EDID data and find out if it's an HDMI sink so
 	 * we can send audio to it.
@@ -923,7 +923,7 @@ bool
 intel_hdmi_detect_audio(struct drm_connector *connector)
 {
 	struct intel_hdmi *intel_hdmi = intel_attached_hdmi(connector);
-	struct inteldrm_softc *dev_priv = connector->dev->dev_private;
+	struct drm_i915_private *dev_priv = connector->dev->dev_private;
 	struct edid *edid;
 	bool has_audio = false;
 
@@ -947,7 +947,7 @@ intel_hdmi_set_property(struct drm_connector *connector,
 	struct intel_hdmi *intel_hdmi = intel_attached_hdmi(connector);
 	struct intel_digital_port *intel_dig_port =
 		hdmi_to_dig_port(intel_hdmi);
-	struct inteldrm_softc *dev_priv = connector->dev->dev_private;
+	struct drm_i915_private *dev_priv = connector->dev->dev_private;
 	int ret;
 
 	ret = drm_object_property_set_value(&connector->base, property, val);
@@ -1044,7 +1044,7 @@ intel_hdmi_init_connector(struct intel_digital_port *intel_dig_port,
 	struct intel_hdmi *intel_hdmi = &intel_dig_port->hdmi;
 	struct intel_encoder *intel_encoder = &intel_dig_port->base;
 	struct drm_device *dev = intel_encoder->base.dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	enum port port = intel_dig_port->port;
 
 	drm_connector_init(dev, connector, &intel_hdmi_connector_funcs,

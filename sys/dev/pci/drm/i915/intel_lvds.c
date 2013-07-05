@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_lvds.c,v 1.3 2013/07/04 09:55:01 jsg Exp $	*/
+/*	$OpenBSD: intel_lvds.c,v 1.4 2013/07/05 07:20:27 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -103,7 +103,7 @@ intel_lvds_get_hw_state(struct intel_encoder *encoder,
 				    enum pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 lvds_reg, tmp;
 
 	if (HAS_PCH_SPLIT(dev)) {
@@ -134,7 +134,7 @@ intel_enable_lvds(struct intel_encoder *encoder)
 	struct drm_device *dev = encoder->base.dev;
 	struct intel_lvds_encoder *lvds_encoder = to_lvds_encoder(&encoder->base);
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->base.crtc);
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 ctl_reg, lvds_reg, stat_reg;
 	int retries;
 
@@ -184,7 +184,7 @@ intel_disable_lvds(struct intel_encoder *encoder)
 {
 	struct drm_device *dev = encoder->base.dev;
 	struct intel_lvds_encoder *lvds_encoder = to_lvds_encoder(&encoder->base);
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 ctl_reg, lvds_reg, stat_reg;
 	int retries;
 
@@ -300,7 +300,7 @@ intel_lvds_mode_fixup(struct drm_encoder *encoder,
 				  struct drm_display_mode *adjusted_mode)
 {
 	struct drm_device *dev = encoder->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_lvds_encoder *lvds_encoder = to_lvds_encoder(encoder);
 	struct intel_connector *intel_connector =
 		&lvds_encoder->attached_connector->base;
@@ -562,7 +562,7 @@ intel_lid_notify(struct notifier_block *nb, unsigned long val,
 		container_of(nb, struct intel_lvds_connector, lid_notifier);
 	struct drm_connector *connector = &lvds_connector->base.base;
 	struct drm_device *dev = connector->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (dev->switch_power_state != DRM_SWITCH_POWER_ON)
 		return NOTIFY_OK;
@@ -876,7 +876,7 @@ intel_find_lvds_downclock(struct drm_device *dev,
 				      struct drm_display_mode *fixed_mode,
 				      struct drm_connector *connector)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_display_mode *scan;
 	int temp_downclock;
 
@@ -927,7 +927,7 @@ bool
 lvds_is_present_in_vbt(struct drm_device *dev,
 				   u8 *i2c_pin)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int i;
 
 	if (!dev_priv->child_dev_num)
@@ -990,7 +990,7 @@ intel_lvds_supported(struct drm_device *dev)
 bool
 intel_lvds_init(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_lvds_encoder *lvds_encoder;
 	struct intel_encoder *intel_encoder;
 	struct intel_lvds_connector *lvds_connector;

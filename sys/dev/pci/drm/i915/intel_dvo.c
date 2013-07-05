@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_dvo.c,v 1.2 2013/07/04 09:59:07 jsg Exp $	*/
+/*	$OpenBSD: intel_dvo.c,v 1.3 2013/07/05 07:20:27 jsg Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2007 Intel Corporation
@@ -136,7 +136,7 @@ intel_dvo_get_hw_state(struct intel_encoder *encoder,
 				   enum pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_dvo *intel_dvo = enc_to_intel_dvo(&encoder->base);
 	u32 tmp;
 
@@ -153,7 +153,7 @@ intel_dvo_get_hw_state(struct intel_encoder *encoder,
 void
 intel_disable_dvo(struct intel_encoder *encoder)
 {
-	drm_i915_private_t *dev_priv = encoder->base.dev->dev_private;
+	struct drm_i915_private *dev_priv = encoder->base.dev->dev_private;
 	struct intel_dvo *intel_dvo = enc_to_intel_dvo(&encoder->base);
 	u32 dvo_reg = intel_dvo->dev.dvo_reg;
 	u32 temp = I915_READ(dvo_reg);
@@ -166,7 +166,7 @@ intel_disable_dvo(struct intel_encoder *encoder)
 void
 intel_enable_dvo(struct intel_encoder *encoder)
 {
-	drm_i915_private_t *dev_priv = encoder->base.dev->dev_private;
+	struct drm_i915_private *dev_priv = encoder->base.dev->dev_private;
 	struct intel_dvo *intel_dvo = enc_to_intel_dvo(&encoder->base);
 	u32 dvo_reg = intel_dvo->dev.dvo_reg;
 	u32 temp = I915_READ(dvo_reg);
@@ -274,7 +274,7 @@ intel_dvo_mode_set(struct drm_encoder *encoder,
 			       struct drm_display_mode *adjusted_mode)
 {
 	struct drm_device *dev = encoder->dev;
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
 	struct intel_dvo *intel_dvo = enc_to_intel_dvo(encoder);
 	int pipe = intel_crtc->pipe;
@@ -339,7 +339,7 @@ int
 intel_dvo_get_modes(struct drm_connector *connector)
 {
 	struct intel_dvo *intel_dvo = intel_attached_dvo(connector);
-	drm_i915_private_t *dev_priv = connector->dev->dev_private;
+	struct drm_i915_private *dev_priv = connector->dev->dev_private;
 
 	/* We should probably have an i2c driver get_modes function for those
 	 * devices which will have a fixed set of modes determined by the chip
@@ -419,7 +419,7 @@ struct drm_display_mode *
 intel_dvo_get_current_mode(struct drm_connector *connector)
 {
 	struct drm_device *dev = connector->dev;
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_dvo *intel_dvo = intel_attached_dvo(connector);
 	uint32_t dvo_val = I915_READ(intel_dvo->dev.dvo_reg);
 	struct drm_display_mode *mode = NULL;
@@ -450,7 +450,7 @@ intel_dvo_get_current_mode(struct drm_connector *connector)
 void
 intel_dvo_init(struct drm_device *dev)
 {
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_encoder *intel_encoder;
 	struct intel_dvo *intel_dvo;
 	struct intel_connector *intel_connector;

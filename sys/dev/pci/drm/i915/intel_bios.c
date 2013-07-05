@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_bios.c,v 1.3 2013/07/04 09:52:29 jsg Exp $	*/
+/*	$OpenBSD: intel_bios.c,v 1.4 2013/07/05 07:20:27 jsg Exp $	*/
 /*
  * Copyright © 2006 Intel Corporation
  *
@@ -45,18 +45,18 @@ bool	 lvds_dvo_timing_equal_size(const struct lvds_dvo_timing *,
 const struct lvds_dvo_timing *
 	 get_lvds_dvo_timing(const struct bdb_lvds_lfp_data *,
 	     const struct bdb_lvds_lfp_data_ptrs *, int);
-void	 parse_lfp_panel_data(struct inteldrm_softc *, struct bdb_header *);
-void	 parse_sdvo_panel_data(struct inteldrm_softc *, struct bdb_header *);
+void	 parse_lfp_panel_data(struct drm_i915_private *, struct bdb_header *);
+void	 parse_sdvo_panel_data(struct drm_i915_private *, struct bdb_header *);
 int	 intel_bios_ssc_frequency(struct drm_device *, bool);
-void	 parse_general_features(struct inteldrm_softc *, struct bdb_header *);
-void	 parse_general_definitions(struct inteldrm_softc *,
+void	 parse_general_features(struct drm_i915_private *, struct bdb_header *);
+void	 parse_general_definitions(struct drm_i915_private *,
 	     struct bdb_header *);
-void	 parse_sdvo_device_mapping(struct inteldrm_softc *,
+void	 parse_sdvo_device_mapping(struct drm_i915_private *,
 	     struct bdb_header *);
-void	 parse_driver_features(struct inteldrm_softc *, struct bdb_header *);
-void	 parse_edp(struct inteldrm_softc *, struct bdb_header *);
-void	 parse_device_mapping(struct inteldrm_softc *, struct bdb_header *);
-void	 init_vbt_defaults(struct inteldrm_softc *);
+void	 parse_driver_features(struct drm_i915_private *, struct bdb_header *);
+void	 parse_edp(struct drm_i915_private *, struct bdb_header *);
+void	 parse_device_mapping(struct drm_i915_private *, struct bdb_header *);
+void	 init_vbt_defaults(struct drm_i915_private *);
 int	 intel_no_opregion_vbt_callback(const struct dmi_system_id *);
 const struct lvds_fp_timing *
 	 get_lvds_fp_timing(const struct bdb_header *,
@@ -227,7 +227,7 @@ get_lvds_fp_timing(const struct bdb_header *bdb,
 
 /* Try to find integrated panel data */
 void
-parse_lfp_panel_data(struct inteldrm_softc *dev_priv,
+parse_lfp_panel_data(struct drm_i915_private *dev_priv,
 			    struct bdb_header *bdb)
 {
 	const struct bdb_lvds_options *lvds_options;
@@ -314,7 +314,7 @@ parse_lfp_panel_data(struct inteldrm_softc *dev_priv,
 
 /* Try to find sdvo panel data */
 void
-parse_sdvo_panel_data(struct inteldrm_softc *dev_priv,
+parse_sdvo_panel_data(struct drm_i915_private *dev_priv,
 		      struct bdb_header *bdb)
 {
 	struct lvds_dvo_timing *dvo_timing;
@@ -370,7 +370,7 @@ intel_bios_ssc_frequency(struct drm_device *dev,
 }
 
 void
-parse_general_features(struct inteldrm_softc *dev_priv,
+parse_general_features(struct drm_i915_private *dev_priv,
 		       struct bdb_header *bdb)
 {
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -396,7 +396,7 @@ parse_general_features(struct inteldrm_softc *dev_priv,
 }
 
 void
-parse_general_definitions(struct inteldrm_softc *dev_priv,
+parse_general_definitions(struct drm_i915_private *dev_priv,
 			  struct bdb_header *bdb)
 {
 	struct bdb_general_definitions *general;
@@ -417,7 +417,7 @@ parse_general_definitions(struct inteldrm_softc *dev_priv,
 }
 
 void
-parse_sdvo_device_mapping(struct inteldrm_softc *dev_priv,
+parse_sdvo_device_mapping(struct drm_i915_private *dev_priv,
 			  struct bdb_header *bdb)
 {
 	struct sdvo_device_mapping *p_mapping;
@@ -507,7 +507,7 @@ parse_sdvo_device_mapping(struct inteldrm_softc *dev_priv,
 }
 
 void
-parse_driver_features(struct inteldrm_softc *dev_priv,
+parse_driver_features(struct drm_i915_private *dev_priv,
 		       struct bdb_header *bdb)
 {
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -526,7 +526,7 @@ parse_driver_features(struct inteldrm_softc *dev_priv,
 }
 
 void
-parse_edp(struct inteldrm_softc *dev_priv, struct bdb_header *bdb)
+parse_edp(struct drm_i915_private *dev_priv, struct bdb_header *bdb)
 {
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	struct bdb_edp *edp;
@@ -603,7 +603,7 @@ parse_edp(struct inteldrm_softc *dev_priv, struct bdb_header *bdb)
 }
 
 void
-parse_device_mapping(struct inteldrm_softc *dev_priv,
+parse_device_mapping(struct drm_i915_private *dev_priv,
 		       struct bdb_header *bdb)
 {
 	struct bdb_general_definitions *p_defs;
@@ -669,7 +669,7 @@ parse_device_mapping(struct inteldrm_softc *dev_priv,
 }
 
 void
-init_vbt_defaults(struct inteldrm_softc *dev_priv)
+init_vbt_defaults(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 
@@ -778,7 +778,7 @@ dmi_check_system(const struct dmi_system_id *sysid)
 int
 intel_parse_bios(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct bdb_header *bdb = NULL;
 	u8 *bios = NULL;
 
@@ -840,7 +840,7 @@ intel_parse_bios(struct drm_device *dev)
 void
 intel_setup_bios(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	 /* Set the Panel Power On/Off timings if uninitialized. */
 	if (!HAS_PCH_SPLIT(dev) &&

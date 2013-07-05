@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_opregion.c,v 1.2 2013/03/21 08:27:32 jsg Exp $	*/
+/*	$OpenBSD: intel_opregion.c,v 1.3 2013/07/05 07:20:27 jsg Exp $	*/
 /*
  * Copyright 2008 Intel Corporation <hong.liu@intel.com>
  * Copyright 2008 Red Hat <mjg@redhat.com>
@@ -160,7 +160,7 @@ void	intel_didl_outputs(struct drm_device *);
 u32
 asle_set_backlight(struct drm_device *dev, u32 bclp)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct opregion_asle *asle = dev_priv->opregion.asle;
 	u32 max;
 
@@ -189,7 +189,7 @@ asle_set_als_illum(struct drm_device *dev, u32 alsi)
 u32
 asle_set_pwm_freq(struct drm_device *dev, u32 pfmb)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	if (pfmb & ASLE_PFMB_PWM_VALID) {
 		u32 blc_pwm_ctl = I915_READ(BLC_PWM_CTL);
 		u32 pwm = pfmb & ASLE_PFMB_PWM_MASK;
@@ -213,7 +213,7 @@ asle_set_pfit(struct drm_device *dev, u32 pfit)
 void
 intel_opregion_asle_intr(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct opregion_asle *asle = dev_priv->opregion.asle;
 	u32 asle_stat = 0;
 	u32 asle_req;
@@ -246,7 +246,7 @@ intel_opregion_asle_intr(struct drm_device *dev)
 void
 intel_opregion_gse_intr(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct opregion_asle *asle = dev_priv->opregion.asle;
 	u32 asle_stat = 0;
 	u32 asle_req;
@@ -290,7 +290,7 @@ intel_opregion_gse_intr(struct drm_device *dev)
 void
 intel_opregion_enable_asle(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct opregion_asle *asle = dev_priv->opregion.asle;
 
 	if (asle) {
@@ -353,7 +353,7 @@ void
 intel_didl_outputs(struct drm_device *dev)
 {
 #ifdef notyet
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_opregion *opregion = &dev_priv->opregion;
 	struct drm_connector *connector;
 	acpi_handle handle;
@@ -446,7 +446,7 @@ blind_set:
 void
 intel_opregion_init(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_opregion *opregion = &dev_priv->opregion;
 
 	if (!opregion->header)
@@ -475,7 +475,7 @@ intel_opregion_init(struct drm_device *dev)
 void
 intel_opregion_fini(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_opregion *opregion = &dev_priv->opregion;
 
 	if (!opregion->header)
@@ -503,7 +503,7 @@ intel_opregion_fini(struct drm_device *dev)
 int
 intel_opregion_setup(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_opregion *opregion = &dev_priv->opregion;
 	void *base;
 	u32 asls, mboxes;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_overlay.c,v 1.4 2013/05/05 13:55:36 kettenis Exp $	*/
+/*	$OpenBSD: intel_overlay.c,v 1.5 2013/07/05 07:20:27 jsg Exp $	*/
 /*
  * Copyright © 2009
  *
@@ -308,7 +308,7 @@ int
 intel_overlay_on(struct intel_overlay *overlay)
 {
 	struct drm_device *dev = overlay->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_ring_buffer *ring = &dev_priv->ring[RCS];
 	int ret;
 
@@ -396,7 +396,7 @@ int
 intel_overlay_off(struct intel_overlay *overlay)
 {
 	struct drm_device *dev = overlay->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_ring_buffer *ring = &dev_priv->ring[RCS];
 	u32 flip_addr = overlay->flip_addr;
 	int ret;
@@ -1087,7 +1087,7 @@ check_overlay_src(struct drm_device *dev,
 int
 intel_panel_fitter_pipe(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32  pfit_control;
 
 	/* i830 doesn't have a panel fitter */

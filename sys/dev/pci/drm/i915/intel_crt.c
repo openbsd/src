@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_crt.c,v 1.3 2013/04/14 05:38:36 jsg Exp $	*/
+/*	$OpenBSD: intel_crt.c,v 1.4 2013/07/05 07:20:27 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -99,7 +99,7 @@ intel_crt_get_hw_state(struct intel_encoder *encoder,
 				   enum pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crt *crt = intel_encoder_to_crt(encoder);
 	u32 tmp;
 
@@ -122,7 +122,7 @@ void
 intel_crt_set_dpms(struct intel_encoder *encoder, int mode)
 {
 	struct drm_device *dev = encoder->base.dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crt *crt = intel_encoder_to_crt(encoder);
 	u32 temp;
 
@@ -254,7 +254,7 @@ intel_crt_mode_set(struct drm_encoder *encoder,
 	struct intel_crt *crt =
 		intel_encoder_to_crt(to_intel_encoder(encoder));
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 adpa;
 
 	if (HAS_PCH_SPLIT(dev))
@@ -288,7 +288,7 @@ intel_ironlake_crt_detect_hotplug(struct drm_connector *connector)
 {
 	struct drm_device *dev = connector->dev;
 	struct intel_crt *crt = intel_attached_crt(connector);
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 adpa;
 	bool ret;
 	int retries;
@@ -339,7 +339,7 @@ bool
 valleyview_crt_detect_hotplug(struct drm_connector *connector)
 {
 	struct drm_device *dev = connector->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 adpa;
 	bool ret;
 	u32 save_adpa;
@@ -391,7 +391,7 @@ bool
 intel_crt_detect_hotplug(struct drm_connector *connector)
 {
 	struct drm_device *dev = connector->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 hotplug_en, orig, stat;
 	bool ret = false;
 	int i, tries = 0, retries;
@@ -481,7 +481,7 @@ bool
 intel_crt_detect_ddc(struct drm_connector *connector)
 {
 	struct intel_crt *crt = intel_attached_crt(connector);
-	struct inteldrm_softc *dev_priv = crt->base.base.dev->dev_private;
+	struct drm_i915_private *dev_priv = crt->base.base.dev->dev_private;
 	struct i2c_controller *i2c;
 	struct edid *edid;
 
@@ -516,7 +516,7 @@ enum drm_connector_status
 intel_crt_load_detect(struct intel_crt *crt)
 {
 	struct drm_device *dev = crt->base.base.dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t pipe = to_intel_crtc(crt->base.base.crtc)->pipe;
 	uint32_t save_bclrpat;
 	uint32_t save_vtotal;
@@ -692,7 +692,7 @@ int
 intel_crt_get_modes(struct drm_connector *connector)
 {
 	struct drm_device *dev = connector->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int ret;
 	struct i2c_controller *i2c;
 
@@ -718,7 +718,7 @@ void
 intel_crt_reset(struct drm_connector *connector)
 {
 	struct drm_device *dev = connector->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crt *crt = intel_attached_crt(connector);
 
 	if (HAS_PCH_SPLIT(dev)) {
@@ -790,7 +790,7 @@ intel_crt_init(struct drm_device *dev)
 	struct drm_connector *connector;
 	struct intel_crt *crt;
 	struct intel_connector *intel_connector;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	/* Skip machines without VGA that falsely report hotplug events */
 	if (dmi_check_system(intel_no_crt))

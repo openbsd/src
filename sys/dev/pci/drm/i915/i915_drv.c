@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.34 2013/07/01 20:16:58 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.35 2013/07/05 07:20:27 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -705,7 +705,7 @@ i915_semaphore_is_enabled(struct drm_device *dev)
 int
 i915_drm_freeze(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	drm_kms_helper_poll_disable(dev);
 
@@ -741,7 +741,7 @@ i915_drm_freeze(struct drm_device *dev)
 int
 __i915_drm_thaw(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int error = 0;
 
 	i915_restore_state(dev);
@@ -1859,7 +1859,7 @@ i965_do_reset(struct drm_device *dev)
 int
 ironlake_do_reset(struct drm_device *dev)
 {
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 gdrst;
 	int retries;
 
@@ -1896,7 +1896,7 @@ ironlake_do_reset(struct drm_device *dev)
 int
 gen6_do_reset(struct drm_device *dev)
 {
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int ret = 0;
 	int retries;
 
@@ -1940,7 +1940,7 @@ gen6_do_reset(struct drm_device *dev)
 int
 intel_gpu_reset(struct drm_device *dev)
 {
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int ret = -ENODEV;
 
 	switch (INTEL_INFO(dev)->gen) {

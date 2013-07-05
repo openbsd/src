@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_panel.c,v 1.2 2013/07/04 09:55:01 jsg Exp $	*/
+/*	$OpenBSD: intel_panel.c,v 1.3 2013/07/05 07:20:27 jsg Exp $	*/
 /*
  * Copyright © 2006-2010 Intel Corporation
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -69,7 +69,7 @@ intel_pch_panel_fitting(struct drm_device *dev,
 			const struct drm_display_mode *mode,
 			struct drm_display_mode *adjusted_mode)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int x, y, width, height;
 
 	x = y = width = height = 0;
@@ -130,7 +130,7 @@ done:
 int
 is_backlight_combination_mode(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (INTEL_INFO(dev)->gen >= 4)
 		return I915_READ(BLC_PWM_CTL2) & BLM_COMBINATION_MODE;
@@ -144,7 +144,7 @@ is_backlight_combination_mode(struct drm_device *dev)
 u32
 i915_read_blc_pwm_ctl(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 val;
 
 	/* Restore the CTL value if it lost, e.g. GPU reset */
@@ -228,7 +228,7 @@ static int i915_panel_invert_brightness;
 u32
 intel_panel_compute_brightness(struct drm_device *dev, u32 val)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (i915_panel_invert_brightness < 0)
 		return val;
@@ -243,7 +243,7 @@ intel_panel_compute_brightness(struct drm_device *dev, u32 val)
 u32
 intel_panel_get_backlight(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 val;
 
 	if (HAS_PCH_SPLIT(dev)) {
@@ -270,7 +270,7 @@ intel_panel_get_backlight(struct drm_device *dev)
 void
 intel_pch_panel_set_backlight(struct drm_device *dev, u32 level)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 val = I915_READ(BLC_PWM_CPU_CTL) & ~BACKLIGHT_DUTY_CYCLE_MASK;
 	I915_WRITE(BLC_PWM_CPU_CTL, val | level);
 }
@@ -278,7 +278,7 @@ intel_pch_panel_set_backlight(struct drm_device *dev, u32 level)
 void
 intel_panel_actually_set_backlight(struct drm_device *dev, u32 level)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 tmp;
 
 	DRM_DEBUG_DRIVER("set backlight PWM = %d\n", level);
@@ -306,7 +306,7 @@ intel_panel_actually_set_backlight(struct drm_device *dev, u32 level)
 void
 intel_panel_set_backlight(struct drm_device *dev, u32 level)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	dev_priv->backlight_level = level;
 	if (dev_priv->backlight_enabled)
@@ -316,7 +316,7 @@ intel_panel_set_backlight(struct drm_device *dev, u32 level)
 void
 intel_panel_disable_backlight(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	dev_priv->backlight_enabled = false;
 	intel_panel_actually_set_backlight(dev, 0);
@@ -340,7 +340,7 @@ void
 intel_panel_enable_backlight(struct drm_device *dev,
 				  enum pipe pipe)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (dev_priv->backlight_level == 0)
 		dev_priv->backlight_level = intel_panel_get_max_backlight(dev);
@@ -391,7 +391,7 @@ set_level:
 void
 intel_panel_init_backlight(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	dev_priv->backlight_level = intel_panel_get_backlight(dev);
 	dev_priv->backlight_enabled = dev_priv->backlight_level != 0;
@@ -400,7 +400,7 @@ intel_panel_init_backlight(struct drm_device *dev)
 enum drm_connector_status
 intel_panel_detect(struct drm_device *dev)
 {
-//	struct inteldrm_softc *dev_priv = dev->dev_private;
+//	struct drm_i915_private *dev_priv = dev->dev_private;
 
 #if 0
 	/* Assume that the BIOS does not lie through the OpRegion... */
@@ -434,7 +434,7 @@ int
 intel_panel_get_brightness(struct backlight_device *bd)
 {
 	struct drm_device *dev = bl_get_data(bd);
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	return dev_priv->backlight_level;
 }
 
@@ -447,7 +447,7 @@ int
 intel_panel_setup_backlight(struct drm_connector *connector)
 {
 	struct drm_device *dev = connector->dev;
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct backlight_properties props;
 
 	intel_panel_init_backlight(dev);
@@ -480,7 +480,7 @@ intel_panel_setup_backlight(struct drm_connector *connector)
 void
 intel_panel_destroy_backlight(struct drm_device *dev)
 {
-	struct inteldrm_softc *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	if (dev_priv->backlight) {
 		backlight_device_unregister(dev_priv->backlight);
 		dev_priv->backlight = NULL;

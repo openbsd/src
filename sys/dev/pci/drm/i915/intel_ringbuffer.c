@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.c,v 1.3 2013/05/05 13:55:36 kettenis Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.c,v 1.4 2013/07/05 07:20:27 jsg Exp $	*/
 /*
  * Copyright © 2008-2010 Intel Corporation
  *
@@ -582,7 +582,7 @@ int
 init_render_ring(struct intel_ring_buffer *ring)
 {
 	struct drm_device *dev = ring->dev;
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int ret = init_ring_common(ring);
 
 	if (INTEL_INFO(dev)->gen > 3)
@@ -1209,7 +1209,7 @@ err:
 int
 init_phys_hws_pga(struct intel_ring_buffer *ring)
 {
-	drm_i915_private_t *dev_priv = ring->dev->dev_private;
+	struct drm_i915_private *dev_priv = ring->dev->dev_private;
 	u32 addr;
 
 	if (!dev_priv->status_page_dmah) {
@@ -1263,7 +1263,7 @@ intel_init_ring_buffer(struct drm_device *dev,
 				  struct intel_ring_buffer *ring)
 {
 	struct drm_i915_gem_object *obj;
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int ret;
 
 	ring->dev = dev;
@@ -1338,7 +1338,7 @@ err_hws:
 void
 intel_cleanup_ring_buffer(struct intel_ring_buffer *ring)
 {
-	drm_i915_private_t *dev_priv;
+	struct drm_i915_private *dev_priv;
 	int ret;
 
 	if (ring->obj == NULL)
@@ -1451,7 +1451,7 @@ int
 ring_wait_for_space(struct intel_ring_buffer *ring, int n)
 {
 	struct drm_device *dev = ring->dev;
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	unsigned long end;
 	int ret;
 
@@ -1581,7 +1581,7 @@ intel_ring_begin(struct intel_ring_buffer *ring, int num_dwords)
 void
 intel_ring_advance(struct intel_ring_buffer *ring)
 {
-	drm_i915_private_t *dev_priv = ring->dev->dev_private;
+	struct drm_i915_private *dev_priv = ring->dev->dev_private;
 
 	ring->tail &= ring->size - 1;
 	if (dev_priv->stop_rings & intel_ring_flag(ring))
