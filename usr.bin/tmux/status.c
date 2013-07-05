@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.105 2013/07/05 14:38:22 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.106 2013/07/05 14:41:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -938,6 +938,7 @@ status_prompt_redraw(struct client *c)
 	off = 0;
 
 	memcpy(&gc, &grid_default_cell, sizeof gc);
+
 	/* Change colours for command mode. */
 	if (c->prompt_mdata.mode == 1) {
 		colour_set_fg(&gc, options_get_number(&s->options, "message-command-fg"));
@@ -1192,6 +1193,11 @@ status_prompt_key(struct client *c, int key)
 			if (strchr(wsep, c->prompt_buffer[c->prompt_index]))
 				break;
 		}
+
+		/* Back up to the end-of-word like vi. */
+		if (options_get_number(oo, "status-keys") == MODEKEY_VI &&
+		    c->prompt_index != 0)
+			c->prompt_index--;
 
 		c->flags |= CLIENT_STATUS;
 		break;
