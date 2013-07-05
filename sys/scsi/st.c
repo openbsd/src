@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.123 2013/06/11 16:42:17 deraadt Exp $	*/
+/*	$OpenBSD: st.c,v 1.124 2013/07/05 01:22:25 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -2031,21 +2031,24 @@ st_interpret_sense(struct scsi_xfer *xs)
 	 * to store datalen in the same units as resid and to adjust
 	 * xs->resid to be in bytes.
 	 */
-	datalen = xs->datalen;
 	if (sense->error_code & SSD_ERRCODE_VALID) {
-		xs->resid = resid = info;
-		if (st->flags & ST_FIXEDBLOCKS) {
-			xs->resid *= st->blksize;
-			datalen /= st->blksize;
-		}
-		if (xs->resid < 0 || xs->resid > xs->datalen)
-			xs->resid = xs->datalen;
+		if (st->flags & ST_FIXEDBLOCKS)
+			resid = info * st->blksize; /* XXXX overflow? */ 
+		else
+			resid = info;
 	} else {
-		xs->resid = resid = xs->datalen;
-		if (st->flags & ST_FIXEDBLOCKS) {
-			resid /= st->blksize;
-			datalen /= st->blksize;
-		}
+		resid = xs->datalen;
+	}
+
+	if (resid < 0 || resid > xs->datalen)
+		xs->resid = xs->datalen;
+	else
+		xs->resid = resid;
+
+	datalen = xs->datalen;
+	if (st->flags & ST_FIXEDBLOCKS) {
+		resid /= st->blksize;
+		datalen /= st->blksize;
 	}
 
 	if (sense->flags & SSD_FILEMARK) {
