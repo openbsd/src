@@ -1,4 +1,4 @@
-/*	$OpenBSD: times.h,v 1.5 2006/01/06 18:53:06 millert Exp $	*/
+/*	$OpenBSD: times.h,v 1.6 2013/07/06 18:44:21 naddy Exp $	*/
 /*	$NetBSD: times.h,v 1.8 1995/03/26 20:24:54 jtc Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #define	_SYS_TIMES_H_
 
 #include <sys/cdefs.h>
-#include <machine/_types.h>
+#include <sys/_types.h>
 
 #ifndef	_CLOCK_T_DEFINED_
 #define	_CLOCK_T_DEFINED_
