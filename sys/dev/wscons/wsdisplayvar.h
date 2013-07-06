@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.25 2013/07/05 21:18:32 kettenis Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.26 2013/07/06 14:35:45 kettenis Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -167,7 +167,7 @@ struct wscons_syncops {
 void	wsdisplay_cnattach(const struct wsscreen_descr *, void *,
 				int, int, long);
 int	wsemuldisplaydevprint(void *, const char *);
-int	wsemuldisplaysubmatch(struct device *, void *, void *);
+int	wsemuldisplaydevsubmatch(struct device *, void *, void *);
 
 /*
  * Console interface.
