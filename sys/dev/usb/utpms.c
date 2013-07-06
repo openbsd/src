@@ -1,4 +1,4 @@
-/*	$OpenBSD: utpms.c,v 1.1 2013/05/31 19:32:30 mpi Exp $	*/
+/*	$OpenBSD: utpms.c,v 1.2 2013/07/06 14:42:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -417,7 +417,7 @@ utpms_ioctl(void *v, unsigned long cmd, caddr_t data, int flag, struct proc *p)
 {
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
-		*(u_int *)data = WSMOUSE_TYPE_TPANEL;
+		*(u_int *)data = WSMOUSE_TYPE_USB;
 		return (0);
 	}
 
