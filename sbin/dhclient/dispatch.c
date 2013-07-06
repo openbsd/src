@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.80 2013/07/05 22:13:10 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.81 2013/07/06 01:12:20 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -394,7 +394,7 @@ get_rdomain(char *name)
 
 int
 subnet_exists(struct client_lease *l)
- {
+{
 	struct ifaddrs *ifap, *ifa;
 	struct in_addr mymask, myaddr, mynet, hismask, hisaddr, hisnet;
 	int myrdomain, hisrdomain;
@@ -450,4 +450,4 @@ subnet_exists(struct client_lease *l)
 	freeifaddrs(ifap);
 
 	return (0);
- }
+}
