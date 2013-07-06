@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.53 2013/05/02 16:35:27 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.54 2013/07/06 03:03:23 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -46,8 +46,7 @@ int parse_option_buffer(struct option_data *, unsigned char *, int);
 
 /*
  * Parse options out of the specified buffer, storing addresses of
- * option values in options and setting client->options_valid if
- * no errors are encountered.
+ * option values in options. Return 0 if errors, 1 if not.
  */
 int
 parse_option_buffer(struct option_data *options, unsigned char *buffer,
@@ -118,8 +117,7 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 		} else {
 			/*
 			 * If it's a repeat, concatenate it to whatever
-			 * we last saw.   This is really only required
-			 * for clients, but what the heck.
+			 * we last saw.
 			 */
 			t = calloc(1, len + options[code].len + 1);
 			if (!t)
