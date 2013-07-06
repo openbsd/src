@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.258 2013/07/05 22:13:10 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.259 2013/07/06 03:13:34 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -722,7 +722,9 @@ dhcpack(struct in_addr client_addr, struct option_data *options, char *info)
 	    client->state != S_REQUESTING &&
 	    client->state != S_RENEWING &&
 	    client->state != S_REBINDING) {
-		note("Unexpected %s. State #%d", info, client->state);
+#ifdef DEBUG
+		debug("Unexpected %s. State #%d", info, client->state);
+#endif
 		return;
 	}
 
@@ -887,7 +889,9 @@ dhcpoffer(struct in_addr client_addr, struct option_data *options, char *info)
 	time_t stop_selecting;
 
 	if (client->state != S_SELECTING) {
-		note("Unexpected %s. State #%d.", info, client->state);
+#ifdef DEBUG
+		debug("Unexpected %s. State #%d.", info, client->state);
+#endif
 		return;
 	}
 
@@ -1051,12 +1055,16 @@ dhcpnak(struct in_addr client_addr, struct option_data *options, char *info)
 	    client->state != S_REQUESTING &&
 	    client->state != S_RENEWING &&
 	    client->state != S_REBINDING) {
-		note("Unexpected %s. State #%d", info, client->state);
+#ifdef DEBUG
+		debug("Unexpected %s. State #%d", info, client->state);
+#endif
 		return;
 	}
 
 	if (!client->active) {
-		note("Unexpected %s. No active lease.", info);
+#ifdef DEBUG
+		debug("Unexpected %s. No active lease.", info);
+#endif
 		return;
 	}
 
