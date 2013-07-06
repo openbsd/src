@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.219 2013/06/04 02:29:32 mpi Exp $g
+#	$OpenBSD: GENERIC,v 1.220 2013/07/06 17:40:01 mpi Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -204,6 +204,7 @@ ohci*	at pci?			# Open Host Controller
 ohci*	at cardbus?		# Open Host Controller
 uhci*	at pci?			# Universal Host Controller
 ehci*	at pci?			# Enhanced Host Controller
+uhci*	at cardbus?		# Universal Host Controller
 ehci*	at cardbus?		# Enhanced Host Controller
 
 # USB bus support
