@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.39 2013/06/11 16:42:13 deraadt Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.40 2013/07/06 18:31:46 miod Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -198,7 +198,7 @@ struct cfdriver hd_cd = {
 /* At least 0.7 uS between register accesses */
 static int hd_dmasize, inq = 0;	/* XXX should be in softc... but only 1 ctrl */
 static int u;
-#define	WAIT	asm("movl _u,_u;movl _u,_u;movl _u,_u; movl _u,_u")
+#define	WAIT	asm("movl %0,%0;movl %0,%0;movl %0,%0; movl %0,%0" :: "m"(u))
 
 #define	HDC_WREG(x)	*(volatile char *)(sc->sc_regs) = (x)
 #define	HDC_RREG	*(volatile char *)(sc->sc_regs)
