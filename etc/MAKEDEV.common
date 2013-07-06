@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.66 2013/06/21 21:30:38 syl Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.67 2013/07/06 16:14:38 naddy Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -144,7 +144,7 @@ twrget(all, mac_tty0, tty0, 0, 1)dnl
 twrget(all, tzs, tty, a, b, c, d)dnl
 twrget(all, czs, cua, a, b, c, d)dnl
 target(all, ttyc, 0, 1, 2, 3, 4, 5, 6, 7)dnl
-twrget(all, com, tty0, 0, 1, 2, 3)dnl
+twrget(all, com, tty0, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 target(all, lkm)dnl
 twrget(all, mmcl, mmclock)dnl
 target(all, lpt, 0, 1, 2)dnl
