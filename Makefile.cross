@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.65 2013/07/05 21:29:51 miod Exp $
+# $OpenBSD: Makefile.cross,v 1.66 2013/07/06 17:52:57 miod Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -139,10 +139,10 @@ cross-env:
 
 ${CROSSDIRS}:
 .if ${TARGET_ARCH} == "arm" &&  ${MACHINE_IS_LP64} == "yes"
-# this config is allowed
+	# this config is allowed
 .elif ${TARGET_IS_LP64} != ${MACHINE_IS_LP64}
-@echo "host and target have different size longs"
-@echo "cross compiler generates bad code; aborting"; exit 1
+	@echo "host and target have different size longs"
+	@echo "cross compiler generates bad code; aborting"; exit 1
 .endif
 	@-mkdir -p ${CROSSDIR}
 	@echo ${TARGET_ARCH} > ${CROSSDIR}/TARGET_ARCH
