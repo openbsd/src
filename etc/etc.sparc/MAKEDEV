@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc/MAKEDEV.md,v 1.51 2013/06/03 16:06:42 tedu Exp 
-#	OpenBSD: MAKEDEV.common,v 1.66 2013/06/21 21:30:38 syl Exp 
+#	OpenBSD: MAKEDEV.common,v 1.67 2013/07/06 16:14:38 naddy Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -525,7 +525,8 @@ all)
 	R diskmap vscsi0 ch0 bio cuaa cuab cuac cuad ttya ttyb ttyc
 	R ttyd audio0 audio1 audio2 fuse pppx hotplug ptm local wscons
 	R uk0 random lkm tty00 tty01 tty02 tty03 tty04 tty05 tty06
-	R tty07 apm pf systrace xd0 xd1 xd2 xd3 std st0 st1 fd
+	R tty07 tty08 tty09 tty0a tty0b apm pf systrace xd0 xd1 xd2
+	R xd3 std st0 st1 fd
 	;;
 
 presto*|xd*|xy*|sd*)

@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.sgi/MAKEDEV.md,v 1.38 2013/06/03 16:06:42 tedu Exp 
-#	OpenBSD: MAKEDEV.common,v 1.66 2013/06/21 21:30:38 syl Exp 
+#	OpenBSD: MAKEDEV.common,v 1.67 2013/07/06 16:14:38 naddy Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -471,8 +471,9 @@ all)
 	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2
 	R diskmap vscsi0 ch0 audio0 audio1 audio2 fuse pppx hotplug
 	R ptm local wscons pci0 pci1 pci2 pci3 uall video0 video1 uk0
-	R random tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07
-	R crypto pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
+	R random tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08
+	R tty09 tty0a tty0b crypto pf systrace wd0 wd1 wd2 wd3 std st0
+	R st1 fd
 	;;
 
 wd*|sd*)
