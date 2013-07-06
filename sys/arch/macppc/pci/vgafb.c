@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.47 2013/06/04 02:29:32 mpi Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.48 2013/07/06 18:08:47 mpi Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ vgafb_wsdisplay_attach(struct device *parent, struct vga_config *vc,
 		struct rasops_info *ri = &vc->ri;
 		long defattr;
 
-		ri->ri_flg |= RI_VCONS;
+		ri->ri_flg |= RI_VCONS | RI_WRONLY;
 		rasops_init(ri, 160, 160);
 
 		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
