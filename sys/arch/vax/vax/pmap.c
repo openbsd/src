@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.58 2013/07/03 19:21:55 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.59 2013/07/07 18:59:36 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -869,7 +869,7 @@ if(startpmapdebug)printf("pmap_extract: pmap %p, va %lx\n",pmap, va);
 		pte = (int *)pmap->pm_p1br;
 	}
 
-	if ((*kvtopte(&pte[sva]) & PG_FRAME) != 0) {
+	if ((*kvtopte(&pte[sva]) & PG_V) && (pte[sva] & PG_V)) {
 		*pap = ((pte[sva] & PG_FRAME) << VAX_PGSHIFT) |
 		    (va & VAX_PGOFSET);
 		return (TRUE);
