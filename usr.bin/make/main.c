@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.100 2012/10/18 17:54:43 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.101 2013/07/07 09:41:08 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -144,8 +144,6 @@ posixParseOptLetter(int c)
 	case 'B':
 		compatMake = true;
 		return;	/* XXX don't pass to submakes. */
-	case 'P':
-		break;	/* old option */
 	case 'S':
 		keepgoing = false;
 		break;
@@ -200,8 +198,8 @@ MainParseArgs(int argc, char **argv)
 {
 	int c, optend;
 
-#define OPTFLAGS "BD:I:PSV:d:ef:ij:km:npqrst"
-#define OPTLETTERS "BPSiknpqrst"
+#define OPTFLAGS "BD:I:SV:d:ef:ij:km:npqrst"
+#define OPTLETTERS "BSiknpqrst"
 
 	optind = 1;	/* since we're called more than once */
 	optreset = 1;
