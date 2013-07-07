@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.32 2005/04/07 00:17:32 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.33 2013/07/07 14:08:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -240,11 +240,12 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	char		*modif;
 	int		(*pr)(const char *, ...);
 {
-	register_t *fp, pc, rp, nargs, *argp;
+	register_t *fp, pc, rp, *argp;
 	db_sym_t sym;
 	db_expr_t off;
 	char *name;
 	char **argnp, *argnames[HPPA_FRAME_NARGS];
+	int nargs;
 
 	if (count < 0)
 		count = 65536;
