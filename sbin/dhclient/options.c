@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.54 2013/07/06 03:03:23 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.55 2013/07/07 00:04:58 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -76,13 +76,11 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 			} else {
 				warning("option %s (%d) larger than buffer.",
 				    dhcp_options[code].name, len);
-				warning("rejecting bogus offer.");
 				return (0);
 			}
 		} else {
 			warning("option %s has no length field.",
 			    dhcp_options[code].name);
-			warning("rejecting bogus offer.");
 			return (0);
 		}
 
