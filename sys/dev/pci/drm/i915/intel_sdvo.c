@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_sdvo.c,v 1.9 2013/07/05 07:20:27 jsg Exp $	*/
+/*	$OpenBSD: intel_sdvo.c,v 1.10 2013/07/08 09:47:45 jsg Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2007 Intel Corporation
@@ -675,7 +675,7 @@ intel_sdvo_read_response(struct intel_sdvo *intel_sdvo,
 		if (retry < 10)
 			drm_msleep(15, "915srr");
 		else
-			DELAY(15);
+			udelay(15);
 
 		if (!intel_sdvo_read_byte(intel_sdvo,
 					  SDVO_I2C_CMD_STATUS,

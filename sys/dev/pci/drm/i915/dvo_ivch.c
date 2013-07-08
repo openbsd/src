@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_ivch.c,v 1.2 2013/03/30 12:36:50 kettenis Exp $	*/
+/*	$OpenBSD: dvo_ivch.c,v 1.3 2013/07/08 09:47:45 jsg Exp $	*/
 /*
  * Copyright © 2006 Intel Corporation
  *
@@ -333,10 +333,10 @@ ivch_dpms(struct intel_dvo_device *dvo, bool enable)
 
 		if (((vr30 & VR30_PANEL_ON) != 0) == enable)
 			break;
-		delay(1000);
+		udelay(1000);
 	}
 	/* wait some more; vch may fail to resync sometimes without this */
-	delay(16 * 1000);
+	udelay(16 * 1000);
 }
 
 bool

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.8 2013/07/05 07:20:27 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.9 2013/07/08 09:47:45 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -4613,7 +4613,7 @@ __gen6_gt_wait_for_fifo(struct drm_i915_private *dev_priv)
 		int loop = 500;
 		u32 fifo = I915_READ_NOTRACE(GT_FIFO_FREE_ENTRIES);
 		while (fifo <= GT_FIFO_NUM_RESERVED_ENTRIES && loop--) {
-			DELAY(10);
+			udelay(10);
 			fifo = I915_READ_NOTRACE(GT_FIFO_FREE_ENTRIES);
 		}
 		if (WARN_ON(loop < 0 && fifo <= GT_FIFO_NUM_RESERVED_ENTRIES))

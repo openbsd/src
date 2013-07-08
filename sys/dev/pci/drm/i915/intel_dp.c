@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_dp.c,v 1.6 2013/07/05 07:20:27 jsg Exp $	*/
+/*	$OpenBSD: intel_dp.c,v 1.7 2013/07/08 09:47:45 jsg Exp $	*/
 /*
  * Copyright © 2008 Intel Corporation
  *
@@ -558,7 +558,7 @@ intel_dp_aux_ch(struct intel_dp *intel_dp,
 			status = I915_READ(ch_ctl);
 			if ((status & DP_AUX_CH_CTL_SEND_BUSY) == 0)
 				break;
-			DELAY(100);
+			udelay(100);
 		}
 
 		/* Clear done status and any errors */
@@ -634,7 +634,7 @@ intel_dp_aux_native_write(struct intel_dp *intel_dp,
 		if ((ack & AUX_NATIVE_REPLY_MASK) == AUX_NATIVE_REPLY_ACK)
 			break;
 		else if ((ack & AUX_NATIVE_REPLY_MASK) == AUX_NATIVE_REPLY_DEFER)
-			DELAY(100);
+			udelay(100);
 		else
 			return -EIO;
 	}
@@ -683,7 +683,7 @@ intel_dp_aux_native_read(struct intel_dp *intel_dp,
 			return ret - 1;
 		}
 		else if ((ack & AUX_NATIVE_REPLY_MASK) == AUX_NATIVE_REPLY_DEFER)
-			DELAY(100);
+			udelay(100);
 		else
 			return -EIO;
 	}
@@ -755,7 +755,7 @@ intel_dp_i2c_aux_ch(struct i2c_controller *adapter, int mode,
 			DRM_DEBUG_KMS("aux_ch native nack\n");
 			return -EIO;
 		case AUX_NATIVE_REPLY_DEFER:
-			DELAY(100);
+			udelay(100);
 			continue;
 		default:
 			DRM_ERROR("aux_ch invalid native reply 0x%02x\n",
@@ -774,7 +774,7 @@ intel_dp_i2c_aux_ch(struct i2c_controller *adapter, int mode,
 			return -EIO;
 		case AUX_I2C_REPLY_DEFER:
 			DRM_DEBUG_KMS("aux_i2c defer\n");
-			DELAY(100);
+			udelay(100);
 			break;
 		default:
 			DRM_ERROR("aux_i2c invalid reply 0x%02x\n", reply[0]);
@@ -1401,7 +1401,7 @@ ironlake_edp_pll_on(struct intel_dp *intel_dp)
 	intel_dp->DP |= DP_PLL_ENABLE;
 	I915_WRITE(DP_A, intel_dp->DP);
 	POSTING_READ(DP_A);
-	DELAY(200);
+	udelay(200);
 }
 
 void
@@ -1427,7 +1427,7 @@ ironlake_edp_pll_off(struct intel_dp *intel_dp)
 	dpa_ctl &= ~DP_PLL_ENABLE;
 	I915_WRITE(DP_A, dpa_ctl);
 	POSTING_READ(DP_A);
-	DELAY(200);
+	udelay(200);
 }
 
 /* If the sink supports it, try to set the power state appropriately */

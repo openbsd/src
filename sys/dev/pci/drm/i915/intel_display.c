@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.8 2013/07/05 07:20:27 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.9 2013/07/08 09:47:45 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -1875,13 +1875,13 @@ intel_enable_pll(struct drm_i915_private *dev_priv, enum pipe pipe)
 	/* We do this three times for luck */
 	I915_WRITE(reg, val);
 	POSTING_READ(reg);
-	DELAY(150); /* wait for warmup */
+	udelay(150); /* wait for warmup */
 	I915_WRITE(reg, val);
 	POSTING_READ(reg);
-	DELAY(150); /* wait for warmup */
+	udelay(150); /* wait for warmup */
 	I915_WRITE(reg, val);
 	POSTING_READ(reg);
-	DELAY(150); /* wait for warmup */
+	udelay(150); /* wait for warmup */
 }
 
 /**
@@ -2042,7 +2042,7 @@ ironlake_enable_pch_pll(struct intel_crtc *intel_crtc)
 	val |= DPLL_VCO_ENABLE;
 	I915_WRITE(reg, val);
 	POSTING_READ(reg);
-	DELAY(200);
+	udelay(200);
 
 	pll->on = true;
 }
@@ -2087,7 +2087,7 @@ intel_disable_pch_pll(struct intel_crtc *intel_crtc)
 	val &= ~DPLL_VCO_ENABLE;
 	I915_WRITE(reg, val);
 	POSTING_READ(reg);
-	DELAY(200);
+	udelay(200);
 
 	pll->on = false;
 }
@@ -2875,7 +2875,7 @@ ironlake_set_pll_edp(struct drm_crtc *crtc, int clock)
 	I915_WRITE(DP_A, dpa_ctl);
 
 	POSTING_READ(DP_A);
-	DELAY(500);
+	udelay(500);
 }
 
 void
@@ -2912,7 +2912,7 @@ intel_fdi_normal_train(struct drm_crtc *crtc)
 
 	/* wait one idle pattern time */
 	POSTING_READ(reg);
-	DELAY(1000);
+	udelay(1000);
 
 	/* IVB wants error correction enabled */
 	if (IS_IVYBRIDGE(dev))
@@ -2967,7 +2967,7 @@ ironlake_fdi_link_train(struct drm_crtc *crtc)
 	temp &= ~FDI_RX_BIT_LOCK;
 	I915_WRITE(reg, temp);
 	I915_READ(reg);
-	DELAY(150);
+	udelay(150);
 
 	/* enable CPU FDI TX and PCH FDI RX */
 	reg = FDI_TX_CTL(pipe);
@@ -2985,7 +2985,7 @@ ironlake_fdi_link_train(struct drm_crtc *crtc)
 	I915_WRITE(reg, temp | FDI_RX_ENABLE);
 
 	POSTING_READ(reg);
-	DELAY(150);
+	udelay(150);
 
 	/* Ironlake workaround, enable clock pointer after FDI enable*/
 	I915_WRITE(FDI_RX_CHICKEN(pipe), FDI_RX_PHASE_SYNC_POINTER_OVR);
@@ -3020,7 +3020,7 @@ ironlake_fdi_link_train(struct drm_crtc *crtc)
 	I915_WRITE(reg, temp);
 
 	POSTING_READ(reg);
-	DELAY(150);
+	udelay(150);
 
 	reg = FDI_RX_IIR(pipe);
 	for (tries = 0; tries < 5; tries++) {
@@ -3066,7 +3066,7 @@ gen6_fdi_link_train(struct drm_crtc *crtc)
 	I915_WRITE(reg, temp);
 
 	POSTING_READ(reg);
-	DELAY(150);
+	udelay(150);
 
 	/* enable CPU FDI TX and PCH FDI RX */
 	reg = FDI_TX_CTL(pipe);
@@ -3095,7 +3095,7 @@ gen6_fdi_link_train(struct drm_crtc *crtc)
 	I915_WRITE(reg, temp | FDI_RX_ENABLE);
 
 	POSTING_READ(reg);
-	DELAY(150);
+	udelay(150);
 
 	for (i = 0; i < 4; i++) {
 		reg = FDI_TX_CTL(pipe);
@@ -3105,7 +3105,7 @@ gen6_fdi_link_train(struct drm_crtc *crtc)
 		I915_WRITE(reg, temp);
 
 		POSTING_READ(reg);
-		DELAY(500);
+		udelay(500);
 
 		for (retry = 0; retry < 5; retry++) {
 			reg = FDI_RX_IIR(pipe);
@@ -3116,7 +3116,7 @@ gen6_fdi_link_train(struct drm_crtc *crtc)
 				DRM_DEBUG_KMS("FDI train 1 done.\n");
 				break;
 			}
-			DELAY(50);
+			udelay(50);
 		}
 		if (retry < 5)
 			break;
@@ -3148,7 +3148,7 @@ gen6_fdi_link_train(struct drm_crtc *crtc)
 	I915_WRITE(reg, temp);
 
 	POSTING_READ(reg);
-	DELAY(150);
+	udelay(150);
 
 	for (i = 0; i < 4; i++) {
 		reg = FDI_TX_CTL(pipe);
@@ -3158,7 +3158,7 @@ gen6_fdi_link_train(struct drm_crtc *crtc)
 		I915_WRITE(reg, temp);
 
 		POSTING_READ(reg);
-		DELAY(500);
+		udelay(500);
 
 		for (retry = 0; retry < 5; retry++) {
 			reg = FDI_RX_IIR(pipe);
@@ -3169,7 +3169,7 @@ gen6_fdi_link_train(struct drm_crtc *crtc)
 				DRM_DEBUG_KMS("FDI train 2 done.\n");
 				break;
 			}
-			DELAY(50);
+			udelay(50);
 		}
 		if (retry < 5)
 			break;
@@ -3199,7 +3199,7 @@ ivb_manual_fdi_link_train(struct drm_crtc *crtc)
 	I915_WRITE(reg, temp);
 
 	POSTING_READ(reg);
-	DELAY(150);
+	udelay(150);
 
 	DRM_DEBUG_KMS("FDI_RX_IIR before link train 0x%x\n",
 		      I915_READ(FDI_RX_IIR(pipe)));
@@ -3228,7 +3228,7 @@ ivb_manual_fdi_link_train(struct drm_crtc *crtc)
 	I915_WRITE(reg, temp | FDI_RX_ENABLE);
 
 	POSTING_READ(reg);
-	DELAY(150);
+	udelay(150);
 
 	for (i = 0; i < 4; i++) {
 		reg = FDI_TX_CTL(pipe);
@@ -3238,7 +3238,7 @@ ivb_manual_fdi_link_train(struct drm_crtc *crtc)
 		I915_WRITE(reg, temp);
 
 		POSTING_READ(reg);
-		DELAY(500);
+		udelay(500);
 
 		reg = FDI_RX_IIR(pipe);
 		temp = I915_READ(reg);
@@ -3270,7 +3270,7 @@ ivb_manual_fdi_link_train(struct drm_crtc *crtc)
 	I915_WRITE(reg, temp);
 
 	POSTING_READ(reg);
-	DELAY(150);
+	udelay(150);
 
 	for (i = 0; i < 4; i++) {
 		reg = FDI_TX_CTL(pipe);
@@ -3280,7 +3280,7 @@ ivb_manual_fdi_link_train(struct drm_crtc *crtc)
 		I915_WRITE(reg, temp);
 
 		POSTING_READ(reg);
-		DELAY(500);
+		udelay(500);
 
 		reg = FDI_RX_IIR(pipe);
 		temp = I915_READ(reg);
@@ -3316,14 +3316,14 @@ ironlake_fdi_pll_enable(struct intel_crtc *intel_crtc)
 	I915_WRITE(reg, temp | FDI_RX_PLL_ENABLE);
 
 	POSTING_READ(reg);
-	DELAY(200);
+	udelay(200);
 
 	/* Switch from Rawclk to PCDclk */
 	temp = I915_READ(reg);
 	I915_WRITE(reg, temp | FDI_PCDCLK);
 
 	POSTING_READ(reg);
-	DELAY(200);
+	udelay(200);
 
 	/* On Haswell, the PLL configuration for ports and pipes is handled
 	 * separately, as part of DDI setup */
@@ -3335,7 +3335,7 @@ ironlake_fdi_pll_enable(struct intel_crtc *intel_crtc)
 			I915_WRITE(reg, temp | FDI_TX_PLL_ENABLE);
 
 			POSTING_READ(reg);
-			DELAY(100);
+			udelay(100);
 		}
 	}
 }
@@ -3359,7 +3359,7 @@ ironlake_fdi_pll_disable(struct intel_crtc *intel_crtc)
 	I915_WRITE(reg, temp & ~FDI_TX_PLL_ENABLE);
 
 	POSTING_READ(reg);
-	DELAY(100);
+	udelay(100);
 
 	reg = FDI_RX_CTL(pipe);
 	temp = I915_READ(reg);
@@ -3367,7 +3367,7 @@ ironlake_fdi_pll_disable(struct intel_crtc *intel_crtc)
 
 	/* Wait for the clocks to turn off. */
 	POSTING_READ(reg);
-	DELAY(100);
+	udelay(100);
 }
 
 void
@@ -3392,7 +3392,7 @@ ironlake_fdi_disable(struct drm_crtc *crtc)
 	I915_WRITE(reg, temp & ~FDI_RX_ENABLE);
 
 	POSTING_READ(reg);
-	DELAY(100);
+	udelay(100);
 
 	/* Ironlake workaround, disable clock pointer after downing FDI */
 	if (HAS_PCH_IBX(dev)) {
@@ -3421,7 +3421,7 @@ ironlake_fdi_disable(struct drm_crtc *crtc)
 	I915_WRITE(reg, temp);
 
 	POSTING_READ(reg);
-	DELAY(100);
+	udelay(100);
 }
 
 bool
@@ -3566,7 +3566,7 @@ lpt_program_iclkip(struct drm_crtc *crtc)
 	intel_sbi_write(dev_priv, SBI_SSCCTL6, temp, SBI_ICLK);
 
 	/* Wait for initialization time */
-	DELAY(24);
+	udelay(24);
 
 	I915_WRITE(PIXCLK_GATE, PIXCLK_GATE_UNGATE);
 }
@@ -3792,7 +3792,7 @@ prepare: /* separate function? */
 	/* Wait for the clocks to stabilize before rewriting the regs */
 	I915_WRITE(pll->pll_reg, dpll & ~DPLL_VCO_ENABLE);
 	POSTING_READ(pll->pll_reg);
-	DELAY(150);
+	udelay(150);
 
 	I915_WRITE(pll->fp0_reg, fp);
 	I915_WRITE(pll->pll_reg, dpll & ~DPLL_VCO_ENABLE);
@@ -3809,7 +3809,7 @@ intel_cpt_verify_modeset(struct drm_device *dev, int pipe)
 	int retries;
 
 	temp = I915_READ(dslreg);
-	DELAY(500);
+	udelay(500);
 	for (retries = 10; retries > 0; retries--) {
 		if (I915_READ(dslreg) != temp)
 			break;
@@ -4964,7 +4964,7 @@ vlv_update_pll(struct drm_crtc *crtc,
 
 	/* Wait for the clocks to stabilize. */
 	POSTING_READ(DPLL(pipe));
-	DELAY(150);
+	udelay(150);
 
 	temp = 0;
 	if (is_sdvo) {
@@ -5071,7 +5071,7 @@ i9xx_update_pll(struct drm_crtc *crtc,
 	dpll |= DPLL_VCO_ENABLE;
 	I915_WRITE(DPLL(pipe), dpll & ~DPLL_VCO_ENABLE);
 	POSTING_READ(DPLL(pipe));
-	DELAY(150);
+	udelay(150);
 
 	/* The LVDS pin pair needs to be on before the DPLLs are enabled.
 	 * This is an exception to the general rule that mode_set doesn't turn
@@ -5087,7 +5087,7 @@ i9xx_update_pll(struct drm_crtc *crtc,
 
 	/* Wait for the clocks to stabilize. */
 	POSTING_READ(DPLL(pipe));
-	DELAY(150);
+	udelay(150);
 
 	if (INTEL_INFO(dev)->gen >= 4) {
 		u32 temp = 0;
@@ -5149,7 +5149,7 @@ i8xx_update_pll(struct drm_crtc *crtc,
 	dpll |= DPLL_VCO_ENABLE;
 	I915_WRITE(DPLL(pipe), dpll & ~DPLL_VCO_ENABLE);
 	POSTING_READ(DPLL(pipe));
-	DELAY(150);
+	udelay(150);
 
 	/* The LVDS pin pair needs to be on before the DPLLs are enabled.
 	 * This is an exception to the general rule that mode_set doesn't turn
@@ -5162,7 +5162,7 @@ i8xx_update_pll(struct drm_crtc *crtc,
 
 	/* Wait for the clocks to stabilize. */
 	POSTING_READ(DPLL(pipe));
-	DELAY(150);
+	udelay(150);
 
 	/* The pixel multiplier can only be updated once the
 	 * DPLL is enabled and the clocks are stable.
@@ -5483,7 +5483,7 @@ ironlake_init_pch_refclk(struct drm_device *dev)
 		/* Get SSC going before enabling the outputs */
 		I915_WRITE(PCH_DREF_CONTROL, temp);
 		POSTING_READ(PCH_DREF_CONTROL);
-		DELAY(200);
+		udelay(200);
 
 		temp &= ~DREF_CPU_SOURCE_OUTPUT_MASK;
 
@@ -5500,7 +5500,7 @@ ironlake_init_pch_refclk(struct drm_device *dev)
 
 		I915_WRITE(PCH_DREF_CONTROL, temp);
 		POSTING_READ(PCH_DREF_CONTROL);
-		DELAY(200);
+		udelay(200);
 	} else {
 		DRM_DEBUG_KMS("Disabling SSC entirely\n");
 
@@ -5511,7 +5511,7 @@ ironlake_init_pch_refclk(struct drm_device *dev)
 
 		I915_WRITE(PCH_DREF_CONTROL, temp);
 		POSTING_READ(PCH_DREF_CONTROL);
-		DELAY(200);
+		udelay(200);
 
 		/* Turn off the SSC source */
 		temp &= ~DREF_SSC_SOURCE_MASK;
@@ -5522,7 +5522,7 @@ ironlake_init_pch_refclk(struct drm_device *dev)
 
 		I915_WRITE(PCH_DREF_CONTROL, temp);
 		POSTING_READ(PCH_DREF_CONTROL);
-		DELAY(200);
+		udelay(200);
 	}
 }
 
@@ -5558,7 +5558,7 @@ lpt_init_pch_refclk(struct drm_device *dev)
 	tmp |= SBI_SSCCTL_PATHALT;
 	intel_sbi_write(dev_priv, SBI_SSCCTL, tmp, SBI_ICLK);
 
-	DELAY(24);
+	udelay(24);
 
 	tmp = intel_sbi_read(dev_priv, SBI_SSCCTL, SBI_ICLK);
 	tmp &= ~SBI_SSCCTL_PATHALT;
@@ -6285,7 +6285,7 @@ ironlake_crtc_mode_set(struct drm_crtc *crtc,
 
 		/* Wait for the clocks to stabilize. */
 		POSTING_READ(intel_crtc->pch_pll->pll_reg);
-		DELAY(150);
+		udelay(150);
 
 		/* The pixel multiplier can only be updated once the
 		 * DPLL is enabled and the clocks are stable.
@@ -6501,7 +6501,7 @@ haswell_crtc_mode_set(struct drm_crtc *crtc,
 
 			/* Wait for the clocks to stabilize. */
 			POSTING_READ(intel_crtc->pch_pll->pll_reg);
-			DELAY(150);
+			udelay(150);
 
 			/* The pixel multiplier can only be updated once the
 			 * DPLL is enabled and the clocks are stable.
@@ -9573,7 +9573,7 @@ i915_disable_vga(struct drm_device *dev)
 #if 0
 	vga_put(dev->pdev, VGA_RSRC_LEGACY_IO);
 #endif
-	DELAY(300);
+	udelay(300);
 
 	I915_WRITE(vga_reg, VGA_DISP_DISABLE);
 	POSTING_READ(vga_reg);

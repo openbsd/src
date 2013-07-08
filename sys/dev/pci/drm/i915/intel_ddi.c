@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ddi.c,v 1.3 2013/07/05 07:20:27 jsg Exp $	*/
+/*	$OpenBSD: intel_ddi.c,v 1.4 2013/07/08 09:47:45 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -168,7 +168,7 @@ intel_wait_ddi_buf_idle(struct drm_i915_private *dev_priv,
 	int i;
 
 	for (i = 0; i < 8; i++) {
-		DELAY(1);
+		udelay(1);
 		if (I915_READ(reg) & DDI_BUF_IS_IDLE)
 			return;
 	}
@@ -206,7 +206,7 @@ hsw_fdi_link_train(struct drm_crtc *crtc)
 		     FDI_RX_PLL_ENABLE | ((intel_crtc->fdi_lanes - 1) << 19);
 	I915_WRITE(_FDI_RXA_CTL, rx_ctl_val);
 	POSTING_READ(_FDI_RXA_CTL);
-	DELAY(220);
+	udelay(220);
 
 	/* Switch from Rawclk to PCDclk */
 	rx_ctl_val |= FDI_PCDCLK;
@@ -235,7 +235,7 @@ hsw_fdi_link_train(struct drm_crtc *crtc)
 			   hsw_ddi_buf_ctl_values[i / 2]);
 		POSTING_READ(DDI_BUF_CTL(PORT_E));
 
-		DELAY(600);
+		udelay(600);
 
 		/* Program PCH FDI Receiver TU */
 		I915_WRITE(_FDI_RXA_TUSIZE1, TU_SIZE(64));
@@ -246,7 +246,7 @@ hsw_fdi_link_train(struct drm_crtc *crtc)
 		POSTING_READ(_FDI_RXA_CTL);
 
 		/* Wait for FDI receiver lane calibration */
-		DELAY(30);
+		udelay(30);
 
 		/* Unset FDI_RX_MISC pwrdn lanes */
 		temp = I915_READ(_FDI_RXA_MISC);
@@ -255,7 +255,7 @@ hsw_fdi_link_train(struct drm_crtc *crtc)
 		POSTING_READ(_FDI_RXA_MISC);
 
 		/* Wait for FDI auto training time */
-		DELAY(5);
+		udelay(5);
 
 		temp = I915_READ(DP_TP_STATUS(PORT_E));
 		if (temp & DP_TP_STATUS_AUTOTRAIN_DONE) {
@@ -940,7 +940,7 @@ intel_ddi_pll_mode_set(struct drm_crtc *crtc, int clock)
 	}
 
 	I915_WRITE(reg, val);
-	DELAY(20);
+	udelay(20);
 
 	return true;
 }
@@ -1444,7 +1444,7 @@ intel_ddi_prepare_link_retrain(struct drm_encoder *encoder)
 	I915_WRITE(DDI_BUF_CTL(port), intel_dp->DP);
 	POSTING_READ(DDI_BUF_CTL(port));
 
-	DELAY(600);
+	udelay(600);
 }
 
 void
