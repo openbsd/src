@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.380 2013/06/24 15:56:29 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.381 2013/07/08 18:28:11 landry Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 24 2013 $
+.Dd $Mdocdate: July 8 2013 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2235,6 +2235,12 @@ lines obtained from
 the ports tree with
 .Cm @wantlib
 lines that come from the installed system.
+Set to
+.Sq Warn
+to have the differences printed as a warning instead of an error
+.Po
+the default
+.Pc .
 .It Ev PKG_DBDIR
 User settings.
 Path to package installation records.
