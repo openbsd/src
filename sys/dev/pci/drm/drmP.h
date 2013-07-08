@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.138 2013/06/11 19:39:09 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.139 2013/07/08 09:43:18 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -221,6 +221,20 @@ IS_ERR_OR_NULL(const void *ptr)
 #define cpu_to_le32(x) htole32(x)
 
 #define DRM_UDELAY(udelay)	DELAY(udelay)
+
+static __inline void
+udelay(unsigned long usecs)
+{
+	DELAY(usecs);
+}
+
+static __inline void
+mdelay(unsigned long msecs)
+{
+	int loops = msecs;
+	while (loops--)
+		DELAY(1000);
+}
 
 #define LOCK_TEST_WITH_RETURN(dev, file_priv)				\
 do {									\
