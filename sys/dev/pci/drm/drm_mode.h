@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_mode.h,v 1.2 2013/03/18 12:36:51 jsg Exp $	*/
+/*	$OpenBSD: drm_mode.h,v 1.3 2013/07/08 05:57:27 jsg Exp $	*/
 /*
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
  * Copyright (c) 2007 Jakob Bornecrantz <wallbraker@gmail.com>
@@ -385,6 +385,19 @@ struct drm_mode_cursor {
 	uint32_t height;
 	/* driver specific handle */
 	uint32_t handle;
+};
+
+struct drm_mode_cursor2 {
+	uint32_t flags;
+	uint32_t crtc_id;
+	int32_t x;
+	int32_t y;
+	uint32_t width;
+	uint32_t height;
+	/* driver specific handle */
+	uint32_t handle;
+	int32_t hot_x;
+	int32_t hot_y;
 };
 
 struct drm_mode_crtc_lut {
