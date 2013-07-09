@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.5 2013/06/11 16:04:43 florian Exp $
+#	$OpenBSD: install.md,v 1.6 2013/07/09 10:35:41 rapha Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,10 +39,13 @@ md_installboot() {
 	/mnt/usr/sbin/chroot /mnt /usr/sbin/mkuboot -a arm -o linux \
 		-e 0x80300000 -l 0x80300000 /bsd.img /mnt/bsd.umg
 	cp -r /tmp/u-boots/* /mnt/usr/mdec/
-	BEAGLE=$(scan_dmesg '/^omap0 at mainbus0: \(Beagle\).*/s//\1/p')
+	BEAGLE=$(scan_dmesg '/^omap0 at mainbus0: \(BeagleBoard\).*/s//\1/p')
+	BEAGLEBONE=$(scan_dmesg '/^omap0 at mainbus0: \(BeagleBone\).*/s//\1/p')
 	PANDA=$(scan_dmesg '/^omap0 at mainbus0: \(PandaBoard\)/s//\1/p')
 	if [[ -n $BEAGLE ]]; then
 		cp /mnt/usr/mdec/beagle/{mlo,u-boot.bin} /mnt/mnt/
+	elif [[ -n $BEAGLEBONE ]]; then
+		cp /mnt/usr/mdec/am335x/{mlo,u-boot.bin} /mnt/mnt/
 	elif [[ -n $PANDA ]]; then
 		cp /mnt/usr/mdec/panda/{mlo,u-boot.bin} /mnt/mnt/
 	fi
