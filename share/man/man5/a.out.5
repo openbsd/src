@@ -1,4 +1,4 @@
-.\"	$OpenBSD: a.out.5,v 1.15 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: a.out.5,v 1.16 2013/07/09 18:25:28 miod Exp $
 .\"	$NetBSD: a.out.5,v 1.8 1994/11/30 19:31:09 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,12 +33,12 @@
 .\"
 .\"	@(#)a.out.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 9 2013 $
 .Dt A.OUT 5
 .Os
 .Sh NAME
 .Nm a.out
-.Nd format of executable binary files
+.Nd format of legacy executable binary files
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <a.out.h>
@@ -46,7 +46,7 @@
 The include file
 .Aq Pa a.out.h
 declares three structures and several macros.
-The structures describe the format of executable machine code files
+The structures describe the format of legacy executable machine code files
 .Pq Dq binaries
 on the system.
 .Pp
@@ -436,7 +436,8 @@ is always 4 on 32-bit machines.
 .Xr execve 2 ,
 .Xr nlist 3 ,
 .Xr core 5 ,
-.Xr link 5 ,
+.Xr elf 5 ,
+.\" .Xr link 5 ,
 .Xr stab 5
 .Sh HISTORY
 The
@@ -447,7 +448,3 @@ include file appeared in
 Nobody seems to agree on what
 .Em BSS
 stands for.
-.Pp
-New binary file formats may be supported in the future,
-and they probably will not be compatible at any level
-with this ancient format.
