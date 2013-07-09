@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.142 2013/03/25 14:58:28 markus Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.143 2013/07/09 08:57:24 blambert Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -405,7 +405,7 @@ done:
  *
  * Rotate the input word by a changing number of bits, to help assure
  * that all bits in the entropy get toggled.  Otherwise, if the pool
- * is consistently feed small numbers (such as keyboard scan codes)
+ * is consistently fed small numbers (such as keyboard scan codes)
  * then the upper bits of the entropy pool will frequently remain
  * untouched.
  */
@@ -484,7 +484,7 @@ void
 extract_entropy(u_int8_t *buf, int nbytes)
 {
 	static u_int32_t extract_pool[POOLWORDS];
-	u_char buffer[16];
+	u_char buffer[MD5_DIGEST_LENGTH];
 	MD5_CTX tmp;
 	u_int i;
 
