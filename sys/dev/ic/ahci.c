@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.2 2013/07/09 11:55:55 jmatthew Exp $ */
+/*	$OpenBSD: ahci.c,v 1.3 2013/07/09 17:53:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -30,19 +30,8 @@
 
 #include <machine/bus.h>
 
-
 #include <dev/ic/ahcivar.h>
 #include <dev/ic/ahcireg.h>
-
-#ifdef HIBERNATE
-#include <uvm/uvm.h>
-#include <sys/hibernate.h>
-#include <sys/disk.h>
-#include <sys/disklabel.h>
-
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
-
 
 #ifdef AHCI_DEBUG
 #define DPRINTF(m, f...) do { if ((ahcidebug & (m)) == (m)) printf(f); } \
@@ -56,6 +45,14 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define DPRINTF(m, f...)
 #endif
 
+#ifdef HIBERNATE
+#include <uvm/uvm.h>
+#include <sys/hibernate.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
 
 void			ahci_hibernate_io_start(struct ahci_port *,
 			    struct ahci_ccb *);
