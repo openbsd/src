@@ -1,4 +1,4 @@
-/* $OpenBSD: tcpdrop.c,v 1.10 2013/07/09 17:29:19 gsoares Exp $ */
+/* $OpenBSD: tcpdrop.c,v 1.11 2013/07/09 19:35:52 gsoares Exp $ */
 
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
@@ -104,10 +104,12 @@ fail:
 		    gai_strerror(gaierr));
 	}
 
+	rval = 1;
 	for (ail = laddr; ail; ail = ail->ai_next) {
 		for (aif = faddr; aif; aif = aif->ai_next) {
 			if (ail->ai_family != aif->ai_family)
 				continue;
+			rval = 0;
 			memset(&tir, 0, sizeof(tir));
 			memcpy(&tir.faddr, aif->ai_addr, aif->ai_addrlen);
 			memcpy(&tir.laddr, ail->ai_addr, ail->ai_addrlen);
