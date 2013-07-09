@@ -1,4 +1,4 @@
-/* $OpenBSD: tcpdrop.c,v 1.9 2012/12/18 21:28:45 millert Exp $ */
+/* $OpenBSD: tcpdrop.c,v 1.10 2013/07/09 17:29:19 gsoares Exp $ */
 
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
@@ -45,7 +45,7 @@ main(int argc, char **argv)
 	struct addrinfo hints, *ail, *aif, *laddr, *faddr;
 	char fhbuf[NI_MAXHOST], fsbuf[NI_MAXSERV];
 	char lhbuf[NI_MAXHOST], lsbuf[NI_MAXSERV];
-	char *laddr1, *addr1, *port1, *laddr2, *addr2, *port2;
+	char *laddr1, *addr1, *port1, *faddr2, *addr2, *port2;
 	struct tcp_ident_mapping tir;
 	int gaierr, rval = 0;
 
@@ -61,7 +61,7 @@ main(int argc, char **argv)
 		else
 			goto fail;
 
-		laddr2 = addr2 = strdup(argv[2]);
+		faddr2 = addr2 = strdup(argv[2]);
 		port2 = strrchr(addr2, ':');
 		if (port2)
 			*port2++ = '\0';
@@ -70,7 +70,7 @@ main(int argc, char **argv)
 	} else if (argc == 5) {
 		laddr1 = addr1 = argv[1];
 		port1 = argv[2];
-		laddr2 = addr2 = argv[3];
+		faddr2 = addr2 = argv[3];
 		port2 = argv[4];
 	} else {
 fail:
@@ -89,16 +89,16 @@ fail:
 		laddr1++;
 	}
 	if (addr2[0] == '[' && addr2[strlen(addr2) - 1] == ']') {
-		laddr2 = strdup(addr2);
-		laddr2[strlen(laddr2) - 1] = '\0';
-		laddr2++;
+		faddr2 = strdup(addr2);
+		faddr2[strlen(faddr2) - 1] = '\0';
+		faddr2++;
 	}
 
 	if ((gaierr = getaddrinfo(laddr1, port1, &hints, &laddr)) != 0)
 		errx(1, "%s port %s: %s", addr1, port1,
 		    gai_strerror(gaierr));
 
-	if ((gaierr = getaddrinfo(laddr2, port2, &hints, &faddr)) != 0) {
+	if ((gaierr = getaddrinfo(faddr2, port2, &hints, &faddr)) != 0) {
 		freeaddrinfo(laddr);
 		errx(1, "%s port %s: %s", addr2, port2,
 		    gai_strerror(gaierr));
