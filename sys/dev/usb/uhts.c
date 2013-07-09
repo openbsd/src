@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhts.c,v 1.7 2013/07/01 20:34:52 matthieu Exp $ */
+/*	$OpenBSD: uhts.c,v 1.8 2013/07/09 10:16:48 edd Exp $ */
 /*
  * Copyright (c) 2009 Matthieu Herrb <matthieu@herrb.eu>
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -78,6 +78,11 @@ int	uhtsdebug = 0;
 
 #define UHTSUNIT(s)	(minor(s))
 
+/* defined in such a way as to aid merge of hidms.c */
+#define UHTS_TIP	0x100
+#define UHTS_BARELL	0x200
+#define UHTS_ERASER	0x400
+
 struct tsscale {
 	int	minx, maxx;
 	int	miny, maxy;
@@ -88,11 +93,12 @@ struct tsscale {
 struct uhts_softc {
 	struct uhidev sc_hdev;
 	struct hid_location sc_loc_x, sc_loc_y;
-	struct hid_location sc_loc_btn;
+#define UHTS_MAX_BUTTONS		31
+	struct hid_location sc_loc_btn[UHTS_MAX_BUTTONS];
+	int sc_num_buttons;
 	int sc_enabled;
 	u_int32_t sc_buttons;	/* mouse button status */
 	int sc_rawmode;
-	int sc_oldx, sc_oldy;
 	struct tsscale sc_tsscale;
 	struct device *sc_wsmousedev;
 	char sc_dying;
@@ -142,10 +148,16 @@ uhts_match(struct device *parent, void *match, void *aux)
 	void *desc;
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
-	if (!hid_is_collection(desc, size, uha->reportid,
-		HID_USAGE2(HUP_DIGITIZERS, HUD_TOUCHSCREEN)))
-		return (UMATCH_NONE);
-	return (UMATCH_IFACECLASS);
+
+	if (hid_is_collection(desc, size, uha->reportid,
+	    HID_USAGE2(HUP_DIGITIZERS, HUD_TOUCHSCREEN)))
+		return (UMATCH_IFACECLASS);
+
+	if (hid_is_collection(desc, size, uha->reportid,
+	    HID_USAGE2(HUP_DIGITIZERS, HUD_PEN)))
+		return (UMATCH_IFACECLASS);
+
+	return (UMATCH_NONE);
 }
 
 void
@@ -187,7 +199,7 @@ uhts_attach(struct device *parent, struct device *self, void *aux)
 	struct wsmousedev_attach_args a;
 	void *desc;
 	int size;
-	u_int32_t flags;
+	u_int32_t flags, buttons_flags = 0;
 
 	sc->sc_hdev.sc_intr = uhts_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
@@ -207,13 +219,36 @@ uhts_attach(struct device *parent, struct device *self, void *aux)
 		       sc->sc_hdev.sc_dev.dv_xname);
 		return;
 	}
-	if (!hid_locate(desc, size, HID_USAGE2(HUP_DIGITIZERS,
-		    HUD_TIP_SWITCH), uha->reportid, hid_input,
-		&sc->sc_loc_btn, NULL)){
-		printf("\n%s: touch screen has no button\n",
-		    sc->sc_hdev.sc_dev.dv_xname);
-		return;
+
+	if (hid_locate(desc, size, HID_USAGE2(HUP_DIGITIZERS,
+	    HUD_TIP_SWITCH), uha->reportid, hid_input,
+	    &sc->sc_loc_btn[sc->sc_num_buttons], NULL)){
+		buttons_flags |= UHTS_TIP;
+		sc->sc_num_buttons++;
 	}
+
+	if (hid_locate(desc, size, HID_USAGE2(HUP_DIGITIZERS,
+	    HUD_BARREL_SWITCH), uha->reportid, hid_input,
+	    &sc->sc_loc_btn[sc->sc_num_buttons], NULL)){
+		buttons_flags |= UHTS_BARELL;
+		sc->sc_num_buttons++;
+	}
+
+	if (hid_locate(desc, size, HID_USAGE2(HUP_DIGITIZERS,
+	    HUD_ERASER), uha->reportid, hid_input,
+	    &sc->sc_loc_btn[sc->sc_num_buttons], NULL)){
+		buttons_flags |= UHTS_ERASER;
+		sc->sc_num_buttons++;
+	}
+
+	printf(": %d button%s",
+	    sc->sc_num_buttons, sc->sc_num_buttons <= 1 ? "" : "s");
+	if (buttons_flags & UHTS_TIP)
+		printf(", tip");
+	if (buttons_flags & UHTS_BARELL)
+		printf(", barrel");
+	if (buttons_flags & UHTS_ERASER)
+		printf(", eraser");
 	printf("\n");
 
 	a.accessops = &uhts_accessops;
@@ -265,42 +300,40 @@ uhts_intr(struct uhidev *addr, void *buf, u_int len)
 	struct uhts_softc *sc = (struct uhts_softc *)addr;
 	u_char *ibuf = (u_char *)buf;
 	struct uhts_pos tp;
-	int x, y, s;
+	int x, y, s, i;
 	u_int32_t buttons = 0;
 
 	DPRINTFN(5, ("uhts_intr: len=%d\n", len));
 
 	x = hid_get_data(ibuf, &sc->sc_loc_x);
 	y = hid_get_data(ibuf, &sc->sc_loc_y);
-	if (hid_get_data(ibuf, &sc->sc_loc_btn))
-		buttons = 1;
+
+	for (i = 0; i < sc->sc_num_buttons; i++) {
+		if (hid_get_data(ibuf, &sc->sc_loc_btn[i]))
+			buttons |= 1 << i;
+	}
 
 	DPRINTFN(10, ("uhts_intr: x:%d y:%d buttons:0x%x\n",
 		x, y, buttons));
 
-	if (buttons) {
-		if (sc->sc_tsscale.swapxy && !sc->sc_rawmode) {
-			/* Swap X/Y-Axis */
-			tp.y = x;
-			tp.x = y;
-		} else {
-			tp.x = x;
-			tp.y = y;
-		}
-		if (!sc->sc_rawmode &&
-		    (sc->sc_tsscale.maxx - sc->sc_tsscale.minx) != 0 &&
-		    (sc->sc_tsscale.maxy - sc->sc_tsscale.miny) != 0) {
-			/* Scale down to the screen resolution. */
-			tp.x = ((tp.x - sc->sc_tsscale.minx) *
-			    sc->sc_tsscale.resx) /
-			    (sc->sc_tsscale.maxx - sc->sc_tsscale.minx);
-			tp.y = ((tp.y - sc->sc_tsscale.miny) *
-			    sc->sc_tsscale.resy) /
-			    (sc->sc_tsscale.maxy - sc->sc_tsscale.miny);
-		}
+	if (sc->sc_tsscale.swapxy && !sc->sc_rawmode) {
+		/* Swap X/Y-Axis */
+		tp.y = x;
+		tp.x = y;
 	} else {
-		tp.x = sc->sc_oldx;
-		tp.y = sc->sc_oldy;
+		tp.x = x;
+		tp.y = y;
+	}
+	if (!sc->sc_rawmode &&
+	    (sc->sc_tsscale.maxx - sc->sc_tsscale.minx) != 0 &&
+	    (sc->sc_tsscale.maxy - sc->sc_tsscale.miny) != 0) {
+		/* Scale down to the screen resolution. */
+		tp.x = ((tp.x - sc->sc_tsscale.minx) *
+		    sc->sc_tsscale.resx) /
+		    (sc->sc_tsscale.maxx - sc->sc_tsscale.minx);
+		tp.y = ((tp.y - sc->sc_tsscale.miny) *
+		    sc->sc_tsscale.resy) /
+		    (sc->sc_tsscale.maxy - sc->sc_tsscale.miny);
 	}
 
 	sc->sc_buttons = buttons;
@@ -311,8 +344,7 @@ uhts_intr(struct uhidev *addr, void *buf, u_int len)
 		wsmouse_input(sc->sc_wsmousedev, buttons, tp.x, tp.y, tp.z, 0,
 		    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
 		    WSMOUSE_INPUT_ABSOLUTE_Z);
-		sc->sc_oldx = tp.x;
-		sc->sc_oldy = tp.y;
+
 		splx(s);
 	}
 }
