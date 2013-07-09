@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahcivar.h,v 1.1 2013/01/21 11:17:48 patrick Exp $ */
+/*	$OpenBSD: ahcivar.h,v 1.2 2013/07/09 11:55:55 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -24,18 +24,6 @@
 
 /* change to AHCI_DEBUG for dmesg spam */
 #define NO_AHCI_DEBUG
-
-#ifdef AHCI_DEBUG
-#define DPRINTF(m, f...) do { if ((ahcidebug & (m)) == (m)) printf(f); } \
-    while (0)
-#define AHCI_D_TIMEOUT		0x00
-#define AHCI_D_VERBOSE		0x01
-#define AHCI_D_INTR		0x02
-#define AHCI_D_XFER		0x08
-int ahcidebug = AHCI_D_VERBOSE;
-#else
-#define DPRINTF(m, f...)
-#endif
 
 struct ahci_cmd_hdr {
 	u_int16_t		flags;
