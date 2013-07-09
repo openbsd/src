@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.20 2013/01/17 21:54:18 jmc Exp $
+.\"	$OpenBSD: elf.5,v 1.21 2013/07/09 17:28:10 matthew Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\"	$FreeBSD: src/share/man/man5/elf.5,v 1.21 2001/10/01 16:09:23 ru Exp $
 .\"
-.Dd $Mdocdate: January 17 2013 $
+.Dd $Mdocdate: July 9 2013 $
 .Dt ELF 5
 .Os
 .Sh NAME
@@ -1355,9 +1355,10 @@ Each string is aligned on a 4-byte boundary.
 .Sh HISTORY
 .Ox
 ELF support first appeared in
-.Ox 1.2 ,
-although not all supported platforms use it as the native
-binary file format.
+.Ox 1.2 .
+Starting with
+.Ox 5.4 ,
+all supported platforms use it as the native binary file format.
 ELF in itself first appeared in
 .At V .
 The ELF format is an adopted standard.
