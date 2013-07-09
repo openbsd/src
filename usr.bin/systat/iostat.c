@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.41 2013/06/11 19:01:20 beck Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.42 2013/07/09 15:37:43 beck Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -220,10 +220,6 @@ showbcache(void)
 {
 	print_fld_str(FLD_IO_SSTR, "total pages");
 	print_fld_ssize(FLD_IO_SVAL, bccur.numbufpages);
-	end_line();
-
-	print_fld_str(FLD_IO_SSTR, "dma pages");
-	print_fld_ssize(FLD_IO_SVAL, bccur.dmapages);
 	end_line();
 
 	print_fld_str(FLD_IO_SSTR, "dirty pages");

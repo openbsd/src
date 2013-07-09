@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.7 2013/06/11 19:01:20 beck Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.8 2013/07/09 15:37:43 beck Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -633,11 +633,6 @@ VOP_STRATEGY(struct buf *bp)
 
 	if (bp->b_vp->v_op->vop_strategy == NULL)
 		return (EOPNOTSUPP);
-	/*
-	 * Flip buffer to dma reachable memory if necessary.
-	 */
-	if (ISSET(bp->b_flags, B_BC))
-		buf_dma(bp);
 
 	return ((bp->b_vp->v_op->vop_strategy)(&a));
 }

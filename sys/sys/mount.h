@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.113 2013/06/21 21:30:38 syl Exp $	*/
+/*	$OpenBSD: mount.h,v 1.114 2013/07/09 15:37:43 beck Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -528,7 +528,6 @@ extern long buflowpages, bufhighpages, bufbackpages;
 #define BUFPAGES_INACT (((bcstats.numcleanpages - buflowpages) < 0) ? 0 \
     : bcstats.numcleanpages - buflowpages)
 extern int bufcachepercent;
-extern int bufhigh(int);
 extern void bufadjust(int);
 struct uvm_constraint_range;
 extern int bufbackoff(struct uvm_constraint_range*, long);

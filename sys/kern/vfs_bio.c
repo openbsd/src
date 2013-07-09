@@ -1,8 +1,7 @@
-/*	$OpenBSD: vfs_bio.c,v 1.150 2013/06/13 15:00:04 tedu Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.151 2013/07/09 15:37:43 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
- * Copyright (c) 2012,2013 Bob Beck <beck@openbsd.org>
  * Copyright (c) 1994 Christopher G. Demetriou
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -64,17 +63,12 @@
 /*
  * Definitions for the buffer free lists.
  */
-#define	BQUEUES		3		/* number of free buffer queues */
+#define	BQUEUES		2		/* number of free buffer queues */
 
 #define	BQ_DIRTY	0		/* LRU queue with dirty buffers */
-#define	BQ_CLEANL	1		/* LRU queue with clean low buffers */
-#define	BQ_CLEANH	2		/* LRU queue with clean high buffers */
+#define	BQ_CLEAN	1		/* LRU queue with clean buffers */
 
 TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
-int	bfreeclean(int, struct bqueues *);
-struct uvm_constraint_range high_constraint;
-psize_t b_dmapages_total, b_highpages_total, b_dmamaxpages;
-int needda;
 int nobuffers;
 int needbuffer;
 struct bio_ops bioops;
@@ -116,47 +110,28 @@ bremfree(struct buf *bp)
 	struct bqueues *dp = NULL;
 
 	splassert(IPL_BIO);
-	KASSERT(ISSET(bp->b_flags, B_BC));
-	KASSERT(!ISSET(bp->b_flags, B_BUSY));
-	if (bp->b_freelist.tqe_next == NOLIST ||
-	    bp->b_freelist.tqe_next == (void *)-1)
-		panic("bremfree: - buf %p not on a free list!", bp);
 
+	/*
+	 * We only calculate the head of the freelist when removing
+	 * the last element of the list as that is the only time that
+	 * it is needed (e.g. to reset the tail pointer).
+	 *
+	 * NB: This makes an assumption about how tailq's are implemented.
+	 */
+	if (TAILQ_NEXT(bp, b_freelist) == NULL) {
+		for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
+			if (dp->tqh_last == &TAILQ_NEXT(bp, b_freelist))
+				break;
+		if (dp == &bufqueues[BQUEUES])
+			panic("bremfree: lost tail");
+	}
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
-		if (ISSET(bp->b_flags, B_DMA))
-			dp = &bufqueues[BQ_CLEANL];
-		else
-			dp = &bufqueues[BQ_CLEANH];
 		bcstats.numcleanpages -= atop(bp->b_bufsize);
 	} else {
-		dp = &bufqueues[BQ_DIRTY];
 		bcstats.numdirtypages -= atop(bp->b_bufsize);
 		bcstats.delwribufs--;
 	}
 	TAILQ_REMOVE(dp, bp, b_freelist);
-}
-
-int
-bfreeclean(int npages, struct bqueues *dp)
-{
-	struct buf *bp;
-	int i = 0;
-
-	splassert(IPL_BIO);
-	while (i < npages) {
- 		bp = TAILQ_FIRST(dp);
-		if (bp == NULL)
-			return(-1);
-		i += atop(bp->b_bufsize);
-		bremfree(bp);
-		if (bp->b_vp) {
-			RB_REMOVE(buf_rb_bufs,
-			    &bp->b_vp->v_bufs_tree, bp);
-			brelvp(bp);
-		}
-		buf_put(bp);
-	}
-	return(0);
 }
 
 void
@@ -183,7 +158,7 @@ buf_put(struct buf *bp)
 	bcstats.numbufs--;
 
 	if (buf_dealloc_mem(bp) != 0)
-		 return;
+		return;
 	pool_put(&bufpool, bp);
 }
 
@@ -193,21 +168,12 @@ buf_put(struct buf *bp)
 void
 bufinit(void)
 {
+	u_int64_t dmapages;
 	struct bqueues *dp;
 
-	/* How much DMA accessible memory will we consider? */
-	b_dmapages_total = uvm_pagecount(&dma_constraint);
-	/* Take away a guess at how much of this the kernel will consume. */
-	b_dmapages_total -= (atop(physmem) - atop(uvmexp.free));
-
-	/* See if we have memory above the dma accessible region. */
-	high_constraint.ucr_low = dma_constraint.ucr_high;
-	high_constraint.ucr_high = no_constraint.ucr_high;
-	if (high_constraint.ucr_low != high_constraint.ucr_high) {
-		high_constraint.ucr_low++;
-		b_highpages_total = uvm_pagecount(&high_constraint);
-	} else
-		b_highpages_total = 0;
+	dmapages = uvm_pagecount(&dma_constraint);
+	/* take away a guess at how much of this the kernel will consume */
+	dmapages -= (atop(physmem) - atop(uvmexp.free));
 
 	/*
 	 * If MD code doesn't say otherwise, use up to 10% of DMA'able
@@ -223,18 +189,18 @@ bufinit(void)
 	KASSERT(bufcachepercent <= 90);
 	KASSERT(bufcachepercent >= 5);
 	if (bufpages == 0)
-		bufpages = (b_dmapages_total + b_highpages_total)
-		    * bufcachepercent / 100;
+		bufpages = dmapages * bufcachepercent / 100;
 	if (bufpages < BCACHE_MIN)
 		bufpages = BCACHE_MIN;
+	KASSERT(bufpages < dmapages);
 
 	bufhighpages = bufpages;
-	b_dmamaxpages = b_dmapages_total * bufcachepercent / 100;
+
 	/*
 	 * Set the base backoff level for the buffer cache.  We will
 	 * not allow uvm to steal back more than this number of pages.
 	 */
-	buflowpages = b_dmapages_total * 5 / 100;
+	buflowpages = dmapages * 5 / 100;
 	if (buflowpages < BCACHE_MIN)
 		buflowpages = BCACHE_MIN;
 
@@ -301,6 +267,7 @@ bufinit(void)
 void
 bufadjust(int newbufpages)
 {
+	struct buf *bp;
 	int s, growing = 0;
 
 	if (newbufpages < buflowpages)
@@ -323,11 +290,15 @@ bufadjust(int newbufpages)
 	 * If we have more buffers allocated than our new low water mark,
 	 * immediately free them.
 	 */
-	if (!growing && (bcstats.numbufpages > lopages)) {
-		if (bfreeclean(bcstats.numbufpages - lopages,
-			&bufqueues[BQ_CLEANH]) != 0)
-			(void) bfreeclean(bcstats.numbufpages - lopages,
-			    &bufqueues[BQ_CLEANL]);
+	while (!growing && (bp = TAILQ_FIRST(&bufqueues[BQ_CLEAN])) &&
+	    (bcstats.numbufpages > lopages)) {
+		bremfree(bp);
+		if (bp->b_vp) {
+			RB_REMOVE(buf_rb_bufs,
+			    &bp->b_vp->v_bufs_tree, bp);
+			brelvp(bp);
+		}
+		buf_put(bp);
 	}
 
 	/*
@@ -350,10 +321,8 @@ bufbackoff(struct uvm_constraint_range *range, long size)
 	/*
 	 * Back off "size" buffer cache pages. Called by the page
 	 * daemon to consume buffer cache pages rather than scanning.
-	 * Also called buy the buffer cache to back off if memory
-	 * allocation in a particular range fails.
 	 *
-	 * It returns 0 to the caller to indicate that it has
+	 * It returns 0 to the pagedaemon to indicate that it has
 	 * succeeded in freeing enough pages. It returns -1 to
 	 * indicate that it could not and the pagedaemon should take
 	 * other measures.
@@ -371,23 +340,8 @@ bufbackoff(struct uvm_constraint_range *range, long size)
 		return(-1);
 	if (bufpages - pdelta < buflowpages)
 		pdelta = bufpages - buflowpages;
-
 	oldbufpages = bufpages;
-	if (b_highpages_total
-	    && (range->ucr_high <= dma_constraint.ucr_high)) {
-		/*
-		 * Free up DMA accessible memory by moving pages to
-		 * the high range.
-		 */
-		if (bufhigh(pdelta) == 0)
-			return(0); /* we moved enough pages up high */
-		else {
-			bufadjust(bufpages - pdelta); /* shrink the cache. */
-		}
-	} else {
-		/* Free memory by shrinking the cache. */
-		bufadjust(bufpages - pdelta);
-	}
+	bufadjust(bufpages - pdelta);
 	if (oldbufpages - bufpages < size)
 		return (-1); /* we did not free what we were asked */
 	else
@@ -572,18 +526,12 @@ bread_cluster(struct vnode *vp, daddr_t blkno, int size, struct buf **rbpp)
 	for (i = 1; i < howmany; i++) {
 		bcstats.pendingreads++;
 		bcstats.numreads++;
-		/*
-		 * We set B_DMA here because bp above will be B_DMA,
-		 * and we are playing buffer slice-n-dice games from
-		 * the memory allocated in bp.
-		 */
-		SET(xbpp[i]->b_flags, B_DMA | B_READ | B_ASYNC);
+		SET(xbpp[i]->b_flags, B_READ | B_ASYNC);
 		xbpp[i]->b_blkno = sblkno + (i * inc);
 		xbpp[i]->b_bufsize = xbpp[i]->b_bcount = size;
 		xbpp[i]->b_data = NULL;
 		xbpp[i]->b_pobj = bp->b_pobj;
 		xbpp[i]->b_poffs = bp->b_poffs + (i * size);
-		buf_dma(xbpp[i]);
 	}
 
 	KASSERT(bp->b_lblkno == blkno + 1);
@@ -812,11 +760,8 @@ brelse(struct buf *bp)
 
 	if (ISSET(bp->b_flags, B_INVAL)) {
 		/*
-		 * If the buffer is invalid, free it now rather than
-		 * putting it on any queue and wasting cache space.
-		 *
-		 * XXX we could queue it here for a later TRIM operation.
-		 *
+		 * If the buffer is invalid, place it in the clean queue, so it
+		 * can be reused.
 		 */
 		if (LIST_FIRST(&bp->b_dep) != NULL)
 			buf_deallocate(bp);
@@ -833,35 +778,44 @@ brelse(struct buf *bp)
 		bp->b_vp = NULL;
 
 		/*
-		 * Wake up any processes waiting for _this_ buffer to
-		 * become free. They are not allowed to grab it
-		 * since it will be freed. But the only sleeper is
-		 * getblk and it's restarting the operation after
-		 * sleep.
+		 * If the buffer has no associated data, place it back in the
+		 * pool.
 		 */
-		if (ISSET(bp->b_flags, B_WANTED)) {
-			CLR(bp->b_flags, B_WANTED);
-			wakeup(bp);
+		if (bp->b_data == NULL && bp->b_pobj == NULL) {
+			/*
+			 * Wake up any processes waiting for _this_ buffer to
+			 * become free. They are not allowed to grab it
+			 * since it will be freed. But the only sleeper is
+			 * getblk and it's restarting the operation after
+			 * sleep.
+			 */
+			if (ISSET(bp->b_flags, B_WANTED)) {
+				CLR(bp->b_flags, B_WANTED);
+				wakeup(bp);
+			}
+			if (bp->b_vp != NULL)
+				RB_REMOVE(buf_rb_bufs,
+				    &bp->b_vp->v_bufs_tree, bp);
+			buf_put(bp);
+			splx(s);
+			return;
 		}
-		if (ISSET(bp->b_flags, B_DMA) && needda)
-			wakeup(&needda);
-		buf_put(bp);
+
+		bcstats.numcleanpages += atop(bp->b_bufsize);
+		binsheadfree(bp, &bufqueues[BQ_CLEAN]);
 	} else {
 		/*
 		 * It has valid data.  Put it on the end of the appropriate
 		 * queue, so that it'll stick around for as long as possible.
 		 */
 
-		if (ISSET(bp->b_flags, B_DELWRI)) {
+		if (!ISSET(bp->b_flags, B_DELWRI)) {
+			bcstats.numcleanpages += atop(bp->b_bufsize);
+			bufq = &bufqueues[BQ_CLEAN];
+		} else {
 			bcstats.numdirtypages += atop(bp->b_bufsize);
 			bcstats.delwribufs++;
 			bufq = &bufqueues[BQ_DIRTY];
-		} else {
-			bcstats.numcleanpages += atop(bp->b_bufsize);
-			if (ISSET(bp->b_flags, B_DMA))
-				bufq = &bufqueues[BQ_CLEANL];
-			else
-				bufq = &bufqueues[BQ_CLEANH];
 		}
 		if (ISSET(bp->b_flags, B_AGE)) {
 			binsheadfree(bp, bufq);
@@ -870,20 +824,12 @@ brelse(struct buf *bp)
 			binstailfree(bp, bufq);
 			bp->b_synctime = time_uptime + 300;
 		}
-		/* Unlock the buffer. */
-		CLR(bp->b_flags, (B_AGE | B_ASYNC | B_NOCACHE | B_DEFERRED));
-		buf_release(bp);
-
-		if (ISSET(bp->b_flags, B_DMA) && needda) {
-			wakeup(&needda);
-		}
-		/* Wake up any processes waiting for _this_ buffer to
-		 * become free. */
-		if (ISSET(bp->b_flags, B_WANTED)) {
-			CLR(bp->b_flags, B_WANTED);
-			wakeup(bp);
-		}
 	}
+
+	/* Unlock the buffer. */
+	CLR(bp->b_flags, (B_AGE | B_ASYNC | B_NOCACHE | B_DEFERRED));
+	buf_release(bp);
+
 	/* Wake up syncer and cleaner processes waiting for buffers. */
 	if (nobuffers) {
 		nobuffers = 0;
@@ -895,6 +841,12 @@ brelse(struct buf *bp)
 	    bcstats.kvaslots_avail > RESERVE_SLOTS) {
 		needbuffer = 0;
 		wakeup(&needbuffer);
+	}
+
+	/* Wake up any processes waiting for _this_ buffer to become free. */
+	if (ISSET(bp->b_flags, B_WANTED)) {
+		CLR(bp->b_flags, B_WANTED);
+		wakeup(bp);
 	}
 
 	splx(s);
@@ -938,6 +890,16 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 	struct buf b;
 	int s, error;
 
+	/*
+	 * XXX
+	 * The following is an inlined version of 'incore()', but with
+	 * the 'invalid' test moved to after the 'busy' test.  It's
+	 * necessary because there are some cases in which the NFS
+	 * code sets B_INVAL prior to writing data to the server, but
+	 * in which the buffers actually contain valid data.  In this
+	 * case, we can't allow the system to allocate a new buffer for
+	 * the block until the write is finished.
+	 */
 start:
 	s = splbio();
 	b.b_lblkno = blkno;
@@ -1025,16 +987,17 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 		 * free down to the low water mark.
 		 */
 		if (bcstats.numbufpages + npages > hipages) {
-			if (bfreeclean(bcstats.numbufpages - lopages,
-				&bufqueues[BQ_CLEANH]) != 0)
-				(void) bfreeclean(bcstats.numbufpages
-				    - lopages, &bufqueues[BQ_CLEANL]);
+			while ((bcstats.numbufpages > lopages) &&
+			    (bp = TAILQ_FIRST(&bufqueues[BQ_CLEAN]))) {
+				bremfree(bp);
+				if (bp->b_vp) {
+					RB_REMOVE(buf_rb_bufs,
+					    &bp->b_vp->v_bufs_tree, bp);
+					brelvp(bp);
+				}
+				buf_put(bp);
+			}
 		}
-
-
-		if (b_highpages_total && bcstats.dmapages + npages >
-		    b_dmamaxpages)
-			bufhigh(bcstats.dmapages + npages - b_dmamaxpages);
 
 		/*
 		 * If we get here, we tried to free the world down
@@ -1066,8 +1029,6 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 		return (NULL);
 	}
 
-	/* Mark buffer as the cache's */
-	SET(bp->b_flags, B_BC);
 	bp->b_freelist.tqe_next = NOLIST;
 	bp->b_synctime = time_uptime + 300;
 	bp->b_dev = NODEV;
@@ -1107,7 +1068,6 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 	if (size) {
 		buf_alloc_pages(bp, round_page(size));
 		buf_map(bp);
-		buf_dma(bp);
 	}
 
 	splx(s);
@@ -1278,128 +1238,6 @@ biodone(struct buf *bp)
 	}
 }
 
-/*
- * Ensure buffer is DMA reachable
- */
-void
-buf_dma(struct buf *buf)
-{
-	struct buf *b;
-	int s;
-
-start:
-	KASSERT(ISSET(buf->b_flags, B_BC));
-	KASSERT(ISSET(buf->b_flags, B_BUSY));
-	KASSERT(buf->b_pobj != NULL);
-	s = splbio();
-	/*
-	 * If we are adding to the queue, and we are not the cleaner or
-	 * the syncer, ensure we free down below the max
-	 */
-	while (b_highpages_total &&
-	    curproc != syncerproc && curproc != cleanerproc &&
-	    (!ISSET(buf->b_flags, B_DMA)) &&
-	    (bcstats.dmapages > (b_dmamaxpages - atop(buf->b_bufsize)))) {
-		b = TAILQ_FIRST(&bufqueues[BQ_CLEANL]);
-		KASSERT(!ISSET(b->b_flags, B_BUSY));
-		if (b == NULL) {
-			/* no non-busy buffers. */
-			needda++;
-			tsleep(&needda, PRIBIO, "needda", 0);
-			needda--;
-			splx(s);
-			goto start;
-		} else {
-			bremfree(b);
-			buf_acquire_nomap(b);
-			if (buf_realloc_pages(b, &high_constraint,
-			    UVM_PLA_NOWAIT) == 0) {
-				/* move the buffer to high memory if we can */
-				if (ISSET(b->b_flags, B_DMA))
-					panic("B_DMA after high flip %p", b);
-				binstailfree(b, &bufqueues[BQ_CLEANH]);
-				buf_release(b);
-			} else {
-				/* otherwise just free the buffer */
-				buf_release(b);
-				if (b->b_vp) {
-					RB_REMOVE(buf_rb_bufs,
-					    &b->b_vp->v_bufs_tree, b);
-					brelvp(b);
-				}
-				buf_put(b);
-			}
-		}
-	}
-	if (!ISSET(buf->b_flags, B_DMA)) {
-		/* move buf to dma reachable memory */
-		(void) buf_realloc_pages(buf, &dma_constraint, UVM_PLA_WAITOK);
-		if (!ISSET(buf->b_flags, B_DMA))
-			panic("non-dma buffer after dma move %p\n", buf);
-	}
-	splx(s);
-	return;
-}
-
-/*
- * Attempt to flip "delta" dma reachable cache pages high. return 0 if we can,
- * -1 otherwise.
- */
-int
-bufhigh(int delta)
-{
-	psize_t newdmapages;
-	struct buf *b, *bn;
-	int s;
-	if (!b_highpages_total)
-		return(-1);
-       	s = splbio();
-	newdmapages = bcstats.dmapages - delta;
-	b = TAILQ_FIRST(&bufqueues[BQ_CLEANL]);
-	while ((bcstats.dmapages > newdmapages) && (b != NULL)) {
-		while (ISSET(b->b_flags, B_BUSY)) {
-			b = TAILQ_NEXT(b, b_freelist);
-		}
-		if (b != NULL) {
-			bn = TAILQ_NEXT(b, b_freelist);
-			bremfree(b);
-			buf_acquire_nomap(b);
-		moveit:
-			if (buf_realloc_pages(b, &high_constraint,
-			    UVM_PLA_NOWAIT) == 0) {
-				/* move the buffer to high memory if we can */
-				if (ISSET(b->b_flags, B_DMA))
-					panic("B_DMA after high flip %p", b);
-				binstailfree(b, &bufqueues[BQ_CLEANH]);
-				buf_release(b);
-			} else {
-				/* free up some high memory and try again. */
-				if (bfreeclean(delta, &bufqueues[BQ_CLEANH])
-				    == 0)
-					goto moveit;
-				else {
-					/* otherwise just free the buffer */
-					buf_release(b);
-					if (b->b_vp) {
-						RB_REMOVE(buf_rb_bufs,
-						    &b->b_vp->v_bufs_tree, b);
-						brelvp(b);
-					}
-					buf_put(b);
-				}
-			}
-			b = bn;
-		}
-	}
-	wakeup(&needda);
-	splx(s);
-	if (bcstats.dmapages > newdmapages)
-	  	return(-1);
-	else
-		return(0);
-}
-
-
 #ifdef DDB
 void	bcstats_print(int (*)(const char *, ...) /* __attribute__((__format__(__kprintf__,1,2))) */);
 /*
@@ -1414,8 +1252,8 @@ bcstats_print(
 	    bcstats.numbufs, bcstats.busymapped, bcstats.delwribufs);
 	(*pr)("kvaslots %lld avail kva slots %lld\n",
 	    bcstats.kvaslots, bcstats.kvaslots_avail);
-    	(*pr)("total bufpages %lld, dmapages %lld, dirtypages %lld\n",
-	    bcstats.numbufpages, bcstats.dmapages, bcstats.numdirtypages);
+    	(*pr)("bufpages %lld, dirtypages %lld\n",
+	    bcstats.numbufpages,  bcstats.numdirtypages);
 	(*pr)("pendingreads %lld, pendingwrites %lld\n",
 	    bcstats.pendingreads, bcstats.pendingwrites);
 }

@@ -1,7 +1,6 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.27 2013/06/27 00:04:16 beck Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.28 2013/07/09 15:37:43 beck Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
- * Copyright (c) 2012,2013 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -168,10 +167,6 @@ buf_release(struct buf *bp)
 		}
 	}
 	CLR(bp->b_flags, B_BUSY);
-	if (ISSET(bp->b_flags, B_WANTED)) {
-		CLR(bp->b_flags, B_WANTED);
-		wakeup(bp);
-	}
 }
 
 /*
@@ -272,7 +267,6 @@ void
 buf_alloc_pages(struct buf *bp, vsize_t size)
 {
 	voff_t offs;
-	int i;
 
 	KASSERT(size == round_page(size));
 	KASSERT(bp->b_pobj == NULL);
@@ -284,18 +278,8 @@ buf_alloc_pages(struct buf *bp, vsize_t size)
 
 	KASSERT(buf_page_offset > 0);
 
-	do {
-		i = uvm_pagealloc_multi(buf_object, offs, size,
-		    UVM_PLA_NOWAIT);
-		if (i == 0)
-			break;
-	} while	(bufbackoff(&dma_constraint, 100) == 0);
-	if (i != 0)
-		i = uvm_pagealloc_multi(buf_object, offs, size,
-		    UVM_PLA_WAITOK);
+	uvm_pagealloc_multi(buf_object, offs, size, UVM_PLA_WAITOK);
 	bcstats.numbufpages += atop(size);
-	bcstats.dmapages += atop(size);
-	SET(bp->b_flags, B_DMA);
 	bp->b_pobj = buf_object;
 	bp->b_poffs = offs;
 	bp->b_bufsize = size;
@@ -323,68 +307,10 @@ buf_free_pages(struct buf *bp)
 		pg->wire_count = 0;
 		uvm_pagefree(pg);
 		bcstats.numbufpages--;
-		if (ISSET(bp->b_flags, B_DMA))
-			bcstats.dmapages--;
 	}
-	CLR(bp->b_flags, B_DMA);
 }
 
-/* Reallocate a buf into a particular pmem range specified by "where". */
-int
-buf_realloc_pages(struct buf *bp, struct uvm_constraint_range *where,
-    int flags)
-{
-	vaddr_t va;
-	int dma;
-  	int i, r;
-	KASSERT(!(flags & UVM_PLA_WAITOK) ^ !(flags & UVM_PLA_NOWAIT));
-
-	splassert(IPL_BIO);
-	KASSERT(ISSET(bp->b_flags, B_BUSY));
-	dma = ISSET(bp->b_flags, B_DMA);
-
-	/* if the original buf is mapped, unmap it */
-	if (bp->b_data != NULL) {
-		va = (vaddr_t)bp->b_data;
-		pmap_kremove(va, bp->b_bufsize);
-		pmap_update(pmap_kernel());
-	}
-
-	r = 0;
-	do {
-		r = uvm_pagerealloc_multi(bp->b_pobj, bp->b_poffs,
-		    bp->b_bufsize, UVM_PLA_NOWAIT, where);
-		if (r == 0)
-			break;
-	} while	((bufbackoff(where, 100) == 0) && (flags & UVM_PLA_WAITOK));
-	if (r != 0 && (! flags & UVM_PLA_NOWAIT))
-		r = uvm_pagerealloc_multi(bp->b_pobj, bp->b_poffs,
-		    bp->b_bufsize, flags, where);
-
-	/*
-	 * do this now, and put it back later when we know where we are
-	 */
-	if (dma)
-		bcstats.dmapages -= atop(bp->b_bufsize);
-
-	dma = 1;
-	/* if the original buf was mapped, re-map it */
-	for (i = 0; i < atop(bp->b_bufsize); i++) {
-		struct vm_page *pg = uvm_pagelookup(bp->b_pobj,
-		    bp->b_poffs + ptoa(i));
-		KASSERT(pg != NULL);
-		if  (!PADDR_IS_DMA_REACHABLE(VM_PAGE_TO_PHYS(pg)))
-			dma = 0;
-		if (bp->b_data != NULL) {
-			pmap_kenter_pa(va + ptoa(i), VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ|VM_PROT_WRITE);
-			pmap_update(pmap_kernel());
-		}
-	}
-	if (dma) {
-		SET(bp->b_flags, B_DMA);
-		bcstats.dmapages += atop(bp->b_bufsize);
-	} else
-		CLR(bp->b_flags, B_DMA);
-	return(r);
-}
+/*
+ * XXX - it might make sense to make a buf_realloc_pages to avoid
+ *       bouncing through the free list all the time.
+ */
