@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2013/07/02 19:00:09 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.7 2013/07/10 05:07:53 ajacoutot Exp $
 
 LIB=	hdb
 
@@ -57,7 +57,7 @@ CPPFLAGS=	-I${KRB5DIR}/lib/hdb -I${KRB5DIR}/lib/asn1 \
 		-I${KRB5DIR}/lib/krb5 \
 		-I.
 
-CFLAGS=	-DHDB_DB_DIR="\"/var/heimdal\""
+CFLAGS=	-DHDB_DB_DIR="\"/var/kerberosV\""
 
 GEN=	asn1_Salt.x \
 	asn1_Key.x \

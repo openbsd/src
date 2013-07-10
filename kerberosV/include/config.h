@@ -1323,7 +1323,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* #undef LIBINTL */
 
 /* path to localstate */
-#define LOCALSTATEDIR "/var/heimdal"
+#define LOCALSTATEDIR "/var"
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
