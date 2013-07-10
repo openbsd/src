@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis.c,v 1.18 2010/09/04 13:14:49 miod Exp $	*/
+/*	$OpenBSD: pcmcia_cis.c,v 1.19 2013/07/10 05:36:40 brad Exp $	*/
 /*	$NetBSD: pcmcia_cis.c,v 1.9 1998/08/22 23:41:48 msaitoh Exp $	*/
 
 /*
@@ -271,7 +271,6 @@ pcmcia_scan_cis(dev, fct, arg)
 					 * distant regions
 					 */
 					if ((addr >= PCMCIA_CIS_SIZE) ||
-					    ((addr + length) < 0) ||
 					    ((addr + length) >=
 					      PCMCIA_CIS_SIZE)) {
 						DPRINTF((" skipped, "
