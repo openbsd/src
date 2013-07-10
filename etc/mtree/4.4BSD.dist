@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.234 2013/07/10 05:09:42 ajacoutot Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.235 2013/07/10 15:09:00 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1243,6 +1243,7 @@ phantasia        uname=root gname=games mode=0775
 # ./var/kerberosV
 kerberosV	uname=root gname=wheel mode=0700
 # ./var/kerberosV
+..
 
 # ./var/log
 log
