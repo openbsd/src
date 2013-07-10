@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sppp.h,v 1.17 2012/01/29 10:21:54 sthen Exp $	*/
+/*	$OpenBSD: if_sppp.h,v 1.18 2013/07/10 07:46:10 mpi Exp $	*/
 /*	$NetBSD: if_sppp.h,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	*/
 
 /*
@@ -40,6 +40,58 @@
 #ifndef _NET_IF_SPPP_H_
 #define _NET_IF_SPPP_H_
 
+#define AUTHFLAG_NOCALLOUT	1 /* don't require authentication on callouts */
+#define AUTHFLAG_NORECHALLENGE	2 /* don't re-challenge CHAP */
+
+/*
+ * Don't change the order of this.  Ordering the phases this way allows
+ * for a comparision of ``pp_phase >= PHASE_AUTHENTICATE'' in order to
+ * know whether LCP is up.
+ */
+enum ppp_phase {
+	PHASE_DEAD, PHASE_ESTABLISH, PHASE_TERMINATE,
+	PHASE_AUTHENTICATE, PHASE_NETWORK
+};
+
+
+#define AUTHMAXLEN	256	/* including terminating '\0' */
+#define AUTHCHALEN	16	/* length of the challenge we send */
+
+/*
+ * Definitions to pass struct sppp data down into the kernel using the
+ * SIOC[SG]IFGENERIC ioctl interface.
+ *
+ * In order to use this, create a struct spppreq, fill in the cmd
+ * field with SPPPIOGDEFS, and put the address of this structure into
+ * the ifr_data portion of a struct ifreq.  Pass this struct to a
+ * SIOCGIFGENERIC ioctl.  Then replace the cmd field by SPPPIOSDEFS,
+ * modify the defs field as desired, and pass the struct ifreq now
+ * to a SIOCSIFGENERIC ioctl.
+ */
+
+struct sauthreq {
+	int cmd;
+	u_short	proto;			/* authentication protocol to use */
+	u_short	flags;
+	u_char	name[AUTHMAXLEN];	/* system identification name */
+	u_char	secret[AUTHMAXLEN];	/* secret password */
+};
+
+struct spppreq {
+	int	cmd;
+	enum ppp_phase phase;	/* phase we're currently in */
+};
+
+#define SPPPIOGDEFS  ((int)(('S' << 24) + (1 << 16) + sizeof(struct spppreq)))
+#define SPPPIOSDEFS  ((int)(('S' << 24) + (2 << 16) + sizeof(struct spppreq)))
+#define SPPPIOGMAUTH ((int)(('S' << 24) + (3 << 16) + sizeof(struct sauthreq)))
+#define SPPPIOSMAUTH ((int)(('S' << 24) + (4 << 16) + sizeof(struct sauthreq)))
+#define SPPPIOGHAUTH ((int)(('S' << 24) + (5 << 16) + sizeof(struct sauthreq)))
+#define SPPPIOSHAUTH ((int)(('S' << 24) + (6 << 16) + sizeof(struct sauthreq)))
+
+
+#ifdef _KERNEL
+
 #include <sys/timeout.h>
 
 #define IDX_LCP 0		/* idx into state table */
@@ -76,15 +128,9 @@ struct sipcp {
 	u_int32_t req_myaddr;	/* local address requested */
 };
 
-#define AUTHMAXLEN	256	/* including terminating '\0' */
-#define AUTHCHALEN	16	/* length of the challenge we send */
-
 struct sauth {
 	u_short	proto;			/* authentication protocol to use */
 	u_short	flags;
-#define AUTHFLAG_NOCALLOUT	1	/* do not require authentication on */
-					/* callouts */
-#define AUTHFLAG_NORECHALLENGE	2	/* do not re-challenge CHAP */
 	u_char	*name;	/* system identification name */
 	u_char	*secret;	/* secret password */
 };
@@ -93,16 +139,6 @@ struct sauth {
 #define IDX_CHAP	4
 
 #define IDX_COUNT (IDX_CHAP + 1) /* bump this when adding cp's! */
-
-/*
- * Don't change the order of this.  Ordering the phases this way allows
- * for a comparision of ``pp_phase >= PHASE_AUTHENTICATE'' in order to
- * know whether LCP is up.
- */
-enum ppp_phase {
-	PHASE_DEAD, PHASE_ESTABLISH, PHASE_TERMINATE,
-	PHASE_AUTHENTICATE, PHASE_NETWORK
-};
 
 struct sppp {
 	/* NB: pp_if _must_ be first */
@@ -173,40 +209,6 @@ struct sppp {
 #define PP_MTU		1500	/* default MTU */
 #define PP_MAX_MRU	2048	/* maximal MRU we want to negotiate */
 
-/*
- * Definitions to pass struct sppp data down into the kernel using the
- * SIOC[SG]IFGENERIC ioctl interface.
- *
- * In order to use this, create a struct spppreq, fill in the cmd
- * field with SPPPIOGDEFS, and put the address of this structure into
- * the ifr_data portion of a struct ifreq.  Pass this struct to a
- * SIOCGIFGENERIC ioctl.  Then replace the cmd field by SPPPIOSDEFS,
- * modify the defs field as desired, and pass the struct ifreq now
- * to a SIOCSIFGENERIC ioctl.
- */
-
-struct sauthreq {
-	int cmd;
-	u_short	proto;			/* authentication protocol to use */
-	u_short	flags;
-	u_char	name[AUTHMAXLEN];	/* system identification name */
-	u_char	secret[AUTHMAXLEN];	/* secret password */
-};
-
-struct spppreq {
-	int	cmd;
-	struct sppp defs;
-};
-
-#define SPPPIOGDEFS  ((int)(('S' << 24) + (1 << 16) + sizeof(struct spppreq)))
-#define SPPPIOSDEFS  ((int)(('S' << 24) + (2 << 16) + sizeof(struct spppreq)))
-#define SPPPIOGMAUTH ((int)(('S' << 24) + (3 << 16) + sizeof(struct sauthreq)))
-#define SPPPIOSMAUTH ((int)(('S' << 24) + (4 << 16) + sizeof(struct sauthreq)))
-#define SPPPIOGHAUTH ((int)(('S' << 24) + (5 << 16) + sizeof(struct sauthreq)))
-#define SPPPIOSHAUTH ((int)(('S' << 24) + (6 << 16) + sizeof(struct sauthreq)))
-
-
-#if defined(_KERNEL)
 void sppp_attach (struct ifnet *ifp);
 void sppp_detach (struct ifnet *ifp);
 void sppp_input (struct ifnet *ifp, struct mbuf *m);
@@ -219,5 +221,5 @@ struct mbuf *sppp_dequeue (struct ifnet *ifp);
 struct mbuf *sppp_pick(struct ifnet *ifp);
 int sppp_isempty (struct ifnet *ifp);
 void sppp_flush (struct ifnet *ifp);
-#endif
+#endif /* _KERNEL */
 #endif /* _NET_IF_SPPP_H_ */

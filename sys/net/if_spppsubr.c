@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.104 2013/06/20 12:03:40 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.105 2013/07/10 07:46:10 mpi Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4966,12 +4966,7 @@ sppp_get_params(struct sppp *sp, struct ifreq *ifr)
 		 */
 
 		spr->cmd = cmd;
-		bcopy(sp, &spr->defs, sizeof(struct sppp));
-		
-		explicit_bzero(&spr->defs.myauth, sizeof(spr->defs.myauth));
-		explicit_bzero(&spr->defs.hisauth, sizeof(spr->defs.hisauth));
-		explicit_bzero(&spr->defs.chap_challenge,
-		    sizeof(spr->defs.chap_challenge));
+		spr->phase = sp->pp_phase;
 
 		if (copyout(spr, (caddr_t)ifr->ifr_data, sizeof(*spr)) != 0) {
 			free(spr, M_DEVBUF);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.265 2013/07/02 14:25:08 bluhm Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.266 2013/07/10 07:46:10 mpi Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -232,7 +232,6 @@ void	setsppppeername(const char *, int);
 void	setsppppeerkey(const char *, int);
 void	setsppppeerflag(const char *, int);
 void	unsetsppppeerflag(const char *, int);
-void	spppinfo(struct spppreq *);
 void	sppp_status(void);
 void	sppp_printproto(const char *, struct sauthreq *);
 void	settrunkport(const char *, int);
@@ -4064,17 +4063,6 @@ setpppoe_ac(const char *val, int d)
 }
 
 void
-spppinfo(struct spppreq *spr)
-{
-	bzero(spr, sizeof(struct spppreq));
-
-	ifr.ifr_data = (caddr_t)spr;
-	spr->cmd = SPPPIOGDEFS;
-	if (ioctl(s, SIOCGIFGENERIC, &ifr) == -1)
-		err(1, "SIOCGIFGENERIC(SPPPIOGDEFS)");
-}
-
-void
 spppauthinfo(struct sauthreq *spa, int d)
 {
 	bzero(spa, sizeof(struct sauthreq));
@@ -4228,10 +4216,10 @@ sppp_status(void)
 		return;
 	}
 
-	if (spr.defs.pp_phase == PHASE_DEAD)
+	if (spr.phase == PHASE_DEAD)
 		return;
 	printf("\tsppp: phase ");
-	switch (spr.defs.pp_phase) {
+	switch (spr.phase) {
 	case PHASE_ESTABLISH:
 		printf("establish ");
 		break;
