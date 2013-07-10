@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.332 2013/06/01 14:06:20 naddy Exp $
+#	$OpenBSD: Makefile,v 1.333 2013/07/10 05:12:15 ajacoutot Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -167,8 +167,6 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 600 /dev/null \
 		    ${DESTDIR}/etc/skel/.ssh/authorized_keys
 	cd kerberosV; \
-		${INSTALL} -c -o root -g wheel -m 644 README \
-		    ${DESTDIR}/etc/kerberosV; \
 		${INSTALL} -c -o root -g wheel -m 644 krb5.conf.example \
 		    ${DESTDIR}/etc/kerberosV
 	cd amd; \

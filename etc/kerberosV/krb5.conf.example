@@ -1,59 +1,27 @@
-# $OpenBSD: krb5.conf.example,v 1.6 2005/02/07 06:08:10 david Exp $
+# $OpenBSD: krb5.conf.example,v 1.7 2013/07/10 05:12:15 ajacoutot Exp $
 #
-# Example Kerberos 5 configuration file. You may need to change the defaults
-# in this file to match your environment.
-#
-# See krb5.conf(5) and the heimdal infopage for more information.
-#
-# Normally, the realm should be your DNS domain name with uppercase
-# letters. In this example file, we've written the realm as MY.REALM
-# and the domain as my.domain to make it clear what we refer to.
-#
-# Normally, it is not necessary to do any changes on client-only
-# machines, as it's recommended that the information needed is put
-# in DNS.
-# On server machines, it is not strictly necessary, but it is recommended
-# to have local configuration.
-#
+# Kerberos 5 minimal configuration example.
+# See krb5.conf(5) and the heimdal info(1) page for more information.
+
 [libdefaults]
-	# Set the realm of this host here
-	default_realm = MY.REALM
-
-	# Maximum allowed time difference between KDC and this host
-	clockskew = 300
-
-	# Uncomment this if you run NAT on the client side of kauth.
-	# This may be considered a security issue though.
-	# no-addresses = yes
+	# local realm(s)
+	default_realm = DOMAIN.TLD
 
 [realms]
-	MY.REALM = {
-		# Specify KDC here
-		kdc = kerberos.my.domain
+	DOMAIN.TLD = {
+		# list of KDC(s) for this realm
+		kdc = kerberos.domain.tld
 
-		# Administration server, used for creating users etc.
-		admin_server = kerberos.my.domain
+		# admin server for this realm
+		admin_server = kerberos.domain.tld
 	}
-
-	# Example of a "foreign" realm
-	OTHER.REALM = {
-		kdc = kerberos.other.domain
-		default_domain = other.domain
-		v4_domains = other.domain
-	}
-
-# This sections describes how to figure out a realm given a DNS name
-[domain_realm]
-	.my.domain = MY.REALM
-
 
 [kadmin]
-	# This is the trickiest part of a Kerberos installation. See the
-	# heimdal infopage for more information about encryption types.
-
-	# For a k5 only realm, this will be fine
-#	default_keys = v5
+	# default salt string
+	default_keys = v5
 
 [logging]
-	# The KDC logs by default, but it's nice to have a kadmind log as well.
-	kadmind = FILE:/var/heimdal/kadmind.log
+	# log to syslog(3)
+	kdc = SYSLOG:INFO:DAEMON
+	kpasswdd = SYSLOG:INFO:AUTH
+	default = SYSLOG:INFO:DAEMON
