@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.331 2013/05/30 20:29:27 florian Exp $ */
+/*	$OpenBSD: session.c,v 1.332 2013/07/10 15:56:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -79,7 +79,6 @@ void	session_notification(struct peer *, u_int8_t, u_int8_t, void *,
 	    ssize_t);
 void	session_rrefresh(struct peer *, u_int8_t);
 int	session_graceful_restart(struct peer *);
-int	session_graceful_is_restarting(struct peer *);
 int	session_graceful_stop(struct peer *);
 int	session_dispatch_msg(struct pollfd *, struct peer *);
 int	session_process_msg(struct peer *);
@@ -1724,17 +1723,6 @@ session_graceful_restart(struct peer *p)
 }
 
 int
-session_graceful_is_restarting(struct peer *p)
-{
-	u_int8_t	i;
-
-	for (i = 0; i < AID_MAX; i++)
-		if (p->capa.neg.grestart.flags[i] & CAPA_GR_RESTARTING)
-			return (1);
-	return (0);
-}
-
-int
 session_graceful_stop(struct peer *p)
 {
 	u_int8_t	i;
@@ -2623,7 +2611,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 
 			/* sync the RDE in case we keep the peer */
 			if (reconf == RECONF_KEEP) {
-				if (imsg_compose(ibuf_rde, IMSG_RECONF_PEER,
+				if (imsg_compose(ibuf_rde, IMSG_SESSION_ADD,
 				    p->conf.id, 0, -1, &p->conf,
 				    sizeof(struct peer_config)) == -1)
 					fatalx("imsg_compose error");
@@ -2637,7 +2625,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 						    NULL, np->conf.id,
 						    np->conf.remote_as);
 						if (imsg_compose(ibuf_rde,
-						    IMSG_RECONF_PEER,
+						    IMSG_SESSION_ADD,
 						    np->conf.id, 0, -1,
 						    &np->conf,
 						    sizeof(struct peer_config))
@@ -3156,10 +3144,9 @@ session_up(struct peer *p)
 {
 	struct session_up	 sup;
 
-	if (!session_graceful_is_restarting(p))
-		if (imsg_compose(ibuf_rde, IMSG_SESSION_ADD, p->conf.id, 0, -1,
-		    &p->conf, sizeof(p->conf)) == -1)
-			fatalx("imsg_compose error");
+	if (imsg_compose(ibuf_rde, IMSG_SESSION_ADD, p->conf.id, 0, -1,
+	    &p->conf, sizeof(p->conf)) == -1)
+		fatalx("imsg_compose error");
 
 	sa2addr((struct sockaddr *)&p->sa_local, &sup.local_addr);
 	sa2addr((struct sockaddr *)&p->sa_remote, &sup.remote_addr);

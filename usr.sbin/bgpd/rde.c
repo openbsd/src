@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.322 2013/05/31 23:10:12 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.323 2013/07/10 15:56:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -393,13 +393,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(pconf))
 				fatalx("incorrect size of session request");
 			memcpy(&pconf, imsg.data, sizeof(pconf));
-			peer = peer_add(imsg.hdr.peerid, &pconf);
-			if (peer == NULL) {
-				log_warnx("session add: "
-				    "peer id %d already exists",
-				    imsg.hdr.peerid);
-				break;
-			}
+			peer_add(imsg.hdr.peerid, &pconf);
 			break;
 		case IMSG_SESSION_UP:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(sup))
@@ -644,7 +638,6 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	struct mrt		 xmrt;
 	struct rde_rib		 rn;
 	struct rde_peer		*peer;
-	struct peer_config	*pconf;
 	struct filter_rule	*r;
 	struct filter_set	*s;
 	struct nexthop		*nh;
@@ -725,16 +718,6 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				rib_new(rn.name, rn.rtableid, rn.flags);
 			} else
 				ribs[rid].state = RECONF_KEEP;
-			break;
-		case IMSG_RECONF_PEER:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(struct peer_config))
-				fatalx("IMSG_RECONF_PEER bad len");
-			if ((peer = peer_get(imsg.hdr.peerid)) == NULL)
-				break;
-			pconf = imsg.data;
-			strlcpy(peer->conf.rib, pconf->rib,
-			    sizeof(peer->conf.rib));
 			break;
 		case IMSG_RECONF_FILTER:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -3144,8 +3127,10 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 	struct rde_peer_head	*head;
 	struct rde_peer		*peer;
 
-	if (peer_get(id))
+	if ((peer = peer_get(id))) {
+		memcpy(&peer->conf, p_conf, sizeof(struct peer_config));
 		return (NULL);
+	}
 
 	peer = calloc(1, sizeof(struct rde_peer));
 	if (peer == NULL)
