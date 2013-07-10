@@ -1,5 +1,3 @@
-changequote({,})dnl
-changecom(,)dnl
 .\"
 .\" Copyright (c) 2001 Brian Somers <brian@Awfulhak.org>
 .\" All rights reserved.
@@ -25,9 +23,9 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.46 2012/08/27 20:57:24 jmc Exp $
+.\" $OpenBSD: ppp.8,v 1.120 2013/07/10 15:56:56 jmc Exp $
 .\"
-.Dd $Mdocdate: August 27 2012 $
+.Dd $Mdocdate: July 10 2013 $
 .Dt PPP 8
 .Os
 .Sh NAME
@@ -215,7 +213,7 @@ When you are connected to the remote peer and it starts to talk
 detects it and switches to packet mode automatically.
 Once you have
 determined the proper sequence for connecting with the remote host, you
-can write a chat script to {define} the necessary dialing and login
+can write a chat script to define the necessary dialing and login
 procedure for later convenience.
 .It Supports on-demand dialup capability.
 By using
@@ -305,13 +303,13 @@ the peer.
 This allows routing from the peer to the LAN without
 configuring each machine on that LAN.
 .It Supports packet filtering.
-User can {define} four kinds of filters: the
+User can define four kinds of filters: the
 .Em in
 filter for incoming packets, the
 .Em out
 filter for outgoing packets, the
 .Em dial
-filter to {define} a dialing trigger packet, and the
+filter to define a dialing trigger packet, and the
 .Em alive
 filter for keeping a connection alive with the trigger packet.
 .It Tunnel driver supports bpf.
@@ -409,7 +407,7 @@ When you first run
 you may need to deal with some initial configuration details:
 .Bl -bullet
 .It
-Your kernel must {include} a tunnel device (the GENERIC kernel includes
+Your kernel must include a tunnel device (the GENERIC kernel includes
 one by default).
 If it doesn't,
 you'll need to rebuild your kernel with the following line in
@@ -773,10 +771,10 @@ character is treated as a comment line.
 Leading whitespace is ignored when identifying comment lines.
 .It
 An inclusion is a line beginning with the word
-.Dq {!include} .
-It must have one argument \- the file to {include}.
+.Dq !include .
+It must have one argument \- the file to include.
 You may wish to
-.Dq {!include} ~/.ppp.conf
+.Dq !include ~/.ppp.conf
 for compatibility with older versions of
 .Nm ppp .
 .It
@@ -973,7 +971,7 @@ You must also specify the destination label in
 to use.
 It must contain the
 .Ic set ifaddr
-command to {define} the remote peer's IP address
+command to define the remote peer's IP address
 (refer to
 .Pa /etc/ppp/ppp.conf.sample ) .
 .Bd -literal -offset indent
@@ -2192,7 +2190,7 @@ In general, the serial speed should be about four times the modem speed.
 .It
 Use the
 .Ic set ifaddr
-command to {define} the IP address.
+command to define the IP address.
 .Bl -bullet
 .It
 If you know what IP address your provider uses, then use it as the remote
@@ -4351,7 +4349,7 @@ In server mode,
 will accept any of the given protocols \- but the client
 .Em must
 request one of them.
-If you wish callback to be optional, you must {include}
+If you wish callback to be optional, you must include
 .Ar none
 as an option.
 .Pp
@@ -5444,7 +5442,7 @@ would result in a default route to
 .Pp
 All RADIUS routes are applied after any sticky routes are applied, making
 RADIUS routes override configured routes.
-This also applies for RADIUS routes that don't {include} the
+This also applies for RADIUS routes that don't include the
 .Dv MYADDR
 or
 .Dv HISADDR
@@ -5495,7 +5493,7 @@ would result in a default route to
 .Pp
 All RADIUS IPv6 routes are applied after any sticky routes are
 applied, making RADIUS IPv6 routes override configured routes.
-This also applies for RADIUS IPv6 routes that don't {include} the
+This also applies for RADIUS IPv6 routes that don't include the
 .Dv MYADDR6
 or
 .Dv HISADDR6
