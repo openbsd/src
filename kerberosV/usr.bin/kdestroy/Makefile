@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.12 2013/07/10 10:43:32 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.13 2013/07/10 11:14:40 ajacoutot Exp $
 
 PROG=	kdestroy
 CPPFLAGS=	-I${KRB5DIR}/lib/roken
-DPADD=	${LIBKAFS5} ${LIBKRB5} ${LIBHEIMNTLM} ${LIBROKEN} ${LIBVERS} \
+DPADD=	${LIBKAFS5} ${LIBKRB5} ${LIBROKEN} ${LIBVERS} \
 	${LIBASN1} ${LIBCRYPTO}
 LDADD=	-lkafs5 -lkrb5 -lroken ${LIBVERS} \
 	-lasn1 -lcrypto -lwind -lcom_err \
