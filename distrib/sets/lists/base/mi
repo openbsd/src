@@ -68,7 +68,6 @@
 ./etc/isakmpd/pubkeys/ipv6
 ./etc/isakmpd/pubkeys/ufqdn
 ./etc/kerberosV
-./etc/kerberosV/README
 ./etc/kerberosV/krb5.conf.example
 ./etc/ldap
 ./etc/ldap/certs
@@ -5143,6 +5142,7 @@
 ./var/games/hackdir/save
 ./var/games/phantasia
 ./var/games/save
+./var/kerberosV
 ./var/log
 ./var/log/rdist
 ./var/mail

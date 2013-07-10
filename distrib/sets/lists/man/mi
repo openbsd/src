@@ -2555,7 +2555,6 @@
 ./usr/share/man/man5/lastlog.5
 ./usr/share/man/man5/ldapd.conf.5
 ./usr/share/man/man5/ldpd.conf.5
-./usr/share/man/man5/link.5
 ./usr/share/man/man5/login.conf.5
 ./usr/share/man/man5/magic.5
 ./usr/share/man/man5/mailer.conf.5
