@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.27 2013/07/05 07:20:27 jsg Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.28 2013/07/10 02:21:09 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -598,7 +598,51 @@ i915_gem_object_wait_rendering(struct drm_i915_gem_object *obj,
 	return 0;
 }
 
-// i915_gem_object_wait_rendering__nonblocking
+/* A nonblocking variant of the above wait. This is a highly dangerous routine
+ * as the object state may change during this call.
+ */
+static int
+i915_gem_object_wait_rendering__nonblocking(struct drm_i915_gem_object *obj,
+					    bool readonly)
+{
+	struct drm_device *dev = obj->base.dev;
+	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct intel_ring_buffer *ring = obj->ring;
+	u32 seqno;
+	int ret;
+
+	rw_assert_wrlock(&dev->dev_lock);
+	BUG_ON(!dev_priv->mm.interruptible);
+
+	seqno = readonly ? obj->last_write_seqno : obj->last_read_seqno;
+	if (seqno == 0)
+		return 0;
+
+	ret = i915_gem_check_wedge(dev_priv, true);
+	if (ret)
+		return ret;
+
+	ret = i915_gem_check_olr(ring, seqno);
+	if (ret)
+		return ret;
+
+	DRM_UNLOCK();
+	ret = __wait_seqno(ring, seqno, true, NULL);
+	DRM_LOCK();
+
+	i915_gem_retire_requests_ring(ring);
+
+	/* Manually manage the write flush as we may have not yet
+	 * retired the buffer.
+	 */
+	if (obj->last_write_seqno &&
+	    i915_seqno_passed(seqno, obj->last_write_seqno)) {
+		obj->last_write_seqno = 0;
+		obj->base.write_domain &= ~I915_GEM_GPU_DOMAINS;
+	}
+
+	return ret;
+}
 
 /**
  * Called when user space prepares to use an object with the CPU, either
@@ -637,7 +681,6 @@ i915_gem_set_domain_ioctl(struct drm_device *dev, void *data,
 		goto unlock;
 	}
 
-#if notyet
 	/* Try to flush the object off the GPU without holding the lock.
 	 * We will repeat the flush holding the lock in the normal manner
 	 * to catch cases where we are gazumped.
@@ -645,7 +688,6 @@ i915_gem_set_domain_ioctl(struct drm_device *dev, void *data,
 	ret = i915_gem_object_wait_rendering__nonblocking(obj, !write_domain);
 	if (ret)
 		goto unref;
-#endif
 
 	if (read_domains & I915_GEM_DOMAIN_GTT) {
 		ret = i915_gem_object_set_to_gtt_domain(obj, write_domain != 0);
@@ -660,9 +702,7 @@ i915_gem_set_domain_ioctl(struct drm_device *dev, void *data,
 		ret = i915_gem_object_set_to_cpu_domain(obj, write_domain != 0);
 	}
 
-#ifdef notyet
 unref:
-#endif
 	drm_gem_object_unreference(&obj->base);
 unlock:
 	DRM_UNLOCK();
