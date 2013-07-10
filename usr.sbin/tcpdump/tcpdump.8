@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.79 2012/09/26 16:19:45 jmc Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.80 2013/07/10 03:08:58 lteo Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: September 26 2012 $
+.Dd $Mdocdate: July 10 2013 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -1012,20 +1012,21 @@ To print all FTP traffic through internet gateway snup:
 .Pp
 .Dl # tcpdump 'gateway snup and (port ftp or ftp-data)'
 .Pp
-To print traffic neither sourced from nor destined for local hosts
-(if you gateway to one other net, this stuff should never make it onto
-your local net):
+To print traffic neither sourced from nor destined for local network
+192.168.7.0/24 (if you gateway to one other net, this stuff should
+never make it onto your local network):
 .Pp
-.Dl # tcpdump ip and not net localnet
+.Dl # tcpdump ip and not net 192.168.7.0/24
 .Pp
 To print the start and end packets
 .Pq the SYN and FIN packets
-of each TCP connection that involves a non-local host:
+of each TCP connection that involves a host that is not in local
+network 192.168.7.0/24:
 .Bd -literal -offset indent
-# tcpdump 'tcp[13] & 3 != 0 and not src and dst net localnet'
+# tcpdump 'tcp[13] & 3 != 0 and not src and dst net 192.168.7.0/24'
 .Ed
 .Pp
-To print only the SYN packets of http connections
+To print only the SYN packets of HTTP connections:
 .Pp
 .Dl # tcpdump 'tcp[tcpflags] = tcp-syn and port http'
 .Pp
