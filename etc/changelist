@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.79 2013/03/21 21:04:53 robert Exp $
+#	$OpenBSD: changelist,v 1.80 2013/07/10 09:56:02 ajacoutot Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -51,6 +51,7 @@
 +/etc/isakmpd/isakmpd.policy
 /etc/isakmpd/local.pub
 +/etc/isakmpd/private/local.key
+/etc/kerberosV/krb5.conf
 /etc/ksh.kshrc
 /etc/ldapd.conf
 /etc/ldpd.conf
@@ -170,6 +171,7 @@
 /var/cron/cron.allow
 /var/cron/cron.deny
 /var/cron/tabs/root
++/var/kerberosV/m-key
 /var/named/etc/named.conf
 +/var/named/etc/rndc.key
 /var/named/etc/root.hint
