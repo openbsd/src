@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.28 2013/05/16 19:26:04 kettenis Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.29 2013/07/10 21:31:11 kettenis Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -676,6 +676,8 @@ apic_intr_establish(int irq, int type, int level, int (*ih_fun)(void *),
 
 	flags = level & IPL_MPSAFE;
 	level &= ~IPL_MPSAFE;
+
+	KASSERT(level <= IPL_TTY || flags & IPL_MPSAFE);
 
 	if (sc == NULL)
 		panic("apic_intr_establish: unknown ioapic %d", ioapic);
