@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2013/07/02 19:00:10 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.4 2013/07/10 10:43:32 ajacoutot Exp $
 
 PROG=	digest-service
 NOMAN=	1
@@ -9,7 +9,7 @@ CPPFLAGS=	-I${KRB5DIR}/kdc \
 		-I${KRB5DIR}/lib/wind \
 		-I${KRB5DIR}/lib/roken
 DPADD=	${LIBHDB} ${LIBKDC} ${LIBHEIMIPCS} ${LIBKRB5} ${LIBROKEN} ${LIBASN1} ${LIBCRYPTO} \
-	${LIBCRYPT} ${LIBVERS}
+	${LIBVERS}
 LDADD=	-lhdb -lkdc ${LIBHEIMIPCS} -lkrb5 -lroken -lasn1 -lcrypto \
 	${LIBVERS} -lheimntlm -lcom_err \
 	-lheimbase -lwind

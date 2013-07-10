@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.26 2013/07/02 19:00:10 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.27 2013/07/10 10:43:32 ajacoutot Exp $
 
 PROG=	kadmin
 MPAGES=	kadmin.8
@@ -28,7 +28,7 @@ CPPFLAGS=-I${KRB5DIR}/lib/asn1 -I${KRB5DIR}/lib/krb5 -I${KRB5DIR}/lib/roken \
 	-I${KRB5DIR}/lib/sl -I.
 DPADD=	${LIBKADM5CLNT} ${LIBKADM5SRV} ${LIBHDB} ${LIBKRB5} ${LIBHX509} \
 	${LIBSL} ${LIBROKEN} ${LIBVERS} ${LIBASN1} \
-	${LIBCRYPTO} ${LIBCRYPT} ${LIBCOM_ERR} \
+	${LIBCRYPTO} ${LIBCOM_ERR} \
 	${LIBEDIT} ${LIBNCURSES}
 LDADD=	-lkadm5clnt -lkadm5srv -lhdb -lkrb5 \
 	${LIBSL} -lroken ${LIBVERS} -lasn1 \
