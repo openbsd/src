@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.55 2013/07/07 00:04:58 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.56 2013/07/11 01:34:00 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -463,18 +463,37 @@ do_packet(unsigned int from_port, struct in_addr from,
 	char *type, *info;
 	int i, rslt, options_valid = 1;
 
-	if (packet->hlen > sizeof(packet->chaddr)) {
-		note("Discarding packet with invalid hlen.");
+	if (ifi->hw_address.hlen != packet->hlen) {
+#ifdef DEBUG
+		debug("Discarding packet with hlen != %s (%u)",
+		    ifi->name, packet->hlen);
+#endif
+		return;
+	} else if (memcmp(ifi->hw_address.haddr, packet->chaddr,
+	    packet->hlen)) {
+#ifdef DEBUG
+		debug("Discarding packet with chaddr != %s (%s)", ifi->name,
+		    ether_ntoa((struct ether_addr *)packet->chaddr));
+#endif
 		return;
 	}
 
-	/*
-	 * Silently drop the packet if the client hardware address in the
-	 * packet is not the hardware address of the interface being managed.
-	 */
-	if ((ifi->hw_address.hlen != packet->hlen) ||
-	    (memcmp(ifi->hw_address.haddr, packet->chaddr, packet->hlen)))
+	if (client->xid != client->packet.xid) {
+#ifdef DEBUG
+		debug("Discarding packet with XID != %u (%u)", client->xid,
+		    client->packet.xid);
+#endif
 		return;
+	}
+
+	for (ap = config->reject_list; ap; ap = ap->next)
+		if (from.s_addr == ap->addr.s_addr) {
+#ifdef DEBUG
+			debug("Discarding packet from address on reject list "
+			    "(%s)", inet_ntoa(from));
+#endif
+			return;
+		}
 
 	memset(options, 0, sizeof(options));
 
@@ -518,11 +537,19 @@ do_packet(unsigned int from_port, struct in_addr from,
 			type = "DHCPACK";
 			break;
 		default:
+#ifdef DEBUG
+			debug("Discarding DHCP packet of unknown type (%d)",
+				options[DHO_DHCP_MESSAGE_TYPE].data[0]);
+#endif
 			break;
 		}
 	} else if (options_valid && packet->op == BOOTREPLY) {
 		handler = dhcpoffer;
 		type = "BOOTREPLY";
+	} else {
+#ifdef DEBUG
+		debug("Discarding packet which is neither DHCP nor BOOTP");
+#endif
 	}
 
 	if (hfrom->hlen == 6)
@@ -532,19 +559,6 @@ do_packet(unsigned int from_port, struct in_addr from,
 		rslt = asprintf(&info, "%s from %s", type, inet_ntoa(from));
 	if (rslt == -1)
 		error("no memory for info string");
-
-	if (client->xid != client->packet.xid) {
-#ifdef DEBUG
-		debug("XID mismatch on %s", info);
-#endif
-		handler = NULL;
-	}
-
-	for (ap = config->reject_list; ap && handler; ap = ap->next)
-		if (from.s_addr == ap->addr.s_addr) {
-			note("Rejected %s.", info);
-			handler = NULL;
-		}
 
 	if (handler)
 		(*handler)(from, options, info);
