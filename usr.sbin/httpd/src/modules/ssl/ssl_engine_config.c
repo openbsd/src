@@ -197,6 +197,7 @@ void *ssl_config_server_create(pool *p, server_rec *s)
     sc->szLogFile              = NULL;
     sc->szCipherSuite          = NULL;
     sc->nLogLevel              = SSL_LOG_NONE;
+    sc->cipher_server_pref     = UNSET;
     sc->nVerifyDepth           = UNSET;
     sc->nVerifyClient          = SSL_CVERIFY_UNSET;
     sc->nSessionCacheTimeout   = UNSET;
@@ -252,6 +253,7 @@ void *ssl_config_server_merge(pool *p, void *basev, void *addv)
     cfgMergeString(szCertificateChain);
     cfgMergeString(szLogFile);
     cfgMergeString(szCipherSuite);
+    cfgMergeBool(cipher_server_pref);
     cfgMerge(nLogLevel, SSL_LOG_NONE);
     cfgMergeInt(nVerifyDepth);
     cfgMerge(nVerifyClient, SSL_CVERIFY_UNSET);
@@ -527,6 +529,14 @@ const char *ssl_cmd_SSLEngine(
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
 
     sc->bEnabled = (flag ? TRUE : FALSE);
+    return NULL;
+}
+
+const char *ssl_cmd_SSLHonorCipherOrder(
+     cmd_parms *cmd, char *struct_ptr, int flag)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+    sc->cipher_server_pref = flag?TRUE:FALSE;
     return NULL;
 }
 

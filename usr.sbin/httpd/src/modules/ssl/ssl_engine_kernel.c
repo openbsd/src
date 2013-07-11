@@ -801,9 +801,12 @@ int ssl_hook_Access(request_rec *r)
         if (skCipherOld != NULL)
             sk_SSL_CIPHER_free(skCipherOld);
         /* tracing */
-        if (renegotiate)
+        if (renegotiate) {
+	    if (sc->cipher_server_pref == TRUE)
+	    	SSL_set_options(ssl, SSL_OP_CIPHER_SERVER_PREFERENCE);
             ssl_log(r->server, SSL_LOG_TRACE,
                     "Reconfigured cipher suite will force renegotiation");
+	}
     }
 
     /*

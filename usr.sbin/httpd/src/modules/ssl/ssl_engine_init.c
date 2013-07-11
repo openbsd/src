@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_engine_init.c,v 1.28 2012/07/07 17:08:17 sthen Exp $ */
+/* $OpenBSD: ssl_engine_init.c,v 1.29 2013/07/11 12:41:52 otto Exp $ */
 
 /*                      _             _
 **  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
@@ -589,6 +589,8 @@ void ssl_init_ConfigureServer(server_rec *s, pool *p, SSLSrvConfigRec *sc)
         SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
     if (!(sc->nProtocol & SSL_PROTOCOL_TLSV1))
         SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
+    if (sc->cipher_server_pref == TRUE)
+    	SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
     SSL_CTX_set_app_data(ctx, s);
     sc->pSSLCtx = ctx;
 
