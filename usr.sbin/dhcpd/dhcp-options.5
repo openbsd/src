@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.14 2013/01/03 16:35:22 krw Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.15 2013/07/11 15:15:46 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: January 3 2013 $
+.Dd $Mdocdate: July 11 2013 $
 .Dt DHCP-OPTIONS 5
 .Os
 .Sh NAME
@@ -616,6 +616,13 @@ Addresses should be listed in order of preference.
 .Sh STANDARDS
 .Rs
 .%A R. Droms
+.%D October 1993
+.%R RFC 1534
+.%T Interoperation Between DHCP and BOOTP
+.Re
+.Pp
+.Rs
+.%A R. Droms
 .%D March 1997
 .%R RFC 2131
 .%T Dynamic Host Configuration Protocol
@@ -627,6 +634,23 @@ Addresses should be listed in order of preference.
 .%D March 1997
 .%R RFC 2132
 .%T DHCP Options and BOOTP Vendor Extensions
+.Re
+.Pp
+.Rs
+.%A T. Lemon
+.%A S. Cheshire
+.%D November 2002
+.%R RFC 3396
+.%T Encoding Long Options in the Dynamic Host Configuration Protocol (DHCPv4)
+.Re
+.Pp
+.Rs
+.%A T. Lemon
+.%A S. Cheshire
+.%A B. Volz
+.%D December 2002
+.%R RFC 3442
+.%T The Classless Static Route Option for Dynamic Host Configuration Protocol (DHCP) version 4
 .Re
 .Sh AUTHORS
 .An -nosplit

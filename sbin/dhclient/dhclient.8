@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.20 2013/02/23 22:00:37 krw Exp $
+.\" $OpenBSD: dhclient.8,v 1.21 2013/07/11 15:15:46 jmc Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .\" Enterprises.  To learn more about the Internet Software Consortium,
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
-.Dd $Mdocdate: February 23 2013 $
+.Dd $Mdocdate: July 11 2013 $
 .Dt DHCLIENT 8
 .Os
 .Sh NAME
@@ -284,6 +284,45 @@ database of acquired leases
 .Xr dhcp 8 ,
 .Xr dhcpd 8 ,
 .Xr dhcrelay 8
+.Sh STANDARDS
+.Rs
+.%A R. Droms
+.%D October 1993
+.%R RFC 1534
+.%T Interoperation Between DHCP and BOOTP
+.Re
+.Pp
+.Rs
+.%A R. Droms
+.%D March 1997
+.%R RFC 2131
+.%T Dynamic Host Configuration Protocol
+.Re
+.Pp
+.Rs
+.%A S. Alexander
+.%A R. Droms
+.%D March 1997
+.%R RFC 2132
+.%T DHCP Options and BOOTP Vendor Extensions
+.Re
+.Pp
+.Rs
+.%A T. Lemon
+.%A S. Cheshire
+.%D November 2002
+.%R RFC 3396
+.%T Encoding Long Options in the Dynamic Host Configuration Protocol (DHCPv4)
+.Re
+.Pp
+.Rs
+.%A T. Lemon
+.%A S. Cheshire
+.%A B. Volz
+.%D December 2002
+.%R RFC 3442
+.%T The Classless Static Route Option for Dynamic Host Configuration Protocol (DHCP) version 4
+.Re
 .Sh AUTHORS
 .An -nosplit
 .Nm

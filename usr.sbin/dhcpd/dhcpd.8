@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.18 2010/10/08 15:43:45 sobrado Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.19 2013/07/11 15:15:46 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: October 8 2010 $
+.Dd $Mdocdate: July 11 2013 $
 .Dt DHCPD 8
 .Os
 .Sh NAME
@@ -460,6 +460,45 @@ DHCPD lease file.
 .Xr dhcp 8 ,
 .Xr dhcrelay 8 ,
 .Xr pxeboot 8
+.Sh STANDARDS
+.Rs
+.%A R. Droms
+.%D October 1993
+.%R RFC 1534
+.%T Interoperation Between DHCP and BOOTP
+.Re
+.Pp
+.Rs
+.%A R. Droms
+.%D March 1997
+.%R RFC 2131
+.%T Dynamic Host Configuration Protocol
+.Re
+.Pp
+.Rs
+.%A S. Alexander
+.%A R. Droms
+.%D March 1997
+.%R RFC 2132
+.%T DHCP Options and BOOTP Vendor Extensions
+.Re
+.Pp
+.Rs
+.%A T. Lemon
+.%A S. Cheshire
+.%D November 2002
+.%R RFC 3396
+.%T Encoding Long Options in the Dynamic Host Configuration Protocol (DHCPv4)
+.Re
+.Pp
+.Rs
+.%A T. Lemon
+.%A S. Cheshire
+.%A B. Volz
+.%D December 2002
+.%R RFC 3442
+.%T The Classless Static Route Option for Dynamic Host Configuration Protocol (DHCP) version 4
+.Re
 .Sh AUTHORS
 .An -nosplit
 .Nm
