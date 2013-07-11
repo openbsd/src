@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.58 2013/07/05 21:29:51 miod Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.59 2013/07/11 07:03:46 ajacoutot Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -42,7 +42,7 @@ LIBGSSAPI?=	${DESTDIR}/usr/lib/libgssapi.a
 LIBHDB?=	${DESTDIR}/usr/lib/libhdb.a
 LIBKADM5CLNT?=	${DESTDIR}/usr/lib/libkadm5clnt.a
 LIBKADM5SRV?=	${DESTDIR}/usr/lib/libkadm5srv.a
-LIBKAFS?=	${DESTDIR}/usr/lib/libkafs.a
+LIBKAFS5?=	${DESTDIR}/usr/lib/libkafs5.a
 LIBKEYNOTE?=	${DESTDIR}/usr/lib/libkeynote.a
 LIBKRB5?=	${DESTDIR}/usr/lib/libkrb5.a
 LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
@@ -57,6 +57,7 @@ LIBPANELW?=	${DESTDIR}/usr/lib/libpanelw.a
 LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
 LIBPERL?=	${DESTDIR}/usr/lib/libperl.a
 LIBPTHREAD?=	${DESTDIR}/usr/lib/libpthread.a
+LIBROKEN?=	${DESTDIR}/usr/lib/libroken.a
 LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
 LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
 LIBSNDIO?=	${DESTDIR}/usr/lib/libsndio.a
@@ -65,6 +66,7 @@ LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
 LIBTERMLIB?=	${DESTDIR}/usr/lib/libtermlib.a
 LIBUSB?=	${DESTDIR}/usr/lib/libusbhid.a
 LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
+LIBWIND?=	${DESTDIR}/usr/lib/libwind.a
 LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
 LIBY?=		${DESTDIR}/usr/lib/liby.a
 LIBZ?=		${DESTDIR}/usr/lib/libz.a
