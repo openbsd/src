@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.h,v 1.1 2013/06/12 22:36:06 tedu Exp $ */
+/* $OpenBSD: fuse_opt.h,v 1.2 2013/07/11 11:41:13 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -37,7 +37,10 @@ struct fuse_opt {
 typedef int (*fuse_opt_proc_t)(void *, const char *, int, struct fuse_args *);
 int fuse_opt_add_arg(struct fuse_args *, const char *);
 int fuse_opt_insert_arg(struct fuse_args *, int, const char *);
-int fuse_opt_free_args(struct fuse_args *);
+void fuse_opt_free_args(struct fuse_args *);
+int fuse_opt_add_opt(char **, const char *);
+int fuse_opt_add_opt_escaped(char **, const char *);
+int fuse_opt_match(const struct fuse_opt *, const char *);
 int fuse_opt_parse(struct fuse_args *, void *, struct fuse_opt *,
     fuse_opt_proc_t);
 
@@ -47,6 +50,8 @@ int fuse_opt_parse(struct fuse_args *, void *, struct fuse_opt *,
 #define FUSE_OPT_END		{ NULL, 0, 0 }
 #define FUSE_OPT_KEY_OPT	-1
 #define FUSE_OPT_KEY_NONOPT	-2
+#define FUSE_OPT_KEY_KEEP	-3
+#define FUSE_OPT_KEY_DISCARD	-4
 
 #ifdef __cplusplus
 }
