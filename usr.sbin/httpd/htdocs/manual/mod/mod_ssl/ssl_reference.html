@@ -294,6 +294,7 @@ virtual host''), which can occur inside the server config files both outside
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC7"><strong>SSLEngine</strong></a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC8"><strong>SSLProtocol</strong></a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC9"><strong>SSLCipherSuite</strong></a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC9a"><strong>SSLHonorCipherOrder</strong></a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC10"><strong>SSLCertificateFile</strong></a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC11"><strong>SSLCertificateKeyFile</strong></a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC12"><strong>SSLCertificateChainFile</strong></a><br>
@@ -1212,6 +1213,62 @@ SSLCipherSuite RSA:!EXP:!NULL:+HIGH:+MEDIUM:-LOW
 </tr></table>
 </td></tr></table>
 </div>
+<!-- SSLHonorCipherOrder --------------------------------------------->
+<p>
+<br>
+<a name="SSLCertificateFile"></a>
+<h2><a name="ToC9a">SSLHonorCipherOrder</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
+<tr>
+<td>
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
+<tr>
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
+<tr><td>
+<font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLHonorCipherOrder</b></td></tr>
+<tr><td>
+<font face="Arial,Helvetica"><b>Description:</b></font></a> </td><td> User server's order of preference for ciphers</td></tr>
+<tr><td><a
+ href="../directive-dict.html#Syntax"
+ rel="Help"
+><font face="Arial,Helvetica"><b>Syntax:</b></font></a> </td><td> <code>SSLHonorCipherOrder</code> <em>on|off</em></td></tr>
+<tr><td><a
+ href="../directive-dict.html#Default"
+ rel="Help"
+><font face="Arial,Helvetica"><b>Default:</b></font></a> </td><td> <code>HonorCip Off</td></tr>
+<tr><td><a
+ href="../directive-dict.html#Context"
+ rel="Help"
+><font face="Arial,Helvetica"><b>Context:</b></font></a> </td><td> server config, virtual host</td></tr>
+<tr><td><a
+ href="../directive-dict.html#Override"
+ rel="Help"
+><font face="Arial,Helvetica"><b>Override:</b></font></a> </td><td> <em>Not applicable</em></td></tr>
+<tr><td><a
+ href="../directive-dict.html#Status"
+ rel="Help"
+><font face="Arial,Helvetica"><b>Status:</b></font></a> </td><td> Extension</td></tr>
+<tr><td><a
+ href="../directive-dict.html#Module"
+ rel="Help"
+><font face="Arial,Helvetica"><b>Module:</b></font></a> </td><td> mod_ssl</td></tr>
+<tr><td><a
+ href="../directive-dict.html#Compatibility"
+ rel="Help"
+><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td></td></tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+<p>
+By default, the client's order of preference is used when choosing a cipher.
+When switched on, this directive makes the server's order of preference for
+ciphers leading. Applies to SSLv3 and TLS.
+<p>
 <!-- SSLCertificateFile --------------------------------------------->
 <p>
 <br>
