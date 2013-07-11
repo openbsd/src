@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.3 2013/06/21 21:30:38 syl Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.4 2013/07/11 11:38:10 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -273,6 +273,7 @@ fuseread(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct fuse_d *fd;
 	struct fusebuf *fbuf;
+	struct fb_hdr hdr;
 	int error = 0;
 	char *F_dat;
 	int remain;
@@ -301,7 +302,9 @@ fuseread(dev_t dev, struct uio *uio, int ioflag)
 		if (uio->uio_resid < len)
 			return (EINVAL);
 
-		error = uiomove(fbuf, len, uio);
+		memcpy(&hdr, &fbuf->fb_hdr, sizeof(hdr));
+		bzero(&hdr.fh_next, sizeof(hdr.fh_next));
+		error = uiomove(&hdr, len, uio);
 		if (error)
 			goto end;
 
@@ -380,7 +383,9 @@ fusewrite(dev_t dev, struct uio *uio, int ioflag)
 #endif
 
 	if (fbuf != NULL) {
-		memcpy(&fbuf->fb_hdr, &hdr, sizeof(fbuf->fb_hdr));
+		fbuf->fb_len = hdr.fh_len;
+		fbuf->fb_err = hdr.fh_err;
+		fbuf->fb_ino = hdr.fh_ino;
 
 		if (uio->uio_resid != hdr.fh_len ||
 		    (uio->uio_resid != 0 && hdr.fh_err) ||
