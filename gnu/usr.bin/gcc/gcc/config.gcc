@@ -1,4 +1,4 @@
-#	$OpenBSD: config.gcc,v 1.26 2013/02/06 20:12:06 miod Exp $
+#	$OpenBSD: config.gcc,v 1.27 2013/07/11 19:11:27 miod Exp $
 # GCC build-, host- and target-specific configuration file.
 # Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
@@ -2778,10 +2778,13 @@ vax-*-netbsd*)
 	use_collect2=yes
 	;;
 vax-*-openbsd*)
-	tmake_file="t-libc-ok t-openbsd"
-	tm_file="vax/vax.h vax/openbsd1.h openbsd.h ${tm_file}"
+	tm_file="openbsd-libpthread.h vax/vax.h dbxelf.h elfos.h vax/openbsd1.h openbsd.h vax/elf.h vax/openbsdelf.h"
 #	tm_file="${tm_file} exec-stack.h"
-	use_collect2=yes
+	tmake_file="t-libc-ok t-openbsd"
+	if test x$enable_threads = xyes; then
+		tmake_file="${tmake_file} t-openbsd-thread"
+	fi
+	float_format=vax
 	;;
 vax-*-ultrix*)			# VAXen running ultrix
 	tm_file="${tm_file} vax/ultrix.h"

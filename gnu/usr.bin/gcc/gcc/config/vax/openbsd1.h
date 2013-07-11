@@ -19,5 +19,4 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Set up definitions before picking up the common openbsd.h file.  */
-#define OBSD_OLD_GAS 
 #define OBSD_NO_DYNAMIC_LIBRARIES
