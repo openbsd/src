@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.337 2013/06/28 11:59:42 mikeb Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.338 2013/07/11 11:25:42 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2555,9 +2555,9 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		sc->bge_mps = 128 << (reg & 0x7);
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719 ||
 		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720)
-			sc->bge_expmrq = 0x4000; /* (fls(2048) - 8) << 12 */
+			sc->bge_expmrq = (fls(2048) - 8) << 12;
 		else
-			sc->bge_expmrq = 0x5000; /* (fls(4096) - 8) << 12 */
+			sc->bge_expmrq = (fls(4096) - 8) << 12;
 		/* Disable PCIe Active State Power Management (ASPM). */
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag,
 		    sc->bge_expcap + PCI_PCIE_LCSR);
