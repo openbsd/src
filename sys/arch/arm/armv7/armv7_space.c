@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_space.c,v 1.4 2013/05/09 23:46:05 patrick Exp $ */
+/*	$OpenBSD: armv7_space.c,v 1.5 2013/07/11 16:16:38 rapha Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -154,7 +154,7 @@ struct bus_space armv7_bs_tag = {
 	/* set region */
 	armv7_bs_sr_1,
 	armv7_bs_sr_2,
-	bs_notimpl_bs_sr_4,
+	armv7_bs_sr_4,
 	bs_notimpl_bs_sr_8,
 
 	/* copy */
