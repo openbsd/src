@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.548 2013/06/11 18:17:25 deraadt Exp $
+#	$OpenBSD: files,v 1.549 2013/07/11 01:20:31 jsg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -1026,6 +1026,8 @@ file lib/libkern/arch/${MACHINE_ARCH}/bcopy.S | lib/libkern/bcopy.c
 file lib/libkern/arch/${MACHINE_ARCH}/memcpy.S | lib/libkern/memcpy.c
 file lib/libkern/arch/${MACHINE_ARCH}/memmove.S | lib/libkern/memmove.c
 file lib/libkern/arch/${MACHINE_ARCH}/ffs.S | lib/libkern/ffs.c
+file lib/libkern/arch/${MACHINE_ARCH}/fls.S | lib/libkern/fls.c
+file lib/libkern/arch/${MACHINE_ARCH}/flsl.S | lib/libkern/flsl.c
 file lib/libkern/arch/${MACHINE_ARCH}/memset.S | lib/libkern/memset.c
 file lib/libkern/arch/${MACHINE_ARCH}/strcmp.S | lib/libkern/strcmp.c
 file lib/libkern/arch/${MACHINE_ARCH}/strlcat.S | lib/libkern/strlcat.c

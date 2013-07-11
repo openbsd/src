@@ -1,4 +1,4 @@
-/*	$OpenBSD: libkern.h,v 1.30 2013/06/08 19:06:50 sf Exp $	*/
+/*	$OpenBSD: libkern.h,v 1.31 2013/07/11 01:20:32 jsg Exp $	*/
 /*	$NetBSD: libkern.h,v 1.7 1996/03/14 18:52:08 christos Exp $	*/
 
 /*-
@@ -148,6 +148,8 @@ int	 bcmp(const void *, const void *, size_t);
 void	 bzero(void *, size_t);
 void	 explicit_bzero(void *, size_t);
 int	 ffs(int);
+int	 fls(int);
+int	 flsl(long);
 void	*memchr(const void *, int, size_t);
 int	 memcmp(const void *, const void *, size_t);
 u_int32_t random(void);
