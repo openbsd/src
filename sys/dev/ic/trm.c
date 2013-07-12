@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.30 2011/12/03 03:29:13 krw Exp $
+/*	$OpenBSD: trm.c,v 1.31 2013/07/12 20:51:31 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -651,11 +651,6 @@ trm_timeout(void *arg1)
 		trm_reset(sc);
 		trm_StartWaitingSRB(sc);
  	}
-#ifdef TRM_DEBUG0
- 	else
-		printf("%s: trm_timeout called with xs == NULL\n",
-		    sc->sc_device.dv_xname);
-#endif
 }
 
 /*
