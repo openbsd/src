@@ -6571,6 +6571,8 @@
 ./usr/share/man/man9/fdrelease.9
 ./usr/share/man/man9/ffs.9
 ./usr/share/man/man9/file.9
+./usr/share/man/man9/fls.9
+./usr/share/man/man9/flsl.9
 ./usr/share/man/man9/fork1.9
 ./usr/share/man/man9/free.9
 ./usr/share/man/man9/fusebuf.9
