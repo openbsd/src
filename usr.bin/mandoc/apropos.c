@@ -1,4 +1,4 @@
-/*	$Id: apropos.c,v 1.16 2012/04/15 11:54:47 schwarze Exp $ */
+/*	$Id: apropos.c,v 1.17 2013/07/12 11:01:42 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -43,8 +43,8 @@ apropos(int argc, char *argv[])
 	struct expr	*e;
 	char		*defpaths, *auxpaths;
 	char		*conf_file;
-	extern int	 optind;
 	extern char	*optarg;
+	extern int	 optind;
 
 	progname = strrchr(argv[0], '/');
 	if (progname == NULL)
@@ -52,7 +52,7 @@ apropos(int argc, char *argv[])
 	else
 		++progname;
 
-	whatis = 0 == strncmp(progname, "whatis", 6);
+	whatis = (0 == strncmp(progname, "whatis", 6));
 
 	memset(&paths, 0, sizeof(struct manpaths));
 	memset(&opts, 0, sizeof(struct opts));
@@ -81,20 +81,14 @@ apropos(int argc, char *argv[])
 			opts.cat = optarg;
 			break;
 		default:
-			fprintf(stderr,
-			    "usage: %s [-C file] [-M path] [-m path]"
-			    " [-S arch] [-s section]%s ...\n",
-			    progname,
-			    whatis ? " name" :
-				"\n               expression");
-			return(EXIT_FAILURE);
+			goto usage;
 		}
 
 	argc -= optind;
 	argv += optind;
 
-	if (0 == argc) 
-		return(EXIT_SUCCESS);
+	if (0 == argc)
+		goto usage;
 
 	rc = 0;
 
@@ -116,11 +110,18 @@ apropos(int argc, char *argv[])
 		fprintf(stderr, "%s: Bad database\n", progname);
 		goto out;
 	}
+
 out:
 	manpath_free(&paths);
 	resfree(res, ressz);
 	exprfree(e);
 	return(rc ? EXIT_SUCCESS : EXIT_FAILURE);
+
+usage:
+	fprintf(stderr, "usage: %s [-C file] [-M path] [-m path] "
+			"[-S arch] [-s section]%s ...\n", progname,
+			whatis ? " name" : "\n               expression");
+	return(EXIT_FAILURE);
 }
 
 /* ARGSUSED */
