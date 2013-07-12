@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.7 2011/09/22 12:53:00 jsing Exp $	*/
+/*	$OpenBSD: intr.c,v 1.8 2013/07/12 04:08:26 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -190,46 +190,6 @@ cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
 	return (iv);
 }
 
-int	fls(u_long mask);
-
-int
-fls(u_long mask)
-{
-	int bit = 64;
-
-	if (!(mask & 0xffffffff00000000)) {
-		bit -= 32;
-		mask <<= 32;
-	}
-
-	if (!(mask & 0xffff000000000000)) {
-		bit -= 16;
-		mask <<= 16;
-	}
-
-	if (!(mask & 0xff00000000000000)) {
-		bit -= 8;
-		mask <<= 8;
-	}
-
-	if (!(mask & 0xf000000000000000)) {
-		bit -= 4;
-		mask <<= 4;
-	}
-
-	if (!(mask & 0xc000000000000000)) {
-		bit -= 2;
-		mask <<= 2;
-	}
-
-	if (!(mask & 0x8000000000000000)) {
-		bit -= 1;
-		mask <<= 1;
-	}
-
-	return mask ? bit : 0;
-}
-
 void
 cpu_intr(void *v)
 {
@@ -253,7 +213,7 @@ cpu_intr(void *v)
 
 		while (ci->ci_ipending & mask) {
 
-			bit = fls(ci->ci_ipending & mask) - 1;
+			bit = flsl(ci->ci_ipending & mask) - 1;
 			iv = &intr_table[bit];
 
 #ifdef INTRDEBUG

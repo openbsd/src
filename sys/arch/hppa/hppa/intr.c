@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.40 2011/05/12 12:54:38 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.41 2013/07/12 04:08:26 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -233,42 +233,6 @@ cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
 		evcount_attach(cnt, name, NULL);
 
 	return (iv);
-}
-
-int	fls(u_int mask);
-
-int
-fls(u_int mask)
-{
-	int bit;
-
-	bit = 32;
-	if (!(mask & 0xffff0000)) {
-		bit -= 16;
-		mask <<= 16;
-	}
-
-	if (!(mask & 0xff000000)) {
-		bit -= 8;
-		mask <<= 8;
-	}
-
-	if (!(mask & 0xf0000000)) {
-		bit -= 4;
-		mask <<= 4;
-	}
-
-	if (!(mask & 0xc0000000)) {
-		bit -= 2;
-		mask <<= 2;
-	}
-
-	if (!(mask & 0x80000000)) {
-		bit -= 1;
-		mask <<= 1;
-	}
-
-	return mask? bit : 0;
 }
 
 void
