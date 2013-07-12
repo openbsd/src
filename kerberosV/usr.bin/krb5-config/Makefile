@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2013/07/01 05:15:24 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.5 2013/07/12 19:01:21 stsp Exp $
 
 SCRIPTS=krb5-config
 MPAGES=	krb5-config.1
@@ -7,8 +7,8 @@ MSRC=	${KRB5DIR}/tools
 CLEANFILES= krb5-config
 
 krb5-config: krb5-config.in
-	sed -e "s,@PACKAGE\@,OpenBSD heimdal,g" \
-	    -e "s,@VERSION\@,1.1.0,g" \
+	sed -e "s,@PACKAGE\@,heimdal,g" \
+	    -e "s,@VERSION\@,1.5.2,g" \
 	    -e "s,@prefix\@,/usr,g" \
 	    -e "s,@exec_prefix\@,/usr,g" \
 	    -e "s,@libdir\@,${LIBDIR},g" \
