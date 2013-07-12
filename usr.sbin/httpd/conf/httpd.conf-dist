@@ -1045,6 +1045,10 @@ SSLEngine on
 #   See the mod_ssl documentation for a complete list.
 SSLCipherSuite ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL
 
+#   SSL Honor Cipher Order:
+#   If on, use server's order of preference for ciphers.
+#SSLHonorCipherOrder on
+
 #   Server Certificate:
 #   Point SSLCertificateFile at a PEM encoded certificate.  If
 #   the certificate is encrypted, then you will be prompted for a
