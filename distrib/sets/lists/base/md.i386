@@ -97,7 +97,7 @@
 ./usr/lib/gcc-lib/i386-unknown-openbsd5.4/4.2.1/collect2
 ./usr/lib/gcc-lib/i386-unknown-openbsd5.4/4.2.1/specs
 ./usr/lib/libasn1.so.19.0
-./usr/lib/libc.so.68.4
+./usr/lib/libc.so.69.0
 ./usr/lib/libcom_err.so.19.0
 ./usr/lib/libcrypto.so.22.0
 ./usr/lib/libcurses.so.12.1
