@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.18 2013/07/01 05:15:23 ajacoutot Exp $
+# $OpenBSD: Makefile.inc,v 1.19 2013/07/12 18:58:13 stsp Exp $
 
 KRB5DIR=	${.CURDIR}/../../../kerberosV/src
 KRB5SUBST=	${KRB5DIR}/../varsub
@@ -68,7 +68,7 @@ INCSDIR?=	${INCLUDEDIR}
 
 ${group}OWN?=	${BINOWN}
 ${group}GRP?=	${BINGRP}
-${group}MODE?=	${BINMODE}
+${group}MODE?=	${NONBINMODE}
 ${group}DIR?=	/usr/include
 
 _${group}INCS=
