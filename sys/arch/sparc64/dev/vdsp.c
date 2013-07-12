@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.18 2012/12/08 20:38:10 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.19 2013/07/12 18:51:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -380,7 +380,7 @@ vdsp_tx_intr(void *arg)
 	uint64_t tx_head, tx_tail, tx_state;
 	int err;
 
-	hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
+	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
 	if (err != H_EOK) {
 		printf("hv_ldc_rx_get_state %d\n", err);
 		return (0);
