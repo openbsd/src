@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_mkquery.c,v 1.5 2013/04/01 20:22:27 eric Exp $	*/
+/*	$OpenBSD: res_mkquery.c,v 1.6 2013/07/12 14:36:22 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -49,7 +49,7 @@ res_mkquery(int op, const char *dname, int class, int type,
 		dname = fqdn;
 	}
 
-	if (dname_from_fqdn(dname, dn, sizeof(dn)) == -1)
+	if (asr_dname_from_fqdn(dname, dn, sizeof(dn)) == -1)
 		return (-1);
 
 	ac = asr_use_resolver(NULL);
@@ -60,9 +60,9 @@ res_mkquery(int op, const char *dname, int class, int type,
 		h.flags |= RD_MASK;
 	h.qdcount = 1;
 
-	pack_init(&p, buf, buflen);
-	pack_header(&p, &h);
-	pack_query(&p, type, class, dn);
+	asr_pack_init(&p, buf, buflen);
+	asr_pack_header(&p, &h);
+	asr_pack_query(&p, type, class, dn);
 
 	asr_ctx_unref(ac);
 

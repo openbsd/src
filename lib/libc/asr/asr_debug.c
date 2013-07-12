@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_debug.c,v 1.13 2013/05/27 17:31:01 eric Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.14 2013/07/12 14:36:21 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -173,9 +173,9 @@ asr_dump_packet(FILE *f, const void *data, size_t len)
 	if (f == NULL)
 		return;
 
-	unpack_init(&p, data, len);
+	asr_unpack_init(&p, data, len);
 
-	if (unpack_header(&p, &h) == -1) {
+	if (asr_unpack_header(&p, &h) == -1) {
 		fprintf(f, ";; BAD PACKET: %s\n", p.err);
 		return;
 	}
@@ -185,7 +185,7 @@ asr_dump_packet(FILE *f, const void *data, size_t len)
 	if (h.qdcount)
 		fprintf(f, ";; QUERY SECTION:\n");
 	for (i = 0; i < h.qdcount; i++) {
-		if (unpack_query(&p, &q) == -1)
+		if (asr_unpack_query(&p, &q) == -1)
 			goto error;
 		fprintf(f, "%s\n", print_query(&q, buf, sizeof buf));
 	}
@@ -203,7 +203,7 @@ asr_dump_packet(FILE *f, const void *data, size_t len)
 		if (i == ar)
 			fprintf(f, "\n;; ADDITIONAL SECTION:\n");
 
-		if (unpack_rr(&p, &rr) == -1)
+		if (asr_unpack_rr(&p, &rr) == -1)
 			goto error;
 		fprintf(f, "%s\n", print_rr(&rr, buf, sizeof buf));
 	}

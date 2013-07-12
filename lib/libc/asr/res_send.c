@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send.c,v 1.4 2013/05/27 17:31:01 eric Exp $	*/
+/*	$OpenBSD: res_send.c,v 1.5 2013/07/12 14:36:22 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -42,7 +42,7 @@ res_send(const u_char *buf, int buflen, u_char *ans, int anslen)
 	if (as == NULL)
 		return (-1); /* errno set */
 
-	async_run_sync(as, &ar);
+	asr_async_run_sync(as, &ar);
 
 	if (ar.ar_errno) {
 		errno = ar.ar_errno;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.4 2013/05/27 17:31:01 eric Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.5 2013/07/12 14:36:22 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -48,7 +48,7 @@ res_query(const char *name, int class, int type, u_char *ans, int anslen)
 		return (-1); /* errno set */
 	}
 
-	async_run_sync(as, &ar);
+	asr_async_run_sync(as, &ar);
 
 	if (ar.ar_errno)
 		errno = ar.ar_errno;
@@ -90,7 +90,7 @@ res_search(const char *name, int class, int type, u_char *ans, int anslen)
 		return (-1); /* errno set */
 	}
 
-	async_run_sync(as, &ar);
+	asr_async_run_sync(as, &ar);
 
 	if (ar.ar_errno)
 		errno = ar.ar_errno;

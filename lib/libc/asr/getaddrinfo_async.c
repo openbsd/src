@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.18 2013/06/01 14:34:34 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.19 2013/07/12 14:36:21 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -74,7 +74,7 @@ getaddrinfo_async(const char *hostname, const char *servname,
 	struct async	*as;
 
 	ac = asr_use_resolver(asr);
-	if ((as = async_new(ac, ASR_GETADDRINFO)) == NULL)
+	if ((as = asr_async_new(ac, ASR_GETADDRINFO)) == NULL)
 		goto abort; /* errno set */
 	as->as_run = getaddrinfo_async_run;
 
@@ -93,7 +93,7 @@ getaddrinfo_async(const char *hostname, const char *servname,
 	return (as);
     abort:
 	if (as)
-		async_free(as);
+		asr_async_free(as);
 	asr_ctx_unref(ac);
 	return (NULL);
 }
@@ -222,7 +222,7 @@ getaddrinfo_async_run(struct async *as, struct async_res *ar)
 					str = (ai->ai_flags & AI_PASSIVE) ? \
 						"::" : "::1";
 				 /* This can't fail */
-				sockaddr_from_str(&sa.sa, family, str);
+				asr_sockaddr_from_str(&sa.sa, family, str);
 				if ((r = addrinfo_add(as, &sa.sa, NULL))) {
 					ar->ar_gai_errno = r;
 					break;
@@ -240,7 +240,7 @@ getaddrinfo_async_run(struct async *as, struct async_res *ar)
 		    family != -1;
 		    family = iter_family(as, 0)) {
 
-			if (sockaddr_from_str(&sa.sa, family,
+			if (asr_sockaddr_from_str(&sa.sa, family,
 			    as->as.ai.hostname) == -1)
 				continue;
 
@@ -379,7 +379,7 @@ getaddrinfo_async_run(struct async *as, struct async_res *ar)
 		break;
 
 	case ASR_STATE_SUBQUERY:
-		if ((r = async_run(as->as.ai.subq, ar)) == ASYNC_COND)
+		if ((r = asr_async_run(as->as.ai.subq, ar)) == ASYNC_COND)
 			return (ASYNC_COND);
 		as->as.ai.subq = NULL;
 
@@ -576,7 +576,7 @@ addrinfo_from_file(struct async *as, int family, FILE *f)
 		for (i = 1; i < n; i++) {
 			if (strcasecmp(name, tokens[i]))
 				continue;
-			if (sockaddr_from_str(&u.sa, family, tokens[0]) == -1)
+			if (asr_sockaddr_from_str(&u.sa, family, tokens[0]) == -1)
 				continue;
 			break;
 		}
@@ -609,13 +609,13 @@ addrinfo_from_pkt(struct async *as, char *pkt, size_t pktlen)
 	} u;
 	char		 buf[MAXDNAME], *c;
 
-	unpack_init(&p, pkt, pktlen);
-	unpack_header(&p, &h);
+	asr_unpack_init(&p, pkt, pktlen);
+	asr_unpack_header(&p, &h);
 	for (; h.qdcount; h.qdcount--)
-		unpack_query(&p, &q);
+		asr_unpack_query(&p, &q);
 
 	for (i = 0; i < h.ancount; i++) {
-		unpack_rr(&p, &rr);
+		asr_unpack_rr(&p, &rr);
 		if (rr.rr_type != q.q_type ||
 		    rr.rr_class != q.q_class)
 			continue;
@@ -694,7 +694,7 @@ addrinfo_from_yp(struct async *as, int family, char *line)
 		if (ntok < 2)
 			continue;
 
-		if (sockaddr_from_str(&u.sa, family, tokens[0]) == -1)
+		if (asr_sockaddr_from_str(&u.sa, family, tokens[0]) == -1)
 			continue;
 
 		if (as->as.ai.hints.ai_flags & (AI_CANONNAME | AI_FQDN))

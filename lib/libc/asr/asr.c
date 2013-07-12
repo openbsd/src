@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.30 2013/06/01 15:02:01 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.31 2013/07/12 14:36:21 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -87,7 +87,7 @@ static struct asr *_asr = NULL;
 
 /* Allocate and configure an async "resolver". */
 struct asr *
-async_resolver(const char *conf)
+asr_resolver(const char *conf)
 {
 	static int	 init = 0;
 	struct asr	*asr;
@@ -156,7 +156,7 @@ async_resolver(const char *conf)
  * Drop the reference to the current context.
  */
 void
-async_resolver_done(struct asr *asr)
+asr_resolver_done(struct asr *asr)
 {
 	struct asr **priv;
 
@@ -177,9 +177,9 @@ async_resolver_done(struct asr *asr)
  * Cancel an async query.
  */
 void
-async_abort(struct async *as)
+asr_async_abort(struct async *as)
 {
-	async_free(as);
+	asr_async_free(as);
 }
 
 /*
@@ -188,7 +188,7 @@ async_abort(struct async *as)
  * the user-allocated memory at "ar".
  */
 int
-async_run(struct async *as, struct async_res *ar)
+asr_async_run(struct async *as, struct async_res *ar)
 {
 	int	r, saved_errno = errno;
 
@@ -203,7 +203,7 @@ async_run(struct async *as, struct async_res *ar)
 		DPRINT(" fd=%i timeout=%i", ar->ar_fd, ar->ar_timeout);
 	DPRINT("\n");
 	if (r == ASYNC_DONE)
-		async_free(as);
+		asr_async_free(as);
 
 	errno = saved_errno;
 
@@ -214,12 +214,12 @@ async_run(struct async *as, struct async_res *ar)
  * Same as above, but run in a loop that handles the fd conditions result.
  */
 int
-async_run_sync(struct async *as, struct async_res *ar)
+asr_async_run_sync(struct async *as, struct async_res *ar)
 {
 	struct pollfd	 fds[1];
 	int		 r, saved_errno = errno;
 
-	while ((r = async_run(as, ar)) == ASYNC_COND) {
+	while ((r = asr_async_run(as, ar)) == ASYNC_COND) {
 		fds[0].fd = ar->ar_fd;
 		fds[0].events = (ar->ar_cond == ASYNC_READ) ? POLLIN : POLLOUT;
 	again:
@@ -227,7 +227,7 @@ async_run_sync(struct async *as, struct async_res *ar)
 		if (r == -1 && errno == EINTR)
 			goto again;
 		/*
-		 * Otherwise, just ignore the error and let async_run()
+		 * Otherwise, just ignore the error and let asr_async_run()
 		 * catch the failure.
 		 */
 	}
@@ -243,11 +243,11 @@ async_run_sync(struct async *as, struct async_res *ar)
  * is running.
  */
 struct async *
-async_new(struct asr_ctx *ac, int type)
+asr_async_new(struct asr_ctx *ac, int type)
 {
 	struct async	*as;
 
-	DPRINT("asr: async_new(ctx=%p) type=%i refcount=%i\n", ac, type,
+	DPRINT("asr: asr_async_new(ctx=%p) type=%i refcount=%i\n", ac, type,
 	    ac ? ac->ac_refcount : 0);
 	if (ac == NULL || (as = calloc(1, sizeof(*as))) == NULL)
 		return (NULL);
@@ -265,9 +265,9 @@ async_new(struct asr_ctx *ac, int type)
  * Free an async query and unref the associated context.
  */
 void
-async_free(struct async *as)
+asr_async_free(struct async *as)
 {
-	DPRINT("asr: async_free(%p)\n", as);
+	DPRINT("asr: asr_async_free(%p)\n", as);
 	switch (as->as_type) {
 	case ASR_SEND:
 		if (as->as_fd != -1)
@@ -282,14 +282,14 @@ async_free(struct async *as)
 
 	case ASR_SEARCH:
 		if (as->as.search.subq)
-			async_free(as->as.search.subq);
+			asr_async_free(as->as.search.subq);
 		if (as->as.search.name)
 			free(as->as.search.name);
 		break;
 
 	case ASR_GETRRSETBYNAME:
 		if (as->as.rrset.subq)
-			async_free(as->as.rrset.subq);
+			asr_async_free(as->as.rrset.subq);
 		if (as->as.rrset.name)
 			free(as->as.rrset.name);
 		break;
@@ -297,7 +297,7 @@ async_free(struct async *as)
 	case ASR_GETHOSTBYNAME:
 	case ASR_GETHOSTBYADDR:
 		if (as->as.hostnamadr.subq)
-			async_free(as->as.hostnamadr.subq);
+			asr_async_free(as->as.hostnamadr.subq);
 		if (as->as.hostnamadr.name)
 			free(as->as.hostnamadr.name);
 		break;
@@ -305,14 +305,14 @@ async_free(struct async *as)
 	case ASR_GETNETBYNAME:
 	case ASR_GETNETBYADDR:
 		if (as->as.netnamadr.subq)
-			async_free(as->as.netnamadr.subq);
+			asr_async_free(as->as.netnamadr.subq);
 		if (as->as.netnamadr.name)
 			free(as->as.netnamadr.name);
 		break;
 
 	case ASR_GETADDRINFO:
 		if (as->as.ai.subq)
-			async_free(as->as.ai.subq);
+			asr_async_free(as->as.ai.subq);
 		if (as->as.ai.aifirst)
 			freeaddrinfo(as->as.ai.aifirst);
 		if (as->as.ai.hostname)
@@ -325,7 +325,7 @@ async_free(struct async *as)
 
 	case ASR_GETNAMEINFO:
 		if (as->as.ni.subq)
-			async_free(as->as.ni.subq);
+			asr_async_free(as->as.ni.subq);
 		break;
 	}
 
@@ -348,7 +348,7 @@ asr_use_resolver(struct asr *asr)
 		priv = _THREAD_PRIVATE(_asr, _asr, &_asr);
 		if (*priv == NULL) {
 			DPRINT("setting up thread-local resolver\n");
-			*priv = async_resolver(NULL);
+			*priv = asr_resolver(NULL);
 		}
 		asr = *priv;
 	}
@@ -808,7 +808,7 @@ asr_parse_nameserver(struct sockaddr *sa, const char *s)
 			return (-1);
 	}
 
-	if (sockaddr_from_str(sa, PF_UNSPEC, s) == -1)
+	if (asr_sockaddr_from_str(sa, PF_UNSPEC, s) == -1)
 		return (-1);
 
 	if (sa->sa_family == PF_INET)

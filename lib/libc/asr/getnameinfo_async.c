@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo_async.c,v 1.6 2013/03/29 21:20:50 eric Exp $	*/
+/*	$OpenBSD: getnameinfo_async.c,v 1.7 2013/07/12 14:36:22 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -43,7 +43,7 @@ getnameinfo_async(const struct sockaddr *sa, socklen_t slen, char *host,
 	struct async	*as;
 
 	ac = asr_use_resolver(asr);
-	if ((as = async_new(ac, ASR_GETNAMEINFO)) == NULL)
+	if ((as = asr_async_new(ac, ASR_GETNAMEINFO)) == NULL)
 		goto abort; /* errno set */
 	as->as_run = getnameinfo_async_run;
 
@@ -64,7 +64,7 @@ getnameinfo_async(const struct sockaddr *sa, socklen_t slen, char *host,
 
     abort:
 	if (as)
-		async_free(as);
+		asr_async_free(as);
 	asr_ctx_unref(ac);
 	return (NULL);
 }
@@ -153,7 +153,7 @@ getnameinfo_async_run(struct async *as, struct async_res *ar)
 
 	case ASR_STATE_SUBQUERY:
 
-		if ((r = async_run(as->as.ni.subq, ar)) == ASYNC_COND)
+		if ((r = asr_async_run(as->as.ni.subq, ar)) == ASYNC_COND)
 			return (ASYNC_COND);
 
 		/*

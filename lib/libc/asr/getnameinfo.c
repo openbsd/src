@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.2 2013/05/27 17:31:01 eric Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.3 2013/07/12 14:36:21 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -43,7 +43,7 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
 		return (EAI_SYSTEM);
 	}
 
-	async_run_sync(as, &ar);
+	asr_async_run_sync(as, &ar);
 	if (ar.ar_gai_errno == EAI_SYSTEM)
 		errno = ar.ar_errno;
 

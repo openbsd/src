@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrrsetbyname_async.c,v 1.4 2013/04/30 12:02:39 eric Exp $	*/
+/*	$OpenBSD: getrrsetbyname_async.c,v 1.5 2013/07/12 14:36:22 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -42,7 +42,7 @@ getrrsetbyname_async(const char *hostname, unsigned int rdclass,
 	struct async	*as;
 
 	ac = asr_use_resolver(asr);
-	if ((as = async_new(ac, ASR_GETRRSETBYNAME)) == NULL)
+	if ((as = asr_async_new(ac, ASR_GETRRSETBYNAME)) == NULL)
 		goto abort; /* errno set */
 	as->as_run = getrrsetbyname_async_run;
 
@@ -57,7 +57,7 @@ getrrsetbyname_async(const char *hostname, unsigned int rdclass,
 	return (as);
     abort:
 	if (as)
-		async_free(as);
+		asr_async_free(as);
 
 	asr_ctx_unref(ac);
 	return (NULL);
@@ -109,7 +109,7 @@ getrrsetbyname_async_run(struct async *as, struct async_res *ar)
 
 	case ASR_STATE_SUBQUERY:
 
-		if ((async_run(as->as.rrset.subq, ar)) == ASYNC_COND)
+		if ((asr_async_run(as->as.rrset.subq, ar)) == ASYNC_COND)
 			return (ASYNC_COND);
 
 		as->as.rrset.subq = NULL;
@@ -169,7 +169,7 @@ getrrsetbyname_async_run(struct async *as, struct async_res *ar)
 
 /* The rest of this file is taken from the orignal implementation. */
 
-/* $OpenBSD: getrrsetbyname_async.c,v 1.4 2013/04/30 12:02:39 eric Exp $ */
+/* $OpenBSD: getrrsetbyname_async.c,v 1.5 2013/07/12 14:36:22 eric Exp $ */
 
 /*
  * Copyright (c) 2001 Jakob Schlyter. All rights reserved.

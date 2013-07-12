@@ -1,4 +1,4 @@
-.\"	$OpenBSD: async_resolver.3,v 1.13 2013/06/05 03:39:22 tedu Exp $
+.\"	$OpenBSD: async_resolver.3,v 1.14 2013/07/12 14:36:21 eric Exp $
 .\"
 .\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
 .\"
@@ -14,15 +14,15 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: July 12 2013 $
 .Dt ASYN_RESOLVER 3
 .Os
 .Sh NAME
-.Nm async_resolver ,
-.Nm async_resolver_done ,
-.Nm async_run ,
-.Nm async_run_sync ,
-.Nm async_abort ,
+.Nm asr_resolver ,
+.Nm asr_resolver_done ,
+.Nm asr_async_run ,
+.Nm asr_async_run_sync ,
+.Nm asr_async_abort ,
 .Nm res_send_async ,
 .Nm res_query_async ,
 .Nm res_search_async ,
@@ -39,15 +39,15 @@
 .Sh SYNOPSIS
 .In asr.h
 .Ft struct asr *
-.Fn async_resolver "const char *conf"
+.Fn asr_resolver "const char *conf"
 .Ft void
-.Fn async_resolver_done "struct asr *asr"
+.Fn asr_resolver_done "struct asr *asr"
 .Ft int
-.Fn async_run "struct async *as" "struct async_res *ar"
+.Fn asr_async_run "struct async *as" "struct async_res *ar"
 .Ft int
-.Fn async_run_sync "struct async *as" "struct async_res *ar"
+.Fn asr_async_run_sync "struct async *as" "struct async_res *ar"
 .Ft void
-.Fn async_abort "struct async *as"
+.Fn asr_async_abort "struct async *as"
 .Ft struct async *
 .Fn res_send_async "const unsigned char *pkt" "int pktlen" "struct asr *asr"
 .Ft struct async *
@@ -95,7 +95,7 @@ The user is responsible for dealing with the situation (fetch the result,
 or wait until the fd conditions are met), and call back into the resolving
 machinery when it is ready to proceed.
 .Pp
-.Fn async_resolver
+.Fn asr_resolver
 is the function used to create a new resolver context.
 The
 .Fa conf
@@ -120,7 +120,7 @@ string is a '!', the configuration is read from the rest of the string rather
 than loaded from a file.
 No further update occurs in this case.
 .Pp
-.Fn async_resolver_done
+.Fn asr_resolver_done
 is used to discard the
 .Fa asr
 context when it is not used anymore.
@@ -131,7 +131,7 @@ it will be able to complete safely.
 All relevant resources are effectively freed when all such queries are cleared.
 .Pp
 The
-.Fn async_run
+.Fn asr_async_run
 function drives the resolving process.
 It runs the
 .Fa as
@@ -190,7 +190,7 @@ The timeout, expressed in milliseconds.
 .El
 .Pp
 The caller is expected to call
-.Fn async_run
+.Fn asr_async_run
 again once the condition holds or the timeout expires.
 .It ASYNC_DONE
 The query is completed.
@@ -204,20 +204,20 @@ set.
 The query-specific members of
 .Fa ar
 are set accordingly and the resolving process can be resumed by calling
-.Fn async_run .
+.Fn asr_async_run .
 .El
 .Pp
 Note that although the query itself may fail (the error being properly reported
 in the
 .Fa ar
 structure), the
-.Fn async_run
+.Fn asr_async_run
 function itself cannot fail and it always preserves errno.
 .Pp
 The
-.Fn async_run_sync
+.Fn asr_async_run_sync
 function is a wrapper around
-.Fn async_run
+.Fn asr_async_run
 that handles the read/write conditions, thus falling back to a blocking
 interface.
 It only returns partial and complete results through ASYNC_YIELD and ASYNC_DONE
@@ -225,14 +225,14 @@ respectively.
 It also preserves errno.
 .Pp
 The
-.Fn async_abort
+.Fn asr_async_abort
 function clears a running query.
 It can be called after a partial result has been retrieved or when the query
 is waiting on a file descriptor.
 Note that a completed query is already cleared when
-.Fn async_run
+.Fn asr_async_run
 returns, so
-.Fn async_abort
+.Fn asr_async_abort
 must not be called in this case.
 .Pp
 The remaining functions are used to initiate different kinds of query
@@ -244,7 +244,7 @@ All functions return NULL if they could not allocate the necessary resources
 to initiate the query.
 All other errors (especially invalid parameters)
 are reported when calling
-.Fn async_run .
+.Fn asr_async_run .
 They usually have the same interface as an existing resolver function, with
 an additional
 .Ar asr

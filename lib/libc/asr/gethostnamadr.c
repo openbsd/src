@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr.c,v 1.8 2013/05/29 06:43:49 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr.c,v 1.9 2013/07/12 14:36:21 eric Exp $	*/
 /*
  * Copyright (c) 2012,2013 Eric Faurot <eric@openbsd.org>
  *
@@ -114,7 +114,7 @@ _gethostbyname(const char *name, int af, struct hostent *ret, char *buf,
 	if (as == NULL)
 		return (errno);
 
-	async_run_sync(as, &ar);
+	asr_async_run_sync(as, &ar);
 
 	errno = ar.ar_errno;
 	*h_errnop = ar.ar_h_errno;
@@ -176,7 +176,7 @@ gethostbyaddr(const void *addr, socklen_t len, int af)
 		return (NULL);
 	}
 
-	async_run_sync(as, &ar);
+	asr_async_run_sync(as, &ar);
 
 	errno = ar.ar_errno;
 	h_errno = ar.ar_h_errno;

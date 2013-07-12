@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.h,v 1.6 2013/04/30 12:02:39 eric Exp $	*/
+/*	$OpenBSD: asr.h,v 1.7 2013/07/12 14:36:21 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -68,15 +68,15 @@ struct async_res {
 	struct netent	 *ar_netent;
 };
 
-int  async_run(struct async *, struct async_res *);
-int  async_run_sync(struct async *, struct async_res *);
-void async_abort(struct async *);
+int  asr_async_run(struct async *, struct async_res *);
+int  asr_async_run_sync(struct async *, struct async_res *);
+void asr_async_abort(struct async *);
 
 /* This opaque structure holds an async resolver context. */
 struct asr;
 
-struct asr *async_resolver(const char *);
-void	    async_resolver_done(struct asr *);
+struct asr *asr_resolver(const char *);
+void	    asr_resolver_done(struct asr *);
 
 /* Async version of the resolver API */
 

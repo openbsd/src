@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.22 2013/06/01 15:02:01 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.23 2013/07/12 14:36:21 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -299,22 +299,22 @@ enum asr_state {
 
 
 /* asr_utils.c */
-void	pack_init(struct pack *, char *, size_t);
-int	pack_header(struct pack *, const struct header *);
-int	pack_query(struct pack *, uint16_t, uint16_t, const char *);
-
-void	unpack_init(struct unpack *, const char *, size_t);
-int	unpack_header(struct unpack *, struct header *);
-int	unpack_query(struct unpack *, struct query *);
-int	unpack_rr(struct unpack *, struct rr *);
-int	sockaddr_from_str(struct sockaddr *, int, const char *);
-ssize_t dname_from_fqdn(const char *, char *, size_t);
+void	asr_pack_init(struct pack *, char *, size_t);
+int	asr_pack_header(struct pack *, const struct header *);
+int	asr_pack_query(struct pack *, uint16_t, uint16_t, const char *);
+void	asr_unpack_init(struct unpack *, const char *, size_t);
+int	asr_unpack_header(struct unpack *, struct header *);
+int	asr_unpack_query(struct unpack *, struct query *);
+int	asr_unpack_rr(struct unpack *, struct rr *);
+int	asr_sockaddr_from_str(struct sockaddr *, int, const char *);
+ssize_t asr_dname_from_fqdn(const char *, char *, size_t);
+ssize_t asr_addr_as_fqdn(const char *, int, char *, size_t);
 
 /* asr.c */
 struct asr_ctx *asr_use_resolver(struct asr *);
 void asr_ctx_unref(struct asr_ctx *);
-struct async *async_new(struct asr_ctx *, int);
-void async_free(struct async *);
+struct async *asr_async_new(struct asr_ctx *, int);
+void asr_async_free(struct async *);
 size_t asr_make_fqdn(const char *, const char *, char *, size_t);
 char *asr_strdname(const char *, char *, size_t);
 int asr_iter_db(struct async *);
