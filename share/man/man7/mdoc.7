@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.98 2013/06/17 17:39:48 guenther Exp $
+.\"	$OpenBSD: mdoc.7,v 1.99 2013/07/13 19:27:47 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 17 2013 $
+.Dd $Mdocdate: July 13 2013 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -657,7 +657,7 @@ for all other author listings.
 .Pp
 Examples:
 .Dl \&.An -nosplit
-.Dl \&.An Kristaps Dzonsons \&Aq kristaps@bsd.lv
+.Dl \&.An Kristaps Dzonsons \&Aq \&Mt kristaps@bsd.lv
 .Ss \&Ao
 Begin a block enclosed by angle brackets.
 Does not have any head arguments.
@@ -1920,6 +1920,7 @@ Its syntax is as follows:
 .Pp
 Examples:
 .Dl \&.Mt discuss@manpages.bsd.lv
+.Dl \&.An Kristaps Dzonsons \&Aq \&Mt kristaps@bsd.lv
 .Ss \&Nd
 A one line description of the manual's content.
 This may only be invoked in the
@@ -3186,5 +3187,4 @@ utility written by Kristaps Dzonsons appeared in
 The
 .Nm
 reference was written by
-.An Kristaps Dzonsons ,
-.Mt kristaps@bsd.lv .
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .
