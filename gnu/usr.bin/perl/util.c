@@ -4962,7 +4962,11 @@ Perl_upg_version(pTHX_ SV *ver, bool qv)
 
 	/* may get too much accuracy */ 
 	char tbuf[64];
+#ifdef __vax__
+	SV *sv = SvNVX(ver) > 10e37 ? newSV(64) : 0;
+#else
 	SV *sv = SvNVX(ver) > 10e50 ? newSV(64) : 0;
+#endif
 	char *buf;
 #ifdef USE_LOCALE_NUMERIC
 	char *loc = savepv(setlocale(LC_NUMERIC, NULL));
