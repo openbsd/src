@@ -72,4 +72,6 @@ _initialize_vaxnbsd_tdep (void)
 			  vaxnbsd_aout_init_abi);
   gdbarch_register_osabi (bfd_arch_vax, 0, GDB_OSABI_NETBSD_ELF,
 			  vaxnbsd_elf_init_abi);
+  gdbarch_register_osabi (bfd_arch_vax, 0, GDB_OSABI_OPENBSD_ELF,
+			  vaxnbsd_elf_init_abi);
 }
