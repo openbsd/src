@@ -1,0 +1,39 @@
+.TH TP-DOUBLE 1 2013-06-23 OpenBSD
+.SH NAME
+TP-double \- effect of double tagged paragraph
+.SH DESCRIPTION
+leading text:
+This is a rather long text because we want to test the text width;
+at which point will this text wrap to the next line?
+.TP 16n
+first TP
+This is a rather long text because we want to test the text width;
+at which point will this text wrap to the next line?
+.TP 16n
+second TP
+This is a rather long text because we want to test the text width;
+at which point will this text wrap to the next line?
+.PP
+normal paragraph:
+This is a rather long text because we want to test the text width;
+at which point will this text wrap to the next line?
+.PP
+.TP 16n
+.TP 16n
+double TP
+This is a rather long text because we want to test the text width;
+at which point will this text wrap to the next line?
+.PP
+normal paragraph:
+This is a rather long text because we want to test the text width;
+at which point will this text wrap to the next line?
+.PP
+.TP 16n
+.TP 16n
+double TP
+This is a rather long text because we want to test the text width;
+at which point will this text wrap to the next line?
+.PP
+normal paragraph:
+This is a rather long text because we want to test the text width;
+at which point will this text wrap to the next line?
