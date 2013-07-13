@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.15 2013/07/05 19:46:27 guenther Exp $	*/
+/*	$OpenBSD: _types.h,v 1.16 2013/07/13 17:28:36 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -110,13 +110,8 @@ typedef	__int64_t		__intmax_t;
 typedef	__uint64_t		__uintmax_t;
 
 /* Register size */
-#if (_MIPS_ISA == _MIPS_ISA_MIPS3 || _MIPS_ISA == _MIPS_ISA_MIPS4)
-typedef __int64_t		__register_t;
-typedef __int64_t		f_register_t;	/* XXX */
-#else
-typedef __int32_t		__register_t;
-typedef __int32_t		f_register_t;	/* XXX */
-#endif
+typedef long			__register_t;
+typedef long			f_register_t;	/* XXX */
 
 /* VM system types */
 typedef unsigned long		__vaddr_t;
