@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.63 2013/01/26 06:10:22 djm Exp $
+# $OpenBSD: Makefile,v 1.64 2013/07/13 16:34:43 miod Exp $
 
 LIB=	crypto
 
@@ -454,18 +454,6 @@ obj_mac.h: ${SSL_OBJECTS}/objects.h ${SSL_OBJECTS}/obj_mac.num ${SSL_OBJECTS}/ob
 
 obj_dat.h: obj_mac.h
 	/usr/bin/perl ${SSL_OBJECTS}/obj_dat.pl obj_mac.h obj_dat.h
-
-.if (${MACHINE_ARCH} == "vax")
-# egcs bombs optimising these files
-a_strnid.o:
-	${CC} ${CFLAGS} -O0 ${CPPFLAGS} -c ${.IMPSRC}
-a_strnid.po:           
-	${CC} ${CFLAGS} -O0 ${CPPFLAGS} -c ${.IMPSRC} -o $@
-des_enc.o:             
-	${CC} ${CFLAGS} -O1 ${CPPFLAGS} -c ${.IMPSRC}
-des_enc.po:            
-	${CC} ${CFLAGS} -O1 ${CPPFLAGS} -c ${.IMPSRC} -o $@
-.endif  
 
 .if (${MACHINE_ARCH} == "i386")
 SRCS+= wp_block.c

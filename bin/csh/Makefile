@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2010/01/04 17:50:36 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.11 2013/07/13 16:34:43 miod Exp $
 #
 # C Shell with process control; VM/UNIX VAX Makefile
 # Bill Joy UC Berkeley; Jim Kulp IIASA, Austria
@@ -15,11 +15,6 @@ SRCS=	alloc.c char.c const.c csh.c dir.c dol.c error.c exec.c exp.c file.c \
 	sem.c set.c str.c time.c
 
 CLEANFILES+=error.h const.h
-
-.if (${MACHINE_ARCH} == "vax")
-alloc.o:
-	${CC} ${CFLAGS} ${CPPFLAGS} -O0 -c $<
-.endif
 
 const.h: error.h
 
