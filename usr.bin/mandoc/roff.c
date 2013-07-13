@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.50 2013/06/27 09:48:22 schwarze Exp $ */
+/*	$Id: roff.c,v 1.51 2013/07/13 12:51:38 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -17,6 +17,7 @@
  */
 #include <assert.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -182,12 +183,13 @@ static	void		 roff_freestr(struct roffkv *);
 static	char		*roff_getname(struct roff *, char **, int, int);
 static	const char	*roff_getstrn(const struct roff *, 
 				const char *, size_t);
+static	enum rofferr	 roff_it(ROFF_ARGS);
 static	enum rofferr	 roff_line_ignore(ROFF_ARGS);
 static	enum rofferr	 roff_nr(ROFF_ARGS);
 static	void		 roff_openeqn(struct roff *, const char *,
 				int, int, const char *);
 static	enum rofft	 roff_parse(struct roff *, const char *, int *);
-static	enum rofferr	 roff_parsetext(char *);
+static	enum rofferr	 roff_parsetext(char **, size_t *, int, int *);
 static	enum rofferr	 roff_res(struct roff *, 
 				char **, size_t *, int, int);
 static	enum rofferr	 roff_rm(ROFF_ARGS);
@@ -229,7 +231,7 @@ static	struct roffmac	 roffs[ROFF_MAX] = {
 	{ "ie", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
 	{ "if", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
 	{ "ig", roff_block, roff_block_text, roff_block_sub, 0, NULL },
-	{ "it", roff_line_ignore, NULL, NULL, 0, NULL },
+	{ "it", roff_it, NULL, NULL, 0, NULL },
 	{ "ne", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ "nh", roff_line_ignore, NULL, NULL, 0, NULL },
 	{ "nr", roff_nr, NULL, NULL, 0, NULL },
@@ -290,6 +292,9 @@ static	const struct predef predefs[PREDEFS_MAX] = {
 
 /* See roffhash_find() */
 #define	ROFF_HASH(p)	(p[0] - ASCII_LO)
+
+static	int	 roffit_lines;  /* number of lines to delay */
+static	char	*roffit_macro;  /* nil-terminated macro line */
 
 static void
 roffhash_init(void)
@@ -592,16 +597,20 @@ again:
 }
 
 /*
- * Process text streams: convert all breakable hyphens into ASCII_HYPH.
+ * Process text streams:
+ * Convert all breakable hyphens into ASCII_HYPH.
+ * Decrement and spring input line trap.
  */
 static enum rofferr
-roff_parsetext(char *p)
+roff_parsetext(char **bufp, size_t *szp, int pos, int *offs)
 {
 	size_t		 sz;
 	const char	*start;
+	char		*p;
+	int		 isz;
 	enum mandoc_esc	 esc;
 
-	start = p;
+	start = p = *bufp + pos;
 
 	while ('\0' != *p) {
 		sz = strcspn(p, "-\\");
@@ -629,6 +638,22 @@ roff_parsetext(char *p)
 		p++;
 	}
 
+	/* Spring the input line trap. */
+	if (1 == roffit_lines) {
+		isz = asprintf(&p, "%s\n.%s", *bufp, roffit_macro);
+		if (-1 == isz) {
+			perror(NULL);
+			exit((int)MANDOCLEVEL_SYSERR);
+		}
+		free(*bufp);
+		*bufp = p;
+		*szp = isz + 1;
+		*offs = 0;
+		free(roffit_macro);
+		roffit_lines = 0;
+		return(ROFF_REPARSE);
+	} else if (1 < roffit_lines)
+		--roffit_lines;
 	return(ROFF_CONT);
 }
 
@@ -673,13 +698,13 @@ roff_parseln(struct roff *r, int ln, char **bufp,
 			return(eqn_read(&r->eqn, ln, *bufp, pos, offs));
 		if (r->tbl)
 			return(tbl_read(r->tbl, ln, *bufp, pos));
-		return(roff_parsetext(*bufp + pos));
+		return(roff_parsetext(bufp, szp, pos, offs));
 	} else if ( ! ctl) {
 		if (r->eqn)
 			return(eqn_read(&r->eqn, ln, *bufp, pos, offs));
 		if (r->tbl)
 			return(tbl_read(r->tbl, ln, *bufp, pos));
-		return(roff_parsetext(*bufp + pos));
+		return(roff_parsetext(bufp, szp, pos, offs));
 	} else if (r->eqn)
 		return(eqn_read(&r->eqn, ln, *bufp, ppos, offs));
 
@@ -1116,9 +1141,6 @@ static enum rofferr
 roff_line_ignore(ROFF_ARGS)
 {
 
-	if (ROFF_it == tok)
-		mandoc_msg(MANDOCERR_REQUEST, r->parse, ln, ppos, "it");
-
 	return(ROFF_IGN);
 }
 
@@ -1288,6 +1310,31 @@ roff_rm(ROFF_ARGS)
 		if ('\0' != *name)
 			roff_setstr(r, name, NULL, 0);
 	}
+	return(ROFF_IGN);
+}
+
+/* ARGSUSED */
+static enum rofferr
+roff_it(ROFF_ARGS)
+{
+	char		*cp;
+	size_t		 len;
+	int		 iv;
+
+	/* Parse the number of lines. */
+	cp = *bufp + pos;
+	len = strcspn(cp, " \t");
+	cp[len] = '\0';
+	if ((iv = mandoc_strntoi(cp, len, 10)) <= 0) {
+		mandoc_msg(MANDOCERR_NUMERIC, r->parse,
+				ln, ppos, *bufp + 1);
+		return(ROFF_IGN);
+	}
+	cp += len + 1;
+
+	/* Arm the input line trap. */
+	roffit_lines = iv;
+	roffit_macro = mandoc_strdup(cp);
 	return(ROFF_IGN);
 }
 

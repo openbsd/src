@@ -1,0 +1,11 @@
+IT-TEXT(1)                 OpenBSD Reference Manual                 IT-TEXT(1)
+
+NNAAMMEE
+     iitt--tteexxtt - what an input line trap counts as text
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text plain text line traptext another plain text line
+
+     first line after .Pp traptext second line after .Pp
+
+OpenBSD                          July 13, 2013                         OpenBSD

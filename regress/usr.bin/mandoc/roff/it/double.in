@@ -1,0 +1,16 @@
+.TH IT-DOUBLE 1 2013-07-13 OpenBSD
+.SH NAME
+it-double \- double input line trap
+.SH DESCRIPTION
+.de firstmacro
+firstmacro
+..
+.de secondmacro
+secondmacro
+..
+initial text
+.it 1 firstmacro
+.it 2 secondmacro
+first line
+second line
+third line

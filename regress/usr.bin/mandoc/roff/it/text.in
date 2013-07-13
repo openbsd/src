@@ -1,0 +1,18 @@
+.Dd $Mdocdate: July 13 2013 $
+.Dt IT-TEXT 1
+.Os OpenBSD
+.Sh NAME
+.Nm it-text
+.Nd what an input line trap counts as text
+.Sh DESCRIPTION
+.de mytrap
+traptext
+..
+initial text
+.it 1 mytrap
+plain text line
+another plain text line
+.it 1 mytrap
+.Pp
+first line after .Pp
+second line after .Pp

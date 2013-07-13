@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.15 2013/06/02 03:35:21 schwarze Exp $ */
+/*	$Id: read.c,v 1.16 2013/07/13 12:51:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -177,6 +177,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"macro requires line argument(s)",
 	"macro requires body argument(s)",
 	"macro requires argument(s)",
+	"request requires a numeric argument",
 	"missing list type",
 	"line argument(s) will be lost",
 	"body argument(s) will be lost",
