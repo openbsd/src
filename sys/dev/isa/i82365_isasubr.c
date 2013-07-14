@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.23 2013/03/08 18:35:46 miod Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.24 2013/07/14 15:18:36 kettenis Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -312,8 +312,9 @@ pcic_intr_find(sc, ist)
 				 * change interrupt) we need to do
 				 * higher.
 				 */
-				ih = isa_intr_establish(ic, irq, ist, IPL_VM,
-				    pcic_intr_probe, 0, sc->dev.dv_xname);
+				ih = isa_intr_establish(ic, irq, ist,
+				    IPL_VM | IPL_MPSAFE, pcic_intr_probe,
+				    0, sc->dev.dv_xname);
 				if (ih == NULL)
 					continue;
 				pcic_intr_seen = 0;
