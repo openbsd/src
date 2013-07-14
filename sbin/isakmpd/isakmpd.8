@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.111 2012/09/25 13:58:00 otto Exp $
+.\" $OpenBSD: isakmpd.8,v 1.112 2013/07/14 16:37:41 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: September 25 2012 $
+.Dd $Mdocdate: July 14 2013 $
 .Dt ISAKMPD 8
 .Os
 .Sh NAME
@@ -494,7 +494,8 @@ signal.
 .It Ic r
 Report
 .Nm
-internal state to a file.
+internal state to
+.Xr syslog 3 .
 See the
 .Fl R
 option.
