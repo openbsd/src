@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.15 2011/04/29 07:19:19 jmc Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.16 2013/07/14 14:36:41 jca Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -126,12 +126,14 @@ doit(char *name)
 		free(phdr);
 		return 1;
 	}
+	close(fd);
 
 	for (i = 0; i < ehdr.e_phnum; i++)
 		if (phdr[i].p_type == PT_INTERP) {
 			interp = 1;
 			break;
 		}
+	free(phdr);
 
 	if (ehdr.e_type == ET_DYN && !interp) {
 		printf("%s:\n", name);
@@ -144,13 +146,8 @@ doit(char *name)
 			printf("%s\n", dlerror());
 			return 1;
 		}
-		close(fd);
-		free(phdr);
 		return 0;
 	}
-
-	close(fd);
-	free(phdr);
 
 	if (i == ehdr.e_phnum) {
 		warnx("%s: not a dynamic executable", name);
