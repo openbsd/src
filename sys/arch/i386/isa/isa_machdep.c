@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.74 2013/07/10 21:31:12 kettenis Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.75 2013/07/14 18:22:08 kettenis Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 /*-
@@ -501,7 +501,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 	flags = level & IPL_MPSAFE;
 	level &= ~IPL_MPSAFE;
 
-	KASSERT(level <= IPL_VM || level >= IPL_CLOCK || flags & IPL_MPSAFE);
+	KASSERT(level <= IPL_TTY || level >= IPL_CLOCK || flags & IPL_MPSAFE);
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
