@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.21 2013/07/11 15:15:46 jmc Exp $
+.\" $OpenBSD: dhclient.8,v 1.22 2013/07/14 19:44:38 jmc Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .\" Enterprises.  To learn more about the Internet Software Consortium,
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
-.Dd $Mdocdate: July 11 2013 $
+.Dd $Mdocdate: July 14 2013 $
 .Dt DHCLIENT 8
 .Os
 .Sh NAME
@@ -50,15 +50,36 @@
 .Op Fl l Ar file
 .Ar interface
 .Sh DESCRIPTION
-The
-.Nm
-utility provides a means for configuring network interfaces using DHCP, BOOTP,
-or if these protocols fail, by statically assigning an address.
+The Dynamic Host Configuration Protocol (DHCP) allows hosts on a TCP/IP network
+to configure one or more network interfaces based on information collected from
+a DHCP server.
+DHCP is often used, for example, by cable modem and DSL network
+providers to automate network configuration for their customers.
 .Pp
-The name of the network interface that
+Information typically provided via DHCP includes
+address and subnet mask for the interface,
+default route,
+and domain name server.
+.Pp
+To have
+.Ox
+configure an interface using DHCP
+(or its predecessor, BOOTP)
+the
 .Nm
-should attempt to
-configure must be specified on the command line.
+utility is used.
+.Nm
+is run on the command line with the name of the
+.Ar interface
+to be configured.
+.Nm
+can also be run at boot time from
+.Xr hostname.if 5 ,
+in which case
+.Xr netstart 8
+reads the hostname files and runs
+.Nm
+for each interface that is to be configured via DHCP.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -274,6 +295,8 @@ or temporary files it created.
 .Bl -tag -width "/var/db/dhclient.leases.<IFNAME>XXX" -compact
 .It Pa /etc/dhclient.conf
 DHCP client configuration file
+.It Pa /etc/hostname.XXX
+interface-specific configuration files
 .It Pa /var/db/dhclient.leases. Ns Aq Ar IFNAME
 database of acquired leases
 .El
@@ -281,7 +304,7 @@ database of acquired leases
 .Xr bpf 4 ,
 .Xr dhclient.conf 5 ,
 .Xr dhclient.leases 5 ,
-.Xr dhcp 8 ,
+.Xr hostname.if 5 ,
 .Xr dhcpd 8 ,
 .Xr dhcrelay 8
 .Sh STANDARDS

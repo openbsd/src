@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.19 2013/07/11 15:15:46 jmc Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.20 2013/07/14 19:44:38 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: July 11 2013 $
+.Dd $Mdocdate: July 14 2013 $
 .Dt DHCPD 8
 .Os
 .Sh NAME
@@ -447,9 +447,9 @@ All hosts using synchronisation must use the same configuration in the
 file.
 .Sh FILES
 .Bl -tag -width "/var/db/dhcpd.leases~  " -compact
-.It /etc/dhcpd.conf
+.It Pa /etc/dhcpd.conf
 DHCPD configuration file.
-.It /var/db/dhcpd.leases
+.It Pa /var/db/dhcpd.leases
 DHCPD lease file.
 .El
 .Sh SEE ALSO
@@ -457,7 +457,6 @@ DHCPD lease file.
 .Xr dhcpd.conf 5 ,
 .Xr dhcpd.leases 5 ,
 .Xr dhclient 8 ,
-.Xr dhcp 8 ,
 .Xr dhcrelay 8 ,
 .Xr pxeboot 8
 .Sh STANDARDS
