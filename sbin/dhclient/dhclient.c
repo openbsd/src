@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.259 2013/07/06 03:13:34 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.260 2013/07/15 14:03:01 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -111,6 +111,8 @@ void		 apply_ignore_list(char *);
 void add_default_route(int, struct in_addr, struct in_addr);
 void add_static_routes(int, struct option_data *);
 void add_classless_static_routes(int, struct option_data *);
+
+int compare_lease(struct client_lease *, struct client_lease *);
 
 #define	ROUNDUP(a) \
 	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -798,12 +800,26 @@ bind_lease(void)
 	struct option_data *options;
 	struct client_lease *lease;
 
+	lease = apply_defaults(client->new);
+	options = lease->options;
+
+	/*
+	 * A duplicate lease once we are responsible means we don't
+	 * need to change the interface, routing table or resolv.conf.
+	 */
+	if ((client->flags & IS_RESPONSIBLE) &&
+	    compare_lease(client->active, client->new) == 0) {
+		client->new->resolv_conf = client->active->resolv_conf;
+		client->active->resolv_conf = NULL;
+		note("bound to %s -- renewal in %lld seconds.",
+		    inet_ntoa(client->new->address),
+		    (long long)(client->new->renewal - time(NULL)));
+		goto newlease;
+	}
+
 	/* Deleting the addresses also clears out arp entries. */
 	delete_addresses(ifi->name, ifi->rdomain);
 	flush_routes(ifi->name, ifi->rdomain);
-
-	lease = apply_defaults(client->new);
-	options = lease->options;
 
 	memset(&mask, 0, sizeof(mask));
 	memcpy(&mask.s_addr, options[DHO_SUBNET_MASK].data,
@@ -840,6 +856,7 @@ bind_lease(void)
 		    client->new->resolv_conf, strlen(client->new->resolv_conf));
 
 	/* Replace the old active lease with the new one. */
+newlease:
 	if (client->active)
 		free_client_lease(client->active);
 	client->active = client->new;
@@ -2398,4 +2415,45 @@ void add_classless_static_routes(int rdomain,
 		    RTA_DST | RTA_GATEWAY | RTA_NETMASK,
 		    RTF_GATEWAY | RTF_STATIC);
 	}
+}
+
+int
+compare_lease(struct client_lease *active, struct client_lease *new)
+{
+	int i;
+
+	if (active == new)
+		return (0);
+
+	if (!new || !active)
+		return (1);
+
+	if (active->address.s_addr != new->address.s_addr ||
+	    active->is_static != new->is_static ||
+	    active->is_bootp != new->is_bootp)
+		return (1);
+
+	if (active->server_name != new->server_name) {
+		if (!active->server_name || !new->server_name)
+			return (1);
+		if (strcmp(active->server_name, new->server_name))
+			return (1);
+	}
+
+	if (active->filename != new->filename) {
+		if (!active->filename || !new->filename)
+			return (1);
+		if (strcmp(active->filename, new->filename))
+			return (1);
+	}
+
+	for (i = 0; i < 256; i++) {
+		if (active->options[i].len != new->options[i].len)
+			return (1);
+		if (memcmp(active->options[i].data, new->options[i].data,
+		    active->options[i].len))
+			return (1);
+	}
+
+	return (0);
 }
