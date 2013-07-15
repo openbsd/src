@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_hypot.c,v 1.3 2009/10/27 23:59:29 deraadt Exp $	*/
+/*	$OpenBSD: n_hypot.c,v 1.4 2013/07/15 04:08:26 espie Exp $	*/
 /*	$NetBSD: n_cabs.c,v 1.1 1995/10/10 23:36:39 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -89,6 +89,12 @@ static const double r2p1hi = 2.4142135623730950345E0;
 static const double r2p1lo = 1.4349369327986523769E-17;
 static const double sqrt2 = 1.4142135623730950622E0;
 
+float
+hypotf(float x, float y)
+{
+	return (float)hypot((double) x, (double) y);
+}
+
 double
 hypot(double x, double y)
 {
@@ -141,6 +147,8 @@ hypot(double x, double y)
 		return (y);
 	else return(copysign(y,one));	/* y is INF */
 }
+
+__strong_alias(hypotl, hypot);
 
 /* A faster but less accurate version of cabs(x,y) */
 #if 0

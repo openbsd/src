@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_cbrt.c,v 1.7 2012/12/05 23:20:03 deraadt Exp $	*/
+/*	$OpenBSD: n_cbrt.c,v 1.8 2013/07/15 04:08:26 espie Exp $	*/
 /*	$NetBSD: n_cbrt.c,v 1.1 1995/10/10 23:36:40 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -58,6 +58,12 @@ static const double
 	    E= 99./70.,
 	    F= 45./28.,
 	    G= 5./14.;
+
+float
+cbrtf(float x)
+{
+	return (float)cbrt((double) x);
+}
 
 double
 cbrt(double x)

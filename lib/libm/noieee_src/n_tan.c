@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_tan.c,v 1.13 2013/03/28 18:09:38 martynas Exp $	*/
+/*	$OpenBSD: n_tan.c,v 1.14 2013/07/15 04:08:26 espie Exp $	*/
 /*	$NetBSD: n_tan.c,v 1.1 1995/10/10 23:37:07 ragge Exp $	*/
 /*
  * Copyright (c) 1987, 1993
@@ -32,6 +32,12 @@
 #include <math.h>
 
 #include "mathimpl.h"
+
+float
+tanf(float x)
+{
+	return (float)tan((double) x);
+}
 
 double
 tan(double x)

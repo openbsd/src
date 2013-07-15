@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_sincos.c,v 1.13 2013/03/28 18:09:38 martynas Exp $	*/
+/*	$OpenBSD: n_sincos.c,v 1.14 2013/07/15 04:08:26 espie Exp $	*/
 /*	$NetBSD: n_sincos.c,v 1.1 1995/10/10 23:37:04 ragge Exp $	*/
 /*
  * Copyright (c) 1987, 1993
@@ -33,6 +33,12 @@
 
 #include "mathimpl.h"
 
+float
+sinf(float x)
+{
+	return (float)sin((double) x);
+}
+
 double
 sin(double x)
 {
@@ -63,6 +69,12 @@ sin(double x)
 }
 
 __strong_alias(sinl, sin);
+
+float
+cosf(float x)
+{
+	return (float)cos((double) x);
+}
 
 double
 cos(double x)
