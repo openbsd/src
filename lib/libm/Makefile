@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.103 2013/07/03 10:26:49 espie Exp $
+#  $OpenBSD: Makefile,v 1.104 2013/07/15 18:05:14 espie Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -119,8 +119,8 @@ COMMON_SRCS = b_exp__D.c b_log__D.c b_tgamma.c \
 	s_log1pf.c s_logb.c s_logbf.c s_llrint.c s_llrintf.c s_lrint.c \
 	s_lrintf.c s_modff.c s_nan.c s_nearbyint.c s_nextafter.c \
 	s_nextafterf.c s_nexttowardf.c s_remquo.c s_remquof.c s_rint.c \
-	s_rintf.c s_round.c s_roundf.c \
-	s_scalbln.c s_scalbn.c s_scalbnf.c s_signgam.c s_significand.c \
+	s_rintf.c \
+	s_scalbn.c s_scalbnf.c s_signgam.c s_significand.c \
 	s_significandf.c \
 	s_sin.c s_sinf.c s_tan.c s_tanf.c s_tanh.c s_tanhf.c s_trunc.c \
 	s_truncf.c w_drem.c w_dremf.c w_gamma.c w_gamma_r.c w_gammaf.c \
@@ -148,7 +148,7 @@ NOIEEE_SRCS = n_acosh.c n_asincos.c n_asinh.c n_atan.c \
 	n_erf.c n_exp.c n_exp__E.c n_expm1.c n_floor.c \
 	n_fmod.c \
 	n_j0.c n_j1.c n_jn.c n_lgamma.c n_log.c n_log10.c \
-	n_log1p.c n_log__L.c n_nan.c n_pow.c n_round.c n_scalbln.c \
+	n_log1p.c n_log__L.c n_nan.c n_pow.c \
 	n_sinh.c n_tanh.c n_tgamma.c
 # there for reference, they're replaced by an asm version on vax
 NOIEEE_SRCS += n_argred.c n_atan2.c n_cbrt.c n_hypot.c n_infnan.c \
@@ -160,7 +160,7 @@ PURE_SRCS = s_cabs.c s_cacos.c s_cacosh.c s_carg.c s_casin.c \
 	s_cimag.c s_cimagf.c s_clog.c s_conj.c s_conjf.c s_cpow.c \
 	s_creal.c s_crealf.c s_csin.c s_csinh.c s_csqrt.c s_ctan.c \
 	s_ctanh.c s_fdim.c s_fmax.c s_fmaxf.c s_fmin.c s_fminf.c \
-	s_cproj.c s_cprojf.c
+	s_cproj.c s_cprojf.c s_round.c s_roundf.c s_scalbln.c 
 
 .if (${MACHINE_ARCH} == "vax")
 SRCS=	${NOIEEE_SRCS} ${NOIEEE_ARCH} ${PURE_SRCS}
