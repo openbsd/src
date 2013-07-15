@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.19 2010/07/20 20:47:17 miod Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.20 2013/07/15 18:28:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -70,8 +70,8 @@ extern int allowaperture;
  * 5110, 6210 and 7210 chips.
  *
  * The card exposes the following resources:
- * - a 32MB aperture window in which views to the different frame buffer
- *   areas can be mapped, in the first BAR.
+ * - a 32MB (ifb), 64MB (xvr600) or 128MB (jfb) aperture window in which
+ *   views to the different frame buffer areas can be mapped, in the first BAR.
  * - a 64KB or 128KB PROM and registers area, in the second BAR.
  * - a 8MB ``direct burst'' memory mapping, in the third BAR.
  *
@@ -367,6 +367,7 @@ ifbattach(struct device *parent, struct device *self, void *aux)
 	uint32_t dev_comm;
 	int node, console;
 	char *name, *text;
+	char namebuf[32];
 
 	sc->sc_mem_t = paa->pa_memt;
 	sc->sc_pcitag = paa->pa_tag;
@@ -392,7 +393,7 @@ ifbattach(struct device *parent, struct device *self, void *aux)
 	 * Describe the beast.
 	 */
 
-	name = text = getpropstring(node, "name");
+	name = text = getpropstringA(node, "name", namebuf);
 	if (strncmp(text, "SUNW,", 5) == 0)
 		text += 5;
 	printf("%s: %s", self->dv_xname, text);
@@ -530,10 +531,10 @@ ifb_accel_identify(const char *name)
 {
 	if (strcmp(name, "SUNW,Expert3D") == 0 ||
 	    strcmp(name, "SUNW,Expert3D-Lite") == 0)
-		return IFB_ACCEL_IFB;
+		return IFB_ACCEL_IFB;	/* ifblite */
 
 	if (strcmp(name, "SUNW,XVR-1200") == 0)
-		return IFB_ACCEL_JFB;
+		return IFB_ACCEL_JFB;	/* jfb */
 
 	/* XVR-500 is bobcat, XVR-600 is xvr600 */
 
