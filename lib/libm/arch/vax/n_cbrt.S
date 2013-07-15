@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_cbrt.S,v 1.5 2013/07/05 21:10:50 miod Exp $	*/
+/*	$OpenBSD: n_cbrt.S,v 1.6 2013/07/15 04:03:41 espie Exp $	*/
 /*	$NetBSD: n_cbrt.S,v 1.1 1995/10/10 23:40:26 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -40,8 +40,13 @@
  * Revised and tested by K.C. Ng, 5/2/85  
  * Max error less than 0.667 ulps (unit in the last places)
  */
-	.text
-	_ALIGN_TEXT
+ENTRY(cbrtf, 0)
+	cvtfd	4(%ap),-(%sp)
+	calls	$2,_C_LABEL(cbrt)
+	cvtdf	%r0,%r0
+	ret
+	
+STRONG_ALIAS(cbrtl,cbrt)
 ENTRY(cbrt, R2|R3|R4|R5|R6|R7)
 	movq	4(%ap),%r0	# r0 = argument x
 	bicw3	$0x807f,%r0,%r2	# biased exponent of x

@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_sincos.S,v 1.9 2013/07/05 21:10:50 miod Exp $	*/
+/*	$OpenBSD: n_sincos.S,v 1.10 2013/07/15 04:03:41 espie Exp $	*/
 /*	$NetBSD: n_sincos.S,v 1.1 1995/10/10 23:40:28 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -48,6 +48,12 @@
  * S. McDonald, April 4,  1985
  */
 
+ENTRY(sinf, 0)
+	cvtfd	4(%ap),-(%sp)
+	calls	$2,_C_LABEL(sin)
+	cvtdf	%r0,%r0
+	ret
+
 STRONG_ALIAS(sinl,sin)
 ENTRY(sin, R2|R3|R4|R5|R6|R7|R8|R9|R10|R11)
 	movq	4(%ap),%r0
@@ -77,6 +83,12 @@ ENTRY(sin, R2|R3|R4|R5|R6|R7|R8|R9|R10|R11)
  * method: true range reduction to [-pi/4,pi/4], P. Tang  &  B. Corbett
  * S. McDonald, April 4,  1985
  */
+
+ENTRY(cosf, 0)
+	cvtfd	4(%ap),-(%sp)
+	calls	$2,_C_LABEL(cos)
+	cvtdf	%r0,%r0
+	ret
 
 STRONG_ALIAS(cosl,cos)
 ENTRY(cos, R2|R3|R4|R5|R6|R7|R8|R9|R10|R11)

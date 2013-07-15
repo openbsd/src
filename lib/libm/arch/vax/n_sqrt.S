@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_sqrt.S,v 1.10 2013/07/05 21:10:50 miod Exp $	*/
+/*	$OpenBSD: n_sqrt.S,v 1.11 2013/07/15 04:03:41 espie Exp $	*/
 /*	$NetBSD: n_sqrt.S,v 1.1 1995/10/10 23:40:29 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -44,6 +44,12 @@
  *
  * entry points: sqrt		double arg is on the stack
  */
+
+ENTRY(sqrtf, 0)
+	cvtfd	4(%ap),-(%sp)
+	calls	$2,_C_LABEL(sqrt)
+	cvtdf	%r0,%r0
+	ret
 
 STRONG_ALIAS(sqrtl,sqrt)
 ENTRY(sqrt, R2|R3|R4|R5)

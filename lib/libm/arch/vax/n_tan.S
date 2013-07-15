@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_tan.S,v 1.9 2013/07/05 21:10:50 miod Exp $	*/
+/*	$OpenBSD: n_tan.S,v 1.10 2013/07/15 04:03:41 espie Exp $	*/
 /*	$NetBSD: n_tan.S,v 1.1 1995/10/10 23:40:31 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -45,6 +45,12 @@
  * method: true range reduction to [-pi/4,pi/4], P. Tang  &  B. Corbett
  * S. McDonald, April 4,  1985
  */
+
+ENTRY(tanf, 0)
+	cvtfd	4(%ap),-(%sp)
+	calls	$2,_C_LABEL(tan)
+	cvtdf	%r0,%r0
+	ret
 
 STRONG_ALIAS(tanl,tan)
 ENTRY(tan, R2|R3|R4|R5|R6|R7|R8|R9|R10|R11)

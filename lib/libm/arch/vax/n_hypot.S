@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_hypot.S,v 1.2 2013/07/05 21:10:50 miod Exp $	*/
+/*	$OpenBSD: n_hypot.S,v 1.3 2013/07/15 04:03:41 espie Exp $	*/
 /*	$NetBSD: n_cabs.S,v 1.1 1995/10/10 23:40:26 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -43,8 +43,14 @@
  */
 
 /*	entry for c functions cabs and hypot */
-	.text
-	_ALIGN_TEXT
+ENTRY(hypotf, 0)
+	cvtfd	4(%ap),-(%sp)
+	calls	$2,_C_LABEL(hypot)
+	cvtdf	%r0,%r0
+	ret
+
+STRONG_ALIAS(hypotl, hypot)
+
 ENTRY(hypot, 0x8000|R2|R3|R4|R5|R6)	# enable floating overflow
 	movq	4(%ap),%r0	# r0:1 = x
 	movq	12(%ap),%r2	# r2:3 = y
