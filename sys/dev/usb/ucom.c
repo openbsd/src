@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.60 2013/06/25 13:42:28 mpi Exp $ */
+/*	$OpenBSD: ucom.c,v 1.61 2013/07/15 13:52:05 mpi Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -220,10 +220,27 @@ ucom_detach(struct device *self, int flags)
 	DPRINTF(("ucom_detach: sc=%p flags=%d tp=%p, pipe=%d,%d\n",
 		 sc, flags, tp, sc->sc_bulkin_no, sc->sc_bulkout_no));
 
-	if (sc->sc_bulkin_pipe != NULL)
+	if (sc->sc_bulkin_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_bulkin_pipe);
-	if (sc->sc_bulkout_pipe != NULL)
+		usbd_close_pipe(sc->sc_bulkin_pipe);
+		sc->sc_bulkin_pipe = NULL;
+	}
+	if (sc->sc_bulkout_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_bulkout_pipe);
+		usbd_close_pipe(sc->sc_bulkout_pipe);
+		sc->sc_bulkout_pipe = NULL;
+	}
+	if (sc->sc_ixfer != NULL) {
+		if (sc->sc_uhidev == NULL)
+			usbd_free_xfer(sc->sc_ixfer);
+		sc->sc_ixfer = NULL;
+	}
+	if (sc->sc_oxfer != NULL) {
+		usbd_free_buffer(sc->sc_oxfer);
+		if (sc->sc_uhidev == NULL)
+			usbd_free_xfer(sc->sc_oxfer);
+		sc->sc_oxfer = NULL;
+	}
 
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
@@ -233,7 +250,6 @@ ucom_detach(struct device *self, int flags)
 			CLR(tp->t_cflag, CLOCAL | MDMBUF);
 			ttyflush(tp, FREAD|FWRITE);
 		}
-		/* Wait for processes to go away. */
 		usb_detach_wait(&sc->sc_dev);
 	}
 	splx(s);
@@ -251,6 +267,11 @@ ucom_detach(struct device *self, int flags)
 
 	/* Detach and free the tty. */
 	if (tp != NULL) {
+		(*LINESW(tp, l_close))(tp, FNONBLOCK, curproc);
+		s = spltty();
+		CLR(tp->t_state, TS_BUSY | TS_FLUSH);
+		ttyclose(tp);
+		splx(s);
 		ttyfree(tp);
 		sc->sc_tty = NULL;
 	}
@@ -622,7 +643,11 @@ ucomtty(dev_t dev)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 
-	if (sc == NULL || sc->sc_dying)
+	/*
+	 * Return a pointer to our tty even if the device is dying
+	 * in order to properly close it in the detach routine.
+	 */
+	if (sc == NULL)
 		return (NULL);
 
 	return (sc->sc_tty);
