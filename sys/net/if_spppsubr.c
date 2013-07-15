@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.105 2013/07/10 07:46:10 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.106 2013/07/15 13:30:37 mpi Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4956,15 +4956,6 @@ sppp_get_params(struct sppp *sp, struct ifreq *ifr)
 		struct spppreq *spr;
 
 		spr = malloc(sizeof(*spr), M_DEVBUF, M_WAITOK);
-
-		/*
-		 * We copy over the entire current state, but clean
-		 * out some of the stuff we don't wanna pass up.
-		 * Remember, SIOCGIFGENERIC is unprotected, and can be
-		 * called by any user.  No need to ever get PAP or
-		 * CHAP secrets back to userland anyway.
-		 */
-
 		spr->cmd = cmd;
 		spr->phase = sp->pp_phase;
 
