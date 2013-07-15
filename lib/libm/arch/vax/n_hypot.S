@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_hypot.S,v 1.3 2013/07/15 04:03:41 espie Exp $	*/
+/*	$OpenBSD: n_hypot.S,v 1.4 2013/07/15 18:50:32 miod Exp $	*/
 /*	$NetBSD: n_cabs.S,v 1.1 1995/10/10 23:40:26 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -44,8 +44,9 @@
 
 /*	entry for c functions cabs and hypot */
 ENTRY(hypotf, 0)
+	cvtfd	8(%ap),-(%sp)
 	cvtfd	4(%ap),-(%sp)
-	calls	$2,_C_LABEL(hypot)
+	calls	$4,_C_LABEL(hypot)
 	cvtdf	%r0,%r0
 	ret
 

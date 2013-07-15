@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_atan2.S,v 1.9 2013/07/15 04:03:41 espie Exp $	*/
+/*	$OpenBSD: n_atan2.S,v 1.10 2013/07/15 18:50:32 miod Exp $	*/
 /*	$NetBSD: n_atan2.S,v 1.1 1995/10/10 23:40:25 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -74,8 +74,9 @@
  */
 
 ENTRY(atan2f, 0)
+	cvtfd	8(%ap),-(%sp)
 	cvtfd	4(%ap),-(%sp)
-	calls	$2,_C_LABEL(atan2)
+	calls	$4,_C_LABEL(atan2)
 	cvtdf	%r0,%r0
 	ret
 	
