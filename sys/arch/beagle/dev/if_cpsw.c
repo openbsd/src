@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.4 2013/07/04 08:35:52 rapha Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.5 2013/07/15 17:30:22 rapha Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -55,12 +55,8 @@
 
 #include "bpfilter.h"
 
-#include <sys/cdefs.h>
-
 #include <sys/param.h>
-#include <sys/endian.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/queue.h>
@@ -72,8 +68,6 @@
 #include <machine/bus.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
-#include <net/if_llc.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>
@@ -866,16 +860,16 @@ cpsw_init(struct ifnet *ifp)
 		cpsw_write_4(sc, CPSW_CPDMA_RX_CP(i), 0);
 	}
 
-	for (i = 0; i < CPSW_CPPI_RAM_TXDESCS_SIZE/4; i++)
-		bus_space_write_4(sc->sc_bst, sc->sc_bsh_txdescs, i*4, 0);
+	bus_space_set_region_4(sc->sc_bst, sc->sc_bsh_txdescs, 0, 0,
+	    CPSW_CPPI_RAM_TXDESCS_SIZE/4);
 
 	sc->sc_txhead = 0;
 	sc->sc_txnext = 0;
 
 	cpsw_write_4(sc, CPSW_CPDMA_RX_FREEBUFFER(0), 0);
 
-	for (i = 0; i < CPSW_CPPI_RAM_RXDESCS_SIZE/4; i++)
-		bus_space_write_4(sc->sc_bst, sc->sc_bsh_rxdescs, i*4, 0);
+	bus_space_set_region_4(sc->sc_bst, sc->sc_bsh_rxdescs, 0, 0,
+	    CPSW_CPPI_RAM_RXDESCS_SIZE/4);
 
 	/* Initialize RX Buffer Descriptors */
 	cpsw_set_rxdesc_next(sc, RXDESC_PREV(0), 0);
