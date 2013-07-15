@@ -32,7 +32,7 @@ ${IMAGE}: rd_setup do_files rd_teardown
 do_files:
 	echo 'bootcmd=mmc rescan ; setenv loadaddr 0x82800000 ; setenv bootargs sd0i:/bsd.umg ; fatload mmc 0 $${loadaddr} bsd.umg ; bootm $${loadaddr} ;\nuenvcmd=boot' > ${MOUNT_POINT}/uenv.txt
 	cp /usr/mdec/${BOARD}/mlo ${MOUNT_POINT}/mlo
-	cp /usr/mdec/${BOARD}/u-boot.bin ${MOUNT_POINT}/u-boot.bin
+	cp /usr/mdec/${BOARD}/u-boot.* ${MOUNT_POINT}/
 	mkdir ${MOUNT_POINT}/u-boots
 	cp -r /usr/mdec/{am335x,beagle,panda} ${MOUNT_POINT}/u-boots
 	objcopy -O binary ${.OBJDIR}/../../ramdisk/bsd.rd \
