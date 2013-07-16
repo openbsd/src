@@ -191,6 +191,7 @@ void *ssl_config_server_create(pool *p, server_rec *s)
 
     sc = ap_palloc(p, sizeof(SSLSrvConfigRec));
     sc->bEnabled               = UNSET;
+    sc->bCompression           = FALSE;
     sc->szCACertificatePath    = NULL;
     sc->szCACertificateFile    = NULL;
     sc->szCertificateChain     = NULL;
@@ -249,6 +250,7 @@ void *ssl_config_server_merge(pool *p, void *basev, void *addv)
     int i;
 
     cfgMergeBool(bEnabled);
+    cfgMergeBool(bCompression);
     cfgMergeString(szCACertificatePath);
     cfgMergeString(szCACertificateFile);
     cfgMergeString(szCertificateChain);
@@ -531,6 +533,15 @@ const char *ssl_cmd_SSLEngine(
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
 
     sc->bEnabled = (flag ? TRUE : FALSE);
+    return NULL;
+}
+
+const char *ssl_cmd_SSLCompression(
+     cmd_parms *cmd, char *struct_ptr, int flag)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->bCompression = (flag ? TRUE : FALSE);
     return NULL;
 }
 

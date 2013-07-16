@@ -74,7 +74,7 @@
  *  identify the module to SCCS `what' and RCS `ident' commands
  */
 static char const sccsid[] = "@(#) mod_ssl/" MOD_SSL_VERSION " >";
-static char const rcsid[]  = "$Id: mod_ssl.c,v 1.13 2013/07/16 13:02:16 jsing Exp $";
+static char const rcsid[]  = "$Id: mod_ssl.c,v 1.14 2013/07/16 13:22:55 jsing Exp $";
 
 /*
  *  the table of configuration directives we provide
@@ -107,15 +107,18 @@ static command_rec ssl_config_cmds[] = {
     AP_SRV_CMD(Engine, FLAG,
                "SSL switch for the protocol engine "
                "(`on', `off')")
-    AP_SRV_CMD(HonorCipherOrder, FLAG,
-		"Let the server determine preferred ciphers "
-		"(`on', `off')")
+    AP_SRV_CMD(Compression, FLAG,
+               "Use SSL compression "
+               "(`on', `off')")
     AP_ALL_CMD(CipherSuite, TAKE1,
                "Colon-delimited list of permitted SSL Ciphers "
                "(`XXX:...:XXX' - see manual)")
     AP_SRV_CMD(ECDHCurve, TAKE1,
                "Name of ECDH curve to use for ephemeral EC keys "
                "(`curve' - see manual)")
+    AP_SRV_CMD(HonorCipherOrder, FLAG,
+		"Let the server determine preferred ciphers "
+		"(`on', `off')")
     AP_SRV_CMD(CertificateFile, TAKE1,
                "SSL Server Certificate file "
                "(`/path/to/file' - PEM or DER encoded)")

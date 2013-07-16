@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_engine_init.c,v 1.31 2013/07/16 13:02:16 jsing Exp $ */
+/* $OpenBSD: ssl_engine_init.c,v 1.32 2013/07/16 13:22:55 jsing Exp $ */
 
 /*                      _             _
 **  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
@@ -590,6 +590,8 @@ void ssl_init_ConfigureServer(server_rec *s, pool *p, SSLSrvConfigRec *sc)
         SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
     if (!(sc->nProtocol & SSL_PROTOCOL_TLSV1))
         SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
+    if (sc->bCompression == FALSE)
+        SSL_CTX_set_options(ctx, SSL_OP_NO_COMPRESSION);
     if (sc->bHonorCipherOrder == TRUE)
     	SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
     SSL_CTX_set_app_data(ctx, s);
