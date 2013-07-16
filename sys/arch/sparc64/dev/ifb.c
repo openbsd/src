@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.20 2013/07/15 18:28:46 miod Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.21 2013/07/16 22:31:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -536,7 +536,10 @@ ifb_accel_identify(const char *name)
 	if (strcmp(name, "SUNW,XVR-1200") == 0)
 		return IFB_ACCEL_JFB;	/* jfb */
 
-	/* XVR-500 is bobcat, XVR-600 is xvr600 */
+	if (strcmp(name, "SUNW,XVR-600") == 0)
+		return IFB_ACCEL_JFB;	/* xvr600 */
+
+	/* XVR-500 is bobcat */
 
 	return IFB_ACCEL_NONE;
 }
