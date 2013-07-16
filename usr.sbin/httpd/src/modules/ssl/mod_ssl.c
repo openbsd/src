@@ -74,7 +74,7 @@
  *  identify the module to SCCS `what' and RCS `ident' commands
  */
 static char const sccsid[] = "@(#) mod_ssl/" MOD_SSL_VERSION " >";
-static char const rcsid[]  = "$Id: mod_ssl.c,v 1.11 2013/07/11 12:41:52 otto Exp $";
+static char const rcsid[]  = "$Id: mod_ssl.c,v 1.12 2013/07/16 11:32:05 jsing Exp $";
 
 /*
  *  the table of configuration directives we provide
@@ -107,9 +107,9 @@ static command_rec ssl_config_cmds[] = {
     AP_SRV_CMD(Engine, FLAG,
                "SSL switch for the protocol engine "
                "(`on', `off')")
-    AP_SRV_CMD(HonorCipherOrder, TAKE1,
+    AP_SRV_CMD(HonorCipherOrder, FLAG,
 		"Let the server determine preferred ciphers "
-		"(`on', `off'")
+		"(`on', `off')")
     AP_ALL_CMD(CipherSuite, TAKE1,
                "Colon-delimited list of permitted SSL Ciphers "
                "(`XXX:...:XXX' - see manual)")

@@ -802,7 +802,7 @@ int ssl_hook_Access(request_rec *r)
             sk_SSL_CIPHER_free(skCipherOld);
         /* tracing */
         if (renegotiate) {
-	    if (sc->cipher_server_pref == TRUE)
+	    if (sc->bHonorCipherOrder == TRUE)
 	    	SSL_set_options(ssl, SSL_OP_CIPHER_SERVER_PREFERENCE);
             ssl_log(r->server, SSL_LOG_TRACE,
                     "Reconfigured cipher suite will force renegotiation");
