@@ -1,10 +1,21 @@
-dnl	$OpenBSD: hardware,v 1.1 2011/03/22 18:33:51 jasper Exp $
-OpenBSD/MACHINE OSREV runs on the original and xM BeagleBoard systems.
+dnl	$OpenBSD: hardware,v 1.2 2013/07/16 18:15:10 florian Exp $
+The following machines are targeted by OpenBSD/MACHINE:
 
-Supported devices:
+    BeagleBoard, BeagleBoard xM
+	Supported on-board devices:
+	  standard serial port (com)
+	  watchdog controller (omdog)
+	  GPIO controller (omgpio)
 
-On-board devices:
-	- standard serial port (com)
-	- USB controller (ehci)
-	- watchdog controller (omdog)
-	- GPIO controller (omgpio)
+    BeagleBone, BeagleBone Black
+	Supported on-board devices:
+	  standard serial port (com)
+	  watchdog controller (omdog)
+	  ethernet controller (cpsw)
+
+    PandaBoard (ES)
+	Supported on-board devices:
+	  standard serial port (com)
+	  USB controller (ehci)
+	  watchdog controller (omdog)
+	  GPIO controller (omgpio)

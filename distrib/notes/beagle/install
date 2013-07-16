@@ -1,62 +1,5 @@
-dnl     $OpenBSD: install,v 1.1 2011/03/22 18:33:51 jasper Exp $
+dnl     $OpenBSD: install,v 1.2 2013/07/16 18:15:10 florian Exp $
 OpenBSDInstallPrelude
-
-Now you are ready to power up the board. It will print some hardware
-information and if your SD card has been properly setup the autoboot
-script will be loaded:
-
-	Hit any key to stop autoboot:  0 
-	mmc1 is available
-	The user button is currently NOT pressed.
-	reading boot.scr
-
-	123 bytes read
-	Running bootscript from mmc ...
-	## Executing script at 80200000
-	reading bsd.umg
-
-	2634332 bytes read
-
-	## Booting kernel from Legacy Image at 82800000 ...
-	   Image Name:   boot
-	   Image Type:   ARM Linux Kernel Image (uncompressed)
-	   Data Size:    2634268 Bytes =  2.5 MB
-	   Load Address: 80300000
-	   Entry Point:  80300000
-	   Verifying Checksum ... OK
-	   Loading Kernel Image ... OK
-	OK
-
-	Starting kernel ...
-
-	OpenBSD/beagle booting ...
-
-Alternatively you can manually boot OpenBSD when you hit any key
-during the time-out and you will be presented with the following
-prompt:
-
-	OMAP3 beagleboard.org #
-
-Now type 'mmc init' to check that the SD card has been found:
-
-	OMAP3 beagleboard.org # mmc init
-	mmc1 is available
-	OMAP3 beagleboard.org # 
-
-When the card has been found you should load the U-Boot image into memory:
-
-	OMAP3 beagleboard.org # fatload mmc 0 0x80800000 bsd.umg
-	reading bsd.umg
-
-	2634332 bytes read
-	OMAP3 beagleboard.org # 
-
-To load that image from memory and thus boot OpenBSD type:
-
-	OMAP3 beagleboard.org # bootm 0x80800000
-
-Note that no ramdisk kernels are provided at this moment, so you won't
-be able to actually install OpenBSD/MACHINE yet..
 
 OpenBSDInstallPart2
 
@@ -66,7 +9,22 @@ OpenBSDInstallPart4
 
 OpenBSDInstallMBRPart1
 
-OpenBSDInstallMBRPart2(indeed)
+dnl OpenBSDInstallMBRPart2(indeed)
+	The fdisk(8) utility will be invoked to let you edit your MBR
+	partitioning.  The current MBR partitions defined will be
+	displayed and you will be allowed to modify them, and add new
+	partitions.
+
+	The setup will need two partitions, one 'OpenBSD' for the
+	OpenBSD/MACHINE installation, and one 'MSDOS' for the
+	U-Boot scripts/bootloader.
+
+	If you use the whole disk option, the install script
+	will create a small 'MSDOS' partition and use the rest of
+	the disk for the OpenBSD installation.
+
+	After your OpenBSD MBR partition has been setup, the real
+	partition setup can follow.
 
 OpenBSDInstallPart5
 
@@ -78,7 +36,27 @@ OpenBSDCDROMInstall
 
 OpenBSDDISKInstall(,,{:-, Linux (ext2) or MS-DOS-:})
 
-OpenBSDCommonInstall
+dnl OpenBSDCommonInstall
+	Installation set selection:
+		A list of available distribution sets found on the
+		given location will be listed.
+
+		You may individually select distribution sets to install,
+		by entering their name, or wildcards (e.g. `*.tgz' or
+		`base*|comp*', or `all' to select all the sets (which
+		is what most users will want to do).
+		You may also enter `abort' to deselect everything and
+		restart the selection from scratch, or unselect sets
+		by entering their name prefixed with `-' (e.g. `-x*').
+
+		It is also possible to enter an arbitrary filename and
+		have it treated as a file set.
+
+		Currently the comp set must be installed for the installer to
+		work correctly.
+
+		When you are done selecting distribution sets, enter
+		`done'.  The files will begin to extract.
 
 OpenBSDInstallWrapup
 
