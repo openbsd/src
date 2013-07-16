@@ -1,4 +1,4 @@
-/*	$OpenBSD: */
+/*	$OpenBSD: fixcoff.c,v 1.2 2013/07/16 08:03:18 mpi Exp $ */
 /*	$NetBSD: fixcoff.c,v 1.10 2006/04/07 02:34:55 gdamore Exp $ */
 
 /*
@@ -143,7 +143,7 @@ main(int argc, char *argv[])
 	}
 
 	if ((fd = open(argv[0], O_RDWR, 0)) == -1)
-		err(i, "%s", argv[0]);
+		err(1, "%s", argv[0]);
 
 	/*
 	 * Make sure it looks like an xcoff file..

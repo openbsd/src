@@ -1,4 +1,4 @@
-/* $OpenBSD: */
+/* $OpenBSD: elf32_powerpc_merge.x,v 1.2 2013/07/16 08:03:18 mpi Exp $ */
 OUTPUT_ARCH(powerpc)
 SECTIONS
 {
