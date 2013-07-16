@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.leases.5,v 1.7 2012/09/26 16:19:45 jmc Exp $
+.\"	$OpenBSD: dhcpd.leases.5,v 1.8 2013/07/16 10:26:17 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: September 26 2012 $
+.Dd $Mdocdate: July 16 2013 $
 .Dt DHCPD.LEASES 5
 .Os
 .Sh NAME
@@ -64,9 +64,7 @@ file is the
 .Ic lease
 declaration.
 .Pp
-.Xo
-.Ic \	\&lease Ar ip-address No { Ar statements... No }
-.Xc
+.D1 Ic lease Ar ip-address No { Ar statements... No }
 .Pp
 Each lease declaration includes the single IP address that has been
 leased to the client.
@@ -81,13 +79,7 @@ and ``ends'' statements:
 .Pp
 Dates are specified as follows:
 .Pp
-.Sm off
-.Xo
-.Ar \	\&weekday\ \&year No / Ar month
-.Pf / Ar day\ \& hour No :
-.Ar minute No : Ar second
-.Xc
-.Sm on
+.D1 Ar weekday year Ns / Ns Ar month Ns / Ns Ar day hour : Ns Ar minute : Ns Ar second
 .Pp
 The weekday is present to make it easy for a human to tell when a
 lease expires \- it's specified as a number from zero to six, with zero
