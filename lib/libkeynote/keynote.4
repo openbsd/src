@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.4,v 1.30 2012/09/27 11:31:58 jmc Exp $
+.\" $OpenBSD: keynote.4,v 1.31 2013/07/16 10:44:51 jmc Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,7 +20,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: September 27 2012 $
+.Dd $Mdocdate: July 16 2013 $
 .Dt KEYNOTE 4
 .\" .TH KeyNote 4 local
 .Os
@@ -671,11 +671,7 @@ A
 expression has the higher-order (maximum) of its two subexpression values.
 .It
 A
-.Qo
-.Ao K
-.Ac Ns -of Ns Po Aq List
-.Pc
-.Qc
+.Qq Ao K Ac Ns -of Ns Pq Aq List
 expression has the K-th highest order compliance value listed in
 .Aq list .
 Values that appear multiple times are counted with multiplicity.

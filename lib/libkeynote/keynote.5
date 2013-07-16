@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.5,v 1.21 2012/09/27 11:31:58 jmc Exp $
+.\" $OpenBSD: keynote.5,v 1.22 2013/07/16 10:44:51 jmc Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,7 +20,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: September 27 2012 $
+.Dd $Mdocdate: July 16 2013 $
 .Dt KEYNOTE 5
 .\" .TH KeyNote 5 local
 .Os
@@ -103,12 +103,12 @@ double-quote character (ASCII 34 decimal).
 A printable character may be
 .Sq escaped
 inside a quoted string literal by preceding it with the backslash
-character (ASCII 92 decimal) (e.g.,
+character (ASCII 92 decimal) e.g.,
 .Qo like \&
 .No \e Ns Qo this Ns \e
 .Qc .
 .\".Pf { Qo mike Ns Qc 12
-.Qc Ns ).
+.Qc .
 This permits the inclusion of the double-quote and backslash characters
 inside string literals.
 .Pp
@@ -334,11 +334,8 @@ structured format (e.g., PKCS1
 and key bit encoding (e.g., HEX or BASE64).
 By convention, the ALGORITHM
 substring starts with an alphabetic character and can contain letters,
-digits, underscores, or dashes (i.e., it should match the regular expression
-.Qo Ns Bo a-zA-Z
-.Bc Ns Bo a-zA-Z0-9_-
-.Bc Ns *
-.Qc Ns ) .
+digits, underscores, or dashes i.e., it should match the regular expression
+.Qq Bo a-zA-Z Bc Ns Bo a-zA-Z0-9_- Bc Ns * .
 The IANA (or some other appropriate authority) will provide a registry of
 reserved algorithm identifiers.
 .Pp

@@ -1,4 +1,4 @@
-.\" $OpenBSD: getrrsetbyname.3,v 1.16 2013/06/05 03:39:23 tedu Exp $
+.\" $OpenBSD: getrrsetbyname.3,v 1.17 2013/07/16 10:44:51 jmc Exp $
 .\"
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
 .\"
@@ -15,7 +15,7 @@
 .\" NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 .\" WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: July 16 2013 $
 .Dt GETRRSETBYNAME 3
 .Os
 .Sh NAME
@@ -123,7 +123,6 @@ will request DNSSEC authentication using the EDNS0 DNSSEC OK (DO) bit.
 .Fn getrrsetbyname
 returns zero on success, and one of the following error
 codes if an error occurred:
-.Pp
 .Bl -tag -width ERRSET_NOMEMORY
 .It Bq Er ERRSET_NONAME
 The name does not exist.
