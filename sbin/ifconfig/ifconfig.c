@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.266 2013/07/10 07:46:10 mpi Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.267 2013/07/16 08:21:10 mpi Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -4216,7 +4216,7 @@ sppp_status(void)
 		return;
 	}
 
-	if (spr.phase == PHASE_DEAD)
+	if (spr.cmd != SPPPIOGDEFS || spr.phase == PHASE_DEAD)
 		return;
 	printf("\tsppp: phase ");
 	switch (spr.phase) {
