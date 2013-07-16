@@ -1045,6 +1045,11 @@ SSLEngine on
 #   See the mod_ssl documentation for a complete list.
 SSLCipherSuite ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL
 
+#   SSL ECDH Curve:
+#   Named curve to use when generating ephemeral EC keys for an
+#   ECDHE-based cipher suite, or `none' to disable.
+SSLECDHCurve prime256v1
+
 #   SSL Honor Cipher Order:
 #   If on, use server's order of preference for ciphers.
 #SSLHonorCipherOrder on

@@ -196,8 +196,9 @@ void *ssl_config_server_create(pool *p, server_rec *s)
     sc->szCertificateChain     = NULL;
     sc->szLogFile              = NULL;
     sc->szCipherSuite          = NULL;
-    sc->nLogLevel              = SSL_LOG_NONE;
+    sc->nECDHCurve             = NID_X9_62_prime256v1;
     sc->bHonorCipherOrder      = UNSET;
+    sc->nLogLevel              = SSL_LOG_NONE;
     sc->nVerifyDepth           = UNSET;
     sc->nVerifyClient          = SSL_CVERIFY_UNSET;
     sc->nSessionCacheTimeout   = UNSET;
@@ -253,6 +254,7 @@ void *ssl_config_server_merge(pool *p, void *basev, void *addv)
     cfgMergeString(szCertificateChain);
     cfgMergeString(szLogFile);
     cfgMergeString(szCipherSuite);
+    cfgMerge(nECDHCurve, NID_X9_62_prime256v1);
     cfgMergeBool(bHonorCipherOrder);
     cfgMerge(nLogLevel, SSL_LOG_NONE);
     cfgMergeInt(nVerifyDepth);
@@ -541,6 +543,25 @@ const char *ssl_cmd_SSLCipherSuite(
         sc->szCipherSuite = arg;
     else
         dc->szCipherSuite = arg;
+    return NULL;
+}
+
+const char *ssl_cmd_SSLECDHCurve(
+    cmd_parms *cmd, char *struct_ptr, char *arg)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    if (strcEQ(arg, "none")) {
+        sc->nECDHCurve = 0;
+        return NULL;
+    }
+
+    sc->nECDHCurve = OBJ_sn2nid((const char *)arg);
+    if (sc->nECDHCurve == 0) {
+        return ap_pstrcat(cmd->pool, "SSLECDHCurve: unknown named curve '",
+                          arg, "'", NULL);
+    }
+
     return NULL;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_engine_init.c,v 1.30 2013/07/16 11:32:05 jsing Exp $ */
+/* $OpenBSD: ssl_engine_init.c,v 1.31 2013/07/16 13:02:16 jsing Exp $ */
 
 /*                      _             _
 **  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
@@ -530,6 +530,7 @@ void ssl_init_ConfigureServer(server_rec *s, pool *p, SSLSrvConfigRec *sc)
     char *cpVHostID;
     EVP_PKEY *pKey;
     SSL_CTX *ctx;
+    EC_KEY *ecdhKey;
     STACK_OF(X509_NAME) *skCAList;
     ssl_asn1_t *asn1;
     unsigned char *ucp;
@@ -639,6 +640,22 @@ void ssl_init_ConfigureServer(server_rec *s, pool *p, SSLSrvConfigRec *sc)
                     cpVHostID);
             ssl_die();
         }
+    }
+
+    /*
+     *  Configure ECDH Curve
+     */
+    if (sc->nECDHCurve > 0) {
+        ecdhKey = EC_KEY_new_by_curve_name(sc->nECDHCurve);
+        if (ecdhKey == NULL) {
+            ssl_log(s, SSL_LOG_ERROR|SSL_ADD_SSLERR,
+                    "Init: (%s) Failed to create new EC key using named curve",
+                    cpVHostID);
+            ssl_die();
+        }
+        SSL_CTX_set_tmp_ecdh(ctx, ecdhKey);
+        SSL_CTX_set_options(ctx, SSL_OP_SINGLE_ECDH_USE);
+        EC_KEY_free(ecdhKey);
     }
 
     /*
