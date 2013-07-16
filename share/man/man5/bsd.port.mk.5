@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.381 2013/07/08 18:28:11 landry Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.382 2013/07/16 18:38:51 schwarze Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 8 2013 $
+.Dd $Mdocdate: July 16 2013 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1801,7 +1801,8 @@ Use with
 .Ev NOT_FOR_ARCHS .
 .It Ev MAINTAINER
 E-mail address with full name of the port's maintainer.
-Defaults to ports@openbsd.org.
+Defaults to
+.Mt ports@openbsd.org .
 .It Ev MAKE_ENV
 Environment variables passed to make invocations.
 Sets at least PATH, PREFIX, LOCALBASE, X11BASE, CFLAGS, TRUEPREFIX, DESTDIR,
