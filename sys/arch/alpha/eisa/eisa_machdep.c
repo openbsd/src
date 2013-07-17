@@ -1,4 +1,4 @@
-/* $OpenBSD: eisa_machdep.c,v 1.3 2011/06/17 07:06:46 mk Exp $ */
+/* $OpenBSD: eisa_machdep.c,v 1.4 2013/07/17 13:57:24 martin Exp $ */
 /* $NetBSD: eisa_machdep.c,v 1.1 2000/07/29 23:18:47 thorpej Exp $ */
 
 /*-
@@ -264,6 +264,7 @@ eisa_parse_io(struct ecu_func *ecuf, u_int8_t *dp)
 		ecuio->ecuio_addr = dp[1] | (dp[2] << 8);
 		ecuio->ecuio_size = (dp[0] & 0x1f) + 1;
 		ecuio->ecuio_shared = (dp[0] & 0x40) ? 1 : 0;
+		SIMPLEQ_INSERT_TAIL(&ecuf->ecuf_io, ecuio, ecuio_list);
 
 #ifdef EISA_DEBUG
 		printf("IO 0x%lx 0x%lx%s\n", ecuio->ecuio_addr,
