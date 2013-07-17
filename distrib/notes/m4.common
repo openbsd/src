@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.96 2013/02/09 19:48:37 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.97 2013/07/17 18:03:42 bmercer Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -276,7 +276,7 @@ define({:-OpenBSDInstallPart2-:},
 The following is a walk-through of the steps you will take while getting
 OpenBSD installed on your hard disk.
 
-The installation procedure is designed to gather as many information about
+The installation procedure is designed to gather as much information about
 your system setup as possible at the beginning, so that no human interaction
 is required as soon as the questions are over.
 
