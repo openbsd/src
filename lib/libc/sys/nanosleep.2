@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nanosleep.2,v 1.13 2013/04/20 23:47:58 tedu Exp $
+.\"	$OpenBSD: nanosleep.2,v 1.14 2013/07/17 05:42:11 schwarze Exp $
 .\"	$NetBSD: nanosleep.2,v 1.1 1997/04/17 18:12:02 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)sleep.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: April 20 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt NANOSLEEP 2
 .Os
 .Sh NAME
@@ -93,3 +93,20 @@ The
 .Fn nanosleep
 function conforms to
 .St -p1003.1-2008 .
+.Sh HISTORY
+The predecessor of this system call,
+.Fn sleep ,
+appeared in
+.At v3 ,
+but was removed when
+.Xr alarm 3
+was introduced into
+.At v7 .
+The
+.Fn nanosleep
+system call has been available since
+.Nx 1.3
+and was ported to
+.Ox 2.1
+and
+.Fx 3.0 .

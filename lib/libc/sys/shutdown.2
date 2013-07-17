@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.2,v 1.13 2013/05/10 06:12:42 guenther Exp $
+.\"	$OpenBSD: shutdown.2,v 1.14 2013/07/17 05:42:11 schwarze Exp $
 .\"	$NetBSD: shutdown.2,v 1.5 1995/02/27 12:37:11 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)shutdown.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 10 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt SHUTDOWN 2
 .Os
 .Sh NAME
@@ -134,8 +134,8 @@ function conforms to
 .Sh HISTORY
 The
 .Fn shutdown
-function call appeared in
-.Bx 4.2 .
+system call first appeared in
+.Bx 4.1c .
 The
 .Dv SHUT_RD , SHUT_WR ,
 and

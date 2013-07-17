@@ -27,7 +27,7 @@
 .\"
 .\"     @(#)stty.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt STTY 3
 .Os
 .Sh NAME
@@ -36,7 +36,9 @@
 .Nd set and get terminal state (defunct)
 .Sh SYNOPSIS
 .In sgtty.h
+.Ft int
 .Fn stty "int fd" "struct sgttyb *buf"
+.Ft int
 .Fn gtty "int fd" "struct sgttyb *buf"
 .Sh DESCRIPTION
 .Bf -symbolic
@@ -82,13 +84,15 @@ contains the reason for the failure.
 .Xr ioctl 2 ,
 .Xr tty 4
 .Sh HISTORY
-The previous reincarnation of the
-.Fn stty
-function was in
-.At v2 .
-The
+The systems calls
 .Fn stty
 and
 .Fn gtty
-functions then appeared in
-.Bx 4.2 .
+existed since
+.At v1 .
+They were implemented in terms of
+.Xr ioctl 2
+since
+.At v7
+and finally moved as functions into the C library in
+.Bx 4.1c .

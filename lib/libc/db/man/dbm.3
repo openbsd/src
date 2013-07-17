@@ -1,4 +1,4 @@
-.\" $OpenBSD: dbm.3,v 1.12 2013/06/05 03:39:22 tedu Exp $
+.\" $OpenBSD: dbm.3,v 1.13 2013/07/17 05:42:10 schwarze Exp $
 .\"
 .\" Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt DBM 3
 .Os
 .Sh NAME
@@ -138,6 +138,17 @@ field to
 .Xr db 3 ,
 .Xr hash 3 ,
 .Xr ndbm 3
+.Sh HISTORY
+The functions
+.Fn dbminit ,
+.Fn fetch ,
+.Fn store ,
+.Fn delete ,
+.Fn firstkey ,
+and
+.Fn nextkey
+first appeared in
+.At v7 .
 .Sh BUGS
 Because the
 .Nm dbm

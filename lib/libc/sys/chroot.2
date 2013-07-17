@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chroot.2,v 1.17 2011/02/11 22:12:28 weerd Exp $
+.\"	$OpenBSD: chroot.2,v 1.18 2013/07/17 05:42:11 schwarze Exp $
 .\"	$NetBSD: chroot.2,v 1.7 1995/02/27 12:32:12 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)chroot.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: February 11 2011 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt CHROOT 2
 .Os
 .Sh NAME
@@ -116,7 +116,7 @@ The caller is not the superuser.
 .Sh HISTORY
 The
 .Fn chroot
-function call appeared in
-.Bx 4.2 .
+system call first appeared in
+.At v7 .
 .Sh CAVEATS
 There are ways for a root process to escape from the chroot jail.

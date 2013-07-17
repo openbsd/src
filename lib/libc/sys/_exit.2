@@ -1,4 +1,4 @@
-.\"	$OpenBSD: _exit.2,v 1.19 2013/06/29 09:08:41 jmc Exp $
+.\"	$OpenBSD: _exit.2,v 1.20 2013/07/17 05:42:11 schwarze Exp $
 .\"	$NetBSD: _exit.2,v 1.6 1995/02/27 12:31:34 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)_exit.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 29 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt _EXIT 2
 .Os
 .Sh NAME
@@ -124,10 +124,14 @@ function conforms to
 An
 .Fn exit
 system call first appeared in
-.At v1 ,
-and an
+.At v1 .
+It accepts the
+.Fa status
+argument since
+.At v2 .
+An
 .Fn _exit
-variant in
+variant first appeared in
 .At v7 .
 The
 .Fn _Exit

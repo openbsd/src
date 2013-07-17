@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getrusage.2,v 1.14 2013/03/31 22:11:26 guenther Exp $
+.\"	$OpenBSD: getrusage.2,v 1.15 2013/07/17 05:42:11 schwarze Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getrusage.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: March 31 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt GETRUSAGE 2
 .Os
 .Sh NAME
@@ -163,10 +163,15 @@ The
 function conforms to
 .St -p1003.1-2008 .
 .Sh HISTORY
+A predecessor to
+.Fn getrusage ,
+.Fn times ,
+first appeared in
+.At v3 .
 The
 .Fn getrusage
-function call appeared in
-.Bx 4.2 .
+system call first appeared in
+.Bx 4.1c .
 .Sh BUGS
 There is no way to obtain information about a child process
 that has not yet terminated.

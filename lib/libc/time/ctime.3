@@ -1,7 +1,7 @@
-.\"	$OpenBSD: ctime.3,v 1.39 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: ctime.3,v 1.40 2013/07/17 05:42:11 schwarze Exp $
 .\"
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -281,6 +281,11 @@ UTC leap seconds are loaded from
 .Xr tzset 3 ,
 .Xr tzfile 5 ,
 .Xr zic 8
+.Sh HISTORY
+A
+.Fn ctime
+function first appeared in
+.At v1 .
 .Sh NOTES
 The return values
 of the non re-entrant functions

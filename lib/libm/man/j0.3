@@ -1,4 +1,4 @@
-.\"	$OpenBSD: j0.3,v 1.14 2013/06/05 03:40:26 tedu Exp $
+.\"	$OpenBSD: j0.3,v 1.15 2013/07/17 05:42:11 schwarze Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)j0.3	6.7 (Berkeley) 4/19/91
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt J0 3
 .Os
 .Sh NAME
@@ -145,6 +145,13 @@ the computed value is returned, otherwise the global variable
 .Va errno
 is set to EDOM or ERANGE.
 .Sh HISTORY
-This set of functions
-appeared in
+The functions
+.Fn j0 ,
+.Fn j1 ,
+.Fn jn ,
+.Fn y0 ,
+.Fn y1 ,
+and
+.Fn yn 
+first appeared in
 .At v7 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getrlimit.2,v 1.21 2013/04/08 05:55:04 jmc Exp $
+.\"	$OpenBSD: getrlimit.2,v 1.22 2013/07/17 05:42:11 schwarze Exp $
 .\"	$NetBSD: getrlimit.2,v 1.8 1995/10/12 15:40:58 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getrlimit.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: April 8 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt GETRLIMIT 2
 .Os
 .Sh NAME
@@ -233,8 +233,10 @@ resources are non-standard extensions.
 .Sh HISTORY
 The
 .Fn getrlimit
-function call appeared in
-.Bx 4.2 .
+and
+.Fn setrlimit
+system calls first appeared in
+.Bx 4.1c .
 .Sh BUGS
 The
 .Dv RLIMIT_AS

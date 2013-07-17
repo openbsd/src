@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exp.3,v 1.26 2013/06/05 03:40:26 tedu Exp $
+.\"	$OpenBSD: exp.3,v 1.27 2013/07/17 05:42:11 schwarze Exp $
 .\"
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)exp.3	6.12 (Berkeley) 7/31/91
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt EXP 3
 .Os
 .Sh NAME
@@ -392,22 +392,20 @@ and infinite x, i.e., independently of x.
 .Xr ilogb 3 ,
 .Xr infnan 3
 .Sh HISTORY
-A
-.Fn exp ,
-.Fn log
-and
-.Fn pow
-functions
-appeared in
-.At v6 .
-A
-.Fn log10
-function
-appeared in
-.At v7 .
 The
+.Fn exp
+and
+.Fn log
+functions first appeared in
+.At v1 ;
+.Fn pow
+in
+.At v3 ;
+.Fn log10
+in
+.At v7 ;
 .Fn log1p
 and
 .Fn expm1
-functions appeared in
+in
 .Bx 4.3 .

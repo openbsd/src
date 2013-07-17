@@ -1,4 +1,4 @@
-.\"	$OpenBSD: truncate.2,v 1.14 2013/04/08 19:49:55 guenther Exp $
+.\"	$OpenBSD: truncate.2,v 1.15 2013/07/17 05:42:11 schwarze Exp $
 .\"	$NetBSD: truncate.2,v 1.7 1995/02/27 12:39:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)truncate.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: April 8 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt TRUNCATE 2
 .Os
 .Sh NAME
@@ -138,8 +138,8 @@ The
 .Fn truncate
 and
 .Fn ftruncate
-function calls appeared in
-.Bx 4.2 .
+system calls first appeared in
+.Bx 4.1c .
 .Sh BUGS
 These calls should be generalized to allow ranges of bytes in a file
 to be discarded.

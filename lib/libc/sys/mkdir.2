@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkdir.2,v 1.13 2013/04/01 20:16:31 guenther Exp $
+.\"	$OpenBSD: mkdir.2,v 1.14 2013/07/17 05:42:11 schwarze Exp $
 .\"	$NetBSD: mkdir.2,v 1.8 1995/02/27 12:34:22 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mkdir.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: April 1 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt MKDIR 2
 .Os
 .Sh NAME
@@ -169,11 +169,32 @@ and
 functions conform to
 .St -p1003.1-2008 .
 .Sh HISTORY
-The
+A
 .Fn mkdir
 system call first appeared in
 .At v1 .
+It was renamed to
+.Fn makdir
+in
+.At v2 .
+However, it did not exist from
+.At v4
+to
+.Bx 4.1 ;
+in those releases,
+.Xr mknod 2
+had to be used.
+Since
+.Fn mkdir
+reappeared in
+.Bx 4.1c ,
+it no longer requires superuser privileges and it automatically creates the
+.Sq \&.
+and
+.Sq \&..
+directory entries.
+.Pp
 The
 .Fn mkdirat
-function appeared in
+system call has been available since
 .Ox 5.0 .

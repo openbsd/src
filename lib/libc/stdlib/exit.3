@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: exit.3,v 1.14 2013/06/05 04:06:08 guenther Exp $
+.\"	$OpenBSD: exit.3,v 1.15 2013/07/17 05:42:11 schwarze Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt EXIT 3
 .Os
 .Sh NAME
@@ -92,6 +92,10 @@ An
 .Fn exit
 function first appeared as a system call in
 .At v1 .
+It has accepted the
+.Fa status
+argument since
+.At v2 .
 In
 .At v7 ,
 the bare system call was renamed to

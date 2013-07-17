@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getgid.2,v 1.17 2013/03/30 06:44:44 guenther Exp $
+.\"	$OpenBSD: getgid.2,v 1.18 2013/07/17 05:42:11 schwarze Exp $
 .\"	$NetBSD: getgid.2,v 1.5 1995/02/27 12:32:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getgid.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: March 30 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt GETGID 2
 .Os
 .Sh NAME
@@ -79,3 +79,12 @@ and
 .Fn getegid
 functions conform to
 .St -p1003.1-2008 .
+.Sh HISTORY
+The
+.Fn getgid
+system call first appeared in
+.At v4 ,
+and
+.Fn getegid
+in
+.At v7 .

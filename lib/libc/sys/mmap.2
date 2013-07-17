@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.41 2013/04/08 19:35:00 guenther Exp $
+.\"	$OpenBSD: mmap.2,v 1.42 2013/07/17 05:42:11 schwarze Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mmap.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: April 8 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -253,6 +253,11 @@ was specified and insufficient memory was available.
 .Xr msync 2 ,
 .Xr munmap 2 ,
 .Xr getpagesize 3
+.Sh HISTORY
+The
+.Fn mmap
+system call first appeared in
+.Bx 4.1c .
 .Sh BUGS
 Due to a limitation of the current vm system (see
 .Xr uvm 9 ) ,

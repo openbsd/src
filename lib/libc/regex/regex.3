@@ -1,4 +1,4 @@
-.\"	$OpenBSD: regex.3,v 1.22 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: regex.3,v 1.23 2013/07/17 05:42:11 schwarze Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)regex.3	8.4 (Berkeley) 3/20/94
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt REGEX 3
 .Os
 .Sh NAME
@@ -598,8 +598,17 @@ sections 2.8 (Regular Expression Notation)
 and
 B.5 (C Binding for Regular Expression Matching).
 .Sh HISTORY
-Originally written by Henry Spencer.
-Altered for inclusion in the
+Predecessors to
+.Fn regcomp
+and
+.Fn regexec ,
+.Fn regcmp
+and
+.Fn regex ,
+first appeared in the Programmer's Workbench (PWB/UNIX).
+.Pp
+The present functions were originally written by Henry Spencer
+and altered for inclusion in the
 .Bx 4.4
 distribution.
 .Sh BUGS

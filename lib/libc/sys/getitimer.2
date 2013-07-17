@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getitimer.2,v 1.22 2013/03/31 22:11:26 guenther Exp $
+.\"	$OpenBSD: getitimer.2,v 1.23 2013/07/17 05:42:11 schwarze Exp $
 .\"	$NetBSD: getitimer.2,v 1.6 1995/10/12 15:40:54 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getitimer.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: March 31 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt GETITIMER 2
 .Os
 .Sh NAME
@@ -217,5 +217,7 @@ functions conform to
 .Sh HISTORY
 The
 .Fn getitimer
-function call appeared in
-.Bx 4.2 .
+and
+.Fn setitimer
+system calls first appeared in
+.Bx 4.1c .

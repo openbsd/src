@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.30 2013/05/05 01:07:46 tedu Exp $
+.\"	$OpenBSD: select.2,v 1.31 2013/07/17 05:42:11 schwarze Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)select.2	8.2 (Berkeley) 3/25/94
 .\"
-.Dd $Mdocdate: May 5 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt SELECT 2
 .Os
 .Sh NAME
@@ -197,11 +197,11 @@ One of its components is negative or too large.
 .Sh HISTORY
 The
 .Fn select
-function appeared in
-.Bx 4.2 .
+system call first appeared in
+.Bx 4.1c .
 The
 .Fn pselect
-function appeared in
+system call has been available since
 .Ox 5.4 .
 .Sh BUGS
 Although the provision of

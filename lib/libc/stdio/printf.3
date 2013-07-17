@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.63 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: printf.3,v 1.64 2013/07/17 05:42:11 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -774,6 +774,23 @@ and
 functions conform to
 .St -p1003.1-2008 .
 .Sh HISTORY
+The predecessors
+.Fn ftoa
+and
+.Fn itoa
+first appeared in
+.At v1 .
+The function
+.Fn printf
+first appeared in
+.At v2 ,
+and
+.Fn fprintf
+and
+.Fn sprintf
+in
+.At v7 .
+.Pp
 The functions
 .Fn snprintf
 and
