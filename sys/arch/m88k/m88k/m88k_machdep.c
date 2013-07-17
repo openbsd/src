@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.56 2013/05/15 20:18:04 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.57 2013/07/17 19:18:15 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -117,7 +117,7 @@ setregs(p, pack, stack, retval)
 	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	int retval[2];
+	register_t retval[2];
 {
 	struct trapframe *tf = (struct trapframe *)USER_REGS(p);
 
