@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.136 2013/05/20 11:26:13 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.137 2013/07/17 14:09:13 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -507,12 +507,14 @@ path_remove(struct rde_aspath *asp)
 
 /* remove all stale routes or if staletime is 0 remove all routes for
    a specified AID. */
-void
+u_int32_t
 path_remove_stale(struct rde_aspath *asp, u_int8_t aid)
 {
 	struct prefix	*p, *np;
 	time_t		 staletime;
+	u_int32_t	 rprefixes;
 
+	rprefixes=0;
 	staletime = asp->peer->staletime[aid];
 	for (p = LIST_FIRST(&asp->prefix_h); p != NULL; p = np) {
 		np = LIST_NEXT(p, path_l);
@@ -530,8 +532,14 @@ path_remove_stale(struct rde_aspath *asp, u_int8_t aid)
 			rde_send_pftable(p->aspath->pftableid, &addr,
 			    p->prefix->prefixlen, 1);
 		}
+
+		/* only count Adj-RIB-In */
+		if (p->rib->ribid == 0)
+			rprefixes++;
+
 		prefix_destroy(p);
 	}
+	return (rprefixes);
 }
 
 
