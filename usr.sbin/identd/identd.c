@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.19 2013/04/29 06:32:11 jmc Exp $ */
+/*	$OpenBSD: identd.c,v 1.20 2013/07/17 15:38:48 okan Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -180,7 +180,7 @@ __dead void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-46dehNn] [-l address] [-t timeout]\n",
+	fprintf(stderr, "usage: %s [-46deHhNn] [-l address] [-t timeout]\n",
 	    __progname);
 	exit(1);
 }
@@ -190,6 +190,7 @@ int debug = 0;
 int noident = 0;
 int on = 1;
 int unknown_err = 0;
+int hideall = 0;
 
 int (*parent_uprintf)(struct ident_resolver *, struct passwd *) =
     parent_username;
@@ -220,7 +221,7 @@ main(int argc, char *argv[])
 	pid_t parent;
 	int sibling;
 
-	while ((c = getopt(argc, argv, "46dehl:Nnp:t:")) != -1) {
+	while ((c = getopt(argc, argv, "46deHhl:Nnp:t:")) != -1) {
 		switch (c) {
 		case '4':
 			family = AF_INET;
@@ -234,6 +235,9 @@ main(int argc, char *argv[])
 		case 'e':
 			unknown_err = 1;
 			break;
+		case 'H':
+			hideall = 1;
+			/* FALLTHROUGH */
 		case 'h':
 			parent_uprintf = parent_token;
 			break;
@@ -375,12 +379,12 @@ parent_rd(int fd, short events, void *arg)
 		lerr(1, "resolver alloc");
 
 	pw = getpwuid(uid);
-	if (pw == NULL) {
+	if (pw == NULL && !hideall) {
 		r->error = E_NOUSER;
 		goto done;
 	}
 
-	if (noident) {
+	if (noident && !hideall) {
 		parent_noident(r, pw);
 		if (r->error != E_NONE)
 			goto done;
@@ -420,8 +424,11 @@ parent_token(struct ident_resolver *r, struct passwd *pw)
 	token = gentoken();
 	rv = asprintf(&r->buf, "%s", token);
 	if (rv != -1) {
-		lnotice("token %s == uid %u (%s)", token,
-		    (u_int)pw->pw_uid, pw->pw_name);
+		if (pw)
+			lnotice("token %s == uid %u (%s)", token,
+			    (u_int)pw->pw_uid, pw->pw_name);
+		else
+			lnotice("token %s == NO USER", token);
 	}
 
 	return (rv);
