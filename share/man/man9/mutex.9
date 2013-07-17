@@ -1,4 +1,4 @@
-.\" $OpenBSD: mutex.9,v 1.15 2013/06/04 19:27:10 schwarze Exp $
+.\" $OpenBSD: mutex.9,v 1.16 2013/07/17 20:21:54 schwarze Exp $
 .\"
 .\" Copyright (c) 2005 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt MUTEX 9
 .Os
 .Sh NAME
@@ -87,8 +87,7 @@ functions first appeared in
 The
 .Nm
 functions were written by
-.An Artur Grabowski
-.Aq art@openbsd.org .
+.An Artur Grabowski Aq Mt art@openbsd.org .
 .Sh CAVEATS
 As these are spinning locks, don't sleep while holding one.
 .Pp

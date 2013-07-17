@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.10 2013/06/04 19:27:12 schwarze Exp $
+.\" $OpenBSD: rwlock.9,v 1.11 2013/07/17 20:21:55 schwarze Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: July 17 2013 $
 .Dt RWLOCK 9
 .Os
 .Sh NAME
@@ -140,8 +140,7 @@ functions first appeared in
 The
 .Nm
 functions were written by
-.An Artur Grabowski
-.Aq art@openbsd.org .
+.An Artur Grabowski Aq Mt art@openbsd.org .
 .Sh CAVEATS
 While it is safe to sleep with an rwlock held, they cannot
 be used in an interrupt handler as an rwlock is bound to a process.
