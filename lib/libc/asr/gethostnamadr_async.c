@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.21 2013/07/12 14:36:21 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.22 2013/07/17 07:43:23 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -136,7 +136,7 @@ gethostbyaddr_async_ctx(const void *addr, socklen_t len, int af,
 
     abort:
 	if (as)
-		async_free(as);
+		asr_async_free(as);
 	return (NULL);
 }
 
