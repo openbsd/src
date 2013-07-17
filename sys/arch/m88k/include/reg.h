@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.2 2005/05/16 11:47:14 miod Exp $ */
+/*	$OpenBSD: reg.h,v 1.3 2013/07/17 19:19:30 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -35,44 +35,44 @@
 #define _M88K_REG_H_
 
 struct reg {
-	unsigned int	r[32];
-	unsigned int	epsr;
-	unsigned int	fpsr;
-	unsigned int	fpcr;
-	unsigned int	sxip;
+	unsigned long	r[32];
+	unsigned long	epsr;
+	unsigned long	fpsr;
+	unsigned long	fpcr;
+	unsigned long	sxip;
 #define exip sxip	/* mc88110 */
-	unsigned int	snip;
+	unsigned long	snip;
 #define enip snip	/* mc88110 */
-	unsigned int	sfip;
-	unsigned int	ssbr;
+	unsigned long	sfip;
+	unsigned long	ssbr;
 #define duap ssbr	/* mc88110 */
-	unsigned int	dmt0;
+	unsigned long	dmt0;
 #define dsr dmt0	/* mc88110 */
-	unsigned int	dmd0;
+	unsigned long	dmd0;
 #define dlar dmd0	/* mc88110 */
-	unsigned int	dma0;
+	unsigned long	dma0;
 #define dpar dma0	/* mc88110 */
-	unsigned int	dmt1;
+	unsigned long	dmt1;
 #define isr dmt1	/* mc88110 */
-	unsigned int	dmd1;
+	unsigned long	dmd1;
 #define ilar dmd1	/* mc88110 */
-	unsigned int	dma1;
+	unsigned long	dma1;
 #define ipar dma1	/* mc88110 */
-	unsigned int	dmt2;
+	unsigned long	dmt2;
 #define isap dmt2	/* mc88110 */
-	unsigned int	dmd2;
+	unsigned long	dmd2;
 #define dsap dmd2	/* mc88110 */
-	unsigned int	dma2;
+	unsigned long	dma2;
 #define iuap dma2	/* mc88110 */
-	unsigned int	fpecr;
-	unsigned int	fphs1;
-	unsigned int	fpls1;
-	unsigned int	fphs2;
-	unsigned int	fpls2;
-	unsigned int	fppt;
-	unsigned int	fprh;
-	unsigned int	fprl;
-	unsigned int	fpit;
+	unsigned long	fpecr;
+	unsigned long	fphs1;
+	unsigned long	fpls1;
+	unsigned long	fphs2;
+	unsigned long	fpls2;
+	unsigned long	fppt;
+	unsigned long	fprh;
+	unsigned long	fprl;
+	unsigned long	fpit;
 };
 
 #endif /* _M88K_REG_H_ */
