@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.72 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: malloc.3,v 1.73 2013/07/18 10:14:49 schwarze Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: July 18 2013 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -439,10 +439,27 @@ The
 function conforms to
 .St -ansiC .
 .Sh HISTORY
-The
-.Nm
-family of functions first appeared in
+A
+.Fn free
+internal kernel function and a predecessor to
+.Fn malloc ,
+.Fn alloc ,
+first appeared in
+.At v1 .
+C library functions
+.Fn alloc
+and
+.Fn free
+appeared in
+.At v6 .
+The functions
+.Fn malloc ,
+.Fn calloc ,
+and
+.Fn realloc
+first appeared in
 .At v7 .
+.Pp
 A new implementation by Chris Kingsley was introduced in
 .Bx 4.2 ,
 followed by a complete rewrite by Poul-Henning Kamp which appeared in

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nice.3,v 1.17 2013/06/05 03:39:22 tedu Exp $
+.\"	$OpenBSD: nice.3,v 1.18 2013/07/18 10:14:48 schwarze Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: July 18 2013 $
 .Dt NICE 3
 .Os
 .Sh NAME
@@ -84,5 +84,9 @@ has the same failure conditions as
 .Sh HISTORY
 A
 .Fn nice
-system call appeared in
-.At v6 .
+system call first appeared in
+.At v3 .
+It has accepted an
+.Fa incr
+argument since
+.At v4 .
