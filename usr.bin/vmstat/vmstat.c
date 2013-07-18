@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.121 2013/05/14 20:39:25 miod Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.122 2013/07/18 08:42:50 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -78,8 +78,6 @@ struct nlist namelist[] = {
 	{ "_nselcoll" },
 #define X_POOLHEAD	7		/* sysctl */
 	{ "_pool_head" },
-#define X_KMPAGESFREE	8		/* sysctl */
-	{ "_uvm_km_pages_free" },
 	{ "" },
 };
 
@@ -1065,8 +1063,6 @@ dopool_kvm(void)
 
 	inuse /= 1024;
 	total /= 1024;
-	kread(X_KMPAGESFREE, &kmfp, sizeof(kmfp));
-	total += kmfp * (getpagesize() / 1024);
 	printf("\nIn use %ldK, total allocated %ldK; utilization %.1f%%\n",
 	    inuse, total, (double)(100 * inuse) / total);
 }
