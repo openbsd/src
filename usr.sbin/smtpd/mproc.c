@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.3 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.4 2013/07/19 15:18:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -675,7 +675,7 @@ m_get_envelope(struct msg *m, struct envelope *evp)
 	m_get_typed_sized(m, M_ENVELOPE, &d, &s);
 
 	if (!envelope_load_buffer(evp, d, s - 1))
-		fatalx("failed to retreive envelope");
+		fatalx("failed to retrieve envelope");
 	evp->id = evpid;
 #endif
 }
