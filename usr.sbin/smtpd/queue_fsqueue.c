@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.63 2013/07/19 11:14:08 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.64 2013/07/19 15:09:40 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -530,10 +530,14 @@ static int
 fsqueue_init(struct passwd *pwq, int server)
 {
 	unsigned int	 n;
-	char		*paths[] = { PATH_QUEUE, PATH_CORRUPT };
+	char		*paths[] = { PATH_QUEUE, PATH_CORRUPT, PATH_INCOMING };
 	char		 path[SMTPD_MAXPATHLEN];
 	int		 ret;
 	struct timeval	 tv;
+
+	/* remove incoming/ if it exists */
+	if (server)
+		mvpurge(PATH_SPOOL PATH_INCOMING, PATH_SPOOL PATH_PURGE);
 
 	fsqueue_envelope_path(0, path, sizeof(path));
 
