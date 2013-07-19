@@ -1,6 +1,7 @@
-/*	$OpenBSD: smtpctl.c,v 1.105 2013/07/19 11:14:08 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.106 2013/07/19 13:41:23 eric Exp $	*/
 
 /*
+ * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
  * Copyright (c) 2006 Gilles Chehade <gilles@poolp.org>
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -30,6 +31,7 @@
 #include <err.h>
 #include <errno.h>
 #include <event.h>
+#include <fts.h>
 #include <imsg.h>
 #include <inttypes.h>
 #include <pwd.h>
@@ -43,43 +45,33 @@
 #include "parser.h"
 #include "log.h"
 
-#define PATH_CAT	"/bin/cat"
 #define PATH_GZCAT	"/usr/bin/gzcat"
+#define	PATH_CAT	"/bin/cat"
 #define PATH_QUEUE	"/queue"
 
 void usage(void);
-static void setup_env(struct smtpd *);
-static int show_command_output(struct imsg *);
-static void show_stats_output(void);
-static void show_queue(int);
 static void show_queue_envelope(struct envelope *, int);
 static void getflag(uint *, int, char *, char *, size_t);
 static void display(const char *);
-static void show_envelope(const char *);
-static void show_message(const char *);
-static void show_monitor(struct stat_digest *);
+static int str_to_trace(const char *);
+static int str_to_profile(const char *);
+static void show_offline_envelope(uint64_t);
+static int is_gzip_fp(FILE *);
+static int is_encrypted_fp(FILE *);
+static int is_encrypted_buffer(const char *);
+static int is_gzip_buffer(const char *);
 
-static int try_connect(void);
-static void flush(void);
-static void next_message(struct imsg *);
-static int action_schedule_all(void);
-
-static int action_show_queue(void);
-static int action_show_queue_message(uint32_t);
-static uint32_t trace_convert(uint32_t);
-static uint32_t profile_convert(uint32_t);
-
-int proctype;
+extern char	*__progname;
+int		 sendmail;
+struct smtpd	*env;
 struct imsgbuf	*ibuf;
-
-int sendmail = 0;
-extern char *__progname;
-
-struct smtpd	*env = NULL;
-
-time_t now;
+struct imsg	 imsg;
+char		*rdata;
+size_t		 rlen;
+time_t		 now;
 
 struct queue_backend queue_backend_null;
+struct queue_backend queue_backend_proc;
 struct queue_backend queue_backend_ram;
 
 __dead void
@@ -96,18 +88,16 @@ usage(void)
 	exit(1);
 }
 
-static void
-setup_env(struct smtpd *smtpd)
+void stat_increment(const char *k, size_t v)
 {
-	bzero(smtpd, sizeof (*smtpd));
-	env = smtpd;
+}
 
-	if (!queue_init("fs", 0))
-		errx(1, "invalid directory permissions");
+void stat_decrement(const char *k, size_t v)
+{
 }
 
 static int
-try_connect(void)
+srv_connect(void)
 {
 	struct sockaddr_un	sun;
 	int			ctl_sock, saved_errno;
@@ -134,22 +124,41 @@ try_connect(void)
 }
 
 static void
-flush(void)
+srv_flush(void)
 {
 	if (imsg_flush(ibuf) == -1)
 		err(1, "write error");
 }
 
 static void
-next_message(struct imsg *imsg)
+srv_send(int msg, const void *data, size_t len)
+{
+	if (ibuf == NULL && !srv_connect())
+		errx(1, "smtpd doesn't seem to be running");
+	imsg_compose(ibuf, msg, IMSG_VERSION, 0, -1, data, len);
+}
+
+static void
+srv_recv(int type)
 {
 	ssize_t	n;
 
+	srv_flush();
+
 	while (1) {
-		if ((n = imsg_get(ibuf, imsg)) == -1)
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
 			errx(1, "imsg_get error");
-		if (n)
-			return;
+		if (n) {
+			if (imsg.hdr.type == IMSG_CTL_FAIL &&
+			    imsg.hdr.peerid != 0 &&
+			    imsg.hdr.peerid != IMSG_VERSION)
+				errx(1, "incompatible smtpctl and smtpd");
+			if (type != -1 && type != (int)imsg.hdr.type)
+				errx(1, "bad message type");
+			rdata = imsg.data;
+			rlen = imsg.hdr.len - sizeof(imsg.hdr);
+			break;
+		}
 
 		if ((n = imsg_read(ibuf)) == -1)
 			errx(1, "imsg_read error");
@@ -158,24 +167,523 @@ next_message(struct imsg *imsg)
 	}
 }
 
-int
-main(int argc, char *argv[])
+static void
+srv_read(void *dst, size_t sz)
 {
-	struct parse_result	*res = NULL;
-	struct imsg		imsg;
-	struct smtpd		smtpd;
-	uint64_t		ulval;
-	char			name[SMTPD_MAXLINESIZE];
-	int			done = 0;
-	int			verb = 0;
-	int			profile = 0;
-	int			action = -1;
+	if (sz == 0)
+		return;
+	if (rlen < sz)
+		errx(1, "message too short");
+	if (dst)
+		memmove(dst, rdata, sz);
+	rlen -= sz;
+	rdata += sz;
+}
 
-	/* parse options */
+static void
+srv_end(void)
+{
+	if (rlen)
+		errx(1, "bogus data");
+	imsg_free(&imsg);
+}
+
+static int
+srv_check_result(void)
+{
+	srv_recv(-1);
+	srv_end();
+
+	switch (imsg.hdr.type) {
+	case IMSG_CTL_OK:
+		printf("command succeeded\n");
+		return (0);
+	case IMSG_CTL_FAIL:
+		if (rlen)
+			printf("command failed: %s\n", rdata);
+		else
+			printf("command failed\n");
+		return (1);
+	default:
+		errx(1, "wrong message in response: %u", imsg.hdr.type);
+	}
+	return (0);
+}
+
+static int
+srv_iter_messages(uint32_t *res)
+{
+	static uint32_t	*msgids = NULL, from = 0;
+	static size_t	 n, curr;
+	static int	 done = 0;
+
+	if (done)
+		return (0);
+
+	if (msgids == NULL) {
+		srv_send(IMSG_CTL_LIST_MESSAGES, &from, sizeof(from));
+		srv_recv(IMSG_CTL_LIST_MESSAGES);
+		if (rlen == 0) {
+			srv_end();
+			done = 1;
+			return (0);
+		}
+		msgids = malloc(rlen);
+		n = rlen / sizeof(*msgids);
+		srv_read(msgids, rlen);
+		srv_end();
+
+		curr = 0;
+		from = msgids[n - 1] + 1;
+		if (from == 0)
+			done = 1;
+	}
+
+	*res = msgids[curr++];
+	if (curr == n) {
+		free(msgids);
+		msgids = NULL;
+	}
+
+	return (1);
+}
+
+static int
+srv_iter_envelopes(uint32_t msgid, struct envelope *evp)
+{
+	static uint32_t	currmsgid = 0;
+	static uint64_t	from = 0;
+	static int	done = 0, need_send = 1, found;
+
+	if (currmsgid != msgid) {
+		if (currmsgid != 0 && !done)
+			errx(1, "must finish current iteration first");
+		currmsgid = msgid;
+		from = msgid_to_evpid(msgid);
+		done = 0;
+		found = 0;
+		need_send = 1;
+	}
+
+	if (done)
+		return (0);
+
+    again:
+	if (need_send) {
+		found = 0;
+		srv_send(IMSG_CTL_LIST_ENVELOPES, &from, sizeof(from));
+	}
+	need_send = 0;
+
+	srv_recv(IMSG_CTL_LIST_ENVELOPES);
+	if (rlen == 0) {
+		srv_end();
+		if (!found || evpid_to_msgid(from) != msgid) {
+			done = 1;
+			return (0);
+		}
+		need_send = 1;
+		goto again;
+	}
+
+	srv_read(evp, sizeof(*evp));
+	srv_end();
+	from = evp->id + 1;
+	found++;
+	return (1);
+}
+
+static int
+do_log_brief(int argc, struct parameter *argv)
+{
+	int	v = 0;
+
+	srv_send(IMSG_CTL_VERBOSE, &v, sizeof(v));
+	return srv_check_result();
+}
+
+static int
+do_log_verbose(int argc, struct parameter *argv)
+{
+	int	v = TRACE_DEBUG;
+
+	srv_send(IMSG_CTL_VERBOSE, &v, sizeof(v));
+	return srv_check_result();
+}
+
+static int
+do_monitor(int argc, struct parameter *argv)
+{
+	struct stat_digest	last, digest;
+	size_t			count;
+
+	bzero(&last, sizeof(last));
+	count = 0;
+
+	while (1) {
+		srv_send(IMSG_DIGEST, NULL, 0);
+		srv_recv(IMSG_DIGEST);
+		srv_read(&digest, sizeof(digest));
+		srv_end();
+
+		if (count % 25 == 0) {
+			if (count != 0)
+				printf("\n");
+			printf("--- client ---  "
+			    "-- envelope --   "
+			    "---- relay/delivery --- "
+			    "------- misc -------\n"
+			    "curr conn disc  "
+			    "curr  enq  deq   "
+			    "ok tmpfail prmfail loop "
+			    "expire remove bounce\n");
+		}
+		printf("%4zu %4zu %4zu  "
+		    "%4zu %4zu %4zu "
+		    "%4zu    %4zu    %4zu %4zu   "
+		    "%4zu   %4zu   %4zu\n",
+		    digest.clt_connect - digest.clt_disconnect,
+		    digest.clt_connect - last.clt_connect,
+		    digest.clt_disconnect - last.clt_disconnect,
+
+		    digest.evp_enqueued - digest.evp_dequeued,
+		    digest.evp_enqueued - last.evp_enqueued,
+		    digest.evp_dequeued - last.evp_dequeued,
+
+		    digest.dlv_ok - last.dlv_ok,
+		    digest.dlv_tempfail - last.dlv_tempfail,
+		    digest.dlv_permfail - last.dlv_permfail,
+		    digest.dlv_loop - last.dlv_loop,
+
+		    digest.evp_expired - last.evp_expired,
+		    digest.evp_removed - last.evp_removed,
+		    digest.evp_bounce - last.evp_bounce);
+
+		last = digest;
+		count++;
+		sleep(1);
+	}
+
+	return (0);
+}
+
+static int
+do_pause_mda(int argc, struct parameter *argv)
+{
+	srv_send(IMSG_CTL_PAUSE_MDA, NULL, 0);
+	return srv_check_result();
+}
+
+static int
+do_pause_mta(int argc, struct parameter *argv)
+{
+	srv_send(IMSG_CTL_PAUSE_MTA, NULL, 0);
+	return srv_check_result();
+}
+
+static int
+do_pause_smtp(int argc, struct parameter *argv)
+{
+	srv_send(IMSG_CTL_PAUSE_SMTP, NULL, 0);
+	return srv_check_result();
+}
+
+static int
+do_profile(int argc, struct parameter *argv)
+{
+	int	v;
+
+	v = str_to_profile(argv[0].u.u_str);
+
+	srv_send(IMSG_CTL_PROFILE, &v, sizeof(v));
+	return srv_check_result();
+}
+
+static int
+do_remove(int argc, struct parameter *argv)
+{
+	struct envelope	 evp;
+	uint32_t	 msgid;
+
+	if (argc == 0) {
+		while (srv_iter_messages(&msgid)) {
+			while (srv_iter_envelopes(msgid, &evp)) {
+				srv_send(IMSG_CTL_REMOVE, &evp.id,
+				    sizeof(evp.id));
+				srv_check_result();
+			}
+		}
+	} else if (argv[0].type == P_MSGID) {
+		while (srv_iter_envelopes(argv[0].u.u_msgid, &evp)) {
+			srv_send(IMSG_CTL_REMOVE, &evp.id, sizeof(evp.id));
+			srv_check_result();
+		}
+	} else {
+		srv_send(IMSG_CTL_REMOVE, &argv[0].u.u_evpid, sizeof(evp.id));
+		srv_check_result();
+	}
+
+	return (0);
+}
+
+static int
+do_resume_mda(int argc, struct parameter *argv)
+{
+	srv_send(IMSG_CTL_RESUME_MDA, NULL, 0);
+	return srv_check_result();
+}
+
+static int
+do_resume_mta(int argc, struct parameter *argv)
+{
+	srv_send(IMSG_CTL_RESUME_MTA, NULL, 0);
+	return srv_check_result();
+}
+
+static int
+do_resume_smtp(int argc, struct parameter *argv)
+{
+	srv_send(IMSG_CTL_RESUME_SMTP, NULL, 0);
+	return srv_check_result();
+}
+
+static int
+do_schedule(int argc, struct parameter *argv)
+{
+	struct envelope	 evp;
+	uint32_t	 msgid;
+
+	if (argc == 0) {
+		while (srv_iter_messages(&msgid)) {
+			while (srv_iter_envelopes(msgid, &evp)) {
+				srv_send(IMSG_CTL_SCHEDULE, &evp.id,
+				    sizeof(evp.id));
+				srv_check_result();
+			}
+		}
+
+	} else if (argv[0].type == P_MSGID) {
+		while (srv_iter_envelopes(argv[0].u.u_msgid, &evp)) {
+			srv_send(IMSG_CTL_SCHEDULE, &evp.id, sizeof(evp.id));
+			srv_check_result();
+		}
+	} else {
+		srv_send(IMSG_CTL_SCHEDULE, &argv[0].u.u_evpid, sizeof(evp.id));
+		srv_check_result();
+	}
+
+	return (0);
+}
+
+static int
+do_show_envelope(int argc, struct parameter *argv)
+{
+	char	 buf[SMTPD_MAXPATHLEN];
+
+	if (! bsnprintf(buf, sizeof(buf), "%s%s/%02x/%08x/%016" PRIx64,
+	    PATH_SPOOL,
+	    PATH_QUEUE,
+	    (evpid_to_msgid(argv[0].u.u_evpid) & 0xff000000) >> 24,
+	    evpid_to_msgid(argv[0].u.u_evpid),
+	    argv[0].u.u_evpid))
+		errx(1, "unable to retrieve envelope");
+
+	display(buf);
+
+	return (0);
+}
+
+static int
+do_show_message(int argc, struct parameter *argv)
+{
+	char	 buf[SMTPD_MAXPATHLEN];
+	uint32_t msgid;
+
+	if (argv[0].type == P_EVPID)
+		msgid = evpid_to_msgid(argv[0].u.u_evpid);
+	else
+		msgid = argv[0].u.u_msgid;
+
+	if (! bsnprintf(buf, sizeof(buf), "%s%s/%02x/%08x/message",
+		PATH_SPOOL,
+		PATH_QUEUE,
+		(msgid & 0xff000000) >> 24,
+		msgid))
+		errx(1, "unable to retrieve message");
+
+	display(buf);
+
+	return (0);
+}
+
+static int
+do_show_queue(int argc, struct parameter *argv)
+{
+	struct envelope	 evp;
+	uint32_t	 msgid;
+	FTS		*fts;
+	FTSENT		*ftse;
+	char		*qpath[] = {"/queue", NULL};
+	char		*tmp;
+	uint64_t	 evpid;
+
+	now = time(NULL);
+
+	if (!srv_connect()) {
+		log_init(1);
+		queue_init("fs", 0);
+		if (chroot(PATH_SPOOL) == -1 || chdir(".") == -1)
+			err(1, "%s", PATH_SPOOL);
+		fts = fts_open(qpath, FTS_PHYSICAL|FTS_NOCHDIR, NULL);
+		if (fts == NULL)
+			err(1, "%s/queue", PATH_SPOOL);
+
+		while ((ftse = fts_read(fts)) != NULL) {
+			switch (ftse->fts_info) {
+			case FTS_DP:
+			case FTS_DNR:
+				break;
+			case FTS_F:
+				tmp = NULL;
+				evpid = strtoull(ftse->fts_name, &tmp, 16);
+				if (tmp && *tmp != '\0')
+					break;
+				show_offline_envelope(evpid);
+			}
+		}
+
+		fts_close(fts);
+		/*
+		while ((r = queue_envelope_walk(&evp)) != -1)
+			if (r)
+				show_queue_envelope(&evp, 0);
+		*/
+		return (0);
+	}
+
+	if (argc == 0) {
+		msgid = 0;
+		while (srv_iter_messages(&msgid))
+			while (srv_iter_envelopes(msgid, &evp))
+				show_queue_envelope(&evp, 1);
+	} else if (argv[0].type == P_MSGID) {
+		while (srv_iter_envelopes(argv[0].u.u_msgid, &evp))
+			show_queue_envelope(&evp, 1);
+	}
+
+	return (0);
+}
+
+static int
+do_show_stats(int argc, struct parameter *argv)
+{
+	struct stat_kv	kv;
+	time_t		duration;
+
+	bzero(&kv, sizeof kv);
+
+	while (1) {
+		srv_send(IMSG_STATS_GET, &kv, sizeof kv);
+		srv_recv(IMSG_STATS_GET);
+		srv_read(&kv, sizeof(kv));
+		srv_end();
+
+		if (kv.iter == NULL)
+			break;
+
+		if (strcmp(kv.key, "uptime") == 0) {
+			duration = time(NULL) - kv.val.u.counter;
+			printf("uptime=%lld\n", (long long)duration);
+			printf("uptime.human=%s\n",
+			    duration_to_text(duration));
+		}
+		else {
+			switch (kv.val.type) {
+			case STAT_COUNTER:
+				printf("%s=%zd\n",
+				    kv.key, kv.val.u.counter);
+				break;
+			case STAT_TIMESTAMP:
+				printf("%s=%" PRId64 "\n",
+				    kv.key, (int64_t)kv.val.u.timestamp);
+				break;
+			case STAT_TIMEVAL:
+				printf("%s=%lld.%lld\n",
+				    kv.key, (long long)kv.val.u.tv.tv_sec,
+				    (long long)kv.val.u.tv.tv_usec);
+				break;
+			case STAT_TIMESPEC:
+				printf("%s=%lli.%06li\n",
+				    kv.key,
+				    (long long)kv.val.u.ts.tv_sec * 1000000 +
+				    kv.val.u.ts.tv_nsec / 1000000,
+				    kv.val.u.ts.tv_nsec % 1000000);
+				break;
+			}
+		}
+	}
+
+	return (0);
+}
+
+static int
+do_stop(int argc, struct parameter *argv)
+{
+	srv_send(IMSG_CTL_SHUTDOWN, NULL, 0);
+	return srv_check_result();
+}
+
+static int
+do_trace(int argc, struct parameter *argv)
+{
+	int	v;
+
+	v = str_to_trace(argv[0].u.u_str);
+
+	srv_send(IMSG_CTL_TRACE, &v, sizeof(v));
+	return srv_check_result();
+}
+
+static int
+do_unprofile(int argc, struct parameter *argv)
+{
+	int	v;
+
+	v = str_to_profile(argv[0].u.u_str);
+
+	srv_send(IMSG_CTL_UNPROFILE, &v, sizeof(v));
+	return srv_check_result();
+}
+
+static int
+do_untrace(int argc, struct parameter *argv)
+{
+	int	v;
+
+	v = str_to_trace(argv[0].u.u_str);
+
+	srv_send(IMSG_CTL_UNTRACE, &v, sizeof(v));
+	return srv_check_result();
+}
+
+static int
+do_update_table(int argc, struct parameter *argv)
+{
+	const char	*name = argv[0].u.u_str;
+
+	srv_send(IMSG_LKA_UPDATE_TABLE, name, strlen(name) + 1);
+	return srv_check_result();
+}
+
+int
+main(int argc, char **argv)
+{
+	char	*argv_mailq[] = { "show", "queue", NULL };
+
 	if (strcmp(__progname, "sendmail") == 0 ||
 	    strcmp(__progname, "send-mail") == 0) {
 		sendmail = 1;
-		if (try_connect())
+		if (srv_connect())
 			return (enqueue(argc, argv));
 		return (enqueue_offline(argc, argv));
 	}
@@ -183,450 +691,41 @@ main(int argc, char *argv[])
 	if (geteuid())
 		errx(1, "need root privileges");
 
+	cmd_install("log brief",		do_log_brief);
+	cmd_install("log verbose",		do_log_verbose);
+	cmd_install("monitor",			do_monitor);
+	cmd_install("pause mda",		do_pause_mda);
+	cmd_install("pause mta",		do_pause_mta);
+	cmd_install("pause smtp",		do_pause_smtp);
+	cmd_install("profile <str>",		do_profile);
+	cmd_install("remove <evpid>",		do_remove);
+	cmd_install("remove <msgid>",		do_remove);
+	cmd_install("resume mda",		do_resume_mda);
+	cmd_install("resume mta",		do_resume_mta);
+	cmd_install("resume smtp",		do_resume_smtp);
+	cmd_install("schedule <msgid>",		do_schedule);
+	cmd_install("schedule <evpid>",		do_schedule);
+	cmd_install("schedule all",		do_schedule);
+	cmd_install("show envelope <evpid>",	do_show_envelope);
+	cmd_install("show message <msgid>",	do_show_message);
+	cmd_install("show message <evpid>",	do_show_message);
+	cmd_install("show queue",		do_show_queue);
+	cmd_install("show queue <msgid>",	do_show_queue);
+	cmd_install("show stats",		do_show_stats);
+	cmd_install("stop",			do_stop);
+	cmd_install("trace <str>",		do_trace);
+	cmd_install("unprofile <str>",		do_unprofile);
+	cmd_install("untrace <str>",		do_untrace);
+	cmd_install("update table <str>",	do_update_table);
+
 	if (strcmp(__progname, "mailq") == 0)
-		action = SHOW_QUEUE;
-	else if (strcmp(__progname, "smtpctl") == 0) {
-		if ((res = parse(argc - 1, argv + 1)) == NULL)
-			exit(1);
-		action = res->action;
-	} else
-		errx(1, "unsupported mode");
+		return cmd_run(2, argv_mailq);
+	if (strcmp(__progname, "smtpctl") == 0)
+		return cmd_run(argc - 1, argv + 1);
 
-	if (action == SHOW_ENVELOPE ||
-	    action == SHOW_MESSAGE ||
-	    !try_connect()) {
-		setup_env(&smtpd);
-		switch (action) {
-		case SHOW_QUEUE:
-			show_queue(0);
-			break;
-		case SHOW_ENVELOPE:
-			show_envelope(res->data);
-			break;
-		case SHOW_MESSAGE:
-			show_message(res->data);
-			break;
-		default:
-			errx(1, "smtpd doesn't seem to be running");
-		}
-		return (0);
-	}
-
-	/* process user request */
-	switch (action) {
-	case NONE:
-		usage();
-		/* not reached */
-
-	case SCHEDULE:
-		if (! strcmp(res->data, "all"))
-			return action_schedule_all();
-
-		if ((ulval = text_to_evpid(res->data)) == 0)
-			errx(1, "invalid msgid/evpid");
-		imsg_compose(ibuf, IMSG_CTL_SCHEDULE, IMSG_VERSION, 0, -1, &ulval,
-		    sizeof(ulval));
-		break;
-	case REMOVE:
-		if ((ulval = text_to_evpid(res->data)) == 0)
-			errx(1, "invalid msgid/evpid");
-		imsg_compose(ibuf, IMSG_CTL_REMOVE, IMSG_VERSION, 0, -1, &ulval,
-		    sizeof(ulval));
-		break;
-	case SHOW_QUEUE:
-		return action_show_queue();
-	case SHUTDOWN:
-		imsg_compose(ibuf, IMSG_CTL_SHUTDOWN, IMSG_VERSION, 0, -1, NULL, 0);
-		break;
-	case PAUSE_MDA:
-		imsg_compose(ibuf, IMSG_CTL_PAUSE_MDA, IMSG_VERSION, 0, -1, NULL, 0);
-		break;
-	case PAUSE_MTA:
-		imsg_compose(ibuf, IMSG_CTL_PAUSE_MTA, IMSG_VERSION, 0, -1, NULL, 0);
-		break;
-	case PAUSE_SMTP:
-		imsg_compose(ibuf, IMSG_CTL_PAUSE_SMTP, IMSG_VERSION, 0, -1, NULL, 0);
-		break;
-	case RESUME_MDA:
-		imsg_compose(ibuf, IMSG_CTL_RESUME_MDA, IMSG_VERSION, 0, -1, NULL, 0);
-		break;
-	case RESUME_MTA:
-		imsg_compose(ibuf, IMSG_CTL_RESUME_MTA, IMSG_VERSION, 0, -1, NULL, 0);
-		break;
-	case RESUME_SMTP:
-		imsg_compose(ibuf, IMSG_CTL_RESUME_SMTP, IMSG_VERSION, 0, -1, NULL, 0);
-		break;
-	case SHOW_STATS:
-		imsg_compose(ibuf, IMSG_STATS, IMSG_VERSION, 0, -1, NULL, 0);
-		break;
-	case UPDATE_TABLE:
-		if (strlcpy(name, res->data, sizeof name) >= sizeof name)
-			errx(1, "table name too long.");
-		imsg_compose(ibuf, IMSG_LKA_UPDATE_TABLE, IMSG_VERSION, 0, -1,
-		    name, strlen(name) + 1);
-		done = 1;
-		break;
-	case MONITOR:
-		while (1) {
-			imsg_compose(ibuf, IMSG_DIGEST, IMSG_VERSION, 0, -1, NULL, 0);
-			flush();
-			next_message(&imsg);
-			show_monitor(imsg.data);
-			imsg_free(&imsg);
-			sleep(1);
-		}
-		break;
-	case LOG_VERBOSE:
-		verb = TRACE_DEBUG;
-		/* FALLTHROUGH */
-	case LOG_BRIEF:
-		imsg_compose(ibuf, IMSG_CTL_VERBOSE, IMSG_VERSION, 0, -1, &verb,
-		    sizeof(verb));
-		printf("logging request sent.\n");
-		done = 1;
-		break;
-
-	case LOG_TRACE_IMSG:
-	case LOG_TRACE_IO:
-	case LOG_TRACE_SMTP:
-	case LOG_TRACE_MFA:
-	case LOG_TRACE_MTA:
-	case LOG_TRACE_BOUNCE:
-	case LOG_TRACE_SCHEDULER:
-	case LOG_TRACE_LOOKUP:
-	case LOG_TRACE_STAT:
-	case LOG_TRACE_RULES:
-	case LOG_TRACE_MPROC:
-	case LOG_TRACE_EXPAND:
-	case LOG_TRACE_ALL:
-		verb = trace_convert(action);
-		imsg_compose(ibuf, IMSG_CTL_TRACE, IMSG_VERSION, 0, -1, &verb,
-		    sizeof(verb));
-		done = 1;
-		break;
-
-	case LOG_UNTRACE_IMSG:
-	case LOG_UNTRACE_IO:
-	case LOG_UNTRACE_SMTP:
-	case LOG_UNTRACE_MFA:
-	case LOG_UNTRACE_MTA:
-	case LOG_UNTRACE_BOUNCE:
-	case LOG_UNTRACE_SCHEDULER:
-	case LOG_UNTRACE_LOOKUP:
-	case LOG_UNTRACE_STAT:
-	case LOG_UNTRACE_RULES:
-	case LOG_UNTRACE_MPROC:
-	case LOG_UNTRACE_EXPAND:
-	case LOG_UNTRACE_ALL:
-		verb = trace_convert(action);
-		imsg_compose(ibuf, IMSG_CTL_UNTRACE, IMSG_VERSION, 0, -1, &verb,
-		    sizeof(verb));
-		done = 1;
-		break;
-
-	case LOG_PROFILE_IMSG:
-	case LOG_PROFILE_QUEUE:
-		profile = profile_convert(action);
-		imsg_compose(ibuf, IMSG_CTL_PROFILE, IMSG_VERSION, 0, -1, &profile,
-		    sizeof(profile));
-		done = 1;
-		break;
-
-	case LOG_UNPROFILE_IMSG:
-	case LOG_UNPROFILE_QUEUE:
-		profile = profile_convert(action);
-		imsg_compose(ibuf, IMSG_CTL_UNPROFILE, IMSG_VERSION, 0, -1, &profile,
-		    sizeof(profile));
-		done = 1;
-		break;
-
-	default:
-		errx(1, "unknown request (%d)", action);
-	}
-
-	do {
-		flush();
-		next_message(&imsg);
-
-		/* ANY command can return IMSG_CTL_FAIL if version mismatch */
-		if (imsg.hdr.type == IMSG_CTL_FAIL) {
-			show_command_output(&imsg);
-			break;
-		}
-
-		switch (action) {
-		case REMOVE:
-		case SCHEDULE:
-		case SHUTDOWN:
-		case PAUSE_MDA:
-		case PAUSE_MTA:
-		case PAUSE_SMTP:
-		case RESUME_MDA:
-		case RESUME_MTA:
-		case RESUME_SMTP:
-		case LOG_VERBOSE:
-		case LOG_BRIEF:
-		case LOG_TRACE_IMSG:
-		case LOG_TRACE_IO:
-		case LOG_TRACE_SMTP:
-		case LOG_TRACE_MFA:
-		case LOG_TRACE_MTA:
-		case LOG_TRACE_BOUNCE:
-		case LOG_TRACE_SCHEDULER:
-		case LOG_TRACE_LOOKUP:
-		case LOG_TRACE_STAT:
-		case LOG_TRACE_RULES:
-		case LOG_TRACE_MPROC:
-		case LOG_TRACE_EXPAND:
-		case LOG_TRACE_ALL:
-		case LOG_UNTRACE_IMSG:
-		case LOG_UNTRACE_IO:
-		case LOG_UNTRACE_SMTP:
-		case LOG_UNTRACE_MFA:
-		case LOG_UNTRACE_MTA:
-		case LOG_UNTRACE_BOUNCE:
-		case LOG_UNTRACE_SCHEDULER:
-		case LOG_UNTRACE_LOOKUP:
-		case LOG_UNTRACE_STAT:
-		case LOG_UNTRACE_RULES:
-		case LOG_UNTRACE_MPROC:
-		case LOG_UNTRACE_EXPAND:
-		case LOG_UNTRACE_ALL:
-		case LOG_PROFILE_IMSG:
-		case LOG_PROFILE_QUEUE:
-		case LOG_UNPROFILE_IMSG:
-		case LOG_UNPROFILE_QUEUE:
-			done = show_command_output(&imsg);
-			break;
-		case SHOW_STATS:
-			show_stats_output();
-			done = 1;
-			break;
-		case NONE:
-			break;
-		case UPDATE_TABLE:
-			break;
-		case MONITOR:
-
-		default:
-			err(1, "unexpected reply (%d)", action);
-		}
-
-		imsg_free(&imsg);
-	} while (!done);
-	free(ibuf);
-
+	errx(1, "unsupported mode");
 	return (0);
-}
 
-
-static int
-action_show_queue_message(uint32_t msgid)
-{
-	struct imsg	 imsg;
-	struct envelope	*evp;
-	uint64_t	 evpid;
-	size_t		 found;
-
-	evpid = msgid_to_evpid(msgid);
-
-    nextbatch:
-
-	found = 0;
-	imsg_compose(ibuf, IMSG_CTL_LIST_ENVELOPES, IMSG_VERSION, 0, -1,
-	    &evpid, sizeof evpid);
-	flush();
-
-	while (1) {
-		next_message(&imsg);
-		if (imsg.hdr.type != IMSG_CTL_LIST_ENVELOPES)
-			errx(1, "unexpected message %i", imsg.hdr.type);
-
-		if (imsg.hdr.len == sizeof imsg.hdr) {
-			imsg_free(&imsg);
-			if (!found || evpid_to_msgid(++evpid) != msgid)
-				return (0);
-			goto nextbatch;
-		}
-		found++;
-		evp = imsg.data;
-		evpid = evp->id;
-		show_queue_envelope(evp, 1);
-		imsg_free(&imsg);
-	}
-
-}
-
-static int
-action_show_queue(void)
-{
-	struct imsg	 imsg;
-	uint32_t	*msgids, msgid;
-	size_t		 i, n;
-
-	msgid = 0;
-	now = time(NULL);
-
-	do {
-		imsg_compose(ibuf, IMSG_CTL_LIST_MESSAGES, IMSG_VERSION, 0, -1,
-		    &msgid, sizeof msgid);
-		flush();
-		next_message(&imsg);
-		if (imsg.hdr.type != IMSG_CTL_LIST_MESSAGES)
-			errx(1, "unexpected message type %i", imsg.hdr.type);
-		msgids = imsg.data;
-		n = (imsg.hdr.len - sizeof imsg.hdr) / sizeof (*msgids);
-		if (n == 0) {
-			imsg_free(&imsg);
-			break;
-		}
-		for (i = 0; i < n; i++) {
-			msgid = msgids[i];
-			action_show_queue_message(msgid);
-		}
-		imsg_free(&imsg);
-
-	} while (++msgid);
-
-	return (0);
-}
-
-static int
-action_schedule_all(void)
-{
-	struct imsg	 imsg;
-	uint32_t	*msgids, from;
-	uint64_t	 evpid;
-	size_t		 i, n;
-
-	from = 0;
-	while (1) {
-		imsg_compose(ibuf, IMSG_CTL_LIST_MESSAGES, IMSG_VERSION, 0, -1,
-		    &from, sizeof from);
-		flush();
-		next_message(&imsg);
-		if (imsg.hdr.type != IMSG_CTL_LIST_MESSAGES)
-			errx(1, "unexpected message type %i", imsg.hdr.type);
-		msgids = imsg.data;
-		n = (imsg.hdr.len - sizeof imsg.hdr) / sizeof (*msgids);
-		if (n == 0)
-			break;
-
-		for (i = 0; i < n; i++) {
-			evpid = msgids[i];
-			imsg_compose(ibuf, IMSG_CTL_SCHEDULE, IMSG_VERSION,
-			    0, -1, &evpid, sizeof(evpid));
-		}
-		from = msgids[n - 1] + 1;
-
-		imsg_free(&imsg);
-		flush();
-
-		for (i = 0; i < n; i++) {
-			next_message(&imsg);
-			if (imsg.hdr.type != IMSG_CTL_OK)
-				errx(1, "unexpected message type %i",
-				    imsg.hdr.type);
-		}
-
-		if (from == 0)
-			break;
-	}
-
-	return (0);
-}
-
-static int
-show_command_output(struct imsg *imsg)
-{
-	switch (imsg->hdr.type) {
-	case IMSG_CTL_OK:
-		printf("command succeeded\n");
-		break;
-	case IMSG_CTL_FAIL:
-		if (imsg->hdr.peerid != IMSG_VERSION)
-			printf("command failed: incompatible smtpctl and smtpd\n");
-		else
-			printf("command failed\n");
-		break;
-	default:
-		errx(1, "wrong message in summary: %u", imsg->hdr.type);
-	}
-	return (1);
-}
-
-static void
-show_stats_output(void)
-{
-	struct stat_kv	kv, *kvp;
-	struct imsg	imsg;
-	time_t		duration;
-
-	bzero(&kv, sizeof kv);
-
-	while (1) {
-		imsg_compose(ibuf, IMSG_STATS_GET, IMSG_VERSION, 0, -1, &kv, sizeof kv);
-		flush();
-		next_message(&imsg);
-		if (imsg.hdr.type != IMSG_STATS_GET)
-			errx(1, "invalid imsg type");
-
-		kvp = imsg.data;
-		if (kvp->iter == NULL) {
-			imsg_free(&imsg);
-			return;
-		}
-
-		if (strcmp(kvp->key, "uptime") == 0) {
-			duration = time(NULL) - kvp->val.u.counter;
-			printf("uptime=%zd\n", (size_t)duration);
-			printf("uptime.human=%s\n",
-			    duration_to_text(duration));
-		}
-		else {
-			switch (kvp->val.type) {
-			case STAT_COUNTER:
-				printf("%s=%zd\n",
-				    kvp->key, kvp->val.u.counter);
-				break;
-			case STAT_TIMESTAMP:
-				printf("%s=%" PRId64 "\n",
-				    kvp->key, (int64_t)kvp->val.u.timestamp);
-				break;
-			case STAT_TIMEVAL:
-				printf("%s=%zd.%zd\n",
-				    kvp->key, kvp->val.u.tv.tv_sec,
-				    kvp->val.u.tv.tv_usec);
-				break;
-			case STAT_TIMESPEC:
-				printf("%s=%li.%06li\n",
-				    kvp->key,
-				    kvp->val.u.ts.tv_sec * 1000000 +
-				    kvp->val.u.ts.tv_nsec / 1000000,
-				    kvp->val.u.ts.tv_nsec % 1000000);
-				break;
-			}
-		}
-
-		kv = *kvp;
-		imsg_free(&imsg);
-	}
-}
-
-static void
-show_queue(flags)
-{
-	struct envelope	 envelope;
-	int		 r;
-
-	log_init(1);
-
-	if (chroot(PATH_SPOOL) == -1 || chdir(".") == -1)
-		err(1, "%s", PATH_SPOOL);
-
-	while ((r = queue_envelope_walk(&envelope)) != -1)
-		if (r)
-			show_queue_envelope(&envelope, flags);
 }
 
 static void
@@ -637,12 +736,9 @@ show_queue_envelope(struct envelope *e, int online)
 
 	status[0] = '\0';
 
-	getflag(&e->flags, EF_BOUNCE, "bounce",
-	    status, sizeof(status));
-	getflag(&e->flags, EF_AUTHENTICATED, "auth",
-	    status, sizeof(status));
-	getflag(&e->flags, EF_INTERNAL, "internal",
-	    status, sizeof(status));
+	getflag(&e->flags, EF_BOUNCE, "bounce", status, sizeof(status));
+	getflag(&e->flags, EF_AUTHENTICATED, "auth", status, sizeof(status));
+	getflag(&e->flags, EF_INTERNAL, "internal", status, sizeof(status));
 
 	if (online) {
 		if (e->flags & EF_PENDING)
@@ -711,197 +807,203 @@ getflag(uint *bitmap, int bit, char *bitstr, char *buf, size_t len)
 }
 
 static void
+show_offline_envelope(uint64_t evpid)
+{
+	FILE   *fp = NULL;
+	char	pathname[SMTPD_MAXPATHLEN];
+	size_t	plen;
+	char   *p;
+	size_t	buflen;
+	char	buffer[sizeof(struct envelope)];
+
+	struct envelope	evp;
+
+	if (! bsnprintf(pathname, sizeof pathname,
+		"/queue/%02x/%08x/%016"PRIx64,
+		(evpid_to_msgid(evpid) & 0xff000000) >> 24,
+		evpid_to_msgid(evpid), evpid))
+		goto end;
+	fp = fopen(pathname, "r");
+	if (fp == NULL)
+		goto end;
+
+	buflen = fread(buffer, 1, sizeof buffer, fp);
+	p = buffer;
+	plen = buflen;
+
+	if (is_encrypted_buffer(p)) {
+		warnx("offline encrypted queue is not supported yet");
+		goto end;
+	}
+
+	if (is_gzip_buffer(p)) {
+		warnx("offline compressed queue is not supported yet");
+		goto end;
+	}
+
+	if (! envelope_load_buffer(&evp, p, plen))
+		goto end;
+	evp.id = evpid;
+	show_queue_envelope(&evp, 0);
+
+end:
+	if (fp)
+		fclose(fp);
+}
+
+static void
 display(const char *s)
 {
-	pid_t	pid;
-	arglist args;
-	char	*cmd;
-	int	status;
+	FILE   *fp;
+	char   *key;
+	int	gzipped;
+	char   *gzcat_argv0 = strrchr(PATH_GZCAT, '/') + 1;
 
-	pid = fork();
-	if (pid < 0)
-		err(1, "fork");
-	if (pid == 0) {
-		cmd = PATH_GZCAT;
-		bzero(&args, sizeof(args));
-		addargs(&args, "%s", cmd);
-		addargs(&args, "%s", s);
-		execvp(cmd, args.list);
-		err(1, "execvp");
+	if ((fp = fopen(s, "r")) == NULL)
+		err(1, "fopen");
+
+	if (is_encrypted_fp(fp)) {
+		int	i;
+		int	fd;
+		FILE   *ofp;
+		char	sfn[] = "/tmp/smtpd.XXXXXXXXXX";
+
+		if ((fd = mkstemp(sfn)) == -1 ||
+		    (ofp = fdopen(fd, "w+")) == NULL) {
+			if (fd != -1) {
+				unlink(sfn);
+				close(fd);
+			}
+			err(1, "mkstemp");
+		}
+		unlink(sfn);
+
+		for (i = 0; i < 3; i++) {
+			key = getpass("key> ");
+			if (crypto_setup(key, strlen(key)))
+				break;
+		}
+		if (i == 3)
+			errx(1, "crypto-setup: invalid key");
+
+		if (! crypto_decrypt_file(fp, ofp)) {
+			printf("object is encrypted: %s\n", key);
+			exit(1);
+		}
+
+		fclose(fp);
+		fp = ofp;
+		fseek(fp, SEEK_SET, 0);
 	}
-	wait(&status);
-	if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
-		exit(0);
-	cmd = PATH_CAT;
-	bzero(&args, sizeof(args));
-	addargs(&args, "%s", cmd);
-	addargs(&args, "%s", s);
-	execvp(cmd, args.list);
-	err(1, "execvp");
+	gzipped = is_gzip_fp(fp);
+
+	(void)dup2(fileno(fp), STDIN_FILENO);
+	if (gzipped)
+		execl(PATH_GZCAT, gzcat_argv0, NULL);
+	else
+		execl(PATH_CAT, "cat", NULL);
+	err(1, "execl");
 }
 
-static void
-show_envelope(const char *s)
+static int
+str_to_trace(const char *str)
 {
-	char	 buf[SMTPD_MAXPATHLEN];
-	uint64_t evpid;
-
-	if ((evpid = text_to_evpid(s)) == 0)
-		errx(1, "invalid msgid/evpid");
-
-	if (! bsnprintf(buf, sizeof(buf), "%s%s/%02x/%08x/%016" PRIx64,
-		PATH_SPOOL,
-		PATH_QUEUE,
-		(evpid_to_msgid(evpid) & 0xff000000) >> 24,
-		evpid_to_msgid(evpid),
-		evpid))
-		errx(1, "unable to retrieve envelope");
-
-	display(buf);
-}
-
-static void
-show_message(const char *s)
-{
-	char	 buf[SMTPD_MAXPATHLEN];
-	uint32_t msgid;
-	uint64_t evpid;
-
-	if ((evpid = text_to_evpid(s)) == 0)
-		errx(1, "invalid msgid/evpid");
-
-	msgid = evpid_to_msgid(evpid);
-	if (! bsnprintf(buf, sizeof(buf), "%s%s/%02x/%08x/message",
-		PATH_SPOOL,
-		PATH_QUEUE,
-		(evpid_to_msgid(evpid) & 0xff000000) >> 24,
-		msgid))
-		errx(1, "unable to retrieve message");
-
-	display(buf);
-}
-
-static void
-show_monitor(struct stat_digest *d)
-{
-	static int init = 0;
-	static size_t count = 0;
-	static struct stat_digest last;
-
-	if (init == 0) {
-		init = 1;
-		bzero(&last, sizeof last);
-	}
-
-	if (count % 25 == 0) {
-		if (count != 0)
-			printf("\n");
-		printf("--- client ---  "
-		    "-- envelope --   "
-		    "---- relay/delivery --- "
-		    "------- misc -------\n"
-		    "curr conn disc  "
-		    "curr  enq  deq   "
-		    "ok tmpfail prmfail loop "
-		    "expire remove bounce\n");
-	}
-	printf("%4zu %4zu %4zu  "
-	    "%4zu %4zu %4zu "
-	    "%4zu    %4zu    %4zu %4zu   "
-	    "%4zu   %4zu   %4zu\n",
-	    d->clt_connect - d->clt_disconnect,
-	    d->clt_connect - last.clt_connect,
-	    d->clt_disconnect - last.clt_disconnect,
-
-	    d->evp_enqueued - d->evp_dequeued,
-	    d->evp_enqueued - last.evp_enqueued,
-	    d->evp_dequeued - last.evp_dequeued,
-
-	    d->dlv_ok - last.dlv_ok,
-	    d->dlv_tempfail - last.dlv_tempfail,
-	    d->dlv_permfail - last.dlv_permfail,
-	    d->dlv_loop - last.dlv_loop,
-
-	    d->evp_expired - last.evp_expired,
-	    d->evp_removed - last.evp_removed,
-	    d->evp_bounce - last.evp_bounce);
-
-	last = *d;
-	count++;
-}
-
-static uint32_t
-trace_convert(uint32_t trace)
-{
-	switch (trace) {
-	case LOG_TRACE_IMSG:
-	case LOG_UNTRACE_IMSG:
+	if (!strcmp(str, "imsg"))
 		return TRACE_IMSG;
-
-	case LOG_TRACE_IO:
-	case LOG_UNTRACE_IO:
+	if (!strcmp(str, "io"))
 		return TRACE_IO;
-
-	case LOG_TRACE_SMTP:
-	case LOG_UNTRACE_SMTP:
+	if (!strcmp(str, "smtp"))
 		return TRACE_SMTP;
-
-	case LOG_TRACE_MFA:
-	case LOG_UNTRACE_MFA:
+	if (!strcmp(str, "mfa"))
 		return TRACE_MFA;
-
-	case LOG_TRACE_MTA:
-	case LOG_UNTRACE_MTA:
+	if (!strcmp(str, "mta"))
 		return TRACE_MTA;
-
-	case LOG_TRACE_BOUNCE:
-	case LOG_UNTRACE_BOUNCE:
+	if (!strcmp(str, "bounce"))
 		return TRACE_BOUNCE;
-
-	case LOG_TRACE_SCHEDULER:
-	case LOG_UNTRACE_SCHEDULER:
+	if (!strcmp(str, "scheduler"))
 		return TRACE_SCHEDULER;
-
-	case LOG_TRACE_LOOKUP:
-	case LOG_UNTRACE_LOOKUP:
+	if (!strcmp(str, "lookup"))
 		return TRACE_LOOKUP;
-
-	case LOG_TRACE_STAT:
-	case LOG_UNTRACE_STAT:
+	if (!strcmp(str, "stat"))
 		return TRACE_STAT;
-
-	case LOG_TRACE_RULES:
-	case LOG_UNTRACE_RULES:
+	if (!strcmp(str, "rules"))
 		return TRACE_RULES;
-
-	case LOG_TRACE_MPROC:
-	case LOG_UNTRACE_MPROC:
+	if (!strcmp(str, "mproc"))
 		return TRACE_MPROC;
-
-	case LOG_TRACE_EXPAND:
-	case LOG_UNTRACE_EXPAND:
+	if (!strcmp(str, "expand"))
 		return TRACE_EXPAND;
-
-	case LOG_TRACE_ALL:
-	case LOG_UNTRACE_ALL:
+	if (!strcmp(str, "all"))
 		return ~TRACE_DEBUG;
-	}
-
-	return 0;
+	errx(1, "invalid trace keyword: %s", str);
+	return (0);
 }
 
-static uint32_t
-profile_convert(uint32_t prof)
+static int
+str_to_profile(const char *str)
 {
-	switch (prof) {
-	case LOG_PROFILE_IMSG:
-	case LOG_UNPROFILE_IMSG:
+	if (!strcmp(str, "imsg"))
 		return PROFILE_IMSG;
-
-	case LOG_PROFILE_QUEUE:
-	case LOG_UNPROFILE_QUEUE:
+	if (!strcmp(str, "queue"))
 		return PROFILE_QUEUE;
-	}
+	errx(1, "invalid profile keyword: %s", str);
+	return (0);
+}
 
-	return 0;
+static int
+is_gzip_buffer(const char *buffer)
+{
+	uint16_t	magic;
+
+	memcpy(&magic, buffer, sizeof magic);
+#define	GZIP_MAGIC	0x8b1f
+	return (magic == GZIP_MAGIC);
+}
+
+static int
+is_gzip_fp(FILE *fp)
+{
+	uint8_t		magic[2];
+	int		ret = 0;
+
+	if (fread(&magic, 1, sizeof magic, fp) != sizeof magic)
+		goto end;
+
+	ret = is_gzip_buffer((const char *)&magic);
+end:
+	fseek(fp, SEEK_SET, 0);
+	return ret;
+}
+
+
+/* XXX */
+/*
+ * queue supports transparent encryption.
+ * encrypted chunks are prefixed with an API version byte
+ * which we ensure is unambiguous with gzipped / plain
+ * objects.
+ */
+
+static int
+is_encrypted_buffer(const char *buffer)
+{
+	uint8_t	magic;
+
+	magic = *buffer;
+#define	ENCRYPTION_MAGIC	0x1
+	return (magic == ENCRYPTION_MAGIC);
+}
+
+static int
+is_encrypted_fp(FILE *fp)
+{
+	uint8_t	magic;
+	int    	ret = 0;
+
+	if (fread(&magic, 1, sizeof magic, fp) != sizeof magic)
+		goto end;
+
+	ret = is_encrypted_buffer((const char *)&magic);
+end:
+	fseek(fp, SEEK_SET, 0);
+	return ret;
 }

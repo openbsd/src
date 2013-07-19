@@ -1,7 +1,7 @@
-/*	$OpenBSD: parser.h,v 1.27 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: parser.h,v 1.28 2013/07/19 13:41:23 eric Exp $	*/
 
 /*
- * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
+ * Copyright (c) 2013 Eric Faurot	<eric@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,67 +16,26 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-enum actions {
-	NONE,
-	SHUTDOWN,
-	MONITOR,
-	LOG_VERBOSE,
-	LOG_BRIEF,
-	SCHEDULE,
-	SHOW_QUEUE,
-	SHOW_STATS,
-	SHOW_SIZES,
-	SHOW_ENVELOPE,
-	SHOW_MESSAGE,
-	PAUSE_MDA,
-	PAUSE_MTA,
-	PAUSE_SMTP,
-	REMOVE,
-	RESUME_MDA,
-	RESUME_MTA,
-	RESUME_SMTP,
-	UPDATE_TABLE,
-	LOG_TRACE_IMSG,
-	LOG_TRACE_IO,
-	LOG_TRACE_SMTP,
-	LOG_TRACE_MFA,
-	LOG_TRACE_MTA,
-	LOG_TRACE_BOUNCE,
-	LOG_TRACE_SCHEDULER,
-	LOG_TRACE_LOOKUP,
-	LOG_TRACE_STAT,
-	LOG_TRACE_RULES,
-	LOG_TRACE_MPROC,
-	LOG_TRACE_EXPAND,
-	LOG_TRACE_ALL,
-	LOG_UNTRACE_IMSG,
-	LOG_UNTRACE_IO,
-	LOG_UNTRACE_SMTP,
-	LOG_UNTRACE_MFA,
-	LOG_UNTRACE_MTA,
-	LOG_UNTRACE_BOUNCE,
-	LOG_UNTRACE_SCHEDULER,
-	LOG_UNTRACE_LOOKUP,
-	LOG_UNTRACE_STAT,
-	LOG_UNTRACE_RULES,
-	LOG_UNTRACE_MPROC,
-	LOG_UNTRACE_EXPAND,
-	LOG_UNTRACE_ALL,
-	LOG_PROFILE_IMSG,
-	LOG_PROFILE_QUEUE,
-	LOG_UNPROFILE_IMSG,
-	LOG_UNPROFILE_QUEUE,
+enum {
+	P_TOKEN,
+	P_STR,
+	P_INT,
+	P_MSGID,
+	P_EVPID,
+	P_ROUTEID,
 };
 
-struct ctl_id {
-	uint32_t	 id;
-	char		 name[MAX_NAME_SIZE];
+struct parameter {
+	int	type;
+	union {
+		const char	*u_str;
+		int		 u_int;
+		uint32_t	 u_msgid;
+		uint64_t	 u_evpid;
+		uint64_t	 u_routeid;
+	} u;
 };
 
-struct parse_result {
-	struct ctl_id	id;
-	enum actions	action;
-	const char     *data;
-};
-
-struct parse_result	*parse(int, char *[]);
+int cmd_install(const char *, int (*)(int, struct parameter *));
+int cmd_run(int, char **);
+int cmd_show_params(int argc, struct parameter *argv);

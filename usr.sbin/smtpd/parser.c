@@ -1,9 +1,7 @@
-/*	$OpenBSD: parser.c,v 1.34 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: parser.c,v 1.35 2013/07/19 13:41:23 eric Exp $	*/
 
 /*
- * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
- * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
- * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2013 Eric Faurot	<eric@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,280 +17,243 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/queue.h>
-#include <sys/tree.h>
 
-#include <event.h>
-#include <imsg.h>
-
-#include <openssl/ssl.h>
-
-#include "smtpd.h"
+#include <err.h>
+#include <inttypes.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "parser.h"
 
-enum token_type {
-	NOTOKEN,
-	ENDTOKEN,
-	KEYWORD,
-	VARIABLE
+uint64_t text_to_evpid(const char *);
+uint32_t text_to_msgid(const char *);
+
+struct node {
+	int			 type;
+	const char		*token;
+	struct node		*parent;
+	TAILQ_ENTRY(node)	 entry;
+	TAILQ_HEAD(, node)	 children;
+	int			(*cmd)(int, struct parameter*);
 };
 
-struct token {
-	enum token_type		 type;
-	const char		*keyword;
-	int			 value;
-	const struct token	*next;
-};
+static struct node	*root;
 
-static const struct token t_log[];
-static const struct token t_main[];
-static const struct token t_pause[];
-static const struct token t_remove[];
-static const struct token t_resume[];
-static const struct token t_schedule[];
-static const struct token t_show[];
-static const struct token t_show_envelope[];
-static const struct token t_show_message[];
-static const struct token t_update[];
-static const struct token t_update_table[];
-static const struct token t_trace[];
-static const struct token t_untrace[];
-static const struct token t_profile[];
-static const struct token t_unprofile[];
+#define ARGVMAX	64
 
-static const struct token t_main[] = {
-	{KEYWORD,	"schedule",	NONE,		t_schedule},
-	{KEYWORD,	"show",		NONE,		t_show},
-	{KEYWORD,	"monitor",	MONITOR,	NULL},
-	{KEYWORD,	"pause",	NONE,		t_pause},
-	{KEYWORD,	"remove",	NONE,		t_remove},
-	{KEYWORD,	"resume",	NONE,		t_resume},
-	{KEYWORD,	"stop",		SHUTDOWN,	NULL},
-	{KEYWORD,	"log",		NONE,		t_log},
-	{KEYWORD,	"profile",	NONE,		t_profile},
-	{KEYWORD,	"trace",	NONE,		t_trace},
-	{KEYWORD,	"unprofile",	NONE,		t_unprofile},
-	{KEYWORD,	"untrace",	NONE,		t_untrace},
-	{KEYWORD,	"update",	NONE,		t_update},
-	{ENDTOKEN,	"",		NONE,		NULL}
-};
-
-static const struct token t_remove[] = {
-	{VARIABLE,	"evpid",	REMOVE,		NULL},
-	{ENDTOKEN,	"",		NONE,		NULL}
-};
-
-static const struct token t_schedule[] = {
-	{VARIABLE,	"msgid/evpid/all",	SCHEDULE,	NULL},
-	{ENDTOKEN,	"",			NONE,		NULL}
-};
-
-static const struct token t_show[] = {
-	{KEYWORD,	"queue",	SHOW_QUEUE,	NULL},
-	{KEYWORD,	"stats",	SHOW_STATS,	NULL},
-	{KEYWORD,	"envelope",	NONE,		t_show_envelope},
-	{KEYWORD,	"message",	SHOW_MESSAGE,	t_show_message},
-	{ENDTOKEN,	"",		NONE,		NULL}
-};
-
-static const struct token t_show_envelope[] = {
-	{VARIABLE,	"evpid",	SHOW_ENVELOPE,	NULL},
-	{ENDTOKEN,	"",		NONE,		NULL}
-};
-
-static const struct token t_show_message[] = {
-	{VARIABLE,	"evpid",	SHOW_MESSAGE,	NULL},
-	{ENDTOKEN,	"",		NONE,		NULL}
-};
-
-static const struct token t_pause[] = {
-	{KEYWORD,	"mda",			PAUSE_MDA,	NULL},
-	{KEYWORD,	"mta",		        PAUSE_MTA,	NULL},
-	{KEYWORD,	"smtp",		        PAUSE_SMTP,	NULL},
-	{ENDTOKEN,	"",			NONE,		NULL}
-};
-
-static const struct token t_resume[] = {
-	{KEYWORD,	"mda",			RESUME_MDA,	NULL},
-	{KEYWORD,	"mta",		        RESUME_MTA,	NULL},
-	{KEYWORD,	"smtp",		        RESUME_SMTP,	NULL},
-	{ENDTOKEN,	"",			NONE,		NULL}
-};
-
-static const struct token t_log[] = {
-	{KEYWORD,	"verbose",		LOG_VERBOSE,	NULL},
-	{KEYWORD,	"brief",		LOG_BRIEF,	NULL},
-	{ENDTOKEN,	"",			NONE,		NULL}
-};
-
-static const struct token t_update[] = {
-	{KEYWORD,	"table",		NONE,		t_update_table},
-	{ENDTOKEN,	"",			NONE,		NULL}
-};
-
-static const struct token t_update_table[] = {
-	{VARIABLE,	"name",			UPDATE_TABLE,	NULL},
-	{ENDTOKEN,	"",			NONE,		NULL}
-};
-
-static const struct token t_trace[] = {
-	{KEYWORD,	"imsg",			LOG_TRACE_IMSG,		NULL},
-	{KEYWORD,	"io",			LOG_TRACE_IO,		NULL},
-	{KEYWORD,	"smtp",			LOG_TRACE_SMTP,		NULL},
-	{KEYWORD,	"filter",      		LOG_TRACE_MFA,		NULL},
-	{KEYWORD,	"transfer",    		LOG_TRACE_MTA,		NULL},
-	{KEYWORD,	"bounce",    		LOG_TRACE_BOUNCE,	NULL},
-	{KEYWORD,	"scheduler",   		LOG_TRACE_SCHEDULER,  	NULL},
-	{KEYWORD,	"lookup",   		LOG_TRACE_LOOKUP,  	NULL},
-	{KEYWORD,	"stat",   		LOG_TRACE_STAT,	  	NULL},
-	{KEYWORD,	"rules",   		LOG_TRACE_RULES,  	NULL},
-	{KEYWORD,	"mproc",   		LOG_TRACE_MPROC,	NULL},
-	{KEYWORD,	"expand",   		LOG_TRACE_EXPAND,	NULL},
-	{KEYWORD,	"all",   		LOG_TRACE_ALL,		NULL},
-	{ENDTOKEN,	"",			NONE,			NULL}
-};
-
-static const struct token t_untrace[] = {
-	{KEYWORD,	"imsg",			LOG_UNTRACE_IMSG,	NULL},
-	{KEYWORD,	"io",			LOG_UNTRACE_IO,		NULL},
-	{KEYWORD,	"smtp",			LOG_UNTRACE_SMTP,	NULL},
-	{KEYWORD,	"filter",      		LOG_UNTRACE_MFA,	NULL},
-	{KEYWORD,	"transfer",    		LOG_UNTRACE_MTA,	NULL},
-	{KEYWORD,	"bounce",    		LOG_UNTRACE_BOUNCE,	NULL},
-	{KEYWORD,	"scheduler",   		LOG_UNTRACE_SCHEDULER, 	NULL},
-	{KEYWORD,	"lookup",   		LOG_UNTRACE_LOOKUP, 	NULL},
-	{KEYWORD,	"stat",   		LOG_UNTRACE_STAT,  	NULL},
-	{KEYWORD,	"rules",   		LOG_UNTRACE_RULES,  	NULL},
-	{KEYWORD,	"mproc",   		LOG_UNTRACE_MPROC,	NULL},
-	{KEYWORD,	"expand",   		LOG_UNTRACE_EXPAND,	NULL},
-	{KEYWORD,	"all",   		LOG_UNTRACE_ALL,	NULL},
-	{ENDTOKEN,	"",			NONE,			NULL}
-};
-
-static const struct token t_profile[] = {
-	{KEYWORD,	"imsg",			LOG_PROFILE_IMSG,	NULL},
-	{KEYWORD,	"queue",       		LOG_PROFILE_QUEUE,     	NULL},
-	{ENDTOKEN,	"",			NONE,			NULL}
-};
-
-static const struct token t_unprofile[] = {
-	{KEYWORD,	"imsg",			LOG_UNPROFILE_IMSG,    	NULL},
-	{KEYWORD,	"queue",       		LOG_UNPROFILE_QUEUE,	NULL},
-	{ENDTOKEN,	"",			NONE,			NULL}
-};
-
-
-static const struct token *match_token(const char *, const struct token [],
-    struct parse_result *);
-static void show_valid_args(const struct token []);
-
-struct parse_result *
-parse(int argc, char *argv[])
+int
+cmd_install(const char *pattern, int (*cmd)(int, struct parameter*))
 {
-	static struct parse_result	res;
-	const struct token	*table = t_main;
-	const struct token	*match;
+	struct node	*node, *tmp;
+	char		*s, *str, *argv[ARGVMAX], **ap;
+	int		 i, n;
 
-	bzero(&res, sizeof(res));
-
-	while (argc >= 0) {
-		if ((match = match_token(argv[0], table, &res)) == NULL) {
-			fprintf(stderr, "valid commands/args:\n");
-			show_valid_args(table);
-			return (NULL);
+	/* Tokenize */
+	str = s = strdup(pattern);
+	if (str == NULL)
+		err(1, "strdup");
+	n = 0;
+	for (ap = argv; n < ARGVMAX && (*ap = strsep(&str, " \t")) != NULL;) {
+		if (**ap != '\0') {
+			ap++;
+			n++;
 		}
-
-		argc--;
-		argv++;
-
-		if (match->type == NOTOKEN || match->next == NULL)
-			break;
-
-		table = match->next;
 	}
+	*ap = NULL;
 
-	if (argc > 0) {
-		fprintf(stderr, "superfluous argument: %s\n", argv[0]);
-		return (NULL);
+	if (root == NULL) {
+		root = calloc(1, sizeof (*root));
+		TAILQ_INIT(&root->children);
 	}
+	node = root;
 
-	return (&res);
-}
-
-const struct token *
-match_token(const char *word, const struct token table[],
-    struct parse_result *res)
-{
-	uint			 i, match;
-	const struct token	*t = NULL;
-
-	match = 0;
-
-	for (i = 0; table[i].type != ENDTOKEN; i++) {
-		switch (table[i].type) {
-		case NOTOKEN:
-			if (word == NULL || strlen(word) == 0) {
-				match++;
-				t = &table[i];
+	for (i = 0; i < n; i++) {
+		TAILQ_FOREACH(tmp, &node->children, entry) {
+			if (!strcmp(tmp->token, argv[i])) {
+				node = tmp;
+				break;
 			}
-			break;
-		case KEYWORD:
-			if (word != NULL && strncmp(word, table[i].keyword,
-			    strlen(word)) == 0) {
-				match++;
-				t = &table[i];
-				if (t->value)
-					res->action = t->value;
-			}
-			break;
-		case VARIABLE:
-			if (word != NULL && strlen(word) != 0) {
-				match++;
-				t = &table[i];
-				if (t->value) {
-					res->action = t->value;
-					res->data = word;
-				}
-			}
-			break;
-		case ENDTOKEN:
-			break;
+		}
+		if (tmp == NULL) {
+			tmp = calloc(1, sizeof (*tmp));
+			TAILQ_INIT(&tmp->children);
+			if (!strcmp(argv[i], "<str>"))
+				tmp->type = P_STR;
+			else if (!strcmp(argv[i], "<int>"))
+				tmp->type = P_INT;
+			else if (!strcmp(argv[i], "<msgid>"))
+				tmp->type = P_MSGID;
+			else if (!strcmp(argv[i], "<evpid>"))
+				tmp->type = P_EVPID;
+			else if (!strcmp(argv[i], "<routeid>"))
+				tmp->type = P_ROUTEID;
+			else
+				tmp->type = P_TOKEN;
+			tmp->token = strdup(argv[i]);
+			tmp->parent = node;
+			TAILQ_INSERT_TAIL(&node->children, tmp, entry);
+			node = tmp;
 		}
 	}
 
-	if (match != 1) {
-		if (word == NULL)
-			fprintf(stderr, "missing argument:\n");
-		else if (match > 1)
-			fprintf(stderr, "ambiguous argument: %s\n", word);
-		else if (match < 1)
-			fprintf(stderr, "unknown argument: %s\n", word);
-		return (NULL);
-	}
+	if (node->cmd)
+		errx(1, "duplicate pattern: %s", pattern);
+	node->cmd = cmd;
 
-	return (t);
+	free(s);
+	return (n);
 }
 
 static void
-show_valid_args(const struct token table[])
+cmd_dump(struct node *node, int depth)
+{
+	struct node	*n;
+	int		 i;
+
+	for(i = 0; i < depth; i++)
+		printf("  ");
+	printf("%s\n", node->token ? node->token : "");
+
+	TAILQ_FOREACH(n, &node->children, entry)
+		cmd_dump(n, depth + 1);
+}
+
+static int
+cmd_check(const char *str, struct node *node, struct parameter *res)
+{
+	const char *e;
+
+	switch (node->type) {
+	case P_TOKEN:
+		if (!strcmp(str, node->token))
+			return (1);
+		return (0);
+
+	case P_STR:
+		res->u.u_str = str;
+		return (1);
+
+	case P_INT:
+		res->u.u_int = strtonum(str, INT_MIN, INT_MAX, &e);
+		if (e)
+			return (0);
+		return (1);
+
+	case P_MSGID:
+		if (strlen(str) != 8)
+			return (0);
+		res->u.u_msgid = text_to_msgid(str);
+		if (res->u.u_msgid == 0)
+			return (0);
+		return (1);
+
+	case P_EVPID:
+		if (strlen(str) != 16)
+			return (0);
+		res->u.u_evpid = text_to_evpid(str);
+		if (res->u.u_evpid == 0)
+			return (0);
+		return (1);
+
+	case P_ROUTEID:
+		res->u.u_int = strtonum(str, 1, LLONG_MAX, &e);
+		if (e)
+			return (0);
+		return (1);
+
+	default:
+		errx(1, "bad token type: %i", node->type);
+		return (0);
+	}
+}
+
+int
+cmd_run(int argc, char **argv)
+{
+	struct parameter param[ARGVMAX];
+	struct node	*node, *tmp, *stack[ARGVMAX], *best;
+	int		 i, j, np;
+
+	node = root;
+	np = 0;
+
+	for (i = 0; i < argc; i++) {
+		TAILQ_FOREACH(tmp, &node->children, entry) {
+			if (cmd_check(argv[i], tmp, &param[np])) {
+				stack[i] = tmp;
+				node = tmp;
+				param[np].type = node->type;
+				if (node->type != P_TOKEN)
+					np++;
+				break;
+			}
+		}
+		if (tmp == NULL) {
+			best = NULL;
+			TAILQ_FOREACH(tmp, &node->children, entry) {
+				if (tmp->type != P_TOKEN)
+					continue;
+				if (strstr(tmp->token, argv[i]) != tmp->token)
+					continue;
+				if (best)
+					goto fail;
+				best = tmp;
+			}
+			if (best == NULL)
+				goto fail;
+			stack[i] = best;
+			node = best;
+			param[np].type = node->type;
+			if (node->type != P_TOKEN)
+				np++;
+		}
+	}
+
+	if (node->cmd == NULL)
+		goto fail;
+
+	return (node->cmd(np, param));
+
+fail:
+	fprintf(stderr, "possibilities are:\n");
+	TAILQ_FOREACH(tmp, &node->children, entry) {
+		for (j = 0; j < i; j++)
+			fprintf(stderr, "%s%s", j?" ":"", stack[j]->token);
+		fprintf(stderr, "%s%s\n", i?" ":"", tmp->token);
+	}
+
+	return (-1);
+}
+
+int
+cmd_show_params(int argc, struct parameter *argv)
 {
 	int	i;
 
-	for (i = 0; table[i].type != ENDTOKEN; i++) {
-		switch (table[i].type) {
-		case NOTOKEN:
-			fprintf(stderr, "  <cr>\n");
+	for (i = 0; i < argc; i++) {
+		switch(argv[i].type) {
+		case P_STR:
+			printf(" str:\"%s\"", argv[i].u.u_str);
 			break;
-		case KEYWORD:
-			fprintf(stderr, "  %s\n", table[i].keyword);
+		case P_INT:
+			printf(" int:%i", argv[i].u.u_int);
 			break;
-		case VARIABLE:
-			fprintf(stderr, "  %s\n", table[i].keyword);
+		case P_MSGID:
+			printf(" msgid:%08"PRIx32, argv[i].u.u_msgid);
 			break;
-		case ENDTOKEN:
+		case P_EVPID:
+			printf(" evpid:%016"PRIx64, argv[i].u.u_evpid);
 			break;
+		case P_ROUTEID:
+			printf(" routeid:%016"PRIx64, argv[i].u.u_routeid);
+			break;
+		default:
+			printf(" ???:%i", argv[i].type);
 		}
 	}
+	printf ("\n");
+	return (1);
 }

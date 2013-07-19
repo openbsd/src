@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.415 2013/07/19 11:14:08 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.416 2013/07/19 13:41:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1071,6 +1071,14 @@ void config_done(void);
 
 /* control.c */
 pid_t control(void);
+
+
+/* crypto.c */
+int	crypto_setup(const char *, size_t);
+int	crypto_encrypt_file(FILE *, FILE *);
+int	crypto_decrypt_file(FILE *, FILE *);
+size_t	crypto_encrypt_buffer(const char *, size_t, char *, size_t);
+size_t	crypto_decrypt_buffer(const char *, size_t, char *, size_t);
 
 
 /* delivery.c */
