@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.152 2013/07/19 20:37:07 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.153 2013/07/19 21:14:52 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -63,7 +63,6 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 	struct delivery_bounce	 bounce;
 	struct bounce_req_msg	*req_bounce;
 	struct envelope		 evp;
-	static uint64_t		 batch_id;
 	struct msg		 m;
 	const char		*reason;
 	uint64_t		 reqid, evpid;
@@ -266,14 +265,7 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 			bounce_add(evpid);
 			return;
 
-		case IMSG_MTA_BATCH:
-			batch_id = generate_uid();
-			m_create(p_mta, IMSG_MTA_BATCH, 0, 0, -1);
-			m_add_id(p_mta, batch_id);
-			m_close(p_mta);
-			return;
-
-		case IMSG_MTA_BATCH_ADD:
+		case IMSG_MTA_TRANSFER:
 			m_msg(&m, imsg);
 			m_get_evpid(&m, &evpid);
 			m_end(&m);
@@ -286,15 +278,8 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 				return;
 			}
 			evp.lasttry = time(NULL);
-			m_create(p_mta, IMSG_MTA_BATCH_ADD, 0, 0, -1);
-			m_add_id(p_mta, batch_id);
+			m_create(p_mta, IMSG_MTA_TRANSFER, 0, 0, -1);
 			m_add_envelope(p_mta, &evp);
-			m_close(p_mta);
-			return;
-
-		case IMSG_MTA_BATCH_END:
-			m_create(p_mta, IMSG_MTA_BATCH_END, 0, 0, -1);
-			m_add_id(p_mta, batch_id);
 			m_close(p_mta);
 			return;
 

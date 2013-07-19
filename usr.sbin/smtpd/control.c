@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.88 2013/07/19 15:14:23 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.89 2013/07/19 21:14:52 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -109,6 +109,22 @@ control_imsg(struct mproc *p, struct imsg *imsg)
 	if (p->proc == PROC_QUEUE) {
 		switch (imsg->hdr.type) {
 		case IMSG_CTL_LIST_ENVELOPES:
+			c = tree_get(&ctl_conns, imsg->hdr.peerid);
+			if (c == NULL)
+				return;
+			m_forward(&c->mproc, imsg);
+			return;
+		}
+	}
+	if (p->proc == PROC_MTA) {
+		switch (imsg->hdr.type) {
+		case IMSG_CTL_MTA_SHOW_ROUTES:
+			c = tree_get(&ctl_conns, imsg->hdr.peerid);
+			if (c == NULL)
+				return;
+			m_forward(&c->mproc, imsg);
+			return;
+		case IMSG_CTL_MTA_SHOW_HOSTSTATS:
 			c = tree_get(&ctl_conns, imsg->hdr.peerid);
 			if (c == NULL)
 				return;
@@ -659,6 +675,15 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		m_compose(p, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 		return;
 
+	case IMSG_CTL_RESUME_ROUTE:
+		if (c->euid)
+			goto badcred;
+
+		log_info("info: route resumed");
+		m_forward(p_mta, imsg);
+		m_compose(p, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+		return;
+
 	case IMSG_CTL_LIST_MESSAGES:
 		if (c->euid)
 			goto badcred;
@@ -670,6 +695,20 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		if (c->euid)
 			goto badcred;
 		m_compose(p_scheduler, IMSG_CTL_LIST_ENVELOPES, c->id, 0, -1,
+		    imsg->data, imsg->hdr.len - sizeof(imsg->hdr));
+		return;
+
+	case IMSG_CTL_MTA_SHOW_ROUTES:
+		if (c->euid)
+			goto badcred;
+		m_compose(p_mta, IMSG_CTL_MTA_SHOW_ROUTES, c->id, 0, -1,
+		    imsg->data, imsg->hdr.len - sizeof(imsg->hdr));
+		return;
+
+	case IMSG_CTL_MTA_SHOW_HOSTSTATS:
+		if (c->euid)
+			goto badcred;
+		m_compose(p_mta, IMSG_CTL_MTA_SHOW_HOSTSTATS, c->id, 0, -1,
 		    imsg->data, imsg->hdr.len - sizeof(imsg->hdr));
 		return;
 

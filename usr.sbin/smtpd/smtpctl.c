@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.107 2013/07/19 15:14:23 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.108 2013/07/19 21:14:52 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -495,6 +495,20 @@ do_resume_mta(int argc, struct parameter *argv)
 }
 
 static int
+do_resume_route(int argc, struct parameter *argv)
+{
+	uint64_t	v;
+
+	if (argc == 0)
+		v = 0;
+	else
+		v = argv[0].u.u_routeid;
+
+	srv_send(IMSG_CTL_RESUME_ROUTE, &v, sizeof(v));
+	return srv_check_result();
+}
+
+static int
 do_resume_smtp(int argc, struct parameter *argv)
 {
 	srv_send(IMSG_CTL_RESUME_SMTP, NULL, 0);
@@ -543,6 +557,23 @@ do_show_envelope(int argc, struct parameter *argv)
 		errx(1, "unable to retrieve envelope");
 
 	display(buf);
+
+	return (0);
+}
+
+static int
+do_show_hoststats(int argc, struct parameter *argv)
+{
+	srv_send(IMSG_CTL_MTA_SHOW_HOSTSTATS, NULL, 0);
+
+	do {
+		srv_recv(IMSG_CTL_MTA_SHOW_HOSTSTATS);
+		if (rlen) {
+			printf("%s\n", rdata);
+			srv_read(NULL, rlen);
+		}
+		srv_end();
+	} while (rlen);
 
 	return (0);
 }
@@ -624,6 +655,23 @@ do_show_queue(int argc, struct parameter *argv)
 		while (srv_iter_envelopes(argv[0].u.u_msgid, &evp))
 			show_queue_envelope(&evp, 1);
 	}
+
+	return (0);
+}
+
+static int
+do_show_routes(int argc, struct parameter *argv)
+{
+	srv_send(IMSG_CTL_MTA_SHOW_ROUTES, NULL, 0);
+
+	do {
+		srv_recv(IMSG_CTL_MTA_SHOW_ROUTES);
+		if (rlen) {
+			printf("%s\n", rdata);
+			srv_read(NULL, rlen);
+		}
+		srv_end();
+	} while (rlen);
 
 	return (0);
 }
@@ -760,15 +808,18 @@ main(int argc, char **argv)
 	cmd_install("resume envelope <msgid>",	do_resume_envelope);
 	cmd_install("resume mda",		do_resume_mda);
 	cmd_install("resume mta",		do_resume_mta);
+	cmd_install("resume route <routeid>",	do_resume_route);
 	cmd_install("resume smtp",		do_resume_smtp);
 	cmd_install("schedule <msgid>",		do_schedule);
 	cmd_install("schedule <evpid>",		do_schedule);
 	cmd_install("schedule all",		do_schedule);
 	cmd_install("show envelope <evpid>",	do_show_envelope);
+	cmd_install("show hoststats",		do_show_hoststats);
 	cmd_install("show message <msgid>",	do_show_message);
 	cmd_install("show message <evpid>",	do_show_message);
 	cmd_install("show queue",		do_show_queue);
 	cmd_install("show queue <msgid>",	do_show_queue);
+	cmd_install("show routes",		do_show_routes);
 	cmd_install("show stats",		do_show_stats);
 	cmd_install("stop",			do_stop);
 	cmd_install("trace <str>",		do_trace);

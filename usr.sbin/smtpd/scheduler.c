@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.31 2013/07/19 15:14:23 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.32 2013/07/19 21:14:52 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -555,17 +555,13 @@ scheduler_process_mta(struct scheduler_batch *batch)
 {
 	size_t	i;
 
-	m_compose(p_queue, IMSG_MTA_BATCH, 0, 0, -1, NULL, 0);
-
 	for (i = 0; i < batch->evpcount; i++) {
 		log_debug("debug: scheduler: evp:%016" PRIx64
 		    " scheduled (mta)", batch->evpids[i]);
-		m_create(p_queue, IMSG_MTA_BATCH_ADD, 0, 0, -1);
+		m_create(p_queue, IMSG_MTA_TRANSFER, 0, 0, -1);
 		m_add_evpid(p_queue, batch->evpids[i]);
 		m_close(p_queue);
 	}
-
-	m_compose(p_queue, IMSG_MTA_BATCH_END, 0, 0, -1, NULL, 0);
 
 	stat_increment("scheduler.envelope.inflight", batch->evpcount);
 }
