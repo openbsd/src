@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.183 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.184 2013/07/19 21:18:54 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -101,6 +101,12 @@ enum smtp_command {
 	CMD_NOOP,
 };
 
+struct smtp_rcpt {
+	TAILQ_ENTRY(smtp_rcpt)	 entry;
+ 	struct mailaddr		 maddr;
+	size_t			 destcount;
+};
+
 struct smtp_session {
 	uint64_t		 id;
 	struct iobuf		 iobuf;
@@ -127,8 +133,10 @@ struct smtp_session {
 	int			 msgflags;
 	int			 msgcode;
 	size_t			 rcptcount;
-	size_t			 rcptfail;
 	size_t			 destcount;
+	size_t			 rcptfail;
+	TAILQ_HEAD(, smtp_rcpt)	 rcpts;
+
 
 	size_t			 datalen;
 	FILE			*ofile;
@@ -227,6 +235,8 @@ smtp_session(struct listener *listener, int sock,
 		free(s);
 		return (-1);
 	}
+	TAILQ_INIT(&s->rcpts);
+
 	s->id = generate_uid();
 	s->listener = listener;
 	memmove(&s->ss, ss, sizeof(*ss));
@@ -259,6 +269,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 	struct ca_cert_resp_msg       	*resp_ca_cert;
 	struct ca_vrfy_resp_msg       	*resp_ca_vrfy;
 	struct smtp_session		*s;
+	struct smtp_rcpt		*rcpt;
 	void				*ssl;
 	char				 user[SMTPD_MAXLOGNAME];
 	struct msg			 m;
@@ -441,6 +452,12 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			smtp_enter_state(s, STATE_QUIT);
 		}
 		else {
+			rcpt = xcalloc(1, sizeof(*rcpt), "smtp_rcpt");
+			rcpt->destcount = s->destcount;
+			rcpt->maddr = s->evp.rcpt;
+			TAILQ_INSERT_TAIL(&s->rcpts, rcpt, entry);
+
+			s->destcount = 0;
 			s->rcptcount++;
 			s->kickcount--;
 			smtp_reply(s, "250 Recipient ok");
@@ -471,16 +488,22 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		smtp_reply(s, "250 %08x Message accepted for delivery",
 		    evpid_to_msgid(s->evp.id));
 
-		log_info("smtp-in: Accepted message %08x on session %016"PRIx64
-		    ": from=<%s%s%s>, size=%zu, nrcpts=%zu, proto=%s",
-		    evpid_to_msgid(s->evp.id),
-		    s->id,
-		    s->evp.sender.user,
-		    s->evp.sender.user[0] == '\0' ? "" : "@",
-		    s->evp.sender.domain,
-		    s->datalen,
-		    s->rcptcount,
-		    s->flags & SF_EHLO ? "ESMTP" : "SMTP");
+		TAILQ_FOREACH(rcpt, &s->rcpts, entry) {
+			log_info("smtp-in: Accepted message %08x "
+			    "on session %016"PRIx64
+			    ": from=<%s%s%s>, to=<%s%s%s>, size=%zu, ndest=%zu, proto=%s",
+			    evpid_to_msgid(s->evp.id),
+			    s->id,
+			    s->evp.sender.user,
+			    s->evp.sender.user[0] == '\0' ? "" : "@",
+			    s->evp.sender.domain,
+			    rcpt->maddr.user,
+			    rcpt->maddr.user[0] == '\0' ? "" : "@",
+			    rcpt->maddr.domain,
+			    s->datalen,
+			    rcpt->destcount,
+			    s->flags & SF_EHLO ? "ESMTP" : "SMTP");
+		}
 
 		s->mailcount++;
 		s->kickcount = 0;
@@ -1380,6 +1403,13 @@ smtp_message_end(struct smtp_session *s)
 static void
 smtp_message_reset(struct smtp_session *s, int prepare)
 {
+	struct smtp_rcpt	*rcpt;
+
+	while ((rcpt = TAILQ_FIRST(&s->rcpts))) {
+		TAILQ_REMOVE(&s->rcpts, rcpt, entry);
+		free(rcpt);
+	}
+
 	bzero(&s->evp, sizeof s->evp);
 	s->msgflags = 0;
 	s->destcount = 0;
@@ -1448,6 +1478,8 @@ smtp_wait_mfa(struct smtp_session *s, int type)
 static void
 smtp_free(struct smtp_session *s, const char * reason)
 {
+	struct smtp_rcpt	*rcpt;
+
 	log_debug("debug: smtp: %p: deleting session: %s", s, reason);
 
 	tree_pop(&wait_mfa_data, s->id);
@@ -1472,6 +1504,11 @@ smtp_free(struct smtp_session *s, const char * reason)
 		stat_decrement("smtp.smtps", 1);
 	if (s->flags & SF_SECURE && s->listener->flags & F_STARTTLS)
 		stat_decrement("smtp.tls", 1);
+
+	while ((rcpt = TAILQ_FIRST(&s->rcpts))) {
+		TAILQ_REMOVE(&s->rcpts, rcpt, entry);
+		free(rcpt);
+	}
 
 	io_clear(&s->io);
 	iobuf_clear(&s->iobuf);
