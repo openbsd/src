@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.158 2013/07/05 13:07:57 blambert Exp $
+.\" $OpenBSD: pfctl.8,v 1.159 2013/07/19 07:44:21 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 5 2013 $
+.Dd $Mdocdate: July 19 2013 $
 .Dt PFCTL 8
 .Os
 .Sh NAME
@@ -74,18 +74,6 @@ A combination of both translations, bidirectional NAT, is also
 supported.
 Translation rules are described in
 .Xr pf.conf 5 .
-.Pp
-When the variable
-.Va pf
-is set to
-.Dv YES
-in
-.Xr rc.conf.local 8 ,
-the rule file specified with the variable
-.Va pf_rules
-is loaded automatically by the
-.Xr rc 8
-scripts and the packet filter is enabled.
 .Pp
 The packet filter does not itself forward packets between interfaces.
 Forwarding can be enabled by setting the
