@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.119 2013/07/19 13:11:18 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.120 2013/07/19 19:10:22 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -98,7 +98,7 @@ int		 host_dns(const char *, const char *, const char *,
 		    struct listenerlist *, int, in_port_t, uint8_t);
 int		 host(const char *, const char *, const char *,
     struct listenerlist *, int, in_port_t, const char *, uint8_t, const char *);
-int		 interface(const char *, const char *, const char *,
+int		 interface(const char *, int, const char *, const char *,
     struct listenerlist *, int, in_port_t, const char *, uint8_t, const char *);
 void		 set_localaddrs(void);
 int		 delaytonum(char *);
@@ -119,7 +119,7 @@ typedef struct {
 %}
 
 %token	AS QUEUE COMPRESSION MAXMESSAGESIZE LISTEN ON ANY PORT EXPIRE
-%token	TABLE SSL SMTPS CERTIFICATE DOMAIN BOUNCEWARN
+%token	TABLE SSL SMTPS CERTIFICATE DOMAIN BOUNCEWARN INET4 INET6
 %token  RELAY BACKUP VIA DELIVER TO LMTP MAILDIR MBOX HOSTNAME HELO
 %token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR SOURCE
 %token	ARROW AUTH TLS LOCAL VIRTUAL TAG TAGGED ALIAS FILTER KEY
@@ -127,7 +127,7 @@ typedef struct {
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.table>	table
-%type	<v.number>	port auth ssl size expire
+%type	<v.number>	port auth ssl size expire address_family
 %type	<v.table>	tables tablenew tableref destination alias virtual usermapping userbase credentials from sender
 %type	<v.maddr>	relay_as
 %type	<v.string>	certificate tag tagged relay_source listen_helo relay_helo relay_backup
@@ -330,8 +330,14 @@ credentials	: AUTH tables	{
 		| /* empty */	{ $$ = 0; }
 		;
 
+address_family	: INET4			{ $$ = AF_INET; }
+		| INET6			{ $$ = AF_INET6; }
+		| /* empty */		{ $$ = AF_UNSPEC; }
+		;
+
 listen_helo	: HOSTNAME STRING	{ $$ = $2; }
 		| /* empty */		{ $$ = NULL; }
+		;
 
 main		: BOUNCEWARN {
 			bzero(conf->sc_bounce_warn, sizeof conf->sc_bounce_warn);
@@ -353,14 +359,15 @@ main		: BOUNCEWARN {
 		}
 		| LISTEN {
 			bzero(&l, sizeof l);
-		} ON STRING port ssl certificate auth tag listen_helo {
+		} ON STRING address_family port ssl certificate auth tag listen_helo {
 			char	       *ifx  = $4;
-			in_port_t	port = $5;
-			uint8_t		ssl  = $6;
-			char	       *cert = $7;
-			uint8_t		auth = $8;
-			char	       *tag  = $9;
-			char	       *helo = $10;
+			int		family = $5;
+			in_port_t	port = $6;
+			uint8_t		ssl  = $7;
+			char	       *cert = $8;
+			uint8_t		auth = $9;
+			char	       *tag  = $10;
+			char	       *helo = $11;
 
 			if (port != 0 && ssl == F_SSL) {
 				yyerror("invalid listen option: tls/smtps on same port");
@@ -374,7 +381,7 @@ main		: BOUNCEWARN {
 
 			if (port == 0) {
 				if (ssl & F_SMTPS) {
-					if (! interface(ifx, tag, cert, conf->sc_listeners,
+					if (! interface(ifx, family, tag, cert, conf->sc_listeners,
 						MAX_LISTEN, 465, l.authtable, F_SMTPS|auth, helo)) {
 						if (host(ifx, tag, cert, conf->sc_listeners,
 							MAX_LISTEN, 465, l.authtable, ssl|auth, helo) <= 0) {
@@ -384,7 +391,7 @@ main		: BOUNCEWARN {
 					}
 				}
 				if (! ssl || (ssl & ~F_SMTPS)) {
-					if (! interface(ifx, tag, cert, conf->sc_listeners,
+					if (! interface(ifx, family, tag, cert, conf->sc_listeners,
 						MAX_LISTEN, 25, l.authtable, (ssl&~F_SMTPS)|auth, helo)) {
 						if (host(ifx, tag, cert, conf->sc_listeners,
 							MAX_LISTEN, 25, l.authtable, ssl|auth, helo) <= 0) {
@@ -395,7 +402,7 @@ main		: BOUNCEWARN {
 				}
 			}
 			else {
-				if (! interface(ifx, tag, cert, conf->sc_listeners,
+				if (! interface(ifx, family, tag, cert, conf->sc_listeners,
 					MAX_LISTEN, port, l.authtable, ssl|auth, helo)) {
 					if (host(ifx, tag, cert, conf->sc_listeners,
 						MAX_LISTEN, port, l.authtable, ssl|auth, helo) <= 0) {
@@ -974,6 +981,8 @@ lookup(char *s)
 		{ "helo",		HELO },
 		{ "hostname",		HOSTNAME },
 		{ "include",		INCLUDE },
+		{ "inet4",		INET4 },
+		{ "inet6",		INET6 },
 		{ "key",		KEY },
 		{ "listen",		LISTEN },
 		{ "lmtp",		LMTP },
@@ -1659,7 +1668,7 @@ host(const char *s, const char *tag, const char *cert, struct listenerlist *al,
 }
 
 int
-interface(const char *s, const char *tag, const char *cert,
+interface(const char *s, int family, const char *tag, const char *cert,
     struct listenerlist *al, int max, in_port_t port, const char *authtable, uint8_t flags,
     const char *helo)
 {
@@ -1679,6 +1688,8 @@ interface(const char *s, const char *tag, const char *cert,
 			continue;
 		if (strcmp(p->ifa_name, s) != 0 &&
 		    ! is_if_in_group(p->ifa_name, s))
+			continue;
+		if (family != AF_UNSPEC && family != p->ifa_addr->sa_family)
 			continue;
 
 		h = xcalloc(1, sizeof(*h), "interface");
