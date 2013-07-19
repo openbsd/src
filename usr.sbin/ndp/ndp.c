@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.47 2013/03/21 04:43:17 deraadt Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.48 2013/07/19 09:12:51 bluhm Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -335,7 +335,8 @@ getsocket(void)
 struct	sockaddr_in6 so_mask = {sizeof(so_mask), AF_INET6 };
 struct	sockaddr_in6 blank_sin = {sizeof(blank_sin), AF_INET6 }, sin_m;
 struct	sockaddr_dl blank_sdl = {sizeof(blank_sdl), AF_LINK }, sdl_m;
-int	expire_time, flags, found_entry;
+time_t	expire_time;
+int	flags, found_entry;
 struct	{
 	struct	rt_msghdr m_rtm;
 	char	m_space[512];
@@ -379,7 +380,8 @@ set(int argc, char **argv)
 	ea = (u_char *)LLADDR(&sdl_m);
 	if (ndp_ether_aton(eaddr, ea) == 0)
 		sdl_m.sdl_alen = 6;
-	flags = expire_time = 0;
+	expire_time = 0;
+	flags = 0;
 	while (argc-- > 0) {
 		if (strncmp(argv[0], "temp", 4) == 0) {
 			struct timeval time;
