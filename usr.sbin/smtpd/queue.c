@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.151 2013/07/19 15:14:23 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.152 2013/07/19 20:37:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -554,12 +554,24 @@ queue(void)
 		if ((pw = getpwnam(SMTPD_USER)) == NULL)
 			fatalx("unknown user " SMTPD_USER);
 
+	env->sc_queue_flags |= QUEUE_EVPCACHE;
+	env->sc_queue_evpcache_size = 1024;
+
 	if (chroot(PATH_SPOOL) == -1)
 		fatal("queue: chroot");
 	if (chdir("/") == -1)
 		fatal("queue: chdir(\"/\")");
 
 	config_process(PROC_QUEUE);
+
+	if (env->sc_queue_flags & QUEUE_COMPRESSION)
+		log_info("queue: queue compression enabled");
+
+	if (env->sc_queue_key) {
+		if (! crypto_setup(env->sc_queue_key, strlen(env->sc_queue_key)))
+			fatalx("crypto_setup: invalid key for queue encryption");
+		log_info("queue: queue encryption enabled");
+	}
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
@@ -677,23 +689,23 @@ queue_loop(uint64_t evpid)
 static void
 queue_log(const struct envelope *e, const char *prefix, const char *status)
 {
-       char rcpt[SMTPD_MAXLINESIZE];
-
-       rcpt[0] = '\0';
-       if (strcmp(e->rcpt.user, e->dest.user) ||
-           strcmp(e->rcpt.domain, e->dest.domain))
-               snprintf(rcpt, sizeof rcpt, "rcpt=<%s@%s>, ",
-                   e->rcpt.user, e->rcpt.domain);
-
-       log_info("%s: %s for %016" PRIx64 ": from=<%s@%s>, to=<%s@%s>, "
-           "%sdelay=%s, stat=%s",
-           e->type == D_MDA ? "delivery" : "relay",
-           prefix,
-           e->id, e->sender.user, e->sender.domain,
-           e->dest.user, e->dest.domain,
-           rcpt,
-           duration_to_text(time(NULL) - e->creation),
-           status);
+	char rcpt[SMTPD_MAXLINESIZE];
+	
+	strlcpy(rcpt, "-", sizeof rcpt);
+	if (strcmp(e->rcpt.user, e->dest.user) ||
+	    strcmp(e->rcpt.domain, e->dest.domain))
+		snprintf(rcpt, sizeof rcpt, "%s@%s",
+		    e->rcpt.user, e->rcpt.domain);
+	
+	log_info("%s: %s for %016" PRIx64 ": from=<%s@%s>, to=<%s@%s>, "
+	    "rcpt=<%s>, delay=%s, stat=%s",
+	    e->type == D_MDA ? "delivery" : "relay",
+	    prefix,
+	    e->id, e->sender.user, e->sender.domain,
+	    e->dest.user, e->dest.domain,
+	    rcpt,
+	    duration_to_text(time(NULL) - e->creation),
+	    status);
 }
 
 void

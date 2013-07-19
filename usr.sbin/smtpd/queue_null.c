@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_null.c,v 1.3 2013/07/19 11:14:08 eric Exp $	*/
+/*	$OpenBSD: queue_null.c,v 1.4 2013/07/19 20:37:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
@@ -40,76 +40,86 @@
 #include "smtpd.h"
 #include "log.h"
 
-static int queue_null_init(struct passwd *, int);
-static int queue_null_message(enum queue_op, uint32_t *);
-static int queue_null_envelope(enum queue_op , uint64_t *, char *, size_t);
-
-struct queue_backend queue_backend_null = {
-	queue_null_init,
-	queue_null_message,
-	queue_null_envelope,
-};
-
-static int	devnull;
-
 static int
-queue_null_init(struct passwd *pw, int server)
+queue_null_message_create(uint32_t *msgid)
 {
-
-	devnull = open("/dev/null", O_WRONLY, 0777);
-	if (devnull == -1) {
-		log_warn("open");
-		return (0);
-	}
-
+	*msgid = queue_generate_msgid();
 	return (1);
 }
 
 static int
-queue_null_message(enum queue_op qop, uint32_t *msgid)
+queue_null_message_commit(uint32_t msgid, const char *path)
 {
-	switch (qop) {
-	case QOP_CREATE:
-		*msgid = queue_generate_msgid();
-		return (1);
-	case QOP_DELETE:
-	case QOP_COMMIT:
-		return (1);
-	case QOP_FD_R:
-		return (-1);
-	case QOP_FD_RW:
-		return dup(devnull);
-	case QOP_CORRUPT:
-		return (0);
-	default:
-		fatalx("queue_null_message: unsupported operation.");
-	}
+	return (1);
+}
 
+static int
+queue_null_message_delete(uint32_t msgid)
+{
+	return (1);
+}
+
+static int
+queue_null_message_fd_r(uint32_t msgid)
+{
+	return (-1);
+}
+
+static int
+queue_null_message_corrupt(uint32_t msgid)
+{
 	return (0);
 }
 
 static int
-queue_null_envelope(enum queue_op qop, uint64_t *evpid, char *buf, size_t len)
+queue_null_envelope_create(uint32_t msgid, const char *buf, size_t len,
+    uint64_t *evpid)
 {
-	uint32_t	msgid;
+	*evpid = queue_generate_evpid(msgid);
+	return (1);
+}
 
-	if (qop == QOP_WALK)
-		return (-1);
+static int
+queue_null_envelope_delete(uint64_t evpid)
+{
+	return (1);
+}
 
-	switch (qop) {
-	case QOP_CREATE:
-		msgid = evpid_to_msgid(*evpid);
-		*evpid = queue_generate_evpid(msgid);
-		return (1);
-	case QOP_DELETE:
-		return (1);
-	case QOP_LOAD:
-		return (0);
-	case QOP_UPDATE:
-		return (1);
-	default:
-		fatalx("queue_null_envelope: unsupported operation.");
-	}
+static int
+queue_null_envelope_update(uint64_t evpid, const char *buf, size_t len)
+{
+	return (1);
+}
 
+static int
+queue_null_envelope_load(uint64_t evpid, char *buf, size_t len)
+{
 	return (0);
 }
+
+static int
+queue_null_envelope_walk(uint64_t *evpid, char *buf, size_t len)
+{
+	return (-1);
+}
+
+static int
+queue_null_init(struct passwd *pw, int server)
+{
+	queue_api_on_message_create(queue_null_message_create);
+	queue_api_on_message_commit(queue_null_message_commit);
+	queue_api_on_message_delete(queue_null_message_delete);
+	queue_api_on_message_fd_r(queue_null_message_fd_r);
+	queue_api_on_message_corrupt(queue_null_message_corrupt);
+	queue_api_on_envelope_create(queue_null_envelope_create);
+	queue_api_on_envelope_delete(queue_null_envelope_delete);
+	queue_api_on_envelope_update(queue_null_envelope_update);
+	queue_api_on_envelope_load(queue_null_envelope_load);
+	queue_api_on_envelope_walk(queue_null_envelope_walk);
+
+	return (1);
+}
+
+struct queue_backend queue_backend_null = {
+	queue_null_init,
+};

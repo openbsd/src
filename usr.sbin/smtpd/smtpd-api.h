@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.6 2013/07/19 19:53:33 eric Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.7 2013/07/19 20:37:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -87,6 +87,24 @@ struct filter_connect {
 	const char		*hostname;
 };
 
+#define PROC_QUEUE_API_VERSION	1
+
+enum {
+	PROC_QUEUE_OK,
+	PROC_QUEUE_FAIL,
+	PROC_QUEUE_INIT,
+	PROC_QUEUE_MESSAGE_CREATE,
+	PROC_QUEUE_MESSAGE_DELETE,
+	PROC_QUEUE_MESSAGE_COMMIT,
+	PROC_QUEUE_MESSAGE_FD_R,
+	PROC_QUEUE_MESSAGE_CORRUPT,
+	PROC_QUEUE_ENVELOPE_CREATE,
+	PROC_QUEUE_ENVELOPE_DELETE,
+	PROC_QUEUE_ENVELOPE_LOAD,
+	PROC_QUEUE_ENVELOPE_UPDATE,
+	PROC_QUEUE_ENVELOPE_WALK,
+};
+
 #define PROC_TABLE_API_VERSION	1
 
 enum table_service {
@@ -164,6 +182,19 @@ void filter_api_on_data(void(*)(uint64_t, uint64_t));
 void filter_api_on_dataline(void(*)(uint64_t, const char *), int);
 void filter_api_on_eom(void(*)(uint64_t, uint64_t));
 void filter_api_on_event(void(*)(uint64_t, enum filter_hook));
+
+/* queue */
+void queue_api_on_message_create(int(*)(uint32_t *));
+void queue_api_on_message_commit(int(*)(uint32_t, const char*));
+void queue_api_on_message_delete(int(*)(uint32_t));
+void queue_api_on_message_fd_r(int(*)(uint32_t));
+void queue_api_on_message_corrupt(int(*)(uint32_t));
+void queue_api_on_envelope_create(int(*)(uint32_t, const char *, size_t, uint64_t *));
+void queue_api_on_envelope_delete(int(*)(uint64_t));
+void queue_api_on_envelope_update(int(*)(uint64_t, const char *, size_t));
+void queue_api_on_envelope_load(int(*)(uint64_t, char *, size_t));
+void queue_api_on_envelope_walk(int(*)(uint64_t *, char *, size_t));
+int queue_api_dispatch(void);
 
 /* table */
 void table_api_on_update(int(*)(void));

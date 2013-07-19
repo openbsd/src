@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.419 2013/07/19 19:53:33 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.420 2013/07/19 20:37:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -66,8 +66,6 @@
 #define PATH_OFFLINE		"/offline"
 #define PATH_PURGE		"/purge"
 #define PATH_TEMPORARY		"/temporary"
-#define PATH_INCOMING		"/incoming"
-#define PATH_MESSAGE		"/message"
 
 #define	PATH_FILTERS		"/usr/libexec/smtpd"
 #define	PATH_TABLES		"/usr/libexec/smtpd"
@@ -539,7 +537,11 @@ struct smtpd {
 	uint32_t			sc_flags;
 
 #define QUEUE_COMPRESSION      		0x00000001
+#define QUEUE_ENCRYPTION      		0x00000002
+#define QUEUE_EVPCACHE			0x00000004
 	uint32_t			sc_queue_flags;
+	char			       *sc_queue_key;
+	size_t				sc_queue_evpcache_size;
 
 	int				sc_qexpire;
 #define MAX_BOUNCE_WARN			4
@@ -748,24 +750,10 @@ struct mta_task {
 	char				*sender;
 };
 
-enum queue_op {
-	QOP_CREATE,
-	QOP_DELETE,
-	QOP_UPDATE,
-	QOP_WALK,
-	QOP_COMMIT,
-	QOP_LOAD,
-	QOP_FD_RW,
-	QOP_FD_R,
-	QOP_CORRUPT,
-};
-
 struct passwd;
 
 struct queue_backend {
 	int	(*init)(struct passwd *, int);
-	int	(*message)(enum queue_op, uint32_t *);
-	int	(*envelope)(enum queue_op, uint64_t *, char *, size_t);
 };
 
 struct compress_backend {
@@ -845,7 +833,6 @@ struct scheduler_backend {
 	int	(*suspend)(uint64_t);
 	int	(*resume)(uint64_t);
 };
-
 
 enum stat_type {
 	STAT_COUNTER,
@@ -1236,7 +1223,6 @@ void queue_flow_control(void);
 uint32_t queue_generate_msgid(void);
 uint64_t queue_generate_evpid(uint32_t);
 int queue_init(const char *, int);
-int queue_message_incoming_path(uint32_t, char *, size_t);
 int queue_message_create(uint32_t *);
 int queue_message_delete(uint32_t);
 int queue_message_commit(uint32_t);

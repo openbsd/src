@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2013/07/19 13:41:23 eric Exp $
+#	$OpenBSD: Makefile,v 1.33 2013/07/19 20:37:08 eric Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -18,7 +18,7 @@ CFLAGS+=	-Wsign-compare -Wbounded
 CFLAGS+=	-DNO_IO
 
 SRCS=	enqueue.c parser.c log.c envelope.c crypto.c
-SRCS+=	queue_backend.c queue_fsqueue.c
+SRCS+=	queue_backend.c queue_fs.c
 SRCS+=	smtpctl.c util.c
 SRCS+=	compress_backend.c compress_gzip.c
 SRCS+=	to.c expand.c tree.c

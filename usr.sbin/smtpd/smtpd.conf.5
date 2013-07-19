@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.100 2013/07/19 19:10:22 eric Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.101 2013/07/19 20:37:07 eric Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -559,6 +559,24 @@ Envelopes and messages may be inspected using the
 or
 .Xr gzcat 1
 utilities.
+.It Ic queue encryption key Ar key
+Enable transparent encryption of envelopes and messages.
+.Ar key
+must be a 16 bytes random key in hexadecimal representation.
+It can be obtained using the
+.Xr openssl
+utility as follow:
+.Bd -literal -offset indent
+$ openssl rand -hex 16
+.Ed
+.Pp
+The only supported algorithm is AES-256 in GCM mode.
+Envelopes and messages may be inspected using the
+.Xr smtpctl 8
+utility.
+.Pp
+Queue encryption can be used with queue compression and will always
+perform compression before encryption.
 .It Ic table Ar name Oo Ar type : Oc Ns Ar config
 Tables are used to provide additional configuration information for
 .Xr smtpd 8
