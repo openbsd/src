@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.120 2013/07/19 19:10:22 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.121 2013/07/19 19:53:33 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -486,6 +486,7 @@ table		: TABLE STRING STRING	{
 					;
 				if (*p == ':') {
 					*p = '\0';
+					backend = $3;
 					config  = p+1;
 				}
 			}
@@ -593,7 +594,7 @@ alias		: ALIAS tables			{
 virtual		: VIRTUAL tables		{
 			struct table   *t = $2;
 
-			if (! table_check_service(t, K_ALIAS)) {
+			if (! table_check_use(t, T_DYNAMIC|T_HASH, K_ALIAS)) {
 				yyerror("invalid use of table \"%s\" as VIRTUAL parameter",
 				    t->t_name);
 				YYERROR;
@@ -751,7 +752,7 @@ action		: userbase DELIVER TO MAILDIR			{
 				fatal("command too long");
 			free($5);
 		}
-		| RELAY relay_as relay_source relay_helo       	{
+		| RELAY relay_as relay_source relay_helo	{
 			rule->r_action = A_RELAY;
 			rule->r_as = $2;
 			if ($3)

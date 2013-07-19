@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.418 2013/07/19 16:02:00 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.419 2013/07/19 19:53:33 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -70,6 +70,7 @@
 #define PATH_MESSAGE		"/message"
 
 #define	PATH_FILTERS		"/usr/libexec/smtpd"
+#define	PATH_TABLES		"/usr/libexec/smtpd"
 
 #define F_STARTTLS		0x01
 #define F_SMTPS			0x02
@@ -288,18 +289,6 @@ enum table_type {
 	T_DYNAMIC	= 0x01,	/* table with external source	*/
 	T_LIST		= 0x02,	/* table holding a list		*/
 	T_HASH		= 0x04,	/* table holding a hash table	*/
-};
-
-enum table_service {
-	K_NONE		= 0x00,
-	K_ALIAS		= 0x01,	/* returns struct expand	*/
-	K_DOMAIN	= 0x02,	/* returns struct destination	*/
-	K_CREDENTIALS	= 0x04,	/* returns struct credentials	*/
-	K_NETADDR	= 0x08,	/* returns struct netaddr	*/
-	K_USERINFO	= 0x10,	/* returns struct userinfo	*/
-	K_SOURCE	= 0x20, /* returns struct source	*/
-	K_MAILADDR	= 0x40, /* returns struct mailaddr	*/
-	K_ADDRNAME	= 0x80, /* returns struct addrname	*/
 };
 
 struct table {

@@ -1,6 +1,7 @@
-/*	$OpenBSD: smtpd-api.h,v 1.5 2013/07/19 16:02:00 eric Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.6 2013/07/19 19:53:33 eric Exp $	*/
 
 /*
+ * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -86,6 +87,32 @@ struct filter_connect {
 	const char		*hostname;
 };
 
+#define PROC_TABLE_API_VERSION	1
+
+enum table_service {
+	K_NONE		= 0x00,
+	K_ALIAS		= 0x01,	/* returns struct expand	*/
+	K_DOMAIN	= 0x02,	/* returns struct destination	*/
+	K_CREDENTIALS	= 0x04,	/* returns struct credentials	*/
+	K_NETADDR	= 0x08,	/* returns struct netaddr	*/
+	K_USERINFO	= 0x10,	/* returns struct userinfo	*/
+	K_SOURCE	= 0x20, /* returns struct source	*/
+	K_MAILADDR	= 0x40, /* returns struct mailaddr	*/
+	K_ADDRNAME	= 0x80, /* returns struct addrname	*/
+};
+#define K_ANY		  0xff
+
+enum {
+	PROC_TABLE_OK,
+	PROC_TABLE_FAIL,
+	PROC_TABLE_OPEN,
+	PROC_TABLE_CLOSE,
+	PROC_TABLE_UPDATE,
+	PROC_TABLE_CHECK,
+	PROC_TABLE_LOOKUP,
+	PROC_TABLE_FETCH,
+};
+
 static inline uint32_t
 evpid_to_msgid(uint64_t evpid)
 {
@@ -137,6 +164,13 @@ void filter_api_on_data(void(*)(uint64_t, uint64_t));
 void filter_api_on_dataline(void(*)(uint64_t, const char *), int);
 void filter_api_on_eom(void(*)(uint64_t, uint64_t));
 void filter_api_on_event(void(*)(uint64_t, enum filter_hook));
+
+/* table */
+void table_api_on_update(int(*)(void));
+void table_api_on_check(int(*)(int, const char *));
+void table_api_on_lookup(int(*)(int, const char *, char *, size_t));
+void table_api_on_fetch(int(*)(int, char *, size_t));
+int table_api_dispatch(void);
 
 /* tree.c */
 #define tree_init(t) do { SPLAY_INIT(&((t)->tree)); (t)->count = 0; } while(0)
