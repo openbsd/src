@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.1 2013/05/04 13:46:21 gilles Exp $	 */
+/* $OpenBSD: crypto.c,v 1.2 2013/07/19 09:39:28 eric Exp $	 */
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@openbsd.org>
@@ -71,7 +71,6 @@ crypto_encrypt_file(FILE * in, FILE * out)
 	uint8_t		tag[GCM_TAG_SIZE];
 	uint8_t		version = API_VERSION;
 	size_t		r, w;
-	off_t		sz;
 	int		len;
 	int		ret = 0;
 	struct stat	sb;
@@ -81,7 +80,6 @@ crypto_encrypt_file(FILE * in, FILE * out)
 		return 0;
 	if (sb.st_size >= 0x1000000000LL)
 		return 0;
-	sz = sb.st_size;
 
 	/* prepend version byte*/
 	if ((w = fwrite(&version, 1, sizeof version, out)) != sizeof version)
@@ -373,7 +371,6 @@ main(int argc, char *argv[])
 		 * fprintf(fpin, "borken");
 		 * fclose(fpin);
 		 */
-
 		fpin = fopen("/tmp/passwd.enc", "r");
 		fpout = fopen("/tmp/passwd.dec", "w");
 		if (!crypto_decrypt_file(fpin, fpout))
