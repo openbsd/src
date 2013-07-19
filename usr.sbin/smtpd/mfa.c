@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.78 2013/07/19 11:14:08 eric Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.79 2013/07/19 16:02:00 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -46,7 +46,6 @@ mfa_imsg(struct mproc *p, struct imsg *imsg)
 {
 	struct sockaddr_storage	 local, remote;
 	struct mailaddr		 maddr;
-	struct filter		*filter;
 	struct msg		 m;
 	const char		*line, *hostname;
 	uint64_t		 reqid;
@@ -144,19 +143,15 @@ mfa_imsg(struct mproc *p, struct imsg *imsg)
 	if (p->proc == PROC_PARENT) {
 		switch (imsg->hdr.type) {
 		case IMSG_CONF_START:
-			dict_init(&env->sc_filters);
 			return;
 
 		case IMSG_CONF_FILTER:
-			filter = xmemdup(imsg->data, sizeof *filter,
-			    "mfa_imsg");
-			dict_set(&env->sc_filters, filter->name, filter);
 			return;
 
 		case IMSG_CONF_END:
 			mfa_filter_init();
 			return;
-
+			
 		case IMSG_CTL_VERBOSE:
 			m_msg(&m, imsg);
 			m_get_int(&m, &v);
@@ -218,12 +213,14 @@ mfa(void)
 
 	switch (pid = fork()) {
 	case -1:
-		fatal("mfa: cannot fork");
+		fatal("filter: cannot fork");
 	case 0:
 		break;
 	default:
 		return (pid);
 	}
+
+	mfa_filter_prepare();
 
 	purge_config(PURGE_EVERYTHING);
 
@@ -232,10 +229,15 @@ mfa(void)
 
 	config_process(PROC_MFA);
 
+	if (chroot(PATH_CHROOT) == -1)
+		fatal("scheduler: chroot");
+	if (chdir("/") == -1)
+		fatal("scheduler: chdir(\"/\")");
+
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		fatal("mfa: cannot drop privileges");
+		fatal("filter: cannot drop privileges");
 
 	imsg_callback = mfa_imsg;
 	event_init();

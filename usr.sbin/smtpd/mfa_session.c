@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa_session.c,v 1.17 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: mfa_session.c,v 1.18 2013/07/19 16:02:00 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -119,20 +119,17 @@ struct tree	sessions;
 struct tree	queries;
 
 void
-mfa_filter_init(void)
+mfa_filter_prepare(void)
 {
-	static int		 init = 0;
+	static int		 prepare = 0;
 	struct filter		*filter;
 	void			*iter;
 	struct mfa_filter	*f;
 	struct mproc		*p;
 
-	if (init)
+	if (prepare)
 		return;
-	init = 1;
-
-	tree_init(&sessions);
-	tree_init(&queries);
+	prepare = 1;
 
 	TAILQ_INIT(&chain.filters);
 
@@ -146,11 +143,30 @@ mfa_filter_init(void)
 		p->data = f;
 		if (mproc_fork(p, filter->path, filter->name) < 0)
 			fatalx("mfa_filter_init");
+		TAILQ_INSERT_TAIL(&chain.filters, f, entry);
+	}
+}
+
+void
+mfa_filter_init(void)
+{
+	static int		 init = 0;
+	struct mfa_filter	*f;
+	struct mproc		*p;
+
+	if (init)
+		return;
+	init = 1;
+
+	tree_init(&sessions);
+	tree_init(&queries);
+
+	TAILQ_FOREACH(f, &chain.filters, entry) {
+		p = &f->mproc;
 		m_create(p, IMSG_FILTER_REGISTER, 0, 0, -1);
 		m_add_u32(p, FILTER_API_VERSION);
 		m_close(p);
 		mproc_enable(p);
-		TAILQ_INSERT_TAIL(&chain.filters, f, entry);
 	}
 
 	if (TAILQ_FIRST(&chain.filters) == NULL)
@@ -249,12 +265,9 @@ static void
 mfa_run_data(struct mfa_filter *f, uint64_t id, const char *line)
 {
 	struct mproc	*p;
-	size_t		 len;
 
 	log_trace(TRACE_MFA,
-	    "mfa: running data for %016"PRIx64" on filter %p: %s", id, f, line);
-
-	len = 16 + strlen(line);
+	    "filter: running data for %016"PRIx64" on filter %p: %s", id, f, line);
 
 	/* Send the dataline to the filters that want to see it. */
 	while (f) {
@@ -272,7 +285,7 @@ mfa_run_data(struct mfa_filter *f, uint64_t id, const char *line)
 			 */
 			if (f->flags & FILTER_ALTERDATA) {
 				log_trace(TRACE_MFA,
-	 			   "mfa: expect datalines from filter %s",
+	 			   "filter: expect datalines from filter %s",
 				   mfa_filter_to_text(f));
 				return;
 			}
@@ -282,7 +295,7 @@ mfa_run_data(struct mfa_filter *f, uint64_t id, const char *line)
 
 	/* When all filters are done, send the line back to the smtp process. */
 	log_trace(TRACE_MFA,
-	    "mfa: sending final data to smtp for %016"PRIx64" on filter %p: %s", id, f, line);
+	    "filter: sending final data to smtp for %016"PRIx64" on filter %p: %s", id, f, line);
 
 	m_create(p_smtp, IMSG_MFA_SMTP_DATA, 0, 0, -1);
 	m_add_id(p_smtp, id);
@@ -307,7 +320,7 @@ mfa_query(struct mfa_session *s, int type, int hook)
 	q->current = TAILQ_FIRST(&chain.filters);
 	q->hasrun = 0;
 
-	log_trace(TRACE_MFA, "mfa: new query %s %s", type_to_str(type),
+	log_trace(TRACE_MFA, "filter: new query %s %s", type_to_str(type),
 	    hook_to_str(hook));
 
 	return (q);
@@ -318,9 +331,8 @@ mfa_drain_query(struct mfa_query *q)
 {
 	struct mfa_filter	*f;
 	struct mfa_query	*prev;
-	size_t			 len;
 
-	log_trace(TRACE_MFA, "mfa: draining query %s", mfa_query_to_text(q));
+	log_trace(TRACE_MFA, "filter: draining query %s", mfa_query_to_text(q));
 
 	/*
 	 * The query must be passed through all filters that registered
@@ -338,7 +350,7 @@ mfa_drain_query(struct mfa_query *q)
 			}
 			if (q->state == QUERY_RUNNING) {
 				log_trace(TRACE_MFA,
-				    "mfa: waiting for running query %s",
+				    "filter: waiting for running query %s",
 				    mfa_query_to_text(q));
 				return;
 			}
@@ -351,7 +363,7 @@ mfa_drain_query(struct mfa_query *q)
 			if (prev && prev->current == q->current) {
 				q->state = QUERY_WAITING;
 				log_trace(TRACE_MFA,
-				    "mfa: query blocked by previoius query %s",
+				    "filter: query blocked by previoius query %s",
 				    mfa_query_to_text(prev));
 				return;
 			}
@@ -365,7 +377,7 @@ mfa_drain_query(struct mfa_query *q)
 	if (q->type == QT_QUERY) {
 
 		log_trace(TRACE_MFA,
-		    "mfa: query 0x%016"PRIx64" done: "
+		    "filter: query 0x%016"PRIx64" done: "
 		    "status=%s code=%i response=\"%s\"",
 		    q->qid,
 		    status_to_str(q->smtp.status),
@@ -380,9 +392,6 @@ mfa_drain_query(struct mfa_query *q)
 			m_close(&f->mproc);
 		}
 
-		len = 48;
-		if (q->smtp.response)
-			len += strlen(q->smtp.response);
 		m_create(p_smtp, IMSG_MFA_SMTP_RESPONSE, 0, 0, -1);
 		m_add_id(p_smtp, q->session->id);
 		m_add_int(p_smtp, q->smtp.status);
@@ -401,7 +410,7 @@ mfa_drain_query(struct mfa_query *q)
 		free(q->session);
 	}
 
-	log_trace(TRACE_MFA, "mfa: freeing query %016" PRIx64, q->qid);
+	log_trace(TRACE_MFA, "filter: freeing query %016" PRIx64, q->qid);
 	free(q);
 }
 
@@ -409,12 +418,12 @@ static void
 mfa_run_query(struct mfa_filter *f, struct mfa_query *q)
 {
 	if ((f->hooks & q->hook) == 0) {
-		log_trace(TRACE_MFA, "mfa: skipping filter %s for query %s",
+		log_trace(TRACE_MFA, "filter: skipping filter %s for query %s",
 		    mfa_filter_to_text(f), mfa_query_to_text(q));
 		return;
 	}
 
-	log_trace(TRACE_MFA, "mfa: running filter %s for query %s",
+	log_trace(TRACE_MFA, "filter: running filter %s for query %s",
 	    mfa_filter_to_text(f), mfa_query_to_text(q));
 
 	if (q->type == QT_QUERY) {
@@ -473,7 +482,7 @@ mfa_filter_imsg(struct mproc *p, struct imsg *imsg)
 		fatalx("exiting");
 	}
 
-	log_trace(TRACE_MFA, "mfa: imsg %s from filter %s",
+	log_trace(TRACE_MFA, "filter: imsg %s from filter %s",
 	    filterimsg_to_str(imsg->hdr.type),
 	    mfa_filter_to_text(f));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.4 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.5 2013/07/19 16:02:00 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -86,6 +86,18 @@ struct filter_connect {
 	const char		*hostname;
 };
 
+static inline uint32_t
+evpid_to_msgid(uint64_t evpid)
+{
+	return (evpid >> 32);
+}
+
+static inline uint64_t
+msgid_to_evpid(uint32_t msgid)
+{
+        return ((uint64_t)msgid << 32);
+}
+
 /* dict.c */
 #define dict_init(d) do { SPLAY_INIT(&((d)->dict)); (d)->count = 0; } while(0)
 #define dict_empty(d) SPLAY_EMPTY(&((d)->dict))
@@ -104,6 +116,10 @@ int dict_iterfrom(struct dict *, void **, const char *, const char **, void **);
 void dict_merge(struct dict *, struct dict *);
 
 /* filter_api.c */
+void filter_api_setugid(uid_t, gid_t);
+void filter_api_set_chroot(const char *);
+void filter_api_no_chroot(void);
+
 void filter_api_loop(void);
 void filter_api_accept(uint64_t);
 void filter_api_accept_notify(uint64_t);
