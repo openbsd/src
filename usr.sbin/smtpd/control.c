@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.85 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.86 2013/07/19 07:49:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -181,7 +181,6 @@ control(void)
 	case -1:
 		fatal("control: cannot fork");
 	case 0:
-		env->sc_pid = getpid();
 		break;
 	default:
 		return (pid);

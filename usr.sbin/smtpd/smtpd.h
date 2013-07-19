@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.412 2013/07/19 07:37:29 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.413 2013/07/19 07:49:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -529,8 +529,6 @@ struct listener {
 struct smtpd {
 	char				sc_conffile[SMTPD_MAXPATHLEN];
 	size_t				sc_maxsize;
-
-	pid_t				sc_pid;
 
 #define SMTPD_OPT_VERBOSE		0x00000001
 #define SMTPD_OPT_NOACTION		0x00000002
