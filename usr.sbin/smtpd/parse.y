@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.118 2013/06/03 08:48:40 zhuk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.119 2013/07/19 13:11:18 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -103,6 +103,7 @@ int		 interface(const char *, const char *, const char *,
 void		 set_localaddrs(void);
 int		 delaytonum(char *);
 int		 is_if_in_group(const char *, const char *);
+int		 getmailname(char *, size_t);
 
 typedef struct {
 	union {
@@ -1329,11 +1330,10 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	struct sym     *sym, *next;
 	struct table   *t;
 	char		hostname[SMTPD_MAXHOSTNAMELEN];
+	char		hostname_copy[SMTPD_MAXHOSTNAMELEN];
 
-	if (gethostname(hostname, sizeof hostname) == -1) {
-		fprintf(stderr, "invalid hostname: gethostname() failed\n");
+	if (! getmailname(hostname, sizeof hostname))
 		return (-1);
-	}
 
 	conf = x_conf;
 	bzero(conf, sizeof(*conf));
@@ -1392,6 +1392,13 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	table_add(t, "localhost", NULL);
 	table_add(t, hostname, NULL);
 
+	/* can't truncate here */
+	(void)strlcpy(hostname_copy, hostname, sizeof hostname_copy);
+
+	hostname_copy[strcspn(hostname_copy, ".")] = '\0';
+	if (strcmp(hostname, hostname_copy) != 0)
+		table_add(t, hostname_copy, NULL);
+
 	table_create("getpwnam", "<getpwnam>", NULL, NULL);
 
 	/*
@@ -1423,12 +1430,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	}
 
 	if (strlen(conf->sc_hostname) == 0)
-		if (gethostname(conf->sc_hostname,
-		    sizeof(conf->sc_hostname)) == -1) {
-			log_warn("warn: could not determine host name");
-			bzero(conf->sc_hostname, sizeof(conf->sc_hostname));
-			errors++;
-		}
+		strlcpy(conf->sc_hostname, hostname, sizeof conf->sc_hostname);
 
 	if (errors) {
 		purge_config(PURGE_EVERYTHING);
@@ -1854,5 +1856,74 @@ is_if_in_group(const char *ifname, const char *groupname)
 
 end:
 	close(s);
+	return ret;
+}
+
+int
+getmailname(char *hostname, size_t len)
+{
+	struct addrinfo	hints, *res = NULL;
+	FILE   *fp;
+	char   *buf, *lbuf = NULL;
+	size_t	buflen;
+	int	error;
+	int	ret = 0;
+
+	/* First, check if we have "/etc/mailname" */
+	if ((fp = fopen("/etc/mailname", "r")) == NULL)
+		goto nomailname;
+
+	if ((buf = fgetln(fp, &buflen)) == NULL)
+		goto end;
+
+	if (buf[buflen-1] == '\n')
+		buf[buflen - 1] = '\0';
+	else {
+		if ((lbuf = calloc(buflen + 1, 1)) == NULL)
+			err(1, "calloc");
+		memcpy(lbuf, buf, buflen);
+	}
+
+	if (strlcpy(hostname, buf, len) >= len)
+		fprintf(stderr, "/etc/mailname entry too long");
+	else {
+		ret = 1;
+		goto end;
+	}
+	
+
+nomailname:
+	if (gethostname(hostname, len) == -1) {
+		fprintf(stderr, "invalid hostname: gethostname() failed\n");
+		goto end;
+	}
+
+	if (strchr(hostname, '.') == NULL) {
+		memset(&hints, 0, sizeof hints);
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_protocol = IPPROTO_TCP;
+		hints.ai_flags = AI_CANONNAME;
+		error = getaddrinfo(hostname, NULL, &hints, &res);
+		if (error) {
+			fprintf(stderr, "invalid hostname: getaddrinfo() failed: %s\n",
+			    gai_strerror(error));
+			goto end;
+		}
+		
+		if (strlcpy(hostname, res->ai_canonname, len) >= len) {
+			fprintf(stderr, "hostname too long");
+			goto end;
+		}
+	}
+
+	ret = 1;
+
+end:
+	free(lbuf);
+	if (res)
+		freeaddrinfo(res);
+	if (fp)
+		fclose(fp);
 	return ret;
 }
