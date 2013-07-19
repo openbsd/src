@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.93 2013/03/21 04:43:17 deraadt Exp $	*/
+/*	$OpenBSD: show.c,v 1.94 2013/07/19 20:10:23 guenther Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -103,6 +103,7 @@ static const struct bits bits[] = {
 	{ 0 }
 };
 
+int	 WID_DST(int);
 void	 pr_rthdr(int);
 void	 p_rtentry(struct rt_msghdr *);
 void	 p_pfkentry(struct sadb_msg *);
@@ -115,6 +116,8 @@ void	 p_sockaddr_mpls(struct sockaddr *, struct sockaddr *, int, int);
 void	 p_flags(int, char *);
 char	*routename4(in_addr_t);
 char	*routename6(struct sockaddr_in6 *);
+char	*netname4(in_addr_t, struct sockaddr_in *);
+char	*netname6(struct sockaddr_in6 *, struct sockaddr_in6 *);
 void	 index_pfk(struct sadb_msg *, void **);
 
 /*
@@ -762,7 +765,7 @@ netname6(struct sockaddr_in6 *sa6, struct sockaddr_in6 *mask)
 	if (mask) {
 		lim = mask->sin6_len - offsetof(struct sockaddr_in6, sin6_addr);
 		lim = lim < (int)sizeof(struct in6_addr) ?
-		    lim : sizeof(struct in6_addr);
+		    lim : (int)sizeof(struct in6_addr);
 		for (p = (u_char *)&mask->sin6_addr, i = 0; i < lim; p++) {
 			if (final && *p) {
 				illegal++;
@@ -816,7 +819,7 @@ netname6(struct sockaddr_in6 *sa6, struct sockaddr_in6 *mask)
 			else
 				sin6.sin6_addr.s6_addr[i++] = 0x00;
 		}
-		while (i < sizeof(struct in6_addr))
+		while (i < (int)sizeof(struct in6_addr))
 			sin6.sin6_addr.s6_addr[i++] = 0x00;
 	} else
 		masklen = 128;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.162 2013/05/27 14:07:25 sthen Exp $	*/
+/*	$OpenBSD: route.c,v 1.163 2013/07/19 20:10:23 guenther Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -80,6 +80,7 @@ struct rt_metrics	rt_metrics;
 void	 flushroutes(int, char **);
 int	 newroute(int, char **);
 void	 show(int, char *[]);
+int	 keycmp(const void *, const void *);
 int	 keyword(char *);
 void	 monitor(int, char *[]);
 int	 prefixlen(char *);
@@ -87,6 +88,7 @@ void	 sockaddr(char *, struct sockaddr *);
 void	 sodump(sup, char *);
 char	*priorityname(u_int8_t);
 void	 print_getmsg(struct rt_msghdr *, int);
+const char *get_linkstate(int, int);
 void	 print_rtmsg(struct rt_msghdr *, int);
 void	 pmsg_common(struct rt_msghdr *);
 void	 pmsg_addrs(char *, int);
@@ -344,8 +346,7 @@ flushroutes(int argc, char **argv)
 		if (verbose)
 			print_rtmsg(rtm, rlen);
 		else {
-			struct sockaddr *sa = (struct sockaddr *)(next +
-			    rtm->rtm_hdrlen);
+			sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 			printf("%-20.20s ", rtm->rtm_flags & RTF_HOST ?
 			    routename(sa) : netname(sa, NULL)); /* XXX extract
 								   netmask */
