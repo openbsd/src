@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.37 2013/06/03 16:04:03 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.38 2013/07/19 07:37:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -479,7 +479,11 @@ mta_connect(struct mta_session *s)
 
 	memmove(&ss, s->route->dst->sa, s->route->dst->sa->sa_len);
 	sa = (struct sockaddr *)&ss;
-	sa_set_port(sa, portno);
+
+	if (sa->sa_family == AF_INET)
+		((struct sockaddr_in *)sa)->sin_port = htons(portno);
+	else if (sa->sa_family == AF_INET6)
+		((struct sockaddr_in6 *)sa)->sin6_port = htons(portno);
 
 	s->attempt += 1;
 

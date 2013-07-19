@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.411 2013/06/04 08:42:00 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.412 2013/07/19 07:37:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1364,7 +1364,6 @@ int valid_domainpart(const char *);
 int secure_file(int, char *, char *, uid_t, int);
 int  lowercase(char *, const char *, size_t);
 void xlowercase(char *, const char *, size_t);
-void sa_set_port(struct sockaddr *, int);
 uint64_t generate_uid(void);
 void fdlimit(double);
 int availdesc(void);

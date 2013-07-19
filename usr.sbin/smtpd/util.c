@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.94 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.95 2013/07/19 07:37:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -604,33 +604,6 @@ xlowercase(char *buf, const char *s, size_t len)
 
 	if (! lowercase(buf, s, len))
 		fatalx("lowercase: truncation");
-}
-
-void
-sa_set_port(struct sockaddr *sa, int port)
-{
-	char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-	struct addrinfo hints, *res;
-	int error;
-
-	error = getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0,
-	    NI_NUMERICHOST);
-	if (error)
-		fatalx("sa_set_port: getnameinfo failed");
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = PF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_NUMERICHOST|AI_NUMERICSERV;
-
-	snprintf(sbuf, sizeof(sbuf), "%d", port);
-
-	error = getaddrinfo(hbuf, sbuf, &hints, &res);
-	if (error)
-		fatalx("sa_set_port: getaddrinfo failed");
-
-	memcpy(sa, res->ai_addr, res->ai_addrlen);
-	freeaddrinfo(res);
 }
 
 uint64_t
