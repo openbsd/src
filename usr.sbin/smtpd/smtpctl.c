@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.104 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.105 2013/07/19 11:14:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Gilles Chehade <gilles@poolp.org>
@@ -101,19 +101,6 @@ setup_env(struct smtpd *smtpd)
 {
 	bzero(smtpd, sizeof (*smtpd));
 	env = smtpd;
-
-	if ((env->sc_pw = getpwnam(SMTPD_USER)) == NULL)
-		errx(1, "unknown user %s", SMTPD_USER);
-	if ((env->sc_pw = pw_dup(env->sc_pw)) == NULL)
-		err(1, NULL);
-
-	env->sc_pwqueue = getpwnam(SMTPD_QUEUE_USER);
-	if (env->sc_pwqueue)
-		env->sc_pwqueue = pw_dup(env->sc_pwqueue);
-	else
-		env->sc_pwqueue = pw_dup(env->sc_pw);
-	if (env->sc_pwqueue == NULL)
-		err(1, NULL);
 
 	if (!queue_init("fs", 0))
 		errx(1, "invalid directory permissions");

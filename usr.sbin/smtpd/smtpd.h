@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.414 2013/07/19 08:12:19 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.415 2013/07/19 11:14:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -49,7 +49,6 @@
 #define SMTPD_QUEUE_MAXINTERVAL	 (4 * 60 * 60)
 #define SMTPD_QUEUE_EXPIRY	 (4 * 24 * 60 * 60)
 #define SMTPD_USER		 "_smtpd"
-#define SMTPD_FILTER_USER	 "_smtpf"
 #define SMTPD_QUEUE_USER	 "_smtpq"
 #define SMTPD_SOCKET		 "/var/run/smtpd.sock"
 #ifndef SMTPD_NAME
@@ -62,6 +61,7 @@
 
 #define	PATH_SMTPCTL		"/usr/sbin/smtpctl"
 
+#define PATH_CHROOT             "/var/empty"
 #define PATH_SPOOL		"/var/spool/smtpd"
 #define PATH_OFFLINE		"/offline"
 #define PATH_PURGE		"/purge"
@@ -551,8 +551,6 @@ struct smtpd {
 	int				sc_qexpire;
 #define MAX_BOUNCE_WARN			4
 	time_t				sc_bounce_warn[MAX_BOUNCE_WARN];
-	struct passwd		       *sc_pw;
-	struct passwd		       *sc_pwqueue;
 	char				sc_hostname[SMTPD_MAXHOSTNAMELEN];
 	struct stat_backend	       *sc_stat;
 	struct compress_backend	       *sc_comp;
@@ -769,8 +767,10 @@ enum queue_op {
 	QOP_CORRUPT,
 };
 
+struct passwd;
+
 struct queue_backend {
-	int	(*init)(int);
+	int	(*init)(struct passwd *, int);
 	int	(*message)(enum queue_op, uint32_t *);
 	int	(*envelope)(enum queue_op, uint64_t *, char *, size_t);
 };

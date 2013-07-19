@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.62 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.63 2013/07/19 11:14:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -62,7 +62,7 @@ static void	fsqueue_envelope_incoming_path(uint64_t, char *, size_t);
 
 static int	fsqueue_envelope_dump(char *, char *, size_t, int, int);
 
-static int	fsqueue_init(int);
+static int	fsqueue_init(struct passwd *, int);
 static int	fsqueue_message(enum queue_op, uint32_t *);
 static int	fsqueue_envelope(enum queue_op , uint64_t *, char *, size_t);
 
@@ -527,7 +527,7 @@ again:
 }
 
 static int
-fsqueue_init(int server)
+fsqueue_init(struct passwd *pwq, int server)
 {
 	unsigned int	 n;
 	char		*paths[] = { PATH_QUEUE, PATH_CORRUPT };
@@ -543,7 +543,7 @@ fsqueue_init(int server)
 		if (strlcat(path, paths[n], sizeof(path)) >= sizeof(path))
 			errx(1, "path too long %s%s", PATH_SPOOL, paths[n]);
 
-		if (ckdir(path, 0700, env->sc_pwqueue->pw_uid, 0, server) == 0)
+		if (ckdir(path, 0700, pwq->pw_uid, 0, server) == 0)
 			ret = 0;
 	}
 

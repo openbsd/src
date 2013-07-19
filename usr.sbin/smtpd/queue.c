@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.149 2013/07/19 07:49:08 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.150 2013/07/19 11:14:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -540,12 +540,11 @@ queue(void)
 	}
 
 	purge_config(PURGE_EVERYTHING);
-	if (env->sc_pwqueue) {
-		free(env->sc_pw);
-		env->sc_pw = env->sc_pwqueue;
-	}
 
-	pw = env->sc_pw;
+	if ((pw = getpwnam(SMTPD_QUEUE_USER)) == NULL)
+		if ((pw = getpwnam(SMTPD_USER)) == NULL)
+			fatalx("unknown user " SMTPD_USER);
+
 	if (chroot(PATH_SPOOL) == -1)
 		fatal("queue: chroot");
 	if (chdir("/") == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_null.c,v 1.2 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: queue_null.c,v 1.3 2013/07/19 11:14:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
@@ -40,7 +40,7 @@
 #include "smtpd.h"
 #include "log.h"
 
-static int queue_null_init(int);
+static int queue_null_init(struct passwd *, int);
 static int queue_null_message(enum queue_op, uint32_t *);
 static int queue_null_envelope(enum queue_op , uint64_t *, char *, size_t);
 
@@ -53,7 +53,7 @@ struct queue_backend queue_backend_null = {
 static int	devnull;
 
 static int
-queue_null_init(int server)
+queue_null_init(struct passwd *pw, int server)
 {
 
 	devnull = open("/dev/null", O_WRONLY, 0777);

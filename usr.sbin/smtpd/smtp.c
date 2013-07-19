@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.126 2013/07/19 07:49:08 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.127 2013/07/19 11:14:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -247,9 +247,10 @@ smtp(void)
 
 	purge_config(PURGE_EVERYTHING);
 
-	pw = env->sc_pw;
+	if ((pw = getpwnam(SMTPD_USER)) == NULL)
+		fatalx("unknown user " SMTPD_USER);
 
-	if (chroot(pw->pw_dir) == -1)
+	if (chroot(PATH_CHROOT) == -1)
 		fatal("smtp: chroot");
 	if (chdir("/") == -1)
 		fatal("smtp: chdir(\"/\")");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.77 2013/07/19 07:49:08 eric Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.78 2013/07/19 11:14:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -227,10 +227,8 @@ mfa(void)
 
 	purge_config(PURGE_EVERYTHING);
 
-	if ((env->sc_pw =  getpwnam(SMTPD_FILTER_USER)) == NULL)
-		if ((env->sc_pw =  getpwnam(SMTPD_USER)) == NULL)
-			fatalx("unknown user " SMTPD_USER);
-	pw = env->sc_pw;
+	if ((pw =  getpwnam(SMTPD_USER)) == NULL)
+		fatalx("unknown user " SMTPD_USER);
 
 	config_process(PROC_MFA);
 

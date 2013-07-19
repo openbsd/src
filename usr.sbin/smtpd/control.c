@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.86 2013/07/19 07:49:08 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.87 2013/07/19 11:14:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -188,7 +188,8 @@ control(void)
 
 	purge_config(PURGE_EVERYTHING);
 
-	pw = env->sc_pw;
+	if ((pw = getpwnam(SMTPD_USER)) == NULL)
+		fatalx("unknown user " SMTPD_USER);
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		fatal("control: socket");
@@ -225,7 +226,7 @@ control(void)
 	stat_backend = env->sc_stat;
 	stat_backend->init();
 
-	if (chroot(pw->pw_dir) == -1)
+	if (chroot(PATH_CHROOT) == -1)
 		fatal("control: chroot");
 	if (chdir("/") == -1)
 		fatal("control: chdir(\"/\")");

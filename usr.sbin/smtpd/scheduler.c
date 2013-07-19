@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.29 2013/07/19 07:49:08 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.30 2013/07/19 11:14:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -337,14 +337,16 @@ scheduler(void)
 
 	purge_config(PURGE_EVERYTHING);
 
+	if ((pw = getpwnam(SMTPD_USER)) == NULL)
+		fatalx("unknown user " SMTPD_USER);
+
 	config_process(PROC_SCHEDULER);
 
 	fdlimit(1.0);
 
 	backend->init();
 
-	pw = env->sc_pw;
-	if (chroot(pw->pw_dir) == -1)
+	if (chroot(PATH_CHROOT) == -1)
 		fatal("scheduler: chroot");
 	if (chdir("/") == -1)
 		fatal("scheduler: chdir(\"/\")");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.192 2013/07/04 07:04:07 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.193 2013/07/19 11:14:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -588,7 +588,6 @@ main(int argc, char *argv[])
 	struct event	 ev_sigchld;
 	struct event	 ev_sighup;
 	struct timeval	 tv;
-	struct passwd	*pwq;
 
 	env = &smtpd;
 
@@ -714,33 +713,6 @@ main(int argc, char *argv[])
 	/* check for root privileges */
 	if (geteuid())
 		errx(1, "need root privileges");
-
-	if ((env->sc_pw = getpwnam(SMTPD_USER)) == NULL)
-		errx(1, "unknown user %s", SMTPD_USER);
-	if ((env->sc_pw = pw_dup(env->sc_pw)) == NULL)
-		err(1, NULL);
-
-	env->sc_pwqueue = getpwnam(SMTPD_QUEUE_USER);
-	if (env->sc_pwqueue)
-		pwq = env->sc_pwqueue = pw_dup(env->sc_pwqueue);
-	else
-		pwq = env->sc_pwqueue = pw_dup(env->sc_pw);
-	if (env->sc_pwqueue == NULL)
-		err(1, NULL);
-
-	if (ckdir(PATH_SPOOL, 0711, 0, 0, 1) == 0)
-		errx(1, "error in spool directory setup");
-	if (ckdir(PATH_SPOOL PATH_OFFLINE, 01777, 0, 0, 1) == 0)
-		errx(1, "error in offline directory setup");
-	if (ckdir(PATH_SPOOL PATH_PURGE, 0700, pwq->pw_uid, 0, 1) == 0)
-		errx(1, "error in purge directory setup");
-	if (ckdir(PATH_SPOOL PATH_TEMPORARY, 0700, pwq->pw_uid, 0, 1) == 0)
-		errx(1, "error in purge directory setup");
-
-	mvpurge(PATH_SPOOL PATH_INCOMING, PATH_SPOOL PATH_PURGE);
-
-	if (ckdir(PATH_SPOOL PATH_INCOMING, 0700, pwq->pw_uid, 0, 1) == 0)
-		errx(1, "error in incoming directory setup");
 
 	if (!queue_init(backend_queue, 1))
 		errx(1, "could not initialize queue backend");
@@ -913,6 +885,7 @@ child_add(pid_t pid, int type, const char *title)
 static void
 purge_task(int fd, short ev, void *arg)
 {
+	struct passwd	*pw;
 	DIR		*d;
 	int		 n;
 	uid_t		 uid;
@@ -934,12 +907,14 @@ purge_task(int fd, short ev, void *arg)
 				log_warn("warn: purge_task: fork");
 				break;
 			case 0:
+				if ((pw = getpwnam(SMTPD_USER)) == NULL)
+					fatalx("unknown user " SMTPD_USER);
 				if (chroot(PATH_SPOOL PATH_PURGE) == -1)
 					fatal("smtpd: chroot");
 				if (chdir("/") == -1)
 					fatal("smtpd: chdir");
-				uid = env->sc_pw->pw_uid;
-				gid = env->sc_pw->pw_gid;
+				uid = pw->pw_uid;
+				gid = pw->pw_gid;
 				if (setgroups(1, &gid) ||
 				    setresgid(gid, gid, gid) ||
 				    setresuid(uid, uid, uid))

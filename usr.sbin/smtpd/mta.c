@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.160 2013/07/19 07:49:08 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.161 2013/07/19 11:14:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -430,8 +430,10 @@ mta(void)
 
 	purge_config(PURGE_EVERYTHING);
 
-	pw = env->sc_pw;
-	if (chroot(pw->pw_dir) == -1)
+	if ((pw = getpwnam(SMTPD_USER)) == NULL)
+		fatalx("unknown user " SMTPD_USER);
+
+	if (chroot(PATH_CHROOT) == -1)
 		fatal("mta: chroot");
 	if (chdir("/") == -1)
 		fatal("mta: chdir(\"/\")");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.44 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.45 2013/07/19 11:14:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
@@ -92,7 +93,14 @@ queue_message_incoming_path(uint32_t msgid, char *buf, size_t len)
 int
 queue_init(const char *name, int server)
 {
-	int	r;
+	struct passwd	*pwq;
+	int		 r;
+
+	pwq = getpwnam(SMTPD_QUEUE_USER);
+	if (pwq == NULL)
+		pwq = getpwnam(SMTPD_USER);
+	if (pwq == NULL)
+		errx(1, "unknown user %s", SMTPD_USER);
 
 	if (!strcmp(name, "fs"))
 		backend = &queue_backend_fs;
@@ -106,7 +114,21 @@ queue_init(const char *name, int server)
 		return (0);
 	}
 
-	r = backend->init(server);
+	if (server) {
+		if (ckdir(PATH_SPOOL, 0711, 0, 0, 1) == 0)
+			errx(1, "error in spool directory setup");
+		if (ckdir(PATH_SPOOL PATH_OFFLINE, 01777, 0, 0, 1) == 0)
+			errx(1, "error in offline directory setup");
+		if (ckdir(PATH_SPOOL PATH_PURGE, 0700, pwq->pw_uid, 0, 1) == 0)
+			errx(1, "error in purge directory setup");
+
+		mvpurge(PATH_SPOOL PATH_TEMPORARY, PATH_SPOOL PATH_PURGE);
+
+		if (ckdir(PATH_SPOOL PATH_TEMPORARY, 0700, pwq->pw_uid, 0, 1) == 0)
+			errx(1, "error in purge directory setup");
+	}
+
+	r = backend->init(pwq, server);
 
 	log_trace(TRACE_QUEUE, "queue-backend: queue_init(%i) -> %i", server, r);
 
