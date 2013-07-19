@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_backend.c,v 1.9 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: scheduler_backend.c,v 1.10 2013/07/19 15:14:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -33,8 +33,8 @@
 #include "smtpd.h"
 #include "log.h"
 
-extern struct scheduler_backend scheduler_backend_ramqueue;
 extern struct scheduler_backend scheduler_backend_null;
+extern struct scheduler_backend scheduler_backend_ramqueue;
 
 struct scheduler_backend *
 scheduler_backend_lookup(const char *name)
@@ -48,7 +48,7 @@ scheduler_backend_lookup(const char *name)
 }
 
 void
-scheduler_info(struct scheduler_info *sched, struct envelope *evp)
+scheduler_info(struct scheduler_info *sched, struct envelope *evp, uint32_t penalty)
 {
 	sched->evpid = evp->id;
 	sched->type = evp->type;
@@ -58,19 +58,22 @@ scheduler_info(struct scheduler_info *sched, struct envelope *evp)
 	sched->lasttry = evp->lasttry;
 	sched->lastbounce = evp->lastbounce;
 	sched->nexttry	= 0;
+	sched->penalty = penalty;
 }
 
 time_t
 scheduler_compute_schedule(struct scheduler_info *sched)
 {
-	time_t	delay;
+	time_t		delay;
+	uint32_t	retry;
 
 	if (sched->type == D_MTA)
 		delay = 800;
 	else
 		delay = 10;
 
-	delay = ((delay * sched->retry) * sched->retry) / 2;
+	retry = sched->retry + sched->penalty;
+	delay = ((delay * retry) * retry) / 2;
 
 	return (sched->creation + delay);
 }

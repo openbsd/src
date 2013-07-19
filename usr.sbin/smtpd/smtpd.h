@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.416 2013/07/19 13:41:23 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.417 2013/07/19 15:14:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -151,7 +151,7 @@ union lookup {
  * Bump IMSG_VERSION whenever a change is made to enum imsg_type.
  * This will ensure that we can never use a wrong version of smtpctl with smtpd.
  */
-#define	IMSG_VERSION		2
+#define	IMSG_VERSION		3
 
 enum imsg_type {
 	IMSG_NONE,
@@ -159,9 +159,11 @@ enum imsg_type {
 	IMSG_CTL_FAIL,
 	IMSG_CTL_SHUTDOWN,
 	IMSG_CTL_VERBOSE,
+	IMSG_CTL_PAUSE_EVP,
 	IMSG_CTL_PAUSE_MDA,
 	IMSG_CTL_PAUSE_MTA,
 	IMSG_CTL_PAUSE_SMTP,
+	IMSG_CTL_RESUME_EVP,
 	IMSG_CTL_RESUME_MDA,
 	IMSG_CTL_RESUME_MTA,
 	IMSG_CTL_RESUME_SMTP,
@@ -227,6 +229,7 @@ enum imsg_type {
 	IMSG_MTA_BATCH,
 	IMSG_MTA_BATCH_ADD,
 	IMSG_MTA_BATCH_END,
+	IMSG_MTA_SCHEDULE,
 
 	IMSG_QUEUE_CREATE_MESSAGE,
 	IMSG_QUEUE_SUBMIT_ENVELOPE,
@@ -442,6 +445,7 @@ enum envelope_flags {
 
 	EF_PENDING		= 0x10,
 	EF_INFLIGHT		= 0x20,
+	EF_SUSPEND		= 0x40,
 };
 
 #define	SMTPD_ENVELOPE_VERSION		1
@@ -815,6 +819,7 @@ struct scheduler_info {
 	time_t			lasttry;
 	time_t			lastbounce;
 	time_t			nexttry;
+	uint8_t			penalty;
 };
 
 #define SCHED_NONE		0x00
@@ -848,6 +853,8 @@ struct scheduler_backend {
 	size_t	(*envelopes)(uint64_t, struct evpstate *, size_t);
 	int	(*schedule)(uint64_t);
 	int	(*remove)(uint64_t);
+	int	(*suspend)(uint64_t);
+	int	(*resume)(uint64_t);
 };
 
 
@@ -1229,7 +1236,7 @@ int cmdline_symset(char *);
 /* queue.c */
 pid_t queue(void);
 void queue_ok(uint64_t);
-void queue_tempfail(uint64_t, const char *);
+void queue_tempfail(uint64_t, uint32_t, const char *);
 void queue_permfail(uint64_t, const char *);
 void queue_loop(uint64_t);
 void queue_flow_control(void);
@@ -1263,7 +1270,7 @@ pid_t scheduler(void);
 
 /* scheduler_bakend.c */
 struct scheduler_backend *scheduler_backend_lookup(const char *);
-void scheduler_info(struct scheduler_info *, struct envelope *);
+void scheduler_info(struct scheduler_info *, struct envelope *, uint32_t);
 time_t scheduler_compute_schedule(struct scheduler_info *);
 
 

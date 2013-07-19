@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.106 2013/07/19 13:41:23 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.107 2013/07/19 15:14:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -368,6 +368,33 @@ do_monitor(int argc, struct parameter *argv)
 }
 
 static int
+do_pause_envelope(int argc, struct parameter *argv)
+{
+	struct envelope	 evp;
+	uint32_t	 msgid;
+
+	if (argc == 0) {
+		while (srv_iter_messages(&msgid)) {
+			while (srv_iter_envelopes(msgid, &evp)) {
+				srv_send(IMSG_CTL_PAUSE_EVP, &evp.id,
+				    sizeof(evp.id));
+				srv_check_result();
+			}
+		}
+	} else if (argv[0].type == P_MSGID) {
+		while (srv_iter_envelopes(argv[0].u.u_msgid, &evp)) {
+			srv_send(IMSG_CTL_PAUSE_EVP, &evp.id, sizeof(evp.id));
+			srv_check_result();
+		}
+	} else {
+		srv_send(IMSG_CTL_PAUSE_EVP, &argv[0].u.u_evpid, sizeof(evp.id));
+		srv_check_result();
+	}
+
+	return (0);
+}
+
+static int
 do_pause_mda(int argc, struct parameter *argv)
 {
 	srv_send(IMSG_CTL_PAUSE_MDA, NULL, 0);
@@ -420,6 +447,33 @@ do_remove(int argc, struct parameter *argv)
 		}
 	} else {
 		srv_send(IMSG_CTL_REMOVE, &argv[0].u.u_evpid, sizeof(evp.id));
+		srv_check_result();
+	}
+
+	return (0);
+}
+
+static int
+do_resume_envelope(int argc, struct parameter *argv)
+{
+	struct envelope	 evp;
+	uint32_t	 msgid;
+
+	if (argc == 0) {
+		while (srv_iter_messages(&msgid)) {
+			while (srv_iter_envelopes(msgid, &evp)) {
+				srv_send(IMSG_CTL_RESUME_EVP, &evp.id,
+				    sizeof(evp.id));
+				srv_check_result();
+			}
+		}
+	} else if (argv[0].type == P_MSGID) {
+		while (srv_iter_envelopes(argv[0].u.u_msgid, &evp)) {
+			srv_send(IMSG_CTL_RESUME_EVP, &evp.id, sizeof(evp.id));
+			srv_check_result();
+		}
+	} else {
+		srv_send(IMSG_CTL_RESUME_EVP, &argv[0].u.u_evpid, sizeof(evp.id));
 		srv_check_result();
 	}
 
@@ -694,12 +748,16 @@ main(int argc, char **argv)
 	cmd_install("log brief",		do_log_brief);
 	cmd_install("log verbose",		do_log_verbose);
 	cmd_install("monitor",			do_monitor);
+	cmd_install("pause envelope <evpid>",	do_pause_envelope);
+	cmd_install("pause envelope <msgid>",	do_pause_envelope);
 	cmd_install("pause mda",		do_pause_mda);
 	cmd_install("pause mta",		do_pause_mta);
 	cmd_install("pause smtp",		do_pause_smtp);
 	cmd_install("profile <str>",		do_profile);
 	cmd_install("remove <evpid>",		do_remove);
 	cmd_install("remove <msgid>",		do_remove);
+	cmd_install("resume envelope <evpid>",	do_resume_envelope);
+	cmd_install("resume envelope <msgid>",	do_resume_envelope);
 	cmd_install("resume mda",		do_resume_mda);
 	cmd_install("resume mta",		do_resume_mta);
 	cmd_install("resume smtp",		do_resume_smtp);
@@ -739,6 +797,7 @@ show_queue_envelope(struct envelope *e, int online)
 	getflag(&e->flags, EF_BOUNCE, "bounce", status, sizeof(status));
 	getflag(&e->flags, EF_AUTHENTICATED, "auth", status, sizeof(status));
 	getflag(&e->flags, EF_INTERNAL, "internal", status, sizeof(status));
+	getflag(&e->flags, EF_SUSPEND, "suspend", status, sizeof(status));
 
 	if (online) {
 		if (e->flags & EF_PENDING)

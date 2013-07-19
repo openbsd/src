@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.56 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.57 2013/07/19 15:14:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -506,6 +506,7 @@ bounce_delivery(struct bounce_message *msg, int delivery, const char *status)
 			queue_envelope_update(&evp);
 			m_create(p_scheduler, delivery, 0, 0, -1);
 			m_add_envelope(p_scheduler, &evp);
+			m_add_u32(p_scheduler, 0);
 			m_close(p_scheduler);
 		} else {
 			m_create(p_scheduler, delivery, 0, 0, -1);

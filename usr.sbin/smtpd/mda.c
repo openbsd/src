@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.93 2013/07/19 11:14:08 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.94 2013/07/19 15:14:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -188,7 +188,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 
 			if (evpcount >= MDA_MAXEVP) {
 				log_debug("debug: mda: too many envelopes");
-				queue_tempfail(e->id,
+				queue_tempfail(e->id, 0,
 				    "Too many envelopes in the delivery agent: "
 				    "will try again later");
 				mda_log(e, "TempFail",
@@ -225,7 +225,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			} else if (u->evpcount >= MDA_MAXEVPUSER) {
 				log_debug("debug: mda: too many envelopes for "
 				    "\"%s\"", u->name);
-				queue_tempfail(e->id,
+				queue_tempfail(e->id, 0,
 				    "Too many envelopes for this user in the "
 				    "delivery agent: will try again later");
 				mda_log(e, "TempFail",
@@ -264,7 +264,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 
 			if (imsg->fd == -1) {
 				log_debug("debug: mda: cannot get message fd");
-				queue_tempfail(e->id, "Cannot get message fd");
+				queue_tempfail(e->id, 0, "Cannot get message fd");
 				mda_log(e, "TempFail", "Cannot get message fd");
 				mda_done(s);
 				return;
@@ -276,7 +276,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 
 			if ((s->datafp = fdopen(imsg->fd, "r")) == NULL) {
 				log_warn("warn: mda: fdopen");
-				queue_tempfail(e->id, "fdopen failed");
+				queue_tempfail(e->id, 0, "fdopen failed");
 				mda_log(e, "TempFail", "fdopen failed");
 				mda_done(s);
 				close(imsg->fd);
@@ -305,7 +305,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			if (n == -1) {
 				log_warn("warn: mda: "
 				    "fail to write delivery info");
-				queue_tempfail(e->id, "Out of memory");
+				queue_tempfail(e->id, 0, "Out of memory");
 				mda_log(e, "TempFail", "Out of memory");
 				mda_done(s);
 				return;
@@ -395,7 +395,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			e = s->evp;
 			if (imsg->fd == -1) {
 				log_warn("warn: mda: fail to retrieve mda fd");
-				queue_tempfail(e->id, "Cannot get mda fd");
+				queue_tempfail(e->id, 0, "Cannot get mda fd");
 				mda_log(e, "TempFail", "Cannot get mda fd");
 				mda_done(s);
 				return;
@@ -438,7 +438,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 
 			/* update queue entry */
 			if (error) {
-				queue_tempfail(e->id, error);
+				queue_tempfail(e->id, 0, error);
 				snprintf(buf, sizeof buf, "Error (%s)", error);
 				mda_log(e, "TempFail", buf);
 			}
@@ -734,7 +734,7 @@ mda_fail(struct mda_user *user, int permfail, const char *error)
 		}
 		else {
 			mda_log(e, "TempFail", error);
-			queue_tempfail(e->id, error);
+			queue_tempfail(e->id, 0, error);
 		}
 		free(e->sender);
 		free(e->dest);

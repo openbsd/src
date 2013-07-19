@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.87 2013/07/19 11:14:08 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.88 2013/07/19 15:14:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -559,6 +559,14 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		m_compose(p, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 		return;
 
+	case IMSG_CTL_PAUSE_EVP:
+		if (c->euid)
+			goto badcred;
+
+		m_forward(p_scheduler, imsg);
+		m_compose(p, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+		return;
+
 	case IMSG_CTL_PAUSE_MDA:
 		if (c->euid)
 			goto badcred;
@@ -598,6 +606,14 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		log_info("info: smtp paused");
 		env->sc_flags |= SMTPD_SMTP_PAUSED;
 		m_compose(p_smtp, IMSG_CTL_PAUSE_SMTP, 0, 0, -1, NULL, 0);
+		m_compose(p, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+		return;
+
+	case IMSG_CTL_RESUME_EVP:
+		if (c->euid)
+			goto badcred;
+
+		m_forward(p_scheduler, imsg);
 		m_compose(p, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 		return;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.161 2013/07/19 11:14:08 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.162 2013/07/19 15:14:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -586,7 +586,7 @@ mta_delivery(struct mta_envelope *e, const char *source, const char *relay,
 	}
 	else if (delivery == IMSG_DELIVERY_TEMPFAIL) {
 		mta_log(e, "TempFail", source, relay, status);
-		queue_tempfail(e->id, status);
+		queue_tempfail(e->id, 0, status);
 	}
 	else if (delivery == IMSG_DELIVERY_PERMFAIL) {
 		mta_log(e, "PermFail", source, relay, status);

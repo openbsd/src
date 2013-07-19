@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.150 2013/07/19 11:14:08 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.151 2013/07/19 15:14:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -68,6 +68,7 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 	const char		*reason;
 	uint64_t		 reqid, evpid;
 	uint32_t		 msgid;
+	uint32_t		 penalty;
 	time_t			 nexttry;
 	int			 fd, ret, v, flags;
 
@@ -236,7 +237,8 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 			}
 			queue_bounce(&evp, &req_bounce->bounce);
 			evp.lastbounce = req_bounce->timestamp;
-			queue_envelope_update(&evp);
+			if (!queue_envelope_update(&evp))
+				log_warnx("warn: could not update envelope %016"PRIx64, evpid);
 			return;
 
 		case IMSG_MDA_DELIVER:
@@ -276,7 +278,7 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 			m_get_evpid(&m, &evpid);
 			m_end(&m);
 			if (queue_envelope_load(evpid, &evp) == 0) {
-				log_warnx("queue: batch: failed to load envelope");
+				log_warnx("queue: failed to load envelope");
 				m_create(p_scheduler, IMSG_QUEUE_REMOVE, 0, 0, -1);
 				m_add_evpid(p_scheduler, evpid);
 				m_add_u32(p_scheduler, 1); /* in-flight */
@@ -319,7 +321,7 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 			evp.flags |= flags;
 			/* In the past if running or runnable */
 			evp.nexttry = nexttry;
-			if (flags == EF_INFLIGHT) {
+			if (flags & EF_INFLIGHT) {
 				/*
 				 * Not exactly correct but pretty close: The
 				 * value is not recorded on the envelope unless
@@ -359,6 +361,7 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 		case IMSG_DELIVERY_TEMPFAIL:
 			m_msg(&m, imsg);
 			m_get_evpid(&m, &evpid);
+			m_get_u32(&m, &penalty);
 			m_get_string(&m, &reason);
 			m_end(&m);
 			if (queue_envelope_load(evpid, &evp) == 0) {
@@ -371,9 +374,11 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 			}
 			envelope_set_errormsg(&evp, "%s", reason);
 			evp.retry++;
-			queue_envelope_update(&evp);
+			if (!queue_envelope_update(&evp))
+				log_warnx("warn: could not update envelope %016"PRIx64, evpid);
 			m_create(p_scheduler, IMSG_DELIVERY_TEMPFAIL, 0, 0, -1);
 			m_add_envelope(p_scheduler, &evp);
+			m_add_u32(p_scheduler, penalty);
 			m_close(p_scheduler);
 			return;
 
@@ -422,6 +427,10 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 			m_create(p_scheduler, IMSG_DELIVERY_LOOP, 0, 0, -1);
 			m_add_evpid(p_scheduler, evp.id);
 			m_close(p_scheduler);
+			return;
+
+		case IMSG_MTA_SCHEDULE:
+			m_forward(p_scheduler, imsg);
 			return;
 		}
 	}
@@ -639,10 +648,11 @@ queue_ok(uint64_t evpid)
 }
 
 void
-queue_tempfail(uint64_t evpid, const char *reason)
+queue_tempfail(uint64_t evpid, uint32_t penalty, const char *reason)
 {
 	m_create(p_queue, IMSG_DELIVERY_TEMPFAIL, 0, 0, -1);
 	m_add_evpid(p_queue, evpid);
+	m_add_u32(p_queue, penalty);
 	m_add_string(p_queue, reason);
 	m_close(p_queue);
 }
