@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.64 2013/07/19 21:14:52 eric Exp $
+#	$OpenBSD: Makefile,v 1.65 2013/07/19 21:34:31 eric Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -31,6 +31,7 @@ SRCS+=		queue_proc.c
 SRCS+=		queue_ram.c
 SRCS+=		scheduler_ramqueue.c
 SRCS+=		scheduler_null.c
+SRCS+=		scheduler_proc.c
 SRCS+=		stat_ramstat.c
 
 MAN=		smtpd.8 smtpd.conf.5

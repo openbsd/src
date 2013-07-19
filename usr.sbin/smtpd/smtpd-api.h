@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.7 2013/07/19 20:37:07 eric Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.8 2013/07/19 21:34:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -105,6 +105,81 @@ enum {
 	PROC_QUEUE_ENVELOPE_WALK,
 };
 
+#define PROC_SCHEDULER_API_VERSION	1
+
+struct scheduler_info;
+struct scheduler_batch;
+
+enum {
+	PROC_SCHEDULER_OK,
+	PROC_SCHEDULER_FAIL,
+	PROC_SCHEDULER_INIT,
+	PROC_SCHEDULER_INSERT,
+	PROC_SCHEDULER_COMMIT,
+	PROC_SCHEDULER_ROLLBACK,
+	PROC_SCHEDULER_UPDATE,
+	PROC_SCHEDULER_DELETE,
+	PROC_SCHEDULER_BATCH,
+	PROC_SCHEDULER_MESSAGES,
+	PROC_SCHEDULER_ENVELOPES,
+	PROC_SCHEDULER_SCHEDULE,
+	PROC_SCHEDULER_REMOVE,
+	PROC_SCHEDULER_SUSPEND,
+	PROC_SCHEDULER_RESUME,
+};
+
+enum envelope_flags {
+	EF_AUTHENTICATED	= 0x01,
+	EF_BOUNCE		= 0x02,
+	EF_INTERNAL		= 0x04, /* Internal expansion forward */
+
+	/* runstate, not saved on disk */
+
+	EF_PENDING		= 0x10,
+	EF_INFLIGHT		= 0x20,
+	EF_SUSPEND		= 0x40,
+};
+
+struct evpstate {
+	uint64_t		evpid;
+	uint16_t		flags;
+	uint16_t		retry;
+	time_t			time;
+};
+
+enum delivery_type {
+	D_MDA,
+	D_MTA,
+	D_BOUNCE,
+};
+
+struct scheduler_info {
+	uint64_t		evpid;
+	enum delivery_type	type;
+	uint16_t		retry;
+	time_t			creation;
+	time_t			expire;
+	time_t			lasttry;
+	time_t			lastbounce;
+	time_t			nexttry;
+	uint8_t			penalty;
+};
+
+#define SCHED_NONE		0x00
+#define SCHED_DELAY		0x01
+#define SCHED_REMOVE		0x02
+#define SCHED_EXPIRE		0x04
+#define SCHED_BOUNCE		0x08
+#define SCHED_MDA		0x10
+#define SCHED_MTA		0x20
+
+struct scheduler_batch {
+	int		 type;
+	time_t		 delay;
+	size_t		 evpcount;
+	uint64_t	*evpids;
+};
+
 #define PROC_TABLE_API_VERSION	1
 
 enum table_service {
@@ -195,6 +270,22 @@ void queue_api_on_envelope_update(int(*)(uint64_t, const char *, size_t));
 void queue_api_on_envelope_load(int(*)(uint64_t, char *, size_t));
 void queue_api_on_envelope_walk(int(*)(uint64_t *, char *, size_t));
 int queue_api_dispatch(void);
+
+/* scheduler */
+void scheduler_api_on_init(int(*)(void));
+void scheduler_api_on_insert(int(*)(struct scheduler_info *));
+void scheduler_api_on_commit(size_t(*)(uint32_t));
+void scheduler_api_on_rollback(size_t(*)(uint32_t));
+void scheduler_api_on_update(int(*)(struct scheduler_info *));
+void scheduler_api_on_delete(int(*)(uint64_t));
+void scheduler_api_on_batch(int(*)(int, struct scheduler_batch *));
+void scheduler_api_on_messages(size_t(*)(uint32_t, uint32_t *, size_t));
+void scheduler_api_on_envelopes(size_t(*)(uint64_t, struct evpstate *, size_t));
+void scheduler_api_on_schedule(int(*)(uint64_t));
+void scheduler_api_on_remove(int(*)(uint64_t));
+void scheduler_api_on_suspend(int(*)(uint64_t));
+void scheduler_api_on_resume(int(*)(uint64_t));
+int scheduler_api_dispatch(void);
 
 /* table */
 void table_api_on_update(int(*)(void));

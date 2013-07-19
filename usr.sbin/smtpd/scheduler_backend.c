@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_backend.c,v 1.10 2013/07/19 15:14:23 eric Exp $	*/
+/*	$OpenBSD: scheduler_backend.c,v 1.11 2013/07/19 21:34:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -34,6 +34,7 @@
 #include "log.h"
 
 extern struct scheduler_backend scheduler_backend_null;
+extern struct scheduler_backend scheduler_backend_proc;
 extern struct scheduler_backend scheduler_backend_ramqueue;
 
 struct scheduler_backend *
@@ -41,6 +42,8 @@ scheduler_backend_lookup(const char *name)
 {
 	if (!strcmp(name, "null"))
 		return &scheduler_backend_null;
+	if (!strcmp(name, "proc"))
+		return &scheduler_backend_proc;
 	if (!strcmp(name, "ramqueue"))
 		return &scheduler_backend_ramqueue;
 

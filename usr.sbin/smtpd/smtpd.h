@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.421 2013/07/19 21:14:52 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.422 2013/07/19 21:34:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -356,12 +356,6 @@ struct rule {
 	time_t				r_qexpire;
 };
 
-enum delivery_type {
-	D_MDA,
-	D_MTA,
-	D_BOUNCE,
-};
-
 struct delivery_mda {
 	enum action_type	method;
 	char			usertable[SMTPD_MAXPATHLEN];
@@ -423,18 +417,6 @@ struct expand {
 	size_t				 nb_nodes;
 	struct rule			*rule;
 	struct expandnode		*parent;
-};
-
-enum envelope_flags {
-	EF_AUTHENTICATED	= 0x01,
-	EF_BOUNCE		= 0x02,
-	EF_INTERNAL		= 0x04, /* Internal expansion forward */
-
-	/* runstate, not saved on disk */
-
-	EF_PENDING		= 0x10,
-	EF_INFLIGHT		= 0x20,
-	EF_SUSPEND		= 0x40,
 };
 
 #define	SMTPD_ENVELOPE_VERSION		1
@@ -817,40 +799,6 @@ struct auth_backend {
 struct delivery_backend {
 	int	allow_root;
 	void	(*open)(struct deliver *);
-};
-
-struct evpstate {
-	uint64_t		evpid;
-	uint16_t		flags;
-	uint16_t		retry;
-	time_t			time;
-};
-
-struct scheduler_info {
-	uint64_t		evpid;
-	enum delivery_type	type;
-	uint16_t		retry;
-	time_t			creation;
-	time_t			expire;
-	time_t			lasttry;
-	time_t			lastbounce;
-	time_t			nexttry;
-	uint8_t			penalty;
-};
-
-#define SCHED_NONE		0x00
-#define SCHED_DELAY		0x01
-#define SCHED_REMOVE		0x02
-#define SCHED_EXPIRE		0x04
-#define SCHED_BOUNCE		0x08
-#define SCHED_MDA		0x10
-#define SCHED_MTA		0x20
-
-struct scheduler_batch {
-	int		 type;
-	time_t		 delay;
-	size_t		 evpcount;
-	uint64_t	*evpids;
 };
 
 struct scheduler_backend {
