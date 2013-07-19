@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.97 2013/06/26 07:22:20 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.98 2013/07/19 08:12:19 eric Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 26 2013 $
+.Dd $Mdocdate: July 19 2013 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -88,6 +88,15 @@ For example, with recipient domain "example.org":
 %{rcpt.domain[-3:]}	expands to "org"
 %{rcpt.domain[0:6]}	expands to "example"
 %{rcpt.domain[0:-4]}	expands to "example"
+.Ed
+.Pp
+In addition, modifiers may be applied to the token.
+For example, with recipient "User+Tag@Example.org":
+.Bd -literal -offset indent
+%{rcpt:lowercase}	expands to "user+tag@example.org"
+%{rcpt:uppercase}	expands to "USER+TAG@EXAMPLE.ORG"
+%{rcpt:strip}		expands to "User@Example.org"
+%{rcpt:lowercase|strip}	expands to "user@example.org"
 .Ed
 .Pp
 Additional configuration files can be included with the

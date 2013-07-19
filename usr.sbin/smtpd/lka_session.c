@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.56 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.57 2013/07/19 08:12:19 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -40,6 +40,8 @@
 #include "smtpd.h"
 #include "log.h"
 
+#define TAG_CHAR	'+'	/* gilles+tag@ */
+
 #define	EXPAND_DEPTH	10
 
 #define	F_WAITING	0x01
@@ -69,6 +71,19 @@ static size_t lka_expand_format(char *, size_t, const struct envelope *,
     const struct userinfo *);
 static void mailaddr_to_username(const struct mailaddr *, char *, size_t);
 static const char * mailaddr_tag(const struct mailaddr *);
+
+static int mod_lowercase(char *, size_t);
+static int mod_uppercase(char *, size_t);
+static int mod_strip(char *, size_t);
+
+struct modifiers {
+	char	*name;
+	int	(*f)(char *buf, size_t len);
+} token_modifiers[] = {
+	{ "lowercase",	mod_lowercase },
+	{ "uppercase",	mod_uppercase },
+	{ "strip",	mod_strip },
+};
 
 static int		init;
 static struct tree	sessions;
@@ -523,7 +538,7 @@ lka_expand_token(char *dest, size_t len, const char *token,
 	char		rtoken[MAXTOKENLEN];
 	char		tmp[EXPAND_BUFFER];
 	const char     *string;
-	char	       *lbracket, *rbracket, *content, *sep;
+	char	       *lbracket, *rbracket, *content, *sep, *mods;
 	ssize_t		i;
 	ssize_t		begoff, endoff;
 	const char     *errstr = NULL;
@@ -531,6 +546,7 @@ lka_expand_token(char *dest, size_t len, const char *token,
 
 	begoff = 0;
 	endoff = EXPAND_BUFFER;
+	mods = NULL;
 
 	if (strlcpy(rtoken, token, sizeof rtoken) >= sizeof rtoken)
 		return 0;
@@ -561,6 +577,12 @@ lka_expand_token(char *dest, size_t len, const char *token,
 		 }
 		 if (errstr)
 			 return 0;
+
+		 /* token:mod_1,mod_2,mod_n -> extract modifiers */
+		 mods = strchr(rbracket + 1, ':');
+	} else {
+		if ((mods = strchr(rtoken, ':')) != NULL)
+			*mods++ = '\0';
 	}
 
 	/* token -> expanded token */
@@ -603,6 +625,30 @@ lka_expand_token(char *dest, size_t len, const char *token,
 	else
 		return 0;
 
+	/*  apply modifiers */
+	if (mods != NULL) {
+		/* make sure we are working on tmp */
+		if (string != tmp) {
+			if (strlcpy(tmp, string, sizeof tmp) >= sizeof tmp)
+				return 0;
+			string = tmp;
+		}
+
+		do {
+			if ((sep = strchr(mods, '|')) != NULL)
+				*sep++ = '\0';
+			for (i = 0; (size_t)i < nitems(token_modifiers); ++i) {
+				if (! strcmp(token_modifiers[i].name, mods)) {
+					if (! token_modifiers[i].f(tmp, sizeof tmp))
+						return 0; /* modifier error */
+					break;
+				}
+			}
+			if ((size_t)i == nitems(token_modifiers))
+				return 0; /* modifier not found */
+		} while ((mods = sep) != NULL);
+	}
+		
 	/* expanded string is empty */
 	i = strlen(string);
 	if (i == 0)
@@ -711,9 +757,6 @@ lka_expand_format(char *buf, size_t len, const struct envelope *ep,
 		if (exptoklen == 0)
 			return 0;
 
-		if (! lowercase(exptok, exptok, sizeof exptok))
-			return 0;
-
 		memcpy(ptmp, exptok, exptoklen);
 		pbuf   = ebuf + 1;
 		ptmp  += exptoklen;
@@ -736,7 +779,7 @@ mailaddr_to_username(const struct mailaddr *maddr, char *dst, size_t len)
 	xlowercase(dst, maddr->user, len);
 
 	/* gilles+hackers@ -> gilles@ */
-	if ((tag = strchr(dst, '+')) != NULL)
+	if ((tag = strchr(dst, TAG_CHAR)) != NULL)
 		*tag++ = '\0';
 }
 
@@ -745,11 +788,53 @@ mailaddr_tag(const struct mailaddr *maddr)
 {
 	const char *tag;
 
-	if ((tag = strchr(maddr->user, '+'))) {
+	if ((tag = strchr(maddr->user, TAG_CHAR))) {
 		tag++;
 		while (*tag == '.')
 			tag++;
 	}
 
 	return (tag);
+}
+
+static int 
+mod_lowercase(char *buf, size_t len)
+{
+	char tmp[EXPAND_BUFFER];
+
+	if (! lowercase(tmp, buf, sizeof tmp))
+		return 0;
+	if (strlcpy(buf, tmp, len) >= len)
+		return 0;
+	return 1;
+}
+
+static int 
+mod_uppercase(char *buf, size_t len)
+{
+	char tmp[EXPAND_BUFFER];
+
+	if (! uppercase(tmp, buf, sizeof tmp))
+		return 0;
+	if (strlcpy(buf, tmp, len) >= len)
+		return 0;
+	return 1;
+}
+
+static int
+mod_strip(char *buf, size_t len)
+{
+	char *tag, *at;
+	unsigned int i;
+
+	/* gilles+hackers -> gilles */
+	if ((tag = strchr(buf, TAG_CHAR)) != NULL) {
+		/* gilles+hackers@poolp.org -> gilles@poolp.org */
+		if ((at = strchr(tag, '@')) != NULL) {
+			for (i = 0; i <= strlen(at); ++i)
+				tag[i] = at[i];
+		} else
+			*tag = '\0';
+	}
+	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.95 2013/07/19 07:37:29 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.96 2013/07/19 08:12:19 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -590,6 +590,23 @@ lowercase(char *buf, const char *s, size_t len)
 
 	while (*buf != '\0') {
 		*buf = tolower((int)*buf);
+		buf++;
+	}
+
+	return 1;
+}
+
+int
+uppercase(char *buf, const char *s, size_t len)
+{
+	if (len == 0)
+		return 0;
+
+	if (strlcpy(buf, s, len) >= len)
+		return 0;
+
+	while (*buf != '\0') {
+		*buf = toupper((int)*buf);
 		buf++;
 	}
 
