@@ -1,4 +1,4 @@
-/* $OpenBSD: delivery_lmtp.c,v 1.1 2013/05/24 17:03:14 eric Exp $ */
+/* $OpenBSD: delivery_lmtp.c,v 1.2 2013/07/19 08:45:38 eric Exp $ */
 
 /*
  * Copyright (c) 2013 Ashish SHUKLA <ashish.is@lostca.se>
@@ -67,6 +67,9 @@ inet_socket (char *address)
 	 struct addrinfo *result0, *result;
 
 	 servname = strchr(address, ':');
+	 if (servname == NULL)
+		 errx(1, "invalid address: %s", address);
+
 	 *servname++ = '\0';
 	 hostname = address;
 	 s = -1;
@@ -213,8 +216,8 @@ delivery_lmtp_open(struct deliver *deliver)
 			 state = LMTP_BYE;
 			 break;
 
-		 case LMTP_BYE:
-			 break;
+		 default:
+			errx(1, "Bogus state %i", state);
 		 }
 	 }
 
