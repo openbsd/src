@@ -1,7 +1,7 @@
-/*	$OpenBSD: table_ldap.c,v 1.4 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: table_ldap.c,v 1.5 2013/07/20 09:06:46 eric Exp $	*/
 
 /*
- * Copyright (c) 2010-2012 Gilles Chehade <gilles@poolp.org>
+ * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,237 +17,422 @@
  */
 
 #include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/tree.h>
-#include <sys/socket.h>
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #include <ctype.h>
-#include <err.h>
-#include <errno.h>
-#include <event.h>
-#include <fcntl.h>
-#include <imsg.h>
-#include <stdio.h>
+#include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "smtpd.h"
-#include "aldap.h"
+#include "smtpd-defines.h"
+#include "smtpd-api.h"
 #include "log.h"
+#include "aldap.h"
 
-#define MAX_LDAP_IDENTIFIER    	 32
-#define MAX_LDAP_URL   	 	 256
-#define MAX_LDAP_USERNAME      	 256
-#define MAX_LDAP_PASSWORD      	 256
-#define MAX_LDAP_BASELEN      	 128
-#define MAX_LDAP_FILTERLEN     	 1024
-#define MAX_LDAP_FIELDLEN      	 128
+#define MAX_LDAP_IDENTIFIER      32
+#define MAX_LDAP_URL             256
+#define MAX_LDAP_USERNAME        256
+#define MAX_LDAP_PASSWORD        256
+#define MAX_LDAP_BASELEN         128
+#define MAX_LDAP_FILTERLEN       1024
+#define MAX_LDAP_FIELDLEN        128
 
-static void	*table_ldap_open(struct table *);
-static int	 table_ldap_update(struct table *);
-static int	 table_ldap_config(struct table *);
-static int	 table_ldap_lookup(void *, const  char *, enum table_service, union lookup *);
-static int	 table_ldap_fetch(void *, enum table_service, union lookup *);
-static void	 table_ldap_close(void *);
-static struct aldap	*ldap_client_connect(const char *);
 
-struct table_backend table_backend_ldap = {
-	K_ALIAS|K_CREDENTIALS|K_DOMAIN|K_USERINFO, /* K_NETADDR|K_SOURCE,*/
-	table_ldap_config,
-	table_ldap_open,
-	table_ldap_update,
-	table_ldap_close,
-	table_ldap_lookup,
-	table_ldap_fetch
+enum {
+	LDAP_ALIAS = 0,
+	LDAP_DOMAIN,
+	LDAP_CREDENTIALS,
+	LDAP_NETADDR,
+	LDAP_USERINFO,
+	LDAP_SOURCE,
+	LDAP_MAILADDR,
+	LDAP_ADDRNAME,
+
+	LDAP_MAX
 };
 
-struct table_ldap_handle {
-	struct aldap	*aldap;
-	struct table	*table;
+#define MAX_ATTRS	6
+
+struct query {
+	char	*filter;
+	char	*attrs[MAX_ATTRS];
+	int	 attrn;
 };
 
-static int	parse_attributes(char **, const char *, size_t);
-static int	table_ldap_internal_query(struct aldap *, const char *,
-    const char *, char **, char ***, size_t);
+static int table_ldap_update(void);
+static int table_ldap_check(int, const char *);
+static int table_ldap_lookup(int, const char *, char *, size_t);
+static int table_ldap_fetch(int, char *, size_t);
 
-static int	table_ldap_alias(struct table_ldap_handle *, const char *, union lookup *);
-static int	table_ldap_credentials(struct table_ldap_handle *, const char *, union lookup *);
-static int	table_ldap_domain(struct table_ldap_handle *, const char *, union lookup *);
-static int	table_ldap_userinfo(struct table_ldap_handle *, const char *, union lookup *);
+static int ldap_config(void);
+static int ldap_open(void);
+static int ldap_query(const char *, char **, char ***, size_t);
+static int ldap_parse_attributes(char **, const char *, const char *, size_t);
+static int ldap_run_query(int type, const char *, char *, size_t);
 
+static char *config;
 
-static int
-table_ldap_config(struct table *table)
+static char *url;
+static char *username;
+static char *password;
+static char *basedn;
+
+static struct aldap *aldap;
+static struct query queries[LDAP_MAX];
+
+int
+main(int argc, char **argv)
 {
-	struct table	*cfg = NULL;
+	int	ch;
 
-	/* no config ? broken */
-	if (table->t_config[0] == '\0')
-		return 0;
+	log_init(1);
+	log_verbose(~0);
 
-	cfg = table_create("static", table->t_name, "conf", table->t_config);
-	if (!table_config(cfg))
-		goto err;
+	while ((ch = getopt(argc, argv, "")) != -1) {
+		switch (ch) {
+		default:
+			log_warnx("warn: table-ldap: bad option");
+			return (1);
+			/* NOTREACHED */
+		}
+	}
+	argc -= optind;
+	argv += optind;
 
-	/* sanity checks */
-	if (table_get(cfg, "url") == NULL) {
-		log_warnx("table_ldap: missing 'url' configuration");
-		goto err;
+	if (argc != 1) {
+		log_warnx("warn: table-ldap: bogus argument(s)");
+		return (1);
 	}
 
-	if (table_get(cfg, "basedn") == NULL) {
-		log_warnx("table_ldap: missing 'basedn' configuration");
-		goto err;
+	config = argv[0];
+
+	if (!ldap_config()) {
+		log_warnx("warn: table-ldap: could not parse config");
+		return (1);
 	}
 
-	return 1;
+	log_debug("debug: table-ldap: done reading config");
 
-err:
-	table_destroy(cfg);
-	return 0;
+	if (!ldap_open()) {
+		log_warnx("warn: table-ldap: failed to connect");
+		return (1);
+	}
 
+	log_debug("debug: table-ldap: connected");
+
+	table_api_on_update(table_ldap_update);
+	table_api_on_check(table_ldap_check);
+	table_api_on_lookup(table_ldap_lookup);
+	table_api_on_fetch(table_ldap_fetch);
+	table_api_dispatch();
+
+	return (0);
 }
 
 static int
-table_ldap_update(struct table *table)
+table_ldap_update(void)
 {
-	return 1;
+	return (1);
 }
 
-static void *
-table_ldap_open(struct table *table)
+static int
+table_ldap_check(int service, const char *key)
 {
-	struct table			*cfg = NULL;
-	struct table_ldap_handle	*tlh = NULL;
-	struct aldap_message		*message = NULL;
-	char     			*url = NULL;
-	char     			*username = NULL;
-	char     			*password = NULL;
+	switch(service) {
+	case K_ALIAS:
+	case K_DOMAIN:
+	case K_CREDENTIALS:
+	case K_USERINFO:
+		return ldap_run_query(service, key, NULL, 0);
+	default:
+		return (-1);
+	}
+}
 
-	cfg = table_find(table->t_name, "conf");
-	if (table_get(cfg, "url") == NULL ||
-	    table_get(cfg, "username") == NULL ||
-	    table_get(cfg, "password") == NULL)
-		goto err;
+static int
+table_ldap_lookup(int service, const char *key, char *dst, size_t sz)
+{
+	switch(service) {
+	case K_ALIAS:
+	case K_DOMAIN:
+	case K_CREDENTIALS:
+	case K_USERINFO:
+		return ldap_run_query(service, key, dst, sz);
+	default:
+		return (-1);
+	}
+}
 
-	url      = xstrdup(table_get(cfg, "url"), "table_ldap_open");
-	username = xstrdup(table_get(cfg, "username"), "table_ldap_open");
-	password = xstrdup(table_get(cfg, "password"), "table_ldap_open");
+static int
+table_ldap_fetch(int service, char *dst, size_t sz)
+{
+	return (-1);
+}
 
-	tlh = xcalloc(1, sizeof(*tlh), "table_ldap_open");
-	tlh->table = table;
-	tlh->aldap = ldap_client_connect(url);
-	if (tlh->aldap == NULL) {
-		log_warnx("table_ldap_open: ldap_client_connect error");
+static struct aldap *
+ldap_connect(const char *addr)
+{
+	struct aldap_url lu;
+	struct addrinfo	 hints, *res0, *res;
+	char		*buf;
+	int		 error, fd = -1;
+
+	if ((buf = strdup(addr)) == NULL)
+		return (NULL);
+
+	/* XXX buf leak */
+
+	if (aldap_parse_url(buf, &lu) != 1) {
+		log_warnx("warn: table-ldap: ldap_parse_url fail");
+		return (NULL);
+	}
+
+	bzero(&hints, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM; /* DUMMY */
+	error = getaddrinfo(lu.host, NULL, &hints, &res0);
+	if (error == EAI_AGAIN || error == EAI_NODATA || error == EAI_NONAME)
+		return (NULL);
+	if (error) {
+		log_warnx("warn: table-ldap: could not parse \"%s\": %s",
+		    lu.host, gai_strerror(error));
+		return (NULL);
+	}
+
+	for (res = res0; res; res = res->ai_next) {
+		if (res->ai_family != AF_INET && res->ai_family != AF_INET6)
+			continue;
+
+		fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (fd == -1)
+			continue;
+
+		if (res->ai_family == AF_INET) {
+			struct sockaddr_in sin4 = *(struct sockaddr_in *)res->ai_addr;
+			sin4.sin_port = htons(lu.port);
+			if (connect(fd, (struct sockaddr *)&sin4, res->ai_addrlen) == 0)
+				return aldap_init(fd);
+		}
+		else if (res->ai_family == AF_INET6) {
+			struct sockaddr_in6 sin6 = *(struct sockaddr_in6 *)res->ai_addr;
+			sin6.sin6_port = htons(lu.port);
+			if (connect(fd, (struct sockaddr *)&sin6, res->ai_addrlen) == 0)
+				return aldap_init(fd);
+		}
+
+		close(fd);
+		fd = -1;
+	}
+
+	return (NULL);
+}
+
+static int
+read_value(char **store, const char *key, const char *value)
+{
+	log_debug("debug: table-ldap: reading key \"%s\" -> \"%s\"",
+	    key, value);
+
+	if (*store) {
+		log_warnx("warn: table-ldap: duplicate key %s", key);
+		return (0);
+	}
+	
+	if ((*store = strdup(value)) == NULL) {
+		log_warn("warn: table-ldap: strdup");
+		return (0);
+	}
+
+	return (1);
+}
+
+static int
+ldap_parse_attributes(char **attributes, const char *key, const char *line,
+    size_t expect)
+{
+	char	buffer[1024];
+	char   *p;
+	size_t	m, n;
+
+	log_debug("debug: table-ldap: parsing attribute \"%s\" (%zu) -> \"%s\"",
+	    key, expect, line);
+
+	if (strlcpy(buffer, line, sizeof buffer) >= sizeof buffer)
+		return (0);
+
+	m = 1;
+	for (p = buffer; *p; ++p) {
+		if (*p == ',') {
+			*p = 0;
+			m++;
+		}
+	}
+	if (expect != m)
+		return (0);
+
+	p = buffer;
+	for (n = 0; n < expect; ++n)
+		attributes[n] = NULL;
+	for (n = 0; n < m; ++n) {
+		attributes[n] = strdup(p);
+		if (attributes[n] == NULL) {
+			log_warnx("warn: table-ldap: strdup");
+			return (0); /* XXX cleanup */
+		}
+		p += strlen(p) + 1;
+	}
+	return (1);
+}
+
+static int
+ldap_config(void)
+{
+	size_t		 flen;
+	FILE		*fp;
+	char		*key, *value, *buf, *lbuf;
+
+	fp = fopen(config, "r");
+	if (fp == NULL)
+		return (0);
+
+	lbuf = NULL;
+	while ((buf = fgetln(fp, &flen))) {
+		if (buf[flen - 1] == '\n')
+			buf[flen - 1] = '\0';
+		else {
+			lbuf = malloc(flen + 1);
+			if (lbuf == NULL) {
+				log_warn("warn: table-ldap: malloc");
+				return (0);
+			}
+			memcpy(lbuf, buf, flen);
+			lbuf[flen] = '\0';
+			buf = lbuf;
+		}
+
+		key = buf;
+		while (isspace((int)*key))
+			++key;
+		if (*key == '\0' || *key == '#')
+			continue;
+		value = key;
+		strsep(&value, " \t:");
+		if (value) {
+			while (*value) {
+				if (!isspace(*value) &&
+				    !(*value == ':' && isspace(*(value + 1))))
+					break;
+				++value;
+			}
+			if (*value == '\0')
+				value = NULL;
+		}
+
+		if (value == NULL) {
+			log_warnx("warn: table-ldap: missing value for key %s", key);
+			continue;
+		}
+
+		if (!strcmp(key, "url"))
+			read_value(&url, key, value);
+		else if (!strcmp(key, "username"))
+			read_value(&username, key, value);
+		else if (!strcmp(key, "password"))
+			read_value(&password, key, value);
+		else if (!strcmp(key, "basedn"))
+			read_value(&basedn, key, value);
+
+		else if (!strcmp(key, "alias_filter"))
+			read_value(&queries[LDAP_ALIAS].filter, key, value);
+		else if (!strcmp(key, "alias_attributes"))
+			ldap_parse_attributes(queries[LDAP_ALIAS].attrs,
+			    key, value, 1);
+
+		else if (!strcmp(key, "credentials_filter"))
+			read_value(&queries[LDAP_CREDENTIALS].filter, key, value);
+		else if (!strcmp(key, "credentials_attributes"))
+			ldap_parse_attributes(queries[LDAP_CREDENTIALS].attrs,
+			    key, value, 2);
+
+		else if (!strcmp(key, "domain_filter"))
+			read_value(&queries[LDAP_DOMAIN].filter, key, value);
+		else if (!strcmp(key, "domain_attributes"))
+			ldap_parse_attributes(queries[LDAP_DOMAIN].attrs,
+			    key, value, 1);
+
+		else if (!strcmp(key, "userinfo_filter"))
+			read_value(&queries[LDAP_USERINFO].filter, key, value);
+		else if (!strcmp(key, "userinfo_attributes"))
+			ldap_parse_attributes(queries[LDAP_USERINFO].attrs,
+			    key, value, 4);
+		else
+			log_warnx("warn: table-ldap: bogus entry \"%s\"", key);
+	}
+
+	free(lbuf);
+	fclose(fp);
+	return (1);
+}
+
+static int
+ldap_open(void)
+{
+	struct aldap_message	*amsg = NULL;
+
+	aldap = ldap_connect(url);
+	if (aldap == NULL) {
+		log_warnx("warn: table-ldap: ldap_connect error");
 		goto err;
 	}
 
-	if (aldap_bind(tlh->aldap, username, password) == -1) {
-		log_warnx("table_ldap_open: aldap_bind error");
+	if (aldap_bind(aldap, username, password) == -1) {
+		log_warnx("warn: table-ldap: aldap_bind error");
 		goto err;
 	}
 
-	if ((message = aldap_parse(tlh->aldap)) == NULL) {
-		log_warnx("table_ldap_open: aldap_parse");
+	if ((amsg = aldap_parse(aldap)) == NULL) {
+		log_warnx("warn: table-ldap: aldap_parse");
 		goto err;
 	}
 
-	switch (aldap_get_resultcode(message)) {
+	switch (aldap_get_resultcode(amsg)) {
 	case LDAP_SUCCESS:
-		log_warnx("table_ldap_open: ldap server accepted credentials");
+		log_debug("debug: table-ldap: ldap server accepted credentials");
 		break;
 	case LDAP_INVALID_CREDENTIALS:
-		log_warnx("table_ldap_open: ldap server refused credentials");
+		log_warnx("warn: table-ldap: ldap server refused credentials");
 		goto err;
 	default:
-		log_warnx("table_ldap_open: failed to bind, result #%d", aldap_get_resultcode(message));
+		log_warnx("warn: table-ldap: failed to bind, result #%d",
+		    aldap_get_resultcode(amsg));
 		goto err;
 	}
 
-	return tlh;
+	if (amsg)
+		aldap_freemsg(amsg);
+	return (1);
 
 err:
-	if (tlh) {
-		if (tlh->aldap != NULL)
-			aldap_close(tlh->aldap);
-		free(tlh);
-	}
-	if (message != NULL)
-		aldap_freemsg(message);
-	return NULL;
-}
-
-static void
-table_ldap_close(void *hdl)
-{
-	struct table_ldap_handle	*tlh = hdl;
-
-	aldap_close(tlh->aldap);
-	free(tlh);
+	if (aldap)
+		aldap_close(aldap);
+	if (amsg)
+		aldap_freemsg(amsg);
+	return (0);
 }
 
 static int
-table_ldap_lookup(void *hdl, const char *key, enum table_service service,
-    union lookup *lk)
+ldap_query(const char *filter, char **attributes, char ***outp, size_t n)
 {
-	struct table_ldap_handle	*tlh = hdl;
+	struct aldap_message		*m = NULL;
+	struct aldap_page_control	*pg = NULL;
+	int				 ret, found;
+	size_t				 i;
+	char				 basedn__[MAX_LDAP_BASELEN];
+	char				 filter__[MAX_LDAP_FILTERLEN];
 
-	switch (service) {
-	case K_ALIAS:
-		return table_ldap_alias(tlh, key, lk);
-
-	case K_CREDENTIALS:
-		return table_ldap_credentials(tlh, key, lk);
-
-	case K_DOMAIN:
-		return table_ldap_domain(tlh, key, lk);
-
-	case K_USERINFO:
-		return table_ldap_userinfo(tlh, key, lk);
-
-	default:
-		break;
-	}
-
-	return 0;
-}
-
-static int
-table_ldap_fetch(void *hdl, enum table_service service, union lookup *lk)
-{
-	/* fetch not support for LDAP at this point */
-	return -1;
-}
-
-static int
-filter_expand(char **expfilter, const char *filter, const char *key)
-{
-	if (asprintf(expfilter, filter, key) < 0)
-		return 0;
-	return 1;
-}
-
-static int
-table_ldap_internal_query(struct aldap *aldap, const char *basedn,
-    const char *filter, char **attributes, char ***outp, size_t n)
-{
-	struct aldap_message	       *m = NULL;
-	struct aldap_page_control      *pg = NULL;
-	int				ret;
-	int				found;
-	size_t				i;
-	char				basedn__[MAX_LDAP_BASELEN];
-	char				filter__[MAX_LDAP_FILTERLEN];
-
-	if (strlcpy(basedn__, basedn, sizeof basedn__)
-	    >= sizeof basedn__)
+	if (strlcpy(basedn__, basedn, sizeof basedn__) >= sizeof basedn__)
 		return -1;
-	if (strlcpy(filter__, filter, sizeof filter__)
-	    >= sizeof filter__)
+	if (strlcpy(filter__, filter, sizeof filter__) >= sizeof filter__)
 		return -1;
 	found = 0;
 	do {
@@ -296,360 +481,73 @@ end:
 	return ret;
 }
 
-
 static int
-table_ldap_credentials(struct table_ldap_handle *tlh, const char *key, union lookup *lk)
+ldap_run_query(int type, const char *key, char *dst, size_t sz)
 {
-	struct aldap	       *aldap = tlh->aldap;
-	struct table	       *cfg = table_find(tlh->table->t_name, "conf");
-	const char	       *filter = NULL;
-	const char	       *basedn = NULL;
-	char		       *expfilter = NULL;
-	char     	       *attributes[4];
-	char     	      **ret_attr[4];
-	const char     	       *attr;
-	char			line[1024];
-	int			ret = -1;
-	size_t			i;
+	struct query	 *q;
+	char		**res[4], filter[MAX_LDAP_FILTERLEN];
+	int		  ret, i;
 
-	bzero(&attributes, sizeof attributes);
-	bzero(&ret_attr, sizeof ret_attr);
-
-	basedn = table_get(cfg, "basedn");
-	if ((filter = table_get(cfg, "credentials_filter")) == NULL) {
-		log_warnx("table_ldap: lookup: no filter configured for credentials");
-		goto end;
+	switch (type) {
+	case K_ALIAS:		q = &queries[LDAP_ALIAS];	break;
+	case K_DOMAIN:		q = &queries[LDAP_DOMAIN];	break;
+	case K_CREDENTIALS:	q = &queries[LDAP_CREDENTIALS];	break;
+	case K_NETADDR:		q = &queries[LDAP_NETADDR];	break;
+	case K_USERINFO:	q = &queries[LDAP_USERINFO];	break;
+	case K_SOURCE:		q = &queries[LDAP_SOURCE];	break;
+	case K_MAILADDR:	q = &queries[LDAP_MAILADDR];	break;
+	case K_ADDRNAME:	q = &queries[LDAP_ADDRNAME];	break;
+	default:
+		return (-1);
 	}
 
-	if ((attr = table_get(cfg, "credentials_attributes")) == NULL) {
-		log_warnx("table_ldap: lookup: no attributes configured for credentials");
-		goto end;
+	if (snprintf(filter, sizeof(filter), q->filter, key)
+	    >= (int)sizeof(filter)) {
+		log_warnx("warn: table-ldap: filter too large");
+		return (-1);
 	}
 
-	if (! filter_expand(&expfilter, filter, key)) {
-		log_warnx("table_ldap: lookup: couldn't expand filter");
-		goto end;
-	}
-
-	if (! parse_attributes(attributes, attr, 2)) {
-		log_warnx("table_ldap: lookup: failed to parse attributes");
-		goto end;
-	}
-
-	if ((ret = table_ldap_internal_query(aldap, basedn, expfilter, attributes,
-		    ret_attr, nitems(attributes))) <= 0)
+	bzero(res, sizeof(res));
+	ret = ldap_query(filter, q->attrs, res, q->attrn);
+	if (ret <= 0 || dst == NULL)
 		goto end;
 
-	if (lk == NULL)
-		goto end;
+	switch (type) {
 
-	if (! bsnprintf(line, sizeof line, "%s:%s", ret_attr[0][0], ret_attr[0][1])) {
-		ret = -1;
-		goto end;
-	}
-
-	bzero(&lk->creds, sizeof(lk->creds));
-	if (! text_to_credentials(&lk->creds, line))
-		ret = -1;
-
-end:
-	for (i = 0; i < nitems(attributes); ++i) {
-		free(attributes[i]);
-		if (ret_attr[i])
-			aldap_free_attr(ret_attr[i]);
-	}
-	
-	free(expfilter);
-	log_debug("debug: table_ldap_credentials: ret=%d", ret);
-	return ret;
-}
-
-static int
-table_ldap_domain(struct table_ldap_handle *tlh, const char *key, union lookup *lk)
-{
-	struct aldap	       *aldap = tlh->aldap;
-	struct table	       *cfg = table_find(tlh->table->t_name, "conf");
-	const char	       *filter = NULL;
-	const char	       *basedn = NULL;
-	char		       *expfilter = NULL;
-	char     	       *attributes[1];
-	char     	      **ret_attr[1];
-	const char     	       *attr;
-	int			ret = -1;
-	size_t			i;
-
-	bzero(&attributes, sizeof attributes);
-	bzero(&ret_attr, sizeof ret_attr);
-
-	log_debug("domain: %s", key);
-	basedn = table_get(cfg, "basedn");
-	if ((filter = table_get(cfg, "domain_filter")) == NULL) {
-		log_warnx("table_ldap: lookup: no filter configured for domain");
-		goto end;
-	}
-
-	if ((attr = table_get(cfg, "domain_attributes")) == NULL) {
-		log_warnx("table_ldap: lookup: no attributes configured for domain");
-		goto end;
-	}
-
-	if (! filter_expand(&expfilter, filter, key)) {
-		log_warnx("table_ldap: lookup: couldn't expand filter");
-		goto end;
-	}
-
-	if (! parse_attributes(attributes, attr, 1)) {
-		log_warnx("table_ldap: lookup: failed to parse attributes");
-		goto end;
-	}
-
-	if ((ret = table_ldap_internal_query(aldap, basedn, expfilter, attributes,
-		    ret_attr, nitems(attributes))) <= 0)
-		goto end;
-
-	if (lk == NULL)
-		goto end;
-
-	bzero(&lk->domain, sizeof(lk->domain));
-	if (strlcpy(lk->domain.name, ret_attr[0][0], sizeof(lk->domain.name))
-	    >= sizeof(lk->domain.name))
-		ret = -1;
-
-end:
-	for (i = 0; i < nitems(attributes); ++i) {
-		free(attributes[i]);
-		if (ret_attr[i])
-			aldap_free_attr(ret_attr[i]);
-	}
-	free(expfilter);
-	log_debug("debug: table_ldap_domain: ret=%d", ret);
-	return ret;
-}
-
-static int
-table_ldap_userinfo(struct table_ldap_handle *tlh, const char *key, union lookup *lk)
-{
-	struct aldap	       *aldap = tlh->aldap;
-	struct table	       *cfg = table_find(tlh->table->t_name, "conf");
-	const char	       *filter = NULL;
-	const char	       *basedn = NULL;
-	char		       *expfilter = NULL;
-	char     	       *attributes[4];
-	char     	      **ret_attr[4];
-	const char     	       *attr;
-	char			line[1024];
-	int			ret = -1;
-	size_t			i;
-
-	bzero(&attributes, sizeof attributes);
-	bzero(&ret_attr, sizeof ret_attr);
-
-	basedn = table_get(cfg, "basedn");
-	if ((filter = table_get(cfg, "userinfo_filter")) == NULL) {
-		log_warnx("table_ldap: lookup: no filter configured for userinfo");
-		goto end;
-	}
-
-	if ((attr = table_get(cfg, "userinfo_attributes")) == NULL) {
-		log_warnx("table_ldap: lookup: no attributes configured for userinfo");
-		goto end;
-	}
-
-	if (! filter_expand(&expfilter, filter, key)) {
-		log_warnx("table_ldap: lookup: couldn't expand filter");
-		goto end;
-	}
-
-	if (! parse_attributes(attributes, attr, 4)) {
-		log_warnx("table_ldap: lookup: failed to parse attributes");
-		goto end;
-	}
-
-	if ((ret = table_ldap_internal_query(aldap, basedn, expfilter, attributes,
-		    ret_attr, nitems(attributes))) <= 0)
-		goto end;
-
-	if (lk == NULL)
-		goto end;
-
-	if (! bsnprintf(line, sizeof line, "%s:%s:%s:%s",
-		ret_attr[0][0], ret_attr[1][0], ret_attr[2][0], ret_attr[3][0])) {
-		ret = -1;
-		goto end;
-	}
-
-	bzero(&lk->userinfo, sizeof(lk->userinfo));
-	if (!text_to_userinfo(&(lk->userinfo), line))
-		ret = -1;
-
-end:
-	for (i = 0; i < nitems(attributes); ++i) {
-		free(attributes[i]);
-		if (ret_attr[i])
-			aldap_free_attr(ret_attr[i]);
-	}
-	free(expfilter);
-	log_debug("debug: table_ldap_userinfo: ret=%d", ret);
-	return ret;
-}
-
-static int
-table_ldap_alias(struct table_ldap_handle *tlh, const char *key, union lookup *lk)
-{
-	struct aldap	       *aldap = tlh->aldap;
-	struct table	       *cfg = table_find(tlh->table->t_name, "conf");
-	const char	       *filter = NULL;
-	const char	       *basedn = NULL;
-	char		       *expfilter = NULL;
-	char     	       *attributes[1];
-	char     	      **ret_attr[1];
-	const char     	       *attr;
-	int			ret = -1;
-	size_t			i;
-
-	bzero(&attributes, sizeof attributes);
-	bzero(&ret_attr, sizeof ret_attr);
-	if (lk)
-		lk->expand = NULL;
-
-	basedn = table_get(cfg, "basedn");
-	if ((filter = table_get(cfg, "alias_filter")) == NULL) {
-		log_warnx("table_ldap: lookup: no filter configured for alias");
-		goto end;
-	}
-
-	if ((attr = table_get(cfg, "alias_attributes")) == NULL) {
-		log_warnx("table_ldap: lookup: no attributes configured for alias");
-		goto end;
-	}
-
-	if (! filter_expand(&expfilter, filter, key)) {
-		log_warnx("table_ldap: lookup: couldn't expand filter");
-		goto end;
-	}
-
-	if (! parse_attributes(attributes, attr, 1)) {
-		log_warnx("table_ldap: lookup: failed to parse attributes");
-		goto end;
-	}
-
-	if ((ret = table_ldap_internal_query(aldap, basedn, expfilter, attributes,
-		    ret_attr, nitems(attributes))) <= 0)
-		goto end;
-
-	if (lk == NULL)
-		goto end;
-
-	lk->expand = xcalloc(1, sizeof(*lk->expand), "table_ldap_alias");
-	for (i = 0; ret_attr[0][i]; ++i) {
-		if (! expand_line(lk->expand, ret_attr[0][i], 1)) {
+	case K_ALIAS:
+		for (i = 0; res[0][i]; i++) {
+			if (i && strlcat(dst, ", ", sz) >= sz) {
+				ret = -1;
+				break;
+			}
+			if (strlcat(dst, res[0][i], sz) >= sz) {
+				ret = -1;
+				break;
+			}
+		}
+		break;
+	case K_DOMAIN:
+		if (strlcpy(dst, res[0][0], sz) >= sz)
 			ret = -1;
-			goto end;
-		}
+		break;
+	case K_CREDENTIALS:
+		if (snprintf(dst, sz, "%s:%s", res[0][0], res[0][1]) >= (int)sz)
+			ret = -1;
+		break;
+	case K_USERINFO:
+		if (snprintf(dst, sz, "%s:%s:%s:%s", res[0][0], res[1][0],
+		    res[2][0], res[3][0]) >= (int)sz)
+			ret = -1;
+		break;
 	}
+
+	if (ret == -1)
+		log_warnx("warn: table-ldap: could not format result");
 
 end:
-	for (i = 0; i < nitems(attributes); ++i) {
-		free(attributes[i]);
-		if (ret_attr[i])
-			aldap_free_attr(ret_attr[i]);
-	}
-	if (ret != 1 && lk && lk->expand)
-		expand_free(lk->expand);
+	for (i = 0; i < q->attrn; ++i)
+		if (res[i])
+			aldap_free_attr(res[i]);
 
-	free(expfilter);
-	log_debug("debug: table_ldap_alias: ret=%d", ret);
-	return ret;
-}
-
-static struct aldap *
-ldap_client_connect(const char *addr)
-{
-	struct aldap_url	lu;
-	struct addrinfo		 hints, *res0, *res;
-	int			 error;
-
-	char *url;
-	int fd = -1;
-
-	if ((url = strdup(addr)) == NULL)
-		err(1, NULL);
-
-	if (aldap_parse_url(url, &lu) != 1) {
-		warnx("aldap_parse_url fail");
-		goto err;
-	}
-	url = NULL;
-
-	bzero(&hints, sizeof(hints));
-	hints.ai_family = PF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM; /* DUMMY */
-	error = getaddrinfo(lu.host, NULL, &hints, &res0);
-	if (error == EAI_AGAIN || error == EAI_NODATA || error == EAI_NONAME)
-		goto err;
-	if (error) {
-		log_warnx("ldap_client_connect: could not parse \"%s\": %s", lu.host,
-		    gai_strerror(error));
-		goto err;
-	}
-
-	for (res = res0; res; res = res->ai_next) {
-		if (res->ai_family != AF_INET && res->ai_family != AF_INET6)
-			continue;
-
-		fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-		if (fd == -1)
-			continue;
-
-		if (res->ai_family == AF_INET) {
-			struct sockaddr_in sin4 = *(struct sockaddr_in *)res->ai_addr;
-			sin4.sin_port = htons(lu.port);
-			if (connect(fd, (struct sockaddr *)&sin4, res->ai_addrlen) == 0)
-				return aldap_init(fd);
-		}
-		else if (res->ai_family == AF_INET6) {
-			struct sockaddr_in6 sin6 = *(struct sockaddr_in6 *)res->ai_addr;
-			sin6.sin6_port = htons(lu.port);
-			if (connect(fd, (struct sockaddr *)&sin6, res->ai_addrlen) == 0)
-				return aldap_init(fd);
-		}
-
-		close(fd);
-		fd = -1;
-	}
-
-err:
-	free(url);
-	return NULL;
-}
-
-static int
-parse_attributes(char **attributes, const char *line, size_t expect)
-{
-	char	buffer[1024];
-	char   *p;
-	size_t	m, n;
-
-	if (strlcpy(buffer, line, sizeof buffer)
-	    >= sizeof buffer)
-		return 0;
-
-	m = 1;
-	for (p = buffer; *p; ++p) {
-		if (*p == ',') {
-			*p = 0;
-			m++;
-		}
-	}
-	if (expect != m)
-		return 0;
-
-	p = buffer;
-	for (n = 0; n < expect; ++n)
-		attributes[n] = NULL;
-	for (n = 0; n < m; ++n) {
-		attributes[n] = xstrdup(p, "parse_attributes");
-		p += strlen(p) + 1;
-	}
-	return 1;
+	return (ret);
 }

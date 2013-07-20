@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_api.c,v 1.1 2013/07/19 19:53:33 eric Exp $	*/
+/*	$OpenBSD: table_api.c,v 1.2 2013/07/20 09:06:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -44,8 +44,10 @@ static struct imsg	 imsg;
 static size_t		 rlen;
 static char		*rdata;
 static struct ibuf	*buf;
+#if 0
 static char		*rootpath;
 static char		*user = SMTPD_USER;
+#endif
 
 static void
 table_msg_get(void *dst, size_t len)
@@ -229,7 +231,9 @@ table_api_on_fetch(int(*cb)(int, char *, size_t))
 int
 table_api_dispatch(void)
 {
+#if 0
 	struct passwd	*pw;
+#endif
 	ssize_t		 n;
 
 #if 0
