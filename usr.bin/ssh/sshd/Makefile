@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.77 2013/07/02 13:32:38 markus Exp $
+#	$OpenBSD: Makefile,v 1.78 2013/07/20 01:55:13 djm Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -19,6 +19,7 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	roaming_common.c roaming_serv.c sandbox-systrace.c
 
 .include <bsd.own.mk> # for KERBEROS and AFS
+
 KERBEROS5=no
 
 .if (${KERBEROS5:L} == "yes")
@@ -29,8 +30,8 @@ SRCS+=  auth-krb5.c auth2-gss.c gss-serv.c gss-serv-krb5.c
 .include <bsd.prog.mk>
 
 .if (${KERBEROS5:L} == "yes")
-LDADD+= -lgssapi -lkrb5 -lhx509 -lasn1 -lheimntlm
-LDADD+= -lwind -lroken -lcom_err -lpthread -lheimbase -lkafs
+LDADD+= -lgssapi -lkrb5 -lasn1
+LDADD+= -lwind -lroken -lcom_err -lpthread -lheimbase -lkafs5
 DPADD+= ${LIBGSSAPI} ${LIBKRB5}
 .endif
 
