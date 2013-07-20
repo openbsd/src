@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.49 2013/07/17 20:21:55 schwarze Exp $
+.\"	$OpenBSD: uvm.9,v 1.50 2013/07/20 06:25:33 jmc Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: July 20 2013 $
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -72,7 +72,10 @@ recently used.
 The swapper process swaps in runnable processes that are currently swapped out,
 if there is room.
 .Pp
-There are also several miscellaneous functions.
+UVM has a machine independent and a machine dependent layer.
+See
+.Xr pmap 9
+for the machine dependent layer.
 .Sh INITIALISATION
 .nr nS 1
 .Ft void
@@ -941,7 +944,7 @@ int swapins;		/* swapins */
 int swapouts;		/* swapouts */
 int pgswapin;		/* pages swapped in */
 int pgswapout;		/* pages swapped out */
-int forks;  		/* forks */
+int forks;		/* forks */
 int forks_ppwait;	/* forks where parent waits */
 int forks_sharevm;	/* forks where vmspace is shared */
 int pga_zerohit;	/* pagealloc where zero wanted and zero
@@ -1044,9 +1047,15 @@ development stages.
 .Xr ddb 4 ,
 .Xr options 4 ,
 .Xr pmap 9
+.Rs
+.%A Charles D. Cranor
+.%D August 1998
+.%C St. Louis, Missouri
+.%Q Department of Computer Science, Sever Institute of Technology, Washington University
+.%T Design and Implementation of the UVM Virtual Memory System, D.Sc. dissertation
+.Re
 .Sh HISTORY
-UVM is a new VM system developed at Washington University in St. Louis
-(Missouri).
+The UVM virtual memory system was developed at Washington University in St. Louis.
 UVM's roots lie partly in the Mach-based
 .Bx 4.4
 VM system, the
@@ -1063,8 +1072,6 @@ new to
 .Bx
 including page loanout, map entry passing, simplified
 copy-on-write, and clustered anonymous memory pageout.
-UVM is also further documented in an August 1998 dissertation
-by Charles D. Cranor.
 .Pp
 UVM appeared in
 .Ox 2.9 .
