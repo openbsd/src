@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.52 2013/03/21 04:43:17 deraadt Exp $ */
+/*	$OpenBSD: arp.c,v 1.53 2013/07/20 18:21:11 bluhm Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -248,8 +248,8 @@ getsocket(void)
 struct sockaddr_in	so_mask = { 8, 0, 0, { 0xffffffff } };
 struct sockaddr_inarp	blank_sin = { sizeof(blank_sin), AF_INET }, sin_m;
 struct sockaddr_dl	blank_sdl = { sizeof(blank_sdl), AF_LINK }, sdl_m;
-int			expire_time, flags, export_only, doing_proxy,
-			    found_entry;
+time_t			expire_time;
+int			flags, export_only, doing_proxy, found_entry;
 struct	{
 	struct rt_msghdr	m_rtm;
 	char			m_space[512];
@@ -282,7 +282,8 @@ set(int argc, char *argv[])
 		errx(1, "invalid ethernet address: %s", eaddr);
 	memcpy(LLADDR(&sdl_m), ea, sizeof(*ea));
 	sdl_m.sdl_alen = 6;
-	doing_proxy = flags = export_only = expire_time = 0;
+	expire_time = 0;
+	doing_proxy = flags = export_only = 0;
 	while (argc-- > 0) {
 		if (strncmp(argv[0], "temp", 4) == 0) {
 			struct timeval time;
