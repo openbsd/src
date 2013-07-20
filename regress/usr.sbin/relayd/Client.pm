@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.4 2013/01/04 14:01:49 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.5 2013/07/20 10:30:55 bluhm Exp $
 
 # Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -44,13 +44,15 @@ sub new {
 sub child {
 	my $self = shift;
 
+	$SSL_ERROR = "";
 	my $iosocket = $self->{ssl} ? "IO::Socket::SSL" : "IO::Socket::INET6";
 	my $cs = $iosocket->new(
-	    Proto	=> "tcp",
-	    Domain	=> $self->{connectdomain},
-	    PeerAddr    => $self->{connectaddr},
-	    PeerPort    => $self->{connectport},
-	) or die ref($self), " $iosocket socket connect failed: $!";
+	    Proto		=> "tcp",
+	    Domain		=> $self->{connectdomain},
+	    PeerAddr		=> $self->{connectaddr},
+	    PeerPort		=> $self->{connectport},
+	    SSL_verify_mode	=> SSL_VERIFY_NONE,
+	) or die ref($self), " $iosocket socket connect failed: $!,$SSL_ERROR";
 	print STDERR "connect sock: ",$cs->sockhost()," ",$cs->sockport(),"\n";
 	print STDERR "connect peer: ",$cs->peerhost()," ",$cs->peerport(),"\n";
 

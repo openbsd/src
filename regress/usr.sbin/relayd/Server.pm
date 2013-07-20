@@ -1,4 +1,4 @@
-#	$OpenBSD: Server.pm,v 1.3 2013/01/04 14:01:49 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.4 2013/07/20 10:30:55 bluhm Exp $
 
 # Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -34,17 +34,19 @@ sub new {
 	my $self = Proc::new($class, %args);
 	$self->{listendomain}
 	    or croak "$class listen domain not given";
+	$SSL_ERROR = "";
 	my $iosocket = $self->{ssl} ? "IO::Socket::SSL" : "IO::Socket::INET6";
 	my $ls = $iosocket->new(
-	    Proto	=> "tcp",
-	    ReuseAddr	=> 1,
-	    Domain	=> $self->{listendomain},
-	    Listen      => 1,
+	    Proto		=> "tcp",
+	    ReuseAddr		=> 1,
+	    Domain		=> $self->{listendomain},
+	    Listen		=> 1,
 	    $self->{listenaddr} ? (LocalAddr => $self->{listenaddr}) : (),
 	    $self->{listenport} ? (LocalPort => $self->{listenport}) : (),
-	    SSL_key_file  => "server-key.pem",
-	    SSL_cert_file => "server-cert.pem",
-	) or die ref($self), " $iosocket socket listen failed: $!";
+	    SSL_key_file	=> "server-key.pem",
+	    SSL_cert_file	=> "server-cert.pem",
+	    SSL_verify_mode	=> SSL_VERIFY_NONE,
+	) or die ref($self), " $iosocket socket listen failed: $!,$SSL_ERROR";
 	my $log = $self->{log};
 	print $log "listen sock: ",$ls->sockhost()," ",$ls->sockport(),"\n";
 	$self->{listenaddr} = $ls->sockhost() unless $self->{listenaddr};
