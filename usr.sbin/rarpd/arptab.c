@@ -1,3 +1,5 @@
+/*	$OpenBSD: arptab.c,v 1.20 2013/07/20 18:25:34 bluhm Exp $ */
+
 /*
  * Copyright (c) 1984, 1993
  *	The Regents of the University of California.  All rights reserved.
