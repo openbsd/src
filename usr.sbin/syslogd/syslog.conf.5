@@ -26,10 +26,10 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.22 2007/05/31 19:20:29 jmc Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.23 2013/07/20 18:11:57 kili Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 20 2013 $
 .Dt SYSLOG.CONF 5
 .Os
 .Sh NAME
@@ -61,8 +61,7 @@ field by one or more tab characters.
 .Pp
 The
 .Em selectors
-function
-is encoded as a
+are encoded as a
 .Em facility ,
 a period
 .Pq Ql \&. ,
@@ -129,7 +128,7 @@ for further descriptions of both the
 and
 .Em level
 keywords and their significance.
-It's preferred that selections be made on
+It's recommended that selections be made on
 .Em facility
 rather than
 .Em program ,
