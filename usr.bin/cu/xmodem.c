@@ -1,4 +1,4 @@
-/* $OpenBSD: xmodem.c,v 1.4 2013/01/17 21:10:24 nicm Exp $ */
+/* $OpenBSD: xmodem.c,v 1.5 2013/07/20 19:27:47 naddy Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -35,6 +35,7 @@
 #define XMODEM_ACK '\006'
 #define XMODEM_NAK '\025'
 #define XMODEM_SUB '\032'
+#define XMODEM_C   '\103'
 
 volatile sig_atomic_t xmodem_stop;
 
@@ -42,6 +43,24 @@ void
 xmodem_signal(int sig)
 {
 	xmodem_stop = 1;
+}
+
+uint16_t
+xmodem_crc16(const u_char *buf, size_t len)
+{
+	uint16_t	crc;
+	u_int		i, j;
+
+	crc = 0;
+	for (i = 0; i < len; i++) {
+		crc = crc ^ *buf++ << 8;
+		for (j = 0; j < 8; j++)
+			if (crc & 0x8000)
+				crc = crc << 1 ^ 0x1021;
+			else
+				crc = crc << 1;
+	}
+	return (crc);
 }
 
 int
@@ -84,9 +103,11 @@ void
 xmodem_send(const char *file)
 {
 	FILE			*f;
-	u_char			 buf[3 + XMODEM_BLOCK + 1], c;
-	size_t			 len;
+	u_char			 buf[3 + XMODEM_BLOCK + 2], c;
+	size_t			 len, pktlen;
 	uint8_t			 num;
+	uint16_t		 crc;
+	int			 crc_mode;
 	u_int			 i, total;
 	struct termios		 tio;
 	struct sigaction	 act, oact;
@@ -112,8 +133,21 @@ xmodem_send(const char *file)
 			cu_err(1, "tcsetattr");
 	}
 
+	tcflush(line_fd, TCIFLUSH);
+	if (xmodem_read(&c) != 0)
+		goto fail;
+	if (c == XMODEM_C)
+		crc_mode = 1;
+	else if (c == XMODEM_NAK)
+		crc_mode = 0;
+	else {
+		cu_warnx("%s: unexpected response \%03hho", file, c);
+		goto fail;
+	}
+
 	num = 1;
 	total = 1;
+	pktlen = 3 + XMODEM_BLOCK + (crc_mode ? 2 : 1);
 	for (;;) {
 		len = fread(buf + 3, 1, XMODEM_BLOCK, f);
 		if (len == 0)
@@ -124,9 +158,15 @@ xmodem_send(const char *file)
 		buf[1] = num;
 		buf[2] = 255 - num;
 
-		buf[3 + XMODEM_BLOCK] = 0;
-		for (i = 0; i < 128; i++)
-			buf[3 + XMODEM_BLOCK] += buf[3 + i];
+		if (crc_mode) {
+			crc = xmodem_crc16(buf + 3, XMODEM_BLOCK);
+			buf[3 + XMODEM_BLOCK] = crc >> 8;
+			buf[3 + XMODEM_BLOCK + 1] = crc & 0xFF;
+		} else {
+			buf[3 + XMODEM_BLOCK] = 0;
+			for (i = 0; i < XMODEM_BLOCK; i++)
+				buf[3 + XMODEM_BLOCK] += buf[3 + i];
+		}
 
 		for (i = 0; i < XMODEM_RETRIES; i++) {
 			if (xmodem_stop) {
@@ -135,7 +175,7 @@ xmodem_send(const char *file)
 			}
 			cu_warnx("%s: sending block %u (attempt %u)", file,
 			    total, 1 + i);
-			if (xmodem_write(buf, sizeof buf) != 0)
+			if (xmodem_write(buf, pktlen) != 0)
 				goto fail;
 
 			if (xmodem_read(&c) != 0)
