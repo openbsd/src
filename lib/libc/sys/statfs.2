@@ -1,4 +1,4 @@
-.\"	$OpenBSD: statfs.2,v 1.21 2012/12/05 19:21:39 millert Exp $
+.\"	$OpenBSD: statfs.2,v 1.22 2013/07/20 19:33:34 naddy Exp $
 .\"	$NetBSD: statfs.2,v 1.10 1995/06/29 11:40:48 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)statfs.2	8.3 (Berkeley) 2/11/94
 .\"
-.Dd $Mdocdate: December 5 2012 $
+.Dd $Mdocdate: July 20 2013 $
 .Dt STATFS 2
 .Os
 .Sh NAME
@@ -63,25 +63,30 @@ struct statfs {
    u_int32_t       f_flags;        /* copy of mount flags */
    u_int32_t       f_bsize;        /* file system block size */
    u_int32_t       f_iosize;       /* optimal transfer block size */
+
                                    /* unit is f_bsize */
    u_int64_t       f_blocks;       /* total data blocks in file system */
    u_int64_t       f_bfree;        /* free blocks in fs */
    int64_t         f_bavail;       /* free blocks avail to non-superuser */
+
    u_int64_t       f_files;        /* total file nodes in file system */
    u_int64_t       f_ffree;        /* free file nodes in fs */
    int64_t         f_favail;       /* free file nodes avail to non-root */
+
    u_int64_t       f_syncwrites;   /* count of sync writes since mount */
    u_int64_t       f_syncreads;    /* count of sync reads since mount */
    u_int64_t       f_asyncwrites;  /* count of async writes since mount */
    u_int64_t       f_asyncreads;   /* count of async reads since mount */
+
    fsid_t          f_fsid;         /* file system id */
    u_int32_t       f_namemax;      /* maximum filename length */
    uid_t           f_owner;        /* user that mounted the file system */
-   u_int32_t       f_ctime;        /* last mount [-u] time */
-   u_int32_t       f_spare[3];     /* spare for later */
+   u_int64_t       f_ctime;        /* last mount [-u] time */
+
    char f_fstypename[MFSNAMELEN];  /* fs type name */
    char f_mntonname[MNAMELEN];     /* directory on which mounted */
    char f_mntfromname[MNAMELEN];   /* mounted file system */
+   char f_mntfromspec[MNAMELEN];   /* special for mount request */
    union mount_info mount_info;    /* per-filesystem mount options */
 };
 .Ed
