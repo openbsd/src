@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.43 2013/07/19 21:14:52 eric Exp $
+.\" $OpenBSD: smtpctl.8,v 1.44 2013/07/20 06:45:12 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 19 2013 $
+.Dd $Mdocdate: July 20 2013 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -127,9 +127,10 @@ It consists of the following fields, separated by a "|":
 .Pp
 .Bl -bullet -compact
 .It
-domain.
+Domain.
 .It
-Unix timestamp of last delivery.
+.Ux
+timestamp of last delivery.
 .It
 Status of last delivery.
 .El
@@ -179,19 +180,21 @@ Error string for the last failed delivery or relay attempt.
 .It Cm show routes
 Display status of routes currently known by
 .Xr smtpd 8 .
-Each line consists in a route number, a source address, a destination
+Each line consists of a route number, a source address, a destination
 address, a set of flags, the number of connections on this
 route, the current penalty level which determines the amount of time
 the route is disabled if an error occurs, and the delay before it
-gets re-activated. The following flags are defined:
+gets re-activated.
+The following flags are defined:
 .Pp
 .Bl -tag -width xx -compact
-.It N
-The route is new. No SMTP session has been established yet.
 .It D
 The route is currently disabled.
+.It N
+The route is new.
+No SMTP session has been established yet.
 .It Q
-The route as a timeout registered to lower its penality level and possibly
+The route as a timeout registered to lower its penalty level and possibly
 re-activate or discard it.
 .El
 .It Cm show stats
