@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.161 2013/07/21 13:20:11 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.162 2013/07/21 13:55:15 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -55,26 +55,15 @@ The
 utility communicates with the packet filter device using the
 ioctl interface described in
 .Xr pf 4 .
-It allows ruleset and parameter configuration and retrieval of status
-information from the packet filter.
-.Pp
+It allows ruleset and parameter configuration,
+and retrieval of status information from the packet filter.
 Packet filtering restricts the types of packets that pass through
 network interfaces entering or leaving the host based on filter
 rules as described in
 .Xr pf.conf 5 .
 The packet filter can also replace addresses and ports of packets.
-Replacing source addresses and ports of outgoing packets is called
-NAT (Network Address Translation) and is used to connect an internal
-network (usually reserved address space) to an external one (the
-Internet) by making all connections to external hosts appear to
-come from the gateway.
-Replacing destination addresses and ports of incoming packets
-is used to redirect connections to different hosts and/or ports.
-A combination of both translations, bidirectional NAT, is also
-supported.
-Translation rules are described in
-.Xr pf.conf 5 .
 .Pp
+The packet filter is enabled by default.
 Should
 .Nm
 be unable to load a ruleset,
@@ -569,12 +558,12 @@ line.
 # pfctl -t test -vTshow
    198.51.100.81
         Cleared:        Fri Jun 28 11:17:37 2013
-        In/Block:       [ Packets: 0              Bytes: 0              ]
-        In/Match        [ Packets: 54             Bytes: 10028          ]
-        In/Pass:        [ Packets: 5              Bytes: 1949           ]
-        Out/Block:      [ Packets: 0              Bytes: 0              ]
-        Out/Match       [ Packets: 65             Bytes: 12684          ]
-        Out/Pass:       [ Packets: 6              Bytes: 389            ]
+        In/Block:       [ Packets: 0	Bytes: 0	]
+        In/Match        [ Packets: 54	Bytes: 10028	]
+        In/Pass:        [ Packets: 5	Bytes: 1949	]
+        Out/Block:      [ Packets: 0	Bytes: 0	]
+        Out/Match       [ Packets: 65	Bytes: 12684	]
+        Out/Pass:       [ Packets: 6	Bytes: 389	]
 .Ed
 .Pp
 Similarly, it is possible to view global information about the tables
@@ -592,16 +581,16 @@ packet statistics for the whole table:
 --a-r-C test
         Addresses:   1
         Cleared:     Fri Jun 28 11:17:37 2013
-        References:  [ Anchors: 0              Rules: 4              ]
-        Evaluations: [ NoMatch: 35             Match: 8              ]
-        In/Block:    [ Packets: 0              Bytes: 0              ]
-        In/Match:    [ Packets: 54             Bytes: 10028          ]
-        In/Pass:     [ Packets: 5              Bytes: 1949           ]
-        In/XPass:    [ Packets: 0              Bytes: 0              ]
-        Out/Block:   [ Packets: 0              Bytes: 0              ]
-        Out/Match:   [ Packets: 65             Bytes: 12684          ]
-        Out/Pass:    [ Packets: 6              Bytes: 389            ]
-        Out/XPass:   [ Packets: 0              Bytes: 0              ]
+        References:  [ Anchors: 0	Rules: 4	]
+        Evaluations: [ NoMatch: 35	Match: 8	]
+        In/Block:    [ Packets: 0	Bytes: 0	]
+        In/Match:    [ Packets: 54	Bytes: 10028	]
+        In/Pass:     [ Packets: 5	Bytes: 1949	]
+        In/XPass:    [ Packets: 0	Bytes: 0	]
+        Out/Block:   [ Packets: 0	Bytes: 0	]
+        Out/Match:   [ Packets: 65	Bytes: 12684	]
+        Out/Pass:    [ Packets: 6	Bytes: 389	]
+        Out/XPass:   [ Packets: 0	Bytes: 0	]
 .Ed
 .Pp
 Only packets creating state are matched in the Evaluations line,
