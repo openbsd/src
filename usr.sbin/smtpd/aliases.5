@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aliases.5,v 1.6 2013/07/19 12:20:57 eric Exp $
+.\"	$OpenBSD: aliases.5,v 1.7 2013/07/21 17:23:45 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 19 2013 $
+.Dd $Mdocdate: July 21 2013 $
 .Dt ALIASES 5
 .Os
 .Sh NAME
@@ -82,7 +82,8 @@ as a
 .Em key .
 .It Ar error : Ns Ar code Ar message
 A status code and message to return.
-The code must be in either 400 (TempFail) or 500 (PermFail) ranges.
+The code must be 3 digits,
+starting 4XX (TempFail) or 5XX (PermFail).
 The message must be present and can be freely chosen.
 .El
 .Sh FILES
