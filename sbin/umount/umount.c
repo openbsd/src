@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.23 2013/04/21 11:56:09 jsing Exp $	*/
+/*	$OpenBSD: umount.c,v 1.24 2013/07/21 21:07:10 millert Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -253,27 +253,27 @@ char *
 getmntname(char *name, mntwhat what, char *type)
 {
 	struct statfs *mntbuf;
-	int i, mntsize;
+	int n;
 
-	if ((mntsize = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0) {
+	if ((n = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0) {
 		warn("getmntinfo");
 		return (NULL);
 	}
-	for (i = 0; i < mntsize; i++) {
+	while (--n >= 0) {
 		if ((what == MNTON) &&
-		    (strncmp(mntbuf[i].f_mntfromname, name, MNAMELEN) == 0 ||
-		     strncmp(mntbuf[i].f_mntfromspec, name, MNAMELEN) == 0)) {
+		    (strncmp(mntbuf[n].f_mntfromname, name, MNAMELEN) == 0 ||
+		     strncmp(mntbuf[n].f_mntfromspec, name, MNAMELEN) == 0)) {
 			if (type)
-				memcpy(type, mntbuf[i].f_fstypename,
-				    sizeof(mntbuf[i].f_fstypename));
-			return (mntbuf[i].f_mntonname);
+				memcpy(type, mntbuf[n].f_fstypename,
+				    sizeof(mntbuf[n].f_fstypename));
+			return (mntbuf[n].f_mntonname);
 		}
 		if ((what == MNTFROM) &&
-		    (strncmp(mntbuf[i].f_mntonname, name, MNAMELEN) == 0)) {
+		    (strncmp(mntbuf[n].f_mntonname, name, MNAMELEN) == 0)) {
 			if (type)
-				memcpy(type, mntbuf[i].f_fstypename,
-				    sizeof(mntbuf[i].f_fstypename));
-			return (mntbuf[i].f_mntfromname);
+				memcpy(type, mntbuf[n].f_fstypename,
+				    sizeof(mntbuf[n].f_fstypename));
+			return (mntbuf[n].f_mntfromname);
 		}
 	}
 	return (NULL);
