@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.681 2013/06/10 21:19:29 rpe Exp $
+#	$OpenBSD: install.sub,v 1.682 2013/07/21 22:06:51 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -823,9 +823,6 @@ v4_config() {
 	dhcp)	if [[ ! -x /sbin/dhclient ]]; then
 			echo "DHCP not possible - no /sbin/dhclient."
 		elif dhcp_request $_ifs "$_name" || dhcp_request $_ifs ; then
-			# Add hosts entry. Overwrites previous entry if any.
-			set -- $(v4_info $_ifs)
-			addhostent "$2" "$_name"
 			echo "dhcp" >>$_hn
 			# Create a new bpf in case we start another dhclient
 			makedev bpf$(ls /dev | grep -c "^bpf[0-9]")
@@ -860,8 +857,6 @@ v6_config() {
 	rtsol)	[[ ! -x /sbin/rtsol ]] && { echo "No /sbin/rtsol." ; return ; }
 		ifconfig $_ifs up
 		if rtsol -F $_ifs; then
-			set -- $(v6_info $_ifs)
-			addhostent "$2" "$_name"
 			echo "up\nrtsol" >>$_hn
 		fi
 		return
