@@ -2618,6 +2618,8 @@
 ./usr/libexec/smrsh
 ./usr/libexec/smtpd
 ./usr/libexec/smtpd/makemap
+./usr/libexec/smtpd/table-ldap
+./usr/libexec/smtpd/table-sqlite
 ./usr/libexec/spamd
 ./usr/libexec/spamd-setup
 ./usr/libexec/spamlogd
