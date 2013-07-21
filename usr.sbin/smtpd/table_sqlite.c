@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_sqlite.c,v 1.4 2013/07/20 09:06:46 eric Exp $	*/
+/*	$OpenBSD: table_sqlite.c,v 1.5 2013/07/21 09:25:38 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -361,7 +361,7 @@ table_sqlite_query(const char *key, int service)
 		return (NULL);
 
 	if (sqlite3_bind_text(stmt, 1, key, strlen(key), NULL) != SQLITE_OK) {
-		log_warnx("table-sqlite: sqlite3_bind_text: %s",
+		log_warnx("warn: table-sqlite: sqlite3_bind_text: %s",
 		    sqlite3_errmsg(db));
 		return (NULL);
 	}
@@ -409,7 +409,7 @@ table_sqlite_lookup(int service, const char *key, char *dst, size_t sz)
 	}
 
 	if (s != SQLITE_ROW) {
-		log_warnx("table-sqlite: sqlite3_step: %s",
+		log_warnx("warn: table-sqlite: sqlite3_step: %s",
 		    sqlite3_errmsg(db));
 		sqlite3_reset(stmt);
 		return (-1);
@@ -435,7 +435,7 @@ table_sqlite_lookup(int service, const char *key, char *dst, size_t sz)
 		} while (s == SQLITE_ROW);
 
 		if (s !=  SQLITE_ROW && s != SQLITE_DONE) {
-			log_warnx("table-sqlite: sqlite3_step: %s",
+			log_warnx("warn: table-sqlite: sqlite3_step: %s",
 			    sqlite3_errmsg(db));
 			r = -1;
 		}
