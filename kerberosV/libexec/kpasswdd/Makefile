@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.17 2013/07/10 11:14:40 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.18 2013/07/22 13:20:48 ajacoutot Exp $
 
 PROG=	kpasswdd
 MPAGES=	kpasswdd.8
 MSRC=	${KRB5DIR}/kpasswd
 
-CPPFLAGS=	-I${KRB5DIR}/lib/roken -I../../lib/libhdb
+CPPFLAGS=	-I${KRB5DIR}/lib/roken -I${KRB5DIR}/lib/hdb
 DPADD=	${LIBKADM5SRV} ${LIBHDB} ${LIBKRB5} ${LIBROKEN} ${LIBVERS} \
 	${LIBASN1} ${LIBCRYPTO} ${LIBCOM_ERR}
 LDADD=	-lkadm5srv -lhdb -lkrb5 -lroken ${LIBVERS} \
