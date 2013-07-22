@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_ldap.c,v 1.5 2013/07/20 09:06:46 eric Exp $	*/
+/*	$OpenBSD: table_ldap.c,v 1.6 2013/07/22 13:14:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -19,7 +19,6 @@
 #include <sys/types.h>
 
 #include <ctype.h>
-#include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

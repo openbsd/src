@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_passwd.c,v 1.1 2013/07/21 09:38:52 eric Exp $	*/
+/*	$OpenBSD: table_passwd.c,v 1.2 2013/07/22 13:14:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -19,11 +19,11 @@
 #include <sys/types.h>
 
 #include <err.h>
-#include <getopt.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "smtpd-defines.h"
 #include "smtpd-api.h"
