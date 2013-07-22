@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.2 2013/07/19 09:39:28 eric Exp $	 */
+/* $OpenBSD: crypto.c,v 1.3 2013/07/22 13:20:49 eric Exp $	 */
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@openbsd.org>
@@ -215,6 +215,7 @@ crypto_encrypt_buffer(const char *in, size_t inlen, char *out, size_t outlen)
 	uint8_t		iv[IV_SIZE];
 	uint8_t		tag[GCM_TAG_SIZE];
 	uint8_t		version = API_VERSION;
+	off_t		sz;
 	int		olen;
 	int		len = 0;
 	int		ret = 0;
@@ -224,7 +225,8 @@ crypto_encrypt_buffer(const char *in, size_t inlen, char *out, size_t outlen)
 		return 0;
 
 	/* input should not exceed 64GB */
-	if (inlen >= 0x1000000000LL)
+	sz = inlen;
+	if (sz >= 0x1000000000LL)
 		return 0;
 
 	/* prepend version */
