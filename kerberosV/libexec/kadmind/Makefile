@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.19 2013/07/10 10:43:32 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.20 2013/07/22 14:42:31 ajacoutot Exp $
 
 PROG=	kadmind
 MPAGES=	kadmind.8
@@ -9,7 +9,7 @@ SRCS=	rpc.c \
 	kadm_conn.c
 
 CPPFLAGS=	-I${KRB5DIR}/lib/krb5 -I${KRB5DIR}/lib/asn1 -I${KRB5DIR}/lib/roken \
-		-I/usr/include/kerberosV/gssapi
+		-I${KRB5DIR}/lib/gssapi/gssapi
 DPADD=	${LIBKADM5SRV} ${LIBGSSAPI} ${LIBHDB} ${LIBKRB5} ${LIBROKEN} \
 	${LIBASN1} ${LIBVERS} ${LIBCRYPTO}
 LDADD=	-lkadm5srv -lgssapi -lhdb -lkrb5 -lasn1 \
