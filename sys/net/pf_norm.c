@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.159 2013/06/26 09:12:39 henning Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.160 2013/07/23 22:47:10 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -237,8 +237,6 @@ pf_find_fragment(struct pf_fragment_cmp *key, struct pf_frag_tree *tree)
 
 	frag = RB_FIND(pf_frag_tree, tree, (struct pf_fragment *)key);
 	if (frag != NULL) {
-		/* XXX Are we sure we want to update the timeout? */
-		frag->fr_timeout = time_uptime;
 		TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
 		TAILQ_INSERT_HEAD(&pf_fragqueue, frag, frag_next);
 	}
