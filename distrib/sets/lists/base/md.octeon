@@ -1607,9 +1607,9 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/asn1-common.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/asn1_err.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/base64.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/cms_asn1.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/com_err.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/com_right.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/cms_asn1.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/der-private.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/der-protos.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/der.ph
@@ -1645,11 +1645,11 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/krb5-protos.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/krb5-types.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/krb5.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/krb5_asn1.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/krb5/ccache_plugin.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/krb5/locate_plugin.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/krb5/send_to_kdc_plugin.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/krb5/windc_plugin.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/krb5_asn1.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/krb5_ccapi.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/krb5_err.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/krb_err.ph
