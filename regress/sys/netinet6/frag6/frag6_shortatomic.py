@@ -11,7 +11,7 @@ from addr import *
 from scapy.all import *
 
 pid=os.getpid()
-payload="ABCDEFGHIJKLOMNO"
+payload="ABCDEFGHIJKLMNOP"
 packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/IPv6ExtHdrDestOpt()/ \
     ICMPv6EchoRequest(id=pid, data=payload)
 frag=[]

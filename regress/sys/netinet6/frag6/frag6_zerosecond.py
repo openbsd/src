@@ -10,7 +10,7 @@ from addr import *
 from scapy.all import *
 
 pid=os.getpid()
-payload="ABCDEFGHIJKLOMNO"
+payload="ABCDEFGHIJKLMNOP"
 packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/ICMPv6EchoRequest(id=pid, data=payload)
 frag=[]
 frag.append(IPv6ExtHdrFragment(nh=58, id=pid, m=1)/str(packet)[40:56])
