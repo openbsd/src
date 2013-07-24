@@ -271,6 +271,7 @@
 ./usr/share/info/gccint.info
 ./usr/share/info/gdb.info
 ./usr/share/info/gdbint.info
+./usr/share/info/heimdal.info
 ./usr/share/info/history.info
 ./usr/share/info/info-stnd.info
 ./usr/share/info/info.info
