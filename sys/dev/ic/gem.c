@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.99 2013/03/09 17:57:00 mpi Exp $	*/
+/*	$OpenBSD: gem.c,v 1.100 2013/07/25 19:50:56 kettenis Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -56,11 +56,7 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
 #endif
 
 #if NBPFILTER > 0
@@ -120,7 +116,6 @@ int		gem_eint(struct gem_softc *, u_int);
 int		gem_rint(struct gem_softc *);
 int		gem_tint(struct gem_softc *, u_int32_t);
 int		gem_pint(struct gem_softc *);
-void		gem_rxcksum(struct mbuf *, u_int64_t);
 
 #ifdef GEM_DEBUG
 #define	DPRINTF(sc, x)	if ((sc)->sc_arpcom.ac_if.if_flags & IFF_DEBUG) \
@@ -138,7 +133,7 @@ gem_config(struct gem_softc *sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mii_data *mii = &sc->sc_mii;
 	struct mii_softc *child;
-	int i, error, mii_flags, phyad;
+	int i, error, phyad;
 	struct ifmedia_entry *ifm;
 
 	/* Make sure the chip is stopped. */
@@ -252,8 +247,6 @@ gem_config(struct gem_softc *sc)
 
 	gem_mifinit(sc);
 
-	mii_flags = MIIF_DOPAUSE;
-
 	/* 
 	 * Look for an external PHY.
 	 */
@@ -272,7 +265,7 @@ gem_config(struct gem_softc *sc)
 		}
 
 		mii_attach(&sc->sc_dev, mii, 0xffffffff, phyad,
-		    MII_OFFSET_ANY, mii_flags);
+		    MII_OFFSET_ANY, 0);
 	}
 
 	/*
@@ -301,7 +294,7 @@ gem_config(struct gem_softc *sc)
 		}
 
 		mii_attach(&sc->sc_dev, mii, 0xffffffff, phyad,
-		    MII_OFFSET_ANY, mii_flags);
+		    MII_OFFSET_ANY, 0);
 	}
 
 	/* 
@@ -323,10 +316,8 @@ gem_config(struct gem_softc *sc)
 		mii->mii_readreg = gem_pcs_readreg;
 		mii->mii_writereg = gem_pcs_writereg;
 
-		mii_flags |= MIIF_NOISOLATE;
-
 		mii_attach(&sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
-		    MII_OFFSET_ANY, mii_flags);
+		    MII_OFFSET_ANY, MIIF_NOISOLATE);
 	}
 
 	child = LIST_FIRST(&mii->mii_phys);
@@ -811,9 +802,7 @@ gem_init(struct ifnet *ifp)
 
 	/* Encode Receive Descriptor ring size: four possible values */
 	v = gem_ringsize(GEM_NRXDESC /*XXX*/);
-	/* RX TCP/UDP checksum offset */
-	v |= ((ETHER_HDR_LEN + sizeof(struct ip)) <<
-	    GEM_RX_CONFIG_CXM_START_SHFT);
+
 	/* Enable DMA */
 	bus_space_write_4(t, h, GEM_RX_CONFIG, 
 		v|(GEM_THRSH_1024<<GEM_RX_CONFIG_FIFO_THRS_SHIFT)|
@@ -917,8 +906,8 @@ gem_init_regs(struct gem_softc *sc)
 	bus_space_write_4(t, h, GEM_MAC_RX_CRC_ERR_CNT, 0);
 	bus_space_write_4(t, h, GEM_MAC_RX_CODE_VIOL, 0);
 
-	/* Set XOFF PAUSE time */
-	bus_space_write_4(t, h, GEM_MAC_SEND_PAUSE_CMD, 0x1bf0);
+	/* Un-pause stuff */
+	bus_space_write_4(t, h, GEM_MAC_SEND_PAUSE_CMD, 0);
 
 	/*
 	 * Set the internal arbitration to "infinite" bursts of the
@@ -945,95 +934,6 @@ gem_init_regs(struct gem_softc *sc)
 		(sc->sc_arpcom.ac_enaddr[2]<<8) | sc->sc_arpcom.ac_enaddr[3]);
 	bus_space_write_4(t, h, GEM_MAC_ADDR2, 
 		(sc->sc_arpcom.ac_enaddr[0]<<8) | sc->sc_arpcom.ac_enaddr[1]);
-}
-
-/*
- * RX TCP/UDP checksum
- */
-void
-gem_rxcksum(struct mbuf *m, u_int64_t rxstat)
-{
-	struct ether_header *eh;
-	struct ip *ip;
-	struct udphdr *uh;
-	int32_t hlen, len, pktlen;
-	u_int16_t cksum, *opts;
-	u_int32_t temp32;
-	union pseudoh {
-		struct hdr {
-			u_int16_t len;
-			u_int8_t ttl;
-			u_int8_t proto;
-			u_int32_t src;
-			u_int32_t dst;
-		} h;
-		u_int16_t w[6];
-	} ph;
-
-	pktlen = m->m_pkthdr.len;
-	if (pktlen < sizeof(struct ether_header))
-		return;
-	eh = mtod(m, struct ether_header *);
-	if (eh->ether_type != htons(ETHERTYPE_IP))
-		return;
-	ip = (struct ip *)(eh + 1);
-	if (ip->ip_v != IPVERSION)
-		return;
-
-	hlen = ip->ip_hl << 2;
-	pktlen -= sizeof(struct ether_header);
-	if (hlen < sizeof(struct ip))
-		return;
-	if (ntohs(ip->ip_len) < hlen)
-		return;
-	if (ntohs(ip->ip_len) != pktlen) 
-		return;
-	if (ip->ip_off & htons(IP_MF | IP_OFFMASK))
-		return;	/* can't handle fragmented packet */
-
-	switch (ip->ip_p) {
-	case IPPROTO_TCP:
-		if (pktlen < (hlen + sizeof(struct tcphdr)))
-			return;
-		break;
-	case IPPROTO_UDP:
-		if (pktlen < (hlen + sizeof(struct udphdr)))
-			return;
-		uh = (struct udphdr *)((caddr_t)ip + hlen);
-		if (uh->uh_sum == 0)
-			return; /* no checksum */
-		break;
-	default:
-		return;
-	}
-
-	cksum = htons(~(rxstat & GEM_RD_CHECKSUM));
-	/* cksum fixup for IP options */
-	len = hlen - sizeof(struct ip);
-	if (len > 0) {
-		opts = (u_int16_t *)(ip + 1);
-		for (; len > 0; len -= sizeof(u_int16_t), opts++) {
-			temp32 = cksum - *opts;
-			temp32 = (temp32 >> 16) + (temp32 & 65535);
-			cksum = temp32 & 65535;
-		}
-	}
-
-	ph.h.len = htons(ntohs(ip->ip_len) - hlen);
-	ph.h.ttl = 0;
-	ph.h.proto = ip->ip_p;
-	ph.h.src = ip->ip_src.s_addr;
-	ph.h.dst = ip->ip_dst.s_addr;
-	temp32 = cksum;
-	opts = &ph.w[0];
-	temp32 += opts[0] + opts[1] + opts[2] + opts[3] + opts[4] + opts[5];
-	temp32 = (temp32 >> 16) + (temp32 & 65535);
-	temp32 += (temp32 >> 16);
-	cksum = ~temp32;
-	if (cksum == 0) {
-		m->m_pkthdr.csum_flags |=
-			M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
-	}
 }
 
 /*
@@ -1100,8 +1000,6 @@ gem_rint(struct gem_softc *sc)
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
-
-		gem_rxcksum(m, rxstat);	
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -1463,17 +1361,6 @@ gem_mii_statchg(struct device *dev)
 		v &= ~GEM_MAC_XIF_GMII_MODE;
 	}
 	bus_space_write_4(t, mac, GEM_MAC_XIF_CONFIG, v);
-
-	/*
-	 * 802.3x flow control
-	 */
-	v = bus_space_read_4(t, mac, GEM_MAC_CONTROL_CONFIG);
-	v &= ~(GEM_MAC_CC_RX_PAUSE | GEM_MAC_CC_TX_PAUSE);
-	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_ETH_RXPAUSE) != 0)
-		v |= GEM_MAC_CC_RX_PAUSE;
-	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_ETH_TXPAUSE) != 0)
-		v |= GEM_MAC_CC_TX_PAUSE;
-	bus_space_write_4(t, mac, GEM_MAC_CONTROL_CONFIG, v);
 }
 
 int
