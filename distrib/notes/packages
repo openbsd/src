@@ -1,4 +1,4 @@
-dnl	$OpenBSD: packages,v 1.45 2010/07/29 17:38:13 steven Exp $
+dnl	$OpenBSD: packages,v 1.46 2013/07/26 20:07:29 miod Exp $
 As complete as your OpenBSD system is, you may want to add any of several
 excellent third party software applications.  There are several ways to do
 this.  You can:
@@ -14,7 +14,7 @@ this.  You can:
    upon whatever installation procedures are provided with the
    application.
 
-If you purchased the OpenBSD CD-ROM set you already have several popular
+If you purchased the OpenBSD CD-ROM set you already have a few popular
 ``packages'', and the ``ports'' collection.
 
 Instructions for installing applications from the various sources using
@@ -24,12 +24,13 @@ You should also refer to the packages(7) manual page.
 
 Installing applications from the CD-ROM package collection:
 
-	The OpenBSD CD-ROM ships with several applications pre-built
-	for various hardware architectures.  The number of applications
-	vary according to available disk space.  Check the directory
-	OSREV/packages/MACHINE_ARCH to see which packages are available for
-	your hardware architecture.  That directory will be on the same
-	CD-ROM containing the OS installation files for your architecture.
+	The OpenBSD CD-ROM ships with the most commonly installed third-party
+	applications pre-built for various hardware architectures.  Limited
+	disk space on the CD-ROM unfortunately limits the number of such
+	packages.  Check the directory OSREV/packages/MACHINE_ARCH to see which
+	packages are available for your hardware architecture.  That directory
+	will be on the same CD-ROM containing the OS installation files for
+	your architecture.
 
 	To install one or more of these packages you must:
 	1) become the superuser (root).
@@ -48,7 +49,7 @@ Installing applications from the CD-ROM package collection:
     # umount /cdrom
 
 	Package names are usually the application name and version
-	with .tgz appended, e.g. emacs-21.3.tgz
+	with .tgz appended, e.g. bzip2-1.0.6p0.tgz
 
 Installing applications from the ftp.OpenBSD.org package collection:
 
@@ -71,7 +72,7 @@ Installing applications from the ftp.OpenBSD.org package collection:
     $ su
     Password: <enter your root password>
     # pkg_add \
-      ftp://ftp.OpenBSD.org/pub/OpenBSD/{:--:}OSREV/packages/MACHINE_ARCH/emacs-21.3.tgz
+      ftp://ftp.OpenBSD.org/pub/OpenBSD/{:--:}OSREV/packages/MACHINE_ARCH/emacs-21.4p23.tgz
 
 Installing applications from the CD-ROM ports collection:
 

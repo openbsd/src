@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.24 2012/05/25 17:40:35 miod Exp $
+dnl	$OpenBSD: prep,v 1.25 2013/07/26 20:07:30 miod Exp $
 Before you install your system, you should identify your system family and
 familiarize yourself with the ARCBios setup and how to run programs from
 the Command monitor prompt.
@@ -41,6 +41,11 @@ dnl	Origin 300, Origin 3000, Onyx 300
     You should use the kernels (bsd and bsd.rd) with the IP suffix
     matching your family number, except for IP35 systems which use
     IP27 kernels.
+
+    On Indigo2 systems, the particular family is not always easy to
+    figure out. When in doubt, access the maintenance console (see
+    below) and enter the ``version'' command. Its output will report
+    the IPxx family number of the system.
 
 Accessing the Maintenance Console:
 

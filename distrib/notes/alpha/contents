@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.53 2013/02/25 20:07:37 miod Exp $
+dnl	$OpenBSD: contents,v 1.54 2013/07/26 20:07:29 miod Exp $
 TopPart
 
 OpenBSDfloppy
@@ -24,6 +24,12 @@ OpenBSDfloppy
 			- XP900, XP1000, CS20, DS10, DS20, DS20L, ES40 and
 			  264DP
 
+	floppyC{:--:}OSrev.fs	Another MACHINE boot and installation floppy; see
+			below.
+			This floppy image will boot on the following MACHINE
+			models:
+   			- Tadpole AlphaBook
+
 OpenBSDdistsets
 
 OpenBSDbsd
@@ -34,28 +40,28 @@ OpenBSDinstalliso
 
 OpenBSDcd
 
-OpenBSDfloppydesc(two,Each,s)
+OpenBSDfloppydesc(three,Each,s)
 
 dnl boot, bootxx, netboot
 dnl
 DistributionDescription(ten)
 
-OpenBSDbase(67815145,214612370)
+OpenBSDbase(67961760,210147940)
 
-OpenBSDcomp(54382773,207417173)
+OpenBSDcomp(57728735,221469162)
 
-OpenBSDetc(523590,1651221)
+OpenBSDetc(524014,1644743)
 
-OpenBSDgame(2898706,6955577)
+OpenBSDgame(2899307,6957911)
 
-OpenBSDman(9739267,37526596)
+OpenBSDman(9996258,38833808)
 
-OpenBSDxbase(12669040,41855369)
+OpenBSDxbase(13192262,43610075)
 
-OpenBSDxetc(63704,259345)
+OpenBSDxetc(64775,272248)
 
-OpenBSDxfont(39798559,51939787)
+OpenBSDxfont(39799319,51943721)
 
-OpenBSDxserv(4934881,13897140)
+OpenBSDxserv(4795083,13338906)
 
-OpenBSDxshare(4337865,25441992)
+OpenBSDxshare(4479570,24957504)

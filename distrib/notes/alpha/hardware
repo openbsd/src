@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.105 2010/07/03 03:59:15 krw Exp $
+dnl	$OpenBSD: hardware,v 1.106 2013/07/26 20:07:29 miod Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run OpenBSD,
 or if you are able to run OpenBSD on hardware not listed here, please
@@ -115,6 +115,8 @@ Supported hardware:
 		Built-in 53C810 SCSI (siop).
 		Built-in IDE controller. (will not boot from IDE, though)
 		PCI graphics card (TGA or VGA compatible).
+dnl not tested yet
+dnl		PCMCIA slots on Multia.
 		Most PCI devices (see below).
 		Some ISA devices (see below).
 	  Unsupported devices:
@@ -147,6 +149,17 @@ Supported hardware:
 		Built-in framebuffer (when applicable).
 		Other TURBOchannel cards.
 
+    Tadpole AlphaBook
+	  Supported devices:
+	  	Built-in serial ports.
+		Built-in 53C810 SCSI (siop).
+		Built-in PCMCIA slots.
+dnl move to PCMCIA section once Multia PCMCIA has been tested
+		3Com 3C589 and 3C562 PCMCIA Ethernet adapters.
+	  Unsupported devices:
+		Built-in display (garbled output).
+		Other PCMCIA cards.
+
     At this time none of the following systems are supported:
 	DECpc AXP150 (2000/300) ``Jensen'' systems (EISA-bus PC-like systems)
 	AlphaServer 2000, 2100 and 2100A
@@ -158,7 +171,6 @@ Supported hardware:
 	EB64+ based systems
 	Samsung 164BX and 164UX (no SRM)
 	VME Alpha systems (AXPvme, ALPHAvme)
-	Tadpole ALPHAbook
 	Multiprocessor Alpha systems (though they will run fine using one
 	    processor only, if the model is listed as supported above)
 

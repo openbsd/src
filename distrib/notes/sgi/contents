@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.21 2013/02/25 20:07:38 miod Exp $
+dnl	$OpenBSD: contents,v 1.22 2013/07/26 20:07:30 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -74,22 +74,22 @@ dnl can't use OpenBSDcd because of the multiple bsd.rd
 
 DistributionDescription(ten)
 
-OpenBSDbase(60136379,206589519)
+OpenBSDbase(60302862,201597457)
 
-OpenBSDcomp(58046442,220138195)
+OpenBSDcomp(61569859,234020553)
 
-OpenBSDetc(523288,1650851)
+OpenBSDetc(523626,1644316)
 
-OpenBSDgame(2818309,6848873)
+OpenBSDgame(2818818,6850295)
 
-OpenBSDman(9738978,37526537)
+OpenBSDman(9996020,38833804)
 
-OpenBSDxbase(11578621,39981326)
+OpenBSDxbase(12114061,41756393)
 
-OpenBSDxetc(63704,259345)
+OpenBSDxetc(64783,272248)
 
-OpenBSDxfont(39799097,51939787)
+OpenBSDxfont(39799050,51943721)
 
-OpenBSDxserv(5937631,18884236)
+OpenBSDxserv(5685250,17686233)
 
-OpenBSDxshare(4337710,25441992)
+OpenBSDxshare(4479497,24957504)

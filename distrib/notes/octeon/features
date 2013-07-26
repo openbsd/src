@@ -1,4 +1,4 @@
-dnl	$OpenBSD: features,v 1.1 2013/04/01 13:02:48 jasper Exp $
+dnl	$OpenBSD: features,v 1.2 2013/07/26 20:07:29 miod Exp $
 dnl
 dnl This file lists almost all the conditional features of this port,
 dnl which are used to provide accurate installation notes.
@@ -31,7 +31,7 @@ define({:-MDTZ-:},1)dnl
 dnl
 dnl define if glass console is possible
 dnl (XXX does not imply availablity of X servers though)
-define({:-MDX-:},1)dnl
+define({:-MDX-:},)dnl
 dnl
 dnl define if the X server can't start until machdep.allow_aperture is set
 define({:-MDXAPERTURE-:},)dnl
