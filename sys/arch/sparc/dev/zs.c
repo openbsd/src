@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.50 2013/04/21 14:44:16 sebastia Exp $	*/
+/*	$OpenBSD: zs.c,v 1.51 2013/07/27 19:45:01 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.50 1997/10/18 00:00:40 gwr Exp $	*/
 
 /*-
@@ -1155,11 +1155,7 @@ setup_console:
 		return;
 	}
 	zs_conschan = zc;
-	/* hardcoded: console is only on unit 0, 
-	 * unit 1 is keyboard/mouse, see zs_attach
-	 */
-	if (zs_unit == 0)
-	    zs_hwflags[zs_unit][channel] = ZS_HWFLAG_CONSOLE;
+	zs_hwflags[zs_unit][channel] = ZS_HWFLAG_CONSOLE;
 	/* switch to selected console */
 	cn_tab = console;
 	(*cn_tab->cn_probe)(cn_tab);
