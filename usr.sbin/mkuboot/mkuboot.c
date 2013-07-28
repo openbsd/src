@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkuboot.c,v 1.1 2013/05/30 19:17:15 bmercer Exp $	*/
+/*	$OpenBSD: mkuboot.c,v 1.2 2013/07/28 18:07:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -27,6 +27,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <zlib.h>
+#include <sys/exec_elf.h>
 
 #define IH_OS_OPENBSD		1 /* OpenBSD */
 #define IH_OS_LINUX		5 /* Linux */
@@ -69,6 +70,14 @@ struct image_header {
 
 extern char *__progname;
 
+u_long	copy_data(int, const char *, int, const char *, u_long,
+	    struct image_header *, Elf_Word);
+u_long	copy_elf(int, const char *, int, const char *, u_long,
+	    struct image_header *);
+u_long	copy_raw(int, const char *, int, const char *, u_long,
+	    struct image_header *);
+u_long	fill_zeroes(int, const char *, u_long, struct image_header *, Elf_Word);
+int	is_elf(int, const char *);
 void	usage(void);
 
 struct arch_map {
@@ -130,8 +139,6 @@ main(int argc, char *argv[])
 	int ifd, ofd;
 	uint32_t fsize;
 	u_long crc;
-	ssize_t nbytes;
-	char buf[BUFSIZ];
 	int c, ep, load;
 
 	ep = load = 0;
@@ -236,14 +243,10 @@ main(int argc, char *argv[])
 			err(1, "%s", oname);
 	}
 
-	while ((nbytes = read(ifd, buf, sizeof buf)) != 0) {
-		if (nbytes == -1)
-			err(1, "%s", iname);
-		if (write(ofd, buf, nbytes) != nbytes)
-			err(1, "%s", oname);
-		crc = crc32(crc, buf, nbytes);
-		ih.ih_size += nbytes;
-	}
+	if (is_elf(ifd, iname))
+		crc = copy_elf(ifd, iname, ofd, oname, crc, &ih);
+	else
+		crc = copy_raw(ifd, iname, ofd, oname, crc, &ih);
 	ih.ih_dcrc = htobe32(crc);
 
 	if (ih.ih_type == IH_TYPE_SCRIPT) {
@@ -263,6 +266,157 @@ main(int argc, char *argv[])
 		err(1, "%s", oname);
 
 	return(0);
+}
+
+int
+is_elf(int ifd, const char *iname)
+{
+	ssize_t nbytes;
+	Elf_Ehdr ehdr;
+
+	nbytes = read(ifd, &ehdr, sizeof ehdr);
+	if (nbytes == -1)
+		err(1, "%s", iname);
+	if (nbytes != sizeof ehdr)
+		return 0;
+
+	if (lseek(ifd, 0, SEEK_SET) != 0)
+		err(1, "%s", iname);
+
+	return IS_ELF(ehdr);
+}
+
+u_long
+copy_elf(int ifd, const char *iname, int ofd, const char *oname, u_long crc,
+    struct image_header *ih)
+{
+	ssize_t nbytes;
+	Elf_Ehdr ehdr;
+	Elf_Phdr phdr;
+	Elf_Addr vaddr;
+	int i;
+
+	nbytes = read(ifd, &ehdr, sizeof ehdr);
+	if (nbytes == -1)
+		err(1, "%s", iname);
+	if (nbytes != sizeof ehdr)
+		return 0;
+
+	for (i = 0; i < ehdr.e_phnum; i++) {
+#ifdef DEBUG
+		fprintf(stderr, "phdr %d/%d\n", i, ehdr.e_phnum);
+#endif
+		if (lseek(ifd, ehdr.e_phoff + i * ehdr.e_phentsize, SEEK_SET) ==
+		    (off_t)-1)
+			err(1, "%s", iname);
+		if (read(ifd, &phdr, sizeof phdr) != sizeof(phdr))
+			err(1, "%s", iname);
+
+#ifdef DEBUG
+		fprintf(stderr, "vaddr %p offset %p filesz %p memsz %p\n",
+		    phdr.p_vaddr, phdr.p_offset, phdr.p_filesz, phdr.p_memsz);
+#endif
+		if (i == 0)
+			vaddr = phdr.p_vaddr;
+		else if (vaddr != phdr.p_vaddr) {
+#ifdef DEBUG
+			fprintf(stderr, "gap %p->%p\n", vaddr, phdr.p_vaddr);
+#endif
+			/* fill the gap between the previous phdr if any */
+			crc = fill_zeroes(ofd, oname, crc, ih,
+			    phdr.p_vaddr - vaddr);
+			vaddr = phdr.p_vaddr;
+		}
+
+		if (phdr.p_filesz != 0) {
+#ifdef DEBUG
+			fprintf(stderr, "copying %p from infile %p\n",
+			    phdr.p_filesz, phdr.p_offset);
+#endif
+			if (lseek(ifd, phdr.p_offset, SEEK_SET) == (off_t)-1)
+				err(1, "%s", iname);
+			crc = copy_data(ifd, iname, ofd, oname, crc, ih,
+			    phdr.p_filesz);
+			if (phdr.p_memsz - phdr.p_filesz != 0) {
+#ifdef DEBUG
+				fprintf(stderr, "zeroing %p\n",
+				    phdr.p_memsz - phdr.p_filesz);
+#endif
+				crc = fill_zeroes(ofd, oname, crc, ih,
+				    phdr.p_memsz - phdr.p_filesz);
+			}
+		}
+		/*
+		 * If p_filesz == 0, this is likely .bss, which we do not
+		 * need to provide. If it's not the last phdr, the gap
+		 * filling code will output the necessary zeroes anyway.
+		 */
+		vaddr += phdr.p_memsz;
+	}
+
+	return crc;
+}
+
+u_long
+copy_data(int ifd, const char *iname, int ofd, const char *oname, u_long crc,
+    struct image_header *ih, Elf_Word size)
+{
+	ssize_t nbytes, chunk;
+	char buf[BUFSIZ];
+
+	while (size != 0) {
+		chunk = size > BUFSIZ ? BUFSIZ : size;
+		nbytes = read(ifd, buf, chunk);
+		if (nbytes != chunk)
+			err(1, "%s", iname);
+		if (write(ofd, buf, nbytes) != nbytes)
+			err(1, "%s", oname);
+		crc = crc32(crc, buf, nbytes);
+		ih->ih_size += nbytes;
+		size -= nbytes;
+	}
+
+	return crc;
+}
+
+u_long
+fill_zeroes(int ofd, const char *oname, u_long crc, struct image_header *ih,
+    Elf_Word size)
+{
+	ssize_t nbytes, chunk;
+	char buf[BUFSIZ];
+
+	memset(buf, 0, BUFSIZ);
+	while (size != 0) {
+		chunk = size > BUFSIZ ? BUFSIZ : size;
+		nbytes = write(ofd, buf, chunk);
+		if (nbytes != chunk)
+			err(1, "%s", oname);
+		crc = crc32(crc, buf, nbytes);
+		ih->ih_size += nbytes;
+		size -= nbytes;
+	}
+
+	return crc;
+}
+
+u_long
+copy_raw(int ifd, const char *iname, int ofd, const char *oname, u_long crc,
+    struct image_header *ih)
+{
+	ssize_t nbytes;
+	char buf[BUFSIZ];
+
+	while ((nbytes = read(ifd, buf, sizeof buf)) != 0) {
+		if (nbytes == -1)
+			err(1, "%s", iname);
+		if (write(ofd, buf, nbytes) != nbytes)
+			err(1, "%s", oname);
+		crc = crc32(crc, buf, nbytes);
+		ih->ih_size += nbytes;
+	}
+
+	return crc;
 }
 
 void
