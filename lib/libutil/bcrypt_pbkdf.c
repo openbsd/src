@@ -1,4 +1,4 @@
-/* $OpenBSD: bcrypt_pbkdf.c,v 1.3 2013/06/04 15:55:50 tedu Exp $ */
+/* $OpenBSD: bcrypt_pbkdf.c,v 1.4 2013/07/29 00:55:53 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -52,8 +52,7 @@
 #define BCRYPT_HASHSIZE (BCRYPT_BLOCKS * 4)
 
 static void
-bcrypt_hash(uint8_t sha2pass[SHA512_DIGEST_LENGTH],
-    uint8_t sha2salt[SHA512_DIGEST_LENGTH], uint8_t out[BCRYPT_HASHSIZE])
+bcrypt_hash(uint8_t *sha2pass, uint8_t *sha2salt, uint8_t *out)
 {
 	blf_ctx state;
 	uint8_t ciphertext[BCRYPT_HASHSIZE] =
@@ -61,14 +60,14 @@ bcrypt_hash(uint8_t sha2pass[SHA512_DIGEST_LENGTH],
 	uint32_t cdata[BCRYPT_BLOCKS];
 	int i;
 	uint16_t j;
+	size_t shalen = SHA512_DIGEST_LENGTH;
 
 	/* key expansion */
 	Blowfish_initstate(&state);
-	Blowfish_expandstate(&state, sha2salt, sizeof(sha2salt), sha2pass,
-	    sizeof(sha2pass));
+	Blowfish_expandstate(&state, sha2salt, shalen, sha2pass, shalen);
 	for (i = 0; i < 64; i++) {
-		Blowfish_expand0state(&state, sha2salt, sizeof(sha2salt));
-		Blowfish_expand0state(&state, sha2pass, sizeof(sha2pass));
+		Blowfish_expand0state(&state, sha2salt, shalen);
+		Blowfish_expand0state(&state, sha2pass, shalen);
 	}
 
 	/* encryption */
