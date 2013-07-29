@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.74 2013/07/09 15:37:43 beck Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.75 2013/07/29 18:51:42 kettenis Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -701,8 +701,10 @@ spec_open_clone(struct vop_open_args *ap)
 		return (EBUSY); /* too many open instances */
 
 	error = cdevvp(makedev(major(vp->v_rdev), i), &cvp);
-	if (error)
+	if (error) {
+		clrbit(vp->v_specbitmap, i);
 		return (error); /* out of vnodes */
+	}
 
 	VOP_UNLOCK(vp, 0, ap->a_p);
 
@@ -712,8 +714,9 @@ spec_open_clone(struct vop_open_args *ap)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, ap->a_p);
 
 	if (error) {
-		 clrbit(vp->v_specbitmap, i);
-		 return (error); /* device open failed */
+		vput(cvp);
+		clrbit(vp->v_specbitmap, i);
+		return (error); /* device open failed */
 	}
 
 	cvp->v_flag |= VCLONE;
