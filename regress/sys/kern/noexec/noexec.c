@@ -1,4 +1,4 @@
-/*	$OpenBSD: noexec.c,v 1.12 2013/07/30 11:15:33 kettenis Exp $	*/
+/*	$OpenBSD: noexec.c,v 1.13 2013/07/30 15:46:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -67,7 +67,11 @@ fdcache(void *p, size_t size)
 	    : "+r" (p) : "r" (32));
 #endif
 #ifdef __sparc64__
-	__asm __volatile("iflush %0" : : "r" (p));
+	char *s = p;
+	int i;
+
+	for (i = 0; i < TESTSZ; i += 8)
+	  __asm __volatile("flush %0" : : "r" (s + i) : "memory");
 #endif
 }
 
