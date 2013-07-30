@@ -99,3 +99,7 @@ Boston, MA 02110-1301, USA.  */
         crtbegin%O%s} %{shared:crtbeginS%O%s}"
 #undef ENDFILE_SPEC
 #define ENDFILE_SPEC "%{!shared:crtend%O%s} %{shared:crtendS%O%s}"
+
+/* We use GNU ld so undefine this so that attribute((init_priority)) works.  */
+#undef CTORS_SECTION_ASM_OP
+#undef DTORS_SECTION_ASM_OP
