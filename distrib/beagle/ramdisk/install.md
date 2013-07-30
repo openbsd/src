@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.7 2013/07/15 15:49:33 rapha Exp $
+#	$OpenBSD: install.md,v 1.8 2013/07/30 02:49:54 bmercer Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,9 +35,8 @@
 md_installboot() {
 	local _disk=$1
 	mount /dev/${_disk}i /mnt/mnt
-	/mnt/usr/sbin/chroot /mnt /usr/bin/objcopy -O binary /bsd /bsd.img
 	/mnt/usr/sbin/chroot /mnt /usr/sbin/mkuboot -a arm -o linux \
-		-e 0x80300000 -l 0x80300000 /bsd.img /mnt/bsd.umg
+		-e 0x80300000 -l 0x80300000 /bsd /mnt/bsd.umg
 	cp -r /tmp/u-boots/* /mnt/usr/mdec/
 	BEAGLE=$(scan_dmesg '/^omap0 at mainbus0: \(BeagleBoard\).*/s//\1/p')
 	BEAGLEBONE=$(scan_dmesg '/^omap0 at mainbus0: \(BeagleBone\).*/s//\1/p')
@@ -65,10 +64,6 @@ md_prep_fdisk() {
 		_d=whole
 		if [[ -n $(fdisk $_disk | grep 'Signature: 0xAA55') ]]; then
 			fdisk $_disk
-			if [[ -n $(fdisk $_disk | grep '^..: A6 ') ]]; then
-				_q=", use the (O)penBSD area,"
-				_d=OpenBSD
-			fi
 		else
 			echo "MBR has invalid signature; not showing it."
 		fi
