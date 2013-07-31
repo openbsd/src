@@ -1,4 +1,4 @@
-.\" $OpenBSD: getprogname.3,v 1.3 2013/06/01 17:14:45 jmc Exp $
+.\" $OpenBSD: getprogname.3,v 1.4 2013/07/31 16:43:27 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Christopher G. Demetriou
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 1 2013 $
+.Dd $Mdocdate: July 31 2013 $
 .Dt GETPROGNAME 3
 .Os
 .Sh NAME
@@ -51,10 +51,6 @@ as used by various error-reporting functions.
 returns the name of the current program.
 This function is typically useful when generating error messages
 or other diagnostic output.
-If the program name has not been set,
-.Fn getprogname
-will return
-.Dv NULL .
 .Pp
 The
 .Fn setprogname
@@ -64,22 +60,6 @@ argument.
 Internally, only the pointer to the given string is kept as the program name,
 so it should not be modified and the storage for the string must remain valid
 for the rest of the program's lifetime.
-.Pp
-In
-.Ox ,
-the name of the program is set by the start-up code that is run before
-.Fn main ;
-thus,
-running
-.Fn setprogname
-is not necessary.
-Programs that desire maximum portability should still call it;
-on other operating systems,
-these functions may be implemented in a portability library.
-Calling
-.Fn setprogname
-allows the aforementioned library to learn the program name without
-modifications to the start-up code.
 .Sh SEE ALSO
 .Xr err 3 ,
 .Xr setproctitle 3
@@ -89,7 +69,11 @@ The
 and
 .Nm setprogname
 functions first appeared in
-.Ox 5.4 .
+.Ox 5.4
+as function-based wrappers around the
+.Bx 4.4
+.Va __progname
+interface.
 .Sh CAVEATS
 The string returned by
 .Fn getprogname
