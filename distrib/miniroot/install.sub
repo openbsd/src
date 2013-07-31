@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.682 2013/07/21 22:06:51 halex Exp $
+#	$OpenBSD: install.sub,v 1.683 2013/07/31 11:26:58 ajacoutot Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1130,16 +1130,6 @@ install_files() {
 			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
 			GOTSETS="$GOTSETS $_f"
 		fi
-
-		# get sets and save arguments for sysmerge(8)
-		[[ $_f == base$VERSION.tgz ]] &&
-			ftp -Vmo /mnt/tmp/etc$VERSION.tgz \
-				"$_src/etc$VERSION.tgz" >/dev/null 2>&1 &&
-			SM_ARGS="-s /tmp/etc$VERSION.tgz"
-		[[ $_f == xbase$VERSION.tgz ]] &&
-			ftp -Vmo /mnt/tmp/xetc$VERSION.tgz \
-				"$_src/xetc$VERSION.tgz" >/dev/null 2>&1 &&
-			SM_ARGSX="-x /tmp/xetc$VERSION.tgz"
 	done
 }
 
@@ -1579,16 +1569,6 @@ install_sets() {
 	done
 }
 
-run_sysmerge() {
-	echo "After rebooting, run sysmerge(8) to update your /etc configuration."
-	#if [[ -n "$SM_ARGS" || -n "$SM_ARGSX" ]]; then
-	#	ask_yn "Merge the new etc/xetc install sets using sysmerge(8)?" no
-	#	if [[ $resp == y ]]; then
-	#		/mnt/usr/sbin/chroot /mnt /usr/sbin/sysmerge $SM_ARGS $SM_ARGSX
-	#	fi
-	#fi
-}
-
 update_firmware() {
 	echo "/usr/sbin/fw_update -v" >> /mnt/etc/rc.firsttime
 }
@@ -1932,7 +1912,8 @@ finish_up() {
 		mv /mnt/bsd.mp /mnt/bsd
 	fi
 
-	[[ "$MODE" == upgrade ]] && run_sysmerge
+	[[ "$MODE" == upgrade ]] && \
+		echo "After rebooting, run sysmerge(8) to update your system configuration."
 
 	update_firmware
 
