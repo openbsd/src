@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.211 2013/06/26 09:12:39 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.212 2013/07/31 15:41:51 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -971,8 +971,6 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	eh = mtod(m, struct ether_header *);
 	dst = (struct ether_addr *)&eh->ether_dhost[0];
 
-	s = splnet();
-
 	/*
 	 * If bridge is down, but original output interface is up,
 	 * go ahead and send out that interface.  Otherwise the packet
@@ -1009,7 +1007,6 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 		    NULL)) != NULL) {
 			ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
 			m_freem(m);
-			splx(s);
 			return (0);
 		}
 #endif /* IPSEC */
@@ -1076,13 +1073,14 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 				mc = m1;
 			}
 
+			s = splnet();
 			error = bridge_ifenqueue(sc, dst_if, mc);
+			splx(s);
 			if (error)
 				continue;
 		}
 		if (!used)
 			m_freem(m);
-		splx(s);
 		return (0);
 	}
 
@@ -1090,9 +1088,9 @@ sendunicast:
 	bridge_span(sc, NULL, m);
 	if ((dst_if->if_flags & IFF_RUNNING) == 0) {
 		m_freem(m);
-		splx(s);
 		return (ENETDOWN);
 	}
+	s = splnet();
 	bridge_ifenqueue(sc, dst_if, m);
 	splx(s);
 	return (0);
@@ -1253,9 +1251,7 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
 	 */
 	if ((m->m_flags & (M_BCAST | M_MCAST)) || dst_if == NULL) {
 		sc->sc_if.if_imcasts++;
-		s = splnet();
 		bridge_broadcast(sc, src_if, &eh, m);
-		splx(s);
 		return;
 	}
 
@@ -1498,9 +1494,7 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 	struct bridge_iflist *p;
 	struct mbuf *mc;
 	struct ifnet *dst_if;
-	int len, used = 0;
-
-	splassert(IPL_NET);
+	int len, s, used = 0;
 
 	TAILQ_FOREACH(p, &sc->sc_iflist, next) {
 		/*
@@ -1589,7 +1583,9 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 		if ((len - ETHER_HDR_LEN) > dst_if->if_mtu)
 			bridge_fragment(sc, dst_if, eh, mc);
 		else {
+			s = splnet();
 			bridge_ifenqueue(sc, dst_if, mc);
+			splx(s);
 		}
 	}
 
@@ -1645,7 +1641,7 @@ bridge_span(struct bridge_softc *sc, struct ether_header *eh,
 	struct bridge_iflist *p;
 	struct ifnet *ifp;
 	struct mbuf *mc, *m;
-	int error;
+	int s, error;
 
 	if (TAILQ_EMPTY(&sc->sc_spanlist))
 		return;
@@ -1681,7 +1677,9 @@ bridge_span(struct bridge_softc *sc, struct ether_header *eh,
 			continue;
 		}
 
+		s = splnet();
 		error = bridge_ifenqueue(sc, ifp, mc);
+		splx(s);
 		if (error)
 			continue;
 	}

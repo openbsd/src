@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.60 2013/07/04 19:10:41 sf Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.61 2013/07/31 15:41:52 mikeb Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -100,7 +100,6 @@ ip6_forward(struct mbuf *m, int srcrt)
 	struct tdb_ident *tdbi;
 	u_int32_t sspi;
 	struct tdb *tdb;
-	int s;
 #if NPF > 0
 	struct ifnet *encif;
 #endif
@@ -148,8 +147,6 @@ reroute:
 	if (!ipsec_in_use)
 		goto done_spd;
 
-	s = splnet();
-
 	/*
 	 * Check if there was an outgoing SA bound to the flow
 	 * from a transport protocol.
@@ -174,8 +171,6 @@ reroute:
 		    &error, IPSP_DIRECTION_OUT, NULL, NULL, 0);
 
 	if (tdb == NULL) {
-	        splx(s);
-
 		if (error == 0) {
 		        /*
 			 * No IPsec processing required, we'll just send the
@@ -209,7 +204,6 @@ reroute:
 			    tdbi->rdomain == tdb->tdb_rdomain &&
 			    !bcmp(&tdbi->dst, &tdb->tdb_dst,
 			    sizeof(union sockaddr_union))) {
-				splx(s);
 				sproto = 0; /* mark as no-IPsec-needed */
 				goto done_spd;
 			}
@@ -219,7 +213,6 @@ reroute:
 	        bcopy(&tdb->tdb_dst, &sdst, sizeof(sdst));
 		sspi = tdb->tdb_spi;
 		sproto = tdb->tdb_sproto;
-	        splx(s);
 	}
 
 	/* Fall through to the routing/multicast handling code */
@@ -337,12 +330,9 @@ reroute:
 	 * PMTU notification.  is it okay?
 	 */
 	if (sproto != 0) {
-		s = splnet();
-
 		tdb = gettdb(rtable_l2(m->m_pkthdr.rdomain),
 		    sspi, &sdst, sproto);
 		if (tdb == NULL) {
-			splx(s);
 			error = EHOSTUNREACH;
 			m_freem(m);
 			goto senderr;	/*XXX*/
@@ -352,15 +342,12 @@ reroute:
 		if ((encif = enc_getif(tdb->tdb_rdomain,
 		    tdb->tdb_tap)) == NULL ||
 		    pf_test(AF_INET6, PF_FWD, encif, &m, NULL) != PF_PASS) {
-			splx(s);
 			error = EHOSTUNREACH;
 			m_freem(m);
 			goto senderr;
 		}
-		if (m == NULL) {
-			splx(s);
+		if (m == NULL)
 			goto senderr;
-		}
 		ip6 = mtod(m, struct ip6_hdr *);
 		/*
 		 * PF_TAG_REROUTE handling or not...
@@ -376,7 +363,6 @@ reroute:
 
 		/* Callee frees mbuf */
 		error = ipsp_process_packet(m, tdb, AF_INET6, 0);
-		splx(s);
 		m_freem(mcopy);
 		goto freert;
 	}

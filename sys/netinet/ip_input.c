@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.214 2013/07/04 08:22:19 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.215 2013/07/31 15:41:51 mikeb Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -245,7 +245,7 @@ ipv4_input(struct mbuf *m)
 	int hlen, len;
 	in_addr_t pfrdr = 0;
 #ifdef IPSEC
-	int error, s;
+	int error;
 	struct tdb *tdb;
 	struct tdb_ident *tdbi;
 	struct m_tag *mtag;
@@ -454,7 +454,6 @@ ipv4_input(struct mbuf *m)
 		 * inner-most IPsec SA used.
 		 */
 		mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
-                s = splnet();
 		if (mtag != NULL) {
 			tdbi = (struct tdb_ident *)(mtag + 1);
 			tdb = gettdb(tdbi->rdomain, tdbi->spi,
@@ -463,7 +462,6 @@ ipv4_input(struct mbuf *m)
 			tdb = NULL;
 	        ipsp_spd_lookup(m, AF_INET, hlen, &error,
 		    IPSP_DIRECTION_IN, tdb, NULL, 0);
-                splx(s);
 
 		/* Error or otherwise drop-packet indication */
 		if (error) {
@@ -497,7 +495,7 @@ ip_ours(struct mbuf *m)
 	struct ipqent *ipqe;
 	int mff, hlen;
 #ifdef IPSEC
-	int error, s;
+	int error;
 	struct tdb *tdb;
 	struct tdb_ident *tdbi;
 	struct m_tag *mtag;
@@ -639,7 +637,6 @@ found:
 	 * that's needed in the real world (who uses bundles anyway ?).
 	 */
 	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
-        s = splnet();
 	if (mtag) {
 		tdbi = (struct tdb_ident *)(mtag + 1);
 	        tdb = gettdb(tdbi->rdomain, tdbi->spi, &tdbi->dst,
@@ -648,7 +645,6 @@ found:
 		tdb = NULL;
 	ipsp_spd_lookup(m, AF_INET, hlen, &error, IPSP_DIRECTION_IN,
 	    tdb, NULL, 0);
-        splx(s);
 
 	/* Error or otherwise drop-packet indication. */
 	if (error) {

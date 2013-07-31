@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.164 2013/06/09 22:03:06 yasuoka Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.165 2013/07/31 15:41:52 mikeb Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ udp_input(struct mbuf *m, ...)
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 	struct tdb *tdb;
-	int error, s;
+	int error;
 	u_int32_t ipsecflowinfo = 0;
 #endif /* IPSEC */
 
@@ -600,7 +600,6 @@ udp_input(struct mbuf *m, ...)
 
 #ifdef IPSEC
 	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
-	s = splnet();
 	if (mtag != NULL) {
 		tdbi = (struct tdb_ident *)(mtag + 1);
 		tdb = gettdb(tdbi->rdomain, tdbi->spi,
@@ -611,7 +610,6 @@ udp_input(struct mbuf *m, ...)
 	    IPSP_DIRECTION_IN, tdb, inp, 0);
 	if (error) {
 		udpstat.udps_nosec++;
-		splx(s);
 		goto bad;
 	}
 
@@ -624,7 +622,6 @@ udp_input(struct mbuf *m, ...)
 				inp->inp_ipo = ipsec_add_policy(inp,
 				    srcsa.sa.sa_family, IPSP_DIRECTION_OUT);
 				if (inp->inp_ipo == NULL) {
-					splx(s);
 					goto bad;
 				}
 			}
@@ -655,7 +652,6 @@ udp_input(struct mbuf *m, ...)
 	if (tdb)
 		ipsecflowinfo = tdb->tdb_spi;
 
-	splx(s);
 #endif /*IPSEC */
 
 	opts = NULL;

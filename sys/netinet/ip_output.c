@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.243 2013/07/04 19:10:40 sf Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.244 2013/07/31 15:41:52 mikeb Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -109,7 +109,6 @@ ip_output(struct mbuf *m0, ...)
 	struct inpcb *inp;
 	struct tdb *tdb;
 	u_int32_t ipsecflowinfo;
-	int s;
 #if NPF > 0
 	struct ifnet *encif;
 #endif
@@ -256,12 +255,6 @@ reroute:
 	if (!ipsec_in_use && inp == NULL)
 		goto done_spd;
 
-	/*
-	 * splnet is chosen over splsoftnet because we are not allowed to
-	 * lower the level, and udp_output calls us in splnet().
-	 */
-	s = splnet();
-
 	/* Do we have any pending SAs to apply ? */
 	mtag = m_tag_find(m, PACKET_TAG_IPSEC_PENDING_TDB, NULL);
 	if (mtag != NULL) {
@@ -282,8 +275,6 @@ reroute:
 		    IPSP_DIRECTION_OUT, NULL, inp, ipsecflowinfo);
 
 	if (tdb == NULL) {
-		splx(s);
-
 		if (error == 0) {
 			/*
 			 * No IPsec processing required, we'll just send the
@@ -318,7 +309,6 @@ reroute:
 			    tdbi->rdomain == tdb->tdb_rdomain &&
 			    !bcmp(&tdbi->dst, &tdb->tdb_dst,
 			    sizeof(union sockaddr_union))) {
-				splx(s);
 				sproto = 0; /* mark as no-IPsec-needed */
 				goto done_spd;
 			}
@@ -328,7 +318,6 @@ reroute:
 		bcopy(&tdb->tdb_dst, &sdst, sizeof(sdst));
 		sspi = tdb->tdb_spi;
 		sproto = tdb->tdb_sproto;
-		splx(s);
 
 		/*
 		 * If it needs TCP/UDP hardware-checksumming, do the
@@ -575,14 +564,11 @@ sendit:
 	 * Check if the packet needs encapsulation.
 	 */
 	if (sproto != 0) {
-		s = splnet();
-
 		tdb = gettdb(rtable_l2(m->m_pkthdr.rdomain),
 		    sspi, &sdst, sproto);
 		if (tdb == NULL) {
 			DPRINTF(("ip_output: unknown TDB"));
 			error = EHOSTUNREACH;
-			splx(s);
 			m_freem(m);
 			goto done;
 		}
@@ -595,12 +581,10 @@ sendit:
 		    tdb->tdb_tap)) == NULL ||
 		    pf_test(AF_INET, PF_OUT, encif, &m, NULL) != PF_PASS) {
 			error = EACCES;
-			splx(s);
 			m_freem(m);
 			goto done;
 		}
 		if (m == NULL) {
-			splx(s);
 			goto done;
 		}
 		ip = mtod(m, struct ip *);
@@ -627,7 +611,6 @@ sendit:
 			    (tdb->tdb_dst.sin.sin_addr.s_addr ==
 			    ip->ip_dst.s_addr);
 			icmp_mtu = tdb->tdb_mtu;
-			splx(s);
 
 			/* Find a host route to store the mtu in */
 			if (ro != NULL)
@@ -667,7 +650,6 @@ sendit:
 
 		/* Callee frees mbuf */
 		error = ipsp_process_packet(m, tdb, AF_INET, 0);
-		splx(s);
 		return error;  /* Nothing more to be done */
 	}
 

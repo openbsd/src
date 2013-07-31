@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.142 2013/07/04 19:10:41 sf Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.143 2013/07/31 15:41:52 mikeb Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -173,7 +173,6 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 	struct tdb_ident *tdbi;
 	u_int32_t sspi;
 	struct tdb *tdb;
-	int s;
 #if NPF > 0
 	struct ifnet *encif;
 #endif
@@ -216,12 +215,6 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 		goto done_spd;
 
 	/*
-	 * splnet is chosen over splsoftnet because we are not allowed to
-	 * lower the level, and udp6_output calls us in splnet(). XXX check
-	 */
-	s = splnet();
-
-	/*
 	 * Check if there was an outgoing SA bound to the flow
 	 * from a transport protocol.
 	 */
@@ -245,8 +238,6 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 		    &error, IPSP_DIRECTION_OUT, NULL, inp, 0);
 
 	if (tdb == NULL) {
-	        splx(s);
-
 		if (error == 0) {
 		        /*
 			 * No IPsec processing required, we'll just send the
@@ -280,7 +271,6 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 			    tdbi->rdomain == tdb->tdb_rdomain &&
 			    !bcmp(&tdbi->dst, &tdb->tdb_dst,
 			    sizeof(union sockaddr_union))) {
-				splx(s);
 				sproto = 0; /* mark as no-IPsec-needed */
 				goto done_spd;
 			}
@@ -290,7 +280,6 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 	        bcopy(&tdb->tdb_dst, &sdst, sizeof(sdst));
 		sspi = tdb->tdb_spi;
 		sproto = tdb->tdb_sproto;
-	        splx(s);
 	}
 
 	/* Fall through to the routing/multicast handling code */
@@ -497,8 +486,6 @@ reroute:
 	 * ipsp_process_packet will never come back to here.
 	 */
 	if (sproto != 0) {
-	        s = splnet();
-
 		/*
 		 * XXX what should we do if ip6_hlim == 0 and the
 		 * packet gets tunneled?
@@ -507,7 +494,6 @@ reroute:
 		tdb = gettdb(rtable_l2(m->m_pkthdr.rdomain),
 		    sspi, &sdst, sproto);
 		if (tdb == NULL) {
-			splx(s);
 			error = EHOSTUNREACH;
 			m_freem(m);
 			goto done;
@@ -517,15 +503,12 @@ reroute:
 		if ((encif = enc_getif(tdb->tdb_rdomain,
 		    tdb->tdb_tap)) == NULL ||
 		    pf_test(AF_INET6, PF_OUT, encif, &m, NULL) != PF_PASS) {
-			splx(s);
 			error = EHOSTUNREACH;
 			m_freem(m);
 			goto done;
 		}
-		if (m == NULL) {
-			splx(s);
+		if (m == NULL)
 			goto done;
-		}
 		ip6 = mtod(m, struct ip6_hdr *);
 		/*
 		 * PF_TAG_REROUTE handling or not...
@@ -547,7 +530,6 @@ reroute:
 		 */
 		error = ipsp_process_packet(m, tdb, AF_INET6,
 		    exthdrs.ip6e_rthdr ? 1 : 0);
-		splx(s);
 
 		return error;  /* Nothing more to be done */
 	}
