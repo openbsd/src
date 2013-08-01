@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.43 2013/06/21 06:47:20 guenther Exp $
+# $OpenBSD: Makefile,v 1.44 2013/08/01 21:26:30 kettenis Exp $
 
 # disabled because it requires a buggy behavior that uthread had:
 #	dup2_race
@@ -11,16 +11,21 @@
 # fix it caused panics:
 #	blocked_fifo
 
-SUBDIR= barrier blocked_shutdown \
-	cancel cancel2 close close_race closefrom cwd earlysig \
-	errno execve fork \
-	group malloc_duel netdb pcap poll preemption preemption_float \
-	pthread_atfork pthread_cond_timedwait pthread_create \
-	pthread_join pthread_kill pthread_mutex \
-	pthread_rwlock pthread_specific \
-	readdir restart select semaphore setjmp setsockopt sigdeliver siginfo \
-	siginterrupt signal signals signodefer sigsuspend sigwait sleep \
-	socket spinlock stack stdarg stdio switch system
+SUBDIR+= barrier blocked_shutdown \
+	 cancel cancel2 close close_race closefrom cwd earlysig \
+	 errno execve fork \
+	 group netdb pcap poll preemption preemption_float \
+	 pthread_atfork pthread_cond_timedwait pthread_create \
+	 pthread_join pthread_kill pthread_mutex \
+	 pthread_rwlock pthread_specific \
+	 readdir restart \
+	 select semaphore setjmp sigdeliver siginfo \
+	 siginterrupt signal signals signodefer sigsuspend sigwait sleep \
+	 socket spinlock stack stdarg stdio switch system
+
+.if defined(REGRESS_FULL)
+SUBDIR+= malloc_duel setsockopt
+.endif
 
 # Not available or disabled: fcntl, getaddrinfo, pause, pw, sigmask, stdfiles
 

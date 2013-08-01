@@ -1,6 +1,7 @@
-/* $OpenBSD: init_priority_test.cc,v 1.3 2013/01/07 05:22:51 miod Exp $ */
+/* $OpenBSD: init_priority_test.cc,v 1.4 2013/08/01 21:26:30 kettenis Exp $ */
 
 #include <cassert>
+#include <cstdio>
 
 namespace {
 const int kNumTests = 10;
@@ -15,6 +16,7 @@ Test::Test(int x)
 {
 	if (counter < kNumTests)
 		log[counter] = x;
+	fprintf(stderr, "%d\n", x);
 	counter++;
 }
 

@@ -1,6 +1,10 @@
-#	$OpenBSD: Makefile,v 1.6 2006/05/26 04:02:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2013/08/01 21:26:30 kettenis Exp $
 
-SUBDIR+= ipsecctl pfctl route
+SUBDIR+= route
+
+.if defined(REGRESS_FULL)
+SUBDIR+= ipsecctl pfctl
+.endif
 
 install:
 

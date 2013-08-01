@@ -1,7 +1,11 @@
-#	$OpenBSD: Makefile,v 1.12 2012/10/25 20:15:58 miod Exp $
+#	$OpenBSD: Makefile,v 1.13 2013/08/01 21:26:30 kettenis Exp $
 
-SUBDIR+= cephes exp fenv floor fpaccuracy lgamma nextafter rint round \
+SUBDIR+= exp fenv floor fpaccuracy lgamma nextafter rint round \
 	 tgamma toint trivial1
+
+.if defined(REGRESS_FULL)
+SUBDIR+= cephes
+.endif
 
 install:
 

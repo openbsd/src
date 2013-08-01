@@ -1,13 +1,16 @@
-#	$OpenBSD: Makefile,v 1.8 2010/09/22 12:04:13 mikeb Exp $
+#	$OpenBSD: Makefile,v 1.9 2013/08/01 21:26:30 kettenis Exp $
 
-SUBDIR=enc
-SUBDIR+=aesctr
-SUBDIR+=aesxts
-SUBDIR+=aes
-SUBDIR+=cmac
-SUBDIR+=gmac
-SUBDIR+=hmac
-SUBDIR+=key_wrap
+SUBDIR+= cmac
+SUBDIR+= gmac
+SUBDIR+= hmac
+SUBDIR+= key_wrap
+
+.if defined(REGRESS_FULL)
+SUBDIR+= enc
+SUBDIR+= aesctr
+SUBDIR+= aesxts
+SUBDIR+= aes
+.endif
 
 install:
 
