@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1682 2013/07/21 17:55:29 martin Exp 
+ *	OpenBSD: pcidevs,v 1.1683 2013/08/01 09:18:52 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -18586,6 +18586,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2790,
 	    "RT2790",
+	},
+	{
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3060,
+	    "RT3060",
 	},
 	{
 	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3062,
