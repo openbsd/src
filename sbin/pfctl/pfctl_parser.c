@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.293 2013/04/21 23:13:39 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.294 2013/08/01 19:03:11 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <net/if_dl.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -1282,6 +1283,9 @@ ifa_load(void)
 				    sizeof(struct in6_addr));
 			n->ifindex = ((struct sockaddr_in6 *)
 			    ifa->ifa_addr)->sin6_scope_id;
+		} else if (n->af == AF_LINK) {
+			n->ifindex = ((struct sockaddr_dl *)
+			    ifa->ifa_addr)->sdl_index;
 		}
 		if ((n->ifname = strdup(ifa->ifa_name)) == NULL)
 			err(1, "ifa_load: strdup");
@@ -1297,6 +1301,34 @@ ifa_load(void)
 
 	iftab = h;
 	freeifaddrs(ifap);
+}
+
+unsigned int
+ifa_nametoindex(const char *ifa_name)
+{
+	struct node_host	*p;
+
+	for (p = iftab; p; p = p->next) {
+		if (p->af == AF_LINK && strcmp(p->ifname, ifa_name) == 0)
+			return (p->ifindex);
+	}
+	errno = ENXIO;
+	return (0);
+}
+
+char *
+ifa_indextoname(unsigned int ifindex, char *ifa_name)
+{
+	struct node_host	*p;
+
+	for (p = iftab; p; p = p->next) {
+		if (p->af == AF_LINK && ifindex == p->ifindex) {
+			strlcpy(ifa_name, p->ifname, IFNAMSIZ);
+			return (ifa_name);
+		}
+	}
+	errno = ENXIO;
+	return (NULL);
 }
 
 struct node_host *
