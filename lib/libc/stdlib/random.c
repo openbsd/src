@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.18 2013/03/15 19:07:53 tedu Exp $ */
+/*	$OpenBSD: random.c,v 1.19 2013/08/01 19:42:08 kettenis Exp $ */
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -233,6 +233,11 @@ srandom(unsigned int x)
 	UNLOCK();
 }
 
+#if defined(APIWARN)
+__warn_references(srandom,
+    "warning: srandom() seed choices are invariably poor");
+#endif
+
 /*
  * srandomdev:
  *
@@ -266,6 +271,11 @@ srandomdev(void)
 	}
 	UNLOCK();
 }
+
+#if defined(APIWARN)
+__warn_references(srandomdev,
+    "warning: srandomdev() usage; consider switching to arc4random()");
+#endif
 
 /*
  * initstate:
@@ -429,3 +439,8 @@ random(void)
 	UNLOCK();
 	return r;
 }
+
+#if defined(APIWARN)
+__warn_references(random,
+    "warning: random() isn't random; consider using arc4random()");
+#endif

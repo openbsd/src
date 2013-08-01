@@ -39,14 +39,29 @@ rand_r(u_int *seed)
 	return (*seed % ((u_int)RAND_MAX + 1));
 }
 
+#if defined(APIWARN)
+__warn_references(rand_r,
+    "warning: rand_r() isn't random; consider using arc4random()");
+#endif
+
 int
 rand(void)
 {
 	return (rand_r(&next));
 }
 
+#if defined(APIWARN)
+__warn_references(rand,
+    "warning: rand() isn't random; consider using arc4random()");
+#endif
+
 void
 srand(u_int seed)
 {
 	next = seed;
 }
+
+#if defined(APIWARN)
+__warn_references(srand,
+    "warning: srand() seed choices are invariably poor");
+#endif
