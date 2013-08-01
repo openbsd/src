@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2011/07/08 21:39:32 drahn Exp $
+#	$OpenBSD: Makefile,v 1.24 2013/08/01 16:39:05 stsp Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -40,7 +40,7 @@ NBLKS=          5744
 
 # old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS=	-t ffs -m 0 -o space
-NEWFSARGS_RD=	-i 8192 -c ${NBLKS}
+NEWFSARGS_RD=	-i 4096 -c ${NBLKS}
 NEWFSARGS_FD=	-i 524288 -c 2880
 
 bsd.rd:	bsd.rd_unz
