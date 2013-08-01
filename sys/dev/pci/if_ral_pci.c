@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_pci.c,v 1.20 2010/08/04 19:48:33 damien Exp $  */
+/*	$OpenBSD: if_ral_pci.c,v 1.21 2013/08/01 09:21:09 kettenis Exp $  */
 
 /*-
  * Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -131,6 +131,7 @@ const struct pci_matchid ral_pci_devices[] = {
 	{ PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_5 },
 	{ PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_6 },
 	{ PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_7 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3060 },
 	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3062 },
 	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3090 },
 	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3091 },
