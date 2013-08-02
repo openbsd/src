@@ -25,15 +25,9 @@
   [ Skip steps: i=6 d=6 r=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-  [ Skip steps: i=0 d=0 r=0 f=0 p=0 sa=0 da=0 sp=0 dp=0 ]
-  [ queue: qname= qid=0 pqname= pqid=0 ]
-  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 }
 @5 anchor "relayd/*" all {
   [ Skip steps: r=end f=end p=end sa=end da=end sp=end dp=end ]
-  [ queue: qname= qid=0 pqname= pqid=0 ]
-  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-  [ Skip steps: i=0 d=0 r=0 f=0 p=0 sa=0 da=0 sp=0 dp=0 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 }
