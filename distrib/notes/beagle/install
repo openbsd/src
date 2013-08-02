@@ -1,4 +1,4 @@
-dnl     $OpenBSD: install,v 1.3 2013/07/26 20:07:29 miod Exp $
+dnl     $OpenBSD: install,v 1.4 2013/08/02 17:11:54 florian Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -36,28 +36,7 @@ OpenBSDCDROMInstall
 
 OpenBSDDISKInstall(,,{:-, Linux (ext2) or MS-DOS-:})
 
-dnl OpenBSDCommonInstall
-	Installation set selection:
-		A list of available distribution sets found on the
-		given location will be listed.
-
-		You may individually select distribution sets to install,
-		by entering their name, or wildcards (e.g. `*.tgz' or
-		`base*|comp*', or `all' to select all the sets (which
-		is what most users will want to do).
-		You may also enter `abort' to deselect everything and
-		restart the selection from scratch, or unselect sets
-		by entering their name prefixed with `-' (e.g. `-x*').
-
-		It is also possible to enter an arbitrary filename and
-		have it treated as a file set.
-
-dnl md_installboot() currently needs objcopy...
-		Currently the comp set must be installed for the installer to
-		work correctly.
-
-		When you are done selecting distribution sets, enter
-		`done'.  The files will begin to extract.
+OpenBSDCommonInstall
 
 OpenBSDInstallWrapup
 
