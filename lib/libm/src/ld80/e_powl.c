@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_powl.c,v 1.3 2011/07/20 21:02:51 martynas Exp $	*/
+/*	$OpenBSD: e_powl.c,v 1.4 2013/08/02 20:23:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -211,6 +211,9 @@ long e;
 if( y == 0.0L )
 	return( 1.0L );
 
+if( x == 1.0L )
+	return( 1.0L );
+
 if( isnan(x) )
 	return( x );
 if( isnan(y) )
@@ -219,10 +222,7 @@ if( isnan(y) )
 if( y == 1.0L )
 	return( x );
 
-if( !isfinite(y) && (x == -1.0L || x == 1.0L) )
-	return y - y;	/* +-1**inf is NaN */
-
-if( x == 1.0L )
+if( !isfinite(y) && x == -1.0L )
 	return( 1.0L );
 
 if( y >= LDBL_MAX )

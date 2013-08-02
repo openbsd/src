@@ -1,4 +1,4 @@
-/*	$OpenBSD: testvectll.c,v 1.2 2011/07/08 16:49:05 martynas Exp $	*/
+/*	$OpenBSD: testvectll.c,v 1.3 2013/08/02 20:23:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -328,12 +328,12 @@ static struct twoarguments test2[] =
   {"powl", powl, &MINFL, &MTHREEL, &NEGZEROL, 0},
   {"powl", powl, &MINFL, &MTWOL, &ZEROL, 0},
   {"powl", powl, &NANL, &ONEL, &NANL, 0},
-  {"powl", powl, &ONEL, &NANL, &NANL, 0},
+  {"powl", powl, &ONEL, &NANL, &ONEL, 0},
   {"powl", powl, &NANL, &NANL, &NANL, 0},
-  {"powl", powl, &ONEL, &INFINITYL, &NANL, 0},
-  {"powl", powl, &MONEL, &INFINITYL, &NANL, 0},
-  {"powl", powl, &ONEL, &MINFL, &NANL, 0},
-  {"powl", powl, &MONEL, &MINFL, &NANL, 0},
+  {"powl", powl, &ONEL, &INFINITYL, &ONEL, 0},
+  {"powl", powl, &MONEL, &INFINITYL, &ONEL, 0},
+  {"powl", powl, &ONEL, &MINFL, &ONEL, 0},
+  {"powl", powl, &MONEL, &MINFL, &ONEL, 0},
   {"powl", powl, &MTWOL, &HALFL, &NANL, 0},
   {"powl", powl, &ZEROL, &MTHREEL, &INFINITYL, 0},
   {"powl", powl, &NEGZEROL, &MTHREEL, &MINFL, 0},

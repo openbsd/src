@@ -1,4 +1,4 @@
-/*	$OpenBSD: testvect.c,v 1.1 2011/05/30 20:23:35 martynas Exp $	*/
+/*	$OpenBSD: testvect.c,v 1.2 2013/08/02 20:23:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -332,12 +332,12 @@ static struct twoarguments test2[] =
   {"pow", pow, &MINF, &MTHREE, &MZERO, 0},
   {"pow", pow, &MINF, &MTWO, &ZERO, 0},
   {"pow", pow, &NAN, &ONE, &NAN, 0},
-  {"pow", pow, &ONE, &NAN, &NAN, 0},
+  {"pow", pow, &ONE, &NAN, &ONE, 0},
   {"pow", pow, &NAN, &NAN, &NAN, 0},
-  {"pow", pow, &ONE, &INF, &NAN, 0},
-  {"pow", pow, &MONE, &INF, &NAN, 0},
-  {"pow", pow, &ONE, &MINF, &NAN, 0},
-  {"pow", pow, &MONE, &MINF, &NAN, 0},
+  {"pow", pow, &ONE, &INF, &ONE, 0},
+  {"pow", pow, &MONE, &INF, &ONE, 0},
+  {"pow", pow, &ONE, &MINF, &ONE, 0},
+  {"pow", pow, &MONE, &MINF, &ONE, 0},
   {"pow", pow, &MTWO, &HALF, &NAN, 0},
   {"pow", pow, &ZERO, &MTHREE, &INF, 0},
   {"pow", pow, &MZERO, &MTHREE, &MINF, 0},
