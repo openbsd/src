@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.beagle,v 1.44 2013/06/23 20:33:51 miod Exp $
+#	$OpenBSD: Makefile.beagle,v 1.45 2013/08/02 09:09:17 rapha Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -54,8 +54,6 @@ HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-
-OBJCOPY?=	objcopy
 
 %OBJS
 
@@ -177,17 +175,12 @@ install-kernel-${MACHINE_NAME}:
 
 
 # until we get native booting working, put this in the tree.
-bsdrd.img: bsd.rd
-	${OBJCOPY} -O binary bsd.rd bsdrd.img
 
-bsd.img: bsd
-	${OBJCOPY} -O binary bsd bsd.img
+bsdrd.umg: bsd.rd
+	mkuboot -a arm -o linux -e ${KERNEL_BASE_PHYS} -l ${KERNEL_BASE_PHYS} bsd.rd bsdrd.umg
 
-bsdrd.umg: bsdrd.img
-	mkuboot -a arm -o linux -e ${KERNEL_BASE_PHYS} -l ${KERNEL_BASE_PHYS} bsdrd.img bsdrd.umg
-
-bsd.umg: bsd.img
-	mkuboot -a arm -o linux -e ${KERNEL_BASE_PHYS} -l ${KERNEL_BASE_PHYS} bsd.img bsd.umg
+bsd.umg: bsd
+	mkuboot -a arm -o linux -e ${KERNEL_BASE_PHYS} -l ${KERNEL_BASE_PHYS} bsd bsd.umg
 
 bsd.rd: bsd
 	cp bsd bsd.rd

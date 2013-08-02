@@ -35,10 +35,8 @@ do_files:
 	cp /usr/mdec/${BOARD}/u-boot.* ${MOUNT_POINT}/
 	mkdir ${MOUNT_POINT}/u-boots
 	cp -r /usr/mdec/{am335x,beagle,panda} ${MOUNT_POINT}/u-boots
-	objcopy -O binary ${.OBJDIR}/../../ramdisk/bsd.rd \
-		${.OBJDIR}/bsdrd.img
 	mkuboot -a arm -o linux -e 0x80300000 -l 0x80300000 \
-		${.OBJDIR}/bsdrd.img ${MOUNT_POINT}/bsd.umg
+		${.OBJDIR}/../../ramdisk/bsd.rd ${MOUNT_POINT}/bsd.umg
 
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
