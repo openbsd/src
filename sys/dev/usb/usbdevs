@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.601 2013/07/21 15:19:41 deraadt Exp $
+$OpenBSD: usbdevs,v 1.602 2013/08/02 08:59:52 mikeb Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3614,6 +3614,7 @@ product SIERRA AC881U		0x6856	881U
 product SIERRA AC885U		0x6880	885U
 product SIERRA C01SW		0x6890	C01SW
 product SIERRA USB305		0x68a3	USB305
+product SIERRA MC8355		0x9013	MC8355
 
 /* Sigmatel products */
 product SIGMATEL IRDA		0x4200	IrDA
