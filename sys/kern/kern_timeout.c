@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.35 2012/06/02 00:11:16 guenther Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.36 2013/08/03 06:47:15 guenther Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -350,7 +350,7 @@ timeout_adjust_ticks(int adj)
 {
 	struct timeout *to;
 	struct circq *p;
-	int new_ticks, b, old;
+	int new_ticks, b;
 
 	/* adjusting the monotonic clock backwards would be a Bad Thing */
 	if (adj <= 0)
@@ -363,8 +363,6 @@ timeout_adjust_ticks(int adj)
 		while (p != &timeout_wheel[b]) {
 			to = (struct timeout *)p; /* XXX */
 			p = CIRCQ_FIRST(p);
-
-			old = to->to_time;
 
 			/* when moving a timeout forward need to reinsert it */
 			if (to->to_time - ticks < adj)
