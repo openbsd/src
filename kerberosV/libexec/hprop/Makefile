@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2013/07/10 11:14:39 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.15 2013/08/05 16:13:30 ajacoutot Exp $
 
 PROG=	hprop
 MPAGES=	hprop.8
@@ -8,8 +8,7 @@ CPPFLAGS=	-I${KRB5DIR}/lib/roken \
 		-I${KRB5DIR}/lib/krb5 \
 		-I${KRB5DIR}/lib/asn1 \
 		-I${KRB5DIR}/lib/ntlm \
-		-I${KRB5DIR}/kdc \
-		-I${.OBJDIR}/../../lib/libkrb5
+		-I${KRB5DIR}/kdc
 DPADD=	${LIBHDB} ${LIBKRB5} ${LIBROKEN} ${LIBVERS} \
 	${LIBASN1} ${LIBCRYPTO} ${LIBCOM_ERR}
 LDADD=	-lhdb -lkrb5 -lroken ${LIBVERS} \
