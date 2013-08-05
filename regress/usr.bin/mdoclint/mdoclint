@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.35 2013/08/05 07:16:19 jmc Exp $
-# $NetBSD: mdoclint,v 1.35 2013/07/30 18:46:29 wiz Exp $
+# $OpenBSD: mdoclint,v 1.36 2013/08/05 07:24:19 jmc Exp $
+# $NetBSD: mdoclint,v 1.39 2013/08/02 13:16:54 wiz Exp $
 #
 # Copyright (c) 2001-2013 Thomas Klausner
 # All rights reserved.
@@ -461,13 +461,15 @@ sub process_line
 
 	if ($s->{mandoc_p}) {
 		if (/^\.Sh\s+(.*)$/o) {
+			my $line = $_;
 			$s->set_section_header($1);
-			return "$_\n";
+			return "$line\n";
 		}
 	} else {
 		if (/^\.SH\s+(.*)$/o) {
+			my $line = $_;
 			$s->set_section_header($1);
-			return "$_\n";
+			return "$line\n";
 		}
 	}
 
