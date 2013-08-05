@@ -1,8 +1,8 @@
-/*	$OpenBSD: if_ix.h,v 1.23 2012/12/17 14:23:48 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.24 2013/08/05 19:58:05 mikeb Exp $	*/
 
 /******************************************************************************
 
-  Copyright (c) 2001-2008, Intel Corporation
+  Copyright (c) 2001-2012, Intel Corporation
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: src/sys/dev/ixgbe/ixgbe.h,v 1.4 2008/05/16 18:46:30 jfv Exp $*/
+/*$FreeBSD: src/sys/dev/ixgbe/ixgbe.h,v 1.38 2012/12/20 22:29:29 svnexp Exp $*/
 
 #ifndef _IX_H_
 #define _IX_H_
@@ -108,34 +108,30 @@
 #define MAX_NUM_MULTICAST_ADDRESSES     128
 #define IXGBE_82598_SCATTER		100
 #define IXGBE_82599_SCATTER		32
-#define IXGBE_MSIX_BAR			3
-#define IXGBE_TSO_SIZE			65535
+#define MSIX_82598_BAR			3
+#define MSIX_82599_BAR			4
+#define IXGBE_TSO_SIZE			262140
 #define IXGBE_TX_BUFFER_SIZE		((uint32_t) 1514)
-#define IXGBE_RX_HDR                    128
-#define IXGBE_VFTA_SIZE                 128
-#define IXGBE_BR_SIZE                   4096
-#define IXGBE_QUEUE_IDLE                0
-#define IXGBE_QUEUE_WORKING             1
-#define IXGBE_QUEUE_HUNG                2
+#define IXGBE_RX_HDR			128
+#define IXGBE_VFTA_SIZE			128
+#define IXGBE_BR_SIZE			4096
+#define IXGBE_QUEUE_MIN_FREE		32
 
 /*
  * Interrupt Moderation parameters
  */
 #define IXGBE_INTS_PER_SEC		8000
 
-/* Used for auto RX queue configuration */
-extern int mp_ncpus;
-
 struct ixgbe_tx_buf {
-	uint32_t	eop_index;
-	struct mbuf	*m_head;
-	bus_dmamap_t	map;
+	uint32_t		eop_index;
+	struct mbuf		*m_head;
+	bus_dmamap_t		map;
 };
 
 struct ixgbe_rx_buf {
-	struct mbuf	*buf;
-	struct mbuf	*fmp;
-	bus_dmamap_t	map;
+	struct mbuf		*buf;
+	struct mbuf		*fmp;
+	bus_dmamap_t		map;
 };
 
 /*
@@ -159,7 +155,6 @@ struct ix_queue {
 	uint32_t		msix;           /* This queue's MSIX vector */
 	uint32_t		eims;           /* This queue's EIMS bit */
 	uint32_t		eitr_setting;
-	/* struct resource	*res; */
 	void			*tag;
 	struct tx_ring		*txr;
 	struct rx_ring		*rxr;
@@ -170,16 +165,19 @@ struct ix_queue {
  */
 struct tx_ring {
 	struct ix_softc		*sc;
-	struct mutex		tx_mtx;
 	uint32_t		me;
-	int			queue_status;
 	uint32_t		watchdog_timer;
 	union ixgbe_adv_tx_desc	*tx_base;
+	struct ixgbe_tx_buf	*tx_buffers;
 	struct ixgbe_dma_alloc	txdma;
+	volatile uint16_t	tx_avail;
 	uint32_t		next_avail_desc;
 	uint32_t		next_to_clean;
-	struct ixgbe_tx_buf	*tx_buffers;
-	volatile uint16_t	tx_avail;
+	enum {
+	    IXGBE_QUEUE_IDLE,
+	    IXGBE_QUEUE_WORKING,
+	    IXGBE_QUEUE_HUNG,
+	}			queue_status;
 	uint32_t		txd_cmd;
 	bus_dma_tag_t		txtag;
 	uint32_t		bytes; /* Used for AIM calc */
@@ -194,19 +192,18 @@ struct tx_ring {
  */
 struct rx_ring {
 	struct ix_softc		*sc;
-	struct mutex		rx_mtx;
 	uint32_t		me;
 	union ixgbe_adv_rx_desc	*rx_base;
 	struct ixgbe_dma_alloc	rxdma;
 #if 0
 	struct lro_ctrl		lro;
 #endif
-	int			lro_enabled;
-	int			hw_rsc;
-	int			discard;
-	unsigned int		next_to_refresh;
-	unsigned int		next_to_check;
-	unsigned int		last_desc_filled;
+	bool			lro_enabled;
+	bool			hw_rsc;
+	bool			discard;
+	uint			next_to_refresh;
+	uint			next_to_check;
+	uint			last_desc_filled;
 	int			rx_ndescs;
 	struct ixgbe_rx_buf	*rx_buffers;
 
@@ -226,22 +223,16 @@ struct ix_softc {
 	struct device		dev;
 	struct arpcom		arpcom;
 
-	struct ixgbe_hw	hw;
+	struct ixgbe_hw		hw;
 	struct ixgbe_osdep	osdep;
 
-	/* struct resource	*pci_mem; */
-	/* struct resource	*msix_mem; */
-
 	void			*tag;
-	/* struct resource 	*res; */
 
 	struct ifmedia		media;
 	struct timeout		timer;
 	struct timeout		rx_refill;
 	int			msix;
 	int			if_flags;
-
-	struct mutex		core_mtx;
 
 	uint16_t		num_vlans;
 	uint16_t		num_queues;
@@ -256,21 +247,19 @@ struct ix_softc {
 
 	/* Info about the interface */
 	uint			optics;
+	uint32_t		fc; /* local flow ctrl setting */
 	int			advertise;  /* link speeds */
 	uint16_t		max_frame_size;
 	uint16_t		num_segs;
 	uint32_t		link_speed;
-	int			link_up;
+	bool			link_up;
 	uint32_t		linkvec;
 
 	/* Mbuf cluster size */
 	uint32_t		rx_mbuf_sz;
 
 	/* Support for pluggable optics */
-	int			sfp_probe;
-	workq_fn		link_task;	/* Link tasklet */
-	workq_fn		mod_task;	/* SFP tasklet */
-	workq_fn		msf_task;	/* Multispeed Fiber */
+	bool			sfp_probe;
 
 	/*
 	 * Queues:
@@ -284,29 +273,29 @@ struct ix_softc {
 	 * Transmit rings:
 	 *	Allocated at run time, an array of rings.
 	 */
-	struct tx_ring	*tx_rings;
-	int		num_tx_desc;
+	struct tx_ring		*tx_rings;
+	int			num_tx_desc;
 
 	/*
 	 * Receive rings:
 	 *	Allocated at run time, an array of rings.
 	 */
-	struct rx_ring	*rx_rings;
-	uint64_t	que_mask;
-	int		num_rx_desc;
+	struct rx_ring		*rx_rings;
+	uint64_t		que_mask;
+	int			num_rx_desc;
 
 	/* Multicast array memory */
-	uint8_t		*mta;
+	uint8_t			*mta;
 
 	/* Misc stats maintained by the driver */
-	unsigned long   dropped_pkts;
-	unsigned long   no_tx_map_avail;
-	unsigned long   no_tx_dma_setup;
-	unsigned long   watchdog_events;
-	unsigned long   tso_tx;
-	unsigned long	link_irq;
+	unsigned long		dropped_pkts;
+	unsigned long		no_tx_map_avail;
+	unsigned long		no_tx_dma_setup;
+	unsigned long		watchdog_events;
+	unsigned long		tso_tx;
+	unsigned long		link_irq;
 
-	struct ixgbe_hw_stats stats;
+	struct ixgbe_hw_stats 	stats;
 };
 
 #endif /* _IX_H_ */

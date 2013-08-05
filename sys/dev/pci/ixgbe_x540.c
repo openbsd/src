@@ -1,8 +1,8 @@
-/*	$OpenBSD: ixgbe_x540.c,v 1.1 2012/08/06 21:07:52 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_x540.c,v 1.2 2013/08/05 19:58:06 mikeb Exp $	*/
 
 /******************************************************************************
 
-  Copyright (c) 2001-2012, Intel Corporation
+  Copyright (c) 2001-2013, Intel Corporation
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: src/sys/dev/ixgbe/ixgbe_x540.c,v 1.2 2012/07/05 20:51:44 jfv Exp $*/
+/* FreeBSD: src/sys/dev/ixgbe/ixgbe_x540.c 251964 Jun 18 21:28:19 2013 UTC */
 
 #include <dev/pci/ixgbe.h>
 #include <dev/pci/ixgbe_type.h>
@@ -42,9 +42,12 @@ int32_t ixgbe_poll_flash_update_done_X540(struct ixgbe_hw *hw);
 int32_t ixgbe_get_swfw_sync_semaphore(struct ixgbe_hw *hw);
 void ixgbe_release_swfw_sync_semaphore(struct ixgbe_hw *hw);
 
+int32_t ixgbe_get_link_capabilities_X540(struct ixgbe_hw *hw,
+					 ixgbe_link_speed *speed,
+					 bool *autoneg);
 enum ixgbe_media_type ixgbe_get_media_type_X540(struct ixgbe_hw *hw);
 int32_t ixgbe_setup_mac_link_X540(struct ixgbe_hw *hw, ixgbe_link_speed speed,
-			      int autoneg, int link_up_wait_to_complete);
+				  bool link_up_wait_to_complete);
 int32_t ixgbe_reset_hw_X540(struct ixgbe_hw *hw);
 int32_t ixgbe_start_hw_X540(struct ixgbe_hw *hw);
 uint32_t ixgbe_get_supported_physical_layer_X540(struct ixgbe_hw *hw);
@@ -105,15 +108,17 @@ int32_t ixgbe_init_ops_X540(struct ixgbe_hw *hw)
 	mac->ops.get_device_caps = &ixgbe_get_device_caps_generic;
 	mac->ops.acquire_swfw_sync = &ixgbe_acquire_swfw_sync_X540;
 	mac->ops.release_swfw_sync = &ixgbe_release_swfw_sync_X540;
+	mac->ops.disable_sec_rx_path = &ixgbe_disable_sec_rx_path_generic;
+	mac->ops.enable_sec_rx_path = &ixgbe_enable_sec_rx_path_generic;
 
 	/* RAR, Multicast, VLAN */
 	mac->ops.set_vmdq = &ixgbe_set_vmdq_generic;
 	mac->ops.clear_vmdq = &ixgbe_clear_vmdq_generic;
 	mac->ops.insert_mac_addr = &ixgbe_insert_mac_addr_generic;
-	mac->ops.insert_mac_addr = &ixgbe_insert_mac_addr_generic;
 	mac->rar_highwater = 1;
 	mac->ops.set_vfta = &ixgbe_set_vfta_generic;
 	mac->ops.clear_vfta = &ixgbe_clear_vfta_generic;
+	mac->ops.init_uta_tables = &ixgbe_init_uta_tables_generic;
 
 	/* Link */
 	mac->ops.get_link_capabilities =
@@ -127,7 +132,7 @@ int32_t ixgbe_init_ops_X540(struct ixgbe_hw *hw)
 	mac->rx_pb_size		= 384;
 	mac->max_tx_queues	= 128;
 	mac->max_rx_queues	= 128;
-	mac->max_msix_vectors	= ixgbe_get_pcie_msix_count_generic(hw);
+	mac->max_msix_vectors	= 0 /*ixgbe_get_pcie_msix_count_generic(hw)*/;
 
 	hw->mbx.ops.init_params = ixgbe_init_mbx_params_pf;
 
@@ -139,6 +144,23 @@ int32_t ixgbe_init_ops_X540(struct ixgbe_hw *hw)
 }
 
 /**
+ *  ixgbe_get_link_capabilities_X540 - Determines link capabilities
+ *  @hw: pointer to hardware structure
+ *  @speed: pointer to link speed
+ *  @autoneg: TRUE when autoneg or autotry is enabled
+ *
+ *  Determines the link capabilities by reading the AUTOC register.
+ **/
+int32_t ixgbe_get_link_capabilities_X540(struct ixgbe_hw *hw,
+					 ixgbe_link_speed *speed,
+					 bool *autoneg)
+{
+	ixgbe_get_copper_link_capabilities_generic(hw, speed, autoneg);
+
+	return IXGBE_SUCCESS;
+}
+
+/**
  *  ixgbe_get_media_type_X540 - Get media type
  *  @hw: pointer to hardware structure
  *
@@ -146,7 +168,6 @@ int32_t ixgbe_init_ops_X540(struct ixgbe_hw *hw)
  **/
 enum ixgbe_media_type ixgbe_get_media_type_X540(struct ixgbe_hw *hw)
 {
-	UNREFERENCED_PARAMETER(hw);
 	return ixgbe_media_type_copper;
 }
 
@@ -154,15 +175,14 @@ enum ixgbe_media_type ixgbe_get_media_type_X540(struct ixgbe_hw *hw)
  *  ixgbe_setup_mac_link_X540 - Sets the auto advertised capabilities
  *  @hw: pointer to hardware structure
  *  @speed: new link speed
- *  @autoneg: TRUE if autonegotiation enabled
  *  @autoneg_wait_to_complete: TRUE when waiting for completion is needed
  **/
 int32_t ixgbe_setup_mac_link_X540(struct ixgbe_hw *hw,
-			      ixgbe_link_speed speed, int autoneg,
-			      int autoneg_wait_to_complete)
+				  ixgbe_link_speed speed,
+				  bool autoneg_wait_to_complete)
 {
 	DEBUGFUNC("ixgbe_setup_mac_link_X540");
-	return hw->phy.ops.setup_link_speed(hw, speed, autoneg,
+	return hw->phy.ops.setup_link_speed(hw, speed,
 					    autoneg_wait_to_complete);
 }
 
@@ -184,6 +204,9 @@ int32_t ixgbe_reset_hw_X540(struct ixgbe_hw *hw)
 	status = hw->mac.ops.stop_adapter(hw);
 	if (status != IXGBE_SUCCESS)
 		goto reset_hw_out;
+
+	/* flush pending Tx transactions */
+	ixgbe_clear_tx_pending(hw);
 
 mac_reset_top:
 	ctrl = IXGBE_CTRL_RST;
@@ -228,27 +251,6 @@ mac_reset_top:
 	 */
 	hw->mac.num_rar_entries = 128;
 	hw->mac.ops.init_rx_addrs(hw);
-
-#if 0
-	/* Store the permanent SAN mac address */
-	hw->mac.ops.get_san_mac_addr(hw, hw->mac.san_addr);
-
-	/* Add the SAN MAC address to the RAR only if it's a valid address */
-	if (ixgbe_validate_mac_addr(hw->mac.san_addr) == 0) {
-		hw->mac.ops.set_rar(hw, hw->mac.num_rar_entries - 1,
-				    hw->mac.san_addr, 0, IXGBE_RAH_AV);
-
-		/* Save the SAN MAC RAR index */
-		hw->mac.san_mac_rar_index = hw->mac.num_rar_entries - 1;
-
-		/* Reserve the last RAR for the SAN MAC address */
-		hw->mac.num_rar_entries--;
-	}
-
-	/* Store the alternative WWNN/WWPN prefix */
-	hw->mac.ops.get_wwn_prefix(hw, &hw->mac.wwnn_prefix,
-				   &hw->mac.wwpn_prefix);
-#endif
 
 reset_hw_out:
 	return status;
@@ -326,7 +328,7 @@ int32_t ixgbe_init_eeprom_params_X540(struct ixgbe_hw *hw)
 		eeprom_size = (uint16_t)((eec & IXGBE_EEC_SIZE) >>
 				    IXGBE_EEC_SIZE_SHIFT);
 		eeprom->word_size = 1 << (eeprom_size +
-					  IXGBE_EEPROM_WORD_SIZE_BASE_SHIFT);
+					  IXGBE_EEPROM_WORD_SIZE_SHIFT);
 
 		DEBUGOUT2("Eeprom params: type = %d, size = %d\n",
 			  eeprom->type, eeprom->word_size);
@@ -349,12 +351,13 @@ int32_t ixgbe_read_eerd_X540(struct ixgbe_hw *hw, uint16_t offset, uint16_t *dat
 
 	DEBUGFUNC("ixgbe_read_eerd_X540");
 	if (hw->mac.ops.acquire_swfw_sync(hw, IXGBE_GSSR_EEP_SM) ==
-	    IXGBE_SUCCESS)
+	    IXGBE_SUCCESS) {
 		status = ixgbe_read_eerd_generic(hw, offset, data);
-	else
+		hw->mac.ops.release_swfw_sync(hw, IXGBE_GSSR_EEP_SM);
+	} else {
 		status = IXGBE_ERR_SWFW_SYNC;
+	}
 
-	hw->mac.ops.release_swfw_sync(hw, IXGBE_GSSR_EEP_SM);
 	return status;
 }
 
@@ -372,12 +375,13 @@ int32_t ixgbe_write_eewr_X540(struct ixgbe_hw *hw, uint16_t offset, uint16_t dat
 
 	DEBUGFUNC("ixgbe_write_eewr_X540");
 	if (hw->mac.ops.acquire_swfw_sync(hw, IXGBE_GSSR_EEP_SM) ==
-	    IXGBE_SUCCESS)
+	    IXGBE_SUCCESS) {
 		status = ixgbe_write_eewr_generic(hw, offset, data);
-	else
+		hw->mac.ops.release_swfw_sync(hw, IXGBE_GSSR_EEP_SM);
+	} else {
 		status = IXGBE_ERR_SWFW_SYNC;
+	}
 
-	hw->mac.ops.release_swfw_sync(hw, IXGBE_GSSR_EEP_SM);
 	return status;
 }
 
@@ -468,7 +472,7 @@ uint16_t ixgbe_calc_eeprom_checksum_X540(struct ixgbe_hw *hw)
  *  caller does not need checksum_val, the value can be NULL.
  **/
 int32_t ixgbe_validate_eeprom_checksum_X540(struct ixgbe_hw *hw,
-					uint16_t *checksum_val)
+					    uint16_t *checksum_val)
 {
 	int32_t status;
 	uint16_t checksum;
@@ -509,11 +513,11 @@ int32_t ixgbe_validate_eeprom_checksum_X540(struct ixgbe_hw *hw,
 		/* If the user cares, return the calculated checksum */
 		if (checksum_val)
 			*checksum_val = checksum;
+		hw->mac.ops.release_swfw_sync(hw, IXGBE_GSSR_EEP_SM);
 	} else {
 		status = IXGBE_ERR_SWFW_SYNC;
 	}
 
-	hw->mac.ops.release_swfw_sync(hw, IXGBE_GSSR_EEP_SM);
 out:
 	return status;
 }
@@ -554,13 +558,12 @@ int32_t ixgbe_update_eeprom_checksum_X540(struct ixgbe_hw *hw)
 		status = ixgbe_write_eewr_generic(hw, IXGBE_EEPROM_CHECKSUM,
 						  checksum);
 
-	if (status == IXGBE_SUCCESS)
-		status = ixgbe_update_flash_X540(hw);
-	else
+		if (status == IXGBE_SUCCESS)
+			status = ixgbe_update_flash_X540(hw);
+		hw->mac.ops.release_swfw_sync(hw, IXGBE_GSSR_EEP_SM);
+	} else {
 		status = IXGBE_ERR_SWFW_SYNC;
 	}
-
-	hw->mac.ops.release_swfw_sync(hw, IXGBE_GSSR_EEP_SM);
 
 	return status;
 }
@@ -594,7 +597,7 @@ int32_t ixgbe_update_flash_X540(struct ixgbe_hw *hw)
 	else
 		DEBUGOUT("Flash update time out\n");
 
-	if (hw->revision_id == 0) {
+	if (hw->mac.type == ixgbe_mac_X540 && hw->revision_id == 0) {
 		flup = IXGBE_READ_REG(hw, IXGBE_EEC);
 
 		if (flup & IXGBE_EEC_SEC1VAL) {
@@ -680,7 +683,6 @@ int32_t ixgbe_acquire_swfw_sync_X540(struct ixgbe_hw *hw, uint16_t mask)
 			swfw_sync |= swmask;
 			IXGBE_WRITE_REG(hw, IXGBE_SWFW_SYNC, swfw_sync);
 			ixgbe_release_swfw_sync_semaphore(hw);
-			msec_delay(5);
 			goto out;
 		} else {
 			/*
@@ -700,7 +702,7 @@ int32_t ixgbe_acquire_swfw_sync_X540(struct ixgbe_hw *hw, uint16_t mask)
 	}
 
 	/* If the resource is not released by the FW/HW the SW can assume that
-	 * the FW/HW malfunctions. In that case the SW should sets the SW bit(s)
+	 * the FW/HW malfunctions. In that case the SW should set the SW bit(s)
 	 * of the requested resource(s) while ignoring the corresponding FW/HW
 	 * bits in the SW_FW_SYNC register.
 	 */
@@ -715,6 +717,17 @@ int32_t ixgbe_acquire_swfw_sync_X540(struct ixgbe_hw *hw, uint16_t mask)
 		IXGBE_WRITE_REG(hw, IXGBE_SWFW_SYNC, swfw_sync);
 		ixgbe_release_swfw_sync_semaphore(hw);
 		msec_delay(5);
+	}
+	/* If the resource is not released by other SW the SW can assume that
+	 * the other SW malfunctions. In that case the SW should clear all SW
+	 * flags that it does not own and then repeat the whole process once
+	 * again.
+	 */
+	else if (swfw_sync & swmask) {
+		ixgbe_release_swfw_sync_X540(hw, IXGBE_GSSR_EEP_SM |
+			IXGBE_GSSR_PHY0_SM | IXGBE_GSSR_PHY1_SM |
+			IXGBE_GSSR_MAC_CSR_SM);
+		ret_val = IXGBE_ERR_SWFW_SYNC;
 	}
 
 out:
@@ -743,7 +756,6 @@ void ixgbe_release_swfw_sync_X540(struct ixgbe_hw *hw, uint16_t mask)
 	IXGBE_WRITE_REG(hw, IXGBE_SWFW_SYNC, swfw_sync);
 
 	ixgbe_release_swfw_sync_semaphore(hw);
-	msec_delay(5);
 }
 
 /**
@@ -841,7 +853,7 @@ int32_t ixgbe_blink_led_start_X540(struct ixgbe_hw *hw, uint32_t index)
 	uint32_t macc_reg;
 	uint32_t ledctl_reg;
 	ixgbe_link_speed speed;
-	int link_up;
+	bool link_up;
 
 	DEBUGFUNC("ixgbe_blink_led_start_X540");
 
