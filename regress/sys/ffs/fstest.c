@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstest.c,v 1.2 2007/04/14 17:18:28 thib Exp $	*/
+/*	$OpenBSD: fstest.c,v 1.3 2013/08/05 07:17:45 guenther Exp $	*/
 
 /*
  * Copyright (c) 2006-2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -204,7 +204,7 @@ show_stat(struct stat *sp, const char *what)
 	if (strcmp(what, "mode") == 0)
 		printf("0%o", (unsigned int)(sp->st_mode & ALLPERMS));
 	else if (strcmp(what, "inode") == 0)
-		printf("%lld", (long long)sp->st_ino);
+		printf("%llu", (unsigned long long)sp->st_ino);
 	else if (strcmp(what, "nlink") == 0)
 		printf("%lld", (long long)sp->st_nlink);
 	else if (strcmp(what, "uid") == 0)
