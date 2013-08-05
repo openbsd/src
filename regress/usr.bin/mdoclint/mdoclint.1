@@ -1,5 +1,5 @@
-.\"	$OpenBSD: mdoclint.1,v 1.14 2013/07/16 14:18:39 schwarze Exp $
-.\"	$NetBSD: mdoclint.1,v 1.2 2009/04/13 22:18:13 wiz Exp $
+.\"	$OpenBSD: mdoclint.1,v 1.15 2013/08/05 07:09:42 jmc Exp $
+.\" $NetBSD: mdoclint.1,v 1.10 2013/07/30 18:50:07 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2013 Thomas Klausner
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: August 5 2013 $
 .Dt MDOCLINT 1
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@
 .Nd man page verifier
 .Sh SYNOPSIS
 .Nm
-.Op Fl aDdeFfHhlmnoPprSsvwXx
+.Op Fl AaDdeFfHhlmnoPprSsvwXx
 .Ar
 .Sh DESCRIPTION
 .Nm
@@ -41,12 +41,18 @@ is a man page verifier.
 It tries to automatically find as many common
 errors that occur when writing man pages as possible.
 If no flags are given,
-.Fl aDdfmnoPprSsXx
+.Fl AaDdfmnoPprSsXx
 is assumed (that is, everything except
 .Fl eFHhlvw ) .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A
+Warn if the
+.Dq .An
+macro (author) markup is not used in the
+.Sx AUTHORS
+section.
 .It Fl a
 Warn about some possible problems in the
 .Sx SEE ALSO
