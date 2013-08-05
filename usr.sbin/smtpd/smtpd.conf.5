@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.103 2013/07/20 06:49:17 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.104 2013/08/05 07:01:45 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: July 20 2013 $
+.Dd $Mdocdate: August 5 2013 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -223,11 +223,16 @@ table, see
 .It Ic for local Op Ic alias Aq Ar aliases
 This rule applies to mail destined to
 .Dq localhost
-and to the default server name (see below).
+and to the default server name.
+See the
+.Sx FILES
+entry for
+.Pa /etc/mailname
+below for details of how the server name is determined.
 .It Ic for local virtual Aq Ar vmap
 This rule applies to mail destined to
 .Dq localhost
-and to the default server name (see below).
+and to the default server name.
 The
 .Ar vmap
 table will be used as the virtual domain mapping.
@@ -292,7 +297,7 @@ value in the MX record for the domain than the one specified in
 .Ar mx .
 If
 .Ar mx
-is not specified, default server name (see below) will be assumed.
+is not specified, the default server name will be assumed.
 .Pp
 If the
 .Ic as
@@ -319,7 +324,7 @@ time a new connection is opened.
 .Pp
 By default, when connecting to a remote server,
 .Xr smtpd 8
-advertises its default server name (see below).
+advertises its default server name.
 A
 .Ic helo
 parameter may be specified to advertise an alternate hostname.
@@ -413,7 +418,7 @@ time a new connection is opened.
 .Pp
 By default, when connecting to a remote server,
 .Xr smtpd 8
-advertises its default server name (see below).
+advertises its default server name.
 A
 .Ic helo
 parameter may be specified to advertise an alternate hostname.
@@ -561,7 +566,7 @@ tagged
 If the
 .Ic hostname
 parameter is used, then it will be used in the greeting banner
-instead of the default server name (see below).
+instead of the default server name.
 .It Ic max-message-size Ar n
 Specify a maximum message size of
 .Ar n
@@ -650,28 +655,20 @@ many mappings as a list of comma separated
 .Ar key Ns = Ns Ar value
 descriptions.
 .El
-.Sh DEFAULT SERVER NAME
-The default server name is the hostname that
-.Xr smtpd 8
-operates as, which is used at various places.
-It is determined at startup as follows.
-.Pp
-If a
-.Pa /etc/mailname
-file exists, then the first line is read and used as the server name.
-Otherwise, the server name is derived from the local hostname returned by
-.Xr gethostname 3 ,
-either directly if it is a fully-qualified domain name,
-or by retreiving the associated canonical name through
-.Xr getaddrinfo 3 .
 .Sh FILES
-.Bl -tag -width "/etc/mail/smtpd.confXXX" -compact
+.Bl -tag -width "/etc/mail/smtpd.confXXX"
 .It Pa /etc/mail/smtpd.conf
 Default
 .Xr smtpd 8
 configuration file.
 .It Pa /etc/mailname
-Alternate server name to use.
+If this file exists,
+the first line is used as the server name.
+Otherwise, the server name is derived from the local hostname returned by
+.Xr gethostname 3 ,
+either directly if it is a fully qualified domain name,
+or by retreiving the associated canonical name through
+.Xr getaddrinfo 3 .
 .It Pa /var/spool/smtpd/
 Spool directories for mail during processing.
 .El

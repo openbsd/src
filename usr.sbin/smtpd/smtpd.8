@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.8,v 1.22 2013/05/24 17:03:14 eric Exp $
+.\"	$OpenBSD: smtpd.8,v 1.23 2013/08/05 07:01:45 jmc Exp $
 .\"
 .\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
 .\" Copyright (c) 2008, Gilles Chehade <gilles@poolp.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 24 2013 $
+.Dd $Mdocdate: August 5 2013 $
 .Dt SMTPD 8
 .Os
 .Sh NAME
@@ -123,11 +123,13 @@ and enable the daemon:
 .Ed
 .Sh FILES
 .Bl -tag -width "/var/run/smtpd.sockXXX" -compact
-.It /etc/mail/smtpd.conf
+.It Pa /etc/mailname
+Alternate server name to use.
+.It Pa /etc/mail/smtpd.conf
 Default
 .Nm
 configuration file.
-.It /var/run/smtpd.sock
+.It Pa /var/run/smtpd.sock
 .Ux Ns -domain
 socket used for communication with
 .Xr smtpctl 8 .
