@@ -233,13 +233,14 @@ static int inode_compare(const void *av, const void *bv)
 {
     const a_file *a = *(a_file **)av;
     const a_file *b = *(a_file **)bv;
-    long c;
 
-    c = a->finfo.st_ino - b->finfo.st_ino;
-    if (c == 0) {
-	return a->finfo.st_dev - b->finfo.st_dev;
-    }
-    return c;
+    if (a->finfo.st_ino < b->finfo.st_ino)
+	return -1;
+    if (a->finfo.st_ino > b->finfo.st_ino)
+	return 1;
+    if (a->finfo.st_dev < b->finfo.st_dev)
+	return -1;
+    return a->finfo.st_dev > b->finfo.st_dev;
 }
 
 static void mmap_init(server_rec *s, pool *p)
