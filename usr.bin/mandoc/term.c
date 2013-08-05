@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.68 2013/05/29 15:15:49 schwarze Exp $ */
+/*	$Id: term.c,v 1.69 2013/08/05 23:35:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -158,7 +158,7 @@ term_flushln(struct termp *p)
 		 */
 
 		for (j = i, jhy = 0; j < p->col; j++) {
-			if ((j && ' ' == p->buf[j]) || '\t' == p->buf[j])
+			if (' ' == p->buf[j] || '\t' == p->buf[j])
 				break;
 
 			/* Back over the the last printed character. */
