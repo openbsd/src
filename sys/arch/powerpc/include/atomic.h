@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.4 2011/03/23 16:54:36 pirofti Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.5 2013/08/06 08:19:52 kettenis Exp $	*/
 
 /* Public Domain */
 
@@ -17,7 +17,7 @@ atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)
 	    "	or	%0, %1, %0	\n"
 	    "	stwcx.	%0, 0, %2	\n"
 	    "	bne-	1b		\n"
-	    "	sync" : "=&r" (tmp) : "r" (v), "r" (uip) : "memory");
+	    "	sync" : "=&r" (tmp) : "r" (v), "r" (uip) : "cc", "memory");
 }
 
 static __inline void
@@ -30,7 +30,7 @@ atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
 	    "	andc	%0, %0, %1	\n"
 	    "	stwcx.	%0, 0, %2	\n"
 	    "	bne-	1b		\n"
-	    "	sync" : "=&r" (tmp) : "r" (v), "r" (uip) : "memory");
+	    "	sync" : "=&r" (tmp) : "r" (v), "r" (uip) : "cc", "memory");
 }
 
 #endif /* defined(_KERNEL) */
