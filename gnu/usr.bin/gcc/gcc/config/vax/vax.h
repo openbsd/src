@@ -1228,3 +1228,7 @@ VAX operand formatting codes:
    actually have any code whatsoever for which this isn't overridden
    by the proper FDE definition.  */
 #define INCOMING_RETURN_ADDR_RTX gen_rtx_REG (Pmode, PC_REGNUM)
+
+/* Tell flow.c not to try and optimize away MEM dead stores, as its
+   logic is confused by some of the addressing modes of the VAX.  */
+#define FLOW_DEAD_STORES_BROKEN_P

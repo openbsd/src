@@ -2702,10 +2702,12 @@ mark_set_1 (pbi, code, reg, cond, insn, flags)
       if (insn && GET_CODE (reg) == MEM)
 	for_each_rtx (&PATTERN (insn), invalidate_mems_from_autoinc, pbi);
 
+#ifndef FLOW_DEAD_STORES_BROKEN_P
       if (GET_CODE (reg) == MEM && ! side_effects_p (reg)
 	  /* ??? With more effort we could track conditional memory life.  */
 	  && ! cond)
 	add_to_mem_set_list (pbi, canon_rtx (reg));
+#endif
     }
 
   if (GET_CODE (reg) == REG
