@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.2 2013/05/09 13:35:43 patrick Exp $ */
+/* $OpenBSD: amptimer.c,v 1.3 2013/08/06 14:20:15 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -144,7 +144,10 @@ amptimer_readcnt64(struct amptimer_softc *sc)
 int
 amptimer_match(struct device *parent, void *cfdata, void *aux)
 {
-	return (1);
+	if ((cpufunc_id() & CPU_ID_CORTEX_A9_MASK) == CPU_ID_CORTEX_A9)
+		return (1);
+
+	return 0;
 }
 
 void
