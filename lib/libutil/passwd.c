@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.50 2013/04/29 00:28:23 okan Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.51 2013/08/06 22:47:43 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -357,7 +357,7 @@ pw_copy(int ffd, int tfd, const struct passwd *pw, const struct passwd *opw)
 			goto fail;
 	}
 	if (!done)
-		(void)fprintf(to, "%s:%s:%d:%d:%s:%d:%d:%s:%s:%s\n",
+		(void)fprintf(to, "%s:%s:%u:%u:%s:%d:%d:%s:%s:%s\n",
 		    pw->pw_name, pw->pw_passwd, pw->pw_uid, pw->pw_gid,
 		    pw->pw_class, pw->pw_change, pw->pw_expire, pw->pw_gecos,
 		    pw->pw_dir, pw->pw_shell);
