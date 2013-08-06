@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2013/07/22 14:40:45 naddy Exp $
+#	$OpenBSD: Makefile,v 1.22 2013/08/06 19:05:57 miod Exp $
 
 PROG=	openssl
 LDADD=	-lssl -lcrypto
@@ -12,6 +12,10 @@ SSLEAY_SRC_TOP= ${.CURDIR}/../../${SSLEAYDIST}
 CFLAGS+= -DMONOLITH -DTERMIOS -DANSI_SOURCE -DOPENSSL_NO_RC5
 CFLAGS+= -DOPENSSL_NO_SSL2
 CFLAGS+= -I${SSLEAY_SRC_TOP}
+
+.if ${MACHINE} == "vax"
+LDFLAGS+=-Wl,--no-keep-memory
+.endif
 
 SRCS=	verify.c asn1pars.c req.c dgst.c dh.c enc.c passwd.c gendh.c errstr.c \
 	pkcs7.c crl2p7.c crl.c ca.c \

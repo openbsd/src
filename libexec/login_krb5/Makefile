@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2013/06/19 19:45:03 robert Exp $
+#	$OpenBSD: Makefile,v 1.20 2013/08/06 19:05:57 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,9 @@ DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCRYPTO}
 LDADD+=	-lkrb5 -lasn1 -lcrypto
 LDADD+= -lwind -lroken -lcom_err -lheimbase
 CFLAGS+=-DKRB5
+.if ${MACHINE} == "vax"
+LDFLAGS+=-Wl,--no-keep-memory
+.endif
 .endif
 
 DPADD+=	${LIBUTIL}

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2008/08/20 22:19:49 dlg Exp $
+#	$OpenBSD: Makefile,v 1.29 2013/08/06 19:05:57 miod Exp $
 
 PROG=	sendmail
 
@@ -19,6 +19,10 @@ ENVDEF+= -DSASL
 CFLAGS+= -I/usr/local/include/sasl
 LDADD+= -lsasl2
 LDFLAGS+=-L/usr/local/lib
+.endif
+
+.if ${MACHINE} == "vax"
+LDFLAGS+=-Wl,--no-keep-memory
 .endif
 
 # Compile with milter support.

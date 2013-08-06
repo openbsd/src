@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2013/06/19 19:45:03 robert Exp $
+#	$OpenBSD: Makefile,v 1.17 2013/08/06 19:05:57 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,9 @@ LDADD+=	-lkrb5 -lasn1 -lcrypto -lutil
 LDADD+=	-lwind -lroken -lcom_err -lheimbase
 CFLAGS+=-DKRB5
 .PATH:	${.CURDIR}/../login_passwd ${.CURDIR}/../login_krb5 ${.CURDIR}/../../usr.bin/passwd
+.if ${MACHINE} == "vax"
+LDFLAGS+=-Wl,--no-keep-memory
+.endif
 .else
 DPADD+=  ${LIBUTIL}
 LDADD+=  -lutil

@@ -1,14 +1,14 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.22 2013/02/19 05:42:50 brad Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.23 2013/08/06 19:05:57 miod Exp $
 
 MAN=	lynx.1
 CLEANFILES+= lynx.1
 DPADD=	${LIBSSL} ${LIBCRYPTO}
 
 .if (${MACHINE} == "vax")
-OPT=-O0
+LDFLAGS+=	-Wl,--no-keep-memory
 .endif
 
-GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS} ${OPT}"
+GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS} ${OPT}" LDFLAGS="${LDFLAGS}"
 CONFIGURE_ARGS= --with-ssl=/usr --enable-widec --enable-ipv6 --enable-debug
 HTMLDIR=	/usr/share/doc/html
 HELPFILES=	keystrokes/alt_edit_help.html keystrokes/bookmark_help.html \

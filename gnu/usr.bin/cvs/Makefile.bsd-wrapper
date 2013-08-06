@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.47 2007/11/03 10:32:56 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.48 2013/08/06 19:05:57 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -20,8 +20,13 @@ KRB5=--with-gssapi=/usr --enable-encryption
 KRB5=
 .endif
 
+LDFLAGS=${LDSTATIC}
+.if ${MACHINE} == "vax"
+LDFLAGS+=-Wl,--no-keep-memory
+.endif
+
 all:	config.status
-	${MAKE} ${GNUCFLAGS} LDFLAGS=${LDSTATIC} all info
+	${MAKE} ${GNUCFLAGS} LDFLAGS="${LDFLAGS}" all info
 
 .FORCE:	.IGNORE
 
