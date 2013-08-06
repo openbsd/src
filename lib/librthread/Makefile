@@ -1,16 +1,10 @@
-#	$OpenBSD: Makefile,v 1.36 2013/07/05 21:29:51 miod Exp $
-
-# For ``COMPILER_VERSION''
-.include <bsd.own.mk>
+#	$OpenBSD: Makefile,v 1.37 2013/08/06 19:11:53 miod Exp $
 
 LIB=pthread
 LIBCSRCDIR=	${.CURDIR}/../libc
 
 CFLAGS+=-Wall -g -Werror -Wshadow
-.if ${COMPILER_VERSION:L} == "gcc4" || ${COMPILER_VERSION:L} == "gcc3"
-CFLAGS+=-Wmissing-prototypes
-.endif
-CFLAGS+=-Wstrict-prototypes
+CFLAGS+=-Wmissing-prototypes -Wstrict-prototypes
 CFLAGS+=-Wsign-compare
 CFLAGS+=-I${LIBCSRCDIR}/arch/${MACHINE_CPU} -I${LIBCSRCDIR}/include
 CDIAGFLAGS=

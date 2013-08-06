@@ -1,11 +1,6 @@
-# $OpenBSD: Makefile,v 1.2 2010/05/10 18:20:31 drahn Exp $
+# $OpenBSD: Makefile,v 1.3 2013/08/06 19:11:53 miod Exp $
 
-.include <bsd.own.mk>
-
-
-.if ${COMPILER_VERSION:L} == "gcc3" || ${COMPILER_VERSION:L} == "gcc4" 
 SUBDIR+= libgd1 libgd2 test1
-.endif
 
 install:
 
