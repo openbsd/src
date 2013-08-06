@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_support.S,v 1.18 2013/07/05 21:10:50 miod Exp $	*/
+/*	$OpenBSD: n_support.S,v 1.19 2013/08/06 19:02:14 espie Exp $	*/
 /*	$NetBSD: n_support.S,v 1.1 1995/10/10 23:40:30 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -114,6 +114,13 @@ Fn:	movl	4(%ap),%r0		# r0:1 = x (zero or reserved op)
  * double
  * scalbn(double x, int N)
  */
+
+ENTRY(scalbnf, 0)
+	movl	8(%ap),-(%sp)
+	cvtfd	4(%ap),-(%sp)
+	calls	$3, _C_LABEL(scalbn)
+	cvtdf	%r0,%r0
+	ret
 
 STRONG_ALIAS(scalbnl,scalbn)
 ENTRY(scalbn, R2|R3)
