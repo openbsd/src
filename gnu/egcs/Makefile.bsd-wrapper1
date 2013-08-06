@@ -1,2 +1,0 @@
-# $OpenBSD: Makefile.bsd-wrapper1,v 1.1 1999/05/26 15:47:02 espie Exp $
-.include <bsd.prog.mk>
