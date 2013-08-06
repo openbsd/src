@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.31 2012/12/05 23:19:57 deraadt Exp $	*/
+/*	$OpenBSD: math.h,v 1.32 2013/08/06 19:04:50 miod Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -25,11 +25,11 @@ __BEGIN_DECLS
  * ANSI/POSIX
  */
 extern char __infinity[];
-#if __GNUC_PREREQ__(3, 3)
+#if __GNUC_PREREQ__(3, 3) && !defined(__vax__)
 #define HUGE_VAL	__builtin_huge_val()
-#else /* __GNUC_PREREQ__(3, 3) */
+#else /* __GNUC_PREREQ__(3, 3) && !__vax__ */
 #define HUGE_VAL	(*(double *)(void *)__infinity)
-#endif /* __GNUC_PREREQ__(3, 3) */
+#endif /* __GNUC_PREREQ__(3, 3) && !__vax__ */
 
 /*
  * C99
@@ -38,12 +38,12 @@ extern char __infinity[];
 typedef	__double_t	double_t;
 typedef	__float_t	float_t;
 
-#if __GNUC_PREREQ__(3, 3)
+#if __GNUC_PREREQ__(3, 3) && !defined(__vax__)
 #define	HUGE_VALF	__builtin_huge_valf()
 #define	HUGE_VALL	__builtin_huge_vall()
 #define	INFINITY	__builtin_inff()
 #define	NAN		__builtin_nanf("")
-#else /* __GNUC_PREREQ__(3, 3) */
+#else /* __GNUC_PREREQ__(3, 3) && !__vax__ */
 #ifdef __vax__
 extern char __infinityf[];
 #define	HUGE_VALF	(*(float *)(void *)__infinityf)
@@ -56,7 +56,7 @@ extern char __infinityf[];
 extern char __nan[];
 #define	NAN		(*(float *)(void *)__nan)
 #endif /* !__vax__ */
-#endif /* __GNUC_PREREQ__(3, 3) */
+#endif /* __GNUC_PREREQ__(3, 3) && !__vax__ */
 
 #define	FP_INFINITE	0x01
 #define	FP_NAN		0x02
