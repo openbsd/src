@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.37 2013/07/06 23:35:44 brad Exp $ */
+/* $OpenBSD: agp.c,v 1.38 2013/08/06 09:45:32 jsg Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -816,8 +816,9 @@ agp_get_info(void *dev, struct agp_info *info)
 		info->ai_mode = 0; /* i810 doesn't have real AGP */
 	info->ai_aperture_base = sc->sc_apaddr;
 	info->ai_aperture_size = sc->sc_apsize;
-        info->ai_memory_allowed = sc->sc_maxmem;
-        info->ai_memory_used = sc->sc_allocated;
+	info->ai_memory_allowed = sc->sc_maxmem;
+	info->ai_memory_used = sc->sc_allocated;
+	info->ai_devid = sc->sc_id;
 }
 
 int
