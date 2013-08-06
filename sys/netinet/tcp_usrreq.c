@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.112 2013/05/17 09:04:30 mpi Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.113 2013/08/06 07:31:48 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -498,9 +498,6 @@ tcp_ctloutput(op, so, level, optname, mp)
 			(void) m_free(*mp);
 		return (ECONNRESET);
 	}
-#ifdef INET6
-	tp = intotcpcb(inp);
-#endif /* INET6 */
 	if (level != IPPROTO_TCP) {
 		switch (so->so_proto->pr_domain->dom_family) {
 #ifdef INET6
@@ -518,9 +515,7 @@ tcp_ctloutput(op, so, level, optname, mp)
 		splx(s);
 		return (error);
 	}
-#ifndef INET6
 	tp = intotcpcb(inp);
-#endif /* !INET6 */
 
 	switch (op) {
 
