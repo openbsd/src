@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.19 2013/03/14 15:44:15 millert Exp $	*/
+/*	$OpenBSD: mktemp.c,v 1.20 2013/08/06 21:56:51 landry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2001-2003, 2013
@@ -73,6 +73,11 @@ main(int argc, char *argv[])
 		usage();
 	}
 
+	len = strlen(template);
+	if (len < 6 || strcmp(&template[len - 6], "XXXXXX")) {
+		fatalx("insufficient number of Xs in template `%s'",
+		    template);
+	}
 	if (tflag) {
 		if (strchr(template, '/')) {
 			fatalx("template must not contain directory "
@@ -88,14 +93,9 @@ main(int argc, char *argv[])
 
 		if (asprintf(&tempfile, "%.*s/%s", (int)len, prefix, template) < 0)
 			tempfile = NULL;
-	} else {
-		len = strlen(template);
-		if (len < 6 || strcmp(&template[len - 6], "XXXXXX")) {
-			fatalx("insufficient number of Xs in template `%s'",
-			    template);
-		}
+	} else
 		tempfile = strdup(template);
-	}
+
 	if (tempfile == NULL)
 		fatalx("cannot allocate memory");
 
