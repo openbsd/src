@@ -1,4 +1,4 @@
-/*	$OpenBSD: specdev.h,v 1.32 2013/06/11 16:42:18 deraadt Exp $	*/
+/*	$OpenBSD: specdev.h,v 1.33 2013/08/06 08:22:37 kettenis Exp $	*/
 /*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
 
 /*
@@ -65,6 +65,12 @@ struct cloneinfo {
 #define v_speclockf v_specinfo->si_lockf
 #define v_specparent v_specinfo->si_ci.ci_parent
 #define v_specbitmap v_specinfo->si_ci.ci_bitmap
+
+/*
+ * We use the upper 16 bits of the minor to record the clone instance.
+ * This gives us 8 bits for encoding the real minor number.
+ */
+#define CLONE_SHIFT	8
 
 /*
  * Special device management
