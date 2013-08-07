@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.138 2013/06/11 16:42:09 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.139 2013/08/07 08:21:17 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1106,9 +1106,9 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	/* do not free memory which was stolen from the vm system */
 	if (ppc_malloc_ok &&
 	    ((sva >= VM_MIN_KERNEL_ADDRESS) && (sva < VM_MAX_KERNEL_ADDRESS)))
-		uvm_km_free(phys_map, sva, len);
+		uvm_km_free(kernel_map, sva, len);
 	else {
-		pmap_remove(vm_map_pmap(phys_map), sva, sva+len);
+		pmap_remove(pmap_kernel(), sva, sva + len);
 		pmap_update(pmap_kernel());
 	}
 }
@@ -1163,8 +1163,7 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 			panic("ppc_kvm_stolen, out of space");
 		}
 	} else {
-		vaddr = uvm_km_kmemalloc(phys_map, NULL, len,
-		    UVM_KMF_NOWAIT|UVM_KMF_VALLOC);
+		vaddr = uvm_km_valloc(kernel_map, len);
 		if (vaddr == 0)
 			return (ENOMEM);
 	}
@@ -1218,8 +1217,7 @@ mapiodev(paddr_t pa, psize_t len)
 			panic("ppc_kvm_stolen, out of space");
 		}
 	} else {
-		va = uvm_km_kmemalloc(phys_map, NULL, size,
-		    UVM_KMF_NOWAIT|UVM_KMF_VALLOC);
+		va = uvm_km_valloc(kernel_map, size);
 	}
 
 	if (va == 0)
@@ -1243,14 +1241,10 @@ unmapiodev(void *kva, psize_t p_size)
 
 	vaddr = trunc_page((vaddr_t)kva);
 
-	uvm_km_free_wakeup(phys_map, vaddr, size);
+	uvm_km_free(kernel_map, vaddr, size);
 
 	for (; size > 0; size -= PAGE_SIZE) {
-#if 0
-		pmap_remove(vm_map_pmap(phys_map), vaddr, vaddr+PAGE_SIZE-1);
-#else
-		pmap_remove(pmap_kernel(), vaddr,  vaddr+PAGE_SIZE-1);
-#endif
+		pmap_remove(pmap_kernel(), vaddr, vaddr + PAGE_SIZE - 1);
 		vaddr += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
