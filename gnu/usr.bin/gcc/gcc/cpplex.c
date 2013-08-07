@@ -911,8 +911,6 @@ continue_after_nul (pfile)
 	    {
 	      /* Non-empty files should end in a newline.  Don't warn
 		 for command line and _Pragma buffers.  */
-	      if (!buffer->from_stage3)
-		cpp_error (pfile, DL_PEDWARN, "no newline at end of file");
 	      handle_newline (pfile);
 	    }
 

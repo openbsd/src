@@ -487,8 +487,6 @@ scan_out_logical_line (pfile, macro)
 
 	  /* Premature end of file.  Fake a new line.  */
 	  cur--;
-	  if (!pfile->buffer->from_stage3)
-	    cpp_error (pfile, DL_PEDWARN, "no newline at end of file");
 	  pfile->line++;
 	  goto done;
 
