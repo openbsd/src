@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.104 2013/07/15 18:05:14 espie Exp $
+#  $OpenBSD: Makefile,v 1.105 2013/08/07 12:45:58 espie Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -149,7 +149,7 @@ NOIEEE_SRCS = n_acosh.c n_asincos.c n_asinh.c n_atan.c \
 	n_fmod.c \
 	n_j0.c n_j1.c n_jn.c n_lgamma.c n_log.c n_log10.c \
 	n_log1p.c n_log__L.c n_nan.c n_pow.c \
-	n_sinh.c n_tanh.c n_tgamma.c
+	n_sinh.c n_tanh.c n_tgamma.c n_lrint.c
 # there for reference, they're replaced by an asm version on vax
 NOIEEE_SRCS += n_argred.c n_atan2.c n_cbrt.c n_hypot.c n_infnan.c \
 	n_sincos.c n_sqrt.c n_support.c n_tan.c
