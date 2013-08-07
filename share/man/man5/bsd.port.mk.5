@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.382 2013/07/16 18:38:51 schwarze Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.383 2013/08/07 07:21:03 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: August 7 2013 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1123,8 +1123,7 @@ If set to
 .Sq Auto ,
 it will apply to dependencies, but not to the current port itself.
 See
-.Ev BULK_COOKIES_DIR ,
-.Ev TRUST_PACKAGES .
+.Ev BULK_COOKIES_DIR .
 Defaults to
 .Sq Auto .
 .It Ev BULK_COOKIES_DIR
@@ -2799,14 +2798,6 @@ during
 Refer to
 .Qq THE FAKE FRAMEWORK
 for details.
-.It Ev TRUST_PACKAGES
-User settings.
-If set to
-.Sq Yes ,
-dependency mechanisms will assume the database of installed packages is
-correct.
-See also
-.Ev BULK .
 .It Ev TRY_BROKEN
 User settings.
 If set to
