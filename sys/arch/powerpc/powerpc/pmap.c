@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.119 2012/08/30 18:14:26 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.120 2013/08/07 08:19:05 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -801,8 +801,9 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	}
 
 	if (cache == PMAP_CACHE_DEFAULT) {
-		if (PHYS_TO_VM_PAGE(pa) != NULL)
-			cache = PMAP_CACHE_WB; /* managed memory is cacheable */
+		pg = PHYS_TO_VM_PAGE(pa);
+		if (pg != NULL && (pg->pg_flags & PG_DEV) == 0)
+			cache = PMAP_CACHE_WB;
 		else
 			cache = PMAP_CACHE_CI;
 	}
