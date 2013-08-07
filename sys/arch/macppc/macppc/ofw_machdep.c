@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.37 2013/01/21 11:43:41 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.38 2013/08/07 07:29:19 mpi Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <machine/autoconf.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pci.h>
 
 #include <macppc/macppc/ofw_machdep.h>
 
@@ -185,29 +186,6 @@ save_ofw_mapping()
 
 #include <dev/pci/pcivar.h>
 #include <arch/macppc/pci/vgafb_pcivar.h>
-static pcitag_t ofw_make_tag( void *cpv, int bus, int dev, int fnc);
-
-/* ARGSUSED */
-static pcitag_t
-ofw_make_tag(void *cpv, int bus, int dev, int fnc)
-{
-        return (bus << 16) | (dev << 11) | (fnc << 8);
-}
-
-#define       OFW_PCI_PHYS_HI_BUSMASK         0x00ff0000
-#define       OFW_PCI_PHYS_HI_BUSSHIFT        16
-#define       OFW_PCI_PHYS_HI_DEVICEMASK      0x0000f800
-#define       OFW_PCI_PHYS_HI_DEVICESHIFT     11
-#define       OFW_PCI_PHYS_HI_FUNCTIONMASK    0x00000700
-#define       OFW_PCI_PHYS_HI_FUNCTIONSHIFT   8
-
-#define pcibus(x) \
-	(((x) & OFW_PCI_PHYS_HI_BUSMASK) >> OFW_PCI_PHYS_HI_BUSSHIFT)
-#define pcidev(x) \
-	(((x) & OFW_PCI_PHYS_HI_DEVICEMASK) >> OFW_PCI_PHYS_HI_DEVICESHIFT)
-#define pcifunc(x) \
-	(((x) & OFW_PCI_PHYS_HI_FUNCTIONMASK) >> OFW_PCI_PHYS_HI_FUNCTIONSHIFT)
-
 
 struct ppc_bus_space ppc_membus;
 bus_space_tag_t cons_membus = &ppc_membus;
@@ -376,16 +354,12 @@ void
 of_display_console()
 {
 #if NVGAFB_PCI > 0
+	struct ofw_pci_register addr[8];
 	char name[32];
 	int len;
 	int stdout_node;
 	int display_node;
 	int err;
-	u_int32_t memtag, iotag;
-	struct {
-		u_int32_t phys_hi, phys_mid, phys_lo;
-		u_int32_t size_hi, size_lo;
-	} addr [8];
 
 	stdout_node = OF_instance_to_package(OF_stdout);
 	len = OF_getprop(stdout_node, "name", name, 20);
@@ -433,25 +407,20 @@ of_display_console()
 	if (OF_getnodebyname(0, "backlight") != 0)
 		cons_backlight_available = 1;
 
-	memtag = ofw_make_tag(NULL, pcibus(addr[0].phys_hi),
-		pcidev(addr[0].phys_hi),
-		pcifunc(addr[0].phys_hi));
-	iotag = ofw_make_tag(NULL, pcibus(addr[1].phys_hi),
-		pcidev(addr[1].phys_hi),
-		pcifunc(addr[1].phys_hi));
+	vgafb_pci_console_tag = PCITAG_CREATE(display_node,
+	    OFW_PCI_PHYS_HI_BUS(addr[1].phys_hi),
+	    OFW_PCI_PHYS_HI_DEVICE(addr[1].phys_hi),
+	    OFW_PCI_PHYS_HI_FUNCTION(addr[1].phys_hi));
 
 #if 1
 	printf(": memaddr %x size %x, ", addr[0].phys_lo, addr[0].size_lo);
 	printf(": consaddr %x, ", cons_addr);
 	printf(": ioaddr %x, size %x", addr[1].phys_lo, addr[1].size_lo);
-	printf(": memtag %x, iotag %x", memtag, iotag);
 	printf(": width %d linebytes %d height %d depth %d\n",
 		cons_width, cons_linebytes, cons_height, cons_depth);
 #endif
 
 	cons_membus->bus_base = 0x80000000;
-	vgafb_pci_console_tag = iotag;
-
 	vgafb_cnattach(cons_membus, cons_membus, -1, 0);
 
 	if (cons_backlight_available == 1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.23 2012/08/28 19:52:18 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.1 2013/08/07 07:29:20 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ht.c,v 1.15 2013/01/21 15:06:29 mpi Exp $	*/
+/*	$OpenBSD: ht.c,v 1.16 2013/08/07 07:29:19 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -32,28 +32,10 @@
 int	 ht_match(struct device *, void *, void *);
 void	 ht_attach(struct device *, struct device *, void *);
 
-void	 ht_attach_hook(struct device *, struct device *,
-	     struct pcibus_attach_args *);
-int	 ht_bus_maxdevs(void *, int);
-pcitag_t ht_make_tag(void *, int, int, int);
-void	 ht_decompose_tag(void *, pcitag_t, int *, int *, int *);
-int	 ht_conf_size(void *, pcitag_t);
 pcireg_t ht_conf_read(void *, pcitag_t, int);
 void	 ht_conf_write(void *, pcitag_t, int, pcireg_t);
-int	 ht_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
-const char *ht_intr_string(void *, pci_intr_handle_t);
-int	 ht_intr_line(void *, pci_intr_handle_t);
-void	*ht_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *),
-	     void *, const char *);
-void	 ht_intr_disestablish(void *, void *);
-
-int	 ht_ether_hw_addr(struct ppc_pci_chipset *, u_int8_t *);
 
 int	 ht_print(void *, const char *);
-
-#define BUS_SHIFT 16
-#define DEVICE_SHIFT 11
-#define FNC_SHIFT 8
 
 struct ht_softc {
 	struct device	sc_dev;
@@ -76,27 +58,6 @@ struct cfdriver ht_cd = {
 	NULL, "ht", DV_DULL,
 };
 
-#if 0
-struct powerpc_bus_dma_tag pci_bus_dma_tag = {
-	NULL,
-	_dmamap_create,
-	_dmamap_destroy,
-	_dmamap_load,
-	_dmamap_load_mbuf,
-	_dmamap_load_uio,
-	_dmamap_load_raw,
-	_dmamap_unload,
-	_dmamap_sync,
-	_dmamem_alloc,
-	_dmamem_free,
-	_dmamem_map,
-	_dmamem_unmap,
-	_dmamem_mmap
-};
-#else
-extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
-#endif
-
 int
 ht_match(struct device *parent, void *cf, void *aux)
 {
@@ -115,8 +76,7 @@ ht_attach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args pba;
 	u_int32_t regs[6];
 	char compat[32];
-	int node, nn;
-	int len;
+	int node, len;
 
 	if (ca->ca_node == 0) {
 		printf(": invalid node on ht config\n");
@@ -144,7 +104,7 @@ ht_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_maxdevs++;
 
 	if (bus_space_map(sc->sc_memt, regs[1],
-	    (1 << DEVICE_SHIFT)*sc->sc_maxdevs, 0, &sc->sc_config0_memh)) {
+	    (1 << 11)*sc->sc_maxdevs, 0, &sc->sc_config0_memh)) {
 		printf(": can't map PCI config0 memory\n");
 		return;
 	}
@@ -168,21 +128,9 @@ ht_attach(struct device *parent, struct device *self, void *aux)
 		printf(": %s", compat);
 
 	sc->sc_pc.pc_conf_v = sc;
-	sc->sc_pc.pc_attach_hook = ht_attach_hook;
-	sc->sc_pc.pc_bus_maxdevs = ht_bus_maxdevs;
-	sc->sc_pc.pc_make_tag = ht_make_tag;
-	sc->sc_pc.pc_decompose_tag = ht_decompose_tag;
-	sc->sc_pc.pc_conf_size = ht_conf_size;
+	sc->sc_pc.pc_node = ca->ca_node;
 	sc->sc_pc.pc_conf_read = ht_conf_read;
 	sc->sc_pc.pc_conf_write = ht_conf_write;
-
-	sc->sc_pc.pc_intr_v = sc;
-	sc->sc_pc.pc_intr_map = ht_intr_map;
-	sc->sc_pc.pc_intr_string = ht_intr_string;
-	sc->sc_pc.pc_intr_line = ht_intr_line;
-	sc->sc_pc.pc_intr_establish = ht_intr_establish;
-	sc->sc_pc.pc_intr_disestablish = ht_intr_disestablish;
-	sc->sc_pc.pc_ether_hw_addr = ht_ether_hw_addr;
 
 	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
@@ -195,64 +143,7 @@ ht_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(", %d devices\n", sc->sc_maxdevs);
 
-	extern void fix_node_irq(int, struct pcibus_attach_args *);
-
-	for (node = OF_child(ca->ca_node); node; node = nn) {
-		fix_node_irq(node, &pba);
-
-		if ((nn = OF_child(node)) != 0)
-			continue;
-
-		while ((nn = OF_peer(node)) == 0) {
-			node = OF_parent(node);
-			if (node == ca->ca_node) {
-				nn = 0;
-				break;
-			}
-		}
-	}
-
 	config_found(self, &pba, ht_print);
-}
-
-void
-ht_attach_hook(struct device *parent, struct device *self,
-    struct pcibus_attach_args *pba)
-{
-}
-
-int
-ht_bus_maxdevs(void *cpv, int bus)
-{
-	struct ht_softc *sc = cpv;
-
-	/* XXX Probing more busses doesn't work. */
-	if (bus == 0)
-		return sc->sc_maxdevs;
-	return 32;
-}
-
-pcitag_t
-ht_make_tag(void *cpv, int bus, int dev, int fnc)
-{
-	return (bus << BUS_SHIFT) | (dev << DEVICE_SHIFT) | (fnc << FNC_SHIFT);
-}
-
-void
-ht_decompose_tag(void *cpv, pcitag_t tag, int *busp, int *devp, int *fncp)
-{
-	if (busp != NULL)
-		*busp = (tag >> BUS_SHIFT) & 0xff;
-	if (devp != NULL)
-		*devp = (tag >> DEVICE_SHIFT) & 0x1f;
-	if (fncp != NULL)
-		*fncp = (tag >> FNC_SHIFT) & 0x7;
-}
-
-int
-ht_conf_size(void *cpv, pcitag_t tag)
-{
-	return PCI_CONFIG_SPACE_SIZE;
 }
 
 pcireg_t
@@ -261,24 +152,26 @@ ht_conf_read(void *cpv, pcitag_t tag, int offset)
 	struct ht_softc *sc = cpv;
 	int bus, dev, fcn;
 	pcireg_t reg;
+	uint32_t val;
 
+	val = PCITAG_OFFSET(tag);
 #ifdef DEBUG
-	printf("ht_conf_read: tag=%x, offset=%x\n", tag, offset);
+	printf("ht_conf_read: tag=%x, offset=%x\n", val, offset);
 #endif
-	ht_decompose_tag(NULL, tag, &bus, &dev, &fcn);
+	pci_decompose_tag(NULL, tag, &bus, &dev, &fcn);
 	if (bus == 0 && dev == 0) {
-		tag |= (offset << 2);
-		reg = bus_space_read_4(sc->sc_iot, sc->sc_config0_ioh, tag);
+		val |= (offset << 2);
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_config0_ioh, val);
 		reg = letoh32(reg);
 	} else if (bus == 0) {
 		/* XXX Why can we only access function 0? */
 		if (fcn > 0)
 			return ~0;
-		tag |= offset;
-		reg = bus_space_read_4(sc->sc_memt, sc->sc_config0_memh, tag);
+		val |= offset;
+		reg = bus_space_read_4(sc->sc_memt, sc->sc_config0_memh, val);
 	} else {
-		tag |= offset;
-		reg = bus_space_read_4(sc->sc_memt, sc->sc_config1_memh, tag);
+		val |= offset;
+		reg = bus_space_read_4(sc->sc_memt, sc->sc_config1_memh, val);
 	}
 #ifdef DEBUG
 	printf("ht_conf_read: reg=%x\n", reg);
@@ -291,102 +184,31 @@ ht_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	struct ht_softc *sc = cpv;
 	int bus, dev, fcn;
+	uint32_t val;
 
+	val = PCITAG_OFFSET(tag);
 #ifdef DEBUG
 	printf("ht_conf_write: tag=%x, offset=%x, data = %x\n",
-	       tag, offset, data);
+	       val, offset, data);
 #endif
-	ht_decompose_tag(NULL, tag, &bus, &dev, &fcn);
+	pci_decompose_tag(NULL, tag, &bus, &dev, &fcn);
 	if (bus == 0 && dev == 0) {
-		tag |= (offset << 2);
+		val |= (offset << 2);
 		data = htole32(data);
-		bus_space_write_4(sc->sc_iot, sc->sc_config0_ioh, tag, data);
-		bus_space_read_4(sc->sc_iot, sc->sc_config0_ioh, tag);
+		bus_space_write_4(sc->sc_iot, sc->sc_config0_ioh, val, data);
+		bus_space_read_4(sc->sc_iot, sc->sc_config0_ioh, val);
 	} else if (bus == 0) {
 		/* XXX Why can we only access function 0? */
 		if (fcn > 0)
 			return;
-		tag |= offset;
-		bus_space_write_4(sc->sc_memt, sc->sc_config0_memh, tag, data);
-		bus_space_read_4(sc->sc_memt, sc->sc_config0_memh, tag);
+		val |= offset;
+		bus_space_write_4(sc->sc_memt, sc->sc_config0_memh, val, data);
+		bus_space_read_4(sc->sc_memt, sc->sc_config0_memh, val);
 	} else {
-		tag |= offset;
-		bus_space_write_4(sc->sc_memt, sc->sc_config1_memh, tag, data);
-		bus_space_read_4(sc->sc_memt, sc->sc_config1_memh, tag);
+		val |= offset;
+		bus_space_write_4(sc->sc_memt, sc->sc_config1_memh, val, data);
+		bus_space_read_4(sc->sc_memt, sc->sc_config1_memh, val);
 	}
-}
-
-/* XXX */
-#define PCI_INTERRUPT_NO_CONNECTION	0xff
-
-int
-ht_intr_map(void *cpv, pcitag_t tag, int pin, int line,
-    pci_intr_handle_t *ihp)
-{
-	int error = 0;
-
-#ifdef DEBUG
-	printf("ht_intr_map: tag=%x, pin=%d, line=%d\n", tag, pin, line);
-#endif
-
-	*ihp = -1;
-        if (line == PCI_INTERRUPT_NO_CONNECTION)
-                error = 1; /* No IRQ used. */
-        else if (pin > PCI_INTERRUPT_PIN_MAX) {
-                printf("ht_intr_map: bad interrupt pin %d\n", pin);
-                error = 1;
-        }
-
-	if (!error)
-		*ihp = line;
-	return error;
-}
-
-const char *
-ht_intr_string(void *cpv, pci_intr_handle_t ih)
-{
-	static char str[16];
-
-	snprintf(str, sizeof str, "irq %ld", ih);
-	return (str);
-}
-
-int
-ht_intr_line(void *cpv, pci_intr_handle_t ih)
-{
-	return (ih);
-}
-
-void *
-ht_intr_establish(void *cpv, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg, const char *name)
-{
-	return (*intr_establish_func)(cpv, ih, IST_LEVEL, level, func, arg,
-		name);
-}
-
-void
-ht_intr_disestablish(void *lcv, void *cookie)
-{
-}
-
-int
-ht_ether_hw_addr(struct ppc_pci_chipset *lcpc, u_int8_t *oaddr)
-{
-	u_int8_t laddr[6];
-	int node;
-	int len;
-
-	node = OF_finddevice("enet");
-	len = OF_getprop(node, "local-mac-address", laddr, sizeof(laddr));
-	if (sizeof(laddr) == len) {
-		memcpy(oaddr, laddr, sizeof(laddr));
-		return 1;
-	}
-
-	oaddr[0] = oaddr[1] = oaddr[2] = 0xff;
-	oaddr[3] = oaddr[4] = oaddr[5] = 0xff;
-	return 0;
 }
 
 int
