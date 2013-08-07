@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.62 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.63 2013/08/07 01:06:42 bluhm Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -66,7 +66,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif

@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: ixgb_hw.c,v 1.3 2008/02/19 18:47:18 brad Exp $ */
+/* $OpenBSD: ixgb_hw.c,v 1.4 2013/08/07 01:06:39 bluhm Exp $ */
 
 /* ixgb_hw.c
  * Shared functions for accessing and configuring the adapter
@@ -53,7 +53,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif

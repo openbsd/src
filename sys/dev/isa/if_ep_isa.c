@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_isa.c,v 1.25 2008/02/18 16:24:13 krw Exp $	*/
+/*	$OpenBSD: if_ep_isa.c,v 1.26 2013/08/07 01:06:32 bluhm Exp $	*/
 /*	$NetBSD: if_ep_isa.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
@@ -59,7 +59,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif

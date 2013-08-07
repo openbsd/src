@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.111 2013/06/28 03:24:18 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.112 2013/08/07 01:06:37 bluhm Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -78,7 +78,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_sbus.c,v 1.13 2009/07/12 21:27:09 kettenis Exp $	*/
+/*	$OpenBSD: if_hme_sbus.c,v 1.14 2013/08/07 01:06:40 bluhm Exp $	*/
 /*	$NetBSD: if_hme_sbus.c,v 1.6 2001/02/28 14:52:48 mrg Exp $	*/
 
 /*-
@@ -48,7 +48,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif

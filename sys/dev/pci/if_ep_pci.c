@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pci.c,v 1.28 2011/04/03 15:36:02 jasper Exp $	*/
+/*	$OpenBSD: if_ep_pci.c,v 1.29 2013/08/07 01:06:34 bluhm Exp $	*/
 /*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h> 
 #include <netinet/if_ether.h>
 #endif

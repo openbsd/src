@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.54 2013/04/26 13:46:40 mglocker Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.55 2013/08/07 01:06:41 bluhm Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -59,7 +59,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 

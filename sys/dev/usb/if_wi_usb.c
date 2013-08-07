@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.57 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.58 2013/08/07 01:06:43 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -49,7 +49,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif

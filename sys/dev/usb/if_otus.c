@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.34 2013/04/15 09:23:01 mglocker Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.35 2013/08/07 01:06:41 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -47,7 +47,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
 

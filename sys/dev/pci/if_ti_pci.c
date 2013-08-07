@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti_pci.c,v 1.1 2009/08/29 21:12:55 kettenis Exp $	*/
+/*	$OpenBSD: if_ti_pci.c,v 1.2 2013/08/07 01:06:38 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -83,7 +83,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif

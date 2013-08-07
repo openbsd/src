@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.45 2013/05/21 20:08:45 brad Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.46 2013/08/07 01:06:27 bluhm Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -55,7 +55,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.87 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.88 2013/08/07 01:06:41 bluhm Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -100,7 +100,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif

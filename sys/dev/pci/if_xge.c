@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.54 2011/04/05 18:01:21 henning Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.55 2013/08/07 01:06:39 bluhm Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -58,7 +58,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #include <netinet/tcp.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.60 2012/07/13 10:08:15 stsp Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.61 2013/08/07 01:06:30 bluhm Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -50,7 +50,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.57 2012/11/29 21:10:32 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.58 2013/08/07 01:06:36 bluhm Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -92,7 +92,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif

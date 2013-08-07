@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_te1.c,v 1.11 2009/01/21 21:54:00 grange Exp $	*/
+/*	$OpenBSD: if_san_te1.c,v 1.12 2013/08/07 01:06:37 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -51,7 +51,6 @@
 #include <net/if_sppp.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
-#include <netinet/in_var.h>
 #include <netinet/udp.h>
 #include <netinet/ip.h>
 

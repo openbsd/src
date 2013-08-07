@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.100 2013/04/15 09:23:01 mglocker Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.101 2013/08/07 01:06:42 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -49,7 +49,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
 

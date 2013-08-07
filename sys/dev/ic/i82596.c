@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.33 2009/10/31 14:31:11 deraadt Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.34 2013/08/07 01:06:29 bluhm Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -157,7 +157,6 @@ Mode of operation:
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif

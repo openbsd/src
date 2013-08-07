@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.51 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.52 2013/08/07 01:06:42 bluhm Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -57,7 +57,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_var.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>

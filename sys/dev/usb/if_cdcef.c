@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.28 2013/04/15 09:23:01 mglocker Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.29 2013/08/07 01:06:41 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -44,7 +44,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 

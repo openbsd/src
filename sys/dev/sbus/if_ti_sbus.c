@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti_sbus.c,v 1.1 2009/09/01 14:45:44 kettenis Exp $	*/
+/*	$OpenBSD: if_ti_sbus.c,v 1.2 2013/08/07 01:06:40 bluhm Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -27,7 +27,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif

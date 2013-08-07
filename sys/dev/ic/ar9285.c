@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9285.c,v 1.19 2012/06/10 21:23:36 kettenis Exp $	*/
+/*	$OpenBSD: ar9285.c,v 1.20 2013/08/07 01:06:28 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -52,7 +52,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
 

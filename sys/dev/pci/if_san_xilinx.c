@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.27 2012/09/19 22:37:23 jsg Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.28 2013/08/07 01:06:37 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -54,7 +54,6 @@
 #include <net/if_sppp.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
-#include <netinet/in_var.h>
 #include <netinet/udp.h>
 #include <netinet/ip.h>
 

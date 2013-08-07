@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.26 2012/11/22 02:04:50 brad Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.27 2013/08/07 01:06:36 bluhm Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -85,7 +85,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif

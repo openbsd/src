@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.41 2012/11/28 01:15:33 brad Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.42 2013/08/07 01:06:40 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -64,7 +64,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.67 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.68 2013/08/07 01:06:41 bluhm Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -91,7 +91,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.58 2013/04/26 14:43:22 mpi Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.59 2013/08/07 01:06:42 bluhm Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -43,7 +43,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
 

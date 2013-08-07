@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.38 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.39 2013/08/07 01:06:43 bluhm Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -44,7 +44,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif

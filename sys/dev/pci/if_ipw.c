@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.95 2011/04/07 15:30:16 miod Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.96 2013/08/07 01:06:35 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -52,7 +52,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
 

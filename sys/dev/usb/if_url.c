@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.66 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: if_url.c,v 1.67 2013/08/07 01:06:43 bluhm Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -65,7 +65,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif

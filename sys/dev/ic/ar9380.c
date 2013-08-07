@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380.c,v 1.17 2012/10/20 09:54:20 stsp Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.18 2013/08/07 01:06:28 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -49,7 +49,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/if_ether.h>
 
 #include <net80211/ieee80211_var.h>

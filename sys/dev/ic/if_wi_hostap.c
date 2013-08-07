@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.41 2008/10/15 19:12:19 blambert Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.42 2013/08/07 01:06:30 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -64,7 +64,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 
