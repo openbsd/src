@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.5 2011/03/23 16:54:35 pirofti Exp $ */
+/*	$OpenBSD: limits.h,v 1.6 2013/08/07 15:34:01 kettenis Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,13 +37,13 @@
 
 #if __POSIX_VISIBLE || __XPG_VISIBLE
 #ifndef	SIZE_MAX
-#define	SIZE_MAX	UINT_MAX	/* max value for a size_t */
+#define	SIZE_MAX	ULONG_MAX	/* max value for a size_t */
 #endif
-#define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
+#define	SSIZE_MAX	LONG_MAX	/* max value for a ssize_t */
 #endif
 
 #if __BSD_VISIBLE
-#define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t (historic) */
+#define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t (historic) */
 
 /* GCC requires that quad constants be written as expressions. */
 #define	UQUAD_MAX	((u_quad_t)0-1)	/* max value for a uquad_t */
