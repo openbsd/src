@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.1,v 1.27 2013/03/12 15:07:12 millert Exp $
+.\"	$OpenBSD: mktemp.1,v 1.28 2013/08/07 06:19:36 deraadt Exp $
 .\"
 .\" Copyright (c) 1996, 2000, 2001, 2003, 2010, 2013
 .\"	Todd C. Miller <Todd.Miller@courtesan.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 12 2013 $
+.Dd $Mdocdate: August 7 2013 $
 .Dt MKTEMP 1
 .Os
 .Sh NAME
@@ -244,12 +244,12 @@ option was specified.
 .Nm
 was unable to create the temporary directory for any of the reasons
 specified by
-.Xr mkdir 2 .
+.Xr mkdtemp 3 .
 .It Li "cannot make temp file"
 .Nm
 was unable to create the temporary file for any of the reasons
 specified by
-.Xr open 2 .
+.Xr mkstemp 3 .
 .It Li "cannot allocate memory"
 .Nm
 was unable to allocate memory for any of the reasons specified by
