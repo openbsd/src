@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.14 2010/04/21 03:03:26 deraadt Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.15 2013/08/07 22:22:42 bluhm Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
@@ -56,7 +56,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #endif
 
