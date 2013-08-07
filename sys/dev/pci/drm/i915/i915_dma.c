@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_dma.c,v 1.8 2013/07/05 07:20:27 jsg Exp $	*/
+/*	$OpenBSD: i915_dma.c,v 1.9 2013/08/07 00:04:27 jsg Exp $	*/
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*
@@ -400,6 +400,8 @@ i915_driver_open(struct drm_device *dev, struct drm_file *file)
 	mtx_init(&file_priv->mm.lock, IPL_NONE);
 	INIT_LIST_HEAD(&file_priv->mm.request_list);
 
+	SPLAY_INIT(&file_priv->ctx_tree);
+
 	return 0;
 }
 
@@ -408,6 +410,7 @@ i915_driver_close(struct drm_device *dev, struct drm_file *file)
 {
 	struct drm_i915_file_private *file_priv = file->driver_priv;
 
+	i915_gem_context_close(dev, file);
 	i915_gem_release(dev, file);
 	free(file_priv, M_DRM);
 }

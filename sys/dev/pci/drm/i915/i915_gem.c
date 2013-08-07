@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.29 2013/07/29 18:32:15 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.30 2013/08/07 00:04:28 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1801,11 +1801,9 @@ i915_gpu_idle(struct drm_device *dev)
 
 	/* Flush everything onto the inactive list. */
 	for_each_ring(ring, dev_priv, i) {
-#ifdef notyet
 		ret = i915_switch_context(ring, NULL, DEFAULT_CONTEXT_ID);
 		if (ret)
 			return ret;
-#endif
 
 		ret = intel_ring_idle(ring);
 		if (ret)
@@ -3173,8 +3171,8 @@ i915_gem_init_hw(struct drm_device *dev)
 	 * XXX: There was some w/a described somewhere suggesting loading
 	 * contexts before PPGTT.
 	 */
-#ifdef notyet
 	i915_gem_context_init(dev);
+#ifdef notyet
 	i915_gem_init_ppgtt(dev);
 #endif
 

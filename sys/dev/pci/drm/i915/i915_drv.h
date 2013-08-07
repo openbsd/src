@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.24 2013/07/05 07:20:27 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.25 2013/08/07 00:04:28 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -201,6 +201,22 @@ struct intel_device_info {
 	u8 has_bsd_ring:1;
 	u8 has_blt_ring:1;
 	u8 has_llc:1;
+};
+
+/* This must match up with the value previously used for execbuf2.rsvd1. */
+#define DEFAULT_CONTEXT_ID 0
+struct i915_hw_context {
+	int id;
+	bool is_initialized;
+	struct drm_i915_file_private *file_priv;
+	struct intel_ring_buffer *ring;
+	struct drm_i915_gem_object *obj;
+};
+
+struct i915_ctx_handle {
+	SPLAY_ENTRY(i915_ctx_handle)	 entry;
+	struct i915_hw_context		*ctx;
+	uint32_t			 handle;
 };
 
 enum no_fbc_reason {
@@ -798,6 +814,9 @@ struct inteldrm_softc {
 	struct drm_property *broadcast_rgb_property;
 	struct drm_property *force_audio_property;
 
+	bool hw_contexts_disabled;
+	uint32_t hw_context_size;
+
 	u32 fdi_rx_config;
 
 	struct i915_suspend_saved_registers regfile;
@@ -973,6 +992,8 @@ struct drm_i915_file_private {
 		struct mutex lock;
 		struct list_head request_list;
 	} mm;
+	SPLAY_HEAD(i915_ctx_tree, i915_ctx_handle) ctx_tree;
+	uint32_t ctx_id;
 };
 
 /**
@@ -1179,6 +1200,17 @@ int	intel_gpu_reset(struct drm_device *);
 int	i915_reset(struct drm_device *);
 void	inteldrm_timeout(void *);
 bool	i915_semaphore_is_enabled(struct drm_device *);
+
+/* i915_gem_context.c */
+void i915_gem_context_init(struct drm_device *dev);
+void i915_gem_context_fini(struct drm_device *dev);
+void i915_gem_context_close(struct drm_device *dev, struct drm_file *file);
+int i915_switch_context(struct intel_ring_buffer *ring,
+			struct drm_file *file, int to_id);
+int i915_gem_context_create_ioctl(struct drm_device *dev, void *data,
+				  struct drm_file *file);
+int i915_gem_context_destroy_ioctl(struct drm_device *dev, void *data,
+				   struct drm_file *file);
 
 /* i915_gem_evict.c */
 int i915_gem_evict_everything(struct drm_device *);

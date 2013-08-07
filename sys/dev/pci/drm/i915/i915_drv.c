@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.35 2013/07/05 07:20:27 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.36 2013/08/07 00:04:28 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1390,6 +1390,12 @@ inteldrm_doioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 		case DRM_IOCTL_I915_GEM_GET_CACHING:
 			return (i915_gem_get_caching_ioctl(dev, data,
 			    file_priv));
+		case DRM_IOCTL_I915_GEM_CONTEXT_CREATE:
+			return (i915_gem_context_create_ioctl(dev, data,
+			    file_priv));
+		case DRM_IOCTL_I915_GEM_CONTEXT_DESTROY:
+			return (i915_gem_context_destroy_ioctl(dev, data,
+			    file_priv));
 		default:
 			break;
 		}
@@ -2042,8 +2048,8 @@ i915_reset(struct drm_device *dev)
 		for_each_ring(ring, dev_priv, i)
 			ring->init(ring);
 
-#ifdef notyet
 		i915_gem_context_init(dev);
+#ifdef notyet
 		i915_gem_init_ppgtt(dev);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.7 2013/05/05 13:55:36 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.8 2013/08/07 00:04:28 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -425,6 +425,7 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 	struct drm_obj				**object_list = NULL;
 	struct drm_obj				*batch_obj, *obj;
 	struct intel_ring_buffer		*ring;
+	uint32_t				 ctx_id = i915_execbuffer2_get_context_id(*args);
 	size_t					 oflow;
 	int					 ret, ret2, i;
 	int					 pinned = 0, pin_tries;
@@ -627,6 +628,10 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 
 	ret = i915_gem_execbuffer_move_to_gpu(ring, object_list,
 	    args->buffer_count);
+	if (ret)
+		goto err;
+
+	ret = i915_switch_context(ring, file_priv, ctx_id);
 	if (ret)
 		goto err;
 
