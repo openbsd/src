@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.139 2013/07/08 09:43:18 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.140 2013/08/07 19:49:04 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -717,10 +717,6 @@ struct drm_device {
 	atomic_t		 obj_count;
 	u_int			 obj_name;
 	atomic_t		 obj_memory;
-	atomic_t		 pin_count;
-	atomic_t		 pin_memory;
-	atomic_t		 gtt_count;
-	atomic_t		 gtt_memory;
 	uint32_t		 gtt_total;
 	SPLAY_HEAD(drm_name_tree, drm_obj)	name_tree;
 	struct pool				objpl;
@@ -950,8 +946,6 @@ struct drm_obj *drm_gem_object_lookup(struct drm_device *,
 int	drm_gem_close_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_gem_flink_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_gem_open_ioctl(struct drm_device *, void *, struct drm_file *);
-int	drm_gem_load_uao(bus_dma_tag_t, bus_dmamap_t, struct uvm_object *,
-	    bus_size_t, int, bus_dma_segment_t **);
 
 static __inline void
 drm_gem_object_reference(struct drm_obj *obj)

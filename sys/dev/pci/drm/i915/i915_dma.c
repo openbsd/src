@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_dma.c,v 1.9 2013/08/07 00:04:27 jsg Exp $	*/
+/*	$OpenBSD: i915_dma.c,v 1.10 2013/08/07 19:49:05 kettenis Exp $	*/
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*
@@ -68,11 +68,16 @@ i915_kernel_lost_context(struct drm_device * dev)
 
 
 int
-i915_getparam(struct inteldrm_softc *dev_priv, void *data)
+i915_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	drm_i915_getparam_t	*param = data;
-	struct drm_device	*dev = (struct drm_device *)dev_priv->drmdev;
-	int			 value;
+	drm_i915_private_t *dev_priv = dev->dev_private;
+	drm_i915_getparam_t *param = data;
+	int value;
+
+	if (!dev_priv) {
+		DRM_ERROR("called with no initialization\n");
+		return -EINVAL;
+	}
 
 	switch (param->param) {
 	case I915_PARAM_CHIPSET_ID:
@@ -103,7 +108,7 @@ i915_getparam(struct inteldrm_softc *dev_priv, void *data)
 #ifdef notyet
 		value = 1;
 #else
-		return EINVAL;
+		return -EINVAL;
 #endif
 		break;
 	case I915_PARAM_HAS_COHERENT_RINGS:
@@ -131,28 +136,37 @@ i915_getparam(struct inteldrm_softc *dev_priv, void *data)
 		value = 1;
 		break;
 	default:
-		DRM_DEBUG("Unknown parameter %d\n", param->param);
-		return (EINVAL);
+		DRM_DEBUG_DRIVER("Unknown parameter %d\n",
+				 param->param);
+		return -EINVAL;
 	}
-	return (copyout(&value, param->value, sizeof(int)));
+
+	return -copyout(&value, param->value, sizeof(int));
 }
 
 int
-i915_setparam(struct inteldrm_softc *dev_priv, void *data)
+i915_setparam(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	drm_i915_setparam_t	*param = data;
+	drm_i915_private_t *dev_priv = dev->dev_private;
+	drm_i915_setparam_t *param = data;
+
+	if (!dev_priv) {
+		DRM_ERROR("called with no initialization\n");
+		return -EINVAL;
+	}
 
 	switch (param->param) {
 	case I915_SETPARAM_NUM_USED_FENCES:
 		if (param->value > dev_priv->num_fence_regs ||
 		    param->value < 0)
-			return EINVAL;
+			return -EINVAL;
 		/* Userspace can use first N regs */
 		dev_priv->fence_reg_start = param->value;
 		break;
 	default:
-		DRM_DEBUG("unknown parameter %d\n", param->param);
-		return (EINVAL);
+		DRM_DEBUG_DRIVER("unknown parameter %d\n",
+					param->param);
+		return -EINVAL;
 	}
 
 	return 0;

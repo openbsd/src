@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_tiling.c,v 1.5 2013/05/18 21:43:42 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_tiling.c,v 1.6 2013/08/07 19:49:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -519,7 +519,7 @@ i915_gem_object_do_bit_17_swizzle(struct drm_i915_gem_object *obj)
 	if (obj->bit_17 == NULL)
 		return;
 
-	segp = &obj->dma_segs[0];
+	segp = &obj->pages[0];
 	n = 0;
 	for (i = 0; i < page_count; i++) {
 		char new_bit_17 = (segp->ds_addr + n) >> 17;
@@ -565,7 +565,7 @@ i915_gem_object_save_bit_17_swizzle(struct drm_i915_gem_object *obj)
 		}
 	}
 
-	segp = &obj->dma_segs[0];
+	segp = &obj->pages[0];
 	n = 0;
 	for (i = 0; i < page_count; i++) {
 		if ((segp->ds_addr + n) & (1 << 17))

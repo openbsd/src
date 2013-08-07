@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.8 2013/08/07 00:04:28 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.9 2013/08/07 19:49:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -444,17 +444,17 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 	    args->batch_start_offset + args->batch_len < args->batch_len ||
 	    args->batch_start_offset + args->batch_len <
 	    args->batch_start_offset)
-		return (EINVAL);
+		return -EINVAL;
 
 	if (args->buffer_count < 1) {
 		DRM_ERROR("execbuf with %d buffers\n", args->buffer_count);
-		return (EINVAL);
+		return -EINVAL;
 	}
 
 	flags = 0;
 	if (args->flags & I915_EXEC_SECURE) {
 		if (!DRM_SUSER(curproc))
-			return (EPERM);
+			return -EPERM;
 
 		flags |= I915_DISPATCH_SECURE;
 	}
@@ -475,12 +475,12 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 	default:
 		printf("unknown ring %d\n",
 		    (int)(args->flags & I915_EXEC_RING_MASK));
-		return (EINVAL);
+		return -EINVAL;
 	}
 	if (!intel_ring_initialized(ring)) {
 		DRM_DEBUG("execbuf with invalid ring: %d\n",
 			  (int)(args->flags & I915_EXEC_RING_MASK));
-		return (EINVAL);
+		return -EINVAL;
 	}
 
 	mode = args->flags & I915_EXEC_CONSTANTS_MASK;
@@ -492,11 +492,11 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 		if (ring == &dev_priv->ring[RCS] &&
 		    mode != dev_priv->relative_constants_mode) {
 			if (INTEL_INFO(dev)->gen < 4)
-				return EINVAL;
+				return -EINVAL;
 
 			if (INTEL_INFO(dev)->gen > 5 &&
 			    mode == I915_EXEC_CONSTANTS_REL_SURFACE)
-				return EINVAL;
+				return -EINVAL;
 
 			/* The HW changed the meaning on this bit on gen6 */
 			if (INTEL_INFO(dev)->gen >= 6)
@@ -505,17 +505,17 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 		break;
 	default:
 		DRM_DEBUG("execbuf with unknown constants: %d\n", mode);
-		return EINVAL;
+		return -EINVAL;
 	}
 
 	/* Copy in the exec list from userland, check for overflow */
 	oflow = SIZE_MAX / args->buffer_count;
 	if (oflow < sizeof(*exec_list) || oflow < sizeof(*object_list))
-		return (EINVAL);
+		return -EINVAL;
 	exec_list = drm_alloc(sizeof(*exec_list) * args->buffer_count);
 	object_list = drm_alloc(sizeof(*object_list) * args->buffer_count);
 	if (exec_list == NULL || object_list == NULL) {
-		ret = ENOMEM;
+		ret = -ENOMEM;
 		goto pre_mutex_err;
 	}
 	ret = copyin((void *)(uintptr_t)args->buffers_ptr, exec_list,
@@ -535,12 +535,12 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 
 	/* XXX check these before we copyin... but we do need the lock */
 	if (dev_priv->mm.wedged) {
-		ret = EIO;
+		ret = -EIO;
 		goto unlock;
 	}
 
 	if (dev_priv->mm.suspended) {
-		ret = EBUSY;
+		ret = -EBUSY;
 		goto unlock;
 	}
 
@@ -552,13 +552,13 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 		if (obj == NULL) {
 			DRM_ERROR("Invalid object handle %d at index %d\n",
 				   exec_list[i].handle, i);
-			ret = ENOENT;
+			ret = -ENOENT;
 			goto err;
 		}
 		if (obj->do_flags & I915_IN_EXEC) {
 			DRM_ERROR("Object %p appears more than once in object_list\n",
 			    object_list[i]);
-			ret = EINVAL;
+			ret = -EINVAL;
 			goto err;
 		}
 		atomic_setbits_int(&obj->do_flags, I915_IN_EXEC);
@@ -589,7 +589,7 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 			break;
 
 		/* error other than GTT full, or we've already tried again */
-		if (ret != ENOSPC || pin_tries >= 1)
+		if (ret != -ENOSPC || pin_tries >= 1)
 			goto err;
 
 		/*
@@ -621,7 +621,7 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 	batch_obj_priv = to_intel_bo(batch_obj);
 	if (args->batch_start_offset + args->batch_len > batch_obj->size ||
 	    batch_obj->pending_write_domain) {
-		ret = EINVAL;
+		ret = -EINVAL;
 		goto err;
 	}
 	batch_obj->pending_read_domains |= I915_GEM_DOMAIN_COMMAND;

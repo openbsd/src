@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.108 2013/06/17 20:55:41 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.109 2013/08/07 19:49:04 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -1672,93 +1672,6 @@ drm_handle_unref(struct drm_obj *obj)
 		}
 	}
 	drm_unref(&obj->uobj);
-}
-
-/*
- * Helper function to load a uvm anonymous object into a dmamap, to be used
- * for binding to a translation-table style sg mechanism (e.g. agp, or intel
- * gtt).
- *
- * For now we ignore maxsegsz.
- */
-int
-drm_gem_load_uao(bus_dma_tag_t dmat, bus_dmamap_t map, struct uvm_object *uao,
-    bus_size_t size, int flags, bus_dma_segment_t **segp)
-{
-	bus_dma_segment_t	*segs;
-	struct vm_page		*pg;
-	struct pglist		 plist;
-	u_long			 npages = size >> PAGE_SHIFT, i = 0;
-	int			 ret;
-
-	TAILQ_INIT(&plist);
-
-	/*
-	 * This is really quite ugly, but nothing else would need
-	 * bus_dmamap_load_uao() yet.
-	 */
-	segs = malloc(npages * sizeof(*segs), M_DRM,
-	    M_WAITOK | M_CANFAIL | M_ZERO);
-	if (segs == NULL)
-		return (ENOMEM);
-
-	/* This may sleep, no choice in the matter */
-	if (uvm_objwire(uao, 0, size, &plist) != 0) {
-		ret = ENOMEM;
-		goto free;
-	}
-
-	TAILQ_FOREACH(pg, &plist, pageq) {
-		paddr_t pa = VM_PAGE_TO_PHYS(pg);
-
-		if (i > 0 && pa == (segs[i - 1].ds_addr +
-		    segs[i - 1].ds_len)) {
-			/* contiguous, yay */
-			segs[i - 1].ds_len += PAGE_SIZE;
-			continue;
-		}
-		segs[i].ds_addr = pa;
-		segs[i].ds_len = PAGE_SIZE;
-		if (i++ > npages)
-			break;
-	}
-	/* this should be impossible */
-	if (pg != TAILQ_END(&plist)) {
-		ret = EINVAL;
-		goto unwire;
-	}
-
-	if ((ret = bus_dmamap_load_raw(dmat, map, segs, i, size, flags)) != 0)
-		goto unwire;
-
-#if defined(__amd64__) || defined(__i386__)
-	/*
-	 * Create a mapping that wraps around once; the second half
-	 * maps to the same set of physical pages as the first half.
-	 * Used to implement fast vertical scrolling in inteldrm(4).
-	 *
-	 * XXX This is an ugly hack that wastes pages and abuses the
-	 * internals of the scatter gather DMA code.
-	 */
-	if (flags & BUS_DMA_GTT_WRAPAROUND) {
-		struct sg_page_map *spm = map->_dm_cookie;
-
-		for (i = spm->spm_pagecnt / 2; i < spm->spm_pagecnt; i++)
-			spm->spm_map[i].spe_pa =
-				spm->spm_map[i - spm->spm_pagecnt / 2].spe_pa;
-		agp_bus_dma_rebind(dmat, map, flags);
-	}
-#endif
-
-	*segp = segs;
-
-	return (0);
-
-unwire:
-	uvm_objunwire(uao, 0, size);
-free:
-	free(segs, M_DRM);
-	return (ret);
 }
 
 /**

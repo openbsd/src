@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.36 2013/08/07 00:04:28 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.37 2013/08/07 19:49:05 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1336,7 +1336,7 @@ inteldrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 
 	dev_priv->entries++;
 
-	error = inteldrm_doioctl(dev, cmd, data, file_priv);
+	error = -inteldrm_doioctl(dev, cmd, data, file_priv);
 
 	dev_priv->entries--;
 	return (error);
@@ -1346,12 +1346,10 @@ int
 inteldrm_doioctl(struct drm_device *dev, u_long cmd, caddr_t data,
     struct drm_file *file_priv)
 {
-	struct inteldrm_softc	*dev_priv = dev->dev_private;
-
 	if (file_priv->authenticated == 1) {
 		switch (cmd) {
 		case DRM_IOCTL_I915_GETPARAM:
-			return (i915_getparam(dev_priv, data));
+			return (i915_getparam(dev, data, file_priv));
 		case DRM_IOCTL_I915_GEM_EXECBUFFER2:
 			return (i915_gem_execbuffer2(dev, data, file_priv));
 		case DRM_IOCTL_I915_GEM_BUSY:
@@ -1404,7 +1402,7 @@ inteldrm_doioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 	if (file_priv->master == 1) {
 		switch (cmd) {
 		case DRM_IOCTL_I915_SETPARAM:
-			return (i915_setparam(dev_priv, data));
+			return (i915_setparam(dev, data, file_priv));
 		case DRM_IOCTL_I915_GEM_INIT:
 			return (i915_gem_init_ioctl(dev, data, file_priv));
 		case DRM_IOCTL_I915_GEM_ENTERVT:
@@ -1425,7 +1423,7 @@ inteldrm_doioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 			return (intel_sprite_set_colorkey(dev, data, file_priv));
 		}
 	}
-	return (EINVAL);
+	return -EINVAL;
 }
 
 void
@@ -1528,20 +1526,6 @@ i915_gem_chipset_flush(struct drm_device *dev)
 	}
 }
 
-void
-inteldrm_set_max_obj_size(struct inteldrm_softc *dev_priv)
-{
-	struct drm_device	*dev = (struct drm_device *)dev_priv->drmdev;
-
-	/*
-	 * Allow max obj size up to the size where ony 2 would fit the
-	 * aperture, but some slop exists due to alignment etc
-	 */
-	dev_priv->max_gem_obj_size = (dev->gtt_total -
-	    atomic_read(&dev->pin_memory)) * 3 / 4 / 2;
-
-}
-
 /**
  * Pin an object to the GTT and evaluate the relocations landing in it.
  */
@@ -1595,12 +1579,12 @@ i915_gem_object_pin_and_relocate(struct drm_obj *obj,
 		/* object must have come before us in the list */
 		if (target_obj == NULL) {
 			i915_gem_object_unpin(obj_priv);
-			return (ENOENT);
+			return -ENOENT;
 		}
 		if ((target_obj->do_flags & I915_IN_EXEC) == 0) {
 			printf("%s: object not already in execbuffer\n",
 			__func__);
-			ret = EBADF;
+			ret = -EBADF;
 			goto err;
 		}
 
@@ -1612,13 +1596,13 @@ i915_gem_object_pin_and_relocate(struct drm_obj *obj,
 		if (target_obj_priv->dmamap == 0) {
 			DRM_ERROR("No GTT space found for object %d\n",
 				  reloc->target_handle);
-			ret = EINVAL;
+			ret = -EINVAL;
 			goto err;
 		}
 
 		/* must be in one write domain and one only */
 		if (reloc->write_domain & (reloc->write_domain - 1)) {
-			ret = EINVAL;
+			ret = -EINVAL;
 			goto err;
 		}
 		if (reloc->read_domains & I915_GEM_DOMAIN_CPU ||
@@ -1628,7 +1612,7 @@ i915_gem_object_pin_and_relocate(struct drm_obj *obj,
 			    "read %08x write %08x", obj,
 			    reloc->target_handle, (int)reloc->offset,
 			    reloc->read_domains, reloc->write_domain);
-			ret = EINVAL;
+			ret = -EINVAL;
 			goto err;
 		}
 
@@ -1641,7 +1625,7 @@ i915_gem_object_pin_and_relocate(struct drm_obj *obj,
 				  (int) reloc->offset,
 				  reloc->write_domain,
 				  target_obj->pending_write_domain);
-			ret = EINVAL;
+			ret = -EINVAL;
 			goto err;
 		}
 
@@ -1654,7 +1638,7 @@ i915_gem_object_pin_and_relocate(struct drm_obj *obj,
 				  "obj %p target %d offset %d size %d.\n",
 				  obj, reloc->target_handle,
 				  (int) reloc->offset, (int) obj->size);
-			ret = EINVAL;
+			ret = -EINVAL;
 			goto err;
 		}
 		if (reloc->offset & 3) {
@@ -1662,7 +1646,7 @@ i915_gem_object_pin_and_relocate(struct drm_obj *obj,
 				  "obj %p target %d offset %d.\n",
 				  obj, reloc->target_handle,
 				  (int) reloc->offset);
-			ret = EINVAL;
+			ret = -EINVAL;
 			goto err;
 		}
 
@@ -1678,7 +1662,7 @@ i915_gem_object_pin_and_relocate(struct drm_obj *obj,
 		}
 
 		ret = i915_gem_object_set_to_gtt_domain(obj_priv, true);
-		if (ret != 0)
+		if (ret)
 			goto err;
 
 		if ((ret = agp_map_subregion(dev_priv->agph,
@@ -1702,7 +1686,7 @@ err:
 	/* we always jump to here mid-loop */
 	drm_gem_object_unreference(target_obj);
 	i915_gem_object_unpin(obj_priv);
-	return (ret);
+	return ret;
 }
 
 int
@@ -1771,10 +1755,12 @@ i915_gem_put_relocs_to_user(struct drm_i915_gem_exec_object2 *exec_list,
 void
 inteldrm_timeout(void *arg)
 {
-	struct inteldrm_softc	*dev_priv = arg;
+	struct inteldrm_softc *dev_priv = arg;
+	int err;
 
-	if (workq_add_task(dev_priv->workq, 0, i915_gem_retire_work_handler,
-	    dev_priv, NULL) == ENOMEM)
+	err = workq_add_task(dev_priv->workq, 0, i915_gem_retire_work_handler,
+	    dev_priv, NULL);
+	if (err)
 		DRM_ERROR("failed to run retire handler\n");
 }
 

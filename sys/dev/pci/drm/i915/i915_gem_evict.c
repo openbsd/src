@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_evict.c,v 1.3 2013/04/17 20:04:04 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_evict.c,v 1.4 2013/08/07 19:49:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -67,6 +67,8 @@ i915_gem_find_inactive_object(struct inteldrm_softc *dev_priv,
 	 */
 	list_for_each_entry(obj_priv, &dev_priv->mm.inactive_list, mm_list) {
 		obj = &obj_priv->base;
+		if (obj_priv->pin_count)
+			continue;
 		if (obj->size >= min_size) {
 			if ((!obj_priv->dirty ||
 			    i915_gem_object_is_purgeable(obj_priv)) &&
@@ -92,7 +94,7 @@ i915_gem_find_inactive_object(struct inteldrm_softc *dev_priv,
 			best = NULL;
 		}
 	}
-	return (best);
+	return best;
 }
 
 int
@@ -126,7 +128,7 @@ i915_gem_evict_something(struct inteldrm_softc *dev_priv, size_t min_size)
 			/* Wait on the rendering and unbind the buffer. */
 			ret = i915_gem_object_unbind(obj_priv);
 			drm_unhold_and_unref(obj);
-			return (ret);
+			return ret;
 		}
 
 		/* If we didn't get anything, but the ring is still processing
@@ -143,7 +145,7 @@ i915_gem_evict_something(struct inteldrm_softc *dev_priv, size_t min_size)
 
 				ret = i915_wait_seqno(request->ring, seqno);
 				if (ret)
-					return (ret);
+					return ret;
 
 				found = 1;
 				break;
@@ -158,9 +160,9 @@ i915_gem_evict_something(struct inteldrm_softc *dev_priv, size_t min_size)
 		 * everything and start again. (This should be rare.)
 		 */
 		if (!list_empty(&dev_priv->mm.inactive_list))
-			return (i915_gem_evict_inactive(dev_priv));
+			return i915_gem_evict_inactive(dev_priv);
 		else
-			return (i915_gem_evict_everything(dev));
+			return i915_gem_evict_everything(dev);
 	}
 	/* NOTREACHED */
 }
@@ -173,7 +175,7 @@ i915_gem_evict_everything(struct drm_device *dev)
 
 	if (list_empty(&dev_priv->mm.inactive_list) &&
 	    list_empty(&dev_priv->mm.active_list))
-		return (ENOSPC);
+		return -ENOSPC;
 
 	/* The gpu_idle will flush everything in the write domain to the
 	 * active list. Then we must move everything off the active list
@@ -194,7 +196,7 @@ i915_gem_evict_everything(struct drm_device *dev)
 	KASSERT(list_empty(&dev_priv->mm.inactive_list));
 	KASSERT(list_empty(&dev_priv->mm.active_list));
 
-	return (0);
+	return 0;
 }
 
 /* Clear out the inactive list and unbind everything in it. */
@@ -207,7 +209,7 @@ i915_gem_evict_inactive(struct inteldrm_softc *dev_priv)
 	list_for_each_entry_safe(obj_priv, next,
 				 &dev_priv->mm.inactive_list, mm_list) {
 		if (obj_priv->pin_count != 0) {
-			ret = EINVAL;
+			ret = -EINVAL;
 			DRM_ERROR("Pinned object in unbind list\n");
 			break;
 		}
@@ -222,5 +224,5 @@ i915_gem_evict_inactive(struct inteldrm_softc *dev_priv)
 			break;
 	}
 
-	return (ret);
+	return ret;
 }

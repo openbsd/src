@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.25 2013/08/07 00:04:28 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.26 2013/08/07 19:49:06 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -560,7 +560,6 @@ struct inteldrm_softc {
 	}			 ifp;
 	struct workq		*workq;
 	struct vm_page		*pgs;
-	size_t			 max_gem_obj_size; /* XXX */
 
 	/* Protects user_irq_refcount and irq_mask reg */
 	struct mutex		 irq_lock;
@@ -739,6 +738,9 @@ struct inteldrm_softc {
 
 		/* accounting, useful for userland debugging */
 		size_t gtt_total;
+		size_t mappable_gtt_total;
+		size_t object_memory;
+		u32 object_count;
 	} mm;
 
 	/* for hangcheck */
@@ -895,7 +897,6 @@ struct drm_i915_gem_object {
 	struct list_head			 exec_list;
 	/* GTT binding. */
 	bus_dmamap_t				 dmamap;
-	bus_dma_segment_t			*dma_segs;
 	/* Current offset of the object in GTT space. */
 	bus_addr_t				 gtt_offset;
 	struct intel_ring_buffer		*ring;
@@ -904,10 +905,6 @@ struct drm_i915_gem_object {
 	int					 dma_flags;
 	/* Fence register for this object. needed for tiling. */
 	int					 fence_reg;
-	/** refcount for times pinned this object in GTT space */
-	int					 pin_count;
-	/* number of times pinned by pin ioctl. */
-	u_int					 user_pin_count;
 
 	/** Breadcrumb of last rendering to the buffer. */
 	u_int32_t				 last_read_seqno;
@@ -945,6 +942,18 @@ struct drm_i915_gem_object {
 	 */
 	unsigned int fence_dirty:1;
 
+	/** How many users have pinned this object in GTT space. The following
+	 * users can each hold at most one reference: pwrite/pread, pin_ioctl
+	 * (via user_pin_count), execbuffer (objects are not allowed multiple
+	 * times for the same batchbuffer), and the framebuffer code. When
+	 * switching/pageflipping, the framebuffer code has at most two buffers
+	 * pinned per crtc.
+	 *
+	 * In the worst case this is 1 + 1 + 1 + 2*2 = 7. That would fit into 3
+	 * bits with absolutely no headroom. So use 4 bits. */
+	unsigned int pin_count:4;
+#define DRM_I915_GEM_OBJECT_MAX_PIN_COUNT 0xf
+
 	/**
 	 * Is the object at the current location in the gtt mappable and
 	 * fenceable? Used to avoid costly recalculations.
@@ -967,11 +976,18 @@ struct drm_i915_gem_object {
 
 	unsigned int cache_level:2;
 
+	bus_dma_segment_t *pages;
+	int pages_pin_count;
+
 	/**
 	 * Used for performing relocations during execbuffer insertion.
 	 */
 	unsigned long exec_handle;
 	struct drm_i915_gem_exec_object2 *exec_entry;
+
+	/** User space pin count and filp owning the pin */
+	uint32_t user_pin_count;
+	struct drm_file *pin_filp;
 
 	/** for phy allocated objects */
 	struct drm_i915_gem_phys_object *phys_obj;
@@ -1186,14 +1202,13 @@ int	intel_setup_mchbar(struct inteldrm_softc *,
 	    struct pci_attach_args *);
 void	intel_teardown_mchbar(struct inteldrm_softc *,
 	    struct pci_attach_args *, int);
-int	i915_getparam(struct inteldrm_softc *dev_priv, void *data);
-int	i915_setparam(struct inteldrm_softc *dev_priv, void *data);
+int	i915_getparam(struct drm_device *, void *, struct drm_file *);
+int	i915_setparam(struct drm_device *, void *, struct drm_file *);
 void	i915_kernel_lost_context(struct drm_device *);
 int	i915_driver_open(struct drm_device *, struct drm_file *);
 void	i915_driver_close(struct drm_device *, struct drm_file *);
 
 /* i915_drv.c */
-void	inteldrm_set_max_obj_size(struct inteldrm_softc *);
 void	inteldrm_purge_obj(struct drm_obj *);
 void	i915_gem_chipset_flush(struct drm_device *);
 int	intel_gpu_reset(struct drm_device *);
@@ -1276,6 +1291,19 @@ i915_gem_get_unfenced_gtt_alignment(struct drm_device *dev,
 
 int i915_gem_object_sync(struct drm_i915_gem_object *,
     struct intel_ring_buffer *);
+
+int i915_gem_object_get_pages(struct drm_i915_gem_object *obj);
+
+static inline void i915_gem_object_pin_pages(struct drm_i915_gem_object *obj)
+{
+	BUG_ON(obj->pages == NULL);
+	obj->pages_pin_count++;
+}
+static inline void i915_gem_object_unpin_pages(struct drm_i915_gem_object *obj)
+{
+	BUG_ON(obj->pages_pin_count == 0);
+	obj->pages_pin_count--;
+}
 
 int i915_mutex_lock_interruptible(struct drm_device *dev);
 
