@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.168 2013/06/01 14:06:20 naddy Exp $
+#	$OpenBSD: Makefile,v 1.169 2013/08/07 22:07:33 dlg Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ SUBDIR=	ac accton acpidump adduser amd apm apmd arp \
 	authpf bgpctl bgpd bind chroot config cron crunchgen dev_mkdb \
 	dhcpd dhcrelay dvmrpctl dvmrpd edquota eeprom fdformat \
 	ftp-proxy fw_update gpioctl hostapd hotplugd httpd ifstated ikectl \
-	inetd iostat iscsictl iscsid kgmon kvm_mkdb \
+	identd inetd iostat iscsictl iscsid kgmon kvm_mkdb \
 	ldapd ldapctl ldomctl ldomd ldpd ldpctl lpr mailwrapper map-mbone \
 	memconfig mksuncd mkuboot mopd mrinfo mrouted \
 	mtrace mtree ndp netgroup_mkdb \

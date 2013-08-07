@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# $OpenBSD: identd,v 1.4 2013/03/24 07:43:32 ajacoutot Exp $
+# $OpenBSD: identd,v 1.5 2013/08/07 22:07:35 dlg Exp $
 
-daemon="/usr/libexec/identd -b"
-daemon_flags="-el"
+daemon="/usr/sbin/identd"
+daemon_flags=""
 
 . /etc/rc.d/rc.subr
 
