@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.200 2013/06/20 12:03:40 mpi Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.201 2013/08/07 05:39:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -916,7 +916,7 @@ pfsync_in_upd(caddr_t buf, int len, int count, int flags)
 		st = pf_find_state_byid(&id_key);
 		if (st == NULL) {
 			/* insert the update */
-			if (pfsync_state_import(sp, 0))
+			if (pfsync_state_import(sp, flags))
 				pfsyncstats.pfsyncs_badstate++;
 			continue;
 		}
