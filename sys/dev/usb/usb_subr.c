@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.90 2013/08/08 09:37:02 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.91 2013/08/08 09:44:22 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -70,6 +70,9 @@ int		usbd_submatch(struct device *, void *, void *);
 void		usbd_free_iface_data(struct usbd_device *, int);
 usbd_status	usbd_probe_and_attach(struct device *,
 		    struct usbd_device *, int, int);
+
+int		usbd_printBCD(char *cp, size_t len, int bcd);
+void		usb_free_device(struct usbd_device *, struct usbd_port *);
 
 #ifdef USBVERBOSE
 #include <dev/usb/usbdevs_data.h>
