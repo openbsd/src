@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2011/06/23 22:46:12 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.6 2013/08/08 18:11:36 brad Exp $
 
 # NOTE: The mkhybrid distrib also makes an "mkisofs" which is the same binary
 # linked. When we know mkhybrid makes distrib CDs ok we should modify this
@@ -20,10 +20,6 @@ CFLAGS+=-DSYSTEM_ID_DEFAULT=\"OpenBSD\" -DAPPLE_HYB -DVANILLA_AUTOCONF \
 	-I${.CURDIR}/../src -I${.CURDIR}/../src/include \
 	-I${.CURDIR}/../src/libhfs_iso \
 	-I${.CURDIR}/../src/libfile
-
-# XXX: alpha gcc bug
-write.o: write.c
-	${CC} ${CFLAGS} -O0 -c ${.CURDIR}/../src/write.c
 
 mkhybrid.8: mkhybrid.8tbl
 	cp ${.ALLSRC} ${.TARGET}
