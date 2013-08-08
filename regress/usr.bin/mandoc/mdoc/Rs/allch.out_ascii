@@ -6,15 +6,15 @@ NNAAMMEE
 DDEESSCCRRIIPPTTIIOONN
      reference on the same line: author name, "title of article", _b_o_o_k _t_i_t_l_e,
      _i_s_s_u_e_r _n_a_m_e, _j_o_u_r_n_a_l _n_a_m_e, report name, number of journal, volume number,
-     uniform resource locator, page number, institutional author, date of
-     publication, optional information.
+     uniform resource locator, page number, institutional author, city name,
+     date of publication, optional information.
 
 SSEEEE AALLSSOO
      reference after a blank line:
 
      author name, "title of article", _b_o_o_k _t_i_t_l_e, _i_s_s_u_e_r _n_a_m_e, _j_o_u_r_n_a_l _n_a_m_e,
      report name, number of journal, volume number, uniform resource locator,
-     page number, institutional author, date of publication, optional
-     information.
+     page number, institutional author, city name, date of publication,
+     optional information.
 
-OpenBSD                          July 12, 2012                         OpenBSD
+OpenBSD                          July 25, 2013                         OpenBSD

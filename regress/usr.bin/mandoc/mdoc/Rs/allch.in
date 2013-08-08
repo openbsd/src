@@ -1,4 +1,4 @@
-.Dd July 12, 2012
+.Dd July 25, 2013
 .Dt RS-ALLCH 1
 .Os OpenBSD
 .Sh NAME
@@ -18,10 +18,9 @@ reference on the same line:
 .%U uniform resource locator
 .%P page number
 .%Q institutional author
+.%C city name
 .%D date of publication
 .%O optional information
-.\" not implemented yet in groff:
-.\" .%C city name
 .Re
 .Sh SEE ALSO
 reference after a blank line:
@@ -37,8 +36,7 @@ reference after a blank line:
 .%U uniform resource locator
 .%P page number
 .%Q institutional author
+.%C city name
 .%D date of publication
 .%O optional information
-.\" not implemented yet in groff:
-.\" .%C city name
 .Re
