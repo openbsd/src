@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.68 2013/08/07 07:29:19 mpi Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.69 2013/08/08 17:54:11 kettenis Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -245,6 +245,7 @@ struct pci_matchid {
 int pci_matchbyid(struct pci_attach_args *, const struct pci_matchid *, int);
 int pci_get_powerstate(pci_chipset_tag_t, pcitag_t);
 int pci_set_powerstate(pci_chipset_tag_t, pcitag_t, int);
+void pci_disable_legacy_vga(struct device *);
 
 /*
  * Vital Product Data (PCI 2.2)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.98 2013/02/09 20:43:33 miod Exp $	*/
+/*	$OpenBSD: pci.c,v 1.99 2013/08/08 17:54:11 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -57,6 +57,7 @@ void pci_resume(struct pci_softc *);
 #define NMAPREG			((PCI_MAPREG_END - PCI_MAPREG_START) / \
 				    sizeof(pcireg_t))
 struct pci_dev {
+	struct device *pd_dev;
 	LIST_ENTRY(pci_dev) pd_next;
 	pcitag_t pd_tag;        /* pci register tag */
 	pcireg_t pd_csr;
@@ -69,6 +70,7 @@ struct pci_dev {
 	pcireg_t pd_msi_mau32;
 	pcireg_t pd_msi_md;
 	int pd_pmcsr_state;
+	int pd_vga_decode;
 };
 
 #ifdef APERTURE
@@ -88,7 +90,6 @@ int	pci_ndomains;
 struct proc *pci_vga_proc;
 struct pci_softc *pci_vga_pci;
 pcitag_t pci_vga_tag;
-int	pci_vga_count;
 
 int	pci_dopm;
 
@@ -102,7 +103,6 @@ int pci_enumerate_bus(struct pci_softc *,
     int (*)(struct pci_attach_args *), struct pci_attach_args *);
 #endif
 int	pci_reserve_resources(struct pci_attach_args *);
-int	pci_count_vga(struct pci_attach_args *);
 int	pci_primary_vga(struct pci_attach_args *);
 
 /*
@@ -191,9 +191,10 @@ pciattach(struct device *parent, struct device *self, void *aux)
 
 	pci_enumerate_bus(sc, pci_reserve_resources, NULL);
 
-	pci_enumerate_bus(sc, pci_count_vga, NULL);
+	/* Find the VGA device that's currently active. */
 	if (pci_enumerate_bus(sc, pci_primary_vga, NULL))
 		pci_vga_pci = sc;
+
 	pci_enumerate_bus(sc, NULL, NULL);
 }
 
@@ -401,7 +402,6 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	pci_chipset_tag_t pc = sc->sc_pc;
 	struct pci_attach_args pa;
 	struct pci_dev *pd;
-	struct device *dev;
 	pcireg_t id, class, intr, bhlcr, cap;
 	int pin, bus, device, function;
 	int off, ret = 0;
@@ -549,9 +549,16 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 			pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 		splx(s);
 
-		if ((dev = config_found_sm(&sc->sc_dev, &pa, pciprint,
-		    pcisubmatch)))
-			pci_dev_postattach(dev, &pa);
+		if ((PCI_CLASS(class) == PCI_CLASS_DISPLAY &&
+		    PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_VGA) ||
+		    (PCI_CLASS(class) == PCI_CLASS_PREHISTORIC &&
+		    PCI_SUBCLASS(class) == PCI_SUBCLASS_PREHISTORIC_VGA))
+			pd->pd_vga_decode = 1;
+
+		pd->pd_dev = config_found_sm(&sc->sc_dev, &pa, pciprint,
+		    pcisubmatch);
+		if (pd->pd_dev)
+			pci_dev_postattach(pd->pd_dev, &pa);
 	}
 
 	return (ret);
@@ -1016,6 +1023,25 @@ pci_matchbyid(struct pci_attach_args *pa, const struct pci_matchid *ids,
 	return (0);
 }
 
+void
+pci_disable_legacy_vga(struct device *dev)
+{
+	struct pci_softc *pci;
+	struct pci_dev *pd;
+
+	/* XXX Until we attach the drm drivers directly to pci. */
+	while (dev->dv_parent->dv_cfdata->cf_driver != &pci_cd)
+		dev = dev->dv_parent;
+
+	pci = (struct pci_softc *)dev->dv_parent;
+	LIST_FOREACH(pd, &pci->sc_devs, pd_next) {
+		if (pd->pd_dev == dev) {
+			pd->pd_vga_decode = 0;
+			break;
+		}
+	}
+}
+
 #ifdef USER_PCICONF
 /*
  * This is the user interface to PCI configuration space.
@@ -1259,20 +1285,32 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case PCIOCGETVGA:
 	{
 		struct pci_vga *vga = (struct pci_vga *)data;
-		int bus, device, function;
+		struct pci_dev *pd;
+		int bus, dev, func;
 
-		pci_decompose_tag(pci_vga_pci->sc_pc, pci_vga_tag,
-		    &bus, &device, &function);
+		vga->pv_decode = 0;
+		LIST_FOREACH(pd, &pci->sc_devs, pd_next) {
+			pci_decompose_tag(pc, pd->pd_tag, NULL, &dev, &func);
+			if (dev == sel->pc_dev && func == sel->pc_func) {
+				if (pd->pd_vga_decode)
+					vga->pv_decode = PCI_VGA_IO_ENABLE |
+					    PCI_VGA_MEM_ENABLE;
+				break;
+			}
+		}
+
+		pci_decompose_tag(pci_vga_pci->sc_pc,
+		    pci_vga_tag, &bus, &dev, &func);
 		vga->pv_sel.pc_bus = bus;
-		vga->pv_sel.pc_dev = device;
-		vga->pv_sel.pc_func = function;
+		vga->pv_sel.pc_dev = dev;
+		vga->pv_sel.pc_func = func;
 		error = 0;
 		break;
 	}
 	case PCIOCSETVGA:
 	{
 		struct pci_vga *vga = (struct pci_vga *)data;
-		int bus, device, function;
+		int bus, dev, func;
 
 		switch (vga->pv_lock) {
 		case PCI_VGA_UNLOCK:
@@ -1301,11 +1339,10 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 		pci_vga_proc = p;
 
-		pci_decompose_tag(pci_vga_pci->sc_pc, pci_vga_tag,
-		    &bus, &device, &function);
-		if (bus != vga->pv_sel.pc_bus ||
-		    device != vga->pv_sel.pc_dev ||
-		    function != vga->pv_sel.pc_func) {
+		pci_decompose_tag(pci_vga_pci->sc_pc,
+		    pci_vga_tag, &bus, &dev, &func);
+		if (bus != vga->pv_sel.pc_bus || dev != vga->pv_sel.pc_dev ||
+		    func != vga->pv_sel.pc_func) {
 			pci_disable_vga(pci_vga_pci->sc_pc, pci_vga_tag);
 			if (pci != pci_vga_pci) {
 				pci_unroute_vga(pci_vga_pci);
@@ -1380,24 +1417,6 @@ pci_unroute_vga(struct pci_softc *sc)
 	pci_unroute_vga((struct pci_softc *)sc->sc_dev.dv_parent->dv_parent);
 }
 #endif /* USER_PCICONF */
-
-int
-pci_count_vga(struct pci_attach_args *pa)
-{
-	/* XXX For now, only handle the first PCI domain. */
-	if (pa->pa_domain != 0)
-		return (0);
-
-	if ((PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY ||
-	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_VGA) &&
-	    (PCI_CLASS(pa->pa_class) != PCI_CLASS_PREHISTORIC ||
-	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_PREHISTORIC_VGA))
-		return (0);
-
-	pci_vga_count++;
-
-	return (0);
-}
 
 int
 pci_primary_vga(struct pci_attach_args *pa)
