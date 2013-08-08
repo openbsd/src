@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.46 2011/07/06 23:44:20 sthen Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.47 2013/08/08 14:29:29 mpi Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ tcp_timer_rexmt(void *arg)
 	if ((tp->t_flags & TF_PMTUD_PEND) && tp->t_inpcb &&
 	    SEQ_GEQ(tp->t_pmtud_th_seq, tp->snd_una) &&
 	    SEQ_LT(tp->t_pmtud_th_seq, (int)(tp->snd_una + tp->t_maxseg))) {
-		extern struct sockaddr_in icmpsrc;
+		struct sockaddr_in sin;
 		struct icmp icmp;
 
 		tp->t_flags &= ~TF_PMTUD_PEND;
@@ -213,14 +213,18 @@ tcp_timer_rexmt(void *arg)
 		icmp.icmp_nextmtu = tp->t_pmtud_nextmtu;
 		icmp.icmp_ip.ip_len = tp->t_pmtud_ip_len;
 		icmp.icmp_ip.ip_hl = tp->t_pmtud_ip_hl;
-		icmpsrc.sin_addr = tp->t_inpcb->inp_faddr;
+		icmp.icmp_ip.ip_dst = tp->t_inpcb->inp_faddr;
 		icmp_mtudisc(&icmp, tp->t_inpcb->inp_rtableid);
 
 		/*
 		 * Notify all connections to the same peer about
 		 * new mss and trigger retransmit.
 		 */
-		in_pcbnotifyall(&tcbtable, sintosa(&icmpsrc),
+		bzero(&sin, sizeof(sin));
+		sin.sin_len = sizeof(sin);
+		sin.sin_family = AF_INET;
+		sin.sin_addr = tp->t_inpcb->inp_faddr;
+		in_pcbnotifyall(&tcbtable, sintosa(&sin),
 		    tp->t_inpcb->inp_rtableid, EMSGSIZE, tcp_mtudisc);
 		splx(s);
 		return;
@@ -258,7 +262,6 @@ tcp_timer_rexmt(void *arg)
 	    tp->t_rxtshift > TCP_MAXRXTSHIFT / 6) {
 		struct inpcb *inp = tp->t_inpcb;
 		struct rtentry *rt = NULL;
-		struct sockaddr_in sin;
 
 		/* No data to send means path mtu is not a problem */
 		if (!inp->inp_socket->so_snd.sb_cc)
@@ -282,11 +285,7 @@ tcp_timer_rexmt(void *arg)
 			break;
 #endif
 		case PF_INET:
-			bzero(&sin, sizeof(struct sockaddr_in));
-			sin.sin_family = AF_INET;
-			sin.sin_len = sizeof(struct sockaddr_in);
-			sin.sin_addr = inp->inp_faddr;
-			rt = icmp_mtudisc_clone(sintosa(&sin), 
+			rt = icmp_mtudisc_clone(inp->inp_faddr,
 			    inp->inp_rtableid);
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.102 2013/06/17 02:31:37 lteo Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.103 2013/08/08 14:29:28 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -907,13 +907,21 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 
 struct rtentry *
-icmp_mtudisc_clone(struct sockaddr *dst, u_int rtableid)
+icmp_mtudisc_clone(struct in_addr dst, u_int rtableid)
 {
+	struct sockaddr_in *sin;
+	struct route ro;
 	struct rtentry *rt;
 	int error;
 
-	rt = rtalloc1(dst, RT_REPORT, rtableid);
-	if (rt == 0)
+	bzero(&ro, sizeof(ro));
+	sin = satosin(&ro.ro_dst);
+	sin->sin_family = AF_INET;
+	sin->sin_len = sizeof(*sin);
+	sin->sin_addr = dst;
+
+	rt = rtalloc1(&ro.ro_dst, RT_REPORT, rtableid);
+	if (rt == NULL)
 		return (NULL);
 
 	/* Check if the route is actually usable */
@@ -928,7 +936,7 @@ icmp_mtudisc_clone(struct sockaddr *dst, u_int rtableid)
 		struct rt_addrinfo info;
 
 		bzero(&info, sizeof(info));
-		info.rti_info[RTAX_DST] = dst;
+		info.rti_info[RTAX_DST] = sintosa(sin);
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_flags = RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC;
 
@@ -955,7 +963,6 @@ void
 icmp_mtudisc(struct icmp *icp, u_int rtableid)
 {
 	struct rtentry *rt;
-	struct sockaddr *dst = sintosa(&icmpsrc);
 	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
 
 	/* Table of common MTUs: */
@@ -965,7 +972,7 @@ icmp_mtudisc(struct icmp *icp, u_int rtableid)
 		4352, 2002, 1492, 1006, 508, 296, 68, 0
 	};
 
-	rt = icmp_mtudisc_clone(dst, rtableid);
+	rt = icmp_mtudisc_clone(icp->icmp_ip.ip_dst, rtableid);
 	if (rt == 0)
 		return;
 

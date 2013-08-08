@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.245 2013/08/08 07:28:08 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.246 2013/08/08 14:29:29 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -615,10 +615,7 @@ sendit:
 			if (transportmode)
 				rt = NULL;
 			else if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0) {
-				struct sockaddr_in dst = {
-					sizeof(struct sockaddr_in), AF_INET};
-				dst.sin_addr = ip->ip_dst;
-				rt = icmp_mtudisc_clone((struct sockaddr *)&dst,
+				rt = icmp_mtudisc_clone(ip->ip_dst,
 				    m->m_pkthdr.rdomain);
 				rt_mtucloned = 1;
 			}
