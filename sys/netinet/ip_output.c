@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.244 2013/07/31 15:41:52 mikeb Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.245 2013/08/08 07:28:08 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -464,13 +464,9 @@ reroute:
 		 * of outgoing interface.
 		 */
 		if (ip->ip_src.s_addr == INADDR_ANY) {
-			struct in_ifaddr *ia;
-
-			TAILQ_FOREACH(ia, &in_ifaddr, ia_list)
-				if (ia->ia_ifp == ifp) {
-					ip->ip_src = ia->ia_addr.sin_addr;
-					break;
-				}
+			IFP_TO_IA(ifp, ia);
+			if (ia != NULL)
+				ip->ip_src = ia->ia_addr.sin_addr;
 		}
 
 		IN_LOOKUP_MULTI(ip->ip_dst, ifp, inm);
