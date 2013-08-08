@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.104 2013/08/05 07:01:45 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.105 2013/08/08 07:08:34 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: August 5 2013 $
+.Dd $Mdocdate: August 8 2013 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -55,48 +55,6 @@ For example:
 lan_addr = "192.168.0.1"
 listen on $lan_addr
 listen on $lan_addr tls auth
-.Ed
-.Pp
-Some configuration directives support expansion of their parameters at runtime.
-Such directives (for example
-.Ar deliver to maildir ,
-.Ar deliver to mda )
-may use format specifiers which will be expanded before delivery or
-relaying.
-The following formats are currently supported:
-.Bd -literal -offset indent
-%{sender}	     sender email address
-%{sender.user}	     user part of the sender email address
-%{sender.domain}     domain part of the sender email address
-%{rcpt}              recipient email address
-%{rcpt.user}	     user part of the recipient email address
-%{rcpt.domain}	     domain part of the recipient email address
-%{dest}              recipient email address after expansion
-%{dest.user}	     user part after expansion
-%{dest.domain}	     domain part after expansion
-%{user.username}     local user
-%{user.directory}    home directory of the local user
-.Ed
-.Pp
-Expansion formats also support partial expansion using the optional
-bracket notations with substring offset.
-For example, with recipient domain "example.org":
-.Bd -literal -offset indent
-%{rcpt.domain[0]}	expands to "e"
-%{rcpt.domain[1]}	expands to "x"
-%{rcpt.domain[8:]}	expands to "org"
-%{rcpt.domain[-3:]}	expands to "org"
-%{rcpt.domain[0:6]}	expands to "example"
-%{rcpt.domain[0:-4]}	expands to "example"
-.Ed
-.Pp
-In addition, modifiers may be applied to the token.
-For example, with recipient "User+Tag@Example.org":
-.Bd -literal -offset indent
-%{rcpt:lowercase}	expands to "user+tag@example.org"
-%{rcpt:uppercase}	expands to "USER+TAG@EXAMPLE.ORG"
-%{rcpt:strip}		expands to "User@Example.org"
-%{rcpt:lowercase|strip}	expands to "user@example.org"
 .Ed
 .Pp
 Additional configuration files can be included with the
@@ -655,6 +613,48 @@ many mappings as a list of comma separated
 .Ar key Ns = Ns Ar value
 descriptions.
 .El
+.Pp
+Some configuration directives support expansion of their parameters at runtime.
+Such directives (for example
+.Ar deliver to maildir ,
+.Ar deliver to mda )
+may use format specifiers which will be expanded before delivery or
+relaying.
+The following formats are currently supported:
+.Bd -literal -offset indent
+%{sender}	     sender email address
+%{sender.user}	     user part of the sender email address
+%{sender.domain}     domain part of the sender email address
+%{rcpt}              recipient email address
+%{rcpt.user}	     user part of the recipient email address
+%{rcpt.domain}	     domain part of the recipient email address
+%{dest}              recipient email address after expansion
+%{dest.user}	     user part after expansion
+%{dest.domain}	     domain part after expansion
+%{user.username}     local user
+%{user.directory}    home directory of the local user
+.Ed
+.Pp
+Expansion formats also support partial expansion using the optional
+bracket notations with substring offset.
+For example, with recipient domain "example.org":
+.Bd -literal -offset indent
+%{rcpt.domain[0]}	expands to "e"
+%{rcpt.domain[1]}	expands to "x"
+%{rcpt.domain[8:]}	expands to "org"
+%{rcpt.domain[-3:]}	expands to "org"
+%{rcpt.domain[0:6]}	expands to "example"
+%{rcpt.domain[0:-4]}	expands to "example"
+.Ed
+.Pp
+In addition, modifiers may be applied to the token.
+For example, with recipient "User+Tag@Example.org":
+.Bd -literal -offset indent
+%{rcpt:lowercase}	expands to "user+tag@example.org"
+%{rcpt:uppercase}	expands to "USER+TAG@EXAMPLE.ORG"
+%{rcpt:strip}		expands to "User@Example.org"
+%{rcpt:lowercase|strip}	expands to "user@example.org"
+.Ed
 .Sh FILES
 .Bl -tag -width "/etc/mail/smtpd.confXXX"
 .It Pa /etc/mail/smtpd.conf
