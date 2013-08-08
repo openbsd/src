@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.182 2013/07/11 01:24:12 jsg Exp $
+#	$OpenBSD: Makefile,v 1.183 2013/08/08 06:41:06 jmc Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -8,8 +8,8 @@ MAN=	altq.9 aml_evalnode.9 atomic.9 audio.9 autoconf.9 bio_register.9 \
 	buffercache.9 bus_dma.9 bus_space.9 copy.9 crypto.9 delay.9 \
 	disk.9 disklabel.9 dma_alloc.9 dohooks.9 dopowerhooks.9 \
 	domountroothooks.9 doshutdownhooks.9 dostartuphooks.9 \
-	evcount.9 file.9 fork1.9 \
-	fusebuf.9 extent.9 getdevvp.9 getnewvnode.9 hash.9 hashinit.9 \
+	evcount.9 extent.9 fb_setup.9 file.9 fork1.9 \
+	getdevvp.9 getnewvnode.9 hash.9 hashinit.9 \
 	hardclock.9 hook_establish.9 hz.9 hzto.9 idgen32.9 \
 	ieee80211.9 ieee80211_crypto.9 ieee80211_input.9 ieee80211_ioctl.9 \
 	ieee80211_node.9 ieee80211_output.9 ieee80211_proto.9 \
@@ -132,6 +132,7 @@ MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_alloc.9 extent.9 extent_alloc_subregion.9 \
 	extent.9 extent_alloc_region.9 extent.9 extent_free.9 \
 	extent.9 extent_print.9
+MLINKS+=fb_setup.9 fb_queue.9
 MLINKS+=file.9 falloc.9 file.9 fdrelease.9 file.9 FREF.9 file.9 FRELE.9 \
 	file.9 fd_getfile.9 file.9 getvnode.9 file.9 getsock.9
 MLINKS+=getdevvp.9 bdevvp.9 getdevvp.9 cdevvp.9

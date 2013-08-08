@@ -1,4 +1,4 @@
-.\" $OpenBSD: fusebuf.9,v 1.10 2013/07/05 06:45:07 jmc Exp $
+.\" $OpenBSD: fb_setup.9,v 1.1 2013/08/08 06:41:06 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 5 2013 $
-.Dt FUSEBUF 9
+.Dd $Mdocdate: August 8 2013 $
+.Dt FB_SETUP 9
 .Os
 .Sh NAME
-.Nm fusebuf
-.Nd kernel messaging mechanism for file system in userland
+.Nm fb_setup
+.Nd kernel messaging mechanism for file system in userland (FUSE)
 .Sh SYNOPSIS
 .In sys/fusebuf.h
 .Ft struct fusebuf *
@@ -227,7 +227,7 @@ with
 .Fa fbtod .
 .Sh SEE ALSO
 .Xr errno 2 ,
-.\".Xr fuse 3 ,
+.\".Xr fuse_main 3 ,
 .Xr queue 3 ,
 .Xr statvfs 3 ,
 .Xr fuse 4 ,

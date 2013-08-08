@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse.3,v 1.9 2013/07/05 11:08:15 syl Exp $
+.\" $OpenBSD: fuse_main.3,v 1.1 2013/08/08 06:41:06 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -14,13 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 5 2013 $
-.Dt FUSE 3
+.Dd $Mdocdate: August 8 2013 $
+.Dt FUSE_MAIN 3
 .Os
 .Sh NAME
-.Nm fuse ,
-.Nm fuse_version ,
 .Nm fuse_main ,
+.Nm fuse_version ,
 .Nm fuse_new ,
 .Nm fuse_parse_cmdline ,
 .Nm fuse_mount ,
@@ -40,10 +39,10 @@
 .Sh SYNOPSIS
 .In fuse.h
 .Ft int
-.Fn fuse_version "void"
-.Ft int
 .Fn fuse_main "int argc" "char **argv" "const struct fuse_operations *ops" \
     "void *data"
+.Ft int
+.Fn fuse_version "void"
 .Ft struct fuse *
 .Fn fuse_new "struct fuse_chan *fc" "struct fuse_args *args" \
     "const struct fuse_operations *ops" "size_t size" "void *userdata"
@@ -76,9 +75,7 @@
 .Ft void
 .Fn fuse_teardown "struct fuse *f" "char *mp"
 .Sh DESCRIPTION
-The
-.Nm
-library provides routines to implement a filesystem in userspace.
+The FUSE library provides routines to implement a filesystem in userspace.
 .Pp
 There are two ways of implementing a FUSE filesystem:
 by calling only
@@ -260,9 +257,7 @@ The FUSE specifications and orignal implementation can be found at:
 .Pp
 .Xr fuse 4
 .Sh HISTORY
-The
-.Nm
-library first appeared in
+The FUSE library first appeared in
 .Ox 5.4 .
 .Sh BUGS
 This man page is woefully incomplete.
