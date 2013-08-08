@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.89 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.90 2013/08/08 09:37:02 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -68,7 +68,6 @@ int		usbd_getnewaddr(struct usbd_bus *);
 int		usbd_print(void *, const char *);
 int		usbd_submatch(struct device *, void *, void *);
 void		usbd_free_iface_data(struct usbd_device *, int);
-void		usbd_kill_pipe(struct usbd_pipe *);
 usbd_status	usbd_probe_and_attach(struct device *,
 		    struct usbd_device *, int, int);
 
@@ -820,16 +819,6 @@ usbd_setup_pipe(struct usbd_device *dev, struct usbd_interface *iface,
 	return (USBD_NORMAL_COMPLETION);
 }
 
-/* Abort the device control pipe. */
-void
-usbd_kill_pipe(struct usbd_pipe *pipe)
-{
-	usbd_abort_pipe(pipe);
-	pipe->methods->close(pipe);
-	pipe->endpoint->refcnt--;
-	free(pipe, M_USB);
-}
-
 int
 usbd_getnewaddr(struct usbd_bus *bus)
 {
@@ -1427,8 +1416,10 @@ usb_free_device(struct usbd_device *dev, struct usbd_port *up)
 
 	DPRINTF(("usb_free_device: %p\n", dev));
 
-	if (dev->default_pipe != NULL)
-		usbd_kill_pipe(dev->default_pipe);
+	if (dev->default_pipe != NULL) {
+		usbd_abort_pipe(dev->default_pipe);
+		usbd_close_pipe(dev->default_pipe);
+	}
 	if (dev->ifaces != NULL) {
 		nifc = dev->cdesc->bNumInterface;
 		for (ifcidx = 0; ifcidx < nifc; ifcidx++)
