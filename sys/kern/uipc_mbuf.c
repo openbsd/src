@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.173 2013/06/11 13:29:50 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.174 2013/08/08 23:25:06 syl Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1346,7 +1346,7 @@ m_dup_pkthdr(struct mbuf *to, struct mbuf *from, int wait)
 #ifdef DDB
 void
 m_print(void *v,
-    int (*pr)(const char *, ...) /* __attribute__((__format__(__kprintf__,1,2))) */)
+    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
 {
 	struct mbuf *m = v;
 

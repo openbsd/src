@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.150 2013/07/03 15:21:40 sf Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.151 2013/08/08 23:25:06 syl Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -756,7 +756,7 @@ diskerr(struct buf *bp, char *dname, char *what, int pri, int blkdone,
     struct disklabel *lp)
 {
 	int unit = DISKUNIT(bp->b_dev), part = DISKPART(bp->b_dev);
-    	int (*pr)(const char *, ...) /* __attribute__((__format__(__kprintf__,1,2))) */;
+    	int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2)));
 	char partname = 'a' + part;
 	daddr_t sn;
 

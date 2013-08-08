@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.122 2013/06/05 00:44:06 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.123 2013/08/08 23:25:06 syl Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -131,9 +131,9 @@ void	pool_large_free_ni(struct pool *, void *);
 
 #ifdef DDB
 void	 pool_print_pagelist(struct pool_pagelist *, int (*)(const char *, ...)
-	    /* __attribute__((__format__(__kprintf__,1,2))) */);
+	     __attribute__((__format__(__kprintf__,1,2))));
 void	 pool_print1(struct pool *, const char *, int (*)(const char *, ...)
-	    /* __attribute__((__format__(__kprintf__,1,2))) */);
+	     __attribute__((__format__(__kprintf__,1,2))));
 #endif
 
 #define pool_sleep(pl) msleep(pl, &pl->pr_mtx, PSWP, pl->pr_wchan, 0)
@@ -1133,14 +1133,14 @@ pool_reclaim_all(void)
  */
 void
 pool_printit(struct pool *pp, const char *modif,
-    int (*pr)(const char *, ...) /* __attribute__((__format__(__kprintf__,1,2))) */)
+    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
 {
 	pool_print1(pp, modif, pr);
 }
 
 void
 pool_print_pagelist(struct pool_pagelist *pl,
-    int (*pr)(const char *, ...) /* __attribute__((__format__(__kprintf__,1,2))) */)
+    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
 {
 	struct pool_item_header *ph;
 #ifdef DIAGNOSTIC
@@ -1163,7 +1163,7 @@ pool_print_pagelist(struct pool_pagelist *pl,
 
 void
 pool_print1(struct pool *pp, const char *modif,
-    int (*pr)(const char *, ...) /* __attribute__((__format__(__kprintf__,1,2))) */)
+    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
 {
 	struct pool_item_header *ph;
 	int print_pagelist = 0;
@@ -1377,8 +1377,9 @@ pool_chk(struct pool *pp)
 #ifdef DDB
 void
 pool_walk(struct pool *pp, int full,
-    int (*pr)(const char *, ...) /* __attribute__((__format__(__kprintf__,1,2))) */,
-    void (*func)(void *, int, int (*)(const char *, ...) /* __attribute__((__format__(__kprintf__,1,2))) */))
+    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))),
+    void (*func)(void *, int, int (*)(const char *, ...)
+	    __attribute__((__format__(__kprintf__,1,2)))))
 {
 	struct pool_item_header *ph;
 	struct pool_item *pi;
