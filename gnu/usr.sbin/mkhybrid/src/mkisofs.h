@@ -20,7 +20,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /*
- * 	$Id: mkisofs.h,v 1.2 2001/10/01 17:05:05 drahn Exp $
+ * 	$Id: mkisofs.h,v 1.3 2013/08/08 05:30:23 guenther Exp $
  */
 
 /* APPLE_HYB James Pearson j.pearson@ge.ucl.ac.uk 12/3/99 */
@@ -485,10 +485,10 @@ extern void * DECL(e_malloc,(size_t));
 #define NEED_CE 8
 #define NEED_SP 16
 
-#define PREV_SESS_DEV (sizeof(dev_t) >= 4 ? 0x7ffffffd : 0x7ffd)
-#define TABLE_INODE (sizeof(ino_t) >= 4 ? 0x7ffffffe : 0x7ffe)
-#define UNCACHED_INODE (sizeof(ino_t) >= 4 ? 0x7fffffff : 0x7fff)
-#define UNCACHED_DEVICE (sizeof(dev_t) >= 4 ? 0x7fffffff : 0x7fff)
+#define PREV_SESS_DEV	(sizeof(dev_t) >= 4 ? 0x7ffffffd : 0x7ffd)
+#define TABLE_INODE	(sizeof(ino_t) >= 8 ? 0x7ffffffffffffffe : 0x7ffffffe)
+#define UNCACHED_INODE	(sizeof(ino_t) >= 8 ? 0x7fffffffffffffff : 0x7fffffff)
+#define UNCACHED_DEVICE	(sizeof(dev_t) >= 4 ? 0x7fffffff : 0x7fff)
 
 #ifdef VMS
 #define STAT_INODE(X) (X.st_ino[0])
