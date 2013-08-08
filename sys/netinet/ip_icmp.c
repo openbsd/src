@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.103 2013/08/08 14:29:28 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.104 2013/08/08 14:59:22 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -959,18 +959,17 @@ icmp_mtudisc_clone(struct in_addr dst, u_int rtableid)
 	return (rt);
 }
 
+/* Table of common MTUs: */
+static const u_short mtu_table[] = {
+	65535, 65280, 32000, 17914, 9180, 8166,
+	4352, 2002, 1492, 1006, 508, 296, 68, 0
+};
+
 void
 icmp_mtudisc(struct icmp *icp, u_int rtableid)
 {
 	struct rtentry *rt;
 	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
-
-	/* Table of common MTUs: */
-
-	static u_short mtu_table[] = {
-		65535, 65280, 32000, 17914, 9180, 8166,
-		4352, 2002, 1492, 1006, 508, 296, 68, 0
-	};
 
 	rt = icmp_mtudisc_clone(icp->icmp_ip.ip_dst, rtableid);
 	if (rt == 0)
@@ -985,7 +984,6 @@ icmp_mtudisc(struct icmp *icp, u_int rtableid)
 			mtu -= (icp->icmp_ip.ip_hl << 2);
 
 		/* If we still can't guess a value, try the route */
-
 		if (mtu == 0) {
 			mtu = rt->rt_rmx.rmx_mtu;
 
@@ -995,7 +993,7 @@ icmp_mtudisc(struct icmp *icp, u_int rtableid)
 				mtu = rt->rt_ifp->if_mtu;
 		}
 
-		for (i = 0; i < sizeof(mtu_table) / sizeof(mtu_table[0]); i++)
+		for (i = 0; i < nitems(mtu_table); i++)
 			if (mtu > mtu_table[i]) {
 				mtu = mtu_table[i];
 				break;
