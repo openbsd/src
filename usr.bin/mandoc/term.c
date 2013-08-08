@@ -1,7 +1,7 @@
-/*	$Id: term.c,v 1.69 2013/08/05 23:35:02 schwarze Exp $ */
+/*	$Id: term.c,v 1.70 2013/08/08 20:07:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -476,6 +476,9 @@ term_word(struct termp *p, const char *word)
 		case (ESCAPE_FONTITALIC):
 			term_fontrepl(p, TERMFONT_UNDER);
 			break;
+		case (ESCAPE_FONTBI):
+			term_fontrepl(p, TERMFONT_BI);
+			break;
 		case (ESCAPE_FONT):
 			/* FALLTHROUGH */
 		case (ESCAPE_FONTROMAN):
@@ -537,27 +540,28 @@ encode1(struct termp *p, int c)
 		return;
 	}
 
-	if (p->col + 4 >= p->maxcols)
-		adjbuf(p, p->col + 4);
+	if (p->col + 6 >= p->maxcols)
+		adjbuf(p, p->col + 6);
 
 	f = term_fonttop(p);
 
-	if (TERMFONT_NONE == f) {
-		p->buf[p->col++] = c;
-		return;
-	} else if (TERMFONT_UNDER == f) {
+	if (TERMFONT_UNDER == f || TERMFONT_BI == f) {
 		p->buf[p->col++] = '_';
-	} else
-		p->buf[p->col++] = c;
-
-	p->buf[p->col++] = 8;
+		p->buf[p->col++] = 8;
+	}
+	if (TERMFONT_BOLD == f || TERMFONT_BI == f) {
+		if (ASCII_HYPH == c)
+			p->buf[p->col++] = '-';
+		else
+			p->buf[p->col++] = c;
+		p->buf[p->col++] = 8;
+	}
 	p->buf[p->col++] = c;
 }
 
 static void
 encode(struct termp *p, const char *word, size_t sz)
 {
-	enum termfont	  f;
 	int		  i, len;
 
 	if (TERMP_SKIPCHAR & p->flags) {
@@ -574,7 +578,7 @@ encode(struct termp *p, const char *word, size_t sz)
 	 * character by character.
 	 */
 
-	if (TERMFONT_NONE == (f = term_fonttop(p))) {
+	if (TERMFONT_NONE == term_fonttop(p)) {
 		if (p->col + len >= p->maxcols) 
 			adjbuf(p, p->col + len);
 		for (i = 0; i < len; i++)
@@ -584,25 +588,15 @@ encode(struct termp *p, const char *word, size_t sz)
 
 	/* Pre-buffer, assuming worst-case. */
 
-	if (p->col + 1 + (len * 3) >= p->maxcols)
-		adjbuf(p, p->col + 1 + (len * 3));
+	if (p->col + 1 + (len * 5) >= p->maxcols)
+		adjbuf(p, p->col + 1 + (len * 5));
 
 	for (i = 0; i < len; i++) {
-		if (ASCII_HYPH != word[i] &&
-		    ! isgraph((unsigned char)word[i])) {
-			p->buf[p->col++] = word[i];
-			continue;
-		}
-
-		if (TERMFONT_UNDER == f)
-			p->buf[p->col++] = '_';
-		else if (ASCII_HYPH == word[i])
-			p->buf[p->col++] = '-';
+		if (ASCII_HYPH == word[i] ||
+		    isgraph((unsigned char)word[i]))
+			encode1(p, word[i]);
 		else
 			p->buf[p->col++] = word[i];
-
-		p->buf[p->col++] = 8;
-		p->buf[p->col++] = word[i];
 	}
 }
 

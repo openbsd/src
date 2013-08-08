@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.21 2013/07/13 19:44:14 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.22 2013/08/08 20:07:24 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2013 $
+.Dd $Mdocdate: August 8 2013 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -144,12 +144,19 @@ escape followed by an indicator: B (bold), I (italic), R (regular), or P
 A numerical representation 3, 2, or 1 (bold, italic, and regular,
 respectively) may be used instead.
 .Pp
+The two-character indicator
+.Sq BI
+requests a font that is both bold and italic.
+It may not be portable to old roff implementations.
+.Pp
 Examples:
 .Bl -tag -width Ds -offset indent -compact
 .It Li \efBbold\efR
-Write in bold, then switch to regular font mode.
+Write in \fBbold\fP, then switch to regular font mode.
 .It Li \efIitalic\efP
-Write in italic, then return to previous font mode.
+Write in \fIitalic\fP, then return to previous font mode.
+.It Li \ef(BIbold italic\efP
+Write in \f(BIbold italic\fP, then return to previous font mode.
 .El
 .Pp
 Text decoration is

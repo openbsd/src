@@ -1,4 +1,4 @@
-/*	$Id: html.h,v 1.19 2012/05/28 13:00:51 schwarze Exp $ */
+/*	$Id: html.h,v 1.20 2013/08/08 20:07:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -75,6 +75,7 @@ enum	htmlfont {
 	HTMLFONT_NONE = 0,
 	HTMLFONT_BOLD,
 	HTMLFONT_ITALIC,
+	HTMLFONT_BI,
 	HTMLFONT_MAX
 };
 

@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.52 2013/07/13 12:51:37 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.53 2013/08/08 20:07:24 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -380,6 +380,7 @@ enum	mandoc_esc {
 	ESCAPE_FONT, /* a generic font mode */
 	ESCAPE_FONTBOLD, /* bold font mode */
 	ESCAPE_FONTITALIC, /* italic font mode */
+	ESCAPE_FONTBI, /* bold italic font mode */
 	ESCAPE_FONTROMAN, /* roman font mode */
 	ESCAPE_FONTPREV, /* previous font mode */
 	ESCAPE_NUMBERED, /* a numbered glyph */

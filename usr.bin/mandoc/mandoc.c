@@ -1,7 +1,7 @@
-/*	$Id: mandoc.c,v 1.36 2013/06/20 22:29:38 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.37 2013/08/08 20:07:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -292,13 +292,19 @@ mandoc_escape(const char **end, const char **start, int *sz)
 
 	switch (gly) {
 	case (ESCAPE_FONT):
-		/*
-		 * Pretend that the constant-width font modes are the
-		 * same as the regular font modes.
-		 */
-		if (2 == *sz && 'C' == **start) {
-			(*start)++;
-			(*sz)--;
+		if (2 == *sz) {
+			if ('C' == **start) {
+				/*
+				 * Treat constant-width font modes
+				 * just like regular font modes.
+				 */
+				(*start)++;
+				(*sz)--;
+			} else {
+				if ('B' == (*start)[0] && 'I' == (*start)[1])
+					gly = ESCAPE_FONTBI;
+				break;
+			}
 		} else if (1 != *sz)
 			break;
 

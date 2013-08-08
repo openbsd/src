@@ -1,4 +1,4 @@
-.Dd May 28, 2012
+.Dd August 7, 2013
 .Dt ESC-F 1
 .Os OpenBSD
 .Sh NAME
@@ -7,6 +7,6 @@
 .Sh DESCRIPTION
 numbers: \f3bold\f2italic\f1roman
 .br
-letters: \fBbold\fIitalic\fPback\fRroman
+letters: \fBbold\fIitalic\fPback\f(BIbolditalic\fRroman
 .br
-multiletter: \f[B]bold\f[I]italic\f[P]back\f[R]roman
+multiletter: \f[B]bold\f[I]italic\f[P]back\f[BI]bolditalic\f[R]roman
