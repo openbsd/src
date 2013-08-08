@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.9 2013/08/07 19:49:07 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.10 2013/08/08 21:35:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -518,12 +518,12 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 		ret = -ENOMEM;
 		goto pre_mutex_err;
 	}
-	ret = copyin((void *)(uintptr_t)args->buffers_ptr, exec_list,
+	ret = -copyin((void *)(uintptr_t)args->buffers_ptr, exec_list,
 	    sizeof(*exec_list) * args->buffer_count);
 	if (ret != 0)
 		goto pre_mutex_err;
 
-	ret = i915_gem_get_relocs_from_user(exec_list, args->buffer_count,
+	ret = -i915_gem_get_relocs_from_user(exec_list, args->buffer_count,
 	    &relocs);
 	if (ret != 0)
 		goto pre_mutex_err;
@@ -671,7 +671,7 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 	i915_gem_execbuffer_move_to_active(object_list, args->buffer_count, ring);
 	i915_gem_execbuffer_retire_commands(dev, file_priv, ring);
 
-	ret = copyout(exec_list, (void *)(uintptr_t)args->buffers_ptr,
+	ret = -copyout(exec_list, (void *)(uintptr_t)args->buffers_ptr,
 	    sizeof(*exec_list) * args->buffer_count);
 
 err:
@@ -699,7 +699,7 @@ unlock:
 
 pre_mutex_err:
 	/* update userlands reloc state. */
-	ret2 = i915_gem_put_relocs_to_user(exec_list,
+	ret2 = -i915_gem_put_relocs_to_user(exec_list,
 	    args->buffer_count, relocs);
 	if (ret2 != 0 && ret == 0)
 		ret = ret2;
