@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.81 2013/06/23 16:30:46 sthen Exp $	*/
+/*	$OpenBSD: in.c,v 1.82 2013/08/08 07:39:13 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -241,8 +241,6 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 			panic("in_control");
 		if (ia == NULL) {
 			ia = malloc(sizeof *ia, M_IFADDR, M_WAITOK | M_ZERO);
-			s = splsoftnet();
-			TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
 			ia->ia_addr.sin_family = AF_INET;
 			ia->ia_addr.sin_len = sizeof(ia->ia_addr);
 			ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
@@ -255,7 +253,6 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 			}
 			ia->ia_ifp = ifp;
 			LIST_INIT(&ia->ia_multiaddrs);
-			splx(s);
 
 			newifaddr = 1;
 		} else
@@ -646,6 +643,13 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 	struct sockaddr_in oldaddr;
 	int s = splnet(), flags = RTF_UP, error;
 
+	if (newaddr)
+		TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
+
+	/*
+	 * Always remove the address from the tree to make sure its
+	 * position gets updated in case the key changes.
+	 */
 	if (!newaddr)
 		ifa_del(ifp, &ia->ia_ifa);
 	oldaddr = ia->ia_addr;

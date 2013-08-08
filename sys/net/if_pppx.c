@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.23 2013/06/24 09:34:59 mpi Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.24 2013/08/08 07:39:13 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -894,7 +894,6 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	ifaddr.sin_addr = req->pr_ip_srcaddr;
 
 	ia = malloc(sizeof (*ia), M_IFADDR, M_WAITOK | M_ZERO);
-	TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
 
 	ia->ia_addr.sin_family = AF_INET;
 	ia->ia_addr.sin_len = sizeof(struct sockaddr_in);
