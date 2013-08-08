@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.5 2013/06/14 20:56:11 syl Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.6 2013/08/08 03:16:13 guenther Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -23,7 +23,8 @@
 #include "debug.h"
 
 #define CHECK_OPT(opname)	DPRINTF("Opcode:\t%s\n", #opname);	\
-				DPRINTF("Inode:\t%i\n", fbuf->fb_ino);	\
+				DPRINTF("Inode:\t%llu\n",		\
+				    (unsigned long long)fbuf->fb_ino);	\
 				if (!f->op.opname) {			\
 					fbuf->fb_err = -ENOSYS;		\
 					fbuf->fb_len = 0;		\
@@ -102,7 +103,7 @@ ifuse_ops_getattr(struct fuse *f, struct fusebuf *fbuf)
 	char *realname;
 
 	DPRINTF("Opcode:\tgetattr\n");
-	DPRINTF("Inode:\t%i\n", fbuf->fb_ino);
+	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
 	bzero(&st, sizeof(st));
 
 	fbuf->fb_len = FUSEFDSIZE;
@@ -149,7 +150,7 @@ ifuse_ops_open(struct fuse *f, struct fusebuf *fbuf)
 	char *realname;
 
 	DPRINTF("Opcode:\topen\n");
-	DPRINTF("Inode:\t%i\n", fbuf->fb_ino);
+	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
 
 	CHECK_OPT(open);
 
@@ -179,7 +180,7 @@ ifuse_ops_opendir(struct fuse *f, struct fusebuf *fbuf)
 	char *realname;
 
 	DPRINTF("Opcode:\topendir\n");
-	DPRINTF("Inode:\t%i\n", fbuf->fb_ino);
+	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
 
 	memset(&ffi, 0, sizeof(ffi));
 	ffi.flags = fbuf->fb_io_flags;
@@ -291,7 +292,7 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 	uint32_t startsave;
 
 	DPRINTF("Opcode:\treaddir\n");
-	DPRINTF("Inode:\t%i\n", fbuf->fb_ino);
+	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
 	DPRINTF("Offset:\t%llu\n", fbuf->fb_io_off);
 	DPRINTF("Size:\t%lu\n", fbuf->fb_io_len);
 
@@ -350,7 +351,7 @@ ifuse_ops_releasedir(struct fuse *f, struct fusebuf *fbuf)
 	char *realname;
 
 	DPRINTF("Opcode:\treleasedir\n");
-	DPRINTF("Inode:\t%i\n", fbuf->fb_ino);
+	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
 
 	bzero(&ffi, sizeof(ffi));
 	ffi.fh = fbuf->fb_io_fd;
@@ -408,7 +409,7 @@ ifuse_ops_lookup(struct fuse *f, struct fusebuf *fbuf)
 	char *realname;
 
 	DPRINTF("Opcode:\tlookup\n");
-	DPRINTF("Inode:\t%i\n", fbuf->fb_ino);
+	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
 	DPRINTF("For file %s\n", fbuf->fb_dat);
 
 	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
@@ -423,7 +424,7 @@ ifuse_ops_lookup(struct fuse *f, struct fusebuf *fbuf)
 		set_vn(f, vn); /*XXX*/
 	}
 
-	DPRINTF("new ino %i\n", vn->ino);
+	DPRINTF("new ino %llu\n", (unsigned long long)vn->ino);
 	fbuf->fb_len = FUSEFDSIZE;
 
 	realname = build_realname(f, vn->ino);
@@ -607,7 +608,7 @@ ifuse_ops_readlink(struct fuse *f, struct fusebuf *fbuf)
 	int len, ret;
 
 	DPRINTF("Opcode:\treadlink\n");
-	DPRINTF("Inode:\t%i\n", fbuf->fb_ino);
+	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
 
 	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
 
@@ -716,7 +717,7 @@ ifuse_ops_setattr(struct fuse *f, struct fusebuf *fbuf)
 	gid_t gid;
 
 	DPRINTF("Opcode:\tsetattr\n");
-	DPRINTF("Inode:\t%i\n", fbuf->fb_ino);
+	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
 
 	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
 	realname = build_realname(f, vn->ino);
@@ -911,7 +912,7 @@ ifuse_exec_opcode(struct fuse *f, struct fusebuf *fbuf)
 		break;
 	default:
 		DPRINTF("Opcode:\t%i not supported\n", fbuf->fb_type);
-		DPRINTF("Inode:\t%i\n", fbuf->fb_ino);
+		DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
 
 		fbuf->fb_err = -ENOSYS;
 		fbuf->fb_len = 0;

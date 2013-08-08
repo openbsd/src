@@ -1184,9 +1184,9 @@ FDECL3(insert_file_entry,struct directory *, this_dir,
 	/* NON-HFS change - print just a warning *if* this ever happens */
 	fprintf(stderr,"Warning: Directory loop (%s)\n", whole_path);
 #else
-	fprintf(stderr,"Directory loop - fatal goof (%s %lx %lu).\n",
+	fprintf(stderr,"Directory loop - fatal goof (%s %lx %llu).\n",
 		whole_path, (unsigned long) statbuf.st_dev,
-		(unsigned long) STAT_INODE(statbuf));
+		(unsigned long long) STAT_INODE(statbuf));
 	exit(1);
 #endif
       }

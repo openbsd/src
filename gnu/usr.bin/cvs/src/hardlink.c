@@ -77,7 +77,7 @@ lookup_file_by_inode (filepath)
 	error (1, errno, "cannot stat %s", file);
     }
 
-    sprintf (inodestr, "%lx", (unsigned long) sb.st_ino);
+    sprintf (inodestr, "%llx", (unsigned long long) sb.st_ino);
 
     /* Find out if this inode is already in the hardlist, adding
        a new entry to the list if not. */
@@ -193,7 +193,7 @@ list_linked_files_on_disk (file)
        inode, so it requires two bytes of text to represent
        each byte of the inode number. */
     inodestr = (char *) xmalloc (2*sizeof(ino_t) + 1);
-    sprintf (inodestr, "%lx", (unsigned long) sb.st_ino);
+    sprintf (inodestr, "%llx", (unsigned long long) sb.st_ino);
 
     /* Make sure the files linked to this inode are sorted. */
     n = findnode (hardlist, inodestr);
