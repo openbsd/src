@@ -1,6 +1,6 @@
 define(MACHINE,i386)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.65 2013/06/03 16:06:42 tedu Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.66 2013/08/08 10:39:29 jsg Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -141,6 +141,6 @@ target(all, gpio, 0, 1, 2)dnl
 target(all, nvram)dnl
 target(all, bthub, 0, 1, 2)dnl
 target(all, agp, 0)dnl
-target(all, drm, 0)dnl
+target(all, drm, 0, 1, 2, 3)dnl
 target(all, amdmsr)dnl
 twrget(ramd, wsdisp, ttyC, 0)dnl
