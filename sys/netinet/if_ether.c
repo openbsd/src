@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.103 2013/08/01 08:27:43 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.104 2013/08/09 06:01:52 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -112,6 +112,8 @@ void	db_print_llinfo(caddr_t);
 int	db_show_radix_node(struct radix_node *, void *, u_int);
 #endif
 
+static const struct sockaddr_dl null_sdl = { sizeof(null_sdl), AF_LINK };
+
 /*
  * Timeout routine.  Age arp_tab entries periodically.
  */
@@ -143,7 +145,6 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
-	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
 	struct in_ifaddr *ia;
 	struct ifaddr *ifa;
 	struct mbuf *m;
@@ -234,7 +235,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		/*FALLTHROUGH*/
 	case RTM_RESOLVE:
 		if (gate->sa_family != AF_LINK ||
-		    gate->sa_len < sizeof(null_sdl)) {
+		    gate->sa_len < sizeof(struct sockaddr_dl)) {
 			log(LOG_DEBUG, "arp_rtrequest: bad gateway value\n");
 			break;
 		}
