@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.2 2004/01/25 20:45:13 deraadt Exp $
+# $OpenBSD: Makefile,v 1.3 2013/08/09 17:52:12 bluhm Exp $
 
 PROG=	ndp
 SRCS=	ndp.c gmt2local.c
-MAN=	ndp.8 # ndp.4
+MAN=	ndp.8
 
 CPPFLAGS+=-DINET6 -I${.CURDIR}
 
