@@ -2584,7 +2584,6 @@
 ./usr/libexec/getty
 ./usr/libexec/hprop
 ./usr/libexec/hpropd
-./usr/libexec/identd
 ./usr/libexec/ipropd-master
 ./usr/libexec/ipropd-slave
 ./usr/libexec/kadmind
@@ -2705,6 +2704,7 @@
 ./usr/sbin/host
 ./usr/sbin/hostapd
 ./usr/sbin/httpd
+./usr/sbin/identd
 ./usr/sbin/ifstated
 ./usr/sbin/ikectl
 ./usr/sbin/inetd

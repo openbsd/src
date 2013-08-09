@@ -6567,6 +6567,8 @@
 ./usr/share/man/man9/extent_free.9
 ./usr/share/man/man9/extent_print.9
 ./usr/share/man/man9/falloc.9
+./usr/share/man/man9/fb_queue.9
+./usr/share/man/man9/fb_setup.9
 ./usr/share/man/man9/fd_getfile.9
 ./usr/share/man/man9/fdrelease.9
 ./usr/share/man/man9/ffs.9
@@ -6575,7 +6577,6 @@
 ./usr/share/man/man9/flsl.9
 ./usr/share/man/man9/fork1.9
 ./usr/share/man/man9/free.9
-./usr/share/man/man9/fusebuf.9
 ./usr/share/man/man9/getblk.9
 ./usr/share/man/man9/getdevvp.9
 ./usr/share/man/man9/geteblk.9

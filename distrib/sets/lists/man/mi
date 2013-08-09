@@ -2732,7 +2732,6 @@
 ./usr/share/man/man8/daily.8
 ./usr/share/man/man8/dev_mkdb.8
 ./usr/share/man/man8/dhclient.8
-./usr/share/man/man8/dhcp.8
 ./usr/share/man/man8/dhcpd.8
 ./usr/share/man/man8/dhcrelay.8
 ./usr/share/man/man8/disklabel.8
