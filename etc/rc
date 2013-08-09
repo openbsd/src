@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.406 2013/06/01 14:06:20 naddy Exp $
+#	$OpenBSD: rc,v 1.407 2013/08/09 16:24:54 ajacoutot Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -493,9 +493,10 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	fi
 fi
 
-start_daemon hostapd rwhod lpd sendmail smtpd httpd slowcgi nginx ftpd ftpproxy
-start_daemon tftpd tftpproxy identd inetd rarpd bootparamd rbootd mopd
-start_daemon popa3d spamd spamlogd kdc kadmind kpasswdd sndiod
+start_daemon hostapd rwhod lpd sendmail smtpd httpd slowcgi nginx ftpd
+start_daemon ftpproxy tftpd tftpproxy identd inetd rarpd bootparamd
+start_daemon rbootd mopd popa3d spamd spamlogd kdc kadmind kpasswdd
+start_daemon ipropd_master ipropd_slave sndiod
 echo '.'
 
 if [ X"${spamd_flags}" != X"NO" ]; then
