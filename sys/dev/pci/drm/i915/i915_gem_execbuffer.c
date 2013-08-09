@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.11 2013/08/09 07:55:42 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.12 2013/08/09 08:14:55 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -908,9 +908,19 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 		break;
 	case I915_EXEC_BSD:
 		ring = &dev_priv->ring[VCS];
+		if (ctx_id != 0) {
+			DRM_DEBUG("Ring %s doesn't support contexts\n",
+				  ring->name);
+			return -EPERM;
+		}
 		break;
 	case I915_EXEC_BLT:
 		ring = &dev_priv->ring[BCS];
+		if (ctx_id != 0) {
+			DRM_DEBUG("Ring %s doesn't support contexts\n",
+				  ring->name);
+			return -EPERM;
+		}
 		break;
 	default:
 		printf("unknown ring %d\n",
