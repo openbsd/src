@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.31 2013/08/07 19:49:06 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.32 2013/08/09 07:55:42 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -315,6 +315,252 @@ i915_gem_object_needs_bit17_swizzle(struct drm_i915_gem_object *obj)
 		obj->tiling_mode != I915_TILING_NONE;
 }
 
+#ifdef notyet
+static inline int
+__copy_to_user_swizzled(char __user *cpu_vaddr,
+			const char *gpu_vaddr, int gpu_offset,
+			int length)
+{
+	int ret, cpu_offset = 0;
+
+	while (length > 0) {
+		int cacheline_end = ALIGN(gpu_offset + 1, 64);
+		int this_length = min(cacheline_end - gpu_offset, length);
+		int swizzled_gpu_offset = gpu_offset ^ 64;
+
+		ret = __copy_to_user(cpu_vaddr + cpu_offset,
+				     gpu_vaddr + swizzled_gpu_offset,
+				     this_length);
+		if (ret)
+			return ret + length;
+
+		cpu_offset += this_length;
+		gpu_offset += this_length;
+		length -= this_length;
+	}
+
+	return 0;
+}
+
+static inline int
+__copy_from_user_swizzled(char *gpu_vaddr, int gpu_offset,
+			  const char __user *cpu_vaddr,
+			  int length)
+{
+	int ret, cpu_offset = 0;
+
+	while (length > 0) {
+		int cacheline_end = ALIGN(gpu_offset + 1, 64);
+		int this_length = min(cacheline_end - gpu_offset, length);
+		int swizzled_gpu_offset = gpu_offset ^ 64;
+
+		ret = __copy_from_user(gpu_vaddr + swizzled_gpu_offset,
+				       cpu_vaddr + cpu_offset,
+				       this_length);
+		if (ret)
+			return ret + length;
+
+		cpu_offset += this_length;
+		gpu_offset += this_length;
+		length -= this_length;
+	}
+
+	return 0;
+}
+
+/* Per-page copy function for the shmem pread fastpath.
+ * Flushes invalid cachelines before reading the target if
+ * needs_clflush is set. */
+static int
+shmem_pread_fast(struct page *page, int shmem_page_offset, int page_length,
+		 char __user *user_data,
+		 bool page_do_bit17_swizzling, bool needs_clflush)
+{
+	char *vaddr;
+	int ret;
+
+	if (unlikely(page_do_bit17_swizzling))
+		return -EINVAL;
+
+	vaddr = kmap_atomic(page);
+	if (needs_clflush)
+		drm_clflush_virt_range(vaddr + shmem_page_offset,
+				       page_length);
+	ret = __copy_to_user_inatomic(user_data,
+				      vaddr + shmem_page_offset,
+				      page_length);
+	kunmap_atomic(vaddr);
+
+	return ret ? -EFAULT : 0;
+}
+
+static void
+shmem_clflush_swizzled_range(char *addr, unsigned long length,
+			     bool swizzled)
+{
+	if (unlikely(swizzled)) {
+		unsigned long start = (unsigned long) addr;
+		unsigned long end = (unsigned long) addr + length;
+
+		/* For swizzling simply ensure that we always flush both
+		 * channels. Lame, but simple and it works. Swizzled
+		 * pwrite/pread is far from a hotpath - current userspace
+		 * doesn't use it at all. */
+		start = round_down(start, 128);
+		end = round_up(end, 128);
+
+		drm_clflush_virt_range((void *)start, end - start);
+	} else {
+		drm_clflush_virt_range(addr, length);
+	}
+
+}
+
+/* Only difference to the fast-path function is that this can handle bit17
+ * and uses non-atomic copy and kmap functions. */
+static int
+shmem_pread_slow(struct page *page, int shmem_page_offset, int page_length,
+		 char __user *user_data,
+		 bool page_do_bit17_swizzling, bool needs_clflush)
+{
+	char *vaddr;
+	int ret;
+
+	vaddr = kmap(page);
+	if (needs_clflush)
+		shmem_clflush_swizzled_range(vaddr + shmem_page_offset,
+					     page_length,
+					     page_do_bit17_swizzling);
+
+	if (page_do_bit17_swizzling)
+		ret = __copy_to_user_swizzled(user_data,
+					      vaddr, shmem_page_offset,
+					      page_length);
+	else
+		ret = __copy_to_user(user_data,
+				     vaddr + shmem_page_offset,
+				     page_length);
+	kunmap(page);
+
+	return ret ? - EFAULT : 0;
+}
+
+static int
+i915_gem_shmem_pread(struct drm_device *dev,
+		     struct drm_i915_gem_object *obj,
+		     struct drm_i915_gem_pread *args,
+		     struct drm_file *file)
+{
+	char __user *user_data;
+	ssize_t remain;
+	loff_t offset;
+	int shmem_page_offset, page_length, ret = 0;
+	int obj_do_bit17_swizzling, page_do_bit17_swizzling;
+	int hit_slowpath = 0;
+	int prefaulted = 0;
+	int needs_clflush = 0;
+	struct scatterlist *sg;
+	int i;
+
+	user_data = (char __user *) (uintptr_t) args->data_ptr;
+	remain = args->size;
+
+	obj_do_bit17_swizzling = i915_gem_object_needs_bit17_swizzle(obj);
+
+	if (!(obj->base.read_domains & I915_GEM_DOMAIN_CPU)) {
+		/* If we're not in the cpu read domain, set ourself into the gtt
+		 * read domain and manually flush cachelines (if required). This
+		 * optimizes for the case when the gpu will dirty the data
+		 * anyway again before the next pread happens. */
+		if (obj->cache_level == I915_CACHE_NONE)
+			needs_clflush = 1;
+		if (obj->gtt_space) {
+			ret = i915_gem_object_set_to_gtt_domain(obj, false);
+			if (ret)
+				return ret;
+		}
+	}
+
+	ret = i915_gem_object_get_pages(obj);
+	if (ret)
+		return ret;
+
+	i915_gem_object_pin_pages(obj);
+
+	offset = args->offset;
+
+	for_each_sg(obj->pages->sgl, sg, obj->pages->nents, i) {
+		struct page *page;
+
+		if (i < offset >> PAGE_SHIFT)
+			continue;
+
+		if (remain <= 0)
+			break;
+
+		/* Operation in this page
+		 *
+		 * shmem_page_offset = offset within page in shmem file
+		 * page_length = bytes to copy for this page
+		 */
+		shmem_page_offset = offset_in_page(offset);
+		page_length = remain;
+		if ((shmem_page_offset + page_length) > PAGE_SIZE)
+			page_length = PAGE_SIZE - shmem_page_offset;
+
+		page = sg_page(sg);
+		page_do_bit17_swizzling = obj_do_bit17_swizzling &&
+			(page_to_phys(page) & (1 << 17)) != 0;
+
+		ret = shmem_pread_fast(page, shmem_page_offset, page_length,
+				       user_data, page_do_bit17_swizzling,
+				       needs_clflush);
+		if (ret == 0)
+			goto next_page;
+
+		hit_slowpath = 1;
+		mutex_unlock(&dev->struct_mutex);
+
+		if (!prefaulted) {
+			ret = fault_in_multipages_writeable(user_data, remain);
+			/* Userspace is tricking us, but we've already clobbered
+			 * its pages with the prefault and promised to write the
+			 * data up to the first fault. Hence ignore any errors
+			 * and just continue. */
+			(void)ret;
+			prefaulted = 1;
+		}
+
+		ret = shmem_pread_slow(page, shmem_page_offset, page_length,
+				       user_data, page_do_bit17_swizzling,
+				       needs_clflush);
+
+		mutex_lock(&dev->struct_mutex);
+
+next_page:
+		mark_page_accessed(page);
+
+		if (ret)
+			goto out;
+
+		remain -= page_length;
+		user_data += page_length;
+		offset += page_length;
+	}
+
+out:
+	i915_gem_object_unpin_pages(obj);
+
+	if (hit_slowpath) {
+		/* Fixup: Kill any reinstated backing storage pages */
+		if (obj->madv == __I915_MADV_PURGED)
+			i915_gem_object_truncate(obj);
+	}
+
+	return ret;
+}
+#endif /* notyet */
+
 /**
  * Reads data from the object referenced by handle.
  *
@@ -381,6 +627,295 @@ out:
 
 	return ret;
 }
+
+#ifdef notyet
+/* This is the fast write path which cannot handle
+ * page faults in the source data
+ */
+
+static inline int
+fast_user_write(struct io_mapping *mapping,
+		loff_t page_base, int page_offset,
+		char __user *user_data,
+		int length)
+{
+	void __iomem *vaddr_atomic;
+	void *vaddr;
+	unsigned long unwritten;
+
+	vaddr_atomic = io_mapping_map_atomic_wc(mapping, page_base);
+	/* We can use the cpu mem copy function because this is X86. */
+	vaddr = (void __force*)vaddr_atomic + page_offset;
+	unwritten = __copy_from_user_inatomic_nocache(vaddr,
+						      user_data, length);
+	io_mapping_unmap_atomic(vaddr_atomic);
+	return unwritten;
+}
+
+/**
+ * This is the fast pwrite path, where we copy the data directly from the
+ * user into the GTT, uncached.
+ */
+static int
+i915_gem_gtt_pwrite_fast(struct drm_device *dev,
+			 struct drm_i915_gem_object *obj,
+			 struct drm_i915_gem_pwrite *args,
+			 struct drm_file *file)
+{
+	drm_i915_private_t *dev_priv = dev->dev_private;
+	ssize_t remain;
+	loff_t offset, page_base;
+	char __user *user_data;
+	int page_offset, page_length, ret;
+
+	ret = i915_gem_object_pin(obj, 0, true, true);
+	if (ret)
+		goto out;
+
+	ret = i915_gem_object_set_to_gtt_domain(obj, true);
+	if (ret)
+		goto out_unpin;
+
+	ret = i915_gem_object_put_fence(obj);
+	if (ret)
+		goto out_unpin;
+
+	user_data = (char __user *) (uintptr_t) args->data_ptr;
+	remain = args->size;
+
+	offset = obj->gtt_offset + args->offset;
+
+	while (remain > 0) {
+		/* Operation in this page
+		 *
+		 * page_base = page offset within aperture
+		 * page_offset = offset within page
+		 * page_length = bytes to copy for this page
+		 */
+		page_base = offset & PAGE_MASK;
+		page_offset = offset_in_page(offset);
+		page_length = remain;
+		if ((page_offset + remain) > PAGE_SIZE)
+			page_length = PAGE_SIZE - page_offset;
+
+		/* If we get a fault while copying data, then (presumably) our
+		 * source page isn't available.  Return the error and we'll
+		 * retry in the slow path.
+		 */
+		if (fast_user_write(dev_priv->mm.gtt_mapping, page_base,
+				    page_offset, user_data, page_length)) {
+			ret = -EFAULT;
+			goto out_unpin;
+		}
+
+		remain -= page_length;
+		user_data += page_length;
+		offset += page_length;
+	}
+
+out_unpin:
+	i915_gem_object_unpin(obj);
+out:
+	return ret;
+}
+
+/* Per-page copy function for the shmem pwrite fastpath.
+ * Flushes invalid cachelines before writing to the target if
+ * needs_clflush_before is set and flushes out any written cachelines after
+ * writing if needs_clflush is set. */
+static int
+shmem_pwrite_fast(struct page *page, int shmem_page_offset, int page_length,
+		  char __user *user_data,
+		  bool page_do_bit17_swizzling,
+		  bool needs_clflush_before,
+		  bool needs_clflush_after)
+{
+	char *vaddr;
+	int ret;
+
+	if (unlikely(page_do_bit17_swizzling))
+		return -EINVAL;
+
+	vaddr = kmap_atomic(page);
+	if (needs_clflush_before)
+		drm_clflush_virt_range(vaddr + shmem_page_offset,
+				       page_length);
+	ret = __copy_from_user_inatomic_nocache(vaddr + shmem_page_offset,
+						user_data,
+						page_length);
+	if (needs_clflush_after)
+		drm_clflush_virt_range(vaddr + shmem_page_offset,
+				       page_length);
+	kunmap_atomic(vaddr);
+
+	return ret ? -EFAULT : 0;
+}
+
+/* Only difference to the fast-path function is that this can handle bit17
+ * and uses non-atomic copy and kmap functions. */
+static int
+shmem_pwrite_slow(struct page *page, int shmem_page_offset, int page_length,
+		  char __user *user_data,
+		  bool page_do_bit17_swizzling,
+		  bool needs_clflush_before,
+		  bool needs_clflush_after)
+{
+	char *vaddr;
+	int ret;
+
+	vaddr = kmap(page);
+	if (unlikely(needs_clflush_before || page_do_bit17_swizzling))
+		shmem_clflush_swizzled_range(vaddr + shmem_page_offset,
+					     page_length,
+					     page_do_bit17_swizzling);
+	if (page_do_bit17_swizzling)
+		ret = __copy_from_user_swizzled(vaddr, shmem_page_offset,
+						user_data,
+						page_length);
+	else
+		ret = __copy_from_user(vaddr + shmem_page_offset,
+				       user_data,
+				       page_length);
+	if (needs_clflush_after)
+		shmem_clflush_swizzled_range(vaddr + shmem_page_offset,
+					     page_length,
+					     page_do_bit17_swizzling);
+	kunmap(page);
+
+	return ret ? -EFAULT : 0;
+}
+
+static int
+i915_gem_shmem_pwrite(struct drm_device *dev,
+		      struct drm_i915_gem_object *obj,
+		      struct drm_i915_gem_pwrite *args,
+		      struct drm_file *file)
+{
+	ssize_t remain;
+	loff_t offset;
+	char __user *user_data;
+	int shmem_page_offset, page_length, ret = 0;
+	int obj_do_bit17_swizzling, page_do_bit17_swizzling;
+	int hit_slowpath = 0;
+	int needs_clflush_after = 0;
+	int needs_clflush_before = 0;
+	int i;
+	struct scatterlist *sg;
+
+	user_data = (char __user *) (uintptr_t) args->data_ptr;
+	remain = args->size;
+
+	obj_do_bit17_swizzling = i915_gem_object_needs_bit17_swizzle(obj);
+
+	if (obj->base.write_domain != I915_GEM_DOMAIN_CPU) {
+		/* If we're not in the cpu write domain, set ourself into the gtt
+		 * write domain and manually flush cachelines (if required). This
+		 * optimizes for the case when the gpu will use the data
+		 * right away and we therefore have to clflush anyway. */
+		if (obj->cache_level == I915_CACHE_NONE)
+			needs_clflush_after = 1;
+		if (obj->gtt_space) {
+			ret = i915_gem_object_set_to_gtt_domain(obj, true);
+			if (ret)
+				return ret;
+		}
+	}
+	/* Same trick applies for invalidate partially written cachelines before
+	 * writing.  */
+	if (!(obj->base.read_domains & I915_GEM_DOMAIN_CPU)
+	    && obj->cache_level == I915_CACHE_NONE)
+		needs_clflush_before = 1;
+
+	ret = i915_gem_object_get_pages(obj);
+	if (ret)
+		return ret;
+
+	i915_gem_object_pin_pages(obj);
+
+	offset = args->offset;
+	obj->dirty = 1;
+
+	for_each_sg(obj->pages->sgl, sg, obj->pages->nents, i) {
+		struct page *page;
+		int partial_cacheline_write;
+
+		if (i < offset >> PAGE_SHIFT)
+			continue;
+
+		if (remain <= 0)
+			break;
+
+		/* Operation in this page
+		 *
+		 * shmem_page_offset = offset within page in shmem file
+		 * page_length = bytes to copy for this page
+		 */
+		shmem_page_offset = offset_in_page(offset);
+
+		page_length = remain;
+		if ((shmem_page_offset + page_length) > PAGE_SIZE)
+			page_length = PAGE_SIZE - shmem_page_offset;
+
+		/* If we don't overwrite a cacheline completely we need to be
+		 * careful to have up-to-date data by first clflushing. Don't
+		 * overcomplicate things and flush the entire patch. */
+		partial_cacheline_write = needs_clflush_before &&
+			((shmem_page_offset | page_length)
+				& (boot_cpu_data.x86_clflush_size - 1));
+
+		page = sg_page(sg);
+		page_do_bit17_swizzling = obj_do_bit17_swizzling &&
+			(page_to_phys(page) & (1 << 17)) != 0;
+
+		ret = shmem_pwrite_fast(page, shmem_page_offset, page_length,
+					user_data, page_do_bit17_swizzling,
+					partial_cacheline_write,
+					needs_clflush_after);
+		if (ret == 0)
+			goto next_page;
+
+		hit_slowpath = 1;
+		mutex_unlock(&dev->struct_mutex);
+		ret = shmem_pwrite_slow(page, shmem_page_offset, page_length,
+					user_data, page_do_bit17_swizzling,
+					partial_cacheline_write,
+					needs_clflush_after);
+
+		mutex_lock(&dev->struct_mutex);
+
+next_page:
+		set_page_dirty(page);
+		mark_page_accessed(page);
+
+		if (ret)
+			goto out;
+
+		remain -= page_length;
+		user_data += page_length;
+		offset += page_length;
+	}
+
+out:
+	i915_gem_object_unpin_pages(obj);
+
+	if (hit_slowpath) {
+		/* Fixup: Kill any reinstated backing storage pages */
+		if (obj->madv == __I915_MADV_PURGED)
+			i915_gem_object_truncate(obj);
+		/* and flush dirty cachelines in case the object isn't in the cpu write
+		 * domain anymore. */
+		if (obj->base.write_domain != I915_GEM_DOMAIN_CPU) {
+			i915_gem_clflush_object(obj);
+			i915_gem_chipset_flush(dev);
+		}
+	}
+
+	if (needs_clflush_after)
+		i915_gem_chipset_flush(dev);
+
+	return ret;
+}
+#endif /* notyet */
 
 /**
  * Writes data to the object referenced by handle.
@@ -1241,9 +1776,57 @@ i915_gem_object_put_pages(struct drm_i915_gem_object *obj)
 	return 0;
 }
 
-// __i915_gem_shrink
-// i915_gem_purge
-// i915_gem_shrink_all
+#ifdef notyet
+static long
+__i915_gem_shrink(struct drm_i915_private *dev_priv, long target,
+		  bool purgeable_only)
+{
+	struct drm_i915_gem_object *obj, *next;
+	long count = 0;
+
+	list_for_each_entry_safe(obj, next,
+				 &dev_priv->mm.unbound_list,
+				 gtt_list) {
+		if ((i915_gem_object_is_purgeable(obj) || !purgeable_only) &&
+		    i915_gem_object_put_pages(obj) == 0) {
+			count += obj->base.size >> PAGE_SHIFT;
+			if (count >= target)
+				return count;
+		}
+	}
+
+	list_for_each_entry_safe(obj, next,
+				 &dev_priv->mm.inactive_list,
+				 mm_list) {
+		if ((i915_gem_object_is_purgeable(obj) || !purgeable_only) &&
+		    i915_gem_object_unbind(obj) == 0 &&
+		    i915_gem_object_put_pages(obj) == 0) {
+			count += obj->base.size >> PAGE_SHIFT;
+			if (count >= target)
+				return count;
+		}
+	}
+
+	return count;
+}
+
+static long
+i915_gem_purge(struct drm_i915_private *dev_priv, long target)
+{
+	return __i915_gem_shrink(dev_priv, target, true);
+}
+
+static void
+i915_gem_shrink_all(struct drm_i915_private *dev_priv)
+{
+	struct drm_i915_gem_object *obj, *next;
+
+	i915_gem_evict_everything(dev_priv->dev);
+
+	list_for_each_entry_safe(obj, next, &dev_priv->mm.unbound_list, gtt_list)
+		i915_gem_object_put_pages(obj);
+}
+#endif /* notyet */
 
 int
 i915_gem_object_get_pages_gtt(struct drm_i915_gem_object *obj)
@@ -1804,7 +2387,91 @@ i915_gem_object_flush_active(struct drm_i915_gem_object *obj)
 	return 0;
 }
 
-// i915_gem_wait_ioctl
+#ifdef notyet
+/**
+ * i915_gem_wait_ioctl - implements DRM_IOCTL_I915_GEM_WAIT
+ * @DRM_IOCTL_ARGS: standard ioctl arguments
+ *
+ * Returns 0 if successful, else an error is returned with the remaining time in
+ * the timeout parameter.
+ *  -ETIME: object is still busy after timeout
+ *  -ERESTARTSYS: signal interrupted the wait
+ *  -ENONENT: object doesn't exist
+ * Also possible, but rare:
+ *  -EAGAIN: GPU wedged
+ *  -ENOMEM: damn
+ *  -ENODEV: Internal IRQ fail
+ *  -E?: The add request failed
+ *
+ * The wait ioctl with a timeout of 0 reimplements the busy ioctl. With any
+ * non-zero timeout parameter the wait ioctl will wait for the given number of
+ * nanoseconds on an object becoming unbusy. Since the wait itself does so
+ * without holding struct_mutex the object may become re-busied before this
+ * function completes. A similar but shorter * race condition exists in the busy
+ * ioctl
+ */
+int
+i915_gem_wait_ioctl(struct drm_device *dev, void *data, struct drm_file *file)
+{
+	struct drm_i915_gem_wait *args = data;
+	struct drm_i915_gem_object *obj;
+	struct intel_ring_buffer *ring = NULL;
+	struct timespec timeout_stack, *timeout = NULL;
+	u32 seqno = 0;
+	int ret = 0;
+
+	if (args->timeout_ns >= 0) {
+		timeout_stack = ns_to_timespec(args->timeout_ns);
+		timeout = &timeout_stack;
+	}
+
+	ret = i915_mutex_lock_interruptible(dev);
+	if (ret)
+		return ret;
+
+	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->bo_handle));
+	if (&obj->base == NULL) {
+		mutex_unlock(&dev->struct_mutex);
+		return -ENOENT;
+	}
+
+	/* Need to make sure the object gets inactive eventually. */
+	ret = i915_gem_object_flush_active(obj);
+	if (ret)
+		goto out;
+
+	if (obj->active) {
+		seqno = obj->last_read_seqno;
+		ring = obj->ring;
+	}
+
+	if (seqno == 0)
+		 goto out;
+
+	/* Do this after OLR check to make sure we make forward progress polling
+	 * on this IOCTL with a 0 timeout (like busy ioctl)
+	 */
+	if (!args->timeout_ns) {
+		ret = -ETIME;
+		goto out;
+	}
+
+	drm_gem_object_unreference(&obj->base);
+	mutex_unlock(&dev->struct_mutex);
+
+	ret = __wait_seqno(ring, seqno, true, timeout);
+	if (timeout) {
+		WARN_ON(!timespec_valid(timeout));
+		args->timeout_ns = timespec_to_ns(timeout);
+	}
+	return ret;
+
+out:
+	drm_gem_object_unreference(&obj->base);
+	mutex_unlock(&dev->struct_mutex);
+	return ret;
+}
+#endif /* notyet */
 
 /**
  * i915_gem_object_sync - sync an object to a ring.
@@ -3061,7 +3728,14 @@ unlock:
 	return ret;
 }
 
-// i915_gem_throttle_ioctl
+#ifdef notyet
+int
+i915_gem_throttle_ioctl(struct drm_device *dev, void *data,
+			struct drm_file *file_priv)
+{
+	return i915_gem_ring_throttle(dev, file_priv);
+}
+#endif
 
 int
 i915_gem_madvise_ioctl(struct drm_device *dev, void *data,
@@ -3247,7 +3921,39 @@ i915_gem_idle(struct drm_device *dev)
 	return 0;
 }
 
-// i915_gem_l3_remap
+#ifdef notyet
+void i915_gem_l3_remap(struct drm_device *dev)
+{
+	drm_i915_private_t *dev_priv = dev->dev_private;
+	u32 misccpctl;
+	int i;
+
+	if (!HAS_L3_GPU_CACHE(dev))
+		return;
+
+	if (!dev_priv->l3_parity.remap_info)
+		return;
+
+	misccpctl = I915_READ(GEN7_MISCCPCTL);
+	I915_WRITE(GEN7_MISCCPCTL, misccpctl & ~GEN7_DOP_CLOCK_GATE_ENABLE);
+	POSTING_READ(GEN7_MISCCPCTL);
+
+	for (i = 0; i < GEN7_L3LOG_SIZE; i += 4) {
+		u32 remap = I915_READ(GEN7_L3LOG_BASE + i);
+		if (remap && remap != dev_priv->l3_parity.remap_info[i/4])
+			DRM_DEBUG("0x%x was already programmed to %x\n",
+				  GEN7_L3LOG_BASE + i, remap);
+		if (remap && !dev_priv->l3_parity.remap_info[i/4])
+			DRM_DEBUG_DRIVER("Clearing remapped register\n");
+		I915_WRITE(GEN7_L3LOG_BASE + i, dev_priv->l3_parity.remap_info[i/4]);
+	}
+
+	/* Make sure all the writes land before disabling dop clock gating */
+	POSTING_READ(GEN7_L3LOG_BASE);
+
+	I915_WRITE(GEN7_MISCCPCTL, misccpctl);
+}
+#endif /* notyet */
 
 void
 i915_gem_init_swizzling(struct drm_device *dev)
@@ -3343,7 +4049,22 @@ cleanup_render_ring:
 	return ret;
 }
 
-// intel_enable_ppgtt
+#ifdef notyet
+static bool
+intel_enable_ppgtt(struct drm_device *dev)
+{
+	if (i915_enable_ppgtt >= 0)
+		return i915_enable_ppgtt;
+
+#ifdef CONFIG_INTEL_IOMMU
+	/* Disable ppgtt on SNB if VT-d is on. */
+	if (INTEL_INFO(dev)->gen == 6 && intel_iommu_gfx_mapped)
+		return false;
+#endif
+
+	return true;
+}
+#endif /* notyet */
 
 int
 i915_gem_init(struct drm_device *dev)
@@ -3454,7 +4175,20 @@ i915_gem_leavevt_ioctl(struct drm_device *dev, void *data,
 	return i915_gem_idle(dev);
 }
 
-// i915_gem_lastclose
+#ifdef notyet
+void
+i915_gem_lastclose(struct drm_device *dev)
+{
+	int ret;
+
+	if (drm_core_check_feature(dev, DRIVER_MODESET))
+		return;
+
+	ret = i915_gem_idle(dev);
+	if (ret)
+		DRM_ERROR("failed to idle hardware: %d\n", ret);
+}
+#endif /* notyet */
 
 void
 init_ring_lists(struct intel_ring_buffer *ring)
@@ -3554,8 +4288,36 @@ kfree_obj:
 	return ret;
 }
 
-// i915_gem_free_phys_object
-// i915_gem_free_all_phys_object
+#ifdef notyet
+static void i915_gem_free_phys_object(struct drm_device *dev, int id)
+{
+	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_gem_phys_object *phys_obj;
+
+	if (!dev_priv->mm.phys_objs[id - 1])
+		return;
+
+	phys_obj = dev_priv->mm.phys_objs[id - 1];
+	if (phys_obj->cur_obj) {
+		i915_gem_detach_phys_object(dev, phys_obj->cur_obj);
+	}
+
+#ifdef CONFIG_X86
+	set_memory_wb((unsigned long)phys_obj->handle->vaddr, phys_obj->handle->size / PAGE_SIZE);
+#endif
+	drm_pci_free(dev, phys_obj->handle);
+	kfree(phys_obj);
+	dev_priv->mm.phys_objs[id - 1] = NULL;
+}
+
+void i915_gem_free_all_phys_object(struct drm_device *dev)
+{
+	int i;
+
+	for (i = I915_GEM_PHYS_CURSOR_0; i <= I915_MAX_PHYS_OBJECT; i++)
+		i915_gem_free_phys_object(dev, i);
+}
+#endif /* notyet */
 
 void i915_gem_detach_phys_object(struct drm_device *dev,
 				 struct drm_i915_gem_object *obj)
@@ -3689,5 +4451,62 @@ i915_gem_release(struct drm_device *dev, struct drm_file *file)
 	mtx_leave(&file_priv->mm.lock);
 }
 
-// mutex_is_locked_by
-// i915_gem_inactive_shrink
+#ifdef notyet
+static bool mutex_is_locked_by(struct mutex *mutex, struct task_struct *task)
+{
+	if (!mutex_is_locked(mutex))
+		return false;
+
+#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_MUTEXES)
+	return mutex->owner == task;
+#else
+	/* Since UP may be pre-empted, we cannot assume that we own the lock */
+	return false;
+#endif
+}
+
+static int
+i915_gem_inactive_shrink(struct shrinker *shrinker, struct shrink_control *sc)
+{
+	struct drm_i915_private *dev_priv =
+		container_of(shrinker,
+			     struct drm_i915_private,
+			     mm.inactive_shrinker);
+	struct drm_device *dev = dev_priv->dev;
+	struct drm_i915_gem_object *obj;
+	int nr_to_scan = sc->nr_to_scan;
+	bool unlock = true;
+	int cnt;
+
+	if (!mutex_trylock(&dev->struct_mutex)) {
+		if (!mutex_is_locked_by(&dev->struct_mutex, current))
+			return 0;
+
+		if (dev_priv->mm.shrinker_no_lock_stealing)
+			return 0;
+
+		unlock = false;
+	}
+
+	if (nr_to_scan) {
+		nr_to_scan -= i915_gem_purge(dev_priv, nr_to_scan);
+		if (nr_to_scan > 0)
+			nr_to_scan -= __i915_gem_shrink(dev_priv, nr_to_scan,
+							false);
+		if (nr_to_scan > 0)
+			i915_gem_shrink_all(dev_priv);
+	}
+
+	cnt = 0;
+	list_for_each_entry(obj, &dev_priv->mm.unbound_list, gtt_list)
+		if (obj->pages_pin_count == 0)
+			cnt += obj->base.size >> PAGE_SHIFT;
+	list_for_each_entry(obj, &dev_priv->mm.inactive_list, gtt_list)
+		if (obj->pin_count == 0 && obj->pages_pin_count == 0)
+			cnt += obj->base.size >> PAGE_SHIFT;
+
+	if (unlock)
+		mutex_unlock(&dev->struct_mutex);
+	return cnt;
+}
+#endif /* notyet */
