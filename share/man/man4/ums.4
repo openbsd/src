@@ -1,4 +1,4 @@
-.\" $OpenBSD: ums.4,v 1.10 2008/06/26 05:42:07 ray Exp $
+.\" $OpenBSD: ums.4,v 1.11 2013/08/09 22:10:17 edd Exp $
 .\" $NetBSD: ums.4,v 1.7 2001/12/28 17:38:00 augustss Exp $
 .\"
 .\" Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -28,23 +28,30 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: August 9 2013 $
 .Dt UMS 4
 .Os
 .Sh NAME
 .Nm ums
-.Nd USB mouse support
+.Nd USB HID mouse, touchscreen and digitiser devices
 .Sh SYNOPSIS
 .Cd "ums*     at uhidev?"
 .Cd "wsmouse* at ums? mux 0"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for USB mice.
-Access to the mouse is through the
+driver provides support for USB HID mice, touchscreens and digitisers.
+Access to these devices is through the
 .Xr wscons 4
 driver.
+.Pp
+If the touchscreen sensor is poorly aligned, then
+.Xr xtsscale 1
+should be used to provide calibration results to the
+.Nm
+driver.
 .Sh SEE ALSO
+.Xr xtsscale 1 ,
 .Xr uhidev 4 ,
 .Xr usb 4 ,
 .Xr wsmouse 4
@@ -54,3 +61,15 @@ The
 driver
 first appeared in
 .Ox 2.8 .
+.Sh AUTHORS
+.An -nosplit
+HID touchscreen and digitiser support was written by
+.An Robert Nagy
+and
+.An Matthieu Herrb
+then later merged into the generic
+.Xr ums 4
+driver by
+.An Edd Barrett .
+.Sh CAVEATS
+Touchscreen and digitiser pressure sensitivity is not yet implemented.

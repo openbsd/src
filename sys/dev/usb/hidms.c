@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidms.c,v 1.4 2011/08/19 18:46:22 matthieu Exp $ */
+/*	$OpenBSD: hidms.c,v 1.5 2013/08/09 22:10:17 edd Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -194,6 +194,27 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 			break;
 	ms->sc_num_buttons = i - 1;
 
+	if (hid_locate(desc, dlen, HID_USAGE2(HUP_DIGITIZERS,
+	    HUD_TIP_SWITCH), id, hid_input,
+	    &ms->sc_loc_btn[ms->sc_num_buttons], NULL)){
+		ms->sc_flags |= HIDMS_TIP;
+		ms->sc_num_buttons++;
+	}
+
+	if (hid_locate(desc, dlen, HID_USAGE2(HUP_DIGITIZERS,
+	    HUD_ERASER), id, hid_input,
+	    &ms->sc_loc_btn[ms->sc_num_buttons], NULL)){
+		ms->sc_flags |= HIDMS_ERASER;
+		ms->sc_num_buttons++;
+	}
+
+	if (hid_locate(desc, dlen, HID_USAGE2(HUP_DIGITIZERS,
+	    HUD_BARREL_SWITCH), id, hid_input,
+	    &ms->sc_loc_btn[ms->sc_num_buttons], NULL)){
+		ms->sc_flags |= HIDMS_BARREL;
+		ms->sc_num_buttons++;
+	}
+
 	/*
 	 * The Microsoft Wireless Notebook Optical Mouse seems to be in worse
 	 * shape than the Wireless Intellimouse 2.0, as its X, Y, wheel, and
@@ -216,6 +237,11 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 	/* Parse descriptors to get touch panel bounds */
 	d = hid_start_parse(desc, dlen, hid_input);
 	while (hid_get_item(d, &h)) {
+		if (h.kind != hid_input ||
+		    HID_GET_USAGE_PAGE(h.usage) != HUP_GENERIC_DESKTOP)
+			continue;
+		DPRINTF(("hidms: usage=0x%x range %d..%d\n",
+			h.usage, h.logical_minimum, h.logical_maximum));
 		switch (HID_GET_USAGE(h.usage)) {
 		case HUG_X:
 			if (ms->sc_flags & HIDMS_ABSX) {
@@ -255,6 +281,14 @@ hidms_attach(struct hidms *ms, const struct wsmouse_accessops *ops)
 		printf(", Z and W dir");
 		break;
 	}
+
+	if (ms->sc_flags & HIDMS_TIP)
+		printf(", tip");
+	if (ms->sc_flags & HIDMS_BARREL)
+		printf(", barrel");
+	if (ms->sc_flags & HIDMS_ERASER)
+		printf(", eraser");
+
 	printf("\n");
 
 #ifdef HIDMS_DEBUG
