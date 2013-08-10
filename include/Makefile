@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.172 2013/08/06 19:11:53 miod Exp $
+#	$OpenBSD: Makefile,v 1.173 2013/08/10 14:38:26 ajacoutot Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -73,7 +73,7 @@ RDIRS+=../kerberosV/lib/libasn1
 RDIRS+=../kerberosV/lib/libgssapi
 RDIRS+=../kerberosV/lib/libhdb
 RDIRS+=../kerberosV/lib/libkadm5clnt
-RDIRS+=../kerberosV/lib/libkafs5
+RDIRS+=../kerberosV/lib/libkafs
 RDIRS+=../kerberosV/lib/libkrb5
 RDIRS+=../kerberosV/lib/libroken
 RDIRS+=../kerberosV/lib/libkdc
