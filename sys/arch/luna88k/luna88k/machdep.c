@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.88 2013/06/11 16:42:09 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.89 2013/08/10 07:42:58 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -292,9 +292,6 @@ size_memory()
 {
 	unsigned int *volatile look;
 	unsigned int *max;
-#if 0
-	extern char *end;
-#endif
 #define PATTERN   0x5a5a5a5a
 #define STRIDE    (4*1024) 	/* 4k at a time */
 #define Roundup(value, stride) (((unsigned)(value) + (stride) - 1) & ~((stride)-1))
@@ -987,7 +984,6 @@ void
 luna88k_bootstrap()
 {
 	extern const struct cmmu_p cmmu8820x;
-	extern char *end;
 	vaddr_t avail_start;
 	extern vaddr_t avail_end;
 #ifndef MULTIPROCESSOR
@@ -1001,13 +997,15 @@ luna88k_bootstrap()
 	*int_mask_reg[2] = *int_mask_reg[3] = 0;
 
 	/* clear software interrupts; just read registers */
-	*swi_reg[0]; *swi_reg[1];
-	*swi_reg[2]; *swi_reg[3];
+	*(volatile uint32_t *)swi_reg[0];
+	*(volatile uint32_t *)swi_reg[1];
+	*(volatile uint32_t *)swi_reg[2];
+	*(volatile uint32_t *)swi_reg[3];
 
 	uvmexp.pagesize = PAGE_SIZE;
 	uvm_setpagesize();
 
-	first_addr = round_page((vaddr_t)&end);	/* XXX temp until symbols */
+	first_addr = round_page(first_addr);
 	last_addr = size_memory();
 	physmem = atop(last_addr);
 
