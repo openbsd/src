@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.32 2013/07/05 17:14:27 florian Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.33 2013/08/10 18:33:21 florian Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -269,6 +269,12 @@ pflow_clone_destroy(struct ifnet *ifp)
 	int			 s;
 
 	s = splnet();
+	if (timeout_initialized(&sc->sc_tmo))
+		timeout_del(&sc->sc_tmo);
+	if (timeout_initialized(&sc->sc_tmo6))
+		timeout_del(&sc->sc_tmo6);
+	if (timeout_initialized(&sc->sc_tmo_tmpl))
+		timeout_del(&sc->sc_tmo_tmpl);
 	pflow_flush(sc);
 	if_detach(ifp);
 	SLIST_REMOVE(&pflowif_list, sc, pflow_softc, sc_next);
