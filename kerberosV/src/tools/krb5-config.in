@@ -132,7 +132,7 @@ if test "$do_libs" = "yes"; then
 	lib_flags="$lib_flags -lkadm5srv @LIB_dbopen@"
 	;;
     kafs)
-	lib_flags="$lib_flags -lkafs5"
+	lib_flags="$lib_flags -lkafs"
 	;;
     esac
     lib_flags="$lib_flags -lkrb5 @LIB_pkinit@ -lasn1"
