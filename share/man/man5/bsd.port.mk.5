@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.383 2013/08/07 07:21:03 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.384 2013/08/10 10:17:36 miod Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 7 2013 $
+.Dd $Mdocdate: August 10 2013 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1656,8 +1656,8 @@ Path to the current port's directory, relative to ${PORTSDIR},
 including flavors and subpackages.
 See
 .Xr pkgpath 7 .
-.It Ev GCC2_ARCHS , GCC3_ARCHS , GCC4_ARCHS
-List of architectures using gcc 2.95.3, gcc 3.3.5, or gcc 4.2.1.
+.It Ev GCC3_ARCHS , GCC4_ARCHS
+List of architectures using gcc 3.3.6, or gcc 4.2.1.
 Read-only.
 Use with
 .Ev NOT_FOR_ARCHS
