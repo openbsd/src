@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.3 2013/06/12 22:55:02 tedu Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.4 2013/08/10 00:12:45 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -25,12 +25,6 @@
 
 #include "fusefs_node.h"
 #include "fusefs.h"
-
-#ifdef	FUSE_DEBUG_VNOP
-#define	DPRINTF(fmt, arg...)	printf("fuse vnop: " fmt, ##arg)
-#else
-#define	DPRINTF(fmt, arg...)
-#endif
 
 int fusefs_lookup(void *);
 
@@ -61,9 +55,6 @@ fusefs_lookup(void *v)
 	fmp = (struct fusefs_mnt *)dp->ufs_ino.i_ump;
 	lockparent = flags & LOCKPARENT;
 	wantparent = flags & (LOCKPARENT | WANTPARENT);
-
-	DPRINTF("lookup path %s\n", cnp->cn_pnbuf);
-	DPRINTF("lookup file %s\n", cnp->cn_nameptr);
 
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
 		return (error);

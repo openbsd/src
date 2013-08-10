@@ -1,4 +1,4 @@
-/* $OpenBSD: fusefs.h,v 1.2 2013/06/09 12:51:40 tedu Exp $ */
+/* $OpenBSD: fusefs.h,v 1.3 2013/08/10 00:12:45 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -80,9 +80,6 @@ void fuse_device_set_fmp(struct fusefs_mnt *);
  */
 #define	FUSE_ROOTINO ((ino_t)1)
 #define VFSTOFUSEFS(mp)	((struct fusefs_mnt *)((mp)->mnt_data))
-
-/* #define FUSE_DEBUG_VNOP
-#define FUSE_DEBUG */
 
 #endif /* _KERNEL */
 #endif /* __FUSEFS_H__ */

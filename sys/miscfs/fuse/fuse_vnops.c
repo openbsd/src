@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.3 2013/06/12 22:55:02 tedu Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.4 2013/08/10 00:12:45 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -31,12 +31,6 @@
 
 #include "fusefs_node.h"
 #include "fusefs.h"
-
-#ifdef	FUSE_DEBUG_VNOP
-#define	DPRINTF(fmt, arg...)	printf("fuse vnop: " fmt, ##arg)
-#else
-#define	DPRINTF(fmt, arg...)
-#endif
 
 /* Prototypes for fusefs vnode ops */
 int	fusefs_lookup(void *);
@@ -127,16 +121,12 @@ fusefs_open(void *v)
 	int error;
 	int isdir;
 
-	DPRINTF("fusefs_open\n");
-
 	ap = v;
 	ip = VTOI(ap->a_vp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
 	if (!fmp->sess_init)
 		return (0);
-
-	DPRINTF("inode = %i mode=0x%x\n", ip->ufs_ino.i_number, ap->a_mode);
 
 	isdir = 0;
 	if (ip->vtype == VDIR)
@@ -159,8 +149,6 @@ fusefs_open(void *v)
 	if (error)
 		return (error);
 
-	DPRINTF("file open fd : %i\n", ip->fufh[fufh_type].fh_id);
-
 	return (error);
 }
 
@@ -172,8 +160,6 @@ fusefs_close(void *v)
 	struct fusefs_mnt *fmp;
 	enum fufh_type fufh_type = FUFH_RDONLY;
 	int isdir, i;
-
-	DPRINTF("fusefs_close\n");
 
 	ap = v;
 	ip = VTOI(ap->a_vp);
@@ -223,8 +209,6 @@ fusefs_access(void *v)
 	uint32_t mask = 0;
 	int error = 0;
 
-	DPRINTF("fusefs_access\n");
-
 	ap = v;
 	p = ap->a_p;
 	ip = VTOI(ap->a_vp);
@@ -262,7 +246,7 @@ fusefs_access(void *v)
 			goto system_check;
 		}
 
-		DPRINTF("access error %i\n", error);
+		printf("fusefs: access error %i\n", error);
 		pool_put(&fusefs_fbuf_pool, fbuf);
 		return (error);
 	}
@@ -288,8 +272,6 @@ fusefs_getattr(void *v)
 	struct fusebuf *fbuf;
 	int error = 0;
 
-	DPRINTF("fusefs_getattr\n");
-
 	ip = VTOI(vp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
@@ -300,7 +282,6 @@ fusefs_getattr(void *v)
 
 	error = fb_queue(fmp->dev, fbuf);
 	if (error) {
-		DPRINTF("getattr error\n");
 		pool_put(&fusefs_fbuf_pool, fbuf);
 		return (error);
 	}
@@ -335,7 +316,6 @@ fusefs_setattr(void *v)
 	struct fb_io *io;
 	int error = 0;
 
-	DPRINTF("fusefs_setattr\n");
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 	/*
 	 * Check for unsettable attributes.
@@ -447,7 +427,6 @@ out:
 int
 fusefs_ioctl(void *v)
 {
-	DPRINTF("fusefs_ioctl\n");
 	return (ENOTTY);
 }
 
@@ -464,8 +443,6 @@ fusefs_link(void *v)
 	struct fusefs_node *dip;
 	struct fusebuf *fbuf;
 	int error = 0;
-
-	DPRINTF("fusefs_link\n");
 
 	if (vp->v_type == VDIR) {
 		VOP_ABORTOP(dvp, cnp);
@@ -532,7 +509,6 @@ fusefs_symlink(void *v)
 	int error = 0;
 	int len;
 
-	DPRINTF("fusefs_symlink\n");
 	dp = VTOI(dvp);
 	fmp = (struct fusefs_mnt *)dp->ufs_ino.i_ump;
 
@@ -598,9 +574,6 @@ fusefs_readdir(void *v)
 	if (!fmp->sess_init)
 		return (0);
 
-	DPRINTF("fusefs_readdir\n");
-	DPRINTF("uio resid 0x%x\n", uio->uio_resid);
-
 	if (uio->uio_resid < sizeof(struct dirent))
 		return (EINVAL);
 
@@ -653,7 +626,6 @@ fusefs_inactive(void *v)
 	int error = 0;
 	int type;
 
-	DPRINTF("fusefs_inactive\n");
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
 	for (type = 0; type < FUFH_MAXTYPE; type++) {
@@ -683,8 +655,6 @@ fusefs_readlink(void *v)
 	struct uio *uio;
 	struct proc *p;
 	int error = 0;
-
-	DPRINTF("fusefs_readlink\n");
 
 	ip = VTOI(vp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
@@ -724,14 +694,13 @@ fusefs_reclaim(void *v)
 	struct fusefs_mnt *fmp;
 	int type;
 
-	DPRINTF("fusefs_reclaim\n");
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
 	/*close opened files*/
 	for (type = 0; type < FUFH_MAXTYPE; type++) {
 		fufh = &(ip->fufh[type]);
 		if (fufh->fh_type != FUFH_INVALID) {
-			printf("FUSE: vnode being reclaimed is valid");
+			printf("FUSE: vnode being reclaimed is valid\n");
 			fusefs_file_close(fmp, ip, fufh->fh_type, type,
 			    (ip->vtype == VDIR), ap->a_p);
 		}
@@ -781,8 +750,6 @@ fusefs_create(void *v)
 	struct fusebuf *fbuf;
 	int error = 0;
 	mode_t mode;
-
-	DPRINTF("fusefs_create(cnp %08x, vap %08x\n", cnp, vap);
 
 	ip = VTOI(dvp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
@@ -854,13 +821,8 @@ fusefs_read(void *v)
 	size_t size;
 	int error=0;
 
-	DPRINTF("fusefs_read\n");
-
 	ip = VTOI(vp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
-
-	DPRINTF("read inode=%i, offset=%llu, resid=%x\n",
-	    ip->ufs_ino.i_number, uio->uio_offset, uio->uio_resid);
 
 	if (uio->uio_resid == 0)
 		return (error);
@@ -910,13 +872,8 @@ fusefs_write(void *v)
 	size_t len, diff;
 	int error=0;
 
-	DPRINTF("fusefs_write\n");
-
 	ip = VTOI(vp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
-
-	DPRINTF("write inode=%i, offset=%llu, resid=%x\n",
-	    ip->ufs_ino.i_number, uio->uio_offset, uio->uio_resid);
 
 	if (uio->uio_resid == 0)
 		return (error);
@@ -931,7 +888,7 @@ fusefs_write(void *v)
 		fbuf->fb_io_len = len;
 
 		if ((error = uiomove(fbuf->fb_dat, len, uio))) {
-			DPRINTF("uio error %i", error);
+			printf("fusefs: uio error %i\n", error);
 			break;
 		}
 
@@ -963,8 +920,6 @@ fusefs_poll(void *v)
 {
 	struct vop_poll_args *ap = v;
 
-	DPRINTF("fusefs_poll\n");
-
 	/*
 	 * We should really check to see if I/O is possible.
 	 */
@@ -986,8 +941,6 @@ fusefs_rename(void *v)
 	struct fusefs_mnt *fmp;
 	struct fusebuf *fbuf;
 	int error = 0;
-
-	DPRINTF("fusefs_rename\n");
 
 #ifdef DIAGNOSTIC
 	if ((tcnp->cn_flags & HASBUF) == 0 ||
@@ -1105,8 +1058,6 @@ fusefs_mkdir(void *v)
 	struct fusebuf *fbuf;
 	int error = 0;
 
-	DPRINTF("fusefs_mkdir %s\n", cnp->cn_nameptr);
-
 	ip = VTOI(dvp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
@@ -1163,8 +1114,6 @@ fusefs_rmdir(void *v)
 	struct fusefs_mnt *fmp;
 	struct fusebuf *fbuf;
 	int error;
-
-	DPRINTF("fusefs_rmdir\n");
 
 	ip = VTOI(vp);
 	dp = VTOI(dvp);
@@ -1233,8 +1182,6 @@ fusefs_remove(void *v)
 	struct fusebuf *fbuf;
 	int error = 0;
 
-	DPRINTF("fusefs_remove\n");
-
 	ip = VTOI(vp);
 	dp = VTOI(dvp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
@@ -1273,7 +1220,6 @@ out:
 int
 fusefs_strategy(void *v)
 {
-	DPRINTF("fusefs_strategy\n");
 	return (0);
 }
 
@@ -1283,7 +1229,6 @@ fusefs_lock(void *v)
 	struct vop_lock_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	DPRINTF("fusefs_lock\n");
 	return (lockmgr(&VTOI(vp)->ufs_ino.i_lock, ap->a_flags, NULL));
 }
 
@@ -1293,7 +1238,6 @@ fusefs_unlock(void *v)
 	struct vop_unlock_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	DPRINTF("fusefs_unlock\n");
 	return (lockmgr(&VTOI(vp)->ufs_ino.i_lock, ap->a_flags | LK_RELEASE,
 	    NULL));
 }
@@ -1303,7 +1247,6 @@ fusefs_islocked(void *v)
 {
 	struct vop_islocked_args *ap = v;
 
-	DPRINTF("fusefs_islocked\n");
 	return (lockstatus(&VTOI(ap->a_vp)->ufs_ino.i_lock));
 }
 
@@ -1313,7 +1256,6 @@ fusefs_advlock(void *v)
 	struct vop_advlock_args *ap = v;
 	struct fusefs_node *ip = VTOI(ap->a_vp);
 
-	DPRINTF("fusefs_advlock\n");
 	return (lf_advlock(&ip->ufs_ino.i_lockf, ip->filesize, ap->a_id,
 	    ap->a_op, ap->a_fl, ap->a_flags));
 }

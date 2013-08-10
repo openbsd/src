@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.4 2013/07/11 11:38:10 syl Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.5 2013/08/10 00:12:44 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -82,7 +82,7 @@ const static struct filterops fuse_seltrue_filtops = {
 	filt_seltrue
 };
 
-#ifdef	FUSE_DEBUG
+#ifdef FUSE_DEBUG
 static void
 fuse_dump_buff(char *buff, int len)
 {
@@ -261,7 +261,6 @@ fuseioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	switch (cmd) {
 	default:
-		DPRINTF("bad ioctl number %d\n", cmd);
 		return (ENODEV);
 	}
 
@@ -330,7 +329,6 @@ fuseread(dev_t dev, struct uio *uio, int ioflag)
 	}
 
 	remain = (fbuf->fb_len - fbuf->fb_resid);
-	DPRINTF("size remaining : %i\n", remain);
 
 	/*
 	 * fbuf moves from a simpleq to another
@@ -370,10 +368,8 @@ fusewrite(dev_t dev, struct uio *uio, int ioflag)
 		return (error);
 
 	SIMPLEQ_FOREACH(fbuf, &fd->fd_fbufs_wait, fb_next) {
-		if (fbuf->fb_uuid == hdr.fh_uuid) {
-			DPRINTF("catch unique %lu\n", fbuf->fb_uuid);
+		if (fbuf->fb_uuid == hdr.fh_uuid)
 			break;
-		}
 
 		lastfbuf = fbuf;
 	}

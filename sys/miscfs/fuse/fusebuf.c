@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.c,v 1.1 2013/06/03 15:50:56 tedu Exp $ */
+/* $OpenBSD: fusebuf.c,v 1.2 2013/08/10 00:12:45 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -30,12 +30,6 @@
 #include "fusefs_node.h"
 #include "fusefs.h"
 
-#ifdef	FUSE_DEBUG
-#define	DPRINTF(fmt, arg...)	printf("fuse ipc: " fmt, ##arg)
-#else
-#define	DPRINTF(fmt, arg...)
-#endif
-
 struct fusebuf *
 fb_setup(size_t len, ino_t ino, int op, struct proc *p)
 {
@@ -48,8 +42,6 @@ fb_setup(size_t len, ino_t ino, int op, struct proc *p)
 	fbuf->fb_type = op;
 	fbuf->fb_ino = ino;
 	fbuf->fb_resid = -1;
-
-	DPRINTF("create unique %lu\n", fbuf->fb_uuid);
 
 	return (fbuf);
 }

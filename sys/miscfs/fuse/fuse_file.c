@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_file.c,v 1.1 2013/06/03 15:50:56 tedu Exp $ */
+/* $OpenBSD: fuse_file.c,v 1.2 2013/08/10 00:12:45 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -23,12 +23,6 @@
 
 #include "fusefs_node.h"
 #include "fusefs.h"
-
-#ifdef	FUSE_DEBUG_VNOP
-#define	DPRINTF(fmt, arg...)	printf("fuse vnop: " fmt, ##arg)
-#else
-#define	DPRINTF(fmt, arg...)
-#endif
 
 int
 fusefs_file_open(struct fusefs_mnt *fmp, struct fusefs_node *ip,
