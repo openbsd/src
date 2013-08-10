@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.59 2013/07/11 07:03:46 ajacoutot Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.60 2013/08/10 10:19:35 ajacoutot Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -42,7 +42,7 @@ LIBGSSAPI?=	${DESTDIR}/usr/lib/libgssapi.a
 LIBHDB?=	${DESTDIR}/usr/lib/libhdb.a
 LIBKADM5CLNT?=	${DESTDIR}/usr/lib/libkadm5clnt.a
 LIBKADM5SRV?=	${DESTDIR}/usr/lib/libkadm5srv.a
-LIBKAFS5?=	${DESTDIR}/usr/lib/libkafs5.a
+LIBKAFS?=	${DESTDIR}/usr/lib/libkafs.a
 LIBKEYNOTE?=	${DESTDIR}/usr/lib/libkeynote.a
 LIBKRB5?=	${DESTDIR}/usr/lib/libkrb5.a
 LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a

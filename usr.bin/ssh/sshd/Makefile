@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.78 2013/07/20 01:55:13 djm Exp $
+#	$OpenBSD: Makefile,v 1.79 2013/08/10 10:19:35 ajacoutot Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -31,7 +31,7 @@ SRCS+=  auth-krb5.c auth2-gss.c gss-serv.c gss-serv-krb5.c
 
 .if (${KERBEROS5:L} == "yes")
 LDADD+= -lgssapi -lkrb5 -lasn1
-LDADD+= -lwind -lroken -lcom_err -lpthread -lheimbase -lkafs5
+LDADD+= -lwind -lroken -lcom_err -lpthread -lheimbase -lkafs
 DPADD+= ${LIBGSSAPI} ${LIBKRB5}
 .endif
 
