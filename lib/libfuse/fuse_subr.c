@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_subr.c,v 1.2 2013/06/03 16:21:08 tedu Exp $ */
+/* $OpenBSD: fuse_subr.c,v 1.3 2013/08/10 00:30:43 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -28,7 +28,6 @@ alloc_vn(struct fuse *f, const char *path, ino_t ino, ino_t parent)
 {
 	struct fuse_vnode *vn;
 
-	DPRINTF("%s %i@%i = %s\n", __func__, ino, parent, path);
 	if ((vn = malloc(sizeof(*vn))) == NULL) {
 		DPERROR("alloc_vn:");
 		return (NULL);
@@ -86,7 +85,6 @@ get_vn_by_name_and_parent(struct fuse *f, const char *path, ino_t parent)
 	struct fuse_vn_head *vn_head;
 	struct fuse_vnode *v = NULL;
 
-	DPRINTF("%s %i = %s\n", __func__, parent, path);
 	vn_head = dict_get(&f->name_tree, path);
 
 	if (vn_head == NULL)

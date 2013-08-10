@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.6 2013/08/08 03:16:13 guenther Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.7 2013/08/10 00:30:43 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -90,7 +90,6 @@ ifuse_ops_init(struct fusebuf *fbuf)
 {
 	DPRINTF("Opcode:\tinit\n");
 	fbuf->fb_len = 0;
-	DPRINTF("\n");
 
 	return (0);
 }
@@ -118,7 +117,6 @@ ifuse_ops_getattr(struct fuse *f, struct fusebuf *fbuf)
 	if (fbuf->fb_err)
 		fbuf->fb_len = 0;
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -138,7 +136,6 @@ ifuse_ops_access(struct fuse *f, struct fusebuf *fbuf)
 	fbuf->fb_err = f->op.access(realname, fbuf->fb_io_mode);
 	free(realname);
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -168,7 +165,6 @@ ifuse_ops_open(struct fuse *f, struct fusebuf *fbuf)
 	if (!fbuf->fb_err)
 		fbuf->fb_io_fd = ffi.fh;
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -210,7 +206,6 @@ ifuse_ops_opendir(struct fuse *f, struct fusebuf *fbuf)
 		vn->fd->start = 0;
 	}
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -339,7 +334,6 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 		vn->fd->filled = 1;
 	}
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -372,7 +366,6 @@ ifuse_ops_releasedir(struct fuse *f, struct fusebuf *fbuf)
 	if (!fbuf->fb_err)
 		free(vn->fd);
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -398,7 +391,6 @@ ifuse_ops_release(struct fuse *f, struct fusebuf *fbuf)
 	fbuf->fb_err = f->op.release(realname, &ffi);
 	free(realname);
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -434,7 +426,6 @@ ifuse_ops_lookup(struct fuse *f, struct fusebuf *fbuf)
 	if (fbuf->fb_err)
 		fbuf->fb_len = 0;
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -470,7 +461,6 @@ ifuse_ops_read(struct fuse *f, struct fusebuf *fbuf)
 		fbuf->fb_err = ret;
 	}
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -509,7 +499,6 @@ ifuse_ops_write(struct fuse *f, struct fusebuf *fbuf)
 	} else
 		fbuf->fb_err = ret;
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -544,7 +533,6 @@ ifuse_ops_create(struct fuse *f, struct fusebuf *fbuf)
 	}
 	free(realname);
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -575,7 +563,6 @@ ifuse_ops_mkdir(struct fuse *f, struct fusebuf *fbuf)
 	}
 	free(realname);
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -595,7 +582,6 @@ ifuse_ops_rmdir(struct fuse *f, struct fusebuf *fbuf)
 	fbuf->fb_err = f->op.rmdir(realname);
 	free(realname);
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -633,7 +619,6 @@ ifuse_ops_readlink(struct fuse *f, struct fusebuf *fbuf)
 	} else
 		fbuf->fb_len = 0;
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -653,7 +638,6 @@ ifuse_ops_unlink(struct fuse *f, struct fusebuf *fbuf)
 	fbuf->fb_err = f->op.unlink(realname);
 	free(realname);
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -677,7 +661,6 @@ ifuse_ops_statfs(struct fuse *f, struct fusebuf *fbuf)
 	if (fbuf->fb_err)
 		fbuf->fb_len = 0;
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -701,7 +684,6 @@ ifuse_ops_link(struct fuse *f, struct fusebuf *fbuf)
 	free(realname);
 	free(realname_ln);
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -770,7 +752,6 @@ ifuse_ops_setattr(struct fuse *f, struct fusebuf *fbuf)
 	if (fbuf->fb_err)
 		fbuf->fb_len = 0;
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -793,7 +774,6 @@ ifuse_ops_symlink(unused struct fuse *f, struct fusebuf *fbuf)
 	fbuf->fb_ino = vn->ino;
 	free(realname);
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -820,7 +800,6 @@ ifuse_ops_rename(struct fuse *f, struct fusebuf *fbuf)
 	free(realnamef);
 	free(realnamet);
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -834,7 +813,6 @@ ifuse_ops_destroy(struct fuse *f, struct fusebuf *fbuf)
 	fbuf->fb_err = 0;
 	f->fc->dead = 1;
 
-	DPRINTF("\n");
 	return (0);
 }
 
@@ -916,8 +894,8 @@ ifuse_exec_opcode(struct fuse *f, struct fusebuf *fbuf)
 
 		fbuf->fb_err = -ENOSYS;
 		fbuf->fb_len = 0;
-		DPRINTF("\n");
 	}
+	DPRINTF("\n");
 
 	/* fuse api use negative errno */
 	fbuf->fb_err = -fbuf->fb_err;

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.8 2013/07/05 11:08:15 syl Exp $ */
+/* $OpenBSD: fuse.c,v 1.9 2013/08/10 00:30:43 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -159,7 +159,6 @@ fuse_unmount(const char *dir, unused struct fuse_chan *ch)
 int
 fuse_is_lib_option(unused const char *opt)
 {
-	DPRINTF("option %s\n", opt);
 	return (0);
 }
 
