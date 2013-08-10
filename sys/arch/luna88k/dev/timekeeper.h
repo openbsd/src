@@ -1,4 +1,4 @@
-/* $OpenBSD: timekeeper.h,v 1.2 2008/06/26 05:42:11 ray Exp $ */
+/* $OpenBSD: timekeeper.h,v 1.3 2013/08/10 22:27:14 aoyama Exp $ */
 /* $NetBSD: timekeeper.h,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
 
 /*-
@@ -44,6 +44,8 @@
 /* bits in cl_csr */
 #define MK_CSR_WRITE	0x80	/* want to write */
 #define MK_CSR_READ	0x40	/* want to read (freeze clock) */
+/* NVRAM space is mapped with 4-bytes stride */
+#define MK_NVRAM_SPACE	(4 * (2048 - 8))
 
 /*
  * Dallas Semiconductor DS1397 for LUNA-88K2
