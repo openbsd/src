@@ -46,7 +46,7 @@ struct field_val_assoc
   unsigned val;
 };
 
-struct field_val_assoc cr_regs[] =
+struct field_val_assoc m88100_cr_regs[] =
 {
   {"PID", 0},
   {"PSR", 1},
@@ -69,6 +69,47 @@ struct field_val_assoc cr_regs[] =
   {"SR1", 18},
   {"SR2", 19},
   {"SR3", 20},
+
+  {NULL, 0},
+};
+
+struct field_val_assoc m88110_cr_regs[] =
+{
+  {"PID", 0},
+  {"PSR", 1},
+  {"EPSR", 2},
+  {"EXIP", 4},
+  {"ENIP", 5},
+  {"VBR", 7},
+  {"SRX", 16},
+  {"SR0", 17},
+  {"SR1", 18},
+  {"SR2", 19},
+  {"SR3", 20},
+  {"ICMD", 25},
+  {"ICTL", 26},
+  {"ISAR", 27},
+  {"ISAP", 28},
+  {"IUAP", 29},
+  {"IIR", 30},
+  {"IBP", 31},
+  {"IPPU", 32},
+  {"IPPL", 33},
+  {"ISR", 34},
+  {"ILAR", 35},
+  {"IPAR", 36},
+  {"DCMD", 40},
+  {"DCTL", 41},
+  {"DSAR", 42},
+  {"DSAP", 43},
+  {"DUAP", 44},
+  {"DIR", 45},
+  {"DBP", 46},
+  {"DPPU", 47},
+  {"DPPL", 48},
+  {"DSR", 49},
+  {"DLAR", 50},
+  {"DPAR", 51},
 
   {NULL, 0},
 };
@@ -257,7 +298,7 @@ md_begin ()
 #endif
 }
 
-const char *md_shortopts = "";
+const char *md_shortopts = "m:";
 struct option md_longopts[] = {
   {NULL, no_argument, NULL, 0}
 };
@@ -779,7 +820,7 @@ get_cmp (param, valp)
 
 #ifdef REGISTER_PREFIX
   /* SVR4 compiler prefixes condition codes with the register prefix */
-  if (param == REGISTER_PREFIX)
+  if (*param == REGISTER_PREFIX)
     param++;
 #endif
   param = match_name (param, cmpslot, valp);
@@ -827,7 +868,7 @@ get_cnd (param, valp)
     {
 #ifdef REGISTER_PREFIX
       /* SVR4 compiler prefixes condition codes with the register prefix */
-      if (param == REGISTER_PREFIX)
+      if (*param == REGISTER_PREFIX)
 	param++;
 #endif
 
@@ -878,7 +919,7 @@ get_bf_offset_expression (param, offsetp)
 
 #ifdef REGISTER_PREFIX
   /* SVR4 compiler prefixes condition codes with the register prefix */
-  if (param == REGISTER_PREFIX && ISALPHA (param[1]))
+  if (*param == REGISTER_PREFIX && ISALPHA (param[1]))
     param++;
 #endif
 
@@ -989,7 +1030,9 @@ get_cr (param, regnop)
       return NULL;
     }
 
-  param = match_name (param, cr_regs, regnop);
+  param = match_name (param,
+		      current_cpu == 88110 ? m88110_cr_regs : m88100_cr_regs,
+		      regnop);
 
   return param;
 }
