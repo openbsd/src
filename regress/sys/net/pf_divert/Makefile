@@ -1,16 +1,21 @@
-#	$OpenBSD: Makefile,v 1.3 2013/06/17 19:42:27 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2013/08/11 21:49:04 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
 # p5-Socket6		Perl defines relating to AF_INET6 sockets
+#
+# Check wether all required perl packages are installed.  If some
+# are missing print a warning and skip the tests, but do not fail.
 
-
-TARGETS ?=		${ARGS}
-.if empty (TARGETS)
-ARGS !=			cd ${.CURDIR} && ls args-*.pl
+PERL_REQUIRE !=	perl -Mstrict -Mwarnings -e ' \
+    eval { require IO::Socket::INET6 } or print $@; \
+    eval { require Socket6 } or print $@; \
+'
+.if ! empty(PERL_REQUIRE)
+regress:
+	@echo "${PERL_REQUIRE}"
+	@echo install these perl packages for additional tests
 .endif
-REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
-CLEANFILES +=		*.log ktrace.out stamp-*
 
 # Fill out these variables as you have to test divert with the pf
 # kernel running on a remote machine.  You have to specify a local
@@ -30,20 +35,40 @@ REMOTE_ADDR6 ?=
 FAKE_ADDR6 ?=
 REMOTE_SSH ?=
 
+.if empty (LOCAL_ADDR) || empty (REMOTE_ADDR) || empty (FAKE_ADDR) || \
+    empty (LOCAL_ADDR6) || empty (REMOTE_ADDR6) || empty (FAKE_ADDR6) || \
+    empty (REMOTE_SSH)
+regress:
+	@echo this tests needs a remote machine to operate on
+	@echo LOCAL_ADDR REMOTE_ADDR FAKE_ADDR LOCAL_ADDR6
+	@echo REMOTE_ADDR6 FAKE_ADDR6 REMOTE_SSH are empty
+	@echo fill out these variables for additional tests
+.endif
+
+# Automatically generate regress targets from test cases in directory.
+
+ARGS !=			cd ${.CURDIR} && ls args-*.pl
+TARGETS ?=		${ARGS}
+REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
+CLEANFILES +=		*.log ktrace.out stamp-*
+
 .MAIN: all
 
-.if make(regress) || make(all)
+.if ! empty (REMOTE_SSH)
+.if make (regress) || make (all)
 .BEGIN:
-.if empty (REMOTE_SSH)
-	@echo "remote test target host not set"; false
-.endif
 	@echo
 	${SUDO} true
-	ssh -t q0 ${SUDO} true
+	ssh -t ${REMOTE_SSH} ${SUDO} true
+.if ! empty (FAKE_ADDR) && ! empty (REMOTE_ADDR)
 	-${SUDO} route -n delete -inet -host ${FAKE_ADDR} 2>/dev/null
 	${SUDO} route -n add -inet -host ${FAKE_ADDR} ${REMOTE_ADDR}
+.endif
+.if ! empty (FAKE_ADDR6) && ! empty (REMOTE_ADDR6)
 	-${SUDO} route -n delete -inet6 -host ${FAKE_ADDR6} 2>/dev/null
 	${SUDO} route -n add -inet6 -host ${FAKE_ADDR6} ${REMOTE_ADDR6}
+.endif
+.endif
 .endif
 
 # Set variables so that make runs with and without obj directory.
