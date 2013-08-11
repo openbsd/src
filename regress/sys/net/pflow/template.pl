@@ -1,5 +1,5 @@
 #! /usr/bin/perl
-# $OpenBSD: template.pl,v 1.1 2013/08/11 10:01:56 florian Exp $
+# $OpenBSD: template.pl,v 1.2 2013/08/11 15:46:26 florian Exp $
 
 # Copyright (c) 2013 Florian Obser <florian@openbsd.org>
 #
@@ -35,7 +35,7 @@ sub usage
 	my $id2name = {
 		  1 => 'octetDeltaCount',
 		  2 => 'packetDeltaCount',
-		  4 => 'protocolIdentifier ',
+		  4 => 'protocolIdentifier',
 		  5 => 'ipClassOfService',
 		  7 => 'sourceTransportPort',
 		  8 => 'sourceIPv4Address',
