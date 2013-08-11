@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2013/08/09 19:26:16 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.7 2013/08/11 21:01:59 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -13,7 +13,7 @@ PERL_REQUIRE !=	perl -Mstrict -Mwarnings -e ' \
     eval { require Socket6 } or print $@; \
     eval { require IO::Socket::SSL } or print $@; \
 '
-.if ! empty(PERL_REQUIRE)
+.if ! empty (PERL_REQUIRE)
 regress:
 	@echo "${PERL_REQUIRE}"
 	@echo install these perl packages for additional tests
@@ -34,7 +34,7 @@ REMOTE_SSH ?=
 ARGS !=			cd ${.CURDIR} && ls args-*.pl
 TARGETS ?=		${ARGS}
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
-CLEANFILES =		*.log *.pem relayd.conf ktrace.out stamp-*
+CLEANFILES +=		*.log *.pem relayd.conf ktrace.out stamp-*
 
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
@@ -56,7 +56,7 @@ run-regress-$a: $a
 	time SUDO=${SUDO} KTRACE=${KTRACE} RELAYD=${RELAYD} perl ${PERLINC} ${PERLPATH}relayd.pl copy ${PERLPATH}$a
 	time SUDO=${SUDO} KTRACE=${KTRACE} RELAYD=${RELAYD} perl ${PERLINC} ${PERLPATH}relayd.pl splice ${PERLPATH}$a
 .else
-	ssh -t q0 ${SUDO} true
+	ssh -t ${REMOTE_SSH} ${SUDO} true
 	time SUDO=${SUDO} KTRACE=${KTRACE} RELAYD=${RELAYD} perl ${PERLINC} ${PERLPATH}remote.pl copy ${LOCAL_ADDR} ${REMOTE_ADDR} ${REMOTE_SSH} ${PERLPATH}$a
 	time SUDO=${SUDO} KTRACE=${KTRACE} RELAYD=${RELAYD} perl ${PERLINC} ${PERLPATH}remote.pl splice ${LOCAL_ADDR} ${REMOTE_ADDR} ${REMOTE_SSH} ${PERLPATH}$a
 .endif
