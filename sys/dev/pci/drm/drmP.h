@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.140 2013/08/07 19:49:04 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.141 2013/08/12 04:11:52 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -101,14 +101,6 @@
 #define DRM_READUNLOCK()	rw_exit_read(&dev->dev_lock)
 #define DRM_MAXUNITS		8
 
-/* D_CLONE only supports one device, this will be fixed eventually */
-#define drm_get_device_from_kdev(_kdev)	\
-	(drm_cd.cd_ndevs > 0 ? drm_cd.cd_devs[0] : NULL)
-#if 0
-#define drm_get_device_from_kdev(_kdev)			\
-	(minor(_kdev) < drm_cd.cd_ndevs) ? drm_cd.cd_devs[minor(_kdev)] : NULL
-#endif
-
 /* DRM_SUSER returns true if the user is superuser */
 #define DRM_SUSER(p)		(suser(p, 0) == 0)
 #define DRM_MTRR_WC		MDF_WRITECOMBINE
@@ -123,20 +115,42 @@
 
 extern struct cfdriver drm_cd;
 
+/* freebsd compat */
+#define	TAILQ_CONCAT(head1, head2, field) do {				\
+	if (!TAILQ_EMPTY(head2)) {					\
+		*(head1)->tqh_last = (head2)->tqh_first;		\
+		(head2)->tqh_first->field.tqe_prev = (head1)->tqh_last;	\
+		(head1)->tqh_last = (head2)->tqh_last;			\
+		TAILQ_INIT((head2));					\
+	}								\
+} while (0)
+
 /* linux compat */
 typedef u_int64_t u64;
 typedef u_int32_t u32;
 typedef u_int16_t u16;
 typedef u_int8_t u8;
 
+typedef int32_t s32;
 typedef int64_t s64;
 
 typedef uint16_t __le16;
+typedef uint16_t __be16;
+typedef uint32_t __le32;
+typedef uint32_t __be32;
 
 #define EXPORT_SYMBOL(x)
+#define MODULE_FIRMWARE(x)
+#define __iomem
 #define ARRAY_SIZE nitems
+#define DRM_ARRAY_SIZE nitems
+
+#define ERESTARTSYS EINTR
 
 #define unlikely(x)	__builtin_expect(!!(x), 0)
+#define likely(x)	__builtin_expect(!!(x), 1)
+
+#define	IS_ALIGNED(x, y)	(((x) & ((y) - 1)) == 0)
 
 #define BUG()								\
 do {									\
@@ -213,12 +227,41 @@ IS_ERR_OR_NULL(const void *ptr)
 #define DRM_READMEMORYBARRIER()		DRM_MEMORYBARRIER() 
 #define DRM_WRITEMEMORYBARRIER()	DRM_MEMORYBARRIER()
 #define DRM_MEMORYBARRIER()		__asm __volatile("sync" : : : "memory");
+#elif defined(__sparc64__)
+#define DRM_READMEMORYBARRIER()		DRM_MEMORYBARRIER() 
+#define DRM_WRITEMEMORYBARRIER()	DRM_MEMORYBARRIER()
+#define DRM_MEMORYBARRIER()		membar(Sync)
 #endif
 
 #define	DRM_COPY_TO_USER(user, kern, size)	copyout(kern, user, size)
 #define	DRM_COPY_FROM_USER(kern, user, size)	copyin(user, kern, size)
+
+#define le16_to_cpu(x) letoh16(x)
 #define le32_to_cpu(x) letoh32(x)
+#define cpu_to_le16(x) htole16(x)
 #define cpu_to_le32(x) htole32(x)
+
+#define be32_to_cpup(x) betoh32(*x)
+
+#ifdef __macppc__
+static __inline int
+of_machine_is_compatible(const char *model)
+{
+	extern char *hw_prod;
+	return (strcmp(model, hw_prod) == 0);
+}
+#endif
+
+static inline unsigned long
+roundup_pow_of_two(unsigned long x)
+{
+	return (1UL << flsl(x - 1));
+}
+
+static inline uint32_t ror32(uint32_t word, unsigned int shift)
+{
+	return (word >> shift) | (word << (32 - shift));
+}
 
 #define DRM_UDELAY(udelay)	DELAY(udelay)
 
@@ -235,6 +278,8 @@ mdelay(unsigned long msecs)
 	while (loops--)
 		DELAY(1000);
 }
+
+#define	drm_can_sleep()	(hz & 1)
 
 #define LOCK_TEST_WITH_RETURN(dev, file_priv)				\
 do {									\
@@ -262,7 +307,7 @@ do {									\
 	    curproc->p_pid, __func__ , ## arg)
 
 
-#define DRM_INFO(fmt, arg...)  printf("%s: " fmt, dev_priv->dev.dv_xname, ## arg)
+#define DRM_INFO(fmt, arg...)  printf("drm: " fmt, ## arg)
 
 #ifdef DRMDEBUG
 #undef DRM_DEBUG
@@ -306,6 +351,18 @@ do {									\
 #else
 #define DRM_DEBUG_DRIVER(fmt, arg...) do { } while(/* CONSTCOND */ 0)
 #endif
+
+#define dev_warn(dev, fmt, arg...) do {					\
+	DRM_ERROR(fmt, ## arg);						\
+} while(0)
+
+#define dev_err(dev, fmt, arg...) do {					\
+	DRM_ERROR(fmt, ## arg);						\
+} while(0)
+
+#define dev_info(dev, fmt, arg...) do {					\
+	printf("%s: " fmt, dev.dv_xname, ## arg);			\
+} while(0)
 
 struct drm_pcidev {
 	int vendor;
@@ -470,6 +527,7 @@ struct drm_mem {
 #define DRM_ATI_GART_R600 4
 
 #define DMA_BIT_MASK(n) (((n) == 64) ? ~0ULL : (1ULL<<(n)) -1)
+#define lower_32_bits(n)	((u32)(n))
 #define upper_32_bits(_val) ((u_int32_t)(((_val) >> 16) >> 16))
 
 struct drm_ati_pcigart_info {
@@ -564,6 +622,7 @@ struct drm_driver_info {
 		    struct drm_file *);
 	void	(*close)(struct drm_device *, struct drm_file *);
 	void	(*lastclose)(struct drm_device *);
+	struct uvm_object *(*mmap)(struct drm_device *, voff_t, vsize_t);
 	int	(*dma_ioctl)(struct drm_device *, struct drm_dma *,
 		    struct drm_file *);
 	int	(*irq_handler)(void *);
@@ -855,6 +914,7 @@ int	drm_irq_uninstall(struct drm_device *);
 void	drm_vblank_cleanup(struct drm_device *);
 int	drm_vblank_init(struct drm_device *, int);
 u_int32_t drm_vblank_count(struct drm_device *, int);
+u_int32_t drm_vblank_count_and_time(struct drm_device *, int, struct timeval *);
 int	drm_vblank_get(struct drm_device *, int);
 void	drm_vblank_put(struct drm_device *, int);
 void	drm_vblank_off(struct drm_device *, int);
@@ -865,6 +925,9 @@ bool	drm_handle_vblank(struct drm_device *, int);
 void	drm_calc_timestamping_constants(struct drm_crtc *);
 int	drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *,
 	    int, int *, struct timeval *, unsigned, struct drm_crtc *);
+struct drm_display_mode *
+	 drm_mode_create_from_cmdline_mode(struct drm_device *,
+	     struct drm_cmdline_mode *);
 
 /* AGP/PCI Express/GART support (drm_agpsupport.c) */
 struct drm_agp_head *drm_agp_init(void);

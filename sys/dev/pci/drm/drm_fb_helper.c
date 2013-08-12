@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_fb_helper.c,v 1.3 2013/05/16 21:14:11 kettenis Exp $	*/
+/*	$OpenBSD: drm_fb_helper.c,v 1.4 2013/08/12 04:11:52 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
  * Copyright (c) 2006-2008 Intel Corporation
@@ -190,11 +190,9 @@ drm_fb_helper_restore_lut_atomic(struct drm_crtc *crtc)
 	crtc->funcs->gamma_set(crtc, r_base, g_base, b_base, 0, crtc->gamma_size);
 }
 
-#if 0
 int
-drm_fb_helper_debug_enter(struct fb_info *info)
+drm_fb_helper_debug_enter(struct drm_fb_helper *helper)
 {
-	struct drm_fb_helper *helper = info->par;
 	struct drm_crtc_helper_funcs *funcs;
 	int i;
 
@@ -222,7 +220,6 @@ drm_fb_helper_debug_enter(struct fb_info *info)
 	return 0;
 }
 EXPORT_SYMBOL(drm_fb_helper_debug_enter);
-#endif
 
 /* Find the real fb for a given fb helper CRTC */
 struct drm_framebuffer *
@@ -239,11 +236,9 @@ drm_mode_config_fb(struct drm_crtc *crtc)
 	return NULL;
 }
 
-#if 0
 int
-drm_fb_helper_debug_leave(struct fb_info *info)
+drm_fb_helper_debug_leave(struct drm_fb_helper *helper)
 {
-	struct drm_fb_helper *helper = info->par;
 	struct drm_crtc *crtc;
 	struct drm_crtc_helper_funcs *funcs;
 	struct drm_framebuffer *fb;
@@ -271,7 +266,6 @@ drm_fb_helper_debug_leave(struct fb_info *info)
 	return 0;
 }
 EXPORT_SYMBOL(drm_fb_helper_debug_leave);
-#endif
 
 bool
 drm_fb_helper_restore_fbdev_mode(struct drm_fb_helper *fb_helper)
@@ -1061,9 +1055,6 @@ struct drm_display_mode *
 drm_pick_cmdline_mode(struct drm_fb_helper_connector *fb_helper_conn,
 						      int width, int height)
 {
-	DRM_DEBUG_KMS("stub\n");
-	return (NULL);
-#ifdef notyet
 	struct drm_cmdline_mode *cmdline_mode;
 	struct drm_display_mode *mode = NULL;
 
@@ -1100,7 +1091,6 @@ create_mode:
 						 cmdline_mode);
 	list_add(&mode->head, &fb_helper_conn->connector->modes);
 	return mode;
-#endif
 }
 
 bool

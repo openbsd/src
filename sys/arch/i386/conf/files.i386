@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.211 2012/09/06 20:20:30 tedu Exp $
+#	$OpenBSD: files.i386,v 1.212 2013/08/12 04:11:52 jsg Exp $
 #
 # new style config file for i386 architecture
 #
@@ -118,6 +118,8 @@ file    dev/pci/amas.c			amas
 # AGP bridge support. most attach at pchb
 include "dev/pci/files.agp"
 file	arch/i386/pci/agp_machdep.c	agp
+
+include "dev/pci/drm/files.drm"
 
 # AMD Elan SC520 System Controller (PCI-Host bridge)
 device	elansc: gpiobus

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux_list.h,v 1.4 2013/03/18 12:36:51 jsg Exp $	*/
+/*	$OpenBSD: drm_linux_list.h,v 1.5 2013/08/12 04:11:52 jsg Exp $	*/
 /* drm_linux_list.h -- linux list functions for the BSDs.
  * Created: Mon Apr 7 14:30:16 1999 by anholt@FreeBSD.org
  */
@@ -118,6 +118,11 @@ list_del_init(struct list_head *entry) {
     for (entry = (head)->next, temp = (entry)->next;		\
 	entry != head; 						\
 	entry = temp, temp = entry->next)
+
+#define list_for_each_entry_safe_from(pos, n, head, member) 		\
+	for (n = list_entry(pos->member.next, __typeof(*pos), member);	\
+	     &pos->member != (head);					\
+	     pos = n, n = list_entry(n->member.next, __typeof(*n), member))
 
 #define list_for_each_entry(pos, head, member)				\
     for (pos = list_entry((head)->next, __typeof(*pos), member);	\

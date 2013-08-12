@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_modes.c,v 1.1 2013/03/18 12:36:51 jsg Exp $	*/
+/*	$OpenBSD: drm_modes.c,v 1.2 2013/08/12 04:11:52 jsg Exp $	*/
 /*
  * Copyright © 1997-2003 by The XFree86 Project, Inc.
  * Copyright © 2007 Dave Airlie
@@ -40,9 +40,6 @@ void	 drm_mode_validate_clocks(struct drm_device *, struct list_head *,
 	     int *, int *, int);
 bool	 drm_mode_parse_command_line_for_connector(const char *,
 	     struct drm_connector *, struct drm_cmdline_mode *);
-struct drm_display_mode *
-	 drm_mode_create_from_cmdline_mode(struct drm_device *,
-	     struct drm_cmdline_mode *);
 int	 drm_mode_compare(struct drm_display_mode *, struct drm_display_mode*);
 long	 simple_strtol(const char *, char **, int);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_atomic.h,v 1.7 2013/03/18 12:36:51 jsg Exp $ */
+/* $OpenBSD: drm_atomic.h,v 1.8 2013/08/12 04:11:52 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -30,28 +30,46 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifdef __OpenBSD__
 #include <machine/atomic.h>
-#endif
 
 /* Many of these implementations are rather fake, but good enough. */
 
 typedef u_int32_t atomic_t;
+typedef u_int64_t atomic64_t;
 
-#ifdef __FreeBSD__
-#define atomic_set(p, v)	(*(p) = (v))
-#define atomic_read(p)		(*(p))
-#define atomic_inc(p)		atomic_add_int(p, 1)
-#define atomic_dec(p)		atomic_subtract_int(p, 1)
-#define atomic_add(n, p)	atomic_add_int(p, n)
-#define atomic_sub(n, p)	atomic_subtract_int(p, n)
-#else /* __FreeBSD__ */
 /* FIXME */
 #define atomic_set(p, v)	(*(p) = (v))
 #define atomic_read(p)		(*(p))
-#define atomic_inc(p)		(*(p) += 1)
-#define atomic_dec(p)		(*(p) -= 1)
+#define atomic_inc(p)		__sync_fetch_and_add(p, 1)
+#define atomic_dec(p)		__sync_fetch_and_sub(p, 1)
 #define atomic_add(n, p)	(*(p) += (n))
+#define atomic_fetchadd_int(p, n) __sync_fetch_and_add(p, n)
+#define atomic_fetchsub_int(p, n) __sync_fetch_and_sub(p, n)
+
+#define atomic64_set(p, v)	(*(p) = (v))
+#define atomic64_read(p)	(*(p))
+
+static __inline int
+atomic_xchg(volatile int *p, int new)
+{
+	int old;
+
+	old = *p;
+	*p = new;
+
+	return (old);
+}
+
+static __inline int64_t
+atomic64_xchg(volatile int64_t *p, int64_t new)
+{
+	int64_t old;
+
+	old = *p;
+	*p = new;
+
+	return (old);
+}
 
 static inline int
 atomic_add_return(int n, atomic_t *p)
@@ -70,22 +88,27 @@ atomic_inc_not_zero(atomic_t *p)
 	return (*p);
 }
 
+#define	atomic_inc_return(v)	atomic_add_return(1, (v))
+#define	atomic_dec_return(v)	atomic_sub_return(1, (v))
+#define	atomic_dec_and_test(v)	(atomic_dec_return(v) == 0)
+#define	atomic_inc_and_test(v)	(atomic_inc_return(v) == 0)
+
 #define atomic_sub(n, p)	(*(p) -= (n))
+
+static __inline int
+atomic_sub_return(int i, atomic_t *p)
+{
+	atomic_sub(i, p);
+	return (*p);
+}
+
 /* FIXME */
 #define atomic_add_int(p, v)      *(p) += v
 #define atomic_subtract_int(p, v) *(p) -= v
-#ifdef __OpenBSD__
 #define atomic_set_int(p, bits)		atomic_setbits_int(p,bits)
 #define atomic_clear_int(p, bits)	atomic_clearbits_int(p,bits)
-#else
-#define atomic_set_int(p, bits)   *(p) |= (bits)
-#define atomic_clear_int(p, bits) *(p) &= ~(bits)
-#endif
-#endif /* !__FreeBSD__ */
 
-#if !defined(__FreeBSD_version) || (__FreeBSD_version < 500000)
 #if defined(__i386__) || defined(__amd64__)
-/* The extra atomic functions from 5.0 haven't been merged to 4.x */
 static __inline int
 atomic_cmpset_int(volatile u_int *dst, u_int exp, u_int src)
 {
@@ -119,7 +142,6 @@ atomic_cmpset_int(__volatile__ u_int *dst, u_int old, u_int new)
 	return 0;
 }
 #endif /* !__i386__ */
-#endif /* !__FreeBSD_version || __FreeBSD_version < 500000 */
 
 static __inline atomic_t
 test_and_set_bit(u_int b, volatile void *p)

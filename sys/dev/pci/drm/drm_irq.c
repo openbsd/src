@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_irq.c,v 1.46 2013/07/01 06:29:10 brad Exp $	*/
+/*	$OpenBSD: drm_irq.c,v 1.47 2013/08/12 04:11:52 jsg Exp $	*/
 /**
  * \file drm_irq.c
  * IRQ support
@@ -63,7 +63,6 @@ int64_t	 timeval_to_ns(const struct timeval *);
 struct timeval ns_to_timeval(const int64_t);
 void	 drm_irq_vgaarb_nokms(void *, bool);
 struct timeval get_drm_timestamp(void);
-u32	 drm_vblank_count_and_time(struct drm_device *, int, struct timeval *);
 void	 send_vblank_event(struct drm_device *,
 	     struct drm_pending_vblank_event *, unsigned long,
 	     struct timeval *);

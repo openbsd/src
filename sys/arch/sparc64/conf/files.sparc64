@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.140 2013/04/21 14:44:16 sebastia Exp $
+#	$OpenBSD: files.sparc64,v 1.141 2013/08/12 04:11:52 jsg Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -107,6 +107,8 @@ attach	gfb at upa
 file	arch/sparc64/dev/gfb.c			gfb
 
 include	"dev/pci/files.pci"
+include	"dev/pci/files.agp"
+include	"dev/pci/drm/files.drm"
 major	{wd = 12}
 
 device	psycho: pcibus, iommu

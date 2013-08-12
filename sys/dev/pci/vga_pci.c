@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.72 2013/03/26 18:45:02 kettenis Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.73 2013/08/12 04:11:52 jsg Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -173,12 +173,6 @@ static const struct vga_device_description vga_devs[] = {
 	    	0x0000, 0x0000 },
 	    {	0xffff, 0xffff, 0x0000, 0x0000 }, 1, 0
 	},
-
-	{	/* All ATI video until further notice */
-	    {	PCI_VENDOR_ATI, 0x0000,
-		0x0000, 0x0000 },
-	    {	0xffff, 0x0000, 0x0000, 0x0000}, 1, 0
-	},
 };
 #endif
 
@@ -279,7 +273,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 #if NDRM > 0
-	config_found_sm(self, aux, NULL, drmsubmatch);
+	config_found_sm(self, aux, NULL, vga_drmsubmatch);
 #endif
 
 	sc->sc_vc = vga_common_attach(self, pa->pa_iot, pa->pa_memt,

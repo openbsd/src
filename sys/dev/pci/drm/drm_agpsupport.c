@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_agpsupport.c,v 1.24 2012/12/06 15:05:21 mpi Exp $ */
+/* $OpenBSD: drm_agpsupport.c,v 1.25 2013/08/12 04:11:52 jsg Exp $ */
 /*-
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
@@ -370,6 +370,7 @@ drm_agp_init(void)
 		head->agpdev = agpdev;
 		agp_get_info(agpdev, &head->info);
 		head->base = head->info.ai_aperture_base;
+		head->cant_use_aperture = (head->base == 0);
 		TAILQ_INIT(&head->memory);
 	}
 	return (head);

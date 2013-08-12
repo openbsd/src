@@ -29,7 +29,7 @@
 
 #if NDRM > 0
 int
-drmsubmatch(struct device *parent, void *match, void *aux)
+vga_drmsubmatch(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct cfdriver *cd;

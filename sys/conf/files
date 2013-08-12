@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.549 2013/07/11 01:20:31 jsg Exp $
+#	$OpenBSD: files,v 1.550 2013/08/12 04:11:52 jsg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -107,7 +107,6 @@ define agpint {}
 
 # DRM - Direct Rendering Manager: /dev/drm
 define drmdev {}
-include "dev/pci/drm/files.drm"
 
 # VGA graphics
 device	vga: wsemuldisplaydev, pcdisplayops, drmdev, agpint
