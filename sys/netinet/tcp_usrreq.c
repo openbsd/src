@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.113 2013/08/06 07:31:48 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.114 2013/08/12 21:57:16 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -532,6 +532,18 @@ tcp_ctloutput(op, so, level, optname, mp)
 				tp->t_flags &= ~TF_NODELAY;
 			break;
 
+		case TCP_NOPUSH:
+			if (m == NULL || m->m_len < sizeof (int))
+				error = EINVAL;
+			else if (*mtod(m, int *))
+				tp->t_flags |= TF_NOPUSH;
+			else if (tp->t_flags & TF_NOPUSH) {
+				tp->t_flags &= ~TF_NOPUSH;
+				if (TCPS_HAVEESTABLISHED(tp->t_state))
+					error = tcp_output(tp);
+			}
+			break;
+
 		case TCP_MAXSEG:
 			if (m == NULL || m->m_len < sizeof (int)) {
 				error = EINVAL;
@@ -604,6 +616,9 @@ tcp_ctloutput(op, so, level, optname, mp)
 		switch (optname) {
 		case TCP_NODELAY:
 			*mtod(m, int *) = tp->t_flags & TF_NODELAY;
+			break;
+		case TCP_NOPUSH:
+			*mtod(m, int *) = tp->t_flags & TF_NOPUSH;
 			break;
 		case TCP_MAXSEG:
 			*mtod(m, int *) = tp->t_maxseg;

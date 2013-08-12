@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.98 2013/06/03 16:57:06 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.99 2013/08/12 21:57:16 bluhm Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -415,8 +415,9 @@ again:
 	if (len) {
 		if (len == txmaxseg)
 			goto send;
-		if ((idle || tp->t_flags & TF_NODELAY) &&
-		    len + off >= so->so_snd.sb_cc && !soissending(so))
+		if ((idle || (tp->t_flags & TF_NODELAY)) &&
+		    len + off >= so->so_snd.sb_cc && !soissending(so) &&
+		    (tp->t_flags & TF_NOPUSH) == 0)
 			goto send;
 		if (tp->t_force)
 			goto send;
