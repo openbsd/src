@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.16 2012/03/31 17:53:34 krw Exp $	*/
+/*	$OpenBSD: boot.c,v 1.17 2013/08/12 13:44:13 rapha Exp $	*/
 /*	$NetBSD: boot.c,v 1.5 1997/10/17 11:19:23 ws Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ readboot(int dosfs, struct bootblock *boot)
 		    || fsinfo[0x3fd]
 		    || fsinfo[0x3fe] != 0x55
 		    || fsinfo[0x3ff] != 0xaa) {
-			pwarn("Invalid signature in fsinfo block");
+			pwarn("Invalid signature in fsinfo block\n");
 			if (ask(0, "fix")) {
 				memcpy(fsinfo, "RRaA", 4);
 				memcpy(fsinfo + 0x1e4, "rrAa", 4);
