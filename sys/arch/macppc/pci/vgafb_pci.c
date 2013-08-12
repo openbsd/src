@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.32 2013/08/12 08:03:56 mpi Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.33 2013/08/12 08:38:03 mpi Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -40,8 +40,6 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
-
-#include "drm.h"
 
 #include <arch/macppc/pci/vgafbvar.h>
 #include <dev/pci/vga_pcivar.h>
@@ -214,8 +212,4 @@ vgafb_pci_attach(struct device *parent, struct device  *self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
 
 	vgafb_wsdisplay_attach(self, vc, console);
-
-#if NDRM > 0
-	config_found_sm(self, aux, NULL, drmsubmatch);
-#endif
 }
