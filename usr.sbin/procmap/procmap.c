@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.49 2013/05/14 20:18:52 miod Exp $ */
+/*	$OpenBSD: procmap.c,v 1.50 2013/08/12 05:41:01 otto Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -699,8 +699,9 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		    vme->advice);
 		if (verbose) {
 			if (inode)
-				printf(" %d,%d %u",
-				    major(dev), minor(dev), inode);
+				printf(" %d,%d %llu",
+				    major(dev), minor(dev),
+				    (unsigned long long)inode);
 			if (name[0])
 				printf(" %s", name);
 		}
