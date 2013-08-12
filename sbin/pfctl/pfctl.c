@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.316 2013/08/02 08:33:11 mikeb Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.317 2013/08/12 17:42:08 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -781,40 +781,6 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 		npath = path;
 	}
 
-	/*
-	 * If this anchor was called with a wildcard path, go through
-	 * the rulesets in the anchor rather than the rules.
-	 */
-	if (wildcard && (opts & PF_OPT_RECURSE)) {
-		struct pfioc_ruleset	 prs;
-		u_int32_t		 mnr, nr;
-
-		memset(&prs, 0, sizeof(prs));
-		memcpy(prs.path, npath, sizeof(prs.path));
-		if (ioctl(dev, DIOCGETRULESETS, &prs)) {
-			if (errno == EINVAL)
-				fprintf(stderr, "Anchor '%s' "
-				    "not found.\n", anchorname);
-			else
-				err(1, "DIOCGETRULESETS");
-		}
-		mnr = prs.nr;
-
-		for (nr = 0; nr < mnr; ++nr) {
-			prs.nr = nr;
-			if (ioctl(dev, DIOCGETRULESET, &prs))
-				err(1, "DIOCGETRULESET");
-			INDENT(depth, !(opts & PF_OPT_VERBOSE));
-			printf("anchor \"%s\" all {\n", prs.name);
-			pfctl_show_rules(dev, npath, opts,
-			    format, prs.name, depth + 1, 0, shownr);
-			INDENT(depth, !(opts & PF_OPT_VERBOSE));
-			printf("}\n");
-		}
-		path[len] = '\0';
-		return (0);
-	}
-
 	memcpy(pr.anchor, npath, sizeof(pr.anchor));
 	if (opts & PF_OPT_SHOWALL) {
 		pr.rule.action = PF_PASS;
@@ -884,9 +850,9 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 			print_rule(&pr.rule, pr.anchor_call, opts);
 
 			/*
-			 * If this is a 'unnamed' brace notation
-			 * anchor, OR the user has explicitly requested
-			 * recursion, print it recursively.
+			 * If this is an 'unnamed' brace notation anchor OR
+			 * the user has explicitly requested recursion,
+			 * print it recursively.
 			 */
        		        if (pr.anchor_call[0] &&
 			    (((p = strrchr(pr.anchor_call, '/')) ?
@@ -2143,20 +2109,12 @@ main(int argc, char *argv[])
 		case 'r':
 			pfctl_load_fingerprints(dev, opts);
 			pfctl_show_rules(dev, path, opts, PFCTL_SHOW_RULES,
-			    anchorname, 0, 0, shownr);
-			if (anchor_wildcard)
-				pfctl_show_rules(dev, path, opts,
-				    PFCTL_SHOW_RULES, anchorname, 0,
-				    anchor_wildcard, shownr);
+			    anchorname, 0, anchor_wildcard, shownr);
 			break;
 		case 'l':
 			pfctl_load_fingerprints(dev, opts);
 			pfctl_show_rules(dev, path, opts, PFCTL_SHOW_LABELS,
-			    anchorname, 0, 0, shownr);
-			if (anchor_wildcard)
-				pfctl_show_rules(dev, path, opts,
-				    PFCTL_SHOW_LABELS, anchorname, 0,
-				    anchor_wildcard, shownr);
+			    anchorname, 0, anchor_wildcard, shownr);
 			break;
 		case 'q':
 			pfctl_show_altq(dev, ifaceopt, opts,
