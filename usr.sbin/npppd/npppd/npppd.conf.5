@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.9 2013/03/19 12:49:30 sthen Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.10 2013/08/12 14:28:30 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 19 2013 $
+.Dd $Mdocdate: August 12 2013 $
 .Dt NPPPD.CONF 5
 .Os
 .Sh NAME
@@ -192,7 +192,10 @@ of the listening interface.
 This option is for PPPoE only.
 .It Ic mru Ar number
 Specify the Maximum Receive Unit (MRU).
-This value is used for LCP negotiation with the tunnel peer.
+This value is used for LCP negotiation to ask the peer not to send packets
+greater than the MRU octets.
+The peer may use the MRU to decide its MTU, but this depends on the
+implementation.
 The default values are 1360 for L2TP, 1400 for PPTP, and 1492 for PPPoE.
 .It Ic lcp-keepalive Ar yes | no
 Specify whether
