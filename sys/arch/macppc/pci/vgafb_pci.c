@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.31 2013/06/04 02:26:36 mpi Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.32 2013/08/12 08:03:56 mpi Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -62,7 +62,6 @@ const struct cfattach vgafb_pci_ca = {
 	sizeof(struct vga_pci_softc), vgafb_pci_match, vgafb_pci_attach,
 };
 
-pcitag_t vgafb_pci_console_tag;
 struct vga_config vgafbcn;
 
 void
@@ -140,6 +139,7 @@ int
 vgafb_pci_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
+	int node;
 
 	if (DEVICE_IS_VGA_PCI(pa->pa_class) == 0) {
 		/*
@@ -151,23 +151,15 @@ vgafb_pci_match(struct device *parent, void *match, void *aux)
 			return (0);
 	}
 
-	/* If it's the console, we have a winner! */
-	if (!bcmp(&pa->pa_tag, &vgafb_pci_console_tag, sizeof(pa->pa_tag))) {
-		return (1);
-	}
+	/*
+	 * XXX Non-console devices do not get configured by the PROM,
+	 * XXX so do not attach them yet.
+	 */
+	node = PCITAG_NODE(pa->pa_tag);
+	if (!vgafb_is_console(node))
+		return (0);
 
-#ifdef DEBUG_VGAFB
-	{
-	int i;
-		pci_chipset_tag_t pc = pa->pa_pc;
-		for (i = 0x10; i < 0x24; i+=4) {
-			printf("vgafb confread %x %x\n",
-				i, pci_conf_read(pc, pa->pa_tag, i));
-		}
-	}
-#endif
-
-	return (0);
+	return (1);
 }
 
 void
@@ -178,15 +170,17 @@ vgafb_pci_attach(struct device *parent, struct device  *self, void *aux)
 	struct vga_config *vc;
 	u_int32_t memaddr, memsize;
 	u_int32_t mmioaddr, mmiosize;
-	int console;
+	int console, node;
 	pcireg_t reg;
 
+
+	node = PCITAG_NODE(pa->pa_tag);
 
  	vga_pci_bar_init(sc, pa);
 	vgafb_pci_mem_init(sc, &memaddr, &memsize, &mmioaddr, &mmiosize);
 
 
-	console = (!bcmp(&pa->pa_tag, &vgafb_pci_console_tag, sizeof(pa->pa_tag)));
+	console = vgafb_is_console(node);
 	if (console) {
 		vc = sc->sc_vc = &vgafbcn;
 

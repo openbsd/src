@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.38 2013/08/07 07:29:19 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.39 2013/08/12 08:03:56 mpi Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -184,7 +184,6 @@ save_ofw_mapping()
 	return 0;
 }
 
-#include <dev/pci/pcivar.h>
 #include <arch/macppc/pci/vgafb_pcivar.h>
 
 struct ppc_bus_space ppc_membus;
@@ -195,6 +194,7 @@ int cons_display_ofh;
 u_int32_t cons_addr;
 int cons_brightness;
 int cons_backlight_available;
+int fbnode;
 
 #include "vgafb_pci.h"
 
@@ -358,7 +358,6 @@ of_display_console()
 	char name[32];
 	int len;
 	int stdout_node;
-	int display_node;
 	int err;
 
 	stdout_node = OF_instance_to_package(OF_stdout);
@@ -389,15 +388,15 @@ of_display_console()
 
 	ofw_find_keyboard();
 
-	display_node = stdout_node;
+	fbnode = stdout_node;
 	len = OF_getprop(stdout_node, "assigned-addresses", addr, sizeof(addr));
 	if (len == -1) {
-		display_node = OF_parent(stdout_node);
-		len = OF_getprop(display_node, "name", name, 20);
+		fbnode = OF_parent(stdout_node);
+		len = OF_getprop(fbnode, "name", name, 20);
 		name[len] = 0;
 
 		printf("using parent %s:", name);
-		len = OF_getprop(display_node, "assigned-addresses",
+		len = OF_getprop(fbnode, "assigned-addresses",
 			addr, sizeof(addr));
 		if (len < sizeof(addr[0])) {
 			panic(": no address");
@@ -406,11 +405,6 @@ of_display_console()
 
 	if (OF_getnodebyname(0, "backlight") != 0)
 		cons_backlight_available = 1;
-
-	vgafb_pci_console_tag = PCITAG_CREATE(display_node,
-	    OFW_PCI_PHYS_HI_BUS(addr[1].phys_hi),
-	    OFW_PCI_PHYS_HI_DEVICE(addr[1].phys_hi),
-	    OFW_PCI_PHYS_HI_FUNCTION(addr[1].phys_hi));
 
 #if 1
 	printf(": memaddr %x size %x, ", addr[0].phys_lo, addr[0].size_lo);
