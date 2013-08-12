@@ -122,6 +122,8 @@
 ./etc/rc.d/ifstated
 ./etc/rc.d/iked
 ./etc/rc.d/inetd
+./etc/rc.d/ipropd_master
+./etc/rc.d/ipropd_slave
 ./etc/rc.d/isakmpd
 ./etc/rc.d/kadmind
 ./etc/rc.d/kdc
