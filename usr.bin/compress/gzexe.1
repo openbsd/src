@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gzexe.1,v 1.5 2007/05/31 19:20:08 jmc Exp $
+.\"	$OpenBSD: gzexe.1,v 1.6 2013/08/12 14:19:53 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Otto Moerbeek <otto@drijf.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 12 2013 $
 .Dt GZEXE 1
 .Os
 .Sh NAME
@@ -52,7 +52,10 @@ program refuses to compress non-regular or non-executable files,
 files with a setuid or setgid bit set, files that are already
 compressed using
 .Nm ,
-files in /bin or /sbin,
+files in
+.Pa /bin
+or
+.Pa /sbin ,
 or programs it needs to perform on-the-fly decompression:
 .Xr sh 1 ,
 .Xr basename 1 ,
