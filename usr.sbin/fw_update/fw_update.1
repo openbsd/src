@@ -1,4 +1,4 @@
-.\" $OpenBSD: fw_update.1,v 1.10 2013/08/12 14:19:53 jmc Exp $
+.\" $OpenBSD: fw_update.1,v 1.11 2013/08/13 20:11:21 halex Exp $
 .\"
 .\" Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 12 2013 $
+.Dd $Mdocdate: August 13 2013 $
 .Dt FW_UPDATE 1
 .Os
 .Sh NAME
@@ -23,11 +23,13 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl nv
+.Op Ar driver ...
+.Nm
+.Op Fl anv
 .Sh DESCRIPTION
 The
 .Nm
-utility checks which firmware are needed on the system and then
-installs or updates the relevant packages from the Internet.
+utility installs or updates firmware packages from the Internet.
 Since firmware with acceptable licenses are already present in
 .Ox ,
 .Nm
@@ -35,14 +37,22 @@ exists purely to install and update firmware that may not be freely
 distributed with
 .Ox .
 .Pp
+If no
+.Ar driver
+is specified, the
+.Nm
+utility tries to determine which firmware are needed on the system.
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl a
+Install or update all available firmwares.
 .It Fl n
 Pass the
 .Fl n
 flag to
 .Xr pkg_add 1 ,
-causing it to not actually install any firmware packages,
+causing it to not actually install or update any firmware packages,
 just report the steps that would be taken if it did.
 .It Fl v
 Turn on verbose output and pass the
