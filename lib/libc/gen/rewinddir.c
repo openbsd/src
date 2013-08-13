@@ -1,4 +1,4 @@
-/*	$OpenBSD: rewinddir.c,v 1.9 2007/10/12 22:41:42 chl Exp $ */
+/*	$OpenBSD: rewinddir.c,v 1.10 2013/08/13 05:52:12 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,6 @@ void
 rewinddir(DIR *dirp)
 {
 	_MUTEX_LOCK(&dirp->dd_lock);
-	__seekdir(dirp, dirp->dd_rewind);
-	dirp->dd_rewind = _telldir_unlocked(dirp);
+	__seekdir(dirp, 0);
 	_MUTEX_UNLOCK(&dirp->dd_lock);
 }

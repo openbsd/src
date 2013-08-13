@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.106 2013/06/01 20:47:40 tedu Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.107 2013/08/13 05:52:23 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -56,6 +56,8 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+
+int	thrsleep(struct proc *, struct sys___thrsleep_args *);
 
 
 /*
@@ -419,52 +421,45 @@ thrsleep_unlock(void *lock, int lockflags)
 
 
 int
-sys___thrsleep(struct proc *p, void *v, register_t *retval)
+thrsleep(struct proc *p, struct sys___thrsleep_args *v)
 {
 	struct sys___thrsleep_args /* {
 		syscallarg(const volatile void *) ident;
 		syscallarg(clockid_t) clock_id;
-		syscallarg(struct timespec *) tp;
+		syscallarg(const struct timespec *) tp;
 		syscallarg(void *) lock;
 		syscallarg(const int *) abort;
 	} */ *uap = v;
 	long ident = (long)SCARG(uap, ident);
+	struct timespec *tsp = (struct timespec *)SCARG(uap, tp);
 	void *lock = SCARG(uap, lock);
 	long long to_ticks = 0;
 	int abort, error;
 	clockid_t clock_id = SCARG(uap, clock_id) & 0x7;
 	int lockflags = SCARG(uap, clock_id) & 0x8;
 
-	if (ident == 0) {
-		*retval = EINVAL;
-		return (0);
-	}
-	if (SCARG(uap, tp) != NULL) {
-		struct timespec now, ats;
+	if (ident == 0)
+		return (EINVAL);
+	if (tsp != NULL) {
+		struct timespec now;
 
-		if ((error = copyin(SCARG(uap, tp), &ats, sizeof(ats))) ||
-		    (error = clock_gettime(p, clock_id, &now))) {
-			*retval = error;
-			return (0);
-		}
+		if ((error = clock_gettime(p, clock_id, &now)))
+			return (error);
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
-			ktrabstimespec(p, &ats);
+			ktrabstimespec(p, tsp);
 #endif
 
-		if (timespeccmp(&ats, &now, <)) {
+		if (timespeccmp(tsp, &now, <)) {
 			/* already passed: still do the unlock */
-			if ((error = thrsleep_unlock(lock, lockflags))) {
-				*retval = error;
-				return (0);
-			}
-			*retval = EWOULDBLOCK;
-			return (0);
+			if ((error = thrsleep_unlock(lock, lockflags)))
+				return (error);
+			return (EWOULDBLOCK);
 		}
 
-		timespecsub(&ats, &now, &ats);
-		to_ticks = (long long)hz * ats.tv_sec +
-		    (ats.tv_nsec + tick * 1000 - 1) / (tick * 1000) + 1;
+		timespecsub(tsp, &now, tsp);
+		to_ticks = (long long)hz * tsp->tv_sec +
+		    (tsp->tv_nsec + tick * 1000 - 1) / (tick * 1000) + 1;
 		if (to_ticks > INT_MAX)
 			to_ticks = INT_MAX;
 	}
@@ -497,10 +492,63 @@ out:
 	if (error == ERESTART)
 		error = EINTR;
 
-	*retval = error;
-	return (0);
+	return (error);
 
 }
+
+int
+sys___thrsleep(struct proc *p, void *v, register_t *retval)
+{
+	struct sys___thrsleep_args /* {
+		syscallarg(const volatile void *) ident;
+		syscallarg(clockid_t) clock_id;
+		syscallarg(struct timespec *) tp;
+		syscallarg(void *) lock;
+		syscallarg(const int *) abort;
+	} */ *uap = v;
+	struct timespec ts;
+	int error;
+
+	if (SCARG(uap, tp) != NULL) {
+		if ((error = copyin(SCARG(uap, tp), &ts, sizeof(ts)))) {
+			*retval = error;
+			return (0);
+		}
+		SCARG(uap, tp) = &ts;
+	}
+
+	*retval = thrsleep(p, uap);
+	return (0);
+}
+
+#ifdef T32
+int
+t32_sys___thrsleep(struct proc *p, void *v, register_t *retval)
+{
+	struct t32_sys___thrsleep_args /* {
+		syscallarg(const volatile void *) ident;
+		syscallarg(clockid_t) clock_id;
+		syscallarg(struct timespec32 *) tp;
+		syscallarg(void *) lock;
+		syscallarg(const int *) abort;
+	} */ *uap = v;
+	struct timespec32 ts32;
+	struct timespec ts;
+	int error;
+
+	if (SCARG(uap, tp) != NULL) {
+		if ((error = copyin(SCARG(uap, tp), &ts32, sizeof(ts32)))) {
+			*retval = error;
+			return (0);
+		}
+		TIMESPEC_FROM_32(&ts, &ts32);
+		SCARG(uap, tp) = (void *)&ts;
+	}
+
+	*retval = thrsleep(p, (struct sys___thrsleep_args *)uap);
+	return (0);
+}
+#endif
 
 int
 sys___thrwakeup(struct proc *p, void *v, register_t *retval)

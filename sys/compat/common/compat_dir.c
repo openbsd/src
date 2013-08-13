@@ -1,4 +1,4 @@
-/* 	$OpenBSD: compat_dir.c,v 1.5 2008/08/19 09:49:50 pedro Exp $	*/
+/* 	$OpenBSD: compat_dir.c,v 1.6 2013/08/13 05:52:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 2000 Constantine Sapuntzakis
@@ -45,7 +45,7 @@ readdir_with_callback(fp, off, nbytes, appendfunc, arg)
 	struct file *fp;
 	off_t *off;
 	u_long nbytes;
-	int (*appendfunc)(void *, struct dirent *, off_t);
+	int (*appendfunc)(void *, struct dirent *);
 	void *arg;
 {
 	struct dirent *bdp;
@@ -54,8 +54,6 @@ readdir_with_callback(fp, off, nbytes, appendfunc, arg)
 	struct uio auio;
 	struct iovec aiov;
 	int eofflag = 0;
-	u_long *cookies = NULL, *cookiep;
-	int ncookies = 0;
 	int error, len, reclen;
 	off_t newoff = *off;
 	struct vnode *vp;
@@ -92,43 +90,16 @@ again:
 	auio.uio_resid = buflen;
 	auio.uio_offset = newoff;
 
-	if (cookies) {
-		free(cookies, M_TEMP);
-		cookies = NULL;
-	}
-
-	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, &ncookies,
-	    &cookies);
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag);
 	if (error)
 		goto out;
 
 	if ((len = buflen - auio.uio_resid) <= 0)
 		goto eof;	
 
-	cookiep = cookies;
 	inp = buf;
 
-	if (cookies) {
-		/*
-		 * When using cookies, the vfs has the option of reading from
-		 * a different offset than that supplied (UFS truncates the
-		 * offset to a block boundary to make sure that it never reads
-		 * partway through a directory entry, even if the directory
-		 * has been compacted).
-		 */
-		while (len > 0 && ncookies > 0 && *cookiep <= newoff) {
-			bdp = (struct dirent *)inp;
-			len -= bdp->d_reclen;
-			inp += bdp->d_reclen;
-			cookiep++;
-			ncookies--;
-		}
-	}
-
 	for (; len > 0; len -= reclen, inp += reclen) {
-		if (cookiep && ncookies == 0)
-			break;
-
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
 
@@ -142,19 +113,12 @@ again:
 
 		/* Skip holes */
 		if (bdp->d_fileno != 0) {
-			if ((error = (*appendfunc) (arg, bdp,
-			    (cookiep) ? *cookiep : (newoff + reclen))) != 0) {
+			if ((error = (*appendfunc) (arg, bdp)) != 0) {
 				if (error == ENOMEM)
 					error = 0;
 				break;
 			}
 		}
-
-		if (cookiep) {
-			newoff = *cookiep++;
-			ncookies--;
-		} else
-			newoff += reclen;
 	}
 
 	if (len <= 0 && !eofflag)
@@ -164,9 +128,6 @@ eof:
 out:
 	if (error == 0)
 		*off = newoff;
-
-	if (cookies)
-		free(cookies, M_TEMP);
 
 	VOP_UNLOCK(vp, 0, curproc);
 	free(buf, M_TEMP);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.102 2013/07/04 16:55:19 sf Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.103 2013/08/13 05:52:23 guenther Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -615,7 +615,6 @@ sys_close(struct proc *p, void *v, register_t *retval)
 /*
  * Return status information about a file descriptor.
  */
-/* ARGSUSED */
 int
 sys_fstat(struct proc *p, void *v, register_t *retval)
 {
@@ -650,6 +649,32 @@ sys_fstat(struct proc *p, void *v, register_t *retval)
 #endif
 	return (error);
 }
+
+#ifdef T32
+int	copyout_stat32(struct stat *, void *, struct proc *);
+int
+t32_sys_fstat(struct proc *p, void *v, register_t *retval)
+{
+	struct t32_sys_fstat_args /* {
+		syscallarg(int) fd;
+		syscallarg(struct stat32 *) sb;
+	} */ *uap = v;
+	int fd = SCARG(uap, fd);
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct stat ub;
+	int error;
+
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+	FREF(fp);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
+	FRELE(fp, p);
+	if (error == 0)
+		error = copyout_stat32(&ub, SCARG(uap, sb), p);
+	return (error);
+}
+#endif
 
 /*
  * Return pathconf information about a file descriptor.

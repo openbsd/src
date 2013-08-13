@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.18 2013/04/24 09:52:54 nicm Exp $	*/
+/*	$OpenBSD: event.h,v 1.19 2013/08/13 05:52:26 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -51,11 +51,11 @@
 } while(0)
 
 struct kevent {
-	u_int		ident;		/* identifier for this event */
+	__uintptr_t	ident;		/* identifier for this event */
 	short		filter;		/* filter for event */
 	u_short		flags;
 	u_int		fflags;
-	int		data;
+	quad_t		data;
 	void		*udata;		/* opaque user data identifier */
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendir.c,v 1.23 2011/07/18 17:29:49 matthew Exp $ */
+/*	$OpenBSD: opendir.c,v 1.24 2013/08/13 05:52:12 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 
 #include "telldir.h"
 
-static DIR *__fdopendir(int fd, off_t offset);
+static DIR *__fdopendir(int fd);
 
 /*
  * Open a directory specified by name.
@@ -52,7 +52,7 @@ opendir(const char *name)
 
 	if ((fd = open(name, O_RDONLY | O_DIRECTORY | O_CLOEXEC)) == -1)
 		return (NULL);
-	dirp = __fdopendir(fd, 0);
+	dirp = __fdopendir(fd);
 	if (dirp == NULL)
 		close(fd);
 	return (dirp);
@@ -66,7 +66,6 @@ fdopendir(int fd)
 {
 	DIR *dirp;
 	int flags;
-	off_t offset;
 
 	if ((flags = fcntl(fd, F_GETFL)) == -1)
 		return (NULL);
@@ -74,9 +73,7 @@ fdopendir(int fd)
 		errno = EBADF;
 		return (NULL);
 	}
-	if ((offset = lseek(fd, 0, SEEK_CUR)) == -1)
-		return (NULL);
-	dirp = __fdopendir(fd, offset);
+	dirp = __fdopendir(fd);
 	if (dirp != NULL) {
 		/*
 		 * POSIX doesn't require fdopendir() to set
@@ -88,7 +85,7 @@ fdopendir(int fd)
 }
 
 static DIR *
-__fdopendir(int fd, off_t offset)
+__fdopendir(int fd)
 {
 	DIR *dirp;
 	struct stat sb;
@@ -100,14 +97,9 @@ __fdopendir(int fd, off_t offset)
 		errno = ENOTDIR;
 		return (NULL);
 	}
-	if ((dirp = malloc(sizeof(DIR) + sizeof(struct _telldir))) == NULL)
+	if ((dirp = malloc(sizeof(DIR))) == NULL)
 		return (NULL);
 
-	/*
-	 * Use a buffer that is page aligned.
-	 * Hopefully this can be a big win someday by allowing page trades
-	 * to user space to be done by getdirentries()
-	 */
 	pageoffset = getpagesize() - 1;
 	dirp->dd_len = ((int)sb.st_blksize + pageoffset) & ~pageoffset;
 	dirp->dd_buf = malloc((size_t)dirp->dd_len);
@@ -116,28 +108,10 @@ __fdopendir(int fd, off_t offset)
 		return (NULL);
 	}
 
-	dirp->dd_td = (struct _telldir *)((char *)dirp + sizeof(DIR));
-	dirp->dd_td->td_locs = NULL;
-	dirp->dd_td->td_sz = 0;
-	dirp->dd_td->td_loccnt = 0;
-	dirp->dd_td->td_last = 0;
-
-	dirp->dd_seek = 0;
 	dirp->dd_loc = 0;
 	dirp->dd_fd = fd;
-	dirp->dd_unused = 0;
 	dirp->dd_lock = NULL;
-
-	/*
-	 * Set up seek point for rewinddir.
-	 */
-	dirp->dd_rewind = telldir(dirp);
-
-	/*
-	 * Store our actual seek offset.  Must do this *after* setting
-	 * dd_rewind = telldir() so that rewinddir() works correctly.
-	 */
-	dirp->dd_seek = offset;
+	dirp->dd_curpos = 0;
 
 	return (dirp);
 }

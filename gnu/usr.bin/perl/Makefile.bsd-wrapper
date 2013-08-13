@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.92 2013/08/06 19:11:53 miod Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.93 2013/08/13 05:52:09 guenther Exp $
 #
 # Build wrapper for Perl 5.16.2
 #
@@ -44,7 +44,7 @@ DYNALOADER=ext/DynaLoader/dl_dlopen.xs
 
 # Arguments passed to Configure...
 
-CPPFLAGS+= -DPERL_CORE -DNO_LOCALE_NUMERIC -DNO_LOCALE_COLLATE -DPERL_RANDOM_DEVICE=\"/dev/arandom\" -I.
+CPPFLAGS+= -DPERL_CORE -DNO_LOCALE_NUMERIC -DNO_LOCALE_COLLATE -DPERL_RANDOM_DEVICE=\"/dev/arandom\" -DBIG_TIME -I.
 
 .if defined (INSTALL_STRIP) && ${INSTALL_STRIP} == "-s"
 STRIPFLAGS='-s'

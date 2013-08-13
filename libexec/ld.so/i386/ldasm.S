@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.14 2013/06/01 09:57:58 miod Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.15 2013/08/13 05:52:19 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -122,7 +122,7 @@ DL_SYSCALL(lstat)
 DL_SYSCALL(utrace)
 DL_SYSCALL2(getcwd,__getcwd)
 DL_SYSCALL2(sysctl,__sysctl)
-DL_SYSCALL(getdirentries)
+DL_SYSCALL(getdents)
 
 .L_cerr:
 	/* error: result = -errno; - handled here. */

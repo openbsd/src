@@ -1,4 +1,4 @@
-/*	$OpenBSD: telldir.h,v 1.5 2012/03/22 04:11:53 matthew Exp $	*/
+/*	$OpenBSD: telldir.h,v 1.6 2013/08/13 05:52:13 guenther Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,39 +36,14 @@
 #ifndef _TELLDIR_H_
 #define	_TELLDIR_H_
 
-/*
- * One of these structures is malloced to describe the current directory
- * position each time telldir is called. It records the current magic
- * cookie returned by getdirentries and the offset within the buffer
- * associated with that return value.
- */
-struct ddloc {
-	off_t	loc_seek;	/* magic cookie returned by getdirentries */
-	long	loc_loc;	/* offset of entry in buffer */
-};
-
-/*
- * One of these structures is malloced for each DIR to record telldir
- * positions.
- */
-struct _telldir {
-	struct ddloc *td_locs;	/* locations */
-	size_t	td_sz;		/* size of locations */
-	long	td_loccnt;	/* index of entry for sequential readdir's */
-	long	td_last;	/* last tell/seekdir */
-};
-
 /* structure describing an open directory. */
 struct _dirdesc {
 	int	dd_fd;		/* file descriptor associated with directory */
 	long	dd_loc;		/* offset in current buffer */
-	long	dd_size;	/* amount of data returned by getdirentries */
+	long	dd_size;	/* amount of data returned by getdents() */
 	char	*dd_buf;	/* data buffer */
 	int	dd_len;		/* size of data buffer */
-	off_t	dd_seek;	/* magic cookie returned by getdirentries */
-	off_t	dd_rewind;	/* magic cookie for rewinding */
-	int	dd_unused;	/* was flags for readdir */
-	struct _telldir *dd_td; /* telldir position recording */
+	off_t	dd_curpos;	/* current cookie */
 	void	*dd_lock;	/* mutex to protect struct */
 };
 

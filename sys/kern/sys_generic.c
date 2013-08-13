@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.81 2013/06/01 16:27:37 tedu Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.82 2013/08/13 05:52:24 guenther Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -718,6 +718,145 @@ done:
 		free(pibits[0], M_TEMP);
 	return (error);
 }
+
+#ifdef T32
+int
+t32_sys_select(struct proc *p, void *v, register_t *retval)
+{
+	struct t32_sys_select_args /* {
+		syscallarg(int) nd;
+		syscallarg(fd_set *) in;
+		syscallarg(fd_set *) ou;
+		syscallarg(fd_set *) ex;
+		syscallarg(struct timeval32 *) tv;
+	} */ *uap = v;
+	fd_mask bits[6];
+	fd_set *pibits[3], *pobits[3];
+	struct timeval32 atv32;
+	struct timeval atv, rtv, ttv;
+	int s, ncoll, error = 0, timo;
+	u_int nd, ni;
+
+	nd = SCARG(uap, nd);
+	if (nd > p->p_fd->fd_nfiles) {
+		/* forgiving; slightly wrong */
+		nd = p->p_fd->fd_nfiles;
+	}
+	ni = howmany(nd, NFDBITS) * sizeof(fd_mask);
+	if (ni > sizeof(bits[0])) {
+		caddr_t mbits;
+
+		mbits = malloc(ni * 6, M_TEMP, M_WAITOK|M_ZERO);
+		pibits[0] = (fd_set *)&mbits[ni * 0];
+		pibits[1] = (fd_set *)&mbits[ni * 1];
+		pibits[2] = (fd_set *)&mbits[ni * 2];
+		pobits[0] = (fd_set *)&mbits[ni * 3];
+		pobits[1] = (fd_set *)&mbits[ni * 4];
+		pobits[2] = (fd_set *)&mbits[ni * 5];
+	} else {
+		bzero(bits, sizeof(bits));
+		pibits[0] = (fd_set *)&bits[0];
+		pibits[1] = (fd_set *)&bits[1];
+		pibits[2] = (fd_set *)&bits[2];
+		pobits[0] = (fd_set *)&bits[3];
+		pobits[1] = (fd_set *)&bits[4];
+		pobits[2] = (fd_set *)&bits[5];
+	}
+
+#define	getbits(name, x) \
+	if (SCARG(uap, name) && (error = copyin(SCARG(uap, name), \
+	    pibits[x], ni))) \
+		goto done;
+	getbits(in, 0);
+	getbits(ou, 1);
+	getbits(ex, 2);
+#undef	getbits
+#ifdef KTRACE
+	if (ni > 0 && KTRPOINT(p, KTR_STRUCT)) {
+		if (SCARG(uap, in)) ktrfdset(p, pibits[0], ni);
+		if (SCARG(uap, ou)) ktrfdset(p, pibits[1], ni);
+		if (SCARG(uap, ex)) ktrfdset(p, pibits[2], ni);
+	}
+#endif
+
+	if (SCARG(uap, tv)) {
+		error = copyin(SCARG(uap, tv), &atv32, sizeof(atv32));
+		if (error)
+			goto done;
+		TIMEVAL_FROM_32(&atv, &atv32);
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrreltimeval(p, &atv);
+#endif
+		if (itimerfix(&atv)) {
+			error = EINVAL;
+			goto done;
+		}
+		getmicrouptime(&rtv);
+		timeradd(&atv, &rtv, &atv);
+	} else {
+		atv.tv_sec = 0;
+		atv.tv_usec = 0;
+	}
+	timo = 0;
+
+retry:
+	ncoll = nselcoll;
+	atomic_setbits_int(&p->p_flag, P_SELECT);
+	error = selscan(p, pibits[0], pobits[0], nd, ni, retval);
+	if (error || *retval)
+		goto done;
+	if (SCARG(uap, tv)) {
+		getmicrouptime(&rtv);
+		if (timercmp(&rtv, &atv, >=))
+			goto done;
+		ttv = atv;
+		timersub(&ttv, &rtv, &ttv);
+		timo = ttv.tv_sec > 24 * 60 * 60 ?
+			24 * 60 * 60 * hz : tvtohz(&ttv);
+	}
+	s = splhigh();
+	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
+		splx(s);
+		goto retry;
+	}
+	atomic_clearbits_int(&p->p_flag, P_SELECT);
+	error = tsleep(&selwait, PSOCK | PCATCH, "select", timo);
+	splx(s);
+	if (error == 0)
+		goto retry;
+done:
+	atomic_clearbits_int(&p->p_flag, P_SELECT);
+	/* select is not restarted after signals... */
+	if (error == ERESTART)
+		error = EINTR;
+	if (error == EWOULDBLOCK)
+		error = 0;
+#define	putbits(name, x) \
+	if (SCARG(uap, name) && (error2 = copyout(pobits[x], \
+	    SCARG(uap, name), ni))) \
+		error = error2;
+	if (error == 0) {
+		int error2;
+
+		putbits(in, 0);
+		putbits(ou, 1);
+		putbits(ex, 2);
+#undef putbits
+#ifdef KTRACE
+		if (ni > 0 && KTRPOINT(p, KTR_STRUCT)) {
+			if (SCARG(uap, in)) ktrfdset(p, pobits[0], ni);
+			if (SCARG(uap, ou)) ktrfdset(p, pobits[1], ni);
+			if (SCARG(uap, ex)) ktrfdset(p, pobits[2], ni);
+		}
+#endif
+	}
+
+	if (pibits[0] != (fd_set *)&bits[0])
+		free(pibits[0], M_TEMP);
+	return (error);
+}
+#endif
 
 int
 selscan(struct proc *p, fd_set *ibits, fd_set *obits, int nfd, int ni,

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.113 2013/06/05 04:06:08 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.114 2013/08/13 05:52:13 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -33,7 +33,7 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	fchdir.o fchflags.o fchmod.o fchmodat.o fchown.o \
 	fchownat.o fcntl.o fhopen.o fhstat.o fhstatfs.o \
 	flock.o fpathconf.o fstat.o fstatat.o fstatfs.o \
-	fsync.o futimens.o futimes.o getdirentries.o getdtablecount.o \
+	fsync.o futimens.o futimes.o getdents.o getdtablecount.o \
 	getegid.o geteuid.o getfh.o getfsstat.o getgid.o \
 	getgroups.o getitimer.o getpeername.o getpgid.o getpgrp.o \
 	getpid.o getppid.o getpriority.o getresgid.o getresuid.o \

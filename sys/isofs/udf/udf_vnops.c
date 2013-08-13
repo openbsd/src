@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.50 2013/06/11 16:42:16 deraadt Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.51 2013/08/13 05:52:22 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -532,27 +532,20 @@ udf_cmpname(char *cs0string, char *cmpname, int cs0len, int cmplen, struct umoun
 
 struct udf_uiodir {
 	struct dirent *dirent;
-	u_long *cookies;
-	int ncookies;
-	int acookies;
 	int eofflag;
 };
 
 static int
-udf_uiodir(struct udf_uiodir *uiodir, int de_size, struct uio *uio, long cookie)
+udf_uiodir(struct udf_uiodir *uiodir, struct uio *uio, long off)
 {
-	if (uiodir->cookies != NULL) {
-		if (++uiodir->acookies > uiodir->ncookies) {
-			uiodir->eofflag = 0;
-			return (-1);
-		}
-		*uiodir->cookies++ = cookie;
-	}
+	int de_size = DIRENT_SIZE(uiodir->dirent);
 
 	if (uio->uio_resid < de_size) {
 		uiodir->eofflag = 0;
 		return (-1);
 	}
+	uiodir->dirent->d_off = off;
+	uiodir->dirent->d_reclen = de_size;
 
 	return (uiomove(uiodir->dirent, de_size, uio));
 }
@@ -723,33 +716,14 @@ udf_readdir(void *v)
 	struct fileid_desc *fid;
 	struct udf_uiodir uiodir;
 	struct udf_dirstream *ds;
-	u_long *cookies = NULL;
-	int ncookies;
 	int error = 0;
-
-#define GENERIC_DIRSIZ(dp) \
-    ((sizeof (struct dirent) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3))
 
 	vp = ap->a_vp;
 	uio = ap->a_uio;
 	up = VTOU(vp);
 	ump = up->u_ump;
 	uiodir.eofflag = 1;
-
-	if (ap->a_ncookies != NULL) {
-		/*
-		 * Guess how many entries are needed.  If we run out, this
-		 * function will be called again and thing will pick up were
-		 * it left off.
-		 */
-		ncookies = uio->uio_resid / 8;
-		cookies = malloc(sizeof(u_long) * ncookies, M_TEMP, M_WAITOK);
-		uiodir.ncookies = ncookies;
-		uiodir.cookies = cookies;
-		uiodir.acookies = 0;
-	} else {
-		uiodir.cookies = NULL;
-	}
+	uiodir.dirent = &dir;
 
 	/*
 	 * Iterate through the file id descriptors.  Give the parent dir
@@ -777,7 +751,7 @@ udf_readdir(void *v)
 
 		if ((fid->l_fi == 0) && (fid->file_char & UDF_FILE_CHAR_PAR)) {
 			/* Do up the '.' and '..' entries.  Dummy values are
-			 * used for the cookies since the offset here is
+			 * used for the offset since the offset here is
 			 * usually zero, and NFS doesn't like that value
 			 */
 			dir.d_fileno = up->u_ino;
@@ -785,9 +759,7 @@ udf_readdir(void *v)
 			dir.d_name[0] = '.';
 			dir.d_name[1] = '\0';
 			dir.d_namlen = 1;
-			dir.d_reclen = GENERIC_DIRSIZ(&dir);
-			uiodir.dirent = &dir;
-			error = udf_uiodir(&uiodir, dir.d_reclen, uio, 1);
+			error = udf_uiodir(&uiodir, uio, 1);
 			if (error)
 				break;
 
@@ -797,19 +769,14 @@ udf_readdir(void *v)
 			dir.d_name[1] = '.';
 			dir.d_name[2] = '\0';
 			dir.d_namlen = 2;
-			dir.d_reclen = GENERIC_DIRSIZ(&dir);
-			uiodir.dirent = &dir;
-			error = udf_uiodir(&uiodir, dir.d_reclen, uio, 2);
+			error = udf_uiodir(&uiodir, uio, 2);
 		} else {
 			dir.d_namlen = udf_transname(&fid->data[fid->l_iu],
 			    &dir.d_name[0], fid->l_fi, ump);
 			dir.d_fileno = udf_getid(&fid->icb);
 			dir.d_type = (fid->file_char & UDF_FILE_CHAR_DIR) ?
 			    DT_DIR : DT_UNKNOWN;
-			dir.d_reclen = GENERIC_DIRSIZ(&dir);
-			uiodir.dirent = &dir;
-			error = udf_uiodir(&uiodir, dir.d_reclen, uio,
-			    ds->this_off);
+			error = udf_uiodir(&uiodir, uio, ds->this_off);
 		}
 		if (error) {
 			printf("uiomove returned %d\n", error);
@@ -817,8 +784,6 @@ udf_readdir(void *v)
 		}
 
 	}
-
-#undef GENERIC_DIRSIZ
 
 	/* tell the calling layer whether we need to be called again */
 	*ap->a_eofflag = uiodir.eofflag;
@@ -831,15 +796,6 @@ udf_readdir(void *v)
 	if (ISSET(up->u_ump->um_flags, UDF_MNT_USES_META)) {
 		up->u_ump->um_start = up->u_ump->um_realstart;
 		up->u_ump->um_len = up->u_ump->um_reallen;
-	}
-
-	if (ap->a_ncookies != NULL) {
-		if (error)
-			free(cookies, M_TEMP);
-		else {
-			*ap->a_ncookies = uiodir.acookies;
-			*ap->a_cookies = cookies;
-		}
 	}
 
 	return (error);

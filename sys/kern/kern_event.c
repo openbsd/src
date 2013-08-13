@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.50 2013/05/31 19:01:56 yasuoka Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.51 2013/08/13 05:52:23 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -547,6 +547,259 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	FRELE(fp, p);
 	return (error);
 }
+
+#ifdef T32
+
+struct kevent32 {
+	u_int		ident;
+	short		filter;
+	u_short		flags;
+	u_int		fflags;
+	int		data;
+	void		*udata;
+};
+
+static int
+kqueue32_scan(struct kqueue *kq, int maxevents, struct kevent32 *ulistp,
+	const struct timespec *tsp, struct proc *p, int *retval,
+	struct kevent32 *k32)
+{
+	struct kevent32 *kevp;
+	struct timeval atv, rtv, ttv;
+	struct knote *kn, marker;
+	int s, count, timeout, nkev = 0, error = 0;
+
+	count = maxevents;
+	if (count == 0)
+		goto done;
+
+	if (tsp != NULL) {
+		TIMESPEC_TO_TIMEVAL(&atv, tsp);
+		if (tsp->tv_sec == 0 && tsp->tv_nsec == 0) {
+			/* No timeout, just poll */
+			timeout = -1;
+			goto start;
+		}
+		if (itimerfix(&atv)) {
+			error = EINVAL;
+			goto done;
+		}
+
+		timeout = atv.tv_sec > 24 * 60 * 60 ?
+			24 * 60 * 60 * hz : tvtohz(&atv);
+
+		getmicrouptime(&rtv);
+		timeradd(&atv, &rtv, &atv);
+	} else {
+		atv.tv_sec = 0;
+		atv.tv_usec = 0;
+		timeout = 0;
+	}
+	goto start;
+
+retry:
+	if (atv.tv_sec || atv.tv_usec) {
+		getmicrouptime(&rtv);
+		if (timercmp(&rtv, &atv, >=))
+			goto done;
+		ttv = atv;
+		timersub(&ttv, &rtv, &ttv);
+		timeout = ttv.tv_sec > 24 * 60 * 60 ?
+			24 * 60 * 60 * hz : tvtohz(&ttv);
+	}
+
+start:
+	if (kq->kq_state & KQ_DYING) {
+		error = EBADF;
+		goto done;
+	}
+
+	kevp = k32;
+	s = splhigh();
+	if (kq->kq_count == 0) {
+		if (timeout < 0) {
+			error = EWOULDBLOCK;
+		} else {
+			kq->kq_state |= KQ_SLEEP;
+			error = tsleep(kq, PSOCK | PCATCH, "kqread", timeout);
+		}
+		splx(s);
+		if (error == 0)
+			goto retry;
+		/* don't restart after signals... */
+		if (error == ERESTART)
+			error = EINTR;
+		else if (error == EWOULDBLOCK)
+			error = 0;
+		goto done;
+	}
+
+	TAILQ_INSERT_TAIL(&kq->kq_head, &marker, kn_tqe);
+	while (count) {
+		kn = TAILQ_FIRST(&kq->kq_head);
+		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
+		if (kn == &marker) {
+			splx(s);
+			if (count == maxevents)
+				goto retry;
+			goto done;
+		}
+		if (kn->kn_status & KN_DISABLED) {
+			kn->kn_status &= ~KN_QUEUED;
+			kq->kq_count--;
+			continue;
+		}
+		if ((kn->kn_flags & EV_ONESHOT) == 0 &&
+		    kn->kn_fop->f_event(kn, 0) == 0) {
+			kn->kn_status &= ~(KN_QUEUED | KN_ACTIVE);
+			kq->kq_count--;
+			continue;
+		}
+		kevp->ident	= kn->kn_kevent.ident;
+		kevp->filter	= kn->kn_kevent.filter;
+		kevp->flags	= kn->kn_kevent.flags;
+		kevp->fflags	= kn->kn_kevent.fflags;
+		kevp->data	= kn->kn_kevent.data;
+		kevp->udata	= kn->kn_kevent.udata;
+		kevp++;
+		nkev++;
+		if (kn->kn_flags & EV_ONESHOT) {
+			kn->kn_status &= ~KN_QUEUED;
+			kq->kq_count--;
+			splx(s);
+			kn->kn_fop->f_detach(kn);
+			knote_drop(kn, p, p->p_fd);
+			s = splhigh();
+		} else if (kn->kn_flags & EV_CLEAR) {
+			kn->kn_data = 0;
+			kn->kn_fflags = 0;
+			kn->kn_status &= ~(KN_QUEUED | KN_ACTIVE);
+			kq->kq_count--;
+		} else {
+			TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
+		}
+		count--;
+		if (nkev == KQ_NEVENTS) {
+			splx(s);
+			error = copyout(k32, ulistp, sizeof(*k32) * nkev);
+			ulistp += nkev;
+			nkev = 0;
+			kevp = k32;
+			s = splhigh();
+			if (error)
+				break;
+		}
+	}
+	TAILQ_REMOVE(&kq->kq_head, &marker, kn_tqe);
+	splx(s);
+done:
+	if (nkev != 0)
+		error = copyout(k32, ulistp, sizeof(*k32) * nkev);
+	*retval = maxevents - count;
+	return (error);
+}
+
+
+int
+t32_sys_kevent(struct proc *p, void *v, register_t *retval)
+{
+	struct filedesc* fdp = p->p_fd;
+	struct t32_sys_kevent_args /* {
+		syscallarg(int)	fd;
+		syscallarg(const struct kevent32 *) changelist;
+		syscallarg(int)	nchanges;
+		syscallarg(struct kevent32 *) eventlist;
+		syscallarg(int)	nevents;
+		syscallarg(const struct timespec32 *) timeout;
+	} */ *uap = v;
+	struct kevent32 k32[KQ_NEVENTS];
+	struct kevent *kevp;
+	struct kqueue *kq;
+	struct file *fp;
+	struct timespec32 ts32;
+	struct timespec ts, *tsp;
+	int i, n, nerrors, error;
+
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL ||
+	    (fp->f_type != DTYPE_KQUEUE))
+		return (EBADF);
+
+	FREF(fp);
+
+	if (SCARG(uap, timeout) != NULL) {
+		error = copyin(SCARG(uap, timeout), &ts32, sizeof(ts32));
+		if (error)
+			goto done;
+		TIMESPEC_FROM_32(&ts, &ts32);
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrreltimespec(p, &ts);
+#endif
+		tsp = &ts;
+	} else
+		tsp = NULL;
+
+	kq = (struct kqueue *)fp->f_data;
+	nerrors = 0;
+
+	while (SCARG(uap, nchanges) > 0) {
+		n = SCARG(uap, nchanges) > KQ_NEVENTS
+			? KQ_NEVENTS : SCARG(uap, nchanges);
+		error = copyin(SCARG(uap, changelist), k32, n * sizeof(*k32));
+		if (error)
+			goto done;
+		for (i = 0; i < n; i++) {
+			kq->kq_kev[i].ident	= k32[i].ident;
+			kq->kq_kev[i].filter	= k32[i].filter;
+			kq->kq_kev[i].flags	= k32[i].flags;
+			kq->kq_kev[i].fflags	= k32[i].fflags;
+			kq->kq_kev[i].data	= k32[i].data;
+			kq->kq_kev[i].udata	= k32[i].udata;
+		}
+		for (i = 0; i < n; i++) {
+			kevp = &kq->kq_kev[i];
+			kevp->flags &= ~EV_SYSFLAGS;
+			error = kqueue_register(kq, kevp, p);
+			if (error) {
+				if (SCARG(uap, nevents) != 0) {
+					k32->ident	= kevp->ident;
+					k32->filter	= kevp->filter;
+					k32->flags	= EV_ERROR;
+					k32->fflags	= kevp->fflags;
+					k32->data	= error;
+					k32->udata	= kevp->udata;
+					copyout(k32, SCARG(uap, eventlist),
+					    sizeof(*k32));
+					SCARG(uap, eventlist)++;
+					SCARG(uap, nevents)--;
+					nerrors++;
+				} else {
+					goto done;
+				}
+			}
+		}
+		SCARG(uap, nchanges) -= n;
+		SCARG(uap, changelist) += n;
+	}
+	if (nerrors) {
+		*retval = nerrors;
+		error = 0;
+		goto done;
+	}
+
+	KQREF(kq);
+	FRELE(fp, p);
+	error = kqueue32_scan(kq, SCARG(uap, nevents), SCARG(uap, eventlist),
+			    tsp, p, &n, k32);
+	KQRELE(kq);
+	*retval = n;
+	return (error);
+
+ done:
+	FRELE(fp, p);
+	return (error);
+}
+#endif
 
 int
 kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.10 2013/06/01 09:57:58 miod Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.11 2013/08/13 05:52:19 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -250,11 +250,11 @@ ENTRY(_dl_sysctl,0)
 	nop
 EXIT(_dl_issetugid)
 
-ENTRY(_dl_getdirentries,0)
-	SYSCALL(getdirentries)
+ENTRY(_dl_getdents,0)
+	SYSCALL(getdents)
 	bv	r0(rp)
 	nop
-EXIT(_dl_getdirentries)
+EXIT(_dl_getdents)
 
 ENTRY(_dl_gettimeofday,0)
 	SYSCALL(gettimeofday)

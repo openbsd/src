@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.42 2013/06/03 16:55:22 guenther Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.43 2013/08/13 05:52:23 guenther Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -421,6 +421,7 @@ calcru(struct tusage *tup, struct timeval *up, struct timeval *sp,
 		TIMESPEC_TO_TIMEVAL(ip, &i);
 }
 
+int	dogetrusage(struct proc *, int, struct rusage *, register_t *);
 
 /* ARGSUSED */
 int
@@ -430,20 +431,51 @@ sys_getrusage(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) who;
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
+	struct rusage ru;
+	int error;
+
+	error = dogetrusage(p, SCARG(uap, who), &ru, retval);
+	if (error == 0)
+		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
+	return (error);
+}
+
+#ifdef T32
+int
+t32_sys_getrusage(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_getrusage_args /* {
+		syscallarg(int) who;
+		syscallarg(struct rusage32 *) rusage;
+	} */ *uap = v;
+	struct rusage ru;
+	int error;
+
+	error = dogetrusage(p, SCARG(uap, who), &ru, retval);
+	if (error == 0) {
+		struct rusage32 ru32;
+
+		RUSAGE_TO_32(&ru32, &ru);
+		error = copyout(&ru32, SCARG(uap, rusage), sizeof(ru32));
+	}
+	return (error);
+}
+#endif
+
+int
+dogetrusage(struct proc *p, int who, struct rusage *rup, register_t *retval)
+{
 	struct process *pr = p->p_p;
 	struct proc *q;
-	struct rusage ru;
-	struct rusage *rup;
 
-	switch (SCARG(uap, who)) {
+	switch (who) {
 
 	case RUSAGE_SELF:
 		/* start with the sum of dead threads, if any */
 		if (pr->ps_ru != NULL)
-			ru = *pr->ps_ru;
+			*rup = *pr->ps_ru;
 		else
-			bzero(&ru, sizeof(ru));
-		rup = &ru;
+			bzero(rup, sizeof(*rup));
 
 		/* add on all living threads */
 		TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
@@ -455,19 +487,18 @@ sys_getrusage(struct proc *p, void *v, register_t *retval)
 		break;
 
 	case RUSAGE_THREAD:
-		rup = &p->p_ru;
+		*rup = p->p_ru;
 		calcru(&p->p_tu, &rup->ru_utime, &rup->ru_stime, NULL);
 		break;
 
 	case RUSAGE_CHILDREN:
-		rup = &pr->ps_cru;
+		*rup = pr->ps_cru;
 		break;
 
 	default:
 		return (EINVAL);
 	}
-	return (copyout((caddr_t)rup, (caddr_t)SCARG(uap, rusage),
-	    sizeof (struct rusage)));
+	return (0);
 }
 
 void

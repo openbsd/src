@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.136 2013/06/09 13:10:19 miod Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.137 2013/08/13 05:52:27 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -398,7 +398,7 @@ struct kinfo_proc {
 
 	int64_t	p_uvalid;		/* CHAR: following p_u* members from struct user are valid */
 					/* XXX 64 bits for alignment */
-	u_int32_t p_ustart_sec;		/* STRUCT TIMEVAL: starting time. */
+	u_int64_t p_ustart_sec;		/* STRUCT TIMEVAL: starting time. */
 	u_int32_t p_ustart_usec;	/* STRUCT TIMEVAL: starting time. */
 
 	u_int32_t p_uutime_sec;		/* STRUCT TIMEVAL: user time. */

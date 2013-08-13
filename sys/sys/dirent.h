@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.9 2013/05/31 19:32:52 guenther Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.10 2013/08/13 05:52:26 guenther Exp $	*/
 /*	$NetBSD: dirent.h,v 1.12 1996/04/09 20:55:25 cgd Exp $	*/
 
 /*-
@@ -50,9 +50,11 @@
 
 struct dirent {
 	__ino_t    d_fileno;		/* file number of entry */
+	__off_t    d_off;		/* offset after this entry */
 	__uint16_t d_reclen;		/* length of this record */
 	__uint8_t  d_type; 		/* file type, see below */
 	__uint8_t  d_namlen;		/* length of string in d_name */
+	__uint8_t  __d_padding[4];	/* suppress padding after d_name */
 #if __BSD_VISIBLE
 #define	MAXNAMLEN	255
 	char	d_name[MAXNAMLEN + 1];	/* name must be no longer than this */
@@ -80,14 +82,18 @@ struct dirent {
 #define	IFTODT(mode)	(((mode) & 0170000) >> 12)
 #define	DTTOIF(dirtype)	((dirtype) << 12)
 
+#ifdef _KERNEL
 /*
- * The DIRENT_SIZE macro gives the minimum record length which will hold
- * the directory entry.  This returns the amount of space in struct dirent
- * without the d_name field, plus enough space for the name with a terminating
- * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
+ * The DIRENT_RECSIZE macro gives the minimum record length which will hold
+ * a directory entry with a name of the given length, including the terminating
+ * nul byte, rounded up to proper alignment.
+ * The DIRENT_SIZE macro does the same when given a pointer to a struct dirent
  */
+#define DIRENT_RECSIZE(namelen) \
+    ((offsetof(struct dirent, d_name) + (namelen) + 1 + 7) &~ 7)
 #define	DIRENT_SIZE(dp) \
-    ((sizeof (struct dirent) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3))
+    DIRENT_RECSIZE((dp)->d_namlen)
+#endif
 
 #endif /* __BSD_VISIBLE */
 

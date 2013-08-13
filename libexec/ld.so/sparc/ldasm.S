@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.20 2013/06/01 09:57:58 miod Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.21 2013/08/13 05:52:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -267,10 +267,10 @@ _dl_fcntl:
 
 	.section ".text"
 	.align 4
-	.globl _dl_getdirentries
-	.type _dl_getdirentries,@function
-_dl_getdirentries:
-	mov  SYS_getdirentries | SYSCALL_G2RFLAG, %g1	! call sys_getdirentries
+	.globl _dl_getdents
+	.type _dl_getdents,@function
+_dl_getdents:
+	mov  SYS_getdents | SYSCALL_G2RFLAG, %g1	! call sys_getdents
 	add %o7, 8, %g2					! just return on success
 	t ST_SYSCALL					! off to wonderland
 	retl

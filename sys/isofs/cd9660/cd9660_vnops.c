@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.62 2013/06/11 16:42:15 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.63 2013/08/13 05:52:22 guenther Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -78,8 +78,6 @@ struct isoreaddir {
 	struct uio *uio;
 	off_t uio_off;
 	int eofflag;
-	u_long *cookies;
-	int ncookies;
 };
 
 int	iso_uiodir(struct isoreaddir *, struct dirent *, off_t);
@@ -344,16 +342,7 @@ iso_uiodir(idp,dp,off)
 		return (-1);
 	}
 
-	if (idp->cookies) {
-		if (idp->ncookies <= 0) {
-			idp->eofflag = 0;
-			return (-1);
-		}
-
-		*idp->cookies++ = off;
-		--idp->ncookies;
-	}
-
+	dp->d_off = off;
 	if ((error = uiomove((caddr_t)dp, dp->d_reclen, idp->uio)) != 0)
 		return (error);
 	idp->uio_off = off;
@@ -434,8 +423,6 @@ cd9660_readdir(void *v)
 	int error = 0;
 	int reclen;
 	u_short namelen;
-	int  ncookies = 0;
-	u_long *cookies = NULL;
 	cdino_t ino;
 
 	dp = VTOI(vdp);
@@ -451,17 +438,6 @@ cd9660_readdir(void *v)
 	idp->saveent.d_type = idp->assocent.d_type = idp->current.d_type =
 	    DT_UNKNOWN;
 	idp->uio = uio;
-	if (ap->a_ncookies == NULL) {
-		idp->cookies = NULL;
-	} else {
-               /*
-                * Guess the number of cookies needed.
-                */
-               ncookies = uio->uio_resid / 16;
-               cookies = malloc(ncookies * sizeof(u_long), M_TEMP, M_WAITOK);
-               idp->cookies = cookies;
-               idp->ncookies = ncookies;
-	}
 	idp->eofflag = 1;
 	idp->curroff = uio->uio_offset;
 	idp->uio_off = uio->uio_offset;
@@ -575,18 +551,6 @@ cd9660_readdir(void *v)
 	if (error < 0)
 		error = 0;
 
-	if (ap->a_ncookies != NULL) {
-		if (error)
-			free(cookies, M_TEMP);
-		else {
-			/*
-			 * Work out the number of cookies actually used.
-			 */
-			*ap->a_ncookies = ncookies - idp->ncookies;
-			*ap->a_cookies = cookies;
-		}
-	}
-	
 	if (bp)
 		brelse (bp);
 

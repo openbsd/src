@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.118 2013/07/05 21:28:21 guenther Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.119 2013/08/13 05:52:27 guenther Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ struct vattr {
 	uid_t		va_uid;		/* owner user id */
 	gid_t		va_gid;		/* owner group id */
 	long		va_fsid;	/* file system id (dev for now) */
-	long		va_fileid;	/* file id */
+	u_quad_t	va_fileid;	/* file id */
 	u_quad_t	va_size;	/* file size in bytes */
 	long		va_blocksize;	/* blocksize preferred for i/o */
 	struct timespec	va_atime;	/* time of last access */
@@ -488,11 +488,8 @@ struct vop_readdir_args {
 	struct uio *a_uio;
 	struct ucred *a_cred;
 	int *a_eofflag;
-	int *a_ncookies;
-	u_long **a_cookies;
 };
-int VOP_READDIR(struct vnode *, struct uio *, struct ucred *, int *, int *, 
-    u_long **);
+int VOP_READDIR(struct vnode *, struct uio *, struct ucred *, int *);
 
 struct vop_readlink_args {
 	struct vnode *a_vp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.31 2013/07/10 03:05:35 guenther Exp $	*/
+/*	$OpenBSD: time.h,v 1.32 2013/08/13 05:52:27 guenther Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -42,9 +42,23 @@
  * and used in other calls.
  */
 struct timeval {
+	time_t	tv_sec;		/* seconds */
+	long	tv_usec;	/* and microseconds */
+};
+#ifdef _KERNEL
+struct timeval32 {
 	long	tv_sec;		/* seconds */
 	long	tv_usec;	/* and microseconds */
 };
+#define TIMEVAL_FROM_32(tv, tv32) {		\
+	(tv)->tv_sec = (tv32)->tv_sec;		\
+	(tv)->tv_usec = (tv32)->tv_usec;	\
+}
+#define TIMEVAL_TO_32(tv32, tv) {		\
+	(tv32)->tv_sec = (tv)->tv_sec;		\
+	(tv32)->tv_usec = (tv)->tv_usec;	\
+}
+#endif
 
 #ifndef _TIMESPEC_DECLARED
 #define _TIMESPEC_DECLARED
@@ -55,6 +69,24 @@ struct timespec {
 	time_t	tv_sec;		/* seconds */
 	long	tv_nsec;	/* and nanoseconds */
 };
+#ifdef _KERNEL
+struct timespec32 {
+	time32_t tv_sec;	/* seconds */
+	long	 tv_nsec;	/* and nanoseconds */
+};
+#define TIMESPEC_FROM_32(ts, ts32) {		\
+	(ts)->tv_sec = (ts32)->tv_sec;		\
+	(ts)->tv_nsec = (ts32)->tv_nsec;	\
+}
+#define TIMESPEC_TO_32(ts32, ts) {		\
+	(ts32)->tv_sec = (ts)->tv_sec;		\
+	(ts32)->tv_nsec = (ts)->tv_nsec;	\
+}
+#define TIMESPEC_FROM_TIMEVAL32(ts, tv32) {	\
+	(ts)->tv_sec = (tv32)->tv_sec;		\
+	(ts)->tv_nsec = (tv32)->tv_usec * 1000;	\
+}
+#endif
 #endif
 
 #define	TIMEVAL_TO_TIMESPEC(tv, ts) {					\
@@ -142,6 +174,20 @@ struct	itimerval {
 	struct	timeval it_interval;	/* timer interval */
 	struct	timeval it_value;	/* current value */
 };
+#ifdef _KERNEL
+struct	itimerval32 {
+	struct	timeval32 it_interval;	/* timer interval */
+	struct	timeval32 it_value;	/* current value */
+};
+#define ITIMERVAL_FROM_32(it, it32) {					\
+	TIMEVAL_FROM_32(&(it)->it_interval, &(it32)->it_interval);	\
+	TIMEVAL_FROM_32(&(it)->it_value, &(it32)->it_value);		\
+}
+#define ITIMERVAL_TO_32(it32, it) {					\
+	TIMEVAL_TO_32(&(it32)->it_interval, &(it)->it_interval);	\
+	TIMEVAL_TO_32(&(it32)->it_value, &(it)->it_value);		\
+}
+#endif
 
 #if __BSD_VISIBLE
 /*

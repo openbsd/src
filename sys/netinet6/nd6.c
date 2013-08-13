@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.99 2013/05/31 15:04:24 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.100 2013/08/13 05:52:25 guenther Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -2116,8 +2116,8 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 				time_t maxexpire;
 
 				/* XXX: we assume time_t is signed. */
-				maxexpire = (-1) &
-					~(1 << ((sizeof(maxexpire) * 8) - 1));
+				maxexpire = (time_t)~(1ULL <<
+				    ((sizeof(maxexpire) * 8) - 1));
 				if (pr->ndpr_vltime <
 				    maxexpire - pr->ndpr_lastupdate) {
 					p->expire = pr->ndpr_lastupdate +

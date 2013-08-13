@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.11 2013/06/09 13:10:19 miod Exp $ */
+/*	$OpenBSD: syscall.h,v 1.12 2013/08/13 05:52:20 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -227,7 +227,7 @@ _dl_fcntl(int fd, int cmd, int flag)
 }
 
 extern inline ssize_t
-_dl_getdirentries(int fd, char *buf, int nbytes, off_t *basep)
+_dl_getdents(int fd, char *buf, size_t nbytes)
 {
 	register int status __asm__ ("$2");
 
@@ -235,14 +235,13 @@ _dl_getdirentries(int fd, char *buf, int nbytes, off_t *basep)
 	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
 	    "move  $6,%4\n\t"
-	    "move  $7,%5\n\t"
 	    "li    $2,%1\n\t"
 	    "syscall\n\t"
 	    "beq   $7,$0,1f\n\t"
 	    "li    $2,-1\n\t"
 	    "1:"
 	    : "=r" (status)
-	    : "I" (SYS_getdirentries), "r" (fd), "r" (buf), "r" (nbytes), "r" (basep)
+	    : "I" (SYS_getdents), "r" (fd), "r" (buf), "r" (nbytes)
 	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;

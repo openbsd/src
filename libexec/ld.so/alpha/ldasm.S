@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.20 2013/06/01 09:57:57 miod Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.21 2013/08/13 05:52:18 guenther Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -276,11 +276,11 @@ LEAF_NOPROFILE(_dl_fcntl, 3)
 	RET
 END(_dl_fcntl)
 
-LEAF_NOPROFILE(_dl_getdirentries, 4)
-	ldiq	v0, SYS_getdirentries
+LEAF_NOPROFILE(_dl_getdents, 3)
+	ldiq	v0, SYS_getdents
 	call_pal PAL_OSF1_callsys
 	RET
-END(_dl_getdirentries)
+END(_dl_getdents)
 
 /* _dl_sigprocmask does not support NULL new mask */
 LEAF_NOPROFILE(_dl_sigprocmask, 4)

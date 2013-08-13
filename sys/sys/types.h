@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.37 2013/06/17 19:11:54 guenther Exp $	*/
+/*	$OpenBSD: types.h,v 1.38 2013/08/13 05:52:27 guenther Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -134,6 +134,7 @@ typedef	__fixpt_t	fixpt_t;	/* fixed point number */
 typedef	__gid_t		gid_t;		/* group id */
 typedef	__id_t		id_t;		/* may contain pid, uid or gid */
 typedef	__ino_t		ino_t;		/* inode number */
+typedef	__ino32_t	ino32_t;	/* inode number */
 typedef	__key_t		key_t;		/* IPC key (for Sys V IPC) */
 typedef	__mode_t	mode_t;		/* permissions */
 typedef	__nlink_t	nlink_t;	/* link count */
@@ -188,6 +189,7 @@ typedef	__ssize_t	ssize_t;
 #ifndef	_TIME_T_DEFINED_
 #define	_TIME_T_DEFINED_
 typedef	__time_t	time_t;
+typedef	__time32_t	time32_t;
 #endif
 
 #ifndef	_TIMER_T_DEFINED_

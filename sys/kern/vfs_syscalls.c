@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.194 2013/08/08 20:19:13 guenther Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.195 2013/08/13 05:52:24 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -71,9 +71,6 @@ int copyout_statfs(struct statfs *, void *, struct proc *);
 #ifdef COMPAT_O53
 int copyout_statfs53(struct statfs *, void *, struct proc *);
 #endif
-
-int getdirentries_internal(struct proc *, int, char *, int, off_t *,
-    register_t *);
 
 int doopenat(struct proc *, int, const char *, int, mode_t, register_t *);
 int domknodat(struct proc *, int, const char *, mode_t, dev_t);
@@ -2876,18 +2873,25 @@ sys_rmdir(struct proc *p, void *v, register_t *retval)
  * Read a block of directory entries in a file system independent format.
  */
 int
-getdirentries_internal(struct proc *p, int fd, char *buf, int count,
-    off_t *basep, register_t *retval)
+sys_getdents(struct proc *p, void *v, register_t *retval)
 {
+	struct sys_getdents_args /* {
+		syscallarg(int) fd;
+		syscallarg(struct dirent *) buf;
+		syscallarg(size_t) buflen;
+	} */ *uap = v;
 	struct vnode *vp;
 	struct file *fp;
 	struct uio auio;
 	struct iovec aiov;
+	size_t buflen;
 	int error, eofflag;
 
-	if (count < 0)
+	buflen = SCARG(uap, buflen);
+
+	if (buflen < 0)
 		return EINVAL;
-	if ((error = getvnode(p->p_fd, fd, &fp)) != 0)
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0) {
 		error = EBADF;
@@ -2897,49 +2901,30 @@ getdirentries_internal(struct proc *p, int fd, char *buf, int count,
 		error = EINVAL;
 		goto bad;
 	}
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto bad;
 	}
-	aiov.iov_base = buf;
-	aiov.iov_len = count;
+	aiov.iov_base = SCARG(uap, buf);
+	aiov.iov_len = buflen;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
-	auio.uio_resid = count;
+	auio.uio_resid = buflen;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-	*basep = auio.uio_offset = fp->f_offset;
-	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, 0, 0);
+	auio.uio_offset = fp->f_offset;
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag);
 	fp->f_offset = auio.uio_offset;
 	VOP_UNLOCK(vp, 0, p);
 	if (error)
 		goto bad;
-	*retval = count - auio.uio_resid;
+	*retval = buflen - auio.uio_resid;
 bad:
 	FRELE(fp, p);
 	return (error);
-}
-
-int
-sys_getdirentries(struct proc *p, void *v, register_t *retval)
-{
-	struct sys_getdirentries_args /* {
-		syscallarg(int) fd;
-		syscallarg(char *) buf;
-		syscallarg(int) count;
-		syscallarg(off_t *) basep;
-	} */ *uap = v;
-	int error;
-	off_t off;
-
-	error = getdirentries_internal(p, SCARG(uap, fd), SCARG(uap, buf),
-	    SCARG(uap, count), &off, retval);
-	if (!error)
-		error = copyout(&off, SCARG(uap, basep), sizeof(off_t));
-	return error;
 }
 
 /*
@@ -3187,3 +3172,250 @@ sys_pwritev(struct proc *p, void *v, register_t *retval)
 	return (dofilewritev(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
 	    1, &offset, retval));
 }
+
+#ifdef T32
+int copyout_stat32(struct stat *, void *, struct proc *);
+int dofstatat32(struct proc *, int, const char *, struct stat32 *, int);
+
+int
+dofstatat32(struct proc *p, int fd, const char *path, struct stat32 *buf,
+    int flag)
+{
+	struct stat sb;
+	int error, follow;
+	struct nameidata nd;
+
+	if (flag & ~AT_SYMLINK_NOFOLLOW)
+		return (EINVAL);
+
+	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
+	NDINITAT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, fd, path, p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+	error = vn_stat(nd.ni_vp, &sb, p);
+	vput(nd.ni_vp);
+	if (error)
+		return (error);
+	return (copyout_stat32(&sb, buf, p));
+}
+
+int
+t32_sys_stat(struct proc *p, void *v, register_t *retval)
+{
+	struct t32_sys_stat_args /* {
+		syscallarg(const char *) path;
+		syscallarg(struct stat32 *) ub;
+	} */ *uap = v;
+
+	return (dofstatat32(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, ub), 0));
+}
+
+int
+copyout_stat32(struct stat *sp, void *uaddr, struct proc *p)
+{
+	struct stat32 sb32;
+	int error;
+
+	STAT_TO_32(&sb32, sp);
+
+	/* Don't let non-root see generation numbers (for NFS security) */
+	if (suser(p, 0))
+		sb32.st_gen = 0;
+	error = copyout(&sb32, uaddr, sizeof(sb32));
+#ifdef KTRACE
+	if (error == 0 && KTRPOINT(p, KTR_STRUCT))
+		ktrstat(p, sp);
+#endif
+	return (error);
+}
+
+int
+t32_sys_fstatat(struct proc *p, void *v, register_t *retval)
+{
+	struct t32_sys_fstatat_args /* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(struct stat32 *) buf;
+		syscallarg(int) flag;
+	} */ *uap = v;
+
+	return (dofstatat32(p, SCARG(uap, fd), SCARG(uap, path),
+	    SCARG(uap, buf), SCARG(uap, flag)));
+}
+
+int
+t32_sys_lstat(struct proc *p, void *v, register_t *retval)
+{
+	struct t32_sys_lstat_args /* {
+		syscallarg(const char *) path;
+		syscallarg(struct stat32 *) ub;
+	} */ *uap = v;
+
+	return (dofstatat32(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, ub),
+	    AT_SYMLINK_NOFOLLOW));
+}
+
+/* ARGSUSED */
+int
+t32_sys_utimes(struct proc *p, void *v, register_t *retval)
+{
+	struct t32_sys_utimes_args /* {
+		syscallarg(const char *) path;
+		syscallarg(const struct timeval32 *) tptr;
+	} */ *uap = v;
+
+	struct timespec ts[2];
+	struct timeval32 tv[2];
+	const struct timeval32 *tvp;
+	int error;
+
+	tvp = SCARG(uap, tptr);
+	if (tvp != NULL) {
+		error = copyin(tvp, tv, sizeof(tv));
+		if (error)
+			return (error);
+		TIMESPEC_FROM_TIMEVAL32(&ts[0], &tv[0]);
+		TIMESPEC_FROM_TIMEVAL32(&ts[1], &tv[1]);
+	} else
+		ts[0].tv_nsec = ts[1].tv_nsec = UTIME_NOW;
+
+	return (doutimensat(p, AT_FDCWD, SCARG(uap, path), ts, 0));
+}
+
+int
+t32_sys_utimensat(struct proc *p, void *v, register_t *retval)
+{
+	struct t32_sys_utimensat_args /* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(const struct timespec32 *) times;
+		syscallarg(int) flag;
+	} */ *uap = v;
+
+	struct timespec ts[2];
+	struct timespec32 ts32[2];
+	const struct timespec32 *tsp;
+	int error;
+
+	tsp = SCARG(uap, times);
+	if (tsp != NULL) {
+		error = copyin(tsp, ts32, sizeof(ts32));
+		if (error)
+			return (error);
+		TIMESPEC_FROM_32(&ts[0], &ts32[0]);
+		TIMESPEC_FROM_32(&ts[1], &ts32[1]);
+	} else
+		ts[0].tv_nsec = ts[1].tv_nsec = UTIME_NOW;
+
+	return (doutimensat(p, SCARG(uap, fd), SCARG(uap, path), ts,
+	    SCARG(uap, flag)));
+}
+
+/* ARGSUSED */
+int
+t32_sys_futimes(struct proc *p, void *v, register_t *retval)
+{
+	struct t32_sys_futimes_args /* {
+		syscallarg(int) fd;
+		syscallarg(const struct timeval32 *) tptr;
+	} */ *uap = v;
+	struct timeval32 tv[2];
+	struct timespec ts[2];
+	const struct timeval32 *tvp;
+	int error;
+
+	tvp = SCARG(uap, tptr);
+	if (tvp != NULL) {
+		error = copyin(tvp, tv, sizeof(tv));
+		if (error)
+			return (error);
+		TIMESPEC_FROM_TIMEVAL32(&ts[0], &tv[0]);
+		TIMESPEC_FROM_TIMEVAL32(&ts[1], &tv[1]);
+	} else
+		ts[0].tv_nsec = ts[1].tv_nsec = UTIME_NOW;
+
+	return (dofutimens(p, SCARG(uap, fd), ts));
+}
+
+int
+t32_sys_futimens(struct proc *p, void *v, register_t *retval)
+{
+	struct t32_sys_futimens_args /* {
+		syscallarg(int) fd;
+		syscallarg(const struct timespec32 *) times;
+	} */ *uap = v;
+	struct timespec ts[2];
+	struct timespec32 ts32[2];
+	const struct timespec32 *tsp;
+	int error;
+
+	tsp = SCARG(uap, times);
+	if (tsp != NULL) {
+		error = copyin(tsp, ts32, sizeof(ts32));
+		if (error)
+			return (error);
+		TIMESPEC_FROM_32(&ts[0], &ts32[0]);
+		TIMESPEC_FROM_32(&ts[1], &ts32[1]);
+	} else
+		ts[0].tv_nsec = ts[1].tv_nsec = UTIME_NOW;
+
+	return (dofutimens(p, SCARG(uap, fd), ts));
+}
+
+int
+t32_sys_getdirentries(struct proc *p, void *v, register_t *retval)
+{
+	struct t32_sys_getdirentries_args /* {
+		syscallarg(int) fd;
+		syscallarg(char *) buf;
+		syscallarg(int) count;
+		syscallarg(off_t *) basep;
+	} */ *uap = v;
+	struct vnode *vp;
+	struct file *fp;
+	struct uio auio;
+	struct iovec aiov;
+	off_t off;
+	int error, count, eofflag;
+
+	count = SCARG(uap, count);
+	if (count < 0)
+		return EINVAL;
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+	if ((fp->f_flag & FREAD) == 0) {
+		error = EBADF;
+		goto bad;
+	}
+	if (fp->f_offset < 0) {
+		error = EINVAL;
+		goto bad;
+	}
+	vp = fp->f_data;
+	if (vp->v_type != VDIR) {
+		error = EINVAL;
+		goto bad;
+	}
+	aiov.iov_base = SCARG(uap, buf);
+	aiov.iov_len = count;
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_rw = UIO_READ;
+	auio.uio_segflg = UIO_USERSPACE | 0x10;		/* XXX */
+	auio.uio_procp = p;
+	auio.uio_resid = count;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	off = auio.uio_offset = fp->f_offset;
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag);
+	fp->f_offset = auio.uio_offset;
+	VOP_UNLOCK(vp, 0, p);
+	if (error)
+		goto bad;
+	*retval = count - auio.uio_resid;
+bad:
+	FRELE(fp, p);
+	if (!error)
+		error = copyout(&off, SCARG(uap, basep), sizeof(off_t));
+	return (error);
+}
+#endif

@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.133 2013/06/09 13:10:19 miod Exp $
+;	$OpenBSD: syscalls.master,v 1.134 2013/08/13 05:52:24 guenther Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -57,13 +57,14 @@
 5	STD		{ int sys_open(const char *path, \
 			    int flags, ... mode_t mode); }
 6	STD		{ int sys_close(int fd); }
-7	STD		{ pid_t sys_wait4(pid_t pid, int *status, int options, \
-			    struct rusage *rusage); }
+7	T32		{ pid_t sys_wait4(pid_t pid, int *status, \
+			    int options, struct rusage32 *rusage); }
 8	STD		{ int sys___tfork(const struct __tfork *param, \
 			    size_t psize); }
 9	STD		{ int sys_link(const char *path, const char *link); }
 10	STD		{ int sys_unlink(const char *path); }
-11	OBSOL		execv
+11	STD		{ pid_t sys_wait4(pid_t pid, int *status, \
+			    int options, struct rusage *rusage); }
 12	STD		{ int sys_chdir(const char *path); }
 13	STD		{ int sys_fchdir(int fd); }
 14	STD		{ int sys_mknod(const char *path, mode_t mode, \
@@ -73,7 +74,8 @@
 			    gid_t gid); }
 17	STD		{ int sys_obreak(char *nsize); } break
 18	STD		{ int sys_getdtablecount(void); }
-19	OBSOL		olseek
+19	STD		{ int sys_getrusage(int who, \
+			    struct rusage *rusage); }
 20	STD NOLOCK	{ pid_t sys_getpid(void); }
 21	STD		{ int sys_mount(const char *type, const char *path, \
 			    int flags, void *data); }
@@ -105,11 +107,12 @@
 35	STD		{ int sys_fchflags(int fd, u_int flags); }
 36	STD		{ void sys_sync(void); }
 37	STD		{ int sys_kill(int pid, int signum); }
-38	OBSOL		stat43
+38	STD		{ int sys_stat(const char *path, struct stat *ub); }
 39	STD		{ pid_t sys_getppid(void); }
-40	OBSOL		lstat43
+40	STD		{ int sys_lstat(const char *path, struct stat *ub); }
 41	STD		{ int sys_dup(int fd); }
-42	OBSOL		opipe
+42	STD		{ int sys_fstatat(int fd, const char *path, \
+			    struct stat *buf, int flag); }
 43	STD		{ gid_t sys_getegid(void); }
 44	STD		{ int sys_profil(caddr_t samples, size_t size, \
 			    u_long offset, u_int scale); }
@@ -132,7 +135,7 @@
 51	UNIMPL		acct
 #endif
 52	STD		{ int sys_sigpending(void); }
-53	OBSOL		osigaltstack
+53	STD		{ int sys_fstat(int fd, struct stat *sb); }
 54	STD		{ int sys_ioctl(int fd, \
 			    u_long com, ... void *data); }
 55	STD		{ int sys_reboot(int opt); }
@@ -153,19 +156,30 @@
 65	STD		{ int sys_fhstatfs(const fhandle_t *fhp, \
 			    struct statfs *buf); }
 66	STD		{ int sys_vfork(void); }
-67	OBSOL		vread
-68	OBSOL		vwrite
-69	OBSOL		sbrk
-70	OBSOL		sstk
-71	OBSOL		ommap
-72	OBSOL		vadvise
+67	STD NOLOCK	{ int sys_gettimeofday(struct timeval *tp, \
+			    struct timezone *tzp); }
+68	STD		{ int sys_settimeofday(const struct timeval *tv, \
+			    const struct timezone *tzp); }
+69	STD		{ int sys_setitimer(int which, \
+			    const struct itimerval *itv, \
+			    struct itimerval *oitv); }
+70	STD		{ int sys_getitimer(int which, \
+			    struct itimerval *itv); }
+71	STD		{ int sys_select(int nd, fd_set *in, fd_set *ou, \
+			    fd_set *ex, struct timeval *tv); }
+72	STD		{ int sys_kevent(int fd, \
+			    const struct kevent *changelist, int nchanges, \
+			    struct kevent *eventlist, int nevents, \
+			    const struct timespec *timeout); }
 73	STD		{ int sys_munmap(void *addr, size_t len); }
 74	STD		{ int sys_mprotect(void *addr, size_t len, \
 			    int prot); }
 75	STD		{ int sys_madvise(void *addr, size_t len, \
 			    int behav); }
-76	OBSOL		vhangup
-77	OBSOL		vlimit
+76	STD		{ int sys_utimes(const char *path, \
+			    const struct timeval *tptr); }
+77	STD		{ int sys_futimes(int fd, \
+			    const struct timeval *tptr); }
 78	STD		{ int sys_mincore(void *addr, size_t len, \
 			    char *vec); }
 79	STD		{ int sys_getgroups(int gidsetsize, \
@@ -174,28 +188,37 @@
 			    const gid_t *gidset); }
 81	STD		{ int sys_getpgrp(void); }
 82	STD		{ int sys_setpgid(pid_t pid, int pgid); }
-83	STD		{ int sys_setitimer(int which, \
-			    const struct itimerval *itv, \
-			    struct itimerval *oitv); }
-84	OBSOL		owait
-85	OBSOL		swapon25
-86	STD		{ int sys_getitimer(int which, \
-			    struct itimerval *itv); }
-87	OBSOL		ogethostname
-88	OBSOL		osethostname
-89	OBSOL		ogetdtablesize
+83	T32		{ int sys_setitimer(int which, \
+			    const struct itimerval32 *itv, \
+			    struct itimerval32 *oitv); }
+84	STD		{ int sys_utimensat(int fd, const char *path, \
+			    const struct timespec *times, int flag); }
+85	STD		{ int sys_futimens(int fd, \
+			    const struct timespec *times); }
+86	T32		{ int sys_getitimer(int which, \
+			    struct itimerval32 *itv); }
+87	STD NOLOCK	{ int sys_clock_gettime(clockid_t clock_id, \
+			    struct timespec *tp); }
+88	STD		{ int sys_clock_settime(clockid_t clock_id, \
+			    const struct timespec *tp); }
+89	STD NOLOCK	{ int sys_clock_getres(clockid_t clock_id, \
+			    struct timespec *tp); }
 90	STD		{ int sys_dup2(int from, int to); }
-91	UNIMPL		getdopt
+91	STD NOLOCK	{ int sys_nanosleep(const struct timespec *rqtp, \
+			    struct timespec *rmtp); }
 92	STD		{ int sys_fcntl(int fd, int cmd, ... void *arg); }
-93	STD		{ int sys_select(int nd, fd_set *in, fd_set *ou, \
-			    fd_set *ex, struct timeval *tv); }
-94	UNIMPL		setdopt
+93	T32		{ int sys_select(int nd, fd_set *in, fd_set *ou, \
+			    fd_set *ex, struct timeval32 *tv); }
+94	STD		{ int sys___thrsleep(const volatile void *ident, \
+			    clockid_t clock_id, const struct timespec *tp, \
+			    void *lock, const int *abort); }
 95	STD		{ int sys_fsync(int fd); }
 96	STD		{ int sys_setpriority(int which, id_t who, int prio); }
 97	STD		{ int sys_socket(int domain, int type, int protocol); }
 98	STD		{ int sys_connect(int s, const struct sockaddr *name, \
 			    socklen_t namelen); }
-99	OBSOL		oaccept
+99	STD		{ int sys_getdents(int fd, struct dirent *buf, \
+			    size_t buflen); }
 100	STD		{ int sys_getpriority(int which, id_t who); }
 101	OBSOL		osend
 102	OBSOL		orecv
@@ -218,9 +241,10 @@
 113	OBSOL		orecvmsg
 114	OBSOL		osendmsg
 115	OBSOL		vtrace
-116	STD NOLOCK	{ int sys_gettimeofday(struct timeval *tp, \
+116	T32 NOLOCK	{ int sys_gettimeofday(struct timeval32 *tp, \
 			    struct timezone *tzp); }
-117	STD		{ int sys_getrusage(int who, struct rusage *rusage); }
+117	T32		{ int sys_getrusage(int who, \
+			    struct rusage32 *rusage); }
 118	STD		{ int sys_getsockopt(int s, int level, int name, \
 			    void *val, socklen_t *avalsize); }
 119	OBSOL		resuba
@@ -228,7 +252,7 @@
 			    const struct iovec *iovp, int iovcnt); }
 121	STD		{ ssize_t sys_writev(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
-122	STD		{ int sys_settimeofday(const struct timeval *tv, \
+122	T32		{ int sys_settimeofday(const struct timeval32 *tv, \
 			    const struct timezone *tzp); }
 123	STD		{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
 124	STD		{ int sys_fchmod(int fd, mode_t mode); }
@@ -248,8 +272,8 @@
 			    int protocol, int *rsv); }
 136	STD		{ int sys_mkdir(const char *path, mode_t mode); }
 137	STD		{ int sys_rmdir(const char *path); }
-138	STD		{ int sys_utimes(const char *path, \
-			    const struct timeval *tptr); }
+138	T32		{ int sys_utimes(const char *path, \
+			    const struct timeval32 *tptr); }
 139	OBSOL		4.2 sigreturn
 140	STD		{ int sys_adjtime(const struct timeval *delta, \
 			    struct timeval *olddelta); }
@@ -339,8 +363,8 @@
 203	STD		{ int sys_mlock(const void *addr, size_t len); }
 204	STD		{ int sys_munlock(const void *addr, size_t len); }
 205	UNIMPL		sys_undelete
-206	STD		{ int sys_futimes(int fd, \
-			    const struct timeval *tptr); }
+206	T32		{ int sys_futimes(int fd, \
+			    const struct timeval32 *tptr); }
 207	STD		{ pid_t sys_getpgid(pid_t pid); }
 208	OBSOL		nnpfspioctl
 209	STD		{ int sys_utrace(const char *label, const void *addr, \
@@ -405,12 +429,12 @@
 230	UNIMPL		shmdt
 #endif
 231	OBSOL		shmget35
-232	STD NOLOCK	{ int sys_clock_gettime(clockid_t clock_id, \
-			    struct timespec *tp); }
-233	STD		{ int sys_clock_settime(clockid_t clock_id, \
-			    const struct timespec *tp); }
-234	STD NOLOCK	{ int sys_clock_getres(clockid_t clock_id, \
-			    struct timespec *tp); }
+232	T32 NOLOCK	{ int sys_clock_gettime(clockid_t clock_id, \
+			    struct timespec32 *tp); }
+233	T32		{ int sys_clock_settime(clockid_t clock_id, \
+			    const struct timespec32 *tp); }
+234	T32 NOLOCK	{ int sys_clock_getres(clockid_t clock_id, \
+			    struct timespec32 *tp); }
 235	UNIMPL		timer_create
 236	UNIMPL		timer_delete
 237	UNIMPL		timer_settime
@@ -419,8 +443,8 @@
 ;
 ; System calls 240-249 are reserved for other IEEE Std1003.1b syscalls
 ;
-240	STD NOLOCK	{ int sys_nanosleep(const struct timespec *rqtp, \
-			    struct timespec *rmtp); }
+240	T32 NOLOCK	{ int sys_nanosleep(const struct timespec32 *rqtp, \
+			    struct timespec32 *rmtp); }
 241	UNIMPL
 242	UNIMPL
 243	UNIMPL
@@ -456,10 +480,10 @@
 			  const struct iovec *iovp, int iovcnt, \
 			  int pad, off_t offset); }
 269	STD		{ int sys_kqueue(void); }
-270	STD		{ int sys_kevent(int fd, \
-			    const struct kevent *changelist, int nchanges, \
-			    struct kevent *eventlist, int nevents, \
-			    const struct timespec *timeout); }
+270	T32		{ int sys_kevent(int fd, \
+			    const struct kevent32 *changelist, int nchanges, \
+			    struct kevent32 *eventlist, int nevents, \
+			    const struct timespec32 *timeout); }
 271	STD		{ int sys_mlockall(int flags); }
 272	STD		{ int sys_munlockall(void); }
 273	UNIMPL		sys_getpeereid
@@ -495,9 +519,9 @@
 #else
 290    UNIMPL		semop
 #endif
-291	STD		{ int sys_stat(const char *path, struct stat *ub); }
-292	STD		{ int sys_fstat(int fd, struct stat *sb); }
-293	STD		{ int sys_lstat(const char *path, struct stat *ub); }
+291	T32		{ int sys_stat(const char *path, struct stat32 *ub); }
+292	T32		{ int sys_fstat(int fd, struct stat32 *sb); }
+293	T32		{ int sys_lstat(const char *path, struct stat32 *ub); }
 294	STD		{ int sys_fhstat(const fhandle_t *fhp, \
 			    struct stat *sb); }
 #ifdef SYSVSEM
@@ -520,8 +544,8 @@
 #endif
 298	STD NOLOCK	{ int sys_sched_yield(void); }
 299	STD NOLOCK	{ pid_t sys_getthrid(void); }
-300	STD		{ int sys___thrsleep(const volatile void *ident, \
-			    clockid_t clock_id, const struct timespec *tp, \
+300	T32		{ int sys___thrsleep(const volatile void *ident, \
+			    clockid_t clock_id, const struct timespec32 *tp, \
 			    void *lock, const int *abort); }
 301	STD		{ int sys___thrwakeup(const volatile void *ident, \
 			    int n); }
@@ -540,7 +564,7 @@
 			    struct statfs53 *buf); }
 310	STD		{ int sys_setrtable(int rtableid); }
 311	STD		{ int sys_getrtable(void); }
-312	STD		{ int sys_getdirentries(int fd, char *buf, \
+312	T32		{ int sys_getdirentries(int fd, char *buf, \
 			    int count, off_t *basep); }
 313	STD		{ int sys_faccessat(int fd, const char *path, \
 			    int amode, int flag); }
@@ -548,8 +572,8 @@
 			    mode_t mode, int flag); }
 315	STD		{ int sys_fchownat(int fd, const char *path, \
 			    uid_t uid, gid_t gid, int flag); }
-316	STD		{ int sys_fstatat(int fd, const char *path, \
-			    struct stat *buf, int flag); }
+316	T32		{ int sys_fstatat(int fd, const char *path, \
+			    struct stat32 *buf, int flag); }
 317	STD		{ int sys_linkat(int fd1, const char *path1, int fd2, \
 			    const char *path2, int flag); }
 318	STD		{ int sys_mkdirat(int fd, const char *path, \
@@ -568,10 +592,10 @@
 			    const char *link); }
 325	STD		{ int sys_unlinkat(int fd, const char *path, \
 			    int flag); }
-326	STD		{ int sys_utimensat(int fd, const char *path, \
-			    const struct timespec *times, int flag); }
-327	STD		{ int sys_futimens(int fd, \
-			    const struct timespec *times); }
+326	T32		{ int sys_utimensat(int fd, const char *path, \
+			    const struct timespec32 *times, int flag); }
+327	T32		{ int sys_futimens(int fd, \
+			    const struct timespec32 *times); }
 328	COMPAT_O51	{ int sys___tfork(struct __tfork51 *param); }
 329	STD NOLOCK	{ void sys___set_tcb(void *tcb); }
 330	STD NOLOCK	{ void *sys___get_tcb(void); }

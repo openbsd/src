@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.93 2013/06/03 16:55:22 guenther Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.94 2013/08/13 05:52:25 guenther Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -2029,9 +2029,8 @@ nfsrv_readdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	struct uio io;
 	struct iovec iv;
 	int len, nlen, pad, xfer, error = 0, getret = 1;
-	int siz, cnt, fullsiz, eofflag, rdonly, ncookies;
+	int siz, cnt, fullsiz, eofflag, rdonly;
 	u_quad_t off, toff, verf;
-	u_long *cookies = NULL, *cookiep;
 
 	info.nmi_mreq = NULL;
 	info.nmi_mrep = nfsd->nd_mrep;
@@ -2094,17 +2093,10 @@ again:
 	io.uio_procp = NULL;
 	eofflag = 0;
 
-	if (cookies) {
-		free((caddr_t)cookies, M_TEMP);
-		cookies = NULL;
-	}
-
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, procp);
-	error = VOP_READDIR(vp, &io, cred, &eofflag, &ncookies, &cookies);
+	error = VOP_READDIR(vp, &io, cred, &eofflag);
 
 	off = (off_t)io.uio_offset;
-	if (!cookies && !error)
-		error = NFSERR_PERM;
 	if (info.nmi_v3) {
 		getret = VOP_GETATTR(vp, &at, cred, procp);
 		if (!error)
@@ -2115,8 +2107,6 @@ again:
 	if (error) {
 		vrele(vp);
 		free((caddr_t)rbuf, M_TEMP);
-		if (cookies)
-			free((caddr_t)cookies, M_TEMP);
 		nfsm_reply(NFSX_POSTOPATTR(info.nmi_v3));
 		nfsm_srvpostop_attr(nfsd, getret, &at, &info);
 		error = 0;
@@ -2143,7 +2133,6 @@ again:
 			*tl++ = nfs_false;
 			*tl = nfs_true;
 			free(rbuf, M_TEMP);
-			free(cookies, M_TEMP);
 			error = 0;
 			goto nfsmout;
 		}
@@ -2156,15 +2145,12 @@ again:
 	cpos = rbuf;
 	cend = rbuf + siz;
 	dp = (struct dirent *)cpos;
-	cookiep = cookies;
 
-	while (cpos < cend && ncookies > 0 && dp->d_fileno == 0) {
+	while (cpos < cend && dp->d_fileno == 0) {
 		cpos += dp->d_reclen;
 		dp = (struct dirent *)cpos;
-		cookiep++;
-		ncookies--;
 	}
-	if (cpos >= cend || ncookies == 0) {
+	if (cpos >= cend) {
 		toff = off;
 		siz = fullsiz;
 		goto again;
@@ -2179,7 +2165,7 @@ again:
 	}
 
 	/* Loop through the records and build reply */
-	while (cpos < cend && ncookies > 0) {
+	while (cpos < cend) {
 		if (dp->d_fileno != 0) {
 			nlen = dp->d_namlen;
 			pad = nfsm_padlen(nlen);
@@ -2194,29 +2180,28 @@ again:
 			 * Build the directory record xdr from
 			 * the dirent entry.
 			 */
-			tl = nfsm_build(&info.nmi_mb, 2 * NFSX_UNSIGNED);
+			tl = nfsm_build(&info.nmi_mb,
+			    (info.nmi_v3 ? 3 : 2) * NFSX_UNSIGNED);
 			*tl++ = nfs_true;
-			if (info.nmi_v3) {
-				*tl = 0;
-				tl = nfsm_build(&info.nmi_mb, NFSX_UNSIGNED);
-			}
-			*tl = txdr_unsigned(dp->d_fileno);
+			if (info.nmi_v3)
+				txdr_hyper(dp->d_fileno, tl);
+			else
+				*tl = txdr_unsigned((u_int32_t)dp->d_fileno);
 	
 			/* And copy the name */
 			nfsm_strtombuf(&info.nmi_mb, dp->d_name, nlen);
 	
 			/* Finish off the record */
 			if (info.nmi_v3) {
+				tl = nfsm_build(&info.nmi_mb, 2*NFSX_UNSIGNED);
+				txdr_hyper(dp->d_off, tl);
+			} else {
 				tl = nfsm_build(&info.nmi_mb, NFSX_UNSIGNED);
-				*tl = 0;
+				*tl = txdr_unsigned((u_int32_t)dp->d_off);
 			}
-			tl = nfsm_build(&info.nmi_mb, NFSX_UNSIGNED);
-			*tl = txdr_unsigned(*cookiep);
 		}
 		cpos += dp->d_reclen;
 		dp = (struct dirent *)cpos;
-		cookiep++;
-		ncookies--;
 	}
 	vrele(vp);
 	tl = nfsm_build(&info.nmi_mb, 2 * NFSX_UNSIGNED);
@@ -2226,7 +2211,6 @@ again:
 	else
 		*tl = nfs_false;
 	free(rbuf, M_TEMP);
-	free(cookies, M_TEMP);
 nfsmout:
 	return(error);
 }
@@ -2251,9 +2235,8 @@ nfsrv_readdirplus(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	struct vattr va, at, *vap = &va;
 	struct nfs_fattr *fp;
 	int len, nlen, pad, xfer, error = 0, getret = 1;
-	int siz, cnt, fullsiz, eofflag, rdonly, dirlen, ncookies;
+	int siz, cnt, fullsiz, eofflag, rdonly, dirlen;
 	u_quad_t off, toff, verf;
-	u_long *cookies = NULL, *cookiep;
 
 	info.nmi_mreq = NULL;
 	info.nmi_mrep = nfsd->nd_mrep;
@@ -2312,27 +2295,18 @@ again:
 	io.uio_procp = NULL;
 	eofflag = 0;
 
-	if (cookies) {
-		free((caddr_t)cookies, M_TEMP);
-		cookies = NULL;
-	}
-
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, procp);
-	error = VOP_READDIR(vp, &io, cred, &eofflag, &ncookies, &cookies);
+	error = VOP_READDIR(vp, &io, cred, &eofflag);
 
 	off = (u_quad_t)io.uio_offset;
 	getret = VOP_GETATTR(vp, &at, cred, procp);
 
 	VOP_UNLOCK(vp, 0, procp);
 
-	if (!cookies && !error)
-		error = NFSERR_PERM;
 	if (!error)
 		error = getret;
 	if (error) {
 		vrele(vp);
-		if (cookies)
-			free((caddr_t)cookies, M_TEMP);
 		free((caddr_t)rbuf, M_TEMP);
 		nfsm_reply(NFSX_V3POSTOPATTR);
 		nfsm_srvpostop_attr(nfsd, getret, &at, &info);
@@ -2356,7 +2330,6 @@ again:
 			tl += 2;
 			*tl++ = nfs_false;
 			*tl = nfs_true;
-			free(cookies, M_TEMP);
 			free(rbuf, M_TEMP);
 			error = 0;
 			goto nfsmout;
@@ -2370,15 +2343,12 @@ again:
 	cpos = rbuf;
 	cend = rbuf + siz;
 	dp = (struct dirent *)cpos;
-	cookiep = cookies;
 
-	while (cpos < cend && ncookies > 0 && dp->d_fileno == 0) {
+	while (cpos < cend && dp->d_fileno == 0) {
 		cpos += dp->d_reclen;
 		dp = (struct dirent *)cpos;
-		cookiep++;
-		ncookies--;
 	}
-	if (cpos >= cend || ncookies == 0) {
+	if (cpos >= cend) {
 		toff = off;
 		siz = fullsiz;
 		goto again;
@@ -2403,7 +2373,7 @@ again:
 	txdr_hyper(at.va_filerev, tl);
 
 	/* Loop through the records and build reply */
-	while (cpos < cend && ncookies > 0) {
+	while (cpos < cend) {
 		if (dp->d_fileno != 0) {
 			nlen = dp->d_namlen;
 			pad = nfsm_padlen(nlen);
@@ -2454,8 +2424,7 @@ again:
 
 			tl = nfsm_build(&info.nmi_mb, 3 * NFSX_UNSIGNED);
 			*tl++ = nfs_true;
-			*tl++ = 0;
-			*tl = txdr_unsigned(dp->d_fileno);
+			txdr_hyper(dp->d_fileno, tl);
 
 			/* And copy the name */
 			nfsm_strtombuf(&info.nmi_mb, dp->d_name, nlen);
@@ -2469,8 +2438,7 @@ again:
 			fl.fl_fhsize = txdr_unsigned(NFSX_V3FH);
 			fl.fl_fhok = nfs_true;
 			fl.fl_postopok = nfs_true;
-			fl.fl_off.nfsuquad[0] = 0;
-			fl.fl_off.nfsuquad[1] = txdr_unsigned(*cookiep);
+			txdr_hyper(dp->d_off, fl.fl_off.nfsuquad);
 
 			/* Now copy the flrep structure out. */
 			nfsm_buftombuf(&info.nmi_mb, &fl, sizeof(struct flrep));
@@ -2478,8 +2446,6 @@ again:
 invalid:
 		cpos += dp->d_reclen;
 		dp = (struct dirent *)cpos;
-		cookiep++;
-		ncookies--;
 	}
 	vrele(vp);
 	tl = nfsm_build(&info.nmi_mb, 2 * NFSX_UNSIGNED);
@@ -2488,7 +2454,6 @@ invalid:
 		*tl = nfs_true;
 	else
 		*tl = nfs_false;
-	free(cookies, M_TEMP);
 	free(rbuf, M_TEMP);
 nfsmout:
 	return(error);

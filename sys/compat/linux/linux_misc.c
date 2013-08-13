@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.80 2013/05/10 10:31:16 pirofti Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.81 2013/08/13 05:52:21 guenther Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -1049,7 +1049,7 @@ linux_sys_readdir(p, v, retval)
  *
  * Note that this doesn't handle union-mounted filesystems.
  */
-int linux_readdir_callback(void *, struct dirent *, off_t);
+int linux_readdir_callback(void *, struct dirent *);
 
 struct linux_readdir_callback_args {
 	caddr_t outp;
@@ -1059,10 +1059,9 @@ struct linux_readdir_callback_args {
 };
 
 int
-linux_readdir_callback(arg, bdp, cookie)
+linux_readdir_callback(arg, bdp)
 	void *arg;
 	struct dirent *bdp;
-	off_t cookie;
 {
 	struct linux_dirent64 idb64;
 	struct linux_dirent idb;
@@ -1082,7 +1081,7 @@ linux_readdir_callback(arg, bdp, cookie)
 
 	if (cb->is64bit) {
 		idb64.d_ino = (linux_ino64_t)bdp->d_fileno;
-		idb64.d_off = (linux_off64_t)cookie;
+		idb64.d_off = (linux_off64_t)bdp->d_off;
 		idb64.d_reclen = (u_short)linux_reclen;
 		idb64.d_type = bdp->d_type;
 		strlcpy(idb64.d_name, bdp->d_name, sizeof(idb64.d_name));
@@ -1099,7 +1098,7 @@ linux_readdir_callback(arg, bdp, cookie)
 			idb.d_off = (linux_off_t)linux_reclen;
 			idb.d_reclen = (u_short)bdp->d_namlen;
 		} else {
-			idb.d_off = (linux_off_t)cookie;
+			idb.d_off = (linux_off_t)bdp->d_off;
 			idb.d_reclen = (u_short)linux_reclen;
 		}
 		strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));

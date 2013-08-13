@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.107 2013/06/11 16:42:19 deraadt Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.108 2013/08/13 05:52:27 guenther Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1365,20 +1365,34 @@ ufs_symlink(void *v)
 /*
  * Vnode op for reading directories.
  * 
- * The routine below assumes that the on-disk format of a directory
- * is the same as that defined by <sys/dirent.h>. If the on-disk
- * format changes, then it will be necessary to do a conversion
- * from the on-disk format that read returns to the format defined
- * by <sys/dirent.h>.
+ * If the 0x10 bit in uio_segflg is set then this routine will assume
+ * that the caller wants the on-disk format of the directory, which
+ * 'happens' to be the same as that defined by struct direct32 in
+ * <sys/dirent.h>.
+ * Otherwise, this routine will convert struct direct entries to struct
+ * dirent entries.
  */
 int
 ufs_readdir(void *v)
 {
 	struct vop_readdir_args *ap = v;
-	struct uio *uio = ap->a_uio;
-	int error;
-	size_t count, lost, entries;
+	struct uio auio, *uio = ap->a_uio;
+	struct iovec aiov;
+	union {
+		struct	dirent dn;
+		char __pad[roundup(sizeof(struct dirent), 8)];
+	} u;
 	off_t off = uio->uio_offset;
+	struct direct *dp, *edp;
+	caddr_t diskbuf;
+	size_t count, entries;
+	int readcnt, error;
+#if (BYTE_ORDER == LITTLE_ENDIAN)
+	int ofmt = ap->a_vp->v_mount->mnt_maxsymlinklen <= 0;
+#endif
+
+	if (uio->uio_rw != UIO_READ)
+		return (EINVAL);
 
 	count = uio->uio_resid;
 	entries = (uio->uio_offset + count) & (DIRBLKSIZ - 1);
@@ -1387,19 +1401,19 @@ ufs_readdir(void *v)
 	if (count <= entries)
 		return (EINVAL);
 
-	count -= entries;
-	lost = uio->uio_resid - count;
-	uio->uio_resid = count;
-	uio->uio_iov->iov_len = count;
+#if T32
+	if (uio->uio_segflg & 0x10) {
+		uio->uio_segflg &= ~0x10;
+
+		count -= entries;
+		uio->uio_resid = count;
+		uio->uio_iov->iov_len = count;
+
 #	if (BYTE_ORDER == LITTLE_ENDIAN)
-		if (ap->a_vp->v_mount->mnt_maxsymlinklen > 0) {
+		if (! ofmt)
 			error = VOP_READ(ap->a_vp, uio, 0, ap->a_cred);
-		} else {
-			struct dirent *dp, *edp;
-			struct uio auio;
-			struct iovec aiov;
+		else {
 			caddr_t dirbuf;
-			int readcnt;
 			u_char tmp;
 
 			auio = *uio;
@@ -1412,13 +1426,13 @@ ufs_readdir(void *v)
 			error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
 			if (error == 0) {
 				readcnt = count - auio.uio_resid;
-				edp = (struct dirent *)&dirbuf[readcnt];
-				for (dp = (struct dirent *)dirbuf; dp < edp; ) {
+				edp = (struct direct *)&dirbuf[readcnt];
+				for (dp = (struct direct *)dirbuf; dp < edp; ) {
 					tmp = dp->d_namlen;
 					dp->d_namlen = dp->d_type;
 					dp->d_type = tmp;
 					if (dp->d_reclen > 0) {
-						dp = (struct dirent *)
+						dp = (struct direct *)
 						    ((char *)dp + dp->d_reclen);
 					} else {
 						error = EIO;
@@ -1433,46 +1447,65 @@ ufs_readdir(void *v)
 #	else
 		error = VOP_READ(ap->a_vp, uio, 0, ap->a_cred);
 #	endif
-	if (!error && ap->a_ncookies) {
-		struct dirent *dp, *dpstart;
-		off_t offstart;
-		u_long *cookies;
-		int ncookies;
 
-		/*
-		 * Only the NFS server and emulations use cookies, and they
-		 * load the directory block into system space, so we can
-		 * just look at it directly.
-		 */
-		if (uio->uio_segflg != UIO_SYSSPACE || uio->uio_iovcnt != 1)
-			panic("ufs_readdir: lost in space");
-
-		dpstart = (struct dirent *)
-			((char *)uio->uio_iov->iov_base -
-			(uio->uio_offset - off));
-                offstart = off;
-                for (dp = dpstart, ncookies = 0; off < uio->uio_offset; ) {
-                        if (dp->d_reclen == 0)
-                                break;
-                        off += dp->d_reclen;
-                        ncookies++;
-                        dp = (struct dirent *)((caddr_t)dp + dp->d_reclen);
-                }
-                lost += uio->uio_offset - off;
-                uio->uio_offset = off;
-                cookies = malloc(ncookies * sizeof(u_long), M_TEMP, M_WAITOK);
-                *ap->a_ncookies = ncookies;
-                *ap->a_cookies = cookies;
-                for (off = offstart, dp = dpstart; off < uio->uio_offset; ) {
-			off += dp->d_reclen;
-                        *cookies = off;
-			cookies++;
-                        dp = (struct dirent *)((caddr_t)dp + dp->d_reclen);
-		}
+		*ap->a_eofflag = DIP(VTOI(ap->a_vp), size) <= uio->uio_offset;
+		return error;
 	}
+#endif /* T32 */
 
-	uio->uio_resid += lost;
-	*ap->a_eofflag = DIP(VTOI(ap->a_vp), size) <= uio->uio_offset;
+	/*
+	 * Convert and copy back the on-disk struct direct format to
+	 * the user-space struct dirent format, one entry at a time
+	 */
+
+	/* read from disk, stopping on a block boundary, max 64kB */
+	readcnt = max(count, 64*1024) - entries;
+
+	auio = *uio;
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_resid = readcnt;
+	auio.uio_segflg = UIO_SYSSPACE;
+	aiov.iov_len = readcnt;
+	diskbuf = malloc(readcnt, M_TEMP, M_WAITOK);
+	aiov.iov_base = diskbuf;
+	error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
+	readcnt -= auio.uio_resid;
+	dp = (struct direct *)diskbuf;
+	edp = (struct direct *)&diskbuf[readcnt];
+	while (error == 0 && dp < edp) {
+		if (dp->d_reclen <= offsetof(struct direct, d_name)) {
+			error = EIO;
+			break;
+		}
+		u.dn.d_reclen = roundup(dp->d_namlen+1 +
+		    offsetof(struct dirent, d_name), 8);
+		if (u.dn.d_reclen > uio->uio_resid)
+			break;
+		off += dp->d_reclen;
+		u.dn.d_off = off;
+		u.dn.d_fileno = dp->d_ino;
+#if (BYTE_ORDER == LITTLE_ENDIAN)
+		if (ofmt) {
+			u.dn.d_type = dp->d_namlen;
+			u.dn.d_namlen = dp->d_type;
+		} else
+#endif
+		{
+			u.dn.d_type = dp->d_type;
+			u.dn.d_namlen = dp->d_namlen;
+		}
+		memcpy(u.dn.d_name, dp->d_name, u.dn.d_namlen);
+		bzero(u.dn.d_name + u.dn.d_namlen, u.dn.d_reclen
+		    - u.dn.d_namlen - offsetof(struct dirent, d_name));
+
+		error = uiomove(&u.dn, u.dn.d_reclen, uio);
+		dp = (struct direct *)((char *)dp + dp->d_reclen);
+	}
+	free(diskbuf, M_TEMP);
+
+	uio->uio_offset = off;
+	*ap->a_eofflag = DIP(VTOI(ap->a_vp), size) <= off;
 
 	return (error);
 }

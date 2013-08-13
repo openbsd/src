@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.6 2013/06/01 09:57:58 miod Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.7 2013/08/13 05:52:20 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -212,7 +212,7 @@ DL_SYSCALL2(getcwd,__getcwd)
 DL_SYSCALL2(sysctl,__sysctl)
 	jmp	%r1
 
-DL_SYSCALL(getdirentries)
+DL_SYSCALL(getdents)
 	jmp	%r1
 
 ENTRY(_dl_sigprocmask)

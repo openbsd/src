@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.87 2013/06/11 16:42:16 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.88 2013/08/13 05:52:24 guenther Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1477,8 +1477,6 @@ msdosfs_readdir(void *v)
 	struct direntry *dentp;
 	struct dirent dirbuf;
 	struct uio *uio = ap->a_uio;
-	u_long *cookies = NULL;
-	int ncookies = 0;
 	off_t offset, wlast = -1;
 	int chksum = -1;
 
@@ -1513,13 +1511,6 @@ msdosfs_readdir(void *v)
 		return (EINVAL);
 	lost = uio->uio_resid - count;
 	uio->uio_resid = count;
-
-	if (ap->a_ncookies) {
-		ncookies = uio->uio_resid / sizeof(struct direntry) + 3;
-		cookies = malloc(ncookies * sizeof(u_long), M_TEMP, M_WAITOK);
-		*ap->a_cookies = cookies;
-		*ap->a_ncookies = ncookies;
-	}
 
 	dirsperblk = pmp->pm_BytesPerSec / sizeof(struct direntry);
 
@@ -1558,18 +1549,14 @@ msdosfs_readdir(void *v)
 					break;
 				}
 				dirbuf.d_reclen = DIRENT_SIZE(&dirbuf);
+				dirbuf.d_off = offset +
+				    sizeof(struct direntry);
 				if (uio->uio_resid < dirbuf.d_reclen)
 					goto out;
-				error = uiomove((caddr_t) &dirbuf,
-						dirbuf.d_reclen, uio);
+				error = uiomove(&dirbuf, dirbuf.d_reclen, uio);
 				if (error)
 					goto out;
-				offset += sizeof(struct direntry);
-				if (cookies) {
-					*cookies++ = offset;
-					if (--ncookies <= 0)
-						goto out;
-				}
+				offset = dirbuf.d_off;
 			}
 		}
 	}
@@ -1685,6 +1672,7 @@ msdosfs_readdir(void *v)
 				dirbuf.d_name[dirbuf.d_namlen] = 0;
 			chksum = -1;
 			dirbuf.d_reclen = DIRENT_SIZE(&dirbuf);
+			dirbuf.d_off = offset + sizeof(struct direntry);
 			if (uio->uio_resid < dirbuf.d_reclen) {
 				brelse(bp);
 				/* Remember long-name offset. */
@@ -1693,28 +1681,16 @@ msdosfs_readdir(void *v)
 				goto out;
 			}
 			wlast = -1;
-			error = uiomove((caddr_t) &dirbuf,
-					dirbuf.d_reclen, uio);
+			error = uiomove(&dirbuf, dirbuf.d_reclen, uio);
 			if (error) {
 				brelse(bp);
 				goto out;
-			}
-			if (cookies) {
-				*cookies++ = offset + sizeof(struct direntry);
-				if (--ncookies <= 0) {
-					brelse(bp);
-					goto out;
-				}
 			}
 		}
 		brelse(bp);
 	}
 
 out:
-	/* Subtract unused cookies */
-	if (ap->a_ncookies)
-		*ap->a_ncookies -= ncookies;
-
 	uio->uio_offset = offset;
 	uio->uio_resid += lost;
 	if (dep->de_FileSize - (offset - bias) <= 0)

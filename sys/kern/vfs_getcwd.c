@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.20 2013/06/09 13:15:26 tedu Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.21 2013/08/13 05:52:24 guenther Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -47,7 +47,6 @@
 
 #include <sys/syscallargs.h>
 
-#define DIRENT_MINSIZE (sizeof(struct dirent) - (MAXNAMLEN + 1) + 4)
 
 /* Find parent vnode of *lvpp, return in *uvpp */
 int
@@ -137,7 +136,7 @@ vfs_getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 		eofflag = 0;
 
 		/* Call VOP_READDIR of parent */
-		error = VOP_READDIR(uvp, &uio, p->p_ucred, &eofflag, 0, 0);
+		error = VOP_READDIR(uvp, &uio, p->p_ucred, &eofflag);
 
 		off = uio.uio_offset;
 
@@ -160,7 +159,7 @@ vfs_getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 			reclen = dp->d_reclen;
 
 			/* Check for malformed directory */
-			if (reclen < DIRENT_MINSIZE) {
+			if (reclen < DIRENT_RECSIZE(1)) {
 				error = EINVAL;
 				goto out;
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.4 2013/06/01 09:57:58 miod Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.5 2013/08/13 05:52:19 guenther Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn
@@ -191,7 +191,7 @@ DL_SYSCALL2(getcwd,__getcwd)
 DL_SYSCALL2(sysctl,__sysctl)
 	rts
 
-DL_SYSCALL(getdirentries)
+DL_SYSCALL(getdents)
 	rts
 
 	.global		_dl_sigprocmask

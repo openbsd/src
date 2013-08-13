@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.71 2012/06/19 11:35:29 pirofti Exp $
+	$OpenBSD: syscalls.master,v 1.72 2013/08/13 05:52:22 guenther Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -144,7 +144,7 @@
 76	STD		{ int linux_sys_getrlimit(u_int which, \
 			    struct linux_rlimit *rlp); }
 77	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
-78	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
+78	NOARGS		{ int t32_sys_gettimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
 79	NOARGS		{ int sys_settimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
@@ -269,8 +269,8 @@
 159	STD		{ int linux_sys_sched_get_priority_max(int policy); }
 160	STD		{ int linux_sys_sched_get_priority_min(int policy); }
 161	STD		{ int linux_sys_sched_rr_get_interval(void); }
-162	NOARGS		{ int sys_nanosleep(const struct timespec *rqtp, \
-				struct timespec *rmtp); }
+162	NOARGS		{ int t32_sys_nanosleep(const struct timespec32 *rqtp, \
+				struct timespec32 *rmtp); }
 163	STD		{ int linux_sys_mremap(void *old_address, \
 			    size_t old_size, size_t new_size, long flags); }
 164	STD		{ int linux_sys_setresuid16(u_int16_t ruid, \

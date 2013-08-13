@@ -1,4 +1,4 @@
-/*	$OpenBSD: telldir.c,v 1.13 2008/05/01 19:49:18 otto Exp $ */
+/*	$OpenBSD: telldir.c,v 1.14 2013/08/13 05:52:12 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,36 +45,7 @@ int _readdir_unlocked(DIR *, struct dirent **, int);
 long
 _telldir_unlocked(DIR *dirp)
 {
-	long i;
-	struct ddloc *lp;
-
-	i = dirp->dd_td->td_last;
-	lp = &dirp->dd_td->td_locs[i];
-
-	/* return previous telldir, if there */
-	for (; i < dirp->dd_td->td_loccnt; i++, lp++) {
-		if (lp->loc_seek == dirp->dd_seek && 
-		    lp->loc_loc == dirp->dd_loc) {
-			dirp->dd_td->td_last = i;
-			return (i);
-		}
-	}
-
-	if (dirp->dd_td->td_loccnt == dirp->dd_td->td_sz) {
-		size_t newsz = dirp->dd_td->td_sz * 2 + 1;
-		struct ddloc *p;
-		p = realloc(dirp->dd_td->td_locs, newsz * sizeof(*p));
-		if (p == NULL)
-			return (-1);
-		dirp->dd_td->td_sz = newsz;
-		dirp->dd_td->td_locs = p;
-		lp = &dirp->dd_td->td_locs[i];
-	}
-	dirp->dd_td->td_loccnt++;
-	lp->loc_seek = dirp->dd_seek;
-	lp->loc_loc = dirp->dd_loc;
-	dirp->dd_td->td_last = i;
-	return (i);
+	return (dirp->dd_curpos);
 }
 
 long
@@ -96,21 +67,5 @@ telldir(DIR *dirp)
 void
 __seekdir(DIR *dirp, long loc)
 {
-	struct ddloc *lp;
-	struct dirent *dp;
-
-	if (loc < 0 || loc >= dirp->dd_td->td_loccnt)
-		return;
-	lp = &dirp->dd_td->td_locs[loc];
-	dirp->dd_td->td_last = loc;
-	if (lp->loc_loc == dirp->dd_loc && lp->loc_seek == dirp->dd_seek)
-		return;
-	(void) lseek(dirp->dd_fd, (off_t)lp->loc_seek, SEEK_SET);
-	dirp->dd_seek = lp->loc_seek;
-	dirp->dd_loc = 0;
-	while (dirp->dd_loc < lp->loc_loc) {
-		_readdir_unlocked(dirp, &dp, 0);
-		if (dp == NULL)
-			break;
-	}
+	lseek(dirp->dd_fd, loc, SEEK_SET);
 }

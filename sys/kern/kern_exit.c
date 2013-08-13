@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.125 2013/06/05 00:53:26 tedu Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.126 2013/08/13 05:52:23 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -441,6 +441,9 @@ reaper(void)
 	}
 }
 
+int	dowait4(struct proc *, pid_t, int *, int, struct rusage *,
+	    register_t *);
+
 int
 sys_wait4(struct proc *q, void *v, register_t *retval)
 {
@@ -450,14 +453,54 @@ sys_wait4(struct proc *q, void *v, register_t *retval)
 		syscallarg(int) options;
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
+	struct rusage ru;
+	int error;
+
+	error = dowait4(q, SCARG(uap, pid), SCARG(uap, status),
+	    SCARG(uap, options), SCARG(uap, rusage) ? &ru : NULL, retval);
+	if (error == 0 && SCARG(uap, rusage)) {
+		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
+	}
+	return (error);
+}
+
+#ifdef T32
+int
+t32_sys_wait4(struct proc *q, void *v, register_t *retval)
+{
+	struct t32_sys_wait4_args /* {
+		syscallarg(pid_t) pid;
+		syscallarg(int *) status;
+		syscallarg(int) options;
+		syscallarg(struct rusage32 *) rusage;
+	} */ *uap = v;
+	struct rusage ru;
+	int error;
+
+	error = dowait4(q, SCARG(uap, pid), SCARG(uap, status),
+	    SCARG(uap, options), SCARG(uap, rusage) ? &ru : NULL, retval);
+	if (error == 0 && SCARG(uap, rusage)) {
+		struct rusage32 ru32;
+
+		RUSAGE_TO_32(&ru32, &ru);
+		error = copyout(&ru32, SCARG(uap, rusage), sizeof(ru32));
+	}
+	return (error);
+}
+#endif
+
+int
+dowait4(struct proc *q, pid_t pid, int *statusp, int options,
+    struct rusage *rusage, register_t *retval)
+{
 	int nfound;
 	struct process *pr;
 	struct proc *p;
 	int status, error;
 
-	if (SCARG(uap, pid) == 0)
-		SCARG(uap, pid) = -q->p_p->ps_pgid;
-	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG|WALTSIG|WCONTINUED))
+	if (pid == 0)
+		pid = -q->p_p->ps_pgid;
+	if (options &~ (WUNTRACED|WNOHANG|WALTSIG|WCONTINUED))
 		return (EINVAL);
 
 loop:
@@ -465,9 +508,9 @@ loop:
 	LIST_FOREACH(pr, &q->p_p->ps_children, ps_sibling) {
 		p = pr->ps_mainproc;
 		if ((p->p_flag & P_NOZOMBIE) ||
-		    (SCARG(uap, pid) != WAIT_ANY &&
-		    p->p_pid != SCARG(uap, pid) &&
-		    pr->ps_pgid != -SCARG(uap, pid)))
+		    (pid != WAIT_ANY &&
+		    p->p_pid != pid &&
+		    pr->ps_pgid != -pid))
 			continue;
 
 		/*
@@ -475,7 +518,7 @@ loop:
 		 * if WALTSIG is set; wait for processes with pexitsig ==
 		 * SIGCHLD only if WALTSIG is clear.
 		 */
-		if ((SCARG(uap, options) & WALTSIG) ?
+		if ((options & WALTSIG) ?
 		    (p->p_exitsig == SIGCHLD) : (P_EXITSIG(p) != SIGCHLD))
 			continue;
 
@@ -483,17 +526,15 @@ loop:
 		if (p->p_stat == SZOMB) {
 			retval[0] = p->p_pid;
 
-			if (SCARG(uap, status)) {
+			if (statusp != NULL) {
 				status = p->p_xstat;	/* convert to int */
 				error = copyout(&status,
-				    SCARG(uap, status), sizeof(status));
+				    statusp, sizeof(status));
 				if (error)
 					return (error);
 			}
-			if (SCARG(uap, rusage) &&
-			    (error = copyout(pr->ps_ru,
-			    SCARG(uap, rusage), sizeof(struct rusage))))
-				return (error);
+			if (rusage != NULL)
+				memcpy(rusage, pr->ps_ru, sizeof(*rusage));
 			proc_finish_wait(q, p);
 			return (0);
 		}
@@ -504,9 +545,9 @@ loop:
 			atomic_setbits_int(&pr->ps_flags, PS_WAITED);
 			retval[0] = p->p_pid;
 
-			if (SCARG(uap, status)) {
+			if (statusp != NULL) {
 				status = W_STOPCODE(pr->ps_single->p_xstat);
-				error = copyout(&status, SCARG(uap, status),
+				error = copyout(&status, statusp,
 				    sizeof(status));
 			} else
 				error = 0;
@@ -516,25 +557,25 @@ loop:
 		    (pr->ps_flags & PS_WAITED) == 0 &&
 		    (p->p_flag & P_SUSPSINGLE) == 0 &&
 		    (pr->ps_flags & PS_TRACED ||
-		    SCARG(uap, options) & WUNTRACED)) {
+		    options & WUNTRACED)) {
 			atomic_setbits_int(&pr->ps_flags, PS_WAITED);
 			retval[0] = p->p_pid;
 
-			if (SCARG(uap, status)) {
+			if (statusp != NULL) {
 				status = W_STOPCODE(p->p_xstat);
-				error = copyout(&status, SCARG(uap, status),
+				error = copyout(&status, statusp,
 				    sizeof(status));
 			} else
 				error = 0;
 			return (error);
 		}
-		if ((SCARG(uap, options) & WCONTINUED) && (p->p_flag & P_CONTINUED)) {
+		if ((options & WCONTINUED) && (p->p_flag & P_CONTINUED)) {
 			atomic_clearbits_int(&p->p_flag, P_CONTINUED);
 			retval[0] = p->p_pid;
 
-			if (SCARG(uap, status)) {
+			if (statusp != NULL) {
 				status = _WCONTINUED;
-				error = copyout(&status, SCARG(uap, status),
+				error = copyout(&status, statusp,
 				    sizeof(status));
 			} else
 				error = 0;
@@ -543,7 +584,7 @@ loop:
 	}
 	if (nfound == 0)
 		return (ECHILD);
-	if (SCARG(uap, options) & WNOHANG) {
+	if (options & WNOHANG) {
 		retval[0] = 0;
 		return (0);
 	}

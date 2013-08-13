@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.113 2011/07/04 21:00:10 deraadt Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.114 2013/08/13 05:52:25 guenther Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1058,8 +1058,7 @@ nfs_loadattrcache(struct vnode **vpp, struct mbuf **mdp, caddr_t *dposp,
 		vap->va_gid = fxdr_unsigned(gid_t, fp->fa_gid);
 		vap->va_size = fxdr_hyper(&fp->fa3_size);
 		vap->va_bytes = fxdr_hyper(&fp->fa3_used);
-		vap->va_fileid = fxdr_unsigned(int32_t,
-		    fp->fa3_fileid.nfsuquad[1]);
+		vap->va_fileid = fxdr_hyper(&fp->fa3_fileid);
 		fxdr_nfsv3time(&fp->fa3_atime, &vap->va_atime);
 		fxdr_nfsv3time(&fp->fa3_ctime, &vap->va_ctime);
 		vap->va_flags = 0;
@@ -1400,8 +1399,7 @@ nfsm_srvfattr(struct nfsrv_descript *nfsd, struct vattr *vap,
 		fp->fa3_rdev.specdata2 = txdr_unsigned(minor(vap->va_rdev));
 		fp->fa3_fsid.nfsuquad[0] = 0;
 		fp->fa3_fsid.nfsuquad[1] = txdr_unsigned(vap->va_fsid);
-		fp->fa3_fileid.nfsuquad[0] = 0;
-		fp->fa3_fileid.nfsuquad[1] = txdr_unsigned(vap->va_fileid);
+		txdr_hyper(vap->va_fileid, &fp->fa3_fileid);
 		txdr_nfsv3time(&vap->va_atime, &fp->fa3_atime);
 		txdr_nfsv3time(&vap->va_mtime, &fp->fa3_mtime);
 		txdr_nfsv3time(&vap->va_ctime, &fp->fa3_ctime);
@@ -1416,7 +1414,7 @@ nfsm_srvfattr(struct nfsrv_descript *nfsd, struct vattr *vap,
 			fp->fa2_rdev = txdr_unsigned(vap->va_rdev);
 		fp->fa2_blocks = txdr_unsigned(vap->va_bytes / NFS_FABLKSIZE);
 		fp->fa2_fsid = txdr_unsigned(vap->va_fsid);
-		fp->fa2_fileid = txdr_unsigned(vap->va_fileid);
+		fp->fa2_fileid = txdr_unsigned((u_int32_t)vap->va_fileid);
 		txdr_nfsv2time(&vap->va_atime, &fp->fa2_atime);
 		txdr_nfsv2time(&vap->va_mtime, &fp->fa2_mtime);
 		txdr_nfsv2time(&vap->va_ctime, &fp->fa2_ctime);

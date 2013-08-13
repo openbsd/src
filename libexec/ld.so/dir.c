@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.16 2012/03/21 04:28:45 matthew Exp $	*/
+/*	$OpenBSD: dir.c,v 1.17 2013/08/13 05:52:17 guenther Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,10 +46,9 @@
 struct _dl_dirdesc {
 	int	dd_fd;		/* file descriptor associated with directory */
 	long	dd_loc;		/* offset in current buffer */
-	long	dd_size;	/* amount of data returned by getdirentries */
+	long	dd_size;	/* amount of data returned by getdents() */
 	char	*dd_buf;	/* data buffer */
 	int	dd_len;		/* size of data buffer */
-	off_t	dd_seek;	/* magic cookie returned by getdirentries */
 };
 
 /*
@@ -81,7 +80,6 @@ _dl_opendir(const char *name)
 		_dl_close (fd);
 		return (NULL);
 	}
-	dirp->dd_seek = 0;
 	dirp->dd_loc = 0;
 	dirp->dd_fd = fd;
 
@@ -121,8 +119,8 @@ _dl_readdir(_dl_DIR *dirp)
 			dirp->dd_loc = 0;
 		}
 		if (dirp->dd_loc == 0) {
-			dirp->dd_size = _dl_getdirentries(dirp->dd_fd,
-			    dirp->dd_buf, dirp->dd_len, &dirp->dd_seek);
+			dirp->dd_size = _dl_getdents(dirp->dd_fd,
+			    dirp->dd_buf, dirp->dd_len);
 			if (dirp->dd_size <= 0)
 				return (NULL);
 		}

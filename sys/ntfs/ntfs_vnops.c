@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.30 2013/03/28 02:08:39 guenther Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.31 2013/08/13 05:52:26 guenther Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -477,29 +477,27 @@ ntfs_readdir(void *v)
 	struct ntfsmount *ntmp = ip->i_mp;
 	int i, error = 0;
 	u_int32_t faked = 0, num;
-	int ncookies = 0;
 	struct dirent *cde;
 	off_t off;
 
-	dprintf(("ntfs_readdir %d off: %d resid: %d\n",ip->i_number,(u_int32_t)uio->uio_offset,uio->uio_resid));
+	dprintf(("ntfs_readdir %d off: %lld resid: %d\n", ip->i_number,
+	    uio->uio_offset, uio->uio_resid));
 
 	off = uio->uio_offset;
 
 	cde = malloc(sizeof(struct dirent), M_TEMP, M_WAITOK);
 
 	/* Simulate . in every dir except ROOT */
-	if (ip->i_number != NTFS_ROOTINO
-	    && uio->uio_offset < sizeof(struct dirent)) {
+	if (ip->i_number != NTFS_ROOTINO && uio->uio_offset == 0) {
 		cde->d_fileno = ip->i_number;
 		cde->d_reclen = sizeof(struct dirent);
 		cde->d_type = DT_DIR;
 		cde->d_namlen = 1;
+		cde->d_off = sizeof(struct dirent);
 		strncpy(cde->d_name, ".", 2);
-		error = uiomove((void *)cde, sizeof(struct dirent), uio);
+		error = uiomove(cde, sizeof(struct dirent), uio);
 		if (error)
 			goto out;
-
-		ncookies++;
 	}
 
 	/* Simulate .. in every dir including ROOT */
@@ -508,13 +506,12 @@ ntfs_readdir(void *v)
 		cde->d_reclen = sizeof(struct dirent);
 		cde->d_type = DT_DIR;
 		cde->d_namlen = 2;
+		cde->d_off = 2 * sizeof(struct dirent);
 		strncpy(cde->d_name, "..", 3);
 
-		error = uiomove((void *) cde, sizeof(struct dirent), uio);
+		error = uiomove(cde, sizeof(struct dirent), uio);
 		if (error)
 			goto out;
-
-		ncookies++;
 	}
 
 	faked = (ip->i_number == NTFS_ROOTINO) ? 1 : 2;
@@ -560,8 +557,6 @@ ntfs_readdir(void *v)
 			error = uiomove((void *)cde, sizeof(struct dirent), uio);
 			if (error)
 				goto out;
-
-			ncookies++;
 			num++;
 		}
 	}
@@ -571,28 +566,6 @@ ntfs_readdir(void *v)
 	dprintf(("ntfs_readdir: off: %d resid: %d\n",
 		(u_int32_t)uio->uio_offset,uio->uio_resid));
 
-	if (!error && ap->a_ncookies != NULL) {
-		struct dirent* dpStart;
-		struct dirent* dp;
-		u_long *cookies;
-		u_long *cookiep;
-
-		dprintf(("ntfs_readdir: %d cookies\n",ncookies));
-		if (uio->uio_segflg != UIO_SYSSPACE || uio->uio_iovcnt != 1)
-			panic("ntfs_readdir: unexpected uio from NFS server");
-		dpStart = (struct dirent *)
-		     ((caddr_t)uio->uio_iov->iov_base -
-			 (uio->uio_offset - off));
-		cookies = malloc(ncookies * sizeof(*cookies), M_TEMP, M_WAITOK);
-		for (dp = dpStart, cookiep = cookies, i=0;
-		     i < ncookies;
-		     dp = (struct dirent *)((caddr_t) dp + dp->d_reclen), i++) {
-			off += dp->d_reclen;
-			*cookiep++ = off;
-		}
-		*ap->a_ncookies = ncookies;
-		*ap->a_cookies = cookies;
-	}
 /*
 	if (ap->a_eofflag)
 	    *ap->a_eofflag = VTONT(ap->a_vp)->i_size <= uio->uio_offset;

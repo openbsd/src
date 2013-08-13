@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.24 2011/10/27 07:56:28 robert Exp $	*/
+/*	$OpenBSD: shm.h,v 1.25 2013/08/13 05:52:26 guenther Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -104,8 +104,11 @@ struct shmid_ds {
 	pid_t		shm_cpid;	/* process ID of creator */
 	shmatt_t	shm_nattch;	/* number of current attaches */
 	time_t		shm_atime;	/* time of last shmat() */
+	long		__shm_atimensec;
 	time_t		shm_dtime;	/* time of last shmdt() */
+	long		__shm_dtimensec;
 	time_t		shm_ctime;	/* time of last change by shmctl() */
+	long		__shm_ctimensec;
 	void		*shm_internal;	/* implementation specific data */
 };
 

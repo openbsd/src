@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.22 2013/06/04 02:23:56 guenther Exp $	*/
+/*	$OpenBSD: stat.h,v 1.23 2013/08/13 05:52:27 guenther Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -43,24 +43,23 @@
 #include <sys/time.h>
 
 struct stat {
+	mode_t	  st_mode;		/* inode protection mode */
 	dev_t	  st_dev;		/* inode's device */
 	ino_t	  st_ino;		/* inode's number */
-	mode_t	  st_mode;		/* inode protection mode */
 	nlink_t	  st_nlink;		/* number of hard links */
 	uid_t	  st_uid;		/* user ID of the file's owner */
 	gid_t	  st_gid;		/* group ID of the file's group */
 	dev_t	  st_rdev;		/* device type */
-	int32_t	  st_lspare0;
 #if __POSIX_VISIBLE >= 200809 || __BSD_VISIBLE
 	struct	timespec st_atim;	/* time of last access */
 	struct	timespec st_mtim;	/* time of last data modification */
 	struct	timespec st_ctim;	/* time of last file status change */
 #else
-	time_t	  st_atime;		/* time of last access */
+	time_t    st_atime;		/* time of last access */
 	long	  st_atimensec;		/* nsec of last access */
-	time_t	  st_mtime;		/* time of last data modification */
+	time_t    st_mtime;		/* time of last data modification */
 	long	  st_mtimensec;		/* nsec of last data modification */
-	time_t	  st_ctime;		/* time of last file status change */
+	time_t    st_ctime;		/* time of last file status change */
 	long	  st_ctimensec;		/* nsec of last file status change */
 #endif /* __POSIX_VISIBLE >= 200809 || __BSD_VISIBLE */
 	off_t	  st_size;		/* file size, in bytes */
@@ -68,15 +67,58 @@ struct stat {
 	u_int32_t st_blksize;		/* optimal blocksize for I/O */
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
-	int32_t	  st_lspare1;
 #if __POSIX_VISIBLE >= 200809 || __BSD_VISIBLE
 	struct	timespec __st_birthtim;	/* time of file creation */
 #else
-	time_t	  __st_birthtime;	/* time of file creation */
+	time_t    __st_birthtime;	/* time of file creation */
 	long	  __st_birthtimensec;	/* nsec of file creation */
 #endif /* __POSIX_VISIBLE >= 200809 || __BSD_VISIBLE */
+};
+#ifdef _KERNEL
+struct stat32 {
+	dev_t	  st_dev;		/* inode's device */
+	ino32_t	  st_ino;		/* inode's number */
+	mode_t	  st_mode;		/* inode protection mode */
+	nlink_t	  st_nlink;		/* number of hard links */
+	uid_t	  st_uid;		/* user ID of the file's owner */
+	gid_t	  st_gid;		/* group ID of the file's group */
+	dev_t	  st_rdev;		/* device type */
+	int32_t	  st_lspare0;
+	struct	timespec32 st_atim;	/* time of last access */
+	struct	timespec32 st_mtim;	/* time of last data modification */
+	struct	timespec32 st_ctim;	/* time of last file status change */
+	off_t	  st_size;		/* file size, in bytes */
+	int64_t	  st_blocks;		/* blocks allocated for file */
+	u_int32_t st_blksize;		/* optimal blocksize for I/O */
+	u_int32_t st_flags;		/* user defined flags for file */
+	u_int32_t st_gen;		/* file generation number */
+	int32_t	  st_lspare1;
+	struct	timespec32 __st_birthtim;	/* time of file creation */
 	int64_t	  st_qspare[2];
 };
+#define STAT_TO_32(st32, st) {						\
+	(st32)->st_dev = (st)->st_dev;					\
+	(st32)->st_ino = (st)->st_ino;					\
+	(st32)->st_mode = (st)->st_mode;				\
+	(st32)->st_nlink = (st)->st_nlink;				\
+	(st32)->st_uid = (st)->st_uid;					\
+	(st32)->st_gid = (st)->st_gid;					\
+	(st32)->st_rdev = (st)->st_rdev;				\
+	(st32)->st_atim.tv_sec = (st)->st_atim.tv_sec;			\
+	(st32)->st_atim.tv_nsec = (st)->st_atim.tv_nsec;		\
+	(st32)->st_mtim.tv_sec = (st)->st_mtim.tv_sec;			\
+	(st32)->st_mtim.tv_nsec = (st)->st_mtim.tv_nsec;		\
+	(st32)->st_ctim.tv_sec = (st)->st_ctim.tv_sec;			\
+	(st32)->st_ctim.tv_nsec = (st)->st_ctim.tv_nsec;		\
+	(st32)->st_size = (st)->st_size;				\
+	(st32)->st_blocks = (st)->st_blocks;				\
+	(st32)->st_blksize = (st)->st_blksize;				\
+	(st32)->st_flags = (st)->st_flags;				\
+	(st32)->st_gen = (st)->st_gen;					\
+	(st32)->__st_birthtim.tv_sec = (st)->__st_birthtim.tv_sec;	\
+	(st32)->__st_birthtim.tv_nsec = (st)->__st_birthtim.tv_nsec;	\
+}
+#endif
 #if __POSIX_VISIBLE >= 200809 || __BSD_VISIBLE
 #define	st_atime		st_atim.tv_sec
 #define	st_mtime		st_mtim.tv_sec
