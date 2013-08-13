@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.56 2013/08/08 09:37:02 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.57 2013/08/13 09:26:04 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -273,10 +273,9 @@ usbd_close_pipe(struct usbd_pipe *pipe)
 	}
 #endif
 
-	if (--pipe->refcnt != 0)
-		return (USBD_NORMAL_COMPLETION);
-	if (! SIMPLEQ_EMPTY(&pipe->queue))
-		return (USBD_PENDING_REQUESTS);
+	if (!SIMPLEQ_EMPTY(&pipe->queue))
+		usbd_abort_pipe(pipe);
+
 	/* Default pipes are never linked */
 	if (pipe->iface != NULL)
 		LIST_REMOVE(pipe, next);

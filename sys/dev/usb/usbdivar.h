@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.50 2013/08/08 09:44:22 mpi Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.51 2013/08/13 09:26:05 mpi Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -159,7 +159,6 @@ struct usbd_pipe {
 	struct usbd_interface  *iface;
 	struct usbd_device     *device;
 	struct usbd_endpoint   *endpoint;
-	int			refcnt;
 	char			running;
 	char			aborting;
 	SIMPLEQ_HEAD(, usbd_xfer) queue;

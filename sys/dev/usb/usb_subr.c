@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.91 2013/08/08 09:44:22 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.92 2013/08/13 09:26:04 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -803,7 +803,6 @@ usbd_setup_pipe(struct usbd_device *dev, struct usbd_interface *iface,
 	p->iface = iface;
 	p->endpoint = ep;
 	ep->refcnt++;
-	p->refcnt = 1;
 	p->intrxfer = 0;
 	p->running = 0;
 	p->aborting = 0;
