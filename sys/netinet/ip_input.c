@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.215 2013/07/31 15:41:51 mikeb Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.216 2013/08/13 09:52:53 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -143,21 +143,21 @@ inet_ntoa(ina)
 }
 
 /*
- * We need to save the IP options in case a protocol wants to respond
+ * Used to save the IP options in case a protocol wants to respond
  * to an incoming packet over the same route if the packet got here
  * using IP source routing.  This allows connection establishment and
  * maintenance when the remote end is on a network that is not known
  * to us.
  */
-int	ip_nhops = 0;
-static	struct ip_srcrt {
-	struct	in_addr dst;			/* final destination */
-	char	nop;				/* one NOP to align */
-	char	srcopt[IPOPT_OFFSET + 1];	/* OPTVAL, OLEN and OFFSET */
-	struct	in_addr route[MAX_IPOPTLEN/sizeof(struct in_addr)];
-} ip_srcrt;
+struct ip_srcrt {
+	int		isr_nhops;		   /* number of hops */
+	struct in_addr	isr_dst;		   /* final destination */
+	char		isr_nop;		   /* one NOP to align */
+	char		isr_hdr[IPOPT_OFFSET + 1]; /* OPTVAL, OLEN & OFFSET */
+	struct in_addr	isr_routes[MAX_IPOPTLEN/sizeof(struct in_addr)];
+};
 
-void save_rte(u_char *, struct in_addr);
+void save_rte(struct mbuf *, u_char *, struct in_addr);
 
 /*
  * IP initialization: fill in IP protocol switch table.
@@ -363,7 +363,6 @@ ipv4_input(struct mbuf *m)
 	 * error was detected (causing an icmp message
 	 * to be sent and the original packet to be freed).
 	 */
-	ip_nhops = 0;		/* for source routed packets */
 	if (hlen > sizeof (struct ip) && ip_dooptions(m)) {
 	        return;
 	}
@@ -1097,7 +1096,7 @@ ip_dooptions(struct mbuf *m)
 				/*
 				 * End of source route.  Should be for us.
 				 */
-				save_rte(cp, ip->ip_src);
+				save_rte(m, cp, ip->ip_src);
 				break;
 			}
 
@@ -1266,20 +1265,29 @@ ip_rtaddr(struct in_addr dst, u_int rtableid)
  * to be picked up later by ip_srcroute if the receiver is interested.
  */
 void
-save_rte(u_char *option, struct in_addr dst)
+save_rte(struct mbuf *m, u_char *option, struct in_addr dst)
 {
+	struct ip_srcrt *isr;
+	struct m_tag *mtag;
 	unsigned olen;
 
 	olen = option[IPOPT_OLEN];
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
-		printf("save_rte: olen %d\n", olen);
-#endif /* 0 */
-	if (olen > sizeof(ip_srcrt) - (1 + sizeof(dst)))
+		printf("%s: olen %d\n", __func__, olen);
+#endif
+	if (olen > sizeof(isr->isr_hdr) + sizeof(isr->isr_routes))
 		return;
-	bcopy((caddr_t)option, (caddr_t)ip_srcrt.srcopt, olen);
-	ip_nhops = (olen - IPOPT_OFFSET - 1) / sizeof(struct in_addr);
-	ip_srcrt.dst = dst;
+
+	mtag = m_tag_get(PACKET_TAG_SRCROUTE, sizeof(*isr), M_NOWAIT);
+	if (mtag == NULL)
+		return;
+	isr = (struct ip_srcrt *)(mtag + 1);
+
+	bcopy(option, isr->isr_hdr, olen);
+	isr->isr_nhops = (olen - IPOPT_OFFSET - 1) / sizeof(struct in_addr);
+	isr->isr_dst = dst;
+	m_tag_prepend(m, mtag);
 }
 
 /*
@@ -1288,31 +1296,41 @@ save_rte(u_char *option, struct in_addr dst)
  * The first hop is placed before the options, will be removed later.
  */
 struct mbuf *
-ip_srcroute(void)
+ip_srcroute(struct mbuf *m0)
 {
 	struct in_addr *p, *q;
 	struct mbuf *m;
+	struct ip_srcrt *isr;
+	struct m_tag *mtag;
 
-	if (ip_nhops == 0)
-		return ((struct mbuf *)0);
+	if (!ip_dosourceroute)
+		return (NULL);
+
+	mtag = m_tag_find(m0, PACKET_TAG_SRCROUTE, NULL);
+	if (mtag == NULL)
+		return (NULL);
+	isr = (struct ip_srcrt *)(mtag + 1);
+
+	if (isr->isr_nhops == 0)
+		return (NULL);
 	m = m_get(M_DONTWAIT, MT_SOOPTS);
-	if (m == 0)
-		return ((struct mbuf *)0);
+	if (m == NULL)
+		return (NULL);
 
-#define OPTSIZ	(sizeof(ip_srcrt.nop) + sizeof(ip_srcrt.srcopt))
+#define OPTSIZ	(sizeof(isr->isr_nop) + sizeof(isr->isr_hdr))
 
-	/* length is (nhops+1)*sizeof(addr) + sizeof(nop + srcrt header) */
-	m->m_len = ip_nhops * sizeof(struct in_addr) + sizeof(struct in_addr) +
-	    OPTSIZ;
+	/* length is (nhops+1)*sizeof(addr) + sizeof(nop + header) */
+	m->m_len = (isr->isr_nhops + 1) * sizeof(struct in_addr) + OPTSIZ;
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
-		printf("ip_srcroute: nhops %d mlen %d", ip_nhops, m->m_len);
+		printf("%s: nhops %d mlen %d", __func__, isr->isr_nhops,
+		    m->m_len);
 #endif
 
 	/*
 	 * First save first hop for return route
 	 */
-	p = &ip_srcrt.route[ip_nhops - 1];
+	p = &(isr->isr_routes[isr->isr_nhops - 1]);
 	*(mtod(m, struct in_addr *)) = *p--;
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
@@ -1322,10 +1340,9 @@ ip_srcroute(void)
 	/*
 	 * Copy option fields and padding (nop) to mbuf.
 	 */
-	ip_srcrt.nop = IPOPT_NOP;
-	ip_srcrt.srcopt[IPOPT_OFFSET] = IPOPT_MINOFF;
-	bcopy((caddr_t)&ip_srcrt.nop,
-	    mtod(m, caddr_t) + sizeof(struct in_addr), OPTSIZ);
+	isr->isr_nop = IPOPT_NOP;
+	isr->isr_hdr[IPOPT_OFFSET] = IPOPT_MINOFF;
+	bcopy(&isr->isr_nop, mtod(m, caddr_t) + sizeof(struct in_addr), OPTSIZ);
 	q = (struct in_addr *)(mtod(m, caddr_t) +
 	    sizeof(struct in_addr) + OPTSIZ);
 #undef OPTSIZ
@@ -1333,7 +1350,7 @@ ip_srcroute(void)
 	 * Record return path as an IP source route,
 	 * reversing the path (pointers are now aligned).
 	 */
-	while (p >= ip_srcrt.route) {
+	while (p >= isr->isr_routes) {
 #ifdef DIAGNOSTIC
 		if (ipprintfs)
 			printf(" %x", ntohl(q->s_addr));
@@ -1343,11 +1360,12 @@ ip_srcroute(void)
 	/*
 	 * Last hop goes to final destination.
 	 */
-	*q = ip_srcrt.dst;
+	*q = isr->isr_dst;
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
 		printf(" %x\n", ntohl(q->s_addr));
 #endif
+	m_tag_delete(m0, (struct m_tag *)isr);
 	return (m);
 }
 
@@ -1706,7 +1724,7 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 	}
 	/* ip_srcroute doesn't do what we want here, need to fix */
 	if (inp->inp_flags & INP_RECVRETOPTS) {
-		*mp = sbcreatecontrol((caddr_t) ip_srcroute(),
+		*mp = sbcreatecontrol((caddr_t) ip_srcroute(m),
 		    sizeof(struct in_addr), IP_RECVRETOPTS, IPPROTO_IP);
 		if (*mp)
 			mp = &(*mp)->m_next;

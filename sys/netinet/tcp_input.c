@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.266 2013/07/31 15:41:52 mikeb Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.267 2013/08/13 09:52:53 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3769,7 +3769,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	case AF_INET:
 
 		inp->inp_laddr = ((struct sockaddr_in *)dst)->sin_addr;
-		inp->inp_options = ip_srcroute();
+		inp->inp_options = ip_srcroute(m);
 		if (inp->inp_options == NULL) {
 			inp->inp_options = sc->sc_ipopts;
 			sc->sc_ipopts = NULL;
@@ -4043,7 +4043,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		/*
 		 * Remember the IP options, if any.
 		 */
-		ipopts = ip_srcroute();
+		ipopts = ip_srcroute(m);
 		break;
 #endif
 	default:

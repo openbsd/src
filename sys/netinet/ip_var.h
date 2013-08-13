@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.45 2013/04/10 08:50:59 mpi Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.46 2013/08/13 09:52:53 mpi Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ u_int16_t
 int	 ip_setmoptions(int, struct ip_moptions **, struct mbuf *, u_int);
 void	 ip_slowtimo(void);
 struct mbuf *
-	 ip_srcroute(void);
+	 ip_srcroute(struct mbuf *);
 void	 ip_stripoptions(struct mbuf *, struct mbuf *);
 int	 ip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 void	 ip_savecontrol(struct inpcb *, struct mbuf **, struct ip *,

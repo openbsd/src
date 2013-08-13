@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.31 2013/07/17 20:21:54 schwarze Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.32 2013/08/13 09:52:53 mpi Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: August 13 2013 $
 .Dt MBUF_TAGS 9
 .Os
 .Sh NAME
@@ -184,6 +184,11 @@ Used by
 to reassemble IPv6 fragments.
 The tag contains a
 .Va struct pf_fragment_tag .
+.It PACKET_TAG_SRCROUTE
+Used by the IPv4 stack to keep track of the source route of an incoming
+IP packet, in case a protocol wants to respond over the same route.
+The tag contains a
+.Va struct ip_srcrt .
 .El
 .Pp
 .Fn m_tag_find

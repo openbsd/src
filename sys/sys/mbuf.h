@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.165 2013/07/06 02:44:23 brad Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.166 2013/08/13 09:52:54 mpi Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -454,6 +454,7 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_PF_DIVERT		0x0200 /* pf(4) diverted packet */
 #define PACKET_TAG_PIPEX		0x0400 /* pipex session cache */
 #define PACKET_TAG_PF_REASSEMBLED	0x0800 /* pf reassembled ipv6 packet */
+#define PACKET_TAG_SRCROUTE		0x1000 /* IPv4 source routing options */
 
 /*
  * Maximum tag payload length (that is excluding the m_tag structure).
@@ -461,7 +462,7 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
  * length for an existing packet tag type or when adding a new one that
  * has payload larger than the value below.
  */
-#define PACKET_TAG_MAXSIZE		40
+#define PACKET_TAG_MAXSIZE		52
 
 #endif /* _KERNEL */
 #endif /* _SYS_MBUF_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.104 2013/08/08 14:59:22 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.105 2013/08/13 09:52:53 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -745,7 +745,7 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 		 * add on any record-route or timestamp options.
 		 */
 		cp = (u_char *) (ip + 1);
-		if (op && (opts = ip_srcroute()) == 0 &&
+		if (op && (opts = ip_srcroute(m)) == NULL &&
 		    (opts = m_gethdr(M_DONTWAIT, MT_HEADER))) {
 			opts->m_len = sizeof(struct in_addr);
 			mtod(opts, struct in_addr *)->s_addr = 0;
