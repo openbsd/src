@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.43 2013/06/07 20:46:14 kettenis Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.44 2013/08/13 06:56:41 kettenis Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -50,7 +50,10 @@
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
 
+#if defined(__amd64__) || defined(__i386__) || \
+    defined(__macppc__) || defined(__sparc64__)
 #include "drm.h"
+#endif
 
 /*
  * private global data structure
