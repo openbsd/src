@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.28 2013/08/13 05:52:20 guenther Exp $ */
+/*	$OpenBSD: syscall.h,v 1.29 2013/08/13 22:33:04 miod Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -252,7 +252,7 @@ _dl_getdents(int fd, char *buf, size_t nbytes)
 	    "1:"
 	    "mr   %0,3\n\t"
 	    : "=r" (status)
-	    : "I" (SYS_getdents), "r" (fd), "r" (buf), "r" (nbytes),
+	    : "I" (SYS_getdents), "r" (fd), "r" (buf), "r" (nbytes)
 	    : "memory", "0", "3", "4", "5", "6");
 	return status;
 }
