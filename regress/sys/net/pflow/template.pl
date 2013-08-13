@@ -1,5 +1,5 @@
 #! /usr/bin/perl
-# $OpenBSD: template.pl,v 1.2 2013/08/11 15:46:26 florian Exp $
+# $OpenBSD: template.pl,v 1.3 2013/08/13 08:47:10 florian Exp $
 
 # Copyright (c) 2013 Florian Obser <florian@openbsd.org>
 #
@@ -49,6 +49,8 @@ sub usage
 		 28 => 'destinationIPv6Address',
 		150 => 'flowStartSeconds',
 		151 => 'flowEndSeconds',
+		152 => 'flowStartMilliseconds',
+		153 => 'flowEndMilliseconds',
 	};
 	sub id2name { return $id2name->{$_[0]} || $_[0]; }
 }
