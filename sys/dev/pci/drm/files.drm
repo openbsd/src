@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.27 2013/08/12 04:11:52 jsg Exp $
+# $OpenBSD: files.drm,v 1.28 2013/08/13 23:45:05 jsg Exp $
 
 # direct rendering modules
 define drmbase {}
@@ -76,7 +76,6 @@ file	dev/pci/drm/i915/dvo_tfp410.c		inteldrm
 
 device	radeondrm: drmbase, ttm, wsemuldisplaydev, rasops8, rasops32, i2cbus, i2c_bitbang
 attach	radeondrm at pci
-file	dev/pci/drm/ati_pcigart.c			radeondrm
 file	dev/pci/drm/drm_heap.c          		radeondrm
 file	dev/pci/drm/radeon/atom.c			radeondrm
 file	dev/pci/drm/radeon/atombios_crtc.c		radeondrm
