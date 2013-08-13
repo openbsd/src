@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_object.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_object.c,v 1.2 2013/08/13 19:43:10 kettenis Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -330,12 +330,10 @@ void radeon_bo_force_delete(struct radeon_device *rdev)
 
 int radeon_bo_init(struct radeon_device *rdev)
 {
-	struct drm_local_map	*map;
 	paddr_t start, end;
 
 	/* Add an MTRR for the VRAM */
-	drm_addmap(rdev->ddev, rdev->mc.aper_base, rdev->mc.aper_size,
-	    _DRM_FRAME_BUFFER, _DRM_WRITE_COMBINING, &map);
+	drm_mtrr_add(rdev->mc.aper_base, rdev->mc.aper_size, DRM_MTRR_WC);
 	/* fake a 'cookie', seems to be unused? */
 	rdev->mc.vram_mtrr = 1;
 
