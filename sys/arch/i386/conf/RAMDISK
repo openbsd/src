@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.180 2013/06/14 01:00:24 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.181 2013/08/13 16:26:24 mikeb Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -238,7 +238,6 @@ wi*	at pci?				# WaveLAN IEEE 802.11DS
 wi*	at pcmcia?			# WaveLAN IEEE 802.11DS
 #an*	at pcmcia?			# Aironet IEEE 802.11DS
 #cnw*	at pcmcia?			# Xircom Netwave
-#ray*	at pcmcia?			# Raylink Aviator2.4/Pro 802.11FH
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii?				# 3Com internal PHYs

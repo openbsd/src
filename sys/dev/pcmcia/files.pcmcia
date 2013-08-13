@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.44 2008/05/23 14:04:19 brad Exp $
+#	$OpenBSD: files.pcmcia,v 1.45 2013/08/13 16:26:26 mikeb Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -72,11 +72,6 @@ file	dev/pcmcia/if_wi_pcmcia.c		wi_pcmcia
 # Marvell 88W8385
 attach	malo at pcmcia with malo_pcmcia
 file	dev/pcmcia/if_malo.c			malo_pcmcia
-
-# Raytheon(Raylink)/WebGear IEEE 802.11 FH WLAN
-device	ray: ether, ifnet, ifmedia
-attach	ray at pcmcia
-file	dev/pcmcia/if_ray.c			ray
 
 # Aironet 4500/4800 802.11 DS WLAN
 attach	an at pcmcia with an_pcmcia

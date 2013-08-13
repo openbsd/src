@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.198 2013/04/05 13:28:59 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.199 2013/08/13 16:26:25 mikeb Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -360,7 +360,6 @@ wi*	at pci?				# WaveLAN IEEE 802.11DS
 wi*	at pcmcia?			# WaveLAN IEEE 802.11DS
 an*	at pcmcia?			# Aironet IEEE 802.11DS
 #cnw*	at pcmcia?			# Xircom Netwave
-ray*	at pcmcia?			# Raylink Aviator2.4/Pro 802.11FH
 ipw*	at pci?				# Intel PRO/Wireless 2100
 iwi*	at pci?				# Intel PRO/Wireless 2200BG/2915ABG
 wpi*	at pci?				# Intel PRO/Wireless 3945ABG
