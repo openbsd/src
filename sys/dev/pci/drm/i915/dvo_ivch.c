@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_ivch.c,v 1.3 2013/07/08 09:47:45 jsg Exp $	*/
+/*	$OpenBSD: dvo_ivch.c,v 1.4 2013/08/13 10:23:48 jsg Exp $	*/
 /*
  * Copyright © 2006 Intel Corporation
  *
@@ -157,26 +157,14 @@ struct ivch_priv {
 };
 
 
-void ivch_dump_regs(struct intel_dvo_device *);
-bool ivch_read(struct intel_dvo_device *, int, uint16_t *);
-bool ivch_write(struct intel_dvo_device *, int, uint16_t);
-bool ivch_init(struct intel_dvo_device *, struct i2c_controller *);
-enum drm_connector_status ivch_detect(struct intel_dvo_device *);
-enum drm_mode_status ivch_mode_valid(struct intel_dvo_device *,
-    struct drm_display_mode *);
-void ivch_dpms(struct intel_dvo_device *, bool);
-bool ivch_get_hw_state(struct intel_dvo_device *);
-void ivch_mode_set(struct intel_dvo_device *, struct drm_display_mode *,
-    struct drm_display_mode *);
-void ivch_destroy(struct intel_dvo_device *);
+static void ivch_dump_regs(struct intel_dvo_device *dvo);
 
 /**
  * Reads a register on the ivch.
  *
  * Each of the 256 registers are 16 bits long.
  */
-bool
-ivch_read(struct intel_dvo_device *dvo, int addr, uint16_t *data)
+static bool ivch_read(struct intel_dvo_device *dvo, int addr, uint16_t *data)
 {
 	struct ivch_priv *priv = dvo->dev_priv;
 	struct i2c_controller *adapter = dvo->i2c_bus;
@@ -215,8 +203,7 @@ read_err:
 }
 
 /** Writes a 16-bit register on the ivch */
-bool
-ivch_write(struct intel_dvo_device *dvo, int addr, uint16_t data)
+static bool ivch_write(struct intel_dvo_device *dvo, int addr, uint16_t data)
 {
 	struct ivch_priv *priv = dvo->dev_priv;
 	struct i2c_controller *adapter = dvo->i2c_bus;
@@ -246,8 +233,7 @@ write_err:
 }
 
 /** Probes the given bus and slave address for an ivch */
-bool
-ivch_init(struct intel_dvo_device *dvo,
+static bool ivch_init(struct intel_dvo_device *dvo,
 		      struct i2c_controller *adapter)
 {
 	struct ivch_priv *priv;
@@ -286,14 +272,12 @@ out:
 	return false;
 }
 
-enum drm_connector_status
-ivch_detect(struct intel_dvo_device *dvo)
+static enum drm_connector_status ivch_detect(struct intel_dvo_device *dvo)
 {
 	return connector_status_connected;
 }
 
-enum drm_mode_status
-ivch_mode_valid(struct intel_dvo_device *dvo,
+static enum drm_mode_status ivch_mode_valid(struct intel_dvo_device *dvo,
 					    struct drm_display_mode *mode)
 {
 	if (mode->clock > 112000)
@@ -303,8 +287,7 @@ ivch_mode_valid(struct intel_dvo_device *dvo,
 }
 
 /** Sets the power state of the panel connected to the ivch */
-void
-ivch_dpms(struct intel_dvo_device *dvo, bool enable)
+static void ivch_dpms(struct intel_dvo_device *dvo, bool enable)
 {
 	int i;
 	uint16_t vr01, vr30, backlight;
@@ -339,8 +322,7 @@ ivch_dpms(struct intel_dvo_device *dvo, bool enable)
 	udelay(16 * 1000);
 }
 
-bool
-ivch_get_hw_state(struct intel_dvo_device *dvo)
+static bool ivch_get_hw_state(struct intel_dvo_device *dvo)
 {
 	uint16_t vr01;
 
@@ -354,8 +336,7 @@ ivch_get_hw_state(struct intel_dvo_device *dvo)
 		return false;
 }
 
-void
-ivch_mode_set(struct intel_dvo_device *dvo,
+static void ivch_mode_set(struct intel_dvo_device *dvo,
 			  struct drm_display_mode *mode,
 			  struct drm_display_mode *adjusted_mode)
 {
@@ -390,8 +371,7 @@ ivch_mode_set(struct intel_dvo_device *dvo,
 	ivch_dump_regs(dvo);
 }
 
-void
-ivch_dump_regs(struct intel_dvo_device *dvo)
+static void ivch_dump_regs(struct intel_dvo_device *dvo)
 {
 	uint16_t val;
 
@@ -433,8 +413,7 @@ ivch_dump_regs(struct intel_dvo_device *dvo)
 	DRM_LOG_KMS("VR8F: 0x%04x\n", val);
 }
 
-void
-ivch_destroy(struct intel_dvo_device *dvo)
+static void ivch_destroy(struct intel_dvo_device *dvo)
 {
 	struct ivch_priv *priv = dvo->dev_priv;
 

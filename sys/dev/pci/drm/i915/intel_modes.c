@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_modes.c,v 1.2 2013/07/05 07:20:27 jsg Exp $	*/
+/*	$OpenBSD: intel_modes.c,v 1.3 2013/08/13 10:23:51 jsg Exp $	*/
 /*
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
  * Copyright (c) 2007, 2010 Intel Corporation
@@ -37,8 +37,8 @@
  * @connector: DRM connector device to use
  * @edid: previously read EDID information
  */
-int
-intel_connector_update_modes(struct drm_connector *connector, struct edid *edid)
+int intel_connector_update_modes(struct drm_connector *connector,
+				struct edid *edid)
 {
 	int ret;
 
@@ -56,8 +56,8 @@ intel_connector_update_modes(struct drm_connector *connector, struct edid *edid)
  *
  * Fetch the EDID information from @connector using the DDC bus.
  */
-int
-intel_ddc_get_modes(struct drm_connector *connector, struct i2c_controller *adapter)
+int intel_ddc_get_modes(struct drm_connector *connector,
+			struct i2c_controller *adapter)
 {
 	struct edid *edid;
 	int ret;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_ch7017.c,v 1.2 2013/03/30 12:36:50 kettenis Exp $	*/
+/*	$OpenBSD: dvo_ch7017.c,v 1.3 2013/08/13 10:23:48 jsg Exp $	*/
 /*
  * Copyright © 2006 Intel Corporation
  *
@@ -163,21 +163,10 @@ struct ch7017_priv {
 	uint8_t dummy;
 };
 
-void ch7017_dump_regs(struct intel_dvo_device *);
-void ch7017_dpms(struct intel_dvo_device *, bool);
-bool ch7017_read(struct intel_dvo_device *, u8, u8 *);
-bool ch7017_write(struct intel_dvo_device *, u8, u8);
-bool ch7017_init(struct intel_dvo_device *, struct i2c_controller *);
-enum drm_connector_status ch7017_detect(struct intel_dvo_device *);
-enum drm_mode_status ch7017_mode_valid(struct intel_dvo_device *,
-    struct drm_display_mode *);
-void ch7017_mode_set(struct intel_dvo_device *, struct drm_display_mode *,
-    struct drm_display_mode *);
-bool ch7017_get_hw_state(struct intel_dvo_device *);
-void ch7017_destroy(struct intel_dvo_device *);
+static void ch7017_dump_regs(struct intel_dvo_device *dvo);
+static void ch7017_dpms(struct intel_dvo_device *dvo, bool enable);
 
-bool
-ch7017_read(struct intel_dvo_device *dvo, u8 addr, u8 *val)
+static bool ch7017_read(struct intel_dvo_device *dvo, u8 addr, u8 *val)
 {
 	struct i2c_controller *adapter = dvo->i2c_bus;
 	int ret;
@@ -192,8 +181,7 @@ ch7017_read(struct intel_dvo_device *dvo, u8 addr, u8 *val)
 		return true;
 }
 
-bool
-ch7017_write(struct intel_dvo_device *dvo, u8 addr, u8 val)
+static bool ch7017_write(struct intel_dvo_device *dvo, u8 addr, u8 val)
 {
 	struct i2c_controller *adapter = dvo->i2c_bus;
 	uint8_t buf[2] = { addr, val };
@@ -210,8 +198,7 @@ ch7017_write(struct intel_dvo_device *dvo, u8 addr, u8 val)
 }
 
 /** Probes for a CH7017 on the given bus and slave address. */
-bool
-ch7017_init(struct intel_dvo_device *dvo,
+static bool ch7017_init(struct intel_dvo_device *dvo,
 			struct i2c_controller *adapter)
 {
 	struct ch7017_priv *priv;
@@ -254,14 +241,12 @@ fail:
 	return false;
 }
 
-enum drm_connector_status
-ch7017_detect(struct intel_dvo_device *dvo)
+static enum drm_connector_status ch7017_detect(struct intel_dvo_device *dvo)
 {
 	return connector_status_connected;
 }
 
-enum drm_mode_status
-ch7017_mode_valid(struct intel_dvo_device *dvo,
+static enum drm_mode_status ch7017_mode_valid(struct intel_dvo_device *dvo,
 					      struct drm_display_mode *mode)
 {
 	if (mode->clock > 160000)
@@ -270,8 +255,7 @@ ch7017_mode_valid(struct intel_dvo_device *dvo,
 	return MODE_OK;
 }
 
-void
-ch7017_mode_set(struct intel_dvo_device *dvo,
+static void ch7017_mode_set(struct intel_dvo_device *dvo,
 			    struct drm_display_mode *mode,
 			    struct drm_display_mode *adjusted_mode)
 {
@@ -348,8 +332,7 @@ ch7017_mode_set(struct intel_dvo_device *dvo,
 }
 
 /* set the CH7017 power state */
-void
-ch7017_dpms(struct intel_dvo_device *dvo, bool enable)
+static void ch7017_dpms(struct intel_dvo_device *dvo, bool enable)
 {
 	uint8_t val;
 
@@ -377,8 +360,7 @@ ch7017_dpms(struct intel_dvo_device *dvo, bool enable)
 	drm_msleep(20, "chdmps");
 }
 
-bool
-ch7017_get_hw_state(struct intel_dvo_device *dvo)
+static bool ch7017_get_hw_state(struct intel_dvo_device *dvo)
 {
 	uint8_t val;
 
@@ -390,8 +372,7 @@ ch7017_get_hw_state(struct intel_dvo_device *dvo)
 		return true;
 }
 
-void
-ch7017_dump_regs(struct intel_dvo_device *dvo)
+static void ch7017_dump_regs(struct intel_dvo_device *dvo)
 {
 	uint8_t val;
 
@@ -412,8 +393,7 @@ do {							\
 	DUMP(CH7017_LVDS_POWER_DOWN);
 }
 
-void
-ch7017_destroy(struct intel_dvo_device *dvo)
+static void ch7017_destroy(struct intel_dvo_device *dvo)
 {
 	struct ch7017_priv *priv = dvo->dev_priv;
 

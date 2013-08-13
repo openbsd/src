@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_gtt.c,v 1.2 2013/08/09 07:55:42 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_gtt.c,v 1.3 2013/08/13 10:23:49 jsg Exp $	*/
 /*
  * Copyright © 2010 Daniel Vetter
  *
@@ -395,8 +395,7 @@ static void i915_ggtt_clear_range(struct drm_device *dev,
 }
 #endif /* notyet */
 
-void
-i915_gem_restore_gtt_mappings(struct drm_device *dev)
+void i915_gem_restore_gtt_mappings(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	struct drm_i915_gem_object *obj;

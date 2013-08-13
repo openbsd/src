@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.6 2013/07/05 07:20:27 jsg Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.7 2013/08/13 10:23:50 jsg Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -34,67 +34,8 @@
 #include "i915_drv.h"
 #include "intel_drv.h"
 
-void	 ironlake_enable_display_irq(drm_i915_private_t *, u32);
-void	 intel_enable_asle(struct drm_device *);
-int	 i915_pipeconf_enabled(struct drm_device *, int);
-u32	 gm45_get_vblank_counter(struct drm_device *, int);
-int	 i915_get_crtc_scanoutpos(struct drm_device *, int, int *, int *);
-int	 i915_get_vblank_timestamp(struct drm_device *, int, int *,
-	     struct timeval *, unsigned);
-void	 ironlake_handle_rps_change(struct drm_device *);
-void	 notify_ring(struct drm_device *, struct intel_ring_buffer *);
-void	 ivybridge_handle_parity_error(struct drm_device *);
-void	 snb_gt_irq_handler(struct drm_device *, struct drm_i915_private *, u32);
-void	 snb_gt_irq_handler(struct drm_device *, struct drm_i915_private *, u32);
-void	 gen6_queue_rps_work(struct drm_i915_private *, u32);
-int	 valleyview_intr(void *);
-void	 ibx_irq_handler(struct drm_device *, u32);
-void	 cpt_irq_handler(struct drm_device *, u32);
-int	 ivybridge_intr(void *);
-void	 ilk_gt_irq_handler(struct drm_device *, struct drm_i915_private *, u32);
-int	 ironlake_intr(void *);
-void	 i915_get_extra_instdone(struct drm_device *, uint32_t *);
-void	 i915_report_and_clear_eir(struct drm_device *);
-void	 i915_handle_error(struct drm_device *, bool);
-void	 i915_pageflip_stall_check(struct drm_device *, int);
-int	 ironlake_enable_vblank(struct drm_device *, int);
-int	 ivybridge_enable_vblank(struct drm_device *, int);
-int	 valleyview_enable_vblank(struct drm_device *, int);
-void	 ironlake_disable_vblank(struct drm_device *, int);
-void	 ivybridge_disable_vblank(struct drm_device *, int);
-void	 valleyview_disable_vblank(struct drm_device *, int);
-u32	 ring_last_seqno(struct intel_ring_buffer *);
-bool	 i915_hangcheck_ring_idle(struct intel_ring_buffer *, bool *);
-bool	 kick_ring(struct intel_ring_buffer *);
-bool	 i915_hangcheck_hung(struct drm_device *);
-void	 ironlake_irq_preinstall(struct drm_device *);
-void	 valleyview_irq_preinstall(struct drm_device *);
-void	 ironlake_enable_pch_hotplug(struct drm_device *);
-int	 ironlake_irq_postinstall(struct drm_device *);
-int	 ivybridge_irq_postinstall(struct drm_device *);
-int	 valleyview_irq_postinstall(struct drm_device *);
-void	 valleyview_irq_uninstall(struct drm_device *);
-void	 ironlake_irq_uninstall(struct drm_device *);
-void	 i8xx_irq_preinstall(struct drm_device *);
-int	 i8xx_irq_postinstall(struct drm_device *);
-int	 i8xx_intr(void *);
-void	 i8xx_irq_uninstall(struct drm_device *);
-void	 i915_irq_preinstall(struct drm_device *);
-int	 i915_irq_postinstall(struct drm_device *);
-int	 i915_intr(void *);
-void	 i915_irq_uninstall(struct drm_device *);
-void	 i965_irq_preinstall(struct drm_device *);
-int	 i965_irq_postinstall(struct drm_device *);
-int	 i965_intr(void *);
-void	 i965_irq_uninstall(struct drm_device *);
-void	 intel_irq_init(struct drm_device *);
-void	 i915_hotplug_work_func(void *, void *);
-void	 i915_error_work_func(void *, void *);
-void	 ivybridge_parity_work(void *, void *);
-void	 gen6_pm_rps_work(void *, void *);
-
 /* For display hotplug interrupt */
-void
+static void
 ironlake_enable_display_irq(drm_i915_private_t *dev_priv, u32 mask)
 {
 	if ((dev_priv->irq_mask & mask) != 0) {
@@ -142,8 +83,7 @@ i915_disable_pipestat(drm_i915_private_t *dev_priv, int pipe, u32 mask)
 /**
  * intel_enable_asle - enable ASLE interrupt for OpRegion
  */
-void
-intel_enable_asle(struct drm_device *dev)
+void intel_enable_asle(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 
@@ -167,7 +107,7 @@ intel_enable_asle(struct drm_device *dev)
 }
 
 /**
- * i915_pipeconf_enabled - check if a pipe is enabled
+ * i915_pipe_enabled - check if a pipe is enabled
  * @dev: DRM device
  * @pipe: pipe to check
  *
@@ -175,8 +115,8 @@ intel_enable_asle(struct drm_device *dev)
  * Use this routine to make sure the PLL is running and the pipe is active
  * before reading such registers if unsure.
  */
-int
-i915_pipeconf_enabled(struct drm_device *dev, int pipe)
+static int
+i915_pipe_enabled(struct drm_device *dev, int pipe)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	enum transcoder cpu_transcoder = intel_pipe_to_cpu_transcoder(dev_priv,
@@ -188,15 +128,14 @@ i915_pipeconf_enabled(struct drm_device *dev, int pipe)
 /* Called from drm generic code, passed a 'crtc', which
  * we use as a pipe index
  */
-u32
-i915_get_vblank_counter(struct drm_device *dev, int pipe)
+static u32 i915_get_vblank_counter(struct drm_device *dev, int pipe)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	unsigned long high_frame;
 	unsigned long low_frame;
 	u32 high1, high2, low;
 
-	if (!i915_pipeconf_enabled(dev, pipe)) {
+	if (!i915_pipe_enabled(dev, pipe)) {
 		DRM_DEBUG_DRIVER("trying to get vblank count for disabled "
 				"pipe %c\n", pipe_name(pipe));
 		return 0;
@@ -221,13 +160,12 @@ i915_get_vblank_counter(struct drm_device *dev, int pipe)
 	return (high1 << 8) | low;
 }
 
-u32
-gm45_get_vblank_counter(struct drm_device *dev, int pipe)
+static u32 gm45_get_vblank_counter(struct drm_device *dev, int pipe)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	int reg = PIPE_FRMCOUNT_GM45(pipe);
 
-	if (!i915_pipeconf_enabled(dev, pipe)) {
+	if (!i915_pipe_enabled(dev, pipe)) {
 		DRM_DEBUG_DRIVER("trying to get vblank count for disabled "
 				 "pipe %c\n", pipe_name(pipe));
 		return 0;
@@ -236,8 +174,7 @@ gm45_get_vblank_counter(struct drm_device *dev, int pipe)
 	return I915_READ(reg);
 }
 
-int
-i915_get_crtc_scanoutpos(struct drm_device *dev, int pipe,
+static int i915_get_crtc_scanoutpos(struct drm_device *dev, int pipe,
 			     int *vpos, int *hpos)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
@@ -248,7 +185,7 @@ i915_get_crtc_scanoutpos(struct drm_device *dev, int pipe,
 	enum transcoder cpu_transcoder = intel_pipe_to_cpu_transcoder(dev_priv,
 								      pipe);
 
-	if (!i915_pipeconf_enabled(dev, pipe)) {
+	if (!i915_pipe_enabled(dev, pipe)) {
 		DRM_DEBUG_DRIVER("trying to get scanoutpos for disabled "
 				 "pipe %c\n", pipe_name(pipe));
 		return 0;
@@ -305,8 +242,7 @@ i915_get_crtc_scanoutpos(struct drm_device *dev, int pipe,
 	return ret;
 }
 
-int
-i915_get_vblank_timestamp(struct drm_device *dev, int pipe,
+static int i915_get_vblank_timestamp(struct drm_device *dev, int pipe,
 			      int *max_error,
 			      struct timeval *vblank_time,
 			      unsigned flags)
@@ -340,8 +276,7 @@ i915_get_vblank_timestamp(struct drm_device *dev, int pipe,
 /*
  * Handle hotplug events outside the interrupt handler proper.
  */
-void
-i915_hotplug_work_func(void *arg1, void *arg2)
+static void i915_hotplug_work_func(void *arg1, void *arg2)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *)arg1;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -364,8 +299,7 @@ i915_hotplug_work_func(void *arg1, void *arg2)
 /* defined intel_pm.c */
 extern struct mutex mchdev_lock;
 
-void
-ironlake_handle_rps_change(struct drm_device *dev)
+static void ironlake_handle_rps_change(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	u32 busy_up, busy_down, max_avg, min_avg;
@@ -404,8 +338,7 @@ ironlake_handle_rps_change(struct drm_device *dev)
 	return;
 }
 
-void
-notify_ring(struct drm_device *dev,
+static void notify_ring(struct drm_device *dev,
 			struct intel_ring_buffer *ring)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -423,8 +356,7 @@ notify_ring(struct drm_device *dev,
 	}
 }
 
-void
-gen6_pm_rps_work(void *arg1, void *arg2)
+static void gen6_pm_rps_work(void *arg1, void *arg2)
 {
 	drm_i915_private_t *dev_priv = arg1;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -468,8 +400,7 @@ gen6_pm_rps_work(void *arg1, void *arg2)
  * this event, userspace should try to remap the bad rows since statistically
  * it is likely the same row is more likely to go bad again.
  */
-void
-ivybridge_parity_work(void *arg1, void *arg2)
+static void ivybridge_parity_work(void *arg1, void *arg2)
 {
 	drm_i915_private_t *dev_priv = arg1;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -528,8 +459,7 @@ ivybridge_parity_work(void *arg1, void *arg2)
 #endif
 }
 
-void
-ivybridge_handle_parity_error(struct drm_device *dev)
+static void ivybridge_handle_parity_error(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 
@@ -546,8 +476,7 @@ ivybridge_handle_parity_error(struct drm_device *dev)
 	
 }
 
-void
-snb_gt_irq_handler(struct drm_device *dev,
+static void snb_gt_irq_handler(struct drm_device *dev,
 			       struct drm_i915_private *dev_priv,
 			       u32 gt_iir)
 {
@@ -571,8 +500,7 @@ snb_gt_irq_handler(struct drm_device *dev,
 		ivybridge_handle_parity_error(dev);
 }
 
-void
-gen6_queue_rps_work(struct drm_i915_private *dev_priv,
+static void gen6_queue_rps_work(struct drm_i915_private *dev_priv,
 				u32 pm_iir)
 {
 	/*
@@ -595,8 +523,7 @@ gen6_queue_rps_work(struct drm_i915_private *dev_priv,
 	    dev_priv, NULL);
 }
 
-int
-valleyview_intr(void *arg)
+static int valleyview_intr(void *arg)
 {
 	drm_i915_private_t *dev_priv = arg;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -676,8 +603,7 @@ out:
 	return ret;
 }
 
-void
-ibx_irq_handler(struct drm_device *dev, u32 pch_iir)
+static void ibx_irq_handler(struct drm_device *dev, u32 pch_iir)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	int pipe;
@@ -721,8 +647,7 @@ ibx_irq_handler(struct drm_device *dev, u32 pch_iir)
 		DRM_DEBUG_DRIVER("PCH transcoder A underrun interrupt\n");
 }
 
-void
-cpt_irq_handler(struct drm_device *dev, u32 pch_iir)
+static void cpt_irq_handler(struct drm_device *dev, u32 pch_iir)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	int pipe;
@@ -755,8 +680,7 @@ cpt_irq_handler(struct drm_device *dev, u32 pch_iir)
 					 I915_READ(FDI_RX_IIR(pipe)));
 }
 
-int
-ivybridge_intr(void *arg)
+static int ivybridge_intr(void *arg)
 {
 	drm_i915_private_t *dev_priv = arg;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -819,8 +743,7 @@ ivybridge_intr(void *arg)
 	return ret;
 }
 
-void
-ilk_gt_irq_handler(struct drm_device *dev,
+static void ilk_gt_irq_handler(struct drm_device *dev,
 			       struct drm_i915_private *dev_priv,
 			       u32 gt_iir)
 {
@@ -830,8 +753,7 @@ ilk_gt_irq_handler(struct drm_device *dev,
 		notify_ring(dev, &dev_priv->ring[VCS]);
 }
 
-int
-ironlake_intr(void *arg)
+static int ironlake_intr(void *arg)
 {
 	drm_i915_private_t *dev_priv = arg;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -914,8 +836,7 @@ done:
  * Fire an error uevent so userspace can see that a hang or error
  * was detected.
  */
-void
-i915_error_work_func(void *arg1, void *arg2)
+static void i915_error_work_func(void *arg1, void *arg2)
 {
 	drm_i915_private_t *dev_priv = arg1;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -942,8 +863,7 @@ i915_error_work_func(void *arg1, void *arg2)
 }
 
 /* NB: please notice the memset */
-void
-i915_get_extra_instdone(struct drm_device *dev,
+static void i915_get_extra_instdone(struct drm_device *dev,
 				    uint32_t *instdone)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -972,7 +892,7 @@ i915_get_extra_instdone(struct drm_device *dev,
 }
 
 #ifdef CONFIG_DEBUG_FS
-struct drm_i915_error_object *
+static struct drm_i915_error_object *
 i915_error_object_create(struct drm_i915_private *dev_priv,
 			 struct drm_i915_gem_object *src)
 {
@@ -1044,7 +964,7 @@ unwind:
 	return NULL;
 }
 
-void
+static void
 i915_error_object_free(struct drm_i915_error_object *obj)
 {
 	int page;
@@ -1075,9 +995,7 @@ i915_error_state_free(struct kref *error_ref)
 	kfree(error->overlay);
 	kfree(error);
 }
-
-void
-capture_bo(struct drm_i915_error_buffer *err,
+static void capture_bo(struct drm_i915_error_buffer *err,
 		       struct drm_i915_gem_object *obj)
 {
 	err->size = obj->base.size;
@@ -1100,8 +1018,7 @@ capture_bo(struct drm_i915_error_buffer *err,
 	err->cache_level = obj->cache_level;
 }
 
-u32
-capture_active_bo(struct drm_i915_error_buffer *err,
+static u32 capture_active_bo(struct drm_i915_error_buffer *err,
 			     int count, struct list_head *head)
 {
 	struct drm_i915_gem_object *obj;
@@ -1116,8 +1033,7 @@ capture_active_bo(struct drm_i915_error_buffer *err,
 	return i;
 }
 
-u32
-capture_pinned_bo(struct drm_i915_error_buffer *err,
+static u32 capture_pinned_bo(struct drm_i915_error_buffer *err,
 			     int count, struct list_head *head)
 {
 	struct drm_i915_gem_object *obj;
@@ -1135,8 +1051,7 @@ capture_pinned_bo(struct drm_i915_error_buffer *err,
 	return i;
 }
 
-void
-i915_gem_record_fences(struct drm_device *dev,
+static void i915_gem_record_fences(struct drm_device *dev,
 				   struct drm_i915_error_state *error)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -1166,7 +1081,7 @@ i915_gem_record_fences(struct drm_device *dev,
 	}
 }
 
-struct drm_i915_error_object *
+static struct drm_i915_error_object *
 i915_error_first_batchbuffer(struct drm_i915_private *dev_priv,
 			     struct intel_ring_buffer *ring)
 {
@@ -1208,8 +1123,7 @@ i915_error_first_batchbuffer(struct drm_i915_private *dev_priv,
 	return NULL;
 }
 
-void
-i915_record_ring_state(struct drm_device *dev,
+static void i915_record_ring_state(struct drm_device *dev,
 				   struct drm_i915_error_state *error,
 				   struct intel_ring_buffer *ring)
 {
@@ -1253,8 +1167,7 @@ i915_record_ring_state(struct drm_device *dev,
 	error->cpu_ring_tail[ring->id] = ring->tail;
 }
 
-void
-i915_gem_record_rings(struct drm_device *dev,
+static void i915_gem_record_rings(struct drm_device *dev,
 				  struct drm_i915_error_state *error)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -1305,8 +1218,7 @@ i915_gem_record_rings(struct drm_device *dev,
  * out a structure which becomes available in debugfs for user level tools
  * to pick up.
  */
-void
-i915_capture_error_state(struct drm_device *dev)
+static void i915_capture_error_state(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_i915_gem_object *obj;
@@ -1421,8 +1333,7 @@ i915_capture_error_state(struct drm_device *dev)
 		i915_error_state_free(&error->ref);
 }
 
-void
-i915_destroy_error_state(struct drm_device *dev)
+void i915_destroy_error_state(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_i915_error_state *error;
@@ -1440,8 +1351,7 @@ i915_destroy_error_state(struct drm_device *dev)
 #define i915_capture_error_state(x)
 #endif
 
-void
-i915_report_and_clear_eir(struct drm_device *dev)
+static void i915_report_and_clear_eir(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t instdone[I915_NUM_INSTDONE_REG];
@@ -1543,8 +1453,7 @@ i915_report_and_clear_eir(struct drm_device *dev)
  * so userspace knows something bad happened (should trigger collection
  * of a ring dump etc.).
  */
-void
-i915_handle_error(struct drm_device *dev, bool wedged)
+void i915_handle_error(struct drm_device *dev, bool wedged)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_ring_buffer *ring;
@@ -1568,8 +1477,7 @@ i915_handle_error(struct drm_device *dev, bool wedged)
 	    i915_error_work_func, dev_priv, NULL);
 }
 
-void
-i915_pageflip_stall_check(struct drm_device *dev, int pipe)
+static void i915_pageflip_stall_check(struct drm_device *dev, int pipe)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc = dev_priv->pipe_to_crtc_mapping[pipe];
@@ -1617,12 +1525,11 @@ i915_pageflip_stall_check(struct drm_device *dev, int pipe)
 /* Called from drm generic code, passed 'crtc' which
  * we use as a pipe index
  */
-int
-i915_enable_vblank(struct drm_device *dev, int pipe)
+static int i915_enable_vblank(struct drm_device *dev, int pipe)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 
-	if (!i915_pipeconf_enabled(dev, pipe))
+	if (!i915_pipe_enabled(dev, pipe))
 		return -EINVAL;
 
 	mtx_enter(&dev_priv->irq_lock);
@@ -1641,12 +1548,11 @@ i915_enable_vblank(struct drm_device *dev, int pipe)
 	return 0;
 }
 
-int
-ironlake_enable_vblank(struct drm_device *dev, int pipe)
+static int ironlake_enable_vblank(struct drm_device *dev, int pipe)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 
-	if (!i915_pipeconf_enabled(dev, pipe))
+	if (!i915_pipe_enabled(dev, pipe))
 		return -EINVAL;
 
 	mtx_enter(&dev_priv->irq_lock);
@@ -1657,12 +1563,11 @@ ironlake_enable_vblank(struct drm_device *dev, int pipe)
 	return 0;
 }
 
-int
-ivybridge_enable_vblank(struct drm_device *dev, int pipe)
+static int ivybridge_enable_vblank(struct drm_device *dev, int pipe)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 
-	if (!i915_pipeconf_enabled(dev, pipe))
+	if (!i915_pipe_enabled(dev, pipe))
 		return -EINVAL;
 
 	mtx_enter(&dev_priv->irq_lock);
@@ -1673,13 +1578,12 @@ ivybridge_enable_vblank(struct drm_device *dev, int pipe)
 	return 0;
 }
 
-int
-valleyview_enable_vblank(struct drm_device *dev, int pipe)
+static int valleyview_enable_vblank(struct drm_device *dev, int pipe)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	u32 imr;
 
-	if (!i915_pipeconf_enabled(dev, pipe))
+	if (!i915_pipe_enabled(dev, pipe))
 		return -EINVAL;
 
 	mtx_enter(&dev_priv->irq_lock);
@@ -1699,8 +1603,7 @@ valleyview_enable_vblank(struct drm_device *dev, int pipe)
 /* Called from drm generic code, passed 'crtc' which
  * we use as a pipe index
  */
-void
-i915_disable_vblank(struct drm_device *dev, int pipe)
+static void i915_disable_vblank(struct drm_device *dev, int pipe)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 
@@ -1714,8 +1617,7 @@ i915_disable_vblank(struct drm_device *dev, int pipe)
 	mtx_leave(&dev_priv->irq_lock);
 }
 
-void
-ironlake_disable_vblank(struct drm_device *dev, int pipe)
+static void ironlake_disable_vblank(struct drm_device *dev, int pipe)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 
@@ -1725,8 +1627,7 @@ ironlake_disable_vblank(struct drm_device *dev, int pipe)
 	mtx_leave(&dev_priv->irq_lock);
 }
 
-void
-ivybridge_disable_vblank(struct drm_device *dev, int pipe)
+static void ivybridge_disable_vblank(struct drm_device *dev, int pipe)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 
@@ -1736,8 +1637,7 @@ ivybridge_disable_vblank(struct drm_device *dev, int pipe)
 	mtx_leave(&dev_priv->irq_lock);
 }
 
-void
-valleyview_disable_vblank(struct drm_device *dev, int pipe)
+static void valleyview_disable_vblank(struct drm_device *dev, int pipe)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	u32 imr;
@@ -1754,15 +1654,14 @@ valleyview_disable_vblank(struct drm_device *dev, int pipe)
 	mtx_leave(&dev_priv->irq_lock);
 }
 
-u32
+static u32
 ring_last_seqno(struct intel_ring_buffer *ring)
 {
 	return list_entry(ring->request_list.prev,
 			  struct drm_i915_gem_request, list)->seqno;
 }
 
-bool
-i915_hangcheck_ring_idle(struct intel_ring_buffer *ring, bool *err)
+static bool i915_hangcheck_ring_idle(struct intel_ring_buffer *ring, bool *err)
 {
 	if (list_empty(&ring->request_list) ||
 	    i915_seqno_passed(ring->get_seqno(ring, false),
@@ -1782,8 +1681,7 @@ i915_hangcheck_ring_idle(struct intel_ring_buffer *ring, bool *err)
 	return false;
 }
 
-bool
-kick_ring(struct intel_ring_buffer *ring)
+static bool kick_ring(struct intel_ring_buffer *ring)
 {
 	struct drm_device *dev = ring->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -1797,8 +1695,7 @@ kick_ring(struct intel_ring_buffer *ring)
 	return false;
 }
 
-bool
-i915_hangcheck_hung(struct drm_device *dev)
+static bool i915_hangcheck_hung(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 
@@ -1833,8 +1730,7 @@ i915_hangcheck_hung(struct drm_device *dev)
  * ACTHD. If ACTHD hasn't changed by the time the hangcheck timer elapses
  * again, we assume the chip is wedged and try to fix it.
  */
-void
-i915_hangcheck_elapsed(void *arg)
+void i915_hangcheck_elapsed(void *arg)
 {
 	drm_i915_private_t *dev_priv = arg;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -1885,8 +1781,7 @@ repeat:
 
 /* drm_dma.h hooks
 */
-void
-ironlake_irq_preinstall(struct drm_device *dev)
+static void ironlake_irq_preinstall(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 
@@ -1911,8 +1806,7 @@ ironlake_irq_preinstall(struct drm_device *dev)
 	POSTING_READ(SDEIER);
 }
 
-void
-valleyview_irq_preinstall(struct drm_device *dev)
+static void valleyview_irq_preinstall(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	int pipe;
@@ -1951,8 +1845,7 @@ valleyview_irq_preinstall(struct drm_device *dev)
  * This register is the same on all known PCH chips.
  */
 
-void
-ironlake_enable_pch_hotplug(struct drm_device *dev)
+static void ironlake_enable_pch_hotplug(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	u32	hotplug;
@@ -1965,8 +1858,7 @@ ironlake_enable_pch_hotplug(struct drm_device *dev)
 	I915_WRITE(PCH_PORT_HOTPLUG, hotplug);
 }
 
-int
-ironlake_irq_postinstall(struct drm_device *dev)
+static int ironlake_irq_postinstall(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	/* enable kind of interrupts always enabled */
@@ -2033,8 +1925,7 @@ ironlake_irq_postinstall(struct drm_device *dev)
 	return 0;
 }
 
-int
-ivybridge_irq_postinstall(struct drm_device *dev)
+static int ivybridge_irq_postinstall(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	/* enable kind of interrupts always enabled */
@@ -2084,8 +1975,7 @@ ivybridge_irq_postinstall(struct drm_device *dev)
 	return 0;
 }
 
-int
-valleyview_irq_postinstall(struct drm_device *dev)
+static int valleyview_irq_postinstall(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	u32 enable_mask;
@@ -2167,8 +2057,7 @@ valleyview_irq_postinstall(struct drm_device *dev)
 	return 0;
 }
 
-void
-valleyview_irq_uninstall(struct drm_device *dev)
+static void valleyview_irq_uninstall(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	int pipe;
@@ -2190,8 +2079,7 @@ valleyview_irq_uninstall(struct drm_device *dev)
 	POSTING_READ(VLV_IER);
 }
 
-void
-ironlake_irq_uninstall(struct drm_device *dev)
+static void ironlake_irq_uninstall(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 
@@ -2213,8 +2101,7 @@ ironlake_irq_uninstall(struct drm_device *dev)
 	I915_WRITE(SDEIIR, I915_READ(SDEIIR));
 }
 
-void
-i8xx_irq_preinstall(struct drm_device * dev)
+static void i8xx_irq_preinstall(struct drm_device * dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	int pipe;
@@ -2228,8 +2115,7 @@ i8xx_irq_preinstall(struct drm_device * dev)
 	POSTING_READ16(IER);
 }
 
-int
-i8xx_irq_postinstall(struct drm_device *dev)
+static int i8xx_irq_postinstall(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 
@@ -2258,8 +2144,7 @@ i8xx_irq_postinstall(struct drm_device *dev)
 	return 0;
 }
 
-int
-i8xx_intr(void *arg)
+static int i8xx_intr(void *arg)
 {
 	drm_i915_private_t *dev_priv = arg;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -2336,8 +2221,7 @@ i8xx_intr(void *arg)
 	return 1;
 }
 
-void
-i8xx_irq_uninstall(struct drm_device * dev)
+static void i8xx_irq_uninstall(struct drm_device * dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	int pipe;
@@ -2352,8 +2236,7 @@ i8xx_irq_uninstall(struct drm_device * dev)
 	I915_WRITE16(IIR, I915_READ16(IIR));
 }
 
-void
-i915_irq_preinstall(struct drm_device * dev)
+static void i915_irq_preinstall(struct drm_device * dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	int pipe;
@@ -2373,8 +2256,7 @@ i915_irq_preinstall(struct drm_device * dev)
 	POSTING_READ(IER);
 }
 
-int
-i915_irq_postinstall(struct drm_device *dev)
+static int i915_irq_postinstall(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	u32 enable_mask;
@@ -2439,8 +2321,7 @@ i915_irq_postinstall(struct drm_device *dev)
 	return 0;
 }
 
-int
-i915_intr(void *arg)
+static int i915_intr(void *arg)
 {
 	drm_i915_private_t *dev_priv = arg;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -2553,8 +2434,7 @@ i915_intr(void *arg)
 	return ret;
 }
 
-void
-i915_irq_uninstall(struct drm_device * dev)
+static void i915_irq_uninstall(struct drm_device * dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	int pipe;
@@ -2576,8 +2456,7 @@ i915_irq_uninstall(struct drm_device * dev)
 	I915_WRITE(IIR, I915_READ(IIR));
 }
 
-void
-i965_irq_preinstall(struct drm_device * dev)
+static void i965_irq_preinstall(struct drm_device * dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	int pipe;
@@ -2595,8 +2474,7 @@ i965_irq_preinstall(struct drm_device * dev)
 	POSTING_READ(IER);
 }
 
-int
-i965_irq_postinstall(struct drm_device *dev)
+static int i965_irq_postinstall(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	u32 hotplug_en;
@@ -2680,8 +2558,7 @@ i965_irq_postinstall(struct drm_device *dev)
 	return 0;
 }
 
-int
-i965_intr(void *arg)
+static int i965_intr(void *arg)
 {
 	drm_i915_private_t *dev_priv = arg;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -2796,8 +2673,7 @@ i965_intr(void *arg)
 	return ret;
 }
 
-void
-i965_irq_uninstall(struct drm_device * dev)
+static void i965_irq_uninstall(struct drm_device * dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	int pipe;
@@ -2820,8 +2696,7 @@ i965_irq_uninstall(struct drm_device * dev)
 	I915_WRITE(IIR, I915_READ(IIR));
 }
 
-void
-intel_irq_init(struct drm_device *dev)
+void intel_irq_init(struct drm_device *dev)
 {
 
 	dev->driver->get_vblank_counter = i915_get_vblank_counter;

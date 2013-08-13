@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.12 2013/08/09 08:14:55 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.13 2013/08/13 10:23:49 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -52,19 +52,6 @@
 
 #include <sys/queue.h>
 #include <sys/workq.h>
-
-int	i915_reset_gen7_sol_offsets(struct drm_device *,
-	    struct intel_ring_buffer *);
-int	i915_gem_execbuffer_wait_for_flips(struct intel_ring_buffer *, u32);
-int	i915_gem_execbuffer_move_to_gpu(struct intel_ring_buffer *,
-	    struct drm_obj **, int);
-void	i915_gem_execbuffer_move_to_active(struct drm_obj **, int,
-	    struct intel_ring_buffer *);
-void	i915_gem_execbuffer_retire_commands(struct drm_device *,
-	    struct drm_file *, struct intel_ring_buffer *);
-int	need_reloc_mappable(struct drm_i915_gem_object *);
-int	i915_gem_execbuffer_reserve(struct intel_ring_buffer *,
-	    struct drm_file *, struct list_head *);
 
 #ifdef notyet
 struct eb_objects {
@@ -363,20 +350,19 @@ i915_gem_execbuffer_relocate(struct drm_device *dev,
 #define  __EXEC_OBJECT_HAS_PIN (1<<31)
 #define  __EXEC_OBJECT_HAS_FENCE (1<<30)
 
-int
+#ifdef notyet
+static int
 need_reloc_mappable(struct drm_i915_gem_object *obj)
 {
 	struct drm_i915_gem_exec_object2 *entry = obj->exec_entry;
 	return entry->relocation_count && !use_cpu_reloc(obj);
 }
 
-int
+static int
 i915_gem_execbuffer_reserve_object(struct drm_i915_gem_object *obj,
 				   struct intel_ring_buffer *ring)
 {
-#ifdef notyet
 	struct drm_i915_private *dev_priv = obj->base.dev->dev_private;
-#endif
 	struct drm_i915_gem_exec_object2 *entry = obj->exec_entry;
 	bool has_fenced_gpu_access = INTEL_INFO(ring->dev)->gen < 4;
 	bool need_fence, need_mappable;
@@ -421,7 +407,7 @@ i915_gem_execbuffer_reserve_object(struct drm_i915_gem_object *obj,
 	return 0;
 }
 
-void
+static void
 i915_gem_execbuffer_unreserve_object(struct drm_i915_gem_object *obj)
 {
 	struct drm_i915_gem_exec_object2 *entry;
@@ -440,7 +426,7 @@ i915_gem_execbuffer_unreserve_object(struct drm_i915_gem_object *obj)
 	entry->flags &= ~(__EXEC_OBJECT_HAS_FENCE | __EXEC_OBJECT_HAS_PIN);
 }
 
-int
+static int
 i915_gem_execbuffer_reserve(struct intel_ring_buffer *ring,
 			    struct drm_file *file,
 			    struct list_head *objects)
@@ -539,7 +525,6 @@ err:		/* Decrement pin count for bound objects */
 	} while (1);
 }
 
-#ifdef notyet
 static int
 i915_gem_execbuffer_relocate_slow(struct drm_device *dev,
 				  struct drm_file *file,
@@ -665,7 +650,7 @@ err:
 }
 #endif /* notyet */
 
-int
+static int
 i915_gem_execbuffer_wait_for_flips(struct intel_ring_buffer *ring, u32 flips)
 {
 	u32 plane, flip_mask;
@@ -697,7 +682,7 @@ i915_gem_execbuffer_wait_for_flips(struct intel_ring_buffer *ring, u32 flips)
 	return 0;
 }
 
-int
+static int
 i915_gem_execbuffer_move_to_gpu(struct intel_ring_buffer *ring,
    struct drm_obj **object_list, int buffer_count)
 {
@@ -783,7 +768,7 @@ validate_exec_list(struct drm_i915_gem_exec_object2 *exec,
 }
 #endif /* notyet */
 
-void
+static void
 i915_gem_execbuffer_move_to_active(struct drm_obj **object_list,
     int buffer_count, struct intel_ring_buffer *ring)
 {
@@ -813,7 +798,7 @@ i915_gem_execbuffer_move_to_active(struct drm_obj **object_list,
 	}
 }
 
-void
+static void
 i915_gem_execbuffer_retire_commands(struct drm_device *dev,
 				    struct drm_file *file,
 				    struct intel_ring_buffer *ring)
@@ -825,7 +810,7 @@ i915_gem_execbuffer_retire_commands(struct drm_device *dev,
 	i915_add_request(ring, file, NULL);
 }
 
-int
+static int
 i915_reset_gen7_sol_offsets(struct drm_device *dev,
 			    struct intel_ring_buffer *ring)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_sil164.c,v 1.2 2013/03/30 12:36:50 kettenis Exp $	*/
+/*	$OpenBSD: dvo_sil164.c,v 1.3 2013/08/13 10:23:49 jsg Exp $	*/
 /**************************************************************************
 
 Copyright © 2006 Dave Airlie
@@ -66,21 +66,7 @@ struct sil164_priv {
 
 #define SILPTR(d) ((SIL164Ptr)(d->DriverPrivate.ptr))
 
-bool sil164_readb(struct intel_dvo_device *, int, uint8_t *);
-bool sil164_writeb(struct intel_dvo_device *, int, uint8_t);
-bool sil164_init(struct intel_dvo_device *, struct i2c_controller *);
-enum drm_connector_status sil164_detect(struct intel_dvo_device *);
-enum drm_mode_status sil164_mode_valid(struct intel_dvo_device *,
-    struct drm_display_mode *);
-void sil164_mode_set(struct intel_dvo_device *, struct drm_display_mode *,
-    struct drm_display_mode *);
-void sil164_dpms(struct intel_dvo_device *, bool);
-bool sil164_get_hw_state(struct intel_dvo_device *);
-void sil164_dump_regs(struct intel_dvo_device *);
-void sil164_destroy(struct intel_dvo_device *);
-
-bool
-sil164_readb(struct intel_dvo_device *dvo, int addr, uint8_t *ch)
+static bool sil164_readb(struct intel_dvo_device *dvo, int addr, uint8_t *ch)
 {
 	struct sil164_priv *sil = dvo->dev_priv;
 	struct i2c_controller *adapter = dvo->i2c_bus;
@@ -110,8 +96,7 @@ read_err:
 	return false;
 }
 
-bool
-sil164_writeb(struct intel_dvo_device *dvo, int addr, uint8_t ch)
+static bool sil164_writeb(struct intel_dvo_device *dvo, int addr, uint8_t ch)
 {
 	struct sil164_priv *sil = dvo->dev_priv;
 	struct i2c_controller *adapter = dvo->i2c_bus;
@@ -140,8 +125,7 @@ write_err:
 }
 
 /* Silicon Image 164 driver for chip on i2c bus */
-bool
-sil164_init(struct intel_dvo_device *dvo,
+static bool sil164_init(struct intel_dvo_device *dvo,
 			struct i2c_controller *adapter)
 {
 	/* this will detect the SIL164 chip on the specified i2c bus */
@@ -183,8 +167,7 @@ out:
 	return false;
 }
 
-enum drm_connector_status
-sil164_detect(struct intel_dvo_device *dvo)
+static enum drm_connector_status sil164_detect(struct intel_dvo_device *dvo)
 {
 	uint8_t reg9;
 
@@ -196,15 +179,13 @@ sil164_detect(struct intel_dvo_device *dvo)
 		return connector_status_disconnected;
 }
 
-enum drm_mode_status
-sil164_mode_valid(struct intel_dvo_device *dvo,
+static enum drm_mode_status sil164_mode_valid(struct intel_dvo_device *dvo,
 					      struct drm_display_mode *mode)
 {
 	return MODE_OK;
 }
 
-void
-sil164_mode_set(struct intel_dvo_device *dvo,
+static void sil164_mode_set(struct intel_dvo_device *dvo,
 			    struct drm_display_mode *mode,
 			    struct drm_display_mode *adjusted_mode)
 {
@@ -223,8 +204,7 @@ sil164_mode_set(struct intel_dvo_device *dvo,
 }
 
 /* set the SIL164 power state */
-void
-sil164_dpms(struct intel_dvo_device *dvo, bool enable)
+static void sil164_dpms(struct intel_dvo_device *dvo, bool enable)
 {
 	int ret;
 	unsigned char ch;
@@ -242,8 +222,7 @@ sil164_dpms(struct intel_dvo_device *dvo, bool enable)
 	return;
 }
 
-bool
-sil164_get_hw_state(struct intel_dvo_device *dvo)
+static bool sil164_get_hw_state(struct intel_dvo_device *dvo)
 {
 	int ret;
 	unsigned char ch;
@@ -258,8 +237,7 @@ sil164_get_hw_state(struct intel_dvo_device *dvo)
 		return false;
 }
 
-void
-sil164_dump_regs(struct intel_dvo_device *dvo)
+static void sil164_dump_regs(struct intel_dvo_device *dvo)
 {
 	uint8_t val;
 
@@ -275,8 +253,7 @@ sil164_dump_regs(struct intel_dvo_device *dvo)
 	DRM_LOG_KMS("SIL164_REGC: 0x%02x\n", val);
 }
 
-void
-sil164_destroy(struct intel_dvo_device *dvo)
+static void sil164_destroy(struct intel_dvo_device *dvo)
 {
 	struct sil164_priv *sil = dvo->dev_priv;
 

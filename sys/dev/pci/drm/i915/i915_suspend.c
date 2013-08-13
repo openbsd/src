@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_suspend.c,v 1.3 2013/07/08 09:47:45 jsg Exp $	*/
+/*	$OpenBSD: i915_suspend.c,v 1.4 2013/08/13 10:23:50 jsg Exp $	*/
 /*
  *
  * Copyright 2008 (c) Intel Corporation
@@ -31,24 +31,7 @@
 #include "intel_drv.h"
 #include "i915_reg.h"
 
-bool	i915_pipe_enabled(struct drm_device *, enum pipe);
-void	i915_save_palette(struct drm_device *, enum pipe);
-void	i915_restore_palette(struct drm_device *, enum pipe);
-u_int8_t	i915_read_indexed(struct drm_device *, u_int16_t,
-		    u_int16_t, u_int8_t);
-void	i915_write_indexed(struct drm_device *, u_int16_t,
-	    u_int16_t, u_int8_t, u_int8_t);
-void	i915_write_ar(struct drm_device *, u_int16_t, u_int8_t,
-	    u_int8_t, u_int16_t);
-u_int8_t	i915_read_ar(struct drm_device *, u_int16_t,
-		    u_int8_t, u_int16_t);
-void	i915_save_vga(struct drm_device *);
-void	i915_restore_vga(struct drm_device *);
-void	i915_save_modeset_reg(struct drm_device *);
-void	i915_restore_modeset_reg(struct drm_device *);
-
-bool
-i915_pipe_enabled(struct drm_device *dev, enum pipe pipe)
+static bool i915_pipe_enabled(struct drm_device *dev, enum pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32	dpll_reg;
@@ -65,8 +48,7 @@ i915_pipe_enabled(struct drm_device *dev, enum pipe pipe)
 	return (I915_READ(dpll_reg) & DPLL_VCO_ENABLE);
 }
 
-void
-i915_save_palette(struct drm_device *dev, enum pipe pipe)
+static void i915_save_palette(struct drm_device *dev, enum pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	unsigned long reg = (pipe == PIPE_A ? _PALETTE_A : _PALETTE_B);
@@ -88,8 +70,7 @@ i915_save_palette(struct drm_device *dev, enum pipe pipe)
 		array[i] = I915_READ(reg + (i << 2));
 }
 
-void
-i915_restore_palette(struct drm_device *dev, enum pipe pipe)
+static void i915_restore_palette(struct drm_device *dev, enum pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	unsigned long reg = (pipe == PIPE_A ? _PALETTE_A : _PALETTE_B);
@@ -111,9 +92,7 @@ i915_restore_palette(struct drm_device *dev, enum pipe pipe)
 		I915_WRITE(reg + (i << 2), array[i]);
 }
 
-u_int8_t
-i915_read_indexed(struct drm_device *dev, u_int16_t index_port,
-    u_int16_t data_port, u_int8_t reg)
+static u8 i915_read_indexed(struct drm_device *dev, u16 index_port, u16 data_port, u8 reg)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -121,9 +100,7 @@ i915_read_indexed(struct drm_device *dev, u_int16_t index_port,
 	return I915_READ8(data_port);
 }
 
-u_int8_t
-i915_read_ar(struct drm_device *dev, u_int16_t st01,
-    u_int8_t reg, u_int16_t palette_enable)
+static u8 i915_read_ar(struct drm_device *dev, u16 st01, u8 reg, u16 palette_enable)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -132,9 +109,7 @@ i915_read_ar(struct drm_device *dev, u_int16_t st01,
 	return I915_READ8(VGA_AR_DATA_READ);
 }
 
-void
-i915_write_ar(struct drm_device *dev, u_int16_t st01, u_int8_t reg,
-    u_int8_t val, u_int16_t palette_enable)
+static void i915_write_ar(struct drm_device *dev, u16 st01, u8 reg, u8 val, u16 palette_enable)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -143,9 +118,7 @@ i915_write_ar(struct drm_device *dev, u_int16_t st01, u_int8_t reg,
 	I915_WRITE8(VGA_AR_DATA_WRITE, val);
 }
 
-void
-i915_write_indexed(struct drm_device *dev, u_int16_t index_port,
-    u_int16_t data_port, u_int8_t reg, u_int8_t val)
+static void i915_write_indexed(struct drm_device *dev, u16 index_port, u16 data_port, u8 reg, u8 val)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -153,8 +126,7 @@ i915_write_indexed(struct drm_device *dev, u_int16_t index_port,
 	I915_WRITE8(data_port, val);
 }
 
-void
-i915_save_vga(struct drm_device *dev)
+static void i915_save_vga(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int i;
@@ -212,8 +184,7 @@ i915_save_vga(struct drm_device *dev)
 			i915_read_indexed(dev, VGA_SR_INDEX, VGA_SR_DATA, i);
 }
 
-void
-i915_restore_vga(struct drm_device *dev)
+static void i915_restore_vga(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int i;
@@ -266,8 +237,7 @@ i915_restore_vga(struct drm_device *dev)
 	I915_WRITE8(VGA_DACMASK, dev_priv->regfile.saveDACMASK);
 }
 
-void
-i915_save_modeset_reg(struct drm_device *dev)
+static void i915_save_modeset_reg(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int i;
@@ -435,8 +405,7 @@ i915_save_modeset_reg(struct drm_device *dev)
 	return;
 }
 
-void
-i915_restore_modeset_reg(struct drm_device *dev)
+static void i915_restore_modeset_reg(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int dpll_a_reg, fpa0_reg, fpa1_reg;
@@ -648,8 +617,7 @@ i915_restore_modeset_reg(struct drm_device *dev)
 	return;
 }
 
-void
-i915_save_display(struct drm_device *dev)
+static void i915_save_display(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -736,8 +704,7 @@ i915_save_display(struct drm_device *dev)
 	i915_save_vga(dev);
 }
 
-void
-i915_restore_display(struct drm_device *dev)
+static void i915_restore_display(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -837,8 +804,7 @@ i915_restore_display(struct drm_device *dev)
 	i915_restore_vga(dev);
 }
 
-int
-i915_save_state(struct drm_device *dev)
+int i915_save_state(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int i;
@@ -888,8 +854,7 @@ i915_save_state(struct drm_device *dev)
 	return 0;
 }
 
-int
-i915_restore_state(struct drm_device *dev)
+int i915_restore_state(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int i;

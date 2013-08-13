@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_ns2501.c,v 1.4 2013/07/05 07:20:27 jsg Exp $	*/
+/*	$OpenBSD: dvo_ns2501.c,v 1.5 2013/08/13 10:23:49 jsg Exp $	*/
 /*
  *
  * Copyright (c) 2012 Gilles Dartiguelongue, Thomas Richter
@@ -75,21 +75,6 @@ struct ns2501_priv {
 
 #define NSPTR(d) ((NS2501Ptr)(d->DriverPrivate.ptr))
 
-void enable_dvo(struct intel_dvo_device *);
-void restore_dvo(struct intel_dvo_device *);
-bool ns2501_readb(struct intel_dvo_device *, int, uint8_t *);
-bool ns2501_writeb(struct intel_dvo_device *, int, uint8_t);
-enum drm_connector_status ns2501_detect(struct intel_dvo_device *);
-bool ns2501_init(struct intel_dvo_device *, struct i2c_controller *);
-enum drm_mode_status ns2501_mode_valid(struct intel_dvo_device *,
-    struct drm_display_mode *);
-void ns2501_mode_set(struct intel_dvo_device *, struct drm_display_mode *,
-    struct drm_display_mode *);
-bool ns2501_get_hw_state(struct intel_dvo_device *);
-void ns2501_dpms(struct intel_dvo_device *, bool);
-void ns2501_dump_regs(struct intel_dvo_device *);
-void ns2501_destroy(struct intel_dvo_device *);
-
 /*
  * For reasons unclear to me, the ns2501 at least on the Fujitsu/Siemens
  * laptops does not react on the i2c bus unless
@@ -103,8 +88,7 @@ void ns2501_destroy(struct intel_dvo_device *);
  * when switching the resolution.
  */
 
-void
-enable_dvo(struct intel_dvo_device *dvo)
+static void enable_dvo(struct intel_dvo_device *dvo)
 {
 	struct ns2501_priv *ns = (struct ns2501_priv *)(dvo->dev_priv);
 	struct i2c_controller *adapter = dvo->i2c_bus;
@@ -132,8 +116,7 @@ enable_dvo(struct intel_dvo_device *dvo)
  * Restore the I915 registers modified by the above
  * trigger function.
  */
-void
-restore_dvo(struct intel_dvo_device *dvo)
+static void restore_dvo(struct intel_dvo_device *dvo)
 {
 	struct i2c_controller *adapter = dvo->i2c_bus;
 	struct intel_gmbus *bus = container_of(adapter,
@@ -154,8 +137,7 @@ restore_dvo(struct intel_dvo_device *dvo)
 ** If it returns false, it might be wise to enable the
 ** DVO with the above function.
 */
-bool
-ns2501_readb(struct intel_dvo_device *dvo, int addr, uint8_t * ch)
+static bool ns2501_readb(struct intel_dvo_device *dvo, int addr, uint8_t * ch)
 {
 	struct ns2501_priv *ns = dvo->dev_priv;
 	struct i2c_controller *adapter = dvo->i2c_bus;
@@ -193,8 +175,7 @@ read_err:
 ** If it returns false, it might be wise to enable the
 ** DVO with the above function.
 */
-bool
-ns2501_writeb(struct intel_dvo_device *dvo, int addr, uint8_t ch)
+static bool ns2501_writeb(struct intel_dvo_device *dvo, int addr, uint8_t ch)
 {
 	struct ns2501_priv *ns = dvo->dev_priv;
 	struct i2c_controller *adapter = dvo->i2c_bus;
@@ -228,8 +209,7 @@ write_err:
  * talk to it. If not, it will not be seen and not detected.
  * Bummer!
  */
-bool
-ns2501_init(struct intel_dvo_device *dvo,
+static bool ns2501_init(struct intel_dvo_device *dvo,
 			struct i2c_controller *adapter)
 {
 	/* this will detect the NS2501 chip on the specified i2c bus */
@@ -274,8 +254,7 @@ out:
 	return false;
 }
 
-enum drm_connector_status
-ns2501_detect(struct intel_dvo_device *dvo)
+static enum drm_connector_status ns2501_detect(struct intel_dvo_device *dvo)
 {
 	/*
 	 * This is a Laptop display, it doesn't have hotplugging.
@@ -287,8 +266,7 @@ ns2501_detect(struct intel_dvo_device *dvo)
 	return connector_status_connected;
 }
 
-enum drm_mode_status
-ns2501_mode_valid(struct intel_dvo_device *dvo,
+static enum drm_mode_status ns2501_mode_valid(struct intel_dvo_device *dvo,
 					      struct drm_display_mode *mode)
 {
 	DRM_DEBUG_KMS
@@ -311,8 +289,7 @@ ns2501_mode_valid(struct intel_dvo_device *dvo,
 	}
 }
 
-void
-ns2501_mode_set(struct intel_dvo_device *dvo,
+static void ns2501_mode_set(struct intel_dvo_device *dvo,
 			    struct drm_display_mode *mode,
 			    struct drm_display_mode *adjusted_mode)
 {
@@ -510,8 +487,7 @@ ns2501_mode_set(struct intel_dvo_device *dvo,
 }
 
 /* set the NS2501 power state */
-bool
-ns2501_get_hw_state(struct intel_dvo_device *dvo)
+static bool ns2501_get_hw_state(struct intel_dvo_device *dvo)
 {
 	unsigned char ch;
 
@@ -525,8 +501,7 @@ ns2501_get_hw_state(struct intel_dvo_device *dvo)
 }
 
 /* set the NS2501 power state */
-void
-ns2501_dpms(struct intel_dvo_device *dvo, bool enable)
+static void ns2501_dpms(struct intel_dvo_device *dvo, bool enable)
 {
 	bool ok;
 	bool restore = false;
@@ -569,8 +544,7 @@ ns2501_dpms(struct intel_dvo_device *dvo, bool enable)
 	}
 }
 
-void
-ns2501_dump_regs(struct intel_dvo_device *dvo)
+static void ns2501_dump_regs(struct intel_dvo_device *dvo)
 {
 	uint8_t val;
 
@@ -586,8 +560,7 @@ ns2501_dump_regs(struct intel_dvo_device *dvo)
 	DRM_LOG_KMS("NS2501_REGC: 0x%02x\n", val);
 }
 
-void
-ns2501_destroy(struct intel_dvo_device *dvo)
+static void ns2501_destroy(struct intel_dvo_device *dvo)
 {
 	struct ns2501_priv *ns = dvo->dev_priv;
 

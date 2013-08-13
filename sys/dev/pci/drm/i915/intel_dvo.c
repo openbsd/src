@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_dvo.c,v 1.3 2013/07/05 07:20:27 jsg Exp $	*/
+/*	$OpenBSD: intel_dvo.c,v 1.4 2013/08/13 10:23:51 jsg Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2007 Intel Corporation
@@ -31,24 +31,6 @@
 #include <dev/pci/drm/i915_drm.h>
 #include "i915_drv.h"
 #include "dvo.h"
-
-struct intel_dvo *enc_to_intel_dvo(struct drm_encoder *);
-struct intel_dvo *intel_attached_dvo(struct drm_connector *);
-bool intel_dvo_connector_get_hw_state(struct intel_connector *);
-bool intel_dvo_get_hw_state(struct intel_encoder *, enum pipe *);
-void intel_disable_dvo(struct intel_encoder *);
-void intel_enable_dvo(struct intel_encoder *);
-void intel_dvo_dpms(struct drm_connector *, int);
-int intel_dvo_mode_valid(struct drm_connector *, struct drm_display_mode *);
-bool intel_dvo_mode_fixup(struct drm_encoder *, const struct drm_display_mode *,
-    struct drm_display_mode *);
-void intel_dvo_mode_set(struct drm_encoder *, struct drm_display_mode *,
-    struct drm_display_mode *);
-enum drm_connector_status intel_dvo_detect(struct drm_connector *, bool);
-int intel_dvo_get_modes(struct drm_connector *);
-void intel_dvo_destroy(struct drm_connector *);
-void intel_dvo_enc_destroy(struct drm_encoder *);
-struct drm_display_mode *intel_dvo_get_current_mode(struct drm_connector *);
 
 #define SIL164_ADDR	0x38
 #define CH7xxx_ADDR	0x76
@@ -110,29 +92,25 @@ struct intel_dvo {
 	bool panel_wants_dither;
 };
 
-struct intel_dvo *
-enc_to_intel_dvo(struct drm_encoder *encoder)
+static struct intel_dvo *enc_to_intel_dvo(struct drm_encoder *encoder)
 {
 	return container_of(encoder, struct intel_dvo, base.base);
 }
 
-struct intel_dvo *
-intel_attached_dvo(struct drm_connector *connector)
+static struct intel_dvo *intel_attached_dvo(struct drm_connector *connector)
 {
 	return container_of(intel_attached_encoder(connector),
 			    struct intel_dvo, base);
 }
 
-bool
-intel_dvo_connector_get_hw_state(struct intel_connector *connector)
+static bool intel_dvo_connector_get_hw_state(struct intel_connector *connector)
 {
 	struct intel_dvo *intel_dvo = intel_attached_dvo(&connector->base);
 
 	return intel_dvo->dev.dev_ops->get_hw_state(&intel_dvo->dev);
 }
 
-bool
-intel_dvo_get_hw_state(struct intel_encoder *encoder,
+static bool intel_dvo_get_hw_state(struct intel_encoder *encoder,
 				   enum pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
@@ -150,8 +128,7 @@ intel_dvo_get_hw_state(struct intel_encoder *encoder,
 	return true;
 }
 
-void
-intel_disable_dvo(struct intel_encoder *encoder)
+static void intel_disable_dvo(struct intel_encoder *encoder)
 {
 	struct drm_i915_private *dev_priv = encoder->base.dev->dev_private;
 	struct intel_dvo *intel_dvo = enc_to_intel_dvo(&encoder->base);
@@ -163,8 +140,7 @@ intel_disable_dvo(struct intel_encoder *encoder)
 	I915_READ(dvo_reg);
 }
 
-void
-intel_enable_dvo(struct intel_encoder *encoder)
+static void intel_enable_dvo(struct intel_encoder *encoder)
 {
 	struct drm_i915_private *dev_priv = encoder->base.dev->dev_private;
 	struct intel_dvo *intel_dvo = enc_to_intel_dvo(&encoder->base);
@@ -176,8 +152,7 @@ intel_enable_dvo(struct intel_encoder *encoder)
 	intel_dvo->dev.dev_ops->dpms(&intel_dvo->dev, true);
 }
 
-void
-intel_dvo_dpms(struct drm_connector *connector, int mode)
+static void intel_dvo_dpms(struct drm_connector *connector, int mode)
 {
 	struct intel_dvo *intel_dvo = intel_attached_dvo(connector);
 	struct drm_crtc *crtc;
@@ -215,8 +190,7 @@ intel_dvo_dpms(struct drm_connector *connector, int mode)
 	intel_modeset_check_state(connector->dev);
 }
 
-int
-intel_dvo_mode_valid(struct drm_connector *connector,
+static int intel_dvo_mode_valid(struct drm_connector *connector,
 				struct drm_display_mode *mode)
 {
 	struct intel_dvo *intel_dvo = intel_attached_dvo(connector);
@@ -236,8 +210,7 @@ intel_dvo_mode_valid(struct drm_connector *connector,
 	return intel_dvo->dev.dev_ops->mode_valid(&intel_dvo->dev, mode);
 }
 
-bool
-intel_dvo_mode_fixup(struct drm_encoder *encoder,
+static bool intel_dvo_mode_fixup(struct drm_encoder *encoder,
 				 const struct drm_display_mode *mode,
 				 struct drm_display_mode *adjusted_mode)
 {
@@ -268,8 +241,7 @@ intel_dvo_mode_fixup(struct drm_encoder *encoder,
 	return true;
 }
 
-void
-intel_dvo_mode_set(struct drm_encoder *encoder,
+static void intel_dvo_mode_set(struct drm_encoder *encoder,
 			       struct drm_display_mode *mode,
 			       struct drm_display_mode *adjusted_mode)
 {
@@ -328,15 +300,14 @@ intel_dvo_mode_set(struct drm_encoder *encoder,
  *
  * Unimplemented.
  */
-enum drm_connector_status
+static enum drm_connector_status
 intel_dvo_detect(struct drm_connector *connector, bool force)
 {
 	struct intel_dvo *intel_dvo = intel_attached_dvo(connector);
 	return intel_dvo->dev.dev_ops->detect(&intel_dvo->dev);
 }
 
-int
-intel_dvo_get_modes(struct drm_connector *connector)
+static int intel_dvo_get_modes(struct drm_connector *connector)
 {
 	struct intel_dvo *intel_dvo = intel_attached_dvo(connector);
 	struct drm_i915_private *dev_priv = connector->dev->dev_private;
@@ -363,8 +334,7 @@ intel_dvo_get_modes(struct drm_connector *connector)
 	return 0;
 }
 
-void
-intel_dvo_destroy(struct drm_connector *connector)
+static void intel_dvo_destroy(struct drm_connector *connector)
 {
 #if 0
 	drm_sysfs_connector_remove(connector);
@@ -392,8 +362,7 @@ static const struct drm_connector_helper_funcs intel_dvo_connector_helper_funcs 
 	.best_encoder = intel_best_encoder,
 };
 
-void
-intel_dvo_enc_destroy(struct drm_encoder *encoder)
+static void intel_dvo_enc_destroy(struct drm_encoder *encoder)
 {
 	struct intel_dvo *intel_dvo = enc_to_intel_dvo(encoder);
 
@@ -415,7 +384,7 @@ static const struct drm_encoder_funcs intel_dvo_enc_funcs = {
  * Other chips with DVO LVDS will need to extend this to deal with the LVDS
  * chip being on DVOB/C and having multiple pipes.
  */
-struct drm_display_mode *
+static struct drm_display_mode *
 intel_dvo_get_current_mode(struct drm_connector *connector)
 {
 	struct drm_device *dev = connector->dev;
@@ -447,8 +416,7 @@ intel_dvo_get_current_mode(struct drm_connector *connector)
 	return mode;
 }
 
-void
-intel_dvo_init(struct drm_device *dev)
+void intel_dvo_init(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_encoder *intel_encoder;

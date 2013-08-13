@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.9 2013/07/08 09:47:45 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.10 2013/08/13 10:23:52 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -42,121 +42,15 @@
  * i915.i915_enable_fbc parameter
  */
 
-bool	 intel_crtc_active(struct drm_crtc *);
-void	 i8xx_disable_fbc(struct drm_device *);
-void	 i8xx_enable_fbc(struct drm_crtc *, unsigned long);
-bool	 i8xx_fbc_enabled(struct drm_device *);
-void	 g4x_enable_fbc(struct drm_crtc *, unsigned long);
-void	 g4x_disable_fbc(struct drm_device *);
-bool	 g4x_fbc_enabled(struct drm_device *);
-void	 sandybridge_blit_fbc_update(struct drm_device *);
-void	 ironlake_enable_fbc(struct drm_crtc *, unsigned long);
-void	 ironlake_disable_fbc(struct drm_device *);
-bool	 ironlake_fbc_enabled(struct drm_device *);
-bool	 intel_fbc_enabled(struct drm_device *);
-void	 intel_cancel_fbc_work(struct drm_i915_private *);
-void	 i915_pineview_get_mem_freq(struct drm_device *);
-void	 i915_ironlake_get_mem_freq(struct drm_device *);
-const struct cxsr_latency *
-	 intel_get_cxsr_latency(int, int, int, int);
-void	 pineview_disable_cxsr(struct drm_device *);
-int	 i9xx_get_fifo_size(struct drm_device *, int);
-int	 i85x_get_fifo_size(struct drm_device *, int);
-int	 i845_get_fifo_size(struct drm_device *, int);
-int	 i830_get_fifo_size(struct drm_device *, int);
-unsigned long
-	 intel_calculate_wm(unsigned long,
-	     const struct intel_watermark_params *wm, int, int, unsigned long);
-struct drm_crtc *
-	 single_enabled_crtc(struct drm_device *);
-void	 pineview_update_wm(struct drm_device *);
-bool	 g4x_compute_wm0(struct drm_device *, int,
-	     const struct intel_watermark_params *, int,
-	     const struct intel_watermark_params *, int, int *, int *);
-bool	 g4x_check_srwm(struct drm_device *, int, int,
-	     const struct intel_watermark_params *,
-	     const struct intel_watermark_params *);
-bool	 g4x_compute_srwm(struct drm_device *, int, int,
-	     const struct intel_watermark_params *,
-	     const struct intel_watermark_params *, int *, int *);
-bool	 vlv_compute_drain_latency(struct drm_device *, int, int *, int *,
-	     int *, int *);
-void	 vlv_update_drain_latency(struct drm_device *);
-void	 valleyview_update_wm(struct drm_device *);
-void	 g4x_update_wm(struct drm_device *);
-void	 i965_update_wm(struct drm_device *);
-void	 i9xx_update_wm(struct drm_device *);
-void	 i830_update_wm(struct drm_device *);
-bool	 ironlake_check_srwm(struct drm_device *, int, int, int, int,
-	     const struct intel_watermark_params *,
-	     const struct intel_watermark_params *);
-bool	 ironlake_compute_srwm(struct drm_device *, int, int, int,
-	     const struct intel_watermark_params *,
-	     const struct intel_watermark_params *, int *, int *, int *);
-void	 ironlake_update_wm(struct drm_device *);
-void	 sandybridge_update_wm(struct drm_device *);
-void	 ivybridge_update_wm(struct drm_device *);
-void	 haswell_update_linetime_wm(struct drm_device *, int,
-	     struct drm_display_mode *);
-bool	 sandybridge_compute_sprite_wm(struct drm_device *, int, uint32_t, int,
-	     const struct intel_watermark_params *, int, int *);
-bool	 sandybridge_compute_sprite_srwm(struct drm_device *, int, uint32_t,
-	     int, const struct intel_watermark_params *, int, int *);
-void	 sandybridge_update_sprite_wm(struct drm_device *, int, uint32_t, int);
-struct drm_i915_gem_object *
-	 intel_alloc_context_page(struct drm_device *);
-void	 ironlake_enable_drps(struct drm_device *);
-void	 ironlake_disable_drps(struct drm_device *);
-u32	 gen6_rps_limits(struct drm_i915_private *, u8 *);
-void	 gen6_disable_rps(struct drm_device *);
-void	 gen6_enable_rps(struct drm_device *);
-void	 gen6_update_ring_freq(struct drm_device *);
-void	 ironlake_disable_rc6(struct drm_device *);
-int	 ironlake_setup_rc6(struct drm_device *);
-void	 ironlake_enable_rc6(struct drm_device *);
-unsigned long intel_pxfreq(u32);
-unsigned long __i915_chipset_val(struct drm_i915_private *);
-u16	 pvid_to_extvid(struct drm_i915_private *, u8);
-void	 __i915_update_gfx_val(struct drm_i915_private *);
-unsigned long __i915_gfx_val(struct drm_i915_private *);
 unsigned long i915_read_mch_val(void);
-bool	 i915_gpu_raise(void);
-bool	 i915_gpu_lower(void);
-bool	 i915_gpu_busy(void);
-bool	 i915_gpu_turbo_disable(void);
-void	 intel_init_emon(struct drm_device *);
-void	 ibx_init_clock_gating(struct drm_device *);
-void	 ironlake_init_clock_gating(struct drm_device *);
-void	 cpt_init_clock_gating(struct drm_device *);
-void	 gen6_init_clock_gating(struct drm_device *);
-void	 gen7_setup_fixed_func_scheduler(struct drm_i915_private *);
-void	 lpt_init_clock_gating(struct drm_device *);
-void	 haswell_init_clock_gating(struct drm_device *);
-void	 ivybridge_init_clock_gating(struct drm_device *);
-void	 valleyview_init_clock_gating(struct drm_device *);
-void	 g4x_init_clock_gating(struct drm_device *);
-void	 crestline_init_clock_gating(struct drm_device *);
-void	 broadwater_init_clock_gating(struct drm_device *);
-void	 gen3_init_clock_gating(struct drm_device *);
-void	 i85x_init_clock_gating(struct drm_device *);
-void	 i830_init_clock_gating(struct drm_device *);
-void	 __gen6_gt_wait_for_thread_c0(struct drm_i915_private *);
-void	 __gen6_gt_force_wake_reset(struct drm_i915_private *);
-void	 __gen6_gt_force_wake_mt_reset(struct drm_i915_private *);
-void	 vlv_force_wake_reset(struct drm_i915_private *);
-void	 vlv_force_wake_get(struct drm_i915_private *);
-void	 vlv_force_wake_put(struct drm_i915_private *);
-void	 intel_gt_reset(struct drm_device *);
-void	 intel_gt_init(struct drm_device *);
-void	 intel_fbc_work_tick(void *);
-void	 intel_fbc_work_fn(void *, void *);
-void	 intel_gen6_powersave_tick(void *);
-void	 intel_gen6_powersave_work(void *, void *);
+bool i915_gpu_raise(void);
+bool i915_gpu_lower(void);
+bool i915_gpu_turbo_disable(void);
+bool i915_gpu_busy(void);
 
 extern int ticks;
 
-bool
-intel_crtc_active(struct drm_crtc *crtc)
+static bool intel_crtc_active(struct drm_crtc *crtc)
 {
 	/* Be paranoid as we can arrive here with only partial
 	 * state retrieved from the hardware during setup.
@@ -164,8 +58,7 @@ intel_crtc_active(struct drm_crtc *crtc)
 	return to_intel_crtc(crtc)->active && crtc->fb && crtc->mode.clock;
 }
 
-void
-i8xx_disable_fbc(struct drm_device *dev)
+static void i8xx_disable_fbc(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 fbc_ctl;
@@ -193,8 +86,7 @@ i8xx_disable_fbc(struct drm_device *dev)
 	DRM_DEBUG_KMS("disabled FBC\n");
 }
 
-void
-i8xx_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
+static void i8xx_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 {
 	struct drm_device *dev = crtc->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -237,16 +129,14 @@ i8xx_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 		      cfb_pitch, crtc->y, intel_crtc->plane);
 }
 
-bool
-i8xx_fbc_enabled(struct drm_device *dev)
+static bool i8xx_fbc_enabled(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	return I915_READ(FBC_CONTROL) & FBC_CTL_EN;
 }
 
-void
-g4x_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
+static void g4x_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 {
 	struct drm_device *dev = crtc->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -273,8 +163,7 @@ g4x_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 	DRM_DEBUG_KMS("enabled fbc on plane %d\n", intel_crtc->plane);
 }
 
-void
-g4x_disable_fbc(struct drm_device *dev)
+static void g4x_disable_fbc(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 dpfc_ctl;
@@ -289,16 +178,14 @@ g4x_disable_fbc(struct drm_device *dev)
 	}
 }
 
-bool
-g4x_fbc_enabled(struct drm_device *dev)
+static bool g4x_fbc_enabled(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	return I915_READ(DPFC_CONTROL) & DPFC_CTL_EN;
 }
 
-void
-sandybridge_blit_fbc_update(struct drm_device *dev)
+static void sandybridge_blit_fbc_update(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 blt_ecoskpd;
@@ -318,8 +205,7 @@ sandybridge_blit_fbc_update(struct drm_device *dev)
 	gen6_gt_force_wake_put(dev_priv);
 }
 
-void
-ironlake_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
+static void ironlake_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 {
 	struct drm_device *dev = crtc->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -357,8 +243,7 @@ ironlake_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 	DRM_DEBUG_KMS("enabled fbc on plane %d\n", intel_crtc->plane);
 }
 
-void
-ironlake_disable_fbc(struct drm_device *dev)
+static void ironlake_disable_fbc(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 dpfc_ctl;
@@ -373,16 +258,14 @@ ironlake_disable_fbc(struct drm_device *dev)
 	}
 }
 
-bool
-ironlake_fbc_enabled(struct drm_device *dev)
+static bool ironlake_fbc_enabled(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	return I915_READ(ILK_DPFC_CONTROL) & DPFC_CTL_EN;
 }
 
-bool
-intel_fbc_enabled(struct drm_device *dev)
+bool intel_fbc_enabled(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -392,17 +275,7 @@ intel_fbc_enabled(struct drm_device *dev)
 	return dev_priv->display.fbc_enabled(dev);
 }
 
-void
-intel_fbc_work_tick(void *arg)
-{
-	struct intel_fbc_work *work = arg;
-
-	workq_queue_task(NULL, &work->task, 0,
-	    intel_fbc_work_fn, work, NULL);
-}
-
-void
-intel_fbc_work_fn(void *arg1, void *arg2)
+static void intel_fbc_work_fn(void *arg1, void *arg2)
 {
 	struct intel_fbc_work *work = arg1;
 	struct drm_device *dev = work->crtc->dev;
@@ -429,8 +302,16 @@ intel_fbc_work_fn(void *arg1, void *arg2)
 	free(work, M_DRM);
 }
 
-void
-intel_cancel_fbc_work(struct drm_i915_private *dev_priv)
+static void
+intel_fbc_work_tick(void *arg)
+{
+	struct intel_fbc_work *work = arg;
+
+	workq_queue_task(NULL, &work->task, 0,
+	    intel_fbc_work_fn, work, NULL);
+}
+
+static void intel_cancel_fbc_work(struct drm_i915_private *dev_priv)
 {
 	if (dev_priv->fbc_work == NULL)
 		return;
@@ -453,8 +334,7 @@ intel_cancel_fbc_work(struct drm_i915_private *dev_priv)
 	dev_priv->fbc_work = NULL;
 }
 
-void
-intel_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
+void intel_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 {
 	struct intel_fbc_work *work;
 	struct drm_device *dev = crtc->dev;
@@ -494,8 +374,7 @@ intel_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 	timeout_add_msec(&work->to, 50);
 }
 
-void
-intel_disable_fbc(struct drm_device *dev)
+void intel_disable_fbc(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -527,8 +406,7 @@ intel_disable_fbc(struct drm_device *dev)
  *
  * We need to enable/disable FBC on a global basis.
  */
-void
-intel_update_fbc(struct drm_device *dev)
+void intel_update_fbc(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc = NULL, *tmp_crtc;
@@ -678,8 +556,7 @@ out_disable:
 	}
 }
 
-void
-i915_pineview_get_mem_freq(struct drm_device *dev)
+static void i915_pineview_get_mem_freq(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	u32 tmp;
@@ -718,8 +595,7 @@ i915_pineview_get_mem_freq(struct drm_device *dev)
 	dev_priv->is_ddr3 = (tmp & CSHRDDR3CTL_DDR3) ? 1 : 0;
 }
 
-void
-i915_ironlake_get_mem_freq(struct drm_device *dev)
+static void i915_ironlake_get_mem_freq(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	u16 ddrpll, csipll;
@@ -825,8 +701,7 @@ static const struct cxsr_latency cxsr_latency_table[] = {
 	{0, 1, 400, 800, 6042, 36042, 6584, 36584},    /* DDR3-800 SC */
 };
 
-const struct cxsr_latency *
-intel_get_cxsr_latency(int is_desktop,
+static const struct cxsr_latency *intel_get_cxsr_latency(int is_desktop,
 							 int is_ddr3,
 							 int fsb,
 							 int mem)
@@ -850,8 +725,7 @@ intel_get_cxsr_latency(int is_desktop,
 	return NULL;
 }
 
-void
-pineview_disable_cxsr(struct drm_device *dev)
+static void pineview_disable_cxsr(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -875,8 +749,7 @@ pineview_disable_cxsr(struct drm_device *dev)
  */
 static const int latency_ns = 5000;
 
-int
-i9xx_get_fifo_size(struct drm_device *dev, int plane)
+static int i9xx_get_fifo_size(struct drm_device *dev, int plane)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t dsparb = I915_READ(DSPARB);
@@ -892,8 +765,7 @@ i9xx_get_fifo_size(struct drm_device *dev, int plane)
 	return size;
 }
 
-int
-i85x_get_fifo_size(struct drm_device *dev, int plane)
+static int i85x_get_fifo_size(struct drm_device *dev, int plane)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t dsparb = I915_READ(DSPARB);
@@ -910,8 +782,7 @@ i85x_get_fifo_size(struct drm_device *dev, int plane)
 	return size;
 }
 
-int
-i845_get_fifo_size(struct drm_device *dev, int plane)
+static int i845_get_fifo_size(struct drm_device *dev, int plane)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t dsparb = I915_READ(DSPARB);
@@ -927,8 +798,7 @@ i845_get_fifo_size(struct drm_device *dev, int plane)
 	return size;
 }
 
-int
-i830_get_fifo_size(struct drm_device *dev, int plane)
+static int i830_get_fifo_size(struct drm_device *dev, int plane)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t dsparb = I915_READ(DSPARB);
@@ -1113,8 +983,7 @@ static const struct intel_watermark_params sandybridge_cursor_srwm_info = {
  * past the watermark point.  If the FIFO drains completely, a FIFO underrun
  * will occur, and a display engine hang could result.
  */
-unsigned long
-intel_calculate_wm(unsigned long clock_in_khz,
+static unsigned long intel_calculate_wm(unsigned long clock_in_khz,
 					const struct intel_watermark_params *wm,
 					int fifo_size,
 					int pixel_size,
@@ -1146,8 +1015,7 @@ intel_calculate_wm(unsigned long clock_in_khz,
 	return wm_size;
 }
 
-struct drm_crtc *
-single_enabled_crtc(struct drm_device *dev)
+static struct drm_crtc *single_enabled_crtc(struct drm_device *dev)
 {
 	struct drm_crtc *crtc, *enabled = NULL;
 
@@ -1162,8 +1030,7 @@ single_enabled_crtc(struct drm_device *dev)
 	return enabled;
 }
 
-void
-pineview_update_wm(struct drm_device *dev)
+static void pineview_update_wm(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc;
@@ -1232,8 +1099,7 @@ pineview_update_wm(struct drm_device *dev)
 	}
 }
 
-bool
-g4x_compute_wm0(struct drm_device *dev,
+static bool g4x_compute_wm0(struct drm_device *dev,
 			    int plane,
 			    const struct intel_watermark_params *display,
 			    int display_latency_ns,
@@ -1291,8 +1157,7 @@ g4x_compute_wm0(struct drm_device *dev,
  * can be programmed into the associated watermark register, that watermark
  * must be disabled.
  */
-bool
-g4x_check_srwm(struct drm_device *dev,
+static bool g4x_check_srwm(struct drm_device *dev,
 			   int display_wm, int cursor_wm,
 			   const struct intel_watermark_params *display,
 			   const struct intel_watermark_params *cursor)
@@ -1320,8 +1185,7 @@ g4x_check_srwm(struct drm_device *dev,
 	return true;
 }
 
-bool
-g4x_compute_srwm(struct drm_device *dev,
+static bool g4x_compute_srwm(struct drm_device *dev,
 			     int plane,
 			     int latency_ns,
 			     const struct intel_watermark_params *display,
@@ -1367,8 +1231,7 @@ g4x_compute_srwm(struct drm_device *dev,
 			      display, cursor);
 }
 
-bool
-vlv_compute_drain_latency(struct drm_device *dev,
+static bool vlv_compute_drain_latency(struct drm_device *dev,
 				     int plane,
 				     int *plane_prec_mult,
 				     int *plane_dl,
@@ -1408,8 +1271,7 @@ vlv_compute_drain_latency(struct drm_device *dev,
  * latency value.
  */
 
-void
-vlv_update_drain_latency(struct drm_device *dev)
+static void vlv_update_drain_latency(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int planea_prec, planea_dl, planeb_prec, planeb_dl;
@@ -1446,8 +1308,7 @@ vlv_update_drain_latency(struct drm_device *dev)
 
 #define single_plane_enabled(mask) ((mask) != 0 && powerof2(mask))
 
-void
-valleyview_update_wm(struct drm_device *dev)
+static void valleyview_update_wm(struct drm_device *dev)
 {
 	static const int sr_latency_ns = 12000;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -1506,8 +1367,7 @@ valleyview_update_wm(struct drm_device *dev)
 		   (cursor_sr << DSPFW_CURSOR_SR_SHIFT));
 }
 
-void
-g4x_update_wm(struct drm_device *dev)
+static void g4x_update_wm(struct drm_device *dev)
 {
 	static const int sr_latency_ns = 12000;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -1559,8 +1419,7 @@ g4x_update_wm(struct drm_device *dev)
 		   (cursor_sr << DSPFW_CURSOR_SR_SHIFT));
 }
 
-void
-i965_update_wm(struct drm_device *dev)
+static void i965_update_wm(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc;
@@ -1625,8 +1484,7 @@ i965_update_wm(struct drm_device *dev)
 	I915_WRITE(DSPFW3, (cursor_sr << DSPFW_CURSOR_SR_SHIFT));
 }
 
-void
-i9xx_update_wm(struct drm_device *dev)
+static void i9xx_update_wm(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	const struct intel_watermark_params *wm_info;
@@ -1743,8 +1601,7 @@ i9xx_update_wm(struct drm_device *dev)
 	}
 }
 
-void
-i830_update_wm(struct drm_device *dev)
+static void i830_update_wm(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc;
@@ -1776,8 +1633,7 @@ i830_update_wm(struct drm_device *dev)
  * can be programmed into the associated watermark register, that watermark
  * must be disabled.
  */
-bool
-ironlake_check_srwm(struct drm_device *dev, int level,
+static bool ironlake_check_srwm(struct drm_device *dev, int level,
 				int fbc_wm, int display_wm, int cursor_wm,
 				const struct intel_watermark_params *display,
 				const struct intel_watermark_params *cursor)
@@ -1820,8 +1676,7 @@ ironlake_check_srwm(struct drm_device *dev, int level,
 /*
  * Compute watermark values of WM[1-3],
  */
-bool
-ironlake_compute_srwm(struct drm_device *dev, int level, int plane,
+static bool ironlake_compute_srwm(struct drm_device *dev, int level, int plane,
 				  int latency_ns,
 				  const struct intel_watermark_params *display,
 				  const struct intel_watermark_params *cursor,
@@ -1872,8 +1727,7 @@ ironlake_compute_srwm(struct drm_device *dev, int level, int plane,
 				   display, cursor);
 }
 
-void
-ironlake_update_wm(struct drm_device *dev)
+static void ironlake_update_wm(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int fbc_wm, plane_wm, cursor_wm;
@@ -1956,8 +1810,7 @@ ironlake_update_wm(struct drm_device *dev)
 	 */
 }
 
-void
-sandybridge_update_wm(struct drm_device *dev)
+static void sandybridge_update_wm(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int latency = SNB_READ_WM0_LATENCY() * 100;	/* In unit 0.1us */
@@ -2059,8 +1912,7 @@ sandybridge_update_wm(struct drm_device *dev)
 		   cursor_wm);
 }
 
-void
-ivybridge_update_wm(struct drm_device *dev)
+static void ivybridge_update_wm(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int latency = SNB_READ_WM0_LATENCY() * 100;	/* In unit 0.1us */
@@ -2182,7 +2034,7 @@ ivybridge_update_wm(struct drm_device *dev)
 		   cursor_wm);
 }
 
-void
+static void
 haswell_update_linetime_wm(struct drm_device *dev, int pipe,
 				 struct drm_display_mode *mode)
 {
@@ -2209,7 +2061,7 @@ haswell_update_linetime_wm(struct drm_device *dev, int pipe,
 	I915_WRITE(PIPE_WM_LINETIME(pipe), temp);
 }
 
-bool
+static bool
 sandybridge_compute_sprite_wm(struct drm_device *dev, int plane,
 			      uint32_t sprite_width, int pixel_size,
 			      const struct intel_watermark_params *display,
@@ -2241,7 +2093,7 @@ sandybridge_compute_sprite_wm(struct drm_device *dev, int plane,
 	return true;
 }
 
-bool
+static bool
 sandybridge_compute_sprite_srwm(struct drm_device *dev, int plane,
 				uint32_t sprite_width, int pixel_size,
 				const struct intel_watermark_params *display,
@@ -2285,8 +2137,7 @@ sandybridge_compute_sprite_srwm(struct drm_device *dev, int plane,
 	return *sprite_wm > 0x3ff ? false : true;
 }
 
-void
-sandybridge_update_sprite_wm(struct drm_device *dev, int pipe,
+static void sandybridge_update_sprite_wm(struct drm_device *dev, int pipe,
 					 uint32_t sprite_width, int pixel_size)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -2397,8 +2248,7 @@ sandybridge_update_sprite_wm(struct drm_device *dev, int pipe,
  * We don't use the sprite, so we can ignore that.  And on Crestline we have
  * to set the non-SR watermarks to 8.
  */
-void
-intel_update_watermarks(struct drm_device *dev)
+void intel_update_watermarks(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -2406,8 +2256,7 @@ intel_update_watermarks(struct drm_device *dev)
 		dev_priv->display.update_wm(dev);
 }
 
-void
-intel_update_linetime_watermarks(struct drm_device *dev,
+void intel_update_linetime_watermarks(struct drm_device *dev,
 		int pipe, struct drm_display_mode *mode)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -2416,8 +2265,7 @@ intel_update_linetime_watermarks(struct drm_device *dev,
 		dev_priv->display.update_linetime_wm(dev, pipe, mode);
 }
 
-void
-intel_update_sprite_watermarks(struct drm_device *dev, int pipe,
+void intel_update_sprite_watermarks(struct drm_device *dev, int pipe,
 				    uint32_t sprite_width, int pixel_size)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -2427,7 +2275,7 @@ intel_update_sprite_watermarks(struct drm_device *dev, int pipe,
 						   pixel_size);
 }
 
-struct drm_i915_gem_object *
+static struct drm_i915_gem_object *
 intel_alloc_context_page(struct drm_device *dev)
 {
 	struct drm_i915_gem_object *ctx;
@@ -2468,8 +2316,7 @@ err_unref:
 struct mutex mchdev_lock;
 static struct drm_i915_private *i915_mch_dev;
 
-bool
-ironlake_set_drps(struct drm_device *dev, u8 val)
+bool ironlake_set_drps(struct drm_device *dev, u8 val)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u16 rgvswctl;
@@ -2493,8 +2340,7 @@ ironlake_set_drps(struct drm_device *dev, u8 val)
 	return true;
 }
 
-void
-ironlake_enable_drps(struct drm_device *dev)
+static void ironlake_enable_drps(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 rgvmodectl = I915_READ(MEMMODECTL);
@@ -2568,8 +2414,7 @@ ironlake_enable_drps(struct drm_device *dev)
 	mtx_leave(&mchdev_lock);
 }
 
-void
-ironlake_disable_drps(struct drm_device *dev)
+static void ironlake_disable_drps(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u16 rgvswctl;
@@ -2600,8 +2445,7 @@ ironlake_disable_drps(struct drm_device *dev)
  * ourselves, instead of doing a rmw cycle (which might result in us clearing
  * all limits and the gpu stuck at whatever frequency it is at atm).
  */
-u32
-gen6_rps_limits(struct drm_i915_private *dev_priv, u8 *val)
+static u32 gen6_rps_limits(struct drm_i915_private *dev_priv, u8 *val)
 {
 	u32 limits;
 
@@ -2625,8 +2469,7 @@ gen6_rps_limits(struct drm_i915_private *dev_priv, u8 *val)
 	return limits;
 }
 
-void
-gen6_set_rps(struct drm_device *dev, u8 val)
+void gen6_set_rps(struct drm_device *dev, u8 val)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 limits = gen6_rps_limits(dev_priv, &val);
@@ -2655,8 +2498,7 @@ gen6_set_rps(struct drm_device *dev, u8 val)
 //	trace_intel_gpu_freq_change(val * 50);
 }
 
-void
-gen6_disable_rps(struct drm_device *dev)
+static void gen6_disable_rps(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -2676,8 +2518,7 @@ gen6_disable_rps(struct drm_device *dev)
 	I915_WRITE(GEN6_PMIIR, I915_READ(GEN6_PMIIR));
 }
 
-int
-intel_enable_rc6(const struct drm_device *dev)
+int intel_enable_rc6(const struct drm_device *dev)
 {
 	/* Respect the kernel parameter if it is set */
 	if (i915_enable_rc6 >= 0)
@@ -2702,8 +2543,7 @@ intel_enable_rc6(const struct drm_device *dev)
 	return (INTEL_RC6_ENABLE | INTEL_RC6p_ENABLE);
 }
 
-void
-gen6_enable_rps(struct drm_device *dev)
+static void gen6_enable_rps(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_ring_buffer *ring;
@@ -2848,8 +2688,7 @@ gen6_enable_rps(struct drm_device *dev)
 	gen6_gt_force_wake_put(dev_priv);
 }
 
-void
-gen6_update_ring_freq(struct drm_device *dev)
+static void gen6_update_ring_freq(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int min_freq = 15;
@@ -2903,8 +2742,7 @@ gen6_update_ring_freq(struct drm_device *dev)
 	}
 }
 
-void
-ironlake_teardown_rc6(struct drm_device *dev)
+void ironlake_teardown_rc6(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -2921,8 +2759,7 @@ ironlake_teardown_rc6(struct drm_device *dev)
 	}
 }
 
-void
-ironlake_disable_rc6(struct drm_device *dev)
+static void ironlake_disable_rc6(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int retries;
@@ -2944,8 +2781,7 @@ ironlake_disable_rc6(struct drm_device *dev)
 	}
 }
 
-int
-ironlake_setup_rc6(struct drm_device *dev)
+static int ironlake_setup_rc6(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -2964,8 +2800,7 @@ ironlake_setup_rc6(struct drm_device *dev)
 	return 0;
 }
 
-void
-ironlake_enable_rc6(struct drm_device *dev)
+static void ironlake_enable_rc6(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_ring_buffer *ring = &dev_priv->ring[RCS];
@@ -3029,8 +2864,7 @@ ironlake_enable_rc6(struct drm_device *dev)
 	I915_WRITE(RSTDBYCTL, I915_READ(RSTDBYCTL) & ~RCX_SW_EXIT);
 }
 
-unsigned long
-intel_pxfreq(u32 vidfreq)
+static unsigned long intel_pxfreq(u32 vidfreq)
 {
 	unsigned long freq;
 	int div = (vidfreq & 0x3f0000) >> 16;
@@ -3059,8 +2893,7 @@ static const struct cparams {
 	{ 0, 800, 231, 23784 },
 };
 
-unsigned long
-__i915_chipset_val(struct drm_i915_private *dev_priv)
+static unsigned long __i915_chipset_val(struct drm_i915_private *dev_priv)
 {
 	u64 total_count, diff, ret;
 	u32 count1, count2, count3, m = 0, c = 0;
@@ -3114,8 +2947,7 @@ __i915_chipset_val(struct drm_i915_private *dev_priv)
 	return ret;
 }
 
-unsigned long
-i915_chipset_val(struct drm_i915_private *dev_priv)
+unsigned long i915_chipset_val(struct drm_i915_private *dev_priv)
 {
 	unsigned long val;
 
@@ -3131,8 +2963,7 @@ i915_chipset_val(struct drm_i915_private *dev_priv)
 	return val;
 }
 
-unsigned long
-i915_mch_val(struct drm_i915_private *dev_priv)
+unsigned long i915_mch_val(struct drm_i915_private *dev_priv)
 {
 	unsigned long m, x, b;
 	u32 tsfs;
@@ -3147,8 +2978,7 @@ i915_mch_val(struct drm_i915_private *dev_priv)
 	return ((m * x) / 127) - b;
 }
 
-u16
-pvid_to_extvid(struct drm_i915_private *dev_priv, u8 pxvid)
+static u16 pvid_to_extvid(struct drm_i915_private *dev_priv, u8 pxvid)
 {
 	static const struct v_table {
 		u16 vd; /* in .1 mil */
@@ -3289,8 +3119,7 @@ pvid_to_extvid(struct drm_i915_private *dev_priv, u8 pxvid)
 		return v_table[pxvid].vd;
 }
 
-void
-__i915_update_gfx_val(struct drm_i915_private *dev_priv)
+static void __i915_update_gfx_val(struct drm_i915_private *dev_priv)
 {
 	struct timespec now, diff1;
 	u64 diff;
@@ -3325,8 +3154,7 @@ __i915_update_gfx_val(struct drm_i915_private *dev_priv)
 	dev_priv->ips.gfx_power = diff;
 }
 
-void
-i915_update_gfx_val(struct drm_i915_private *dev_priv)
+void i915_update_gfx_val(struct drm_i915_private *dev_priv)
 {
 	if (dev_priv->info->gen != 5)
 		return;
@@ -3338,8 +3166,7 @@ i915_update_gfx_val(struct drm_i915_private *dev_priv)
 	mtx_leave(&mchdev_lock);
 }
 
-unsigned long
-__i915_gfx_val(struct drm_i915_private *dev_priv)
+static unsigned long __i915_gfx_val(struct drm_i915_private *dev_priv)
 {
 	unsigned long t, corr, state1, corr2, state2;
 	u32 pxvid, ext_v;
@@ -3376,8 +3203,7 @@ __i915_gfx_val(struct drm_i915_private *dev_priv)
 	return dev_priv->ips.gfx_power + state2;
 }
 
-unsigned long
-i915_gfx_val(struct drm_i915_private *dev_priv)
+unsigned long i915_gfx_val(struct drm_i915_private *dev_priv)
 {
 	unsigned long val;
 
@@ -3399,8 +3225,7 @@ i915_gfx_val(struct drm_i915_private *dev_priv)
  * Calculate and return a value for the IPS driver to use when deciding whether
  * we have thermal and power headroom to increase CPU or GPU power budget.
  */
-unsigned long
-i915_read_mch_val(void)
+unsigned long i915_read_mch_val(void)
 {
 	struct drm_i915_private *dev_priv;
 	unsigned long chipset_val, graphics_val, ret = 0;
@@ -3426,8 +3251,7 @@ out_unlock:
  *
  * Raise the limit; IPS indicates we have thermal headroom.
  */
-bool
-i915_gpu_raise(void)
+bool i915_gpu_raise(void)
 {
 	struct drm_i915_private *dev_priv;
 	bool ret = true;
@@ -3454,8 +3278,7 @@ out_unlock:
  * IPS indicates we're close to a thermal limit, so throttle back the GPU
  * frequency maximum.
  */
-bool
-i915_gpu_lower(void)
+bool i915_gpu_lower(void)
 {
 	struct drm_i915_private *dev_priv;
 	bool ret = true;
@@ -3481,8 +3304,7 @@ out_unlock:
  *
  * Tell the IPS driver whether or not the GPU is busy.
  */
-bool
-i915_gpu_busy(void)
+bool i915_gpu_busy(void)
 {
 	struct drm_i915_private *dev_priv;
 	struct intel_ring_buffer *ring;
@@ -3509,8 +3331,7 @@ out_unlock:
  * Disable graphics turbo by resetting the max frequency and setting the
  * current frequency to the default.
  */
-bool
-i915_gpu_turbo_disable(void)
+bool i915_gpu_turbo_disable(void)
 {
 	struct drm_i915_private *dev_priv;
 	struct drm_device *dev;
@@ -3543,7 +3364,7 @@ out_unlock:
  * GPU turbo limits to i915.
  */
 #if 0
-void
+static void
 ips_ping_for_i915_load(void)
 {
 	void (*link)(void);
@@ -3556,8 +3377,7 @@ ips_ping_for_i915_load(void)
 }
 #endif
 
-void
-intel_gpu_ips_init(struct drm_i915_private *dev_priv)
+void intel_gpu_ips_init(struct drm_i915_private *dev_priv)
 {
 	/* We only register the i915 ips part with intel-ips once everything is
 	 * set up, to avoid intel-ips sneaking in and reading bogus values. */
@@ -3568,16 +3388,14 @@ intel_gpu_ips_init(struct drm_i915_private *dev_priv)
 //	ips_ping_for_i915_load();
 }
 
-void
-intel_gpu_ips_teardown(void)
+void intel_gpu_ips_teardown(void)
 {
 	mtx_enter(&mchdev_lock);
 	i915_mch_dev = NULL;
 	mtx_leave(&mchdev_lock);
 } 
 
-void
-intel_init_emon(struct drm_device *dev)
+static void intel_init_emon(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 lcfuse;
@@ -3648,8 +3466,7 @@ intel_init_emon(struct drm_device *dev)
 	dev_priv->ips.corr = (lcfuse & LCFUSE_HIV_MASK);
 }
 
-void
-intel_disable_gt_powersave(struct drm_device *dev)
+void intel_disable_gt_powersave(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -3664,17 +3481,7 @@ intel_disable_gt_powersave(struct drm_device *dev)
 	}
 }
 
-void
-intel_gen6_powersave_tick(void *arg)
-{
-	drm_i915_private_t *dev_priv = arg;
-
-	workq_queue_task(NULL, &dev_priv->rps.delayed_resume_task, 0,
-	    intel_gen6_powersave_work, dev_priv, NULL);
-}
-
-void
-intel_gen6_powersave_work(void *arg1, void *arg2)
+static void intel_gen6_powersave_work(void *arg1, void *arg2)
 {
 	drm_i915_private_t *dev_priv = arg1;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -3685,8 +3492,16 @@ intel_gen6_powersave_work(void *arg1, void *arg2)
 	rw_exit_write(&dev_priv->rps.hw_lock);
 }
 
-void
-intel_enable_gt_powersave(struct drm_device *dev)
+static void
+intel_gen6_powersave_tick(void *arg)
+{
+	drm_i915_private_t *dev_priv = arg;
+
+	workq_queue_task(NULL, &dev_priv->rps.delayed_resume_task, 0,
+	    intel_gen6_powersave_work, dev_priv, NULL);
+}
+
+void intel_enable_gt_powersave(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -3704,8 +3519,7 @@ intel_enable_gt_powersave(struct drm_device *dev)
 	}
 }
 
-void
-ibx_init_clock_gating(struct drm_device *dev)
+static void ibx_init_clock_gating(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -3717,8 +3531,7 @@ ibx_init_clock_gating(struct drm_device *dev)
 	I915_WRITE(SOUTH_DSPCLK_GATE_D, PCH_DPLSUNIT_CLOCK_GATE_DISABLE);
 }
 
-void
-ironlake_init_clock_gating(struct drm_device *dev)
+static void ironlake_init_clock_gating(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t dspclk_gate = ILK_VRHUNIT_CLOCK_GATE_DISABLE;
@@ -3784,8 +3597,7 @@ ironlake_init_clock_gating(struct drm_device *dev)
 	ibx_init_clock_gating(dev);
 }
 
-void
-cpt_init_clock_gating(struct drm_device *dev)
+static void cpt_init_clock_gating(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int pipe;
@@ -3815,8 +3627,7 @@ cpt_init_clock_gating(struct drm_device *dev)
 	}
 }
 
-void
-gen6_init_clock_gating(struct drm_device *dev)
+static void gen6_init_clock_gating(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int pipe;
@@ -3910,8 +3721,7 @@ gen6_init_clock_gating(struct drm_device *dev)
 	cpt_init_clock_gating(dev);
 }
 
-void
-gen7_setup_fixed_func_scheduler(struct drm_i915_private *dev_priv)
+static void gen7_setup_fixed_func_scheduler(struct drm_i915_private *dev_priv)
 {
 	uint32_t reg = I915_READ(GEN7_FF_THREAD_MODE);
 
@@ -3923,8 +3733,7 @@ gen7_setup_fixed_func_scheduler(struct drm_i915_private *dev_priv)
 	I915_WRITE(GEN7_FF_THREAD_MODE, reg);
 }
 
-void
-lpt_init_clock_gating(struct drm_device *dev)
+static void lpt_init_clock_gating(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -3938,8 +3747,7 @@ lpt_init_clock_gating(struct drm_device *dev)
 			   PCH_LP_PARTITION_LEVEL_DISABLE);
 }
 
-void
-haswell_init_clock_gating(struct drm_device *dev)
+static void haswell_init_clock_gating(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int pipe;
@@ -3997,8 +3805,7 @@ haswell_init_clock_gating(struct drm_device *dev)
 	lpt_init_clock_gating(dev);
 }
 
-void
-ivybridge_init_clock_gating(struct drm_device *dev)
+static void ivybridge_init_clock_gating(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int pipe;
@@ -4095,8 +3902,7 @@ ivybridge_init_clock_gating(struct drm_device *dev)
 	cpt_init_clock_gating(dev);
 }
 
-void
-valleyview_init_clock_gating(struct drm_device *dev)
+static void valleyview_init_clock_gating(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int pipe;
@@ -4205,8 +4011,7 @@ valleyview_init_clock_gating(struct drm_device *dev)
 	I915_WRITE(VLV_GUNIT_CLOCK_GATE, GCFG_DIS);
 }
 
-void
-g4x_init_clock_gating(struct drm_device *dev)
+static void g4x_init_clock_gating(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t dspclk_gate;
@@ -4228,8 +4033,7 @@ g4x_init_clock_gating(struct drm_device *dev)
 		   _MASKED_BIT_ENABLE(CM0_PIPELINED_RENDER_FLUSH_DISABLE));
 }
 
-void
-crestline_init_clock_gating(struct drm_device *dev)
+static void crestline_init_clock_gating(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -4240,8 +4044,7 @@ crestline_init_clock_gating(struct drm_device *dev)
 	I915_WRITE16(DEUC, 0);
 }
 
-void
-broadwater_init_clock_gating(struct drm_device *dev)
+static void broadwater_init_clock_gating(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -4253,8 +4056,7 @@ broadwater_init_clock_gating(struct drm_device *dev)
 	I915_WRITE(RENCLK_GATE_D2, 0);
 }
 
-void
-gen3_init_clock_gating(struct drm_device *dev)
+static void gen3_init_clock_gating(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 dstate = I915_READ(D_STATE);
@@ -4270,24 +4072,21 @@ gen3_init_clock_gating(struct drm_device *dev)
 	I915_WRITE(ECOSKPD, _MASKED_BIT_DISABLE(ECO_FLIP_DONE));
 }
 
-void
-i85x_init_clock_gating(struct drm_device *dev)
+static void i85x_init_clock_gating(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	I915_WRITE(RENCLK_GATE_D1, SV_CLOCK_GATE_DISABLE);
 }
 
-void
-i830_init_clock_gating(struct drm_device *dev)
+static void i830_init_clock_gating(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	I915_WRITE(DSPCLK_GATE_D, OVRUNIT_CLOCK_GATE_DISABLE);
 }
 
-void
-intel_init_clock_gating(struct drm_device *dev)
+void intel_init_clock_gating(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -4297,8 +4096,7 @@ intel_init_clock_gating(struct drm_device *dev)
 /* Starting with Haswell, we have different power wells for
  * different parts of the GPU. This attempts to enable them all.
  */
-void
-intel_init_power_wells(struct drm_device *dev)
+void intel_init_power_wells(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	unsigned long power_wells[] = {
@@ -4332,8 +4130,7 @@ intel_init_power_wells(struct drm_device *dev)
 }
 
 /* Set up chip specific power management-related functions */
-void
-intel_init_pm(struct drm_device *dev)
+void intel_init_pm(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -4456,8 +4253,7 @@ intel_init_pm(struct drm_device *dev)
 	}
 }
 
-void
-__gen6_gt_wait_for_thread_c0(struct drm_i915_private *dev_priv)
+static void __gen6_gt_wait_for_thread_c0(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	u32 gt_thread_status_mask;
@@ -4481,15 +4277,13 @@ __gen6_gt_wait_for_thread_c0(struct drm_i915_private *dev_priv)
 		DRM_ERROR("GT thread status wait timed out\n");
 }
 
-void
-__gen6_gt_force_wake_reset(struct drm_i915_private *dev_priv)
+static void __gen6_gt_force_wake_reset(struct drm_i915_private *dev_priv)
 {
 	I915_WRITE_NOTRACE(FORCEWAKE, 0);
 	POSTING_READ(ECOBUS); /* something from same cacheline, but !FORCEWAKE */
 }
 
-void
-__gen6_gt_force_wake_get(struct drm_i915_private *dev_priv)
+static void __gen6_gt_force_wake_get(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	u32 forcewake_ack;
@@ -4514,16 +4308,14 @@ __gen6_gt_force_wake_get(struct drm_i915_private *dev_priv)
 	__gen6_gt_wait_for_thread_c0(dev_priv);
 }
 
-void
-__gen6_gt_force_wake_mt_reset(struct drm_i915_private *dev_priv)
+static void __gen6_gt_force_wake_mt_reset(struct drm_i915_private *dev_priv)
 {
 	I915_WRITE_NOTRACE(FORCEWAKE_MT, _MASKED_BIT_DISABLE(0xffff));
 	/* something from same cacheline, but !FORCEWAKE_MT */
 	POSTING_READ(ECOBUS);
 }
 
-void
-__gen6_gt_force_wake_mt_get(struct drm_i915_private *dev_priv)
+static void __gen6_gt_force_wake_mt_get(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	u32 forcewake_ack;
@@ -4555,8 +4347,7 @@ __gen6_gt_force_wake_mt_get(struct drm_i915_private *dev_priv)
  * be called at the beginning of the sequence followed by a call to
  * gen6_gt_force_wake_put() at the end of the sequence.
  */
-void
-gen6_gt_force_wake_get(struct drm_i915_private *dev_priv)
+void gen6_gt_force_wake_get(struct drm_i915_private *dev_priv)
 {
 	mtx_enter(&dev_priv->gt_lock);
 	if (dev_priv->forcewake_count++ == 0)
@@ -4564,8 +4355,7 @@ gen6_gt_force_wake_get(struct drm_i915_private *dev_priv)
 	mtx_leave(&dev_priv->gt_lock);
 }
 
-void
-gen6_gt_check_fifodbg(struct drm_i915_private *dev_priv)
+void gen6_gt_check_fifodbg(struct drm_i915_private *dev_priv)
 {
 	u32 gtfifodbg;
 	gtfifodbg = I915_READ_NOTRACE(GTFIFODBG);
@@ -4574,8 +4364,7 @@ gen6_gt_check_fifodbg(struct drm_i915_private *dev_priv)
 		I915_WRITE_NOTRACE(GTFIFODBG, GT_FIFO_CPU_ERROR_MASK);
 }
 
-void
-__gen6_gt_force_wake_put(struct drm_i915_private *dev_priv)
+static void __gen6_gt_force_wake_put(struct drm_i915_private *dev_priv)
 {
 	I915_WRITE_NOTRACE(FORCEWAKE, 0);
 	/* something from same cacheline, but !FORCEWAKE */
@@ -4583,8 +4372,7 @@ __gen6_gt_force_wake_put(struct drm_i915_private *dev_priv)
 	gen6_gt_check_fifodbg(dev_priv);
 }
 
-void
-__gen6_gt_force_wake_mt_put(struct drm_i915_private *dev_priv)
+static void __gen6_gt_force_wake_mt_put(struct drm_i915_private *dev_priv)
 {
 	I915_WRITE_NOTRACE(FORCEWAKE_MT, _MASKED_BIT_DISABLE(FORCEWAKE_KERNEL));
 	/* something from same cacheline, but !FORCEWAKE_MT */
@@ -4595,8 +4383,7 @@ __gen6_gt_force_wake_mt_put(struct drm_i915_private *dev_priv)
 /*
  * see gen6_gt_force_wake_get()
  */
-void
-gen6_gt_force_wake_put(struct drm_i915_private *dev_priv)
+void gen6_gt_force_wake_put(struct drm_i915_private *dev_priv)
 {
 	mtx_enter(&dev_priv->gt_lock);
 	if (--dev_priv->forcewake_count == 0)
@@ -4604,8 +4391,7 @@ gen6_gt_force_wake_put(struct drm_i915_private *dev_priv)
 	mtx_leave(&dev_priv->gt_lock);
 }
 
-int
-__gen6_gt_wait_for_fifo(struct drm_i915_private *dev_priv)
+int __gen6_gt_wait_for_fifo(struct drm_i915_private *dev_priv)
 {
 	int ret = 0;
 
@@ -4625,16 +4411,14 @@ __gen6_gt_wait_for_fifo(struct drm_i915_private *dev_priv)
 	return ret;
 }
 
-void
-vlv_force_wake_reset(struct drm_i915_private *dev_priv)
+static void vlv_force_wake_reset(struct drm_i915_private *dev_priv)
 {
 	I915_WRITE_NOTRACE(FORCEWAKE_VLV, _MASKED_BIT_DISABLE(0xffff));
 	/* something from same cacheline, but !FORCEWAKE_VLV */
 	POSTING_READ(FORCEWAKE_ACK_VLV);
 }
 
-void
-vlv_force_wake_get(struct drm_i915_private *dev_priv)
+static void vlv_force_wake_get(struct drm_i915_private *dev_priv)
 {
 	int count;
 
@@ -4651,8 +4435,7 @@ vlv_force_wake_get(struct drm_i915_private *dev_priv)
 	__gen6_gt_wait_for_thread_c0(dev_priv);
 }
 
-void
-vlv_force_wake_put(struct drm_i915_private *dev_priv)
+static void vlv_force_wake_put(struct drm_i915_private *dev_priv)
 {
 	I915_WRITE_NOTRACE(FORCEWAKE_VLV, _MASKED_BIT_DISABLE(FORCEWAKE_KERNEL));
 	/* something from same cacheline, but !FORCEWAKE_VLV */
@@ -4660,8 +4443,7 @@ vlv_force_wake_put(struct drm_i915_private *dev_priv)
 	gen6_gt_check_fifodbg(dev_priv);
 }
 
-void
-intel_gt_reset(struct drm_device *dev)
+void intel_gt_reset(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -4674,8 +4456,7 @@ intel_gt_reset(struct drm_device *dev)
 	}
 }
 
-void
-intel_gt_init(struct drm_device *dev)
+void intel_gt_init(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -4697,8 +4478,7 @@ intel_gt_init(struct drm_device *dev)
 	    dev_priv);
 }
 
-int
-sandybridge_pcode_read(struct drm_i915_private *dev_priv, u8 mbox, u32 *val)
+int sandybridge_pcode_read(struct drm_i915_private *dev_priv, u8 mbox, u32 *val)
 {
 	int retries;
 	rw_assert_wrlock(&dev_priv->rps.hw_lock);
@@ -4727,8 +4507,7 @@ sandybridge_pcode_read(struct drm_i915_private *dev_priv, u8 mbox, u32 *val)
 	return 0;
 }
 
-int
-sandybridge_pcode_write(struct drm_i915_private *dev_priv, u8 mbox, u32 val)
+int sandybridge_pcode_write(struct drm_i915_private *dev_priv, u8 mbox, u32 val)
 {
 	int retries;
 	rw_assert_wrlock(&dev_priv->rps.hw_lock);

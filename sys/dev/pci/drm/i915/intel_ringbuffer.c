@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.c,v 1.4 2013/07/05 07:20:27 jsg Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.c,v 1.5 2013/08/13 10:23:52 jsg Exp $	*/
 /*
  * Copyright © 2008-2010 Intel Corporation
  *
@@ -43,62 +43,9 @@ struct pipe_control {
 	u32 gtt_offset;
 };
 
-int	 gen2_render_ring_flush(struct intel_ring_buffer *, u32, u32);
-int	 gen4_render_ring_flush(struct intel_ring_buffer *, u32, u32);
-int	 gen6_render_ring_flush(struct intel_ring_buffer *, u32, u32);
-int	 gen7_render_ring_flush(struct intel_ring_buffer *, u32, u32);
-int	 intel_emit_post_sync_nonzero_flush(struct intel_ring_buffer *);
-int	 gen7_render_ring_cs_stall_wa(struct intel_ring_buffer *);
-void	 ring_write_tail(struct intel_ring_buffer *, u32);
-int	 init_pipe_control(struct intel_ring_buffer *);
-void	 cleanup_pipe_control(struct intel_ring_buffer *);
-int	 init_render_ring(struct intel_ring_buffer *);
-void	 render_ring_cleanup(struct intel_ring_buffer *);
-void	 update_mboxes(struct intel_ring_buffer *, u32);
-int	 gen6_add_request(struct intel_ring_buffer *);
-int	 gen6_ring_sync(struct intel_ring_buffer *, struct intel_ring_buffer *,
-	     u32);
-int	 pc_render_add_request(struct intel_ring_buffer *);
-u32	 gen6_ring_get_seqno(struct intel_ring_buffer *, bool);
-u32	 ring_get_seqno(struct intel_ring_buffer *, bool);
-u32	 pc_render_get_seqno(struct intel_ring_buffer *, bool);
-bool	 gen5_ring_get_irq(struct intel_ring_buffer *);
-void	 gen5_ring_put_irq(struct intel_ring_buffer *);
-bool	 i9xx_ring_get_irq(struct intel_ring_buffer *);
-void	 i9xx_ring_put_irq(struct intel_ring_buffer *);
-bool	 i8xx_ring_get_irq(struct intel_ring_buffer *);
-void	 i8xx_ring_put_irq(struct intel_ring_buffer *);
-int	 bsd_ring_flush(struct intel_ring_buffer *, u32, u32);
-int	 i9xx_add_request(struct intel_ring_buffer *);
-bool	 gen6_ring_get_irq(struct intel_ring_buffer *);
-void	 gen6_ring_put_irq(struct intel_ring_buffer *);
-int	 i830_dispatch_execbuffer(struct intel_ring_buffer *, u32, u32,
-	     unsigned);
-int	 i915_dispatch_execbuffer(struct intel_ring_buffer *, u32, u32,
-	     unsigned);
-int	 i965_dispatch_execbuffer(struct intel_ring_buffer *, u32, u32,
-	     unsigned);
-int	 init_status_page(struct intel_ring_buffer *);
-int	 init_phys_hws_pga(struct intel_ring_buffer *);
-int	 intel_ring_idle(struct intel_ring_buffer *);
-int	 intel_ring_wait_seqno(struct intel_ring_buffer *, u32);
-int	 intel_ring_wait_request(struct intel_ring_buffer *, int);
-int	 intel_wrap_ring_buffer(struct intel_ring_buffer *);
-int	 intel_ring_alloc_seqno(struct intel_ring_buffer *);
-void	 gen6_bsd_ring_write_tail(struct intel_ring_buffer *, u32);
-int	 gen6_ring_flush(struct intel_ring_buffer *, u32, u32);
-int	 gen6_ring_dispatch_execbuffer(struct intel_ring_buffer *, u32, u32,
-	     unsigned);
-int	 hsw_ring_dispatch_execbuffer(struct intel_ring_buffer *, u32, u32,
-	     unsigned);
-int	 blt_ring_flush(struct intel_ring_buffer *, u32, u32);
-int	 intel_ring_flush_all_caches(struct intel_ring_buffer *);
-int	 intel_ring_invalidate_all_caches(struct intel_ring_buffer *);
-
 extern int ticks;
 
-static inline int
-ring_space(struct intel_ring_buffer *ring)
+static inline int ring_space(struct intel_ring_buffer *ring)
 {
 	int space = (ring->head & HEAD_ADDR) - (ring->tail + I915_RING_FREE_SPACE);
 	if (space < 0)
@@ -106,7 +53,7 @@ ring_space(struct intel_ring_buffer *ring)
 	return space;
 }
 
-int
+static int
 gen2_render_ring_flush(struct intel_ring_buffer *ring,
 		       u32	invalidate_domains,
 		       u32	flush_domains)
@@ -132,7 +79,7 @@ gen2_render_ring_flush(struct intel_ring_buffer *ring,
 	return 0;
 }
 
-int
+static int
 gen4_render_ring_flush(struct intel_ring_buffer *ring,
 		       u32	invalidate_domains,
 		       u32	flush_domains)
@@ -227,7 +174,7 @@ gen4_render_ring_flush(struct intel_ring_buffer *ring,
  * can't use that one either.  Notify enable is IRQs, which aren't
  * really our business.  That leaves only stall at scoreboard.
  */
-int
+static int
 intel_emit_post_sync_nonzero_flush(struct intel_ring_buffer *ring)
 {
 	struct pipe_control *pc = ring->private;
@@ -263,7 +210,7 @@ intel_emit_post_sync_nonzero_flush(struct intel_ring_buffer *ring)
 	return 0;
 }
 
-int
+static int
 gen6_render_ring_flush(struct intel_ring_buffer *ring,
                          u32 invalidate_domains, u32 flush_domains)
 {
@@ -316,7 +263,7 @@ gen6_render_ring_flush(struct intel_ring_buffer *ring,
 	return 0;
 }
 
-int
+static int
 gen7_render_ring_cs_stall_wa(struct intel_ring_buffer *ring)
 {
 	int ret;
@@ -335,7 +282,7 @@ gen7_render_ring_cs_stall_wa(struct intel_ring_buffer *ring)
 	return 0;
 }
 
-int
+static int
 gen7_render_ring_flush(struct intel_ring_buffer *ring,
 		       u32 invalidate_domains, u32 flush_domains)
 {
@@ -394,15 +341,14 @@ gen7_render_ring_flush(struct intel_ring_buffer *ring,
 	return 0;
 }
 
-void
-ring_write_tail(struct intel_ring_buffer *ring, u32 value)
+static void ring_write_tail(struct intel_ring_buffer *ring,
+			    u32 value)
 {
 	drm_i915_private_t *dev_priv = ring->dev->dev_private;
 	I915_WRITE_TAIL(ring, value);
 }
 
-u32
-intel_ring_get_active_head(struct intel_ring_buffer *ring)
+u32 intel_ring_get_active_head(struct intel_ring_buffer *ring)
 {
 	drm_i915_private_t *dev_priv = ring->dev->dev_private;
 	u32 acthd_reg = INTEL_INFO(ring->dev)->gen >= 4 ?
@@ -411,8 +357,7 @@ intel_ring_get_active_head(struct intel_ring_buffer *ring)
 	return I915_READ(acthd_reg);
 }
 
-int
-init_ring_common(struct intel_ring_buffer *ring)
+static int init_ring_common(struct intel_ring_buffer *ring)
 {
 	struct drm_device *dev = ring->dev;
 	drm_i915_private_t *dev_priv = dev->dev_private;
@@ -499,7 +444,7 @@ out:
 	return ret;
 }
 
-int
+static int
 init_pipe_control(struct intel_ring_buffer *ring)
 {
 	struct pipe_control *pc;
@@ -558,7 +503,7 @@ err:
 	return ret;
 }
 
-void
+static void
 cleanup_pipe_control(struct intel_ring_buffer *ring)
 {
 	struct pipe_control *pc = ring->private;
@@ -578,8 +523,7 @@ cleanup_pipe_control(struct intel_ring_buffer *ring)
 	ring->private = NULL;
 }
 
-int
-init_render_ring(struct intel_ring_buffer *ring)
+static int init_render_ring(struct intel_ring_buffer *ring)
 {
 	struct drm_device *dev = ring->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -639,8 +583,7 @@ init_render_ring(struct intel_ring_buffer *ring)
 	return ret;
 }
 
-void
-render_ring_cleanup(struct intel_ring_buffer *ring)
+static void render_ring_cleanup(struct intel_ring_buffer *ring)
 {
 	struct drm_device *dev = ring->dev;
 
@@ -653,7 +596,7 @@ render_ring_cleanup(struct intel_ring_buffer *ring)
 	cleanup_pipe_control(ring);
 }
 
-void
+static void
 update_mboxes(struct intel_ring_buffer *ring,
 	      u32 mmio_offset)
 {
@@ -671,7 +614,7 @@ update_mboxes(struct intel_ring_buffer *ring,
  * Update the mailbox registers in the *other* rings with the current seqno.
  * This acts like a signal in the canonical semaphore.
  */
-int
+static int
 gen6_add_request(struct intel_ring_buffer *ring)
 {
 	u32 mbox1_reg;
@@ -703,7 +646,7 @@ gen6_add_request(struct intel_ring_buffer *ring)
  * @signaller - ring which has, or will signal
  * @seqno - seqno which the waiter will block on
  */
-int
+static int
 gen6_ring_sync(struct intel_ring_buffer *waiter,
 	       struct intel_ring_buffer *signaller,
 	       u32 seqno)
@@ -745,7 +688,7 @@ do {									\
 	intel_ring_emit(ring__, 0);							\
 } while (0)
 
-int
+static int
 pc_render_add_request(struct intel_ring_buffer *ring)
 {
 	struct pipe_control *pc = ring->private;
@@ -794,7 +737,7 @@ pc_render_add_request(struct intel_ring_buffer *ring)
 	return 0;
 }
 
-u32
+static u32
 gen6_ring_get_seqno(struct intel_ring_buffer *ring, bool lazy_coherency)
 {
 	/* Workaround to force correct ordering between irq and seqno writes on
@@ -805,20 +748,20 @@ gen6_ring_get_seqno(struct intel_ring_buffer *ring, bool lazy_coherency)
 	return intel_read_status_page(ring, I915_GEM_HWS_INDEX);
 }
 
-u32
+static u32
 ring_get_seqno(struct intel_ring_buffer *ring, bool lazy_coherency)
 {
 	return intel_read_status_page(ring, I915_GEM_HWS_INDEX);
 }
 
-u32
+static u32
 pc_render_get_seqno(struct intel_ring_buffer *ring, bool lazy_coherency)
 {
 	struct pipe_control *pc = ring->private;
 	return pc->cpu_page[0];
 }
 
-bool
+static bool
 gen5_ring_get_irq(struct intel_ring_buffer *ring)
 {
 	struct drm_device *dev = ring->dev;
@@ -838,7 +781,7 @@ gen5_ring_get_irq(struct intel_ring_buffer *ring)
 	return true;
 }
 
-void
+static void
 gen5_ring_put_irq(struct intel_ring_buffer *ring)
 {
 	struct drm_device *dev = ring->dev;
@@ -853,7 +796,7 @@ gen5_ring_put_irq(struct intel_ring_buffer *ring)
 //	mtx_leave(&dev_priv->irq_lock);
 }
 
-bool
+static bool
 i9xx_ring_get_irq(struct intel_ring_buffer *ring)
 {
 	struct drm_device *dev = ring->dev;
@@ -873,7 +816,7 @@ i9xx_ring_get_irq(struct intel_ring_buffer *ring)
 	return true;
 }
 
-void
+static void
 i9xx_ring_put_irq(struct intel_ring_buffer *ring)
 {
 	struct drm_device *dev = ring->dev;
@@ -888,7 +831,7 @@ i9xx_ring_put_irq(struct intel_ring_buffer *ring)
 //	mtx_leave(&dev_priv->irq_lock);
 }
 
-bool
+static bool
 i8xx_ring_get_irq(struct intel_ring_buffer *ring)
 {
 	struct drm_device *dev = ring->dev;
@@ -908,7 +851,7 @@ i8xx_ring_get_irq(struct intel_ring_buffer *ring)
 	return true;
 }
 
-void
+static void
 i8xx_ring_put_irq(struct intel_ring_buffer *ring)
 {
 	struct drm_device *dev = ring->dev;
@@ -923,8 +866,7 @@ i8xx_ring_put_irq(struct intel_ring_buffer *ring)
 //	mtx_leave(&dev_priv->irq_lock);
 }
 
-void
-intel_ring_setup_status_page(struct intel_ring_buffer *ring)
+void intel_ring_setup_status_page(struct intel_ring_buffer *ring)
 {
 	struct drm_device *dev = ring->dev;
 	drm_i915_private_t *dev_priv = ring->dev->dev_private;
@@ -955,7 +897,7 @@ intel_ring_setup_status_page(struct intel_ring_buffer *ring)
 	POSTING_READ(mmio);
 }
 
-int
+static int
 bsd_ring_flush(struct intel_ring_buffer *ring,
 	       u32     invalidate_domains,
 	       u32     flush_domains)
@@ -972,7 +914,7 @@ bsd_ring_flush(struct intel_ring_buffer *ring,
 	return 0;
 }
 
-int
+static int
 i9xx_add_request(struct intel_ring_buffer *ring)
 {
 	int ret;
@@ -990,7 +932,7 @@ i9xx_add_request(struct intel_ring_buffer *ring)
 	return 0;
 }
 
-bool
+static bool
 gen6_ring_get_irq(struct intel_ring_buffer *ring)
 {
 	struct drm_device *dev = ring->dev;
@@ -1020,7 +962,7 @@ gen6_ring_get_irq(struct intel_ring_buffer *ring)
 	return true;
 }
 
-void
+static void
 gen6_ring_put_irq(struct intel_ring_buffer *ring)
 {
 	struct drm_device *dev = ring->dev;
@@ -1041,7 +983,7 @@ gen6_ring_put_irq(struct intel_ring_buffer *ring)
 	gen6_gt_force_wake_put(dev_priv);
 }
 
-int
+static int
 i965_dispatch_execbuffer(struct intel_ring_buffer *ring,
 			 u32 offset, u32 length,
 			 unsigned flags)
@@ -1064,7 +1006,7 @@ i965_dispatch_execbuffer(struct intel_ring_buffer *ring,
 
 /* Just userspace ABI convention to limit the wa batch bo to a resonable size */
 #define I830_BATCH_LIMIT (256*1024)
-int
+static int
 i830_dispatch_execbuffer(struct intel_ring_buffer *ring,
 				u32 offset, u32 len,
 				unsigned flags)
@@ -1116,7 +1058,7 @@ i830_dispatch_execbuffer(struct intel_ring_buffer *ring,
 	return 0;
 }
 
-int
+static int
 i915_dispatch_execbuffer(struct intel_ring_buffer *ring,
 			 u32 offset, u32 len,
 			 unsigned flags)
@@ -1134,8 +1076,7 @@ i915_dispatch_execbuffer(struct intel_ring_buffer *ring,
 	return 0;
 }
 
-void
-cleanup_status_page(struct intel_ring_buffer *ring)
+static void cleanup_status_page(struct intel_ring_buffer *ring)
 {
 	struct drm_i915_gem_object *obj;
 
@@ -1150,8 +1091,7 @@ cleanup_status_page(struct intel_ring_buffer *ring)
 	ring->status_page.obj = NULL;
 }
 
-int
-init_status_page(struct intel_ring_buffer *ring)
+static int init_status_page(struct intel_ring_buffer *ring)
 {
 	struct drm_device *dev = ring->dev;
 	struct drm_i915_gem_object *obj;
@@ -1206,8 +1146,7 @@ err:
 	return ret;
 }
 
-int
-init_phys_hws_pga(struct intel_ring_buffer *ring)
+static int init_phys_hws_pga(struct intel_ring_buffer *ring)
 {
 	struct drm_i915_private *dev_priv = ring->dev->dev_private;
 	u32 addr;
@@ -1258,8 +1197,7 @@ intel_read_status_page(struct intel_ring_buffer *ring, int reg)
 	return (val);
 }
 
-int
-intel_init_ring_buffer(struct drm_device *dev,
+static int intel_init_ring_buffer(struct drm_device *dev,
 				  struct intel_ring_buffer *ring)
 {
 	struct drm_i915_gem_object *obj;
@@ -1335,8 +1273,7 @@ err_hws:
 	return ret;
 }
 
-void
-intel_cleanup_ring_buffer(struct intel_ring_buffer *ring)
+void intel_cleanup_ring_buffer(struct intel_ring_buffer *ring)
 {
 	struct drm_i915_private *dev_priv;
 	int ret;
@@ -1365,8 +1302,7 @@ intel_cleanup_ring_buffer(struct intel_ring_buffer *ring)
 	cleanup_status_page(ring);
 }
 
-int
-intel_ring_wait_seqno(struct intel_ring_buffer *ring, u32 seqno)
+static int intel_ring_wait_seqno(struct intel_ring_buffer *ring, u32 seqno)
 {
 	drm_i915_private_t *dev_priv = ring->dev->dev_private;
 	bool was_interruptible;
@@ -1389,8 +1325,7 @@ intel_ring_wait_seqno(struct intel_ring_buffer *ring, u32 seqno)
 	return ret;
 }
 
-int
-intel_ring_wait_request(struct intel_ring_buffer *ring, int n)
+static int intel_ring_wait_request(struct intel_ring_buffer *ring, int n)
 {
 	struct drm_i915_gem_request *request;
 	u32 seqno = 0;
@@ -1447,8 +1382,7 @@ intel_ring_wait_request(struct intel_ring_buffer *ring, int n)
 	return 0;
 }
 
-int
-ring_wait_for_space(struct intel_ring_buffer *ring, int n)
+static int ring_wait_for_space(struct intel_ring_buffer *ring, int n)
 {
 	struct drm_device *dev = ring->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -1493,8 +1427,7 @@ ring_wait_for_space(struct intel_ring_buffer *ring, int n)
 	return -EBUSY;
 }
 
-int
-intel_wrap_ring_buffer(struct intel_ring_buffer *ring)
+static int intel_wrap_ring_buffer(struct intel_ring_buffer *ring)
 {
 	struct inteldrm_softc *dev_priv = ring->dev->dev_private;
 	int rem = ring->size - ring->tail;
@@ -1514,8 +1447,7 @@ intel_wrap_ring_buffer(struct intel_ring_buffer *ring)
 	return 0;
 }
 
-int
-intel_ring_idle(struct intel_ring_buffer *ring)
+int intel_ring_idle(struct intel_ring_buffer *ring)
 {
 	u32 seqno;
 	int ret;
@@ -1537,7 +1469,7 @@ intel_ring_idle(struct intel_ring_buffer *ring)
 	return i915_wait_seqno(ring, seqno);
 }
 
-int
+static int
 intel_ring_alloc_seqno(struct intel_ring_buffer *ring)
 {
 	if (ring->outstanding_lazy_request)
@@ -1546,8 +1478,8 @@ intel_ring_alloc_seqno(struct intel_ring_buffer *ring)
 	return i915_gem_get_seqno(ring->dev, &ring->outstanding_lazy_request);
 }
 
-int
-intel_ring_begin(struct intel_ring_buffer *ring, int num_dwords)
+int intel_ring_begin(struct intel_ring_buffer *ring,
+		     int num_dwords)
 {
 	drm_i915_private_t *dev_priv = ring->dev->dev_private;
 	int n = 4*num_dwords;
@@ -1578,8 +1510,7 @@ intel_ring_begin(struct intel_ring_buffer *ring, int num_dwords)
 	return 0;
 }
 
-void
-intel_ring_advance(struct intel_ring_buffer *ring)
+void intel_ring_advance(struct intel_ring_buffer *ring)
 {
 	struct drm_i915_private *dev_priv = ring->dev->dev_private;
 
@@ -1589,8 +1520,8 @@ intel_ring_advance(struct intel_ring_buffer *ring)
 	ring->write_tail(ring, ring->tail);
 }
 
-void
-gen6_bsd_ring_write_tail(struct intel_ring_buffer *ring, u32 value)
+static void gen6_bsd_ring_write_tail(struct intel_ring_buffer *ring,
+				     u32 value)
 {
 	drm_i915_private_t *dev_priv = ring->dev->dev_private;
 	int retries;
@@ -1627,8 +1558,8 @@ gen6_bsd_ring_write_tail(struct intel_ring_buffer *ring, u32 value)
 		   _MASKED_BIT_DISABLE(GEN6_BSD_SLEEP_MSG_DISABLE));
 }
 
-int
-gen6_ring_flush(struct intel_ring_buffer *ring, u32 invalidate, u32 flush)
+static int gen6_ring_flush(struct intel_ring_buffer *ring,
+			   u32 invalidate, u32 flush)
 {
 	uint32_t cmd;
 	int ret;
@@ -1655,7 +1586,7 @@ gen6_ring_flush(struct intel_ring_buffer *ring, u32 invalidate, u32 flush)
 	return 0;
 }
 
-int
+static int
 hsw_ring_dispatch_execbuffer(struct intel_ring_buffer *ring,
 			      u32 offset, u32 len,
 			      unsigned flags)
@@ -1676,7 +1607,7 @@ hsw_ring_dispatch_execbuffer(struct intel_ring_buffer *ring,
 	return 0;
 }
 
-int
+static int
 gen6_ring_dispatch_execbuffer(struct intel_ring_buffer *ring,
 			      u32 offset, u32 len,
 			      unsigned flags)
@@ -1699,8 +1630,7 @@ gen6_ring_dispatch_execbuffer(struct intel_ring_buffer *ring,
 
 /* Blitter support (SandyBridge+) */
 
-int
-blt_ring_flush(struct intel_ring_buffer *ring, u32 invalidate, u32 flush)
+static int blt_ring_flush(struct intel_ring_buffer *ring, u32 invalidate, u32 flush)
 {
 	uint32_t cmd;
 	int ret;
@@ -1727,8 +1657,7 @@ blt_ring_flush(struct intel_ring_buffer *ring, u32 invalidate, u32 flush)
 	return 0;
 }
 
-int
-intel_init_render_ring_buffer(struct drm_device *dev)
+int intel_init_render_ring_buffer(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	struct intel_ring_buffer *ring = &dev_priv->ring[RCS];
@@ -1813,8 +1742,7 @@ intel_init_render_ring_buffer(struct drm_device *dev)
 	return intel_init_ring_buffer(dev, ring);
 }
 
-int
-intel_render_ring_init_dri(struct drm_device *dev, u64 start, u32 size)
+int intel_render_ring_init_dri(struct drm_device *dev, u64 start, u32 size)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	struct intel_ring_buffer *ring = &dev_priv->ring[RCS];
@@ -1880,8 +1808,7 @@ intel_render_ring_init_dri(struct drm_device *dev, u64 start, u32 size)
 	return 0;
 }
 
-int
-intel_init_bsd_ring_buffer(struct drm_device *dev)
+int intel_init_bsd_ring_buffer(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	struct intel_ring_buffer *ring = &dev_priv->ring[VCS];
@@ -1929,8 +1856,7 @@ intel_init_bsd_ring_buffer(struct drm_device *dev)
 	return intel_init_ring_buffer(dev, ring);
 }
 
-int
-intel_init_blt_ring_buffer(struct drm_device *dev)
+int intel_init_blt_ring_buffer(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	struct intel_ring_buffer *ring = &dev_priv->ring[BCS];

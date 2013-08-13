@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.26 2013/08/07 19:49:06 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.27 2013/08/13 10:23:49 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1038,7 +1038,6 @@ struct drm_i915_gem_request {
 };
 
 u_int32_t	inteldrm_read_hws(struct inteldrm_softc *, int);
-int		ring_wait_for_space(struct intel_ring_buffer *, int n);
 int		intel_ring_begin(struct intel_ring_buffer *, int);
 void		intel_ring_emit(struct intel_ring_buffer *, u_int32_t);
 void		intel_ring_advance(struct intel_ring_buffer *);
@@ -1051,10 +1050,6 @@ unsigned long	i915_mch_val(struct inteldrm_softc *dev_priv);
 unsigned long	i915_gfx_val(struct inteldrm_softc *dev_priv);
 void		i915_update_gfx_val(struct inteldrm_softc *);
 
-int		intel_init_ring_buffer(struct drm_device *,
-		    struct intel_ring_buffer *);
-int		init_ring_common(struct intel_ring_buffer *);
-
 int		intel_init_render_ring_buffer(struct drm_device *);
 void		intel_cleanup_ring_buffer(struct intel_ring_buffer *);
 
@@ -1062,15 +1057,13 @@ void		intel_cleanup_ring_buffer(struct intel_ring_buffer *);
 
 extern int i915_driver_irq_install(struct drm_device * dev);
 extern void i915_driver_irq_uninstall(struct drm_device * dev);
-extern int i915_enable_vblank(struct drm_device *dev, int crtc);
-extern void i915_disable_vblank(struct drm_device *dev, int crtc);
-extern u32 i915_get_vblank_counter(struct drm_device *dev, int crtc);
 extern void i915_user_irq_get(struct inteldrm_softc *);
 extern void i915_user_irq_put(struct inteldrm_softc *);
 void	i915_enable_pipestat(struct inteldrm_softc *, int, u_int32_t);
 void	i915_disable_pipestat(struct inteldrm_softc *, int, u_int32_t);
 void	intel_irq_init(struct drm_device *dev);
 void	i915_hangcheck_elapsed(void *);
+void	i915_handle_error(struct drm_device *dev, bool wedged);
 void	intel_enable_asle(struct drm_device *);
 
 extern void intel_gt_init(struct drm_device *dev);
@@ -1105,6 +1098,7 @@ int	i915_gem_set_caching_ioctl(struct drm_device *, void *,
 
 /* GEM memory manager functions */
 int	i915_gem_init_object(struct drm_obj *);
+void	i915_gem_object_init(struct drm_i915_gem_object *);
 void	i915_gem_free_object(struct drm_obj *);
 int	i915_gem_object_pin(struct drm_i915_gem_object *, uint32_t, bool, bool);
 void	i915_gem_object_unpin(struct drm_i915_gem_object *);
@@ -1117,10 +1111,7 @@ void	i915_gem_retire_work_handler(void *, void*);
 int	i915_gem_idle(struct drm_device *);
 void	i915_gem_object_move_to_active(struct drm_i915_gem_object *,
 	    struct intel_ring_buffer *);
-void	i915_gem_object_move_to_inactive(struct drm_i915_gem_object *);
 int	i915_add_request(struct intel_ring_buffer *, struct drm_file *, u32 *);
-int	init_pipe_control(struct intel_ring_buffer *);
-void	cleanup_status_page(struct intel_ring_buffer *);
 void	i915_gem_init_swizzling(struct drm_device *);
 void	i915_gem_cleanup_ringbuffer(struct drm_device *);
 int	i915_gem_ring_throttle(struct drm_device *, struct drm_file *);
@@ -1133,9 +1124,6 @@ void	i915_dispatch_gem_execbuffer(struct intel_ring_buffer *,
 int	i915_gem_object_pin_and_relocate(struct drm_obj *,
 	    struct drm_file *, struct drm_i915_gem_exec_object2 *,
 	    struct drm_i915_gem_relocation_entry *);
-int	i915_gem_execbuffer_reserve_object(struct drm_i915_gem_object *,
-	    struct intel_ring_buffer *);
-void	i915_gem_execbuffer_unreserve_object(struct drm_i915_gem_object *);
 
 extern int i915_gem_get_seqno(struct drm_device *, u32 *);
 
@@ -1146,22 +1134,12 @@ int	i915_gem_object_pin_to_display_plane(struct drm_i915_gem_object *,
 int	i915_gem_object_set_to_cpu_domain(struct drm_i915_gem_object *,
 	    bool);
 int	i915_gem_object_flush_gpu_write_domain(struct drm_i915_gem_object *);
-int	i915_gem_object_wait_rendering(struct drm_i915_gem_object *, bool);
 
 int	i915_gem_init(struct drm_device *);
 int	i915_gem_mmap_gtt(struct drm_file *, struct drm_device *,
 	    uint32_t, uint64_t *);
 int	i915_gem_object_set_cache_level(struct drm_i915_gem_object *obj,
 	    enum i915_cache_level cache_level);
-
-void	sandybridge_write_fence_reg(struct drm_device *, int,
-	    struct drm_i915_gem_object *);
-void	i965_write_fence_reg(struct drm_device *, int,
-	    struct drm_i915_gem_object *);
-void	i915_write_fence_reg(struct drm_device *, int,
-	    struct drm_i915_gem_object *);
-void	i830_write_fence_reg(struct drm_device *, int,
-	    struct drm_i915_gem_object *);
 
 int	i915_gem_object_finish_gpu(struct drm_i915_gem_object *);
 int	i915_gem_init_hw(struct drm_device *);
@@ -1236,16 +1214,11 @@ int i915_gem_evict_inactive(struct inteldrm_softc *);
 void	i915_gem_detect_bit_6_swizzle(struct drm_device *);
 void	i915_gem_object_do_bit_17_swizzle(struct drm_i915_gem_object *);
 void	i915_gem_object_save_bit_17_swizzle(struct drm_i915_gem_object *);
-int	i915_gem_swizzle_page(struct vm_page *page);
-bool	i915_tiling_ok(struct drm_device *, int, int, int);
-bool	i915_gem_object_fence_ok(struct drm_i915_gem_object *, int);
 
 /* i915_gem_debug.c */
 #define i915_verify_lists(dev) 0
 
 /* i915_suspend.c */
-extern void i915_save_display(struct drm_device *);
-extern void i915_restore_display(struct drm_device *);
 extern int i915_save_state(struct drm_device *);
 extern int i915_restore_state(struct drm_device *);
 
@@ -1264,18 +1237,12 @@ static inline bool intel_gmbus_is_forced_bit(struct i2c_controller *i2c)
 }
 
 /* i915_gem.c */
-int i915_gem_create(struct drm_file *, struct drm_device *, uint64_t,
-    uint32_t *);
-void init_ring_lists(struct intel_ring_buffer *);
 int i915_gem_fault(struct drm_obj *, struct uvm_faultinfo *, off_t,
     vaddr_t, vm_page_t *, int, int, vm_prot_t, int );
 struct drm_i915_gem_object *
     i915_gem_alloc_object(struct drm_device *, size_t);
 int i915_gpu_idle(struct drm_device *);
 void i915_gem_object_move_to_flushing(struct drm_i915_gem_object *);
-void i915_gem_write_fence(struct drm_device *, int,
-    struct drm_i915_gem_object *);
-void i915_gem_reset_fences(struct drm_device *);
 int i915_gem_object_get_fence(struct drm_i915_gem_object *);
 int i915_gem_object_put_fence(struct drm_i915_gem_object *);
 void i915_gem_reset(struct drm_device *);
@@ -1341,17 +1308,11 @@ extern bool intel_fbc_enabled(struct drm_device *dev);
 extern void intel_disable_fbc(struct drm_device *dev);
 extern bool ironlake_set_drps(struct drm_device *dev, u8 val);
 extern void intel_init_pch_refclk(struct drm_device *dev);
-extern void ironlake_init_pch_refclk(struct drm_device *dev);
 extern void gen6_set_rps(struct drm_device *dev, u8 val);
 extern void intel_detect_pch(struct inteldrm_softc *dev_priv);
 extern int intel_trans_dp_port_sel(struct drm_crtc *crtc);
 int i915_load_modeset_init(struct drm_device *dev);
 extern int intel_enable_rc6(const struct drm_device *dev);
-
-extern void __gen6_gt_force_wake_get(struct inteldrm_softc *dev_priv);
-extern void __gen6_gt_force_wake_mt_get(struct inteldrm_softc *dev_priv);
-extern void __gen6_gt_force_wake_put(struct inteldrm_softc *dev_priv);
-extern void __gen6_gt_force_wake_mt_put(struct inteldrm_softc *dev_priv);
 
 extern struct intel_overlay_error_state *intel_overlay_capture_error_state(
     struct drm_device *dev);

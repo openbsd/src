@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_sprite.c,v 1.2 2013/07/05 07:20:27 jsg Exp $	*/
+/*	$OpenBSD: intel_sprite.c,v 1.3 2013/08/13 10:23:52 jsg Exp $	*/
 /*
  * Copyright © 2011 Intel Corporation
  *
@@ -37,39 +37,7 @@
 #include <dev/pci/drm/i915_drm.h>
 #include "i915_drv.h"
 
-void	 ivb_disable_plane(struct drm_plane *);
-int	 ivb_update_colorkey(struct drm_plane *,
-	     struct drm_intel_sprite_colorkey *);
-void	 ivb_get_colorkey(struct drm_plane *,
-	     struct drm_intel_sprite_colorkey *);
-void	 snb_disable_plane(struct drm_plane *);
-void	 intel_enable_primary(struct drm_crtc *);
-int	 snb_update_colorkey(struct drm_plane *,
-	     struct drm_intel_sprite_colorkey *);
-void	 snb_get_colorkey(struct drm_plane *,
-	     struct drm_intel_sprite_colorkey *);
-int	 intel_update_plane(struct drm_plane *, struct drm_crtc *,
-	     struct drm_framebuffer *, int, int, unsigned int, unsigned int,
-	     uint32_t, uint32_t, uint32_t, uint32_t);
-int	 intel_disable_drm_plane(struct drm_plane *);
-void	 intel_destroy_plane(struct drm_plane *);
-void	 ivb_update_plane(struct drm_plane *, struct drm_framebuffer *,
-	     struct drm_i915_gem_object *, int, int, unsigned int,
-	     unsigned int, uint32_t, uint32_t, uint32_t, uint32_t);
-void	 snb_update_plane(struct drm_plane *, struct drm_framebuffer *,
-	     struct drm_i915_gem_object *, int, int, unsigned int,
-	     unsigned int, uint32_t, uint32_t, uint32_t, uint32_t);
-void	 intel_disable_primary(struct drm_crtc *);
-void	 ilk_update_plane(struct drm_plane *, struct drm_framebuffer *,
-	     struct drm_i915_gem_object *, int, int, unsigned int, unsigned int,
-	     uint32_t, uint32_t, uint32_t, uint32_t);
-void	 ilk_disable_plane(struct drm_plane *);
-int	 ilk_update_colorkey(struct drm_plane *,
-	     struct drm_intel_sprite_colorkey *);
-void	 ilk_get_colorkey(struct drm_plane *,
-	     struct drm_intel_sprite_colorkey *);
-
-void
+static void
 ivb_update_plane(struct drm_plane *plane, struct drm_framebuffer *fb,
 		 struct drm_i915_gem_object *obj, int crtc_x, int crtc_y,
 		 unsigned int crtc_w, unsigned int crtc_h,
@@ -176,7 +144,7 @@ ivb_update_plane(struct drm_plane *plane, struct drm_framebuffer *fb,
 	POSTING_READ(SPRSURF(pipe));
 }
 
-void
+static void
 ivb_disable_plane(struct drm_plane *plane)
 {
 	struct drm_device *dev = plane->dev;
@@ -196,7 +164,7 @@ ivb_disable_plane(struct drm_plane *plane)
 	intel_update_watermarks(dev);
 }
 
-int
+static int
 ivb_update_colorkey(struct drm_plane *plane,
 		    struct drm_intel_sprite_colorkey *key)
 {
@@ -225,7 +193,7 @@ ivb_update_colorkey(struct drm_plane *plane,
 	return ret;
 }
 
-void
+static void
 ivb_get_colorkey(struct drm_plane *plane, struct drm_intel_sprite_colorkey *key)
 {
 	struct drm_device *dev = plane->dev;
@@ -250,7 +218,7 @@ ivb_get_colorkey(struct drm_plane *plane, struct drm_intel_sprite_colorkey *key)
 		key->flags = I915_SET_COLORKEY_NONE;
 }
 
-void
+static void
 ilk_update_plane(struct drm_plane *plane, struct drm_framebuffer *fb,
 		 struct drm_i915_gem_object *obj, int crtc_x, int crtc_y,
 		 unsigned int crtc_w, unsigned int crtc_h,
@@ -336,7 +304,7 @@ ilk_update_plane(struct drm_plane *plane, struct drm_framebuffer *fb,
 	POSTING_READ(DVSSURF(pipe));
 }
 
-void
+static void
 ilk_disable_plane(struct drm_plane *plane)
 {
 	struct drm_device *dev = plane->dev;
@@ -352,7 +320,7 @@ ilk_disable_plane(struct drm_plane *plane)
 	POSTING_READ(DVSSURF(pipe));
 }
 
-void
+static void
 intel_enable_primary(struct drm_crtc *crtc)
 {
 	struct drm_device *dev = crtc->dev;
@@ -369,7 +337,7 @@ intel_enable_primary(struct drm_crtc *crtc)
 	I915_WRITE(reg, I915_READ(reg) | DISPLAY_PLANE_ENABLE);
 }
 
-void
+static void
 intel_disable_primary(struct drm_crtc *crtc)
 {
 	struct drm_device *dev = crtc->dev;
@@ -386,7 +354,7 @@ intel_disable_primary(struct drm_crtc *crtc)
 	intel_update_fbc(dev);
 }
 
-int
+static int
 ilk_update_colorkey(struct drm_plane *plane,
 		    struct drm_intel_sprite_colorkey *key)
 {
@@ -415,7 +383,7 @@ ilk_update_colorkey(struct drm_plane *plane,
 	return ret;
 }
 
-void
+static void
 ilk_get_colorkey(struct drm_plane *plane, struct drm_intel_sprite_colorkey *key)
 {
 	struct drm_device *dev = plane->dev;
@@ -440,7 +408,7 @@ ilk_get_colorkey(struct drm_plane *plane, struct drm_intel_sprite_colorkey *key)
 		key->flags = I915_SET_COLORKEY_NONE;
 }
 
-int
+static int
 intel_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
 		   struct drm_framebuffer *fb, int crtc_x, int crtc_y,
 		   unsigned int crtc_w, unsigned int crtc_h,
@@ -579,8 +547,8 @@ out:
 	return ret;
 }
 
-int
-intel_disable_drm_plane(struct drm_plane *plane)
+static int
+intel_disable_plane(struct drm_plane *plane)
 {
 	struct drm_device *dev = plane->dev;
 	struct intel_plane *intel_plane = to_intel_plane(plane);
@@ -602,17 +570,15 @@ out:
 	return ret;
 }
 
-void
-intel_destroy_plane(struct drm_plane *plane)
+static void intel_destroy_plane(struct drm_plane *plane)
 {
 	struct intel_plane *intel_plane = to_intel_plane(plane);
-	intel_disable_drm_plane(plane);
+	intel_disable_plane(plane);
 	drm_plane_cleanup(plane);
 	free(intel_plane, M_DRM);
 }
 
-int
-intel_sprite_set_colorkey(struct drm_device *dev, void *data,
+int intel_sprite_set_colorkey(struct drm_device *dev, void *data,
 			      struct drm_file *file_priv)
 {
 	struct drm_intel_sprite_colorkey *set = data;
@@ -645,8 +611,7 @@ out_unlock:
 	return ret;
 }
 
-int
-intel_sprite_get_colorkey(struct drm_device *dev, void *data,
+int intel_sprite_get_colorkey(struct drm_device *dev, void *data,
 			      struct drm_file *file_priv)
 {
 	struct drm_intel_sprite_colorkey *get = data;
@@ -677,7 +642,7 @@ out_unlock:
 
 static const struct drm_plane_funcs intel_plane_funcs = {
 	.update_plane = intel_update_plane,
-	.disable_plane = intel_disable_drm_plane,
+	.disable_plane = intel_disable_plane,
 	.destroy = intel_destroy_plane,
 };
 

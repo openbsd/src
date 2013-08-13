@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.141 2013/08/12 04:11:52 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.142 2013/08/13 10:23:48 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -142,6 +142,8 @@ typedef uint32_t __be32;
 #define EXPORT_SYMBOL(x)
 #define MODULE_FIRMWARE(x)
 #define __iomem
+#define __must_check
+#define __init
 #define ARRAY_SIZE nitems
 #define DRM_ARRAY_SIZE nitems
 

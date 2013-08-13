@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ddi.c,v 1.4 2013/07/08 09:47:45 jsg Exp $	*/
+/*	$OpenBSD: intel_ddi.c,v 1.5 2013/08/13 10:23:50 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -28,6 +28,8 @@
 
 #include "i915_drv.h"
 #include "intel_drv.h"
+
+void intel_prepare_ddi_buffers(struct drm_device *dev, enum port port, bool use_fdi_mode);
 
 /* HDMI/DVI modes ignore everything but the last 2 items. So we share
  * them for both DP and FDI transports, allowing those ports to
@@ -59,27 +61,7 @@ static const u32 hsw_ddi_translations_fdi[] = {
 	0x00FFFFFF, 0x00040006		/* HDMI parameters */
 };
 
-enum port
-	 intel_ddi_get_encoder_port(struct intel_encoder *);
-void	 intel_prepare_ddi_buffers(struct drm_device *, enum port, bool);
-void	 intel_wait_ddi_buf_idle(struct drm_i915_private *, enum port);
-void	 intel_ddi_mode_set(struct drm_encoder *, struct drm_display_mode *,
-	     struct drm_display_mode *);
-struct intel_encoder *
-	 intel_ddi_get_crtc_encoder(struct drm_crtc *);
-void	 intel_ddi_calculate_wrpll(int, int *, int *, int *);
-uint32_t intel_ddi_get_crtc_pll(struct drm_i915_private *, enum pipe);
-void	 intel_ddi_pre_enable(struct intel_encoder *);
-void	 intel_ddi_post_disable(struct intel_encoder *);
-void	 intel_enable_ddi(struct intel_encoder *);
-void	 intel_disable_ddi(struct intel_encoder *);
-void	 intel_ddi_hot_plug(struct intel_encoder *);
-void	 intel_ddi_destroy(struct drm_encoder *);
-bool	 intel_ddi_mode_fixup(struct drm_encoder *,
-	     const struct drm_display_mode *, struct drm_display_mode *);
-
-enum port
-intel_ddi_get_encoder_port(struct intel_encoder *intel_encoder)
+static enum port intel_ddi_get_encoder_port(struct intel_encoder *intel_encoder)
 {
 	struct drm_encoder *encoder = &intel_encoder->base;
 	int type = intel_encoder->type;
@@ -104,8 +86,7 @@ intel_ddi_get_encoder_port(struct intel_encoder *intel_encoder)
  * in either FDI or DP modes only, as HDMI connections will work with both
  * of those
  */
-void
-intel_prepare_ddi_buffers(struct drm_device *dev, enum port port, bool use_fdi_mode)
+void intel_prepare_ddi_buffers(struct drm_device *dev, enum port port, bool use_fdi_mode)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 reg;
@@ -131,8 +112,7 @@ intel_prepare_ddi_buffers(struct drm_device *dev, enum port port, bool use_fdi_m
 /* Program DDI buffers translations for DP. By default, program ports A-D in DP
  * mode and port E for FDI.
  */
-void
-intel_prepare_ddi(struct drm_device *dev)
+void intel_prepare_ddi(struct drm_device *dev)
 {
 	int port;
 
@@ -160,8 +140,7 @@ static const long hsw_ddi_buf_ctl_values[] = {
 	DDI_BUF_EMP_800MV_3_5DB_HSW
 };
 
-void
-intel_wait_ddi_buf_idle(struct drm_i915_private *dev_priv,
+static void intel_wait_ddi_buf_idle(struct drm_i915_private *dev_priv,
 				    enum port port)
 {
 	uint32_t reg = DDI_BUF_CTL(port);
@@ -184,8 +163,7 @@ intel_wait_ddi_buf_idle(struct drm_i915_private *dev_priv,
  * DDI A (which is used for eDP)
  */
 
-void
-hsw_fdi_link_train(struct drm_crtc *crtc)
+void hsw_fdi_link_train(struct drm_crtc *crtc)
 {
 	struct drm_device *dev = crtc->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -686,8 +664,7 @@ static const struct wrpll_tmds_clock wrpll_tmds_clock_table[] = {
 	{298000,	2,	21,	19},
 };
 
-void
-intel_ddi_mode_set(struct drm_encoder *encoder,
+static void intel_ddi_mode_set(struct drm_encoder *encoder,
 			       struct drm_display_mode *mode,
 			       struct drm_display_mode *adjusted_mode)
 {
@@ -758,7 +735,7 @@ intel_ddi_mode_set(struct drm_encoder *encoder,
 	}
 }
 
-struct intel_encoder *
+static struct intel_encoder *
 intel_ddi_get_crtc_encoder(struct drm_crtc *crtc)
 {
 	struct drm_device *dev = crtc->dev;
@@ -779,8 +756,7 @@ intel_ddi_get_crtc_encoder(struct drm_crtc *crtc)
 	return ret;
 }
 
-void
-intel_ddi_put_crtc_pll(struct drm_crtc *crtc)
+void intel_ddi_put_crtc_pll(struct drm_crtc *crtc)
 {
 	struct drm_i915_private *dev_priv = crtc->dev->dev_private;
 	struct intel_ddi_plls *plls = &dev_priv->ddi_plls;
@@ -827,8 +803,7 @@ intel_ddi_put_crtc_pll(struct drm_crtc *crtc)
 	intel_crtc->ddi_pll_sel = PORT_CLK_SEL_NONE;
 }
 
-void
-intel_ddi_calculate_wrpll(int clock, int *p, int *n2, int *r2)
+static void intel_ddi_calculate_wrpll(int clock, int *p, int *n2, int *r2)
 {
 	u32 i;
 
@@ -851,8 +826,7 @@ intel_ddi_calculate_wrpll(int clock, int *p, int *n2, int *r2)
 		      clock, *p, *n2, *r2);
 }
 
-bool
-intel_ddi_pll_mode_set(struct drm_crtc *crtc, int clock)
+bool intel_ddi_pll_mode_set(struct drm_crtc *crtc, int clock)
 {
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	struct intel_encoder *intel_encoder = intel_ddi_get_crtc_encoder(crtc);
@@ -945,8 +919,7 @@ intel_ddi_pll_mode_set(struct drm_crtc *crtc, int clock)
 	return true;
 }
 
-void
-intel_ddi_set_pipe_settings(struct drm_crtc *crtc)
+void intel_ddi_set_pipe_settings(struct drm_crtc *crtc)
 {
 	struct drm_i915_private *dev_priv = crtc->dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
@@ -980,8 +953,7 @@ intel_ddi_set_pipe_settings(struct drm_crtc *crtc)
 	}
 }
 
-void
-intel_ddi_enable_pipe_func(struct drm_crtc *crtc)
+void intel_ddi_enable_pipe_func(struct drm_crtc *crtc)
 {
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	struct intel_encoder *intel_encoder = intel_ddi_get_crtc_encoder(crtc);
@@ -1079,8 +1051,7 @@ intel_ddi_enable_pipe_func(struct drm_crtc *crtc)
 	I915_WRITE(TRANS_DDI_FUNC_CTL(cpu_transcoder), temp);
 }
 
-void
-intel_ddi_disable_transcoder_func(struct drm_i915_private *dev_priv,
+void intel_ddi_disable_transcoder_func(struct drm_i915_private *dev_priv,
 				       enum transcoder cpu_transcoder)
 {
 	uint32_t reg = TRANS_DDI_FUNC_CTL(cpu_transcoder);
@@ -1091,8 +1062,7 @@ intel_ddi_disable_transcoder_func(struct drm_i915_private *dev_priv,
 	I915_WRITE(reg, val);
 }
 
-bool
-intel_ddi_connector_get_hw_state(struct intel_connector *intel_connector)
+bool intel_ddi_connector_get_hw_state(struct intel_connector *intel_connector)
 {
 	struct drm_device *dev = intel_connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -1132,8 +1102,7 @@ intel_ddi_connector_get_hw_state(struct intel_connector *intel_connector)
 	}
 }
 
-bool
-intel_ddi_get_hw_state(struct intel_encoder *encoder,
+bool intel_ddi_get_hw_state(struct intel_encoder *encoder,
 			    enum pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
@@ -1181,8 +1150,7 @@ intel_ddi_get_hw_state(struct intel_encoder *encoder,
 	return true;
 }
 
-uint32_t
-intel_ddi_get_crtc_pll(struct drm_i915_private *dev_priv,
+static uint32_t intel_ddi_get_crtc_pll(struct drm_i915_private *dev_priv,
 				       enum pipe pipe)
 {
 	uint32_t temp, ret;
@@ -1210,8 +1178,7 @@ intel_ddi_get_crtc_pll(struct drm_i915_private *dev_priv,
 	return ret;
 }
 
-void
-intel_ddi_setup_hw_pll_state(struct drm_device *dev)
+void intel_ddi_setup_hw_pll_state(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	enum pipe pipe;
@@ -1241,8 +1208,7 @@ intel_ddi_setup_hw_pll_state(struct drm_device *dev)
 	}
 }
 
-void
-intel_ddi_enable_pipe_clock(struct intel_crtc *intel_crtc)
+void intel_ddi_enable_pipe_clock(struct intel_crtc *intel_crtc)
 {
 	struct drm_crtc *crtc = &intel_crtc->base;
 	struct drm_i915_private *dev_priv = crtc->dev->dev_private;
@@ -1255,8 +1221,7 @@ intel_ddi_enable_pipe_clock(struct intel_crtc *intel_crtc)
 			   TRANS_CLK_SEL_PORT(port));
 }
 
-void
-intel_ddi_disable_pipe_clock(struct intel_crtc *intel_crtc)
+void intel_ddi_disable_pipe_clock(struct intel_crtc *intel_crtc)
 {
 	struct drm_i915_private *dev_priv = intel_crtc->base.dev->dev_private;
 	enum transcoder cpu_transcoder = intel_crtc->cpu_transcoder;
@@ -1266,8 +1231,7 @@ intel_ddi_disable_pipe_clock(struct intel_crtc *intel_crtc)
 			   TRANS_CLK_SEL_DISABLED);
 }
 
-void
-intel_ddi_pre_enable(struct intel_encoder *intel_encoder)
+static void intel_ddi_pre_enable(struct intel_encoder *intel_encoder)
 {
 	struct drm_encoder *encoder = &intel_encoder->base;
 	struct drm_crtc *crtc = encoder->crtc;
@@ -1295,8 +1259,7 @@ intel_ddi_pre_enable(struct intel_encoder *intel_encoder)
 	}
 }
 
-void
-intel_ddi_post_disable(struct intel_encoder *intel_encoder)
+static void intel_ddi_post_disable(struct intel_encoder *intel_encoder)
 {
 	struct drm_encoder *encoder = &intel_encoder->base;
 	struct drm_i915_private *dev_priv = encoder->dev->dev_private;
@@ -1329,8 +1292,7 @@ intel_ddi_post_disable(struct intel_encoder *intel_encoder)
 	I915_WRITE(PORT_CLK_SEL(port), PORT_CLK_SEL_NONE);
 }
 
-void
-intel_enable_ddi(struct intel_encoder *intel_encoder)
+static void intel_enable_ddi(struct intel_encoder *intel_encoder)
 {
 	struct drm_encoder *encoder = &intel_encoder->base;
 	struct drm_device *dev = encoder->dev;
@@ -1355,8 +1317,7 @@ intel_enable_ddi(struct intel_encoder *intel_encoder)
 	}
 }
 
-void
-intel_disable_ddi(struct intel_encoder *intel_encoder)
+static void intel_disable_ddi(struct intel_encoder *intel_encoder)
 {
 	struct drm_encoder *encoder = &intel_encoder->base;
 	int type = intel_encoder->type;
@@ -1368,8 +1329,7 @@ intel_disable_ddi(struct intel_encoder *intel_encoder)
 	}
 }
 
-int
-intel_ddi_get_cdclk_freq(struct drm_i915_private *dev_priv)
+int intel_ddi_get_cdclk_freq(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 
@@ -1384,8 +1344,7 @@ intel_ddi_get_cdclk_freq(struct drm_i915_private *dev_priv)
 		return 540;
 }
 
-void
-intel_ddi_pll_init(struct drm_device *dev)
+void intel_ddi_pll_init(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t val = I915_READ(LCPLL_CTL);
@@ -1405,8 +1364,7 @@ intel_ddi_pll_init(struct drm_device *dev)
 		DRM_ERROR("LCPLL is disabled\n");
 }
 
-void
-intel_ddi_prepare_link_retrain(struct drm_encoder *encoder)
+void intel_ddi_prepare_link_retrain(struct drm_encoder *encoder)
 {
 	struct intel_digital_port *intel_dig_port = enc_to_dig_port(encoder);
 	struct intel_dp *intel_dp = &intel_dig_port->dp;
@@ -1447,8 +1405,7 @@ intel_ddi_prepare_link_retrain(struct drm_encoder *encoder)
 	udelay(600);
 }
 
-void
-intel_ddi_fdi_disable(struct drm_crtc *crtc)
+void intel_ddi_fdi_disable(struct drm_crtc *crtc)
 {
 	struct drm_i915_private *dev_priv = crtc->dev->dev_private;
 	struct intel_encoder *intel_encoder = intel_ddi_get_crtc_encoder(crtc);
@@ -1474,8 +1431,7 @@ intel_ddi_fdi_disable(struct drm_crtc *crtc)
 	I915_WRITE(_FDI_RXA_CTL, val);
 }
 
-void
-intel_ddi_hot_plug(struct intel_encoder *intel_encoder)
+static void intel_ddi_hot_plug(struct intel_encoder *intel_encoder)
 {
 	struct intel_dp *intel_dp = enc_to_intel_dp(&intel_encoder->base);
 	int type = intel_encoder->type;
@@ -1484,15 +1440,13 @@ intel_ddi_hot_plug(struct intel_encoder *intel_encoder)
 		intel_dp_check_link_status(intel_dp);
 }
 
-void
-intel_ddi_destroy(struct drm_encoder *encoder)
+static void intel_ddi_destroy(struct drm_encoder *encoder)
 {
 	/* HDMI has nothing special to destroy, so we can go with this. */
 	intel_dp_encoder_destroy(encoder);
 }
 
-bool
-intel_ddi_mode_fixup(struct drm_encoder *encoder,
+static bool intel_ddi_mode_fixup(struct drm_encoder *encoder,
 				 const struct drm_display_mode *mode,
 				 struct drm_display_mode *adjusted_mode)
 {
@@ -1517,8 +1471,7 @@ static const struct drm_encoder_helper_funcs intel_ddi_helper_funcs = {
 	.disable = intel_encoder_noop,
 };
 
-void
-intel_ddi_init(struct drm_device *dev, enum port port)
+void intel_ddi_init(struct drm_device *dev, enum port port)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_digital_port *intel_dig_port;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_ch7xxx.c,v 1.2 2013/03/30 12:36:50 kettenis Exp $	*/
+/*	$OpenBSD: dvo_ch7xxx.c,v 1.3 2013/08/13 10:23:48 jsg Exp $	*/
 /**************************************************************************
 
 Copyright © 2006 Dave Airlie
@@ -97,22 +97,7 @@ struct ch7xxx_priv {
 	bool quiet;
 };
 
-char *ch7xxx_get_id(uint8_t);
-bool ch7xxx_readb(struct intel_dvo_device *, int, uint8_t *);
-bool ch7xxx_writeb(struct intel_dvo_device *, int, uint8_t);
-bool ch7xxx_init(struct intel_dvo_device *, struct i2c_controller *);
-enum drm_connector_status ch7xxx_detect(struct intel_dvo_device *);
-enum drm_mode_status ch7xxx_mode_valid(struct intel_dvo_device *,
-    struct drm_display_mode *);
-void ch7xxx_mode_set(struct intel_dvo_device *, struct drm_display_mode *,
-    struct drm_display_mode *);
-void ch7xxx_dpms(struct intel_dvo_device *, bool);
-bool ch7xxx_get_hw_state(struct intel_dvo_device *);
-void ch7xxx_dump_regs(struct intel_dvo_device *);
-void ch7xxx_destroy(struct intel_dvo_device *);
-
-char *
-ch7xxx_get_id(uint8_t vid)
+static char *ch7xxx_get_id(uint8_t vid)
 {
 	int i;
 
@@ -125,8 +110,7 @@ ch7xxx_get_id(uint8_t vid)
 }
 
 /** Reads an 8 bit register */
-bool
-ch7xxx_readb(struct intel_dvo_device *dvo, int addr, uint8_t *ch)
+static bool ch7xxx_readb(struct intel_dvo_device *dvo, int addr, uint8_t *ch)
 {
 	struct ch7xxx_priv *ch7xxx = dvo->dev_priv;
 	struct i2c_controller *adapter = dvo->i2c_bus;
@@ -157,8 +141,7 @@ read_err:
 }
 
 /** Writes an 8 bit register */
-bool
-ch7xxx_writeb(struct intel_dvo_device *dvo, int addr, uint8_t ch)
+static bool ch7xxx_writeb(struct intel_dvo_device *dvo, int addr, uint8_t ch)
 {
 	struct ch7xxx_priv *ch7xxx = dvo->dev_priv;
 	struct i2c_controller *adapter = dvo->i2c_bus;
@@ -186,8 +169,7 @@ write_err:
 	return false;
 }
 
-bool
-ch7xxx_init(struct intel_dvo_device *dvo,
+static bool ch7xxx_init(struct intel_dvo_device *dvo,
 			struct i2c_controller *adapter)
 {
 	/* this will detect the CH7xxx chip on the specified i2c bus */
@@ -234,8 +216,7 @@ out:
 	return false;
 }
 
-enum drm_connector_status
-ch7xxx_detect(struct intel_dvo_device *dvo)
+static enum drm_connector_status ch7xxx_detect(struct intel_dvo_device *dvo)
 {
 	uint8_t cdet, orig_pm, pm;
 
@@ -256,8 +237,7 @@ ch7xxx_detect(struct intel_dvo_device *dvo)
 	return connector_status_disconnected;
 }
 
-enum drm_mode_status
-ch7xxx_mode_valid(struct intel_dvo_device *dvo,
+static enum drm_mode_status ch7xxx_mode_valid(struct intel_dvo_device *dvo,
 					      struct drm_display_mode *mode)
 {
 	if (mode->clock > 165000)
@@ -266,8 +246,7 @@ ch7xxx_mode_valid(struct intel_dvo_device *dvo,
 	return MODE_OK;
 }
 
-void
-ch7xxx_mode_set(struct intel_dvo_device *dvo,
+static void ch7xxx_mode_set(struct intel_dvo_device *dvo,
 			    struct drm_display_mode *mode,
 			    struct drm_display_mode *adjusted_mode)
 {
@@ -306,8 +285,7 @@ ch7xxx_mode_set(struct intel_dvo_device *dvo,
 }
 
 /* set the CH7xxx power state */
-void
-ch7xxx_dpms(struct intel_dvo_device *dvo, bool enable)
+static void ch7xxx_dpms(struct intel_dvo_device *dvo, bool enable)
 {
 	if (enable)
 		ch7xxx_writeb(dvo, CH7xxx_PM, CH7xxx_PM_DVIL | CH7xxx_PM_DVIP);
@@ -315,8 +293,7 @@ ch7xxx_dpms(struct intel_dvo_device *dvo, bool enable)
 		ch7xxx_writeb(dvo, CH7xxx_PM, CH7xxx_PM_FPD);
 }
 
-bool
-ch7xxx_get_hw_state(struct intel_dvo_device *dvo)
+static bool ch7xxx_get_hw_state(struct intel_dvo_device *dvo)
 {
 	u8 val;
 
@@ -328,8 +305,7 @@ ch7xxx_get_hw_state(struct intel_dvo_device *dvo)
 		return false;
 }
 
-void
-ch7xxx_dump_regs(struct intel_dvo_device *dvo)
+static void ch7xxx_dump_regs(struct intel_dvo_device *dvo)
 {
 	int i;
 
@@ -342,8 +318,7 @@ ch7xxx_dump_regs(struct intel_dvo_device *dvo)
 	}
 }
 
-void
-ch7xxx_destroy(struct intel_dvo_device *dvo)
+static void ch7xxx_destroy(struct intel_dvo_device *dvo)
 {
 	struct ch7xxx_priv *ch7xxx = dvo->dev_priv;
 

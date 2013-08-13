@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_tfp410.c,v 1.2 2013/03/30 12:36:50 kettenis Exp $	*/
+/*	$OpenBSD: dvo_tfp410.c,v 1.3 2013/08/13 10:23:49 jsg Exp $	*/
 /*
  * Copyright © 2007 Dave Mueller
  *
@@ -91,22 +91,7 @@ struct tfp410_priv {
 	bool quiet;
 };
 
-bool tfp410_readb(struct intel_dvo_device *, int, uint8_t *);
-bool tfp410_writeb(struct intel_dvo_device *, int, uint8_t);
-int tfp410_getid(struct intel_dvo_device *, int);
-bool tfp410_init(struct intel_dvo_device *, struct i2c_controller *);
-enum drm_connector_status tfp410_detect(struct intel_dvo_device *);
-enum drm_mode_status tfp410_mode_valid(struct intel_dvo_device *,
-    struct drm_display_mode *);
-void tfp410_mode_set(struct intel_dvo_device *, struct drm_display_mode *,
-    struct drm_display_mode *);
-void tfp410_dpms(struct intel_dvo_device *, bool);
-bool tfp410_get_hw_state(struct intel_dvo_device *);
-void tfp410_dump_regs(struct intel_dvo_device *);
-void tfp410_destroy(struct intel_dvo_device *);
-
-bool
-tfp410_readb(struct intel_dvo_device *dvo, int addr, uint8_t *ch)
+static bool tfp410_readb(struct intel_dvo_device *dvo, int addr, uint8_t *ch)
 {
 	struct tfp410_priv *tfp = dvo->dev_priv;
 	struct i2c_controller *adapter = dvo->i2c_bus;
@@ -136,8 +121,7 @@ read_err:
 	return false;
 }
 
-bool
-tfp410_writeb(struct intel_dvo_device *dvo, int addr, uint8_t ch)
+static bool tfp410_writeb(struct intel_dvo_device *dvo, int addr, uint8_t ch)
 {
 	struct tfp410_priv *tfp = dvo->dev_priv;
 	struct i2c_controller *adapter = dvo->i2c_bus;
@@ -165,8 +149,7 @@ write_err:
 	return false;
 }
 
-int
-tfp410_getid(struct intel_dvo_device *dvo, int addr)
+static int tfp410_getid(struct intel_dvo_device *dvo, int addr)
 {
 	uint8_t ch1, ch2;
 
@@ -178,8 +161,7 @@ tfp410_getid(struct intel_dvo_device *dvo, int addr)
 }
 
 /* Ti TFP410 driver for chip on i2c bus */
-bool
-tfp410_init(struct intel_dvo_device *dvo,
+static bool tfp410_init(struct intel_dvo_device *dvo,
 			struct i2c_controller *adapter)
 {
 	/* this will detect the tfp410 chip on the specified i2c bus */
@@ -214,8 +196,7 @@ out:
 	return false;
 }
 
-enum drm_connector_status
-tfp410_detect(struct intel_dvo_device *dvo)
+static enum drm_connector_status tfp410_detect(struct intel_dvo_device *dvo)
 {
 	enum drm_connector_status ret = connector_status_disconnected;
 	uint8_t ctl2;
@@ -230,15 +211,13 @@ tfp410_detect(struct intel_dvo_device *dvo)
 	return ret;
 }
 
-enum drm_mode_status
-tfp410_mode_valid(struct intel_dvo_device *dvo,
+static enum drm_mode_status tfp410_mode_valid(struct intel_dvo_device *dvo,
 					      struct drm_display_mode *mode)
 {
 	return MODE_OK;
 }
 
-void
-tfp410_mode_set(struct intel_dvo_device *dvo,
+static void tfp410_mode_set(struct intel_dvo_device *dvo,
 			    struct drm_display_mode *mode,
 			    struct drm_display_mode *adjusted_mode)
 {
@@ -251,8 +230,7 @@ tfp410_mode_set(struct intel_dvo_device *dvo,
 }
 
 /* set the tfp410 power state */
-void
-tfp410_dpms(struct intel_dvo_device *dvo, bool enable)
+static void tfp410_dpms(struct intel_dvo_device *dvo, bool enable)
 {
 	uint8_t ctl1;
 
@@ -267,8 +245,7 @@ tfp410_dpms(struct intel_dvo_device *dvo, bool enable)
 	tfp410_writeb(dvo, TFP410_CTL_1, ctl1);
 }
 
-bool
-tfp410_get_hw_state(struct intel_dvo_device *dvo)
+static bool tfp410_get_hw_state(struct intel_dvo_device *dvo)
 {
 	uint8_t ctl1;
 
@@ -281,8 +258,7 @@ tfp410_get_hw_state(struct intel_dvo_device *dvo)
 		return false;
 }
 
-void
-tfp410_dump_regs(struct intel_dvo_device *dvo)
+static void tfp410_dump_regs(struct intel_dvo_device *dvo)
 {
 	uint8_t val, val2;
 
@@ -316,8 +292,7 @@ tfp410_dump_regs(struct intel_dvo_device *dvo)
 	DRM_LOG_KMS("TFP410_V_RES: 0x%02X%02X\n", val2, val);
 }
 
-void
-tfp410_destroy(struct intel_dvo_device *dvo)
+static void tfp410_destroy(struct intel_dvo_device *dvo)
 {
 	struct tfp410_priv *tfp = dvo->dev_priv;
 

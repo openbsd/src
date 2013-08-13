@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_bios.c,v 1.4 2013/07/05 07:20:27 jsg Exp $	*/
+/*	$OpenBSD: intel_bios.c,v 1.5 2013/08/13 10:23:50 jsg Exp $	*/
 /*
  * Copyright © 2006 Intel Corporation
  *
@@ -36,37 +36,9 @@
 #define	SLAVE_ADDR1	0x70
 #define	SLAVE_ADDR2	0x72
 
-void	*find_section(struct bdb_header *, int);
-u16	 get_blocksize(void *);
-void	 fill_detail_timing_data(struct drm_display_mode *,
-	     const struct lvds_dvo_timing *);
-bool	 lvds_dvo_timing_equal_size(const struct lvds_dvo_timing *,
-	     const struct lvds_dvo_timing *);
-const struct lvds_dvo_timing *
-	 get_lvds_dvo_timing(const struct bdb_lvds_lfp_data *,
-	     const struct bdb_lvds_lfp_data_ptrs *, int);
-void	 parse_lfp_panel_data(struct drm_i915_private *, struct bdb_header *);
-void	 parse_sdvo_panel_data(struct drm_i915_private *, struct bdb_header *);
-int	 intel_bios_ssc_frequency(struct drm_device *, bool);
-void	 parse_general_features(struct drm_i915_private *, struct bdb_header *);
-void	 parse_general_definitions(struct drm_i915_private *,
-	     struct bdb_header *);
-void	 parse_sdvo_device_mapping(struct drm_i915_private *,
-	     struct bdb_header *);
-void	 parse_driver_features(struct drm_i915_private *, struct bdb_header *);
-void	 parse_edp(struct drm_i915_private *, struct bdb_header *);
-void	 parse_device_mapping(struct drm_i915_private *, struct bdb_header *);
-void	 init_vbt_defaults(struct drm_i915_private *);
-int	 intel_no_opregion_vbt_callback(const struct dmi_system_id *);
-const struct lvds_fp_timing *
-	 get_lvds_fp_timing(const struct bdb_header *,
-	     const struct bdb_lvds_lfp_data *,
-	     const struct bdb_lvds_lfp_data_ptrs *, int);
-bool	 dmi_found(const struct dmi_system_id *);
-
 static int panel_type;
 
-void *
+static void *
 find_section(struct bdb_header *bdb, int section_id)
 {
 	u8 *base = (u8 *)bdb;
@@ -92,7 +64,7 @@ find_section(struct bdb_header *bdb, int section_id)
 	return NULL;
 }
 
-u16
+static u16
 get_blocksize(void *p)
 {
 	u16 *block_ptr, block_size;
@@ -102,7 +74,7 @@ get_blocksize(void *p)
 	return block_size;
 }
 
-void
+static void
 fill_detail_timing_data(struct drm_display_mode *panel_fixed_mode,
 			const struct lvds_dvo_timing *dvo_timing)
 {
@@ -145,7 +117,7 @@ fill_detail_timing_data(struct drm_display_mode *panel_fixed_mode,
 	drm_mode_set_name(panel_fixed_mode);
 }
 
-bool
+static bool
 lvds_dvo_timing_equal_size(const struct lvds_dvo_timing *a,
 			   const struct lvds_dvo_timing *b)
 {
@@ -181,7 +153,7 @@ lvds_dvo_timing_equal_size(const struct lvds_dvo_timing *a,
 	return true;
 }
 
-const struct lvds_dvo_timing *
+static const struct lvds_dvo_timing *
 get_lvds_dvo_timing(const struct bdb_lvds_lfp_data *lvds_lfp_data,
 		    const struct bdb_lvds_lfp_data_ptrs *lvds_lfp_data_ptrs,
 		    int index)
@@ -206,7 +178,7 @@ get_lvds_dvo_timing(const struct bdb_lvds_lfp_data *lvds_lfp_data,
 /* get lvds_fp_timing entry
  * this function may return NULL if the corresponding entry is invalid
  */
-const struct lvds_fp_timing *
+static const struct lvds_fp_timing *
 get_lvds_fp_timing(const struct bdb_header *bdb,
 		   const struct bdb_lvds_lfp_data *data,
 		   const struct bdb_lvds_lfp_data_ptrs *ptrs,
@@ -226,7 +198,7 @@ get_lvds_fp_timing(const struct bdb_header *bdb,
 }
 
 /* Try to find integrated panel data */
-void
+static void
 parse_lfp_panel_data(struct drm_i915_private *dev_priv,
 			    struct bdb_header *bdb)
 {
@@ -313,7 +285,7 @@ parse_lfp_panel_data(struct drm_i915_private *dev_priv,
 }
 
 /* Try to find sdvo panel data */
-void
+static void
 parse_sdvo_panel_data(struct drm_i915_private *dev_priv,
 		      struct bdb_header *bdb)
 {
@@ -354,8 +326,7 @@ parse_sdvo_panel_data(struct drm_i915_private *dev_priv,
 	drm_mode_debug_printmodeline(panel_fixed_mode);
 }
 
-int
-intel_bios_ssc_frequency(struct drm_device *dev,
+static int intel_bios_ssc_frequency(struct drm_device *dev,
 				    bool alternate)
 {
 	switch (INTEL_INFO(dev)->gen) {
@@ -369,7 +340,7 @@ intel_bios_ssc_frequency(struct drm_device *dev,
 	}
 }
 
-void
+static void
 parse_general_features(struct drm_i915_private *dev_priv,
 		       struct bdb_header *bdb)
 {
@@ -395,7 +366,7 @@ parse_general_features(struct drm_i915_private *dev_priv,
 	}
 }
 
-void
+static void
 parse_general_definitions(struct drm_i915_private *dev_priv,
 			  struct bdb_header *bdb)
 {
@@ -416,7 +387,7 @@ parse_general_definitions(struct drm_i915_private *dev_priv,
 	}
 }
 
-void
+static void
 parse_sdvo_device_mapping(struct drm_i915_private *dev_priv,
 			  struct bdb_header *bdb)
 {
@@ -506,7 +477,7 @@ parse_sdvo_device_mapping(struct drm_i915_private *dev_priv,
 	return;
 }
 
-void
+static void
 parse_driver_features(struct drm_i915_private *dev_priv,
 		       struct bdb_header *bdb)
 {
@@ -525,7 +496,7 @@ parse_driver_features(struct drm_i915_private *dev_priv,
 		dev_priv->render_reclock_avail = true;
 }
 
-void
+static void
 parse_edp(struct drm_i915_private *dev_priv, struct bdb_header *bdb)
 {
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -602,7 +573,7 @@ parse_edp(struct drm_i915_private *dev_priv, struct bdb_header *bdb)
 	}
 }
 
-void
+static void
 parse_device_mapping(struct drm_i915_private *dev_priv,
 		       struct bdb_header *bdb)
 {
@@ -668,7 +639,7 @@ parse_device_mapping(struct drm_i915_private *dev_priv,
 	return;
 }
 
-void
+static void
 init_vbt_defaults(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
@@ -692,8 +663,7 @@ init_vbt_defaults(struct drm_i915_private *dev_priv)
 	DRM_DEBUG_KMS("Set default to SSC at %dMHz\n", dev_priv->lvds_ssc_freq);
 }
 
-int
-intel_no_opregion_vbt_callback(const struct dmi_system_id *id)
+static int __init intel_no_opregion_vbt_callback(const struct dmi_system_id *id)
 {
 	DRM_DEBUG_KMS("Falling back to manually reading VBT from "
 		      "VBIOS ROM for %s\n",
@@ -715,7 +685,7 @@ static const struct dmi_system_id intel_no_opregion_vbt[] = {
 
 extern char *hw_vendor, *hw_prod;
 
-bool
+static bool
 dmi_found(const struct dmi_system_id *dsi)
 {
 	int i, slot;
@@ -837,8 +807,7 @@ intel_parse_bios(struct drm_device *dev)
 /* Ensure that vital registers have been initialised, even if the BIOS
  * is absent or just failing to do its job.
  */
-void
-intel_setup_bios(struct drm_device *dev)
+void intel_setup_bios(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
