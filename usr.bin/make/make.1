@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.105 2013/06/24 15:44:36 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.106 2013/08/14 08:39:26 jmc Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: June 24 2013 $
+.Dd $Mdocdate: August 14 2013 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -82,7 +82,9 @@ The handling of
 .Sq Pa BSDmakefile
 and
 .Sq Pa .depend
-are BSD extensions.
+are
+.Bx
+extensions.
 .Pp
 Standard options are as follows:
 .Bl -tag -width Ds
@@ -338,7 +340,9 @@ popularized by
 .Xr imake .
 The
 .Ic !\&
-operator is a BSD extension.
+operator is a
+.Bx
+extension.
 .Pp
 As an extension, targets and prerequisites may contain the shell wildcard
 expressions
@@ -521,13 +525,20 @@ to the variable (extension).
 .It Ic \&+=
 Append the value to the current value of the variable (extension).
 .It Ic \&?=
-Assign the value to the variable if it is not already defined (BSD
-extension).
+Assign the value to the variable if it is not already defined
+.Po
+.Bx
+extension
+.Pc .
 Normally, expansion is not done until the variable is referenced.
 .It Ic \&!=
 Expand the value and pass it to the shell for execution and assign
 the result to the variable.
-Any newlines in the result are replaced with spaces (BSD extension).
+Any newlines in the result are replaced with spaces
+.Po
+.Bx
+extension
+.Pc .
 .El
 .Pp
 Any whitespace before the assigned
@@ -970,7 +981,9 @@ may contain variable values, which will be expanded.
 To put an actual single dollar, just double it.
 .El
 .Pp
-All modifiers are BSD extensions, except for the standard
+All modifiers are
+.Bx
+extensions, except for the standard
 .At V
 style variable substitution.
 .Pp
@@ -1608,7 +1621,9 @@ For loops are expanded before tests, so a fragment such as:
 .Pp
 requires the quotes.
 .Pp
-When handling pre-BSD 4.4 archives,
+When handling
+.Pf pre- Bx 4.4
+archives,
 .Nm
 may erroneously mark archive members as out of date if the archive name
 was truncated.

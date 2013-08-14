@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.171 2013/06/09 12:54:38 tedu Exp $
+.\"	$OpenBSD: sysctl.8,v 1.172 2013/08/14 08:39:30 jmc Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: June 9 2013 $
+.Dd $Mdocdate: August 14 2013 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -487,7 +487,9 @@ To retrieve information about the load average history:
 .Pp
 To make the
 .Xr chown 2
-system call use traditional BSD semantics (don't clear setuid/setgid bits):
+system call use traditional
+.Bx
+semantics (don't clear setuid/setgid bits):
 .Pp
 .Dl # sysctl fs.posix.setuid=0
 .Pp

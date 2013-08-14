@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chpass.1,v 1.37 2012/06/20 21:32:27 schwarze Exp $
+.\"	$OpenBSD: chpass.1,v 1.38 2013/08/14 08:39:26 jmc Exp $
 .\"	$NetBSD: chpass.1,v 1.7 1996/05/15 21:50:40 jtc Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)chpass.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: June 20 2012 $
+.Dd $Mdocdate: August 14 2013 $
 .Dt CHPASS 1
 .Os
 .Sh NAME
@@ -146,7 +146,9 @@ entries, and that one by random selection.
 The
 .Ar group
 field is the group that the user will be placed in at login.
-Since BSD supports multiple groups (see
+Since
+.Bx
+supports multiple groups (see
 .Xr groups 1 ) ,
 this field currently has little special meaning.
 This field may be filled in with either a number or a group name (see

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.31 2010/04/09 16:25:21 jmc Exp $
+.\"	$OpenBSD: bpf.4,v 1.32 2013/08/14 08:39:29 jmc Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: April 9 2010 $
+.Dd $Mdocdate: August 14 2013 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -1033,7 +1033,9 @@ struct bpf_insn insns[] = {
 .Sh HISTORY
 The Enet packet filter was created in 1980 by Mike Accetta and Rick Rashid
 at Carnegie-Mellon University.
-Jeffrey Mogul, at Stanford, ported the code to BSD and continued its
+Jeffrey Mogul, at Stanford, ported the code to
+.Bx
+and continued its
 development from 1983 on.
 Since then, it has evolved into the Ultrix Packet Filter at DEC, a STREAMS
 NIT module under SunOS 4.1, and BPF.

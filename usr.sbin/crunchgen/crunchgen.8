@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crunchgen.8,v 1.6 2013/07/16 11:13:33 schwarze Exp $
+.\"	$OpenBSD: crunchgen.8,v 1.7 2013/08/14 08:39:33 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 University of Maryland
@@ -25,7 +25,7 @@
 .\"			   Computer Science Department
 .\"			   University of Maryland at College Park
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: August 14 2013 $
 .Dt CRUNCHGEN 8
 .Os
 .Sh NAME
@@ -179,7 +179,8 @@ commands are as follows:
 .It srcdirs Ar dirname ...
 A list of source trees in which the source directories of the
 component programs can be found.
-These dirs are searched using the BSD
+These dirs are searched using the
+.Bx
 .Dq <source-dir>/<progname>/
 convention.
 Multiple srcdirs lines can be specified.
@@ -313,7 +314,9 @@ Some shuffling in the order of libraries may be required,
 and in some rare cases two libraries may
 have an unresolvable conflict and thus cannot be crunched together.
 .Pp
-Some versions of the BSD build environment do not by default build the
+Some versions of the
+.Bx
+build environment do not by default build the
 intermediate object file for single-source file programs.
 The
 .Dq make objs

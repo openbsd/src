@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigreturn.2,v 1.9 2007/05/31 19:19:34 jmc Exp $
+.\"	$OpenBSD: sigreturn.2,v 1.10 2013/08/14 08:39:25 jmc Exp $
 .\"	$NetBSD: sigreturn.2,v 1.6 1995/02/27 12:37:40 cgd Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)sigreturn.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 14 2013 $
 .Dt SIGRETURN 2
 .Os
 .Sh NAME
@@ -56,8 +56,8 @@ when returning from a signal to the previously executing program.
 .Pp
 Note that sigcontext contains machine dependent information.
 .Sh NOTES
-This system call is not available in 4.2
-.Tn BSD
+This system call is not available in
+.Bx 4.2
 hence it should not be used if backward compatibility is needed.
 .Sh RETURN VALUES
 If successful, the system call does not return.

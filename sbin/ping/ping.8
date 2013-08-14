@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.47 2012/10/13 16:34:08 jmc Exp $
+.\"	$OpenBSD: ping.8,v 1.48 2013/08/14 08:39:30 jmc Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: October 13 2012 $
+.Dd $Mdocdate: August 14 2013 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -311,7 +311,12 @@ the TTL field by exactly one.
 The TCP/IP specification states that the TTL field
 for TCP packets should be set to 60,
 but many systems use smaller values
-(4.3 BSD uses 30, 4.2 used 15).
+.Po
+.Bx 4.3
+uses 30,
+.Bx 4.2
+used 15
+.Pc .
 .Pp
 The maximum possible value of this field is 255, and most
 .Ux
@@ -336,7 +341,7 @@ with the TTL field in its response:
 Not change it; this is what Berkeley
 .Ux
 systems did before the
-.Bx 4.3 tahoe
+.Bx 4.3 Tahoe
 release.
 In this case the TTL value in the received packet will be
 255 minus the number of routers in the round trip path.

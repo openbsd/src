@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_radius.8,v 1.11 2012/02/01 17:32:59 sobrado Exp $
+.\" $OpenBSD: login_radius.8,v 1.12 2013/08/14 08:39:31 jmc Exp $
 .\"
 .\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .\"
 .\"	BSDI $From: login_radius.8,v 1.2 1996/11/11 18:42:02 prb Exp $
 .\"
-.Dd $Mdocdate: February 1 2012 $
+.Dd $Mdocdate: August 14 2013 $
 .Dt LOGIN_RADIUS 8
 .Os
 .Sh NAME
@@ -68,8 +68,9 @@ The options are as follows:
 .Bl -tag -width indent
 .It Fl d
 Debug mode.
-Output is sent to the standard output instead of the BSD
-authentication backchannel.
+Output is sent to the standard output instead of the
+.Bx
+Authentication backchannel.
 .It Fl s Ar service
 Specify the service.
 Currently only

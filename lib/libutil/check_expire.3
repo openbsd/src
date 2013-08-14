@@ -1,4 +1,4 @@
-.\"	$OpenBSD: check_expire.3,v 1.8 2013/06/05 03:40:26 tedu Exp $
+.\"	$OpenBSD: check_expire.3,v 1.9 2013/08/14 08:39:26 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: August 14 2013 $
 .Dt CHECK_EXPIRE 3
 .Os
 .Sh NAME
@@ -28,7 +28,9 @@
 .Sh DESCRIPTION
 The
 .Fn login_check_expire
-function is called by a BSD authentication login script to
+function is called by a
+.Bx
+Authentication login script to
 check whether the user's password entry, as described by
 .Fa pwd ,
 has expired.

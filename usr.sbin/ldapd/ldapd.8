@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.8,v 1.10 2012/09/26 16:19:44 jmc Exp $
+.\"	$OpenBSD: ldapd.8,v 1.11 2013/08/14 08:39:31 jmc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 26 2012 $
+.Dd $Mdocdate: August 14 2013 $
 .Dt LDAPD 8
 .Os
 .Sh NAME
@@ -92,7 +92,9 @@ Verify the password against the
 .Xr crypt 3
 hash.
 .It Ic {BSDAUTH}username
-Use BSD Authentication with the given username and authentication style
+Use
+.Bx
+Authentication with the given username and authentication style
 .Dq auth-ldap .
 This is similar to using SASL PLAIN authentication with
 .Ar username
@@ -106,7 +108,9 @@ Without a prefix, the
 attribute is compared literally with the provided plain text password.
 .Pp
 When using SASL binds, the authentication ID should be a valid
-username for BSD Authentication.
+username for
+.Bx
+Authentication.
 .Pp
 For plain text passwords to be accepted, the connection must be
 considered secure, either by using an encrypted connection, or by

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.384 2013/08/10 10:17:36 miod Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.385 2013/08/14 08:39:28 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 10 2013 $
+.Dd $Mdocdate: August 14 2013 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -45,7 +45,9 @@ Those live under
 and they do have manpages under
 .Pa ${PORTSDIR}/infrastructure/man .
 .Pp
-Other BSD variants, as well as older versions of
+Other
+.Bx
+variants, as well as older versions of
 .Nm bsd.port.mk ,
 include other targets and variables.
 Conversion methods are outlined here.
@@ -4030,7 +4032,9 @@ Likewise, offensive to introspection too.
 .It Pa ${FILESDIR}/md5
 Renamed to
 .Pa distinfo
-to match other BSD, and save directories.
+to match other
+.Bx ,
+and save directories.
 .It Pa ${SCRIPTDIR}/{pre,do,post}-*
 Identical functionality can be obtained through a {pre,do,post}-* target,
 invoking the script manually if necessary.
@@ -4112,7 +4116,8 @@ inconsistencies.
 FLAVORS, MULTI_PACKAGES and FAKE are
 .Ox
 improvements.
-Most recent additions do not come from another BSD.
+Most recent additions do not come from another
+.Bx .
 .\" Voluntarily undocumented:
 .\" AUTOCONF_ENV: probably not needed anyway, should be internal.
 .Sh BUGS AND LIMITATIONS

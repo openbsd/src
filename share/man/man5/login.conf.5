@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.50 2012/11/25 21:18:13 jmc Exp $
+.\" $OpenBSD: login.conf.5,v 1.51 2013/08/14 08:39:28 jmc Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd $Mdocdate: November 25 2012 $
+.Dd $Mdocdate: August 14 2013 $
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -449,7 +449,9 @@ For example, to indicate 1 and 1/2 hours, the following string could be used:
 .\"
 .Sh AUTHENTICATION
 .Ox
-uses BSD Authentication, which is made up of a variety of
+uses
+.Bx
+Authentication, which is made up of a variety of
 authentication styles.
 The authentication styles currently provided are:
 .Bl -tag -width krb5-or-pwdxx
@@ -528,9 +530,12 @@ See
 .Pp
 Local authentication styles may be added by creating a login script
 for the style (see below).
-To prevent collisions with future official BSD
+To prevent collisions with future official
+.Bx
 Authentication style names, all local style names should start with a dash (-).
-Current plans are for all official BSD Authentication style names to begin
+Current plans are for all official
+.Bx
+Authentication style names to begin
 with a lower case alphabetic character.
 For example, if you have a new style you refer to as
 .Li slick

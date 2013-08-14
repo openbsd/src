@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tr.1,v 1.19 2011/09/03 22:59:07 jmc Exp $
+.\"	$OpenBSD: tr.1,v 1.20 2013/08/14 08:39:27 jmc Exp $
 .\"	$NetBSD: tr.1,v 1.5 1994/12/07 08:35:13 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)tr.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: August 14 2013 $
 .Dt TR 1
 .Os
 .Sh NAME
@@ -289,7 +289,9 @@ System V has historically implemented character ranges using the syntax
 .Dq [c-c]
 instead of the
 .Dq c-c
-used by historic BSD implementations and
+used by historic
+.Bx
+implementations and
 standardized by POSIX.
 System V shell scripts should work under this implementation as long as
 the range is intended to map in another range, i.e., the command

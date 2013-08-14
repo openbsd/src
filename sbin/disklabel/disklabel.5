@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.5,v 1.20 2011/06/05 11:57:17 krw Exp $
+.\"	$OpenBSD: disklabel.5,v 1.21 2013/08/14 08:39:30 jmc Exp $
 .\"	$NetBSD: disklabel.5,v 1.3 1995/03/18 14:54:36 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)disklabel.5.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: June 5 2011 $
+.Dd $Mdocdate: August 14 2013 $
 .Dt DISKLABEL 5
 .Os
 .Sh NAME
@@ -108,7 +108,9 @@ generation has changed (e.g. the fdisk partition table).
 All of these operations are normally done using
 .Xr disklabel 8 .
 .Pp
-Note that when a disk has no real BSD disklabel the kernel creates a
+Note that when a disk has no real
+.Bx
+disklabel the kernel creates a
 default label so that the disk can be used.
 This default label will include other partitions found on the disk if
 they are supported on your architecture.
@@ -118,7 +120,8 @@ partitions the default label will also include DOS and Linux partitions.
 However, these entries are not dynamic, they are fixed at the time
 .Xr disklabel 8
 is run.
-That means that subsequent changes that affect non-OpenBSD
+That means that subsequent changes that affect
+.Pf non- Ox
 partitions will not be present in the default label, though you
 may update them by hand.
 To see the default label, run

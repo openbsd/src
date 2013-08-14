@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm.3,v 1.8 2011/08/18 13:01:26 jmc Exp $
+.\"	$OpenBSD: kvm.3,v 1.9 2013/08/14 08:39:25 jmc Exp $
 .\"	$NetBSD: kvm.3,v 1.2 1996/03/18 22:33:11 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 18 2011 $
+.Dd $Mdocdate: August 14 2013 $
 .Dt KVM 3
 .Os
 .Sh NAME
@@ -81,7 +81,9 @@ Accordingly, the generic portion of the interface (i.e.,
 .Fn kvm_write ,
 and
 .Fn kvm_nlist )
-has been incorporated into the BSD interface.
+has been incorporated into the
+.Bx
+interface.
 Indeed, many kvm
 applications (i.e., debuggers and statistical monitors) use only
 this subset of the interface.
@@ -95,7 +97,9 @@ Finally, the Sun kvm error reporting semantics are poorly defined.
 The library can be configured either to print errors to stderr automatically,
 or to print no error messages at all.
 In the latter case, the nature of the error cannot be determined.
-To overcome this, the BSD interface includes a
+To overcome this, the
+.Bx
+interface includes a
 routine,
 .Xr kvm_geterr 3 ,
 to return (not print out) the error message

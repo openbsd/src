@@ -1,4 +1,4 @@
-.\"	$OpenBSD: authenticate.3,v 1.14 2013/06/05 03:39:22 tedu Exp $
+.\"	$OpenBSD: authenticate.3,v 1.15 2013/08/14 08:39:24 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	BSDI $From: authenticate.3,v 2.7 1998/09/03 20:27:20 prb Exp $
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: August 14 2013 $
 .Dt AUTHENTICATE 3
 .Os
 .Sh NAME
@@ -68,8 +68,9 @@
 .Ft auth_session_t *
 .Fn auth_verify "auth_session_t *as" "char *style" "char *name" "..."
 .Sh DESCRIPTION
-These functions provide a simplified interface to the BSD Authentication
-system
+These functions provide a simplified interface to the
+.Bx
+Authentication system
 .Pq see Xr bsd_auth 3 .
 The
 .Fn auth_userokay
@@ -130,9 +131,13 @@ The
 .Fn auth_usercheck
 function operates the same as the
 .Fn auth_userokay
-function except that it does not close the BSD Authentication session created.
+function except that it does not close the
+.Bx
+Authentication session created.
 Rather than returning the status of the session, it returns
-a pointer to the newly created BSD Authentication session.
+a pointer to the newly created
+.Bx
+Authentication session.
 .Pp
 The
 .Fn auth_userchallenge
@@ -146,7 +151,8 @@ However, rather than authenticating the user, it returns a possible
 challenge in the pointer pointed to by
 .Ar challengep .
 The return value of the function is a pointer to a newly created
-BSD Authentication session.
+.Bx
+Authentication session.
 This challenge, if not
 .Dv NULL ,
 should be displayed to the user.
@@ -167,7 +173,9 @@ If
 is zero then the session will be closed.
 The
 .Fn auth_userresponse
-function closes the BSD Authentication session and has the same
+function closes the
+.Bx
+Authentication session and has the same
 return value as
 .Fn auth_userokay .
 For security reasons, when a
@@ -250,14 +258,18 @@ The
 function is a front end to the
 .Xr auth_call 3
 function.
-It will open a BSD Authentication session, if needed, and will set
+It will open a
+.Bx
+Authentication session, if needed, and will set
 the style and user name based on the
 .Ar style
 and
 .Ar name
 arguments, if not
 .Dv NULL .
-Values for the style and user name in an existing BSD Authentication
+Values for the style and user name in an existing
+.Bx
+Authentication
 session will be replaced and the old values freed (if the calling program
 has obtained pointers to the style or user name via
 .Xr auth_getitem 3 ,
@@ -267,7 +279,9 @@ The variable arguments are passed to
 via the
 .Xr auth_set_va_list 3
 function.
-The, possibly created, BSD Authentication session is returned.
+The, possibly created,
+.Bx
+Authentication session is returned.
 The
 .Xr auth_getstate 3
 or
@@ -315,7 +329,9 @@ and
 .Fn auth_usercheck
 only, use the
 .Xr auth_setpwd 3
-function to copy the passwd struct into a BSD Authentication session structure
+function to copy the passwd struct into a
+.Bx
+Authentication session structure
 which can then be passed to
 .Fn auth_approval
 or
