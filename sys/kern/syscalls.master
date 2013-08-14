@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.134 2013/08/13 05:52:24 guenther Exp $
+;	$OpenBSD: syscalls.master,v 1.135 2013/08/14 05:26:14 guenther Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -555,13 +555,10 @@
 304	STD		{ int sys___getcwd(char *buf, size_t len); }
 305	STD		{ int sys_adjfreq(const int64_t *freq, \
 			    int64_t *oldfreq); }
-306	COMPAT_O53	{ int sys_getfsstat(struct statfs53 *buf, \
-			    size_t bufsize, int flags); }
-307	COMPAT_O53	{ int sys_statfs(const char *path, \
-			    struct statfs53 *buf); }
-308	COMPAT_O53	{ int sys_fstatfs(int fd, struct statfs53 *buf); }
-309	COMPAT_O53	{ int sys_fhstatfs(const fhandle_t *fhp, \
-			    struct statfs53 *buf); }
+306	OBSOL		getfsstat53
+307	OBSOL		statfs53
+308	OBSOL		fstatfs53
+309	OBSOL		fhstatfs53
 310	STD		{ int sys_setrtable(int rtableid); }
 311	STD		{ int sys_getrtable(void); }
 312	T32		{ int sys_getdirentries(int fd, char *buf, \
@@ -596,6 +593,6 @@
 			    const struct timespec32 *times, int flag); }
 327	T32		{ int sys_futimens(int fd, \
 			    const struct timespec32 *times); }
-328	COMPAT_O51	{ int sys___tfork(struct __tfork51 *param); }
+328	OBSOL		__tfork51
 329	STD NOLOCK	{ void sys___set_tcb(void *tcb); }
 330	STD NOLOCK	{ void *sys___get_tcb(void); }
