@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.48 2013/01/17 10:07:56 markus Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.49 2013/08/14 20:16:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -297,6 +297,11 @@ lsa_router_check(struct lsa *lsa, u_int16_t len)
 	off = sizeof(lsa->hdr) + sizeof(struct lsa_rtr);
 	if (off > len) {
 		log_warnx("lsa_check: invalid LSA router packet");
+		return (0);
+	}
+
+	if (lsa->hdr.ls_id != lsa->hdr.adv_rtr) {
+		log_warnx("lsa_check: invalid LSA router packet, bad adv_rtr");
 		return (0);
 	}
 
