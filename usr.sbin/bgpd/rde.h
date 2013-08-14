@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.146 2013/07/17 14:09:13 benno Exp $ */
+/*	$OpenBSD: rde.h,v 1.147 2013/08/14 20:34:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -76,7 +76,6 @@ struct rde_peer {
 	u_int16_t			 ribid;
 	u_int16_t			 short_as;
 	u_int16_t			 mrt_idx;
-	u_int8_t			 reconf_in;	/* in filter changed */
 	u_int8_t			 reconf_out;	/* out filter changed */
 	u_int8_t			 reconf_rib;	/* rib changed */
 };
@@ -287,6 +286,8 @@ struct rib_entry {
 struct rib {
 	char			name[PEER_DESCR_LEN];
 	struct rib_tree		rib;
+	struct filter_head	*in_rules;
+	struct filter_head	*in_rules_tmp;
 	u_int			rtableid;
 	u_int16_t		flags;
 	u_int16_t		id;
@@ -325,6 +326,7 @@ u_int32_t	 rde_local_as(void);
 int		 rde_noevaluate(void);
 int		 rde_decisionflags(void);
 int		 rde_as4byte(struct rde_peer *);
+void		 rde_free_filter(struct filter_head *);
 
 /* rde_attr.c */
 int		 attr_write(void *, u_int16_t, u_int8_t, u_int8_t, void *,
@@ -379,14 +381,13 @@ int		 community_ext_conv(struct filter_extcommunity *, u_int16_t,
 void		 prefix_evaluate(struct prefix *, struct rib_entry *);
 
 /* rde_filter.c */
-enum filter_actions rde_filter(u_int16_t, struct rde_aspath **,
-		     struct filter_head *, struct rde_peer *,
-		     struct rde_aspath *, struct bgpd_addr *, u_int8_t,
-		     struct rde_peer *, enum directions);
+enum filter_actions rde_filter(struct filter_head *, struct rde_aspath **,
+		     struct rde_peer *, struct rde_aspath *,
+		     struct bgpd_addr *, u_int8_t, struct rde_peer *);
 void		 rde_apply_set(struct rde_aspath *, struct filter_set_head *,
 		     u_int8_t, struct rde_peer *, struct rde_peer *);
 int		 rde_filter_equal(struct filter_head *, struct filter_head *,
-		     struct rde_peer *, enum directions);
+		     struct rde_peer *);
 
 /* rde_prefix.c */
 #define pt_empty(pt)	((pt)->refcnt == 0)

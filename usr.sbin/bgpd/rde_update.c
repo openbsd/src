@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.80 2012/04/12 17:31:05 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.81 2013/08/14 20:34:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -411,9 +411,8 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 			return;
 
 		pt_getaddr(old->prefix, &addr);
-		if (rde_filter(peer->ribid, NULL, rules, peer, old->aspath,
-		    &addr, old->prefix->prefixlen, old->aspath->peer,
-		    DIR_OUT) == ACTION_DENY)
+		if (rde_filter(rules, NULL, peer, old->aspath, &addr,
+		    old->prefix->prefixlen, old->aspath->peer) == ACTION_DENY)
 			return;
 
 		/* withdraw prefix */
@@ -430,9 +429,8 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 		}
 
 		pt_getaddr(new->prefix, &addr);
-		if (rde_filter(peer->ribid, &asp, rules, peer, new->aspath,
-		    &addr, new->prefix->prefixlen, new->aspath->peer,
-		    DIR_OUT) == ACTION_DENY) {
+		if (rde_filter(rules, &asp, peer, new->aspath, &addr,
+		    new->prefix->prefixlen, new->aspath->peer) == ACTION_DENY) {
 			path_put(asp);
 			up_generate_updates(rules, peer, NULL, old);
 			return;
@@ -474,8 +472,8 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	bzero(&addr, sizeof(addr));
 	addr.aid = aid;
 
-	if (rde_filter(peer->ribid, &fasp, rules, peer, asp, &addr, 0, NULL,
-	    DIR_OUT) == ACTION_DENY) {
+	if (rde_filter(rules, &fasp, peer, asp, &addr, 0, NULL) ==
+	    ACTION_DENY) {
 		path_put(fasp);
 		path_put(asp);
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.137 2013/07/17 14:09:13 benno Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.138 2013/08/14 20:34:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -82,6 +82,11 @@ rib_new(char *name, u_int rtableid, u_int16_t flags)
 	ribs[id].flags = flags;
 	ribs[id].rtableid = rtableid;
 
+	ribs[id].in_rules = calloc(1, sizeof(struct filter_head));
+	if (ribs[id].in_rules == NULL)
+		fatal(NULL);
+	TAILQ_INIT(ribs[id].in_rules);
+
 	return (id);
 }
 
@@ -91,7 +96,7 @@ rib_find(char *name)
 	u_int16_t id;
 
 	if (name == NULL || *name == '\0')
-		return (1);	/* XXX */
+		return (1);	/* no name returns the Loc-RIB */
 
 	for (id = 0; id < rib_size; id++) {
 		if (!strcmp(ribs[id].name, name))
@@ -108,6 +113,7 @@ rib_free(struct rib *rib)
 	struct rib_entry *re, *xre;
 	struct prefix *p, *np;
 
+	/* abort pending rib_dumps */
 	for (ctx = LIST_FIRST(&rib_dump_h); ctx != NULL; ctx = next) {
 		next = LIST_NEXT(ctx, entry);
 		if (ctx->ctx_rib == rib) {
@@ -126,8 +132,8 @@ rib_free(struct rib *rib)
 
 		/*
 		 * Removing the prefixes is tricky because the last one
-		 * will remove the rib_entry as well and at because we do
-		 * a empty check in prefix_destroy() it is not possible to
+		 * will remove the rib_entry as well and because we do
+		 * an empty check in prefix_destroy() it is not possible to
 		 * use the default for loop.
 		 */
 		while ((p = LIST_FIRST(&re->prefix_h))) {
@@ -145,6 +151,8 @@ rib_free(struct rib *rib)
 				break;
 		}
 	}
+	rde_free_filter(rib->in_rules_tmp);
+	rde_free_filter(rib->in_rules);
 	bzero(rib, sizeof(struct rib));
 }
 
