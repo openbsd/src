@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.5,v 1.27 2013/08/14 08:41:16 jmc Exp $
+.\" $OpenBSD: crontab.5,v 1.28 2013/08/14 14:58:06 millert Exp $
 .\"
 .Dd $Mdocdate: August 14 2013 $
 .Dt CRONTAB 5
@@ -111,9 +111,10 @@ daemon.
 is set to
 .Pa /bin/sh ,
 and
-.Ev LOGNAME
+.Ev LOGNAME ,
+.Ev HOME ,
 and
-.Ev HOME
+.Ev USER
 are set from the
 .Pa /etc/passwd
 line of the
@@ -125,26 +126,14 @@ and
 may be overridden by settings in the
 .Nm crontab ;
 .Ev LOGNAME
-may not.
-.Pp
-Note: on
-.Bx
-systems the
-.Ev LOGNAME
-variable is sometimes called
-.Ev USER .
-On
-.Ox ,
-.Xr cron 8
-will set both
-.Ev USER
 and
-.Ev LOGNAME
-to the same value.
+.Ev USER
+may not.
 .Pp
 In addition to
 .Ev LOGNAME ,
 .Ev HOME ,
+.Ev USER ,
 and
 .Ev SHELL ,
 .Xr cron 8
@@ -406,22 +395,10 @@ is the same as
 Months or days of the week can be specified by name.
 .Pp
 Environment variables can be set in the crontab.
-In
-.Bx
-or
-.At ,
-the
-environment handed to child processes is basically the one from
-.Pa /etc/rc .
 .Pp
-Command output is mailed to the crontab owner
-.Po
-.Bx
-can't do this
-.Pc ,
-can be
-mailed to a person other than the crontab owner (SysV can't do this), or the
-feature can be turned off and no mail will be sent at all (SysV can't do this
+Command output is mailed to the crontab owner, can be
+mailed to a person other than the crontab owner, or the
+feature can be turned off and no mail will be sent at all.
 either).
 .Pp
 All of the
