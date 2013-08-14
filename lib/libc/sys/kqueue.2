@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.27 2013/07/16 15:21:11 schwarze Exp $
+.\"	$OpenBSD: kqueue.2,v 1.28 2013/08/14 10:06:02 guenther Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: August 14 2013 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -133,12 +133,12 @@ The
 structure is defined as:
 .Bd -literal
 struct kevent {
-	u_int	ident;		/* identifier for this event */
-	short	filter;		/* filter for event */
-	u_short	flags;		/* action flags for kqueue */
-	u_int	fflags;		/* filter flag value */
-	int	data;		/* filter data value */
-	void	*udata;		/* opaque user data identifier */
+	uintptr_t  ident;	/* identifier for this event */
+	short	   filter;	/* filter for event */
+	u_short	   flags;	/* action flags for kqueue */
+	u_int	   fflags;	/* filter flag value */
+	quad_t	   data;	/* filter data value */
+	void	   *udata;	/* opaque user data identifier */
 };
 .Ed
 .Pp
