@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.142 2013/08/13 10:23:48 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.143 2013/08/14 02:16:54 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -532,24 +532,6 @@ struct drm_mem {
 #define lower_32_bits(n)	((u32)(n))
 #define upper_32_bits(_val) ((u_int32_t)(((_val) >> 16) >> 16))
 
-struct drm_ati_pcigart_info {
-	union pcigart_table {
-		struct fb_gart {
-			bus_space_tag_t		 bst;
-			bus_space_handle_t	 bsh;
-		}	fb;
-		struct mem_gart {
-			struct drm_dmamem	*mem;
-			u_int32_t		*addr;
-		}	dma;
-	}			 tbl;
-	bus_addr_t		 bus_addr;
-	bus_addr_t		 table_mask;
-	bus_size_t		 table_size;
-	int			 gart_table_location;
-	int			 gart_reg_if;
-};
-
 /*
  *  Locking protocol:
  * All drm object are uvm objects, as such they have a reference count and
@@ -950,12 +932,6 @@ int	drm_agp_unbind(struct drm_device *, struct drm_agp_binding *);
 /* Scatter Gather Support (drm_scatter.c) */
 void	drm_sg_cleanup(struct drm_device *, struct drm_sg_mem *);
 int	drm_sg_alloc(struct drm_device *, struct drm_scatter_gather *);
-
-/* ATI PCIGART support (ati_pcigart.c) */
-int	drm_ati_pcigart_init(struct drm_device *,
-	    struct drm_ati_pcigart_info *);
-int	drm_ati_pcigart_cleanup(struct drm_device *,
-	    struct drm_ati_pcigart_info *);
 
 /* Locking IOCTL support (drm_drv.c) */
 int	drm_lock(struct drm_device *, void *, struct drm_file *);
