@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.143 2013/08/14 02:16:54 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.144 2013/08/14 02:49:19 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -854,14 +854,6 @@ void	drm_core_ioremapfree(struct drm_local_map *, struct drm_device *);
 
 int	drm_mtrr_add(unsigned long, size_t, int);
 int	drm_mtrr_del(int, unsigned long, size_t, int);
-
-/* Heap interface (DEPRECATED) */
-int		 drm_init_heap(struct drm_heap *, int, int);
-struct drm_mem	*drm_alloc_block(struct drm_heap *, int, int,
-		     struct drm_file *);
-int		 drm_mem_free(struct drm_heap *, int, struct drm_file *);
-void		 drm_mem_release(struct drm_heap *, struct drm_file *);
-void		 drm_mem_takedown(struct drm_heap *);
 
 /* Context management (DRI1, deprecated) */
 int	drm_ctxbitmap_init(struct drm_device *);
