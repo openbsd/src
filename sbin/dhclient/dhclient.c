@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.260 2013/07/15 14:03:01 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.261 2013/08/14 13:52:53 florian Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -804,10 +804,10 @@ bind_lease(void)
 	options = lease->options;
 
 	/*
-	 * A duplicate lease once we are responsible means we don't
+	 * A duplicate lease once we are responsible & S_RENEWING means we don't
 	 * need to change the interface, routing table or resolv.conf.
 	 */
-	if ((client->flags & IS_RESPONSIBLE) &&
+	if ((client->flags & IS_RESPONSIBLE) && client->state == S_RENEWING &&
 	    compare_lease(client->active, client->new) == 0) {
 		client->new->resolv_conf = client->active->resolv_conf;
 		client->active->resolv_conf = NULL;
