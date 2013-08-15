@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.45 2013/03/21 21:59:32 deraadt Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.46 2013/08/15 18:19:50 miod Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -85,7 +85,7 @@ static struct _ypexclude *__ypexhead;
 
 static int __has_yppw();
 static int __has_ypmaster(void);
-static void __ypproto_set(struct passwd *, long *, int, int *);
+static void __ypproto_set(struct passwd *, long long *, int, int *);
 static int __ypparse(struct passwd *pw, char *s, int);
 
 #define LOOKUP_BYNAME 0
@@ -100,7 +100,7 @@ static struct passwd *__yppwlookup(int, char *, uid_t, struct passwd *,
 	(__has_ypmaster() ? "master.passwd.byuid" : "passwd.byuid")
 
 static void
-__ypproto_set(struct passwd *pw, long *buf, int flags, int *yp_pw_flagsp)
+__ypproto_set(struct passwd *pw, long long *buf, int flags, int *yp_pw_flagsp)
 {
 	char *ptr;
 
@@ -379,7 +379,7 @@ again:
 	if (__hashpw(&key, _pw_string, sizeof _pw_string,
 	    &_pw_passwd, &_pw_flags)) {
 #ifdef YP
-		static long __yppbuf[_PW_BUF_LEN / sizeof(long)];
+		static long long __yppbuf[_PW_BUF_LEN / sizeof(long long)];
 		const char *user, *host, *dom;
 
 		/* if we don't have YP at all, don't bother. */
@@ -519,7 +519,7 @@ __yppwlookup(int lookup, char *name, uid_t uid, struct passwd *pw,
 {
 	char bf[1 + _PW_NAME_LEN], *ypcurrent = NULL, *map = NULL;
 	int yp_pw_flags = 0, ypcurrentlen, r, s = -1, pw_keynum;
-	static long yppbuf[_PW_BUF_LEN / sizeof(long)];
+	static long long yppbuf[_PW_BUF_LEN / sizeof(long long)];
 	struct _ypexclude *ypexhead = NULL;
 	const char *host, *user, *dom;
 	DBT key;
