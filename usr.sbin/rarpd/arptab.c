@@ -1,4 +1,4 @@
-/*	$OpenBSD: arptab.c,v 1.20 2013/07/20 18:25:34 bluhm Exp $ */
+/*	$OpenBSD: arptab.c,v 1.21 2013/08/15 13:43:33 bluhm Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -96,7 +96,7 @@ arptab_set(u_char *eaddr, u_int32_t host)
 	struct sockaddr_inarp *sin = &sin_m;
 	struct rt_msghdr *rtm = &(m_rtmsg.m_rtm);
 	struct sockaddr_dl *sdl;
-	struct timeval time;
+	struct timeval now;
 	int rt;
 
 	getsocket();
@@ -109,8 +109,8 @@ arptab_set(u_char *eaddr, u_int32_t host)
 	sdl_m.sdl_alen = 6;
 	expire_time = 0;
 	doing_proxy = flags = export_only = 0;
-	gettimeofday(&time, 0);
-	expire_time = time.tv_sec + 20 * 60;
+	gettimeofday(&now, 0);
+	expire_time = now.tv_sec + 20 * 60;
 
 tryagain:
 	if (rtmsg(RTM_GET) < 0) {
