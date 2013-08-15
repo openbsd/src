@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.h,v 1.7 2004/06/17 22:11:55 millert Exp $	*/
+/*	$OpenBSD: globals.h,v 1.8 2013/08/15 20:19:26 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -25,6 +25,7 @@
 # define INIT(x)
 #endif
 
+#if 0
 XTRN const char *copyright[]
 #ifdef MAIN_PROGRAM
 	= {
@@ -37,6 +38,7 @@ XTRN const char *copyright[]
 	}
 #endif
 	;
+#endif
 
 XTRN const char *MonthNames[]
 #ifdef MAIN_PROGRAM
