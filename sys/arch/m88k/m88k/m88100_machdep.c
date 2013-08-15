@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_machdep.c,v 1.7 2009/02/21 18:37:48 miod Exp $	*/
+/*	$OpenBSD: m88100_machdep.c,v 1.8 2013/08/15 19:29:46 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -102,13 +102,13 @@ dae_print_one(u_int x, u_int dmax, u_int dmdx, u_int dmtx)
 		return;
 
 	if (ISSET(dmtx, DMT_WRITE))
-		printf("[DMT%d=%x: st.%c %x to %x as %d %s %s]\n",
+		printf("[DMT%d=%x: st.%c %x to %x en %x %s %s]\n",
 		    x, dmtx, dmtx & DMT_DAS ? 's' : 'u', dmdx, dmax,
 		    DMT_ENBITS(dmtx),
 		    dmtx & DMT_DOUB1 ? "double": "not double",
 		    dmtx & DMT_LOCKBAR ? "xmem": "not xmem");
 	else
-		printf("[DMT%d=%x: ld.%c r%d <- %x as %d %s %s]\n",
+		printf("[DMT%d=%x: ld.%c r%d <- %x en %x %s %s]\n",
 		    x, dmtx, dmtx & DMT_DAS ? 's' : 'u',
 		    DMT_DREGBITS(dmtx), dmax, DMT_ENBITS(dmtx),
 		    dmtx & DMT_DOUB1 ? "double": "not double",
@@ -145,13 +145,13 @@ dae_process(struct trapframe *eframe, u_int x,
 
       DAE_DEBUG(
 		if (ISSET(dmtx, DMT_WRITE))
-			printf("[DMT%d=%x: st.%c %x to %x as %d %s %s]\n",
+			printf("[DMT%d=%x: st.%c %x to %x en %x %s %s]\n",
 			    x, dmtx, dmtx & DMT_DAS ? 's' : 'u', dmdx, dmax,
 			    DMT_ENBITS(dmtx),
 			    dmtx & DMT_DOUB1 ? "double": "not double",
 			    dmtx & DMT_LOCKBAR ? "xmem": "not xmem");
 		else
-			printf("[DMT%d=%x: ld.%c r%d <- %x as %d %s %s]\n",
+			printf("[DMT%d=%x: ld.%c r%d <- %x en %x %s %s]\n",
 			    x, dmtx, dmtx & DMT_DAS ? 's' : 'u',
 			    DMT_DREGBITS(dmtx), dmax, DMT_ENBITS(dmtx),
 			    dmtx & DMT_DOUB1 ? "double": "not double",
@@ -250,7 +250,7 @@ dae_process(struct trapframe *eframe, u_int x,
 		 * was set...
 		 */
 		if (!ISSET(dmtx, DMT_WRITE)) {
-			if (x != 2) {
+			if (x < 2) {
 				/* RERUN xmem WITH DMD(x+1) */
 				dmdx =
 				    x == 0 ? eframe->tf_dmd1 : eframe->tf_dmd2;
