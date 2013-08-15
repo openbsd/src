@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.95 2013/03/09 16:48:55 deraadt Exp $
+#	$OpenBSD: files.alpha,v 1.96 2013/08/15 06:54:35 kettenis Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -181,8 +181,6 @@ file	arch/alpha/eisa/eisa_machdep.c		eisa
 #
 
 # include "dev/pci/files.pci" XXX SEE ABOVE
-
-include "dev/pci/files.agp"
 
 file	arch/alpha/pci/pciide_machdep.c		pciide
 

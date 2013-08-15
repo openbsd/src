@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.69 2013/08/12 04:11:52 jsg Exp $
+#	$OpenBSD: files.amd64,v 1.70 2013/08/15 06:54:35 kettenis Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -126,10 +126,7 @@ attach	amas at pci
 file	dev/pci/amas.c				amas
 
 # AGP bridge support. most attach at pchb
-include "dev/pci/files.agp"
 file	arch/amd64/pci/agp_machdep.c		agp
-
-include "dev/pci/drm/files.drm"
 
 #
 # CARDBUS
