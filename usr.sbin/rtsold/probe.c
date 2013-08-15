@@ -1,4 +1,4 @@
-/*	$OpenBSD: probe.c,v 1.13 2009/11/11 17:23:16 deraadt Exp $	*/
+/*	$OpenBSD: probe.c,v 1.14 2013/08/15 13:57:30 bluhm Exp $	*/
 /*	$KAME: probe.c,v 1.16 2002/06/10 20:00:36 itojun Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/sysctl.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
 
@@ -100,40 +101,51 @@ void
 defrouter_probe(struct ifinfo *ifinfo)
 {
 	u_char ntopbuf[INET6_ADDRSTRLEN];
-	struct in6_drlist dr;
-	int s, i;
+	int mib[] = { CTL_NET, PF_INET6, IPPROTO_ICMPV6, ICMPV6CTL_ND6_DRLIST };
+	char *buf;
+	struct in6_defrouter *p, *ep;
+	size_t l;
 	int ifindex = ifinfo->sdl->sdl_index;
 
-	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-		warnmsg(LOG_ERR, __func__, "socket: %s", strerror(errno));
+	if (!ifindex)
+		return;
+
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), NULL, &l, NULL, 0) < 0) {
+		warnmsg(LOG_ERR, __func__, "sysctl(ICMPV6CTL_ND6_DRLIST): %s",
+		    strerror(errno));
 		return;
 	}
-	memset(&dr, 0, sizeof(dr));
-	strlcpy(dr.ifname, "lo0", sizeof dr.ifname); /* dummy interface */
-	if (ioctl(s, SIOCGDRLST_IN6, (caddr_t)&dr) < 0) {
-		warnmsg(LOG_ERR, __func__, "ioctl(SIOCGDRLST_IN6): %s",
+	if (l == 0)
+		return;
+	buf = malloc(l);
+	if (buf == NULL) {
+		warnmsg(LOG_ERR, __func__, "malloc: %s", strerror(errno));
+		return;
+	}
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), buf, &l, NULL, 0) < 0) {
+		warnmsg(LOG_ERR, __func__, "sysctl(ICMPV6CTL_ND6_DRLIST): %s",
 		    strerror(errno));
-		goto closeandend;
+		free(buf);
+		return;
 	}
 
-	for (i = 0; i < DRLSTSIZ && dr.defrouter[i].if_index; i++) {
-		if (ifindex && dr.defrouter[i].if_index == ifindex) {
+	ep = (struct in6_defrouter *)(buf + l);
+	for (p = (struct in6_defrouter *)buf; p < ep; p++) {
+		if (p->if_index == ifindex) {
 			/* sanity check */
-			if (!IN6_IS_ADDR_LINKLOCAL(&dr.defrouter[i].rtaddr)) {
+			if (!IN6_IS_ADDR_LINKLOCAL(&p->rtaddr.sin6_addr)) {
 				warnmsg(LOG_ERR, __func__,
 				    "default router list contains a "
 				    "non-link-local address(%s)",
 				    inet_ntop(AF_INET6,
-				    &dr.defrouter[i].rtaddr,
+				    &p->rtaddr.sin6_addr,
 				    ntopbuf, INET6_ADDRSTRLEN));
 				continue; /* ignore the address */
 			}
-			sendprobe(&dr.defrouter[i].rtaddr, ifinfo);
+			sendprobe(&p->rtaddr.sin6_addr, ifinfo);
 		}
 	}
-
-closeandend:
-	close(s);
+	free(buf);
 }
 
 static void
