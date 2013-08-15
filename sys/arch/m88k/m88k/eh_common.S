@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.58 2013/05/25 16:22:12 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.59 2013/08/15 19:29:10 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1132,7 +1132,7 @@ ASLOCAL(pfsr_done)
 
 ASLOCAL(clear_FPi_ssbr_bit)
 	/*
-	 * Clear floatingpoint-imprecise ssbr bits.
+	 * Clear floating point imprecise ssbr bits.
 	 * Also, save appropriate FPU control registers to the E.F.
 	 *
 	 * r1:  return address to calling exception handler
@@ -1170,7 +1170,7 @@ ASLOCAL(clear_FPi_ssbr_bit)
 
 ASLOCAL(clear_FPp_ssbr_bit)
 	/*
-	 * Clear floating pont precise ssbr bits.
+	 * Clear floating point precise ssbr bits.
 	 * Also, save appropriate FPU control registers to the E.F.
 	 *
 	 * r1:  return address to calling exception handler
@@ -1204,7 +1204,7 @@ ASLOCAL(clear_FPp_ssbr_bit)
 	br.n	3f
 	 set	TMP3, TMP3, 1<5>	/* size=1 - clear one bit for float */
 2:
-	set	TMP3, TMP3, 1<6>	/* size=2 - clear two bit for double */
+	set	TMP3, TMP3, 1<6>	/* size=2 - clear two bits for double */
 3:
 	jmp.n	%r1
 	 clr	TMP,  TMP,  TMP3	/* clear bit(s) in ssbr. */
