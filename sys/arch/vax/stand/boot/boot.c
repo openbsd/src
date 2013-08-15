@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.22 2013/07/05 21:13:06 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.23 2013/08/15 13:00:48 otto Exp $ */
 /*	$NetBSD: boot.c,v 1.18 2002/05/31 15:58:26 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -56,7 +56,7 @@ extern	unsigned opendev;
 void	usage(char *), boot(char *), halt(char *);
 void	Xmain(void);
 void	autoconf(void);
-int	getsecs(void);
+time_t	getsecs(void);
 int	setjmp(int *);
 int	testkey(void);
 

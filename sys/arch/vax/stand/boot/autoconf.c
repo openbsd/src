@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.15 2013/07/13 16:33:22 miod Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.16 2013/08/15 13:00:48 otto Exp $ */
 /*	$NetBSD: autoconf.c,v 1.19 2002/06/01 15:33:22 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -52,7 +52,7 @@ void findcpu(void);
 void consinit(void);
 void scbinit(void);
 void clkstart(void);
-int getsecs(void);
+time_t getsecs(void);
 void scb_stray(void *);
 void scb_silent(void *);
 void longjmp(int *);
@@ -131,7 +131,7 @@ autoconf(void)
 
 volatile int tickcnt;
 
-int
+time_t
 getsecs(void)
 {
 	return tickcnt/100;
