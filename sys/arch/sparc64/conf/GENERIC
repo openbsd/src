@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.269 2012/10/17 12:12:18 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.270 2013/08/15 18:33:49 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -483,7 +483,7 @@ machfb*		at pci?			# PGX/PGX64 framebuffers
 wsdisplay*	at machfb?
 mgx*		at sbus?		# SMS MGX/MGXPlus framebuffer
 wsdisplay*	at mgx?
-radeonfb*	at pci?			# XVR-100 framebuffer
+radeonfb*	at pci?			# XVR-100/300 framebuffer
 wsdisplay*	at radeonfb?
 raptor*		at pci?			# Raptor framebuffer
 wsdisplay*	at raptor?
@@ -497,6 +497,10 @@ vigra*		at sbus?		# Viagra framebuffer series
 wsdisplay*	at vigra?
 zx*		at sbus?		# Sun Leo (ZX) framebuffer
 wsdisplay*	at zx?
+
+radeondrm*	at pci?			# ATI Radeon DRM driver
+drm*		at radeondrm?
+wsdisplay*	at radeondrm?
 
 audiocs*	at sbus?
 
