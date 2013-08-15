@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110_fp.c,v 1.7 2013/01/05 11:20:56 miod Exp $	*/
+/*	$OpenBSD: m88110_fp.c,v 1.8 2013/08/15 19:30:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, Miodrag Vallat.
@@ -625,17 +625,17 @@ fpu_compare(struct trapframe *frame, fparg *s1, fparg *s2, u_int width,
 		if (float32_eq(s1->sng, s2->sng))
 			cc = CC_EQ;
 		else if (float32_lt(s1->sng, s2->sng))
-			cc = CC_LT;
+			cc = CC_LT | CC_NE;
 		else
-			cc = CC_GT;
+			cc = CC_GT | CC_NE;
 		break;
 	case FTYPE_DBL:
 		if (float64_eq(s1->dbl, s2->dbl))
 			cc = CC_EQ;
 		else if (float64_lt(s1->dbl, s2->dbl))
-			cc = CC_LT;
+			cc = CC_LT | CC_NE;
 		else
-			cc = CC_GT;
+			cc = CC_GT | CC_NE;
 		break;
 	}
 
