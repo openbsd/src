@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan_var.h,v 1.20 2010/06/03 16:15:00 naddy Exp $	*/
+/*	$OpenBSD: if_vlan_var.h,v 1.21 2013/08/15 09:18:37 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -95,8 +95,6 @@ struct	vlanreq {
 	char	vlr_parent[IFNAMSIZ];
 	u_short	vlr_tag;
 };
-#define	SIOCSETVLAN	SIOCSIFGENERIC
-#define	SIOCGETVLAN	SIOCGIFGENERIC
 
 #ifdef _KERNEL
 extern	int vlan_input(struct ether_header *eh, struct mbuf *m);
