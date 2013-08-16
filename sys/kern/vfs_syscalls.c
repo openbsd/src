@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.196 2013/08/14 05:26:14 guenther Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.197 2013/08/16 08:33:20 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2689,7 +2689,7 @@ sys_getdents(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_getdents_args /* {
 		syscallarg(int) fd;
-		syscallarg(struct dirent *) buf;
+		syscallarg(void *) buf;
 		syscallarg(size_t) buflen;
 	} */ *uap = v;
 	struct vnode *vp;
@@ -2701,7 +2701,7 @@ sys_getdents(struct proc *p, void *v, register_t *retval)
 
 	buflen = SCARG(uap, buflen);
 
-	if (buflen < 0)
+	if (buflen > INT_MAX)
 		return EINVAL;
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.31 2013/06/02 16:14:59 guenther Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.32 2013/08/16 08:33:20 guenther Exp $	*/
 /*	$NetBSD: dirent.h,v 1.9 1995/03/26 20:13:37 jtc Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@
 
 /*
  * The kernel defines the format of directory entries returned by 
- * the getdirentries(2) system call.
+ * the getdents(2) system call.
  */
 #include <sys/dirent.h>
 
@@ -84,6 +84,8 @@ struct dirent *readdir(DIR *);
 void rewinddir(DIR *);
 int closedir(DIR *);
 #if __BSD_VISIBLE
+int getdents(int, void *, size_t)
+		__attribute__ ((__bounded__(__string__,2,3)));
 int getdirentries(int, char *, int, off_t *)
 		__attribute__ ((__bounded__(__string__,2,3)));
 #endif /* __BSD_VISIBLE */
