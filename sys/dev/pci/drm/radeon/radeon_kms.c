@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.2 2013/08/16 19:36:50 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1777,7 +1777,7 @@ radeondrm_attachhook(void *xsc)
 
 		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&radeondrm_stdscreen, ri->ri_active,
-		    0, 0, defattr);
+		    ri->ri_ccol, ri->ri_crow, defattr);
 	}
 
 	/*
