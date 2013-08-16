@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.49 2013/08/12 08:03:56 mpi Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.50 2013/08/16 18:20:46 kettenis Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -103,10 +103,7 @@ vgafb_init(bus_space_tag_t iot, bus_space_tag_t memt, struct vga_config *vc,
 	vc->vc_memt = memt;
 	vc->membase = membase;
 	vc->memsize = memsize;
-
-	if (bus_space_map(vc->vc_memt, membase, memsize,
-	    /* XXX */ppc_proc_is_64b ? 0 : 1, &vc->vc_memh))
-		panic("vgafb_init: can't map mem space");
+	vc->vc_memh = (bus_space_handle_t)mapiodev(membase, memsize);
 }
 
 void
