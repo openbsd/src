@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.2 2013/08/16 19:36:50 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.3 2013/08/16 19:53:53 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1530,6 +1530,30 @@ radeondrm_getchar(void *v, int row, int col, struct wsdisplay_charcell *cell)
 	return rasops_getchar(ri, row, col, cell);
 }
 
+#ifdef __sparc64__
+void	radeondrm_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
+
+void
+radeondrm_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
+{
+	struct sunfb *sf = v;
+	struct radeon_device *rdev = sf->sf_ro.ri_hw;
+	struct drm_fb_helper *fb_helper = (void *)rdev->mode_info.rfbdev;
+	u_int16_t red, green, blue;
+	struct drm_crtc *crtc;
+	int i;
+
+	for (i = 0; i < fb_helper->crtc_count; i++) {
+		crtc = fb_helper->crtc_info[i].mode_set.crtc;
+
+		red = (r << 8) | r;
+		green = (g << 8) | g;
+		blue = (b << 8) | b;
+		fb_helper->funcs->gamma_set(crtc, red, green, blue, index);
+	}
+}
+#endif
+
 /**
  * radeon_driver_load_kms - Main load function for KMS.
  *
@@ -1749,6 +1773,9 @@ radeondrm_attachhook(void *xsc)
 	if (ri->ri_bits == NULL)
 		return;
 
+#ifdef __sparc64__
+	fbwscons_setcolormap(&rdev->sf, radeondrm_setcolor);
+#endif
 	drm_fb_helper_restore();
 
 	ri->ri_flg = RI_CENTER | RI_VCONS | RI_WRONLY;
