@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.51 2013/08/15 09:18:37 mpi Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.52 2013/08/16 12:29:18 mpi Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -83,9 +83,6 @@
 #define	SIOCSIFMEDIA	_IOWR('i', 53, struct ifreq)	/* set net media */
 #define	SIOCGIFMEDIA	_IOWR('i', 54, struct ifmediareq) /* get net media */
 
-#define	SIOCSIFGENERIC	 _IOW('i', 57, struct ifreq)	/* generic IF set op */
-#define	SIOCGIFGENERIC	_IOWR('i', 58, struct ifreq)	/* generic IF get op */
-
 #define SIOCSIFPHYADDR   _IOW('i', 70, struct ifaliasreq) /* set gif address */
 #define	SIOCGIFPSRCADDR	_IOWR('i', 71, struct ifreq)	/* get gif psrc addr */
 #define	SIOCGIFPDSTADDR	_IOWR('i', 72, struct ifreq)	/* get gif pdst addr */
@@ -163,6 +160,9 @@
 
 #define	SIOCSETVLAN	 _IOW('i', 143, struct ifreq)	/* set vlan parent if */
 #define	SIOCGETVLAN	_IOWR('i', 144, struct ifreq)	/* get vlan parent if */
+
+#define	SIOCSSPPPPARAMS	 _IOW('i', 147, struct ifreq)	/* set pppoe params */
+#define	SIOCGSPPPPARAMS	_IOWR('i', 148, struct ifreq)	/* get pppoe params */
 
 #define SIOCSETLABEL	 _IOW('i', 153, struct ifreq)	/* set MPLS label */
 #define SIOCGETLABEL	 _IOW('i', 154, struct ifreq)	/* get MPLS label */
