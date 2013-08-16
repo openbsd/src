@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2012/08/31 16:13:20 pascal Exp $
+#	$OpenBSD: Makefile,v 1.24 2013/08/16 08:16:45 otto Exp $
 
 MAN=	boot.8
 MANSUBDIR=hppa
@@ -15,7 +15,7 @@ SRCS+=	bootarg.c boot.c vars.c cmd.c
 
 .PATH:	${S}/lib/libkern/arch/hppa ${S}/lib/libkern
 SRCS+=	milli.S ashrdi3.c memcmp.c memcpy.c memset.c moddi3.c muldi3.c \
-	qdivrem.c strcmp.c strlcpy.c strlen.c strncmp.c strncpy.c
+	qdivrem.c strcmp.c strlcpy.c strlen.c strncmp.c strncpy.c divdi3.c
 
 LD?=	ld
 LDFLAGS+=-Bstatic -nostartfiles -nostdlib -N -Ttext $(LINKADDR) -nopie
