@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.33 2013/08/12 08:38:03 mpi Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.34 2013/08/17 09:11:22 mpi Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -168,33 +168,18 @@ vgafb_pci_attach(struct device *parent, struct device  *self, void *aux)
 	struct vga_config *vc;
 	u_int32_t memaddr, memsize;
 	u_int32_t mmioaddr, mmiosize;
-	int console, node;
-	pcireg_t reg;
-
-
-	node = PCITAG_NODE(pa->pa_tag);
 
  	vga_pci_bar_init(sc, pa);
 	vgafb_pci_mem_init(sc, &memaddr, &memsize, &mmioaddr, &mmiosize);
 
+	vc = sc->sc_vc = &vgafbcn;
 
-	console = vgafb_is_console(node);
-	if (console) {
-		vc = sc->sc_vc = &vgafbcn;
-
-		/*
-		 * The previous size was not necessarily the real size
-		 * but what is needed for the glass console.
-		 */
-		vc->membase = memaddr;
-		vc->memsize = memsize;
-	} else {
-		vc = sc->sc_vc = (struct vga_config *)
-		    malloc(sizeof(struct vga_config), M_DEVBUF, M_WAITOK);
-
-		/* set up bus-independent VGA configuration */
-		vgafb_init(pa->pa_iot, pa->pa_memt, vc, memaddr, memsize);
-	}
+	/*
+	 * The previous size was not necessarily the real size
+	 * but what is needed for the glass console.
+	 */
+	vc->membase = memaddr;
+	vc->memsize = memsize;
 
 	if (mmiosize != 0) {
 		vc->mmiobase = mmioaddr;
@@ -204,12 +189,5 @@ vgafb_pci_attach(struct device *parent, struct device  *self, void *aux)
 	}
 	printf("\n");
 
-	/*
-	 * Enable bus master; X might need this for accelerated graphics.
-	 */
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	reg |= PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
-
-	vgafb_wsdisplay_attach(self, vc, console);
+	vgafb_wsdisplay_attach(self, vc, 1);
 }
