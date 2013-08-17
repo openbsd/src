@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.51 2013/08/17 09:15:47 mpi Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.52 2013/08/17 10:59:38 mpi Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -110,25 +110,19 @@ vgafb_restore_default_colors(struct vga_config *vc)
 }
 
 void
-vgafb_wsdisplay_attach(struct device *parent, struct vga_config *vc,
-    int console)
+vgafb_wsdisplay_attach(struct device *parent, struct vga_config *vc)
 {
 	struct wsemuldisplaydev_attach_args aa;
+	struct rasops_info *ri = &vc->ri;
+	long defattr;
 
-	/* Setup virtual console now that we can allocate resources. */
-	if (console) {
-		struct rasops_info *ri = &vc->ri;
-		long defattr;
+	ri->ri_flg = RI_CENTER | RI_VCONS | RI_WRONLY;
+	rasops_init(ri, 160, 160);
 
-		ri->ri_flg |= RI_VCONS | RI_WRONLY;
-		rasops_init(ri, 160, 160);
+	ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+	wsdisplay_cnattach(&vgafb_stdscreen, ri->ri_active, 0, 0, defattr);
 
-		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
-		wsdisplay_cnattach(&vgafb_stdscreen, ri->ri_active,
-		    0, 0, defattr);
-	}
-
-	aa.console = console;
+	aa.console = 1;
 	aa.scrdata = &vgafb_screenlist;
 	aa.accessops = &vgafb_accessops;
 	aa.accesscookie = vc;
