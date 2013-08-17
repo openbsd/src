@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.25 2012/10/03 22:46:09 miod Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.26 2013/08/17 15:44:08 bluhm Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -85,7 +85,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #endif
 
