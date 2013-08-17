@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafbvar.h,v 1.20 2013/08/12 08:03:56 mpi Exp $	*/
+/*	$OpenBSD: vgafbvar.h,v 1.21 2013/08/17 09:15:47 mpi Exp $	*/
 /*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
@@ -55,6 +55,4 @@ struct vga_config {
 int	vgafb_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);
 int	vgafb_is_console(int);
 
-void	vgafb_init(bus_space_tag_t, bus_space_tag_t,
-	    struct vga_config *, u_int32_t, size_t);
 void	vgafb_wsdisplay_attach(struct device *, struct vga_config *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.50 2013/08/16 18:20:46 kettenis Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.51 2013/08/17 09:15:47 mpi Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -95,16 +95,6 @@ int	vgafb_putcmap(struct vga_config *vc, struct wsdisplay_cmap *cm);
 #ifdef APERTURE
 extern int allowaperture;
 #endif
-
-void
-vgafb_init(bus_space_tag_t iot, bus_space_tag_t memt, struct vga_config *vc,
-    u_int32_t  membase, size_t memsize)
-{
-	vc->vc_memt = memt;
-	vc->membase = membase;
-	vc->memsize = memsize;
-	vc->vc_memh = (bus_space_handle_t)mapiodev(membase, memsize);
-}
 
 void
 vgafb_restore_default_colors(struct vga_config *vc)
@@ -308,18 +298,16 @@ vgafb_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	struct vga_config *vc = &vgafbcn;
 	struct rasops_info *ri = &vc->ri;
 	long defattr;
-	int i;
 
-	vgafb_init(iot, memt, vc, cons_addr, cons_linebytes * cons_height);
+	vc->vc_memt = memt;
+	vc->membase = cons_addr;
+	vc->memsize = cons_linebytes * cons_height;
+	vc->vc_memh = (bus_space_handle_t)mapiodev(vc->membase, vc->memsize);
 
 	if (cons_depth == 8)
 		vgafb_restore_default_colors(vc);
 
-	/* Clear the screen */
-	for (i = 0; i < cons_linebytes * cons_height; i++)
-		bus_space_write_1(memt,	vc->vc_memh, i, 0);
-
-	ri->ri_flg = RI_CENTER;
+	ri->ri_flg = RI_FULLCLEAR | RI_CLEAR;
 	ri->ri_depth = cons_depth;
 	ri->ri_bits = (void *)vc->vc_memh;
 	ri->ri_width = cons_width;
