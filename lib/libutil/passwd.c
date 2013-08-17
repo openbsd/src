@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.51 2013/08/06 22:47:43 millert Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.52 2013/08/17 06:54:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -347,19 +347,20 @@ pw_copy(int ffd, int tfd, const struct passwd *pw, const struct passwd *opw)
 				pw_error(NULL, 0, 1);
 			}
 		}
-		(void)fprintf(to, "%s:%s:%u:%u:%s:%d:%d:%s:%s:%s\n",
+		(void)fprintf(to, "%s:%s:%u:%u:%s:%lld:%lld:%s:%s:%s\n",
 		    pw->pw_name, pw->pw_passwd, (u_int)pw->pw_uid,
-		    (u_int)pw->pw_gid, pw->pw_class, pw->pw_change,
-		    pw->pw_expire, pw->pw_gecos, pw->pw_dir,
+		    (u_int)pw->pw_gid, pw->pw_class, (long long)pw->pw_change,
+		    (long long)pw->pw_expire, pw->pw_gecos, pw->pw_dir,
 		    pw->pw_shell);
 		done = 1;
 		if (ferror(to))
 			goto fail;
 	}
 	if (!done)
-		(void)fprintf(to, "%s:%s:%u:%u:%s:%d:%d:%s:%s:%s\n",
-		    pw->pw_name, pw->pw_passwd, pw->pw_uid, pw->pw_gid,
-		    pw->pw_class, pw->pw_change, pw->pw_expire, pw->pw_gecos,
+		(void)fprintf(to, "%s:%s:%u:%u:%s:%lld:%lld:%s:%s:%s\n",
+		    pw->pw_name, pw->pw_passwd, (u_int)pw->pw_uid,
+		    (u_int)pw->pw_gid, pw->pw_class, (long long)pw->pw_change,
+		    (long long)pw->pw_expire, pw->pw_gecos,
 		    pw->pw_dir, pw->pw_shell);
 
 	if (ferror(to))
@@ -426,12 +427,12 @@ pw_scan(char *bp, struct passwd *pw, int *flags)
 	pw->pw_class = strsep(&bp, ":");		/* class */
 	if (!(p = strsep(&bp, ":")))			/* change */
 		goto fmt;
-	pw->pw_change = atol(p);
+	pw->pw_change = atoll(p);
 	if ((*p == '\0') && (flags != (int *)NULL))
 		*flags |= _PASSWORD_NOCHG;
 	if (!(p = strsep(&bp, ":")))			/* expire */
 		goto fmt;
-	pw->pw_expire = atol(p);
+	pw->pw_expire = atoll(p);
 	if ((*p == '\0') && (flags != (int *)NULL))
 		*flags |= _PASSWORD_NOEXP;
 	pw->pw_gecos = strsep(&bp, ":");		/* gecos */
