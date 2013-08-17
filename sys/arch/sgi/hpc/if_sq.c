@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.8 2012/05/28 17:03:35 miod Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.9 2013/08/17 15:50:06 bluhm Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #endif
 
