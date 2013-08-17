@@ -1,4 +1,4 @@
-/*	$OpenBSD: utwitch.c,v 1.7 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: utwitch.c,v 1.8 2013/08/17 08:34:45 sthen Exp $ */
 
 /*
  * Copyright (c) 2010 Yojiro UO <yuo@nui.org>
@@ -51,19 +51,14 @@
 #define UPDATE_TICK	5 /* sec */
 
 #ifdef UYUREX_DEBUG
-int	utwitchdebug = 0;
-#define DPRINTFN(n, x)	do { if (utwitchdebug > (n)) printf x; } while (0)
+#define DPRINTF(x)	do { printf x; } while (0)
 #else
-#define DPRINTFN(n, x)
+#define DPRINTF(x)
 #endif
-
-#define DPRINTF(x) DPRINTFN(0, x)
 
 struct utwitch_softc {
 	struct uhidev		 sc_hdev;
 	struct usbd_device	*sc_udev;
-	u_char			 sc_dying;
-	uint16_t		 sc_flag;
 
 	/* uhidev parameters */
 	size_t			 sc_flen;	/* feature report length */
@@ -94,7 +89,6 @@ const struct usb_devno utwitch_devs[] = {
 int utwitch_match(struct device *, void *, void *);
 void utwitch_attach(struct device *, struct device *, void *);
 int utwitch_detach(struct device *, int);
-int utwitch_activate(struct device *, int);
 
 void utwitch_set_mode(struct utwitch_softc *, uint8_t);
 void utwitch_read_value_request(struct utwitch_softc *);
@@ -111,8 +105,7 @@ const struct cfattach utwitch_ca = {
 	sizeof(struct utwitch_softc),
 	utwitch_match,
 	utwitch_attach,
-	utwitch_detach,
-	utwitch_activate,
+	utwitch_detach
 };
 
 int
@@ -191,8 +184,6 @@ utwitch_detach(struct device *self, int flags)
 	struct utwitch_softc *sc = (struct utwitch_softc *)self;
 	int rv = 0;
 
-	sc->sc_dying = 1;
-
 	wakeup(&sc->sc_sensortask);
 	sensordev_deinstall(&sc->sc_sensordev);
 	sensor_detach(&sc->sc_sensordev, &sc->sc_sensor_val);
@@ -206,19 +197,6 @@ utwitch_detach(struct device *self, int flags)
 	}
 
 	return (rv);
-}
-
-int
-utwitch_activate(struct device *self, int act)
-{
-	struct utwitch_softc *sc = (struct utwitch_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
-		break;
-	}
-	return (0);
 }
 
 void

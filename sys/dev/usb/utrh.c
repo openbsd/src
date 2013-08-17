@@ -1,4 +1,4 @@
-/*	$OpenBSD: utrh.c,v 1.10 2013/04/15 09:23:02 mglocker Exp $   */
+/*	$OpenBSD: utrh.c,v 1.11 2013/08/17 08:34:45 sthen Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -39,13 +39,10 @@
 #endif
 
 #ifdef UTRH_DEBUG
-int	utrhdebug = 0;
-#define DPRINTFN(n, x)	do { if (utrhdebug > (n)) printf x; } while (0)
+#define DPRINTF(x)	do { printf x; } while (0)
 #else
-#define DPRINTFN(n, x)
+#define DPRINTF(x)
 #endif
-
-#define DPRINTF(x) DPRINTFN(0, x)
 
 /* sensors */
 #define UTRH_TEMP		0
@@ -55,8 +52,6 @@ int	utrhdebug = 0;
 struct utrh_softc {
 	struct uhidev		 sc_hdev;
 	struct usbd_device	*sc_udev;
-	u_char			 sc_dying;
-	uint16_t		 sc_flag;
 
 	/* uhidev parameters */
 	size_t			 sc_flen;	/* feature report length */
@@ -80,7 +75,6 @@ const struct usb_devno utrh_devs[] = {
 int utrh_match(struct device *, void *, void *);
 void utrh_attach(struct device *, struct device *, void *);
 int utrh_detach(struct device *, int);
-int utrh_activate(struct device *, int);
 
 int utrh_sht1x_temp(unsigned int);
 int utrh_sht1x_rh(unsigned int, int);
@@ -96,8 +90,7 @@ const struct cfattach utrh_ca = {
 	sizeof(struct utrh_softc),
 	utrh_match,
 	utrh_attach,
-	utrh_detach,
-	utrh_activate,
+	utrh_detach
 };
 
 int
@@ -190,19 +183,6 @@ utrh_detach(struct device *self, int flags)
 	}
 
 	return (rv);
-}
-
-int
-utrh_activate(struct device *self, int act)
-{
-	struct utrh_softc *sc = (struct utrh_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
-		break;
-	}
-	return (0);
 }
 
 void
