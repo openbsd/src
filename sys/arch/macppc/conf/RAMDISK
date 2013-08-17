@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.94 2013/08/09 09:12:42 mpi Exp $
+#	$OpenBSD: RAMDISK,v 1.95 2013/08/17 08:33:11 mpi Exp $
 #
 # PPC GENERIC config file
 #
@@ -6,10 +6,6 @@
 machine		macppc powerpc
 
 maxusers	32
-
-# default type, instructs system to try to determin what proper type is
-# actual machine type probed via name of openfirmware root node.
-option		SYS_TYPE=APPL
 
 option		PCIVERBOSE
 

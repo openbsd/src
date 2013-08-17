@@ -1,4 +1,4 @@
-/*	$OpenBSD: powerpc.h,v 1.9 2011/04/15 20:52:56 deraadt Exp $	*/
+/*	$OpenBSD: powerpc.h,v 1.10 2013/08/17 08:33:11 mpi Exp $	*/
 /*	$NetBSD: powerpc.h,v 1.1 1996/09/30 16:34:30 ws Exp $	*/
 
 /*
@@ -76,8 +76,6 @@ struct firmware {
 #endif
 };
 extern  struct firmware *fw;
-int ppc_open_pci_bridge(void);
-void ppc_close_pci_bridge(int);
 void install_extint(void (*handler) (void));
 void ppc_intr_enable(int enable);
 int ppc_intr_disable(void);

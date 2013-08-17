@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.139 2013/08/07 08:21:17 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.140 2013/08/17 08:33:11 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -103,14 +103,6 @@ struct vm_map *phys_map = NULL;
 
 int ppc_malloc_ok = 0;
 
-#ifndef SYS_TYPE
-/* XXX Hardwire it for now */
-#define SYS_TYPE POWER4e
-#endif
-
-int system_type = SYS_TYPE;	/* XXX Hardwire it for now */
-
-char ofw_eth_addr[6];		/* Save address of first network ifc found */
 char *bootpath;
 char bootpathbuf[512];
 
@@ -131,12 +123,8 @@ int allowaperture = 0;
 #endif
 #endif
 
-void ofw_dbg(char *str);
-
 void dumpsys(void);
-void systype(char *name);
 int lcsplx(int ipl);	/* called from LCore */
-int power4e_get_eth_addr(void);
 void ppc_intr_setup(intr_establish_t *establish,
     intr_disestablish_t *disestablish);
 void *ppc_intr_establish(void *lcv, pci_intr_handle_t ih, int type,
@@ -150,15 +138,10 @@ void bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
 
 
 /*
- * Extent maps to manage I/O. Allocate storage for 8 regions in each,
- * initially. Later devio_malloc_safe will indicate that it's safe to
- * use malloc() to dynamically allocate region descriptors.
+ * Extent maps to manage I/O. Allocate storage for 8 regions in each.
  */
 static long devio_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof (long)];
 struct extent *devio_ex;
-static int devio_malloc_safe = 0;
-
-extern int OF_stdout;
 
 /* XXX, called from asm */
 void initppc(u_int startkernel, u_int endkernel, char *args);
@@ -423,20 +406,9 @@ initppc(startkernel, endkernel, args)
 		Debugger();
 #endif
 
-	/*
-	 * Figure out ethernet address.
-	 */
-	(void)power4e_get_eth_addr();
-
         pool_init(&ppc_vecpl, sizeof(struct vreg), 16, 0, 0, "ppcvec", NULL);
 
 }
-void ofw_dbg(char *str)
-{
-	int i = strlen (str);
-	OF_write(OF_stdout, str, i);
-}
-
 
 void
 install_extint(void (*handler)(void))
@@ -504,8 +476,6 @@ cpu_startup()
 	 * Set up the buffers.
 	 */
 	bufinit();
-
-	devio_malloc_safe = 1;
 }
 
 /*
@@ -885,33 +855,6 @@ boot(int howto)
 	while(1) /* forever */;
 }
 
-/*
- *  Get Ethernet address for the onboard ethernet chip.
- */
-int
-power4e_get_eth_addr()
-{
-	int qhandle, phandle;
-	char name[32];
-
-	for (qhandle = OF_peer(0); qhandle; qhandle = phandle) {
-		if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0
-		    && !strcmp(name, "network")
-		    && OF_getprop(qhandle, "local-mac-address",
-				  &ofw_eth_addr, sizeof ofw_eth_addr) >= 0) {
-			return(0);
-		}
-		if ((phandle = OF_child(qhandle)))
-			continue;
-		while (qhandle) {
-			if ((phandle = OF_peer(qhandle)))
-				break;
-			qhandle = OF_parent(qhandle);
-		}
-	}
-	return(-1);
-}
-
 typedef void  (void_f) (void);
 void_f *pending_int_f = NULL;
 
@@ -946,44 +889,6 @@ cpu_unidle(struct cpu_info *ci)
 		ppc_send_ipi(ci, PPC_IPI_NOP);
 }
 #endif
-
-/*
- * set system type from string
- */
-void
-systype(char *name)
-{
-	/* this table may be order specific if substrings match several
-	 * computers but a longer string matches a specific
-	 */
-	int i;
-	struct systyp {
-		char *name;
-		char *systypename;
-		int type;
-	} systypes[] = {
-		{ "MOT",	"(PWRSTK) MCG powerstack family", PWRSTK },
-		{ "V-I Power",	"(POWER4e) V-I ppc vme boards ",  POWER4e},
-		{ "iMac",	"(APPL) Apple iMac ",  APPL},
-		{ "PowerMac",	"(APPL) Apple PowerMac ",  APPL},
-		{ "PowerBook",	"(APPL) Apple Powerbook ",  APPL},
-		{ NULL,"",0}
-	};
-	for (i = 0; systypes[i].name != NULL; i++) {
-		if (strncmp( name , systypes[i].name,
-			strlen (systypes[i].name)) == 0)
-		{
-			system_type = systypes[i].type;
-			printf("recognized system type of %s as %s\n",
-				name, systypes[i].systypename);
-			break;
-		}
-	}
-	if (system_type == OFWMACH) {
-		printf("System type %snot recognized, good luck\n",
-			name);
-	}
-}
 
 /*
  * one attempt at interrupt stuff..
@@ -1368,31 +1273,6 @@ bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
 {
 	*nbshp = bsh + offset;
 	return (0);
-}
-
-int
-ppc_open_pci_bridge()
-{
-	char *
-	pci_bridges[] = {
-		"/pci",
-		NULL
-	};
-	int handle;
-	int i;
-
-	for (i = 0; pci_bridges[i] != NULL; i++) {
-		handle = OF_open(pci_bridges[i]);
-		if ( handle != -1) {
-			return handle;
-		}
-	}
-	return 0;
-}
-void
-ppc_close_pci_bridge(int handle)
-{
-	OF_close(handle);
 }
 
 /* bcopy(), error on fault */
