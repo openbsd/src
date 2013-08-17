@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.10 2013/04/12 15:22:26 bcallah Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.11 2013/08/17 10:00:09 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -66,7 +66,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 
 #include <machine/bus.h>
