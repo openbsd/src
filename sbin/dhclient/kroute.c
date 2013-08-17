@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.55 2013/07/05 22:13:10 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.56 2013/08/17 14:50:05 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -381,7 +381,6 @@ priv_delete_address(struct imsg_delete_address *imsg)
  * [priv_]add_address is the equivalent of
  *
  *	ifconfig <if> inet <addr> netmask <mask> broadcast <addr>
- *	route -q <rdomain> add <addr> 127.0.0.1
  */
 void
 add_address(char *ifname, int rdomain, struct in_addr addr,
@@ -410,7 +409,6 @@ add_address(char *ifname, int rdomain, struct in_addr addr,
 void
 priv_add_address(struct imsg_add_address *imsg)
 {
-	struct imsg_add_route rimsg;
 	struct ifaliasreq ifaliasreq;
 	struct sockaddr_in *in;
 	int s;
@@ -452,17 +450,6 @@ priv_add_address(struct imsg_add_address *imsg)
 		    strerror(errno));
 
 	close(s);
-
-	/*
-	 * Add the 127.0.0.1 route for the specified address.
-	 */
-	memset(&rimsg, 0, sizeof(rimsg));
-	rimsg.dest.s_addr = imsg->addr.s_addr;
-	rimsg.gateway.s_addr = inet_addr("127.0.0.1");
-	rimsg.addrs = RTA_DST | RTA_GATEWAY;
-	rimsg.flags = RTF_GATEWAY | RTF_STATIC;
-
-	priv_add_route(&rimsg);
 
 	active_addr = imsg->addr;
 }
