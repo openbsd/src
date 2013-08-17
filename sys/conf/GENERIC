@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.199 2013/08/14 05:28:04 guenther Exp $
+#	$OpenBSD: GENERIC,v 1.200 2013/08/17 10:08:34 bluhm Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -17,7 +17,7 @@ option		KMEMSTATS	# collect malloc(9) statistics
 option		PTRACE		# ptrace(2) system call
 
 #option		KVA_GUARDPAGES	# slow virtual address recycling (+ guarding)
-option		POOL_DEBUG	# pool corruption detection 
+option		POOL_DEBUG	# pool corruption detection
 #option		VFSLCKDEBUG	# VFS locking checks
 
 option		CRYPTO		# Cryptographic framework
@@ -46,7 +46,7 @@ option		UDF		# UDF (DVD) file system
 option		MSDOSFS		# MS-DOS file system
 option		FIFO		# FIFOs; RECOMMENDED
 
-option		SOCKET_SPLICE	# Socket Splicing for TCP
+option		SOCKET_SPLICE	# Socket Splicing for TCP and UDP
 option		TCP_SACK	# Selective Acknowledgements for TCP
 option		TCP_ECN		# Explicit Congestion Notification for TCP
 option		TCP_SIGNATURE	# TCP MD5 Signatures, for BGP routing sessions
@@ -88,7 +88,7 @@ pseudo-device	ksyms	1	# kernel symbols device
 pseudo-device	systrace 1	# system call tracing device
 
 # clonable devices
-pseudo-device	bpfilter 	# packet filter
+pseudo-device	bpfilter	# packet filter
 pseudo-device	bridge		# network bridging support
 pseudo-device	carp		# CARP protocol support
 pseudo-device	gif		# IPv[46] over IPv[46] tunnel (RFC1933)
@@ -97,13 +97,13 @@ pseudo-device	loop		# network loopback
 pseudo-device	mpe		# MPLS PE interface
 pseudo-device	ppp		# PPP
 pseudo-device	pppoe		# PPP over Ethernet (RFC 2516)
-pseudo-device	pppx 		# PPP multiplexer
+pseudo-device	pppx		# PPP multiplexer
 pseudo-device	sl		# CSLIP
 pseudo-device	sppp	1	# Sync PPP/HDLC
 pseudo-device	trunk		# Trunking support
 pseudo-device	tun		# network tunneling over tty
 pseudo-device	vether		# Virtual ethernet
-pseudo-device	vlan 		# IEEE 802.1Q VLAN 
+pseudo-device	vlan		# IEEE 802.1Q VLAN
 
 pseudo-device	bio	1	# ioctl multiplexing device
 
