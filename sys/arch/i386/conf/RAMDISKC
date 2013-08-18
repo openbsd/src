@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.104 2013/08/13 16:26:25 mikeb Exp $
+#	$OpenBSD: RAMDISKC,v 1.105 2013/08/18 19:16:46 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -80,7 +80,7 @@ pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
 pcic2	at isa? port 0x3e4 iomem 0xd4000 iosiz 0x4000
 
 # ISA Plug-and-Play PCMCIA controllers
-pcic*	at isapnp?
+#pcic*	at isapnp?
 
 # PCI PCMCIA controllers
 pcic*	at pci? dev?
@@ -123,7 +123,7 @@ wskbd*	at ukbd? mux 1
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
-isapnp0	at isa?
+#isapnp0 at isa?
 
 pckbc0		at isa?			# PC keyboard controller
 pckbd*		at pckbc?		# PC keyboard
@@ -201,7 +201,7 @@ pciide* at pci? flags 0x0000
 
 wdc0	at isa? port 0x1f0 irq 14 flags 0x00
 wdc1	at isa? port 0x170 irq 15 flags 0x00
-wdc*	at pcmcia?
+#wdc*	at pcmcia?
 #wdc*	at isapnp?
 
 # IDE hard drives

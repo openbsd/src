@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.122 2013/08/13 16:26:25 mikeb Exp $
+#	$OpenBSD: RAMDISKB,v 1.123 2013/08/18 19:16:46 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -139,7 +139,7 @@ mpi*	at pci?			# LSI Logic Fusion-MPT Message Passing Interface
 #aac*	at pci?			# Adaptec FSA RAID controllers
 ami*	at pci?			# AMI MegaRAID controllers
 mfi*	at pci?			# LSI MegaRAID SAS controllers
-cac*	at pci?			# Compaq Smart ARRAY [234]* RAID controllers
+#cac*	at pci?			# Compaq Smart ARRAY [234]* RAID controllers
 #cac*	at eisa?
 #ciss*	at pci?			# Compaq Smart ARRAY [56]* RAID controllers
 #twe*	at pci?			# 3ware Escalade RAID controllers
