@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.123 2013/04/18 15:43:22 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.124 2013/08/18 16:32:24 guenther Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -258,7 +258,7 @@ tcp_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &tcpstat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -389,7 +389,7 @@ udp_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &udpstat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -435,7 +435,7 @@ ip_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &ipstat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -494,7 +494,7 @@ div_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &divstat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -570,7 +570,7 @@ icmp_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &icmpstat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -628,7 +628,7 @@ igmp_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &igmpstat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -664,7 +664,7 @@ pim_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &pimstat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -858,7 +858,7 @@ ah_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &ahstat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -904,7 +904,7 @@ etherip_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &etheripstat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -937,7 +937,7 @@ esp_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &espstat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -984,7 +984,7 @@ ipip_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &ipipstat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -1018,7 +1018,7 @@ carp_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &carpstat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -1060,7 +1060,7 @@ pfsync_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &pfsyncstat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -1103,7 +1103,7 @@ pflow_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), &flowstats, &len,
 	    NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -1134,7 +1134,7 @@ ipcomp_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &ipcompstat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -1178,10 +1178,10 @@ socket_dump(u_long off)
 #define	pll(fmt, v, sep) printf(#v " " fmt sep, (long long) so.v);
 #define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : so.v);
 	printf("socket %#lx\n ", hideroot ? 0 : off);
-	p("%#0.4x", so_type, "\n ");
-	p("%#0.4x", so_options, "\n ");
+	p("%#.4x", so_type, "\n ");
+	p("%#.4x", so_options, "\n ");
 	p("%d", so_linger, "\n ");
-	p("%#0.4x", so_state, "\n ");
+	p("%#.4x", so_state, "\n ");
 	pp("%p", so_pcb, ", ");
 	pp("%p", so_proto, ", ");
 	pp("%p", so_head, "\n ");
@@ -1232,8 +1232,8 @@ sockbuf_dump(struct sockbuf *sb, const char *name)
 	p("%lu", sb_mbmax, ", ");
 	p("%ld", sb_lowat, "\n ");
 	printf("%s ", name);
-	p("%#0.8x", sb_flagsintr, ", ");
-	p("%#0.4x", sb_flags, ", ");
+	p("%#.8x", sb_flagsintr, ", ");
+	p("%#.4x", sb_flags, ", ");
 	p("%u", sb_timeo, "\n ");
 #undef	p
 }
@@ -1253,10 +1253,10 @@ protosw_dump(u_long off, u_long pcb)
 #define	p(fmt, v, sep) printf(#v " " fmt sep, proto.v);
 #define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : proto.v);
 	printf("protosw %#lx\n ", hideroot ? 0 : off);
-	p("%#0.4x", pr_type, "\n ");
+	p("%#.4x", pr_type, "\n ");
 	pp("%p", pr_domain, "\n ");
 	p("%d", pr_protocol, "\n ");
-	p("%#0.4x", pr_flags, "\n");
+	p("%#.4x", pr_flags, "\n");
 #undef	p
 #undef	pp
 
@@ -1280,7 +1280,7 @@ domain_dump(u_long off, u_long pcb, short protocol)
 #define	p(fmt, v, sep) printf(#v " " fmt sep, dom.v);
 	printf("domain %#lx\n ", hideroot ? 0 : off);
 	p("%d", dom_family, "\n ");
-	printf("dom_name %.*s\n", sizeof(name), name);
+	printf("dom_name %.*s\n", (int)sizeof(name), name);
 #undef	p
 
 	switch (dom.dom_family) {
@@ -1330,7 +1330,7 @@ inpcb_dump(u_long off, short protocol, int af)
 	p("%u", inp_lport, "\n ");
 	pp("%p", inp_socket, ", ");
 	pp("%p", inp_ppcb, "\n ");
-	p("%#0.8x", inp_flags, "\n ");
+	p("%#.8x", inp_flags, "\n ");
 	p("%d", inp_hops, "\n ");
 	p("%u", inp_seclevel[0], ", ");
 	p("%u", inp_seclevel[1], ", ");

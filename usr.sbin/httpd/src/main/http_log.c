@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_log.c,v 1.19 2008/05/14 09:25:38 mbalmer Exp $ */
+/*	$OpenBSD: http_log.c,v 1.20 2013/08/18 16:32:24 guenther Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -371,7 +371,7 @@ ap_log_pid(pool *p, char *fname)
 	   *	  that may screw up scripts written to do something
 	   *	  based on the last modification time of the pid file.
 	   */
-		ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_WARNING, NULL,
+		ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_WARNING, NULL, "%s",
 		    ap_psprintf(p, "pid file %s overwritten -- Unclean shutdown"
 		    " of previous Apache run?", fname));
 

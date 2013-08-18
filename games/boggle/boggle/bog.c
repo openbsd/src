@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.21 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: bog.c,v 1.22 2013/08/18 16:32:24 guenther Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -331,7 +331,7 @@ playgame(void)
 					    maxpwords * sizeof(char *));
 					if (pword == NULL) {
 						cleanup();
-						errx(1, strerror(ENOMEM));
+						errx(1, "%s", strerror(ENOMEM));
 					}
 				}
 				len = strlen(buf) + 1;
@@ -340,7 +340,7 @@ playgame(void)
 					pwords = realloc(pwords, maxpspace);
 					if (pwords == NULL) {
 						cleanup();
-						errx(1, strerror(ENOMEM));
+						errx(1, "%s", strerror(ENOMEM));
 					}
 				}
 				pword[npwords++] = pwordsp;
@@ -558,7 +558,7 @@ checkdict(void)
 			mword = realloc(mword, maxmwords * sizeof(char *));
 			if (mword == NULL) {
 				cleanup();
-				errx(1, strerror(ENOMEM));
+				errx(1, "%s", strerror(ENOMEM));
 			}
 		}
 		if (mwordsp + wordlen + 1 >= &mwords[maxmspace]) {
@@ -566,7 +566,7 @@ checkdict(void)
 			mwords = realloc(mwords, maxmspace);
 			if (mwords == NULL) {
 				cleanup();
-				errx(1, strerror(ENOMEM));
+				errx(1, "%s", strerror(ENOMEM));
 			}
 		}
 		mword[nmwords++] = mwordsp;

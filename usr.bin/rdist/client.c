@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.25 2012/11/12 01:18:37 guenther Exp $	*/
+/*	$OpenBSD: client.c,v 1.26 2013/08/18 16:32:24 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -256,7 +256,7 @@ runcmdspecial(struct cmd *cmd, opt_t opts)
 					return;
 				first = FALSE;
 			}
-			(void) sendcmd(RC_FILE, f->n_name);
+			(void) sendcmd(RC_FILE, "%s", f->n_name);
 			if (response() < 0)
 				return;
 		}
@@ -267,7 +267,7 @@ runcmdspecial(struct cmd *cmd, opt_t opts)
 			first = FALSE;
 		}
 		/* Send command to run and wait for it to complete */
-		(void) sendcmd(RC_COMMAND, sc->sc_name);
+		(void) sendcmd(RC_COMMAND, "%s", sc->sc_name);
 		while (response() > 0)
 			;
 		first = TRUE;	/* Reset in case there are more CMDSPECIAL's */

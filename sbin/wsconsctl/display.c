@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.17 2012/08/08 16:44:07 shadchin Exp $	*/
+/*	$OpenBSD: display.c,v 1.18 2013/08/18 16:32:23 guenther Exp $	*/
 /*	$NetBSD: display.c,v 1.1 1998/12/28 14:01:16 hannken Exp $ */
 
 /*-
@@ -141,7 +141,7 @@ display_get_values(int fd)
 					pf->flags |= FLG_DEAD;
 					continue;
 				} else
-					warn(cmd_str);
+					warn("%s", cmd_str);
 			}
 		}
 
@@ -252,7 +252,7 @@ display_put_values(int fd)
 				pf->flags |= FLG_DEAD;
 				continue;
 			} else {
-				warn(cmd_str);
+				warn("%s", cmd_str);
 				return 1;
 			}
 		}

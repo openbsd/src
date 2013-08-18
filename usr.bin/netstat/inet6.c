@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.43 2012/12/04 02:30:34 deraadt Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.44 2013/08/18 16:32:24 guenther Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -343,7 +343,7 @@ ip6_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &ip6stat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -822,7 +822,7 @@ icmp6_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &icmp6stat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -967,7 +967,7 @@ pim6_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &pim6stat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -999,7 +999,7 @@ rip6_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &rip6stat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 
@@ -1039,7 +1039,7 @@ div6_stats(char *name)
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &div6stat, &len, NULL, 0) == -1) {
 		if (errno != ENOPROTOOPT)
-			warn(name);
+			warn("%s", name);
 		return;
 	}
 

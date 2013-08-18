@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.19 2013/04/23 23:32:46 deraadt Exp $	*/
+/*	$OpenBSD: unix.c,v 1.20 2013/08/18 16:32:24 guenther Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -159,7 +159,7 @@ unpcb_dump(u_long off)
 	pp("%p", unp_refs, ", ");
 	pp("%p", unp_nextref, "\n ");
 	pp("%p", unp_addr, "\n ");
-	p("%#0.8x", unp_flags, "\n ");
+	p("%#.8x", unp_flags, "\n ");
 	p("%u", unp_connid.uid, ", ");
 	p("%u", unp_connid.gid, ", ");
 	p("%d", unp_connid.pid, "\n ");
