@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_machdep.c,v 1.8 2013/08/15 19:29:46 miod Exp $	*/
+/*	$OpenBSD: m88100_machdep.c,v 1.9 2013/08/18 22:13:54 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -98,21 +98,54 @@ dae_print(u_int *f)
 void
 dae_print_one(u_int x, u_int dmax, u_int dmdx, u_int dmtx)
 {
+	u_int enbits;
+	const char *width, *usr, *xmem;
+
 	if (!ISSET(dmtx, DMT_VALID))
 		return;
 
-	if (ISSET(dmtx, DMT_WRITE))
-		printf("[DMT%d=%x: st.%c %x to %x en %x %s %s]\n",
-		    x, dmtx, dmtx & DMT_DAS ? 's' : 'u', dmdx, dmax,
-		    DMT_ENBITS(dmtx),
-		    dmtx & DMT_DOUB1 ? "double": "not double",
-		    dmtx & DMT_LOCKBAR ? "xmem": "not xmem");
+	enbits = DMT_ENBITS(dmtx);
+	dmax += dmt_en_info[enbits].offset;
+
+	if (dmtx & DMT_DOUB1)
+		width = ".d";
+	else {
+		switch (dmt_en_info[enbits].size) {
+		case DMT_BYTE:
+			if (dmtx & DMT_SIGNED)
+				width = ".b";
+			else
+				width = ".bu";
+			break;
+		case DMT_HALF:
+			if (dmtx & DMT_SIGNED)
+				width = ".h";
+			else
+				width = ".hu";
+			break;
+		case DMT_WORD:
+			width = "";
+			break;
+		default:
+			width = ".???";
+			break;
+		}
+	}
+	if (dmtx & DMT_DAS)
+		usr = "";
 	else
-		printf("[DMT%d=%x: ld.%c r%d <- %x en %x %s %s]\n",
-		    x, dmtx, dmtx & DMT_DAS ? 's' : 'u',
-		    DMT_DREGBITS(dmtx), dmax, DMT_ENBITS(dmtx),
-		    dmtx & DMT_DOUB1 ? "double": "not double",
-		    dmtx & DMT_LOCKBAR ? "xmem": "not xmem");
+		usr = ".usr";
+	if (dmtx & DMT_LOCKBAR)
+		xmem = "(xmem)";
+	else
+		xmem = "";
+
+	if (ISSET(dmtx, DMT_WRITE))
+		printf("[DMT%d=%x: %sst%s%s %08x to %08x]\n",
+		    x, dmtx, xmem, width, usr, dmdx, dmax);
+	else
+		printf("[DMT%d=%x: %sld%s%s r%d <- %x]\n",
+		    x, dmtx, xmem, width, usr, DMT_DREGBITS(dmtx), dmax);
 }
 
 void
@@ -138,27 +171,15 @@ void
 dae_process(struct trapframe *eframe, u_int x,
     u_int dmax, u_int dmdx, u_int dmtx)
 {
-	u_int v, reg;
+	u_int v, reg, enbits;
 
 	if (!ISSET(dmtx, DMT_VALID))
 		return;
 
-      DAE_DEBUG(
-		if (ISSET(dmtx, DMT_WRITE))
-			printf("[DMT%d=%x: st.%c %x to %x en %x %s %s]\n",
-			    x, dmtx, dmtx & DMT_DAS ? 's' : 'u', dmdx, dmax,
-			    DMT_ENBITS(dmtx),
-			    dmtx & DMT_DOUB1 ? "double": "not double",
-			    dmtx & DMT_LOCKBAR ? "xmem": "not xmem");
-		else
-			printf("[DMT%d=%x: ld.%c r%d <- %x en %x %s %s]\n",
-			    x, dmtx, dmtx & DMT_DAS ? 's' : 'u',
-			    DMT_DREGBITS(dmtx), dmax, DMT_ENBITS(dmtx),
-			    dmtx & DMT_DOUB1 ? "double": "not double",
-			    dmtx & DMT_LOCKBAR ? "xmem": "not xmem")
-	);
+	DAE_DEBUG(dae_print_one(x, dmax, dmdx, dmtx));
 
-	dmax += dmt_en_info[DMT_ENBITS(dmtx)].offset;
+	enbits = DMT_ENBITS(dmtx);
+	dmax += dmt_en_info[enbits].offset;
 	reg = DMT_DREGBITS(dmtx);
 
 	if (!ISSET(dmtx, DMT_LOCKBAR)) {
@@ -183,10 +204,10 @@ dae_process(struct trapframe *eframe, u_int x,
 		} else {
 			/* not pipeline #2 with a double */
 			if (dmtx & DMT_WRITE) {
-				switch (dmt_en_info[DMT_ENBITS(dmtx)].size) {
+				switch (dmt_en_info[enbits].size) {
 				case DMT_BYTE:
 				DAE_DEBUG(
-					printf("[byte %x -> [%x(%c)]\n",
+					printf("[byte %x -> %08x(%c)]\n",
 					    dmdx & 0xff, dmax,
 					    ISSET(dmtx, DMT_DAS) ? 's' : 'u')
 				);
@@ -195,7 +216,7 @@ dae_process(struct trapframe *eframe, u_int x,
 					break;
 				case DMT_HALF:
 				DAE_DEBUG(
-					printf("[half %x -> [%x(%c)]\n",
+					printf("[half %x -> %08x(%c)]\n",
 					    dmdx & 0xffff, dmax,
 					    ISSET(dmtx, DMT_DAS) ? 's' : 'u')
 				);
@@ -204,7 +225,7 @@ dae_process(struct trapframe *eframe, u_int x,
 					break;
 				case DMT_WORD:
 				DAE_DEBUG(
-					printf("[word %x -> [%x(%c)]\n",
+					printf("[word %x -> %08x(%c)]\n",
 					    dmdx, dmax,
 					    ISSET(dmtx, DMT_DAS) ? 's' : 'u')
 				);
@@ -214,7 +235,7 @@ dae_process(struct trapframe *eframe, u_int x,
 				}
 			} else {
 				/* else it's a read */
-				switch (dmt_en_info[DMT_ENBITS(dmtx)].size) {
+				switch (dmt_en_info[enbits].size) {
 				case DMT_BYTE:
 					v = do_load_byte(dmax, dmtx & DMT_DAS);
 					if (!ISSET(dmtx, DMT_SIGNED))
@@ -233,7 +254,7 @@ dae_process(struct trapframe *eframe, u_int x,
 					if (reg == 0)
 						printf("[no write to r0 done]\n");
 					else
-						printf("[r%d <- %x]\n", reg, v);
+						printf("[r%d <- %08x]\n", reg, v);
 				);
 				if (reg != 0)
 					eframe->tf_r[reg] = v;
@@ -258,7 +279,7 @@ dae_process(struct trapframe *eframe, u_int x,
 				/* RERUN xmem WITH DMD2 */
 			}
 
-			if (dmt_en_info[DMT_ENBITS(dmtx)].size == DMT_WORD) {
+			if (dmt_en_info[enbits].size == DMT_WORD) {
 				v = do_xmem_word(dmax, dmdx, dmtx & DMT_DAS);
 			} else {
 				v = do_xmem_byte(dmax, dmdx, dmtx & DMT_DAS);
