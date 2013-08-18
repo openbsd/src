@@ -13,6 +13,7 @@
 ./usr/include/arm/conf.h
 ./usr/include/arm/cpu.h
 ./usr/include/arm/cpuconf.h
+./usr/include/arm/cpufunc.h
 ./usr/include/arm/db_machdep.h
 ./usr/include/arm/disklabel.h
 ./usr/include/arm/endian.h
@@ -63,7 +64,6 @@
 ./usr/include/beagle/cdefs.h
 ./usr/include/beagle/conf.h
 ./usr/include/beagle/cpu.h
-./usr/include/beagle/cpufunc.h
 ./usr/include/beagle/db_machdep.h
 ./usr/include/beagle/disklabel.h
 ./usr/include/beagle/elf_abi.h
