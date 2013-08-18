@@ -689,7 +689,6 @@
 ./usr/include/dev/pcmcia/if_cnwreg.h
 ./usr/include/dev/pcmcia/if_maloreg.h
 ./usr/include/dev/pcmcia/if_malovar.h
-./usr/include/dev/pcmcia/if_rayreg.h
 ./usr/include/dev/pcmcia/if_xereg.h
 ./usr/include/dev/pcmcia/pcmciachip.h
 ./usr/include/dev/pcmcia/pcmciadevs.h

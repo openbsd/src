@@ -617,6 +617,7 @@
 ./usr/include/socppc/mutex.h
 ./usr/include/socppc/param.h
 ./usr/include/socppc/pcb.h
+./usr/include/socppc/pci_machdep.h
 ./usr/include/socppc/pio.h
 ./usr/include/socppc/pmap.h
 ./usr/include/socppc/powerpc.h

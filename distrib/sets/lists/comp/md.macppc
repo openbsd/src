@@ -578,6 +578,7 @@
 ./usr/include/macppc/openpromio.h
 ./usr/include/macppc/param.h
 ./usr/include/macppc/pcb.h
+./usr/include/macppc/pci_machdep.h
 ./usr/include/macppc/pio.h
 ./usr/include/macppc/pmap.h
 ./usr/include/macppc/powerpc.h

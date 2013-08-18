@@ -2036,7 +2036,6 @@
 ./usr/share/man/man4/radio.4
 ./usr/share/man/man4/ral.4
 ./usr/share/man/man4/random.4
-./usr/share/man/man4/ray.4
 ./usr/share/man/man4/rd.4
 ./usr/share/man/man4/rdac.4
 ./usr/share/man/man4/rdcphy.4
@@ -2334,7 +2333,6 @@
 ./usr/share/man/man4/uhci.4
 ./usr/share/man/man4/uhid.4
 ./usr/share/man/man4/uhidev.4
-./usr/share/man/man4/uhts.4
 ./usr/share/man/man4/uhub.4
 ./usr/share/man/man4/uipaq.4
 ./usr/share/man/man4/uk.4
