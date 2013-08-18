@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_machdep.c,v 1.9 2013/08/18 22:13:54 miod Exp $	*/
+/*	$OpenBSD: m88100_machdep.c,v 1.10 2013/08/18 22:17:26 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -153,8 +153,7 @@ data_access_emulation(u_int *f)
 {
 	struct trapframe *eframe = (void *)f;
 
-	if (!ISSET(eframe->tf_dmt0, DMT_VALID) ||
-	    ISSET(eframe->tf_dmt0, DMT_SKIP))
+	if (!ISSET(eframe->tf_dmt0, DMT_VALID))
 		return;
 
 	dae_process(eframe, 0,
@@ -164,7 +163,7 @@ data_access_emulation(u_int *f)
 	dae_process(eframe, 2,
 	    eframe->tf_dma2, eframe->tf_dmd2, eframe->tf_dmt2);
 
-	eframe->tf_dmt0 |= DMT_SKIP;
+	eframe->tf_dmt0 = 0;
 }
 
 void

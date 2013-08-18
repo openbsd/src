@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100.h,v 1.7 2013/08/18 22:04:51 miod Exp $ */
+/*	$OpenBSD: m88100.h,v 1.8 2013/08/18 22:17:26 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -34,12 +34,7 @@
 
 /*
  * DMT0, DMT1, DMT2 layout
- *
- * The DMT_SKIP bit is never set by the cpu.  It is used to mark 'known'
- * transactions so that they don't get processed a second time by
- * data_access_emulation().
  */
-#define DMT_SKIP	0x00010000	/* skip this dmt */
 #define DMT_BO		0x00008000	/* Byte-Ordering */
 #define DMT_DAS		0x00004000	/* Data Access Space */
 #define DMT_DOUB1	0x00002000	/* Double Word */
