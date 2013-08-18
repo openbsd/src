@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100.h,v 1.6 2011/03/23 16:54:35 pirofti Exp $ */
+/*	$OpenBSD: m88100.h,v 1.7 2013/08/18 22:04:51 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -62,8 +62,8 @@ void	dae_print(u_int *);
 void	data_access_emulation(u_int *);
 
 u_int32_t do_load_word(vaddr_t, int);
-u_int16_t do_load_half(vaddr_t, int);
-u_int8_t  do_load_byte(vaddr_t, int);
+u_int32_t do_load_half(vaddr_t, int);
+u_int32_t do_load_byte(vaddr_t, int);
 void      do_store_word(vaddr_t, u_int32_t, int);
 void      do_store_half(vaddr_t, u_int16_t, int);
 void      do_store_byte(vaddr_t, u_int8_t, int);
