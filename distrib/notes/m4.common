@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.97 2013/07/17 18:03:42 bmercer Exp $
+dnl	$OpenBSD: m4.common,v 1.98 2013/08/18 04:16:13 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -129,7 +129,7 @@ define({:-OpenBSDetc-:},
 		 upgrading.  (If you are upgrading, it's recommended that
 		 you get a copy of this set and CAREFULLY upgrade your
 		 configuration files by hand; see the section named 
-		 Upgrading a previously-installed OpenBSD System" below.)-:},.)showsize($1,$2)-:})dnl
+		 "Upgrading a previously-installed OpenBSD System" below.)-:},.)showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDgame( compressed size, uncompressed size )
