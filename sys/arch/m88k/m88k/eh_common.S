@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.59 2013/08/15 19:29:10 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.60 2013/08/18 22:10:58 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1069,15 +1069,14 @@ ASLOCAL(pfsr_done)
 	st	TMP2, %r31, EF_DMD1
 	st	TMP3, %r31, EF_DMD2
 
-/*
- * need to clear "appropriate" bits in the SSBR before
- * we restart the FPU
- */
-
-	ldcr	TMP2, DMT0
-	bb0.n	DMT_VALID_BIT, TMP2, 8f
 	/* make sure an exception in fpu_enable will not see our DMT0 */
-	 stcr	%r0,   DMT0
+	stcr	%r0,   DMT0
+
+	/*
+ 	 * need to clear "appropriate" bits in the SSBR before
+ 	 * we restart the FPU
+ 	 */
+	ld	TMP2, %r31, EF_DMT0
 	bb1	DMT_LOCK_BIT,  TMP2, 1f
 	bb1	DMT_WRITE_BIT, TMP2, 2f
 1:
