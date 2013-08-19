@@ -1,4 +1,4 @@
-/* $OpenBSD: xmalloc.c,v 1.3 2010/08/04 21:28:17 ray Exp $ */
+/* $OpenBSD: xmalloc.c,v 1.4 2013/08/19 20:21:15 millert Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -28,10 +28,10 @@ xmalloc(size_t size)
 	void *ptr;
 
 	if (size == 0)
-		errx(2, NULL);
+		errx(2, "xmalloc: zero size");
 	ptr = malloc(size);
 	if (ptr == NULL)
-		errx(2, NULL);
+		err(2, NULL);
 	return ptr;
 }
 
@@ -58,15 +58,15 @@ xrealloc(void *ptr, size_t nmemb, size_t size)
 	size_t new_size = nmemb * size;
 
 	if (new_size == 0)
-		errx(2, NULL);
+		errx(2, "xrealloc: zero size");
 	if (SIZE_MAX / nmemb < size)
-		errx(2, NULL);
+		errx(2, "xrealloc: nmemb * size > SIZE_MAX");
 	if (ptr == NULL)
 		new_ptr = malloc(new_size);
 	else
 		new_ptr = realloc(ptr, new_size);
 	if (new_ptr == NULL)
-		errx(2, NULL);
+		err(2, NULL);
 	return new_ptr;
 }
 
@@ -74,7 +74,7 @@ void
 xfree(void *ptr)
 {
 	if (ptr == NULL)
-		errx(2, NULL);
+		err(2, NULL);
 	free(ptr);
 }
 
@@ -101,7 +101,7 @@ xasprintf(char **ret, const char *fmt, ...)
 	va_end(ap);
 
 	if (i < 0 || *ret == NULL)
-		errx(2, NULL);
+		err(2, NULL);
 
 	return (i);
 }
