@@ -42,7 +42,7 @@ extern int nfunix;
 extern char *funixn[MAXFUNIX];
 extern char *ctlsock_path;
 
-#define dprintf		if (Debug) printf
+#define dprintf(_f...)	do { if (Debug) printf(_f); } while (0)
 extern int Debug;
 extern int Startup;
 
