@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.82 2013/08/08 07:39:13 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.83 2013/08/19 08:45:34 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -411,8 +411,7 @@ cleanup:
 		 */
 		s = splsoftnet();
 		in_ifscrub(ifp, ia);
-		if (!error)
-			ifa_del(ifp, &ia->ia_ifa);
+		ifa_del(ifp, &ia->ia_ifa);
 		TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
 		if (ia->ia_allhosts != NULL) {
 			in_delmulti(ia->ia_allhosts);
@@ -641,7 +640,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 {
 	u_int32_t i = sin->sin_addr.s_addr;
 	struct sockaddr_in oldaddr;
-	int s = splnet(), flags = RTF_UP, error;
+	int s = splnet(), flags = RTF_UP, error = 0;
 
 	if (newaddr)
 		TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
@@ -664,7 +663,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 	    (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia))) {
 		ia->ia_addr = oldaddr;
 		splx(s);
-		return (error);
+		goto out;
 	}
 	splx(s);
 
@@ -703,10 +702,8 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 		ia->ia_dstaddr = ia->ia_addr;
 		flags |= RTF_HOST;
 	} else if (ifp->if_flags & IFF_POINTOPOINT) {
-		if (ia->ia_dstaddr.sin_family != AF_INET) {
-			ifa_add(ifp, &ia->ia_ifa);
-			return (0);
-		}
+		if (ia->ia_dstaddr.sin_family != AF_INET)
+			goto out;
 		flags |= RTF_HOST;
 	}
 	error = in_addprefix(ia, flags);
@@ -722,8 +719,17 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 		ia->ia_allhosts = in_addmulti(&addr, ifp);
 	}
 
-	if (!error)
-		ifa_add(ifp, &ia->ia_ifa);
+out:
+	/*
+	 * Add the address to the local list and the global tree
+	 * even if an error occured to make sure the various
+	 * global structures are consistent.
+	 *
+	 * XXX This is necessary because we added the address
+	 * to the global list in the first place because of
+	 * carp(4).
+	 */
+	ifa_add(ifp, &ia->ia_ifa);
 
 	return (error);
 }
