@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.268 2013/08/16 12:29:17 mpi Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.269 2013/08/19 11:20:57 dcoppa Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -100,6 +100,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 #include <ifaddrs.h>
 
 #include "brconfig.h"
