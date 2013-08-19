@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.120 2013/08/07 08:19:05 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.121 2013/08/19 08:39:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -143,12 +143,16 @@ void pmap_page_ro32(pmap_t pm, vaddr_t va, vm_prot_t prot);
 #define pmap_simplelock_pv(pm)
 #define pmap_simpleunlock_pv(pm)
 
+/*
+ * Some functions are called in real mode and cannot be profiled.
+ */
+#define __noprof __attribute__((__no_instrument_function__))
 
 /* VP routines */
 int pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags);
 struct pte_desc *pmap_vp_remove(pmap_t pm, vaddr_t va);
 void pmap_vp_destroy(pmap_t pm);
-struct pte_desc *pmap_vp_lookup(pmap_t pm, vaddr_t va);
+struct pte_desc *pmap_vp_lookup(pmap_t pm, vaddr_t va) __noprof;
 
 /* PV routines */
 void pmap_enter_pv(struct pte_desc *pted, struct vm_page *);
@@ -156,13 +160,13 @@ void pmap_remove_pv(struct pte_desc *pted);
 
 
 /* pte hash table routines */
-void pte_insert32(struct pte_desc *pted);
-void pte_insert64(struct pte_desc *pted);
-void pmap_hash_remove(struct pte_desc *pted);
-void pmap_fill_pte64(pmap_t pm, vaddr_t va, paddr_t pa,
-    struct pte_desc *pted, vm_prot_t prot, int flags, int cache);
-void pmap_fill_pte32(pmap_t pm, vaddr_t va, paddr_t pa,
-    struct pte_desc *pted, vm_prot_t prot, int flags, int cache);
+void pmap_hash_remove(struct pte_desc *);
+void pte_insert32(struct pte_desc *) __noprof;
+void pte_insert64(struct pte_desc *) __noprof;
+void pmap_fill_pte64(pmap_t, vaddr_t, paddr_t, struct pte_desc *, vm_prot_t,
+    int, int) __noprof;
+void pmap_fill_pte32(pmap_t, vaddr_t, paddr_t, struct pte_desc *, vm_prot_t,
+    int, int) __noprof;
 
 void pmap_syncicache_user_virt(pmap_t pm, vaddr_t va);
 
@@ -178,8 +182,7 @@ void pmap_remove_avail(paddr_t base, paddr_t end);
 void *pmap_steal_avail(size_t size, int align);
 
 /* asm interface */
-int pte_spill_r(u_int32_t va, u_int32_t msr, u_int32_t access_type,
-    int exec_fault);
+int pte_spill_r(u_int32_t, u_int32_t, u_int32_t, int) __noprof;
 
 u_int32_t pmap_setusr(pmap_t pm, vaddr_t va);
 void pmap_popusr(u_int32_t oldsr);
@@ -201,8 +204,8 @@ int physmaxaddr;
 
 void pmap_hash_lock_init(void);
 void pmap_hash_lock(int entry);
-void pmap_hash_unlock(int entry);
-int pmap_hash_lock_try(int entry);
+void pmap_hash_unlock(int entry)  __noprof;
+int pmap_hash_lock_try(int entry) __noprof;
 
 volatile unsigned int pmap_hash_lock_word = 0;
 

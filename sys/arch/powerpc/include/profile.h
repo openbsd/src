@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.6 2003/06/03 01:35:30 drahn Exp $ */
+/*	$OpenBSD: profile.h,v 1.7 2013/08/19 08:39:30 mpi Exp $ */
 
 /*
  * Copyright (c) 1998 Dale Rahn.
@@ -70,8 +70,6 @@
 #ifdef _KERNEL
 #define MCOUNT_ENTER						\
 	__asm volatile("mfmsr %0" : "=r"(s));			\
-	if ((s & (PSL_IR | PSL_DR)) != (PSL_IR | PSL_DR))	\
-		return;	/* prof not possible in real mode */	\
 	s &= ~PSL_POW;						\
 	__asm volatile("mtmsr %0" :: "r"(s & ~PSL_EE))
 
