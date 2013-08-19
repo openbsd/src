@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.838 2013/07/05 13:07:57 blambert Exp $ */
+/*	$OpenBSD: pf.c,v 1.839 2013/08/19 09:16:25 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3323,7 +3323,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 				}
 			}
 
-			if ((*rm)->quick)
+			if (r->quick)
 				break;
 			r = TAILQ_NEXT(r, entries);
 		} else
