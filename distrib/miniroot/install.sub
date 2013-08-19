@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.683 2013/07/31 11:26:58 ajacoutot Exp $
+#	$OpenBSD: install.sub,v 1.684 2013/08/19 21:07:22 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1859,6 +1859,14 @@ questions() {
 	fi
 }
 
+# Rebuild or wipe time_t size dependant stuff.
+# XXX To be removed after 5.6 is released.
+upgrade_to64time_t() {
+	/mnt/usr/sbin/pwd_mkdb -d /mnt/etc master.passwd
+	>/mnt/var/log/lastlog
+	>/mnt/var/run/utmp
+}
+
 finish_up() {
 	local _dev _mp _fstype _rest
 
@@ -1916,6 +1924,9 @@ finish_up() {
 		echo "After rebooting, run sysmerge(8) to update your system configuration."
 
 	update_firmware
+
+	# XXX To be removed after 5.6 is released.
+	upgrade_to64time_t
 
 	# Pat on the back.
 	cat <<__EOT
