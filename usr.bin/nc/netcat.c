@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.112 2013/04/29 00:28:23 okan Exp $ */
+/* $OpenBSD: netcat.c,v 1.113 2013/08/20 16:22:09 djm Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/uio.h>
 #include <sys/un.h>
 
 #include <netinet/in.h>
@@ -66,6 +67,7 @@
 
 /* Command Line Options */
 int	dflag;					/* detached, no stdin */
+int	Fflag;					/* fdpass sock to stdout */
 unsigned int iflag;				/* Interval Flag */
 int	kflag;					/* More than one connect */
 int	lflag;					/* Bind to local port */
@@ -97,6 +99,7 @@ void	build_ports(char *);
 void	help(void);
 int	local_listen(char *, char *, struct addrinfo);
 void	readwrite(int);
+void	fdpass(int nfd) __attribute__((noreturn));
 int	remote_connect(const char *, const char *, struct addrinfo);
 int	timeout_connect(int, const struct sockaddr *, socklen_t);
 int	socks_connect(const char *, const char *, struct addrinfo,
@@ -132,7 +135,7 @@ main(int argc, char *argv[])
 	sv = NULL;
 
 	while ((ch = getopt(argc, argv,
-	    "46DdhI:i:klNnO:P:p:rSs:tT:UuV:vw:X:x:z")) != -1) {
+	    "46DdFhI:i:klNnO:P:p:rSs:tT:UuV:vw:X:x:z")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -155,6 +158,9 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			dflag = 1;
+			break;
+		case 'F':
+			Fflag = 1;
 			break;
 		case 'h':
 			help();
@@ -463,7 +469,9 @@ main(int argc, char *argv[])
 				    uflag ? "udp" : "tcp",
 				    sv ? sv->s_name : "*");
 			}
-			if (!zflag)
+			if (Fflag)
+				fdpass(s);
+			else if (!zflag)
 				readwrite(s);
 		}
 	}
@@ -785,6 +793,66 @@ readwrite(int nfd)
 			}
 		}
 	}
+}
+
+/*
+ * fdpass()
+ * Pass the connected file descriptor to stdout and exit.
+ */
+void
+fdpass(int nfd)
+{
+	struct msghdr mh;
+	union {
+		struct cmsghdr hdr;
+		char buf[CMSG_SPACE(sizeof(int))];
+	} cmsgbuf;
+	struct cmsghdr *cmsg;
+	struct iovec iov;
+	char c = '\0';
+	ssize_t r;
+	struct pollfd pfd;
+
+	/* Avoid obvious stupidity */
+	if (isatty(STDOUT_FILENO))
+		errx(1, "Cannot pass file descriptor to tty");
+
+	bzero(&mh, sizeof(mh));
+	bzero(&cmsgbuf, sizeof(cmsgbuf));
+	bzero(&iov, sizeof(iov));
+	bzero(&pfd, sizeof(pfd));
+
+	mh.msg_control = (caddr_t)&cmsgbuf.buf;
+	mh.msg_controllen = sizeof(cmsgbuf.buf);
+	cmsg = CMSG_FIRSTHDR(&mh);
+	cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+	cmsg->cmsg_level = SOL_SOCKET;
+	cmsg->cmsg_type = SCM_RIGHTS;
+	*(int *)CMSG_DATA(cmsg) = nfd;
+
+	iov.iov_base = &c;
+	iov.iov_len = 1;
+	mh.msg_iov = &iov;
+	mh.msg_iovlen = 1;
+
+	bzero(&pfd, sizeof(pfd));
+	pfd.fd = STDOUT_FILENO;
+	for (;;) {
+		r = sendmsg(STDOUT_FILENO, &mh, 0);
+		if (r == -1) {
+			if (errno == EAGAIN || errno == EINTR) {
+				pfd.events = POLLOUT;
+				if (poll(&pfd, 1, -1) == -1)
+					err(1, "poll");
+				continue;
+			}
+			err(1, "sendmsg");
+		} else if (r == -1)
+			errx(1, "sendmsg: unexpected return value %zd", r);
+		else
+			break;
+	}
+	exit(0);
 }
 
 /* Deal with RFC 854 WILL/WONT DO/DONT negotiation. */
