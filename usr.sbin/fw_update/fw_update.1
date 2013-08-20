@@ -1,4 +1,4 @@
-.\" $OpenBSD: fw_update.1,v 1.13 2013/08/13 20:46:43 halex Exp $
+.\" $OpenBSD: fw_update.1,v 1.14 2013/08/20 22:42:08 halex Exp $
 .\"
 .\" Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 13 2013 $
+.Dd $Mdocdate: August 20 2013 $
 .Dt FW_UPDATE 1
 .Os
 .Sh NAME
@@ -23,8 +23,6 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl anv
-.Nm
-.Op Fl nv
 .Op Ar driver ...
 .Sh DESCRIPTION
 The
@@ -47,6 +45,9 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Install or update all available firmware.
+It is an error to specify this option with any
+.Ar driver
+arguments. 
 .It Fl n
 Pass the
 .Fl n
