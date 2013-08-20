@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.113 2013/08/20 16:22:09 djm Exp $ */
+/* $OpenBSD: netcat.c,v 1.114 2013/08/20 21:04:40 jmc Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -1082,6 +1082,7 @@ help(void)
 	\t-6		Use IPv6\n\
 	\t-D		Enable the debug socket option\n\
 	\t-d		Detach from stdin\n\
+	\t-F		Pass socket fd\n\
 	\t-h		This help text\n\
 	\t-I length	TCP receive buffer length\n\
 	\t-i secs\t	Delay interval for lines sent, ports scanned\n\
@@ -1113,7 +1114,7 @@ void
 usage(int ret)
 {
 	fprintf(stderr,
-	    "usage: nc [-46DdhklNnrStUuvz] [-I length] [-i interval] [-O length]\n"
+	    "usage: nc [-46DdFhklNnrStUuvz] [-I length] [-i interval] [-O length]\n"
 	    "\t  [-P proxy_username] [-p source_port] [-s source] [-T ToS]\n"
 	    "\t  [-V rtable] [-w timeout] [-X proxy_protocol]\n"
 	    "\t  [-x proxy_address[:port]] [destination] [port]\n");
