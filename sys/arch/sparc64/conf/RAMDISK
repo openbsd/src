@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.103 2012/10/21 17:46:33 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.104 2013/08/20 09:06:02 dlg Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -175,6 +175,7 @@ ahc*	at pci?
 siop*	at pci?
 isp*	at pci?
 mpi*	at pci?
+mpii*	at pci?
 sili*	at pci?
 arc*	at pci?
 jmb*	at pci?
