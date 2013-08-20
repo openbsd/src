@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.conf.5,v 1.17 2013/06/29 09:08:41 jmc Exp $
+.\"	$OpenBSD: ldapd.conf.5,v 1.18 2013/08/20 10:13:03 mikeb Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 29 2013 $
+.Dd $Mdocdate: August 20 2013 $
 .Dt LDAPD.CONF 5
 .Os
 .Sh NAME
@@ -269,7 +269,7 @@ Schema files define the structure and format of entries in the directory tree.
 There are three types of definitions in a schema file:
 .Bl -tag -width Ds
 .It attributetype
-\*(lp
+.Po
 .Ar oid
 .Op NAME name
 .Op DESC description
@@ -283,14 +283,14 @@ There are three types of definitions in a schema file:
 .Op COLLECTIVE
 .Op NO-USER-MODIFICATION
 .Op USAGE Brq userApplications | directoryOperation | distributedOperation | dSAOperation
-\*(rp
+.Pc
 .Pp
 An attribute type definition specifies the syntax of attribute values, whether
 it allows multiple values and how it can be compared in search requests.
 For a complete description of attribute type definitions, see section
 4.1.2 in RFC 4712.
 .It objectclass
-\*(lp
+.Po
 .Ar oid
 .Op NAME name
 .Op DESC description
@@ -299,7 +299,7 @@ For a complete description of attribute type definitions, see section
 .Op Brq ABSTRACT | STRUCTURAL | AUXILIARY
 .Op MUST oids
 .Op MAY oids
-\*(rp
+.Pc
 .Pp
 An object class definition specifies which attributes are required
 and which are allowed.
