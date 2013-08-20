@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.37 2013/06/05 01:32:22 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.38 2013/08/20 14:58:05 pirofti Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -156,13 +156,13 @@ octeon_memory_init(struct boot_info *boot_info)
 	/* Simulator we limit to 96 meg */
 	if (boot_info->board_type == BOARD_TYPE_SIM) {
 		realmem_bytes = (96 << 20);
-	}else{
+	} else {
 		realmem_bytes = ((boot_info->dram_size << 20) - PAGE_SIZE);
 		realmem_bytes &= ~(PAGE_SIZE - 1);
 	}
 	/* phys_avail regions are in bytes */
-	phys_avail[0] = (CKSEG0_TO_PHYS((uint64_t)&end) + 
-			 PAGE_SIZE ) & ~(PAGE_SIZE - 1);
+	phys_avail[0] =
+	    (CKSEG0_TO_PHYS((uint64_t)&end) + PAGE_SIZE) & ~(PAGE_SIZE - 1);
 
 	/* Simulator gets 96Meg period. */
 	if (boot_info->board_type == BOARD_TYPE_SIM) {
@@ -190,15 +190,15 @@ octeon_memory_init(struct boot_info *boot_info)
 	physmem = atop(phys_avail[1] - phys_avail[0]);
 
 	if (boot_info->board_type != BOARD_TYPE_SIM) {
-		if(realmem_bytes > OCTEON_DRAM_FIRST_256_END){
+		if (realmem_bytes > OCTEON_DRAM_FIRST_256_END) {
 #if 0 /* XXX: need fix on mips64 pmap code */
 			/* take out the upper non-cached 1/2 */
 			phys_avail[2] = 0x410000000ULL;
-			phys_avail[3] = (0x410000000ULL 
-					 + OCTEON_DRAM_FIRST_256_END);
+			phys_avail[3] =
+			    (0x410000000ULL + OCTEON_DRAM_FIRST_256_END);
 			physmem += btoc(phys_avail[3] - phys_avail[2]);
 			mem_layout[2].mem_first_page = atop(phys_avail[2]);
-			mem_layout[2].mem_last_page = atop(phys_avail[3]-1);
+			mem_layout[2].mem_last_page = atop(phys_avail[3] - 1);
 #endif
 			realmem_bytes -= OCTEON_DRAM_FIRST_256_END;
 
@@ -207,33 +207,33 @@ octeon_memory_init(struct boot_info *boot_info)
 			phys_avail[5] = (0x20000000ULL + realmem_bytes);
 			physmem += btoc(phys_avail[5] - phys_avail[4]);
 			mem_layout[1].mem_first_page = atop(phys_avail[4]);
-			mem_layout[1].mem_last_page = atop(phys_avail[5]-1);
-			realmem_bytes=0;
-		}else{
+			mem_layout[1].mem_last_page = atop(phys_avail[5] - 1);
+			realmem_bytes = 0;
+		} else {
 #if 0 /* XXX: need fix on mips64 pmap code */
 			/* Now map the rest of the memory */
 			phys_avail[2] = 0x410000000ULL;
 			phys_avail[3] = (0x410000000ULL + realmem_bytes);
 			physmem += btoc(phys_avail[3] - phys_avail[2]);
 			mem_layout[1].mem_first_page = atop(phys_avail[2]);
-			mem_layout[1].mem_last_page = atop(phys_avail[3]-1);
-			realmem_bytes=0;
+			mem_layout[1].mem_last_page = atop(phys_avail[3] - 1);
+			realmem_bytes = 0;
 #endif
 		}
  	}
 
  	realmem = physmem;
 
-	printf("Total DRAM Size 0x%016X\n", (uint32_t) (boot_info->dram_size << 20));
+	printf("Total DRAM Size 0x%016X\n",
+	    (uint32_t)(boot_info->dram_size << 20));
 
-	for(i=0;phys_avail[i];i+=2){
-		printf("Bank %d = 0x%016lX   ->  0x%016lX\n",i>>1, 
-		       (long)phys_avail[i], (long)phys_avail[i+1]);
+	for (i = 0; phys_avail[i]; i += 2) {
+		printf("Bank %d = 0x%016lX   ->  0x%016lX\n", i >> 1,
+		    (long)phys_avail[i], (long)phys_avail[i + 1]);
 	}
-	for( i=0;mem_layout[i].mem_last_page;i++){
-		printf("mem_layout[%d] page 0x%016lX -> 0x%016lX\n",i,
-		       mem_layout[i].mem_first_page,
-		       mem_layout[i].mem_last_page);
+	for (i = 0; mem_layout[i].mem_last_page; i++) {
+		printf("mem_layout[%d] page 0x%016lX -> 0x%016lX\n", i,
+		    mem_layout[i].mem_first_page, mem_layout[i].mem_last_page);
 	}
 }
 
