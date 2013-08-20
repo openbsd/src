@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2013/07/10 15:56:56 jmc Exp $
+#	$OpenBSD: Makefile,v 1.31 2013/08/20 09:14:32 mpi Exp $
 
 PROG=	ppp
 SRCS=	alias.c alias_cuseeme.c alias_db.c alias_ftp.c alias_irc.c \
@@ -22,12 +22,6 @@ BINOWN=	root
 .endif
 BINGRP=	network
 MAN=	ppp.8
-NOATM=	/usr/include/netnatm required
-.if defined(NOATM)
-CFLAGS+=-DNOATM
-.else
-SRCS+=	atm.c
-.endif
 
 .if defined(NOSUID) || defined(PPP_NOSUID)
 CFLAGS+=-DNOSUID

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.261 2013/06/20 12:03:40 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.262 2013/08/20 09:14:22 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -566,9 +566,6 @@ do { \
 #endif
 #ifdef INET6
 	IF_DETACH_QUEUES(ip6intrq);
-#endif
-#ifdef NATM
-	IF_DETACH_QUEUES(natmintrq);
 #endif
 #undef IF_DETACH_QUEUES
 

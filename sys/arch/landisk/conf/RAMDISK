@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.17 2012/09/27 14:01:35 jsg Exp $
+# $OpenBSD: RAMDISK,v 1.18 2013/08/20 09:14:15 mpi Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -109,8 +109,6 @@ ugen*	at uhub?		# USB Generic driver
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 zyd*	at uhub?		# Zydas ZD1211
-#option	NATM
-#ueagle* at uhub?		# Analog Devices Eagle ADSL
 #udcf*	at uhub?		# Gude Expert mouseCLOCK
 #uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 #onewire* at uow?

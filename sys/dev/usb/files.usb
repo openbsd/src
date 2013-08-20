@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.106 2013/08/15 15:01:48 edd Exp $
+#	$OpenBSD: files.usb,v 1.107 2013/08/20 09:14:17 mpi Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -383,12 +383,6 @@ file	dev/usb/if_rsu.c		rsu
 device	otus: ether, ifnet, ifmedia, wlan, firmload
 attach	otus at uhub
 file	dev/usb/if_otus.c		otus
-
-# Analog Devices Eagle driver
-device	ueagle: atm, ifnet, ezload, firmload
-attach	ueagle at uhub
-file	dev/usb/ueagle.c		ueagle
-
 
 # USB logical device
 device	usbf {}
