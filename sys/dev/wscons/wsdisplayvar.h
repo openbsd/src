@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.26 2013/07/06 14:35:45 kettenis Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.27 2013/08/20 17:44:36 kettenis Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -30,6 +30,25 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * Default to white on black except on Sun hardware, where we default
+ * to black on white to match the firmware console.
+ */
+#ifndef WS_DEFAULT_FG
+#if defined(__sparc__) || defined(__sparc64__)
+#define WS_DEFAULT_FG WSCOL_BLACK
+#else
+#define WS_DEFAULT_FG WSCOL_WHITE
+#endif
+#endif
+#ifndef WS_DEFAULT_BG
+#if defined(__sparc__) || defined(__sparc64__)
+#define WS_DEFAULT_BG WSCOL_WHITE
+#else
+#define WS_DEFAULT_BG WSCOL_BLACK
+#endif
+#endif
 
 struct device;
 

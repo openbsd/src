@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.26 2013/06/28 20:06:50 kettenis Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.27 2013/08/20 17:44:34 kettenis Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -510,8 +510,8 @@ rasops_alloc_cattr(void *cookie, int fg, int bg, int flg, long *attr)
 		return (EINVAL);
 
 	if ((flg & WSATTR_WSCOLORS) == 0) {
-		fg = WSCOL_WHITE;
-		bg = WSCOL_BLACK;
+		fg = WS_DEFAULT_FG;
+		bg = WS_DEFAULT_BG;
 	}
 
 	if ((flg & WSATTR_REVERSE) != 0) {
