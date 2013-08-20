@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.sgi/MAKEDEV.md,v 1.38 2013/06/03 16:06:42 tedu Exp 
-#	OpenBSD: MAKEDEV.common,v 1.67 2013/07/06 16:14:38 naddy Exp 
+#	OpenBSD: MAKEDEV.common,v 1.69 2013/08/20 14:27:24 ajacoutot Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -60,7 +60,7 @@
 #	ulpt*	Printer devices
 #	urio*	Diamond Multimedia Rio 500
 #	usb*	Bus control devices used by usbd for attach/detach
-#	uscanner*	Scanners
+uscan_dev
 # Special purpose devices:
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
@@ -302,10 +302,6 @@ audio*)
 	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
-uscanner*)
-	M uscanner$U c 72 $U 660
-	;;
-
 usb*)
 	[ "$i" = "usb" ] && u= || u=$U
 	M usb$u c 61 $U 660
@@ -333,8 +329,7 @@ ugen*)
 
 uall)
 	R ttyU0 ttyU1 ttyU2 ttyU3 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1
-	R uhid2 uhid3 uscanner0 urio0 usb0 usb1 usb2 usb3 usb4 usb5
-	R usb6 usb7
+	R uhid2 uhid3 urio0 usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
 	;;
 
 ttyU[0-9a-zA-Z])
