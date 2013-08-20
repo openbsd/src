@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.270 2013/08/15 18:33:49 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.271 2013/08/20 09:05:21 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -115,6 +115,7 @@ siop*	at pci?			# NCR 538XX SCSI controllers
 isp*	at pci?			# Qlogic ISP [12]0x0 SCSI/FibreChannel
 pcscp*	at pci?			# AMD 53c974 PCscsi-PCI SCSI
 mpi*	at pci?			# LSI Logic Fusion MPT Message Passing Interface
+mpii*	at pci?			# LSI Message Passing Interface II
 arc*	at pci?			# Areca RAID Controllers
 jmb*	at pci?			# JMicron JMB36x controllers
 ahci*	at jmb? flags 0x0000	# flags 0x0001 to force SATA 1 (1.5Gb/s)
