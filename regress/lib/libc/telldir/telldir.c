@@ -1,4 +1,4 @@
-/*	$OpenBSD: telldir.c,v 1.2 2006/04/01 18:24:53 otto Exp $	*/
+/*	$OpenBSD: telldir.c,v 1.3 2013/08/20 01:13:54 guenther Exp $	*/
 
 /*	Written by Otto Moerbeek, 2006,  Public domain.	*/
 
@@ -58,7 +58,7 @@ loop(DIR *dp, int i)
 {
 	struct dirent *f;
 	char file[PATH_MAX];
-	long pos, remember = -1;
+	long pos, t, remember = -1;
 
 	rewinddir(dp);
 	snprintf(file, sizeof file, "%d", i);
@@ -71,12 +71,12 @@ loop(DIR *dp, int i)
 			remember = pos;
 	}
 	if (remember == -1)
-		errx(1, "remember");
+		errx(1, "remember %s", file);
 	seekdir(dp, remember);
-	if (telldir(dp) != remember)
-		errx(1, "tell after seek");
-	if (telldir(dp) != remember)
-		errx(1, "tell after tell");
+	if ((t = telldir(dp)) != remember)
+		errx(1, "tell after seek %s %ld != %ld", file, t, pos);
+	if ((t = telldir(dp)) != remember)
+		errx(1, "tell after tell %s %ld != %ld", file, t, pos);
 	f = readdir(dp);
 	if (f == NULL)
 		err(1, "seek to %s %ld", file, remember);
