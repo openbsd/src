@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.71 2013/06/03 15:54:47 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.72 2013/08/20 14:27:24 ajacoutot Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -118,7 +118,6 @@ cdev_decl(cy);
 #include "ulpt.h"
 #include "urio.h"
 #include "ucom.h"
-#include "uscanner.h"
 #include "pf.h"
 #ifdef USER_PCICONF
 #include "pci.h"
@@ -204,7 +203,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(1,diskmap),	/* 63: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 64: pppx */
 	cdev_urio_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
-	cdev_usbdev_init(NUSCANNER,uscanner),	/* 66: USB scanners */
+	cdev_notdef(),			/* 66: was USB scanners */
 	cdev_fuse_init(NFUSE,fuse),	/* 67: fuse */
 };
 int	nchrdev = nitems(cdevsw);

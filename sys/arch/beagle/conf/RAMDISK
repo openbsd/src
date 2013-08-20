@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.23 2013/06/16 22:06:42 florian Exp $
+# $OpenBSD: RAMDISK,v 1.24 2013/08/20 14:27:26 ajacoutot Exp $
 #
 # GENERIC machine description file
 #
@@ -144,7 +144,6 @@ smsc*		at uhub?		# SMSC LAN95xx Ethernet
 # url*		at uhub?		# Realtek RTL8150L based adapters
 # wi*		at uhub?		# WaveLAN IEEE 802.11DS
 # urio*		at uhub?		# Diamond Multimedia Rio 500
-# uscanner*	at uhub?		# USB Scanners
 # #uyap*		at uhub?		# Y@P firmware loader
 # udsbr*		at uhub?		# D-Link DSB-R100 radio
 # radio*		at udsbr?		# USB radio

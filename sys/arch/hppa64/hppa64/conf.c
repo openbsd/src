@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.23 2013/06/03 15:54:47 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.24 2013/08/20 14:27:27 ajacoutot Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -117,7 +117,6 @@ cdev_decl(pci);
 #include "ulpt.h"
 #include "urio.h"
 #include "ucom.h"
-#include "uscanner.h"
 
 #include "bthub.h"
 #include "fuse.h"
@@ -175,7 +174,7 @@ struct cdevsw   cdevsw[] =
 	cdev_ulpt_init(NULPT,ulpt),	/* 43: USB printers */
 	cdev_urio_init(NURIO,urio),	/* 44: USB Diamond Rio 500 */
 	cdev_tty_init(NUCOM,ucom),	/* 45: USB tty */
-	cdev_usbdev_init(NUSCANNER,uscanner), /* 46: USB scanners */
+	cdev_notdef(),			/* 46: was USB scanners */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 47: devices hot plugging */
 	cdev_lkm_dummy(),		/* 48: */
 	cdev_lkm_dummy(),		/* 49: */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.9 2013/06/03 17:33:58 tedu Exp $ */
+/*	$OpenBSD: conf.c,v 1.10 2013/08/20 14:27:30 ajacoutot Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,7 +132,6 @@ cdev_decl(pci);
 #include "ulpt.h"
 #include "urio.h"
 #include "ucom.h"
-#include "uscanner.h"
 
 #include "bthub.h"
 #include "vscsi.h"
@@ -221,7 +220,7 @@ struct cdevsw	cdevsw[] =
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 69: vscsi */
 	cdev_disk_init(1,diskmap),	/* 70: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 71: pppx */
-	cdev_usbdev_init(NUSCANNER,uscanner),	/* 72: USB scanners */
+	cdev_notdef(),			/* 72: was USB scanners */
 };
 
 int	nchrdev = nitems(cdevsw);

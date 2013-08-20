@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.68 2013/08/08 21:13:07 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.69 2013/08/20 14:27:31 ajacoutot Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -107,7 +107,6 @@ cdev_decl(pci);
 #include "ulpt.h"
 #include "urio.h"
 #include "ucom.h"
-#include "uscanner.h"
 
 #include "bthub.h"
 
@@ -256,7 +255,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ulpt_init(NULPT,ulpt),	/* 93: USB printers */
 	cdev_urio_init(NURIO,urio),	/* 94: USB Diamond Rio 500 */
 	cdev_tty_init(NUCOM,ucom),	/* 95: USB tty */
-	cdev_usbdev_init(NUSCANNER,uscanner), /* 96: USB scanners */
+	cdev_notdef(),			/* 96: was USB scanners */
 	cdev_notdef(),			/* 97 */
 	cdev_notdef(),			/* 98 */
 	cdev_notdef(),			/* 99 */

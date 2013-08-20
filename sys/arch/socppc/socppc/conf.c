@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 2013/06/03 15:54:47 tedu Exp $ */
+/*	$OpenBSD: conf.c,v 1.18 2013/08/20 14:27:31 ajacoutot Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -113,7 +113,6 @@ cdev_decl(pci);
 #include "ulpt.h"
 #include "urio.h"
 #include "ucom.h"
-#include "uscanner.h"
 
 #include "bthub.h"
 #include "vscsi.h"
@@ -202,7 +201,7 @@ struct cdevsw cdevsw[] = {
 #endif
 	cdev_notdef(),			/* 72 */
 	cdev_notdef(),			/* 73 */
-	cdev_usbdev_init(NUSCANNER,uscanner), /* 74: usb scanner */
+	cdev_notdef(),			/* 74: was USB scanners */
 	cdev_notdef(),			/* 75 */
 	cdev_notdef(),			/* 76 */
 	cdev_ptm_init(NPTY,ptm),	/* 77: pseudo-tty ptm device */

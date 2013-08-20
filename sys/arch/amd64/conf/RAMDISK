@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.57 2013/08/20 13:16:39 mpi Exp $
+#	$OpenBSD: RAMDISK,v 1.58 2013/08/20 14:27:25 ajacoutot Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -106,7 +106,6 @@ wskbd*	at ukbd? mux 1
 #kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 #upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 #urio*	at uhub?		# Diamond Multimedia Rio 500
-#uscanner* at uhub?		# USB Scanners
 #uyap*	at uhub?		# Y@P firmware loader
 #ugen*	at uhub?		# USB Generic driver
 

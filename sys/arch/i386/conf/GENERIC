@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.751 2013/08/20 09:14:13 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.752 2013/08/20 14:27:27 ajacoutot Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -281,7 +281,6 @@ mos*	at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
 url*	at uhub?		# Realtek RTL8150L based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
 urio*	at uhub?		# Diamond Multimedia Rio 500
-uscanner* at uhub? disable	# USB Scanners
 #uyap*	at uhub?		# Y@P firmware loader
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio

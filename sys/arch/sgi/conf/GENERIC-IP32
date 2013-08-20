@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP32,v 1.29 2012/09/27 14:01:35 jsg Exp $
+#	$OpenBSD: GENERIC-IP32,v 1.30 2013/08/20 14:27:30 ajacoutot Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 #
@@ -98,7 +98,6 @@ audio*		at uaudio?
 ulpt*		at uhub?	# USB Printers	
 umass*		at uhub?	# USB Mass Storage devices
 urio*		at uhub?	# Diamond Multimedia Rio 500
-uscanner*	at uhub? disable# USB Scanners
 uhidev*		at uhub?	# Human Interface Devices
 ums*		at uhidev?	# USB mouse
 wsmouse*	at ums? mux 0

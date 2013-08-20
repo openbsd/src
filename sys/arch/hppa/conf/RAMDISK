@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.96 2013/03/09 02:19:21 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.97 2013/08/20 14:27:26 ajacoutot Exp $
 #
 # Diskless kernel config
 #
@@ -152,7 +152,6 @@ udav*	at uhub?		# Davicom DM9601 based Ethernet
 upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
 #urio*	at uhub?		# Diamond Multimedia Rio 500
-#uscanner* at uhub?		# USB Scanners
 #uyap*	at uhub?		# Y@P firmware loader
 #udsbr*	at uhub?		# D-Link DSB-R100 radio
 #radio*	at udsbr?		# USB radio

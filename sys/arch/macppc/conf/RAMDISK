@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.95 2013/08/17 08:33:11 mpi Exp $
+#	$OpenBSD: RAMDISK,v 1.96 2013/08/20 14:27:29 ajacoutot Exp $
 #
 # PPC GENERIC config file
 #
@@ -183,7 +183,6 @@ urtwn*		at uhub?		# Realtek RTL8188CU/RTL8192CU
 zyd*		at uhub?		# Zydas ZD1211
 url*		at uhub?		# Realtek RTL8150L based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
-#uscanner*	at uhub?		# USB Scanner driver
 #uyap*		at uhub?		# Y@P firmware loader
 #ugen*		at uhub?		# USB Generic driver
 umass*		at uhub?		# USB Mass Storage devices

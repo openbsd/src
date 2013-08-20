@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.143 2013/06/03 15:54:47 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.144 2013/08/20 14:27:28 ajacoutot Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -155,7 +155,6 @@ cdev_decl(cy);
 #include "ulpt.h"
 #include "urio.h"
 #include "ucom.h"
-#include "uscanner.h"
 #include "cz.h"
 cdev_decl(cztty);
 #include "radio.h"
@@ -276,7 +275,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 74: ALTQ (deprecated) */
 	cdev_iop_init(NIOP,iop),	/* 75: I2O IOP control interface */
 	cdev_radio_init(NRADIO, radio), /* 76: generic radio I/O */
-	cdev_usbdev_init(NUSCANNER,uscanner),	/* 77: USB scanners */
+	cdev_notdef(),			/* 77: was USB scanners */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 78: system call tracing */
  	cdev_bio_init(NBIO,bio),	/* 79: ioctl tunnel */
 	cdev_ch_init(NGPR,gpr),		/* 80: GPR400 SmartCard reader */

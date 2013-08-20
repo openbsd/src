@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.52 2013/06/03 17:33:58 tedu Exp $ */
+/*	$OpenBSD: conf.c,v 1.53 2013/08/20 14:27:29 ajacoutot Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -108,7 +108,6 @@ cdev_decl(com);
 #include "ulpt.h"
 #include "urio.h"
 #include "ucom.h"
-#include "uscanner.h"
 
 #include "inet.h"
 
@@ -226,7 +225,7 @@ struct cdevsw cdevsw[] = {
 #endif
 	cdev_notdef(),			/* 72: ALTQ (deprecated) */
 	cdev_iop_init(NIOP,iop),	/* 73: I2O IOP control interface */
-	cdev_usbdev_init(NUSCANNER,uscanner), /* 74: usb scanner */
+	cdev_notdef(),			/* 74: was USB scanners */
 	cdev_bktr_init(NBKTR,bktr),	/* 75: Bt848 video capture device */
 	cdev_radio_init(NRADIO, radio),	/* 76: generic radio I/O */
 	cdev_ptm_init(NPTY,ptm),	/* 77: pseudo-tty ptm device */

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.38 2013/01/14 21:18:47 pirofti Exp $
+#	$OpenBSD: GENERIC,v 1.39 2013/08/20 14:27:29 ajacoutot Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -124,7 +124,6 @@ ucom*		at uchcom?
 ulpt*		at uhub?	# USB Printers	
 umass*		at uhub?	# USB Mass Storage devices
 urio*		at uhub?	# Diamond Multimedia Rio 500
-uscanner*	at uhub? disable# USB Scanners
 uhidev*		at uhub?	# Human Interface Devices
 ums*		at uhidev?	# USB mouse
 wsmouse*	at ums? mux 0
