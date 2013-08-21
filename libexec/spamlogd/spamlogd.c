@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.21 2011/03/18 22:37:06 okan Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.22 2013/08/21 16:13:30 millert Exp $	*/
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -250,12 +250,12 @@ dbupdate(char *dbname, char *ip)
 			goto bad;
 		}
 	} else {
-		if (dbd.size != sizeof(gd)) {
+		/* XXX - backwards compat */
+		if (gdcopyin(&dbd, &gd) == -1) {
 			/* whatever this is, it doesn't belong */
 			db->del(db, &dbk, 0);
 			goto bad;
 		}
-		memcpy(&gd, dbd.data, sizeof(gd));
 		gd.pcount++;
 		gd.expire = now + whiteexp;
 		memset(&dbk, 0, sizeof(dbk));

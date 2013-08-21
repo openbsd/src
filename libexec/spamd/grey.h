@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.h,v 1.9 2007/03/06 23:38:36 beck Exp $	*/
+/*	$OpenBSD: grey.h,v 1.10 2013/08/21 16:13:29 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -27,13 +27,23 @@
 #define DB_TRAP_INTERVAL 60 * 10
 #define PATH_SPAMD_DB "/var/db/spamd"
 
+/* Obsolete grey data format. */
+struct ogdata {
+	int32_t first;  /* when did we see it first */
+	int32_t pass;   /* when was it whitelisted */
+	int32_t expire; /* when will we get rid of this entry */
+	int bcount;     /* how many times have we blocked it */
+	int pcount;     /* how many times passed, or -1 for spamtrap */
+};
+
 struct gdata {
-	time_t first;  /* when did we see it first */
-	time_t pass;   /* when was it whitelisted */
-	time_t expire; /* when will we get rid of this entry */
-	int bcount;    /* how many times have we blocked it */
-	int pcount;    /* how many times passed, or -1 for spamtrap */
+	int64_t first;  /* when did we see it first */
+	int64_t pass;   /* when was it whitelisted */
+	int64_t expire; /* when will we get rid of this entry */
+	int bcount;     /* how many times have we blocked it */
+	int pcount;     /* how many times passed, or -1 for spamtrap */
 };
 
 extern int greywatcher(void);
 extern int greyupdate(char *, char *, char *, char *, char *, int, char *);
+extern int gdcopyin(const void *, struct gdata *);

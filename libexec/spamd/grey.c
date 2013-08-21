@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.52 2012/10/02 15:26:17 okan Exp $	*/
+/*	$OpenBSD: grey.c,v 1.53 2013/08/21 16:13:29 millert Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -540,7 +540,6 @@ do_changes(DB *db)
 int
 db_addrstate(DB *db, char *key)
 {
-	int			i;
 	DBT			dbk, dbd;
 	struct gdata		gd;
 
@@ -548,14 +547,18 @@ db_addrstate(DB *db, char *key)
 	dbk.size = strlen(key);
 	dbk.data = key;
 	memset(&dbd, 0, sizeof(dbd));
-	i = db->get(db, &dbk, &dbd, 0);
-	if (i == -1)
-		return (-1);
-	if (i)
-		/* not in the database */
+	switch (db->get(db, &dbk, &dbd, 0)) {
+	case 1:
+		/* not found */
 		return (0);
-	memcpy(&gd, dbd.data, sizeof(gd));
-	return gd.pcount == -1 ? 1 : 2;
+	case 0:
+		if (gdcopyin(&dbd, &gd) != -1)
+			return (gd.pcount == -1 ? 1 : 2);
+		/* FALLTHROUGH */
+	default:
+		/* error */
+		return (-1);
+	}
 }
 
 
@@ -582,7 +585,7 @@ greyscan(char *dbname)
 	memset(&dbd, 0, sizeof(dbd));
 	for (r = db->seq(db, &dbk, &dbd, R_FIRST); !r;
 	    r = db->seq(db, &dbk, &dbd, R_NEXT)) {
-		if ((dbk.size < 1) || dbd.size != sizeof(struct gdata)) {
+		if ((dbk.size < 1) || gdcopyin(&dbd, &gd) == -1) {
 			syslog_r(LOG_ERR, &sdata, "bogus entry in spamd database");
 			goto bad;
 		}
@@ -597,7 +600,6 @@ greyscan(char *dbname)
 		}
 		memset(a, 0, asiz);
 		memcpy(a, dbk.data, dbk.size);
-		memcpy(&gd, dbd.data, sizeof(gd));
 		if (gd.expire <= now && gd.pcount != -2) {
 			/* get rid of entry */
 			if (queue_change(a, NULL, 0, DBC_DEL) == -1)
@@ -719,7 +721,7 @@ twupdate(char *dbname, char *what, char *ip, char *source, char *expires)
 
 	now = time(NULL);
 	/* expiry times have to be in the future */
-	expire = strtonum(expires, now, INT_MAX, NULL);
+	expire = strtonum(expires, now, sizeof(time_t) == sizeof(int) ? INT_MAX : LLONG_MAX, NULL);
 	if (expire == 0)
 		return(-1);
 
@@ -766,13 +768,12 @@ twupdate(char *dbname, char *what, char *ip, char *source, char *expires)
 		    expires);
 	} else {
 		/* existing entry */
-		if (dbd.size != sizeof(gd)) {
+		if (gdcopyin(&dbd, &gd) == -1) {
 			/* whatever this is, it doesn't belong */
 			db->del(db, &dbk, 0);
 			db->sync(db, 0);
 			goto bad;
 		}
-		memcpy(&gd, dbd.data, sizeof(gd));
 		if (spamtrap) {
 			gd.pcount = -1;
 			gd.bcount++;
@@ -889,13 +890,12 @@ greyupdate(char *dbname, char *helo, char *ip, char *from, char *to, int sync,
 		    spamtrap ? "greytrap " : "", ip, from, to, helo);
 	} else {
 		/* existing entry */
-		if (dbd.size != sizeof(gd)) {
+		if (gdcopyin(&dbd, &gd) == -1) {
 			/* whatever this is, it doesn't belong */
 			db->del(db, &dbk, 0);
 			db->sync(db, 0);
 			goto bad;
 		}
-		memcpy(&gd, dbd.data, sizeof(gd));
 		gd.bcount++;
 		gd.pcount = spamtrap ? -1 : 0;
 		if (gd.first + passtime < now)
@@ -979,7 +979,7 @@ greyreader(void)
 	sync = 1;
 	if (grey == NULL) {
 		syslog_r(LOG_ERR, &sdata, "No greylist pipe stream!\n");
-		exit(1);
+		return (-1);
 	}
 
 	/* grab trap suffixes */
@@ -1140,10 +1140,11 @@ greywatcher(void)
 		 */
 		close(pfdev);
 		setproctitle("(%s update)", PATH_SPAMD_DB);
-		greyreader();
-		syslog_r(LOG_ERR, &sdata, "greyreader failed (%m)");
-		/* NOTREACHED */
-		_exit(1);
+		if (greyreader() == -1) {
+		    syslog_r(LOG_ERR, &sdata, "greyreader failed (%m)");
+		    _exit(1);
+		}
+		_exit(0);
 	}
 
 

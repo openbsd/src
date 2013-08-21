@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.26 2013/04/22 19:49:36 otto Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.27 2013/08/21 16:13:29 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -129,12 +129,11 @@ dbupdate(DB *db, char *ip, int add, int type)
 				goto bad;
 			}
 		} else {
-			if (dbd.size != sizeof(gd)) {
+			if (gdcopyin(&dbd, &gd) == -1) {
 				/* whatever this is, it doesn't belong */
 				db->del(db, &dbk, 0);
 				goto bad;
 			}
-			memcpy(&gd, dbd.data, sizeof(gd));
 			gd.pcount++;
 			switch (type) {
 			case WHITE:
@@ -185,11 +184,10 @@ dblist(DB *db)
 	    r = db->seq(db, &dbk, &dbd, R_NEXT)) {
 		char *a, *cp;
 
-		if ((dbk.size < 1) || dbd.size != sizeof(struct gdata)) {
+		if ((dbk.size < 1) || gdcopyin(&dbd, &gd) == -1) {
 			db->close(db);
 			errx(1, "bogus size db entry - bad db file?");
 		}
-		memcpy(&gd, dbd.data, sizeof(gd));
 		a = malloc(dbk.size + 1);
 		if (a == NULL)
 			err(1, "malloc");
