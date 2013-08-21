@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.752 2013/08/20 14:27:27 ajacoutot Exp $
+#	$OpenBSD: GENERIC,v 1.753 2013/08/21 18:29:25 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -349,8 +349,8 @@ vga0		at isa?
 option		X86EMU		# to POST video cards
 vga*		at pci?
 pcdisplay0	at isa?		# CGA, MDA, EGA, HGA
-wsdisplay*	at vga?
-wsdisplay*	at pcdisplay?
+wsdisplay0	at vga? console 1
+wsdisplay0	at pcdisplay? console 1
 wskbd*		at pckbd? mux 1
 wsmouse*	at pms? mux 0
 
@@ -375,6 +375,7 @@ inteldrm*	at vga?		# Intel i915, i945 DRM driver
 drm*		at inteldrm?
 radeondrm*	at pci? 	# ATI Radeon DRM driver
 drm*		at radeondrm?
+wsdisplay0	at radeondrm? console 1
 wsdisplay*	at radeondrm?
 
 #option		VESABIOSVERBOSE

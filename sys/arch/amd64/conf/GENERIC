@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.346 2013/08/20 14:27:25 ajacoutot Exp $
+#	$OpenBSD: GENERIC,v 1.347 2013/08/21 18:29:25 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -292,7 +292,7 @@ pms*		at pckbc?		# PS/2 mouse for wsmouse
 vga0		at isa?
 option		X86EMU			# to POST video cards
 vga*		at pci?
-wsdisplay*	at vga?
+wsdisplay0	at vga? console 1
 wskbd*		at pckbd? mux 1
 wsmouse*	at pms? mux 0
 
@@ -307,6 +307,7 @@ inteldrm*	at vga? 	# Intel i915, i945 DRM driver
 drm*		at inteldrm?
 radeondrm*	at pci? 	# ATI Radeon DRM driver
 drm*		at radeondrm?
+wsdisplay0	at radeondrm? console 1
 wsdisplay*	at radeondrm?
 
 pcppi0		at isa?
