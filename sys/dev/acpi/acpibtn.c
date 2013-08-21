@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.34 2011/01/02 04:56:57 jordan Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.35 2013/08/21 20:10:47 landry Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -45,6 +45,9 @@ struct acpibtn_softc {
 
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
+
+	struct ksensor		sc_sens;
+	struct ksensordev	sc_sensdev;
 
 	int			sc_btn_type;
 #define	ACPIBTN_UNKNOWN	0
@@ -123,6 +126,7 @@ acpibtn_attach(struct device *parent, struct device *self, void *aux)
 	struct acpibtn_softc	*sc = (struct acpibtn_softc *)self;
 	struct acpi_attach_args *aa = aux;
 	struct acpi_lid		*lid;
+	int64_t			lid_open;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
@@ -142,6 +146,20 @@ acpibtn_attach(struct device *parent, struct device *self, void *aux)
 	acpibtn_getsta(sc);
 
 	printf(": %s\n", sc->sc_devnode->name);
+
+	if (sc->sc_btn_type == ACPIBTN_LID) {
+		strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
+		    sizeof(sc->sc_sensdev.xname));
+		strlcpy(sc->sc_sens.desc, "lid open",
+		    sizeof(sc->sc_sens.desc));
+		sc->sc_sens.type = SENSOR_INDICATOR;
+		sensor_attach(&sc->sc_sensdev, &sc->sc_sens);
+		sensordev_install(&sc->sc_sensdev);
+
+		aml_evalinteger(sc->sc_acpi, sc->sc_devnode,
+		    "_LID", 0, NULL, &lid_open);
+		sc->sc_sens.value = lid_open;
+	}
 
 	aml_register_notify(sc->sc_devnode, aa->aaa_dev, acpibtn_notify,
 	    sc, ACPIDEV_NOPOLL);
@@ -179,11 +197,12 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 		 * _LID method.  0 means the lid is closed and we
 		 * should go to sleep.
 		 */
-		if (lid_suspend == 0)
-			break;
 		if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode,
 		    "_LID", 0, NULL, &lid))
 			return (0);
+		sc->sc_sens.value = lid;
+		if (lid_suspend == 0)
+			break;
 		if (lid == 0)
 			goto sleep;
 #endif /* SMALL_KERNEL */
