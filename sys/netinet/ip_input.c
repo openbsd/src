@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.216 2013/08/13 09:52:53 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.217 2013/08/21 09:02:12 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -694,6 +694,8 @@ in_ouraddr(struct in_addr ina, struct mbuf *m)
 	ia = ifatoia(ifa_ifwithaddr(sintosa(&sin), m->m_pkthdr.rdomain));
 
 	if (ia == NULL) {
+		struct ifaddr *ifa;
+
 		/*
 		 * No local address or broadcast address found, so check for
 		 * ancient classful broadcast addresses.
@@ -704,16 +706,19 @@ in_ouraddr(struct in_addr ina, struct mbuf *m)
 		    !IN_CLASSFULBROADCAST(ina.s_addr, ina.s_addr))
 			return (0);
 
+		if (m->m_pkthdr.rcvif->if_rdomain != m->m_pkthdr.rdomain)
+			return (0);
 		/*
 		 * The check in the loop assumes you only rx a packet on an UP
 		 * interface, and that M_BCAST will only be set on a BROADCAST
 		 * interface.
 		 */
-		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-			if (ia->ia_ifp == m->m_pkthdr.rcvif &&
-			    ia->ia_ifp->if_rdomain == m->m_pkthdr.rdomain &&
-			    IN_CLASSFULBROADCAST(ina.s_addr,
-			    ia->ia_addr.sin_addr.s_addr))
+		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
+			if (ifa->ifa_addr->sa_family != AF_INET)
+				continue;
+
+			if (IN_CLASSFULBROADCAST(ina.s_addr,
+			    ifatoia(ifa)->ia_addr.sin_addr.s_addr))
 				return (1);
 		}
 
