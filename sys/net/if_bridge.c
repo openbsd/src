@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.213 2013/08/05 11:18:03 mikeb Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.214 2013/08/21 13:53:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -87,8 +87,6 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
-
-#include <net/if_vlan_var.h>
 
 #if NCARP > 0
 #include <netinet/ip_carp.h>
