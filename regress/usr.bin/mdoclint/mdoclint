@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.36 2013/08/05 07:24:19 jmc Exp $
-# $NetBSD: mdoclint,v 1.39 2013/08/02 13:16:54 wiz Exp $
+# $OpenBSD: mdoclint,v 1.37 2013/08/21 13:22:03 jmc Exp $
+# $NetBSD: mdoclint,v 1.41 2013/08/21 11:22:15 wiz Exp $
 #
 # Copyright (c) 2001-2013 Thomas Klausner
 # All rights reserved.
@@ -82,7 +82,7 @@ usage:	mdoclint [-$options] file ...
 	-s	warn about whitespace problems
 	-v	verbose output
 	-w	show section header in warnings
-	-X	warn about explicit mentions of FreeBSD, NetBSD, or OpenBSD
+	-X	warn about explicit mentions of the *BSD system names
 	-x	warn about cross-references with missing targets
 Default is $default if no flag is specified.
 EOF
@@ -93,6 +93,7 @@ EOF
 my %short = (
     "Free" => ".Fx",
     "Net" => ".Nx",
+    "DragonFly" => ".Dx",
     "Open" => ".Ox"
 );
 
@@ -523,15 +524,16 @@ sub process_line
 		}
 	}
 
-	if (/\b(Free|Net|Open)BSD\b/o
-	    and not /\b(?:www|ftp)\.(?:Free|Net|Open)BSD\.org\b/o
+	if (/\b(Free|Net|DragonFly|Open)BSD\b/o
+	    and not /\b(?:www|ftp)\.(?:Free|Net|DragonFly|Open)BSD\.org\b/o
 	    and not /\bOpenBSD\::.*3p\b/o
 	    and not /\/pub\/OpenBSD\//o
 	    and not /\@(?:Free|Net|Open)BSD\.(?i:org)\b/o) {
 		$s->warning("verbose mention of `$1BSD' instead of "
 		    . "`$short{$1}': `$_'") if $opt_X;
 	}
-	if (/^\./o and (/Bx (Open)/o or /Bx (Free)/o or /Bx (Net)/o)) {
+	if (/^\./o and (/Bx (Open)/o or /Bx (Free)/o
+			or /Bx (DragonFly)/o or /Bx (Net)/o)) {
 		$s->warning("`.Bx $1' found -- use $short{$1} instead")
 		    if $opt_X;
 	}
