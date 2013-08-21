@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.38 2013/08/20 14:58:05 pirofti Exp $ */
+/*	$OpenBSD: machdep.c,v 1.39 2013/08/21 11:25:33 pirofti Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -167,7 +167,7 @@ octeon_memory_init(struct boot_info *boot_info)
 	/* Simulator gets 96Meg period. */
 	if (boot_info->board_type == BOARD_TYPE_SIM) {
 		phys_avail[1] = (96 << 20);
-	}else{
+	} else {
 		if (realmem_bytes > OCTEON_DRAM_FIRST_256_END)
 			phys_avail[1] = OCTEON_DRAM_FIRST_256_END;
 		else
