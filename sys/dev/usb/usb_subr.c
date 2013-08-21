@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.92 2013/08/13 09:26:04 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.93 2013/08/21 13:45:34 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -720,8 +720,8 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 			selfpowered = 1;
 	}
 	DPRINTF(("usbd_set_config_index: (addr %d) cno=%d attr=0x%02x, "
-		 "selfpowered=%d, power=%d\n",
-		 cdp->bConfigurationValue, dev->address, cdp->bmAttributes,
+		 "selfpowered=%d, power=%d\n", dev->address,
+		 cdp->bConfigurationValue, cdp->bmAttributes,
 		 selfpowered, cdp->bMaxPower * 2));
 
 	/* Check if we have enough power. */
