@@ -1,4 +1,4 @@
-/*	$Id: term.h,v 1.37 2013/08/08 20:07:24 schwarze Exp $ */
+/*	$Id: term.h,v 1.38 2013/08/21 21:19:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -58,10 +58,10 @@ struct	termp {
 	size_t		  defrmargin;	/* Right margin of the device. */
 	size_t		  rmargin;	/* Current right margin. */
 	size_t		  maxrmargin;	/* Max right margin. */
-	int		  maxcols;	/* Max size of buf. */
+	size_t		  maxcols;	/* Max size of buf. */
 	size_t		  offset;	/* Margin offest. */
 	size_t		  tabwidth;	/* Distance of tab positions. */
-	int		  col;		/* Bytes in buf. */
+	size_t		  col;		/* Bytes in buf. */
 	size_t		  viscol;	/* Chars on current line. */
 	int		  overstep;	/* See termp_flushln(). */
 	int		  skipvsp;	/* Vertical space to skip. */
