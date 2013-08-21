@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.105 2013/08/13 09:52:53 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.106 2013/08/21 09:05:22 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -297,10 +297,6 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 			icmp_send(m, NULL);
 }
 
-struct sockaddr_in icmpsrc = { sizeof (struct sockaddr_in), AF_INET };
-static struct sockaddr_in icmpdst = { sizeof (struct sockaddr_in), AF_INET };
-static struct sockaddr_in icmpgw = { sizeof (struct sockaddr_in), AF_INET };
-
 /*
  * Process a received ICMP message.
  */
@@ -309,14 +305,11 @@ icmp_input(struct mbuf *m, ...)
 {
 	struct icmp *icp;
 	struct ip *ip = mtod(m, struct ip *);
-	int icmplen;
-	int i;
+	struct sockaddr_in sin;
+	int icmplen, i, code, hlen;
 	struct in_ifaddr *ia;
 	void *(*ctlfunc)(int, struct sockaddr *, u_int, void *);
-	int code;
-	int hlen;
 	va_list ap;
-	struct rtentry *rt;
 	struct mbuf *opts;
 
 	va_start(ap, m);
@@ -479,10 +472,13 @@ icmp_input(struct mbuf *m, ...)
 		if (icmpprintfs)
 			printf("deliver to protocol %d\n", icp->icmp_ip.ip_p);
 #endif
-		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
+		bzero(&sin, sizeof(sin));
+		sin.sin_family = AF_INET;
+		sin.sin_len = sizeof(struct sockaddr_in);
+		sin.sin_addr = icp->icmp_ip.ip_dst;
 #if NCARP > 0
 		if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
-		    carp_lsdrop(m, AF_INET, &icmpsrc.sin_addr.s_addr,
+		    carp_lsdrop(m, AF_INET, &sin.sin_addr.s_addr,
 		    &ip->ip_dst.s_addr))
 			goto freeit;
 #endif
@@ -492,7 +488,7 @@ icmp_input(struct mbuf *m, ...)
 		 */
 		ctlfunc = inetsw[ip_protox[icp->icmp_ip.ip_p]].pr_ctlinput;
 		if (ctlfunc)
-			(*ctlfunc)(code, sintosa(&icmpsrc), m->m_pkthdr.rdomain,
+			(*ctlfunc)(code, sintosa(&sin), m->m_pkthdr.rdomain,
 			    &icp->icmp_ip);
 		break;
 
@@ -538,14 +534,17 @@ icmp_input(struct mbuf *m, ...)
 		 * We are not able to respond with all ones broadcast
 		 * unless we receive it over a point-to-point interface.
 		 */
+		bzero(&sin, sizeof(sin));
+		sin.sin_family = AF_INET;
+		sin.sin_len = sizeof(struct sockaddr_in);
 		if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
 		    ip->ip_dst.s_addr == INADDR_ANY)
-			icmpdst.sin_addr = ip->ip_src;
+			sin.sin_addr = ip->ip_src;
 		else
-			icmpdst.sin_addr = ip->ip_dst;
+			sin.sin_addr = ip->ip_dst;
 		if (m->m_pkthdr.rcvif == NULL)
 			break;
-		ia = ifatoia(ifaof_ifpforaddr(sintosa(&icmpdst),
+		ia = ifatoia(ifaof_ifpforaddr(sintosa(&sin),
 		    m->m_pkthdr.rcvif));
 		if (ia == 0)
 			break;
@@ -579,6 +578,12 @@ reflect:
 		return;
 
 	case ICMP_REDIRECT:
+	{
+		struct sockaddr_in sdst;
+		struct sockaddr_in sgw;
+		struct sockaddr_in ssrc;
+		struct rtentry *newrt = NULL;
+
 		/* Free packet atttributes */
 		if (m->m_flags & M_PKTHDR)
 			m_tag_delete_chain(m);
@@ -598,8 +603,15 @@ reflect:
 		 * listening on a raw socket (e.g. the routing
 		 * daemon for use in updating its tables).
 		 */
-		icmpgw.sin_addr = ip->ip_src;
-		icmpdst.sin_addr = icp->icmp_gwaddr;
+		bzero(&sdst, sizeof(sdst));
+		bzero(&sgw, sizeof(sgw));
+		bzero(&ssrc, sizeof(ssrc));
+		sdst.sin_family = sgw.sin_family = ssrc.sin_family = AF_INET;
+		sdst.sin_len = sgw.sin_len = ssrc.sin_len = sizeof(sdst);
+		bcopy(&icp->icmp_ip.ip_dst, &sdst.sin_addr, sizeof(sdst));
+		bcopy(&icp->icmp_gwaddr, &sgw.sin_addr, sizeof(sgw));
+		bcopy(&ip->ip_src, &ssrc.sin_addr, sizeof(ssrc));
+
 #ifdef	ICMPPRINTFS
 		if (icmpprintfs) {
 			char buf[4 * sizeof("123")];
@@ -610,27 +622,25 @@ reflect:
 			    buf, inet_ntoa(icp->icmp_gwaddr));
 		}
 #endif
-		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
+
 #if NCARP > 0
 		if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
-		    carp_lsdrop(m, AF_INET, &icmpsrc.sin_addr.s_addr,
+		    carp_lsdrop(m, AF_INET, &sdst.sin_addr.s_addr,
 		    &ip->ip_dst.s_addr))
 			goto freeit;
 #endif
-		rt = NULL;
-		rtredirect(sintosa(&icmpsrc), sintosa(&icmpdst),
-		    (struct sockaddr *)0, RTF_GATEWAY | RTF_HOST,
-		    sintosa(&icmpgw), (struct rtentry **)&rt,
-		    m->m_pkthdr.rdomain);
-		if (rt != NULL && icmp_redirtimeout != 0) {
-			(void)rt_timer_add(rt, icmp_redirect_timeout,
+		rtredirect(sintosa(&sdst), sintosa(&sgw), NULL,
+		    RTF_GATEWAY | RTF_HOST, sintosa(&ssrc),
+		    &newrt, m->m_pkthdr.rdomain);
+		if (newrt != NULL && icmp_redirtimeout != 0) {
+			(void)rt_timer_add(newrt, icmp_redirect_timeout,
 			    icmp_redirect_timeout_q, m->m_pkthdr.rdomain);
 		}
-		if (rt != NULL)
-			rtfree(rt);
-		pfctlinput(PRC_REDIRECT_HOST, sintosa(&icmpsrc));
+		if (newrt != NULL)
+			rtfree(newrt);
+		pfctlinput(PRC_REDIRECT_HOST, sintosa(&sdst));
 		break;
-
+	}
 	/*
 	 * No kernel processing for the following;
 	 * just fall through to send to raw listener.
