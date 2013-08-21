@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.19 2012/11/29 21:10:32 brad Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.20 2013/08/21 05:21:43 dlg Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -926,8 +926,7 @@ mtd_rxeof(struct mtd_softc *sc)
 		    0, sc->mtd_cdata.mtd_rx_chain[i].sd_map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
 
-		m0 = m_devget(mtod(m, char *), total_len,  ETHER_ALIGN,
-		    ifp, NULL);
+		m0 = m_devget(mtod(m, char *), total_len,  ETHER_ALIGN, ifp);
 		mtd_newbuf(sc, i, m);
 		i = (i + 1) % MTD_RX_LIST_CNT;
 		if (m0 == NULL) {

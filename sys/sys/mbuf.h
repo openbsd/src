@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.166 2013/08/13 09:52:54 mpi Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.167 2013/08/21 05:21:46 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -423,8 +423,7 @@ void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
 void	m_copydata(struct mbuf *, int, int, caddr_t);
 void	m_cat(struct mbuf *, struct mbuf *);
-struct mbuf *m_devget(char *, int, int, struct ifnet *,
-	    void (*)(const void *, void *, size_t));
+struct mbuf *m_devget(char *, int, int, struct ifnet *);
 int	m_apply(struct mbuf *, int, int,
 	    int (*)(caddr_t, caddr_t, unsigned int), caddr_t);
 int	m_dup_pkthdr(struct mbuf *, struct mbuf *, int);

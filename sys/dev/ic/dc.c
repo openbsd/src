@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.126 2013/08/07 01:06:29 bluhm Exp $	*/
+/*	$OpenBSD: dc.c,v 1.127 2013/08/21 05:21:43 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2185,8 +2185,7 @@ dc_rxeof(struct dc_softc *sc)
 		total_len -= ETHER_CRC_LEN;
 
 		m->m_pkthdr.rcvif = ifp;
-		m0 = m_devget(mtod(m, char *), total_len, ETHER_ALIGN,
-		    ifp, NULL);
+		m0 = m_devget(mtod(m, char *), total_len, ETHER_ALIGN, ifp);
 		dc_newbuf(sc, i, m);
 		DC_INC(i, DC_RX_LIST_CNT);
 		if (m0 == NULL) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.36 2013/08/07 01:06:33 bluhm Exp $ */
+/* $OpenBSD: if_bce.c,v 1.37 2013/08/21 05:21:43 dlg Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -753,7 +753,7 @@ bce_rxintr(struct bce_softc *sc)
 		len -= ETHER_CRC_LEN;
 
 		m = m_devget(sc->bce_data + i * MCLBYTES +
-		    BCE_PREPKT_HEADER_SIZE, len, ETHER_ALIGN, ifp, NULL);
+		    BCE_PREPKT_HEADER_SIZE, len, ETHER_ALIGN, ifp);
 		ifp->if_ipackets++;
 
 #if NBPFILTER > 0

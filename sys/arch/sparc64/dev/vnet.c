@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.28 2012/12/07 21:56:06 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.29 2013/08/21 05:21:42 dlg Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -719,7 +719,7 @@ vnet_rx_vio_desc_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		}
 
 		/* Stupid OBP doesn't align properly. */
-                m = m_devget(buf, dm->nbytes, ETHER_ALIGN, ifp, NULL);
+                m = m_devget(buf, dm->nbytes, ETHER_ALIGN, ifp);
 		pool_put(&sc->sc_pool, buf);
 		if (m == NULL) {
 			ifp->if_ierrors++;

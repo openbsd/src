@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.58 2013/08/07 01:06:36 bluhm Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.59 2013/08/21 05:21:44 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -890,7 +890,7 @@ lge_rxeof(struct lge_softc *sc, int cnt)
 
 		if (lge_newbuf(sc, &LGE_RXTAIL(sc), NULL) == ENOBUFS) {
 			m0 = m_devget(mtod(m, char *), total_len, ETHER_ALIGN,
-			    ifp, NULL);
+			    ifp);
 			lge_newbuf(sc, &LGE_RXTAIL(sc), m);
 			if (m0 == NULL) {
 				ifp->if_ierrors++;

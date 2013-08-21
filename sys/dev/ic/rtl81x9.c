@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.78 2013/08/07 01:06:31 bluhm Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.79 2013/08/21 05:21:43 dlg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -650,7 +650,7 @@ rl_rxeof(struct rl_softc *sc)
 		wrap = (sc->rl_cdata.rl_rx_buf + RL_RXBUFLEN) - rxbufpos;
 
 		if (total_len > wrap) {
-			m = m_devget(rxbufpos, wrap, ETHER_ALIGN, ifp, NULL);
+			m = m_devget(rxbufpos, wrap, ETHER_ALIGN, ifp);
 			if (m != NULL) {
 				m_copyback(m, wrap, total_len - wrap,
 				    sc->rl_cdata.rl_rx_buf, M_NOWAIT);
@@ -661,8 +661,7 @@ rl_rxeof(struct rl_softc *sc)
 			}
 			cur_rx = (total_len - wrap + ETHER_CRC_LEN);
 		} else {
-			m = m_devget(rxbufpos, total_len, ETHER_ALIGN, ifp,
-			    NULL);
+			m = m_devget(rxbufpos, total_len, ETHER_ALIGN, ifp);
 			cur_rx += total_len + 4 + ETHER_CRC_LEN;
 		}
 
