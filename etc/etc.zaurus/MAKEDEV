@@ -58,7 +58,6 @@
 #	ulpt*	Printer devices
 #	urio*	Diamond Multimedia Rio 500
 #	usb*	Bus control devices used by usbd for attach/detach
-uscan_dev
 # Special purpose devices:
 #	apm	Power management device
 #	audio*	Audio devices

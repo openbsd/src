@@ -62,7 +62,6 @@
 #	ulpt*	Printer devices
 #	urio*	Diamond Multimedia Rio 500
 #	ttyU*	USB serial ports
-uscan_dev
 # Special purpose devices:
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
