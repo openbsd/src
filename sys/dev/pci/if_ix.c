@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.90 2013/08/05 19:58:05 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.91 2013/08/21 13:52:57 mpi Exp $	*/
 
 /******************************************************************************
 
@@ -2064,7 +2064,9 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	uint8_t	ipproto = 0;
 	int	offload = TRUE;
 	int	ctxd = txr->next_avail_desc;
+#if NVLAN > 0
 	uint16_t vtag = 0;
+#endif
 
 #if notyet
 	/* First check if TSO is to be used */
