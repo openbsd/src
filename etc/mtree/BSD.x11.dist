@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.28 2012/10/06 17:44:52 shadchin Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.29 2013/08/22 09:49:51 jsg Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -32,6 +32,16 @@
                 GL
                     internal
                     ..
+                ..
+                EGL
+                ..
+                GLES
+                ..
+                GLES2
+                ..
+                GLES3
+                ..
+                KHR
                 ..
                 X11
                     ICE
