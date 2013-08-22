@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.138 2013/03/20 15:26:28 todd Exp $
+#	$OpenBSD: netstart,v 1.139 2013/08/22 07:53:11 mpi Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -103,7 +103,6 @@ ifstart() {
 				if [ "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
 					cmd="$cmd broadcast $bcaddr"
 				fi
-				[ "$alias" ] && rtcmd=";route -qn add -host $name 127.0.0.1"
 				;;
 			inet6)
 				if [ ! -n "$name" ]; then
@@ -117,7 +116,7 @@ ifstart() {
 				cmd="$cmd $mask $bcaddr"
 				;;
 			esac
-			cmd="$cmd $ext1 $ext2$rtcmd" rtcmd=
+			cmd="$cmd $ext1 $ext2"
 			;;
 		esac
 		eval "$cmd"
