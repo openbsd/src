@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.83 2013/07/03 23:04:33 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.84 2013/08/22 02:02:33 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,21 +37,16 @@
 #include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/ptrace.h>
-#include <sys/resource.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/siginfo.h>
-#include <sys/un.h>
 #include <sys/vmmeter.h>
-#include <sys/stat.h>
 #include <sys/tty.h>
 #include <sys/wait.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #define _KERNEL
-#include <sys/errno.h>
+#include <errno.h>
 #undef _KERNEL
 #include <ddb/db_var.h>
 #include <machine/cpu.h>
@@ -66,8 +61,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <grp.h>
-#include <pwd.h>
 #include <unistd.h>
 #include <vis.h>
 
@@ -82,7 +75,6 @@ char *tracefile = DEF_TRACEFILE;
 struct ktr_header ktr_header;
 pid_t pid = -1;
 
-#define TIME_FORMAT	"%b %e %T %Y"
 #define eqs(s1, s2)	(strcmp((s1), (s2)) == 0)
 
 #include <sys/syscall.h>
@@ -157,7 +149,6 @@ static void ktrpsig(struct ktr_psig *);
 static void ktrsyscall(struct ktr_syscall *);
 static const char *kresolvsysctl(int, int *, int);
 static void ktrsysret(struct ktr_sysret *);
-static void ktrstruct(char *, size_t);
 static void ktruser(struct ktr_user *, size_t);
 static void setemul(const char *);
 static void usage(void);
@@ -166,7 +157,6 @@ static void polltimeout(int);
 static void pgid(int);
 static void wait4pid(int);
 static void signame(int);
-static void sigset(int);
 static void semctlname(int);
 static void shmctlname(int);
 static void semgetname(int);
@@ -1289,329 +1279,6 @@ ktrcsw(struct ktr_csw *cs)
 }
 
 static void
-ktrsockaddr(struct sockaddr *sa)
-{
-/*
- TODO: Support additional address families
-	#include <netnatm/natm.h>
-	struct sockaddr_natm	*natm;
-	#include <netsmb/netbios.h>
-	struct sockaddr_nb	*nb;
-*/
-	char addr[64];
-
-	/*
-	 * note: ktrstruct() has already verified that sa points to a
-	 * buffer at least sizeof(struct sockaddr) bytes long and exactly
-	 * sa->sa_len bytes long.
-	 */
-	printf("struct sockaddr { ");
-	sockfamilyname(sa->sa_family);
-	printf(", ");
-
-#define check_sockaddr_len(n)					\
-	if (sa_##n->s##n##_len < sizeof(struct sockaddr_##n)) {	\
-		printf("invalid");				\
-		break;						\
-	}
-
-	switch(sa->sa_family) {
-	case AF_INET: {
-		struct sockaddr_in	*sa_in;
-
-		sa_in = (struct sockaddr_in *)sa;
-		check_sockaddr_len(in);
-		inet_ntop(AF_INET, &sa_in->sin_addr, addr, sizeof addr);
-		printf("%s:%u", addr, ntohs(sa_in->sin_port));
-		break;
-	}
-	case AF_INET6: {
-		struct sockaddr_in6	*sa_in6;
-
-		sa_in6 = (struct sockaddr_in6 *)sa;
-		check_sockaddr_len(in6);
-		inet_ntop(AF_INET6, &sa_in6->sin6_addr, addr, sizeof addr);
-		printf("[%s]:%u", addr, htons(sa_in6->sin6_port));
-		break;
-	}
-#ifdef IPX
-	case AF_IPX: {
-		struct sockaddr_ipx	*sa_ipx;
-
-		sa_ipx = (struct sockaddr_ipx *)sa;
-		check_sockaddr_len(ipx);
-		/* XXX wish we had ipx_ntop */
-		printf("%s", ipx_ntoa(sa_ipx->sipx_addr));
-		break;
-	}
-#endif
-	case AF_UNIX: {
-		struct sockaddr_un *sa_un;
-
-		sa_un = (struct sockaddr_un *)sa;
-		if (sa_un->sun_len <= sizeof(sa_un->sun_len) +
-		    sizeof(sa_un->sun_family)) {
-			printf("invalid");
-			break;
-		}
-		printf("\"%.*s\"", (int)(sa_un->sun_len -
-		    sizeof(sa_un->sun_len) - sizeof(sa_un->sun_family)),
-		    sa_un->sun_path);
-		break;
-	}
-	default:
-		printf("unknown address family");
-	}
-	printf(" }\n");
-}
-
-static void
-print_time(time_t t, int relative)
-{
-	char timestr[PATH_MAX + 4];
-	struct tm *tm;
-
-	if (resolv == 0 || relative)
-		printf("%jd", (intmax_t)t);
-	else {
-		tm = localtime(&t);
-		(void)strftime(timestr, sizeof(timestr), TIME_FORMAT, tm);
-		printf("\"%s\"", timestr);
-	}
-}
-
-static void
-print_timespec(const struct timespec *tsp, int relative)
-{
-	print_time(tsp->tv_sec, relative);
-	if (tsp->tv_nsec != 0)
-		printf(".%09ld", tsp->tv_nsec);
-}
-
-static void
-ktrstat(const struct stat *statp)
-{
-	char mode[12];
-	struct passwd *pwd;
-	struct group  *grp;
-
-	/*
-	 * note: ktrstruct() has already verified that statp points to a
-	 * buffer exactly sizeof(struct stat) bytes long.
-	 */
-	printf("struct stat { ");
-	strmode(statp->st_mode, mode);
-	printf("dev=%d, ino=%llu, mode=%s, nlink=%u, ",
-	    statp->st_dev, (unsigned long long)statp->st_ino,
-	    mode, statp->st_nlink);
-	if (resolv == 0 || (pwd = getpwuid(statp->st_uid)) == NULL)
-		printf("uid=%u, ", statp->st_uid);
-	else
-		printf("uid=\"%s\", ", pwd->pw_name);
-	if (resolv == 0 || (grp = getgrgid(statp->st_gid)) == NULL)
-		printf("gid=%u, ", statp->st_gid);
-	else
-		printf("gid=\"%s\", ", grp->gr_name);
-	printf("rdev=%d, ", statp->st_rdev);
-	printf("atime=");
-	print_timespec(&statp->st_atim, 0);
-	printf(", mtime=");
-	print_timespec(&statp->st_mtim, 0);
-	printf(", ctime=");
-	print_timespec(&statp->st_ctim, 0);
-	printf(", size=%lld, blocks=%lld, blksize=%u, flags=0x%x, gen=0x%x",
-	    statp->st_size, statp->st_blocks, statp->st_blksize,
-	    statp->st_flags, statp->st_gen);
-	printf(" }\n");
-}
-
-static void
-ktrtimespec(const struct timespec *tsp, int relative)
-{
-	printf("struct timespec { ");
-	print_timespec(tsp, relative);
-	printf(" }\n");
-}
-
-static void
-ktrtimeval(const struct timeval *tvp, int relative)
-{
-	printf("struct timeval { ");
-	print_time(tvp->tv_sec, relative);
-	if (tvp->tv_usec != 0)
-		printf(".%06ld", tvp->tv_usec);
-	printf(" }\n");
-}
-
-static void
-ktrsigaction(const struct sigaction *sa)
-{
-	/*
-	 * note: ktrstruct() has already verified that sa points to a
-	 * buffer exactly sizeof(struct sigaction) bytes long.
-	 */
-	printf("struct sigaction { ");
-	if (sa->sa_handler == SIG_DFL)
-		printf("handler=SIG_DFL");
-	else if (sa->sa_handler == SIG_IGN)
-		printf("handler=SIG_IGN");
-	else if (sa->sa_flags & SA_SIGINFO)
-		printf("sigaction=%p", (void *)sa->sa_sigaction);
-	else
-		printf("handler=%p", (void *)sa->sa_handler);
-	printf(", mask=");
-	sigset(sa->sa_mask);
-	printf(", flags=");
-	sigactionflagname(sa->sa_flags);
-	printf(" }\n");
-}
-
-static void
-print_rlim(rlim_t lim)
-{
-	if (lim == RLIM_INFINITY)
-		printf("infinite");
-	else
-		printf("%llu", (unsigned long long)lim);
-}
-
-static void
-ktrrlimit(const struct rlimit *limp)
-{
-	printf("struct rlimit { ");
-	printf("cur=");
-	print_rlim(limp->rlim_cur);
-	printf(", max=");
-	print_rlim(limp->rlim_max);
-	printf(" }\n");
-}
-
-static void
-ktrtfork(const struct __tfork *tf)
-{
-	printf("struct __tfork { tcb=%p, tid=%p, stack=%p }\n",
-	    tf->tf_tcb, (void *)tf->tf_tid, tf->tf_stack);
-}
-
-static void
-ktrfdset(const struct fd_set *fds, int len)
-{
-	int nfds, i, start = -1;
-	char sep = ' ';
-
-	nfds = len * NBBY;
-	printf("struct fd_set {");
-	for (i = 0; i <= nfds; i++)
-		if (i != nfds && FD_ISSET(i, fds)) {
-			if (start == -1)
-				start = i;
-		} else if (start != -1) {
-			putchar(sep);
-			if (start == i - 1)
-				printf("%d", start);
-			else if (start == i - 2)
-				printf("%d,%d", start, i - 1);
-			else
-				printf("%d-%d", start, i - 1);
-			sep = ',';
-			start = -1;
-		}
-
-	printf(" }\n");
-}
-
-static void
-ktrstruct(char *buf, size_t buflen)
-{
-	char *name, *data;
-	size_t namelen, datalen;
-	int i;
-
-	for (name = buf, namelen = 0; namelen < buflen && name[namelen] != '\0';
-	     ++namelen)
-		/* nothing */;
-	if (namelen == buflen)
-		goto invalid;
-	if (name[namelen] != '\0')
-		goto invalid;
-	data = buf + namelen + 1;
-	datalen = buflen - namelen - 1;
-	if (datalen == 0)
-		goto invalid;
-	/* sanity check */
-	for (i = 0; i < namelen; ++i)
-		if (!isalpha((unsigned char)name[i]))
-			goto invalid;
-	if (strcmp(name, "stat") == 0) {
-		struct stat sb;
-
-		if (datalen != sizeof(struct stat))
-			goto invalid;
-		memcpy(&sb, data, datalen);
-		ktrstat(&sb);
-	} else if (strcmp(name, "sockaddr") == 0) {
-		struct sockaddr_storage ss;
-
-		if (datalen > sizeof(ss))
-			goto invalid;
-		memcpy(&ss, data, datalen);
-		if ((ss.ss_family != AF_UNIX && 
-		    datalen < sizeof(struct sockaddr)) || datalen != ss.ss_len)
-			goto invalid;
-		ktrsockaddr((struct sockaddr *)&ss);
-	} else if (strcmp(name, "abstimespec") == 0 ||
-	    strcmp(name, "reltimespec") == 0) {
-		struct timespec ts;
-
-		if (datalen != sizeof(ts))
-			goto invalid;
-		memcpy(&ts, data, datalen);
-		ktrtimespec(&ts, name[0] == 'r');
-	} else if (strcmp(name, "abstimeval") == 0 ||
-	    strcmp(name, "reltimeval") == 0) {
-		struct timeval tv;
-
-		if (datalen != sizeof(tv))
-			goto invalid;
-		memcpy(&tv, data, datalen);
-		ktrtimeval(&tv, name[0] == 'r');
-	} else if (strcmp(name, "sigaction") == 0) {
-		struct sigaction sa;
-
-		if (datalen != sizeof(sa))
-			goto invalid;
-		memcpy(&sa, data, datalen);
-		ktrsigaction(&sa);
-	} else if (strcmp(name, "rlimit") == 0) {
-		struct rlimit lim;
-
-		if (datalen != sizeof(lim))
-			goto invalid;
-		memcpy(&lim, data, datalen);
-		ktrrlimit(&lim);
-	} else if (strcmp(name, "tfork") == 0) {
-		struct __tfork tf;
-
-		if (datalen != sizeof(tf))
-			goto invalid;
-		memcpy(&tf, data, datalen);
-		ktrtfork(&tf);
-	} else if (strcmp(name, "fdset") == 0) {
-		struct fd_set *fds;
-		if ((fds = malloc(datalen)) == NULL)
-			err(1, "malloc");
-		memcpy(fds, data, datalen);
-		ktrfdset(fds, datalen);
-		free(fds);
-	} else {
-		printf("unknown structure %s\n", name);
-	}
-	return;
-invalid:
-	printf("invalid record\n");
-}
-
-static void
 ktruser(struct ktr_user *usr, size_t len)
 {
 	len -= sizeof(struct ktr_user);
@@ -1693,7 +1360,7 @@ signame(int sig)
 		(void)printf("SIG %d", sig);
 }
 
-static void
+void
 sigset(int ss)
 {
 	int	or = 0;
