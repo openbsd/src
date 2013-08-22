@@ -1,4 +1,4 @@
-/*	$OpenBSD: token.c,v 1.15 2013/05/07 12:17:20 tedu Exp $	*/
+/*	$OpenBSD: token.c,v 1.16 2013/08/22 04:43:40 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -176,7 +176,7 @@ tokenverify(char *username, char *challenge, char *response)
 	(void)strtok(challenge, "\"");
 	state = strtok(NULL, "\"");
 	tmp.ul[0] = strtoul(state, NULL, 10);
-	snprintf(tokennumber.ct, sizeof(tokennumber.ct), "%8.8lu",tmp.ul[0]);
+	snprintf(tokennumber.ct, sizeof(tokennumber.ct), "%8.8u",tmp.ul[0]);
 
 	/*
 	 * Retrieve the db record for the user. Nuke it as soon as
@@ -212,7 +212,7 @@ tokenverify(char *username, char *challenge, char *response)
 	 */
 
 	HTONL(cipher_text.ul[0]);
-	snprintf(cmp_text.ct, sizeof(cmp_text.ct), "%8.8lx", cipher_text.ul[0]);
+	snprintf(cmp_text.ct, sizeof(cmp_text.ct), "%8.8x", cipher_text.ul[0]);
 
 	if (tokenrec.mode & TOKEN_PHONEMODE) {
 		/*
@@ -318,7 +318,7 @@ tokenuserinit(int flags, char *username, unsigned char *usecret, unsigned mode)
 	DES_ecb_encrypt(&nulls.cb, &checksum.cb, &key_schedule, DES_ENCRYPT);
 	memset(&key_schedule, 0, sizeof(key_schedule));
 	HTONL(checksum.ul[0]);
-	snprintf(checktxt.ct, sizeof(checktxt.ct), "%8.8lx", checksum.ul[0]);
+	snprintf(checktxt.ct, sizeof(checktxt.ct), "%8.8x", checksum.ul[0]);
 	printf("Hex Checksum: \"%s\"", checktxt.ct);
 
 	h2d(checktxt.ct);
@@ -370,8 +370,8 @@ cb2h(TOKEN_CBlock cb, char* hp)
 {
 	char	scratch[17];
 
-	snprintf(scratch,   9, "%8.8lx", cb.ul[0]);
-	snprintf(scratch+8, 9, "%8.8lx", cb.ul[1]);
+	snprintf(scratch,   9, "%8.8x", cb.ul[0]);
+	snprintf(scratch+8, 9, "%8.8x", cb.ul[1]);
 	memcpy(hp, scratch, 16);
 }
 

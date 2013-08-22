@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.61 2013/05/19 18:37:40 tedu Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.62 2013/08/22 04:43:41 guenther Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -666,8 +666,8 @@ main(int argc, char *argv[])
 		if (ev->ident == ctl_fd) {
 			suspends = standbys = resumes = 0;
 			syslog(LOG_DEBUG, "apmevent %04x index %d",
-			    APM_EVENT_TYPE(ev->data),
-			    APM_EVENT_INDEX(ev->data));
+			    (int)APM_EVENT_TYPE(ev->data),
+			    (int)APM_EVENT_INDEX(ev->data));
 
 			switch (APM_EVENT_TYPE(ev->data)) {
 			case APM_SUSPEND_REQ:

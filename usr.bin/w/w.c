@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.51 2012/06/24 06:34:34 guenther Exp $	*/
+/*	$OpenBSD: w.c,v 1.52 2013/08/22 04:43:41 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -414,7 +414,7 @@ pr_header(time_t *nowp, int nusers)
 					    mins, mins != 1 ? "s" : "");
 			}
 		} else
-			printf(" %d secs,", uptime);
+			printf(" %d secs,", (int)uptime);
 	}
 
 	/* Print number of users logged in to system */

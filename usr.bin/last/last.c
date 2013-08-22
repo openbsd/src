@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.38 2013/02/18 10:40:12 fgsch Exp $	*/
+/*	$OpenBSD: last.c,v 1.39 2013/08/22 04:43:40 guenther Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -377,8 +377,8 @@ wtmp(void)
 							    timesize, timesize,
 							    asctime(gmtime(&delta))+11);
 						else
-							printf(" (%ld+%*.*s)\n",
-							    delta / SECSPERDAY,
+							printf(" (%lld+%*.*s)\n",
+							    (long long)delta / SECSPERDAY,
 							    timesize, timesize,
 							    asctime(gmtime(&delta))+11);
 					}

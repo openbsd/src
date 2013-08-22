@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.85 2013/06/05 01:26:00 guenther Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.86 2013/08/22 04:43:41 guenther Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -607,7 +607,7 @@ nfs_print(struct vnode *vp)
 		*flags++ = '-';
 	*flags = '\0';
 
-	(void)printf(" %6ld %5s", np->n_vattr.va_fileid, flagbuf);
+	(void)printf(" %6lld %5s", (long long)np->n_vattr.va_fileid, flagbuf);
 	type = np->n_vattr.va_mode & S_IFMT;
 	if (S_ISCHR(np->n_vattr.va_mode) || S_ISBLK(np->n_vattr.va_mode))
 		if (usenumflag ||

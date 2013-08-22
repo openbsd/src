@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_protocol.c,v 1.38 2013/08/08 03:16:13 guenther Exp $ */
+/*	$OpenBSD: http_protocol.c,v 1.39 2013/08/22 04:43:41 guenther Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1349,14 +1349,14 @@ API_EXPORT(void) ap_note_digest_auth_failure(request_rec *r)
      */
     char * nonce_prefix = ap_md5(r->pool,
            (unsigned char *)
-           ap_psprintf(r->pool, "%s%lu",
-                       ap_auth_nonce(r), r->request_time));
+           ap_psprintf(r->pool, "%s%lld",
+                       ap_auth_nonce(r), (long long)r->request_time));
 
     ap_table_setn(r->err_headers_out,
 	    r->proxyreq == STD_PROXY ? "Proxy-Authenticate"
 		  : "WWW-Authenticate",
-           ap_psprintf(r->pool, "Digest realm=\"%s\", nonce=\"%s%lu\"",
-               ap_auth_name(r), nonce_prefix, r->request_time));
+           ap_psprintf(r->pool, "Digest realm=\"%s\", nonce=\"%s%lld\"",
+               ap_auth_name(r), nonce_prefix, (long long)r->request_time));
 }
 
 API_EXPORT(int) ap_get_basic_auth_pw(request_rec *r, const char **pw)

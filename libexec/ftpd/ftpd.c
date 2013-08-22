@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.197 2013/07/26 18:13:02 guenther Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.198 2013/08/22 04:43:40 guenther Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -2812,8 +2812,8 @@ logxfer(char *name, off_t size, time_t start)
 		strvis(vpw, guest? guestpw : pw->pw_name, VIS_SAFE|VIS_NOSLASH);
 
 		len = snprintf(buf, sizeof(buf),
-		    "%.24s %d %s %qd %s %c %s %c %c %s ftp %d %s %s\n",
-		    ctime(&now), now - start + (now == start),
+		    "%.24s %lld %s %qd %s %c %s %c %c %s ftp %d %s %s\n",
+		    ctime(&now), (long long)(now - start + (now == start)),
 		    vremotehost, (long long)size, vpath,
 		    ((type == TYPE_A) ? 'a' : 'b'), "*" /* none yet */,
 		    'o', ((guest) ? 'a' : 'r'),

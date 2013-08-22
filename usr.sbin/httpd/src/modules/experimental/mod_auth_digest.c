@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_auth_digest.c,v 1.22 2008/05/25 11:46:27 mbalmer Exp $ */
+/*	$OpenBSD: mod_auth_digest.c,v 1.23 2013/08/22 04:43:41 guenther Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -884,7 +884,7 @@ static int check_nonce(request_rec *r, digest_header_rec *resp,
 
     if (strlen(resp->nonce) != NONCE_LEN) {
 	ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
-		      "Digest: invalid nonce %s received - length is not %d",
+		      "Digest: invalid nonce %s received - length is not %zu",
 		      resp->nonce, NONCE_LEN);
 	note_digest_auth_failure(r, conf, resp, 1);
 	return AUTH_REQUIRED;

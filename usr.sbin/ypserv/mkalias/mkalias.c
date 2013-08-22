@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.24 2010/06/29 03:47:40 deraadt Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.25 2013/08/22 04:43:41 guenther Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -288,7 +288,8 @@ fail:
 	}
 
 	if (new_db != NULL) {
-		snprintf(datestr, sizeof datestr, "%010u", time(NULL));
+		snprintf(datestr, sizeof datestr, "%010lld",
+		    (long long)time(NULL));
 		key.dptr = YP_LAST_KEY;
 		key.dsize = strlen(YP_LAST_KEY);
 		val.dptr = datestr;

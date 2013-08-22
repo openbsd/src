@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.122 2013/07/18 08:42:50 bluhm Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.123 2013/08/22 04:43:40 guenther Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -368,7 +368,7 @@ dovmstat(u_int interval, int reps)
 		}
 		(void)printf(" %u %u %u ",
 		    total.t_rq - 1, total.t_dw + total.t_pw, total.t_sw);
-#define	rate(x)	((((unsigned)x) + halfuptime) / uptime)	/* round */
+#define	rate(x)	((unsigned)((((unsigned)x) + halfuptime) / uptime)) /* round */
 #define pgtok(a) ((a) * ((unsigned int)uvmexp.pagesize >> 10))
 		(void)printf("%6u %7u ",
 		    pgtok(total.t_avm), pgtok(total.t_free));

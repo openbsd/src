@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.31 2013/04/18 02:28:48 deraadt Exp $	*/
+/*	$OpenBSD: pr.c,v 1.32 2013/08/22 04:43:40 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -844,6 +844,7 @@ flsh_errs(void)
     }
 }
 
+static void ferrout(char *fmt, ...) __attribute__((format (printf, 1, 2)));
 static void
 ferrout(char *fmt, ...)
 {
@@ -861,8 +862,10 @@ ferrout(char *fmt, ...)
 	sigprocmask(SIG_BLOCK, &block, &oblock);
 
 	if (vasprintf(&p, fmt, ap) == -1 || (f = malloc(sizeof(*f))) == NULL) {
+		va_end(ap);
+		va_start(ap, fmt);
 		flsh_errs();
-		fprintf(stderr, fmt, ap);
+		vfprintf(stderr, fmt, ap);
 		fputs("pr: memory allocation failed\n", stderr);
 		exit(1);
 	}

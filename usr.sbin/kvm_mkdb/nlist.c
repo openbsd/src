@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.41 2013/01/29 22:39:06 miod Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.42 2013/08/22 04:43:41 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -318,7 +318,7 @@ __elf_knlist(int fd, DB *db, int ksyms)
 
 	sh = (Elf_Shdr *)calloc(sizeof(Elf_Shdr), eh.e_shnum);
 	if (sh == NULL)
-		errx(1, "cannot allocate %d bytes for symbol header",
+		errx(1, "cannot allocate %zu bytes for symbol header",
 		    sizeof(Elf_Shdr) * eh.e_shnum);
 
 	if (fseek (fp, eh.e_shoff, SEEK_SET) < 0) {

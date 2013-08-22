@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.13 2013/04/16 22:13:30 deraadt Exp $	*/
+/*	$OpenBSD: time.c,v 1.14 2013/08/22 04:43:40 guenther Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/03/21 13:55:25 mycroft Exp $	*/
 
 /*-
@@ -164,19 +164,20 @@ prusage(struct rusage *r0, struct rusage *r1, struct timeval *e,
 
 	    case 'X':		/* (average) shared text size */
 		(void) fprintf(cshout, "%ld", t == 0 ? 0L :
-			       (r1->ru_ixrss - r0->ru_ixrss) / t);
+			       (long)((r1->ru_ixrss - r0->ru_ixrss) / t));
 		break;
 
 	    case 'D':		/* (average) unshared data size */
 		(void) fprintf(cshout, "%ld", t == 0 ? 0L :
-			(r1->ru_idrss + r1->ru_isrss -
-			 (r0->ru_idrss + r0->ru_isrss)) / t);
+			(long)((r1->ru_idrss + r1->ru_isrss -
+			       (r0->ru_idrss + r0->ru_isrss)) / t));
 		break;
 
 	    case 'K':		/* (average) total data memory used  */
 		(void) fprintf(cshout, "%ld", t == 0 ? 0L :
-			((r1->ru_ixrss + r1->ru_isrss + r1->ru_idrss) -
-			 (r0->ru_ixrss + r0->ru_idrss + r0->ru_isrss)) / t);
+			(long)(((r1->ru_ixrss + r1->ru_isrss + r1->ru_idrss)
+			      - (r0->ru_ixrss + r0->ru_idrss + r0->ru_isrss))
+			      / t));
 		break;
 
 	    case 'M':		/* max. Resident Set Size */

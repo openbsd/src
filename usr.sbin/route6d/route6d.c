@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.56 2013/03/21 04:43:17 deraadt Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.57 2013/08/22 04:43:41 guenther Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -1138,7 +1138,7 @@ riprecv(void)
 	if (iff_find(ifcp, 'N') != NULL)
 		return;
 
-	tracet(1, "Recv(%s): from %s.%d info(%d)\n",
+	tracet(1, "Recv(%s): from %s.%d info(%zd)\n",
 	    ifcp->ifc_name, inet6_n2p(&nh), ntohs(fsock.sin6_port), nn);
 
 	t = time(NULL);

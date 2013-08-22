@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.11 2013/04/03 03:20:39 deraadt Exp $	*/
+/*	$OpenBSD: utils.c,v 1.12 2013/08/22 04:43:41 guenther Exp $	*/
 /*	$NetBSD: utils.c,v 1.5.2.1 1995/11/14 08:45:46 thorpej Exp $	*/
 
 /*
@@ -71,8 +71,10 @@
 void
 DispPkt(RMPCONN *rconn, int direct)
 {
-	static char BootFmt[] = "\t\tRetCode:%u SeqNo:%lx SessID:%x Vers:%u";
-	static char ReadFmt[] = "\t\tRetCode:%u Offset:%lx SessID:%x\n";
+	static const char BootFmt[] =
+	    "\t\tRetCode:%u SeqNo:%x SessID:%x Vers:%u";
+	static const char ReadFmt[] =
+	    "\t\tRetCode:%u Offset:%x SessID:%x\n";
 	struct tm *tmp;
 	struct rmp_packet *rmp;
 	int i, omask;

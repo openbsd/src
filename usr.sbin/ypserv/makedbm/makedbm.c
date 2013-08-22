@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.29 2009/10/27 23:59:57 deraadt Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.30 2013/08/22 04:43:41 guenther Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -111,14 +111,16 @@ file_date(char *filename)
 	int	status;
 
 	if (strcmp(filename,"-") == 0) {
-		snprintf(datestr, sizeof datestr, "%010u", time(0));
+		snprintf(datestr, sizeof datestr, "%010lld",
+		    (long long)time(0));
 	} else {
 		status = stat(filename, &finfo);
 		if (status < 0) {
 			fprintf(stderr, "%s: can't stat %s\n", __progname, filename);
 			exit(1);
 		}
-		snprintf(datestr, sizeof datestr, "%010u", finfo.st_mtime);
+		snprintf(datestr, sizeof datestr, "%010lld",
+		    (long long)finfo.st_mtime);
 	}
 	return datestr;
 }

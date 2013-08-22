@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.26 2010/06/13 15:26:06 tobias Exp $	*/
+/*	$OpenBSD: lock.c,v 1.27 2013/08/22 04:43:40 guenther Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -224,14 +224,14 @@ void
 hi(int signo)
 {
 	char buf[1024], buf2[1024];
-	time_t now;
+	time_t left;
 
 	if (no_timeout)
 		buf2[0] = '\0';
 	else {
-		now = time(NULL);
-		(void)snprintf(buf2, sizeof buf2, " timeout in %d:%d minutes",
-		    (nexttime - now) / 60, (nexttime - now) % 60);
+		left = nexttime - time(NULL);
+		(void)snprintf(buf2, sizeof buf2, " timeout in %lld:%d minutes",
+		    (long long)(left / 60), (int)(left % 60));
 	}
 	(void)snprintf(buf, sizeof buf, "%s: type in the unlock key.%s\n",
 	    __progname, buf2);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wizard.c,v 1.14 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: wizard.c,v 1.15 2013/08/22 04:43:41 guenther Exp $	*/
 /*	$NetBSD: wizard.c,v 1.3 1995/04/24 12:21:41 cgd Exp $	*/
 
 /*-
@@ -84,7 +84,7 @@ Start(void)
 	if (delay >= latncy)
 		return (FALSE);
 	printf("This adventure was suspended a mere %d minute%s ago.",
-		delay, delay == 1 ? "" : "s");
+		(int)delay, delay == 1 ? "" : "s");
 	if (delay <= latncy / 3) {
 		mspeak(2);
 		exit(0);

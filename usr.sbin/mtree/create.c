@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.28 2013/04/16 23:42:44 deraadt Exp $	*/
+/*	$OpenBSD: create.c,v 1.29 2013/08/22 04:43:41 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -195,7 +195,7 @@ statf(int indent, FTSENT *p)
 		    crc(fd, &val, &len))
 			error("%s: %s", p->fts_accpath, strerror(errno));
 		(void)close(fd);
-		output(indent, &offset, "cksum=%lu", val);
+		output(indent, &offset, "cksum=%u", val);
 	}
 	if (keys & F_MD5 && S_ISREG(p->fts_statp->st_mode)) {
 		char *md5digest, buf[MD5_DIGEST_STRING_LENGTH];
