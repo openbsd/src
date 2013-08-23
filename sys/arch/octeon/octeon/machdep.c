@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.39 2013/08/21 11:25:33 pirofti Exp $ */
+/*	$OpenBSD: machdep.c,v 1.40 2013/08/23 08:18:25 pirofti Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -168,12 +168,13 @@ octeon_memory_init(struct boot_info *boot_info)
 	if (boot_info->board_type == BOARD_TYPE_SIM) {
 		phys_avail[1] = (96 << 20);
 	} else {
-		if (realmem_bytes > OCTEON_DRAM_FIRST_256_END)
+		if (realmem_bytes > OCTEON_DRAM_FIRST_256_END) {
 			phys_avail[1] = OCTEON_DRAM_FIRST_256_END;
-		else
+			realmem_bytes -= OCTEON_DRAM_FIRST_256_END;
+			realmem_bytes &= ~(PAGE_SIZE - 1);
+		} else
 			phys_avail[1] = realmem_bytes;
-		realmem_bytes -= OCTEON_DRAM_FIRST_256_END;
-		realmem_bytes &= ~(PAGE_SIZE - 1);
+
 		mem_layout[0].mem_last_page = atop(phys_avail[1]);
 	}
 
