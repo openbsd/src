@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.91 2013/08/21 13:52:57 mpi Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.92 2013/08/23 19:44:14 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -946,23 +946,23 @@ ixgbe_media_status(struct ifnet * ifp, struct ifmediareq * ifmr)
 			ifmr->ifm_active |= sc->optics | IFM_FDX;
 			break;
 		}
-	}
 
-	switch (sc->hw.fc.current_mode) {
-	case ixgbe_fc_tx_pause:
-		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
-		break;
-	case ixgbe_fc_rx_pause:
-		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE;
-		break;
-	case ixgbe_fc_full:
-		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE |
-		    IFM_ETH_TXPAUSE;
-		break;
-	default:
-		ifmr->ifm_active &= ~(IFM_FLOW | IFM_ETH_RXPAUSE |
-		    IFM_ETH_TXPAUSE);
-		break;
+		switch (sc->hw.fc.current_mode) {
+		case ixgbe_fc_tx_pause:
+			ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
+			break;
+		case ixgbe_fc_rx_pause:
+			ifmr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE;
+			break;
+		case ixgbe_fc_full:
+			ifmr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE |
+			    IFM_ETH_TXPAUSE;
+			break;
+		default:
+			ifmr->ifm_active &= ~(IFM_FLOW | IFM_ETH_RXPAUSE |
+			    IFM_ETH_TXPAUSE);
+			break;
+		}
 	}
 }
 
@@ -1238,12 +1238,10 @@ ixgbe_update_link_status(struct ix_softc *sc)
 
 	ixgbe_check_link(&sc->hw, &sc->link_speed, &sc->link_up, 0);
 
-	if (sc->link_up)
-		link_state = LINK_STATE_FULL_DUPLEX;
-	if (ifp->if_link_state == link_state)
-		return;
 	ifp->if_baudrate = 0;
-	if (link_state != LINK_STATE_DOWN) {
+	if (sc->link_up) {
+		link_state = LINK_STATE_FULL_DUPLEX;
+
 		switch (sc->link_speed) {
 		case IXGBE_LINK_SPEED_UNKNOWN:
 			ifp->if_baudrate = 0;
@@ -1258,11 +1256,14 @@ ixgbe_update_link_status(struct ix_softc *sc)
 			ifp->if_baudrate = IF_Gbps(10);
 			break;
 		}
-	}
-	if (sc->link_up) /* Update any Flow Control changes */
+
+		/* Update any Flow Control changes */
 		sc->hw.mac.ops.fc_enable(&sc->hw);
-	ifp->if_link_state = link_state;
-	if_link_state_change(ifp);
+	}
+	if (ifp->if_link_state != link_state) {
+		ifp->if_link_state = link_state;
+		if_link_state_change(ifp);
+	}
 }
 
 
@@ -1406,8 +1407,6 @@ ixgbe_setup_optics(struct ix_softc *sc)
 		sc->optics = IFM_10G_CX4;
 	else if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_SX)
 		sc->optics = IFM_1000_SX;
-	else
-		sc->optics = IFM_ETHER | IFM_AUTO;
 }
 
 /*********************************************************************
@@ -1553,7 +1552,7 @@ ixgbe_setup_interface(struct ix_softc *sc)
 	 * callbacks to update media and link information
 	 */
 	ifmedia_init(&sc->media, IFM_IMASK, ixgbe_media_change,
-		     ixgbe_media_status);
+	    ixgbe_media_status);
 	if (sc->optics)
 		ifmedia_add(&sc->media, IFM_ETHER | sc->optics |
 		    IFM_FDX, 0, NULL);
