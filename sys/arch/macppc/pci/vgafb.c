@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.52 2013/08/17 10:59:38 mpi Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.53 2013/08/23 08:52:25 mpi Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -55,7 +55,6 @@ void	vgafb_free_screen(void *, void *);
 int	vgafb_show_screen(void *, void *, int, void (*cb)(void *, int, int),
 	    void *);
 void	vgafb_burn(void *v, u_int , u_int);
-void	vgafb_setcolor(struct vga_config *, u_int, uint8_t, uint8_t, uint8_t);
 void	vgafb_restore_default_colors(struct vga_config *);
 
 extern struct vga_config vgafbcn;
@@ -99,14 +98,20 @@ extern int allowaperture;
 void
 vgafb_restore_default_colors(struct vga_config *vc)
 {
+	const uint8_t *color;
 	int i;
 
 	for (i = 0; i < 256; i++) {
-		const u_char *color;
 
 		color = &rasops_cmap[i * 3];
-		vgafb_setcolor(vc, i, color[0], color[1], color[2]);
+
+		vc->vc_cmap_red[i] = color[0];
+		vc->vc_cmap_green[i] = color[1];
+		vc->vc_cmap_blue[i] = color[2];
 	}
+
+	of_setcolors(0, 256, vc->vc_cmap_red, vc->vc_cmap_green,
+	    vc->vc_cmap_blue);
 }
 
 void
@@ -322,27 +327,6 @@ vgafb_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	return (0);
 }
 
-struct {
-	u_int8_t r;
-	u_int8_t g;
-	u_int8_t b;
-} vgafb_color[256];
-
-void
-vgafb_setcolor(struct vga_config *vc, unsigned int index, u_int8_t r,
-    u_int8_t g, u_int8_t b)
-{
-	vc->vc_cmap_red[index] = r;
-	vc->vc_cmap_green[index] = g;
-	vc->vc_cmap_blue[index] = b;
-
-	vgafb_color[index].r = r;
-	vgafb_color[index].g = g;
-	vgafb_color[index].b = b;
-	OF_call_method_1("set-colors", cons_display_ofh, 3,
-	    &vgafb_color[index], index, 1);
-}
-
 int
 vgafb_getcmap(struct vga_config *vc, struct wsdisplay_cmap *cm)
 {
@@ -371,7 +355,6 @@ vgafb_putcmap(struct vga_config *vc, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index;
 	u_int count = cm->count;
-	u_int i;
 	int error;
 	u_int8_t *r, *g, *b;
 
@@ -389,14 +372,8 @@ vgafb_putcmap(struct vga_config *vc, struct wsdisplay_cmap *cm)
 	g = &(vc->vc_cmap_green[index]);
 	b = &(vc->vc_cmap_blue[index]);
 
-	for (i = 0; i < count; i++) {
-		vgafb_color[i].r = *r;
-		vgafb_color[i].g = *g;
-		vgafb_color[i].b = *b;
-		r++, g++, b++;
-	}
-	OF_call_method_1("set-colors", cons_display_ofh, 3,
-	    &vgafb_color, index, count);
+	of_setcolors(index, count, r, g, b);
+
 	return 0;
 }
 
@@ -405,13 +382,8 @@ vgafb_burn(void *v, u_int on, u_int flags)
 {
 	struct vga_config *vc = v;
 
-	if (cons_backlight_available == 1 &&
-	    vc->vc_backlight_on != on) {
-		if (on == WSDISPLAYIO_VIDEO_ON) {
-			OF_call_method_1("backlight-on", cons_display_ofh, 0);
-		} else {
-			OF_call_method_1("backlight-off", cons_display_ofh, 0);
-		}
+	if (vc->vc_backlight_on != on) {
+		of_setbacklight(on == WSDISPLAYIO_VIDEO_ON);
 		vc->vc_backlight_on = on;
 	}
 }

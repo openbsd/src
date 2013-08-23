@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.39 2013/08/12 08:03:56 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.40 2013/08/23 08:52:24 mpi Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ struct ppc_bus_space ppc_membus;
 bus_space_tag_t cons_membus = &ppc_membus;
 bus_space_handle_t cons_display_mem_h;
 int cons_height, cons_width, cons_linebytes, cons_depth;
-int cons_display_ofh;
+static int display_ofh;
 u_int32_t cons_addr;
 int cons_brightness;
 int cons_backlight_available;
@@ -353,7 +353,6 @@ ofw_find_keyboard()
 void
 of_display_console()
 {
-#if NVGAFB_PCI > 0
 	struct ofw_pci_register addr[8];
 	char name[32];
 	int len;
@@ -364,7 +363,7 @@ of_display_console()
 	len = OF_getprop(stdout_node, "name", name, 20);
 	name[len] = 0;
 	printf("console out [%s]", name);
-	cons_display_ofh = OF_stdout;
+	display_ofh = OF_stdout;
 	err = OF_getprop(stdout_node, "width", &cons_width, 4);
 	if ( err != 4) {
 		cons_width = 0;
@@ -415,18 +414,29 @@ of_display_console()
 #endif
 
 	cons_membus->bus_base = 0x80000000;
+#if NVGAFB_PCI > 0
 	vgafb_cnattach(cons_membus, cons_membus, -1, 0);
+#endif
 
 	if (cons_backlight_available == 1)
 		of_setbrightness(DEFAULT_BRIGHTNESS);
-#endif
+}
+
+void
+of_setbacklight(int on)
+{
+	if (cons_backlight_available == 0)
+		return;
+
+	if (on)
+		OF_call_method_1("backlight-on", display_ofh, 0);
+	else
+		OF_call_method_1("backlight-off", display_ofh, 0);
 }
 
 void
 of_setbrightness(int brightness)
 {
-
-#if NVGAFB_PCI > 0
 	if (cons_backlight_available == 0)
 		return;
 
@@ -441,10 +451,29 @@ of_setbrightness(int brightness)
 	 * The OF method is called "set-contrast" but affects brightness.
 	 * Don't ask.
 	 */
-	OF_call_method_1("set-contrast", cons_display_ofh, 1, cons_brightness);
+	OF_call_method_1("set-contrast", display_ofh, 1, cons_brightness);
 
 	/* XXX this routine should also save the brightness settings in the nvram */
-#endif
+}
+
+struct {
+	uint8_t r, g, b;
+} of_colors[256];
+
+void
+of_setcolors(unsigned int idx, unsigned int cnt, uint8_t *r, uint8_t *g,
+    uint8_t *b)
+{
+	int i;
+
+	for (i = 0; i < cnt; i++) {
+		of_colors[i].r = *r;
+		of_colors[i].g = *g;
+		of_colors[i].b = *b;
+		r++, g++, b++;
+	}
+
+	OF_call_method_1("set-colors", display_ofh, 3, &of_colors, idx, cnt);
 }
 
 #include <dev/cons.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.h,v 1.4 2012/06/21 10:08:16 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.h,v 1.5 2013/08/23 08:52:24 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002, Miodrag Vallat.
@@ -30,7 +30,6 @@
  * Various console variables...
  */
 extern int cons_height, cons_width, cons_linebytes, cons_depth;
-extern int cons_display_ofh;
 extern u_int32_t cons_addr;
 extern int cons_backlight_available;
 
@@ -48,4 +47,6 @@ void ofwconsinit(void);
 #define	DEFAULT_BRIGHTNESS	0x80
 extern int cons_brightness;
 
+void of_setbacklight(int);
 void of_setbrightness(int);
+void of_setcolors(unsigned int, unsigned int, uint8_t *, uint8_t *, uint8_t *);
