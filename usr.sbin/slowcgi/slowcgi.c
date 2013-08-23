@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.4 2013/06/02 14:11:38 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.5 2013/08/23 07:12:49 blambert Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -345,7 +345,8 @@ slowcgi_accept(int fd, short events, void *arg)
 	int			 s;
 
 	l = arg;
-	pause.tv_sec = 1; pause.tv_usec = 0;
+	pause.tv_sec = 1;
+	pause.tv_usec = 0;
 	c = NULL;
 
 	len = sizeof(ss);
@@ -455,7 +456,7 @@ slowcgi_response(int fd, short events, void *arg)
 			dump_fcgi_record_header("resp ", header);
 
 		n = write(fd, resp->data + resp->data_pos, resp->data_len);
-		if ( n == -1) {
+		if (n == -1) {
 			if (errno == EAGAIN)
 				return;
 			cleanup_client(c);
@@ -463,7 +464,7 @@ slowcgi_response(int fd, short events, void *arg)
 		}
 		resp->data_pos += n;
 		resp->data_len -= n;
-		if(resp->data_len == 0) {
+		if (resp->data_len == 0) {
 			TAILQ_REMOVE(&c->response_head, resp, entry);
 			free(resp);
 		}
@@ -487,7 +488,7 @@ slowcgi_request(int fd, short events, void *arg)
 	c = arg;
 	parsed = 0;
 
-	n = read(fd, c->buf+c->buf_pos+c->buf_len,
+	n = read(fd, c->buf + c->buf_pos + c->buf_len,
 	    FCGI_RECORD_SIZE - c->buf_pos-c->buf_len);
 	
 	switch (n) {
@@ -508,16 +509,17 @@ slowcgi_request(int fd, short events, void *arg)
 		break;
 	}
 
-	c->buf_len+=n;
+	c->buf_len += n;
 
 	do {
-		parsed = parse_request(c->buf+c->buf_pos, c->buf_len, c);
+		parsed = parse_request(c->buf + c->buf_pos, c->buf_len, c);
 		c->buf_pos += parsed;
 		c->buf_len -= parsed;
 	} while (parsed > 0 && c->buf_len > 0);
 
+	/* Make space for further reads */
 	if (c->buf_len > 0) {
-		bcopy(c->buf+c->buf_pos, c->buf, c->buf_len);
+		bcopy(c->buf + c->buf_pos, c->buf, c->buf_len);
 		c->buf_pos = 0;
 	}
 	return;
@@ -530,6 +532,7 @@ parse_begin_request(uint8_t *buf, uint16_t n, struct client *c, uint16_t id)
 {
 	struct fcgi_begin_request_body	*b;
 	
+	/* XXX -- FCGI_CANT_MPX_CONN */
 	if (c->request_started) {
 		lwarnx("unexpected FCGI_BEGIN_REQUEST, ignoring");
 		return;
@@ -617,7 +620,8 @@ parse_params(uint8_t *buf, uint16_t n, struct client *c, uint16_t id)
 		}
 
 		bcopy(buf, env_entry->val, name_len);
-		buf += name_len; n -= name_len;
+		buf += name_len;
+		n -= name_len;
 
 		env_entry->val[name_len] = '\0';
 		if (val_len < MAXPATHLEN && strcmp(env_entry->val,
@@ -627,8 +631,9 @@ parse_params(uint8_t *buf, uint16_t n, struct client *c, uint16_t id)
 		}
 		env_entry->val[name_len] = '=';
 
-		bcopy(buf, (env_entry->val)+name_len+1, val_len);
-		buf += val_len; n -= val_len;
+		bcopy(buf, (env_entry->val) + name_len + 1, val_len);
+		buf += val_len;
+		n -= val_len;
 
 		SLIST_INSERT_HEAD(&c->env, env_entry, entry);
 		c->env_count++;
@@ -660,7 +665,6 @@ parse_stdin(uint8_t *buf, uint16_t n, struct client *c, uint16_t id)
 	event_set(&c->script_stdin_ev, EVENT_FD(&c->script_ev), EV_WRITE |
 	    EV_PERSIST, script_out, c);
 	event_add(&c->script_stdin_ev, NULL);
-
 }
 
 size_t
@@ -685,15 +689,15 @@ parse_request(uint8_t *buf, size_t n, struct client *c)
 
 	switch (h->type) {
 	case FCGI_BEGIN_REQUEST:
-		parse_begin_request(buf+sizeof(struct fcgi_record_header),
+		parse_begin_request(buf + sizeof(struct fcgi_record_header),
 		    ntohs(h->content_len), c, ntohs(h->id));
 		break;
 	case FCGI_PARAMS:
-		parse_params(buf+sizeof(struct fcgi_record_header),
+		parse_params(buf + sizeof(struct fcgi_record_header),
 		    ntohs(h->content_len), c, ntohs(h->id));
 		break;
 	case FCGI_STDIN:
-		parse_stdin(buf+sizeof(struct fcgi_record_header),
+		parse_stdin(buf + sizeof(struct fcgi_record_header),
 		    ntohs(h->content_len), c, ntohs(h->id));
 		break;
 	default:
@@ -720,29 +724,30 @@ exec_cgi(struct client *c)
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, s_err) == -1)
 		lerr(1, "socketpair");
 	ldebug("fork: %s", c->script_name);
-	switch(pid = fork()) {
-		case -1:
-			lwarn("fork");
-			return;
-		case 0:
-			/* Child process */
-			close(s[0]);
-			close(s_err[0]);
-			if (dup2(s[1], STDIN_FILENO) == -1)
-				_exit(1);
-			if (dup2(s[1], STDOUT_FILENO) == -1)
-				_exit(1);
-			if (dup2(s_err[1], STDERR_FILENO) == -1)
-				_exit(1);
-			argv[0] = c->script_name;
-			argv[1] = NULL;
-			if((env = calloc(c->env_count+1, sizeof(char*)))==NULL)
-				_exit(1);
-			SLIST_FOREACH(env_entry, &c->env, entry)
-				env[i++] = env_entry->val;
-			env[i++] = NULL;
-			execve(c->script_name, argv, env);
+
+	switch (pid = fork()) {
+	case -1:
+		lwarn("fork");
+		return;
+	case 0:
+		/* Child process */
+		close(s[0]);
+		close(s_err[0]);
+		if (dup2(s[1], STDIN_FILENO) == -1)
 			_exit(1);
+		if (dup2(s[1], STDOUT_FILENO) == -1)
+			_exit(1);
+		if (dup2(s_err[1], STDERR_FILENO) == -1)
+			_exit(1);
+		argv[0] = c->script_name;
+		argv[1] = NULL;
+		if ((env = calloc(c->env_count + 1, sizeof(char*))) == NULL)
+			_exit(1);
+		SLIST_FOREACH(env_entry, &c->env, entry)
+			env[i++] = env_entry->val;
+		env[i++] = NULL;
+		execve(c->script_name, argv, env);
+		_exit(1);
 
 	}
 	/* Parent process*/
@@ -875,7 +880,7 @@ script_out(int fd, short events, void *arg)
 			break;
 		}
 		n = write(fd, node->data + node->data_pos, node->data_len);
-		if ( n == -1) {
+		if (n == -1) {
 			if (errno == EAGAIN)
 				return;
 			event_del(&c->script_stdin_ev);
@@ -883,7 +888,7 @@ script_out(int fd, short events, void *arg)
 		}
 		node->data_pos += n;
 		node->data_len -= n;
-		if(node->data_len == 0) {
+		if (node->data_len == 0) {
 			TAILQ_REMOVE(&c->stdin_head, node, entry);
 			free(node);
 		}
@@ -932,7 +937,7 @@ cleanup_client(struct client *c)
 		free(stdin_node);
 	}
 	SLIST_FOREACH_SAFE(ncs, &slowcgi_proc.clients, entry, tcs) {
-		if(ncs->client == c) {
+		if (ncs->client == c) {
 			SLIST_REMOVE(&slowcgi_proc.clients, ncs, clients,
 			    entry);
 			free(ncs);
@@ -942,7 +947,8 @@ cleanup_client(struct client *c)
 	free(c);
 }
 
-void dump_fcgi_record_header(const char* p, struct fcgi_record_header *h)
+void
+dump_fcgi_record_header(const char* p, struct fcgi_record_header *h)
 {
 	ldebug("%sversion:         %d", p, h->version);
 	ldebug("%stype:            %d", p, h->type);
