@@ -1,4 +1,4 @@
-/* $OpenBSD: mtrr.c,v 1.11 2009/06/01 20:46:50 phessler Exp $ */
+/* $OpenBSD: mtrr.c,v 1.12 2013/08/24 04:26:16 mlarkin Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * Copyright (c) 1999 Brian Fundakowski Feldman
@@ -33,7 +33,7 @@
 
 #include <machine/specialreg.h>
 
-extern struct mem_range_ops i686_mrops;
+extern struct mem_range_ops mrops;
 extern struct mem_range_ops k6_mrops;
 
 void mtrrattach(int);
@@ -63,7 +63,7 @@ mtrrattach(int num)
 		    (strcmp(cpu_vendor, "AuthenticAMD") == 0)) &&
 		    (family == 0x6 || family == 0xf) &&
 		    (cpu_feature & CPUID_MTRR)) {
-		mem_range_softc.mr_op = &i686_mrops;
+		mem_range_softc.mr_op = &mrops;
 
 	}
 	/* Initialise memory range handling */

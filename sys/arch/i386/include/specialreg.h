@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.45 2013/05/06 00:15:11 dlg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.46 2013/08/24 04:26:16 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -308,46 +308,23 @@
 #define MSR_LASTINTFROMIP	0x1dd
 #define MSR_LASTINTTOIP		0x1de
 #define MSR_ROB_CR_BKUPTMPDR6	0x1e0
-#define MSR_MTRRVarBase		0x200
-#define	MSR_MTRRphysMask0	0x201
-#define	MSR_MTRRphysBase1	0x202
-#define	MSR_MTRRphysMask1	0x203
-#define	MSR_MTRRphysBase2	0x204
-#define	MSR_MTRRphysMask2	0x205
-#define	MSR_MTRRphysBase3	0x206
-#define	MSR_MTRRphysMask3	0x207
-#define	MSR_MTRRphysBase4	0x208
-#define	MSR_MTRRphysMask4	0x209
-#define	MSR_MTRRphysBase5	0x20a
-#define	MSR_MTRRphysMask5	0x20b
-#define	MSR_MTRRphysBase6	0x20c
-#define	MSR_MTRRphysMask6	0x20d
-#define	MSR_MTRRphysBase7	0x20e
-#define	MSR_MTRRphysMask7	0x20f
-#define MSR_MTRR64kBase		0x250
-#define MSR_MTRR16kBase		0x258
-#define	MSR_MTRRfix16K_A0000	0x259
-#define MSR_MTRR4kBase		0x268
-#define	MSR_MTRRfix4K_C8000	0x269
-#define	MSR_MTRRfix4K_D0000	0x26a
-#define	MSR_MTRRfix4K_D8000	0x26b
-#define	MSR_MTRRfix4K_E0000	0x26c
-#define	MSR_MTRRfix4K_E8000	0x26d
-#define	MSR_MTRRfix4K_F0000	0x26e
-#define	MSR_MTRRfix4K_F8000	0x26f
+#define MSR_MTRRvarBase		0x200
+#define MSR_MTRRfix64K_00000	0x250
+#define MSR_MTRRfix16K_80000	0x258
+#define MSR_MTRRfix4K_C0000	0x268
 #define MSR_CR_PAT		0x277
 #define MSR_MTRRdefType		0x2ff
 #define MSR_PERF_FIXED_CTR1	0x30a	/* CPU_CLK_Unhalted.Core */
 #define MSR_PERF_FIXED_CTR2	0x30b	/* CPU_CLK.Unhalted.Ref */
 #define MSR_PERF_FIXED_CTR_CTRL	0x38d
-#define  MSR_PERF_FIXED_CTR_FC_DIS	0x0 /* disable counter */
-#define  MSR_PERF_FIXED_CTR_FC_1	0x1 /* count ring 1 */
-#define  MSR_PERF_FIXED_CTR_FC_123	0x2 /* count rings 1,2,3 */
-#define  MSR_PERF_FIXED_CTR_FC_ANY	0x3 /* count everything */
-#define  MSR_PERF_FIXED_CTR_FC_MASK	0x3
-#define  MSR_PERF_FIXED_CTR_FC(_i, _v)	((_v) << (4 * (_i)))
-#define  MSR_PERF_FIXED_CTR_ANYTHR(_i)	(0x4 << (4 * (_i)))
-#define  MSR_PERF_FIXED_CTR_INT(_i)	(0x8 << (4 * (_i)))
+#define MSR_PERF_FIXED_CTR_FC_DIS	0x0 /* disable counter */
+#define MSR_PERF_FIXED_CTR_FC_1	0x1 /* count ring 1 */
+#define MSR_PERF_FIXED_CTR_FC_123	0x2 /* count rings 1,2,3 */
+#define MSR_PERF_FIXED_CTR_FC_ANY	0x3 /* count everything */
+#define MSR_PERF_FIXED_CTR_FC_MASK	0x3
+#define MSR_PERF_FIXED_CTR_FC(_i, _v)	((_v) << (4 * (_i)))
+#define MSR_PERF_FIXED_CTR_ANYTHR(_i)	(0x4 << (4 * (_i)))
+#define MSR_PERF_FIXED_CTR_INT(_i)	(0x8 << (4 * (_i)))
 #define MSR_PERF_GLOBAL_CTRL	0x38f
 #define MSR_PERF_GLOBAL_CTR1_EN	(1ULL << 33)
 #define MSR_PERF_GLOBAL_CTR2_EN	(1ULL << 34)
@@ -393,10 +370,10 @@
 #define	MSR_SYSCFG	0xc0000010
 
 #define MSR_EFER	0xc0000080		/* Extended feature enable */
-#define 	EFER_SCE		0x00000001	/* SYSCALL extension */
-#define 	EFER_LME		0x00000100	/* Long Mode Active */
-#define		EFER_LMA		0x00000400	/* Long Mode Enabled */
-#define 	EFER_NXE		0x00000800	/* No-Execute Enabled */
+#define	EFER_SCE	0x00000001	/* SYSCALL extension */
+#define	EFER_LME	0x00000100	/* Long Mode Active */
+#define	EFER_LMA	0x00000400	/* Long Mode Enabled */
+#define	EFER_NXE	0x00000800	/* No-Execute Enabled */
 
 #define MSR_STAR	0xc0000081		/* 32 bit syscall gate addr */
 #define MSR_LSTAR	0xc0000082		/* 64 bit syscall gate addr */
@@ -409,7 +386,7 @@
 #define MSR_INT_PEN_MSG	0xc0010055		/* Interrupt pending message */
 
 #define MSR_DE_CFG	0xc0011029		/* Decode Configuration */
-#define		DE_CFG_721		0x00000001	/* errata 721 */
+#define	DE_CFG_721	0x00000001	/* errata 721 */
 
 #define IPM_C1E_CMP_HLT	0x10000000
 #define IPM_SMI_CMP_HLT	0x08000000
@@ -418,26 +395,26 @@
  * These require a 'passcode' for access.  See cpufunc.h.
  */
 #define	MSR_HWCR	0xc0010015
-#define		HWCR_FFDIS		0x00000040
+#define	HWCR_FFDIS	0x00000040
 
 #define	MSR_NB_CFG	0xc001001f
-#define		NB_CFG_DISIOREQLOCK	0x0000000000000004ULL
-#define		NB_CFG_DISDATMSK	0x0000001000000000ULL
+#define	NB_CFG_DISIOREQLOCK	0x0000000000000004ULL
+#define	NB_CFG_DISDATMSK	0x0000001000000000ULL
 
 #define	MSR_LS_CFG	0xc0011020
-#define		LS_CFG_DIS_LS2_SQUISH	0x02000000
+#define	LS_CFG_DIS_LS2_SQUISH	0x02000000
 
 #define	MSR_IC_CFG	0xc0011021
-#define		IC_CFG_DIS_SEQ_PREFETCH	0x00000800
+#define	IC_CFG_DIS_SEQ_PREFETCH	0x00000800
 
 #define	MSR_DC_CFG	0xc0011022
-#define		DC_CFG_DIS_CNV_WC_SSO	0x00000004
-#define		DC_CFG_DIS_SMC_CHK_BUF	0x00000400
+#define	DC_CFG_DIS_CNV_WC_SSO	0x00000004
+#define	DC_CFG_DIS_SMC_CHK_BUF	0x00000400
 
 #define	MSR_BU_CFG	0xc0011023
-#define		BU_CFG_THRL2IDXCMPDIS	0x0000080000000000ULL
-#define		BU_CFG_WBPFSMCCHKDIS	0x0000200000000000ULL
-#define		BU_CFG_WBENHWSBDIS	0x0001000000000000ULL
+#define	BU_CFG_THRL2IDXCMPDIS	0x0000080000000000ULL
+#define	BU_CFG_WBPFSMCCHKDIS	0x0000200000000000ULL
+#define	BU_CFG_WBENHWSBDIS	0x0001000000000000ULL
 
 /*
  * Constants related to MTRRs
