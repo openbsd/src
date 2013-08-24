@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.22 2013/01/11 22:34:43 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.23 2013/08/24 20:54:29 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -151,33 +151,35 @@ ENTRY(do_xmem_word)	/* do_xmem_word(address, data, supervisor) */
 	bcnd	ne0,%r4,1f
 #ifdef ERRATA__XXX_USR
 	NOP
-	xmem.usr	%r3,%r2,%r0
-	NOP
-	NOP
-	NOP
-	jmp	%r1
-#else
-	jmp.n	%r1
-	 xmem.usr	%r3,%r2,%r0
 #endif
-1:	jmp.n	%r1
-	 xmem	%r3,%r2,%r0
+	xmem.usr	%r3,%r2,%r0
+#ifdef ERRATA__XXX_USR
+	NOP
+	NOP
+	NOP
+#endif
+	jmp.n	%r1
+	 or	%r2, %r3, %r0
+1:	xmem	%r3,%r2,%r0
+	jmp.n	%r1
+	 or	%r2, %r3, %r0
 
 ENTRY(do_xmem_byte)	/* do_xmem_byte(address, data, supervisor) */
 	bcnd	ne0,%r4,1f
 #ifdef ERRATA__XXX_USR
 	NOP
-	xmem.bu.usr	%r3,%r2,%r0
-	NOP
-	NOP
-	NOP
-	jmp	%r1
-#else
-	jmp.n	%r1
-	 xmem.bu.usr	%r3,%r2,%r0
 #endif
-1:	jmp.n	%r1
-	 xmem.bu	%r3,%r2,%r0
+	xmem.bu.usr	%r3,%r2,%r0
+#ifdef ERRATA__XXX_USR
+	NOP
+	NOP
+	NOP
+#endif
+	jmp.n	%r1
+	 or	%r2,%r3,%r0
+1:	xmem.bu	%r3,%r2,%r0
+	jmp.n	%r1
+	 or	%r2,%r3,%r0
 
 #endif	/* M88100 */
 

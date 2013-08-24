@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_machdep.c,v 1.10 2013/08/18 22:17:26 miod Exp $	*/
+/*	$OpenBSD: m88100_machdep.c,v 1.11 2013/08/24 20:54:29 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -283,6 +283,12 @@ dae_process(struct trapframe *eframe, u_int x,
 			} else {
 				v = do_xmem_byte(dmax, dmdx, dmtx & DMT_DAS);
 			}
+			DAE_DEBUG(
+				if (reg == 0)
+					printf("[no write to r0 done]\n");
+				else
+					printf("[r%d <- %08x]\n", reg, v);
+			);
 			if (reg != 0)
 				eframe->tf_r[reg] = v;
 		} else {
@@ -325,8 +331,6 @@ m88100_apply_patches()
 		((u_int32_t *)(do_store_word))[1] = 0xf400c401;
 		((u_int32_t *)(do_store_half))[1] = 0xf400c401;
 		((u_int32_t *)(do_store_byte))[1] = 0xf400c401;
-		((u_int32_t *)(do_xmem_word))[1] = 0xf400c401;
-		((u_int32_t *)(do_xmem_byte))[1] = 0xf400c401;
 	}
 #endif
 }
