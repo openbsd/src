@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.39 2010/09/03 11:09:29 jmc Exp $
+.\"	$OpenBSD: sort.1,v 1.40 2013/08/24 22:18:05 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: August 24 2013 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -118,7 +118,7 @@ The following options override the default ordering rules globally:
 .Bl -tag -width indent
 .It Fl H
 Use a merge sort instead of a radix sort.
-This option should be used for files larger than 60Mb.
+This option should be used for files larger than 60MB.
 .It Fl s
 Enable stable sort.
 Uses additional resources (see
@@ -458,7 +458,7 @@ is equivalent to
 .Fl f
 and may take twice as long.
 .Sh BUGS
-To sort files larger than 60Mb, use
+To sort files larger than 60MB, use
 .Nm
 .Fl H ;
-files larger than 704Mb must be sorted in smaller pieces, then merged.
+files larger than 704MB must be sorted in smaller pieces, then merged.
