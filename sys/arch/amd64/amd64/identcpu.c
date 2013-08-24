@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.49 2013/07/30 20:42:34 kettenis Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.50 2013/08/24 23:45:31 mlarkin Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -626,9 +626,9 @@ cpu_topology(struct cpu_info *ci)
 {
 #ifndef SMALL_KERNEL
 	u_int32_t eax, ebx, ecx, edx;
-	u_int32_t apicid, max_apicid, max_coreid;
-	u_int32_t smt_bits, core_bits, pkg_bits;
-	u_int32_t smt_mask, core_mask, pkg_mask;
+	u_int32_t apicid, max_apicid = 0, max_coreid = 0;
+	u_int32_t smt_bits = 0, core_bits, pkg_bits = 0;
+	u_int32_t smt_mask = 0, core_mask, pkg_mask = 0;
 
 	/* We need at least apicid at CPUID 1 */
 	CPUID(0, eax, ebx, ecx, edx);
