@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_config.c,v 1.10 2013/04/16 07:31:20 yasuoka Exp $ */
+/*	$OpenBSD: npppd_config.c,v 1.11 2013/08/24 23:48:25 mlarkin Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_config.c,v 1.10 2013/04/16 07:31:20 yasuoka Exp $ */
+/* $Id: npppd_config.c,v 1.11 2013/08/24 23:48:25 mlarkin Exp $ */
 /*@file
  * This file provides functions which operates configuration and so on.
  */
@@ -330,7 +330,7 @@ realm_list_remove(slist *list0, const char *label)
 int
 npppd_ifaces_load_config(npppd *_this)
 {
-	int           i, n;
+	int           i;
 	struct iface *iface;
 	npppd_iface  *niface;
 
@@ -370,7 +370,6 @@ npppd_ifaces_load_config(npppd *_this)
 			npppd_iface_init(_this, niface, iface);
 		else
 			npppd_iface_reinit(niface, iface);
-		n++;
 	}
 
 	return 0;
