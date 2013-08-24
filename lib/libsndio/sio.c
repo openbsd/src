@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.13 2013/04/03 03:13:32 guenther Exp $	*/
+/*	$OpenBSD: sio.c,v 1.14 2013/08/24 12:32:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -98,6 +98,10 @@ sio_close(struct sio_hdl *hdl)
 int
 sio_start(struct sio_hdl *hdl)
 {
+#ifdef DEBUG
+	struct timespec ts;
+#endif
+
 	if (hdl->eof) {
 		DPRINTF("sio_start: eof\n");
 		return 0;
@@ -110,9 +114,11 @@ sio_start(struct sio_hdl *hdl)
 #ifdef DEBUG
 	if (!sio_getpar(hdl, &hdl->par))
 		return 0;
-	hdl->pollcnt = hdl->wcnt = hdl->rcnt = hdl->realpos = 0;
-	clock_gettime(CLOCK_MONOTONIC, &hdl->ts);
+	hdl->pollcnt = hdl->wcnt = hdl->rcnt = hdl->cpos = 0;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	hdl->start_nsec = 1000000000LL * ts.tv_sec + ts.tv_nsec;
 #endif
+	hdl->rdrop = hdl->wsil = 0;
 	if (!hdl->ops->start(hdl))
 		return 0;
 	hdl->started = 1;
@@ -236,6 +242,46 @@ sio_psleep(struct sio_hdl *hdl, int event)
 	return 1;
 }
 
+static int
+sio_rdrop(struct sio_hdl *hdl)
+{
+#define DROP_NMAX 0x1000
+	static char dummy[DROP_NMAX];
+	ssize_t n, todo;
+
+	while (hdl->rdrop > 0) {
+		todo = hdl->rdrop;
+		if (todo > DROP_NMAX)
+			todo = DROP_NMAX;
+		n = hdl->ops->read(hdl, dummy, todo);
+		if (n == 0)
+			return 0;
+		hdl->rdrop -= n;
+		DPRINTF("sio_rdrop: dropped %zu bytes\n", n);
+	}
+	return 1;
+}
+
+static int
+sio_wsil(struct sio_hdl *hdl)
+{
+#define ZERO_NMAX 0x1000
+	static char zero[ZERO_NMAX];
+	ssize_t n, todo;
+
+	while (hdl->wsil > 0) {
+		todo = hdl->wsil;
+		if (todo > ZERO_NMAX)
+			todo = ZERO_NMAX;
+		n = hdl->ops->write(hdl, zero, todo);
+		if (n == 0)
+			return 0;
+		hdl->wsil -= n;
+		DPRINTF("sio_wsil: inserted %zu bytes\n", n);
+	}
+	return 1;
+}
+
 size_t
 sio_read(struct sio_hdl *hdl, void *buf, size_t len)
 {
@@ -256,6 +302,8 @@ sio_read(struct sio_hdl *hdl, void *buf, size_t len)
 		DPRINTF("sio_read: zero length read ignored\n");
 		return 0;
 	}
+	if (!sio_rdrop(hdl))
+		return 0;
 	while (todo > 0) {
 		n = hdl->ops->read(hdl, data, todo);
 		if (n == 0) {
@@ -280,13 +328,6 @@ sio_write(struct sio_hdl *hdl, const void *buf, size_t len)
 	unsigned int n;
 	const unsigned char *data = buf;
 	size_t todo = len;
-#ifdef DEBUG
-	struct timespec ts0, ts1, dts;
-	unsigned int us;
-
-	if (sndio_debug >= 2)
-		clock_gettime(CLOCK_MONOTONIC, &ts0);
-#endif
 
 	if (hdl->eof) {
 		DPRINTF("sio_write: eof\n");
@@ -301,6 +342,8 @@ sio_write(struct sio_hdl *hdl, const void *buf, size_t len)
 		DPRINTF("sio_write: zero length write ignored\n");
 		return 0;
 	}
+	if (!sio_wsil(hdl))
+		return 0;
 	while (todo > 0) {
 		n = hdl->ops->write(hdl, data, todo);
 		if (n == 0) {
@@ -316,19 +359,6 @@ sio_write(struct sio_hdl *hdl, const void *buf, size_t len)
 		hdl->wcnt += n;
 #endif
 	}
-#ifdef DEBUG
-	if (sndio_debug >= 2) {
-		clock_gettime(CLOCK_MONOTONIC, &ts1);
-		timespecsub(&ts0, &hdl->ts, &dts);
-		DPRINTF("%lld.%09ld: ", (long long)dts.tv_sec, dts.tv_nsec);
-
-		timespecsub(&ts1, &ts0, &dts);
-		us = dts.tv_sec * 1000000 + dts.tv_nsec/1000;
-		DPRINTF(
-		    "sio_write: wrote %d bytes of %d in %uus\n",
-		    (int)(len - todo), (int)len, us);
-	}
-#endif
 	return len - todo;
 }
 
@@ -353,8 +383,7 @@ sio_revents(struct sio_hdl *hdl, struct pollfd *pfd)
 {
 	int revents;
 #ifdef DEBUG
-	struct timespec ts0, ts1, dts;
-	unsigned int us;
+	struct timespec ts0, ts1;
 
 	if (sndio_debug >= 2)
 		clock_gettime(CLOCK_MONOTONIC, &ts0);
@@ -368,17 +397,20 @@ sio_revents(struct sio_hdl *hdl, struct pollfd *pfd)
 	if (!hdl->started)
 		return revents & POLLHUP;
 #ifdef DEBUG
-	if (sndio_debug >= 2) {
+	if (sndio_debug >= 3) {
 		clock_gettime(CLOCK_MONOTONIC, &ts1);
-		timespecsub(&ts0, &hdl->ts, &dts);
-		DPRINTF("%lld.%09ld: ", (long long)dts.tv_sec, dts.tv_nsec);
-
-		timespecsub(&ts1, &ts0, &dts);
-		us = dts.tv_sec * 1000000 + dts.tv_nsec/1000;
-		DPRINTF("sio_revents: revents = 0x%x, complete in %uus\n",
-		    revents, us);
+		DPRINTF("%09lld: sio_revents: revents = 0x%x, took %lldns\n",
+		    1000000000LL * ts0.tv_sec +
+		    ts0.tv_nsec - hdl->start_nsec,
+		    revents,
+		    1000000000LL * (ts1.tv_sec - ts0.tv_sec) +
+		    ts1.tv_nsec - ts0.tv_nsec);
 	}
 #endif
+	if ((hdl->mode & SIO_PLAY) && !sio_wsil(hdl))
+		revents &= ~POLLOUT;
+	if ((hdl->mode & SIO_REC) && !sio_rdrop(hdl))
+		revents &= ~POLLIN;
 	return revents;
 }
 
@@ -400,28 +432,54 @@ sio_onmove(struct sio_hdl *hdl, void (*cb)(void *, int), void *addr)
 	hdl->move_addr = addr;
 }
 
+#ifdef DEBUG
+void
+sio_printpos(struct sio_hdl *hdl)
+{	
+	struct timespec ts;
+	long long rpos, rdiff;
+	long long cpos, cdiff;
+	long long wpos, wdiff;
+
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+
+	rpos = (hdl->mode & SIO_REC) ? 
+	    hdl->rcnt / (hdl->par.bps * hdl->par.rchan) : 0;
+	wpos = (hdl->mode & SIO_PLAY) ?
+	    hdl->wcnt / (hdl->par.bps * hdl->par.pchan) : 0;
+
+	cdiff = hdl->cpos % hdl->par.round;
+	cpos  = hdl->cpos / hdl->par.round;
+	if (cdiff > hdl->par.round / 2) {
+		cpos++;
+		cdiff = cdiff - hdl->par.round;
+	}
+	rdiff = rpos % hdl->par.round;
+	rpos  = rpos / hdl->par.round;
+	if (rdiff > hdl->par.round / 2) {
+		rpos++;
+		rdiff = rdiff - hdl->par.round;
+	}
+	wdiff = wpos % hdl->par.round;
+	wpos  = wpos / hdl->par.round;
+	if (wdiff > hdl->par.round / 2) {
+		wpos++;
+		wdiff = wdiff - hdl->par.round;
+	}
+	DPRINTF("%011lld: "
+	    "clk %+5lld%+5lld, wr %+5lld%+5lld rd: %+5lld%+5lld\n",
+	    1000000000LL * ts.tv_sec + ts.tv_nsec - hdl->start_nsec,
+	    cpos, cdiff, wpos, wdiff, rpos, rdiff);
+}
+#endif
+
 void
 sio_onmove_cb(struct sio_hdl *hdl, int delta)
 {
 #ifdef DEBUG
-	struct timespec ts0, dts;
-	long long playpos;
-
-	if (sndio_debug >= 3 && (hdl->mode & SIO_PLAY)) {
-		clock_gettime(CLOCK_MONOTONIC, &ts0);
-		timespecsub(&ts0, &hdl->ts, &dts);
-		DPRINTF("%lld.%09ld: ", (long long)dts.tv_sec, dts.tv_nsec);
-		hdl->realpos += delta;
-		playpos = hdl->wcnt / (hdl->par.bps * hdl->par.pchan);
-		DPRINTF("sio_onmove_cb: delta = %+7d, "
-		    "plat = %+7lld, "
-		    "realpos = %+7lld, "
-		    "bufused = %+7lld\n",
-		    delta,
-		    playpos - hdl->realpos,
-		    hdl->realpos,
-		    hdl->realpos < 0 ? playpos : playpos - hdl->realpos);
-	}
+	hdl->cpos += delta;
+	if (sndio_debug >= 2)
+		sio_printpos(hdl);
 #endif
 	if (hdl->move_cb)
 		hdl->move_cb(hdl->move_addr, delta);

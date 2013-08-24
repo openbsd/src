@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_priv.h,v 1.5 2013/04/03 03:13:32 guenther Exp $	*/
+/*	$OpenBSD: sio_priv.h,v 1.6 2013/08/24 12:32:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -35,12 +35,14 @@ struct sio_hdl {
 	int started;			/* true if started */
 	int nbio;			/* true if non-blocking io */
 	int eof;			/* true if error occured */
+	int rdrop;			/* recorded bytes to drop */
+	int wsil;			/* silence to play */
 #ifdef DEBUG
 	unsigned long long pollcnt;	/* times sio_revents was called */
-	unsigned long long wcnt;	/* bytes written with sio_write() */
-	unsigned long long rcnt;	/* bytes read with sio_read() */
-	long long realpos;
-	struct timespec ts;
+	long long wcnt;			/* bytes written with sio_write() */
+	long long rcnt;			/* bytes read with sio_read() */
+	long long cpos;
+	long long start_nsec;
 	struct sio_par par;
 #endif
 };
@@ -70,5 +72,8 @@ void sio_create(struct sio_hdl *, struct sio_ops *, unsigned, int);
 void sio_destroy(struct sio_hdl *);
 void sio_onmove_cb(struct sio_hdl *, int);
 void sio_onvol_cb(struct sio_hdl *, unsigned);
+#ifdef DEBUG
+void sio_printpos(struct sio_hdl *);
+#endif
 
 #endif /* !defined(SNDIO_PRIV_H) */
