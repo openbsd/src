@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.c,v 1.15 2010/04/21 20:02:40 nicm Exp $	*/
+/*	$OpenBSD: poll.c,v 1.16 2013/08/24 10:46:48 dlg Exp $	*/
 
 /*
  * Copyright 2000-2003 Niels Provos <provos@citi.umich.edu>
@@ -163,7 +163,7 @@ poll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 	if (res == 0 || nfds == 0)
 		return (0);
 
-	i = random() % nfds;
+	i = arc4random_uniform(nfds);
 	for (j = 0; j < nfds; j++) {
 		struct event *r_ev = NULL, *w_ev = NULL;
 		int what;

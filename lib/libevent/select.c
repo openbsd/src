@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.c,v 1.16 2010/04/21 21:02:47 nicm Exp $	*/
+/*	$OpenBSD: select.c,v 1.17 2013/08/24 10:46:48 dlg Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -175,7 +175,7 @@ select_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 	event_debug(("%s: select reports %d", __func__, res));
 
 	check_selectop(sop);
-	i = random() % (sop->event_fds+1);
+	i = arc4random_uniform(sop->event_fds + 1);
 	for (j = 0; j <= sop->event_fds; ++j) {
 		struct event *r_ev = NULL, *w_ev = NULL;
 		if (++i >= sop->event_fds+1)
