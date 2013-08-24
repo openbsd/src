@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.13 2013/06/04 01:20:23 pirofti Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.14 2013/08/24 23:43:36 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -403,7 +403,6 @@ hibernate_quiesce_cpus(void)
 
 	/* Start the hatched (but idling) APs */
 	cpu_boot_secondary_processors();
-	sched_start_secondary_cpus();
 
 	/* 
 	 * Wait for cpus to halt so we know their FPU state has been
