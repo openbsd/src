@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtrr.4,v 1.5 2011/03/18 15:29:03 deraadt Exp $
+.\"	$OpenBSD: mtrr.4,v 1.6 2013/08/24 04:38:52 mlarkin Exp $
 .\"
 .\" MTRR driver for OpenBSD.
 .\" Copyright 1999 Matthieu Herrb <matthieu@openbsd.org>
@@ -7,7 +7,7 @@
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
 .\"
-.Dd $Mdocdate: March 18 2011 $
+.Dd $Mdocdate: August 24 2013 $
 .Dt MTRR 4 amd64
 .Os
 .Sh NAME
@@ -75,9 +75,6 @@ The region is currently active.
 We believe the region to be invalid or otherwise erroneous.
 .It Dv MDF_FIXACTIVE
 The region cannot be disabled.
-.It Dv MDF_BUSY
-The region is currently owned by another process and may not be
-altered.
 .El
 .Pp
 Operations are performed using
@@ -105,9 +102,7 @@ The
 ioctl is used to add, alter and remove memory range attributes.
 A range with the
 .Dv MDF_FIXACTIVE
-flag may not be removed; a range with the
-.Dv MDF_BUSY
-flag may not be removed or updated.
+flag may not be removed.
 .Pp
 .Fa mo_arg[0]
 should be set to MEMRANGE_SET_UPDATE to update an existing
