@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1683 2013/08/01 09:18:52 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1684 2013/08/25 02:11:46 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2523,6 +2523,15 @@ product HP PLUTO		0x1229	Pluto MIO
 product HP ZX1_IOC		0x122a	zx1 IOC
 product HP MERCURY		0x122e	Mercury Ropes-PCI
 product HP QUICKSILVER		0x12b4	QuickSilver Ropes-PCI
+product HP HPSAP430I		0x1920	Smart Array P430i
+product HP HPSAP830I		0x1921	Smart Array P830i
+product HP HPSAP430		0x1922	Smart Array P430
+product HP HPSAP431		0x1923	Smart Array P431
+product HP HPSAP830		0x1924	Smart Array P830
+product HP HPSAP731M		0x1926	Smart Array P731m
+product HP HPSAP230I		0x1928	Smart Array P230i
+product HP HPSAP530		0x1929	Smart Array P530
+product HP HPSAP531		0x192a	Smart Array P531
 product HP HPSAV100		0x3210	Smart Array V100
 product HP HPSAE200I_1		0x3211	Smart Array E200i
 product HP HPSAE200		0x3212	Smart Array E200
