@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.25 2012/12/05 23:20:12 deraadt Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.26 2013/08/25 22:50:04 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -513,8 +513,10 @@ glxsb_crypto_freesession(uint64_t tid)
 	if ((swd = sc->sc_sessions[sesn].ses_swd_enc)) {
 		txf = swd->sw_exf;
 
-		if (swd->sw_kschedule)
-			txf->zerokey(&(swd->sw_kschedule));
+		if (swd->sw_kschedule) {
+			explicit_bzero(swd->sw_kschedule, txf->ctxsize);
+			free(swd->sw_kschedule, M_CRYPTO_DATA);
+		}
 		free(swd, M_CRYPTO_DATA);
 	}
 	if ((swd = sc->sc_sessions[sesn].ses_swd_auth)) {
