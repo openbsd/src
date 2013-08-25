@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.16 2013/08/25 18:22:26 stsp Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.17 2013/08/25 18:22:59 stsp Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -1135,7 +1135,6 @@ ommmc_wait_intr(struct ommmc_softc *sc, int mask, int timo)
 int
 ommmc_intr(void *arg)
 {
-	int done = 0;
 	struct ommmc_softc *sc = arg;
 
 	u_int32_t status;
@@ -1187,7 +1186,7 @@ ommmc_intr(void *arg)
 		HCLR4(sc, MMCHS_STAT, MMCHS_STAT_CIRQ);
 		sdmmc_card_intr(sc->sdmmc);
 	}
-	return done;
+	return 1;
 }
 
 #ifdef SDHC_DEBUG
