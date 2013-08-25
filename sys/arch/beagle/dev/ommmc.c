@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.15 2013/05/21 20:57:13 rapha Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.16 2013/08/25 18:22:26 stsp Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -603,9 +603,6 @@ ommmc_host_maxblklen(sdmmc_chipset_handle_t sch)
 int
 ommmc_card_detect(sdmmc_chipset_handle_t sch)
 {
-#ifdef SDHC_DEBUG
-printf("ommmc_card_detect\n");
-#endif
 #if 0
 	struct ommmc_softc *sc = sch;
 	return ISSET(HREAD4(sc, SDHC_PRESENT_STATE), SDHC_CARD_INSERTED) ?
@@ -773,7 +770,6 @@ ret:
 void
 ommmc_card_intr_mask(sdmmc_chipset_handle_t sch, int enable)
 {
-printf("ommmc_card_intr_mask\n");
 	/* - this is SDIO card interrupt */
 	struct ommmc_softc *sc = sch;
 
@@ -789,7 +785,6 @@ printf("ommmc_card_intr_mask\n");
 void
 ommmc_card_intr_ack(sdmmc_chipset_handle_t sch)
 {
-printf("ommmc_card_intr_ack\n");
 	struct ommmc_softc *sc = sch;
 
 	HWRITE4(sc, MMCHS_STAT, MMCHS_STAT_CIRQ);
