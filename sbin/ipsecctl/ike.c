@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.77 2012/09/17 20:38:28 markus Exp $	*/
+/*	$OpenBSD: ike.c,v 1.78 2013/08/25 23:15:20 mikeb Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -544,6 +544,7 @@ ike_section_p1(struct ipsec_rule *r, FILE *fd)
 		return (-1);
 	}
 
+	/* the transform name must not include "," */
 	if (key_length && (p = strchr(key_length, ',')) != NULL)
 		num_print = p - key_length;
 	/* create unique name for transform, see also ike_section_p2() */
