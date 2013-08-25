@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1683 2013/08/01 09:18:52 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1684 2013/08/25 02:11:46 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2528,6 +2528,15 @@
 #define	PCI_PRODUCT_HP_ZX1_IOC	0x122a		/* zx1 IOC */
 #define	PCI_PRODUCT_HP_MERCURY	0x122e		/* Mercury Ropes-PCI */
 #define	PCI_PRODUCT_HP_QUICKSILVER	0x12b4		/* QuickSilver Ropes-PCI */
+#define	PCI_PRODUCT_HP_HPSAP430I	0x1920		/* Smart Array P430i */
+#define	PCI_PRODUCT_HP_HPSAP830I	0x1921		/* Smart Array P830i */
+#define	PCI_PRODUCT_HP_HPSAP430	0x1922		/* Smart Array P430 */
+#define	PCI_PRODUCT_HP_HPSAP431	0x1923		/* Smart Array P431 */
+#define	PCI_PRODUCT_HP_HPSAP830	0x1924		/* Smart Array P830 */
+#define	PCI_PRODUCT_HP_HPSAP731M	0x1926		/* Smart Array P731m */
+#define	PCI_PRODUCT_HP_HPSAP230I	0x1928		/* Smart Array P230i */
+#define	PCI_PRODUCT_HP_HPSAP530	0x1929		/* Smart Array P530 */
+#define	PCI_PRODUCT_HP_HPSAP531	0x192a		/* Smart Array P531 */
 #define	PCI_PRODUCT_HP_HPSAV100	0x3210		/* Smart Array V100 */
 #define	PCI_PRODUCT_HP_HPSAE200I_1	0x3211		/* Smart Array E200i */
 #define	PCI_PRODUCT_HP_HPSAE200	0x3212		/* Smart Array E200 */
