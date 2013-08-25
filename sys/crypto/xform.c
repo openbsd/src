@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.43 2011/07/07 02:57:24 deraadt Exp $	*/
+/*	$OpenBSD: xform.c,v 1.44 2013/08/25 14:26:56 jsing Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -43,7 +43,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -64,15 +63,15 @@
 extern void des_ecb3_encrypt(caddr_t, caddr_t, caddr_t, caddr_t, caddr_t, int);
 extern void des_ecb_encrypt(caddr_t, caddr_t, caddr_t, int);
 
-int  des_set_key(caddr_t, caddr_t);
-int  des1_setkey(u_int8_t **, u_int8_t *, int);
-int  des3_setkey(u_int8_t **, u_int8_t *, int);
-int  blf_setkey(u_int8_t **, u_int8_t *, int);
-int  cast5_setkey(u_int8_t **, u_int8_t *, int);
-int  rijndael128_setkey(u_int8_t **, u_int8_t *, int);
-int  aes_ctr_setkey(u_int8_t **, u_int8_t *, int);
-int  aes_xts_setkey(u_int8_t **, u_int8_t *, int);
-int  null_setkey(u_int8_t **, u_int8_t *, int);
+int  des_set_key(void *, caddr_t);
+int  des1_setkey(void *, u_int8_t *, int);
+int  des3_setkey(void *, u_int8_t *, int);
+int  blf_setkey(void *, u_int8_t *, int);
+int  cast5_setkey(void *, u_int8_t *, int);
+int  rijndael128_setkey(void *, u_int8_t *, int);
+int  aes_ctr_setkey(void *, u_int8_t *, int);
+int  aes_xts_setkey(void *, u_int8_t *, int);
+int  null_setkey(void *, u_int8_t *, int);
 
 void des1_encrypt(caddr_t, u_int8_t *);
 void des3_encrypt(caddr_t, u_int8_t *);
@@ -92,15 +91,6 @@ void aes_xts_decrypt(caddr_t, u_int8_t *);
 
 void aes_ctr_crypt(caddr_t, u_int8_t *);
 
-void des1_zerokey(u_int8_t **);
-void des3_zerokey(u_int8_t **);
-void blf_zerokey(u_int8_t **);
-void cast5_zerokey(u_int8_t **);
-void rijndael128_zerokey(u_int8_t **);
-void aes_ctr_zerokey(u_int8_t **);
-void aes_xts_zerokey(u_int8_t **);
-void null_zerokey(u_int8_t **);
-
 void aes_ctr_reinit(caddr_t, u_int8_t *);
 void aes_xts_reinit(caddr_t, u_int8_t *);
 void aes_gcm_reinit(caddr_t, u_int8_t *);
@@ -116,85 +106,101 @@ u_int32_t deflate_compress(u_int8_t *, u_int32_t, u_int8_t **);
 u_int32_t deflate_decompress(u_int8_t *, u_int32_t, u_int8_t **);
 u_int32_t lzs_dummy(u_int8_t *, u_int32_t, u_int8_t **);
 
+#define AESCTR_NONCESIZE	4
+#define AESCTR_IVSIZE		8
+#define AESCTR_BLOCKSIZE	16
+
+struct aes_ctr_ctx {
+	u_int32_t	ac_ek[4*(AES_MAXROUNDS + 1)];
+	u_int8_t	ac_block[AESCTR_BLOCKSIZE];
+	int		ac_nr;
+};
+
+#define AES_XTS_BLOCKSIZE	16
+#define AES_XTS_IVSIZE		8
+#define AES_XTS_ALPHA		0x87	/* GF(2^128) generator polynomial */
+
+struct aes_xts_ctx {
+	rijndael_ctx key1;
+	rijndael_ctx key2;
+	u_int8_t tweak[AES_XTS_BLOCKSIZE];
+};
+
 /* Helper */
-struct aes_xts_ctx;
 void aes_xts_crypt(struct aes_xts_ctx *, u_int8_t *, u_int);
 
 /* Encryption instances */
 struct enc_xform enc_xform_des = {
 	CRYPTO_DES_CBC, "DES",
-	8, 8, 8, 8,
+	8, 8, 8, 8, 128,
 	des1_encrypt,
 	des1_decrypt,
 	des1_setkey,
-	des1_zerokey,
 	NULL
 };
 
 struct enc_xform enc_xform_3des = {
 	CRYPTO_3DES_CBC, "3DES",
-	8, 8, 24, 24,
+	8, 8, 24, 24, 384,
 	des3_encrypt,
 	des3_decrypt,
 	des3_setkey,
-	des3_zerokey,
 	NULL
 };
 
 struct enc_xform enc_xform_blf = {
 	CRYPTO_BLF_CBC, "Blowfish",
 	8, 8, 5, 56 /* 448 bits, max key */,
+	sizeof(blf_ctx),
 	blf_encrypt,
 	blf_decrypt,
 	blf_setkey,
-	blf_zerokey,
 	NULL
 };
 
 struct enc_xform enc_xform_cast5 = {
 	CRYPTO_CAST_CBC, "CAST-128",
 	8, 8, 5, 16,
+	sizeof(cast_key),
 	cast5_encrypt,
 	cast5_decrypt,
 	cast5_setkey,
-	cast5_zerokey,
 	NULL
 };
 
 struct enc_xform enc_xform_rijndael128 = {
 	CRYPTO_RIJNDAEL128_CBC, "Rijndael-128/AES",
 	16, 16, 16, 32,
+	sizeof(rijndael_ctx),
 	rijndael128_encrypt,
 	rijndael128_decrypt,
 	rijndael128_setkey,
-	rijndael128_zerokey,
 	NULL
 };
 
 struct enc_xform enc_xform_aes_ctr = {
 	CRYPTO_AES_CTR, "AES-CTR",
 	16, 8, 16+4, 32+4,
+	sizeof(struct aes_ctr_ctx),
 	aes_ctr_crypt,
 	aes_ctr_crypt,
 	aes_ctr_setkey,
-	aes_ctr_zerokey,
 	aes_ctr_reinit
 };
 
 struct enc_xform enc_xform_aes_gcm = {
 	CRYPTO_AES_GCM_16, "AES-GCM",
 	1, 8, 16+4, 32+4,
+	sizeof(struct aes_ctr_ctx),
 	aes_ctr_crypt,
 	aes_ctr_crypt,
 	aes_ctr_setkey,
-	aes_ctr_zerokey,
 	aes_gcm_reinit
 };
 
 struct enc_xform enc_xform_aes_gmac = {
 	CRYPTO_AES_GMAC, "AES-GMAC",
-	1, 8, 16+4, 32+4,
-	NULL,
+	1, 8, 16+4, 32+4, 0,
 	NULL,
 	NULL,
 	NULL,
@@ -204,17 +210,16 @@ struct enc_xform enc_xform_aes_gmac = {
 struct enc_xform enc_xform_aes_xts = {
 	CRYPTO_AES_XTS, "AES-XTS",
 	16, 8, 32, 64,
+	sizeof(struct aes_xts_ctx),
 	aes_xts_encrypt,
 	aes_xts_decrypt,
 	aes_xts_setkey,
-	aes_xts_zerokey,
 	aes_xts_reinit
 };
 
 struct enc_xform enc_xform_arc4 = {
 	CRYPTO_ARC4, "ARC4",
-	1, 1, 1, 32,
-	NULL,
+	1, 1, 1, 32, 0,
 	NULL,
 	NULL,
 	NULL,
@@ -223,11 +228,10 @@ struct enc_xform enc_xform_arc4 = {
 
 struct enc_xform enc_xform_null = {
 	CRYPTO_NULL, "NULL",
-	4, 0, 0, 256,
+	4, 0, 0, 256, 0,
 	null_encrypt,
 	null_decrypt,
 	null_setkey,
-	null_zerokey,
 	NULL
 };
 
@@ -371,24 +375,9 @@ des1_decrypt(caddr_t key, u_int8_t *blk)
 }
 
 int
-des1_setkey(u_int8_t **sched, u_int8_t *key, int len)
+des1_setkey(void *sched, u_int8_t *key, int len)
 {
-	*sched = malloc(128, M_CRYPTO_DATA, M_WAITOK | M_ZERO);
-
-	if (des_set_key(key, *sched) < 0) {
-		des1_zerokey(sched);
-		return -1;
-	}
-
-	return 0;
-}
-
-void
-des1_zerokey(u_int8_t **sched)
-{
-	explicit_bzero(*sched, 128);
-	free(*sched, M_CRYPTO_DATA);
-	*sched = NULL;
+	return des_set_key(key, sched);
 }
 
 void
@@ -404,25 +393,13 @@ des3_decrypt(caddr_t key, u_int8_t *blk)
 }
 
 int
-des3_setkey(u_int8_t **sched, u_int8_t *key, int len)
+des3_setkey(void *sched, u_int8_t *key, int len)
 {
-	*sched = malloc(384, M_CRYPTO_DATA, M_WAITOK | M_ZERO);
-
-	if (des_set_key(key, *sched) < 0 || des_set_key(key + 8, *sched + 128)
-	    < 0 || des_set_key(key + 16, *sched + 256) < 0) {
-		des3_zerokey(sched);
+	if (des_set_key(key, sched) < 0 || des_set_key(key + 8, sched + 128)
+	    < 0 || des_set_key(key + 16, sched + 256) < 0)
 		return -1;
-	}
 
 	return 0;
-}
-
-void
-des3_zerokey(u_int8_t **sched)
-{
-	explicit_bzero(*sched, 384);
-	free(*sched, M_CRYPTO_DATA);
-	*sched = NULL;
 }
 
 void
@@ -438,31 +415,17 @@ blf_decrypt(caddr_t key, u_int8_t *blk)
 }
 
 int
-blf_setkey(u_int8_t **sched, u_int8_t *key, int len)
+blf_setkey(void *sched, u_int8_t *key, int len)
 {
-	*sched = malloc(sizeof(blf_ctx), M_CRYPTO_DATA, M_WAITOK | M_ZERO);
-	blf_key((blf_ctx *)*sched, key, len);
+	blf_key((blf_ctx *)sched, key, len);
 
 	return 0;
-}
-
-void
-blf_zerokey(u_int8_t **sched)
-{
-	explicit_bzero(*sched, sizeof(blf_ctx));
-	free(*sched, M_CRYPTO_DATA);
-	*sched = NULL;
 }
 
 int
-null_setkey(u_int8_t **sched, u_int8_t *key, int len)
+null_setkey(void *sched, u_int8_t *key, int len)
 {
 	return 0;
-}
-
-void
-null_zerokey(u_int8_t **sched)
-{
 }
 
 void
@@ -488,20 +451,11 @@ cast5_decrypt(caddr_t key, u_int8_t *blk)
 }
 
 int
-cast5_setkey(u_int8_t **sched, u_int8_t *key, int len)
+cast5_setkey(void *sched, u_int8_t *key, int len)
 {
-	*sched = malloc(sizeof(cast_key), M_CRYPTO_DATA, M_WAITOK | M_ZERO);
-	cast_setkey((cast_key *)*sched, key, len);
+	cast_setkey((cast_key *)sched, key, len);
 
 	return 0;
-}
-
-void
-cast5_zerokey(u_int8_t **sched)
-{
-	explicit_bzero(*sched, sizeof(cast_key));
-	free(*sched, M_CRYPTO_DATA);
-	*sched = NULL;
 }
 
 void
@@ -517,36 +471,10 @@ rijndael128_decrypt(caddr_t key, u_int8_t *blk)
 }
 
 int
-rijndael128_setkey(u_int8_t **sched, u_int8_t *key, int len)
+rijndael128_setkey(void *sched, u_int8_t *key, int len)
 {
-	*sched = malloc(sizeof(rijndael_ctx), M_CRYPTO_DATA, M_WAITOK | M_ZERO);
-
-	if (rijndael_set_key((rijndael_ctx *)*sched, (u_char *)key, len * 8)
-	    < 0) {
-		rijndael128_zerokey(sched);
-		return -1;
-	}
-
-	return 0;
+	return rijndael_set_key((rijndael_ctx *)sched, (u_char *)key, len * 8);
 }
-
-void
-rijndael128_zerokey(u_int8_t **sched)
-{
-	explicit_bzero(*sched, sizeof(rijndael_ctx));
-	free(*sched, M_CRYPTO_DATA);
-	*sched = NULL;
-}
-
-#define AESCTR_NONCESIZE	4
-#define AESCTR_IVSIZE		8
-#define AESCTR_BLOCKSIZE	16
-
-struct aes_ctr_ctx {
-	u_int32_t	ac_ek[4*(AES_MAXROUNDS + 1)];
-	u_int8_t	ac_block[AESCTR_BLOCKSIZE];
-	int		ac_nr;
-};
 
 void
 aes_ctr_reinit(caddr_t key, u_int8_t *iv)
@@ -593,43 +521,21 @@ aes_ctr_crypt(caddr_t key, u_int8_t *data)
 }
 
 int
-aes_ctr_setkey(u_int8_t **sched, u_int8_t *key, int len)
+aes_ctr_setkey(void *sched, u_int8_t *key, int len)
 {
 	struct aes_ctr_ctx *ctx;
 
 	if (len < AESCTR_NONCESIZE)
 		return -1;
 
-	*sched = malloc(sizeof(struct aes_ctr_ctx), M_CRYPTO_DATA, M_WAITOK |
-	    M_ZERO);
-	ctx = (struct aes_ctr_ctx *)*sched;
+	ctx = (struct aes_ctr_ctx *)sched;
 	ctx->ac_nr = rijndaelKeySetupEnc(ctx->ac_ek, (u_char *)key,
 	    (len - AESCTR_NONCESIZE) * 8);
-	if (ctx->ac_nr == 0) {
-		aes_ctr_zerokey(sched);
+	if (ctx->ac_nr == 0)
 		return -1;
-	}
 	bcopy(key + len - AESCTR_NONCESIZE, ctx->ac_block, AESCTR_NONCESIZE);
 	return 0;
 }
-
-void
-aes_ctr_zerokey(u_int8_t **sched)
-{
-	explicit_bzero(*sched, sizeof(struct aes_ctr_ctx));
-	free(*sched, M_CRYPTO_DATA);
-	*sched = NULL;
-}
-
-#define AES_XTS_BLOCKSIZE	16
-#define AES_XTS_IVSIZE		8
-#define AES_XTS_ALPHA		0x87	/* GF(2^128) generator polynomial */
-
-struct aes_xts_ctx {
-	rijndael_ctx key1;
-	rijndael_ctx key2;
-	u_int8_t tweak[AES_XTS_BLOCKSIZE];
-};
 
 void
 aes_xts_reinit(caddr_t key, u_int8_t *iv)
@@ -695,31 +601,20 @@ aes_xts_decrypt(caddr_t key, u_int8_t *data)
 }
 
 int
-aes_xts_setkey(u_int8_t **sched, u_int8_t *key, int len)
+aes_xts_setkey(void *sched, u_int8_t *key, int len)
 {
 	struct aes_xts_ctx *ctx;
 
 	if (len != 32 && len != 64)
 		return -1;
 
-	*sched = malloc(sizeof(struct aes_xts_ctx), M_CRYPTO_DATA,
-	    M_WAITOK | M_ZERO);
-	ctx = (struct aes_xts_ctx *)*sched;
+	ctx = (struct aes_xts_ctx *)sched;
 
 	rijndael_set_key(&ctx->key1, key, len * 4);
 	rijndael_set_key(&ctx->key2, key + (len / 2), len * 4);
 
 	return 0;
 }
-
-void
-aes_xts_zerokey(u_int8_t **sched)
-{
-	explicit_bzero(*sched, sizeof(struct aes_xts_ctx));
-	free(*sched, M_CRYPTO_DATA);
-	*sched = NULL;
-}
-
 
 /*
  * And now for auth.

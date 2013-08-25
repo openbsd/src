@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.h,v 1.22 2010/10/06 22:19:20 mikeb Exp $	*/
+/*	$OpenBSD: xform.h,v 1.23 2013/08/25 14:26:56 jsing Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -49,12 +49,14 @@ struct auth_hash {
 struct enc_xform {
 	int type;
 	char *name;
-	u_int16_t blocksize, ivsize;
-	u_int16_t minkey, maxkey;
+	u_int16_t blocksize;
+	u_int16_t ivsize;
+	u_int16_t minkey;
+	u_int16_t maxkey;
+	u_int16_t ctxsize;
 	void (*encrypt) (caddr_t, u_int8_t *);
 	void (*decrypt) (caddr_t, u_int8_t *);
-	int  (*setkey) (u_int8_t **, u_int8_t *, int len);
-	void (*zerokey) (u_int8_t **);
+	int  (*setkey) (void *, u_int8_t *, int len);
 	void (*reinit) (caddr_t, u_int8_t *);
 };
 
