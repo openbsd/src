@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.153 2013/06/11 16:42:17 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.154 2013/08/25 23:31:39 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -566,6 +566,12 @@ void	scsi_xsh_set(struct scsi_xshandler *, struct scsi_link *,
 	    void (*)(struct scsi_xfer *));
 void	scsi_xsh_add(struct scsi_xshandler *);
 void	scsi_xsh_del(struct scsi_xshandler *);
+
+/*
+ * utility functions
+ */
+int	scsi_sem_enter(struct mutex *, u_int *);
+int	scsi_sem_leave(struct mutex *, u_int *);
 
 /*
  * Utility functions for SCSI HBA emulation.
