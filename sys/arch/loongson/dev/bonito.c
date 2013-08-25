@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.23 2013/05/30 16:15:01 deraadt Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.24 2013/08/25 08:18:05 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -1045,6 +1045,8 @@ bonito_mem_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size, int flags,
 	bus_addr_t end = offs + size - 1;
 	int pcilo_window;
 
+	pcimap = REGVAL(BONITO_PCIMAP);
+
 	/*
 	 * Try a PCIHI mapping first.
 	 */
@@ -1084,7 +1086,6 @@ bonito_mem_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size, int flags,
 	 * possible.
 	 */
 
-	pcimap = REGVAL(BONITO_PCIMAP);
 	pcilo_w[0] = (pcimap & BONITO_PCIMAP_PCIMAP_LO0) >>
 	    BONITO_PCIMAP_PCIMAP_LO0_SHIFT;
 	pcilo_w[1] = (pcimap & BONITO_PCIMAP_PCIMAP_LO1) >>
