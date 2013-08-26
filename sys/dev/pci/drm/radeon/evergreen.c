@@ -1,4 +1,4 @@
-/*	$OpenBSD: evergreen.c,v 1.2 2013/08/18 10:45:32 jsg Exp $	*/
+/*	$OpenBSD: evergreen.c,v 1.3 2013/08/26 05:15:21 jsg Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -3805,10 +3805,8 @@ void evergreen_fini(struct radeon_device *rdev)
 
 void evergreen_pcie_gen2_enable(struct radeon_device *rdev)
 {
-#ifdef notyet
 	u32 link_width_cntl, speed_cntl, mask;
 	int ret;
-#endif
 
 	if (radeon_pcie_gen2 == 0)
 		return;
@@ -3823,9 +3821,7 @@ void evergreen_pcie_gen2_enable(struct radeon_device *rdev)
 	if (ASIC_IS_X2(rdev))
 		return;
 	
-	printf("%s partial stub\n", __func__);
-#ifdef notyet
-	ret = drm_pcie_get_speed_cap_mask(ddev, &mask);
+	ret = drm_pcie_get_speed_cap_mask(rdev->ddev, &mask);
 	if (ret != 0)
 		return;
 
@@ -3872,5 +3868,4 @@ void evergreen_pcie_gen2_enable(struct radeon_device *rdev)
 			link_width_cntl &= ~LC_UPCONFIGURE_DIS;
 		WREG32_PCIE_P(PCIE_LC_LINK_WIDTH_CNTL, link_width_cntl);
 	}
-#endif
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.144 2013/08/14 02:49:19 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.145 2013/08/26 05:15:20 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -1034,6 +1034,11 @@ static __inline__ int drm_core_check_feature(struct drm_device *dev,
 
 #endif
 
+#define DRM_PCIE_SPEED_25 1
+#define DRM_PCIE_SPEED_50 2
+#define DRM_PCIE_SPEED_80 4
+
+int	 drm_pcie_get_speed_cap_mask(struct drm_device *, u32 *);
 
 #endif /* __KERNEL__ */
 #endif /* _DRM_P_H_ */

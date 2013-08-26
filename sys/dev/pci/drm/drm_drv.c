@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.110 2013/08/12 04:11:52 jsg Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.111 2013/08/26 05:15:20 jsg Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -1820,6 +1820,58 @@ again:
 	drm_unhold_object(obj);
 	DRM_UNLOCK();
 	return &obj->uobj;
+}
+
+int drm_pcie_get_speed_cap_mask(struct drm_device *dev, u32 *mask)
+{
+	printf("%s stub\n", __func__);
+	return -EINVAL;
+#ifdef notyet
+	struct pci_dev *root;
+	int pos;
+	u32 lnkcap = 0, lnkcap2 = 0;
+
+	*mask = 0;
+	if (!dev->pdev)
+		return -EINVAL;
+
+	if (!pci_is_pcie(dev->pdev))
+		return -EINVAL;
+
+	root = dev->pdev->bus->self;
+
+	pos = pci_pcie_cap(root);
+	if (!pos)
+		return -EINVAL;
+
+	/* we've been informed via and serverworks don't make the cut */
+	if (root->vendor == PCI_VENDOR_ID_VIA ||
+	    root->vendor == PCI_VENDOR_ID_SERVERWORKS)
+		return -EINVAL;
+
+	pci_read_config_dword(root, pos + PCI_EXP_LNKCAP, &lnkcap);
+	pci_read_config_dword(root, pos + PCI_EXP_LNKCAP2, &lnkcap2);
+
+	lnkcap &= PCI_EXP_LNKCAP_SLS;
+	lnkcap2 &= 0xfe;
+
+	if (lnkcap2) { /* PCIE GEN 3.0 */
+		if (lnkcap2 & PCI_EXP_LNKCAP2_SLS_2_5GB)
+			*mask |= DRM_PCIE_SPEED_25;
+		if (lnkcap2 & PCI_EXP_LNKCAP2_SLS_5_0GB)
+			*mask |= DRM_PCIE_SPEED_50;
+		if (lnkcap2 & PCI_EXP_LNKCAP2_SLS_8_0GB)
+			*mask |= DRM_PCIE_SPEED_80;
+	} else {
+		if (lnkcap & 1)
+			*mask |= DRM_PCIE_SPEED_25;
+		if (lnkcap & 2)
+			*mask |= DRM_PCIE_SPEED_50;
+	}
+
+	DRM_INFO("probing gen 2 caps for device %x:%x = %x/%x\n", root->vendor, root->device, lnkcap, lnkcap2);
+	return 0;
+#endif
 }
 
 int

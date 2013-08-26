@@ -1,4 +1,4 @@
-/*	$OpenBSD: r600.c,v 1.2 2013/08/18 10:45:32 jsg Exp $	*/
+/*	$OpenBSD: r600.c,v 1.3 2013/08/26 05:15:21 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -4235,12 +4235,10 @@ int r600_get_pcie_lanes(struct radeon_device *rdev)
 
 static void r600_pcie_gen2_enable(struct radeon_device *rdev)
 {
-#ifdef notyet
 	u32 link_width_cntl, lanes, speed_cntl, training_cntl, tmp;
 	u16 link_cntl2;
 	u32 mask;
 	int ret;
-#endif
 
 	if (radeon_pcie_gen2 == 0)
 		return;
@@ -4259,8 +4257,6 @@ static void r600_pcie_gen2_enable(struct radeon_device *rdev)
 	if (rdev->family <= CHIP_R600)
 		return;
 
-	printf("%s partial stub\n", __func__);
-#ifdef notyet
 	ret = drm_pcie_get_speed_cap_mask(rdev->ddev, &mask);
 	if (ret != 0)
 		return;
@@ -4354,7 +4350,6 @@ static void r600_pcie_gen2_enable(struct radeon_device *rdev)
 			link_width_cntl &= ~LC_UPCONFIGURE_DIS;
 		WREG32_PCIE_P(PCIE_LC_LINK_WIDTH_CNTL, link_width_cntl);
 	}
-#endif
 }
 
 /**
