@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_rdac.c,v 1.7 2011/07/11 01:02:48 dlg Exp $ */
+/*	$OpenBSD: mpath_rdac.c,v 1.8 2013/08/26 07:21:18 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -154,6 +154,7 @@ const struct mpath_ops rdac_mpath_ops = {
 	MPATH_ROUNDROBIN
 };
 
+int		rdac_groupid(struct rdac_softc *);
 int		rdac_c8(struct rdac_softc *);
 int		rdac_c9(struct rdac_softc *);
 
@@ -268,6 +269,32 @@ int
 rdac_mpath_offline(struct scsi_link *link)
 {
 	return (0);
+}
+
+int
+rdac_groupid(struct rdac_softc *sc)
+{
+	struct rdac_vpd_subsys *pg;
+	int rv = -1;
+
+	pg = dma_alloc(sizeof(*pg), PR_WAITOK | PR_ZERO);
+
+	if (scsi_inquire_vpd(sc->sc_path.p_link, pg, sizeof(*pg),
+	    RDAC_VPD_SUBSYS, scsi_autoconf) != 0) {
+		printf("%s: unable to fetch subsys vpd page\n", DEVNAME(sc));
+		goto done;
+	}
+
+	if (_4btol(pg->pg_id) != RDAC_VPD_ID_SUBSYS) {
+		printf("%s: subsys page is invalid\n", DEVNAME(sc));
+		goto done;
+	}
+
+	rv = _2btol(pg->controller_slot_id);
+
+done:
+	dma_free(pg, sizeof(*pg));
+	return (rv);
 }
 
 int
