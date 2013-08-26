@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_pm.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_pm.c,v 1.2 2013/08/26 05:01:53 jsg Exp $	*/
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -526,8 +526,6 @@ static int radeon_hwmon_init(struct radeon_device *rdev)
 		/* No support for TN yet */
 		if (rdev->family == CHIP_ARUBA)
 			return err;
-		printf("%s partial stub\n", __func__);
-		return (0);
 #ifdef notyet
 		rdev->pm.int_hwmon_dev = hwmon_device_register(rdev->dev);
 		if (IS_ERR(rdev->pm.int_hwmon_dev)) {
