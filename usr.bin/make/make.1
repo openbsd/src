@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.106 2013/08/14 08:39:26 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.107 2013/08/26 16:54:04 jmc Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: August 26 2013 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -497,7 +497,7 @@ can be used to reset the currently valid list of suffixes,
 but inference rules already read are still known by
 .Nm ,
 and they are marked as inactive.
-Redefining the corresponding suffix (or suffixes) will re-active the rule.
+Redefining the corresponding suffix (or suffixes) will reactivate the rule.
 .Pp
 In case of duplicate inference rules with the same suffix combination,
 the new rule overrides the old one.
