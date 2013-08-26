@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.203 2013/08/25 23:31:39 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.204 2013/08/26 01:37:13 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -309,16 +309,18 @@ scsi_ioh_set(struct scsi_iohandler *ioh, struct scsi_iopool *iopl,
 	ioh->cookie = cookie;
 }
 
-void
+int
 scsi_ioh_add(struct scsi_iohandler *ioh)
 {
-	struct scsi_iopool *iopl = ioh->pool;
+	struct scsi_iopool *iopl = ioh->pool;	
+	int rv = 0;
 
 	mtx_enter(&iopl->mtx);
 	switch (ioh->q_state) {
 	case RUNQ_IDLE:
 		TAILQ_INSERT_TAIL(&iopl->queue, ioh, q_entry);
 		ioh->q_state = RUNQ_POOLQ;
+		rv = 1;
 		break;
 #ifdef DIAGNOSTIC
 	case RUNQ_POOLQ:
@@ -331,18 +333,22 @@ scsi_ioh_add(struct scsi_iohandler *ioh)
 
 	/* lets get some io up in the air */
 	scsi_ioh_runqueue(iopl);
+
+	return (rv);
 }
 
-void
+int
 scsi_ioh_del(struct scsi_iohandler *ioh)
 {
 	struct scsi_iopool *iopl = ioh->pool;
+	int rv = 0;
 
 	mtx_enter(&iopl->mtx);
 	switch (ioh->q_state) {
 	case RUNQ_POOLQ:
 		TAILQ_REMOVE(&iopl->queue, ioh, q_entry);
 		ioh->q_state = RUNQ_IDLE;
+		rv = 1;
 		break;
 #ifdef DIAGNOSTIC
 	case RUNQ_IDLE:
@@ -351,8 +357,9 @@ scsi_ioh_del(struct scsi_iohandler *ioh)
 		panic("scsi_ioh_del: unexpected state %u", ioh->q_state);
 #endif
 	}
-
 	mtx_leave(&iopl->mtx);
+
+	return (rv);
 }
 
 /*
@@ -490,33 +497,39 @@ scsi_xsh_set(struct scsi_xshandler *xsh, struct scsi_link *link,
 	xsh->handler = handler;
 }
 
-void
+int
 scsi_xsh_add(struct scsi_xshandler *xsh)
 {
 	struct scsi_link *link = xsh->link;
+	int rv = 0;
 
 	if (ISSET(link->state, SDEV_S_DYING))
-		return;
+		return (0);
 
 	mtx_enter(&link->pool->mtx);
 	if (xsh->ioh.q_state == RUNQ_IDLE) {
 		TAILQ_INSERT_TAIL(&link->queue, &xsh->ioh, q_entry);
 		xsh->ioh.q_state = RUNQ_LINKQ;
+		rv = 1;
 	}
 	mtx_leave(&link->pool->mtx);
 
 	/* lets get some io up in the air */
 	scsi_xsh_runqueue(link);
+
+	return (rv);
 }
 
-void
+int
 scsi_xsh_del(struct scsi_xshandler *xsh)
 {
 	struct scsi_link *link = xsh->link;
+	int rv = 1;
 
 	mtx_enter(&link->pool->mtx);
 	switch (xsh->ioh.q_state) {
 	case RUNQ_IDLE:
+		rv = 0;
 		break;
 	case RUNQ_LINKQ:
 		TAILQ_REMOVE(&link->queue, &xsh->ioh, q_entry);
@@ -532,6 +545,8 @@ scsi_xsh_del(struct scsi_xshandler *xsh)
 	}
 	xsh->ioh.q_state = RUNQ_IDLE;
 	mtx_leave(&link->pool->mtx);
+
+	return (rv);
 }
 
 /*
