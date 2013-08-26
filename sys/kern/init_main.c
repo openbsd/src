@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.189 2013/06/03 16:55:22 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.190 2013/08/26 01:59:22 dlg Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -346,6 +346,11 @@ main(void *framep)
 	/* Initialize the interface/address trees */
 	ifinit();
 
+#if NMPATH > 0
+	/* Attach mpath before hardware */
+	config_rootfound("mpath", NULL);
+#endif
+
 	/* Configure the devices */
 	cpu_configure();
 
@@ -456,9 +461,6 @@ main(void *framep)
 
 	dostartuphooks();
 
-#if NMPATH > 0
-	config_rootfound("mpath", NULL);
-#endif
 #if NVSCSI > 0
 	config_rootfound("vscsi", NULL);
 #endif
