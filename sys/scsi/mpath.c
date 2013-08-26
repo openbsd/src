@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.26 2013/06/10 04:12:57 dlg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.27 2013/08/26 06:54:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -59,11 +59,11 @@ struct mpath_softc {
 	struct device		sc_dev;
 	struct scsi_link	sc_link;
 	struct scsibus_softc	*sc_scsibus;
+	struct mpath_dev	*sc_devs[MPATH_BUSWIDTH];
 };
 #define DEVNAME(_s) ((_s)->sc_dev.dv_xname)
 
 struct mpath_softc	*mpath;
-struct mpath_dev	*mpath_devs[MPATH_BUSWIDTH];
 
 struct cfattach mpath_ca = {
 	sizeof(struct mpath_softc),
@@ -132,7 +132,8 @@ mpath_xs_stuffup(struct scsi_xfer *xs)
 int
 mpath_probe(struct scsi_link *link)
 {
-	struct mpath_dev *d = mpath_devs[link->target];
+	struct mpath_softc *sc = link->adapter_softc;
+	struct mpath_dev *d = sc->sc_devs[link->target];
 
 	if (link->lun != 0 || d == NULL)
 		return (ENXIO);
@@ -164,7 +165,8 @@ void
 mpath_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct mpath_dev *d = mpath_devs[link->target];
+	struct mpath_softc *sc = link->adapter_softc;
+	struct mpath_dev *d = sc->sc_devs[link->target];
 	struct mpath_path *p;
 	struct scsi_xfer *mxs;
 
@@ -267,7 +269,8 @@ mpath_done(struct scsi_xfer *mxs)
 {
 	struct scsi_xfer *xs = mxs->cookie;
 	struct scsi_link *link = xs->sc_link;
-	struct mpath_dev *d = mpath_devs[link->target];
+	struct mpath_softc *sc = link->adapter_softc;
+	struct mpath_dev *d = sc->sc_devs[link->target];
 	struct mpath_path *p;
 	int next = d->d_ops->op_schedule;
 
@@ -302,7 +305,8 @@ mpath_done(struct scsi_xfer *mxs)
 void
 mpath_minphys(struct buf *bp, struct scsi_link *link)
 {
-	struct mpath_dev *d = mpath_devs[link->target];
+	struct mpath_softc *sc = link->adapter_softc;
+	struct mpath_dev *d = sc->sc_devs[link->target];
 	struct mpath_path *p;
 
 #ifdef DIAGNOSTIC
@@ -317,25 +321,13 @@ mpath_minphys(struct buf *bp, struct scsi_link *link)
 int
 mpath_path_probe(struct scsi_link *link)
 {
-	static struct cfdata *cf = NULL;
-
-	if (cf == NULL) {
-		for (cf = cfdata; cf->cf_attach != (struct cfattach *)-1;
-		    cf++) {
-			if (cf->cf_attach == NULL)
-				continue;
-			if (cf->cf_driver == &mpath_cd)
-				break;
-		}
-	}
-
-	if (cf->cf_fstate == FSTATE_DNOTFOUND || cf->cf_fstate == FSTATE_DSTAR)
+	if (mpath == NULL)
 		return (ENXIO);
 
 	if (link->id == NULL)
 		return (EINVAL);
 
-	if (mpath != NULL && mpath == link->adapter_softc)
+	if (mpath == link->adapter_softc)
 		return (ENXIO);
 
 	return (0);
@@ -344,6 +336,7 @@ mpath_path_probe(struct scsi_link *link)
 int
 mpath_path_attach(struct mpath_path *p, const struct mpath_ops *ops)
 {
+	struct mpath_softc *sc = mpath;
 	struct scsi_link *link = p->p_link;
 	struct mpath_dev *d = NULL;
 	int newdev = 0, addxsh = 0;
@@ -357,7 +350,7 @@ mpath_path_attach(struct mpath_path *p, const struct mpath_ops *ops)
 #endif
 
 	for (target = 0; target < MPATH_BUSWIDTH; target++) {
-		if ((d = mpath_devs[target]) == NULL)
+		if ((d = sc->sc_devs[target]) == NULL)
 			continue;
 
 		if (DEVID_CMP(d->d_id, link->id) && d->d_ops == ops)
@@ -368,7 +361,7 @@ mpath_path_attach(struct mpath_path *p, const struct mpath_ops *ops)
 
 	if (d == NULL) {
 		for (target = 0; target < MPATH_BUSWIDTH; target++) {
-			if (mpath_devs[target] == NULL)
+			if (sc->sc_devs[target] == NULL)
 				break;
 		}
 		if (target >= MPATH_BUSWIDTH)
@@ -385,7 +378,7 @@ mpath_path_attach(struct mpath_path *p, const struct mpath_ops *ops)
 		d->d_id = devid_copy(link->id);
 		d->d_ops = ops;
 
-		mpath_devs[target] = d;
+		sc->sc_devs[target] = d;
 		newdev = 1;
 	} else {
 		/*
@@ -448,15 +441,16 @@ mpath_path_detach(struct mpath_path *p)
 struct device *
 mpath_bootdv(struct device *dev)
 {
+	struct mpath_softc *sc = mpath;
 	struct mpath_dev *d;
 	struct mpath_path *p;
 	int target;
 
-	if (mpath == NULL)
+	if (sc == NULL)
 		return (dev);
 
 	for (target = 0; target < MPATH_BUSWIDTH; target++) {
-		if ((d = mpath_devs[target]) == NULL)
+		if ((d = sc->sc_devs[target]) == NULL)
 			continue;
 
 		TAILQ_FOREACH(p, &d->d_paths, p_entry) {
