@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.57 2013/08/22 04:43:41 guenther Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.58 2013/08/26 14:15:08 naddy Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <stdarg.h>
 #include <syslog.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <errno.h>
 #include <err.h>
 #include <util.h>
@@ -3270,9 +3271,9 @@ hms(void)
 int
 ripinterval(int timer)
 {
-	double r = rand();
+	double r = arc4random();
 
-	interval = (int)(timer + timer * RIPRANDDEV * (r / RAND_MAX - 0.5));
+	interval = (int)(timer + timer * RIPRANDDEV * (r / UINT32_MAX - 0.5));
 	nextalarm = time(NULL) + interval;
 	return interval;
 }
@@ -3282,9 +3283,9 @@ ripsuptrig(void)
 {
 	time_t t;
 
-	double r = rand();
+	double r = arc4random();
 	t  = (int)(RIP_TRIG_INT6_MIN + 
-		(RIP_TRIG_INT6_MAX - RIP_TRIG_INT6_MIN) * (r / RAND_MAX));
+		(RIP_TRIG_INT6_MAX - RIP_TRIG_INT6_MIN) * (r / UINT32_MAX));
 	sup_trig_update = time(NULL) + t;
 	return t;
 }

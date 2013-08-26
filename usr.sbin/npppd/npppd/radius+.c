@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius+.c,v 1.6 2012/05/08 13:15:12 yasuoka Exp $ */
+/*	$OpenBSD: radius+.c,v 1.7 2013/08/26 14:15:08 naddy Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -110,7 +110,6 @@ static int radius_ensure_add_capacity(RADIUS_PACKET* packet, size_t capacity)
 RADIUS_PACKET* radius_new_request_packet(u_int8_t code)
 {
 	RADIUS_PACKET* packet;
-	unsigned int i;
 
 	packet = (RADIUS_PACKET*)malloc(sizeof(RADIUS_PACKET));
 	if(packet == NULL)
@@ -126,8 +125,8 @@ RADIUS_PACKET* radius_new_request_packet(u_int8_t code)
 	packet->pdata->code = code;
 	packet->pdata->id = radius_id_counter++;
 	packet->pdata->length = htons(sizeof(RADIUS_PACKET_DATA));
-	for(i=0; i<countof(packet->pdata->authenticator); i++)
-		packet->pdata->authenticator[i] = rand()&0xff;
+	arc4random_buf(packet->pdata->authenticator,
+	    sizeof(packet->pdata->authenticator));
 
 	return packet;
 }
