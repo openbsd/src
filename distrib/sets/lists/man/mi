@@ -2326,7 +2326,6 @@
 ./usr/share/man/man4/udl.4
 ./usr/share/man/man4/udp.4
 ./usr/share/man/man4/udsbr.4
-./usr/share/man/man4/ueagle.4
 ./usr/share/man/man4/uftdi.4
 ./usr/share/man/man4/ugen.4
 ./usr/share/man/man4/uguru.4
@@ -2364,7 +2363,6 @@
 ./usr/share/man/man4/urtwn.4
 ./usr/share/man/man4/usb.4
 ./usr/share/man/man4/usbf.4
-./usr/share/man/man4/uscanner.4
 ./usr/share/man/man4/uslcom.4
 ./usr/share/man/man4/usps.4
 ./usr/share/man/man4/uthum.4

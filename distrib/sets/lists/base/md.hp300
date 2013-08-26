@@ -1302,8 +1302,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ucomvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/udl.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/udlio.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ueaglereg.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ueaglevar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/uftdireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/uhcireg.ph
@@ -1728,7 +1726,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_aoe.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_arp.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_atm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_bridge.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_dl.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_enc.ph
@@ -1787,7 +1784,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/icmp6.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/icmp_var.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/if_atm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/if_ether.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/igmp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/igmp_var.ph
@@ -1840,8 +1836,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet6/tcpipv6.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netmpls
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netmpls/mpls.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/netnatm
-./usr/libdata/perl5/site_perl/m68k-openbsd/netnatm/natm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/nfs
 ./usr/libdata/perl5/site_perl/m68k-openbsd/nfs/krpc.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/nfs/nfs.ph

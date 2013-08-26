@@ -777,8 +777,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ucomvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/udl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/udlio.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ueaglereg.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ueaglevar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/uftdireg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/uhcireg.ph
@@ -1122,7 +1120,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_aoe.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_arp.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/net/if_atm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_bridge.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_dl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_enc.ph
@@ -1181,7 +1178,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/netinet
 ./usr/libdata/perl5/site_perl/vax-openbsd/netinet/icmp6.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netinet/icmp_var.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netinet/if_atm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netinet/if_ether.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netinet/igmp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netinet/igmp_var.ph
@@ -1234,8 +1230,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/netinet6/tcpipv6.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netmpls
 ./usr/libdata/perl5/site_perl/vax-openbsd/netmpls/mpls.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netnatm
-./usr/libdata/perl5/site_perl/vax-openbsd/netnatm/natm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/nfs
 ./usr/libdata/perl5/site_perl/vax-openbsd/nfs/krpc.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/nfs/nfs.ph
