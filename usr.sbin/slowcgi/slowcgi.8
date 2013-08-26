@@ -1,4 +1,4 @@
-.\"   $OpenBSD: slowcgi.8,v 1.3 2013/06/02 14:11:38 florian Exp $
+.\"   $OpenBSD: slowcgi.8,v 1.4 2013/08/26 08:02:03 blambert Exp $
 .\"
 .\" Copyright (c) 2013 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 2 2013 $
+.Dd $Mdocdate: August 26 2013 $
 .Dt SLOWCGI 8
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl d
+.Op Fl s Ar socket
 .Sh DESCRIPTION
 .Nm
 is a server which implements the FastCGI Protocol to execute CGI scripts.
@@ -44,6 +45,9 @@ Do not daemonize.
 If this option is specified,
 .Nm
 will run in the foreground and log to stderr.
+.It Fl s Ar socket
+Create and bind to alternative local socket at
+.Ar socket .
 .El
 .\" .Sh SEE ALSO
 .Sh STANDARDS

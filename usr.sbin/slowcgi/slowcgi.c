@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.5 2013/08/23 07:12:49 blambert Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.6 2013/08/26 08:02:03 blambert Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -146,7 +146,7 @@ struct fcgi_end_request {
 	uint8_t		reserved[3];
 }__packed;
 __dead void	usage(void);
-void		slowcgi_listen(const char *, gid_t);
+void		slowcgi_listen(char *, gid_t);
 void		slowcgi_paused(int, short, void*);
 void		slowcgi_accept(int, short, void*);
 void		slowcgi_request(int, short, void*);
@@ -215,7 +215,7 @@ __dead void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-d]\n", __progname);
+	fprintf(stderr, "usage: %s [-d] [-s socket]\n", __progname);
 	exit(1);
 }
 
@@ -223,6 +223,7 @@ struct timeval		timeout = { TIMEOUT_DEFAULT, 0 };
 struct slowcgi_proc	slowcgi_proc;
 int			debug = 0;
 int			on = 1;
+char 			*fcgi_socket = "/var/www/run/slowcgi.sock";
 
 int
 main(int argc, char *argv[])
@@ -230,10 +231,13 @@ main(int argc, char *argv[])
 	struct passwd	*pw;
 	int		 c;
 
-	while ((c = getopt(argc, argv, "d")) != -1) {
+	while ((c = getopt(argc, argv, "ds:")) != -1) {
 		switch (c) {
 		case 'd':
 			debug = 1;
+			break;
+		case 's':
+			fcgi_socket = optarg;
 			break;
 		default:
 			usage();
@@ -253,7 +257,8 @@ main(int argc, char *argv[])
 
 	event_init();
 
-	slowcgi_listen("/var/www/run/slowcgi.sock", pw->pw_gid);
+	slowcgi_listen(fcgi_socket, pw->pw_gid);
+
 	if (chroot(pw->pw_dir) == -1)
 		lerr(1, "chroot(%s)", pw->pw_dir);
 
@@ -279,7 +284,7 @@ main(int argc, char *argv[])
 	return (0);
 }
 void
-slowcgi_listen(const char *path, gid_t gid)
+slowcgi_listen(char *path, gid_t gid)
 {
 	struct listener		 *l = NULL;
 	struct sockaddr_un	 sun;
