@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.28 2013/08/26 07:29:45 dlg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.29 2013/08/26 07:32:24 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -414,8 +414,10 @@ mpath_path_attach(struct mpath_path *p, u_int g_id, const struct mpath_ops *ops)
 		g = malloc(sizeof(*g),  M_DEVBUF,
 		    M_WAITOK | M_CANFAIL | M_ZERO);
 		if (g == NULL) {
-			if (newdev)
+			if (newdev) {
 				free(d, M_DEVBUF);
+				sc->sc_devs[target] = NULL;
+			}
 
 			return (ENOMEM);
 		}
