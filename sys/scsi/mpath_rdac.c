@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_rdac.c,v 1.14 2013/08/26 10:40:26 dlg Exp $ */
+/*	$OpenBSD: mpath_rdac.c,v 1.15 2013/08/26 11:58:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -379,8 +379,7 @@ rdac_extdevid(struct rdac_softc *sc)
 	}
 
 	if (_4btol(pg->pg_id) != RDAC_VPD_ID_EXTDEVID) {
-		printf("%s: extdevid page is invalid\n",
-		    DEVNAME(sc));
+		printf("%s: extdevid page is invalid\n", DEVNAME(sc));
 		goto done;
 	}
 
