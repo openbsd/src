@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_emc.c,v 1.8 2011/07/11 01:02:48 dlg Exp $ */
+/*	$OpenBSD: mpath_emc.c,v 1.9 2013/08/26 07:29:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -171,10 +171,13 @@ emc_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: %s %s SP-%c port %d\n", DEVNAME(sc), model, serial,
 	    sc->sc_sp + 'A', sc->sc_port);
 
-	if (sc->sc_lun_state == EMC_SP_INFO_LUN_STATE_OWNED) {
-		if (mpath_path_attach(&sc->sc_path, &emc_mpath_ops) != 0)
-			printf("%s: unable to attach path\n", DEVNAME(sc));
+	if (sc->sc_lun_state != EMC_SP_INFO_LUN_STATE_OWNED) {
+		/* XXX add failover support */
+		return;
 	}
+
+	if (mpath_path_attach(&sc->sc_path, sc->sc_sp, &emc_mpath_ops) != 0)
+		printf("%s: unable to attach path\n", DEVNAME(sc));
 }
 
 int

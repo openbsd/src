@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpathvar.h,v 1.4 2013/06/10 04:16:33 dlg Exp $ */
+/*	$OpenBSD: mpathvar.h,v 1.5 2013/08/26 07:29:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -47,7 +47,7 @@ struct mpath_path {
 };
 
 int			 mpath_path_probe(struct scsi_link *);
-int			 mpath_path_attach(struct mpath_path *,
+int			 mpath_path_attach(struct mpath_path *, u_int,
 			    const struct mpath_ops *);
 void			 mpath_path_state(struct mpath_path *, int);
 int			 mpath_path_detach(struct mpath_path *);

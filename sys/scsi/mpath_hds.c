@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_hds.c,v 1.6 2011/07/11 01:02:48 dlg Exp $ */
+/*	$OpenBSD: mpath_hds.c,v 1.7 2013/08/26 07:29:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -172,7 +172,8 @@ hds_attach(struct device *parent, struct device *self, void *aux)
 	if (!preferred)
 		return;
 
-	if (mpath_path_attach(&sc->sc_path, &hds_mpath_ops) != 0)
+	/* XXX id isnt real, needs to come from hds_info */
+	if (mpath_path_attach(&sc->sc_path, 0, &hds_mpath_ops) != 0)
 		printf("%s: unable to attach path\n", DEVNAME(sc));
 }
 

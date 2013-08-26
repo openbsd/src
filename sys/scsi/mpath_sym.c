@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_sym.c,v 1.9 2013/06/10 03:56:43 dlg Exp $ */
+/*	$OpenBSD: mpath_sym.c,v 1.10 2013/08/26 07:29:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -142,6 +142,7 @@ sym_attach(struct device *parent, struct device *self, void *aux)
 	struct scsi_inquiry_data *inq = sa->sa_inqbuf;
 	const struct mpath_ops *ops = &sym_mpath_sym_ops;
 	struct sym_device *s;
+	u_int id = 0;
 	int i;
 
 	printf("\n");
@@ -153,6 +154,7 @@ sym_attach(struct device *parent, struct device *self, void *aux)
 		if (bcmp(s->vendor, inq->vendor, strlen(s->vendor)) == 0 &&
 		    bcmp(s->product, inq->product, strlen(s->product)) == 0) {
 			ops = &sym_mpath_asym_ops;
+			id = sc->sc_dev.dv_unit;
 			break;
 		}
 	}
@@ -164,7 +166,7 @@ sym_attach(struct device *parent, struct device *self, void *aux)
 	scsi_xsh_set(&sc->sc_path.p_xsh, link, sym_mpath_start);
 	sc->sc_path.p_link = link;
 
-	if (mpath_path_attach(&sc->sc_path, ops) != 0)
+	if (mpath_path_attach(&sc->sc_path, id, ops) != 0)
 		printf("%s: unable to attach path\n", DEVNAME(sc));
 }
 

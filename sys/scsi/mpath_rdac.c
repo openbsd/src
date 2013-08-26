@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_rdac.c,v 1.8 2013/08/26 07:21:18 dlg Exp $ */
+/*	$OpenBSD: mpath_rdac.c,v 1.9 2013/08/26 07:29:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -201,6 +201,7 @@ rdac_attach(struct device *parent, struct device *self, void *aux)
 	struct rdac_softc *sc = (struct rdac_softc *)self;
 	struct scsi_attach_args *sa = aux;
 	struct scsi_link *link = sa->sa_sc_link;
+	int id;
 
 	printf("\n");
 
@@ -217,7 +218,13 @@ rdac_attach(struct device *parent, struct device *self, void *aux)
 	if (rdac_c9(sc) != 0)
 		return;
 
-	if (mpath_path_attach(&sc->sc_path, &rdac_mpath_ops) != 0)
+	id = rdac_groupid(sc);
+	if (id == -1) {
+		/* error printed by rdac_groupid */
+		return;
+	}
+
+	if (mpath_path_attach(&sc->sc_path, id, &rdac_mpath_ops) != 0)
 		printf("%s: unable to attach path\n", DEVNAME(sc));
 }
 

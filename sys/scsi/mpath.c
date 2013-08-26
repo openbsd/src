@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.27 2013/08/26 06:54:32 dlg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.28 2013/08/26 07:29:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -42,14 +42,19 @@ void		mpath_shutdown(void *);
 
 TAILQ_HEAD(mpath_paths, mpath_path);
 
+struct mpath_group {
+	TAILQ_ENTRY(mpath_group) g_entry;
+	struct mpath_paths	 g_paths;
+	u_int			 g_id;
+};
+TAILQ_HEAD(mpath_groups, mpath_group);
+
 struct mpath_dev {
 	struct mutex		 d_mtx;
 
 	struct scsi_xfer_list	 d_xfers;
-	struct mpath_paths	 d_paths;
+	struct mpath_groups	 d_groups;
 	struct mpath_path	*d_next_path;
-
-	u_int			 d_path_count;
 
 	const struct mpath_ops	*d_ops;
 	struct devid		*d_id;
@@ -146,6 +151,7 @@ mpath_probe(struct scsi_link *link)
 struct mpath_path *
 mpath_next_path(struct mpath_dev *d, int next)
 {
+	struct mpath_group *g;
 	struct mpath_path *p;
 
 	if (d == NULL)
@@ -154,8 +160,10 @@ mpath_next_path(struct mpath_dev *d, int next)
 	p = d->d_next_path;
 	if (p != NULL && next == MPATH_NEXT) {
 		d->d_next_path = TAILQ_NEXT(p, p_entry);
-		if (d->d_next_path == NULL)
-			d->d_next_path = TAILQ_FIRST(&d->d_paths);
+		if (d->d_next_path == NULL) {
+			g = TAILQ_FIRST(&d->d_groups);
+			d->d_next_path = TAILQ_FIRST(&g->g_paths);
+		}
 	}
 
 	return (p);
@@ -307,6 +315,7 @@ mpath_minphys(struct buf *bp, struct scsi_link *link)
 {
 	struct mpath_softc *sc = link->adapter_softc;
 	struct mpath_dev *d = sc->sc_devs[link->target];
+	struct mpath_group *g;
 	struct mpath_path *p;
 
 #ifdef DIAGNOSTIC
@@ -314,8 +323,14 @@ mpath_minphys(struct buf *bp, struct scsi_link *link)
 		panic("mpath_minphys against nonexistant device");
 #endif
 
-	TAILQ_FOREACH(p, &d->d_paths, p_entry)
-		p->p_link->adapter->scsi_minphys(bp, p->p_link);
+	mtx_enter(&d->d_mtx);
+	TAILQ_FOREACH(g, &d->d_groups, g_entry) {
+		TAILQ_FOREACH(p, &g->g_paths, p_entry) {
+			/* XXX crossing layers with mutex held */
+			p->p_link->adapter->scsi_minphys(bp, p->p_link);
+		}
+	}
+	mtx_leave(&d->d_mtx);
 }
 
 int
@@ -334,11 +349,12 @@ mpath_path_probe(struct scsi_link *link)
 }
 
 int
-mpath_path_attach(struct mpath_path *p, const struct mpath_ops *ops)
+mpath_path_attach(struct mpath_path *p, u_int g_id, const struct mpath_ops *ops)
 {
 	struct mpath_softc *sc = mpath;
 	struct scsi_link *link = p->p_link;
 	struct mpath_dev *d = NULL;
+	struct mpath_group *g;
 	int newdev = 0, addxsh = 0;
 	int target;
 
@@ -367,13 +383,12 @@ mpath_path_attach(struct mpath_path *p, const struct mpath_ops *ops)
 		if (target >= MPATH_BUSWIDTH)
 			return (ENXIO);
 
-		d = malloc(sizeof(*d), M_DEVBUF,
-		    M_WAITOK | M_CANFAIL | M_ZERO);
+		d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK | M_CANFAIL | M_ZERO);
 		if (d == NULL)
 			return (ENOMEM);
 
 		mtx_init(&d->d_mtx, IPL_BIO);
-		TAILQ_INIT(&d->d_paths);
+		TAILQ_INIT(&d->d_groups);
 		SIMPLEQ_INIT(&d->d_xfers);
 		d->d_id = devid_copy(link->id);
 		d->d_ops = ops;
@@ -390,17 +405,44 @@ mpath_path_attach(struct mpath_path *p, const struct mpath_ops *ops)
 		link->id = devid_copy(d->d_id);
 	}
 
+	TAILQ_FOREACH(g, &d->d_groups, g_entry) {
+		if (g->g_id == g_id)
+			break;
+	}
+
+	if (g == NULL) {
+		g = malloc(sizeof(*g),  M_DEVBUF,
+		    M_WAITOK | M_CANFAIL | M_ZERO);
+		if (g == NULL) {
+			if (newdev)
+				free(d, M_DEVBUF);
+
+			return (ENOMEM);
+		}
+
+		TAILQ_INIT(&g->g_paths);
+		g->g_id = g_id;
+
+		mtx_enter(&d->d_mtx);
+		TAILQ_INSERT_TAIL(&d->d_groups, g, g_entry);
+		mtx_leave(&d->d_mtx);
+	}
+
 	p->p_dev = d;
+
 	mtx_enter(&d->d_mtx);
-	if (TAILQ_EMPTY(&d->d_paths))
+
+	if (d->d_next_path == NULL)
 		d->d_next_path = p;
-	TAILQ_INSERT_TAIL(&d->d_paths, p, p_entry);
-	d->d_path_count++;
+
+	TAILQ_INSERT_TAIL(&g->g_paths, p, p_entry);
+
 	if (!SIMPLEQ_EMPTY(&d->d_xfers))
 		addxsh = 1;
+
 	mtx_leave(&d->d_mtx);
 
-	if (newdev && mpath != NULL)
+	if (newdev)
 		scsi_probe_target(mpath->sc_scsibus, target);
 	else if (addxsh)
 		scsi_xsh_add(&p->p_xsh);
@@ -412,6 +454,7 @@ int
 mpath_path_detach(struct mpath_path *p)
 {
 	struct mpath_dev *d = p->p_dev;
+	struct mpath_group *g;
 	struct mpath_path *np = NULL;
 
 #ifdef DIAGNOSTIC
@@ -421,11 +464,17 @@ mpath_path_detach(struct mpath_path *p)
 	p->p_dev = NULL;
 
 	mtx_enter(&d->d_mtx);
-	TAILQ_REMOVE(&d->d_paths, p, p_entry);
-	if (d->d_next_path == p)
-		d->d_next_path = TAILQ_FIRST(&d->d_paths);
+	g = TAILQ_FIRST(&d->d_groups);
 
-	d->d_path_count--;
+	TAILQ_REMOVE(&g->g_paths, p, p_entry);
+	if (d->d_next_path == p)
+		d->d_next_path = TAILQ_FIRST(&g->g_paths);
+
+	if (TAILQ_EMPTY(&g->g_paths)) {
+		TAILQ_REMOVE(&d->d_groups, g, g_entry);
+		free(g, M_DEVBUF);
+	}
+
 	if (!SIMPLEQ_EMPTY(&d->d_xfers))
 		np = d->d_next_path;
 	mtx_leave(&d->d_mtx);
@@ -443,6 +492,7 @@ mpath_bootdv(struct device *dev)
 {
 	struct mpath_softc *sc = mpath;
 	struct mpath_dev *d;
+	struct mpath_group *g;
 	struct mpath_path *p;
 	int target;
 
@@ -453,10 +503,12 @@ mpath_bootdv(struct device *dev)
 		if ((d = sc->sc_devs[target]) == NULL)
 			continue;
 
-		TAILQ_FOREACH(p, &d->d_paths, p_entry) {
-			if (p->p_link->device_softc == dev) {
-				return (scsi_get_link(mpath->sc_scsibus,
-				    target, 0)->device_softc);
+		TAILQ_FOREACH(g, &d->d_groups, g_entry) {
+			TAILQ_FOREACH(p, &g->g_paths, p_entry) {
+				if (p->p_link->device_softc == dev) {
+					return (scsi_get_link(mpath->sc_scsibus,
+					    target, 0)->device_softc);
+				}
 			}
 		}
 	}
