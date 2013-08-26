@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpathvar.h,v 1.7 2013/08/26 10:13:17 dlg Exp $ */
+/*	$OpenBSD: mpathvar.h,v 1.8 2013/08/26 12:20:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -19,7 +19,6 @@
 #ifndef _SYS_SCSI_MPATH_H_
 #define _SYS_SCSI_MPATH_H_
 
-struct mpath_dev;
 struct mpath_group;
 
 struct mpath_ops {
@@ -48,7 +47,7 @@ struct mpath_path {
 
 	/* the following are private to mpath.c */
 	TAILQ_ENTRY(mpath_path)	 p_entry;
-	struct mpath_dev	*p_dev;
+	struct mpath_group	*p_group;
 	int			 p_state;
 };
 
