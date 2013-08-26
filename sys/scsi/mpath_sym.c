@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_sym.c,v 1.13 2013/08/26 10:48:58 dlg Exp $ */
+/*	$OpenBSD: mpath_sym.c,v 1.14 2013/08/26 10:50:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -210,5 +210,5 @@ sym_mpath_status(struct scsi_link *link)
 {
 	struct sym_softc *sc = link->device_softc;
 
-	mpath_path_status(&sc->sc_path, MPATH_S_UNKNOWN);
+	mpath_path_status(&sc->sc_path, MPATH_S_ACTIVE);
 }
