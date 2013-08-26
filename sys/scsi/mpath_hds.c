@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_hds.c,v 1.7 2013/08/26 07:29:45 dlg Exp $ */
+/*	$OpenBSD: mpath_hds.c,v 1.8 2013/08/26 07:38:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -212,7 +212,7 @@ hds_mpath_start(struct scsi_xfer *xs)
 int
 hds_mpath_checksense(struct scsi_xfer *xs)
 {
-	return (0);
+	return (MPATH_SENSE_DECLINED);
 }
 
 int

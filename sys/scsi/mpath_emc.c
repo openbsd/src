@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_emc.c,v 1.9 2013/08/26 07:29:45 dlg Exp $ */
+/*	$OpenBSD: mpath_emc.c,v 1.10 2013/08/26 07:38:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -215,7 +215,7 @@ emc_mpath_start(struct scsi_xfer *xs)
 int
 emc_mpath_checksense(struct scsi_xfer *xs)
 {
-	return (0);
+	return (MPATH_SENSE_DECLINED);
 }
 
 int

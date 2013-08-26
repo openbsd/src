@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_sym.c,v 1.10 2013/08/26 07:29:45 dlg Exp $ */
+/*	$OpenBSD: mpath_sym.c,v 1.11 2013/08/26 07:38:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -205,7 +205,7 @@ sym_mpath_start(struct scsi_xfer *xs)
 int
 sym_mpath_checksense(struct scsi_xfer *xs)
 {
-	return (0);
+	return (MPATH_SENSE_DECLINED);
 }
 
 int

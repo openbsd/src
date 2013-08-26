@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpathvar.h,v 1.5 2013/08/26 07:29:45 dlg Exp $ */
+/*	$OpenBSD: mpathvar.h,v 1.6 2013/08/26 07:38:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -29,6 +29,9 @@ struct mpath_ops {
 	int	(*op_offline)(struct scsi_link *);
 	int	op_schedule;
 };
+
+#define MPATH_SENSE_DECLINED	0 /* path driver declined to interpret sense */
+#define MPATH_SENSE_FAILOVER	1 /* sense says controllers have failed over */
 
 #define MPATH_ROUNDROBIN	0 /* use all active paths */
 #define MPATH_NEXT		MPATH_ROUNDROBIN
