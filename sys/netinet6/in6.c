@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.117 2013/08/13 05:52:25 guenther Exp $	*/
+/*	$OpenBSD: in6.c,v 1.118 2013/08/26 07:15:58 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -361,10 +361,7 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 		if (!privileged)
 			return (EPERM);
 		/* FALLTHROUGH */
-	case OSIOCGIFINFO_IN6:
 	case SIOCGIFINFO_IN6:
-	case SIOCGDRLST_IN6:
-	case SIOCGPRLST_IN6:
 	case SIOCGNBRINFO_IN6:
 		return (nd6_ioctl(cmd, data, ifp));
 	}

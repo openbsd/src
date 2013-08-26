@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.40 2013/06/17 18:02:24 bluhm Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.41 2013/08/26 07:15:58 bluhm Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -400,11 +400,6 @@ struct	in6_rrenumreq {
 
 #define SIOCGIFAFLAG_IN6	_IOWR('i', 73, struct in6_ifreq)
 
-#define SIOCGDRLST_IN6		_IOWR('i', 74, struct in6_drlist)
-#define SIOCGPRLST_IN6		_IOWR('i', 75, struct in6_prlist)
-#ifdef _KERNEL
-#define OSIOCGIFINFO_IN6	_IOWR('i', 76, struct in6_ondireq)
-#endif
 #define SIOCGIFINFO_IN6		_IOWR('i', 108, struct in6_ndireq)
 #define SIOCSNDFLUSH_IN6	_IOWR('i', 77, struct in6_ifreq)
 #define SIOCGNBRINFO_IN6	_IOWR('i', 78, struct in6_nbrinfo)

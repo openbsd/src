@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.32 2013/08/11 22:13:32 bluhm Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.33 2013/08/26 07:15:58 bluhm Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -113,59 +113,12 @@ struct in6_nbrinfo {
 	int	state;		/* reachability state */
 };
 
-#define DRLSTSIZ 10
-#define PRLSTSIZ 10
-struct	in6_drlist {
-	char ifname[IFNAMSIZ];
-	struct {
-		struct	in6_addr rtaddr;
-		time_t	expire;
-		u_short	rtlifetime;
-		u_short	if_index;
-		u_char	flags;
-	} defrouter[DRLSTSIZ];
-};
-
 struct	in6_defrouter {
 	struct	sockaddr_in6 rtaddr;
 	time_t	expire;
 	u_short	rtlifetime;
 	u_short	if_index;
 	u_char	flags;
-};
-
-#ifdef _KERNEL
-struct	in6_oprlist {
-	char ifname[IFNAMSIZ];
-	struct {
-		struct	in6_addr prefix;
-		struct	prf_ra raflags;
-		time_t	expire;
-		u_int32_t vltime;
-		u_int32_t pltime;
-		u_short	if_index;
-		u_short	advrtrs; /* number of advertisement routers */
-		u_char	prefixlen;
-		u_char	origin;
-		struct	in6_addr advrtr[DRLSTSIZ]; /* XXX: explicit limit */
-	} prefix[PRLSTSIZ];
-};
-#endif
-
-struct	in6_prlist {
-	char ifname[IFNAMSIZ];
-	struct {
-		struct	in6_addr prefix;
-		struct	prf_ra raflags;
-		time_t	expire;
-		u_int32_t vltime;
-		u_int32_t pltime;
-		u_short	if_index;
-		u_short	advrtrs; /* number of advertisement routers */
-		u_char	prefixlen;
-		u_char	origin;
-		struct	in6_addr advrtr[DRLSTSIZ]; /* XXX: explicit limit */
-	} prefix[PRLSTSIZ];
 };
 
 struct in6_prefix {
@@ -182,23 +135,6 @@ struct in6_prefix {
 	u_char	origin;
 	/* struct sockaddr_in6 advrtr[] */
 };
-
-#ifdef _KERNEL
-struct	in6_ondireq {
-	char ifname[IFNAMSIZ];
-	struct {
-		u_int32_t linkmtu;	/* LinkMTU */
-		u_int32_t maxmtu;	/* Upper bound of LinkMTU */
-		u_int32_t basereachable; /* BaseReachableTime */
-		u_int32_t reachable;	/* Reachable Time */
-		u_int32_t retrans;	/* Retrans Timer */
-		u_int32_t flags;	/* Flags */
-		int recalctm;		/* BaseReacable re-calculation timer */
-		u_int8_t chlim;		/* CurHopLimit */
-		u_int8_t receivedra;
-	} ndi;
-};
-#endif
 
 struct	in6_ndireq {
 	char ifname[IFNAMSIZ];
