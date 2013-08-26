@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.5 2011/03/23 16:54:35 pirofti Exp $ */
+/*	$OpenBSD: proc.h,v 1.6 2013/08/26 21:38:08 miod Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -66,5 +66,7 @@ struct mdproc {
 	vaddr_t	md_bp1va;
 	u_int	md_bp1save;
 };
+
+#define __HAVE_MD_TCB
 
 #endif /* _M88K_PROC_H_ */

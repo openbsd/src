@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.4 2013/01/27 09:56:05 miod Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.5 2013/08/26 21:38:08 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,16 @@
 
 	.globl	_C_LABEL(__errno)
 
+/*
+ * long long __cerror(register_t errcode)
+ * stores `errcode' into the current thread's errno variable, and returns
+ * -1LL.
+ */
+
 ASENTRY(__cerror)
+	/* if %r26 has been initialized, don't bother setting up a frame */
+	bcnd	ne0, %r26, has_r26
+
 	subu	%r31,%r31,16
 	st	%r25,%r0,%r31
 	st	%r1,%r31,4
@@ -48,13 +57,16 @@ ASENTRY(__cerror)
 	bsr.n	_C_LABEL(__errno)
 #endif
 	 or	%r25,%r0,%r2
-	st	%r25,%r0,%r2
-
-	subu	%r2,%r0,1
-	or	%r3, %r0, %r2
+	or	%r26,%r0,%r2	/* save errno ptr */
+	or	%r2,%r0,%r25	/* and restore errno value */
 
 	ld	%r1,%r31,4
 	ld	%r25,%r0,%r31
+	addu	%r31,%r31,16
+
+has_r26:
+	st	%r2,%r0,%r26
+	subu	%r2,%r0,1
 	jmp.n	%r1
-	 addu	%r31,%r31,16
+	 or	%r3, %r0, %r2
 END(__cerror)
