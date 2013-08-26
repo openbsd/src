@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.71 2013/05/17 22:33:25 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.72 2013/08/26 20:29:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -144,6 +144,7 @@ apr_t	userland_apr = CACHE_GLOBAL | CACHE_DFL | APR_V;
  * Internal routines
  */
 void		 pmap_changebit(struct vm_page *, int, int);
+void		 pmap_clean_page(paddr_t);
 pt_entry_t	*pmap_expand(pmap_t, vaddr_t, int);
 pt_entry_t	*pmap_expand_kmap(vaddr_t, int);
 void		 pmap_map(paddr_t, psize_t, vm_prot_t, u_int);
@@ -1084,9 +1085,7 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte, struct vm_page *pg,
 			 * code without getting a chance of writeback),
 			 * we make sure the page gets written back.
 			 */
-			if (KERNEL_APR_CMODE == CACHE_DFL ||
-			    USERLAND_APR_CMODE == CACHE_DFL)
-				cmmu_dcache_wb(cpu_number(), pa, PAGE_SIZE);
+			pmap_clean_page(pa);
 		}
 	} else {
 		prev->pv_next = cur->pv_next;
@@ -1191,13 +1190,10 @@ pmap_kremove(vaddr_t va, vsize_t len)
 					 * Make sure the page is written back
 					 * if it was cached.
 					 */
-					if (KERNEL_APR_CMODE == CACHE_DFL &&
-					    (opte & (CACHE_INH | CACHE_WT)) ==
-					    0) {
-						cmmu_dcache_wb(cpu_number(),
-						    ptoa(PG_PFNUM(opte)),
-						    PAGE_SIZE);
-					}
+					if ((opte & (CACHE_INH | CACHE_WT)) ==
+					    0)
+						pmap_clean_page(
+						    ptoa(PG_PFNUM(opte)));
 				}
 				va += PAGE_SIZE;
 				pte++;
@@ -1616,6 +1612,30 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  */
 
 /*
+ * [INTERNAL]
+ * Writeback the data cache for the given page, on all processors.
+ */
+void
+pmap_clean_page(paddr_t pa)
+{
+	struct cpu_info *ci;
+#ifdef MULTIPROCESSOR
+	CPU_INFO_ITERATOR cpu;
+#endif
+
+	if (KERNEL_APR_CMODE != CACHE_DFL && USERLAND_APR_CMODE != CACHE_DFL)
+		return;
+
+#ifdef MULTIPROCESSOR
+	CPU_INFO_FOREACH(cpu, ci)
+#else
+	ci = curcpu();
+#endif
+	/* CPU_INFO_FOREACH(cpu, ci) */
+		cmmu_dcache_wb(ci->ci_cpuid, pa, PAGE_SIZE);
+}
+
+/*
  * [MI]
  * Flushes instruction cache for the range `va'..`va'+`len' in proc `p'.
  */
@@ -1626,6 +1646,9 @@ pmap_proc_iflush(struct proc *p, vaddr_t va, vsize_t len)
 	paddr_t pa;
 	vsize_t count;
 	struct cpu_info *ci;
+
+	if (KERNEL_APR_CMODE != CACHE_DFL && USERLAND_APR_CMODE != CACHE_DFL)
+		return;
 
 	while (len != 0) {
 		count = min(len, PAGE_SIZE - (va & PAGE_MASK));
@@ -1638,8 +1661,9 @@ pmap_proc_iflush(struct proc *p, vaddr_t va, vsize_t len)
 			ci = curcpu();
 #endif
 			/* CPU_INFO_FOREACH(cpu, ci) */ {
-				if (KERNEL_APR_CMODE == CACHE_DFL)
-					cmmu_dcache_wb(ci->ci_cpuid, pa, count);
+				cmmu_dcache_wb(ci->ci_cpuid, pa, count);
+				/* XXX this should not be necessary, */
+				/* XXX I$ is configured to snoop D$ */
 				cmmu_icache_inv(ci->ci_cpuid, pa, count);
 			}
 		}
@@ -1736,7 +1760,8 @@ pmap_cache_ctrl(vaddr_t sva, vaddr_t eva, u_int mode)
 					if (mode & CACHE_INH)
 						cmmu_cache_wbinv(cpu,
 						    pa, PAGE_SIZE);
-					else if (KERNEL_APR_CMODE == CACHE_DFL)
+					else if (KERNEL_APR_CMODE == CACHE_DFL ||
+					    USERLAND_APR_CMODE == CACHE_DFL)
 						cmmu_dcache_wb(cpu,
 						    pa, PAGE_SIZE);
 #ifdef MULTIPROCESSOR
