@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_rdac.c,v 1.12 2013/08/26 10:13:17 dlg Exp $ */
+/*	$OpenBSD: mpath_rdac.c,v 1.13 2013/08/26 10:36:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -152,8 +152,8 @@ const struct mpath_ops rdac_mpath_ops = {
 	MPATH_ROUNDROBIN
 };
 
+int		rdac_extdevid(struct rdac_softc *);
 int		rdac_groupid(struct rdac_softc *);
-int		rdac_c8(struct rdac_softc *);
 int		rdac_c9(struct rdac_softc *);
 
 struct rdac_device {
@@ -210,7 +210,7 @@ rdac_attach(struct device *parent, struct device *self, void *aux)
 	scsi_xsh_set(&sc->sc_path.p_xsh, link, rdac_mpath_start);
 	sc->sc_path.p_link = link;
 
-	if (rdac_c8(sc) != 0)
+	if (rdac_extdevid(sc) != 0)
 		return;
 
 	if (rdac_c9(sc) != 0)
@@ -315,7 +315,7 @@ done:
 }
 
 int
-rdac_c8(struct rdac_softc *sc)
+rdac_extdevid(struct rdac_softc *sc)
 {
 	struct rdac_vpd_extdevid *pg;
 	char array[31];
@@ -325,14 +325,14 @@ rdac_c8(struct rdac_softc *sc)
 
 	pg = dma_alloc(sizeof(*pg), PR_WAITOK | PR_ZERO);
 
-	if (scsi_inquire_vpd(sc->sc_path.p_link, pg, sizeof(*pg), 0xc8,
-	    scsi_autoconf) != 0) {
-		printf("%s: unable to fetch vpd page c8\n", DEVNAME(sc));
+	if (scsi_inquire_vpd(sc->sc_path.p_link, pg, sizeof(*pg),
+	    RDAC_VPD_EXTDEVID, scsi_autoconf) != 0) {
+		printf("%s: unable to fetch extdevid vpd page\n", DEVNAME(sc));
 		goto done;
 	}
 
 	if (_4btol(pg->pg_id) != RDAC_VPD_ID_EXTDEVID) {
-		printf("%s: extended hardware id page is invalid\n",
+		printf("%s: extdevid page is invalid\n",
 		    DEVNAME(sc));
 		goto done;
 	}
