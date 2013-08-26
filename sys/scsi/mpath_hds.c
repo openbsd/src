@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_hds.c,v 1.8 2013/08/26 07:38:56 dlg Exp $ */
+/*	$OpenBSD: mpath_hds.c,v 1.9 2013/08/26 10:13:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -86,14 +86,12 @@ struct cfdriver hds_cd = {
 
 void		hds_mpath_start(struct scsi_xfer *);
 int		hds_mpath_checksense(struct scsi_xfer *);
-int		hds_mpath_online(struct scsi_link *);
-int		hds_mpath_offline(struct scsi_link *);
+void		hds_mpath_status(struct scsi_link *);
 
 const struct mpath_ops hds_mpath_ops = {
 	"hds",
 	hds_mpath_checksense,
-	hds_mpath_online,
-	hds_mpath_offline,
+	hds_mpath_status,
 	MPATH_ROUNDROBIN
 };
 
@@ -215,16 +213,12 @@ hds_mpath_checksense(struct scsi_xfer *xs)
 	return (MPATH_SENSE_DECLINED);
 }
 
-int
-hds_mpath_online(struct scsi_link *link)
+void
+hds_mpath_status(struct scsi_link *link)
 {
-	return (0);
-}
+	struct hds_softc *sc = link->device_softc;
 
-int
-hds_mpath_offline(struct scsi_link *link)
-{
-	return (0);
+	mpath_path_status(&sc->sc_path, MPATH_S_UNKNOWN);
 }
 
 int

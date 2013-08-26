@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.29 2013/08/26 07:32:24 dlg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.30 2013/08/26 10:13:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -487,6 +487,12 @@ mpath_path_detach(struct mpath_path *p)
 		scsi_xsh_add(&np->p_xsh);
 
 	return (0);
+}
+
+void
+mpath_path_status(struct mpath_path *p, int status)
+{
+
 }
 
 struct device *

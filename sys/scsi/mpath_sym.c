@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_sym.c,v 1.11 2013/08/26 07:38:56 dlg Exp $ */
+/*	$OpenBSD: mpath_sym.c,v 1.12 2013/08/26 10:13:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -62,22 +62,19 @@ struct cfdriver sym_cd = {
 
 void		sym_mpath_start(struct scsi_xfer *);
 int		sym_mpath_checksense(struct scsi_xfer *);
-int		sym_mpath_online(struct scsi_link *);
-int		sym_mpath_offline(struct scsi_link *);
+void		sym_mpath_status(struct scsi_link *);
 
 const struct mpath_ops sym_mpath_sym_ops = {
 	"sym",
 	sym_mpath_checksense,
-	sym_mpath_online,
-	sym_mpath_offline,
+	sym_mpath_status,
 	MPATH_ROUNDROBIN
 };
 
 const struct mpath_ops sym_mpath_asym_ops = {
 	"sym",
 	sym_mpath_checksense,
-	sym_mpath_online,
-	sym_mpath_offline,
+	sym_mpath_status,
 	MPATH_MRU
 };
 
@@ -208,14 +205,10 @@ sym_mpath_checksense(struct scsi_xfer *xs)
 	return (MPATH_SENSE_DECLINED);
 }
 
-int
-sym_mpath_online(struct scsi_link *link)
+void
+sym_mpath_status(struct scsi_link *link)
 {
-	return (0);
-}
+	struct sym_softc *sc = link->device_softc;
 
-int
-sym_mpath_offline(struct scsi_link *link)
-{
-	return (0);
+	mpath_path_status(&sc->sc_path, MPATH_S_UNKNOWN);
 }
