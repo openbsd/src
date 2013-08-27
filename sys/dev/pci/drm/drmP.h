@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.145 2013/08/26 05:15:20 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.146 2013/08/27 03:06:02 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -692,6 +692,9 @@ struct drm_device {
 	u_int16_t	 pci_subdevice;
 	u_int16_t	 pci_subvendor;
 
+	pci_chipset_tag_t		 pc;
+	pcitag_t	 		*bridgetag;
+
 	bus_dma_tag_t			dmat;
 	bus_space_tag_t			bst;
 
@@ -779,6 +782,8 @@ struct drm_attach_args {
 	u_int16_t			 pci_device;
 	u_int16_t			 pci_subvendor;
 	u_int16_t			 pci_subdevice;
+	pci_chipset_tag_t		 pc;
+	pcitag_t			*bridgetag;
 };
 
 extern int	drm_debug_flag;

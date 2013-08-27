@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.111 2013/08/26 05:15:20 jsg Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.112 2013/08/27 03:06:03 jsg Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -118,6 +118,9 @@ drm_attach_pci(struct drm_driver_info *driver, struct pci_attach_args *pa,
 	arg.pci_subvendor = PCI_VENDOR(subsys);
 	arg.pci_subdevice = PCI_PRODUCT(subsys);
 
+	arg.pc = pa->pa_pc;
+	arg.bridgetag = pa->pa_bridgetag;
+
 	arg.busid_len = 20;
 	arg.busid = malloc(arg.busid_len + 1, M_DRM, M_NOWAIT);
 	if (arg.busid == NULL) {
@@ -189,6 +192,9 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	dev->pci_device = da->pci_device;
 	dev->pci_subvendor = da->pci_subvendor;
 	dev->pci_subdevice = da->pci_subdevice;
+
+	dev->pc = da->pc;
+	dev->bridgetag = da->bridgetag;
 
 	rw_init(&dev->dev_lock, "drmdevlk");
 	mtx_init(&dev->lock.spinlock, IPL_NONE);
