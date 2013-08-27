@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.h,v 1.5 2013/08/23 08:52:24 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.h,v 1.6 2013/08/27 21:00:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002, Miodrag Vallat.
@@ -50,3 +50,6 @@ extern int cons_brightness;
 void of_setbacklight(int);
 void of_setbrightness(int);
 void of_setcolors(unsigned int, unsigned int, uint8_t *, uint8_t *, uint8_t *);
+
+/* XXX */
+int vgafb_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);

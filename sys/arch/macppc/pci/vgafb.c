@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.53 2013/08/23 08:52:25 mpi Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.54 2013/08/27 21:00:52 mpi Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -40,11 +40,27 @@
 
 #include <dev/ofw/openfirm.h>
 #include <macppc/macppc/ofw_machdep.h>
-#include <macppc/pci/vgafbvar.h>
 
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/vga_pcivar.h>
 
-struct cfdriver vgafb_cd = {
-	NULL, "vgafb", DV_DULL,
+struct vga_config {
+	bus_space_tag_t		vc_memt;
+	bus_space_handle_t	vc_memh;
+
+	/* Colormap */
+	u_char vc_cmap_red[256];
+	u_char vc_cmap_green[256];
+	u_char vc_cmap_blue[256];
+
+	struct rasops_info	ri;
+
+	bus_addr_t	iobase, membase, mmiobase;
+	bus_size_t	iosize, memsize, mmiosize;
+
+	int vc_backlight_on;
+	u_int vc_mode;
 };
 
 int	vgafb_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -56,8 +72,11 @@ int	vgafb_show_screen(void *, void *, int, void (*cb)(void *, int, int),
 	    void *);
 void	vgafb_burn(void *v, u_int , u_int);
 void	vgafb_restore_default_colors(struct vga_config *);
+int	vgafb_is_console(int);
+void	vgafb_wsdisplay_attach(struct device *, struct vga_config *);
+int	vgafb_mapregs(struct vga_config *, struct pci_attach_args *);
 
-extern struct vga_config vgafbcn;
+struct vga_config vgafbcn;
 
 struct wsscreen_descr vgafb_stdscreen = {
 	"std",
@@ -91,9 +110,59 @@ struct wsdisplay_accessops vgafb_accessops = {
 int	vgafb_getcmap(struct vga_config *vc, struct wsdisplay_cmap *cm);
 int	vgafb_putcmap(struct vga_config *vc, struct wsdisplay_cmap *cm);
 
+int	vgafb_match(struct device *, void *, void *);
+void	vgafb_attach(struct device *, struct device *, void *);
+
+const struct cfattach vgafb_ca = {
+	sizeof(struct device), vgafb_match, vgafb_attach,
+};
+
+struct cfdriver vgafb_cd = {
+	NULL, "vgafb", DV_DULL,
+};
+
 #ifdef APERTURE
 extern int allowaperture;
 #endif
+
+int
+vgafb_match(struct device *parent, void *match, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	int node;
+
+	if (DEVICE_IS_VGA_PCI(pa->pa_class) == 0) {
+		/*
+		 * XXX Graphic cards found in iMac G3 have a ``Misc''
+		 * subclass, match them all.
+		 */
+		if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY ||
+		    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_MISC)
+			return (0);
+	}
+
+	/*
+	 * XXX Non-console devices do not get configured by the PROM,
+	 * XXX so do not attach them yet.
+	 */
+	node = PCITAG_NODE(pa->pa_tag);
+	if (!vgafb_is_console(node))
+		return (0);
+
+	return (1);
+}
+
+void
+vgafb_attach(struct device *parent, struct device  *self, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	struct vga_config *vc = &vgafbcn;
+
+	if (vgafb_mapregs(vc, pa))
+		return;
+
+	vgafb_wsdisplay_attach(self, vc);
+}
 
 void
 vgafb_restore_default_colors(struct vga_config *vc)
@@ -418,4 +487,88 @@ vgafb_show_screen(void *v, void *cookie, int waitok,
 		return (0);
 
 	return rasops_show_screen(ri, cookie, waitok, cb, cbarg);
+}
+
+int
+vgafb_mapregs(struct vga_config *vc, struct pci_attach_args *pa)
+{
+	bus_addr_t ba;
+	bus_size_t bs;
+	int hasio = 0, hasmem = 0, hasmmio = 0;
+	uint32_t i, cf;
+	int rv;
+
+	for (i = PCI_MAPREG_START; i <= PCI_MAPREG_PPB_END; i += 4) {
+		cf = pci_conf_read(pa->pa_pc, pa->pa_tag, i);
+		if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_IO) {
+			if (hasio)
+				continue;
+			rv = pci_io_find(pa->pa_pc, pa->pa_tag, i,
+			    &vc->iobase, &vc->iosize);
+			if (rv != 0) {
+#if notyet
+				if (rv != ENOENT)
+					printf("%s: failed to find io at 0x%x\n",
+					    DEVNAME(sc), i);
+#endif
+				continue;
+			}
+			hasio = 1;
+		} else {
+			/* Memory mapping... frame memory or mmio? */
+			rv = pci_mem_find(pa->pa_pc, pa->pa_tag, i,
+			    &ba, &bs, NULL);
+			if (rv != 0) {
+#if notyet
+				if (rv != ENOENT)
+					printf("%s: failed to find mem at 0x%x\n",
+					    DEVNAME(sc), i);
+#endif
+				continue;
+			}
+
+			if (bs == 0 /* || ba == 0 */) {
+				/* ignore this entry */
+			} else if (hasmem == 0) {
+				/*
+				 * first memory slot found goes into memory,
+				 * this is for the case of no mmio
+				 */
+				vc->membase = ba;
+				vc->memsize = bs;
+				hasmem = 1;
+			} else {
+				/*
+				 * Oh, we have a second `memory'
+				 * region, is this region the vga memory
+				 * or mmio, we guess that memory is
+				 * the larger of the two.
+				 */
+				if (vc->memsize >= bs) {
+					/* this is the mmio */
+					vc->mmiobase = ba;
+					vc->mmiosize = bs;
+					hasmmio = 1;
+				} else {
+					/* this is the memory */
+					vc->mmiobase = vc->membase;
+					vc->mmiosize = vc->memsize;
+					vc->membase = ba;
+					vc->memsize = bs;
+				}
+			}
+		}
+	}
+
+	/* failure to initialize io ports should not prevent attachment */
+	if (hasmem == 0) {
+		printf(": could not find memory space\n");
+		return (1);
+	}
+
+	if (hasmmio)
+		printf (", mmio");
+	printf("\n");
+
+	return (0);
 }

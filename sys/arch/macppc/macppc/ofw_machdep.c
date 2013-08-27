@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.40 2013/08/23 08:52:24 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.41 2013/08/27 21:00:52 mpi Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -183,8 +183,6 @@ save_ofw_mapping()
 	fwcall = &fwentry;
 	return 0;
 }
-
-#include <arch/macppc/pci/vgafb_pcivar.h>
 
 struct ppc_bus_space ppc_membus;
 bus_space_tag_t cons_membus = &ppc_membus;

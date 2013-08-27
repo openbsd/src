@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.74 2013/08/15 06:54:35 kettenis Exp $
+#	$OpenBSD: files.macppc,v 1.75 2013/08/27 21:00:52 mpi Exp $
 
 #
 # macppc-specific configuration info
@@ -255,11 +255,8 @@ include "dev/wsfont/files.wsfont"
 
 # VGA framebuffer
 device	vgafb: wsemuldisplaydev, rasops8, rasops16, rasops32
-file	arch/macppc/pci/vgafb.c				vgafb & vgafb_pci
-
-# Generic VGA Framebuffer version
-attach	vgafb at pci with vgafb_pci
-file	arch/macppc/pci/vgafb_pci.c			vgafb_pci needs-flag
+attach	vgafb at pci
+file	arch/macppc/pci/vgafb.c				vgafb
 
 #
 # CARDBUS
