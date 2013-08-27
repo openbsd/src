@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_emc.c,v 1.13 2013/08/27 00:53:09 dlg Exp $ */
+/*	$OpenBSD: mpath_emc.c,v 1.14 2013/08/27 00:57:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -132,7 +132,7 @@ emc_match(struct device *parent, void *match, void *aux)
 
 		if (bcmp(s->vendor, inq->vendor, strlen(s->vendor)) == 0 &&
 		    bcmp(s->product, inq->product, strlen(s->product)) == 0)
-			return (3);
+			return (8);
 	}
 
 	return (0);

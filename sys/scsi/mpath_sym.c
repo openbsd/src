@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_sym.c,v 1.16 2013/08/27 00:53:10 dlg Exp $ */
+/*	$OpenBSD: mpath_sym.c,v 1.17 2013/08/27 00:57:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -115,14 +115,14 @@ sym_match(struct device *parent, void *match, void *aux)
 
 		if (bcmp(s->vendor, inq->vendor, strlen(s->vendor)) == 0 &&
 		    bcmp(s->product, inq->product, strlen(s->product)) == 0)
-			return (3);
+			return (8);
 	}
 	for (i = 0; i < nitems(asym_devices); i++) {
 		s = &asym_devices[i];
 
 		if (bcmp(s->vendor, inq->vendor, strlen(s->vendor)) == 0 &&
 		    bcmp(s->product, inq->product, strlen(s->product)) == 0)
-			return (3);
+			return (8);
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_hds.c,v 1.11 2013/08/27 00:53:10 dlg Exp $ */
+/*	$OpenBSD: mpath_hds.c,v 1.12 2013/08/27 00:57:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -128,7 +128,7 @@ hds_match(struct device *parent, void *match, void *aux)
 		if (bcmp(s->vendor, inq->vendor, strlen(s->vendor)) == 0 &&
 		    bcmp(s->product, inq->product, strlen(s->product)) == 0 &&
 		    hds_inquiry(link, &mode) == 0)
-			return (3);
+			return (8);
 	}
 
 	return (0);
