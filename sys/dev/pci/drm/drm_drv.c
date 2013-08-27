@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.112 2013/08/27 03:06:03 jsg Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.113 2013/08/27 03:18:45 jsg Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -1830,43 +1830,43 @@ again:
 
 int drm_pcie_get_speed_cap_mask(struct drm_device *dev, u32 *mask)
 {
-	printf("%s stub\n", __func__);
-	return -EINVAL;
-#ifdef notyet
-	struct pci_dev *root;
-	int pos;
-	u32 lnkcap = 0, lnkcap2 = 0;
+	pci_chipset_tag_t	pc = dev->pc;
+	pcitag_t		tag;
+	int			pos ;
+	pcireg_t		xcap, lnkcap = 0, lnkcap2 = 0;
+	pcireg_t		id;
 
 	*mask = 0;
-	if (!dev->pdev)
+
+	if (dev->bridgetag == NULL)
+		return -EINVAL;
+	tag = *dev->bridgetag;
+
+	if (!pci_get_capability(pc, tag, PCI_CAP_PCIEXPRESS,
+	    &pos, NULL)) 
 		return -EINVAL;
 
-	if (!pci_is_pcie(dev->pdev))
-		return -EINVAL;
-
-	root = dev->pdev->bus->self;
-
-	pos = pci_pcie_cap(root);
-	if (!pos)
-		return -EINVAL;
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
 
 	/* we've been informed via and serverworks don't make the cut */
-	if (root->vendor == PCI_VENDOR_ID_VIA ||
-	    root->vendor == PCI_VENDOR_ID_SERVERWORKS)
+	if (PCI_VENDOR(id) == PCI_VENDOR_VIATECH ||
+	    PCI_VENDOR(id) == PCI_VENDOR_RCC)
 		return -EINVAL;
 
-	pci_read_config_dword(root, pos + PCI_EXP_LNKCAP, &lnkcap);
-	pci_read_config_dword(root, pos + PCI_EXP_LNKCAP2, &lnkcap2);
+	lnkcap = pci_conf_read(pc, tag, pos + PCI_PCIE_LCAP);
+	xcap = pci_conf_read(pc, tag, pos + PCI_PCIE_XCAP);
+	if (PCI_PCIE_XCAP_VER(xcap) >= 2)
+		lnkcap2 = pci_conf_read(pc, tag, pos + PCI_PCIE_LCAP2);
 
-	lnkcap &= PCI_EXP_LNKCAP_SLS;
+	lnkcap &= 0x0f;
 	lnkcap2 &= 0xfe;
 
 	if (lnkcap2) { /* PCIE GEN 3.0 */
-		if (lnkcap2 & PCI_EXP_LNKCAP2_SLS_2_5GB)
+		if (lnkcap2 & 2)
 			*mask |= DRM_PCIE_SPEED_25;
-		if (lnkcap2 & PCI_EXP_LNKCAP2_SLS_5_0GB)
+		if (lnkcap2 & 4)
 			*mask |= DRM_PCIE_SPEED_50;
-		if (lnkcap2 & PCI_EXP_LNKCAP2_SLS_8_0GB)
+		if (lnkcap2 & 8)
 			*mask |= DRM_PCIE_SPEED_80;
 	} else {
 		if (lnkcap & 1)
@@ -1875,9 +1875,9 @@ int drm_pcie_get_speed_cap_mask(struct drm_device *dev, u32 *mask)
 			*mask |= DRM_PCIE_SPEED_50;
 	}
 
-	DRM_INFO("probing gen 2 caps for device %x:%x = %x/%x\n", root->vendor, root->device, lnkcap, lnkcap2);
+	DRM_INFO("probing gen 2 caps for device 0x%04x:0x%04x = %x/%x\n",
+	    PCI_VENDOR(id), PCI_PRODUCT(id), lnkcap, lnkcap2);
 	return 0;
-#endif
 }
 
 int
