@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.53 2013/08/20 14:27:29 ajacoutot Exp $ */
+/*	$OpenBSD: conf.c,v 1.54 2013/08/27 21:02:53 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -336,12 +336,9 @@ int chrtoblktbl[] = {
 int nchrtoblktbl = nitems(chrtoblktbl);
 
 #include <dev/cons.h>
-#include "vgafb_pci.h"
 
 cons_decl(ws);
 cons_decl(zs);
-cons_decl(ofc);
-cons_decl(com);
 
 struct consdev constab[] = {
 #if NWSDISPLAY > 0
@@ -349,9 +346,6 @@ struct consdev constab[] = {
 #endif
 #if NZSTTY > 0
 	cons_init(zs),
-#endif
-#if NOFCONS > 0
-	cons_init(ofc),
 #endif
 	{ 0 },
 };
