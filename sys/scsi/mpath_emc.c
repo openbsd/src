@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_emc.c,v 1.11 2013/08/26 10:13:17 dlg Exp $ */
+/*	$OpenBSD: mpath_emc.c,v 1.12 2013/08/27 00:24:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -195,7 +195,7 @@ emc_activate(struct device *self, int act)
 	case DVACT_RESUME:
 		break;
 	case DVACT_DEACTIVATE:
-		if (sc->sc_path.p_dev != NULL)
+		if (sc->sc_path.p_group != NULL)
 			mpath_path_detach(&sc->sc_path);
 		break;
 	}
