@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_hds.c,v 1.10 2013/08/27 00:24:03 dlg Exp $ */
+/*	$OpenBSD: mpath_hds.c,v 1.11 2013/08/27 00:53:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -91,8 +91,7 @@ void		hds_mpath_status(struct scsi_link *);
 const struct mpath_ops hds_mpath_ops = {
 	"hds",
 	hds_mpath_checksense,
-	hds_mpath_status,
-	MPATH_ROUNDROBIN
+	hds_mpath_status
 };
 
 struct hds_device {

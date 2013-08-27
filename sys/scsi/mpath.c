@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.31 2013/08/26 12:20:12 dlg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.32 2013/08/27 00:53:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -92,7 +92,7 @@ void		mpath_cmd(struct scsi_xfer *);
 void		mpath_minphys(struct buf *, struct scsi_link *);
 int		mpath_probe(struct scsi_link *);
 
-struct mpath_path *mpath_next_path(struct mpath_dev *, int);
+struct mpath_path *mpath_next_path(struct mpath_dev *);
 void		mpath_done(struct scsi_xfer *);
 
 void		mpath_failover(struct mpath_dev *);
@@ -159,21 +159,21 @@ mpath_probe(struct scsi_link *link)
 }
 
 struct mpath_path *
-mpath_next_path(struct mpath_dev *d, int next)
+mpath_next_path(struct mpath_dev *d)
 {
 	struct mpath_group *g;
 	struct mpath_path *p;
 
+#ifdef DIAGNOSTIC
 	if (d == NULL)
 		panic("%s: d is NULL", __func__);
+#endif
 
 	p = d->d_next_path;
-	if (p != NULL && next == MPATH_NEXT) {
-		d->d_next_path = TAILQ_NEXT(p, p_entry);
-		if (d->d_next_path == NULL) {
-			g = TAILQ_FIRST(&d->d_groups);
-			d->d_next_path = TAILQ_FIRST(&g->g_paths);
-		}
+	d->d_next_path = TAILQ_NEXT(p, p_entry);
+	if (d->d_next_path == NULL) {
+		g = TAILQ_FIRST(&d->d_groups);
+		d->d_next_path = TAILQ_FIRST(&g->g_paths);
 	}
 
 	return (p);
@@ -195,7 +195,7 @@ mpath_cmd(struct scsi_xfer *xs)
 
 	if (ISSET(xs->flags, SCSI_POLL)) {
 		mtx_enter(&d->d_mtx);
-		p = mpath_next_path(d, d->d_ops->op_schedule);
+		p = mpath_next_path(d);
 		mtx_leave(&d->d_mtx);
 		if (p == NULL) {
 			mpath_xs_stuffup(xs);
@@ -231,7 +231,7 @@ mpath_cmd(struct scsi_xfer *xs)
 
 	mtx_enter(&d->d_mtx);
 	SIMPLEQ_INSERT_TAIL(&d->d_xfers, xs, xfer_list);
-	p = mpath_next_path(d, d->d_ops->op_schedule);
+	p = mpath_next_path(d);
 	mtx_leave(&d->d_mtx);
 
 	if (p != NULL)
@@ -290,15 +290,13 @@ mpath_done(struct scsi_xfer *mxs)
 	struct mpath_softc *sc = link->adapter_softc;
 	struct mpath_dev *d = sc->sc_devs[link->target];
 	struct mpath_path *p;
-	int next = d->d_ops->op_schedule;
 
 	switch (mxs->error) {
 	case XS_SELTIMEOUT: /* physical path is gone, try the next */
-		next = MPATH_NEXT;
 	case XS_RESET:
 		mtx_enter(&d->d_mtx);
 		SIMPLEQ_INSERT_HEAD(&d->d_xfers, xs, xfer_list);
-		p = mpath_next_path(d, next);
+		p = mpath_next_path(d);
 		mtx_leave(&d->d_mtx);
 
 		scsi_xs_put(mxs);
@@ -311,7 +309,7 @@ mpath_done(struct scsi_xfer *mxs)
 		case MPATH_SENSE_FAILOVER:
 			mtx_enter(&d->d_mtx);
 			SIMPLEQ_INSERT_HEAD(&d->d_xfers, xs, xfer_list);
-			p = mpath_next_path(d, next);
+			p = mpath_next_path(d);
 			mtx_leave(&d->d_mtx);
 
 			scsi_xs_put(mxs);

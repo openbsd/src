@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_sym.c,v 1.15 2013/08/26 12:20:12 dlg Exp $ */
+/*	$OpenBSD: mpath_sym.c,v 1.16 2013/08/27 00:53:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -67,15 +67,13 @@ void		sym_mpath_status(struct scsi_link *);
 const struct mpath_ops sym_mpath_sym_ops = {
 	"sym",
 	sym_mpath_checksense,
-	sym_mpath_status,
-	MPATH_ROUNDROBIN
+	sym_mpath_status
 };
 
 const struct mpath_ops sym_mpath_asym_ops = {
 	"sym",
 	sym_mpath_checksense,
-	sym_mpath_status,
-	MPATH_MRU
+	sym_mpath_status
 };
 
 struct sym_device {

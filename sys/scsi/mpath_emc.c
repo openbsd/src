@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_emc.c,v 1.12 2013/08/27 00:24:03 dlg Exp $ */
+/*	$OpenBSD: mpath_emc.c,v 1.13 2013/08/27 00:53:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -96,8 +96,7 @@ void		emc_mpath_status(struct scsi_link *);
 const struct mpath_ops emc_mpath_ops = {
 	"emc",
 	emc_mpath_checksense,
-	emc_mpath_status,
-	MPATH_ROUNDROBIN
+	emc_mpath_status
 };
 
 struct emc_device {

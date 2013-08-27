@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_rdac.c,v 1.16 2013/08/26 12:20:12 dlg Exp $ */
+/*	$OpenBSD: mpath_rdac.c,v 1.17 2013/08/27 00:53:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -152,8 +152,7 @@ void		rdac_mpath_status(struct scsi_link *);
 const struct mpath_ops rdac_mpath_ops = {
 	"rdac",
 	rdac_mpath_checksense,
-	rdac_mpath_status,
-	MPATH_ROUNDROBIN
+	rdac_mpath_status
 };
 
 int		rdac_extdevid(struct rdac_softc *);

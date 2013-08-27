@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpathvar.h,v 1.8 2013/08/26 12:20:12 dlg Exp $ */
+/*	$OpenBSD: mpathvar.h,v 1.9 2013/08/27 00:53:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -25,7 +25,6 @@ struct mpath_ops {
 	char	op_name[16];
 	int	(*op_checksense)(struct scsi_xfer *);
 	void	(*op_status)(struct scsi_link *);
-	int	op_schedule;
 };
 
 #define MPATH_SENSE_DECLINED	0 /* path driver declined to interpret sense */
@@ -34,10 +33,6 @@ struct mpath_ops {
 #define MPATH_S_UNKNOWN		-1
 #define MPATH_S_ACTIVE		0
 #define MPATH_S_PASSIVE		1
-
-#define MPATH_ROUNDROBIN	0 /* use all active paths */
-#define MPATH_NEXT		MPATH_ROUNDROBIN
-#define MPATH_MRU		1 /* use most recently used path */
 
 struct mpath_path {
 	/* the path driver must set these */
