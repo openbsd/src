@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.20 2009/10/19 22:24:18 jsg Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.21 2013/08/27 03:32:12 deraadt Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	int error, rcvflg, timo, secs, len;
 	static u_int32_t xid = 0;
 	int *ip;
-	struct timeval *tv;
+	struct timeval tv;
 
 	/*
 	 * Validate address family.
@@ -236,10 +236,10 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 		goto out;
 
 	m = m_get(M_WAIT, MT_SOOPTS);
-	tv = mtod(m, struct timeval *);
-	m->m_len = sizeof(*tv);
-	tv->tv_sec = 1;
-	tv->tv_usec = 0;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+	memcpy(mtod(m, struct timeval *), &tv, sizeof tv);
+	m->m_len = sizeof(tv);
 	if ((error = sosetopt(so, SOL_SOCKET, SO_RCVTIMEO, m)))
 		goto out;
 

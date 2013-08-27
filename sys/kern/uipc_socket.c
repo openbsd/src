@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.118 2013/04/05 08:25:30 tedu Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.119 2013/08/27 03:32:11 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1559,15 +1559,15 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 		case SO_SNDTIMEO:
 		case SO_RCVTIMEO:
 		    {
-			struct timeval *tv;
+			struct timeval tv;
 			int val;
 
-			if (m == NULL || m->m_len < sizeof (*tv)) {
+			if (m == NULL || m->m_len < sizeof (tv)) {
 				error = EINVAL;
 				goto bad;
 			}
-			tv = mtod(m, struct timeval *);
-			val = tvtohz(tv);
+			memcpy(&tv, mtod(m, struct timeval *), sizeof tv);
+			val = tvtohz(&tv);
 			if (val > USHRT_MAX) {
 				error = EDOM;
 				goto bad;
@@ -1697,13 +1697,14 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 		case SO_SNDTIMEO:
 		case SO_RCVTIMEO:
 		    {
+			struct timeval tv;
 			int val = (optname == SO_SNDTIMEO ?
 			    so->so_snd.sb_timeo : so->so_rcv.sb_timeo);
 
 			m->m_len = sizeof(struct timeval);
-			mtod(m, struct timeval *)->tv_sec = val / hz;
-			mtod(m, struct timeval *)->tv_usec =
-			    (val % hz) * tick;
+			tv.tv_sec = val / hz;
+			tv.tv_usec = (val % hz) * tick;
+			memcpy(mtod(m, struct timeval *), &tv, sizeof tv);
 			break;
 		    }
 
