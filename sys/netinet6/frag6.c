@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.47 2013/06/11 18:15:54 deraadt Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.48 2013/08/27 08:20:32 mpi Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -236,10 +236,10 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	offset += sizeof(struct ip6_frag);
 
 	/*
-	 * draft-gont-6man-ipv6-atomic-fragments-00:  A host that receives an
-	 * IPv6 packet which includes a Fragment Header with the "Fragment
-	 * Offset" equal to 0 and the "M" bit equal to 0 MUST process such
-	 * packet in isolation from any other packets/fragments.
+	 * RFC6946:  A host that receives an IPv6 packet which includes
+	 * a Fragment Header with the "Fragment Offset" equal to 0 and
+	 * the "M" bit equal to 0 MUST process such packet in isolation
+	 * from any other packets/fragments.
 	 */
 	fragoff = ntohs(ip6f->ip6f_offlg & IP6F_OFF_MASK);
 	if (fragoff == 0 && !(ip6f->ip6f_offlg & IP6F_MORE_FRAG)) {
