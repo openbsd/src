@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.204 2013/08/26 01:37:13 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.205 2013/08/27 00:05:36 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -234,8 +234,10 @@ scsi_sem_leave(struct mutex *mtx, u_int *running)
 
 	mtx_enter(mtx);
 	(*running)--;
-	if ((*running) > 0)
+	if ((*running) > 0) {
+		(*running) = 1;
 		rv = 0;
+	}
 	mtx_leave(mtx);
 
 	return (rv);
