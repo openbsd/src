@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.19 2013/06/01 20:02:53 stsp Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.20 2013/08/28 16:53:34 stsp Exp $	*/
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -209,6 +209,35 @@ revert_to_default(int category)
 }
 
 static int
+set_lc_messages_locale(const char *locname)
+{
+	const char *charset;
+	char charsets[sizeof(LOCALE_CHARSETS)];
+	char *s = charsets;
+	const char *dot, *loc_encoding;
+
+	/* Assumes "language[_territory][.codeset]" locale name. */
+	dot = strrchr(locname, '.');
+	if (dot == NULL)
+		return -1;
+	loc_encoding = dot + 1;
+
+	/* Allow message catalogs in encodings supported by LC_CTYPE.
+	 * We don't care about the language name since it is application
+	 * specific. */
+	memcpy(charsets, LOCALE_CHARSETS, sizeof(charsets));
+	do {
+		charset = strsep(&s, " \t");
+		if (charset && charset[0]) {
+			if (strcmp(loc_encoding, charset) == 0)
+				return 0;
+		}
+	} while (charset);
+
+	return -1;
+}
+
+static int
 load_locale_sub(int category, const char *locname, int isspecial)
 {
 	/* check for the default locales */
@@ -230,6 +259,8 @@ load_locale_sub(int category, const char *locname, int isspecial)
 		break;
 
 	case LC_MESSAGES:
+		return set_lc_messages_locale(locname);
+
 	case LC_COLLATE:
 	case LC_MONETARY:
 	case LC_NUMERIC:
