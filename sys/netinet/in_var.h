@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.20 2013/05/31 19:16:52 mpi Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.21 2013/08/28 21:19:16 bluhm Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -92,17 +92,16 @@ void	in_socktrim(struct sockaddr_in *);
  * Macro for finding the interface (ifnet structure) corresponding to one
  * of our IP addresses.
  */
-#define INADDR_TO_IFP(addr, ifp, rdomain)				\
+#define INADDR_TO_IFP(addr, ifp, rtableid)				\
 	/* struct in_addr addr; */					\
 	/* struct ifnet *ifp; */					\
 do {									\
 	struct in_ifaddr *ia;						\
 									\
-	for (ia = TAILQ_FIRST(&in_ifaddr); ia != NULL && \
-	    (ia->ia_ifp->if_rdomain != rtable_l2(rdomain) || 		\
-	    ia->ia_addr.sin_addr.s_addr != (addr).s_addr);		\
-	    ia = TAILQ_NEXT(ia, ia_list))				\
-		 continue;						\
+	TAILQ_FOREACH(ia, &in_ifaddr, ia_list)				\
+		if (ia->ia_ifp->if_rdomain == rtable_l2(rtableid) &&	\
+		    ia->ia_addr.sin_addr.s_addr == (addr).s_addr)	\
+			 break;						\
 	(ifp) = (ia == NULL) ? NULL : ia->ia_ifp;			\
 } while (/* CONSTCOND */ 0)
 
@@ -114,10 +113,9 @@ do {									\
 	/* struct ifnet *ifp; */					\
 	/* struct in_ifaddr *ia; */					\
 do {									\
-	for ((ia) = TAILQ_FIRST(&in_ifaddr);				\
-	    (ia) != NULL && (ia)->ia_ifp != (ifp);	\
-	    (ia) = TAILQ_NEXT((ia), ia_list))				\
-		continue;						\
+	TAILQ_FOREACH((ia), &in_ifaddr, ia_list)			\
+		if ((ia)->ia_ifp == (ifp))				\
+			break;						\
 } while (/* CONSTCOND */ 0)
 #endif
 
