@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmxreg.h,v 1.2 2013/06/12 01:07:33 uebayasi Exp $	*/
+/*	$OpenBSD: if_vmxreg.h,v 1.3 2013/08/28 10:19:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -79,23 +79,33 @@ struct UPT1_RxStats {
 
 #define VMXNET3_DMADESC_ALIGN	128
 
+/* All descriptors are in little-endian format. */
 struct vmxnet3_txdesc {
-	u_int64_t addr;
+	u_int64_t		tx_addr;
 
-	u_int len:14;
-	u_int gen:1;		/* generation */
-	u_int :1;
-	u_int dtype:1;		/* descriptor type */
-	u_int :1;
-	u_int offload_pos:14;	/* offloading position */
+	u_int32_t		tx_word2;
+#define	VMXNET3_TX_LEN_M	0x00003fff
+#define	VMXNET3_TX_LEN_S	0
+#define VMXNET3_TX_GEN_M	0x00000001	/* generation */
+#define VMXNET3_TX_GEN_S	14
+#define VMXNET3_TX_RES0		0x00008000
+#define	VMXNET3_TX_DTYPE_M	0x00000001	/* descriptor type */
+#define	VMXNET3_TX_DTYPE_S	16		/* descriptor type */
+#define	VMXNET3_TX_RES1		0x00000002
+#define VMXNET3_TX_OP_M		0x00003fff	/* offloading position */
+#define	VMXNET3_TX_OP_S		18
 
-	u_int hlen:10;		/* header len */
-	u_int offload_mode:2;	/* offloading mode */
-	u_int eop:1;		/* end of packet */
-	u_int compreq:1;	/* completion request */
-	u_int :1;
-	u_int vtag_mode:1;	/* VLAN tag insertion mode */
-	u_int vtag:16;		/* VLAN tag */
+	u_int32_t		tx_word3;
+#define VMXNET3_TX_HLEN_M	0x000003ff	/* header len */
+#define VMXNET3_TX_HLEN_S	0
+#define VMXNET3_TX_OM_M		0x00000003	/* offloading mode */
+#define VMXNET3_TX_OM_S		10
+#define VMXNET3_TX_EOP		0x00001000	/* end of packet */
+#define VMXNET3_TX_COMPREQ	0x00002000	/* completion request */
+#define VMXNET3_TX_RES2		0x00004000
+#define VMXNET3_TX_VTAG_MODE	0x00008000	/* VLAN tag insertion mode */
+#define VMXNET3_TX_VLANTAG_M	0x0000ffff
+#define VMXNET3_TX_VLANTAG_S	16
 } __packed;
 
 /* offloading modes */
@@ -104,27 +114,39 @@ struct vmxnet3_txdesc {
 #define VMXNET3_OM_TSO  3
 
 struct vmxnet3_txcompdesc {
-	u_int eop_idx:12;	/* eop index in Tx ring */
-	u_int :20;
+	u_int32_t		txc_word0;	
+#define VMXNET3_TXC_EOPIDX_M	0x00000fff	/* eop index in Tx ring */
+#define VMXNET3_TXC_EOPIDX_S	0
+#define VMXNET3_TXC_RES0_M	0x000fffff
+#define VMXNET3_TXC_RES0_S	12
 
-	u_int :32;
-	u_int :32;
+	u_int32_t		txc_word1;
+	u_int32_t		txc_word2;
 
-	u_int :24;
-	u_int type:7;
-	u_int gen:1;
+	u_int32_t		txc_word3;
+#define VMXNET3_TXC_RES2_M	0x00ffffff
+#define VMXNET3_TXC_TYPE_M	0x0000007f
+#define VMXNET3_TXC_TYPE_S	24
+#define VMXNET3_TXC_GEN_M	0x00000001
+#define VMXNET3_TXC_GEN_S	31
 } __packed;
 
 struct vmxnet3_rxdesc {
-	u_int64_t addr;
+	u_int64_t		rx_addr;
 
-	u_int len:14;
-	u_int btype:1;		/* buffer type */
-	u_int dtype:1;		/* descriptor type */
-	u_int :15;
-	u_int gen:1;
+	u_int32_t		rx_word2;
+#define VMXNET3_RX_LEN_M	0x00003fff
+#define VMXNET3_RX_LEN_S	0
+#define VMXNET3_RX_BTYPE_M	0x00000001	/* buffer type */
+#define VMXNET3_RX_BTYPE_S	14
+#define VMXNET3_RX_DTYPE_M	0x00000001	/* descriptor type */
+#define VMXNET3_RX_DTYPE_S	15
+#define VMXNET3_RX_RES0_M	0x00007fff
+#define VMXNET3_RX_RES0_S	16
+#define VMXNET3_RX_GEN_M	0x00000001
+#define VMXNET3_RX_GEN_S	31
 
-	u_int :32;
+	u_int32_t		rx_word3;
 } __packed;
 
 /* buffer types */
@@ -132,33 +154,46 @@ struct vmxnet3_rxdesc {
 #define VMXNET3_BTYPE_BODY 1	/* body only */
 
 struct vmxnet3_rxcompdesc {
-	u_int rxd_idx:12;	/* Rx descriptor index */
-	u_int :2;
-	u_int eop:1;		/* end of packet */
-	u_int sop:1;		/* start of packet */
-	u_int qid:10;
-	u_int rss_type:4;
-	u_int no_csum:1;	/* no checksum calculated */
-	u_int :1;
+	u_int32_t		rxc_word0;
+#define VMXNET3_RXC_IDX_M	0x00000fff	/* Rx descriptor index */
+#define VMXNET3_RXC_IDX_S	0
+#define VMXNET3_RXC_RES0_M	0x00000003
+#define VMXNET3_RXC_RES0_S	12
+#define VMXNET3_RXC_EOP		0x00004000	/* end of packet */
+#define VMXNET3_RXC_SOP		0x00008000	/* start of packet */
+#define VMXNET3_RXC_QID_M	0x000003ff
+#define VMXNET3_RXC_QID_S	16
+#define VMXNET3_RXC_RSSTYPE_M	0x0000000f
+#define VMXNET3_RXC_RSSTYPE_S	26
+#define VMXNET3_RXC_NOCSUM	0x40000000	/* no checksum calculated */
+#define VMXNET3_RXC_RES1	0x80000000
 
-	u_int rss_hash:32;	/* RSS hash value */
+	u_int32_t		rxc_word1;
+#define VMXNET3_RXC_RSSHASH_M	0xffffffff	/* RSS hash value */
+#define VMXNET3_RXC_RSSHASH_S	0
 
-	u_int len:14;
-	u_int error:1;
-	u_int vlan:1;		/* 802.1Q VLAN frame */
-	u_int vtag:16;		/* VLAN tag */
+	u_int32_t		rxc_word2;
+#define VMXNET3_RXC_LEN_M	0x00003fff
+#define VMXNET3_RXC_LEN_S	0
+#define VMXNET3_RXC_ERROR	0x00004000
+#define VMXNET3_RXC_VLAN	0x00008000	/* 802.1Q VLAN frame */
+#define VMXNET3_RXC_VLANTAG_M	0x0000ffff	/* VLAN tag */
+#define VMXNET3_RXC_VLANTAG_S	16
 
-	u_int csum:16;
-	u_int csum_ok:1;	/* TCP/UDP checksum ok */
-	u_int udp:1;
-	u_int tcp:1;
-	u_int ipcsum_ok:1;	/* IP checksum ok */
-	u_int ipv6:1;
-	u_int ipv4:1;
-	u_int fragment:1;	/* IP fragment */
-	u_int fcs:1;		/* frame CRC correct */
-	u_int type:7;
-	u_int gen:1;
+	u_int32_t		rxc_word3;
+#define VMXNET3_RXC_CSUM_M	0x0000ffff	/* TCP/UDP checksum */
+#define VMXNET3_RXC_CSUM_S	16
+#define VMXNET3_RXC_CSUM_OK	0x00010000	/* TCP/UDP checksum ok */
+#define VMXNET3_RXC_UDP		0x00020000
+#define VMXNET3_RXC_TCP		0x00040000
+#define VMXNET3_RXC_IPSUM_OK	0x00080000	/* IP checksum ok */
+#define VMXNET3_RXC_IPV6	0x00100000
+#define VMXNET3_RXC_IPV4	0x00200000
+#define VMXNET3_RXC_FRAGMENT	0x00400000	/* IP fragment */
+#define VMXNET3_RXC_FCS		0x00800000	/* frame CRC correct */
+#define VMXNET3_RXC_TYPE_M	0x7f000000
+#define VMXNET3_RXC_GEN_M	0x00000001
+#define VMXNET3_RXC_GEN_S	31
 } __packed;
 
 #define VMXNET3_REV1_MAGIC 0xbabefee1

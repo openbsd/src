@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.11 2013/06/22 00:28:10 uebayasi Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.12 2013/08/28 10:19:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -645,7 +645,9 @@ vmxnet3_txintr(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 
 	for (;;) {
 		txcd = &comp_ring->txcd[comp_ring->next];
-		if (txcd->gen != comp_ring->gen)
+
+		if (letoh32((txcd->txc_word3 >> VMXNET3_TXC_GEN_S) &
+		    VMXNET3_TXC_GEN_M) != comp_ring->gen)
 			break;
 
 		comp_ring->next++;
@@ -660,7 +662,9 @@ vmxnet3_txintr(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 		m_freem(ring->m[sop]);
 		ring->m[sop] = NULL;
 		bus_dmamap_unload(sc->sc_dmat, ring->dmap[sop]);
-		ring->next = (txcd->eop_idx + 1) % NTXDESC;
+		ring->next = (letoh32((txcd->txc_word0 >>
+		    VMXNET3_TXC_EOPIDX_S) & VMXNET3_TXC_EOPIDX_M) + 1)
+		    % NTXDESC;
 
 		ifp->if_flags &= ~IFF_OACTIVE;
 	}
@@ -682,7 +686,8 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 
 	for (;;) {
 		rxcd = &comp_ring->rxcd[comp_ring->next];
-		if (rxcd->gen != comp_ring->gen)
+		if (letoh32((rxcd->rxc_word3 >> VMXNET3_RXC_GEN_S) &
+		    VMXNET3_RXC_GEN_M) != comp_ring->gen)
 			break;
 
 		comp_ring->next++;
@@ -691,13 +696,16 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 			comp_ring->gen ^= 1;
 		}
 
-		idx = rxcd->rxd_idx;
-		if (rxcd->qid < NRXQUEUE)
+		idx = letoh32((rxcd->rxc_word0 >> VMXNET3_RXC_IDX_S) &
+		    VMXNET3_RXC_IDX_M);
+		if (letoh32((rxcd->rxc_word0 >> VMXNET3_RXC_QID_S) &
+		    VMXNET3_RXC_QID_M) < NRXQUEUE)
 			ring = &rq->cmd_ring[0];
 		else
 			ring = &rq->cmd_ring[1];
 		rxd = &ring->rxd[idx];
-		len = rxcd->len;
+		len = letoh32((rxcd->rxc_word2 >> VMXNET3_RXC_LEN_S) &
+		    VMXNET3_RXC_LEN_M);
 		m = ring->m[idx];
 		ring->m[idx] = NULL;
 		bus_dmamap_unload(sc->sc_dmat, ring->dmap[idx]);
@@ -705,11 +713,12 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 		if (m == NULL)
 			panic("NULL mbuf");
 
-		if (rxd->btype != VMXNET3_BTYPE_HEAD) {
+		if (letoh32((rxd->rx_word2 >> VMXNET3_RX_BTYPE_S) &
+		    VMXNET3_RX_BTYPE_M) != VMXNET3_BTYPE_HEAD) {
 			m_freem(m);
 			goto skip_buffer;
 		}
-		if (rxcd->error) {
+		if (letoh32(rxcd->rxc_word2 & VMXNET3_RXC_ERROR)) {
 			ifp->if_ierrors++;
 			m_freem(m);
 			goto skip_buffer;
@@ -726,9 +735,10 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 		vmxnet3_rx_csum(rxcd, m);
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
-		if (rxcd->vlan) {
+		if (letoh32(rxcd->rxc_word2 & VMXNET3_RXC_VLAN)) {
 			m->m_flags |= M_VLANTAG;
-			m->m_pkthdr.ether_vtag = rxcd->vtag;
+			m->m_pkthdr.ether_vtag = letoh32((rxcd->rxc_word2 >>
+			    VMXNET3_RXC_VLANTAG_S) & VMXNET3_RXC_VLANTAG_M);
 		}
 
 #if NBPFILTER > 0
@@ -742,7 +752,8 @@ skip_buffer:
 		vmxstat.rxdone = idx;
 #endif
 		if (rq->rs->update_rxhead) {
-			u_int qid = rxcd->qid;
+			u_int qid = letoh32((rxcd->rxc_word0 >>
+			    VMXNET3_RXC_QID_S) & VMXNET3_RXC_QID_M);
 
 			idx = (idx + 1) % NRXDESC;
 			if (qid < NRXQUEUE) {
@@ -811,23 +822,24 @@ vmxnet3_iff(struct vmxnet3_softc *sc)
 void
 vmxnet3_rx_csum(struct vmxnet3_rxcompdesc *rxcd, struct mbuf *m)
 {
-	if (rxcd->no_csum)
+	if (letoh32(rxcd->rxc_word0 & VMXNET3_RXC_NOCSUM))
 		return;
 
-	if (rxcd->ipv4 && rxcd->ipcsum_ok)
+	if ((rxcd->rxc_word3 & (VMXNET3_RXC_IPV4|VMXNET3_RXC_IPSUM_OK)) ==
+	    (VMXNET3_RXC_IPV4|VMXNET3_RXC_IPSUM_OK))
 		m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
 
-	if (rxcd->fragment)
+	if (rxcd->rxc_word3 & VMXNET3_RXC_FRAGMENT)
 		return;
 
-	if (rxcd->tcp) {
-		if (rxcd->csum_ok)
+	if (rxcd->rxc_word3 & VMXNET3_RXC_TCP) {
+		if (rxcd->rxc_word3 & VMXNET3_RXC_CSUM_OK)
 			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
 		else
 			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_BAD;
 	}
-	if (rxcd->udp) {
-		if (rxcd->csum_ok)
+	if (rxcd->rxc_word3 & VMXNET3_RXC_UDP) {
+		if (rxcd->rxc_word3 & VMXNET3_RXC_CSUM_OK)
 			m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
 		else
 			m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_BAD;
@@ -873,10 +885,11 @@ vmxnet3_getbuf(struct vmxnet3_softc *sc, struct vmxnet3_rxring *ring)
 	if (bus_dmamap_load_mbuf(sc->sc_dmat, ring->dmap[idx], m,
 	    BUS_DMA_NOWAIT))
 		panic("load mbuf");
-	rxd->addr = DMAADDR(ring->dmap[idx]);
-	rxd->btype = btype;
-	rxd->len = m->m_pkthdr.len;
-	rxd->gen = ring->gen;
+	rxd->rx_addr = htole64(DMAADDR(ring->dmap[idx]));
+	rxd->rx_word2 = htole32(((m->m_pkthdr.len & VMXNET3_RX_LEN_M) <<
+	    VMXNET3_RX_LEN_S) | ((btype & VMXNET3_RX_BTYPE_M) <<
+	    VMXNET3_RX_BTYPE_S) | ((ring->gen & VMXNET3_RX_GEN_M) <<
+	    VMXNET3_RX_GEN_S));
 	idx++;
 	if (idx == NRXDESC) {
 		idx = 0;
@@ -1118,14 +1131,11 @@ vmxnet3_load_mbuf(struct vmxnet3_softc *sc, struct mbuf *m)
 	gen = ring->gen ^ 1;		/* owned by cpu (yet) */
 	for (i = 0; i < map->dm_nsegs; i++) {
 		txd = &ring->txd[ring->head];
-		txd->addr = map->dm_segs[i].ds_addr;
-		txd->len = map->dm_segs[i].ds_len;
-		txd->gen = gen;
-		txd->dtype = 0;
-		txd->offload_mode = VMXNET3_OM_NONE;
-		txd->offload_pos = txd->hlen = 0;
-		txd->eop = txd->compreq = 0;
-		txd->vtag_mode = txd->vtag = 0;
+		txd->tx_addr = htole64(map->dm_segs[i].ds_addr);
+		txd->tx_word2 = htole32(((map->dm_segs[i].ds_len &
+		    VMXNET3_TX_LEN_M) << VMXNET3_TX_LEN_S) |
+		    ((gen & VMXNET3_TX_GEN_M) << VMXNET3_TX_GEN_S));
+		txd->tx_word3 = 0;
 		ring->head++;
 		if (ring->head == NTXDESC) {
 			ring->head = 0;
@@ -1133,20 +1143,22 @@ vmxnet3_load_mbuf(struct vmxnet3_softc *sc, struct mbuf *m)
 		}
 		gen = ring->gen;
 	}
-	txd->eop = txd->compreq = 1;
+	txd->tx_word3 |= htole32(VMXNET3_TX_EOP | VMXNET3_TX_COMPREQ);
 
 	if (m->m_flags & M_VLANTAG) {
-		sop->vtag_mode = 1;
-		sop->vtag = m->m_pkthdr.ether_vtag;
+		sop->tx_word3 |= htole32(VMXNET3_TX_VTAG_MODE);
+		sop->tx_word3 |= htole32((m->m_pkthdr.ether_vtag &
+		    VMXNET3_TX_VLANTAG_M) << VMXNET3_TX_VLANTAG_S);
 	}
 	if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT|M_UDP_CSUM_OUT)) {
-		sop->offload_mode = VMXNET3_OM_CSUM;
-		sop->hlen = hlen;
-		sop->offload_pos = hlen + csum_off;
+		sop->tx_word2 |= htole32(((hlen + csum_off) &
+		    VMXNET3_TX_OP_M) << VMXNET3_TX_OP_S);
+		sop->tx_word3 |= htole32(((hlen & VMXNET3_TX_HLEN_M) <<
+		    VMXNET3_TX_HLEN_S) | (VMXNET3_OM_CSUM << VMXNET3_TX_OM_S));
 	}
 
-	/* Change the ownership. */
-	sop->gen ^= 1;
+	/* Change the ownership by flipping the "generation" bit */
+	sop->tx_word2 ^= htole32(VMXNET3_TX_GEN_M << VMXNET3_TX_GEN_S);
 
 	return (0);
 }
