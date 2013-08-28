@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.126 2013/05/17 11:13:37 krw Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.127 2013/08/28 06:58:57 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -783,8 +783,7 @@ report:
 				struct ifaddr *oifa = rt->rt_ifa;
 				if (oifa != ifa) {
 				    if (oifa && oifa->ifa_rtrequest)
-					oifa->ifa_rtrequest(RTM_DELETE, rt,
-					    &info);
+					oifa->ifa_rtrequest(RTM_DELETE, rt);
 				    ifafree(rt->rt_ifa);
 				    rt->rt_ifa = ifa;
 				    ifa->ifa_refcnt++;
@@ -849,7 +848,7 @@ report:
 			rtm->rtm_priority = rt->rt_priority & RTP_MASK;
 			rtm->rtm_flags = rt->rt_flags;
 			if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
-				rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, &info);
+				rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt);
 			if (genmask)
 				rt->rt_genmask = genmask;
 			if (info.rti_info[RTAX_LABEL] != NULL) {

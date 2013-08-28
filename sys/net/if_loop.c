@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.49 2013/03/28 16:55:27 deraadt Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.50 2013/08/28 06:58:57 mpi Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -373,7 +373,7 @@ lo_altqstart(struct ifnet *ifp)
 
 /* ARGSUSED */
 void
-lortrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
+lortrequest(int cmd, struct rtentry *rt)
 {
 	if (rt)
 		rt->rt_rmx.rmx_mtu = LOMTU;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.144 2013/03/28 23:10:05 tedu Exp $	*/
+/*	$OpenBSD: route.c,v 1.145 2013/08/28 06:58:57 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -781,7 +781,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 
 		rt->rt_flags &= ~RTF_UP;
 		if ((ifa = rt->rt_ifa) && ifa->ifa_rtrequest)
-			ifa->ifa_rtrequest(RTM_DELETE, rt, info);
+			ifa->ifa_rtrequest(RTM_DELETE, rt);
 		rttrash++;
 
 		if (ret_nrt)
@@ -925,14 +925,13 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 				    "was (%p)\n", ifa, (*ret_nrt)->rt_ifa);
 				if ((*ret_nrt)->rt_ifa->ifa_rtrequest)
 					(*ret_nrt)->rt_ifa->ifa_rtrequest(
-					    RTM_DELETE, *ret_nrt, NULL);
+					    RTM_DELETE, *ret_nrt);
 				ifafree((*ret_nrt)->rt_ifa);
 				(*ret_nrt)->rt_ifa = ifa;
 				(*ret_nrt)->rt_ifp = ifa->ifa_ifp;
 				ifa->ifa_refcnt++;
 				if (ifa->ifa_rtrequest)
-					ifa->ifa_rtrequest(RTM_ADD, *ret_nrt,
-					    NULL);
+					ifa->ifa_rtrequest(RTM_ADD, *ret_nrt);
 			}
 			/*
 			 * Copy both metrics and a back pointer to the cloned
@@ -980,7 +979,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 #endif
 
 		if (ifa->ifa_rtrequest)
-			ifa->ifa_rtrequest(req, rt, info);
+			ifa->ifa_rtrequest(req, rt);
 		if (ret_nrt) {
 			*ret_nrt = rt;
 			rt->rt_refcnt++;
@@ -1138,13 +1137,13 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 			printf("rtinit: wrong ifa (%p) was (%p)\n",
 			    ifa, rt->rt_ifa);
 			if (rt->rt_ifa->ifa_rtrequest)
-				rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt, NULL);
+				rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt);
 			ifafree(rt->rt_ifa);
 			rt->rt_ifa = ifa;
 			rt->rt_ifp = ifa->ifa_ifp;
 			ifa->ifa_refcnt++;
 			if (ifa->ifa_rtrequest)
-				ifa->ifa_rtrequest(RTM_ADD, rt, NULL);
+				ifa->ifa_rtrequest(RTM_ADD, rt);
 		}
 		rt_newaddrmsg(cmd, ifa, error, nrt);
 	}

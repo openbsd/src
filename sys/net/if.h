@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.144 2013/06/20 12:03:40 mpi Exp $	*/
+/*	$OpenBSD: if.h,v 1.145 2013/08/28 06:58:57 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -494,7 +494,7 @@ struct ifaddr {
 	struct	ifnet *ifa_ifp;		/* back-pointer to interface */
 	TAILQ_ENTRY(ifaddr) ifa_list;	/* list of addresses for interface */
 					/* check or clean routes (+ or -)'d */
-	void	(*ifa_rtrequest)(int, struct rtentry *, struct rt_addrinfo *);
+	void	(*ifa_rtrequest)(int, struct rtentry *);
 	u_int	ifa_flags;		/* mostly rt_flags for cloning */
 	u_int	ifa_refcnt;		/* count of references */
 	int	ifa_metric;		/* cost of going out this interface */
@@ -842,7 +842,7 @@ struct	ifaddr *ifa_ifwithroute(int, struct sockaddr *,
 					struct sockaddr *, u_int);
 struct	ifaddr *ifaof_ifpforaddr(struct sockaddr *, struct ifnet *);
 void	ifafree(struct ifaddr *);
-void	link_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
+void	link_rtrequest(int, struct rtentry *);
 
 void	if_clone_attach(struct if_clone *);
 void	if_clone_detach(struct if_clone *);
@@ -858,7 +858,7 @@ int	loioctl(struct ifnet *, u_long, caddr_t);
 void	loopattach(int);
 int	looutput(struct ifnet *,
 	    struct mbuf *, struct sockaddr *, struct rtentry *);
-void	lortrequest(int, struct rtentry *, struct rt_addrinfo *);
+void	lortrequest(int, struct rtentry *);
 void	ifa_add(struct ifnet *, struct ifaddr *);
 void	ifa_del(struct ifnet *, struct ifaddr *);
 void	ifa_update_broadaddr(struct ifnet *, struct ifaddr *,

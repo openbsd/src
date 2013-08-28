@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.101 2013/08/26 07:15:58 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.102 2013/08/28 06:58:57 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -953,7 +953,7 @@ nd6_nud_hint(struct rtentry *rt, struct in6_addr *dst6, int force)
  */
 
 void
-nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
+nd6_rtrequest(int req, struct rtentry *rt)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;

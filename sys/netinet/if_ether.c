@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.104 2013/08/09 06:01:52 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.105 2013/08/28 06:58:57 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ arptimer(void *arg)
  * Parallel to llc_rtrequest.
  */
 void
-arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
+arp_rtrequest(int req, struct rtentry *rt)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
