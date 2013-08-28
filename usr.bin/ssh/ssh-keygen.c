@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.232 2013/08/13 18:33:08 djm Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.233 2013/08/28 12:34:27 mikeb Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -986,6 +986,7 @@ do_known_hosts(struct passwd *pw, const char *name)
 	char line[16*1024], tmp[MAXPATHLEN], old[MAXPATHLEN];
 	int c, skip = 0, inplace = 0, num = 0, invalid = 0, has_unhashed = 0;
 	int ca;
+	int found_key = 0;
 
 	if (!have_identity) {
 		cp = tilde_expand_filename(_PATH_SSH_USER_HOSTFILE, pw->pw_uid);
@@ -1088,11 +1089,13 @@ do_known_hosts(struct passwd *pw, const char *name)
 				}
 				c = (strcmp(cp2, cp) == 0);
 				if (find_host && c) {
-					printf("# Host %s found: "
-					    "line %d type %s%s\n", name,
-					    num, key_type(pub),
-					    ca ? " (CA key)" : "");
+					if (!quiet)
+						printf("# Host %s found: "
+						    "line %d type %s%s\n", name,
+						    num, key_type(pub),
+						    ca ? " (CA key)" : "");
 					printhost(out, cp, pub, ca, 0);
+					found_key = 1;
 				}
 				if (delete_host) {
 					if (!c && !ca)
@@ -1109,12 +1112,14 @@ do_known_hosts(struct passwd *pw, const char *name)
 				c = (match_hostname(name, cp,
 				    strlen(cp)) == 1);
 				if (find_host && c) {
-					printf("# Host %s found: "
-					    "line %d type %s%s\n", name,
-					    num, key_type(pub),
-					    ca ? " (CA key)" : "");
+					if (!quiet)
+						printf("# Host %s found: "
+						    "line %d type %s%s\n", name,
+						    num, key_type(pub),
+						    ca ? " (CA key)" : "");
 					printhost(out, name, pub,
 					    ca, hash_hosts && !ca);
+					found_key = 1;
 				}
 				if (delete_host) {
 					if (!c && !ca)
@@ -1190,7 +1195,7 @@ do_known_hosts(struct passwd *pw, const char *name)
 		}
 	}
 
-	exit(0);
+	exit (find_host && !found_key);
 }
 
 /*
