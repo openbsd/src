@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.83 2013/08/19 08:45:34 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.84 2013/08/28 07:30:55 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -192,6 +192,7 @@ int
 in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifaddr *ifa;						\
 	struct in_ifaddr *ia = NULL;
 	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
 	struct sockaddr_in oldaddr;
@@ -215,21 +216,24 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 	 * Find address for this interface, if it exists.
 	 */
 	if (ifp)
-		TAILQ_FOREACH(ia, &in_ifaddr, ia_list)
-			if (ia->ia_ifp == ifp)
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
+			if (ifa->ifa_addr->sa_family == AF_INET) {
+				ia = ifatoia(ifa);
 				break;
+			}
 
 	switch (cmd) {
 
 	case SIOCAIFADDR:
 	case SIOCDIFADDR:
 		if (ifra->ifra_addr.sin_family == AF_INET)
-			for (; ia != NULL; ia = TAILQ_NEXT(ia, ia_list)) {
-				if (ia->ia_ifp == ifp &&
-				    ia->ia_addr.sin_addr.s_addr ==
-					ifra->ifra_addr.sin_addr.s_addr)
-				    break;
+			for (; ifa != NULL; ifa = TAILQ_NEXT(ifa, ifa_list)) {
+				if ((ifa->ifa_addr->sa_family == AF_INET) &&
+				    ifatoia(ifa)->ia_addr.sin_addr.s_addr ==
+				    ifra->ifra_addr.sin_addr.s_addr)
+					break;
 			}
+			ia = ifatoia(ifa);
 		if (cmd == SIOCDIFADDR && ia == NULL)
 			return (EADDRNOTAVAIL);
 		/* FALLTHROUGH */
@@ -271,17 +275,14 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 	case SIOCGIFDSTADDR:
 	case SIOCGIFBRDADDR:
 		if (ia && satosin(&ifr->ifr_addr)->sin_addr.s_addr) {
-			struct in_ifaddr *ia2;
-
-			for (ia2 = ia; ia2 != NULL;
-			    ia2 = TAILQ_NEXT(ia2, ia_list)) {
-				if (ia2->ia_ifp == ifp &&
-				    ia2->ia_addr.sin_addr.s_addr ==
-				    satosin(&ifr->ifr_addr)->sin_addr.s_addr)
+			for (; ifa != NULL; ifa = TAILQ_NEXT(ifa, ifa_list)) {
+				if ((ifa->ifa_addr->sa_family == AF_INET) &&
+				    ifatoia(ifa)->ia_addr.sin_addr.s_addr ==
+				    satosin(&ifr->ifr_addr)->sin_addr.s_addr) {
+					ia = ifatoia(ifa);
 					break;
+				}
 			}
-			if (ia2 && ia2->ia_ifp == ifp)
-				ia = ia2;
 		}
 		if (ia == NULL)
 			return (EADDRNOTAVAIL);
