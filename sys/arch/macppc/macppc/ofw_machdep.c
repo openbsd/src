@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.41 2013/08/27 21:00:52 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.42 2013/08/28 07:03:02 mpi Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ int cons_brightness;
 int cons_backlight_available;
 int fbnode;
 
-#include "vgafb_pci.h"
+#include "vgafb.h"
 
 struct usb_kbd_ihandles {
         struct usb_kbd_ihandles *next;
@@ -412,7 +412,7 @@ of_display_console()
 #endif
 
 	cons_membus->bus_base = 0x80000000;
-#if NVGAFB_PCI > 0
+#if NVGAFB > 0
 	vgafb_cnattach(cons_membus, cons_membus, -1, 0);
 #endif
 
