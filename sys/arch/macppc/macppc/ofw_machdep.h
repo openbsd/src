@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.h,v 1.6 2013/08/27 21:00:52 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.h,v 1.7 2013/08/28 20:47:10 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002, Miodrag Vallat.
@@ -26,15 +26,13 @@
  *
  */
 
-/*
- * Various console variables...
- */
-extern int cons_height, cons_width, cons_linebytes, cons_depth;
-extern u_int32_t cons_addr;
 extern int cons_backlight_available;
 
 void ofwconprobe(void);
 void ofwconsinit(void);
+
+struct rasops_info;
+void ofwconsswitch(struct rasops_info *);
 
 /*
  * For some reason, setting the brightness under 0x29 from OF switches the
@@ -49,7 +47,4 @@ extern int cons_brightness;
 
 void of_setbacklight(int);
 void of_setbrightness(int);
-void of_setcolors(unsigned int, unsigned int, uint8_t *, uint8_t *, uint8_t *);
-
-/* XXX */
-int vgafb_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);
+void of_setcolors(const uint8_t *, unsigned int, unsigned int);

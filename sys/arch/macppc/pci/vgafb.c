@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.54 2013/08/27 21:00:52 mpi Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.55 2013/08/28 20:47:10 mpi Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -49,15 +49,15 @@ struct vga_config {
 	bus_space_tag_t		vc_memt;
 	bus_space_handle_t	vc_memh;
 
-	/* Colormap */
-	u_char vc_cmap_red[256];
-	u_char vc_cmap_green[256];
-	u_char vc_cmap_blue[256];
-
 	struct rasops_info	ri;
+	uint8_t			cmap[256 * 3];
 
 	bus_addr_t	iobase, membase, mmiobase;
 	bus_size_t	iosize, memsize, mmiosize;
+
+	struct	wsscreen_descr	vc_wsd;
+	struct	wsscreen_list	vc_wsl;
+	struct	wsscreen_descr *vc_scrlist[1];
 
 	int vc_backlight_on;
 	u_int vc_mode;
@@ -73,27 +73,9 @@ int	vgafb_show_screen(void *, void *, int, void (*cb)(void *, int, int),
 void	vgafb_burn(void *v, u_int , u_int);
 void	vgafb_restore_default_colors(struct vga_config *);
 int	vgafb_is_console(int);
-void	vgafb_wsdisplay_attach(struct device *, struct vga_config *);
 int	vgafb_mapregs(struct vga_config *, struct pci_attach_args *);
 
 struct vga_config vgafbcn;
-
-struct wsscreen_descr vgafb_stdscreen = {
-	"std",
-	0, 0,
-	0,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
-};
-
-const struct wsscreen_descr *vgafb_scrlist[] = {
-	&vgafb_stdscreen,
-};
-
-struct wsscreen_list vgafb_screenlist = {
-	nitems(vgafb_scrlist), vgafb_scrlist
-};
 
 struct wsdisplay_accessops vgafb_accessops = {
 	vgafb_ioctl,
@@ -107,8 +89,8 @@ struct wsdisplay_accessops vgafb_accessops = {
 	vgafb_burn,	/* burner */
 };
 
-int	vgafb_getcmap(struct vga_config *vc, struct wsdisplay_cmap *cm);
-int	vgafb_putcmap(struct vga_config *vc, struct wsdisplay_cmap *cm);
+int	vgafb_getcmap(uint8_t *, struct wsdisplay_cmap *);
+int	vgafb_putcmap(uint8_t *, struct wsdisplay_cmap *);
 
 int	vgafb_match(struct device *, void *, void *);
 void	vgafb_attach(struct device *, struct device *, void *);
@@ -157,50 +139,42 @@ vgafb_attach(struct device *parent, struct device  *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct vga_config *vc = &vgafbcn;
+	struct wsemuldisplaydev_attach_args waa;
+	struct rasops_info *ri;
+	long defattr;
 
 	if (vgafb_mapregs(vc, pa))
 		return;
 
-	vgafb_wsdisplay_attach(self, vc);
-}
-
-void
-vgafb_restore_default_colors(struct vga_config *vc)
-{
-	const uint8_t *color;
-	int i;
-
-	for (i = 0; i < 256; i++) {
-
-		color = &rasops_cmap[i * 3];
-
-		vc->vc_cmap_red[i] = color[0];
-		vc->vc_cmap_green[i] = color[1];
-		vc->vc_cmap_blue[i] = color[2];
-	}
-
-	of_setcolors(0, 256, vc->vc_cmap_red, vc->vc_cmap_green,
-	    vc->vc_cmap_blue);
-}
-
-void
-vgafb_wsdisplay_attach(struct device *parent, struct vga_config *vc)
-{
-	struct wsemuldisplaydev_attach_args aa;
-	struct rasops_info *ri = &vc->ri;
-	long defattr;
-
+	ri = &vc->ri;
 	ri->ri_flg = RI_CENTER | RI_VCONS | RI_WRONLY;
+	ri->ri_hw = vc;
+
+	ofwconsswitch(ri);
+
 	rasops_init(ri, 160, 160);
 
-	ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
-	wsdisplay_cnattach(&vgafb_stdscreen, ri->ri_active, 0, 0, defattr);
+	strlcpy(vc->vc_wsd.name, "std", sizeof(vc->vc_wsd.name));
+	vc->vc_wsd.capabilities = ri->ri_caps;
+	vc->vc_wsd.nrows = ri->ri_rows;
+	vc->vc_wsd.ncols = ri->ri_cols;
+	vc->vc_wsd.textops = &ri->ri_ops;
+	vc->vc_wsd.fontwidth = ri->ri_font->fontwidth;
+	vc->vc_wsd.fontheight = ri->ri_font->fontheight;
 
-	aa.console = 1;
-	aa.scrdata = &vgafb_screenlist;
-	aa.accessops = &vgafb_accessops;
-	aa.accesscookie = vc;
-	aa.defaultscreens = 0;
+	ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+	wsdisplay_cnattach(&vc->vc_wsd, ri->ri_active, ri->ri_ccol, ri->ri_crow,
+	    defattr);
+
+	vc->vc_scrlist[0] = &vc->vc_wsd;
+	vc->vc_wsl.nscreens = 1;
+	vc->vc_wsl.screens = (const struct wsscreen_descr **)vc->vc_scrlist;
+
+	waa.console = 1;
+	waa.scrdata = &vc->vc_wsl;
+	waa.accessops = &vgafb_accessops;
+	waa.accesscookie = vc;
+	waa.defaultscreens = 0;
 
 	/* no need to keep the burner function if no hw support */
 	if (cons_backlight_available == 0)
@@ -210,49 +184,58 @@ vgafb_wsdisplay_attach(struct device *parent, struct vga_config *vc)
 		vgafb_burn(vc, WSDISPLAYIO_VIDEO_ON, 0);	/* paranoia */
 	}
 
-	config_found(parent, &aa, wsemuldisplaydevprint);
+	config_found(self, &waa, wsemuldisplaydevprint);
+}
+
+void
+vgafb_restore_default_colors(struct vga_config *vc)
+{
+	bcopy(rasops_cmap, vc->cmap, sizeof(vc->cmap));
+	of_setcolors(vc->cmap, 0, 256);
 }
 
 int
 vgafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct vga_config *vc = v;
+	struct rasops_info *ri = &vc->ri;
+	struct wsdisplay_cmap *cm;
 	struct wsdisplay_fbinfo *wdf;
+	int rc;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_PCIVGA;
-		return 0;
+		break;
 	case WSDISPLAYIO_GINFO:
-		wdf = (void *)data;
-		wdf->height = cons_height;
-		wdf->width  = cons_width;
-		wdf->depth  = cons_depth;
+		wdf = (struct wsdisplay_fbinfo *)data;
+		wdf->width = ri->ri_width;
+		wdf->height = ri->ri_height;
+		wdf->depth = ri->ri_depth;
 		wdf->cmsize = 256;
-		return 0;
-
+		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = cons_linebytes;
-		return 0;
-
+		*(uint *)data = ri->ri_stride;
+		break;
 	case WSDISPLAYIO_GETCMAP:
-		return vgafb_getcmap(vc, (struct wsdisplay_cmap *)data);
-
+		cm = (struct wsdisplay_cmap *)data;
+		rc = vgafb_getcmap(vc->cmap, cm);
+		if (rc != 0)
+			return rc;
+		break;
 	case WSDISPLAYIO_PUTCMAP:
-		return vgafb_putcmap(vc, (struct wsdisplay_cmap *)data);
-
+		cm = (struct wsdisplay_cmap *)data;
+		rc = vgafb_putcmap(vc->cmap, cm);
+		if (rc != 0)
+			return (rc);
+		if (ri->ri_depth == 8)
+			of_setcolors(vc->cmap, cm->index, cm->count);
+		break;
 	case WSDISPLAYIO_SMODE:
 		vc->vc_mode = *(u_int *)data;
-		/* track the state of the display,
-		 * if returning to WSDISPLAYIO_MODE_EMUL
-		 * restore the last palette, workaround for
-		 * bad accellerated X servers that does not restore
-		 * the correct palette.
-		 */
-		if (cons_depth == 8)
+		if (ri->ri_depth == 8)
 			vgafb_restore_default_colors(vc);
 		break;
-
 	case WSDISPLAYIO_GETPARAM:
 	{
 		struct wsdisplay_param *dp = (struct wsdisplay_param *)data;
@@ -361,87 +344,79 @@ vgafb_is_console(int node)
 }
 
 int
-vgafb_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
+vgafb_getcmap(uint8_t *cmap, struct wsdisplay_cmap *cm)
 {
-	struct vga_config *vc = &vgafbcn;
-	struct rasops_info *ri = &vc->ri;
-	long defattr;
-
-	vc->vc_memt = memt;
-	vc->membase = cons_addr;
-	vc->memsize = cons_linebytes * cons_height;
-	vc->vc_memh = (bus_space_handle_t)mapiodev(vc->membase, vc->memsize);
-
-	if (cons_depth == 8)
-		vgafb_restore_default_colors(vc);
-
-	ri->ri_flg = RI_FULLCLEAR | RI_CLEAR;
-	ri->ri_depth = cons_depth;
-	ri->ri_bits = (void *)vc->vc_memh;
-	ri->ri_width = cons_width;
-	ri->ri_height = cons_height;
-	ri->ri_stride = cons_linebytes;
-	ri->ri_hw = vc;
-
-	rasops_init(ri, 160, 160);
-
-	vgafb_stdscreen.nrows = ri->ri_rows;
-	vgafb_stdscreen.ncols = ri->ri_cols;
-	vgafb_stdscreen.textops = &ri->ri_ops;
-
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
-
-	wsdisplay_cnattach(&vgafb_stdscreen, ri, 0, 0, defattr);
-
-	return (0);
-}
-
-int
-vgafb_getcmap(struct vga_config *vc, struct wsdisplay_cmap *cm)
-{
-	u_int index = cm->index;
-	u_int count = cm->count;
-	int error;
+	uint index = cm->index, count = cm->count, i;
+	uint8_t ramp[256], *dst, *src;
+	int rc;
 
 	if (index >= 256 || count > 256 - index)
 		return EINVAL;
 
-	error = copyout(&vc->vc_cmap_red[index],   cm->red,   count);
-	if (error)
-		return error;
-	error = copyout(&vc->vc_cmap_green[index], cm->green, count);
-	if (error)
-		return error;
-	error = copyout(&vc->vc_cmap_blue[index],  cm->blue,  count);
-	if (error)
-		return error;
+	index *= 3;
+
+	src = cmap + index;
+	dst = ramp;
+	for (i = 0; i < count; i++)
+		*dst++ = *src, src += 3;
+	rc = copyout(ramp, cm->red, count);
+	if (rc != 0)
+		return rc;
+
+	src = cmap + index + 1;
+	dst = ramp;
+	for (i = 0; i < count; i++)
+		*dst++ = *src, src += 3;
+	rc = copyout(ramp, cm->green, count);
+	if (rc != 0)
+		return rc;
+
+	src = cmap + index + 2;
+	dst = ramp;
+	for (i = 0; i < count; i++)
+		*dst++ = *src, src += 3;
+	rc = copyout(ramp, cm->blue, count);
+	if (rc != 0)
+		return rc;
 
 	return 0;
 }
 
 int
-vgafb_putcmap(struct vga_config *vc, struct wsdisplay_cmap *cm)
+vgafb_putcmap(uint8_t *cmap, struct wsdisplay_cmap *cm)
 {
-	u_int index = cm->index;
-	u_int count = cm->count;
-	int error;
-	u_int8_t *r, *g, *b;
+	uint index = cm->index, count = cm->count, i;
+	uint8_t ramp[256], *dst, *src;
+	int rc;
 
 	if (index >= 256 || count > 256 - index)
 		return EINVAL;
 
-	if ((error = copyin(cm->red, &vc->vc_cmap_red[index], count)) != 0)
-		return (error);
-	if ((error = copyin(cm->green, &vc->vc_cmap_green[index], count)) != 0)
-		return (error);
-	if ((error = copyin(cm->blue, &vc->vc_cmap_blue[index], count)) != 0)
-		return (error);
+	index *= 3;
 
-	r = &(vc->vc_cmap_red[index]);
-	g = &(vc->vc_cmap_green[index]);
-	b = &(vc->vc_cmap_blue[index]);
+	rc = copyin(cm->red, ramp, count);
+	if (rc != 0)
+		return rc;
+	dst = cmap + index;
+	src = ramp;
+	for (i = 0; i < count; i++)
+		*dst = *src++, dst += 3;
 
-	of_setcolors(index, count, r, g, b);
+	rc = copyin(cm->green, ramp, count);
+	if (rc != 0)
+		return rc;
+	dst = cmap + index + 1;
+	src = ramp;
+	for (i = 0; i < count; i++)
+		*dst = *src++, dst += 3;
+
+	rc = copyin(cm->blue, ramp, count);
+	if (rc != 0)
+		return rc;
+	dst = cmap + index + 2;
+	src = ramp;
+	for (i = 0; i < count; i++)
+		*dst = *src++, dst += 3;
 
 	return 0;
 }

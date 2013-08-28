@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.42 2013/08/28 07:03:02 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.43 2013/08/28 20:47:10 mpi Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -31,18 +31,16 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "akbd.h"
+#include "ukbd.h"
+#include "wsdisplay.h"
+#include "zstty.h"
+
 #include <sys/param.h>
-#include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/disk.h>
-#include <sys/disklabel.h>
-#include <sys/fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/malloc.h>
-#include <sys/stat.h>
 #include <sys/systm.h>
-#include <sys/timeout.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -54,12 +52,18 @@
 
 #include <macppc/macppc/ofw_machdep.h>
 
-#include "ukbd.h"
-#include "akbd.h"
-#include "zstty.h"
-#include <dev/usb/ukbdvar.h>
+#if NAKBD > 0
 #include <dev/adb/akbdvar.h>
-#include <dev/usb/usbdevs.h>
+#endif
+
+#if NUKBD > 0
+#include <dev/usb/ukbdvar.h>
+#endif
+
+#if NWSDISPLAY > 0
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
+#endif
 
 /* XXX, called from asm */
 int save_ofw_mapping(void);
@@ -83,6 +87,16 @@ struct firmware ofw_firmware = {
 
 #define	OFMEM_REGIONS	32
 static struct mem_region OFmem[OFMEM_REGIONS + 1], OFavail[OFMEM_REGIONS + 3];
+
+#if NWSDISPLAY > 0
+struct ofwfb {
+	struct rasops_info	ofw_ri;
+	struct wsscreen_descr	ofw_wsd;
+};
+
+/* Early boot framebuffer */
+static struct ofwfb ofwfb;
+#endif
 
 /*
  * This is called during initppc, before the system is really initialized.
@@ -184,17 +198,11 @@ save_ofw_mapping()
 	return 0;
 }
 
-struct ppc_bus_space ppc_membus;
-bus_space_tag_t cons_membus = &ppc_membus;
 bus_space_handle_t cons_display_mem_h;
-int cons_height, cons_width, cons_linebytes, cons_depth;
 static int display_ofh;
-u_int32_t cons_addr;
 int cons_brightness;
 int cons_backlight_available;
 int fbnode;
-
-#include "vgafb.h"
 
 struct usb_kbd_ihandles {
         struct usb_kbd_ihandles *next;
@@ -349,13 +357,14 @@ ofw_find_keyboard()
 }
 
 void
-of_display_console()
+of_display_console(void)
 {
 	struct ofw_pci_register addr[8];
+	int cons_height, cons_width, cons_linebytes, cons_depth;
+	uint32_t cons_addr;
 	char name[32];
-	int len;
+	int len, err;
 	int stdout_node;
-	int err;
 
 	stdout_node = OF_instance_to_package(OF_stdout);
 	len = OF_getprop(stdout_node, "name", name, 20);
@@ -411,13 +420,52 @@ of_display_console()
 		cons_width, cons_linebytes, cons_height, cons_depth);
 #endif
 
-	cons_membus->bus_base = 0x80000000;
-#if NVGAFB > 0
-	vgafb_cnattach(cons_membus, cons_membus, -1, 0);
+#if NWSDISPLAY > 0
+{
+	struct ofwfb *fb = &ofwfb;
+	struct rasops_info *ri = &fb->ofw_ri;
+	long defattr;
+
+	ri->ri_width = cons_width;
+	ri->ri_height = cons_height;
+	ri->ri_depth = cons_depth;
+	ri->ri_stride = cons_linebytes;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | RI_CLEAR;
+	ri->ri_bits = (void *)mapiodev(cons_addr, cons_linebytes * cons_height);
+	ri->ri_hw = fb;
+
+	if (cons_depth == 8)
+		of_setcolors(rasops_cmap, 0, 256);
+
+	rasops_init(ri, 160, 160);
+
+	strlcpy(fb->ofw_wsd.name, "std", sizeof(fb->ofw_wsd.name));
+	fb->ofw_wsd.capabilities = ri->ri_caps;
+	fb->ofw_wsd.ncols = ri->ri_cols;
+	fb->ofw_wsd.nrows = ri->ri_rows;
+	fb->ofw_wsd.textops = &ri->ri_ops;
+#if 0
+	fb->ofw_wsd.fontwidth = ri->ri_font->fontwidth;
+	fb->ofw_wsd.fontheight = ri->ri_font->fontheight;
 #endif
 
-	if (cons_backlight_available == 1)
-		of_setbrightness(DEFAULT_BRIGHTNESS);
+	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	wsdisplay_cnattach(&fb->ofw_wsd, ri, 0, 0, defattr);
+}
+#endif
+}
+
+void
+ofwconsswitch(struct rasops_info *ri)
+{
+#if NWSDISPLAY > 0
+	ri->ri_width = ofwfb.ofw_ri.ri_width;
+	ri->ri_height = ofwfb.ofw_ri.ri_height;
+	ri->ri_depth = ofwfb.ofw_ri.ri_depth;
+	ri->ri_stride = ofwfb.ofw_ri.ri_stride;
+
+	ri->ri_bits = ofwfb.ofw_ri.ri_bits /* XXX */;
+#endif
 }
 
 void
@@ -454,24 +502,13 @@ of_setbrightness(int brightness)
 	/* XXX this routine should also save the brightness settings in the nvram */
 }
 
-struct {
-	uint8_t r, g, b;
-} of_colors[256];
+uint8_t of_cmap[256];
 
 void
-of_setcolors(unsigned int idx, unsigned int cnt, uint8_t *r, uint8_t *g,
-    uint8_t *b)
+of_setcolors(const uint8_t *cmap, unsigned int index, unsigned int count)
 {
-	int i;
-
-	for (i = 0; i < cnt; i++) {
-		of_colors[i].r = *r;
-		of_colors[i].g = *g;
-		of_colors[i].b = *b;
-		r++, g++, b++;
-	}
-
-	OF_call_method_1("set-colors", display_ofh, 3, &of_colors, idx, cnt);
+	bcopy(cmap, of_cmap, sizeof(of_cmap));
+	OF_call_method_1("set-colors", display_ofh, 3, &of_cmap, index, count);
 }
 
 #include <dev/cons.h>
