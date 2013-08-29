@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.105 2013/08/28 06:58:57 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.106 2013/08/29 13:24:43 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -145,7 +145,6 @@ arp_rtrequest(int req, struct rtentry *rt)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
-	struct in_ifaddr *ia;
 	struct ifaddr *ifa;
 	struct mbuf *m;
 
@@ -259,13 +258,13 @@ arp_rtrequest(int req, struct rtentry *rt)
 		rt->rt_flags |= RTF_LLINFO;
 		LIST_INSERT_HEAD(&llinfo_arp, la, la_list);
 
-		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-			if (ia->ia_ifp == rt->rt_ifp &&
-			    SIN(rt_key(rt))->sin_addr.s_addr ==
-			    (IA_SIN(ia))->sin_addr.s_addr)
+		TAILQ_FOREACH(ifa, &rt->rt_ifp->if_addrlist, ifa_list) {
+			if ((ifa->ifa_addr->sa_family == AF_INET) &&
+			    ifatoia(ifa)->ia_addr.sin_addr.s_addr ==
+			    satosin(rt_key(rt))->sin_addr.s_addr)
 				break;
 		}
-		if (ia) {
+		if (ifa) {
 			/*
 			 * This test used to be
 			 *	if (lo0ifp->if_flags & IFF_UP)
@@ -294,7 +293,6 @@ arp_rtrequest(int req, struct rtentry *rt)
 			 * address we are using, otherwise we will have trouble
 			 * with source address selection.
 			 */
-			ifa = &ia->ia_ifa;
 			if (ifa != rt->rt_ifa) {
 				ifafree(rt->rt_ifa);
 				ifa->ifa_refcnt++;
@@ -562,11 +560,12 @@ void
 in_arpinput(struct mbuf *m)
 {
 	struct ether_arp *ea;
-	struct arpcom *ac = (struct arpcom *)m->m_pkthdr.rcvif;
+	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct arpcom *ac = (struct arpcom *)ifp;
 	struct ether_header *eh;
 	struct llinfo_arp *la = 0;
 	struct rtentry *rt;
-	struct in_ifaddr *ia;
+	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
 	struct in_addr isaddr, itaddr, myaddr;
@@ -593,57 +592,55 @@ in_arpinput(struct mbuf *m)
 	bcopy((caddr_t)ea->arp_spa, (caddr_t)&isaddr, sizeof(isaddr));
 
 	/* First try: check target against our addresses */
-	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-		if (itaddr.s_addr != ia->ia_addr.sin_addr.s_addr)
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+
+		if (itaddr.s_addr != ifatoia(ifa)->ia_addr.sin_addr.s_addr)
 			continue;
 
 #if NCARP > 0
-		if (ia->ia_ifp->if_type == IFT_CARP &&
-		    ((ia->ia_ifp->if_flags & (IFF_UP|IFF_RUNNING)) ==
+		if (ifp->if_type == IFT_CARP &&
+		    ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) ==
 		    (IFF_UP|IFF_RUNNING))) {
-			if (ia->ia_ifp == m->m_pkthdr.rcvif) {
-				if (op == ARPOP_REPLY)
-					break;
-				if (carp_iamatch(ia, ea->arp_sha,
-				    &enaddr, &ether_shost))
-					break;
-				else
-					goto out;
-			}
-		} else
-#endif
-			if (ia->ia_ifp == m->m_pkthdr.rcvif)
+			if (op == ARPOP_REPLY)
 				break;
+			if (carp_iamatch(ifatoia(ifa), ea->arp_sha,
+			    &enaddr, &ether_shost))
+				break;
+			else
+				goto out;
+		}
+#endif
+		break;
 	}
 
 	/* Second try: check source against our addresses */
-	if (ia == NULL) {
-		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-			if (isaddr.s_addr != ia->ia_addr.sin_addr.s_addr)
+	if (ifa == NULL) {
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
-			if (ia->ia_ifp == m->m_pkthdr.rcvif)
+
+			if (isaddr.s_addr ==
+			    ifatoia(ifa)->ia_addr.sin_addr.s_addr)
 				break;
 		}
 	}
 
 	/* Third try: not one of our addresses, just find an usable ia */
-	if (ia == NULL) {
-		struct ifaddr *ifa;
-
-		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
+	if (ifa == NULL) {
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family == AF_INET)
 				break;
 		}
-		if (ifa)
-			ia = (struct in_ifaddr *)ifa;
 	}
 
-	if (ia == NULL)
+	if (ifa == NULL)
 		goto out;
 
 	if (!enaddr)
 		enaddr = ac->ac_enaddr;
-	myaddr = ia->ia_addr.sin_addr;
+	myaddr = ifatoia(ifa)->ia_addr.sin_addr;
 
 	if (!bcmp((caddr_t)ea->arp_sha, enaddr, sizeof (ea->arp_sha)))
 		goto out;	/* it's from me, ignore it. */
