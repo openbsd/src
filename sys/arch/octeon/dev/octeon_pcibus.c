@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.11 2013/08/29 07:53:07 pirofti Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.12 2013/08/29 07:56:50 pirofti Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -205,12 +205,10 @@ void
 octeon_pcibus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct octeon_pcibus_softc *sc;
-	struct iobus_attach_args *aa;
 	struct pcibus_attach_args pba;
 
 	sc = (struct octeon_pcibus_softc *)self;
-	aa = aux;
-	sc->sc_aa = aa;
+	sc->sc_aa = aux;
 
 	printf("\n");
 
