@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.205 2013/08/27 00:05:36 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.206 2013/08/29 02:54:36 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -214,7 +214,7 @@ scsi_plug_detach(void *xsc, void *xp)
 }
 
 int
-scsi_sem_enter(struct mutex *mtx, u_int *running)
+scsi_pending_start(struct mutex *mtx, u_int *running)
 {
 	int rv = 1;
 
@@ -228,7 +228,7 @@ scsi_sem_enter(struct mutex *mtx, u_int *running)
 }
 
 int
-scsi_sem_leave(struct mutex *mtx, u_int *running)
+scsi_pending_finish(struct mutex *mtx, u_int *running)
 {
 	int rv = 1;
 
@@ -402,7 +402,7 @@ scsi_ioh_runqueue(struct scsi_iopool *iopl)
 	struct scsi_iohandler *ioh;
 	void *io;
 
-	if (!scsi_sem_enter(&iopl->mtx, &iopl->running))
+	if (!scsi_pending_start(&iopl->mtx, &iopl->running))
 		return;
 	do {
 		while (scsi_ioh_pending(iopl)) {
@@ -418,7 +418,7 @@ scsi_ioh_runqueue(struct scsi_iopool *iopl)
 
 			ioh->handler(ioh->cookie, io);
 		}
-	} while (!scsi_sem_leave(&iopl->mtx, &iopl->running));
+	} while (!scsi_pending_finish(&iopl->mtx, &iopl->running));
 }
 
 /*
@@ -561,7 +561,7 @@ scsi_xsh_runqueue(struct scsi_link *link)
 	struct scsi_iohandler *ioh;
 	int runq;
 
-	if (!scsi_sem_enter(&link->pool->mtx, &link->running))
+	if (!scsi_pending_start(&link->pool->mtx, &link->running))
 		return;
 	do {
 		runq = 0;
@@ -582,7 +582,7 @@ scsi_xsh_runqueue(struct scsi_link *link)
 
 		if (runq)
 			scsi_ioh_runqueue(link->pool);
-	} while (!scsi_sem_leave(&link->pool->mtx, &link->running));
+	} while (!scsi_pending_finish(&link->pool->mtx, &link->running));
 }
 
 void

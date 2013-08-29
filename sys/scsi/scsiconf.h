@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.155 2013/08/26 01:37:13 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.156 2013/08/29 02:54:37 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -570,8 +570,8 @@ int	scsi_xsh_del(struct scsi_xshandler *);
 /*
  * utility functions
  */
-int	scsi_sem_enter(struct mutex *, u_int *);
-int	scsi_sem_leave(struct mutex *, u_int *);
+int	scsi_pending_start(struct mutex *, u_int *);
+int	scsi_pending_finish(struct mutex *, u_int *);
 
 /*
  * Utility functions for SCSI HBA emulation.

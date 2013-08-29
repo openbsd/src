@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.32 2013/08/27 00:53:09 dlg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.33 2013/08/29 02:54:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -340,7 +340,7 @@ mpath_done(struct scsi_xfer *mxs)
 void
 mpath_failover(struct mpath_dev *d)
 {
-	if (!scsi_sem_enter(&d->d_mtx, &d->d_failover))
+	if (!scsi_pending_start(&d->d_mtx, &d->d_failover))
 		return;
 
 	mpath_failover_start(d);
@@ -389,7 +389,7 @@ mpath_path_status(struct mpath_path *p, int status)
 
 	if (status == MPATH_S_ACTIVE) {
 		scsi_xsh_add(&p->p_xsh);
-		if (!scsi_sem_leave(&d->d_mtx, &d->d_failover))
+		if (!scsi_pending_finish(&d->d_mtx, &d->d_failover))
 			mpath_failover_start(d);
 	} else
 		mpath_failover_check(d);
