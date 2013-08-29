@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2013/08/29 20:22:09 naddy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -100,7 +100,6 @@ main (argc,argv)
 
 	/* use whole screen for text */
 	begscr = 0;
-	srandomdev();		/* seed random number generator */
 
 	getarg(argc, argv);
 	args[acnt] = '\0';

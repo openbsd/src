@@ -1,4 +1,4 @@
-/*	$OpenBSD: getword.c,v 1.7 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: getword.c,v 1.8 2013/08/29 20:22:14 naddy Exp $	*/
 /*	$NetBSD: getword.c,v 1.4 1995/03/23 08:32:45 cgd Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ getword(void)
 	while (badwords < MAXBADWORDS) {
 		if (countwords)
 			badwords++;
-		pos = (double) random() / (RAND_MAX + 1.0) * (double) Dict_size;
+		pos = arc4random_uniform(Dict_size);
 		fseek(inf, pos, SEEK_SET);
 		if (fgets(Word, BUFSIZ, inf) == NULL)
 			continue;

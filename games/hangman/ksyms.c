@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.1 2008/04/01 21:05:50 miod Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.2 2013/08/29 20:22:14 naddy Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -42,7 +42,7 @@ kgetword()
 	size_t symlen;
 
 	for (tries = 0; tries < MAXBADWORDS; tries++) {
-		pos = (double) random() / (RAND_MAX + 1.0) * (double)ksymsize;
+		pos = arc4random_uniform(ksymsize);
 		if (lseek(ksyms, pos + ksymoffs, SEEK_SET) == -1)
 			continue;
 		buflen = read(ksyms, symbuf, BUFSIZ);

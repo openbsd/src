@@ -1,4 +1,4 @@
-/*	$OpenBSD: arithmetic.c,v 1.17 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: arithmetic.c,v 1.18 2013/08/29 20:22:09 naddy Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -124,9 +124,6 @@ main(int argc, char *argv[])
 	if (argc -= optind)
 		usage();
 
-	/* Seed the random-number generator. */
-	srandomdev();
-
 	(void)signal(SIGINT, intr);
 
 	/* Now ask the questions. */
@@ -177,7 +174,7 @@ problem(void)
 	int left, op, right, result;
 	char line[80];
 
-	op = keys[random() % nkeys];
+	op = keys[arc4random_uniform(nkeys)];
 	if (op != '/')
 		right = getrandom(rangemax + 1, op, 1);
 retry:
@@ -198,7 +195,7 @@ retry:
 	case '/':
 		right = getrandom(rangemax, op, 1) + 1;
 		result = getrandom(rangemax + 1, op, 0);
-		left = right * result + random() % right;
+		left = right * result + arc4random_uniform(right);
 		break;
 	}
 
@@ -308,7 +305,7 @@ getrandom(int maxval, int op, int operand)
 	struct penalty **pp, *p;
 
 	op = opnum(op);
-	value = random() % (maxval + penalty[op][operand]);
+	value = arc4random_uniform(maxval + penalty[op][operand]);
 
 	/*
 	 * 0 to maxval - 1 is a number to be used directly; bigger values

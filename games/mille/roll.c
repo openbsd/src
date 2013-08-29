@@ -1,4 +1,4 @@
-/*	$OpenBSD: roll.c,v 1.5 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: roll.c,v 1.6 2013/08/29 20:22:16 naddy Exp $	*/
 /*	$NetBSD: roll.c,v 1.4 1995/03/24 05:02:07 cgd Exp $	*/
 
 /*
@@ -47,6 +47,6 @@ roll(ndie, nsides)
 
 	tot = 0;
 	while (ndie--)
-		tot += random() % nsides + 1;
+		tot += arc4random_uniform(nsides) + 1;
 	return tot;
 }

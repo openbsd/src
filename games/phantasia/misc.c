@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.14 2010/12/15 06:40:39 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.15 2013/08/29 20:22:17 naddy Exp $	*/
 /*	$NetBSD: misc.c,v 1.2 1995/03/24 03:59:03 cgd Exp $	*/
 
 /*
@@ -1574,7 +1574,7 @@ descrstatus(playerp)
 /
 / RETURN VALUE: none
 /
-/ MODULES CALLED: random()
+/ MODULES CALLED: arc4random()
 /
 / GLOBAL INPUTS: none
 /
@@ -1583,19 +1583,13 @@ descrstatus(playerp)
 / DESCRIPTION:
 /	Convert random integer from library routine into a floating
 /	point number, and divide by the largest possible random number.
-/	We mask large integers with 32767 to handle sites that return
-/	31 bit random integers.
 /
 *************************************************************************/
 
 double
 drandom()
 {
-	if (sizeof(int) != 2)
-		/* use only low bits */
-		return ((double) (random() & 0x7fff) / 32768.0);
-	else
-		return ((double) random() / 32768.0);
+	return ((double) arc4random() / (UINT32_MAX + 1.0));
 }
 /**/
 /************************************************************************

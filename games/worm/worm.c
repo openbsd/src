@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.23 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: worm.c,v 1.24 2013/08/29 20:22:21 naddy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -92,7 +92,6 @@ main(int argc, char **argv)
 
 	FD_ZERO(&rset);
 	setbuf(stdout, outbuf);
-	srandomdev();
 	signal(SIGINT, leave);
 	signal(SIGQUIT, leave);
 	signal(SIGTSTP, suspend);	/* process control signal */
@@ -209,7 +208,7 @@ leave(int dummy)
 int
 rnd(int range)
 {
-	return random() % range;
+	return arc4random_uniform(range);
 }
 
 void

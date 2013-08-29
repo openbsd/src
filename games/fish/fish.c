@@ -1,4 +1,4 @@
-/*	$OpenBSD: fish.c,v 1.15 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: fish.c,v 1.16 2013/08/29 20:22:12 naddy Exp $	*/
 /*	$NetBSD: fish.c,v 1.3 1995/03/23 08:28:18 cgd Exp $	*/
 
 /*-
@@ -98,7 +98,6 @@ main(int argc, char *argv[])
 			usage();
 		}
 
-	srandomdev();
 	instructions();
 	init();
 
@@ -412,7 +411,7 @@ init(void)
 int
 nrandom(int n)
 {
-	return((int)random() % n);
+	return(arc4random_uniform(n));
 }
 
 int

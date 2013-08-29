@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2010/12/15 06:40:39 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2013/08/29 20:22:17 naddy Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/24 12:24:37 cgd Exp $	*/
 
 /*
@@ -312,8 +312,7 @@ main(argc, argv)
 /
 / RETURN VALUE: none
 /
-/ MODULES CALLED: time(), fopen(), srandom(), error(), getuid(), getlogin(), 
-/	getpwuid()
+/ MODULES CALLED: fopen(), error(), getuid(), getlogin(), getpwuid()
 /
 / GLOBAL INPUTS: 
 /
@@ -384,8 +383,6 @@ initialstate()
 	if ((Energyvoidfp = fopen(_PATH_VOID, "r+")) == NULL)
 		error(_PATH_VOID);
 	/* NOTREACHED */
-
-	srandomdev();	/* prime random numbers */
 }
 /**/
 /************************************************************************

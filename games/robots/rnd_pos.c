@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd_pos.c,v 1.5 2009/10/27 23:59:26 deraadt Exp $	*/
+/*	$OpenBSD: rnd_pos.c,v 1.6 2013/08/29 20:22:19 naddy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -55,5 +55,5 @@ rnd_pos(void)
 int
 rnd(int range)
 {
-	return (int)random() % range;
+	return arc4random_uniform(range);
 }

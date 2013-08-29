@@ -1,4 +1,4 @@
-/*	$OpenBSD: include.h,v 1.3 2001/02/04 02:51:23 pjanzen Exp $	*/
+/*	$OpenBSD: include.h,v 1.4 2013/08/29 20:22:17 naddy Exp $	*/
 /*	$NetBSD: include.h,v 1.3 1995/04/24 12:24:31 cgd Exp $	*/
 
 /*
@@ -14,6 +14,7 @@
 #include <math.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>

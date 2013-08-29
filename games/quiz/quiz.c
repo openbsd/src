@@ -1,4 +1,4 @@
-/*	$OpenBSD: quiz.c,v 1.20 2009/10/27 23:59:26 deraadt Exp $	*/
+/*	$OpenBSD: quiz.c,v 1.21 2013/08/29 20:22:18 naddy Exp $	*/
 /*	$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $	*/
 
 /*-
@@ -213,12 +213,11 @@ quiz(void)
 	char *answer, *t, question[LINE_SZ];
 	const char *s;
 
-	srandomdev();
 	guesses = rights = wrongs = 0;
 	for (;;) {
 		if (qsize == 0)
 			break;
-		next = random() % qsize;
+		next = arc4random_uniform(qsize);
 		qp = qlist.q_next;
 		for (i = 0; i < next; i++)
 			qp = qp->q_next;
@@ -228,7 +227,7 @@ quiz(void)
 			qsize = next;
 			continue;
 		}
-		if (tflag && random() % 100 > 20) {
+		if (tflag && arc4random_uniform(100) > 20) {
 			/* repeat questions in tutorial mode */
 			while (qp && (!qp->q_asked || qp->q_answered))
 				qp = qp->q_next;

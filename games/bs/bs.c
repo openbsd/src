@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.23 2009/11/14 02:20:43 guenther Exp $	*/
+/*	$OpenBSD: bs.c,v 1.24 2013/08/29 20:22:11 naddy Exp $	*/
 /*
  * Copyright (c) 1986, Bruce Holloway
  * All rights reserved.
@@ -38,8 +38,6 @@
  * v2.1 with ncurses mouse support, September 1995
  * v2.2 with bugfixes and strategical improvements, March 1998.
  */
-
-/* #define _POSIX_SOURCE  */  /* ( random() ) */
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -235,8 +233,6 @@ static void intro(void)
 {
     char *tmpname;
 
-    srandomdev();	/* Kick the random number generator */
-
     (void) signal(SIGINT,uninitgame);
     (void) signal(SIGINT,uninitgame);
     if(signal(SIGQUIT,SIG_IGN) != SIG_IGN)
@@ -344,7 +340,7 @@ static void placeship(int b, ship_t *ss, int vis)
 
 static int rnd(int n)
 {
-    return(((random() & 0x7FFF) % n));
+    return(arc4random_uniform(n));
 }
 
 static void randomplace(int b, ship_t *ss)

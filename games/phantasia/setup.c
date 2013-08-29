@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.11 2011/06/23 03:14:32 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.12 2013/08/29 20:22:17 naddy Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:24:41 cgd Exp $	*/
 
 /*
@@ -25,8 +25,8 @@ void Error(char *, char *);
 /
 / RETURN VALUE: none
 /
-/ MODULES CALLED: time(), exit(), stat(), Error(), open(), close(), fopen(), 
-/	fgets(), floor(), srandomdev(), umask(), strlcpy(),
+/ MODULES CALLED: exit(), stat(), Error(), open(), close(), fopen(), 
+/	fgets(), floor(), umask(), strlcpy(),
 /	unlink(), fwrite(), fclose(), sscanf(), printf(), strlen(), fprintf()
 /
 / GLOBAL INPUTS: Curmonster, _iob[], Databuf[], *Monstfp, Enrgyvoid
@@ -81,8 +81,6 @@ main(argc, argv)
 		}
 	argc -= optind;
 	argv += optind;
-
-    srandomdev();	/* prime random numbers */
 
     umask(0117);		/* only owner can read/write created files */
 
@@ -227,7 +225,7 @@ Error(str, file)
 /
 / RETURN VALUE: none
 /
-/ MODULES CALLED: random()
+/ MODULES CALLED: arc4random()
 /
 / GLOBAL INPUTS: none
 /
@@ -240,8 +238,5 @@ Error(str, file)
 double
 drandom()
 {
-    if (sizeof(int) != 2)
-	return((double) (random() & 0x7fff) / 32768.0);
-    else
-	return((double) random() / 32768.0);
+	return((double) arc4random() / (UINT32_MAX + 1.0));
 }

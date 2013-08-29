@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.8 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.9 2013/08/29 20:22:19 naddy Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1998/09/13 15:27:30 hubertf Exp $ */
 
 /*
@@ -61,7 +61,7 @@ extern char nobells;			/* -b, don't ring bell before Signal */
 extern gid_t gid;
 extern gid_t egid;
 
-#define die()		((random() >> 3) % 6 + 1)
+#define die()		(arc4random_uniform(6) + 1)
 #define sqr(a)		((a) * (a))
 #define min(a,b)	((a) < (b) ? (a) : (b))
 

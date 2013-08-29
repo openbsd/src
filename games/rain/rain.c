@@ -1,4 +1,4 @@
-/*	$OpenBSD: rain.c,v 1.16 2012/05/27 10:09:33 sthen Exp $	*/
+/*	$OpenBSD: rain.c,v 1.17 2013/08/29 20:22:18 naddy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -84,7 +84,6 @@ main(int argc, char *argv[])
 	sleeptime.tv_nsec = delay * 500000;
 	timespecadd(&sleeptime, &sleeptime, &sleeptime);
 
-	srandomdev();
 	initscr();
 	tcols = COLS - 4;
 	tlines = LINES - 4;
@@ -98,16 +97,16 @@ main(int argc, char *argv[])
 	
 	curs_set(0);
 	for (j = 4; j >= 0; --j) {
-		xpos[j] = random() % tcols + 2;
-		ypos[j] = random() % tlines + 2;
+		xpos[j] = arc4random_uniform(tcols) + 2;
+		ypos[j] = arc4random_uniform(tlines) + 2;
 	}
 	for (j = 0;;) {
 		if (sig_caught) {
 			endwin();
 			exit(0);
 		}
-		x = random() % tcols + 2;
-		y = random() % tlines + 2;
+		x = arc4random_uniform(tcols) + 2;
+		y = arc4random_uniform(tlines) + 2;
 		mvaddch(y, x, '.');
 		mvaddch(ypos[j], xpos[j], 'o');
 		if (!j--)

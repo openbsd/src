@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.h,v 1.9 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: mille.h,v 1.10 2013/08/29 20:22:16 naddy Exp $	*/
 /*	$NetBSD: mille.h,v 1.5 1995/03/24 05:01:51 cgd Exp $	*/
 
 /*
@@ -153,11 +153,6 @@
 # define	FILEPROMPT		6
 # define	EXTENSIONPROMPT		7
 # define	OVERWRITEFILEPROMPT	8
-
-# ifdef	SYSV
-# define	srandom(x)	srand(x)
-# define	random()	rand()
-# endif		/* SYSV */
 
 typedef struct {
 	bool	coups[NUM_SAFE];

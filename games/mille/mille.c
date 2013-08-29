@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.c,v 1.18 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: mille.c,v 1.19 2013/08/29 20:22:15 naddy Exp $	*/
 /*	$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $	*/
 
 /*
@@ -78,7 +78,6 @@ main(ac, av)
 	leaveok(Score, TRUE);
 	leaveok(Miles, TRUE);
 	clearok(curscr, TRUE);
-	srandomdev();
 	cbreak();
 	noecho();
 	signal(SIGINT, rub);

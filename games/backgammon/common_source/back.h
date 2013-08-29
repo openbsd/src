@@ -1,4 +1,4 @@
-/*	$OpenBSD: back.h,v 1.11 2006/12/14 10:14:05 martin Exp $	*/
+/*	$OpenBSD: back.h,v 1.12 2013/08/29 20:22:10 naddy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@
 #include <term.h>
 #include <unistd.h>
 
-#define rnum(r)	(random()%r)
+#define rnum(r)	arc4random_uniform(r)
 #define D0	dice[0]
 #define D1	dice[1]
 #define swap	{D0 ^= D1; D1 ^= D0; D0 ^= D1; d0 = 1-d0;}

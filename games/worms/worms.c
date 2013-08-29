@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.20 2011/04/25 13:30:07 millert Exp $	*/
+/*	$OpenBSD: worms.c,v 1.21 2013/08/29 20:22:21 naddy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -226,7 +226,6 @@ main(int argc, char *argv[])
 	sleeptime.tv_nsec = delay * 500000;
 	timespecadd(&sleeptime, &sleeptime, &sleeptime);
 
-	srandomdev();
 	if (!(worm = calloc((size_t)number, sizeof(struct worm))))
 		nomem();
 	initscr();
@@ -319,7 +318,7 @@ main(int argc, char *argv[])
 				break;
 			default:
 				w->orientation =
-				    op->opts[(int)random() % op->nopts];
+				    op->opts[arc4random_uniform(op->nopts)];
 			}
 			mvaddch(y += yinc[w->orientation],
 			    x += xinc[w->orientation],

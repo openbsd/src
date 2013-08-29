@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.23 2009/10/28 00:25:38 deraadt Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.24 2013/08/29 20:22:20 naddy Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -139,8 +139,8 @@ randshape(void)
 	const struct shape *tmp;
 	int i, j;
 
-	tmp = &shapes[random() % 7];
-	j = random() % 4;
+	tmp = &shapes[arc4random_uniform(7)];
+	j = arc4random_uniform(4);
 	for (i = 0; i < j; i++)
 		tmp = &shapes[classic? tmp->rotc : tmp->rot];
 	return (tmp);
@@ -225,7 +225,6 @@ main(int argc, char *argv[])
 	scr_init();
 	setup_board();
 
-	srandomdev();
 	scr_set();
 
 	pos = A_FIRST*B_COLS + (B_COLS/2)-1;

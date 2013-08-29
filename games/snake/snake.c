@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.14 2009/11/13 21:50:12 deraadt Exp $	*/
+/*	$OpenBSD: snake.c,v 1.15 2013/08/29 20:22:20 naddy Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -170,7 +170,6 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-	srandomdev();
 	penalty = loot = 0;
 	initscr();
 #ifdef KEY_LEFT
@@ -470,8 +469,8 @@ snrand(struct point *sp)
 	int i;
 
 	for (;;) {
-		p.col = random() % ccnt;
-		p.line = random() % lcnt;
+		p.col = arc4random_uniform(ccnt);
+		p.line = arc4random_uniform(lcnt);
 
 		/* make sure it's not on top of something else */
 		if (p.line == 0 && p.col < 5)
@@ -580,7 +579,7 @@ chase(struct point *np, struct point *sp)
 	}
 	for (w = i = 0; i < 8; i++)
 		w += wt[i];
-	vp = ((random() >> 6) & 01777) % w;
+	vp = arc4random_uniform(w);
 	for (i = 0; i < 8; i++)
 		if (vp < wt[i])
 			break;
@@ -830,7 +829,7 @@ pushsnake(void)
 		if ((same(&snake[i], &you)) || (same(&tmp, &you))) {
 			surround(&you);
 			i = (cashvalue) % 10;
-			bonus = ((random() >> 8) & 0377) % 10;
+			bonus = arc4random_uniform(10);
 			mvprintw(lcnt + 1, 0, "%d\n", bonus);
 			refresh();
 			delay(30);

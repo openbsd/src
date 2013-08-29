@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.25 2009/10/27 23:59:28 deraadt Exp $	*/
+/*	$OpenBSD: wump.c,v 1.26 2013/08/29 20:22:22 naddy Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -201,12 +201,11 @@ main(int argc, char *argv[])
 		errx(1,
 "too many tunnels!  The cave collapsed!\n(Fortunately, the wumpus escaped!)");
 
-	srandomdev();
 	if (level == HARD) {
 		if (room_num / 2 - bat_num)
-			bat_num += (random() % (room_num / 2 - bat_num));
+			bat_num += arc4random_uniform(room_num / 2 - bat_num);
 		if (room_num / 2 - pit_num)
-			pit_num += (random() % (room_num / 2 - pit_num));
+			pit_num += arc4random_uniform(room_num / 2 - pit_num);
 	}
 
 	/* Leave at least two rooms free--one for the player to start in, and
@@ -314,7 +313,7 @@ take_action(void)
 		case '\n':
 			return(0);
 		}
-	if (random() % 15 == 1)
+	if (arc4random_uniform(15) == 1)
 		(void)printf("Que pasa?\n");
 	else
 		(void)printf("I don't understand!\n");
@@ -367,7 +366,7 @@ move_to(const char *room_number)
 
 	if (!tunnel_available) {
 		(void)printf("*Oof!*  (You hit the wall)\n");
-		if (random() % 6 == 1) {
+		if (arc4random_uniform(6) == 1) {
 (void)printf("Your colorful comments awaken the wumpus!\n");
 			move_wump();
 			if (wumpus_loc == player_loc) {
@@ -380,7 +379,7 @@ move_to(const char *room_number)
 
 	/* now let's move into that room and check it out for dangers */
 /*	if (next_room == room_num + 1)
- *		jump(next_room = (random() % room_num) + 1);
+ *		jump(next_room = arc4random_uniform(room_num) + 1);
  */
 	player_loc = next_room;
 	for (;;) {
@@ -392,7 +391,7 @@ move_to(const char *room_number)
 			return(1);
 		}
 		if (cave[next_room].has_a_pit) {
-			if (random() % 12 < 2) {
+			if (arc4random_uniform(12) < 2) {
 				pit_survive();
 				return(0);
 			} else {
@@ -408,7 +407,8 @@ move_to(const char *room_number)
 			(void)printf(
 "*flap*  *flap*  *flap*  (humongous bats pick you up and move you%s!)\n",
 			    just_moved_by_bats ? " again": "");
-			next_room = player_loc = (random() % room_num) + 1;
+			next_room = player_loc =
+			    arc4random_uniform(room_num) + 1;
 			just_moved_by_bats = 1;
 		}
 
@@ -461,7 +461,7 @@ shoot(char *room_list)
 		if (next == 0)
 			break;	/* Old wumpus used room 0 as the terminator */
 
-		chance = random() % 10;
+		chance = arc4random_uniform(10);
 		if (roomcnt == 4 && chance < 2) {
 			(void)printf(
 "Your finger slips on the bowstring!  *twaaaaaang*\n\
@@ -482,11 +482,12 @@ The arrow is weakly shot and can go no further than room %d!\n",arrow_location);
 /*			if (next > room_num) {
  *				(void)printf(
  * "A faint gleam tells you the arrow has gone through a magic tunnel!\n");
- *				arrow_location = (random() % room_num) + 1;
+ *				arrow_location =
+ *				    arc4random_uniform(room_num) + 1;
  *			} else
  */				arrow_location = next;
 		} else {
-			link = (random() % link_num);
+			link = (arc4random_uniform(link_num));
 			if (cave[arrow_location].tunnel[link] == player_loc)
 				(void)printf(
 "*thunk*  The arrow can't find a way from %d to %d and flies back into\n\
@@ -529,11 +530,13 @@ into room %d!\n", arrow_location, next, cave[arrow_location].tunnel[link]);
 		/* each time you shoot, it's more likely the wumpus moves */
 		static int lastchance = 2;
 
-		if (random() % level == EASY ? 12 : 9 < (lastchance += 2)) {
+		if (arc4random_uniform(level) == EASY ?
+		    12 : 9 < (lastchance += 2)) {
 			move_wump();
 			if (wumpus_loc == player_loc) {
 				wump_walk_kill();
-				lastchance = random() % 3;   /* Reset for next game */
+				/* Reset for next game */
+				lastchance = arc4random_uniform(3);
 				return(1);
 			}
 
@@ -587,7 +590,7 @@ cave_init(void)
 	 * divisor of (delta + 1) and room_num to be 1
 	 */
 	do {
-		delta = (random() % (room_num - 1)) + 1;
+		delta = arc4random_uniform(room_num - 1) + 1;
 	} while (gcd(room_num, delta + 1) != 1);
 
 	for (i = 1; i <= room_num; ++i) {
@@ -602,7 +605,7 @@ cave_init(void)
 		for (j = 2; j < link_num ; j++) {
 			if (cave[i].tunnel[j] != -1)
 				continue;
-try_again:		link = (random() % room_num) + 1;
+try_again:		link = arc4random_uniform(room_num) + 1;
 			/* skip duplicates */
 			for (k = 0; k < j; k++)
 				if (cave[i].tunnel[k] == link)
@@ -611,7 +614,7 @@ try_again:		link = (random() % room_num) + 1;
 			if (link == i)
 				goto try_again;
 			cave[i].tunnel[j] = link;
-			if (random() % 2 == 1)
+			if (arc4random() % 2 == 1)
 				continue;
 			for (k = 0; k < link_num; ++k) {
 				/* if duplicate, skip it */
@@ -678,7 +681,7 @@ dodecahedral_cave_init(void)
 	for (i = 0; i < 20; i++)
 		loc[i] = i;
 	for (i = 0; i < 20; i++) {
-		j = random() % (20 - i);
+		j = arc4random_uniform(20 - i);
 		if (j) {
 			temp = loc[i];
 			loc[i] = loc[i + j];
@@ -731,7 +734,7 @@ initialize_things_in_cave(void)
 	/* place some bats, pits, the wumpus, and the player. */
 	for (i = 0; i < bat_num; ++i) {
 		do {
-			loc = (random() % room_num) + 1;
+			loc = arc4random_uniform(room_num) + 1;
 		} while (cave[loc].has_a_bat);
 		cave[loc].has_a_bat = 1;
 #ifdef DEBUG
@@ -742,7 +745,7 @@ initialize_things_in_cave(void)
 
 	for (i = 0; i < pit_num; ++i) {
 		do {
-			loc = (random() % room_num) + 1;
+			loc = arc4random_uniform(room_num) + 1;
 		} while (cave[loc].has_a_pit || cave[loc].has_a_bat);
 		/* Above used to be &&;  || makes sense but so does just
 		 * checking cave[loc].has_a_pit  */
@@ -753,14 +756,14 @@ initialize_things_in_cave(void)
 #endif
 	}
 
-	wumpus_loc = (random() % room_num) + 1;
+	wumpus_loc = arc4random_uniform(room_num) + 1;
 #ifdef DEBUG
 	if (debug)
 		(void)printf("<wumpus in room %d>\n", wumpus_loc);
 #endif
 
 	do {
-		player_loc = (random() % room_num) + 1;
+		player_loc = arc4random_uniform(room_num) + 1;
 	} while (player_loc == wumpus_loc || cave[player_loc].has_a_pit ||
 			cave[player_loc].has_a_bat);
 	/* Replaced (level == HARD ?
@@ -839,7 +842,7 @@ wump_nearby(void)
 void
 move_wump(void)
 {
-	wumpus_loc = cave[wumpus_loc].tunnel[random() % link_num];
+	wumpus_loc = cave[wumpus_loc].tunnel[arc4random_uniform(link_num)];
 #ifdef DEBUG
 	if (debug)
 		(void)printf("Wumpus moved to room %d\n",wumpus_loc);
