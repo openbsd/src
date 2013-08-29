@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.43 2011/09/01 18:49:56 kettenis Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.44 2013/08/29 19:06:40 syl Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -433,6 +433,8 @@ struct iwn_tx_cmd {
 #define IWN_CMD_SET_CRITICAL_TEMP	164
 #define IWN_CMD_SET_SENSITIVITY		168
 #define IWN_CMD_PHY_CALIB		176
+#define IWN_CMD_BT_COEX_PRIOTABLE	204
+#define IWN_CMD_BT_COEX_PROT		205
 
 	uint8_t	flags;
 	uint8_t	idx;
@@ -830,7 +832,7 @@ struct iwn5000_cmd_txpower {
 	uint8_t	reserved;
 } __packed;
 
-/* Structure for command IWN_CMD_BLUETOOTH. */
+/* Structures for command IWN_CMD_BLUETOOTH. */
 struct iwn_bluetooth {
 	uint8_t		flags;
 #define IWN_BT_COEX_CHAN_ANN	(1 << 0)
@@ -846,6 +848,55 @@ struct iwn_bluetooth {
 	uint8_t		reserved;
 	uint32_t	kill_ack;
 	uint32_t	kill_cts;
+} __packed;
+
+struct iwn6000_btcoex_config {
+	uint8_t		flags;
+#define	IWN_BT_FLAG_COEX6000_CHAN_INHIBITION	1
+#define	IWN_BT_FLAG_COEX6000_MODE_MASK		((1 << 3) | (1 << 4) | (1 << 5))
+#define	IWN_BT_FLAG_COEX6000_MODE_SHIFT		3
+#define	IWN_BT_FLAG_COEX6000_MODE_DISABLED	0
+#define	IWN_BT_FLAG_COEX6000_MODE_LEGACY_2W	1
+#define	IWN_BT_FLAG_COEX6000_MODE_3W		2
+#define	IWN_BT_FLAG_COEX6000_MODE_4W		3
+#define	IWN_BT_FLAG_UCODE_DEFAULT		(1<<6)
+#define	IWN_BT_FLAG_SYNC_2_BT_DISABLE		(1<<7)
+
+	uint8_t		lead_time;
+	uint8_t		max_kill;
+	uint8_t		bt3_t7_timer;
+	uint32_t	kill_ack;
+	uint32_t	kill_cts;
+	uint8_t		sample_time;
+	uint8_t		bt3_t2_timer;
+	uint16_t	bt4_reaction;
+	uint32_t	lookup_table[12];
+	uint16_t	bt4_decision;
+	uint16_t	valid;
+	uint8_t		prio_boost;
+	uint8_t		tx_prio_boost;
+	uint16_t	rx_prio_boost;
+} __packed;
+
+/* Structure for command IWN_CMD_BT_COEX_PRIOTABLE */
+struct iwn_btcoex_priotable {
+	uint8_t		calib_init1;
+	uint8_t		calib_init2;
+	uint8_t		calib_periodic_low1;
+	uint8_t		calib_periodic_low2;
+	uint8_t		calib_periodic_high1;
+	uint8_t		calib_periodic_high2;
+	uint8_t		dtim;
+	uint8_t		scan52;
+	uint8_t		scan24;
+	uint8_t		reserved[7];
+} __packed;
+
+/* Structure for command IWN_CMD_BT_COEX_PROT */
+struct iwn_btcoex_prot {
+	uint8_t		open;
+	uint8_t		type;
+	uint8_t		reserved[2];
 } __packed;
 
 /* Structure for command IWN_CMD_SET_CRITICAL_TEMP. */
