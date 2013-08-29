@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.10 2013/06/02 19:47:01 jasper Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.11 2013/08/29 07:53:07 pirofti Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -211,6 +211,8 @@ octeon_pcibus_attach(struct device *parent, struct device *self, void *aux)
 	sc = (struct octeon_pcibus_softc *)self;
 	aa = aux;
 	sc->sc_aa = aa;
+
+	printf("\n");
 
 	/*
 	 * Attach PCI bus.
