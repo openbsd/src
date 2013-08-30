@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_audio.c,v 1.16 2013/05/15 08:29:24 ratchov Exp $	*/
+/*	$OpenBSD: zaurus_audio.c,v 1.17 2013/08/30 14:18:38 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -57,6 +57,8 @@ int	zaudio_match(struct device *, void *, void *);
 void	zaudio_attach(struct device *, struct device *, void *);
 int	zaudio_detach(struct device *, int);
 int	zaudio_activate(struct device *, int);
+void    zaudio_pintr(void *);
+void    zaudio_rintr(void *);
 
 #define ZAUDIO_OP_SPKR	0
 #define ZAUDIO_OP_HP	1
@@ -92,6 +94,8 @@ struct zaudio_softc {
 	int			sc_state;
 	int			sc_icount;
 	struct timeout		sc_to; 
+	void		      (*sc_pintr)(void *);
+	void		       *sc_parg;
 };
 
 struct cfattach zaudio_ca = {
@@ -979,6 +983,16 @@ zaudio_get_props(void *hdl)
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
+void
+zaudio_pintr(void *hdl)
+{
+	struct zaudio_softc *sc = hdl;
+
+	mtx_enter(&audio_lock);
+	sc->sc_pintr(sc->sc_parg);
+	mtx_leave(&audio_lock);
+}
+
 /*
  * called by interrupt code-path, don't lock
  */
@@ -996,7 +1010,9 @@ zaudio_start_output(void *hdl, void *block, int bsize, void (*intr)(void *),
 	}
 
 	/* Start DMA via I2S */
-	err = pxa2x0_i2s_start_output(&sc->sc_i2s, block, bsize, intr, intrarg);
+	sc->sc_pintr = intr;
+	sc->sc_parg = intrarg;
+	err = pxa2x0_i2s_start_output(&sc->sc_i2s, block, bsize, zaudio_pintr, sc);
 	if (err) {
 		zaudio_standby(sc);
 		sc->sc_playing = 0;
