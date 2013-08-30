@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space_asm_armv7.S,v 1.1 2013/05/09 20:41:47 patrick Exp $	*/
+/*	$OpenBSD: bus_space_asm_armv7.S,v 1.2 2013/08/30 09:24:42 patrick Exp $	*/
 /*	$NetBSD: bus_space_asm_armv7.S,v 1.3 2003/03/27 19:46:14 mycroft Exp $	*/
 
 /*
@@ -38,8 +38,8 @@
 #include <arm/asm.h>
 #include <arm/cpuconf.h>
 
-#define	DSB	.long	0xf57ff040
-#define	ISB	.long	0xf57ff060
+#define	DSB	.long	0xf57ff04f
+#define	ISB	.long	0xf57ff06f
 #define	WFI	.long	0xe320f003
 
 /*

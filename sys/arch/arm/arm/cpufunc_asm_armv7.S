@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm_armv7.S,v 1.6 2013/03/30 01:30:30 patrick Exp $ */
+/* $OpenBSD: cpufunc_asm_armv7.S,v 1.7 2013/08/30 09:24:41 patrick Exp $ */
 /*
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
  *
@@ -18,8 +18,8 @@
 #include <machine/cpu.h>
 #include <machine/asm.h>
 
-#define	DSB	.long	0xf57ff040
-#define	ISB	.long	0xf57ff060
+#define	DSB	.long	0xf57ff04f
+#define	ISB	.long	0xf57ff06f
 #define	WFI	.long	0xe320f003
 
 ENTRY(armv7_cpu_sleep)
