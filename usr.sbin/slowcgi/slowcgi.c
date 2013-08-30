@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.6 2013/08/26 08:02:03 blambert Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.7 2013/08/30 07:10:26 blambert Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -265,6 +265,8 @@ main(int argc, char *argv[])
 	if (chdir("/") == -1)
 		lerr(1, "chdir(%s)", pw->pw_dir);
 
+	ldebug("chroot: %s", pw->pw_dir);
+
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
@@ -329,6 +331,8 @@ slowcgi_listen(char *path, gid_t gid)
 	event_set(&l->ev, fd, EV_READ | EV_PERSIST, slowcgi_accept, l);
 	event_add(&l->ev, NULL);
 	evtimer_set(&l->pause, slowcgi_paused, l);
+
+	ldebug("socket: %s", path);
 }
 
 void
@@ -430,12 +434,22 @@ slowcgi_sig_handler(int sig, short event, void *arg)
 				c = ncs->client;
 				break;
 			}
-		if (c != NULL) {
-			c->script_status = WEXITSTATUS(status);
-			if (c->script_flags == (STDOUT_DONE | STDERR_DONE))
-				create_end_request(c);
-			c->script_flags |= SCRIPT_DONE;
+		if (c == NULL) {
+			lwarnx("caught exit of unknown child %i", pid);
+			break;
 		}
+
+		if (WIFSIGNALED(status))
+			c->script_status = WTERMSIG(status);
+		else
+			c->script_status = WEXITSTATUS(status);
+
+		if (c->script_flags == (STDOUT_DONE | STDERR_DONE))
+			create_end_request(c);
+		c->script_flags |= SCRIPT_DONE;
+
+		ldebug("wait: %s", c->script_name);
+		break;
 	case SIGPIPE:
 		/* ignore */
 		break;
