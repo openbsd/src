@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.66 2013/06/20 12:03:40 mpi Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.67 2013/08/30 18:23:17 haesbaert Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -635,6 +635,7 @@ pfi_update_status(const char *name, struct pf_status *pfs)
 			bzero(p->pfik_bytes, sizeof(p->pfik_bytes));
 			p->pfik_tzero = time_second;
 		}
+		splx(s);
 		return;
 	}
 
