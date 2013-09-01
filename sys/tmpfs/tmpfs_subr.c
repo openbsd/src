@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.2 2013/06/03 10:37:02 espie Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.3 2013/09/01 17:02:56 guenther Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -644,6 +644,7 @@ tmpfs_dir_getdotdent(tmpfs_node_t *node, struct uio *uio)
 	/* dentp = kmem_alloc(sizeof(struct dirent), KM_SLEEP); */
 	dentp = malloc(sizeof(struct dirent), M_TEMP, M_WAITOK);
 	dentp->d_fileno = node->tn_id;
+	dentp->d_off = TMPFS_DIRCOOKIE_DOTDOT;
 	dentp->d_type = DT_DIR;
 	dentp->d_namlen = 1;
 	dentp->d_name[0] = '.';
@@ -671,14 +672,23 @@ int
 tmpfs_dir_getdotdotdent(tmpfs_node_t *node, struct uio *uio)
 {
 	struct dirent *dentp;
+	tmpfs_dirent_t *de;
+	off_t next;
 	int error;
 
 	TMPFS_VALIDATE_DIR(node);
 	KASSERT(uio->uio_offset == TMPFS_DIRCOOKIE_DOTDOT);
 
+	de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir);
+	if (de == NULL)
+		next = TMPFS_DIRCOOKIE_EOF;
+	else
+		next = tmpfs_dircookie(de);
+
 	/* dentp = kmem_alloc(sizeof(struct dirent), KM_SLEEP); */
 	dentp = malloc(sizeof(struct dirent), M_TEMP, M_WAITOK);
 	dentp->d_fileno = node->tn_spec.tn_dir.tn_parent->tn_id;
+	dentp->d_off = next;
 	dentp->d_type = DT_DIR;
 	dentp->d_namlen = 2;
 	dentp->d_name[0] = '.';
@@ -690,15 +700,8 @@ tmpfs_dir_getdotdotdent(tmpfs_node_t *node, struct uio *uio)
 		error = -1;
 	else {
 		error = uiomove(dentp, dentp->d_reclen, uio);
-		if (error == 0) {
-			tmpfs_dirent_t *de;
-
-			de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir);
-			if (de == NULL)
-				uio->uio_offset = TMPFS_DIRCOOKIE_EOF;
-			else
-				uio->uio_offset = tmpfs_dircookie(de);
-		}
+		if (error == 0)
+			uio->uio_offset = next;
 	}
 	tmpfs_update(node, TMPFS_NODE_ACCESSED);
 	/* kmem_free(dentp, sizeof(struct dirent)); */
@@ -729,7 +732,7 @@ tmpfs_dir_lookupbycookie(tmpfs_node_t *node, off_t cookie)
 }
 
 /*
- * tmpfs_dir_getdents: relper function for tmpfs_readdir.
+ * tmpfs_dir_getdents: helper function for tmpfs_readdir.
  *
  * => Returns as much directory entries as can fit in the uio space.
  * => The read starts at uio->uio_offset.
@@ -739,7 +742,7 @@ tmpfs_dir_getdents(tmpfs_node_t *node, struct uio *uio, off_t *cntp)
 {
 	tmpfs_dirent_t *de;
 	struct dirent *dentp;
-	off_t startcookie;
+	off_t cookie;
 	int error;
 
 	KASSERT(VOP_ISLOCKED(node->tn_vnode));
@@ -750,13 +753,13 @@ tmpfs_dir_getdents(tmpfs_node_t *node, struct uio *uio, off_t *cntp)
 	 * the last readdir in the node, so use those values if appropriate.
 	 * Otherwise do a linear scan to find the requested entry.
 	 */
-	startcookie = uio->uio_offset;
-	KASSERT(startcookie != TMPFS_DIRCOOKIE_DOT);
-	KASSERT(startcookie != TMPFS_DIRCOOKIE_DOTDOT);
-	if (startcookie == TMPFS_DIRCOOKIE_EOF) {
+	cookie = uio->uio_offset;
+	KASSERT(cookie != TMPFS_DIRCOOKIE_DOT);
+	KASSERT(cookie != TMPFS_DIRCOOKIE_DOTDOT);
+	if (cookie == TMPFS_DIRCOOKIE_EOF) {
 		return 0;
 	} else {
-		de = tmpfs_dir_lookupbycookie(node, startcookie);
+		de = tmpfs_dir_lookupbycookie(node, cookie);
 	}
 	if (de == NULL) {
 		return EINVAL;
@@ -810,6 +813,13 @@ tmpfs_dir_getdents(tmpfs_node_t *node, struct uio *uio, off_t *cntp)
 		dentp->d_name[de->td_namelen] = '\0';
 		dentp->d_reclen = DIRENT_SIZE(dentp);
 
+		de = TAILQ_NEXT(de, td_entries);
+		if (de == NULL)
+			cookie = TMPFS_DIRCOOKIE_EOF;
+		else
+			cookie = tmpfs_dircookie(de);
+		dentp->d_off = cookie;
+
 		/* Stop reading if the directory entry we are treating is
 		 * bigger than the amount of data that can be returned. */
 		if (dentp->d_reclen > uio->uio_resid) {
@@ -824,19 +834,11 @@ tmpfs_dir_getdents(tmpfs_node_t *node, struct uio *uio, off_t *cntp)
 		error = uiomove(dentp, dentp->d_reclen, uio);
 
 		(*cntp)++;
-		de = TAILQ_NEXT(de, td_entries);
 	} while (error == 0 && uio->uio_resid > 0 && de != NULL);
 
 	/* Update the offset and cache. */
-	if (de == NULL) {
-		uio->uio_offset = TMPFS_DIRCOOKIE_EOF;
-		node->tn_spec.tn_dir.tn_readdir_lastn = 0;
-		node->tn_spec.tn_dir.tn_readdir_lastp = NULL;
-	} else {
-		node->tn_spec.tn_dir.tn_readdir_lastn = uio->uio_offset =
-		    tmpfs_dircookie(de);
-		node->tn_spec.tn_dir.tn_readdir_lastp = de;
-	}
+	node->tn_spec.tn_dir.tn_readdir_lastn = uio->uio_offset = cookie;
+	node->tn_spec.tn_dir.tn_readdir_lastp = de;
 	tmpfs_update(node, TMPFS_NODE_ACCESSED);
 	/* kmem_free(dentp, sizeof(struct dirent)); */
 	free(dentp, M_TEMP);
