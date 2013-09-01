@@ -1,4 +1,4 @@
-/*	$OpenBSD: sid.h,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: sid.h,v 1.2 2013/09/01 10:39:39 jsg Exp $	*/
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -62,6 +62,10 @@
 #define DMIF_ADDR_CONFIG  				0xBD4
 
 #define DMIF_ADDR_CALC  				0xC00
+
+#define	PIPE0_DMIF_BUFFER_CONTROL			  0x0ca0
+#       define DMIF_BUFFERS_ALLOCATED(x)                  ((x) << 0)
+#       define DMIF_BUFFERS_ALLOCATED_COMPLETED           (1 << 4)
 
 #define	SRBM_STATUS				        0xE50
 
