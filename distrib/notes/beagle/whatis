@@ -1,5 +1,6 @@
-dnl	$OpenBSD: whatis,v 1.1 2011/03/22 18:33:51 jasper Exp $
+dnl	$OpenBSD: whatis,v 1.2 2013/09/02 09:16:56 rapha Exp $
 
-OpenBSD/MACHINE runs on a the original BeagleBoard as well as the newer
-xM models. Hardware support is currently very limited, but this port is
-a heavy work in progress.
+OpenBSD/MACHINE runs on the BeagleBoard and newer xM models, as well as
+PandaBoard, PandaBoard ES, BeagleBone, and BeagleBone Black. Hardware
+support is currently very limited, but this port is a heavy work in
+progress.
