@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.c,v 1.2 2013/09/02 06:25:27 jsg Exp $	*/
+/*	$OpenBSD: drm_crtc.c,v 1.3 2013/09/02 10:18:26 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -34,6 +34,7 @@
 #include "drm_crtc.h"
 #include "drm_edid.h"
 #include "drm_fourcc.h"
+#include "refcount.h"
 
 /* Avoid boilerplate.  I'm tired of typing. */
 #define DRM_ENUM_NAME_FN(fnname, list)				\
@@ -313,7 +314,7 @@ int drm_framebuffer_init(struct drm_device *dev, struct drm_framebuffer *fb,
 {
 	int ret;
 
-	fb->refcount = 0;
+	refcount_init(&fb->refcount, 1);
 
 	ret = drm_mode_object_get(dev, &fb->base, DRM_MODE_OBJECT_FB);
 	if (ret)
@@ -346,7 +347,7 @@ void drm_framebuffer_unreference(struct drm_framebuffer *fb)
 #ifdef notyet
 	WARN_ON(!mutex_is_locked(&dev->mode_config.mutex));
 #endif
-	if (--fb->refcount == 0)
+	if (refcount_release(&fb->refcount))
 		drm_framebuffer_free(fb);
 }
 EXPORT_SYMBOL(drm_framebuffer_unreference);
@@ -357,7 +358,7 @@ EXPORT_SYMBOL(drm_framebuffer_unreference);
 void drm_framebuffer_reference(struct drm_framebuffer *fb)
 {
 	DRM_DEBUG("FB ID: %d\n", fb->base.id);
-	fb->refcount++;
+	refcount_acquire(&fb->refcount);
 }
 EXPORT_SYMBOL(drm_framebuffer_reference);
 
