@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.405 2013/08/22 19:02:21 djm Exp $ */
+/* $OpenBSD: sshd.c,v 1.406 2013/09/02 22:00:34 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -377,7 +377,6 @@ generate_ephemeral_server_key(void)
 	verbose("RSA key generation complete.");
 
 	arc4random_buf(sensitive_data.ssh1_cookie, SSH_SESSION_KEY_LENGTH);
-	arc4random_stir();
 }
 
 /*ARGSUSED*/
@@ -591,7 +590,6 @@ privsep_preauth_child(void)
 	/* Enable challenge-response authentication for privilege separation */
 	privsep_challenge_enable();
 
-	arc4random_stir();
 	arc4random_buf(rnd, sizeof(rnd));
 	RAND_seed(rnd, sizeof(rnd));
 	bzero(rnd, sizeof(rnd));
@@ -728,7 +726,6 @@ privsep_postauth(Authctxt *authctxt)
 	/* Demote the private keys to public keys. */
 	demote_sensitive_data();
 
-	arc4random_stir();
 	arc4random_buf(rnd, sizeof(rnd));
 	RAND_seed(rnd, sizeof(rnd));
 	bzero(rnd, sizeof(rnd));
@@ -1307,7 +1304,6 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 			 * Ensure that our random state differs
 			 * from that of the child
 			 */
-			arc4random_stir();
 			arc4random_buf(rnd, sizeof(rnd));
 			RAND_seed(rnd, sizeof(rnd));
 			bzero(rnd, sizeof(rnd));
@@ -1766,9 +1762,6 @@ main(int ac, char **av)
 	}
 	/* Reinitialize the log (because of the fork above). */
 	log_init(__progname, options.log_level, options.log_facility, log_stderr);
-
-	/* Initialize the random number generator. */
-	arc4random_stir();
 
 	/* Chdir to the root directory so that the current disk can be
 	   unmounted if desired. */
