@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc_helper.c,v 1.2 2013/08/12 04:11:52 jsg Exp $	*/
+/*	$OpenBSD: drm_crtc_helper.c,v 1.3 2013/09/02 06:25:27 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -37,17 +37,6 @@
 #include "drm_fb_helper.h"
 #include "drm_edid.h"
 
-void	 drm_mode_validate_flag(struct drm_connector *, int);
-void	 drm_encoder_disable(struct drm_encoder *);
-void	 drm_calc_timestamping_constants(struct drm_crtc *);
-bool	 drm_encoder_crtc_ok(struct drm_encoder *, struct drm_crtc *);
-void	 drm_crtc_prepare_encoders(struct drm_device *);
-int	 drm_helper_choose_encoder_dpms(struct drm_encoder *);
-int	 drm_helper_choose_crtc_dpms(struct drm_crtc *);
-int	 drm_crtc_helper_disable(struct drm_crtc *);
-void	 drm_output_poll_execute(void *, void *);
-void	 drm_output_poll_tick(void *);
-
 /**
  * drm_helper_move_panel_connectors_to_head() - move panels to the front in the
  * 						connector list
@@ -59,8 +48,7 @@ void	 drm_output_poll_tick(void *);
  * (eDP/LVDS) panels to the front of the connector list, instead of
  * painstakingly trying to initialize them in the right order.
  */
-void
-drm_helper_move_panel_connectors_to_head(struct drm_device *dev)
+void drm_helper_move_panel_connectors_to_head(struct drm_device *dev)
 {
 	struct drm_connector *connector, *tmp;
 	struct list_head panel_list;
@@ -80,8 +68,7 @@ EXPORT_SYMBOL(drm_helper_move_panel_connectors_to_head);
 
 static bool drm_kms_helper_poll = true;
 
-void
-drm_mode_validate_flag(struct drm_connector *connector,
+static void drm_mode_validate_flag(struct drm_connector *connector,
 				   int flags)
 {
 	struct drm_display_mode *mode;
@@ -122,8 +109,7 @@ drm_mode_validate_flag(struct drm_connector *connector,
  * RETURNS:
  * Number of modes found on @connector.
  */
-int
-drm_helper_probe_single_connector_modes(struct drm_connector *connector,
+int drm_helper_probe_single_connector_modes(struct drm_connector *connector,
 					    uint32_t maxX, uint32_t maxY)
 {
 	struct drm_device *dev = connector->dev;
@@ -225,8 +211,7 @@ EXPORT_SYMBOL(drm_helper_probe_single_connector_modes);
  * RETURNS:
  * True if @encoder is part of the mode_config, false otherwise.
  */
-bool
-drm_helper_encoder_in_use(struct drm_encoder *encoder)
+bool drm_helper_encoder_in_use(struct drm_encoder *encoder)
 {
 	struct drm_connector *connector;
 	struct drm_device *dev = encoder->dev;
@@ -249,8 +234,7 @@ EXPORT_SYMBOL(drm_helper_encoder_in_use);
  * RETURNS:
  * True if @crtc is part of the mode_config, false otherwise.
  */
-bool
-drm_helper_crtc_in_use(struct drm_crtc *crtc)
+bool drm_helper_crtc_in_use(struct drm_crtc *crtc)
 {
 	struct drm_encoder *encoder;
 	struct drm_device *dev = crtc->dev;
@@ -262,7 +246,7 @@ drm_helper_crtc_in_use(struct drm_crtc *crtc)
 }
 EXPORT_SYMBOL(drm_helper_crtc_in_use);
 
-void
+static void
 drm_encoder_disable(struct drm_encoder *encoder)
 {
 	struct drm_encoder_helper_funcs *encoder_funcs = encoder->helper_private;
@@ -283,8 +267,7 @@ drm_encoder_disable(struct drm_encoder *encoder)
  * If an connector or CRTC isn't part of @dev's mode_config, it can be disabled
  * by calling its dpms function, which should power it off.
  */
-void
-drm_helper_disable_unused_functions(struct drm_device *dev)
+void drm_helper_disable_unused_functions(struct drm_device *dev)
 {
 	struct drm_encoder *encoder;
 	struct drm_connector *connector;
@@ -326,8 +309,7 @@ EXPORT_SYMBOL(drm_helper_disable_unused_functions);
  *
  * Return false if @encoder can't be driven by @crtc, true otherwise.
  */
-bool
-drm_encoder_crtc_ok(struct drm_encoder *encoder,
+static bool drm_encoder_crtc_ok(struct drm_encoder *encoder,
 				struct drm_crtc *crtc)
 {
 	struct drm_device *dev;
@@ -355,7 +337,7 @@ drm_encoder_crtc_ok(struct drm_encoder *encoder,
  * CRTC.  If they don't match, we have to disable the output and the CRTC
  * since the driver will have to re-route things.
  */
-void
+static void
 drm_crtc_prepare_encoders(struct drm_device *dev)
 {
 	struct drm_encoder_helper_funcs *encoder_funcs;
@@ -396,8 +378,7 @@ drm_crtc_prepare_encoders(struct drm_device *dev)
  * RETURNS:
  * True if the mode was set successfully, or false otherwise.
  */
-bool
-drm_crtc_helper_set_mode(struct drm_crtc *crtc,
+bool drm_crtc_helper_set_mode(struct drm_crtc *crtc,
 			      struct drm_display_mode *mode,
 			      int x, int y,
 			      struct drm_framebuffer *old_fb)
@@ -522,7 +503,7 @@ done:
 EXPORT_SYMBOL(drm_crtc_helper_set_mode);
 
 
-int
+static int
 drm_crtc_helper_disable(struct drm_crtc *crtc)
 {
 	struct drm_device *dev = crtc->dev;
@@ -562,8 +543,7 @@ drm_crtc_helper_disable(struct drm_crtc *crtc)
  * RETURNS:
  * Returns 0 on success, ERRNO on failure.
  */
-int
-drm_crtc_helper_set_config(struct drm_mode_set *set)
+int drm_crtc_helper_set_config(struct drm_mode_set *set)
 {
 	struct drm_device *dev;
 	struct drm_crtc *save_crtcs, *new_crtc, *crtc;
@@ -830,8 +810,7 @@ fail:
 }
 EXPORT_SYMBOL(drm_crtc_helper_set_config);
 
-int
-drm_helper_choose_encoder_dpms(struct drm_encoder *encoder)
+static int drm_helper_choose_encoder_dpms(struct drm_encoder *encoder)
 {
 	int dpms = DRM_MODE_DPMS_OFF;
 	struct drm_connector *connector;
@@ -844,8 +823,7 @@ drm_helper_choose_encoder_dpms(struct drm_encoder *encoder)
 	return dpms;
 }
 
-int
-drm_helper_choose_crtc_dpms(struct drm_crtc *crtc)
+static int drm_helper_choose_crtc_dpms(struct drm_crtc *crtc)
 {
 	int dpms = DRM_MODE_DPMS_OFF;
 	struct drm_connector *connector;
@@ -868,8 +846,7 @@ drm_helper_choose_crtc_dpms(struct drm_crtc *crtc)
  * state for all encoders and crtcs in the output mesh and calls the ->dpms()
  * callback provided by the driver appropriately.
  */
-void
-drm_helper_connector_dpms(struct drm_connector *connector, int mode)
+void drm_helper_connector_dpms(struct drm_connector *connector, int mode)
 {
 	struct drm_encoder *encoder = connector->encoder;
 	struct drm_crtc *crtc = encoder ? encoder->crtc : NULL;
@@ -917,8 +894,7 @@ drm_helper_connector_dpms(struct drm_connector *connector, int mode)
 }
 EXPORT_SYMBOL(drm_helper_connector_dpms);
 
-int
-drm_helper_mode_fill_fb_struct(struct drm_framebuffer *fb,
+int drm_helper_mode_fill_fb_struct(struct drm_framebuffer *fb,
 				   struct drm_mode_fb_cmd2 *mode_cmd)
 {
 	int i;
@@ -937,8 +913,7 @@ drm_helper_mode_fill_fb_struct(struct drm_framebuffer *fb,
 }
 EXPORT_SYMBOL(drm_helper_mode_fill_fb_struct);
 
-int
-drm_helper_resume_force_mode(struct drm_device *dev)
+int drm_helper_resume_force_mode(struct drm_device *dev)
 {
 	struct drm_crtc *crtc;
 	struct drm_encoder *encoder;
@@ -982,8 +957,7 @@ drm_helper_resume_force_mode(struct drm_device *dev)
 }
 EXPORT_SYMBOL(drm_helper_resume_force_mode);
 
-void
-drm_kms_helper_hotplug_event(struct drm_device *dev)
+void drm_kms_helper_hotplug_event(struct drm_device *dev)
 {
 	/* send a uevent + call fbdev */
 //	drm_sysfs_hotplug_event(dev);
@@ -992,18 +966,8 @@ drm_kms_helper_hotplug_event(struct drm_device *dev)
 }
 EXPORT_SYMBOL(drm_kms_helper_hotplug_event);
 
-void
-drm_output_poll_tick(void *arg)
-{
-	struct drm_device *dev = arg;
-
-	workq_queue_task(NULL, &dev->mode_config.poll_task, 0,
-	    drm_output_poll_execute, dev, NULL);
-}
-
 #define DRM_OUTPUT_POLL_SECONDS 10
-void
-drm_output_poll_execute(void *arg1, void *arg2)
+static void drm_output_poll_execute(void *arg1, void *arg2)
 {
 	struct drm_device *dev = (struct drm_device *)arg1;
 	struct drm_connector *connector;
@@ -1054,8 +1018,16 @@ drm_output_poll_execute(void *arg1, void *arg2)
 		    DRM_OUTPUT_POLL_SECONDS);
 }
 
-void
-drm_kms_helper_poll_disable(struct drm_device *dev)
+static void
+drm_output_poll_tick(void *arg)
+{
+	struct drm_device *dev = arg;
+
+	workq_queue_task(NULL, &dev->mode_config.poll_task, 0,
+	    drm_output_poll_execute, dev, NULL);
+}
+
+void drm_kms_helper_poll_disable(struct drm_device *dev)
 {
 	if (!dev->mode_config.poll_enabled)
 		return;
@@ -1063,8 +1035,7 @@ drm_kms_helper_poll_disable(struct drm_device *dev)
 }
 EXPORT_SYMBOL(drm_kms_helper_poll_disable);
 
-void
-drm_kms_helper_poll_enable(struct drm_device *dev)
+void drm_kms_helper_poll_enable(struct drm_device *dev)
 {
 	bool poll = false;
 	struct drm_connector *connector;
@@ -1084,8 +1055,7 @@ drm_kms_helper_poll_enable(struct drm_device *dev)
 }
 EXPORT_SYMBOL(drm_kms_helper_poll_enable);
 
-void
-drm_kms_helper_poll_init(struct drm_device *dev)
+void drm_kms_helper_poll_init(struct drm_device *dev)
 {
 	timeout_set(&dev->mode_config.output_poll_to, drm_output_poll_tick,
 	    dev);
@@ -1095,15 +1065,13 @@ drm_kms_helper_poll_init(struct drm_device *dev)
 }
 EXPORT_SYMBOL(drm_kms_helper_poll_init);
 
-void
-drm_kms_helper_poll_fini(struct drm_device *dev)
+void drm_kms_helper_poll_fini(struct drm_device *dev)
 {
 	drm_kms_helper_poll_disable(dev);
 }
 EXPORT_SYMBOL(drm_kms_helper_poll_fini);
 
-void
-drm_helper_hpd_irq_event(struct drm_device *dev)
+void drm_helper_hpd_irq_event(struct drm_device *dev)
 {
 	struct drm_connector *connector;
 	enum drm_connector_status old_status;

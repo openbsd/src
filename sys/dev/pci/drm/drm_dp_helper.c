@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_dp_helper.c,v 1.3 2013/03/30 18:33:56 kettenis Exp $	*/
+/*	$OpenBSD: drm_dp_helper.c,v 1.4 2013/09/02 06:25:27 jsg Exp $	*/
 /*
  * Copyright © 2009 Keith Packard
  *
@@ -33,24 +33,8 @@
  * blocks, ...
  */
 
-int	 i2c_algo_dp_aux_transaction(struct i2c_controller *, int, uint8_t,
-	     uint8_t *);
-int	 i2c_algo_dp_aux_address(struct i2c_controller *, u16, bool);
-void	 i2c_algo_dp_aux_stop(struct i2c_controller *, bool);
-int	 i2c_algo_dp_aux_put_byte(struct i2c_controller *, u8);
-int	 i2c_algo_dp_aux_get_byte(struct i2c_controller *, u8 *);
-void	 i2c_dp_aux_reset_bus(struct i2c_controller *);
-int	 i2c_dp_aux_prepare_bus(struct i2c_controller *);
-int	 i2c_dp_aux_add_bus(struct i2c_controller *);
-u8	 dp_link_status(u8 link_status[DP_LINK_STATUS_SIZE], int);
-u8	 dp_get_lane_status(u8 link_status[DP_LINK_STATUS_SIZE], int);
-int	 i2c_algo_dp_aux_exec(void *, i2c_op_t, i2c_addr_t,
-	    const void *, size_t, void *, size_t, int);
-void	 i2c_dp_aux_release_bus(void *, int);
-int	 i2c_dp_aux_acquire_bus(void *, int);
-
 /* Run a single AUX_CH I2C transaction, writing/reading data as necessary */
-int
+static int
 i2c_algo_dp_aux_transaction(struct i2c_controller *adapter, int mode,
 			    uint8_t write_byte, uint8_t *read_byte)
 {
@@ -71,7 +55,7 @@ i2c_algo_dp_aux_transaction(struct i2c_controller *adapter, int mode,
  * the connection with the new address, this is used for doing
  * a write followed by a read (as needed for DDC)
  */
-int
+static int
 i2c_algo_dp_aux_address(struct i2c_controller *adapter, u16 address, bool reading)
 {
 	struct i2c_algo_dp_aux_data *algo_data = adapter->ic_cookie;
@@ -92,7 +76,7 @@ i2c_algo_dp_aux_address(struct i2c_controller *adapter, u16 address, bool readin
  * Stop the I2C transaction. This closes out the link, sending
  * a bare address packet with the MOT bit turned off
  */
-void
+static void
 i2c_algo_dp_aux_stop(struct i2c_controller *adapter, bool reading)
 {
 	struct i2c_algo_dp_aux_data *algo_data = adapter->ic_cookie;
@@ -112,7 +96,7 @@ i2c_algo_dp_aux_stop(struct i2c_controller *adapter, bool reading)
  * Write a single byte to the current I2C address, the
  * the I2C link must be running or this returns -EIO
  */
-int
+static int
 i2c_algo_dp_aux_put_byte(struct i2c_controller *adapter, u8 byte)
 {
 	struct i2c_algo_dp_aux_data *algo_data = adapter->ic_cookie;
@@ -129,7 +113,7 @@ i2c_algo_dp_aux_put_byte(struct i2c_controller *adapter, u8 byte)
  * Read a single byte from the current I2C address, the
  * I2C link must be running or this returns -EIO
  */
-int
+static int
 i2c_algo_dp_aux_get_byte(struct i2c_controller *adapter, u8 *byte_ret)
 {
 	struct i2c_algo_dp_aux_data *algo_data = adapter->ic_cookie;
@@ -142,7 +126,7 @@ i2c_algo_dp_aux_get_byte(struct i2c_controller *adapter, u8 *byte_ret)
 	return ret;
 }
 
-int
+static int
 i2c_algo_dp_aux_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
     const void *cmdbuf, size_t cmdlen, void *buffer, size_t len, int flags)
 {
@@ -191,20 +175,20 @@ out:
 	return ret;
 }
 
-void
+static void
 i2c_dp_aux_reset_bus(struct i2c_controller *adapter)
 {
 	(void) i2c_algo_dp_aux_address(adapter, 0, false);
 	(void) i2c_algo_dp_aux_stop(adapter, false);
 }
 
-int
+static int
 i2c_dp_aux_acquire_bus(void *cookie, int flags)
 {
 	return (0);
 }
 
-void
+static void
 i2c_dp_aux_release_bus(void *cookie, int flags)
 {
 	struct i2c_algo_dp_aux_data *algo_data = cookie;
@@ -212,7 +196,7 @@ i2c_dp_aux_release_bus(void *cookie, int flags)
 	i2c_dp_aux_reset_bus(algo_data->adapter);
 }
 
-int
+static int
 i2c_dp_aux_prepare_bus(struct i2c_controller *adapter)
 {
 #ifdef notyet
@@ -255,14 +239,12 @@ i2c_dp_aux_add_bus(struct i2c_controller *adapter)
 EXPORT_SYMBOL(i2c_dp_aux_add_bus);
 
 /* Helpers for DP link training */
-u8
-dp_link_status(u8 link_status[DP_LINK_STATUS_SIZE], int r)
+static u8 dp_link_status(u8 link_status[DP_LINK_STATUS_SIZE], int r)
 {
 	return link_status[r - DP_LANE0_1_STATUS];
 }
 
-u8
-dp_get_lane_status(u8 link_status[DP_LINK_STATUS_SIZE],
+static u8 dp_get_lane_status(u8 link_status[DP_LINK_STATUS_SIZE],
 			     int lane)
 {
 	int i = DP_LANE0_1_STATUS + (lane >> 1);
@@ -271,8 +253,7 @@ dp_get_lane_status(u8 link_status[DP_LINK_STATUS_SIZE],
 	return (l >> s) & 0xf;
 }
 
-bool
-drm_dp_channel_eq_ok(u8 link_status[DP_LINK_STATUS_SIZE],
+bool drm_dp_channel_eq_ok(u8 link_status[DP_LINK_STATUS_SIZE],
 			  int lane_count)
 {
 	u8 lane_align;
@@ -292,8 +273,7 @@ drm_dp_channel_eq_ok(u8 link_status[DP_LINK_STATUS_SIZE],
 }
 EXPORT_SYMBOL(drm_dp_channel_eq_ok);
 
-bool
-drm_dp_clock_recovery_ok(u8 link_status[DP_LINK_STATUS_SIZE],
+bool drm_dp_clock_recovery_ok(u8 link_status[DP_LINK_STATUS_SIZE],
 			      int lane_count)
 {
 	int lane;
@@ -308,8 +288,7 @@ drm_dp_clock_recovery_ok(u8 link_status[DP_LINK_STATUS_SIZE],
 }
 EXPORT_SYMBOL(drm_dp_clock_recovery_ok);
 
-u8
-drm_dp_get_adjust_request_voltage(u8 link_status[DP_LINK_STATUS_SIZE],
+u8 drm_dp_get_adjust_request_voltage(u8 link_status[DP_LINK_STATUS_SIZE],
 				     int lane)
 {
 	int i = DP_ADJUST_REQUEST_LANE0_1 + (lane >> 1);
@@ -322,8 +301,7 @@ drm_dp_get_adjust_request_voltage(u8 link_status[DP_LINK_STATUS_SIZE],
 }
 EXPORT_SYMBOL(drm_dp_get_adjust_request_voltage);
 
-u8
-drm_dp_get_adjust_request_pre_emphasis(u8 link_status[DP_LINK_STATUS_SIZE],
+u8 drm_dp_get_adjust_request_pre_emphasis(u8 link_status[DP_LINK_STATUS_SIZE],
 					  int lane)
 {
 	int i = DP_ADJUST_REQUEST_LANE0_1 + (lane >> 1);
@@ -336,9 +314,7 @@ drm_dp_get_adjust_request_pre_emphasis(u8 link_status[DP_LINK_STATUS_SIZE],
 }
 EXPORT_SYMBOL(drm_dp_get_adjust_request_pre_emphasis);
 
-void
-drm_dp_link_train_clock_recovery_delay(u8 dpcd[DP_RECEIVER_CAP_SIZE])
-{
+void drm_dp_link_train_clock_recovery_delay(u8 dpcd[DP_RECEIVER_CAP_SIZE]) {
 	if (dpcd[DP_TRAINING_AUX_RD_INTERVAL] == 0)
 		DELAY(100);
 	else
@@ -346,9 +322,7 @@ drm_dp_link_train_clock_recovery_delay(u8 dpcd[DP_RECEIVER_CAP_SIZE])
 }
 EXPORT_SYMBOL(drm_dp_link_train_clock_recovery_delay);
 
-void
-drm_dp_link_train_channel_eq_delay(u8 dpcd[DP_RECEIVER_CAP_SIZE])
-{
+void drm_dp_link_train_channel_eq_delay(u8 dpcd[DP_RECEIVER_CAP_SIZE]) {
 	if (dpcd[DP_TRAINING_AUX_RD_INTERVAL] == 0)
 		DELAY(400);
 	else
@@ -356,8 +330,7 @@ drm_dp_link_train_channel_eq_delay(u8 dpcd[DP_RECEIVER_CAP_SIZE])
 }
 EXPORT_SYMBOL(drm_dp_link_train_channel_eq_delay);
 
-u8
-drm_dp_link_rate_to_bw_code(int link_rate)
+u8 drm_dp_link_rate_to_bw_code(int link_rate)
 {
 	switch (link_rate) {
 	case 162000:
@@ -371,8 +344,7 @@ drm_dp_link_rate_to_bw_code(int link_rate)
 }
 EXPORT_SYMBOL(drm_dp_link_rate_to_bw_code);
 
-int
-drm_dp_bw_code_to_link_rate(u8 link_bw)
+int drm_dp_bw_code_to_link_rate(u8 link_bw)
 {
 	switch (link_bw) {
 	case DP_LINK_BW_1_62:

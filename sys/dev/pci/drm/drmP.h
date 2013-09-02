@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.146 2013/08/27 03:06:02 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.147 2013/09/02 06:25:27 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -893,6 +893,8 @@ void	drm_reclaim_buffers(struct drm_device *, struct drm_file *);
 int	drm_irq_install(struct drm_device *);
 int	drm_irq_uninstall(struct drm_device *);
 void	drm_vblank_cleanup(struct drm_device *);
+u32	drm_get_last_vbltimestamp(struct drm_device *, int ,
+				  struct timeval *, unsigned);
 int	drm_vblank_init(struct drm_device *, int);
 u_int32_t drm_vblank_count(struct drm_device *, int);
 u_int32_t drm_vblank_count_and_time(struct drm_device *, int, struct timeval *);
@@ -906,6 +908,8 @@ bool	drm_handle_vblank(struct drm_device *, int);
 void	drm_calc_timestamping_constants(struct drm_crtc *);
 int	drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *,
 	    int, int *, struct timeval *, unsigned, struct drm_crtc *);
+bool	drm_mode_parse_command_line_for_connector(const char *,
+	    struct drm_connector *, struct drm_cmdline_mode *);
 struct drm_display_mode *
 	 drm_mode_create_from_cmdline_mode(struct drm_device *,
 	     struct drm_cmdline_mode *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_fb_helper.c,v 1.4 2013/08/12 04:11:52 jsg Exp $	*/
+/*	$OpenBSD: drm_fb_helper.c,v 1.5 2013/09/02 06:25:28 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
  * Copyright (c) 2006-2008 Intel Corporation
@@ -35,34 +35,6 @@
 #include "drm_fb_helper.h"
 #include "drm_crtc_helper.h"
 
-bool	 drm_fb_helper_connector_parse_command_line(
-	     struct drm_fb_helper_connector *, const char *);
-int	 fb_get_options(const char *, char **);
-int	 drm_fb_helper_parse_command_line(struct drm_fb_helper *);
-void	 drm_fb_helper_crtc_free(struct drm_fb_helper *);
-struct drm_display_mode	*drm_has_preferred_mode(
-			     struct drm_fb_helper_connector *, int, int);
-int	 drm_fb_helper_probe_connector_modes(struct drm_fb_helper *,
-	     uint32_t, uint32_t);
-bool	 drm_has_cmdline_mode(struct drm_fb_helper_connector *);
-struct drm_display_mode *drm_pick_cmdline_mode(struct drm_fb_helper_connector *,
-			     int, int);
-bool	 drm_connector_enabled(struct drm_connector *, bool);
-void	 drm_enable_connectors(struct drm_fb_helper *, bool *);
-bool	 drm_target_cloned(struct drm_fb_helper *, struct drm_display_mode **,
-	     bool *, int, int);
-bool	 drm_target_preferred(struct drm_fb_helper *,
-	     struct drm_display_mode **, bool *, int, int);
-int	 drm_pick_crtcs(struct drm_fb_helper *, struct drm_fb_helper_crtc **,
-	     struct drm_display_mode **, int, int, int);
-void	 drm_setup_crtcs(struct drm_fb_helper *);
-void	 drm_fb_helper_save_lut_atomic(struct drm_crtc *,
-	     struct drm_fb_helper *);
-void	 drm_fb_helper_restore_lut_atomic(struct drm_crtc *);
-struct drm_framebuffer *
-	 drm_mode_config_fb(struct drm_crtc *);
-bool 	 drm_fb_helper_force_kernel_mode(void);
-
 static DRM_LIST_HEAD(kernel_fb_helper_list);
 
 /**
@@ -75,8 +47,7 @@ static DRM_LIST_HEAD(kernel_fb_helper_list);
  */
 
 /* simple single crtc case helper function */
-int
-drm_fb_helper_single_add_all_connectors(struct drm_fb_helper *fb_helper)
+int drm_fb_helper_single_add_all_connectors(struct drm_fb_helper *fb_helper)
 {
 	struct drm_device *dev = fb_helper->dev;
 	struct drm_connector *connector;
@@ -104,8 +75,7 @@ fail:
 }
 EXPORT_SYMBOL(drm_fb_helper_single_add_all_connectors);
 
-int
-drm_fb_helper_parse_command_line(struct drm_fb_helper *fb_helper)
+static int drm_fb_helper_parse_command_line(struct drm_fb_helper *fb_helper)
 {
 	struct drm_fb_helper_connector *fb_helper_conn;
 	int i;
@@ -161,8 +131,7 @@ drm_fb_helper_parse_command_line(struct drm_fb_helper *fb_helper)
 	return 0;
 }
 
-void
-drm_fb_helper_save_lut_atomic(struct drm_crtc *crtc, struct drm_fb_helper *helper)
+static void drm_fb_helper_save_lut_atomic(struct drm_crtc *crtc, struct drm_fb_helper *helper)
 {
 	uint16_t *r_base, *g_base, *b_base;
 	int i;
@@ -175,8 +144,7 @@ drm_fb_helper_save_lut_atomic(struct drm_crtc *crtc, struct drm_fb_helper *helpe
 		helper->funcs->gamma_get(crtc, &r_base[i], &g_base[i], &b_base[i], i);
 }
 
-void
-drm_fb_helper_restore_lut_atomic(struct drm_crtc *crtc)
+static void drm_fb_helper_restore_lut_atomic(struct drm_crtc *crtc)
 {
 	uint16_t *r_base, *g_base, *b_base;
 
@@ -190,8 +158,7 @@ drm_fb_helper_restore_lut_atomic(struct drm_crtc *crtc)
 	crtc->funcs->gamma_set(crtc, r_base, g_base, b_base, 0, crtc->gamma_size);
 }
 
-int
-drm_fb_helper_debug_enter(struct drm_fb_helper *helper)
+int drm_fb_helper_debug_enter(struct drm_fb_helper *helper)
 {
 	struct drm_crtc_helper_funcs *funcs;
 	int i;
@@ -222,8 +189,7 @@ drm_fb_helper_debug_enter(struct drm_fb_helper *helper)
 EXPORT_SYMBOL(drm_fb_helper_debug_enter);
 
 /* Find the real fb for a given fb helper CRTC */
-struct drm_framebuffer *
-drm_mode_config_fb(struct drm_crtc *crtc)
+static struct drm_framebuffer *drm_mode_config_fb(struct drm_crtc *crtc)
 {
 	struct drm_device *dev = crtc->dev;
 	struct drm_crtc *c;
@@ -236,8 +202,7 @@ drm_mode_config_fb(struct drm_crtc *crtc)
 	return NULL;
 }
 
-int
-drm_fb_helper_debug_leave(struct drm_fb_helper *helper)
+int drm_fb_helper_debug_leave(struct drm_fb_helper *helper)
 {
 	struct drm_crtc *crtc;
 	struct drm_crtc_helper_funcs *funcs;
@@ -267,8 +232,7 @@ drm_fb_helper_debug_leave(struct drm_fb_helper *helper)
 }
 EXPORT_SYMBOL(drm_fb_helper_debug_leave);
 
-bool
-drm_fb_helper_restore_fbdev_mode(struct drm_fb_helper *fb_helper)
+bool drm_fb_helper_restore_fbdev_mode(struct drm_fb_helper *fb_helper)
 {
 	bool error = false;
 	int i, ret;
@@ -282,8 +246,7 @@ drm_fb_helper_restore_fbdev_mode(struct drm_fb_helper *fb_helper)
 }
 EXPORT_SYMBOL(drm_fb_helper_restore_fbdev_mode);
 
-bool
-drm_fb_helper_force_kernel_mode(void)
+static bool drm_fb_helper_force_kernel_mode(void)
 {
 	bool ret, error = false;
 	struct drm_fb_helper *helper;
@@ -305,8 +268,7 @@ drm_fb_helper_force_kernel_mode(void)
 }
 
 #if 0
-int
-drm_fb_helper_panic(struct notifier_block *n, unsigned long ununsed,
+int drm_fb_helper_panic(struct notifier_block *n, unsigned long ununsed,
 			void *panic_str)
 {
 	/*
@@ -331,8 +293,7 @@ static struct notifier_block paniced = {
  *
  * Restore's the kernel's fbcon mode, used for lastclose & panic paths.
  */
-void
-drm_fb_helper_restore(void)
+void drm_fb_helper_restore(void)
 {
 	bool ret;
 	ret = drm_fb_helper_force_kernel_mode();
@@ -343,15 +304,13 @@ EXPORT_SYMBOL(drm_fb_helper_restore);
 
 #if 0
 #ifdef CONFIG_MAGIC_SYSRQ
-void
-drm_fb_helper_restore_work_fn(struct work_struct *ignored)
+static void drm_fb_helper_restore_work_fn(struct work_struct *ignored)
 {
 	drm_fb_helper_restore();
 }
 static DECLARE_WORK(drm_fb_helper_restore_work, drm_fb_helper_restore_work_fn);
 
-void
-drm_fb_helper_sysrq(int dummy1)
+static void drm_fb_helper_sysrq(int dummy1)
 {
 	schedule_work(&drm_fb_helper_restore_work);
 }
@@ -366,8 +325,7 @@ static struct sysrq_key_op sysrq_drm_fb_helper_restore_op = { };
 #endif
 #endif
 
-void
-drm_fb_helper_dpms(struct drm_fb_helper *fb_helper, int dpms_mode)
+void drm_fb_helper_dpms(struct drm_fb_helper *fb_helper, int dpms_mode)
 {
 	struct drm_device *dev = fb_helper->dev;
 	struct drm_crtc *crtc;
@@ -396,8 +354,7 @@ drm_fb_helper_dpms(struct drm_fb_helper *fb_helper, int dpms_mode)
 }
 
 #if 0
-int
-drm_fb_helper_blank(int blank, struct fb_info *info)
+int drm_fb_helper_blank(int blank, struct fb_info *info)
 {
 	switch (blank) {
 	/* Display: On; HSync: On, VSync: On */
@@ -426,8 +383,7 @@ drm_fb_helper_blank(int blank, struct fb_info *info)
 EXPORT_SYMBOL(drm_fb_helper_blank);
 #endif
 
-void
-drm_fb_helper_crtc_free(struct drm_fb_helper *helper)
+static void drm_fb_helper_crtc_free(struct drm_fb_helper *helper)
 {
 	int i;
 
@@ -442,8 +398,7 @@ drm_fb_helper_crtc_free(struct drm_fb_helper *helper)
 	free(helper->crtc_info, M_DRM);
 }
 
-int
-drm_fb_helper_init(struct drm_device *dev,
+int drm_fb_helper_init(struct drm_device *dev,
 		       struct drm_fb_helper *fb_helper,
 		       int crtc_count, int max_conn_count)
 {
@@ -492,8 +447,7 @@ out_free:
 }
 EXPORT_SYMBOL(drm_fb_helper_init);
 
-void
-drm_fb_helper_fini(struct drm_fb_helper *fb_helper)
+void drm_fb_helper_fini(struct drm_fb_helper *fb_helper)
 {
 	if (!list_empty(&fb_helper->kernel_fb_list)) {
 		list_del(&fb_helper->kernel_fb_list);
@@ -513,8 +467,7 @@ drm_fb_helper_fini(struct drm_fb_helper *fb_helper)
 EXPORT_SYMBOL(drm_fb_helper_fini);
 
 #if 0
-int
-setcolreg(struct drm_crtc *crtc, u16 red, u16 green,
+static int setcolreg(struct drm_crtc *crtc, u16 red, u16 green,
 		     u16 blue, u16 regno, struct fb_info *info)
 {
 	struct drm_fb_helper *fb_helper = info->par;
@@ -580,8 +533,7 @@ setcolreg(struct drm_crtc *crtc, u16 red, u16 green,
 #endif
 
 #if 0
-int
-drm_fb_helper_setcmap(struct fb_cmap *cmap, struct fb_info *info)
+int drm_fb_helper_setcmap(struct fb_cmap *cmap, struct fb_info *info)
 {
 	struct drm_fb_helper *fb_helper = info->par;
 	struct drm_crtc_helper_funcs *crtc_funcs;
@@ -622,8 +574,7 @@ EXPORT_SYMBOL(drm_fb_helper_setcmap);
 #endif
 
 #if 0
-int
-drm_fb_helper_check_var(struct fb_var_screeninfo *var,
+int drm_fb_helper_check_var(struct fb_var_screeninfo *var,
 			    struct fb_info *info)
 {
 	struct drm_fb_helper *fb_helper = info->par;
@@ -718,8 +669,7 @@ EXPORT_SYMBOL(drm_fb_helper_check_var);
 
 #if 0
 /* this will let fbcon do the mode init */
-int
-drm_fb_helper_set_par(struct fb_info *info)
+int drm_fb_helper_set_par(struct fb_info *info)
 {
 	struct drm_fb_helper *fb_helper = info->par;
 	struct drm_device *dev = fb_helper->dev;
@@ -754,8 +704,7 @@ EXPORT_SYMBOL(drm_fb_helper_set_par);
 #endif
 
 #if 0
-int
-drm_fb_helper_pan_display(struct fb_var_screeninfo *var,
+int drm_fb_helper_pan_display(struct fb_var_screeninfo *var,
 			      struct fb_info *info)
 {
 	struct drm_fb_helper *fb_helper = info->par;
@@ -788,8 +737,7 @@ drm_fb_helper_pan_display(struct fb_var_screeninfo *var,
 EXPORT_SYMBOL(drm_fb_helper_pan_display);
 #endif
 
-int
-drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
+int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
 				  int preferred_bpp)
 {
 	int new_fb = 0;
@@ -914,8 +862,7 @@ drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
 EXPORT_SYMBOL(drm_fb_helper_single_fb_probe);
 
 #if 0
-void
-drm_fb_helper_fill_fix(struct fb_info *info, uint32_t pitch,
+void drm_fb_helper_fill_fix(struct fb_info *info, uint32_t pitch,
 			    uint32_t depth)
 {
 	info->fix.type = FB_TYPE_PACKED_PIXELS;
@@ -935,8 +882,7 @@ drm_fb_helper_fill_fix(struct fb_info *info, uint32_t pitch,
 }
 EXPORT_SYMBOL(drm_fb_helper_fill_fix);
 
-void
-drm_fb_helper_fill_var(struct fb_info *info, struct drm_fb_helper *fb_helper,
+void drm_fb_helper_fill_var(struct fb_info *info, struct drm_fb_helper *fb_helper,
 			    uint32_t fb_width, uint32_t fb_height)
 {
 	struct drm_framebuffer *fb = fb_helper->fb;
@@ -1011,8 +957,7 @@ drm_fb_helper_fill_var(struct fb_info *info, struct drm_fb_helper *fb_helper,
 EXPORT_SYMBOL(drm_fb_helper_fill_var);
 #endif
 
-int
-drm_fb_helper_probe_connector_modes(struct drm_fb_helper *fb_helper,
+static int drm_fb_helper_probe_connector_modes(struct drm_fb_helper *fb_helper,
 					       uint32_t maxX,
 					       uint32_t maxY)
 {
@@ -1028,8 +973,7 @@ drm_fb_helper_probe_connector_modes(struct drm_fb_helper *fb_helper,
 	return count;
 }
 
-struct drm_display_mode *
-drm_has_preferred_mode(struct drm_fb_helper_connector *fb_connector, int width, int height)
+static struct drm_display_mode *drm_has_preferred_mode(struct drm_fb_helper_connector *fb_connector, int width, int height)
 {
 	struct drm_display_mode *mode;
 
@@ -1043,16 +987,14 @@ drm_has_preferred_mode(struct drm_fb_helper_connector *fb_connector, int width, 
 	return NULL;
 }
 
-bool
-drm_has_cmdline_mode(struct drm_fb_helper_connector *fb_connector)
+static bool drm_has_cmdline_mode(struct drm_fb_helper_connector *fb_connector)
 {
 	struct drm_cmdline_mode *cmdline_mode;
 	cmdline_mode = &fb_connector->cmdline_mode;
 	return cmdline_mode->specified;
 }
 
-struct drm_display_mode *
-drm_pick_cmdline_mode(struct drm_fb_helper_connector *fb_helper_conn,
+static struct drm_display_mode *drm_pick_cmdline_mode(struct drm_fb_helper_connector *fb_helper_conn,
 						      int width, int height)
 {
 	struct drm_cmdline_mode *cmdline_mode;
@@ -1093,8 +1035,7 @@ create_mode:
 	return mode;
 }
 
-bool
-drm_connector_enabled(struct drm_connector *connector, bool strict)
+static bool drm_connector_enabled(struct drm_connector *connector, bool strict)
 {
 	bool enable;
 
@@ -1106,8 +1047,7 @@ drm_connector_enabled(struct drm_connector *connector, bool strict)
 	return enable;
 }
 
-void
-drm_enable_connectors(struct drm_fb_helper *fb_helper,
+static void drm_enable_connectors(struct drm_fb_helper *fb_helper,
 				  bool *enabled)
 {
 	bool any_enabled = false;
@@ -1131,8 +1071,7 @@ drm_enable_connectors(struct drm_fb_helper *fb_helper,
 	}
 }
 
-bool
-drm_target_cloned(struct drm_fb_helper *fb_helper,
+static bool drm_target_cloned(struct drm_fb_helper *fb_helper,
 			      struct drm_display_mode **modes,
 			      bool *enabled, int width, int height)
 {
@@ -1205,8 +1144,7 @@ drm_target_cloned(struct drm_fb_helper *fb_helper,
 	return false;
 }
 
-bool
-drm_target_preferred(struct drm_fb_helper *fb_helper,
+static bool drm_target_preferred(struct drm_fb_helper *fb_helper,
 				 struct drm_display_mode **modes,
 				 bool *enabled, int width, int height)
 {
@@ -1240,8 +1178,7 @@ drm_target_preferred(struct drm_fb_helper *fb_helper,
 	return true;
 }
 
-int
-drm_pick_crtcs(struct drm_fb_helper *fb_helper,
+static int drm_pick_crtcs(struct drm_fb_helper *fb_helper,
 			  struct drm_fb_helper_crtc **best_crtcs,
 			  struct drm_display_mode **modes,
 			  int n, int width, int height)
@@ -1325,8 +1262,7 @@ out:
 	return best_score;
 }
 
-void
-drm_setup_crtcs(struct drm_fb_helper *fb_helper)
+static void drm_setup_crtcs(struct drm_fb_helper *fb_helper)
 {
 	struct drm_device *dev = fb_helper->dev;
 	struct drm_fb_helper_crtc **crtcs;
@@ -1414,8 +1350,7 @@ out:
  * RETURNS:
  * Zero if everything went ok, nonzero otherwise.
  */
-bool
-drm_fb_helper_initial_config(struct drm_fb_helper *fb_helper, int bpp_sel)
+bool drm_fb_helper_initial_config(struct drm_fb_helper *fb_helper, int bpp_sel)
 {
 	struct drm_device *dev = fb_helper->dev;
 	int count = 0;
@@ -1454,8 +1389,7 @@ EXPORT_SYMBOL(drm_fb_helper_initial_config);
  * RETURNS:
  * 0 on success and a non-zero error code otherwise.
  */
-int
-drm_fb_helper_hotplug_event(struct drm_fb_helper *fb_helper)
+int drm_fb_helper_hotplug_event(struct drm_fb_helper *fb_helper)
 {
 	struct drm_device *dev = fb_helper->dev;
 	int count = 0;
@@ -1500,8 +1434,7 @@ EXPORT_SYMBOL(drm_fb_helper_hotplug_event);
  * attempt to load fbcon to avoid leaving the system without a usable console.
  */
 #if defined(CONFIG_FRAMEBUFFER_CONSOLE_MODULE) && !defined(CONFIG_EXPERT)
-int
-__init drm_fb_helper_modinit(void)
+static int __init drm_fb_helper_modinit(void)
 {
 	const char *name = "fbcon";
 	struct module *fbcon;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_irq.c,v 1.47 2013/08/12 04:11:52 jsg Exp $	*/
+/*	$OpenBSD: drm_irq.c,v 1.48 2013/09/02 06:25:28 jsg Exp $	*/
 /**
  * \file drm_irq.c
  * IRQ support
@@ -54,22 +54,8 @@
  */
 #define DRM_REDUNDANT_VBLIRQ_THRESH_NS 1000000
 
-void	 clear_vblank_timestamps(struct drm_device *, int);
-void	 vblank_disable_and_save(struct drm_device *, int);
-u32	 drm_get_last_vbltimestamp(struct drm_device *, int, struct timeval *,
-	     unsigned);
-void	 vblank_disable_fn(void *);
 int64_t	 timeval_to_ns(const struct timeval *);
 struct timeval ns_to_timeval(const int64_t);
-void	 drm_irq_vgaarb_nokms(void *, bool);
-struct timeval get_drm_timestamp(void);
-void	 send_vblank_event(struct drm_device *,
-	     struct drm_pending_vblank_event *, unsigned long,
-	     struct timeval *);
-void	 drm_update_vblank_count(struct drm_device *, int);
-int	 drm_queue_vblank_event(struct drm_device *, int,
-	     union drm_wait_vblank *, struct drm_file *);
-void	 drm_handle_vblank_events(struct drm_device *, int);
 
 #ifdef DRM_VBLANK_DEBUG
 #define DPRINTF(x...)	do { printf(x); } while(/* CONSTCOND */ 0)
@@ -98,8 +84,8 @@ unsigned int drm_timestamp_monotonic = 1;
  * This IOCTL is deprecated, and will now return EINVAL for any busid not equal
  * to that of the device that this DRM instance attached to.
  */
-int
-drm_irq_by_busid(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int drm_irq_by_busid(struct drm_device *dev, void *data,
+		     struct drm_file *file_priv)
 {
 	struct drm_irq_busid	*irq = data;
 
@@ -119,8 +105,7 @@ drm_irq_by_busid(struct drm_device *dev, void *data, struct drm_file *file_priv)
 /*
  * Clear vblank timestamp buffer for a crtc.
  */
-void
-clear_vblank_timestamps(struct drm_device *dev, int crtc)
+static void clear_vblank_timestamps(struct drm_device *dev, int crtc)
 {
 	memset(&dev->_vblank_time[crtc * DRM_VBLANKTIME_RBSIZE], 0,
 		DRM_VBLANKTIME_RBSIZE * sizeof(struct timeval));
@@ -170,8 +155,7 @@ abs64(int64_t x)
  * are preserved, even if there are any spurious vblank irq's after
  * disable.
  */
-void
-vblank_disable_and_save(struct drm_device *dev, int crtc)
+static void vblank_disable_and_save(struct drm_device *dev, int crtc)
 {
 	u32 vblcount;
 	s64 diff_ns;
@@ -239,8 +223,7 @@ vblank_disable_and_save(struct drm_device *dev, int crtc)
 	mtx_leave(&dev->vblank_time_lock);
 }
 
-void
-vblank_disable_fn(void *arg)
+static void vblank_disable_fn(void *arg)
 {
 	struct drm_device *dev = (struct drm_device *)arg;
 	int i;
@@ -259,8 +242,7 @@ vblank_disable_fn(void *arg)
 	}
 }
 
-void
-drm_vblank_cleanup(struct drm_device *dev)
+void drm_vblank_cleanup(struct drm_device *dev)
 {
 	/* Bail if the driver didn't call drm_vblank_init() */
 	if (dev->num_crtcs == 0)
@@ -281,9 +263,9 @@ drm_vblank_cleanup(struct drm_device *dev)
 
 	dev->num_crtcs = 0;
 }
+EXPORT_SYMBOL(drm_vblank_cleanup);
 
-int
-drm_vblank_init(struct drm_device *dev, int num_crtcs)
+int drm_vblank_init(struct drm_device *dev, int num_crtcs)
 {
 	int i, ret = -ENOMEM;
 
@@ -355,9 +337,10 @@ err:
 	drm_vblank_cleanup(dev);
 	return ret;
 }
+EXPORT_SYMBOL(drm_vblank_init);
 
-void
-drm_irq_vgaarb_nokms(void *cookie, bool state)
+#ifdef notyet
+static void drm_irq_vgaarb_nokms(void *cookie, bool state)
 {
 	struct drm_device *dev = cookie;
 
@@ -381,6 +364,7 @@ drm_irq_vgaarb_nokms(void *cookie, bool state)
 			dev->driver->irq_postinstall(dev);
 	}
 }
+#endif
 
 /**
  * Install IRQ handler.
@@ -391,8 +375,7 @@ drm_irq_vgaarb_nokms(void *cookie, bool state)
  * \c irq_preinstall() and \c irq_postinstall() functions
  * before and after the installation.
  */
-int
-drm_irq_install(struct drm_device *dev)
+int drm_irq_install(struct drm_device *dev)
 {
 	int	ret;
 
@@ -426,6 +409,7 @@ err:
 	DRM_UNLOCK();
 	return (ret);
 }
+EXPORT_SYMBOL(drm_irq_install);
 
 /**
  * Uninstall the IRQ handler.
@@ -434,8 +418,7 @@ err:
  *
  * Calls the driver's \c irq_uninstall() function, and stops the irq.
  */
-int
-drm_irq_uninstall(struct drm_device *dev)
+int drm_irq_uninstall(struct drm_device *dev)
 {
 	int i;
 
@@ -470,6 +453,7 @@ drm_irq_uninstall(struct drm_device *dev)
 
 	return (0);
 }
+EXPORT_SYMBOL(drm_irq_uninstall);
 
 /**
  * IRQ control ioctl.
@@ -482,8 +466,8 @@ drm_irq_uninstall(struct drm_device *dev)
  *
  * Calls irq_install() or irq_uninstall() according to \p arg.
  */
-int
-drm_control(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int drm_control(struct drm_device *dev, void *data,
+		struct drm_file *file_priv)
 {
 	struct drm_control	*ctl = data;
 
@@ -520,8 +504,7 @@ drm_control(struct drm_device *dev, void *data, struct drm_file *file_priv)
  * @crtc drm_crtc whose timestamp constants should be updated.
  *
  */
-void
-drm_calc_timestamping_constants(struct drm_crtc *crtc)
+void drm_calc_timestamping_constants(struct drm_crtc *crtc)
 {
 	s64 linedur_ns = 0, pixeldur_ns = 0, framedur_ns = 0;
 	u64 dotclock;
@@ -560,6 +543,7 @@ drm_calc_timestamping_constants(struct drm_crtc *crtc)
 		  crtc->base.id, (int) dotclock/1000, (int) framedur_ns,
 		  (int) linedur_ns, (int) pixeldur_ns);
 }
+EXPORT_SYMBOL(drm_calc_timestamping_constants);
 
 /**
  * drm_calc_vbltimestamp_from_scanoutpos - helper routine for kms
@@ -605,8 +589,7 @@ drm_calc_timestamping_constants(struct drm_crtc *crtc)
  * DRM_VBLANKTIME_INVBL - Timestamp taken while scanout was in vblank interval.
  *
  */
-int
-drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev, int crtc,
+int drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev, int crtc,
 					  int *max_error,
 					  struct timeval *vblank_time,
 					  unsigned flags,
@@ -756,9 +739,9 @@ drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev, int crtc,
 
 	return vbl_status;
 }
+EXPORT_SYMBOL(drm_calc_vbltimestamp_from_scanoutpos);
 
-struct timeval
-get_drm_timestamp(void)
+static struct timeval get_drm_timestamp(void)
 {
 	struct timeval now;
 
@@ -791,8 +774,7 @@ get_drm_timestamp(void)
  *
  * Returns non-zero if timestamp is considered to be very precise.
  */
-u32
-drm_get_last_vbltimestamp(struct drm_device *dev, int crtc,
+u32 drm_get_last_vbltimestamp(struct drm_device *dev, int crtc,
 			      struct timeval *tvblank, unsigned flags)
 {
 	int ret;
@@ -815,6 +797,7 @@ drm_get_last_vbltimestamp(struct drm_device *dev, int crtc,
 
 	return 0;
 }
+EXPORT_SYMBOL(drm_get_last_vbltimestamp);
 
 /**
  * drm_vblank_count - retrieve "cooked" vblank counter value
@@ -825,11 +808,11 @@ drm_get_last_vbltimestamp(struct drm_device *dev, int crtc,
  * vblank events since the system was booted, including lost events due to
  * modesetting activity.
  */
-u32
-drm_vblank_count(struct drm_device *dev, int crtc)
+u32 drm_vblank_count(struct drm_device *dev, int crtc)
 {
 	return atomic_read(&dev->_vblank_count[crtc]);
 }
+EXPORT_SYMBOL(drm_vblank_count);
 
 /**
  * drm_vblank_count_and_time - retrieve "cooked" vblank counter value
@@ -845,8 +828,7 @@ drm_vblank_count(struct drm_device *dev, int crtc)
  * of the vblank interval that corresponds to the current value vblank counter
  * value.
  */
-u32
-drm_vblank_count_and_time(struct drm_device *dev, int crtc,
+u32 drm_vblank_count_and_time(struct drm_device *dev, int crtc,
 			      struct timeval *vblanktime)
 {
 	u32 cur_vblank;
@@ -864,9 +846,9 @@ drm_vblank_count_and_time(struct drm_device *dev, int crtc,
 
 	return cur_vblank;
 }
+EXPORT_SYMBOL(drm_vblank_count_and_time);
 
-void
-send_vblank_event(struct drm_device *dev,
+static void send_vblank_event(struct drm_device *dev,
 		struct drm_pending_vblank_event *e,
 		unsigned long seq, struct timeval *now)
 {
@@ -894,8 +876,7 @@ send_vblank_event(struct drm_device *dev,
  * Updates sequence # and timestamp on event, and sends it to userspace.
  * Caller must hold event lock.
  */
-void
-drm_send_vblank_event(struct drm_device *dev, int crtc,
+void drm_send_vblank_event(struct drm_device *dev, int crtc,
 		struct drm_pending_vblank_event *e)
 {
 	struct timeval now;
@@ -909,6 +890,7 @@ drm_send_vblank_event(struct drm_device *dev, int crtc,
 	}
 	send_vblank_event(dev, e, seq, &now);
 }
+EXPORT_SYMBOL(drm_send_vblank_event);
 
 /**
  * drm_update_vblank_count - update the master vblank counter
@@ -926,8 +908,7 @@ drm_send_vblank_event(struct drm_device *dev, int crtc,
  * Note: caller must hold dev->vbl_lock since this reads & writes
  * device vblank fields.
  */
-void
-drm_update_vblank_count(struct drm_device *dev, int crtc)
+static void drm_update_vblank_count(struct drm_device *dev, int crtc)
 {
 	u32 cur_vblank, diff, tslot, rc;
 	struct timeval t_vblank;
@@ -986,8 +967,7 @@ drm_update_vblank_count(struct drm_device *dev, int crtc)
  * RETURNS
  * Zero on success, nonzero on failure.
  */
-int
-drm_vblank_get(struct drm_device *dev, int crtc)
+int drm_vblank_get(struct drm_device *dev, int crtc)
 {
 	int ret = 0;
 
@@ -1023,6 +1003,7 @@ drm_vblank_get(struct drm_device *dev, int crtc)
 
 	return ret;
 }
+EXPORT_SYMBOL(drm_vblank_get);
 
 /**
  * drm_vblank_put - give up ownership of vblank events
@@ -1032,8 +1013,7 @@ drm_vblank_get(struct drm_device *dev, int crtc)
  * Release ownership of a given vblank counter, turning off interrupts
  * if possible. Disable interrupts after drm_vblank_offdelay milliseconds.
  */
-void
-drm_vblank_put(struct drm_device *dev, int crtc)
+void drm_vblank_put(struct drm_device *dev, int crtc)
 {
 	BUG_ON(atomic_read(&dev->vblank_refcount[crtc]) == 0);
 
@@ -1050,8 +1030,7 @@ drm_vblank_put(struct drm_device *dev, int crtc)
  *
  * Caller must hold event lock.
  */
-void
-drm_vblank_off(struct drm_device *dev, int crtc)
+void drm_vblank_off(struct drm_device *dev, int crtc)
 {
 	struct drmevlist *list;
 	struct drm_pending_event *ev, *tmp;
@@ -1095,8 +1074,7 @@ drm_vblank_off(struct drm_device *dev, int crtc)
  * Account for vblank events across mode setting events, which will likely
  * reset the hardware frame counter.
  */
-void
-drm_vblank_pre_modeset(struct drm_device *dev, int crtc)
+void drm_vblank_pre_modeset(struct drm_device *dev, int crtc)
 {
 	/* vblank is not initialized (IRQ not installed ?) */
 	if (!dev->num_crtcs)
@@ -1114,9 +1092,9 @@ drm_vblank_pre_modeset(struct drm_device *dev, int crtc)
 			dev->vblank_inmodeset[crtc] |= 0x2;
 	}
 }
+EXPORT_SYMBOL(drm_vblank_pre_modeset);
 
-void
-drm_vblank_post_modeset(struct drm_device *dev, int crtc)
+void drm_vblank_post_modeset(struct drm_device *dev, int crtc)
 {
 	if (dev->vblank_inmodeset[crtc]) {
 		mtx_enter(&dev->vbl_lock);
@@ -1129,6 +1107,7 @@ drm_vblank_post_modeset(struct drm_device *dev, int crtc)
 		dev->vblank_inmodeset[crtc] = 0;
 	}
 }
+EXPORT_SYMBOL(drm_vblank_post_modeset);
 
 /**
  * drm_modeset_ctl - handle vblank event counter changes across mode switch
@@ -1141,8 +1120,7 @@ drm_vblank_post_modeset(struct drm_device *dev, int crtc)
  * enabled around this call, we don't have to do anything since the counter
  * will have already been incremented.
  */
-int
-drm_modeset_ctl(struct drm_device *dev, void *data,
+int drm_modeset_ctl(struct drm_device *dev, void *data,
 		    struct drm_file *file_priv)
 {
 	struct drm_modeset_ctl *modeset = data;
@@ -1174,8 +1152,7 @@ drm_modeset_ctl(struct drm_device *dev, void *data,
 	return 0;
 }
 
-int
-drm_queue_vblank_event(struct drm_device *dev, int pipe,
+static int drm_queue_vblank_event(struct drm_device *dev, int pipe,
 				  union drm_wait_vblank *vblwait,
 				  struct drm_file *file_priv)
 {
@@ -1260,8 +1237,7 @@ err_put:
  * the vblank interrupt refcount afterwards. (vblank irq disable follows that
  * after a timeout with no further vblank waits scheduled).
  */
-int
-drm_wait_vblank(struct drm_device *dev, void *data,
+int drm_wait_vblank(struct drm_device *dev, void *data,
 		    struct drm_file *file_priv)
 {
 	union drm_wait_vblank *vblwait = data;
@@ -1349,8 +1325,7 @@ done:
 	return ret;
 }
 
-void
-drm_handle_vblank_events(struct drm_device *dev, int crtc)
+static void drm_handle_vblank_events(struct drm_device *dev, int crtc)
 {
 	struct drmevlist *list;
 	struct drm_pending_event *ev, *tmp;
@@ -1394,8 +1369,7 @@ drm_handle_vblank_events(struct drm_device *dev, int crtc)
  * Drivers should call this routine in their vblank interrupt handlers to
  * update the vblank counter and send any signals that may be pending.
  */
-bool
-drm_handle_vblank(struct drm_device *dev, int crtc)
+bool drm_handle_vblank(struct drm_device *dev, int crtc)
 {
 	u32 vblcount;
 	s64 diff_ns;
@@ -1458,3 +1432,4 @@ drm_handle_vblank(struct drm_device *dev, int crtc)
 	mtx_leave(&dev->vblank_time_lock);
 	return true;
 }
+EXPORT_SYMBOL(drm_handle_vblank);
