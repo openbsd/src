@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_irq.c,v 1.48 2013/09/02 06:25:28 jsg Exp $	*/
+/*	$OpenBSD: drm_irq.c,v 1.49 2013/09/02 07:14:22 jsg Exp $	*/
 /**
  * \file drm_irq.c
  * IRQ support
@@ -213,8 +213,7 @@ static void vblank_disable_and_save(struct drm_device *dev, int crtc)
 	 */
 	if ((vblrc > 0) && (abs64(diff_ns) > 1000000)) {
 		atomic_inc(&dev->_vblank_count[crtc]);
-//		smp_mb__after_atomic_inc();
-		DRM_WRITEMEMORYBARRIER();
+		smp_mb__after_atomic_inc();
 	}
 
 	/* Invalidate all timestamps while vblank irq's are off. */
@@ -951,9 +950,9 @@ static void drm_update_vblank_count(struct drm_device *dev, int crtc)
 		vblanktimestamp(dev, crtc, tslot) = t_vblank;
 	}
 
-//	smp_mb__before_atomic_inc();
+	smp_mb__before_atomic_inc();
 	atomic_add(diff, &dev->_vblank_count[crtc]);
-//	smp_mb__after_atomic_inc();
+	smp_mb__after_atomic_inc();
 }
 
 /**
@@ -1418,9 +1417,9 @@ bool drm_handle_vblank(struct drm_device *dev, int crtc)
 		/* Increment cooked vblank count. This also atomically commits
 		 * the timestamp computed above.
 		 */
-//		smp_mb__before_atomic_inc();
+		smp_mb__before_atomic_inc();
 		atomic_inc(&dev->_vblank_count[crtc]);
-//		smp_mb__after_atomic_inc();
+		smp_mb__after_atomic_inc();
 	} else {
 		DRM_DEBUG("crtc %d: Redundant vblirq ignored. diff_ns = %d\n",
 			  crtc, (int) diff_ns);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo.c,v 1.2 2013/09/02 07:14:22 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -549,7 +549,7 @@ ttm_bo_cleanup_memtype_use(struct ttm_buffer_object *bo)
 	 *
 	 * This function only needs protection against the final kref_put.
 	 */
-	DRM_MEMORYBARRIER();
+	smp_mb__before_atomic_dec();
 }
 
 void
