@@ -524,14 +524,16 @@ cutest.o:	$(srcdir)/tpkg/cutest/cutest.c
 	$(COMPILE) -c $(srcdir)/tpkg/cutest/cutest.c -o $@
 
 zlexer.c:	$(srcdir)/zlexer.lex
-	echo "#include <config.h>" > $@
+	rm -f $@
+	echo '#include "config.h"' > $@
 	$(LEX) -i -t $(srcdir)/zlexer.lex >> $@
 
 zparser.c zparser.h: $(srcdir)/zparser.y
 	$(YACC) -d -o zparser.c $(srcdir)/zparser.y
 
 configlexer.c:	$(srcdir)/configlexer.lex
-	echo "#include \"configyyrename.h\"" > $@
+	rm -f $@
+	echo '#include "configyyrename.h"' > $@
 	$(LEX) -i -t $(srcdir)/configlexer.lex >> $@
 
 configparser.c configparser.h:	$(srcdir)/configparser.y

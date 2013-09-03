@@ -4,7 +4,7 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,3.2.15,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,3.2.16,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 AC_AIX
@@ -350,7 +350,7 @@ AC_CACHE_VAL(ac_cv_c_strptime_needs_defs,
 [
 cat >conftest.c <<EOF
 #include <time.h>
-int testing (void) { struct tm t; const char *timestr="201201"; return strptime(timestr, "%Y%m", &t)!=0; }
+int testing (void) { struct tm t; const char *timestr="201201"; return strptime(timestr, "%Y%m", &t) != 0; }
 EOF
 if test -z "`$CC -Wall -Werror -c conftest.c 2>&1`"; then
 eval "ac_cv_c_strptime_needs_defs=no"
@@ -391,10 +391,10 @@ AC_DEFINE_UNQUOTED([STRPTIME_WORKS], 1, [use default strptime.])
 fi
 ])dnl
 
-AC_CHECK_STRPTIME_WORKS
-
 AC_SEARCH_LIBS(inet_pton, [nsl])
 AC_SEARCH_LIBS(socket, [socket])
+
+AC_CHECK_STRPTIME_WORKS
 
 dnl LIBGTOP_CHECK_TYPE
 dnl Stolen from Gnome's anjuta
@@ -642,6 +642,15 @@ case "$enable_minimal_responses" in
                 ;;
 esac
 
+AC_ARG_ENABLE(draft-rrtypes, AC_HELP_STRING([--enable-draft-rrtypes], [Enable draft RRtypes.]))
+case "$enable_draft_rrtypes" in
+        yes)
+		AC_DEFINE_UNQUOTED([DRAFT_RRTYPES], [], [Define this to enable draft RRtypes.])
+                ;;
+        no|*)
+		;;
+esac
+
 AC_ARG_ENABLE(mmap, AC_HELP_STRING([--enable-mmap], [Use mmap instead of malloc. Experimental.]))
 case "$enable_mmap" in
         yes)
@@ -773,13 +782,13 @@ AH_BOTTOM([
 ])
 
 AH_BOTTOM([
-#ifndef B64_PTON
+#ifndef HAVE_B64_NTOP
 int b64_ntop(uint8_t const *src, size_t srclength,
 	     char *target, size_t targsize);
-#endif /* !B64_PTON */
-#ifndef B64_NTOP
+#endif /* !HAVE_B64_NTOP */
+#ifndef HAVE_B64_PTON
 int b64_pton(char const *src, uint8_t *target, size_t targsize);
-#endif /* !B64_NTOP */
+#endif /* !HAVE_B64_PTON */
 #ifndef HAVE_FSEEKO
 #define fseeko fseek
 #define ftello ftell

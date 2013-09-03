@@ -241,8 +241,12 @@ unlinkpid(const char* file)
 	if (file) {
 		/* truncate pidfile */
 		fd = open(file, O_WRONLY | O_TRUNC, 0644);
-		if (fd != -1)
+		if (fd == -1) {
+			/* Truncate the pid file.  */
+			log_msg(LOG_ERR, "can not truncate the pid file %s: %s", file, strerror(errno));
+		} else 
 			close(fd);
+
 		/* unlink pidfile */
 		if (unlink(file) == -1)
 			log_msg(LOG_WARNING, "failed to unlink pidfile %s: %s",
@@ -386,6 +390,8 @@ bind8_stats (struct nsd *nsd)
 
 	/* Current time... */
 	time_t now;
+	if(!nsd->st.period)
+		return;
 	time(&now);
 
 	/* NSTATS */
@@ -479,7 +485,7 @@ main(int argc, char *argv[])
 
 	char* argv0 = (argv0 = strrchr(argv[0], '/')) ? argv0 + 1 : argv[0];
 
-	log_init("nsd");
+	log_init(argv0);
 
 	/* Initialize the server handler... */
 	memset(&nsd, 0, sizeof(struct nsd));
@@ -950,6 +956,9 @@ main(int argc, char *argv[])
 		} else if (strncmp(nsd.chrootdir, nsd.options->difffile, l) != 0) {
 			error("%s is not relative to %s: chroot not possible",
 				nsd.options->difffile, nsd.chrootdir);
+		} else if (strncmp(nsd.chrootdir, nsd.options->zonesdir, l) != 0) {
+			error("%s is not relative to %s: chroot not possible",
+				nsd.options->zonesdir, nsd.chrootdir);
 		}
 	}
 
@@ -981,6 +990,37 @@ main(int argc, char *argv[])
 		}
 	}
 
+	/* Setup the signal handling... */
+	action.sa_handler = sig_handler;
+	sigfillset(&action.sa_mask);
+	action.sa_flags = 0;
+	sigaction(SIGTERM, &action, NULL);
+	sigaction(SIGHUP, &action, NULL);
+	sigaction(SIGINT, &action, NULL);
+	sigaction(SIGILL, &action, NULL);
+	sigaction(SIGUSR1, &action, NULL);
+	sigaction(SIGALRM, &action, NULL);
+	sigaction(SIGCHLD, &action, NULL);
+	action.sa_handler = SIG_IGN;
+	sigaction(SIGPIPE, &action, NULL);
+
+	/* Initialize... */
+	nsd.mode = NSD_RUN;
+	nsd.signal_hint_child = 0;
+	nsd.signal_hint_reload = 0;
+	nsd.signal_hint_quit = 0;
+	nsd.signal_hint_shutdown = 0;
+	nsd.signal_hint_stats = 0;
+	nsd.signal_hint_statsusr = 0;
+	nsd.quit_sync_done = 0;
+
+	/* Initialize the server... */
+	if (server_init(&nsd) != 0) {
+		log_msg(LOG_ERR, "server initialization failed, %s could "
+			"not be started", argv0);
+		exit(1);
+	}
+
 	/* Unless we're debugging, fork... */
 	if (!nsd.debug) {
 		int fd;
@@ -992,9 +1032,13 @@ main(int argc, char *argv[])
 			break;
 		case -1:
 			log_msg(LOG_ERR, "fork() failed: %s", strerror(errno));
+			server_close_all_sockets(nsd.udp, nsd.ifs);
+			server_close_all_sockets(nsd.tcp, nsd.ifs);
 			exit(1);
 		default:
 			/* Parent is done */
+			server_close_all_sockets(nsd.udp, nsd.ifs);
+			server_close_all_sockets(nsd.tcp, nsd.ifs);
 			exit(0);
 		}
 
@@ -1013,39 +1057,8 @@ main(int argc, char *argv[])
 		}
 	}
 
-	/* Setup the signal handling... */
-	action.sa_handler = sig_handler;
-	sigfillset(&action.sa_mask);
-	action.sa_flags = 0;
-	sigaction(SIGTERM, &action, NULL);
-	sigaction(SIGHUP, &action, NULL);
-	sigaction(SIGINT, &action, NULL);
-	sigaction(SIGILL, &action, NULL);
-	sigaction(SIGUSR1, &action, NULL);
-	sigaction(SIGALRM, &action, NULL);
-	sigaction(SIGCHLD, &action, NULL);
-	action.sa_handler = SIG_IGN;
-	sigaction(SIGPIPE, &action, NULL);
-
 	/* Get our process id */
 	nsd.pid = getpid();
-
-	/* Initialize... */
-	nsd.mode = NSD_RUN;
-	nsd.signal_hint_child = 0;
-	nsd.signal_hint_reload = 0;
-	nsd.signal_hint_quit = 0;
-	nsd.signal_hint_shutdown = 0;
-	nsd.signal_hint_stats = 0;
-	nsd.signal_hint_statsusr = 0;
-	nsd.quit_sync_done = 0;
-
-	/* Initialize the server... */
-	if (server_init(&nsd) != 0) {
-		log_msg(LOG_ERR, "server initialization failed, %s could "
-			"not be started", argv0);
-		exit(1);
-	}
 
 	/* Set user context */
 #ifdef HAVE_GETPWNAM
@@ -1082,6 +1095,7 @@ main(int argc, char *argv[])
 		nsd.pidfile += l;
 		nsd.options->xfrdfile += l;
 		nsd.options->difffile += l;
+		nsd.options->zonesdir += l;
 
 #ifdef HAVE_TZSET
 		/* set timezone whilst not yet in chroot */
@@ -1097,6 +1111,15 @@ main(int argc, char *argv[])
 		}
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "changed root directory to %s",
 			nsd.chrootdir));
+		/* chdir to zonesdir again after chroot */
+		if(nsd.options->zonesdir && nsd.options->zonesdir[0]) {
+			if(chdir(nsd.options->zonesdir)) {
+				error("unable to chdir to '%s': %s",
+					nsd.options->zonesdir, strerror(errno));
+			}
+			DEBUG(DEBUG_IPC,1, (LOG_INFO, "changed directory to %s",
+				nsd.options->zonesdir));
+		}
 	}
 	else
 #endif /* HAVE_CHROOT */

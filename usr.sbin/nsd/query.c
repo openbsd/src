@@ -1323,16 +1323,27 @@ query_process(query_type *q, nsd_type *nsd)
 
 	arcount = ARCOUNT(q->packet);
 	if (arcount > 0) {
+		/* According to RFC 6891:
+		 * "The placement flexibility for the OPT RR does not
+		 * override the need for the TSIG or SIG(0) RRs to be
+		 * the last in the additional section whenever they are
+		 * present."
+		 * So we should not have to check for TSIG RR before
+		 * OPT RR. Keep the code for backwards compatibility.
+		 */
+
 		/* see if tsig is before edns record */
 		if (!tsig_parse_rr(&q->tsig, q->packet))
 			return query_formerr(q);
 		if(q->tsig.status != TSIG_NOT_PRESENT)
 			--arcount;
 	}
+	/* See if there is an OPT RR. */
 	if (arcount > 0) {
 		if (edns_parse_record(&q->edns, q->packet))
 			--arcount;
 	}
+	/* See if there is a TSIG RR. */
 	if (arcount > 0 && q->tsig.status == TSIG_NOT_PRESENT) {
 		/* see if tsig is after the edns record */
 		if (!tsig_parse_rr(&q->tsig, q->packet))
@@ -1340,6 +1351,7 @@ query_process(query_type *q, nsd_type *nsd)
 		if(q->tsig.status != TSIG_NOT_PRESENT)
 			--arcount;
 	}
+	/* If more RRs left in Add. Section, FORMERR. */
 	if (arcount > 0) {
 		return query_formerr(q);
 	}

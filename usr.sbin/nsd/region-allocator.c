@@ -443,7 +443,7 @@ region_log_stats(region_type *region)
 	char buf[10240], *str=buf;
 	int strl = sizeof(buf);
 	int len;
-	len=snprintf(str, strl, "%lu objects (%lu small/%lu large), %lu bytes allocated (%lu wasted) in %lu chunks, %lu cleanups, %lu in recyclebin",
+	snprintf(str, strl, "%lu objects (%lu small/%lu large), %lu bytes allocated (%lu wasted) in %lu chunks, %lu cleanups, %lu in recyclebin",
 		(unsigned long) (region->small_objects + region->large_objects),
 		(unsigned long) region->small_objects,
 		(unsigned long) region->large_objects,
@@ -452,6 +452,7 @@ region_log_stats(region_type *region)
 		(unsigned long) region->chunk_count,
 		(unsigned long) region->cleanup_count,
 		(unsigned long) region->recycle_size);
+	len = strlen(str);
 	str+=len;
 	strl-=len;
 	if(1 && region->recycle_bin) {
@@ -465,7 +466,8 @@ region_log_stats(region_type *region)
 				el = el->next;
 			}
 			if(i%ALIGNMENT == 0 && i!=0) {
-				len=snprintf(str, strl, " %lu", (unsigned long)count);
+				snprintf(str, strl, " %lu", (unsigned long)count);
+				len = strlen(str);
 				str+=len;
 				strl-=len;
 			}

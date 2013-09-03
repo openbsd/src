@@ -46,11 +46,11 @@ lookup_table_type dns_certificate_types[] = {
 
 /* Taken from RFC 2535, section 7.  */
 lookup_table_type dns_algorithms[] = {
-	{ 1, "RSAMD5" },		/* RFC 2537 */
-	{ 2, "DH" },			/* RFC 2539 */
-	{ 3, "DSA" },			/* RFC 2536 */
+	{ 1, "RSAMD5" },	/* RFC 2537 */
+	{ 2, "DH" },		/* RFC 2539 */
+	{ 3, "DSA" },		/* RFC 2536 */
 	{ 4, "ECC" },
-	{ 5, "RSASHA1" },		/* RFC 3110 */
+	{ 5, "RSASHA1" },	/* RFC 3110 */
 	{ 6, "DSA-NSEC3-SHA1" },	/* RFC 5155 */
 	{ 7, "RSASHA1-NSEC3-SHA1" },	/* RFC 5155 */
 	{ 8, "RSASHA256" },		/* RFC 5702 */
@@ -234,6 +234,44 @@ rdata_ilnp64_to_string(buffer_type *output, rdata_atom_type rdata,
 	buffer_printf(output, "%.4x:%.4x:%.4x:%.4x", a1, a2, a3, a4);
 	return 1;
 }
+
+#ifdef DRAFT_RRTYPES
+static int
+rdata_eui48_to_string(buffer_type *output, rdata_atom_type rdata,
+	rr_type* ATTR_UNUSED(rr))
+{
+	uint8_t* data = rdata_atom_data(rdata);
+	uint8_t a1 = data[0];
+	uint8_t a2 = data[1];
+	uint8_t a3 = data[2];
+	uint8_t a4 = data[3];
+	uint8_t a5 = data[4];
+	uint8_t a6 = data[5];
+
+	buffer_printf(output, "%.2x-%.2x-%.2x-%.2x-%.2x-%.2x",
+		a1, a2, a3, a4, a5, a6);
+	return 1;
+}
+
+static int
+rdata_eui64_to_string(buffer_type *output, rdata_atom_type rdata,
+	rr_type* ATTR_UNUSED(rr))
+{
+	uint8_t* data = rdata_atom_data(rdata);
+	uint8_t a1 = data[0];
+	uint8_t a2 = data[1];
+	uint8_t a3 = data[2];
+	uint8_t a4 = data[3];
+	uint8_t a5 = data[4];
+	uint8_t a6 = data[5];
+	uint8_t a7 = data[6];
+	uint8_t a8 = data[7];
+
+	buffer_printf(output, "%.2x-%.2x-%.2x-%.2x-%.2x-%.2x-%.2x-%.2x",
+		a1, a2, a3, a4, a5, a6, a7, a8);
+	return 1;
+}
+#endif
 
 static int
 rdata_rrtype_to_string(buffer_type *output, rdata_atom_type rdata,
@@ -593,6 +631,10 @@ static rdata_to_string_type rdata_to_string_table[RDATA_ZF_UNKNOWN + 1] = {
 	rdata_nsec_to_string,
 	rdata_loc_to_string,
 	rdata_ilnp64_to_string,
+#ifdef DRAFT_RRTYPES
+	rdata_eui48_to_string,
+	rdata_eui64_to_string,
+#endif
 	rdata_unknown_to_string
 };
 
@@ -671,6 +713,13 @@ rdata_wireformat_to_rdata_atoms(region_type *region,
 		case RDATA_WF_ILNP64:
 			length = IP6ADDRLEN/2;
 			break;
+#ifdef DRAFT_RRTYPES
+		case RDATA_WF_EUI48:
+			length = EUI48ADDRLEN;
+		case RDATA_WF_EUI64:
+			length = EUI64ADDRLEN;
+			break;
+#endif
 		case RDATA_WF_BINARY:
 			/* Remaining RDATA is binary.  */
 			length = end - buffer_position(packet);

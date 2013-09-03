@@ -92,6 +92,9 @@ uint16_t *zparser_conv_byte(region_type *region, const char *text);
 uint16_t *zparser_conv_a(region_type *region, const char *text);
 uint16_t *zparser_conv_aaaa(region_type *region, const char *text);
 uint16_t *zparser_conv_ilnp64(region_type *region, const char *text);
+#ifdef DRAFT_RRTYPES
+uint16_t *zparser_conv_eui(region_type *region, const char *text, size_t len);
+#endif
 uint16_t *zparser_conv_text(region_type *region, const char *text, size_t len);
 uint16_t *zparser_conv_dns_name(region_type *region, const uint8_t* name, size_t len);
 uint16_t *zparser_conv_b32(region_type *region, const char *b32);

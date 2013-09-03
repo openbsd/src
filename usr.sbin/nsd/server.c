@@ -174,6 +174,8 @@ static void handle_tcp_writing(netio_type *netio,
  * Send all children the quit nonblocking, then close pipe.
  */
 static void send_children_quit(struct nsd* nsd);
+/* same, for shutdown time, waits for child to exit to avoid restart issues */
+static void send_children_quit_and_wait(struct nsd* nsd);
 
 /* set childrens flags to send NSD_STATS to them */
 #ifdef BIND8_STATS
@@ -358,7 +360,7 @@ int
 server_init(struct nsd *nsd)
 {
 	size_t i;
-#if defined(SO_REUSEADDR) || (defined(INET6) && (defined(IPV6_V6ONLY) || defined(IPV6_USE_MIN_MTU) || defined(IPV6_MTU)))
+#if defined(SO_REUSEADDR) || (defined(INET6) && (defined(IPV6_V6ONLY) || defined(IPV6_USE_MIN_MTU) || defined(IPV6_MTU) || defined(IP_TRANSPARENT)))
 	int on = 1;
 #endif
 
@@ -459,6 +461,15 @@ server_init(struct nsd *nsd)
 		}
 
 		/* Bind it... */
+		if (nsd->options->ip_transparent) {
+#ifdef IP_TRANSPARENT
+			if (setsockopt(nsd->udp[i].s, IPPROTO_IP, IP_TRANSPARENT, &on, sizeof(on)) < 0) {
+				log_msg(LOG_ERR, "setsockopt(...,IP_TRANSPARENT, ...) failed for udp: %s",
+					strerror(errno));
+			}
+#endif /* IP_TRANSPARENT */
+		}
+
 		if (bind(nsd->udp[i].s, (struct sockaddr *) nsd->udp[i].addr->ai_addr, nsd->udp[i].addr->ai_addrlen) != 0) {
 			log_msg(LOG_ERR, "can't bind udp socket: %s", strerror(errno));
 			return -1;
@@ -491,12 +502,39 @@ server_init(struct nsd *nsd)
 		}
 #endif /* SO_REUSEADDR */
 
-#if defined(INET6) && defined(IPV6_V6ONLY)
-		if (nsd->tcp[i].addr->ai_family == AF_INET6 &&
-		    setsockopt(nsd->tcp[i].s, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) < 0)
-		{
-			log_msg(LOG_ERR, "setsockopt(..., IPV6_V6ONLY, ...) failed: %s", strerror(errno));
-			return -1;
+#if defined(INET6)
+		if (nsd->tcp[i].addr->ai_family == AF_INET6) {
+# if defined(IPV6_V6ONLY)
+			if (setsockopt(nsd->tcp[i].s, IPPROTO_IPV6, IPV6_V6ONLY,
+				&on, sizeof(on)) < 0) {
+				log_msg(LOG_ERR, "setsockopt(..., IPV6_V6ONLY, ...) failed: %s", strerror(errno));
+				return -1;
+			}
+# endif
+# if defined(IPV6_USE_MIN_MTU)
+			/*
+			 * Use minimum MTU to minimize delays learning working
+			 * PMTU when communicating through a tunnel.
+			 */
+			if (setsockopt(nsd->tcp[i].s,
+				       IPPROTO_IPV6, IPV6_USE_MIN_MTU,
+				       &on, sizeof(on)) < 0) {
+				log_msg(LOG_ERR, "setsockopt(..., IPV6_USE_MIN_MTU, ...) failed: %s", strerror(errno));
+				return -1;
+			}
+# elif defined(IPV6_MTU)
+			/*
+			 * On Linux, PMTUD is disabled by default for datagrams
+			 * so set the MTU equal to the MIN MTU to get the same.
+			 */
+			on = IPV6_MIN_MTU;
+			if (setsockopt(nsd->tcp[i].s, IPPROTO_IPV6, IPV6_MTU,
+				&on, sizeof(on)) < 0) {
+				log_msg(LOG_ERR, "setsockopt(..., IPV6_MTU, ...) failed: %s", strerror(errno));
+				return -1;
+			}
+			on = 1;
+# endif
 		}
 #endif
 		/* set it nonblocking */
@@ -507,6 +545,15 @@ server_init(struct nsd *nsd)
 		}
 
 		/* Bind it... */
+		if (nsd->options->ip_transparent) {
+#ifdef IP_TRANSPARENT
+			if (setsockopt(nsd->tcp[i].s, IPPROTO_IP, IP_TRANSPARENT, &on, sizeof(on)) < 0) {
+				log_msg(LOG_ERR, "setsockopt(...,IP_TRANSPARENT, ...) failed for tcp: %s",
+					strerror(errno));
+			}
+#endif /* IP_TRANSPARENT */
+		}
+
 		if (bind(nsd->tcp[i].s, (struct sockaddr *) nsd->tcp[i].addr->ai_addr, nsd->tcp[i].addr->ai_addrlen) != 0) {
 			log_msg(LOG_ERR, "can't bind tcp socket: %s", strerror(errno));
 			return -1;
@@ -543,7 +590,10 @@ server_prepare(struct nsd *nsd)
 #endif
 	rrl_mmap_init(nsd->child_count, nsd->options->rrl_size,
 		nsd->options->rrl_ratelimit,
-		nsd->options->rrl_whitelist_ratelimit);
+		nsd->options->rrl_whitelist_ratelimit,
+		nsd->options->rrl_slip,
+		nsd->options->rrl_ipv4_prefix_length,
+		nsd->options->rrl_ipv6_prefix_length);
 #endif /* RATELIMIT */
 
 	/* Open the database... */
@@ -592,8 +642,8 @@ server_start_children(struct nsd *nsd, region_type* region, netio_type* netio,
 	return restart_child_servers(nsd, region, netio, xfrd_sock_p);
 }
 
-static void
-close_all_sockets(struct nsd_socket sockets[], size_t n)
+void
+server_close_all_sockets(struct nsd_socket sockets[], size_t n)
 {
 	size_t i;
 
@@ -617,8 +667,8 @@ server_shutdown(struct nsd *nsd)
 {
 	size_t i;
 
-	close_all_sockets(nsd->udp, nsd->ifs);
-	close_all_sockets(nsd->tcp, nsd->ifs);
+	server_close_all_sockets(nsd->udp, nsd->ifs);
+	server_close_all_sockets(nsd->tcp, nsd->ifs);
 	/* CHILD: close command channel to parent */
 	if(nsd->this_child && nsd->this_child->parent_fd != -1)
 	{
@@ -806,7 +856,7 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 
 	/* Start new child processes */
 	if (server_start_children(nsd, server_region, netio, xfrd_sock_p) != 0) {
-		send_children_quit(nsd);
+		send_children_quit(nsd); /* no wait required */
 		exit(1);
 	}
 
@@ -815,7 +865,7 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: ipc command from main %d", cmd));
 		if(cmd == NSD_QUIT) {
 			DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: quit to follow nsd"));
-			send_children_quit(nsd);
+			send_children_quit(nsd); /* no wait required */
 			exit(0);
 		}
 	}
@@ -850,7 +900,7 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 		log_msg(LOG_ERR, "reload: could not wait for parent to quit: %s",
 			strerror(errno));
 	}
-	DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: ipc reply main %d %d", ret, cmd));
+	DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: ipc reply main %d %d", ret, (int)cmd));
 	if(cmd == NSD_QUIT) {
 		/* small race condition possible here, parent got quit cmd. */
 		send_children_quit(nsd);
@@ -1009,7 +1059,7 @@ server_main(struct nsd *nsd)
 
 	/* Start the child processes that handle incoming queries */
 	if (server_start_children(nsd, server_region, netio, &xfrd_listener.fd) != 0) {
-		send_children_quit(nsd);
+		send_children_quit(nsd); /* no wait required */
 		exit(1);
 	}
 	reload_listener.fd = -1;
@@ -1170,7 +1220,7 @@ server_main(struct nsd *nsd)
 				close(reload_listener.fd);
 			}
 			/* only quit children after xfrd has acked */
-			send_children_quit(nsd);
+			send_children_quit(nsd); /* no wait required */
 
 			namedb_fd_close(nsd->db);
 			region_destroy(server_region);
@@ -1179,7 +1229,7 @@ server_main(struct nsd *nsd)
 			/* ENOTREACH */
 			break;
 		case NSD_SHUTDOWN:
-			send_children_quit(nsd);
+			send_children_quit_and_wait(nsd);
 			log_msg(LOG_WARNING, "signal received, shutting down...");
 			break;
 		case NSD_REAP_CHILDREN:
@@ -1262,10 +1312,10 @@ server_child(struct nsd *nsd)
 	DEBUG(DEBUG_IPC, 2, (LOG_INFO, "child process started"));
 
 	if (!(nsd->server_kind & NSD_SERVER_TCP)) {
-		close_all_sockets(nsd->tcp, nsd->ifs);
+		server_close_all_sockets(nsd->tcp, nsd->ifs);
 	}
 	if (!(nsd->server_kind & NSD_SERVER_UDP)) {
-		close_all_sockets(nsd->udp, nsd->ifs);
+		server_close_all_sockets(nsd->udp, nsd->ifs);
 	}
 
 	if (nsd->this_child && nsd->this_child->parent_fd != -1) {
@@ -1348,8 +1398,11 @@ server_child(struct nsd *nsd)
 		/* Do we need to do the statistics... */
 		if (mode == NSD_STATS) {
 #ifdef BIND8_STATS
+			int p = nsd->st.period;
+			nsd->st.period = 1; /* force stats printout */
 			/* Dump the statistics */
 			bind8_stats(nsd);
+			nsd->st.period = p;
 #else /* !BIND8_STATS */
 			log_msg(LOG_NOTICE, "Statistics support not enabled at compile time.");
 #endif /* BIND8_STATS */
@@ -2030,9 +2083,8 @@ handle_tcp_accept(netio_type *netio,
 }
 
 static void
-send_children_quit(struct nsd* nsd)
+send_children_command(struct nsd* nsd, sig_atomic_t command, int timeout)
 {
-	sig_atomic_t command = NSD_QUIT;
 	size_t i;
 	assert(nsd->server_kind == NSD_SERVER_MAIN && nsd->this_child == 0);
 	for (i = 0; i < nsd->child_count; ++i) {
@@ -2046,12 +2098,30 @@ send_children_quit(struct nsd* nsd)
 					(int) command,
 					(int) nsd->children[i].pid,
 					strerror(errno));
+			} else if (timeout > 0) {
+				/* wait for reply */
+				(void)block_read(NULL,
+					nsd->children[i].child_fd,
+					&command, sizeof(command), timeout);
 			}
 			fsync(nsd->children[i].child_fd);
 			close(nsd->children[i].child_fd);
 			nsd->children[i].child_fd = -1;
 		}
 	}
+}
+
+static void
+send_children_quit(struct nsd* nsd)
+{
+	send_children_command(nsd, NSD_QUIT, 0);
+}
+
+static void
+send_children_quit_and_wait(struct nsd* nsd)
+{
+	DEBUG(DEBUG_IPC, 1, (LOG_INFO, "send children quit and wait"));
+	send_children_command(nsd, NSD_QUIT_CHILD, 3);
 }
 
 #ifdef BIND8_STATS

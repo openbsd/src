@@ -67,7 +67,7 @@ nsec3_add_params(const char* hash_algo_str, const char* flag_str,
 %token <type> T_OPT T_APL T_UINFO T_UID T_GID T_UNSPEC T_TKEY T_TSIG T_IXFR
 %token <type> T_AXFR T_MAILB T_MAILA T_DS T_DLV T_SSHFP T_RRSIG T_NSEC T_DNSKEY
 %token <type> T_SPF T_NSEC3 T_IPSECKEY T_DHCID T_NSEC3PARAM T_TLSA
-%token <type> T_NID T_L32 T_L64 T_LP
+%token <type> T_NID T_L32 T_L64 T_LP T_EUI48 T_EUI64
 
 /* other tokens */
 %token	       DOLLAR_TTL DOLLAR_ORIGIN NL SP
@@ -242,6 +242,9 @@ label:	STR
 	    if ($1.len > MAXLABELLEN) {
 		    zc_error("label exceeds %d character limit", MAXLABELLEN);
 		    $$ = error_dname;
+	    } else if ($1.len <= 0) {
+		    zc_error("zero label length");
+		    $$ = error_dname;
 	    } else {
 		    $$ = dname_make_from_label(parser->rr_region,
 					       (uint8_t *) $1.str,
@@ -250,7 +253,7 @@ label:	STR
     }
     |	BITLAB
     {
-	    zc_error("bitlabels are not supported. RFC2673 has status experimental.");
+	    zc_error("bitlabels are now deprecated. RFC2673 is obsoleted.");
 	    $$ = error_dname;
     }
     ;
@@ -335,11 +338,11 @@ wire_rel_dname:	wire_label
 
 str_seq:	STR
     {
-	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->region, $1.str, $1.len), 1);
+	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->rr_region, $1.str, $1.len), 1);
     }
     |	str_seq sp STR
     {
-	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->region, $3.str, $3.len), 0);
+	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->rr_region, $3.str, $3.len), 0);
     }
     ;
 
@@ -603,6 +606,10 @@ type_and_rdata:
     |	T_L64 sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_LP sp rdata_lp
     |	T_LP sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
+    |	T_EUI48 sp rdata_eui48
+    |	T_EUI48 sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
+    |	T_EUI64 sp rdata_eui64
+    |	T_EUI64 sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_UTYPE sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	STR error NL
     {
@@ -981,6 +988,26 @@ rdata_lp:	STR sp dname trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str));  /* preference */
 	    zadd_rdata_domain($3);  /* FQDN */
+    }
+    ;
+
+rdata_eui48:	STR trail
+    {
+#ifdef DRAFT_RRTYPES
+	    zadd_rdata_wireformat(zparser_conv_eui(parser->region, $1.str, 48));
+#else
+	    zc_error_prev_line("EUI48 not supported, enable with --enable-draft-rrtypes.");
+#endif
+    }
+    ;
+
+rdata_eui64:	STR trail
+    {
+#ifdef DRAFT_RRTYPES
+	    zadd_rdata_wireformat(zparser_conv_eui(parser->region, $1.str, 64));
+#else
+	    zc_error_prev_line("EUI64 not supported, enable with --enable-draft-rrtypes.");
+#endif
     }
     ;
 

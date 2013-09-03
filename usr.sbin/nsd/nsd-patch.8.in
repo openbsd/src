@@ -1,10 +1,10 @@
-.TH "nsd\-patch" "8" "Feb  4, 2013" "NLnet Labs" "nsd 3.2.15"
+.TH "nsd\-patch" "8" "Jul 22, 2013" "NLnet Labs" "nsd 3.2.16"
 .\" Copyright (c) 2001\-2011, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
 .LP
 .B nsd\-patch
-\- NSD zone patcher version 3.2.15.
+\- NSD zone patcher version 3.2.16.
 .SH "SYNOPSIS"
 .B nsd\-patch
 .RB [ \-c

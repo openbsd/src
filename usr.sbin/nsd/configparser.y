@@ -32,7 +32,7 @@ extern config_parser_state_t* cfg_parser;
 static int server_settings_seen = 0;
 
 #if 0
-#define OUTYY(s)  printf s /* used ONLY when debugging */
+#define OUTYY(s) printf s /* used ONLY when debugging */
 #else
 #define OUTYY(s)
 #endif
@@ -44,7 +44,7 @@ static int server_settings_seen = 0;
 
 %token SPACE LETTER NEWLINE COMMENT COLON ANY ZONESTR
 %token <str> STRING
-%token VAR_SERVER VAR_NAME VAR_IP_ADDRESS VAR_DEBUG_MODE
+%token VAR_SERVER VAR_NAME VAR_IP_ADDRESS VAR_IP_TRANSPARENT VAR_DEBUG_MODE
 %token VAR_IP4_ONLY VAR_IP6_ONLY VAR_DATABASE VAR_IDENTITY VAR_NSID VAR_LOGFILE
 %token VAR_SERVER_COUNT VAR_TCP_COUNT VAR_PIDFILE VAR_PORT VAR_STATISTICS
 %token VAR_ZONESTATSFILE VAR_CHROOT VAR_USERNAME VAR_ZONESDIR
@@ -59,7 +59,9 @@ static int server_settings_seen = 0;
 %token VAR_ALGORITHM VAR_SECRET
 %token VAR_AXFR VAR_UDP
 %token VAR_VERBOSITY VAR_HIDE_VERSION
-%token VAR_RRL_SIZE VAR_RRL_RATELIMIT VAR_RRL_WHITELIST_RATELIMIT VAR_RRL_WHITELIST
+%token VAR_RRL_SIZE VAR_RRL_RATELIMIT VAR_RRL_SLIP 
+%token VAR_RRL_IPV4_PREFIX_LENGTH VAR_RRL_IPV6_PREFIX_LENGTH
+%token VAR_RRL_WHITELIST_RATELIMIT VAR_RRL_WHITELIST
 
 %%
 toplevelvars: /* empty */ | toplevelvars toplevelvar ;
@@ -76,7 +78,7 @@ serverstart: VAR_SERVER
 	}
 	;
 contents_server: contents_server content_server | ;
-content_server: server_ip_address | server_debug_mode | server_ip4_only | 
+content_server: server_ip_address | server_ip_transparent | server_debug_mode | server_ip4_only | 
 	server_ip6_only | server_database | server_identity | server_nsid | server_logfile | 
 	server_server_count | server_tcp_count | server_pidfile | server_port | 
 	server_statistics | server_zonestatsfile | server_chroot |
@@ -84,7 +86,8 @@ content_server: server_ip_address | server_debug_mode | server_ip4_only |
 	server_difffile | server_xfrdfile | server_xfrd_reload_timeout |
 	server_tcp_query_count | server_tcp_timeout | server_ipv4_edns_size |
 	server_ipv6_edns_size | server_verbosity | server_hide_version |
-	server_rrl_size | server_rrl_ratelimit | server_rrl_whitelist_ratelimit;
+	server_rrl_size | server_rrl_ratelimit | server_rrl_slip | 
+	server_rrl_ipv4_prefix_length | server_rrl_ipv6_prefix_length | server_rrl_whitelist_ratelimit;
 server_ip_address: VAR_IP_ADDRESS STRING 
 	{ 
 		OUTYY(("P(server_ip_address:%s)\n", $2)); 
@@ -105,6 +108,14 @@ server_ip_address: VAR_IP_ADDRESS STRING
 
 		cfg_parser->current_ip_address_option->address = 
 			region_strdup(cfg_parser->opt->region, $2);
+	}
+	;
+server_ip_transparent: VAR_IP_TRANSPARENT STRING 
+	{ 
+		OUTYY(("P(server_ip_transparent:%s)\n", $2)); 
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else cfg_parser->opt->ip_transparent = (strcmp($2, "yes")==0);
 	}
 	;
 server_debug_mode: VAR_DEBUG_MODE STRING 
@@ -312,6 +323,36 @@ server_rrl_ratelimit: VAR_RRL_RATELIMIT STRING
 		OUTYY(("P(server_rrl_ratelimit:%s)\n", $2)); 
 #ifdef RATELIMIT
 		cfg_parser->opt->rrl_ratelimit = atoi($2);
+#endif
+	}
+	;
+server_rrl_slip: VAR_RRL_SLIP STRING
+	{ 
+		OUTYY(("P(server_rrl_slip:%s)\n", $2)); 
+#ifdef RATELIMIT
+		if(atoi($2) < 0)
+			yyerror("number equal or greater than zero expected");
+		cfg_parser->opt->rrl_slip = atoi($2);
+#endif
+	}
+	;
+server_rrl_ipv4_prefix_length: VAR_RRL_IPV4_PREFIX_LENGTH STRING
+	{
+		OUTYY(("P(server_rrl_ipv4_prefix_length:%s)\n", $2)); 
+#ifdef RATELIMIT
+		if(atoi($2) < 0 || atoi($2) > 32)
+			yyerror("invalid IPv4 prefix length");
+		cfg_parser->opt->rrl_ipv4_prefix_length = atoi($2);
+#endif
+	}
+	;
+server_rrl_ipv6_prefix_length: VAR_RRL_IPV6_PREFIX_LENGTH STRING
+	{
+		OUTYY(("P(server_rrl_ipv6_prefix_length:%s)\n", $2)); 
+#ifdef RATELIMIT
+		if(atoi($2) < 0 || atoi($2) > 64)
+			yyerror("invalid IPv6 prefix length");
+		cfg_parser->opt->rrl_ipv6_prefix_length = atoi($2);
 #endif
 	}
 	;

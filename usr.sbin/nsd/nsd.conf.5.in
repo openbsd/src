@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Feb  4, 2013" "NLnet Labs" "nsd 3.2.15"
+.TH "nsd.conf" "5" "Jul 22, 2013" "NLnet Labs" "nsd 3.2.16"
 .\" Copyright (c) 2001\-2011, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -107,6 +107,9 @@ to bind multiple ip\-addresses. Optionally, a port number can be given.
 If none are given NSD listens to the wildcard interface. Same as commandline option 
 .BR \-a.
 .TP
+.B ip\-transparent:\fR <yes or no>
+Allows NSD to bind to non local addresses. Default is no.
+.TP
 .B debug\-mode:\fR <yes or no>
 Turns on debugging mode for nsd, does not fork a daemon process. 
 Default is no. Same as commandline option 
@@ -153,7 +156,7 @@ option
 .B tcp\-count:\fR <number>
 The maximum number of concurrent, active TCP connections by each server. 
 Default is 10. This option should have a value below 1000.
-Same as commandline option 
+Same as commandline option
 .BR \-n .
 .TP
 .B tcp\-query\-count:\fR <number>
@@ -247,6 +250,17 @@ then it is disabled (unlimited rate), also set the whilelist\-ratelimit
 to 0 to disable ratelimit processing.  If you set verbosity to 2 the
 blocked and unblocked subnets are logged.  Blocked queries are blocked
 and some receive TCP fallback replies.
+.TP
+.B rrl\-slip:\fR <numpackets>
+This option controls the number of packets discarded before we send back a SLIP response
+(a response with "truncated" bit set to one). 0 disables the sending of SLIP packets, 
+1 means every query will get a SLIP response.
+.TP
+.B rrl\-ipv4\-prefix:\fR <subnet>
+IPv4 prefix length. Addresses are grouped by netblock.
+.TP
+.B rrl\-ipv6\-prefix:\fR <subnet>
+IPv6 prefix length. Addresses are grouped by netblock.
 .TP
 .B rrl\-whitelist\-ratelimit:\fR <qps>
 The max qps for query sorts for a source, which have been

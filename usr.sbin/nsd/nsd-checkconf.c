@@ -55,6 +55,7 @@ extern int optind;
 #define SERV_GET_BIN(NAME, VAR) 			\
 	if (strcasecmp(#NAME, (VAR)) == 0) { 		\
 		printf("%s\n", opt->NAME?"yes":"no"); 	\
+		return;					\
 	}
 
 #define SERV_GET_STR(NAME, VAR) 		\
@@ -283,6 +284,7 @@ config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o, const
 		/* look in the server section */
 		SERV_GET_IP(ip_address, o);
 		/* bin */
+		SERV_GET_BIN(ip_transparent, o);
 		SERV_GET_BIN(debug_mode, o);
 		SERV_GET_BIN(ip4_only, o);
 		SERV_GET_BIN(ip6_only, o);
@@ -315,6 +317,9 @@ config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o, const
 #ifdef RATELIMIT
 		SERV_GET_INT(rrl_size, o);
 		SERV_GET_INT(rrl_ratelimit, o);
+		SERV_GET_INT(rrl_slip, o);
+		SERV_GET_INT(rrl_ipv4_prefix_length, o);
+		SERV_GET_INT(rrl_ipv6_prefix_length, o);
 		SERV_GET_INT(rrl_whitelist_ratelimit, o);
 #endif
 
@@ -338,6 +343,7 @@ config_test_print_server(nsd_options_t* opt)
 	printf("# Config settings.\n");
 	printf("server:\n");
 	printf("\tdebug-mode: %s\n", opt->debug_mode?"yes":"no");
+	printf("\tip-transparent: %s\n", opt->ip_transparent?"yes":"no");
 	printf("\tip4-only: %s\n", opt->ip4_only?"yes":"no");
 	printf("\tip6-only: %s\n", opt->ip6_only?"yes":"no");
 	printf("\thide-version: %s\n", opt->hide_version?"yes":"no");
@@ -367,6 +373,9 @@ config_test_print_server(nsd_options_t* opt)
 #ifdef RATELIMIT
 	printf("\trrl-size: %d\n", (int)opt->rrl_size);
 	printf("\trrl-ratelimit: %d\n", (int)opt->rrl_ratelimit);
+	printf("\trrl-slip: %d\n", (int)opt->rrl_slip);
+	printf("\trrl-ipv4-prefix-length: %d\n", (int)opt->rrl_ipv4_prefix_length);
+	printf("\trrl-ipv6-prefix-length: %d\n", (int)opt->rrl_ipv6_prefix_length);
 	printf("\trrl-whitelist-ratelimit: %d\n", (int)opt->rrl_whitelist_ratelimit);
 #endif
 
@@ -540,9 +549,8 @@ main(int argc, char* argv[])
 
 	log_init("nsd-checkconf");
 
-
-        /* Parse the command line... */
-        while ((c = getopt(argc, argv, "vo:a:s:z:")) != -1) {
+	/* Parse the command line... */
+	while ((c = getopt(argc, argv, "vo:a:s:z:")) != -1) {
 		switch (c) {
 		case 'v':
 			verbose = 1;
