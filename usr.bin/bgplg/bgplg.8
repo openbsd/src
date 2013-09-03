@@ -1,6 +1,6 @@
-.\"	$OpenBSD: bgplg.8,v 1.12 2013/07/16 00:07:51 schwarze Exp $
+.\"	$OpenBSD: bgplg.8,v 1.13 2013/09/03 20:36:02 reyk Exp $
 .\"
-.\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
+.\" Copyright (c) 2005, 2006, 2013 Reyk Floeter <reyk@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: September 3 2013 $
 .Dt BGPLG 8
 .Os
 .Sh NAME
@@ -105,10 +105,25 @@ open a second, restricted, control socket:
 .Pp
 .Dl socket \&"/var/www/run/bgpd.rsock\&" restricted
 .It
-Start the Apache HyperText Transfer Protocol server.
-See
-.Xr httpd 8
-for more information.
+Start the
+.Xr nginx 8
+and
+.Xr slowcgi 8
+servers after configuring the related
+.Ic server
+section in
+.Pa /etc/nginx/nginx.conf .
+For example:
+.Bd -literal -offset indent
+# FastCGI to CGI wrapper server
+#
+location /cgi-bin/ {
+	fastcgi_pass	unix:run/slowcgi.sock;
+	fastcgi_split_path_info	^(/cgi-bin/[^/]+)(.*);
+	fastcgi_param	PATH_INFO $fastcgi_path_info;
+	include		fastcgi_params;
+}
+.Ed
 .El
 .Sh FILES
 .Bl -tag -width "/var/www/conf/bgplg.headXX" -compact
@@ -133,7 +148,7 @@ The following statically linked executables have been installed into
 the
 .Xr chroot 2
 environment of the
-.Xr httpd 8
+.Xr nginx 8
 server.
 To enable the corresponding functionality, use the
 .Xr chmod 1
@@ -177,7 +192,8 @@ Requires the set-user-ID bit, set the permission mode to 4555.
 .Xr bgpctl 8 ,
 .Xr bgpd 8 ,
 .Xr bgplgsh 8 ,
-.Xr httpd 8
+.Xr nginx 8 ,
+.Xr slowcgi 8
 .Sh HISTORY
 The
 .Nm
