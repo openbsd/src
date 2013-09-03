@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.46 2013/09/03 07:37:58 mpi Exp $ */
+/* $OpenBSD: pms.c,v 1.47 2013/09/03 09:29:35 stsp Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -273,6 +273,7 @@ void	pms_proc_elantech_v2(struct pms_softc *);
 void	pms_proc_elantech_v3(struct pms_softc *);
 void	pms_proc_elantech_v4(struct pms_softc *);
 
+int	synaptics_knock(struct pms_softc *);
 int	synaptics_set_mode(struct pms_softc *, int);
 int	synaptics_query(struct pms_softc *, int, int *);
 int	synaptics_get_hwinfo(struct pms_softc *);
@@ -937,12 +938,9 @@ synaptics_sec_proc(struct pms_softc *sc)
 }
 
 int
-pms_enable_synaptics(struct pms_softc *sc)
+synaptics_knock(struct pms_softc *sc)
 {
-	struct synaptics_softc *syn = sc->synaptics;
-	struct wsmousedev_attach_args a;
 	u_char resp[3];
-	int mode;
 
 	if (pms_set_resolution(sc, 0) ||
 	    pms_set_resolution(sc, 0) ||
@@ -950,7 +948,38 @@ pms_enable_synaptics(struct pms_softc *sc)
 	    pms_set_resolution(sc, 0) ||
 	    pms_get_status(sc, resp) ||
 	    resp[1] != SYNAPTICS_ID_MAGIC)
-		goto err;
+		return (-1);
+
+	return (0);
+}
+
+int
+pms_enable_synaptics(struct pms_softc *sc)
+{
+	struct synaptics_softc *syn = sc->synaptics;
+	struct wsmousedev_attach_args a;
+	int mode, i;
+
+	if (synaptics_knock(sc)) {
+		if (sc->synaptics == NULL)
+			goto err;
+		/* 
+		 * Some synaptics touchpads don't resume quickly.
+		 * Retry a few times.
+		 */
+		for (i = 10; i > 0; --i) {
+			printf("%s: device not resuming, retrying\n",
+			    DEVNAME(sc));
+			pms_reset(sc);
+			if (synaptics_knock(sc) == 0)
+				break;
+			delay(100000);
+		}
+		if (i == 0) {
+			printf("%s: lost device\n", DEVNAME(sc));
+			goto err;
+		}
+	}
 
 	if (sc->synaptics == NULL) {
 		sc->synaptics = syn = malloc(sizeof(struct synaptics_softc),
