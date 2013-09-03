@@ -20,7 +20,6 @@
 
 #include "namedb.h"
 
-
 static domain_type *
 allocate_domain_info(domain_table_type *table,
 		     const dname_type *dname,

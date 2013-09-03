@@ -137,6 +137,13 @@ struct netio_handler
 };
 
 
+struct netio_handler_list
+{
+	netio_handler_list_type *next;
+	netio_handler_type      *handler;
+};
+
+
 /*
  * Create a new netio instance using the specified REGION.  The netio
  * instance is cleaned up when the REGION is deallocated.

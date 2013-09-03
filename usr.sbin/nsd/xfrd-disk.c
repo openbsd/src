@@ -297,7 +297,7 @@ xfrd_read_state(struct xfrd_state* xfrd)
 		return;
 	}
 
-	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: read %d zones from state file", numzones));
+	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: read %d zones from state file", (int)numzones));
 	fclose(in);
 	region_destroy(tempregion);
 }
@@ -308,23 +308,23 @@ neato_timeout(FILE* out, const char* str, uint32_t secs)
 {
 	fprintf(out, "%s", str);
 	if(secs <= 0) {
-		fprintf(out, " %ds", secs);
+		fprintf(out, " %ds", (int)secs);
 		return;
 	}
 	if(secs >= 3600*24) {
-		fprintf(out, " %dd", secs/(3600*24));
+		fprintf(out, " %dd", (int)secs/(3600*24));
 		secs = secs % (3600*24);
 	}
 	if(secs >= 3600) {
-		fprintf(out, " %dh", secs/3600);
+		fprintf(out, " %dh", (int)secs/3600);
 		secs = secs%3600;
 	}
 	if(secs >= 60) {
-		fprintf(out, " %dm", secs/60);
+		fprintf(out, " %dm", (int)secs/60);
 		secs = secs%60;
 	}
 	if(secs > 0) {
-		fprintf(out, " %ds", secs);
+		fprintf(out, " %ds", (int)secs);
 	}
 }
 
@@ -371,17 +371,17 @@ xfrd_write_state_soa(FILE* out, const char* id,
 	fprintf(out, " ago\n");
 
 	fprintf(out, "\t%s: %u %u %u %u", id,
-		ntohs(soa->type), ntohs(soa->klass),
-		ntohl(soa->ttl), ntohs(soa->rdata_count));
+		(unsigned)ntohs(soa->type), (unsigned)ntohs(soa->klass),
+		(unsigned)ntohl(soa->ttl), (unsigned)ntohs(soa->rdata_count));
 	fprintf(out, " ");
 	xfrd_write_dname(out, soa->prim_ns);
 	fprintf(out, " ");
 	xfrd_write_dname(out, soa->email);
-	fprintf(out, " %u", ntohl(soa->serial));
-	fprintf(out, " %u", ntohl(soa->refresh));
-	fprintf(out, " %u", ntohl(soa->retry));
-	fprintf(out, " %u", ntohl(soa->expire));
-	fprintf(out, " %u\n", ntohl(soa->minimum));
+	fprintf(out, " %u", (unsigned)ntohl(soa->serial));
+	fprintf(out, " %u", (unsigned)ntohl(soa->refresh));
+	fprintf(out, " %u", (unsigned)ntohl(soa->retry));
+	fprintf(out, " %u", (unsigned)ntohl(soa->expire));
+	fprintf(out, " %u\n", (unsigned)ntohl(soa->minimum));
 	fprintf(out, "\t#");
 	neato_timeout(out, " refresh =", ntohl(soa->refresh));
 	neato_timeout(out, " retry =", ntohl(soa->retry));

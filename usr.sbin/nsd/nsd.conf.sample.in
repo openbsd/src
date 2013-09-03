@@ -16,6 +16,9 @@ server:
 	# ip-address: 1.2.3.4@5678
 	# ip-address: 12fe::8ef0
 
+	# Allow binding to non local addresses. Default no.
+	# ip-transparent: no
+
 	# don't answer VERSION.BIND and VERSION.SERVER CHAOS class queries
 	# hide-version: no
 
@@ -107,6 +110,22 @@ server:
 	# Default 200. If set to 0, ratelimiting is disabled. Also set
 	# rrl-whitelist-ratelimit to 0 to disable ratelimit processing.
 	# rrl-ratelimit: 200
+
+	# Response Rate Limiting, number of packets to discard before
+	# sending a SLIP response (a truncated one, allowing an honest
+	# resolver to retry with TCP). Default is 2 (one half of the
+	# queries will receive a SLIP response, 0 disables SLIP (all
+	# packets are discarded), 1 means every request will get a
+	# SLIP response.
+	# rrl-slip: 2
+
+	# Response Rate Limiting, IPv4 prefix length. Addresses are
+	# grouped by netblock. 
+	# rrl-ipv4-prefix-length: 24
+
+	# Response Rate Limiting, IPv6 prefix length. Addresses are
+	# grouped by netblock. 
+	# rrl-ipv6-prefix-length: 64
 
 	# Response Rate Limiting, maximum QPS allowed (from one query source)
 	# for whitelisted types. Default 2000.

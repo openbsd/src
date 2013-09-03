@@ -57,6 +57,11 @@ struct nsd_options;
  * channel content during reload
  */
 #define NSD_QUIT_SYNC 11
+/*
+ * QUIT_CHILD is sent at exit, to make sure the child has exited so that
+ * port53 is free when all of nsd's processes have exited at shutdown time
+ */
+#define NSD_QUIT_CHILD 12
 
 #define NSD_SERVER_MAIN 0x0U
 #define NSD_SERVER_UDP  0x1U
@@ -224,6 +229,7 @@ int server_prepare(struct nsd *nsd);
 void server_main(struct nsd *nsd);
 void server_child(struct nsd *nsd);
 void server_shutdown(struct nsd *nsd);
+void server_close_all_sockets(struct nsd_socket sockets[], size_t n);
 /* extra domain numbers for temporary domains */
 #define EXTRA_DOMAIN_NUMBERS 1024
 

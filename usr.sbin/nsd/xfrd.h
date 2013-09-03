@@ -178,6 +178,7 @@ struct xfrd_zone {
 
 enum xfrd_packet_result {
 	xfrd_packet_bad, /* drop the packet/connection */
+	xfrd_packet_drop, /* drop the connection, but not report bad */
 	xfrd_packet_more, /* more packets to follow on tcp */
 	xfrd_packet_notimpl, /* server responded with NOTIMPL or FORMATERR */
 	xfrd_packet_tcp, /* try tcp connection */

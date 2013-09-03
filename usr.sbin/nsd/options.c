@@ -34,6 +34,7 @@ nsd_options_t* nsd_options_create(region_type* region)
 	opt->keys = NULL;
 	opt->numkeys = 0;
 	opt->ip_addresses = NULL;
+	opt->ip_transparent = 0;
 	opt->debug_mode = 0;
 	opt->verbosity = 0;
 	opt->hide_version = 0;
@@ -67,6 +68,9 @@ nsd_options_t* nsd_options_create(region_type* region)
 #ifdef RATELIMIT
 	opt->rrl_size = RRL_BUCKETS;
 	opt->rrl_ratelimit = RRL_LIMIT/2;
+	opt->rrl_slip = RRL_SLIP;
+	opt->rrl_ipv4_prefix_length = RRL_IPV4_PREFIX_LENGTH;
+	opt->rrl_ipv6_prefix_length = RRL_IPV6_PREFIX_LENGTH;
 	opt->rrl_whitelist_ratelimit = RRL_WLIST_LIMIT/2;
 #endif
 	nsd_options = opt;
@@ -647,6 +651,7 @@ acl_options_t* parse_acl_info(region_type* region, char* ip, const char* key)
 	acl->use_axfr_only = 0;
 	acl->allow_udp = 0;
 	acl->ixfr_disabled = 0;
+	acl->bad_xfr_count = 0;
 	acl->key_options = 0;
 	acl->is_ipv6 = 0;
 	acl->port = 0;

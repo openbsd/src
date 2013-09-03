@@ -30,14 +30,21 @@ enum rrl_type {
 #define RRL_BUCKETS 1000000
 /** default rrl limit, in 2x qps , the default is 200 qps */
 #define RRL_LIMIT 400
+/** default slip */
+#define RRL_SLIP 2
+/** default prefix lengths */
+#define RRL_IPV4_PREFIX_LENGTH 24
+#define RRL_IPV6_PREFIX_LENGTH 64
 /** default whitelist rrl limit, in 2x qps, default is thus 2000 qps */
 #define RRL_WLIST_LIMIT 4000
 
 /**
  * Initialize for n children (optional, otherwise no mmaps used)
  * ratelimits lm and wlm are in qps (this routines x2s them for internal use).
+ * plf and pls are in prefix lengths.
  */
-void rrl_mmap_init(int numch, size_t numbuck, size_t lm, size_t wlm);
+void rrl_mmap_init(int numch, size_t numbuck, size_t lm, size_t wlm, size_t sm,
+	size_t plf, size_t pls);
 
 /**
  * Initialize rate limiting (for this child server process)
@@ -65,7 +72,5 @@ enum rrl_type rrlstr2type(const char* s);
 /** for unit test, update rrl bucket; return rate */
 uint32_t rrl_update(query_type* query, uint32_t hash, uint64_t source,
 	uint16_t flags, int32_t now, uint32_t lm);
-/** set the rate limit counters, pass variables in qps */
-void rrl_set_limit(size_t lm, size_t wlm);
 
 #endif /* RRL_H */

@@ -25,13 +25,6 @@ int pselect(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 #include <sys/select.h>
 #endif
 
-
-struct netio_handler_list
-{
-	netio_handler_list_type *next;
-	netio_handler_type      *handler;
-};
-
 netio_type *
 netio_create(region_type *region)
 {

@@ -38,6 +38,7 @@ struct nsd_options {
 	/* list of ip adresses to bind to (or NULL for all) */
 	ip_address_option_t* ip_addresses;
 
+	int ip_transparent;
 	int debug_mode;
 	int verbosity;
 	int hide_version;
@@ -69,6 +70,11 @@ struct nsd_options {
 	size_t rrl_size;
 	/** max qps for queries, 0 is nolimit */
 	size_t rrl_ratelimit;
+	/** ratio of slipped responses, 0 is noslip */
+	size_t rrl_slip;
+	/** ip prefix length */
+	size_t rrl_ipv4_prefix_length;
+	size_t rrl_ipv6_prefix_length;
 	/** max qps for whitelisted queries, 0 is nolimit */
 	size_t rrl_whitelist_ratelimit;
 #endif
@@ -122,6 +128,7 @@ struct acl_options {
 	uint8_t use_axfr_only;
 	uint8_t allow_udp;
 	time_t ixfr_disabled;
+	int bad_xfr_count;
 
 	/* ip address range */
 	const char* ip_address_spec;

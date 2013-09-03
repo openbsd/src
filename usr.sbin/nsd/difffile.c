@@ -536,6 +536,14 @@ add_RR(namedb_type* db, const dname_type* dname,
 		/* ignore already existing RR: lenient accepting of messages */
 		return 1;
 	}
+	if(domain == zone->apex) {
+		/* make sure we don't get multiple soa rrs  */
+		if (type == TYPE_SOA && rrset->rr_count > 0) {
+			log_msg(LOG_ERR, "diff: multiple soa records for %s",
+				dname_to_string(dname,0));
+			return 0;
+		}
+	}
 
 	/* re-alloc the rrs and add the new */
 	rrs_old = rrset->rrs;
