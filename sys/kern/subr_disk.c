@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.151 2013/08/08 23:25:06 syl Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.152 2013/09/03 17:48:26 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -645,22 +645,17 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_int openmask)
 
 	/* XXX missing check if other dos partitions will be overwritten */
 
-	while (openmask != 0) {
-		i = ffs(openmask) - 1;
-		openmask &= ~(1 << i);
-		if (nlp->d_npartitions <= i)
-			return (EBUSY);
+	for (i = 0; i < MAXPARTITIONS; i++) {
 		opp = &olp->d_partitions[i];
 		npp = &nlp->d_partitions[i];
-		if (DL_GETPOFFSET(npp) != DL_GETPOFFSET(opp) ||
-		    DL_GETPSIZE(npp) < DL_GETPSIZE(opp))
+		if ((openmask & (1 << i)) && (DL_GETPOFFSET(npp) != DL_GETPOFFSET(opp) ||
+		    DL_GETPSIZE(npp) < DL_GETPSIZE(opp)))
 			return (EBUSY);
 		/*
 		 * Copy internally-set partition information
 		 * if new label doesn't include it.		XXX
 		 */
 		if (npp->p_fstype == FS_UNUSED && opp->p_fstype != FS_UNUSED) {
-			npp->p_fstype = opp->p_fstype;
 			npp->p_fragblock = opp->p_fragblock;
 			npp->p_cpg = opp->p_cpg;
 		}
