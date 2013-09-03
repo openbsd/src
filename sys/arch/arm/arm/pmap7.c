@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.8 2013/06/09 12:53:42 miod Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.9 2013/09/03 16:48:26 patrick Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -278,14 +278,6 @@ extern caddr_t msgbufaddr;
  * Flag to indicate if pmap_init() has done its thing
  */
 boolean_t pmap_initialized;
-
-/*
- * Flag to indicate whether the data cache is virtually indexed and
- * virtually tagged. A value of zero implies physically indexed and
- * physically tagged data cache; there is no support for VIPT data
- * cache yet.
- */
-boolean_t pmap_cachevivt = FALSE;
 
 /*
  * Misc. locking data structures
