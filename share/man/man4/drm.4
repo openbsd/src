@@ -1,4 +1,4 @@
-.\" $OpenBSD: drm.4,v 1.2 2008/12/07 08:45:13 jmc Exp $
+.\" $OpenBSD: drm.4,v 1.3 2013/09/03 07:01:47 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: December 7 2008 $
+.Dd $Mdocdate: September 3 2013 $
 .Dt DRM 4
 .Os
 .Sh NAME
@@ -44,11 +44,11 @@ Intel integrated graphics chipsets
 ATI RADEON video driver
 .El
 .Sh FILES
-.Bl -tag -width "/usr/X11R6/lib/modules/extensions/libdri.soXXX" -compact
-.It /dev/drm0
-DRM device special file.
-.It /usr/X11R6/lib/modules/extensions/libdri.so
-X DRI module.
+.Bl -tag -width "/usr/X11R6/lib/modules/X_dri.soXXX" -compact
+.It /dev/drm*
+DRM device special files.
+.It /usr/X11R6/lib/modules/*_dri.so
+X DRI modules.
 .El
 .Sh SEE ALSO
 .Xr vga 4
