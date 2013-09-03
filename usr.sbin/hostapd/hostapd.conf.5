@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.41 2013/07/16 11:13:33 schwarze Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.42 2013/09/03 20:44:01 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: September 3 2013 $
 .Dt HOSTAPD.CONF 5
 .Os
 .Sh NAME
@@ -405,7 +405,8 @@ Match the transmit rate of the received frame.
 .Op Ic operator
 .Ar rate Ic Mb
 .Xc
-Match the frequency of the received frame.
+Match the frequency of the received frame,
+in Mbps.
 .El
 .Pp
 The radiotap rules support the following operators.
@@ -729,7 +730,7 @@ hostap handle type management subtype auth from <blacklist> \e
     with node delete &from
 
 # Log rogue access points with a strong signal quality on
-# channel 3 (2.422GHz) transmitting frames with 1Mb.
+# channel 3 (2.422GHz) transmitting frames with 1Mbps.
 hostap handle type management subtype beacon bssid !<myess> \e
     signal >= 50% txrate 1Mb freq 2.422GHz \e
     with log
