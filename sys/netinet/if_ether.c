@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.106 2013/08/29 13:24:43 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.107 2013/09/03 10:25:32 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -67,7 +67,6 @@
 #include <net/if_bridge.h>
 #endif
 
-#define SIN(s) ((struct sockaddr_in *)s)
 #define SDL(s) ((struct sockaddr_dl *)s)
 #define SRP(s) ((struct sockaddr_inarp *)s)
 
@@ -193,7 +192,7 @@ arp_rtrequest(int req, struct rtentry *rt)
 		 * restore cloning bit.
 		 */
 		if ((rt->rt_flags & RTF_HOST) == 0 &&
-		    SIN(rt_mask(rt))->sin_addr.s_addr != 0xffffffff)
+		    satosin(rt_mask(rt))->sin_addr.s_addr != 0xffffffff)
 			rt->rt_flags |= RTF_CLONING;
 		if (rt->rt_flags & RTF_CLONING) {
 			/*
@@ -228,8 +227,8 @@ arp_rtrequest(int req, struct rtentry *rt)
 		/* Announce a new entry if requested. */
 		if (rt->rt_flags & RTF_ANNOUNCE)
 			arprequest(rt->rt_ifp,
-			    &SIN(rt_key(rt))->sin_addr.s_addr,
-			    &SIN(rt_key(rt))->sin_addr.s_addr,
+			    &satosin(rt_key(rt))->sin_addr.s_addr,
+			    &satosin(rt_key(rt))->sin_addr.s_addr,
 			    (u_char *)LLADDR(SDL(gate)));
 		/*FALLTHROUGH*/
 	case RTM_RESOLVE:
@@ -383,22 +382,23 @@ arpresolve(struct arpcom *ac, struct rtentry *rt, struct mbuf *m,
 		return (1);
 	}
 	if (m->m_flags & M_MCAST) {	/* multicast */
-		ETHER_MAP_IP_MULTICAST(&SIN(dst)->sin_addr, desten);
+		ETHER_MAP_IP_MULTICAST(&satosin(dst)->sin_addr, desten);
 		return (1);
 	}
 	if (rt) {
 		la = (struct llinfo_arp *)rt->rt_llinfo;
 		if (la == NULL)
 			log(LOG_DEBUG, "arpresolve: %s: route without link "
-			    "local address\n", inet_ntoa(SIN(dst)->sin_addr));
+			    "local address\n",
+			    inet_ntoa(satosin(dst)->sin_addr));
 	} else {
-		if ((la = arplookup(SIN(dst)->sin_addr.s_addr, RT_REPORT, 0,
+		if ((la = arplookup(satosin(dst)->sin_addr.s_addr, RT_REPORT, 0,
 		    ac->ac_if.if_rdomain)) != NULL)
 			rt = la->la_rt;
 		else
 			log(LOG_DEBUG,
 			    "arpresolve: %s: can't allocate llinfo\n",
-			    inet_ntoa(SIN(dst)->sin_addr));
+			    inet_ntoa(satosin(dst)->sin_addr));
 	}
 	if (la == 0 || rt == 0) {
 		m_freem(m);
@@ -470,8 +470,8 @@ arpresolve(struct arpcom *ac, struct rtentry *rt, struct mbuf *m,
 			rt->rt_expire = time_second;
 			if (la->la_asked++ < arp_maxtries)
 				arprequest(&ac->ac_if,
-				    &(SIN(rt->rt_ifa->ifa_addr)->sin_addr.s_addr),
-				    &(SIN(dst)->sin_addr.s_addr),
+				    &satosin(rt->rt_ifa->ifa_addr)->sin_addr.s_addr,
+				    &satosin(dst)->sin_addr.s_addr,
 #if NCARP > 0
 				    (rt->rt_ifp->if_type == IFT_CARP) ?
 					((struct arpcom *) rt->rt_ifp->if_softc
