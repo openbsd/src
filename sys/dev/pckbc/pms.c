@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.45 2013/07/16 08:11:39 mpi Exp $ */
+/* $OpenBSD: pms.c,v 1.46 2013/09/03 07:37:58 mpi Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -909,6 +909,11 @@ synaptics_get_hwinfo(struct pms_softc *sc)
 	if (SYNAPTICS_EXT_MODEL_BUTTONS(syn->ext_model) > 8)
 		syn->ext_model &= ~0xf000;
 
+	if ((syn->model & SYNAPTICS_MODEL_NEWABS) == 0) {
+		printf("%s: don't support Synaptics OLDABS\n", DEVNAME(sc));
+		return (-1);
+	}
+
 	return (0);
 }
 
@@ -956,12 +961,9 @@ pms_enable_synaptics(struct pms_softc *sc)
 			goto err;
 		}
 
-		if (synaptics_get_hwinfo(sc))
-			goto err;
-
-		if ((syn->model & SYNAPTICS_MODEL_NEWABS) == 0) {
-			printf("%s: don't support Synaptics OLDABS\n",
-			    DEVNAME(sc));
+		if (synaptics_get_hwinfo(sc)) {
+			free(sc->synaptics, M_DEVBUF);
+			sc->synaptics = NULL;
 			goto err;
 		}
 
@@ -999,11 +1001,6 @@ pms_enable_synaptics(struct pms_softc *sc)
 	return (1);
 
 err:
-	if (sc->synaptics) {
-		free(sc->synaptics, M_DEVBUF);
-		sc->synaptics = NULL;
-	}
-
 	pms_reset(sc);
 
 	return (0);
@@ -1246,8 +1243,11 @@ pms_enable_alps(struct pms_softc *sc)
 			goto err;
 		}
 
-		if (alps_get_hwinfo(sc))
+		if (alps_get_hwinfo(sc)) {
+			free(sc->alps, M_DEVBUF);
+			sc->alps = NULL;
 			goto err;
+		}
 
 		printf("%s: ALPS %s, version 0x%04x\n", DEVNAME(sc),
 		    (alps->model & ALPS_DUALPOINT ? "Dualpoint" : "Glidepoint"),
@@ -1310,11 +1310,6 @@ pms_enable_alps(struct pms_softc *sc)
 	return (1);
 
 err:
-	if (sc->alps) {
-		free(sc->alps, M_DEVBUF);
-		sc->alps = NULL;
-	}
-
 	pms_reset(sc);
 
 	return (0);
@@ -1805,8 +1800,11 @@ pms_enable_elantech_v1(struct pms_softc *sc)
 			goto err;
 		}
 
-		if (elantech_get_hwinfo_v1(sc))
+		if (elantech_get_hwinfo_v1(sc)) {
+			free(sc->elantech, M_DEVBUF);
+			sc->elantech = NULL;
 			goto err;
+		}
 
 		printf("%s: Elantech Touchpad, version %d\n", DEVNAME(sc), 1);
 	} else if (elantech_set_absolute_mode_v1(sc))
@@ -1818,11 +1816,6 @@ pms_enable_elantech_v1(struct pms_softc *sc)
 	return (1);
 
 err:
-	if (sc->elantech) {
-		free(sc->elantech, M_DEVBUF);
-		sc->elantech = NULL;
-	}
-
 	pms_reset(sc);
 
 	return (0);
@@ -1845,8 +1838,11 @@ pms_enable_elantech_v2(struct pms_softc *sc)
 			goto err;
 		}
 
-		if (elantech_get_hwinfo_v2(sc))
+		if (elantech_get_hwinfo_v2(sc)) {
+			free(sc->elantech, M_DEVBUF);
+			sc->elantech = NULL;
 			goto err;
+		}
 
 		printf("%s: Elantech Touchpad, version %d\n", DEVNAME(sc), 2);
 	} else if (elantech_set_absolute_mode_v2(sc))
@@ -1855,11 +1851,6 @@ pms_enable_elantech_v2(struct pms_softc *sc)
 	return (1);
 
 err:
-	if (sc->elantech) {
-		free(sc->elantech, M_DEVBUF);
-		sc->elantech = NULL;
-	}
-
 	pms_reset(sc);
 
 	return (0);
@@ -1882,8 +1873,11 @@ pms_enable_elantech_v3(struct pms_softc *sc)
 			goto err;
 		}
 
-		if (elantech_get_hwinfo_v3(sc))
+		if (elantech_get_hwinfo_v3(sc)) {
+			free(sc->elantech, M_DEVBUF);
+			sc->elantech = NULL;
 			goto err;
+		}
 
 		printf("%s: Elantech Touchpad, version %d\n", DEVNAME(sc), 3);
 	} else if (elantech_set_absolute_mode_v3(sc))
@@ -1892,11 +1886,6 @@ pms_enable_elantech_v3(struct pms_softc *sc)
 	return (1);
 
 err:
-	if (sc->elantech) {
-		free(sc->elantech, M_DEVBUF);
-		sc->elantech = NULL;
-	}
-
 	pms_reset(sc);
 
 	return (0);
@@ -1919,8 +1908,11 @@ pms_enable_elantech_v4(struct pms_softc *sc)
 			goto err;
 		}
 
-		if (elantech_get_hwinfo_v4(sc))
+		if (elantech_get_hwinfo_v4(sc)) {
+			free(sc->elantech, M_DEVBUF);
+			sc->elantech = NULL;
 			goto err;
+		}
 
 		printf("%s: Elantech Clickpad, version %d\n", DEVNAME(sc), 4);
 	} else if (elantech_set_absolute_mode_v4(sc))
@@ -1929,11 +1921,6 @@ pms_enable_elantech_v4(struct pms_softc *sc)
 	return (1);
 
 err:
-	if (sc->elantech) {
-		free(sc->elantech, M_DEVBUF);
-		sc->elantech = NULL;
-	}
-
 	pms_reset(sc);
 
 	return (0);
