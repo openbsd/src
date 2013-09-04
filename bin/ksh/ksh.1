@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.147 2013/06/13 19:43:09 millert Exp $
+.\"	$OpenBSD: ksh.1,v 1.148 2013/09/04 15:49:18 millert Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: June 13 2013 $
+.Dd $Mdocdate: September 4 2013 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -849,7 +849,6 @@ login='exec login'
 nohup='nohup '
 r='fc -e -'
 stop='kill -STOP'
-suspend='kill -STOP $$'
 type='whence -v'
 .Ed
 .Pp
@@ -2744,8 +2743,8 @@ Additional
 regular commands
 .Pp
 .Ic \&[ , echo , let , mknod ,
-.Ic print , pwd , test , ulimit ,
-.Ic whence
+.Ic print , pwd , suspend , test ,
+.Ic ulimit , whence
 .Pp
 In the future, the additional
 .Nm
@@ -3818,6 +3817,16 @@ etc. are renamed to
 etc.
 .Ar number
 defaults to 1.
+.Pp
+.It Ic suspend
+Stops the shell as if it had received the suspend character from
+the terminal.
+It is not possible to suspend a login shell unless the parent process
+is a member of the same terminal session but is a member of a different
+process group.
+As a general rule, if the shell was started by another shell or via
+.Xr su 1 ,
+it can be suspended.
 .Pp
 .It Ic test Ar expression
 .It Ic \&[ Ar expression Ic \&]

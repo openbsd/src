@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.43 2013/04/19 17:39:45 deraadt Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.44 2013/09/04 15:49:18 millert Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -871,6 +871,26 @@ usage:
 	return 1;
 }
 
+static int
+c_suspend(char **wp)
+{
+	if (wp[1] != NULL) {
+		bi_errorf("too many arguments");
+		return 1;
+	}
+	if (Flag(FLOGIN)) {
+		/* Can't suspend an orphaned process group. */
+		pid_t parent = getppid();
+		if (getpgid(parent) == getpgid(0) ||
+		    getsid(parent) != getsid(0)) {
+			bi_errorf("can't suspend a login shell");
+			return 1;
+		}
+	}
+	j_suspend();
+	return 0;
+}
+
 /* dummy function, special case in comexec() */
 int
 c_builtin(char **wp)
@@ -910,5 +930,6 @@ const struct builtin shbuiltins [] = {
 	{"+umask", c_umask},
 	{"*=unset", c_unset},
 	{"mknod", c_mknod},
+	{"suspend", c_suspend},
 	{NULL, NULL}
 };

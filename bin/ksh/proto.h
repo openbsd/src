@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.34 2012/06/27 07:17:19 otto Exp $	*/
+/*	$OpenBSD: proto.h,v 1.35 2013/09/04 15:49:19 millert Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -132,6 +132,7 @@ void	coproc_cleanup(int);
 struct temp *maketemp(Area *, Temp_type, struct temp **);
 /* jobs.c */
 void	j_init(int);
+void	j_suspend(void);
 void	j_exit(void);
 void	j_change(void);
 int	exchild(struct op *, int, volatile int *, int);

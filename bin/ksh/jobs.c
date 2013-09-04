@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.39 2009/12/13 04:36:48 deraadt Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.40 2013/09/04 15:49:18 millert Exp $	*/
 
 /*
  * Process and job control
@@ -184,6 +184,59 @@ j_init(int mflagset)
 #endif /* JOBS */
 		if (Flag(FTALKING))
 			tty_init(true);
+}
+
+/* suspend the shell */
+void
+j_suspend(void)
+{
+	struct sigaction sa, osa;
+
+	/* Restore tty and pgrp. */
+	if (ttypgrp_ok) {
+		tcsetattr(tty_fd, TCSADRAIN, &tty_state);
+		if (restore_ttypgrp >= 0) {
+			if (tcsetpgrp(tty_fd, restore_ttypgrp) < 0) {
+				warningf(false,
+				    "j_suspend: tcsetpgrp() failed: %s",
+				    strerror(errno));
+			} else {
+				if (setpgid(0, restore_ttypgrp) < 0) {
+					warningf(false,
+					    "j_suspend: setpgid() failed: %s",
+					    strerror(errno));
+				}
+			}
+		}
+	}
+
+	/* Suspend the shell. */
+	memset(&sa, 0, sizeof(sa));
+	sigemptyset(&sa.sa_mask);
+	sa.sa_handler = SIG_DFL;
+	sigaction(SIGTSTP, &sa, &osa);
+	kill(0, SIGTSTP);
+
+	/* Back from suspend, reset signals, pgrp and tty. */
+	sigaction(SIGTSTP, &osa, NULL);
+	if (ttypgrp_ok) {
+		if (restore_ttypgrp >= 0) {
+			if (setpgid(0, kshpid) < 0) {
+				warningf(false,
+				    "j_suspend: setpgid() failed: %s",
+				    strerror(errno));
+				ttypgrp_ok = 0;
+			} else {
+				if (tcsetpgrp(tty_fd, kshpid) < 0) {
+					warningf(false,
+					    "j_suspend: tcsetpgrp() failed: %s",
+					    strerror(errno));
+					ttypgrp_ok = 0;
+				}
+			}
+		}
+		tty_init(true);
+	}
 }
 
 /* job cleanup before shell exit */
