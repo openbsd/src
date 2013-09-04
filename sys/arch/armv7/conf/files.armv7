@@ -1,0 +1,159 @@
+#	$OpenBSD: files.armv7,v 1.1 2013/09/04 14:38:25 patrick Exp $
+#
+# First try for arm-specific configuration info
+#
+
+maxpartitions	16
+maxusers	2 8 64
+
+major	{wd = 16}
+major	{sd = 24}
+major	{cd = 26}
+major	{rd = 18}
+
+file	arch/arm/arm/conf.c
+
+file	arch/armv7/omap/beagle_machdep.c
+
+#interrupt API layer
+file	arch/armv7/armv7/intr.c
+
+# u-boot argument support
+file	arch/armv7/armv7/uboot_tags.c
+
+# note that the order of the devices in _this_ file
+# affects the order that the devices will configure.
+
+# XXX arch/arm/omap
+define soc {}
+device omap: soc
+attach omap at mainbus
+file	arch/armv7/omap/omap.c			omap
+file	arch/armv7/omap/omap3.c			omap
+file	arch/armv7/omap/omap4.c			omap
+file	arch/armv7/omap/am335x.c		omap
+
+include "dev/sdmmc/files.sdmmc"
+
+device ommmc: sdmmcbus
+attach ommmc at soc
+file	arch/armv7/omap/ommmc.c			ommmc
+
+# Media Independent Interface (mii)
+include "dev/mii/files.mii"
+
+device cpsw: ether, ifnet, mii, ifmedia
+attach cpsw at soc
+file	arch/armv7/omap/if_cpsw.c		cpsw
+
+device prcm
+attach prcm at soc
+file	arch/armv7/omap/prcm.c			prcm
+
+device sitaracm
+attach sitaracm at soc
+file	arch/armv7/omap/am335x_cm_padconf.c	sitaracm
+file	arch/armv7/omap/sitara_cm.c		sitaracm
+
+device omgpio
+attach omgpio at soc
+file   arch/armv7/omap/omgpio.c			omgpio
+
+device intc
+attach intc at soc
+file	arch/armv7/omap/intc.c			intc
+
+device gptimer
+attach gptimer at soc
+file	arch/armv7/omap/gptimer.c		gptimer
+
+device dmtimer
+attach dmtimer at soc
+file	arch/armv7/omap/dmtimer.c		dmtimer
+
+device omapid
+attach omapid at soc
+file	arch/armv7/omap/omapid.c		omapid
+
+device omdog
+attach omdog at soc
+file	arch/armv7/omap/omdog.c			omdog
+
+attach ohci at soc with omohci
+file	arch/armv7/omap/omohci.c		omohci
+
+attach ehci at soc with omehci
+file	arch/armv7/omap/omehci.c		omehci
+
+# NS16550 compatible serial ports
+attach	com at soc with com_omap
+file	arch/armv7/omap/omap_com.c		com_omap
+
+device omusbtll
+attach omusbtll at soc
+file arch/armv7/omap/omusbtll.c			omusbtll
+
+device omkbd: wskbddev
+attach omkbd at soc
+file	arch/armv7/omap/omkbd.c			omkbd
+
+# LCD frame buffer
+device omdisplay: wsemuldisplaydev, rasops16
+attach omdisplay at soc
+file arch/armv7/omap/omdisplay.c		omdisplay
+
+#
+# Machine-independent SCSI drivers
+#
+include "scsi/files.scsi"
+include "dev/atapiscsi/files.atapiscsi"
+
+# CPU support and integrated peripherals
+file	arch/arm/arm/irq_dispatch.S
+file	arch/arm/arm/softintr.c
+
+# MCSPI - spi 
+device mcspi 
+attach mcspi at soc
+file	arch/armv7/omap/mcspi.c			mcspi
+
+# pseudo-Audio Device Driver
+device oaudio: audio
+attach oaudio at soc				# configure after Atlas Driver
+file arch/armv7/omap/beagle_audio.c		oaudio
+
+#
+# Machine-independent ATA drivers
+#
+include "dev/ata/files.ata"
+
+# Generic MD files
+file	arch/armv7/armv7/autoconf.c
+
+file	arch/arm/arm/disksubr.c			disk
+
+
+# ARM FPE
+file	arch/arm/fpe-arm/armfpe_glue.S		armfpe
+file	arch/arm/fpe-arm/armfpe_init.c		armfpe
+file	arch/arm/fpe-arm/armfpe.s		armfpe
+
+
+# Machine-independent I2O drivers.
+include "dev/i2o/files.i2o"
+
+# Include WSCONS stuff
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+
+# Include USB stuff
+include "dev/usb/files.usb"
+
+# Bluetooth
+include "dev/bluetooth/files.bluetooth"
+
+#
+# Machine-independent GPIO drivers
+#
+include "dev/gpio/files.gpio"
