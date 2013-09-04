@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.55 2013/08/28 20:47:10 mpi Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.56 2013/09/04 16:33:06 mpi Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -45,22 +45,22 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/vga_pcivar.h>
 
-struct vga_config {
-	bus_space_tag_t		vc_memt;
-	bus_space_handle_t	vc_memh;
+struct vgafb_softc {
+	struct device		sc_dev;
+	int			sc_node;
 
-	struct rasops_info	ri;
-	uint8_t			cmap[256 * 3];
+	bus_addr_t		sc_mem_addr, sc_mmio_addr;
+	bus_size_t		sc_mem_size, sc_mmio_size;
 
-	bus_addr_t	iobase, membase, mmiobase;
-	bus_size_t	iosize, memsize, mmiosize;
+	struct rasops_info	sc_ri;
+	uint8_t			sc_cmap[256 * 3];
+	u_int			sc_mode;
 
-	struct	wsscreen_descr	vc_wsd;
-	struct	wsscreen_list	vc_wsl;
-	struct	wsscreen_descr *vc_scrlist[1];
+	struct	wsscreen_descr	sc_wsd;
+	struct	wsscreen_list	sc_wsl;
+	struct	wsscreen_descr *sc_scrlist[1];
 
-	int vc_backlight_on;
-	u_int vc_mode;
+	int			sc_backlight_on;
 };
 
 int	vgafb_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -71,11 +71,10 @@ void	vgafb_free_screen(void *, void *);
 int	vgafb_show_screen(void *, void *, int, void (*cb)(void *, int, int),
 	    void *);
 void	vgafb_burn(void *v, u_int , u_int);
-void	vgafb_restore_default_colors(struct vga_config *);
+void	vgafb_restore_default_colors(struct vgafb_softc *);
 int	vgafb_is_console(int);
-int	vgafb_mapregs(struct vga_config *, struct pci_attach_args *);
-
-struct vga_config vgafbcn;
+int	vgafb_console_init(struct vgafb_softc *);
+int	vgafb_mapregs(struct vgafb_softc *, struct pci_attach_args *);
 
 struct wsdisplay_accessops vgafb_accessops = {
 	vgafb_ioctl,
@@ -96,7 +95,7 @@ int	vgafb_match(struct device *, void *, void *);
 void	vgafb_attach(struct device *, struct device *, void *);
 
 const struct cfattach vgafb_ca = {
-	sizeof(struct device), vgafb_match, vgafb_attach,
+	sizeof(struct vgafb_softc), vgafb_match, vgafb_attach,
 };
 
 struct cfdriver vgafb_cd = {
@@ -135,70 +134,81 @@ vgafb_match(struct device *parent, void *match, void *aux)
 }
 
 void
-vgafb_attach(struct device *parent, struct device  *self, void *aux)
+vgafb_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct vgafb_softc *sc = (struct vgafb_softc *)self;
 	struct pci_attach_args *pa = aux;
-	struct vga_config *vc = &vgafbcn;
 	struct wsemuldisplaydev_attach_args waa;
-	struct rasops_info *ri;
-	long defattr;
 
-	if (vgafb_mapregs(vc, pa))
+	sc->sc_node = PCITAG_NODE(pa->pa_tag);
+
+	if (vgafb_mapregs(sc, pa))
 		return;
 
-	ri = &vc->ri;
-	ri->ri_flg = RI_CENTER | RI_VCONS | RI_WRONLY;
-	ri->ri_hw = vc;
+	if (vgafb_console_init(sc))
+		return;
 
-	ofwconsswitch(ri);
-
-	rasops_init(ri, 160, 160);
-
-	strlcpy(vc->vc_wsd.name, "std", sizeof(vc->vc_wsd.name));
-	vc->vc_wsd.capabilities = ri->ri_caps;
-	vc->vc_wsd.nrows = ri->ri_rows;
-	vc->vc_wsd.ncols = ri->ri_cols;
-	vc->vc_wsd.textops = &ri->ri_ops;
-	vc->vc_wsd.fontwidth = ri->ri_font->fontwidth;
-	vc->vc_wsd.fontheight = ri->ri_font->fontheight;
-
-	ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
-	wsdisplay_cnattach(&vc->vc_wsd, ri->ri_active, ri->ri_ccol, ri->ri_crow,
-	    defattr);
-
-	vc->vc_scrlist[0] = &vc->vc_wsd;
-	vc->vc_wsl.nscreens = 1;
-	vc->vc_wsl.screens = (const struct wsscreen_descr **)vc->vc_scrlist;
+	sc->sc_scrlist[0] = &sc->sc_wsd;
+	sc->sc_wsl.nscreens = 1;
+	sc->sc_wsl.screens = (const struct wsscreen_descr **)sc->sc_scrlist;
 
 	waa.console = 1;
-	waa.scrdata = &vc->vc_wsl;
+	waa.scrdata = &sc->sc_wsl;
 	waa.accessops = &vgafb_accessops;
-	waa.accesscookie = vc;
+	waa.accesscookie = sc;
 	waa.defaultscreens = 0;
 
 	/* no need to keep the burner function if no hw support */
 	if (cons_backlight_available == 0)
 		vgafb_accessops.burn_screen = NULL;
 	else {
-		vc->vc_backlight_on = WSDISPLAYIO_VIDEO_OFF;
-		vgafb_burn(vc, WSDISPLAYIO_VIDEO_ON, 0);	/* paranoia */
+		sc->sc_backlight_on = WSDISPLAYIO_VIDEO_OFF;
+		vgafb_burn(sc, WSDISPLAYIO_VIDEO_ON, 0);	/* paranoia */
 	}
 
 	config_found(self, &waa, wsemuldisplaydevprint);
 }
 
-void
-vgafb_restore_default_colors(struct vga_config *vc)
+int
+vgafb_console_init(struct vgafb_softc *sc)
 {
-	bcopy(rasops_cmap, vc->cmap, sizeof(vc->cmap));
-	of_setcolors(vc->cmap, 0, 256);
+	struct rasops_info *ri = &sc->sc_ri;
+	long defattr;
+
+	ri->ri_flg = RI_CENTER | RI_VCONS | RI_WRONLY;
+	ri->ri_hw = sc;
+
+	ofwconsswitch(ri);
+
+	rasops_init(ri, 160, 160);
+
+	strlcpy(sc->sc_wsd.name, "std", sizeof(sc->sc_wsd.name));
+	sc->sc_wsd.capabilities = ri->ri_caps;
+	sc->sc_wsd.nrows = ri->ri_rows;
+	sc->sc_wsd.ncols = ri->ri_cols;
+	sc->sc_wsd.textops = &ri->ri_ops;
+	sc->sc_wsd.fontwidth = ri->ri_font->fontwidth;
+	sc->sc_wsd.fontheight = ri->ri_font->fontheight;
+
+	ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+	wsdisplay_cnattach(&sc->sc_wsd, ri->ri_active, ri->ri_ccol, ri->ri_crow,
+	    defattr);
+
+	return (0);
+}
+
+void
+vgafb_restore_default_colors(struct vgafb_softc *sc)
+{
+	bcopy(rasops_cmap, sc->sc_cmap, sizeof(sc->sc_cmap));
+	of_setcolors(sc->sc_cmap, 0, 256);
 }
 
 int
 vgafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	struct vga_config *vc = v;
-	struct rasops_info *ri = &vc->ri;
+	struct vgafb_softc *sc = v;
+	struct rasops_info *ri = &sc->sc_ri;
 	struct wsdisplay_cmap *cm;
 	struct wsdisplay_fbinfo *wdf;
 	int rc;
@@ -219,22 +229,22 @@ vgafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	case WSDISPLAYIO_GETCMAP:
 		cm = (struct wsdisplay_cmap *)data;
-		rc = vgafb_getcmap(vc->cmap, cm);
+		rc = vgafb_getcmap(sc->sc_cmap, cm);
 		if (rc != 0)
 			return rc;
 		break;
 	case WSDISPLAYIO_PUTCMAP:
 		cm = (struct wsdisplay_cmap *)data;
-		rc = vgafb_putcmap(vc->cmap, cm);
+		rc = vgafb_putcmap(sc->sc_cmap, cm);
 		if (rc != 0)
 			return (rc);
 		if (ri->ri_depth == 8)
-			of_setcolors(vc->cmap, cm->index, cm->count);
+			of_setcolors(sc->sc_cmap, cm->index, cm->count);
 		break;
 	case WSDISPLAYIO_SMODE:
-		vc->vc_mode = *(u_int *)data;
+		sc->sc_mode = *(u_int *)data;
 		if (ri->ri_depth == 8)
-			vgafb_restore_default_colors(vc);
+			vgafb_restore_default_colors(sc);
 		break;
 	case WSDISPLAYIO_GETPARAM:
 	{
@@ -253,7 +263,7 @@ vgafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 			if (cons_backlight_available != 0) {
 				dp->min = 0;
 				dp->max = 1;
-				dp->curval = vc->vc_backlight_on;
+				dp->curval = sc->sc_backlight_on;
 				return 0;
 			} else
 				return -1;
@@ -274,7 +284,7 @@ vgafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 				return -1;
 		case WSDISPLAYIO_PARAM_BACKLIGHT:
 			if (cons_backlight_available != 0) {
-				vgafb_burn(vc,
+				vgafb_burn(sc,
 				    dp->curval ? WSDISPLAYIO_VIDEO_ON :
 				      WSDISPLAYIO_VIDEO_OFF, 0);
 				return 0;
@@ -303,31 +313,33 @@ vgafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 paddr_t
 vgafb_mmap(void *v, off_t off, int prot)
 {
-	struct vga_config *vc = v;
+	struct vgafb_softc *sc = v;
 
 	if (off & PGOFSET)
 		return (-1);
 
-	switch (vc->vc_mode) {
+	switch (sc->sc_mode) {
 	case WSDISPLAYIO_MODE_MAPPED:
 #ifdef APERTURE
 		if (allowaperture == 0)
 			return (-1);
 #endif
 
-		if (vc->mmiosize == 0)
+		if (sc->sc_mmio_size == 0)
 			return (-1);
 
-		if (off >= vc->membase && off < (vc->membase + vc->memsize))
+		if (off >= sc->sc_mem_addr &&
+		    off < (sc->sc_mem_addr + sc->sc_mem_size))
 			return (off);
 
-		if (off >= vc->mmiobase && off < (vc->mmiobase + vc->mmiosize))
+		if (off >= sc->sc_mmio_addr &&
+		    off < (sc->sc_mmio_addr + sc->sc_mmio_size))
 			return (off);
 		break;
 
 	case WSDISPLAYIO_MODE_DUMBFB:
-		if (off >= 0x00000 && off < vc->memsize)
-			return (vc->membase + off);
+		if (off >= 0x00000 && off < sc->sc_mem_size)
+			return (sc->sc_mem_addr + off);
 		break;
 
 	}
@@ -424,11 +436,11 @@ vgafb_putcmap(uint8_t *cmap, struct wsdisplay_cmap *cm)
 void
 vgafb_burn(void *v, u_int on, u_int flags)
 {
-	struct vga_config *vc = v;
+	struct vgafb_softc *sc = v;
 
-	if (vc->vc_backlight_on != on) {
+	if (sc->sc_backlight_on != on) {
 		of_setbacklight(on == WSDISPLAYIO_VIDEO_ON);
-		vc->vc_backlight_on = on;
+		sc->sc_backlight_on = on;
 	}
 }
 
@@ -436,8 +448,8 @@ int
 vgafb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
     int *curxp, int *curyp, long *attrp)
 {
-	struct vga_config *vc = v;
-	struct rasops_info *ri = &vc->ri;
+	struct vgafb_softc *sc = v;
+	struct rasops_info *ri = &sc->sc_ri;
 
 	return rasops_alloc_screen(ri, cookiep, curxp, curyp, attrp);
 }
@@ -445,8 +457,8 @@ vgafb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 void
 vgafb_free_screen(void *v, void *cookie)
 {
-	struct vga_config *vc = v;
-	struct rasops_info *ri = &vc->ri;
+	struct vgafb_softc *sc = v;
+	struct rasops_info *ri = &sc->sc_ri;
 
 	return rasops_free_screen(ri, cookie);
 }
@@ -455,8 +467,8 @@ int
 vgafb_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
-	struct vga_config *vc = v;
-	struct rasops_info *ri = &vc->ri;
+	struct vgafb_softc *sc = v;
+	struct rasops_info *ri = &sc->sc_ri;
 
 	if (cookie == ri->ri_active)
 		return (0);
@@ -465,42 +477,22 @@ vgafb_show_screen(void *v, void *cookie, int waitok,
 }
 
 int
-vgafb_mapregs(struct vga_config *vc, struct pci_attach_args *pa)
+vgafb_mapregs(struct vgafb_softc *sc, struct pci_attach_args *pa)
 {
 	bus_addr_t ba;
 	bus_size_t bs;
-	int hasio = 0, hasmem = 0, hasmmio = 0;
+	int hasmem = 0, hasmmio = 0;
 	uint32_t i, cf;
 	int rv;
 
 	for (i = PCI_MAPREG_START; i <= PCI_MAPREG_PPB_END; i += 4) {
 		cf = pci_conf_read(pa->pa_pc, pa->pa_tag, i);
-		if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_IO) {
-			if (hasio)
-				continue;
-			rv = pci_io_find(pa->pa_pc, pa->pa_tag, i,
-			    &vc->iobase, &vc->iosize);
-			if (rv != 0) {
-#if notyet
-				if (rv != ENOENT)
-					printf("%s: failed to find io at 0x%x\n",
-					    DEVNAME(sc), i);
-#endif
-				continue;
-			}
-			hasio = 1;
-		} else {
+		if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_MEM) {
 			/* Memory mapping... frame memory or mmio? */
 			rv = pci_mem_find(pa->pa_pc, pa->pa_tag, i,
 			    &ba, &bs, NULL);
-			if (rv != 0) {
-#if notyet
-				if (rv != ENOENT)
-					printf("%s: failed to find mem at 0x%x\n",
-					    DEVNAME(sc), i);
-#endif
+			if (rv != 0)
 				continue;
-			}
 
 			if (bs == 0 /* || ba == 0 */) {
 				/* ignore this entry */
@@ -509,8 +501,8 @@ vgafb_mapregs(struct vga_config *vc, struct pci_attach_args *pa)
 				 * first memory slot found goes into memory,
 				 * this is for the case of no mmio
 				 */
-				vc->membase = ba;
-				vc->memsize = bs;
+				sc->sc_mem_addr = ba;
+				sc->sc_mem_size = bs;
 				hasmem = 1;
 			} else {
 				/*
@@ -519,17 +511,17 @@ vgafb_mapregs(struct vga_config *vc, struct pci_attach_args *pa)
 				 * or mmio, we guess that memory is
 				 * the larger of the two.
 				 */
-				if (vc->memsize >= bs) {
+				if (sc->sc_mem_size >= bs) {
 					/* this is the mmio */
-					vc->mmiobase = ba;
-					vc->mmiosize = bs;
+					sc->sc_mmio_addr = ba;
+					sc->sc_mmio_size = bs;
 					hasmmio = 1;
 				} else {
 					/* this is the memory */
-					vc->mmiobase = vc->membase;
-					vc->mmiosize = vc->memsize;
-					vc->membase = ba;
-					vc->memsize = bs;
+					sc->sc_mmio_addr = sc->sc_mem_addr;
+					sc->sc_mmio_size = sc->sc_mem_size;
+					sc->sc_mem_addr = ba;
+					sc->sc_mem_size = bs;
 				}
 			}
 		}
