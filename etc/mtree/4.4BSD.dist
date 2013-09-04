@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.235 2013/07/10 15:09:00 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.236 2013/09/04 19:39:18 patrick Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -848,9 +848,9 @@ amd64
 ..
 armish
 ..
-aviion
+armv7
 ..
-beagle
+aviion
 ..
 hp300
 ..
@@ -930,9 +930,9 @@ amd64
 ..
 armish
 ..
-aviion
+armv7
 ..
-beagle
+aviion
 ..
 hp300
 ..
