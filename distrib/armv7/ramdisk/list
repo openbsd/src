@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.2 2012/10/30 18:39:43 krw Exp $
+#	$OpenBSD: list,v 1.1 2013/09/04 20:00:23 patrick Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin

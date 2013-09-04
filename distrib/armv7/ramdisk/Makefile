@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2011/07/27 20:44:53 drahn Exp $
+#	$OpenBSD: Makefile,v 1.1 2013/09/04 20:00:22 patrick Exp $
 
 REV=	${OSrev}
 
@@ -45,10 +45,10 @@ ${IMAGE}: rd_setup do_files rd_teardown
 .endif
 
 bsd:
-	cd ${TOP}/../../sys/arch/beagle/conf && config RAMDISK
-	cd ${TOP}/../../sys/arch/beagle/compile/RAMDISK && \
+	cd ${TOP}/../../sys/arch/armv7/conf && config RAMDISK-OMAP
+	cd ${TOP}/../../sys/arch/armv7/compile/RAMDISK-OMAP && \
 	    ${MAKE} clean && exec ${MAKE}
-	cp ${TOP}/../../sys/arch/beagle/compile/RAMDISK/bsd bsd
+	cp ${TOP}/../../sys/arch/armv7/compile/RAMDISK-OMAP/bsd bsd
 
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}

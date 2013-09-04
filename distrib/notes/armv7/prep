@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.3 2013/08/07 19:24:54 bmercer Exp $
+dnl	$OpenBSD: prep,v 1.1 2013/09/04 20:00:26 patrick Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 

@@ -1,2 +1,0 @@
-dnl	$OpenBSD: upgrade,v 1.1 2011/03/22 18:33:51 jasper Exp $
-OpenBSDUpgrade({:-your usual boot device-:})

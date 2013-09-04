@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.8 2013/07/30 02:49:54 bmercer Exp $
+#	$OpenBSD: install.md,v 1.1 2013/09/04 20:00:23 patrick Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.

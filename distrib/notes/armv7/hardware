@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.2 2013/07/16 18:15:10 florian Exp $
+dnl	$OpenBSD: hardware,v 1.1 2013/09/04 20:00:26 patrick Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
     BeagleBoard, BeagleBoard xM
