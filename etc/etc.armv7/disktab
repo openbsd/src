@@ -1,4 +1,4 @@
-# $OpenBSD: disktab,v 1.1 2011/10/19 02:24:31 uwe Exp $
+# $OpenBSD: disktab,v 1.1 2013/09/04 16:53:40 patrick Exp $
 
 # Leave nc=16; adjust size using: ns
 rdroot|ramdiskroot|RAM-disk root FS image:\

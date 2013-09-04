@@ -1,6 +1,6 @@
-define(MACHINE,beagle)dnl
+define(MACHINE,armv7)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.6 2013/08/21 15:12:47 ajacoutot Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.1 2013/09/04 16:53:40 patrick Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -100,7 +100,7 @@ ramdisk)
 _std(1, 2, 8, 6)
 	;;
 dnl
-dnl *** beagle specific targets
+dnl *** armv7 specific targets
 dnl
 target(all, ch, 0)dnl
 target(all, vscsi, 0)dnl
