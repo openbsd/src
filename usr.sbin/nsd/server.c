@@ -579,7 +579,6 @@ server_prepare(struct nsd *nsd)
 #ifdef RATELIMIT
 	/* set secret modifier for hashing (udb ptr buckets and rate limits) */
 #ifdef HAVE_ARC4RANDOM
-	srandom(arc4random());
 	hash_set_raninit(arc4random());
 #else
 	uint32_t v = getpid() ^ time(NULL);

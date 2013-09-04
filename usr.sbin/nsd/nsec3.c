@@ -649,8 +649,8 @@ prehash(struct namedb* db, int updated_only)
 	}
 	end = time(NULL);
 	if(count > 0)
-		VERBOSITY(1, (LOG_INFO, "nsec3-prepare took %d "
-		"seconds for %d zones.", (int)(end-start), count));
+		VERBOSITY(1, (LOG_INFO, "nsec3-prepare took %lld "
+		"seconds for %d zones.", (long long)(end-start), count));
 }
 
 

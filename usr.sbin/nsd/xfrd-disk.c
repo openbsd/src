@@ -168,8 +168,8 @@ xfrd_read_state(struct xfrd_state* xfrd)
 	   !xfrd_read_check_str(in, "numzones:") ||
 	   !xfrd_read_i32(in, &numzones))
 	{
-		log_msg(LOG_ERR, "xfrd: corrupt state file %s dated %d (now=%d)",
-			statefile, (int)filetime, (int)xfrd_time());
+		log_msg(LOG_ERR, "xfrd: corrupt state file %s dated %d (now=%lld)",
+			statefile, (int)filetime, (long long)xfrd_time());
 		fclose(in);
 		region_destroy(tempregion);
 		return;
@@ -211,8 +211,8 @@ xfrd_read_state(struct xfrd_state* xfrd)
 		   !xfrd_read_state_soa(in, "soa_notify_acquired:", "soa_notify:",
 			&soa_notified_read, &soa_notified_acquired_read))
 		{
-			log_msg(LOG_ERR, "xfrd: corrupt state file %s dated %d (now=%d)",
-				statefile, (int)filetime, (int)xfrd_time());
+			log_msg(LOG_ERR, "xfrd: corrupt state file %s dated %d (now=%lld)",
+				statefile, (int)filetime, (long long)xfrd_time());
 			fclose(in);
 			region_destroy(tempregion);
 			return;
@@ -290,8 +290,8 @@ xfrd_read_state(struct xfrd_state* xfrd)
 	}
 
 	if(!xfrd_read_check_str(in, XFRD_FILE_MAGIC)) {
-		log_msg(LOG_ERR, "xfrd: corrupt state file %s dated %d (now=%d)",
-			statefile, (int)filetime, (int)xfrd_time());
+		log_msg(LOG_ERR, "xfrd: corrupt state file %s dated %d (now=%lld)",
+			statefile, (int)filetime, (long long)xfrd_time());
 		region_destroy(tempregion);
 		fclose(in);
 		return;
@@ -304,27 +304,27 @@ xfrd_read_state(struct xfrd_state* xfrd)
 
 /* prints neato days hours and minutes. */
 static void
-neato_timeout(FILE* out, const char* str, uint32_t secs)
+neato_timeout(FILE* out, const char* str, time_t secs)
 {
 	fprintf(out, "%s", str);
 	if(secs <= 0) {
-		fprintf(out, " %ds", (int)secs);
+		fprintf(out, " %llds", (long long)secs);
 		return;
 	}
 	if(secs >= 3600*24) {
-		fprintf(out, " %dd", (int)secs/(3600*24));
+		fprintf(out, " %lldd", (long long)(secs/(3600*24)));
 		secs = secs % (3600*24);
 	}
 	if(secs >= 3600) {
-		fprintf(out, " %dh", (int)secs/3600);
+		fprintf(out, " %lldh", (long long)(secs/3600));
 		secs = secs%3600;
 	}
 	if(secs >= 60) {
-		fprintf(out, " %dm", (int)secs/60);
+		fprintf(out, " %lldm", (long long)(secs/60));
 		secs = secs%60;
 	}
 	if(secs > 0) {
-		fprintf(out, " %ds", (int)secs);
+		fprintf(out, " %llds", (long long)secs);
 	}
 }
 
@@ -424,7 +424,7 @@ xfrd_write_state(struct xfrd_state* xfrd)
 	fprintf(out, "# Note: if you edit this file while nsd is running,\n");
 	fprintf(out, "#       it will be overwritten on exit by nsd.\n");
 	fprintf(out, "\n");
-	fprintf(out, "filetime: %d\t# %s\n", (int)now, ctime(&now));
+	fprintf(out, "filetime: %lld\t# %s\n", (long long)now, ctime(&now));
 	fprintf(out, "# The number of zone entries in this file\n");
 	fprintf(out, "numzones: %d\n", (int)xfrd->zones->count);
 	fprintf(out, "\n");
