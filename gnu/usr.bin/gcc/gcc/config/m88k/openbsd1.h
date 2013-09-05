@@ -23,3 +23,5 @@ Boston, MA 02111-1307, USA.  */
 #define OBSD_HAS_CORRECT_ASM_OPS
 #define OBSD_OLD_GAS
 #endif
+
+#define USE_GAS
