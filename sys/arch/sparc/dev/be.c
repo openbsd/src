@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.43 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: be.c,v 1.44 2013/09/05 20:55:58 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -46,7 +46,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
