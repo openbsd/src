@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC-OMAP,v 1.1 2013/09/04 14:38:25 patrick Exp $
+# $OpenBSD: GENERIC-OMAP,v 1.2 2013/09/05 11:48:42 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -54,7 +54,7 @@ cpu0		at mainbus?
 
 # OMAP3xxx/OMAP4xxx SoC
 omap0		at mainbus?
-omapid*		at soc?
+omapid*		at omap?
 
 # Cortex-A9 (OMAP4)
 cortex0		at mainbus?
@@ -63,26 +63,26 @@ amptimer*	at cortex?
 #armliicc*	at cortex?		# L2 cache controller
 
 # OMAP3 only
-intc*		at soc?			# interrupt controller
+intc*		at omap?			# interrupt controller
 
 # OMAP on-chip devices
-prcm*		at soc?			# power/clock controller
-sitaracm*	at soc?			# sitara control module
-omdog*		at soc?			# watchdog timer
-omgpio*		at soc?			# user-visible GPIO pins?
-gptimer*	at soc?			# general purpose timers
-dmtimer*	at soc?			# am335x dual mode timers
-ommmc*		at soc?			# SD/MMC card controller
-omusbtll*	at soc?
-cpsw*		at soc?
+prcm*		at omap?			# power/clock controller
+sitaracm*	at omap?			# sitara control module
+omdog*		at omap?			# watchdog timer
+omgpio*		at omap?			# user-visible GPIO pins?
+gptimer*	at omap?			# general purpose timers
+dmtimer*	at omap?			# am335x dual mode timers
+ommmc*		at omap?			# SD/MMC card controller
+omusbtll*	at omap?
+cpsw*		at omap?
 
-#omkbd*		at soc?
+#omkbd*		at omap?
 #wskbd*		at omkbd? mux 1
 
-ehci*		at soc?			# EHCI (shim)
+ehci*		at omap?			# EHCI (shim)
 usb*		at ehci?
 
-#usbotg0	at soc?
+#usbotg0	at omap?
 #usb*		at ohci?
 
 ## USB bus support
@@ -146,10 +146,10 @@ ch*		at scsibus?
 uk*		at scsibus?
 
 # onboard uarts
-com*		at soc?
+com*		at omap?
 
 # LCD
-#omdisplay0	at soc?			# LCD DISPLAY
+#omdisplay0	at omap?			# LCD DISPLAY
 #wsdisplay*	at omdisplay? console ?
 
 sdmmc*		at ommmc?		# SD/MMC bus

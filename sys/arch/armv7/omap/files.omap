@@ -1,0 +1,84 @@
+#	$OpenBSD: files.omap,v 1.1 2013/09/05 11:48:43 patrick Exp $
+
+define omap {}
+device omap: omap
+attach omap at mainbus
+file	arch/armv7/omap/beagle_machdep.c	omap
+file	arch/armv7/omap/omap.c			omap
+file	arch/armv7/omap/omap3.c			omap
+file	arch/armv7/omap/omap4.c			omap
+file	arch/armv7/omap/am335x.c		omap
+
+device ommmc: sdmmcbus
+attach ommmc at omap
+file	arch/armv7/omap/ommmc.c			ommmc
+
+device cpsw: ether, ifnet, mii, ifmedia
+attach cpsw at omap
+file	arch/armv7/omap/if_cpsw.c		cpsw
+
+device prcm
+attach prcm at omap
+file	arch/armv7/omap/prcm.c			prcm
+
+device sitaracm
+attach sitaracm at omap
+file	arch/armv7/omap/am335x_cm_padconf.c	sitaracm
+file	arch/armv7/omap/sitara_cm.c		sitaracm
+
+device omgpio
+attach omgpio at omap
+file   arch/armv7/omap/omgpio.c			omgpio
+
+device intc
+attach intc at omap
+file	arch/armv7/omap/intc.c			intc
+
+device gptimer
+attach gptimer at omap
+file	arch/armv7/omap/gptimer.c		gptimer
+
+device dmtimer
+attach dmtimer at omap
+file	arch/armv7/omap/dmtimer.c		dmtimer
+
+device omapid
+attach omapid at omap
+file	arch/armv7/omap/omapid.c		omapid
+
+device omdog
+attach omdog at omap
+file	arch/armv7/omap/omdog.c			omdog
+
+attach ohci at omap with omohci
+file	arch/armv7/omap/omohci.c		omohci
+
+attach ehci at omap with omehci
+file	arch/armv7/omap/omehci.c		omehci
+
+# NS16550 compatible serial ports
+attach	com at omap with com_omap
+file	arch/armv7/omap/omap_com.c		com_omap
+
+device omusbtll
+attach omusbtll at omap
+file arch/armv7/omap/omusbtll.c			omusbtll
+
+device omkbd: wskbddev
+attach omkbd at omap
+file	arch/armv7/omap/omkbd.c			omkbd
+
+# LCD frame buffer
+device omdisplay: wsemuldisplaydev, rasops16
+attach omdisplay at omap
+file arch/armv7/omap/omdisplay.c		omdisplay
+
+# MCSPI - spi 
+device mcspi 
+attach mcspi at omap
+file	arch/armv7/omap/mcspi.c			mcspi
+
+# pseudo-Audio Device Driver
+device oaudio: audio
+attach oaudio at omap				# configure after Atlas Driver
+file arch/armv7/omap/beagle_audio.c		oaudio
