@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.10 2011/03/23 16:54:35 pirofti Exp $ */
+/*	$OpenBSD: trap.h,v 1.11 2013/09/05 20:40:32 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -24,14 +24,12 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
-/*
- * Trap codes
- */
 #ifndef _M88K_TRAP_H_
 #define _M88K_TRAP_H_
 
 /*
- * Trap type values
+ * Trap type values. These have no relation to the trap vector offsets in
+ * the VBR page.
  */
 #define	T_PRIVINFLT	0	/* privileged instruction fault */
 #define	T_INSTFLT	1	/* instruction access exception */
@@ -42,18 +40,19 @@
 #define	T_ZERODIV	6	/* illegal divide exception */
 #define	T_OVFFLT	7	/* integer overflow exception */
 #define	T_FPEPFLT	8	/* floating point precise exception */
-#define	T_KDB_ENTRY	9	/* force entry to kernel debugger */
-#define	T_KDB_BREAK	10	/* break point hit */
-#define	T_KDB_TRACE	11	/* trace */
-#define	T_UNKNOWNFLT	12	/* unknown exception */
-#define	T_SIGSYS	13	/* generate SIGSYS */
-#define	T_STEPBPT	14	/* special breakpoint for single step */
-#define	T_USERBPT	15	/* user set breakpoint (for debugger) */
-#define	T_110_DRM	16	/* 88110 data read miss (sw table walk) */
-#define	T_110_DWM	17	/* 88110 data write miss (sw table walk) */
-#define	T_110_IAM	18	/* 88110 inst ATC miss (sw table walk) */
+#define	T_FPEIFLT	9	/* floating point imprecise exception (88100) */
+#define	T_KDB_ENTRY	10	/* force entry to kernel debugger */
+#define	T_KDB_BREAK	11	/* break point hit */
+#define	T_KDB_TRACE	12	/* trace */
+#define	T_UNKNOWNFLT	13	/* unknown exception */
+#define	T_SIGSYS	14	/* generate SIGSYS */
+#define	T_STEPBPT	15	/* special breakpoint for single step */
+#define	T_USERBPT	16	/* user set breakpoint (for debugger) */
+#define	T_110_DRM	17	/* 88110 data read miss (sw table walk) */
+#define	T_110_DWM	18	/* 88110 data write miss (sw table walk) */
+#define	T_110_IAM	19	/* 88110 inst ATC miss (sw table walk) */
 
-#define	T_USER		19	/* user mode fault */
+#define	T_USER		20	/* added to trap code if user mode fault */
 
 #ifndef _LOCORE
 
@@ -68,6 +67,8 @@ void	m88100_trap(u_int, struct trapframe *);
 void	m88110_syscall(register_t, struct trapframe *);
 void	m88110_trap(u_int, struct trapframe *);
 
+void	m88100_fpu_imprecise_exception(struct trapframe *);
+void	m88100_fpu_precise_exception(struct trapframe *);
 void	m88110_fpu_exception(struct trapframe *);
 
 #endif /* _LOCORE */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.87 2013/08/26 21:38:09 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.88 2013/09/05 20:40:32 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -514,7 +514,33 @@ user_fault:
 		fault_type = FPE_INTOVF;
 		break;
 	case T_FPEPFLT+T_USER:
-		sig = SIGFPE;
+		m88100_fpu_precise_exception(frame);
+		goto maysigfpe;
+	case T_FPEIFLT+T_USER:
+		m88100_fpu_imprecise_exception(frame);
+maysigfpe:
+		/* Check for a SIGFPE condition */
+		if (frame->tf_fpsr & frame->tf_fpcr) {
+			sig = SIGFPE;
+			if (frame->tf_fpecr & FPECR_FIOV)
+				fault_type = FPE_FLTSUB;
+			else if (frame->tf_fpecr & FPECR_FROP)
+				fault_type = FPE_FLTINV;
+			else if (frame->tf_fpecr & FPECR_FDVZ)
+				fault_type = FPE_INTDIV;
+			else if (frame->tf_fpecr & FPECR_FUNF) {
+				if (frame->tf_fpsr & FPSR_EFUNF)
+					fault_type = FPE_FLTUND;
+				else if (frame->tf_fpsr & FPSR_EFINX)
+					fault_type = FPE_FLTRES;
+			} else if (frame->tf_fpecr & FPECR_FOVF) {
+				if (frame->tf_fpsr & FPSR_EFOVF)
+					fault_type = FPE_FLTOVF;
+				else if (frame->tf_fpsr & FPSR_EFINX)
+					fault_type = FPE_FLTRES;
+			} else if (frame->tf_fpecr & FPECR_FINX)
+				fault_type = FPE_FLTRES;
+		}
 		break;
 	case T_SIGSYS+T_USER:
 		sig = SIGSYS;
