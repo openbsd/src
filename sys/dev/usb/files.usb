@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.108 2013/08/20 14:27:33 ajacoutot Exp $
+#	$OpenBSD: files.usb,v 1.109 2013/09/05 19:42:08 sasano Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -128,6 +128,11 @@ file	dev/usb/umass_scsi.c		umass & scsibus
 device	uthum: hid
 attach	uthum at uhidbus
 file	dev/usb/uthum.c			uthum
+
+# gold TEMPer
+device	ugold: hid
+attach	ugold at uhidbus
+file	dev/usb/ugold.c			ugold
 
 # Strawberry Linux USBRH
 device	utrh: hid

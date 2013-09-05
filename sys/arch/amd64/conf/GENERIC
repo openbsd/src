@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.347 2013/08/21 18:29:25 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.348 2013/09/05 19:42:06 sasano Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -246,6 +246,7 @@ rsu*	at uhub?		# RealTek RTL8188SU/RTL8191SU/RTL8192SU
 urtwn*	at uhub?		# RealTek RTL8188CU/RTL8192CU
 udcf*	at uhub?		# Gude Expert mouseCLOCK
 uthum*	at uhidev?		# TEMPerHUM sensor
+ugold*	at uhidev?		# gold TEMPer sensor
 utrh*	at uhidev?		# USBRH sensor
 utwitch* at uhidev?		# YUREX BBU sensor
 uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
