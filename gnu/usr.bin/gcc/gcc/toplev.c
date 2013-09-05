@@ -4479,7 +4479,7 @@ independent_decode_option (argc, argv)
       break;
 
     case 'W':
-      if (arg[1] == 0)
+      if (arg[1] == 0 || !strcmp (arg, "Wextra"))
 	{
 	  extra_warnings = 1;
 	  /* We save the value of warn_uninitialized, since if they put
