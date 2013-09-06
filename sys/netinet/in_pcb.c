@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.139 2013/06/01 13:25:40 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.140 2013/09/06 12:12:45 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -794,13 +794,12 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro, int soopts,
 	if (IN_MULTICAST(sin->sin_addr.s_addr) && mopts != NULL) {
 		struct ifnet *ifp;
 
-		if (mopts->imo_multicast_ifp != NULL) {
-			ifp = mopts->imo_multicast_ifp;
-			TAILQ_FOREACH(ia, &in_ifaddr, ia_list)
-				if (ia->ia_ifp == ifp &&
-				    rtable_l2(rtableid) == ifp->if_rdomain)
-					break;
-			if (ia == 0) {
+		ifp = mopts->imo_multicast_ifp;
+		if (ifp != NULL) {
+			if (ifp->if_rdomain == rtable_l2(rtableid))
+				IFP_TO_IA(ifp, ia);
+
+			if (ia == NULL) {
 				*errorp = EADDRNOTAVAIL;
 				return NULL;
 			}
