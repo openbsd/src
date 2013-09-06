@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.144 2013/08/20 14:27:32 ajacoutot Exp $
+.\"	$OpenBSD: usb.4,v 1.145 2013/09/06 08:50:53 mpi Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 20 2013 $
+.Dd $Mdocdate: September 6 2013 $
 .Dt USB 4
 .Os
 .Sh NAME
@@ -255,7 +255,7 @@ Toradex OAK USB temperature and relative humidity sensor
 .It Xr uoakv 4
 Toradex OAK USB +/-10V 8channel ADC interface
 .It Xr uthum 4
-TEMPer USB temperature and humidity sensor
+TEMPer HID thermometer and hygrometer
 .It Xr utpms 4
 Apple touchpad mouse
 .It Xr utrh 4
@@ -267,6 +267,8 @@ USBRH temperature and humidity sensor
 Research In Motion Blackberry
 .It Xr ugen 4
 USB generic device support
+.It Xr ugold 4
+TEMPer gold HID thermometer
 .It Xr uow 4
 Maxim/Dallas DS2490 USB 1-Wire adapter
 .It Xr upl 4
