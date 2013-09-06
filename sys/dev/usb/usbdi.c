@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.57 2013/08/13 09:26:04 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.58 2013/09/06 08:29:58 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -177,8 +177,8 @@ usbd_dump_pipe(struct usbd_pipe *pipe)
 	usbd_dump_iface(pipe->iface);
 	usbd_dump_device(pipe->device);
 	usbd_dump_endpoint(pipe->endpoint);
-	printf(" (usbd_dump_pipe:)\n refcnt=%d running=%d aborting=%d\n",
-	    pipe->refcnt, pipe->running, pipe->aborting);
+	printf(" (usbd_dump_pipe:)\n running=%d aborting=%d\n",
+	    pipe->running, pipe->aborting);
 	printf(" intrxfer=%p, repeat=%d, interval=%d\n", pipe->intrxfer,
 	    pipe->repeat, pipe->interval);
 }
