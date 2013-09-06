@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.1 2013/05/01 00:16:26 patrick Exp $ */
+/* $OpenBSD: ampintc.c,v 1.2 2013/09/06 21:40:28 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -137,6 +137,7 @@ struct ampintc_softc {
 	int			 sc_nintr;
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_d_ioh, sc_p_ioh;
+	struct evcount		 sc_spur;
 };
 struct ampintc_softc *ampintc;
 
@@ -220,6 +221,8 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_iot = iot;
 	sc->sc_d_ioh = d_ioh;
 	sc->sc_p_ioh = p_ioh;
+
+	evcount_attach(&sc->sc_spur, "irq1023/spur", NULL);
 
 	nintr = 32 * (bus_space_read_4(iot, d_ioh, ICD_ICTR) & ICD_ICTR_ITL_M);
 	nintr += 32; /* ICD_ICTR + 1, irq 0-31 is SGI, 32+ is PPI */
@@ -478,7 +481,7 @@ ampintc_irq_handler(void *frame)
 #endif
 
 	if (iack_val == 1023) {
-		printf("spur\n");
+		sc->sc_spur.ec_count++;
 		return;
 	}
 	irq = iack_val & ((1 << sc->sc_nintr) - 1);
