@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_hdmi.c,v 1.3 2013/08/13 10:23:51 jsg Exp $	*/
+/*	$OpenBSD: intel_hdmi.c,v 1.4 2013/09/06 08:24:07 mpi Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2009 Intel Corporation
@@ -149,7 +149,7 @@ static void g4x_write_infoframe(struct drm_encoder *encoder,
 
 	I915_WRITE(VIDEO_DIP_CTL, val);
 
-	DRM_WRITEMEMORYBARRIER()
+	DRM_WRITEMEMORYBARRIER();
 	for (i = 0; i < len; i += 4) {
 		I915_WRITE(VIDEO_DIP_DATA, *data);
 		data++;
@@ -157,7 +157,7 @@ static void g4x_write_infoframe(struct drm_encoder *encoder,
 	/* Write every possible data byte to force correct ECC calculation. */
 	for (; i < VIDEO_DIP_DATA_SIZE; i += 4)
 		I915_WRITE(VIDEO_DIP_DATA, 0);
-	DRM_WRITEMEMORYBARRIER()
+	DRM_WRITEMEMORYBARRIER();
 
 	val |= g4x_infoframe_enable(frame);
 	val &= ~VIDEO_DIP_FREQ_MASK;
