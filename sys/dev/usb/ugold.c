@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.1 2013/09/05 19:42:08 sasano Exp $   */
+/*	$OpenBSD: ugold.c,v 1.2 2013/09/06 20:24:53 deraadt Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <sasano@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/device.h>
 #include <sys/sensors.h>
 
 #include <dev/usb/usb.h>
