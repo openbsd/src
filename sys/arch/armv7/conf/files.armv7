@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.2 2013/09/05 11:48:42 patrick Exp $
+#	$OpenBSD: files.armv7,v 1.3 2013/09/06 20:45:53 patrick Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -57,4 +57,5 @@ include "dev/bluetooth/files.bluetooth"
 include "dev/gpio/files.gpio"
 
 # SoC includes
+include "arch/armv7/imx/files.imx"
 include "arch/armv7/omap/files.omap"

@@ -1,0 +1,51 @@
+#	$OpenBSD: files.imx,v 1.1 2013/09/06 20:45:53 patrick Exp $
+
+define imx {}
+device imx: imx
+attach imx at mainbus
+file	arch/armv7/imx/imx_machdep.c		imx
+file	arch/armv7/imx/imx.c			imx
+file	arch/armv7/imx/imx6.c			imx
+
+# serial ports
+device imxuart
+attach	imxuart at imx
+file	arch/armv7/imx/imxuart.c		imxuart
+
+device imxccm
+attach imxccm at imx
+file	arch/armv7/imx/imxccm.c		imxccm
+
+device imxiomuxc
+attach imxiomuxc at imx
+file	arch/armv7/imx/imxiomuxc.c	imxiomuxc
+
+device imxdog
+attach imxdog at imx
+file	arch/armv7/imx/imxdog.c		imxdog
+
+device imxocotp
+attach imxocotp at imx
+file	arch/armv7/imx/imxocotp.c		imxocotp
+
+device imxgpio
+attach imxgpio at imx
+file	arch/armv7/imx/imxgpio.c		imxgpio
+
+device	imxiic: i2cbus
+attach	imxiic at imx
+file	arch/armv7/imx/imxiic.c		imxiic
+
+device imxenet: ether, ifnet, mii, ifmedia
+attach imxenet at imx
+file	arch/armv7/imx/imxenet.c		imxenet
+
+attach ehci at imx with imxehci
+file	arch/armv7/imx/imxehci.c		imxehci
+
+device imxesdhc: sdmmcbus
+attach imxesdhc at imx
+file	arch/armv7/imx/imxesdhc.c		imxesdhc
+
+attach ahci at imx with imxahci
+file	arch/armv7/imx/imxahci.c		imxahci
