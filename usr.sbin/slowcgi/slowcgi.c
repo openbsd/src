@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.7 2013/08/30 07:10:26 blambert Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.8 2013/09/06 07:36:03 blambert Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -39,7 +39,12 @@
 
 #define TIMEOUT_DEFAULT		 120
 #define SLOWCGI_USER		 "www"
-#define FCGI_RECORD_SIZE	 64*1024
+
+#define FCGI_CONTENT_SIZE	 65535
+#define FCGI_PADDING_SIZE	 255
+#define FCGI_RECORD_SIZE	 \
+    (sizeof(struct fcgi_record_header) + FCGI_CONTENT_SIZE + FCGI_PADDING_SIZE)
+
 #define STDOUT_DONE		 1
 #define STDERR_DONE		 2
 #define SCRIPT_DONE		 4
@@ -84,8 +89,7 @@ struct fcgi_record_header {
 
 struct fcgi_response {
 	TAILQ_ENTRY(fcgi_response)	entry;
-	uint8_t				data[FCGI_RECORD_SIZE + sizeof(struct
-					    fcgi_record_header)];
+	uint8_t				data[FCGI_RECORD_SIZE];
 	size_t				data_pos;
 	size_t				data_len;
 };
@@ -833,7 +837,7 @@ script_in(int fd, struct event *ev, struct client *c, uint8_t type)
 	header->reserved = 0;
 
 	n = read(fd, resp->data + sizeof(struct fcgi_record_header),
-	     FCGI_RECORD_SIZE);
+	     FCGI_CONTENT_SIZE);
 	
 	if (n == -1) {
 		switch (errno) {
