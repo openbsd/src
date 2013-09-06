@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.8 2013/09/06 07:36:03 blambert Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.9 2013/09/06 12:17:28 blambert Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -144,11 +144,12 @@ struct fcgi_begin_request_body {
 	uint8_t		reserved[5];
 }__packed;
 
-struct fcgi_end_request {
+struct fcgi_end_request_body {
 	uint32_t	app_status;
 	uint8_t		protocol_status;
 	uint8_t		reserved[3];
 }__packed;
+
 __dead void	usage(void);
 void		slowcgi_listen(char *, gid_t);
 void		slowcgi_paused(int, short, void*);
@@ -168,9 +169,16 @@ void		script_std_in(int, short, void*);
 void		script_err_in(int, short, void*);
 void		script_out(int, short, void*);
 void		create_end_request(struct client*);
+void		dump_fcgi_record(const char *,
+		    struct fcgi_record_header *);
 void		dump_fcgi_record_header(const char*,
 		    struct fcgi_record_header*);
+void		dump_fcgi_begin_request_body(const char *,
+		    struct fcgi_begin_request_body *);
+void		dump_fcgi_end_request_body(const char *,
+		    struct fcgi_end_request_body *);
 void		cleanup_client(struct client*);
+
 struct loggers {
 	void (*err)(int, const char *, ...);
 	void (*errx)(int, const char *, ...);
@@ -476,7 +484,7 @@ slowcgi_response(int fd, short events, void *arg)
 	while ((resp = TAILQ_FIRST(&c->response_head))) {
 		header = (struct fcgi_record_header*) resp->data;
 		if (debug)
-			dump_fcgi_record_header("resp ", header);
+			dump_fcgi_record("resp ", header);
 
 		n = write(fd, resp->data + resp->data_pos, resp->data_len);
 		if (n == -1) {
@@ -701,7 +709,7 @@ parse_request(uint8_t *buf, size_t n, struct client *c)
 	h = (struct fcgi_record_header*) buf;
 
 	if (debug)
-		dump_fcgi_record_header("", h);
+		dump_fcgi_record("", h);
 
 	if (n < sizeof(struct fcgi_record_header) + ntohs(h->content_len)
 	    + h->padding_len)
@@ -794,7 +802,7 @@ create_end_request(struct client *c)
 {
 	struct fcgi_response		*resp;
 	struct fcgi_record_header	*header;
-	struct fcgi_end_request		*end_request;
+	struct fcgi_end_request_body	*end_request;
 
 	if ((resp = malloc(sizeof(struct fcgi_response))) == NULL) {
 		lwarnx("cannot malloc fcgi_response");
@@ -805,15 +813,15 @@ create_end_request(struct client *c)
 	header->type = FCGI_END_REQUEST;
 	header->id = htons(c->id);
 	header->content_len = htons(sizeof(struct
-	    fcgi_end_request));
+	    fcgi_end_request_body));
 	header->padding_len = 0;
 	header->reserved = 0;
-	end_request = (struct fcgi_end_request *) resp->data +
+	end_request = (struct fcgi_end_request_body *) resp->data +
 	    sizeof(struct fcgi_record_header);
 	end_request->app_status = htonl(c->script_status);
 	end_request->protocol_status = FCGI_REQUEST_COMPLETE;
 	resp->data_pos = 0;
-	resp->data_len = sizeof(struct fcgi_end_request) +
+	resp->data_len = sizeof(struct fcgi_end_request_body) +
 	    sizeof(struct fcgi_record_header);
 	TAILQ_INSERT_TAIL(&c->response_head, resp, entry);	
 }
@@ -971,6 +979,19 @@ cleanup_client(struct client *c)
 }
 
 void
+dump_fcgi_record(const char *p, struct fcgi_record_header *h)
+{
+	dump_fcgi_record_header(p, h);
+
+	if (h->type == FCGI_BEGIN_REQUEST)
+		dump_fcgi_begin_request_body(p,
+		    (struct fcgi_begin_request_body *)((char *)h) + sizeof(*h));
+	else if (h->type == FCGI_END_REQUEST)
+		dump_fcgi_end_request_body(p,
+		    (struct fcgi_end_request_body *)((char *)h) + sizeof(*h));
+}
+
+void
 dump_fcgi_record_header(const char* p, struct fcgi_record_header *h)
 {
 	ldebug("%sversion:         %d", p, h->version);
@@ -979,6 +1000,20 @@ dump_fcgi_record_header(const char* p, struct fcgi_record_header *h)
 	ldebug("%scontentLength:   %d", p, ntohs(h->content_len));
 	ldebug("%spaddingLength:   %d", p, h->padding_len);
 	ldebug("%sreserved:        %d", p, h->reserved);
+}
+
+void
+dump_fcgi_begin_request_body(const char *p, struct fcgi_begin_request_body *b)
+{
+	ldebug("%srole             %d", p, ntohs(b->role));
+	ldebug("%sflags            %d", p, b->flags);
+}
+
+void
+dump_fcgi_end_request_body(const char *p, struct fcgi_end_request_body *b)
+{
+	ldebug("%sappStatus:       %d", p, ntohl(b->app_status));
+	ldebug("%sprotocolStatus:  %d", p, b->protocol_status);
 }
 
 void
