@@ -1,4 +1,4 @@
-/*	$OpenBSD: id.c,v 1.19 2009/10/27 23:59:39 deraadt Exp $	*/
+/*	$OpenBSD: id.c,v 1.20 2013/09/06 19:48:46 okan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -31,6 +31,7 @@
 
 #include <sys/param.h>
 
+#include <err.h>
 #include <errno.h>
 #include <grp.h>
 #include <pwd.h>
@@ -38,7 +39,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <err.h>
 
 void	current(void);
 void	pretty(struct passwd *);
@@ -56,9 +56,26 @@ main(int argc, char *argv[])
 	int Gflag, ch, gflag, nflag, pflag, rflag, uflag;
 	uid_t uid;
 	gid_t gid;
+	const char *opts;
 
 	Gflag = gflag = nflag = pflag = rflag = uflag = 0;
-	while ((ch = getopt(argc, argv, "Ggnpru")) != -1)
+
+	if (strcmp(getprogname(), "groups") == 0) {
+		Gflag = 1;
+		nflag = 1;
+		opts = "";
+		if (argc > 2)
+			usage();
+	} else if (strcmp(getprogname(), "whoami") == 0) {
+		uflag = 1;
+		nflag = 1;
+		opts = "";
+		if (argc > 1)
+			usage();
+	} else
+		opts = "Ggnpru";
+
+	while ((ch = getopt(argc, argv, opts)) != -1)
 		switch(ch) {
 		case 'G':
 			Gflag = 1;
@@ -85,7 +102,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	switch(Gflag + gflag + pflag + uflag) {
+	switch (Gflag + gflag + pflag + uflag) {
 	case 1:
 		break;
 	case 0:
@@ -95,6 +112,9 @@ main(int argc, char *argv[])
 	default:
 		usage();
 	}
+
+	if (strcmp(opts, "") != 0 && argc > 1)
+		usage();
 
 	pw = *argv ? who(*argv) : NULL;
 
@@ -155,7 +175,7 @@ pretty(struct passwd *pw)
 			(void)printf("uid\t%s\n", pw->pw_name);
 		else
 			(void)printf("uid\t%u\n", rid);
-		
+
 		if ((eid = geteuid()) != rid) {
 			if ((pw = getpwuid(eid)))
 				(void)printf("euid\t%s\n", pw->pw_name);
@@ -302,10 +322,16 @@ who(char *u)
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: id [user]\n"
-			      "       id -G [-n] [user]\n"
-			      "       id -g [-nr] [user]\n"
-			      "       id -p [user]\n"
-			      "       id -u [-nr] [user]\n");
+	if (strcmp(getprogname(), "groups") == 0) {
+		(void)fprintf(stderr, "usage: groups [user]\n");
+	} else if (strcmp(getprogname(), "whoami") == 0) {
+		(void)fprintf(stderr, "usage: whoami\n");
+	} else {
+		(void)fprintf(stderr, "usage: id [user]\n");
+		(void)fprintf(stderr, "       id -G [-n] [user]\n");
+		(void)fprintf(stderr, "       id -g [-nr] [user]\n");
+		(void)fprintf(stderr, "       id -p [user]\n");
+		(void)fprintf(stderr, "       id -u [-nr] [user]\n");
+	}
 	exit(1);
 }
