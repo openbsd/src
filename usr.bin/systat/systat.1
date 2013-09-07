@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.95 2012/12/23 17:01:27 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.96 2013/09/07 11:43:50 reyk Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: December 23 2012 $
+.Dd $Mdocdate: September 7 2013 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd display system statistics
 .Sh SYNOPSIS
 .Nm systat
-.Op Fl abiNn
+.Op Fl aBbiNn
 .Op Fl d Ar count
 .Op Fl s Ar delay
 .Op Fl w Ar width
@@ -86,8 +86,17 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Display all lines.
+.It Fl B
+Raw, non-interactive mode.
+The default is to exit after two screen updates,
+with statistics only ever displayed once.
+Useful for views such as
+.Ic cpu ,
+where initial calculations are useless.
 .It Fl b
 Raw, non-interactive mode.
+The default is to exit after one screen update,
+with statistics displayed every update.
 .It Fl d Ar count
 Exit after
 .Ar count
@@ -130,8 +139,9 @@ argument expects to be one of:
 .Ic malloc ,
 .Ic buckets ,
 .Ic nfsclient ,
+.Ic nfsserver ,
 or
-.Ic nfsserver .
+.Ic cpu .
 These displays can also be requested interactively and are described in
 full detail below.
 .Ar view
@@ -236,6 +246,10 @@ Display kernel
 .Xr malloc 9
 bucket statistics similar to the output of
 .Cm vmstat Fl m .
+.It Ic cpu
+Display information about the average usage of each CPU,
+similar to the output provided by
+.Xr top 1 .
 .It Ic ifstat
 Display interface statistics.
 The

@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.14 2011/04/05 07:35:32 mpf Exp $	 */
+/* $Id: engine.c,v 1.15 2013/09/07 11:43:49 reyk Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -55,6 +55,7 @@ struct view_ent {
 useconds_t udelay = 5000000;
 int dispstart = 0;
 int interactive = 1;
+int averageonly = 0;
 int maxprint = 0;
 int paused = 0;
 int rawmode = 0;
@@ -1351,7 +1352,9 @@ engine_loop(int countmax)
 
 		if (need_update) {
 			erase();
-			disp_update();
+			if (!averageonly ||
+			    (averageonly && count == countmax - 1))
+				disp_update();
 			end_page();
 			need_update = 0;
 			if (countmax && ++count >= countmax)

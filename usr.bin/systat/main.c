@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.59 2011/04/05 07:35:32 mpf Exp $	 */
+/* $Id: main.c,v 1.60 2013/09/07 11:43:50 reyk Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -208,7 +208,7 @@ void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-abiNn] [-d count] "
+	fprintf(stderr, "usage: %s [-aBbiNn] [-d count] "
 	    "[-s delay] [-w width] [view] [delay]\n", __progname);
 	exit(1);
 }
@@ -359,6 +359,7 @@ initialize(void)
 	initpool();
 	initmalloc();
 	initnfs();
+	initcpu();
 }
 
 void
@@ -403,11 +404,16 @@ main(int argc, char *argv[])
 	if (setresgid(gid, gid, gid) == -1)
 		err(1, "setresgid");
 
-	while ((ch = getopt(argc, argv, "Nabd:ins:w:")) != -1) {
+	while ((ch = getopt(argc, argv, "BNabd:ins:w:")) != -1) {
 		switch (ch) {
 		case 'a':
 			maxlines = -1;
 			break;
+		case 'B':
+			averageonly = 1;
+			if (countmax < 2)
+				countmax = 2;
+			/* FALLTHROUGH */
 		case 'b':
 			rawmode = 1;
 			interactive = 0;
