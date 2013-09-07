@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-PF-MIB.txt,v 1.3 2013/09/07 04:31:52 joel Exp $
+-- $OpenBSD: OPENBSD-PF-MIB.txt,v 1.4 2013/09/07 04:39:30 joel Exp $
 --
 -- Copyright (c) 2004-2013 Joel Knight <knight.joel@gmail.com>
 -- 
@@ -903,29 +903,29 @@ pfTblEntry OBJECT-TYPE
 TblEntry ::=
 	SEQUENCE {
 		pfTblIndex		Integer32,
-		pfTblName			OCTET STRING,
+		pfTblName		OCTET STRING,
 		pfTblAddresses		Integer32,
 		pfTblAnchorRefs		Integer32,
 		pfTblRuleRefs		Integer32,
 		pfTblEvalsMatch		Counter64,
-		pfTblEvalsNoMatch		Counter64,
+		pfTblEvalsNoMatch	Counter64,
 		pfTblInPassPkts		Counter64,
-		pfTblInPassBytes		Counter64,
-		pfTblInBlockPkts		Counter64,
-		pfTblInBlockBytes		Counter64,
-		pfTblInXPassPkts		Counter64,
-		pfTblInXPassBytes		Counter64,
-		pfTblOutPassPkts		Counter64,
-		pfTblOutPassBytes		Counter64,
-		pfTblOutBlockPkts		Counter64,
+		pfTblInPassBytes	Counter64,
+		pfTblInBlockPkts	Counter64,
+		pfTblInBlockBytes	Counter64,
+		pfTblInXPassPkts	Counter64,
+		pfTblInXPassBytes	Counter64,
+		pfTblOutPassPkts	Counter64,
+		pfTblOutPassBytes	Counter64,
+		pfTblOutBlockPkts	Counter64,
 		pfTblOutBlockBytes	Counter64,
-		pfTblOutXPassPkts		Counter64,
+		pfTblOutXPassPkts	Counter64,
 		pfTblOutXPassBytes	Counter64,
-		pfTblStatsCleared		TimeTicks,
-		pfTblInMatchPkts		Counter64,
-		pfTblInMatchBytes		Counter64,
-		pfTblOutMatchPkts		Counter64,
-		pfTblOutMatchBytes		Counter64
+		pfTblStatsCleared	TimeTicks,
+		pfTblInMatchPkts	Counter64,
+		pfTblInMatchBytes	Counter64,
+		pfTblOutMatchPkts	Counter64,
+		pfTblOutMatchBytes	Counter64
 	}
 
 pfTblIndex OBJECT-TYPE
@@ -1157,10 +1157,10 @@ pfTblAddrEntry OBJECT-TYPE
 
 TblAddrEntry ::=
 	SEQUENCE {
-		pfTblAddrTblIndex		Integer32,
+		pfTblAddrTblIndex	Integer32,
 		pfTblAddrNet		IpAddress,
 		pfTblAddrMask		Integer32,
-		pfTblAddrCleared		TimeTicks,
+		pfTblAddrCleared	TimeTicks,
 		pfTblAddrInBlockPkts	Counter64,
 		pfTblAddrInBlockBytes	Counter64,
 		pfTblAddrInPassPkts	Counter64,
