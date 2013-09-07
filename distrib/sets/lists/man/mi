@@ -1553,6 +1553,8 @@
 ./usr/share/man/man4/armish/intro.4
 ./usr/share/man/man4/armish/kmem.4
 ./usr/share/man/man4/armish/mem.4
+./usr/share/man/man4/armv7
+./usr/share/man/man4/armv7/cpsw.4
 ./usr/share/man/man4/arp.4
 ./usr/share/man/man4/art.4
 ./usr/share/man/man4/asbtm.4
@@ -1581,8 +1583,6 @@
 ./usr/share/man/man4/az.4
 ./usr/share/man/man4/azalia.4
 ./usr/share/man/man4/bce.4
-./usr/share/man/man4/beagle
-./usr/share/man/man4/beagle/cpsw.4
 ./usr/share/man/man4/berkwdt.4
 ./usr/share/man/man4/bge.4
 ./usr/share/man/man4/bha.4
@@ -2695,6 +2695,8 @@
 ./usr/share/man/man8/armish
 ./usr/share/man/man8/armish/MAKEDEV.8
 ./usr/share/man/man8/armish/boot.8
+./usr/share/man/man8/armv7
+./usr/share/man/man8/armv7/MAKEDEV.8
 ./usr/share/man/man8/arp.8
 ./usr/share/man/man8/atactl.8
 ./usr/share/man/man8/authpf-noip.8
@@ -2703,8 +2705,6 @@
 ./usr/share/man/man8/aviion/MAKEDEV.8
 ./usr/share/man/man8/aviion/a2coff.8
 ./usr/share/man/man8/badsect.8
-./usr/share/man/man8/beagle
-./usr/share/man/man8/beagle/MAKEDEV.8
 ./usr/share/man/man8/bgpctl.8
 ./usr/share/man/man8/bgpd.8
 ./usr/share/man/man8/bgplg.8
