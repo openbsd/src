@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.5 2013/01/28 13:42:14 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.6 2013/09/07 10:46:32 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -40,7 +40,7 @@
 
 #include "ldapd.h"
 
-#define SSL_CIPHERS	"HIGH"
+#define SSL_CIPHERS	"HIGH:!aNULL"
 
 void	 ssl_error(const char *);
 char	*ssl_load_file(const char *, off_t *);
