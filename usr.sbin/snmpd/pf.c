@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.5 2013/03/04 14:00:31 bluhm Exp $	*/
+/*	$OpenBSD: pf.c,v 1.6 2013/09/07 04:43:21 joel Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -431,6 +431,9 @@ pfta_get_nextaddr(struct pfr_astats *ras, int *tblidx)
 			    && (as->pfras_a.pfra_net == ras->pfras_a.pfra_net))
 				found = 1;
 		}
+
+		free(ba.pfrb_caddr);
+		ba.pfrb_caddr = NULL;
 	}
 
 
