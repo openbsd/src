@@ -1,6 +1,6 @@
--- $OpenBSD: OPENBSD-PF-MIB.txt,v 1.2 2013/03/11 19:49:37 sthen Exp $
+-- $OpenBSD: OPENBSD-PF-MIB.txt,v 1.3 2013/09/07 04:31:52 joel Exp $
 --
--- Copyright (c) 2004-2012 Joel Knight <knight.joel@gmail.com>
+-- Copyright (c) 2004-2013 Joel Knight <knight.joel@gmail.com>
 -- 
 -- Permission to use, copy, modify, and distribute this document for any
 -- purpose with or without fee is hereby granted, provided that the above
@@ -33,7 +33,7 @@ IMPORTS
 		FROM SNMPv2-CONF;
 
 pfMIBObjects MODULE-IDENTITY
-    LAST-UPDATED "201302242033Z"
+    LAST-UPDATED "201308310446Z"
     ORGANIZATION "OpenBSD"
     CONTACT-INFO "
                   Author:     Joel Knight
@@ -43,6 +43,8 @@ pfMIBObjects MODULE-IDENTITY
     DESCRIPTION "The MIB module for gathering information from
 		OpenBSD's packet filter.
                 "
+    REVISION "201308310446Z"
+    DESCRIPTION "Add pf(4) table byte/packet counters for 'match' rules"
     REVISION "201302242033Z"
     DESCRIPTION "Add separate counter for failed translations"
     REVISION "201201260000Z"
@@ -919,7 +921,11 @@ TblEntry ::=
 		pfTblOutBlockBytes	Counter64,
 		pfTblOutXPassPkts		Counter64,
 		pfTblOutXPassBytes	Counter64,
-		pfTblStatsCleared		TimeTicks
+		pfTblStatsCleared		TimeTicks,
+		pfTblInMatchPkts		Counter64,
+		pfTblInMatchBytes		Counter64,
+		pfTblOutMatchPkts		Counter64,
+		pfTblOutMatchBytes		Counter64
 	}
 
 pfTblIndex OBJECT-TYPE
@@ -1092,6 +1098,44 @@ pfTblStatsCleared OBJECT-TYPE
 	for this pf table were zeroed."
 	::= { pfTblEntry 20 }
 
+pfTblInMatchPkts OBJECT-TYPE
+	SYNTAX		Counter64
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION
+	"The number of inbound packets that hit a 'match' rule where this
+	particular table was referenced by the rule."
+	::= { pfTblEntry 21 }
+
+pfTblInMatchBytes OBJECT-TYPE
+	SYNTAX		Counter64
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION
+	"The total size in bytes of all inbound packets that hit a
+	'match' rule where this particular table was referenced by
+	the rule."
+	::= { pfTblEntry 22 }
+
+pfTblOutMatchPkts OBJECT-TYPE
+	SYNTAX		Counter64
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION
+	"The number of outbound packets that hit a 'match' rule where this
+	particular table was referenced by the rule."
+	::= { pfTblEntry 23 }
+
+pfTblOutMatchBytes OBJECT-TYPE
+	SYNTAX		Counter64
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION
+	"The total size in bytes of all outbound packets that hit a
+	'match' rule where this particular table was referenced by
+	the rule."
+	::= { pfTblEntry 24 }
+
 pfTblAddrTable OBJECT-TYPE
 	SYNTAX		SEQUENCE OF TblAddrEntry
 	MAX-ACCESS	not-accessible
@@ -1124,7 +1168,11 @@ TblAddrEntry ::=
 		pfTblAddrOutBlockPkts	Counter64,
 		pfTblAddrOutBlockBytes	Counter64,
 		pfTblAddrOutPassPkts	Counter64,
-		pfTblAddrOutPassBytes	Counter64
+		pfTblAddrOutPassBytes	Counter64,
+		pfTblAddrInMatchPkts	Counter64,
+		pfTblAddrInMatchBytes	Counter64,
+		pfTblAddrOutMatchPkts	Counter64,
+		pfTblAddrOutMatchBytes	Counter64
 	}
 
 pfTblAddrTblIndex OBJECT-TYPE
@@ -1235,6 +1283,42 @@ pfTblAddrOutPassBytes OBJECT-TYPE
 	"The number of outbound bytes passed as a result of matchg
 	this table entry."
 	::= { pfTblAddrEntry 12 }
+
+pfTblAddrInMatchPkts OBJECT-TYPE
+	SYNTAX		Counter64
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION
+	"The number of inbound packets that hit a 'match' rule where
+	this table entry was referenced."
+	::= { pfTblAddrEntry 13 }
+
+pfTblAddrInMatchBytes OBJECT-TYPE
+	SYNTAX		Counter64
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION
+	"The total size in bytes of all inbound packets that hit
+	a 'match' rule where this table entry was referenced."
+	::= { pfTblAddrEntry 14 }
+
+pfTblAddrOutMatchPkts OBJECT-TYPE
+	SYNTAX		Counter64
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION
+	"The number of outbound packets that hit a 'match' rule where
+	this table entry was referenced."
+	::= { pfTblAddrEntry 15 }
+
+pfTblAddrOutMatchBytes OBJECT-TYPE
+	SYNTAX		Counter64
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION
+	"The total size in bytes of all outbound packets that hit
+	a 'match' rule where this table entry was referenced."
+	::= { pfTblAddrEntry 16 }
 
 
 -- pfLabels

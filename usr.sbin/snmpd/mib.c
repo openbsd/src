@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.64 2013/03/11 19:49:37 sthen Exp $	*/
+/*	$OpenBSD: mib.c,v 1.65 2013/09/07 04:31:52 joel Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -1548,6 +1548,10 @@ static struct oid openbsd_mib[] = {
 	{ MIB(pfTblOutXPassPkts),	OID_TRD, mib_pftables },
 	{ MIB(pfTblOutXPassBytes),	OID_TRD, mib_pftables },
 	{ MIB(pfTblStatsCleared),	OID_TRD, mib_pftables },
+	{ MIB(pfTblInMatchPkts),	OID_TRD, mib_pftables },
+	{ MIB(pfTblInMatchBytes),	OID_TRD, mib_pftables },
+	{ MIB(pfTblOutMatchPkts),	OID_TRD, mib_pftables },
+	{ MIB(pfTblOutMatchBytes),	OID_TRD, mib_pftables },
 	{ MIB(pfTblAddrTblIndex),	OID_TRD, mib_pftableaddrs,
 	    NULL, mib_pftableaddrstable },
 	{ MIB(pfTblAddrNet),		OID_TRD, mib_pftableaddrs,
@@ -1571,6 +1575,14 @@ static struct oid openbsd_mib[] = {
 	{ MIB(pfTblAddrOutPassPkts),	OID_TRD, mib_pftableaddrs,
 	    NULL, mib_pftableaddrstable },
 	{ MIB(pfTblAddrOutPassBytes),	OID_TRD, mib_pftableaddrs,
+	    NULL, mib_pftableaddrstable },
+	{ MIB(pfTblAddrInMatchPkts),	OID_TRD, mib_pftableaddrs,
+	    NULL, mib_pftableaddrstable },
+	{ MIB(pfTblAddrInMatchBytes),	OID_TRD, mib_pftableaddrs,
+	    NULL, mib_pftableaddrstable },
+	{ MIB(pfTblAddrOutMatchPkts),	OID_TRD, mib_pftableaddrs,
+	    NULL, mib_pftableaddrstable },
+	{ MIB(pfTblAddrOutMatchBytes),	OID_TRD, mib_pftableaddrs,
 	    NULL, mib_pftableaddrstable },
 	{ MIB(pfLabelNumber),		OID_RD, mib_pflabelnum },
 	{ MIB(pfLabelIndex),		OID_TRD, mib_pflabels },
@@ -2166,6 +2178,22 @@ mib_pftables(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		ber = ber_add_integer(ber, tzero);
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_TIMETICKS);
 		break;
+	case 21:
+		ber = ber_add_integer(ber, ts.pfrts_packets[IN][PFR_OP_MATCH]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 22:
+		ber = ber_add_integer(ber, ts.pfrts_bytes[IN][PFR_OP_MATCH]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 23:
+		ber = ber_add_integer(ber, ts.pfrts_packets[OUT][PFR_OP_MATCH]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 24:
+		ber = ber_add_integer(ber, ts.pfrts_bytes[OUT][PFR_OP_MATCH]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
 	default:
 		return (1);
 	}
@@ -2236,6 +2264,22 @@ mib_pftableaddrs(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		break;
 	case 12:
 		ber = ber_add_integer(ber, as.pfras_bytes[OUT][PFR_OP_PASS]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 13:
+		ber = ber_add_integer(ber, as.pfras_packets[IN][PFR_OP_MATCH]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 14:
+		ber = ber_add_integer(ber, as.pfras_bytes[IN][PFR_OP_MATCH]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 15:
+		ber = ber_add_integer(ber, as.pfras_packets[OUT][PFR_OP_MATCH]);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	case 16:
+		ber = ber_add_integer(ber, as.pfras_bytes[OUT][PFR_OP_MATCH]);
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
 		break;
 	default:

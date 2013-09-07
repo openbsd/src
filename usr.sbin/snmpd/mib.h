@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.30 2013/03/11 19:49:37 sthen Exp $	*/
+/*	$OpenBSD: mib.h,v 1.31 2013/09/07 04:31:52 joel Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -587,6 +587,10 @@
 #define MIB_pfTblOutXPassPkts		MIB_pfTblEntry, 18
 #define MIB_pfTblOutXPassBytes		MIB_pfTblEntry, 19
 #define MIB_pfTblStatsCleared		MIB_pfTblEntry, 20
+#define MIB_pfTblInMatchPkts		MIB_pfTblEntry, 21
+#define MIB_pfTblInMatchBytes		MIB_pfTblEntry, 22
+#define MIB_pfTblOutMatchPkts		MIB_pfTblEntry, 23
+#define MIB_pfTblOutMatchBytes		MIB_pfTblEntry, 24
 #define MIB_pfTblAddrTable		MIB_pfTables, 129
 #define MIB_pfTblAddrEntry		MIB_pfTblAddrTable, 1
 #define OIDIDX_pfTblAddr		11
@@ -602,6 +606,10 @@
 #define MIB_pfTblAddrOutBlockBytes	MIB_pfTblAddrEntry, 10
 #define MIB_pfTblAddrOutPassPkts	MIB_pfTblAddrEntry, 11
 #define MIB_pfTblAddrOutPassBytes	MIB_pfTblAddrEntry, 12
+#define MIB_pfTblAddrInMatchPkts	MIB_pfTblAddrEntry, 13
+#define MIB_pfTblAddrInMatchBytes	MIB_pfTblAddrEntry, 14
+#define MIB_pfTblAddrOutMatchPkts	MIB_pfTblAddrEntry, 15
+#define MIB_pfTblAddrOutMatchBytes	MIB_pfTblAddrEntry, 16
 #define MIB_pfLabels			MIB_pfMIBObjects, 10
 #define MIB_pfLabelNumber		MIB_pfLabels, 1
 #define MIB_pfLabelTable		MIB_pfLabels, 128
@@ -1108,6 +1116,10 @@
 	{ MIBDECL(pfTblOutXPassPkts) },			\
 	{ MIBDECL(pfTblOutXPassBytes) },		\
 	{ MIBDECL(pfTblStatsCleared) },			\
+	{ MIBDECL(pfTblInMatchPkts) },			\
+	{ MIBDECL(pfTblInMatchBytes) },			\
+	{ MIBDECL(pfTblOutMatchPkts) },			\
+	{ MIBDECL(pfTblOutMatchBytes) },		\
 	{ MIBDECL(pfTblAddrTable) },			\
 	{ MIBDECL(pfTblAddrEntry) },			\
 	{ MIBDECL(pfTblAddrTblIndex) },			\
@@ -1122,6 +1134,10 @@
 	{ MIBDECL(pfTblAddrOutBlockBytes) },		\
 	{ MIBDECL(pfTblAddrOutPassPkts) },		\
 	{ MIBDECL(pfTblAddrOutPassBytes) },		\
+	{ MIBDECL(pfTblAddrInMatchPkts) },		\
+	{ MIBDECL(pfTblAddrInMatchBytes) },		\
+	{ MIBDECL(pfTblAddrOutMatchPkts) },		\
+	{ MIBDECL(pfTblAddrOutMatchBytes) },		\
 	{ MIBDECL(pfLabels) },				\
 	{ MIBDECL(pfLabelNumber) },			\
 	{ MIBDECL(pfLabelTable) },			\
