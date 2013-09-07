@@ -1,6 +1,6 @@
 
 REV=	${OSrev}
-BSD_RD=		bsd.rd
+BSD_RD=		bsd.rd.OMAP
 
 IMAGE=	miniroot-${BOARD}-${REV}.fs
 
@@ -36,7 +36,7 @@ do_files:
 	mkdir ${MOUNT_POINT}/u-boots
 	cp -r /usr/mdec/{am335x,beagle,panda} ${MOUNT_POINT}/u-boots
 	mkuboot -a arm -o linux -e 0x80300000 -l 0x80300000 \
-		${.OBJDIR}/../../ramdisk/bsd.rd ${MOUNT_POINT}/bsd.umg
+		${.OBJDIR}/../../ramdisk/bsd.rd.OMAP ${MOUNT_POINT}/bsd.umg
 
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}

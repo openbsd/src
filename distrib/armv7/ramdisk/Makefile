@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2013/09/04 20:00:22 patrick Exp $
+#	$OpenBSD: Makefile,v 1.2 2013/09/07 23:04:44 patrick Exp $
 
 REV=	${OSrev}
 
@@ -33,22 +33,30 @@ all ${IMAGE}:
 	@false
 .else
 
-# mix config is not needed.
-all:	${BSD_RD}
+ALLSOC=		IMX OMAP
+ALLBDS=
+ALLBSDRD=
+.for SOC in ${ALLSOC}
+ALLBSD+=	bsd.${SOC}
+ALLBSDRD+=	${BSD_RD}.${SOC}
+all:	${ALLBSDRD}
+.endfor
 
-${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
-	cp bsd ${BSD_RD}
-	${.OBJDIR}/rdsetroot ${BSD_RD} ${IMAGE}
+.for SOC in ${ALLSOC}
+bsd.${SOC}:
+	cd ${TOP}/../../sys/arch/armv7/conf && config RAMDISK-${SOC}
+	cd ${TOP}/../../sys/arch/armv7/compile/RAMDISK-${SOC} && \
+	    ${MAKE} clean && exec ${MAKE}
+	cp ${TOP}/../../sys/arch/armv7/compile/RAMDISK-${SOC}/bsd bsd.${SOC}
+
+${BSD_RD}.${SOC}: ${CBIN} ${IMAGE} bsd.${SOC} rdsetroot
+	cp bsd.${SOC} ${BSD_RD}.${SOC}
+	${.OBJDIR}/rdsetroot ${BSD_RD}.${SOC} ${IMAGE}
+.endfor
 
 ${IMAGE}: rd_setup do_files rd_teardown
 
 .endif
-
-bsd:
-	cd ${TOP}/../../sys/arch/armv7/conf && config RAMDISK-OMAP
-	cd ${TOP}/../../sys/arch/armv7/compile/RAMDISK-OMAP && \
-	    ${MAKE} clean && exec ${MAKE}
-	cp ${TOP}/../../sys/arch/armv7/compile/RAMDISK-OMAP/bsd bsd
 
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
@@ -92,13 +100,13 @@ do_files:
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	    *.o *.lo *.c bsd ${BSD_RD} rdsetroot
+	    *.o *.lo *.c ${ALLBSD} ${ALLBSDRD} rdsetroot
 	rm -f instbin.conf
 	rm -rf cd-dir
 
 .ifdef RELEASEDIR
 install:
-	cp ${BSD_RD} ${RELEASEDIR}
+	cp ${ALLBSDRD} ${RELEASEDIR}
 .endif	# RELEASEDIR
 
 .include <bsd.obj.mk>
