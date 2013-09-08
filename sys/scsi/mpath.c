@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.33 2013/08/29 02:54:36 dlg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.34 2013/09/08 09:47:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -170,10 +170,11 @@ mpath_next_path(struct mpath_dev *d)
 #endif
 
 	p = d->d_next_path;
-	d->d_next_path = TAILQ_NEXT(p, p_entry);
-	if (d->d_next_path == NULL) {
-		g = TAILQ_FIRST(&d->d_groups);
-		d->d_next_path = TAILQ_FIRST(&g->g_paths);
+	if (p != NULL) {
+		d->d_next_path = TAILQ_NEXT(p, p_entry);
+		if (d->d_next_path == NULL &&
+		    (g = TAILQ_FIRST(&d->d_groups)) != NULL)
+			d->d_next_path = TAILQ_FIRST(&g->g_paths);
 	}
 
 	return (p);
