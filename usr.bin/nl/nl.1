@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nl.1,v 1.1 2013/09/08 18:59:07 jca Exp $
+.\"	$OpenBSD: nl.1,v 1.2 2013/09/08 20:23:34 jmc Exp $
 .\"	$NetBSD: nl.1,v 1.13 2013/05/01 20:53:59 christos Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -53,8 +53,8 @@ The
 .Nm
 utility reads lines from the named
 .Ar file ,
-applies a configurable line numbering filter operation and writes the result
-to the standard output.
+applies a configurable line numbering filter operation,
+and writes the result to the standard output.
 If
 .Ar file
 is a single dash
@@ -75,14 +75,12 @@ body and footer sections.
 .Pp
 The starts of logical page sections are signaled by input lines containing
 nothing but one of the following sequences of delimiter characters:
-.Bd -unfilled -offset indent
-.Bl -column "\e:\e:\e: " "header "
-.It Em "Line"	"Start of"
+.Bl -column "\e:\e:\e: " "header " -offset indent
+.It Em "Line" Ta Em "Start of"
 .It \e:\e:\e:	header
 .It \e:\e:	body
 .It \e:	footer
 .El
-.Ed
 .Pp
 If the input does not contain any logical page section signaling directives,
 the text being read is assumed to consist of a single logical page body.
@@ -160,7 +158,8 @@ Specify the line numbering output format.
 Recognized
 .Ar format
 arguments are:
-.Bl -tag -width lnXX -compact
+.Pp
+.Bl -tag -width lnXX -compact -offset indent
 .It ln
 Left justified.
 .It rn
@@ -190,7 +189,7 @@ The default
 value is 1.
 .It Fl w Ar width
 Specify the number of characters to be occupied by the line number;
-in case the
+if the
 .Ar width
 is insufficient to hold the line number, it will be truncated to its
 .Ar width
