@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.200 2013/08/20 14:27:28 ajacoutot Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.201 2013/09/08 02:53:39 reyk Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -336,6 +336,7 @@ vge*	at pci?				# VIA VT612x
 nfe*	at pci?				# NVIDIA nForce Ethernet
 xge*	at pci?				# Neterion Xframe-I/II 10Gb ethernet
 vic*	at pci?				# VMware VMXnet virtual interface
+vmx*	at pci?				# VMware VMXNET3 virtual interface
 et*	at pci?				# Agere/LSI ET1310
 age*	at pci?				# Attansic L1 Ethernet
 alc*	at pci?				# Attansic L1C/L1D/L2C Ethernet
