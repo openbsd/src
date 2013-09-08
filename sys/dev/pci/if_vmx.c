@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.12 2013/08/28 10:19:19 reyk Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.13 2013/09/08 02:18:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -366,7 +366,7 @@ vmxnet3_dma_init(struct vmxnet3_softc *sc)
 	for (i = 0; i < VMXNET3_NINTR; i++)
 		ds->modlevel[i] = UPT1_IMOD_ADAPTIVE;
 	WRITE_BAR1(sc, VMXNET3_BAR1_DSL, ds_pa);
-	WRITE_BAR1(sc, VMXNET3_BAR1_DSH, ds_pa >> 32);
+	WRITE_BAR1(sc, VMXNET3_BAR1_DSH, (u_int64_t)ds_pa >> 32);
 	return 0;
 }
 
