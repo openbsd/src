@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.148 2013/09/02 07:14:22 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.149 2013/09/08 11:59:44 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -371,10 +371,16 @@ do {									\
 	printf("%s: " fmt, dev.dv_xname, ## arg);			\
 } while(0)
 
+#define PCI_ANY_ID (uint16_t) (~0U)
+
 struct drm_pcidev {
-	int vendor;
-	int device;
-	long driver_private;
+	uint16_t vendor;
+	uint16_t device;
+	uint16_t subvendor;
+	uint16_t subdevice;
+	uint32_t class;
+	uint32_t class_mask;
+	unsigned long driver_data;
 };
 
 struct drm_file;

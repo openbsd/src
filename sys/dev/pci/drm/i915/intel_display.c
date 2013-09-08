@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.11 2013/08/13 10:23:50 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.12 2013/09/08 11:59:45 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -8985,8 +8985,6 @@ static int intel_dmi_reverse_brightness(const struct dmi_system_id *id)
 	return 1;
 }
 #endif
-
-#define PCI_ANY_ID	(u_int16_t) (~0U)
 
 static struct intel_quirk intel_quirks[] = {
 	/* HP Mini needs pipe A force quirk (LP: #322104) */
