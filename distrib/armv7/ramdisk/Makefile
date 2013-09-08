@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2013/09/07 23:04:44 patrick Exp $
+#	$OpenBSD: Makefile,v 1.3 2013/09/08 11:23:54 patrick Exp $
 
 REV=	${OSrev}
 
@@ -34,7 +34,7 @@ all ${IMAGE}:
 .else
 
 ALLSOC=		IMX OMAP
-ALLBDS=
+ALLBSD=
 ALLBSDRD=
 .for SOC in ${ALLSOC}
 ALLBSD+=	bsd.${SOC}
