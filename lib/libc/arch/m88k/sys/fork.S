@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork.S,v 1.7 2013/01/11 21:23:24 miod Exp $	*/
+/*	$OpenBSD: fork.S,v 1.8 2013/09/08 18:01:56 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,12 +35,4 @@
 
 #include "SYS.h"
 
-/* r2 = pid. r3 = 0 in parent, 1 in child */
-
-SYSCALL(fork)
-	bcnd	eq0,%r3,parent
-	or	%r2,%r0,0
-	or	%r3,%r0,0
-parent:
-	jmp	%r1		/* pid = fork() */
-END(fork)
+RSYSCALL(fork)
