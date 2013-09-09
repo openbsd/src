@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.1 2013/08/22 02:02:33 guenther Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.2 2013/09/09 05:10:32 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -151,9 +151,15 @@ print_time(time_t t, int relative)
 static void
 print_timespec(const struct timespec *tsp, int relative)
 {
-	print_time(tsp->tv_sec, relative);
-	if (tsp->tv_nsec != 0)
-		printf(".%09ld", tsp->tv_nsec);
+	if (tsp->tv_nsec == UTIME_NOW)
+		printf("UTIME_NOW");
+	else if (tsp->tv_nsec == UTIME_OMIT)
+		printf("UTIME_OMIT");
+	else {
+		print_time(tsp->tv_sec, relative);
+		if (tsp->tv_nsec != 0)
+			printf(".%09ld", tsp->tv_nsec);
+	}
 }
 
 static void
