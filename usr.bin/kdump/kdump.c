@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.84 2013/08/22 02:02:33 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.85 2013/09/09 05:08:26 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -73,7 +73,7 @@ int timestamp, decimal, iohex, fancy = 1, maxdata = INT_MAX;
 int needtid, resolv, tail;
 char *tracefile = DEF_TRACEFILE;
 struct ktr_header ktr_header;
-pid_t pid = -1;
+pid_t pid_opt = -1;
 
 #define eqs(s1, s2)	(strcmp((s1), (s2)) == 0)
 
@@ -199,7 +199,7 @@ main(int argc, char *argv[])
 			fancy = 0;
 			break;
 		case 'p':
-			pid = atoi(optarg);
+			pid_opt = atoi(optarg);
 			break;
 		case 'r':
 			resolv = 1;
@@ -239,7 +239,7 @@ main(int argc, char *argv[])
 		silent = 0;
 		if (pe_size == 0)
 			mappidtoemul(ktr_header.ktr_pid, current);
-		if (pid != -1 && pid != ktr_header.ktr_pid)
+		if (pid_opt != -1 && pid_opt != ktr_header.ktr_pid)
 			silent = 1;
 		if (silent == 0 && trpoints & (1<<ktr_header.ktr_type))
 			dumpheader(&ktr_header);
