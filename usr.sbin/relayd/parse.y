@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.171 2013/05/30 20:17:12 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.172 2013/09/09 17:57:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -159,7 +159,7 @@ typedef struct {
 %token	RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION SOCKET SPLICE
 %token	SSL STICKYADDR STYLE TABLE TAG TCP TIMEOUT TO ROUTER RTLABEL
 %token	TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL RTABLE MATCH
-%token	RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD
+%token	RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDH CURVE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostname interface table
@@ -844,6 +844,7 @@ proto		: relay_proto PROTO STRING	{
 			p->tcpbacklog = RELAY_BACKLOG;
 			(void)strlcpy(p->sslciphers, SSLCIPHERS_DEFAULT,
 			    sizeof(p->sslciphers));
+			p->sslecdhcurve = SSLECDHCURVE_DEFAULT;
 			if (last_proto_id == INT_MAX) {
 				yyerror("too many protocols defined");
 				free(p);
@@ -969,6 +970,16 @@ sslflags	: SESSION CACHE sslcache	{ proto->cache = $3; }
 				YYERROR;
 			}
 			free($2);
+		}
+		| ECDH CURVE STRING		{
+			if (strcmp("none", $3) == 0)
+				proto->sslecdhcurve = 0;
+			else if ((proto->sslecdhcurve = OBJ_sn2nid($3)) == 0) {
+				yyerror("ECDH curve not supported");
+				free($3);
+				YYERROR;
+			}
+			free($3);
 		}
 		| CA FILENAME STRING		{
 			if (strlcpy(proto->sslca, $3,
@@ -1833,10 +1844,12 @@ lookup(char *s)
 		{ "ciphers",		CIPHERS },
 		{ "code",		CODE },
 		{ "cookie",		COOKIE },
+		{ "curve",		CURVE },
 		{ "demote",		DEMOTE },
 		{ "destination",	DESTINATION },
 		{ "digest",		DIGEST },
 		{ "disable",		DISABLE },
+		{ "ecdh",		ECDH },
 		{ "error",		ERROR },
 		{ "expect",		EXPECT },
 		{ "external",		EXTERNAL },

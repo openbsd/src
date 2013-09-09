@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.9 2013/05/30 20:17:12 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.10 2013/09/09 17:57:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 Reyk Floeter <reyk@openbsd.org>
@@ -112,6 +112,7 @@ config_init(struct relayd *env)
 		(void)strlcpy(env->sc_proto_default.sslciphers,
 		    SSLCIPHERS_DEFAULT,
 		    sizeof(env->sc_proto_default.sslciphers));
+		env->sc_proto_default.sslecdhcurve = SSLECDHCURVE_DEFAULT;
 		env->sc_proto_default.type = RELAY_PROTO_TCP;
 		(void)strlcpy(env->sc_proto_default.name, "default",
 		    sizeof(env->sc_proto_default.name));

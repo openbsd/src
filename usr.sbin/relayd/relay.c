@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.166 2013/05/30 20:17:12 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.167 2013/09/09 17:57:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -1841,8 +1841,9 @@ relay_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 SSL_CTX *
 relay_ssl_ctx_create(struct relay *rlay)
 {
-	struct protocol *proto = rlay->rl_proto;
-	SSL_CTX *ctx;
+	struct protocol	*proto = rlay->rl_proto;
+	SSL_CTX		*ctx;
+	EC_KEY		*ecdhkey;
 
 	ctx = SSL_CTX_new(SSLv23_method());
 	if (ctx == NULL)
@@ -1871,6 +1872,16 @@ relay_ssl_ctx_create(struct relay *rlay)
 		SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
 	if ((proto->sslflags & SSLFLAG_TLSV1) == 0)
 		SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
+
+	if (proto->sslecdhcurve > 0) {
+		/* Enable ECDHE support for TLS perfect forward secrecy */
+		if ((ecdhkey =
+		    EC_KEY_new_by_curve_name(proto->sslecdhcurve)) == NULL)
+			goto err;
+		SSL_CTX_set_tmp_ecdh(ctx, ecdhkey);
+		SSL_CTX_set_options(ctx, SSL_OP_SINGLE_ECDH_USE);
+		EC_KEY_free(ecdhkey);
+	}
 
 	if (!SSL_CTX_set_cipher_list(ctx, proto->sslciphers))
 		goto err;
