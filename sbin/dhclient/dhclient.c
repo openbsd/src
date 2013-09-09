@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.261 2013/08/14 13:52:53 florian Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.262 2013/09/09 20:30:05 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -679,20 +679,39 @@ state_selecting(void)
 
 	time(&cur_time);
 
-	/* If it was a BOOTREPLY, we can just take the address right now. */
+	/* If it was a BOOTREPLY, we can just take the lease right now. */
 	if (!picked->options[DHO_DHCP_MESSAGE_TYPE].len) {
+		struct option_data *option;
+
 		client->new = picked;
 
-		/* Make up some lease expiry times
-		   XXX these should be configurable. */
-		client->new->expiry = cur_time + 12000;
-		client->new->renewal += cur_time + 8000;
-		client->new->rebind += cur_time + 10000;
+		/*
+		 * Fake up DHO_DHCP_LEASE_TIME, DHO_RENEWAL_TIME and
+		 * DHO_REBINDING_TIME options so bind_lease() can
+		 * set the times.
+		 */
+		option = &client->new->options[DHO_DHCP_LEASE_TIME];
+		option->data = malloc(4);
+		if (option->data) {
+			option->len = 4;
+			putULong(option->data, 12000);
+		}
+		option = &client->new->options[DHO_DHCP_RENEWAL_TIME];
+		option->data = malloc(4);
+		if (option->data) {
+			option->len = 4;
+			putULong(option->data, 8000);
+		}
+		option = &client->new->options[DHO_DHCP_REBINDING_TIME];
+		option->data = malloc(4);
+		if (option->data) {
+			option->len = 4;
+			putULong(option->data, 10000);
+		}
 
 		client->state = S_REQUESTING;
-
-		/* Bind to the address we received. */
 		bind_lease();
+
 		return;
 	}
 
@@ -718,7 +737,6 @@ void
 dhcpack(struct in_addr client_addr, struct option_data *options, char *info)
 {
 	struct client_lease *lease;
-	time_t cur_time;
 
 	if (client->state != S_REBOOTING &&
 	    client->state != S_REQUESTING &&
@@ -743,12 +761,27 @@ dhcpack(struct in_addr client_addr, struct option_data *options, char *info)
 	/* Stop resending DHCPREQUEST. */
 	cancel_timeout();
 
+	bind_lease();
+}
+
+void
+bind_lease(void)
+{
+	struct in_addr gateway, mask;
+	struct option_data *options;
+	struct client_lease *lease;
+	time_t cur_time;
+
+	lease = apply_defaults(client->new);
+	options = lease->options;
+
 	/* Figure out the lease time. */
-	if (client->new->options[DHO_DHCP_LEASE_TIME].data)
+	if (options[DHO_DHCP_LEASE_TIME].data)
 		client->new->expiry =
-		    getULong(client->new->options[DHO_DHCP_LEASE_TIME].data);
+		    getULong(options[DHO_DHCP_LEASE_TIME].data);
 	else
 		client->new->expiry = DEFAULT_LEASE_TIME;
+
 	/*
 	 * A number that looks negative here is really just very large,
 	 * because the lease expiry offset is unsigned.
@@ -763,16 +796,16 @@ dhcpack(struct in_addr client_addr, struct option_data *options, char *info)
 	 * Take the server-provided renewal time if there is one;
 	 * otherwise figure it out according to the spec.
 	 */
-	if (client->new->options[DHO_DHCP_RENEWAL_TIME].len)
+	if (options[DHO_DHCP_RENEWAL_TIME].len)
 		client->new->renewal =
-		    getULong(client->new->options[DHO_DHCP_RENEWAL_TIME].data);
+		    getULong(options[DHO_DHCP_RENEWAL_TIME].data);
 	else
 		client->new->renewal = client->new->expiry / 2;
 
 	/* Same deal with the rebind time. */
-	if (client->new->options[DHO_DHCP_REBINDING_TIME].len)
+	if (options[DHO_DHCP_REBINDING_TIME].len)
 		client->new->rebind =
-		    getULong(client->new->options[DHO_DHCP_REBINDING_TIME].data);
+		    getULong(options[DHO_DHCP_REBINDING_TIME].data);
 	else
 		client->new->rebind = client->new->renewal +
 		    client->new->renewal / 2 + client->new->renewal / 4;
@@ -789,19 +822,6 @@ dhcpack(struct in_addr client_addr, struct option_data *options, char *info)
 	client->new->rebind += cur_time;
 	if (client->new->rebind < cur_time)
 		client->new->rebind = TIME_MAX;
-
-	bind_lease();
-}
-
-void
-bind_lease(void)
-{
-	struct in_addr gateway, mask;
-	struct option_data *options;
-	struct client_lease *lease;
-
-	lease = apply_defaults(client->new);
-	options = lease->options;
 
 	/*
 	 * A duplicate lease once we are responsible & S_RENEWING means we don't
