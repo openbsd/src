@@ -1,4 +1,4 @@
-#	$OpenBSD: files.cortex,v 1.2 2013/05/02 19:15:53 patrick Exp $
+#	$OpenBSD: files.cortex,v 1.3 2013/09/09 14:31:54 patrick Exp $
 
 # ARM core
 device	cortex {}
@@ -12,6 +12,10 @@ file	arch/arm/cortex/ampintc.c		ampintc
 device	amptimer
 attach	amptimer at cortex
 file	arch/arm/cortex/amptimer.c		amptimer
+
+device	agtimer
+attach	agtimer at cortex
+file	arch/arm/cortex/agtimer.c		agtimer
 
 device	armliicc
 attach	armliicc at cortex
