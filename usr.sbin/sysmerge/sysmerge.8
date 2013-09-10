@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.39 2013/07/16 11:13:34 schwarze Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.40 2013/09/10 08:44:38 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: September 10 2013 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -51,9 +51,6 @@ The reference files are created from a
 source tree or a
 .Dq .tgz
 release or snapshot file.
-The default, if no source is specified on the command line,
-is to use
-.Pa /usr/src .
 All work is done under
 .Pa ${TMPDIR}/sysmerge.XXXXXXXXXX
 (known as the
@@ -64,6 +61,15 @@ is created under the work directory.
 Each modified and/or replaced file is saved under the
 .Pa backup
 directory inside the work directory.
+.Pp
+If no source is specified on the command line,
+.Nm
+uses ${FETCH_CMD} to fetch the required sets from the URI pointed
+to by the
+.Ev SM_PATH
+environment variable, and falls back to
+.Pa /usr/src
+if this variable is unset.
 .Pp
 To make sure configuration files are in sync with the actual binaries,
 use the same source as was used to upgrade the system:
@@ -221,6 +227,9 @@ Log summary which may contain information for further, manual,
 updating.
 Defaults to
 .Pa ${WRKDIR}/sysmerge.log .
+.It Ev SM_PATH
+A URI, specifying the directory to search for sets if none are specified
+on the command line.
 .It Ev TMPDIR
 Directory in which the work directory is created.
 If unset, this defaults to

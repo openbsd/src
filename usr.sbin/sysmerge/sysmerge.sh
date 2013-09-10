@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.104 2013/03/22 08:20:43 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.105 2013/09/10 08:44:38 ajacoutot Exp $
 #
 # Copyright (c) 2008-2013 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -674,7 +674,13 @@ if (($# != 0)); then
 fi
 
 if [ -z "${SRCDIR}" -a -z "${TGZ}" -a -z "${XTGZ}" ]; then
-	if [ -f "/usr/src/etc/Makefile" ]; then
+	if [ -n "${SM_PATH}" ]; then
+		_relint=$(uname -r | tr -d '.')
+		get_set "${SM_PATH}/etc${_relint}.tgz" etc
+		if [ -d ${DESTDIR}/etc/X11 ]; then
+			get_set "${SM_PATH}/xetc${_relint}.tgz" xetc
+		fi
+	elif [ -f "/usr/src/etc/Makefile" ]; then
 		SRCDIR=/usr/src
 	else
 		error "please specify a valid path to src or (x)etcXX.tgz"
