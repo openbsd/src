@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.96 2013/08/06 21:33:03 millert Exp $ */
+/* $OpenBSD: user.c,v 1.97 2013/09/10 20:53:09 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -290,6 +290,8 @@ copydotfiles(char *skeldir, uid_t uid, gid_t gid, char *dir)
 	DIR		*dirp;
 	int		n;
 
+	if (*skeldir == '\0')
+		return 0;
 	if ((dirp = opendir(skeldir)) == NULL) {
 		warn("can't open source . files dir `%s'", skeldir);
 		return 0;
@@ -308,8 +310,6 @@ copydotfiles(char *skeldir, uid_t uid, gid_t gid, char *dir)
 		(void) asystem("cd %s && %s -rw -pe %s . %s",
 				skeldir, PAX, (verbose) ? "-v" : "", dir);
 	}
-	(void) asystem("%s -R -P %u:%u %s", CHOWN, uid, gid, dir);
-	(void) asystem("%s -R u+w %s", CHMOD, dir);
 	return n;
 }
 
@@ -1177,6 +1177,9 @@ adduser(char *login_name, user_t *up)
 				err(EXIT_FAILURE, "can't mkdir `%s'", home);
 			}
 			(void) copydotfiles(up->u_skeldir, up->u_uid, gid, home);
+			(void) asystem("%s -R -P %u:%u %s", CHOWN, up->u_uid,
+			    gid, home);
+			(void) asystem("%s -R u+w %s", CHMOD, home);
 		}
 	}
 	if (strcmp(up->u_primgrp, "=uid") == 0 &&
