@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.33 2013/08/13 10:23:49 jsg Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.34 2013/09/10 03:40:39 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -3967,13 +3967,15 @@ i915_gem_init_hw(struct drm_device *dev)
 #ifdef notyet
 	if (INTEL_INFO(dev)->gen < 6 && !intel_enable_gtt())
 		return -EIO;
+#endif
 
 	if (IS_HASWELL(dev) && (I915_READ(0x120010) == 1))
 		I915_WRITE(0x9008, I915_READ(0x9008) | 0xf0000);
 
+#ifdef notyet
 	i915_gem_l3_remap(dev);
-
 #endif
+
 	i915_gem_init_swizzling(dev);
 
 	ret = intel_init_render_ring_buffer(dev);
