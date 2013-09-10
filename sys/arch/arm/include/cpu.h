@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.35 2013/05/31 17:00:58 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.36 2013/09/10 12:35:26 patrick Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -142,8 +142,7 @@ extern int cpu_do_powersave;
  * CLKF_INTR: True if we took the interrupt from inside another
  * interrupt handler.
  */
-extern int current_intr_depth;
-#define CLKF_INTR(frame)	(current_intr_depth > 1) 
+#define CLKF_INTR(frame)	(curcpu()->ci_idepth > 1) 
 
 /*
  * CLKF_PC: Extract the program counter from a clockframe
@@ -179,13 +178,11 @@ void	arm32_vector_init(vaddr_t, int);
 #include <sys/device.h>
 #include <sys/sched.h>
 struct cpu_info {
+	struct device *ci_dev;		/* Device corresponding to this CPU */
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+
 	struct proc *ci_curproc;
 
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#ifdef DIAGNOSTIC
-	int	ci_mutex_level;
-#endif
-	struct device *ci_dev;		/* Device corresponding to this CPU */
 	u_int32_t ci_arm_cpuid;		/* aggregate CPU id */
 	u_int32_t ci_arm_cputype;	/* CPU type */
 	u_int32_t ci_arm_cpurev;	/* CPU revision */
@@ -194,6 +191,11 @@ struct cpu_info {
 
 	uint32_t ci_cpl;
 	uint32_t ci_ipending;
+	uint32_t ci_idepth;
+#ifdef DIAGNOSTIC
+	int	ci_mutex_level;
+#endif
+
 #ifdef GPROF
 	struct gmonparam *ci_gmon;
 #endif

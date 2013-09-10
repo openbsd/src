@@ -1,4 +1,4 @@
-/*	$OpenBSD: irq_dispatch.S,v 1.7 2011/09/20 22:02:11 miod Exp $	*/
+/*	$OpenBSD: irq_dispatch.S,v 1.8 2013/09/10 12:35:25 patrick Exp $	*/
 /*	$NetBSD: irq_dispatch.S,v 1.5 2003/10/30 08:57:24 scw Exp $	*/
 
 /*
@@ -86,8 +86,8 @@
  */
 	.text
 	.align	0
-.Lcurrent_intr_depth:
-	.word	_C_LABEL(current_intr_depth)
+.Lcpu_info_store:
+	.word	_C_LABEL(cpu_info_store)
 
 AST_LOCALS
 
@@ -102,14 +102,14 @@ ASENTRY_NP(irq_entry)
 	 * callee-saved regs here.  We use the following registers, which
 	 * we expect to persist:
 	 *
-	 *	r5	address of `current_intr_depth' variable
-	 *	r6	old value of `current_intr_depth'
+	 *	r5	address of the curcpu struct
+	 *	r6	old value of curcpu()->ci_idepth
 	 */
-	ldr	r5, .Lcurrent_intr_depth
+	ldr	r5, .Lcpu_info_store
 	mov	r0, sp			/* arg for dispatcher */
-	ldr	r6, [r5]
+	ldr	r6, [r5, #CI_IDEPTH]
 	add	r1, r6, #1
-	str	r1, [r5]
+	str	r1, [r5, #CI_IDEPTH]
 
 	bl	ARM_IRQ_HANDLER
 
@@ -117,7 +117,7 @@ ASENTRY_NP(irq_entry)
 	 * Restore the old interrupt depth value (which should be the
 	 * same as decrementing it at this point).
 	 */
-	str	r6, [r5]
+	str	r6, [r5, #CI_IDEPTH]
 
 	DO_AST
 	PULLFRAMEFROMSVCANDEXIT
@@ -128,8 +128,4 @@ ASENTRY_NP(irq_entry)
 
 	.global _C_LABEL(astpending)
 _C_LABEL(astpending):
-	.word	0
-
-	.global _C_LABEL(current_intr_depth)
-_C_LABEL(current_intr_depth):
 	.word	0

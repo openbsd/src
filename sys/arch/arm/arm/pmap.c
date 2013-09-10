@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.43 2013/06/09 12:53:42 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.44 2013/09/10 12:35:25 patrick Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -925,7 +925,7 @@ pmap_use_l1(pmap_t pm)
 	 * Access to an L1 by the kernel pmap must not affect
 	 * the LRU list.
 	 */
-	if (current_intr_depth || pm == pmap_kernel())
+	if (curcpu()->ci_idepth || pm == pmap_kernel())
 		return;
 
 	l1 = pm->pm_l1;
