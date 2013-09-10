@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.187 2013/06/18 18:24:15 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.188 2013/09/10 15:17:46 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -716,7 +716,7 @@ char
 canonical_unit(struct disklabel *lp, char unit)
 {
 	struct partition *pp;
-	daddr_t small;
+	u_int64_t small;
 	int i;
 
 	if (unit == '*') {
@@ -1379,13 +1379,13 @@ setbootflag(struct disklabel *lp)
 {
 	struct partition *pp;
 	int i, errors = 0;
-	daddr_t bend;
+	u_int64_t bend;
 	char part;
 
 	if (bootbuf == NULL)
 		return;
 
-	bend = bootsize / lp->d_secsize;
+	bend = (u_int64_t)bootsize / lp->d_secsize;
 	for (i = 0; i < lp->d_npartitions; i++) {
 		if (i == RAW_PART)
 			/* It will *ALWAYS* overlap 'c'. */
