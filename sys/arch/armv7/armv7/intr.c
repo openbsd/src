@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.1 2013/09/04 14:38:25 patrick Exp $ */
+/* $OpenBSD: intr.c,v 1.2 2013/09/10 12:36:57 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -275,8 +275,7 @@ splx(int ipl)
 void
 arm_splassert_check(int wantipl, const char *func)
 {
-	struct cpu_info *ci = curcpu();
-	int oldipl = ci->ci_cpl;
+	int oldipl = curcpu()->ci_cpl;
 
 	if (oldipl < wantipl) {
 		splassert_fail(wantipl, oldipl, func);
@@ -285,6 +284,10 @@ arm_splassert_check(int wantipl, const char *func)
 		 * in a feeble attempt to reduce damage.
 		 */
 		arm_intr_func.setipl(wantipl);
+	}
+
+	if (wantipl == IPL_NONE && curcpu()->ci_idepth != 0) {
+		splassert_fail(-1, curcpu()->ci_idepth, func);
 	}
 }
 #endif
