@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.3 2013/09/11 23:34:50 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.4 2013/09/11 23:40:15 dlg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -109,21 +109,21 @@
 #define RXDESC_PREV(x) cpsw_rxdesc_adjust((x), -1)
 
 /* __BIT(n): nth bit, where __BIT(0) == 0x1. */
-#define __BIT(__n)      \
+#define __BIT(__n) \
     (((uint32_t)(__n) >= NBBY * sizeof(uint32_t)) ? 0 : ((uint32_t)1 << (uint32_t)(__n)))
 
 /* __BITS(m, n): bits m through n, m < n. */
-#define __BITS(__m, __n)        \
-        ((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
+#define __BITS(__m, __n) \
+    ((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
 
 /* find least significant bit that is set */
 #define __LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
 
-#define __PRIuBIT       PRIuMAX
-#define __PRIuBITS      __PRIuBIT
+#define __PRIuBIT	PRIuMAX
+#define __PRIuBITS	__PRIuBIT
 
-#define __PRIxBIT       PRIxMAX
-#define __PRIxBITS      __PRIxBIT
+#define __PRIxBIT	PRIxMAX
+#define __PRIxBITS	__PRIxBIT
 
 #define __SHIFTOUT(__x, __mask) (((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
 
@@ -190,11 +190,15 @@ int cpsw_txintr(void *);
 int cpsw_miscintr(void *);
 
 struct cfattach cpsw_ca = {
-        sizeof (struct cpsw_softc), NULL, cpsw_attach
+	sizeof(struct cpsw_softc),
+	NULL,
+	cpsw_attach
 };
 
 struct cfdriver cpsw_cd = {
-        NULL, "cpsw", DV_IFNET
+	NULL,
+	"cpsw",
+	DV_IFNET
 };
 
 /*
@@ -203,16 +207,16 @@ struct cfdriver cpsw_cd = {
 static __inline u_int
 m_length(const struct mbuf *m)
 {
-        const struct mbuf *m0;
-        u_int pktlen;
+	const struct mbuf *m0;
+	u_int pktlen;
 
-        if ((m->m_flags & M_PKTHDR) != 0)
-                return m->m_pkthdr.len;
+	if ((m->m_flags & M_PKTHDR) != 0)
+		return m->m_pkthdr.len;
 
-        pktlen = 0;
-        for (m0 = m; m0 != NULL; m0 = m0->m_next)
-                pktlen += m0->m_len;
-        return pktlen;
+	pktlen = 0;
+	for (m0 = m; m0 != NULL; m0 = m0->m_next)
+		pktlen += m0->m_len;
+	return pktlen;
 }
 
 static inline u_int
@@ -349,15 +353,15 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 
 #if 0
 	/* XXX Start here, we need to setup the interrupt properly */
-        sc->sc_ihc0 = arm_intr_establish(aa->aa_intr, IPL_USB,
-            ohci_intr, &sc->sc, sc->sc.sc_bus.bdev.dv_xname);
-	 	int irqno, 
-	 	int level, 
-	 	int (*func)(void *), 
-	 	void *cookie, 
+	sc->sc_ihc0 = arm_intr_establish(aa->aa_intr, IPL_USB,
+	    ohci_intr, &sc->sc, sc->sc.sc_bus.bdev.dv_xname);
+	 	int irqno,
+	 	int level,
+	 	int (*func)(void *),
+	 	void *cookie,
 	 	char *name;
 #endif
-	sc->sc_rxthih = arm_intr_establish(oa->oa_dev->irq[0] + CPSW_INTROFF_RXTH, 
+	sc->sc_rxthih = arm_intr_establish(oa->oa_dev->irq[0] + CPSW_INTROFF_RXTH,
 	    IPL_NET, cpsw_rxthintr, sc, sc->sc_dev.dv_xname);
 	sc->sc_rxih = arm_intr_establish(oa->oa_dev->irq[0] + CPSW_INTROFF_RX,
 	    IPL_NET, cpsw_rxintr, sc, sc->sc_dev.dv_xname);
@@ -480,12 +484,12 @@ cpsw_mediachange(struct ifnet *ifp)
 void
 cpsw_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
-        struct cpsw_softc *sc = ifp->if_softc;
+	struct cpsw_softc *sc = ifp->if_softc;
 
 	if (LIST_FIRST(&sc->sc_mii.mii_phys)) {
-        	mii_pollstat(&sc->sc_mii);
-        	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-        	ifmr->ifm_status = sc->sc_mii.mii_media_status;
+		mii_pollstat(&sc->sc_mii);
+		ifmr->ifm_active = sc->sc_mii.mii_media_active;
+		ifmr->ifm_status = sc->sc_mii.mii_media_status;
 	}
 }
 
