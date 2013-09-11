@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.9 2013/09/06 12:17:28 blambert Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.10 2013/09/11 09:31:22 blambert Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -542,6 +542,12 @@ slowcgi_request(int fd, short events, void *arg)
 
 	c->buf_len += n;
 
+	/*
+	 * Parse the records as they are received. Per the FastCGI
+	 * specification, the server need only receive the FastCGI
+	 * parameter records in full; it is free to begin execution
+	 * at that point, which is what happens here.
+	 */
 	do {
 		parsed = parse_request(c->buf + c->buf_pos, c->buf_len, c);
 		c->buf_pos += parsed;
@@ -600,10 +606,15 @@ parse_params(uint8_t *buf, uint16_t n, struct client *c, uint16_t id)
 
 	name_len = val_len = 0;
 
+	/*
+	 * If this is the last FastCGI parameter record,
+	 * begin execution of the CGI script.
+	 */
 	if (n == 0) {
 		exec_cgi(c);
 		return;
 	}
+
 	while (n > 0) {
 		if (buf[0] >> 7 == 0) {
 			name_len = buf[0];
@@ -739,6 +750,12 @@ parse_request(uint8_t *buf, size_t n, struct client *c)
 	    + h->padding_len);
 }
 
+/*
+ * Fork a new CGI process to handle the request, translating
+ * between FastCGI parameter records and CGI's environment variables,
+ * as well as between the CGI process' stdin/stdout and the
+ * corresponding FastCGI records.
+ */
 void
 exec_cgi(struct client *c)
 {
