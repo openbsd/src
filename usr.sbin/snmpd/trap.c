@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.17 2012/09/17 16:43:59 reyk Exp $	*/
+/*	$OpenBSD: trap.c,v 1.18 2013/09/11 14:58:01 blambert Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -107,10 +107,12 @@ trap_imsg(struct imsgev *iev, pid_t pid)
 					a = ber_add_oidstring(a, ostr);
 					break;
 				case SNMP_BITSTRING:
+					if (sm->snmp_len < 1)
+						goto imsgdone;
+					/* FALLTHROUGH */
 				case SNMP_OCTETSTRING:
 				case SNMP_IPADDR:
-					if ((sm->snmp_len < 1) ||
-					    (sm->snmp_len >= SNMPD_MAXSTRLEN))
+					if (sm->snmp_len >= SNMPD_MAXSTRLEN)
 						goto imsgdone;
 					c = (u_int8_t *)(sm + 1);
 					if (sm->snmp_type == SNMP_BITSTRING)
