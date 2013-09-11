@@ -1550,12 +1550,12 @@ sudo_ldap_set_options(ld)
 	tv.tv_usec = 0;
 	rc = ldap_set_option(ld, LDAP_OPT_NETWORK_TIMEOUT, &tv);
 	if (rc != LDAP_OPT_SUCCESS) {
-	    warningx("ldap_set_option(NETWORK_TIMEOUT, %ld): %s",
-		(long)tv.tv_sec, ldap_err2string(rc));
+	    warningx("ldap_set_option(NETWORK_TIMEOUT, %lld): %s",
+		(long long)tv.tv_sec, ldap_err2string(rc));
 	    return(-1);
 	}
 	DPRINTF(("ldap_set_option(LDAP_OPT_NETWORK_TIMEOUT, %ld)\n",
-	    (long)tv.tv_sec), 1);
+	    (long long)tv.tv_sec), 1);
     }
 #endif
 
