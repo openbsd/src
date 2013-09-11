@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1684 2013/08/25 02:11:46 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1685 2013/09/11 09:29:20 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -737,6 +737,7 @@
 #define	PCI_PRODUCT_AMD_HUDSON2_PCIE_1	0x43a0		/* Hudson-2 PCIE */
 #define	PCI_PRODUCT_AMD_HUDSON2_PCIE_2	0x43a1		/* Hudson-2 PCIE */
 #define	PCI_PRODUCT_AMD_HUDSON2_PCIE_3	0x43a2		/* Hudson-2 PCIE */
+#define	PCI_PRODUCT_AMD_HUDSON2_PCIE_4	0x43a3		/* Hudson-2 PCIE */
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/21910.pdf */
 #define	PCI_PRODUCT_AMD_SC751_SC	0x7006		/* 751 System */
 #define	PCI_PRODUCT_AMD_SC751_PPB	0x7007		/* 751 */
