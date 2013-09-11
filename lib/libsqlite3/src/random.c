@@ -17,7 +17,12 @@
 */
 #include "sqliteInt.h"
 
+#if HAVE_ARC4RANDOM_BUF && defined(SQLITE_OMIT_BUILTIN_TEST)
+void sqlite3_randomness(int N, void *pBuf){
+	arc4random_buf(pBuf, N);
+}
 
+#else
 /* All threads share a single random number generator.
 ** This structure is the current state of the generator.
 */
@@ -143,3 +148,4 @@ void sqlite3PrngResetState(void){
   GLOBAL(struct sqlite3PrngType, sqlite3Prng).isInit = 0;
 }
 #endif /* SQLITE_OMIT_BUILTIN_TEST */
+#endif
