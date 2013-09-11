@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.1 2013/09/04 14:38:31 patrick Exp $ */
+/* $OpenBSD: prcm.c,v 1.2 2013/09/11 23:08:29 dlg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -161,10 +161,8 @@ prcm_attach(struct device *parent, struct device *self, void *args)
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_prcm, PRCM_REVISION);
 	printf(" rev %d.%d\n", reg >> 4 & 0xf, reg & 0xf);
 
-	if (sc->sc_setup)
+	if (sc->sc_setup != NULL)
 		sc->sc_setup(sc);
-
-	printf("\n");
 }
 
 void
