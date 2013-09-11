@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.40 2013/05/26 16:02:20 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.41 2013/09/11 15:36:18 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -710,6 +710,7 @@ sub install_pkglocate
 	my $spec = 'pkglocatedb->=0.4';
 
 	my @l = installed_stems()->find('pkglocatedb');
+	require OpenBSD::PkgSpec;
 	if (OpenBSD::PkgSpec->new($spec)->match_ref(\@l)) {
 		return 1;
 	}
