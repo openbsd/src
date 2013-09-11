@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.1 2013/09/07 11:43:49 reyk Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.2 2013/09/11 07:01:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -82,7 +82,7 @@ field_def fields_cpu[] = {
 /* Define views */
 field_def *view_cpu_0[] = {
 	FLD_CPU_CPU,
-	FLD_CPU_INT, FLD_CPU_SYS, FLD_CPU_USR, FLD_CPU_NIC, FLD_CPU_IDLE
+	FLD_CPU_INT, FLD_CPU_SYS, FLD_CPU_USR, FLD_CPU_NIC, FLD_CPU_IDLE, NULL
 };
 
 /* Define view managers */
