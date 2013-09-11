@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.2 2013/09/11 23:20:03 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.3 2013/09/11 23:34:50 dlg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ struct cpsw_softc {
 	bus_space_handle_t sc_bsh_rxdescs;
 	bus_addr_t sc_txdescs_pa;
 	bus_addr_t sc_rxdescs_pa;
-	struct arpcom sc_ec;
+	struct arpcom sc_ac;
 	struct mii_data sc_mii;
 	void *sc_ih;
 	struct cpsw_ring_data *sc_rdp;
@@ -338,8 +338,8 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cpsw_softc *sc = (struct cpsw_softc *)self;
 	struct omap_attach_args *oa = aux;
-	struct arpcom * const ec = &sc->sc_ec;
-	struct ifnet * const ifp = &ec->ac_if;
+	struct arpcom * const ac = &sc->sc_ac;
+	struct ifnet * const ifp = &ac->ac_if;
 	int error;
 	u_int i;
 
@@ -447,9 +447,6 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_writereg = cpsw_mii_writereg;
 	sc->sc_mii.mii_statchg = cpsw_mii_statchg;
 
-#if 0
-	sc->sc_ec.ec_mii = &sc->sc_mii;
-#endif
 	ifmedia_init(&sc->sc_mii.mii_media, 0, cpsw_mediachange,
 	    cpsw_mediastatus);
 	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
@@ -462,7 +459,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	}
 
-	memcpy(sc->sc_ec.ac_enaddr, sc->sc_enaddr, ETHER_ADDR_LEN);
+	memcpy(sc->sc_ac.ac_enaddr, sc->sc_enaddr, ETHER_ADDR_LEN);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -627,7 +624,7 @@ cpsw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ec, ifa);
+			arp_ifinit(&sc->sc_ac, ifa);
 #endif
 
 	case SIOCSIFFLAGS:
@@ -648,7 +645,7 @@ cpsw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 	default:
-		error = ether_ioctl(ifp, &sc->sc_ec, cmd, data);
+		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
 		break;
 	}
 	if (error == ENETRESET) {
@@ -1022,7 +1019,7 @@ int
 cpsw_rxintr(void *arg)
 {
 	struct cpsw_softc * const sc = arg;
-	struct ifnet * const ifp = &sc->sc_ec.ac_if;
+	struct ifnet * const ifp = &sc->sc_ac.ac_if;
 	struct cpsw_ring_data * const rdp = sc->sc_rdp;
 	struct cpsw_cpdma_bd bd;
 	const uint32_t * const dw = bd.word;
@@ -1122,7 +1119,7 @@ int
 cpsw_txintr(void *arg)
 {
 	struct cpsw_softc * const sc = arg;
-	struct ifnet * const ifp = &sc->sc_ec.ac_if;
+	struct ifnet * const ifp = &sc->sc_ac.ac_if;
 	struct cpsw_ring_data * const rdp = sc->sc_rdp;
 	struct cpsw_cpdma_bd bd;
 	const uint32_t * const dw = bd.word;
