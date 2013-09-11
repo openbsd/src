@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.4 2013/09/11 23:40:15 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.5 2013/09/11 23:43:20 dlg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -351,16 +351,6 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 
 	cpsw_get_mac_addr(sc);
 
-#if 0
-	/* XXX Start here, we need to setup the interrupt properly */
-	sc->sc_ihc0 = arm_intr_establish(aa->aa_intr, IPL_USB,
-	    ohci_intr, &sc->sc, sc->sc.sc_bus.bdev.dv_xname);
-	 	int irqno,
-	 	int level,
-	 	int (*func)(void *),
-	 	void *cookie,
-	 	char *name;
-#endif
 	sc->sc_rxthih = arm_intr_establish(oa->oa_dev->irq[0] + CPSW_INTROFF_RXTH,
 	    IPL_NET, cpsw_rxthintr, sc, sc->sc_dev.dv_xname);
 	sc->sc_rxih = arm_intr_establish(oa->oa_dev->irq[0] + CPSW_INTROFF_RX,
