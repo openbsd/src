@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK-IMX,v 1.1 2013/09/06 20:45:53 patrick Exp $
+# $OpenBSD: RAMDISK-IMX,v 1.2 2013/09/11 11:07:30 rapha Exp $
 #
 # GENERIC machine description file
 #
@@ -47,7 +47,6 @@ maxusers	32
 
 # CPU options
 options	CPU_ARMv7	# Support the ARMv7
-makeoptions	CPUFLAGS="-mcpu=armv5"	# dont have gcc v7 support yet.
 
 #option SYSCALL_DEBUG
 
