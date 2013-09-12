@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.27 2013/05/22 09:13:36 mpi Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.28 2013/09/12 13:12:33 deraadt Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 	 * Use the old broadcast address for the WHOAMI
 	 * call because we do not yet know our netmask.
 	 * The server address returned by the WHOAMI call
-	 * is used for all subsequent booptaram RPCs.
+	 * is used for all subsequent bootparam RPCs.
 	 */
 	bzero((caddr_t)&bp_sin, sizeof(bp_sin));
 	bp_sin.sin_len = sizeof(bp_sin);
