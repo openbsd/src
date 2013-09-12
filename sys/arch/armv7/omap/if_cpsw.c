@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.12 2013/09/12 01:44:14 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.13 2013/09/12 02:20:17 dlg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -385,7 +385,6 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 		printf("can't subregion tx ring SRAM: %d\n", error);
 		return;
 	}
-	printf(" txdescs at %p", (void *)sc->sc_bsh_txdescs);
 
 	sc->sc_rxdescs_pa = oa->oa_dev->mem[0].addr +
 	    CPSW_CPPI_RAM_RXDESCS_BASE;
@@ -396,7 +395,6 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 		printf("can't subregion rx ring SRAM: %d\n", error);
 		return;
 	}
-	printf(" rxdescs at %p", (void *)sc->sc_bsh_rxdescs);
 
 	sc->sc_rdp = malloc(sizeof(*sc->sc_rdp), M_TEMP, M_WAITOK);
 	KASSERT(sc->sc_rdp != NULL);
@@ -430,7 +428,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	bus_dmamap_sync(sc->sc_bdt, sc->sc_txpad_dm, 0, ETHER_MIN_LEN,
 	    BUS_DMASYNC_PREWRITE);
 
-	printf(", address %s\n", ether_sprintf(ac->ac_enaddr));
+	printf(": address %s\n", ether_sprintf(ac->ac_enaddr));
 
 	ifp->if_softc = sc;
 	ifp->if_capabilities = 0;
