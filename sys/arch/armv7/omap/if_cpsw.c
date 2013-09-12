@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.10 2013/09/12 01:11:15 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.11 2013/09/12 01:13:10 dlg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -147,7 +147,6 @@ struct cpsw_softc {
 	struct arpcom		 sc_ac;
 	struct mii_data		 sc_mii;
 
-	void			*sc_ih;
 	struct cpsw_ring_data	*sc_rdp;
 	volatile u_int		 sc_txnext;
 	volatile u_int		 sc_txhead;
