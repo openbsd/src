@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.17 2013/09/12 04:42:03 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.18 2013/09/12 10:28:03 dlg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -1040,6 +1040,7 @@ cpsw_rxintr(void *arg)
 
 		bus_dmamap_sync(sc->sc_bdt, dm, 0, dm->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_bdt, dm);
 
 		if (cpsw_new_rxbuf(sc, i) != 0) {
 			/* drop current packet, reuse buffer for new */
