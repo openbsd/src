@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.264 2013/08/28 07:38:50 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.265 2013/09/12 09:52:46 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -204,37 +204,31 @@ if_attachsetup(struct ifnet *ifp)
 {
 	int wrapped = 0;
 
-	/*
-	 * Always increment the index to avoid races.
-	 */
-	if_index++;
-
-	/*
-	 * If we hit USHRT_MAX, we skip back to 1 since there are a
-	 * number of places where the value of ifp->if_index or
-	 * if_index itself is compared to or stored in an unsigned
-	 * short.  By jumping back, we won't botch those assignments
-	 * or comparisons.
-	 */
-	if (if_index == USHRT_MAX) {
+	if (ifindex2ifnet == 0)
 		if_index = 1;
-		wrapped++;
-	}
-
-	while (if_index < if_indexlim && ifindex2ifnet[if_index] != NULL) {
-		if_index++;
-
-		if (if_index == USHRT_MAX) {
+	else {
+		while (if_index < if_indexlim &&
+		    ifindex2ifnet[if_index] != NULL) {
+			if_index++;
 			/*
-			 * If we have to jump back to 1 twice without
-			 * finding an empty slot then there are too many
-			 * interfaces.
+			 * If we hit USHRT_MAX, we skip back to 1 since
+			 * there are a number of places where the value
+			 * of ifp->if_index or if_index itself is compared
+			 * to or stored in an unsigned short.  By
+			 * jumping back, we won't botch those assignments
+			 * or comparisons.
 			 */
-			if (wrapped)
-				panic("too many interfaces");
-
-			if_index = 1;
-			wrapped++;
+			if (if_index == USHRT_MAX) {
+				if_index = 1;
+				/*
+				 * However, if we have to jump back to 1
+				 * *twice* without finding an empty
+				 * slot in ifindex2ifnet[], then there
+				 * there are too many (>65535) interfaces.
+				 */
+				if (wrapped++)
+					panic("too many interfaces");
+			}
 		}
 	}
 	ifp->if_index = if_index;
