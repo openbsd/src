@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.9 2013/09/12 01:02:21 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.10 2013/09/12 01:11:15 dlg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -128,67 +128,73 @@
 #define __SHIFTOUT(__x, __mask) (((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
 
 struct cpsw_ring_data {
-	bus_dmamap_t tx_dm[CPSW_NTXDESCS];
-	struct mbuf *tx_mb[CPSW_NTXDESCS];
-	bus_dmamap_t rx_dm[CPSW_NRXDESCS];
-	struct mbuf *rx_mb[CPSW_NRXDESCS];
+	bus_dmamap_t		 tx_dm[CPSW_NTXDESCS];
+	struct mbuf		*tx_mb[CPSW_NTXDESCS];
+	bus_dmamap_t		 rx_dm[CPSW_NRXDESCS];
+	struct mbuf		*rx_mb[CPSW_NRXDESCS];
 };
 
 struct cpsw_softc {
-	struct device  sc_dev;
-	bus_space_tag_t sc_bst;
-	bus_space_handle_t sc_bsh;
-	bus_dma_tag_t sc_bdt;
-	bus_space_handle_t sc_bsh_txdescs;
-	bus_space_handle_t sc_bsh_rxdescs;
-	bus_addr_t sc_txdescs_pa;
-	bus_addr_t sc_rxdescs_pa;
-	struct arpcom sc_ac;
-	struct mii_data sc_mii;
-	void *sc_ih;
-	struct cpsw_ring_data *sc_rdp;
-	volatile u_int sc_txnext;
-	volatile u_int sc_txhead;
-	volatile u_int sc_rxhead;
-	void *sc_rxthih;
-	void *sc_rxih;
-	void *sc_txih;
-	void *sc_miscih;
-	void *sc_txpad;
-	bus_dmamap_t sc_txpad_dm;
+	struct device		 sc_dev;
+	bus_space_tag_t		 sc_bst;
+	bus_space_handle_t	 sc_bsh;
+	bus_dma_tag_t		 sc_bdt;
+	bus_space_handle_t	 sc_bsh_txdescs;
+	bus_space_handle_t	 sc_bsh_rxdescs;
+	bus_addr_t		 sc_txdescs_pa;
+	bus_addr_t		 sc_rxdescs_pa;
+
+	struct arpcom		 sc_ac;
+	struct mii_data		 sc_mii;
+
+	void			*sc_ih;
+	struct cpsw_ring_data	*sc_rdp;
+	volatile u_int		 sc_txnext;
+	volatile u_int		 sc_txhead;
+	volatile u_int		 sc_rxhead;
+
+	void			*sc_rxthih;
+	void			*sc_rxih;
+	void			*sc_txih;
+	void			*sc_miscih;
+
+	void			*sc_txpad;
+	bus_dmamap_t		 sc_txpad_dm;
 #define sc_txpad_pa sc_txpad_dm->dm_segs[0].ds_addr
-	volatile bool sc_txrun;
-	volatile bool sc_rxrun;
-	volatile bool sc_txeoq;
-	volatile bool sc_rxeoq;
-	struct timeout sc_tick;
+
+	volatile bool		 sc_txrun;
+	volatile bool		 sc_rxrun;
+	volatile bool		 sc_txeoq;
+	volatile bool		 sc_rxeoq;
+	struct timeout		 sc_tick;
 };
 
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
 
-void	cpsw_get_mac_addr(struct cpsw_softc *);
-void cpsw_attach(struct device *, struct device *, void *);
+void	cpsw_attach(struct device *, struct device *, void *);
 
-void cpsw_start(struct ifnet *);
-int cpsw_ioctl(struct ifnet *, u_long, caddr_t);
-void cpsw_watchdog(struct ifnet *);
-int cpsw_init(struct ifnet *);
-void cpsw_stop(struct ifnet *);
+void	cpsw_start(struct ifnet *);
+int	cpsw_ioctl(struct ifnet *, u_long, caddr_t);
+void	cpsw_watchdog(struct ifnet *);
+int	cpsw_init(struct ifnet *);
+void	cpsw_stop(struct ifnet *);
 
-int cpsw_mii_readreg(struct device *, int, int);
-void cpsw_mii_writereg(struct device *, int, int, int);
-void cpsw_mii_statchg(struct device *);
+int	cpsw_mii_readreg(struct device *, int, int);
+void	cpsw_mii_writereg(struct device *, int, int, int);
+void	cpsw_mii_statchg(struct device *);
 
-void cpsw_tick(void *);
+void	cpsw_tick(void *);
 
-int cpsw_new_rxbuf(struct cpsw_softc * const, const u_int);
+int	cpsw_new_rxbuf(struct cpsw_softc * const, const u_int);
 int	cpsw_mediachange(struct ifnet *);
 void	cpsw_mediastatus(struct ifnet *, struct ifmediareq *);
 
-int cpsw_rxthintr(void *);
-int cpsw_rxintr(void *);
-int cpsw_txintr(void *);
-int cpsw_miscintr(void *);
+int	cpsw_rxthintr(void *);
+int	cpsw_rxintr(void *);
+int	cpsw_txintr(void *);
+int	cpsw_miscintr(void *);
+
+void	cpsw_get_mac_addr(struct cpsw_softc *);
 
 struct cfattach cpsw_ca = {
 	sizeof(struct cpsw_softc),
@@ -203,8 +209,8 @@ struct cfdriver cpsw_cd = {
 };
 
 /*
- *  * Return the number of bytes in the mbuf chain, m.
- *   */
+ * Return the number of bytes in the mbuf chain, m.
+ */
 static __inline u_int
 m_length(const struct mbuf *m)
 {
