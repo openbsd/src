@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.6 2013/09/12 00:06:05 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.7 2013/09/12 00:14:57 dlg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -157,7 +157,6 @@ struct cpsw_softc {
 	void *sc_txpad;
 	bus_dmamap_t sc_txpad_dm;
 #define sc_txpad_pa sc_txpad_dm->dm_segs[0].ds_addr
-	uint8_t sc_enaddr[ETHER_ADDR_LEN];
 	volatile bool sc_txrun;
 	volatile bool sc_rxrun;
 	volatile bool sc_txeoq;
@@ -321,6 +320,7 @@ cpsw_rxdesc_paddr(struct cpsw_softc * const sc, u_int x)
 void
 cpsw_get_mac_addr(struct cpsw_softc *sc)
 {
+	struct arpcom *ac = &sc->sc_ac;
 	u_int32_t	mac_lo = 0, mac_hi = 0;
 
 	sitara_cm_reg_read_4(OMAP2SCM_MAC_ID0_LO, &mac_lo);
@@ -330,12 +330,12 @@ cpsw_get_mac_addr(struct cpsw_softc *sc)
 		CPSW_PRINTF(sc, "%s(%d): Invalid Ethernet address!\n",
 		    __FILE__, __LINE__);
 	} else {
-			sc->sc_enaddr[0] = (mac_hi >>  0) & 0xff;
-			sc->sc_enaddr[1] = (mac_hi >>  8) & 0xff;
-			sc->sc_enaddr[2] = (mac_hi >> 16) & 0xff;
-			sc->sc_enaddr[3] = (mac_hi >> 24) & 0xff;
-			sc->sc_enaddr[4] = (mac_lo >>  0) & 0xff;
-			sc->sc_enaddr[5] = (mac_lo >>  8) & 0xff;
+		ac->ac_enaddr[0] = (mac_hi >>  0) & 0xff;
+		ac->ac_enaddr[1] = (mac_hi >>  8) & 0xff;
+		ac->ac_enaddr[2] = (mac_hi >> 16) & 0xff;
+		ac->ac_enaddr[3] = (mac_hi >> 24) & 0xff;
+		ac->ac_enaddr[4] = (mac_lo >>  0) & 0xff;
+		ac->ac_enaddr[5] = (mac_lo >>  8) & 0xff;
 	}
 }
 
@@ -424,7 +424,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	bus_dmamap_sync(sc->sc_bdt, sc->sc_txpad_dm, 0, ETHER_MIN_LEN,
 	    BUS_DMASYNC_PREWRITE);
 
-	printf(", address %s\n", ether_sprintf(sc->sc_enaddr));
+	printf(", address %s\n", ether_sprintf(ac->ac_enaddr));
 
 	ifp->if_softc = sc;
 	ifp->if_capabilities = 0;
@@ -455,7 +455,6 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	}
 
-	memcpy(sc->sc_ac.ac_enaddr, sc->sc_enaddr, ETHER_ADDR_LEN);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -789,6 +788,7 @@ int
 cpsw_init(struct ifnet *ifp)
 {
 	struct cpsw_softc * const sc = ifp->if_softc;
+	struct arpcom *ac = &sc->sc_ac;
 	struct mii_data * const mii = &sc->sc_mii;
 	int i;
 
@@ -819,10 +819,10 @@ cpsw_init(struct ifnet *ifp)
 		cpsw_write_4(sc, CPSW_SL_RX_MAXLEN(i), 0x5f2);
 		/* Set MAC Address */
 		cpsw_write_4(sc, CPSW_PORT_P_SA_HI(i+1),
-		    sc->sc_enaddr[0] | (sc->sc_enaddr[1] << 8) |
-		    (sc->sc_enaddr[2] << 16) | (sc->sc_enaddr[3] << 24));
+		    ac->ac_enaddr[0] | (ac->ac_enaddr[1] << 8) |
+		    (ac->ac_enaddr[2] << 16) | (ac->ac_enaddr[3] << 24));
 		cpsw_write_4(sc, CPSW_PORT_P_SA_LO(i+1),
-		    sc->sc_enaddr[4] | (sc->sc_enaddr[5] << 8));
+		    ac->ac_enaddr[4] | (ac->ac_enaddr[5] << 8));
 
 		/* Set MACCONTROL for ports 0,1: FULLDUPLEX(1), GMII_EN(5),
 		   IFCTL_A(15), IFCTL_B(16) FIXME */
