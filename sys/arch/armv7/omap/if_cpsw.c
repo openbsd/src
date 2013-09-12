@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.8 2013/09/12 00:19:11 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.9 2013/09/12 01:02:21 dlg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -352,26 +352,27 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 
 	cpsw_get_mac_addr(sc);
 
-	sc->sc_rxthih = arm_intr_establish(oa->oa_dev->irq[0] + CPSW_INTROFF_RXTH,
-	    IPL_NET, cpsw_rxthintr, sc, DEVNAME(sc));
-	sc->sc_rxih = arm_intr_establish(oa->oa_dev->irq[0] + CPSW_INTROFF_RX,
-	    IPL_NET, cpsw_rxintr, sc, DEVNAME(sc));
-	sc->sc_txih = arm_intr_establish(oa->oa_dev->irq[0] + CPSW_INTROFF_TX,
-	    IPL_NET, cpsw_txintr, sc, DEVNAME(sc));
-	sc->sc_miscih = arm_intr_establish(oa->oa_dev->irq[0] + CPSW_INTROFF_MISC,
-	    IPL_NET, cpsw_miscintr, sc, DEVNAME(sc));
+	sc->sc_rxthih = arm_intr_establish(oa->oa_dev->irq[0] +
+	    CPSW_INTROFF_RXTH, IPL_NET, cpsw_rxthintr, sc, DEVNAME(sc));
+	sc->sc_rxih = arm_intr_establish(oa->oa_dev->irq[0] +
+	    CPSW_INTROFF_RX, IPL_NET, cpsw_rxintr, sc, DEVNAME(sc));
+	sc->sc_txih = arm_intr_establish(oa->oa_dev->irq[0] +
+	    CPSW_INTROFF_TX, IPL_NET, cpsw_txintr, sc, DEVNAME(sc));
+	sc->sc_miscih = arm_intr_establish(oa->oa_dev->irq[0] +
+	    CPSW_INTROFF_MISC, IPL_NET, cpsw_miscintr, sc, DEVNAME(sc));
 
 	sc->sc_bst = oa->oa_iot;
 	sc->sc_bdt = oa->oa_dmat;
 
-	error = bus_space_map(sc->sc_bst, oa->oa_dev->mem[0].addr, oa->oa_dev->mem[0].size, 0,
-	    &sc->sc_bsh);
+	error = bus_space_map(sc->sc_bst, oa->oa_dev->mem[0].addr,
+	    oa->oa_dev->mem[0].size, 0, &sc->sc_bsh);
 	if (error) {
 		printf("can't map registers: %d\n", error);
 		return;
 	}
 
-	sc->sc_txdescs_pa = oa->oa_dev->mem[0].addr + CPSW_CPPI_RAM_TXDESCS_BASE;
+	sc->sc_txdescs_pa = oa->oa_dev->mem[0].addr +
+	    CPSW_CPPI_RAM_TXDESCS_BASE;
 	error = bus_space_subregion(sc->sc_bst, sc->sc_bsh,
 	    CPSW_CPPI_RAM_TXDESCS_BASE, CPSW_CPPI_RAM_TXDESCS_SIZE,
 	    &sc->sc_bsh_txdescs);
@@ -381,7 +382,8 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(" txdescs at %p", (void *)sc->sc_bsh_txdescs);
 
-	sc->sc_rxdescs_pa = oa->oa_dev->mem[0].addr + CPSW_CPPI_RAM_RXDESCS_BASE;
+	sc->sc_rxdescs_pa = oa->oa_dev->mem[0].addr +
+	    CPSW_CPPI_RAM_RXDESCS_BASE;
 	error = bus_space_subregion(sc->sc_bst, sc->sc_bsh,
 	    CPSW_CPPI_RAM_RXDESCS_BASE, CPSW_CPPI_RAM_RXDESCS_SIZE,
 	    &sc->sc_bsh_rxdescs);
@@ -444,7 +446,8 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 
 	ifmedia_init(&sc->sc_mii.mii_media, 0, cpsw_mediachange,
 	    cpsw_mediastatus);
-	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	mii_attach(self, &sc->sc_mii, 0xffffffff,
+	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		printf("no PHY found!\n");
 		ifmedia_add(&sc->sc_mii.mii_media,
@@ -825,7 +828,8 @@ cpsw_init(struct ifnet *ifp)
 
 		/* Set MACCONTROL for ports 0,1: FULLDUPLEX(1), GMII_EN(5),
 		   IFCTL_A(15), IFCTL_B(16) FIXME */
-		cpsw_write_4(sc, CPSW_SL_MACCONTROL(i), 1 | (1<<5) | (1<<15) | (1<<16));
+		cpsw_write_4(sc, CPSW_SL_MACCONTROL(i),
+		    1 | (1<<5) | (1<<15) | (1<<16));
 
 		/* Set ALE port to forwarding(3) */
 		cpsw_write_4(sc, CPSW_ALE_PORTCTL(i+1), 3);
@@ -1137,9 +1141,9 @@ cpsw_txintr(void *arg)
 
 	for (;;) {
 		tx0_cp = cpsw_read_4(sc, CPSW_CPDMA_TX_CP(0));
-		cpi = (tx0_cp - sc->sc_txdescs_pa) / sizeof(struct cpsw_cpdma_bd);
+		cpi = (tx0_cp - sc->sc_txdescs_pa) /
+		    sizeof(struct cpsw_cpdma_bd);
 		KASSERT(sc->sc_txhead < CPSW_NTXDESCS);
-
 
 		cpsw_get_txdesc(sc, sc->sc_txhead, &bd);
 
@@ -1151,7 +1155,8 @@ cpsw_txintr(void *arg)
 			goto next;
 
 		if (ISSET(dw[3], CPDMA_BD_OWNER)) {
-			printf("pwned %x %x %x\n", cpi, sc->sc_txhead, sc->sc_txnext);
+			printf("pwned %x %x %x\n", cpi, sc->sc_txhead,
+			    sc->sc_txnext);
 			break;
 		}
 
