@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.11 2013/09/12 01:13:10 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.12 2013/09/12 01:44:14 dlg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -509,39 +509,45 @@ cpsw_start(struct ifnet *ifp)
 	bool pad;
 	u_int mlen;
 
-	if (__predict_false((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) !=
-	    IFF_RUNNING)) {
+	if (!ISSET(ifp->if_flags, IFF_RUNNING) ||
+	    ISSET(ifp->if_flags, IFF_OACTIVE) ||
+	    IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
-	}
 
 	if (sc->sc_txnext >= sc->sc_txhead)
 		txfree = CPSW_NTXDESCS - 1 + sc->sc_txhead - sc->sc_txnext;
 	else
 		txfree = sc->sc_txhead - sc->sc_txnext - 1;
 
-	while (txfree > 0) {
+	for (;;) {
+		if (txfree <= CPSW_TXFRAGS) {
+			SET(ifp->if_flags, IFF_OACTIVE);
+			break;
+		}
+
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 
-		dm = rdp->tx_dm[sc->sc_txnext];
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 
+		dm = rdp->tx_dm[sc->sc_txnext];
 		error = bus_dmamap_load_mbuf(sc->sc_bdt, dm, m, BUS_DMA_NOWAIT);
-		if (error == EFBIG) {
-			printf("won't fit\n");
-			IFQ_DEQUEUE(&ifp->if_snd, m);
+		switch (error) {
+		case 0:
+			break;
+
+		case EFBIG: /* mbuf chain is too fragmented */
+			if (m_defrag(m, M_DONTWAIT) == 0 &&
+			    bus_dmamap_load_mbuf(sc->sc_bdt, dm, m,
+			    BUS_DMA_NOWAIT) == 0)
+				break;
+
+			/* FALLTHROUGH */
+		default:
 			m_freem(m);
 			ifp->if_oerrors++;
 			continue;
-		} else if (error != 0) {
-			printf("error\n");
-			break;
-		}
-
-		if (dm->dm_nsegs + 1 >= txfree) {
-			ifp->if_flags |= IFF_OACTIVE;
-			bus_dmamap_unload(sc->sc_bdt, dm);
-			break;
 		}
 
 		mlen = m_length(m);
@@ -549,7 +555,11 @@ cpsw_start(struct ifnet *ifp)
 
 		KASSERT(rdp->tx_mb[sc->sc_txnext] == NULL);
 		rdp->tx_mb[sc->sc_txnext] = m;
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
 
 		bus_dmamap_sync(sc->sc_bdt, dm, 0, dm->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
@@ -588,10 +598,6 @@ cpsw_start(struct ifnet *ifp)
 			eopi = sc->sc_txnext;
 			sc->sc_txnext = TXDESC_NEXT(sc->sc_txnext);
 		}
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
-#endif
 	}
 
 	if (txstart >= 0) {
