@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.94 2013/04/16 22:10:34 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.95 2013/09/12 23:06:44 krw Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -347,7 +347,7 @@ main(int argc, char *argv[])
 
 	memset(&interstr, 0, sizeof(interstr));
 
-	interstr.it_value.tv_sec = (long) interval;
+	interstr.it_value.tv_sec = interval;
 	interstr.it_value.tv_usec =
 		(long) ((interval - interstr.it_value.tv_sec) * 1000000);
 

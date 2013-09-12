@@ -1,4 +1,4 @@
-/*	$OpenBSD: itimer.c,v 1.1 2004/07/28 21:32:51 art Exp $	*/
+/*	$OpenBSD: itimer.c,v 1.2 2013/09/12 23:06:44 krw Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2004 Public Domain.
  */
@@ -82,8 +82,8 @@ main(int argc, char **argv)
 		timersub(&stv, &tv, &tv);
 
 	if (tv.tv_sec != 0 || tv.tv_usec > 100000)
-		errx(1, "timer difference too big: %ld.%ld", (long)tv.tv_sec,
-		    (long)tv.tv_usec);
+		errx(1, "timer difference too big: %lld.%ld",
+		    (long long)tv.tv_sec, tv.tv_usec);
 
 	return (0);
 }

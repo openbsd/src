@@ -268,9 +268,9 @@ main(int argc, char **argv)
 	gettimeofday(&tv2, NULL);
 	timevalsub(&tv2, &tv1);
 
-	printf("time %lu.%06lu\n",
-	       (unsigned long)tv2.tv_sec,
-	       (unsigned long)tv2.tv_usec);
+	printf("time %lld.%06ld\n",
+	       (long long)tv2.tv_sec,
+	       tv2.tv_usec);
 
 	BN_free(e);
 	ENGINE_finish(engine);
@@ -310,9 +310,9 @@ main(int argc, char **argv)
 
 	timevalsub(&tv2, &tv1);
 
-	printf("time %lu.%06lu\n",
-	       (unsigned long)tv2.tv_sec,
-	       (unsigned long)tv2.tv_usec);
+	printf("time %lld.%06ld\n",
+	       (long long)tv2.tv_sec,
+	       tv2.tv_usec);
 
 	RSA_free(rsa);
 	ENGINE_finish(engine);

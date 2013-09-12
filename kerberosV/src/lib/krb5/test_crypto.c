@@ -77,9 +77,9 @@ time_encryption(krb5_context context, size_t size,
 
     timevalsub(&tv2, &tv1);
 
-    printf("%s size: %7lu iterations: %d time: %3ld.%06ld\n",
+    printf("%s size: %7lu iterations: %d time: %3lld.%06ld\n",
 	   etype_name, (unsigned long)size, iterations,
-	   (long)tv2.tv_sec, (long)tv2.tv_usec);
+	   (long long)tv2.tv_sec, tv2.tv_usec);
 
     free(buf);
     free(etype_name);
@@ -122,8 +122,8 @@ time_s2k(krb5_context context,
 
     timevalsub(&tv2, &tv1);
 
-    printf("%s string2key %d iterations time: %3ld.%06ld\n",
-	   etype_name, iterations, (long)tv2.tv_sec, (long)tv2.tv_usec);
+    printf("%s string2key %d iterations time: %3lld.%06ld\n",
+	   etype_name, iterations, (long long)tv2.tv_sec, tv2.tv_usec);
     free(etype_name);
 
 }

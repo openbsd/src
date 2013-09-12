@@ -449,10 +449,10 @@ lwres_context_sendrecv(lwres_context_t *ctx,
 	struct timeval timeout;
 
 	/*
-	 * Type of tv_sec is 32 bits long. 
+	 * Type of tv_sec is at least 32 bits long. 
 	 */
 	if (ctx->timeout <= 0x7FFFFFFFU)
-		timeout.tv_sec = (int)ctx->timeout;
+		timeout.tv_sec = ctx->timeout;
 	else
 		timeout.tv_sec = 0x7FFFFFFF;
 
