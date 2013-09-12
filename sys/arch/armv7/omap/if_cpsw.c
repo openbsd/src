@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.7 2013/09/12 00:14:57 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.8 2013/09/12 00:19:11 dlg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -326,10 +326,9 @@ cpsw_get_mac_addr(struct cpsw_softc *sc)
 	sitara_cm_reg_read_4(OMAP2SCM_MAC_ID0_LO, &mac_lo);
 	sitara_cm_reg_read_4(OMAP2SCM_MAC_ID0_HI, &mac_hi);
 
-	if ((mac_lo == 0) && (mac_hi == 0)) {
-		CPSW_PRINTF(sc, "%s(%d): Invalid Ethernet address!\n",
-		    __FILE__, __LINE__);
-	} else {
+	if ((mac_lo == 0) && (mac_hi == 0))
+		printf("%s: invalid ethernet address\n", DEVNAME(sc));
+	else {
 		ac->ac_enaddr[0] = (mac_hi >>  0) & 0xff;
 		ac->ac_enaddr[1] = (mac_hi >>  8) & 0xff;
 		ac->ac_enaddr[2] = (mac_hi >> 16) & 0xff;

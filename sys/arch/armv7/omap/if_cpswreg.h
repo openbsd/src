@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpswreg.h,v 1.1 2013/09/04 14:38:30 patrick Exp $ */
+/* $OpenBSD: if_cpswreg.h,v 1.2 2013/09/12 00:19:11 dlg Exp $ */
 
 /*-
  * Copyright (c) 2012 Damjan Marion <dmarion@Freebsd.org>
@@ -111,8 +111,6 @@
 #define CPSW_WR_C_MISC_STAT(p)		(CPSW_WR_OFFSET + (0x10 * (p)) + 0x4C)
 
 #define CPSW_CPPI_RAM_OFFSET		0x2000
-
-#define CPSW_PRINTF(sc, fmt, args...)	printf("%s: " fmt, sc->sc_dev, ##args)
 
 #define __BIT32(x) ((uint32_t)__BIT(x))
 #define __BITS32(x, y) ((uint32_t)__BITS((x), (y)))
