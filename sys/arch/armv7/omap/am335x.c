@@ -1,4 +1,4 @@
-/* $OpenBSD: am335x.c,v 1.1 2013/09/04 14:38:29 patrick Exp $ */
+/* $OpenBSD: am335x.c,v 1.2 2013/09/12 12:03:15 rapha Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -80,7 +80,9 @@
 
 #define HSMMCx_SIZE	0x300
 #define HSMMC0_ADDR	0x48060000
+#define HSMMC1_ADDR	0x481d8000
 #define HSMMC0_IRQ	64
+#define HSMMC1_IRQ	28
 
 #define CPSW_SIZE	0x4000
 #define CPSW_ADDR	0x4A100000
@@ -158,6 +160,12 @@ struct omap_dev am335x_devs[] = {
 	  .unit = 0,
 	  .mem = { { HSMMC0_ADDR, HSMMCx_SIZE } },
 	  .irq = { HSMMC0_IRQ }
+	},
+
+	{ .name = "ommmc",
+	  .unit = 1,
+	  .mem = { { HSMMC1_ADDR, HSMMCx_SIZE } },
+	  .irq = { HSMMC1_IRQ }
 	},
 
 	/* cpsw Ethernet */

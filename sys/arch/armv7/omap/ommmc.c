@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.1 2013/09/04 14:38:31 patrick Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.2 2013/09/12 12:03:15 rapha Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -45,6 +45,8 @@
 #define MMCHS_SYSTEST	0x028
 #define MMCHS_CON	0x02C
 #define  MMCHS_CON_INIT	(1<<1)
+#define  MMCHS_CON_DW8	(1<<5)
+#define  MMCHS_CON_OD	(1<<0)
 #define MMCHS_PWCNT	0x030
 #define MMCHS_BLK	0x104
 #define  MMCHS_BLK_NBLK_MAX	0xffff
@@ -106,6 +108,7 @@
 #define  MMCHS_HCTL_SDVS_V30	(0x6<<MMCHS_HCTL_SDVS_SHIFT)
 #define  MMCHS_HCTL_SDVS_V33	(0x7<<MMCHS_HCTL_SDVS_SHIFT)
 #define  MMCHS_HCTL_SDBP	(1<<8)
+#define  MMCHS_HCTL_HSPE	(1<<2)
 #define  MMCHS_HCTL_DTW		(1<<1)
 #define MMCHS_SYSCTL	0x12C
 #define  MMCHS_SYSCTL_SRD	(1<<26)
@@ -350,6 +353,7 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 	struct sdmmcbus_attach_args	 saa;
 	int				 baseaddr;
 	int				 error = 1;
+	u_int32_t			 caps;
 
 	/* XXX - ICLKEN, FCLKEN? */
 
@@ -388,10 +392,10 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 	 */
 	(void)ommmc_host_reset(sc);
 
-#if 0
 	/* Determine host capabilities. */
-	caps = HREAD4(sc, SDHC_CAPABILITIES);
+	caps = HREAD4(sc, MMCHS_CAPA);
 
+#if 0
 	/* we want this !! */
 	/* Use DMA if the host system and the controller support it. */
 	if (usedma && ISSET(caps, SDHC_DMA_SUPPORT))
@@ -429,19 +433,18 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 	/*
 	 * Determine SD bus voltage levels supported by the controller.
 	 */
-	if (HREAD4(sc, MMCHS_CAPA) & MMCHS_CAPA_VS18)
+	if (caps & MMCHS_CAPA_VS18)
 		SET(sc->ocr, MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V);
-	if (HREAD4(sc, MMCHS_CAPA) & MMCHS_CAPA_VS30)
+	if (caps & MMCHS_CAPA_VS30)
 		SET(sc->ocr, MMC_OCR_2_9V_3_0V | MMC_OCR_3_0V_3_1V);
-	if (HREAD4(sc, MMCHS_CAPA) & MMCHS_CAPA_VS33)
+	if (caps & MMCHS_CAPA_VS33)
 		SET(sc->ocr, MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V);
 
 	/*
 	 * Omap max block size is fixed (single buffer), could limit
 	 * this to 512 for double buffering, but dont see the point.
 	 */
-	switch ((HREAD4(sc, MMCHS_CAPA) & MMCHS_CAPA_MBL_MASK)
-	    >> MMCHS_CAPA_MBL_SHIFT) {
+	switch ((caps & MMCHS_CAPA_MBL_MASK) >> MMCHS_CAPA_MBL_SHIFT) {
 	case 0:
 		sc->maxblklen = 512;
 		break;
@@ -467,6 +470,9 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 	saa.saa_busname = "sdmmc";
 	saa.sct = &ommmc_functions;
 	saa.sch = sc;
+	saa.caps = 0;
+	if (caps & MMCHS_CAPA_HSS)
+		saa.caps |= SMC_CAPS_MMC_HIGHSPEED;
 
 	sc->sdmmc = config_found(&sc->sc_dev, &saa, NULL);
 	if (sc->sdmmc == NULL) {
@@ -660,8 +666,8 @@ ommmc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 	 * voltage ramp until power rises.
 	 */
 	reg = HREAD4(sc, MMCHS_HCTL);
-	reg &= MMCHS_HCTL_SDVS_MASK;
-	reg = vdd;
+	reg &= ~MMCHS_HCTL_SDVS_MASK;
+	reg |= vdd;
 	HWRITE4(sc, MMCHS_HCTL, reg);
 
 	HSET4(sc, MMCHS_HCTL, MMCHS_HCTL_SDBP);
@@ -717,13 +723,18 @@ ommmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 
 	s = splsdmmc();
 
-#ifdef DIAGNOSTIC
 	/* Must not stop the clock if commands are in progress. */
-	if (ISSET(HREAD4(sc, MMCHS_PSTATE), MMCHS_PSTATE_CMDI|MMCHS_PSTATE_DATI)
-	    && ommmc_card_detect(sc))
-		printf("ommmc_sdclk_frequency_select: command in progress\n");
-#endif
-
+	for (timo = 1000; timo > 0; timo--) {
+		if (!ISSET(HREAD4(sc, MMCHS_PSTATE),
+		    MMCHS_PSTATE_CMDI|MMCHS_PSTATE_DATI))
+			break;
+		delay(10);
+	}
+	if (timo == 0) {
+		error = ETIMEDOUT;
+		goto ret;
+	}
+	
 	/*
 	 * Stop SD clock before changing the frequency.
 	 */
