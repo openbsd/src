@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.21 2011/11/10 14:24:29 uwe Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.22 2013/09/12 11:54:04 rapha Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -164,6 +164,19 @@ struct sdmmc_softc {
 #define SMF_CARD_ATTACHED	0x0020	/* card driver(s) attached */
 #define	SMF_STOP_AFTER_MULTIPLE	0x0040	/* send a stop after a multiple cmd */
 #define SMF_CONFIG_PENDING	0x0080	/* config_pending_incr() called */
+
+	uint32_t sc_caps;		/* host capability */
+#define SMC_CAPS_AUTO_STOP	0x0001	/* send CMD12 automagically by host */
+#define SMC_CAPS_4BIT_MODE	0x0002	/* 4-bits data bus width */
+#define SMC_CAPS_DMA		0x0004	/* DMA transfer */
+#define SMC_CAPS_SPI_MODE	0x0008	/* SPI mode */
+#define SMC_CAPS_POLL_CARD_DET	0x0010	/* Polling card detect */
+#define SMC_CAPS_SINGLE_ONLY	0x0020	/* only single read/write */
+#define SMC_CAPS_8BIT_MODE	0x0040	/* 8-bits data bus width */
+#define SMC_CAPS_MULTI_SEG_DMA	0x0080	/* multiple segment DMA transfer */
+#define SMC_CAPS_SD_HIGHSPEED	0x0100	/* SD high-speed timing */
+#define SMC_CAPS_MMC_HIGHSPEED	0x0200	/* MMC high-speed timing */
+
 	int sc_function_count;		/* number of I/O functions (SDIO) */
 	struct sdmmc_function *sc_card;	/* selected card */
 	struct sdmmc_function *sc_fn0;	/* function 0, the card itself */

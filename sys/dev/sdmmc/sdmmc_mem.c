@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.16 2010/08/24 14:52:23 blambert Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.17 2013/09/12 11:54:04 rapha Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -36,6 +36,12 @@ void	sdmmc_print_cid(struct sdmmc_cid *);
 
 int	sdmmc_mem_send_op_cond(struct sdmmc_softc *, u_int32_t, u_int32_t *);
 int	sdmmc_mem_set_blocklen(struct sdmmc_softc *, struct sdmmc_function *);
+
+int	sdmmc_mem_send_cxd_data(struct sdmmc_softc *, int, void *, size_t);
+int	sdmmc_mem_mmc_switch(struct sdmmc_function *, uint8_t, uint8_t, uint8_t);
+
+int	sdmmc_mem_sd_init(struct sdmmc_softc *, struct sdmmc_function *);
+int	sdmmc_mem_mmc_init(struct sdmmc_softc *, struct sdmmc_function *);
 
 #ifdef SDMMC_DEBUG
 #define DPRINTF(s)	printf s
@@ -253,16 +259,17 @@ sdmmc_decode_csd(struct sdmmc_softc *sc, sdmmc_response resp,
 
 	} else {
 		csd->csdver = MMC_CSD_CSDVER(resp);
-		if (csd->csdver != MMC_CSD_CSDVER_1_0 &&
-		    csd->csdver != MMC_CSD_CSDVER_2_0) {
+		if (csd->csdver == MMC_CSD_CSDVER_1_0 ||
+		    csd->csdver == MMC_CSD_CSDVER_2_0 ||
+		    csd->csdver == MMC_CSD_CSDVER_EXT_CSD) {
+			csd->mmcver = MMC_CSD_MMCVER(resp);
+			csd->capacity = MMC_CSD_CAPACITY(resp);
+			csd->read_bl_len = MMC_CSD_READ_BL_LEN(resp);
+		} else {
 			printf("%s: unknown MMC CSD structure version 0x%x\n",
 			    DEVNAME(sc), csd->csdver);
 			return 1;
 		}
-
-		csd->mmcver = MMC_CSD_MMCVER(resp);
-		csd->capacity = MMC_CSD_CAPACITY(resp);
-		csd->read_bl_len = MMC_CSD_READ_BL_LEN(resp);
 	}
 	csd->sector_size = MIN(1 << csd->read_bl_len,
 	    sdmmc_chip_host_maxblklen(sc->sct, sc->sch));
@@ -323,6 +330,59 @@ sdmmc_print_cid(struct sdmmc_cid *cid)
 }
 #endif
 
+int
+sdmmc_mem_send_cxd_data(struct sdmmc_softc *sc, int opcode, void *data,
+    size_t datalen)
+{
+	struct sdmmc_command cmd;
+	void *ptr = NULL;
+	int error = 0;
+
+	ptr = malloc(datalen, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (ptr == NULL) {
+		error = ENOMEM;
+		goto out;
+	}
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.c_data = ptr;
+	cmd.c_datalen = datalen;
+	cmd.c_blklen = datalen;
+	cmd.c_opcode = opcode;
+	cmd.c_arg = 0;
+	cmd.c_flags = SCF_CMD_ADTC | SCF_CMD_READ;
+	if (opcode == MMC_SEND_EXT_CSD)
+		SET(cmd.c_flags, SCF_RSP_R1);
+	else
+		SET(cmd.c_flags, SCF_RSP_R2);
+
+	error = sdmmc_mmc_command(sc, &cmd);
+	if (error == 0)
+		memcpy(data, ptr, datalen);
+
+out:
+	if (ptr != NULL)
+		free(ptr, M_DEVBUF);
+
+	return error;
+}
+
+int
+sdmmc_mem_mmc_switch(struct sdmmc_function *sf, uint8_t set, uint8_t index,
+    uint8_t value)
+{
+	struct sdmmc_softc *sc = sf->sc;
+	struct sdmmc_command cmd;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.c_opcode = MMC_SWITCH;
+	cmd.c_arg = (MMC_SWITCH_MODE_WRITE_BYTE << 24) |
+	    (index << 16) | (value << 8) | set;
+	cmd.c_flags = SCF_RSP_R1B | SCF_CMD_AC;
+
+	return sdmmc_mmc_command(sc, &cmd);
+}
+
 /*
  * Initialize a SD/MMC memory card.
  */
@@ -336,6 +396,92 @@ sdmmc_mem_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	if (sdmmc_select_card(sc, sf) != 0 ||
 	    sdmmc_mem_set_blocklen(sc, sf) != 0)
 		error = 1;
+
+	if (ISSET(sc->sc_flags, SMF_SD_MODE))
+		error = sdmmc_mem_sd_init(sc, sf);
+	else
+		error = sdmmc_mem_mmc_init(sc, sf);
+
+	return error;
+}
+
+int
+sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
+{
+	/* XXX */
+
+	return 0;
+}
+
+int
+sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
+{
+	int error = 0;
+	u_int8_t ext_csd[512];
+	int speed = 0;
+	int hs_timing = 0;
+
+	if (sf->csd.mmcver >= MMC_CSD_MMCVER_4_0) {
+		/* read EXT_CSD */
+		error = sdmmc_mem_send_cxd_data(sc,
+		    MMC_SEND_EXT_CSD, ext_csd, sizeof(ext_csd));
+		if (error != 0) {
+			SET(sf->flags, SFF_ERROR);
+			printf("%s: can't read EXT_CSD\n", DEVNAME(sc));
+			return error;
+		}
+
+		switch (ext_csd[EXT_CSD_CARD_TYPE]) {
+		case EXT_CSD_CARD_TYPE_26M:
+			speed = 26000;
+			break;
+		case EXT_CSD_CARD_TYPE_52M:
+		case EXT_CSD_CARD_TYPE_52M_V18:
+		case EXT_CSD_CARD_TYPE_52M_V12:
+		case EXT_CSD_CARD_TYPE_52M_V12_18:
+			speed = 52000;
+			hs_timing = 1;
+			break;
+		default:
+			printf("%s: unknown CARD_TYPE 0x%x\n", DEVNAME(sc),
+			    ext_csd[EXT_CSD_CARD_TYPE]);
+		}
+		if (!ISSET(sc->sc_caps, SMC_CAPS_MMC_HIGHSPEED))
+			hs_timing = 0;
+
+		if (hs_timing) {
+			/* switch to high speed timing */
+			error = sdmmc_mem_mmc_switch(sf, EXT_CSD_CMD_SET_NORMAL,
+			    EXT_CSD_HS_TIMING, hs_timing);
+			if (error != 0) {
+				printf("%s: can't change high speed\n",
+				    DEVNAME(sc));
+				return error;
+			}
+		}
+
+		error =
+		    sdmmc_chip_bus_clock(sc->sct, sc->sch, speed);
+		if (error != 0) {
+			printf("%s: can't change bus clock\n", DEVNAME(sc));
+			return error;
+		}
+
+		if (hs_timing) {
+			/* read EXT_CSD again */
+			error = sdmmc_mem_send_cxd_data(sc,
+			    MMC_SEND_EXT_CSD, ext_csd, sizeof(ext_csd));
+			if (error != 0) {
+				printf("%s: can't re-read EXT_CSD\n", DEVNAME(sc));
+				return error;
+			}
+			if (ext_csd[EXT_CSD_HS_TIMING] != 1) {
+				printf("%s, HS_TIMING set failed\n", DEVNAME(sc));
+				return EINVAL;
+			}
+		}
+	}
+
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
+/*	$OpenBSD: sdmmcreg.h,v 1.5 2013/09/12 11:54:04 rapha Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -24,7 +24,9 @@
 #define MMC_SEND_OP_COND		1	/* R3 */
 #define MMC_ALL_SEND_CID		2	/* R2 */
 #define MMC_SET_RELATIVE_ADDR   	3	/* R1 */
+#define MMC_SWITCH			6	/* R1B */
 #define MMC_SELECT_CARD			7	/* R1 */
+#define MMC_SEND_EXT_CSD		8	/* R1 */
 #define MMC_SEND_CSD			9	/* R2 */
 #define MMC_STOP_TRANSMISSION		12	/* R1B */
 #define MMC_SEND_STATUS			13	/* R1 */
@@ -87,10 +89,47 @@
 #define SD_ARG_BUS_WIDTH_1		0
 #define SD_ARG_BUS_WIDTH_4		2
 
+/* EXT_CSD fields */
+#define EXT_CSD_BUS_WIDTH		183	/* WO */
+#define EXT_CSD_HS_TIMING		185	/* R/W */
+#define EXT_CSD_REV			192	/* RO */
+#define EXT_CSD_STRUCTURE		194	/* RO */
+#define EXT_CSD_CARD_TYPE		196	/* RO */
+
+/* EXT_CSD field definitions */
+#define EXT_CSD_CMD_SET_NORMAL		(1U << 0)
+#define EXT_CSD_CMD_SET_SECURE		(1U << 1)
+#define EXT_CSD_CMD_SET_CPSECURE	(1U << 2)
+
+/* EXT_CSD_BUS_WIDTH  */
+#define EXT_CSD_BUS_WIDTH_1		0
+#define EXT_CSD_BUS_WIDTH_4		1
+#define EXT_CSD_BUS_WIDTH_8		2
+
+/* EXT_CSD_CARD_TYPE */
+/* The only currently valid values for this field are 0x01, 0x03, 0x07,
+ * 0x0B and 0x0F. */
+#define EXT_CSD_CARD_TYPE_F_26M		(1 << 0)
+#define EXT_CSD_CARD_TYPE_F_52M		(1 << 1)
+#define EXT_CSD_CARD_TYPE_F_52M_1_8V	(1 << 2)
+#define EXT_CSD_CARD_TYPE_F_52M_1_2V	(1 << 3)
+#define EXT_CSD_CARD_TYPE_26M		0x01
+#define EXT_CSD_CARD_TYPE_52M		0x03
+#define EXT_CSD_CARD_TYPE_52M_V18	0x07
+#define EXT_CSD_CARD_TYPE_52M_V12	0x0b
+#define EXT_CSD_CARD_TYPE_52M_V12_18	0x0f
+
+/* MMC_SWITCH access mode */
+#define MMC_SWITCH_MODE_CMD_SET		0x00	/* Change the command set */
+#define MMC_SWITCH_MODE_SET_BITS	0x01	/* Set bits in value */
+#define MMC_SWITCH_MODE_CLEAR_BITS	0x02	/* Clear bits in value */
+#define MMC_SWITCH_MODE_WRITE_BYTE	0x03	/* Set target to value */
+
 /* MMC R2 response (CSD) */
 #define MMC_CSD_CSDVER(resp)		MMC_RSP_BITS((resp), 126, 2)
 #define  MMC_CSD_CSDVER_1_0		1
 #define  MMC_CSD_CSDVER_2_0		2
+#define  MMC_CSD_CSDVER_EXT_CSD		3
 #define MMC_CSD_MMCVER(resp)		MMC_RSP_BITS((resp), 122, 4)
 #define  MMC_CSD_MMCVER_1_0		0 /* MMC 1.0 - 1.2 */
 #define  MMC_CSD_MMCVER_1_4		1 /* MMC 1.4 */
