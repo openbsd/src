@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.14 2013/09/12 02:55:03 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.15 2013/09/12 03:09:34 dlg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -200,24 +200,6 @@ struct cfdriver cpsw_cd = {
 	"cpsw",
 	DV_IFNET
 };
-
-/*
- * Return the number of bytes in the mbuf chain, m.
- */
-static __inline u_int
-m_length(const struct mbuf *m)
-{
-	const struct mbuf *m0;
-	u_int pktlen;
-
-	if ((m->m_flags & M_PKTHDR) != 0)
-		return m->m_pkthdr.len;
-
-	pktlen = 0;
-	for (m0 = m; m0 != NULL; m0 = m0->m_next)
-		pktlen += m0->m_len;
-	return pktlen;
-}
 
 static inline u_int
 cpsw_txdesc_adjust(u_int x, int y)
@@ -542,7 +524,7 @@ cpsw_start(struct ifnet *ifp)
 			continue;
 		}
 
-		mlen = m_length(m);
+		mlen = dm->dm_mapsize;
 		pad = mlen < CPSW_PAD_LEN;
 
 		KASSERT(rdp->tx_mb[sc->sc_txnext] == NULL);
