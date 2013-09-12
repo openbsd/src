@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.16 2013/09/12 04:23:28 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.17 2013/09/12 04:42:03 dlg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -393,10 +393,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_rdp->rx_mb[i] = NULL;
 	}
 
-	/* XXX Not sure if this is the correct way to do this. orig below.
-	    sc->sc_txpad = kmem_zalloc(ETHER_MIN_LEN, KM_SLEEP);
-	*/
-	sc->sc_txpad = malloc(ETHER_MIN_LEN, M_TEMP, M_WAITOK);
+	sc->sc_txpad = dma_alloc(ETHER_MIN_LEN, PR_WAITOK | PR_ZERO);
 	KASSERT(sc->sc_txpad != NULL);
 	bus_dmamap_create(sc->sc_bdt, ETHER_MIN_LEN, 1, ETHER_MIN_LEN, 0,
 	    BUS_DMA_WAITOK, &sc->sc_txpad_dm);
