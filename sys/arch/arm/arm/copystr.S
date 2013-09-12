@@ -1,4 +1,4 @@
-/*	$OpenBSD: copystr.S,v 1.3 2011/09/20 22:02:10 miod Exp $	*/
+/*	$OpenBSD: copystr.S,v 1.4 2013/09/12 11:43:51 patrick Exp $	*/
 /*	$NetBSD: copystr.S,v 1.8 2002/10/13 14:54:48 bjh21 Exp $	*/
 
 /*
@@ -49,8 +49,8 @@
 .Lcpu_info:
 	.word	_C_LABEL(cpu_info)
 #else
-.Lcurpcb:
-	.word	_C_LABEL(curpcb)
+.Lcpu_info_primary:
+	.word	_C_LABEL(cpu_info_primary)
 #endif
 
 /*
@@ -113,8 +113,8 @@ ENTRY(copyinstr)
 	ldr	r4, [r4, #CI_CURPCB]
 	ldmfd	sp!, {r0-r3, r14}
 #else
-	ldr	r4, .Lcurpcb
-	ldr	r4, [r4]
+	ldr	r4, .Lcpu_info_primary
+	ldr	r4, [r4, #CI_CURPCB]
 #endif
 
 #ifdef DEBUG
@@ -170,8 +170,8 @@ ENTRY(copyoutstr)
 	ldr	r4, [r4, #CI_CURPCB]
 	ldmfd	sp!, {r0-r3, r14}
 #else
-	ldr	r4, .Lcurpcb
-	ldr	r4, [r4]
+	ldr	r4, .Lcpu_info_primary
+	ldr	r4, [r4, #CI_CURPCB]
 #endif
 
 #ifdef DEBUG

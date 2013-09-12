@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopyinout.S,v 1.2 2011/09/20 22:02:10 miod Exp $	*/
+/*	$OpenBSD: bcopyinout.S,v 1.3 2013/09/12 11:43:51 patrick Exp $	*/
 /*	$NetBSD: bcopyinout.S,v 1.13 2003/10/31 16:54:05 scw Exp $	*/
 
 /*
@@ -51,8 +51,8 @@
 .Lcpu_info:
 	.word	_C_LABEL(cpu_info)
 #else
-.Lcurpcb:
-	.word _C_LABEL(curpcb)
+.Lcpu_info_primary:
+	.word _C_LABEL(cpu_info_primary)
 #endif
 
 #define SAVE_REGS	stmfd	sp!, {r4-r11}
@@ -91,8 +91,8 @@ ENTRY(copyin)
 	ldr	r4, [r4, #CI_CURPCB]
 	ldmfd	sp!, {r0-r2, r14}
 #else
-	ldr	r4, .Lcurpcb
-	ldr	r4, [r4]
+	ldr	r4, .Lcpu_info_primary
+	ldr	r4, [r4, #CI_CURPCB]
 #endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
@@ -314,8 +314,8 @@ ENTRY(copyout)
 	ldr	r4, [r4, #CI_CURPCB]
 	ldmfd	sp!, {r0-r2, r14}
 #else
-	ldr	r4, .Lcurpcb
-	ldr	r4, [r4]
+	ldr	r4, .Lcpu_info_primary
+	ldr	r4, [r4, #CI_CURPCB]
 #endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
@@ -527,8 +527,8 @@ ENTRY(kcopy)
 	ldr	r4, [r4, #CI_CURPCB]
 	ldmfd	sp!, {r0-r2, r14}
 #else
-	ldr	r4, .Lcurpcb
-	ldr	r4, [r4]
+	ldr	r4, .Lcpu_info_primary
+	ldr	r4, [r4, #CI_CURPCB]
 #endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
@@ -720,8 +720,8 @@ ENTRY(badaddr_read_1)
 	ldr	r2, [r2, #CI_CURPCB]
 	ldmfd	sp!, {r0-r1, r14}
 #else
-	ldr	r2, .Lcurpcb
-	ldr	r2, [r2]
+	ldr	r2, .Lcpu_info_primary
+	ldr	r2, [r2, #CI_CURPCB]
 #endif
 	ldr	ip, [r2, #PCB_ONFAULT]
 	adr	r3, 1f
@@ -754,8 +754,8 @@ ENTRY(badaddr_read_2)
 	ldr	r2, [r2, #CI_CURPCB]
 	ldmfd	sp!, {r0-r1, r14}
 #else
-	ldr	r2, .Lcurpcb
-	ldr	r2, [r2]
+	ldr	r2, .Lcpu_info_primary
+	ldr	r2, [r2, #CI_CURPCB]
 #endif
 	ldr	ip, [r2, #PCB_ONFAULT]
 	adr	r3, 1f
@@ -788,8 +788,8 @@ ENTRY(badaddr_read_4)
 	ldr	r2, [r2, #CI_CURPCB]
 	ldmfd	sp!, {r0-r1, r14}
 #else
-	ldr	r2, .Lcurpcb
-	ldr	r2, [r2]
+	ldr	r2, .Lcpu_info_primary
+	ldr	r2, [r2, #CI_CURPCB]
 #endif
 	ldr	ip, [r2, #PCB_ONFAULT]
 	adr	r3, 1f

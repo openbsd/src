@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.37 2013/09/12 11:42:22 patrick Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.38 2013/09/12 11:43:51 patrick Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -179,15 +179,19 @@ void	arm32_vector_init(vaddr_t, int);
 #include <sys/sched.h>
 struct cpu_info {
 	struct device *ci_dev;		/* Device corresponding to this CPU */
+	struct cpu_info *ci_next;
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 
 	struct proc *ci_curproc;
+	u_int32_t ci_cpuid;
+	u_int32_t ci_randseed;
+
+	struct pcb *ci_curpcb;
 
 	u_int32_t ci_arm_cpuid;		/* aggregate CPU id */
 	u_int32_t ci_arm_cputype;	/* CPU type */
 	u_int32_t ci_arm_cpurev;	/* CPU revision */
 	u_int32_t ci_ctrl;		/* The CPU control register */
-	u_int32_t ci_randseed;
 
 	uint32_t ci_cpl;
 	uint32_t ci_ipending;
@@ -229,6 +233,8 @@ extern struct cpu_info *cpu_info[MAXCPUS];
 
 void cpu_boot_secondary_processors(void);
 #endif /* !MULTIPROCESSOR */
+
+#define curpcb		curcpu()->ci_curpcb
 
 /*
  * Scheduling glue

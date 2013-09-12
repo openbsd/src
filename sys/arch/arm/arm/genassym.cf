@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.12 2013/09/10 12:35:25 patrick Exp $
+#	$OpenBSD: genassym.cf,v 1.13 2013/09/12 11:43:51 patrick Exp $
 #	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp$
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -157,7 +157,7 @@ member	cf_control
 struct	cpu_info
 #member	CI_CURPRIORITY		ci_schedstate.spc_curpriority
 member	ci_curproc
-#member	ci_curpcb
+member	ci_curpcb
 member	ci_idepth
 
 # Constants required for in_cksum() and friends.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.4 2011/09/20 22:02:13 miod Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.5 2013/09/12 11:43:51 patrick Exp $	*/
 /*	$NetBSD: pcb.h,v 1.10 2003/10/13 21:46:39 scw Exp $	*/
 
 /*
@@ -92,13 +92,5 @@ struct pcb {
 struct md_coredump {
 	int	md_empty;
 };
-
-#ifdef _KERNEL
-#ifdef MULTIPROCESSOR
-#define curpcb	(curcpu()->ci_curpcb)
-#else
-extern struct pcb *curpcb;
-#endif
-#endif	/* _KERNEL */
 
 #endif	/* _ARM_PCB_H_ */

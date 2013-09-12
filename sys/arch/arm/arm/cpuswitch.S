@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch.S,v 1.13 2013/09/12 11:42:22 patrick Exp $	*/
+/*	$OpenBSD: cpuswitch.S,v 1.14 2013/09/12 11:43:51 patrick Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -108,23 +108,12 @@
 .Lcpu_info_primary:
 	.word	_C_LABEL(cpu_info_primary)
 .Lcurproc:
-	.word	_C_LABEL(cpu_info_parimary) + CI_CURPROC
-
-.Lcpufuncs:	
-	.word	_C_LABEL(cpufuncs)
-	
-#ifndef MULTIPROCESSOR
-.Lcurpcb:
-	.word   _C_LABEL(curpcb)
-	.data
-	.global	_C_LABEL(curpcb)
-_C_LABEL(curpcb):
-	.word	0x00000000
-	.text
-#else
+	.word	_C_LABEL(cpu_info_primary) + CI_CURPROC
 .Lcurpcb:
 	.word	_C_LABEL(cpu_info_primary) + CI_CURPCB
-#endif
+
+.Lcpufuncs:
+	.word	_C_LABEL(cpufuncs)
 
 .Lcpu_do_powersave:
 	.word	_C_LABEL(cpu_do_powersave)
