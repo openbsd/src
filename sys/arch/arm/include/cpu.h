@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.36 2013/09/10 12:35:26 patrick Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.37 2013/09/12 11:42:22 patrick Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -201,9 +201,11 @@ struct cpu_info {
 #endif
 };
 
+extern struct cpu_info cpu_info_primary;
+extern struct cpu_info *cpu_info_list;
+
 #ifndef MULTIPROCESSOR
-extern struct cpu_info cpu_info_store;
-#define	curcpu()	(&cpu_info_store)
+#define	curcpu()	(&cpu_info_primary)
 #define cpu_number()	0
 #define CPU_IS_PRIMARY(ci)	1
 #define CPU_INFO_ITERATOR	int
@@ -212,7 +214,21 @@ extern struct cpu_info cpu_info_store;
 #define CPU_INFO_UNIT(ci)	0
 #define MAXCPUS	1
 #define cpu_unidle(ci)
-#endif
+#else
+#define cpu_number()		(curcpu()->ci_cpuid)
+#define CPU_IS_PRIMARY(ci)	((ci) == &cpu_info_primary)
+#define CPU_INFO_ITERATOR		int
+#define CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = cpu_info_list; \
+					    ci != NULL; ci = ci->ci_next)
+
+#define CPU_INFO_UNIT(ci)	((ci)->ci_dev ? (ci)->ci_dev->dv_unit : 0)
+#define MAXCPUS	4
+#define cpu_unidle(ci)
+
+extern struct cpu_info *cpu_info[MAXCPUS];
+
+void cpu_boot_secondary_processors(void);
+#endif /* !MULTIPROCESSOR */
 
 /*
  * Scheduling glue

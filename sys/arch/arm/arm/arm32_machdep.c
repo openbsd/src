@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.40 2013/03/27 00:18:19 patrick Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.41 2013/09/12 11:42:22 patrick Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -84,8 +84,17 @@ pv_addr_t kernelstack;
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
+/* Statically defined CPU info. */
+struct cpu_info cpu_info_primary;
+struct cpu_info *cpu_info_list = &cpu_info_primary;
+
+#ifdef MULTIPROCESSOR
+/*
+ * Array of CPU info structures.  Must be statically-allocated because
+ * curproc, etc. are used early.
+ */
+struct cpu_info *cpu_info[MAXCPUS] = { &cpu_info_primary };
+#endif
 
 caddr_t	msgbufaddr;
 extern paddr_t msgbufphys;

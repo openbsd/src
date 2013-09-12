@@ -1,4 +1,4 @@
-/*	$OpenBSD: irq_dispatch.S,v 1.8 2013/09/10 12:35:25 patrick Exp $	*/
+/*	$OpenBSD: irq_dispatch.S,v 1.9 2013/09/12 11:42:22 patrick Exp $	*/
 /*	$NetBSD: irq_dispatch.S,v 1.5 2003/10/30 08:57:24 scw Exp $	*/
 
 /*
@@ -86,8 +86,8 @@
  */
 	.text
 	.align	0
-.Lcpu_info_store:
-	.word	_C_LABEL(cpu_info_store)
+.Lcpu_info_primary:
+	.word	_C_LABEL(cpu_info_primary)
 
 AST_LOCALS
 
@@ -105,7 +105,7 @@ ASENTRY_NP(irq_entry)
 	 *	r5	address of the curcpu struct
 	 *	r6	old value of curcpu()->ci_idepth
 	 */
-	ldr	r5, .Lcpu_info_store
+	ldr	r5, .Lcpu_info_primary
 	mov	r0, sp			/* arg for dispatcher */
 	ldr	r6, [r5, #CI_IDEPTH]
 	add	r1, r6, #1
