@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.15 2013/09/12 03:09:34 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.16 2013/09/12 04:23:28 dlg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -326,6 +326,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	struct omap_attach_args *oa = aux;
 	struct arpcom * const ac = &sc->sc_ac;
 	struct ifnet * const ifp = &ac->ac_if;
+	u_int32_t idver;
 	int error;
 	u_int i;
 
@@ -404,7 +405,10 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	bus_dmamap_sync(sc->sc_bdt, sc->sc_txpad_dm, 0, ETHER_MIN_LEN,
 	    BUS_DMASYNC_PREWRITE);
 
-	printf(": address %s\n", ether_sprintf(ac->ac_enaddr));
+	idver = cpsw_read_4(sc, CPSW_SS_IDVER);
+	printf(": version %d.%d (%d), address %s\n",
+	    CPSW_SS_IDVER_MAJ(idver), CPSW_SS_IDVER_MIN(idver),
+	    CPSW_SS_IDVER_RTL(idver), ether_sprintf(ac->ac_enaddr));
 
 	ifp->if_softc = sc;
 	ifp->if_capabilities = 0;

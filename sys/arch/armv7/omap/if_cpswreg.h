@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpswreg.h,v 1.3 2013/09/12 03:16:59 dlg Exp $ */
+/* $OpenBSD: if_cpswreg.h,v 1.4 2013/09/12 04:23:28 dlg Exp $ */
 
 /*-
  * Copyright (c) 2012 Damjan Marion <dmarion@Freebsd.org>
@@ -33,6 +33,9 @@
 
 #define CPSW_SS_OFFSET			0x0000
 #define CPSW_SS_IDVER			(CPSW_SS_OFFSET + 0x00)
+#define  CPSW_SS_IDVER_RTL(_r)			(((_r) >> 11) & 0x1f)
+#define  CPSW_SS_IDVER_MAJ(_r)			(((_r) >> 8) & 0x7)
+#define  CPSW_SS_IDVER_MIN(_r)			((_r) & 0xff)
 #define CPSW_SS_SOFT_RESET		(CPSW_SS_OFFSET + 0x08)
 #define CPSW_SS_STAT_PORT_EN		(CPSW_SS_OFFSET + 0x0C)
 #define CPSW_SS_PTYPE			(CPSW_SS_OFFSET + 0x10)
