@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.13 2013/09/12 02:20:17 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.14 2013/09/12 02:55:03 dlg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -118,12 +118,6 @@
 
 /* find least significant bit that is set */
 #define __LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
-
-#define __PRIuBIT	PRIuMAX
-#define __PRIuBITS	__PRIuBIT
-
-#define __PRIxBIT	PRIxMAX
-#define __PRIxBITS	__PRIxBIT
 
 #define __SHIFTOUT(__x, __mask) (((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
 
