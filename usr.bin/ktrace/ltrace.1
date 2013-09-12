@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ltrace.1,v 1.3 2013/06/02 16:39:05 jmc Exp $
+.\"	$OpenBSD: ltrace.1,v 1.4 2013/09/12 09:27:27 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Miodrag Vallat.
 .\"
@@ -43,7 +43,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: June 2 2013 $
+.Dd $Mdocdate: September 12 2013 $
 .Dt LTRACE 1
 .Os
 .Sh NAME
@@ -112,7 +112,7 @@ Each list can be empty.
 Each list member may end with a star
 .Pq *
 to only match the beginning of a name.
-A leading bang at the beginning of a list turns it into a rejection list,
+An exclamation mark at the beginning of a list turns it into a rejection list,
 causing all unmatched names to be traced.
 Library names are compared without their version number and
 .Sq .so
