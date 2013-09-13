@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2013/08/23 08:25:57 florian Exp $
+# $OpenBSD: Makefile,v 1.3 2013/09/13 14:51:50 florian Exp $
 #
 #  template_v{9,10}
 #  ----------------
@@ -20,8 +20,14 @@
 #  * wait for flow and compare it with known good flow
 #  * destroy pflow0
 #  * delete 10.11.12.13 and 2001:db8::13 from lo0
+#
+# ifconfig
+# --------
+# Take up pflow0 and test various combinations of flowdst, flowsrc and proto.
+# Destroy it in the end.
 
 REGRESS_TARGETS=template_v9 template_v10 flow_9_4 flow_9_6 flow_10_4 flow_10_6
+REGRESS_TARGETS+=ifconfig
 
 PROG=   gen_traffic
 LDADD=  -levent
@@ -45,6 +51,10 @@ flow_10_4: gen_traffic
 flow_10_6: gen_traffic
 	perl -I ${.CURDIR} ${.CURDIR}/flow.pl 10 6 \
 	    | cmp -s ${.CURDIR}/flow.10_6 /dev/stdin
+
+ifconfig:
+	sh ${.CURDIR}/ifconfig.sh 2>&1 \
+	    | cmp -s ${.CURDIR}/ifconfig.ok /dev/stdin
 
 .PHONY: ${REGRESS_TARGETS}
 
