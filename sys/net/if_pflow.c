@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.34 2013/08/13 08:44:05 florian Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.35 2013/09/13 14:30:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -151,7 +151,7 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	    (sizeof(struct in_multi *) * IP_MIN_MEMBERSHIPS), M_IPMOPTS,
 	    M_WAITOK|M_ZERO);
 	pflowif->sc_imo.imo_max_memberships = IP_MIN_MEMBERSHIPS;
-	pflowif->sc_receiver_ip.s_addr = 0;
+	pflowif->sc_receiver_ip.s_addr = INADDR_ANY;
 	pflowif->sc_receiver_port = 0;
 	pflowif->sc_sender_ip.s_addr = INADDR_ANY;
 	pflowif->sc_sender_port = pflow_get_dynport();
@@ -428,8 +428,10 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFDSTADDR:
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) &&
-		    sc->sc_receiver_ip.s_addr != 0 &&
-		    sc->sc_receiver_port != 0) {
+		    sc->sc_receiver_ip.s_addr != INADDR_ANY &&
+		    sc->sc_receiver_port != 0 &&
+		    sc->sc_sender_ip.s_addr != INADDR_ANY &&
+		    sc->sc_sender_port != 0) {
 			ifp->if_flags |= IFF_RUNNING;
 			sc->sc_gcounter=pflowstats.pflow_flows;
 			/* send templates on startup */
@@ -491,7 +493,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		pflow_flush(sc);
 
 		if (pflowr.addrmask & PFLOW_MASK_DSTIP)
-			sc->sc_receiver_ip = pflowr.receiver_ip;
+			sc->sc_receiver_ip.s_addr = pflowr.receiver_ip.s_addr;
 		if (pflowr.addrmask & PFLOW_MASK_DSTPRT)
 			sc->sc_receiver_port = pflowr.receiver_port;
 		if (pflowr.addrmask & PFLOW_MASK_SRCIP)
@@ -503,18 +505,24 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		pflow_setmtu(sc, ETHERMTU);
 		pflow_init_timeouts(sc);
 
-		if (sc->sc_version == PFLOW_PROTO_9)
-			pflow_sendout_v9_tmpl(sc);
-		else if (sc->sc_version == PFLOW_PROTO_10)
-			pflow_sendout_ipfix_tmpl(sc);
-
 		splx(s);
 
 		if ((ifp->if_flags & IFF_UP) &&
-		    sc->sc_receiver_ip.s_addr != 0 &&
-		    sc->sc_receiver_port != 0) {
+		    sc->sc_receiver_ip.s_addr != INADDR_ANY &&
+		    sc->sc_receiver_port != 0 &&
+		    sc->sc_sender_ip.s_addr != INADDR_ANY &&
+		    sc->sc_sender_port != 0) {
 			ifp->if_flags |= IFF_RUNNING;
 			sc->sc_gcounter=pflowstats.pflow_flows;
+			if (sc->sc_version == PFLOW_PROTO_9) {
+				s = splnet();
+				pflow_sendout_v9_tmpl(sc);
+				splx(s);
+			} else if (sc->sc_version == PFLOW_PROTO_10) {
+				s = splnet();
+				pflow_sendout_ipfix_tmpl(sc);
+				splx(s);
+			}
 		} else
 			ifp->if_flags &= ~IFF_RUNNING;
 
