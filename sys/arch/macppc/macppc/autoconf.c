@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.40 2013/06/03 19:16:43 mpi Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.41 2013/09/13 07:29:01 mpi Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.40 2013/06/03 19:16:43 mpi Exp $
+ *      $Id: autoconf.c,v 1.41 2013/09/13 07:29:01 mpi Exp $
  */
 
 /*
@@ -93,7 +93,6 @@ void
 cpu_configure()
 {
 	(void)splhigh();	/* To be really sure.. */
-	calc_delayconst();
 
 	softintr_init();
 

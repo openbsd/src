@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.33 2013/04/23 07:38:05 mpi Exp $	*/
+/*	$OpenBSD: clock.c,v 1.34 2013/09/13 07:29:01 mpi Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ u_int tb_get_timecount(struct timecounter *);
 /*
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
  */
-static u_int32_t ticks_per_sec = 3125000;
+u_int32_t ticks_per_sec = 3125000;
 static u_int32_t ns_per_tick = 320;
 static int32_t ticks_per_intr;
 
@@ -304,6 +304,9 @@ cpu_initclocks()
 
 	intrstate = ppc_intr_disable();
 
+	ns_per_tick = 1000000000 / ticks_per_sec;
+	ticks_per_intr = ticks_per_sec / hz;
+
 	stathz = 100;
 	profhz = 1000; /* must be a multiple of stathz */
 
@@ -344,43 +347,6 @@ cpu_startclock()
 	ci->ci_statspending = 0;
 
 	ppc_mtdec(nextevent - ci->ci_lasttb);
-}
-
-void
-calc_delayconst(void)
-{
-	int qhandle, phandle = 0;
-	char name[32];
-	int s;
-
-	/*
-	 * Get this info during autoconf?				XXX
-	 */
-	for (qhandle = OF_peer(0); qhandle; qhandle = phandle) {
-		if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0
-		    && !strcmp(name, "cpu")
-		    && OF_getprop(qhandle, "timebase-frequency",
-		    &ticks_per_sec, sizeof ticks_per_sec) >= 0) {
-			/*
-			 * Should check for correct CPU here?		XXX
-			 */
-			s = ppc_intr_disable();
-			ns_per_tick = 1000000000 / ticks_per_sec;
-			ticks_per_intr = ticks_per_sec / hz;
-			ppc_intr_enable(s);
-			break;
-		}
-		if ((phandle = OF_child(qhandle)))
-			continue;
-		while (qhandle) {
-			if ((phandle = OF_peer(qhandle)))
-				break;
-			qhandle = OF_parent(qhandle);
-		}
-	}
-
-	if (!phandle)
-		panic("no cpu node");
 }
 
 /*

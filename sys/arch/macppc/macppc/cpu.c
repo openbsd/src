@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.71 2013/06/03 16:55:22 guenther Exp $ */
+/*	$OpenBSD: cpu.c,v 1.72 2013/09/13 07:29:02 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -45,6 +45,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/bat.h>
+#include <machine/cpu.h>
 #include <machine/trap.h>
 
 /* only valid on 603(e,ev) and G3, G4 */
@@ -241,8 +242,8 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	int *reg = ca->ca_reg;
 	u_int32_t cpu, pvr, hid0;
 	char name[32];
-	int qhandle, phandle;
-	u_int32_t clock_freq = 0;
+	int qhandle, phandle, len;
+	u_int32_t clock_freq = 0, timebase = 0;
 	struct cpu_info *ci;
 
 	ci = &cpu_info[reg[0]];
@@ -330,14 +331,13 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	    " (Revision 0x%x)", pvr & 0xffff);
 	printf(": %s", cpu_model);
 
-	/* This should only be executed on openfirmware systems... */
-
 	for (qhandle = OF_peer(0); qhandle; qhandle = phandle) {
-                if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0
-                    && !strcmp(name, "cpu")
-                    && OF_getprop(qhandle, "clock-frequency",
-                        &clock_freq, sizeof clock_freq) >= 0)
-		{
+                len = OF_getprop(qhandle, "device_type", name, sizeof(name));
+                if (len >= 0 && strcmp(name, "cpu") == 0) {
+			OF_getprop(qhandle, "clock-frequency", &clock_freq,
+			    sizeof(clock_freq));
+			OF_getprop(qhandle, "timebase-frequency", &timebase,
+			    sizeof(timebase));
 			break;
 		}
                 if ((phandle = OF_child(qhandle)))
@@ -348,6 +348,9 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
                         qhandle = OF_parent(qhandle);
                 }
 	}
+
+	if (timebase != 0)
+		ticks_per_sec = timebase;
 
 	if (clock_freq != 0) {
 		/* Openfirmware stores clock in Hz, not MHz */
