@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.34 2013/09/10 03:40:39 jsg Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.35 2013/09/13 13:00:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1047,7 +1047,7 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 			if (i915_seqno_passed(ring->get_seqno(ring, false),
 			    seqno) || dev_priv->mm.wedged)
 				break;
-			ret = msleep(ring, &dev_priv->irq_lock,
+			ret = -msleep(ring, &dev_priv->irq_lock,
 			    PZERO | (interruptible ? PCATCH : 0),
 			    "gemwt", 0);
 		}
