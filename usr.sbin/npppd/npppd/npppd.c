@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.31 2013/06/03 23:26:57 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.32 2013/09/13 03:25:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.31 2013/06/03 23:26:57 yasuoka Exp $
+ * $Id: npppd.c,v 1.32 2013/09/13 03:25:28 yasuoka Exp $
  */
 #include "version.h"
 #include <sys/types.h>
@@ -247,7 +247,6 @@ npppd_init(npppd *_this, const char *config_file)
 	int i, status = -1;
 	const char *pidpath0;
 	FILE *pidfp = NULL;
-	long seed;
 
 	memset(_this, 0, sizeof(npppd));
 #ifndef	NO_ROUTE_FOR_POOLED_ADDRESS
