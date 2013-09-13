@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.269 2013/08/19 11:20:57 dcoppa Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.270 2013/09/13 14:32:53 florian Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3808,9 +3808,14 @@ pflow_status(void)
 	if (ioctl(s, SIOCGETPFLOW, (caddr_t)&ifr) == -1)
 		 return;
 
-	printf("\tpflow: sender: %s ", inet_ntoa(preq.sender_ip));
-	printf("receiver: %s:%u ", inet_ntoa(preq.receiver_ip),
-	    ntohs(preq.receiver_port));
+	printf("\tpflow: sender: %s ", preq.sender_ip.s_addr != INADDR_ANY ?
+	    inet_ntoa(preq.sender_ip) : "INVALID");
+	printf("receiver: %s:", preq.receiver_ip.s_addr != INADDR_ANY ?
+	    inet_ntoa(preq.receiver_ip) : "INVALID");
+	if (preq.receiver_port == 0)
+		printf("%s ", "INVALID");
+	else
+		printf("%u ", ntohs(preq.receiver_port));
 	printf("version: %d\n", preq.version);
 }
 
