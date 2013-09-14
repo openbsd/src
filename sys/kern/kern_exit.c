@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.126 2013/08/13 05:52:23 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.127 2013/09/14 01:35:00 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -463,31 +463,6 @@ sys_wait4(struct proc *q, void *v, register_t *retval)
 	}
 	return (error);
 }
-
-#ifdef T32
-int
-t32_sys_wait4(struct proc *q, void *v, register_t *retval)
-{
-	struct t32_sys_wait4_args /* {
-		syscallarg(pid_t) pid;
-		syscallarg(int *) status;
-		syscallarg(int) options;
-		syscallarg(struct rusage32 *) rusage;
-	} */ *uap = v;
-	struct rusage ru;
-	int error;
-
-	error = dowait4(q, SCARG(uap, pid), SCARG(uap, status),
-	    SCARG(uap, options), SCARG(uap, rusage) ? &ru : NULL, retval);
-	if (error == 0 && SCARG(uap, rusage)) {
-		struct rusage32 ru32;
-
-		RUSAGE_TO_32(&ru32, &ru);
-		error = copyout(&ru32, SCARG(uap, rusage), sizeof(ru32));
-	}
-	return (error);
-}
-#endif
 
 int
 dowait4(struct proc *q, pid_t pid, int *statusp, int options,

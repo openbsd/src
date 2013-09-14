@@ -1,4 +1,4 @@
-/*	$OpenBSD: resource.h,v 1.12 2013/08/13 05:52:26 guenther Exp $	*/
+/*	$OpenBSD: resource.h,v 1.13 2013/09/14 01:35:02 guenther Exp $	*/
 /*	$NetBSD: resource.h,v 1.14 1996/02/09 18:25:27 christos Exp $	*/
 
 /*
@@ -75,34 +75,6 @@ struct	rusage {
 	long	ru_nivcsw;		/* involuntary " */
 #define	ru_last		ru_nivcsw
 };
-#ifdef _KERNEL
-struct	rusage32 {
-	struct timeval32 ru_utime;	/* user time used */
-	struct timeval32 ru_stime;	/* system time used */
-	long	ru_maxrss;		/* max resident set size */
-	long	ru_ixrss;		/* integral shared text memory size */
-	long	ru_idrss;		/* integral unshared data " */
-	long	ru_isrss;		/* integral unshared stack " */
-	long	ru_minflt;		/* page reclaims */
-	long	ru_majflt;		/* page faults */
-	long	ru_nswap;		/* swaps */
-	long	ru_inblock;		/* block input operations */
-	long	ru_oublock;		/* block output operations */
-	long	ru_msgsnd;		/* messages sent */
-	long	ru_msgrcv;		/* messages received */
-	long	ru_nsignals;		/* signals received */
-	long	ru_nvcsw;		/* voluntary context switches */
-	long	ru_nivcsw;		/* involuntary " */
-};
-#define RUSAGE_TO_32(rup32, rup) {				\
-	TIMEVAL_TO_32(&(rup32)->ru_utime, &(rup)->ru_utime);	\
-	TIMEVAL_TO_32(&(rup32)->ru_stime, &(rup)->ru_stime);	\
-	memcpy(&(rup32)->ru_maxrss, &(rup)->ru_maxrss,		\
-	    offsetof(struct rusage, ru_nivcsw) -		\
-	    offsetof(struct rusage, ru_maxrss) +		\
-	    sizeof((rup32)->ru_nivcsw));			\
-}
-#endif
 
 /*
  * Resource limits

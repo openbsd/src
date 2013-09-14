@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.145 2013/08/13 05:52:25 guenther Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.146 2013/09/14 01:35:01 guenther Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -81,11 +81,6 @@
 #include <netinet/in_var.h>
 
 #include <dev/rndvar.h>
-
-#ifdef T32
-/* t32_sys_getdirentries() returns struct direct-style entries */
-#include <ufs/ufs/dir.h>
-#endif
 
 void nfs_cache_enter(struct vnode *, struct vnode *, struct componentname *);
 
@@ -1974,12 +1969,6 @@ nfs_readdir(void *v)
 	int done = 0, eof = 0;
 	struct ucred *cred = ap->a_cred;
 	void *data;
-#if T32
-	int t32 = (uio->uio_segflg & 0x10);
-	struct direct dc;
-
-	uio->uio_segflg &= ~0x10;
-#endif
 
 	if (vp->v_type != VDIR)
 		return (EPERM);
@@ -2040,38 +2029,16 @@ nfs_readdir(void *v)
 			struct dirent *dp = &ndp->dirent;
 			int reclen = dp->d_reclen;
 
-#if T32
-			if (t32) {
-				dc.d_reclen = roundup(dp->d_namlen + 1 +
-				    offsetof(struct direct, d_name), 4);
+			dp->d_reclen -= NFS_DIRENT_OVERHEAD;
+			dp->d_off = fxdr_hyper(&ndp->cookie[0]);
 
-				if (uio->uio_resid < dc.d_reclen) {
-					eof = 0;
-					done = 1;
-					break;
-				}
-
-				dc.d_ino = (u_int32_t)dp->d_fileno;
-				dc.d_type = dp->d_type;
-				dc.d_namlen = dp->d_namlen;
-				bcopy(&dp->d_name, &dc.d_name,
-				    dp->d_namlen + 1);
-				error = uiomove(&dc, dc.d_reclen, uio);
-			} else
-#endif
-			{
-				dp->d_reclen -= NFS_DIRENT_OVERHEAD;
-				dp->d_off = fxdr_hyper(&ndp->cookie[0]);
-
-				if (uio->uio_resid < dp->d_reclen) {
-					eof = 0;
-					done = 1;
-					break;
-				}
-
-				error = uiomove(dp, dp->d_reclen, uio);
+			if (uio->uio_resid < dp->d_reclen) {
+				eof = 0;
+				done = 1;
+				break;
 			}
-			if (error)
+
+			if ((error = uiomove(dp, dp->d_reclen, uio)))
 				break;
 
 			newoff = fxdr_hyper(&ndp->cookie[0]);

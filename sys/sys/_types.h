@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.6 2013/08/13 05:52:26 guenther Exp $	*/
+/*	$OpenBSD: _types.h,v 1.7 2013/09/14 01:35:02 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -47,7 +47,6 @@ typedef	__uint32_t	__gid_t;	/* group id */
 typedef	__uint32_t	__id_t;		/* may contain pid, uid or gid */
 typedef	__uint32_t	__in_addr_t;	/* base type for internet address */
 typedef	__uint16_t	__in_port_t;	/* IP port type */
-typedef	__uint32_t	__ino32_t;	/* T32 */
 typedef	__uint64_t	__ino_t;	/* inode number */
 typedef	long		__key_t;	/* IPC key (for Sys V IPC) */
 typedef	__uint32_t	__mode_t;	/* permissions */
@@ -60,7 +59,6 @@ typedef	__int32_t	__segsz_t;	/* segment size */
 typedef	__uint32_t	__socklen_t;	/* length type for network syscalls */
 typedef	__int32_t	__suseconds_t;	/* microseconds (signed) */
 typedef	__int32_t	__swblk_t;	/* swap offset */
-typedef	__int32_t	__time32_t;	/* T32 */
 typedef	__int64_t	__time_t;	/* epoch time */
 typedef	__int32_t	__timer_t;	/* POSIX timer identifiers */
 typedef	__uint32_t	__uid_t;	/* user id */

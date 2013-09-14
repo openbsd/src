@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.107 2013/08/13 05:52:23 guenther Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.108 2013/09/14 01:35:01 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -520,35 +520,6 @@ sys___thrsleep(struct proc *p, void *v, register_t *retval)
 	*retval = thrsleep(p, uap);
 	return (0);
 }
-
-#ifdef T32
-int
-t32_sys___thrsleep(struct proc *p, void *v, register_t *retval)
-{
-	struct t32_sys___thrsleep_args /* {
-		syscallarg(const volatile void *) ident;
-		syscallarg(clockid_t) clock_id;
-		syscallarg(struct timespec32 *) tp;
-		syscallarg(void *) lock;
-		syscallarg(const int *) abort;
-	} */ *uap = v;
-	struct timespec32 ts32;
-	struct timespec ts;
-	int error;
-
-	if (SCARG(uap, tp) != NULL) {
-		if ((error = copyin(SCARG(uap, tp), &ts32, sizeof(ts32)))) {
-			*retval = error;
-			return (0);
-		}
-		TIMESPEC_FROM_32(&ts, &ts32);
-		SCARG(uap, tp) = (void *)&ts;
-	}
-
-	*retval = thrsleep(p, (struct sys___thrsleep_args *)uap);
-	return (0);
-}
-#endif
 
 int
 sys___thrwakeup(struct proc *p, void *v, register_t *retval)

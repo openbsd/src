@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.43 2013/08/13 05:52:23 guenther Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.44 2013/09/14 01:35:00 guenther Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -439,28 +439,6 @@ sys_getrusage(struct proc *p, void *v, register_t *retval)
 		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
 	return (error);
 }
-
-#ifdef T32
-int
-t32_sys_getrusage(struct proc *p, void *v, register_t *retval)
-{
-	struct sys_getrusage_args /* {
-		syscallarg(int) who;
-		syscallarg(struct rusage32 *) rusage;
-	} */ *uap = v;
-	struct rusage ru;
-	int error;
-
-	error = dogetrusage(p, SCARG(uap, who), &ru, retval);
-	if (error == 0) {
-		struct rusage32 ru32;
-
-		RUSAGE_TO_32(&ru32, &ru);
-		error = copyout(&ru32, SCARG(uap, rusage), sizeof(ru32));
-	}
-	return (error);
-}
-#endif
 
 int
 dogetrusage(struct proc *p, int who, struct rusage *rup, register_t *retval)
