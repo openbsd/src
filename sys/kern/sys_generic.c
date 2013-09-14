@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.83 2013/09/14 01:35:01 guenther Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.84 2013/09/14 02:28:02 guenther Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -211,8 +211,7 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)
-			ktrgenio(p, fd, UIO_READ, ktriov, cnt,
-			    error);
+			ktrgenio(p, fd, UIO_READ, ktriov, cnt);
 		free(ktriov, M_TEMP);
 	}
 #endif
@@ -368,7 +367,7 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)
-			ktrgenio(p, fd, UIO_WRITE, ktriov, cnt, error);
+			ktrgenio(p, fd, UIO_WRITE, ktriov, cnt);
 		free(ktriov, M_TEMP);
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.35 2013/08/13 05:52:23 guenther Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.36 2013/09/14 02:28:01 guenther Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ int
 uiomove(void *cp, int n, struct uio *uio)
 {
 	struct iovec *iov;
-	u_int cnt;
+	size_t cnt;
 	int error = 0;
 	struct proc *p;
 
@@ -72,9 +72,8 @@ uiomove(void *cp, int n, struct uio *uio)
 		}
 		if (cnt > n)
 			cnt = n;
-		switch ((int)uio->uio_segflg) {
+		switch (uio->uio_segflg) {
 
-		case UIO_USERSPACE | 0x10:
 		case UIO_USERSPACE:
 			if (curcpu()->ci_schedstate.spc_schedflags &
 			    SPCF_SHOULDYIELD)
@@ -132,9 +131,8 @@ again:
 		uio->uio_iov++;
 		goto again;
 	}
-	switch ((int)uio->uio_segflg) {
+	switch (uio->uio_segflg) {
 
-	case UIO_USERSPACE | 0x10:
 	case UIO_USERSPACE:
 	{
 		char tmp = c;

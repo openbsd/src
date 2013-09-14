@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.119 2013/08/13 05:52:27 guenther Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.120 2013/09/14 02:28:02 guenther Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -649,7 +649,7 @@ int	vn_stat(struct vnode *, struct stat *, struct proc *);
 int	vn_statfile(struct file *, struct stat *, struct proc *);
 int	vn_lock(struct vnode *, int, struct proc *);
 int	vn_writechk(struct vnode *);
-int	vn_fsizechk(struct vnode *, struct uio *, int, int *);
+int	vn_fsizechk(struct vnode *, struct uio *, int, ssize_t *);
 int	vn_ioctl(struct file *, u_long, caddr_t, struct proc *);
 void	vn_marktext(struct vnode *);
 

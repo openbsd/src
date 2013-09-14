@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.74 2013/06/11 16:42:17 deraadt Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.75 2013/09/14 02:28:03 guenther Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -257,7 +257,7 @@ nfs_write(void *v)
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	daddr_t lbn, bn;
 	int n, on, error = 0, extended = 0, wrotedta = 0, truncated = 0;
-	int overrun;
+	ssize_t overrun;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)

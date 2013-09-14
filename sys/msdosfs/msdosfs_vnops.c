@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.88 2013/08/13 05:52:24 guenther Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.89 2013/09/14 02:28:03 guenther Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -594,7 +594,7 @@ msdosfs_write(void *v)
 	int n;
 	int croffset;
 	int resid;
-	int overrun;
+	ssize_t overrun;
 	int extended = 0;
 	uint32_t osize;
 	int error = 0;
