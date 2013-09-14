@@ -486,6 +486,7 @@
 ./usr/share/man/man1/netstat.1
 ./usr/share/man/man1/nfsstat.1
 ./usr/share/man/man1/nice.1
+./usr/share/man/man1/nl.1
 ./usr/share/man/man1/nm.1
 ./usr/share/man/man1/nohup.1
 ./usr/share/man/man1/nslookup.1
@@ -2328,6 +2329,7 @@
 ./usr/share/man/man4/udsbr.4
 ./usr/share/man/man4/uftdi.4
 ./usr/share/man/man4/ugen.4
+./usr/share/man/man4/ugold.4
 ./usr/share/man/man4/uguru.4
 ./usr/share/man/man4/uhci.4
 ./usr/share/man/man4/uhid.4

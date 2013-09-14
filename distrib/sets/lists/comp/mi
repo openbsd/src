@@ -533,6 +533,7 @@
 ./usr/include/dev/pci/drm/drm_mem_util.h
 ./usr/include/dev/pci/drm/drm_mm.h
 ./usr/include/dev/pci/drm/drm_mode.h
+./usr/include/dev/pci/drm/drm_pciids.h
 ./usr/include/dev/pci/drm/drm_sarea.h
 ./usr/include/dev/pci/drm/i915_drm.h
 ./usr/include/dev/pci/drm/radeon_drm.h

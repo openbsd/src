@@ -351,6 +351,7 @@
 ./usr/bin/newsyslog
 ./usr/bin/nfsstat
 ./usr/bin/nice
+./usr/bin/nl
 ./usr/bin/nm
 ./usr/bin/nohup
 ./usr/bin/od

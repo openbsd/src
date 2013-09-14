@@ -71,7 +71,7 @@
 ./usr/lib/librpcsvc.so.2.0
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.5.0
-./usr/lib/libsqlite3.so.24.0
+./usr/lib/libsqlite3.so.25.0
 ./usr/lib/libssl.so.20.0
 ./usr/lib/libstdc++.so.56.0
 ./usr/lib/libtermcap.so.13.0
@@ -593,6 +593,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/drm/drm_mem_util.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/drm/drm_mm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/drm/drm_mode.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/drm/drm_pciids.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/drm/drm_sarea.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/drm/i915_drm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/drm/radeon_drm.ph
