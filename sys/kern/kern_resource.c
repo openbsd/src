@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.44 2013/09/14 01:35:00 guenther Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.45 2013/09/14 03:06:41 guenther Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -421,7 +421,7 @@ calcru(struct tusage *tup, struct timeval *up, struct timeval *sp,
 		TIMESPEC_TO_TIMEVAL(ip, &i);
 }
 
-int	dogetrusage(struct proc *, int, struct rusage *, register_t *);
+int	dogetrusage(struct proc *, int, struct rusage *);
 
 /* ARGSUSED */
 int
@@ -434,14 +434,14 @@ sys_getrusage(struct proc *p, void *v, register_t *retval)
 	struct rusage ru;
 	int error;
 
-	error = dogetrusage(p, SCARG(uap, who), &ru, retval);
+	error = dogetrusage(p, SCARG(uap, who), &ru);
 	if (error == 0)
 		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
 	return (error);
 }
 
 int
-dogetrusage(struct proc *p, int who, struct rusage *rup, register_t *retval)
+dogetrusage(struct proc *p, int who, struct rusage *rup)
 {
 	struct process *pr = p->p_p;
 	struct proc *q;
