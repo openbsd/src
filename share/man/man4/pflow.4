@@ -1,4 +1,4 @@
-.\" $OpenBSD: pflow.4,v 1.15 2013/09/13 14:32:53 florian Exp $
+.\" $OpenBSD: pflow.4,v 1.16 2013/09/14 14:54:30 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2008 Joerg Goltermann <jg@osn.de>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 13 2013 $
+.Dd $Mdocdate: September 14 2013 $
 .Dt PFLOW 4
 .Os
 .Sh NAME
@@ -42,8 +42,9 @@ Multiple
 interfaces can be created at runtime using the
 .Ic ifconfig pflow Ns Ar N Ic create
 command.
-Each interface must be configured with flow sender IP address and a flow
-receiver IP address and port number.
+Each interface must be configured with a flow sender IP address,
+a flow receiver IP address,
+and a flow receiver port number.
 .Pp
 Only states created by a rule marked with the
 .Ar pflow
