@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.78 2012/11/19 22:28:35 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.79 2013/09/15 18:26:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -788,6 +788,9 @@ blk_exp_close(MACRO_PROT_ARGS)
 				return(0);
 			flushed = 1;
 		}
+
+		mdoc->flags &= ~MDOC_NEWLINE;
+
 		if ( ! mdoc_macro(mdoc, ntok, line, lastarg, pos, buf))
 			return(0);
 		break;
