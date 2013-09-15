@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.209 2013/09/15 14:35:50 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.210 2013/09/15 16:54:52 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1639,7 +1639,7 @@ cdsize(dev_t dev)
 }
 
 int
-cddump(dev_t dev, daddr_t secno, caddr_t va, size_t size)
+cddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	/* Not implemented. */
 	return ENXIO;
