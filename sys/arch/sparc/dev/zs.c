@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.51 2013/07/27 19:45:01 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.52 2013/09/15 09:49:21 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.50 1997/10/18 00:00:40 gwr Exp $	*/
 
 /*-
@@ -750,7 +750,7 @@ zs_putc(arg, c)
 	 * interrupts we put in the 2us delay regardless of cpu model.
 	 */
         zc->zc_data = c;
-        delay(2);
+	ZS_DELAY();
 
 	splx(s);
 }
