@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.79 2013/02/25 20:28:01 miod Exp $
+dnl	$OpenBSD: hardware,v 1.80 2013/09/15 12:02:21 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original SPARC with VME. Many hardware bugs.
@@ -298,7 +298,7 @@ Supported devices {:-include-:}:
 	- Force system configuration registers (scf)
 	- Force flash memory (flash)
 	- Tadpole microcontroller (power/system control) (tctrl)
-	- Prestoserve NVRAM Sbus cards (limited support) (presto)
+	- Prestoserve NVRAM Sbus cards and NVSIMM (limited support) (presto)
 
 OpenBSD/MACHINE OSREV does NOT run on these machines (yet):
 	- Sun 4/400
