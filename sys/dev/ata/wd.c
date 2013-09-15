@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.110 2013/06/11 16:42:14 deraadt Exp $ */
+/*	$OpenBSD: wd.c,v 1.111 2013/09/15 13:44:53 krw Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -465,11 +465,12 @@ wdstart(void *arg)
 void
 __wdstart(struct wd_softc *wd, struct buf *bp)
 {
-	daddr_t nblks;
+	struct disklabel *lp;
+	u_int64_t nsecs;
 
-	wd->sc_wdc_bio.blkno = bp->b_blkno +
-	    DL_GETPOFFSET(&wd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)]);
-	wd->sc_wdc_bio.blkno /= (wd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+	lp = wd->sc_dk.dk_label;
+	wd->sc_wdc_bio.blkno = DL_BLKTOSEC(lp, bp->b_blkno + DL_SECTOBLK(lp,
+	    DL_GETPOFFSET(&lp->d_partitions[DISKPART(bp->b_dev)])));
 	wd->sc_wdc_bio.blkdone =0;
 	wd->sc_bp = bp;
 	/*
@@ -481,11 +482,11 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 		wd->sc_wdc_bio.flags = ATA_SINGLE;
 	else
 		wd->sc_wdc_bio.flags = 0;
-	nblks = bp->b_bcount / wd->sc_dk.dk_label->d_secsize;
+	nsecs = howmany(bp->b_bcount, lp->d_secsize);
 	if ((wd->sc_flags & WDF_LBA48) &&
 	    /* use LBA48 only if really need */
-	    ((wd->sc_wdc_bio.blkno + nblks - 1 >= LBA48_THRESHOLD) ||
-	     (nblks > 0xff)))
+	    ((wd->sc_wdc_bio.blkno + nsecs - 1 >= LBA48_THRESHOLD) ||
+	     (nsecs > 0xff)))
 		wd->sc_wdc_bio.flags |= ATA_LBA48;
 	if (wd->sc_flags & WDF_LBA)
 		wd->sc_wdc_bio.flags |= ATA_LBA;
