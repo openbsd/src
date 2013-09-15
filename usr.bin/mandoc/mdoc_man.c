@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.50 2013/06/02 18:16:51 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.51 2013/09/15 18:48:26 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -549,7 +549,7 @@ man_mdoc(void *arg, const struct mdoc *mdoc)
 static void
 print_node(DECL_ARGS)
 {
-	const struct mdoc_node	*prev, *sub;
+	const struct mdoc_node	*sub;
 	const struct manact	*act;
 	int			 cond, do_sub;
 
@@ -557,8 +557,7 @@ print_node(DECL_ARGS)
 	 * Break the line if we were parsed subsequent the current node.
 	 * This makes the page structure be more consistent.
 	 */
-	prev = n->prev ? n->prev : n->parent;
-	if (MMAN_spc & outflags && prev && prev->line < n->line)
+	if (MMAN_spc & outflags && MDOC_LINE & n->flags)
 		outflags |= MMAN_nl;
 
 	act = NULL;
