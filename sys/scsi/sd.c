@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.246 2013/06/11 16:42:17 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.247 2013/09/15 14:35:50 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -658,7 +658,8 @@ sdstart(struct scsi_xfer *xs)
 		return;
 	}
 
-	secno = bp->b_blkno / (sc->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+	secno = DL_BLKTOSEC(sc->sc_dk.dk_label, bp->b_blkno);
+
 	p = &sc->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
 	secno += DL_GETPOFFSET(p);
 	nsecs = howmany(bp->b_bcount, sc->sc_dk.dk_label->d_secsize);
@@ -1195,9 +1196,10 @@ sd_interpret_sense(struct scsi_xfer *xs)
 daddr_t
 sdsize(dev_t dev)
 {
+	struct disklabel *lp;
 	struct sd_softc *sc;
 	int part, omask;
-	int64_t size;
+	daddr_t size;
 
 	sc = sdlookup(DISKUNIT(dev));
 	if (sc == NULL)
@@ -1214,13 +1216,14 @@ sdsize(dev_t dev)
 		size = -1;
 		goto exit;
 	}
+
+	lp = sc->sc_dk.dk_label;
 	if ((sc->sc_link->flags & SDEV_MEDIA_LOADED) == 0)
 		size = -1;
-	else if (sc->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
+	else if (lp->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
-		size = DL_GETPSIZE(&sc->sc_dk.dk_label->d_partitions[part]) *
-			(sc->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+		size = DL_SECTOBLK(lp, DL_GETPSIZE(&lp->d_partitions[part]));
 	if (omask == 0 && sdclose(dev, 0, S_IFBLK, NULL) != 0)
 		size = -1;
 
