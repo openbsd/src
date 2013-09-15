@@ -1,4 +1,4 @@
-/*	$Id: tree.c,v 1.17 2013/05/18 17:08:09 schwarze Exp $ */
+/*	$Id: tree.c,v 1.18 2013/09/15 17:33:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -155,8 +155,11 @@ print_mdoc(const struct mdoc_node *n, int indent)
 			if (argv[i].sz > 0)
 				printf(" ]");
 		}
-		
-		printf(" %d:%d\n", n->line, n->pos);
+
+		putchar(' ');
+		if (MDOC_LINE & n->flags)
+			putchar('*');
+		printf("%d:%d\n", n->line, n->pos);
 	}
 
 	if (n->child)
