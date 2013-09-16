@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.70 2013/09/05 06:36:16 jmc Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.71 2013/09/16 08:17:02 dcoppa Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -183,7 +183,7 @@ target(usb, usb, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 target(usb, urio, 0)dnl
 target(usb, uhid, 0, 1, 2, 3)dnl
 target(usb, ulpt, 0, 1)dnl
-target(usb, ugen, 0, 1)dnl
+target(usb, ugen, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 target(usb, ttyU, 0, 1, 2, 3)dnl
 dnl
 __devitem({-uall-}, uall, All USB devices,usb)dnl
