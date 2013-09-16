@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: GENERIC,v 1.8 2013/09/16 16:30:50 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -40,7 +40,7 @@ mainbus0 at root
 
 syscon0 at mainbus0 addr 0xfff00000
 nvram0	at syscon? offset 0x80000
-dart0	at syscon? offset 0x82000 ipl 3		# serial ports
+dart0	at syscon? offset 0x82000		# serial ports
 #avkbd0	at syscon? offset 0x82800
 #wskbd*	at avkbd?
 #avfb0	at syscon? offset 0x89000
@@ -49,35 +49,35 @@ dart0	at syscon? offset 0x82000 ipl 3		# serial ports
 # AV400 onboard devices
 #
 
-dart1	at syscon? offset 0x82c00 ipl 3
+dart1	at syscon? offset 0x82c00
 vme0	at syscon? offset 0x85000		# VME bridge
-#aic0	at syscon? offset 0x8a000 ipl 2
-le0	at syscon? offset 0x8c000 ipl 1		# on-board ethernet
+#aic0	at syscon? offset 0x8a000
+le0	at syscon? offset 0x8c000		# on-board ethernet
 
 #
 # AV530 onboard devices
 #
 
-dart1	at syscon? offset 0x82040 ipl 3
-#ssi0	at syscon? offset 0x8d000 ipl 3
-oosiop0	at syscon? offset 0xb0000 ipl 2
-oosiop1	at syscon? offset 0xb0080 ipl 2
-#ile0	at syscon? offset 0xb00c0 ipl 1
-#ile1	at syscon? offset 0xb0140 ipl 1
+dart1	at syscon? offset 0x82040
+#ssi0	at syscon? offset 0x8d000
+oosiop0	at syscon? offset 0xb0000
+oosiop1	at syscon? offset 0xb0080
+#ile0	at syscon? offset 0xb00c0
+#ile1	at syscon? offset 0xb0140
 
 #
 # VME devices
 #
 
 # Interphase Hawk Ethernet
-le*	at vme? a32 0x00900000 a16 0x4000 ipl 1	# artwork X0A factory settings
-le*	at vme? a32 0x55540000 a16 0x8600 ipl 1	# artwork X0B factory settings
-le*	at vme? a32 0x55900000 a16 0x4000 ipl 1
-le*	at vme? a32 0x55980000 a16 0x5000 ipl 1
+le*	at vme? a32 0x00900000 a16 0x4000 ipl 3	# artwork X0A factory settings
+le*	at vme? a32 0x55540000 a16 0x8600 ipl 3	# artwork X0B factory settings
+le*	at vme? a32 0x55900000 a16 0x4000 ipl 3
+le*	at vme? a32 0x55980000 a16 0x5000 ipl 3
 
 # AV5000 VME Ethernet
-#ile*	at vme? a32 0x55900000 a16 0x4000 ipl 1
-#ile*	at vme? a32 0x55980000 a16 0x5000 ipl 1
+#ile*	at vme? a32 0x55900000 a16 0x4000 ipl 3
+#ile*	at vme? a32 0x55980000 a16 0x5000 ipl 3
 
 # VDA/255 Serial Host Adapter (on-board on model 4300)
 #vda0	at vme? a32 0x60000000

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart_syscon.c,v 1.3 2007/12/19 22:05:06 miod Exp $	*/
+/*	$OpenBSD: dart_syscon.c,v 1.4 2013/09/16 16:30:50 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -72,9 +72,6 @@ dart_syscon_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ioh;
 	u_int intsrc;
 
-	if (ca->ca_ipl < 0)
-		ca->ca_ipl = IPL_TTY;
-
 	sc->sc_iot = ca->ca_iot;
 	if (bus_space_map(sc->sc_iot, ca->ca_paddr, DART_SIZE, 0, &ioh) != 0) {
 		printf(": can't map registers!\n");
@@ -95,7 +92,7 @@ dart_syscon_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih.ih_fn = dartintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_flags = 0;
-	sc->sc_ih.ih_ipl = ca->ca_ipl;
+	sc->sc_ih.ih_ipl = IPL_TTY;
 
 	sysconintr_establish(intsrc, &sc->sc_ih, self->dv_xname);
 

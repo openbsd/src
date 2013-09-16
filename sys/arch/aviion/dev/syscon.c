@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.6 2010/09/20 06:33:47 matthew Exp $ */
+/*	$OpenBSD: syscon.c,v 1.7 2013/09/16 16:30:51 miod Exp $ */
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -138,7 +138,6 @@ syscon_scan(struct device *parent, void *child, void *args)
 		oca.ca_paddr = ca->ca_paddr + oca.ca_offset;
 	else
 		oca.ca_paddr = (paddr_t)-1;
-	oca.ca_ipl = (u_int)cf->cf_loc[1];
 
 	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0)
 		return (0);
@@ -154,8 +153,6 @@ syscon_print(void *args, const char *pnp)
 
 	if (ca->ca_offset != (paddr_t)-1)
 		printf(" offset 0x%x", ca->ca_offset);
-	if (ca->ca_ipl != (u_int)-1)
-		printf(" ipl %u", ca->ca_ipl);
 	return (UNCONF);
 }
 

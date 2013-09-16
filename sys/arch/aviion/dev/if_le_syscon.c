@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_syscon.c,v 1.12 2011/04/07 15:30:15 miod Exp $	*/
+/*	$OpenBSD: if_le_syscon.c,v 1.13 2013/09/16 16:30:51 miod Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@ le_syscon_attach(struct device *parent, struct device *self, void *aux)
 	lesc->sc_ih.ih_fn = le_syscon_intr;
 	lesc->sc_ih.ih_arg = sc;
 	lesc->sc_ih.ih_flags = 0;
-	lesc->sc_ih.ih_ipl = ca->ca_ipl;
+	lesc->sc_ih.ih_ipl = IPL_NET;
 
 	sysconintr_establish(INTSRC_ETHERNET1, &lesc->sc_ih, self->dv_xname);
 }

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.aviion,v 1.9 2010/12/31 21:38:07 miod Exp $
+#	$OpenBSD: files.aviion,v 1.10 2013/09/16 16:30:50 miod Exp $
 #
 maxpartitions 16
 
@@ -10,7 +10,7 @@ file	arch/aviion/dev/mainbus.c
 # On-board devices
 #
 
-device	syscon {[offset = -1], [ipl = 0]}
+device	syscon {[offset = -1]}
 attach	syscon at mainbus
 file	arch/aviion/dev/syscon.c			syscon needs-flag
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop_syscon.c,v 1.4 2011/04/07 15:30:15 miod Exp $	*/
+/*	$OpenBSD: oosiop_syscon.c,v 1.5 2013/09/16 16:30:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -111,7 +111,7 @@ oosiop_syscon_attach(struct device *parent, struct device *self, void *aux)
 	ssc->sc_ih.ih_fn = (int(*)(void *))oosiop_intr;
 	ssc->sc_ih.ih_arg = sc;
 	ssc->sc_ih.ih_flags = 0;
-	ssc->sc_ih.ih_ipl = ca->ca_ipl;
+	ssc->sc_ih.ih_ipl = IPL_BIO;
 	intsrc = ca->ca_paddr == AV530_SCSI1 ? INTSRC_SCSI1 : INTSRC_SCSI2;
 	sysconintr_establish(intsrc, &ssc->sc_ih, self->dv_xname);
 }
