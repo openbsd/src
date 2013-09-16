@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.53 2013/08/08 20:07:24 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.54 2013/09/16 00:25:06 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -65,7 +65,7 @@ enum	mandocerr {
 	MANDOCERR_BADNAMESEC, /* bad NAME section contents */
 	MANDOCERR_SECOOO, /* sections out of conventional order */
 	MANDOCERR_SECREP, /* duplicate section name */
-	MANDOCERR_SECMSEC, /* section not in conventional manual section */
+	MANDOCERR_SECMSEC, /* section header suited to sections ... */
 
 	/* related to macros and nesting */
 	MANDOCERR_MACROOBS, /* skipping obsolete macro */

@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.16 2013/07/13 12:51:38 schwarze Exp $ */
+/*	$Id: read.c,v 1.17 2013/09/16 00:25:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -98,7 +98,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"bad NAME section contents",
 	"sections out of conventional order",
 	"duplicate section name",
-	"section not in conventional manual section",
+	"section header suited to sections 2, 3, and 9 only",
 
 	/* related to macros and nesting */
 	"skipping obsolete macro",
