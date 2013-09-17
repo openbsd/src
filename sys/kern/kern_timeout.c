@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.36 2013/08/03 06:47:15 guenther Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.37 2013/09/17 04:52:53 guenther Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -60,7 +60,7 @@ struct circq timeout_todo;		/* Worklist */
 
 #define BUCKET(rel, abs)						\
     (timeout_wheel[							\
-	((rel) <= (1 << (2*WHEELBITS)))				\
+	((rel) <= (1 << (2*WHEELBITS)))					\
 	    ? ((rel) <= (1 << WHEELBITS))				\
 		? MASKWHEEL(0, (abs))					\
 		: MASKWHEEL(1, (abs)) + WHEELSIZE			\
