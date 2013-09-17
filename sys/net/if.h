@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.145 2013/08/28 06:58:57 mpi Exp $	*/
+/*	$OpenBSD: if.h,v 1.146 2013/09/17 13:34:17 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -105,6 +105,7 @@ struct ether_header;
 struct arpcom;
 struct rt_addrinfo;
 struct ifnet;
+struct ifvlan;
 
 /*
  * Structure describing a `cloning' interface.
@@ -266,12 +267,12 @@ struct ifnet {				/* and the entries */
 	TAILQ_HEAD(, ifg_list) if_groups; /* linked list of groups per if */
 	struct hook_desc_head *if_addrhooks; /* address change callbacks */
 	struct hook_desc_head *if_linkstatehooks; /* link change callbacks */
-	struct hook_desc_head *if_detachhooks; /* detach callbacks */
 	char	if_xname[IFNAMSIZ];	/* external name (name + unit) */
 	int	if_pcount;		/* number of promiscuous listeners */
 	caddr_t	if_bpf;			/* packet filter structure */
 	caddr_t if_bridgeport;		/* used by bridge ports */
 	caddr_t	if_tp;			/* used by trunk ports */
+	LIST_HEAD(, ifvlan) if_vlist;	/* list of vlans on this interface */
 	caddr_t	if_pf_kif;		/* pf interface abstraction */
 	union {
 		caddr_t	carp_s;		/* carp structure (used by !carp ifs) */
