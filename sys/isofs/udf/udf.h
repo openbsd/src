@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf.h,v 1.18 2013/08/16 14:27:28 mlarkin Exp $	*/
+/*	$OpenBSD: udf.h,v 1.19 2013/09/17 04:31:56 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -111,7 +111,6 @@ struct udf_dirstream {
 #define	RDSECTOR(devvp, sector, size, bp) \
 	bread(devvp, \
 		((daddr_t)(sector) << ump->um_bshift) / DEV_BSIZE, size, bp)
-
 
 static __inline int
 udf_readlblks(struct umount *ump, int sector, int size, struct buf **bp)
