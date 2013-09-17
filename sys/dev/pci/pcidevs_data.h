@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1685 2013/09/11 09:29:20 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1686 2013/09/17 13:36:30 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1164,6 +1164,62 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AMD64 11h Link Cfg",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_1x_LINK,
+	    "AMD64 15/1xh Link Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_1x_ADDR,
+	    "AMD64 15/1xh Address Map",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_1x_DRAM,
+	    "AMD64 15/1xh DRAM Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_1x_MISC,
+	    "AMD64 15/1xh Misc Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_1x_CPU_PM,
+	    "AMD64 15/1xh CPU Power",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_1x_NB_PM,
+	    "AMD64 15/1xh NB Power",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_1x_HB,
+	    "AMD64 15/1xh Host",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_1x_PCIE_1,
+	    "AMD64 15/1xh PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_1x_PCIE_2,
+	    "AMD64 15/1xh PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_1x_PCIE_3,
+	    "AMD64 15/1xh PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_1x_PCIE_4,
+	    "AMD64 15/1xh PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_1x_PCIE_5,
+	    "AMD64 15/1xh PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_1x_PCIE_6,
+	    "AMD64 15/1xh PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_1x_PCIE_7,
+	    "AMD64 15/1xh PCIE",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_14_HB,
 	    "AMD64 14h Host",
 	},
@@ -1188,28 +1244,28 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AMD64 14h PCIE",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_LINK,
-	    "AMD64 15h Link Cfg",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_0x_LINK,
+	    "AMD64 15/0xh Link Cfg",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_ADDR,
-	    "AMD64 15h Address Map",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_0x_ADDR,
+	    "AMD64 15/0xh Address Map",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_DRAM,
-	    "AMD64 15h DRAM Cfg",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_0x_DRAM,
+	    "AMD64 15/0xh DRAM Cfg",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_MISC,
-	    "AMD64 15h Misc Cfg",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_0x_MISC,
+	    "AMD64 15/0xh Misc Cfg",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_CPU_PM,
-	    "AMD64 15h CPU Power",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_0x_CPU_PM,
+	    "AMD64 15/0xh CPU Power",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_HB,
-	    "AMD64 15h Host",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_0x_HB,
+	    "AMD64 15/0xh Host",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_14_LINK,
