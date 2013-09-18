@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.27 2013/08/13 10:23:49 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.28 2013/09/18 08:50:28 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -982,6 +982,7 @@ struct drm_i915_gem_object {
 	/**
 	 * Used for performing relocations during execbuffer insertion.
 	 */
+	LIST_ENTRY(drm_i915_gem_object) exec_node;
 	unsigned long exec_handle;
 	struct drm_i915_gem_exec_object2 *exec_entry;
 
