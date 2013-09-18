@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.116 2011/08/03 00:27:20 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.117 2013/09/18 01:06:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1060,16 +1060,22 @@ atascsi_disk_unmap(struct scsi_xfer *xs)
 
 	cdb = (struct scsi_unmap *)xs->cmd;
 	len = _2btol(cdb->list_len);
-	if (xs->datalen != len || len < sizeof(*unmap))
+	if (xs->datalen != len || len < sizeof(*unmap)) {
 		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
 
 	unmap = (struct scsi_unmap_data *)xs->data;
-	if (_2btol(unmap->data_length) != len)
+	if (_2btol(unmap->data_length) != len) {
 		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
 
 	len = _2btol(unmap->desc_length);
-	if (len != xs->datalen - sizeof(*unmap))
+	if (len != xs->datalen - sizeof(*unmap)) {
 		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
 
 	if (len < sizeof(struct scsi_unmap_desc)) {
 		/* no work, no error according to sbc3 */
@@ -1079,14 +1085,17 @@ atascsi_disk_unmap(struct scsi_xfer *xs)
 	if (len > sizeof(struct scsi_unmap_desc) * 64) {
 		/* more work than we advertised */
 		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
 	}
 
 	/* let's go */
 	if (!ISSET(xs->flags, SCSI_NOSLEEP))
 		atascsi_disk_unmap_task(xs, NULL);
 	else if (workq_add_task(NULL, 0, atascsi_disk_unmap_task,
-	    xs, NULL) != 0)
+	    xs, NULL) != 0) {
 		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
 }
 
 void
