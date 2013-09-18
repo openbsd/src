@@ -1,4 +1,4 @@
-/*	$OpenBSD: tset.c,v 1.35 2010/01/12 23:22:14 nicm Exp $	*/
+/*	$OpenBSD: tset.c,v 1.36 2013/09/18 16:21:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -105,7 +105,7 @@ char *ttyname(int fd);
 #include <dump_entry.h>
 #include <transform.h>
 
-MODULE_ID("$Id: tset.c,v 1.35 2010/01/12 23:22:14 nicm Exp $")
+MODULE_ID("$Id: tset.c,v 1.36 2013/09/18 16:21:30 millert Exp $")
 
 /*
  * SCO defines TIOCGSIZE and the corresponding struct.  Other systems (SunOS,
@@ -1133,7 +1133,7 @@ usage(void)
 	,"  -w          set window-size"
     };
     unsigned n;
-    (void) fprintf(stderr, "Usage: %s [-cIQqrSsVw] [-] "
+    (void) fprintf(stderr, "Usage: %s [-cIQqrsVw] [-] "
 	"[-e ch] [-i ch] [-k ch] [-m mapping] [terminal]\n",
 	_nc_progname);
     for (n = 0; n < sizeof(tbl) / sizeof(tbl[0]); ++n)
@@ -1157,11 +1157,6 @@ main(int argc, char **argv)
     int ch, noinit, noset, quiet, Sflag, sflag, showterm;
     const char *p;
     const char *ttype;
-#ifdef __OpenBSD__
-    char tcapbuf[1024], *t;
-    int tcgetent(char *, const char *);
-    void wrtermcap (char *);
-#endif /* __OpenBSD__ */
 
     obsolete(argv);
     noinit = noset = quiet = Sflag = sflag = showterm = 0;
@@ -1249,10 +1244,6 @@ main(int argc, char **argv)
     }
 
     ttype = get_termcap_entry(*argv);
-#ifdef __OpenBSD__
-    if (tcgetent(tcapbuf, ttype) < 0)
-	    tcapbuf[0] = '\0';
-#endif /* __OpenBSD__ */
 
     if (!noset) {
 	tcolumns = columns;
@@ -1307,54 +1298,9 @@ main(int argc, char **argv)
 #endif
     }
 
-#ifdef __OpenBSD__
-    if (Sflag) {
-	if (tcapbuf[0]) { 
-	    (void) printf("%s ", ttype);
-	    wrtermcap(tcapbuf);
-	} else
-	    err("No termcap entry for %s, only terminfo.", ttype);
-    }
-#else
     if (Sflag)
 	err("The -S option is not supported under terminfo.");
-#endif /* __OpenBSD__ */
 
-#ifdef __OpenBSD__
-    if (sflag) {
-	/*
-	 * Figure out what shell we're using.  A hack, we look for an
-	 * environmental variable SHELL ending in "csh".
-	 */
-	if ((p = getenv("SHELL")) != 0 && !strcmp(p + strlen(p) - 3, "csh")) {
-	    if (tcapbuf[0])
-		p = "set noglob histchars="";\nsetenv TERM %s;\nsetenv TERMCAP ";
-	    else
-		p = "set noglob histchars="";\nsetenv TERM %s;\n";
-		t = "unset noglob histchars;\n";
-	} else {
-	    if (tcapbuf) {
-		p = "TERM=%s;\nTERMCAP=";
-		t = "export TERMCAP TERM;\n";
-	    } else {
-		if (tcapbuf) {
-		    p = "TERM=%s;\nTERMCAP=";
-		    t = "export TERMCAP TERM;\n";
-		} else {
-		    p = "TERM=%s;\n";
-		    t = "export TERMCAP;\n";
-		}
-	    }
-	}
-	(void) printf(p, ttype);
-	if (tcapbuf[0]) {
-	    putchar('\'');
-	    wrtermcap(tcapbuf);
-	    fputs("';\n", stdout);
-	}
-	(void)fputs(t, stdout);
-    }
-#else
     if (sflag) {
 	int len;
 	char *var;
@@ -1371,7 +1317,6 @@ main(int argc, char **argv)
 	    p = "TERM=%s;\n";
 	(void) printf(p, ttype);
     }
-#endif /* __OpenBSD__ */
 
     ExitProgram(EXIT_SUCCESS);
 }

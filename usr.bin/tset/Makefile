@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.8 2009/05/06 19:12:45 millert Exp $
+#	$OpenBSD: Makefile,v 1.9 2013/09/18 16:21:29 millert Exp $
 
 PROG=	tset
-SRCS=	tset.c dump_entry.c termcap.c
+SRCS=	tset.c dump_entry.c
 DPADD=	${LIBCURSES}
 LDADD=	-lcurses
 CURSES= ${.CURDIR}/../../lib/libcurses

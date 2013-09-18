@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tset.1,v 1.18 2011/12/28 22:27:18 schwarze Exp $
+.\"	$OpenBSD: tset.1,v 1.19 2013/09/18 16:21:30 millert Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)tset.1	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: December 28 2011 $
+.Dd $Mdocdate: September 18 2013 $
 .Dt TSET 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd terminal initialization
 .Sh SYNOPSIS
 .Nm tset
-.Op Fl cIQqrSsVw
+.Op Fl cIQqrsVw
 .Op Fl
 .Op Fl e Ar ch
 .Op Fl i Ar ch
@@ -45,7 +45,7 @@
 .Op Fl m Ar mapping
 .Op Ar terminal
 .Nm reset
-.Op Fl cIQqrSsVw
+.Op Fl cIQqrsVw
 .Op Fl
 .Op Fl e Ar ch
 .Op Fl i Ar ch
@@ -78,18 +78,20 @@ The default terminal type,
 .Pp
 If the terminal type was not specified on the command line, the
 .Fl m
-option mappings are then applied (see below for more information).
+option mappings are then applied (see the
+.Sx TERMINAL TYPE MAPPING
+section below for more information).
 Then, if the terminal type begins with a question mark
 .Pq Ql \&? ,
 the user is prompted for confirmation of the terminal type.
 An empty response confirms the type, or another type can be entered to
 specify a new type.
-Once the terminal type has been determined, the termcap entry for the terminal
+Once the terminal type has been determined, the terminfo entry for the terminal
 is retrieved.
-If no termcap entry is found for the type, the user is prompted for another
+If no terminfo entry is found for the type, the user is prompted for another
 terminal type.
 .Pp
-Once the termcap entry is retrieved, the window size, backspace, interrupt,
+Once the terminfo entry is retrieved, the window size, backspace, interrupt,
 and line kill characters (among many other things) are set and the terminal
 and tab initialization strings are sent to the standard error output.
 Finally, if the erase, interrupt and line kill characters have changed,
@@ -138,7 +140,9 @@ Set the line kill character to
 .Ar ch .
 .It Fl m Ar mapping
 Specify a mapping from a port type to a terminal.
-See below for more information.
+See the
+.Sx TERMINAL TYPE MAPPING
+section below for more information.
 .It Fl Q
 Don't display any values for the erase, interrupt and line kill characters.
 Normally
@@ -150,16 +154,13 @@ The terminal type is displayed to the standard output, and the terminal is
 not initialized in any way.
 .It Fl r
 Print the terminal type to the standard error output.
-.It Fl S
-Print the terminal type and the termcap entry to the standard output.
-See the section below on setting the environment for details.
 .It Fl s
-Print the sequence of shell commands to initialize the environment variables
+Print the sequence of shell commands to initialize the environment variable
 .Ev TERM
-and
-.Ev TERMCAP
 to the standard output.
-See the section below on setting the environment for details.
+See the
+.Sx SETTING THE ENVIRONMENT
+section below for details.
 .It Fl V
 Report the version of ncurses which was used in this program, and exit.
 .It Fl w
@@ -185,21 +186,8 @@ or
 It is often desirable to enter the terminal type and information about
 the terminal's capabilities into the shell's environment.
 This is done using the
-.Fl S
-and
 .Fl s
-options.
-.Pp
-When the
-.Fl S
-option is specified, the terminal type and the termcap entry are written
-to the standard output, separated by a space and without a terminating
-newline.
-This can be assigned to an array by
-.Xr csh 1
-and
-.Xr ksh 1
-users and then used like any other shell array.
+option.
 .Pp
 When the
 .Fl s
@@ -225,20 +213,6 @@ or
 files will initialize the environment correctly:
 .Bd -literal -offset indent
 eval \`tset -s options ... \`
-.Ed
-.Pp
-To demonstrate a simple use of the
-.Fl S
-option, the following lines in the
-.Pa .login
-file have an equivalent effect:
-.Bd -literal -offset indent
-set noglob
-set term=(`tset -S options ...`)
-setenv TERM $term[1]
-setenv TERMCAP "$term[2]"
-unset term
-unset noglob
 .Ed
 .Sh TERMINAL TYPE MAPPING
 When the terminal is not hardwired into the system (or the current system
@@ -357,10 +331,10 @@ and
 .Ev TERM
 environment variables.
 .Sh FILES
-.Bl -tag -width /usr/share/misc/termcap -compact
+.Bl -tag -width /usr/share/misc/terminfo.db -compact
 .It Pa /etc/ttys
 port name to terminal type mapping database
-.It Pa /usr/share/misc/termcap
+.It Pa /usr/share/misc/terminfo.db
 terminal capability database
 .El
 .Sh SEE ALSO
@@ -368,7 +342,7 @@ terminal capability database
 .Xr sh 1 ,
 .Xr stty 1 ,
 .Xr tty 4 ,
-.Xr termcap 5 ,
+.Xr terminfo 5 ,
 .Xr ttys 5 ,
 .Xr environ 7
 .Sh STANDARDS
@@ -378,28 +352,25 @@ command now uses the
 .Xr terminfo 5
 database where previous versions used
 .Xr termcap 5 .
-To make the
-.Fl s
-and
+.Pp
+Historic versions of the
+.Xr termcap 3
+library limited entries to 1023 bytes.
+Modern
+.Xr terminfo 3
+entries are often much larger, making it impossible to
+store the full entry in the
+.Ev TERMCAP
+environment variable.
+Because of this, the
 .Fl S
-options still work,
-.Nm tset
-also reads in the terminal entry from
-.Xr termcap 5 .
-However, this info is used for setting
-.Ev TERMCAP
-only.
-If the terminal type appears in
-.Xr terminfo 5
-but not in
-.Xr termcap 5 ,
-the
-.Fl q
-option will not set
-.Ev TERMCAP
-and the
-.Fl Q
-option will not work at all.
+option is no longer supported (it prints an error message to the standard
+error and exits) and the
+.Fl s
+option only sets
+.Ev TERM ,
+not
+.Ev TERMCAP .
 .Pp
 The
 .Fl A ,
