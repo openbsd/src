@@ -1,4 +1,4 @@
-/*      $OpenBSD: extern.h,v 1.9 2011/08/03 08:48:19 otto Exp $	*/
+/*      $OpenBSD: extern.h,v 1.10 2013/09/19 16:12:01 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 
 struct lvalue {
@@ -27,7 +28,9 @@ int		yylex(void);
 void		yyerror(char *);
 void		fatal(const char *);
 void		abort_line(int);
+struct termios;
 int		gettty(struct termios *);
+void		tstpcont(int);
 unsigned char	bc_eof(EditLine *, int);
 
 extern int	lineno;

@@ -1,5 +1,5 @@
 %{
-/*      $OpenBSD: scan.l,v 1.27 2011/08/03 08:48:19 otto Exp $	*/
+/*      $OpenBSD: scan.l,v 1.28 2013/09/19 16:12:01 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -20,9 +20,7 @@
 #include <err.h>
 #include <histedit.h>
 #include <signal.h>
-#include <stdbool.h>
 #include <string.h>
-#include <termios.h>
 #include <unistd.h>
 
 #include "extern.h"
@@ -41,7 +39,6 @@ static size_t	strbuf_sz = 1;
 static bool	dot_seen;
 static int	use_el;
 static volatile sig_atomic_t skipchars;
-struct termios ttysaved, ttyedit;
 
 static void	init_strbuf(void);
 static void	add_str(const char *);
@@ -252,45 +249,6 @@ abort_line(int sig)
 		skipchars = info->lastchar - info->buffer;
 	} else
 		write(STDOUT_FILENO, str1, sizeof(str1) - 1);
-	errno = save_errno;
-}
-
-int
-settty(struct termios *t)
-{
-	int ret;
-
-	while ((ret = tcsetattr(0, TCSADRAIN,  t) == -1) && errno == EINTR)
-		continue;
-	return ret;
-}
-
-int
-gettty(struct termios *t)
-{
-	int ret;
-
-	while ((ret = tcgetattr(0, t) == -1) && errno == EINTR)
-		continue;
-	return ret;
-}
-
-/* ARGSUSED */
-void
-tstpcont(int sig)
-{
-	int save_errno = errno;
-
-	if (sig == SIGTSTP) {
-		signal(SIGCONT, tstpcont);
-		gettty(&ttyedit);
-		settty(&ttysaved);		
-	} else {
-		signal(SIGTSTP, tstpcont);
-		settty(&ttyedit);		
-	}
-	signal(sig, SIG_DFL);
-	kill(0, sig);
 	errno = save_errno;
 }
 
