@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.6 2013/09/16 20:52:13 jmatthew Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.7 2013/09/19 00:15:59 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -41,6 +41,7 @@
 
 #include <machine/bus.h>
 #include <machine/octeon_model.h>
+#include <machine/octeonvar.h>
 
 #include <octeon/dev/iobusvar.h>
 #include <octeon/dev/cn30xxciureg.h>
@@ -190,9 +191,19 @@ cn30xxgmx_match(struct device *parent, void *match, void *aux)
 static int
 cn30xxgmx_port_phy_addr(int port)
 {
-	if (port >= nitems(octeon_eth_phy_table))
-		return -1;
-	return octeon_eth_phy_table[port];
+	extern struct boot_info *octeon_boot_info;
+
+	switch (octeon_boot_info->board_type) {
+	case BOARD_TYPE_UBIQUITI_E100:
+		if (port > 2)
+			return -1;
+		return 7 - port;
+
+	default:
+		if (port >= nitems(octeon_eth_phy_table))
+			return -1;
+		return octeon_eth_phy_table[port];
+	}
 }
 
 static void
@@ -977,7 +988,9 @@ cn30xxgmx_rgmii_speed_speed(struct cn30xxgmx_port_softc *sc)
 static int
 cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *sc)
 {
-	int clk_set_setting;
+	extern struct boot_info *octeon_boot_info;
+	int clk_tx_setting;
+	int clk_rx_setting;
 	uint64_t rx_frm_ctl;
 
 	/* RGMII TX Threshold Registers, CN30XX-HM-1.0;
@@ -1022,15 +1035,25 @@ cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *sc)
 		/*
 		 * Table.4-6, Summary of ASX Registers, SEIL_HS_v03;
 		 */
-		clk_set_setting = 0;
+		clk_tx_setting = 0;
+		clk_rx_setting = 0;
 		break;
 	default:
 		/* Default parameter of CN30XX */
-		clk_set_setting = 24;
+		clk_tx_setting = 24;
+		clk_rx_setting = 24;
+		break;
+	}
+	
+	/* board specific overrides */
+	switch (octeon_boot_info->board_type) {
+	case BOARD_TYPE_UBIQUITI_E100:
+		clk_tx_setting = 16;
+		clk_rx_setting = 0;
 		break;
 	}
 
-	cn30xxasx_clk_set(sc->sc_port_asx, clk_set_setting);
+	cn30xxasx_clk_set(sc->sc_port_asx, clk_tx_setting, clk_rx_setting);
 
 	return 0;
 }

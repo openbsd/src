@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxasxvar.h,v 1.1 2011/06/16 11:22:30 syuu Exp $	*/
+/*	$OpenBSD: cn30xxasxvar.h,v 1.2 2013/09/19 00:15:59 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -50,7 +50,7 @@ struct cn30xxasx_attach_args {
 void			cn30xxasx_init(struct cn30xxasx_attach_args *,
 			    struct cn30xxasx_softc **);
 int			cn30xxasx_enable(struct cn30xxasx_softc *, int);
-int			cn30xxasx_clk_set(struct cn30xxasx_softc *, int);
+int			cn30xxasx_clk_set(struct cn30xxasx_softc *, int, int);
 uint64_t		cn30xxasx_int_summary(struct cn30xxasx_softc *sc);
 
 #endif

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.9 2011/06/24 02:18:17 yasuoka Exp $
+#	$OpenBSD: GENERIC,v 1.10 2013/09/19 00:15:59 jmatthew Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -44,6 +44,7 @@ cnmac*		at cn30xxgmx?
 
 rgephy*		at mii?
 ukphy*		at mii?
+atphy*		at mii?
 
 # IDE Controller
 pciide*		at pci? flags 0x0000
