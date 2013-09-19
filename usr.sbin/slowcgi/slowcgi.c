@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.10 2013/09/11 09:31:22 blambert Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.11 2013/09/19 09:21:29 blambert Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -103,7 +103,7 @@ struct fcgi_stdin {
 };
 TAILQ_HEAD(fcgi_stdin_head, fcgi_stdin);
 
-struct client {
+struct request {
 	struct event			ev;
 	struct event			resp_ev;
 	struct event			tmo;
@@ -126,14 +126,14 @@ struct client {
 	uint8_t				request_started;
 };
 
-struct clients {
-	SLIST_ENTRY(clients)	 entry;
-	struct client		*client;
+struct requests {
+	SLIST_ENTRY(requests)	 entry;
+	struct request		*request;
 };
-SLIST_HEAD(clients_head, clients);
+SLIST_HEAD(requests_head, requests);
 
 struct slowcgi_proc {
-	struct clients_head	clients;
+	struct requests_head	requests;
 	struct event		ev_sigchld;
 	struct event		ev_sigpipe;
 };
@@ -152,32 +152,32 @@ struct fcgi_end_request_body {
 
 __dead void	usage(void);
 void		slowcgi_listen(char *, gid_t);
-void		slowcgi_paused(int, short, void*);
-void		slowcgi_accept(int, short, void*);
-void		slowcgi_request(int, short, void*);
-void		slowcgi_response(int, short, void*);
-void		slowcgi_timeout(int, short, void*);
-void		slowcgi_sig_handler(int, short, void*);
-size_t		parse_request(uint8_t* , size_t, struct client*);
-void		parse_begin_request(uint8_t*, uint16_t, struct client*,
+void		slowcgi_paused(int, short, void *);
+void		slowcgi_accept(int, short, void *);
+void		slowcgi_request(int, short, void *);
+void		slowcgi_response(int, short, void *);
+void		slowcgi_timeout(int, short, void *);
+void		slowcgi_sig_handler(int, short, void *);
+size_t		parse_record(uint8_t * , size_t, struct request *);
+void		parse_begin_request(uint8_t *, uint16_t, struct request *,
 		    uint16_t);
-void		parse_params(uint8_t*, uint16_t, struct client*, uint16_t);
-void		parse_stdin(uint8_t*, uint16_t, struct client*, uint16_t);
-void		exec_cgi(struct client*);
-void		script_in(int, struct event*, struct client*, uint8_t);
-void		script_std_in(int, short, void*);
-void		script_err_in(int, short, void*);
-void		script_out(int, short, void*);
-void		create_end_request(struct client*);
+void		parse_params(uint8_t *, uint16_t, struct request *, uint16_t);
+void		parse_stdin(uint8_t *, uint16_t, struct request *, uint16_t);
+void		exec_cgi(struct request *);
+void		script_in(int, struct event *, struct request *, uint8_t);
+void		script_std_in(int, short, void *);
+void		script_err_in(int, short, void *);
+void		script_out(int, short, void *);
+void		create_end_record(struct request *);
 void		dump_fcgi_record(const char *,
 		    struct fcgi_record_header *);
-void		dump_fcgi_record_header(const char*,
-		    struct fcgi_record_header*);
+void		dump_fcgi_record_header(const char *,
+		    struct fcgi_record_header *);
 void		dump_fcgi_begin_request_body(const char *,
 		    struct fcgi_begin_request_body *);
 void		dump_fcgi_end_request_body(const char *,
 		    struct fcgi_end_request_body *);
-void		cleanup_client(struct client*);
+void		cleanup_request(struct request *);
 
 struct loggers {
 	void (*err)(int, const char *, ...);
@@ -284,7 +284,7 @@ main(int argc, char *argv[])
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		lerr(1, "unable to revoke privs");
 
-	SLIST_INIT(&slowcgi_proc.clients);
+	SLIST_INIT(&slowcgi_proc.requests);
 
 	signal_set(&slowcgi_proc.ev_sigchld, SIGCHLD, slowcgi_sig_handler,
 	    &slowcgi_proc);
@@ -360,8 +360,8 @@ slowcgi_accept(int fd, short events, void *arg)
 	struct listener		*l;
 	struct sockaddr_storage	 ss;
 	struct timeval		 pause;
-	struct client		*c;
-	struct clients		*clients;
+	struct request		*c;
+	struct requests		*requests;
 	socklen_t		 len;
 	int			 s;
 
@@ -389,17 +389,17 @@ slowcgi_accept(int fd, short events, void *arg)
 	}
 
 	if (ioctl(s, FIONBIO, &on) == -1)
-		lerr(1, "client ioctl(FIONBIO)");
+		lerr(1, "request ioctl(FIONBIO)");
 
 	c = calloc(1, sizeof(*c));
 	if (c == NULL) {
-		lwarn("cannot calloc client");
+		lwarn("cannot calloc request");
 		close(s);
 		return;
 	}
-	clients = calloc(1, sizeof(*clients));
-	if (clients == NULL) {
-		lwarn("cannot calloc clients");
+	requests = calloc(1, sizeof(*requests));
+	if (requests == NULL) {
+		lwarn("cannot calloc requests");
 		close(s);
 		free(c);
 		return;
@@ -416,21 +416,21 @@ slowcgi_accept(int fd, short events, void *arg)
 
 	event_set(&c->tmo, s, 0, slowcgi_timeout, c);
 	event_add(&c->tmo, &timeout);
-	clients->client = c;
-	SLIST_INSERT_HEAD(&slowcgi_proc.clients, clients, entry);
+	requests->request = c;
+	SLIST_INSERT_HEAD(&slowcgi_proc.requests, requests, entry);
 }
 
 void
 slowcgi_timeout(int fd, short events, void *arg)
 {
-	cleanup_client((struct client*) arg);
+	cleanup_request((struct request*) arg);
 }
 
 void
 slowcgi_sig_handler(int sig, short event, void *arg)
 {
-	struct client		*c;
-	struct clients		*ncs;
+	struct request		*c;
+	struct requests		*ncs;
 	struct slowcgi_proc 	*p;
 	pid_t			 pid;
 	int			 status;
@@ -441,9 +441,9 @@ slowcgi_sig_handler(int sig, short event, void *arg)
 	switch (sig) {
 	case SIGCHLD:
 		pid = wait(&status);
-		SLIST_FOREACH(ncs, &p->clients, entry)
-			if (ncs->client->script_pid == pid) {
-				c = ncs->client;
+		SLIST_FOREACH(ncs, &p->requests, entry)
+			if (ncs->request->script_pid == pid) {
+				c = ncs->request;
 				break;
 			}
 		if (c == NULL) {
@@ -457,7 +457,7 @@ slowcgi_sig_handler(int sig, short event, void *arg)
 			c->script_status = WEXITSTATUS(status);
 
 		if (c->script_flags == (STDOUT_DONE | STDERR_DONE))
-			create_end_request(c);
+			create_end_record(c);
 		c->script_flags |= SCRIPT_DONE;
 
 		ldebug("wait: %s", c->script_name);
@@ -474,7 +474,7 @@ slowcgi_sig_handler(int sig, short event, void *arg)
 void
 slowcgi_response(int fd, short events, void *arg)
 {
-	struct client		 	*c;
+	struct request		 	*c;
 	struct fcgi_record_header	*header;
 	struct fcgi_response		*resp;
 	ssize_t 			 n;
@@ -490,7 +490,7 @@ slowcgi_response(int fd, short events, void *arg)
 		if (n == -1) {
 			if (errno == EAGAIN)
 				return;
-			cleanup_client(c);
+			cleanup_request(c);
 			return;
 		}
 		resp->data_pos += n;
@@ -504,7 +504,7 @@ slowcgi_response(int fd, short events, void *arg)
 	if (TAILQ_EMPTY(&c->response_head)) {
 		if (c->script_flags == (STDOUT_DONE | STDERR_DONE |
 		    SCRIPT_DONE))
-			cleanup_client(c);
+			cleanup_request(c);
 		else
 			event_del(&c->resp_ev);
 	}
@@ -513,7 +513,7 @@ slowcgi_response(int fd, short events, void *arg)
 void
 slowcgi_request(int fd, short events, void *arg)
 {
-	struct client	*c;
+	struct request	*c;
 	size_t 		 n, parsed;
 
 	c = arg;
@@ -549,7 +549,7 @@ slowcgi_request(int fd, short events, void *arg)
 	 * at that point, which is what happens here.
 	 */
 	do {
-		parsed = parse_request(c->buf + c->buf_pos, c->buf_len, c);
+		parsed = parse_record(c->buf + c->buf_pos, c->buf_len, c);
 		c->buf_pos += parsed;
 		c->buf_len -= parsed;
 	} while (parsed > 0 && c->buf_len > 0);
@@ -561,11 +561,11 @@ slowcgi_request(int fd, short events, void *arg)
 	}
 	return;
 fail:
-	cleanup_client(c);
+	cleanup_request(c);
 }
 
 void
-parse_begin_request(uint8_t *buf, uint16_t n, struct client *c, uint16_t id)
+parse_begin_request(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 {
 	struct fcgi_begin_request_body	*b;
 	
@@ -589,7 +589,7 @@ parse_begin_request(uint8_t *buf, uint16_t n, struct client *c, uint16_t id)
 	c->env_count = 0;
 }
 void
-parse_params(uint8_t *buf, uint16_t n, struct client *c, uint16_t id)
+parse_params(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 {
 	struct env_val			*env_entry;
 	uint32_t			 name_len, val_len;
@@ -683,7 +683,7 @@ parse_params(uint8_t *buf, uint16_t n, struct client *c, uint16_t id)
 }
 
 void
-parse_stdin(uint8_t *buf, uint16_t n, struct client *c, uint16_t id)
+parse_stdin(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 {
 	struct fcgi_stdin	*node;
 
@@ -710,7 +710,7 @@ parse_stdin(uint8_t *buf, uint16_t n, struct client *c, uint16_t id)
 }
 
 size_t
-parse_request(uint8_t *buf, size_t n, struct client *c)
+parse_record(uint8_t *buf, size_t n, struct request *c)
 {
 	struct fcgi_record_header 	*h;
 
@@ -757,7 +757,7 @@ parse_request(uint8_t *buf, size_t n, struct client *c)
  * corresponding FastCGI records.
  */
 void
-exec_cgi(struct client *c)
+exec_cgi(struct request *c)
 {
 	struct env_val	*env_entry;
 	int		 s[2], s_err[2], i;
@@ -815,7 +815,7 @@ exec_cgi(struct client *c)
 }
 
 void
-create_end_request(struct client *c)
+create_end_record(struct request *c)
 {
 	struct fcgi_response		*resp;
 	struct fcgi_record_header	*header;
@@ -844,7 +844,7 @@ create_end_request(struct client *c)
 }
 
 void
-script_in(int fd, struct event *ev, struct client *c, uint8_t type)
+script_in(int fd, struct event *ev, struct request *c, uint8_t type)
 {
 	struct fcgi_response		*resp;
 	struct fcgi_record_header	*header;
@@ -892,7 +892,7 @@ script_in(int fd, struct event *ev, struct client *c, uint8_t type)
 
 		if (c->script_flags == (STDOUT_DONE | STDERR_DONE |
 		    SCRIPT_DONE)) {
-			create_end_request(c);
+			create_end_record(c);
 		}
 		event_del(ev);
 		close(fd);
@@ -902,21 +902,21 @@ script_in(int fd, struct event *ev, struct client *c, uint8_t type)
 void
 script_std_in(int fd, short events, void *arg)
 {
-	struct client *c = arg;
+	struct request *c = arg;
 	script_in(fd, &c->script_ev, c, FCGI_STDOUT);
 }
 
 void
 script_err_in(int fd, short events, void *arg)
 {
-	struct client *c = arg;
+	struct request *c = arg;
 	script_in(fd, &c->script_err_ev, c, FCGI_STDERR);
 }
 
 void
 script_out(int fd, short events, void *arg)
 {
-	struct client		*c;
+	struct request		*c;
 	struct fcgi_stdin	*node;
 	ssize_t 		 n;
 
@@ -944,12 +944,12 @@ script_out(int fd, short events, void *arg)
 }
 
 void
-cleanup_client(struct client *c)
+cleanup_request(struct request *c)
 {
 	struct fcgi_response	*resp;
 	struct fcgi_stdin	*stdin_node;
 	struct env_val		*env_entry;
-	struct clients		*ncs, *tcs;
+	struct requests		*ncs, *tcs;
 
 	evtimer_del(&c->tmo);
 	if (event_initialized(&c->ev))
@@ -984,9 +984,9 @@ cleanup_client(struct client *c)
 		TAILQ_REMOVE(&c->stdin_head, stdin_node, entry);
 		free(stdin_node);
 	}
-	SLIST_FOREACH_SAFE(ncs, &slowcgi_proc.clients, entry, tcs) {
-		if (ncs->client == c) {
-			SLIST_REMOVE(&slowcgi_proc.clients, ncs, clients,
+	SLIST_FOREACH_SAFE(ncs, &slowcgi_proc.requests, entry, tcs) {
+		if (ncs->request == c) {
+			SLIST_REMOVE(&slowcgi_proc.requests, ncs, requests,
 			    entry);
 			free(ncs);
 			break;
