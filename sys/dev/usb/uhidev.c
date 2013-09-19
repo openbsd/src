@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.44 2013/05/07 08:44:38 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.45 2013/09/19 09:54:42 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -393,7 +393,7 @@ uhidev_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 	}
 #endif
 
-	if (status == USBD_CANCELLED)
+	if (status == USBD_CANCELLED || status == USBD_IOERROR)
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
