@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.247 2013/09/15 14:35:50 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.248 2013/09/19 19:26:16 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -47,6 +47,7 @@
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  */
 
+#include <sys/stdint.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1245,17 +1246,19 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	struct sd_softc *sc;	/* disk unit to do the I/O */
 	struct disklabel *lp;	/* disk's disklabel */
 	int	unit, part;
-	int	sectorsize;	/* size of a disk sector */
-	daddr_t	nsects;		/* number of sectors in partition */
-	daddr_t	sectoff;	/* sector offset of partition */
-	int	totwrt;		/* total number of sectors left to write */
-	int	nwrt;		/* current number of sectors to write */
+	u_int32_t sectorsize;	/* size of a disk sector */
+	u_int64_t nsects;	/* number of sectors in partition */
+	u_int64_t sectoff;	/* sector offset of partition */
+	u_int64_t totwrt;	/* total number of sectors left to write */
+	u_int32_t nwrt;		/* current number of sectors to write */
 	struct scsi_xfer *xs;	/* ... convenience */
 	int rv;
 
 	/* Check if recursive dump; if so, punt. */
 	if (sddoingadump)
 		return EFAULT;
+	if (blkno < 0)
+		return EINVAL;
 
 	/* Mark as active early. */
 	sddoingadump = 1;
@@ -1283,21 +1286,26 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	sectorsize = lp->d_secsize;
 	if ((size % sectorsize) != 0)
 		return EFAULT;
+	if ((blkno % DL_BLKSPERSEC(lp)) != 0)
+		return EFAULT;
 	totwrt = size / sectorsize;
-	blkno = dbtob(blkno) / sectorsize;	/* blkno in DEV_BSIZE units */
+	blkno = DL_BLKTOSEC(lp, blkno);
 
 	nsects = DL_GETPSIZE(&lp->d_partitions[part]);
 	sectoff = DL_GETPOFFSET(&lp->d_partitions[part]);
 
 	/* Check transfer bounds against partition size. */
-	if ((blkno < 0) || ((blkno + totwrt) > nsects))
+	if ((blkno + totwrt) > nsects)
 		return EINVAL;
 
 	/* Offset block number to start of partition. */
 	blkno += sectoff;
 
 	while (totwrt > 0) {
-		nwrt = totwrt;		/* XXX */
+		if (totwrt > UINT32_MAX)
+			nwrt = UINT32_MAX;
+		else
+			nwrt = totwrt;
 
 #ifndef	SD_DUMP_NOT_TRUSTED
 		xs = scsi_xs_get(sc->sc_link, SCSI_NOSLEEP);
