@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.47 2013/09/03 09:29:35 stsp Exp $ */
+/* $OpenBSD: pms.c,v 1.48 2013/09/20 14:07:30 stsp Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -118,6 +118,7 @@ struct elantech_softc {
 #define ELANTECH_F_HAS_ROCKER		0x02
 #define ELANTECH_F_2FINGER_PACKET	0x04
 #define ELANTECH_F_HW_V1_OLD		0x08
+	int fw_version;
 
 	int min_x, min_y;
 	int max_x, max_y;
@@ -1533,6 +1534,7 @@ elantech_set_absolute_mode_v2(struct pms_softc *sc)
 {
 	int i;
 	u_char resp[3];
+	u_char reg10 = (sc->elantech->fw_version == 0x20030 ? 0x54 : 0xc4);
 
 	/* Enable absolute mode. Magic numbers from Linux driver. */
 	if (elantech_ps2_cmd(sc, ELANTECH_PS2_CUSTOM_COMMAND) ||
@@ -1540,19 +1542,12 @@ elantech_set_absolute_mode_v2(struct pms_softc *sc)
 	    elantech_ps2_cmd(sc, ELANTECH_PS2_CUSTOM_COMMAND) ||
 	    elantech_ps2_cmd(sc, 0x10) ||
 	    elantech_ps2_cmd(sc, ELANTECH_PS2_CUSTOM_COMMAND) ||
-	    elantech_ps2_cmd(sc, 0x54) ||
+	    elantech_ps2_cmd(sc, reg10) ||
 	    pms_set_scaling(sc, 1) ||
 	    elantech_ps2_cmd(sc, ELANTECH_PS2_CUSTOM_COMMAND) ||
 	    elantech_ps2_cmd(sc, ELANTECH_CMD_WRITE_REG) ||
 	    elantech_ps2_cmd(sc, ELANTECH_PS2_CUSTOM_COMMAND) ||
 	    elantech_ps2_cmd(sc, 0x11) ||
-	    elantech_ps2_cmd(sc, ELANTECH_PS2_CUSTOM_COMMAND) ||
-	    elantech_ps2_cmd(sc, 0x88) ||
-	    pms_set_scaling(sc, 1) ||
-	    elantech_ps2_cmd(sc, ELANTECH_PS2_CUSTOM_COMMAND) ||
-	    elantech_ps2_cmd(sc, ELANTECH_CMD_WRITE_REG) ||
-	    elantech_ps2_cmd(sc, ELANTECH_PS2_CUSTOM_COMMAND) ||
-	    elantech_ps2_cmd(sc, 0x21) ||
 	    elantech_ps2_cmd(sc, ELANTECH_PS2_CUSTOM_COMMAND) ||
 	    elantech_ps2_cmd(sc, 0x88) ||
 	    pms_set_scaling(sc, 1))
@@ -1642,6 +1637,8 @@ elantech_get_hwinfo_v1(struct pms_softc *sc)
 	} else
 		return (-1);
 
+	elantech->fw_version = fw_version;
+
 	if (pms_spec_cmd(sc, ELANTECH_QUE_CAPABILITIES) ||
 	    pms_get_status(sc, capabilities))
 		return (-1);
@@ -1676,6 +1673,7 @@ elantech_get_hwinfo_v2(struct pms_softc *sc)
 	if (ic_ver != 2 && ic_ver != 4)
 		return (-1);
 
+	elantech->fw_version = fw_version;
 	if (fw_version >= 0x20800)
 		elantech->flags |= ELANTECH_F_REPORTS_PRESSURE;
 
@@ -1730,6 +1728,7 @@ elantech_get_hwinfo_v3(struct pms_softc *sc)
 	if (((fw_version & 0x0f0000) >> 16) != 5)
 		return (-1);
 
+	elantech->fw_version = fw_version;
 	elantech->flags |= ELANTECH_F_REPORTS_PRESSURE;
 
 	if (elantech_set_absolute_mode_v3(sc))
@@ -1759,6 +1758,7 @@ elantech_get_hwinfo_v4(struct pms_softc *sc)
 	if (((fw_version & 0x0f0000) >> 16) != 6)
 		return (-1);
 
+	elantech->fw_version = fw_version;
 	elantech->flags |= ELANTECH_F_REPORTS_PRESSURE;
 
 	if (elantech_set_absolute_mode_v4(sc))
@@ -1835,7 +1835,8 @@ pms_enable_elantech_v1(struct pms_softc *sc)
 			goto err;
 		}
 
-		printf("%s: Elantech Touchpad, version %d\n", DEVNAME(sc), 1);
+		printf("%s: Elantech Touchpad, version %d, firmware 0x%x\n",
+		    DEVNAME(sc), 1, sc->elantech->fw_version);
 	} else if (elantech_set_absolute_mode_v1(sc))
 		goto err;
 
@@ -1873,7 +1874,8 @@ pms_enable_elantech_v2(struct pms_softc *sc)
 			goto err;
 		}
 
-		printf("%s: Elantech Touchpad, version %d\n", DEVNAME(sc), 2);
+		printf("%s: Elantech Touchpad, version %d, firmware 0x%x\n",
+		    DEVNAME(sc), 2, sc->elantech->fw_version);
 	} else if (elantech_set_absolute_mode_v2(sc))
 		goto err;
 
@@ -1908,7 +1910,8 @@ pms_enable_elantech_v3(struct pms_softc *sc)
 			goto err;
 		}
 
-		printf("%s: Elantech Touchpad, version %d\n", DEVNAME(sc), 3);
+		printf("%s: Elantech Touchpad, version %d, firmware 0x%x\n",
+		    DEVNAME(sc), 3, sc->elantech->fw_version);
 	} else if (elantech_set_absolute_mode_v3(sc))
 		goto err;
 
@@ -1943,7 +1946,8 @@ pms_enable_elantech_v4(struct pms_softc *sc)
 			goto err;
 		}
 
-		printf("%s: Elantech Clickpad, version %d\n", DEVNAME(sc), 4);
+		printf("%s: Elantech Clickpad, version %d, firmware 0x%x\n",
+		    DEVNAME(sc), 4, sc->elantech->fw_version);
 	} else if (elantech_set_absolute_mode_v4(sc))
 		goto err;
 
