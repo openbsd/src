@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.33 2013/06/11 16:42:13 deraadt Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.34 2013/09/20 08:08:45 tedu Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -387,10 +387,6 @@ sr_aoe_rw(struct sr_workunit *wu)
 	int			rv, i;
 	const int		aoe_frags = 2;
 
-
-	printf("%s: sr_aoe_rw 0x%02x\n", DEVNAME(sd->sd_sc),
-	    xs->cmd->opcode);
-	return (1);
 
 	DNPRINTF(SR_D_DIS, "%s: sr_aoe_rw 0x%02x\n", DEVNAME(sd->sd_sc),
 	    xs->cmd->opcode);
