@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.9 2013/04/20 23:32:32 yasuoka Exp $ */
+/*	$OpenBSD: chap.c,v 1.10 2013/09/20 07:29:19 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -36,7 +36,7 @@
  * </ul></p>
  */
 /* RFC 1994, 2433 */
-/* $Id: chap.c,v 1.9 2013/04/20 23:32:32 yasuoka Exp $ */
+/* $Id: chap.c,v 1.10 2013/09/20 07:29:19 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -563,7 +563,7 @@ md5chap_authenticate(chap *_this, int id, char *username, u_char *challenge,
 	passlen = strlen(password);
 	MD5Init(&md5ctx);
 	MD5Update(&md5ctx, buf, passlen + 1);
-	MD5Update(&md5ctx, challenge, 16);
+	MD5Update(&md5ctx, challenge, lchallenge);
 	MD5Final(digest, &md5ctx);
 
 	if (memcmp(response, digest, 16) == 0) {
@@ -763,7 +763,7 @@ chap_radius_authenticate(chap *_this, int id, char *username,
 		    RADIUS_TYPE_CHAP_PASSWORD, md5response, 17) != 0)
 			goto fail;
 		if (radius_put_raw_attr(radpkt,
-		    RADIUS_TYPE_CHAP_CHALLENGE, challenge, 16) != 0)
+		    RADIUS_TYPE_CHAP_CHALLENGE, challenge, lchallenge) != 0)
 			goto fail;
 		break;
 	    }
