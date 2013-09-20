@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.42 2013/06/08 14:24:38 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.43 2013/09/20 08:11:55 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -850,19 +850,22 @@ pipex_timer(void *ignored_arg)
 
 		case PIPEX_STATE_CLOSE_WAIT:
 		case PIPEX_STATE_CLOSE_WAIT2:
+			/* Wait PIPEXDSESSION from userland */
 			session->stat.idle_time++;
 			if (session->stat.idle_time < PIPEX_CLOSE_TIMEOUT)
 				continue;
+
+			if (session->state == PIPEX_STATE_CLOSE_WAIT)
+				LIST_REMOVE(session, state_list);
 			session->state = PIPEX_STATE_CLOSED;
 			/* FALLTHROUGH */
+
 		case PIPEX_STATE_CLOSED:
 			/*
-			 * if mbuf which queued pipexinq has
-			 * session reference pointer, the
-			 * referenced session must not destroy.
+			 * mbuf queued in pipexinq or pipexoutq may have a
+			 * refererce to this session.
 			 */
-			if (!IF_IS_EMPTY(&pipexinq) ||
-			    !IF_IS_EMPTY(&pipexoutq))
+			if (!IF_IS_EMPTY(&pipexinq) || !IF_IS_EMPTY(&pipexoutq))
 				continue;
 
 			pipex_destroy_session(session);
