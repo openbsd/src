@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_call.c,v 1.14 2012/09/18 13:14:08 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_call.c,v 1.15 2013/09/20 07:26:23 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: l2tp_call.c,v 1.14 2012/09/18 13:14:08 yasuoka Exp $ */
+/* $Id: l2tp_call.c,v 1.15 2013/09/20 07:26:23 yasuoka Exp $ */
 /**@file L2TP LNS call */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -525,39 +525,44 @@ l2tp_call_recv_ICCN(l2tp_call *_this, u_char *pkt, int pktlen,
 			_this->seq_required = 1;
 			_this->use_seq = 1;
 			continue;
-#ifndef	L2TPD_TEST
 	    /*
 	     * AVP's for Proxy-LCP and Proxy-Authen
 	     */
 		case L2TP_AVP_TYPE_LAST_SENT_LCP_CONFREQ:
+			AVP_MAXLEN_CHECK(avp, sizeof(dpi->last_sent_lcp.data));
 			memcpy(dpi->last_sent_lcp.data, avp->attr_value,
 			    avp_attr_length(avp));
 			dpi->last_sent_lcp.ldata = avp_attr_length(avp);
 			break;
 		case L2TP_AVP_TYPE_LAST_RECV_LCP_CONFREQ:
+			AVP_MAXLEN_CHECK(avp, sizeof(dpi->last_recv_lcp.data));
 			memcpy(dpi->last_recv_lcp.data, avp->attr_value,
 			    avp_attr_length(avp));
 			dpi->last_recv_lcp.ldata = avp_attr_length(avp);
 			break;
 		case L2TP_AVP_TYPE_PROXY_AUTHEN_CHALLENGE:
+			AVP_MAXLEN_CHECK(avp, sizeof(dpi->auth_chall));
 			memcpy(dpi->auth_chall, avp->attr_value,
-			    MIN(avp_attr_length(avp), sizeof(dpi->auth_chall)));
+			    avp_attr_length(avp));
 			dpi->lauth_chall = avp_attr_length(avp);
 			break;
 		case L2TP_AVP_TYPE_PROXY_AUTHEN_ID:
+			AVP_SIZE_CHECK(avp, ==, 8);
 			dpi->auth_id = avp_get_val16(avp);
 			break;
 		case L2TP_AVP_TYPE_PROXY_AUTHEN_NAME:
+			AVP_MAXLEN_CHECK(avp, sizeof(dpi->username) - 1);
 			memcpy(dpi->username, avp->attr_value,
-			    MIN(sizeof(dpi->username) - 1,
-			    avp_attr_length(avp)));
+			    avp_attr_length(avp));
 			break;
 		case L2TP_AVP_TYPE_PROXY_AUTHEN_RESPONSE:
+			AVP_MAXLEN_CHECK(avp, sizeof(dpi->auth_resp));
 			memcpy(dpi->auth_resp, avp->attr_value,
-			    MIN(avp_attr_length(avp), sizeof(dpi->auth_resp)));
+			    avp_attr_length(avp));
 			dpi->lauth_resp = avp_attr_length(avp);
 			break;
 		case L2TP_AVP_TYPE_PROXY_AUTHEN_TYPE:
+			AVP_SIZE_CHECK(avp, ==, 8);
 			switch (avp_get_val16(avp)) {
 			default:
 				l2tp_call_log(_this, LOG_WARNING,
@@ -578,7 +583,6 @@ l2tp_call_recv_ICCN(l2tp_call *_this, u_char *pkt, int pktlen,
 				break;
 			}
 			break;
-#endif
 		default:
 			if (avp->is_mandatory != 0) {
 				l2tp_call_log(_this, LOG_WARNING,

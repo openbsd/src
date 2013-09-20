@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_subr.h,v 1.5 2012/05/08 13:15:11 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_subr.h,v 1.6 2013/09/20 07:26:23 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 #ifndef	L2TP_SUBR_H
 #define	L2TP_SUBR_H	1
-/* $Id: l2tp_subr.h,v 1.5 2012/05/08 13:15:11 yasuoka Exp $ */
+/* $Id: l2tp_subr.h,v 1.6 2013/09/20 07:26:23 yasuoka Exp $ */
 
 /**
  * structure of L2TP Attribute Value Pair (AVP) packet header
@@ -94,17 +94,29 @@ short_hash(const void *v, int sz)
 
 /*
  * macro to check AVP size.
- * Prepare 1) char emes[256] for error message, 2) size_check_failed label
+ * Prepare 1) char array `emes' for error message, 2) size_check_failed label
  * before use this macro.
  */
-#define	AVP_SIZE_CHECK(avp, op, exp)					\
-	    if (!((avp)->length op (exp))) {				\
-		    snprintf(emes, sizeof(emes),			\
-			"invalid packet size %s %d" #op "%d)",		\
-			avp_attr_type_string((avp)->attr_type),		\
-			(avp)->length, (exp));				\
-		    goto size_check_failed;				\
-	    }
+#define	AVP_SIZE_CHECK(_avp, _op, _exp)					\
+	do {								\
+		if (!((_avp)->length _op (_exp))) {			\
+			snprintf(emes, sizeof(emes),			\
+			    "invalid packet size %s %d" #_op "%d)",	\
+			    avp_attr_type_string((_avp)->attr_type),	\
+			    (_avp)->length, (_exp));			\
+			goto size_check_failed;				\
+		}							\
+	} while (/* CONSTCOND */0)
+#define AVP_MAXLEN_CHECK(_avp, _maxlen)					\
+	do {								\
+		if ((_avp)->length > (_maxlen) + 6) {			\
+			snprintf(emes, sizeof(emes),			\
+			    "Attribute value is too long %s %d > %d",	\
+			    avp_attr_type_string((_avp)->attr_type),	\
+			    (_avp)->length - 6, (int)(_maxlen));	\
+			goto size_check_failed;				\
+		}							\
+	} while (/* CONSTCOND */0)
 
 #ifdef __cplusplus
 extern "C" {
