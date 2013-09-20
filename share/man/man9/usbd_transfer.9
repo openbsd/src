@@ -1,0 +1,105 @@
+.\" $OpenBSD: usbd_transfer.9,v 1.1 2013/09/20 15:34:52 mpi Exp $
+.\"
+.\" Copyright (c) 2013 Martin Pieuchot
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: September 20 2013 $
+.Dt USBD_TRANSFER 9
+.Os
+.Sh NAME
+.Nm usbd_setup_xfer , usbd_transfer
+.Nd submit USB data transfers
+.Sh SYNOPSIS
+.In dev/usb/usb.h
+.In dev/usb/usbdi.h
+.Ft void
+.Fn usbd_setup_xfer "struct usbd_xfer *xfer" "struct usbd_pipe *pipe" \
+ "void *priv" "void *buffer" "uint32_t length" "uint16_t flags" \
+ "uint32_t timeout" "usbd_callback callback"
+.Ft usbd_status
+.Fn usbd_transfer "struct usbd_xfer *xfer"
+.Sh DESCRIPTION
+These functions provide a controller independent mechanism to perform USB
+data transfers.
+.Pp
+The function
+.Fn usbd_setup_xfer
+is used to initialize the structure pointed to by
+.Fa xfer ,
+describing an individual transfer to submit.
+It takes the following arguments:
+.Bl -tag -width callback
+.It Fa xfer
+A pointer to an existing structure describing a transfer.
+.It Fa pipe
+A pointer to a pipe associated with the endpoint for the transfer.
+.It Fa priv
+A pointer to a private cookie untouched by the USB stack for reuse in the
+.Fa callback .
+.It Fa buffer
+A pointer to the data buffer.
+.It Fa length
+The total length of the data to read or write.
+.It Fa flags
+The characteristics of the transfer:
+.Bl -tag -width xxx -offset indent
+.It Dv USBD_NO_COPY
+Do not copy data between
+.Fa buffer
+and the DMA buffer.
+.It Dv USBD_SYNCHRONOUS
+Causes
+.Fn usbd_transfer
+to sleep until the I/O transfer is complete or the
+.Fa timeout
+expires.
+.It Dv USBD_SHORT_XFER_OK
+Do not report short reads, when the length of the data read is lower than
+.Fa length ,
+as errors.
+.It Dv USBD_FORCE_SHORT_XFER
+Submit a supplementary zero length packet at the end of the data if
+.Fa length
+is a multiple of the endpoint's wMaxPacketSize.
+.It Dv USBD_CATCH
+Used in conjunction with the
+.Dv USBD_SYNCHRONOUS
+flag to pass the
+.Dv PCATCH
+flag to
+.Xr tsleep 9
+in order to check for signals before and after sleeping.
+.El
+.It Fa timeout
+Timeout of the transfer in milliseconds.
+.It Fa callback
+A routine invoked upon completion of the transfer whether successful or not.
+.El
+.Pp
+The function
+.Fn usbd_transfer
+is used to submit the USB transfer described by
+.Fa xfer
+to the corresponding
+.Xr usb 4
+host controller to perform I/O with devices.
+.Sh CODE REFERENCES
+These functions are implemented in the file
+.Pa sys/dev/usb/usbdi.c .
+.Sh SEE ALSO
+.Xr ehci 4 ,
+.Xr ohci 4 ,
+.Xr uhci 4 ,
+.Xr usb 4 ,
+.Xr tsleep 9

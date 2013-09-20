@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.45 2013/09/19 09:54:42 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.46 2013/09/20 15:34:50 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -627,6 +627,7 @@ uhidev_get_report(struct uhidev *scd, int type, void *data, int len)
 usbd_status
 uhidev_write(struct uhidev_softc *sc, void *data, int len)
 {
+	usbd_status error;
 
 	DPRINTF(("uhidev_write: data=%p, len=%d\n", data, len));
 
@@ -645,8 +646,13 @@ uhidev_write(struct uhidev_softc *sc, void *data, int len)
 		DPRINTF(("\n"));
 	}
 #endif
-	return usbd_intr_transfer(sc->sc_owxfer, sc->sc_opipe, 0,
-	    USBD_NO_TIMEOUT, data, &len, "uhidevwi");
+	usbd_setup_xfer(sc->sc_owxfer, sc->sc_opipe, 0, data, len,
+	    USBD_SYNCHRONOUS | USBD_CATCH, 0, NULL);
+	error = usbd_transfer(sc->sc_owxfer);
+	if (error)
+		usbd_clear_endpoint_stall(sc->sc_opipe);
+
+	return (error);
 }
 
 int

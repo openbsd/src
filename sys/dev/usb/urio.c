@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.42 2013/05/17 09:14:08 mpi Exp $	*/
+/*	$OpenBSD: urio.c,v 1.43 2013/09/20 15:34:51 mpi Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -304,7 +304,7 @@ urioread(dev_t dev, struct uio *uio, int flag)
 	struct usbd_xfer *xfer;
 	usbd_status err;
 	void *bufp;
-	u_int32_t n, tn;
+	u_int32_t n;
 	int error = 0;
 
 	sc = urio_cd.cd_devs[URIOUNIT(dev)];
@@ -327,23 +327,22 @@ urioread(dev_t dev, struct uio *uio, int flag)
 
 	while ((n = min(URIO_BSIZE, uio->uio_resid)) != 0) {
 		DPRINTFN(1, ("urioread: start transfer %d bytes\n", n));
-		tn = n;
-		err = usbd_bulk_transfer(xfer, sc->sc_in_pipe, USBD_NO_COPY,
-			  URIO_RW_TIMEOUT, bufp, &tn, "uriors");
+		usbd_setup_xfer(xfer, sc->sc_in_pipe, 0, bufp, n,
+		    USBD_NO_COPY | USBD_SYNCHRONOUS, URIO_RW_TIMEOUT, NULL);
+		err = usbd_transfer(xfer);
 		if (err) {
-			if (err == USBD_INTERRUPTED)
-				error = EINTR;
-			else if (err == USBD_TIMEOUT)
+			usbd_clear_endpoint_stall(sc->sc_in_pipe);
+			if (err == USBD_TIMEOUT)
 				error = ETIMEDOUT;
 			else
 				error = EIO;
 			break;
 		}
 
-		DPRINTFN(1, ("urioread: got %d bytes\n", tn));
+		DPRINTFN(1, ("urioread: got %d bytes\n", n));
 
-		error = uiomove(bufp, tn, uio);
-		if (error || tn < n)
+		error = uiomove(bufp, n, uio);
+		if (error)
 			break;
 	}
 	usbd_free_xfer(xfer);
@@ -390,13 +389,13 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 
 		DPRINTFN(1, ("uriowrite: transfer %d bytes\n", n));
 
-		err = usbd_bulk_transfer(xfer, sc->sc_out_pipe, USBD_NO_COPY,
-			  URIO_RW_TIMEOUT, bufp, &n, "uriowr");
+		usbd_setup_xfer(xfer, sc->sc_out_pipe, 0, bufp, n,
+		    USBD_NO_COPY | USBD_SYNCHRONOUS, URIO_RW_TIMEOUT, NULL);
+		err = usbd_transfer(xfer);
 		DPRINTFN(2, ("uriowrite: err=%d\n", err));
 		if (err) {
-			if (err == USBD_INTERRUPTED)
-				error = EINTR;
-			else if (err == USBD_TIMEOUT)
+			usbd_clear_endpoint_stall(sc->sc_out_pipe);
+			if (err == USBD_TIMEOUT)
 				error = ETIMEDOUT;
 			else
 				error = EIO;

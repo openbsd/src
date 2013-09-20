@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.58 2013/09/06 08:29:58 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.59 2013/09/20 15:34:51 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -294,7 +294,7 @@ usbd_transfer(struct usbd_xfer *xfer)
 	struct usb_dma *dmap = &xfer->dmabuf;
 	usbd_status err;
 	u_int size;
-	int s;
+	int flags, s;
 
 	if (usbd_is_dying(pipe->device))
 		return (USBD_IOERROR);
@@ -352,7 +352,16 @@ usbd_transfer(struct usbd_xfer *xfer)
 	while (!xfer->done) {
 		if (pipe->device->bus->use_polling)
 			panic("usbd_transfer: not done");
-		tsleep(xfer, PRIBIO, "usbsyn", 0);
+		flags = PRIBIO | (xfer->flags & USBD_CATCH ? PCATCH : 0);
+
+		err = tsleep(xfer, flags, "usbsyn", 0);
+		if (err && !xfer->done) {
+			usbd_abort_pipe(pipe);
+			if (err == EINTR)
+				xfer->status = USBD_INTERRUPTED;
+			else
+				xfer->status = USBD_TIMEOUT;
+		}
 	}
 	splx(s);
 	return (xfer->status);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.31 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.32 2013/09/20 15:34:51 mpi Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -394,90 +394,6 @@ usbd_get_config(struct usbd_device *dev, u_int8_t *conf)
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, 1);
 	return (usbd_do_request(dev, &req, conf));
-}
-
-void usbd_bulk_transfer_cb(struct usbd_xfer *xfer, void *priv,
-    usbd_status status);
-void
-usbd_bulk_transfer_cb(struct usbd_xfer *xfer, void *priv,
-    usbd_status status)
-{
-	wakeup(xfer);
-}
-
-usbd_status
-usbd_bulk_transfer(struct usbd_xfer *xfer, struct usbd_pipe *pipe,
-    u_int16_t flags, u_int32_t timeout, void *buf, u_int32_t *size, char *lbl)
-{
-	usbd_status err;
-	int s, error, pri;
-
-	usbd_setup_xfer(xfer, pipe, 0, buf, *size, flags, timeout,
-	    usbd_bulk_transfer_cb);
-	DPRINTFN(1, ("usbd_bulk_transfer: start transfer %d bytes\n", *size));
-	s = splusb();		/* don't want callback until tsleep() */
-	err = usbd_transfer(xfer);
-	if (err != USBD_IN_PROGRESS) {
-		splx(s);
-		return (err);
-	}
-	pri = timeout == 0 ? (PZERO | PCATCH) : PZERO;
-	error = tsleep((caddr_t)xfer, pri, lbl, 0);
-	splx(s);
-	if (error) {
-		DPRINTF(("usbd_bulk_transfer: tsleep=%d\n", error));
-		usbd_abort_pipe(pipe);
-		return (USBD_INTERRUPTED);
-	}
-	usbd_get_xfer_status(xfer, NULL, NULL, size, &err);
-	DPRINTFN(1,("usbd_bulk_transfer: transferred %d\n", *size));
-	if (err) {
-		DPRINTF(("usbd_bulk_transfer: error=%d\n", err));
-		usbd_clear_endpoint_stall(pipe);
-	}
-	return (err);
-}
-
-void usbd_intr_transfer_cb(struct usbd_xfer *xfer, void *priv,
-    usbd_status status);
-void
-usbd_intr_transfer_cb(struct usbd_xfer *xfer, void *priv,
-    usbd_status status)
-{
-	wakeup(xfer);
-}
-
-usbd_status
-usbd_intr_transfer(struct usbd_xfer *xfer, struct usbd_pipe *pipe,
-    u_int16_t flags, u_int32_t timeout, void *buf, u_int32_t *size, char *lbl)
-{
-	usbd_status err;
-	int s, error, pri;
-
-	usbd_setup_xfer(xfer, pipe, 0, buf, *size, flags, timeout,
-	    usbd_intr_transfer_cb);
-	DPRINTFN(1, ("usbd_intr_transfer: start transfer %d bytes\n", *size));
-	s = splusb();		/* don't want callback until tsleep() */
-	err = usbd_transfer(xfer);
-	if (err != USBD_IN_PROGRESS) {
-		splx(s);
-		return (err);
-	}
-	pri = timeout == 0 ? (PZERO | PCATCH) : PZERO;
-	error = tsleep(xfer, pri, lbl, 0);
-	splx(s);
-	if (error) {
-		DPRINTF(("usbd_intr_transfer: tsleep=%d\n", error));
-		usbd_abort_pipe(pipe);
-		return (USBD_INTERRUPTED);
-	}
-	usbd_get_xfer_status(xfer, NULL, NULL, size, &err);
-	DPRINTFN(1,("usbd_intr_transfer: transferred %d\n", *size));
-	if (err) {
-		DPRINTF(("usbd_intr_transfer: error=%d\n", err));
-		usbd_clear_endpoint_stall(pipe);
-	}
-	return (err);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.91 2013/08/02 09:00:49 mikeb Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.92 2013/09/20 15:34:51 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -768,11 +768,14 @@ umsm_umass_changemode(struct umsm_softc *sc)
 		else {
 			n = UMASS_BBB_CBW_SIZE;
 			memcpy(bufp, &cbw, UMASS_BBB_CBW_SIZE);
-			err = usbd_bulk_transfer(xfer, cmdpipe, USBD_NO_COPY,
-			    USBD_NO_TIMEOUT, bufp, &n, "umsm");
-			if (err)
+			usbd_setup_xfer(xfer, cmdpipe, 0, bufp, n,
+			    USBD_NO_COPY | USBD_SYNCHRONOUS, 0, NULL);
+			err = usbd_transfer(xfer);
+			if (err) {
+				usbd_clear_endpoint_stall(cmdpipe);
 				DPRINTF(("%s: send error:%s", __func__,
 				    usbd_errstr(err)));
+			}
 		}
 		usbd_close_pipe(cmdpipe);
 		usbd_free_buffer(xfer);

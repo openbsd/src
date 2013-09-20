@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.h,v 1.21 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: usbdi_util.h,v 1.22 2013/09/20 15:34:51 mpi Exp $ */
 /*	$NetBSD: usbdi_util.h,v 1.28 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.h,v 1.9 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -68,14 +68,6 @@ void		usbd_delay_ms(struct usbd_device *, u_int);
 usbd_status	usbd_set_config_no(struct usbd_device *dev, int no, int msg);
 usbd_status	usbd_set_config_index(struct usbd_device *dev, int index,
 		    int msg);
-
-usbd_status	usbd_bulk_transfer(struct usbd_xfer *xfer,
-		    struct usbd_pipe *pipe, u_int16_t flags, u_int32_t timeout,
-		    void *buf, u_int32_t *size, char *lbl);
-
-usbd_status	usbd_intr_transfer(struct usbd_xfer *xfer,
-		    struct usbd_pipe *pipe, u_int16_t flags, u_int32_t timeout,
-		    void *buf, u_int32_t *size, char *lbl);
 
 void usb_detach_wait(struct device *);
 void usb_detach_wakeup(struct device *);

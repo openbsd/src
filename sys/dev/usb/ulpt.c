@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.43 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.44 2013/09/20 15:34:51 mpi Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -636,9 +636,11 @@ ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags)
 		if (error)
 			break;
 		DPRINTFN(1, ("ulptwrite: transfer %d bytes\n", n));
-		err = usbd_bulk_transfer(xfer, sc->sc_out_pipe, USBD_NO_COPY,
-			  USBD_NO_TIMEOUT, bufp, &n, "ulptwr");
+		usbd_setup_xfer(xfer, sc->sc_out_pipe, 0, bufp, n,
+		    USBD_NO_COPY | USBD_SYNCHRONOUS | USBD_CATCH, 0, NULL);
+		err = usbd_transfer(xfer);
 		if (err) {
+			usbd_clear_endpoint_stall(sc->sc_out_pipe);
 			DPRINTF(("ulptwrite: error=%d\n", err));
 			error = EIO;
 			break;
@@ -704,9 +706,11 @@ ulpt_ucode_loader_hp(struct ulpt_softc *sc)
 	while (remain > 0) {
 		len = min(remain, ULPT_BSIZE);
 		memcpy(bufp, &ucode[offset], len);
-		error = usbd_bulk_transfer(xfer, sc->sc_out_pipe, USBD_NO_COPY,
-			  USBD_NO_TIMEOUT, bufp, &len, "ulptwr");
+		usbd_setup_xfer(xfer, sc->sc_out_pipe, 0, bufp, len,
+		    USBD_NO_COPY | USBD_SYNCHRONOUS, 0, NULL);
+		error = usbd_transfer(xfer);
 		if (error != USBD_NORMAL_COMPLETION) {
+			usbd_clear_endpoint_stall(sc->sc_out_pipe);
 			printf("%s: ucode upload error=%s!\n",
 			    sc->sc_dev.dv_xname, usbd_errstr(error));
 			break;
