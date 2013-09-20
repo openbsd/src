@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.97 2013/04/17 16:22:24 florian Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.98 2013/09/20 23:51:44 fgsch Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -365,7 +365,6 @@ nfs_mountroot(void)
 struct mount *
 nfs_mount_diskless(struct nfs_dlmount *ndmntp, char *mntname, int mntflag)
 {
-	struct nfs_args args;
 	struct mount *mp;
 	struct mbuf *m;
 	int error;
@@ -374,35 +373,13 @@ nfs_mount_diskless(struct nfs_dlmount *ndmntp, char *mntname, int mntflag)
 		panic("nfs_mount_diskless: vfs_rootmountalloc failed");
 	mp->mnt_flag |= mntflag;
 
-	/* Initialize mount args. */
-	bzero((caddr_t) &args, sizeof(args));
-	args.addr     = (struct sockaddr *)&ndmntp->ndm_saddr;
-	args.addrlen  = args.addr->sa_len;
-	args.sotype   = SOCK_DGRAM;
-	args.fh	      = ndmntp->ndm_fh;
-	args.fhsize   = NFSX_V2FH;
-	args.hostname = ndmntp->ndm_host;
-
-#ifdef	NFS_BOOT_OPTIONS
-	args.flags    |= NFS_BOOT_OPTIONS;
-#endif
-#ifdef	NFS_BOOT_RWSIZE
-	/*
-	 * Reduce rsize,wsize for interfaces that consistently
-	 * drop fragments of long UDP messages.	 (i.e. wd8003).
-	 * You can always change these later via remount.
-	 */
-	args.flags   |= NFSMNT_WSIZE | NFSMNT_RSIZE;
-	args.wsize    = NFS_BOOT_RWSIZE;
-	args.rsize    = NFS_BOOT_RWSIZE;
-#endif
-
 	/* Get mbuf for server sockaddr. */
 	m = m_get(M_WAIT, MT_SONAME);
-	bcopy((caddr_t)args.addr, mtod(m, caddr_t),
-	    (m->m_len = args.addr->sa_len));
+	bcopy((caddr_t)ndmntp->ndm_args.addr, mtod(m, caddr_t),
+	    (m->m_len = ndmntp->ndm_args.addr->sa_len));
 
-	error = mountnfs(&args, mp, m, mntname, args.hostname);
+	error = mountnfs(&ndmntp->ndm_args, mp, m, mntname,
+	    ndmntp->ndm_args.hostname);
 	if (error)
 		panic("nfs_mountroot: mount %s failed: %d", mntname, error);
 
