@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_subr.c,v 1.3 2013/08/10 00:30:43 syl Exp $ */
+/* $OpenBSD: fuse_subr.c,v 1.4 2013/09/21 22:21:14 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -51,8 +51,9 @@ set_vn(struct fuse *f, struct fuse_vnode *v)
 	struct fuse_vn_head *vn_head;
 	struct fuse_vnode *vn;
 
-	DPRINTF("%s: create or update vnode %i%i = %s\n", __func__, v->ino,
-	    v->parent, v->path);
+	DPRINTF("%s: create or update vnode %llu@%llu = %s\n", __func__,
+	    (unsigned long long)v->ino, (unsigned long long)v->parent,
+	    v->path);
 
 	if (tree_set(&f->vnode_tree, v->ino, v) == NULL)
 		return (0);
