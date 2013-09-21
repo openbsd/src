@@ -1,4 +1,4 @@
-.\"	$OpenBSD: a2coff.8,v 1.2 2007/05/31 19:20:02 jmc Exp $
+.\"	$OpenBSD: a2coff.8,v 1.3 2013/09/21 21:00:02 miod Exp $
 .\"
 .\" Copyright (c) 2006, Miodrag Vallat
 .\"
@@ -23,12 +23,12 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 21 2013 $
 .Dt A2COFF 8 aviion
 .Os
 .Sh NAME
 .Nm a2coff
-.Nd convert standalone a.out binaries to 88KBCS COFF format
+.Nd convert standalone a.out or ELF binaries to 88KBCS COFF format
 .Sh SYNOPSIS
 .Nm a2coff
 .Ar source
@@ -37,9 +37,10 @@
 .Nm a2coff
 converts standalone binaries, such as kernels or boot blocks, from
 .Xr a.out 5
-format to COFF format, suitable for booting from the
+or ELF format to COFF format, suitable for booting from the
 .Tn Data General
 .Tn AViiON
 PROMs.
 .Sh SEE ALSO
-.Xr a.out 5
+.Xr a.out 5 ,
+.Xr elf 5
