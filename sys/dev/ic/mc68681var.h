@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc68681var.h,v 1.1 2013/06/11 21:03:39 miod Exp $	*/
+/*	$OpenBSD: mc68681var.h,v 1.2 2013/09/21 20:05:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -23,9 +23,9 @@
 
 /* speed lookup table entry */
 struct mc68681_s {
-	int			speed;
-	uint8_t			brg_sets; /* bitmask of compatible sets */
-	uint8_t			csr;
+	int			 speed;
+	uint8_t			 brg_sets; /* bitmask of compatible sets */
+	uint8_t			 csr;
 };
 
 /* per-line state */
@@ -37,35 +37,37 @@ struct mc68681_line {
 
 /* per-line hardware configuration */
 struct mc68681_hw {
-	uint8_t			dtr_op;
-	uint8_t			rts_op;
-	uint8_t			dcd_ip;
-	uint8_t			dcd_active_low;
+	uint8_t			 dtr_op;
+	uint8_t			 rts_op;
+	uint8_t			 dcd_ip;
+	uint8_t			 dcd_active_low;
 };
 
 /* write-only chip registers values */
 struct mc68681_sw_reg {
-	uint8_t			mr1[N68681PORTS];
-	uint8_t			mr2[N68681PORTS];
-	uint8_t			cr[N68681PORTS];
-	uint8_t			acr;
-	uint8_t			imr;
-	uint8_t			oprs;
-	uint8_t			opcr;
+	uint8_t			 mr1[N68681PORTS];
+	uint8_t			 mr2[N68681PORTS];
+	uint8_t			 cr[N68681PORTS];
+	uint8_t			 acr;
+	uint8_t			 imr;
+	uint8_t			 oprs;
+	uint8_t			 opcr;
 	int			*ct;	/* timer limit in timer mode */
 };
 
 struct mc68681_softc {
-	struct device		sc_dev;
+	struct device		 sc_dev;
 
-	struct mc68681_sw_reg	sc_sw_reg;
-	struct mc68681_hw	sc_hw[N68681PORTS];
-	struct mc68681_line	sc_line[N68681PORTS];
+	struct mc68681_sw_reg	*sc_sw_reg;
+	struct mc68681_hw	 sc_hw[N68681PORTS];
+	struct mc68681_line	 sc_line[N68681PORTS];
 
-	int			sc_consport;
+	int			 sc_consport;
 
 	uint8_t			(*sc_read)(void *, uint);
 	void			(*sc_write)(void *, uint, uint8_t);
+
+	struct mc68681_sw_reg	 sc_sw_reg_store;
 };
 
 void	mc68681_common_attach(struct mc68681_softc *);

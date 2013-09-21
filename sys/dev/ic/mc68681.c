@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc68681.c,v 1.1 2013/06/11 21:03:39 miod Exp $	*/
+/*	$OpenBSD: mc68681.c,v 1.2 2013/09/21 20:05:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -83,20 +83,20 @@ mc68681_common_attach(struct mc68681_softc *sc)
 	sc->sc_line[A_PORT].speed = sc->sc_line[B_PORT].speed =
 	    mc68681_speed(B9600);
 
-	sc->sc_sw_reg.mr1[A_PORT] = sc->sc_sw_reg.mr1[B_PORT] =
+	sc->sc_sw_reg->mr1[A_PORT] = sc->sc_sw_reg->mr1[B_PORT] =
 	    DART_MR1_RX_IRQ_RXRDY | DART_MR1_ERROR_CHAR |
 	    DART_MR1_PARITY_NONE | DART_MR1_RX_RTR | DART_MR1_BPC_8;
-	sc->sc_sw_reg.mr2[A_PORT] = sc->sc_sw_reg.mr2[B_PORT] =
+	sc->sc_sw_reg->mr2[A_PORT] = sc->sc_sw_reg->mr2[B_PORT] =
 	    DART_MR2_MODE_NORMAL | /* DART_MR2_TX_CTS | */ DART_MR2_STOP_1;
-	sc->sc_sw_reg.cr[A_PORT] = sc->sc_sw_reg.cr[B_PORT] =
+	sc->sc_sw_reg->cr[A_PORT] = sc->sc_sw_reg->cr[B_PORT] =
 	    DART_CR_TX_ENABLE | DART_CR_RX_ENABLE;
 
-	sc->sc_sw_reg.acr &= ~DART_ACR_BRG_SET_MASK;
-	sc->sc_sw_reg.acr |= DART_ACR_BRG_SET_2;
+	sc->sc_sw_reg->acr &= ~DART_ACR_BRG_SET_MASK;
+	sc->sc_sw_reg->acr |= DART_ACR_BRG_SET_2;
 
 	/* Start out with Tx and RX interrupts disabled, but enable input port
 	   change interrupt */
-	sc->sc_sw_reg.imr |= DART_ISR_IP_CHANGE;
+	sc->sc_sw_reg->imr |= DART_ISR_IP_CHANGE;
 
 	if (sc->sc_consport >= 0) {
 		printf(": console");
@@ -105,7 +105,7 @@ mc68681_common_attach(struct mc68681_softc *sc)
 
 	mc68681_set_acr(sc);
 
-	(*sc->sc_write)(sc, DART_IMR, sc->sc_sw_reg.imr);
+	(*sc->sc_write)(sc, DART_IMR, sc->sc_sw_reg->imr);
 
 	printf("\n");
 }
@@ -117,14 +117,14 @@ mc68681_set_acr(struct mc68681_softc *sc)
 {
 	uint8_t acr;
 
-	acr = sc->sc_sw_reg.acr;
+	acr = sc->sc_sw_reg->acr;
 	/*
 	 * If MD attachment configures a timer, ignore this until the timer
 	 * limit has been correctly set up. This allows this function to be
 	 * invoked at attach time, before cpu_initclocks() gets a chance to
 	 * run.
 	 */
-	if (ISSET(acr, DART_ACR_CT_TIMER_BIT) && *sc->sc_sw_reg.ct == 0)
+	if (ISSET(acr, DART_ACR_CT_TIMER_BIT) && *sc->sc_sw_reg->ct == 0)
 		acr = (acr & ~DART_ACR_CT_MASK) | DART_ACR_CT_COUNTER_CLK_16;
 
 	/* reset port a */
@@ -151,8 +151,8 @@ mc68681_set_acr(struct mc68681_softc *sc)
 	(*sc->sc_write)(sc, DART_CRB,
 	    DART_CR_RESET_MR1 /* | DART_CR_TX_DISABLE | DART_CR_RX_DISABLE */);
 
-	(*sc->sc_write)(sc, DART_OPRS, sc->sc_sw_reg.oprs);
-	(*sc->sc_write)(sc, DART_OPCR, sc->sc_sw_reg.opcr);
+	(*sc->sc_write)(sc, DART_OPRS, sc->sc_sw_reg->oprs);
+	(*sc->sc_write)(sc, DART_OPCR, sc->sc_sw_reg->opcr);
 
 	(*sc->sc_write)(sc, DART_ACR, acr);
 	/*
@@ -160,21 +160,21 @@ mc68681_set_acr(struct mc68681_softc *sc)
 	 * XXX This loses the current timer cycle.
 	 */
 	if (ISSET(acr, DART_ACR_CT_TIMER_BIT)) {
-		(*sc->sc_write)(sc, DART_CTUR, *sc->sc_sw_reg.ct >> 8);
-		(*sc->sc_write)(sc, DART_CTLR, *sc->sc_sw_reg.ct & 0xff);
+		(*sc->sc_write)(sc, DART_CTUR, *sc->sc_sw_reg->ct >> 8);
+		(*sc->sc_write)(sc, DART_CTLR, *sc->sc_sw_reg->ct & 0xff);
 		(*sc->sc_read)(sc, DART_CTSTART);
 	}
 
 	/* reinitialize ports */
-	(*sc->sc_write)(sc, DART_MRA, sc->sc_sw_reg.mr1[A_PORT]);
-	(*sc->sc_write)(sc, DART_MRA, sc->sc_sw_reg.mr2[A_PORT]);
+	(*sc->sc_write)(sc, DART_MRA, sc->sc_sw_reg->mr1[A_PORT]);
+	(*sc->sc_write)(sc, DART_MRA, sc->sc_sw_reg->mr2[A_PORT]);
 	(*sc->sc_write)(sc, DART_CSRA, sc->sc_line[A_PORT].speed->csr);
-	(*sc->sc_write)(sc, DART_CRA, sc->sc_sw_reg.cr[A_PORT]);
+	(*sc->sc_write)(sc, DART_CRA, sc->sc_sw_reg->cr[A_PORT]);
 
-	(*sc->sc_write)(sc, DART_MRB, sc->sc_sw_reg.mr1[B_PORT]);
-	(*sc->sc_write)(sc, DART_MRB, sc->sc_sw_reg.mr2[B_PORT]);
+	(*sc->sc_write)(sc, DART_MRB, sc->sc_sw_reg->mr1[B_PORT]);
+	(*sc->sc_write)(sc, DART_MRB, sc->sc_sw_reg->mr2[B_PORT]);
 	(*sc->sc_write)(sc, DART_CSRB, sc->sc_line[B_PORT].speed->csr);
-	(*sc->sc_write)(sc, DART_CRB, sc->sc_sw_reg.cr[B_PORT]);
+	(*sc->sc_write)(sc, DART_CRB, sc->sc_sw_reg->cr[B_PORT]);
 }
 
 /* speed table */
@@ -257,9 +257,9 @@ mc68681_start(struct tty *tp)
 				break;
 
 		if (tries == 0) {
-			if (!ISSET(sc->sc_sw_reg.imr, imrbit)) {
-				sc->sc_sw_reg.imr |= imrbit;
-				(*sc->sc_write)(sc, DART_IMR, sc->sc_sw_reg.imr);
+			if (!ISSET(sc->sc_sw_reg->imr, imrbit)) {
+				sc->sc_sw_reg->imr |= imrbit;
+				(*sc->sc_write)(sc, DART_IMR, sc->sc_sw_reg->imr);
 			}
 			goto bail;
 		}
@@ -437,10 +437,10 @@ mc68681_param(struct tty *tp, struct termios *t)
 	if (sc->sc_consport != port) {
 		/* disable Tx and Rx */
 		if (port == A_PORT)
-			sc->sc_sw_reg.imr &= ~(DART_ISR_TXA | DART_ISR_RXA);
+			sc->sc_sw_reg->imr &= ~(DART_ISR_TXA | DART_ISR_RXA);
 		else
-			sc->sc_sw_reg.imr &= ~(DART_ISR_TXB | DART_ISR_RXB);
-		(*sc->sc_write)(sc, DART_IMR, sc->sc_sw_reg.imr);
+			sc->sc_sw_reg->imr &= ~(DART_ISR_TXB | DART_ISR_RXB);
+		(*sc->sc_write)(sc, DART_IMR, sc->sc_sw_reg->imr);
 
 		acrupdate = 0;
 
@@ -459,7 +459,7 @@ mc68681_param(struct tty *tp, struct termios *t)
 			return EAGAIN;
 		line->speed = spd;
 		if (spd->brg_sets != (1 | 2)) {
-			acr = sc->sc_sw_reg.acr;
+			acr = sc->sc_sw_reg->acr;
 			switch (acr & DART_ACR_BRG_SET_MASK) {
 			case DART_ACR_BRG_SET_2:
 				if (spd->brg_sets == 1) {
@@ -474,8 +474,8 @@ mc68681_param(struct tty *tp, struct termios *t)
 				}
 				break;
 			}
-			if (acr != sc->sc_sw_reg.acr) {
-				sc->sc_sw_reg.acr = acr;
+			if (acr != sc->sc_sw_reg->acr) {
+				sc->sc_sw_reg->acr = acr;
 				acrupdate = 1;
 			}
 		}
@@ -483,9 +483,9 @@ mc68681_param(struct tty *tp, struct termios *t)
 			(*sc->sc_write)(sc, ptaddr + DART_CSRA, spd->csr);
 
 		/* get saved mode registers and clear set up parameters */
-		mr1 = sc->sc_sw_reg.mr1[port];
+		mr1 = sc->sc_sw_reg->mr1[port];
 		mr1 &= ~(DART_MR1_BPC_MASK | DART_MR1_PARITY_MASK);
-		mr2 = sc->sc_sw_reg.mr2[port];
+		mr2 = sc->sc_sw_reg->mr2[port];
 		mr2 &= ~DART_MR2_STOP_MASK;
 
 		/* set up character size */
@@ -528,8 +528,8 @@ mc68681_param(struct tty *tp, struct termios *t)
 		} else
 			mr1 |= DART_MR1_PARITY_NONE;
 
-		if (sc->sc_sw_reg.mr1[port] != mr1 ||
-		    sc->sc_sw_reg.mr2[port] != mr2) {
+		if (sc->sc_sw_reg->mr1[port] != mr1 ||
+		    sc->sc_sw_reg->mr2[port] != mr2) {
 			if (acrupdate == 0) {
 				/* write mode registers to duart */
 				(*sc->sc_write)(sc, ptaddr + DART_CRA,
@@ -539,8 +539,8 @@ mc68681_param(struct tty *tp, struct termios *t)
 			}
 
 			/* save changed mode registers */
-			sc->sc_sw_reg.mr1[port] = mr1;
-			sc->sc_sw_reg.mr2[port] = mr2;
+			sc->sc_sw_reg->mr1[port] = mr1;
+			sc->sc_sw_reg->mr2[port] = mr2;
 		}
 
 		if (acrupdate != 0) {
@@ -553,19 +553,19 @@ mc68681_param(struct tty *tp, struct termios *t)
 	/* enable transmitter? */
 	if (tp->t_state & TS_BUSY) {
 		if (port == A_PORT)
-			sc->sc_sw_reg.imr |= DART_ISR_TXA;
+			sc->sc_sw_reg->imr |= DART_ISR_TXA;
 		else
-			sc->sc_sw_reg.imr |= DART_ISR_TXB;
+			sc->sc_sw_reg->imr |= DART_ISR_TXB;
 		/* will be done below
-		(*sc->sc_write)(sc, DART_IMR, sc->sc_sw_reg.imr); */
+		(*sc->sc_write)(sc, DART_IMR, sc->sc_sw_reg->imr); */
 	}
 
 	/* re-enable the receiver */
 	if (port == A_PORT)
-		sc->sc_sw_reg.imr |= DART_ISR_RXA;
+		sc->sc_sw_reg->imr |= DART_ISR_RXA;
 	else
-		sc->sc_sw_reg.imr |= DART_ISR_RXB;
-	(*sc->sc_write)(sc, DART_IMR, sc->sc_sw_reg.imr);
+		sc->sc_sw_reg->imr |= DART_ISR_RXB;
+	(*sc->sc_write)(sc, DART_IMR, sc->sc_sw_reg->imr);
 
 	return 0;
 }
@@ -799,11 +799,11 @@ out:
 
 	/* disable transmitter */
 	if (port == A_PORT)
-		sc->sc_sw_reg.imr &= ~DART_ISR_TXA;
+		sc->sc_sw_reg->imr &= ~DART_ISR_TXA;
 	else
-		sc->sc_sw_reg.imr &= ~DART_ISR_TXB;
+		sc->sc_sw_reg->imr &= ~DART_ISR_TXB;
 
-	(*sc->sc_write)(sc, DART_IMR, sc->sc_sw_reg.imr);
+	(*sc->sc_write)(sc, DART_IMR, sc->sc_sw_reg->imr);
 }
 
 void

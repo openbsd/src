@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.60 2013/06/11 21:06:31 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.61 2013/09/21 20:05:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -170,6 +170,7 @@ dartattach(struct device *parent, struct device *self, void *aux)
 	 * an MVME188 and console is always on the first port.
 	 */
 	msc->sc_consport = CONS_PORT;
+	msc->sc_sw_reg = &msc->sc_sw_reg_store;
 
 	msc->sc_read = dart_read;
 	msc->sc_write = dart_write;
@@ -182,7 +183,7 @@ dartattach(struct device *parent, struct device *self, void *aux)
 	 */
 #ifdef MVME181
 	if (brdtyp == BRD_180 || brdtyp == BRD_181)
-		msc->sc_sw_reg.imr = DART_ISR_CT;
+		msc->sc_sw_reg->imr = DART_ISR_CT;
 #endif
 
 	/*
@@ -198,7 +199,7 @@ dartattach(struct device *parent, struct device *self, void *aux)
 	msc->sc_hw[A_PORT].dcd_active_low = 1;
 	msc->sc_hw[B_PORT].dcd_ip = 3;
 	msc->sc_hw[B_PORT].dcd_active_low = 1;
-	msc->sc_sw_reg.acr |=
+	msc->sc_sw_reg->acr |=
 	    DART_ACR_ISR_IP3_CHANGE_ENABLE | DART_ACR_ISR_IP2_CHANGE_ENABLE;
 
 	/*
@@ -226,13 +227,13 @@ dartattach(struct device *parent, struct device *self, void *aux)
 	msc->sc_hw[B_PORT].rts_op = 1;
 #ifdef MVME181
 	if (brdtyp == BRD_180)
-		msc->sc_sw_reg.oprs = 
+		msc->sc_sw_reg->oprs = 
 		    DART_OP_OP3 | DART_OP_OP2 | DART_OP_OP1 | DART_OP_OP0;
 	else
 #endif
-		msc->sc_sw_reg.oprs = 
+		msc->sc_sw_reg->oprs = 
 		    DART_OP_OP5 | DART_OP_OP2 | DART_OP_OP1 | DART_OP_OP0;
-	msc->sc_sw_reg.opcr = DART_OPCR_OP7 | DART_OPCR_OP6 |
+	msc->sc_sw_reg->opcr = DART_OPCR_OP7 | DART_OPCR_OP6 |
 	    DART_OPCR_OP5 | DART_OPCR_OP4 | DART_OPCR_OP3 | DART_OPCR_OP2;
 
 	/*
@@ -244,11 +245,11 @@ dartattach(struct device *parent, struct device *self, void *aux)
 	if (brdtyp == BRD_180 || brdtyp == BRD_181) {
 		extern int m181_clkint;	/* XXX */
 
-		msc->sc_sw_reg.acr = DART_ACR_CT_TIMER_CLK_16;
-		msc->sc_sw_reg.ct = &m181_clkint;
+		msc->sc_sw_reg->acr = DART_ACR_CT_TIMER_CLK_16;
+		msc->sc_sw_reg->ct = &m181_clkint;
 	} else
 #endif
-		msc->sc_sw_reg.acr = DART_ACR_CT_COUNTER_CLK_16;
+		msc->sc_sw_reg->acr = DART_ACR_CT_COUNTER_CLK_16;
 
 	mc68681_common_attach(msc);
 
@@ -269,7 +270,7 @@ dartintr(void *arg)
 	int rc;
 
 	isr = (*sc->sc_read)(sc, DART_ISR);
-	imr = sc->sc_sw_reg.imr;
+	imr = sc->sc_sw_reg->imr;
 
 	isr &= imr;
 	if (isr == 0)
@@ -349,7 +350,7 @@ dartcnputc(dev_t dev, int c)
 	s = spltty();
 
 	/* inhibit interrupts on the chip */
-	dart_write(sc, DART_IMR, sc->sc_base.sc_sw_reg.imr & ~DART_ISR_TXA);
+	dart_write(sc, DART_IMR, sc->sc_base.sc_sw_reg->imr & ~DART_ISR_TXA);
 	/* make sure transmitter is enabled */
 	dart_write(sc, DART_CRA, DART_CR_TX_ENABLE);
 
@@ -362,8 +363,8 @@ dartcnputc(dev_t dev, int c)
 		;
 
 	/* restore the previous state */
-	dart_write(sc, DART_IMR, sc->sc_base.sc_sw_reg.imr);
-	dart_write(sc, DART_CRA, sc->sc_base.sc_sw_reg.cr[0]);
+	dart_write(sc, DART_IMR, sc->sc_base.sc_sw_reg->imr);
+	dart_write(sc, DART_CRA, sc->sc_base.sc_sw_reg->cr[0]);
 
 	splx(s);
 }
