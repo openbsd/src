@@ -44,7 +44,7 @@ my $h = { prefix => '/usr',
 	exec_prefix => '${prefix}',
 	libdir => '${exec_prefix}/lib',
 	includedir => '${prefix}/include',
-	RELEASE => $version,
+	PACKAGE_VERSION => $version,
 	LIBS => '' };
 
 open(my $in2, '<', $pcin)
