@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1686 2013/09/17 13:36:30 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1687 2013/09/21 15:37:54 jasper Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8460,7 +8460,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Xeon E3-1200v2 Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1200V2_PCIE,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1200V2_PCIE_1,
 	    "Xeon E3-1200v2 PCIE",
 	},
 	{
@@ -8472,12 +8472,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Core 3G Host",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1200V2_PCIE_2,
+	    "Xeon E3-1200v2 PCIE",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE3G_M_GT1,
 	    "HD Graphics 2500",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1200V2_PCIE_3,
+	    "Xeon E3-1200v2 PCIE",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE3G_S_GT1,
 	    "HD Graphics 2500",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1200V2_PCIE_4,
+	    "Xeon E3-1200v2 PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE3G_D_GT2,
@@ -14382,6 +14394,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200EW,
 	    "MGA G200eW",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200EH,
+	    "MGA G200eH",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_IMPRESSION,
