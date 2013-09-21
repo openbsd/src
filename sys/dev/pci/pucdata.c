@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.87 2013/04/21 20:46:28 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.88 2013/09/21 20:19:32 miod Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -960,6 +960,15 @@ const struct puc_device_description puc_devs[] = {
 	/* Oxford Semiconductor OX16PCI952 PCI Parallel port */
 	{   /* "Oxford Semiconductor OX16PCI952 Parallel port", */
 	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI952P,	0, 0 },
+	    {   0xffff, 0xffff,						0, 0 },
+	    {
+		{ PUC_LPT, 0x10, 0x0000 },
+	    },
+	},
+
+	/* Oxford Semiconductor OXPCIE952 PCIE Parallel port */
+	{   /* "Oxford Semiconductor OXPCIE952 PCIE Parallel port", */
+	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OXPCIE952,	0, 0 },
 	    {   0xffff, 0xffff,						0, 0 },
 	    {
 		{ PUC_LPT, 0x10, 0x0000 },
