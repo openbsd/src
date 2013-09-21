@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.162 2013/05/30 15:17:59 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.163 2013/09/21 10:01:27 miod Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3362,8 +3362,9 @@ uvm_mapent_forkshared(struct vmspace *new_vm, struct vm_map *new_map,
 	 * but if it is there it will reduce the number of
 	 * page faults in the new proc.
 	 */
-	pmap_copy(new_map->pmap, old_map->pmap, new_entry->start,
-	    (new_entry->end - new_entry->start), new_entry->start);
+	if (!UVM_ET_ISHOLE(new_entry))
+		pmap_copy(new_map->pmap, old_map->pmap, new_entry->start,
+		    (new_entry->end - new_entry->start), new_entry->start);
 
 	/*
 	 * Update process statistics.
@@ -3516,10 +3517,11 @@ uvm_mapent_forkcopy(struct vmspace *new_vm, struct vm_map *new_map,
 		 * XXX: need a way to tell if this does anything
 		 */
 
-		pmap_copy(new_map->pmap, old_map->pmap,
-		    new_entry->start,
-		    (old_entry->end - old_entry->start),
-		    old_entry->start);
+		if (!UVM_ET_ISHOLE(new_entry))
+			pmap_copy(new_map->pmap, old_map->pmap,
+			    new_entry->start,
+			    (old_entry->end - old_entry->start),
+			    old_entry->start);
 
 		/*
 		 * protect the child's mappings if necessary
