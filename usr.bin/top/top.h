@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.h,v 1.14 2012/12/05 23:20:26 deraadt Exp $	*/
+/*	$OpenBSD: top.h,v 1.15 2013/09/21 14:15:19 espie Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -38,7 +38,7 @@
 #define VERSION		3
 
 /* Maximum number of columns allowed for display */
-#define MAX_COLS	256
+#define MAX_COLS	768
 
 /* Log base 2 of 1024 is 10 (2^10 == 1024) */
 #define LOG1024		10
