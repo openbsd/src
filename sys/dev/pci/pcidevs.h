@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1687 2013/09/21 15:37:54 jasper Exp 
+ *	OpenBSD: pcidevs,v 1.1688 2013/09/21 20:19:31 miod Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5240,6 +5240,7 @@
 #define	PCI_PRODUCT_OXFORD2_OX16PCI954P	0x9513		/* OX16PCI954 Parallel */
 #define	PCI_PRODUCT_OXFORD2_OX16PCI952	0x9521		/* OX16PCI952 */
 #define	PCI_PRODUCT_OXFORD2_OX16PCI952P	0x9523		/* OX16PCI952 Parallel */
+#define	PCI_PRODUCT_OXFORD2_OXPCIE952	0xc110		/* OXPCIE952 Parallel */
 
 /* Pacific Data products */
 #define	PCI_PRODUCT_PDC_QSTOR_SATA	0x2068		/* QStor SATA */
