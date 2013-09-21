@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.162 2013/06/11 16:42:11 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.163 2013/09/21 10:04:42 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -6274,7 +6274,7 @@ pmap_remove_holes(struct vm_map *map)
 
 		(void)uvm_map(map, &shole, ehole - shole, NULL,
 		    UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_SHARE,
 		      UVM_ADV_RANDOM,
 		      UVM_FLAG_NOMERGE | UVM_FLAG_HOLE | UVM_FLAG_FIXED));
 	}
