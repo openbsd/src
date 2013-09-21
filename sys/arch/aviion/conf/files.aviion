@@ -1,4 +1,4 @@
-#	$OpenBSD: files.aviion,v 1.10 2013/09/16 16:30:50 miod Exp $
+#	$OpenBSD: files.aviion,v 1.11 2013/09/21 20:07:17 miod Exp $
 #
 maxpartitions 16
 
@@ -19,9 +19,9 @@ attach	nvram at syscon
 file	arch/aviion/dev/nvram.c				nvram needs-flag
 
 device	dart: tty
-attach	dart at syscon with dart_syscon
-file	arch/aviion/dev/dart.c				dart needs-flag
-file	arch/aviion/dev/dart_syscon.c			dart_syscon
+file	dev/ic/mc68681.c
+attach	dart at syscon
+file	arch/aviion/dev/dart.c				dart needs-count
 
 attach	le at syscon with le_syscon
 file	arch/aviion/dev/if_le_syscon.c			le_syscon
