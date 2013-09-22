@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.52 2013/08/30 05:35:47 guenther Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.53 2013/09/22 15:42:53 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -719,6 +719,7 @@ udf_readdir(void *v)
 	struct fileid_desc *fid;
 	struct udf_uiodir uiodir;
 	struct udf_dirstream *ds;
+	off_t last_off;
 	enum { MODE_NORMAL, MODE_SELF, MODE_PARENT } mode;
 	int error = 0;
 
@@ -753,6 +754,7 @@ udf_readdir(void *v)
 	ds = udf_opendir(up, uio->uio_offset,
 	    letoh64(up->u_fentry->inf_len), up->u_ump);
 
+	last_off = ds->offset + ds->off;
 	while ((fid = udf_getfid(ds)) != NULL) {
 
 		/* Should we return an error on a bad fid? */
@@ -802,15 +804,20 @@ udf_readdir(void *v)
 			error = udf_uiodir(&uiodir, uio, ds->this_off);
 		}
 		if (error) {
-			printf("uiomove returned %d\n", error);
+			/*
+			 * udf_uiodir() indicates there isn't space for
+			 * another entry by returning -1
+			 */
+			if (error == -1)
+				error = 0;
 			break;
 		}
-
+		last_off = ds->this_off;
 	}
 
 	/* tell the calling layer whether we need to be called again */
 	*ap->a_eofflag = uiodir.eofflag;
-	uio->uio_offset = ds->offset + ds->off;
+	uio->uio_offset = last_off;
 
 	if (!error)
 		error = ds->error;
