@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.108 2013/08/13 05:52:27 guenther Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.109 2013/09/22 17:14:55 guenther Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1365,12 +1365,8 @@ ufs_symlink(void *v)
 /*
  * Vnode op for reading directories.
  * 
- * If the 0x10 bit in uio_segflg is set then this routine will assume
- * that the caller wants the on-disk format of the directory, which
- * 'happens' to be the same as that defined by struct direct32 in
- * <sys/dirent.h>.
- * Otherwise, this routine will convert struct direct entries to struct
- * dirent entries.
+ * This routine converts the on-disk struct direct entries to the
+ * struct dirent entries expected by userland and the rest of the kernel.
  */
 int
 ufs_readdir(void *v)
@@ -1400,58 +1396,6 @@ ufs_readdir(void *v)
 	/* Make sure we don't return partial entries. */
 	if (count <= entries)
 		return (EINVAL);
-
-#if T32
-	if (uio->uio_segflg & 0x10) {
-		uio->uio_segflg &= ~0x10;
-
-		count -= entries;
-		uio->uio_resid = count;
-		uio->uio_iov->iov_len = count;
-
-#	if (BYTE_ORDER == LITTLE_ENDIAN)
-		if (! ofmt)
-			error = VOP_READ(ap->a_vp, uio, 0, ap->a_cred);
-		else {
-			caddr_t dirbuf;
-			u_char tmp;
-
-			auio = *uio;
-			auio.uio_iov = &aiov;
-			auio.uio_iovcnt = 1;
-			auio.uio_segflg = UIO_SYSSPACE;
-			aiov.iov_len = count;
-			dirbuf = malloc(count, M_TEMP, M_WAITOK);
-			aiov.iov_base = dirbuf;
-			error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
-			if (error == 0) {
-				readcnt = count - auio.uio_resid;
-				edp = (struct direct *)&dirbuf[readcnt];
-				for (dp = (struct direct *)dirbuf; dp < edp; ) {
-					tmp = dp->d_namlen;
-					dp->d_namlen = dp->d_type;
-					dp->d_type = tmp;
-					if (dp->d_reclen > 0) {
-						dp = (struct direct *)
-						    ((char *)dp + dp->d_reclen);
-					} else {
-						error = EIO;
-						break;
-					}
-				}
-				if (dp >= edp)
-					error = uiomove(dirbuf, readcnt, uio);
-			}
-			free(dirbuf, M_TEMP);
-		}
-#	else
-		error = VOP_READ(ap->a_vp, uio, 0, ap->a_cred);
-#	endif
-
-		*ap->a_eofflag = DIP(VTOI(ap->a_vp), size) <= uio->uio_offset;
-		return error;
-	}
-#endif /* T32 */
 
 	/*
 	 * Convert and copy back the on-disk struct direct format to
