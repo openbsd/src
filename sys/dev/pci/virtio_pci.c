@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.6 2013/03/10 21:58:02 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.7 2013/09/22 09:58:46 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_1;
 	}
 
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", vsc->sc_dev.dv_xname);
 		goto fail_2;
 	}
