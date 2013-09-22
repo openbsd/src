@@ -32,7 +32,7 @@ init_root(void)
 	ldns_rr_list_push_rr(global_dns_root, r);
 	(void)ldns_rr_new_frm_str(&r, "C.ROOT-SERVERS.NET.      3600000      A     192.33.4.12", 0, NULL, NULL);
 	ldns_rr_list_push_rr(global_dns_root, r);
-	(void)ldns_rr_new_frm_str(&r, "D.ROOT-SERVERS.NET.      3600000      A     199.7.91.13", 0, NULL, NULL);
+	(void)ldns_rr_new_frm_str(&r, "D.ROOT-SERVERS.NET.      3600000      A     128.8.10.90", 0, NULL, NULL);
 	ldns_rr_list_push_rr(global_dns_root, r);
 	(void)ldns_rr_new_frm_str(&r, "E.ROOT-SERVERS.NET.      3600000      A     192.203.230.10", 0, NULL, NULL);
 	ldns_rr_list_push_rr(global_dns_root, r);
