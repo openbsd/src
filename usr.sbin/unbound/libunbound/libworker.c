@@ -44,7 +44,9 @@
 #include "config.h"
 #include <ldns/dname.h>
 #include <ldns/wire2host.h>
+#ifdef HAVE_SSL
 #include <openssl/ssl.h>
+#endif
 #include "libunbound/libworker.h"
 #include "libunbound/context.h"
 #include "libunbound/unbound.h"
@@ -88,7 +90,9 @@ libworker_delete(struct libworker* w)
 		ub_randfree(w->env->rnd);
 		free(w->env);
 	}
+#ifdef HAVE_SSL
 	SSL_CTX_free(w->sslctx);
+#endif
 	outside_network_delete(w->back);
 	comm_base_delete(w->base);
 	free(w);
@@ -194,7 +198,10 @@ libworker_setup(struct ub_ctx* ctx, int is_bg)
 	}
 	numports = cfg_condense_ports(cfg, &ports);
 	if(numports == 0) {
+		int locked = !w->is_bg || w->is_bg_thread;
 		libworker_delete(w);
+		if(locked)
+			lock_basic_unlock(&ctx->cfglock);
 		return NULL;
 	}
 	w->back = outside_network_create(w->base, cfg->msg_buffer_size,
@@ -368,6 +375,11 @@ int libworker_bg(struct ub_ctx* ctx)
 			case -1:
 				return UB_FORKFAIL;
 			default:
+				/* close non-used parts, so that the worker
+				 * bgprocess gets 'pipe closed' when the
+				 * main process exits */
+				tube_close_read(ctx->qq_pipe);
+				tube_close_write(ctx->rr_pipe);
 				break;
 		}
 #endif /* HAVE_FORK */ 
@@ -407,15 +419,18 @@ fill_canon(struct ub_result* res, uint8_t* s)
 /** fill data into result */
 static int
 fill_res(struct ub_result* res, struct ub_packed_rrset_key* answer,
-	uint8_t* finalcname, struct query_info* rq)
+	uint8_t* finalcname, struct query_info* rq, struct reply_info* rep)
 {
 	size_t i;
 	struct packed_rrset_data* data;
+	res->ttl = 0;
 	if(!answer) {
 		if(finalcname) {
 			if(!fill_canon(res, finalcname))
 				return 0; /* out of memory */
 		}
+		if(rep->rrset_count != 0)
+			res->ttl = (int)rep->ttl;
 		res->data = (char**)calloc(1, sizeof(char*));
 		res->len = (int*)calloc(1, sizeof(int));
 		return (res->data && res->len);
@@ -436,6 +451,21 @@ fill_res(struct ub_result* res, struct ub_packed_rrset_key* answer,
 		if(!res->data[i])
 			return 0; /* out of memory */
 	}
+	/* ttl for positive answers, from CNAME and answer RRs */
+	if(data->count != 0) {
+		size_t j;
+		res->ttl = (int)data->ttl;
+		for(j=0; j<rep->an_numrrsets; j++) {
+			struct packed_rrset_data* d =
+				(struct packed_rrset_data*)rep->rrsets[j]->
+				entry.data;
+			if((int)d->ttl < res->ttl)
+				res->ttl = (int)d->ttl;
+		}
+	}
+	/* ttl for negative answers */
+	if(data->count == 0 && rep->rrset_count != 0)
+		res->ttl = (int)rep->ttl;
 	res->data[data->count] = NULL;
 	res->len[data->count] = 0;
 	return 1;
@@ -455,7 +485,7 @@ libworker_enter_result(struct ub_result* res, ldns_buffer* buf,
 		return; /* error parsing buf, or out of memory */
 	}
 	if(!fill_res(res, reply_find_answer_rrset(&rq, rep), 
-		reply_find_final_cname_target(&rq, rep), &rq))
+		reply_find_final_cname_target(&rq, rep), &rq, rep))
 		return; /* out of memory */
 	/* rcode, havedata, nxdomain, secure, bogus */
 	res->rcode = (int)FLAGS_GET_RCODE(rep->flags);
@@ -705,17 +735,6 @@ void libworker_alloc_cleanup(void* arg)
         slabhash_clear(w->env->msg_cache);
 }
 
-/** compare outbound entry qstates */
-static int
-outbound_entry_compare(void* a, void* b)
-{
-        struct outbound_entry* e1 = (struct outbound_entry*)a;
-        struct outbound_entry* e2 = (struct outbound_entry*)b;
-        if(e1->qstate == e2->qstate)
-                return 1;
-        return 0;
-}
-
 struct outbound_entry* libworker_send_query(uint8_t* qname, size_t qnamelen,
         uint16_t qtype, uint16_t qclass, uint16_t flags, int dnssec,
 	int want_dnssec, struct sockaddr_storage* addr, socklen_t addrlen,
@@ -731,7 +750,7 @@ struct outbound_entry* libworker_send_query(uint8_t* qname, size_t qnamelen,
 		qnamelen, qtype, qclass, flags, dnssec, want_dnssec,
 		q->env->cfg->tcp_upstream, q->env->cfg->ssl_upstream, addr,
 		addrlen, zone, zonelen, libworker_handle_service_reply, e,
-		w->back->udp_buff, &outbound_entry_compare);
+		w->back->udp_buff);
 	if(!e->qsent) {
 		return NULL;
 	}

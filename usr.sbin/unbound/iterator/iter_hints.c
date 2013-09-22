@@ -119,7 +119,7 @@ compile_time_root_prime(int do_ip4, int do_ip6)
 	 ;           on server           FTP.INTERNIC.NET
 	 ;       -OR-                    RS.INTERNIC.NET
 	 ;
-	 ;       related version of root zone:   2010061700
+	 ;       related version of root zone:   changes-on-20120103
 	 */
 	struct delegpt* dp = delegpt_create_mlc((uint8_t*)"\000");
 	if(!dp)
@@ -172,7 +172,9 @@ hints_insert(struct iter_hints* hints, uint16_t c, struct delegpt* dp,
 	node->noprime = (uint8_t)noprime;
 	if(!name_tree_insert(&hints->tree, &node->node, dp->name, dp->namelen,
 		dp->namelabs, c)) {
-		log_err("second hints ignored.");
+		char buf[257];
+		dname_str(dp->name, buf);
+		log_err("second hints for zone %s ignored.", buf);
 		delegpt_free_mlc(dp);
 		free(node);
 	}
