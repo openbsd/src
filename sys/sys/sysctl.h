@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.137 2013/08/13 05:52:27 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.138 2013/09/22 17:28:33 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -423,7 +423,8 @@ struct kinfo_proc {
 
 	u_int32_t p_uctime_sec;		/* STRUCT TIMEVAL: child u+s time. */
 	u_int32_t p_uctime_usec;	/* STRUCT TIMEVAL: child u+s time. */
-	u_int64_t p_realflag;		/* INT: P_* flags (not including LWPs). */
+	int32_t p_psflags;		/* INT: PS_* flags on the process. */
+	int32_t p_spare;		/* INT: unused. */
 	u_int32_t p_svuid;		/* UID_T: saved user id */
 	u_int32_t p_svgid;		/* GID_T: saved group id */
 	char    p_emul[KI_EMULNAMELEN];	/* syscall emulation name */
@@ -478,7 +479,8 @@ do {									\
 	}								\
 	(kp)->p_stats = 0;						\
 	(kp)->p_exitsig = (p)->p_exitsig;				\
-	(kp)->p_flag = (p)->p_flag | (pr)->ps_flags | P_INMEM;		\
+	(kp)->p_flag = (p)->p_flag;					\
+	(kp)->p_psflags = (pr)->ps_flags;				\
 									\
 	(kp)->p__pgid = (pg)->pg_id;					\
 									\

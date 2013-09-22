@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.169 2013/08/12 20:43:28 bluhm Exp $	*/
+/*	$OpenBSD: proc.h,v 1.170 2013/09/22 17:28:33 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -222,30 +222,28 @@ struct process {
 #endif /* __need_process */
 
 /*
- * These flags are kept in ps_flags, but they used to be in proc's p_flag
- * and were exported to userspace via the KERN_PROC sysctl.  We'll retain
- * compat by using non-overlapping bits for PS_* and P_* flags and just
- * OR them together for export.
+ * These flags are kept in ps_flags.
  */
-#define	PS_CONTROLT	_P_CONTROLT
-#define	PS_PPWAIT	_P_PPWAIT
-#define	PS_PROFIL	_P_PROFIL
-#define	PS_SUGID	_P_SUGID
-#define	PS_SYSTEM	_P_SYSTEM
-#define	PS_TRACED	_P_TRACED
-#define	PS_WAITED	_P_WAITED
-#define	PS_EXEC		_P_EXEC
-#define	PS_ISPWAIT	_P_ISPWAIT
-#define	PS_SUGIDEXEC	_P_SUGIDEXEC
-#define	PS_NOZOMBIE	_P_NOZOMBIE
-#define	PS_INEXEC	_P_INEXEC
-#define	PS_SYSTRACE	_P_SYSTRACE
-#define	PS_CONTINUED	_P_CONTINUED
-#define	PS_STOPPED	_P_STOPPED
-#define	PS_SINGLEEXIT	_P_SINGLEEXIT
-#define	PS_SINGLEUNWIND	_P_SINGLEUNWIND
-#define	PS_EXITING	_P_EXITING
-#define	PS_COREDUMP	_P_COREDUMP
+#define	PS_CONTROLT	0x00000001	/* Has a controlling terminal. */
+#define	PS_EXEC		0x00000002	/* Process called exec. */
+#define	PS_INEXEC	0x00000004	/* Process is doing an exec right now */
+#define	PS_EXITING	0x00000008	/* Process is exiting. */
+#define	PS_SUGID	0x00000010	/* Had set id privs since last exec. */
+#define	PS_SUGIDEXEC	0x00000020	/* last execve() was set[ug]id */
+#define	PS_PPWAIT	0x00000040	/* Parent waits for exec/exit. */
+#define	PS_ISPWAIT	0x00000080	/* Is parent of PPWAIT child. */
+#define	PS_PROFIL	0x00000100	/* Has started profiling. */
+#define	PS_TRACED	0x00000200	/* Being ptraced. */
+#define	PS_WAITED	0x00000400	/* Stopped proc has waited for. */
+#define	PS_COREDUMP	0x00000800	/* Busy coredumping */
+#define	PS_SINGLEEXIT	0x00001000	/* Other threads must die. */
+#define	PS_SINGLEUNWIND	0x00002000	/* Other threads must unwind. */
+
+#define	PS_BITS \
+    ("\20\01CONTROLT\02EXEC\03INEXEC\04EXITING\05SUGID" \
+     "\06SUGIDEXEC\07PPWAIT\010ISPWAIT\011PROFIL\012TRACED" \
+     "\013WAITED\014COREDUMP\015SINGLEEXIT\016SINGLEUNWIND")
+
 
 struct proc {
 	TAILQ_ENTRY(proc) p_runq;
@@ -361,65 +359,31 @@ struct proc {
 #define P_ZOMBIE(p)	((p)->p_stat == SZOMB || (p)->p_stat == SDEAD)
 
 /*
- * These flags are kept in p_flag, except those with a leading underbar,
- * which are in process's ps_flags
+ * These flags are per-thread and kept in p_flag
  */
 #define	P_INKTR		0x000001	/* In a ktrace op, don't recurse */
-#define	_P_CONTROLT	0x000002	/* Has a controlling terminal. */
-#define	P_INMEM		0x000004	/* Loaded into memory. UNUSED */
 #define	P_SIGSUSPEND	0x000008	/* Need to restore before-suspend mask*/
-#define	_P_PPWAIT	0x000010	/* Parent waits for exec/exit. */
-#define	_P_PROFIL	0x000020	/* Has started profiling. */
 #define	P_SELECT	0x000040	/* Selecting; wakeup/waiting danger. */
 #define	P_SINTR		0x000080	/* Sleep is interruptible. */
-#define	_P_SUGID	0x000100	/* Had set id privs since last exec. */
 #define	P_SYSTEM	0x000200	/* No sigs, stats or swapping. */
 #define	P_TIMEOUT	0x000400	/* Timing out during sleep. */
-#define	_P_TRACED	0x000800	/* Debugged process being traced. */
-#define	_P_WAITED	0x001000	/* Debugging proc has waited for child. */
 #define	P_WEXIT		0x002000	/* Working on exiting. */
-#define	_P_EXEC		0x004000	/* Process called exec. */
-
-/* Should be moved to machine-dependent areas. */
 #define	P_OWEUPC	0x008000	/* Owe proc an addupc() at next ast. */
-
-#define	_P_ISPWAIT	0x010000	/* Is parent of PPWAIT child. */
-#define	_P_COREDUMP	0x020000	/* busy coredumping */
-#define	_P_SUGIDEXEC	0x040000	/* last execve() was set[ug]id */
 #define	P_SUSPSINGLE	0x080000	/* Need to stop for single threading. */
 #define	P_NOZOMBIE	0x100000	/* Pid 1 waits for me instead of dad */
-#define _P_INEXEC	0x200000	/* Process is doing an exec right now */
 #define P_SYSTRACE	0x400000	/* Process system call tracing active*/
 #define P_CONTINUED	0x800000	/* Proc has continued from a stopped state. */
-#define	_P_SINGLEEXIT	0x1000000	/* Other threads must die. */
-#define	_P_SINGLEUNWIND	0x2000000	/* Other threads must unwind. */
 #define	P_THREAD	0x4000000	/* Only a thread, not a real process */
 #define	P_SUSPSIG	0x8000000	/* Stopped from signal. */
 #define	P_SOFTDEP	0x10000000	/* Stuck processing softdep worklist */
 #define P_STOPPED	0x20000000	/* Just stopped, need sig to parent. */
 #define P_CPUPEG	0x40000000	/* Do not move to another cpu. */
-#define _P_EXITING	0x80000000	/* Process is exiting. */
-
-#ifndef _KERNEL
-#define	P_CONTROLT	_P_CONTROLT
-#define	P_PPWAIT	_P_PPWAIT
-#define	P_PROFIL	_P_PROFIL
-#define	P_SUGID		_P_SUGID
-#define	P_TRACED	_P_TRACED
-#define	P_EXEC		_P_EXEC
-#define	P_SUGIDEXEC	_P_SUGIDEXEC
-#define	P_INEXEC	_P_INEXEC
-#endif
 
 #define	P_BITS \
-    ("\20\01INKTR\02CONTROLT\03INMEM\04SIGSUSPEND" \
-     "\05PPWAIT\06PROFIL\07SELECT\010SINTR" \
-     "\011SUGID\012SYSTEM\013TIMEOUT\014TRACED" \
-     "\015WAITED\016WEXIT\017EXEC\020OWEUPC" \
-     "\021ISPWAIT\022COREDUMP\023SUGIDEXEC\024SUSPSINGLE" \
-     "\025NOZOMBIE\026INEXEC\027SYSTRACE\030CONTINUED" \
-     "\031SINGLEEXIT\032SINGLEUNWIND\033THREAD\034SUSPSIG" \
-     "\035SOFTDEP\036STOPPED\037CPUPEG\040EXITING")
+    ("\20\01INKTR\04SIGSUSPEND\07SELECT\010SINTR\012SYSTEM" \
+     "\013TIMEOUT\016WEXIT\020OWEUPC\024SUSPSINGLE" \
+     "\025NOZOMBIE\027SYSTRACE\030CONTINUED\033THREAD" \
+     "\034SUSPSIG\035SOFTDEP\036STOPPED\037CPUPEG")
 
 /* Macro to compute the exit signal to be delivered. */
 #define P_EXITSIG(p) \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.32 2013/06/03 04:17:37 tedu Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.33 2013/09/22 17:28:34 guenther Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -362,7 +362,7 @@ main(int argc, char **argv)
 
 		SLIST_FOREACH(li, &tdevlist, li_chain) {
 			if (li->li_number == -1 &&
-			    (kp->p_flag & P_CONTROLT) == 0)
+			    (kp->p_psflags & PS_CONTROLT) == 0)
 				break;
 			if (kp->p_tdev == (uid_t)li->li_number)
 				break;

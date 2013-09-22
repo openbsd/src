@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.54 2013/03/23 21:12:31 tedu Exp $	*/
+/*	$OpenBSD: print.c,v 1.55 2013/09/22 17:28:34 guenther Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -255,13 +255,13 @@ state(const struct kinfo_proc *kp, VARENT *ve)
 		*cp++ = '<';
 	else if (kp->p_nice > NZERO)
 		*cp++ = 'N';
-	if (flag & P_TRACED)
+	if (kp->p_psflags & PS_TRACED)
 		*cp++ = 'X';
 	if (flag & P_SYSTRACE)
 		*cp++ = 'x';
 	if (flag & P_WEXIT && kp->p_stat != SZOMB)
 		*cp++ = 'E';
-	if (flag & PS_ISPWAIT)
+	if (kp->p_psflags & PS_ISPWAIT)
 		*cp++ = 'V';
 	if (flag & P_SYSTEM)
 		*cp++ = 'K';
@@ -270,7 +270,7 @@ state(const struct kinfo_proc *kp, VARENT *ve)
 		*cp++ = '>';
 	if (kp->p_eflag & EPROC_SLEADER)
 		*cp++ = 's';
-	if ((flag & P_CONTROLT) && kp->p__pgid == kp->p_tpgid)
+	if ((kp->p_psflags & PS_CONTROLT) && kp->p__pgid == kp->p_tpgid)
 		*cp++ = '+';
 	*cp = '\0';
 
