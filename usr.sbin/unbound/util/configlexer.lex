@@ -11,6 +11,9 @@
 #include <ctype.h>
 #include <string.h>
 #include <strings.h>
+#ifdef HAVE_GLOB_H
+# include <glob.h>
+#endif
 
 #include "util/config_file.h"
 #include "util/configparser.h"
@@ -36,52 +39,127 @@ void ub_c_error(const char *message);
 struct inc_state {
 	char* filename;
 	int line;
+	YY_BUFFER_STATE buffer;
+	struct inc_state* next;
 };
-static struct inc_state parse_stack[MAXINCLUDES];
-static YY_BUFFER_STATE include_stack[MAXINCLUDES];
-static int config_include_stack_ptr = 0;
+static struct inc_state* config_include_stack = NULL;
+static int inc_depth = 0;
 static int inc_prev = 0;
 static int num_args = 0;
+
+void init_cfg_parse(void)
+{
+	config_include_stack = NULL;
+	inc_depth = 0;
+	inc_prev = 0;
+	num_args = 0;
+}
 
 static void config_start_include(const char* filename)
 {
 	FILE *input;
+	struct inc_state* s;
+	char* nm;
+	if(inc_depth++ > 100000) {
+		ub_c_error_msg("too many include files");
+		return;
+	}
 	if(strlen(filename) == 0) {
 		ub_c_error_msg("empty include file name");
 		return;
 	}
-	if(config_include_stack_ptr >= MAXINCLUDES) {
-		ub_c_error_msg("includes nested too deeply, skipped (>%d)", MAXINCLUDES);
+	s = (struct inc_state*)malloc(sizeof(*s));
+	if(!s) {
+		ub_c_error_msg("include %s: malloc failure", filename);
 		return;
 	}
 	if(cfg_parser->chroot && strncmp(filename, cfg_parser->chroot,
 		strlen(cfg_parser->chroot)) == 0) {
 		filename += strlen(cfg_parser->chroot);
 	}
+	nm = strdup(filename);
+	if(!nm) {
+		ub_c_error_msg("include %s: strdup failure", filename);
+		free(s);
+		return;
+	}
 	input = fopen(filename, "r");
 	if(!input) {
 		ub_c_error_msg("cannot open include file '%s': %s",
 			filename, strerror(errno));
+		free(s);
+		free(nm);
 		return;
 	}
-	LEXOUT(("switch_to_include_file(%s) ", filename));
-	parse_stack[config_include_stack_ptr].filename = cfg_parser->filename;
-	parse_stack[config_include_stack_ptr].line = cfg_parser->line;
-	include_stack[config_include_stack_ptr] = YY_CURRENT_BUFFER;
-	cfg_parser->filename = strdup(filename);
+	LEXOUT(("switch_to_include_file(%s)\n", filename));
+	s->filename = cfg_parser->filename;
+	s->line = cfg_parser->line;
+	s->buffer = YY_CURRENT_BUFFER;
+	s->next = config_include_stack;
+	config_include_stack = s;
+	cfg_parser->filename = nm;
 	cfg_parser->line = 1;
 	yy_switch_to_buffer(yy_create_buffer(input, YY_BUF_SIZE));
-	++config_include_stack_ptr;
+}
+
+static void config_start_include_glob(const char* filename)
+{
+
+	/* check for wildcards */
+#ifdef HAVE_GLOB
+	glob_t g;
+	size_t i;
+	int r, flags;
+	if(!(!strchr(filename, '*') && !strchr(filename, '?') && !strchr(filename, '[') &&
+		!strchr(filename, '{') && !strchr(filename, '~'))) {
+		flags = 0
+#ifdef GLOB_ERR
+			| GLOB_ERR
+#endif
+#ifdef GLOB_NOSORT
+			| GLOB_NOSORT
+#endif
+#ifdef GLOB_BRACE
+			| GLOB_BRACE
+#endif
+#ifdef GLOB_TILDE
+			| GLOB_TILDE
+#endif
+		;
+		memset(&g, 0, sizeof(g));
+		r = glob(filename, flags, NULL, &g);
+		if(r) {
+			/* some error */
+			globfree(&g);
+			if(r == GLOB_NOMATCH)
+				return; /* no matches for pattern */
+			config_start_include(filename); /* let original deal with it */
+			return;
+		}
+		/* process files found, if any */
+		for(i=0; i<(size_t)g.gl_pathc; i++) {
+			config_start_include(g.gl_pathv[i]);
+		}
+		globfree(&g);
+		return;
+	}
+#endif /* HAVE_GLOB */
+
+	config_start_include(filename);
 }
 
 static void config_end_include(void)
 {
-	--config_include_stack_ptr;
+	struct inc_state* s = config_include_stack;
+	--inc_depth;
+	if(!s) return;
 	free(cfg_parser->filename);
-	cfg_parser->filename = parse_stack[config_include_stack_ptr].filename;
-	cfg_parser->line = parse_stack[config_include_stack_ptr].line;
+	cfg_parser->filename = s->filename;
+	cfg_parser->line = s->line;
 	yy_delete_buffer(YY_CURRENT_BUFFER);
-	yy_switch_to_buffer(include_stack[config_include_stack_ptr]);
+	yy_switch_to_buffer(s->buffer);
+	config_include_stack = s->next;
+	free(s);
 }
 
 #ifndef yy_set_bol /* compat definition, for flex 2.4.6 */
@@ -243,6 +321,7 @@ python{COLON}			{ YDVAR(0, VAR_PYTHON) }
 domain-insecure{COLON}		{ YDVAR(1, VAR_DOMAIN_INSECURE) }
 minimal-responses{COLON}	{ YDVAR(1, VAR_MINIMAL_RESPONSES) }
 rrset-roundrobin{COLON}		{ YDVAR(1, VAR_RRSET_ROUNDROBIN) }
+max-udp-size{COLON}		{ YDVAR(1, VAR_MAX_UDP_SIZE) }
 <INITIAL,val>{NEWLINE}		{ LEXOUT(("NL\n")); cfg_parser->line++; }
 
 	/* Quoted strings. Strip leading and ending quotes */
@@ -299,7 +378,7 @@ rrset-roundrobin{COLON}		{ YDVAR(1, VAR_RRSET_ROUNDROBIN) }
 <include>\"		{ LEXOUT(("IQS ")); BEGIN(include_quoted); }
 <include>{UNQUOTEDLETTER}*	{
 	LEXOUT(("Iunquotedstr(%s) ", yytext));
-	config_start_include(yytext);
+	config_start_include_glob(yytext);
 	BEGIN(inc_prev);
 }
 <include_quoted><<EOF>>	{
@@ -312,12 +391,13 @@ rrset-roundrobin{COLON}		{ YDVAR(1, VAR_RRSET_ROUNDROBIN) }
 <include_quoted>\"	{
 	LEXOUT(("IQE "));
 	yytext[yyleng - 1] = '\0';
-	config_start_include(yytext);
+	config_start_include_glob(yytext);
 	BEGIN(inc_prev);
 }
 <INITIAL,val><<EOF>>	{
+	LEXOUT(("LEXEOF "));
 	yy_set_bol(1); /* Set beginning of line, so "^" rules match.  */
-	if (config_include_stack_ptr == 0) {
+	if (!config_include_stack) {
 		yyterminate();
 	} else {
 		fclose(yyin);

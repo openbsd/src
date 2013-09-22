@@ -53,6 +53,10 @@
 #include "util/regional.h"
 #include "util/fptr_wlist.h"
 #include "util/data/dname.h"
+#ifdef HAVE_GLOB_H
+# include <glob.h>
+#endif
+
 /** global config during parsing */
 struct config_parser_state* cfg_parser = 0;
 /** lex in file */
@@ -65,6 +69,8 @@ int ub_c_parse(void);
 int ub_c_lex(void);
 /** wrap function */
 int ub_c_wrap(void);
+/** init lex state */
+void init_cfg_parse(void);
 
 /** init ports possible for use */
 static void init_outgoing_availports(int* array, int num);
@@ -197,6 +203,7 @@ config_create(void)
 	cfg->control_port = UNBOUND_CONTROL_PORT;
 	cfg->minimal_responses = 0;
 	cfg->rrset_roundrobin = 0;
+	cfg->max_udp_size = 4096;
 	if(!(cfg->server_key_file = strdup(RUN_DIR"/unbound_server.key"))) 
 		goto error_exit;
 	if(!(cfg->server_cert_file = strdup(RUN_DIR"/unbound_server.pem"))) 
@@ -286,7 +293,7 @@ struct config_file* config_create_forlib(void)
 	{ return cfg_strlist_insert(&cfg->var, strdup(val)); }
 
 int config_set_option(struct config_file* cfg, const char* opt,
-        const char* val)
+	const char* val)
 {
 	S_NUMBER_OR_ZERO("verbosity:", verbosity)
 	else if(strcmp(opt, "statistics-interval:") == 0) {
@@ -323,7 +330,11 @@ int config_set_option(struct config_file* cfg, const char* opt,
 		cfg->use_syslog = 0;
 		free(cfg->logfile);
 		return (cfg->logfile = strdup(val)) != NULL;
-	} 
+	}
+	else if(strcmp(opt, "log-time-ascii:") == 0)
+	{ IS_YES_OR_NO; cfg->log_time_ascii = (strcmp(val, "yes") == 0);
+	  log_set_time_asc(cfg->log_time_ascii); }
+	else S_SIZET_NONZERO("max-udp-size:", max_udp_size)
 	else S_YNO("use-syslog:", use_syslog)
 	else S_YNO("extended-statistics:", stat_extended)
 	else S_YNO("statistics-cumulative:", stat_cumulative)
@@ -354,7 +365,10 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	else S_POW2("rrset-cache-slabs:", rrset_cache_slabs)
 	else S_YNO("prefetch:", prefetch)
 	else S_YNO("prefetch-key:", prefetch_key)
-	else S_NUMBER_OR_ZERO("cache-max-ttl:", max_ttl)
+	else if(strcmp(opt, "cache-max-ttl:") == 0)
+	{ IS_NUMBER_OR_ZERO; cfg->max_ttl = atoi(val); MAX_TTL=(time_t)cfg->max_ttl;}
+	else if(strcmp(opt, "cache-min-ttl:") == 0)
+	{ IS_NUMBER_OR_ZERO; cfg->min_ttl = atoi(val); MIN_TTL=(time_t)cfg->min_ttl;}
 	else S_NUMBER_OR_ZERO("infra-host-ttl:", host_ttl)
 	else S_POW2("infra-cache-slabs:", infra_cache_slabs)
 	else S_SIZET_NONZERO("infra-cache-numhosts:", infra_cache_numhosts)
@@ -413,6 +427,12 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	else S_STR("control-cert-file:", control_cert_file)
 	else S_STR("module-config:", module_conf)
 	else S_STR("python-script:", python_script)
+	/* val_sig_skew_min and max are copied into val_env during init,
+	 * so this does not update val_env with set_option */
+	else if(strcmp(opt, "val-sig-skew-min:") == 0)
+	{ IS_NUMBER_OR_ZERO; cfg->val_sig_skew_min = (int32_t)atoi(val); }
+	else if(strcmp(opt, "val-sig-skew-max:") == 0)
+	{ IS_NUMBER_OR_ZERO; cfg->val_sig_skew_max = (int32_t)atoi(val); }
 	else if (strcmp(opt, "outgoing-interface:") == 0) {
 		char* d = strdup(val);
 		char** oi = (char**)malloc((cfg->num_out_ifs+1)*sizeof(char*));
@@ -458,7 +478,7 @@ void config_collate_func(char* line, void* arg)
 }
 
 int config_get_option_list(struct config_file* cfg, const char* opt,
-        struct config_strlist** list)
+	struct config_strlist** list)
 {
 	struct config_collate_arg m;
 	memset(&m, 0, sizeof(m));
@@ -512,8 +532,9 @@ config_collate_cat(struct config_strlist* list)
 			return NULL;
 		}
 		snprintf(w, left, "%s\n", s->str);
-		w += this+1;
-		left -= this+1;
+		this = strlen(w);
+		w += this;
+		left -= this;
 	}
 	return r;
 }
@@ -568,6 +589,7 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_YNO(opt, "statistics-cumulative", stat_cumulative)
 	else O_YNO(opt, "extended-statistics", stat_extended)
 	else O_YNO(opt, "use-syslog", use_syslog)
+	else O_YNO(opt, "log-time-ascii", log_time_ascii)
 	else O_DEC(opt, "num-threads", num_threads)
 	else O_IFC(opt, "interface", num_ifs, ifs)
 	else O_IFC(opt, "outgoing-interface", num_out_ifs, out_ifs)
@@ -589,6 +611,7 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_YNO(opt, "prefetch-key", prefetch_key)
 	else O_YNO(opt, "prefetch", prefetch)
 	else O_DEC(opt, "cache-max-ttl", max_ttl)
+	else O_DEC(opt, "cache-min-ttl", min_ttl)
 	else O_DEC(opt, "infra-host-ttl", host_ttl)
 	else O_DEC(opt, "infra-cache-slabs", infra_cache_slabs)
 	else O_MEM(opt, "infra-cache-numhosts", infra_cache_numhosts)
@@ -657,6 +680,10 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_UNS(opt, "val-override-date", val_date_override)
 	else O_YNO(opt, "minimal-responses", minimal_responses)
 	else O_YNO(opt, "rrset-roundrobin", rrset_roundrobin)
+	else O_DEC(opt, "max-udp-size", max_udp_size)
+	else O_STR(opt, "python-script", python_script)
+	else O_DEC(opt, "val-sig-skew-min", val_sig_skew_min)
+	else O_DEC(opt, "val-sig-skew-max", val_sig_skew_max)
 	/* not here:
 	 * outgoing-permit, outgoing-avoid - have list of ports
 	 * local-zone - zones and nodefault variables
@@ -680,6 +707,7 @@ create_cfg_parser(struct config_file* cfg, char* filename, const char* chroot)
 	cfg_parser->errors = 0;
 	cfg_parser->cfg = cfg;
 	cfg_parser->chroot = chroot;
+	init_cfg_parse();
 }
 
 int 
@@ -687,8 +715,69 @@ config_read(struct config_file* cfg, const char* filename, const char* chroot)
 {
 	FILE *in;
 	char *fname = (char*)filename;
+#ifdef HAVE_GLOB
+	glob_t g;
+	size_t i;
+	int r, flags;
+#endif
 	if(!fname)
 		return 1;
+
+	/* check for wildcards */
+#ifdef HAVE_GLOB
+	if(!(!strchr(fname, '*') && !strchr(fname, '?') && !strchr(fname, '[') &&
+		!strchr(fname, '{') && !strchr(fname, '~'))) {
+		verbose(VERB_QUERY, "wildcard found, processing %s", fname);
+		flags = 0
+#ifdef GLOB_ERR
+			| GLOB_ERR
+#endif
+#ifdef GLOB_NOSORT
+			| GLOB_NOSORT
+#endif
+#ifdef GLOB_BRACE
+			| GLOB_BRACE
+#endif
+#ifdef GLOB_TILDE
+			| GLOB_TILDE
+#endif
+		;
+		memset(&g, 0, sizeof(g));
+		r = glob(fname, flags, NULL, &g);
+		if(r) {
+			/* some error */
+			globfree(&g);
+			if(r == GLOB_NOMATCH) {
+				verbose(VERB_QUERY, "include: "
+				"no matches for %s", fname);
+				return 1; 
+			} else if(r == GLOB_NOSPACE) {
+				log_err("include: %s: "
+					"fnametern out of memory", fname);
+			} else if(r == GLOB_ABORTED) {
+				log_err("wildcard include: %s: expansion "
+					"aborted (%s)", fname, strerror(errno));
+			} else {
+				log_err("wildcard include: %s: expansion "
+					"failed (%s)", fname, strerror(errno));
+			}
+			/* ignore globs that yield no files */
+			return 1;
+		}
+		/* process files found, if any */
+		for(i=0; i<(size_t)g.gl_pathc; i++) {
+			if(!config_read(cfg, g.gl_pathv[i], chroot)) {
+				log_err("error reading wildcard "
+					"include: %s", g.gl_pathv[i]);
+				globfree(&g);
+				return 0;
+			}
+		}
+		globfree(&g);
+		return 1;
+	}
+#endif /* HAVE_GLOB */
+
 	in = fopen(fname, "r");
 	if(!in) {
 		log_err("Could not open %s: %s", fname, strerror(errno));
@@ -975,10 +1064,10 @@ cfg_str2list_insert(struct config_str2list** head, char* item, char* i2)
 	return 1;
 }
 
-uint32_t 
+time_t 
 cfg_convert_timeval(const char* str)
 {
-	uint32_t t;
+	time_t t;
 	struct tm tm;
 	memset(&tm, 0, sizeof(tm));
 	if(strlen(str) < 14)
@@ -1003,26 +1092,26 @@ cfg_convert_timeval(const char* str)
 int 
 cfg_count_numbers(const char* s)
 {
-        /* format ::= (sp num)+ sp      */
-        /* num ::= [-](0-9)+            */
-        /* sp ::= (space|tab)*          */
-        int num = 0;
-        while(*s) {
-                while(*s && isspace((int)*s))
-                        s++;
-                if(!*s) /* end of string */
-                        break;
-                if(*s == '-')
-                        s++;
-                if(!*s) /* only - not allowed */
-                        return 0;
-                if(!isdigit((int)*s)) /* bad character */
-                        return 0;
-                while(*s && isdigit((int)*s))
-                        s++;
-                num++;
-        }
-        return num;
+	/* format ::= (sp num)+ sp  */
+	/* num ::= [-](0-9)+        */
+	/* sp ::= (space|tab)*      */
+	int num = 0;
+	while(*s) {
+		while(*s && isspace((int)*s))
+			s++;
+		if(!*s) /* end of string */
+			break;
+		if(*s == '-')
+			s++;
+		if(!*s) /* only - not allowed */
+			return 0;
+		if(!isdigit((int)*s)) /* bad character */
+			return 0;
+		while(*s && isdigit((int)*s))
+			s++;
+		num++;
+	}
+	return num;
 }
 
 /** all digit number */
@@ -1082,8 +1171,8 @@ cfg_parse_memsize(const char* str, size_t* res)
 void 
 config_apply(struct config_file* config)
 {
-	MAX_TTL = (uint32_t)config->max_ttl;
-	MIN_TTL = (uint32_t)config->min_ttl;
+	MAX_TTL = (time_t)config->max_ttl;
+	MIN_TTL = (time_t)config->min_ttl;
 	EDNS_ADVERTISED_SIZE = (uint16_t)config->edns_buffer_size;
 	MINIMAL_RESPONSES = config->minimal_responses;
 	RRSET_ROUNDROBIN = config->rrset_roundrobin;

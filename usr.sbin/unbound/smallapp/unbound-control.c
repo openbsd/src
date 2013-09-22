@@ -68,6 +68,7 @@ usage()
 	printf("Options:\n");
 	printf("  -c file	config file, default is %s\n", CONFIGFILE);
 	printf("  -s ip[@port]	server address, if omitted config is used.\n");
+	printf("  -q		quiet (don't print anything if it works ok).\n");
 	printf("  -h		show this usage help.\n");
 	printf("Commands:\n");
 	printf("  start				start server; runs unbound(8)\n");
@@ -105,6 +106,8 @@ usage()
 	printf("  list_forwards			list forward-zones in use\n");
 	printf("  list_local_zones		list local-zones in use\n");
 	printf("  list_local_data		list local-data RRs in use\n");
+	printf("  insecure_add zone 		add domain-insecure zone\n");
+	printf("  insecure_remove zone		remove domain-insecure zone\n");
 	printf("  forward_add [+i] zone addr..	add forward-zone with servers\n");
 	printf("  forward_remove [+i] zone	remove forward zone\n");
 	printf("  stub_add [+ip] zone addr..	add stub-zone with servers\n");
@@ -263,7 +266,7 @@ send_file(SSL* ssl, FILE* in, char* buf, size_t sz)
 
 /** send command and display result */
 static int
-go_cmd(SSL* ssl, int argc, char* argv[])
+go_cmd(SSL* ssl, int quiet, int argc, char* argv[])
 {
 	char pre[10];
 	const char* space=" ";
@@ -297,9 +300,12 @@ go_cmd(SSL* ssl, int argc, char* argv[])
 			ssl_err("could not SSL_read");
 		}
 		buf[r] = 0;
-		printf("%s", buf);
-		if(first_line && strncmp(buf, "error", 5) == 0)
+		if(first_line && strncmp(buf, "error", 5) == 0) {
+			printf("%s", buf);
 			was_error = 1;
+		} else if (!quiet)
+			printf("%s", buf);
+
 		first_line = 0;
 	}
 	return was_error;
@@ -307,7 +313,7 @@ go_cmd(SSL* ssl, int argc, char* argv[])
 
 /** go ahead and read config, contact server and perform command and display */
 static int
-go(const char* cfgfile, char* svr, int argc, char* argv[])
+go(const char* cfgfile, char* svr, int quiet, int argc, char* argv[])
 {
 	struct config_file* cfg;
 	int fd, ret;
@@ -328,7 +334,7 @@ go(const char* cfgfile, char* svr, int argc, char* argv[])
 	ssl = setup_ssl(ctx, fd);
 	
 	/* send command */
-	ret = go_cmd(ssl, argc, argv);
+	ret = go_cmd(ssl, quiet, argc, argv);
 
 	SSL_free(ssl);
 #ifndef USE_WINSOCK
@@ -350,6 +356,7 @@ extern char* optarg;
 int main(int argc, char* argv[])
 {
 	int c, ret;
+	int quiet = 0;
 	const char* cfgfile = CONFIGFILE;
 	char* svr = NULL;
 #ifdef USE_WINSOCK
@@ -392,13 +399,16 @@ int main(int argc, char* argv[])
 	}
 
 	/* parse the options */
-	while( (c=getopt(argc, argv, "c:s:h")) != -1) {
+	while( (c=getopt(argc, argv, "c:s:qh")) != -1) {
 		switch(c) {
 		case 'c':
 			cfgfile = optarg;
 			break;
 		case 's':
 			svr = optarg;
+			break;
+		case 'q':
+			quiet = 1;
 			break;
 		case '?':
 		case 'h':
@@ -418,7 +428,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	ret = go(cfgfile, svr, argc, argv);
+	ret = go(cfgfile, svr, quiet, argc, argv);
 
 #ifdef USE_WINSOCK
         WSACleanup();

@@ -152,13 +152,8 @@ dnskey_algo_id_is_supported(int id)
 {
 	switch(id) {
 	case LDNS_RSAMD5:
-#ifdef HAVE_FIPS_MODE
-		/* openssl can return if the system is in FIPS mode, 
-		 * which does not allow MD5 hashes for network traffic */
-		return !FIPS_mode();
-#else
-		return 1;
-#endif
+		/* RFC 6725 deprecates RSAMD5 */
+		return 0;
 	case LDNS_DSA:
 	case LDNS_DSA_NSEC3:
 	case LDNS_RSASHA1:
@@ -558,12 +553,14 @@ verify_canonrrset(ldns_buffer* buf, int algo, unsigned char* sigblock,
 /**************************************************/
 #elif defined(HAVE_NSS)
 /* libnss implementation */
-#include <nss3/sechash.h>
-#include <nss3/pk11pub.h>
-#include <nss3/keyhi.h>
-#include <nss3/secerr.h>
-#include <nss3/cryptohi.h>
-#include <nspr4/prerror.h>
+/* nss3 */
+#include "sechash.h"
+#include "pk11pub.h"
+#include "keyhi.h"
+#include "secerr.h"
+#include "cryptohi.h"
+/* nspr4 */
+#include "prerror.h"
 
 size_t
 ds_digest_size_supported(int algo)
@@ -621,8 +618,8 @@ dnskey_algo_id_is_supported(int id)
 	/* uses libNSS */
 	switch(id) {
 	case LDNS_RSAMD5:
-		/* disable MD5 support if FIPS mode is enabled in libnss */
-		return !PK11_IsFIPS();
+		/* RFC 6725 deprecates RSAMD5 */
+		return 0;
 	case LDNS_DSA:
 	case LDNS_DSA_NSEC3:
 	case LDNS_RSASHA1:
@@ -672,12 +669,12 @@ static SECKEYPublicKey* nss_buf2ecdsa(unsigned char* key, size_t len, int algo)
 	SECKEYPublicKey* pk;
 	SECItem pub = {siBuffer, NULL, 0};
 	SECItem params = {siBuffer, NULL, 0};
-	unsigned char param256[] = {
+	static unsigned char param256[] = {
 		/* OBJECTIDENTIFIER 1.2.840.10045.3.1.7 (P-256)
 		 * {iso(1) member-body(2) us(840) ansi-x962(10045) curves(3) prime(1) prime256v1(7)} */
 		0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07
 	};
-	unsigned char param384[] = {
+	static unsigned char param384[] = {
 		/* OBJECTIDENTIFIER 1.3.132.0.34 (P-384)
 		 * {iso(1) identified-organization(3) certicom(132) curve(0) ansip384r1(34)} */
 		0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x22
@@ -848,19 +845,19 @@ nss_setup_key_digest(int algo, SECKEYPublicKey** pubkey, HASH_HashType* htype,
 	/* uses libNSS */
 
 	/* hash prefix for md5, RFC2537 */
-	unsigned char p_md5[] = {0x30, 0x20, 0x30, 0x0c, 0x06, 0x08, 0x2a,
+	static unsigned char p_md5[] = {0x30, 0x20, 0x30, 0x0c, 0x06, 0x08, 0x2a,
 	0x86, 0x48, 0x86, 0xf7, 0x0d, 0x02, 0x05, 0x05, 0x00, 0x04, 0x10};
 	/* hash prefix to prepend to hash output, from RFC3110 */
-	unsigned char p_sha1[] = {0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2B,
+	static unsigned char p_sha1[] = {0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2B,
 		0x0E, 0x03, 0x02, 0x1A, 0x05, 0x00, 0x04, 0x14};
 	/* from RFC5702 */
-	unsigned char p_sha256[] = {0x30, 0x31, 0x30, 0x0d, 0x06, 0x09, 0x60,
+	static unsigned char p_sha256[] = {0x30, 0x31, 0x30, 0x0d, 0x06, 0x09, 0x60,
 	0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01, 0x05, 0x00, 0x04, 0x20};
-	unsigned char p_sha512[] = {0x30, 0x51, 0x30, 0x0d, 0x06, 0x09, 0x60,
+	static unsigned char p_sha512[] = {0x30, 0x51, 0x30, 0x0d, 0x06, 0x09, 0x60,
 	0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x03, 0x05, 0x00, 0x04, 0x40};
 	/* from RFC6234 */
 	/* for future RSASHA384 .. 
-	unsigned char p_sha384[] = {0x30, 0x51, 0x30, 0x0d, 0x06, 0x09, 0x60,
+	static unsigned char p_sha384[] = {0x30, 0x51, 0x30, 0x0d, 0x06, 0x09, 0x60,
 	0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x02, 0x05, 0x00, 0x04, 0x30};
 	*/
 

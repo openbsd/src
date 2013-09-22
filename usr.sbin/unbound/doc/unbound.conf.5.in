@@ -1,4 +1,4 @@
-.TH "unbound.conf" "5" "Aug  2, 2012" "NLnet Labs" "unbound 1.4.18"
+.TH "unbound.conf" "5" "Sep 19, 2013" "NLnet Labs" "unbound 1.4.21"
 .\"
 .\" unbound.conf.5 -- unbound.conf manual
 .\"
@@ -71,12 +71,12 @@ is followed by its containing attributes, or a value.
 .P
 Files can be included using the
 .B include:
-directive. It can appear anywhere, and takes a single filename as an argument.
+directive. It can appear anywhere, it accepts a single file name as argument.
 Processing continues as if the text from the included file was copied into
 the config file at that point.  If also using chroot, using full path names
 for the included files works, relative pathnames for the included names work
 if the directory where the daemon is started equals its chroot/working 
-directory.
+directory.  Wildcards can be used to include multiple files, see \fIglob\fR(7).
 .SS "Server Options"
 These options are part of the
 .B server:
@@ -182,6 +182,11 @@ then a value of 1480 can fix it.  Setting to 512 bypasses even the most
 stringent path MTU problems, but is seen as extreme, since the amount
 of TCP fallback generated is excessive (probably also for this resolver,
 consider tuning the outgoing tcp number).
+.TP
+.B max\-udp\-size: \fI<number>
+Maximum UDP response size (not applied to TCP response).  65536 disables the
+udp response size maximum, and uses the choice from the client, always.
+Suggested values are 512 to 4096. Default is 4096. 
 .TP
 .B msg\-buffer\-size: \fI<number>
 Number of bytes size of the message buffers. Default is 65552 bytes, enough
@@ -492,7 +497,7 @@ unsigned to badly signed often. If turned off you run the risk of a
 downgrade attack that disables security for a zone. Default is on.
 .TP
 .B harden\-below\-nxdomain: \fI<yes or no>
-From draft-vixie-dnsext-resimprove, returns nxdomain to queries for a name
+From draft\-vixie\-dnsext\-resimprove, returns nxdomain to queries for a name
 below another name that is already known to be nxdomain.  DNSSEC mandates
 noerror for empty nonterminals, hence this is possible.  Very old software
 might return nxdomain for empty nonterminals (that usually happen for reverse
@@ -994,6 +999,8 @@ the resolver picks up a correct list online.
 .TP
 .B stub\-first: \fI<yes or no>
 If enabled, a query is attempted without the stub clause if it fails.
+The data could not be retrieved and would have caused SERVFAIL because
+the servers are unreachable, instead it is tried without this clause.
 The default is no.
 .SS "Forward Zone Options"
 .LP
@@ -1022,6 +1029,8 @@ To use a nondefault port for DNS communication append '@' with the port number.
 .TP
 .B forward\-first: \fI<yes or no>
 If enabled, a query is attempted without the forward clause if it fails.
+The data could not be retrieved and would have caused SERVFAIL because
+the servers are unreachable, instead it is tried without this clause.
 The default is no.
 .SS "Python Module Options"
 .LP

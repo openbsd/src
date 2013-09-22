@@ -242,6 +242,8 @@ anchor_new_ta(struct val_anchors* anchors, uint8_t* name, int namelabs,
 	}
 #ifdef UNBOUND_DEBUG
 	r =
+#else
+	(void)
 #endif
 	rbtree_insert(anchors->tree, &ta->node);
 	if(lockit) {
@@ -836,7 +838,8 @@ anchor_read_bind_file_wild(struct val_anchors* anchors, ldns_buffer* buffer,
 			log_err("wildcard trusted-keys-file %s: expansion "
 				"failed (%s)", pat, strerror(errno));
 		}
-		return 0;
+		/* ignore globs that yield no files */
+		return 1; 
 	}
 	/* process files found, if any */
 	for(i=0; i<(size_t)g.gl_pathc; i++) {
@@ -899,7 +902,7 @@ assemble_it(struct trust_anchor* ta, size_t num, uint16_t type)
 		free(pkey);
 		return NULL;
 	}
-	pd->rr_ttl = (uint32_t*)malloc(num*sizeof(uint32_t));
+	pd->rr_ttl = (time_t*)malloc(num*sizeof(time_t));
 	if(!pd->rr_ttl) {
 		free(pd->rr_len);
 		free(pd);

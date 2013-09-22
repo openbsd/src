@@ -1023,6 +1023,13 @@ validate_cname_response(struct module_env* env, struct val_env* ve,
 			chase_reply->security = sec_status_bogus;
 			return;
 		}
+
+		/* If we have found a CNAME, stop looking for one.
+		 * The iterator has placed the CNAME chain in correct
+		 * order. */
+		if (ntohs(s->rk.type) == LDNS_RR_TYPE_CNAME) {
+			break;
+		}
 	}
 
 	/* AUTHORITY section */
@@ -2391,7 +2398,7 @@ ds_response_to_ke(struct module_qstate* qstate, struct val_qstate* vq,
 		subtype == VAL_CLASS_NAMEERROR) {
 		/* NODATA means that the qname exists, but that there was 
 		 * no DS.  This is a pretty normal case. */
-		uint32_t proof_ttl = 0;
+		time_t proof_ttl = 0;
 		enum sec_status sec;
 
 		/* make sure there are NSECs or NSEC3s with signatures */

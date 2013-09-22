@@ -128,7 +128,9 @@ forwards_insert_data(struct iter_forwards* fwd, uint16_t c, uint8_t* nm,
 	node->namelabs = nmlabs;
 	node->dp = dp;
 	if(!rbtree_insert(fwd->tree, &node->node)) {
-		log_err("duplicate forward zone ignored.");
+		char buf[257];
+		dname_str(nm, buf);
+		log_err("duplicate forward zone %s ignored.", buf);
 		delegpt_free_mlc(dp);
 		free(node->name);
 		free(node);
@@ -270,25 +272,6 @@ read_forwards(struct iter_forwards* fwd, struct config_file* cfg)
 	return 1;
 }
 
-/** see if zone needs to have a hole inserted */
-static int
-need_hole_insert(rbtree_t* tree, struct iter_forward_zone* zone)
-{
-	struct iter_forward_zone k;
-	if(rbtree_search(tree, zone))
-		return 0; /* exact match exists */
-	k = *zone;
-	k.node.key = &k;
-	/* search up the tree */
-	do {
-		dname_remove_label(&k.name, &k.namelen);
-		k.namelabs --;
-		if(rbtree_search(tree, &k))
-			return 1; /* found an upper forward zone, need hole */
-	} while(k.namelabs > 1);
-	return 0; /* no forwards above, no holes needed */
-}
-
 /** insert a stub hole (if necessary) for stub name */
 static int
 fwd_add_stub_hole(struct iter_forwards* fwd, uint16_t c, uint8_t* nm)
@@ -298,11 +281,8 @@ fwd_add_stub_hole(struct iter_forwards* fwd, uint16_t c, uint8_t* nm)
 	key.dclass = c;
 	key.name = nm;
 	key.namelabs = dname_count_size_labels(key.name, &key.namelen);
-	if(need_hole_insert(fwd->tree, &key)) {
-		return forwards_insert_data(fwd, key.dclass, key.name,
-			key.namelen, key.namelabs, NULL);
-	}
-	return 1;
+	return forwards_insert_data(fwd, key.dclass, key.name,
+		key.namelen, key.namelabs, NULL);
 }
 
 /** make NULL entries for stubs */
@@ -342,6 +322,20 @@ forwards_apply_cfg(struct iter_forwards* fwd, struct config_file* cfg)
 		return 0;
 	fwd_init_parents(fwd);
 	return 1;
+}
+
+struct delegpt* 
+forwards_find(struct iter_forwards* fwd, uint8_t* qname, uint16_t qclass)
+{
+	rbnode_t* res = NULL;
+	struct iter_forward_zone key;
+	key.node.key = &key;
+	key.dclass = qclass;
+	key.name = qname;
+	key.namelabs = dname_count_size_labels(qname, &key.namelen);
+	res = rbtree_search(fwd->tree, &key);
+	if(res) return ((struct iter_forward_zone*)res)->dp;
+	return NULL;
 }
 
 struct delegpt* 
