@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs.h,v 1.3 2013/06/04 09:11:40 espie Exp $	*/
+/*	$OpenBSD: tmpfs.h,v 1.4 2013/09/22 03:34:31 guenther Exp $	*/
 /*	$NetBSD: tmpfs.h,v 1.45 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -285,7 +285,7 @@ tmpfs_dirent_t *tmpfs_dir_cached(tmpfs_node_t *);
 int		tmpfs_dir_getdotdent(tmpfs_node_t *, struct uio *);
 int		tmpfs_dir_getdotdotdent(tmpfs_node_t *, struct uio *);
 tmpfs_dirent_t *tmpfs_dir_lookupbycookie(tmpfs_node_t *, off_t);
-int		tmpfs_dir_getdents(tmpfs_node_t *, struct uio *, off_t *);
+int		tmpfs_dir_getdents(tmpfs_node_t *, struct uio *);
 
 int		tmpfs_reg_resize(struct vnode *, off_t);
 int		tmpfs_truncate(struct vnode *, off_t);

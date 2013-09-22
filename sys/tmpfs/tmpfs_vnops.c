@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.7 2013/09/01 17:02:56 guenther Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.8 2013/09/22 03:34:31 guenther Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -963,7 +963,6 @@ tmpfs_readdir(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
 	int *eofflag = ap->a_eofflag;
-	off_t cnt;
 	tmpfs_node_t *node;
 	int error;
 
@@ -974,7 +973,6 @@ tmpfs_readdir(void *v)
 		return ENOTDIR;
 	}
 	node = VP_TO_TMPFS_DIR(vp);
-	cnt = 0;
 	if (node->tn_links == 0) {
 		error = 0;
 		goto out;
@@ -987,7 +985,6 @@ tmpfs_readdir(void *v)
 				error = 0;
 			goto out;
 		}
-		cnt++;
 	}
 	if (uio->uio_offset == TMPFS_DIRCOOKIE_DOTDOT) {
 		error = tmpfs_dir_getdotdotdent(node, uio);
@@ -996,9 +993,8 @@ tmpfs_readdir(void *v)
 				error = 0;
 			goto out;
 		}
-		cnt++;
 	}
-	error = tmpfs_dir_getdents(node, uio, &cnt);
+	error = tmpfs_dir_getdents(node, uio);
 	if (error == -1) {
 		error = 0;
 	}

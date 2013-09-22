@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.3 2013/09/01 17:02:56 guenther Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.4 2013/09/22 03:34:31 guenther Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -738,11 +738,11 @@ tmpfs_dir_lookupbycookie(tmpfs_node_t *node, off_t cookie)
  * => The read starts at uio->uio_offset.
  */
 int
-tmpfs_dir_getdents(tmpfs_node_t *node, struct uio *uio, off_t *cntp)
+tmpfs_dir_getdents(tmpfs_node_t *node, struct uio *uio)
 {
-	tmpfs_dirent_t *de;
+	tmpfs_dirent_t *de, *next_de;
 	struct dirent *dentp;
-	off_t cookie;
+	off_t cookie, next_cookie;
 	int error;
 
 	KASSERT(VOP_ISLOCKED(node->tn_vnode));
@@ -813,12 +813,12 @@ tmpfs_dir_getdents(tmpfs_node_t *node, struct uio *uio, off_t *cntp)
 		dentp->d_name[de->td_namelen] = '\0';
 		dentp->d_reclen = DIRENT_SIZE(dentp);
 
-		de = TAILQ_NEXT(de, td_entries);
-		if (de == NULL)
-			cookie = TMPFS_DIRCOOKIE_EOF;
+		next_de = TAILQ_NEXT(de, td_entries);
+		if (next_de == NULL)
+			next_cookie = TMPFS_DIRCOOKIE_EOF;
 		else
-			cookie = tmpfs_dircookie(de);
-		dentp->d_off = cookie;
+			next_cookie = tmpfs_dircookie(next_de);
+		dentp->d_off = next_cookie;
 
 		/* Stop reading if the directory entry we are treating is
 		 * bigger than the amount of data that can be returned. */
@@ -832,8 +832,10 @@ tmpfs_dir_getdents(tmpfs_node_t *node, struct uio *uio, off_t *cntp)
 		 * advance pointers.
 		 */
 		error = uiomove(dentp, dentp->d_reclen, uio);
-
-		(*cntp)++;
+		if (error == 0) {
+			de = next_de;
+			cookie = next_cookie;
+		}
 	} while (error == 0 && uio->uio_resid > 0 && de != NULL);
 
 	/* Update the offset and cache. */
