@@ -19,7 +19,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: August 17 2012 $
+.Dd $Mdocdate: September 23 2013 $
 .Dt SUDOERS @mansectform@
 .Os
 .Sh NAME
@@ -2554,7 +2554,7 @@ web pages) or simply
 to www.
 .Bd -literal
 ALL		CDROM = NOPASSWD: /sbin/umount /CDROM,\e
-		/sbin/mount -o nosuid\,nodev /dev/cd0a /CDROM
+		/sbin/mount -o nosuid\,nodev /dev/cd0c /CDROM
 .Ed
 .Pp
 Any user may mount or unmount a CD-ROM on the machines in the CDROM
