@@ -1,4 +1,4 @@
-# $OpenBSD: sudoers,v 1.26 2013/09/12 14:02:07 ajacoutot Exp $
+# $OpenBSD: sudoers,v 1.27 2013/09/23 20:45:45 ajacoutot Exp $
 #
 # sudoers file.
 #
@@ -16,11 +16,16 @@
 # Cmnd alias specification
 
 # Defaults specification
-Defaults env_keep +="DESTDIR DISTDIR EDITOR FETCH_CMD FLAVOR FTPMODE GROUP MAKE"
-Defaults env_keep +="MAKECONF MULTI_PACKAGES NOMAN OKAY_FILES OWNER PKG_CACHE"
-Defaults env_keep +="PKG_DBDIR PKG_DESTDIR PKG_PATH PKG_TMPDIR PORTSDIR"
-Defaults env_keep +="RELEASEDIR SHARED_ONLY SM_PATH SSH_AUTH_SOCK SUBPACKAGE"
-Defaults env_keep +="VISUAL WRKOBJDIR"
+Defaults env_keep +="FTPMODE PKG_CACHE PKG_PATH SM_PATH SSH_AUTH_SOCK"
+
+# Non-exhaustive list of variables needed to build release(8) and ports(7)
+Defaults:%wsrc env_keep +="DESTDIR DISTDIR FETCH_CMD FLAVOR GROUP MAKE MAKECONF"
+Defaults:%wsrc env_keep +="MULTI_PACKAGES NOMAN OKAY_FILES OWNER PKG_DBDIR"
+Defaults:%wsrc env_keep +="PKG_DESTDIR PKG_TMPDIR PORTSDIR RELEASEDIR SHARED_ONLY"
+Defaults:%wsrc env_keep +="SUBPACKAGE WRKOBJDIR"
+
+# Uncomment to preserve the default proxy host variable
+#Defaults env_keep +="ftp_proxy http_proxy"
 
 # Uncomment to disable the lecture the first time you run sudo
 #Defaults !lecture
