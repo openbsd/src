@@ -3166,3 +3166,5 @@
 ./usr/share/man/man8/zdump.8
 ./usr/share/man/man8/zic.8
 ./usr/share/man/man9
+./usr/share/man/man9/usbd_setup_xfer.9
+./usr/share/man/man9/usbd_transfer.9
