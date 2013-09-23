@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.13 2013/02/02 13:34:29 miod Exp $	*/
+/*	$OpenBSD: version.c,v 1.14 2013/09/23 22:14:45 miod Exp $	*/
 
 /*
  * Record major changes in the boot code here, and increment the version
@@ -25,6 +25,7 @@
  *	from the default boot device without an explicit device or a leading
  *	`/'.
  * 2.14 Build with the ELF toolchain.
+ * 2.15 Remove SLOWSCSI from scsi code, and increase target selection timeout.
  */
 
-const char version[] = "2.14";
+const char version[] = "2.15";

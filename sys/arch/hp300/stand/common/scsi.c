@@ -1,11 +1,5 @@
-/*	$OpenBSD: scsi.c,v 1.9 2013/03/23 16:08:28 deraadt Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.10 2013/09/23 22:14:44 miod Exp $	*/
 /*	$NetBSD: scsi.c,v 1.7 1997/01/30 10:32:57 thorpej Exp $	*/
-
-/*
- * This is reported to fix some odd failures when disklabeling
- * SCSI disks in SYS_INST.
- */
-#define SLOWSCSI
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -172,10 +166,10 @@ issue_select(volatile struct scsidevice *hd, u_char target, u_char our_addr)
 
 	hd->scsi_pctl = 0;
 	hd->scsi_temp = (1 << target) | our_addr;
-	/* select timeout is hardcoded to 2ms */
-	hd->scsi_tch = 0;
-	hd->scsi_tcm = 32;
-	hd->scsi_tcl = 4;
+	/* select timeout is hardcoded to 250ms */
+	hd->scsi_tch = 2;
+	hd->scsi_tcm = 113;
+	hd->scsi_tcl = 3;
 
 	hd->scsi_scmd = SCMD_SELECT;
 	return (0);
@@ -330,15 +324,6 @@ scsiicmd(struct scsi_softc *hs, int target, u_char *cbuf, int clen, u_char *buf,
 			    (int)(hs - scsi_softc), phase);
 			goto abort;
 		}
-#ifdef SLOWSCSI
-		/*
-		 * XXX we have weird transient problems with booting from
-		 * slow scsi disks on fast machines.  I have never been
-		 * able to pin the problem down, but a large delay here
-		 * seems to always work.
-		 */
-		DELAY(1000);
-#endif
 		/* wait for last command to complete */
 		while ((ints = hd->scsi_ints) == 0) {
 			if (--wait < 0)
