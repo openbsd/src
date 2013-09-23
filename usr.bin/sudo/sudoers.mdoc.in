@@ -2554,7 +2554,7 @@ web pages) or simply
 to www.
 .Bd -literal
 ALL		CDROM = NOPASSWD: /sbin/umount /CDROM,\e
-		/sbin/mount -o nosuid\,nodev /dev/cd0c /CDROM
+		/sbin/mount -o nosuid\,nodev /dev/cd0a /CDROM
 .Ed
 .Pp
 Any user may mount or unmount a CD-ROM on the machines in the CDROM
