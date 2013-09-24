@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.115 2013/08/14 05:26:14 guenther Exp $	*/
+/*	$OpenBSD: mount.h,v 1.116 2013/09/24 09:20:12 espie Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -245,6 +245,23 @@ struct udf_args {
 };
 
 /*
+ * Arguments to mount tmpfs file systems
+ */
+#define TMPFS_ARGS_VERSION	1
+struct tmpfs_args {
+	int			ta_version;
+
+	/* Size counters. */
+	ino_t			ta_nodes_max;
+	off_t			ta_size_max;
+
+	/* Root node attributes. */
+	uid_t			ta_root_uid;
+	gid_t			ta_root_gid;
+	mode_t			ta_root_mode;
+};
+
+/*
  * Arguments to mount procfs filesystems
  */
 struct procfs_args {
@@ -284,6 +301,7 @@ union mount_info {
 	struct procfs_args procfs_args;
 	struct msdosfs_args msdosfs_args;
 	struct ntfs_args ntfs_args;
+	struct tmpfs_args tmpfs_args;
 	char __align[160];	/* 64-bit alignment and room to grow */
 };
 
@@ -335,6 +353,7 @@ struct statfs {
 #define	MOUNT_NCPFS	"ncpfs"		/* NetWare Network File System */
 #define	MOUNT_NTFS	"ntfs"		/* NTFS */
 #define	MOUNT_UDF	"udf"		/* UDF */
+#define	MOUNT_TMPFS	"tmpfs"		/* tmpfs */
 #define	MOUNT_FUSEFS	"fuse"		/* FUSE */
 
 /*

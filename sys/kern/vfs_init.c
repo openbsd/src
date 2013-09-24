@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.32 2013/06/03 15:54:48 tedu Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.33 2013/09/24 09:20:12 espie Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -90,6 +90,10 @@ extern  const struct vfsops udf_vfsops;
 extern const struct vfsops fusefs_vfsops;
 #endif
 
+#ifdef TMPFS
+extern  const struct vfsops tmpfs_vfsops;
+#endif
+
 /* Set up the filesystem operations for vnodes. */
 static struct vfsconf vfsconflist[] = {
 #ifdef FFS
@@ -130,6 +134,10 @@ static struct vfsconf vfsconflist[] = {
 
 #ifdef FUSE
 	{ &fusefs_vfsops, MOUNT_FUSEFS, 18, 0, MNT_LOCAL, NULL },
+#endif
+
+#ifdef TMPFS
+	{ &tmpfs_vfsops, MOUNT_TMPFS, 19, 0, MNT_LOCAL, NULL },
 #endif
 };
 

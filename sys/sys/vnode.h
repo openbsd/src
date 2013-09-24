@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.120 2013/09/14 02:28:02 guenther Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.121 2013/09/24 09:20:12 espie Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -69,13 +69,13 @@ enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
 enum vtagtype	{
 	VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_MSDOSFS,
 	VT_PORTAL, VT_PROCFS, VT_AFS, VT_ISOFS, VT_ADOSFS,
-	VT_EXT2FS, VT_VFS, VT_NTFS, VT_UDF, VT_FUSEFS
+	VT_EXT2FS, VT_VFS, VT_NTFS, VT_UDF, VT_FUSEFS, VT_TMPFS,
 };
 
 #define	VTAG_NAMES \
     "NON", "UFS", "NFS", "MFS", "MSDOSFS",			\
     "PORTAL", "PROCFS", "AFS", "ISOFS", "ADOSFS",		\
-    "EXT2FS", "VFS", "NTFS", "UDF", "FUSEFS"
+    "EXT2FS", "VFS", "NTFS", "UDF", "FUSEFS", "TMPFS"
 
 /*
  * Each underlying filesystem allocates its own private area and hangs

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.552 2013/08/20 09:14:15 mpi Exp $
+#	$OpenBSD: files,v 1.553 2013/09/24 09:20:11 espie Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -754,6 +754,12 @@ file ntfs/ntfs_ihash.c			ntfs
 file ntfs/ntfs_subr.c			ntfs
 file ntfs/ntfs_vfsops.c			ntfs
 file ntfs/ntfs_vnops.c			ntfs
+file tmpfs/tmpfs_mem.c			tmpfs
+file tmpfs/tmpfs_subr.c			tmpfs
+file tmpfs/tmpfs_vfsops.c		tmpfs
+file tmpfs/tmpfs_vnops.c		tmpfs
+file tmpfs/tmpfs_specops.c		tmpfs
+file tmpfs/tmpfs_fifoops.c		tmpfs & fifo
 file net/bpf.c				bpfilter		needs-count
 file net/bpf_filter.c			bpfilter
 file net/if.c
