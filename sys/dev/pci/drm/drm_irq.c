@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_irq.c,v 1.50 2013/09/24 21:16:24 kettenis Exp $	*/
+/*	$OpenBSD: drm_irq.c,v 1.51 2013/09/24 21:18:58 kettenis Exp $	*/
 /**
  * \file drm_irq.c
  * IRQ support
@@ -1017,7 +1017,7 @@ void drm_vblank_put(struct drm_device *dev, int crtc)
 	BUG_ON(atomic_read(&dev->vblank_refcount[crtc]) == 0);
 
 	/* Last user schedules interrupt disable */
-	if ((--dev->vblank_refcount[crtc] == 0) &&
+	if (atomic_dec_and_test(&dev->vblank_refcount[crtc]) &&
 	    (drm_vblank_offdelay > 0))
 		timeout_add_msec(&dev->vblank_disable_timer, drm_vblank_offdelay);
 }

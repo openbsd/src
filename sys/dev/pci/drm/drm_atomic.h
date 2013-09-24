@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_atomic.h,v 1.8 2013/08/12 04:11:52 jsg Exp $ */
+/* $OpenBSD: drm_atomic.h,v 1.9 2013/09/24 21:18:57 kettenis Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -42,40 +42,30 @@ typedef u_int64_t atomic64_t;
 #define atomic_read(p)		(*(p))
 #define atomic_inc(p)		__sync_fetch_and_add(p, 1)
 #define atomic_dec(p)		__sync_fetch_and_sub(p, 1)
-#define atomic_add(n, p)	(*(p) += (n))
-#define atomic_fetchadd_int(p, n) __sync_fetch_and_add(p, n)
-#define atomic_fetchsub_int(p, n) __sync_fetch_and_sub(p, n)
+#define atomic_add(n, p)	__sync_fetch_and_add(p, n)
+#define atomic_sub(n, p)	__sync_fetch_and_sub(p, n)
+#define atomic_add_return(n, p) __sync_add_and_fetch(p, n)
+#define atomic_sub_return(n, p) __sync_sub_and_fetch(p, n)
+#define atomic_inc_return(v)	atomic_add_return(1, (v))
+#define atomic_dec_return(v)	atomic_sub_return(1, (v))
+#define atomic_dec_and_test(v)	(atomic_dec_return(v) == 0)
+#define atomic_inc_and_test(v)	(atomic_inc_return(v) == 0)
 
 #define atomic64_set(p, v)	(*(p) = (v))
 #define atomic64_read(p)	(*(p))
 
 static __inline int
-atomic_xchg(volatile int *p, int new)
+atomic_xchg(volatile int *v, int n)
 {
-	int old;
-
-	old = *p;
-	*p = new;
-
-	return (old);
+	__sync_synchronize();
+	return __sync_lock_test_and_set(v, n);
 }
 
 static __inline int64_t
-atomic64_xchg(volatile int64_t *p, int64_t new)
+atomic64_xchg(volatile int64_t *v, int64_t n)
 {
-	int64_t old;
-
-	old = *p;
-	*p = new;
-
-	return (old);
-}
-
-static inline int
-atomic_add_return(int n, atomic_t *p)
-{
-	*(p) += (n);
-	return  (*p);
+	__sync_synchronize();
+	return __sync_lock_test_and_set(v, n);
 }
 
 static inline int
@@ -88,25 +78,11 @@ atomic_inc_not_zero(atomic_t *p)
 	return (*p);
 }
 
-#define	atomic_inc_return(v)	atomic_add_return(1, (v))
-#define	atomic_dec_return(v)	atomic_sub_return(1, (v))
-#define	atomic_dec_and_test(v)	(atomic_dec_return(v) == 0)
-#define	atomic_inc_and_test(v)	(atomic_inc_return(v) == 0)
-
-#define atomic_sub(n, p)	(*(p) -= (n))
-
-static __inline int
-atomic_sub_return(int i, atomic_t *p)
-{
-	atomic_sub(i, p);
-	return (*p);
-}
-
 /* FIXME */
-#define atomic_add_int(p, v)      *(p) += v
-#define atomic_subtract_int(p, v) *(p) -= v
 #define atomic_set_int(p, bits)		atomic_setbits_int(p,bits)
 #define atomic_clear_int(p, bits)	atomic_clearbits_int(p,bits)
+#define atomic_fetchadd_int(p, n) __sync_fetch_and_add(p, n)
+#define atomic_fetchsub_int(p, n) __sync_fetch_and_sub(p, n)
 
 #if defined(__i386__) || defined(__amd64__)
 static __inline int
