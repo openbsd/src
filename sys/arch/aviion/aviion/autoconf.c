@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.13 2011/10/09 17:01:32 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.14 2013/09/24 20:14:33 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -42,8 +42,13 @@
 
 #include <machine/asm_macro.h>
 #include <machine/autoconf.h>
+#include <machine/board.h>
 #include <machine/cpu.h>
 #include <machine/vmparam.h>
+
+#ifdef AV530
+#include <machine/av530.h>
+#endif
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -186,19 +191,44 @@ cmdline_parse(void)
 void
 device_register(struct device *dev, void *aux)
 {
+	struct confargs *ca = (struct confargs *)aux;
+
 	if (bootdv != NULL)
 		return;
 
 	switch (bootdevtype) {
 	case BT_INEN:
 		/*
-		 * Internal ethernet is le at syscon only, and we do not
+		 * Internal LANCE Ethernet is le at syscon only, and we do not
 		 * care about controller and unit numbers.
 		 */
 		if (strcmp("le", dev->dv_cfdata->cf_driver->cd_name) == 0 &&
 		    strcmp("syscon",
 		      dev->dv_parent->dv_cfdata->cf_driver->cd_name) == 0)
 			bootdv = dev;
+		break;
+	case BT_DGEN:
+		/*
+		 * Internal ILACC Ethernet is le at syscon only, and need to
+		 * match the controller address.
+		 */
+		if (strcmp("le", dev->dv_cfdata->cf_driver->cd_name) == 0 &&
+		    strcmp("syscon",
+		      dev->dv_parent->dv_cfdata->cf_driver->cd_name) == 0) {
+			switch (cpuid) {
+#ifdef AV530
+			case AVIION_4600_530:
+				if ((bootdev == 0 &&
+				    ca->ca_paddr == AV530_LAN1) ||
+				    (bootdev == 1 &&
+				    ca->ca_paddr == AV530_LAN2))
+					bootdv = dev;
+				break;
+#endif
+			default:
+				break;
+			}
+		}
 		break;
 	}
 }

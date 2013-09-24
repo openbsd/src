@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.8 2013/09/16 16:30:50 miod Exp $
+#	$OpenBSD: GENERIC,v 1.9 2013/09/24 20:14:36 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -62,8 +62,8 @@ dart1	at syscon? offset 0x82040
 #ssi0	at syscon? offset 0x8d000
 oosiop0	at syscon? offset 0xb0000
 oosiop1	at syscon? offset 0xb0080
-#ile0	at syscon? offset 0xb00c0
-#ile1	at syscon? offset 0xb0140
+le0	at syscon? offset 0xb0100
+le1	at syscon? offset 0xb0140
 
 #
 # VME devices
@@ -74,10 +74,6 @@ le*	at vme? a32 0x00900000 a16 0x4000 ipl 3	# artwork X0A factory settings
 le*	at vme? a32 0x55540000 a16 0x8600 ipl 3	# artwork X0B factory settings
 le*	at vme? a32 0x55900000 a16 0x4000 ipl 3
 le*	at vme? a32 0x55980000 a16 0x5000 ipl 3
-
-# AV5000 VME Ethernet
-#ile*	at vme? a32 0x55900000 a16 0x4000 ipl 3
-#ile*	at vme? a32 0x55980000 a16 0x5000 ipl 3
 
 # VDA/255 Serial Host Adapter (on-board on model 4300)
 #vda0	at vme? a32 0x60000000

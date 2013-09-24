@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_vme.c,v 1.3 2007/12/20 21:16:19 miod Exp $	*/
+/*	$OpenBSD: if_le_vme.c,v 1.4 2013/09/24 20:14:34 miod Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -52,6 +52,8 @@
 #include <machine/bus.h>
 #include <machine/cpu.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -80,26 +82,23 @@ struct cfattach le_vme_ca = {
 	sizeof(struct le_softc), le_vme_match, le_vme_attach
 };
 
-void	le_vme_wrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-u_int16_t le_vme_rdcsr(struct am7990_softc *, u_int16_t);
-void	nvram_cmd(struct am7990_softc *, u_int, u_int);
-u_int16_t nvram_read(struct am7990_softc *, u_int);
-void	le_vme_etheraddr(struct am7990_softc *);
-void	le_vme_init(struct am7990_softc *);
-void	le_vme_reset(struct am7990_softc *);
+void	le_vme_wrcsr(struct lance_softc *, uint16_t, uint16_t);
+uint16_t le_vme_rdcsr(struct lance_softc *, uint16_t);
+void	nvram_cmd(struct lance_softc *, u_int, u_int);
+uint16_t nvram_read(struct lance_softc *, u_int);
+void	le_vme_etheraddr(struct lance_softc *);
+void	le_vme_init(struct lance_softc *);
+void	le_vme_reset(struct lance_softc *);
 int	le_vme_intr(void *);
 #if 0
-void	le_vme_copyfrombuf_contig(struct am7990_softc *, void *, int, int);
-void	le_vme_copytobuf_contig(struct am7990_softc *, void *, int, int);
-void	le_vme_zerobuf_contig(struct am7990_softc *, int, int);
+void	le_vme_copyfrombuf_contig(struct lance_softc *, void *, int, int);
+void	le_vme_copytobuf_contig(struct lance_softc *, void *, int, int);
+void	le_vme_zerobuf_contig(struct lance_softc *, int, int);
 #endif
 
 /* send command to the nvram controller */
 void
-nvram_cmd(sc, cmd, addr)
-	struct am7990_softc *sc;
-	u_int cmd;
-	u_int addr;
+nvram_cmd(struct lance_softc *sc, u_int cmd, u_int addr)
 {
 	struct le_softc *lesc = (void *)sc;
 	int i;
@@ -112,14 +111,12 @@ nvram_cmd(sc, cmd, addr)
 }
 
 /* read nvram one bit at a time */
-u_int16_t
-nvram_read(sc, nvram_addr)
-	struct am7990_softc *sc;
-	u_int nvram_addr;
+uint16_t
+nvram_read(struct lance_softc *sc, u_int nvram_addr)
 {
 	struct le_softc *lesc = (void *)sc;
 	u_int val = 0, mask = 0x04000;
-	u_int16_t wbit;
+	uint16_t wbit;
 
 	lesc->sc_csr = HW_RS | NVRAM_EN | 0x07;
 	ENABLE_NVRAM;
@@ -147,11 +144,10 @@ nvram_read(sc, nvram_addr)
 }
 
 void
-le_vme_etheraddr(sc)
-	struct am7990_softc *sc;
+le_vme_etheraddr(struct lance_softc *sc)
 {
 	u_char *cp = sc->sc_arpcom.ac_enaddr;
-	u_int16_t ival[3];
+	uint16_t ival[3];
 	int i;
 
 	for (i = 0; i < 3; i++) {
@@ -161,9 +157,7 @@ le_vme_etheraddr(sc)
 }
 
 void
-le_vme_wrcsr(sc, port, val)
-	struct am7990_softc *sc;
-	u_int16_t port, val;
+le_vme_wrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
 	struct le_softc *lesc = (void *)sc;
 
@@ -171,10 +165,8 @@ le_vme_wrcsr(sc, port, val)
 	bus_space_write_2(lesc->sc_iot, lesc->sc_ioh, LEREG_RDP, val);
 }
 
-u_int16_t
-le_vme_rdcsr(sc, port)
-	struct am7990_softc *sc;
-	u_int16_t port;
+uint16_t
+le_vme_rdcsr(struct lance_softc *sc, uint16_t port)
 {
 	struct le_softc *lesc = (void *)sc;
 
@@ -184,8 +176,7 @@ le_vme_rdcsr(sc, port)
 
 /* init board, set ipl and vec */
 void
-le_vme_init(sc)
-	struct am7990_softc *sc;
+le_vme_init(struct lance_softc *sc)
 {
 	struct le_softc *lesc = (void *)sc;
 
@@ -197,8 +188,7 @@ le_vme_init(sc)
 
 /* board reset */
 void
-le_vme_reset(sc)
-	struct am7990_softc *sc;
+le_vme_reset(struct lance_softc *sc)
 {
 	struct le_softc *lesc = (void *)sc;
 
@@ -211,10 +201,10 @@ le_vme_reset(sc)
 }
 
 int
-le_vme_intr(sc)
-	void *sc;
+le_vme_intr(void *arg)
 {
-	struct le_softc *lesc = (void *)sc;
+	struct le_softc *lesc = arg;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	int rc;
 
 	rc = am7990_intr(sc);
@@ -224,10 +214,7 @@ le_vme_intr(sc)
 
 #if 0
 void
-le_vme_copytobuf_contig(sc, from, boff, len)
-	struct am7990_softc *sc;
-	void *from;
-	int boff, len;
+le_vme_copytobuf_contig(struct lance_softc *sc, void *from, int boff, int len)
 {
 	struct le_softc *lesc = (void *)sc;
 
@@ -235,10 +222,7 @@ le_vme_copytobuf_contig(sc, from, boff, len)
 }
 
 void
-le_vme_copyfrombuf_contig(sc, to, boff, len)
-	struct am7990_softc *sc;
-	void *to;
-	int boff, len;
+le_vme_copyfrombuf_contig(struct lance_softc *sc, void *to, int boff, int len)
 {
 	struct le_softc *lesc = (void *)sc;
 
@@ -246,9 +230,7 @@ le_vme_copyfrombuf_contig(sc, to, boff, len)
 }
 
 void
-le_vme_zerobuf_contig(sc, boff, len)
-	struct am7990_softc *sc;
-	int boff, len;
+le_vme_zerobuf_contig(struct lance_softc *sc, int boff, int len)
 {
 	struct le_softc *lesc = (void *)sc;
 
@@ -257,9 +239,7 @@ le_vme_zerobuf_contig(sc, boff, len)
 #endif
 
 int
-le_vme_match(parent, vcf, args)
-	struct device *parent;
-	void *vcf, *args;
+le_vme_match(struct device *parent, void *vcf, void *args)
 {
 	struct vme_attach_args *vaa = args;
 	bus_space_tag_t iot, memt;
@@ -293,13 +273,10 @@ le_vme_match(parent, vcf, args)
 }
 
 void
-le_vme_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+le_vme_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct le_softc *lesc = (struct le_softc *)self;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct vme_attach_args *vaa = aux;
 
 	/*
@@ -354,17 +331,17 @@ le_vme_attach(parent, self, aux)
 	sc->sc_copyfrombuf = le_vme_copyfrombuf_contig;
 	sc->sc_zerobuf = le_vme_zerobuf_contig;
 #else
-	sc->sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_zerobuf = am7990_zerobuf_contig;
+	sc->sc_copytodesc = lance_copytobuf_contig;
+	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+	sc->sc_copytobuf = lance_copytobuf_contig;
+	sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+	sc->sc_zerobuf = lance_zerobuf_contig;
 #endif
 
 	/* get Ethernet address */
 	le_vme_etheraddr(sc);
 
-	am7990_config(sc);
+	am7990_config(&lesc->sc_am7990);
 
 	/* connect the interrupt */
 	lesc->sc_ih.ih_fn = le_vme_intr;
