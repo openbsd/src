@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.36 2013/05/19 20:32:47 miod Exp $
+#	$OpenBSD: files.mvme68k,v 1.37 2013/09/24 20:10:45 miod Exp $
 
 # config file for mvme68k
 
@@ -64,7 +64,7 @@ file	arch/mvme68k/dev/vmel.c			vmel needs-count
 #attach	vsb at lrc, ofobio
 #file	arch/mvme68k/dev/vsb.c			vsb needs-flag
 
-attach	le at pcc, vmes
+attach	le at pcc, vmes: le24
 file	arch/mvme68k/dev/if_le.c		le
 
 attach	ie at mc, pcctwo

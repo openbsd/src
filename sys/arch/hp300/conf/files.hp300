@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.35 2011/12/21 23:12:03 miod Exp $
+#	$OpenBSD: files.hp300,v 1.36 2013/09/24 20:10:42 miod Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -122,7 +122,7 @@ attach	dcm at dio
 file	arch/hp300/dev/dcm.c			dcm	needs-flag
 
 # LANCE ethernet
-attach	le at dio
+attach	le at dio: le24
 file	arch/hp300/dev/if_le.c			le
 
 # 425e digital audio

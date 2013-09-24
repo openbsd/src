@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.17 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.18 2013/09/24 20:10:51 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.14 1999/08/14 18:40:23 ragge Exp $	*/
 
 /*-
@@ -87,6 +87,8 @@
 #include <machine/nexus.h>
 #include <machine/scb.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -97,26 +99,24 @@ struct le_softc {
 	struct	am7990_softc sc_am7990; /* Must be first */
 	struct  evcount sc_intrcnt;
 	int	sc_vec;
-	volatile u_short *sc_rap;
-	volatile u_short *sc_rdp;
+	volatile uint16_t *sc_rap;
+	volatile uint16_t *sc_rdp;
 };
 
 int	le_ibus_match(struct device *, void *, void *);
 void	le_ibus_attach(struct device *, struct device *, void *);
-void	lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
-void	lance_copytobuf_gap2(struct am7990_softc *, void *, int, int);
-void	lance_copyfrombuf_gap2(struct am7990_softc *, void *, int, int);
-void	lance_zerobuf_gap2(struct am7990_softc *, int, int);
+void	lewrcsr(struct lance_softc *, uint16_t, uint16_t);
+uint16_t lerdcsr(struct lance_softc *, uint16_t);
+void	lance_copytobuf_gap2(struct lance_softc *, void *, int, int);
+void	lance_copyfrombuf_gap2(struct lance_softc *, void *, int, int);
+void	lance_zerobuf_gap2(struct lance_softc *, int, int);
 
 struct cfattach le_ibus_ca = {
 	sizeof(struct le_softc), le_ibus_match, le_ibus_attach
 };
 
 void
-lewrcsr(ls, port, val)
-	struct am7990_softc *ls;
-	u_int16_t port, val;
+lewrcsr(struct lance_softc *ls, uint16_t port, uint16_t val)
 {
 	struct le_softc *sc = (void *)ls;
 
@@ -124,10 +124,8 @@ lewrcsr(ls, port, val)
 	*sc->sc_rdp = val;
 }
 
-u_int16_t
-lerdcsr(ls, port)
-	struct am7990_softc *ls;
-	u_int16_t port;
+uint16_t
+lerdcsr(struct lance_softc *ls, uint16_t port)
 {
 	struct le_softc *sc = (void *)ls;
 
@@ -136,10 +134,7 @@ lerdcsr(ls, port)
 }
 
 int
-le_ibus_match(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+le_ibus_match(struct device *parent, void *cf, void *aux)
 {
 	struct bp_conf *bp = aux;
 
@@ -149,70 +144,64 @@ le_ibus_match(parent, cf, aux)
 }
 
 void
-le_ibus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+le_ibus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct le_softc *sc = (void *)self;
+	struct le_softc *lesc = (void *)self;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	int *lance_addr;
 	int i, br;
 
-	sc->sc_rdp = (short *)vax_map_physmem(0x20084400, 1);
-	sc->sc_rap = sc->sc_rdp + 2;
+	lesc->sc_rdp = (short *)vax_map_physmem(0x20084400, 1);
+	lesc->sc_rap = lesc->sc_rdp + 2;
 
 	/*
 	 * Set interrupt vector, by forcing an interrupt.
 	 */
 	scb_vecref(0, 0); /* Clear vector ref */
-	*sc->sc_rap = LE_CSR0;
-	*sc->sc_rdp = LE_C0_STOP;
+	*lesc->sc_rap = LE_CSR0;
+	*lesc->sc_rdp = LE_C0_STOP;
 	DELAY(100);
-	*sc->sc_rdp = LE_C0_INIT|LE_C0_INEA;
+	*lesc->sc_rdp = LE_C0_INIT|LE_C0_INEA;
 	DELAY(100000);
-	i = scb_vecref(&sc->sc_vec, &br);
-	if (i == 0 || sc->sc_vec == 0)
+	i = scb_vecref(&lesc->sc_vec, &br);
+	if (i == 0 || lesc->sc_vec == 0)
 		return;
-	scb_vecalloc(sc->sc_vec, (void *)am7990_intr, sc,
-	     SCB_ISTACK, &sc->sc_intrcnt);
-	evcount_attach(&sc->sc_intrcnt, self->dv_xname, &sc->sc_vec);
+	scb_vecalloc(lesc->sc_vec, (void *)am7990_intr, sc,
+	     SCB_ISTACK, &lesc->sc_intrcnt);
+	evcount_attach(&lesc->sc_intrcnt, self->dv_xname, &lesc->sc_vec);
 
-	printf(": vec %d ipl %x\n%s", sc->sc_vec, br, self->dv_xname);
+	printf(": vec %d ipl %x\n%s", lesc->sc_vec, br, self->dv_xname);
 	/*
 	 * MD functions.
 	 */
-	sc->sc_am7990.sc_rdcsr = lerdcsr;
-	sc->sc_am7990.sc_wrcsr = lewrcsr;
-	sc->sc_am7990.sc_nocarrier = NULL;
+	sc->sc_rdcsr = lerdcsr;
+	sc->sc_wrcsr = lewrcsr;
+	sc->sc_nocarrier = NULL;
 
-	sc->sc_am7990.sc_mem =
-	    (void *)uvm_km_valloc(kernel_map, (128 * 1024));
-	if (sc->sc_am7990.sc_mem == 0)
+	sc->sc_mem = (void *)uvm_km_valloc(kernel_map, (128 * 1024));
+	if (sc->sc_mem == 0)
 		return;
 
-	ioaccess((vaddr_t)sc->sc_am7990.sc_mem, 0x20120000,
-	    (128 * 1024) >> VAX_PGSHIFT);
+	ioaccess((vaddr_t)sc->sc_mem, 0x20120000, (128 * 1024) >> VAX_PGSHIFT);
 
-	
-	sc->sc_am7990.sc_addr = 0;
-	sc->sc_am7990.sc_memsize = (64 * 1024);
+	sc->sc_addr = 0;
+	sc->sc_memsize = (64 * 1024);
 
-	sc->sc_am7990.sc_copytodesc = lance_copytobuf_gap2;
-	sc->sc_am7990.sc_copyfromdesc = lance_copyfrombuf_gap2;
-	sc->sc_am7990.sc_copytobuf = lance_copytobuf_gap2;
-	sc->sc_am7990.sc_copyfrombuf = lance_copyfrombuf_gap2;
-	sc->sc_am7990.sc_zerobuf = lance_zerobuf_gap2;
+	sc->sc_copytodesc = lance_copytobuf_gap2;
+	sc->sc_copyfromdesc = lance_copyfrombuf_gap2;
+	sc->sc_copytobuf = lance_copytobuf_gap2;
+	sc->sc_copyfrombuf = lance_copyfrombuf_gap2;
+	sc->sc_zerobuf = lance_zerobuf_gap2;
 
 	/*
 	 * Get the ethernet address out of rom
 	 */
 	lance_addr = (int *)vax_map_physmem(0x20084200, 1);
 	for (i = 0; i < 6; i++)
-		sc->sc_am7990.sc_arpcom.ac_enaddr[i] = (u_char)lance_addr[i];
+		sc->sc_arpcom.ac_enaddr[i] = (u_char)lance_addr[i];
 	vax_unmap_physmem((vaddr_t)lance_addr, 1);
 
-	bcopy(self->dv_xname, sc->sc_am7990.sc_arpcom.ac_if.if_xname,
-	    IFNAMSIZ);
-	am7990_config(&sc->sc_am7990);
+	am7990_config(&lesc->sc_am7990);
 }
 
 /*
@@ -223,24 +212,20 @@ le_ibus_attach(parent, self, aux)
  */
 
 void
-lance_copytobuf_gap2(sc, fromv, boff, len)
-	struct am7990_softc *sc;
-	void *fromv;
-	int boff;
-	register int len;
+lance_copytobuf_gap2(struct lance_softc *sc, void *fromv, int boff, int len)
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t from = fromv;
-	register volatile u_int16_t *bptr;
+	caddr_t from = fromv;
+	volatile uint16_t *bptr;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
-		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
+		bptr = ((volatile uint16_t *)buf) + (boff - 1);
 		*bptr = (*from++ << 8) | (*bptr & 0xff);
 		bptr += 2;
 		len--;
 	} else
-		bptr = ((volatile u_int16_t *)buf) + boff;
+		bptr = ((volatile uint16_t *)buf) + boff;
 	while (len > 1) {
 		*bptr = (from[1] << 8) | (from[0] & 0xff);
 		bptr += 2;
@@ -248,28 +233,25 @@ lance_copytobuf_gap2(sc, fromv, boff, len)
 		len -= 2;
 	}
 	if (len == 1)
-		*bptr = (u_int16_t)*from;
+		*bptr = (uint16_t)*from;
 }
 
 void
-lance_copyfrombuf_gap2(sc, tov, boff, len)
-	struct am7990_softc *sc;
-	void *tov;
-	int boff, len;
+lance_copyfrombuf_gap2(struct lance_softc *sc, void *tov, int boff, int len)
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t to = tov;
-	register volatile u_int16_t *bptr;
-	register u_int16_t tmp;
+	caddr_t to = tov;
+	volatile uint16_t *bptr;
+	uint16_t tmp;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
-		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
+		bptr = ((volatile uint16_t *)buf) + (boff - 1);
 		*to++ = (*bptr >> 8) & 0xff;
 		bptr += 2;
 		len--;
 	} else
-		bptr = ((volatile u_int16_t *)buf) + boff;
+		bptr = ((volatile uint16_t *)buf) + boff;
 	while (len > 1) {
 		tmp = *bptr;
 		*to++ = tmp & 0xff;
@@ -282,20 +264,18 @@ lance_copyfrombuf_gap2(sc, tov, boff, len)
 }
 
 void
-lance_zerobuf_gap2(sc, boff, len)
-	struct am7990_softc *sc;
-	int boff, len;
+lance_zerobuf_gap2(struct lance_softc *sc, int boff, int len)
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register volatile u_int16_t *bptr;
+	volatile uint16_t *bptr;
 
 	if ((unsigned)boff & 0x1) {
-		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
+		bptr = ((volatile uint16_t *)buf) + (boff - 1);
 		*bptr &= 0xff;
 		bptr += 2;
 		len--;
 	} else
-		bptr = ((volatile u_int16_t *)buf) + boff;
+		bptr = ((volatile uint16_t *)buf) + boff;
 	while (len > 0) {
 		*bptr = 0;
 		bptr += 2;

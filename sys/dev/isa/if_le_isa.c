@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_isa.c,v 1.20 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: if_le_isa.c,v 1.21 2013/09/24 20:11:01 miod Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -61,6 +61,8 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -79,7 +81,7 @@ struct cfattach le_isa_ca = {
 int	depca_isa_probe(struct le_softc *, struct isa_attach_args *);
 int	ne2100_isa_probe(struct le_softc *, struct isa_attach_args *);
 int	bicc_isa_probe(struct le_softc *, struct isa_attach_args *);
-int	lance_isa_probe(struct am7990_softc *);
+int	lance_isa_probe(struct lance_softc *);
 
 int
 le_isa_probe(struct device *parent, void *match, void *aux)
@@ -99,7 +101,7 @@ le_isa_probe(struct device *parent, void *match, void *aux)
 	    depca_isa_probe(lesc, ia) == 0)
 		return (0);
 
-	if (bcmp(lesc->sc_am7990.sc_arpcom.ac_enaddr, bogusether,
+	if (bcmp(lesc->sc_am7990.lsc.sc_arpcom.ac_enaddr, bogusether,
 	    sizeof(bogusether)) == 0)
 		return (0);
 
@@ -109,7 +111,7 @@ le_isa_probe(struct device *parent, void *match, void *aux)
 int
 depca_isa_probe(struct le_softc *lesc, struct isa_attach_args *ia)
 {
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	bus_space_tag_t iot = lesc->sc_iot;
 	bus_space_handle_t ioh = lesc->sc_ioh;
 	int iosize = 16;
@@ -211,7 +213,7 @@ found:
 int
 ne2100_isa_probe(struct le_softc *lesc, struct isa_attach_args *ia)
 {
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	bus_space_tag_t iot = lesc->sc_iot;
 	bus_space_handle_t ioh = lesc->sc_ioh;
 	int iosize = 24;
@@ -244,7 +246,7 @@ ne2100_isa_probe(struct le_softc *lesc, struct isa_attach_args *ia)
 int
 bicc_isa_probe(struct le_softc *lesc, struct isa_attach_args *ia)
 {
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	bus_space_handle_t ioh;
 	bus_space_tag_t iot = ia->ia_iot;
 	int iosize = 16;
@@ -278,7 +280,7 @@ bicc_isa_probe(struct le_softc *lesc, struct isa_attach_args *ia)
  * Determine which chip is present on the card.
  */
 int
-lance_isa_probe(struct am7990_softc *sc)
+lance_isa_probe(struct lance_softc *sc)
 {
 
 	/* Stop the LANCE chip and put it in a known state. */
@@ -297,7 +299,7 @@ le_isa_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct le_softc *lesc = (void *)self;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
@@ -346,11 +348,11 @@ le_isa_attach(struct device *parent, struct device *self,
 		sc->sc_memsize = 16384;
 	}
 
-	sc->sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_zerobuf = am7990_zerobuf_contig;
+	sc->sc_copytodesc = lance_copytobuf_contig;
+	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+	sc->sc_copytobuf = lance_copytobuf_contig;
+	sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+	sc->sc_zerobuf = lance_zerobuf_contig;
 
 	sc->sc_rdcsr = le_isa_rdcsr;
 	sc->sc_wrcsr = le_isa_wrcsr;
@@ -358,7 +360,7 @@ le_isa_attach(struct device *parent, struct device *self,
 	sc->sc_hwinit = NULL;
 
 	printf("%s", sc->sc_dev.dv_xname);
-	am7990_config(sc);
+	am7990_config(&lesc->sc_am7990);
 
 #if NISADMA > 0
 	if (ia->ia_drq != DRQUNK)

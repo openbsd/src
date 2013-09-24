@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.56 2011/09/04 08:03:32 miod Exp $
+#	$OpenBSD: files.vax,v 1.57 2013/09/24 20:10:50 miod Exp $
 #	$NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -42,7 +42,7 @@ file	arch/vax/vsa/if_ze_vsbus.c		ze_vsbus
 attach	ze at vxtbus with ze_vxtbus
 file	arch/vax/vxt/if_ze_vxtbus.c		ze_vxtbus
 
-attach	le at ibus with le_ibus
+attach	le at ibus with le_ibus: le24
 file	arch/vax/if/if_le.c			le_ibus
 
 # MSCP device drivers
@@ -109,7 +109,7 @@ attach	ncr at vsbus
 file	arch/vax/vsa/ncr.c			ncr needs-flag
 
 # LANCE ethernet controller on VAXstation
-attach	le at vsbus with le_vsbus
+attach	le at vsbus with le_vsbus: le24
 file	arch/vax/vsa/if_le_vsbus.c		le_vsbus
 
 # Monochrome (on-board) framebuffer on VS3100

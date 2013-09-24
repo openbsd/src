@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_isapnp.c,v 1.12 2007/06/17 21:20:47 jasper Exp $	*/
+/*	$OpenBSD: if_le_isapnp.c,v 1.13 2013/09/24 20:11:01 miod Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -61,6 +61,8 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -84,7 +86,7 @@ le_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct le_softc *lesc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	bus_space_tag_t iot = lesc->sc_iot;
 	bus_space_handle_t ioh = lesc->sc_ioh;
 	int i;
@@ -111,18 +113,18 @@ le_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_addr = kvtop(sc->sc_mem);
 	sc->sc_memsize = 16384;
 
-	sc->sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_zerobuf = am7990_zerobuf_contig;
+	sc->sc_copytodesc = lance_copytobuf_contig;
+	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+	sc->sc_copytobuf = lance_copytobuf_contig;
+	sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+	sc->sc_zerobuf = lance_zerobuf_contig;
 
 	sc->sc_rdcsr = le_isa_rdcsr;
 	sc->sc_wrcsr = le_isa_wrcsr;
 	sc->sc_hwreset = NULL;
 	sc->sc_hwinit = NULL;
 
-	am7990_config(sc);
+	am7990_config(&lesc->sc_am7990);
 
 #if NISADMA > 0
 	if (ia->ia_drq != DRQUNK)

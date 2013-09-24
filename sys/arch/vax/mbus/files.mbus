@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mbus,v 1.2 2008/08/20 19:00:01 miod Exp $
+#	$OpenBSD: files.mbus,v 1.3 2013/09/24 20:10:52 miod Exp $
 
 # VAXstation 3[58][24]0 internal bus
 device	mbus { [mid = -1] }
@@ -13,7 +13,7 @@ file	arch/vax/mbus/fwio.c			fwio
 attach	dz at fwio with dz_fwio: dzcons
 file	arch/vax/mbus/dz_fwio.c			dz_fwio
 
-attach	le at fwio with le_fwio
+attach	le at fwio with le_fwio: le24
 file	arch/vax/mbus/if_le_fwio.c		le_fwio
 
 attach	sii at fwio with sii_fwio

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.luna88k,v 1.17 2013/05/22 11:35:02 aoyama Exp $
+#	$OpenBSD: files.luna88k,v 1.18 2013/09/24 20:10:44 miod Exp $
 #
 maxpartitions 16
 
@@ -14,7 +14,7 @@ device lcd
 attach lcd at mainbus
 file	arch/luna88k/dev/lcd.c				lcd needs-flag
 
-attach le at mainbus
+attach le at mainbus: le24
 file	arch/luna88k/dev/if_le.c			le
 
 device sio {[channel = -1]}

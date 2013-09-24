@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.50 2013/06/11 21:06:31 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.51 2013/09/24 20:10:47 miod Exp $
 #
 maxpartitions 16
 
@@ -102,7 +102,7 @@ attach	ie at pcctwo: ifnet, ether
 file	arch/mvme88k/dev/if_ie.c			ie
 
 # MVME376
-attach	le at vmes
+attach	le at vmes: le24
 file	arch/mvme88k/dev/if_le.c			le
 
 # MVME374

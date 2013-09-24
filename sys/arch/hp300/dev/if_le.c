@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.17 2005/01/15 21:13:08 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.18 2013/09/24 20:10:44 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.43 1997/05/05 21:05:32 thorpej Exp $	*/
 
 /*-
@@ -58,6 +58,8 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -81,15 +83,13 @@ struct cfattach le_ca = {
 int	leintr(void *);
 
 /* offsets for:	   ID,   REGS,    MEM,  NVRAM */
-int	lestd[] = { 0, 0x4000, 0x8000, 0xC008 };
+const int lestd[] = { 0, 0x4000, 0x8000, 0xC008 };
 
-hide void lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-hide u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
+void lewrcsr(struct lance_softc *, uint16_t, uint16_t);
+uint16_t lerdcsr(struct lance_softc *, uint16_t);
 
-hide void
-lewrcsr(sc, port, val)
-	struct am7990_softc *sc;
-	u_int16_t port, val;
+void
+lewrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
 	struct lereg0 *ler0 = ((struct le_softc *)sc)->sc_r0;
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
@@ -102,14 +102,12 @@ lewrcsr(sc, port, val)
 	} while ((ler0->ler0_status & LE_ACK) == 0);
 }
 
-hide u_int16_t
-lerdcsr(sc, port)
-	struct am7990_softc *sc;
-	u_int16_t port;
+uint16_t
+lerdcsr(struct lance_softc *sc, uint16_t port)
 {
 	struct lereg0 *ler0 = ((struct le_softc *)sc)->sc_r0;
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
-	u_int16_t val;
+	uint16_t val;
 
 	do {
 		ler1->ler1_rap = port;
@@ -147,7 +145,7 @@ leattach(parent, self, aux)
 	struct dio_attach_args *da = aux;
 	struct le_softc *lesc = (struct le_softc *)self;
 	caddr_t addr;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	char *cp;
 	int i, ipl;
 
@@ -182,18 +180,18 @@ leattach(parent, self, aux)
 		cp++;
 	}
 
-	sc->sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_zerobuf = am7990_zerobuf_contig;
+	sc->sc_copytodesc = lance_copytobuf_contig;
+	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+	sc->sc_copytobuf = lance_copytobuf_contig;
+	sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+	sc->sc_zerobuf = lance_zerobuf_contig;
 
 	sc->sc_rdcsr = lerdcsr;
 	sc->sc_wrcsr = lewrcsr;
 	sc->sc_hwreset = NULL;
 	sc->sc_hwinit = NULL;
 
-	am7990_config(sc);
+	am7990_config(&lesc->sc_am7990);
 
 	/* Establish the interrupt handler. */
 	lesc->sc_isr.isr_func = leintr;
@@ -209,9 +207,9 @@ leintr(arg)
 	void *arg;
 {
 	struct le_softc *lesc = (struct le_softc *)arg;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 #ifdef USELEDS
-	u_int16_t isr;
+	uint16_t isr;
 
 	isr = lerdcsr(sc, LE_CSR0);
 

@@ -1,8 +1,8 @@
-/*	$OpenBSD: am7990var.h,v 1.11 2013/09/24 20:10:57 miod Exp $	*/
-/*	$NetBSD: am7990var.h,v 1.24 2008/04/28 20:23:49 martin Exp $	*/
+/*	$OpenBSD: am79900var.h,v 1.1 2013/09/24 20:10:56 miod Exp $	*/
+/*	$NetBSD: am79900var.h,v 1.5 2008/04/28 20:23:49 martin Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,8 +31,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_IC_AM7990VAR_H_
-#define	_DEV_IC_AM7990VAR_H_
+#ifndef _DEV_IC_AM79900VAR_H_
+#define	_DEV_IC_AM79900VAR_H_
 
 /*
  * Ethernet software status per device.
@@ -40,14 +40,14 @@
  * NOTE: this structure MUST be the first element in machine-dependent
  * le_softc structures!  This is designed SPECIFICALLY to make it possible
  * to simply cast a "void *" to "struct le_softc *" or to
- * "struct am7990_softc *".  Among other things, this saves a lot of hair
+ * "struct am79900_softc *".  Among other things, this saves a lot of hair
  * in the interrupt handlers.
  */
-struct am7990_softc {
+struct am79900_softc {
 	struct lance_softc lsc;
 };
 
-void	am7990_config(struct am7990_softc *);
-int	am7990_intr(void *);
+void	am79900_config(struct am79900_softc *);
+int	am79900_intr(void *);
 
-#endif /* _DEV_IC_AM7990VAR_H_ */
+#endif /* _DEV_IC_AM79900VAR_H_ */

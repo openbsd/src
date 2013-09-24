@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_fwio.c,v 1.2 2008/10/22 23:04:45 mpf Exp $	*/
+/*	$OpenBSD: if_le_fwio.c,v 1.3 2013/09/24 20:10:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -103,6 +103,8 @@
 #include <vax/mbus/fwioreg.h>
 #include <vax/mbus/fwiovar.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -120,9 +122,9 @@ struct cfattach le_fwio_ca = {
 };
 
 int	le_fwio_intr(void *);
-uint16_t le_fwio_rdcsr(struct am7990_softc *, uint16_t);
-void	le_fwio_wrcsr(struct am7990_softc *, uint16_t, uint16_t);
-void	le_fwio_wrcsr_interrupt(struct am7990_softc *, uint16_t, uint16_t);
+uint16_t le_fwio_rdcsr(struct lance_softc *, uint16_t);
+void	le_fwio_wrcsr(struct lance_softc *, uint16_t, uint16_t);
+void	le_fwio_wrcsr_interrupt(struct lance_softc *, uint16_t, uint16_t);
 
 int
 le_fwio_match(struct device *parent, void *vcf, void *aux)
@@ -136,7 +138,8 @@ void
 le_fwio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fwio_attach_args *faa = (struct fwio_attach_args *)aux;
-	struct le_fwio_softc *sc = (struct le_fwio_softc *)self;
+	struct le_fwio_softc *lsc = (struct le_fwio_softc *)self;
+	struct lance_softc *sc = &lsc->sc_am7990.lsc;
 	unsigned int vec;
 	uint32_t *esar;
 	int i;
@@ -148,41 +151,40 @@ le_fwio_attach(struct device *parent, struct device *self, void *aux)
 	 * Map registers.
 	 */
 
-	sc->sc_rdp = (volatile uint16_t *)
+	lsc->sc_rdp = (volatile uint16_t *)
 	    vax_map_physmem(faa->faa_base + FWIO_LANCE_REG_OFFSET, 1);
-	sc->sc_rap = sc->sc_rdp + 2;
+	lsc->sc_rap = lsc->sc_rdp + 2;
 
 	/*
 	 * Register access functions.
 	 */
 
-	sc->sc_am7990.sc_rdcsr = le_fwio_rdcsr;
-	sc->sc_am7990.sc_wrcsr = le_fwio_wrcsr;
+	sc->sc_rdcsr = le_fwio_rdcsr;
+	sc->sc_wrcsr = le_fwio_wrcsr;
 
 	/*
 	 * Map buffers.
 	 */
 
-	sc->sc_am7990.sc_mem =
-	    (void *)uvm_km_valloc(kernel_map, FWIO_LANCE_BUF_SIZE);
-	if (sc->sc_am7990.sc_mem == NULL) {
+	sc->sc_mem = (void *)uvm_km_valloc(kernel_map, FWIO_LANCE_BUF_SIZE);
+	if (sc->sc_mem == NULL) {
 		vax_unmap_physmem(faa->faa_base + FWIO_LANCE_REG_OFFSET, 1);
 		printf(": can't map buffers\n");
 		return;
 	}
 
-	ioaccess((vaddr_t)sc->sc_am7990.sc_mem, faa->faa_base +
+	ioaccess((vaddr_t)sc->sc_mem, faa->faa_base +
 	    FWIO_LANCE_BUF_OFFSET, FWIO_LANCE_BUF_SIZE >> VAX_PGSHIFT);
 
-	sc->sc_am7990.sc_addr = FWIO_LANCE_BUF_OFFSET;
-	sc->sc_am7990.sc_memsize = FWIO_LANCE_BUF_SIZE;
-	sc->sc_am7990.sc_conf3 = 0;
+	sc->sc_addr = FWIO_LANCE_BUF_OFFSET;
+	sc->sc_memsize = FWIO_LANCE_BUF_SIZE;
+	sc->sc_conf3 = 0;
 
-	sc->sc_am7990.sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_am7990.sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_am7990.sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_am7990.sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_am7990.sc_zerobuf = am7990_zerobuf_contig;
+	sc->sc_copytodesc = lance_copytobuf_contig;
+	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+	sc->sc_copytobuf = lance_copytobuf_contig;
+	sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+	sc->sc_zerobuf = lance_zerobuf_contig;
 
 	/*
 	 * Get the Ethernet address from the Station Address ROM.
@@ -190,10 +192,9 @@ le_fwio_attach(struct device *parent, struct device *self, void *aux)
 
 	esar = (uint32_t *)vax_map_physmem(faa->faa_base + FWIO_ESAR_OFFSET, 1);
 	for (i = 0; i < 6; i++)
-		sc->sc_am7990.sc_arpcom.ac_enaddr[i] =
+		sc->sc_arpcom.ac_enaddr[i] =
 		    (esar[i] & FWIO_ESAR_MASK) >> FWIO_ESAR_SHIFT;
 	vax_unmap_physmem((vaddr_t)esar, 1);
-	bcopy(self->dv_xname, sc->sc_am7990.sc_arpcom.ac_if.if_xname, IFNAMSIZ);
 
 	/*
 	 * Register interrupt handler.
@@ -202,7 +203,7 @@ le_fwio_attach(struct device *parent, struct device *self, void *aux)
 	if (mbus_intr_establish(vec, IPL_NET, le_fwio_intr, sc,
 	    self->dv_xname) != 0) {
 		vax_unmap_physmem(faa->faa_base + FWIO_LANCE_REG_OFFSET, 1);
-		uvm_km_free(kernel_map, (vaddr_t)sc->sc_am7990.sc_mem,
+		uvm_km_free(kernel_map, (vaddr_t)sc->sc_mem,
 		    FWIO_LANCE_BUF_SIZE);
 		printf(": can't establish interrupt\n");
 		return;
@@ -212,13 +213,14 @@ le_fwio_attach(struct device *parent, struct device *self, void *aux)
 	 * Complete attachment.
 	 */
 
-	am7990_config(&sc->sc_am7990);
+	am7990_config(&lsc->sc_am7990);
 }
 
 int
 le_fwio_intr(void *v)
 {
 	struct le_fwio_softc *lsc = (struct le_fwio_softc *)v;
+	struct lance_softc *sc = &lsc->sc_am7990.lsc;
 	int rc;
 
 	/*
@@ -230,22 +232,21 @@ le_fwio_intr(void *v)
 	 * itself; we override wrcsr with a specific version during
 	 * servicing, so as not to reenable interrupts accidentally...
 	 */
-	lsc->sc_am7990.sc_wrcsr = le_fwio_wrcsr_interrupt;
+	sc->sc_wrcsr = le_fwio_wrcsr_interrupt;
 
 	rc = am7990_intr(v);
 
-	lsc->sc_am7990.sc_wrcsr = le_fwio_wrcsr;
+	sc->sc_wrcsr = le_fwio_wrcsr;
 	/*
 	 * ...but we should not forget to reenable interrupts at this point!
 	 */
-	le_fwio_wrcsr(&lsc->sc_am7990, LE_CSR0, LE_C0_INEA |
-	    le_fwio_rdcsr(&lsc->sc_am7990, LE_CSR0));
+	le_fwio_wrcsr(sc, LE_CSR0, LE_C0_INEA | le_fwio_rdcsr(sc, LE_CSR0));
 
 	return rc;
 }
 
 uint16_t
-le_fwio_rdcsr(struct am7990_softc *sc, uint16_t port)
+le_fwio_rdcsr(struct lance_softc *sc, uint16_t port)
 {
 	struct le_fwio_softc *lsc = (struct le_fwio_softc *)sc;
 
@@ -254,7 +255,7 @@ le_fwio_rdcsr(struct am7990_softc *sc, uint16_t port)
 }
 
 void
-le_fwio_wrcsr(struct am7990_softc *sc, uint16_t port, uint16_t val)
+le_fwio_wrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
 	struct le_fwio_softc *lsc = (struct le_fwio_softc *)sc;
 
@@ -263,7 +264,7 @@ le_fwio_wrcsr(struct am7990_softc *sc, uint16_t port, uint16_t val)
 }
 
 void
-le_fwio_wrcsr_interrupt(struct am7990_softc *sc, uint16_t port, uint16_t val)
+le_fwio_wrcsr_interrupt(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
 	if (port == LE_CSR0)
 		val &= ~LE_C0_INEA;

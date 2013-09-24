@@ -1,4 +1,4 @@
-#	$OpenBSD: files.tc,v 1.9 2011/09/04 20:10:18 miod Exp $
+#	$OpenBSD: files.tc,v 1.10 2013/09/24 20:11:05 miod Exp $
 #	$NetBSD: files.tc,v 1.26 2001/11/28 10:21:24 lukem Exp $
 #
 # Config file and device description for machine-independent
@@ -17,10 +17,10 @@ file	dev/tc/ioasic_subr.c		ioasic
 #  lance device defined in sys/conf/files
 #  le_dec_subr	attribute defined in sys/dev/dec/files.dec
 
-attach	le at ioasic with le_ioasic:	le_dec_subr
+attach	le at ioasic with le_ioasic:	le24, le_dec_subr
 file	dev/tc/if_le_ioasic.c		le_ioasic
 
-attach	le at tc with le_tc:		le_dec_subr
+attach	le at tc with le_tc:		le24, le_dec_subr
 file	dev/tc/if_le_tc.c		le_tc
 
 # baseboard audio

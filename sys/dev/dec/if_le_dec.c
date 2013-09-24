@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_dec.c,v 1.4 2007/06/18 21:24:43 jasper Exp $	*/
+/*	$OpenBSD: if_le_dec.c,v 1.5 2013/09/24 20:10:54 miod Exp $	*/
 /*	$NetBSD: if_le_dec.c,v 1.12 2001/11/13 12:49:45 lukem Exp $	*/
 
 /*-
@@ -52,6 +52,8 @@
 #include <netinet/if_ether.h>
 #endif
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -65,27 +67,28 @@ void le_dec_writereg(volatile u_short *regptr, u_short val);
 #define	LERDWR(cntl, src, dst)	{ (dst) = (src); tc_mb(); }
 #define	LEWREG(src, dst)	le_dec_writereg(&(dst), (src))
 
-void le_dec_wrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-u_int16_t le_dec_rdcsr(struct am7990_softc *, u_int16_t);
+void le_dec_wrcsr(struct lance_softc *, u_int16_t, u_int16_t);
+u_int16_t le_dec_rdcsr(struct lance_softc *, u_int16_t);
 
 void
 dec_le_common_attach(struct am7990_softc *sc, u_char *eap)
 {
+	struct lance_softc *lsc = &sc->lsc;
 	int i;
 
-	sc->sc_rdcsr = le_dec_rdcsr;
-	sc->sc_wrcsr = le_dec_wrcsr;
-	sc->sc_hwinit = NULL;
+	lsc->sc_rdcsr = le_dec_rdcsr;
+	lsc->sc_wrcsr = le_dec_wrcsr;
+	lsc->sc_hwinit = NULL;
 
-	sc->sc_conf3 = 0;
-	sc->sc_addr = 0;
-	sc->sc_memsize = 65536;
+	lsc->sc_conf3 = 0;
+	lsc->sc_addr = 0;
+	lsc->sc_memsize = 65536;
 
 	/*
 	 * Get the ethernet address out of rom
 	 */
-	for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++) {
-		sc->sc_arpcom.ac_enaddr[i] = *eap;
+	for (i = 0; i < sizeof(lsc->sc_arpcom.ac_enaddr); i++) {
+		lsc->sc_arpcom.ac_enaddr[i] = *eap;
 		eap += 4;
 	}
 
@@ -93,7 +96,7 @@ dec_le_common_attach(struct am7990_softc *sc, u_char *eap)
 }
 
 void
-le_dec_wrcsr(struct am7990_softc *sc, u_int16_t port, u_int16_t val)
+le_dec_wrcsr(struct lance_softc *sc, u_int16_t port, u_int16_t val)
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 
@@ -102,7 +105,7 @@ le_dec_wrcsr(struct am7990_softc *sc, u_int16_t port, u_int16_t val)
 }
 
 u_int16_t
-le_dec_rdcsr(struct am7990_softc *sc, u_int16_t port)
+le_dec_rdcsr(struct lance_softc *sc, u_int16_t port)
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 	u_int16_t val;
@@ -136,7 +139,7 @@ le_dec_writereg(volatile u_short *regptr, u_short val)
 
 /*
  * Routines for accessing the transmit and receive buffers are provided
- * by am7990.c, because of the LE_NEED_BUF_* macros defined above.
+ * by lance.c, because of the LE_NEED_BUF_* macros defined above.
  * Unfortunately, CPU addressing of these buffers is done in one of
  * 3 ways:
  * - contiguous (for the 3max and turbochannel option card)

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sbus,v 1.38 2009/09/01 14:45:44 kettenis Exp $
+#	$OpenBSD: files.sbus,v 1.39 2013/09/24 20:11:02 miod Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
@@ -19,9 +19,9 @@ attach	lebuffer at sbus
 file	dev/sbus/lebuffer.c		lebuffer
 
 # device definition in sys/conf/files
-attach	le at sbus with le_sbus
-attach	le at lebuffer with le_lebuffer
-attach	le at ledma with le_ledma
+attach	le at sbus with le_sbus: le24
+attach	le at lebuffer with le_lebuffer: le24
+attach	le at ledma with le_ledma: le24
 file	dev/sbus/if_le.c		le_sbus
 file	dev/sbus/if_le_lebuffer.c	le_lebuffer
 file	dev/sbus/if_le_ledma.c		le_ledma

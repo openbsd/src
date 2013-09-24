@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.18 2007/06/17 21:20:47 jasper Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.19 2013/09/24 20:11:00 miod Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -61,13 +61,15 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
 #include <dev/isa/if_levar.h>
 
 void
-le_isa_wrcsr(struct am7990_softc *sc, u_int16_t port, u_int16_t val)
+le_isa_wrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t iot = lesc->sc_iot;
@@ -77,13 +79,13 @@ le_isa_wrcsr(struct am7990_softc *sc, u_int16_t port, u_int16_t val)
 	bus_space_write_2(iot, ioh, lesc->sc_rdp, val);
 }
 
-u_int16_t
-le_isa_rdcsr(struct am7990_softc *sc, u_int16_t port)
+uint16_t
+le_isa_rdcsr(struct lance_softc *sc, uint16_t port)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t iot = lesc->sc_iot;
 	bus_space_handle_t ioh = lesc->sc_ioh;
-	u_int16_t val;
+	uint16_t val;
 
 	bus_space_write_2(iot, ioh, lesc->sc_rap, port);
 	val = bus_space_read_2(iot, ioh, lesc->sc_rdp);

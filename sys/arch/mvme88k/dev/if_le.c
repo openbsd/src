@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.15 2006/05/08 14:36:10 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.16 2013/09/24 20:10:48 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -51,6 +51,8 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -62,25 +64,22 @@
 void  leattach(struct device *, struct device *, void *);
 int   lematch(struct device *, void *, void *);
 
-struct cfattach le_ca = {
+const struct cfattach le_ca = {
 	sizeof(struct le_softc), lematch, leattach
 };
 
-void vlewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-u_int16_t vlerdcsr(struct am7990_softc *, u_int16_t);
-void nvram_cmd(struct am7990_softc *, u_char, u_short);
-u_int16_t nvram_read(struct am7990_softc *, u_char);
-void vleetheraddr(struct am7990_softc *);
-void vleinit(struct am7990_softc *);
-void vlereset(struct am7990_softc *);
-int vle_intr(void *);
+void	vlewrcsr(struct lance_softc *, uint16_t, uint16_t);
+uint16_t vlerdcsr(struct lance_softc *, uint16_t);
+void	nvram_cmd(struct lance_softc *, uint8_t, uint16_t);
+uint16_t nvram_read(struct lance_softc *, uint8_t);
+void	vleetheraddr(struct lance_softc *);
+void	vleinit(struct lance_softc *);
+void	vlereset(struct lance_softc *);
+int	vle_intr(void *);
 
 /* send command to the nvram controller */
 void
-nvram_cmd(sc, cmd, addr)
-	struct am7990_softc *sc;
-	u_char cmd;
-	u_short addr;
+nvram_cmd(struct lance_softc *sc, uint8_t cmd, uint16_t addr)
 {
 	struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 	int i;
@@ -92,13 +91,11 @@ nvram_cmd(sc, cmd, addr)
 }
 
 /* read nvram one bit at a time */
-u_int16_t
-nvram_read(sc, nvram_addr)
-	struct am7990_softc *sc;
-	u_char nvram_addr;
+uint16_t
+nvram_read(struct lance_softc *sc, uint8_t nvram_addr)
 {
-	u_short val = 0, mask = 0x04000;
-	u_int16_t wbit;
+	uint16_t val = 0, mask = 0x04000;
+	uint16_t wbit;
 	struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 
 	((struct le_softc *)sc)->sc_csr = 0x4f;
@@ -126,11 +123,10 @@ nvram_read(sc, nvram_addr)
 }
 
 void
-vleetheraddr(sc)
-	struct am7990_softc *sc;
+vleetheraddr(struct lance_softc *sc)
 {
-	u_char *cp = sc->sc_arpcom.ac_enaddr;
-	u_int16_t ival[3];
+	uint8_t *cp = sc->sc_arpcom.ac_enaddr;
+	uint16_t ival[3];
 	int i;
 
 	for (i = 0; i < 3; i++) {
@@ -140,9 +136,7 @@ vleetheraddr(sc)
 }
 
 void
-vlewrcsr(sc, port, val)
-	struct am7990_softc *sc;
-	u_int16_t port, val;
+vlewrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
 	struct vlereg1 *ler1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 
@@ -150,13 +144,11 @@ vlewrcsr(sc, port, val)
 	ler1->ler1_rdp = val;
 }
 
-u_int16_t
-vlerdcsr(sc, port)
-	struct am7990_softc *sc;
-	u_int16_t port;
+uint16_t
+vlerdcsr(struct lance_softc *sc, uint16_t port)
 {
 	struct vlereg1 *ler1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
-	u_int16_t val;
+	uint16_t val;
 
 	ler1->ler1_rap = port;
 	val = ler1->ler1_rdp;
@@ -165,12 +157,11 @@ vlerdcsr(sc, port)
 
 /* init MVME376, set ipl and vec */
 void
-vleinit(sc)
-	struct am7990_softc *sc;
+vleinit(struct lance_softc *sc)
 {
 	struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
-	u_char vec = ((struct le_softc *)sc)->sc_vec;
-	u_char ipl = ((struct le_softc *)sc)->sc_ipl;
+	uint8_t vec = ((struct le_softc *)sc)->sc_vec;
+	uint8_t ipl = ((struct le_softc *)sc)->sc_ipl;
 
 	((struct le_softc *)sc)->sc_csr = 0x4f;
 	WRITE_CSR_AND(ipl);
@@ -180,8 +171,7 @@ vleinit(sc)
 
 /* MVME376 hardware reset */
 void
-vlereset(sc)
-	struct am7990_softc *sc;
+vlereset(struct lance_softc *sc)
 {
 	struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 
@@ -195,8 +185,7 @@ vlereset(sc)
 }
 
 int
-vle_intr(sc)
-	void *sc;
+vle_intr(void *sc)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	struct vlereg1 *reg1 = (struct vlereg1 *)lesc->sc_r1;
@@ -208,9 +197,7 @@ vle_intr(sc)
 }
 
 int
-lematch(parent, vcf, args)
-	struct device *parent;
-	void *vcf, *args;
+lematch(struct device *parent, void *vcf, void *args)
 {
 	struct confargs *ca = args;
 	bus_space_tag_t iot = ca->ca_iot;
@@ -231,13 +218,10 @@ lematch(parent, vcf, args)
  * to accept packets.
  */
 void
-leattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+leattach(struct device *parent, struct device *self, void *aux)
 {
 	struct le_softc *lesc = (struct le_softc *)self;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct confargs *ca = aux;
 	paddr_t paddr;
 	int card;
@@ -252,11 +236,10 @@ leattach(parent, self, aux)
 		ca->ca_ipl = IPL_NET;
 
 	/* 
-	 * get the first available etherbuf.  MVME376 uses its own dual-ported 
-	 * RAM for etherbuf.  It is set by dip switches on board.  We support 
-	 * the six Motorola address locations, however, the board can be set up
-	 * at any other address.
-	 * XXX These physical addresses should be mapped in extio!!!
+	 * MVME376 uses its own dual-ported RAM for buffers.
+	 * Its address is set by DIP switches on board.  We support the six
+	 * Motorola address locations; however, the board can be set up at
+	 * any other address.
 	 */
 	switch (ca->ca_paddr) {
 	case 0xffff1200:
@@ -306,16 +289,16 @@ leattach(parent, self, aux)
 	sc->sc_rdcsr = vlerdcsr;
 	sc->sc_wrcsr = vlewrcsr;
 	sc->sc_hwinit = vleinit;
-	sc->sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_zerobuf = am7990_zerobuf_contig;
+	sc->sc_copytodesc = lance_copytobuf_contig;
+	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+	sc->sc_copytobuf = lance_copytobuf_contig;
+	sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+	sc->sc_zerobuf = lance_zerobuf_contig;
 
 	/* get Ethernet address */
 	vleetheraddr(sc);
 
-	am7990_config(sc);
+	am7990_config(&lesc->sc_am7990);
 
 	/* connect the interrupt */
 	lesc->sc_ih.ih_fn = vle_intr;

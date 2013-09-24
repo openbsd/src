@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.33 2009/02/21 20:33:08 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.34 2013/09/24 20:10:46 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -53,6 +53,8 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -73,25 +75,20 @@ struct cfattach le_ca = {
 	sizeof(struct le_softc), lematch, leattach
 };
 
-static int lebustype;
-
-void lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
-void vlewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-u_int16_t vlerdcsr(struct am7990_softc *, u_int16_t);
-void nvram_cmd(struct am7990_softc *, u_char, u_short);
-u_int16_t nvram_read(struct am7990_softc *, u_char);
-void vleetheraddr(struct am7990_softc *);
-void vleinit(struct am7990_softc *);
-void vlereset(struct am7990_softc *);
-int vle_intr(void *);
+void	lewrcsr(struct lance_softc *, uint16_t, uint16_t);
+uint16_t lerdcsr(struct lance_softc *, uint16_t);
+void	vlewrcsr(struct lance_softc *, uint16_t, uint16_t);
+uint16_t vlerdcsr(struct lance_softc *, uint16_t);
+void	nvram_cmd(struct lance_softc *, uint8_t, uint16_t);
+uint16_t nvram_read(struct lance_softc *, uint8_t);
+void	vleetheraddr(struct lance_softc *);
+void	vleinit(struct lance_softc *);
+void	vlereset(struct lance_softc *);
+int	vle_intr(void *);
 
 /* send command to the nvram controller */
 void
-nvram_cmd(sc, cmd, addr)
-	struct am7990_softc *sc;
-	u_char cmd;
-	u_short addr;
+nvram_cmd(struct lance_softc *sc, uint8_t cmd, uint16_t addr)
 {
 	int i;
 	struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
@@ -103,13 +100,11 @@ nvram_cmd(sc, cmd, addr)
 }
 
 /* read nvram one bit at a time */
-u_int16_t
-nvram_read(sc, nvram_addr)
-	struct am7990_softc *sc;
-	u_char nvram_addr;
+uint16_t
+nvram_read(struct lance_softc *sc, uint8_t nvram_addr)
 {
-	u_short val = 0, mask = 0x04000;
-	u_int16_t wbit;
+	uint16_t val = 0, mask = 0x04000;
+	uint16_t wbit;
 	/* these used by macros DO NOT CHANGE!*/
 	struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 	((struct le_softc *)sc)->csr = 0x4f;
@@ -131,12 +126,11 @@ nvram_read(sc, nvram_addr)
 }
 
 void
-vleetheraddr(sc)
-	struct am7990_softc *sc;
+vleetheraddr(struct lance_softc *sc)
 {
-	u_char * cp = sc->sc_arpcom.ac_enaddr;
-	u_int16_t ival[3];
-	u_char i;
+	uint8_t * cp = sc->sc_arpcom.ac_enaddr;
+	uint16_t ival[3];
+	uint8_t i;
 
 	for (i=0; i<3; i++) {
 		ival[i] = nvram_read(sc, i);
@@ -145,47 +139,39 @@ vleetheraddr(sc)
 }
 
 void
-lewrcsr(sc, port, val)
-	struct am7990_softc *sc;
-	u_int16_t port, val;
+lewrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
-	register struct lereg1 *ler1 = (struct lereg1 *)((struct le_softc *)sc)->sc_r1;
+	struct lereg1 *ler1 = (struct lereg1 *)((struct le_softc *)sc)->sc_r1;
 
 	ler1->ler1_rap = port;
 	ler1->ler1_rdp = val;
 }
 
 void
-vlewrcsr(sc, port, val)
-	struct am7990_softc *sc;
-	u_int16_t port, val;
+vlewrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
-	register struct vlereg1 *ler1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
+	struct vlereg1 *ler1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 
 	ler1->ler1_rap = port;
 	ler1->ler1_rdp = val;
 }
 
-u_int16_t
-lerdcsr(sc, port)
-	struct am7990_softc *sc;
-	u_int16_t port;
+uint16_t
+lerdcsr(struct lance_softc *sc, uint16_t port)
 {
-	register struct lereg1 *ler1 = (struct lereg1 *)((struct le_softc *)sc)->sc_r1;
-	u_int16_t val;
+	struct lereg1 *ler1 = (struct lereg1 *)((struct le_softc *)sc)->sc_r1;
+	uint16_t val;
 
 	ler1->ler1_rap = port;
 	val = ler1->ler1_rdp;
 	return (val);
 }
 
-u_int16_t
-vlerdcsr(sc, port)
-	struct am7990_softc *sc;
-	u_int16_t port;
+uint16_t
+vlerdcsr(struct lance_softc *sc, uint16_t port)
 {
-	register struct vlereg1 *ler1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
-	u_int16_t val;
+	struct vlereg1 *ler1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
+	uint16_t val;
 
 	ler1->ler1_rap = port;
 	val = ler1->ler1_rdp;
@@ -194,12 +180,11 @@ vlerdcsr(sc, port)
 
 /* init MVME376, set ipl and vec */
 void
-vleinit(sc)
-	struct am7990_softc *sc;
+vleinit(struct lance_softc *sc)
 {
-	register struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
-	u_char vec = ((struct le_softc *)sc)->sc_vec;
-	u_char ipl = ((struct le_softc *)sc)->sc_ipl;
+	struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
+	uint8_t vec = ((struct le_softc *)sc)->sc_vec;
+	uint8_t ipl = ((struct le_softc *)sc)->sc_ipl;
 	((struct le_softc *)sc)->csr = 0x4f;
 	WRITE_CSR_AND( ~ipl );
 	SET_VEC(vec);
@@ -208,10 +193,9 @@ vleinit(sc)
 
 /* MVME376 hardware reset */
 void
-vlereset(sc)
-	struct am7990_softc *sc;
+vlereset(struct lance_softc *sc)
 {
-	register struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
+	struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 	RESET_HW;
 #ifdef LEDEBUG
 	if (sc->sc_debug) {
@@ -223,10 +207,9 @@ vlereset(sc)
 }
 
 int
-vle_intr(sc)
-	void *sc;
+vle_intr(void *sc)
 {
-	register struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
+	struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 	int rc;
 	rc = am7990_intr(sc);
 	ENABLE_INTR;
@@ -234,9 +217,7 @@ vle_intr(sc)
 }
 
 int
-lematch(parent, vcf, args)
-	struct device *parent;
-	void *vcf, *args;
+lematch(struct device *parent, void *vcf, void *args)
 {
 	struct confargs *ca = args;
 	bus_space_tag_t iot = ca->ca_iot;
@@ -263,13 +244,10 @@ lematch(parent, vcf, args)
  * to accept packets.
  */
 void
-leattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+leattach(struct device *parent, struct device *self, void *aux)
 {
-	register struct le_softc *lesc = (struct le_softc *)self;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct le_softc *lesc = (struct le_softc *)self;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct confargs *ca = aux;
 	int pri = ca->ca_ipl;
 	extern void *etherbuf;
@@ -279,11 +257,9 @@ leattach(parent, self, aux)
 	bus_space_handle_t ioh, memh;
 
 	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr(u_char *);
+	extern void myetheraddr(uint8_t *);
 
-	lebustype = ca->ca_bustype;
-
-	switch (lebustype) {
+	switch (ca->ca_bustype) {
 	case BUS_VMES:
 		/* 
 		 * get the first available etherbuf.  MVME376 uses its own
@@ -341,11 +317,11 @@ leattach(parent, self, aux)
 		sc->sc_rdcsr = vlerdcsr;
 		sc->sc_wrcsr = vlewrcsr;
 		sc->sc_hwinit = vleinit;
-		sc->sc_copytodesc = am7990_copytobuf_contig;
-		sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-		sc->sc_copytobuf = am7990_copytobuf_contig;
-		sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-		sc->sc_zerobuf = am7990_zerobuf_contig;
+		sc->sc_copytodesc = lance_copytobuf_contig;
+		sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+		sc->sc_copytobuf = lance_copytobuf_contig;
+		sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+		sc->sc_zerobuf = lance_zerobuf_contig;
 		/* get ether address */
 		vleetheraddr(sc);
 		break;      
@@ -359,11 +335,11 @@ leattach(parent, self, aux)
 		sc->sc_wrcsr = lewrcsr;
 		sc->sc_hwreset = NULL;
 		sc->sc_hwinit = NULL;
-		sc->sc_copytodesc = am7990_copytobuf_contig;
-		sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-		sc->sc_copytobuf = am7990_copytobuf_contig;
-		sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-		sc->sc_zerobuf = am7990_zerobuf_contig;
+		sc->sc_copytodesc = lance_copytobuf_contig;
+		sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+		sc->sc_copytobuf = lance_copytobuf_contig;
+		sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+		sc->sc_zerobuf = lance_zerobuf_contig;
 		/* get ether address */
 		myetheraddr(sc->sc_arpcom.ac_enaddr);
 		break;
@@ -372,10 +348,10 @@ leattach(parent, self, aux)
 		return;
 	}
 
-	am7990_config(sc);
+	am7990_config(&lesc->sc_am7990);
 
 	/* connect the interrupt */
-	switch (lebustype) {
+	switch (ca->ca_bustype) {
 	case BUS_VMES:
 		lesc->sc_ih.ih_fn = vle_intr;
 		lesc->sc_ih.ih_arg = sc;

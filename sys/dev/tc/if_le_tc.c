@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_tc.c,v 1.10 2008/08/09 16:42:30 miod Exp $	*/
+/*	$OpenBSD: if_le_tc.c,v 1.11 2013/09/24 20:11:05 miod Exp $	*/
 /*	$NetBSD: if_le_tc.c,v 1.12 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -47,6 +47,8 @@
 #include <netinet/if_ether.h>
 #endif
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -79,7 +81,7 @@ void
 le_tc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct le_softc *lesc = (void *)self;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct tc_attach_args *d = aux;
 
 	/*
@@ -90,11 +92,11 @@ le_tc_attach(struct device *parent, struct device *self, void *aux)
            TC_DENSE_TO_SPARSE(TC_PHYS_TO_UNCACHED(d->ta_addr + LE_OFFSET_LANCE)); 
 	sc->sc_mem = (void *)(d->ta_addr + LE_OFFSET_RAM);
 
-	sc->sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_zerobuf = am7990_zerobuf_contig;
+	sc->sc_copytodesc = lance_copytobuf_contig;
+	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+	sc->sc_copytobuf = lance_copytobuf_contig;
+	sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+	sc->sc_zerobuf = lance_zerobuf_contig;
 
 	/*
 	 * TC lance boards have onboard SRAM buffers.  DMA
@@ -103,7 +105,7 @@ le_tc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 
 	dec_le_common_attach(&lesc->sc_am7990,
-			     (u_char *)(d->ta_addr + LE_OFFSET_ROM + 2));
+	    (u_char *)(d->ta_addr + LE_OFFSET_ROM + 2));
 
 	tc_intr_establish(parent, d->ta_cookie, IPL_NET, am7990_intr, sc,
 	    self->dv_xname);

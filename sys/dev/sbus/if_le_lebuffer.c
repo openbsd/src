@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_lebuffer.c,v 1.10 2012/12/05 23:20:21 deraadt Exp $	*/
+/*	$OpenBSD: if_le_lebuffer.c,v 1.11 2013/09/24 20:11:03 miod Exp $	*/
 /*	$NetBSD: if_le_lebuffer.c,v 1.10 2002/03/11 16:00:56 pk Exp $	*/
 
 /*-
@@ -56,6 +56,8 @@
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/lebuffervar.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -76,6 +78,13 @@ struct	le_softc {
 int	lematch_lebuffer(struct device *, void *, void *);
 void	leattach_lebuffer(struct device *, struct device *, void *);
 
+/*
+ * Media types supported.
+ */
+static int lemedia[] = {
+	IFM_ETHER | IFM_10_T
+};
+
 struct cfattach le_lebuffer_ca = {
 	sizeof(struct le_softc), lematch_lebuffer, leattach_lebuffer
 };
@@ -86,11 +95,11 @@ struct cfdriver lebuffer_cd = {
 	NULL, "lebuffer", DV_DULL
 };
 
-void le_lebuffer_wrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-u_int16_t le_lebuffer_rdcsr(struct am7990_softc *, u_int16_t);
+void le_lebuffer_wrcsr(struct lance_softc *, uint16_t, uint16_t);
+uint16_t le_lebuffer_rdcsr(struct lance_softc *, uint16_t);
 
 void
-le_lebuffer_wrcsr(struct am7990_softc *sc, u_int16_t port, u_int16_t val)
+le_lebuffer_wrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
@@ -108,15 +117,15 @@ le_lebuffer_wrcsr(struct am7990_softc *sc, u_int16_t port, u_int16_t val)
 	 * just wrote (thanks to Chris Torek for this solution).
 	 */
 	if (CPU_ISSUN4M) {
-		volatile u_int16_t discard;
+		volatile uint16_t discard;
 		discard = bus_space_read_2(lesc->sc_bustag, lesc->sc_reg,
 		    LEREG1_RDP);
 	}
 #endif
 }
 
-u_int16_t
-le_lebuffer_rdcsr(struct am7990_softc *sc, u_int16_t port)
+uint16_t
+le_lebuffer_rdcsr(struct lance_softc *sc, uint16_t port)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
@@ -141,7 +150,7 @@ leattach_lebuffer(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct le_softc *lesc = (struct le_softc *)self;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct lebuf_softc *lebuf = (struct lebuf_softc *)parent;
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr(u_char *);
@@ -167,11 +176,15 @@ leattach_lebuffer(struct device *parent, struct device *self, void *aux)
 
 	myetheraddr(sc->sc_arpcom.ac_enaddr);
 
-	sc->sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_zerobuf = am7990_zerobuf_contig;
+	sc->sc_supmedia = lemedia;
+	sc->sc_nsupmedia = nitems(lemedia);
+	sc->sc_defaultmedia = sc->sc_supmedia[sc->sc_nsupmedia - 1];
+
+	sc->sc_copytodesc = lance_copytobuf_contig;
+	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+	sc->sc_copytobuf = lance_copytobuf_contig;
+	sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+	sc->sc_zerobuf = lance_zerobuf_contig;
 
 	sc->sc_rdcsr = le_lebuffer_rdcsr;
 	sc->sc_wrcsr = le_lebuffer_wrcsr;

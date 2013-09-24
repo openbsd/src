@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_ledma.c,v 1.16 2012/07/30 16:58:19 miod Exp $	*/
+/*	$OpenBSD: if_le_ledma.c,v 1.17 2013/09/24 20:11:04 miod Exp $	*/
 /*	$NetBSD: if_le_ledma.c,v 1.14 2001/05/30 11:46:35 mrg Exp $	*/
 
 /*-
@@ -58,6 +58,8 @@
 #include <dev/ic/lsi64854reg.h>
 #include <dev/ic/lsi64854var.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -85,25 +87,30 @@ void	leattach_ledma(struct device *, struct device *, void *);
 /*
  * Media types supported by the Sun4m.
  */
+static int lemedia[] = {
+	IFM_ETHER | IFM_10_T,
+	IFM_ETHER | IFM_10_5,
+	IFM_ETHER | IFM_AUTO
+};
 
-void	le_ledma_setutp(struct am7990_softc *);
-void	le_ledma_setaui(struct am7990_softc *);
+void	le_ledma_setutp(struct lance_softc *);
+void	le_ledma_setaui(struct lance_softc *);
 
-int	lemediachange(struct ifnet *);
-void	lemediastatus(struct ifnet *, struct ifmediareq *);
+int	lemediachange(struct lance_softc *);
+void	lemediastatus(struct lance_softc *, struct ifmediareq *);
 
 struct cfattach le_ledma_ca = {
 	sizeof(struct le_softc), lematch_ledma, leattach_ledma
 };
 
-void le_ledma_wrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-u_int16_t le_ledma_rdcsr(struct am7990_softc *, u_int16_t);
-void le_ledma_hwreset(struct am7990_softc *);
-void le_ledma_hwinit(struct am7990_softc *);
-void le_ledma_nocarrier(struct am7990_softc *);
+void le_ledma_wrcsr(struct lance_softc *, uint16_t, uint16_t);
+uint16_t le_ledma_rdcsr(struct lance_softc *, uint16_t);
+void le_ledma_hwreset(struct lance_softc *);
+void le_ledma_hwinit(struct lance_softc *);
+void le_ledma_nocarrier(struct lance_softc *);
 
 void
-le_ledma_wrcsr(struct am7990_softc *sc, u_int16_t port, u_int16_t val)
+le_ledma_wrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
@@ -121,15 +128,15 @@ le_ledma_wrcsr(struct am7990_softc *sc, u_int16_t port, u_int16_t val)
 	 * just wrote (thanks to Chris Torek for this solution).
 	 */
 	if (CPU_ISSUN4M) {
-		volatile u_int16_t discard;
+		volatile uint16_t discard;
 		discard = bus_space_read_2(lesc->sc_bustag, lesc->sc_reg,
 					   LEREG1_RDP);
 	}
 #endif
 }
 
-u_int16_t
-le_ledma_rdcsr(struct am7990_softc *sc, u_int16_t port)
+uint16_t
+le_ledma_rdcsr(struct lance_softc *sc, uint16_t port)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
@@ -140,7 +147,7 @@ le_ledma_rdcsr(struct am7990_softc *sc, u_int16_t port)
 }
 
 void
-le_ledma_setutp(struct am7990_softc *sc)
+le_ledma_setutp(struct lance_softc *sc)
 {
 	struct lsi64854_softc *dma = ((struct le_softc *)sc)->sc_dma;
 	u_int32_t csr;
@@ -152,7 +159,7 @@ le_ledma_setutp(struct am7990_softc *sc)
 }
 
 void
-le_ledma_setaui(struct am7990_softc *sc)
+le_ledma_setaui(struct lance_softc *sc)
 {
 	struct lsi64854_softc *dma = ((struct le_softc *)sc)->sc_dma;
 	u_int32_t csr;
@@ -164,9 +171,8 @@ le_ledma_setaui(struct am7990_softc *sc)
 }
 
 int
-lemediachange(struct ifnet *ifp)
+lemediachange(struct lance_softc *sc)
 {
-	struct am7990_softc *sc = ifp->if_softc;
 	struct ifmedia *ifm = &sc->sc_ifmedia;
 
 	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
@@ -198,9 +204,8 @@ lemediachange(struct ifnet *ifp)
 }
 
 void
-lemediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
+lemediastatus(struct lance_softc *sc, struct ifmediareq *ifmr)
 {
-	struct am7990_softc *sc = ifp->if_softc;
 	struct lsi64854_softc *dma = ((struct le_softc *)sc)->sc_dma;
 
 	/*
@@ -213,7 +218,7 @@ lemediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 void
-le_ledma_hwreset(struct am7990_softc *sc)
+le_ledma_hwreset(struct lance_softc *sc)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	struct lsi64854_softc *dma = lesc->sc_dma;
@@ -244,7 +249,7 @@ le_ledma_hwreset(struct am7990_softc *sc)
 }
 
 void
-le_ledma_hwinit(struct am7990_softc *sc)
+le_ledma_hwinit(struct lance_softc *sc)
 {
 
 	/*
@@ -263,7 +268,7 @@ le_ledma_hwinit(struct am7990_softc *sc)
 }
 
 void
-le_ledma_nocarrier(struct am7990_softc *sc)
+le_ledma_nocarrier(struct lance_softc *sc)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
@@ -307,7 +312,7 @@ leattach_ledma(struct device *parent, struct device *self, void *aux)
 	struct sbus_attach_args *sa = aux;
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct lsi64854_softc *lsi = (struct lsi64854_softc *)parent;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	bus_dma_tag_t dmatag = sa->sa_dmatag;
 	bus_dma_segment_t seg;
 	int rseg, error;
@@ -374,20 +379,19 @@ leattach_ledma(struct device *parent, struct device *self, void *aux)
 	sc->sc_addr = lesc->sc_laddr & 0xffffff;
 	sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
 
-	ifmedia_init(&sc->sc_ifmedia, 0, lemediachange, lemediastatus);
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T, 0, NULL);
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_5, 0, NULL);
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_AUTO, 0, NULL);
-	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_AUTO);
-	sc->sc_hasifmedia = 1;
-
 	myetheraddr(sc->sc_arpcom.ac_enaddr);
 
-	sc->sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_zerobuf = am7990_zerobuf_contig;
+	sc->sc_mediachange = lemediachange;
+	sc->sc_mediastatus = lemediastatus;
+	sc->sc_supmedia = lemedia;
+	sc->sc_nsupmedia = nitems(lemedia);
+	sc->sc_defaultmedia = sc->sc_supmedia[sc->sc_nsupmedia - 1];
+
+	sc->sc_copytodesc = lance_copytobuf_contig;
+	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+	sc->sc_copytobuf = lance_copytobuf_contig;
+	sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+	sc->sc_zerobuf = lance_zerobuf_contig;
 
 	sc->sc_rdcsr = le_ledma_rdcsr;
 	sc->sc_wrcsr = le_ledma_wrcsr;

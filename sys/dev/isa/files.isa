@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.112 2013/04/05 07:25:26 tedu Exp $
+#	$OpenBSD: files.isa,v 1.113 2013/09/24 20:10:59 miod Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -186,8 +186,8 @@ file	dev/isa/if_ex.c			ex needs-flag
 # AMD am7990 (Lance) -based boards
 # (BICC Isolan, NE2100, DEPCA)
 # device declaration in sys/conf/files
-attach	le at isa with le_isa
-file	dev/isa/if_le.c			le_isa | le_pci
+attach	le at isa with le_isa: le24
+file	dev/isa/if_le.c			le_isa
 file	dev/isa/if_le_isa.c		le_isa
 
 # SMC91Cxx Ethernet Controllers

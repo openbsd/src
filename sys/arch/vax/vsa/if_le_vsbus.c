@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_vsbus.c,v 1.13 2011/08/26 21:52:22 miod Exp $	*/
+/*	$OpenBSD: if_le_vsbus.c,v 1.14 2013/09/24 20:10:53 miod Exp $	*/
 /*	$NetBSD: if_le_vsbus.c,v 1.10 2000/06/29 07:14:18 mrg Exp $	*/
 
 /*-
@@ -88,6 +88,8 @@
 #include <machine/bus.h>
 #include <machine/vsbus.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -101,17 +103,15 @@ struct le_softc {
 
 static	int	le_vsbus_match(struct device *, struct cfdata *, void *);
 static	void	le_vsbus_attach(struct device *, struct device *, void *);
-static	void	lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-static	u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
+static	void	lewrcsr(struct lance_softc *, uint16_t, uint16_t);
+static	uint16_t lerdcsr(struct lance_softc *, uint16_t);
 
 struct cfattach le_vsbus_ca = {
 	sizeof(struct le_softc), (cfmatch_t)le_vsbus_match, le_vsbus_attach
 };
 
 static void
-lewrcsr(ls, port, val)
-	struct am7990_softc *ls;
-	u_int16_t port, val;
+lewrcsr(struct lance_softc *ls, uint16_t port, uint16_t val)
 {
 	struct le_softc *sc = (void *)ls;
 
@@ -119,10 +119,8 @@ lewrcsr(ls, port, val)
 	*sc->sc_rdp = val;
 }
 
-static u_int16_t
-lerdcsr(ls, port)
-	struct am7990_softc *ls;
-	u_int16_t port;
+static uint16_t
+lerdcsr(struct lance_softc *ls, uint16_t port)
 {
 	struct le_softc *sc = (void *)ls;
 
@@ -131,10 +129,7 @@ lerdcsr(ls, port)
 }
 
 static int
-le_vsbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+le_vsbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct vsbus_attach_args *va = aux;
 	volatile short *rdp, *rap;
@@ -193,31 +188,30 @@ le_vsbus_match(parent, cf, aux)
 }
 
 static void
-le_vsbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+le_vsbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vsbus_attach_args *va = aux;
-	struct le_softc *sc = (void *)self;
+	struct le_softc *lesc = (void *)self;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	bus_dma_segment_t seg;
 	int *lance_addr;
 	int i, err, rseg;
 	static int cvec;
 
-	sc->sc_rdp = (short *)vax_map_physmem(NI_BASE, 1);
-	sc->sc_rap = sc->sc_rdp + 2;
+	lesc->sc_rdp = (short *)vax_map_physmem(NI_BASE, 1);
+	lesc->sc_rap = lesc->sc_rdp + 2;
 
 	/*
 	 * MD functions.
 	 */
-	sc->sc_am7990.sc_rdcsr = lerdcsr;
-	sc->sc_am7990.sc_wrcsr = lewrcsr;
-	sc->sc_am7990.sc_nocarrier = NULL;
+	sc->sc_rdcsr = lerdcsr;
+	sc->sc_wrcsr = lewrcsr;
+	sc->sc_nocarrier = NULL;
 
-	scb_vecalloc(va->va_cvec, (void (*)(void *)) am7990_intr, sc,
-	    SCB_ISTACK, &sc->sc_intrcnt);
+	scb_vecalloc(va->va_cvec, (void (*)(void *))am7990_intr, sc,
+	    SCB_ISTACK, &lesc->sc_intrcnt);
 	cvec = va->va_cvec;
-	evcount_attach(&sc->sc_intrcnt, self->dv_xname, &cvec);
+	evcount_attach(&lesc->sc_intrcnt, self->dv_xname, &cvec);
 
         /*
          * Allocate a (DMA-safe) block for all descriptors and buffers.
@@ -231,54 +225,51 @@ le_vsbus_attach(parent, self, aux)
                 return;
         }
         err = bus_dmamem_map(va->va_dmat, &seg, rseg, ALLOCSIZ, 
-            (caddr_t *)&sc->sc_am7990.sc_mem,
-	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+            (caddr_t *)&sc->sc_mem, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
         if (err) {
                 printf(": unable to map buffer block: err %d\n", err);
                 bus_dmamem_free(va->va_dmat, &seg, rseg);
                 return;
         }
 	err = bus_dmamap_create(va->va_dmat, ALLOCSIZ, rseg, ALLOCSIZ, 
-	    0, BUS_DMA_NOWAIT, &sc->sc_dm);
+	    0, BUS_DMA_NOWAIT, &lesc->sc_dm);
         if (err) {
                 printf(": unable to create dma map: err %d\n", err);
                 bus_dmamem_free(va->va_dmat, &seg, rseg);
                 return;
         }
-	err = bus_dmamap_load(va->va_dmat, sc->sc_dm, sc->sc_am7990.sc_mem,
+	err = bus_dmamap_load(va->va_dmat, lesc->sc_dm, sc->sc_mem,
 	    ALLOCSIZ, NULL, BUS_DMA_NOWAIT);
         if (err) {
                 printf(": unable to load dma map: err %d\n", err);
-                bus_dmamap_destroy(va->va_dmat, sc->sc_dm);
+                bus_dmamap_destroy(va->va_dmat, lesc->sc_dm);
                 bus_dmamem_free(va->va_dmat, &seg, rseg);
                 return;
         }
-	printf(" buf 0x%lx-0x%lx", sc->sc_dm->dm_segs->ds_addr,
-	    sc->sc_dm->dm_segs->ds_addr + sc->sc_dm->dm_segs->ds_len - 1);
-	sc->sc_am7990.sc_addr = sc->sc_dm->dm_segs->ds_addr & 0xffffff;
-	sc->sc_am7990.sc_memsize = sc->sc_dm->dm_segs->ds_len;
+	printf(" buf 0x%lx-0x%lx", lesc->sc_dm->dm_segs->ds_addr,
+	    lesc->sc_dm->dm_segs->ds_addr + lesc->sc_dm->dm_segs->ds_len - 1);
+	sc->sc_addr = lesc->sc_dm->dm_segs->ds_addr & 0xffffff;
+	sc->sc_memsize = lesc->sc_dm->dm_segs->ds_len;
 
-	sc->sc_am7990.sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_am7990.sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_am7990.sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_am7990.sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_am7990.sc_zerobuf = am7990_zerobuf_contig;
+	sc->sc_copytodesc = lance_copytobuf_contig;
+	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+	sc->sc_copytobuf = lance_copytobuf_contig;
+	sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+	sc->sc_zerobuf = lance_zerobuf_contig;
 
 #ifdef LEDEBUG
-	sc->sc_am7990.sc_debug = 1;
+	sc->sc_debug = 1;
 #endif
 	/*
 	 * Get the ethernet address out of rom
 	 */
 	lance_addr = (int *)vax_map_physmem(NI_ADDR, 1);
 	for (i = 0; i < 6; i++)
-		sc->sc_am7990.sc_arpcom.ac_enaddr[i] = (u_char)lance_addr[i];
+		sc->sc_arpcom.ac_enaddr[i] = (u_char)lance_addr[i];
 	vax_unmap_physmem((vaddr_t)lance_addr, 1);
 
-	bcopy(self->dv_xname, sc->sc_am7990.sc_arpcom.ac_if.if_xname,
-	    IFNAMSIZ);
 	/* Prettier printout */
 	printf("\n%s", self->dv_xname);
 
-	am7990_config(&sc->sc_am7990);
+	am7990_config(&lesc->sc_am7990);
 }

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.553 2013/09/24 09:20:11 espie Exp $
+#	$OpenBSD: files,v 1.554 2013/09/24 20:10:53 miod Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -262,7 +262,11 @@ file	dev/ic/an.c			an
 
 # LANCE and PCnet Ethernet controllers
 device	le: ether, ifnet, ifmedia
-file	dev/ic/am7990.c			le
+define	le24
+define	le32
+file	dev/ic/am7990.c			le24
+file	dev/ic/am79900.c		le32
+file	dev/ic/lance.c			le24 | le32
 
 # 3Com 3c9xx
 device	xl: ether, ifnet, ifmedia, mii
