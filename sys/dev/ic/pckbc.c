@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.36 2013/05/23 18:29:51 tobias Exp $ */
+/* $OpenBSD: pckbc.c,v 1.37 2013/09/24 08:33:50 mpi Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -82,6 +82,7 @@ int pckbc_attach_slot(struct pckbc_softc *, pckbc_slot_t, int);
 int pckbc_submatch_locators(struct device *, void *, void *);
 int pckbc_submatch(struct device *, void *, void *);
 int pckbcprint(void *, const char *);
+void pckbc_release_console(void);
 
 struct pckbc_internal pckbc_consdata;
 int pckbc_console_attached;
@@ -303,6 +304,12 @@ pckbc_attach(struct pckbc_softc *sc, int flags)
 
 	/* set initial cmd byte */
 	if (!pckbc_put8042cmd(t)) {
+#if defined(__i386__) || defined(__amd64__)
+		if (!ISSET(flags, PCKBCF_FORCE_KEYBOARD_PRESENT)) {
+			pckbc_release_console();
+			return;
+		}
+#endif
 		printf("kbc: cmd word write error\n");
 		return;
 	}
@@ -398,28 +405,11 @@ pckbc_attach(struct pckbc_softc *sc, int flags)
 
 #if defined(__i386__) || defined(__amd64__)
 	if (haskbd == 0 && !ISSET(flags, PCKBCF_FORCE_KEYBOARD_PRESENT)) {
-		/*
-		 * If there is no keyboard present, yet we are the console,
-		 * we might be on a legacy-free PC where the PS/2 emulated
-		 * keyboard was elected as console, but went away as soon
-		 * as the USB controller drivers attached.
-		 *
-		 * In that case, we want to release ourselves from console
-		 * duties, unless we have been able to attach a mouse,
-		 * which would mean this is a real PS/2 controller
-		 * afterwards.
-		 */
-
 		if (t->t_haveaux) {
 			if (pckbc_attach_slot(sc, PCKBC_KBD_SLOT, 1))
 				cmdbits |= KC8_KENABLE;
 		} else {
-			if (pckbc_console != 0) {
-				extern void wscn_input_init(int);
-
-				pckbc_console = 0;
-				wscn_input_init(1);
-			}
+			pckbc_release_console();
 		}
 	}
 #endif
@@ -439,6 +429,30 @@ pckbcprint(void *aux, const char *pnp)
 	if (!pnp)
 		printf(" (%s slot)", pckbc_slot_names[pa->pa_slot]);
 	return (QUIET);
+}
+
+void
+pckbc_release_console(void)
+{
+#if defined(__i386__) || defined(__amd64__)
+	/*
+	 * If there is no keyboard present, yet we are the console,
+	 * we might be on a legacy-free PC where the PS/2 emulated
+	 * keyboard was elected as console, but went away as soon
+	 * as the USB controller drivers attached.
+	 *
+	 * In that case, we want to release ourselves from console
+	 * duties, unless we have been able to attach a mouse,
+	 * which would mean this is a real PS/2 controller
+	 * afterwards.
+	 */
+	if (pckbc_console != 0) {
+		extern void wscn_input_init(int);
+
+		pckbc_console = 0;
+		wscn_input_init(1);
+	}
+#endif
 }
 
 void
