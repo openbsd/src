@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wcslcpy.3,v 1.5 2013/07/16 15:21:11 schwarze Exp $
+.\"	$OpenBSD: wcslcpy.3,v 1.6 2013/09/25 21:49:31 millert Exp $
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: September 25 2013 $
 .Dt WCSLCPY 3
 .Os
 .Sh NAME
@@ -88,6 +88,12 @@ It will append at most
 .Fa size
 \(mi wcslen(dst) \(mi 1 wide characters, terminating the result with a null
 wide character.
+.Pp
+If the
+.Fa src
+and
+.Fa dst
+strings overlap, the behavior is undefined.
 .Sh RETURN VALUES
 The
 .Fn wcslcpy
