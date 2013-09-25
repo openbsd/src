@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stpcpy.3,v 1.4 2013/09/25 21:49:31 millert Exp $
+.\"	$OpenBSD: stpcpy.3,v 1.5 2013/09/25 21:50:18 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -103,7 +103,66 @@ if the length of
 .Fa src
 is greater than or equal to
 .Fa len .
+.Sh EXAMPLES
+The most common use of
+.Fn stpcpy
+is to build up a string from multiple elements.
+The following example builds up a pathname from
+directory and file components using
+.Fn stpcpy :
+.Bd -literal -offset indent
+char *dir, *file, pname[PATH_MAX];
+
+\&...
+
+if (strlen(dir) + strlen("/") + strlen(file) >= sizeof(pname))
+	goto toolong;
+stpcpy(stpcpy(stpcpy(pname, dir), "/"), file);
+.Ed
+.Pp
+However, the size check required to avoid a buffer overflow is error
+prone since the check can become out of sync with the code that
+performs the copy.
+.Pp
+One might expect that
+.Fn stpncpy
+could be safely used instead, but it suffers from the same defects as
+.Fn strncpy .
+The example below using
+.Fn stpncpy
+is even more prone to error and will not detect when truncation occurs:
+.Bd -literal -offset indent
+char *dir, *file, pname[PATH_MAX];
+char *p1, *p2;
+
+\&...
+
+p1 = stpncpy(pname, dir, sizeof(pname) - 1);
+p2 = stpncpy(p1, "/", sizeof(pname) - 1 - (p1 - pname));
+stpncpy(p2, file, sizeof(pname) - 1 - (p2 - pname));
+pname[sizeof(pname) - 1] = '\e0';
+.Ed
+.Pp
+A safer (and simpler) approach is to use
+.Fn snprintf :
+.Bd -literal -offset indent
+char *dir, *file, pname[PATH_MAX];
+int len;
+
+\&...
+
+len = snprintf(pname, sizeof(pname), "%s/%s", dir, file);
+if (len >= sizeof(pname))
+	goto toolong;
+.Ed
+.Pp
+In most cases, it is better to use
+.Fn snprintf ,
+.Fn strlcpy ,
+or
+.Fn strlcat .
 .Sh SEE ALSO
+.Xr snprintf 3 ,
 .Xr strcpy 3 ,
 .Xr strlcpy 3 ,
 .Xr strncpy 3
