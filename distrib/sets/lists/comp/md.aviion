@@ -1,4 +1,5 @@
 ./usr/bin/addr2line
+./usr/bin/gccbug
 ./usr/bin/objcopy
 ./usr/bin/protoize
 ./usr/bin/readelf
@@ -257,6 +258,10 @@
 ./usr/lib/gcc-lib/m88k-unknown-openbsd5.4/3.3.6/SYSCALLS.c.X
 ./usr/lib/gcc-lib/m88k-unknown-openbsd5.4/3.3.6/cc1obj
 ./usr/lib/gcc-lib/m88k-unknown-openbsd5.4/3.3.6/cc1plus
+./usr/lib/gcc-lib/m88k-unknown-openbsd5.4/3.3.6/fPIC
+./usr/lib/gcc-lib/m88k-unknown-openbsd5.4/3.3.6/fPIC/libgcc.a
+./usr/lib/gcc-lib/m88k-unknown-openbsd5.4/3.3.6/fpic
+./usr/lib/gcc-lib/m88k-unknown-openbsd5.4/3.3.6/fpic/libgcc.a
 ./usr/lib/gcc-lib/m88k-unknown-openbsd5.4/3.3.6/include/unwind.h
 ./usr/lib/gcc-lib/m88k-unknown-openbsd5.4/3.3.6/libgcc.a
 ./usr/lib/libsupc++.a
