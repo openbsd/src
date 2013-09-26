@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.25 2013/03/21 04:30:14 deraadt Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.26 2013/09/26 13:09:38 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -256,6 +256,7 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 	struct ibuf		*buf = msg->msg_data;
 	u_int32_t		 natt = 0x00000000;
 	int			 isnatt = 0;
+	u_int8_t		 exchange, flags;
 	struct ike_header	*hdr;
 	struct iked_message	*m;
 
@@ -265,8 +266,10 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 
 	isnatt = (msg->msg_natt || (msg->msg_sa && msg->msg_sa->sa_natt));
 
+	exchange = hdr->ike_exchange;
+	flags = hdr->ike_flags;
 	log_info("%s: %s from %s to %s, %ld bytes%s", __func__,
-	    print_map(hdr->ike_exchange, ikev2_exchange_map),
+	    print_map(exchange, ikev2_exchange_map),
 	    print_host(&msg->msg_local, NULL, 0),
 	    print_host(&msg->msg_peer, NULL, 0),
 	    ibuf_length(buf), isnatt ? ", NAT-T" : "");
@@ -292,9 +295,9 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 		log_debug("%s: failed to copy a message", __func__);
 		return (-1);
 	}
-	m->msg_exchange = hdr->ike_exchange;
+	m->msg_exchange = exchange;
 
-	if (hdr->ike_flags & IKEV2_FLAG_RESPONSE) {
+	if (flags & IKEV2_FLAG_RESPONSE) {
 		TAILQ_INSERT_TAIL(&sa->sa_responses, m, msg_entry);
 		timer_initialize(env, &m->msg_timer,
 		    ikev2_msg_response_timeout, m);
