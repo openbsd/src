@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.84 2013/08/28 07:30:55 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.85 2013/09/26 08:53:17 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -91,6 +91,7 @@ void in_len2mask(struct in_addr *, int);
 int in_lifaddr_ioctl(struct socket *, u_long, caddr_t,
 	struct ifnet *);
 
+void in_purgeaddr(struct ifaddr *);
 int in_addprefix(struct in_ifaddr *, int);
 int in_scrubprefix(struct in_ifaddr *);
 
@@ -343,12 +344,8 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), newifaddr);
 		if (!error)
 			dohooks(ifp->if_addrhooks, 0);
-		else if (newifaddr) {
-			splx(s);
-			goto cleanup;
-		}
 		splx(s);
-		return error;
+		return (error);
 
 	case SIOCSIFNETMASK:
 		ia->ia_netmask = ia->ia_sockmask.sin_addr.s_addr =
@@ -393,17 +390,10 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		}
 		if (!error)
 			dohooks(ifp->if_addrhooks, 0);
-		else if (newifaddr) {
-			splx(s);
-			goto cleanup;
-		}
 		splx(s);
 		return (error);
 		}
-	case SIOCDIFADDR: {
-
-		error = 0;
-cleanup:
+	case SIOCDIFADDR:
 		/*
 		 * Even if the individual steps were safe, shouldn't
 		 * these kinds of changes happen atomically?  What 
@@ -411,21 +401,10 @@ cleanup:
 		 * the scrub but before the other steps? 
 		 */
 		s = splsoftnet();
-		in_ifscrub(ifp, ia);
-		ifa_del(ifp, &ia->ia_ifa);
-		TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
-		if (ia->ia_allhosts != NULL) {
-			in_delmulti(ia->ia_allhosts);
-			ia->ia_allhosts = NULL;
-		}
-		/* remove backpointer, since ifp may die before ia */
-		ia->ia_ifp = NULL;
-		ifafree((&ia->ia_ifa));
-		if (!error)
-			dohooks(ifp->if_addrhooks, 0);
+		in_purgeaddr(&ia->ia_ifa);
+		dohooks(ifp->if_addrhooks, 0);
 		splx(s);
-		return (error);
-		}
+		break;
 
 #ifdef MROUTING
 	case SIOCGETVIFCNT:
@@ -732,7 +711,31 @@ out:
 	 */
 	ifa_add(ifp, &ia->ia_ifa);
 
+	if (error && newaddr)
+		in_purgeaddr(&ia->ia_ifa);
+
 	return (error);
+}
+
+void
+in_purgeaddr(struct ifaddr *ifa)
+{
+	struct ifnet *ifp = ifa->ifa_ifp;
+	struct in_ifaddr *ia = ifatoia(ifa);
+
+	splsoftassert(IPL_SOFTNET);
+
+	in_ifscrub(ifp, ia);
+
+	ifa_del(ifp, &ia->ia_ifa);
+	TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
+	if (ia->ia_allhosts != NULL) {
+		in_delmulti(ia->ia_allhosts);
+		ia->ia_allhosts = NULL;
+	}
+
+	ia->ia_ifp = NULL;
+	ifafree(&ia->ia_ifa);
 }
 
 #define rtinitflags(x) \
