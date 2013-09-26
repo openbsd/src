@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.30 2013/05/17 22:46:27 miod Exp $ */
+/*	$OpenBSD: syscon.c,v 1.31 2013/09/26 19:02:07 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -86,6 +86,7 @@ sysconattach(struct device *parent, struct device *self, void *args)
 	 * Clear SYSFAIL if lit.
 	 */
 	*(volatile u_int32_t *)MVME188_UCSR |= UCSR_DRVSFBIT;
+	*(volatile u_int32_t *)MVME188_CLRINT = ISTATE_SYSFAIL;
 
 	sc->sc_abih.ih_fn = sysconabort;
 	sc->sc_abih.ih_arg = 0;
