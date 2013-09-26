@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.50 2013/08/24 23:45:31 mlarkin Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.51 2013/09/26 14:38:51 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -568,7 +568,7 @@ identifycpu(struct cpu_info *ci)
 	if (!strcmp(cpu_vendor, "AuthenticAMD"))
 		amd64_errata(ci);
 
-	if (strncmp(mycpu_model, "VIA Nano processor", 18) == 0) {
+	if (!strcmp(cpu_vendor, "CentaurHauls")) {
 		ci->cpu_setup = via_nano_setup;
 #ifndef SMALL_KERNEL
 		strlcpy(ci->ci_sensordev.xname, ci->ci_dev->dv_xname,
