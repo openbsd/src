@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.9 2013/06/21 07:07:55 gerhard Exp $	*/
+/*	$OpenBSD: smi.c,v 1.10 2013/09/26 08:12:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -185,6 +185,7 @@ smi_mibtree(struct oid *oids)
 int
 smi_init(void)
 {
+	/* Initialize the Structure of Managed Information (SMI) */
 	RB_INIT(&smi_oidtree);
 	mib_init();
 	return (0);
