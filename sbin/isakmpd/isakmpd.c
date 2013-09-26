@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.100 2013/04/24 13:46:09 deraadt Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.101 2013/09/26 15:31:14 patrick Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -193,7 +193,6 @@ parse_args(int argc, char *argv[])
 			do_packetlog++;
 			break;
 
-			break;
 		case 'R':
 			report_file = optarg;
 			break;
