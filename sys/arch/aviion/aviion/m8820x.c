@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.10 2010/12/31 21:38:07 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.11 2013/09/26 18:37:07 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2006, 2010 Miodrag Vallat.
  *
@@ -151,7 +151,12 @@ hardprobe:
 			cmmu_per_cpu = 6;
 			cmmu_shift = 3;
 			max_cmmus = ncpusfound << cmmu_shift;
-			scc.isplit = scc.dsplit = 0;	/* XXX unknown */
+#if 0
+			scc.igang = 4;
+			scc.isplit = (1U << 12) | (1U << 13);
+			scc.dgang = 2;
+			scc.dsplit = (1U << 12);
+#endif
 			m8820x_pfsr = pfsr_six;
 			goto done;
 			break;
@@ -211,11 +216,30 @@ done:
 		}
 	}
 
-
 	/*
 	 * Now set up addressing limits
 	 */
-	if (cmmu_shift > 1) {
+	switch (cmmu_shift) {
+	case 3:	/* 6:1 schemes */
+		for (cmmu_num = 0, cmmu = m8820x_cmmu; cmmu_num < max_cmmus;
+		    cmmu_num++, cmmu++) {
+			if (cmmu->cmmu_regs == NULL)
+				continue;
+
+			cpu_cmmu_num = cmmu_num >> 1; /* CPU view of the CMMU */
+
+			if (CMMU_MODE(cmmu_num) == INST_CMMU) {
+				/* I0, I1, I2, I3: A13:A12 split */
+				cmmu->cmmu_addr = (cpu_cmmu_num & 0x03) << 12;
+				cmmu->cmmu_addr_mask = (1U << 13) | (1U << 12);
+			} else {
+				/* D0, D1: A12 split */
+				cmmu->cmmu_addr = (cpu_cmmu_num & 0x01) << 12;
+				cmmu->cmmu_addr_mask = 1U << 12;
+			}
+		}
+		break;
+	case 2:	/* 4:1 schemes */
 		for (cmmu_num = 0, cmmu = m8820x_cmmu; cmmu_num < max_cmmus;
 		    cmmu_num++, cmmu++) {
 			cpu_cmmu_num = cmmu_num >> 1; /* CPU view of the CMMU */
@@ -232,6 +256,7 @@ done:
 				cmmu->cmmu_addr_mask = scc.dsplit;
 			}
 		}
+		break;
 	}
 
 	/*
