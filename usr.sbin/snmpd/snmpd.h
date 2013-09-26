@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.43 2013/03/29 12:53:41 gerhard Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.44 2013/09/26 09:11:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -473,7 +473,6 @@ struct kroute	*kroute_getaddr(in_addr_t, u_int8_t, u_int8_t, int);
 
 /* snmpe.c */
 pid_t		 snmpe(struct snmpd *, int [2]);
-void		 snmpe_debug_elements(struct ber_element *);
 
 /* trap.c */
 void		 trap_init(void);
@@ -535,6 +534,9 @@ char		*smi_oidstring(struct ber_oid *, char *, size_t);
 void		 smi_delete(struct oid *);
 void		 smi_insert(struct oid *);
 int		 smi_oid_cmp(struct oid *, struct oid *);
+unsigned long	 smi_application(struct ber_element *);
+void		 smi_debug_elements(struct ber_element *);
+char		*smi_print_element(struct ber_element *);
 
 /* timer.c */
 void		 timer_init(void);

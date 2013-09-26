@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.10 2013/09/26 08:12:40 reyk Exp $	*/
+/*	$OpenBSD: smi.c,v 1.11 2013/09/26 09:11:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -42,6 +42,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <vis.h>
 
 #include "snmpd.h"
 #include "mib.h"
@@ -226,6 +227,282 @@ smi_foreach(struct oid *oid, u_int flags)
 	}
 
 	return (oid);
+}
+
+#ifdef DEBUG
+void
+smi_debug_elements(struct ber_element *root)
+{
+	static int	 indent = 0;
+	char		*value;
+	int		 constructed;
+
+	/* calculate lengths */
+	ber_calc_len(root);
+
+	switch (root->be_encoding) {
+	case BER_TYPE_SEQUENCE:
+	case BER_TYPE_SET:
+		constructed = root->be_encoding;
+		break;
+	default:
+		constructed = 0;
+		break;
+	}
+
+	fprintf(stderr, "%*slen %lu ", indent, "", root->be_len);
+	switch (root->be_class) {
+	case BER_CLASS_UNIVERSAL:
+		fprintf(stderr, "class: universal(%u) type: ", root->be_class);
+		switch (root->be_type) {
+		case BER_TYPE_EOC:
+			fprintf(stderr, "end-of-content");
+			break;
+		case BER_TYPE_BOOLEAN:
+			fprintf(stderr, "boolean");
+			break;
+		case BER_TYPE_INTEGER:
+			fprintf(stderr, "integer");
+			break;
+		case BER_TYPE_BITSTRING:
+			fprintf(stderr, "bit-string");
+			break;
+		case BER_TYPE_OCTETSTRING:
+			fprintf(stderr, "octet-string");
+			break;
+		case BER_TYPE_NULL:
+			fprintf(stderr, "null");
+			break;
+		case BER_TYPE_OBJECT:
+			fprintf(stderr, "object");
+			break;
+		case BER_TYPE_ENUMERATED:
+			fprintf(stderr, "enumerated");
+			break;
+		case BER_TYPE_SEQUENCE:
+			fprintf(stderr, "sequence");
+			break;
+		case BER_TYPE_SET:
+			fprintf(stderr, "set");
+			break;
+		}
+		break;
+	case BER_CLASS_APPLICATION:
+		fprintf(stderr, "class: application(%u) type: ",
+		    root->be_class);
+		switch (root->be_type) {
+		case SNMP_T_IPADDR:
+			fprintf(stderr, "ipaddr");
+			break;
+		case SNMP_T_COUNTER32:
+			fprintf(stderr, "counter32");
+			break;
+		case SNMP_T_GAUGE32:
+			fprintf(stderr, "gauge32");
+			break;
+		case SNMP_T_TIMETICKS:
+			fprintf(stderr, "timeticks");
+			break;
+		case SNMP_T_OPAQUE:
+			fprintf(stderr, "opaque");
+			break;
+		case SNMP_T_COUNTER64:
+			fprintf(stderr, "counter64");
+			break;
+		}
+		break;
+	case BER_CLASS_CONTEXT:
+		fprintf(stderr, "class: context(%u) type: ",
+		    root->be_class);
+		switch (root->be_type) {
+		case SNMP_C_GETREQ:
+			fprintf(stderr, "getreq");
+			break;
+		case SNMP_C_GETNEXTREQ:
+			fprintf(stderr, "nextreq");
+			break;
+		case SNMP_C_GETRESP:
+			fprintf(stderr, "getresp");
+			break;
+		case SNMP_C_SETREQ:
+			fprintf(stderr, "setreq");
+			break;
+		case SNMP_C_TRAP:
+			fprintf(stderr, "trap");
+			break;
+		case SNMP_C_GETBULKREQ:
+			fprintf(stderr, "getbulkreq");
+			break;
+		case SNMP_C_INFORMREQ:
+			fprintf(stderr, "informreq");
+			break;
+		case SNMP_C_TRAPV2:
+			fprintf(stderr, "trapv2");
+			break;
+		case SNMP_C_REPORT:
+			fprintf(stderr, "report");
+			break;
+		}
+		break;
+	case BER_CLASS_PRIVATE:
+		fprintf(stderr, "class: private(%u) type: ", root->be_class);
+		break;
+	default:
+		fprintf(stderr, "class: <INVALID>(%u) type: ", root->be_class);
+		break;
+	}
+	fprintf(stderr, "(%lu) encoding %lu ",
+	    root->be_type, root->be_encoding);
+
+	if ((value = smi_print_element(root)) == NULL)
+		goto invalid;
+
+	switch (root->be_encoding) {
+	case BER_TYPE_BOOLEAN:
+		fprintf(stderr, "%s", value);
+		break;
+	case BER_TYPE_INTEGER:
+	case BER_TYPE_ENUMERATED:
+		fprintf(stderr, "value %s", value);
+		break;
+	case BER_TYPE_BITSTRING:
+		fprintf(stderr, "hexdump %s", value);
+		break;
+	case BER_TYPE_OBJECT:
+		fprintf(stderr, "oid %s", value);
+		break;
+	case BER_TYPE_OCTETSTRING:
+		if (root->be_class == BER_CLASS_APPLICATION &&
+		    root->be_type == SNMP_T_IPADDR) {
+			fprintf(stderr, "addr %s", value);
+		} else {
+			fprintf(stderr, "string %s", value);
+		}
+		break;
+	case BER_TYPE_NULL:	/* no payload */
+	case BER_TYPE_EOC:
+	case BER_TYPE_SEQUENCE:
+	case BER_TYPE_SET:
+	default:
+		fprintf(stderr, "%s", value);
+		break;
+	}
+
+ invalid:
+	if (value == NULL)
+		fprintf(stderr, "<INVALID>");
+	else
+		free(value);
+	fprintf(stderr, "\n");
+
+	if (constructed)
+		root->be_encoding = constructed;
+
+	if (constructed && root->be_sub) {
+		indent += 2;
+		smi_debug_elements(root->be_sub);
+		indent -= 2;
+	}
+	if (root->be_next)
+		smi_debug_elements(root->be_next);
+}
+#endif
+
+char *
+smi_print_element(struct ber_element *root)
+{
+	char		*str = NULL, *buf, *p;
+	size_t		 len, i;
+	long long	 v;
+	int		 d;
+	struct ber_oid	 o;
+	char		 strbuf[BUFSIZ];
+
+	switch (root->be_encoding) {
+	case BER_TYPE_BOOLEAN:
+		if (ber_get_boolean(root, &d) == -1)
+			goto fail;
+		if (asprintf(&str, "%s(%d)", d ? "true" : "false", d) == -1)
+			goto fail;
+		break;
+	case BER_TYPE_INTEGER:
+	case BER_TYPE_ENUMERATED:
+		if (ber_get_integer(root, &v) == -1)
+			goto fail;
+		if (asprintf(&str, "%lld", v) == -1)
+			goto fail;
+		break;
+	case BER_TYPE_BITSTRING:
+		if (ber_get_bitstring(root, (void *)&buf, &len) == -1)
+			goto fail;
+		if ((str = calloc(1, len * 2 + 1)) == NULL)
+			goto fail;
+		for (p = str, i = 0; i < len; i++) {
+			snprintf(p, 3, "%02x", buf[i]);
+			p += 2;
+		}
+		break;
+	case BER_TYPE_OBJECT:
+		if (ber_get_oid(root, &o) == -1)
+			goto fail;
+		if (asprintf(&str, "%s",
+		    smi_oidstring(&o, strbuf, sizeof(strbuf))) == -1)
+			goto fail;
+		break;
+	case BER_TYPE_OCTETSTRING:
+		if (ber_get_string(root, &buf) == -1)
+			goto fail;
+		if (root->be_class == BER_CLASS_APPLICATION &&
+		    root->be_type == SNMP_T_IPADDR) {
+			if (asprintf(&str, "%s",
+			    inet_ntoa(*(struct in_addr *)buf)) == -1)
+				goto fail;
+		} else {
+			if ((p = malloc(root->be_len * 4 + 1)) == NULL)
+				goto fail;
+			strvisx(p, buf, root->be_len, 0);
+			if (asprintf(&str, "\"%s\"", p) == -1) {
+				free(p);
+				goto fail;
+			}
+		}
+		break;
+	case BER_TYPE_NULL:	/* no payload */
+	case BER_TYPE_EOC:
+	case BER_TYPE_SEQUENCE:
+	case BER_TYPE_SET:
+	default:
+		str = strdup("");
+		break;
+	}
+
+	return (str);
+
+ fail:
+	if (str != NULL)
+		free(str);
+	return (NULL);
+}
+
+unsigned long
+smi_application(struct ber_element *elm)
+{
+	if (elm->be_class != BER_CLASS_APPLICATION)
+		return (BER_TYPE_OCTETSTRING);
+
+	switch (elm->be_type) {
+	case SNMP_T_IPADDR:
+		return (BER_TYPE_OCTETSTRING);
+	case SNMP_T_COUNTER32:
+	case SNMP_T_GAUGE32:
+	case SNMP_T_TIMETICKS:
+	case SNMP_T_OPAQUE:
+	case SNMP_T_COUNTER64:
+		return (BER_TYPE_INTEGER);
+	default:
+		break;
+	}
+	return (BER_TYPE_OCTETSTRING);
 }
 
 int

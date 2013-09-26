@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.33 2013/03/29 12:53:41 gerhard Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.34 2013/09/26 09:11:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -36,7 +36,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <pwd.h>
-#include <vis.h>
 
 #include "snmpd.h"
 #include "mib.h"
@@ -259,233 +258,6 @@ snmpe_bind(struct address *addr)
  bad:
 	close(s);
 	return (-1);
-}
-
-#ifdef DEBUG
-void
-snmpe_debug_elements(struct ber_element *root)
-{
-	static int	 indent = 0;
-	long long	 v;
-	int		 d;
-	char		*buf;
-	size_t		 len;
-	u_int		 i;
-	int		 constructed;
-	struct ber_oid	 o;
-	char		 str[BUFSIZ];
-
-	/* calculate lengths */
-	ber_calc_len(root);
-
-	switch (root->be_encoding) {
-	case BER_TYPE_SEQUENCE:
-	case BER_TYPE_SET:
-		constructed = root->be_encoding;
-		break;
-	default:
-		constructed = 0;
-		break;
-	}
-
-	fprintf(stderr, "%*slen %lu ", indent, "", root->be_len);
-	switch (root->be_class) {
-	case BER_CLASS_UNIVERSAL:
-		fprintf(stderr, "class: universal(%u) type: ", root->be_class);
-		switch (root->be_type) {
-		case BER_TYPE_EOC:
-			fprintf(stderr, "end-of-content");
-			break;
-		case BER_TYPE_BOOLEAN:
-			fprintf(stderr, "boolean");
-			break;
-		case BER_TYPE_INTEGER:
-			fprintf(stderr, "integer");
-			break;
-		case BER_TYPE_BITSTRING:
-			fprintf(stderr, "bit-string");
-			break;
-		case BER_TYPE_OCTETSTRING:
-			fprintf(stderr, "octet-string");
-			break;
-		case BER_TYPE_NULL:
-			fprintf(stderr, "null");
-			break;
-		case BER_TYPE_OBJECT:
-			fprintf(stderr, "object");
-			break;
-		case BER_TYPE_ENUMERATED:
-			fprintf(stderr, "enumerated");
-			break;
-		case BER_TYPE_SEQUENCE:
-			fprintf(stderr, "sequence");
-			break;
-		case BER_TYPE_SET:
-			fprintf(stderr, "set");
-			break;
-		}
-		break;
-	case BER_CLASS_APPLICATION:
-		fprintf(stderr, "class: application(%u) type: ",
-		    root->be_class);
-		switch (root->be_type) {
-		case SNMP_T_IPADDR:
-			fprintf(stderr, "ipaddr");
-			break;
-		case SNMP_T_COUNTER32:
-			fprintf(stderr, "counter32");
-			break;
-		case SNMP_T_GAUGE32:
-			fprintf(stderr, "gauge32");
-			break;
-		case SNMP_T_TIMETICKS:
-			fprintf(stderr, "timeticks");
-			break;
-		case SNMP_T_OPAQUE:
-			fprintf(stderr, "opaque");
-			break;
-		case SNMP_T_COUNTER64:
-			fprintf(stderr, "counter64");
-			break;
-		}
-		break;
-	case BER_CLASS_CONTEXT:
-		fprintf(stderr, "class: context(%u) type: ",
-		    root->be_class);
-		switch (root->be_type) {
-		case SNMP_C_GETREQ:
-			fprintf(stderr, "getreq");
-			break;
-		case SNMP_C_GETNEXTREQ:
-			fprintf(stderr, "nextreq");
-			break;
-		case SNMP_C_GETRESP:
-			fprintf(stderr, "getresp");
-			break;
-		case SNMP_C_SETREQ:
-			fprintf(stderr, "setreq");
-			break;
-		case SNMP_C_TRAP:
-			fprintf(stderr, "trap");
-			break;
-		case SNMP_C_GETBULKREQ:
-			fprintf(stderr, "getbulkreq");
-			break;
-		case SNMP_C_INFORMREQ:
-			fprintf(stderr, "informreq");
-			break;
-		case SNMP_C_TRAPV2:
-			fprintf(stderr, "trapv2");
-			break;
-		case SNMP_C_REPORT:
-			fprintf(stderr, "report");
-			break;
-		}
-		break;
-	case BER_CLASS_PRIVATE:
-		fprintf(stderr, "class: private(%u) type: ", root->be_class);
-		break;
-	default:
-		fprintf(stderr, "class: <INVALID>(%u) type: ", root->be_class);
-		break;
-	}
-	fprintf(stderr, "(%lu) encoding %lu ",
-	    root->be_type, root->be_encoding);
-
-	if (constructed)
-		root->be_encoding = constructed;
-
-	switch (root->be_encoding) {
-	case BER_TYPE_BOOLEAN:
-		if (ber_get_boolean(root, &d) == -1) {
-			fprintf(stderr, "<INVALID>\n");
-			break;
-		}
-		fprintf(stderr, "%s(%d)\n", d ? "true" : "false", d);
-		break;
-	case BER_TYPE_INTEGER:
-	case BER_TYPE_ENUMERATED:
-		if (ber_get_integer(root, &v) == -1) {
-			fprintf(stderr, "<INVALID>\n");
-			break;
-		}
-		fprintf(stderr, "value %lld\n", v);
-		break;
-	case BER_TYPE_BITSTRING:
-		if (ber_get_bitstring(root, (void *)&buf, &len) == -1) {
-			fprintf(stderr, "<INVALID>\n");
-			break;
-		}
-		fprintf(stderr, "hexdump ");
-		for (i = 0; i < len; i++)
-			fprintf(stderr, "%02x", buf[i]);
-		fprintf(stderr, "\n");
-		break;
-	case BER_TYPE_OBJECT:
-		if (ber_get_oid(root, &o) == -1) {
-			fprintf(stderr, "<INVALID>\n");
-			break;
-		}
-		fprintf(stderr, "oid %s",
-		    smi_oidstring(&o, str, sizeof(str)));
-		fprintf(stderr, "\n");
-		break;
-	case BER_TYPE_OCTETSTRING:
-		if (ber_get_string(root, &buf) == -1) {
-			fprintf(stderr, "<INVALID>\n");
-			break;
-		}
-		if (root->be_class == BER_CLASS_APPLICATION &&
-		    root->be_type == SNMP_T_IPADDR) {
-			fprintf(stderr, "addr %s\n",
-			    inet_ntoa(*(struct in_addr *)buf));
-		} else {
-			char *visbuf;
-			if ((visbuf = malloc(root->be_len * 4 + 1)) == NULL)
-				fatal("malloc");
-			strvisx(visbuf, buf, root->be_len, 0);
-			fprintf(stderr, "string \"%s\"\n",  visbuf);
-			free(visbuf);
-		}
-		break;
-	case BER_TYPE_NULL:	/* no payload */
-	case BER_TYPE_EOC:
-	case BER_TYPE_SEQUENCE:
-	case BER_TYPE_SET:
-	default:
-		fprintf(stderr, "\n");
-		break;
-	}
-
-	if (constructed && root->be_sub) {
-		indent += 2;
-		snmpe_debug_elements(root->be_sub);
-		indent -= 2;
-	}
-	if (root->be_next)
-		snmpe_debug_elements(root->be_next);
-}
-#endif
-
-unsigned long
-snmpe_application(struct ber_element *elm)
-{
-	if (elm->be_class != BER_CLASS_APPLICATION)
-		return (BER_TYPE_OCTETSTRING);
-
-	switch (elm->be_type) {
-	case SNMP_T_IPADDR:
-		return (BER_TYPE_OCTETSTRING);
-	case SNMP_T_COUNTER32:
-	case SNMP_T_GAUGE32:
-	case SNMP_T_TIMETICKS:
-	case SNMP_T_OPAQUE:
-	case SNMP_T_COUNTER64:
-		return (BER_TYPE_INTEGER);
-	default:
-		break;
-	}
-	return (BER_TYPE_OCTETSTRING);
 }
 
 int
@@ -785,7 +557,7 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 
 	bzero(&ber, sizeof(ber));
 	ber.fd = -1;
-	ber_set_application(&ber, snmpe_application);
+	ber_set_application(&ber, smi_application);
 	ber_set_readbuf(&ber, msg.sm_data, msg.sm_datalen);
 
 	req = ber_read_elements(&ber, NULL);
@@ -796,7 +568,7 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 
 #ifdef DEBUG
 	fprintf(stderr, "recv msg:\n");
-	snmpe_debug_elements(req);
+	smi_debug_elements(req);
 #endif
 
 	if (snmpe_parse(&ss, req, &msg) == -1) {
@@ -898,7 +670,7 @@ snmpe_encode(struct snmp_message *msg)
 
 #ifdef DEBUG
 	fprintf(stderr, "resp msg:\n");
-	snmpe_debug_elements(msg->sm_resp);
+	smi_debug_elements(msg->sm_resp);
 #endif
 	return 0;
 }

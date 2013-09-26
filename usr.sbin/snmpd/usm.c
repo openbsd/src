@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.6 2013/01/24 09:30:27 gerhard Exp $	*/
+/*	$OpenBSD: usm.c,v 1.7 2013/09/26 09:11:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -242,7 +242,7 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 
 #ifdef DEBUG
 	fprintf(stderr, "decode USM parameters:\n");
-	snmpe_debug_elements(usm);
+	smi_debug_elements(usm);
 #endif
 
 	if (ber_scanf_elements(usm, "{xiixpxx", &engineid, &enginelen,
@@ -390,7 +390,7 @@ usm_encode(struct snmp_message *msg, struct ber_element *e)
 
 #ifdef DEBUG
 	fprintf(stderr, "encode USM parameters:\n");
-	snmpe_debug_elements(usm);
+	smi_debug_elements(usm);
 #endif
 	len = ber_write_elements(&ber, usm);
 	if (ber_get_writebuf(&ber, &ptr) > 0) {
@@ -430,7 +430,7 @@ usm_encrypt(struct snmp_message *msg, struct ber_element *pdu)
 
 #ifdef DEBUG
 	fprintf(stderr, "encrypted PDU:\n");
-	snmpe_debug_elements(pdu);
+	smi_debug_elements(pdu);
 #endif
 
 	len = ber_write_elements(&ber, pdu);
@@ -553,7 +553,7 @@ usm_decrypt(struct snmp_message *msg, struct ber_element *encr)
 #ifdef DEBUG
 	if (scoped_pdu != NULL) {
 		fprintf(stderr, "decrypted scoped PDU:\n");
-		snmpe_debug_elements(scoped_pdu);
+		smi_debug_elements(scoped_pdu);
 	}
 #endif
 
