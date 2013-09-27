@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.111 2013/09/15 13:44:53 krw Exp $ */
+/*	$OpenBSD: wd.c,v 1.112 2013/09/27 12:12:16 krw Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -920,6 +920,7 @@ wddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	struct disklabel *lp;   /* disk's disklabel */
 	int unit, part;
 	int nblks;	/* total number of sectors left to write */
+	int nwrt;	/* sectors to write with current i/o. */
 	int err;
 	char errbuf[256];
 
@@ -961,14 +962,14 @@ wddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	}
 
 	while (nblks > 0) {
+		nwrt = min(nblks, wddumpmulti);
 		wd->sc_wdc_bio.blkno = blkno;
 		wd->sc_wdc_bio.flags = ATA_POLL;
 		if (wd->sc_flags & WDF_LBA48)
 			wd->sc_wdc_bio.flags |= ATA_LBA48;
 		if (wd->sc_flags & WDF_LBA)
 			wd->sc_wdc_bio.flags |= ATA_LBA;
-		wd->sc_wdc_bio.bcount =
-			min(nblks, wddumpmulti) * lp->d_secsize;
+		wd->sc_wdc_bio.bcount = nwrt * lp->d_secsize;
 		wd->sc_wdc_bio.databuf = va;
 		wd->sc_wdc_bio.wd = wd;
 #ifndef WD_DUMP_NOT_TRUSTED
@@ -1020,9 +1021,9 @@ wddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 #endif
 
 		/* update block count */
-		nblks -= min(nblks, wddumpmulti);
-		blkno += min(nblks, wddumpmulti);
-		va += min(nblks, wddumpmulti) * lp->d_secsize;
+		nblks -= nwrt;
+		blkno += nwrt;
+		va += nwrt * lp->d_secsize;
 	}
 
 	wddoingadump = 0;
