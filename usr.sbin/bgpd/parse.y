@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.266 2013/05/11 14:42:28 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.267 2013/09/27 08:23:11 sthen Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2880,7 +2880,7 @@ parsesubtype(char *type)
 		{ "ori",	EXT_COMMUNITY_OSPF_RTR_ID },
 		{ "ort",	EXT_COMMUNITY_OSPF_RTR_TYPE },
 		{ "rt",		EXT_COMMUNITY_ROUTE_TGT },
-		{ "soo",	EXT_CUMMUNITY_ROUTE_ORIG }
+		{ "soo",	EXT_COMMUNITY_ROUTE_ORIG }
 	};
 	const struct keywords	*p;
 
