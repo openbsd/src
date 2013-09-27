@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.52 2010/07/03 04:44:51 guenther Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.53 2013/09/27 14:10:01 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -72,13 +72,14 @@ enc_clone_create(struct if_clone *ifc, int unit)
 	struct ifnet		*ifp;
 	struct ifnet		**new;
 	size_t			 newlen;
+	int			 error;
 
 	if (unit > ENC_MAX_UNITS)
 		return (EINVAL);
 
 	if ((sc = malloc(sizeof(struct enc_softc),
 	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
-		return (ENOMEM);
+		return (ENOBUFS);
 
 	sc->sc_unit = unit;
 
@@ -102,17 +103,17 @@ enc_clone_create(struct if_clone *ifc, int unit)
 	bpfattach(&ifp->if_bpf, ifp, DLT_ENC, ENC_HDRLEN);
 #endif
 
-	if (enc_setif(ifp, 0) != 0) {
+	if ((error = enc_setif(ifp, 0)) != 0) {
 		if_detach(ifp);
 		free(sc, M_DEVBUF);
-		return (-1);
+		return (error);
 	}
 
 	if (unit == 0 || unit > enc_max_unit) {
 		newlen = sizeof(struct ifnet *) * (unit + 1);
 
 		if ((new = malloc(newlen, M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
-			return (-1);
+			return (ENOBUFS);
 		if (enc_allifps != NULL) {
 			memcpy(new, enc_allifps,
 			    sizeof(struct ifnet *) * (enc_max_unit + 1));
@@ -172,7 +173,7 @@ int
 enc_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ifreq	*ifr = (struct ifreq *)data;
-	int		 error = 0;
+	int		 error;
 
 	switch (cmd) {
 	case SIOCAIFADDR:
@@ -238,13 +239,13 @@ enc_setif(struct ifnet *ifp, u_int id)
 		return (0);
 
 	if (id > RT_TABLEID_MAX)
-		return (-1);
+		return (EINVAL);
 
 	if (id == 0 || id > enc_max_id) {
 		newlen = sizeof(struct ifnet *) * (id + 1);
 
 		if ((new = malloc(newlen, M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
-			return (-1);
+			return (ENOBUFS);
 		if (enc_ifps != NULL) {
 			memcpy(new, enc_ifps,
 			    sizeof(struct ifnet *) * (enc_max_id + 1));
