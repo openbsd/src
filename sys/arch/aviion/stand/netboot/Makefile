@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2012/08/21 14:46:18 pascal Exp $
+#	$OpenBSD: Makefile,v 1.3 2013/09/28 21:59:39 miod Exp $
 
 SIZE?=	size
 
@@ -19,7 +19,7 @@ CLEANFILES+=netboot netboot.aout
 SRCS=   crt.c boot.c conf.c devopen.c dev_net.c if_le.c version.c
 OBJS=  ${SRCS:S/.c/.o/g}
 LIBS=	${LIBSA} ${LIBPROM} ${LIBZ}
-LDFLAGS+= -N -T ${STAGE2_RELOC} 
+LDFLAGS+= -N -Ttext ${STAGE2_RELOC} -e start
 NOPIE=
 
 all:	netboot.aout
@@ -27,9 +27,8 @@ all:	netboot.aout
 netboot: netboot.aout a2coff
 	${DESTDIR}${MDEC_DIR}/a2coff netboot.aout netboot
 
-netboot.aout: ${OBJS} ${SINGLE} ${LIBS}
-	${LD} ${LDFLAGS} -o $@ \
-		${SINGLE} ${OBJS} ${LIBS} `cc -print-libgcc-file-name`
+netboot.aout: ${OBJS} ${LIBS}
+	${LD} ${LDFLAGS} -o $@ ${OBJS} ${LIBS} `cc -print-libgcc-file-name`
 	@${SIZE} $@
 
 a2coff:	${DESTDIR}${MDEC_DIR}/a2coff

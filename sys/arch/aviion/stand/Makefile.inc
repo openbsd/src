@@ -1,8 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2006/05/20 22:38:32 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2013/09/28 21:59:38 miod Exp $
 
 MDEC_DIR?=	/usr/mdec
 
 CFLAGS+=	-Wall -Werror -fno-stack-protector -mmemcpy
+CFLAGS+=	-fno-builtin-printf -fno-builtin-putchar -fno-builtin-vprintf
+
 
 # Load addresses for bootstrap code
 # This should work on 8MB machines, if each bootstrap code fits in 60KB

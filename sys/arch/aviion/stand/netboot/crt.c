@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt.c,v 1.2 2006/05/20 22:38:33 miod Exp $ */
+/*	$OpenBSD: crt.c,v 1.3 2013/09/28 21:59:39 miod Exp $ */
 
 #include <sys/types.h>
 #include <machine/prom.h>
@@ -24,10 +24,9 @@ start(const char *args, int dev, int unit, int part)
 	 * Do not use any low register to enable the SFU1. This wipes out
 	 * the args.  Not cool at all... r25 seems free. 
 	 */
-	asm("|	enable SFU1");
-	asm("	ldcr	r25,cr1" ::: "r25");
-	asm("	clr	r25,r25,1<3>"); /* bit 3 is SFU1D */
-	asm("	stcr	r25,cr1");
+	asm("	ldcr	%%r25,%%cr1" ::: "r25");
+	asm("	clr	%r25,%r25,1<3>"); /* bit 3 is SFU1D */
+	asm("	stcr	%r25,%cr1");
 
 	memset(&edata, 0, ((int)&end - (int)&edata));
 

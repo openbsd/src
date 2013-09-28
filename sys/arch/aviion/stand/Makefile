@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.2 2006/05/16 22:48:16 miod Exp $
+#	$OpenBSD: Makefile,v 1.3 2013/09/28 21:59:38 miod Exp $
 
 SUBDIR= a2coff
 
 .if ${MACHINE} == "aviion"
-SUBDIR+= libprom libsa libz netboot
+SUBDIR+=	libprom libsa libz
+SUBDIR+=	netboot
 .endif
 
 .include <bsd.subdir.mk>
