@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.11 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.12 2013/09/28 19:25:25 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -27,19 +27,19 @@
  * AViiON native disk identification
  */
 
-#define	VDM_SIGNATURE		0x1234abcd
+#define	VDM_LABEL_SIGNATURE		0x1234abcd
 
-#define	VDM_DISK_VERIFICATION_SECTOR		0
-#define	VDM_DISK_VERIFICATION_OFFSET		0x1c8
-#define	VDM_DISK_VERIFICATION_OFFSET_ALT	0x1c0
+#define	VDM_LABEL_SECTOR		0
+#define	VDM_LABEL_OFFSET		0x1c8
+#define	VDM_LABEL_OFFSET_ALT		0x1c0
 
-struct vdm_disk_verification {
+struct vdm_label {
 	uint32_t	signature;
 	uint32_t	version;
 	uint32_t	unused[2];
 };
 
-#define	VDM_DISK_VERSION	0
+#define	VDM_LABEL_VERSION		0
 
 struct vdm_boot_info {
 	uint32_t	padding[6];
@@ -49,21 +49,21 @@ struct vdm_boot_info {
 	uint32_t	version;
 };
 
-#define	VDM_BOOT_INFO_VERSION	1
-#define	VDM_BOOT_DEFAULT_SIZE	500
+#define	VDM_BOOT_INFO_VERSION		1
+#define	VDM_BOOT_DEFAULT_SIZE		500
 
 /*
  * MBR identification information is in <sys/disklabel.h>
  */
 
-/* DG/UX VDM partition type */
-#define	DOSPTYP_DGUX_VDM	0xdf
+/* DG/UX VDM partition type (apparently not used on m88k AViiON) */
+#define	DOSPTYP_DGUX_VDM		0xdf
 
 /*
  * DG/UX VDM structures
  */
 
-#define	VDIT_SECTOR	1
+#define	VDIT_SECTOR			1
 
 struct vdm_self_id {
 	union {
@@ -77,13 +77,14 @@ struct vdm_self_id {
 #define	VDM_BLKNO_MASK			0x00ffffff	/* low 24 bits */
 #define	VDM_ID_BLKNO(id)		((id)->u._blkno) & VDM_BLKNO_MASK)
 #define	VDM_NO_NODE_NUMBER		012345670123
+#define	VDM_NO_BLK_NUMBER		0xffffffff
 
 #define	VDIT_BLOCK			0x12
 #define	VDIT_PORTION_HEADER_BLOCK	0x13
 #define	VDIT_BLOCK_HEAD_BE		0x14
 #define	VDIT_BLOCK_HEAD_LE		0x18
 
-struct	vdit_block_header {
+struct vdit_block_header {
 	struct vdm_self_id		id;
 	uint32_t			nextblk;
 	uint32_t			timestamp;
@@ -92,10 +93,13 @@ struct	vdit_block_header {
 	uint16_t			padding;
 } __packed;
 
+typedef uint32_t vdit_timestamp_t;
+typedef uint32_t vdit_id_t;
+
 struct vdit_entry_header {
 	uint16_t			type;
 	uint16_t			size;
-	uint32_t			timestamp;
+	vdit_timestamp_t		timestamp;
 } __packed;
 
 #define	VDIT_ENTRY_SENTINEL		0x00
@@ -107,8 +111,8 @@ struct vdit_entry_header {
 #define	VDIT_NAME_MAX 0x20
 
 struct vdit_instance_id {
-	uint32_t			generation_timestamp;
-	uint32_t			system_id;
+	vdit_timestamp_t		generation_timestamp;
+	vdit_id_t			system_id;
 } __packed;
 
 struct vdit_boot_info_entry {
@@ -119,7 +123,7 @@ struct vdit_boot_info_entry {
 
 struct vdit_subdriver_entry {
 	uint16_t			version;
-	uint32_t			subdriver_id;
+	vdit_id_t			subdriver_id;
 	char				name[VDIT_NAME_MAX];
 } __packed;
 
@@ -131,7 +135,7 @@ struct vdit_subdriver_entry {
 struct vdit_instance_entry {
 	uint16_t			version;
 	char				name[VDIT_NAME_MAX];
-	uint32_t			subdriver_id;
+	vdit_id_t			subdriver_id;
 	struct vdit_instance_id		instance_id;
 	uint8_t				exported;
 } __packed;

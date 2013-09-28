@@ -1,6 +1,20 @@
-/*	$OpenBSD: disksubr.c,v 1.51 2011/07/08 00:08:00 krw Exp $	*/
-/*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.52 2013/09/28 19:25:24 miod Exp $	*/
 
+/*
+ * Copyright (c) 2013 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*
  * Copyright (c) 1996 Theo de Raadt
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -36,6 +50,11 @@
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/malloc.h>
+
+char	*extract_vdit_portion(char *, const char *, unsigned int, int);
+int	 readvditlabel(struct buf *, void (*)(struct buf *), struct disklabel *,
+	    int *, int);
 
 /*
  * Attempt to read a disk label from a device
@@ -44,17 +63,10 @@
  * secpercyl, secsize and anything required for a block i/o read
  * operation in the driver's strategy/start routines
  * must be filled in before calling us.
- *
- * If dos partition table requested, attempt to load it and
- * find disklabel inside a DOS partition.
- *
- * We would like to check if each MBR has a valid DOSMBR_SIGNATURE, but
- * we cannot because it doesn't always exist. So.. we assume the
- * MBR is valid.
  */
 int
-readdisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, int spoofonly)
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+    int spoofonly)
 {
 	struct buf *bp = NULL;
 	int error;
@@ -65,6 +77,10 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+
+	error = readvditlabel(bp, strat, lp, NULL, spoofonly);
+	if (error == 0)
+		goto done;
 
 	error = readdoslabel(bp, strat, lp, NULL, spoofonly);
 	if (error == 0)
@@ -105,13 +121,17 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	if (readdoslabel(bp, strat, lp, &partoff, 1) != 0)
+	if (readvditlabel(bp, strat, lp, &partoff, 1) == 0) {
+		bp->b_blkno = partoff + LABELSECTOR;
+		offset = LABELOFFSET;
+	} else if (readdoslabel(bp, strat, lp, &partoff, 1) == 0) {
+		bp->b_blkno = DL_BLKTOSEC(lp, partoff + DOS_LABELSECTOR) *
+		    DL_BLKSPERSEC(lp);
+		offset = DL_BLKOFFSET(lp, partoff + DOS_LABELSECTOR);
+	} else
 		goto done;
 
 	/* Read it in, slap the new label in, and write it back out */
-	bp->b_blkno = DL_BLKTOSEC(lp, partoff + DOS_LABELSECTOR) *
-	    DL_BLKSPERSEC(lp);
-	offset = DL_BLKOFFSET(lp, partoff + DOS_LABELSECTOR);
 	bp->b_bcount = lp->d_secsize;
 	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
 	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
@@ -133,4 +153,237 @@ done:
 	}
 	disk_change = 1;
 	return (error);
+}
+
+/*
+ * Search for a VDIT volume information. If one is found, search for a
+ * vdmpart instance of name "OpenBSD". If one is found, set the disklabel
+ * bounds to the area it spans, and attempt to read a native label within
+ * it.
+ */
+int
+readvditlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
+    int *partoffp, int spoofonly)
+{
+	struct buf *sbp = NULL;
+	struct vdm_label *vdl;
+	struct vdit_block_header *vbh;
+	struct vdit_entry_header *veh;
+	char *vdit_storage = NULL, *vdit_end;
+	size_t vdit_size, largest_chunk;
+	int expected_kind;
+	daddr_t blkno;
+	int error = 0;
+	vdit_id_t *vdmpart_id;
+	struct vdit_vdmpart_instance *bsd_vdmpart;
+
+	/*
+	 * Read first sector and check for a VDM label.
+	 * Note that a VDM label is theoretically only required for bootable
+	 * disks; but do disks with a VDIT but no VDM label really exist?
+	 */
+
+	bp->b_blkno = VDM_LABEL_SECTOR;
+	bp->b_bcount = lp->d_secsize;
+	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
+	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
+	(*strat)(bp);
+	if ((error = biowait(bp)) != 0)
+		return error;
+
+	vdl = (struct vdm_label *)(bp->b_data + VDM_LABEL_OFFSET);
+	if (vdl->signature != VDM_LABEL_SIGNATURE)
+		vdl = (struct vdm_label *)(bp->b_data + VDM_LABEL_OFFSET_ALT);
+	if (vdl->signature != VDM_LABEL_SIGNATURE)
+		return EINVAL;
+
+	/*
+	 * Figure out the size of the first VDIT.
+	 */
+
+	vdit_size = largest_chunk = 0;
+	expected_kind = VDIT_BLOCK_HEAD_BE;
+	blkno = VDIT_SECTOR;
+	do { 
+		bp->b_blkno = blkno;
+		bp->b_bcount = lp->d_secsize;
+		CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
+		SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
+		(*strat)(bp);
+		if ((error = biowait(bp)) != 0)
+			return error;
+
+		vbh = (struct vdit_block_header *)bp->b_data;
+		if (VDM_ID_KIND(&vbh->id) != expected_kind)
+			return EINVAL;
+
+		if (vbh->chunksz > largest_chunk)
+			largest_chunk = vbh->chunksz;
+		vdit_size += vbh->chunksz;
+		blkno = vbh->nextblk;
+		expected_kind = VDIT_PORTION_HEADER_BLOCK;
+	} while (vbh->nextblk != VDM_NO_BLK_NUMBER);
+
+	/*
+	 * Now read the first VDIT.
+	 */
+
+	vdit_size *= dbtob(1) - sizeof(struct vdit_block_header);
+	vdit_storage = malloc(vdit_size, M_DEVBUF, M_WAITOK);
+	largest_chunk = dbtob(largest_chunk);
+	sbp = geteblk(largest_chunk);
+	sbp->b_dev = bp->b_dev;
+
+	vdit_end = vdit_storage;
+	expected_kind = VDIT_BLOCK_HEAD_BE;
+	blkno = VDIT_SECTOR;
+	do {
+		sbp->b_blkno = blkno;
+		sbp->b_bcount = largest_chunk;
+		CLR(sbp->b_flags, B_READ | B_WRITE | B_DONE);
+		SET(sbp->b_flags, B_BUSY | B_READ | B_RAW);
+		(*strat)(sbp);
+		if ((error = biowait(sbp)) != 0)
+			goto done;
+
+		vbh = (struct vdit_block_header *)sbp->b_data;
+		if (VDM_ID_KIND(&vbh->id) != expected_kind) {
+			error = EINVAL;
+			goto done;
+		}
+
+		vdit_end = extract_vdit_portion(vdit_end, sbp->b_data,
+		    vbh->chunksz, expected_kind);
+		if (vdit_end == NULL) {
+			error = EINVAL;
+			goto done;
+		}
+		blkno = vbh->nextblk;
+		expected_kind = VDIT_PORTION_HEADER_BLOCK;
+	} while (vbh->nextblk != VDM_NO_BLK_NUMBER);
+
+	/*
+	 * Now walk the VDIT entries.
+	 *
+	 * If we find an OpenBSD vdmpart, we'll set our disk area bounds to
+	 * its area, and will read a label from there.
+	 */
+
+	vdmpart_id = NULL;
+	bsd_vdmpart = NULL;
+
+	veh = (struct vdit_entry_header *)vdit_storage;
+	while ((caddr_t)veh < vdit_end) {
+		switch (veh->type) {
+		case VDIT_ENTRY_SUBDRIVER_INFO:
+		    {
+			struct vdit_subdriver_entry *vse;
+
+			vse = (struct vdit_subdriver_entry *)(veh + 1);
+			if (strcmp(vse->name, VDM_SUBDRIVER_VDMPART) == 0)
+				vdmpart_id = &vse->subdriver_id;
+		    }
+			break;
+		case VDIT_ENTRY_INSTANCE:
+		    {
+			struct vdit_instance_entry *vie;
+
+			vie = (struct vdit_instance_entry *)(veh + 1);
+			if (strcmp(vie->name, VDM_INSTANCE_OPENBSD) == 0) {
+				if (vdmpart_id != NULL &&
+				    memcmp(vdmpart_id, &vie->subdriver_id,
+				      sizeof(vdit_id_t)) == 0) {
+					/* found it! */
+					if (bsd_vdmpart != NULL) {
+						bsd_vdmpart = NULL;
+						veh->type = VDIT_ENTRY_SENTINEL;
+					} else
+						bsd_vdmpart = (struct
+						    vdit_vdmpart_instance *)vie;
+				}
+			}
+		    }
+			break;
+		}
+		if (veh->type == VDIT_ENTRY_SENTINEL)
+			break;
+		veh = (struct vdit_entry_header *)((char *)veh + veh->size);
+	}
+
+	if (bsd_vdmpart != NULL) {
+		uint32_t start, size;
+
+		memcpy(&start, &bsd_vdmpart->start_blkno, sizeof(uint32_t));
+		memcpy(&size, &bsd_vdmpart->size, sizeof(uint32_t));
+
+		if (start >= DL_GETDSIZE(lp) ||
+		    start + size > DL_GETDSIZE(lp)) {
+			error = EINVAL;
+			goto done;
+		}
+
+		if (partoffp != NULL) {
+			*partoffp = start;
+			goto done;
+		}
+		DL_SETBSTART(lp, start);
+		DL_SETBEND(lp, start + size);
+
+		/*
+		 * Now read the native label.
+		 */
+
+		if (spoofonly == 0) {
+			bp->b_blkno = start + LABELSECTOR;
+			bp->b_bcount = lp->d_secsize;
+			CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
+			SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
+			(*strat)(bp);
+			if ((error = biowait(bp)) != 0)
+				goto done;
+
+			checkdisklabel(bp->b_data + LABELOFFSET, lp,
+			    start, start + size);
+		}
+	} else {
+		/*
+		 * VDM label, but no OpenBSD vdmpart partition found.
+		 * XXX is it worth registering the whole disk as a
+		 * XXX `don't touch' vendor partition in that case?
+		 */
+		error = EINVAL;
+		goto done;
+	}
+
+done:
+	free(vdit_storage, M_DEVBUF);
+	if (sbp != NULL) {
+		sbp->b_flags |= B_INVAL;
+		brelse(sbp);
+	}
+
+	return error;
+}
+
+/*
+ * Process a contiguous chunk of VDIT, verifying and removing each block header
+ * as we go.
+ */
+char *
+extract_vdit_portion(char *dst, const char *src, unsigned int nsec, int kind)
+{
+	struct vdit_block_header *vbh;
+
+	for (; nsec != 0; nsec--) {
+		vbh = (struct vdit_block_header *)src;
+		if (VDM_ID_KIND(&vbh->id) != kind)
+			return NULL;
+		kind = VDIT_BLOCK;
+
+		memcpy(dst, src + sizeof *vbh, dbtob(1) - sizeof *vbh);
+		dst += dbtob(1) - sizeof *vbh;
+		src += dbtob(1);
+	}
+
+	return dst;
 }
