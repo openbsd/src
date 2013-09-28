@@ -18380,6 +18380,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "OXPCIE952 Parallel",
 	},
 	{
+	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OXPCIE952S,
+	    "OXPCIE952 Serial",
+	},
+	{
 	    PCI_VENDOR_PDC, PCI_PRODUCT_PDC_QSTOR_SATA,
 	    "QStor SATA",
 	},
