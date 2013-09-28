@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.2 2012/11/30 20:38:24 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.3 2013/09/28 18:49:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -109,7 +109,7 @@ struct dev {
 	/*
 	 * audio device (while opened)
 	 */	
-	struct siofile_ sio;
+	struct dev_sio sio;
 	struct aparams par;			/* encoding */
 	int pchan, rchan;			/* play & rec channels */
 	adata_t *rbuf;				/* rec buffer */

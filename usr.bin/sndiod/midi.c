@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.9 2013/05/12 05:02:08 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.10 2013/09/28 18:49:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -27,13 +27,6 @@
 #include "sysex.h"
 #include "utils.h"
 
-/*
- * input data rate is XFER / TIMO (in bytes per microsecond),
- * it must be slightly larger than the MIDI standard 3125 bytes/s
- */ 
-#define MIDI_XFER 1
-#define MIDI_TIMO 100000
-
 int  port_open(struct port *);
 void port_imsg(void *, unsigned char *, int);
 void port_omsg(void *, unsigned char *, int);
@@ -49,7 +42,6 @@ struct midiops port_midiops = {
 
 #define MIDI_NEP 32
 struct midi midi_ep[MIDI_NEP];
-struct timo midi_timo;
 struct port *port_list = NULL;
 unsigned int midi_portnum = 0;
 
@@ -72,27 +64,13 @@ midi_log(struct midi *ep)
 }
 
 void
-midi_ontimo(void *arg)
-{
-	int i;
-	struct midi *ep;
-	
-	for (i = MIDI_NEP, ep = midi_ep; i > 0; i--, ep++) {
-	}
-	timo_add(&midi_timo, MIDI_TIMO);
-}
-
-void
 midi_init(void)
 {
-	timo_set(&midi_timo, midi_ontimo, NULL);
-	timo_add(&midi_timo, MIDI_TIMO);
 }
 
 void
 midi_done(void)
 {
-	timo_del(&midi_timo);
 }
 
 struct midi *
@@ -513,7 +491,8 @@ port_unref(struct port *c)
 #endif
 	for (rxmask = 0, i = 0; i < MIDI_NEP; i++)
 		rxmask |= midi_ep[i].txmask;
-	if ((rxmask & ~c->midi->self) == 0 && c->state == PORT_INIT && !c->hold)
+	if ((rxmask & c->midi->self) == 0 && c->midi->txmask == 0 &&
+	    c->state == PORT_INIT && !c->hold)
 		port_drain(c);
 }
 
