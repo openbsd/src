@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.126 2013/07/05 21:11:57 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.127 2013/09/28 12:40:32 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -540,7 +540,8 @@ boot(howto)
 
 haltsys:
 	doshutdownhooks();
-	config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	if (!TAILQ_EMPTY(&alldevs))
+		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
 
 	if (howto & RB_HALT) {
 		if (dep_call->cpu_halt)

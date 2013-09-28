@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.165 2013/06/29 21:06:15 brad Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.166 2013/09/28 12:40:28 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -754,7 +754,8 @@ boot(int howto)
 
 haltsys:
 	doshutdownhooks();
-	config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	if (!TAILQ_EMPTY(&alldevs))
+		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
 
 #ifdef MULTIPROCESSOR
 	x86_broadcast_ipi(X86_IPI_HALT);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.140 2013/08/17 08:33:11 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.141 2013/09/28 12:40:31 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -826,7 +826,8 @@ boot(int howto)
 	splhigh();
 	if (howto & RB_HALT) {
 		doshutdownhooks();
-		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+		if (!TAILQ_EMPTY(&alldevs))
+			config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
 		if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #if NADB > 0
 			delay(1000000);
@@ -842,7 +843,8 @@ boot(int howto)
 	if (!cold && (howto & RB_DUMP))
 		dumpsys();
 	doshutdownhooks();
-	config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	if (!TAILQ_EMPTY(&alldevs))
+		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
 	printf("rebooting\n\n");
 
 #if NADB > 0

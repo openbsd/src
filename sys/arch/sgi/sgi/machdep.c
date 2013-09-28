@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.132 2012/10/08 21:47:50 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.133 2013/09/28 12:40:31 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -867,7 +867,8 @@ boot(int howto)
 
 haltsys:
 	doshutdownhooks();
-	config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	if (!TAILQ_EMPTY(&alldevs))
+		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
 
 	if (howto & RB_HALT) {
 		if (howto & RB_POWERDOWN)

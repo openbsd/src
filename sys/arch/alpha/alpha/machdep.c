@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.141 2013/06/11 16:42:06 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.142 2013/09/28 12:40:28 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1032,7 +1032,8 @@ boot(howto)
 
 haltsys:
 	doshutdownhooks();
-	config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	if (!TAILQ_EMPTY(&alldevs))
+		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
 
 #ifdef BROKEN_PROM_CONSOLE
 	sio_intr_shutdown(NULL);
