@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.23 2013/05/08 08:26:25 mglocker Exp $   */
+/*	$OpenBSD: uthum.c,v 1.24 2013/09/28 11:22:09 sasano Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -820,15 +820,19 @@ uthum_print_sensorinfo(struct uthum_softc *sc, int num)
 		printf("type %s (temperature)",
 		    uthum_sensor_type_s[s->dev_type]);
 		if (s->cal_offset)
-			printf(", calibration offset %d.%d degC",
-			    s->cal_offset / 100, abs(s->cal_offset % 100));
+			printf(", calibration offset %c%d.%d degC",
+			    (s->cal_offset < 0) ? '-' : '+',
+			    abs(s->cal_offset / 100),
+			    abs(s->cal_offset % 100));
 		break;
 	case SENSOR_HUMIDITY:
 		printf("type %s (humidity)",
 		    uthum_sensor_type_s[s->dev_type]);
 		if (s->cal_offset)
-			printf("calibration offset %d.%d %%RH",
-			    s->cal_offset / 100, abs(s->cal_offset % 100));
+			printf("calibration offset %c%d.%d %%RH",
+			    (s->cal_offset < 0) ? '-' : '+',
+			    abs(s->cal_offset / 100),
+			    abs(s->cal_offset % 100));
 		break;
 	default:
 		printf("unknown");
