@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.117 2011/09/21 15:41:30 phessler Exp $ */
+/*	$OpenBSD: ntp.c,v 1.118 2013/09/28 12:18:05 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -618,18 +618,12 @@ priv_adjtime(void)
 	qsort(offsets, offset_cnt, sizeof(struct ntp_offset *), offset_compare);
 
 	i = offset_cnt / 2;
-	if (offset_cnt % 2 == 0) {
-		offset_median =
-		    (offsets[i - 1]->offset + offsets[i]->offset) / 2;
-		conf->status.rootdelay =
-		    (offsets[i - 1]->delay + offsets[i]->delay) / 2;
-		conf->status.stratum = MAX(
-		    offsets[i - 1]->status.stratum, offsets[i]->status.stratum);
-	} else {
-		offset_median = offsets[i]->offset;
-		conf->status.rootdelay = offsets[i]->delay;
-		conf->status.stratum = offsets[i]->status.stratum;
-	}
+	if (offset_cnt % 2 == 0)
+		if (offsets[i - 1]->delay < offsets[i]->delay)
+			i -= 1;
+	offset_median = offsets[i]->offset;
+	conf->status.rootdelay = offsets[i]->delay;
+	conf->status.stratum = offsets[i]->status.stratum;
 	conf->status.leap = offsets[i]->status.leap;
 
 	imsg_compose(ibuf_main, IMSG_ADJTIME, 0, 0, -1,
