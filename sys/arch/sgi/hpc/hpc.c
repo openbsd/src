@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpc.c,v 1.15 2012/09/29 19:24:31 miod Exp $	*/
+/*	$OpenBSD: hpc.c,v 1.16 2013/09/28 14:00:00 miod Exp $	*/
 /*	$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $	*/
 /*	$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	 */
 
@@ -518,7 +518,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 
 		/* XXX: the firmware should have taken care of this already */
 #if 0
-		if (sys_config.system_subtype != IP22_INDIGO) {
+		if (sys_config.system_subtype != IP22_INDIGO2) {
 			bus_space_write_4(sc->sc_ct, sc->sc_ch,
 			    IOC_BASE + IOC_GCSEL, 0xff);
 			bus_space_write_4(sc->sc_ct, sc->sc_ch,
@@ -688,9 +688,13 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 				delay(20);
 				*reg = 0x00;
 
-				pa = sc->sc_ch + hd->hd_devoff;
-				if (guarded_read_4(PHYS_TO_XKPHYS(pa, CCA_NC),
-				    &probe32) != 0)
+				pa = sc->sc_ch + hd->hd_devoff +
+				    (7 << 2);		/* SEEQ_TXSTAT */
+				reg = (volatile uint32_t *)
+				    PHYS_TO_XKPHYS(pa, CCA_NC);
+				if (guarded_read_4((vaddr_t)reg, &probe32) != 0)
+					continue;
+				if ((probe32 & 0xff) != 0x80) /*TXSTAT_OLDNEW*/
 					continue;
 			} else
 			/* if (strcmp(hd->hd_name, "wdsc") == 0) */ {
