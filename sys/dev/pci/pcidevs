@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1689 2013/09/23 03:45:08 jsg Exp $
+$OpenBSD: pcidevs,v 1.1690 2013/09/28 08:51:39 mlarkin Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -5341,6 +5341,7 @@ product OXFORD2 OX16PCI954P	0x9513	OX16PCI954 Parallel
 product OXFORD2 OX16PCI952	0x9521	OX16PCI952
 product OXFORD2 OX16PCI952P	0x9523	OX16PCI952 Parallel
 product OXFORD2 OXPCIE952	0xc110	OXPCIE952 Parallel
+product OXFORD2 OXPCIE952S	0xc120	OXPCIE952 Serial
 
 /* Pacific Data products */
 product PDC QSTOR_SATA		0x2068	QStor SATA
