@@ -1,4 +1,4 @@
-/*	$OpenBSD: gio.c,v 1.15 2013/04/21 17:13:36 miod Exp $	*/
+/*	$OpenBSD: gio.c,v 1.16 2013/09/28 14:03:13 miod Exp $	*/
 /*	$NetBSD: gio.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -371,7 +371,7 @@ gio_id(vaddr_t va, paddr_t pa, int maybe_gfx)
 	}
 
 	/*
-	 * GIO32 devices with a 32-bit ID register will not necesserily
+	 * GIO32 devices with a 32-bit ID register will not necessarily
 	 * answer to addresses not aligned on 32 bit boundaries.
 	 */
 
@@ -403,6 +403,34 @@ gio_id(vaddr_t va, paddr_t pa, int maybe_gfx)
 	 */
 
 	if (maybe_gfx) {
+		/*
+		 * On (at least) Indy systems with newport graphics, the
+		 * presence of a SCSI Expansion board (030-8133) in either
+		 * slot will cause extra bits to be set in the topmost byte
+		 * of the 32-bit access to the pipelined slot (i.e. the
+		 * value of id32 is 0x18000004, not 0x00000004).
+		 *
+		 * This would prevent newport from being recognized
+		 * properly.
+		 *
+		 * This behaviour seems to be specific to the SCSI board,
+		 * since the E++ board does not trigger it. This would
+		 * rule out an HPC1.x-specific cause.
+		 * 
+		 * We work around this by ignoring the topmost byte of id32
+		 * from this point on, but it's ugly and isaish...
+		 *
+		 * Note that this is not necessary on Indigo 2 since this
+		 * troublesome board can not be installed on such a system.
+		 * Indigo are probably safe from this issues, for they can't
+		 * use newport graphics; but the issue at hand might be
+		 * HPC 1.x related, so better play safe.
+		 */
+		if (sys_config.system_type == SGI_IP20 ||
+		    (sys_config.system_type == SGI_IP22 &&
+		     sys_config.system_subtype != IP22_INDIGO2))
+			id32 &= ~0xff000000;
+
 		if (id32 != 4 || id16 != 2 || id8 != 1) {
 			if (guarded_read_4(va + HQ2_MYSTERY, &mystery) == 0 &&
 			    mystery == HQ2_MYSTERY_VALUE)
