@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.88 2013/09/21 20:19:32 miod Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.89 2013/09/28 08:53:41 mlarkin Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1040,6 +1040,15 @@ const struct puc_device_description puc_devs[] = {
 	    {   0xffff, 0xffff,						0, 0 },
 	    {
 		{ PUC_LPT, 0x10, 0x0000 },
+	    },
+	},
+
+	/* Oxford Semiconductor PCIE `950 UARTs - 128 byte FIFOs */
+	{   /* "Oxford Semiconductor PCIE UARTs", */
+	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OXPCIE952S,	0, 0 },
+	    {   0xffff, 0xffff,						0, 0 },
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
 	    },
 	},
 
