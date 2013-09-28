@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.c,v 1.5 2013/01/05 11:20:55 miod Exp $	*/
+/*	$OpenBSD: prom.c,v 1.6 2013/09/28 19:56:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat.
@@ -155,9 +155,11 @@ scm_halt()
 	SCM_CONTEXT();
 	SCM_VBR();
 	SCM_CALL(SCM_HALT);
+#if 0
 	OS_CONTEXT();
 	OS_VBR();
 	set_psr(psr);
+#endif
 	for (;;) ;
 }
 
@@ -262,9 +264,11 @@ scm_reboot(const char *cmdline)
 	SCM_VBR();
 	__asm__ __volatile__ ("or %%r2, %%r0, %0" : : "r" (cmdline));
 	SCM_CALL(SCM_REBOOT);
+#if 0
 	OS_CONTEXT();
 	OS_VBR();
 	set_psr(psr);
+#endif
 	for (;;) ;
 }
 

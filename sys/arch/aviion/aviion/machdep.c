@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.52 2013/09/28 12:40:29 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.53 2013/09/28 19:56:47 miod Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -122,6 +122,8 @@ void	dumpsys(void);
 void	savectx(struct pcb *);
 void	secondary_main(void);
 vaddr_t	secondary_pre_main(void);
+
+extern void bootstack(void);
 
 int physmem;	  /* available physical memory, in pages */
 
@@ -280,7 +282,9 @@ cpu_startup()
 __dead void
 doboot()
 {
+
 	printf("Rebooting system...\n\n");
+	bootstack();
 	cmmu_shutdown();
 	scm_reboot(NULL);
 	/*NOTREACHED*/
@@ -332,6 +336,7 @@ haltsys:
 
 	if (howto & RB_HALT) {
 		printf("System halted.\n\n");
+		bootstack();
 		cmmu_shutdown();
 		scm_halt();
 	}

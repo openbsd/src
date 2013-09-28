@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.17 2013/01/05 11:20:55 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.18 2013/09/28 19:56:46 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -291,6 +291,14 @@ GLOBAL(delay)
 	 subu	%r4, %r4, 2	/* two cycles per iteration */
 2:
 	jmp	%r1
+
+/*
+ * Switch to a 1:1 mapped stack at shutdown/reboot time.
+ */
+GLOBAL(bootstack)
+	or.u	%r31, %r0,  %hi16(_ASM_LABEL(initstack_end))
+	jmp.n	%r1
+	 or	%r31, %r31, %lo16(_ASM_LABEL(initstack_end))
 
 /*****************************************************************************/
 
