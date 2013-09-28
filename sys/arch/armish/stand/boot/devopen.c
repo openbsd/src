@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.3 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.4 2013/09/28 10:05:36 mlarkin Exp $	*/
 /*	$NetBSD: devopen.c,v 1.1 2003/06/25 17:24:22 cdi Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@ devparse(const char *fname, int *dev, int *unit, int *part, const char **file)
 	s = strchr(fname, ':');
 	if (s != NULL) {
 		int devlen;
-		int i, u, p;
+		int i, u, p = 0;
 		struct devsw *dp;
 		char devname[MAXDEVNAME];
 
