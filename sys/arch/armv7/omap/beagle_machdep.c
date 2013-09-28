@@ -1,4 +1,4 @@
-/*	$OpenBSD: beagle_machdep.c,v 1.1 2013/09/04 14:38:30 patrick Exp $ */
+/*	$OpenBSD: beagle_machdep.c,v 1.2 2013/09/28 14:16:41 miod Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -301,6 +301,8 @@ boot(int howto)
 	 */
 	if (cold) {
 		doshutdownhooks();
+		if (!TAILQ_EMPTY(&alldevs))
+			config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
 		if ((howto & (RB_HALT | RB_USERREQ)) != RB_USERREQ) {
 			printf("The operating system has halted.\n");
 			printf("Please press any key to reboot.\n\n");
@@ -336,6 +338,8 @@ boot(int howto)
 	
 	/* Run any shutdown hooks */
 	doshutdownhooks();
+	if (!TAILQ_EMPTY(&alldevs))
+		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;

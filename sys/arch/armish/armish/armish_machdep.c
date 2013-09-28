@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_machdep.c,v 1.18 2011/10/19 20:18:31 drahn Exp $ */
+/*	$OpenBSD: armish_machdep.c,v 1.19 2013/09/28 14:16:41 miod Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -275,6 +275,8 @@ boot(int howto)
 	
 haltsys:
 	doshutdownhooks();
+	if (!TAILQ_EMPTY(&alldevs))
+		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;
