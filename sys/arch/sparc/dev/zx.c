@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.24 2013/05/31 22:07:49 deraadt Exp $	*/
+/*	$OpenBSD: zx.c,v 1.25 2013/09/28 06:43:42 mlarkin Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -507,7 +507,7 @@ zx_cross_loadwid(struct zx_softc *sc, u_int type, u_int index, u_int value)
 
 	if (type == ZX_WID_DBL_8)
 		tmp = (index & 0x0f) + 0x40;
-	else if (type == ZX_WID_DBL_24)
+	else  /* ZX_WID_DBL_24 */
 		tmp = index & 0x3f;
 
 	SETREG(zx->zx_type, 0x5800 + tmp);
