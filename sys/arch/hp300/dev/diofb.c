@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofb.c,v 1.18 2010/12/26 15:40:59 miod Exp $	*/
+/*	$OpenBSD: diofb.c,v 1.19 2013/09/28 21:10:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -144,6 +144,14 @@ diofb_fbinquire(struct diofb *fb, int scode, struct diofbreg *fbr)
 		fb->dwidth = fb->fbwidth;
 	if (fb->dheight > fb->fbheight)
 		fb->dheight = fb->fbheight;
+
+	/*
+	 * Some monochrome displays, such as the HP332 internal video
+	 * appear to return a display width of 1024 instead of 512.
+	 */
+	if (fbr->num_planes == 1 && fb->dheight == 400)
+		if (fb->dwidth == 1024)
+			fb->dwidth = 512;
 
 	fb->planes = fbr->num_planes;
 	if (fb->planes > 8)

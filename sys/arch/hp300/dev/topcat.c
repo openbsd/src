@@ -1,4 +1,4 @@
-/*	$OpenBSD: topcat.c,v 1.15 2006/08/11 18:33:13 miod Exp $	*/
+/*	$OpenBSD: topcat.c,v 1.16 2013/09/28 21:10:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -246,7 +246,10 @@ topcat_end_attach(struct topcat_softc *sc, u_int8_t id)
 	case GID_TOPCAT:
 		switch (sc->sc_fb->planes) {
 		case 1:
-			fbname = "HP98544 topcat";
+			if (sc->sc_fb->dheight == 400)
+				fbname = "HP98542 topcat";
+			else
+				fbname = "HP98544 topcat";
 			break;
 		case 4:
 			if (sc->sc_fb->dheight == 400)
@@ -414,6 +417,10 @@ void
 topcat_setcolor(struct diofb *fb, u_int index)
 {
 	volatile struct tcboxfb *tc = (struct tcboxfb *)fb->regkva;
+
+	/* Monochrome topcat may not have the colormap logic present */
+	if (fb->planes <= 1)
+		return;
 
 	if (tc->regs.fbid != GID_TOPCAT) {
 		tccm_waitbusy(tc);
