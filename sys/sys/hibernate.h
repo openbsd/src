@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.24 2013/04/09 18:58:03 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.25 2013/09/29 16:28:35 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -23,10 +23,6 @@
 #include <sys/tree.h>
 #include <lib/libz/zlib.h>
 #include <machine/vmparam.h>
-
-#if 0
-#define HIBERNATE_DEBUG
-#endif
 
 #define HIBERNATE_CHUNK_USED 1
 #define HIBERNATE_CHUNK_CONFLICT 2
