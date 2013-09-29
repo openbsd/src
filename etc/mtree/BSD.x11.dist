@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.29 2013/08/22 09:49:51 jsg Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.30 2013/09/29 14:00:02 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -229,6 +229,8 @@
                         ..
                         ja_JP.UTF-8
                         ..
+                        km_KH.UTF-8
+                        ..
                         ko
                         ..
                         ko_KR.UTF-8
@@ -252,6 +254,8 @@
                         pt_BR.UTF-8
                         ..
                         ru_RU.UTF-8
+                        ..
+                        sr_CS.UTF-8
                         ..
                         tatar-cyr
                         ..
