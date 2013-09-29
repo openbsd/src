@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.53 2013/09/29 12:17:59 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.54 2013/09/29 16:32:25 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -55,6 +55,8 @@
 char	*extract_vdit_portion(char *, const char *, unsigned int, unsigned int,
 	    int);
 int	 readvditlabel(struct buf *, void (*)(struct buf *), struct disklabel *,
+	    int *, int, struct vdm_boot_info *);
+int	 readvdmlabel(struct buf *, void (*)(struct buf *), struct disklabel *,
 	    int *, int);
 
 /*
@@ -78,7 +80,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	error = readvditlabel(bp, strat, lp, NULL, spoofonly);
+	error = readvdmlabel(bp, strat, lp, NULL, spoofonly);
 	if (error == 0)
 		goto done;
 
@@ -121,7 +123,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	if (readvditlabel(bp, strat, lp, &partoff, 1) == 0) {
+	if (readvdmlabel(bp, strat, lp, &partoff, 1) == 0) {
 		bp->b_blkno = partoff + LABELSECTOR;
 		offset = LABELOFFSET;
 	} else if (readdoslabel(bp, strat, lp, &partoff, 1) == 0) {
@@ -156,33 +158,22 @@ done:
 }
 
 /*
- * Search for a VDIT volume information. If one is found, search for a
- * vdmpart instance of name "OpenBSD". If one is found, set the disklabel
- * bounds to the area it spans, and attempt to read a native label within
- * it.
+ * Search for a VDM "label" (which does not describe any partition).
+ * If one is found, search for either a VDIT label, or a native OpenBSD
+ * label in the first sector.
  */
 int
-readvditlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
+readvdmlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
     int *partoffp, int spoofonly)
 {
-	struct buf *sbp = NULL;
 	struct vdm_label *vdl;
 	struct vdm_boot_info *vbi;
-	struct vdit_block_header *vbh;
-	struct vdit_entry_header *veh;
-	char *vdit_storage = NULL, *vdit_end;
-	size_t vdit_size;
-	unsigned int largest_chunk, vdit_blkno;
-	int expected_kind;
-	daddr_t blkno;
 	int error = 0;
-	vdit_id_t *vdmpart_id;
-	struct vdit_vdmpart_instance *bsd_vdmpart;
 
 	/*
 	 * Read first sector and check for a VDM label.
-	 * Note that a VDM label is theoretically only required for bootable
-	 * disks; but do disks with a VDIT but no VDM label really exist?
+	 * Note that a VDM label is only required for bootable disks, and
+	 * may not be followed by a VDIT.
 	 */
 
 	bp->b_blkno = VDM_LABEL_SECTOR;
@@ -211,8 +202,53 @@ readvditlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	if (vbi != NULL && vbi->boot_start == VDIT_SECTOR)
 		return EINVAL;
 
-	if (vbi != NULL && vbi->boot_start + vbi->boot_size < DL_GETBSTART(lp))
+	if (vbi != NULL && vbi->boot_start + vbi->boot_size > DL_GETBSTART(lp))
 		DL_SETBSTART(lp, vbi->boot_start + vbi->boot_size);
+
+	error = readvditlabel(bp, strat, lp, partoffp, spoofonly, vbi);
+	if (error == 0)
+		return 0;
+
+	/*
+	 * Valid VDIT information, but no OpenBSD vdmpart found.
+	 * Do not try to read a native label.
+	 */
+	if (error == ENOENT)
+		return EINVAL;
+
+	bp->b_blkno = LABELSECTOR;
+	bp->b_bcount = lp->d_secsize;
+	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
+	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
+	(*strat)(bp);
+	if ((error = biowait(bp)) != 0)
+		return error;
+
+	return checkdisklabel(bp->b_data + LABELOFFSET, lp, 
+	    DL_GETBSTART(lp), DL_GETBEND(lp));
+}
+
+/*
+ * Search for a VDIT volume information. If one is found, search for a
+ * vdmpart instance of name "OpenBSD". If one is found, set the disklabel
+ * bounds to the area it spans, and attempt to read a native label within
+ * it.
+ */
+int
+readvditlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
+    int *partoffp, int spoofonly, struct vdm_boot_info *vbi)
+{
+	struct buf *sbp = NULL;
+	struct vdit_block_header *vbh;
+	struct vdit_entry_header *veh;
+	char *vdit_storage = NULL, *vdit_end;
+	size_t vdit_size;
+	unsigned int largest_chunk, vdit_blkno;
+	int expected_kind;
+	daddr_t blkno;
+	int error = 0;
+	vdit_id_t *vdmpart_id;
+	struct vdit_vdmpart_instance *bsd_vdmpart;
 
 	/*
 	 * Figure out the size of the first VDIT.
@@ -299,7 +335,7 @@ readvditlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	}
 
 	/*
-	 * Now walk the VDIT entries.
+	 * Walk the VDIT entries.
 	 *
 	 * If we find an OpenBSD vdmpart, we'll set our disk area bounds to
 	 * its area, and will read a label from there.
@@ -361,9 +397,10 @@ readvditlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 		if (partoffp != NULL) {
 			*partoffp = start;
 			goto done;
+		} else {
+			DL_SETBSTART(lp, start);
+			DL_SETBEND(lp, start + size);
 		}
-		DL_SETBSTART(lp, start);
-		DL_SETBEND(lp, start + size);
 
 		/*
 		 * Now read the native label.
@@ -387,7 +424,7 @@ readvditlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 		 * XXX is it worth registering the whole disk as a
 		 * XXX `don't touch' vendor partition in that case?
 		 */
-		error = EINVAL;
+		error = ENOENT;
 		goto done;
 	}
 
