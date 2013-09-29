@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.59 2013/06/01 19:06:34 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.60 2013/09/29 15:47:35 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1196,7 +1196,7 @@ hibernate_resume(void)
 	hibernate_quiesce_cpus();
 #endif /* MULTIPROCESSOR */
 
-	printf("Unhibernating...\n");
+	printf("Unhibernating...");
 
 	/* Read the image from disk into the image (pig) area */
 	if (hibernate_read_image(&disk_hiber_info))
@@ -1227,7 +1227,7 @@ hibernate_resume(void)
 
 fail:
 	splx(s);
-	printf("Unable to resume hibernated image\n");
+	printf("\nUnable to resume hibernated image\n");
 }
 
 /*
@@ -1636,6 +1636,8 @@ hibernate_read_image(union hibernate_info *hiber_info)
 		compressed_size += chunks[i].compressed_size;
 
 	disk_size = compressed_size;
+
+	printf(" (image size: %zu)\n", compressed_size);
 
 	/* Allocate the pig area */
 	pig_sz = compressed_size + HIBERNATE_CHUNK_SIZE;
