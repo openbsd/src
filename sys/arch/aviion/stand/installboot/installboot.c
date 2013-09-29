@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.1 2013/09/29 17:51:34 miod Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.2 2013/09/29 21:30:49 jmc Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -43,7 +43,7 @@ uint8_t buf[VDM_BLOCK_SIZE];
 void
 usage()
 {
-	fprintf(stderr, "usage: installboot [-n] <boot> <device>\n");
+	fprintf(stderr, "usage: installboot [-nv] boot rawdev\n");
 	exit(1);
 }
 

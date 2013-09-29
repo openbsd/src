@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.11 2012/01/01 16:11:13 jsing Exp $
+.\"	$OpenBSD: installboot.8,v 1.12 2013/09/29 21:30:50 jmc Exp $
 .\"	$NetBSD: installboot.8,v 1.1 1995/09/30 21:32:14 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 1 2012 $
+.Dd $Mdocdate: September 29 2013 $
 .Dt INSTALLBOOT 8 sparc64
 .Os
 .Sh NAME
@@ -74,11 +74,11 @@ Verbose mode.
 .El
 .Pp
 The arguments are:
-.Bl -tag -width ofwboot
+.Bl -tag -width bootblk
 .It Ar bootblk
-the name of the file containing the first-stage bootblock.
+The name of the file containing the first-stage bootblock.
 .It Ar device
-the name of the raw device in which the first-stage boot program
+The name of the raw device in which the first-stage boot program
 is to be installed.
 This should correspond to the block device on which the file system containing
 .Ar ofwboot

@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.7 2011/03/13 00:13:53 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.8 2013/09/29 21:30:50 jmc Exp $	*/
 /*	$NetBSD: installboot.c,v 1.1 1997/06/01 03:39:45 mrg Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ static void
 usage()
 {
 	fprintf(stderr,
-		"usage: installboot [-n] [-v] [-h] [-s isofsblk -e isofseblk] [-a <karch>] <boot> <proto> <device>\n");
+		"usage: installboot [-hnv] [-a karch] [-s isofsblk -e isofseblk] boot bootxx rawdev\n");
 	exit(1);
 }
 

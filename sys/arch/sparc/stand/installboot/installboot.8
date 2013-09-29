@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.10 2010/03/06 16:16:43 jmc Exp $
+.\"	$OpenBSD: installboot.8,v 1.11 2013/09/29 21:30:50 jmc Exp $
 .\"	$NetBSD: installboot.8,v 1.1 1995/09/30 21:32:14 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 6 2010 $
+.Dd $Mdocdate: September 29 2013 $
 .Dt INSTALLBOOT 8 sparc
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd install a bootstrap on an FFS filesystem partition
 .Sh SYNOPSIS
 .Nm installboot
-.Op Fl nvh
+.Op Fl hnv
 .Op Fl a Ar karch
 .Ar boot
 .Ar bootxx
@@ -113,12 +113,12 @@ Verbose mode.
 The arguments are:
 .Bl -tag -width bootxx
 .It Ar boot
-the name of the second-stage boot program in the file system
+The name of the second-stage boot program in the file system
 where the first-stage boot program is to be installed.
 .It Ar bootxx
-the name of the prototype file for the first stage boot program.
+The name of the prototype file for the first stage boot program.
 .It Ar device
-the name of the raw device in which the first-stage boot program
+The name of the raw device in which the first-stage boot program
 is to be installed.
 This should correspond to the block device on which the file system containing
 .Ar boot
@@ -132,7 +132,7 @@ using the file
 .Pa /boot
 as the second-level boot program:
 .Bd -literal -offset indent
-installboot /boot /usr/mdec/bootxx /dev/rsd0a
+# installboot /boot /usr/mdec/bootxx /dev/rsd0a
 .Ed
 .Sh SEE ALSO
 .Xr disklabel 8 ,

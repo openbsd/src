@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.1 2013/09/29 17:51:34 miod Exp $
+.\"	$OpenBSD: installboot.8,v 1.2 2013/09/29 21:30:49 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Paul Kranenburg
 .\" All rights reserved.
@@ -36,8 +36,7 @@
 .Nd install a bootstrap on a disk
 .Sh SYNOPSIS
 .Nm installboot
-.Op Fl n
-.Op Fl v
+.Op Fl nv
 .Ar boot
 .Ar rawdev
 .Sh DESCRIPTION
@@ -53,17 +52,17 @@ Be verbose, printing out boot area and boot file information.
 .El
 .Pp
 The arguments are:
-.Bl -tag -width boot
+.Bl -tag -width rawdev
 .It Ar boot
-the name of the boot program to be installed.
+The name of the boot program to be installed.
 .It Ar rawdev
-the name of the raw disk device in which the boot program is to be installed.
+The name of the raw disk device in which the boot program is to be installed.
 It may be abbreviated into a form recognizable by
 .Xr opendev 3 .
 .El
 .Sh EXAMPLES
-.Bd -literal -offset
-/usr/mdec/installboot /usr/mdec/boot sd0
+.Bd -literal
+# /usr/mdec/installboot /usr/mdec/boot sd0
 .Ed
 .Sh SEE ALSO
 .Xr disklabel 8 ,
