@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.166 2013/09/28 12:40:28 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.167 2013/09/29 12:56:31 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1852,7 +1852,6 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 				printf(" console 0x%x:%d",
 				    cdp->consdev, cdp->conspeed);
 #endif
-				cnset(cdp->consdev);
 			}
 			break;
 		case BOOTARG_BOOTMAC:

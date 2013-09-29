@@ -1,4 +1,4 @@
-/*	$OpenBSD: cninit.c,v 1.11 2011/06/23 16:02:33 tedu Exp $	*/
+/*	$OpenBSD: cninit.c,v 1.12 2013/09/29 12:56:31 kettenis Exp $	*/
 /*	$NetBSD: cninit.c,v 1.2 1995/04/11 22:08:10 pk Exp $	*/
 
 /*
@@ -79,30 +79,4 @@ cninit(void)
 	 * Turn on console.
 	 */
 	(*cp->cn_init)(cp);
-}
-
-int
-cnset(dev_t dev)
-{
-	struct consdev *cp;
-
-	/*
-	 * Look for the specified console device and use it.
-	 */
-	for (cp = constab; cp->cn_probe; cp++) {
-		if (major(cp->cn_dev) == major(dev)) {
-			/* Short-circuit noop. */
-			if (cp == cn_tab && cp->cn_dev == dev)
-				return (0);
-			if (cp->cn_pri != CN_DEAD) {
-				cn_tab = cp;
-				cp->cn_dev = dev;
-				/* Turn it on.  */
-				(*cp->cn_init)(cp);
-				return (0);
-			}
-			break;
-		}
-	}
-	return (1);
 }

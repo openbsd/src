@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.99 2013/04/24 08:23:45 blambert Exp $	*/
+/*	$OpenBSD: bios.c,v 1.100 2013/09/29 12:56:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -573,7 +573,6 @@ bios_getopt()
 				printf(" console 0x%x:%d",
 				    cdp->consdev, cdp->conspeed);
 #endif
-				cnset(cdp->consdev);
 			}
 			break;
 #ifdef MULTIPROCESSOR
