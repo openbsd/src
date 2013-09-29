@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.12 2013/09/28 19:25:25 miod Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.13 2013/09/29 12:17:59 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -75,7 +75,7 @@ struct vdm_self_id {
 
 #define	VDM_ID_KIND(id)			((id)->u._kind)
 #define	VDM_BLKNO_MASK			0x00ffffff	/* low 24 bits */
-#define	VDM_ID_BLKNO(id)		((id)->u._blkno) & VDM_BLKNO_MASK)
+#define	VDM_ID_BLKNO(id)		(((id)->u._blkno) & VDM_BLKNO_MASK)
 #define	VDM_NO_NODE_NUMBER		012345670123
 #define	VDM_NO_BLK_NUMBER		0xffffffff
 

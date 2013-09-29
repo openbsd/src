@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.52 2013/09/28 19:25:24 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.53 2013/09/29 12:17:59 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -52,7 +52,8 @@
 #include <sys/disk.h>
 #include <sys/malloc.h>
 
-char	*extract_vdit_portion(char *, const char *, unsigned int, int);
+char	*extract_vdit_portion(char *, const char *, unsigned int, unsigned int,
+	    int);
 int	 readvditlabel(struct buf *, void (*)(struct buf *), struct disklabel *,
 	    int *, int);
 
@@ -74,7 +75,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	if ((error = initdisklabel(lp)))
 		goto done;
 
-	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
@@ -167,10 +167,12 @@ readvditlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 {
 	struct buf *sbp = NULL;
 	struct vdm_label *vdl;
+	struct vdm_boot_info *vbi;
 	struct vdit_block_header *vbh;
 	struct vdit_entry_header *veh;
 	char *vdit_storage = NULL, *vdit_end;
-	size_t vdit_size, largest_chunk;
+	size_t vdit_size;
+	unsigned int largest_chunk, vdit_blkno;
 	int expected_kind;
 	daddr_t blkno;
 	int error = 0;
@@ -198,13 +200,28 @@ readvditlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 		return EINVAL;
 
 	/*
+	 * If the disk is a bootable disk, remember the boot block area, to
+	 * be able to check that the VDIT does not overwrite it.
+	 */
+
+	vbi = (struct vdm_boot_info *)(bp->b_data + dbtob(1) - sizeof *vbi);
+	if (vbi->signature != VDM_LABEL_SIGNATURE || vbi->boot_start == 0)
+		vbi = NULL;
+
+	if (vbi != NULL && vbi->boot_start == VDIT_SECTOR)
+		return EINVAL;
+
+	if (vbi != NULL && vbi->boot_start + vbi->boot_size < DL_GETBSTART(lp))
+		DL_SETBSTART(lp, vbi->boot_start + vbi->boot_size);
+
+	/*
 	 * Figure out the size of the first VDIT.
 	 */
 
 	vdit_size = largest_chunk = 0;
 	expected_kind = VDIT_BLOCK_HEAD_BE;
 	blkno = VDIT_SECTOR;
-	do { 
+	for (;;) { 
 		bp->b_blkno = blkno;
 		bp->b_bcount = lp->d_secsize;
 		CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
@@ -214,15 +231,30 @@ readvditlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 			return error;
 
 		vbh = (struct vdit_block_header *)bp->b_data;
-		if (VDM_ID_KIND(&vbh->id) != expected_kind)
+		if (VDM_ID_KIND(&vbh->id) != expected_kind ||
+		    VDM_ID_BLKNO(&vbh->id) != vdit_size ||
+		    vbh->id.node_number != VDM_NO_NODE_NUMBER)
 			return EINVAL;
+
+		if (vbi != NULL) {
+			if ((blkno >= vbi->boot_start &&
+			     blkno < vbi->boot_start + vbi->boot_size) ||
+			    (blkno + vbh->chunksz - 1 >= vbi->boot_start &&
+			     blkno + vbh->chunksz - 1 <
+			     vbi->boot_start + vbi->boot_size))
+			return EINVAL;
+		}
 
 		if (vbh->chunksz > largest_chunk)
 			largest_chunk = vbh->chunksz;
 		vdit_size += vbh->chunksz;
+		if (vbh->nextblk == VDM_NO_BLK_NUMBER)
+			break;
 		blkno = vbh->nextblk;
+		if (blkno >= DL_GETDSIZE(lp))
+			return EINVAL;
 		expected_kind = VDIT_PORTION_HEADER_BLOCK;
-	} while (vbh->nextblk != VDM_NO_BLK_NUMBER);
+	}
 
 	/*
 	 * Now read the first VDIT.
@@ -237,7 +269,8 @@ readvditlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	vdit_end = vdit_storage;
 	expected_kind = VDIT_BLOCK_HEAD_BE;
 	blkno = VDIT_SECTOR;
-	do {
+	vdit_blkno = 0;
+	for (;;) {
 		sbp->b_blkno = blkno;
 		sbp->b_bcount = largest_chunk;
 		CLR(sbp->b_flags, B_READ | B_WRITE | B_DONE);
@@ -253,14 +286,17 @@ readvditlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 		}
 
 		vdit_end = extract_vdit_portion(vdit_end, sbp->b_data,
-		    vbh->chunksz, expected_kind);
+		    vbh->chunksz, vdit_blkno, expected_kind);
 		if (vdit_end == NULL) {
 			error = EINVAL;
 			goto done;
 		}
+		if (vbh->nextblk == VDM_NO_BLK_NUMBER)
+			break;
+		vdit_blkno += vbh->chunksz;
 		blkno = vbh->nextblk;
 		expected_kind = VDIT_PORTION_HEADER_BLOCK;
-	} while (vbh->nextblk != VDM_NO_BLK_NUMBER);
+	}
 
 	/*
 	 * Now walk the VDIT entries.
@@ -370,19 +406,23 @@ done:
  * as we go.
  */
 char *
-extract_vdit_portion(char *dst, const char *src, unsigned int nsec, int kind)
+extract_vdit_portion(char *dst, const char *src, unsigned int nsec,
+    unsigned int vdit_blkno, int kind)
 {
 	struct vdit_block_header *vbh;
 
 	for (; nsec != 0; nsec--) {
 		vbh = (struct vdit_block_header *)src;
-		if (VDM_ID_KIND(&vbh->id) != kind)
+		if (VDM_ID_KIND(&vbh->id) != kind ||
+		    VDM_ID_BLKNO(&vbh->id) != vdit_blkno ||
+		    vbh->id.node_number != VDM_NO_NODE_NUMBER)
 			return NULL;
 		kind = VDIT_BLOCK;
 
 		memcpy(dst, src + sizeof *vbh, dbtob(1) - sizeof *vbh);
 		dst += dbtob(1) - sizeof *vbh;
 		src += dbtob(1);
+		vdit_blkno++;
 	}
 
 	return dst;
