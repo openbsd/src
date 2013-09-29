@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.90 2013/03/20 15:23:37 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.91 2013/09/29 10:45:40 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -313,8 +313,8 @@ p_krtentry(struct rtentry *rt)
 	}
 	putchar('\n');
 	if (vflag)
-		printf("\texpire   %10u%c\n",
-		    rt->rt_rmx.rmx_expire,
+		printf("\texpire   %10lld%c\n",
+		    (long long)rt->rt_rmx.rmx_expire,
 		    (rt->rt_rmx.rmx_locks & RTV_EXPIRE) ? 'L' : ' ');
 }
 
