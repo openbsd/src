@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.d.8,v 1.23 2013/09/29 10:11:14 sthen Exp $
+.\"	$OpenBSD: rc.d.8,v 1.24 2013/09/29 13:17:43 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -98,14 +98,13 @@ Daemon control scripts use a fixed number of
 variables when starting a daemon.
 The following two can be overridden by site-specific values provided in
 .Xr rc.conf.local 8 :
-.Pp
 .Bl -tag -width daemon_flags -offset indent
 .It Ar daemon Ns _flags
 Additional arguments to call the daemon with.
 These will be appended to any mandatory arguments already contained in the
 .Va daemon
 variable defined in the control script.
-If 
+If
 .Ar daemon Ns _flags
 is set to
 .Dq NO ,
