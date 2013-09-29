@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.175 2013/08/24 06:55:39 jsg Exp $
+#	$OpenBSD: Makefile,v 1.176 2013/09/29 14:54:07 deraadt Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -9,7 +9,6 @@
 
 .include <bsd.own.mk>
 
-# Missing: mp.h
 FILES=	a.out.h ar.h assert.h bitstring.h blf.h bm.h bsd_auth.h \
 	complex.h cpio.h ctype.h curses.h db.h dbm.h des.h dirent.h disktab.h \
 	dlfcn.h elf_abi.h err.h errno.h fenv.h float.h fnmatch.h fstab.h fts.h \
