@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.7 2011/09/19 21:53:02 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.8 2013/09/30 04:30:03 miod Exp $ */
 /*	$NetBSD: if_le.c,v 1.6 2000/05/20 13:30:03 ragge Exp $ */
 /*
  * Copyright (c) 1997, 1999 Ludd, University of Lule}, Sweden.
@@ -55,6 +55,7 @@
 #include <arch/vax/mbus/mbusreg.h>
 #include <arch/vax/mbus/fwioreg.h>
 
+#include <dev/ic/lancereg.h>
 #include <dev/ic/am7990reg.h>
 
 #include "vaxstand.h"
