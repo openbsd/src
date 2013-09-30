@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.4 2010/04/03 19:13:27 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.5 2013/09/30 19:27:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -294,7 +294,7 @@ gdium_abort()
 	    "because of dire firmware limitations.\n"
 	    "Also, the firmware has reset the USB controller so you "
 	    "will need to power cycle.\n"
-	    "We would apologize for this incovenience, but we have "
+	    "We would apologize for this inconvenience, but we have "
 	    "no control about the firmware of your machine.\n\n");
 	rd_invalidate();
 	_rtt();
