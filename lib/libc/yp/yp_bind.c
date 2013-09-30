@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_bind.c,v 1.18 2013/04/29 00:28:23 okan Exp $ */
+/*	$OpenBSD: yp_bind.c,v 1.19 2013/09/30 12:02:36 millert Exp $ */
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -49,7 +49,7 @@ int
 _yp_dobind(const char *dom, struct dom_binding **ypdb)
 {
 	static pid_t	pid = -1;
-	char            path[MAXPATHLEN];
+	char            path[PATH_MAX];
 	struct dom_binding *ysd, *ysd2;
 	struct ypbind_resp ypbr;
 	struct timeval  tv;

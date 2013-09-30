@@ -1,4 +1,4 @@
-.\" $OpenBSD: dirname.3,v 1.19 2013/06/05 03:39:22 tedu Exp $
+.\" $OpenBSD: dirname.3,v 1.20 2013/09/30 12:02:32 millert Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: September 30 2013 $
 .Dt DIRNAME 3
 .Os
 .Sh NAME
@@ -61,7 +61,7 @@ The following error codes may be set in
 .Bl -tag -width Er
 .It Bq Er ENAMETOOLONG
 The path component to be returned was larger than
-.Dv MAXPATHLEN .
+.Dv PATH_MAX .
 .El
 .Sh SEE ALSO
 .Xr basename 1 ,

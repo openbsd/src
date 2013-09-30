@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_page.c,v 1.20 2013/04/29 00:28:23 okan Exp $	*/
+/*	$OpenBSD: hash_page.c,v 1.21 2013/09/30 12:02:31 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -48,10 +48,9 @@
  *	open_temp
  */
 
-#include <sys/param.h>
-
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -842,7 +841,7 @@ open_temp(HTAB *hashp)
 	sigset_t set, oset;
 	int len;
 	char *envtmp = NULL;
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 
 	if (issetugid() == 0)
 		envtmp = getenv("TMPDIR");

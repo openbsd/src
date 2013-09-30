@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.44 2010/09/24 13:56:32 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.45 2013/09/30 12:02:33 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,6 +36,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -94,7 +95,7 @@ fts_open(char * const *argv, int options,
 	 * Start out with 1K of path space, and enough, in any case,
 	 * to hold the user's paths.
 	 */
-	if (fts_palloc(sp, MAX(fts_maxarglen(argv), MAXPATHLEN)))
+	if (fts_palloc(sp, MAX(fts_maxarglen(argv), PATH_MAX)))
 		goto mem1;
 
 	/* Allocate/initialize root's parent. */
@@ -933,7 +934,7 @@ fts_lfree(FTSENT *head)
 
 /*
  * Allow essentially unlimited paths; find, rm, ls should all work on any tree.
- * Most systems will allow creation of paths much longer than MAXPATHLEN, even
+ * Most systems will allow creation of paths much longer than PATH_MAX, even
  * though the kernel won't resolve them.  Add the size (not just what's needed)
  * plus 256 bytes so don't realloc the path 2 bytes at a time.
  */

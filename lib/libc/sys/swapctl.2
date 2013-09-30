@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapctl.2,v 1.18 2013/07/16 15:21:11 schwarze Exp $
+.\"	$OpenBSD: swapctl.2,v 1.19 2013/09/30 12:02:36 millert Exp $
 .\"	$NetBSD: swapctl.2,v 1.10 1998/08/29 17:11:09 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: September 30 2013 $
 .Dt SWAPCTL 2
 .Os
 .Sh NAME
@@ -92,7 +92,7 @@ struct swapent {
 	int	se_nblks;		/* total blocks */
 	int	se_inuse;		/* blocks in use */
 	int	se_priority;		/* priority */
-	char	se_path[MAXPATHLEN];	/* path to entry */
+	char	se_path[PATH_MAX];	/* path to entry */
 };
 .Ed
 .Pp

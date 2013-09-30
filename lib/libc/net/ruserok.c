@@ -28,25 +28,25 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <signal.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <pwd.h>
-#include <errno.h>
-#include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <netdb.h>
+#include <netgroup.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#include <stdlib.h>
-#include <netgroup.h>
+#include <unistd.h>
 
 int	__ivaliduser(FILE *, in_addr_t, const char *, const char *);
 int	__ivaliduser_sa(FILE *, struct sockaddr *, socklen_t,
@@ -114,7 +114,7 @@ iruserok_sa(const void *raddr, int rlen, int superuser, const char *ruser,
 	FILE *hostf;
 	uid_t uid;
 	int first;
-	char pbuf[MAXPATHLEN];
+	char pbuf[PATH_MAX];
 
 	sa = (struct sockaddr *)raddr;
 	first = 1;

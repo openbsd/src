@@ -1,4 +1,4 @@
-/*	$OpenBSD: getusershell.c,v 1.9 2012/04/06 20:54:41 deraadt Exp $ */
+/*	$OpenBSD: getusershell.c,v 1.10 2013/09/30 12:02:34 millert Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,14 +28,14 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/file.h>
 #include <sys/stat.h>
-#include <stdio.h>
+
 #include <ctype.h>
+#include <limits.h>
+#include <paths.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <paths.h>
 
 /*
  * Local shells should NOT be added here.  They should be added in
@@ -118,7 +118,7 @@ initshells(void)
 	}
 	sp = shells;
 	cp = strings;
-	while (fgets(cp, MAXPATHLEN + 1, fp) != NULL) {
+	while (fgets(cp, PATH_MAX + 1, fp) != NULL) {
 		while (*cp != '#' && *cp != '/' && *cp != '\0')
 			cp++;
 		if (*cp == '#' || *cp == '\0')

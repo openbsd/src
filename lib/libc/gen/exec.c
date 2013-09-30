@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.20 2013/01/08 02:26:09 deraadt Exp $ */
+/*	$OpenBSD: exec.c,v 1.21 2013/09/30 12:02:33 millert Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,16 +28,17 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/uio.h>
+
 #include <errno.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#include <limits.h>
 #include <paths.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 extern char **environ;
 
@@ -135,7 +136,7 @@ execvpe(const char *name, char *const *argv, char *const *envp)
 	size_t lp, ln, len;
 	char *p;
 	int eacces = 0;
-	char *bp, *cur, *path, buf[MAXPATHLEN];
+	char *bp, *cur, *path, buf[PATH_MAX];
 
 	/*
 	 * Do not allow null name

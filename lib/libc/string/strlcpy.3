@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strlcpy.3,v 1.25 2013/09/25 21:49:31 millert Exp $
+.\"	$OpenBSD: strlcpy.3,v 1.26 2013/09/30 12:02:35 millert Exp $
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 25 2013 $
+.Dd $Mdocdate: September 30 2013 $
 .Dt STRLCPY 3
 .Os
 .Sh NAME
@@ -138,7 +138,7 @@ char *s, *p, buf[BUFSIZ];
 To detect truncation, perhaps while building a pathname, something
 like the following might be used:
 .Bd -literal -offset indent
-char *dir, *file, pname[MAXPATHLEN];
+char *dir, *file, pname[PATH_MAX];
 
 \&...
 
@@ -151,7 +151,7 @@ if (strlcat(pname, file, sizeof(pname)) >= sizeof(pname))
 Since it is known how many characters were copied the first time, things
 can be sped up a bit by using a copy instead of an append:
 .Bd -literal -offset indent
-char *dir, *file, pname[MAXPATHLEN];
+char *dir, *file, pname[PATH_MAX];
 size_t n;
 
 \&...

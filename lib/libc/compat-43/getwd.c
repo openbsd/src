@@ -1,4 +1,4 @@
-/*	$OpenBSD: getwd.c,v 1.10 2013/06/01 01:46:05 tedu Exp $ */
+/*	$OpenBSD: getwd.c,v 1.11 2013/09/30 12:02:30 millert Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -28,20 +28,20 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <unistd.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 char *
 getwd(char *buf)
 {
 	char *p;
 
-	if ((p = getcwd(buf, MAXPATHLEN)))
+	if ((p = getcwd(buf, PATH_MAX)))
 		return(p);
-	strlcpy(buf, strerror(errno), MAXPATHLEN);
+	strlcpy(buf, strerror(errno), PATH_MAX);
 	return(NULL);
 }
 

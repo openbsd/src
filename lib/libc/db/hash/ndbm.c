@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.c,v 1.22 2007/09/17 07:07:23 moritz Exp $	*/
+/*	$OpenBSD: ndbm.c,v 1.23 2013/09/30 12:02:31 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -32,10 +32,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -188,7 +187,7 @@ _dbm_open(file, suff, flags, mode)
 	mode_t mode;
 {
 	HASHINFO info;
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 	int len;
 
 	len = snprintf(path, sizeof path, "%s%s", file, suff);

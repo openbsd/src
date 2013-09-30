@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_open.c,v 1.15 2013/04/29 00:28:23 okan Exp $	*/
+/*	$OpenBSD: bt_open.c,v 1.16 2013/09/30 12:02:31 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,6 @@
  * is wholly independent of the Postgres code.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <errno.h>
@@ -389,7 +388,7 @@ tmp(void)
 	sigset_t set, oset;
 	int fd, len;
 	char *envtmp = NULL;
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 
 	if (issetugid() == 0)
 		envtmp = getenv("TMPDIR");

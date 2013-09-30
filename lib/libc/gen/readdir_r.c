@@ -1,4 +1,4 @@
-/*	$OpenBSD: readdir_r.c,v 1.3 2013/04/17 17:40:35 tedu Exp $ */
+/*	$OpenBSD: readdir_r.c,v 1.4 2013/09/30 12:02:34 millert Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,10 +28,10 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <dirent.h>
-#include <string.h>
 #include <errno.h>
+#include <limits.h>
+#include <string.h>
 #include "telldir.h"
 #include "thread_private.h"
 
@@ -49,7 +49,7 @@ readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result)
 	}
 	if (dp != NULL)
 		memcpy(entry, dp,
-		    sizeof (struct dirent) - MAXNAMLEN + dp->d_namlen);
+		    sizeof (struct dirent) - NAME_MAX + dp->d_namlen);
 	_MUTEX_UNLOCK(&dirp->dd_lock);
 	if (dp != NULL)
 		*result = entry;

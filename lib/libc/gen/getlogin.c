@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlogin.c,v 1.11 2005/10/19 19:10:32 deraadt Exp $ */
+/*	$OpenBSD: getlogin.c,v 1.12 2013/09/30 12:02:33 millert Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,18 +28,19 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <errno.h>
+#include <limits.h>
 #include <pwd.h>
-#include <utmp.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <errno.h>
+#include <utmp.h>
+
 #include "thread_private.h"
 
 _THREAD_PRIVATE_MUTEX(logname);
 static int  logname_valid = 0;
-static char logname[MAXLOGNAME + 1];
+static char logname[LOGIN_NAME_MAX + 1];
 
 int	_getlogin(char *, size_t);
 int	_setlogin(const char *);
@@ -71,7 +72,7 @@ getlogin_r(char *name, size_t namelen)
 			return errno;
 		}
 		logname_valid = 1;
-		logname[MAXLOGNAME] = '\0';	/* paranoia */
+		logname[LOGIN_NAME_MAX] = '\0';	/* paranoia */
 	}
 	logname_size = strlen(logname) + 1;
 	if (namelen < logname_size) {

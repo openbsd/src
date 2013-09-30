@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.18 2009/01/15 13:14:30 millert Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.19 2013/09/30 12:02:32 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -33,12 +33,13 @@
  *
  *	BSDI $From: authenticate.c,v 2.21 1999/09/08 22:33:26 prb Exp $
  */
-#include <sys/param.h>
+
 #include <sys/stat.h>
 
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <login_cap.h>
 #include <paths.h>
 #include <pwd.h>
@@ -174,7 +175,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 {
 	int close_on_exit, close_lc_on_exit, len;
 	struct passwd *pwd;
-	char *approve, *s, path[MAXPATHLEN];
+	char *approve, *s, path[PATH_MAX];
 
 	pwd = NULL;
 	close_on_exit = as == NULL;
@@ -203,9 +204,9 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 		name = pwd->pw_name;
 
 	if (lc == NULL) {
-		if (strlen(name) >= MAXPATHLEN) {
+		if (strlen(name) >= PATH_MAX) {
 			syslog(LOG_ERR, "username to login %.*s...",
-			    MAXPATHLEN, name);
+			    PATH_MAX, name);
 			_warnx("username too long");
 			return (0);
 		}
@@ -232,7 +233,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 			if (close_lc_on_exit)
 				login_close(lc);
 			syslog(LOG_ERR, "approval path too long %.*s...",
-			    MAXPATHLEN, type);
+			    PATH_MAX, type);
 			_warnx("approval script path too long");
 			return (0);
 		}
@@ -303,7 +304,7 @@ out:
 auth_session_t *
 auth_usercheck(char *name, char *style, char *type, char *password)
 {
-	char namebuf[MAXLOGNAME + 1 + NAME_MAX + 1];
+	char namebuf[LOGIN_NAME_MAX + 1 + NAME_MAX + 1];
 	auth_session_t *as;
 	login_cap_t *lc;
 	struct passwd *pwd;
@@ -368,7 +369,7 @@ auth_userokay(char *name, char *style, char *type, char *password)
 auth_session_t *
 auth_userchallenge(char *name, char *style, char *type, char **challengep)
 {
-	char namebuf[MAXLOGNAME + 1 + NAME_MAX + 1];
+	char namebuf[LOGIN_NAME_MAX + 1 + NAME_MAX + 1];
 	auth_session_t *as;
 	login_cap_t *lc;
 	struct passwd *pwd;
@@ -420,7 +421,7 @@ auth_userchallenge(char *name, char *style, char *type, char **challengep)
 int
 auth_userresponse(auth_session_t *as, char *response, int more)
 {
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 	char *style, *name, *challenge, *class;
 	int len;
 
@@ -481,7 +482,7 @@ auth_session_t *
 auth_verify(auth_session_t *as, char *style, char *name, ...)
 {
 	va_list ap;
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 
 	if ((name == NULL || style == NULL) && as == NULL)
 		return (as);

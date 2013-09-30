@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.37 2013/01/08 02:26:09 deraadt Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.38 2013/09/30 12:02:32 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -49,7 +49,7 @@
  *
  *	BSDI $From: auth_subr.c,v 2.4 1999/09/08 04:10:40 prb Exp $
  */
-#include <sys/param.h>
+
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
@@ -59,6 +59,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdarg.h>
@@ -304,7 +305,7 @@ auth_close(auth_session_t *as)
 char *
 auth_challenge(auth_session_t *as)
 {
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 	int len;
 
 	if (as == NULL || as->style == NULL || as->name == NULL)

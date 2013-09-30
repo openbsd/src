@@ -1,4 +1,4 @@
-/*	$OpenBSD: tempnam.c,v 1.16 2007/09/21 12:06:38 moritz Exp $ */
+/*	$OpenBSD: tempnam.c,v 1.17 2013/09/30 12:02:35 millert Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,13 +28,13 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <errno.h>
+#include <limits.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <paths.h>
 
 __warn_references(tempnam,
     "warning: tempnam() possibly used unsafely; consider using mkstemp()");
@@ -47,16 +47,16 @@ tempnam(const char *dir, const char *pfx)
 	int sverrno, len;
 	char *f, *name;
 
-	if (!(name = malloc(MAXPATHLEN)))
+	if (!(name = malloc(PATH_MAX)))
 		return(NULL);
 
 	if (!pfx)
 		pfx = "tmp.";
 
 	if (issetugid() == 0 && (f = getenv("TMPDIR")) && *f != '\0') {
-		len = snprintf(name, MAXPATHLEN, "%s%s%sXXXXXXXXXX", f,
+		len = snprintf(name, PATH_MAX, "%s%s%sXXXXXXXXXX", f,
 		    f[strlen(f) - 1] == '/' ? "" : "/", pfx);
-		if (len < 0 || len >= MAXPATHLEN) {
+		if (len < 0 || len >= PATH_MAX) {
 			errno = ENAMETOOLONG;
 			return(NULL);
 		}
@@ -66,9 +66,9 @@ tempnam(const char *dir, const char *pfx)
 
 	if (dir != NULL) {
 		f = *dir ? (char *)dir : ".";
-		len = snprintf(name, MAXPATHLEN, "%s%s%sXXXXXXXXXX", f,
+		len = snprintf(name, PATH_MAX, "%s%s%sXXXXXXXXXX", f,
 		    f[strlen(f) - 1] == '/' ? "" : "/", pfx);
-		if (len < 0 || len >= MAXPATHLEN) {
+		if (len < 0 || len >= PATH_MAX) {
 			errno = ENAMETOOLONG;
 			return(NULL);
 		}
@@ -77,8 +77,8 @@ tempnam(const char *dir, const char *pfx)
 	}
 
 	f = P_tmpdir;
-	len = snprintf(name, MAXPATHLEN, "%s%sXXXXXXXXX", f, pfx);
-	if (len < 0 || len >= MAXPATHLEN) {
+	len = snprintf(name, PATH_MAX, "%s%sXXXXXXXXX", f, pfx);
+	if (len < 0 || len >= PATH_MAX) {
 		errno = ENAMETOOLONG;
 		return(NULL);
 	}
@@ -86,8 +86,8 @@ tempnam(const char *dir, const char *pfx)
 		return(f);
 
 	f = _PATH_TMP;
-	len = snprintf(name, MAXPATHLEN, "%s%sXXXXXXXXX", f, pfx);
-	if (len < 0 || len >= MAXPATHLEN) {
+	len = snprintf(name, PATH_MAX, "%s%sXXXXXXXXX", f, pfx);
+	if (len < 0 || len >= PATH_MAX) {
 		errno = ENAMETOOLONG;
 		return(NULL);
 	}
