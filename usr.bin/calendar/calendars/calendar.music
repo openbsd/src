@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.27 2011/07/07 13:52:55 jmc Exp $
+ * $OpenBSD: calendar.music,v 1.28 2013/09/30 07:06:24 jmc Exp $
  */
 
 #ifndef _calendar_music_
@@ -304,6 +304,7 @@
 07/25	Bob Dylan goes electric at the Newport Folk Festival, 1965
 07/25	Crosby, Stills, Nash & Young debut at the Fillmore East, 1969
 07/26	Mick Jagger is born in Kent, England, 1943
+07/26	JJ Cale (John Weldon Cale) dies in La Jolla, California, 2013
 07/27	Enrique Granados is born in Lleida, Catalonia, Spain, 1867
 07/28	Johann Sebastian Bach dies in Leipzig, Germany, 1750
 07/28	The Watkins Glen "Summer Jam" opens, 1973
@@ -485,6 +486,7 @@
 12/04	Frank Zappa dies in his Laurel Canyon home shortly before 18:00, 1993
 12/04	Lord Benjamin Britten dies, 1976
 12/05	Wolfgang Amadeus Mozart dies in Vienna, Austria, 1791
+12/05	JJ Cale (John Weldon Cale) is born in Oklahoma City, Oklahoma, 1938
 12/06	First sound recording made by Thomas Edison, 1877
 12/06	The Rolling Stones play Altamont Speedway near San Francisco, 1969
 12/07	Harry Chapin is born in New York City, 1942
