@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.38 2013/09/04 19:39:19 patrick Exp $
-# $NetBSD: mdoclint,v 1.41 2013/08/21 11:22:15 wiz Exp $
+# $OpenBSD: mdoclint,v 1.39 2013/09/30 18:27:17 jmc Exp $
+# $NetBSD: mdoclint,v 1.43 2013/09/30 09:36:45 wiz Exp $
 #
 # Copyright (c) 2001-2013 Thomas Klausner
 # All rights reserved.
@@ -177,6 +177,7 @@ my $valid_date_re;
 		"DIAGNOSTICS",
 		NETBSD ? "COMPATIBILITY" : undef,
 		"ERRORS",
+		NETBSD ? "CODE REFERENCES" : undef,
 		"SEE ALSO",
 		"STANDARDS",
 		"HISTORY",
