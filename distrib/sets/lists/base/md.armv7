@@ -596,13 +596,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/trap.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/undefined.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/vmparam.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arpa
-./usr/libdata/perl5/site_perl/arm-openbsd/arpa/ftp.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arpa/inet.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arpa/nameser.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arpa/telnet.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arpa/tftp.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/assert.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7/_float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7/_types.ph
@@ -651,6 +644,13 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7/tcb.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7/trap.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7/vmparam.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/arpa
+./usr/libdata/perl5/site_perl/arm-openbsd/arpa/ftp.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/arpa/inet.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/arpa/nameser.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/arpa/telnet.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/arpa/tftp.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/assert.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/blf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/bm.ph
@@ -794,6 +794,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/am7930reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/am7930var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/am79900reg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/am79900var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/am7990reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/am7990var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/amireg.ph
@@ -898,6 +899,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ispreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ispvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/lancereg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/lancevar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/lemacreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/lemacvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/lm700x.ph

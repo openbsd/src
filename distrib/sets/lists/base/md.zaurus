@@ -780,6 +780,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/am7930reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/am7930var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/am79900reg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/am79900var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/am7990reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/am7990var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/amireg.ph
@@ -884,6 +885,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ispreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ispvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/lancereg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/lancevar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/lemacreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/lemacvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/lm700x.ph
