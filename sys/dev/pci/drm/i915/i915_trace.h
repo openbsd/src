@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_trace.h,v 1.1 2013/08/07 19:49:07 kettenis Exp $	*/
+/*	$OpenBSD: i915_trace.h,v 1.2 2013/09/30 06:47:48 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -38,5 +38,10 @@ trace_i915_gem_object_bind(struct drm_i915_gem_object *obj, bool mappable)
 
 static inline void
 trace_i915_gem_object_unbind(struct drm_i915_gem_object *obj)
+{
+}
+
+static inline void
+trace_i915_reg_rw(bool write, u32 reg, u64 val, int len)
 {
 }

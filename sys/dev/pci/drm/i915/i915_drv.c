@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.38 2013/09/08 11:59:44 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.39 2013/09/30 06:47:48 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -50,6 +50,7 @@
 #include <dev/pci/drm/i915_drm.h>
 #include "i915_drv.h"
 #include "intel_drv.h"
+#include "i915_trace.h"
 
 #include <machine/pmap.h>
 
@@ -2266,3 +2267,176 @@ intel_detect_pch(struct inteldrm_softc *dev_priv)
 	}
 }
 
+/* We give fast paths for the really cool registers */
+#define NEEDS_FORCE_WAKE(dev, reg) \
+	((HAS_FORCE_WAKE(dev)) && \
+	 ((reg) < 0x40000) &&            \
+	 ((reg) != FORCEWAKE))
+
+static bool IS_DISPLAYREG(u32 reg)
+{
+	/*
+	 * This should make it easier to transition modules over to the
+	 * new register block scheme, since we can do it incrementally.
+	 */
+	if (reg >= VLV_DISPLAY_BASE)
+		return false;
+
+	if (reg >= RENDER_RING_BASE &&
+	    reg < RENDER_RING_BASE + 0xff)
+		return false;
+	if (reg >= GEN6_BSD_RING_BASE &&
+	    reg < GEN6_BSD_RING_BASE + 0xff)
+		return false;
+	if (reg >= BLT_RING_BASE &&
+	    reg < BLT_RING_BASE + 0xff)
+		return false;
+
+	if (reg == PGTBL_ER)
+		return false;
+
+	if (reg >= IPEIR_I965 &&
+	    reg < HWSTAM)
+		return false;
+
+	if (reg == MI_MODE)
+		return false;
+
+	if (reg == GFX_MODE_GEN7)
+		return false;
+
+	if (reg == RENDER_HWS_PGA_GEN7 ||
+	    reg == BSD_HWS_PGA_GEN7 ||
+	    reg == BLT_HWS_PGA_GEN7)
+		return false;
+
+	if (reg == GEN6_BSD_SLEEP_PSMI_CONTROL ||
+	    reg == GEN6_BSD_RNCID)
+		return false;
+
+	if (reg == GEN6_BLITTER_ECOSKPD)
+		return false;
+
+	if (reg >= 0x4000c &&
+	    reg <= 0x4002c)
+		return false;
+
+	if (reg >= 0x4f000 &&
+	    reg <= 0x4f08f)
+		return false;
+
+	if (reg >= 0x4f100 &&
+	    reg <= 0x4f11f)
+		return false;
+
+	if (reg >= VLV_MASTER_IER &&
+	    reg <= GEN6_PMIER)
+		return false;
+
+	if (reg >= FENCE_REG_SANDYBRIDGE_0 &&
+	    reg < (FENCE_REG_SANDYBRIDGE_0 + (16*8)))
+		return false;
+
+	if (reg >= VLV_IIR_RW &&
+	    reg <= VLV_ISR)
+		return false;
+
+	if (reg == FORCEWAKE_VLV ||
+	    reg == FORCEWAKE_ACK_VLV)
+		return false;
+
+	if (reg == GEN6_GDRST)
+		return false;
+
+	switch (reg) {
+	case _3D_CHICKEN3:
+	case IVB_CHICKEN3:
+	case GEN7_COMMON_SLICE_CHICKEN1:
+	case GEN7_L3CNTLREG1:
+	case GEN7_L3_CHICKEN_MODE_REGISTER:
+	case GEN7_ROW_CHICKEN2:
+	case GEN7_L3SQCREG4:
+	case GEN7_SQ_CHICKEN_MBCUNIT_CONFIG:
+	case GEN7_HALF_SLICE_CHICKEN1:
+	case GEN6_MBCTL:
+	case GEN6_UCGCTL2:
+		return false;
+	default:
+		break;
+	}
+
+	return true;
+}
+
+static void
+ilk_dummy_write(struct drm_i915_private *dev_priv)
+{
+	/* WaIssueDummyWriteToWakeupFromRC6: Issue a dummy write to wake up the
+	 * chip from rc6 before touching it for real. MI_MODE is masked, hence
+	 * harmless to write 0 into. */
+	I915_WRITE_NOTRACE(MI_MODE, 0);
+}
+
+#define __i915_read(x, y) \
+u##x i915_read##x(struct drm_i915_private *dev_priv, u32 reg) { \
+	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev; \
+	u##x val = 0; \
+	mtx_enter(&dev_priv->gt_lock); \
+	if (IS_GEN5(dev)) \
+		ilk_dummy_write(dev_priv); \
+	if (NEEDS_FORCE_WAKE((dev), (reg))) { \
+		if (dev_priv->forcewake_count == 0) \
+			dev_priv->gt.force_wake_get(dev_priv); \
+		val = read##x(dev_priv, reg); \
+		if (dev_priv->forcewake_count == 0) \
+			dev_priv->gt.force_wake_put(dev_priv); \
+	} else if (IS_VALLEYVIEW(dev) && IS_DISPLAYREG(reg)) { \
+		val = read##x(dev_priv, reg + 0x180000);		\
+	} else { \
+		val = read##x(dev_priv, reg); \
+	} \
+	mtx_leave(&dev_priv->gt_lock); \
+	trace_i915_reg_rw(false, reg, val, sizeof(val)); \
+	return val; \
+}
+
+__i915_read(8, b)
+__i915_read(16, w)
+__i915_read(32, l)
+__i915_read(64, q)
+#undef __i915_read
+
+#define __i915_write(x, y) \
+void i915_write##x(struct drm_i915_private *dev_priv, u32 reg, u##x val) { \
+	u32 __fifo_ret = 0; \
+	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev; \
+	trace_i915_reg_rw(true, reg, val, sizeof(val)); \
+	mtx_enter(&dev_priv->gt_lock); \
+	if (NEEDS_FORCE_WAKE((dev), (reg))) { \
+		__fifo_ret = __gen6_gt_wait_for_fifo(dev_priv); \
+	} \
+	if (IS_GEN5(dev)) \
+		ilk_dummy_write(dev_priv); \
+	if (IS_HASWELL(dev) && (I915_READ_NOTRACE(GEN7_ERR_INT) & ERR_INT_MMIO_UNCLAIMED)) { \
+		DRM_ERROR("Unknown unclaimed register before writing to %x\n", reg); \
+		I915_WRITE_NOTRACE(GEN7_ERR_INT, ERR_INT_MMIO_UNCLAIMED); \
+	} \
+	if (IS_VALLEYVIEW(dev) && IS_DISPLAYREG(reg)) { \
+		write##x(dev_priv, reg + 0x180000, val);		\
+	} else {							\
+		write##x(dev_priv, reg, val);			\
+	}								\
+	if (unlikely(__fifo_ret)) { \
+		gen6_gt_check_fifodbg(dev_priv); \
+	} \
+	if (IS_HASWELL(dev) && (I915_READ_NOTRACE(GEN7_ERR_INT) & ERR_INT_MMIO_UNCLAIMED)) { \
+		DRM_ERROR("Unclaimed write to %x\n", reg); \
+		write32(dev_priv, GEN7_ERR_INT, ERR_INT_MMIO_UNCLAIMED);	\
+	} \
+	mtx_leave(&dev_priv->gt_lock); \
+}
+__i915_write(8, b)
+__i915_write(16, w)
+__i915_write(32, l)
+__i915_write(64, q)
+#undef __i915_write

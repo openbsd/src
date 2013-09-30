@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.28 2013/09/18 08:50:28 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.29 2013/09/30 06:47:48 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1339,50 +1339,112 @@ int __gen6_gt_wait_for_fifo(struct inteldrm_softc *dev_priv);
 int sandybridge_pcode_read(struct inteldrm_softc *dev_priv, u8 mbox, u32 *val);
 int sandybridge_pcode_write(struct inteldrm_softc *dev_priv, u8 mbox, u32 val);
 
-/* XXX need bus_space_write_8, this evaluated arguments twice */
 static __inline void
-write64(struct inteldrm_softc *dev_priv, bus_size_t off, u_int64_t reg)
+write8(struct inteldrm_softc *dev_priv, bus_size_t reg, uint8_t val)
 {
-	bus_space_write_4(dev_priv->regs->bst, dev_priv->regs->bsh,
-	    off, (u_int32_t)reg);
-	bus_space_write_4(dev_priv->regs->bst, dev_priv->regs->bsh,
-	    off + 4, upper_32_bits(reg));
+	bus_space_write_1(dev_priv->regs->bst,dev_priv->regs->bsh, (reg),
+	    (val));
 }
 
-static __inline u_int64_t
-read64(struct inteldrm_softc *dev_priv, bus_size_t off)
+static __inline void
+write16(struct inteldrm_softc *dev_priv, bus_size_t reg, uint16_t val)
+{
+	bus_space_write_2(dev_priv->regs->bst,dev_priv->regs->bsh, (reg),
+	    (val));
+}
+
+static __inline void
+write32(struct inteldrm_softc *dev_priv, bus_size_t reg, uint32_t val)
+{
+	bus_space_write_4(dev_priv->regs->bst,dev_priv->regs->bsh, (reg),
+	    (val));
+}
+
+/* XXX need bus_space_write_8, this evaluated arguments twice */
+static __inline void
+write64(struct inteldrm_softc *dev_priv, bus_size_t reg, uint64_t val)
+{
+	bus_space_write_4(dev_priv->regs->bst, dev_priv->regs->bsh,
+	    reg, (u_int32_t)val);
+	bus_space_write_4(dev_priv->regs->bst, dev_priv->regs->bsh,
+	    reg + 4, upper_32_bits(val));
+}
+
+static __inline uint8_t
+read8(struct inteldrm_softc *dev_priv, bus_size_t reg)
+{
+	return (bus_space_read_1(dev_priv->regs->bst, dev_priv->regs->bsh,
+	    (reg)));
+}
+
+static __inline uint16_t
+read16(struct inteldrm_softc *dev_priv, bus_size_t reg)
+{
+	return (bus_space_read_2(dev_priv->regs->bst, dev_priv->regs->bsh,
+	    (reg)));
+}
+
+static __inline uint32_t
+read32(struct inteldrm_softc *dev_priv, bus_size_t reg)
+{
+	return (bus_space_read_4(dev_priv->regs->bst, dev_priv->regs->bsh,
+	    (reg)));
+}
+
+static __inline uint64_t
+read64(struct inteldrm_softc *dev_priv, bus_size_t reg)
 {
 	u_int32_t low, high;
 
 	low = bus_space_read_4(dev_priv->regs->bst,
-	    dev_priv->regs->bsh, off);
+	    dev_priv->regs->bsh, reg);
 	high = bus_space_read_4(dev_priv->regs->bst,
-	    dev_priv->regs->bsh, off + 4);
+	    dev_priv->regs->bsh, reg + 4);
 
 	return ((u_int64_t)low | ((u_int64_t)high << 32));
 }
 
-#define I915_READ64(off)	read64(dev_priv, off)
 
-#define I915_WRITE64(off, reg)	write64(dev_priv, off, reg)
+#define __i915_read(x, y) \
+	u##x i915_read##x(struct drm_i915_private *dev_priv, u32 reg);
 
-#define I915_READ(reg)		bus_space_read_4(dev_priv->regs->bst,	\
-				    dev_priv->regs->bsh, (reg))
-#define I915_READ_NOTRACE(reg)	I915_READ(reg)
-#define I915_WRITE(reg,val)	bus_space_write_4(dev_priv->regs->bst,	\
-				    dev_priv->regs->bsh, (reg), (val))
-#define I915_WRITE_NOTRACE(reg,val)	I915_WRITE(reg, val)
-#define I915_READ16(reg)	bus_space_read_2(dev_priv->regs->bst,	\
-				    dev_priv->regs->bsh, (reg))
-#define I915_WRITE16(reg,val)	bus_space_write_2(dev_priv->regs->bst,	\
-				    dev_priv->regs->bsh, (reg), (val))
-#define I915_READ8(reg)		bus_space_read_1(dev_priv->regs->bst,	\
-				    dev_priv->regs->bsh, (reg))
-#define I915_WRITE8(reg,val)	bus_space_write_1(dev_priv->regs->bst,	\
-				    dev_priv->regs->bsh, (reg), (val))
+__i915_read(8, b)
+__i915_read(16, w)
+__i915_read(32, l)
+__i915_read(64, q)
+#undef __i915_read
 
-#define POSTING_READ(reg)	(void)I915_READ(reg)
-#define POSTING_READ16(reg)	(void)I915_READ16(reg)
+#define __i915_write(x, y) \
+	void i915_write##x(struct drm_i915_private *dev_priv, u32 reg, u##x val);
+
+__i915_write(8, b)
+__i915_write(16, w)
+__i915_write(32, l)
+__i915_write(64, q)
+#undef __i915_write
+
+#define I915_READ8(reg)		i915_read8(dev_priv, (reg))
+#define I915_WRITE8(reg, val)	i915_write8(dev_priv, (reg), (val))
+
+#define I915_READ16(reg)	i915_read16(dev_priv, (reg))
+#define I915_WRITE16(reg, val)	i915_write16(dev_priv, (reg), (val))
+#define I915_READ16_NOTRACE(reg)	bus_space_read_2(dev_priv->regs->bst, \
+					    dev_priv->regs->bsh, (reg))
+#define I915_WRITE16_NOTRACE(reg,val)	bus_space_write_2(dev_priv->regs->bst, \
+					    dev_priv->regs->bsh, (reg), (val))
+
+#define I915_READ(reg)		i915_read32(dev_priv, (reg))
+#define I915_WRITE(reg, val)	i915_write32(dev_priv, (reg), (val))
+#define I915_READ_NOTRACE(reg)		bus_space_read_4(dev_priv->regs->bst, \
+					    dev_priv->regs->bsh, (reg))
+#define I915_WRITE_NOTRACE(reg,val)	bus_space_write_4(dev_priv->regs->bst, \
+					    dev_priv->regs->bsh, (reg), (val))
+
+#define I915_WRITE64(reg, val)	i915_write64(dev_priv, (reg), (val))
+#define I915_READ64(reg)	i915_read64(dev_priv, (reg))
+
+#define POSTING_READ(reg)	(void)I915_READ_NOTRACE(reg)
+#define POSTING_READ16(reg)	(void)I915_READ16_NOTRACE(reg)
 
 #define INTELDRM_VERBOSE 0
 #if INTELDRM_VERBOSE > 0
