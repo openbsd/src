@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.22 2010/07/02 16:11:19 jsg Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.23 2013/10/01 19:41:33 sf Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -354,7 +354,7 @@ pciaddr_do_resource_reserve_disabled(struct pcibios_softc *sc,
 	    (val & PCI_COMMAND_IO_ENABLE) == PCI_COMMAND_IO_ENABLE)
 		return (0);
 
-	PCIBIOS_PRINTV(("disabled %s space at addr 0x%x size 0x%x\n",
+	PCIBIOS_PRINTV(("disabled %s space at addr 0x%lx size 0x%x\n",
 	    type == PCI_MAPREG_TYPE_MEM ? "mem" : "io", *addr, size));
 
 	error = extent_alloc_region(ex, *addr, size, EX_NOWAIT | EX_MALLOCOK);
