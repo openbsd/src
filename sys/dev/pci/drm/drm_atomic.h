@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_atomic.h,v 1.10 2013/09/25 10:13:30 kettenis Exp $ */
+/* $OpenBSD: drm_atomic.h,v 1.11 2013/10/01 20:06:57 kettenis Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -32,12 +32,8 @@
 
 #include <machine/atomic.h>
 
-/* Many of these implementations are rather fake, but good enough. */
+typedef uint32_t atomic_t;
 
-typedef u_int32_t atomic_t;
-typedef u_int64_t atomic64_t;
-
-/* FIXME */
 #define atomic_set(p, v)	(*(p) = (v))
 #define atomic_read(p)		(*(p))
 #define atomic_inc(p)		__sync_fetch_and_add(p, 1)
@@ -51,9 +47,6 @@ typedef u_int64_t atomic64_t;
 #define atomic_dec_and_test(v)	(atomic_dec_return(v) == 0)
 #define atomic_inc_and_test(v)	(atomic_inc_return(v) == 0)
 
-#define atomic64_set(p, v)	(*(p) = (v))
-#define atomic64_read(p)	(*(p))
-
 static __inline int
 atomic_xchg(volatile int *v, int n)
 {
@@ -61,21 +54,58 @@ atomic_xchg(volatile int *v, int n)
 	return __sync_lock_test_and_set(v, n);
 }
 
+#ifdef __LP64__
+typedef uint64_t atomic64_t;
+
+#define atomic64_set(p, v)	(*(p) = (v))
+#define atomic64_read(p)	(*(p))
+
 static __inline int64_t
 atomic64_xchg(volatile int64_t *v, int64_t n)
 {
-#if defined(__i386__) || defined(__powerpc__)
-	int64_t o;
-
-	o = *v;
-	*v = n;
-
-	return (o);
-#else
 	__sync_synchronize();
 	return __sync_lock_test_and_set(v, n);
-#endif
 }
+
+#else
+
+typedef struct {
+	volatile uint64_t val;
+	struct mutex lock;
+} atomic64_t;
+
+static __inline void
+atomic64_set(atomic64_t *v, int64_t i)
+{
+	mtx_init(&v->lock, IPL_HIGH);
+	v->val = i;
+}
+
+static __inline int64_t
+atomic64_read(atomic64_t *v)
+{
+	int64_t val;
+
+	mtx_enter(&v->lock);
+	val = v->val;
+	mtx_leave(&v->lock);
+
+	return val;
+}
+
+static __inline int64_t
+atomic64_xchg(atomic64_t *v, int64_t n)
+{
+	int64_t val;
+
+	mtx_enter(&v->lock);
+	val = v->val;
+	v->val = n;
+	mtx_leave(&v->lock);
+
+	return val;
+}
+#endif
 
 static inline int
 atomic_inc_not_zero(atomic_t *p)
