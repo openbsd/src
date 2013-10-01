@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.11 2011/08/28 11:53:16 aschrijver Exp $ */
+/*	$OpenBSD: yp.c,v 1.12 2013/10/01 12:00:34 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -99,11 +99,7 @@ yp_enable_events(void)
 void
 yp_fd_event(int fd, short event, void *p)
 {
-	fd_set	fdset;
-
-	FD_ZERO(&fdset);
-	FD_SET(fd, &fdset);
-	svc_getreqset(&fdset);
+	svc_getreq_common(fd);
 	yp_disable_events();
 	yp_enable_events();
 }
