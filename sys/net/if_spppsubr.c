@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.107 2013/08/16 12:29:18 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.108 2013/10/01 20:22:13 sf Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -1260,7 +1260,7 @@ sppp_cisco_send(struct sppp *sp, u_int32_t type, u_int32_t par1, u_int32_t par2)
 
 	if (debug)
 		log(LOG_DEBUG, SPP_FMT
-		    "cisco output: <0x%lx 0x%lx 0x%lx 0x%x 0x%x-0x%x>\n",
+		    "cisco output: <0x%x 0x%x 0x%x 0x%x 0x%x-0x%x>\n",
 			SPP_ARGS(ifp), ntohl(ch->type), ch->par1, ch->par2,
 			(u_int)ch->rel, (u_int)ch->time0, (u_int)ch->time1);
 

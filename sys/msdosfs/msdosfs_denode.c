@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.45 2013/06/11 16:42:16 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.46 2013/10/01 20:22:13 sf Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -387,7 +387,7 @@ detrunc(struct denode *dep, uint32_t length, int flags, struct ucred *cred,
 	 * directory's life.
 	 */
 	if ((DETOV(dep)->v_flag & VROOT) && !FAT32(pmp)) {
-		printf("detrunc(): can't truncate root directory, clust %ld, offset %ld\n",
+		printf("detrunc(): can't truncate root directory, clust %u, offset %u\n",
 		    dep->de_dirclust, dep->de_diroffset);
 		return (EINVAL);
 	}

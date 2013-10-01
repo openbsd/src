@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.29 2013/07/10 21:31:11 kettenis Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.30 2013/10/01 20:22:11 sf Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -300,7 +300,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 
 	ioapic_add(sc);
 
-	printf(" pa 0x%lx", aaa->apic_address);
+	printf(" pa 0x%x", aaa->apic_address);
 
 	if (bus_mem_add_mapping(aaa->apic_address, PAGE_SIZE, 0, &bh) != 0) {
 		printf(", map failed\n");

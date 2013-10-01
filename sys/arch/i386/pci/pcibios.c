@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.41 2013/10/01 20:05:58 sf Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.42 2013/10/01 20:22:12 sf Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ pcibiosprobe(struct device *parent, void *match, void *aux)
 	rv = bios32_service(PCIBIOS_SIGNATURE, &pcibios_entry,
 		&pcibios_entry_info);
 
-	PCIBIOS_PRINTV(("pcibiosprobe: 0x%lx:0x%lx at 0x%lx[0x%lx]\n",
+	PCIBIOS_PRINTV(("pcibiosprobe: 0x%hx:0x%x at 0x%x[0x%x]\n",
 	    pcibios_entry.segment, pcibios_entry.offset,
 	    pcibios_entry_info.bei_base, pcibios_entry_info.bei_size));
 
@@ -172,7 +172,7 @@ pcibiosattach(struct device *parent, struct device *self, void *aux)
 	    &rev_min, &mech1, &mech2,
 	    &scmech1, &scmech2, &sc->max_bus);
 
-	printf(": rev %d.%d @ 0x%lx/0x%lx\n",
+	printf(": rev %d.%d @ 0x%x/0x%x\n",
 	    rev_maj, rev_min >> 4, pcibios_entry_info.bei_base,
 	    pcibios_entry_info.bei_size);
 

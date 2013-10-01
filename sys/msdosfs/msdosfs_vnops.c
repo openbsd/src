@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.89 2013/09/14 02:28:03 guenther Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.90 2013/10/01 20:22:13 sf Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1821,7 +1821,7 @@ msdosfs_print(void *v)
 	struct denode *dep = VTODE(ap->a_vp);
 
 	printf(
-	    "tag VT_MSDOSFS, startcluster %ld, dircluster %ld, diroffset %ld ",
+	    "tag VT_MSDOSFS, startcluster %u, dircluster %u, diroffset %u ",
 	    dep->de_StartCluster, dep->de_dirclust, dep->de_diroffset);
 	printf(" dev %d, %d, %s\n",
 	    major(dep->de_dev), minor(dep->de_dev),

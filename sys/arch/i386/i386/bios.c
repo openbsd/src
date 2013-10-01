@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.100 2013/09/29 12:56:31 kettenis Exp $	*/
+/*	$OpenBSD: bios.c,v 1.101 2013/10/01 20:22:11 sf Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -238,7 +238,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 
 			bios32_entry.segment = GSEL(GCODE_SEL, SEL_KPL);
 			bios32_entry.offset = (u_int32_t)ISA_HOLE_VADDR(h->entry);
-			printf(", BIOS32 rev. %d @ 0x%lx", h->rev, h->entry);
+			printf(", BIOS32 rev. %d @ 0x%x", h->rev, h->entry);
 			break;
 		}
 	}
@@ -285,7 +285,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 			for (; pa < end; pa+= NBPG, eva+= NBPG)
 				pmap_kenter_pa(eva, pa, VM_PROT_READ);
 
-			printf(", SMBIOS rev. %d.%d @ 0x%lx (%d entries)",
+			printf(", SMBIOS rev. %d.%d @ 0x%x (%hd entries)",
 			    sh->majrev, sh->minrev, sh->addr, sh->count);
 			/*
 			 * Unbelievably the SMBIOS version number
