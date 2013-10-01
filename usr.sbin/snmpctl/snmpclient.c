@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpclient.c,v 1.6 2013/10/01 17:32:20 reyk Exp $	*/
+/*	$OpenBSD: snmpclient.c,v 1.7 2013/10/01 20:55:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -212,7 +212,7 @@ snmpc_response(struct snmpc *sc)
 	char			 buf[BUFSIZ];
 	struct ber_element	*resp = NULL, *s, *e;
 	char			*value = NULL, *p;
-	int			 c, ret = 0;
+	int			 ret = 0;
 
 	/* Receive response */
 	if (snmpc_recvresp(sc->sc_fd, sc->sc_version,
@@ -222,16 +222,14 @@ snmpc_response(struct snmpc *sc)
 	if (ber_scanf_elements(resp, "{SS{SSSS{e}}", &s) != 0)
 		goto fail;
 
-	for (c = 0; s != NULL; s = s->be_next, c++) {
+	for (; s != NULL; s = s->be_next) {
 		if (ber_scanf_elements(s, "{oe}", &sc->sc_oid, &e) != 0)
 			goto fail;
-
-		if (c && ber_oid_cmp(&sc->sc_oid, &sc->sc_last_oid) == 0)
-			continue;
 
 		/* Break if the returned OID is not a child of the root. */
 		if (sc->sc_nresp &&
 		    (ber_oid_cmp(&sc->sc_root_oid, &sc->sc_oid) != 2 ||
+		    e->be_class == BER_CLASS_CONTEXT ||
 		    e->be_type == BER_TYPE_NULL)) {
 			ret = 1; 
 			break;
