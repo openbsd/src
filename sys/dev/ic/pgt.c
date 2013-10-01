@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.70 2013/08/07 01:06:30 bluhm Exp $  */
+/*	$OpenBSD: pgt.c,v 1.71 2013/10/01 20:05:59 sf Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -3192,7 +3192,7 @@ pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq)
 		error = bus_dmamem_alloc(sc->sc_dmat, PGT_FRAG_SIZE, PAGE_SIZE,
 		    0, &pd->pd_dmas, 1, &nsegs, BUS_DMA_WAITOK);
 		if (error != 0) {
-			printf("%s: error alloc frag %u on queue %u\n",
+			printf("%s: error alloc frag %zu on queue %u\n",
 			    sc->sc_dev.dv_xname, i, pq);
 			free(pd, M_DEVBUF);
 			break;
@@ -3201,7 +3201,7 @@ pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq)
 		error = bus_dmamem_map(sc->sc_dmat, &pd->pd_dmas, nsegs,
 		    PGT_FRAG_SIZE, (caddr_t *)&pd->pd_mem, BUS_DMA_WAITOK);
 		if (error != 0) {
-			printf("%s: error map frag %u on queue %u\n",
+			printf("%s: error map frag %zu on queue %u\n",
 			    sc->sc_dev.dv_xname, i, pq);
 			free(pd, M_DEVBUF);
 			break;
@@ -3211,7 +3211,7 @@ pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq)
 			error = bus_dmamap_load(sc->sc_dmat, pd->pd_dmam,
 			    pd->pd_mem, PGT_FRAG_SIZE, NULL, BUS_DMA_NOWAIT);
 			if (error != 0) {
-				printf("%s: error load frag %u on queue %u\n",
+				printf("%s: error load frag %zu on queue %u\n",
 				    sc->sc_dev.dv_xname, i, pq);
 				bus_dmamem_free(sc->sc_dmat, &pd->pd_dmas,
 				    nsegs);

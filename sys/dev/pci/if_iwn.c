@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.123 2013/08/29 19:06:39 syl Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.124 2013/10/01 20:06:01 sf Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -5348,7 +5348,7 @@ iwn_read_firmware_leg(struct iwn_softc *sc, struct iwn_fw_info *fw)
 		ptr++;
 	}
 	if (fw->size < hdrlen) {
-		printf("%s: firmware too short: %d bytes\n",
+		printf("%s: firmware too short: %zu bytes\n",
 		    sc->sc_dev.dv_xname, fw->size);
 		return EINVAL;
 	}
@@ -5361,7 +5361,7 @@ iwn_read_firmware_leg(struct iwn_softc *sc, struct iwn_fw_info *fw)
 	/* Check that all firmware sections fit. */
 	if (fw->size < hdrlen + fw->main.textsz + fw->main.datasz +
 	    fw->init.textsz + fw->init.datasz + fw->boot.textsz) {
-		printf("%s: firmware too short: %d bytes\n",
+		printf("%s: firmware too short: %zu bytes\n",
 		    sc->sc_dev.dv_xname, fw->size);
 		return EINVAL;
 	}
@@ -5389,7 +5389,7 @@ iwn_read_firmware_tlv(struct iwn_softc *sc, struct iwn_fw_info *fw,
 	uint32_t len;
 
 	if (fw->size < sizeof (*hdr)) {
-		printf("%s: firmware too short: %d bytes\n",
+		printf("%s: firmware too short: %zu bytes\n",
 		    sc->sc_dev.dv_xname, fw->size);
 		return EINVAL;
 	}
@@ -5421,7 +5421,7 @@ iwn_read_firmware_tlv(struct iwn_softc *sc, struct iwn_fw_info *fw,
 
 		ptr += sizeof (*tlv);
 		if (ptr + len > end) {
-			printf("%s: firmware too short: %d bytes\n",
+			printf("%s: firmware too short: %zu bytes\n",
 			    sc->sc_dev.dv_xname, fw->size);
 			return EINVAL;
 		}
@@ -5476,7 +5476,7 @@ iwn_read_firmware(struct iwn_softc *sc)
 		return error;
 	}
 	if (fw->size < sizeof (uint32_t)) {
-		printf("%s: firmware too short: %d bytes\n",
+		printf("%s: firmware too short: %zu bytes\n",
 		    sc->sc_dev.dv_xname, fw->size);
 		free(fw->data, M_DEVBUF);
 		return EINVAL;

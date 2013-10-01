@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdiic.c,v 1.10 2012/10/05 10:51:28 haesbaert Exp $	*/
+/*	$OpenBSD: amdiic.c,v 1.11 2013/10/01 20:06:00 sf Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -340,8 +340,8 @@ amdiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 			DELAY(AMDIIC_DELAY);
 		}
 		if (st == 0) {
-			printf("%s: exec: op %d, addr 0x%02x, cmdlen %d, "
-			    "len %d, flags 0x%02x: timeout\n",
+			printf("%s: exec: op %d, addr 0x%02x, cmdlen %zu, "
+			    "len %zu, flags 0x%02x: timeout\n",
 			    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags);
 			return (1);
 		}

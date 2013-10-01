@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.112 2013/08/07 01:06:35 bluhm Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.113 2013/10/01 20:06:00 sf Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -2238,7 +2238,7 @@ iwi_init(struct ifnet *ifp)
 		goto fail1;
 	}
 	if (size < sizeof (struct iwi_firmware_hdr)) {
-		printf("%s: firmware image too short: %u bytes\n",
+		printf("%s: firmware image too short: %zu bytes\n",
 		    sc->sc_dev.dv_xname, size);
 		error = EINVAL;
 		goto fail2;
@@ -2255,7 +2255,7 @@ iwi_init(struct ifnet *ifp)
 
 	if (size < sizeof (struct iwi_firmware_hdr) + letoh32(hdr->bootsz) +
 	    letoh32(hdr->ucodesz) + letoh32(hdr->mainsz)) {
-		printf("%s: firmware image too short: %u bytes\n",
+		printf("%s: firmware image too short: %zu bytes\n",
 		    sc->sc_dev.dv_xname, size);
 		error = EINVAL;
 		goto fail2;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.39 2013/08/07 01:06:43 bluhm Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.40 2013/10/01 20:06:03 sf Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -341,8 +341,8 @@ urndis_ctrl_handle_query(struct urndis_softc *sc,
 	if (letoh32(msg->rm_infobuflen) + letoh32(msg->rm_infobufoffset) +
 	    RNDIS_HEADER_OFFSET > letoh32(msg->rm_len)) {
 		printf("%s: ctrl message error: invalid query info "
-		    "len/offset/end_position(%d/%d/%d) -> "
-		    "go out of buffer limit %d\n",
+		    "len/offset/end_position(%u/%u/%zu) -> "
+		    "go out of buffer limit %u\n",
 		    DEVNAME(sc),
 		    letoh32(msg->rm_infobuflen),
 		    letoh32(msg->rm_infobufoffset), 
@@ -805,7 +805,7 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 
 		if (len < sizeof(*msg)) {
 			printf("%s: urndis_decap invalid buffer len %u < "
-			    "minimum header %u\n",
+			    "minimum header %zu\n",
 			    DEVNAME(sc),
 			    len,
 			    sizeof(*msg));
@@ -832,7 +832,7 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 			return;
 		}
 		if (letoh32(msg->rm_len) < sizeof(*msg)) {
-			printf("%s: urndis_decap invalid msg len %u < %u\n",
+			printf("%s: urndis_decap invalid msg len %u < %zu\n",
 			    DEVNAME(sc),
 			    letoh32(msg->rm_len),
 			    sizeof(*msg));
@@ -851,7 +851,7 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 		    letoh32(msg->rm_datalen) + RNDIS_HEADER_OFFSET 
 		        > letoh32(msg->rm_len)) {
 			printf("%s: urndis_decap invalid data "
-			    "len/offset/end_position(%u/%u/%u) -> "
+			    "len/offset/end_position(%u/%u/%zu) -> "
 			    "go out of receive buffer limit %u\n",
 			    DEVNAME(sc),
 			    letoh32(msg->rm_datalen),
@@ -865,7 +865,7 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 		if (letoh32(msg->rm_datalen) < sizeof(struct ether_header)) {
 			ifp->if_ierrors++;
 			printf("%s: urndis_decap invalid ethernet size "
-			    "%d < %d\n",
+			    "%u < %zu\n",
 			    DEVNAME(sc),
 			    letoh32(msg->rm_datalen),
 			    sizeof(struct ether_header));

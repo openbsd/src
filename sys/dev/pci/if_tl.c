@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.54 2013/08/07 01:06:38 bluhm Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.55 2013/10/01 20:06:01 sf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -2051,7 +2051,7 @@ tl_attach(parent, self, aux)
 	}
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, sizeof(struct tl_list_data),
 	    &kva, BUS_DMA_NOWAIT)) {
-		printf("%s: can't map dma buffers (%d bytes)\n",
+		printf("%s: can't map dma buffers (%zd bytes)\n",
 		    sc->sc_dev.dv_xname, sizeof(struct tl_list_data));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		return;

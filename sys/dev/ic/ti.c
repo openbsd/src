@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.6 2013/08/21 05:21:43 dlg Exp $	*/
+/*	$OpenBSD: ti.c,v 1.7 2013/10/01 20:06:00 sf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -611,7 +611,7 @@ ti_alloc_jumbo_mem(struct ti_softc *sc)
 	state = 1;
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg, TI_JMEM, &kva,
 	    BUS_DMA_NOWAIT)) {
-		printf("%s: can't map dma buffers (%d bytes)\n",
+		printf("%s: can't map dma buffers (%zu bytes)\n",
 		    sc->sc_dv.dv_xname, TI_JMEM);
 		error = ENOBUFS;
 		goto out;
@@ -1599,7 +1599,7 @@ ti_attach(struct ti_softc *sc)
 	}
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
 	    sizeof(struct ti_ring_data), &kva, BUS_DMA_NOWAIT)) {
-		printf("%s: can't map dma buffers (%d bytes)\n",
+		printf("%s: can't map dma buffers (%zu bytes)\n",
 		       sc->sc_dv.dv_xname, sizeof(struct ti_ring_data));
 		goto fail_1;
 	}

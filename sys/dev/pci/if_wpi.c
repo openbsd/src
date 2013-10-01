@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.112 2013/08/07 01:06:39 bluhm Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.113 2013/10/01 20:06:02 sf Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -2987,7 +2987,7 @@ wpi_read_firmware(struct wpi_softc *sc)
 		return error;
 	}
 	if (size < sizeof (*hdr)) {
-		printf("%s: truncated firmware header: %d bytes\n",
+		printf("%s: truncated firmware header: %zu bytes\n",
 		    sc->sc_dev.dv_xname, size);
 		free(fw->data, M_DEVBUF);
 		return EINVAL;
@@ -3016,7 +3016,7 @@ wpi_read_firmware(struct wpi_softc *sc)
 	/* Check that all firmware sections fit. */
 	if (size < sizeof (*hdr) + fw->main.textsz + fw->main.datasz +
 	    fw->init.textsz + fw->init.datasz + fw->boot.textsz) {
-		printf("%s: firmware file too short: %d bytes\n",
+		printf("%s: firmware file too short: %zu bytes\n",
 		    sc->sc_dev.dv_xname, size);
 		free(fw->data, M_DEVBUF);
 		return EINVAL;

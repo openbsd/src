@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.53 2013/08/21 05:21:45 dlg Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.54 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -772,7 +772,7 @@ wb_attach(parent, self, aux)
 	}
 	if (bus_dmamem_map(pa->pa_dmat, &seg, rseg,
 	    sizeof(struct wb_list_data), &kva, BUS_DMA_NOWAIT)) {
-		printf(": can't map list data, size %d\n",
+		printf(": can't map list data, size %zd\n",
 		    sizeof(struct wb_list_data));
 		goto fail_3;
 	}

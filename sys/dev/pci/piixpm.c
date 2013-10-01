@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.38 2012/10/05 10:51:28 haesbaert Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -359,7 +359,7 @@ timeout:
 	/*
 	 * Transfer timeout. Kill the transaction and clear status bits.
 	 */
-	printf("%s: exec: op %d, addr 0x%02x, cmdlen %d, len %d, "
+	printf("%s: exec: op %d, addr 0x%02x, cmdlen %zu, len %zu, "
 	    "flags 0x%02x: timeout, status 0x%b\n",
 	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags,
 	    st, PIIX_SMB_HS_BITS);
