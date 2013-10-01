@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.12 2013/10/01 12:41:47 reyk Exp $	*/
+/*	$OpenBSD: smi.c,v 1.13 2013/10/01 12:44:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -140,7 +140,7 @@ smi_string2oid(const char *oidstr, struct ber_oid *o)
 
 	/*
 	 * Parse OID strings in the common form n.n.n or n-n-n.
-	 * Based on ber_string2oid with additional support for symbolid names.
+	 * Based on ber_string2oid with additional support for symbolic names.
 	 */
 	for (p = sp = str; p != NULL; sp = p) {
 		if ((p = strpbrk(p, ".-")) != NULL)
