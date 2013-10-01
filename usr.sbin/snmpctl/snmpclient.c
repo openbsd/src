@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpclient.c,v 1.1 2013/10/01 12:41:49 reyk Exp $	*/
+/*	$OpenBSD: snmpclient.c,v 1.2 2013/10/01 13:14:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -46,7 +46,6 @@
 #include "parser.h"
 
 struct snmpc {
-	char			 sc_root[BUFSIZ];
 	size_t			 sc_root_len;
 	struct ber_oid		 sc_root_oid;
 	struct ber_oid		 sc_last_oid;
@@ -66,11 +65,10 @@ struct snmpc {
 #define SNMPC_COMMUNITY		"public"
 #define SNMPC_OID		"system"
 
-void	 snmpc_req(int, int, const char *, struct ber_oid *,
+int	 snmpc_req(int, int, const char *, struct ber_oid *,
 	    struct sockaddr *, socklen_t, u_int32_t *, u_long);
 void	 snmpc_getreq(struct snmpc *, u_long);
-struct ber_element
-	*snmpc_getresp(int, int, u_int32_t);
+int	 snmpc_getresp(int, int, u_int32_t, struct ber_element **);
 
 void
 snmpclient(struct parse_result *res)
@@ -80,6 +78,9 @@ snmpclient(struct parse_result *res)
 	int			 s;
 	int			 error;
 
+	bzero(&sc, sizeof(sc));
+
+	/* Get client configuration */
 	if (res->oid == NULL)
 		res->oid = strdup(SNMPC_OID);
 	if (res->community == NULL)
@@ -89,6 +90,7 @@ snmpclient(struct parse_result *res)
 	if (res->oid == NULL || res->community == NULL)
 		err(1, "strdup");
 
+	/* Resolve target host name */
 	bzero(&hints, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
@@ -107,35 +109,33 @@ snmpclient(struct parse_result *res)
 	if (s == -1)
 		errx(1, "invalid host");
 
-	bzero(&sc, sizeof(sc));
 	bcopy(ai->ai_addr, &sc.sc_addr, ai->ai_addrlen);
 	sc.sc_addr_len = ai->ai_addrlen;
+	freeaddrinfo(ai0);
+
 	sc.sc_fd = s;
 	sc.sc_retry_max = SNMPC_RETRY_MAX;
 	sc.sc_community = res->community;
 	sc.sc_version = res->version;
 
+	/*
+	 * Set up the root OID and get the prefix length to shorten the
+	 * printed OID strings of the children.
+	 */
 	if (smi_string2oid(res->oid, &sc.sc_oid) == -1)
 		errx(1, "oid");
 
-	/*
-	 * Get the size of the requested root OID to shorten the output
-	 * of its children.
-	 */
-	smi_oid2string(&sc.sc_oid, sc.sc_root, sizeof(sc.sc_root), 0);
-	if (sc.sc_oid.bo_n > 2)
-		sc.sc_root_len = sc.sc_oid.bo_n - 1;
-
 	bcopy(&sc.sc_oid, &sc.sc_root_oid, sizeof(sc.sc_root_oid));
 	bcopy(&sc.sc_oid, &sc.sc_last_oid, sizeof(sc.sc_last_oid));
+	if (sc.sc_oid.bo_n > 2)
+		sc.sc_root_len = sc.sc_oid.bo_n - 1;
 
 	if (res->action == GET)
 		snmpc_getreq(&sc, SNMP_C_GETREQ);
 	else
 		snmpc_getreq(&sc, SNMP_C_GETNEXTREQ);
 
-	close(s);
-	freeaddrinfo(ai0);
+	close(sc.sc_fd);
 }
 
 void
@@ -147,11 +147,13 @@ snmpc_getreq(struct snmpc *sc, u_long cmd)
 	struct pollfd		 pfd[1];
 	int			 nfds;
 
-	snmpc_req(sc->sc_fd, sc->sc_version, sc->sc_community, &sc->sc_oid,
+	/* Send SNMP request */
+	if (snmpc_req(sc->sc_fd, sc->sc_version, sc->sc_community, &sc->sc_oid,
 	    (struct sockaddr *)&sc->sc_addr, sc->sc_addr_len,
-	    &sc->sc_msgid, cmd);
+	    &sc->sc_msgid, cmd) == -1)
+		err(1, "request failed");
 
-	/* Wait for input */
+	/* Wait for response */
 	pfd[0].fd = sc->sc_fd;
 	pfd[0].events = POLLIN;
 	nfds = poll(pfd, 1, 3 * 1000);
@@ -168,18 +170,22 @@ snmpc_getreq(struct snmpc *sc, u_long cmd)
 	}
 	sc->sc_retry = 0;
 
-	if ((resp = snmpc_getresp(sc->sc_fd, sc->sc_version,
-	    sc->sc_msgid)) == NULL)
-		errx(1, "invalid response");
+	/* Receive response */
+	if (snmpc_getresp(sc->sc_fd, sc->sc_version,
+	    sc->sc_msgid, &resp) == -1)
+		err(1, "invalid response");
 
 	if (ber_scanf_elements(resp, "{SS{SSSS{{oe}}}",
 	    &sc->sc_oid, &e) != 0)
-		err(1, "response");
+		errx(1, "invalid response header");
 
+	/* Return if the returned OID is not a child of the requested root */
 	if (sc->sc_nresp++ &&
 	    (ber_oid_cmp(&sc->sc_root_oid, &sc->sc_oid) != 2 ||
-	    e->be_type == BER_TYPE_NULL))
+	    e->be_type == BER_TYPE_NULL)) {
+		ber_free_elements(resp);
 		return;
+	}
 
 	if ((value = smi_print_element(e)) != NULL) {
 		smi_oid2string(&sc->sc_oid, buf, sizeof(buf), sc->sc_root_len);
@@ -200,7 +206,7 @@ snmpc_getreq(struct snmpc *sc, u_long cmd)
 	snmpc_getreq(sc, cmd);
 }
 
-void
+int
 snmpc_req(int s, int version, const char *community, struct ber_oid *oid,
     struct sockaddr *addr, socklen_t addrlen, u_int32_t *msgid, u_long type)
 {
@@ -214,8 +220,10 @@ snmpc_req(int s, int version, const char *community, struct ber_oid *oid,
 	if ((root = ber_add_sequence(NULL)) == NULL ||
 	    (b = ber_printf_elements(root, "ds{tddd{{O0}}",
 	    version, community, BER_CLASS_CONTEXT, type,
-	    *msgid, 0, 0, oid)) == NULL)
-		err(1, "invalid elements");
+	    *msgid, 0, 0, oid)) == NULL) {
+		errno = EINVAL;
+		return (-1);
+	}
 
 #ifdef DEBUG
 	fprintf(stderr, "REQUEST(%lu):\n", type);
@@ -227,24 +235,27 @@ snmpc_req(int s, int version, const char *community, struct ber_oid *oid,
 
 	len = ber_write_elements(&ber, root);
 	if (ber_get_writebuf(&ber, (void *)&ptr) < 1)
-		err(1, "sendto");
+		return (-1);
 
 	if (sendto(s, ptr, len, 0, addr, addrlen) == -1)
-		err(1, "sendto");
+		return (-1);
+
+	return (0);
 }
 
-struct ber_element *
-snmpc_getresp(int s, int msgver, u_int32_t msgid)
+int
+snmpc_getresp(int s, int msgver, u_int32_t msgid,
+    struct ber_element **respptr)
 {
 	char			 buf[READ_BUF_SIZE];
 	ssize_t			 rlen;
 	struct ber		 ber;
-	struct ber_element	*resp;
+	struct ber_element	*resp = NULL;
 	char			*comn;
 	long long		 ver, id;
 
 	if ((rlen = recv(s, buf, sizeof(buf), MSG_WAITALL)) == -1)
-		err(1, "recv");
+		return (-1);
 
 	bzero(&ber, sizeof(ber));
 	ber.fd = -1;
@@ -257,18 +268,23 @@ snmpc_getresp(int s, int msgver, u_int32_t msgid)
 
 	resp = ber_read_elements(&ber, NULL);
 	if (resp == NULL)
-		err(1, "ber_read_elements");
+		goto fail;
 
 #ifdef DEBUG
 	smi_debug_elements(resp);
 #endif
 
 	if (ber_scanf_elements(resp, "{is{i", &ver, &comn, &id) != 0)
-		err(1, "response");
-	if (!(msgver == (int)ver && msgid == (u_int32_t)id)) {
-		ber_free_elements(resp);
-		return (NULL);
-	}
+		goto fail;
+	if (!(msgver == (int)ver && msgid == (u_int32_t)id))
+		goto fail;
 
-	return (resp);
+	*respptr = resp;
+	return (0);
+
+ fail:
+	if (resp != NULL)
+		ber_free_elements(resp);
+	errno = EINVAL;
+	return (-1);
 }
