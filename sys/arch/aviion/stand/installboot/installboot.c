@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.2 2013/09/29 21:30:49 jmc Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.3 2013/10/01 20:32:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -31,7 +31,6 @@ char	*boot, *dev;
 
 void	analyze_label_sector(uint8_t *, struct vdm_label **,
 	    struct vdm_boot_info **);
-void	initialize_boot_area(int);
 void	read_sector(int, uint32_t, void *);
 void	usage(void);
 void	write_sector(int, uint32_t, void *);
@@ -90,32 +89,17 @@ main(int argc, char *argv[])
 
 	/*
 	 * Figure out the boot area span.
-	 * If there is no VDM boot area, set up one.
 	 */
 
 	read_sector(devfd, VDM_LABEL_SECTOR, buf);
 	analyze_label_sector(buf, &dl, &bi);
-
-	if (bi == NULL) {
-		if (verbose)
-			printf("no boot area found\n");
-		if (nowrite)
-			return 0;
-		if (verbose)
-			printf("creating boot area\n");
-		initialize_boot_area(devfd);
-
-		read_sector(devfd, VDM_LABEL_SECTOR, buf);
-		analyze_label_sector(buf, &dl, &bi);
-	}
 
 	if (bi != NULL) {
 		if (verbose)
 			printf("boot area: sectors %u-%u\n",
 			   bi->boot_start, bi->boot_start + bi->boot_size - 1);
 	} else {
-		/* should not happen */
-		return 1;
+		errx(1, "no boot area found on %s", dev);
 	}
 
 	/*
@@ -195,30 +179,4 @@ analyze_label_sector(uint8_t *sector, struct vdm_label **dl,
 
 	*dl = l;
 	*dbi = bi;
-}
-
-/*
- * Build a minimal VDM label and boot area.
- * Allows you to shoot yourself in the foot, badly.
- */
-void
-initialize_boot_area(int fd)
-{
-	struct vdm_label dl;
-	struct vdm_boot_info bi;
-
-	memset(buf, 0, sizeof buf);
-	memset(&dl, 0, sizeof dl);
-	memset(&bi, 0, sizeof bi);
-
-	dl.signature = htobe32(VDM_LABEL_SIGNATURE);
-	bi.signature = htobe32(VDM_LABEL_SIGNATURE);
-	bi.boot_start = htobe32(LABELSECTOR + 1);
-	bi.boot_size = htobe32(VDM_BOOT_DEFAULT_SIZE);
-	bi.version = htobe32(VDM_BOOT_INFO_VERSION);
-
-	memcpy(buf + VDM_LABEL_OFFSET_ALT, &dl, sizeof dl);
-	memcpy(buf + VDM_BLOCK_SIZE - sizeof bi, &bi, sizeof bi);
-
-	write_sector(fd, VDM_LABEL_SECTOR, buf);
 }
