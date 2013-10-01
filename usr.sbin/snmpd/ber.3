@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber.3,v 1.12 2013/07/16 11:13:34 schwarze Exp $
+.\" $OpenBSD: ber.3,v 1.13 2013/10/01 12:48:27 reyk Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: October 1 2013 $
 .Dt BER 3
 .Os
 .Sh NAME
@@ -185,6 +185,7 @@ struct ber_oid {
 .Fn ber_add_oidstring ,
 .Fn ber_get_oid ,
 .Fn ber_oid2ber ,
+.Fn ber_oid_cmp ,
 .Fn ber_string2oid
 .Sh FORMAT STRINGS
 .Fn ber_printf_elements ,
