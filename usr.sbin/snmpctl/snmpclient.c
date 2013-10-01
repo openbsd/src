@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpclient.c,v 1.4 2013/10/01 15:06:01 reyk Exp $	*/
+/*	$OpenBSD: snmpclient.c,v 1.5 2013/10/01 17:20:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -21,7 +21,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <sys/un.h>
 #include <sys/tree.h>
 
 #include <net/if.h>
@@ -30,6 +29,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <netdb.h>
 #include <errno.h>
 #include <event.h>
@@ -65,6 +65,7 @@ struct snmpc {
 #define	SNMPC_RETRY_MAX		3
 #define SNMPC_COMMUNITY		"public"
 #define SNMPC_OID		"system"
+#define SNMPC_MAXREPETITIONS	10
 
 void	 snmpc_request(struct snmpc *, u_long);
 int	 snmpc_response(struct snmpc *);
@@ -91,6 +92,10 @@ snmpclient(struct parse_result *res)
 		res->version = SNMP_V2;
 	if (res->oid == NULL || res->community == NULL)
 		err(1, "strdup");
+
+	/* Checks */
+	if ((res->action == BULKWALK) && (res->version < SNMP_V2))
+		errx(1, "invalid version for bulkwalk");
 
 	/* Resolve target host name */
 	bzero(&hints, sizeof(hints));
@@ -152,6 +157,8 @@ snmpclient(struct parse_result *res)
 
 	if (res->action == GET)
 		snmpc_request(&sc, SNMP_C_GETREQ);
+	else if (res->action == BULKWALK)
+		snmpc_request(&sc, SNMP_C_GETBULKREQ);
 	else
 		snmpc_request(&sc, SNMP_C_GETNEXTREQ);
 
@@ -191,7 +198,7 @@ snmpc_request(struct snmpc *sc, u_long type)
 		return;
 	}	
 
-	if (type != SNMP_C_GETNEXTREQ)
+	if (type == SNMP_C_GETREQ)
 		return;
 
 	snmpc_request(sc, type);
@@ -201,40 +208,50 @@ int
 snmpc_response(struct snmpc *sc)
 {
 	char			 buf[BUFSIZ];
-	struct ber_element	*resp = NULL, *e;
+	struct ber_element	*resp = NULL, *s, *e;
 	char			*value = NULL, *p;
+	int			 c, ret = 0;
 
 	/* Receive response */
 	if (snmpc_recvresp(sc->sc_fd, sc->sc_version,
 	    sc->sc_msgid, &resp) == -1)
 		return (-1);
 
-	if (ber_scanf_elements(resp, "{SS{SSSS{{oe}}}",
-	    &sc->sc_oid, &e) != 0)
+	if (ber_scanf_elements(resp, "{SS{SSSS{e}}", &s) != 0)
 		goto fail;
 
-	/* Return if the returned OID is not a child of the requested root */
-	if (sc->sc_nresp++ &&
-	    (ber_oid_cmp(&sc->sc_root_oid, &sc->sc_oid) != 2 ||
-	    e->be_type == BER_TYPE_NULL)) {
-		ber_free_elements(resp);
-		return (1); /* ignore response */
+	for (c = 0; s != NULL; s = s->be_next, c++) {
+		if (ber_scanf_elements(s, "{oe}", &sc->sc_oid, &e) != 0)
+			goto fail;
+
+		if (c && ber_oid_cmp(&sc->sc_oid, &sc->sc_last_oid) == 0)
+			continue;
+
+		/* Break if the returned OID is not a child of the root. */
+		if (sc->sc_nresp &&
+		    (ber_oid_cmp(&sc->sc_root_oid, &sc->sc_oid) != 2 ||
+		    e->be_type == BER_TYPE_NULL)) {
+			ret = 1; 
+			break;
+		}		
+
+		if ((value = smi_print_element(e)) != NULL) {
+			smi_oid2string(&sc->sc_oid, buf, sizeof(buf),
+			    sc->sc_root_len);
+			p = buf;
+			if (*p != '\0')
+				printf("%s=%s\n", p, value);
+			else
+				printf("%s\n", value);
+			free(value);
+		}
+		bcopy(&sc->sc_oid, &sc->sc_last_oid, sizeof(sc->sc_last_oid));
 	}
 
-	if ((value = smi_print_element(e)) != NULL) {
-		smi_oid2string(&sc->sc_oid, buf, sizeof(buf), sc->sc_root_len);
-		p = buf;
-		if (*p != '\0')
-			printf("%s=%s\n", p, value);
-		else
-			printf("%s\n", value);
-		free(value);
-	}
+	sc->sc_nresp++;
+
 	ber_free_elements(resp);
-
-	bcopy(&sc->sc_oid, &sc->sc_last_oid, sizeof(sc->sc_last_oid));
-
-	return (0);
+	return (ret);
 
  fail:
 	if (resp != NULL)
@@ -250,13 +267,17 @@ snmpc_sendreq(struct snmpc *sc, u_long type)
 	struct ber		 ber;
 	ssize_t			 len;
 	u_int8_t		*ptr;
+	int			 erroridx = 0;
+
+	if (type == SNMP_C_GETBULKREQ)
+		erroridx = SNMPC_MAXREPETITIONS;
 
 	/* SNMP header */
 	sc->sc_msgid = arc4random();
 	if ((root = ber_add_sequence(NULL)) == NULL ||
 	    (b = ber_printf_elements(root, "ds{tddd{{O0}}",
 	    sc->sc_version, sc->sc_community, BER_CLASS_CONTEXT, type,
-	    sc->sc_msgid, 0, 0, &sc->sc_oid)) == NULL) {
+	    sc->sc_msgid, 0, erroridx, &sc->sc_oid)) == NULL) {
 		errno = EINVAL;
 		return (-1);
 	}

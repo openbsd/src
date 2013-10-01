@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.6 2013/10/01 12:41:48 reyk Exp $	*/
+/*	$OpenBSD: parser.h,v 1.7 2013/10/01 17:20:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -22,7 +22,8 @@ enum actions {
 	SHOW_MIB,
 	TRAP,
 	GET,
-	WALK
+	WALK,
+	BULKWALK
 };
 
 struct parse_result {
