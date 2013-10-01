@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.152 2013/08/07 01:06:29 bluhm Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.153 2013/10/01 19:33:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -517,6 +517,9 @@ wi_intr(void *vsc)
 
 	/* Re-enable interrupts. */
 	CSR_WRITE_2(sc, WI_INT_EN, WI_INTRS);
+
+	if (status == 0)
+		return (0);
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		wi_start(ifp);
