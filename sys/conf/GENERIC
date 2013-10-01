@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.201 2013/09/28 22:02:04 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.202 2013/10/01 06:57:25 dlg Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -64,12 +64,12 @@ option		MROUTING	# Multicast router
 #option		PIM		# Protocol Independent Multicast
 option		MPLS		# Multi-Protocol Label Switching
 
-mpath0		at root		# SCSI Multipathing
-scsibus*	at mpath?
+#mpath0		at root		# SCSI Multipathing
+#scsibus*	at mpath?
 #emc*		at scsibus?
 #hds*		at scsibus?
-rdac*		at scsibus?
-sym*		at scsibus?
+#rdac*		at scsibus?
+#sym*		at scsibus?
 
 softraid0	at root		# Software RAID
 scsibus*	at softraid?
