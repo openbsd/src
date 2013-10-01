@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1689 2013/09/23 03:45:08 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1691 2013/10/01 12:04:36 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8552,12 +8552,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HD Graphics 3000",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1200V2_HB,
-	    "Xeon E3-1200v2 Host",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE3G_HB,
+	    "Core 3G Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1200V2_PCIE_1,
-	    "Xeon E3-1200v2 PCIE",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE3G_PCIE_1,
+	    "Core 3G PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE3G_D_GT1,
@@ -8568,24 +8568,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Core 3G Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1200V2_PCIE_2,
-	    "Xeon E3-1200v2 PCIE",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE3G_PCIE_2,
+	    "Core 3G PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE3G_M_GT1,
 	    "HD Graphics 2500",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1200V2_PCIE_3,
-	    "Xeon E3-1200v2 PCIE",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE3G_PCIE_3,
+	    "Core 3G PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE3G_S_GT1,
 	    "HD Graphics 2500",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1200V2_PCIE_4,
-	    "Xeon E3-1200v2 PCIE",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE3G_PCIE_4,
+	    "Core 3G PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE3G_D_GT2,
@@ -8689,7 +8689,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_D_GT2,
-	    "HD Graphics 4400",
+	    "HD Graphics 4600",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_M_GT2,
