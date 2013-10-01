@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.19 2013/09/26 09:11:30 reyk Exp $	*/
+/*	$OpenBSD: trap.c,v 1.20 2013/10/01 12:41:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -219,7 +219,7 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 	smi_scalar_oidlen(&trapoid);
 	smi_scalar_oidlen(oid);
 
-	smi_oidstring(oid, ostr, sizeof(ostr));
+	smi_oid2string(oid, ostr, sizeof(ostr), 0);
 	log_debug("trap_send: oid %s", ostr);
 
 	/* Setup OIDs to compare against the trap receiver MIB */

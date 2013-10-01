@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpctl.8,v 1.14 2013/07/16 11:13:34 schwarze Exp $
+.\" $OpenBSD: snmpctl.8,v 1.15 2013/10/01 12:41:49 reyk Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: October 1 2013 $
 .Dt SNMPCTL 8
 .Os
 .Sh NAME
@@ -58,6 +58,38 @@ Monitor internal messages of the
 subsystems and engines.
 .It Cm show mib
 Dump the tree of compiled-in MIB objects.
+.It Xo
+.Cm snmp Ar request Ar host
+.Op Ar options
+.Xc
+Request information from an SNMP agent that is running on the specified
+.Ar host .
+The
+.Ar request
+can be either
+.Ic get
+or
+.Ic walk
+to retrieve a single SNMP value or a subtree.
+The following
+.Ar options
+are supported:
+.Pp
+.Bl -tag -width bitstringXXXXXXXX -compact
+.It Cm community Ar value
+Set the SNMPv2 community; the default is
+.Sq public .
+.It Cm oid Ar value
+Set the start OID; the default is
+.Sq system .
+.It Cm version Ar value
+Set the SNMP version, either 
+.Ic 1
+or
+.Ic 2c .
+The default is
+.Ic 2c .
+.El
 .It Xo
 .Cm trap send Ar oid-string
 .Op Cm oid Ar oid-string Ar type value ...

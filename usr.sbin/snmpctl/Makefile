@@ -1,9 +1,9 @@
-#	$Id: Makefile,v 1.4 2013/09/26 09:11:30 reyk Exp $
+#	$Id: Makefile,v 1.5 2013/10/01 12:41:48 reyk Exp $
 
 .PATH:		${.CURDIR}/../snmpd
 
 PROG=		snmpctl
-SRCS=		log.c ber.c smi.c snmpctl.c parser.c
+SRCS=		log.c ber.c smi.c snmpclient.c snmpctl.c parser.c
 
 MAN=		snmpctl.8
 

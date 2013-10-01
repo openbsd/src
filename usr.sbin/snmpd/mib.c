@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.65 2013/09/07 04:31:52 joel Exp $	*/
+/*	$OpenBSD: mib.c,v 1.66 2013/10/01 12:41:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -235,7 +235,7 @@ mib_sysor(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		 * But we use the symbolic OID string for now, it may
 		 * help to display names of internal OIDs.
 		 */
-		smi_oidstring(&miboid->o_id, buf, sizeof(buf));
+		smi_oid2string(&miboid->o_id, buf, sizeof(buf), 0);
 		ber = ber_add_string(ber, buf);
 		break;
 	case 4:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.10 2012/09/17 16:43:59 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.11 2013/10/01 12:41:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -52,7 +52,11 @@ enum token_type {
 	INT32VAL,
 	UINT32VAL,
 	INT64VAL,
-	STRINGVAL
+	STRINGVAL,
+	SNMPOID,
+	SNMPHOST,
+	SNMPCOMMUNITY,
+	SNMPVERSION
 };
 
 struct token {
@@ -74,16 +78,57 @@ static const struct token t_int32[];
 static const struct token t_uint32[];
 static const struct token t_int64[];
 static const struct token t_string[];
+static const struct token t_snmp[];
+static const struct token t_snmpclient[];
+static const struct token t_snmphost[];
+static const struct token t_snmpoid[];
+static const struct token t_snmpcommunity[];
+static const struct token t_snmpversion[];
 
 static const struct token t_main[] = {
 	{KEYWORD,	"monitor",	MONITOR,	NULL},
 	{KEYWORD,	"show",		NONE,		t_show},
+	{KEYWORD,	"snmp",		NONE,		t_snmp},
 	{KEYWORD,	"trap",		NONE,		t_trap},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_show[] = {
 	{KEYWORD,	"mib",		SHOW_MIB,	NULL},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_snmp[] = {
+	{KEYWORD,	"get",		GET,		t_snmphost},
+	{KEYWORD,	"walk",		WALK,		t_snmphost},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_snmphost[] = {
+	{SNMPHOST,	"",		NONE,		t_snmpclient},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_snmpclient[] = {
+	{NOTOKEN,	"",		NONE,		NULL},
+	{KEYWORD,	"oid",		NONE,		t_snmpoid},
+	{KEYWORD,	"community",	NONE,		t_snmpcommunity},
+	{KEYWORD,	"version",	NONE,		t_snmpversion},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_snmpoid[] = {
+	{SNMPOID,	"",		NONE,		t_snmpclient},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_snmpcommunity[] = {
+	{SNMPCOMMUNITY,	"",		NONE,		t_snmpclient},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_snmpversion[] = {
+	{SNMPVERSION,	"",		NONE,		t_snmpclient},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -165,6 +210,7 @@ parse(int argc, char *argv[])
 	const struct token	*match;
 
 	bzero(&res, sizeof(res));
+	res.version = -1;
 
 	while (argc >= 0) {
 		if ((match = match_token(argv[0], table)) == NULL) {
@@ -221,6 +267,43 @@ match_token(char *word, const struct token table[])
 				t = &table[i];
 				if (t->value)
 					res.action = t->value;
+			}
+			break;
+		case SNMPHOST:
+			if (!match && word != NULL && strlen(word) > 0 &&
+			    res.host == NULL) {
+				res.host = strdup(word);
+				match++;
+				t = &table[i];
+			}
+			break;
+		case SNMPOID:
+			if (!match && word != NULL && strlen(word) > 0 &&
+			    res.oid == NULL) {
+				res.oid = strdup(word);
+				match++;
+				t = &table[i];
+			}
+			break;
+		case SNMPCOMMUNITY:
+			if (!match && word != NULL && strlen(word) > 0 &&
+			    res.community == NULL) {
+				res.community = strdup(word);
+				match++;
+				t = &table[i];
+			}
+			break;
+		case SNMPVERSION:
+			if (!match && word != NULL && strlen(word) > 0 &&
+			    res.version == -1) {
+				if (strcmp("1", word) == 0)
+					res.version = SNMP_V1;
+				else if (strcmp("2c", word) == 0)
+					res.version = SNMP_V2;
+				else
+					break;
+				match++;
+				t = &table[i];
 			}
 			break;
 		case VALTYPE:
@@ -361,6 +444,10 @@ show_valid_args(const struct token table[])
 		case VALTYPE:
 			fprintf(stderr, "  %s <value>\n", table[i].keyword);
 			break;
+		case SNMPHOST:
+			fprintf(stderr, "  <hostname>\n");
+			break;
+		case SNMPOID:
 		case TRAPOID:
 		case ELEMENTOBJECT:
 			fprintf(stderr, "  <oid-string>\n");
@@ -378,7 +465,11 @@ show_valid_args(const struct token table[])
 			fprintf(stderr, "  <int64>\n");
 			break;
 		case STRINGVAL:
+		case SNMPCOMMUNITY:
 			fprintf(stderr, "  <string>\n");
+			break;
+		case SNMPVERSION:
+			fprintf(stderr, "  [1|2c]\n");
 			break;
 		case ENDTOKEN:
 			break;

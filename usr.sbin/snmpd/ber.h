@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.h,v 1.8 2012/09/17 16:30:34 reyk Exp $ */
+/*	$OpenBSD: ber.h,v 1.9 2013/10/01 12:41:47 reyk Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -135,6 +135,8 @@ void			 ber_set_application(struct ber *,
 void			 ber_set_writecallback(struct ber_element *,
 			    void (*)(void *, size_t), void *);
 void			 ber_free(struct ber *);
+int			 ber_oid_cmp(struct ber_oid *, struct ber_oid *);
+
 __END_DECLS
 
 #endif /* _BER_H */

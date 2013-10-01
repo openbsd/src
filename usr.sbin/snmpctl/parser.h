@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.5 2012/09/17 16:43:59 reyk Exp $	*/
+/*	$OpenBSD: parser.h,v 1.6 2013/10/01 12:41:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -20,12 +20,19 @@ enum actions {
 	NONE,
 	MONITOR,
 	SHOW_MIB,
-	TRAP
+	TRAP,
+	GET,
+	WALK
 };
 
 struct parse_result {
 	enum actions	 action;
 	struct imsgbuf	*ibuf;
+	char		*host;
+	char		*oid;
+	char		*community;
+	int		 version;
 };
 
 struct parse_result	*parse(int, char *[]);
+void			 snmpclient(struct parse_result *);

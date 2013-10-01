@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.11 2013/09/26 09:11:29 reyk Exp $	*/
+/*	$OpenBSD: smi.c,v 1.12 2013/10/01 12:41:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -53,6 +53,10 @@ RB_HEAD(oidtree, oid);
 RB_PROTOTYPE(oidtree, oid, o_element, smi_oid_cmp);
 struct oidtree smi_oidtree;
 
+RB_HEAD(keytree, oid);
+RB_PROTOTYPE(keytree, oid, o_keyword, smi_key_cmp);
+struct keytree smi_keytree;
+
 u_long
 smi_getticks(void)
 {
@@ -91,7 +95,7 @@ smi_scalar_oidlen(struct ber_oid *o)
 }
 
 char *
-smi_oidstring(struct ber_oid *o, char *buf, size_t len)
+smi_oid2string(struct ber_oid *o, char *buf, size_t len, size_t skip)
 {
 	char		 str[256];
 	struct oid	*value, key;
@@ -107,6 +111,8 @@ smi_oidstring(struct ber_oid *o, char *buf, size_t len)
 
 	for (i = 0; i < o->bo_n; i++) {
 		key.o_oidlen = i + 1;
+		if (lookup && skip > i)
+			continue;
 		if (lookup &&
 		    (value = RB_FIND(oidtree, &smi_oidtree, &key)) != NULL)
 			snprintf(str, sizeof(str), "%s", value->o_name);
@@ -118,6 +124,42 @@ smi_oidstring(struct ber_oid *o, char *buf, size_t len)
 	}
 
 	return (buf);
+}
+
+int
+smi_string2oid(const char *oidstr, struct ber_oid *o)
+{
+	char			*sp, *p, str[BUFSIZ];
+	const char		*errstr;
+	struct oid		*oid;
+	struct ber_oid		 ko;
+
+	if (strlcpy(str, oidstr, sizeof(str)) >= sizeof(str))
+		return (-1);
+	bzero(o, sizeof(*o));
+
+	/*
+	 * Parse OID strings in the common form n.n.n or n-n-n.
+	 * Based on ber_string2oid with additional support for symbolid names.
+	 */
+	for (p = sp = str; p != NULL; sp = p) {
+		if ((p = strpbrk(p, ".-")) != NULL)
+			*p++ = '\0';
+		if ((oid = smi_findkey(sp)) != NULL) {
+			bcopy(&oid->o_id, &ko, sizeof(ko));
+			if (o->bo_n && ber_oid_cmp(o, &ko) != 2)
+				return (-1);
+			bcopy(&ko, o, sizeof(*o));
+			errstr = NULL;
+		} else {
+			o->bo_id[o->bo_n++] =
+			    strtonum(sp, 0, UINT_MAX, &errstr);
+		}
+		if (errstr || o->bo_n > BER_MAX_OID_LEN)
+			return (-1);
+	}
+
+	return (0);
 }
 
 void
@@ -169,6 +211,7 @@ smi_mibtree(struct oid *oids)
 			if ((oid->o_flags & OID_TABLE) && oid->o_get == NULL)
 				fatalx("smi_mibtree: invalid MIB table");
 			RB_INSERT(oidtree, &smi_oidtree, oid);
+			RB_INSERT(keytree, &smi_keytree, oid);
 			continue;
 		}
 		decl = RB_FIND(oidtree, &smi_oidtree, oid);
@@ -196,6 +239,16 @@ struct oid *
 smi_find(struct oid *oid)
 {
 	return (RB_FIND(oidtree, &smi_oidtree, oid));
+}
+
+struct oid *
+smi_findkey(char *name)
+{
+	struct oid	oid;
+	if (name == NULL)
+		return (NULL);
+	oid.o_name = name;
+	return (RB_FIND(keytree, &smi_keytree, &oid));
 }
 
 struct oid *
@@ -446,7 +499,7 @@ smi_print_element(struct ber_element *root)
 		if (ber_get_oid(root, &o) == -1)
 			goto fail;
 		if (asprintf(&str, "%s",
-		    smi_oidstring(&o, strbuf, sizeof(strbuf))) == -1)
+		    smi_oid2string(&o, strbuf, sizeof(strbuf), 0)) == -1)
 			goto fail;
 		break;
 	case BER_TYPE_OCTETSTRING:
@@ -527,3 +580,13 @@ smi_oid_cmp(struct oid *a, struct oid *b)
 }
 
 RB_GENERATE(oidtree, oid, o_element, smi_oid_cmp);
+
+int
+smi_key_cmp(struct oid *a, struct oid *b)
+{
+	if (a->o_name == NULL || b->o_name == NULL)
+		return (-1);
+	return (strcasecmp(a->o_name, b->o_name));
+}
+
+RB_GENERATE(keytree, oid, o_keyword, smi_key_cmp);

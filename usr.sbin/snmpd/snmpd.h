@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.44 2013/09/26 09:11:30 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.45 2013/10/01 12:41:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -195,6 +195,7 @@ struct oid {
 	void			*o_data;
 
 	RB_ENTRY(oid)		 o_element;
+	RB_ENTRY(oid)		 o_keyword;
 };
 
 #define OID_ROOT		0x00
@@ -526,14 +527,17 @@ int		 smi_init(void);
 u_long		 smi_getticks(void);
 void		 smi_mibtree(struct oid *);
 struct oid	*smi_find(struct oid *);
+struct oid	*smi_findkey(char *);
 struct oid	*smi_next(struct oid *);
 struct oid	*smi_foreach(struct oid *, u_int);
 void		 smi_oidlen(struct ber_oid *);
 void		 smi_scalar_oidlen(struct ber_oid *);
-char		*smi_oidstring(struct ber_oid *, char *, size_t);
+char		*smi_oid2string(struct ber_oid *, char *, size_t, size_t);
+int		 smi_string2oid(const char *, struct ber_oid *);
 void		 smi_delete(struct oid *);
 void		 smi_insert(struct oid *);
 int		 smi_oid_cmp(struct oid *, struct oid *);
+int		 smi_key_cmp(struct oid *, struct oid *);
 unsigned long	 smi_application(struct ber_element *);
 void		 smi_debug_elements(struct ber_element *);
 char		*smi_print_element(struct ber_element *);
