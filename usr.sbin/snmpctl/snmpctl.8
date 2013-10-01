@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpctl.8,v 1.15 2013/10/01 12:41:49 reyk Exp $
+.\" $OpenBSD: snmpctl.8,v 1.16 2013/10/01 14:16:20 reyk Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -137,6 +137,10 @@ This type takes no argument.
 An string describing an Object ID, for example
 .Ar 1.3.6.1.4.1.30155 .
 .El
+.It Cm walk Ar host
+Alias for
+.Ic snmp walk Ar host ,
+see above.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/snmpd.sockXX" -compact
