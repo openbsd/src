@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.13 2013/10/01 12:44:31 reyk Exp $	*/
+/*	$OpenBSD: smi.c,v 1.14 2013/10/01 15:19:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -513,7 +513,7 @@ smi_print_element(struct ber_element *root)
 		} else {
 			if ((p = malloc(root->be_len * 4 + 1)) == NULL)
 				goto fail;
-			strvisx(p, buf, root->be_len, 0);
+			strvisx(p, buf, root->be_len, VIS_NL);
 			if (asprintf(&str, "\"%s\"", p) == -1) {
 				free(p);
 				goto fail;
