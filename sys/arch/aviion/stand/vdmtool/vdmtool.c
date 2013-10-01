@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdmtool.c,v 1.1 2013/10/01 20:32:30 miod Exp $	*/
+/*	$OpenBSD: vdmtool.c,v 1.2 2013/10/01 22:24:53 jmc Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -36,7 +36,7 @@ int	verbose;
 void
 usage()
 {
-	fprintf(stderr, "usage: vdmtool [-i] [-v] <device>\n");
+	fprintf(stderr, "usage: vdmtool [-iv] rawdev\n");
 	exit(1);
 }
 
