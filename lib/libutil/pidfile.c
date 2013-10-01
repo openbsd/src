@@ -1,4 +1,4 @@
-/*	$OpenBSD: pidfile.c,v 1.8 2008/06/26 05:42:05 ray Exp $	*/
+/*	$OpenBSD: pidfile.c,v 1.9 2013/10/01 16:47:42 millert Exp $	*/
 /*	$NetBSD: pidfile.c,v 1.4 2001/02/19 22:43:42 cgd Exp $	*/
 
 /*-
@@ -74,14 +74,16 @@ pidfile(const char *basename)
 	}
 
 	pid = getpid();
-	if (fprintf(f, "%ld\n", (long)pid) <= 0 || fclose(f) != 0) {
+	if (fprintf(f, "%ld\n", (long)pid) <= 0 || fflush(f) != 0) {
 		save_errno = errno;
+		(void) fclose(f);
 		(void) unlink(pidfile_path);
 		free(pidfile_path);
 		pidfile_path = NULL;
 		errno = save_errno;
 		return (-1);
 	}
+	(void) fclose(f);
 
 	pidfile_pid = pid;
 	if (atexit(pidfile_cleanup) < 0) {
