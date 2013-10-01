@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.32 2013/10/01 11:09:39 reyk Exp $	*/
+/*	$OpenBSD: mib.h,v 1.33 2013/10/01 19:24:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -434,6 +434,7 @@
 #define MIB_vMware			MIB_enterprises, 6876
 #define MIB_alcatelLucent		MIB_enterprises, 7483
 #define MIB_snom			MIB_enterprises, 7526
+#define MIB_netSNMP			MIB_enterprises, 8072
 #define MIB_netflix			MIB_enterprises, 10949
 #define MIB_google			MIB_enterprises, 11129
 #define MIB_f5Networks			MIB_enterprises, 12276
@@ -995,6 +996,8 @@
 	{ MIBDECL(vMware) },				\
 	{ MIBDECL(alcatelLucent) },			\
 	{ MIBDECL(snom) },				\
+	{ MIBDECL(netSNMP) },				\
+	{ MIBDECL(netflix) },				\
 	{ MIBDECL(google) },				\
 	{ MIBDECL(f5Networks) },			\
 	{ MIBDECL(sFlow) },				\
