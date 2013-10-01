@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.118 2013/08/26 07:15:58 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.119 2013/10/01 08:25:35 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -426,8 +426,11 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 		sa6 = &ifr->ifr_addr;
 		break;
 	case SIOCSIFADDR:
+	case SIOCSIFDSTADDR:
+	case SIOCSIFBRDADDR:
+	case SIOCSIFNETMASK:
 		/*
-		 * Do not pass this ioctl to driver handler since it is not
+		 * Do not pass those ioctl to driver handler since they are not
 		 * properly setup. Instead just error out.
 		 */
 		return (EOPNOTSUPP);
