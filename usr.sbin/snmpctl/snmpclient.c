@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpclient.c,v 1.3 2013/10/01 13:46:04 reyk Exp $	*/
+/*	$OpenBSD: snmpclient.c,v 1.4 2013/10/01 15:06:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -39,6 +39,7 @@
 #include <ctype.h>
 #include <poll.h>
 #include <err.h>
+#include <pwd.h>
 
 #include "snmpd.h"
 #include "mib.h"
@@ -77,6 +78,7 @@ snmpclient(struct parse_result *res)
 	struct addrinfo		 hints, *ai, *ai0;
 	int			 s;
 	int			 error;
+	struct passwd		*pw;
 
 	bzero(&sc, sizeof(sc));
 
@@ -129,6 +131,24 @@ snmpclient(struct parse_result *res)
 	bcopy(&sc.sc_oid, &sc.sc_last_oid, sizeof(sc.sc_last_oid));
 	if (sc.sc_oid.bo_n > 2)
 		sc.sc_root_len = sc.sc_oid.bo_n - 1;
+
+	/*
+	 * Drop privileges to mitigate the risk when running as root.
+	 */
+	if (geteuid() == 0) {
+		if ((pw = getpwnam(SNMPD_USER)) == NULL)
+			err(1, "snmpctl: getpwnam");
+#ifndef DEBUG
+		if (chroot(pw->pw_dir) == -1)
+			err(1, "snmpctl: chroot");
+		if (chdir("/") == -1)
+			err(1, "snmpctl: chdir(\"/\")");
+		if (setgroups(1, &pw->pw_gid) ||
+		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+			err(1, "snmpctl: cannot drop privileges");
+#endif
+	}
 
 	if (res->action == GET)
 		snmpc_request(&sc, SNMP_C_GETREQ);
