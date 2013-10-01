@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpctl.8,v 1.18 2013/10/01 17:20:39 reyk Exp $
+.\" $OpenBSD: snmpctl.8,v 1.19 2013/10/01 17:32:21 reyk Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -80,7 +80,10 @@ are supported:
 .It Cm community Ar value
 Set the SNMPv2 community; the default is
 .Sq public .
-.It Cm oid Ar value
+.It Xo
+.Cm oid
+.Pq Ic all Ns | Ns Ar value
+.Xc
 Set the start OID; the default is
 .Sq system .
 .It Cm version Ar value

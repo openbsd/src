@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpclient.c,v 1.5 2013/10/01 17:20:39 reyk Exp $	*/
+/*	$OpenBSD: snmpclient.c,v 1.6 2013/10/01 17:32:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -86,6 +86,8 @@ snmpclient(struct parse_result *res)
 	/* Get client configuration */
 	if (res->oid == NULL)
 		res->oid = strdup(SNMPC_OID);
+	else if (strcmp("all", res->oid) == 0)
+		res->oid = strdup("1.0");
 	if (res->community == NULL)
 		res->community = strdup(SNMPC_COMMUNITY);
 	if (res->version == -1 || res->version > SNMP_V2)
