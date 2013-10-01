@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.54 2013/09/29 16:32:25 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.55 2013/10/01 21:12:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -80,9 +80,19 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
+	/*
+	 * Check for a VDIT or native-in-VDM label first.
+	 * If a valid VDM signature is found, but neither a VDIT nor a
+	 * native label are found, do not attempt to check for any other
+	 * label scheme.
+	 */
 	error = readvdmlabel(bp, strat, lp, NULL, spoofonly);
 	if (error == 0)
 		goto done;
+	if (error == ENOENT) {
+		error = EINVAL;
+		goto done;
+	}
 
 	error = readdoslabel(bp, strat, lp, NULL, spoofonly);
 	if (error == 0)
@@ -114,7 +124,7 @@ done:
 int
 writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 {
-	int error = EIO, partoff = -1;
+	int error, partoff = -1;
 	int offset;
 	struct disklabel *dlp;
 	struct buf *bp = NULL;
@@ -123,15 +133,18 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	if (readvdmlabel(bp, strat, lp, &partoff, 1) == 0) {
+	error = readvdmlabel(bp, strat, lp, &partoff, 1);
+	if (error == 0 || error == ENOENT) {
 		bp->b_blkno = partoff + LABELSECTOR;
 		offset = LABELOFFSET;
 	} else if (readdoslabel(bp, strat, lp, &partoff, 1) == 0) {
 		bp->b_blkno = DL_BLKTOSEC(lp, partoff + DOS_LABELSECTOR) *
 		    DL_BLKSPERSEC(lp);
 		offset = DL_BLKOFFSET(lp, partoff + DOS_LABELSECTOR);
-	} else
+	} else {
+		error = EIO;
 		goto done;
+	}
 
 	/* Read it in, slap the new label in, and write it back out */
 	bp->b_bcount = lp->d_secsize;
@@ -214,7 +227,7 @@ readvdmlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	 * Do not try to read a native label.
 	 */
 	if (error == ENOENT)
-		return EINVAL;
+		return error;
 
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
@@ -415,7 +428,7 @@ readvditlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 			if ((error = biowait(bp)) != 0)
 				goto done;
 
-			checkdisklabel(bp->b_data + LABELOFFSET, lp,
+			error = checkdisklabel(bp->b_data + LABELOFFSET, lp,
 			    start, start + size);
 		}
 	} else {
