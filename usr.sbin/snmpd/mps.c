@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.17 2012/10/01 11:36:55 reyk Exp $	*/
+/*	$OpenBSD: mps.c,v 1.18 2013/10/02 09:36:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -210,16 +210,11 @@ mps_getnextreq(struct ber_element *root, struct ber_oid *o)
 			break;
 		}
 	} else if (o->bo_n == value->o_oidlen && value->o_get != NULL) {
-		/* No instance identifier specified. Append .0. */
-		if (o->bo_n + 1 > BER_MAX_OID_LEN)
-			return (NULL);
-		ber = ber_add_noid(ber, o, o->bo_n + 1);
-		if ((ret = value->o_get(value, o, &ber)) != 0)
-			return (NULL);
-		return (ber);
+		next = value;
+		goto appendzero;
 	}
 
-getnext:
+ getnext:
 	for (next = value; next != NULL;) {
 		next = smi_next(next);
 		if (next == NULL)
@@ -246,8 +241,11 @@ getnext:
 		}
 	} else {
 		bcopy(&next->o_id, o, sizeof(*o));
-		ber = ber_add_noid(ber, &next->o_id,
-		    next->o_oidlen + 1);
+ appendzero:
+		/* No instance identifier specified. Append .0. */
+		if (o->bo_n + 1 > BER_MAX_OID_LEN)
+			return (NULL);
+		ber = ber_add_noid(ber, o, ++o->bo_n);
 		if ((ret = next->o_get(next, o, &ber)) != 0)
 			return (NULL);
 	}
