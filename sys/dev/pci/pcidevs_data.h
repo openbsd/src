@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1691 2013/10/01 12:04:36 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1692 2013/10/02 14:29:26 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -22316,48 +22316,60 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82C925",
 	},
 	{
-	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL2,
-	    "Virtual SVGA II",
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_SVGA2,
+	    "SVGA II",
 	},
 	{
-	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL,
-	    "Virtual SVGA",
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_SVGA,
+	    "SVGA",
 	},
 	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_NET,
-	    "Virtual NIC",
+	    "VMXNET",
 	},
 	{
-	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_MACHINE_2,
-	    "Virtual Machine Interface",
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VMCI,
+	    "VMCI",
 	},
 	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_EHCI,
-	    "Virtual EHCI",
+	    "EHCI",
 	},
 	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_UHCI,
-	    "Virtual UHCI",
+	    "UHCI",
+	},
+	{
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_XHCI,
+	    "xHCI",
 	},
 	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_PCI,
-	    "Virtual",
+	    "PCI",
 	},
 	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_PCIE,
-	    "Virtual PCIE-PCIE",
+	    "PCIE",
 	},
 	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_NET_3,
-	    "Virtual VMXNET3",
+	    "VMXNET3",
 	},
 	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_PVSCSI,
-	    "Virtual PVSCSI",
+	    "PVSCSI",
 	},
 	{
-	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_MACHINE,
-	    "Virtual Machine Interface",
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_AHCI,
+	    "AHCI",
+	},
+	{
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VMI,
+	    "VMI",
+	},
+	{
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_HDA,
+	    "HD Audio",
 	},
 	{
 	    PCI_VENDOR_WEITEK, PCI_PRODUCT_WEITEK_P9000,

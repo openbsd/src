@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1691 2013/10/01 12:04:36 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1692 2013/10/02 14:29:26 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6488,17 +6488,20 @@
 #define	PCI_PRODUCT_VLSI_82C925	0x0280		/* 82C925 */
 
 /* VMware */
-#define	PCI_PRODUCT_VMWARE_VIRTUAL2	0x0405		/* Virtual SVGA II */
-#define	PCI_PRODUCT_VMWARE_VIRTUAL	0x0710		/* Virtual SVGA */
-#define	PCI_PRODUCT_VMWARE_NET	0x0720		/* Virtual NIC */
-#define	PCI_PRODUCT_VMWARE_MACHINE_2	0x0740		/* Virtual Machine Interface */
-#define	PCI_PRODUCT_VMWARE_EHCI	0x0770		/* Virtual EHCI */
-#define	PCI_PRODUCT_VMWARE_UHCI	0x0774		/* Virtual UHCI */
-#define	PCI_PRODUCT_VMWARE_PCI	0x0790		/* Virtual */
-#define	PCI_PRODUCT_VMWARE_PCIE	0x07a0		/* Virtual PCIE-PCIE */
-#define	PCI_PRODUCT_VMWARE_NET_3	0x07b0		/* Virtual VMXNET3 */
-#define	PCI_PRODUCT_VMWARE_PVSCSI	0x07c0		/* Virtual PVSCSI */
-#define	PCI_PRODUCT_VMWARE_MACHINE	0x0801		/* Virtual Machine Interface */
+#define	PCI_PRODUCT_VMWARE_SVGA2	0x0405		/* SVGA II */
+#define	PCI_PRODUCT_VMWARE_SVGA	0x0710		/* SVGA */
+#define	PCI_PRODUCT_VMWARE_NET	0x0720		/* VMXNET */
+#define	PCI_PRODUCT_VMWARE_VMCI	0x0740		/* VMCI */
+#define	PCI_PRODUCT_VMWARE_EHCI	0x0770		/* EHCI */
+#define	PCI_PRODUCT_VMWARE_UHCI	0x0774		/* UHCI */
+#define	PCI_PRODUCT_VMWARE_XHCI	0x0778		/* xHCI */
+#define	PCI_PRODUCT_VMWARE_PCI	0x0790		/* PCI */
+#define	PCI_PRODUCT_VMWARE_PCIE	0x07a0		/* PCIE */
+#define	PCI_PRODUCT_VMWARE_NET_3	0x07b0		/* VMXNET3 */
+#define	PCI_PRODUCT_VMWARE_PVSCSI	0x07c0		/* PVSCSI */
+#define	PCI_PRODUCT_VMWARE_AHCI	0x07e0		/* AHCI */
+#define	PCI_PRODUCT_VMWARE_VMI	0x0801		/* VMI */
+#define	PCI_PRODUCT_VMWARE_HDA	0x1977		/* HD Audio */
 
 /* Weitek products */
 #define	PCI_PRODUCT_WEITEK_P9000	0x9001		/* P9000 */
