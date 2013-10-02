@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.38 2013/10/01 19:36:25 sf Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.39 2013/10/02 21:03:21 sf Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -391,7 +391,7 @@ db_show_callout_bucket(struct circq *bucket)
 		to = (struct timeout *)p; /* XXX */
 		db_find_sym_and_offset((db_addr_t)to->to_func, &name, &offset);
 		name = name ? name : "?";
-		db_printf("%9d %2d/%-4d %p  %s\n", to->to_time - ticks,
+		db_printf("%9d %2td/%-4td %p  %s\n", to->to_time - ticks,
 		    (bucket - timeout_wheel) / WHEELSIZE,
 		    bucket - timeout_wheel, to->to_arg, name);
 	}
