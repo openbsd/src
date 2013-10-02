@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.9 2008/10/06 20:42:02 chl Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.10 2013/10/02 21:20:22 sf Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -1222,7 +1222,7 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 		if (size == WORD)
 			db_printf("%s", i_name);
 		else if (size == LONG)
-			db_printf("%s", ip->i_extra);
+			db_printf("%s", (char *)ip->i_extra);
 		else {
 			char *cp = ip->i_extra;
 			while (*cp)
@@ -1398,7 +1398,7 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 		case OS: //XXX
 			get_value_inc(imm, loc, len, FALSE);	/* offset */
 			get_value_inc(imm2, loc, 2, FALSE);	/* segment */
-			db_printf("$0x%#lx", imm2);
+			db_printf("$0x%#x", imm2);
 			break;
 		}
 	}
