@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.146 2013/09/14 01:35:01 guenther Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.147 2013/10/02 21:28:11 sf Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2993,7 +2993,7 @@ nfs_print(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 
-	printf("tag VT_NFS, fileid %ld fsid 0x%lx",
+	printf("tag VT_NFS, fileid %lld fsid 0x%lx",
 		np->n_vattr.va_fileid, np->n_vattr.va_fsid);
 #ifdef FIFO
 	if (vp->v_type == VFIFO)
