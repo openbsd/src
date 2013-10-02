@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.524 2013/09/28 12:40:30 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.525 2013/10/02 21:06:16 sf Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2775,7 +2775,7 @@ dumpsys()
 
 			/* Print out how many MBs we have more to go. */
 			if (dbtob(blkno - dumplo) % (1024 * 1024) < NBPG)
-				printf("%d ",
+				printf("%ld ",
 				    (ptoa(dumpsize) - maddr) / (1024 * 1024));
 #if 0
 			printf("(%x %lld) ", maddr, blkno);
@@ -3225,7 +3225,7 @@ init386(paddr_t first_avail)
 
 			if (extent_alloc_region(iomem_ex, a, e - a, EX_NOWAIT))
 				/* XXX What should we do? */
-				printf("\nWARNING: CAN'T ALLOCATE RAM (%x-%x)"
+				printf("\nWARNING: CAN'T ALLOCATE RAM (%lx-%lx)"
 				    " FROM IOMEM EXTENT MAP!\n", a, e);
 
 			physmem += atop(e - a);

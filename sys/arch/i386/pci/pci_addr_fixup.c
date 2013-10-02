@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.23 2013/10/01 19:41:33 sf Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.24 2013/10/02 21:06:17 sf Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -136,7 +136,7 @@ pci_addr_fixup(struct pcibios_softc *sc, pci_chipset_tag_t pc, int maxbus)
 		start = PCIADDR_ISAMEM_RESERVE;
 	sc->mem_alloc_start = (start + 0x100000 + 1) & ~(0x100000 - 1);
 	sc->port_alloc_start = PCIADDR_ISAPORT_RESERVE;
-	PCIBIOS_PRINTV((" Physical memory end: 0x%08x\n PCI memory mapped I/O "
+	PCIBIOS_PRINTV((" Physical memory end: 0x%08lx\n PCI memory mapped I/O "
 	    "space start: 0x%08x\n", avail_end, sc->mem_alloc_start));
 
 	/* 
