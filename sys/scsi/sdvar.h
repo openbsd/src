@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.41 2013/06/11 16:42:17 deraadt Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.42 2013/10/02 18:59:04 krw Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@ struct sd_softc {
 		u_long	cyls;		/* number of cylinders */
 		u_long	sectors;	/* number of sectors/track */
 		u_long	secsize;	/* number of bytes/sector */
-		daddr_t	disksize;	/* total number sectors */
+		u_int64_t	disksize;	/* total number sectors */
 		u_int32_t	unmap_sectors;	/* maximum sectors/unmap */
 		u_int32_t	unmap_descs;	/* maximum descriptors/unmap */
 	} params;
