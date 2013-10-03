@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.272 2013/09/10 15:17:46 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.273 2013/10/03 18:50:30 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1217,7 +1217,7 @@ getuint64(struct disklabel *lp, char *prompt, char *helpstring,
 					if (*p == '+' || *p == '-')
 						operator = *p++;
 					percent = strtod(p, NULL) / 100.0;
-					snprintf(buf, sizeof(buf), "%lld",
+					snprintf(buf, sizeof(buf), "%llu",
 					    DL_GETDSIZE(lp));
 					break;
 				case '&':
