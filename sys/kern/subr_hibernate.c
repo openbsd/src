@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.60 2013/09/29 15:47:35 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.61 2013/10/03 03:51:16 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -66,6 +66,16 @@ vaddr_t hibernate_copy_page;
 union hibernate_info disk_hiber_info;
 paddr_t global_pig_start;
 vaddr_t global_piglet_va;
+
+/* #define HIB_DEBUG */
+#ifdef HIB_DEBUG
+int	hib_debug = 99;
+#define DPRINTF(x...)     do { if (hib_debug) printf(x); } while (0)
+#define DNPRINTF(n,x...)  do { if (hib_debug > (n)) printf(x); } while (0)
+#else
+#define DPRINTF(x...)
+#define DNPRINTF(n,x...)
+#endif
 
 void hibernate_copy_chunk_to_piglet(paddr_t, vaddr_t, size_t);
 
@@ -950,7 +960,7 @@ hibernate_write_chunktable(union hibernate_info *hiber_info)
 	vaddr_t hibernate_chunk_table_start;
 	size_t hibernate_chunk_table_size;
 	daddr_t chunkbase;
-	int i;
+	int i, err;
 
 	hibernate_chunk_table_size = HIBERNATE_CHUNK_TABLE_SIZE;
 
@@ -965,11 +975,13 @@ hibernate_write_chunktable(union hibernate_info *hiber_info)
 
 	/* Write chunk table */
 	for (i = 0; i < hibernate_chunk_table_size; i += MAXPHYS) {
-		if (hiber_info->io_func(hiber_info->device,
+		if ((err = hiber_info->io_func(hiber_info->device,
 		    chunkbase + (i/hiber_info->secsize),
 		    (vaddr_t)(hibernate_chunk_table_start + i),
-		    MAXPHYS, HIB_W, hiber_info->io_page))
+		    MAXPHYS, HIB_W, hiber_info->io_page))) {
+			DPRINTF("chunktable write error: %d\n", err);
 			return (EIO);
+		}
 	}
 
 	return (0);
@@ -993,10 +1005,8 @@ hibernate_clear_signature(void)
 		return (1);
 
 	/* Write (zeroed) hibernate info to disk */
-#ifdef HIBERNATE_DEBUG
-	printf("clearing hibernate signature block location: %lld\n",
+	DPRINTF("clearing hibernate signature block location: %lld\n",
 		hiber_info.sig_offset - hiber_info.swap_offset);
-#endif /* HIBERNATE_DEBUG */
 	if (hibernate_block_io(&hiber_info,
 	    hiber_info.sig_offset - hiber_info.swap_offset,
 	    hiber_info.secsize, (vaddr_t)&blank_hiber_info, 1))
@@ -1047,27 +1057,21 @@ hibernate_compare_signature(union hibernate_info *mine,
 	u_int i;
 
 	if (mine->nranges != disk->nranges) {
-#ifdef HIBERNATE_DEBUG
-		printf("hibernate memory range count mismatch\n");
-#endif
+		DPRINTF("hibernate memory range count mismatch\n");
 		return (1);
 	}
 
 	if (strcmp(mine->kernel_version, disk->kernel_version) != 0) {
-#ifdef HIBERNATE_DEBUG
-		printf("hibernate kernel version mismatch\n");
-#endif
+		DPRINTF("hibernate kernel version mismatch\n");
 		return (1);
 	}
 
 	for (i = 0; i < mine->nranges; i++) {
 		if ((mine->ranges[i].base != disk->ranges[i].base) ||
 		    (mine->ranges[i].end != disk->ranges[i].end) ) {
-#ifdef HIBERNATE_DEBUG
-			printf("hib range %d mismatch [%p-%p != %p-%p]\n",
+			DPRINTF("hib range %d mismatch [%p-%p != %p-%p]\n",
 				i, mine->ranges[i].base, mine->ranges[i].end,
 				disk->ranges[i].base, disk->ranges[i].end);
-#endif
 			return (1);
 		}
 	}
@@ -1158,10 +1162,8 @@ hibernate_resume(void)
 	/* Read hibernate info from disk */
 	s = splbio();
 
-#ifdef HIBERNATE_DEBUG
-	printf("reading hibernate signature block location: %lld\n",
+	DPRINTF("reading hibernate signature block location: %lld\n",
 		hiber_info.sig_offset - hiber_info.swap_offset);
-#endif /* HIBERNATE_DEBUG */
 
 	if (hibernate_block_io(&hiber_info,
 	    hiber_info.sig_offset - hiber_info.swap_offset,
@@ -1379,7 +1381,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 	struct hibernate_disk_chunk *chunks;
 	vaddr_t hibernate_io_page = hiber_info->piglet_va + PAGE_SIZE;
 	daddr_t blkctr = hiber_info->image_offset, offset = 0;
-	int i;
+	int i, err;
 	struct hibernate_zlib_state *hibernate_state;
 
 	hibernate_state =
@@ -1400,8 +1402,10 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 
 	hibernate_copy_page = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
 	    &kp_none, &kd_nowait);
-	if (!hibernate_copy_page)
+	if (!hibernate_copy_page) {
+		DPRINTF("out of memory allocating hibernate_copy_page\n");
 		return (ENOMEM);
+	}
 
 	pmap_kenter_pa(hibernate_copy_page,
 	    (hiber_info->piglet_pa + 3*PAGE_SIZE), VM_PROT_ALL);
@@ -1439,8 +1443,10 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 		chunks[i].offset = blkctr;
 
 		/* Reset zlib for deflate */
-		if (hibernate_zlib_reset(hiber_info, 1) != Z_OK)
+		if (hibernate_zlib_reset(hiber_info, 1) != Z_OK) {
+			DPRINTF("hibernate_zlib_reset failed for deflate\n");
 			return (ENOMEM);
+		}
 
 		inaddr = range_base;
 
@@ -1480,20 +1486,25 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 					nblocks =
 					    PAGE_SIZE / hiber_info->secsize;
 
-					if (hiber_info->io_func(
+					if ((err = hiber_info->io_func(
 					    hiber_info->device,
 					    blkctr, (vaddr_t)hibernate_io_page,
 					    PAGE_SIZE, HIB_W,
-					    hiber_info->io_page))
+					    hiber_info->io_page))) {
+						DPRINTF("hib write error %d\n",
+							err);
 						return (EIO);
+					}
 
 					blkctr += nblocks;
 				}
 			}
 		}
 
-		if (inaddr != range_end)
+		if (inaddr != range_end) {
+			DPRINTF("deflate range ended prematurely\n");
 			return (EINVAL);
+		}
 
 		/*
 		 * End of range. Round up to next secsize bytes
@@ -1509,9 +1520,11 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 		    (caddr_t)hibernate_io_page + (PAGE_SIZE - out_remaining);
 		hibernate_state->hib_stream.avail_out = out_remaining;
 
-		if (deflate(&hibernate_state->hib_stream, Z_FINISH) !=
-		    Z_STREAM_END)
+		if ((err = deflate(&hibernate_state->hib_stream, Z_FINISH)) !=
+		    Z_STREAM_END) {
+			DPRINTF("deflate error in output stream: %d\n", err);
 			return (EIO);
+		}
 
 		out_remaining = hibernate_state->hib_stream.avail_out;
 
@@ -1523,10 +1536,12 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 			nblocks ++;
 
 		/* Write final block(s) for this chunk */
-		if (hiber_info->io_func(hiber_info->device, blkctr,
+		if ((err = hiber_info->io_func(hiber_info->device, blkctr,
 		    (vaddr_t)hibernate_io_page, nblocks*hiber_info->secsize,
-		    HIB_W, hiber_info->io_page))
+		    HIB_W, hiber_info->io_page))) {
+			DPRINTF("hib final write error %d\n", err);
 			return (EIO);
+		}
 
 		blkctr += nblocks;
 
@@ -1901,8 +1916,10 @@ hibernate_suspend(void)
 	 * This also allocates a piglet whose physaddr is stored in
 	 * hib_info->piglet_pa and vaddr stored in hib_info->piglet_va
 	 */
-	if (get_hibernate_info(&hib_info, 1))
+	if (get_hibernate_info(&hib_info, 1)) {
+		DPRINTF("failed to obtain hibernate info\n");
 		return (1);
+	}
 
 	swap_size = hib_info.image_size + hib_info.secsize +
 		HIBERNATE_CHUNK_TABLE_SIZE;
@@ -1919,14 +1936,20 @@ hibernate_suspend(void)
 	/* Stash the piglet VA so we can free it in the resuming kernel */
 	global_piglet_va = hib_info.piglet_va;
 
-	if (hibernate_write_chunks(&hib_info))
+	if (hibernate_write_chunks(&hib_info)) {
+		DPRINTF("hibernate_write_chunks failed\n");
 		return (1);
+	}
 
-	if (hibernate_write_chunktable(&hib_info))
+	if (hibernate_write_chunktable(&hib_info)) {
+		DPRINTF("hibernate_write_chunktable failed\n");
 		return (1);
+	}
 
-	if (hibernate_write_signature(&hib_info))
+	if (hibernate_write_signature(&hib_info)) {
+		DPRINTF("hibernate_write_signature failed\n");
 		return (1);
+	}
 
 	/* Allow the disk to settle */
 	delay(500000);
