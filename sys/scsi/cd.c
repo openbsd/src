@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.211 2013/09/27 11:43:19 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.212 2013/10/03 14:07:41 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -457,7 +457,7 @@ cdstrategy(struct buf *bp)
 		goto bad;
 	}
 
-	SC_DEBUG(sc->sc_link, SDEV_DB2, ("cdstrategy: %ld bytes @ blk %d\n",
+	SC_DEBUG(sc->sc_link, SDEV_DB2, ("cdstrategy: %ld bytes @ blk %lld\n",
 	    bp->b_bcount, bp->b_blkno));
 	/*
 	 * If the device has been made invalid, error out

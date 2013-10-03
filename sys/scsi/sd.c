@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.249 2013/10/02 18:59:04 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.250 2013/10/03 14:07:42 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -225,7 +225,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 
 	switch (result) {
 	case SDGP_RESULT_OK:
-		printf("%s: %lldMB, %lu bytes/sector, %lld sectors",
+		printf("%s: %lluMB, %lu bytes/sector, %llu sectors",
 		    sc->sc_dev.dv_xname,
 		    dp->disksize / (1048576 / dp->secsize), dp->secsize,
 		    dp->disksize);
@@ -531,7 +531,7 @@ sdstrategy(struct buf *bp)
 		goto bad;
 	}
 
-	SC_DEBUG(sc->sc_link, SDEV_DB2, ("sdstrategy: %ld bytes @ blk %d\n",
+	SC_DEBUG(sc->sc_link, SDEV_DB2, ("sdstrategy: %ld bytes @ blk %lld\n",
 	    bp->b_bcount, bp->b_blkno));
 	/*
 	 * If the device has been made invalid, error out
@@ -1325,7 +1325,7 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 			return (ENXIO);
 #else	/* SD_DUMP_NOT_TRUSTED */
 		/* Let's just talk about this first... */
-		printf("sd%d: dump addr 0x%x, blk %d\n", unit, va, blkno);
+		printf("sd%d: dump addr 0x%x, blk %lld\n", unit, va, blkno);
 		delay(500 * 1000);	/* half a second */
 #endif	/* SD_DUMP_NOT_TRUSTED */
 
