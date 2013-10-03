@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.52 2013/10/03 19:32:25 schwarze Exp $ */
+/*	$Id: roff.c,v 1.53 2013/10/03 22:04:08 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -93,11 +93,10 @@ struct	roffkv {
 
 /*
  * A single number register as part of a singly-linked list.
- * Registers are assumed to be unsigned ints for now.
  */
 struct	roffreg {
 	struct roffstr	 key;
-	unsigned int	 u;
+	int		 val;
 	struct roffreg	*next;
 };
 
@@ -182,6 +181,8 @@ static	void		 roff_free1(struct roff *);
 static	void		 roff_freereg(struct roffreg *);
 static	void		 roff_freestr(struct roffkv *);
 static	char		*roff_getname(struct roff *, char **, int, int);
+static	int		 roff_getregn(const struct roff *,
+				const char *, size_t);
 static	const char	*roff_getstrn(const struct roff *, 
 				const char *, size_t);
 static	enum rofferr	 roff_it(ROFF_ARGS);
@@ -476,22 +477,23 @@ roff_alloc(enum mparset type, struct mparse *parse)
 }
 
 /*
- * Pre-filter each and every line for reserved words (one beginning with
- * `\*', e.g., `\*(ab').  These must be handled before the actual line
- * is processed. 
- * This also checks the syntax of regular escapes.
+ * In the current line, expand user-defined strings ("\*")
+ * and references to number registers ("\n").
+ * Also check the syntax of other escape sequences.
  */
 static enum rofferr
 roff_res(struct roff *r, char **bufp, size_t *szp, int ln, int pos)
 {
-	enum mandoc_esc	 esc;
+	char		 ubuf[12]; /* buffer to print the number */
 	const char	*stesc;	/* start of an escape sequence ('\\') */
 	const char	*stnam;	/* start of the name, after "[(*" */
 	const char	*cp;	/* end of the name, e.g. before ']' */
 	const char	*res;	/* the string to be substituted */
-	int		 i, maxl, expand_count;
-	size_t		 nsz;
-	char		*n;
+	char		*nbuf;	/* new buffer to copy bufp to */
+	size_t		 nsz;	/* size of the new buffer */
+	size_t		 maxl;  /* expected length of the escape name */
+	size_t		 naml;	/* actual length of the escape name */
+	int		 expand_count;	/* to avoid infinite loops */
 
 	expand_count = 0;
 
@@ -501,7 +503,7 @@ again:
 		stesc = cp++;
 
 		/*
-		 * The second character must be an asterisk.
+		 * The second character must be an asterisk or an n.
 		 * If it isn't, skip it anyway:  It is escaped,
 		 * so it can't start another escape sequence.
 		 */
@@ -509,12 +511,16 @@ again:
 		if ('\0' == *cp)
 			return(ROFF_CONT);
 
-		if ('*' != *cp) {
-			res = cp;
-			esc = mandoc_escape(&cp, NULL, NULL);
-			if (ESCAPE_ERROR != esc)
+		switch (*cp) {
+		case ('*'):
+			res = NULL;
+			break;
+		case ('n'):
+			res = ubuf;
+			break;
+		default:
+			if (ESCAPE_ERROR != mandoc_escape(&cp, NULL, NULL))
 				continue;
-			cp = res;
 			mandoc_msg
 				(MANDOCERR_BADESCAPE, r->parse, 
 				 ln, (int)(stesc - *bufp), NULL);
@@ -525,7 +531,7 @@ again:
 
 		/*
 		 * The third character decides the length
-		 * of the name of the string.
+		 * of the name of the string or register.
 		 * Save a pointer to the name.
 		 */
 
@@ -548,7 +554,7 @@ again:
 
 		/* Advance to the end of the name. */
 
-		for (i = 0; 0 == maxl || i < maxl; i++, cp++) {
+		for (naml = 0; 0 == maxl || naml < maxl; naml++, cp++) {
 			if ('\0' == *cp) {
 				mandoc_msg
 					(MANDOCERR_BADESCAPE, 
@@ -565,7 +571,11 @@ again:
 		 * undefined, resume searching for escapes.
 		 */
 
-		res = roff_getstrn(r, stnam, (size_t)i);
+		if (NULL == res)
+			res = roff_getstrn(r, stnam, naml);
+		else
+			snprintf(ubuf, sizeof(ubuf), "%d",
+			    roff_getregn(r, stnam, naml));
 
 		if (NULL == res) {
 			mandoc_msg
@@ -579,15 +589,15 @@ again:
 		pos = stesc - *bufp;
 
 		nsz = *szp + strlen(res) + 1;
-		n = mandoc_malloc(nsz);
+		nbuf = mandoc_malloc(nsz);
 
-		strlcpy(n, *bufp, (size_t)(stesc - *bufp + 1));
-		strlcat(n, res, nsz);
-		strlcat(n, cp + (maxl ? 0 : 1), nsz);
+		strlcpy(nbuf, *bufp, (size_t)(stesc - *bufp + 1));
+		strlcat(nbuf, res, nsz);
+		strlcat(nbuf, cp + (maxl ? 0 : 1), nsz);
 
 		free(*bufp);
 
-		*bufp = n;
+		*bufp = nbuf;
 		*szp = nsz;
 
 		if (EXPAND_LIMIT >= ++expand_count)
@@ -1259,7 +1269,7 @@ roff_ds(ROFF_ARGS)
 }
 
 void
-roff_setreg(struct roff *r, const char *name, unsigned int val)
+roff_setreg(struct roff *r, const char *name, int val)
 {
 	struct roffreg	*reg;
 
@@ -1278,17 +1288,30 @@ roff_setreg(struct roff *r, const char *name, unsigned int val)
 		r->regtab = reg;
 	}
 
-	reg->u = val;
+	reg->val = val;
 }
 
-unsigned int
+int
 roff_getreg(const struct roff *r, const char *name)
 {
 	struct roffreg	*reg;
 
 	for (reg = r->regtab; reg; reg = reg->next)
 		if (0 == strcmp(name, reg->key.p))
-			return(reg->u);
+			return(reg->val);
+
+	return(0);
+}
+
+static int
+roff_getregn(const struct roff *r, const char *name, size_t len)
+{
+	struct roffreg	*reg;
+
+	for (reg = r->regtab; reg; reg = reg->next)
+		if (len == reg->key.sz &&
+		    0 == strncmp(name, reg->key.p, len))
+			return(reg->val);
 
 	return(0);
 }
@@ -1318,10 +1341,8 @@ roff_nr(ROFF_ARGS)
 	key = roff_getname(r, &val, ln, pos);
 
 	iv = mandoc_strntoi(val, strlen(val), 10);
-	if (0 > iv)
-		iv = 0;
 
-	roff_setreg(r, key, (unsigned)iv);
+	roff_setreg(r, key, iv);
 
 	return(ROFF_IGN);
 }

@@ -1,0 +1,10 @@
+.TH NR-INT 1 "October 3, 2013" OpenBSD
+.SH NAME
+nr-int \- integer number registers
+.SH DESCRIPTION
+initial contents: \nY \n(YY \n[YYY]
+.br
+.nr Y 42
+.nr YY -1
+.nr YYY 2147483647
+final contents: \nY \n(YY \n[YYY]

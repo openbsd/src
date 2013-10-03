@@ -1,0 +1,14 @@
+NR-INT(1)                  OpenBSD Reference Manual                  NR-INT(1)
+
+
+
+NNAAMMEE
+       nr-int - integer number registers
+
+DDEESSCCRRIIPPTTIIOONN
+       initial contents: 0 0 0
+       final contents: 42 -1 2147483647
+
+
+
+OpenBSD                         October 3, 2013                      NR-INT(1)
