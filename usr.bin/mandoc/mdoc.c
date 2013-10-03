@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.93 2012/11/17 00:25:20 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.94 2013/10/03 19:32:25 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -291,12 +291,10 @@ mdoc_parseln(struct mdoc *mdoc, int ln, char *buf, int offs)
 	 * whether this mode is on or off.
 	 * Note that this mode is also switched by the Sh macro.
 	 */
-	if (roff_regisset(mdoc->roff, REG_nS)) {
-		if (roff_regget(mdoc->roff, REG_nS))
-			mdoc->flags |= MDOC_SYNOPSIS;
-		else
-			mdoc->flags &= ~MDOC_SYNOPSIS;
-	}
+	if (roff_getreg(mdoc->roff, "nS"))
+		mdoc->flags |= MDOC_SYNOPSIS;
+	else
+		mdoc->flags &= ~MDOC_SYNOPSIS;
 
 	return(roff_getcontrol(mdoc->roff, buf, &offs) ?
 			mdoc_pmacro(mdoc, ln, buf, offs) :

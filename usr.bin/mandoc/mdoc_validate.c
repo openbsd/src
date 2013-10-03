@@ -1,7 +1,7 @@
-/*	$Id: mdoc_validate.c,v 1.111 2013/09/16 00:25:06 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.112 2013/10/03 19:32:25 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -884,8 +884,6 @@ pre_sh(PRE_ARGS)
 
 	if (MDOC_BLOCK != n->type)
 		return(1);
-
-	roff_regunset(mdoc->roff, REG_nS);
 	return(check_parent(mdoc, n, MDOC_MAX, MDOC_ROOT));
 }
 
@@ -1901,10 +1899,13 @@ post_sh_head(POST_ARGS)
 
 	/* The SYNOPSIS gets special attention in other areas. */
 
-	if (SEC_SYNOPSIS == sec)
+	if (SEC_SYNOPSIS == sec) {
+		roff_setreg(mdoc->roff, "nS", 1);
 		mdoc->flags |= MDOC_SYNOPSIS;
-	else
+	} else {
+		roff_setreg(mdoc->roff, "nS", 0);
 		mdoc->flags &= ~MDOC_SYNOPSIS;
+	}
 
 	/* Mark our last section. */
 
