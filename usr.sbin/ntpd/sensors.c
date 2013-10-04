@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.46 2012/09/20 12:43:16 patrick Exp $ */
+/*	$OpenBSD: sensors.c,v 1.47 2013/10/04 14:28:16 phessler Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -140,7 +140,7 @@ sensor_add(int sensordev, char *dxname)
 	s->sensordevid = sensordev;
 
 	if (cs->refstr == NULL)
-		memcpy(&s->refid, "HARD", sizeof(s->refid));
+		memcpy(&s->refid, SENSOR_DEFAULT_REFID, sizeof(s->refid));
 	else {
 		s->refid = 0;
 		strncpy((char *)&s->refid, cs->refstr, sizeof(s->refid));

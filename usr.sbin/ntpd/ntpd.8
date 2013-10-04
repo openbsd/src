@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.35 2013/08/14 06:32:37 jmc Exp $
+.\" $OpenBSD: ntpd.8,v 1.36 2013/10/04 14:28:16 phessler Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: October 4 2013 $
 .Dt NTPD 8
 .Os
 .Sh NAME
@@ -130,12 +130,16 @@ signal, it writes its peer and sensor status to
 Default configuration file.
 .It Pa /var/db/ntpd.drift
 Drift file.
+.It Pa /var/run/ntpd.sock
+Socket file for communication with
+.Xr ntpctl 8 .
 .El
 .Sh SEE ALSO
 .Xr date 1 ,
 .Xr adjfreq 2 ,
 .Xr adjtime 2 ,
 .Xr ntpd.conf 5 ,
+.Xr ntpctl 8 ,
 .Xr rc 8 ,
 .Xr rc.conf 8 ,
 .Xr rdate 8

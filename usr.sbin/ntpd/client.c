@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.90 2013/04/30 11:42:56 mglocker Exp $ */
+/*	$OpenBSD: client.c,v 1.91 2013/10/04 14:28:16 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -36,6 +36,7 @@ set_next(struct ntp_peer *p, time_t t)
 {
 	p->next = getmonotime() + t;
 	p->deadline = 0;
+	p->poll = t;
 }
 
 void
@@ -328,6 +329,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 
 	p->reply[p->shift].offset = ((T2 - T1) + (T3 - T4)) / 2;
 	p->reply[p->shift].delay = (T4 - T1) - (T3 - T2);
+	p->reply[p->shift].status.stratum = msg.stratum;
 	if (p->reply[p->shift].delay < 0) {
 		interval = error_interval();
 		set_next(p, interval);
@@ -348,7 +350,6 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	p->reply[p->shift].status.refid = msg.refid;
 	p->reply[p->shift].status.reftime = lfp_to_d(msg.reftime);
 	p->reply[p->shift].status.poll = msg.ppoll;
-	p->reply[p->shift].status.stratum = msg.stratum;
 
 	if (p->addr->ss.ss_family == AF_INET) {
 		p->reply[p->shift].status.send_refid =
