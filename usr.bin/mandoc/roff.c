@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.55 2013/10/03 22:56:18 schwarze Exp $ */
+/*	$Id: roff.c,v 1.56 2013/10/04 02:01:58 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -181,6 +181,8 @@ static	void		 roff_free1(struct roff *);
 static	void		 roff_freereg(struct roffreg *);
 static	void		 roff_freestr(struct roffkv *);
 static	char		*roff_getname(struct roff *, char **, int, int);
+static	int		 roff_getnum(const char *, int *, int *);
+static	int		 roff_getop(const char *, int *, char *);
 static	int		 roff_getregn(const struct roff *,
 				const char *, size_t);
 static	const char	*roff_getstrn(const struct roff *, 
@@ -1121,9 +1123,61 @@ roff_cond_text(ROFF_ARGS)
 	return(ROFFRULE_DENY == rr ? ROFF_IGN : ROFF_CONT);
 }
 
+static int
+roff_getnum(const char *v, int *pos, int *res)
+{
+	int p, n;
+
+	p = *pos;
+	n = v[p] == '-';
+	if (n)
+		p++;
+
+	for (*res = 0; isdigit((unsigned char)v[p]); p++)
+		*res += 10 * *res + v[p] - '0';
+	if (p == *pos + n)
+		return 0;
+
+	if (n)
+		*res = -*res;
+
+	*pos = p;
+	return 1;
+}
+
+static int
+roff_getop(const char *v, int *pos, char *res)
+{
+	int e;
+
+	*res = v[*pos];
+	e = v[*pos + 1] == '=';
+
+	switch (*res) {
+	case '=':
+		break;
+	case '>':
+		if (e)
+			*res = 'g';
+		break;
+	case '<':
+		if (e)
+			*res = 'l';
+		break;
+	default:
+		return(0);
+	}
+
+	*pos += 1 + e;
+
+	return(*res);
+}
+
 static enum roffrule
 roff_evalcond(const char *v, int *pos)
 {
+	int	 not, lh, rh;
+	char	 op;
 
 	switch (v[*pos]) {
 	case ('n'):
@@ -1136,13 +1190,47 @@ roff_evalcond(const char *v, int *pos)
 	case ('t'):
 		(*pos)++;
 		return(ROFFRULE_DENY);
+	case ('!'):
+		(*pos)++;
+		not = 1;
+		break;
 	default:
+		not = 0;
 		break;
 	}
 
-	while (v[*pos] && ' ' != v[*pos])
-		(*pos)++;
-	return(ROFFRULE_DENY);
+	if (!roff_getnum(v, pos, &lh))
+		return ROFFRULE_DENY;
+	if (!roff_getop(v, pos, &op)) {
+		if (lh < 0)
+			lh = 0;
+		goto out;
+	}
+	if (!roff_getnum(v, pos, &rh))
+		return ROFFRULE_DENY;
+	switch (op) {
+	case 'g':
+		lh = lh >= rh;
+		break;
+	case 'l':
+		lh = lh <= rh;
+		break;
+	case '=':
+		lh = lh == rh;
+		break;
+	case '>':
+		lh = lh > rh;
+		break;
+	case '<':
+		lh = lh < rh;
+		break;
+	default:
+		return ROFFRULE_DENY;
+	}
+out:
+	if (not)
+		lh = !lh;
+	return lh ? ROFFRULE_ALLOW : ROFFRULE_DENY;
 }
 
 /* ARGSUSED */
