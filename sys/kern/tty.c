@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.99 2013/06/10 04:44:30 guenther Exp $	*/
+/*	$OpenBSD: tty.c,v 1.100 2013/10/04 17:52:55 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1065,7 +1065,10 @@ ttpoll(dev_t device, int events, struct proc *p)
 		    !ISSET(tp->t_state, TS_CARR_ON)))
 			revents |= events & (POLLIN | POLLRDNORM);
 	}
-	if (events & (POLLOUT | POLLWRNORM)) {
+	/* NOTE: POLLHUP and POLLOUT/POLLWRNORM are mutually exclusive */
+	if (!ISSET(tp->t_cflag, CLOCAL) && !ISSET(tp->t_state, TS_CARR_ON)) {
+		revents |= POLLHUP;
+	} else if (events & (POLLOUT | POLLWRNORM)) {
 		if (tp->t_outq.c_cc <= tp->t_lowat)
 			revents |= events & (POLLOUT | POLLWRNORM);
 	}
