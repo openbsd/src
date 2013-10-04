@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.30 2013/07/05 02:37:30 brad Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.31 2013/10/04 07:27:36 brad Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -1780,7 +1780,7 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 			temp_mute( bktr, FALSE );
 			return( EINVAL );
 		}
-		*(unsigned int *)arg = temp;
+		*(unsigned int *)arg = tmp_int;
 
 		/* after every channel change, we must restart the MSP34xx */
 		/* audio chip to reselect NICAM STEREO or MONO audio */
