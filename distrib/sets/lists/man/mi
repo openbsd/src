@@ -2707,6 +2707,7 @@
 ./usr/share/man/man8/aviion/MAKEDEV.8
 ./usr/share/man/man8/aviion/a2coff.8
 ./usr/share/man/man8/aviion/installboot.8
+./usr/share/man/man8/aviion/vdmtool.8
 ./usr/share/man/man8/badsect.8
 ./usr/share/man/man8/bgpctl.8
 ./usr/share/man/man8/bgpd.8
