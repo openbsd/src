@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.70 2013/10/04 14:28:16 phessler Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.71 2013/10/04 20:30:38 schwarze Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -80,13 +80,11 @@ usage(void)
 {
 	extern char *__progname;
 
-	if (strcmp(__progname, "ntpd") == 0)
+	if (strcmp(__progname, "ntpctl") == 0)
+		fprintf(stderr, "usage: ntpctl [-s modifier]\n");
+	else
 		fprintf(stderr, "usage: %s [-dnSsv] [-f file]\n",
 		    __progname);
-	else if (strcmp(__progname, "ntpctl") == 0)
-		fprintf(stderr, "usage: %s [-s modifier]\n", __progname);
-	else
-		fprintf(stderr, "Invalid program name: %s\n", __progname);
 	exit(1);
 }
 
@@ -741,10 +739,10 @@ show_peer_msg(struct imsg *imsg, int calledfromshowall)
 	else
 		strlcpy (stratum, " -", sizeof (stratum));
 
-	printf("%s\n %1s %2u %2u %2s %4ds %4ds",
+	printf("%s\n %1s %2u %2u %2s %4llds %4llds",
 	    cpeer->peer_desc, cpeer->syncedto == 1 ? "*" : " ",
-	    cpeer->weight, cpeer->trustlevel, stratum, cpeer->next,
-	    cpeer->poll);
+	    cpeer->weight, cpeer->trustlevel, stratum,
+	    (long long)cpeer->next, (long long)cpeer->poll);
 
 	if (cpeer->trustlevel >= TRUSTLEVEL_BADPEER)
 		printf("  %12.3fms %9.3fms  %8.3fms\n", cpeer->offset,
@@ -786,9 +784,10 @@ show_sensor_msg(struct imsg *imsg, int calledfromshowall)
 		    "offset  correction\n");
 	}
 
-	printf("%s\n %1s %2u %2u %2u %4ds %4ds", csensor->sensor_desc,
-	    csensor->syncedto == 1 ? "*" : " ", csensor->weight, csensor->good,
-	    csensor->stratum, csensor->next, csensor->poll);
+	printf("%s\n %1s %2u %2u %2u %4llds %4llds",
+	    csensor->sensor_desc, csensor->syncedto == 1 ? "*" : " ",
+	    csensor->weight, csensor->good, csensor->stratum,
+	    (long long)csensor->next, (long long)csensor->poll);
 
 	if (csensor->good == 1)
 		printf("   %11.3fms %9.3fms\n",
