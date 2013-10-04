@@ -1,0 +1,100 @@
+.TH COND-NUMERIC 1 "October 3, 2013" OpenBSD
+.SH NAME
+cond-numeric \- roff conditions involving numbers
+.SH DESCRIPTION
+positive number:
+plain
+.ie 42 (t)
+.el (f)
+negated
+.ie !42 (t)
+.el (f)
+.PP
+negative number:
+plain
+.ie -42 (t)
+.el (f)
+negated
+.ie !-42 (t)
+.el (f)
+.PP
+second number missing:
+.ie 42=bad worse
+.el ok
+.PP
+operator "<":
+smaller
+.ie 1<2 (t)
+.el (f)
+equal
+.ie 1<1 (t)
+.el (f)
+greater
+.ie 2<1 (t)
+.el (f)
+.PP
+operator "<=":
+smaller
+.ie 1<=2 (t)
+.el (f)
+equal
+.ie 1<=1 (t)
+.el (f)
+greater
+.ie 2<=1 (t)
+.el (f)
+.PP
+operator "=":
+smaller
+.ie 1=2 (t)
+.el (f)
+equal
+.ie 1=1 (t)
+.el (f)
+greater
+.ie 2=1 (t)
+.el (f)
+.PP
+operator "==":
+smaller
+.ie 1==2 (t)
+.el (f)
+equal
+.ie 1==1 (t)
+.el (f)
+greater
+.ie 2==1 (t)
+.el (f)
+.PP
+operator ">=":
+smaller
+.ie 1>=2 (t)
+.el (f)
+equal
+.ie 1>=1 (t)
+.el (f)
+greater
+.ie 2>=1 (t)
+.el (f)
+.PP
+operator ">":
+smaller
+.ie 1>2 (t)
+.el (f)
+equal
+.ie 1>1 (t)
+.el (f)
+greater
+.ie 2>1 (t)
+.el (f)
+.PP
+with negative numbers:
+mm
+.ie -2<-1 (t)
+.el (f)
+mp
+.ie -2<1 (t)
+.el (f)
+pm
+.ie 1>-2 (t)
+.el (f)
