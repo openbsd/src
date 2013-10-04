@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.56 2010/05/24 15:04:54 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.57 2013/10/04 18:34:46 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -86,9 +86,12 @@ void heartbeat(void *);
 #include "cd.h"
 #include "sd.h"
 #include "st.h"
-#if NCD > 0 || NSD > 0 || NST > 0
+#include "mpath.h"
+
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+#if NMPATH > 0
+#include <scsi/mpathvar.h>
 #endif
 
 #ifdef USELEDS
@@ -362,8 +365,10 @@ device_register(struct device *dev, void *aux)
 #if NPCI > 0
 	extern struct cfdriver pci_cd;
 #endif
+#if NCD > 0 || NSD > 0 || NST > 0
+	extern struct cfdriver scsibus_cd;
+#endif
 	struct confargs *ca = aux;
-	char *basename;
 	static struct device *elder = NULL;
 
 	if (bootdv != NULL)
@@ -420,6 +425,7 @@ device_register(struct device *dev, void *aux)
 		}
 		return;
 	case DV_DISK:
+	case DV_DULL:
 		if ((PAGE0->mem_boot.pz_class & PCL_CLASS_MASK) != PCL_RANDOM)
 			return;
 		break;
@@ -435,16 +441,14 @@ device_register(struct device *dev, void *aux)
 	/*
 	 * If control goes here, we are booted from a block device and we
 	 * matched a block device.
+	 *
+	 * We only grok SCSI boot currently.  Match on proper device
+	 * hierarchy and unit/lun values.
 	 */
-	basename = dev->dv_cfdata->cf_driver->cd_name;
 
-	/*
-	 * We only grok SCSI boot currently. Match on proper device hierarchy,
-	 * name and unit/lun values.
-	 */
 #if NCD > 0 || NSD > 0 || NST > 0
-	if (strcmp(basename, "sd") == 0 || strcmp(basename, "cd") == 0 ||
-	    strcmp(basename, "st") == 0) {
+	if (dev->dv_parent &&
+	    dev->dv_parent->dv_cfdata->cf_driver == &scsibus_cd) {
 		struct scsi_attach_args *sa = aux;
 		struct scsi_link *sl = sa->sa_sc_link;
 
@@ -453,8 +457,7 @@ device_register(struct device *dev, void *aux)
 		 * the controller. Hence the grandparent here should be
 		 * the elder.
 		 */
-		if (dev->dv_parent == NULL ||
-		    dev->dv_parent->dv_parent != elder) {
+		if (dev->dv_parent->dv_parent != elder) {
 			return;
 		}
 
@@ -497,6 +500,12 @@ void
 diskconf(void)
 {
 	print_devpath("bootpath", &PAGE0->mem_boot);
+
+#if NMPATH > 0
+	if (bootdv != NULL)
+		bootdv = mpath_bootdv(bootdv);
+#endif
+
 	setroot(bootdv, 0, RB_USERREQ);
 	dumpconf();
 }
