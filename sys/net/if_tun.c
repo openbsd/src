@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.115 2013/05/25 10:05:52 mikeb Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.116 2013/10/04 08:40:32 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -492,10 +492,6 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFDSTADDR:
 		tuninit(tp);
 		TUNDEBUG(("%s: destination address set\n", ifp->if_xname));
-		break;
-	case SIOCSIFBRDADDR:
-		tuninit(tp);
-		TUNDEBUG(("%s: broadcast address set\n", ifp->if_xname));
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > TUNMRU)
