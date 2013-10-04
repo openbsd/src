@@ -4,6 +4,8 @@ D. J. Bernstein
 Public domain.
 */
 
+/* $OpenBSD: chacha_private.h,v 1.2 2013/10/04 07:02:27 djm Exp $ */
+
 typedef unsigned char u8;
 typedef unsigned int u32;
 
@@ -88,9 +90,9 @@ chacha_encrypt_bytes(chacha_ctx *x,const u8 *m,u8 *c,u32 bytes)
 {
   u32 x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15;
   u32 j0, j1, j2, j3, j4, j5, j6, j7, j8, j9, j10, j11, j12, j13, j14, j15;
-  u8 *ctarget;
+  u8 *ctarget = NULL;
   u8 tmp[64];
-  int i;
+  u_int i;
 
   if (!bytes) return;
 
