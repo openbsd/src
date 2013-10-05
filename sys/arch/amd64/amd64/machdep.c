@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.168 2013/10/05 16:58:30 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.169 2013/10/05 17:25:00 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -85,7 +85,6 @@
 #include <sys/extent.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
-#include <sys/wait.h>
 #include <sys/syscallargs.h>
 
 #ifdef KGDB
