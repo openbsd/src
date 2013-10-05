@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.54 2013/09/16 00:25:06 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.55 2013/10/05 21:17:29 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -400,7 +400,8 @@ struct	man;
 __BEGIN_DECLS
 
 void		 *mandoc_calloc(size_t, size_t);
-enum mandoc_esc	  mandoc_escape(const char **, const char **, int *);
+enum mandoc_esc	  mandoc_escape(const char const **,
+			const char const **, int *);
 void		 *mandoc_malloc(size_t);
 void		 *mandoc_realloc(void *, size_t);
 char		 *mandoc_strdup(const char *);

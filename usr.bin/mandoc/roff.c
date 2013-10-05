@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.56 2013/10/04 02:01:58 schwarze Exp $ */
+/*	$Id: roff.c,v 1.57 2013/10/05 21:17:29 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -639,7 +639,7 @@ roff_parsetext(char **bufp, size_t *szp, int pos, int *offs)
 			/* Skip over escapes. */
 			p++;
 			esc = mandoc_escape
-				((const char **)&p, NULL, NULL);
+				((const char const **)&p, NULL, NULL);
 			if (ESCAPE_ERROR == esc)
 				break;
 			continue;

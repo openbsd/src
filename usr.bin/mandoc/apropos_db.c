@@ -1,4 +1,4 @@
-/*	$Id: apropos_db.c,v 1.18 2012/04/15 11:54:47 schwarze Exp $ */
+/*	$Id: apropos_db.c,v 1.19 2013/10/05 21:17:29 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -401,11 +401,10 @@ apropos_search(int pathsz, char **paths, const struct opts *opts,
 {
 	struct rectree	 tree;
 	struct mchars	*mc;
-	int		 i, rc;
+	int		 i;
 
 	memset(&tree, 0, sizeof(struct rectree));
 
-	rc = 0;
 	mc = mchars_alloc();
 	*sz = 0;
 	*resp = NULL;
