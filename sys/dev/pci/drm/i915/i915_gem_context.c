@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_context.c,v 1.1 2013/08/07 00:04:28 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_context.c,v 1.2 2013/10/05 07:30:06 jsg Exp $	*/
 /*
  * Copyright © 2011-2012 Intel Corporation
  *
@@ -417,12 +417,8 @@ static int do_switch(struct i915_hw_context *to)
 		return ret;
 	}
 
-#ifdef notyet
 	if (!to->obj->has_global_gtt_mapping)
-		i915_gem_gtt_bind_object(to->obj, to->obj->cache_level);
-#else
-	i915_gem_gtt_rebind_object(to->obj, to->obj->cache_level);
-#endif
+		i915_gem_gtt_rebind_object(to->obj, to->obj->cache_level);
 
 	if (!to->is_initialized || is_default_context(to))
 		hw_flags |= MI_RESTORE_INHIBIT;

@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.29 2013/09/30 06:47:48 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.30 2013/10/05 07:30:05 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -975,6 +975,9 @@ struct drm_i915_gem_object {
 	unsigned int fenced_gpu_access:1;
 
 	unsigned int cache_level:2;
+
+	unsigned int has_aliasing_ppgtt_mapping:1;
+	unsigned int has_global_gtt_mapping:1;
 
 	bus_dma_segment_t *pages;
 	int pages_pin_count;

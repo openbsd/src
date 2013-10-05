@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.14 2013/09/18 08:50:28 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.15 2013/10/05 07:30:06 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -141,14 +141,12 @@ i915_gem_execbuffer_relocate_entry(struct drm_i915_gem_object *obj,
 	/* Sandybridge PPGTT errata: We need a global gtt mapping for MI and
 	 * pipe_control writes because the gpu doesn't properly redirect them
 	 * through the ppgtt for non_secure batchbuffers. */
-#ifdef notyet
 	if (unlikely(IS_GEN6(dev) &&
 	    reloc->write_domain == I915_GEM_DOMAIN_INSTRUCTION &&
 	    !target_i915_obj->has_global_gtt_mapping)) {
-		i915_gem_gtt_bind_object(target_i915_obj,
+		i915_gem_gtt_rebind_object(target_i915_obj,
 					 target_i915_obj->cache_level);
 	}
-#endif
 
 	/* Validate that the target is in a valid r/w GPU domain */
 	if (unlikely(reloc->write_domain & (reloc->write_domain - 1))) {
@@ -1059,10 +1057,8 @@ i915_gem_do_execbuffer(struct drm_device *dev, void *data,
 	 * batch" bit. Hence we need to pin secure batches into the global gtt.
 	 * hsw should have this fixed, but let's be paranoid and do it
 	 * unconditionally for now. */
-#ifdef notyet
 	if (flags & I915_DISPATCH_SECURE && !batch_obj->has_global_gtt_mapping)
-		i915_gem_gtt_bind_object(batch_obj, batch_obj->cache_level);
-#endif
+		i915_gem_gtt_rebind_object(batch_obj, batch_obj->cache_level);
 
 	ret = i915_gem_execbuffer_move_to_gpu(ring, &objects);
 	if (ret)

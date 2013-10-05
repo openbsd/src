@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.36 2013/10/03 18:12:18 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.37 2013/10/05 07:30:06 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -2574,6 +2574,8 @@ i915_gem_object_unbind(struct drm_i915_gem_object *obj)
 	/* Avoid an unnecessary call to unbind on rebind. */
 	obj->map_and_fenceable = true;
 
+	obj->has_global_gtt_mapping = 0;
+
 	/* XXX persistent dmamap worth the memory? */
 	bus_dmamap_destroy(dev_priv->agpdmat, obj->dmamap);
 	obj->dmamap = NULL;
@@ -3221,8 +3223,8 @@ int i915_gem_object_set_cache_level(struct drm_i915_gem_object *obj,
 				return ret;
 		}
 
-		i915_gem_gtt_rebind_object(obj, cache_level);
-		
+		if (obj->has_global_gtt_mapping)
+			i915_gem_gtt_rebind_object(obj, cache_level);
 #ifdef notyet
 		if (obj->has_aliasing_ppgtt_mapping)
 			i915_ppgtt_bind_object(dev_priv->mm.aliasing_ppgtt,
@@ -3522,12 +3524,24 @@ i915_gem_object_pin(struct drm_i915_gem_object *obj,
 	}
 
 	if (obj->dmamap == NULL) {
+#ifdef notyet
+		struct drm_i915_private *dev_priv = obj->base.dev->dev_private;
+#endif
+
 		ret = i915_gem_object_bind_to_gtt(obj, alignment,
 						  map_and_fenceable,
 						  nonblocking);
 		if (ret)
 			return ret;
+
+#ifdef notyet
+		if (!dev_priv->mm.aliasing_ppgtt)
+#endif
+			i915_gem_gtt_rebind_object(obj, obj->cache_level);
 	}
+
+	if (!obj->has_global_gtt_mapping && map_and_fenceable)
+		i915_gem_gtt_rebind_object(obj, obj->cache_level);
 
 	obj->pin_count++;
 	obj->pin_mappable |= map_and_fenceable;
