@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.56 2013/06/03 16:55:21 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.57 2013/10/05 16:58:30 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -281,6 +281,112 @@ cpu_vm_init(struct cpu_info *ci)
 #endif
 }
 
+#if defined(MULTIPROCESSOR)
+void	cpu_idle_mwait_cycle(void);
+void	cpu_init_mwait(struct cpu_softc *);
+void	cpu_enable_mwait(void);
+
+void
+cpu_idle_mwait_cycle(void)
+{
+	struct cpu_info *ci = curcpu();
+	volatile int *state = &ci->ci_mwait[0];
+
+	if ((read_rflags() & PSL_I) == 0)
+		panic("idle with interrupts blocked!");
+
+	/* something already queued? */
+	if (ci->ci_schedstate.spc_whichqs != 0)
+		return;
+
+	/*
+	 * About to idle; setting the MWAIT_IN_IDLE bit tells
+	 * cpu_unidle() that it can't be a no-op and tells cpu_kick()
+	 * that it doesn't need to use an IPI.  We also set the
+	 * MWAIT_KEEP_IDLING bit: those routines clear it to stop
+	 * the mwait.  Once they're set, we do a final check of the
+	 * queue, in case another cpu called setrunqueue() and added
+	 * something to the queue and called cpu_unidle() between
+	 * the check in sched_idle() and here.
+	 */
+	atomic_setbits_int(state, MWAIT_IDLING);
+	if (ci->ci_schedstate.spc_whichqs == 0) {
+		monitor(state, 0, 0);
+		if ((*state & MWAIT_IDLING) == MWAIT_IDLING)
+			mwait(0, 0);
+	}
+
+	/* done idling; let cpu_kick() know that an IPI is required */
+	atomic_clearbits_int(state, MWAIT_IDLING);
+}
+
+unsigned int mwait_size;
+
+void
+cpu_init_mwait(struct cpu_softc *sc)
+{
+	unsigned int smallest, largest, extensions, c_substates;
+
+	if ((cpu_ecxfeature & CPUIDECX_MWAIT) == 0)
+		return;
+
+	/* get the monitor granularity */
+	CPUID(0x5, smallest, largest, extensions, c_substates);
+	smallest &= 0xffff;
+	largest  &= 0xffff;
+
+	printf("%s: mwait min=%u, max=%u", sc->sc_dev.dv_xname,
+	    smallest, largest);
+	if (extensions & 0x1) {
+		printf(", C-substates=%u.%u.%u.%u.%u",
+		    0xf & (c_substates),
+		    0xf & (c_substates >> 4),
+		    0xf & (c_substates >> 8),
+		    0xf & (c_substates >> 12),
+		    0xf & (c_substates >> 16));
+		if (extensions & 0x2)
+			printf(", IBE");
+	}
+
+	/* paranoia: check the values */
+	if (smallest < sizeof(int) || largest < smallest ||
+	    (largest & (sizeof(int)-1)))
+		printf(" (bogus)");
+	else
+		mwait_size = largest;
+	printf("\n");
+}
+
+void
+cpu_enable_mwait(void)
+{
+	unsigned long area;
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	if (mwait_size == 0)
+		return;
+
+	/*
+	 * Allocate the area, with a bit extra so that we can align
+	 * to a multiple of mwait_size
+	 */
+	area = (unsigned long)malloc((ncpus * mwait_size) + mwait_size
+	    - sizeof(int), M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (area == 0) {
+		printf("cpu0: mwait failed\n");
+	} else {
+		/* round to a multiple of mwait_size  */
+		area = ((area + mwait_size - sizeof(int)) / mwait_size)
+		    * mwait_size;
+		CPU_INFO_FOREACH(cii, ci) {
+			ci->ci_mwait = (int *)area;
+			area += mwait_size;
+		}
+		cpu_idle_cycle_fcn = &cpu_idle_mwait_cycle;
+	}
+}
+#endif /* MULTIPROCESSOR */
 
 void
 cpu_attach(struct device *parent, struct device *self, void *aux)
@@ -388,6 +494,9 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #if NIOAPIC > 0
 		ioapic_bsp_id = caa->cpu_number;
 #endif
+#if defined(MULTIPROCESSOR)
+		cpu_init_mwait(sc);
+#endif
 		break;
 
 	case CPU_ROLE_AP:
@@ -463,6 +572,8 @@ cpu_boot_secondary_processors(void)
 {
 	struct cpu_info *ci;
 	u_long i;
+
+	cpu_enable_mwait();
 
 	for (i=0; i < MAXCPUS; i++) {
 		ci = cpu_info[i];
