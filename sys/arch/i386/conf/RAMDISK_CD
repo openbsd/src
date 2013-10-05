@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.201 2013/09/08 02:53:39 reyk Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.202 2013/10/05 17:05:16 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -130,7 +130,7 @@ axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub?		# CATC USB-EL1201A based Ethernet
 kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 smsc*	at uhub?		# SMSC LAN95xx Ethernet
-upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
+#upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 #urio*	at uhub?		# Diamond Multimedia Rio 500
 cdce*	at uhub?		# CDC Ethernet
 udav*	at uhub?		# Davicom DM9601 based Ethernet
