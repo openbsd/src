@@ -1,4 +1,4 @@
-/* $OpenBSD: imxenet.c,v 1.1 2013/09/06 20:45:53 patrick Exp $ */
+/* $OpenBSD: imxenet.c,v 1.2 2013/10/05 23:05:12 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -140,6 +140,7 @@
 #define ENET_SABRELITE_PHY	6
 #define ENET_PHYFLEX_PHY	3
 #define ENET_PHYFLEX_PHY_RST	87
+#define ENET_WANDBOARD_PHY	1
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
@@ -201,7 +202,7 @@ struct cfattach imxenet_ca = {
 };
 
 struct cfdriver imxenet_cd = {
-	NULL, "imxenet", DV_DULL
+	NULL, "imxenet", DV_IFNET
 };
 
 void
@@ -350,6 +351,7 @@ imxenet_chip_init(struct imxenet_softc *sc)
 {
 	struct device *dev = (struct device *) sc;
 	int phy = 0;
+	uint32_t reg;
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ENET_MSCR,
 	    (((imxccm_get_fecclk() + (ENET_MII_CLK << 2) - 1) / (ENET_MII_CLK << 2)) << 1) | 0x100);
@@ -361,6 +363,9 @@ imxenet_chip_init(struct imxenet_softc *sc)
 		break;
 	case BOARD_ID_IMX6_PHYFLEX:
 		phy = ENET_PHYFLEX_PHY;
+		break;
+	case BOARD_ID_IMX6_WANDBOARD:
+		phy = ENET_WANDBOARD_PHY;
 		break;
 	}
 
@@ -386,6 +391,32 @@ imxenet_chip_init(struct imxenet_softc *sc)
 
 		/* enable all interrupts */
 		imxenet_miibus_writereg(dev, phy, 0x1b, 0xff00);
+		break;
+	case BOARD_ID_IMX6_WANDBOARD:
+		/* disable SmartEEE */
+		imxenet_miibus_writereg(dev, phy, 0x0d, 0x0003);
+		imxenet_miibus_writereg(dev, phy, 0x0e, 0x805d);
+		imxenet_miibus_writereg(dev, phy, 0x0d, 0x4003);
+		reg = imxenet_miibus_readreg(dev, phy, 0x0e);
+		imxenet_miibus_writereg(dev, phy, 0x0e, reg & ~0x0100);
+
+		/* enable 125MHz clk output for AR8031 */
+		imxenet_miibus_writereg(dev, phy, 0x0d, 0x0007);
+		imxenet_miibus_writereg(dev, phy, 0x0e, 0x8016);
+		imxenet_miibus_writereg(dev, phy, 0x0d, 0x4007);
+
+		reg = imxenet_miibus_readreg(dev, phy, 0x0e) & 0xffe3;
+		imxenet_miibus_writereg(dev, phy, 0x0e, reg | 0x18);
+
+		/* tx clock delay */
+		imxenet_miibus_writereg(dev, phy, 0x1d, 0x0005);
+		reg = imxenet_miibus_readreg(dev, phy, 0x1e);
+		imxenet_miibus_writereg(dev, phy, 0x1e, reg | 0x0100);
+
+		/* phy power */
+		reg = imxenet_miibus_readreg(dev, phy, 0x00);
+		if (reg & 0x0800)
+			imxenet_miibus_writereg(dev, phy, 0x00, reg & ~0x0800);
 		break;
 	}
 }
@@ -504,13 +535,15 @@ imxenet_init(struct imxenet_softc *sc)
 	/* rx descriptors are ready */
 	HWRITE4(sc, ENET_RDAR, ENET_RDAR_RDAR);
 
+	/* Indicate we are up and running. */
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
+
 	/* enable interrupts for tx/rx */
 	HWRITE4(sc, ENET_EIMR, ENET_EIR_TXF | ENET_EIR_RXF);
 	HWRITE4(sc, ENET_EIMR, 0xffffffff);
 
-	/* Indicate we are up and running. */
-	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	imxenet_start(ifp);
 }
 
 void
@@ -708,6 +741,10 @@ imxenet_intr(void *arg)
 		if (ifp->if_flags & IFF_RUNNING)
 			imxenet_recv(sc);
 	}
+
+	/* Try to transmit. */
+	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
+		imxenet_start(ifp);
 
 	return 1;
 }

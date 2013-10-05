@@ -1,4 +1,4 @@
-/*	$OpenBSD: imx_machdep.c,v 1.3 2013/09/28 14:16:41 miod Exp $ */
+/*	$OpenBSD: imx_machdep.c,v 1.4 2013/10/05 23:05:12 patrick Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -864,6 +864,10 @@ initarm(void *arg0, void *arg1, void *arg2)
 		amptimer_frequency = 396 * 1000 * 1000;
 		printf("board type: SABRE Lite\n");
 		break;
+	case BOARD_ID_IMX6_WANDBOARD:
+		amptimer_frequency = 396 * 1000 * 1000;
+		printf("board type: Wandboard\n");
+		break;
 	default:
 		printf("board type %x unknown\n", board_id);
 	}
@@ -953,6 +957,9 @@ consinit(void)
 		break;
 	case BOARD_ID_IMX6_SABRELITE:
 		paddr = 0x021e8000;
+		break;
+	case BOARD_ID_IMX6_WANDBOARD:
+		paddr = 0x02020000;
 		break;
 	default:
 		printf("board type %x unknown", board_id);

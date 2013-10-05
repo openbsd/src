@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC-IMX,v 1.2 2013/09/11 11:07:29 rapha Exp $
+# $OpenBSD: GENERIC-IMX,v 1.3 2013/10/05 23:05:11 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -46,7 +46,7 @@ options	CPU_ARMv7	# Support the ARMv7
 option WSDISPLAY_DEFAULTSCREENS=1
 #option WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 
-config		bsd	root on sd0a swap on sd0b
+config		bsd	swap generic
 
 # The main bus device
 mainbus0	at root
@@ -128,6 +128,7 @@ radio*		at udsbr?		# USB radio
 #ubt*		at uhub? disable	# USB Bluetooth
 ugen*		at uhub?		# USB Generic driver
 
+atphy*		at mii?			# Attansic F1 PHYs
 ukphy*		at mii?			# "unknown" PHYs
 
 scsibus*	at scsi?

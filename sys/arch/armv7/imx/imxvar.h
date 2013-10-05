@@ -1,4 +1,4 @@
-/* $OpenBSD: imxvar.h,v 1.1 2013/09/06 20:45:54 patrick Exp $ */
+/* $OpenBSD: imxvar.h,v 1.2 2013/10/05 23:05:12 patrick Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@drahn.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -52,4 +52,5 @@ void *avic_intr_establish(int irqno, int level, int (*func)(void *),
 /* board identification - from uboot */
 #define BOARD_ID_IMX6_PHYFLEX 3529
 #define BOARD_ID_IMX6_SABRELITE 3769
+#define BOARD_ID_IMX6_WANDBOARD 4412
 extern uint32_t board_id;
