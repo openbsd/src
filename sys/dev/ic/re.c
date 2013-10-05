@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.143 2013/08/07 01:06:30 bluhm Exp $	*/
+/*	$OpenBSD: re.c,v 1.144 2013/10/05 22:59:57 kettenis Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1650,6 +1650,9 @@ re_intr(void *arg)
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return (0);
 
+	/* Disable interrupts. */
+	CSR_WRITE_2(sc, RL_IMR, 0);
+
 	rx = tx = 0;
 	status = CSR_READ_2(sc, RL_ISR);
 	/* If the card has gone away the read returns 0xffff. */
@@ -1715,6 +1718,8 @@ re_intr(void *arg)
 
 	if (tx && !IFQ_IS_EMPTY(&ifp->if_snd))
 		re_start(ifp);
+
+	CSR_WRITE_2(sc, RL_IMR, sc->rl_intrs);
 
 	return (claimed);
 }
