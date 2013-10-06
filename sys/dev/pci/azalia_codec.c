@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.154 2013/05/27 21:19:31 miod Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.155 2013/10/06 10:46:24 rapha Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -74,6 +74,8 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x10ec0260:
 		this->name = "Realtek ALC260";
+		if (this->subid == 0x008f1025)
+			this->qrks |= AZ_QRK_GPIO_UNMUTE_0;
 		break;
 	case 0x10ec0262:
 		this->name = "Realtek ALC262";
