@@ -1,0 +1,15 @@
+BL-NOIT(1)                 OpenBSD Reference Manual                 BL-NOIT(1)
+
+NNAAMMEE
+     BBll--nnooIItt - list missing item macros
+
+DDEESSCCRRIIPPTTIIOONN
+     Stray text.  _M_o_r_e _s_t_r_a_y _t_e_x_t_.
+
+     tag     Tagged text.
+     Stray text.  _M_o_r_e _s_t_r_a_y _t_e_x_t_.
+
+     oo   Bullet point.
+     Stray text only.
+
+OpenBSD                         October 6, 2013                        OpenBSD

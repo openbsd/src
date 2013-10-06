@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.112 2013/10/03 19:32:25 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.113 2013/10/06 13:27:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -1586,32 +1586,71 @@ post_bl_head(POST_ARGS)
 static int
 post_bl(POST_ARGS)
 {
-	struct mdoc_node	*n;
+	struct mdoc_node	*nparent, *nprev; /* of the Bl block */
+	struct mdoc_node	*nblock, *nbody;  /* of the Bl */
+	struct mdoc_node	*nchild, *nnext;  /* of the Bl body */
 
-	if (MDOC_HEAD == mdoc->last->type) 
-		return(post_bl_head(mdoc));
-	if (MDOC_BLOCK == mdoc->last->type)
+	nbody = mdoc->last;
+	switch (nbody->type) {
+	case (MDOC_BLOCK):
 		return(post_bl_block(mdoc));
-	if (MDOC_BODY != mdoc->last->type)
+	case (MDOC_HEAD):
+		return(post_bl_head(mdoc));
+	case (MDOC_BODY):
+		break;
+	default:
 		return(1);
+	}
 
-	for (n = mdoc->last->child; n; n = n->next) {
-		switch (n->tok) {
-		case (MDOC_Lp):
-			/* FALLTHROUGH */
-		case (MDOC_Pp):
-			mdoc_nmsg(mdoc, n, MANDOCERR_CHILD);
-			/* FALLTHROUGH */
-		case (MDOC_It):
-			/* FALLTHROUGH */
-		case (MDOC_Sm):
+	nchild = nbody->child;
+	while (NULL != nchild) {
+		if (MDOC_It == nchild->tok || MDOC_Sm == nchild->tok) {
+			nchild = nchild->next;
 			continue;
-		default:
-			break;
 		}
 
-		mdoc_nmsg(mdoc, n, MANDOCERR_SYNTCHILD);
-		return(0);
+		mdoc_nmsg(mdoc, nchild, MANDOCERR_CHILD);
+
+		/*
+		 * Move the node out of the Bl block.
+		 * First, collect all required node pointers.
+		 */
+
+		nblock  = nbody->parent;
+		nprev   = nblock->prev;
+		nparent = nblock->parent;
+		nnext   = nchild->next;
+
+		/*
+		 * Unlink this child.
+		 */
+
+		assert(NULL == nchild->prev);
+		if (0 == --nbody->nchild) {
+			nbody->child = NULL;
+			nbody->last  = NULL;
+			assert(NULL == nnext);
+		} else {
+			nbody->child = nnext;
+			nnext->prev = NULL;
+		}
+
+		/*
+		 * Relink this child.
+		 */
+
+		nchild->parent = nparent;
+		nchild->prev   = nprev;
+		nchild->next   = nblock;
+
+		nblock->prev = nchild;
+		nparent->nchild++;
+		if (NULL == nprev)
+			nparent->child = nchild;
+		else
+			nprev->next = nchild;
+
+		nchild = nnext;
 	}
 
 	return(1);
