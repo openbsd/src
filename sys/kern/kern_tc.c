@@ -6,7 +6,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $OpenBSD: kern_tc.c,v 1.20 2013/06/03 16:55:22 guenther Exp $
+ * $OpenBSD: kern_tc.c,v 1.21 2013/10/06 01:27:49 guenther Exp $
  * $FreeBSD: src/sys/kern/kern_tc.c,v 1.148 2003/03/18 08:45:23 phk Exp $
  */
 
@@ -95,7 +95,7 @@ static struct timecounter *timecounters = &dummy_timecounter;
 volatile time_t time_second = 1;
 volatile time_t time_uptime = 0;
 
-extern struct timeval adjtimedelta;
+struct bintime naptime;
 static struct bintime boottimebin;
 static int timestepwarnings;
 
@@ -339,9 +339,13 @@ tc_setclock(struct timespec *ts)
 	bt2 = timehands->th_offset;
 	timehands->th_offset = bt;
 
+	/* XXX fiddle all the little crinkly bits around the fiords... */
+	tc_windup();
+
 #ifndef SMALL_KERNEL
 	/* convert the bintime to ticks */
 	bintime_sub(&bt, &bt2);
+	bintime_add(&naptime, &bt);
 	adj_ticks = (long long)hz * bt.sec +
 	    (((uint64_t)1000000 * (uint32_t)(bt.frac >> 32)) >> 32) / tick;
 	if (adj_ticks > 0) {
@@ -350,9 +354,6 @@ tc_setclock(struct timespec *ts)
 		timeout_adjust_ticks(adj_ticks);
 	}
 #endif
-
-	/* XXX fiddle all the little crinkly bits around the fiords... */
-	tc_windup();
 }
 
 /*
