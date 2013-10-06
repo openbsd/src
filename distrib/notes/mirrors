@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.114 2013/04/26 13:01:55 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.115 2013/10/06 21:37:12 sthen Exp $
 This is a list of currently known FTP and HTTP servers at the time
 of the OSREV release.  For a more recent list, please refer to
 
@@ -44,6 +44,10 @@ Costa Rica:
     http://mirrors.ucr.ac.cr/OpenBSD
     ftp://mirrors.ucr.ac.cr/OpenBSD
 
+Czech Republic:
+    http://mirror.steadynet.cz/pub/OpenBSD
+    ftp://mirror.steadynet.cz/pub/OpenBSD
+
 Denmark:
     http://ftp.openbsd.dk/pub/OpenBSD (Aalborg)
     ftp://ftp.openbsd.dk/pub/OpenBSD (Aalborg)
@@ -83,6 +87,9 @@ Hungary:
     http://ftp.fsn.hu/pub/OpenBSD (Budapest)
     ftp://ftp.fsn.hu/pub/OpenBSD (Budapest)
 
+Indonesia:
+    http://kartolo.sby.datautama.net.id/pub/OpenBSD (Surabaya, Java)
+
 Ireland:
     http://ftp.heanet.ie/pub/OpenBSD (Dublin)
     ftp://ftp.heanet.ie/pub/OpenBSD (Dublin)
@@ -104,6 +111,8 @@ Pakistan:
     ftp://stingray.cyber.net.pk/OpenBSD (Karachi)
 
 Poland:
+    http://piotrkosoft.net/pub/OpenBSD (Oswiecim)
+    ftp://ftp.piotrkosoft.net/pub/OpenBSD (Oswiecim)
     http://ftp.icm.edu.pl/pub/OpenBSD (Warszawa)
     ftp://ftp.icm.edu.pl/pub/OpenBSD (Warszawa)
 
@@ -176,6 +185,8 @@ USA:
     ftp://mirrors.syringanetworks.net/pub/OpenBSD (Boise, ID)
     http://mirror.jmu.edu/pub/OpenBSD (Harrisonburg, VA)
     ftp://mirror.jmu.edu/pub/OpenBSD (Harrisonburg, VA)
+    http://openbsd.mirror.frontiernet.net/pub/OpenBSD (Rochester, NY)
+    ftp://openbsd.mirror.frontiernet.net/pub/OpenBSD (Rochester, NY)
 
 
 Additionally, the file ftp://ftp.OpenBSD.org/pub/OpenBSD/ftplist
