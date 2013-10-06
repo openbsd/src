@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ruby-module.5,v 1.9 2013/03/21 10:53:13 jmc Exp $
+.\"	$OpenBSD: ruby-module.5,v 1.10 2013/10/06 17:45:04 jeremy Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie, Jeremy Evans
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2013 $
+.Dd $Mdocdate: October 6 2013 $
 .Dt RUBY-MODULE 5
 .Os
 .Sh NAME
@@ -213,7 +213,7 @@ is necessary so that if a ruby 1.9 package is being built for the current
 port, it depends on the ruby 1.9 package of the
 dependencies.
 .Pp
-The ports system defaults to using ruby 1.9 if the version of ruby is not
+The ports system defaults to using ruby 2.0 if the version of ruby is not
 specified.
 If you want to specify a version for a gem/extconf port, use a specific
 .Ev FLAVOR ,
