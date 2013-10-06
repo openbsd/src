@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2007/07/23 17:24:06 kurt Exp $
+#	$OpenBSD: Makefile,v 1.4 2013/10/06 20:05:30 guenther Exp $
 
 .SUFFIXES: .m
 
@@ -12,6 +12,6 @@ LINK.m?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 PROG=	main
 SRCS=	main.m
-LDADD=	-lobjc -pthread
+LDADD=	-lobjc -lpthread
 
 .include <bsd.regress.mk>
