@@ -1,4 +1,4 @@
-/*      $OpenBSD: aes_xts.c,v 1.1 2008/06/09 16:15:05 djm Exp $  */
+/*      $OpenBSD: aes_xts.c,v 1.2 2013/10/06 16:59:34 jsing Exp $  */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -26,10 +26,7 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
-#include <sys/ioctl.h>
-#include <sys/sysctl.h>
-#include <crypto/cryptodev.h>
+#include <crypto/rijndael.h>
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -37,109 +34,18 @@
 #include <string.h>
 #include <unistd.h>
 
-static int
-syscrypt(const unsigned char *key, size_t klen, u_int64_t unit_number,
-    const unsigned char *in, unsigned char *out, size_t len, int do_encrypt)
-{
-	struct session_op session;
-	struct crypt_op cryp;
-	int cryptodev_fd = -1, fd = -1;
+#define	AES_XTS_BLOCKSIZE	16
 
-	if ((cryptodev_fd = open("/dev/crypto", O_RDWR, 0)) < 0) {
-		warn("/dev/crypto");
-		goto err;
-	}
-	if (ioctl(cryptodev_fd, CRIOGET, &fd) == -1) {
-		warn("CRIOGET failed");
-		goto err;
-	}
-	memset(&session, 0, sizeof(session));
-	session.cipher = CRYPTO_AES_XTS;
-	session.key = (caddr_t) key;
-	session.keylen = klen;
-	if (ioctl(fd, CIOCGSESSION, &session) == -1) {
-		warn("CIOCGSESSION");
-		goto err;
-	}
-	memset(&cryp, 0, sizeof(cryp));
-	cryp.ses = session.ses;
-	cryp.op = do_encrypt ? COP_ENCRYPT : COP_DECRYPT;
-	cryp.flags = 0;
-	cryp.len = len;
-	cryp.src = (caddr_t) in;
-	cryp.dst = (caddr_t) out;
-	cryp.iv = (caddr_t) &unit_number;
-	cryp.mac = 0;
-	if (ioctl(fd, CIOCCRYPT, &cryp) == -1) {
-		warn("CIOCCRYPT");
-		goto err;
-	}
-	if (ioctl(fd, CIOCFSESSION, &session.ses) == -1) {
-		warn("CIOCFSESSION");
-		goto err;
-	}
-	close(fd);
-	close(cryptodev_fd);
-	return (0);
+struct aes_xts_ctx {
+	rijndael_ctx key1;
+	rijndael_ctx key2;
+	u_int8_t tweak[AES_XTS_BLOCKSIZE];
+};
 
-err:
-	if (fd != -1)
-		close(fd);
-	if (cryptodev_fd != -1)
-		close(cryptodev_fd);
-	return (-1);
-}
-
-static int
-getallowsoft(void)
-{
-	int mib[2], old;
-	size_t olen;
-
-	olen = sizeof(old);
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_CRYPTODEVALLOWSOFT;
-	if (sysctl(mib, 2, &old, &olen, NULL, 0) < 0)
-		err(1, "sysctl failed");
-
-	return old;
-}
-
-static void
-setallowsoft(int new)
-{
-	int mib[2], old;
-	size_t olen, nlen;
-
-	olen = nlen = sizeof(new);
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_CRYPTODEVALLOWSOFT;
-
-	if (sysctl(mib, 2, &old, &olen, &new, nlen) < 0)
-		err(1, "sysctl failed");
-}
-
-static int
-match(unsigned char *a, unsigned char *b, size_t len)
-{
-	size_t i;
-
-	if (memcmp(a, b, len) == 0)
-		return (1);
-
-	warnx("decrypt/plaintext mismatch");
-
-	for (i = 0; i < len; i++)
-		printf("%2.2x", a[i]);
-	printf("\n");
-	for (i = 0; i < len; i++)
-		printf("%2.2x", b[i]);
-	printf("\n");
-
-	return (0);
-}
+int  aes_xts_setkey(void *, u_int8_t *, int);
+void aes_xts_encrypt(caddr_t, u_int8_t *);
+void aes_xts_decrypt(caddr_t, u_int8_t *);
+void aes_xts_reinit(caddr_t, u_int8_t *);
 
 struct aes_xts_tv {
 	u_int64_t seqno;
@@ -150,6 +56,7 @@ struct aes_xts_tv {
 	u_int8_t ciphertext[512];
 };
 
+/* Test vectors from IEEE P1619/D16, Annex B. */
 struct aes_xts_tv aes_xts_test_vectors[] = {
 	{
 		0x00000000ULL,
@@ -1802,52 +1709,106 @@ struct aes_xts_tv aes_xts_test_vectors[] = {
 };
 #define N_VECTORS (sizeof(aes_xts_test_vectors) / sizeof(*aes_xts_test_vectors))
 
+u_int32_t deflate_global(u_int8_t *, u_int32_t, int, u_int8_t **);
+
+u_int32_t
+deflate_global(u_int8_t *data, u_int32_t size, int comp, u_int8_t **out)
+{
+	return 0;
+}
+
+void	explicit_bzero(void *, size_t);
+
+void
+explicit_bzero(void *b, size_t len)
+{
+	bzero(b, len);
+}
+
+static int
+match(unsigned char *a, unsigned char *b, size_t len)
+{
+	size_t i;
+
+	if (memcmp(a, b, len) == 0)
+		return (1);
+
+	warnx("decrypt/plaintext mismatch");
+
+	for (i = 0; i < len; i++)
+		printf("%2.2x", a[i]);
+	printf("\n");
+	for (i = 0; i < len; i++)
+		printf("%2.2x", b[i]);
+	printf("\n");
+
+	return (0);
+}
+
+static int
+do_aes_xts(u_int8_t *key, int klen, u_int64_t seqno,
+    const u_int8_t *in, u_int8_t *out, size_t len, int do_encrypt)
+{
+	u_int8_t block[AES_XTS_BLOCKSIZE];
+	struct aes_xts_ctx ctx;
+	size_t i;
+
+	if (aes_xts_setkey(&ctx, key, klen) < 0)
+		return -1;
+
+	aes_xts_reinit((caddr_t)&ctx, (u_int8_t *)&seqno);
+
+	for (i = 0; i < (len / AES_XTS_BLOCKSIZE); i++) {
+		bcopy(in, block, AES_XTS_BLOCKSIZE);
+		in += AES_XTS_BLOCKSIZE;
+		if (do_encrypt)
+			aes_xts_encrypt((caddr_t)&ctx, block);
+		else
+			aes_xts_decrypt((caddr_t)&ctx, block);
+		bcopy(block, out, AES_XTS_BLOCKSIZE);
+		out += AES_XTS_BLOCKSIZE;
+	}
+
+	return 0;
+}
+
 int
 main(int argc, char **argv)
 {
-	int allowed = 0, fail = 0;
-	size_t i;
 	struct aes_xts_tv *tv;
 	u_int8_t result[512];
-
-	if (geteuid() == 0) {
-		allowed = getallowsoft();
-		if (allowed == 0)
-			setallowsoft(1);
-	}
+	int fail = 0;
+	size_t i;
 
 	for (i = 0; i < N_VECTORS; i++) {
 		tv = &aes_xts_test_vectors[i];
 
 		/* Encrypt test */
-		if (syscrypt(tv->key, tv->key_len, tv->seqno, tv->plaintext,
-		    result, tv->text_len, 1) < 0) {
-			warnx("encrypt with /dev/crypto failed");
+		if (do_aes_xts(tv->key, tv->key_len, tv->seqno, tv->plaintext,
+                    result, tv->text_len, 1) < 0) {
+			printf("FAIL encrypt test vector %zu\n", i);
 			fail++;
 			break;
 		}
 		if (!match(result, tv->ciphertext, tv->text_len)) {
 			fail++;
 			break;
-		} else
-			printf("OK encrypt test vector %zu\n", i);
+		}
+		printf("OK encrypt test vector %zu\n", i);
 
 		/* Decrypt test */
-		if (syscrypt(tv->key, tv->key_len, tv->seqno, tv->ciphertext,
+		if (do_aes_xts(tv->key, tv->key_len, tv->seqno, tv->ciphertext,
 		    result, tv->text_len, 0) < 0) {
-			warnx("decrypt with /dev/crypto failed");
+			printf("FAIL decrypt test vector %zu\n", i);
 			fail++;
 			break;
 		}
 		if (!match(result, tv->plaintext, tv->text_len)) {
 			fail++;
 			break;
-		} else
-			printf("OK decrypt test vector %zu\n", i);
+		}
+		printf("OK decrypt test vector %zu\n", i);
 	}
 
-	if (geteuid() == 0 && allowed == 0)
-		setallowsoft(0);
 	exit((fail > 0) ? 1 : 0);
 }
-
