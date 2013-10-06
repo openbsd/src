@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.91 2013/06/11 16:42:05 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.92 2013/10/06 22:13:26 krw Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ u_short	dkcksum(struct disklabel *);
 int	mfs;			/* run as the memory based filesystem */
 int	Nflag;			/* run without writing file system */
 int	Oflag = 1;		/* 0 = 4.3BSD ffs, 1 = 4.4BSD ffs, 2 = ffs2 */
-daddr_t	fssize;			/* file system size */
+daddr_t	fssize;			/* file system size in 512-byte blocks */
 long long	sectorsize;		/* bytes/sector */
 int	fsize = 0;		/* fragment size */
 int	bsize = 0;		/* block size */
@@ -171,6 +171,7 @@ main(int argc, char *argv[])
 	const char *errstr;
 	long long fssize_input = 0;
 	int fssize_usebytes = 0;
+	u_int64_t nsecs;
 
 	if (strstr(__progname, "mfs"))
 		mfs = Nflag = quiet = 1;
@@ -428,19 +429,19 @@ havelabel:
 	}
 
 	if (fssize_usebytes) {
-		fssize = (daddr_t)fssize_input / (daddr_t)sectorsize;
-		if ((daddr_t)fssize_input % (daddr_t)sectorsize != 0)
-			fssize++;
+		nsecs = fssize_input / sectorsize;
+		if (fssize_input % sectorsize != 0)
+			nsecs++;
 	} else if (fssize_input == 0)
-		fssize = DL_GETPSIZE(pp);
+		nsecs = DL_GETPSIZE(pp);
 	else
-		fssize = (daddr_t)fssize_input;
+		nsecs = fssize_input;
 
-	if (fssize > DL_GETPSIZE(pp) && !mfs)
+	if (nsecs > DL_GETPSIZE(pp) && !mfs)
 	       fatal("%s: maximum file system size on the `%c' partition is "
-		   "%lld sectors", argv[0], *cp, DL_GETPSIZE(pp));
+		   "%llu sectors", argv[0], *cp, DL_GETPSIZE(pp));
 
-	fssize *= sectorsize / DEV_BSIZE;
+	fssize = DL_SECTOBLK(lp, nsecs);
 	if (oflagset == 0 && fssize >= INT_MAX)
 		Oflag = 2;	/* FFS2 */
 	if (fsize == 0) {
@@ -598,7 +599,7 @@ rewritelabel(char *s, int fd, struct disklabel *lp)
 	if (lp->d_type == DTYPE_SMD && lp->d_flags & D_BADSECT) {
 		int i;
 		int cfd;
-		daddr_t alt;
+		u_int64_t alt;
 		char specname[64];
 		char blk[1024];
 		char *cp;
