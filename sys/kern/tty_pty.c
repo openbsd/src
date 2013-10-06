@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.60 2013/10/04 17:52:55 millert Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.61 2013/10/06 01:10:53 millert Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -615,6 +615,9 @@ ptcpoll(dev_t dev, int events, struct proc *p)
 	struct tty *tp = pti->pt_tty;
 	int revents = 0, s;
 
+	if (!ISSET(tp->t_state, TS_CARR_ON))
+		return (POLLHUP);
+
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		goto notopen;
 
@@ -629,10 +632,7 @@ ptcpoll(dev_t dev, int events, struct proc *p)
 			revents |= events & (POLLIN | POLLRDNORM);
 		splx(s);
 	}
-	/* NOTE: POLLHUP and POLLOUT/POLLWRNORM are mutually exclusive */
-	if (!ISSET(tp->t_state, TS_CARR_ON)) {
-		revents |= POLLHUP;
-	} else if (events & (POLLOUT | POLLWRNORM)) {
+	if (events & (POLLOUT | POLLWRNORM)) {
 		if ((pti->pt_flags & PF_REMOTE) ?
 		    (tp->t_canq.c_cc == 0) :
 		    ((tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG(tp) - 2) ||
