@@ -1,4 +1,4 @@
-/*	$OpenBSD: cancel.c,v 1.6 2003/07/31 21:48:04 deraadt Exp $	*/
+/*	$OpenBSD: cancel.c,v 1.7 2013/10/06 21:46:10 guenther Exp $	*/
 /* David Leonard <d@openbsd.org>, 1999. Public Domain. */
 
 #include <pthread.h>
@@ -63,6 +63,7 @@ child1fn(void *arg)
 		CHECKe(len = read(fd, &buf, sizeof buf));
 		printf("child 1 read %d bytes\n", len);
 	}
+	pthread_cleanup_pop(0);
 	PANIC("child 1");
 }
 
@@ -115,6 +116,7 @@ child2fn(void *arg)
 		ASSERT(message_seen == 1);
 		v();
 	}
+	pthread_cleanup_pop(0);
 	PANIC("child 2");
 }
 
@@ -140,14 +142,51 @@ child3fn(void *arg)
 	pthread_cancel(pthread_self());
 	c3_cancel_survived = 1;
 	pthread_testcancel();
+	pthread_cleanup_pop(0);
 
 	PANIC("child 3");
+}
+
+static int c4_cancel_early;
+
+static void
+c4handler(void *arg)
+{
+	printf("early = %d\n", c4_cancel_early);
+	ASSERT(c4_cancel_early == 0);
+	v();
+}
+
+static void *
+child4fn(void *arg)
+{
+	SET_NAME("c4");
+	pthread_cleanup_push(c4handler, NULL);
+
+	/* Cancel myself */
+	CHECKr(pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL));
+
+	c4_cancel_early = 3;
+	pthread_cancel(pthread_self());
+
+	c4_cancel_early = 2;
+	pthread_testcancel();
+
+	c4_cancel_early = 1;
+	CHECKr(pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL));
+
+	c4_cancel_early = 0;
+	pthread_testcancel();
+
+	pthread_cleanup_pop(0);
+
+	PANIC("child 4");
 }
 
 int
 main(int argc, char *argv[])
 {
-	pthread_t child1, child2, child3;
+	pthread_t child1, child2, child3, child4;
 
 	/* Set up our control flow */
 	CHECKr(pthread_mutex_init(&mutex, NULL));
@@ -172,7 +211,12 @@ main(int argc, char *argv[])
 	CHECKr(pthread_create(&child3, NULL, child3fn, NULL));
 	p();
 
+	/* Child 4 also cancels itself */
+	CHECKr(pthread_create(&child4, NULL, child4fn, NULL));
+	p();
+
 	/* Make sure they're all gone */
+	CHECKr(pthread_join(child4, NULL));
 	CHECKr(pthread_join(child3, NULL));
 	CHECKr(pthread_join(child2, NULL));
 	CHECKr(pthread_join(child1, NULL));
