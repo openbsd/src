@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendir.c,v 1.24 2013/08/13 05:52:12 guenther Exp $ */
+/*	$OpenBSD: opendir.c,v 1.25 2013/10/06 17:57:11 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -75,6 +75,9 @@ fdopendir(int fd)
 	}
 	dirp = __fdopendir(fd);
 	if (dirp != NULL) {
+		/* Record current offset for immediate telldir() */
+		dirp->dd_curpos = lseek(fd, 0, SEEK_CUR);
+
 		/*
 		 * POSIX doesn't require fdopendir() to set
 		 * FD_CLOEXEC, so it's okay for this to fail.
