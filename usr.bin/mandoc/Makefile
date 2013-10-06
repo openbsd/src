@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.70 2013/08/06 19:11:53 miod Exp $
+#	$OpenBSD: Makefile,v 1.71 2013/10/06 23:59:59 schwarze Exp $
 
 .include <bsd.own.mk>
 
-CFLAGS+=-DVERSION=\"1.12.1\"
+CFLAGS+=-DVERSION=\"1.12.2\"
 CFLAGS+=-W -Wall -Wstrict-prototypes -Wno-unused-parameter
 
 SRCS=	roff.c tbl.c tbl_opts.c tbl_layout.c tbl_data.c eqn.c mandoc.c read.c
