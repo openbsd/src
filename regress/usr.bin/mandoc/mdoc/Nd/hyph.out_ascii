@@ -1,0 +1,10 @@
+ND-HYPH(1)                 OpenBSD Reference Manual                 ND-HYPH(1)
+
+NNAAMMEE
+     NNdd--hhyypphh - when there is already a hyphen within the the word, line-
+     breaking is permitted at that place
+
+DDEESSCCRRIIPPTTIIOONN
+     Even in the document description line in the _N_A_M_E section.
+
+OpenBSD                         October 5, 2013                        OpenBSD

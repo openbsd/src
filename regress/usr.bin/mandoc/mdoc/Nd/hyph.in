@@ -1,0 +1,11 @@
+.Dd October 5, 2013
+.Dt ND-HYPH 1
+.Os OpenBSD
+.Sh NAME
+.Nm Nd-hyph
+.Nd when there is already a hyphen within the the word, \
+line-breaking is permitted at that place
+.Sh DESCRIPTION
+Even in the document description line in the
+.Sx NAME
+section.

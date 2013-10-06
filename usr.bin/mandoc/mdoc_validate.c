@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.113 2013/10/06 13:27:47 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.114 2013/10/06 22:45:13 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef        OSNAME
+#ifndef OSNAME
 #include <sys/utsname.h>
 #endif
 
@@ -93,18 +93,19 @@ static	int	 post_bl_block_width(POST_ARGS);
 static	int	 post_bl_block_tag(POST_ARGS);
 static	int	 post_bl_head(POST_ARGS);
 static	int	 post_bx(POST_ARGS);
+static	int	 post_defaults(POST_ARGS);
 static	int	 post_dd(POST_ARGS);
 static	int	 post_dt(POST_ARGS);
-static	int	 post_defaults(POST_ARGS);
-static	int	 post_literal(POST_ARGS);
 static	int	 post_eoln(POST_ARGS);
+static	int	 post_hyph(POST_ARGS);
+static	int	 post_ignpar(POST_ARGS);
 static	int	 post_it(POST_ARGS);
 static	int	 post_lb(POST_ARGS);
+static	int	 post_literal(POST_ARGS);
 static	int	 post_nm(POST_ARGS);
 static	int	 post_ns(POST_ARGS);
 static	int	 post_os(POST_ARGS);
 static	int	 post_par(POST_ARGS);
-static	int	 post_ignpar(POST_ARGS);
 static	int	 post_prol(POST_ARGS);
 static	int	 post_root(POST_ARGS);
 static	int	 post_rs(POST_ARGS);
@@ -138,28 +139,30 @@ static	v_post	 posts_bx[] = { post_bx, NULL };
 static	v_post	 posts_bool[] = { ebool, NULL };
 static	v_post	 posts_eoln[] = { post_eoln, NULL };
 static	v_post	 posts_defaults[] = { post_defaults, NULL };
+static	v_post	 posts_d1[] = { bwarn_ge1, post_hyph, NULL };
 static	v_post	 posts_dd[] = { post_dd, post_prol, NULL };
 static	v_post	 posts_dl[] = { post_literal, bwarn_ge1, NULL };
 static	v_post	 posts_dt[] = { post_dt, post_prol, NULL };
 static	v_post	 posts_fo[] = { hwarn_eq1, bwarn_ge1, NULL };
+static	v_post	 posts_hyph[] = { post_hyph, NULL };
+static	v_post	 posts_hyphtext[] = { ewarn_ge1, post_hyph, NULL };
 static	v_post	 posts_it[] = { post_it, NULL };
 static	v_post	 posts_lb[] = { post_lb, NULL };
-static	v_post	 posts_nd[] = { berr_ge1, NULL };
+static	v_post	 posts_nd[] = { berr_ge1, post_hyph, NULL };
 static	v_post	 posts_nm[] = { post_nm, NULL };
 static	v_post	 posts_notext[] = { ewarn_eq0, NULL };
 static	v_post	 posts_ns[] = { post_ns, NULL };
 static	v_post	 posts_os[] = { post_os, post_prol, NULL };
 static	v_post	 posts_pp[] = { post_par, ewarn_eq0, NULL };
 static	v_post	 posts_rs[] = { post_rs, NULL };
-static	v_post	 posts_sh[] = { post_ignpar, hwarn_ge1, post_sh, NULL };
+static	v_post	 posts_sh[] = { post_ignpar,hwarn_ge1,post_sh,post_hyph,NULL };
 static	v_post	 posts_sp[] = { post_par, ewarn_le1, NULL };
-static	v_post	 posts_ss[] = { post_ignpar, hwarn_ge1, NULL };
+static	v_post	 posts_ss[] = { post_ignpar, hwarn_ge1, post_hyph, NULL };
 static	v_post	 posts_st[] = { post_st, NULL };
 static	v_post	 posts_std[] = { post_std, NULL };
 static	v_post	 posts_text[] = { ewarn_ge1, NULL };
 static	v_post	 posts_text1[] = { ewarn_eq1, NULL };
 static	v_post	 posts_vt[] = { post_vt, NULL };
-static	v_post	 posts_wline[] = { bwarn_ge1, NULL };
 static	v_pre	 pres_an[] = { pre_an, NULL };
 static	v_pre	 pres_bd[] = { pre_display, pre_bd, pre_literal, pre_par, NULL };
 static	v_pre	 pres_bl[] = { pre_bl, pre_par, NULL };
@@ -167,8 +170,6 @@ static	v_pre	 pres_d1[] = { pre_display, NULL };
 static	v_pre	 pres_dl[] = { pre_literal, pre_display, NULL };
 static	v_pre	 pres_dd[] = { pre_dd, NULL };
 static	v_pre	 pres_dt[] = { pre_dt, NULL };
-static	v_pre	 pres_er[] = { NULL, NULL };
-static	v_pre	 pres_fd[] = { NULL, NULL };
 static	v_pre	 pres_it[] = { pre_it, pre_par, NULL };
 static	v_pre	 pres_os[] = { pre_os, NULL };
 static	v_pre	 pres_pp[] = { pre_par, NULL };
@@ -184,7 +185,7 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ pres_sh, posts_sh },			/* Sh */ 
 	{ pres_ss, posts_ss },			/* Ss */ 
 	{ pres_pp, posts_pp },			/* Pp */ 
-	{ pres_d1, posts_wline },		/* D1 */
+	{ pres_d1, posts_d1 },			/* D1 */
 	{ pres_dl, posts_dl },			/* Dl */
 	{ pres_bd, posts_bd },			/* Bd */
 	{ NULL, NULL },				/* Ed */
@@ -197,11 +198,11 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Cd */ 
 	{ NULL, NULL },				/* Cm */
 	{ NULL, NULL },				/* Dv */ 
-	{ pres_er, NULL },			/* Er */ 
+	{ NULL, NULL },				/* Er */ 
 	{ NULL, NULL },				/* Ev */ 
 	{ pres_std, posts_std },		/* Ex */ 
 	{ NULL, NULL },				/* Fa */ 
-	{ pres_fd, posts_text },		/* Fd */
+	{ NULL, posts_text },			/* Fd */
 	{ NULL, NULL },				/* Fl */
 	{ NULL, NULL },				/* Fn */ 
 	{ NULL, NULL },				/* Ft */ 
@@ -219,15 +220,15 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_vt },			/* Vt */ 
 	{ NULL, posts_text },			/* Xr */ 
 	{ NULL, posts_text },			/* %A */
-	{ NULL, posts_text },			/* %B */ /* FIXME: can be used outside Rs/Re. */
+	{ NULL, posts_hyphtext },		/* %B */ /* FIXME: can be used outside Rs/Re. */
 	{ NULL, posts_text },			/* %D */
 	{ NULL, posts_text },			/* %I */
 	{ NULL, posts_text },			/* %J */
-	{ NULL, posts_text },			/* %N */
-	{ NULL, posts_text },			/* %O */
+	{ NULL, posts_hyphtext },		/* %N */
+	{ NULL, posts_hyphtext },		/* %O */
 	{ NULL, posts_text },			/* %P */
-	{ NULL, posts_text },			/* %R */
-	{ NULL, posts_text },			/* %T */ /* FIXME: can be used outside Rs/Re. */
+	{ NULL, posts_hyphtext },		/* %R */
+	{ NULL, posts_hyphtext },		/* %T */ /* FIXME: can be used outside Rs/Re. */
 	{ NULL, posts_text },			/* %V */
 	{ NULL, NULL },				/* Ac */
 	{ NULL, NULL },				/* Ao */
@@ -267,7 +268,7 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* So */
 	{ NULL, NULL },				/* Sq */
 	{ NULL, posts_bool },			/* Sm */ 
-	{ NULL, NULL },				/* Sx */
+	{ NULL, posts_hyph },			/* Sx */
 	{ NULL, NULL },				/* Sy */
 	{ NULL, NULL },				/* Tn */
 	{ NULL, NULL },				/* Ux */
@@ -1849,6 +1850,47 @@ post_rs(POST_ARGS)
 		}
 	}
 
+	return(1);
+}
+
+/*
+ * For some arguments of some macros,
+ * convert all breakable hyphens into ASCII_HYPH.
+ */
+static int
+post_hyph(POST_ARGS)
+{
+	struct mdoc_node	*n, *nch;
+	char			*cp;
+
+	n = mdoc->last;
+	switch (n->type) {
+	case (MDOC_HEAD):
+		if (MDOC_Sh == n->tok || MDOC_Ss == n->tok)
+			break;
+		return(1);
+	case (MDOC_BODY):
+		if (MDOC_D1 == n->tok || MDOC_Nd == n->tok)
+			break;
+		return(1);
+	case (MDOC_ELEM):
+		break;
+	default:
+		return(1);
+	}
+
+	for (nch = n->child; nch; nch = nch->next) {
+		if (MDOC_TEXT != nch->type)
+			continue;
+		cp = nch->string;
+		if (3 > strnlen(cp, 3))
+			continue;
+		while ('\0' != *(++cp))
+			if ('-' == *cp &&
+			    isalpha((unsigned char)cp[-1]) &&
+			    isalpha((unsigned char)cp[1]))
+				*cp = ASCII_HYPH;
+	}
 	return(1);
 }
 
