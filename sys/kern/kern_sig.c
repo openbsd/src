@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.152 2013/06/01 04:05:26 tedu Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.153 2013/10/06 19:44:42 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1079,7 +1079,7 @@ issignal(struct proc *p)
 
 		/*
 		 * We should see pending but ignored signals
-		 * only if P_TRACED was on when they were posted.
+		 * only if PS_TRACED was on when they were posted.
 		 */
 		if (mask & p->p_sigacts->ps_sigignore &&
 		    (pr->ps_flags & PS_TRACED) == 0)
