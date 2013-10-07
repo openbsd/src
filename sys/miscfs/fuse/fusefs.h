@@ -1,4 +1,4 @@
-/* $OpenBSD: fusefs.h,v 1.3 2013/08/10 00:12:45 syl Exp $ */
+/* $OpenBSD: fusefs.h,v 1.4 2013/10/07 18:07:04 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -32,6 +32,16 @@
 	{ "fusefs_fbufs_wait", CTLTYPE_INT }, \
 	{ "fusefs_pool_pages", CTLTYPE_INT }, \
 }
+
+struct fb_ioctl_xch {
+	uint64_t	fbxch_uuid;
+	size_t		fbxch_len;
+	uint8_t		*fbxch_data;
+};
+
+/* FUSE Device ioctls */
+#define FIOCGETFBDAT	_IOW('F', 0, struct fb_ioctl_xch)
+#define FIOCSETFBDAT	_IOW('F', 1, struct fb_ioctl_xch)
 
 #ifdef _KERNEL
 
