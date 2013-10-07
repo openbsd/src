@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpclient.c,v 1.7 2013/10/01 20:55:25 reyk Exp $	*/
+/*	$OpenBSD: snmpclient.c,v 1.8 2013/10/07 11:40:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -64,9 +64,11 @@ struct snmpc {
 
 #define	SNMPC_RETRY_MAX		3
 #define SNMPC_COMMUNITY		"public"
-#define SNMPC_OID		"system"
+#define SNMPC_OID_DEFAULT	"system"
+#define SNMPC_OID_ALL		"1.0"
 #define SNMPC_MAXREPETITIONS	10
 
+void	 snmpc_run(struct snmpc *, enum actions, const char *);
 void	 snmpc_request(struct snmpc *, u_long);
 int	 snmpc_response(struct snmpc *);
 int	 snmpc_sendreq(struct snmpc *, u_long);
@@ -80,19 +82,16 @@ snmpclient(struct parse_result *res)
 	int			 s;
 	int			 error;
 	struct passwd		*pw;
+	struct parse_val	*oid;
 
 	bzero(&sc, sizeof(sc));
 
 	/* Get client configuration */
-	if (res->oid == NULL)
-		res->oid = strdup(SNMPC_OID);
-	else if (strcmp("all", res->oid) == 0)
-		res->oid = strdup("1.0");
 	if (res->community == NULL)
 		res->community = strdup(SNMPC_COMMUNITY);
 	if (res->version == -1 || res->version > SNMP_V2)
 		res->version = SNMP_V2;
-	if (res->oid == NULL || res->community == NULL)
+	if (res->community == NULL)
 		err(1, "strdup");
 
 	/* Checks */
@@ -122,23 +121,6 @@ snmpclient(struct parse_result *res)
 	sc.sc_addr_len = ai->ai_addrlen;
 	freeaddrinfo(ai0);
 
-	sc.sc_fd = s;
-	sc.sc_retry_max = SNMPC_RETRY_MAX;
-	sc.sc_community = res->community;
-	sc.sc_version = res->version;
-
-	/*
-	 * Set up the root OID and get the prefix length to shorten the
-	 * printed OID strings of the children.
-	 */
-	if (smi_string2oid(res->oid, &sc.sc_oid) == -1)
-		errx(1, "oid");
-
-	bcopy(&sc.sc_oid, &sc.sc_root_oid, sizeof(sc.sc_root_oid));
-	bcopy(&sc.sc_oid, &sc.sc_last_oid, sizeof(sc.sc_last_oid));
-	if (sc.sc_oid.bo_n > 2)
-		sc.sc_root_len = sc.sc_oid.bo_n - 1;
-
 	/*
 	 * Drop privileges to mitigate the risk when running as root.
 	 */
@@ -157,14 +139,48 @@ snmpclient(struct parse_result *res)
 #endif
 	}
 
-	if (res->action == GET)
-		snmpc_request(&sc, SNMP_C_GETREQ);
-	else if (res->action == BULKWALK)
-		snmpc_request(&sc, SNMP_C_GETBULKREQ);
-	else
-		snmpc_request(&sc, SNMP_C_GETNEXTREQ);
+	sc.sc_fd = s;
+	sc.sc_community = res->community;
+	sc.sc_version = res->version;
+	sc.sc_retry_max = SNMPC_RETRY_MAX;
+
+	if (TAILQ_EMPTY(&res->oids)) {
+			snmpc_run(&sc, res->action, SNMPC_OID_DEFAULT);
+	} else {
+		TAILQ_FOREACH(oid, &res->oids, val_entry) {
+			snmpc_run(&sc, res->action, oid->val);
+		}
+	}
 
 	close(sc.sc_fd);
+}
+
+void
+snmpc_run(struct snmpc *sc, enum actions action, const char *oid)
+{
+	if (strcmp("all", oid) == 0)
+		oid = SNMPC_OID_ALL;
+
+	/*
+	 * Set up the root OID and get the prefix length to shorten the
+	 * printed OID strings of the children.
+	 */
+	if (smi_string2oid(oid, &sc->sc_oid) == -1)
+		errx(1, "oid");
+
+	bcopy(&sc->sc_oid, &sc->sc_root_oid, sizeof(sc->sc_root_oid));
+	bcopy(&sc->sc_oid, &sc->sc_last_oid, sizeof(sc->sc_last_oid));
+	if (sc->sc_oid.bo_n > 2)
+		sc->sc_root_len = sc->sc_oid.bo_n - 1;
+
+	sc->sc_nresp = 0;
+
+	if (action == GET)
+		snmpc_request(sc, SNMP_C_GETREQ);
+	else if (action == BULKWALK)
+		snmpc_request(sc, SNMP_C_GETBULKREQ);
+	else
+		snmpc_request(sc, SNMP_C_GETNEXTREQ);
 }
 
 void

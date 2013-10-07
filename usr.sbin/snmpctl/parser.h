@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.7 2013/10/01 17:20:39 reyk Exp $	*/
+/*	$OpenBSD: parser.h,v 1.8 2013/10/07 11:40:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -26,13 +26,19 @@ enum actions {
 	BULKWALK
 };
 
+struct parse_val {
+	char			*val;
+	TAILQ_ENTRY(parse_val)	 val_entry;
+};
+TAILQ_HEAD(parse_vals, parse_val);
+
 struct parse_result {
-	enum actions	 action;
-	struct imsgbuf	*ibuf;
-	char		*host;
-	char		*oid;
-	char		*community;
-	int		 version;
+	enum actions		 action;
+	struct imsgbuf		*ibuf;
+	char			*host;
+	struct parse_vals	 oids;
+	char			*community;
+	int			 version;
 };
 
 struct parse_result	*parse(int, char *[]);

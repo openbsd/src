@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.13 2013/10/01 17:20:39 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.14 2013/10/07 11:40:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -213,6 +213,7 @@ parse(int argc, char *argv[])
 
 	bzero(&res, sizeof(res));
 	res.version = -1;
+	TAILQ_INIT(&res.oids);
 
 	while (argc >= 0) {
 		if ((match = match_token(argv[0], table)) == NULL) {
@@ -251,6 +252,7 @@ match_token(char *word, const struct token table[])
 	int			 iovcnt = 0;
 	struct in_addr		 in4;
 	struct in6_addr		 in6;
+	struct parse_val	*val;
 
 	bzero(&iov, sizeof(iov));
 
@@ -274,15 +276,18 @@ match_token(char *word, const struct token table[])
 		case SNMPHOST:
 			if (!match && word != NULL && strlen(word) > 0 &&
 			    res.host == NULL) {
-				res.host = strdup(word);
+				if ((res.host = strdup(word)) == NULL)
+					err(1, "strdup");
 				match++;
 				t = &table[i];
 			}
 			break;
 		case SNMPOID:
-			if (!match && word != NULL && strlen(word) > 0 &&
-			    res.oid == NULL) {
-				res.oid = strdup(word);
+			if (!match && word != NULL && strlen(word) > 0) {
+				if ((val = calloc(1, sizeof(*val))) == NULL ||
+				    (val->val = strdup(word)) == NULL)
+					err(1, "strdup");
+				TAILQ_INSERT_TAIL(&res.oids, val, val_entry);
 				match++;
 				t = &table[i];
 			}
@@ -290,7 +295,8 @@ match_token(char *word, const struct token table[])
 		case SNMPCOMMUNITY:
 			if (!match && word != NULL && strlen(word) > 0 &&
 			    res.community == NULL) {
-				res.community = strdup(word);
+				if ((res.community = strdup(word)) == NULL)
+					err(1, "strdup");
 				match++;
 				t = &table[i];
 			}
