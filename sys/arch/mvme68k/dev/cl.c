@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.53 2012/11/04 13:33:32 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.54 2013/10/07 17:53:57 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -1466,7 +1466,7 @@ cl_mintr(arg)
 		((msvr & 0x40) != 0x0)
 		);
 #endif
-		ttymodem(tp, ((msvr & 0x40) != 0x0) );
+		(*linesw[tp->t_line].l_modem)(tp, ((msvr & 0x40) != 0x0) );
 	}
 	if (misr & 0x80) {
 #ifdef VERBOSE_LOG_MESSAGES

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wl.c,v 1.25 2013/07/04 00:25:37 guenther Exp $ */
+/*	$OpenBSD: wl.c,v 1.26 2013/10/07 17:53:57 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -1142,7 +1142,7 @@ cl_mintr(sc)
 		struct tty *tp = sc->sc_cl[channel].tty;
 		log(LOG_WARNING, "cl_mintr: channel %x cd %x\n",channel,
 		    ((msvr & 0x40) != 0x0));
-		ttymodem(tp, ((msvr & 0x40) != 0x0) );
+		(*linesw[tp->t_line].l_modem)(tp, ((msvr & 0x40) != 0x0) );
 	}
 	if (misr & MISR_DSRCHG) {
 		log(LOG_WARNING, "cl_mintr: channel %x dsr %x\n",channel,

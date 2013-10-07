@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.59 2010/06/28 14:13:29 deraadt Exp $ */
+/*	$OpenBSD: cl.c,v 1.60 2013/10/07 17:53:57 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -1329,7 +1329,7 @@ cl_mintr(arg)
 		    ((msvr & 0x40) != 0x0)
 		);
 #endif
-		ttymodem(tp, ((msvr & 0x40) != 0x0) );
+		(*linesw[tp->t_line].l_modem)(tp, ((msvr & 0x40) != 0x0) );
 	}
 	if (misr & 0x80) {
 #ifdef DEBUG
