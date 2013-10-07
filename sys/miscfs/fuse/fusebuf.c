@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.c,v 1.3 2013/10/07 18:04:53 syl Exp $ */
+/* $OpenBSD: fusebuf.c,v 1.4 2013/10/07 18:09:58 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -41,6 +41,11 @@ fb_setup(size_t len, ino_t ino, int op, struct proc *p)
 	fbuf->fb_uuid = arc4random();
 	fbuf->fb_type = op;
 	fbuf->fb_ino = ino;
+	if (len == 0)
+		fbuf->fb_dat = NULL;
+	else
+		fbuf->fb_dat = (uint8_t *)malloc(len, M_FUSEFS,
+		    M_WAITOK | M_ZERO);
 
 	return (fbuf);
 }
