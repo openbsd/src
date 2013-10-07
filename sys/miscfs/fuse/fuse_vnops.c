@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.7 2013/10/07 18:15:21 syl Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.8 2013/10/07 18:24:12 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -32,6 +32,7 @@
 #include "fusefs.h"
 
 /* Prototypes for fusefs vnode ops */
+int	fusefs_kqfilter(void *);
 int	fusefs_lookup(void *);
 int	fusefs_open(void *);
 int	fusefs_close(void *);
@@ -61,6 +62,11 @@ int	fusefs_unlock(void *);
 int	fusefs_islocked(void *);
 int	fusefs_advlock(void *);
 
+/* Prototypes for fusefs kqfilter */
+int	filt_fusefsreadwrite(struct knote *, long);
+int	filt_fusefsvnode(struct knote *, long);
+void	filt_fusefsdetach(struct knote *);
+
 struct vops fusefs_vops = {
 	.vop_lookup	= fusefs_lookup,
 	.vop_create	= fusefs_create,
@@ -74,6 +80,7 @@ struct vops fusefs_vops = {
 	.vop_write	= fusefs_write,
 	.vop_ioctl	= fusefs_ioctl,
 	.vop_poll	= fusefs_poll,
+	.vop_kqfilter	= fusefs_kqfilter,
 	.vop_fsync	= nullop,
 	.vop_remove	= fusefs_remove,
 	.vop_link	= fusefs_link,
@@ -95,6 +102,74 @@ struct vops fusefs_vops = {
 	.vop_pathconf	= spec_pathconf,
 	.vop_advlock	= fusefs_advlock,
 };
+
+struct filterops fusefsreadwrite_filtops =
+	{ 1, NULL, filt_fusefsdetach, filt_fusefsreadwrite };
+struct filterops fusefsvnode_filtops =
+	{ 1, NULL, filt_fusefsdetach, filt_fusefsvnode };
+
+int
+fusefs_kqfilter(void *v)
+{
+	struct vop_kqfilter_args *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct knote *kn = ap->a_kn;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		kn->kn_fop = &fusefsreadwrite_filtops;
+		break;
+	case EVFILT_WRITE:
+		kn->kn_fop = &fusefsreadwrite_filtops;
+		break;
+	case EVFILT_VNODE:
+		kn->kn_fop = &fusefsvnode_filtops;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	kn->kn_hook = (caddr_t)vp;
+
+	SLIST_INSERT_HEAD(&vp->v_selectinfo.si_note, kn, kn_selnext);
+
+	return (0);
+}
+
+void
+filt_fusefsdetach(struct knote *kn)
+{
+	struct vnode *vp = (struct vnode *)kn->kn_hook;
+
+	SLIST_REMOVE(&vp->v_selectinfo.si_note, kn, knote, kn_selnext);
+}
+
+int
+filt_fusefsreadwrite(struct knote *kn, long hint)
+{
+	/*
+	 * filesystem is gone, so set the EOF flag and schedule
+	 * the knote for deletion
+	 */
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		return (1);
+	}
+
+	return (kn->kn_data != 0);
+}
+
+int
+filt_fusefsvnode(struct knote *kn, long int hint)
+{
+	if (kn->kn_sfflags & hint)
+		kn->kn_fflags |= hint;
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= EV_EOF;
+		return (1);
+	}
+	return (kn->kn_fflags != 0);
+}
 
 void
 update_vattr(struct mount *mp, struct vattr *v)
@@ -410,6 +485,7 @@ fusefs_setattr(void *v)
 
 	update_vattr(fmp->mp, &fbuf->fb_vattr);
 	memcpy(vap, &fbuf->fb_vattr, sizeof(*vap));
+	VN_KNOTE(ap->a_vp, NOTE_ATTRIB);
 
 out:
 	fb_delete(fbuf);
@@ -476,6 +552,8 @@ fusefs_link(void *v)
 	}
 
 	fb_delete(fbuf);
+	VN_KNOTE(vp, NOTE_LINK);
+	VN_KNOTE(dvp, NOTE_WRITE);
 
 out1:
 	if (dvp != vp)
@@ -535,6 +613,7 @@ fusefs_symlink(void *v)
 	tdp->v_type = VLNK;
 	VTOI(tdp)->vtype = tdp->v_type;
 	VTOI(tdp)->parent = dp->ufs_ino.i_number;
+	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 
 	*vpp = tdp;
 	fb_delete(fbuf);
@@ -1138,8 +1217,6 @@ fusefs_rmdir(void *v)
 		fb_delete(fbuf);
 		goto out;
 	}
-
-	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 
 	cache_purge(dvp);
 	vput(dvp);
