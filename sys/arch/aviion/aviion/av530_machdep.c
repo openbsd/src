@@ -1,4 +1,4 @@
-/*	$OpenBSD: av530_machdep.c,v 1.8 2013/10/07 19:09:08 miod Exp $	*/
+/*	$OpenBSD: av530_machdep.c,v 1.9 2013/10/07 19:11:39 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -148,13 +148,10 @@ av530_startup()
 {
 }
 
-void
+u_int
 av530_bootstrap()
 {
 	extern const struct cmmu_p cmmu8820x;
-#if 0
-	extern u_char hostaddr[6];
-#endif
 	uint32_t whoami;
 
 	/*
@@ -192,13 +189,10 @@ av530_bootstrap()
 	*(volatile u_int32_t *)AV_IENALL = 0;
 	*(volatile u_int32_t *)AV_EXIENALL = 0;
 
-#if 0
 	/*
-	 * Get all the information we'll need later from the PROM, while
-	 * we can still use it.
+	 * Return the delay const value to use (which matches the CPU speed).
 	 */
-	scm_getenaddr(hostaddr);
-#endif
+	return 33;
 }
 
 /*

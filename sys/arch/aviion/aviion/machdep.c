@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.55 2013/10/07 19:10:40 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.56 2013/10/07 19:11:39 miod Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -700,7 +700,7 @@ aviion_bootstrap()
 	aviion_identify();
 
 	cn_tab = &bootcons;
-	platform->bootstrap();
+	aviion_delay_const = platform->bootstrap();
 	/* we can use printf() from here. */
 
 	/* Parse the commandline */

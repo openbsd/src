@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.10 2013/10/07 19:09:11 miod Exp $	*/
+/*	$OpenBSD: board.h,v 1.11 2013/10/07 19:11:42 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat
  *
@@ -75,7 +75,7 @@ struct pmap_table;
 struct vme_range;
 
 struct board {
-	void		(*bootstrap)(void);
+	u_int		(*bootstrap)(void);
 	vaddr_t		(*memsize)(void);
 	void		(*startup)(void);
 
@@ -100,7 +100,7 @@ struct board {
 
 #define	DECLARE_BOARD(b) \
 extern const struct board board_av##b; \
-void	av##b##_bootstrap(void); \
+u_int	av##b##_bootstrap(void); \
 vaddr_t	av##b##_memsize(void); \
 void	av##b##_startup(void); \
 void	av##b##_intr(struct trapframe *); \

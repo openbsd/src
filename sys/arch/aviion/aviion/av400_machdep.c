@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.22 2013/10/07 19:09:07 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.23 2013/10/07 19:11:39 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat.
  *
@@ -260,7 +260,7 @@ av400_startup()
 {
 }
 
-void
+u_int
 av400_bootstrap()
 {
 	extern const struct cmmu_p cmmu8820x;
@@ -287,6 +287,25 @@ av400_bootstrap()
 	 * we can still use it.
 	 */
 	scm_getenaddr(hostaddr);
+
+	/*
+	 * Return the delay const value to use (which matches the CPU speed).
+	 */
+	switch (cputyp) {
+	case AVIION_300_310:
+	case AVIION_400_4000:
+	case AVIION_300C_310C:
+	case AVIION_300CD_310CD:
+	case AVIION_300D_310D:
+	case AVIION_4300_16:
+		return 16;
+	case AVIION_410_4100:
+	case AVIION_4300_20:
+		return 20;
+	default:
+	case AVIION_4300_25:
+		return 25;
+	}
 }
 
 /*

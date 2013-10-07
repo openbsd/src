@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtc_clock.c,v 1.2 2010/04/24 18:46:51 miod Exp $	*/
+/*	$OpenBSD: rtc_clock.c,v 1.3 2013/10/07 19:11:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -31,8 +31,6 @@
 
 #include <aviion/dev/sysconvar.h>
 
-extern u_int aviion_delay_const;
-
 struct intrhand rtc_clock_ih;
 
 int	rtc_clockintr(void *);
@@ -63,13 +61,9 @@ rtc_init_clocks()
 	profhz = stathz = 0;
 
 	/*
-	 * According to the documentation, systems of this family run
-	 * at 33MHz; however other sources seem to imply model 530
-	 * runs at 25Mhz only.
-	 * If this turns out to be the case, proper calibration of the
-	 * system clock will be necessary.
+	 * According to the documentation, all systems of this family run
+	 * at 33MHz.
 	 */
-	aviion_delay_const = 33;
 	rtc_speed = 33333333 / 2;	/* apparently RTC runs at half CPUCLK */
 
 	/*
