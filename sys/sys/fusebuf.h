@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.h,v 1.3 2013/06/04 18:25:09 tedu Exp $ */
+/* $OpenBSD: fusebuf.h,v 1.4 2013/10/07 18:04:53 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon
  * Copyright (c) 2013 Martin Pieuchot
@@ -22,15 +22,13 @@
 /*
  * Fusebufs are of a single size, 4096 bytes.
  */
-#define	FUSEBUFSIZE	4096
-#define	FUSEFDSIZE	sizeof(((struct fusebuf *)0)->F_dat.FD)
-#define	FUSELEN	(FUSEBUFSIZE - sizeof(struct fb_hdr) - sizeof(union uFD))
+#define	FUSEBUFSIZE	(sizeof(struct fusebuf))
+#define FUSEBUFMAXSIZE	(4096*1024)
 
 /* header at beginning of each fusebuf(9): */
 struct fb_hdr {
 	SIMPLEQ_ENTRY(fusebuf)	fh_next;	/* next buffer in chain */
 	size_t			fh_len;		/* Amount of data */
-	size_t			fh_resid;	/* Needed for partial rw */
 	uint32_t		fh_err;		/* Err code to pass back */
 	int			fh_type;	/* type of data */
 	ino_t			fh_ino;		/* Inode of this fusebuf(9) */
@@ -61,34 +59,30 @@ struct fb_io {
  */
 struct fusebuf {
 	struct fb_hdr	fb_hdr;
-	struct {
-		union uFD {
-			struct statvfs	FD_stat;	/* vfs statfs */
-			struct vattr	FD_vattr;	/* for attr vnops */
-			struct fb_io	FD_io;		/* for file io vnops */
-
-		} FD;
-		char	F_databuf[FUSELEN];
-	} F_dat;
+	union {
+		struct statvfs	FD_stat;	/* vfs statfs */
+		struct vattr	FD_vattr;	/* for attr vnops */
+		struct fb_io	FD_io;		/* for file io vnops */
+	} FD;
+	uint8_t *F_databuf;			/* data's */
 };
 
 #define fb_next		fb_hdr.fh_next
 #define fb_len		fb_hdr.fh_len
-#define fb_resid	fb_hdr.fh_resid
 #define fb_err		fb_hdr.fh_err
 #define fb_type		fb_hdr.fh_type
 #define fb_ino		fb_hdr.fh_ino
 #define fb_uuid		fb_hdr.fh_uuid
 
-#define fb_stat		F_dat.FD.FD_stat
-#define fb_vattr	F_dat.FD.FD_vattr
-#define fb_io_fd	F_dat.FD.FD_io.fi_fd
-#define fb_io_ino	F_dat.FD.FD_io.fi_ino
-#define fb_io_off	F_dat.FD.FD_io.fi_off
-#define fb_io_len	F_dat.FD.FD_io.fi_len
-#define fb_io_mode	F_dat.FD.FD_io.fi_mode
-#define fb_io_flags	F_dat.FD.FD_io.fi_flags
-#define	fb_dat		F_dat.F_databuf
+#define fb_stat		FD.FD_stat
+#define fb_vattr	FD.FD_vattr
+#define fb_io_fd	FD.FD_io.fi_fd
+#define fb_io_ino	FD.FD_io.fi_ino
+#define fb_io_off	FD.FD_io.fi_off
+#define fb_io_len	FD.FD_io.fi_len
+#define fb_io_mode	FD.FD_io.fi_mode
+#define fb_io_flags	FD.FD_io.fi_flags
+#define	fb_dat		F_databuf
 
 /*
  * Macros for type conversion
@@ -96,9 +90,6 @@ struct fusebuf {
  *			type
  */
 #define	fbtod(fb,t)	((t)((fb)->fb_dat))
-
-/* helper to get F_databuf size */
-#define fbdatsize(fb)	((fb)->fb_len - FUSEFDSIZE)
 
 /* flags needed by setattr */
 #define FUSE_FATTR_MODE		(1 << 0)

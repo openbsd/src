@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.5 2013/09/17 19:07:11 syl Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.6 2013/10/07 18:04:53 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -235,7 +235,7 @@ fusefs_access(void *v)
 	if ((ap->a_mode & VEXEC) != 0)
 		mask |= 0x1;
 
-	fbuf = fb_setup(FUSEFDSIZE, ip->ufs_ino.i_number, FBT_ACCESS, p);
+	fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_ACCESS, p);
 	fbuf->fb_io_mode = mask;
 
 	error = fb_queue(fmp->dev, fbuf);
@@ -329,8 +329,7 @@ fusefs_setattr(void *v)
 	if (!fmp->sess_init || (fmp->undef_op & UNDEF_SETATTR))
 		return (ENXIO);
 
-	fbuf = fb_setup(FUSEFDSIZE + sizeof(*io), ip->ufs_ino.i_number,
-	    FBT_SETATTR, p);
+	fbuf = fb_setup(sizeof(*io), ip->ufs_ino.i_number, FBT_SETATTR, p);
 	io = fbtod(fbuf, struct fb_io *);
 	io->fi_flags = 0;
 
@@ -466,8 +465,8 @@ fusefs_link(void *v)
 	if (!fmp->sess_init || (fmp->undef_op & UNDEF_LINK))
 		goto out1;
 
-	fbuf = fb_setup(FUSEFDSIZE + cnp->cn_namelen + 1,
-	    dip->ufs_ino.i_number, FBT_LINK, p);
+	fbuf = fb_setup(cnp->cn_namelen + 1, dip->ufs_ino.i_number,
+	    FBT_LINK, p);
 
 	fbuf->fb_io_ino = ip->ufs_ino.i_number;
 	memcpy(fbuf->fb_dat, cnp->cn_nameptr, cnp->cn_namelen);
@@ -519,8 +518,8 @@ fusefs_symlink(void *v)
 
 	len = strlen(target) + 1;
 
-	fbuf = fb_setup(FUSEFDSIZE + len + cnp->cn_namelen + 1,
-	    dp->ufs_ino.i_number, FBT_SYMLINK, p);
+	fbuf = fb_setup(len + cnp->cn_namelen + 1, dp->ufs_ino.i_number,
+	    FBT_SYMLINK, p);
 
 	memcpy(fbuf->fb_dat, cnp->cn_nameptr, cnp->cn_namelen);
 	fbuf->fb_dat[cnp->cn_namelen] = '\0';
@@ -578,8 +577,7 @@ fusefs_readdir(void *v)
 		return (EINVAL);
 
 	while (uio->uio_resid > 0) {
-		fbuf = fb_setup(FUSEFDSIZE, ip->ufs_ino.i_number, FBT_READDIR,
-		    p);
+		fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_READDIR, p);
 
 		if (ip->fufh[FUFH_RDONLY].fh_type == FUFH_INVALID) {
 			/* TODO open the file */
@@ -588,7 +586,7 @@ fusefs_readdir(void *v)
 		}
 		fbuf->fb_io_fd = ip->fufh[FUFH_RDONLY].fh_id;
 		fbuf->fb_io_off = uio->uio_offset;
-		fbuf->fb_io_len = MIN(uio->uio_resid, FUSELEN);
+		fbuf->fb_io_len = MIN(uio->uio_resid, FUSEBUFMAXSIZE);
 
 		error = fb_queue(fmp->dev, fbuf);
 
@@ -598,12 +596,12 @@ fusefs_readdir(void *v)
 		}
 
 		/*ack end of readdir */
-		if (fbdatsize(fbuf) == 0) {
+		if (fbuf->fb_len == 0) {
 			pool_put(&fusefs_fbuf_pool, fbuf);
 			break;
 		}
 
-		if ((error = uiomove(fbuf->fb_dat, fbdatsize(fbuf), uio))) {
+		if ((error = uiomove(fbuf->fb_dat, fbuf->fb_len, uio))) {
 			pool_put(&fusefs_fbuf_pool, fbuf);
 			break;
 		}
@@ -678,7 +676,7 @@ fusefs_readlink(void *v)
 		goto out;
 	}
 
-	error = uiomove(fbuf->fb_dat, fbdatsize(fbuf), uio);
+	error = uiomove(fbuf->fb_dat, fbuf->fb_len, uio);
 	pool_put(&fusefs_fbuf_pool, fbuf);
 out:
 	return (error);
@@ -760,8 +758,8 @@ fusefs_create(void *v)
 		goto out;
 	}
 
-	fbuf = fb_setup(FUSEFDSIZE + cnp->cn_namelen + 1,
-	    ip->ufs_ino.i_number, FBT_CREATE, p);
+	fbuf = fb_setup(cnp->cn_namelen + 1, ip->ufs_ino.i_number,
+	    FBT_CREATE, p);
 
 	fbuf->fb_io_mode = mode;
 	fbuf->fb_io_flags = O_CREAT | O_RDWR;
@@ -830,9 +828,9 @@ fusefs_read(void *v)
 		return (EINVAL);
 
 	while (uio->uio_resid > 0) {
-		fbuf = fb_setup(FUSEFDSIZE, ip->ufs_ino.i_number, FBT_READ, p);
+		fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_READ, p);
 
-		size = MIN(uio->uio_resid, FUSELEN);
+		size = MIN(uio->uio_resid, FUSEBUFMAXSIZE);
 		fbuf->fb_io_fd = fusefs_fd_get(ip, FUFH_RDONLY);
 		fbuf->fb_io_off = uio->uio_offset;
 		fbuf->fb_io_len = size;
@@ -842,11 +840,11 @@ fusefs_read(void *v)
 		if (error)
 			break;
 
-		error = uiomove(fbuf->fb_dat, MIN(size, fbdatsize(fbuf)), uio);
+		error = uiomove(fbuf->fb_dat, MIN(size, fbuf->fb_len), uio);
 		if (error)
 			break;
 
-		if (fbdatsize(fbuf) < size)
+		if (fbuf->fb_len < size)
 			break;
 
 		pool_put(&fusefs_fbuf_pool, fbuf);
@@ -879,9 +877,8 @@ fusefs_write(void *v)
 		return (error);
 
 	while (uio->uio_resid > 0) {
-		len = MIN(uio->uio_resid, FUSELEN);
-		fbuf = fb_setup(FUSEFDSIZE + len, ip->ufs_ino.i_number,
-		    FBT_WRITE, p);
+		len = MIN(uio->uio_resid, FUSEBUFMAXSIZE);
+		fbuf = fb_setup(len, ip->ufs_ino.i_number, FBT_WRITE, p);
 
 		fbuf->fb_io_fd = fusefs_fd_get(ip, FUFH_WRONLY);
 		fbuf->fb_io_off = uio->uio_offset;
@@ -1008,7 +1005,7 @@ abortit:
 		goto abortit;
 	}
 
-	fbuf = fb_setup(FUSEFDSIZE + fcnp->cn_namelen + tcnp->cn_namelen + 2,
+	fbuf = fb_setup(fcnp->cn_namelen + tcnp->cn_namelen + 2,
 	    dp->ufs_ino.i_number, FBT_RENAME, p);
 
 	memcpy(fbuf->fb_dat, fcnp->cn_nameptr, fcnp->cn_namelen);
@@ -1067,7 +1064,7 @@ fusefs_mkdir(void *v)
 		goto out;
 	}
 
-	fbuf = fb_setup(FUSEFDSIZE + cnp->cn_namelen + 1, ip->ufs_ino.i_number,
+	fbuf = fb_setup(cnp->cn_namelen + 1, ip->ufs_ino.i_number,
 	    FBT_MKDIR, p);
 
 	fbuf->fb_io_mode = MAKEIMODE(vap->va_type, vap->va_mode);
@@ -1135,7 +1132,7 @@ fusefs_rmdir(void *v)
 
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 
-	fbuf = fb_setup(FUSEFDSIZE + cnp->cn_namelen + 1, dp->ufs_ino.i_number,
+	fbuf = fb_setup(cnp->cn_namelen + 1, dp->ufs_ino.i_number,
 	    FBT_RMDIR, p);
 	memcpy(fbuf->fb_dat, cnp->cn_nameptr, cnp->cn_namelen);
 	fbuf->fb_dat[cnp->cn_namelen] = '\0';
@@ -1191,7 +1188,7 @@ fusefs_remove(void *v)
 		goto out;
 	}
 
-	fbuf = fb_setup(FUSEFDSIZE + cnp->cn_namelen + 1, dp->ufs_ino.i_number,
+	fbuf = fb_setup(cnp->cn_namelen + 1, dp->ufs_ino.i_number,
 	    FBT_UNLINK, p);
 	memcpy(fbuf->fb_dat, cnp->cn_nameptr, cnp->cn_namelen);
 	fbuf->fb_dat[cnp->cn_namelen] = '\0';
