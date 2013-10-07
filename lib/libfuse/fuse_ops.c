@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.10 2013/10/07 18:20:31 syl Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.11 2013/10/07 18:22:18 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -94,12 +94,10 @@ static int
 ifuse_ops_getattr(struct fuse *f, struct fusebuf *fbuf)
 {
 	struct fuse_vnode *vn;
-	struct stat st;
 	char *realname;
 
 	DPRINTF("Opcode:\tgetattr\n");
 	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
-	bzero(&st, sizeof(st));
 
 	bzero(&fbuf->fb_vattr, sizeof(fbuf->fb_vattr));
 
