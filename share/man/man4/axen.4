@@ -1,4 +1,4 @@
-.\"	$OpenBSD: axen.4,v 1.1 2013/10/07 05:56:58 yuo Exp $
+.\"	$OpenBSD: axen.4,v 1.2 2013/10/07 07:18:36 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Yojiro UO <yuo@nui.org>
 .\"
@@ -27,13 +27,14 @@
 The
 .Nm
 driver provides support for USB Ethernet adapters based on the ASIX
-Electronics AX88178a and AX88779 USB 2.0 chipsets (potentially AX88779 will 
-support USB 3.0 bus, but currenly no xhci suuport on OpenBSD) including the
-following:
+Electronics AX88178a and AX88779 USB 2.0 chipsets
+(potentially the AX88779 supports USB 3.0, but there is currently no xhci support in
+.Ox ) ,
+including the following:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Logitec LAN-GTJU3
 .It Kurotoshiko GbE-USB3.0
+.It Logitec LAN-GTJU3
 .El
 .Pp
 The
@@ -56,17 +57,15 @@ Set 1000Mbps (Gigabit Ethernet) operation.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
-.Sh DIAGNOSTICS
 .Sh SEE ALSO
 .Xr arp 4 ,
-.Xr rgephy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
+.Xr rgephy 4 ,
 .Xr usb 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
-.Re
 .Sh HISTORY
 The
 .Nm
@@ -77,4 +76,4 @@ device driver first appeared in
 The
 .Nm
 driver was written by
-.An Yojiro UO <yuo@nui.org>
+.An Yojiro UO Aq Mt yuo@nui.org .
