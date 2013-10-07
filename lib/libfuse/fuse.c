@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.10 2013/08/10 09:51:50 jca Exp $ */
+/* $OpenBSD: fuse.c,v 1.11 2013/10/07 18:08:51 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -16,6 +16,10 @@
  */
 
 #include <sys/wait.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
+
+#include <miscfs/fuse/fusefs.h>
 
 #include <errno.h>
 #include <signal.h>
@@ -35,9 +39,9 @@ fuse_loop(struct fuse *fuse)
 {
 	struct fusebuf fbuf;
 	struct fuse_context ctx;
+	struct fb_ioctl_xch ioexch;
 	struct kevent ev;
 	int error = 0;
-	size_t len = 0;
 	int ret;
 
 	fuse->fc->kq = kqueue();
@@ -52,19 +56,25 @@ fuse_loop(struct fuse *fuse)
 		if (ret == -1)
 			DPERROR(__func__);
 		else if (ret > 0) {
-			error = read(fuse->fc->fd, &fbuf, sizeof(fbuf.fb_hdr));
-			if (error != sizeof(fbuf.fb_hdr)) {
-				DPRINTF("%s: bad hdr read\n", __func__);
-				errno = EINVAL;
+			error = read(fuse->fc->fd, &fbuf, sizeof(fbuf));
+			if (error != sizeof(fbuf)) {
+				fprintf(stderr, "%s: bad fusebuf read\n",
+				    __func__);
 				return (-1);
 			}
 
-			if (fbuf.fb_len != 0) {
-				error = read(fuse->fc->fd, (char *)&fbuf.F_dat,
-				    fbuf.fb_len);
+			/* check if there is data something present */
+			if (fbuf.fb_len) {
+				fbuf.fb_dat = malloc(fbuf.fb_len);
+				if (fbuf.fb_dat == NULL)
+					return (-1);
+				ioexch.fbxch_uuid = fbuf.fb_uuid;
+				ioexch.fbxch_len = fbuf.fb_len;
+				ioexch.fbxch_data = fbuf.fb_dat;
 
-				if (error != (int)fbuf.fb_len) {
-					errno = EINVAL;
+				if (ioctl(fuse->fc->fd, FIOCGETFBDAT,
+				    &ioexch)) {
+					free(fbuf.fb_dat);
 					return (-1);
 				}
 			}
@@ -82,11 +92,26 @@ fuse_loop(struct fuse *fuse)
 				return (ret);
 			}
 
-			len = sizeof(fbuf.fb_hdr) + fbuf.fb_len;
-			ret = write(fuse->fc->fd, &fbuf, len);
+			ret = write(fuse->fc->fd, &fbuf, sizeof(fbuf));
+			if (fbuf.fb_len) {
+				if (fbuf.fb_dat == NULL) {
+					fprintf(stderr, "%s: fb_dat is Null\n",
+					    __func__);
+					return (-1);
+				}
+				ioexch.fbxch_uuid = fbuf.fb_uuid;
+				ioexch.fbxch_len = fbuf.fb_len;
+				ioexch.fbxch_data = fbuf.fb_dat;
+
+				if (ioctl(fuse->fc->fd, FIOCSETFBDAT, &ioexch)) {
+					free(fbuf.fb_dat);
+					return (-1);
+				}
+				free(fbuf.fb_dat);
+			}
 			ictx = NULL;
 
-			if (ret != (int)len) {
+			if (ret != FUSEBUFSIZE) {
 				errno = EINVAL;
 				return (-1);
 			}
