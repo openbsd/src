@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dir.5,v 1.16 2012/04/13 08:20:15 matthew Exp $
+.\"	$OpenBSD: dir.5,v 1.17 2013/10/07 01:50:26 guenther Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)dir.5	8.4 (Berkeley) 5/3/95
 .\"
-.Dd $Mdocdate: April 13 2012 $
+.Dd $Mdocdate: October 7 2013 $
 .Dt DIR 5
 .Os
 .Sh NAME
@@ -37,7 +37,6 @@
 .Nm dirent
 .Nd directory file format
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
 .Fd #include <dirent.h>
 .Sh DESCRIPTION
 Directories provide a convenient hierarchical method of grouping
@@ -75,13 +74,14 @@ The directory entry format is defined in the file
 /*
  * A directory entry has a struct dirent at the front of it, containing
  * its inode number, the length of the entry, and the length of the name
- * contained in the entry.  These are followed by the name padded to a 4
- * byte boundary with null bytes.  All names are guaranteed NUL terminated.
- * The maximum length of a name in a directory is MAXNAMLEN.
+ * contained in the entry.  These are followed by the name padded to some
+ * alignment (currently 8 bytes) with NUL bytes.  All names are guaranteed
+ * NUL terminated.  The maximum length of a name in a directory is MAXNAMLEN.
  */
 
 struct dirent {
-	u_int32_t	d_fileno;	/* file number of entry */
+	ino_t		d_fileno;	/* file number of entry */
+	off_t		d_off;		/* offset of next entry */
 	u_int16_t	d_reclen;	/* length of this record */
 	u_int8_t	d_type;		/* file type, see below */
 	u_int8_t	d_namlen;	/* length of string in d_name */
@@ -102,15 +102,9 @@ struct dirent {
 #define DT_REG		8
 #define DT_LNK		10
 #define DT_SOCK		12
-
-/*
- * Convert between stat structure types and directory types.
- */
-#define IFTODT(mode)	(((mode) & 0170000) >> 12)
-#define DTTOIF(dirtype)	((dirtype) << 12)
 .Ed
 .Sh SEE ALSO
-.Xr getdirentries 2 ,
+.Xr getdents 2 ,
 .Xr fs 5 ,
 .Xr inode 5
 .Sh HISTORY
@@ -118,3 +112,7 @@ A
 .Nm dir
 file format appeared in
 .At v7 .
+The
+.Fa d_off
+member was added in
+.Ox 5.5 .

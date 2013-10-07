@@ -1,4 +1,4 @@
-.\" $OpenBSD: VOP_LOOKUP.9,v 1.24 2013/06/11 16:42:05 deraadt Exp $
+.\" $OpenBSD: VOP_LOOKUP.9,v 1.25 2013/10/07 01:50:26 guenther Exp $
 .\"
 .\" Copyright (c) 2003 Ted Unangst
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 11 2013 $
+.Dd $Mdocdate: October 7 2013 $
 .Dt VOP_LOOKUP 9
 .Os
 .Sh NAME
@@ -182,8 +182,6 @@
 .Fa "struct uio *uio"
 .Fa "struct ucred *cred"
 .Fa "int *eofflag"
-.Fa "int *ncookies"
-.Fa "u_long **cookies"
 .Fc
 .Ft int
 .Fo VOP_READLINK
@@ -671,13 +669,13 @@ Do I/O as an atomic unit.
 Upon success, zero is returned; otherwise, an appropriate error code is
 returned.
 .Pp
-.It Fn VOP_READDIR vp uio cred eofflag ncookies cookies
+.It Fn VOP_READDIR vp uio cred eofflag
 Read the contents of the directory associated with the locked vnode
 .Fa vp ,
 usually via
 .Fn VOP_READ ,
 and convert its file-system-specific format to that expected by the
-.Xr getdirentries 2
+.Xr getdents 2
 system call, storing the result into the buffers specified by
 .Fa uio .
 .Fa cred
@@ -685,16 +683,6 @@ specifies the credentials of the calling process.
 .Fa *eofflag
 is set to a non-zero value on return once successful end-of-file for the
 directory contents has been reached.
-.Pp
-.Fa ncookies
-and
-.Fa cookies ,
-if not
-.Dv NULL ,
-are used for keeping track of directory seeking.
-This is used by some file systems, such as
-.Tn NFS ,
-to allow sequential chunks of the directory contents to be obtained.
 .Pp
 Upon success, zero is returned; otherwise, an appropriate error code is
 returned.

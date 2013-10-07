@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getdirentries.2,v 1.24 2013/08/14 06:32:28 jmc Exp $
+.\"	$OpenBSD: getdents.2,v 1.1 2013/10/07 01:50:26 guenther Exp $
 .\"	$NetBSD: getdirentries.2,v 1.7 1995/10/12 15:40:50 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,18 +30,18 @@
 .\"
 .\"	@(#)getdirentries.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: August 14 2013 $
-.Dt GETDIRENTRIES 2
+.Dd $Mdocdate: October 7 2013 $
+.Dt GETDENTS 2
 .Os
 .Sh NAME
-.Nm getdirentries
+.Nm getdents
 .Nd get directory entries in a filesystem independent format
 .Sh SYNOPSIS
 .Fd #include <dirent.h>
 .Ft int
-.Fn getdirentries "int fd" "char *buf" "int nbytes" "off_t *basep"
+.Fn getdents "int fd" "void *buf" "size_t nbytes"
 .Sh DESCRIPTION
-.Fn getdirentries
+.Fn getdents
 reads directory entries from the directory
 referenced by the file descriptor
 .Fa fd
@@ -56,14 +56,15 @@ must be greater than or equal to the
 block size associated with the file (see
 .Xr stat 2 ) .
 Some filesystems may not support
-.Fn getdirentries
+.Fn getdents
 with buffers smaller than this size.
 .Pp
 The data in the buffer is a series of
 .Em dirent
-structures each containing the following entries:
+structures each containing at least the following entries:
 .Bd -literal -offset indent
-u_int32_t	d_fileno;
+ino_t		d_fileno;
+off_t		d_off;
 u_int16_t	d_reclen;
 u_int8_t	d_type;
 u_int8_t	d_namlen;
@@ -77,6 +78,9 @@ Files that are linked by hard links (see
 .Xr link 2 )
 have the same
 .Fa d_fileno .
+The
+.Fa d_off
+entry is the file offset of the next entry.
 The
 .Fa d_reclen
 entry is the length, in bytes, of the directory record.
@@ -123,9 +127,9 @@ The current position pointer associated with
 .Fa fd
 is set to point to the next block of entries.
 The pointer may not advance by the number of bytes returned by
-.Fn getdirentries .
+.Fn getdents .
 .Pp
-.Fn getdirentries
+.Fn getdents
 writes the position of the block read into the location pointed to by
 .Fa basep .
 Alternatively, the current position pointer may be set and retrieved by
@@ -143,7 +147,7 @@ Otherwise, \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn getdirentries
+.Fn getdents
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EBADF
@@ -174,7 +178,7 @@ error occurred while reading from or writing to the file system.
 .Xr dirent 5
 .Sh STANDARDS
 The
-.Fn getdirentries
+.Fn getdents
 call is not a portable interface and should not be used directly by
 applications.
 Use
@@ -185,3 +189,13 @@ The
 .Fn getdirentries
 function first appeared in
 .Bx 4.4 .
+In
+.Ox 5.5
+the
+.Fa d_off
+entry was added to
+.Vt struct dirent
+and
+.Fn getdirentries
+was replaced with
+.Fn getdents .
