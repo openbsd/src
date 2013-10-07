@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.80 2013/10/07 11:51:11 krw Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.81 2013/10/07 21:00:45 krw Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -405,7 +405,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 		    sblock.fs_ipg / INOPF(&sblock), sblock.fs_frag);
 		if (sblock.fs_size < lastminfpg)
 			errx(28, "file system size %jd < minimum size of %d "
-			    "sectors", (intmax_t)sblock.fs_size, lastminfpg);
+			    "fragments", (intmax_t)sblock.fs_size, lastminfpg);
 
 		if (sblock.fs_size % sblock.fs_fpg >= lastminfpg ||
 		    sblock.fs_size % sblock.fs_fpg == 0)
@@ -626,7 +626,7 @@ initcg(int cylno, time_t utime)
 	dmax = cbase + sblock.fs_fpg;
 	if (dmax > sblock.fs_size)
 		dmax = sblock.fs_size;
-	if (fsbtodb(&sblock, cgsblock(&sblock, cylno)) + iobufsize / sectorsize
+	if (fsbtodb(&sblock, cgsblock(&sblock, cylno)) + iobufsize / DEV_BSIZE 
 	    > fssize)
 		errx(40, "inode table does not fit in cylinder group");
 
