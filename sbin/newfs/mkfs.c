@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.79 2013/10/06 21:50:23 krw Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.80 2013/10/07 11:51:11 krw Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -490,7 +490,8 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 #define B2MBFACTOR (1 / (1024.0 * 1024.0))
 		printf("%s: %.1fMB in %jd sectors of %lld bytes\n", fsys,
 		    (float)sblock.fs_size * sblock.fs_fsize * B2MBFACTOR,
-		    (intmax_t)fsbtodb(&sblock, sblock.fs_size), sectorsize);
+		    (intmax_t)fsbtodb(&sblock, sblock.fs_size) /
+		    (sectorsize / DEV_BSIZE), sectorsize);
 		printf("%d cylinder groups of %.2fMB, %d blocks, %d"
 		    " inodes each\n", sblock.fs_ncg,
 		    (float)sblock.fs_fpg * sblock.fs_fsize * B2MBFACTOR,
