@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.8 2013/10/07 18:08:51 syl Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.9 2013/10/07 18:16:43 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -28,7 +28,6 @@
 				if (!f->op.opname) {			\
 					fbuf->fb_err = -ENOSYS;		\
 					fbuf->fb_len = 0;		\
-					DPRINTF("\n");			\
 					return (0);			\
 				}
 
@@ -146,9 +145,6 @@ ifuse_ops_open(struct fuse *f, struct fusebuf *fbuf)
 	struct fuse_vnode *vn;
 	char *realname;
 
-	DPRINTF("Opcode:\topen\n");
-	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
-
 	CHECK_OPT(open);
 
 	bzero(&ffi, sizeof(ffi));
@@ -196,10 +192,8 @@ ifuse_ops_opendir(struct fuse *f, struct fusebuf *fbuf)
 		fbuf->fb_len = 0;
 
 		vn->fd = calloc(1, sizeof(*vn->fd));
-		if (vn->fd == NULL) {
-			DPRINTF("\n");
+		if (vn->fd == NULL)
 			return (errno);
-		}
 
 		vn->fd->filled = 0;
 		vn->fd->size = 0;
@@ -411,7 +405,6 @@ ifuse_ops_lookup(struct fuse *f, struct fusebuf *fbuf)
 		if (vn == NULL) {
 			fbuf->fb_err = -ENOMEM;
 			fbuf->fb_len = 0;
-			DPRINTF("\n");
 			free(fbuf->fb_dat);
 			return (0);
 		}
