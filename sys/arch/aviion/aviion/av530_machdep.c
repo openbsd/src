@@ -1,4 +1,4 @@
-/*	$OpenBSD: av530_machdep.c,v 1.7 2013/02/17 18:07:36 miod Exp $	*/
+/*	$OpenBSD: av530_machdep.c,v 1.8 2013/10/07 19:09:08 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -92,15 +92,15 @@ const struct board board_av530 = {
 	m88100_smp_setup,
 #endif
 	av530_intsrc,
+	av530_exintsrc,
 	av530_get_vme_ranges,
 
 	av530_ptable
 };
 
 /*
- * The MVME188 interrupt arbiter has 25 orthogonal interrupt sources.
- * On the AViiON 530 machines, there are even more interrupt sources in use,
- * requiring the use of two arbiters.
+ * The AViiON 530 machines have two interrupt arbiter for 32 orthognal
+ * interrupt sources each.
  * We fold this model in the 8-level spl model this port uses, enforcing
  * priorities manually with the interrupt masks.
  */
@@ -385,7 +385,7 @@ av530_clock_ipi_handler(struct trapframe *eframe)
 /*
  * Provide the interrupt masks for a given logical interrupt source.
  */
-u_int64_t
+u_int32_t
 av530_intsrc(int i)
 {
 	static const u_int32_t intsrc[] = {
@@ -407,7 +407,15 @@ av530_intsrc(int i)
 		AV530_IRQ_VME5,
 		AV530_IRQ_VME6,
 		AV530_IRQ_VME7
-	}, ext_intsrc[] = {
+	};
+
+	return intsrc[i];
+}
+
+u_int32_t
+av530_exintsrc(int i)
+{
+	static const u_int32_t exintsrc[] = {
 		0,
 		0,
 		0,
@@ -427,11 +435,8 @@ av530_intsrc(int i)
 		0,
 		0
 	};
-	uint64_t isrc;
 
-	isrc = ext_intsrc[i];
-	isrc = (isrc << 32) | intsrc[i];
-	return isrc;
+	return exintsrc[i];
 }
 
 /*

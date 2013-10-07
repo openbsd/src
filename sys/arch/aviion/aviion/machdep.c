@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.53 2013/09/28 19:56:47 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.54 2013/10/07 19:09:08 miod Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -929,15 +929,16 @@ void
 intsrc_enable(u_int intsrc, int ipl)
 {
 	u_int32_t psr;
-	u_int64_t intmask = platform->intsrc(intsrc);
+	u_int32_t intmask = platform->intsrc(intsrc);
+	u_int32_t exintmask = platform->exintsrc(intsrc);
 	int i;
 
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
 
 	for (i = IPL_NONE; i < ipl; i++) {
-		int_mask_val[i] |= (u_int32_t)intmask;
-		ext_int_mask_val[i] |= (u_int32_t)(intmask >> 32);
+		int_mask_val[i] |= intmask;
+		ext_int_mask_val[i] |= exintmask;
 	}
 	setipl(getipl());
 
@@ -948,15 +949,16 @@ void
 intsrc_disable(u_int intsrc)
 {
 	u_int32_t psr;
-	u_int64_t intmask = platform->intsrc(intsrc);
+	u_int32_t intmask = platform->intsrc(intsrc);
+	u_int32_t exintmask = platform->exintsrc(intsrc);
 	int i;
 
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
 
 	for (i = 0; i < NIPLS; i++) {
-		int_mask_val[i] &= ~((u_int32_t)intmask);
-		ext_int_mask_val[i] &= ~((u_int32_t)(intmask >> 32));
+		int_mask_val[i] &= ~intmask;
+		ext_int_mask_val[i] &= ~exintmask;
 	}
 	setipl(getipl());
 
