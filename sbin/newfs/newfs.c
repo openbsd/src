@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.92 2013/10/06 22:13:26 krw Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.93 2013/10/07 10:05:24 krw Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -441,7 +441,8 @@ havelabel:
 	       fatal("%s: maximum file system size on the `%c' partition is "
 		   "%llu sectors", argv[0], *cp, DL_GETPSIZE(pp));
 
-	fssize = DL_SECTOBLK(lp, nsecs);
+	/* Can't use DL_SECTOBLK() because sectorsize may not be from label! */
+	fssize = nsecs * (sectorsize / DEV_BSIZE);
 	if (oflagset == 0 && fssize >= INT_MAX)
 		Oflag = 2;	/* FFS2 */
 	if (fsize == 0) {
