@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.18 2013/09/28 19:56:46 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.19 2013/10/07 19:10:40 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -85,6 +85,26 @@ ASGLOBAL(__start)
 	br	_ASM_LABEL(main_start)
 
 	/*
+	 * Room for the kernel VBR page.
+	 * Note this page is in kernel text, in order to be write-protected
+	 * by pmap_bootstrap().
+	 */
+	.balign	PAGE_SIZE
+
+#ifdef M88100
+	/*
+	 * The 88100 may execute the first instruction of the next trap
+	 * handler, as documented in its Errata. Processing trap #511
+	 * would then fall into the next page, unless the address computation
+	 * wraps, or software traps are exempt from the issue - the Errata
+	 * does not provide more detail.
+	 * Although the MVME BUG does not add an extra NOP after its VBR page,
+	 * it is cheap to add an extra NOP for safety.
+	 */
+	NOP
+#endif
+
+	/*
 	 * Startup code for main processor.
 	 */
 ASLOCAL(main_start)
@@ -127,8 +147,6 @@ ASLOCAL(main_start)
 	ldcr	%r12, VBR
 	or.u	%r13, %r0,  %hi16(_C_LABEL(prom_vbr))
 	st	%r12, %r13, %lo16(_C_LABEL(prom_vbr))
-	stcr	%r0,  VBR
-	FLUSH_PIPELINE
 
 	/*
 	 * Have curcpu() point at the dummy cpuinfo structure,
@@ -167,8 +185,14 @@ ASLOCAL(main_start)
 #endif /* M88100 */
 2:
 	or	%r4, %r0, 1
+	or.u	%r2, %r0, %hi16(_ASM_LABEL(__start))
 	bsr.n	_C_LABEL(vector_init)
-	 ldcr	%r2, VBR
+	 or	%r2, %r2, %lo16(_ASM_LABEL(__start))
+	stcr	%r2, VBR
+	FLUSH_PIPELINE
+
+	or.u	%r3, %r0, %hi16(_C_LABEL(kernel_vbr))
+	st	%r2, %r3, %lo16(_C_LABEL(kernel_vbr))
 
 #ifdef MULTIPROCESSOR
 	bsr	_C_LABEL(atomic_init)
@@ -232,7 +256,9 @@ GLOBAL(secondary_start)
 	bsr.n	_ASM_LABEL(setup_psr)
 	 or	%r31, %r31, %lo16(_ASM_LABEL(slavestack_end))
 
-	stcr	%r0,  VBR	/* set Vector Base Register to 0, ALWAYS! */
+	or.u	%r3,  %r0,  %hi16(_C_LABEL(kernel_vbr))
+	ld	%r2,  %r3,  %lo16(_C_LABEL(kernel_vbr))
+	stcr	%r2,  VBR
 	FLUSH_PIPELINE
 
 	/*

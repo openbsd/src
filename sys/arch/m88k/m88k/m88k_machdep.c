@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.57 2013/07/17 19:18:15 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.58 2013/10/07 19:10:49 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -83,7 +83,7 @@ typedef struct {
 void	dumpconf(void);
 void	dumpsys(void);
 void	regdump(struct trapframe *f);
-void	vector_init(m88k_exception_vector_area *, u_int32_t *, int);
+void	*vector_init(m88k_exception_vector_area *, u_int32_t *, int);
 void	atomic_init(void);
 
 /*
@@ -438,7 +438,7 @@ spl0()
  * more detail. And since the MVME BUG does not add an extra NOP after its
  * VBR page, I'll assume this is safe for now -- miod
  */
-void
+void *
 vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list,
     int bootstrap)
 {
@@ -508,6 +508,8 @@ vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list,
 		break;
 #endif
 	}
+
+	return vbr;
 }
 
 #ifdef MULTIPROCESSOR

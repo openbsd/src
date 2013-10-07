@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.54 2013/10/07 19:09:08 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.55 2013/10/07 19:10:40 miod Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -156,7 +156,7 @@ u_int bootdev, bootunit, bootpart;		/* set in locore.S */
 int32_t cpuid;
 
 int cputyp;					/* set in locore.S */
-int avtyp;
+register_t kernel_vbr;				/* set in locore.S */
 const struct board *platform;
 
 /* multiplication factor for delay() */
@@ -771,9 +771,7 @@ aviion_bootstrap()
 	    MSGBUFSIZE);
 
 	/* ROM work area is on top of physical memory */
-	/* but we need to make VBR page readable */
-	/* XXX relocate VBR as done on mvme88k */
-	pmap_bootstrap(0, PAGE_SIZE);
+	pmap_bootstrap(0, 0);
 
 	/* Initialize the "u-area" pages. */
 	bzero((caddr_t)curpcb, USPACE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.c,v 1.6 2013/09/28 19:56:47 miod Exp $	*/
+/*	$OpenBSD: prom.c,v 1.7 2013/10/07 19:10:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat.
@@ -58,7 +58,7 @@ register_t prom_vbr;					/* set in locore.S */
 	__asm__ __volatile__ ("ldcr %0, %%cr20" : "=r" (ossr3))
 
 #define	OS_VBR() \
-	__asm__ __volatile__ ("stcr %r0, %cr7")
+	__asm__ __volatile__ ("stcr %0, %%cr7" : : "r" (kernel_vbr))
 
 #define	OS_CONTEXT() \
 	__asm__ __volatile__ ("stcr %0, %%cr17" : : "r" (ossr0)); \
