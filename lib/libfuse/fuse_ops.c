@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.11 2013/10/07 18:22:18 syl Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.12 2013/10/07 18:41:01 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -379,7 +379,7 @@ ifuse_ops_lookup(struct fuse *f, struct fusebuf *fbuf)
 
 	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
 	if (vn == NULL) {
-		vn = alloc_vn(f, fbuf->fb_dat, -1, fbuf->fb_ino);
+		vn = alloc_vn(f, (const char *)fbuf->fb_dat, -1, fbuf->fb_ino);
 		if (vn == NULL) {
 			fbuf->fb_err = -ENOMEM;
 			free(fbuf->fb_dat);
@@ -419,7 +419,7 @@ ifuse_ops_read(struct fuse *f, struct fusebuf *fbuf)
 	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
 
 	realname = build_realname(f, vn->ino);
-	ret = f->op.read(realname, fbuf->fb_dat, size, offset, &ffi);
+	ret = f->op.read(realname, (char *)fbuf->fb_dat, size, offset, &ffi);
 	free(realname);
 	if (ret >= 0)
 		fbuf->fb_len = ret;
@@ -451,7 +451,7 @@ ifuse_ops_write(struct fuse *f, struct fusebuf *fbuf)
 	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
 
 	realname = build_realname(f, vn->ino);
-	ret = f->op.write(realname, fbuf->fb_dat, size, offset, &ffi);
+	ret = f->op.write(realname, (char *)fbuf->fb_dat, size, offset, &ffi);
 	free(realname);
 	free(fbuf->fb_dat);
 
@@ -708,11 +708,12 @@ ifuse_ops_symlink(unused struct fuse *f, struct fusebuf *fbuf)
 	CHECK_OPT(symlink);
 
 	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
-	len = strlen(fbuf->fb_dat);
+	len = strlen((char *)fbuf->fb_dat);
 
 	realname = build_realname(f, vn->ino);
 	/* fuse invert the symlink params */
-	fbuf->fb_err = f->op.symlink(&fbuf->fb_dat[len + 1], realname);
+	fbuf->fb_err = f->op.symlink((const char *)&fbuf->fb_dat[len + 1],
+	    realname);
 	fbuf->fb_ino = vn->ino;
 	free(fbuf->fb_dat);
 	free(realname);
@@ -731,7 +732,7 @@ ifuse_ops_rename(struct fuse *f, struct fusebuf *fbuf)
 
 	CHECK_OPT(rename);
 
-	len = strlen(fbuf->fb_dat);
+	len = strlen((char *)fbuf->fb_dat);
 	vnf = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
 	vnt = get_vn_by_name_and_parent(f, &fbuf->fb_dat[len + 1],
 	    fbuf->fb_io_ino);

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_private.h,v 1.4 2013/06/14 20:49:06 syl Exp $ */
+/* $OpenBSD: fuse_private.h,v 1.5 2013/10/07 18:41:01 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -92,7 +92,7 @@ int	ifuse_exec_opcode(struct fuse *, struct fusebuf *);
 
 /* fuse_subr.c */
 struct fuse_vnode	*alloc_vn(struct fuse *, const char *, ino_t, ino_t);
-struct fuse_vnode	*get_vn_by_name_and_parent(struct fuse *, const char *,
+struct fuse_vnode	*get_vn_by_name_and_parent(struct fuse *, uint8_t *,
     ino_t);
 int			set_vn(struct fuse *, struct fuse_vnode *);
 char			*build_realname(struct fuse *, ino_t);

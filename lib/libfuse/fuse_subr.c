@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_subr.c,v 1.4 2013/09/21 22:21:14 syl Exp $ */
+/* $OpenBSD: fuse_subr.c,v 1.5 2013/10/07 18:41:01 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -81,10 +81,11 @@ set_vn(struct fuse *f, struct fuse_vnode *v)
 }
 
 struct fuse_vnode *
-get_vn_by_name_and_parent(struct fuse *f, const char *path, ino_t parent)
+get_vn_by_name_and_parent(struct fuse *f, uint8_t *xpath, ino_t parent)
 {
 	struct fuse_vn_head *vn_head;
 	struct fuse_vnode *v = NULL;
+	const char *path = (const char *)xpath;
 
 	vn_head = dict_get(&f->name_tree, path);
 
