@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_file.c,v 1.4 2013/10/07 18:15:21 syl Exp $ */
+/* $OpenBSD: fuse_file.c,v 1.5 2013/10/07 18:25:32 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -61,7 +61,7 @@ fusefs_file_close(struct fusefs_mnt *fmp, struct fusefs_node * ip,
 
 	error = fb_queue(fmp->dev, fbuf);
 	if (error)
-		printf("fuse file error %d\n", error);
+		printf("fusefs: file error %d\n", error);
 
 	ip->fufh[fufh_type].fh_id = (uint64_t)-1;
 	ip->fufh[fufh_type].fh_type = FUFH_INVALID;

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.6 2013/10/07 18:15:21 syl Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.7 2013/10/07 18:25:32 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -141,7 +141,7 @@ fusefs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		error = fb_queue(fmp->dev, fbuf);
 
 		if (error)
-			printf("error from fuse\n");
+			printf("fusefs: error from fuse\n");
 
 		fb_delete(fbuf);
 	}
@@ -252,7 +252,7 @@ retry:
 	 * if not create it
 	 */
 	if ((error = getnewvnode(VT_FUSEFS, mp, &fusefs_vops, &nvp)) != 0) {
-		printf("fuse: getnewvnode error\n");
+		printf("fusefs: getnewvnode error\n");
 		*vpp = NULLVP;
 		return (error);
 	}

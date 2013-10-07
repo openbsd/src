@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.8 2013/10/07 18:15:21 syl Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.9 2013/10/07 18:25:32 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -244,7 +244,7 @@ fuseclose(dev_t dev, int flags, int fmt, struct proc *p)
 		return (EINVAL);
 
 	if (fd->fd_fmp) {
-		printf("libfuse close the device without umount\n");
+		printf("fuse: device close without umount\n");
 		fd->fd_fmp->sess_init = 0;
 		fd->fd_fmp = NULL;
 	}
@@ -461,7 +461,7 @@ fusewrite(dev_t dev, struct uio *uio, int ioflag)
 	/* Check for corrupted fbufs */
 	if ((fbuf->fb_len && fbuf->fb_err) ||
 	    SIMPLEQ_EMPTY(&fd->fd_fbufs_wait)) {
-		printf("corrupted fuse header or queue empty\n");
+		printf("fuse: dropping corrupted fusebuf\n");
 		error = EINVAL;
 		goto end;
 	}

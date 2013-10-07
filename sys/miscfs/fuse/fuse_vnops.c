@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.8 2013/10/07 18:24:12 syl Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.9 2013/10/07 18:25:32 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -770,7 +770,7 @@ fusefs_reclaim(void *v)
 	for (type = 0; type < FUFH_MAXTYPE; type++) {
 		fufh = &(ip->fufh[type]);
 		if (fufh->fh_type != FUFH_INVALID) {
-			printf("FUSE: vnode being reclaimed is valid\n");
+			printf("fusefs: vnode being reclaimed is valid\n");
 			fusefs_file_close(fmp, ip, fufh->fh_type, type,
 			    (ip->vtype == VDIR), ap->a_p);
 		}
