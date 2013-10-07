@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.152 2013/09/03 17:48:26 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.153 2013/10/07 22:11:49 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ checkdisklabel(void *rlp, struct disklabel *lp, u_int64_t boundstart,
 	struct disklabel *dlp = rlp;
 	struct __partitionv0 *v0pp;
 	struct partition *pp;
-	daddr_t disksize;
+	u_int64_t disksize;
 	int error = 0;
 	int i;
 
@@ -354,13 +354,13 @@ checkdisklabel(void *rlp, struct disklabel *lp, u_int64_t boundstart,
 
 #ifdef DEBUG
 	if (DL_GETDSIZE(lp) != disksize)
-		printf("on-disk disklabel has incorrect disksize (%lld)\n",
+		printf("on-disk disklabel has incorrect disksize (%llu)\n",
 		    DL_GETDSIZE(lp));
 	if (DL_GETPSIZE(&lp->d_partitions[RAW_PART]) != disksize)
-		printf("on-disk disklabel RAW_PART has incorrect size (%lld)\n",
+		printf("on-disk disklabel RAW_PART has incorrect size (%llu)\n",
 		    DL_GETPSIZE(&lp->d_partitions[RAW_PART]));
 	if (DL_GETPOFFSET(&lp->d_partitions[RAW_PART]) != 0)
-		printf("on-disk disklabel RAW_PART offset != 0 (%lld)\n",
+		printf("on-disk disklabel RAW_PART offset != 0 (%llu)\n",
 		    DL_GETPOFFSET(&lp->d_partitions[RAW_PART]));
 #endif
 	DL_SETDSIZE(lp, disksize);
