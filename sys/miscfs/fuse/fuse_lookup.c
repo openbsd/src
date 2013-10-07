@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.5 2013/10/07 18:04:53 syl Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.6 2013/10/07 18:15:21 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -18,7 +18,6 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/pool.h>
 #include <sys/statvfs.h>
 #include <sys/vnode.h>
 #include <sys/fusebuf.h>
@@ -117,8 +116,7 @@ fusefs_lookup(void *v)
 		 */
 		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc);
 		if (error != 0) {
-			if (fbuf)
-				pool_put(&fusefs_fbuf_pool, fbuf);
+			fb_delete(fbuf);
 			return (error);
 		}
 
@@ -129,8 +127,10 @@ fusefs_lookup(void *v)
 		/*
 		 * Write access to directory required to delete files.
 		 */
-		if ((error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc)) != 0)
+		if ((error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc)) != 0) {
+			fb_delete(fbuf);
 			return (error);
+		}
 
 		if (nid == VTOI(vdp)->ufs_ino.i_number) {
 			error = EISDIR;
@@ -188,8 +188,7 @@ fusefs_lookup(void *v)
 		    sizeof(struct vattr));
 
 		if (error) {
-			if (fbuf)
-				pool_put(&fusefs_fbuf_pool, fbuf);
+			fb_delete(fbuf);
 			return (error);
 		}
 
@@ -209,7 +208,6 @@ out:
 	    nameiop != DELETE)
 		cache_enter(vdp, *vpp, cnp);
 
-	if (fbuf)
-		pool_put(&fusefs_fbuf_pool, fbuf);
+	fb_delete(fbuf);
 	return (error);
 }

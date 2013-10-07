@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.5 2013/06/21 21:30:38 syl Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.6 2013/10/07 18:15:21 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -139,13 +139,14 @@ fusefs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		fbuf = fb_setup(0, 0, FBT_DESTROY, p);
 
 		error = fb_queue(fmp->dev, fbuf);
-		pool_put(&fusefs_fbuf_pool, fbuf);
 
 		if (error)
 			printf("error from fuse\n");
-	} else {
-		fuse_device_cleanup(fmp->dev, NULL);
+
+		fb_delete(fbuf);
 	}
+
+	fuse_device_cleanup(fmp->dev, NULL);
 
 	if (mntflags & MNT_FORCE) {
 		/* fusefs can never be rootfs so don't check for it */
@@ -201,7 +202,7 @@ int fusefs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 		error = fb_queue(fmp->dev, fbuf);
 
 		if (error) {
-			pool_put(&fusefs_fbuf_pool, fbuf);
+			fb_delete(fbuf);
 			return (error);
 		}
 
@@ -212,7 +213,7 @@ int fusefs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 		sbp->f_ffree = fbuf->fb_stat.f_ffree;
 		sbp->f_bsize = fbuf->fb_stat.f_frsize;
 		sbp->f_namemax = fbuf->fb_stat.f_namemax;
-		pool_put(&fusefs_fbuf_pool, fbuf);
+		fb_delete(fbuf);
 	} else {
 		sbp->f_bavail = 0;
 		sbp->f_bfree = 0;

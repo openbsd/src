@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.7 2013/10/07 18:07:04 syl Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.8 2013/10/07 18:15:21 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -20,7 +20,6 @@
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/poll.h>
-#include <sys/pool.h>
 #include <sys/statvfs.h>
 #include <sys/vnode.h>
 #include <sys/fusebuf.h>
@@ -172,7 +171,7 @@ fuse_device_cleanup(dev_t dev, struct fusebuf *fbuf)
 			SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_in, fb_next);
 			stat_fbufs_in--;
 			if (fbuf == NULL)
-				pool_put(&fusefs_fbuf_pool, f);
+				fb_delete(f);
 		}
 	}
 
@@ -183,7 +182,7 @@ fuse_device_cleanup(dev_t dev, struct fusebuf *fbuf)
 			SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_wait, fb_next);
 			stat_fbufs_wait--;
 			if (fbuf == NULL)
-				pool_put(&fusefs_fbuf_pool, f);
+				fb_delete(f);
 		}
 	}
 }
@@ -494,7 +493,7 @@ end:
 			    fb_next);
 		stat_fbufs_wait--;
 		if (fbuf->fb_type == FBT_INIT)
-			pool_put(&fusefs_fbuf_pool, fbuf);
+			fb_delete(fbuf);
 		else
 			wakeup(fbuf);
 	}

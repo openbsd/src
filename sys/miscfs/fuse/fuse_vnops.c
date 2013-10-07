@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.6 2013/10/07 18:04:53 syl Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.7 2013/10/07 18:15:21 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -23,7 +23,6 @@
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/poll.h>
-#include <sys/pool.h>
 #include <sys/specdev.h>
 #include <sys/statvfs.h>
 #include <sys/vnode.h>
@@ -242,16 +241,16 @@ fusefs_access(void *v)
 	if (error) {
 		if (error == ENOSYS) {
 			fmp->undef_op |= UNDEF_ACCESS;
-			pool_put(&fusefs_fbuf_pool, fbuf);
+			fb_delete(fbuf);
 			goto system_check;
 		}
 
 		printf("fusefs: access error %i\n", error);
-		pool_put(&fusefs_fbuf_pool, fbuf);
+		fb_delete(fbuf);
 		return (error);
 	}
 
-	pool_put(&fusefs_fbuf_pool, fbuf);
+	fb_delete(fbuf);
 	return (error);
 
 system_check:
@@ -282,20 +281,14 @@ fusefs_getattr(void *v)
 
 	error = fb_queue(fmp->dev, fbuf);
 	if (error) {
-		pool_put(&fusefs_fbuf_pool, fbuf);
+		fb_delete(fbuf);
 		return (error);
-	}
-
-	/* check if we got a response */
-	if (fbuf->fb_len == 0) {
-		pool_put(&fusefs_fbuf_pool, fbuf);
-		goto fake;
 	}
 
 	update_vattr(fmp->mp, &fbuf->fb_vattr);
 	memcpy(vap, &fbuf->fb_vattr, sizeof(*vap));
 	memcpy(&ip->cached_attrs, vap, sizeof(*vap));
-	pool_put(&fusefs_fbuf_pool, fbuf);
+	fb_delete(fbuf);
 	return (error);
 fake:
 	bzero(vap, sizeof(*vap));
@@ -419,7 +412,7 @@ fusefs_setattr(void *v)
 	memcpy(vap, &fbuf->fb_vattr, sizeof(*vap));
 
 out:
-	pool_put(&fusefs_fbuf_pool, fbuf);
+	fb_delete(fbuf);
 	return (error);
 }
 
@@ -478,11 +471,11 @@ fusefs_link(void *v)
 		if (error == ENOSYS)
 			fmp->undef_op |= UNDEF_LINK;
 
-		pool_put(&fusefs_fbuf_pool, fbuf);
+		fb_delete(fbuf);
 		goto out1;
 	}
 
-	pool_put(&fusefs_fbuf_pool, fbuf);
+	fb_delete(fbuf);
 
 out1:
 	if (dvp != vp)
@@ -530,12 +523,12 @@ fusefs_symlink(void *v)
 		if (error == ENOSYS)
 			fmp->undef_op |= UNDEF_SYMLINK;
 
-		pool_put(&fusefs_fbuf_pool, fbuf);
+		fb_delete(fbuf);
 		goto bad;
 	}
 
 	if ((error = VFS_VGET(fmp->mp, fbuf->fb_ino, &tdp))) {
-		pool_put(&fusefs_fbuf_pool, fbuf);
+		fb_delete(fbuf);
 		goto bad;
 	}
 
@@ -544,7 +537,7 @@ fusefs_symlink(void *v)
 	VTOI(tdp)->parent = dp->ufs_ino.i_number;
 
 	*vpp = tdp;
-	pool_put(&fusefs_fbuf_pool, fbuf);
+	fb_delete(fbuf);
 	vput(tdp);
 bad:
 	vput(dvp);
@@ -581,7 +574,7 @@ fusefs_readdir(void *v)
 
 		if (ip->fufh[FUFH_RDONLY].fh_type == FUFH_INVALID) {
 			/* TODO open the file */
-			pool_put(&fusefs_fbuf_pool, fbuf);
+			fb_delete(fbuf);
 			return (error);
 		}
 		fbuf->fb_io_fd = ip->fufh[FUFH_RDONLY].fh_id;
@@ -591,22 +584,22 @@ fusefs_readdir(void *v)
 		error = fb_queue(fmp->dev, fbuf);
 
 		if (error) {
-			pool_put(&fusefs_fbuf_pool, fbuf);
+			fb_delete(fbuf);
 			break;
 		}
 
 		/*ack end of readdir */
 		if (fbuf->fb_len == 0) {
-			pool_put(&fusefs_fbuf_pool, fbuf);
+			fb_delete(fbuf);
 			break;
 		}
 
 		if ((error = uiomove(fbuf->fb_dat, fbuf->fb_len, uio))) {
-			pool_put(&fusefs_fbuf_pool, fbuf);
+			fb_delete(fbuf);
 			break;
 		}
 
-		pool_put(&fusefs_fbuf_pool, fbuf);
+		fb_delete(fbuf);
 	}
 
 	return (error);
@@ -672,12 +665,12 @@ fusefs_readlink(void *v)
 		if (error == ENOSYS)
 			fmp->undef_op |= UNDEF_READLINK;
 
-		pool_put(&fusefs_fbuf_pool, fbuf);
+		fb_delete(fbuf);
 		goto out;
 	}
 
 	error = uiomove(fbuf->fb_dat, fbuf->fb_len, uio);
-	pool_put(&fusefs_fbuf_pool, fbuf);
+	fb_delete(fbuf);
 out:
 	return (error);
 }
@@ -772,12 +765,12 @@ fusefs_create(void *v)
 		if (error == ENOSYS)
 			fmp->undef_op |= UNDEF_CREATE;
 
-		pool_put(&fusefs_fbuf_pool, fbuf);
+		fb_delete(fbuf);
 		goto out;
 	}
 
 	if ((error = VFS_VGET(fmp->mp, fbuf->fb_ino, &tdp))) {
-		pool_put(&fusefs_fbuf_pool, fbuf);
+		fb_delete(fbuf);
 		goto out;
 	}
 
@@ -789,8 +782,7 @@ fusefs_create(void *v)
 
 	*vpp = tdp;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	pool_put(&fusefs_fbuf_pool, fbuf);
-
+	fb_delete(fbuf);
 out:
 	vput(ap->a_dvp);
 	return (error);
@@ -847,13 +839,11 @@ fusefs_read(void *v)
 		if (fbuf->fb_len < size)
 			break;
 
-		pool_put(&fusefs_fbuf_pool, fbuf);
+		fb_delete(fbuf);
 		fbuf = NULL;
 	}
 
-	if (fbuf)
-		pool_put(&fusefs_fbuf_pool, fbuf);
-
+	fb_delete(fbuf);
 	return (error);
 }
 
@@ -903,12 +893,11 @@ fusefs_write(void *v)
 		uio->uio_resid += diff;
 		uio->uio_offset -= diff;
 
-		pool_put(&fusefs_fbuf_pool, fbuf);
+		fb_delete(fbuf);
 		fbuf = NULL;
 	}
 
-	if (fbuf)
-		pool_put(&fusefs_fbuf_pool, fbuf);
+	fb_delete(fbuf);
 	return (error);
 }
 
@@ -1022,11 +1011,12 @@ abortit:
 			fmp->undef_op |= UNDEF_RENAME;
 		}
 
-		pool_put(&fusefs_fbuf_pool, fbuf);
+		fb_delete(fbuf);
 		VOP_UNLOCK(fvp, 0, p);
 		goto abortit;
 	}
 
+	fb_delete(fbuf);
 	VN_KNOTE(fvp, NOTE_RENAME);
 
 	VOP_UNLOCK(fvp, 0, p);
@@ -1076,12 +1066,12 @@ fusefs_mkdir(void *v)
 		if (error == ENOSYS)
 			fmp->undef_op |= UNDEF_MKDIR;
 
-		pool_put(&fusefs_fbuf_pool, fbuf);
+		fb_delete(fbuf);
 		goto out;
 	}
 
 	if ((error = VFS_VGET(fmp->mp, fbuf->fb_ino, &tdp))) {
-		pool_put(&fusefs_fbuf_pool, fbuf);
+		fb_delete(fbuf);
 		goto out;
 	}
 
@@ -1093,7 +1083,7 @@ fusefs_mkdir(void *v)
 
 	*vpp = tdp;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE | NOTE_LINK);
-	pool_put(&fusefs_fbuf_pool, fbuf);
+	fb_delete(fbuf);
 out:
 	vput(dvp);
 	return (error);
@@ -1145,7 +1135,7 @@ fusefs_rmdir(void *v)
 		if (error != ENOTEMPTY)
 			VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 
-		pool_put(&fusefs_fbuf_pool, fbuf);
+		fb_delete(fbuf);
 		goto out;
 	}
 
@@ -1156,7 +1146,7 @@ fusefs_rmdir(void *v)
 	dvp = NULL;
 
 	cache_purge(ITOV(ip));
-	pool_put(&fusefs_fbuf_pool, fbuf);
+	fb_delete(fbuf);
 out:
 	if (dvp)
 		vput(dvp);
@@ -1198,13 +1188,13 @@ fusefs_remove(void *v)
 		if (error == ENOSYS)
 			fmp->undef_op |= UNDEF_REMOVE;
 
-		pool_put(&fusefs_fbuf_pool, fbuf);
+		fb_delete(fbuf);
 		goto out;
 	}
 
 	VN_KNOTE(vp, NOTE_DELETE);
 	VN_KNOTE(dvp, NOTE_WRITE);
-	pool_put(&fusefs_fbuf_pool, fbuf);
+	fb_delete(fbuf);
 out:
 	if (dvp == vp)
 		vrele(vp);
