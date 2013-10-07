@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.50 2013/08/15 13:43:33 bluhm Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.51 2013/10/07 12:46:57 jca Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -727,8 +727,6 @@ again:;
 
 		printf("\n");
 	}
-	if (buf != NULL)
-		free(buf);
 
 	if (repeat) {
 		printf("\n");
@@ -736,6 +734,8 @@ again:;
 		sleep(repeat);
 		goto again;
 	}
+
+	free(buf);
 }
 
 static struct in6_nbrinfo *
