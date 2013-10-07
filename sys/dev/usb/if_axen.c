@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.2 2013/10/07 06:29:13 yuo Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -474,10 +474,10 @@ axen_ax88179_init(struct axen_softc *sc)
 	/* UA1 */
 	if (!(val & AXEN_GENERAL_STATUS_MASK)) {
 		sc->axen_rev = AXEN_REV_UA1;
-		printf("AX88179 ver. UA1\n");
+		DPRINTF(("AX88179 ver. UA1\n"));
 	} else {
 		sc->axen_rev = AXEN_REV_UA2;
-		printf("AX88179 ver. UA2\n");
+		DPRINTF(("AX88179 ver. UA2\n"));
 	}
 
 	/* power up ethernet PHY */
@@ -522,7 +522,7 @@ axen_ax88179_init(struct axen_softc *sc)
 	axen_cmd(sc, AXEN_CMD_MAC_READ, 1, AXEN_USB_UPLINK, &val);
 	switch (val) {
 	case AXEN_USB_FS:
-		printf("uplink: USB1.1\n");
+		DPRINTF(("uplink: USB1.1\n"));
 		qctrl.ctrl	= 0x07;
 		qctrl.timer_low	= 0xcc;
 		qctrl.timer_high= 0x4c;
@@ -530,7 +530,7 @@ axen_ax88179_init(struct axen_softc *sc)
 		qctrl.ifg	= 0x08;
 		break;
 	case AXEN_USB_HS:
-		printf("uplink: USB2.0\n");
+		DPRINTF(("uplink: USB2.0\n"));
 		qctrl.ctrl	= 0x07;
 		qctrl.timer_low	= 0x02;
 		qctrl.timer_high= 0xa0;
@@ -538,7 +538,7 @@ axen_ax88179_init(struct axen_softc *sc)
 		qctrl.ifg	= 0xff;
 		break;
 	case AXEN_USB_SS:
-		printf("uplink: USB3.0\n");
+		DPRINTF(("uplink: USB3.0\n"));
 		qctrl.ctrl	= 0x07;
 		qctrl.timer_low	= 0x4f;
 		qctrl.timer_high= 0x00;
@@ -588,19 +588,19 @@ axen_ax88179_init(struct axen_softc *sc)
 	val = AXEN_MONITOR_PMETYPE | AXEN_MONITOR_PMEPOL | AXEN_MONITOR_RWMP;
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_MONITOR_MODE, &val);
 	axen_cmd(sc, AXEN_CMD_MAC_READ, 1, AXEN_MONITOR_MODE, &val);
-	printf(":Monitor mode = 0x%02x\n", val);
+	DPRINTF(("axen: Monitor mode = 0x%02x\n", val));
 
 	/* set medium type */
 	ctl = AXEN_MEDIUM_GIGA | AXEN_MEDIUM_FDX | AXEN_MEDIUM_ALWAYS_ONE |
 	      AXEN_MEDIUM_RXFLOW_CTRL_EN | AXEN_MEDIUM_TXFLOW_CTRL_EN;
 	ctl |= AXEN_MEDIUM_RECV_EN;
 	USETW(wval, ctl);
-	printf("axen: set to medium mode: 0x%04x\n", UGETW(wval));
+	DPRINTF(("axen: set to medium mode: 0x%04x\n", UGETW(wval)));
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE2, 2, AXEN_MEDIUM_STATUS, &wval);
 	usbd_delay_ms(sc->axen_udev, 100);
 
 	axen_cmd(sc, AXEN_CMD_MAC_READ2, 2, AXEN_MEDIUM_STATUS, &wval);
-	printf("axen: current medium mode: 0x%04x\n", UGETW(wval));
+	DPRINTF(("axen: current medium mode: 0x%04x\n", UGETW(wval)));
 
 
 #if 0 /* XXX: TBD.... */
