@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.153 2013/10/06 19:44:42 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.154 2013/10/08 03:36:48 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -811,27 +811,39 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		}
 
 		/*
-		 * A process-wide signal can be diverted to a different
-		 * thread that's in sigwait() for this signal.  If there
-		 * isn't such a thread, then pick a thread that doesn't
-		 * have it blocked so that the stop/kill consideration
-		 * isn't delayed.  Otherwise, mark it pending on the
-		 * main thread.
+		 * If the current thread can process the signal
+		 * immediately, either because it's sigwait()ing
+		 * on it or has it unblocked, then have it take it.
 		 */
-		TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
-			/* ignore exiting threads */
-			if (q->p_flag & P_WEXIT)
-				continue;
+		q = curproc;
+		if (q != NULL && q->p_p == pr && (q->p_flag & P_WEXIT) == 0 &&
+		    ((q->p_sigdivert & mask) || (q->p_sigmask & mask) == 0))
+			p = q;
+		else {
+			/*
+			 * A process-wide signal can be diverted to a
+			 * different thread that's in sigwait() for this
+			 * signal.  If there isn't such a thread, then
+			 * pick a thread that doesn't have it blocked so
+			 * that the stop/kill consideration isn't
+			 * delayed.  Otherwise, mark it pending on the
+			 * main thread.
+			 */
+			TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
+				/* ignore exiting threads */
+				if (q->p_flag & P_WEXIT)
+					continue;
 
-			/* sigwait: definitely go to this thread */
-			if (q->p_sigdivert & mask) {
-				p = q;
-				break;
+				/* sigwait: definitely go to this thread */
+				if (q->p_sigdivert & mask) {
+					p = q;
+					break;
+				}
+
+				/* unblocked: possibly go to this thread */
+				if ((q->p_sigmask & mask) == 0)
+					p = q;
 			}
-
-			/* unblocked: possibly go to this thread */
-			if ((q->p_sigmask & mask) == 0)
-				p = q;
 		}
 	}
 
