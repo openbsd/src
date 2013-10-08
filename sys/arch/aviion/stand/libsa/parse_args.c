@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_args.c,v 1.2 2010/04/18 15:09:00 miod Exp $ */
+/*	$OpenBSD: parse_args.c,v 1.3 2013/10/08 21:55:22 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -29,7 +29,6 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <machine/prom.h>
-#include <a.out.h>
 
 #include "stand.h"
 #include "libsa.h"
@@ -39,9 +38,9 @@
 int	boothowto = 0;
 
 /* skip end of token and whitespace */
-static char *stws(char *);
-static char *
-stws(char *p)
+static const char *stws(const char *);
+static const char *
+stws(const char *p)
 {
 	while (*p != ' ' && *p != '\0')
 		p++;
@@ -53,9 +52,9 @@ stws(char *p)
 }
 
 int
-parse_args(char *line, char **filep, int first)
+parse_args(const char *line, char **filep, int first)
 {
-	char *s = NULL, *p;
+	const char *p;
 	char *name;
 	size_t namelen;
 
@@ -65,32 +64,9 @@ parse_args(char *line, char **filep, int first)
 			return (1);
 	}
 
-	/*
-	 * The command line should be under the form
-	 *   devtype(...)filename args
-	 * such as
-	 *   inen()bsd -s
-	 * and we only care about the kernel name here.
-	 *
-	 * However, if the kernel could not be loaded, and we asked the
-	 * user, he may not give the devtype() part - especially since
-	 * at the moment we only support inen() anyway.
-	 */
-
-	/* search for a set of braces */
-	for (p = line; *p != '\0' && *p != '('; p++) ;
-	if (*p != '\0') {
-		for (p = line; *p != '\0' && *p != ')'; p++) ;
-		if (*p != '\0')
-			s = ++p;
-	}
-		
-	if (s == NULL)
-		s = line;
-
 	/* figure out how long the kernel name is */
-	for (p = s; *p != '\0' && *p != ' '; p++) ;
-	namelen = p - s;
+	for (p = line; *p != '\0' && *p != ' '; p++) ;
+	namelen = p - line;
 
 	/* empty, use the default */
 	if (namelen == 0)
@@ -99,7 +75,7 @@ parse_args(char *line, char **filep, int first)
 		name = (char *)alloc(1 + namelen);
 		if (name == NULL)
 			panic("out of memory");
-		bcopy(s, name, namelen);
+		memcpy(name, line, namelen);
 		name[namelen] = '\0';
 	}
 	*filep = name;

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2012/08/21 14:46:18 pascal Exp $
+#	$OpenBSD: Makefile,v 1.4 2013/10/08 21:55:21 miod Exp $
 
 LIB=sa
 
@@ -8,37 +8,30 @@ NOPIE=
 
 # Logically src/sys
 S=${.CURDIR}/../../../..
-DIR_SA=$S/lib/libsa
 
-SRC_net= arp.c ether.c in_cksum.c net.c netif.c rpc.c nfs.c \
+SRCS=	clock.c delay.S exec.c fault.c parse_args.c setjmp.S
+
+.PATH:	${S}/lib/libsa
+SRCS+=	alloc.c memcpy.c exit.c getfile.c gets.c globals.c loadfile.c \
+	printf.c strerror.c memset.c memcmp.c strncpy.c strcmp.c strlen.c \
+	strlcpy.c strlcat.c snprintf.c strchr.c strtol.c \
+	close.c closeall.c dev.c dkcksum.c \
+	lseek.c open.c nullfs.c read.c fstat.c disklabel.c \
+	ufs.c cread.c
+SRCS+= arp.c ether.c in_cksum.c net.c netif.c rpc.c nfs.c \
 	 rarp.c bootparam.c 
 
-SRC_sa=	alloc.c memcpy.c exit.c getfile.c gets.c globals.c \
-	printf.c strerror.c memset.c memcmp.c strncpy.c strcmp.c strlen.c \
-	strlcpy.c strlcat.c snprintf.c \
-	close.c closeall.c dev.c dkcksum.c \
-	lseek.c open.c nullfs.c read.c fstat.c \
-	ufs.c cread.c
-
 .PATH:	${S}/lib/libkern/arch/m88k ${S}/lib/libkern
-SRCS+=	ashrdi3.c bzero.c
-
-SRC_aviion= exec_aout.c
-
-SRC_here= clock.c parse_args.c
-
-SRCS+= ${SRC_net} ${SRC_sa} ${SRC_aviion} ${SRC_here}
+SRCS+=	ashrdi3.c bzero.c __main.c
 
 # DBG= -DDEBUG -DNETIF_DEBUG -DNFS_DEBUG -DRPC_DEBUG \
 # 	-DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG
 
 #DEFS= -DCOMPAT_UFS
-DEFS= -D__INTERNAL_LIBSA_CREAD 
+DEFS= -D__INTERNAL_LIBSA_CREAD -D_STANDALONE
 #-DNETIF_DEBUG
 INCL= -I${.CURDIR} -I${.CURDIR}/../libprom -I${S}/lib/libsa -I${S}
 CFLAGS+= ${XCFLAGS} ${COPTS} ${DEFS} ${DBG} ${INCL}
-
-.PATH:  ${DIR_SA} ${DIR_KERN} 
 
 all: libsa.a
 

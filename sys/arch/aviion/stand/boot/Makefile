@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2013/10/08 21:55:22 miod Exp $
+#	$OpenBSD: Makefile,v 1.1 2013/10/08 21:55:20 miod Exp $
 
 SIZE?=	size
 
@@ -8,7 +8,7 @@ DEFS=	-DSUN_BOOTPARAMS
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libprom \
 	-I${S} -I${S}/lib/libsa
 CFLAGS+=${DEFS} ${INCPATH} ${COPTS}
-CLEANFILES+=netboot netboot.aout
+CLEANFILES+=boot boot.ELF
 
 .include "${S}/arch/aviion/stand/Makefile.inc"
 .include "${S}/arch/aviion/stand/libprom/Makefile.inc"
@@ -16,26 +16,26 @@ CLEANFILES+=netboot netboot.aout
 .include "${S}/arch/aviion/stand/libz/Makefile.inc"
 
 # Keep crt.c first in the object list for ld's sake.
-SRCS=   crt.c boot.c conf.c devopen.c dev_net.c if_le.c version.c
+SRCS=   crt.c boot.c conf.c devopen.c oosiop.c sd.c version.c
 OBJS=  ${SRCS:S/.c/.o/g}
 LIBS=	${LIBSA} ${LIBPROM} ${LIBZ}
 LDFLAGS+= -N -Ttext ${STAGE2_RELOC} -e start
 NOPIE=
 
-all:	netboot.aout
+all:	boot.ELF
 
-netboot: netboot.aout a2coff
-	${DESTDIR}${MDEC_DIR}/a2coff netboot.aout netboot
+boot: boot.ELF a2coff
+	${DESTDIR}${MDEC_DIR}/a2coff boot.ELF boot
 
-netboot.aout: ${OBJS} ${LIBS}
+boot.ELF: ${OBJS} ${LIBS}
 	${LD} ${LDFLAGS} -o $@ ${OBJS} ${LIBS} `${CC} -print-libgcc-file-name`
 	@${SIZE} $@
 
 a2coff:	${DESTDIR}${MDEC_DIR}/a2coff
 	cd ${S}/arch/aviion/stand/a2coff && ${MAKE} && ${MAKE} install
 
-install: netboot
+install: boot
 	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	  netboot ${DESTDIR}${MDEC_DIR}/netboot
+	  boot ${DESTDIR}${MDEC_DIR}/boot
 
 .include <bsd.prog.mk>
