@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.170 2013/09/22 17:28:33 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.171 2013/10/08 03:50:06 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -209,8 +209,6 @@ struct process {
 
 	struct	timespec ps_start;	/* starting time. */
 	struct	timeout ps_realit_to;	/* real-time itimer trampoline. */
-	struct	timeout ps_virt_to;	/* virtual itimer trampoline. */
-	struct	timeout ps_prof_to;	/* prof itimer trampoline. */
 
 	int	ps_refcnt;		/* Number of references. */
 };
@@ -362,6 +360,8 @@ struct proc {
  * These flags are per-thread and kept in p_flag
  */
 #define	P_INKTR		0x000001	/* In a ktrace op, don't recurse */
+#define	P_PROFPEND	0x000002	/* SIGPROF needs to be posted */
+#define	P_ALRMPEND	0x000004	/* SIGVTALRM needs to be posted */
 #define	P_SIGSUSPEND	0x000008	/* Need to restore before-suspend mask*/
 #define	P_SELECT	0x000040	/* Selecting; wakeup/waiting danger. */
 #define	P_SINTR		0x000080	/* Sleep is interruptible. */
@@ -380,7 +380,8 @@ struct proc {
 #define P_CPUPEG	0x40000000	/* Do not move to another cpu. */
 
 #define	P_BITS \
-    ("\20\01INKTR\04SIGSUSPEND\07SELECT\010SINTR\012SYSTEM" \
+    ("\20\01INKTR\02PROFPEND\03ALRMPEND\04SIGSUSPEND\07SELECT" \
+     "\010SINTR\012SYSTEM" \
      "\013TIMEOUT\016WEXIT\020OWEUPC\024SUSPSINGLE" \
      "\025NOZOMBIE\027SYSTRACE\030CONTINUED\033THREAD" \
      "\034SUSPSIG\035SOFTDEP\036STOPPED\037CPUPEG")

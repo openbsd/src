@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.83 2013/10/06 01:27:50 guenther Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.84 2013/10/08 03:50:08 guenther Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -571,10 +571,6 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 		itimerround(&aitv.it_interval);
 		s = splclock();
 		pr->ps_timer[which] = aitv;
-		if (which == ITIMER_VIRTUAL)
-			timeout_del(&pr->ps_virt_to);
-		if (which == ITIMER_PROF)
-			timeout_del(&pr->ps_prof_to);
 		splx(s);
 	}
 

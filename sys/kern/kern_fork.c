@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.153 2013/08/14 05:26:14 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.154 2013/10/08 03:50:07 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -183,8 +183,6 @@ process_new(struct proc *p, struct process *parent)
 	pr->ps_limit->p_refcnt++;
 
 	timeout_set(&pr->ps_realit_to, realitexpire, pr);
-	timeout_set(&pr->ps_virt_to, virttimer_trampoline, pr);
-	timeout_set(&pr->ps_prof_to, proftimer_trampoline, pr);
 
 	pr->ps_flags = parent->ps_flags & (PS_SUGID | PS_SUGIDEXEC);
 	if (parent->ps_session->s_ttyvp != NULL &&

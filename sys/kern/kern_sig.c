@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.154 2013/10/08 03:36:48 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.155 2013/10/08 03:50:07 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1747,6 +1747,20 @@ void
 userret(struct proc *p)
 {
 	int sig;
+
+	/* send SIGPROF or SIGVTALRM if their timers interrupted this thread */
+	if (p->p_flag & P_PROFPEND) {
+		atomic_clearbits_int(&p->p_flag, P_PROFPEND);
+		KERNEL_LOCK();
+		psignal(p, SIGPROF);
+		KERNEL_UNLOCK();
+	}
+	if (p->p_flag & P_ALRMPEND) {
+		atomic_clearbits_int(&p->p_flag, P_ALRMPEND);
+		KERNEL_LOCK();
+		psignal(p, SIGVTALRM);
+		KERNEL_UNLOCK();
+	}
 
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resourcevar.h,v 1.16 2013/06/03 16:55:22 guenther Exp $	*/
+/*	$OpenBSD: resourcevar.h,v 1.17 2013/10/08 03:50:07 guenther Exp $	*/
 /*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
@@ -68,8 +68,5 @@ struct plimit *limcopy(struct plimit *);
 void	limfree(struct plimit *);
 
 void	 ruadd(struct rusage *, struct rusage *);
-
-void	virttimer_trampoline(void *);
-void	proftimer_trampoline(void *);
 #endif
 #endif	/* !_SYS_RESOURCEVAR_H_ */
