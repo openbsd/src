@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syscall.9,v 1.9 2013/08/14 06:32:32 jmc Exp $
+.\"	$OpenBSD: syscall.9,v 1.10 2013/10/08 05:13:34 guenther Exp $
 .\"
 .\" Copyright (c) 2003 Michael Shalayeff
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: October 8 2013 $
 .Dt SYSCALL 9
 .Os
 .Sh NAME
@@ -120,7 +120,9 @@ else
 
 /* copyin the arguments from the user space */
 \&...
+	rval[0] = 0;
 
+/* the following steps are now performed using mi_syscall() */
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
 #endif
@@ -128,13 +130,13 @@ else
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p, code, argsize, args);
 #endif
-	rval[0] = 0;
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE))
 		error = systrace_redirect(code, p, args, rval);
 	else
 #endif
 		error = (*callp->sy_call)(p, args, rval);
+
 	switch (error) {
 	case 0:
 		/* normal return */
@@ -163,10 +165,12 @@ else
 		\&...
 		break;
 	}
+
+/* the following steps are now performed using mi_syscall_return() */
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, orig_error, rval);
 #endif
-	userret(p, frame.tf_eip, sticks);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, orig_error, rval[0]);
@@ -236,7 +240,9 @@ system call switch tables;
 .It Pa sys/{sys/,compat/*/*_}syscallargs.h
 system call argument lists;
 .It Pa sys/{sys/,compat/*/*_}syscall.h
-system call numbers.
+system call numbers;
+.It Pa sys/sys/syscall_mi.h
+Machine-independent syscall entry end return handling.
 .El
 .Sh SEE ALSO
 .Xr ktrace 2 ,
