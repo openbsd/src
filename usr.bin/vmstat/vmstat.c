@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.123 2013/08/22 04:43:40 guenther Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.124 2013/10/08 03:04:17 guenther Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -64,8 +64,8 @@
 struct nlist namelist[] = {
 #define X_UVMEXP	0		/* sysctl */
 	{ "_uvmexp" },
-#define	X_BOOTTIME	1		/* sysctl */
-	{ "_boottime" },
+#define	X_TIME_UPTIME	1
+	{ "_time_uptime" },
 #define X_NCHSTATS	2		/* sysctl */
 	{ "_nchstats" },
 #define	X_KMEMSTAT	3		/* sysctl */
@@ -78,6 +78,8 @@ struct nlist namelist[] = {
 	{ "_nselcoll" },
 #define X_POOLHEAD	7		/* sysctl */
 	{ "_pool_head" },
+#define	X_NAPTIME	8
+	{ "_naptime" },
 	{ "" },
 };
 
@@ -291,31 +293,18 @@ choosedrives(char **argv)
 time_t
 getuptime(void)
 {
-	static struct timeval boottime;
-	static time_t now;
-	time_t uptime;
-	size_t size;
-	int mib[2];
+	struct timespec uptime;
+	time_t time_uptime, naptime;
 
-	if (boottime.tv_sec == 0) {
-		if (nlistf == NULL && memf == NULL) {
-			size = sizeof(boottime);
-			mib[0] = CTL_KERN;
-			mib[1] = KERN_BOOTTIME;
-			if (sysctl(mib, 2, &boottime, &size, NULL, 0) < 0) {
-				warn("could not get kern.boottime");
-				bzero(&boottime, sizeof(boottime));
-			}
-		} else {
-			kread(X_BOOTTIME, &boottime, sizeof(boottime));
-		}
+	if (nlistf == NULL && memf == NULL) {
+		if (clock_gettime(CLOCK_UPTIME, &uptime) == -1)
+			err(1, "clock_gettime");
+		return (uptime.tv_sec);
 	}
-	(void)time(&now);
-	uptime = now - boottime.tv_sec;
-	if (uptime <= 0 || uptime > 60*60*24*365*10)
-		errx(1, "time makes no sense; namelist must be wrong");
 
-	return(uptime);
+	kread(X_NAPTIME, &naptime, sizeof(naptime));
+	kread(X_TIME_UPTIME, &time_uptime, sizeof(time_uptime));
+	return (time_uptime - naptime);
 }
 
 int	hz;
