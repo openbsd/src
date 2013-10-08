@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.2 2013/10/08 16:37:12 dlg Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.3 2013/10/08 19:11:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -846,9 +846,6 @@ vmwpvs_scsi_cmd_done(struct vmwpvs_softc *sc, struct vmwpvs_ring_cmp *c)
 
 		bus_dmamap_unload(sc->sc_dmat, dmap);
 	}
-	printf("%s: %s:%d c:0x%02x h:0x%x s:0x%x\n", DEVNAME(sc),
-	    __FUNCTION__, __LINE__, xs->cmd->opcode,
-	    c->host_status, c->scsi_status);
 
 	xs->status = c->scsi_status;
 	switch (c->host_status) {
@@ -860,6 +857,7 @@ vmwpvs_scsi_cmd_done(struct vmwpvs_softc *sc, struct vmwpvs_ring_cmp *c)
 			xs->error = XS_SENSE;
 		} else
 			xs->error = XS_NOERROR;
+		xs->resid = 0;
 		break;
 
 	case VMWPVS_HOST_STATUS_UNDERRUN:
