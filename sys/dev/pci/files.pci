@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.295 2013/08/15 06:54:35 kettenis Exp $
+#	$OpenBSD: files.pci,v 1.296 2013/10/08 07:40:01 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -762,6 +762,11 @@ file	dev/pci/if_vic.c		vic
 device	vmx: ether, ifnet, ifmedia
 attach	vmx at pci
 file	dev/pci/if_vmx.c		vmx
+
+# VMware Paravirtual SCSI controller
+device	vmwpvs: scsi
+attach	vmwpvs at pci
+file	dev/pci/vmwpvs.c		vmwpvs
 
 # Atheros L2 Ethernet
 device	lii: ether, ifnet, ifmedia, mii
