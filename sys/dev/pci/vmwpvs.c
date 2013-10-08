@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.1 2013/10/08 07:40:01 dlg Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.2 2013/10/08 16:37:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -707,7 +707,7 @@ vmwpvs_scsi_cmd(struct scsi_xfer *xs)
 	    VMWPVS_PAGE_SIZE, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	prod = s->req_prod;
-	r = &ring[prod];
+	r = &ring[prod % VMWPVS_REQ_COUNT];
 
 	bus_dmamap_sync(sc->sc_dmat, VMWPVS_DMA_MAP(sc->sc_req_ring),
 	    prod * sizeof(*r), sizeof(*r), BUS_DMASYNC_POSTWRITE);
