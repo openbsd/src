@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.12 2013/10/07 18:41:01 syl Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.13 2013/10/08 04:57:39 guenther Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -188,7 +188,7 @@ ifuse_ops_opendir(struct fuse *f, struct fusebuf *fbuf)
 }
 
 #define GENERIC_DIRSIZ(NLEN) \
-((sizeof (struct dirent) - (MAXNAMLEN+1)) + ((NLEN+1 + 3) &~ 3))
+((sizeof (struct dirent) - (MAXNAMLEN+1)) + ((NLEN+1 + 7) &~ 7))
 
 static int
 ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
@@ -222,13 +222,14 @@ ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
 
 	if (stbuf) {
 		dir->d_fileno = stbuf->st_ino;
-		dir->d_type = stbuf->st_mode;
+		dir->d_type = IFTODT(stbuf->st_mode);
 	} else {
 		dir->d_fileno = 0xffffffff;
-		dir->d_type = 0;
+		dir->d_type = DT_UNKNOWN;
 	}
 	dir->d_namlen = namelen;
 	dir->d_reclen = len;
+	dir->d_off = off + len;		/* XXX */
 	memcpy(dir->d_name, name, namelen);
 
 	fbuf->fb_len += len;
