@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.3 2013/10/08 19:11:33 dlg Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.4 2013/10/08 20:44:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -250,7 +250,8 @@ struct vmwpvs_sgl {
 } __packed;
 
 struct vmwpvs_ccb {
-	SLIST_ENTRY(vmwpvs_ccb)	ccb_entry;
+	SIMPLEQ_ENTRY(vmwpvs_ccb)
+				ccb_entry;
 
 	bus_dmamap_t		ccb_dmamap;
 	struct scsi_xfer	*ccb_xs;
@@ -262,7 +263,7 @@ struct vmwpvs_ccb {
 	void			*ccb_sense;
 	bus_addr_t		ccb_sense_offset;
 };
-SLIST_HEAD(vmwpvs_ccb_list, vmwpvs_ccb);
+SIMPLEQ_HEAD(vmwpvs_ccb_list, vmwpvs_ccb);
 
 struct vmwpvs_softc {
 	struct device		sc_dev;
@@ -348,8 +349,10 @@ void		vmwpvs_cmd(struct vmwpvs_softc *, u_int32_t, void *, size_t);
 int		vmwpvs_get_config(struct vmwpvs_softc *);
 void		vmwpvs_setup_rings(struct vmwpvs_softc *);
 
-void		vmwpvs_scsi_cmd_poll(struct vmwpvs_softc *, u_int64_t);
-u_int64_t	vmwpvs_scsi_cmd_done(struct vmwpvs_softc *,
+struct vmwpvs_ccb *
+		vmwpvs_scsi_cmd_poll(struct vmwpvs_softc *);
+struct vmwpvs_ccb *
+		vmwpvs_scsi_cmd_done(struct vmwpvs_softc *,
 		    struct vmwpvs_ring_cmp *);
 
 int
@@ -386,7 +389,7 @@ vmwpvs_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bus_width = 16;
 	mtx_init(&sc->sc_ring_mtx, IPL_BIO);
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
-	SLIST_INIT(&sc->sc_ccb_list);
+	SIMPLEQ_INIT(&sc->sc_ccb_list);
 
 	for (r = PCI_MAPREG_START; r < PCI_MAPREG_END; r += sizeof(memtype)) {
 		memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, r);
@@ -638,6 +641,8 @@ vmwpvs_intr(void *xsc)
 	volatile struct vmwpvw_ring_state *s =
 	    VMWPVS_DMA_KVA(sc->sc_ring_state);
 	struct vmwpvs_ring_cmp *ring = VMWPVS_DMA_KVA(sc->sc_cmp_ring);
+	struct vmwpvs_ccb_list list = SIMPLEQ_HEAD_INITIALIZER(list);
+	struct vmwpvs_ccb *ccb;
 	u_int32_t cons, prod;
 
 	mtx_enter(&sc->sc_ring_mtx);
@@ -656,8 +661,9 @@ vmwpvs_intr(void *xsc)
 		    0, VMWPVS_PAGE_SIZE, BUS_DMASYNC_POSTREAD);
 
 		do {
-			vmwpvs_scsi_cmd_done(sc,
+			ccb = vmwpvs_scsi_cmd_done(sc,
 			    &ring[cons++ % VMWPVS_CMP_COUNT]);
+			SIMPLEQ_INSERT_TAIL(&list, ccb, ccb_entry);
 		} while (cons != prod);
 
 		bus_dmamap_sync(sc->sc_dmat, VMWPVS_DMA_MAP(sc->sc_cmp_ring),
@@ -665,6 +671,11 @@ vmwpvs_intr(void *xsc)
 	}
 
 	mtx_leave(&sc->sc_ring_mtx);
+
+	while ((ccb = SIMPLEQ_FIRST(&list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&list, ccb_entry);
+		scsi_done(ccb->ccb_xs);
+	}
 
 	return (1);
 }
@@ -680,7 +691,7 @@ vmwpvs_scsi_cmd(struct scsi_xfer *xs)
 	    VMWPVS_DMA_KVA(sc->sc_ring_state);
 	struct vmwpvs_ring_req *ring = VMWPVS_DMA_KVA(sc->sc_req_ring), *r;
 	u_int32_t prod;
-	u_int64_t ctx = ccb->ccb_ctx;
+	struct vmwpvs_ccb_list list;
 	int error;
 	u_int i;
 
@@ -713,7 +724,7 @@ vmwpvs_scsi_cmd(struct scsi_xfer *xs)
 	    prod * sizeof(*r), sizeof(*r), BUS_DMASYNC_POSTWRITE);
 
 	memset(r, 0, sizeof(*r));
-	r->context = ctx;
+	r->context = ccb->ccb_ctx;
 
 	if (xs->datalen > 0) {
 		r->data_len = xs->datalen;
@@ -776,22 +787,35 @@ vmwpvs_scsi_cmd(struct scsi_xfer *xs)
 	vmwpvs_write(sc, xs->bp == NULL ?
 	    VMWPVS_R_KICK_NON_RW_IO : VMWPVS_R_KICK_RW_IO, 0);
 
-	if (ISSET(xs->flags, SCSI_POLL))
-		vmwpvs_scsi_cmd_poll(sc, ctx);
+	if (!ISSET(xs->flags, SCSI_POLL)) {
+		mtx_leave(&sc->sc_ring_mtx);
+		return;
+	}
+
+	SIMPLEQ_INIT(&list);
+	do {
+		ccb = vmwpvs_scsi_cmd_poll(sc);
+		SIMPLEQ_INSERT_TAIL(&list, ccb, ccb_entry);
+	} while (xs->io != ccb);
 
 	mtx_leave(&sc->sc_ring_mtx);
+
+	while ((ccb = SIMPLEQ_FIRST(&list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&list, ccb_entry);
+		scsi_done(ccb->ccb_xs);
+	}
 }
 
-void
-vmwpvs_scsi_cmd_poll(struct vmwpvs_softc *sc, u_int64_t req)
+struct vmwpvs_ccb *
+vmwpvs_scsi_cmd_poll(struct vmwpvs_softc *sc)
 {
 	volatile struct vmwpvw_ring_state *s =
 	    VMWPVS_DMA_KVA(sc->sc_ring_state);
 	struct vmwpvs_ring_cmp *ring = VMWPVS_DMA_KVA(sc->sc_cmp_ring);
+	struct vmwpvs_ccb *ccb;
 	u_int32_t prod, cons;
-	u_int64_t cmp;
 
-	do {
+	for (;;) {
 		bus_dmamap_sync(sc->sc_dmat,
 		    VMWPVS_DMA_MAP(sc->sc_ring_state), 0, VMWPVS_PAGE_SIZE,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
@@ -806,22 +830,24 @@ vmwpvs_scsi_cmd_poll(struct vmwpvs_softc *sc, u_int64_t req)
 		    VMWPVS_DMA_MAP(sc->sc_ring_state), 0, VMWPVS_PAGE_SIZE,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-		if (cons == prod) {
+		if (cons != prod)
+			break;
+		else
 			delay(1000);
-			continue;
-		}
+	}
 
-		bus_dmamap_sync(sc->sc_dmat, VMWPVS_DMA_MAP(sc->sc_cmp_ring),
-		    0, VMWPVS_PAGE_SIZE * VMWPVS_RING_PAGES,
-		    BUS_DMASYNC_POSTREAD);
-		cmp = vmwpvs_scsi_cmd_done(sc, &ring[cons % VMWPVS_CMP_COUNT]);
-		bus_dmamap_sync(sc->sc_dmat, VMWPVS_DMA_MAP(sc->sc_cmp_ring),
-		    0, VMWPVS_PAGE_SIZE * VMWPVS_RING_PAGES,
-		    BUS_DMASYNC_PREREAD);
-	} while (cmp != req);
+	bus_dmamap_sync(sc->sc_dmat, VMWPVS_DMA_MAP(sc->sc_cmp_ring),
+	    0, VMWPVS_PAGE_SIZE * VMWPVS_RING_PAGES,
+	    BUS_DMASYNC_POSTREAD);
+	ccb = vmwpvs_scsi_cmd_done(sc, &ring[cons % VMWPVS_CMP_COUNT]);
+	bus_dmamap_sync(sc->sc_dmat, VMWPVS_DMA_MAP(sc->sc_cmp_ring),
+	    0, VMWPVS_PAGE_SIZE * VMWPVS_RING_PAGES,
+	    BUS_DMASYNC_PREREAD);
+
+	return (ccb);
 }
 
-u_int64_t
+struct vmwpvs_ccb *
 vmwpvs_scsi_cmd_done(struct vmwpvs_softc *sc, struct vmwpvs_ring_cmp *c)
 {
 	u_int64_t ctx = c->context;
@@ -877,13 +903,8 @@ vmwpvs_scsi_cmd_done(struct vmwpvs_softc *sc, struct vmwpvs_ring_cmp *c)
 		break;
 	}
 
-	scsi_done(xs);
-
-	return (ctx);
+	return (ccb);
 }
-
-
-
 
 void *
 vmwpvs_ccb_get(void *xsc)
@@ -892,9 +913,9 @@ vmwpvs_ccb_get(void *xsc)
 	struct vmwpvs_ccb *ccb;
 
 	mtx_enter(&sc->sc_ccb_mtx);
-	ccb = SLIST_FIRST(&sc->sc_ccb_list);
+	ccb = SIMPLEQ_FIRST(&sc->sc_ccb_list);
 	if (ccb != NULL)
-		SLIST_REMOVE_HEAD(&sc->sc_ccb_list, ccb_entry);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_list, ccb_entry);
 	mtx_leave(&sc->sc_ccb_mtx);
 
 	return (ccb);
@@ -907,7 +928,7 @@ vmwpvs_ccb_put(void *xsc, void *io)
 	struct vmwpvs_ccb *ccb = io;
 
 	mtx_enter(&sc->sc_ccb_mtx);
-	SLIST_INSERT_HEAD(&sc->sc_ccb_list, ccb, ccb_entry);
+	SIMPLEQ_INSERT_HEAD(&sc->sc_ccb_list, ccb, ccb_entry);
 	mtx_leave(&sc->sc_ccb_mtx);
 }
 
