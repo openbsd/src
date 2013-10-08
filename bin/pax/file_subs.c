@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.33 2013/04/16 18:06:35 millert Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.34 2013/10/08 03:10:36 guenther Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -307,7 +307,7 @@ mk_link(char *to, struct stat *to_sb, char *from, int ign)
 	 * try again)
 	 */
 	for (;;) {
-		if (link(to, from) == 0)
+		if (linkat(AT_FDCWD, to, AT_FDCWD, from, 0) == 0)
 			break;
 		oerrno = errno;
 		if (!nodirs && chk_path(from, to_sb->st_uid, to_sb->st_gid) == 0)
