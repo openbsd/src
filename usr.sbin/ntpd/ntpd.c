@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.71 2013/10/04 20:30:38 schwarze Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.72 2013/10/09 12:34:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -677,20 +677,20 @@ show_status_msg(struct imsg *imsg)
 	cstatus = (struct ctl_show_status *)imsg->data;
 
 	if (cstatus->peercnt > 0)
-		printf("%d of %d peers valid\n",
+		printf("%d/%d peers valid, ",
 		    cstatus->valid_peers, cstatus->peercnt);
 
 	if (cstatus->sensorcnt > 0)
-		printf("%d of %d sensors valid\n",
+		printf("%d/%d sensors valid, ",
 		    cstatus->valid_sensors, cstatus->sensorcnt);
 
 	if (cstatus->peercnt + cstatus->sensorcnt == 0)
 		printf("no peers and no sensors configured\n");
 
 	if (cstatus->synced == 1)
-		printf("clock is synced, stratum %u\n", cstatus->stratum);
+		printf("clock synced, stratum %u\n", cstatus->stratum);
 	else {
-		printf("clock is unsynced");
+		printf("clock unsynced");
 		clock_offset = cstatus->clock_offset < 0 ?
 		    -1.0 * cstatus->clock_offset : cstatus->clock_offset;
 		if (clock_offset > 5e-7)
