@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.14 2013/09/24 20:14:33 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.15 2013/10/09 21:28:33 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -55,6 +55,9 @@
 
 #include <dev/cons.h>
 
+#include "sd.h"
+#include "st.h"
+
 /*
  * The following several variables are related to
  * the configuration process, and are used in initializing
@@ -67,14 +70,23 @@ int cold = 1;   /* 1 if still booting */
 
 struct device *bootdv;	/* set by device drivers (if found) */
 
-u_int bootdevtype;
+uint32_t bootdevtype;
 
+/* cied */
 #define	BT_CIEN		0x6369656e
+/* cimd */
+/* cird */
+/* cisc */
 #define	BT_DGEN		0x6467656e
+#define	BT_DGSC		0x64677363
+/* hada */
 #define	BT_HKEN		0x686b656e
 #define	BT_INEN		0x696e656e
 #define	BT_INSC		0x696e7363
 #define	BT_NCSC		0x6e637363
+/* nvrd */
+/* pefn */
+/* vitr */
 
 /*
  * called at boot time, configure all devices on the system.
@@ -138,6 +150,7 @@ void
 cmdline_parse(void)
 {
 	char *p;
+	
 
 	/*
 	 * If the boot commandline has been manually entered, it
@@ -180,30 +193,39 @@ cmdline_parse(void)
 	 * and partition numbers for us already, and we do not care about
 	 * our own filename...
 	 *
-	 * Actually we rely upon the fact that all device strings are
-	 * exactly 4 characters long, and appears at the beginning of the
-	 * commandline, so we can simply use its numerical value, as a
-	 * word, to tell device types apart.
+	 * However, in the sd() or st() cases, we need to figure out the
+	 * SCSI controller name (if not the default one) and address, if
+	 * provided.
 	 */
-	bcopy(bootargs, &bootdevtype, sizeof(int));
+	if (memcmp(bootargs, "sd", 2) == 0 ||
+	    memcmp(bootargs, "st", 2) == 0) {
+		bcopy(platform->default_boot, &bootdevtype, sizeof(uint32_t));
+		/* search for a controller specification */
+	} else
+		bcopy(bootargs, &bootdevtype, sizeof(int));
 }
 
 void
 device_register(struct device *dev, void *aux)
 {
 	struct confargs *ca = (struct confargs *)aux;
+	struct cfdriver *cf = dev->dv_cfdata->cf_driver;
 
 	if (bootdv != NULL)
 		return;
-
+/* SCSI -> match bootunit/bootpart as id:lun iff controller matches */
 	switch (bootdevtype) {
+
+	/*
+	 * Network devices
+	 */
+
 	case BT_INEN:
 		/*
 		 * Internal LANCE Ethernet is le at syscon only, and we do not
 		 * care about controller and unit numbers.
 		 */
-		if (strcmp("le", dev->dv_cfdata->cf_driver->cd_name) == 0 &&
-		    strcmp("syscon",
+		if (strcmp("le", cf->cd_name) == 0 && strcmp("syscon",
 		      dev->dv_parent->dv_cfdata->cf_driver->cd_name) == 0)
 			bootdv = dev;
 		break;
@@ -212,8 +234,7 @@ device_register(struct device *dev, void *aux)
 		 * Internal ILACC Ethernet is le at syscon only, and need to
 		 * match the controller address.
 		 */
-		if (strcmp("le", dev->dv_cfdata->cf_driver->cd_name) == 0 &&
-		    strcmp("syscon",
+		if (strcmp("le", cf->cd_name) == 0 && strcmp("syscon",
 		      dev->dv_parent->dv_cfdata->cf_driver->cd_name) == 0) {
 			switch (cpuid) {
 #ifdef AV530
@@ -229,6 +250,44 @@ device_register(struct device *dev, void *aux)
 				break;
 			}
 		}
+		break;
+
+	/*
+	 * SCSI controllers
+	 */
+
+	case BT_NCSC:
+		/*
+		 * Internal 53C700 controller is oosiop at syscon only, and
+		 * needs to match the controller address, as well as SCSI
+		 * unit and lun numbers.
+		 */
+	    {
+		struct scsi_attach_args *sa = aux;
+		struct device *grandp;
+
+		if (memcmp(cf->cd_name, bootargs, 2) != 0 ||
+		    (strcmp("sd", cf->cd_name) != 0 &&
+		     strcmp("st", cf->cd_name) != 0) ||
+		    sa->sa_sc_link->target != bootunit ||
+		    sa->sa_sc_link->lun != bootpart)
+			break;
+
+		grandp = dev->dv_parent->dv_parent;
+		if (strcmp("oosiop",
+		    grandp->dv_cfdata->cf_driver->cd_name) == 0) {
+			bootdv = dev;	/* XXX second controller */
+		}
+	    }
+		break;
+
+	case BT_INSC:
+		/*
+		 * Internal AIC-6250 controller is oaic at syscon only, and
+		 * needs to match the controller address, as well as SCSI
+		 * unit and lun numbers.
+		 */
+		/* XXX TBD */
 		break;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: av530_machdep.c,v 1.9 2013/10/07 19:11:39 miod Exp $	*/
+/*	$OpenBSD: av530_machdep.c,v 1.10 2013/10/09 21:28:33 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -95,7 +95,8 @@ const struct board board_av530 = {
 	av530_exintsrc,
 	av530_get_vme_ranges,
 
-	av530_ptable
+	av530_ptable,
+	"ncsc"
 };
 
 /*

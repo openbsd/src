@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.11 2013/10/07 19:11:42 miod Exp $	*/
+/*	$OpenBSD: board.h,v 1.12 2013/10/09 21:28:33 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat
  *
@@ -94,6 +94,7 @@ struct board {
 	const struct vme_range *(*get_vme_ranges)(void);
 
 	const struct pmap_table *ptable;
+	const char	*default_boot;
 };
 
 #define	md_interrupt_func(f)	platform->intr(f)

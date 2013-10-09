@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.23 2013/10/07 19:11:39 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.24 2013/10/09 21:28:33 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat.
  *
@@ -206,7 +206,8 @@ const struct board board_av400 = {
 	av400_exintsrc,
 	av400_get_vme_ranges,
 
-	av400_ptable
+	av400_ptable,
+	"insc"
 };
 
 /*
