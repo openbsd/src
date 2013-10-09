@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.146 2013/05/18 08:39:47 jmc Exp $ */
+/* $OpenBSD: mfi.c,v 1.147 2013/10/09 09:40:01 jmatthew Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -2050,6 +2050,7 @@ mfi_bbu(struct mfi_softc *sc)
 	struct mfi_bbu_status bbu;
 	u_int32_t status;
 	u_int32_t mask;
+	u_int32_t soh_bad;
 	int i;
 
 	if (mfi_mgmt(sc, MR_DCMD_BBU_GET_STATUS, MFI_DATA_IN,
@@ -2068,9 +2069,11 @@ mfi_bbu(struct mfi_softc *sc)
 	switch (bbu.battery_type) {
 	case MFI_BBU_TYPE_IBBU:
 		mask = MFI_BBU_STATE_BAD_IBBU;
+		soh_bad = 0;
 		break;
 	case MFI_BBU_TYPE_BBU:
 		mask = MFI_BBU_STATE_BAD_BBU;
+		soh_bad = (bbu.detail.bbu.is_SOH_good == 0);
 		break;
 
 	case MFI_BBU_TYPE_NONE:
@@ -2090,8 +2093,9 @@ mfi_bbu(struct mfi_softc *sc)
 
 	status = letoh32(bbu.fw_status);
 
-	sc->sc_bbu[0].value = (status & mask) ? 0 : 1;
-	sc->sc_bbu[0].status = (status & mask) ? SENSOR_S_CRIT : SENSOR_S_OK;
+	sc->sc_bbu[0].value = ((status & mask) || soh_bad) ? 0 : 1;
+	sc->sc_bbu[0].status = ((status & mask) || soh_bad) ? SENSOR_S_CRIT :
+	    SENSOR_S_OK;
 
 	sc->sc_bbu[1].value = letoh16(bbu.voltage) * 1000;
 	sc->sc_bbu[2].value = (int16_t)letoh16(bbu.current) * 1000;
