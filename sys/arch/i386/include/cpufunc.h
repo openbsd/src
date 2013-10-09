@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.19 2012/12/05 23:20:12 deraadt Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.20 2013/10/09 01:48:41 guenther Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -246,6 +246,19 @@ rdmsr(u_int msr)
 
         __asm __volatile("rdmsr" : "=A" (rv) : "c" (msr));
         return (rv);
+}
+
+static __inline void
+monitor(const volatile void *addr, u_long extensions, u_int hints)
+{
+	__asm __volatile("monitor"
+	    : : "a" (addr), "c" (extensions), "d" (hints));
+}
+
+static __inline void
+mwait(u_long extensions, u_int hints)
+{
+	__asm __volatile("mwait" : : "a" (hints), "c" (extensions));
 }
 
 /* 
