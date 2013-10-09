@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.270 2013/09/13 14:32:53 florian Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.271 2013/10/09 20:23:46 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2721,7 +2721,7 @@ phys_status(int force)
 	    pdstaddr, sizeof(pdstaddr), 0, 0, niflag) != 0)
 		strlcpy(pdstaddr, "<error>", sizeof(pdstaddr));
 
-	printf("\tphysical address inet%s %s --> %s", ver,
+	printf("\ttunnel: inet%s %s -> %s", ver,
 	    psrcaddr, pdstaddr);
 
 #ifndef SMALL
