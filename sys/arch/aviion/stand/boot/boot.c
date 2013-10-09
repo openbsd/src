@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.1 2013/10/08 21:55:20 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.2 2013/10/09 20:12:35 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -72,7 +72,7 @@ boot(const char *args, int bootdev, int bootunit, int bootpart)
 	int ask = 0;
 	int ret;
 
-	printf(">> OpenBSD/" MACHINE " boot %s\n", version);
+	printf("\n>> OpenBSD/" MACHINE " boot %s\n", version);
 
 	ret = parse_args(args, &file, 1);
 	for (;;) {
@@ -88,6 +88,7 @@ boot(const char *args, int bootdev, int bootunit, int bootpart)
 			break;
 		}
 
+		printf("%s: ", file);
 		exec(file, args, bootdev, bootunit, bootpart);
 		printf("boot: %s: %s\n", file, strerror(errno));
 		ask = 1;
