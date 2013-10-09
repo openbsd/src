@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.19 2011/06/27 21:33:20 miod Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.20 2013/10/09 18:22:06 miod Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ void	oosiop_minphys(struct buf *, struct scsi_link *);
 void	oosiop_scsicmd(struct scsi_xfer *);
 void	oosiop_done(struct oosiop_softc *, struct oosiop_cb *);
 void	oosiop_timeout(void *);
-void	oosiop_reset(struct oosiop_softc *);
+void	oosiop_reset(struct oosiop_softc *, int);
 void	oosiop_reset_bus(struct oosiop_softc *);
 void	oosiop_scriptintr(struct oosiop_softc *);
 void	oosiop_msgin(struct oosiop_softc *, struct oosiop_cb *);
@@ -252,7 +252,7 @@ oosiop_attach(struct oosiop_softc *sc)
 	/*
 	 * Reset all
 	 */
-	oosiop_reset(sc);
+	oosiop_reset(sc, TRUE);
 	oosiop_reset_bus(sc);
 
 	/*
@@ -722,7 +722,7 @@ oosiop_set_syncparam(struct oosiop_softc *sc, int id, int period, int offset)
 			sc->sc_tgt[id].sxfer = (synctbl[i].tp << 4) | offset;
 		}
 		/* XXX print actual ns period... */
-		printf(" synchronous");
+		printf("synchronous");
 	}
 	printf(" xfers\n");
 }
@@ -847,7 +847,7 @@ oosiop_poll(struct oosiop_softc *sc, struct oosiop_cb *cb)
 				i = 1000;
 				to--;
 				if (to <= 0) {
-					oosiop_reset(sc);
+					oosiop_reset(sc, TRUE);
 					splx(s);
 					return;
 				}
@@ -882,6 +882,7 @@ oosiop_setup(struct oosiop_softc *sc, struct oosiop_cb *cb)
 	cb->msgoutlen = 1;
 
 	if (sc->sc_tgt[cb->id].flags & TGTF_SYNCNEG) {
+		sc->sc_tgt[cb->id].flags &= ~TGTF_SYNCNEG;
 		/* Send SDTR */
 		xfer->msgout[1] = MSG_EXTENDED;
 		xfer->msgout[2] = MSG_EXT_SDTR_LEN;
@@ -889,7 +890,6 @@ oosiop_setup(struct oosiop_softc *sc, struct oosiop_cb *cb)
 		xfer->msgout[4] = sc->sc_minperiod;
 		xfer->msgout[5] = OOSIOP_MAX_OFFSET;
 		cb->msgoutlen = 6;
-		sc->sc_tgt[cb->id].flags &= ~TGTF_SYNCNEG;
 		sc->sc_tgt[cb->id].flags |= TGTF_WAITSDTR;
 	}
 
@@ -1047,7 +1047,7 @@ oosiop_timeout(void *arg)
 }
 
 void
-oosiop_reset(struct oosiop_softc *sc)
+oosiop_reset(struct oosiop_softc *sc, int allflags)
 {
 	int i, s;
 
@@ -1089,7 +1089,10 @@ oosiop_reset(struct oosiop_softc *sc)
 
 	/* Set target state to asynchronous */
 	for (i = 0; i < OOSIOP_NTGT; i++) {
-		sc->sc_tgt[i].flags = 0;
+		if (allflags)
+			sc->sc_tgt[i].flags = 0;
+		else
+			sc->sc_tgt[i].flags |= TGTF_SYNCNEG;
 		sc->sc_tgt[i].scf = 0;
 		sc->sc_tgt[i].sxfer = 0;
 	}
@@ -1184,7 +1187,7 @@ oosiop_processintr(struct oosiop_softc *sc, u_int8_t istat)
 
 		if (dstat & OOSIOP_DSTAT_WTD) {
 			printf("%s: DMA time out\n", sc->sc_dev.dv_xname);
-			oosiop_reset(sc);
+			oosiop_reset(sc, TRUE);
 		}
 
 		if (dstat & OOSIOP_DSTAT_IID) {
@@ -1199,7 +1202,7 @@ oosiop_processintr(struct oosiop_softc *sc, u_int8_t istat)
 				    sc->sc_dev.dv_xname,
 				    oosiop_read_4(sc, OOSIOP_DSP) - 8, dcmd,
 				    oosiop_read_4(sc, OOSIOP_DSPS));
-				oosiop_reset(sc);
+				oosiop_reset(sc, TRUE);
 				OOSIOP_SCRIPT_SYNC(sc, BUS_DMASYNC_POSTWRITE);
 				oosiop_load_script(sc);
 			}
@@ -1230,7 +1233,7 @@ oosiop_processintr(struct oosiop_softc *sc, u_int8_t istat)
 
 		if (sstat0 & OOSIOP_SSTAT0_SGE) {
 			printf("%s: SCSI gross error\n", sc->sc_dev.dv_xname);
-			oosiop_reset(sc);
+			oosiop_reset(sc, TRUE);
 		}
 
 		if (sstat0 & OOSIOP_SSTAT0_UDC) {
@@ -1242,8 +1245,13 @@ oosiop_processintr(struct oosiop_softc *sc, u_int8_t istat)
 			}
 		}
 
-		if (sstat0 & OOSIOP_SSTAT0_RST)
-			oosiop_reset(sc);
+		if (sstat0 & OOSIOP_SSTAT0_RST) {
+			/*
+			 * This may happen during sync request negotiation;
+			 * be sure not to reset TGTF_WAITSDTR in that case.
+			 */
+			oosiop_reset(sc, FALSE);
+		}
 
 		if (sstat0 & OOSIOP_SSTAT0_PAR)
 			printf("%s: parity error\n", sc->sc_dev.dv_xname);
