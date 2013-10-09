@@ -495,10 +495,14 @@ void
 einfo (const char *fmt, ...)
 {
   va_list arg;
+  char buf[BUFSIZ];
 
+  setvbuf(stderr, buf, _IOFBF, sizeof(buf));
   va_start (arg, fmt);
   vfinfo (stderr, fmt, arg, TRUE);
   va_end (arg);
+  fflush(stderr);
+  setvbuf(stderr, NULL, _IONBF, 0);
 }
 
 void
