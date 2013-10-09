@@ -1,5 +1,6 @@
-#	$OpenBSD: Makefile,v 1.65 2013/04/18 02:46:12 djm Exp $
+#	$OpenBSD: Makefile,v 1.66 2013/10/09 23:44:14 djm Exp $
 
+REGRESS_FAIL_EARLY= yes
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7 t8 t9
 
 CLEANFILES+=	t2.out t6.out1 t6.out2 t7.out t7.out.pub copy.1 copy.2 \
@@ -36,6 +37,7 @@ LTESTS= 	connect \
 		sftp-badcmds \
 		sftp-batch \
 		sftp-glob \
+		sftp-perm \
 		reconfigure \
 		dynamic-forward \
 		forwarding \
@@ -74,7 +76,8 @@ CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
 		authorized_principals_${USER} expect actual ready \
 		sshd_proxy.* authorized_keys_${USER}.* revoked-* krl-* \
 		ssh.log failed-ssh.log sshd.log failed-sshd.log \
-		regress.log failed-regress.log ssh-log-wrapper.sh
+		regress.log failed-regress.log ssh-log-wrapper.sh \
+		sftp-server.sh sftp-server.log sftp.log
 
 SUDO_CLEAN+=	/var/run/testdata_${USER} /var/run/keycommand_${USER}
 
