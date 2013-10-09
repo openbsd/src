@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.13 2013/09/13 07:29:02 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.14 2013/10/09 17:43:50 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -63,6 +63,7 @@ extern int		ppc_altivec;
 extern void (*ppc64_slew_voltage)(u_int);
 
 extern u_int32_t	ticks_per_sec;
+extern u_int32_t 	ns_per_tick;
 
 #endif /* _KERNEL */
 #endif /* _MACHINE_CPU_H_ */

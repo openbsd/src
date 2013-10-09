@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.34 2013/09/13 07:29:01 mpi Exp $	*/
+/*	$OpenBSD: clock.c,v 1.35 2013/10/09 17:43:50 mpi Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ u_int tb_get_timecount(struct timecounter *);
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
  */
 u_int32_t ticks_per_sec = 3125000;
-static u_int32_t ns_per_tick = 320;
+u_int32_t ns_per_tick = 320;
 static int32_t ticks_per_intr;
 
 static struct timecounter tb_timecounter = {
@@ -304,7 +304,6 @@ cpu_initclocks()
 
 	intrstate = ppc_intr_disable();
 
-	ns_per_tick = 1000000000 / ticks_per_sec;
 	ticks_per_intr = ticks_per_sec / hz;
 
 	stathz = 100;

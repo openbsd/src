@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.72 2013/09/13 07:29:02 mpi Exp $ */
+/*	$OpenBSD: cpu.c,v 1.73 2013/10/09 17:43:50 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -349,8 +349,11 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
                 }
 	}
 
-	if (timebase != 0)
+	if (timebase != 0) {
 		ticks_per_sec = timebase;
+		ns_per_tick = 1000000000 / ticks_per_sec;
+	}
+
 
 	if (clock_freq != 0) {
 		/* Openfirmware stores clock in Hz, not MHz */
