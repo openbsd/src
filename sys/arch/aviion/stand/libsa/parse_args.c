@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_args.c,v 1.3 2013/10/08 21:55:22 miod Exp $ */
+/*	$OpenBSD: parse_args.c,v 1.4 2013/10/09 20:04:39 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -54,7 +54,7 @@ stws(const char *p)
 int
 parse_args(const char *line, char **filep, int first)
 {
-	const char *p;
+	const char *po, *pc, *p;
 	char *name;
 	size_t namelen;
 
@@ -64,14 +64,40 @@ parse_args(const char *line, char **filep, int first)
 			return (1);
 	}
 
-	/* figure out how long the kernel name is */
-	for (p = line; *p != '\0' && *p != ' '; p++) ;
-	namelen = p - line;
+	/* skip boot device; up to two nested foo(...) constructs */
+	p = line;
+	po = strchr(line, '(');
+	if (po != NULL) {
+		pc = strchr(po + 1, ')');
+		if (pc != NULL) {
+			p = strchr(po + 1, '(');
+			if (p == NULL || pc < p)
+				p = pc + 1;
+			else if (pc != NULL) {
+				p = strchr(pc + 1, ')');
+				if (p != NULL)
+					p = p + 1;
+				else
+					p = line;
+			}
+		}
+	}
 
-	/* empty, use the default */
-	if (namelen == 0)
-		name = KERNEL_NAME;
-	else {
+	/* figure out how long the kernel name is */
+	pc = strchr(p, ' ');
+	if (pc == NULL)
+		pc = p + strlen(p);
+
+	if (p == pc) {
+		/* empty, use the default kernel name */
+		namelen = 1 + (p - line) + strlen(KERNEL_NAME);
+		name = (char *)alloc(namelen);
+		if (name == NULL)
+			panic("out of memory");
+		memcpy(name, line, p - line);
+		memcpy(name + (p - line), KERNEL_NAME, sizeof(KERNEL_NAME));
+	} else {
+		namelen = pc - line;
 		name = (char *)alloc(1 + namelen);
 		if (name == NULL)
 			panic("out of memory");
