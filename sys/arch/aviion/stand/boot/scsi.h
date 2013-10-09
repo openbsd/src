@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.h,v 1.1 2013/10/09 20:03:05 miod Exp $	*/
+/*	$OpenBSD: scsi.h,v 1.2 2013/10/09 20:08:20 miod Exp $	*/
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -76,6 +76,8 @@
 #define SCSI_RETRIES		4
 
 #include <scsi/scsi_message.h>
+
+#include <sys/disklabel.h>
 
 struct scsi_private {
 	void	*scsicookie;
