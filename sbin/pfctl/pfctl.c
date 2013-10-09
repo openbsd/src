@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.317 2013/08/12 17:42:08 mikeb Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.318 2013/10/09 02:59:27 lteo Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1858,11 +1858,11 @@ pfctl_state_store(int dev, const char *file)
 		if (ps.ps_len + sizeof(struct pfioc_states) < len)
 			break;
 		if (len == 0 && ps.ps_len == 0)
-			return;
+			goto done;
 		if (len == 0 && ps.ps_len != 0)
 			len = ps.ps_len;
 		if (ps.ps_len == 0)
-			return; /* no states */
+			goto done;	/* no states */
 		len *= 2;
 	}
 
@@ -1870,6 +1870,8 @@ pfctl_state_store(int dev, const char *file)
 	if (fwrite(inbuf, sizeof(struct pfsync_state), n, f) < n)
 		err(1, "fwrite");
 
+done:
+	free(inbuf);
 	fclose(f);
 }
 
