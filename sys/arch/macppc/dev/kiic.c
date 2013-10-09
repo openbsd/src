@@ -1,4 +1,4 @@
-/*	$OpenBSD: kiic.c,v 1.3 2008/04/18 17:59:37 deraadt Exp $	*/
+/*	$OpenBSD: kiic.c,v 1.4 2013/10/09 17:53:29 mpi Exp $	*/
 /*	$NetBSD: kiic.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -40,12 +40,9 @@
 
 int kiic_match(struct device *, void *, void *);
 void kiic_attach(struct device *, struct device *, void *);
-void kiic_attach_bus(struct kiic_softc *, struct kiic_bus *, int);
 inline u_int kiic_readreg(struct kiic_softc *, int);
 inline void kiic_writereg(struct kiic_softc *, int, u_int);
-u_int kiic_getmode(struct kiic_softc *);
 void kiic_setmode(struct kiic_softc *, u_int, u_int);
-u_int kiic_getspeed(struct kiic_softc *);
 void kiic_setspeed(struct kiic_softc *, u_int);
 int kiic_intr(struct kiic_softc *);
 int kiic_poll(struct kiic_softc *, int);
@@ -87,9 +84,10 @@ kiic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct kiic_softc *sc = (struct kiic_softc *)self;
 	struct confargs *ca = aux;
-	int node = ca->ca_node;
-	int rate, count = 0;
+	struct i2cbus_attach_args iba;
+	int rate, node = ca->ca_node;
 	char name[32];
+	uint32_t reg;
 
 	ca->ca_reg[0] += ca->ca_baseaddr;
 
@@ -119,46 +117,28 @@ kiic_attach(struct device *parent, struct device *self, void *aux)
 	rw_init(&sc->sc_buslock, sc->sc_dev.dv_xname);
 	kiic_writereg(sc, IER,I2C_INT_DATA|I2C_INT_ADDR|I2C_INT_STOP);
 
-	for (node = OF_child(ca->ca_node); node; node = OF_peer(node)) {
-		if (OF_getprop(node, "name", &name, sizeof name) > 0) {
-			if (strcmp(name, "i2c-bus") == 0) {
-				kiic_attach_bus(sc, &sc->sc_bus[count], node);
-				if (++count >= KIIC_MAX_BUSSES)
-					break;
-			}
+	sc->sc_busnode = node;
+
+	node = OF_child(ca->ca_node);
+	if (OF_getprop(node, "name", name, sizeof(name)) > 0) {
+		if (strcmp(name, "i2c-bus") == 0) {
+			if (OF_getprop(node, "reg", &reg, sizeof(reg)) > 0)
+				sc->sc_busport = reg;
+
+			sc->sc_busnode = node;
 		}
 	}
 
-	/* 
-	 * If we didn't find any i2c-bus nodes, there is only a single
-	 * i2c bus.
-	 */
+	sc->sc_i2c_tag.ic_cookie = sc;
+	sc->sc_i2c_tag.ic_acquire_bus = kiic_i2c_acquire_bus;
+	sc->sc_i2c_tag.ic_release_bus = kiic_i2c_release_bus;
+	sc->sc_i2c_tag.ic_exec = kiic_i2c_exec;
 
-	if (count == 0)
-		kiic_attach_bus(sc, &sc->sc_bus[0], ca->ca_node);
-}
-
-void
-kiic_attach_bus(struct kiic_softc *sc, struct kiic_bus *bus, int node)
-{
-	struct i2cbus_attach_args iba;
-	u_int32_t reg;
-
-	if (OF_getprop(node, "reg", &reg, sizeof reg) != sizeof reg)
-		return;
-
-	bus->sc = sc;
-	bus->i2c_tag.ic_cookie = bus;
-	bus->i2c_tag.ic_acquire_bus = kiic_i2c_acquire_bus;
-	bus->i2c_tag.ic_release_bus = kiic_i2c_release_bus;
-	bus->i2c_tag.ic_exec = kiic_i2c_exec;
-	bus->reg = reg;
-
-	bzero(&iba, sizeof iba);
+	bzero(&iba, sizeof(iba));
 	iba.iba_name = "iic";
-	iba.iba_tag = &bus->i2c_tag;
+	iba.iba_tag = &sc->sc_i2c_tag;
 	iba.iba_bus_scan = maciic_scan;
-	iba.iba_bus_scan_arg = &node;
+	iba.iba_bus_scan_arg = &sc->sc_busnode;
 	config_found(&sc->sc_dev, &iba, NULL);
 }
 
@@ -180,12 +160,6 @@ kiic_writereg(struct kiic_softc *sc, int reg, u_int val)
 	delay(10);
 }
 
-u_int
-kiic_getmode(struct kiic_softc *sc)
-{
-	return kiic_readreg(sc, MODE) & I2C_MODE;
-}
-
 void
 kiic_setmode(struct kiic_softc *sc, u_int mode, u_int bus)
 {
@@ -200,12 +174,6 @@ kiic_setmode(struct kiic_softc *sc, u_int mode, u_int bus)
 		x &= ~I2C_BUS1;
 	x |= mode;
 	kiic_writereg(sc, MODE, x);
-}
-
-u_int
-kiic_getspeed(struct kiic_softc *sc)
-{
-	return kiic_readreg(sc, MODE) & I2C_SPEED;
 }
 
 void
@@ -249,9 +217,10 @@ kiic_intr(struct kiic_softc *sc)
 
 	if (isr & I2C_INT_DATA) {
 		if (sc->sc_flags & I2C_READING) {
-			*sc->sc_data++ = kiic_readreg(sc, DATA);
-			sc->sc_resid--;
-
+			if (sc->sc_resid > 0) {
+				*sc->sc_data++ = kiic_readreg(sc, DATA);
+				sc->sc_resid--;
+			}
 			if (sc->sc_resid == 0) {	/* Completed */
 				kiic_writereg(sc, CONTROL, 0);
 				goto out;
@@ -354,24 +323,24 @@ kiic_write(struct kiic_softc *sc, int addr, int subaddr, const void *data, int l
 int
 kiic_i2c_acquire_bus(void *cookie, int flags)
 {
-	struct kiic_bus *bus = cookie;
+	struct kiic_softc *sc = cookie;
 
-	return (rw_enter(&bus->sc->sc_buslock, RW_WRITE));
+	return (rw_enter(&sc->sc_buslock, RW_WRITE));
 }
 
 void
 kiic_i2c_release_bus(void *cookie, int flags)
 {
-	struct kiic_bus *bus = cookie;
+	struct kiic_softc *sc = cookie;
 
-	(void) rw_exit(&bus->sc->sc_buslock);
+	(void) rw_exit(&sc->sc_buslock);
 }
 
 int
 kiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
     const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
 {
-	struct kiic_bus *bus = cookie;
+	struct kiic_softc *sc = cookie;
 	u_int mode = I2C_STDSUBMODE;
 	u_int8_t cmd = 0;
 
@@ -386,14 +355,18 @@ kiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if (cmdlen > 0)
 		cmd = *(u_int8_t *)cmdbuf;
 
-	kiic_setmode(bus->sc, mode, bus->reg || addr & 0x80);
+	/*
+	 * Use the value read from the "i2c-bus" child node or
+	 * the 9th bit of the address to select the right bus.
+	 */
+	kiic_setmode(sc, mode, sc->sc_busport || addr & 0x80);
 	addr &= 0x7f;
 
 	if (I2C_OP_READ_P(op)) {
-		if (kiic_read(bus->sc, (addr << 1), cmd, buf, len) != 0)
+		if (kiic_read(sc, (addr << 1), cmd, buf, len) != 0)
 			return (EIO);
 	} else {
-		if (kiic_write(bus->sc, (addr << 1), cmd, buf, len) != 0)
+		if (kiic_write(sc, (addr << 1), cmd, buf, len) != 0)
 			return (EIO);
 	}
 	return (0);
