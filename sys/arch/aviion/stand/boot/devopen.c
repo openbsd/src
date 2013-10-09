@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.1 2013/10/08 21:55:21 miod Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.2 2013/10/09 20:11:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -41,9 +41,16 @@ devopen(struct open_file *f, const char *fname, char **file)
 
 	/*
 	 * Attempt to parse the name as
-	 *     ctrlnam([num[,unit[,lun]]])[:partname/]filename
+	 *     ctrlnam([num[,unit[,lun]]])[partname:]filename
 	 * or
-	 *     devnam(ctrlnam([addr|num])[,unit[,lun]])[:partname/]filename
+	 *     devnam(addr|num|ctrlnam([addr|num][,initiator])[,unit[,lun]])
+	 *						[partname:]filename
+	 *
+	 * With device names being "sd" or "st" for storage devices,
+	 * or a controller name for network devices, and controller names
+	 * being four letter long ("dgen", "dgsc", "inen", "ncsc" ...)
+	 *
+	 * Initiator id is always ignored.
 	 */
 
 	po = strchr(fname, '(');
@@ -111,7 +118,17 @@ devopen(struct open_file *f, const char *fname, char **file)
 		/* no controller, keep defaults */
 	}
 
-	while (*fname == '/')
+	/* XXX parse partition: */
+	p = strchr(fname, ':');
+	if (p != NULL) {
+		if (*fname > '9')
+			part = strtol(fname, NULL, 16);
+		else
+			part = strtol(fname, NULL, 0);
+		fname = p + 1;
+	}
+
+	while (*fname == '/' || *fname == ':')
 		fname++;
 
 	*file = (char *)fname;
