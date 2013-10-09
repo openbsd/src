@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.840 2013/09/27 10:20:08 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.841 2013/10/09 09:32:01 camield Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3416,6 +3416,12 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 			goto cleanup;
 		}
 
+		if (r->max_states && (r->states_cur >= r->max_states)) {
+			pf_status.lcounters[LCNT_STATES]++;
+			REASON_SET(&reason, PFRES_MAXSTATES);
+			goto cleanup;
+		}
+
 		action = pf_create_state(pd, r, a, nr, &skw, &sks, &rewrite,
 		    sm, tag, &rules, &act, sns);
 
@@ -3492,13 +3498,6 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	u_int16_t		 mss = tcp_mssdflt;
 	u_short			 reason;
 	u_int			 i;
-
-	/* check maximums */
-	if (r->max_states && (r->states_cur >= r->max_states)) {
-		pf_status.lcounters[LCNT_STATES]++;
-		REASON_SET(&reason, PFRES_MAXSTATES);
-		return (PF_DROP);
-	}
 
 	s = pool_get(&pf_state_pl, PR_NOWAIT | PR_ZERO);
 	if (s == NULL) {
