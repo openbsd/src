@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.266 2013/09/17 13:34:17 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.267 2013/10/09 09:33:42 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -550,6 +550,9 @@ if_detach(struct ifnet *ifp)
 	vif_delete(ifp);
 #endif
 #endif
+#ifdef INET
+	in_ifdetach(ifp);
+#endif
 #ifdef INET6
 	in6_ifdetach(ifp);
 #endif
@@ -592,10 +595,6 @@ do { \
 	 */
 	while ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) != NULL) {
 		ifa_del(ifp, ifa);
-#ifdef INET
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			TAILQ_REMOVE(&in_ifaddr, ifatoia(ifa), ia_list);
-#endif
 		/* XXX if_free_sadl needs this */
 		if (ifa == ifp->if_lladdr)
 			continue;
@@ -1184,7 +1183,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr;
-	struct ifaddr *ifa, *nifa;
+	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
 	struct ifgroupreq *ifgr;
 	char ifdescrbuf[IFDESCRSIZE];
@@ -1487,17 +1486,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			ifp->if_xflags |= IFXF_NOINET6;
 #endif
 #ifdef INET
-			TAILQ_FOREACH_SAFE(ifa, &ifp->if_addrlist, ifa_list,
-			    nifa) {
-				/* only remove AF_INET */
-				if (ifa->ifa_addr->sa_family != AF_INET)
-					continue;
-
-				TAILQ_REMOVE(&in_ifaddr, ifatoia(ifa), ia_list);
-				ifa_del(ifp, ifa);
-				ifa->ifa_ifp = NULL;
-				ifafree(ifa);
-			}
+			in_ifdetach(ifp);
 #endif
 			splx(s);
 		}

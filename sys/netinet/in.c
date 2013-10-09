@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.85 2013/09/26 08:53:17 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.86 2013/10/09 09:33:43 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -1017,3 +1017,16 @@ in_delmulti(struct in_multi *inm)
 }
 
 #endif
+
+void
+in_ifdetach(struct ifnet *ifp)
+{
+	struct ifaddr *ifa, *next;
+
+	/* nuke any of IPv4 addresses we have */
+	TAILQ_FOREACH_SAFE(ifa, &ifp->if_addrlist, ifa_list, next) {
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+		in_purgeaddr(ifa);
+	}
+}
