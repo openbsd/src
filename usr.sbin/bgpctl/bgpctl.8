@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.61 2013/03/07 21:28:34 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.62 2013/10/09 08:56:38 phessler Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 7 2013 $
+.Dd $Mdocdate: October 9 2013 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -126,6 +126,25 @@ It is possible to set various path attributes with additional
 Remove the specified prefix from the list of announced networks.
 .It Cm network flush
 Remove all dynamically added prefixes from the list of announced networks.
+.It Xo
+.Cm network bulk
+.Op Ar arguments
+.Op Cm add
+.Xc
+Bulk add specified prefixes to the list of announced networks.
+Prefixes should be sent via STDIN.
+It is possible to set various path attributes with additional
+.Ar arguments .
+If neither
+.Cm add
+or
+.Cm delete
+is given, 
+.Cm add
+is the default.
+.It Cm network bulk delete
+Bulk remove the specified prefixes from the list of announced networks.
+Prefixes should be sent via STDIN.
 .It Cm network mrt file Ar file filter
 Import networks from an MRT table dump for debugging purposes.
 .Ar filter
