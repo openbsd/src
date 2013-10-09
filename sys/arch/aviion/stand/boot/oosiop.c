@@ -1,6 +1,7 @@
-/* $OpenBSD: oosiop.c,v 1.1 2013/10/08 21:55:21 miod Exp $	*/
-/* $OpenBSD: oosiop.c,v 1.1 2013/10/08 21:55:21 miod Exp $ */
-/* $NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
+/* $OpenBSD: oosiop.c,v 1.2 2013/10/09 20:03:05 miod Exp $ */
+/* OpenBSD: oosiop.c,v 1.20 2013/10/09 18:22:06 miod Exp */
+/* OpenBSD: oosiopvar.h,v 1.5 2011/04/03 12:42:36 krw Exp */
+/* $NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $ */
 /* $NetBSD: oosiopvar.h,v 1.2 2003/05/03 18:11:23 wiz Exp $ */
 
 /*
@@ -35,20 +36,7 @@
 #include <stand.h>
 #include "libsa.h"
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
-#define	SCSI_DATA_IN	1
-#define	SCSI_DATA_OUT	2
-#define	ITSDONE		4
-#define XS_NOERROR	0
-#define XS_SENSE	1
-#define XS_DRIVER_STUFFUP	2
-#define XS_SELTIMEOUT	3
-#define XS_TIMEOUT	4
-#define XS_BUSY		5
-#define XS_RESET	8
-
-#include <scsi/scsi_message.h>
+#include "scsi.h"
 
 #include <dev/ic/oosiopreg.h>
 
@@ -94,17 +82,6 @@ struct oosiop_cb {
 #define	CBF_SELTOUT	0x01	/* Selection timeout */
 #define	CBF_TIMEOUT	0x02	/* Command timeout */
 
-struct oosiop_target {
-	struct oosiop_cb *nexus;
-	int flags;
-	u_int8_t scf;		/* synchronous clock divisor */
-	u_int8_t sxfer;		/* synchronous period and offset */
-};
-
-/* target flags */
-#define	TGTF_SYNCNEG	0x01	/* Trigger synchronous negotiation */
-#define	TGTF_WAITSDTR	0x02	/* Waiting SDTR from target */
-
 struct oosiop_softc {
 	uint32_t	sc_baseaddr;
 	uint32_t *sc_scr;		/* ptr to script memory */
@@ -116,14 +93,13 @@ struct oosiop_softc {
 	int		sc_freq;	/* SCLK frequency */
 	int		sc_ccf;		/* asynchronous divisor (*10) */
 	u_int8_t	sc_dcntl;
-	u_int8_t	sc_minperiod;
 
 	int sc_pending;
 
-	struct oosiop_target sc_tgt;
 	struct oosiop_xfer sc_xfer;
 	struct oosiop_cb sc_cb;
 
+	struct oosiop_cb *sc_nexus;
 	struct oosiop_cb *sc_curcb;	/* current command */
 
 	uint32_t sc_reselbuf;		/* msgin buffer for reselection */
@@ -164,8 +140,7 @@ void	oosiop_setup_dma(struct oosiop_softc *);
 void	oosiop_flush_fifo(struct oosiop_softc *);
 void	oosiop_clear_fifo(struct oosiop_softc *);
 void	oosiop_phasemismatch(struct oosiop_softc *);
-void	oosiop_setup_syncxfer(struct oosiop_softc *);
-void	oosiop_set_syncparam(struct oosiop_softc *, int, int, int);
+static __inline void oosiop_setup_syncxfer(struct oosiop_softc *);
 void	oosiop_done(struct oosiop_softc *, struct oosiop_cb *);
 void	oosiop_reset(struct oosiop_softc *);
 void	oosiop_reset_bus(struct oosiop_softc *);
@@ -177,36 +152,6 @@ void	oosiop_processintr(struct oosiop_softc *, u_int8_t);
 /* Trap interrupt code for unexpected data I/O */
 #define	DATAIN_TRAP	0xdead0001
 #define	DATAOUT_TRAP	0xdead0002
-
-/* Possible TP and SCF conbination */
-static const struct {
-	u_int8_t	tp;
-	u_int8_t	scf;
-} synctbl[] = {
-	{0, 1},		/* SCLK /  4.0 */
-	{1, 1},		/* SCLK /  5.0 */
-	{2, 1},		/* SCLK /  6.0 */
-	{3, 1},		/* SCLK /  7.0 */
-	{1, 2},		/* SCLK /  7.5 */
-	{4, 1},		/* SCLK /  8.0 */
-	{5, 1},		/* SCLK /  9.0 */
-	{6, 1},		/* SCLK / 10.0 */
-	{3, 2},		/* SCLK / 10.5 */
-	{7, 1},		/* SCLK / 11.0 */
-	{4, 2},		/* SCLK / 12.0 */
-	{5, 2},		/* SCLK / 13.5 */
-	{3, 3},		/* SCLK / 14.0 */
-	{6, 2},		/* SCLK / 15.0 */
-	{4, 3},		/* SCLK / 16.0 */
-	{7, 2},		/* SCLK / 16.5 */
-	{5, 3},		/* SCLK / 18.0 */
-	{6, 3},		/* SCLK / 20.0 */
-	{7, 3}		/* SCLK / 22.0 */
-};
-#define	NSYNCTBL	(sizeof(synctbl) / sizeof(synctbl[0]))
-
-#define	oosiop_period(sc, tp, scf)					\
-	    (((1000000000 / (sc)->sc_freq) * (tp) * (scf)) / 40)
 
 void *
 oosiop_attach(uint32_t addr, int id, int lun)
@@ -245,10 +190,6 @@ oosiop_attach(uint32_t addr, int id, int lun)
 		sc->sc_ccf = 30;
 		sc->sc_dcntl = OOSIOP_DCNTL_CF_3;
 	}
-
-	sc->sc_minperiod = oosiop_period(sc, 4, sc->sc_ccf);
-	if (sc->sc_minperiod < 25)
-		sc->sc_minperiod = 25;	/* limit to 10MB/s */
 
 	sc->sc_cb.xfer = &sc->sc_xfer;
 	sc->sc_reselbuf = (uint32_t)&sc->sc_xfer.msgin;
@@ -527,9 +468,6 @@ oosiop_phasemismatch(struct oosiop_softc *sc)
 		sstat1 = oosiop_read_1(sc, OOSIOP_SSTAT1);
 		if (sstat1 & OOSIOP_SSTAT1_OLF)
 			dbc++;
-		if ((sc->sc_tgt.sxfer != 0) && 
-		    (sstat1 & OOSIOP_SSTAT1_ORF) != 0)
-			dbc++;
 
 		oosiop_clear_fifo(sc);
 	} else {
@@ -548,41 +486,10 @@ oosiop_phasemismatch(struct oosiop_softc *sc)
 	}
 }
 
-void
+static __inline void
 oosiop_setup_syncxfer(struct oosiop_softc *sc)
 {
-	oosiop_write_1(sc, OOSIOP_SXFER, sc->sc_tgt.sxfer);
-}
-
-void
-oosiop_set_syncparam(struct oosiop_softc *sc, int id, int period, int offset)
-{
-	int i, p;
-
-	printf("ncsc: target %d now using 8 bit ", id);
-
-	if (offset == 0) {
-		/* Asynchronous */
-		sc->sc_tgt.scf = 0;
-		sc->sc_tgt.sxfer = 0;
-		printf("asynchronous");
-	} else {
-		/* Synchronous */
-		for (i = 4; i < 12; i++) {
-			p = oosiop_period(sc, i, sc->sc_ccf);
-			if (p >= period)
-				break;
-		}
-		if (i == 12) {
-			printf("ncsc: target %d period too large\n", id);
-			i = 11;	/* XXX */
-		}
-		sc->sc_tgt.scf = 0;
-		sc->sc_tgt.sxfer = ((i - 4) << 4) | offset;
-		/* XXX print actual ns period... */
-		printf(" synchronous");
-	}
-	printf(" xfers\n");
+	oosiop_write_1(sc, OOSIOP_SXFER, 0);
 }
 
 int
@@ -650,18 +557,6 @@ oosiop_setup(struct oosiop_softc *sc, struct oosiop_cb *cb)
 	xfer->msgout[0] = MSG_IDENTIFY(cb->lun,
 	    (((struct scsi_generic *)cb->cmdbuf)->opcode != REQUEST_SENSE));
 	cb->msgoutlen = 1;
-
-	if (sc->sc_tgt.flags & TGTF_SYNCNEG) {
-		/* Send SDTR */
-		xfer->msgout[1] = MSG_EXTENDED;
-		xfer->msgout[2] = MSG_EXT_SDTR_LEN;
-		xfer->msgout[3] = MSG_EXT_SDTR;
-		xfer->msgout[4] = sc->sc_minperiod;
-		xfer->msgout[5] = OOSIOP_MAX_OFFSET;
-		cb->msgoutlen = 6;
-		sc->sc_tgt.flags &= ~TGTF_SYNCNEG;
-		sc->sc_tgt.flags |= TGTF_WAITSDTR;
-	}
 }
 
 void
@@ -700,7 +595,7 @@ oosiop_done(struct oosiop_softc *sc, struct oosiop_cb *cb)
 
 	if (cb == sc->sc_curcb)
 		sc->sc_curcb = NULL;
-	sc->sc_tgt.nexus = NULL;
+	sc->sc_nexus = NULL;
 }
 
 void
@@ -739,11 +634,6 @@ oosiop_reset(struct oosiop_softc *sc)
 	oosiop_write_1(sc, OOSIOP_DIEN,
 	    OOSIOP_DIEN_ABRT | OOSIOP_DIEN_SSI | OOSIOP_DIEN_SIR |
 	    OOSIOP_DIEN_WTD | OOSIOP_DIEN_IID);
-
-	/* Set target state to asynchronous */
-	sc->sc_tgt.flags = 0;
-	sc->sc_tgt.scf = 0;
-	sc->sc_tgt.sxfer = 0;
 }
 
 void
@@ -755,10 +645,10 @@ oosiop_reset_bus(struct oosiop_softc *sc)
 	oosiop_write_1(sc, OOSIOP_SCNTL1, 0);
 
 	/* Remove all nexuses */
-	if (sc->sc_tgt.nexus) {
-		sc->sc_tgt.nexus->xfer->status =
+	if (sc->sc_nexus) {
+		sc->sc_nexus->xfer->status =
 		    SCSI_OOSIOP_NOSTATUS; /* XXX */
-		oosiop_done(sc, sc->sc_tgt.nexus);
+		oosiop_done(sc, sc->sc_nexus);
 	}
 
 	sc->sc_curcb = NULL;
@@ -872,7 +762,7 @@ oosiop_processintr(struct oosiop_softc *sc, u_int8_t istat)
 	if (sc->sc_nextdsp == Ent_wait_reselect && sc->sc_pending != 0) {
 		sc->sc_pending = 0;
 		cb = sc->sc_curcb = &sc->sc_cb;
-		sc->sc_tgt.nexus = cb;
+		sc->sc_nexus = cb;
 		oosiop_setup_dma(sc);
 		oosiop_setup_syncxfer(sc);
 		sc->sc_nextdsp = Ent_start_select;
@@ -929,14 +819,14 @@ oosiop_scriptintr(struct oosiop_softc *sc)
 
 		if (cb) {
 			/* Current command was lost arbitration */
-			sc->sc_tgt.nexus = NULL;
+			sc->sc_nexus = NULL;
 			sc->sc_curcb = NULL;
 		}
 
 		break;
 
 	case A_int_res_id:
-		cb = sc->sc_tgt.nexus;
+		cb = sc->sc_nexus;
 		resmsg = oosiop_read_1(sc, OOSIOP_SFBR);
 		if (MSG_ISIDENTIFY(resmsg) && cb &&
 		    (resmsg & MSG_IDENTIFY_LUNMASK) == cb->lun) {
@@ -1000,40 +890,6 @@ oosiop_msgin(struct oosiop_softc *sc, struct oosiop_cb *cb)
 	msgout = 0;
 
 	switch (xfer->msgin[0]) {
-	case MSG_EXTENDED:
-		switch (xfer->msgin[2]) {
-		case MSG_EXT_SDTR:
-			if (sc->sc_tgt.flags & TGTF_WAITSDTR) {
-				/* Host initiated SDTR */
-				sc->sc_tgt.flags &= ~TGTF_WAITSDTR;
-			} else {
-				/* Target initiated SDTR */
-				if (xfer->msgin[3] < sc->sc_minperiod)
-					xfer->msgin[3] = sc->sc_minperiod;
-				if (xfer->msgin[4] > OOSIOP_MAX_OFFSET)
-					xfer->msgin[4] = OOSIOP_MAX_OFFSET;
-				xfer->msgout[0] = MSG_EXTENDED;
-				xfer->msgout[1] = MSG_EXT_SDTR_LEN;
-				xfer->msgout[2] = MSG_EXT_SDTR;
-				xfer->msgout[3] = xfer->msgin[3];
-				xfer->msgout[4] = xfer->msgin[4];
-				cb->msgoutlen = 5;
-				msgout = 1;
-			}
-			oosiop_set_syncparam(sc, cb->id, (int)xfer->msgin[3],
-			    (int)xfer->msgin[4]);
-			oosiop_setup_syncxfer(sc);
-			break;
-
-		default:
-			/* Reject message */
-			xfer->msgout[0] = MSG_MESSAGE_REJECT;
-			cb->msgoutlen = 1;
-			msgout = 1;
-			break;
-		}
-		break;
-
 	case MSG_SAVEDATAPOINTER:
 		cb->savedp = cb->curdp;
 		break;
@@ -1046,12 +902,6 @@ oosiop_msgin(struct oosiop_softc *sc, struct oosiop_cb *cb)
 		break;
 
 	case MSG_MESSAGE_REJECT:
-		if (sc->sc_tgt.flags & TGTF_WAITSDTR) {
-			/* SDTR rejected */
-			sc->sc_tgt.flags &= ~TGTF_WAITSDTR;
-			oosiop_set_syncparam(sc, cb->id, 0, 0);
-			oosiop_setup_syncxfer(sc);
-		}
 		break;
 
 	default:

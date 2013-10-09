@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.1 2013/10/08 21:55:21 miod Exp $	*/
+/*	$OpenBSD: sd.c,v 1.2 2013/10/09 20:03:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -21,26 +21,10 @@
 #include <sys/param.h>
 #include <stand.h>
 
-#include <scsi/scsiconf.h>
-#define	TEST_READY_RETRIES 5
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_disk.h>
-
 #include <sys/disklabel.h>
 
-#include "oosiop.h"
-
-#define paddr_t uint32_t
-#define vaddr_t uint32_t
-#define vsize_t size_t
-
-struct scsi_private {
-	void	*scsicookie;
-	int	(*scsicmd)(void *, void *, size_t, void *, size_t, size_t *);
-	void	(*scsidetach)(void *);
-
-	struct disklabel label;
-};
+#include "scsi.h"
+#include <scsi/scsi_disk.h>
 
 static int
 sdtur(struct scsi_private *priv)
@@ -115,6 +99,7 @@ sdopen(struct open_file *f, const char *ctrlname, int ctrl, int unit, int lun,
 
 	priv = (struct scsi_private *)f->f_devdata;
 	memset(priv, 0, sizeof(struct scsi_private));
+	priv->part = part;
 
 	/* XXX provide default based upon system type */
 	if (*ctrlname == '\0')
@@ -174,7 +159,7 @@ sdstrategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
 	if (rw != F_READ)
 		return EROFS;
 
-	blk += priv->label.d_partitions[0 /* XXX part */].p_offset;
+	blk += priv->label.d_partitions[priv->part].p_offset;
 
 	return sdread(priv, blk, size, buf, rsize) != 0 ? EIO : 0;
 }
