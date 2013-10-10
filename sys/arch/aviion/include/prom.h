@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.5 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: prom.h,v 1.6 2013/10/10 21:24:59 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat.
  *
@@ -81,5 +81,25 @@ void	scm_putc(int);
 void	scm_putcrlf(void);
 __dead void scm_reboot(const char *);
 u_int	scm_sysid(void);
+
+/*
+ * SCM boot device names
+ */
+
+/* cied */
+#define	SCM_CIEN	0x6369656e
+/* cimd */
+/* cird */
+/* cisc */
+#define	SCM_DGEN	0x6467656e
+#define	SCM_DGSC	0x64677363
+/* hada */
+#define	SCM_HKEN	0x686b656e
+#define	SCM_INEN	0x696e656e
+#define	SCM_INSC	0x696e7363
+#define	SCM_NCSC	0x6e637363
+/* nvrd */
+/* pefn */
+/* vitr */
 
 #endif /* _MACHINE_PROM_H_ */

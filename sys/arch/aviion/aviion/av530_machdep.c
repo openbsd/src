@@ -1,4 +1,4 @@
-/*	$OpenBSD: av530_machdep.c,v 1.10 2013/10/09 21:28:33 miod Exp $	*/
+/*	$OpenBSD: av530_machdep.c,v 1.11 2013/10/10 21:24:58 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -82,6 +82,7 @@ const struct board board_av530 = {
 	av530_bootstrap,
 	av530_memsize,
 	av530_startup,
+	av530_get_boot_device,
 	av530_intr,
 	rtc_init_clocks,
 	av530_getipl,
@@ -95,8 +96,7 @@ const struct board board_av530 = {
 	av530_exintsrc,
 	av530_get_vme_ranges,
 
-	av530_ptable,
-	"ncsc"
+	av530_ptable
 };
 
 /*
@@ -194,6 +194,39 @@ av530_bootstrap()
 	 * Return the delay const value to use (which matches the CPU speed).
 	 */
 	return 33;
+}
+
+/*
+ * Return the address of the boot device, providing the default boot device
+ * if none is requested.
+ */
+paddr_t
+av530_get_boot_device(uint32_t *name, u_int unit)
+{
+	/* default boot device is on-board ncsc() */
+	if (*name == 0)
+		*name = SCM_NCSC;
+
+	switch (*name) {
+	case SCM_DGEN:
+		switch (unit) {
+		case 0:
+			return AV530_LAN1;
+		case 1:
+			return AV530_LAN2;
+		}
+		break;
+	case SCM_NCSC:
+		switch (unit) {
+		case 0:
+			return AV530_SCSI1;
+		case 1:
+			return AV530_SCSI1;
+		}
+		break;
+	}
+
+	return 0;
 }
 
 /*

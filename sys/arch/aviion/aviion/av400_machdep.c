@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.24 2013/10/09 21:28:33 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.25 2013/10/10 21:24:58 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat.
  *
@@ -193,6 +193,7 @@ const struct board board_av400 = {
 	av400_bootstrap,
 	av400_memsize,
 	av400_startup,
+	av400_get_boot_device,
 	av400_intr,
 	cio_init_clocks,
 	av400_getipl,
@@ -206,8 +207,7 @@ const struct board board_av400 = {
 	av400_exintsrc,
 	av400_get_vme_ranges,
 
-	av400_ptable,
-	"insc"
+	av400_ptable
 };
 
 /*
@@ -307,6 +307,31 @@ av400_bootstrap()
 	case AVIION_4300_25:
 		return 25;
 	}
+}
+
+/*
+ * Return the address of the boot device, providing the default boot device
+ * if none is requested.
+ */
+paddr_t
+av400_get_boot_device(uint32_t *name, u_int unit)
+{
+	/* default boot device is on-board insc() */
+	if (*name == 0)
+		*name = SCM_INSC;
+
+	switch (*name) {
+	case SCM_INEN:
+		if (unit == 0)
+			return AV400_LAN;
+		break;
+	case SCM_INSC:
+		if (unit == 0)
+			return AV400_SCSI;
+		break;
+	}
+
+	return 0;
 }
 
 /*

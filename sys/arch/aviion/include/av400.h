@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400.h,v 1.9 2013/09/24 20:14:35 miod Exp $	*/
+/*	$OpenBSD: av400.h,v 1.10 2013/10/10 21:24:59 miod Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -130,6 +130,7 @@
  * Onboard device addresses
  */
 
+#define	AV400_SCSI	0xfff8a000
 #define	AV400_LAN	0xfff8c000
 
 /*

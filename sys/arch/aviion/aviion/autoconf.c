@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.15 2013/10/09 21:28:33 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.16 2013/10/10 21:24:58 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -44,7 +44,7 @@
 #include <machine/autoconf.h>
 #include <machine/board.h>
 #include <machine/cpu.h>
-#include <machine/vmparam.h>
+#include <machine/prom.h>
 
 #ifdef AV530
 #include <machine/av530.h>
@@ -68,25 +68,14 @@ void	dumpconf(void);
 
 int cold = 1;   /* 1 if still booting */
 
-struct device *bootdv;	/* set by device drivers (if found) */
-
-uint32_t bootdevtype;
-
-/* cied */
-#define	BT_CIEN		0x6369656e
-/* cimd */
-/* cird */
-/* cisc */
-#define	BT_DGEN		0x6467656e
-#define	BT_DGSC		0x64677363
-/* hada */
-#define	BT_HKEN		0x686b656e
-#define	BT_INEN		0x696e656e
-#define	BT_INSC		0x696e7363
-#define	BT_NCSC		0x6e637363
-/* nvrd */
-/* pefn */
-/* vitr */
+static struct device *bootctrl;		/* boot controller */
+static struct device *bootdv;		/* boot device (if found) */
+u_int bootdev = 0;			/* set in locore.S, can't be in .bss */
+u_int bootunit = 0;			/* set in locore.S, can't be in .bss */
+u_int bootlun = 0;			/* set in locore.S, can't be in .bss */
+u_int bootpart = 0;			/* set in locore.S, can't be in .bss */
+static uint32_t bootdevtype;		/* boot controller SCM name */
+static paddr_t bootctrlpaddr;		/* boot controller address */
 
 /*
  * called at boot time, configure all devices on the system.
@@ -94,8 +83,8 @@ uint32_t bootdevtype;
 void
 cpu_configure()
 {
-	printf("bootpath: '%s' dev %u unit %u part %u\n",
-	    bootargs, bootdev, bootunit, bootpart);
+	printf("bootpath: '%s' dev %u unit %u lun %u\n",
+	    bootargs, bootdev, bootunit, bootlun);
 
 	softintr_init();
 
@@ -146,11 +135,36 @@ stws(char *p)
 	return (p);
 }
 
+/* parse a positive base 10 number */
+static u_int strtoi(const char *);
+static u_int
+strtoi(const char *s)
+{
+	int c;
+	u_int val = 0;
+
+	if (s == NULL || *s == '\0')
+		return 0;
+
+	/* skip whitespace */
+	do {
+		c = *s++;
+	} while (c == ' ' || c == '\t');
+
+	for (;;) {
+		if (c < '0' || c > '9')
+			break;
+		val *= 10;
+		val += c - '0';
+	}
+
+	return val;
+}
+
 void
 cmdline_parse(void)
 {
 	char *p;
-	
 
 	/*
 	 * If the boot commandline has been manually entered, it
@@ -196,13 +210,33 @@ cmdline_parse(void)
 	 * However, in the sd() or st() cases, we need to figure out the
 	 * SCSI controller name (if not the default one) and address, if
 	 * provided.
+	 *
+	 * Note that we will override bootdev at this point. If no boot
+	 * controller number or address was provided, bootdev will be set
+	 * to zero anyway.
 	 */
 	if (memcmp(bootargs, "sd", 2) == 0 ||
 	    memcmp(bootargs, "st", 2) == 0) {
-		bcopy(platform->default_boot, &bootdevtype, sizeof(uint32_t));
-		/* search for a controller specification */
-	} else
+		/*
+		 * Either
+		 *   sd(bootdev,bootunit,bootlun)
+		 * or
+		 *   sd(ctrl(bootdev,id),bootunit,bootlun)
+		 * We already know bootdev, bootunit and bootlun.
+		 * All we need here is to figure out the controller type
+		 * and address.
+		 */
+		if (bootargs[7] == '(') {
+			bcopy(bootargs + 3, &bootdevtype, sizeof(uint32_t));
+			bootdev = strtoi(bootargs + 8);
+		}
+	} else {
 		bcopy(bootargs, &bootdevtype, sizeof(int));
+		bootdev = strtoi(bootargs + 5);
+	}
+
+	/* fill the holes */
+	bootctrlpaddr = platform->get_boot_device(&bootdevtype, bootdev);
 }
 
 void
@@ -210,85 +244,52 @@ device_register(struct device *dev, void *aux)
 {
 	struct confargs *ca = (struct confargs *)aux;
 	struct cfdriver *cf = dev->dv_cfdata->cf_driver;
+	struct device *parent = dev->dv_parent;
 
 	if (bootdv != NULL)
 		return;
-/* SCSI -> match bootunit/bootpart as id:lun iff controller matches */
-	switch (bootdevtype) {
 
-	/*
-	 * Network devices
-	 */
+	if (bootctrl == NULL) {
+		if (ca->ca_paddr != bootctrlpaddr)
+			return;
 
-	case BT_INEN:
-		/*
-		 * Internal LANCE Ethernet is le at syscon only, and we do not
-		 * care about controller and unit numbers.
-		 */
-		if (strcmp("le", cf->cd_name) == 0 && strcmp("syscon",
-		      dev->dv_parent->dv_cfdata->cf_driver->cd_name) == 0)
-			bootdv = dev;
-		break;
-	case BT_DGEN:
-		/*
-		 * Internal ILACC Ethernet is le at syscon only, and need to
-		 * match the controller address.
-		 */
-		if (strcmp("le", cf->cd_name) == 0 && strcmp("syscon",
-		      dev->dv_parent->dv_cfdata->cf_driver->cd_name) == 0) {
-			switch (cpuid) {
-#ifdef AV530
-			case AVIION_4600_530:
-				if ((bootdev == 0 &&
-				    ca->ca_paddr == AV530_LAN1) ||
-				    (bootdev == 1 &&
-				    ca->ca_paddr == AV530_LAN2))
-					bootdv = dev;
-				break;
-#endif
-			default:
-				break;
-			}
-		}
-		break;
-
-	/*
-	 * SCSI controllers
-	 */
-
-	case BT_NCSC:
-		/*
-		 * Internal 53C700 controller is oosiop at syscon only, and
-		 * needs to match the controller address, as well as SCSI
-		 * unit and lun numbers.
-		 */
-	    {
-		struct scsi_attach_args *sa = aux;
-		struct device *grandp;
-
-		if (memcmp(cf->cd_name, bootargs, 2) != 0 ||
-		    (strcmp("sd", cf->cd_name) != 0 &&
-		     strcmp("st", cf->cd_name) != 0) ||
-		    sa->sa_sc_link->target != bootunit ||
-		    sa->sa_sc_link->lun != bootpart)
+		switch (bootdevtype) {
+		case SCM_INEN:
+		case SCM_DGEN:
+			if (strcmp("le", cf->cd_name) == 0 &&
+			    strcmp("syscon",
+			      parent->dv_cfdata->cf_driver->cd_name) == 0)
+				bootctrl = dev;
 			break;
 
-		grandp = dev->dv_parent->dv_parent;
-		if (strcmp("oosiop",
-		    grandp->dv_cfdata->cf_driver->cd_name) == 0) {
-			bootdv = dev;	/* XXX second controller */
-		}
-	    }
-		break;
+		case SCM_INSC:
+			if (strcmp("oaic", cf->cd_name) == 0 &&
+			    strcmp("syscon",
+			      parent->dv_cfdata->cf_driver->cd_name) == 0)
+				bootctrl = dev;
+			break;
 
-	case BT_INSC:
-		/*
-		 * Internal AIC-6250 controller is oaic at syscon only, and
-		 * needs to match the controller address, as well as SCSI
-		 * unit and lun numbers.
-		 */
-		/* XXX TBD */
-		break;
+		case SCM_NCSC:
+			if (strcmp("oosiop", cf->cd_name) == 0 &&
+			    strcmp("syscon",
+			      parent->dv_cfdata->cf_driver->cd_name) == 0)
+				bootctrl = dev;
+			break;
+		}
+
+		if (bootctrl != NULL && bootctrl->dv_class == DV_IFNET)
+			bootdv = bootctrl;
+		return;
+	}
+
+	if (memcmp(cf->cd_name, bootargs, 2) == 0 &&
+	    (strcmp("sd", cf->cd_name) == 0 ||
+	     strcmp("st", cf->cd_name) == 0)) {
+		struct scsi_attach_args *saa = aux;
+		if (saa->sa_sc_link->target == bootunit &&
+		    saa->sa_sc_link->lun == bootlun &&
+		    parent->dv_parent == bootctrl)
+			bootdv = dev;
 	}
 }
 

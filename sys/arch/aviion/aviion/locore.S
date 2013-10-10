@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.19 2013/10/07 19:10:40 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.20 2013/10/10 21:24:59 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -68,7 +68,7 @@
 #include <machine/trap.h>
 #include <machine/vmparam.h>
 
-#define	SYM_MAGIC	0x6274ef2e
+#define	BOOT_MAGIC	0x6274ef2e
 
 	.text
 
@@ -123,18 +123,34 @@ ASLOCAL(main_start)
 	st	%r3,  %r13, %lo16(_C_LABEL(bootdev))
 	or.u	%r13, %r0,  %hi16(_C_LABEL(bootunit))
 	st	%r4,  %r13, %lo16(_C_LABEL(bootunit))
-	or.u	%r13, %r0,  %hi16(_C_LABEL(bootpart))
-	st	%r5,  %r13, %lo16(_C_LABEL(bootpart))
-#if defined(DDB) || NKSYMS > 0
-	or.u	%r12, %r0,  %hi16(SYM_MAGIC)
-	or	%r12, %r12, %lo16(SYM_MAGIC)
+	or.u	%r13, %r0,  %hi16(_C_LABEL(bootlun))
+	st	%r5,  %r13, %lo16(_C_LABEL(bootlun))
+
+	or.u	%r12, %r0,  %hi16(BOOT_MAGIC)
+	or	%r12, %r12, %lo16(BOOT_MAGIC)
 	cmp	%r2,  %r6,  %r12
-	bb1	ne,   %r2,  1f
+	bb1	eq,   %r2,  1f
+	addu	%r12, %r12, 1		/* BOOT_MAGIC + 1 */
+	cmp	%r2,  %r6,  %r12
+	bb1	ne,   %r2,  2f
+
+	/* BOOT_MAGIC + 1 */
+	or.u	%r13, %r0,  %hi16(_C_LABEL(bootpart))
+	st	%r7,  %r13, %lo16(_C_LABEL(bootpart))
+#if defined(DDB) || NKSYMS > 0
+	or.u	%r13, %r0,  %hi16(_C_LABEL(esym))
+	st	%r8,  %r13, %lo16(_C_LABEL(esym))
+#endif
+	br	2f
+
+	/* BOOT_MAGIC */
+1:
+#if defined(DDB) || NKSYMS > 0
 	or.u	%r13, %r0,  %hi16(_C_LABEL(esym))
 	st	%r7,  %r13, %lo16(_C_LABEL(esym))
-1:
 #endif
 
+2:
 	/* set cputyp */
 	ldcr	%r1,  PID
 	extu	%r8,  %r1,  8<8>
