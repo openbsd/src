@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-message.c,v 1.23 2013/10/10 12:00:19 nicm Exp $ */
+/* $OpenBSD: cmd-display-message.c,v 1.24 2013/10/10 12:01:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -70,9 +70,9 @@ cmd_display_message_exec(struct cmd *self, struct cmd_q *cmdq)
 	}
 
 	if (args_has(args, 'c')) {
-	    c = cmd_find_client(cmdq, args_get(args, 'c'), 0);
-	    if (c == NULL)
-		return (CMD_RETURN_ERROR);
+		c = cmd_find_client(cmdq, args_get(args, 'c'), 0);
+		if (c == NULL)
+			return (CMD_RETURN_ERROR);
 	} else {
 		c = cmd_current_client(cmdq);
 		if (c == NULL && !args_has(self->args, 'p')) {
