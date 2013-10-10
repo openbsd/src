@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.373 2013/10/10 12:39:25 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.374 2013/10/10 23:31:28 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -2734,8 +2734,8 @@ instead redraw it entirely every
 .Ar interval
 milliseconds.
 This helps to prevent fast output (such as
-.Xr yes 1
-overwhelming the terminal).
+.Xr yes 1 )
+overwhelming the terminal.
 The default is a trigger of 250 and an interval of 100.
 A trigger of zero disables the rate limiting.
 .Pp
