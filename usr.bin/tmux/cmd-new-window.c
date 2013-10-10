@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.33 2013/10/10 12:00:21 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.34 2013/10/10 12:07:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -102,7 +102,7 @@ cmd_new_window_exec(struct cmd *self, struct cmd_q *cmdq)
 		cmd = options_get_string(&s->options, "default-command");
 	else
 		cmd = args->argv[0];
-	cwd = cmd_get_default_path(cmdq, args_get(args, 'c'));
+	cwd = cmdq_default_path(cmdq, args_get(args, 'c'));
 
 	if (idx == -1)
 		idx = -1 - options_get_number(&s->options, "base-index");

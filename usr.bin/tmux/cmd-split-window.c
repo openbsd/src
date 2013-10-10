@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.44 2013/10/10 12:04:13 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.45 2013/10/10 12:07:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -83,7 +83,7 @@ cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 		cmd = options_get_string(&s->options, "default-command");
 	else
 		cmd = args->argv[0];
-	cwd = cmd_get_default_path(cmdq, args_get(args, 'c'));
+	cwd = cmdq_default_path(cmdq, args_get(args, 'c'));
 
 	type = LAYOUT_TOPBOTTOM;
 	if (args_has(args, 'h'))
