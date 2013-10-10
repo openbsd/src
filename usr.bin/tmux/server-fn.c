@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.70 2013/07/05 14:52:33 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.71 2013/10/10 11:46:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -398,14 +398,15 @@ void
 server_destroy_session_group(struct session *s)
 {
 	struct session_group	*sg;
+	struct session		*s1;
 
 	if ((sg = session_group_find(s)) == NULL)
 		server_destroy_session(s);
 	else {
-		TAILQ_FOREACH(s, &sg->sessions, gentry)
+		TAILQ_FOREACH_SAFE(s, &sg->sessions, gentry, s1) {
 			server_destroy_session(s);
-		TAILQ_REMOVE(&session_groups, sg, entry);
-		free(sg);
+			session_destroy(s);
+		}
 	}
 }
 

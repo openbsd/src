@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.38 2013/03/25 10:11:45 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.39 2013/10/10 11:46:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -151,6 +151,7 @@ void
 session_destroy(struct session *s)
 {
 	struct winlink	*wl;
+
 	log_debug("session %s destroyed", s->name);
 
 	RB_REMOVE(sessions, &sessions, s);
