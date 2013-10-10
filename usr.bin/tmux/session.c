@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.39 2013/10/10 11:46:29 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.40 2013/10/10 11:58:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -616,7 +616,7 @@ session_renumber_windows(struct session *s)
 	memcpy(&old_lastw, &s->lastw, sizeof old_lastw);
 	TAILQ_INIT(&s->lastw);
 	TAILQ_FOREACH(wl, &old_lastw, sentry) {
-		wl_new = winlink_find_by_index(&s->windows, wl->idx);
+		wl_new = winlink_find_by_window(&s->windows, wl->window);
 		if (wl_new != NULL)
 			TAILQ_INSERT_TAIL(&s->lastw, wl_new, sentry);
 	}
