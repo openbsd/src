@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-pane.c,v 1.17 2013/03/28 15:08:12 nicm Exp $ */
+/* $OpenBSD: cmd-swap-pane.c,v 1.18 2013/10/10 12:00:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -35,7 +35,6 @@ const struct cmd_entry cmd_swap_pane_entry = {
 	"[-dDU] " CMD_SRCDST_PANE_USAGE,
 	0,
 	cmd_swap_pane_key_binding,
-	NULL,
 	cmd_swap_pane_exec
 };
 

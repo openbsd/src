@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.62 2013/07/05 15:10:38 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.63 2013/10/10 12:00:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -67,7 +67,6 @@ const struct cmd_entry cmd_set_option_entry = {
 	"[-agosquw] [-t target-session|target-window] option [value]",
 	0,
 	NULL,
-	NULL,
 	cmd_set_option_exec
 };
 
@@ -76,7 +75,6 @@ const struct cmd_entry cmd_set_window_option_entry = {
 	"agoqt:u", 1, 2,
 	"[-agoqu] " CMD_TARGET_WINDOW_USAGE " option [value]",
 	0,
-	NULL,
 	NULL,
 	cmd_set_option_exec
 };

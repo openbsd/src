@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.21 2013/03/24 09:57:59 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.22 2013/10/10 12:00:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,6 @@ const struct cmd_entry cmd_break_pane_entry = {
 	"dPF:t:", 0, 0,
 	"[-dP] [-F format] " CMD_TARGET_PANE_USAGE,
 	0,
-	NULL,
 	NULL,
 	cmd_break_pane_exec
 };

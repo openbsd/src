@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.16 2013/03/24 09:57:59 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.17 2013/10/10 12:00:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,6 @@ const struct cmd_entry cmd_select_pane_entry = {
 	"[-lDLRU] " CMD_TARGET_PANE_USAGE,
 	0,
 	cmd_select_pane_key_binding,
-	NULL,
 	cmd_select_pane_exec
 };
 
@@ -42,7 +41,6 @@ const struct cmd_entry cmd_last_pane_entry = {
 	"t:", 0, 0,
 	CMD_TARGET_WINDOW_USAGE,
 	0,
-	NULL,
 	NULL,
 	cmd_select_pane_exec
 };

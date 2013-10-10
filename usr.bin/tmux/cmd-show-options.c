@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-options.c,v 1.20 2013/03/25 10:04:04 nicm Exp $ */
+/* $OpenBSD: cmd-show-options.c,v 1.21 2013/10/10 12:00:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -40,7 +40,6 @@ const struct cmd_entry cmd_show_options_entry = {
 	"[-gqsvw] [-t target-session|target-window] [option]",
 	0,
 	NULL,
-	NULL,
 	cmd_show_options_exec
 };
 
@@ -49,7 +48,6 @@ const struct cmd_entry cmd_show_window_options_entry = {
 	"gvt:", 0, 1,
 	"[-gv] " CMD_TARGET_WINDOW_USAGE " [option]",
 	0,
-	NULL,
 	NULL,
 	cmd_show_options_exec
 };

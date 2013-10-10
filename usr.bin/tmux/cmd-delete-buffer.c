@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-delete-buffer.c,v 1.9 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-delete-buffer.c,v 1.10 2013/10/10 12:00:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,6 @@ const struct cmd_entry cmd_delete_buffer_entry = {
 	"b:", 0, 0,
 	CMD_BUFFER_USAGE,
 	0,
-	NULL,
 	NULL,
 	cmd_delete_buffer_exec
 };

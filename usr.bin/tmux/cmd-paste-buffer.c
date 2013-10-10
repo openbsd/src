@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-paste-buffer.c,v 1.22 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-paste-buffer.c,v 1.23 2013/10/10 12:00:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -38,7 +38,6 @@ const struct cmd_entry cmd_paste_buffer_entry = {
 	"db:prs:t:", 0, 0,
 	"[-dpr] [-s separator] [-b buffer-index] " CMD_TARGET_PANE_USAGE,
 	0,
-	NULL,
 	NULL,
 	cmd_paste_buffer_exec
 };

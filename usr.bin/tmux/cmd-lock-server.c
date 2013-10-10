@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-lock-server.c,v 1.14 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-lock-server.c,v 1.15 2013/10/10 12:00:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,7 +36,6 @@ const struct cmd_entry cmd_lock_server_entry = {
 	"",
 	0,
 	NULL,
-	NULL,
 	cmd_lock_server_exec
 };
 
@@ -46,7 +45,6 @@ const struct cmd_entry cmd_lock_session_entry = {
 	CMD_TARGET_SESSION_USAGE,
 	0,
 	NULL,
-	NULL,
 	cmd_lock_server_exec
 };
 
@@ -55,7 +53,6 @@ const struct cmd_entry cmd_lock_client_entry = {
 	"t:", 0, 0,
 	CMD_TARGET_CLIENT_USAGE,
 	0,
-	NULL,
 	NULL,
 	cmd_lock_server_exec
 };

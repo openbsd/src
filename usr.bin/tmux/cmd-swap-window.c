@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-window.c,v 1.9 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-swap-window.c,v 1.10 2013/10/10 12:00:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,6 @@ const struct cmd_entry cmd_swap_window_entry = {
 	"ds:t:", 0, 0,
 	"[-d] " CMD_SRCDST_WINDOW_USAGE,
 	0,
-	NULL,
 	NULL,
 	cmd_swap_window_exec
 };

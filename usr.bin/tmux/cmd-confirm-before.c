@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-confirm-before.c,v 1.19 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-confirm-before.c,v 1.20 2013/10/10 12:00:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -38,7 +38,6 @@ const struct cmd_entry cmd_confirm_before_entry = {
 	"[-p prompt] " CMD_TARGET_CLIENT_USAGE " command",
 	0,
 	cmd_confirm_before_key_binding,
-	NULL,
 	cmd_confirm_before_exec
 };
 

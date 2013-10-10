@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-window.c,v 1.10 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-select-window.c,v 1.11 2013/10/10 12:00:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -35,7 +35,6 @@ const struct cmd_entry cmd_select_window_entry = {
 	"[-lnpT] " CMD_TARGET_WINDOW_USAGE,
 	0,
 	cmd_select_window_key_binding,
-	NULL,
 	cmd_select_window_exec
 };
 
@@ -45,7 +44,6 @@ const struct cmd_entry cmd_next_window_entry = {
 	"[-a] " CMD_TARGET_SESSION_USAGE,
 	0,
 	cmd_select_window_key_binding,
-	NULL,
 	cmd_select_window_exec
 };
 
@@ -55,7 +53,6 @@ const struct cmd_entry cmd_previous_window_entry = {
 	"[-a] " CMD_TARGET_SESSION_USAGE,
 	0,
 	cmd_select_window_key_binding,
-	NULL,
 	cmd_select_window_exec
 };
 
@@ -64,7 +61,6 @@ const struct cmd_entry cmd_last_window_entry = {
 	"t:", 0, 0,
 	CMD_TARGET_SESSION_USAGE,
 	0,
-	NULL,
 	NULL,
 	cmd_select_window_exec
 };

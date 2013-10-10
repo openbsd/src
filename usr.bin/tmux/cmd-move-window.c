@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-move-window.c,v 1.15 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-move-window.c,v 1.16 2013/10/10 12:00:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,6 @@ const struct cmd_entry cmd_move_window_entry = {
 	"dkrs:t:", 0, 0,
 	"[-dkr] " CMD_SRCDST_WINDOW_USAGE,
 	0,
-	NULL,
 	NULL,
 	cmd_move_window_exec
 };

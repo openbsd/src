@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.17 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.18 2013/10/10 12:00:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,7 +36,6 @@ const struct cmd_entry cmd_switch_client_entry = {
 	"[-lnpr] [-c target-client] [-t target-session]",
 	CMD_READONLY,
 	cmd_switch_client_key_binding,
-	NULL,
 	cmd_switch_client_exec
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-server-info.c,v 1.33 2013/03/25 10:11:45 nicm Exp $ */
+/* $OpenBSD: cmd-server-info.c,v 1.34 2013/10/10 12:00:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -38,7 +38,6 @@ const struct cmd_entry cmd_server_info_entry = {
 	"", 0, 0,
 	"",
 	0,
-	NULL,
 	NULL,
 	cmd_server_info_exec
 };

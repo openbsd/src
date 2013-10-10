@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.418 2013/10/10 11:59:23 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.419 2013/10/10 12:00:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1455,7 +1455,6 @@ struct cmd_entry {
 	int		 flags;
 
 	void		 (*key_binding)(struct cmd *, int);
-	int		 (*check)(struct args *);
 	enum cmd_retval	 (*exec)(struct cmd *, struct cmd_q *);
 };
 

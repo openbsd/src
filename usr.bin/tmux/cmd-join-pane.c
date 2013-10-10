@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.14 2013/03/24 09:57:59 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.15 2013/10/10 12:00:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -40,7 +40,6 @@ const struct cmd_entry cmd_join_pane_entry = {
 	"[-bdhv] [-p percentage|-l size] [-s src-pane] [-t dst-pane]",
 	0,
 	cmd_join_pane_key_binding,
-	NULL,
 	cmd_join_pane_exec
 };
 
@@ -49,7 +48,6 @@ const struct cmd_entry cmd_move_pane_entry = {
 	"bdhvp:l:s:t:", 0, 0,
 	"[-bdhv] [-p percentage|-l size] [-s src-pane] [-t dst-pane]",
 	0,
-	NULL,
 	NULL,
 	cmd_join_pane_exec
 };

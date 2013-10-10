@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-client.c,v 1.18 2013/03/25 10:04:44 nicm Exp $ */
+/* $OpenBSD: cmd-choose-client.c,v 1.19 2013/10/10 12:00:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,7 +36,6 @@ const struct cmd_entry cmd_choose_client_entry = {
 	"F:t:", 0, 1,
 	CMD_TARGET_WINDOW_USAGE " [-F format] [template]",
 	0,
-	NULL,
 	NULL,
 	cmd_choose_client_exec
 };

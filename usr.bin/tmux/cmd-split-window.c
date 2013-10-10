@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.42 2013/03/25 15:59:57 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.43 2013/10/10 12:00:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -37,7 +37,6 @@ const struct cmd_entry cmd_split_window_entry = {
 	"[-dhvP] [-c start-directory] [-F format] [-p percentage|-l size] "
 	CMD_TARGET_PANE_USAGE " [command]",
 	0,
-	cmd_split_window_key_binding,
 	NULL,
 	cmd_split_window_exec
 };

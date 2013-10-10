@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find-window.c,v 1.24 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-find-window.c,v 1.25 2013/10/10 12:00:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -47,7 +47,6 @@ const struct cmd_entry cmd_find_window_entry = {
 	"F:CNt:T", 1, 4,
 	"[-CNT] [-F format] " CMD_TARGET_WINDOW_USAGE " match-string",
 	0,
-	NULL,
 	NULL,
 	cmd_find_window_exec
 };

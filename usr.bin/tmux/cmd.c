@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.85 2013/05/15 15:34:09 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.86 2013/10/10 12:00:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -254,8 +254,6 @@ cmd_parse(int argc, char **argv, const char *file, u_int line, char **cause)
 	if (entry->args_lower != -1 && args->argc < entry->args_lower)
 		goto usage;
 	if (entry->args_upper != -1 && args->argc > entry->args_upper)
-		goto usage;
-	if (entry->check != NULL && entry->check(args) != 0)
 		goto usage;
 
 	cmd = xcalloc(1, sizeof *cmd);
