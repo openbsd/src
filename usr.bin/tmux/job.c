@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.31 2013/04/17 08:41:41 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.32 2013/10/10 12:35:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -145,7 +145,7 @@ job_write_callback(unused struct bufferevent *bufev, void *data)
 	size_t		 len = EVBUFFER_LENGTH(EVBUFFER_OUTPUT(job->event));
 
 	log_debug("job write %p: %s, pid %ld, output left %zu", job, job->cmd,
-		    (long) job->pid, len);
+	    (long) job->pid, len);
 
 	if (len == 0) {
 		shutdown(job->fd, SHUT_WR);

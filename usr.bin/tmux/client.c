@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.74 2013/10/10 12:29:35 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.75 2013/10/10 12:35:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -351,6 +351,7 @@ client_send_identify(int flags)
 
 	for (ss = environ; *ss != NULL; ss++)
 		client_write_one(MSG_IDENTIFY_ENVIRON, -1, *ss, strlen(*ss) + 1);
+
 	client_write_one(MSG_IDENTIFY_DONE, -1, NULL, 0);
 
 	client_update_event();
