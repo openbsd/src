@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.73 2013/10/10 12:28:08 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.74 2013/10/10 12:29:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -279,10 +279,6 @@ client_main(int argc, char **argv, int flags)
 		for (i = 0; i < argc; i++)
 			size += strlen(argv[i]) + 1;
 		data = xmalloc((sizeof *data) + size);
-
-		/* Fill in command line arguments. */
-		data->pid = environ_pid;
-		data->session_id = environ_session_id;
 
 		/* Prepare command for server. */
 		data->argc = argc;

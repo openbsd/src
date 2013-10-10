@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.110 2013/10/10 12:27:38 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.111 2013/10/10 12:29:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -61,6 +61,8 @@ server_client_create(int fd)
 	if (gettimeofday(&c->creation_time, NULL) != 0)
 		fatal("gettimeofday failed");
 	memcpy(&c->activity_time, &c->creation_time, sizeof c->activity_time);
+
+	environ_init(&c->environ);
 
 	c->cmdq = cmdq_new(c);
 	c->cmdq->client_exit = 1;
