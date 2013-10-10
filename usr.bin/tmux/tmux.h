@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.421 2013/10/10 12:07:37 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.422 2013/10/10 12:09:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1450,8 +1450,7 @@ struct cmd_entry {
 
 #define CMD_STARTSERVER 0x1
 #define CMD_CANTNEST 0x2
-#define CMD_SENDENVIRON 0x4
-#define CMD_READONLY 0x8
+#define CMD_READONLY 0x4
 	int		 flags;
 
 	void		 (*key_binding)(struct cmd *, int);
