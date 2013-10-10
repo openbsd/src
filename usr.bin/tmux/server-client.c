@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.103 2013/06/23 13:10:46 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.104 2013/10/10 11:49:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -825,8 +825,6 @@ server_client_msg_dispatch(struct client *c)
 		case MSG_IDENTIFY:
 			if (datalen != sizeof identifydata)
 				fatalx("bad MSG_IDENTIFY size");
-			if (imsg.fd == -1)
-				fatalx("MSG_IDENTIFY missing fd");
 			memcpy(&identifydata, imsg.data, sizeof identifydata);
 
 			server_client_msg_identify(c, &identifydata, imsg.fd);
@@ -972,6 +970,8 @@ server_client_msg_identify(
 		return;
 	}
 
+	if (fd == -1)
+		return;
 	if (!isatty(fd)) {
 		close(fd);
 		return;
