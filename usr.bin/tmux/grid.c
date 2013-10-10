@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.29 2013/03/25 10:07:40 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.30 2013/10/10 11:49:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -592,6 +592,7 @@ grid_string_cells(struct grid *gd, u_int px, u_int py, u_int nx,
 	char			*buf, code[128];
 	size_t			 len, off, size, codelen;
 	u_int			 xx;
+	const struct grid_line	*gl;
 
 	GRID_DEBUG(gd, "px=%u, py=%u, nx=%u", px, py, nx);
 
@@ -604,8 +605,11 @@ grid_string_cells(struct grid *gd, u_int px, u_int py, u_int nx,
 	buf = xmalloc(len);
 	off = 0;
 
+	gl = grid_peek_line(gd, py);
 	for (xx = px; xx < px + nx; xx++) {
-		gc = grid_peek_cell(gd, xx, py);
+		if (gl == NULL || xx >= gl->cellsize)
+			break;
+		gc = &gl->celldata[xx];
 		if (gc->flags & GRID_FLAG_PADDING)
 			continue;
 		grid_cell_get(gc, &ud);
