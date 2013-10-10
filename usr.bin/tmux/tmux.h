@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.425 2013/10/10 12:12:54 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.426 2013/10/10 12:13:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -490,20 +490,8 @@ struct msg_identify_data {
 	int		flags;
 };
 
-struct msg_lock_data {
-	char		cmd[COMMAND_LENGTH];
-};
-
 struct msg_environ_data {
 	char		var[ENVIRON_LENGTH];
-};
-
-struct msg_shell_data {
-	char		shell[MAXPATHLEN];
-};
-
-struct msg_exit_data {
-	int		retcode;
 };
 
 struct msg_stdin_data {
