@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.39 2013/10/05 13:56:48 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.40 2013/10/10 11:50:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -387,7 +387,7 @@ const struct options_table_entry session_options_table[] = {
 
 	{ .name = "status-right",
 	  .type = OPTIONS_TABLE_STRING,
-	  .default_str = "\"#22T\" %H:%M %d-%b-%y"
+	  .default_str = "\"#{=22:pane_title}\" %H:%M %d-%b-%y"
 	},
 
 	{ .name = "status-right-attr",
