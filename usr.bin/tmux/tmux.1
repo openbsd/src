@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.369 2013/10/10 12:01:51 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.370 2013/10/10 12:02:55 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -3580,7 +3580,7 @@ If the command doesn't return success, the exit status is also displayed.
 .D1 (alias: Ic info )
 Show server information and terminal details.
 .It Xo Ic wait-for
-.Fl LSU
+.Op Fl L | S | U
 .Ar channel
 .Xc
 .D1 (alias: Ic wait )
