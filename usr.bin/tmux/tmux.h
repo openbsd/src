@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.422 2013/10/10 12:09:34 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.423 2013/10/10 12:11:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -19,7 +19,7 @@
 #ifndef TMUX_H
 #define TMUX_H
 
-#define PROTOCOL_VERSION 7
+#define PROTOCOL_VERSION 8
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -437,27 +437,36 @@ ARRAY_DECL(causelist, char *);
 
 /* Message codes. */
 enum msgtype {
-	MSG_COMMAND,
+	MSG_VERSION = 12,
+
+	MSG_IDENTIFY_FLAGS = 100,
+	MSG_IDENTIFY_TERM,
+	MSG_IDENTIFY_TTYNAME,
+	MSG_IDENTIFY_CWD,
+	MSG_IDENTIFY_STDIN,
+	MSG_IDENTIFY_ENVIRON,
+	MSG_IDENTIFY_DONE,
+
+	MSG_COMMAND = 200,
 	MSG_DETACH,
-	MSG_ERROR,
+	MSG_DETACHKILL,
 	MSG_EXIT,
 	MSG_EXITED,
 	MSG_EXITING,
-	MSG_IDENTIFY,
-	MSG_STDIN,
+	MSG_LOCK,
 	MSG_READY,
 	MSG_RESIZE,
-	MSG_SHUTDOWN,
-	MSG_SUSPEND,
-	MSG_VERSION,
-	MSG_WAKEUP,
-	MSG_ENVIRON,
-	MSG_UNLOCK,
-	MSG_LOCK,
 	MSG_SHELL,
+	MSG_SHUTDOWN,
 	MSG_STDERR,
+	MSG_STDIN,
 	MSG_STDOUT,
-	MSG_DETACHKILL
+	MSG_SUSPEND,
+	MSG_UNLOCK,
+	MSG_WAKEUP,
+
+	MSG_IDENTIFY = 300,
+	MSG_ENVIRON
 };
 
 /*
