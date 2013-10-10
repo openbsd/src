@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.417 2013/10/10 11:56:50 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.418 2013/10/10 11:59:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1008,6 +1008,7 @@ struct window {
 #define WINDOW_REDRAW 0x4
 #define WINDOW_SILENCE 0x8
 #define WINDOW_ZOOMED 0x10
+#define WINDOW_ALERTFLAGS (WINDOW_BELL|WINDOW_ACTIVITY|WINDOW_SILENCE)
 
 	struct options	 options;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.97 2013/03/26 10:54:48 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.98 2013/10/10 11:59:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1242,6 +1242,7 @@ winlink_clear_flags(struct winlink *wl)
 				continue;
 
 			wm->flags &= ~WINLINK_ALERTFLAGS;
+			wm->window->flags &= ~WINDOW_ALERTFLAGS;
 			server_status_session(s);
 		}
 	}
