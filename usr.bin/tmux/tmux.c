@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.122 2013/10/05 10:40:49 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.123 2013/10/10 12:03:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -189,7 +189,8 @@ makesocketpath(const char *label)
 		errno = ENOTDIR;
 		return (NULL);
 	}
-	if (sb.st_uid != uid || (sb.st_mode & (S_IRWXG|S_IRWXO)) != 0) {
+	if (sb.st_uid != uid || (!S_ISDIR(sb.st_mode) &&
+		sb.st_mode & (S_IRWXG|S_IRWXO)) != 0) {
 		errno = EACCES;
 		return (NULL);
 	}
@@ -389,7 +390,8 @@ main(int argc, char **argv)
 		/* -L or default set. */
 		if (label != NULL) {
 			if ((path = makesocketpath(label)) == NULL) {
-				fprintf(stderr, "can't create socket\n");
+				fprintf(stderr, "can't create socket: %s\n",
+					strerror(errno));
 				exit(1);
 			}
 		}
