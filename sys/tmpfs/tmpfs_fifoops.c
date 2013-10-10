@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_fifoops.c,v 1.2 2013/06/03 10:37:02 espie Exp $	*/
+/*	$OpenBSD: tmpfs_fifoops.c,v 1.3 2013/10/10 11:00:28 espie Exp $	*/
 /*	$NetBSD: tmpfs_fifoops.c,v 1.9 2011/05/24 20:17:49 rmind Exp $	*/
 
 /*
@@ -89,6 +89,7 @@ struct vops tmpfs_fifovops = {
 	.vop_bmap	= vop_generic_bmap,
 	.vop_strategy	= fifo_badop,
 	.vop_print	= tmpfs_print,
+	.vop_islocked	= tmpfs_islocked,
 	.vop_pathconf	= fifo_pathconf,
 	.vop_advlock	= fifo_advlock,
 	.vop_bwrite	= tmpfs_bwrite,

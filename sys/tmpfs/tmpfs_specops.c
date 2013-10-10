@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_specops.c,v 1.2 2013/06/03 10:37:02 espie Exp $	*/
+/*	$OpenBSD: tmpfs_specops.c,v 1.3 2013/10/10 11:00:28 espie Exp $	*/
 /*	$NetBSD: tmpfs_specops.c,v 1.10 2011/05/24 20:17:49 rmind Exp $	*/
 
 /*
@@ -88,6 +88,7 @@ struct vops tmpfs_specvops = {
 	.vop_bmap	= vop_generic_bmap,
 	.vop_strategy	= spec_strategy,
 	.vop_print	= tmpfs_print,
+	.vop_islocked	= tmpfs_islocked,
 	.vop_pathconf	= spec_pathconf,
 	.vop_advlock	= spec_advlock,
 	.vop_bwrite	= vop_generic_bwrite,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.8 2013/09/22 03:34:31 guenther Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.9 2013/10/10 11:00:28 espie Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -166,9 +166,15 @@ tmpfs_lookup(void *v)
 		/*
 		 * Lookup of ".." case.
 		 */
-		if (lastcn && cnp->cn_nameiop == RENAME) {
-			error = EINVAL;
-			goto out;
+		if (lastcn) {
+			if (cnp->cn_nameiop == RENAME) {
+				error = EINVAL;
+				goto out;
+			}
+			if (cnp->cn_nameiop == DELETE) {
+				/* Keep the name for tmpfs_rmdir(). */
+				cnp->cn_flags |= SAVENAME;
+			}
 		}
 		KASSERT(dnode->tn_type == VDIR);
 		pnode = dnode->tn_spec.tn_dir.tn_parent;
@@ -353,15 +359,7 @@ tmpfs_mknod(void *v)
 	if (error)
 		return error;
 
-	/*
-	 * As in ufs_mknod(), remove inode so that it will be reloaded by
-	 * VFS_VGET and checked to see if it is an alias of an existing entry
-	 * in the vnode cache.
-	 */
 	vput(*vpp);
-	(*vpp)->v_type = VNON;
-	vgone(*vpp);
-	*vpp = NULL;
 
 	return 0;
 }
@@ -689,7 +687,7 @@ tmpfs_remove(void *v)
 	} */ *ap = v;
 	struct vnode *dvp = ap->a_dvp, *vp = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
-	tmpfs_node_t *node;
+	tmpfs_node_t *dnode, *node;
 	tmpfs_dirent_t *de;
 	int error;
 
@@ -701,10 +699,21 @@ tmpfs_remove(void *v)
 		error = EPERM;
 		goto out;
 	}
+
+	dnode = VP_TO_TMPFS_NODE(dvp);
 	node = VP_TO_TMPFS_NODE(vp);
 
 	/* Files marked as immutable or append-only cannot be deleted. */
 	if (node->tn_flags & (IMMUTABLE | APPEND)) {
+		error = EPERM;
+		goto out;
+	}
+
+	/*
+	 * Likewise, files residing on directories marked as append-only cannot
+	 * be deleted.
+	 */
+	if (dnode->tn_flags & APPEND) {
 		error = EPERM;
 		goto out;
 	}
@@ -729,6 +738,10 @@ tmpfs_remove(void *v)
 		tmpfs_dir_attach(dvp, de, TMPFS_NODE_WHITEOUT);
 	else
 		tmpfs_free_dirent(VFS_TO_TMPFS(vp->v_mount), de);
+	if (node->tn_links > 0)  {
+		/* We removed a hard link. */
+		tmpfs_update(node, TMPFS_NODE_CHANGED);
+	}
 	error = 0;
 out:
 	pool_put(&namei_pool, cnp->cn_pnbuf);
@@ -856,8 +869,15 @@ tmpfs_rmdir(void *v)
 
 	KASSERT(VOP_ISLOCKED(dvp));
 	KASSERT(VOP_ISLOCKED(vp));
-	KASSERT(node->tn_spec.tn_dir.tn_parent == dnode);
 	KASSERT(cnp->cn_flags & HASBUF);
+
+	if (cnp->cn_namelen == 2 && cnp->cn_nameptr[0] == '.' &&
+	    cnp->cn_nameptr[1] == '.') {
+		error = ENOTEMPTY;
+		goto out;
+	}
+
+	KASSERT(node->tn_spec.tn_dir.tn_parent == dnode);
 
 	/*
 	 * Directories with more than two non-whiteout
@@ -948,7 +968,7 @@ tmpfs_symlink(void *v)
 	if (error == 0)
 		vput(*vpp);
 
-	return 0;
+	return error;
 }
 
 int
@@ -1437,6 +1457,7 @@ int tmpfs_check_sticky(struct ucred *,
     struct tmpfs_node *, struct tmpfs_node *);
 void tmpfs_rename_cache_purge(struct vnode *, struct vnode *, struct vnode *,
     struct vnode *);
+void tmpfs_rename_abort(void *);
 
 int
 tmpfs_rename(void *v)
@@ -1482,17 +1503,18 @@ tmpfs_rename(void *v)
 	 */
 	if (fvp->v_mount != tdvp->v_mount ||
 	    (tvp != NULL && (fvp->v_mount != tvp->v_mount))) {
-	    	VOP_ABORTOP(tdvp, tcnp);
-	    	if (tdvp == tvp)
-	    		vrele(tdvp);
-		else
-			vput(tdvp);
-		if (tvp != NULL)
-			vput(tvp);
-		VOP_ABORTOP(fdvp, fcnp);
-		vrele(fdvp);
-		vrele(fvp);
+	    	tmpfs_rename_abort(v);
 		return EXDEV;
+	}
+
+	/*
+	 * Reject renaming '.' and '..'.
+	 */
+	if ((fcnp->cn_namelen == 1 && fcnp->cn_nameptr[0] == '.') ||
+	    (fcnp->cn_namelen == 2 && fcnp->cn_nameptr[0] == '.' &&
+	     fcnp->cn_nameptr[1] == '.')) {
+	     	tmpfs_rename_abort(v);
+	     	return EINVAL;
 	}
 
 	/*
@@ -2697,4 +2719,27 @@ tmpfs_rename_cache_purge(struct vnode *fdvp, struct vnode *fvp,
 
 	if ((tvp != NULL) && (tvp->v_type == VDIR))
 		cache_purge(tvp);
+}
+
+void
+tmpfs_rename_abort(void *v)
+{
+	struct vop_rename_args *ap = v;
+	struct vnode *fdvp = ap->a_fdvp;
+	struct vnode *fvp = ap->a_fvp;
+	struct componentname *fcnp = ap->a_fcnp;
+	struct vnode *tdvp = ap->a_tdvp;
+	struct vnode *tvp = ap->a_tvp;
+	struct componentname *tcnp = ap->a_tcnp;
+
+	VOP_ABORTOP(tdvp, tcnp);
+	if (tdvp == tvp)
+		vrele(tdvp);
+	else
+		vput(tdvp);
+	if (tvp != NULL)
+		vput(tvp);
+	VOP_ABORTOP(fdvp, fcnp);
+	vrele(fdvp);
+	vrele(fvp);
 }
