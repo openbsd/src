@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.104 2013/10/10 11:49:07 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.105 2013/10/10 12:12:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -954,12 +954,12 @@ server_client_msg_identify(
 	if (*data->cwd != '\0')
 		c->cwd = xstrdup(data->cwd);
 
-	if (data->flags & IDENTIFY_CONTROL) {
+	if (data->flags & CLIENT_CONTROL) {
 		c->stdin_callback = control_callback;
 		evbuffer_free(c->stderr_data);
 		c->stderr_data = c->stdout_data;
 		c->flags |= CLIENT_CONTROL;
-		if (data->flags & IDENTIFY_TERMIOS)
+		if (data->flags & CLIENT_CONTROLCONTROL)
 			evbuffer_add_printf(c->stdout_data, "\033P1000p");
 		server_write_client(c, MSG_STDIN, NULL, 0);
 
@@ -978,14 +978,14 @@ server_client_msg_identify(
 	}
 	data->term[(sizeof data->term) - 1] = '\0';
 	tty_init(&c->tty, c, fd, data->term);
-	if (data->flags & IDENTIFY_UTF8)
+	if (data->flags & CLIENT_UTF8)
 		c->tty.flags |= TTY_UTF8;
-	if (data->flags & IDENTIFY_256COLOURS)
+	if (data->flags & CLIENT_256COLOURS)
 		c->tty.term_flags |= TERM_256COLOURS;
 
 	tty_resize(&c->tty);
 
-	if (!(data->flags & IDENTIFY_CONTROL))
+	if (!(data->flags & CLIENT_CONTROL))
 		c->flags |= CLIENT_TERMINAL;
 }
 

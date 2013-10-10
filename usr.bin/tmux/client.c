@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.67 2013/10/10 12:09:34 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.68 2013/10/10 12:12:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -234,7 +234,7 @@ client_main(int argc, char **argv, int flags)
 	setblocking(STDIN_FILENO, 0);
 	event_set(&client_stdin, STDIN_FILENO, EV_READ|EV_PERSIST,
 	    client_stdin_callback, NULL);
-	if (flags & IDENTIFY_TERMIOS) {
+	if (flags & CLIENT_CONTROLCONTROL) {
 		if (tcgetattr(STDIN_FILENO, &saved_tio) != 0) {
 			fprintf(stderr, "tcgetattr failed: %s\n",
 			    strerror(errno));
@@ -289,14 +289,12 @@ client_main(int argc, char **argv, int flags)
 		ppid = getppid();
 		if (client_exittype == MSG_DETACHKILL && ppid > 1)
 			kill(ppid, SIGHUP);
-	} else if (flags & IDENTIFY_TERMIOS) {
-		if (flags & IDENTIFY_CONTROL) {
-			if (client_exitreason != CLIENT_EXIT_NONE)
-			    printf("%%exit %s\n", client_exit_message());
-			else
-			    printf("%%exit\n");
-			printf("\033\\");
-		}
+	} else if (flags & CLIENT_CONTROLCONTROL) {
+		if (client_exitreason != CLIENT_EXIT_NONE)
+			printf("%%exit %s\n", client_exit_message());
+		else
+			printf("%%exit\n");
+		printf("\033\\");
 		tcsetattr(STDOUT_FILENO, TCSAFLUSH, &saved_tio);
 	}
 	setblocking(STDIN_FILENO, 1);

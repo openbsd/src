@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.423 2013/10/10 12:11:45 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.424 2013/10/10 12:12:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -487,11 +487,6 @@ struct msg_identify_data {
 
 	char		term[TERMINAL_LENGTH];
 
-#define IDENTIFY_UTF8 0x1
-#define IDENTIFY_256COLOURS 0x2
-/* 0x4 unused */
-#define IDENTIFY_CONTROL 0x8
-#define IDENTIFY_TERMIOS 0x10
 	int		flags;
 };
 
@@ -1344,7 +1339,11 @@ struct client {
 #define CLIENT_READONLY 0x800
 #define CLIENT_REDRAWWINDOW 0x1000
 #define CLIENT_CONTROL 0x2000
-#define CLIENT_FOCUSED 0x4000
+#define CLIENT_CONTROLCONTROL 0x4000
+#define CLIENT_FOCUSED 0x8000
+#define CLIENT_UTF8 0x10000
+#define CLIENT_256COLOURS 0x20000
+#define CLIENT_IDENTIFIED 0x40000
 	int		 flags;
 
 	struct event	 identify_timer;
