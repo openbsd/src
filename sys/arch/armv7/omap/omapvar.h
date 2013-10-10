@@ -1,4 +1,4 @@
-/* $OpenBSD: omapvar.h,v 1.1 2013/09/04 14:38:31 patrick Exp $ */
+/* $OpenBSD: omapvar.h,v 1.2 2013/10/10 19:40:02 syl Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@drahn.com>
  *
@@ -23,6 +23,7 @@ struct omap_mem {
 
 #define OMAP_DEV_NMEM 4		       /* number of memory ranges */
 #define OMAP_DEV_NIRQ 4		       /* number of IRQs per device */
+#define OMAP_DEV_NDMA 4		       /* number of DMA channels per device */
 
 /* Descriptor for all on-chip devices. */
 struct omap_dev {
@@ -30,6 +31,7 @@ struct omap_dev {
 	int unit;			/* driver instance number or -1 */
 	struct omap_mem mem[OMAP_DEV_NMEM]; /* memory ranges */
 	int irq[OMAP_DEV_NIRQ];		    /* IRQ number(s) */
+	int dma[OMAP_DEV_NDMA];		/* DMA chan number(s) */
 };
 
 /* Passed as third arg to attach functions. */

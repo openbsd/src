@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.2 2013/09/11 23:08:29 dlg Exp $ */
+/* $OpenBSD: prcm.c,v 1.3 2013/10/10 19:40:02 syl Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -273,6 +273,14 @@ prcm_am335x_clkctrl(int mod)
 		return PRCM_AM335X_MMC0_CLKCTRL;
 	case PRCM_USB:
 		return PRCM_AM335X_USB0_CLKCTRL;
+	case PRCM_TPCC:
+		return PRCM_AM335X_TPCC_CLKCTRL;
+	case PRCM_TPTC0:
+		return PRCM_AM335X_TPTC0_CLKCTRL;
+	case PRCM_TPTC1:
+		return PRCM_AM335X_TPTC1_CLKCTRL;
+	case PRCM_TPTC2:
+		return PRCM_AM335X_TPTC2_CLKCTRL;
 	default:
 		panic("%s: module not found\n", __func__);
 	}

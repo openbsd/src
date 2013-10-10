@@ -1,4 +1,4 @@
-/* $OpenBSD: omap.c,v 1.2 2013/09/12 12:03:15 rapha Exp $ */
+/* $OpenBSD: omap.c,v 1.3 2013/10/10 19:40:02 syl Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -70,6 +70,7 @@ struct board_dev beaglebone_devs[] = {
 	{ "prcm",	0 },
 	{ "sitaracm",	0 },
 	{ "intc",	0 },
+	{ "edma",	0 },
 	{ "dmtimer",	0 },
 	{ "dmtimer",	1 },
 	{ "omdog",	0 },

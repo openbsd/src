@@ -1,4 +1,4 @@
-#	$OpenBSD: files.omap,v 1.1 2013/09/05 11:48:43 patrick Exp $
+#	$OpenBSD: files.omap,v 1.2 2013/10/10 19:40:02 syl Exp $
 
 define omap {}
 device omap: omap
@@ -28,7 +28,11 @@ file	arch/armv7/omap/sitara_cm.c		sitaracm
 
 device omgpio
 attach omgpio at omap
-file   arch/armv7/omap/omgpio.c			omgpio
+file	arch/armv7/omap/omgpio.c		omgpio
+
+device edma
+attach edma at omap
+file	arch/armv7/omap/edma.c			edma
 
 device intc
 attach intc at omap
