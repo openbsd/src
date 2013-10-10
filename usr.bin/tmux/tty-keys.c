@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.60 2013/10/10 11:49:42 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.61 2013/10/10 11:57:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -746,6 +746,8 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size)
 	m->sgr = sgr;
 	m->sgr_xb = sgr_b;
 	m->sgr_rel = sgr_rel;
+	m->x = x;
+	m->y = y;
 	if (b & 64) { /* wheel button */
 		b &= 3;
 		if (b == 0)
@@ -773,8 +775,6 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size)
 		}
 		m->button = (b & 3);
 	}
-	m->x = x;
-	m->y = y;
 
 	return (0);
 }
