@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.72 2013/10/10 12:13:29 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.73 2013/10/10 12:13:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -236,7 +236,6 @@ void
 server_lock_client(struct client *c)
 {
 	const char	*cmd;
-	size_t		 cmdlen;
 
 	if (c->flags & CLIENT_CONTROL)
 		return;
