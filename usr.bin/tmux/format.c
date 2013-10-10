@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.32 2013/10/10 11:56:50 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.33 2013/10/10 12:04:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -121,7 +121,7 @@ format_create(void)
 
 	if (gethostname(host, sizeof host) == 0) {
 		format_add(ft, "host", "%s", host);
-		if ((ptr = strrchr(host, '.')) != NULL)
+		if ((ptr = strchr(host, '.')) != NULL)
 			*ptr = '\0';
 		format_add(ft, "host_short", "%s", host);
 	}
