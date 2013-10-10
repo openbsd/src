@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.335 2013/09/04 16:53:38 patrick Exp $
+#	$OpenBSD: Makefile,v 1.336 2013/10/10 00:59:18 dtucker Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -320,29 +320,6 @@ release-sets: distribution kernels
 distrib:
 	cd ../distrib && \
 	    ${MAKE} && exec ${SUDO} ${MAKE} install
-
-# Because the moduli sizes > 4096 are not commonly used, and because they
-# take a long time to generate we update the <= 4096 ones more frequently.
-DHSIZE=1024 1536 2048 3072 4096
-update-moduli: moduli.6144 moduli.8192
-	( \
-		echo -n '#    $$Open'; echo 'BSD$$'; \
-		echo '# Time Type Tests Tries Size Generator Modulus'; \
-		( for i in ${DHSIZE}; do \
-			ssh-keygen -b $$i -G /dev/stdout; \
-		done) | \
-		ssh-keygen -T /dev/stdout ; \
-		cat moduli.6144 ; \
-		cat moduli.8192 ; \
-	) > moduli
-
-# These two will probably take days, so if you're going to regen them
-# run it in a tmux session or something.
-moduli.6144:
-	ssh-keygen -b 6144 -G /dev/stdout | ssh-keygen -T moduli.6144
-
-moduli.8192:
-	ssh-keygen -b 8192 -G /dev/stdout | ssh-keygen -T moduli.8192
 
 .PHONY: distribution-etc-root-var distribution distrib-dirs \
 	release allarchs kernels release-sets m4 install-mtree \
