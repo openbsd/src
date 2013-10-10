@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.1 2013/10/08 21:55:21 miod Exp $	*/
+/*	$OpenBSD: exec.c,v 1.2 2013/10/10 21:22:07 miod Exp $	*/
 
 
 /*-
@@ -41,24 +41,26 @@
 
 #include <lib/libsa/loadfile.h>
 
-#define	SYM_MAGIC	0x6274ef2e
+#define	BOOT_MAGIC	0x6274ef2e	/* need to match locore.S */
 
 /*ARGSUSED*/
 void
-exec(char *file, const char *args, int bootdev, int bootunit, int bootpart)
+exec(char *file, const char *args, uint bootdev, uint bootunit, uint bootlun,
+    uint bootpart)
 {
 	u_long marks[MARK_MAX];
 	int rc;
-	void (*entry)(const char *, int, int, int, int, int);
+	void (*entry)(const char *, uint, uint, uint, uint, uint, uint);
 
 	marks[MARK_START] = 0;
 	rc = loadfile(file, marks, LOAD_KERNEL | COUNT_KERNEL);
 	if (rc != 0)
 		return;
 
-	entry =
-	    (void(*)(const char *, int, int, int, int, int))marks[MARK_START];
-	(*entry)(args, bootdev, bootunit, bootpart, SYM_MAGIC, marks[MARK_END]);
+	entry = (void(*)(const char *, uint, uint, uint, uint, uint, uint))
+	    marks[MARK_START];
+	(*entry)(args, bootdev, bootunit, bootlun, BOOT_MAGIC + 1,
+	    bootpart, marks[MARK_END]);
 
 	printf("exec: kernel returned!\n");
 }

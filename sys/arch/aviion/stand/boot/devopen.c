@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.2 2013/10/09 20:11:41 miod Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.3 2013/10/10 21:22:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -20,6 +20,8 @@
 #include <sys/param.h>
 #include <stand.h>
 
+#include "libsa.h"
+
 /*
  * Parse the boot commandline into a proper device specification and
  * kernel filename.
@@ -31,7 +33,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	int error, i;
 	const char *po, *pc, *pc2, *p, *comma;
 	char ctrl[1 + 4], device[1 + 4];
-	int controller, unit, lun, part;
+	uint controller, unit, lun, part;
 	size_t devlen;
 
 	/* defaults */
@@ -43,7 +45,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	 * Attempt to parse the name as
 	 *     ctrlnam([num[,unit[,lun]]])[partname:]filename
 	 * or
-	 *     devnam(addr|num|ctrlnam([addr|num][,initiator])[,unit[,lun]])
+	 *     devnam([num|ctrlnam([num]][,initiator])[,unit[,lun]])
 	 *						[partname:]filename
 	 *
 	 * With device names being "sd" or "st" for storage devices,
@@ -81,11 +83,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 			memcpy(ctrl, po, devlen);
 			ctrl[devlen] = '\0';
 
-			if (*p > '9')
-				controller = strtol(p, NULL, 16);
-			else
-				controller = strtol(p, NULL, 0);
-
+			controller = strtol(p, NULL, 0);
 			po = pc + 1;
 			pc = pc2;
 		} else {
@@ -93,26 +91,21 @@ devopen(struct open_file *f, const char *fname, char **file)
 			controller = strtol(po, NULL, 0);
 		}
 
+		comma = strchr(po, ',');
+		if (comma != NULL && comma < pc) {
+			comma++;
+			unit = strtol(comma, NULL, 0);
+			po = comma;
+		}
+
+		comma = strchr(po, ',');
+		if (comma != NULL && comma < pc) {
+			comma++;
+			lun = strtol(comma, NULL, 0);
+			po = comma;
+		}
+
 		pc++;
-
-		comma = strchr(po, ',');
-		if (comma != NULL && comma < pc) {
-			if (*++comma > '9')
-				unit = strtol(comma, NULL, 16);
-			else
-				unit = strtol(comma, NULL, 0);
-			po = comma;
-		}
-
-		comma = strchr(po, ',');
-		if (comma != NULL && comma < pc) {
-			if (*++comma > '9')
-				lun = strtol(comma, NULL, 16);
-			else
-				lun = strtol(comma, NULL, 0);
-			po = comma;
-		}
-
 		fname = pc;
 	} else {
 		/* no controller, keep defaults */
@@ -121,10 +114,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	/* XXX parse partition: */
 	p = strchr(fname, ':');
 	if (p != NULL) {
-		if (*fname > '9')
-			part = strtol(fname, NULL, 16);
-		else
-			part = strtol(fname, NULL, 0);
+		part = strtol(fname, NULL, 0);
 		fname = p + 1;
 	}
 
@@ -140,8 +130,14 @@ devopen(struct open_file *f, const char *fname, char **file)
 		return ENXIO;
 
 	error = (*dp->dv_open)(f, ctrl, controller, unit, lun, part);
-	if (error == 0)
+	if (error == 0) {
 		f->f_dev = dp;
+		/* update global boot_info */
+		bi.bootdev = controller;
+		bi.bootunit = unit;
+		bi.bootlun = lun;
+		bi.bootpart = part;
+	}
 
 	return error;
 }

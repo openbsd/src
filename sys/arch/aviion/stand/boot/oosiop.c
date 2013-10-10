@@ -1,4 +1,4 @@
-/* $OpenBSD: oosiop.c,v 1.2 2013/10/09 20:03:05 miod Exp $ */
+/* $OpenBSD: oosiop.c,v 1.3 2013/10/10 21:22:06 miod Exp $ */
 /* OpenBSD: oosiop.c,v 1.20 2013/10/09 18:22:06 miod Exp */
 /* OpenBSD: oosiopvar.h,v 1.5 2011/04/03 12:42:36 krw Exp */
 /* $NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $ */
@@ -446,7 +446,7 @@ oosiop_phasemismatch(struct oosiop_softc *sc)
 
 	n = dsp - (uint32_t)cb->xfer - 8;
 	if (n >= offsetof(struct oosiop_xfer, datain_scr[0]) &&
-	    n < offsetof(struct oosiop_xfer, datain_scr[1 * 2])) {
+	    n < offsetof(struct oosiop_xfer, datain_scr[2 * 2])) {
 		n -= offsetof(struct oosiop_xfer, datain_scr[0]);
 		n >>= 3;
 		for (i = 0; i <= n; i++)
@@ -454,7 +454,7 @@ oosiop_phasemismatch(struct oosiop_softc *sc)
 			    0x00ffffff;
 		/* All data in the chip are already flushed */
 	} else if (n >= offsetof(struct oosiop_xfer, dataout_scr[0]) &&
-	    n < offsetof(struct oosiop_xfer, dataout_scr[1 * 2])) {
+	    n < offsetof(struct oosiop_xfer, dataout_scr[2 * 2])) {
 		n -= offsetof(struct oosiop_xfer, dataout_scr[0]);
 		n >>= 3;
 		for (i = 0; i <= n; i++)
@@ -471,7 +471,7 @@ oosiop_phasemismatch(struct oosiop_softc *sc)
 
 		oosiop_clear_fifo(sc);
 	} else {
-#if 0	/* happens too many times in the polling driver */
+#if 0 /* XXX happens with dsp == Ent_p_cmdout_move ?!? */
 		printf("ncsc: phase mismatch addr=%p\n",
 		    oosiop_read_4(sc, OOSIOP_DSP) - 8);
 #endif

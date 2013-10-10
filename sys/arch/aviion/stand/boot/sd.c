@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.3 2013/10/09 20:08:20 miod Exp $	*/
+/*	$OpenBSD: sd.c,v 1.4 2013/10/10 21:22:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -21,64 +21,8 @@
 #include <sys/param.h>
 #include <stand.h>
 
+#include "libsa.h"
 #include "scsi.h"
-#include <scsi/scsi_disk.h>
-
-static int
-sdtur(struct scsi_private *priv)
-{
-	struct scsi_test_unit_ready cmd;
-	int i, rc;
-
-	for (i = TEST_READY_RETRIES; i != 0; i--) {
-		memset(&cmd, 0, sizeof cmd);
-		cmd.opcode = TEST_UNIT_READY;
-
-		rc = (*priv->scsicmd)(priv->scsicookie,
-		    &cmd, sizeof cmd, NULL, 0, NULL);
-		if (rc == 0)
-			break;
-	}
-
-	return rc;
-}
-
-static int
-sdread(struct scsi_private *priv, daddr32_t blk, size_t size, void *buf,
-    size_t *rsize)
-{
-	union {
-		struct scsi_rw rw;
-		struct scsi_rw_big rw_big;
-		struct scsi_rw_12 rw_12;
-	} cmd;
-	int nsecs;
-	size_t cmdlen;
-
-	memset(&cmd, 0, sizeof cmd);
-	nsecs = (size + DEV_BSIZE - 1) >> _DEV_BSHIFT;
-
-	/* XXX SDEV_ONLYBIG quirk */
-	if ((blk & 0x1fffff) == blk && (nsecs & 0xff) == nsecs) {
-		cmd.rw.opcode = READ_COMMAND;
-		_lto3b(blk, cmd.rw.addr);
-		cmd.rw.length = nsecs;
-		cmdlen = sizeof cmd.rw;
-	} else if ((nsecs & 0xffff) == nsecs) {
-		cmd.rw_big.opcode = READ_BIG;
-		_lto4b(blk, cmd.rw_big.addr);
-		_lto2b(nsecs, cmd.rw_big.length);
-		cmdlen = sizeof cmd.rw_big;
-	} else {
-		cmd.rw_12.opcode = READ_12;
-		_lto4b(blk, cmd.rw_12.addr);
-		_lto4b(nsecs, cmd.rw_12.length);
-		cmdlen = sizeof cmd.rw_12;
-	}
-
-	return (*priv->scsicmd)(priv->scsicookie,
-	    &cmd, sizeof cmd, buf, size, rsize);
-}
 
 int
 sdopen(struct open_file *f, const char *ctrlname, int ctrl, int unit, int lun,
@@ -108,6 +52,12 @@ sdopen(struct open_file *f, const char *ctrlname, int ctrl, int unit, int lun,
 			ctrl = 0xfffb0000;
 		else if (ctrl == 1)
 			ctrl = 0xfffb0080;
+		else
+			return ENXIO;
+
+		if (badaddr((void *)ctrl, 4) != 0)
+			return ENXIO;
+
 		/* initialize controller */
 		priv->scsicookie = oosiop_attach(ctrl, unit, lun);
 		priv->scsicmd = oosiop_scsicmd;
@@ -118,13 +68,13 @@ sdopen(struct open_file *f, const char *ctrlname, int ctrl, int unit, int lun,
 		return ENXIO;
 
 	/* send TUR */
-	rc = sdtur(priv);
+	rc = scsi_tur(priv);
 	if (rc != 0)
 		return EIO;
 
 	/* read disklabel. We expect a VDM label since this is the only way
 	 * we can boot from disk.  */
-	rc = sdread(priv, VDM_LABEL_SECTOR, sizeof buf, buf, &z);
+	rc = scsi_read(priv, VDM_LABEL_SECTOR, sizeof buf, buf, &z);
 	if (rc != 0 || z != sizeof buf)
 		return EIO;
 
@@ -135,7 +85,7 @@ sdopen(struct open_file *f, const char *ctrlname, int ctrl, int unit, int lun,
 		return EINVAL;
 	
 	/* XXX ought to search for an OpenBSD vdmpart too. Too lazy for now */
-	rc = sdread(priv, LABELSECTOR, sizeof buf, buf, &z);
+	rc = scsi_read(priv, LABELSECTOR, sizeof buf, buf, &z);
 	if (rc != 0 || z != sizeof buf)
 		return EIO;
 
@@ -159,7 +109,7 @@ sdstrategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
 
 	blk += priv->label.d_partitions[priv->part].p_offset;
 
-	return sdread(priv, blk, size, buf, rsize) != 0 ? EIO : 0;
+	return scsi_read(priv, blk, size, buf, rsize) != 0 ? EIO : 0;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_args.c,v 1.4 2013/10/09 20:04:39 miod Exp $ */
+/*	$OpenBSD: parse_args.c,v 1.5 2013/10/10 21:22:07 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -82,6 +82,11 @@ parse_args(const char *line, char **filep, int first)
 			}
 		}
 	}
+
+	/* skip partition number if any */
+	pc = strchr(p, ':');
+	if (pc != NULL)
+		p = pc + 1;
 
 	/* figure out how long the kernel name is */
 	pc = strchr(p, ' ');

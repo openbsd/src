@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.2 2013/10/09 20:12:35 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.3 2013/10/10 21:22:06 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -64,9 +64,10 @@
 
 extern	const char version[];
 char	line[80];
+struct boot_info bi;
 
 void
-boot(const char *args, int bootdev, int bootunit, int bootpart)
+boot(const char *args, uint bootdev, uint bootunit, uint bootlun)
 {
 	char *file;
 	int ask = 0;
@@ -74,14 +75,20 @@ boot(const char *args, int bootdev, int bootunit, int bootpart)
 
 	printf("\n>> OpenBSD/" MACHINE " boot %s\n", version);
 
+	bi.bootdev = bootdev;
+	bi.bootunit = bootunit;
+	bi.bootlun = bootlun;
+	bi.bootpart = 0;
 	ret = parse_args(args, &file, 1);
 	for (;;) {
 		if (ask) {
 			printf("boot: ");
 			gets(line);
-			if (line[0])
-				ret = parse_args(line, &file, 0);
-			args = file;
+			if (line[0] == '\0')
+				continue;
+
+			ret = parse_args(line, &file, 0);
+			args = line;
 		}
 		if (ret != 0) {
 			printf("boot: returning to SCM\n");
@@ -89,7 +96,8 @@ boot(const char *args, int bootdev, int bootunit, int bootpart)
 		}
 
 		printf("%s: ", file);
-		exec(file, args, bootdev, bootunit, bootpart);
+		exec(file, args,
+		    bi.bootdev, bi.bootunit, bi.bootlun, bi.bootpart);
 		printf("boot: %s: %s\n", file, strerror(errno));
 		ask = 1;
 	}

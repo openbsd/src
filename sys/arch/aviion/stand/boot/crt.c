@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt.c,v 1.1 2013/10/08 21:55:21 miod Exp $ */
+/*	$OpenBSD: crt.c,v 1.2 2013/10/10 21:22:06 miod Exp $ */
 
 #include <sys/types.h>
 #include <machine/prom.h>
@@ -14,7 +14,7 @@ extern void boot(const char *, int, int, int);
  * 128KB).
  */
 void
-start(const char *args, int dev, int unit, int part)
+start(const char *args, int dev, int unit, int lun)
 {
 	extern int edata, end;
 
@@ -30,7 +30,7 @@ start(const char *args, int dev, int unit, int part)
 
 	memset(&edata, 0, ((int)&end - (int)&edata));
 
-	boot(args, dev, unit, part);
+	boot(args, dev, unit, lun);
 	_rtt();
 	/* NOTREACHED */
 }
