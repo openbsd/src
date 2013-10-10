@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.71 2013/10/10 12:26:34 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.72 2013/10/10 12:27:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -575,7 +575,7 @@ client_dispatch_wait(void *data0)
 			imsg_free(&imsg);
 			return (-1);
 		case MSG_SHELL:
-			if (data[datalen - 1] != '\0')
+			if (datalen == 0 || data[datalen - 1] != '\0')
 				fatalx("bad MSG_SHELL string");
 
 			clear_signals(0);
@@ -659,7 +659,7 @@ client_dispatch_attached(void)
 			kill(getpid(), SIGTSTP);
 			break;
 		case MSG_LOCK:
-			if (data[datalen - 1] != '\0')
+			if (datalen == 0 || data[datalen - 1] != '\0')
 				fatalx("bad MSG_LOCK string");
 
 			system(data);
