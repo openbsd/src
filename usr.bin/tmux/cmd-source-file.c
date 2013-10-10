@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.18 2013/10/10 12:00:23 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.19 2013/10/10 12:04:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -94,6 +94,9 @@ void
 cmd_source_file_done(struct cmd_q *cmdq1)
 {
 	struct cmd_q	*cmdq = cmdq1->data;
+
+	if (cmdq1->client_exit >= 0)
+		cmdq->client_exit = cmdq1->client_exit;
 
 	cmdq_free(cmdq1);
 
