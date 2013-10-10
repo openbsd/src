@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.12 2013/10/10 12:07:36 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.13 2013/10/10 12:12:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -143,7 +143,7 @@ cmdq_error(struct cmd_q *cmdq, const char *fmt, ...)
 		evbuffer_add(c->stderr_data, "\n", 1);
 
 		server_push_stderr(c);
-		c->retcode = 1;
+		c->retval = 1;
 	} else {
 		*msg = toupper((u_char) *msg);
 		status_message_set(c, "%s", msg);

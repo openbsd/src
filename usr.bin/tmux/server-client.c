@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.105 2013/10/10 12:12:08 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.106 2013/10/10 12:12:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -707,7 +707,7 @@ server_client_check_exit(struct client *c)
 	if (EVBUFFER_LENGTH(c->stderr_data) != 0)
 		return;
 
-	exitdata.retcode = c->retcode;
+	exitdata.retcode = c->retval;
 	server_write_client(c, MSG_EXIT, &exitdata, sizeof exitdata);
 
 	c->flags &= ~CLIENT_EXIT;

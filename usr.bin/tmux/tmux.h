@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.424 2013/10/10 12:12:08 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.425 2013/10/10 12:12:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1298,8 +1298,9 @@ RB_HEAD(status_out_tree, status_out);
 /* Client connection. */
 struct client {
 	struct imsgbuf	 ibuf;
+
 	struct event	 event;
-	int		 retcode;
+	int		 retval;
 
 	struct timeval	 creation_time;
 	struct timeval	 activity_time;
