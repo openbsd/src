@@ -1,4 +1,4 @@
-/* $OpenBSD: procname.c,v 1.10 2012/12/18 21:28:45 millert Exp $ */
+/* $OpenBSD: procname.c,v 1.11 2013/10/10 12:39:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -37,7 +37,6 @@
 
 struct kinfo_proc	*cmp_procs(struct kinfo_proc *, struct kinfo_proc *);
 char			*get_proc_name(int, char *);
-char			*get_proc_cwd(int);
 
 struct kinfo_proc *
 cmp_procs(struct kinfo_proc *p1, struct kinfo_proc *p2)
@@ -131,18 +130,4 @@ retry:
 error:
 	free(buf);
 	return (NULL);
-}
-
-char*
-get_proc_cwd(int fd)
-{
-	int		name[] = { CTL_KERN, KERN_PROC_CWD, 0 };
-	static char	path[MAXPATHLEN];
-	size_t		pathlen = sizeof path;
-
-	if ((name[2] = tcgetpgrp(fd)) == -1)
-		return (NULL);
-	if (sysctl(name, 3, path, &pathlen, NULL, 0) != 0)
-		return (NULL);
-	return (path);
 }

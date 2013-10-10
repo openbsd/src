@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.35 2013/10/10 12:35:31 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.36 2013/10/10 12:39:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -518,7 +518,6 @@ format_window_pane(struct format_tree *ft, struct window_pane *wp)
 	struct grid_line	*gl;
 	unsigned long long	 size;
 	u_int			 i, idx;
-	const char		*cwd;
 	char			*cmd;
 
 	size = 0;
@@ -551,8 +550,6 @@ format_window_pane(struct format_tree *ft, struct window_pane *wp)
 	format_add(ft, "pane_pid", "%ld", (long) wp->pid);
 	if (wp->cmd != NULL)
 		format_add(ft, "pane_start_command", "%s", wp->cmd);
-	if ((cwd = get_proc_cwd(wp->fd)) != NULL)
-		format_add(ft, "pane_current_path", "%s", cwd);
 	if ((cmd = format_get_command(wp)) != NULL) {
 		format_add(ft, "pane_current_command", "%s", cmd);
 		free(cmd);
