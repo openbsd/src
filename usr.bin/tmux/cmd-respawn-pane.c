@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-pane.c,v 1.9 2013/10/10 12:00:22 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-pane.c,v 1.10 2013/10/10 12:29:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -77,7 +77,7 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 		cmd = args->argv[0];
 	else
 		cmd = NULL;
-	if (window_pane_spawn(wp, cmd, NULL, NULL, &env, s->tio, &cause) != 0) {
+	if (window_pane_spawn(wp, cmd, NULL, -1, &env, s->tio, &cause) != 0) {
 		cmdq_error(cmdq, "respawn pane failed: %s", cause);
 		free(cause);
 		environ_free(&env);
