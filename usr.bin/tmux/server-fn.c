@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.73 2013/10/10 12:13:56 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.74 2013/10/10 12:26:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -56,8 +56,8 @@ server_write_ready(struct client *c)
 }
 
 int
-server_write_client(
-    struct client *c, enum msgtype type, const void *buf, size_t len)
+server_write_client(struct client *c, enum msgtype type, const void *buf,
+    size_t len)
 {
 	struct imsgbuf	*ibuf = &c->ibuf;
 	int              error;
@@ -73,8 +73,8 @@ server_write_client(
 }
 
 void
-server_write_session(
-    struct session *s, enum msgtype type, const void *buf, size_t len)
+server_write_session(struct session *s, enum msgtype type, const void *buf,
+    size_t len)
 {
 	struct client	*c;
 	u_int		 i;
