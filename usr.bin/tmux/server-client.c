@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.111 2013/10/10 12:29:35 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.112 2013/10/11 08:07:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -808,6 +808,8 @@ server_client_msg_dispatch(struct client *c)
 		if (imsg.hdr.peerid != PROTOCOL_VERSION) {
 			server_write_client(c, MSG_VERSION, NULL, 0);
 			c->flags |= CLIENT_BAD;
+			if (imsg.fd != -1)
+				close(imsg.fd);
 			imsg_free(&imsg);
 			continue;
 		}
