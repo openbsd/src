@@ -1341,6 +1341,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_athn_usb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_atureg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_auereg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_axenreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_axereg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_cdcereg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_cuereg.ph

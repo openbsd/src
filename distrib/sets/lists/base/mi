@@ -2760,6 +2760,7 @@
 ./usr/sbin/nsdc
 ./usr/sbin/nslookup
 ./usr/sbin/nsupdate
+./usr/sbin/ntpctl
 ./usr/sbin/ntpd
 ./usr/sbin/openssl
 ./usr/sbin/ospf6ctl

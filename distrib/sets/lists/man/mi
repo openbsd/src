@@ -1581,6 +1581,7 @@
 ./usr/share/man/man4/aviion/le.4
 ./usr/share/man/man4/aviion/mem.4
 ./usr/share/man/man4/axe.4
+./usr/share/man/man4/axen.4
 ./usr/share/man/man4/az.4
 ./usr/share/man/man4/azalia.4
 ./usr/share/man/man4/bce.4
@@ -2428,6 +2429,7 @@
 ./usr/share/man/man4/virtio.4
 ./usr/share/man/man4/vlan.4
 ./usr/share/man/man4/vmt.4
+./usr/share/man/man4/vmwpvs.4
 ./usr/share/man/man4/vmx.4
 ./usr/share/man/man4/vnd.4
 ./usr/share/man/man4/vr.4
@@ -2950,6 +2952,7 @@
 ./usr/share/man/man8/nsdc.8
 ./usr/share/man/man8/nsupdate.8
 ./usr/share/man/man8/ntalkd.8
+./usr/share/man/man8/ntpctl.8
 ./usr/share/man/man8/ntpd.8
 ./usr/share/man/man8/octeon
 ./usr/share/man/man8/octeon/MAKEDEV.8
