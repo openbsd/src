@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.37 2013/10/10 23:31:03 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.38 2013/10/11 08:01:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -357,9 +357,9 @@ format_get_command(struct window_pane *wp)
 
 	cmd = get_proc_name(wp->fd, wp->tty);
 	if (cmd == NULL || *cmd == '\0') {
-		cmd = wp->cmd;
+		cmd = xstrdup(wp->cmd);
 		if (cmd == NULL || *cmd == '\0')
-			cmd = wp->shell;
+			cmd = xstrdup(wp->shell);
 	}
 	out = parse_window_name(cmd);
 	free(cmd);
