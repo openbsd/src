@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.313 2013/04/17 02:28:40 jsg Exp $
+.\"	$OpenBSD: pci.4,v 1.314 2013/10/11 00:34:04 dlg Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 17 2013 $
+.Dd $Mdocdate: October 11 2013 $
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -123,6 +123,8 @@ LSI/Symbios Logic/NCR 53c8xx SCSI interface
 Emulex LightPulse Fibre Channel SCSI interface
 .It Xr trm 4
 TRM-S1040 based PCI SCSI interface
+.It Xr vmwpvs 4
+VMware Paravirtual SCSI
 .El
 .Ss IDE disk controllers
 .Bl -tag -width 10n -offset ind -compact
