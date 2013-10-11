@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-unbind-key.c,v 1.17 2013/10/10 12:00:24 nicm Exp $ */
+/* $OpenBSD: cmd-unbind-key.c,v 1.18 2013/10/11 08:06:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -50,7 +50,6 @@ cmd_unbind_key_exec(struct cmd *self, struct cmd_q *cmdq)
 			cmdq_error(cmdq, "missing key");
 			return (CMD_RETURN_ERROR);
 		}
-		return (CMD_RETURN_ERROR);
 		key = key_string_lookup_string(args->argv[0]);
 		if (key == KEYC_NONE) {
 			cmdq_error(cmdq, "unknown key: %s", args->argv[0]);
