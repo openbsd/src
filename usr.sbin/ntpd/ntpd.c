@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.72 2013/10/09 12:34:12 deraadt Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.73 2013/10/11 19:33:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -81,7 +81,7 @@ usage(void)
 	extern char *__progname;
 
 	if (strcmp(__progname, "ntpctl") == 0)
-		fprintf(stderr, "usage: ntpctl [-s modifier]\n");
+		fprintf(stderr, "usage: ntpctl [-s all|peers|sensors|status]\n");
 	else
 		fprintf(stderr, "usage: %s [-dnSsv] [-f file]\n",
 		    __progname);
@@ -556,9 +556,8 @@ ctl_main(int argc, char *argv[])
 			usage();
 			/* NOTREACHED */
 		}
-	}
-	else
-		errx (1, "invalid do_what");
+	} else
+		usage();
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "ntpctl: socket");
