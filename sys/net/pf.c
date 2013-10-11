@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.841 2013/10/09 09:32:01 camield Exp $ */
+/*	$OpenBSD: pf.c,v 1.842 2013/10/11 10:58:42 gerhard Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3940,7 +3940,7 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state_peer *src,
 	if (seq == end) {
 		/* Ease sequencing restrictions on no data packets */
 		seq = src->seqlo;
-		end = seq;
+		data_end = end = seq;
 	}
 
 	ackskew = dst->seqlo - ack;
