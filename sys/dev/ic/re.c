@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.144 2013/10/05 22:59:57 kettenis Exp $	*/
+/*	$OpenBSD: re.c,v 1.145 2013/10/11 14:00:18 jsg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -223,6 +223,8 @@ static const struct re_revision {
 	{ RL_HWREV_8101,	"RTL8101" },
 	{ RL_HWREV_8101E,	"RTL8101E" },
 	{ RL_HWREV_8102E,	"RTL8102E" },
+	{ RL_HWREV_8106E,	"RTL8106E" },
+	{ RL_HWREV_8106E_SPIN1,	"RTL8106E" },
 	{ RL_HWREV_8401E,	"RTL8401E" },
 	{ RL_HWREV_8402,	"RTL8402" },
 	{ RL_HWREV_8411,	"RTL8411" },
@@ -238,6 +240,10 @@ static const struct re_revision {
 	{ RL_HWREV_8168C_SPIN2,	"RTL8168C/8111C" },
 	{ RL_HWREV_8168CP,	"RTL8168CP/8111CP" },
 	{ RL_HWREV_8168F,	"RTL8168F/8111F" },
+	{ RL_HWREV_8168G,	"RTL8168G/8111G" },
+	{ RL_HWREV_8168G_SPIN1,	"RTL8168G/8111G" },
+	{ RL_HWREV_8168G_SPIN2,	"RTL8168G/8111G" },
+	{ RL_HWREV_8168G_SPIN4,	"RTL8168G/8111G" },
 	{ RL_HWREV_8105E,	"RTL8105E" },
 	{ RL_HWREV_8105E_SPIN1,	"RTL8105E" },
 	{ RL_HWREV_8168D,	"RTL8168D/8111D" },
@@ -846,6 +852,8 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	case RL_HWREV_8402:
 	case RL_HWREV_8105E:
 	case RL_HWREV_8105E_SPIN1:
+	case RL_HWREV_8106E:
+	case RL_HWREV_8106E_SPIN1:
 		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
 		    RL_FLAG_PHYWAKE_PM | RL_FLAG_PAR | RL_FLAG_DESCV2 |
 		    RL_FLAG_MACSTAT | RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD |
@@ -891,6 +899,15 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
 		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
 		    RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD | RL_FLAG_NOJUMBO;
+		break;
+	case RL_HWREV_8168G:
+	case RL_HWREV_8168G_SPIN1:
+	case RL_HWREV_8168G_SPIN2:
+	case RL_HWREV_8168G_SPIN4:
+		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
+		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
+		    RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD | RL_FLAG_NOJUMBO |
+		    RL_FLAG_EARLYOFF;
 		break;
 	case RL_HWREV_8169_8110SB:
 	case RL_HWREV_8169_8110SBL:
@@ -1974,6 +1991,7 @@ re_init(struct ifnet *ifp)
 {
 	struct rl_softc *sc = ifp->if_softc;
 	u_int16_t	cfg;
+	uint32_t	rxcfg;
 	int		s;
 	union {
 		u_int32_t align_dummy;
@@ -2058,7 +2076,10 @@ re_init(struct ifnet *ifp)
 
 	CSR_WRITE_1(sc, RL_EARLY_TX_THRESH, 16);
 
-	CSR_WRITE_4(sc, RL_RXCFG, RL_RXCFG_CONFIG);
+	rxcfg = RL_RXCFG_CONFIG;
+	if (sc->rl_flags & RL_FLAG_EARLYOFF)
+		rxcfg |= RL_RXCFG_EARLYOFF;
+	CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
 
 	/* Program promiscuous mode and multicast filters. */
 	re_iff(sc);
