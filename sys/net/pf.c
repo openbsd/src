@@ -1,8 +1,8 @@
-/*	$OpenBSD: pf.c,v 1.842 2013/10/11 10:58:42 gerhard Exp $ */
+/*	$OpenBSD: pf.c,v 1.843 2013/10/12 12:13:10 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
- * Copyright (c) 2002 - 2012 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2002 - 2013 Henning Brauer <henning@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -100,6 +100,9 @@
  * Global variables
  */
 struct pf_state_tree	 pf_statetbl;
+struct pf_queuehead	 pf_queues[2];
+struct pf_queuehead	*pf_queues_active;
+struct pf_queuehead	*pf_queues_inactive;
 
 struct pf_altqqueue	 pf_altqs[2];
 struct pf_altqqueue	*pf_altqs_active;
@@ -138,7 +141,7 @@ union pf_headers {
 };
 
 
-struct pool		 pf_src_tree_pl, pf_rule_pl;
+struct pool		 pf_src_tree_pl, pf_rule_pl, pf_queue_pl;
 struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl;
 struct pool		 pf_altq_pl, pf_rule_item_pl, pf_sn_item_pl;
 

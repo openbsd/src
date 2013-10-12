@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_altq.h,v 1.15 2011/10/07 17:10:08 henning Exp $	*/
+/*	$OpenBSD: if_altq.h,v 1.16 2013/10/12 12:13:10 henning Exp $	*/
 /*	$KAME: if_altq.h,v 1.6 2001/01/29 19:59:09 itojun Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
 #ifndef _ALTQ_IF_ALTQ_H_
 #define	_ALTQ_IF_ALTQ_H_
 
-struct altq_pktattr; struct tb_regulator;
+struct altq_pktattr; struct oldtb_regulator; struct hfsc_if;
 
 #define ALTQ_IFQ_NQUEUES	8
 
@@ -45,6 +45,7 @@ struct	ifaltq {
 	int	ifq_len;
 	int	ifq_maxlen;
 	int	ifq_drops;
+	struct	hfsc_if *ifq_hfsc;
 	struct	timeout *ifq_congestion;
 
 	/* alternate queueing related fields */

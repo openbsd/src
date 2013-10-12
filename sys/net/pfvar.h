@@ -1,8 +1,8 @@
-/*	$OpenBSD: pfvar.h,v 1.390 2013/10/12 11:55:46 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.391 2013/10/12 12:13:11 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
- * Copyright (c) 2002 - 2010 Henning Brauer
+ * Copyright (c) 2002 - 2013 Henning Brauer <henning@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1419,6 +1419,32 @@ struct pf_status {
 #define PF_REASS_ENABLED	0x01
 #define PF_REASS_NODF		0x02
 
+struct pf_queue_bwspec {
+	u_int		absolute;
+	u_int		percent;
+};
+
+struct pf_queue_scspec {
+	struct pf_queue_bwspec	m1;
+	struct pf_queue_bwspec	m2;
+	u_int			d;
+};
+
+struct pf_queuespec {
+	TAILQ_ENTRY(pf_queuespec)	 entries;
+	char				 qname[PF_QNAME_SIZE];
+	char				 parent[PF_QNAME_SIZE];
+	char				 ifname[IFNAMSIZ];
+	struct pf_queue_scspec		 realtime;
+	struct pf_queue_scspec		 linkshare;
+	struct pf_queue_scspec		 upperlimit;
+	struct pfi_kif			*kif;
+	u_int				 flags;
+	u_int				 qlimit;
+	u_int32_t			 qid;
+	u_int32_t			 parent_qid;
+};
+
 struct cbq_opts {
 	u_int		minburst;
 	u_int		maxburst;
@@ -1589,7 +1615,7 @@ struct pfioc_altq {
 	struct pf_altq	 altq;
 };
 
-struct pfioc_qstats {
+struct pfioc_altqstats {
 	u_int32_t	 ticket;
 	u_int32_t	 nr;
 	void		*buf;
@@ -1611,6 +1637,20 @@ struct pfioc_trans {
 		char		anchor[MAXPATHLEN];
 		u_int32_t	ticket;
 	}		*array;
+};
+
+struct pfioc_queue {
+	u_int32_t		ticket;
+	u_int			nr;
+	struct pf_queuespec	queue;
+};
+
+struct pfioc_qstats {
+	u_int32_t		 ticket;
+	u_int32_t		 nr;
+	struct pf_queuespec	 queue;
+	void			*buf;
+	int			 nbytes;
 };
 
 #define PFR_FLAG_DUMMY		0x00000002
@@ -1686,7 +1726,7 @@ struct pfioc_iface {
 #define DIOCGETALTQS	_IOWR('D', 47, struct pfioc_altq)
 #define DIOCGETALTQ	_IOWR('D', 48, struct pfioc_altq)
 #define DIOCCHANGEALTQ	_IOWR('D', 49, struct pfioc_altq)
-#define DIOCGETQSTATS	_IOWR('D', 50, struct pfioc_qstats)
+#define DIOCGETALTQSTATS	_IOWR('D', 50, struct pfioc_altqstats)
 /* XXX cut 51 - 57 */
 #define	DIOCGETRULESETS	_IOWR('D', 58, struct pfioc_ruleset)
 #define	DIOCGETRULESET	_IOWR('D', 59, struct pfioc_ruleset)
@@ -1720,6 +1760,10 @@ struct pfioc_iface {
 #define DIOCCLRIFFLAG	_IOWR('D', 90, struct pfioc_iface)
 #define DIOCKILLSRCNODES	_IOWR('D', 91, struct pfioc_src_node_kill)
 #define DIOCSETREASS	_IOWR('D', 92, u_int32_t)
+#define DIOCADDQUEUE	_IOWR('D', 93, struct pfioc_queue)
+#define DIOCGETQUEUES	_IOWR('D', 94, struct pfioc_queue)
+#define DIOCGETQUEUE	_IOWR('D', 95, struct pfioc_queue)
+#define DIOCGETQSTATS	_IOWR('D', 96, struct pfioc_qstats)
 
 #ifdef _KERNEL
 RB_HEAD(pf_src_tree, pf_src_node);
@@ -1731,6 +1775,10 @@ RB_PROTOTYPE(pf_state_tree_id, pf_state,
     entry_id, pf_state_compare_id);
 extern struct pf_state_tree_id tree_id;
 extern struct pf_state_queue state_list;
+
+TAILQ_HEAD(pf_queuehead, pf_queuespec);
+extern struct pf_queuehead		  pf_queues[2];
+extern struct pf_queuehead		 *pf_queues_active, *pf_queues_inactive;
 
 TAILQ_HEAD(pf_altqqueue, pf_altq);
 extern struct pf_altqqueue		  pf_altqs[2];
@@ -1748,7 +1796,7 @@ extern void			 pf_tbladdr_copyout(struct pf_addr_wrap *);
 extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
 extern struct pool		 pf_src_tree_pl, pf_sn_item_pl, pf_rule_pl;
 extern struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl,
-				    pf_altq_pl, pf_rule_item_pl;
+				    pf_altq_pl, pf_rule_item_pl, pf_queue_pl;
 extern struct pool		 pf_state_scrub_pl;
 extern void			 pf_purge_thread(void *);
 extern void			 pf_purge_expired_src_nodes(int);

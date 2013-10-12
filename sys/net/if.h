@@ -1,7 +1,8 @@
-/*	$OpenBSD: if.h,v 1.146 2013/09/17 13:34:17 mpi Exp $	*/
+/*	$OpenBSD: if.h,v 1.147 2013/10/12 12:13:10 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -61,14 +62,8 @@ __END_DECLS
 
 #include <sys/queue.h>
 #include <sys/tree.h>
-
-/*
- * Always include ALTQ glue here -- we use the ALTQ interface queue
- * structure even when ALTQ is not configured into the kernel so that
- * the size of struct ifnet does not changed based on the option.  The
- * ALTQ queue structure is API-compatible with the legacy ifqueue.
- */
 #include <altq/if_altq.h>
+#include <net/hfsc.h>
 
 /*
  * Structures defining a network interface, providing a packet
@@ -105,6 +100,7 @@ struct ether_header;
 struct arpcom;
 struct rt_addrinfo;
 struct ifnet;
+struct hfsc_if;
 struct ifvlan;
 
 /*
@@ -173,7 +169,7 @@ struct	if_data {
 	struct mclpool	ifi_mclpool[MCLPOOLS];
 };
 
-#define IFQ_NQUEUES	ALTQ_IFQ_NQUEUES
+#define IFQ_NQUEUES	8
 #define IFQ_MAXPRIO	IFQ_NQUEUES - 1
 #define IFQ_DEFPRIO	3
 
@@ -185,11 +181,12 @@ struct	ifqueue {
 	struct {
 		struct	mbuf *head;
 		struct	mbuf *tail;
-	}	ifq_q[IFQ_NQUEUES];
-	int	ifq_len;
-	int	ifq_maxlen;
-	int	ifq_drops;
-	struct	timeout *ifq_congestion;
+	}			 ifq_q[IFQ_NQUEUES];
+	int			 ifq_len;
+	int			 ifq_maxlen;
+	int			 ifq_drops;
+	struct hfsc_if		*ifq_hfsc;
+	struct timeout		*ifq_congestion;
 };
 
 /*
@@ -709,11 +706,25 @@ struct if_laddrreq {
 #include <net/if_arp.h>
 
 #ifdef _KERNEL
+#define	IFAFREE(ifa) \
+do { \
+	if ((ifa)->ifa_refcnt <= 0) \
+		ifafree(ifa); \
+	else \
+		(ifa)->ifa_refcnt--; \
+} while (/* CONSTCOND */0)
+
+/* XXX the IFQ_ macros are a giant mess right now. cleanup once altq gone. */
+
 #ifdef ALTQ
 
+/* XXX pattr unused */
+/* if_snd becomes ifqueue when altq is gone and the casts go away */
 #define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
 do {									\
-	if (ALTQ_IS_ENABLED((ifq))) {					\
+	if (HFSC_ENABLED((ifq)))					\
+		(err) = hfsc_enqueue(((struct ifqueue *)(ifq)), (m));	\
+	else if (ALTQ_IS_ENABLED((ifq))) {				\
 		m->m_pkthdr.pf.prio = IFQ_MAXPRIO;			\
 		ALTQ_ENQUEUE((ifq), (m), (pattr), (err));		\
 	} else {							\
@@ -731,8 +742,10 @@ do {									\
 
 #define	IFQ_DEQUEUE(ifq, m)						\
 do {									\
-	if (OLDTBR_IS_ENABLED((ifq)))					\
-		(m) = oldtbr_dequeue((ifq), ALTDQ_REMOVE);			\
+	if (HFSC_ENABLED((ifq)))					\
+		(m) = hfsc_dequeue(((struct ifqueue *)(ifq)), 1);	\
+	else if (OLDTBR_IS_ENABLED((ifq)))				\
+		(m) = oldtbr_dequeue((ifq), ALTDQ_REMOVE);		\
 	else if (ALTQ_IS_ENABLED((ifq)))				\
 		ALTQ_DEQUEUE((ifq), (m));				\
 	else								\
@@ -741,8 +754,10 @@ do {									\
 
 #define	IFQ_POLL(ifq, m)						\
 do {									\
-	if (TBR_IS_ENABLED((ifq)))					\
-		(m) = oldtbr_dequeue((ifq), ALTDQ_POLL);			\
+	if (HFSC_ENABLED((ifq)))					\
+		(m) = hfsc_dequeue(((struct ifqueue *)(ifq)), 0);	\
+	else if (OLDTBR_IS_ENABLED((ifq)))				\
+		(m) = oldtbr_dequeue((ifq), ALTDQ_POLL);		\
 	else if (ALTQ_IS_ENABLED((ifq)))				\
 		ALTQ_POLL((ifq), (m));					\
 	else								\
@@ -751,8 +766,10 @@ do {									\
 
 #define	IFQ_PURGE(ifq)							\
 do {									\
-	if (ALTQ_IS_ENABLED((ifq)))					\
-		ALTQ_PURGE((ifq));					\
+	if (HFSC_ENABLED((ifq)))					\
+		hfsc_purge(((struct ifqueue *)(ifq)));			\
+	else if (ALTQ_IS_ENABLED((ifq)))				\
+		ALTQ_PURGE(ifq);					\
 	else								\
 		IF_PURGE((ifq));					\
 } while (/* CONSTCOND */0)
@@ -764,24 +781,47 @@ do {									\
 
 #else /* !ALTQ */
 
+/* XXX pattr unused */
 #define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
 do {									\
-	if (IF_QFULL((ifq))) {						\
-		m_freem((m));						\
-		(err) = ENOBUFS;					\
-	} else {							\
-		IF_ENQUEUE((ifq), (m));					\
-		(err) = 0;						\
+	if (HFSC_ENABLED(ifq))						\
+		(err) = hfsc_enqueue(((struct ifqueue *)(ifq)), m);	\
+	else {								\
+		if (IF_QFULL((ifq))) {					\
+			m_freem((m));					\
+			(err) = ENOBUFS;				\
+		} else {						\
+			IF_ENQUEUE((ifq), (m));				\
+			(err) = 0;					\
+		}							\
 	}								\
 	if ((err))							\
 		(ifq)->ifq_drops++;					\
 } while (/* CONSTCOND */0)
 
-#define	IFQ_DEQUEUE(ifq, m)	IF_DEQUEUE((ifq), (m))
+#define	IFQ_DEQUEUE(ifq, m)						\
+do {									\
+	if (HFSC_ENABLED((ifq)))					\
+		(m) = hfsc_dequeue(((struct ifqueue *)(ifq)), 1);	\
+	else								\
+		IF_DEQUEUE((ifq), (m));					\
+} while (/* CONSTCOND */0)
 
-#define	IFQ_POLL(ifq, m)	IF_POLL((ifq), (m))
+#define	IFQ_POLL(ifq, m)						\
+do {									\
+	if (HFSC_ENABLED((ifq)))					\
+		(m) = hfsc_dequeue(((struct ifqueue *)(ifq)), 0);	\
+	else								\
+		IF_POLL((ifq), (m));					\
+} while (/* CONSTCOND */0)
 
-#define	IFQ_PURGE(ifq)		IF_PURGE((ifq))
+#define	IFQ_PURGE(ifq)							\
+do {									\
+	if (HFSC_ENABLED((ifq)))					\
+		hfsc_purge(((struct ifqueue *)(ifq)));			\
+	else								\
+		IF_PURGE((ifq));					\
+} while (/* CONSTCOND */0)
 
 #define	IFQ_SET_READY(ifq)	/* nothing */
 
