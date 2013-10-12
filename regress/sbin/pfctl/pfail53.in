@@ -1,6 +1,6 @@
 # queuenames cannot be numbers
 altq on lo0 tbrsize 1824 bandwidth 10Mb priq queue 80
-queue 80 priority 2 priq(default)
+oldqueue 80 priority 2 priq(default)
 
 # tablenames cannot be numbers
 table <444> { 1.2.3.4 }

@@ -2,6 +2,6 @@ ext_if="lo0"
 
 altq on $ext_if priq bandwidth 10Mb tbrsize 1824 \
     queue { pri-low pri-med pri-high }
-queue pri-low priority 0
-queue pri-med priority 1 priq(default)
-queue pri-high priority 2
+oldqueue pri-low priority 0
+oldqueue pri-med priority 1 priq(default)
+oldqueue pri-high priority 2

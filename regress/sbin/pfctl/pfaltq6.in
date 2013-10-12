@@ -1,11 +1,11 @@
 # verify the queue IDs on the rules are set correctly
 
 altq on lo0 tbrsize 1824 cbq bandwidth 10Mb queue { wim, the minibar is empty }
-queue wim bandwidth 10% cbq(default)
-queue the bandwidth 10%
-queue minibar bandwidth 30% priority 7
-queue  is bandwidth 10%
-queue  empty bandwidth 40%
+oldqueue wim bandwidth 10% cbq(default)
+oldqueue the bandwidth 10%
+oldqueue minibar bandwidth 30% priority 7
+oldqueue  is bandwidth 10%
+oldqueue  empty bandwidth 40%
 pass in on lo0 proto tcp to port 22 keep state queue(the minibar)
 pass in proto tcp to port 22 keep state queue(is empty)
 pass in proto tcp to port 22 keep state queue the

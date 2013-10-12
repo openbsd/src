@@ -4,9 +4,9 @@
 # was: qid = priority + 1
 
 altq on lo0 tbrsize 1824 bandwidth 10Mb priq queue eins
-queue eins priority 2 priq(default)
+oldqueue eins priority 2 priq(default)
 
 altq on tun1000000 tbrsize 1824 bandwidth 33600b priq queue zwei
-queue zwei priority 2 priq(default)
+oldqueue zwei priority 2 priq(default)
 
 

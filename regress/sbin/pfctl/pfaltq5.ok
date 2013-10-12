@@ -1,8 +1,8 @@
-queue praise on lo0 priq( default ) 
+oldqueue praise on lo0 priq( default ) 
   [ qid=1 ifname=lo0 ifbandwidth=10Mb ]
-queue wim on lo0 priority 15 
+oldqueue wim on lo0 priority 15 
   [ qid=2 ifname=lo0 ifbandwidth=10Mb ]
-queue hi on lo0 priority 7 
+oldqueue hi on lo0 priority 7 
   [ qid=3 ifname=lo0 ifbandwidth=10Mb ]
 @0 pass in on lo0 proto tcp from any to any port = 22 flags S/SA keep state queue(hi, wim)
   [ Skip steps: d=end f=end p=end sa=end sp=end da=end dp=3 ]

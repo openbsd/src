@@ -1,6 +1,6 @@
 altq on lo0 hfsc bandwidth 10Mb tbrsize 1824 queue { eins zwei drei }
-queue eins bandwidth 10% hfsc( default ) 
-queue zwei bandwidth 60% { sub2 sub3 }
-queue sub2 bandwidth 20% 
-queue sub3 bandwidth 20% 
-queue drei bandwidth 10% 
+oldqueue eins bandwidth 10% hfsc( default ) 
+oldqueue zwei bandwidth 60% { sub2 sub3 }
+oldqueue sub2 bandwidth 20% 
+oldqueue sub3 bandwidth 20% 
+oldqueue drei bandwidth 10% 
