@@ -1,7 +1,8 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.100 2013/08/01 19:03:11 mikeb Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.101 2013/10/12 12:16:12 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
+ * Copyright (c) 2002 - 2013 Henning Brauer <henning@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -217,11 +218,15 @@ int	parse_config(char *, struct pfctl *);
 int	parse_flags(char *);
 int	pfctl_load_anchors(int, struct pfctl *, struct pfr_buffer *);
 
+int	pfctl_load_queues(struct pfctl *);
+int	pfctl_add_queue(struct pfctl *, struct pf_queuespec *);
+
 void	print_pool(struct pf_pool *, u_int16_t, u_int16_t, sa_family_t, int, int);
 void	print_src_node(struct pf_src_node *, int);
 void	print_rule(struct pf_rule *, const char *, int);
 void	print_tabledef(const char *, int, int, struct node_tinithead *);
 void	print_status(struct pf_status *, int);
+void	print_queuespec(struct pf_queuespec *);
 
 int	eval_pfaltq(struct pfctl *, struct pf_altq *, struct node_queue_bw *,
 	    struct node_queue_opt *);
@@ -283,5 +288,13 @@ struct node_host	*host(const char *);
 int			 append_addr(struct pfr_buffer *, char *, int);
 int			 append_addr_host(struct pfr_buffer *,
 			    struct node_host *, int, int);
+
+TAILQ_HEAD(pf_qihead, pfctl_qsitem);
+struct pfctl_qsitem {
+	TAILQ_ENTRY(pfctl_qsitem)	 entries;
+	struct pf_queuespec		 qs;
+	struct pf_qihead		 children;
+	int				 matches;
+};
 
 #endif /* _PFCTL_PARSER_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.50 2012/07/08 17:48:37 lteo Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.51 2013/10/12 12:16:11 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -116,5 +116,7 @@ int	 pfctl_add_trans(struct pfr_buffer *, int, const char *);
 u_int32_t
 	 pfctl_get_ticket(struct pfr_buffer *, int, const char *);
 int	 pfctl_trans(int, struct pfr_buffer *, u_long, int);
+
+int	 pfctl_show_queues(int, const char *, int, int);
 
 #endif /* _PFCTL_H_ */

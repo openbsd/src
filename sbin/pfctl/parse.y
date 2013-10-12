@@ -1,10 +1,10 @@
-/*	$OpenBSD: parse.y,v 1.624 2013/08/01 19:03:11 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.625 2013/10/12 12:16:11 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Daniel Hartmeier.  All rights reserved.
  * Copyright (c) 2001 Theo de Raadt.  All rights reserved.
- * Copyright (c) 2002,2003 Henning Brauer. All rights reserved.
+ * Copyright (c) 2002 - 2013 Henning Brauer <henning@openbsd.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,6 +37,7 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
 #include <net/pfvar.h>
+#include <net/hfsc.h>
 #include <arpa/inet.h>
 #include <altq/altq.h>
 #include <altq/altq_cbq.h>
@@ -185,7 +186,7 @@ struct node_queue {
 	int			 scheduler;
 	struct node_queue	*next;
 	struct node_queue	*tail;
-}	*queues = NULL;
+}	*oqueues = NULL;
 
 struct node_qassign {
 	char		*qname;
@@ -299,19 +300,39 @@ struct scrub_opts {
 	int			reassemble_tcp;
 } scrub_opts;
 
+struct node_sc {
+	struct node_queue_bw	m1;
+	u_int			d;
+	struct node_queue_bw	m2;
+};
+
 struct queue_opts {
+	int		 marker;
+#define	QOM_BWSPEC	0x01
+#define	QOM_PARENT	0x02
+#define	QOM_DEFAULT	0x04
+#define	QOM_QLIMIT	0x08
+	struct node_sc	 realtime;
+	struct node_sc	 linkshare;
+	struct node_sc	 upperlimit;
+	char		*parent;
+	int		 flags;
+	u_int		 qlimit;
+} queue_opts;
+
+struct oldqueue_opts {
 	int			marker;
-#define QOM_BWSPEC	0x01
-#define QOM_SCHEDULER	0x02
-#define QOM_PRIORITY	0x04
-#define QOM_TBRSIZE	0x08
-#define QOM_QLIMIT	0x10
+#define OQOM_BWSPEC	0x01
+#define OQOM_SCHEDULER	0x02
+#define OQOM_PRIORITY	0x04
+#define OQOM_TBRSIZE	0x08
+#define OQOM_QLIMIT	0x10
 	struct node_queue_bw	queue_bwspec;
 	struct node_queue_opt	scheduler;
 	int			priority;
 	int			tbrsize;
 	int			qlimit;
-} queue_opts;
+} oldqueue_opts;
 
 struct table_opts {
 	int			flags;
@@ -349,10 +370,11 @@ void		 expand_rule(struct pf_rule *, int, struct node_if *,
 		    struct node_host *, struct node_port *, struct node_uid *,
 		    struct node_gid *, struct node_if *, struct node_icmp *,
 		    const char *);
+int		 expand_queue(char *, struct node_if *, struct queue_opts *);
 int		 expand_altq(struct pf_altq *, struct node_if *,
 		    struct node_queue *, struct node_queue_bw bwspec,
 		    struct node_queue_opt *);
-int		 expand_queue(struct pf_altq *, struct node_if *,
+int		 expand_oldqueue(struct pf_altq *, struct node_if *,
 		    struct node_queue *, struct node_queue_bw,
 		    struct node_queue_opt *);
 int		 expand_skip_interface(struct node_if *);
@@ -424,9 +446,11 @@ typedef struct {
 		struct node_queue_opt	 queue_options;
 		struct node_queue_bw	 queue_bwspec;
 		struct node_qassign	 qassign;
+		struct node_sc		 sc;
 		struct filter_opts	 filter_opts;
 		struct antispoof_opts	 antispoof_opts;
 		struct queue_opts	 queue_opts;
+		struct oldqueue_opts	 oldqueue_opts;
 		struct scrub_opts	 scrub_opts;
 		struct table_opts	 table_opts;
 		struct pool_opts	 pool_opts;
@@ -457,8 +481,8 @@ int	parseport(char *, struct range *r, int);
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN LEASTSTATES STATICPORT PROBABILITY
 %token	WEIGHT
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
-%token	QUEUE PRIORITY QLIMIT RTABLE RDOMAIN
-%token	LOAD RULESET_OPTIMIZATION RTABLE RDOMAIN PRIO ONCE
+%token	QUEUE OLDQUEUE PRIORITY QLIMIT RTABLE RDOMAIN MINIMUM BURST PARENT
+%token	LOAD RULESET_OPTIMIZATION RTABLE RDOMAIN PRIO ONCE DEFAULT
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH SLOPPY PFLOW
 %token	TAGGED TAG IFBOUND FLOATING STATEPOLICY STATEDEFAULTS ROUTE
@@ -510,7 +534,9 @@ int	parseport(char *, struct range *r, int);
 %type	<v.filter_opts>		filter_opts filter_opt filter_opts_l
 %type	<v.filter_opts>		filter_sets filter_set filter_sets_l
 %type	<v.antispoof_opts>	antispoof_opts antispoof_opt antispoof_opts_l
-%type	<v.queue_opts>		queue_opts queue_opt queue_opts_l
+%type	<v.queue_opts>		queue_opts queue_opt queue_opts_l optscs
+%type	<v.sc>			scspec
+%type	<v.oldqueue_opts>	oldqueue_opts oldqueue_opt oldqueue_opts_l
 %type	<v.scrub_opts>		scrub_opts scrub_opt scrub_opts_l
 %type	<v.table_opts>		table_opts table_opt table_opts_l
 %type	<v.pool_opts>		pool_opts pool_opt pool_opts_l
@@ -523,8 +549,9 @@ ruleset		: /* empty */
 		| ruleset pfrule '\n'
 		| ruleset anchorrule '\n'
 		| ruleset loadrule '\n'
-		| ruleset altqif '\n'
 		| ruleset queuespec '\n'
+		| ruleset altqif '\n'
+		| ruleset oldqueuespec '\n'
 		| ruleset varset '\n'
 		| ruleset antispoof '\n'
 		| ruleset tabledef '\n'
@@ -1277,7 +1304,119 @@ table_host_list	: tablespec optnl			{ $$ = $1; }
 		}
 		;
 
-altqif		: ALTQ interface queue_opts QUEUE qassign {
+queuespec	: QUEUE STRING interface queue_opts		{
+			if ($3 == NULL && $4.parent == NULL) {
+				yyerror("root queue without interface");
+				YYERROR;
+			}
+			if ($2[0] == '_') {
+				yyerror("queue names must not start with _");
+				YYERROR;
+			}
+			expand_queue($2, $3, &$4);
+		}
+		;
+
+queue_opts	:	{
+			bzero(&queue_opts, sizeof queue_opts);
+		}
+		    queue_opts_l
+			{ $$ = queue_opts; }
+		;
+
+queue_opts_l	: queue_opts_l queue_opt
+		| queue_opt
+		;
+
+queue_opt	: BANDWIDTH scspec optscs			{
+			if (queue_opts.marker & QOM_BWSPEC) {
+				yyerror("bandwidth cannot be respecified");
+				YYERROR;
+			}
+			queue_opts.marker |= QOM_BWSPEC;
+			queue_opts.linkshare = $2;
+			queue_opts.realtime= $3.realtime;
+			queue_opts.upperlimit = $3.upperlimit;
+		}
+		| PARENT STRING					{
+			if (queue_opts.marker & QOM_PARENT) {
+				yyerror("parent cannot be respecified");
+				YYERROR;
+			}
+			queue_opts.marker |= QOM_PARENT;
+			queue_opts.parent = $2;
+		}
+		| DEFAULT					{
+			if (queue_opts.marker & QOM_DEFAULT) {
+				yyerror("default cannot be respecified");
+				YYERROR;
+			}
+			queue_opts.marker |= QOM_DEFAULT;
+			queue_opts.flags |= HFSC_DEFAULTCLASS;
+		}
+		| QLIMIT NUMBER	{
+			if (queue_opts.marker & QOM_QLIMIT) {
+				yyerror("qlimit cannot be respecified");
+				YYERROR;
+			}
+			if ($2 < 0 || $2 > 65535) {
+				yyerror("qlimit out of range: max 65535");
+				YYERROR;
+			}
+			queue_opts.marker |= QOM_QLIMIT;
+			queue_opts.qlimit = $2;
+		}
+		;
+
+optscs		: /* nada */					{
+
+		}
+		| comma MINIMUM scspec				{
+			$$.realtime = $3;
+		}
+		| comma MAXIMUM scspec				{
+			$$.upperlimit = $3;
+		}
+		| comma MINIMUM scspec comma MAXIMUM scspec	{
+			$$.realtime = $3;
+			$$.upperlimit = $6;
+		}
+		| comma MAXIMUM scspec comma MINIMUM scspec	{
+			$$.realtime = $6;
+			$$.upperlimit = $3;
+		}
+		;
+
+scspec		: bandwidth					{
+			$$.m2 = $1;
+			$$.d = 0;
+			if ($$.m2.bw_percent) {
+				yyerror("no bandwidth in % yet");
+				YYERROR;
+			}
+		}
+		| bandwidth BURST bandwidth FOR STRING	{
+			u_long	 ul;
+			char	*cp;
+
+			ul = strtoul($5, &cp, 10);
+			if (cp == NULL || strcmp(cp, "ms")) {
+				yyerror("time in scspec must be in ms");
+				YYERROR;
+			}
+
+			$$.m1 = $3;
+			$$.d = ul;
+			$$.m2 = $1;
+
+			if ($$.m1.bw_percent || $$.m2.bw_percent) {
+				yyerror("no bandwidth in % yet");
+				YYERROR;
+			}
+		}
+		;
+
+altqif		: ALTQ interface oldqueue_opts QUEUE qassign {
 			struct pf_altq	a;
 
 			memset(&a, 0, sizeof(a));
@@ -1298,7 +1437,7 @@ altqif		: ALTQ interface queue_opts QUEUE qassign {
 		}
 		;
 
-queuespec	: QUEUE STRING interface queue_opts qassign {
+oldqueuespec	: OLDQUEUE STRING interface oldqueue_opts qassign {
 			struct pf_altq	a;
 
 			memset(&a, 0, sizeof(a));
@@ -1321,7 +1460,7 @@ queuespec	: QUEUE STRING interface queue_opts qassign {
 			a.priority = $4.priority;
 			a.qlimit = $4.qlimit;
 			a.scheduler = $4.scheduler.qtype;
-			if (expand_queue(&a, $3, $5, $4.queue_bwspec,
+			if (expand_oldqueue(&a, $3, $5, $4.queue_bwspec,
 			    &$4.scheduler)) {
 				yyerror("errors in queue definition");
 				YYERROR;
@@ -1329,39 +1468,39 @@ queuespec	: QUEUE STRING interface queue_opts qassign {
 		}
 		;
 
-queue_opts	:	{
-			bzero(&queue_opts, sizeof queue_opts);
-			queue_opts.priority = DEFAULT_PRIORITY;
-			queue_opts.qlimit = DEFAULT_QLIMIT;
-			queue_opts.scheduler.qtype = ALTQT_NONE;
-			queue_opts.queue_bwspec.bw_percent = 100;
+oldqueue_opts	:	{
+			bzero(&oldqueue_opts, sizeof oldqueue_opts);
+			oldqueue_opts.priority = DEFAULT_PRIORITY;
+			oldqueue_opts.qlimit = DEFAULT_QLIMIT;
+			oldqueue_opts.scheduler.qtype = ALTQT_NONE;
+			oldqueue_opts.queue_bwspec.bw_percent = 100;
 		}
-		    queue_opts_l
-			{ $$ = queue_opts; }
+		    oldqueue_opts_l
+			{ $$ = oldqueue_opts; }
 		| /* empty */ {
-			bzero(&queue_opts, sizeof queue_opts);
-			queue_opts.priority = DEFAULT_PRIORITY;
-			queue_opts.qlimit = DEFAULT_QLIMIT;
-			queue_opts.scheduler.qtype = ALTQT_NONE;
-			queue_opts.queue_bwspec.bw_percent = 100;
-			$$ = queue_opts;
+			bzero(&oldqueue_opts, sizeof oldqueue_opts);
+			oldqueue_opts.priority = DEFAULT_PRIORITY;
+			oldqueue_opts.qlimit = DEFAULT_QLIMIT;
+			oldqueue_opts.scheduler.qtype = ALTQT_NONE;
+			oldqueue_opts.queue_bwspec.bw_percent = 100;
+			$$ = oldqueue_opts;
 		}
 		;
 
-queue_opts_l	: queue_opts_l queue_opt
-		| queue_opt
+oldqueue_opts_l	: oldqueue_opts_l oldqueue_opt
+		| oldqueue_opt
 		;
 
-queue_opt	: BANDWIDTH bandwidth	{
-			if (queue_opts.marker & QOM_BWSPEC) {
+oldqueue_opt	: BANDWIDTH bandwidth	{
+			if (oldqueue_opts.marker & OQOM_BWSPEC) {
 				yyerror("bandwidth cannot be respecified");
 				YYERROR;
 			}
-			queue_opts.marker |= QOM_BWSPEC;
-			queue_opts.queue_bwspec = $2;
+			oldqueue_opts.marker |= OQOM_BWSPEC;
+			oldqueue_opts.queue_bwspec = $2;
 		}
 		| PRIORITY NUMBER	{
-			if (queue_opts.marker & QOM_PRIORITY) {
+			if (oldqueue_opts.marker & OQOM_PRIORITY) {
 				yyerror("priority cannot be respecified");
 				YYERROR;
 			}
@@ -1369,11 +1508,11 @@ queue_opt	: BANDWIDTH bandwidth	{
 				yyerror("priority out of range: max 255");
 				YYERROR;
 			}
-			queue_opts.marker |= QOM_PRIORITY;
-			queue_opts.priority = $2;
+			oldqueue_opts.marker |= OQOM_PRIORITY;
+			oldqueue_opts.priority = $2;
 		}
 		| QLIMIT NUMBER	{
-			if (queue_opts.marker & QOM_QLIMIT) {
+			if (oldqueue_opts.marker & OQOM_QLIMIT) {
 				yyerror("qlimit cannot be respecified");
 				YYERROR;
 			}
@@ -1381,19 +1520,19 @@ queue_opt	: BANDWIDTH bandwidth	{
 				yyerror("qlimit out of range: max 65535");
 				YYERROR;
 			}
-			queue_opts.marker |= QOM_QLIMIT;
-			queue_opts.qlimit = $2;
+			oldqueue_opts.marker |= OQOM_QLIMIT;
+			oldqueue_opts.qlimit = $2;
 		}
 		| scheduler	{
-			if (queue_opts.marker & QOM_SCHEDULER) {
+			if (oldqueue_opts.marker & OQOM_SCHEDULER) {
 				yyerror("scheduler cannot be respecified");
 				YYERROR;
 			}
-			queue_opts.marker |= QOM_SCHEDULER;
-			queue_opts.scheduler = $1;
+			oldqueue_opts.marker |= OQOM_SCHEDULER;
+			oldqueue_opts.scheduler = $1;
 		}
 		| TBRSIZE NUMBER	{
-			if (queue_opts.marker & QOM_TBRSIZE) {
+			if (oldqueue_opts.marker & OQOM_TBRSIZE) {
 				yyerror("tbrsize cannot be respecified");
 				YYERROR;
 			}
@@ -1401,8 +1540,8 @@ queue_opt	: BANDWIDTH bandwidth	{
 				yyerror("tbrsize too big: max 65535");
 				YYERROR;
 			}
-			queue_opts.marker |= QOM_TBRSIZE;
-			queue_opts.tbrsize = $2;
+			oldqueue_opts.marker |= OQOM_TBRSIZE;
+			oldqueue_opts.tbrsize = $2;
 		}
 		;
 
@@ -1414,13 +1553,22 @@ bandwidth	: STRING {
 
 			bps = strtod($1, &cp);
 			if (cp != NULL) {
+				if (strlen(cp) > 1) {
+					char *cu = cp + 1;
+					if (!strcmp(cu, "Bit") ||
+					    !strcmp(cu, "B") ||
+					    !strcmp(cu, "bit") ||
+					    !strcmp(cu, "b")) {
+						*cu = 0;
+					}
+				}
 				if (!strcmp(cp, "b"))
 					; /* nothing */
-				else if (!strcmp(cp, "Kb"))
+				else if (!strcmp(cp, "K"))
 					bps *= 1000;
-				else if (!strcmp(cp, "Mb"))
+				else if (!strcmp(cp, "M"))
 					bps *= 1000 * 1000;
-				else if (!strcmp(cp, "Gb"))
+				else if (!strcmp(cp, "G"))
 					bps *= 1000 * 1000 * 1000;
 				else if (!strcmp(cp, "%")) {
 					if (bps < 0 || bps > 100) {
@@ -1432,7 +1580,7 @@ bandwidth	: STRING {
 					$$.bw_percent = bps;
 					bps = 0;
 				} else {
-					yyerror("unknown unit %s", cp);
+					yyerror("unknown unit \"%s\"", cp);
 					free($1);
 					YYERROR;
 				}
@@ -1481,10 +1629,11 @@ cbqflags_list	: cbqflags_item				{ $$ |= $1; }
 		| cbqflags_list comma cbqflags_item	{ $$ |= $3; }
 		;
 
-cbqflags_item	: STRING	{
-			if (!strcmp($1, "default"))
-				$$ = CBQCLF_DEFCLASS;
-			else if (!strcmp($1, "borrow"))
+cbqflags_item	: DEFAULT {
+			$$ = CBQCLF_DEFCLASS;
+		}
+		| STRING	{
+			if (!strcmp($1, "borrow"))
 				$$ = CBQCLF_BORROW;
 			else if (!strcmp($1, "red"))
 				$$ = CBQCLF_RED;
@@ -1503,10 +1652,11 @@ priqflags_list	: priqflags_item			{ $$ |= $1; }
 		| priqflags_list comma priqflags_item	{ $$ |= $3; }
 		;
 
-priqflags_item	: STRING	{
-			if (!strcmp($1, "default"))
-				$$ = PRCF_DEFAULTCLASS;
-			else if (!strcmp($1, "red"))
+priqflags_item	: DEFAULT {
+			$$ = PRCF_DEFAULTCLASS;
+		}
+		| STRING	{
+			 if (!strcmp($1, "red"))
 				$$ = PRCF_RED;
 			else if (!strcmp($1, "ecn"))
 				$$ = PRCF_RED|PRCF_ECN;
@@ -1601,10 +1751,11 @@ hfscopts_item	: LINKSHARE bandwidth				{
 			hfsc_opts.upperlimit.m2 = $7;
 			hfsc_opts.upperlimit.used = 1;
 		}
+		| DEFAULT	{
+			hfsc_opts.flags |= HFCF_DEFAULTCLASS;
+		}
 		| STRING	{
-			if (!strcmp($1, "default"))
-				hfsc_opts.flags |= HFCF_DEFAULTCLASS;
-			else if (!strcmp($1, "red"))
+			if (!strcmp($1, "red"))
 				hfsc_opts.flags |= HFCF_RED;
 			else if (!strcmp($1, "ecn"))
 				hfsc_opts.flags |= HFCF_RED|HFCF_ECN;
@@ -4526,11 +4677,11 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 				n->scheduler = pa.scheduler;
 				n->next = NULL;
 				n->tail = n;
-				if (queues == NULL)
-					queues = n;
+				if (oqueues == NULL)
+					oqueues = n;
 				else {
-					queues->tail->next = n;
-					queues->tail = n;
+					oqueues->tail->next = n;
+					oqueues->tail = n;
 				}
 			);
 		}
@@ -4542,7 +4693,57 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 }
 
 int
-expand_queue(struct pf_altq *a, struct node_if *interfaces,
+expand_queue(char *qname, struct node_if *interfaces, struct queue_opts *opts)
+{
+	struct pf_queuespec	qspec;
+
+	LOOP_THROUGH(struct node_if, interface, interfaces,
+		bzero(&qspec, sizeof(qspec));
+		if (strlcpy(qspec.qname, qname, sizeof(qspec.qname)) >=
+		    sizeof(qspec.qname)) {
+			yyerror("queuename too long");
+			return (1);
+		}
+		if (opts->parent && strlcpy(qspec.parent, opts->parent,
+		    sizeof(qspec.parent)) >= sizeof(qspec.parent)) {
+			yyerror("parent too long");
+			return (1);
+		}
+		if (strlcpy(qspec.ifname, interface->ifname,
+		    sizeof(qspec.ifname)) >= sizeof(qspec.ifname)) {
+			yyerror("interface too long");
+			return (1);
+		}
+		qspec.realtime.m1.absolute = opts->realtime.m1.bw_absolute;
+		qspec.realtime.m1.percent = opts->realtime.m1.bw_percent;
+		qspec.realtime.m2.absolute = opts->realtime.m2.bw_absolute;
+		qspec.realtime.m2.percent = opts->realtime.m2.bw_percent;
+		qspec.realtime.d = opts->realtime.d;
+
+		qspec.linkshare.m1.absolute = opts->linkshare.m1.bw_absolute;
+		qspec.linkshare.m1.percent = opts->linkshare.m1.bw_percent;
+		qspec.linkshare.m2.absolute = opts->linkshare.m2.bw_absolute;
+		qspec.linkshare.m2.percent = opts->linkshare.m2.bw_percent;
+		qspec.linkshare.d = opts->linkshare.d;
+
+		qspec.upperlimit.m1.absolute = opts->upperlimit.m1.bw_absolute;
+		qspec.upperlimit.m1.percent = opts->upperlimit.m1.bw_percent;
+		qspec.upperlimit.m2.absolute = opts->upperlimit.m2.bw_absolute;
+		qspec.upperlimit.m2.percent = opts->upperlimit.m2.bw_percent;
+		qspec.upperlimit.d = opts->upperlimit.d;
+
+		qspec.flags = opts->flags;
+		qspec.qlimit = opts->qlimit;
+
+		pfctl_add_queue(pf, &qspec);
+	);
+
+	FREE_LIST(struct node_if, interfaces);
+	return (0);
+}
+
+int
+expand_oldqueue(struct pf_altq *a, struct node_if *interfaces,
     struct node_queue *nqueues, struct node_queue_bw bwspec,
     struct node_queue_opt *opts)
 {
@@ -4551,14 +4752,14 @@ expand_queue(struct pf_altq *a, struct node_if *interfaces,
 	u_int8_t		 found = 0;
 	u_int8_t		 errs = 0;
 
-	if (queues == NULL) {
+	if (oqueues == NULL) {
 		yyerror("queue %s has no parent", a->qname);
 		FREE_LIST(struct node_queue, nqueues);
 		return (1);
 	}
 
 	LOOP_THROUGH(struct node_if, interface, interfaces,
-		LOOP_THROUGH(struct node_queue, tqueue, queues,
+		LOOP_THROUGH(struct node_queue, tqueue, oqueues,
 			if (!strncmp(a->qname, tqueue->queue, PF_QNAME_SIZE) &&
 			    (interface->ifname[0] == 0 ||
 			    (!interface->not && !strncmp(interface->ifname,
@@ -4636,11 +4837,11 @@ expand_queue(struct pf_altq *a, struct node_if *interfaces,
 					n->scheduler = tqueue->scheduler;
 					n->next = NULL;
 					n->tail = n;
-					if (queues == NULL)
-						queues = n;
+					if (oqueues == NULL)
+						oqueues = n;
 					else {
-						queues->tail->next = n;
-						queues->tail = n;
+						oqueues->tail->next = n;
+						oqueues->tail = n;
 					}
 				}
 				if ((pf->opts & PF_OPT_VERBOSE) && (
@@ -5199,9 +5400,11 @@ lookup(char *s)
 		{ "bitmask",		BITMASK},
 		{ "block",		BLOCK},
 		{ "block-policy",	BLOCKPOLICY},
+		{ "burst",		BURST},
 		{ "cbq",		CBQ},
 		{ "code",		CODE},
 		{ "debug",		DEBUG},
+		{ "default",		DEFAULT},
 		{ "divert-packet",	DIVERTPACKET},
 		{ "divert-reply",	DIVERTREPLY},
 		{ "divert-to",		DIVERTTO},
@@ -5242,6 +5445,7 @@ lookup(char *s)
 		{ "max-src-conn-rate",	MAXSRCCONNRATE},
 		{ "max-src-nodes",	MAXSRCNODES},
 		{ "max-src-states",	MAXSRCSTATES},
+		{ "min",		MINIMUM},
 		{ "min-ttl",		MINTTL},
 		{ "modulate",		MODULATE},
 		{ "nat-to",		NATTO},
@@ -5249,12 +5453,14 @@ lookup(char *s)
 		{ "no-df",		NODF},
 		{ "no-route",		NOROUTE},
 		{ "no-sync",		NOSYNC},
+		{ "oldqueue",		OLDQUEUE},
 		{ "on",			ON},
 		{ "once",		ONCE},
 		{ "optimization",	OPTIMIZATION},
 		{ "os",			OS},
 		{ "out",		OUT},
 		{ "overload",		OVERLOAD},
+		{ "parent",		PARENT},
 		{ "pass",		PASS},
 		{ "pflow",		PFLOW},
 		{ "port",		PORT},

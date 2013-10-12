@@ -1,7 +1,7 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.32 2011/07/04 22:49:03 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.33 2013/10/12 12:16:12 henning Exp $ */
 
 /*
- * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -64,7 +64,7 @@ struct pf_altq_node {
 	struct queue_stats	 qstats;
 };
 
-int			 pfctl_update_qstats(int, struct pf_altq_node **);
+int			 pfctl_update_altqstats(int, struct pf_altq_node **);
 void			 pfctl_insert_altq_node(struct pf_altq_node **,
 			    const struct pf_altq, const struct queue_stats);
 struct pf_altq_node	*pfctl_find_altq_node(struct pf_altq_node *,
@@ -78,7 +78,7 @@ void			 pfctl_free_altq_node(struct pf_altq_node *);
 void			 pfctl_print_altq_nodestat(int,
 			    const struct pf_altq_node *);
 
-void			 update_avg(struct pf_altq_node *);
+void			 altq_update_avg(struct pf_altq_node *);
 
 int
 pfctl_show_altq(int dev, const char *iface, int opts, int verbose2)
@@ -87,11 +87,11 @@ pfctl_show_altq(int dev, const char *iface, int opts, int verbose2)
 	int			 nodes, dotitle = (opts & PF_OPT_SHOWALL);
 
 
-	if ((nodes = pfctl_update_qstats(dev, &root)) < 0)
+	if ((nodes = pfctl_update_altqstats(dev, &root)) < 0)
 		return (-1);
 
 	if (nodes == 0)
-		printf("No queue in use\n");
+		printf("No altq queue in use\n");
 	for (node = root; node != NULL; node = node->next) {
 		if (iface != NULL && strcmp(node->altq.ifname, iface))
 			continue;
@@ -106,7 +106,7 @@ pfctl_show_altq(int dev, const char *iface, int opts, int verbose2)
 		printf("\n");
 		fflush(stdout);
 		sleep(STAT_INTERVAL);
-		if ((nodes = pfctl_update_qstats(dev, &root)) == -1)
+		if ((nodes = pfctl_update_altqstats(dev, &root)) == -1)
 			return (-1);
 		for (node = root; node != NULL; node = node->next) {
 			if (iface != NULL && strcmp(node->altq.ifname, iface))
@@ -119,11 +119,11 @@ pfctl_show_altq(int dev, const char *iface, int opts, int verbose2)
 }
 
 int
-pfctl_update_qstats(int dev, struct pf_altq_node **root)
+pfctl_update_altqstats(int dev, struct pf_altq_node **root)
 {
 	struct pf_altq_node	*node;
 	struct pfioc_altq	 pa;
-	struct pfioc_qstats	 pq;
+	struct pfioc_altqstats	 pq;
 	u_int32_t		 mnr, nr;
 	struct queue_stats	 qstats;
 	static	u_int32_t	 last_ticket;
@@ -155,15 +155,15 @@ pfctl_update_qstats(int dev, struct pf_altq_node **root)
 			pq.ticket = pa.ticket;
 			pq.buf = &qstats.data;
 			pq.nbytes = sizeof(qstats.data);
-			if (ioctl(dev, DIOCGETQSTATS, &pq)) {
-				warn("DIOCGETQSTATS");
+			if (ioctl(dev, DIOCGETALTQSTATS, &pq)) {
+				warn("DIOCGETALTQSTATS");
 				return (-1);
 			}
 			if ((node = pfctl_find_altq_node(*root, pa.altq.qname,
 			    pa.altq.ifname)) != NULL) {
 				memcpy(&node->qstats.data, &qstats.data,
 				    sizeof(qstats.data));
-				update_avg(node);
+				altq_update_avg(node);
 			} else {
 				pfctl_insert_altq_node(root, pa.altq, qstats);
 			}
@@ -209,7 +209,7 @@ pfctl_insert_altq_node(struct pf_altq_node **root,
 			prev->next = node;
 		}
 	}
-	update_avg(node);
+	altq_update_avg(node);
 }
 
 struct pf_altq_node *
@@ -363,7 +363,7 @@ pfctl_free_altq_node(struct pf_altq_node *node)
 }
 
 void
-update_avg(struct pf_altq_node *a)
+altq_update_avg(struct pf_altq_node *a)
 {
 	struct queue_stats	*qs;
 	u_int64_t		 b, p;

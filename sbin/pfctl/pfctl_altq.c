@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.99 2013/03/20 00:18:00 deraadt Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.100 2013/10/12 12:16:11 henning Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -181,7 +181,7 @@ print_queue(const struct pf_altq *a, unsigned int level,
 {
 	unsigned int	i;
 
-	printf("queue ");
+	printf("oldqueue ");
 	for (i = 0; i < level; ++i)
 		printf(" ");
 	printf("%s ", a->qname);

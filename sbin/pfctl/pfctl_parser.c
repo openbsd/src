@@ -1,8 +1,8 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.294 2013/08/01 19:03:11 mikeb Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.295 2013/10/12 12:16:12 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
- * Copyright (c) 2002,2003 Henning Brauer
+ * Copyright (c) 2002 - 2013 Henning Brauer <henning@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,7 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
 #include <net/pfvar.h>
+#include <net/hfsc.h>
 #include <arpa/inet.h>
 
 #include <stdio.h>
@@ -67,6 +68,8 @@ void		 print_ugid (u_int8_t, unsigned, unsigned, const char *, unsigned);
 void		 print_flags (u_int8_t);
 void		 print_fromto(struct pf_rule_addr *, pf_osfp_t,
 		    struct pf_rule_addr *, u_int8_t, u_int8_t, int);
+void		 print_bwspec(const char *index, struct pf_queue_bwspec *);
+void		 print_scspec(const char *, struct pf_queue_scspec *);
 int		 ifa_skip_if(const char *filter, struct node_host *p);
 
 struct node_host	*ifa_grouplookup(const char *, int);
@@ -1144,6 +1147,55 @@ print_tabledef(const char *name, int flags, int addrs,
 	}
 	if (addrs && SIMPLEQ_EMPTY(nodes))
 		printf(" { }");
+	printf("\n");
+}
+
+void
+print_bwspec(const char *prefix, struct pf_queue_bwspec *bw)
+{
+	u_int	rate;
+	int	i;
+	static const char unit[] = " KMG";
+
+	if (bw->percent)
+		printf("%s%u%%", prefix, bw->percent);
+	else if (bw->absolute) {
+		rate = bw->absolute;
+		for (i = 0; rate >= 1000 && i <= 3; i++)
+			rate /= 1000;
+		printf("%s%u%c", prefix, rate, unit[i]);
+	}
+}
+
+void
+print_scspec(const char *prefix, struct pf_queue_scspec *sc)
+{
+	print_bwspec(prefix, &sc->m2);
+	if (sc->d) {
+		printf(" burst ");
+		print_bwspec("", &sc->m1);
+		printf(" for %ums", sc->d);
+	}
+}
+
+void
+print_queuespec(struct pf_queuespec *q)
+{
+	/* hide the _root_ifname queues */
+	if (q->qname[0] == '_')
+		return;
+	printf("queue %s", q->qname);
+	if (q->parent[0] && q->parent[0] != '_')
+		printf(" parent %s", q->parent);
+	if (q->ifname[0])
+		printf(" on %s", q->ifname);
+	print_scspec(" bandwidth ", &q->linkshare);
+	print_scspec(", min ", &q->realtime);
+	print_scspec(", max ", &q->upperlimit);
+	if (q->flags & HFSC_DEFAULTCLASS)
+		printf(" default");
+	if (q->qlimit)
+		printf(" qlimit %u", q->qlimit);
 	printf("\n");
 }
 

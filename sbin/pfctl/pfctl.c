@@ -1,8 +1,8 @@
-/*	$OpenBSD: pfctl.c,v 1.318 2013/10/09 02:59:27 lteo Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.319 2013/10/12 12:16:11 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
- * Copyright (c) 2002,2003 Henning Brauer
+ * Copyright (c) 2002 - 2013 Henning Brauer <henning@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -92,6 +92,11 @@ void	 pfctl_debug(int, u_int32_t, int);
 int	 pfctl_test_altqsupport(int, int);
 int	 pfctl_show_anchors(int, int, char *);
 int	 pfctl_ruleset_trans(struct pfctl *, char *, struct pf_anchor *);
+u_int	 pfctl_find_childqs(struct pfctl_qsitem *);
+void	 pfctl_load_queue(struct pfctl *, u_int32_t, struct pfctl_qsitem *);
+int	 pfctl_load_queues(struct pfctl *);
+u_int	 pfctl_leafqueue_check(char *);
+u_int	 pfctl_check_qassignments(struct pf_ruleset *);
 int	 pfctl_load_ruleset(struct pfctl *, char *, struct pf_ruleset *, int);
 int	 pfctl_load_rule(struct pfctl *, char *, struct pf_rule *, int);
 const char	*pfctl_lookup_option(char *, const char **);
@@ -339,7 +344,6 @@ int
 pfctl_clear_altq(int dev, int opts)
 {
 	struct pfr_buffer t;
-
 	if (!altqsupport)
 		return (-1);
 	memset(&t, 0, sizeof(t));
@@ -1096,6 +1100,196 @@ pfctl_ruleset_trans(struct pfctl *pf, char *path, struct pf_anchor *a)
 	return (0);
 }
 
+TAILQ_HEAD(qspecs, pfctl_qsitem) qspecs = TAILQ_HEAD_INITIALIZER(qspecs);
+TAILQ_HEAD(rootqs, pfctl_qsitem) rootqs = TAILQ_HEAD_INITIALIZER(rootqs);
+
+int
+pfctl_add_queue(struct pfctl *pf, struct pf_queuespec *q)
+{
+	struct pfctl_qsitem	*qi;
+
+	if ((qi = calloc(1, sizeof(*qi))) == NULL)
+		err(1, "calloc");
+	bcopy(q, &qi->qs, sizeof(qi->qs));
+	TAILQ_INIT(&qi->children);
+
+	if (qi->qs.parent[0])
+		TAILQ_INSERT_TAIL(&qspecs, qi, entries);
+	else
+		TAILQ_INSERT_TAIL(&rootqs, qi, entries);
+
+	return (0);
+}
+
+u_int
+pfctl_find_childqs(struct pfctl_qsitem *qi)
+{
+	struct pfctl_qsitem	*n, *p, *q;
+	u_int			 flags = qi->qs.flags;
+
+	TAILQ_FOREACH(p, &qspecs, entries) {
+		if (strcmp(p->qs.parent, qi->qs.qname))
+			continue;
+		if (p->qs.ifname[0] && strcmp(p->qs.ifname, qi->qs.ifname))
+			continue;
+		if (++p->matches > 10000)
+			errx(1, "pfctl_find_childqs: excessive matches, loop?");
+
+		/* check wether a children with that name is already there */
+		TAILQ_FOREACH(q, &qi->children, entries)
+			if (!strcmp(q->qs.qname, p->qs.qname))
+				break;
+		if (q == NULL) {
+			/* insert */
+			if ((n = calloc(1, sizeof(*n))) == NULL)
+				err(1, "calloc");
+			TAILQ_INIT(&n->children);
+			bcopy(&p->qs, &n->qs, sizeof(n->qs));
+			TAILQ_INSERT_TAIL(&qi->children, n, entries);
+		} else {
+			if ((q->qs.ifname[0] && p->qs.ifname[0]))
+				errx(1, "queue %s on %s respecified",
+				    q->qs.qname, q->qs.ifname);
+			if (!q->qs.ifname[0] && !p->qs.ifname[0])
+				errx(1, "queue %s respecified",
+				    q->qs.qname);
+			/* ifbound beats floating */
+			if (!q->qs.ifname[0])
+				bcopy(&p->qs, &q->qs, sizeof(q->qs));
+		}
+	}
+
+	TAILQ_FOREACH(p, &qi->children, entries)
+		flags |= pfctl_find_childqs(p);
+
+	if (qi->qs.flags & HFSC_DEFAULTCLASS && !TAILQ_EMPTY(&qi->children))
+		errx(1, "default queue %s is not a leaf queue", qi->qs.qname);
+
+	return (flags);
+}
+
+void
+pfctl_load_queue(struct pfctl *pf, u_int32_t ticket, struct pfctl_qsitem *qi)
+{
+	struct pfioc_queue	 q;
+	struct pfctl_qsitem	*p;
+
+	q.ticket = ticket;
+	bcopy(&qi->qs, &q.queue, sizeof(q.queue));
+	if ((pf->opts & PF_OPT_NOACTION) == 0)
+		if (ioctl(pf->dev, DIOCADDQUEUE, &q))
+			err(1, "DIOCADDQUEUE");
+	if (pf->opts & PF_OPT_VERBOSE)
+		print_queuespec(&qi->qs);
+	while ((p = TAILQ_FIRST(&qi->children)) != NULL) {
+		TAILQ_REMOVE(&qi->children, p, entries);
+		strlcpy(p->qs.ifname, qi->qs.ifname, IFNAMSIZ);
+		pfctl_load_queue(pf, ticket, p);
+		free(p);
+	}
+}
+
+int
+pfctl_load_queues(struct pfctl *pf)
+{
+	struct pfctl_qsitem	*qi, rqi;
+	u_int32_t		 ticket;
+
+	while ((qi = TAILQ_FIRST(&qspecs)) != NULL) {
+		if (qi->matches == 0)
+			errx(1, "queue %s: parent %s not found\n", qi->qs.qname,
+			    qi->qs.parent);
+		if (qi->qs.realtime.m1.percent || qi->qs.realtime.m2.percent ||
+		    qi->qs.linkshare.m1.percent ||
+		    qi->qs.linkshare.m2.percent ||
+		    qi->qs.upperlimit.m1.percent ||
+		    qi->qs.upperlimit.m2.percent)
+			errx(1, "only absolute bandwidth specs for now");
+
+		TAILQ_REMOVE(&qspecs, qi, entries);
+		free(qi);
+	}
+
+	if ((pf->opts & PF_OPT_NOACTION) == 0)
+		ticket = pfctl_get_ticket(pf->trans, PF_TRANS_RULESET, "");
+	while ((qi = TAILQ_FIRST(&rootqs)) != NULL) {
+		TAILQ_REMOVE(&rootqs, qi, entries);
+
+		/*
+		 * We must have a hidden root queue below the user-
+		 * specified/visible root queue, due to the way the
+		 * dequeueing works far down there... don't ask.
+		 * the _ namespace is reserved for these.
+		 */
+		bzero(&rqi, sizeof(rqi));
+		TAILQ_INIT(&rqi.children);
+		TAILQ_INSERT_TAIL(&rqi.children, qi, entries);
+		snprintf(rqi.qs.qname, PF_QNAME_SIZE, "_root_%s",
+		    qi->qs.ifname);
+		strlcpy(rqi.qs.ifname, qi->qs.ifname, sizeof(rqi.qs.ifname));
+		strlcpy(qi->qs.parent, rqi.qs.qname, sizeof(qi->qs.parent));
+
+		pfctl_load_queue(pf, ticket, &rqi);
+
+	}
+
+	return (0);
+}
+
+u_int
+pfctl_leafqueue_check(char *qname)
+{
+	struct pfctl_qsitem	*qi;
+	if (qname == NULL || qname[0] == 0)
+		return (0);
+
+	TAILQ_FOREACH(qi, &rootqs, entries) {
+		if (strcmp(qname, qi->qs.qname))
+			continue;
+		if (!TAILQ_EMPTY(&qi->children)) {
+			printf("queue %s: packets must be assigned to leaf "
+			    "queues only\n", qname);
+			return (1);
+		}
+	}
+	TAILQ_FOREACH(qi, &qspecs, entries) {
+		if (strcmp(qname, qi->qs.qname))
+			continue;
+		if (!TAILQ_EMPTY(&qi->children)) {
+			printf("queue %s: packets must be assigned to leaf "
+			    "queues only\n", qname);
+			return (1);
+		}
+	}
+	return (0);
+}
+
+u_int
+pfctl_check_qassignments(struct pf_ruleset *rs)
+{
+	struct pf_rule		*r;
+	struct pfctl_qsitem	*qi;
+	u_int			 flags, errs = 0;
+
+	/* main ruleset: need find_childqs to populate qi->children */
+	if (rs->anchor->path[0] == 0) {
+		TAILQ_FOREACH(qi, &rootqs, entries) {
+			flags = pfctl_find_childqs(qi);
+			if (!(flags & HFSC_DEFAULTCLASS))
+				errx(1, "no default queue specified");
+		}
+	}
+
+	TAILQ_FOREACH(r, rs->rules.active.ptr, entries) {
+		if (r->anchor)
+			errs += pfctl_check_qassignments(&r->anchor->ruleset);
+		if (pfctl_leafqueue_check(r->qname) ||
+		    pfctl_leafqueue_check(r->pqname))
+			errs++;
+	}
+	return (errs);
+}
+
 int
 pfctl_load_ruleset(struct pfctl *pf, char *path, struct pf_ruleset *rs,
     int depth)
@@ -1305,6 +1499,14 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 		if ((opts & PF_OPT_NOACTION) == 0)
 			ERRX("Syntax error in config file: "
 			    "pf rules not loaded");
+		else
+			goto _error;
+	}
+
+	if (pfctl_check_qassignments(&pf.anchor->ruleset) ||
+	    pfctl_load_queues(&pf)) {
+		if ((opts & PF_OPT_NOACTION) == 0)
+			ERRX("Unable to load queues into kernel");
 		else
 			goto _error;
 	}
@@ -1747,6 +1949,7 @@ pfctl_debug(int dev, u_int32_t level, int opts)
 
 	memset(&t, 0, sizeof(t));
 	t.pfrb_type = PFRB_TRANS;
+printf("pfctl_debug DIOCXCOMMIT\n");
 	if (pfctl_trans(dev, &t, DIOCXBEGIN, 0) ||
 	    ioctl(dev, DIOCSETDEBUG, &level) ||
 	    pfctl_trans(dev, &t, DIOCXCOMMIT, 0))
@@ -2119,6 +2322,8 @@ main(int argc, char *argv[])
 			    anchorname, 0, anchor_wildcard, shownr);
 			break;
 		case 'q':
+			pfctl_show_queues(dev, ifaceopt, opts,
+			    opts & PF_OPT_VERBOSE2);
 			pfctl_show_altq(dev, ifaceopt, opts,
 			    opts & PF_OPT_VERBOSE2);
 			break;
