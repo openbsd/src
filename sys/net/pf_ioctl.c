@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.259 2013/03/28 16:45:16 tedu Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.260 2013/10/12 11:55:45 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -143,7 +143,7 @@ TAILQ_HEAD(pf_tags, pf_tagname)	pf_tags = TAILQ_HEAD_INITIALIZER(pf_tags),
 #if (PF_QNAME_SIZE != PF_TAG_NAME_SIZE)
 #error PF_QNAME_SIZE must be equal to PF_TAG_NAME_SIZE
 #endif
-u_int16_t		 tagname2tag(struct pf_tags *, char *);
+u_int16_t		 tagname2tag(struct pf_tags *, char *, int);
 void			 tag2tagname(struct pf_tags *, u_int16_t, char *);
 void			 tag_unref(struct pf_tags *, u_int16_t);
 int			 pf_rtlabel_add(struct pf_addr_wrap *);
@@ -341,7 +341,7 @@ pf_purge_rule(struct pf_ruleset *ruleset, struct pf_rule *rule)
 }
 
 u_int16_t
-tagname2tag(struct pf_tags *head, char *tagname)
+tagname2tag(struct pf_tags *head, char *tagname, int create)
 {
 	struct pf_tagname	*tag, *p = NULL;
 	u_int16_t		 new_tagid = 1;
@@ -351,6 +351,9 @@ tagname2tag(struct pf_tags *head, char *tagname)
 			tag->ref++;
 			return (tag->tag);
 		}
+
+	if (!create)
+		return (0);
 
 	/*
 	 * to avoid fragmentation, we do a linear search from the beginning
@@ -416,9 +419,9 @@ tag_unref(struct pf_tags *head, u_int16_t tag)
 }
 
 u_int16_t
-pf_tagname2tag(char *tagname)
+pf_tagname2tag(char *tagname, int create)
 {
-	return (tagname2tag(&pf_tags, tagname));
+	return (tagname2tag(&pf_tags, tagname, create));
 }
 
 void
@@ -480,7 +483,7 @@ pf_rtlabel_copyout(struct pf_addr_wrap *a)
 u_int32_t
 pf_oqname2qid(char *qname)
 {
-	return ((u_int32_t)tagname2tag(&pf_oqids, qname));
+	return ((u_int32_t)tagname2tag(&pf_oqids, qname, 1));
 }
 
 void
@@ -2588,10 +2591,10 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to,
 	to->return_icmp6 = from->return_icmp6;
 	to->max_mss = from->max_mss;
 	if (to->tagname[0])
-		if ((to->tag = pf_tagname2tag(to->tagname)) == 0)
+		if ((to->tag = pf_tagname2tag(to->tagname, 1)) == 0)
 			return (EBUSY);
 	if (to->match_tagname[0])
-		if ((to->match_tag = pf_tagname2tag(to->match_tagname)) == 0)
+		if ((to->match_tag = pf_tagname2tag(to->match_tagname, 1)) == 0)
 			return (EBUSY);
 	to->scrub_flags = from->scrub_flags;
 	to->uid = from->uid;

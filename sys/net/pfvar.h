@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.389 2013/07/23 22:47:10 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.390 2013/10/12 11:55:46 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1912,7 +1912,7 @@ int		 pfi_clear_flags(const char *, int);
 void		 pfi_xcommit(void);
 
 int		 pf_match_tag(struct mbuf *, struct pf_rule *, int *);
-u_int16_t	 pf_tagname2tag(char *);
+u_int16_t	 pf_tagname2tag(char *, int);
 void		 pf_tag2tagname(u_int16_t, char *);
 void		 pf_tag_ref(u_int16_t);
 void		 pf_tag_unref(u_int16_t);

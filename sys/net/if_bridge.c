@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.214 2013/08/21 13:53:48 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.215 2013/10/12 11:55:45 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2137,7 +2137,7 @@ bridge_addrule(struct bridge_iflist *bif, struct ifbrlreq *req, int out)
 	n->brl_flags = req->ifbr_flags;
 #if NPF > 0
 	if (req->ifbr_tagname[0])
-		n->brl_tag = pf_tagname2tag(req->ifbr_tagname);
+		n->brl_tag = pf_tagname2tag(req->ifbr_tagname, 1);
 	else
 		n->brl_tag = 0;
 #endif
