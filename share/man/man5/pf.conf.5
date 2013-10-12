@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.528 2013/10/12 12:31:37 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.529 2013/10/12 12:44:24 sthen Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -1454,7 +1454,7 @@ Only leaf queues, i. e. queues without children, can be used to assign
 packets to.
 The root queue must specifically reference an interface, all other queues
 pick up the interface(s) they should be created on from their parent queues
-unless explicitely specified.
+unless explicitly specified.
 .Pp
 In the following example, a queue named std is created on the interface em0,
 with 3 child queues ssh, mail and http.
