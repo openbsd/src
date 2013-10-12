@@ -1,6 +1,7 @@
-.\"	$OpenBSD: pf.conf.5,v 1.527 2013/04/25 16:53:11 sobrado Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.528 2013/10/12 12:31:37 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
+.\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -27,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 25 2013 $
+.Dd $Mdocdate: October 12 2013 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1436,233 +1437,80 @@ With 9000 state table entries, the timeout values are scaled to 50%
 .Sh QUEUEING
 Packets can be assigned to queues for the purpose of bandwidth
 control.
-At least two declarations are required to configure queues, and later
+At least one declaration is required to configure queues, and later
 any packet filtering rule can reference the defined queues by name.
 During the filtering component of
 .Nm ,
 the last referenced
 .Ar queue
-name is where any packets from
-.Ar pass
-rules will be queued, while for
-.Ar block
-rules it specifies where any resulting ICMP or TCP RST
+name is where any passed packets will be queued, while for
+blocked packets it specifies where any resulting ICMP or TCP RST
 packets should be queued.
-The
-.Em scheduler
-defines the algorithm used to decide which packets get delayed, dropped, or
-sent out immediately.
-There are three schedulers currently supported:
-.Bl -tag -width xxxx
-.It Ar cbq
-Class Based Queueing.
+If the referenced queue does not exist on the outgoing interface the
+default queue for that interface is used.
 Queues attached to an interface build a tree,
 thus each queue can have further child queues.
-Each queue can have a
-.Ar priority
-and a
-.Ar bandwidth
-assigned.
-Priority mainly controls the time packets take to get sent out,
-while bandwidth has primarily effects on throughput.
-.Ar cbq
-achieves both partitioning and sharing of link bandwidth
-by hierarchically structured classes.
-Each class has its own queue
-and is assigned its share of bandwidth.
-A child class can borrow bandwidth from its parent class
-as long as excess bandwidth is available
-(see the option
-.Ar borrow ,
-below).
-.It Ar hfsc
-Hierarchical Fair Service Curve.
-Queues attached to an interface build a tree,
-thus each queue can have further child queues.
-Each queue can have a
-.Ar priority
-and a
-.Ar bandwidth
-assigned.
-Priority mainly controls the time packets take to get sent out,
-while bandwidth primarily affects throughput.
-.Ar hfsc
-supports both link-sharing and guaranteed real-time services.
-It employs a service curve based QoS model,
-and its unique feature is an ability to decouple
-delay and bandwidth allocation.
-.It Ar priq
-Priority Queueing.
-Queues are flat attached to the interface,
-thus queues cannot have further child queues.
-Each queue has a unique
-.Ar priority
-assigned, ranging from 0 to 15.
-Packets in the queue with the highest priority are processed first.
-.El
+Only leaf queues, i. e. queues without children, can be used to assign
+packets to.
+The root queue must specifically reference an interface, all other queues
+pick up the interface(s) they should be created on from their parent queues
+unless explicitely specified.
 .Pp
-The interfaces on which queueing should be activated are declared using
-the
-.Ar altq on
-declaration.
-.Ar altq on
-has the following keywords:
-.Bl -tag -width xxxx
-.It Aq Ar interface
-Queueing is enabled on the named interface.
-.It Aq Ar scheduler
-Specifies which queueing scheduler to use.
-.It Ar bandwidth Aq Ar bw
-The maximum bitrate for all queues on an
-interface may be specified using the
-.Ar bandwidth
+In the following example, a queue named std is created on the interface em0,
+with 3 child queues ssh, mail and http.
+.Bd -literal -offset indent
+queue std on em0 bandwidth 100M
+queue ssh parent std bandwidth 10M
+queue mail parent std bandwidth 10M
+queue http parent std bandwidth 80M default
+.Ed
+.Pp
+The specified bandwidth is the target bandwidth, every queue can receive
+more bandwidth as long as the parent still has some available.
+The maximum bandwidth that should be assigned to a given queue can be limited
+using the
+.Ar max
 keyword.
-The value can be specified as an absolute value or as a
-percentage of the interface bandwidth.
-When using an absolute value, the suffixes
-.Ar b ,
-.Ar Kb ,
-.Ar Mb ,
+Similarily, a minimum (reserved) bandwidth can be specified.
+.Bd -literal -offset indent
+queue ssh parent std bandwidth 10M, min 5M, max 25M
+.Ed
+.Pp
+For each of these 3 bandwidth specifications an additional burst bandwidth and
+time can be specified.
+.Bd -literal -offset indent
+queue ssh parent std bandwidth 10M burst 90M for 100ms
+.Ed
+.Pp
+All
+.Ar bandwidth
+values must be specified as an absolute value.
+The suffixes
+.Ar K ,
+.Ar M ,
 and
-.Ar Gb
+.Ar G
 are used to represent bits, kilobits, megabits, and
 gigabits per second, respectively.
 The value must not exceed the interface bandwidth.
-If
-.Ar bandwidth
-is not specified, the interface bandwidth is used
-(but take note that some interfaces do not know their bandwidth,
-or can adapt their bandwidth rates).
-.It Ar qlimit Aq Ar limit
-The maximum number of packets held in the queue.
-The default is 50.
-.It Ar tbrsize Aq Ar size
-Adjusts the size, in bytes, of the token bucket regulator.
-If not specified, heuristics based on the
-interface bandwidth are used to determine the size.
-.It Ar queue Aq Ar list
-Defines a list of subqueues to create on an interface.
-.El
 .Pp
-In the following example, the interface dc0
-should queue up to 5Mbps in four second-level queues using
-Class Based Queueing.
-Those four queues will be shown in a later example.
-.Bd -literal -offset indent
-altq on dc0 cbq bandwidth 5Mb queue { std, http, mail, ssh }
-.Ed
-.Pp
-Once interfaces are activated for queueing using the
-.Ar altq
-directive, a sequence of
-.Ar queue
-directives may be defined.
-The name associated with a queue
-must match a queue defined in the altq
-directive or, except for the
-.Ar priq
-scheduler, in a parent queue declaration.
-The following keywords can be used:
+In addition to the bandwidth specifications queues support the following
+options:
 .Bl -tag -width xxxx
+.It Ar default
+Packets not matched by another queue are assigned to this queue.
+Exactly one default queue per interface is required.
 .It Ar on Aq Ar interface
 Specifies the interface the queue operates on.
 If not given, it operates on all matching interfaces.
-.It Ar bandwidth Aq Ar bw
-Specifies the maximum bitrate to be processed by the queue.
-This value must not exceed the value of the parent
-.Ar queue
-and can be specified as an absolute value or a percentage of the parent
-queue's bandwidth.
-If not specified, defaults to 100% of the parent queue's bandwidth.
-The
-.Ar priq
-scheduler does not support bandwidth specification.
-.It Ar priority Aq Ar level
-Between queues a priority level can be set.
-For
-.Ar cbq
-and
-.Ar hfsc ,
-the range is 0 to 7 and for
-.Ar priq ,
-the range is 0 to 15.
-The default for all is 1.
-.Ar priq
-queues with a higher priority are always served first.
-.Ar cbq
-and
-.Ar hfsc
-queues with a higher priority are preferred in the case of overload.
+.It Ar parent Aq Ar name
+Defines which parent queue the queue should be attached to.
+Mandantory for all queues except root queues.
+The parent queue must exist.
 .It Ar qlimit Aq Ar limit
 The maximum number of packets held in the queue.
 The default is 50.
 .El
-.Pp
-The scheduler can specify additional parameters using the format
-.Ar scheduler Ns Pq Ar parameters .
-The parameters are:
-.Bl -tag -width Fl
-.It Ar default
-Packets not matched by another queue are assigned to this one.
-Exactly one default queue is required.
-.It Ar ecn
-Enables Explicit Congestion Notification (ECN) on this queue.
-ECN implies RED.
-.It Ar red
-Enables Random Early Detection (RED) on this queue.
-RED drops packets with a probability proportional to the average
-queue length.
-.El
-.Pp
-The
-.Ar cbq
-scheduler supports an additional option:
-.Pp
-.Bl -tag -width "upperlimit XXXXXXX" -compact -offset 3n
-.It Ar borrow
-The queue can borrow bandwidth from the parent.
-.El
-.Pp
-The
-.Ar hfsc
-scheduler supports some additional options:
-.Pp
-.Bl -tag -width "upperlimit XXXXXXX" -compact -offset 3n
-.It Ar linkshare Aq Ar sc
-The bandwidth share of a backlogged queue.
-.It Ar realtime Aq Ar sc
-The minimum required bandwidth for the queue.
-.It Ar upperlimit Aq Ar sc
-The maximum allowed bandwidth for the queue.
-.El
-.Pp
-.Aq Ar sc
-is an abbreviation for
-.Ar service curve .
-.Pp
-The format for service curve specifications is
-.Ar ( m1 , d , m2 ) .
-.Ar m2
-controls the bandwidth assigned to the queue.
-.Ar m1
-and
-.Ar d
-are optional and can be used to control the initial bandwidth assignment.
-For the first
-.Ar d
-milliseconds the queue gets the bandwidth given as
-.Ar m1 ,
-afterwards the value given in
-.Ar m2 .
-.Pp
-Furthermore, with
-.Ar cbq
-and
-.Ar hfsc ,
-child queues can be specified as in an
-.Ar altq
-declaration, thus building a tree of queues using a part of
-their parent's bandwidth.
 .Pp
 Packets can be assigned to queues based on filter rules by using the
 .Ar queue
@@ -1683,28 +1531,28 @@ sessions get priority over bulk transfers like
 .Xr scp 1
 and
 .Xr sftp 1 .
-The queues may then be referenced by filtering rules (see
+The queues are then referenced by filtering rules (see
 .Sx PACKET FILTERING ,
 above).
 .Bd -literal -offset 4n
-queue std bandwidth 10% cbq(default)
-queue http bandwidth 60% priority 2 cbq(borrow red) \e
-      { employees, developers }
-queue  developers bandwidth 75% cbq(borrow)
-queue  employees bandwidth 15%
-queue mail bandwidth 10% priority 0 cbq(borrow ecn)
-queue ssh bandwidth 20% cbq(borrow) { ssh_interactive, ssh_bulk }
-queue  ssh_interactive bandwidth 50% priority 7 cbq(borrow)
-queue  ssh_bulk bandwidth 50% priority 0 cbq(borrow)
+queue rootq on em0 bandwidth 100M max 100M
+queue http parent rootq bandwidth 60M burst 90M for 100ms
+queue  developers parent http bandwidth 45M
+queue  employees parent http bandwidth 15M
+queue mail parent rootq bandwidth 10M
+queue ssh parent rootq bandwidth 20M
+queue  ssh_interactive parent ssh bandwidth 10M min 5M
+queue  ssh_bulk parent ssh bandwidth 10M
+queue std parent rootq bandwidth 20M default
 
-block return out on dc0 inet all set queue std
-pass out on dc0 inet proto tcp from $developerhosts to any port 80 \e
+block return out on em0 inet all set queue std
+pass out on em0 inet proto tcp from $developerhosts to any port 80 \e
       set queue developers
-pass out on dc0 inet proto tcp from $employeehosts to any port 80 \e
+pass out on em0 inet proto tcp from $employeehosts to any port 80 \e
       set queue employees
-pass out on dc0 inet proto tcp from any to any port 22 \e
-      set queue(ssh_bulk, ssh_interactive)
-pass out on dc0 inet proto tcp from any to any port 25 \e
+pass out on em0 inet proto tcp from any to any port 22 \e
+      set (queue(ssh_bulk, ssh_interactive), prio (6, 3))
+pass out on em0 inet proto tcp from any to any port 25 \e
       set queue mail
 .Ed
 .Sh TABLES
@@ -2761,7 +2609,7 @@ Syntax for
 in BNF:
 .Bd -literal
 line           = ( option | pf-rule |
-                 antispoof-rule | altq-rule | queue-rule | anchor-rule |
+                 antispoof-rule | queue-rule | anchor-rule |
                  anchor-close | load-anchor | table-rule | include )
 
 option         = "set" ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
@@ -2826,10 +2674,7 @@ tableaddr-spec = [ "!" ] tableaddr [ "/" mask-bits ]
 tableaddr      = hostname | ifspec | "self" |
                  ipv4-dotted-quad | ipv6-coloned-hex
 
-altq-rule      = "altq on" interface-name queueopts-list
-                 "queue" subqueue
 queue-rule     = "queue" string [ "on" interface-name ] queueopts-list
-                 subqueue
 
 anchor-rule    = "anchor" [ string ] [ ( "in" | "out" ) ] [ "on" ifspec ]
                  [ af ] [ protospec ] [ hosts ] [ filteropt-list ] [ "{" ]
@@ -2839,11 +2684,11 @@ anchor-close   = "}"
 load-anchor    = "load anchor" string "from" filename
 
 queueopts-list = queueopts-list queueopts | queueopts
-queueopts      = [ "bandwidth" bandwidth-spec ] |
-                 [ "qlimit" number ] | [ "tbrsize" number ] |
-                 [ "priority" number ] | [ schedulers ]
-schedulers     = ( cbq-def | priq-def | hfsc-def )
-bandwidth-spec = "number" ( "b" | "Kb" | "Mb" | "Gb" | "%" )
+queueopts      = [ "bandwidth" bandwidth ] | [ "min" bandwidth ] |
+                 [ "max" bandwidth ] | [ "parent" string ] |
+                 [ "default" ] | [ "qlimit" number ]
+bandwidth      = bandwidth-spec [ "burst" bandwidth-spec "for" number "ms" ]
+bandwidth-spec = number ( "" | "K" | "M" | "G" )
 
 action         = "pass" | "match" | "block" [ return ]
 return         = "drop" | "return" |
@@ -2941,20 +2786,6 @@ pooltype       = ( "bitmask" | "least-states" |
                  "source-hash" [ ( hex-key | string-key ) ] )
                  [ sticky-address ]
 
-subqueue       = string | "{" queue-list "}"
-queue-list     = string [ [ "," ] string ]
-cbq-def        = "cbq" [ "(" cbq-opt [ [ "," ] cbq-opt ] ")" ]
-priq-def       = "priq" [ "(" priq-opt [ [ "," ] priq-opt ] ")" ]
-hfsc-def       = "hfsc" [ "(" hfsc-opt [ [ "," ] hfsc-opt ] ")" ]
-cbq-opt        = ( "default" | "borrow" | "red" | "ecn" )
-priq-opt       = ( "default" | "red" | "ecn" )
-hfsc-opt       = ( "default" | "red" | "ecn" |
-                 linkshare-sc | realtime-sc | upperlimit-sc )
-linkshare-sc   = "linkshare" sc-spec
-realtime-sc    = "realtime" sc-spec
-upperlimit-sc  = "upperlimit" sc-spec
-sc-spec        = ( bandwidth-spec |
-                 "(" bandwidth-spec number bandwidth-spec ")" )
 include        = "include" filename
 .Ed
 .Sh FILES
