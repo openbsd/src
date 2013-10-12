@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.529 2013/10/12 12:44:24 sthen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.530 2013/10/12 21:44:57 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -1450,7 +1450,7 @@ If the referenced queue does not exist on the outgoing interface the
 default queue for that interface is used.
 Queues attached to an interface build a tree,
 thus each queue can have further child queues.
-Only leaf queues, i. e. queues without children, can be used to assign
+Only leaf queues, i.e. queues without children, can be used to assign
 packets to.
 The root queue must specifically reference an interface, all other queues
 pick up the interface(s) they should be created on from their parent queues
