@@ -1738,6 +1738,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/bpf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/bpfdesc.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/ethertypes.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/net/hfsc.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_aoe.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_arp.ph
