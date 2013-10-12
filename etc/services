@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.80 2013/02/16 07:13:03 ajacoutot Exp $
+#	$OpenBSD: services,v 1.81 2013/10/12 20:45:22 deraadt Exp $
 #
 # Network services, Internet style
 #
@@ -248,6 +248,7 @@ krb524		4444/tcp			# Kerberos 5->4
 krb524		4444/udp			# Kerberos 5->4
 ipsec-nat-t	4500/tcp	ipsec-msft	# IPsec NAT-Traversal
 ipsec-nat-t	4500/udp	ipsec-msft	# IPsec NAT-Traversal
+vxlan		4789/udp			# VXLAN
 rfe		5002/tcp			# Radio Free Ethernet
 rfe		5002/udp			# Actually uses UDP only
 sip		5060/tcp			# SIP
