@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchide.c,v 1.4 2009/12/04 04:59:48 drahn Exp $	 */
+/* $OpenBSD: crunchide.c,v 1.5 2013/10/13 17:23:41 guenther Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -72,13 +72,6 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include "mangle.h"
-
-/*
- * if __ELF__ is defined, do not bother supporting AOUT.
- */
-#if defined(_NLIST_DO_AOUT) && !(defined(__ELF__))
-#define DO_AOUT
-#endif
 
 void            usage(void);
 
@@ -216,20 +209,6 @@ struct nlist   *symbase;
 #define IS_GLOBAL_DEFINED(sp) \
 	(((sp)->n_type & N_EXT) && ((sp)->n_type & N_TYPE) != N_UNDF)
 
-#ifdef DO_AOUT
-#if defined(__sparc__)
-/* is the relocation entry dependent on a symbol? */
-#define IS_SYMBOL_RELOC(rp)   \
-	((rp)->r_extern || \
-	((rp)->r_type >= RELOC_BASE10 && (rp)->r_type <= RELOC_BASE22) || \
-	(rp)->r_type == RELOC_JMP_TBL)
-#else
-/* is the relocation entry dependent on a symbol? */
-#define IS_SYMBOL_RELOC(rp)   \
-		  ((rp)->r_extern||(rp)->r_baserel||(rp)->r_jmptable)
-#endif
-#endif
-
 void            check_reloc(char *filename, struct relocation_info * relp);
 
 void 
@@ -237,11 +216,6 @@ hide_syms(char *filename)
 {
 	int             inf;
 	struct stat     infstat;
-#ifdef DO_AOUT
-	struct relocation_info *relp;
-	struct nlist   *symp;
-	u_char          zero = 0;
-#endif
 	char           *buf;
 
 	/*
@@ -283,73 +257,4 @@ hide_syms(char *filename)
 		return;
 	}
 #endif				/* _NLIST_DO_ECOFF */
-
-#ifdef DO_AOUT
-	aoutdata = buf;
-
-	/*
-         * Check the header and calculate offsets and sizes from it.
-         */
-	hdrp = (struct exec *) aoutdata;
-
-	if (N_BADMAG(*hdrp)) {
-		fprintf(stderr, "%s: bad magic: not an a.out, ecoff or elf  file\n",
-		    filename);
-		close(inf);
-		return;
-	}
-	textrel = (struct relocation_info *) (aoutdata + N_TRELOFF(*hdrp));
-	datarel = (struct relocation_info *) (aoutdata + N_DRELOFF(*hdrp));
-	symbase = (struct nlist *) (aoutdata + N_SYMOFF(*hdrp));
-	strbase = (char *) (aoutdata + N_STROFF(*hdrp));
-
-	ntextrel = hdrp->a_trsize / sizeof(struct relocation_info);
-	ndatarel = hdrp->a_drsize / sizeof(struct relocation_info);
-	nsyms = hdrp->a_syms / sizeof(struct nlist);
-
-	/*
-         * Zap the type field of all globally-defined symbols.  The linker will
-         * subsequently ignore these entries.  Don't zap any symbols in the
-         * keep list.
-         */
-	for (symp = symbase; symp < symbase + nsyms; symp++)
-		if (IS_GLOBAL_DEFINED(symp) && !in_keep_list(SYMSTR(symp))) {
-			/*
-		         * XXX Our VM system has some problems, so
-		         * avoid the VM system....
-		         */
-			lseek(inf, (off_t) ((void *) &symp->n_type -
-			    (void *) buf), SEEK_SET);
-			write(inf, &zero, sizeof zero);
-			symp->n_type = 0;
-		}
-	/*
-         * Check whether the relocation entries reference any symbols that we
-         * just zapped.  I don't know whether ld can handle this case, but I
-         * haven't encountered it yet.  These checks are here so that the program
-         * doesn't fail silently should such symbols be encountered.
-         */
-	for (relp = textrel; relp < textrel + ntextrel; relp++)
-		check_reloc(filename, relp);
-	for (relp = datarel; relp < datarel + ndatarel; relp++)
-		check_reloc(filename, relp);
-
-	msync(buf, infstat.st_size, MS_SYNC);
-	munmap(buf, infstat.st_size);
-	close(inf);
-#endif				/* DO_AOUT */
 }
-
-#ifdef DO_AOUT
-void 
-check_reloc(char *filename, struct relocation_info * relp)
-{
-	/* bail out if we zapped a symbol that is needed */
-	if (IS_SYMBOL_RELOC(relp) && symbase[relp->r_symbolnum].n_type == 0) {
-		fprintf(stderr,
-		    "%s: oops, have hanging relocation for %s: bailing out!\n",
-		    filename, SYMSTR(&symbase[relp->r_symbolnum]));
-		exit(1);
-	}
-}
-#endif				/* DO_AOUT */
