@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.2 2013/10/13 10:41:11 reyk Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.3 2013/10/13 12:21:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -183,7 +183,7 @@ vxlanstart(struct ifnet *ifp)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
-		vxlan_output(ifp, m);		
+		vxlan_output(ifp, m);
 	}
 }
 
@@ -545,7 +545,7 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 	ip->ip_hl = sizeof(struct ip) >> 2;
 	ip->ip_id = htons(ip_randomid());
 	ip->ip_off = 0; /* htons(IP_DF); XXX should we disallow IP fragments? */
-	ip->ip_tos = IPTOS_LOWDELAY;		
+	ip->ip_tos = IPTOS_LOWDELAY;
 	ip->ip_len = htons(sizeof(struct udpiphdr) + len);
 	if (sc->sc_ttl > 0)
 		ip->ip_ttl = sc->sc_ttl;
@@ -574,7 +574,7 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 	vi->ui_v.vxlan_id = htonl(sc->sc_vnetid << VXLAN_VNI_S);
 
 	/* UDP checksum should be 0 */
-	ui->ui_sum = 0;	
+	ui->ui_sum = 0;
 #endif
 
 	ifp->if_opackets++;

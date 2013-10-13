@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.272 2013/10/13 10:10:00 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.273 2013/10/13 12:19:30 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -407,7 +407,7 @@ const struct	cmd {
 	{ "-nwflag",	NEXTARG,	0,		unsetifnwflag },
 	{ "flowsrc",	NEXTARG,	0,		setpflow_sender },
 	{ "-flowsrc",	1,		0,		unsetpflow_sender },
-	{ "flowdst", 	NEXTARG,	0,		setpflow_receiver },
+	{ "flowdst",	NEXTARG,	0,		setpflow_receiver },
 	{ "-flowdst", 1,		0,		unsetpflow_receiver },
 	{ "pflowproto", NEXTARG,	0,		setpflowproto },
 	{ "-inet6",	IFXF_NOINET6,	0,		setifxflags } ,
@@ -416,7 +416,7 @@ const struct	cmd {
 	{ "add",	NEXTARG,	0,		bridge_add },
 	{ "del",	NEXTARG,	0,		bridge_delete },
 	{ "addspan",	NEXTARG,	0,		bridge_addspan },
-	{ "delspan",	NEXTARG, 	0,		bridge_delspan },
+	{ "delspan",	NEXTARG,	0,		bridge_delspan },
 	{ "discover",	NEXTARG,	0,		setdiscover },
 	{ "-discover",	NEXTARG,	0,		unsetdiscover },
 	{ "blocknonip", NEXTARG,	0,		setblocknonip },
@@ -700,7 +700,8 @@ main(int argc, char *argv[])
 
 				if (argv[1]) {
 					for (p0 = cmds; p0->c_name; p0++)
-						if (strcmp(argv[1], p0->c_name) == 0) {
+						if (strcmp(argv[1],
+						    p0->c_name) == 0) {
 							noarg = 0;
 							break;
 						}
@@ -2698,7 +2699,7 @@ phys_status(int force)
 	const char *ver = "";
 	const int niflag = NI_NUMERICHOST;
 	struct if_laddrreq req;
-	in_port_t dstport = 0;	
+	in_port_t dstport = 0;
 
 	psrcaddr[0] = pdstaddr[0] = '\0';
 
@@ -2735,13 +2736,10 @@ phys_status(int force)
 
 	if (dstport)
 		printf(":%u", ntohs(dstport));
-
 	if (ioctl(s, SIOCGVNETID, (caddr_t)&ifr) == 0 && ifr.ifr_vnetid > 0)
 		printf(" vnetid %d", ifr.ifr_vnetid);
-
 	if (ioctl(s, SIOCGLIFPHYTTL, (caddr_t)&ifr) == 0 && ifr.ifr_ttl > 0)
 		printf(" ttl %d", ifr.ifr_ttl);
-
 #ifndef SMALL
 	if (ioctl(s, SIOCGLIFPHYRTABLE, (caddr_t)&ifr) == 0 &&
 	    (rdomainid != 0 || ifr.ifr_rdomainid != 0))
@@ -3424,8 +3422,8 @@ carp_status(void)
 			printf("\tcarp: %s carpdev %s vhid %u advbase %d "
 			    "advskew %u%s\n", state,
 			    carpr.carpr_carpdev[0] != '\0' ?
-		    	    carpr.carpr_carpdev : "none", carpr.carpr_vhids[0],
-		    	    carpr.carpr_advbase, carpr.carpr_advskews[0],
+			    carpr.carpr_carpdev : "none", carpr.carpr_vhids[0],
+			    carpr.carpr_advbase, carpr.carpr_advskews[0],
 			    peer);
 		} else {
 			if (i == 0) {
@@ -3906,7 +3904,7 @@ setpflow_sender(const char *val, int d)
 	preq.addrmask |= PFLOW_MASK_SRCIP;
 	preq.sender_ip.s_addr = ((struct sockaddr_in *)
 	    sender->ai_addr)->sin_addr.s_addr;
-	
+
 	if (ioctl(s, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETPFLOW");
 
@@ -4760,7 +4758,7 @@ void
 printifhwfeatures(const char *unused, int show)
 {
 	struct if_data ifrdat;
-	
+
 	if (!show) {
 		if (showcapsflag)
 			usage(1);
