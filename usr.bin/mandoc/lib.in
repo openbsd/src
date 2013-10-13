@@ -1,4 +1,4 @@
-/*	$Id: lib.in,v 1.10 2013/10/13 02:55:04 schwarze Exp $ */
+/*	$Id: lib.in,v 1.11 2013/10/13 14:46:38 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -24,7 +24,7 @@
  */
 
 LINE("libalias",	"Packet Aliasing Library (libalias, \\-lalias)")
-LINE("libarchive",	"Reading and Writing Streaming Archives Library (libarchive, \\-larchive)")
+LINE("libarchive",	"Streaming Archive Library (libarchive, \\-larchive)")
 LINE("libarm",		"ARM Architecture Library (libarm, \\-larm)")
 LINE("libarm32",	"ARM32 Architecture Library (libarm32, \\-larm32)")
 LINE("libbluetooth",	"Bluetooth Library (libbluetooth, \\-lbluetooth)")
@@ -46,10 +46,11 @@ LINE("libdisk",		"Interface to Slice and Partition Labels Library (libdisk, \\-l
 LINE("libdm",		"Device Mapper Library (libdm, \\-ldm)")
 LINE("libdwarf",	"DWARF Access Library (libdwarf, \\-ldwarf)")
 LINE("libedit",		"Command Line Editor Library (libedit, \\-ledit)")
+LINE("libefi",		"EFI Runtime Services Library (libefi, \\-lefi)")
 LINE("libelf",		"ELF Access Library (libelf, \\-lelf)")
 LINE("libevent",	"Event Notification Library (libevent, \\-levent)")
 LINE("libexecinfo",	"Backtrace Information Library (libexecinfo, \\-lexecinfo)")
-LINE("libfetch",	"File Transfer Library for URLs (libfetch, \\-lfetch)")
+LINE("libfetch",	"File Transfer Library (libfetch, \\-lfetch)")
 LINE("libfsid",		"Filesystem Identification Library (libfsid, \\-lfsid)")
 LINE("libftpio",	"FTP Connection Management Library (libftpio, \\-lftpio)")
 LINE("libform",		"Curses Form Library (libform, \\-lform)")
