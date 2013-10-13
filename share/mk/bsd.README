@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.51 2013/08/10 10:19:35 ajacoutot Exp $
+#	$OpenBSD: bsd.README,v 1.52 2013/10/13 23:30:12 guenther Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -465,6 +465,18 @@ It has rules for building profiled objects; profiled libraries are
 built by default.
 
 Libraries are ranlib'd when made.
+
+In addition, a reduced version of a library, including just specific
+objects that are compiled with additional options to reduce their
+size may be built.  This is used by the distrib/ tree and crunchgen
+when building ramdisks.  This sets/uses the following variables:
+
+DIST_LIB	The path of the library to build. [lib${LIB}_d.a]
+
+DIST_OBJS	The (sub)set of .o files to include in ${DIST_LIB}. [${OBJS}]
+
+DIST_CFLAGS	Additional flags for the C compiler and assembler.
+		[-Os]
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 

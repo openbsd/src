@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.69 2013/03/18 10:51:35 mpi Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.70 2013/10/13 23:30:12 guenther Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -23,14 +23,17 @@ SHLIB_MINOR=${minor}
 
 # prefer .S to a .c, add .po, remove stuff not used in the BSD libraries.
 # .so used for PIC object files.
+# .do used for distrib "crunchgen" object files
 # .m for objective c files.
 .SUFFIXES:
-.SUFFIXES: .out .o .go .po .so .S .s .c .cc .cpp .C .cxx .f .y .l .m4 .m
+.SUFFIXES: .out .o .go .po .so .do .S .s .c .cc .cpp .C .cxx .f .y .l .m4 .m
 
 .if defined(NOPIE)
 CFLAGS+=	${NOPIE_FLAGS}
 AFLAGS+=	${NOPIE_FLAGS}
 .endif
+
+DIST_CFLAGS+=	-Os
 
 .c.o:
 	@echo "${COMPILE.c} ${.IMPSRC} -o ${.TARGET}"
@@ -53,6 +56,12 @@ AFLAGS+=	${NOPIE_FLAGS}
 .c.so:
 	@echo "${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+.c.do:
+	@echo "${COMPILE.c} ${DIST_CFLAGS} ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.c} ${DIST_CFLAGS} ${.IMPSRC}  -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -133,6 +142,14 @@ AFLAGS+=	${NOPIE_FLAGS}
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
+.S.do .s.do:
+	@echo "${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${DIST_CFLAGS} \
+	    ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${DIST_CFLAGS} ${.IMPSRC} \
+	    -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
 .if ${WARNINGS:L} == "yes"
 CFLAGS+=	${CDIAGFLAGS}
 CXXFLAGS+=	${CXXDIAGFLAGS}
@@ -188,6 +205,27 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: ${SOBJS} ${DPADD}
 	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 	    `${LORDER} ${SOBJS}|tsort -q` ${LDADD}
 
+# all .do files...
+DOBJS+=	${OBJS:.o=.do}
+
+# .do files that we actually need for where this dist lib will be used
+.if defined(DIST_OBJS)
+SELECTED_DOBJS=${DIST_OBJS:.o=.do}
+.else
+SELECTED_DOBJS?=${DOBJS}
+.endif
+
+DIST_LIB?=lib${LIB}_d.a
+${DIST_LIB}: ${SELECTED_DOBJS}
+	@echo building distrib ${DIST_LIB} library from ${SELECTED_DOBJS}
+	@rm -f ${DIST_LIB}
+.if !empty(SELECTED_DOBJS)
+	@${AR} cq ${DIST_LIB} `${LORDER} ${SELECTED_DOBJS} | tsort -q`
+.else
+	@${AR} cq ${DIST_LIB}
+.endif
+	${RANLIB} ${DIST_LIB}
+
 .if !target(clean)
 clean: _SUBDIRUSE
 	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
@@ -195,6 +233,7 @@ clean: _SUBDIRUSE
 	rm -f lib${LIB}_g.a ${GOBJS}
 	rm -f lib${LIB}_p.a ${POBJS}
 	rm -f lib${LIB}.so.*.* ${SOBJS}
+	rm -f ${DIST_LIB} ${DOBJS}
 .endif
 
 cleandir: _SUBDIRUSE clean
@@ -206,7 +245,7 @@ afterdepend: .depend
 		echo "$$0: cannot create temp file, exiting..."; \
 		exit 1; \
 	fi; \
-	sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.so:/' \
+	sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.go \1.po \1.so \1.do:/' \
 	      < .depend > $$TMP; \
 	mv $$TMP .depend)
 .endif
