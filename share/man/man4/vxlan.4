@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vxlan.4,v 1.2 2013/10/13 10:41:12 reyk Exp $
+.\"	$OpenBSD: vxlan.4,v 1.3 2013/10/13 10:52:35 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -42,7 +42,7 @@ Each
 interface uses a 24-bit
 .Ic vnetid
 (virtual networks identifier)
-that allows to distinguish multiple virtualized layer 2 networks and
+that distinguishes multiple virtualized layer 2 networks and
 their tunnels between identical tunnel endpoints.
 .Pp
 The interface can operate in three different tunnel modes:
@@ -62,7 +62,6 @@ is configured for multicast mode and added to a
 all broadcast and multicast traffic is sent to the multicast group,
 but directed traffic is sent to unicast IP addresses of individual tunnel
 endpoints, as they are learned by the bridge.
-.Xr 
 .El
 .Pp
 The configuration can be done at runtime or by setting up a
@@ -126,16 +125,6 @@ value to restrict the traffic to the local network:
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr netstart 8
-.Sh HISTORY
-The
-.Nm
-device first appeared in
-.Ox 5.5 .
-.Sh AUTHORS
-The
-.Nm
-driver was written by
-.An Reyk Floeter Aq Mt reyk@openbsd.org .
 .Sh STANDARDS
 .Rs
 .%A M. Mahalingam
@@ -148,8 +137,18 @@ driver was written by
 .%A C. Wright
 .%D May 2013
 .%R draft-mahalingam-dutt-dcops-vxlan-04
-.%T VXLAN: A Framework for Overlaying Virtualized Layer 2 Networks over Layer 3 Networks.
+.%T VXLAN: A Framework for Overlaying Virtualized Layer 2 Networks over Layer 3 Networks
 .Re
+.Sh HISTORY
+The
+.Nm
+device first appeared in
+.Ox 5.5 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Reyk Floeter Aq Mt reyk@openbsd.org .
 .Sh CAVEATS
 The
 .Nm
@@ -158,7 +157,7 @@ protocol overhead and optionally 4 bytes for the encapsulated VLAN tag.
 The default MTU is set to 1500 bytes but can be adjusted if the
 transport interfaces carrying the tunnel traffic do not support larger
 MTUs, the tunnel traffic is leaving the local network, or if
-interoperability with another implementation requires to run a
+interoperability with another implementation requires running a
 decreased MTU of 1450 bytes.
 In any other case, it is commonly recommended to set the MTU of the
 transport interfaces to at least 1600 bytes.
