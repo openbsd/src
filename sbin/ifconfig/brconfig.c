@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.7 2013/10/13 10:10:00 reyk Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.8 2013/10/13 12:18:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -612,7 +612,7 @@ bridge_addrs(const char *delim, int d)
 {
 	char dstaddr[NI_MAXHOST];
 	char dstport[NI_MAXSERV];
-	const int niflag = NI_NUMERICHOST;
+	const int niflag = NI_NUMERICHOST|NI_DGRAM;
 	struct ifbaconf ifbac;
 	struct ifbareq *ifba;
 	char *inbuf = NULL, buf[sizeof(ifba->ifba_ifsname) + 1], *inb;
