@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.38 2013/10/13 10:10:03 reyk Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.39 2013/10/13 12:09:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -407,15 +407,7 @@ struct bridge_rtnode {
 	u_int8_t			brt_flags;	/* address flags */
 	u_int8_t			brt_age;	/* age counter */
 	struct				ether_addr brt_addr;	/* dst addr */
-	union {
-		struct sockaddr		sa;
-#ifdef INET
-		struct sockaddr_in	sin;
-#endif
-#ifdef INET6
-		struct sockaddr_in6	sin6;
-#endif
-	}				brt_tunnel;	/* tunnel endpoint */
+	union sockaddr_union		brt_tunnel;	/* tunnel endpoint */
 };
 
 #ifndef BRIDGE_RTABLE_SIZE

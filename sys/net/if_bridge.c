@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.216 2013/10/13 10:10:02 reyk Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.217 2013/10/13 12:09:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -161,7 +161,7 @@ int bridge_ipsec(struct bridge_softc *, struct ifnet *,
 int     bridge_clone_create(struct if_clone *, int);
 int	bridge_clone_destroy(struct ifnet *ifp);
 int	bridge_delete(struct bridge_softc *, struct bridge_iflist *);
-void	bridge_tunnelupdate(struct sockaddr *, struct sockaddr *);
+void	bridge_copyaddr(struct sockaddr *, struct sockaddr *);
 
 #define	ETHERADDR_IS_IP_MCAST(a) \
 	/* struct etheraddr *a;	*/				\
@@ -1720,7 +1720,7 @@ bridge_rtupdate(struct bridge_softc *sc, struct ether_addr *ea,
 		bcopy(ea, &p->brt_addr, sizeof(p->brt_addr));
 		p->brt_if = ifp;
 		p->brt_age = 1;
-		bridge_tunnelupdate(sa, (struct sockaddr *)&p->brt_tunnel);
+		bridge_copyaddr(sa, (struct sockaddr *)&p->brt_tunnel);
 
 		if (setflags)
 			p->brt_flags = flags;
@@ -1747,7 +1747,7 @@ bridge_rtupdate(struct bridge_softc *sc, struct ether_addr *ea,
 			if (q->brt_if == ifp)
 				q->brt_age = 1;
 			ifp = q->brt_if;
-			bridge_tunnelupdate(sa,
+			bridge_copyaddr(sa,
 			     (struct sockaddr *)&q->brt_tunnel);
 
 			goto want;
@@ -1763,7 +1763,7 @@ bridge_rtupdate(struct bridge_softc *sc, struct ether_addr *ea,
 			bcopy(ea, &p->brt_addr, sizeof(p->brt_addr));
 			p->brt_if = ifp;
 			p->brt_age = 1;
-			bridge_tunnelupdate(sa,
+			bridge_copyaddr(sa,
 			    (struct sockaddr *)&p->brt_tunnel);
 
 			if (setflags)
@@ -1786,7 +1786,7 @@ bridge_rtupdate(struct bridge_softc *sc, struct ether_addr *ea,
 			bcopy(ea, &p->brt_addr, sizeof(p->brt_addr));
 			p->brt_if = ifp;
 			p->brt_age = 1;
-			bridge_tunnelupdate(sa,
+			bridge_copyaddr(sa,
 			    (struct sockaddr *)&p->brt_tunnel);
 
 			if (setflags)
@@ -2043,12 +2043,8 @@ bridge_rtfind(struct bridge_softc *sc, struct ifbaconf *baconf)
 				    sizeof(bareq.ifba_ifsname));
 				bcopy(&n->brt_addr, &bareq.ifba_dst,
 				    sizeof(bareq.ifba_dst));
-				if (n->brt_tunnel.sa.sa_family != AF_UNSPEC)
-					bcopy(&n->brt_tunnel.sa,
-					    &bareq.ifba_dstsa,
-					    n->brt_tunnel.sa.sa_len);
-				else
-					bareq.ifba_dstsa.ss_family = AF_UNSPEC;
+				bridge_copyaddr(&n->brt_tunnel.sa,
+				    (struct sockaddr *)&bareq.ifba_dstsa);
 				bareq.ifba_age = n->brt_age;
 				bareq.ifba_flags = n->brt_flags;
 				error = copyout((caddr_t)&bareq,
@@ -2909,10 +2905,10 @@ bridge_tunneluntag(struct mbuf *m)
 }
 
 void
-bridge_tunnelupdate(struct sockaddr *sa, struct sockaddr *tunnel)
+bridge_copyaddr(struct sockaddr *src, struct sockaddr *dst)
 {
-	if (sa != NULL && sa->sa_family != AF_UNSPEC)
-		memcpy(tunnel, sa, sa->sa_len);
+	if (src != NULL && src->sa_family != AF_UNSPEC)
+		memcpy(dst, src, src->sa_len);
 	else
-		tunnel->sa_family = AF_UNSPEC;
+		dst->sa_family = AF_UNSPEC;
 }
