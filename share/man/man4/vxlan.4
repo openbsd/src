@@ -1,0 +1,165 @@
+.\"	$OpenBSD: vxlan.4,v 1.1 2013/10/13 10:10:01 reyk Exp $
+.\"
+.\" Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: October 13 2013 $
+.Dt VXLAN 4
+.Os
+.Sh NAME
+.Nm vxlan
+.Nd virtual extensible local area network tunnel interface
+.Sh SYNOPSIS
+.Cd "pseudo-device vxlan"
+.Sh DESCRIPTION
+The
+.Nm
+interface is a tunnelling pseudo-device for overlaying virtualized
+layer 2 networks over layer 3 networks.
+.Pp
+A
+.Nm
+interface can be created using the
+.Ic ifconfig vxlan Ns Ar N Ic create
+command.
+Once configured, the interface encapsulates and decapsulates Ethernet
+frames in UDP datagrams that are exchanged with tunnel endpoints.
+The default UDP port for VXLAN traffic is 4789.
+.Pp
+Each
+.Nm
+interface uses a 24-bit
+.Ic vnetid
+(virtual networks identifier)
+that allows to distinguish multiple virtualized layer 2 networks and
+their tunnels between identical tunnel endpoints.
+.Pp
+The interface can operate in three different tunnel modes:
+.Bl -tag -width multicast
+.It Ic unicast mode
+When a unicast IP address is configured as the tunnel destination,
+all traffic is sent to a single tunnel endpoint.
+.It Ic multicast mode
+When a multicast IP address is configured as the tunnel destination,
+all traffic is sent to all the tunnel endpoints that subscribed for the
+specified multicast group.
+.It Ic dynamic mode
+When
+.Nm
+is configured for multicast mode and added to a
+.Xr bridge 4 ,
+all broadcast and multicast traffic is sent to the multicast group,
+but directed traffic is sent to unicast IP addresses of individual tunnel
+endpoints, as they are learned by the bridge.
+.Xr 
+.El
+.Pp
+The configuration can be done at runtime or by setting up a
+.Xr hostname.if 5
+configuration file for
+.Xr netstart 8 .
+.Sh EXAMPLES
+Create a tunnel to a unicast tunnel endpoint, using the virtual tunnel
+identifier 5:
+.Bd -literal -offset indent
+# ifconfig vxlan0 tunnel 192.168.1.100 192.168.1.200 vnetid 5
+# ifconfig vxlan0 10.1.1.100/24
+.Ed
+.Pp
+The following examples creates a dynamic tunnel that is attached to a
+.Xr bridge 4 :
+.Bd -literal -offset indent
+# ifconfig vxlan0 tunnel 192.168.1.100 239.1.1.100 vnetid 7395
+# ifconfig vxlan0 10.1.2.100/24
+# ifconfig bridge0 add vxlan0 up
+.Ed
+.Pp
+Prior to the assignment of UDP port 4789 by IANA, some early VXLAN
+implementations used port 8472.
+A non-standard port can be specified with the tunnel destination
+address:
+.Bd -literal -offset indent
+# ifconfig vxlan0 tunnel 192.168.1.100 239.1.1.100:8472
+.Ed
+.Sh SECURITY
+.Nm
+does not provide any integrated security features.
+It is designed to be a simple protocol that can be used in trusted
+data center environments, to carry VM traffic between virtual machine
+hypervisors, and provide virtualized layer 2 networks in Cloud
+infrastructures.
+.Pp
+To protect
+.Nm
+tunnels, the traffic can be protected with IPsec to add authentication
+and encryption for confidentiality.
+.Pp
+The Packet Filter (PF) can be used to filter tunnel traffic with
+endpoint policies in
+.Xr pf.conf 5 :
+.Bd -literal -offset indent
+table <vxlantep> { 192.168.1.200 192.168.1.201 }
+block in on vmx0
+pass out on vmx0
+pass in on vmx0 proto udp from <vxlantep> to port 4789
+.Ed
+.Pp
+The Time-to-Live (TTL) value of the tunnel can be set to 1 or a low
+value to restrict the traffic to the local network:
+.Bd -literal -offset indent
+# ifconfig vxlan0 tunnelttl 1
+.Ed
+.Sh SEE ALSO
+.Xr bridge 4 ,
+.Xr inet 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8 ,
+.Xr netstart 8
+.Sh HISTORY
+The
+.Nm
+device first appeared in
+.Ox 5.5 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Reyk Floeter Aq Mt reyk@openbsd.org .
+.Sh STANDARDS
+.Rs
+.%A M. Mahalingam
+.%A D. Dutt
+.%A K. Duda
+.%A P. Agarwal
+.%A L. Kreeger
+.%A T. Sridhar
+.%A M. Bursell
+.%A C. Wright
+.%D May 2013
+.%R draft-mahalingam-dutt-dcops-vxlan-04
+.%T VXLAN: A Framework for Overlaying Virtualized Layer 2 Networks over Layer 3 Networks.
+.Re
+.Sh CAVEATS
+The
+.Nm
+interface requires at least 50 bytes for the IP, UDP and VXLAN
+protocol overhead and optionally 4 bytes for the encapsulated VLAN tag.
+The default MTU is set to 1450 bytes but can be adjusted if the
+transport interfaces carrying the tunnel traffic support larger MTUs. 
+It is recommended to set the MTU of the transport interfaces to at
+least 1550 bytes and to bump the MTU of the
+.Nm
+interfaces to 1500 bytes accordingly.
+.Pp
+The implementation does not support IPv6 tunnel endpoints at present.

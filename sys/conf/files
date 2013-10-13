@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.555 2013/10/12 12:02:03 henning Exp $
+#	$OpenBSD: files,v 1.556 2013/10/13 10:10:02 reyk Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -541,6 +541,7 @@ pseudo-device trunk: ifnet, ether, ifmedia
 pseudo-device mpe: ifnet, ether
 pseudo-device vether: ifnet, ether
 pseudo-device pppx: ifnet
+pseudo-device vxlan: ifnet, ether, ifmedia
 
 pseudo-device systrace
 
@@ -800,6 +801,7 @@ file net/if_mpe.c			mpe			needs-count
 file net/if_vether.c			vether			needs-count
 file net/if_pppx.c			pppx			needs-count
 file net/if_aoe.c			ether & aoe
+file net/if_vxlan.c			vxlan			needs-count
 file net80211/ieee80211.c		wlan
 file net80211/ieee80211_amrr.c		wlan
 file net80211/ieee80211_crypto.c	wlan

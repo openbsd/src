@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.202 2013/10/01 06:57:25 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.203 2013/10/13 10:10:01 reyk Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -107,6 +107,7 @@ pseudo-device	sppp	1	# Sync PPP/HDLC
 pseudo-device	trunk		# Trunking support
 pseudo-device	tun		# network tunneling over tty
 pseudo-device	vether		# Virtual ethernet
+#pseudo-device	vxlan		# Virtual extensible LAN
 pseudo-device	vlan		# IEEE 802.1Q VLAN
 
 pseudo-device	bio	1	# ioctl multiplexing device

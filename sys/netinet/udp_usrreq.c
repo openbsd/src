@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.166 2013/09/06 18:35:16 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.167 2013/10/13 10:10:04 reyk Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -78,6 +78,7 @@
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#include <net/if_media.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -111,6 +112,11 @@
 #ifdef PIPEX 
 #include <netinet/if_ether.h>
 #include <net/pipex.h>
+#endif
+
+#include "vxlan.h"
+#if NVXLAN > 0
+#include <net/if_vxlan.h>
 #endif
 
 /*
@@ -383,6 +389,20 @@ udp_input(struct mbuf *m, ...)
 		break;
 #endif /* INET6 */
 	}
+
+#if NVXLAN > 0
+	if (vxlan_enable > 0 &&
+#if NPF > 0
+	    !(m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) &&
+#endif
+	    (error = vxlan_lookup(m, uh, iphlen, &srcsa.sa)) != 0) {
+		if (error == -1) {
+			udpstat.udps_hdrops++;
+			m_freem(m);
+		}
+		return;
+	}
+#endif
 
 #ifdef INET6
 	if ((ip6 && IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) ||

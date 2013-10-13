@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.6 2012/12/22 13:20:32 camield Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.7 2013/10/13 10:10:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -40,6 +40,7 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <net/if_bridge.h>
+#include <netdb.h>
 #include <string.h>
 #include <err.h>
 #include <errno.h>
@@ -609,9 +610,13 @@ bridge_addaddr(const char *ifname, const char *addr)
 void
 bridge_addrs(const char *delim, int d)
 {
+	char dstaddr[NI_MAXHOST];
+	char dstport[NI_MAXSERV];
+	const int niflag = NI_NUMERICHOST;
 	struct ifbaconf ifbac;
 	struct ifbareq *ifba;
 	char *inbuf = NULL, buf[sizeof(ifba->ifba_ifsname) + 1], *inb;
+	struct sockaddr *sa;
 	int i, len = 8192;
 
 	/* ifconfig will call us with the argv of the command */
@@ -640,7 +645,13 @@ bridge_addrs(const char *delim, int d)
 		strlcpy(buf, ifba->ifba_ifsname, sizeof(buf));
 		printf("%s%s %s %u ", delim, ether_ntoa(&ifba->ifba_dst),
 		    buf, ifba->ifba_age);
+		sa = (struct sockaddr *)&ifba->ifba_dstsa;
 		printb("flags", ifba->ifba_flags, IFBAFBITS);
+		if (sa->sa_family != AF_UNSPEC &&
+		    getnameinfo(sa, sa->sa_len,
+		    dstaddr, sizeof(dstaddr),
+		    dstport, sizeof(dstport), niflag) == 0)
+			printf(" tunnel %s:%s", dstaddr, dstport);
 		printf("\n");
 	}
 	free(inbuf);

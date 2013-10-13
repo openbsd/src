@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.37 2013/01/23 13:28:36 camield Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.38 2013/10/13 10:10:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -122,6 +122,7 @@ struct ifbareq {
 	u_int8_t		ifba_age;		/* address age */
 	u_int8_t		ifba_flags;		/* address flags */
 	struct ether_addr	ifba_dst;		/* destination addr */
+	struct sockaddr_storage	ifba_dstsa;		/* tunnel endpoint */
 };
 
 #define	IFBAF_TYPEMASK		0x03		/* address type mask */
@@ -406,6 +407,15 @@ struct bridge_rtnode {
 	u_int8_t			brt_flags;	/* address flags */
 	u_int8_t			brt_age;	/* age counter */
 	struct				ether_addr brt_addr;	/* dst addr */
+	union {
+		struct sockaddr		sa;
+#ifdef INET
+		struct sockaddr_in	sin;
+#endif
+#ifdef INET6
+		struct sockaddr_in6	sin6;
+#endif
+	}				brt_tunnel;	/* tunnel endpoint */
 };
 
 #ifndef BRIDGE_RTABLE_SIZE
@@ -441,6 +451,9 @@ int	bridge_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 void	bridge_update(struct ifnet *, struct ether_addr *, int);
 void	bridge_rtdelete(struct bridge_softc *, struct ifnet *, int);
 void	bridge_rtagenode(struct ifnet *, int);
+struct sockaddr *bridge_tunnel(struct mbuf *);
+struct sockaddr *bridge_tunneltag(struct mbuf *, int);
+void	bridge_tunneluntag(struct mbuf *);
 
 struct bstp_state *bstp_create(struct ifnet *);
 void	bstp_destroy(struct bstp_state *);

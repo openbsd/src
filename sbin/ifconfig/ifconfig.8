@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.235 2013/09/13 14:32:52 florian Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.236 2013/10/13 10:10:00 reyk Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: September 13 2013 $
+.Dd $Mdocdate: October 13 2013 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1428,6 +1428,7 @@ for a complete list of the available protocols,
 .Op Oo Fl Oc Ns Cm keepalive Ar period count
 .Op Cm tunnel Ar src_address dest_address
 .Op Cm tunneldomain Ar route-id
+.Op Cm vnetid Ar network-id
 .Ek
 .nr nS 0
 .Pp
@@ -1454,13 +1455,16 @@ is 2 since the round-trip time of keepalive packets needs to be accounted for.
 Disable the
 .Xr gre 4
 keepalive mechanism.
-.It Cm tunnel Ar src_address dest_address
+.It Cm tunnel Ar src_address dest_address Ns Op Ns : Ns Ar dest_port
 Set the source and destination tunnel addresses on a tunnel interface,
 including
 .Xr gif 4 .
 Packets routed to this interface will be encapsulated in
 IPv4 or IPv6, depending on the source and destination address families.
 Both addresses must be of the same family.
+The optional destination port can be specified for interfaces such as
+.Xr vxlan 4 ,
+which further encapsulate the packets in UDP datagrams.
 .It Cm tunneldomain Ar route-id
 Use routing table
 .Ar route-id
@@ -1470,6 +1474,16 @@ interface itself.
 .Ar route-id
 can be set to any valid routing table ID;
 the corresponding routing domain is derived from this table.
+.It Cm tunnelttl Ar ttl
+Set the IP or multicast TTL of the tunnel packets.
+.It Cm vnetid Ar network-id
+Set the virtual network identifier.
+This is a number which is used by tunnel protocols such as
+.Xr vxlan 4
+to identify packets with a virtual network.
+The accepted size of the number depends on the individual tunnel protocol;
+which is a 24-bit number for
+.Xr vxlan 4 .
 .El
 .\" VLAN
 .Sh VLAN

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.52 2013/08/16 12:29:18 mpi Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.53 2013/10/13 10:10:04 reyk Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -183,6 +183,12 @@
 #define SIOCGETKALIVE	_IOWR('i', 164, struct ifkalivereq)
 
 #define	SIOCGIFHARDMTU	_IOWR('i', 165, struct ifreq)	/* get ifnet hardmtu */
+
+#define SIOCSVNETID	_IOW('i', 166, struct ifreq)	/* set virt net id */
+#define SIOCGVNETID	_IOWR('i', 167, struct ifreq)	/* get virt net id */
+
+#define SIOCSLIFPHYTTL	_IOW('i', 168, struct ifreq)	/* set tunnel ttl */
+#define SIOCGLIFPHYTTL	_IOWR('i', 169, struct ifreq)	/* get tunnel ttl */
 
 #define	SIOCSVH		_IOWR('i', 245, struct ifreq)	/* set carp param */
 #define	SIOCGVH		_IOWR('i', 246, struct ifreq)	/* get carp param */

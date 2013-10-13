@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.271 2013/10/09 20:23:46 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.272 2013/10/13 10:10:00 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -168,6 +168,8 @@ void	setifprefixlen(const char *, int);
 void	settunnel(const char *, const char *);
 void	deletetunnel(const char *, int);
 void	settunnelinst(const char *, int);
+void	settunnelttl(const char *, int);
+void	setvnetid(const char *, int);
 #ifdef INET6
 void	setia6flags(const char *, int);
 void	setia6pltime(const char *, int);
@@ -380,6 +382,8 @@ const struct	cmd {
 	{ "tunnel",	NEXTARG2,	0,		NULL, settunnel } ,
 	{ "deletetunnel",  0,		0,		deletetunnel } ,
 	{ "tunneldomain", NEXTARG,	0,		settunnelinst } ,
+	{ "tunnelttl",	NEXTARG,	0,		settunnelttl } ,
+	{ "vnetid",	NEXTARG,	0,		setvnetid },
 	{ "pppoedev",	NEXTARG,	0,		setpppoe_dev },
 	{ "pppoesvc",	NEXTARG,	0,		setpppoe_svc },
 	{ "-pppoesvc",	1,		0,		setpppoe_svc },
@@ -2694,6 +2698,7 @@ phys_status(int force)
 	const char *ver = "";
 	const int niflag = NI_NUMERICHOST;
 	struct if_laddrreq req;
+	in_port_t dstport = 0;	
 
 	psrcaddr[0] = pdstaddr[0] = '\0';
 
@@ -2713,9 +2718,13 @@ phys_status(int force)
 		ver = "6";
 #endif /* INET6 */
 
+	if (req.dstaddr.ss_family == AF_INET)
+		dstport = ((struct sockaddr_in *)&req.dstaddr)->sin_port;
 #ifdef INET6
-	if (req.dstaddr.ss_family == AF_INET6)
+	else if (req.dstaddr.ss_family == AF_INET6) {
 		in6_fillscopeid((struct sockaddr_in6 *)&req.dstaddr);
+		dstport = ((struct sockaddr_in6 *)&req.dstaddr)->sin6_port;
+	}
 #endif /* INET6 */
 	if (getnameinfo((struct sockaddr *)&req.dstaddr, req.dstaddr.ss_len,
 	    pdstaddr, sizeof(pdstaddr), 0, 0, niflag) != 0)
@@ -2723,6 +2732,15 @@ phys_status(int force)
 
 	printf("\ttunnel: inet%s %s -> %s", ver,
 	    psrcaddr, pdstaddr);
+
+	if (dstport)
+		printf(":%u", ntohs(dstport));
+
+	if (ioctl(s, SIOCGVNETID, (caddr_t)&ifr) == 0 && ifr.ifr_vnetid > 0)
+		printf(" vnetid %d", ifr.ifr_vnetid);
+
+	if (ioctl(s, SIOCGLIFPHYTTL, (caddr_t)&ifr) == 0 && ifr.ifr_ttl > 0)
+		printf(" ttl %d", ifr.ifr_ttl);
 
 #ifndef SMALL
 	if (ioctl(s, SIOCGLIFPHYRTABLE, (caddr_t)&ifr) == 0 &&
@@ -3140,15 +3158,28 @@ in6_status(int force)
 void
 settunnel(const char *src, const char *dst)
 {
+	char buf[MAXHOSTNAMELEN+sizeof (":65535")], *dstport;
+	const char *dstip;
 	struct addrinfo *srcres, *dstres;
 	int ecode;
 	struct if_laddrreq req;
+
+	if (strchr (dst, ':') == NULL) {
+		dstip = dst;
+		dstport = NULL;
+	} else {
+		if (strlcpy(buf, dst, sizeof(buf)) >= sizeof(buf))
+			errx(1, "%s bad value", dst);
+		dstport = strchr(buf, ':');
+		*dstport++ = '\0';
+		dstip = buf;
+	}
 
 	if ((ecode = getaddrinfo(src, NULL, NULL, &srcres)) != 0)
 		errx(1, "error in parsing address string: %s",
 		    gai_strerror(ecode));
 
-	if ((ecode = getaddrinfo(dst, NULL, NULL, &dstres)) != 0)
+	if ((ecode = getaddrinfo(dstip, dstport, NULL, &dstres)) != 0)
 		errx(1, "error in parsing address string: %s",
 		    gai_strerror(ecode));
 
@@ -3193,6 +3224,38 @@ settunnelinst(const char *id, int param)
 	ifr.ifr_rdomainid = rdomainid;
 	if (ioctl(s, SIOCSLIFPHYRTABLE, (caddr_t)&ifr) < 0)
 		warn("SIOCSLIFPHYRTABLE");
+}
+
+void
+settunnelttl(const char *id, int param)
+{
+	const char *errmsg = NULL;
+	int ttl;
+
+	ttl = strtonum(id, 0, 0xff, &errmsg);
+	if (errmsg)
+		errx(1, "tunnelttl %s: %s", id, errmsg);
+
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_ttl = ttl;
+	if (ioctl(s, SIOCSLIFPHYTTL, (caddr_t)&ifr) < 0)
+		warn("SIOCSLIFPHYTTL");
+}
+
+void
+setvnetid(const char *id, int param)
+{
+	const char *errmsg = NULL;
+	int vnetid;
+
+	vnetid = strtonum(id, 0, UINT_MAX, &errmsg);
+	if (errmsg)
+		errx(1, "vnetid %s: %s", id, errmsg);
+
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_vnetid = vnetid;
+	if (ioctl(s, SIOCSVNETID, (caddr_t)&ifr) < 0)
+		warn("SIOCSVNETID");
 }
 
 void
