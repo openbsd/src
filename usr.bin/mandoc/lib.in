@@ -1,4 +1,4 @@
-/*	$Id: lib.in,v 1.11 2013/10/13 14:46:38 schwarze Exp $ */
+/*	$Id: lib.in,v 1.12 2013/10/13 15:24:26 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -85,6 +85,7 @@ LINE("libpam",		"Pluggable Authentication Module Library (libpam, \\-lpam)")
 LINE("libpcap",		"Capture Library (libpcap, \\-lpcap)")
 LINE("libpci",		"PCI Bus Access Library (libpci, \\-lpci)")
 LINE("libpmc",		"Performance Counters Library (libpmc, \\-lpmc)")
+LINE("libppath",	"Property-List Paths Library (libppath, \\-lppath)")
 LINE("libposix",	"POSIX Compatibility Library (libposix, \\-lposix)")
 LINE("libposix1e",	"POSIX.1e Security API Library (libposix1e, \\-lposix1e)")
 LINE("libppath",	"Property-List Paths Library (libppath, \\-lppath)")
