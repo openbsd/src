@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vxlan.4,v 1.1 2013/10/13 10:10:01 reyk Exp $
+.\"	$OpenBSD: vxlan.4,v 1.2 2013/10/13 10:41:12 reyk Exp $
 .\"
 .\" Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -155,11 +155,12 @@ The
 .Nm
 interface requires at least 50 bytes for the IP, UDP and VXLAN
 protocol overhead and optionally 4 bytes for the encapsulated VLAN tag.
-The default MTU is set to 1450 bytes but can be adjusted if the
-transport interfaces carrying the tunnel traffic support larger MTUs. 
-It is recommended to set the MTU of the transport interfaces to at
-least 1550 bytes and to bump the MTU of the
-.Nm
-interfaces to 1500 bytes accordingly.
+The default MTU is set to 1500 bytes but can be adjusted if the
+transport interfaces carrying the tunnel traffic do not support larger
+MTUs, the tunnel traffic is leaving the local network, or if
+interoperability with another implementation requires to run a
+decreased MTU of 1450 bytes.
+In any other case, it is commonly recommended to set the MTU of the
+transport interfaces to at least 1600 bytes.
 .Pp
 The implementation does not support IPv6 tunnel endpoints at present.

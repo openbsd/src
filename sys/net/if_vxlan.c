@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.1 2013/10/13 10:10:03 reyk Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.2 2013/10/13 10:41:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -127,10 +127,17 @@ vxlan_clone_create(struct if_clone *ifc, int unit)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	/* XXX should we allow IP fragments? */
+#if 0
+	/*
+	 * Instead of using a decreased MTU of 1450 bytes, prefer
+	 * to use the default Ethernet-size MTU of 1500 bytes and to
+	 * increase the MTU of the outer transport interfaces to
+	 * at least 1550 bytes. The following is disabled by default.
+	 */
 	ifp->if_mtu = ETHERMTU - sizeof(struct ether_header);
 #ifdef INET
 	ifp->if_mtu -= sizeof(struct vxlanudpiphdr);
+#endif
 #endif
 
 	LIST_INSERT_HEAD(&vxlan_tagh[VXLAN_TAGHASH(0)], sc, sc_entry);
