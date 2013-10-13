@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.1 2013/08/07 07:29:19 mpi Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.2 2013/10/13 16:36:46 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Martin Pieuchot
@@ -78,7 +78,17 @@ pci_make_tag(pci_chipset_tag_t pc, int b, int d, int f)
 	if (pc->busnode[b])
 		return PCITAG_CREATE(0, b, d, f);
 
-	for (node = pc->pc_node; node; node = OF_peer(node)) {
+	node = pc->pc_node;
+
+	/*
+	 * Because ht(4) controller nodes do not have a "bus-range"
+	 * property,  we need to start iterating from one of their
+	 * PCI bridge nodes to be able to find our devices.
+	 */
+	if (OF_getprop(node, "bus-range", &busrange, sizeof(busrange)) < 0)
+		node = OF_child(pc->pc_node);
+
+	for (; node; node = OF_peer(node)) {
 		/*
 		 * Check for PCI-PCI bridges.  If the device we want is
 		 * in the bus-range for that bridge, work our way down.
