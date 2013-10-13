@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.9 2011/10/02 22:20:49 edd Exp $ */
+/*	$OpenBSD: exec.c,v 1.10 2013/10/13 20:17:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -31,153 +31,32 @@
 #include <fcntl.h>
 #include <stdio.h>
 
-#ifdef AOUT_SUPPORT
-int	aout_check(char *);
-void	aout_loadkernel(char *);
-void	aout_savekernel(char *);
-caddr_t	aout_adjust(caddr_t);
-caddr_t	aout_readjust(caddr_t);
-#endif
-
-#ifdef ECOFF_SUPPORT
-int	ecoff_check(char *);
-void	ecoff_loadkernel(char *);
-void	ecoff_savekernel(char *);
-caddr_t	ecoff_adjust(caddr_t);
-caddr_t	ecoff_readjust(caddr_t);
-#endif
-
-#ifdef ELF_SUPPORT
 int	elf_check(char *);
 void	elf_loadkernel(char *);
 void	elf_savekernel(char *);
 caddr_t	elf_adjust(caddr_t);
 caddr_t	elf_readjust(caddr_t);
-#endif
-
-#define DO_AOUT	0
-#define DO_ECOFF 1
-#define	DO_ELF 2
-
-int current_exec = -1;
 
 caddr_t
 adjust(caddr_t x)
 {
-	switch (current_exec) {
-#ifdef AOUT_SUPPORT
-	case DO_AOUT:
-		return(aout_adjust(x));
-		break;
-#endif
-#ifdef ECOFF_SUPPORT
-	case DO_ECOFF:
-		return(ecoff_adjust(x));
-		break;
-#endif
-#ifdef ELF_SUPPORT
-	case DO_ELF:
-		return(elf_adjust(x));
-		break;
-#endif
-	default:
-		errx(1, "no supported exec type");
-	}
+	return(elf_adjust(x));
 }
 
 caddr_t
 readjust(caddr_t x)
 {
-	switch (current_exec) {
-#ifdef AOUT_SUPPORT
-	case DO_AOUT:
-		return(aout_readjust(x));
-		break;
-#endif
-#ifdef ECOFF_SUPPORT
-	case DO_ECOFF:
-		return(ecoff_readjust(x));
-		break;
-#endif
-#ifdef ELF_SUPPORT
-	case DO_ELF:
-		return(elf_readjust(x));
-		break;
-#endif
-	default:
-		errx(1, "no supported exec type");
-	}
+	return(elf_readjust(x));
 }
 
 void
 loadkernel(char *file)
 {
-	struct stat			st;
-
-	if (stat(file, &st) == -1)
-		err(1, "cannot stat '%s'", file);
-
-	current_exec = -1;
-
-#ifdef AOUT_SUPPORT
-	if (aout_check(file)) {
-		current_exec = DO_AOUT;
-	}
-#endif
-
-#ifdef ECOFF_SUPPORT
-	if (ecoff_check(file)) {
-		current_exec = DO_ECOFF;
-	}
-#endif
-
-#ifdef ELF_SUPPORT
-	if (elf_check(file)) {
-		current_exec = DO_ELF;
-	}
-#endif
-
-	switch (current_exec) {
-#ifdef AOUT_SUPPORT
-	case DO_AOUT:
-		aout_loadkernel(file);
-		break;
-#endif
-#ifdef ECOFF_SUPPORT
-	case DO_ECOFF:
-		ecoff_loadkernel(file);
-		break;
-#endif
-#ifdef ELF_SUPPORT
-	case DO_ELF:
-		elf_loadkernel(file);
-		break;
-#endif
-	default:
-		errx(1, "no supported exec type");
-	}
+	elf_loadkernel(file);
 }
 
 void
 savekernel(char *outfile)
 {
-	switch (current_exec) {
-#ifdef AOUT_SUPPORT
-	case DO_AOUT:
-		aout_savekernel(outfile);
-		break;
-#endif
-#ifdef ECOFF_SUPPORT
-	case DO_ECOFF:
-		ecoff_savekernel(outfile);
-		break;
-#endif
-#ifdef ELF_SUPPORT
-	case DO_ELF:
-		elf_savekernel(outfile);
-		break;
-#endif
-	default:
-		errx(1, "no supported exec type");
-	}
+	elf_savekernel(outfile);
 }
