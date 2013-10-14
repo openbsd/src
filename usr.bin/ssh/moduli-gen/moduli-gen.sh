@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: moduli-gen.sh,v 1.1 2013/10/10 00:59:18 dtucker Exp $
+#	$OpenBSD: moduli-gen.sh,v 1.2 2013/10/14 02:55:47 dtucker Exp $
 #
 
 srcdir="$1"
@@ -24,8 +24,10 @@ if [ ! -f ${moduli_sieved} ]; then
 	mv ${moduli_sieved}.tmp ${moduli_sieved}
 fi
 
+lines=`gzip -dc ${moduli_sieved} | wc -l`
+
 gzip -dc ${moduli_sieved} | \
-    ssh-keygen -K ${moduli_tested}.ckpt -T ${moduli_tested} && \
+    ssh-keygen -K ${moduli_tested}.ckpt -T ${moduli_tested} -J $lines && \
 mv ${objdir}/moduli.${bits}.tested ${srcdir}/moduli.${bits}
 
 exit 0
