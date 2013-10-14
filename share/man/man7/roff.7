@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.22 2013/08/08 20:07:24 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.23 2013/10/14 01:42:25 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 8 2013 $
+.Dd $Mdocdate: October 14 2013 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -636,6 +636,12 @@ Begin an equation block.
 See
 .Xr eqn 7
 for a description of the equation language.
+.Ss \&fam
+Change the font family.
+This line-scoped request is intended to have one argument specifying
+the font family to be selected.
+It is a groff extension, and currently, it is ignored including its
+arguments, and the number of arguments is not checked.
 .Ss \&ft
 Change the font.
 Its syntax is as follows:
