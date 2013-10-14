@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2013/03/26 18:03:53 jasper Exp $
+#	$OpenBSD: Makefile,v 1.2 2013/10/14 00:00:11 guenther Exp $
 
 REV=		${OSrev}
 
@@ -69,7 +69,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -M -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 
 ${CRUNCHCONF}: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
@@ -83,6 +83,7 @@ do_files:
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
+	    lib*.a lib*.olist ${CBIN}.map \
 	    *.o *.lo *.c bsd ${BSD_RD} rdsetroot
 	rm -rf cd-dir
 

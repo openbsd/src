@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2013/07/05 21:29:51 miod Exp $
+#	$OpenBSD: Makefile,v 1.42 2013/10/14 00:00:12 guenther Exp $
 
 REV=		${OSrev}
 
@@ -123,11 +123,12 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 	    ${CBIN}.conf
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	${CBIN}.conf *.o *.lo *.c bsd bsd.*
+	    lib*.a lib*.olist ${CBIN}.map \
+	    ${CBIN}.conf *.o *.lo *.c bsd bsd.*
 
 .endif	# DESTDIR check
 

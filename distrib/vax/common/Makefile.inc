@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.7 2011/04/18 16:52:10 thib Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 2013/10/14 00:00:14 guenther Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -64,10 +64,12 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../ -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk
+	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 
 clean cleandir:
-	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
+	    *.o *.lo *.c \
+	    lib*.a lib*.olist ${CBIN}.map
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

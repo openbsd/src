@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2011/07/10 04:03:23 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.25 2013/10/14 00:00:08 guenther Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -105,10 +105,11 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 	    ${CBIN}.conf
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
+	    lib*.a lib*.olist ${CBIN}.map \
 	    ${CBIN}.conf *.o *.lo *.c obsd bsd bsd.* ${LIF} ${CDROM}
 
 .ifdef RELEASEDIR

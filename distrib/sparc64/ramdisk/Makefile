@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2011/07/08 21:39:32 drahn Exp $
+#	$OpenBSD: Makefile,v 1.27 2013/10/14 00:00:13 guenther Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -119,7 +119,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
@@ -130,6 +130,7 @@ do_files:
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
+	    lib*.a lib*.olist ${CBIN}.map \
 	    *.o *.lo *.c bsd ${BSD_RD} bsd.gz ${FLOPPY} elfrdsetroot
 
 .ifdef RELEASEDIR
