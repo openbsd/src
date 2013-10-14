@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2012/09/02 23:07:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2013/10/14 11:51:09 mpi Exp $
 #       $NetBSD: Makefile,v 1.1 1996/09/30 16:35:05 ws Exp $
 
 S=      ${.CURDIR}/../../../..
@@ -10,7 +10,8 @@ PROG=           boot.mac
 SRCS=           Locore.c main.c ofdev.c net.c netif_of.c alloc.c cache.c hfs.c
 SRCS+=          boot.c conf.c cmd.c vars.c ctime.c strtol.c
 
-NOMAN=
+MAN?=   	boot.8
+MLINKS?=	boot.8 boot.conf.5
 INSTALL_STRIP=
 BINDIR=         /usr/mdec
 OBJCOPY?=	objcopy
