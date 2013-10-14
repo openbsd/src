@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.3 2013/10/14 18:49:19 syl Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.4 2013/10/14 18:51:56 syl Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -185,15 +185,14 @@ struct ommmc_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	void			*sc_ih; /* Interrupt handler */
-	u_int sc_flags;
+	uint32_t		sc_flags;
 
 	struct device *sdmmc;		/* generic SD/MMC device */
 	int clockbit;			/* clock control bit */
-	u_int clkbase;			/* base clock frequency in KHz */
+	uint32_t clkbase;		/* base clock frequency in KHz */
 	int maxblklen;			/* maximum block length */
 	int flags;			/* flags for this host */
 	uint32_t ocr;			/* OCR value from capabilities */
-//	u_int8_t regs[14];		/* host controller state */
 	uint32_t intr_status;		/* soft interrupt status */
 	uint32_t intr_error_status;	/*  */
 };
@@ -239,8 +238,8 @@ int	ommmc_wait_state(struct ommmc_softc *, uint32_t, uint32_t);
 int	ommmc_soft_reset(struct ommmc_softc *, int);
 int	ommmc_wait_intr(struct ommmc_softc *, int, int);
 void	ommmc_transfer_data(struct ommmc_softc *, struct sdmmc_command *);
-void	ommmc_read_data(struct ommmc_softc *, u_char *, int);
-void	ommmc_write_data(struct ommmc_softc *, u_char *, int);
+void	ommmc_read_data(struct ommmc_softc *, uint8_t *, int);
+void	ommmc_write_data(struct ommmc_softc *, uint8_t *, int);
 
 /* #define SDHC_DEBUG */
 #ifdef SDHC_DEBUG
@@ -285,7 +284,7 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 	struct sdmmcbus_attach_args	 saa;
 	int				 baseaddr;
 	int				 error = 1;
-	u_int32_t			 caps;
+	uint32_t			 caps;
 
 	/* XXX - ICLKEN, FCLKEN? */
 
@@ -473,7 +472,7 @@ int
 ommmc_host_reset(sdmmc_chipset_handle_t sch)
 {
 	struct ommmc_softc *sc = sch;
-	u_int32_t imask;
+	uint32_t imask;
 	int error;
 	int s;
 
@@ -624,7 +623,7 @@ ommmc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
  * for the CLOCK_CTL register to produce `freq' (KHz).
  */
 static int
-ommmc_clock_divisor(struct ommmc_softc *sc, u_int freq)
+ommmc_clock_divisor(struct ommmc_softc *sc, uint32_t freq)
 {
 	int div;
 	uint32_t maxclk = MMCHS_SYSCTL_CLKD_MASK>>MMCHS_SYSCTL_CLKD_SH;
@@ -826,9 +825,9 @@ ommmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 int
 ommmc_start_command(struct ommmc_softc *sc, struct sdmmc_command *cmd)
 {
-	u_int32_t blksize = 0;
-	u_int32_t blkcount = 0;
-	u_int32_t command;
+	uint32_t blksize = 0;
+	uint32_t blkcount = 0;
+	uint32_t command;
 	int error;
 	int s;
 	
@@ -931,7 +930,7 @@ ommmc_start_command(struct ommmc_softc *sc, struct sdmmc_command *cmd)
 void
 ommmc_transfer_data(struct ommmc_softc *sc, struct sdmmc_command *cmd)
 {
-	u_char *datap = cmd->c_data;
+	uint8_t *datap = cmd->c_data;
 	int i, datalen;
 	int mask;
 	int error;
@@ -977,7 +976,7 @@ ommmc_transfer_data(struct ommmc_softc *sc, struct sdmmc_command *cmd)
 }
 
 void
-ommmc_read_data(struct ommmc_softc *sc, u_char *datap, int datalen)
+ommmc_read_data(struct ommmc_softc *sc, uint8_t *datap, int datalen)
 {
 	while (datalen > 3) {
 		*(uint32_t *)datap = HREAD4(sc, MMCHS_DATA);
@@ -994,7 +993,7 @@ ommmc_read_data(struct ommmc_softc *sc, u_char *datap, int datalen)
 }
 
 void
-ommmc_write_data(struct ommmc_softc *sc, u_char *datap, int datalen)
+ommmc_write_data(struct ommmc_softc *sc, uint8_t *datap, int datalen)
 {
 	while (datalen > 3) {
 		DPRINTF(3,("%08x\n", *(uint32_t *)datap));
@@ -1080,7 +1079,7 @@ ommmc_intr(void *arg)
 {
 	struct ommmc_softc *sc = arg;
 
-	u_int32_t status;
+	uint32_t status;
 
 	/* Find out which interrupts are pending. */
 	status = HREAD4(sc, MMCHS_STAT);
