@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.21 2013/08/28 21:19:16 bluhm Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.22 2013/10/14 11:07:42 mpi Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -147,17 +147,21 @@ struct in_multi {
 
 #ifdef _KERNEL
 /*
- * Structure used by macros below to remember position when stepping through
- * all of the in_multi records.
+ * Macro for iterating over all the in_multi records linked to a given
+ * interface.
  */
-struct in_multistep {
-	struct in_ifaddr *i_ia;
-	struct in_multi *i_inm;
-};
+#define IN_FOREACH_MULTI(ia, ifp, inm)					\
+	/* struct in_ifaddr *ia; */					\
+	/* struct ifnet *ifp; */					\
+	/* struct in_multi *inm; */					\
+	IFP_TO_IA((ifp), ia);						\
+	if (ia != NULL)							\
+		LIST_FOREACH((inm), &ia->ia_multiaddrs, inm_list)	\
 
 /*
- * Macro for looking up the in_multi record for a given IP multicast address
- * on a given interface.  If no matching record is found, "inm" returns NULL.
+ * Macro for looking up the in_multi record for a given IP multicast
+ * address on a given interface.  If no matching record is found, "inm"
+ * returns NULL.
  */
 #define IN_LOOKUP_MULTI(addr, ifp, inm)					\
 	/* struct in_addr addr; */					\
@@ -166,48 +170,10 @@ struct in_multistep {
 do {									\
 	struct in_ifaddr *ia;						\
 									\
-	IFP_TO_IA((ifp), ia);						\
-	if (ia == NULL)							\
-		(inm) = NULL;						\
-	else								\
-		for ((inm) = LIST_FIRST(&ia->ia_multiaddrs);		\
-		     (inm) != NULL &&		\
-		      (inm)->inm_addr.s_addr != (addr).s_addr;		\
-		     (inm) = LIST_NEXT(inm, inm_list))			\
-			 continue;					\
-} while (/* CONSTCOND */ 0)
-
-/*
- * Macro to step through all of the in_multi records, one at a time.
- * The current position is remembered in "step", which the caller must
- * provide.  IN_FIRST_MULTI(), below, must be called to initialize "step"
- * and get the first record.  Both macros return a NULL "inm" when there
- * are no remaining records.
- */
-#define IN_NEXT_MULTI(step, inm)					\
-	/* struct in_multistep  step; */				\
-	/* struct in_multi *inm; */					\
-do {									\
-	if (((inm) = (step).i_inm) != NULL)				\
-		(step).i_inm = LIST_NEXT((inm), inm_list);		\
-	else								\
-		while ((step).i_ia != NULL) {				\
-			(inm) = LIST_FIRST(&(step).i_ia->ia_multiaddrs); \
-			(step).i_ia = TAILQ_NEXT((step).i_ia, ia_list);	\
-			if ((inm) != NULL) {				\
-				(step).i_inm = LIST_NEXT((inm), inm_list); \
-				break;					\
-			}						\
-		}							\
-} while (/* CONSTCOND */ 0)
-
-#define IN_FIRST_MULTI(step, inm)					\
-	/* struct in_multistep step; */					\
-	/* struct in_multi *inm; */					\
-do {									\
-	(step).i_ia = TAILQ_FIRST(&in_ifaddr);				\
-	(step).i_inm = NULL;						\
-	IN_NEXT_MULTI((step), (inm));					\
+	(inm) = NULL;							\
+	IN_FOREACH_MULTI(ia, ifp, inm)					\
+		if ((inm)->inm_addr.s_addr == (addr).s_addr)		\
+			break;						\
 } while (/* CONSTCOND */ 0)
 
 int	in_ifinit(struct ifnet *,

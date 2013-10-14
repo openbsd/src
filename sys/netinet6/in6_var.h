@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.41 2013/08/26 07:15:58 bluhm Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.42 2013/10/14 11:07:42 mpi Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -502,70 +502,34 @@ struct	in6_multi {
 
 #ifdef _KERNEL
 /*
- * Structure used by macros below to remember position when stepping through
- * all of the in6_multi records.
+ * Macro for iterating over all the in6_multi records linked to a given
+ * interface.
  */
-struct	in6_multistep {
-	struct	in6_ifaddr *i_ia;
-	struct	in6_multi *i_in6m;
-};
+#define IN6_FOREACH_MULTI(ia, ifp, in6m)				\
+	/* struct in6_ifaddr *ia; */					\
+	/* struct ifnet *ifp; */					\
+	/* struct in6_multi *in6m; */					\
+	IFP_TO_IA6((ifp), ia);						\
+	if (ia != NULL)							\
+		LIST_FOREACH((in6m), &ia->ia6_multiaddrs, in6m_entry)	\
 
 /*
  * Macros for looking up the in6_multi record for a given IP6 multicast
  * address on a given interface. If no matching record is found, "in6m"
- * returns NLL.
+ * returns NULL.
  */
-
-#define IN6_LOOKUP_MULTI(addr, ifp, in6m)			\
-/* struct in6_addr addr; */					\
-/* struct ifnet *ifp; */					\
-/* struct in6_multi *in6m; */					\
-do {								\
-	struct in6_ifaddr *ia;					\
-								\
-	IFP_TO_IA6((ifp), ia);					\
-	if (ia == NULL)						\
-	  	(in6m) = NULL;					\
-	else							\
-		for ((in6m) = LIST_FIRST(&ia->ia6_multiaddrs);	\
-		     (in6m) != NULL &&	\
-		     !IN6_ARE_ADDR_EQUAL(&(in6m)->in6m_addr, &(addr));	\
-		     (in6m) = LIST_NEXT((in6m), in6m_entry))	\
-			continue;				\
-} while (0)
-
-/*
- * Macro to step through all of the in6_multi records, one at a time.
- * The current position is remembered in "step", which the caller must
- * provide.  IN6_FIRST_MULTI(), below, must be called to initialize "step"
- * and get the first record.  Both macros return a NULL "in6m" when there
- * are no remaining records.
- */
-#define IN6_NEXT_MULTI(step, in6m)					\
-/* struct in6_multistep step; */					\
-/* struct in6_multi *in6m; */						\
+#define IN6_LOOKUP_MULTI(addr, ifp, in6m)				\
+	/* struct in6_addr addr; */					\
+	/* struct ifnet *ifp; */					\
+	/* struct in6_multi *in6m; */					\
 do {									\
-	if (((in6m) = (step).i_in6m) != NULL)				\
-		(step).i_in6m = LIST_NEXT((in6m), in6m_entry);		\
-	else								\
-		while ((step).i_ia != NULL) {				\
-			(in6m) = LIST_FIRST(&(step).i_ia->ia6_multiaddrs); \
-			(step).i_ia = TAILQ_NEXT((step).i_ia, ia_list);	\
-			if ((in6m) != NULL) {				\
-				(step).i_in6m = LIST_NEXT((in6m), in6m_entry); \
-				break;					\
-			}						\
-		}							\
-} while (0)
-
-#define IN6_FIRST_MULTI(step, in6m)		\
-/* struct in6_multistep step; */		\
-/* struct in6_multi *in6m */			\
-do {						\
-	(step).i_ia = TAILQ_FIRST(&in6_ifaddr);	\
-	(step).i_in6m = NULL;			\
-	IN6_NEXT_MULTI((step), (in6m));		\
-} while (0)
+	struct in6_ifaddr *ia;						\
+									\
+	(in6m) = NULL;							\
+	IN6_FOREACH_MULTI(ia, ifp, in6m)				\
+		if (IN6_ARE_ADDR_EQUAL(&(in6m)->in6m_addr, &(addr)))	\
+			break;						\
+} while (/* CONSTCOND */ 0)
 
 struct	in6_multi *in6_addmulti(struct in6_addr *, struct ifnet *, int *);
 void	in6_delmulti(struct in6_multi *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.28 2011/11/24 17:39:55 sperreault Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.29 2013/10/14 11:07:42 mpi Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -89,6 +89,7 @@ static int mld_timers_are_running;
 static struct in6_addr mld_all_nodes_linklocal = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
 static struct in6_addr mld_all_routers_linklocal = IN6ADDR_LINKLOCAL_ALLROUTERS_INIT;
 
+void mld6_checktimer(struct ifnet *);
 static void mld6_sendpkt(struct in6_multi *, int, const struct in6_addr *);
 
 void
@@ -317,10 +318,9 @@ mld6_input(struct mbuf *m, int off)
 }
 
 void
-mld6_fasttimeo()
+mld6_fasttimeo(void)
 {
-	struct in6_multi *in6m;
-	struct in6_multistep step;
+	struct ifnet *ifp;
 	int s;
 
 	/*
@@ -332,8 +332,20 @@ mld6_fasttimeo()
 
 	s = splsoftnet();
 	mld_timers_are_running = 0;
-	IN6_FIRST_MULTI(step, in6m);
-	while (in6m != NULL) {
+	TAILQ_FOREACH(ifp, &ifnet, if_list)
+		mld6_checktimer(ifp);
+	splx(s);
+}
+
+void
+mld6_checktimer(struct ifnet *ifp)
+{
+	struct in6_multi *in6m;
+	struct in6_ifaddr *ia;					\
+
+	splsoftassert(IPL_SOFTNET);
+
+	IN6_FOREACH_MULTI(ia, ifp, in6m) {
 		if (in6m->in6m_timer == 0) {
 			/* do nothing */
 		} else if (--in6m->in6m_timer == 0) {
@@ -342,9 +354,7 @@ mld6_fasttimeo()
 		} else {
 			mld_timers_are_running = 1;
 		}
-		IN6_NEXT_MULTI(step, in6m);
 	}
-	splx(s);
 }
 
 static void

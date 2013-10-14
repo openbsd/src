@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.33 2013/05/02 11:54:10 mpi Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.34 2013/10/14 11:07:42 mpi Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -104,6 +104,7 @@ int		igmp_timers_are_running;
 static struct router_info *rti_head;
 struct igmpstat igmpstat;
 
+void igmp_checktimer(struct ifnet *);
 void igmp_sendpkt(struct in_multi *, int, in_addr_t);
 int rti_fill(struct in_multi *);
 struct router_info * rti_find(struct ifnet *);
@@ -193,7 +194,6 @@ igmp_input(struct mbuf *m, ...)
 	int igmplen;
 	int minlen;
 	struct in_multi *inm;
-	struct in_multistep step;
 	struct router_info *rti;
 	struct in_ifaddr *ia;
 	int timer;
@@ -266,17 +266,14 @@ igmp_input(struct mbuf *m, ...)
 			 * except those that are already running and those
 			 * that belong to a "local" group (224.0.0.X).
 			 */
-			IN_FIRST_MULTI(step, inm);
-			while (inm != NULL) {
-				if (inm->inm_ia->ia_ifp == ifp &&
-				    inm->inm_timer == 0 &&
+			IN_FOREACH_MULTI(ia, ifp, inm) {
+				if (inm->inm_timer == 0 &&
 				    !IN_LOCAL_GROUP(inm->inm_addr.s_addr)) {
 					inm->inm_state = IGMP_DELAYING_MEMBER;
 					inm->inm_timer = IGMP_RANDOM_DELAY(
 					    IGMP_MAX_HOST_REPORT_DELAY * PR_FASTHZ);
 					igmp_timers_are_running = 1;
 				}
-				IN_NEXT_MULTI(step, inm);
 			}
 		} else {
 			if (!IN_MULTICAST(ip->ip_dst.s_addr)) {
@@ -297,10 +294,8 @@ igmp_input(struct mbuf *m, ...)
 			 * timers already running, check if they need to be
 			 * reset.
 			 */
-			IN_FIRST_MULTI(step, inm);
-			while (inm != NULL) {
-				if (inm->inm_ia->ia_ifp == ifp &&
-				    !IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
+			IN_FOREACH_MULTI(ia, ifp, inm) {
+				if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
 				    (ip->ip_dst.s_addr == INADDR_ALLHOSTS_GROUP ||
 				     ip->ip_dst.s_addr == inm->inm_addr.s_addr)) {
 					switch (inm->inm_state) {
@@ -323,7 +318,6 @@ igmp_input(struct mbuf *m, ...)
 						break;
 					}
 				}
-				IN_NEXT_MULTI(step, inm);
 			}
 		}
 
@@ -505,8 +499,7 @@ igmp_leavegroup(struct in_multi *inm)
 void
 igmp_fasttimo(void)
 {
-	struct in_multi *inm;
-	struct in_multistep step;
+	struct ifnet *ifp;
 	int s;
 
 	/*
@@ -518,8 +511,21 @@ igmp_fasttimo(void)
 
 	s = splsoftnet();
 	igmp_timers_are_running = 0;
-	IN_FIRST_MULTI(step, inm);
-	while (inm != NULL) {
+	TAILQ_FOREACH(ifp, &ifnet, if_list)
+		igmp_checktimer(ifp);
+	splx(s);
+}
+
+
+void
+igmp_checktimer(struct ifnet *ifp)
+{
+	struct in_multi *inm;
+	struct in_ifaddr *ia;
+
+	splsoftassert(IPL_SOFTNET);
+
+	IN_FOREACH_MULTI(ia, ifp, inm) {
 		if (inm->inm_timer == 0) {
 			/* do nothing */
 		} else if (--inm->inm_timer == 0) {
@@ -535,9 +541,7 @@ igmp_fasttimo(void)
 		} else {
 			igmp_timers_are_running = 1;
 		}
-		IN_NEXT_MULTI(step, inm);
 	}
-	splx(s);
 }
 
 void
