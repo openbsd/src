@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.2 2013/09/12 12:03:15 rapha Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.3 2013/10/14 18:49:19 syl Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -216,73 +216,6 @@ int	ommmc_intr(void *);
 /* flag values */
 #define SHF_USE_DMA		0x0001
 
-/* MMCHS should only be accessed with 4 byte reads or writes. */
-#if 0
-struct regtbl {
-	char* name;
-	uint32_t reg;
-} tblname[] = {
-	{"MMCHS_SYSCONFIG", MMCHS_SYSCONFIG},
-	{"MMCHS_SYSSTATUS", MMCHS_SYSSTATUS},
-	{"MMCHS_CSRE", MMCHS_CSRE},
-	{"MMCHS_SYSTEST", MMCHS_SYSTEST},
-	{"MMCHS_CON", MMCHS_CON},
-	{"MMCHS_PWCNT", MMCHS_PWCNT},
-	{"MMCHS_BLK", MMCHS_BLK},
-	{"MMCHS_ARG", MMCHS_ARG},
-	{"MMCHS_CMD", MMCHS_CMD},
-	{"MMCHS_RSP10", MMCHS_RSP10},
-	{"MMCHS_RSP32", MMCHS_RSP32},
-	{"MMCHS_RSP54", MMCHS_RSP54},
-	{"MMCHS_RSP76", MMCHS_RSP76},
-	{"MMCHS_DATA", MMCHS_DATA},
-	{"MMCHS_PSTATE", MMCHS_PSTATE},
-	{"MMCHS_HCTL", MMCHS_HCTL},
-	{"MMCHS_SYSCTL", MMCHS_SYSCTL},
-	{"MMCHS_STAT", MMCHS_STAT},
-	{"MMCHS_IE", MMCHS_IE},
-	{"MMCHS_ISE", MMCHS_ISE},
-	{"MMCHS_AC12", MMCHS_AC12},
-	{"MMCHS_CAPA", MMCHS_CAPA},
-	{"MMCHS_CUR_CAPA", MMCHS_CUR_CAPA},
-	{NULL, 0 }
-};
-uint32_t HREAD4(struct ommmc_softc *sc, uint32_t reg);
-void HWRITE4(struct ommmc_softc *sc, uint32_t reg, uint32_t val);
-uint32_t HREAD4(struct ommmc_softc *sc, uint32_t reg)
-{
-	uint32_t val;
-	int i;
-	char *regname = "???";
-	for (i = 0; tblname[i].name != NULL; i++) {
-		if (tblname[i].reg == reg) {
-			regname = tblname[i].name;
-			break;
-		}
-	}
-	val = (bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)));
-	printf("read reg[%s] = %x\n", regname, val);
-	return val;
-
-}
-void HWRITE4(struct ommmc_softc *sc, uint32_t reg, uint32_t val)
-{
-	char *regname = "???";
-	int i;
-	for (i = 0; tblname[i].name != NULL; i++) {
-		if (tblname[i].reg == reg) {
-			regname = tblname[i].name;
-			break;
-		}
-	}
-	printf("write reg[%s] = %x\n", regname, val);
-	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val));
-}
-#define HSET4(sc, reg, bits)						\
-	HWRITE4((sc), (reg), HREAD4((sc), (reg)) | (bits))
-#define HCLR4(sc, reg, bits)						\
-	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
-#else
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
 #define HWRITE4(sc, reg, val)						\
@@ -291,7 +224,6 @@ void HWRITE4(struct ommmc_softc *sc, uint32_t reg, uint32_t val)
 	HWRITE4((sc), (reg), HREAD4((sc), (reg)) | (bits))
 #define HCLR4(sc, reg, bits)						\
 	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
-#endif
 
 int	ommmc_host_reset(sdmmc_chipset_handle_t);
 uint32_t ommmc_host_ocr(sdmmc_chipset_handle_t);
@@ -1199,45 +1131,3 @@ ommmc_intr(void *arg)
 	}
 	return 1;
 }
-
-#ifdef SDHC_DEBUG
-
-struct { 
-	char * name;
-	uint32_t off;
-	} 	reglist[] = {
-	{ "MMCHS_SYSCONFIG",	0x010 },
-	{ "MMCHS_SYSSTATUS",	0x014 },
-	{ "MMCHS_CSRE",		0x024 },
-	{ "MMCHS_SYSTEST",	0x028 },
-	{ "MMCHS_CON",		0x02C },
-	{ "MMCHS_PWCNT",	0x030 },
-	{ "MMCHS_BLK",		0x104 },
-	{ "MMCHS_ARG",		0x108 },
-	{ "MMCHS_CMD",		0x10C },
-	{ "MMCHS_RSP10",	0x110 },
-	{ "MMCHS_RSP32",	0x114 },
-	{ "MMCHS_RSP54",	0x118 },
-	{ "MMCHS_RSP76",	0x11C },
-	{ "MMCHS_DATA",		0x120 },
-	{ "MMCHS_PSTATE",	0x124 },
-	{ "MMCHS_HCTL",		0x128 },
-	{ "MMCHS_SYSCTL",	0x12C },
-	{ "MMCHS_STAT",		0x130 },
-	{ "MMCHS_IE",		0x134 },
-	{ "MMCHS_ISE",		0x138 },
-	{ "MMCHS_AC12",		0x13C },
-	{ "MMCHS_CAPA",		0x140 },
-	{ "MMCHS_CUR_CAPA",	0x148 },
-	{ NULL,	0x0 }
-};
-void
-ommmc_dump_regs(struct ommmc_softc *sc)
-{
-	int i;
-	for (i = 0; reglist[i].name != NULL; i++) {
-		printf("reg %s = %08x\n", reglist[i].name,
-		    HREAD4(sc, reglist[i].off));
-	}
-}
-#endif
