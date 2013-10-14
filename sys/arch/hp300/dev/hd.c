@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.71 2013/06/28 18:17:12 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.72 2013/10/14 23:26:22 krw Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -1171,7 +1171,7 @@ hdsize(dev)
 	struct hd_softc *rs;
 	int unit = DISKUNIT(dev);
 	int part, omask;
-	int size;
+	daddr_t size;
 
 	rs = hdlookup(unit);
 	if (rs == NULL)

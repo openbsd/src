@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.40 2013/07/06 18:31:46 miod Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.41 2013/10/14 23:26:22 krw Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -624,7 +624,7 @@ hdsize(dev_t dev)
 {
 	struct hdsoftc *hd;
 	int unit = DISKUNIT(dev);
-	int size;
+	daddr_t size;
 
 	if (unit >= hd_cd.cd_ndevs || hd_cd.cd_devs[unit] == 0)
 		return -1;

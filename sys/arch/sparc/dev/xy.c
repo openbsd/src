@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.54 2013/06/11 16:42:11 deraadt Exp $	*/
+/*	$OpenBSD: xy.c,v 1.55 2013/10/14 23:26:22 krw Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -933,7 +933,8 @@ xysize(dev)
 
 {
 	struct xy_softc *xysc;
-	int     unit, part, size, omask;
+	int     unit, part, omask;
+	daddr_t size;
 
 	/* valid unit? */
 	unit = DISKUNIT(dev);

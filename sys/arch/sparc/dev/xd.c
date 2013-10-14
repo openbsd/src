@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.58 2013/06/11 16:42:11 deraadt Exp $	*/
+/*	$OpenBSD: xd.c,v 1.59 2013/10/14 23:26:22 krw Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -971,7 +971,8 @@ xdsize(dev)
 
 {
 	struct xd_softc *xdsc;
-	int     unit, part, size, omask;
+	int     unit, part, omask;
+	daddr_t size;
 
 	/* valid unit? */
 	unit = DISKUNIT(dev);
