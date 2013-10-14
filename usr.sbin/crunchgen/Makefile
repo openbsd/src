@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.4 2009/12/04 04:59:48 drahn Exp $
+#	$OpenBSD: Makefile,v 1.5 2013/10/14 16:58:05 deraadt Exp $
 
 PROG=		crunchgen
 MAN=		crunchgen.8
-SRCS=		crunchgen.c crunched_skel.c \
-		crunchide.c elf_hide.c ecoff_hide.c mangle.c
+SRCS=		crunchgen.c crunched_skel.c crunchide.c elf_hide.c mangle.c
 CFLAGS+=	-g -Wall
 CLEANFILES+=	crunched_skel.c
 

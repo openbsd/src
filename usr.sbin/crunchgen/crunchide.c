@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchide.c,v 1.5 2013/10/13 17:23:41 guenther Exp $	 */
+/* $OpenBSD: crunchide.c,v 1.6 2013/10/14 16:58:05 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -66,9 +66,6 @@
 #include <fcntl.h>
 #include <a.out.h>
 #include <sys/types.h>
-#ifdef _NLIST_DO_ECOFF
-#include <sys/exec_ecoff.h>
-#endif
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include "mangle.h"
@@ -79,9 +76,6 @@ void            add_to_keep_list(char *);
 void            add_file_to_keep_list(char *);
 
 void            hide_syms(char *);
-#ifdef _NLIST_DO_ECOFF
-void            ecoff_hide(int, char *);
-#endif
 #ifdef _NLIST_DO_ELF
 void            elf_hide(int, char *);
 #endif
@@ -250,11 +244,4 @@ hide_syms(char *filename)
 		return;
 	}
 #endif				/* _NLIST_DO_ELF */
-
-#ifdef _NLIST_DO_ECOFF
-	if (!ECOFF_BADMAG((struct ecoff_exechdr *) buf)) {
-		ecoff_hide(inf, buf);
-		return;
-	}
-#endif				/* _NLIST_DO_ECOFF */
 }
