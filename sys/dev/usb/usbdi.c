@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.60 2013/09/24 09:01:41 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.61 2013/10/14 08:27:54 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -803,15 +803,6 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	}
 
 	if (pipe->repeat) {
-		/*
-		 * If we already got an I/O error that generally means
-		 * the device is gone or not responding, so don't try
-		 * to enqueue a new transfer as it will more likely
-		 * results in the same error.
-		 */
-		if (xfer->status == USBD_IOERROR)
-			pipe->repeat = 0;
-
 		if (xfer->callback)
 			xfer->callback(xfer, xfer->priv, xfer->status);
 		pipe->methods->done(xfer);
@@ -820,6 +811,15 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 		if (xfer->callback)
 			xfer->callback(xfer, xfer->priv, xfer->status);
 	}
+
+	/*
+	 * If we already got an I/O error that generally means the
+	 * device is gone or not responding, so don't try to enqueue
+	 * a new transfer as it will more likely results in the same
+	 * error.
+	 */
+	if (xfer->status == USBD_IOERROR)
+		pipe->repeat = 0;
 
 	if ((xfer->flags & USBD_SYNCHRONOUS) && !polling)
 		wakeup(xfer);
