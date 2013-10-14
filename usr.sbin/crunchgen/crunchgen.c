@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.9 2013/10/13 23:33:14 guenther Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.10 2013/10/14 06:59:11 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -936,7 +936,7 @@ top_makefile_rules(FILE * outmk)
 	fprintf(outmk, "\t    $(LIBS) -Wl,-M | sed -e '/^Allocating/q' >${.TARGET}\n\n");
 
 	fprintf(outmk, "${CLIB:.a=.olist}: %s.map\n", execfname);
-	fprintf(outmk, "\tsed -n -e 's!^/usr/lib/${.TARGET:R}\\.a(\\([^)]*\\.o\\)).*!\\1!p' \\\n");
+	fprintf(outmk, "\tsed -n -e 's!^${DESTDIR}/usr/lib/${.TARGET:R}\\.a(\\([^)]*\\.o\\)).*!\\1!p' \\\n");
 	fprintf(outmk, "\t    < %s.map | tr '\\012' ' ' >$@\n", execfname);
 	fprintf(outmk, ".endif\n\n");
 
