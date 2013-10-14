@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.113 2013/10/14 23:26:23 krw Exp $ */
+/*	$OpenBSD: wd.c,v 1.114 2013/10/14 23:33:13 krw Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -878,6 +878,7 @@ daddr_t
 wdsize(dev_t dev)
 {
 	struct wd_softc *wd;
+	struct disklabel *lp;
 	int part, omask;
 	daddr_t size;
 
@@ -895,8 +896,8 @@ wdsize(dev_t dev)
 		goto exit;
 	}
 
-	size = DL_GETPSIZE(&wd->sc_dk.dk_label->d_partitions[part]) *
-	    (wd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+	lp = wd->sc_dk.dk_label;
+	size = DL_SECTOBLK(lp, DL_GETPSIZE(&lp->d_partitions[part]));
 	if (omask == 0 && wdclose(dev, 0, S_IFBLK, NULL) != 0)
 		size = -1;
 
