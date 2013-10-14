@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.153 2013/10/07 22:11:49 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.154 2013/10/14 23:35:53 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -774,12 +774,12 @@ diskerr(struct buf *bp, char *dname, char *what, int pri, int blkdone,
 		    bp->b_blkno + (bp->b_bcount - 1) / DEV_BSIZE);
 	}
 	if (lp && (blkdone >= 0 || bp->b_bcount <= lp->d_secsize)) {
-		sn += DL_GETPOFFSET(&lp->d_partitions[part]);
+		sn += DL_SECTOBLK(lp, DL_GETPOFFSET(&lp->d_partitions[part]));
 		(*pr)(" (%s%d bn %lld; cn %lld", dname, unit, sn,
-		    sn / lp->d_secpercyl);
-		sn %= lp->d_secpercyl;
-		(*pr)(" tn %lld sn %lld)", sn / lp->d_nsectors,
-		    sn % lp->d_nsectors);
+		    sn / DL_SECTOBLK(lp, lp->d_secpercyl));
+		sn %= DL_SECTOBLK(lp, lp->d_secpercyl);
+		(*pr)(" tn %lld sn %lld)", sn / DL_SECTOBLK(lp, lp->d_nsectors),
+		    sn % DL_SECTOBLK(lp, lp->d_nsectors));
 	}
 }
 
