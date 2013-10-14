@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.3 2013/10/13 12:21:54 reyk Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.4 2013/10/14 13:04:26 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -210,8 +210,8 @@ vxlan_config(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	}
 
 #ifdef INET
-	src4 = (struct sockaddr_in *)src;
-	dst4 = (struct sockaddr_in *)dst;
+	src4 = satosin(src);
+	dst4 = satosin(dst);
 
 	if (src4->sin_len != sizeof(*src4) || dst4->sin_len != sizeof(*dst4))
 		return (EINVAL);
@@ -220,7 +220,7 @@ vxlan_config(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		if (src4->sin_addr.s_addr == INADDR_ANY ||
 		    IN_MULTICAST(src4->sin_addr.s_addr))
 			return (EINVAL);
-		if ((ifa = ifa_ifwithaddr((struct sockaddr *)src4,
+		if ((ifa = ifa_ifwithaddr(sintosa(src4),
 		    sc->sc_rtableid)) == NULL ||
 		    ifa->ifa_ifp == NULL ||
 		    (ifa->ifa_ifp->if_flags & IFF_MULTICAST) == 0)
@@ -274,7 +274,7 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifaddr		*ifa = (struct ifaddr *)data;
 #endif
 	struct ifreq		*ifr = (struct ifreq *)data;
-	struct if_laddrreq *lifr = (struct if_laddrreq *)data;
+	struct if_laddrreq	*lifr = (struct if_laddrreq *)data;
 	struct proc		*p = curproc;
 	int			 error = 0, s;
 	struct ip_moptions	*imo = &sc->sc_imo;
@@ -456,8 +456,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 		return (0);
 
 	vni >>= VXLAN_VNI_S;
-	LIST_FOREACH(sc, &vxlan_tagh[VXLAN_TAGHASH(vni)],
-	    sc_entry) {
+	LIST_FOREACH(sc, &vxlan_tagh[VXLAN_TAGHASH(vni)], sc_entry) {
 		if ((uh->uh_dport == sc->sc_dstport) &&
 		    vni == sc->sc_vnetid &&
 		    sc->sc_rtableid == rtable_l2(m->m_pkthdr.rdomain))
@@ -553,7 +552,7 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 		ip->ip_ttl = IPDEFTTL;
 
 #if NBRIDGE > 0
-	if ((sin = (struct sockaddr_in *)bridge_tunnel(m)) != NULL &&
+	if ((sin = satosin(bridge_tunnel(m))) != NULL &&
 	    sin->sin_family == AF_INET) {
 		ui->ui_dst = sin->sin_addr;
 
