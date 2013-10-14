@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.30 2013/05/13 10:37:02 ajacoutot Exp $
+#	$OpenBSD: Makefile.inc,v 1.31 2013/10/14 06:55:28 guenther Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/string ${LIBCSRCDIR}/string
@@ -45,6 +45,12 @@ memmove.po: bcopy.c
 memmove.so: bcopy.c
 	${CC} ${PICFLAG} -DPIC -DMEMMOVE ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} \
 		-o ${.TARGET}
+
+memmove.do: bcopy.c
+	${CC} -DMEMMOVE ${CFLAGS} ${CPPFLAGS} ${DIST_CFLAGS} -c ${.ALLSRC} \
+	    -o ${.TARGET}
+	@${LD} -o ${.TARGET}.tmp -x -r ${.TARGET}
+	@mv ${.TARGET}.tmp ${.TARGET}
 .endif
 
 # if no machine specific memcpy(3), build one out of bcopy(3).
@@ -71,6 +77,12 @@ memcpy.po: bcopy.c
 memcpy.so: bcopy.c
 	${CC} ${PICFLAG} -DPIC -DMEMCOPY ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} \
 		-o ${.TARGET}
+
+memcpy.do: bcopy.c
+	${CC} -DMEMCOPY ${CFLAGS} ${CPPFLAGS} ${DIST_CFLAGS} -c ${.ALLSRC} \
+	    -o ${.TARGET}
+	@${LD} -o ${.TARGET}.tmp -x -r ${.TARGET}
+	@mv ${.TARGET}.tmp ${.TARGET}
 .endif
 .endif
 
@@ -95,6 +107,12 @@ strchr.po: index.c
 strchr.so: index.c
 	${CC} ${PICFLAG} -DPIC -DSTRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} \
 	    -o ${.TARGET}
+
+strchr.do: index.c
+	${CC} -DSTRCHR ${CFLAGS} ${CPPFLAGS} ${DIST_CFLAGS} -c ${.ALLSRC} \
+	    -o ${.TARGET}
+	@${LD} -o ${.TARGET}.tmp -x -r ${.TARGET}
+	@mv ${.TARGET}.tmp ${.TARGET}
 .endif
 
 # if no machine specific strrchr(3), build one out of rindex(3).
@@ -118,6 +136,12 @@ strrchr.po: rindex.c
 strrchr.so: rindex.c
 	${CC} ${PICFLAG} -DPIC -DSTRRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} \
 	    -o ${.TARGET}
+
+strrchr.do: rindex.c
+	${CC} -DSTRRCHR ${CFLAGS} ${CPPFLAGS} ${DIST_CFLAGS} -c ${.ALLSRC} \
+	    -o ${.TARGET}
+	@${LD} -o ${.TARGET}.tmp -x -r ${.TARGET}
+	@mv ${.TARGET}.tmp ${.TARGET}
 .endif
 
 MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 memccpy.3 memchr.3 \
