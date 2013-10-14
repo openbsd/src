@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.10 2013/10/14 06:59:11 deraadt Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.11 2013/10/14 07:06:25 guenther Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -932,7 +932,7 @@ top_makefile_rules(FILE * outmk)
 	fprintf(outmk, "\t    DIST_LIB=${.OBJDIR}/${.TARGET} ${.OBJDIR}/${.TARGET}\n\n");
 
 	fprintf(outmk, "%s.map: %s.o $(CRUNCHED_OBJS)\n", execfname, execfname);
-	fprintf(outmk, "\t$(CC) -static ${LDFLAGS} -o /dev/null %s.o $(CRUNCHED_OBJS) \\\n", execfname);
+	fprintf(outmk, "\t$(CC) -static ${LDFLAGS} -o %s.o.o %s.o $(CRUNCHED_OBJS) \\\n", execfname, execfname);
 	fprintf(outmk, "\t    $(LIBS) -Wl,-M | sed -e '/^Allocating/q' >${.TARGET}\n\n");
 
 	fprintf(outmk, "${CLIB:.a=.olist}: %s.map\n", execfname);
