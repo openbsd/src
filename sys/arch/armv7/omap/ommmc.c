@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.4 2013/10/14 18:51:56 syl Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.5 2013/10/14 18:53:52 syl Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -336,7 +336,7 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 	/*
 	 * Determine the base clock frequency. (2.2.24)
 	 */
-	
+
 	sc->clkbase = 96 * 1000;
 #if 0
 	if (SDHC_BASE_FREQ_KHZ(caps) != 0)
@@ -410,7 +410,7 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 		error = 0;
 		goto err;
 	}
-	
+
 	return;
 
 err:
@@ -489,7 +489,7 @@ ommmc_host_reset(sdmmc_chipset_handle_t sch)
 	if ((error = ommmc_soft_reset(sc, MMCHS_SYSCTL_SRA)) != 0) {
 		splx(s);
 		return (error);
-	}	
+	}
 
 #if 0
 	HSET4(sc, MMCHS_CON, MMCHS_CON_INIT);
@@ -509,7 +509,7 @@ ommmc_host_reset(sdmmc_chipset_handle_t sch)
 	imask = MMCHS_STAT_BRR | MMCHS_STAT_BWR | MMCHS_STAT_BGE |
 	    MMCHS_STAT_TC | MMCHS_STAT_CC;
 
-	imask |= MMCHS_STAT_BADA | MMCHS_STAT_CERR | MMCHS_STAT_DEB | 
+	imask |= MMCHS_STAT_BADA | MMCHS_STAT_CERR | MMCHS_STAT_DEB |
 	    MMCHS_STAT_DCRC | MMCHS_STAT_DTO | MMCHS_STAT_CIE |
 	    MMCHS_STAT_CEB | MMCHS_STAT_CCRC | MMCHS_STAT_CTO;
 
@@ -517,21 +517,21 @@ ommmc_host_reset(sdmmc_chipset_handle_t sch)
 	HWRITE4(sc, MMCHS_ISE, imask);
 
 	splx(s);
-	return 0;
+	return (0);
 }
 
 uint32_t
 ommmc_host_ocr(sdmmc_chipset_handle_t sch)
 {
 	struct ommmc_softc *sc = sch;
-	return sc->ocr;
+	return (sc->ocr);
 }
 
 int
 ommmc_host_maxblklen(sdmmc_chipset_handle_t sch)
 {
 	struct ommmc_softc *sc = sch;
-	return sc->maxblklen;
+	return (sc->maxblklen);
 }
 
 /*
@@ -545,7 +545,7 @@ ommmc_card_detect(sdmmc_chipset_handle_t sch)
 	return ISSET(HREAD4(sc, SDHC_PRESENT_STATE), SDHC_CARD_INSERTED) ?
 	    1 : 0;
 #else
-	return 1; /* XXX */
+	return (1); /* XXX */
 #endif
 }
 
@@ -572,7 +572,7 @@ ommmc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 	if (ocr == 0) {
 		splx(s);
 		(void)ommmc_host_reset(sc);
-		return 0;
+		return (0);
 	}
 
 	/*
@@ -589,7 +589,7 @@ ommmc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 	else {
 		/* Unsupported voltage level requested. */
 		splx(s);
-		return EINVAL;
+		return (EINVAL);
 	}
 
 	/*
@@ -611,11 +611,11 @@ ommmc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 	 */
 	if (!ISSET(HREAD4(sc, MMCHS_HCTL), MMCHS_HCTL_SDBP)) {
 		splx(s);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	splx(s);
-	return 0;
+	return (0);
 }
 
 /*
@@ -635,7 +635,7 @@ ommmc_clock_divisor(struct ommmc_softc *sc, uint32_t freq)
 
 	printf("divisor failure\n");
 	/* No divisor found. */
-	return -1;
+	return (-1);
 }
 
 /*
@@ -665,7 +665,7 @@ ommmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 		error = ETIMEDOUT;
 		goto ret;
 	}
-	
+
 	/*
 	 * Stop SD clock before changing the frequency.
 	 */
@@ -706,7 +706,7 @@ ommmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 	HSET4(sc, MMCHS_SYSCTL, MMCHS_SYSCTL_CEN);
 ret:
 	splx(s);
-	return error;
+	return (error);
 }
 
 void
@@ -743,12 +743,12 @@ ommmc_wait_state(struct ommmc_softc *sc, uint32_t mask, uint32_t value)
 	    mask, value, state, state, MMCHS_PSTATE_FMT));
 	for (timeout = 1000; timeout > 0; timeout--) {
 		if (((state = HREAD4(sc, MMCHS_PSTATE)) & mask) == value)
-			return 0;
+			return (0);
 		delay(10);
 	}
 	DPRINTF(0,("%s: timeout waiting for %x (state=%b)\n", HDEVNAME(sc),
 	    value, state, MMCHS_PSTATE_FMT));
-	return ETIMEDOUT;
+	return (ETIMEDOUT);
 }
 
 void
@@ -830,7 +830,7 @@ ommmc_start_command(struct ommmc_softc *sc, struct sdmmc_command *cmd)
 	uint32_t command;
 	int error;
 	int s;
-	
+
 	DPRINTF(1,("%s: start cmd %u arg=%#x data=%#x dlen=%d flags=%#x "
 	    "proc=\"%s\"\n", HDEVNAME(sc), cmd->c_opcode, cmd->c_arg,
 	    cmd->c_data, cmd->c_datalen, cmd->c_flags, curproc ?
@@ -849,14 +849,14 @@ ommmc_start_command(struct ommmc_softc *sc, struct sdmmc_command *cmd)
 			/* XXX: Split this command. (1.7.4) */
 			printf("%s: data not a multiple of %d bytes\n",
 			    HDEVNAME(sc), blksize);
-			return EINVAL;
+			return (EINVAL);
 		}
 	}
 
 	/* Check limit imposed by 9-bit block count. (1.7.2) */
 	if (blkcount > MMCHS_BLK_NBLK_MAX) {
 		printf("%s: too much data\n", HDEVNAME(sc));
-		return EINVAL;
+		return (EINVAL);
 	}
 
 	/* Prepare transfer mode register value. (2.2.5) */
@@ -900,7 +900,7 @@ ommmc_start_command(struct ommmc_softc *sc, struct sdmmc_command *cmd)
 
 	/* Wait until command and data inhibit bits are clear. (1.5) */
 	if ((error = ommmc_wait_state(sc, MMCHS_PSTATE_CMDI, 0)) != 0)
-		return error;
+		return (error);
 
 	s = splsdmmc();
 
@@ -918,13 +918,13 @@ ommmc_start_command(struct ommmc_softc *sc, struct sdmmc_command *cmd)
 	 * Start a CPU data transfer.  Writing to the high order byte
 	 * of the SDHC_COMMAND register triggers the SD command. (1.5)
 	 */
-	HWRITE4(sc, MMCHS_BLK, (blkcount << MMCHS_BLK_NBLK_SHIFT) | 
+	HWRITE4(sc, MMCHS_BLK, (blkcount << MMCHS_BLK_NBLK_SHIFT) |
 	    (blksize << MMCHS_BLK_BLEN_SHIFT));
 	HWRITE4(sc, MMCHS_ARG, cmd->c_arg);
 	HWRITE4(sc, MMCHS_CMD, command);
 
 	splx(s);
-	return 0;
+	return (0);
 }
 
 void
@@ -1016,7 +1016,7 @@ ommmc_write_data(struct ommmc_softc *sc, uint8_t *datap, int datalen)
 int
 ommmc_soft_reset(struct ommmc_softc *sc, int mask)
 {
-	
+
 	int timo;
 
 	DPRINTF(1,("%s: software reset reg=%#x\n", HDEVNAME(sc), mask));
@@ -1059,7 +1059,7 @@ ommmc_wait_intr(struct ommmc_softc *sc, int mask, int timo)
 
 	DPRINTF(2,("%s: intr status %#x error %#x\n", HDEVNAME(sc), status,
 	    sc->intr_error_status));
-	
+
 	/* Command timeout has higher priority than command complete. */
 	if (ISSET(status, MMCHS_STAT_ERRI)) {
 		sc->intr_error_status = 0;
@@ -1068,7 +1068,7 @@ ommmc_wait_intr(struct ommmc_softc *sc, int mask, int timo)
 	}
 
 	splx(s);
-	return status;
+	return (status);
 }
 
 /*
