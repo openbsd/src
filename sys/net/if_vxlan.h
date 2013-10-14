@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.h,v 1.1 2013/10/13 10:10:03 reyk Exp $	*/
+/*	$OpenBSD: if_vxlan.h,v 1.2 2013/10/14 14:04:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -40,14 +40,6 @@ struct vxlanudpiphdr {
 	struct vxlan_header	ui_v;
 } __packed;
 #endif
-
-#define SIOCGETVXLAN	SIOCGETPFLOW
-#define SIOCSETVXLAN	SIOCSETPFLOW
-
-/* from struct vxlanreq */
-struct vxlanreq {
-	u_int8_t		vxlan_reserved;
-};
 
 #ifdef _KERNEL
 struct vxlan_softc {
