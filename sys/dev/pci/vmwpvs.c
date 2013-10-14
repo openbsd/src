@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.4 2013/10/08 20:44:08 dlg Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.5 2013/10/14 03:11:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -37,6 +37,7 @@
 #include <scsi/scsiconf.h>
 
 /* pushbuttons */
+#define VMWPVS_OPENINGS		64 /* according to the linux driver */
 #define VMWPVS_RING_PAGES	2
 #define VMWPVS_MAXSGL		(MAXPHYS / PAGE_SIZE)
 #define VMWPVS_SENSELEN		roundup(sizeof(struct scsi_sense_data), 16)
@@ -508,7 +509,7 @@ vmwpvs_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = -1;
 	sc->sc_link.adapter_buswidth = sc->sc_bus_width;
-	sc->sc_link.openings = 16; /* XXX */
+	sc->sc_link.openings = VMWPVS_OPENINGS;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
