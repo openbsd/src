@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.30 2012/08/20 23:25:07 matthew Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.31 2013/10/15 05:30:53 deraadt Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -314,8 +314,7 @@ vmcmd_randomize(struct proc *p, struct exec_vmcmd *cmd)
 }
 
 /*
- * exec_setup_stack(): Set up the stack segment for an a.out
- * executable.
+ * exec_setup_stack(): Set up the stack segment for an executable.
  *
  * Note that the ep_ssize parameter must be set to be the current stack
  * limit; this is adjusted in the body of execve() to yield the
