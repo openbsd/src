@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.3 2013/10/15 05:45:55 deraadt Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.4 2013/10/15 22:09:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -23,9 +23,7 @@
 #include <string.h>
 
 #include <sys/exec.h>
-#ifdef _NLIST_DO_ELF
 #include <elf_abi.h>
-#endif
 
 #include "hangman.h"
 
@@ -93,22 +91,14 @@ ksetup()
 	if ((ksyms = open(Dict_name, O_RDONLY)) < 0)
 		return ksyms;
 
-	/*
-	 * Relaxed header check - /dev/ksyms is either a native a.out
-	 * binary or a native ELF binary.
-	 */
-
-#ifdef _NLIST_DO_ELF
 	if (ksyms_elf_parse() == 0)
 		return 0;
-#endif
 
 	close(ksyms);
 	errno = ENOEXEC;
 	return -1;
 }
 
-#ifdef _NLIST_DO_ELF
 int
 ksyms_elf_parse()
 {
@@ -154,4 +144,3 @@ ksyms_elf_parse()
 
 	return 0;
 }
-#endif
