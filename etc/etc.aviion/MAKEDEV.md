@@ -1,6 +1,6 @@
 define(MACHINE,aviion)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.16 2013/06/03 17:34:15 tedu Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.17 2013/10/15 17:39:09 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -65,6 +65,7 @@ dnl
 twrget(ramd, dart, tty, a)dnl
 target(ramd, pty, 0)dnl
 target(ramd, bio)dnl
+target(ramd, diskmap)dnl
 _DEV(ramd)
 dnl
 _DEV(std)
