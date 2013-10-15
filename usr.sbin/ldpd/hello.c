@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.22 2013/10/15 20:21:24 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.23 2013/10/15 20:31:13 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -146,7 +146,7 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 	} else {
 		if (ldp.lspace_id != 0) {
 			log_debug("recv_hello: invalid label space "
-			    "ID %s, interface %s", ldp.lspace_id,
+			    "ID %u, interface %s", ldp.lspace_id,
 			    iface->name);
 			return;
 		}
