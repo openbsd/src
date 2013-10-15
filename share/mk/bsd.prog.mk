@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.60 2013/08/10 10:19:35 ajacoutot Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.61 2013/10/15 22:40:00 deraadt Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -107,7 +107,7 @@ all: ${PROG} _SUBDIRUSE
 
 .if !target(clean)
 clean: _SUBDIRUSE
-	rm -f a.out [Ee]rrs mklog core *.core y.tab.h \
+	rm -f a.out [Ee]rrs mklog *.core y.tab.h \
 	    ${PROG} ${OBJS} ${_LEXINTM} ${_YACCINTM} ${CLEANFILES}
 .endif
 

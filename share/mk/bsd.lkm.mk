@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lkm.mk,v 1.24 2013/03/14 12:56:58 mikeb Exp $
+#	$OpenBSD: bsd.lkm.mk,v 1.25 2013/10/15 22:40:00 deraadt Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -56,7 +56,7 @@ all: ${COMBINED} _SUBDIRUSE
 
 .if !target(clean)
 clean: _SUBDIRUSE
-	rm -f a.out [Ee]rrs mklog core *.core \
+	rm -f a.out [Ee]rrs mklog *.core \
 	    ${LKM} ${COMBINED} ${OBJS} ${CLEANFILES}
 .endif
 
