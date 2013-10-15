@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.556 2013/10/13 10:10:02 reyk Exp $
+#	$OpenBSD: files,v 1.557 2013/10/15 01:41:45 miod Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -513,6 +513,10 @@ file	dev/softraid_concat.c		softraid
 # SPD Memory EEPROM
 device	spdmem
 file	dev/spdmem.c			spdmem
+
+# AIC-6250 SCSI
+device	oaic: scsi
+file	dev/ic/aic6250.c		oaic
 
 # legitimate pseudo-devices
 pseudo-device vnd: disk
