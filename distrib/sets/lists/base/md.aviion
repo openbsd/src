@@ -64,7 +64,7 @@
 ./usr/lib/librpcsvc.so.2.0
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.5.0
-./usr/lib/libsqlite3.so.25.0
+./usr/lib/libsqlite3.so.26.0
 ./usr/lib/libssl.so.20.0
 ./usr/lib/libstdc++.so.56.0
 ./usr/lib/libtermcap.so.13.0
@@ -2282,4 +2282,6 @@
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/m88k-openbsd
 ./usr/mdec/a2coff
-./usr/mdec/netboot
+./usr/mdec/boot
+./usr/mdec/installboot
+./usr/mdec/vdmtool

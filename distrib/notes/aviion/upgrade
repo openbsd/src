@@ -1,9 +1,2 @@
-dnl	$OpenBSD: upgrade,v 1.3 2013/02/09 19:48:37 miod Exp $
-dnl OpenBSDUpgrade({:-an installation tape, or bsd.rd over the network-:})
-To upgrade your OpenBSD installation, simply extract the new sets on
-the diskless server.
-
-It is strongly advised that you unpack the etc{:--:}OSrev.tgz set in
-a temporary directory and merge changes by hand, since some components of
-your system may not function correctly until your files in `/etc' are
-updated.
+dnl	$OpenBSD: upgrade,v 1.4 2013/10/15 13:28:07 miod Exp $
+OpenBSDUpgrade({:-bsd.rd-:})

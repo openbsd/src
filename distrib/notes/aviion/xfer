@@ -1,3 +1,21 @@
-dnl	$OpenBSD: xfer,v 1.1 2007/03/15 20:18:23 miod Exp $
-As long as OpenBSD/MACHINE only runs diskless, there is no real installation
-media to prepare.
+dnl	$OpenBSD: xfer,v 1.2 2013/10/15 13:28:07 miod Exp $
+Installation is supported from several media types, including:
+
+        CD-ROM
+        FFS partitions
+        Tape
+        Remote NFS partition
+        FTP
+        HTTP
+
+OpenBSDXferPrelude
+
+dnl once we can boot from tapes...
+dnl OpenBSDXferBootTape(xbase xetc xfont xserv xshare)
+dnl once we have X sets...
+dnl OpenBSDXferBareTape(xbase xetc xfont xserv xshare)
+OpenBSDXferBareTape
+
+OpenBSDXferNFS
+
+OpenBSDXferFFS
