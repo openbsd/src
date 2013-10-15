@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2013/06/04 02:25:28 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.18 2013/10/15 20:13:47 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -892,7 +892,7 @@ conf_get_tnbr(struct in_addr addr)
 		}
 	}
 
-	t = tnbr_new(addr, 1);
+	t = tnbr_new(conf, addr, 1);
 
 	return (t);
 }

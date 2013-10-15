@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.20 2013/06/04 02:25:28 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.21 2013/10/15 20:13:47 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -135,7 +135,7 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 			    leconf->flags & LDPD_FLAG_TH_ACCEPT))
 				return;
 
-			tnbr = tnbr_new(src, 0);
+			tnbr = tnbr_new(leconf, src, 0);
 			if (!tnbr)
 				return;
 			tnbr_init(leconf, tnbr);
