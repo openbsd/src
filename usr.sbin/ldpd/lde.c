@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.26 2013/10/15 20:34:02 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.27 2013/10/15 20:36:30 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -45,7 +45,7 @@ void		 lde_dispatch_imsg(int, short, void *);
 void		 lde_dispatch_parent(int, short, void *);
 
 struct lde_nbr	*lde_nbr_find(u_int32_t);
-struct lde_nbr	*lde_nbr_new(u_int32_t, struct lde_nbr *);
+struct lde_nbr	*lde_nbr_new(u_int32_t, struct in_addr *);
 void		 lde_nbr_del(struct lde_nbr *);
 void		 lde_nbr_clear(void);
 
@@ -196,7 +196,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg		 imsg;
-	struct lde_nbr		 rn, *nbr;
+	struct lde_nbr		 *nbr;
 	struct map		 map;
 	struct timespec		 tp;
 	struct in_addr		 addr;
@@ -310,14 +310,14 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 
 			break;
 		case IMSG_NEIGHBOR_UP:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(rn))
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(addr))
 				fatalx("invalid size of OE request");
-			memcpy(&rn, imsg.data, sizeof(rn));
+			memcpy(&addr, imsg.data, sizeof(addr));
 
 			if (lde_nbr_find(imsg.hdr.peerid))
 				fatalx("lde_dispatch_imsg: "
 				    "neighbor already exists");
-			lde_nbr_new(imsg.hdr.peerid, &rn);
+			lde_nbr_new(imsg.hdr.peerid, &addr);
 			break;
 		case IMSG_NEIGHBOR_DOWN:
 			lde_nbr_del(lde_nbr_find(imsg.hdr.peerid));
@@ -591,14 +591,14 @@ lde_nbr_find(u_int32_t peerid)
 }
 
 struct lde_nbr *
-lde_nbr_new(u_int32_t peerid, struct lde_nbr *new)
+lde_nbr_new(u_int32_t peerid, struct in_addr *id)
 {
 	struct lde_nbr	*nbr;
 
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
 		fatal("lde_nbr_new");
 
-	memcpy(nbr, new, sizeof(*nbr));
+	nbr->id.s_addr = id->s_addr;
 	nbr->peerid = peerid;
 	fec_init(&nbr->recv_map);
 	fec_init(&nbr->sent_map);

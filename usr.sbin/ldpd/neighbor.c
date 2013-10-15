@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.40 2013/10/15 20:31:13 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.41 2013/10/15 20:36:30 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -527,15 +527,10 @@ nbr_establish_connection(struct nbr *nbr)
 int
 nbr_act_session_operational(struct nbr *nbr)
 {
-	struct lde_nbr	 rn;
-
 	nbr->idtimer_cnt = 0;
 
-	bzero(&rn, sizeof(rn));
-	rn.id.s_addr = nbr->id.s_addr;
-
-	return (ldpe_imsg_compose_lde(IMSG_NEIGHBOR_UP, nbr->peerid, 0, &rn,
-	    sizeof(rn)));
+	return (ldpe_imsg_compose_lde(IMSG_NEIGHBOR_UP, nbr->peerid, 0,
+	    &nbr->id, sizeof(nbr->id)));
 }
 
 void

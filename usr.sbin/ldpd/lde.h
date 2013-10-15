@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.22 2013/10/15 20:34:03 renato Exp $ */
+/*	$OpenBSD: lde.h,v 1.23 2013/10/15 20:36:30 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -105,7 +105,6 @@ void	lde_send_labelrequest(struct lde_nbr *, struct rt_node *);
 void	lde_send_labelrelease(struct lde_nbr *, struct rt_node *, u_int32_t);
 void	lde_send_notification(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
-void		lde_nbr_del(struct lde_nbr *);
 void		lde_nbr_do_mappings(struct rt_node *);
 struct lde_map *lde_map_add(struct lde_nbr *, struct rt_node *, int);
 void		lde_map_del(struct lde_nbr *, struct lde_map *, int);
