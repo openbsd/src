@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.55 2013/10/01 21:12:43 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.56 2013/10/15 11:03:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -237,6 +237,8 @@ readvdmlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	if ((error = biowait(bp)) != 0)
 		return error;
 
+	if (partoffp != NULL)
+		*partoffp = 0;
 	return checkdisklabel(bp->b_data + LABELOFFSET, lp, 
 	    DL_GETBSTART(lp), DL_GETBEND(lp));
 }
