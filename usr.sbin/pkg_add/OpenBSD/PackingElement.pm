@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.212 2013/05/13 18:30:51 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.213 2013/10/15 20:23:51 schwarze Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -589,6 +589,10 @@ sub format
 
 	my $base = $state->{base};
 	my $fname = $base.$self->fullname;
+	if (-z $fname) {
+		$state->error("empty source manpage: #1", $fname);
+		return;
+	}
 	open(my $fh, '<', $fname) or die "Can't read $fname";
 	my $line = <$fh>;
 	close $fh;
@@ -620,6 +624,7 @@ sub format
 	} else {
 		die "Can't parse source name $fname";
 	}
+	return 1;
 }
 
 package OpenBSD::PackingElement::Mandoc;

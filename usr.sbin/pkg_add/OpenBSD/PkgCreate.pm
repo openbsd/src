@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.69 2012/12/31 09:42:05 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.70 2013/10/15 20:23:51 schwarze Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -510,7 +510,7 @@ sub makesum_plist
 	if (-d $state->{base}.$d) {
 		undef $d;
 	}
-	$self->format($state, $tempname, $fh);
+	$self->format($state, $tempname, $fh) or return;
 	if (-z $tempname) {
 		$state->errsay("groff produced empty result for #1", $dest);
 		$state->errsay("\tkeeping source manpage");
