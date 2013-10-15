@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.1 2013/10/15 13:28:05 miod Exp $
+#       $OpenBSD: install.md,v 1.2 2013/10/15 17:48:16 miod Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -64,14 +64,14 @@ md_has_boot_area () {
 
 # true if the device seems to have DG/UX VDM partitioning
 md_has_vdm () {
-	/usr/mdec/vdmtool $1 2>&1 | greq -q "^vdit entry"
+	/usr/mdec/vdmtool $1 2>&1 | grep -q "^vdit entry"
 }
 
 # true if the device seems to have DG/UX LDM partitioning
 md_has_ldm () {
 	# until vdmtool can grok them...
 	/usr/mdec/vdmtool $1 2>&1 | \
-	    greq -q "vdmtool: unexpected block kind on sector 00000001: ff"
+	    grep -q "vdmtool: unexpected block kind on sector 00000001: ff"
 }
 
 md_prep_disklabel() {
