@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.14 2011/09/21 15:41:30 phessler Exp $ */
+/*	$OpenBSD: util.c,v 1.15 2013/10/15 20:35:55 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -63,7 +63,7 @@ getmonotime(void)
 void
 d_to_tv(double d, struct timeval *tv)
 {
-	tv->tv_sec = (long)d;
+	tv->tv_sec = d;
 	tv->tv_usec = (d - tv->tv_sec) * 1000000;
 	while (tv->tv_usec < 0) {
 		tv->tv_usec += 1000000;
