@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.h,v 1.4 2002/06/09 08:13:07 todd Exp $	*/
+/*	$OpenBSD: modload.h,v 1.5 2013/10/15 02:46:31 deraadt Exp $	*/
 /*	$NetBSD: modload.h,v 1.2 2001/11/08 15:33:15 christos Exp $	*/
 
 /*
@@ -43,24 +43,10 @@ void	elf_linkcmd(char *, size_t, const char *, const char *,
 	    const char *, const void *, const char *);
 void	elf_mod_symload(int);
 
-int	a_out_mod_sizes(int, size_t *, int *, struct lmc_resrv *,
-	    struct stat *);
-void	*a_out_mod_load(int);
-void	a_out_linkcmd(char *, size_t, const char *, const char *,
-	    const char *, const void *, const char *);
-void	a_out_mod_symload(int);
-
-#ifndef USE_AOUT
 #define mod_sizes elf_mod_sizes
 #define mod_load elf_mod_load
 #define mod_symload elf_mod_symload
 #define linkcmd elf_linkcmd
-#else
-#define mod_sizes a_out_mod_sizes
-#define mod_load a_out_mod_load
-#define mod_symload a_out_mod_symload
-#define linkcmd a_out_linkcmd
-#endif
 
 void loadbuf(void *, size_t);
 void loadspace(size_t);
