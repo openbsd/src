@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.21 2013/10/15 20:21:25 renato Exp $ */
+/*	$OpenBSD: lde.h,v 1.22 2013/10/15 20:34:03 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -94,6 +94,7 @@ struct rt_node {
 
 /* lde.c */
 pid_t		lde(struct ldpd_conf *, int [2], int [2], int [2]);
+int		lde_imsg_compose_parent(int, pid_t, void *, u_int16_t);
 int		lde_imsg_compose_ldpe(int, u_int32_t, pid_t, void *, u_int16_t);
 u_int32_t	lde_assign_label(void);
 

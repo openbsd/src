@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.25 2013/10/15 20:21:25 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.26 2013/10/15 20:34:02 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -174,6 +174,13 @@ lde_shutdown(void)
 	_exit(0);
 }
 
+/* imesg */
+int
+lde_imsg_compose_parent(int type, pid_t pid, void *data, u_int16_t datalen)
+{
+	return (imsg_compose_event(iev_main, type, 0, pid, -1, data, datalen));
+}
+
 int
 lde_imsg_compose_ldpe(int type, u_int32_t peerid, pid_t pid, void *data,
     u_int16_t datalen)
@@ -318,8 +325,8 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_CTL_SHOW_LIB:
 			rt_dump(imsg.hdr.pid);
 
-			imsg_compose_event(iev_ldpe, IMSG_CTL_END, 0,
-			    imsg.hdr.pid, -1, NULL, 0);
+			lde_imsg_compose_ldpe(IMSG_CTL_END, 0,
+			    imsg.hdr.pid, NULL, 0);
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
 			/* already checked by ldpe */
@@ -441,8 +448,7 @@ lde_send_change_klabel(struct rt_node *rr, struct rt_lsp *rl)
 	kr.nexthop.s_addr = rl->nexthop.s_addr;
 	kr.remote_label = rl->remote_label;
 
-	imsg_compose_event(iev_main, IMSG_KLABEL_CHANGE, 0, 0, -1,
-	     &kr, sizeof(kr));
+	lde_imsg_compose_parent(IMSG_KLABEL_CHANGE, 0, &kr, sizeof(kr));
 }
 
 void
@@ -458,8 +464,7 @@ lde_send_delete_klabel(struct rt_node *rr, struct rt_lsp *rl)
 	kr.nexthop.s_addr = rl->nexthop.s_addr;
 	kr.remote_label = rl->remote_label;
 
-	imsg_compose_event(iev_main, IMSG_KLABEL_DELETE, 0, 0, -1,
-	     &kr, sizeof(kr));
+	lde_imsg_compose_parent(IMSG_KLABEL_DELETE, 0, &kr, sizeof(kr));
 }
 
 void
@@ -481,10 +486,10 @@ lde_send_labelrequest(struct lde_nbr *ln, struct rt_node *rn)
 	map.prefix = rn->fec.prefix;
 	map.prefixlen = rn->fec.prefixlen;
 
-	imsg_compose_event(iev_ldpe, IMSG_REQUEST_ADD, ln->peerid, 0,
-	     -1, &map, sizeof(map));
-	imsg_compose_event(iev_ldpe, IMSG_REQUEST_ADD_END, ln->peerid, 0,
-	     -1, NULL, 0);
+	lde_imsg_compose_ldpe(IMSG_REQUEST_ADD, ln->peerid, 0,
+	    &map, sizeof(map));
+	lde_imsg_compose_ldpe(IMSG_REQUEST_ADD_END, ln->peerid, 0,
+	    NULL, 0);
 }
 
 void
@@ -519,10 +524,10 @@ lde_send_labelmapping(struct lde_nbr *ln, struct rt_node *rn)
 		me = lde_map_add(ln, rn, 1);
 	me->label = map.label;
 
-	imsg_compose_event(iev_ldpe, IMSG_MAPPING_ADD, ln->peerid, 0,
-	     -1, &map, sizeof(map));
-	imsg_compose_event(iev_ldpe, IMSG_MAPPING_ADD_END, ln->peerid, 0,
-	     -1, NULL, 0);
+	lde_imsg_compose_ldpe(IMSG_MAPPING_ADD, ln->peerid, 0,
+	    &map, sizeof(map));
+	lde_imsg_compose_ldpe(IMSG_MAPPING_ADD_END, ln->peerid, 0,
+	    NULL, 0);
 }
 
 void
@@ -537,11 +542,11 @@ lde_send_labelrelease(struct lde_nbr *ln, struct rt_node *rn, u_int32_t label)
 		map.flags = F_MAP_OPTLABEL;
 		map.label = label;
 	}
-	
-	imsg_compose_event(iev_ldpe, IMSG_RELEASE_ADD, ln->peerid, 0,
-	    -1, &map, sizeof(map));
-	imsg_compose_event(iev_ldpe, IMSG_RELEASE_ADD_END, ln->peerid, 0,
-	    -1, NULL, 0);
+
+	lde_imsg_compose_ldpe(IMSG_RELEASE_ADD, ln->peerid, 0,
+	    &map, sizeof(map));
+	lde_imsg_compose_ldpe(IMSG_RELEASE_ADD_END, ln->peerid, 0,
+	    NULL, 0);
 }
 
 void
@@ -557,8 +562,8 @@ lde_send_notification(u_int32_t peerid, u_int32_t code, u_int32_t msgid,
 	nm.messageid = ntohl(msgid);
 	nm.type = type;
 
-	imsg_compose_event(iev_ldpe, IMSG_NOTIFICATION_SEND, peerid, 0,
-	    -1, &nm, sizeof(nm));
+	lde_imsg_compose_ldpe(IMSG_NOTIFICATION_SEND, peerid, 0,
+	    &nm, sizeof(nm));
 }
 
 static __inline int lde_nbr_compare(struct lde_nbr *, struct lde_nbr *);
