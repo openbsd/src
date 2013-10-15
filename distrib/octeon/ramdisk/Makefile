@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2013/10/14 00:00:11 guenther Exp $
+#	$OpenBSD: Makefile,v 1.3 2013/10/15 22:46:53 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -82,7 +82,7 @@ do_files:
 	rm ${MOUNT_POINT}/${CBIN}
 
 clean cleandir:
-	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
+	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	    lib*.a lib*.olist ${CBIN}.map \
 	    *.o *.lo *.c bsd ${BSD_RD} rdsetroot
 	rm -rf cd-dir

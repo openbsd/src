@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2013/03/31 23:29:46 miod Exp $
+# $OpenBSD: Makefile,v 1.3 2013/10/15 22:49:03 deraadt Exp $
 
 .include <bsd.obj.mk>
 
@@ -26,7 +26,7 @@ test: $(PROG)
 	./$(PROG)
 
 clean:
-	rm -f a.out [Ee]rrs mklog core *.core y.tab.h \
+	rm -f a.out [Ee]rrs mklog *.core y.tab.h \
 	    ${PROG} ${OBJS} ${_LEXINTM} ${_YACCINTM} ${CLEANFILES}
 	rm -rf OpenBSD
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2013/07/05 21:13:07 miod Exp $
+#	$OpenBSD: Makefile,v 1.13 2013/10/15 22:49:03 deraadt Exp $
 #	$NetBSD: Makefile,v 1.12 2002/02/24 01:04:25 matt Exp $
 
 S=	${.CURDIR}/../../../../
@@ -53,7 +53,7 @@ ${PROG}: ${OBJS} ${LIBSA}
 	/usr/bin/objcopy -O binary ${PROG}.out ${PROG}
 
 clean::
-	rm -f a.out [Ee]rrs mklog core *.core ${PROG} ${OBJS} ${LOBJS} \
+	rm -f a.out [Ee]rrs mklog *.core ${PROG} ${OBJS} ${LOBJS} \
 	    ${CLEANFILES} 
 
 .include <bsd.prog.mk>

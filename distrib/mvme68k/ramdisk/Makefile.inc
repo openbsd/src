@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.11 2013/10/14 00:00:11 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2013/10/15 22:46:52 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1995/07/18 04:13:14 briggs Exp $
 #
 
@@ -38,7 +38,7 @@ do_files:
 	rm ${MOUNT_POINT}/${CBIN}
 
 clean cleandir:
-	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
+	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	    *.o *.lo *.c \
 	    lib*.a lib*.olist ${CBIN}.map
 
