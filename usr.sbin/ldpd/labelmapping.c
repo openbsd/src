@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.24 2013/06/04 02:34:48 claudio Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.25 2013/10/15 19:59:53 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -25,6 +25,7 @@
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <net/if_dl.h>
+#include <netmpls/mpls.h>
 #include <unistd.h>
 
 #include <errno.h>
@@ -42,10 +43,11 @@ void		gen_label_tlv(struct ibuf *, u_int32_t);
 void		gen_reqid_tlv(struct ibuf *, u_int32_t);
 void		gen_fec_tlv(struct ibuf *, struct in_addr, u_int8_t);
 
-int	tlv_decode_label(char *, u_int16_t, u_int32_t *);
+int	tlv_decode_label(struct nbr *, struct ldp_msg *, char *, u_int16_t,
+    u_int32_t *);
 int	tlv_decode_reqid(char *, u_int16_t, u_int32_t *);
-int	tlv_decode_fec_elm(char *, u_int16_t, u_int8_t *, u_int32_t *,
-	    u_int8_t *);
+int	tlv_decode_fec_elm(struct nbr *, struct ldp_msg *, char *, u_int16_t,
+    u_int8_t *, u_int32_t *, u_int8_t *);
 
 /* Label Mapping Message */
 void
@@ -108,6 +110,10 @@ recv_labelmapping(struct nbr *nbr, char *buf, u_int16_t len)
 	}
 
 	bcopy(buf, &ft, sizeof(ft));
+	if (ntohs(ft.type) != TLV_TYPE_FEC) {
+		send_notification_nbr(nbr, S_MISS_MSG, lm.msgid, lm.type);
+		return (-1);
+	}
 	feclen = ntohs(ft.length);
 
 	if (feclen > len - TLV_HDR_LEN) {
@@ -118,15 +124,10 @@ recv_labelmapping(struct nbr *nbr, char *buf, u_int16_t len)
 	buf += TLV_HDR_LEN;	/* just advance to the end of the fec header */
 	len -= TLV_HDR_LEN;
 
-	lbllen = tlv_decode_label(buf + feclen, len - feclen, &label);
-	if (lbllen == -1) {
-		session_shutdown(nbr, S_BAD_TLV_LEN, lm.msgid, lm.type);
+	lbllen = tlv_decode_label(nbr, &lm, buf + feclen, len - feclen,
+	    &label);
+	if (lbllen == -1)
 		return (-1);
-	}
-	if (label == NO_LABEL) {
-		session_shutdown(nbr, S_BAD_TLV_VAL, lm.msgid, lm.type);
-		return (-1);
-	}
 
 	/* TODO opt label request msg id, hop cnt and path vektor TLV */
 
@@ -134,9 +135,10 @@ recv_labelmapping(struct nbr *nbr, char *buf, u_int16_t len)
 	map.messageid = lm.msgid;
 	map.label = label;
 	do {
-		if ((tlen = tlv_decode_fec_elm(buf, feclen, &addr_type,
-		    &map.prefix.s_addr, &map.prefixlen)) == -1 ||
-		    addr_type == FEC_WILDCARD) {
+		if ((tlen = tlv_decode_fec_elm(nbr, &lm, buf, feclen,
+		    &addr_type, &map.prefix.s_addr, &map.prefixlen)) == -1)
+			return (-1);
+		if (addr_type == FEC_WILDCARD) {
 			session_shutdown(nbr, S_BAD_TLV_VAL, lm.msgid, lm.type);
 			return (-1);
 		}
@@ -208,6 +210,10 @@ recv_labelrequest(struct nbr *nbr, char *buf, u_int16_t len)
 	}
 
 	bcopy(buf, &ft, sizeof(ft));
+	if (ntohs(ft.type) != TLV_TYPE_FEC) {
+		send_notification_nbr(nbr, S_MISS_MSG, lr.msgid, lr.type);
+		return (-1);
+	}
 	feclen = ntohs(ft.length);
 
 	if (feclen > len - TLV_HDR_LEN) {
@@ -223,9 +229,10 @@ recv_labelrequest(struct nbr *nbr, char *buf, u_int16_t len)
 	bzero(&map, sizeof(map));
 	map.messageid = lr.msgid;
 	do {
-		if ((tlen = tlv_decode_fec_elm(buf, feclen, &addr_type,
-		    &map.prefix.s_addr, &map.prefixlen)) == -1 ||
-		    addr_type == FEC_WILDCARD) {
+		if ((tlen = tlv_decode_fec_elm(nbr, &lr, buf, feclen,
+		    &addr_type, &map.prefix.s_addr, &map.prefixlen)) == -1)
+			return (-1);
+		if (addr_type == FEC_WILDCARD) {
 			session_shutdown(nbr, S_BAD_TLV_VAL, lr.msgid, lr.type);
 			return (-1);
 		}
@@ -306,6 +313,10 @@ recv_labelwithdraw(struct nbr *nbr, char *buf, u_int16_t len)
 	}
 
 	bcopy(buf, &ft, sizeof(ft));
+	if (ntohs(ft.type) != TLV_TYPE_FEC) {
+		send_notification_nbr(nbr, S_MISS_MSG, lw.msgid, lw.type);
+		return (-1);
+	}
 	feclen = ntohs(ft.length);
 
 	if (feclen > len - TLV_HDR_LEN) {
@@ -320,7 +331,8 @@ recv_labelwithdraw(struct nbr *nbr, char *buf, u_int16_t len)
 	if (len > feclen) {
 		int r;
 
-		r = tlv_decode_label(buf + feclen, len - feclen, &label);
+		r = tlv_decode_label(nbr, &lw, buf + feclen, len - feclen,
+		    &label);
 		if (r == -1 || len != feclen + r) {
 			session_shutdown(nbr, S_BAD_TLV_VAL, lw.msgid,
 			    lw.type);
@@ -335,11 +347,9 @@ recv_labelwithdraw(struct nbr *nbr, char *buf, u_int16_t len)
 		map.flags = F_MAP_OPTLABEL;
 	}
 	do {
-		if ((tlen = tlv_decode_fec_elm(buf, feclen, &addr_type,
-		    &map.prefix.s_addr, &map.prefixlen)) == -1) {
-			session_shutdown(nbr, S_BAD_TLV_VAL, lw.msgid, lw.type);
+		if ((tlen = tlv_decode_fec_elm(nbr, &lw, buf, feclen,
+		    &addr_type, &map.prefix.s_addr, &map.prefixlen)) == -1)
 			return (-1);
-		}
 
 		if (addr_type == FEC_WILDCARD) {
 			/* Wildcard FEC must be the only FEC element */
@@ -439,6 +449,10 @@ recv_labelrelease(struct nbr *nbr, char *buf, u_int16_t len)
 	}
 
 	bcopy(buf, &ft, sizeof(ft));
+	if (ntohs(ft.type) != TLV_TYPE_FEC) {
+		send_notification_nbr(nbr, S_MISS_MSG, lr.msgid, lr.type);
+		return (-1);
+	}
 	feclen = ntohs(ft.length);
 
 	if (feclen > len - TLV_HDR_LEN) {
@@ -453,7 +467,8 @@ recv_labelrelease(struct nbr *nbr, char *buf, u_int16_t len)
 	if (len > feclen) {
 		int r;
 
-		r = tlv_decode_label(buf + feclen, len - feclen, &label);
+		r = tlv_decode_label(nbr, &lr, buf + feclen, len - feclen,
+		    &label);
 		if (r == -1 || len != feclen + r) {
 			session_shutdown(nbr, S_BAD_TLV_VAL, lr.msgid,
 			    lr.type);
@@ -468,11 +483,9 @@ recv_labelrelease(struct nbr *nbr, char *buf, u_int16_t len)
 		map.flags = F_MAP_OPTLABEL;
 	}
 	do {
-		if ((tlen = tlv_decode_fec_elm(buf, feclen, &addr_type,
-		    &map.prefix.s_addr, &map.prefixlen)) == -1) {
-			session_shutdown(nbr, S_BAD_TLV_VAL, lr.msgid, lr.type);
+		if ((tlen = tlv_decode_fec_elm(nbr, &lr, buf, feclen,
+		    &addr_type, &map.prefix.s_addr, &map.prefixlen)) == -1)
 			return (-1);
-		}
 
 		if (addr_type == FEC_WILDCARD) {
 			/* Wildcard FEC must be the only FEC element */
@@ -551,6 +564,10 @@ recv_labelabortreq(struct nbr *nbr, char *buf, u_int16_t len)
 	}
 
 	bcopy(buf, &ft, sizeof(ft));
+	if (ntohs(ft.type) != TLV_TYPE_FEC) {
+		send_notification_nbr(nbr, S_MISS_MSG, la.msgid, la.type);
+		return (-1);
+	}
 	feclen = ntohs(ft.length);
 
 	if (feclen > len - TLV_HDR_LEN) {
@@ -579,9 +596,10 @@ recv_labelabortreq(struct nbr *nbr, char *buf, u_int16_t len)
 	}
 
 	do {
-		if ((tlen = tlv_decode_fec_elm(buf, feclen, &addr_type,
-		    &map.prefix.s_addr, &map.prefixlen)) == -1 ||
-		    addr_type == FEC_WILDCARD) {
+		if ((tlen = tlv_decode_fec_elm(nbr, &la, buf, feclen,
+		    &addr_type, &map.prefix.s_addr, &map.prefixlen)) == -1)
+			return (-1);
+		if (addr_type == FEC_WILDCARD) {
 			session_shutdown(nbr, S_BAD_TLV_VAL, la.msgid, la.type);
 			return (-1);
 		}
@@ -612,21 +630,47 @@ gen_label_tlv(struct ibuf *buf, u_int32_t label)
 }
 
 int
-tlv_decode_label(char *buf, u_int16_t len, u_int32_t *label)
+tlv_decode_label(struct nbr *nbr, struct ldp_msg *lm, char *buf,
+    u_int16_t len, u_int32_t *label)
 {
 	struct label_tlv lt;
 
-	if (len < sizeof(lt))
+	if (len < sizeof(lt)) {
+		session_shutdown(nbr, S_BAD_TLV_LEN, lm->msgid, lm->type);
 		return (-1);
+	}
 	bcopy(buf, &lt, sizeof(lt));
 
-	if (ntohs(lt.length) != sizeof(lt) - TLV_HDR_LEN)
+	if (!(ntohs(lt.type) & TLV_TYPE_GENERICLABEL)) {
+		send_notification_nbr(nbr, S_MISS_MSG, lm->msgid, lm->type);
 		return (-1);
+	}
 
-	if (lt.type != htons(TLV_TYPE_GENERICLABEL))
+	switch (htons(lt.type)) {
+	case TLV_TYPE_GENERICLABEL:
+		if (ntohs(lt.length) != sizeof(lt) - TLV_HDR_LEN) {
+			session_shutdown(nbr, S_BAD_TLV_LEN, lm->msgid,
+			    lm->type);
+			return (-1);
+		}
+
+		*label = ntohl(lt.label);
+		if (*label > MPLS_LABEL_MAX ||
+		    (*label <= MPLS_LABEL_RESERVED_MAX &&
+		     *label != MPLS_LABEL_IPV4NULL &&
+		     *label != MPLS_LABEL_IMPLNULL)) {
+			session_shutdown(nbr, S_BAD_TLV_VAL, lm->msgid,
+			    lm->type);
+			return (-1);
+		}
+		break;
+	case TLV_TYPE_ATMLABEL:
+	case TLV_TYPE_FRLABEL:
+	default:
+		/* unsupported */
+		session_shutdown(nbr, S_BAD_TLV_VAL, lm->msgid, lm->type);
 		return (-1);
-
-	*label = ntohl(lt.label);
+	}
 
 	return (sizeof(lt));
 }
@@ -663,7 +707,6 @@ tlv_decode_reqid(char *buf, u_int16_t len, u_int32_t *reqid)
 	return (sizeof(rt));
 }
 
-
 void
 gen_fec_tlv(struct ibuf *buf, struct in_addr prefix, u_int8_t prefixlen)
 {
@@ -690,8 +733,8 @@ gen_fec_tlv(struct ibuf *buf, struct in_addr prefix, u_int8_t prefixlen)
 }
 
 int
-tlv_decode_fec_elm(char *buf, u_int16_t len, u_int8_t *type, u_int32_t *prefix,
-    u_int8_t *prefixlen)
+tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *lm, char *buf,
+    u_int16_t len, u_int8_t *type, u_int32_t *prefix, u_int8_t *prefixlen)
 {
 	u_int16_t	family, off = 0;
 
@@ -701,27 +744,38 @@ tlv_decode_fec_elm(char *buf, u_int16_t len, u_int8_t *type, u_int32_t *prefix,
 	if (*type == FEC_WILDCARD) {
 		if (len == 0)
 			return (off);
-		else
-			return (-1); /* XXX Malformed TLV Value */
+		else {
+			session_shutdown(nbr, S_BAD_TLV_VAL, lm->msgid,
+			    lm->type);
+			return (-1);
+		}
 	}
 
-	if (*type != FEC_PREFIX)
-		return (-1);	/* XXX "Unknown FEC" Notification */
+	if (*type != FEC_PREFIX) {
+		send_notification_nbr(nbr, S_UNKNOWN_FEC, lm->msgid, lm->type);
+		return (-1);
+	}
 
-	if (len < FEC_ELM_MIN_LEN)
-		return (-1);	/* XXX Bad TLV Length */
+	if (len < FEC_ELM_MIN_LEN) {
+		session_shutdown(nbr, S_BAD_TLV_LEN, lm->msgid, lm->type);
+		return (-1);
+	}
 
 	bcopy(buf + off, &family, sizeof(family));
 	off += sizeof(family);
 
-	if (family != htons(FEC_IPV4))
-		return (-1);	/* XXX "Unsupported Address Family" */
+	if (family != htons(FEC_IPV4)) {
+		send_notification_nbr(nbr, S_UNSUP_ADDR, lm->msgid, lm->type);
+		return (-1);
+	}
 
 	*prefixlen = buf[off];
 	off += sizeof(u_int8_t);
 
-	if (len < off + PREFIX_SIZE(*prefixlen))
-		return (-1);	/* XXX Bad TLV Length */
+	if (len < off + PREFIX_SIZE(*prefixlen)) {
+		session_shutdown(nbr, S_BAD_TLV_LEN, lm->msgid, lm->type);
+		return (-1);
+	}
 
 	*prefix = 0;
 	bcopy(buf + off, prefix, PREFIX_SIZE(*prefixlen));

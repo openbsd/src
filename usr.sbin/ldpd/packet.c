@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.29 2013/10/15 16:47:24 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.30 2013/10/15 19:59:53 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -345,11 +345,12 @@ session_read(int fd, short event, void *arg)
 		}
 
 		pdu_len = ntohs(ldp_hdr->length);
-		if (pdu_len < LDP_HDR_SIZE || pdu_len > LDP_MAX_LEN) {
+		if (pdu_len < (LDP_HDR_PDU_LEN + LDP_MSG_LEN) ||
+		    pdu_len > LDP_MAX_LEN) {
 			if (nbr)
-				session_shutdown(nbr, S_BAD_MSG_LEN, 0, 0);
+				session_shutdown(nbr, S_BAD_PDU_LEN, 0, 0);
 			else {
-				send_notification(S_BAD_MSG_LEN, tcp, 0, 0);
+				send_notification(S_BAD_PDU_LEN, tcp, 0, 0);
 				msgbuf_write(&tcp->wbuf.wbuf);
 				tcp_close(tcp);
 			}
@@ -405,9 +406,6 @@ session_read(int fd, short event, void *arg)
 
 			/* check for error conditions earlier */
 			switch (type) {
-			case MSG_TYPE_NOTIFICATION:
-				/* notifications are always processed */
-				break;
 			case MSG_TYPE_INIT:
 				if ((nbr->state != NBR_STA_INITIAL) &&
 				    (nbr->state != NBR_STA_OPENSENT)) {
@@ -426,6 +424,7 @@ session_read(int fd, short event, void *arg)
 					return;
 				}
 				break;
+			case MSG_TYPE_NOTIFICATION:
 			case MSG_TYPE_ADDR:
 			case MSG_TYPE_ADDRWITHDRAW:
 			case MSG_TYPE_LABELMAPPING:

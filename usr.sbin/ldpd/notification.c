@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.14 2013/06/04 02:34:48 claudio Exp $ */
+/*	$OpenBSD: notification.c,v 1.15 2013/10/15 19:59:53 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -112,7 +112,8 @@ recv_notification(struct nbr *nbr, char *buf, u_int16_t len)
 		if (st.status_code == htonl(S_NO_HELLO) ||
 		    st.status_code == htonl(S_PARM_ADV_MODE) ||
 		    st.status_code == htonl(S_MAX_PDU_LEN) ||
-		    st.status_code == htonl(S_PARM_L_RANGE))
+		    st.status_code == htonl(S_PARM_L_RANGE) ||
+		    st.status_code == htonl(S_KEEPALIVE_BAD))
 			nbr_start_idtimer(nbr);
 
 		nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);

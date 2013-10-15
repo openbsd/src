@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.14 2013/10/15 16:47:24 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.15 2013/10/15 19:59:53 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -92,6 +92,7 @@ struct ldp_hdr {
 } __packed;
 
 #define	LDP_HDR_SIZE		10
+#define	LDP_HDR_PDU_LEN		6
 
 /* TLV record */
 struct tlv {
