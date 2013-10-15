@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.2 2013/08/29 20:22:14 naddy Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.3 2013/10/15 05:45:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -29,7 +29,6 @@
 
 #include "hangman.h"
 
-int	ksyms_aout_parse();
 int	ksyms_elf_parse();
 
 void
@@ -104,11 +103,6 @@ ksetup()
 		return 0;
 #endif
 
-#ifdef _NLIST_DO_AOUT
-	if (ksyms_aout_parse() == 0)
-		return 0;
-#endif
-
 	close(ksyms);
 	errno = ENOEXEC;
 	return -1;
@@ -157,37 +151,6 @@ ksyms_elf_parse()
 
 	if (ksymsize == 0)
 		return -1;
-
-	return 0;
-}
-#endif
-
-#ifdef _NLIST_DO_AOUT
-int
-ksyms_aout_parse()
-{
-	struct exec eh;
-	uint32_t size;
-
-	if (lseek(ksyms, 0, SEEK_SET) == -1)
-		return -1;
-
-	if (read(ksyms, &eh, sizeof eh) != sizeof eh)
-		return -1;
-
-	if (N_BADMAG(eh))
-		return -1;
-
-	ksymoffs = (off_t)N_STROFF(eh);
-	if (lseek(ksyms, ksymoffs, SEEK_SET) == -1)
-		return -1;
-
-	if (read(ksyms, &size, sizeof size) != sizeof size)
-		return -1;
-	ksymoffs += sizeof size;
-	if (size <= sizeof size)
-		return -1;
-	ksymsize = (off_t)size - sizeof size;
 
 	return 0;
 }
