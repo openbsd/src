@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.4 2013/10/14 13:04:26 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.5 2013/10/15 10:24:41 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -63,6 +63,7 @@ int	 vxlanioctl(struct ifnet *, u_long, caddr_t);
 void	 vxlanstart(struct ifnet *);
 int	 vxlan_clone_create(struct if_clone *, int);
 int	 vxlan_clone_destroy(struct ifnet *);
+void	 vxlan_multicast_cleanup(struct ifnet *);
 int	 vxlan_media_change(struct ifnet *);
 void	 vxlan_media_status(struct ifnet *, struct ifmediareq *);
 int	 vxlan_config(struct ifnet *, struct sockaddr *, struct sockaddr *);
@@ -150,6 +151,11 @@ int
 vxlan_clone_destroy(struct ifnet *ifp)
 {
 	struct vxlan_softc	*sc = ifp->if_softc;
+	int			 s;
+
+	s = splsoftnet();
+	vxlan_multicast_cleanup(ifp);
+	splx(s);
 
 	vxlan_enable--;
 	LIST_REMOVE(sc, sc_entry);
@@ -161,6 +167,18 @@ vxlan_clone_destroy(struct ifnet *ifp)
 	free(sc, M_DEVBUF);
 
 	return (0);
+}
+
+void
+vxlan_multicast_cleanup(struct ifnet *ifp)
+{
+	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
+	struct ip_moptions	*imo = &sc->sc_imo;
+
+	if (imo->imo_num_memberships > 0) {
+		in_delmulti(imo->imo_membership[--imo->imo_num_memberships]);
+		imo->imo_multicast_ifp = NULL;
+	}
 }
 
 void
@@ -228,11 +246,7 @@ vxlan_config(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	}
 #endif
 
-	if (imo->imo_num_memberships > 0) {
-		in_delmulti(imo->imo_membership[
-		    --imo->imo_num_memberships]);
-		imo->imo_multicast_ifp = NULL;
-	}
+	vxlan_multicast_cleanup(ifp);
 
 #ifdef INET
 	if (IN_MULTICAST(dst4->sin_addr.s_addr)) {
@@ -277,7 +291,6 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct if_laddrreq	*lifr = (struct if_laddrreq *)data;
 	struct proc		*p = curproc;
 	int			 error = 0, s;
-	struct ip_moptions	*imo = &sc->sc_imo;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -327,12 +340,8 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCDIFPHYADDR:
 		if ((error = suser(p, 0)) != 0)
 			break;
-		s = splnet();
-		if (imo->imo_num_memberships > 0) {
-			in_delmulti(imo->imo_membership[
-			    --imo->imo_num_memberships]);
-			imo->imo_multicast_ifp = NULL;
-		}
+		s = splsoftnet();
+		vxlan_multicast_cleanup(ifp);
 		bzero(&sc->sc_src, sizeof(sc->sc_src));
 		bzero(&sc->sc_dst, sizeof(sc->sc_dst));
 		sc->sc_dstport = htons(VXLAN_PORT);
@@ -359,7 +368,7 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EINVAL;
 			break;
 		}
-		s = splnet();
+		s = splsoftnet();
 		sc->sc_rtableid = ifr->ifr_rdomainid;
 		(void)vxlan_config(ifp, NULL, NULL);
 		splx(s);
@@ -378,7 +387,7 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		if (sc->sc_ttl == (u_int8_t)ifr->ifr_ttl)
 			break;
-		s = splnet();
+		s = splsoftnet();
 		sc->sc_ttl = (u_int8_t)(ifr->ifr_ttl);
 		(void)vxlan_config(ifp, NULL, NULL);
 		splx(s);
@@ -391,12 +400,11 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSVNETID:
 		if ((error = suser(p, 0)) != 0)
 			break;
-		if (ifr->ifr_vnetid < 0 ||
-		    ifr->ifr_vnetid > 0x00ffffff) {
+		if (ifr->ifr_vnetid < 0 || ifr->ifr_vnetid > 0x00ffffff) {
 			error = EINVAL;
 			break;
 		}
-		s = splnet();
+		s = splsoftnet();
 		sc->sc_vnetid = (u_int32_t)ifr->ifr_vnetid;
 		(void)vxlan_config(ifp, NULL, NULL);
 		splx(s);
