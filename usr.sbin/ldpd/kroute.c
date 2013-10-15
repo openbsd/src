@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.30 2013/10/15 20:21:25 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.31 2013/10/15 21:54:19 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -422,11 +422,12 @@ kr_redist_eval(struct kroute *kr)
 		goto dont_redistribute;
 
 	/*
-	 * We consider the loopback net, multicast and experimental addresses
-	 * as not redistributable.
+	 * We consider the loopback net, default route, multicast and
+	 * experimental addresses as not redistributable.
 	 */
 	a = ntohl(kr->prefix.s_addr);
 	if (IN_MULTICAST(a) || IN_BADCLASS(a) ||
+	    (kr->prefixlen == 0) ||
 	    (a >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
 		goto dont_redistribute;
 	/*
