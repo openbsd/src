@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dart.4,v 1.2 2013/05/18 12:13:13 jmc Exp $
+.\"	$OpenBSD: dart.4,v 1.3 2013/10/15 18:15:04 miod Exp $
 .\"
 .\" Copyright (c) 2013 Miodrag Vallat.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 18 2013 $
+.Dd $Mdocdate: October 15 2013 $
 .Dt DART 4 mvme88k
 .Os
 .Sh NAME
@@ -42,7 +42,8 @@ character buffer on the receive path.
 The following link speeds are supported by the
 .Nm
 driver:
-75, 110, 134.5, 150, 300, 600, 1200, 1800, 2400, 4800, 9600 and 19200 bps.
+50, 75, 110, 134.5, 150, 200, 300, 600, 1050, 1200, 1800, 200, 2400, 4800,
+7200, 9600, 19200 and 38400 bps.
 .Pp
 On MVME180 and MVME181, the counter/timer is used to provide the
 scheduling clock, while on MVME188, the counter/timer is used to provide
@@ -55,8 +56,3 @@ the statistics clock.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr tty 4
-.Sh BUGS
-The following link speeds are supported by the hardware, but not by the
-.Nm
-driver yet:
-50, 200, 1050, 2000, 7200 and 38400 bps.
