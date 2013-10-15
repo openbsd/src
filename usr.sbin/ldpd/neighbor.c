@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.41 2013/10/15 20:36:30 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.42 2013/10/15 20:41:10 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -217,7 +217,7 @@ nbr_new(struct in_addr id, struct in_addr addr)
 
 	nbr->state = NBR_STA_PRESENT;
 	nbr->id.s_addr = id.s_addr;
-	nbr->addr = addr;
+	nbr->addr.s_addr = addr.s_addr;
 
 	/* get next unused peerid */
 	while (nbr_find_peerid(++peercnt))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.19 2013/06/04 02:39:10 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.20 2013/10/15 20:41:09 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -169,8 +169,6 @@ if_del(struct iface *iface)
 	struct if_addr		*if_addr;
 
 	log_debug("if_del: interface %s", iface->name);
-
-	if_stop_hello_timer(iface);
 
 	while ((adj = LIST_FIRST(&iface->adj_list)) != NULL) {
 		LIST_REMOVE(adj, iface_entry);
