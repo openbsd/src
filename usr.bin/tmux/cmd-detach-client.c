@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-detach-client.c,v 1.15 2013/10/10 12:28:08 nicm Exp $ */
+/* $OpenBSD: cmd-detach-client.c,v 1.16 2013/10/15 00:15:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -71,7 +71,8 @@ cmd_detach_client_exec(struct cmd *self, struct cmd_q *cmdq)
 		if (args_has(args, 'a')) {
 			for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
 				c2 = ARRAY_ITEM(&clients, i);
-				if (c2 == NULL || c == c2)
+				if (c2 == NULL || c2->session == NULL ||
+				    c2 == c)
 					continue;
 				server_write_client(c2, msgtype,
 				    c2->session->name,
