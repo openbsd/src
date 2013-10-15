@@ -1,4 +1,4 @@
-/*	$OpenBSD: keepalive.c,v 1.10 2013/06/04 02:34:48 claudio Exp $ */
+/*	$OpenBSD: keepalive.c,v 1.11 2013/10/15 20:27:40 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -71,8 +71,6 @@ recv_keepalive(struct nbr *nbr, char *buf, u_int16_t len)
 
 	if (nbr->state != NBR_STA_OPER)
 		nbr_fsm(nbr, NBR_EVT_KEEPALIVE_RCVD);
-	else
-		nbr_fsm(nbr, NBR_EVT_PDU_RCVD);
 
 	return (ntohs(ka.length));
 }

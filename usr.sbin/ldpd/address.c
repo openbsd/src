@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.13 2013/06/04 02:34:48 claudio Exp $ */
+/*	$OpenBSD: address.c,v 1.14 2013/10/15 20:27:40 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -132,8 +132,6 @@ recv_address(struct nbr *nbr, char *buf, u_int16_t len)
 		session_shutdown(nbr, S_BAD_TLV_LEN, addr.msgid, addr.type);
 		return (-1);
 	}
-
-	nbr_fsm(nbr, NBR_EVT_PDU_RCVD);
 
 	return (ntohs(addr.length));
 }
