@@ -1,4 +1,4 @@
-/*	$OpenBSD: accept.c,v 1.1 2012/04/12 17:33:43 claudio Exp $ */
+/*	$OpenBSD: accept.c,v 1.2 2013/10/15 20:21:24 renato Exp $ */
 
 /*
  * Copyright (c) 2012 Claudio Jeker <claudio@openbsd.org>
@@ -56,7 +56,7 @@ accept_add(int fd, void (*cb)(int, short, void *), void *arg)
 	struct accept_ev	*av;
 
 	if ((av = calloc(1, sizeof(*av))) == NULL)
-		return -1;
+		return (-1);
 	av->fd = fd;
 	av->accept_cb = cb;
 	av->arg = arg;

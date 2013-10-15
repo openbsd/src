@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.38 2013/06/04 02:39:10 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.39 2013/10/15 20:21:26 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -288,9 +288,9 @@ int
 nbr_session_active_role(struct nbr *nbr)
 {
 	if (ntohl(ldpe_router_id()) > ntohl(nbr->addr.s_addr))
-		return 1;
+		return (1);
 
-	return 0;
+	return (0);
 }
 
 /* timers */

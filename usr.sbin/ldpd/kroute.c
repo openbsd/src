@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.29 2013/06/04 00:41:18 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.30 2013/10/15 20:21:25 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -553,7 +553,7 @@ kroute_insert(struct kroute_node *kr)
 
 	if ((krh = RB_INSERT(kroute_tree, &krt, kr)) != NULL) {
 		/*
-		 * Multiple FEC, add to ordered list 
+		 * Multiple FEC, add to ordered list
 		 */
 		if (kr->r.priority < krh->r.priority) {
 			/* head element */
@@ -847,7 +847,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd,
 
 	kif = kif_update(ifindex, flags, ifd, sdl, &link_old);
 	if (!kif) {
-		log_warn("if_change:  kif_update(%u)", ifindex);
+		log_warn("if_change: kif_update(%u)", ifindex);
 		return;
 	}
 	link_new = (kif->k.flags & IFF_UP) &&
@@ -1071,7 +1071,6 @@ send_rtmsg(int fd, int action, struct kroute *kroute, u_int32_t family)
 				hdr.rtm_mpls = MPLS_OP_PUSH;
 		}
 	}
-
 
 retry:
 	if (writev(fd, iov, iovcnt) == -1) {

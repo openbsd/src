@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.30 2013/06/03 16:56:47 claudio Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.31 2013/10/15 20:21:25 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -92,7 +92,6 @@ fec_find(struct fec_tree *fh, struct fec *f)
 	return (RB_FIND(fec_tree, fh, f));
 }
 
-
 int
 fec_insert(struct fec_tree *fh, struct fec *f)
 {
@@ -122,7 +121,6 @@ fec_clear(struct fec_tree *fh, void (*free_cb)(void *))
 		free_cb(f);
 	}
 }
-
 
 /* routing table functions */
 void
@@ -447,7 +445,7 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 	/* LMp.15 install FEC in FIB */
 	lde_send_change_klabel(rn, rl);
 
-	/* Record the mapping from this peer LMp.16 */	
+	/* Record the mapping from this peer LMp.16 */
 	if (me == NULL)
 		me = lde_map_add(ln, rn, 0);
 	me->label = map->label;
@@ -597,7 +595,7 @@ lde_check_withdraw(struct map *map, struct lde_nbr *ln)
 	/* if ordered distribution */
 	/* walk over upstream list and send withdraws for LSP that depend on
 	 * the removed LSP */
-	
+
 	/* if independent distribution and adv on demand */
 	/* Generate Event: Recognize New FEC for FEC. */
 }
