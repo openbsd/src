@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.273 2013/10/03 18:50:30 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.274 2013/10/15 20:13:02 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -206,7 +206,7 @@ editor(int f)
 	}
 
 #ifdef SUN_CYLCHECK
-	if ((newlab.d_flags & D_VENDOR) & !aflag) {
+	if ((newlab.d_flags & D_VENDOR) && !aflag) {
 		puts("This platform requires that partition offsets/sizes "
 		    "be on cylinder boundaries.\n"
 		    "Partition offsets/sizes will be rounded to the "

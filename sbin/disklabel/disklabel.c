@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.189 2013/10/03 18:50:30 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.190 2013/10/15 20:13:02 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -261,7 +261,7 @@ main(int argc, char *argv[])
 		fclose(t);
 		break;
 	case WRITE:
-		if (dflag | aflag) {
+		if (dflag || aflag) {
 			readlabel(f);
 		} else if (argc < 2 || argc > 3)
 			usage();
