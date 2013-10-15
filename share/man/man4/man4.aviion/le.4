@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.5 2013/09/24 20:14:36 miod Exp $
+.\"	$OpenBSD: le.4,v 1.6 2013/10/15 18:13:53 miod Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -25,12 +25,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 24 2013 $
+.Dd $Mdocdate: October 15 2013 $
 .Dt LE 4 aviion
 .Os
 .Sh NAME
 .Nm le
-.Nd AMD LANCE Ethernet device
+.Nd AMD LANCE or ILACC Ethernet device
 .Sh SYNOPSIS
 .Cd "le0 at syscon? offset 0x8c000              " Pq "on-board, AV4000 family"
 .Cd "le0 at syscon? offset 0xb0100              " Pq "on-board, AV530 family"
@@ -43,8 +43,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides access to the on-board AMD 7990/LANCE interface,
-as well as the VME Interphase 3207 Hawk Ethernet boards.
+driver provides access to the on-board AMD 7990/LANCE or AMD 79900/ILACC
+interface, as well as the VME Interphase 3207 Hawk Ethernet boards.
 This in turn provides an interface to the
 .Tn Ethernet
 network.
@@ -81,6 +81,6 @@ network.
 .Xr inet 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
-.\" .Xr vme 4 ,
+.Xr vme 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8

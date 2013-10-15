@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.6 2013/06/29 16:57:33 jmc Exp $
+.\"	$OpenBSD: intro.4,v 1.7 2013/10/15 18:13:53 miod Exp $
 .\" Copyright (c) 1990, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)intro.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: June 29 2013 $
+.Dd $Mdocdate: October 15 2013 $
 .Dt INTRO 4 aviion
 .Os
 .Sh NAME
@@ -58,7 +58,7 @@ The networking support is introduced in
 .Xr netintro 4 .
 .Sh DEVICE SUPPORT
 This section describes the hardware supported on the
-aviion platform.
+AViiON platform.
 Software support for these devices comes in two forms.
 A hardware device may be supported with a character or block
 .Em device driver ,
@@ -92,12 +92,21 @@ Pseudo-devices are not listed.
 Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
-.Bl -tag -compact -width "pcctwo(4)"
-.\" dart
+.Bl -tag -compact -width 9n
+.It Xr dart 4
+MC68681 or MC68692 dual UART
 .It Xr le 4
-AMD LANCE Ethernet device
-.\" syscon
-.\" vme
+AMD LANCE or ILACC Ethernet device
+.It Xr nvram 4
+Mostek MK48T0x battery-backed realtime clock
+.It Xr oaic 4
+Adaptec AIC-6250 SCSI interface
+.It Xr oosiop 4
+Symbios/NCR 53C700 SCSI driver
+.It Xr syscon 4
+VME system controller
+.Ir Xr vme 4
+VMEbus interface
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
