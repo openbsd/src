@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_struct.c,v 1.1 2009/08/09 23:04:49 miod Exp $	*/
+/*	$OpenBSD: db_struct.c,v 1.2 2013/10/15 19:23:24 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -60,17 +60,17 @@ db_struct_print_field(uint fidx, int flags, db_expr_t baseaddr)
 
 	if (ISSET(flags, DBSP_STRUCT_NAME)) {
 		struc = &ddb_struct_info[field->sidx];
-		namelen = strlen(struc->name);
-		db_printf("%-30s ", struc->name);
+		namelen = strlen(ddb_structfield_strings + struc->name);
+		db_printf("%-30s ", ddb_structfield_strings + struc->name);
 		if (namelen > 30)
 			basecol += namelen + 1;
 		else
 			basecol += 30 + 1;
 	}
 
-	namelen = strlen(field->name);
+	namelen = strlen(ddb_structfield_strings + field->name);
 	if (field->nitems == 1) {
-		db_printf("%-30s ", field->name);
+		db_printf("%-30s ", ddb_structfield_strings + field->name);
 		if (namelen > 30)
 			basecol += namelen + 1;
 		else
@@ -83,11 +83,14 @@ db_struct_print_field(uint fidx, int flags, db_expr_t baseaddr)
 			tmp /= 10;
 		}
 		if (namelen >= width) {
-			db_printf("%s[%zu] ", field->name, field->nitems);
+			db_printf("%s[%hu] ",
+			    ddb_structfield_strings + field->name,
+			    field->nitems);
 			basecol += namelen + (30 - width) + 1;
 		} else {
-			db_printf("%s[%zu]%*s ", field->name, field->nitems,
-			    width - (int)namelen, "");
+			db_printf("%s[%hu]%*s ",
+			    ddb_structfield_strings + field->name,
+			    field->nitems, width - (int)namelen, "");
 			/* namelen + (30-width) + (width-namelen) + 1 */
 			basecol += 30 + 1;
 		}
@@ -97,7 +100,7 @@ db_struct_print_field(uint fidx, int flags, db_expr_t baseaddr)
 		db_printf("bitfield");
 		/* basecol irrelevant from there on */
 	} else {
-		snprintf(tmpfmt, sizeof tmpfmt, "%zu", field->size);
+		snprintf(tmpfmt, sizeof tmpfmt, "%hu", field->size);
 		basecol += strlen(tmpfmt) + 1;
 		db_printf("%s ", tmpfmt);
 	}
@@ -176,7 +179,7 @@ db_struct_offset_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 {
 	db_expr_t offset = 0;
 	const struct ddb_field_offsets *field;
-	const uint *fidx;
+	const u_short *fidx;
 	uint oidx;
 	int width;
 	char tmpfmt[28];
@@ -209,7 +212,7 @@ db_struct_offset_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 	}
 
 	db_printf("%-30s %-30s size\n", "struct", "member");
-	for (fidx = field->list; *fidx != 0; fidx++)
+	for (fidx = ddb_fields_by_offset + field->list; *fidx != 0; fidx++)
 		db_struct_print_field(*fidx, DBSP_STRUCT_NAME, 0);
 }
 
@@ -238,7 +241,8 @@ db_struct_layout_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 
 	for (struc = ddb_struct_info, sidx = 0; sidx < NSTRUCT;
 	    struc++, sidx++)
-		if (strcmp(struc->name, db_tok_string) == 0)
+		if (strcmp(ddb_structfield_strings + struc->name,
+		    db_tok_string) == 0)
 			break;
 
 	if (sidx == NSTRUCT) {
@@ -264,8 +268,8 @@ db_struct_layout_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 	 * Display the structure contents.
 	 */
 
-	db_printf("struct %s at %p (%zu bytes)\n", struc->name, (vaddr_t)addr,
-	    struc->size);
+	db_printf("struct %s at %p (%hu bytes)\n",
+	    ddb_structfield_strings + struc->name, (void *)addr, struc->size);
 	for (fidx = struc->fmin; fidx <= struc->fmax; fidx++)
 		db_struct_print_field(fidx, DBSP_VALUE, addr);
 }

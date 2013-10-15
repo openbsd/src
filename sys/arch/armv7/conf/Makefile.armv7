@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armv7,v 1.1 2013/09/04 14:38:25 patrick Exp $
+#	$OpenBSD: Makefile.armv7,v 1.2 2013/10/15 19:23:26 guenther Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -137,9 +137,9 @@ depend:
 tags:
 	@echo "see $S/kern/Makefile for tags"
 
-db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
+db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.pl
 	${CC} ${CFLAGS} ${CPPFLAGS} -MT $@ -gstabs -c $S/ddb/db_structinfo.c
-	objdump -g db_structinfo.o | awk -f $S/ddb/parse_structinfo.awk > $@
+	objdump -g db_structinfo.o | perl $S/ddb/parse_structinfo.pl > $@
 	rm -f db_structinfo.o
 
 ${_mach}_start.o: ${_machdir}/${_mach}/${_mach}_start.S

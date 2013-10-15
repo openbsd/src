@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.landisk,v 1.48 2013/06/23 20:33:51 miod Exp $
+#	$OpenBSD: Makefile.landisk,v 1.49 2013/10/15 19:23:27 guenther Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -132,9 +132,9 @@ depend:
 tags:
 	@echo "see $S/kern/Makefile for tags"
 
-db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
+db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.pl
 	${CC} ${CFLAGS} ${CPPFLAGS} -MT $@ -gstabs -c $S/ddb/db_structinfo.c
-	objdump -g db_structinfo.o | awk -f $S/ddb/parse_structinfo.awk > $@
+	objdump -g db_structinfo.o | perl $S/ddb/parse_structinfo.pl > $@
 	rm -f db_structinfo.o
 
 locore.o: ${_machdir}/${_mach}/locore.S assym.h
