@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2013/10/10 21:22:06 miod Exp $
+#	$OpenBSD: Makefile,v 1.3 2013/10/16 16:59:33 miod Exp $
 
 SIZE?=	size
 
@@ -16,7 +16,7 @@ CLEANFILES+=boot boot.ELF
 .include "${S}/arch/aviion/stand/libz/Makefile.inc"
 
 # Keep crt.c first in the object list for ld's sake.
-SRCS=   crt.c boot.c conf.c devopen.c oosiop.c scsi.c sd.c version.c
+SRCS=   crt.c boot.c conf.c devopen.c oaic.c oosiop.c scsi.c sd.c version.c
 OBJS=  ${SRCS:S/.c/.o/g}
 LIBS=	${LIBSA} ${LIBPROM} ${LIBZ}
 LDFLAGS+= -N -Ttext ${STAGE2_RELOC} -e start

@@ -1,4 +1,4 @@
-/* $OpenBSD: oosiop.c,v 1.3 2013/10/10 21:22:06 miod Exp $ */
+/* $OpenBSD: oosiop.c,v 1.4 2013/10/16 16:59:34 miod Exp $ */
 /* OpenBSD: oosiop.c,v 1.20 2013/10/09 18:22:06 miod Exp */
 /* OpenBSD: oosiopvar.h,v 1.5 2011/04/03 12:42:36 krw Exp */
 /* $NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $ */
@@ -39,8 +39,6 @@
 #include "scsi.h"
 
 #include <dev/ic/oosiopreg.h>
-
-#include "oosiop.h"
 
 #define	OOSIOP_NTGT	8		/* Max targets */
 
@@ -162,7 +160,6 @@ oosiop_attach(uint32_t addr, int id, int lun)
 	if (sc == NULL)
 		return NULL;
 
-	/* XXX run badaddr? */
 	memset(sc, 0, sizeof *sc);
 	sc->sc_baseaddr = addr;
 	sc->sc_scr = (uint32_t *)alloc(sizeof(oosiop_script));

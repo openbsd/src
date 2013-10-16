@@ -1,11 +1,11 @@
-/*	$OpenBSD: crt.c,v 1.2 2013/10/10 21:22:06 miod Exp $ */
+/*	$OpenBSD: crt.c,v 1.3 2013/10/16 16:59:34 miod Exp $ */
 
 #include <sys/types.h>
 #include <machine/prom.h>
 
 #include "stand.h"
 
-extern void boot(const char *, int, int, int);
+extern void boot(char *, int, int, int);
 
 /*
  * This is the boot code entry point.
@@ -14,7 +14,7 @@ extern void boot(const char *, int, int, int);
  * 128KB).
  */
 void
-start(const char *args, int dev, int unit, int lun)
+start(char *args, int dev, int unit, int lun)
 {
 	extern int edata, end;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.1 2013/10/10 21:22:06 miod Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.2 2013/10/16 16:59:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -21,8 +21,84 @@
 #include <sys/param.h>
 #include <stand.h>
 
+#include "libsa.h"
+#include "prom.h"
+
 #include "scsi.h"
 #include <scsi/scsi_disk.h>
+
+struct scsi_private *
+scsi_initialize(const char *ctrlname, int ctrl, int unit, int lun, int part)
+{
+	struct scsi_private *priv;
+
+	priv = alloc(sizeof(struct scsi_private));
+	if (priv == NULL)
+		return NULL;
+
+	memset(priv, 0, sizeof(struct scsi_private));
+	priv->part = part;
+
+	/* provide default based upon system type */
+	if (*ctrlname == '\0') {
+		switch (cpuid()) {
+		case AVIION_300_310:
+		case AVIION_400_4000:
+		case AVIION_410_4100:
+		case AVIION_300C_310C:
+		case AVIION_300CD_310CD:
+		case AVIION_300D_310D:
+		case AVIION_4300_25:
+		case AVIION_4300_20:
+		case AVIION_4300_16:
+			ctrlname = "insc";
+			break;
+		case AVIION_4600_530:
+			ctrlname = "ncsc";
+			break;
+		}
+	}
+
+	if (strcmp(ctrlname, "insc") == 0) {
+		if (ctrl == 0) {
+			*(volatile uint32_t *)0xfff840c0 = 0x6e;
+			ctrl = 0xfff8a000;
+		} else
+			goto done;
+
+		if (badaddr((void *)ctrl, 4) != 0)
+			goto done;
+
+		/* initialize controller */
+		priv->scsicookie = oaic_attach(ctrl, unit, lun);
+		priv->scsicmd = oaic_scsicmd;
+		priv->scsidetach = oaic_detach;
+	} else
+	if (strcmp(ctrlname, "ncsc") == 0) {
+		if (ctrl == 0)
+			ctrl = 0xfffb0000;
+		else if (ctrl == 1)
+			ctrl = 0xfffb0080;
+		else
+			goto done;
+
+		if (badaddr((void *)ctrl, 4) != 0)
+			goto done;
+
+		/* initialize controller */
+		priv->scsicookie = oosiop_attach(ctrl, unit, lun);
+		priv->scsicmd = oosiop_scsicmd;
+		priv->scsidetach = oosiop_detach;
+	}
+
+done:
+	if (priv->scsicookie == NULL) {
+		free(priv, sizeof(struct scsi_private));
+		priv = NULL;
+	}
+
+	return priv;
+}
 
 int
 scsi_tur(struct scsi_private *priv)

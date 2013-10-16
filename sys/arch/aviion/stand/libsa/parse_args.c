@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_args.c,v 1.5 2013/10/10 21:22:07 miod Exp $ */
+/*	$OpenBSD: parse_args.c,v 1.6 2013/10/16 16:59:35 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -122,8 +122,8 @@ parse_args(const char *line, char **filep, int first)
 			if (*p++ == '-')
 				while (*p != ' ' && *p != '\0')
 					switch (*p++) {
-					case 'z':
-						boothowto |= BOOT_ETHERNET_ZERO;
+					case 'a':
+						boothowto |= RB_ASKNAME;
 						break;
 					}
 			p = stws(p);

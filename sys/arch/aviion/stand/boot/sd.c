@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.4 2013/10/10 21:22:07 miod Exp $	*/
+/*	$OpenBSD: sd.c,v 1.5 2013/10/16 16:59:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -21,7 +21,6 @@
 #include <sys/param.h>
 #include <stand.h>
 
-#include "libsa.h"
 #include "scsi.h"
 
 int
@@ -35,36 +34,8 @@ sdopen(struct open_file *f, const char *ctrlname, int ctrl, int unit, int lun,
 	char *msg;
 	size_t z;
 
-	f->f_devdata = alloc(sizeof(struct scsi_private));
-	if (f->f_devdata == NULL)
-		return ENOMEM;
-
-	priv = (struct scsi_private *)f->f_devdata;
-	memset(priv, 0, sizeof(struct scsi_private));
-	priv->part = part;
-
-	/* XXX provide default based upon system type */
-	if (*ctrlname == '\0')
-		ctrlname = "ncsc";
-
-	if (strcmp(ctrlname, "ncsc") == 0) {
-		if (ctrl == 0)
-			ctrl = 0xfffb0000;
-		else if (ctrl == 1)
-			ctrl = 0xfffb0080;
-		else
-			return ENXIO;
-
-		if (badaddr((void *)ctrl, 4) != 0)
-			return ENXIO;
-
-		/* initialize controller */
-		priv->scsicookie = oosiop_attach(ctrl, unit, lun);
-		priv->scsicmd = oosiop_scsicmd;
-		priv->scsidetach = oosiop_detach;
-	}
-
-	if (priv->scsicookie == NULL)
+	f->f_devdata = priv = scsi_initialize(ctrlname, ctrl, unit, lun, part);
+	if (priv == NULL)
 		return ENXIO;
 
 	/* send TUR */

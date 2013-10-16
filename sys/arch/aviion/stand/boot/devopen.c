@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.3 2013/10/10 21:22:06 miod Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.4 2013/10/16 16:59:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -111,7 +111,6 @@ devopen(struct open_file *f, const char *fname, char **file)
 		/* no controller, keep defaults */
 	}
 
-	/* XXX parse partition: */
 	p = strchr(fname, ':');
 	if (p != NULL) {
 		part = strtol(fname, NULL, 0);

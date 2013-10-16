@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.3 2013/10/10 21:22:06 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.4 2013/10/16 16:59:34 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -69,8 +69,8 @@ struct boot_info bi;
 void
 boot(const char *args, uint bootdev, uint bootunit, uint bootlun)
 {
-	char *file;
-	int ask = 0;
+	char *p, *file;
+	int ask;
 	int ret;
 
 	printf("\n>> OpenBSD/" MACHINE " boot %s\n", version);
@@ -79,9 +79,18 @@ boot(const char *args, uint bootdev, uint bootunit, uint bootlun)
 	bi.bootunit = bootunit;
 	bi.bootlun = bootlun;
 	bi.bootpart = 0;
+
+	/*
+	 * Older PROM version put a \r at the end of a manually entered
+	 * boot string.
+	 */
+	if ((p = strchr(args, '\r')) != NULL)
+		*p = '\0';
+
 	ret = parse_args(args, &file, 1);
+	ask = boothowto & RB_ASKNAME;
 	for (;;) {
-		if (ask) {
+		if (ask != 0) {
 			printf("boot: ");
 			gets(line);
 			if (line[0] == '\0')
