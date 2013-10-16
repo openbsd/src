@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.57 2013/10/15 19:23:25 guenther Exp $
+#	$OpenBSD: Makefile.amd64,v 1.58 2013/10/16 17:34:02 florian Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -150,11 +150,10 @@ MACHINE_NAME!=  uname -n
 install: install-kernel-${MACHINE_NAME}
 .if !target(install-kernel-${MACHINE_NAME}})
 install-kernel-${MACHINE_NAME}:
-	${SUDO} rm -f /obsd
-	${SUDO} ln /bsd /obsd
-	${SUDO} cp bsd /nbsd
-	${SUDO} mv /nbsd /bsd
-	cp bsd.gdb /var/crash
+	rm -f /obsd
+	ln /bsd /obsd
+	cp bsd /nbsd
+	mv /nbsd /bsd
 .endif
 
 # pull in the dependency information
