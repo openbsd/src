@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh.c,v 1.385 2013/10/16 02:31:46 djm Exp $ */
+/* $OpenBSD: ssh.c,v 1.386 2013/10/16 22:49:39 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -262,14 +262,14 @@ check_follow_cname(char **namep, const char *cname)
 	if (*cname == '\0' || options.num_permitted_cnames == 0 ||
 	    strcmp(*namep, cname) == 0)
 		return 0;
-	if (options.canonicalise_hostname == SSH_CANONICALISE_NO)
+	if (options.canonicalize_hostname == SSH_CANONICALISE_NO)
 		return 0;
 	/*
-	 * Don't attempt to canonicalise names that will be interpreted by
+	 * Don't attempt to canonicalize names that will be interpreted by
 	 * a proxy unless the user specifically requests so.
 	 */
 	if (options.proxy_command != NULL &&
-	    options.canonicalise_hostname != SSH_CANONICALISE_ALWAYS)
+	    options.canonicalize_hostname != SSH_CANONICALISE_ALWAYS)
 		return 0;
 	debug3("%s: check \"%s\" CNAME \"%s\"", __func__, *namep, cname);
 	for (i = 0; i < options.num_permitted_cnames; i++) {
@@ -279,7 +279,7 @@ check_follow_cname(char **namep, const char *cname)
 		    match_pattern_list(cname, rule->target_list,
 		    strlen(rule->target_list), 1) != 1)
 			continue;
-		verbose("Canonicalised DNS aliased hostname "
+		verbose("Canonicalized DNS aliased hostname "
 		    "\"%s\" => \"%s\"", *namep, cname);
 		free(*namep);
 		*namep = xstrdup(cname);
@@ -294,20 +294,20 @@ check_follow_cname(char **namep, const char *cname)
  * if no name was found after canonicalisation.
  */
 static struct addrinfo *
-resolve_canonicalise(char **hostp, u_int port)
+resolve_canonicalize(char **hostp, u_int port)
 {
 	int i, ndots;
 	char *cp, *fullhost, cname_target[NI_MAXHOST];
 	struct addrinfo *addrs;
 
-	if (options.canonicalise_hostname == SSH_CANONICALISE_NO)
+	if (options.canonicalize_hostname == SSH_CANONICALISE_NO)
 		return NULL;
 	/*
-	 * Don't attempt to canonicalise names that will be interpreted by
+	 * Don't attempt to canonicalize names that will be interpreted by
 	 * a proxy unless the user specifically requests so.
 	 */
 	if (options.proxy_command != NULL &&
-	    options.canonicalise_hostname != SSH_CANONICALISE_ALWAYS)
+	    options.canonicalize_hostname != SSH_CANONICALISE_ALWAYS)
 		return NULL;
 	/* Don't apply canonicalisation to sufficiently-qualified hostnames */
 	ndots = 0;
@@ -315,9 +315,9 @@ resolve_canonicalise(char **hostp, u_int port)
 		if (*cp == '.')
 			ndots++;
 	}
-	if (ndots > options.canonicalise_max_dots) {
-		debug3("%s: not canonicalising hostname \"%s\" (max dots %d)",
-		    __func__, *hostp, options.canonicalise_max_dots);
+	if (ndots > options.canonicalize_max_dots) {
+		debug3("%s: not canonicalizing hostname \"%s\" (max dots %d)",
+		    __func__, *hostp, options.canonicalize_max_dots);
 		return NULL;
 	}
 	/* Attempt each supplied suffix */
@@ -334,14 +334,14 @@ resolve_canonicalise(char **hostp, u_int port)
 		fullhost[strlen(fullhost) - 1] = '\0';
 		/* Follow CNAME if requested */
 		if (!check_follow_cname(&fullhost, cname_target)) {
-			debug("Canonicalised hostname \"%s\" => \"%s\"",
+			debug("Canonicalized hostname \"%s\" => \"%s\"",
 			    *hostp, fullhost);
 		}
 		free(*hostp);
 		*hostp = fullhost;
 		return addrs;
 	}
-	if (!options.canonicalise_fallback_local)
+	if (!options.canonicalize_fallback_local)
 		fatal("%s: Could not resolve host \"%s\"", __progname, host);
 	return NULL;
 }
@@ -873,8 +873,8 @@ main(int ac, char **av)
 	}
 
 	/* If canonicalisation requested then try to apply it */
-	if (options.canonicalise_hostname != SSH_CANONICALISE_NO)
-		addrs = resolve_canonicalise(&host, options.port);
+	if (options.canonicalize_hostname != SSH_CANONICALISE_NO)
+		addrs = resolve_canonicalize(&host, options.port);
 	/*
 	 * If canonicalisation not requested, or if it failed then try to
 	 * resolve the bare hostname name using the system resolver's usual
