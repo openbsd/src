@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.26 2013/10/16 16:05:03 blambert Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.27 2013/10/16 21:17:27 jmc Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -142,7 +142,9 @@ Set the control socket location to
 If
 .Ic restricted
 is specified a restricted control socket will be created.
-By default /var/run/snmpd.sock is used and no restricted socket is created.
+By default
+.Pa /var/run/snmpd.sock
+is used and no restricted socket is created.
 .Pp
 .It Ic system contact Ar string
 Specify the name or description of the system contact, typically a

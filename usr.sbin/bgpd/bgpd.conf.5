@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.126 2013/09/10 07:29:12 weerd Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.127 2013/10/16 21:17:27 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 10 2013 $
+.Dd $Mdocdate: October 16 2013 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -396,7 +396,9 @@ Set the control socket location to
 If
 .Ic restricted
 is specified a restricted control socket will be created.
-By default /var/run/bgpd.sock is used and no restricted socket is created.
+By default
+.Pa /var/run/bgpd.sock
+is used and no restricted socket is created.
 .Pp
 .It Xo
 .Ic transparent-as
