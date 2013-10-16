@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.16 2013/10/16 16:05:03 blambert Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.17 2013/10/16 21:15:33 jmc Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -87,7 +87,7 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr, "usage: %s [-dNnv] [-D macro=value] "
-	    "[-f file] [-r path]\n", __progname);
+	    "[-f file]\n", __progname);
 	exit(1);
 }
 
@@ -109,7 +109,7 @@ main(int argc, char *argv[])
 
 	log_init(1);	/* log to stderr until daemonized */
 
-	while ((c = getopt(argc, argv, "dD:nNf:r:v")) != -1) {
+	while ((c = getopt(argc, argv, "dD:nNf:v")) != -1) {
 		switch (c) {
 		case 'd':
 			debug = 1;
