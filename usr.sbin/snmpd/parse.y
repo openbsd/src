@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.25 2013/03/29 12:53:41 gerhard Exp $	*/
+/*	$OpenBSD: parse.y,v 1.26 2013/10/16 16:05:02 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -86,6 +86,7 @@ struct snmpd			*conf = NULL;
 static int			 errors = 0;
 static struct addresslist	*hlist;
 static struct usmuser		*user = NULL;
+static int			 nctlsocks = 0;
 
 struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
@@ -119,10 +120,11 @@ typedef struct {
 %token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES RTFILTER
 %token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
 %token	SECLEVEL NONE AUTH ENC USER AUTHKEY ENCKEY ERROR DISABLED
+%token	SOCKET RESTRICTED
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostcmn
-%type	<v.number>	optwrite yesno seclevel
+%type	<v.number>	optwrite yesno seclevel restricted
 %type	<v.data>	objtype
 %type	<v.oid>		oid hostoid
 %type	<v.auth>	auth
@@ -263,6 +265,28 @@ main		: LISTEN ON STRING		{
 				YYERROR;
 			}
 			user = NULL;
+		}
+		| SOCKET STRING restricted {
+			if ($3) {
+				struct control_sock *rcsock;
+
+				rcsock = calloc(1, sizeof(*rcsock));
+				if (rcsock == NULL) {
+					yyerror("calloc");
+					YYERROR;
+				}
+				rcsock->cs_name = $2;
+				rcsock->cs_restricted = 1;
+				TAILQ_INSERT_TAIL(&conf->sc_rcsocks, rcsock,
+				    cs_entry);
+			} else {
+				if (++nctlsocks > 1) {
+					yyerror("multiple control "
+					    "sockets specified");
+					YYERROR;
+				}
+				conf->sc_csock.cs_name = $2;
+			}
 		}
 		;
 
@@ -451,6 +475,10 @@ enc		: STRING			{
 		}
 		;
 
+restricted	: RESTRICTED		{ $$ = 1; }
+		| /* nothing */		{ $$ = 0; }
+		;
+
 %%
 
 struct keywords {
@@ -505,8 +533,10 @@ lookup(char *s)
 		{ "read-only",		READONLY },
 		{ "read-write",		READWRITE },
 		{ "receiver",		RECEIVER },
+		{ "restricted",		RESTRICTED },
 		{ "seclevel",		SECLEVEL },
 		{ "services",		SERVICES },
+		{ "socket",		SOCKET },
 		{ "string",		OCTETSTRING },
 		{ "system",		SYSTEM },
 		{ "trap",		TRAP },
@@ -851,6 +881,8 @@ parse_config(const char *filename, u_int flags)
 	conf->sc_confpath = filename;
 	conf->sc_address.ss.ss_family = AF_INET;
 	conf->sc_address.port = SNMPD_PORT;
+	conf->sc_csock.cs_name = SNMPD_SOCKET;
+	TAILQ_INIT(&conf->sc_rcsocks);
 	strlcpy(conf->sc_rdcommunity, "public", SNMPD_MAXCOMMUNITYLEN);
 	strlcpy(conf->sc_rwcommunity, "private", SNMPD_MAXCOMMUNITYLEN);
 	strlcpy(conf->sc_trcommunity, "public", SNMPD_MAXCOMMUNITYLEN);

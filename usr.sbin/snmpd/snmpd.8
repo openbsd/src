@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.8,v 1.18 2013/07/16 11:13:34 schwarze Exp $
+.\" $OpenBSD: snmpd.8,v 1.19 2013/10/16 16:05:03 blambert Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: October 16 2013 $
 .Dt SNMPD 8
 .Os
 .Sh NAME
@@ -54,13 +54,6 @@ Show numeric OID values instead of their symbolic names.
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
-.It Fl r Ar path
-Open a second, restricted, control socket that
-.Xr snmpctl 8
-can use.
-Only
-.Em trap
-requests are allowed on this socket.
 .It Fl v
 Produce more verbose output.
 .El

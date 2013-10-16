@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.15 2012/11/29 14:53:24 yasuoka Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.16 2013/10/16 16:05:03 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -104,7 +104,6 @@ main(int argc, char *argv[])
 	u_int			 flags = 0;
 	int			 noaction = 0;
 	const char		*conffile = CONF_FILE;
-	const char		*rcsock = NULL;
 
 	smi_init();
 
@@ -128,9 +127,6 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			conffile = optarg;
-			break;
-		case 'r':
-			rcsock = optarg;
 			break;
 		case 'v':
 			flags |= SNMPD_F_VERBOSE;
@@ -159,11 +155,6 @@ main(int argc, char *argv[])
 
 	if (getpwnam(SNMPD_USER) == NULL)
 		errx(1, "unknown user %s", SNMPD_USER);
-
-	/* Configure the control sockets */
-	env->sc_csock.cs_name = SNMPD_SOCKET;
-	env->sc_rcsock.cs_name = rcsock;
-	env->sc_rcsock.cs_restricted = 1;
 
 	log_init(debug);
 
@@ -225,6 +216,7 @@ main(int argc, char *argv[])
 void
 snmpd_shutdown(struct snmpd *env)
 {
+	struct control_sock *rcs;
 	pid_t	pid;
 
 	if (snmpe_pid)
@@ -237,7 +229,11 @@ snmpd_shutdown(struct snmpd *env)
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
 	control_cleanup(&env->sc_csock);
-	control_cleanup(&env->sc_rcsock);
+	while ((rcs = TAILQ_FIRST(&env->sc_rcsocks)) != NULL) {
+		TAILQ_REMOVE(&env->sc_rcsocks, rcs, cs_entry);
+		control_cleanup(rcs);
+		free(rcs);
+	}
 	log_info("terminating");
 	exit(0);
 }

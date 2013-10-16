@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.35 2013/10/01 12:41:48 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.36 2013/10/16 16:05:03 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -71,10 +71,11 @@ snmpe_sig_handler(int sig, short event, void *arg)
 pid_t
 snmpe(struct snmpd *x_env, int pipe_parent2snmpe[2])
 {
-	pid_t		 pid;
-	struct passwd	*pw;
-	struct event	 ev_sigint;
-	struct event	 ev_sigterm;
+	pid_t			 pid;
+	struct passwd		*pw;
+	struct event		 ev_sigint;
+	struct event		 ev_sigterm;
+	struct control_sock	*rcs;
 #ifdef DEBUG
 	struct oid	*oid;
 #endif
@@ -92,8 +93,9 @@ snmpe(struct snmpd *x_env, int pipe_parent2snmpe[2])
 
 	if (control_init(&env->sc_csock) == -1)
 		fatalx("snmpe: control socket setup failed");
-	if (control_init(&env->sc_rcsock) == -1)
-		fatalx("snmpe: restricted control socket setup failed");
+	TAILQ_FOREACH(rcs, &env->sc_rcsocks, cs_entry)
+		if (control_init(rcs) == -1)
+			fatalx("snmpe: restricted control socket setup failed");
 
 	if ((env->sc_sock = snmpe_bind(&env->sc_address)) == -1)
 		fatalx("snmpe: failed to bind SNMP UDP socket");
@@ -155,8 +157,9 @@ snmpe(struct snmpd *x_env, int pipe_parent2snmpe[2])
 
 	if (control_listen(&env->sc_csock) == -1)
 		fatalx("snmpe: control socket listen failed");
-	if (control_listen(&env->sc_rcsock) == -1)
-		fatalx("snmpe: restricted control socket listen failed");
+	TAILQ_FOREACH(rcs, &env->sc_rcsocks, cs_entry)
+		if (control_listen(rcs) == -1)
+			fatalx("snmpe: restricted control socket listen failed");
 
 	event_set(&env->sc_ev, env->sc_sock, EV_READ|EV_PERSIST,
 	    snmpe_recvmsg, env);

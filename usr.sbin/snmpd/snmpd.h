@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.45 2013/10/01 12:41:47 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.46 2013/10/16 16:05:03 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -88,7 +88,10 @@ struct control_sock {
 	struct event	 cs_evt;
 	int		 cs_fd;
 	int		 cs_restricted;
+
+	TAILQ_ENTRY(control_sock) cs_entry;
 };
+TAILQ_HEAD(control_socks, control_sock);
 
 enum blockmodes {
 	BM_NORMAL,
@@ -404,7 +407,7 @@ struct snmpd {
 	u_int32_t		 sc_engine_boots;
 
 	struct control_sock	 sc_csock;
-	struct control_sock	 sc_rcsock;
+	struct control_socks	 sc_rcsocks;
 
 	char			 sc_rdcommunity[SNMPD_MAXCOMMUNITYLEN];
 	char			 sc_rwcommunity[SNMPD_MAXCOMMUNITYLEN];
