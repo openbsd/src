@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.73 2013/10/11 19:33:20 deraadt Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.74 2013/10/16 21:23:59 jmc Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -81,7 +81,7 @@ usage(void)
 	extern char *__progname;
 
 	if (strcmp(__progname, "ntpctl") == 0)
-		fprintf(stderr, "usage: ntpctl [-s all|peers|sensors|status]\n");
+		fprintf(stderr, "usage: ntpctl [-s modifier]\n");
 	else
 		fprintf(stderr, "usage: %s [-dnSsv] [-f file]\n",
 		    __progname);
