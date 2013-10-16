@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.101 2013/10/01 20:22:11 sf Exp $	*/
+/*	$OpenBSD: bios.c,v 1.102 2013/10/16 13:41:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -169,7 +169,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 	struct smbtable bios;
 	volatile u_int8_t *va;
 	char scratch[64], *str;
-	int flags, smbiosrev = 0, ncpu = 0;
+	int flags, smbiosrev = 0, ncpu = 0, usingacpi = 0;
 
 	/* remember flags */
 	flags = sc->sc_dev.dv_cfdata->cf_flags;
@@ -374,8 +374,27 @@ biosattach(struct device *parent, struct device *self, void *aux)
 			}
 	}
 
+#if NACPI > 0
+#if NPCI > 0
+	if (smbiosrev >= 210 && pci_mode_detect() != 0)
+#endif
+	{
+		struct bios_attach_args ba;
+
+		memset(&ba, 0, sizeof(ba));
+		ba.ba_name = "acpi";
+		ba.ba_func = 0x00;		/* XXX ? */
+		ba.ba_iot = I386_BUS_SPACE_IO;
+		ba.ba_memt = I386_BUS_SPACE_MEM;
+		if (config_found(self, &ba, bios_print)) {
+			flags |= BIOSF_PCIBIOS;
+			usingacpi = 1;
+		}
+	}
+#endif
+
 #if NAPM > 0
-	if (apm && ncpu < 2 && smbiosrev < 240) {
+	if (usingacpi == 0 && apm && ncpu < 2 && smbiosrev < 240) {
 		struct bios_attach_args ba;
 
 #if defined(DEBUG) || defined(APMDEBUG)
@@ -394,22 +413,6 @@ biosattach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-#if NACPI > 0
-#if NPCI > 0
-	if (smbiosrev && pci_mode_detect() != 0)
-#endif
-	{
-		struct bios_attach_args ba;
-
-		memset(&ba, 0, sizeof(ba));
-		ba.ba_name = "acpi";
-		ba.ba_func = 0x00;		/* XXX ? */
-		ba.ba_iot = I386_BUS_SPACE_IO;
-		ba.ba_memt = I386_BUS_SPACE_MEM;
-		if (config_found(self, &ba, bios_print))
-			flags |= BIOSF_PCIBIOS;
-	}
-#endif
 
 #if NMPBIOS > 0
 	if (mpbios_probe(self)) {
