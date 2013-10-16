@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.56 2013/10/15 11:03:30 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.57 2013/10/16 20:13:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -229,6 +229,13 @@ readvdmlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	if (error == ENOENT)
 		return error;
 
+	if (partoffp != NULL)
+		*partoffp = 0;
+
+	/* don't read the on-disk label if we are in spoofed-only mode */
+	if (spoofonly != 0)
+		return 0;
+
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
@@ -237,8 +244,6 @@ readvdmlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	if ((error = biowait(bp)) != 0)
 		return error;
 
-	if (partoffp != NULL)
-		*partoffp = 0;
 	return checkdisklabel(bp->b_data + LABELOFFSET, lp, 
 	    DL_GETBSTART(lp), DL_GETBEND(lp));
 }
