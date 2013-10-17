@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.12 2013/09/21 20:07:18 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.13 2013/10/17 15:46:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2013 Miodrag Vallat.
@@ -215,7 +215,7 @@ dart_attach(struct device *parent, struct device *self, void *aux)
 	case AVIION_4300_25:
 	case AVIION_4300_20:
 	case AVIION_4300_16:
-		msc->sc_sw_reg->opcr |= DART_OPCR_RX_A;	/* disable speaker */
+		msc->sc_sw_reg->oprs |= DART_OP_OP4;	/* disable speaker */
 		/* FALLTHROUGH */
 	case AVIION_4600_530:
 		msc->sc_hw[B_PORT].dtr_op = 5;
