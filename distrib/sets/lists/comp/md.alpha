@@ -17,7 +17,6 @@
 ./usr/include/alpha/cpuconf.h
 ./usr/include/alpha/db_machdep.h
 ./usr/include/alpha/disklabel.h
-./usr/include/alpha/ecoff_machdep.h
 ./usr/include/alpha/endian.h
 ./usr/include/alpha/exec.h
 ./usr/include/alpha/fenv.h

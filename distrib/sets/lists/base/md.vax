@@ -65,7 +65,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dbm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ddb
 ./usr/libdata/perl5/site_perl/vax-openbsd/ddb/db_access.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/ddb/db_aout.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ddb/db_break.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ddb/db_command.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ddb/db_extern.ph
@@ -159,6 +158,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/adwlib.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ahcireg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ahcivar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/aic6250reg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/aic6250var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/aic6360reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/aic6360var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/aic6915.ph
@@ -1145,6 +1146,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_tun.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_types.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_vlan_var.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/net/if_vxlan.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/netisr.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/pfvar.ph
@@ -1481,8 +1483,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/event.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/eventvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/exec.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/sys/exec_aout.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/sys/exec_ecoff.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/exec_elf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/exec_script.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/extent.ph

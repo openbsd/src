@@ -613,7 +613,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/cpuconf.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/db_machdep.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/disklabel.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ecoff_machdep.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/endian.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/exec.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/fenv.ph
@@ -706,7 +705,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dbm.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ddb
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ddb/db_access.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/ddb/db_aout.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ddb/db_break.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ddb/db_command.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ddb/db_extern.ph
@@ -800,6 +798,8 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/adwlib.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/ahcireg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/ahcivar.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/aic6250reg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/aic6250var.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/aic6360reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/aic6360var.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/aic6915.ph
@@ -1854,6 +1854,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_tun.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_types.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_vlan_var.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_vxlan.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/netisr.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/pfvar.ph
@@ -2192,8 +2193,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/event.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/eventvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/exec.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/sys/exec_aout.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/sys/exec_ecoff.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/exec_elf.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/exec_script.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/extent.ph

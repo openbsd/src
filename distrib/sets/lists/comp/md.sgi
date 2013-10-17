@@ -606,7 +606,6 @@
 ./usr/include/sgi/cpustate.h
 ./usr/include/sgi/db_machdep.h
 ./usr/include/sgi/disklabel.h
-./usr/include/sgi/ecoff_machdep.h
 ./usr/include/sgi/eisa_machdep.h
 ./usr/include/sgi/endian.h
 ./usr/include/sgi/exec.h

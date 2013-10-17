@@ -1580,6 +1580,7 @@
 ./usr/share/man/man4/aviion/kmem.4
 ./usr/share/man/man4/aviion/le.4
 ./usr/share/man/man4/aviion/mem.4
+./usr/share/man/man4/aviion/oaic.4
 ./usr/share/man/man4/axe.4
 ./usr/share/man/man4/axen.4
 ./usr/share/man/man4/az.4
@@ -2435,6 +2436,7 @@
 ./usr/share/man/man4/vr.4
 ./usr/share/man/man4/vscsi.4
 ./usr/share/man/man4/vte.4
+./usr/share/man/man4/vxlan.4
 ./usr/share/man/man4/watchdog.4
 ./usr/share/man/man4/wb.4
 ./usr/share/man/man4/wbenv.4
