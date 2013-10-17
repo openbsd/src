@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2012/07/10 16:58:29 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2013/10/17 02:20:15 lteo Exp $
 
 # The following ports must be installed:
 #
@@ -129,7 +129,7 @@ run-regress-fragping:
 	@echo '\n======== $@ ========'
 .for ip in PF_IN PF_OUT RT_IN RT_OUT DST_IN RDR_IN
 	@echo Check ping ${ip}:
-	-ping6 -n -c 1 -s 1400 -m ${${ip}}
+	-ping -n -c 1 -s 1400 -D ${${ip}}
 	ping -n -c 1 -s 5000 ${${ip}}
 .endfor
 
