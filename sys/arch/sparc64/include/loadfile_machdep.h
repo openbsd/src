@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile_machdep.h,v 1.2 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: loadfile_machdep.h,v 1.3 2013/10/17 11:54:02 miod Exp $	*/
 /*	$NetBSD: loadfile_machdep.h,v 1.3 2000/08/16 08:16:58 mrg Exp $	 */
 
 /*-
@@ -52,7 +52,6 @@
 #define PROGRESS(a)		(void) printf a
 #define ALLOC(a)		alloc(a)
 #define FREE(a, b)		free(a, b)
-#define OKMAGIC(a)		((a) == OMAGIC)
 #else
 #define LOADADDR(a)		(((u_long)(a)) + offset)
 #define ALIGNENTRY(a)		((u_long)(a))
@@ -63,5 +62,4 @@
 #define PROGRESS(a)		/* nothing */
 #define ALLOC(a)		malloc(a)
 #define FREE(a, b)		free(a)
-#define OKMAGIC(a)		((a) == OMAGIC)
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile_machdep.h,v 1.2 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: loadfile_machdep.h,v 1.3 2013/10/17 11:53:59 miod Exp $	*/
 /*	$NetBSD: loadfile_machdep.h,v 1.1 1999/04/29 03:17:12 tsubai Exp $	*/
 
 /*-
@@ -47,6 +47,5 @@
 #define PROGRESS(a)		(void) printf a
 #define ALLOC(a)		alloc(a)
 #define FREE(a, b)		free(a, b)
-#define OKMAGIC(a)		((a) == OMAGIC)
 
 void run_loadfile(u_long *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile_machdep.h,v 1.1 2012/12/31 21:35:32 miod Exp $	*/
+/*	$OpenBSD: loadfile_machdep.h,v 1.2 2013/10/17 11:54:00 miod Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -29,7 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	BOOT_AOUT
 #define BOOT_ELF
 
 #define LOAD_KERNEL		LOAD_ALL
@@ -46,4 +45,3 @@
 #define PROGRESS(a)		(void) printf a
 #define ALLOC(a)		alloc(a)
 #define FREE(a, b)		free(a, b)
-#define OKMAGIC(a)		((a) == ZMAGIC)
