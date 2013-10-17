@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2013/10/17 16:30:07 miod Exp $
+#	$OpenBSD: Makefile,v 1.5 2013/10/17 16:44:22 miod Exp $
 
 SIZE?=	size
 
@@ -7,7 +7,7 @@ DEFS=	-DSUN_BOOTPARAMS
 #DEFS+=	-DNETIF_DEBUG
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libprom \
 	-I${S} -I${S}/lib/libsa
-CFLAGS+=${DEFS} ${INCPATH} ${COPTS}
+CFLAGS+=${DEFS} ${INCPATH} ${COPTS} -DSTAGE1_RELOC=${STAGE1_RELOC}
 CLEANFILES+=boot boot.ELF
 
 .include "${S}/arch/aviion/stand/Makefile.inc"

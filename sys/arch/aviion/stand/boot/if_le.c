@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.1 2013/10/17 16:30:07 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.2 2013/10/17 16:44:23 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -421,7 +421,7 @@ le_init(desc, machdep_hint)
 	struct iodesc *desc;
 	void   *machdep_hint;
 {
-	u_long eram = 4*1024*1024;
+	u_long eram = STAGE1_RELOC;
 	struct netif *nif = desc->io_netif;
 
 	if (le_debug)
