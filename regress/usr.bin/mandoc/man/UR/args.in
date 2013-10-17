@@ -1,0 +1,29 @@
+.TH UR-ARGS 1 "October 17, 2013" OpenBSD
+.SH NAME
+UR-basic \- argument handling of the man-ext URI macro
+.SH DESCRIPTION
+argument plus text:
+.UR http://www.openbsd.org/
+OpenBSD
+homepage
+.UE
+.PP
+argument but no text:
+.UR http://www.netbsd.org/
+.UE
+.PP
+no argument, but text:
+.UR
+some text
+.UE
+.PP
+two arguments plus text:
+.UR first second
+some text
+.UE
+.PP
+two arguments, but no text:
+.UR first second
+.UE
+.PP
+final text

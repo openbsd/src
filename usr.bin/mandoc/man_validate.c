@@ -1,7 +1,7 @@
-/*	$Id: man_validate.c,v 1.57 2012/11/17 00:25:20 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.58 2013/10/17 20:51:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -45,6 +45,7 @@ static	int	  check_eq2(CHKARGS);
 static	int	  check_le1(CHKARGS);
 static	int	  check_ge2(CHKARGS);
 static	int	  check_le5(CHKARGS);
+static	int	  check_head1(CHKARGS);
 static	int	  check_par(CHKARGS);
 static	int	  check_part(CHKARGS);
 static	int	  check_root(CHKARGS);
@@ -76,6 +77,7 @@ static	v_check	  posts_sec[] = { post_sec, NULL };
 static	v_check	  posts_sp[] = { post_vs, check_le1, NULL };
 static	v_check	  posts_th[] = { check_ge2, check_le5, post_TH, NULL };
 static	v_check	  posts_uc[] = { post_UC, NULL };
+static	v_check	  posts_ur[] = { check_head1, check_part, NULL };
 static	v_check	  pres_sec[] = { pre_sec, NULL };
 
 static	const struct man_valid man_valids[MAN_MAX] = {
@@ -115,6 +117,8 @@ static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL, posts_eq2 }, /* OP */
 	{ NULL, posts_nf }, /* EX */
 	{ NULL, posts_fi }, /* EE */
+	{ NULL, posts_ur }, /* UR */
+	{ NULL, NULL }, /* UE */
 };
 
 
@@ -240,6 +244,17 @@ INEQ_DEFINE(2, ==, eq2)
 INEQ_DEFINE(1, <=, le1)
 INEQ_DEFINE(2, >=, ge2)
 INEQ_DEFINE(5, <=, le5)
+
+static int
+check_head1(CHKARGS)
+{
+
+	if (MAN_HEAD == n->type && 1 != n->nchild)
+		mandoc_vmsg(MANDOCERR_ARGCOUNT, man->parse, n->line,
+		    n->pos, "line arguments eq 1 (have %d)", n->nchild);
+
+	return(1);
+}
 
 static int
 post_ft(CHKARGS)

@@ -1,6 +1,7 @@
-/*	$Id: man_html.c,v 1.48 2012/11/17 00:25:20 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.49 2013/10/17 20:51:29 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -66,6 +67,7 @@ static	int		  man_RS_pre(MAN_ARGS);
 static	int		  man_SH_pre(MAN_ARGS);
 static	int		  man_SM_pre(MAN_ARGS);
 static	int		  man_SS_pre(MAN_ARGS);
+static	int		  man_UR_pre(MAN_ARGS);
 static	int		  man_alt_pre(MAN_ARGS);
 static	int		  man_br_pre(MAN_ARGS);
 static	int		  man_ign_pre(MAN_ARGS);
@@ -111,6 +113,8 @@ static	const struct htmlman mans[MAN_MAX] = {
 	{ man_OP_pre, NULL }, /* OP */
 	{ man_literal_pre, NULL }, /* EX */
 	{ man_literal_pre, NULL }, /* EE */
+	{ man_UR_pre, NULL }, /* UR */
+	{ NULL, NULL }, /* UE */
 };
 
 /*
@@ -683,4 +687,28 @@ man_RS_pre(MAN_ARGS)
 	PAIR_STYLE_INIT(&tag, h);
 	print_otag(h, TAG_DIV, 1, &tag);
 	return(1);
+}
+
+/* ARGSUSED */
+static int
+man_UR_pre(MAN_ARGS)
+{
+	struct htmlpair		 tag[2];
+
+	n = n->child;
+	assert(MAN_HEAD == n->type);
+	if (n->nchild) {
+		assert(MAN_TEXT == n->child->type);
+		PAIR_CLASS_INIT(&tag[0], "link-ext");
+		PAIR_HREF_INIT(&tag[1], n->child->string);
+		print_otag(h, TAG_A, 2, tag);
+	}
+
+	assert(MAN_BODY == n->next->type);
+	if (n->next->nchild)
+		n = n->next;
+
+	print_man_nodelist(man, n->child, mh, h);
+
+	return(0);
 }

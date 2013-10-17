@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.38 2012/11/17 00:25:20 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.39 2013/10/17 20:51:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -84,6 +84,8 @@ const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, 0 }, /* OP */
 	{ in_line_eoln, MAN_BSCOPE }, /* EX */
 	{ in_line_eoln, MAN_BSCOPE }, /* EE */
+	{ blk_exp, MAN_BSCOPE | MAN_EXPLICIT }, /* UR */
+	{ blk_close, 0 }, /* UE */
 };
 
 const	struct man_macro * const man_macros = __man_macros;
@@ -279,6 +281,9 @@ blk_close(MACRO_PROT_ARGS)
 	switch (tok) {
 	case (MAN_RE):
 		ntok = MAN_RS;
+		break;
+	case (MAN_UE):
+		ntok = MAN_UR;
 		break;
 	default:
 		abort();
