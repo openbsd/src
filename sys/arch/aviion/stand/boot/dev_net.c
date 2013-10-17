@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_net.c,v 1.2 2010/04/18 15:09:02 miod Exp $ */
+/*	$OpenBSD: dev_net.c,v 1.1 2013/10/17 16:30:07 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -112,13 +112,8 @@ net_close(f)
 }
 
 int
-net_ioctl()
-{
-	return EIO;
-}
-
-int
-net_strategy()
+net_strategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
+    size_t *rsize)
 {
 	return EIO;
 }
@@ -189,8 +184,5 @@ void
 machdep_common_ether(ether)
 	u_char *ether;
 {
-	if (boothowto & BOOT_ETHERNET_ZERO)
-		bzero(ether, 6);
-	else
-		scm_getenaddr(ether);
+	scm_getenaddr(ether);
 }
