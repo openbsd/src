@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.217 2013/10/13 12:09:53 reyk Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.218 2013/10/17 16:27:40 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -71,6 +71,7 @@
 #endif
 
 #ifdef INET6
+#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif

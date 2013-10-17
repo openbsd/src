@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrenum.c,v 1.15 2013/05/18 07:34:59 jmc Exp $	*/
+/*	$OpenBSD: rrenum.c,v 1.16 2013/10/17 16:27:48 bluhm Exp $	*/
 /*	$KAME: rrenum.c,v 1.11 2002/05/21 14:26:55 itojun Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #include <net/if.h>
 #include <net/route.h>
 #include <netinet/in.h>
-#include <netinet/in_var.h>
+#include <netinet6/in6_var.h>
 #include <netinet/icmp6.h>
 
 #include <arpa/inet.h>

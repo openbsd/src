@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.119 2013/10/01 08:25:35 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.120 2013/10/17 16:27:45 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -82,12 +82,12 @@
 #include <net/if_dl.h>
 
 #include <netinet/in.h>
-#include <netinet/in_var.h>
 #include <netinet/if_ether.h>
 #if NBRIDGE > 0
 #include <net/if_bridge.h>
 #endif
 
+#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>

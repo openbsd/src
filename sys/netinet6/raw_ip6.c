@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.58 2013/06/04 19:11:52 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.59 2013/10/17 16:27:47 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@
 #endif
 
 #include <netinet/in.h>
-#include <netinet/in_var.h>
+#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #ifdef MROUTING

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.29 2013/10/14 11:07:42 mpi Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.30 2013/10/17 16:27:46 bluhm Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
 #include <net/if.h>
 
 #include <netinet/in.h>
-#include <netinet/in_var.h>
+#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.140 2013/09/06 12:12:45 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.141 2013/10/17 16:27:43 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -96,6 +96,7 @@
 #include <nfs/nfsproto.h>
 
 #ifdef INET6
+#include <netinet6/in6_var.h>
 #include <netinet6/ip6_var.h>
 #endif /* INET6 */
 #ifdef IPSEC

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.13 2013/06/26 09:12:40 henning Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.14 2013/10/17 16:27:46 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -31,7 +31,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/in_pcb.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.61 2013/05/31 15:04:23 bluhm Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.62 2013/10/17 16:27:45 bluhm Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -46,9 +46,9 @@
 #include <net/route.h>
 
 #include <netinet/in.h>
-#include <netinet/in_var.h>
 #include <netinet/if_ether.h>
 
+#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_ifattach.h>

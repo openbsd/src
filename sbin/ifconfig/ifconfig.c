@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.273 2013/10/13 12:19:30 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.274 2013/10/17 16:27:39 bluhm Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -70,6 +70,7 @@
 #include <net/if_types.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+#include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
 #include <arpa/inet.h>
 #include <netinet/ip_ipsp.h>

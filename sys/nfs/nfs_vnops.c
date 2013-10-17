@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.147 2013/10/02 21:28:11 sf Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.148 2013/10/17 16:27:47 bluhm Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -78,7 +78,6 @@
 
 #include <net/if.h>
 #include <netinet/in.h>
-#include <netinet/in_var.h>
 
 #include <dev/rndvar.h>
 

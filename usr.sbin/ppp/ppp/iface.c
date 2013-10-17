@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: iface.c,v 1.30 2012/01/23 09:13:16 nicm Exp $
+ *	$OpenBSD: iface.c,v 1.31 2013/10/17 16:27:47 bluhm Exp $
  */
 
 #include <sys/param.h>
@@ -39,6 +39,7 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #ifndef NOINET6
+#include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
 #endif
 #include <sys/un.h>

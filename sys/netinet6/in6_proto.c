@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.67 2013/04/24 10:17:08 mpi Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.68 2013/10/17 16:27:45 bluhm Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -77,7 +77,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/in_pcb.h>
@@ -99,8 +98,8 @@
 #include <netinet6/pim6_var.h>
 #endif
 
+#include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
-
 #include <netinet6/ip6protosw.h>
 
 #include "gif.h"

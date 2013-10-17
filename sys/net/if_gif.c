@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.62 2013/06/17 18:19:44 bluhm Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.63 2013/10/17 16:27:40 bluhm Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #ifndef INET
 #include <netinet/in.h>
 #endif
+#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_gif.h>

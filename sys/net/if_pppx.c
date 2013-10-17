@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.24 2013/08/08 07:39:13 mpi Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.25 2013/10/17 16:27:41 bluhm Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -77,6 +77,7 @@
 #endif
 
 #ifdef INET6
+#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/nd6.h>
 #endif /* INET6 */

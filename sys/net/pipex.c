@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.43 2013/09/20 08:11:55 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.44 2013/10/17 16:27:43 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -69,6 +69,7 @@
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #ifdef INET6
+#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif

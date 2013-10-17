@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.58 2013/08/26 14:15:08 naddy Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.59 2013/10/17 16:27:48 bluhm Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -56,7 +56,7 @@
 #include <net/if.h>
 #include <net/route.h>
 #include <netinet/in.h>
-#include <netinet/in_var.h>
+#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet/udp.h>
 #include <netdb.h>

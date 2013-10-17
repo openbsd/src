@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.25 2013/03/28 16:45:16 tedu Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.26 2013/10/17 16:27:42 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -87,6 +87,7 @@
 #endif /* NPFSYNC > 0 */
 
 #ifdef INET6
+#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet/in_pcb.h>
 #include <netinet/icmp6.h>

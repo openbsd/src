@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.261 2013/10/12 12:13:11 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.262 2013/10/17 16:27:42 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -60,7 +60,6 @@
 #include <net/route.h>
 
 #include <netinet/in.h>
-#include <netinet/in_var.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>

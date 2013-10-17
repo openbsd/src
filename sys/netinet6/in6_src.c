@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.32 2013/05/31 15:04:24 bluhm Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.33 2013/10/17 16:27:46 bluhm Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -76,7 +76,6 @@
 #include <net/route.h>
 
 #include <netinet/in.h>
-#include <netinet/in_var.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
