@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.526 2013/10/09 01:48:40 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.527 2013/10/17 08:02:15 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3371,19 +3371,6 @@ init386(paddr_t first_avail)
 #endif /* KGDB */
 
 	softintr_init();
-}
-
-/*
- * cpu_exec_aout_makecmds():
- *	cpu-dependent a.out format hook for execve().
- *
- * Determine of the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- */
-int
-cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
-{
-	return ENOEXEC;
 }
 
 /*

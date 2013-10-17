@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.90 2013/09/28 12:40:30 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.91 2013/10/17 08:02:16 deraadt Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -914,15 +914,6 @@ out:
 	 * be restored later.
 	 */
 	set_psr(get_psr() | PSR_IND);
-}
-
-int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-
-	return (ENOEXEC);
 }
 
 int

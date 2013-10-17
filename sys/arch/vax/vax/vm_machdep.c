@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.39 2013/01/16 19:04:43 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.40 2013/10/17 08:02:18 deraadt Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.67 2000/06/29 07:14:34 mrg Exp $	     */
 
 /*
@@ -153,14 +153,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	tf->r0 = p1->p_pid; /* parent pid. (shouldn't be needed) */
 	tf->r1 = 1;
 	tf->psl = PSL_U|PSL_PREVU;
-}
-
-int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	return ENOEXEC;
 }
 
 int

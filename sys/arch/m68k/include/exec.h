@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.6 2013/02/09 19:21:29 miod Exp $ */
+/*	$OpenBSD: exec.h,v 1.7 2013/10/17 08:02:16 deraadt Exp $ */
 /*	$NetBSD: exec.h,v 1.8 1994/11/21 21:33:39 gwr Exp $	*/
 
 /*
@@ -39,12 +39,7 @@
 #define ELF_TARG_DATA           ELFDATA2MSB
 #define ELF_TARG_MACH           EM_68K
 
-#define _NLIST_DO_AOUT
 #define _NLIST_DO_ELF
-
-#define _KERN_DO_AOUT
 #define _KERN_DO_ELF
-
-#define cpu_exec_aout_makecmds(p, epp)  (ENOEXEC)
 
 #endif  /* _M68K_EXEC_H_ */

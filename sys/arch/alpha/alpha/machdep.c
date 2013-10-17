@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.142 2013/09/28 12:40:28 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.143 2013/10/17 08:02:14 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -78,7 +78,6 @@
 #include <sys/tty.h>
 #include <sys/user.h>
 #include <sys/exec.h>
-#include <sys/exec_ecoff.h>
 #include <sys/sysctl.h>
 #include <sys/core.h>
 #include <sys/kcore.h>

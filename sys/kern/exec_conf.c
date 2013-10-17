@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.29 2013/02/09 21:03:22 miod Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.30 2013/10/17 08:02:19 deraadt Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -47,21 +47,10 @@
 #include <compat/linux/linux_exec.h>
 #endif
 
-extern struct emul emul_native, emul_elf32, emul_elf64, emul_aout,
-	emul_linux_elf, emul_linux_aout;
+extern struct emul emul_native, emul_elf32, emul_elf64, emul_linux_elf;
 
 struct execsw execsw[] = {
 	{ EXEC_SCRIPT_HDRSZ, exec_script_makecmds, &emul_native, },	/* shell scripts */
-#ifdef _KERN_DO_AOUT
-#ifdef COMPAT_AOUT
-	{ sizeof(struct exec), exec_aout_makecmds, &emul_aout },
-#else
-	{ sizeof(struct exec), exec_aout_makecmds, &emul_native },	/* a.out binaries */
-#endif
-#endif
-#ifdef _KERN_DO_ECOFF
-	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds, &emul_native },	/* ecoff binaries */
-#endif
 #ifdef _KERN_DO_ELF
 	{ sizeof(Elf32_Ehdr), exec_elf32_makecmds, &emul_native },	/* elf binaries */
 #endif
@@ -69,7 +58,6 @@ struct execsw execsw[] = {
 	{ sizeof(Elf64_Ehdr), exec_elf64_makecmds, &emul_native },	/* elf binaries */
 #endif /* ELF64 */
 #ifdef COMPAT_LINUX
-	{ LINUX_AOUT_HDR_SIZE, exec_linux_aout_makecmds, &emul_linux_aout }, /* linux a.out */
 	{ sizeof(Elf32_Ehdr), exec_linux_elf32_makecmds, &emul_linux_elf },
 #endif
 #ifdef LKM

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.22 2013/03/31 17:03:25 deraadt Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.23 2013/10/17 08:02:19 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
@@ -114,36 +114,6 @@ ksymsattach(int num)
 
 		return;
 	} while (0);
-#endif
-
-#ifdef _NLIST_DO_AOUT
-	{
-		/*
-		 * a.out header.
-		 * Fake up a struct exec.
-		 * We only fill in the following non-zero entries:
-		 *	a_text - fake text segment (struct exec only)
-		 *	a_syms - size of symbol table
-		 */
-		caddr_t symtab = (char *)(&end + 1);
-		struct exec *k1;
-
-		ksym_head_size = __LDPGSZ;
-		ksym_head = malloc(ksym_head_size, M_DEVBUF, M_NOWAIT | M_ZERO);
-		if (ksym_head == NULL) {
-			printf("failed to allocate memory for /dev/ksyms\n");
-			return;
-		}
-
-		k1 = (struct exec *)ksym_head;
-
-		N_SETMAGIC(*k1, ZMAGIC, MID_MACHINE, 0);
-		k1->a_text = __LDPGSZ;
-		k1->a_syms = end;
-
-		ksym_syms = symtab;
-		ksym_syms_size = (size_t)(esym - symtab);
-	}
 #endif
 }
 

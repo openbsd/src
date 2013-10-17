@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.557 2013/10/15 01:41:45 miod Exp $
+#	$OpenBSD: files,v 1.558 2013/10/17 08:02:18 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -598,7 +598,6 @@ file altq/altq_rmclass.c		altq
 file altq/altq_hfsc.c			altq
 file altq/altq_priq.c			altq
 file ddb/db_access.c			ddb | kgdb
-file ddb/db_aout.c			ddb
 file ddb/db_break.c			ddb
 file ddb/db_command.c			ddb
 file ddb/db_elf.c			ddb
@@ -650,9 +649,7 @@ file isofs/udf/udf_subr.c		udf
 file isofs/udf/udf_vfsops.c		udf
 file isofs/udf/udf_vnops.c		udf
 file kern/clock_subr.c
-file kern/exec_aout.c
 file kern/exec_conf.c
-file kern/exec_ecoff.c
 file kern/exec_elf32.c
 file kern/exec_elf64.c
 file kern/exec_script.c
