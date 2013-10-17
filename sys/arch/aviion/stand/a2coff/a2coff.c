@@ -1,4 +1,4 @@
-/*	$OpenBSD: a2coff.c,v 1.7 2013/10/11 22:31:24 miod Exp $	*/
+/*	$OpenBSD: a2coff.c,v 1.8 2013/10/17 15:53:47 deraadt Exp $	*/
 /*
  * Copyright (c) 2006, 2013, Miodrag Vallat
  *
@@ -61,9 +61,6 @@
  * do not know about the scnhdr changes for 88K BCS.
  * So we'll provide our own, working, definitions.
  */
-#if 0 /* defined(_KERN_DO_ECOFF) */
-#include <sys/exec_ecoff.h>
-#else
 struct ecoff_filehdr {
 	u_short f_magic;	/* magic number */
 	u_short f_nscns;	/* # of sections */
@@ -120,7 +117,6 @@ struct ecoff_exechdr {
 	struct ecoff_filehdr f;
 	struct ecoff_aouthdr a;
 };
-#endif
 
 #define	round(qty, pow2)	(((qty) + (pow2 - 1)) & ~(pow2 - 1UL))
 
