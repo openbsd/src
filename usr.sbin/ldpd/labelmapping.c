@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.27 2013/10/17 17:47:03 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.28 2013/10/17 17:52:20 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -48,186 +48,71 @@ int	tlv_decode_label(struct nbr *, struct ldp_msg *, char *, u_int16_t,
 int	tlv_decode_fec_elm(struct nbr *, struct ldp_msg *, char *, u_int16_t,
     u_int8_t *, u_int32_t *, u_int8_t *);
 
-/* Label Mapping Message */
-void
-send_labelmapping(struct nbr *nbr)
+static void
+enqueue_pdu(struct nbr *nbr, struct ibuf *buf, u_int16_t size)
 {
-	struct ibuf		*buf;
-	struct mapping_entry	*me;
 	struct ldp_hdr		*ldp_hdr;
-	u_int16_t		 tlv_size, size;
 
-	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
-		fatal("send_labelmapping");
+	ldp_hdr = ibuf_seek(buf, 0, sizeof(struct ldp_hdr));
+	ldp_hdr->length = htons(size);
+	evbuf_enqueue(&nbr->tcp->wbuf, buf);
+}
 
-	/* real size will be set up later */
-	gen_ldp_hdr(buf, 0);
+/* Generic function that handles all Label Message types */
+void
+send_labelmessage(struct nbr *nbr, u_int16_t type, struct mapping_head *mh)
+{
+	struct ibuf		*buf = NULL;
+	struct mapping_entry	*me;
+	u_int16_t		 tlv_size, size = 0;
+	int			 first = 1;
 
-	size = LDP_HDR_SIZE - TLV_HDR_LEN;
+	while ((me = TAILQ_FIRST(mh)) != NULL) {
+		/* generate pdu */
+		if (first) {
+			if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
+				fatal("send_labelmapping");
 
-	TAILQ_FOREACH(me, &nbr->mapping_list, entry) {
-		tlv_size = BASIC_LABEL_MAP_LEN + PREFIX_SIZE(me->map.prefixlen);
+			/* real size will be set up later */
+			gen_ldp_hdr(buf, 0);
+
+			size = LDP_HDR_PDU_LEN;
+			first = 0;
+		}
+
+		/* calculate size */
+		tlv_size = LDP_MSG_LEN + TLV_HDR_LEN + FEC_ELM_MIN_LEN +
+		    PREFIX_SIZE(me->map.prefixlen);
+		if (type == MSG_TYPE_LABELMAPPING ||
+		    me->map.flags & F_MAP_OPTLABEL)
+			tlv_size += LABEL_TLV_LEN;
 		if (me->map.flags & F_MAP_REQ_ID)
 			tlv_size += REQID_TLV_LEN;
+
+		/* maximum pdu length exceeded, we need a new ldp pdu */
+		if (size + tlv_size > LDP_MAX_LEN) {
+			enqueue_pdu(nbr, buf, size);
+			first = 1;
+			continue;
+		}
+
 		size += tlv_size;
 
-		gen_msg_tlv(buf, MSG_TYPE_LABELMAPPING, tlv_size);
+		/* append message and tlvs */
+		gen_msg_tlv(buf, type, tlv_size);
 		gen_fec_tlv(buf, me->map.prefix, me->map.prefixlen);
-		gen_label_tlv(buf, me->map.label);
+		if (type == MSG_TYPE_LABELMAPPING ||
+		    me->map.flags & F_MAP_OPTLABEL)
+			gen_label_tlv(buf, me->map.label);
 		if (me->map.flags & F_MAP_REQ_ID)
 			gen_reqid_tlv(buf, me->map.requestid);
+
+		TAILQ_REMOVE(mh, me, entry);
+		free(me);
 	}
 
-	/* XXX: should we remove them first? */
-	mapping_list_clr(&nbr->mapping_list);
+	enqueue_pdu(nbr, buf, size);
 
-	ldp_hdr = ibuf_seek(buf, 0, sizeof(struct ldp_hdr));
-	ldp_hdr->length = htons(size);
-
-	evbuf_enqueue(&nbr->tcp->wbuf, buf);
-	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
-}
-
-/* Label Request Message */
-void
-send_labelrequest(struct nbr *nbr)
-{
-	struct ibuf		*buf;
-	struct mapping_entry	*me;
-	struct ldp_hdr		*ldp_hdr;
-	u_int16_t		 tlv_size, size;
-
-	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
-		fatal("send_labelrequest");
-
-	/* real size will be set up later */
-	gen_ldp_hdr(buf, 0);
-
-	size = LDP_HDR_SIZE - TLV_HDR_LEN;
-
-	TAILQ_FOREACH(me, &nbr->request_list, entry) {
-		tlv_size = PREFIX_SIZE(me->map.prefixlen);
-		size += tlv_size;
-
-		gen_msg_tlv(buf, MSG_TYPE_LABELREQUEST, tlv_size);
-		gen_fec_tlv(buf, me->map.prefix, me->map.prefixlen);
-	}
-
-	/* XXX: should we remove them first? */
-	mapping_list_clr(&nbr->request_list);
-
-	ldp_hdr = ibuf_seek(buf, 0, sizeof(struct ldp_hdr));
-	ldp_hdr->length = htons(size);
-
-	evbuf_enqueue(&nbr->tcp->wbuf, buf);
-	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
-}
-
-/* Label Withdraw Message */
-void
-send_labelwithdraw(struct nbr *nbr)
-{
-	struct ibuf		*buf;
-	struct mapping_entry	*me;
-	struct ldp_hdr		*ldp_hdr;
-	u_int16_t		 tlv_size, size;
-
-	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
-		fatal("send_labelwithdraw");
-
-	/* real size will be set up later */
-	gen_ldp_hdr(buf, 0);
-
-	size = LDP_HDR_SIZE - TLV_HDR_LEN;
-
-	TAILQ_FOREACH(me, &nbr->withdraw_list, entry) {
-		if (me->map.label == NO_LABEL)
-			tlv_size = PREFIX_SIZE(me->map.prefixlen);
-		else
-			tlv_size = BASIC_LABEL_MAP_LEN +
-			    PREFIX_SIZE(me->map.prefixlen);
-
-		size += tlv_size;
-
-		gen_msg_tlv(buf, MSG_TYPE_LABELWITHDRAW, tlv_size);
-		gen_fec_tlv(buf, me->map.prefix, me->map.prefixlen);
-
-		if (me->map.label != NO_LABEL)
-			gen_label_tlv(buf, me->map.label);
-	}
-
-	/* XXX: should we remove them first? */
-	mapping_list_clr(&nbr->withdraw_list);
-
-	ldp_hdr = ibuf_seek(buf, 0, sizeof(struct ldp_hdr));
-	ldp_hdr->length = htons(size);
-
-	evbuf_enqueue(&nbr->tcp->wbuf, buf);
-	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
-}
-
-/* Label Release Message */
-void
-send_labelrelease(struct nbr *nbr)
-{
-	struct ibuf		*buf;
-	struct mapping_entry	*me;
-	struct ldp_hdr		*ldp_hdr;
-	u_int16_t		 tlv_size, size;
-
-	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
-		fatal("send_labelrelease");
-
-	/* real size will be set up later */
-	gen_ldp_hdr(buf, 0);
-
-	size = LDP_HDR_SIZE - TLV_HDR_LEN;
-
-	TAILQ_FOREACH(me, &nbr->release_list, entry) {
-		if (me->map.label == NO_LABEL)
-			tlv_size = PREFIX_SIZE(me->map.prefixlen);
-		else
-			tlv_size = BASIC_LABEL_MAP_LEN +
-			    PREFIX_SIZE(me->map.prefixlen);
-
-		size += tlv_size;
-
-		gen_msg_tlv(buf, MSG_TYPE_LABELRELEASE, tlv_size);
-		gen_fec_tlv(buf, me->map.prefix, me->map.prefixlen);
-
-		if (me->map.label != NO_LABEL)
-			gen_label_tlv(buf, me->map.label);
-	}
-
-	/* XXX: should we remove them first? */
-	mapping_list_clr(&nbr->release_list);
-
-	ldp_hdr = ibuf_seek(buf, 0, sizeof(struct ldp_hdr));
-	ldp_hdr->length = htons(size);
-
-	evbuf_enqueue(&nbr->tcp->wbuf, buf);
-	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
-}
-
-/* Label Abort Req Message */
-void
-send_labelabortreq(struct nbr *nbr)
-{
-	struct ibuf	*buf;
-	u_int16_t	 size;
-
-	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
-		fatal("send_labelabortreq");
-
-	size = LDP_HDR_SIZE + sizeof(struct ldp_msg);
-
-	gen_ldp_hdr(buf, size);
-
-	size -= LDP_HDR_SIZE;
-
-	gen_msg_tlv(buf, MSG_TYPE_LABELABORTREQ, size);
-
-	evbuf_enqueue(&nbr->tcp->wbuf, buf);
 	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
 }
 
@@ -239,6 +124,7 @@ recv_labelmessage(struct nbr *nbr, char *buf, u_int16_t len, u_int16_t type)
 	struct tlv			 ft;
 	u_int32_t			 label, reqid;
 	u_int8_t			 flags = 0;
+
 	int				 feclen, lbllen, tlen;
 	u_int8_t			 addr_type;
 	struct mapping_entry		*me;

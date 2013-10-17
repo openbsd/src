@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.15 2013/10/15 19:59:53 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.16 2013/10/17 17:52:21 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -191,8 +191,6 @@ struct address_list_tlv {
 	u_int16_t	family;
 	/* address entries */
 } __packed;
-
-#define	BASIC_LABEL_MAP_LEN	24
 
 #define	ADDR_IPV4		0x1
 #define	ADDR_IPV6		0x2

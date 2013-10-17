@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.21 2013/06/04 02:25:28 claudio Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.22 2013/10/17 17:52:21 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -523,13 +523,16 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 
 			switch (imsg.hdr.type) {
 			case IMSG_MAPPING_ADD_END:
-				send_labelmapping(nbr);
+				send_labelmessage(nbr, MSG_TYPE_LABELMAPPING,
+				    &nbr->mapping_list);
 				break;
 			case IMSG_RELEASE_ADD_END:
-				send_labelrelease(nbr);
+				send_labelmessage(nbr, MSG_TYPE_LABELRELEASE,
+				    &nbr->release_list);
 				break;
 			case IMSG_REQUEST_ADD_END:
-				send_labelrequest(nbr);
+				send_labelmessage(nbr, MSG_TYPE_LABELREQUEST,
+				    &nbr->request_list);
 				break;
 			}
 			break;

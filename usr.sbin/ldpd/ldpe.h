@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.30 2013/10/17 17:47:04 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.31 2013/10/17 17:52:21 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -122,12 +122,8 @@ void	 send_address_withdraw(struct nbr *, struct if_addr *);
 
 /* labelmapping.c */
 #define PREFIX_SIZE(x)	(((x) + 7) / 8)
+void	 send_labelmessage(struct nbr *, u_int16_t, struct mapping_head *);
 int	 recv_labelmessage(struct nbr *, char *, u_int16_t, u_int16_t);
-void	 send_labelmapping(struct nbr *);
-void	 send_labelrequest(struct nbr *);
-void	 send_labelwithdraw(struct nbr *);
-void	 send_labelrelease(struct nbr *);
-void	 send_labelabortreq(struct nbr *);
 
 /* ldpe.c */
 pid_t		 ldpe(struct ldpd_conf *, int[2], int[2], int[2]);
