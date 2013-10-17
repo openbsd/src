@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh.c,v 1.387 2013/10/16 22:58:01 djm Exp $ */
+/* $OpenBSD: ssh.c,v 1.388 2013/10/17 00:46:49 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -833,6 +833,8 @@ main(int ac, char **av)
 	    strcmp(options.proxy_command, "-") == 0 &&
 	    options.proxy_use_fdpass)
 		fatal("ProxyCommand=- and ProxyUseFDPass are incompatible");
+	if (original_effective_uid != 0)
+		options.use_privileged_port = 0;
 
 	/* reinit */
 	log_init(argv0, options.log_level, SYSLOG_FACILITY_USER, !use_syslog);
@@ -925,7 +927,7 @@ main(int ac, char **av)
 	if (ssh_connect(host, addrs, &hostaddr, options.port,
 	    options.address_family, options.connection_attempts,
 	    &timeout_ms, options.tcp_keep_alive,
-	    original_effective_uid == 0 && options.use_privileged_port) != 0)
+	    options.use_privileged_port) != 0)
 		exit(255);
 
 	freeaddrinfo(addrs);
