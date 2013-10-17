@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.127 2013/10/16 21:17:27 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.128 2013/10/17 09:14:02 blambert Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 16 2013 $
+.Dd $Mdocdate: October 17 2013 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -391,7 +391,7 @@ rde rib Loc-RIB rtable number
 .Ed
 .Pp
 .It Ic socket Qo Ar path Qc Op Ic restricted
-Set the control socket location to
+Create a control socket at
 .Ar path .
 If
 .Ic restricted
