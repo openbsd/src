@@ -1,4 +1,4 @@
-#	$OpenBSD: sftp-perm.sh,v 1.1 2013/10/09 23:44:14 djm Exp $
+#	$OpenBSD: sftp-perm.sh,v 1.2 2013/10/17 22:00:18 djm Exp $
 #	Placed in the Public Domain.
 
 tid="sftp permissions"
@@ -90,10 +90,10 @@ ro_test \
 
 ro_test \
 	"setstat" \
-	"chmod 0600 $COPY" \
+	"chmod 0700 $COPY" \
 	"touch $COPY; chmod 0400 $COPY" \
-	"test -w $COPY" \
-	"test ! -w $COPY"
+	"test -x $COPY" \
+	"test ! -x $COPY"
 
 ro_test \
 	"rm" \
@@ -191,10 +191,10 @@ perm_test \
 perm_test \
 	"setstat" \
 	"realpath,stat,lstat" \
-	"chmod 0600 $COPY" \
+	"chmod 0700 $COPY" \
 	"touch $COPY; chmod 0400 $COPY" \
-	"test -w $COPY" \
-	"test ! -w $COPY"
+	"test -x $COPY" \
+	"test ! -x $COPY"
 
 perm_test \
 	"remove" \
