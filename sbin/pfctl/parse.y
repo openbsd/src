@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.625 2013/10/12 12:16:11 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.626 2013/10/17 19:59:54 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4735,7 +4735,10 @@ expand_queue(char *qname, struct node_if *interfaces, struct queue_opts *opts)
 		qspec.flags = opts->flags;
 		qspec.qlimit = opts->qlimit;
 
-		pfctl_add_queue(pf, &qspec);
+		if (pfctl_add_queue(pf, &qspec)) {
+			yyerror("cannot add queue");
+			return (1);
+		}
 	);
 
 	FREE_LIST(struct node_if, interfaces);

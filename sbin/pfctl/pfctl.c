@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.319 2013/10/12 12:16:11 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.320 2013/10/17 19:59:54 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1108,6 +1108,11 @@ pfctl_add_queue(struct pfctl *pf, struct pf_queuespec *q)
 {
 	struct pfctl_qsitem	*qi;
 
+	if (pf->anchor->name[0]) {
+		printf("must not have queue definitions in an anchor\n");
+		return (1);
+	}
+
 	if ((qi = calloc(1, sizeof(*qi))) == NULL)
 		err(1, "calloc");
 	bcopy(q, &qi->qs, sizeof(qi->qs));
@@ -1503,8 +1508,8 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 			goto _error;
 	}
 
-	if (pfctl_check_qassignments(&pf.anchor->ruleset) ||
-	    pfctl_load_queues(&pf)) {
+	if (!anchorname[0] && (pfctl_check_qassignments(&pf.anchor->ruleset) ||
+	    pfctl_load_queues(&pf))) {
 		if ((opts & PF_OPT_NOACTION) == 0)
 			ERRX("Unable to load queues into kernel");
 		else
