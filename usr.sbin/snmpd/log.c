@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.3 2010/03/29 14:52:49 claudio Exp $	*/
+/*	$OpenBSD: log.c,v 1.4 2013/10/17 08:42:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,6 +43,7 @@
 #include "snmpd.h"
 
 int	 debug;
+int	 verbose;
 
 void	 vlog(int, const char *, va_list);
 void	 logit(int, const char *, ...);
@@ -53,11 +54,18 @@ log_init(int n_debug)
 	extern char	*__progname;
 
 	debug = n_debug;
+	verbose = n_debug;
 
 	if (!debug)
 		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
 	tzset();
+}
+
+void
+log_verbose(int v)
+{
+	verbose = v;
 }
 
 void
@@ -139,9 +147,33 @@ log_debug(const char *emsg, ...)
 {
 	va_list	 ap;
 
-	if (debug) {
+	if (verbose > 1) {
 		va_start(ap, emsg);
 		vlog(LOG_DEBUG, emsg, ap);
+		va_end(ap);
+	}
+}
+
+void
+print_debug(const char *emsg, ...)
+{
+	va_list	 ap;
+
+	if (debug && verbose > 2) {
+		va_start(ap, emsg);
+		vfprintf(stderr, emsg, ap);
+		va_end(ap);
+	}
+}
+
+void
+print_verbose(const char *emsg, ...)
+{
+	va_list	 ap;
+
+	if (verbose) {
+		va_start(ap, emsg);
+		vfprintf(stderr, emsg, ap);
 		va_end(ap);
 	}
 }
@@ -151,12 +183,13 @@ fatal(const char *emsg)
 {
 	if (emsg == NULL)
 		logit(LOG_CRIT, "fatal: %s", strerror(errno));
-	else
+	else {
 		if (errno)
 			logit(LOG_CRIT, "fatal: %s: %s",
 			    emsg, strerror(errno));
 		else
 			logit(LOG_CRIT, "fatal: %s", emsg);
+	}
 
 	exit(1);
 }

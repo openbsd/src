@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.46 2013/10/16 16:05:03 blambert Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.47 2013/10/17 08:42:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -73,29 +73,9 @@ enum imsg_type {
 	IMSG_CTL_OK,		/* answer to snmpctl requests */
 	IMSG_CTL_FAIL,
 	IMSG_CTL_END,
-	IMSG_CTL_NOTIFY
-};
-
-enum {
-	PROC_PARENT,	/* Parent process and application interface */
-	PROC_SNMPE	/* SNMP engine */
-} snmpd_process;
-
-/* initially control.h */
-struct control_sock {
-	const char	*cs_name;
-	struct event	 cs_ev;
-	struct event	 cs_evt;
-	int		 cs_fd;
-	int		 cs_restricted;
-
-	TAILQ_ENTRY(control_sock) cs_entry;
-};
-TAILQ_HEAD(control_socks, control_sock);
-
-enum blockmodes {
-	BM_NORMAL,
-	BM_NONBLOCK
+	IMSG_CTL_NOTIFY,
+	IMSG_CTL_VERBOSE,
+	IMSG_CTL_RELOAD
 };
 
 struct imsgev {
@@ -104,6 +84,76 @@ struct imsgev {
 	struct event		 ev;
 	void			*data;
 	short			 events;
+	const char		*name;
+};
+
+#define IMSG_SIZE_CHECK(imsg, p) do {				\
+	if (IMSG_DATA_SIZE(imsg) < sizeof(*p))			\
+		fatalx("bad length imsg received");		\
+} while (0)
+#define IMSG_DATA_SIZE(imsg)	((imsg)->hdr.len - IMSG_HEADER_SIZE)
+
+/* initially control.h */
+struct control_sock {
+	const char	*cs_name;
+	struct event	 cs_ev;
+	struct event	 cs_evt;
+	int		 cs_fd;
+	int		 cs_restricted;
+	void		*cs_env;
+
+	TAILQ_ENTRY(control_sock) cs_entry;
+};
+TAILQ_HEAD(control_socks, control_sock);
+
+enum privsep_procid {
+	PROC_PARENT,	/* Parent process and application interface */
+	PROC_SNMPE,	/* SNMP engine */
+	PROC_MAX
+};
+
+enum privsep_procid privsep_process;
+
+/* Attach the control socket to the following process */
+#define PROC_CONTROL	PROC_SNMPE
+
+struct privsep {
+	int			 ps_pipes[PROC_MAX][PROC_MAX];
+	struct imsgev		 ps_ievs[PROC_MAX];
+	const char		*ps_title[PROC_MAX];
+	pid_t			 ps_pid[PROC_MAX];
+	struct passwd		*ps_pw;
+
+	struct control_sock	 ps_csock;
+	struct control_socks	 ps_rcsocks;
+
+	/* Event and signal handlers */
+	struct event		 ps_evsigint;
+	struct event		 ps_evsigterm;
+	struct event		 ps_evsigchld;
+	struct event		 ps_evsighup;
+	struct event		 ps_evsigpipe;
+
+	void			*ps_env;
+};
+
+struct privsep_proc {
+	const char		*p_title;
+	enum privsep_procid	 p_id;
+	int			(*p_cb)(int, struct privsep_proc *,
+				    struct imsg *);
+	pid_t			(*p_init)(struct privsep *,
+				    struct privsep_proc *);
+	void			(*p_shutdown)(struct privsep *,
+				    struct privsep_proc *);
+	const char		*p_chroot;
+	struct privsep		*p_ps;
+	void 			*p_env;
+};
+
+enum blockmodes {
+	BM_NORMAL,
+	BM_NONBLOCK
 };
 
 struct ctl_conn {
@@ -406,9 +456,6 @@ struct snmpd {
 	struct timeval		 sc_starttime;
 	u_int32_t		 sc_engine_boots;
 
-	struct control_sock	 sc_csock;
-	struct control_socks	 sc_rcsocks;
-
 	char			 sc_rdcommunity[SNMPD_MAXCOMMUNITYLEN];
 	char			 sc_rwcommunity[SNMPD_MAXCOMMUNITYLEN];
 	char			 sc_trcommunity[SNMPD_MAXCOMMUNITYLEN];
@@ -426,17 +473,16 @@ struct snmpd {
 
 	int			 sc_min_seclevel;
 	int			 sc_readonly;
+
+	struct privsep		 sc_ps;
 };
 
 /* control.c */
-int		 control_init(struct control_sock *);
+int		 control_init(struct privsep *, struct control_sock *);
 int		 control_listen(struct control_sock *);
-void		 control_accept(int, short, void *);
-void		 control_dispatch_imsg(int, short, void *);
-void		 control_imsg_forward(struct imsg *);
 void		 control_cleanup(struct control_sock *);
 
-void		 session_socket_blockmode(int, enum blockmodes);
+void		 socket_set_blockmode(int, enum blockmodes);
 
 /* parse.y */
 struct snmpd	*parse_config(const char *, u_int);
@@ -444,19 +490,18 @@ int		 cmdline_symset(char *);
 
 /* log.c */
 void		 log_init(int);
+void		 log_verbose(int);
 void		 log_warn(const char *, ...);
 void		 log_warnx(const char *, ...);
 void		 log_info(const char *, ...);
 void		 log_debug(const char *, ...);
+void		 print_debug(const char *, ...);
+void		 print_verbose(const char *, ...);
 __dead void	 fatal(const char *);
 __dead void	 fatalx(const char *);
 void		 vlog(int, const char *, va_list);
 const char	*log_in6addr(const struct in6_addr *);
 const char	*print_host(struct sockaddr_storage *, char *, size_t);
-
-void		 imsg_event_add(struct imsgev *);
-int		 imsg_compose_event(struct imsgev *, enum imsg_type, u_int32_t,
-		    pid_t, int, void *, u_int16_t);
 
 /* kroute.c */
 void		 kr_init(void);
@@ -476,7 +521,8 @@ struct kroute	*kroute_first(void);
 struct kroute	*kroute_getaddr(in_addr_t, u_int8_t, u_int8_t, int);
 
 /* snmpe.c */
-pid_t		 snmpe(struct snmpd *, int [2]);
+pid_t		 snmpe(struct privsep *, struct privsep_proc *);
+void		 snmpe_shutdown(struct privsep *, struct privsep_proc *);
 
 /* trap.c */
 void		 trap_init(void);
@@ -564,4 +610,25 @@ struct ber_element *usm_encode(struct snmp_message *, struct ber_element *);
 struct ber_element *usm_encrypt(struct snmp_message *, struct ber_element *);
 void		 usm_finalize_digest(struct snmp_message *, char *, ssize_t);
 void		 usm_make_report(struct snmp_message *);
+
+/* proc.c */
+void	 proc_init(struct privsep *, struct privsep_proc *, u_int);
+void	 proc_kill(struct privsep *);
+void	 proc_config(struct privsep *, struct privsep_proc *, u_int);
+void	 proc_dispatch(int, short event, void *);
+pid_t	 proc_run(struct privsep *, struct privsep_proc *,
+	    struct privsep_proc *, u_int,
+	    void (*)(struct privsep *, void *), void *);
+void	 imsg_event_add(struct imsgev *);
+int	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
+	    pid_t, int, void *, u_int16_t);
+int	 imsg_composev_event(struct imsgev *, u_int16_t, u_int32_t,
+	    pid_t, int, const struct iovec *, int);
+int	 proc_compose_imsg(struct privsep *, enum privsep_procid,
+	    u_int16_t, int, void *, u_int16_t);
+int	 proc_composev_imsg(struct privsep *, enum privsep_procid,
+	    u_int16_t, int, const struct iovec *, int);
+int	 proc_forward_imsg(struct privsep *, struct imsg *,
+	    enum privsep_procid);
+void	 proc_flush_imsg(struct privsep *, enum privsep_procid);
 #endif /* _SNMPD_H */

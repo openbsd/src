@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.26 2013/10/16 16:05:02 blambert Exp $	*/
+/*	$OpenBSD: parse.y,v 1.27 2013/10/17 08:42:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -277,15 +277,15 @@ main		: LISTEN ON STRING		{
 				}
 				rcsock->cs_name = $2;
 				rcsock->cs_restricted = 1;
-				TAILQ_INSERT_TAIL(&conf->sc_rcsocks, rcsock,
-				    cs_entry);
+				TAILQ_INSERT_TAIL(&conf->sc_ps.ps_rcsocks,
+				    rcsock, cs_entry);
 			} else {
 				if (++nctlsocks > 1) {
 					yyerror("multiple control "
 					    "sockets specified");
 					YYERROR;
 				}
-				conf->sc_csock.cs_name = $2;
+				conf->sc_ps.ps_csock.cs_name = $2;
 			}
 		}
 		;
@@ -881,8 +881,8 @@ parse_config(const char *filename, u_int flags)
 	conf->sc_confpath = filename;
 	conf->sc_address.ss.ss_family = AF_INET;
 	conf->sc_address.port = SNMPD_PORT;
-	conf->sc_csock.cs_name = SNMPD_SOCKET;
-	TAILQ_INIT(&conf->sc_rcsocks);
+	conf->sc_ps.ps_csock.cs_name = SNMPD_SOCKET;
+	TAILQ_INIT(&conf->sc_ps.ps_rcsocks);
 	strlcpy(conf->sc_rdcommunity, "public", SNMPD_MAXCOMMUNITYLEN);
 	strlcpy(conf->sc_rwcommunity, "private", SNMPD_MAXCOMMUNITYLEN);
 	strlcpy(conf->sc_trcommunity, "public", SNMPD_MAXCOMMUNITYLEN);

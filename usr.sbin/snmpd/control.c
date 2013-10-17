@@ -1,6 +1,7 @@
-/*	$OpenBSD: control.c,v 1.18 2013/03/11 17:40:11 deraadt Exp $	*/
+/*	$OpenBSD: control.c,v 1.19 2013/10/17 08:42:44 reyk Exp $	*/
 
 /*
+ * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +19,6 @@
 
 #include <sys/queue.h>
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -40,12 +40,17 @@
 
 struct ctl_connlist ctl_conns;
 
-struct ctl_conn	*control_connbyfd(int);
-void		 control_close(int, struct control_sock *);
+void	 control_accept(int, short, void *);
+struct ctl_conn
+	*control_connbyfd(int);
+void	 control_close(int, struct control_sock *);
+void	 control_dispatch_imsg(int, short, void *);
+void	 control_imsg_forward(struct imsg *);
 
 int
-control_init(struct control_sock *cs)
+control_init(struct privsep *ps, struct control_sock *cs)
 {
+	struct snmpd		*env = ps->ps_env;
 	struct sockaddr_un	 sun;
 	int			 fd;
 	mode_t			 old_umask, mode;
@@ -54,21 +59,21 @@ control_init(struct control_sock *cs)
 		return (0);
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-		log_warn("control_init: socket");
+		log_warn("%s: socket", __func__);
 		return (-1);
 	}
 
 	sun.sun_family = AF_UNIX;
 	if (strlcpy(sun.sun_path, cs->cs_name,
 	    sizeof(sun.sun_path)) >= sizeof(sun.sun_path)) {
-		log_warn("control_init: %s name too long", cs->cs_name);
+		log_warn("%s: %s name too long", __func__, cs->cs_name);
 		close(fd);
 		return (-1);
 	}
 
 	if (unlink(cs->cs_name) == -1)
 		if (errno != ENOENT) {
-			log_warn("control_init: unlink %s", cs->cs_name);
+			log_warn("%s: unlink %s", __func__, cs->cs_name);
 			close(fd);
 			return (-1);
 		}
@@ -82,7 +87,7 @@ control_init(struct control_sock *cs)
 	}
 
 	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
-		log_warn("control_init: bind: %s", cs->cs_name);
+		log_warn("%s: bind: %s", __func__, cs->cs_name);
 		close(fd);
 		(void)umask(old_umask);
 		return (-1);
@@ -90,14 +95,15 @@ control_init(struct control_sock *cs)
 	(void)umask(old_umask);
 
 	if (chmod(cs->cs_name, mode) == -1) {
-		log_warn("control_init: chmod");
+		log_warn("%s: chmod", __func__);
 		close(fd);
 		(void)unlink(cs->cs_name);
 		return (-1);
 	}
 
-	session_socket_blockmode(fd, BM_NONBLOCK);
+	socket_set_blockmode(fd, BM_NONBLOCK);
 	cs->cs_fd = fd;
+	cs->cs_env = env;
 
 	return (0);
 }
@@ -109,7 +115,7 @@ control_listen(struct control_sock *cs)
 		return (0);
 
 	if (listen(cs->cs_fd, CONTROL_BACKLOG) == -1) {
-		log_warn("control_listen: listen");
+		log_warn("%s: listen", __func__);
 		return (-1);
 	}
 
@@ -135,7 +141,7 @@ control_cleanup(struct control_sock *cs)
 void
 control_accept(int listenfd, short event, void *arg)
 {
-	struct control_sock	*cs = (struct control_sock *)arg;
+	struct control_sock	*cs = arg;
 	int			 connfd;
 	socklen_t		 len;
 	struct sockaddr_un	 sun;
@@ -159,14 +165,14 @@ control_accept(int listenfd, short event, void *arg)
 			evtimer_add(&cs->cs_evt, &evtpause);
 		} else if (errno != EWOULDBLOCK && errno != EINTR &&
 		    errno != ECONNABORTED)
-			log_warn("control_accept: accept");
+			log_warn("%s: accept", __func__);
 		return;
 	}
 
-	session_socket_blockmode(connfd, BM_NONBLOCK);
+	socket_set_blockmode(connfd, BM_NONBLOCK);
 
 	if ((c = calloc(1, sizeof(struct ctl_conn))) == NULL) {
-		log_warn("control_accept");
+		log_warn("%s", __func__);
 		close(connfd);
 		return;
 	}
@@ -176,7 +182,7 @@ control_accept(int listenfd, short event, void *arg)
 	c->iev.events = EV_READ;
 	c->iev.data = cs;
 	event_set(&c->iev.ev, c->iev.ibuf.fd, c->iev.events,
-	    c->iev.handler, cs);
+	    c->iev.handler, c->iev.data);
 	event_add(&c->iev.ev, NULL);
 
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
@@ -200,7 +206,7 @@ control_close(int fd, struct control_sock *cs)
 	struct ctl_conn	*c;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
-		log_warn("control_close: fd %d: not found", fd);
+		log_warn("%s: fd %d: not found", __func__, fd);
 		return;
 	}
 
@@ -223,13 +229,14 @@ control_close(int fd, struct control_sock *cs)
 void
 control_dispatch_imsg(int fd, short event, void *arg)
 {
-	struct control_sock	*cs = (struct control_sock *)arg;
+	struct control_sock	*cs = arg;
+	struct snmpd		*env = cs->cs_env;
 	struct ctl_conn		*c;
 	struct imsg		 imsg;
-	int			 n;
+	int			 n, v, i;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
-		log_warn("control_dispatch_imsg: fd %d: not found", fd);
+		log_warn("%s: fd %d: not found", __func__, fd);
 		return;
 	}
 
@@ -276,12 +283,15 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			}
 		}
 
+		control_imsg_forward(&imsg);
+
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_NOTIFY:
 			if (c->flags & CTL_CONN_NOTIFY) {
-				log_debug("control_dispatch_imsg: "
-				    "client requested notify more than once");
-				imsg_compose(&c->iev.ibuf, IMSG_CTL_FAIL,
+				log_debug("%s: "
+				    "client requested notify more than once",
+				    __func__);
+				imsg_compose_event(&c->iev, IMSG_CTL_FAIL,
 				    0, 0, -1, NULL, 0);
 				break;
 			}
@@ -301,9 +311,24 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				return;
 			}
 			break;
+		case IMSG_CTL_VERBOSE:
+			IMSG_SIZE_CHECK(&imsg, &v);
+
+			memcpy(&v, imsg.data, sizeof(v));
+			log_verbose(v);
+
+			for (i = 0; i < PROC_MAX; i++) {
+				if (privsep_process == PROC_CONTROL)
+					continue;
+				proc_forward_imsg(&env->sc_ps, &imsg, i);
+			}
+			break;
+		case IMSG_CTL_RELOAD:
+			proc_forward_imsg(&env->sc_ps, &imsg, PROC_PARENT);
+			break;
 		default:
-			log_debug("control_dispatch_imsg: "
-			    "error handling imsg %d", imsg.hdr.type);
+			log_debug("%s: error handling imsg %d",
+			    __func__, imsg.hdr.type);
 			break;
 		}
 		imsg_free(&imsg);
@@ -319,24 +344,7 @@ control_imsg_forward(struct imsg *imsg)
 
 	TAILQ_FOREACH(c, &ctl_conns, entry)
 		if (c->flags & CTL_CONN_NOTIFY)
-			imsg_compose(&c->iev.ibuf, imsg->hdr.type, 0,
-			    imsg->hdr.pid, -1, imsg->data,
+			imsg_compose(&c->iev.ibuf, imsg->hdr.type,
+			    0, imsg->hdr.pid, -1, imsg->data,
 			    imsg->hdr.len - IMSG_HEADER_SIZE);
-}
-
-void
-session_socket_blockmode(int fd, enum blockmodes bm)
-{
-	int	flags;
-
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
-		fatal("fcntl F_GETFL");
-
-	if (bm == BM_NONBLOCK)
-		flags |= O_NONBLOCK;
-	else
-		flags &= ~O_NONBLOCK;
-
-	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
-		fatal("fcntl F_SETFL");
 }

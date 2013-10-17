@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.17 2013/10/16 21:15:33 jmc Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.18 2013/10/17 08:42:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -34,6 +34,7 @@
 #include <event.h>
 #include <signal.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <pwd.h>
 
 #include "snmpd.h"
@@ -41,23 +42,24 @@
 
 __dead void	 usage(void);
 
-void		 snmpd_sig_handler(int, short, void *);
-void		 snmpd_shutdown(struct snmpd *);
-void		 snmpd_dispatch_snmpe(int, short, void *);
-int		 check_child(pid_t, const char *);
-void		 snmpd_generate_engineid(struct snmpd *);
+void	 snmpd_shutdown(struct snmpd *);
+void	 snmpd_sig_handler(int, short, void *);
+int	 snmpd_dispatch_snmpe(int, struct privsep_proc *, struct imsg *);
+void	 snmpd_generate_engineid(struct snmpd *);
+int	 check_child(pid_t, const char *);
 
 struct snmpd	*snmpd_env;
 
-int		 pipe_parent2snmpe[2];
-struct imsgev	*iev_snmpe;
-pid_t		 snmpe_pid = 0;
+static struct privsep_proc procs[] = {
+	{ "snmpe", PROC_SNMPE, snmpd_dispatch_snmpe, snmpe, snmpe_shutdown }
+};
 
 void
 snmpd_sig_handler(int sig, short event, void *arg)
 {
-	struct snmpd	*env = arg;
-	int			 die = 0;
+	struct privsep	*ps = arg;
+	struct snmpd	*env = ps->ps_env;
+	int		 die = 0, id;
 
 	switch (sig) {
 	case SIGTERM:
@@ -65,9 +67,10 @@ snmpd_sig_handler(int sig, short event, void *arg)
 		die = 1;
 		/* FALLTHROUGH */
 	case SIGCHLD:
-		if (check_child(snmpe_pid, "snmp engine")) {
-			snmpe_pid = 0;
-			die  = 1;
+		for (id = 0; id < PROC_MAX; id++) {
+			if (check_child(ps->ps_pid[id],
+			    ps->ps_title[id]))
+				die  = 1;
 		}
 		if (die)
 			snmpd_shutdown(env);
@@ -94,25 +97,21 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	int			 c;
-	struct snmpd		*env;
-	struct event		 ev_sigint;
-	struct event		 ev_sigterm;
-	struct event		 ev_sigchld;
-	struct event		 ev_sighup;
-	int			 debug = 0;
-	u_int			 flags = 0;
-	int			 noaction = 0;
-	const char		*conffile = CONF_FILE;
+	int		 c;
+	struct snmpd	*env;
+	int		 debug = 0, verbose = 0;
+	u_int		 flags = 0;
+	int		 noaction = 0;
+	const char	*conffile = CONF_FILE;
+	struct privsep	*ps;
 
 	smi_init();
-
 	log_init(1);	/* log to stderr until daemonized */
 
 	while ((c = getopt(argc, argv, "dD:nNf:v")) != -1) {
 		switch (c) {
 		case 'd':
-			debug = 1;
+			debug++;
 			break;
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
@@ -129,6 +128,7 @@ main(int argc, char *argv[])
 			conffile = optarg;
 			break;
 		case 'v':
+			verbose++;
 			flags |= SNMPD_F_VERBOSE;
 			break;
 		default:
@@ -143,6 +143,9 @@ main(int argc, char *argv[])
 
 	if ((env = parse_config(conffile, flags)) == NULL)
 		exit(1);
+
+	ps = &env->sc_ps;
+	ps->ps_env = env;
 	snmpd_env = env;
 
 	if (noaction) {
@@ -153,62 +156,45 @@ main(int argc, char *argv[])
 	if (geteuid())
 		errx(1, "need root privileges");
 
-	if (getpwnam(SNMPD_USER) == NULL)
+	if ((ps->ps_pw = getpwnam(SNMPD_USER)) == NULL)
 		errx(1, "unknown user %s", SNMPD_USER);
 
 	log_init(debug);
+	log_verbose(verbose);
 
-	if (!debug) {
-		if (daemon(1, 0) == -1)
-			err(1, "failed to daemonize");
-	}
+	if (!debug && daemon(0, 0) == -1)
+		err(1, "failed to daemonize");
 
 	gettimeofday(&env->sc_starttime, NULL);
 	env->sc_engine_boots = 0;
 
-	log_info("startup");
-
 	pf_init();
-
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
-	    pipe_parent2snmpe) == -1)
-		fatal("socketpair");
-
-	session_socket_blockmode(pipe_parent2snmpe[0], BM_NONBLOCK);
-	session_socket_blockmode(pipe_parent2snmpe[1], BM_NONBLOCK);
-
 	snmpd_generate_engineid(env);
 
-	snmpe_pid = snmpe(env, pipe_parent2snmpe);
+	proc_init(ps, procs, nitems(procs));
+
 	setproctitle("parent");
+	log_info("startup");
 
 	event_init();
 
-	signal_set(&ev_sigint, SIGINT, snmpd_sig_handler, env);
-	signal_set(&ev_sigterm, SIGTERM, snmpd_sig_handler, env);
-	signal_set(&ev_sigchld, SIGCHLD, snmpd_sig_handler, env);
-	signal_set(&ev_sighup, SIGHUP, snmpd_sig_handler, env);
-	signal_add(&ev_sigint, NULL);
-	signal_add(&ev_sigterm, NULL);
-	signal_add(&ev_sigchld, NULL);
-	signal_add(&ev_sighup, NULL);
-	signal(SIGPIPE, SIG_IGN);
+	signal_set(&ps->ps_evsigint, SIGINT, snmpd_sig_handler, ps);
+	signal_set(&ps->ps_evsigterm, SIGTERM, snmpd_sig_handler, ps);
+	signal_set(&ps->ps_evsigchld, SIGCHLD, snmpd_sig_handler, ps);
+	signal_set(&ps->ps_evsighup, SIGHUP, snmpd_sig_handler, ps);
+	signal_set(&ps->ps_evsigpipe, SIGPIPE, snmpd_sig_handler, ps);
 
-	close(pipe_parent2snmpe[1]);
+	signal_add(&ps->ps_evsigint, NULL);
+	signal_add(&ps->ps_evsigterm, NULL);
+	signal_add(&ps->ps_evsigchld, NULL);
+	signal_add(&ps->ps_evsighup, NULL);
+	signal_add(&ps->ps_evsigpipe, NULL);
 
-	if ((iev_snmpe = calloc(1, sizeof(struct imsgev))) == NULL)
-		fatal(NULL);
-
-	imsg_init(&iev_snmpe->ibuf, pipe_parent2snmpe[0]);
-	iev_snmpe->handler = snmpd_dispatch_snmpe;
-	iev_snmpe->data = iev_snmpe;
-
-	iev_snmpe->events = EV_READ;
-	event_set(&iev_snmpe->ev, iev_snmpe->ibuf.fd, iev_snmpe->events,
-	    iev_snmpe->handler, iev_snmpe);
-	event_add(&iev_snmpe->ev, NULL);
+	proc_config(ps, procs, nitems(procs));
 
 	event_dispatch();
+
+	log_debug("%d parent exiting", getpid());
 
 	return (0);
 }
@@ -216,24 +202,10 @@ main(int argc, char *argv[])
 void
 snmpd_shutdown(struct snmpd *env)
 {
-	struct control_sock *rcs;
-	pid_t	pid;
+	proc_kill(&env->sc_ps);
 
-	if (snmpe_pid)
-		kill(snmpe_pid, SIGTERM);
+	free(env);
 
-	do {
-		if ((pid = wait(NULL)) == -1 &&
-		    errno != EINTR && errno != ECHILD)
-			fatal("wait");
-	} while (pid != -1 || (pid == -1 && errno == EINTR));
-
-	control_cleanup(&env->sc_csock);
-	while ((rcs = TAILQ_FIRST(&env->sc_rcsocks)) != NULL) {
-		TAILQ_REMOVE(&env->sc_rcsocks, rcs, cs_entry);
-		control_cleanup(rcs);
-		free(rcs);
-	}
 	log_info("terminating");
 	exit(0);
 }
@@ -258,63 +230,17 @@ check_child(pid_t pid, const char *pname)
 	return (0);
 }
 
-void
-imsg_event_add(struct imsgev *iev)
+int
+snmpd_dispatch_snmpe(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	iev->events = EV_READ;
-	if (iev->ibuf.w.queued)
-		iev->events |= EV_WRITE;
-
-	event_del(&iev->ev);
-	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev->data);
-	event_add(&iev->ev, NULL);
-}
-
-void
-snmpd_dispatch_snmpe(int fd, short event, void * ptr)
-{
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = ptr;
-	ibuf = &iev->ibuf;
-	switch (event) {
-	case EV_READ:
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-		break;
-	case EV_WRITE:
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-		imsg_event_add(iev);
-		return;
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_RELOAD:
+		/* XXX notyet */
 	default:
-		fatalx("unknown event");
+		break;
 	}
 
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("snmpd_dispatch_relay: imsg_read error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		default:
-			log_debug("snmpd_dispatch_relay: unexpected imsg %d",
-			    imsg.hdr.type);
-			break;
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
+	return (-1);
 }
 
 int
@@ -395,4 +321,21 @@ tohexstr(u_int8_t *str, int len)
 		r += snprintf(r, len * 2, "%0*x", 2, *str++);
 	*r = '\0';
 	return hstr;
+}
+
+void
+socket_set_blockmode(int fd, enum blockmodes bm)
+{
+	int	flags;
+
+	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
+		fatal("fcntl F_GETFL");
+
+	if (bm == BM_NONBLOCK)
+		flags |= O_NONBLOCK;
+	else
+		flags &= ~O_NONBLOCK;
+
+	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
+		fatal("fcntl F_SETFL");
 }

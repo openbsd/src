@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.36 2013/10/16 16:05:03 blambert Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.37 2013/10/17 08:42:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -40,13 +40,13 @@
 #include "snmpd.h"
 #include "mib.h"
 
+void	 snmpe_init(struct privsep *, void *);
 int	 snmpe_parse(struct sockaddr_storage *,
 	    struct ber_element *, struct snmp_message *);
 unsigned long
 	 snmpe_application(struct ber_element *);
 void	 snmpe_sig_handler(int sig, short, void *);
-void	 snmpe_shutdown(void);
-void	 snmpe_dispatch_parent(int, short, void *);
+int	 snmpe_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 snmpe_bind(struct address *);
 void	 snmpe_recvmsg(int fd, short, void *);
 int	 snmpe_encode(struct snmp_message *);
@@ -55,182 +55,64 @@ struct snmpd	*env = NULL;
 
 struct imsgev	*iev_parent;
 
-void
-snmpe_sig_handler(int sig, short event, void *arg)
-{
-	switch (sig) {
-	case SIGINT:
-	case SIGTERM:
-		snmpe_shutdown();
-		break;
-	default:
-		fatalx("snmpe_sig_handler: unexpected signal");
-	}
-}
+static struct privsep_proc procs[] = {
+	{ "parent",	PROC_PARENT,	snmpe_dispatch_parent }
+};
 
 pid_t
-snmpe(struct snmpd *x_env, int pipe_parent2snmpe[2])
+snmpe(struct privsep *ps, struct privsep_proc *p)
 {
-	pid_t			 pid;
-	struct passwd		*pw;
-	struct event		 ev_sigint;
-	struct event		 ev_sigterm;
-	struct control_sock	*rcs;
 #ifdef DEBUG
+	char		 buf[BUFSIZ];
 	struct oid	*oid;
 #endif
 
-	switch (pid = fork()) {
-	case -1:
-		fatal("snmpe: cannot fork");
-	case 0:
-		break;
-	default:
-		return (pid);
-	}
-
-	env = x_env;
-
-	if (control_init(&env->sc_csock) == -1)
-		fatalx("snmpe: control socket setup failed");
-	TAILQ_FOREACH(rcs, &env->sc_rcsocks, cs_entry)
-		if (control_init(rcs) == -1)
-			fatalx("snmpe: restricted control socket setup failed");
-
-	if ((env->sc_sock = snmpe_bind(&env->sc_address)) == -1)
-		fatalx("snmpe: failed to bind SNMP UDP socket");
-
-	if ((pw = getpwnam(SNMPD_USER)) == NULL)
-		fatal("snmpe: getpwnam");
-
-#ifndef DEBUG
-	if (chroot(pw->pw_dir) == -1)
-		fatal("snmpe: chroot");
-	if (chdir("/") == -1)
-		fatal("snmpe: chdir(\"/\")");
-#else
-#warning disabling privilege revocation and chroot in DEBUG mode
-#endif
-
-	setproctitle("snmp engine");
-	snmpd_process = PROC_SNMPE;
-
-#ifndef DEBUG
-	if (setgroups(1, &pw->pw_gid) ||
-	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		fatal("snmpe: cannot drop privileges");
-#endif
+	env = ps->ps_env;
 
 #ifdef DEBUG
 	for (oid = NULL; (oid = smi_foreach(oid, 0)) != NULL;) {
-		char	 buf[BUFSIZ];
 		smi_oid2string(&oid->o_id, buf, sizeof(buf), 0);
 		log_debug("oid %s", buf);
 	}
 #endif
 
-	event_init();
+	/* bind SNMP UDP socket */
+	if ((env->sc_sock = snmpe_bind(&env->sc_address)) == -1)
+		fatalx("snmpe: failed to bind SNMP UDP socket");
 
-	signal_set(&ev_sigint, SIGINT, snmpe_sig_handler, NULL);
-	signal_set(&ev_sigterm, SIGTERM, snmpe_sig_handler, NULL);
-	signal_add(&ev_sigint, NULL);
-	signal_add(&ev_sigterm, NULL);
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGHUP, SIG_IGN);
+	return (proc_run(ps, p, procs, nitems(procs), snmpe_init, NULL));
+}
 
-	close(pipe_parent2snmpe[0]);
-
-	if ((iev_parent = calloc(1, sizeof(struct imsgev))) == NULL)
-		fatal("snmpe");
-
-	imsg_init(&iev_parent->ibuf, pipe_parent2snmpe[1]);
-	iev_parent->handler = snmpe_dispatch_parent;
-	iev_parent->data = iev_parent;
-
-	iev_parent->events = EV_READ;
-	event_set(&iev_parent->ev, iev_parent->ibuf.fd, iev_parent->events,
-	    iev_parent->handler, iev_parent);
-	event_add(&iev_parent->ev, NULL);
-
-	TAILQ_INIT(&ctl_conns);
-
-	if (control_listen(&env->sc_csock) == -1)
-		fatalx("snmpe: control socket listen failed");
-	TAILQ_FOREACH(rcs, &env->sc_rcsocks, cs_entry)
-		if (control_listen(rcs) == -1)
-			fatalx("snmpe: restricted control socket listen failed");
-
-	event_set(&env->sc_ev, env->sc_sock, EV_READ|EV_PERSIST,
-	    snmpe_recvmsg, env);
-	event_add(&env->sc_ev, NULL);
-
+/* ARGSUSED */
+void
+snmpe_init(struct privsep *p, void *arg)
+{
 	kr_init();
 	trap_init();
 	timer_init();
-
 	usm_generate_keys();
 
-	event_dispatch();
+	/* listen for incoming SNMP UDP messages */
+	event_set(&env->sc_ev, env->sc_sock, EV_READ|EV_PERSIST,
+	    snmpe_recvmsg, env);
+	event_add(&env->sc_ev, NULL);
+}
 
-	snmpe_shutdown();
+void
+snmpe_shutdown(struct privsep *ps, struct privsep_proc *p)
+{
 	kr_shutdown();
-
-	return (0);
 }
 
-void
-snmpe_shutdown(void)
+int
+snmpe_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	log_info("snmp engine exiting");
-	_exit(0);
-}
-
-void
-snmpe_dispatch_parent(int fd, short event, void * ptr)
-{
-	struct imsgev	*iev;
-	struct imsgbuf	*ibuf;
-	struct imsg	 imsg;
-	ssize_t		 n;
-
-	iev = ptr;
-	ibuf = &iev->ibuf;
-	switch (event) {
-	case EV_READ:
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-		break;
-	case EV_WRITE:
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-		imsg_event_add(iev);
-		return;
+	switch (imsg->hdr.type) {
 	default:
-		fatalx("snmpe_dispatch_parent: unknown event");
+		break;
 	}
 
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("snmpe_dispatch_parent: imsg_read error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		default:
-			log_debug("snmpe_dispatch_parent: unexpected imsg %d",
-			    imsg.hdr.type);
-			break;
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
+	return (-1);
 }
 
 int
