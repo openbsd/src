@@ -1556,6 +1556,7 @@
 ./usr/share/man/man4/armish/mem.4
 ./usr/share/man/man4/armv7
 ./usr/share/man/man4/armv7/cpsw.4
+./usr/share/man/man4/armv7/ommmc.4
 ./usr/share/man/man4/arp.4
 ./usr/share/man/man4/art.4
 ./usr/share/man/man4/asbtm.4
@@ -1576,11 +1577,15 @@
 ./usr/share/man/man4/auvia.4
 ./usr/share/man/man4/aviion
 ./usr/share/man/man4/aviion/autoconf.4
+./usr/share/man/man4/aviion/dart.4
 ./usr/share/man/man4/aviion/intro.4
 ./usr/share/man/man4/aviion/kmem.4
 ./usr/share/man/man4/aviion/le.4
 ./usr/share/man/man4/aviion/mem.4
+./usr/share/man/man4/aviion/nvram.4
 ./usr/share/man/man4/aviion/oaic.4
+./usr/share/man/man4/aviion/syscon.4
+./usr/share/man/man4/aviion/vme.4
 ./usr/share/man/man4/axe.4
 ./usr/share/man/man4/axen.4
 ./usr/share/man/man4/az.4
