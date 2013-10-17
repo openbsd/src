@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.32 2013/10/15 20:31:14 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.33 2013/10/17 17:47:05 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -461,18 +461,13 @@ session_read(int fd, short event, void *arg)
 				msg_size = recv_address(nbr, pdu, pdu_len);
 				break;
 			case MSG_TYPE_LABELMAPPING:
-				msg_size = recv_labelmapping(nbr, pdu, pdu_len);
-				break;
 			case MSG_TYPE_LABELREQUEST:
-				msg_size = recv_labelrequest(nbr, pdu, pdu_len);
-				break;
 			case MSG_TYPE_LABELWITHDRAW:
-				msg_size = recv_labelwithdraw(nbr, pdu, pdu_len);
-				break;
 			case MSG_TYPE_LABELRELEASE:
-				msg_size = recv_labelrelease(nbr, pdu, pdu_len);
-				break;
 			case MSG_TYPE_LABELABORTREQ:
+				msg_size = recv_labelmessage(nbr, pdu,
+				    pdu_len, type);
+				break;
 			default:
 				log_debug("session_read: unknown LDP packet "
 				    "from nbr %s", inet_ntoa(nbr->id));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.42 2013/10/15 20:41:10 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.43 2013/10/17 17:47:04 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -256,11 +256,11 @@ nbr_del(struct nbr *nbr)
 	nbr_stop_ktimeout(nbr);
 	nbr_stop_idtimer(nbr);
 
-	nbr_mapping_list_clr(nbr, &nbr->mapping_list);
-	nbr_mapping_list_clr(nbr, &nbr->withdraw_list);
-	nbr_mapping_list_clr(nbr, &nbr->request_list);
-	nbr_mapping_list_clr(nbr, &nbr->release_list);
-	nbr_mapping_list_clr(nbr, &nbr->abortreq_list);
+	mapping_list_clr(&nbr->mapping_list);
+	mapping_list_clr(&nbr->withdraw_list);
+	mapping_list_clr(&nbr->request_list);
+	mapping_list_clr(&nbr->release_list);
+	mapping_list_clr(&nbr->abortreq_list);
 
 	RB_REMOVE(nbr_pid_head, &nbrs_by_pid, nbr);
 	RB_REMOVE(nbr_id_head, &nbrs_by_id, nbr);
@@ -583,7 +583,7 @@ nbr_mapping_del(struct nbr *nbr, struct mapping_head *mh, struct map *map)
 }
 
 void
-nbr_mapping_list_clr(struct nbr *nbr, struct mapping_head *mh)
+mapping_list_clr(struct mapping_head *mh)
 {
 	struct mapping_entry	*me;
 
