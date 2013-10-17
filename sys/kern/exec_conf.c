@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.30 2013/10/17 08:02:19 deraadt Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.31 2013/10/17 10:38:28 deraadt Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -34,10 +34,6 @@
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/exec_script.h>
-
-#if defined(_KERN_DO_ECOFF)
-#include <sys/exec_ecoff.h>
-#endif
 
 #if defined(_KERN_DO_ELF) || defined(_KERN_DO_ELF64)
 #include <sys/exec_elf.h>
