@@ -1,4 +1,25 @@
 
+Changes with nginx 1.4.3                                         08 Oct 2013
+
+    *) Bugfix: a segmentation fault might occur in a worker process if the
+       ngx_http_spdy_module was used with the "client_body_in_file_only"
+       directive.
+
+    *) Bugfix: a segmentation fault might occur on start or during
+       reconfiguration if the "try_files" directive was used with an empty
+       parameter.
+
+    *) Bugfix: the $request_time variable did not work in nginx/Windows.
+
+    *) Bugfix: in the ngx_http_auth_basic_module when using "$apr1$"
+       password encryption method.
+       Thanks to Markus Linnala.
+
+    *) Bugfix: in the ngx_http_autoindex_module.
+
+    *) Bugfix: in the mail proxy server.
+
+
 Changes with nginx 1.4.2                                         17 Jul 2013
 
     *) Bugfix: the $r->header_in() embedded perl method did not return value
