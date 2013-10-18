@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.19 2013/08/03 09:39:29 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.20 2013/10/18 15:07:58 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -468,8 +468,12 @@ NENTRY(hibernate_activate_resume_pt_machdep)
 	/* Enable large pages */
 	movq	%cr4, %rax
 	orq	$(CR4_PSE), %rax
+
+	/* Disable global pages */
+	andq	$(~CR4_PGE), %rax
 	movq	%rax, %cr4
 
+	wbinvd
 	movq	$HIBERNATE_PML4T, %rax
 	movq	%rax,	%cr3
 	jmp	1f

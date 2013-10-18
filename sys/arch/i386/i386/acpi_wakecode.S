@@ -373,8 +373,12 @@ NENTRY(hibernate_activate_resume_pt_machdep)
 	/* Enable large pages */
 	movl	%cr4, %eax
 	orl	$(CR4_PSE), %eax
+
+	/* Disable global pages */
+	andl	$(~CR4_PGE), %eax
 	movl	%eax, %cr4
 
+	wbinvd
 	movl	$HIBERNATE_PD_PAGE, %eax
 	movl	%eax,	%cr3
 	jmp	1f
@@ -395,7 +399,6 @@ NENTRY(hibernate_switch_stack_machdep)
 	ret
 
 NENTRY(hibernate_flush)
-	wbinvd
 	invlpg  HIBERNATE_INFLATE_PAGE
 	ret
 #endif /* HIBERNATE */
