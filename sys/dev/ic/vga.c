@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.57 2013/07/06 14:36:33 kettenis Exp $ */
+/* $OpenBSD: vga.c,v 1.58 2013/10/18 17:38:33 miod Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -1213,7 +1213,7 @@ _vga_mapchar(void *id, struct vgafont *font, int uni, unsigned int *index)
 #ifdef VGAFONTDEBUG
 		printf("_vga_mapchar: encoding=%d\n", font->encoding);
 #endif
-		*index = ' ';
+		*index = '?';
 		return (0);
 	}
 }

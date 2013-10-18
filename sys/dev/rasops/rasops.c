@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.27 2013/08/20 17:44:34 kettenis Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.28 2013/10/18 17:38:34 miod Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -473,7 +473,7 @@ rasops_mapchar(void *cookie, int c, u_int *cp)
 
 		if ( (c = wsfont_map_unichar(ri->ri_font, c)) < 0) {
 
-			*cp = ' ';
+			*cp = '?';
 			return (0);
 
 		}
@@ -481,12 +481,12 @@ rasops_mapchar(void *cookie, int c, u_int *cp)
 
 
 	if (c < ri->ri_font->firstchar) {
-		*cp = ' ';
+		*cp = '?';
 		return (0);
 	}
 
 	if (c - ri->ri_font->firstchar >= ri->ri_font->numchars) {
-		*cp = ' ';
+		*cp = '?';
 		return (0);
 	}
 
