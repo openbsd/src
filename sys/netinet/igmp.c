@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.34 2013/10/14 11:07:42 mpi Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.35 2013/10/18 09:04:02 mpi Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ rti_fill(struct in_multi *inm)
 	struct router_info *rti;
 
 	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
-		if (rti->rti_ifp == inm->inm_ia->ia_ifp) {
+		if (rti->rti_ifp == inm->inm_ifp) {
 			inm->inm_rti = rti;
 			if (rti->rti_type == IGMP_v1_ROUTER)
 				return (IGMP_v1_HOST_MEMBERSHIP_REPORT);
@@ -140,7 +140,7 @@ rti_fill(struct in_multi *inm)
 					   M_MRTABLE, M_NOWAIT);
 	if (rti == NULL)
 		return (-1);
-	rti->rti_ifp = inm->inm_ia->ia_ifp;
+	rti->rti_ifp = inm->inm_ifp;
 	rti->rti_type = IGMP_v2_ROUTER;
 	rti->rti_next = rti_head;
 	rti_head = rti;
@@ -459,8 +459,8 @@ igmp_joingroup(struct in_multi *inm)
 	inm->inm_state = IGMP_IDLE_MEMBER;
 
 	if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
-	    inm->inm_ia->ia_ifp &&
-	    (inm->inm_ia->ia_ifp->if_flags & IFF_LOOPBACK) == 0) {
+	    inm->inm_ifp &&
+	    (inm->inm_ifp->if_flags & IFF_LOOPBACK) == 0) {
 		if ((i = rti_fill(inm)) == -1) {
 			splx(s);
 			return;
@@ -483,8 +483,8 @@ igmp_leavegroup(struct in_multi *inm)
 	case IGMP_DELAYING_MEMBER:
 	case IGMP_IDLE_MEMBER:
 		if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
-		    inm->inm_ia->ia_ifp &&
-		    (inm->inm_ia->ia_ifp->if_flags & IFF_LOOPBACK) == 0)
+		    inm->inm_ifp &&
+		    (inm->inm_ifp->if_flags & IFF_LOOPBACK) == 0)
 			if (inm->inm_rti->rti_type != IGMP_v1_ROUTER)
 				igmp_sendpkt(inm, IGMP_HOST_LEAVE_MESSAGE,
 				    INADDR_ALLROUTERS_GROUP);
@@ -602,7 +602,7 @@ igmp_sendpkt(struct in_multi *inm, int type, in_addr_t addr)
 	m->m_data -= sizeof(struct ip);
 	m->m_len += sizeof(struct ip);
 
-	imo.imo_multicast_ifp = inm->inm_ia->ia_ifp;
+	imo.imo_multicast_ifp = inm->inm_ifp;
 	imo.imo_multicast_ttl = 1;
 
 	/*
