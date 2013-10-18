@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.72 2013/01/06 18:07:07 ratchov Exp $ */
+/* $OpenBSD: wskbd.c,v 1.73 2013/10/18 13:54:09 miod Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -99,6 +99,7 @@
 
 #include <ddb/db_var.h>
 
+#include <dev/wscons/wscons_features.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
@@ -111,11 +112,6 @@
 #include "wsdisplay.h"
 #include "wskbd.h"
 #include "wsmux.h"
-
-#ifndef	SMALL_KERNEL
-#define	BURNER_SUPPORT
-#define	SCROLLBACK_SUPPORT
-#endif
 
 #ifdef WSKBD_DEBUG
 #define DPRINTF(x)	if (wskbddebug) printf x
@@ -618,14 +614,14 @@ wskbd_input(struct device *dev, u_int type, int value)
 	 * send upstream.
 	 */
 	if (sc->sc_translating) {
-#ifdef BURNER_SUPPORT
+#ifdef HAVE_BURNER_SUPPORT
 		if (type == WSCONS_EVENT_KEY_DOWN && sc->sc_displaydv != NULL)
 			wsdisplay_burn(sc->sc_displaydv, WSDISPLAY_BURN_KBD);
 #endif
 		num = wskbd_translate(sc->id, type, value);
 		if (num > 0) {
 			if (sc->sc_displaydv != NULL) {
-#ifdef SCROLLBACK_SUPPORT
+#ifdef HAVE_SCROLLBACK_SUPPORT
 				/* XXX - Shift_R+PGUP(release) emits PrtSc */
 				if (sc->id->t_symbols[0] != KS_Print_Screen) {
 					wsscrollback(sc->sc_displaydv,
@@ -1388,7 +1384,7 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 	if (*type != WSCONS_EVENT_KEY_DOWN)
 		return (0);
 
-#ifdef SCROLLBACK_SUPPORT
+#ifdef HAVE_SCROLLBACK_SUPPORT
 #if NWSDISPLAY > 0
 	switch (ksym) {
 	case KS_Cmd_ScrollBack:

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.29 2013/06/16 19:04:20 miod Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.30 2013/10/18 13:54:09 miod Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -27,16 +27,13 @@
  *
  */
 
-#ifndef	SMALL_KERNEL
-#define	JUMP_SCROLL
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
 
+#include <dev/wscons/wscons_features.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsemulvar.h>
@@ -1010,7 +1007,7 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 	struct wsemul_vt100_emuldata *edp = cookie;
 	u_int processed = 0;
 	u_char c;
-#ifdef JUMP_SCROLL
+#ifdef HAVE_JUMP_SCROLL
 	int lines;
 #endif
 	int rc = 0;
@@ -1046,7 +1043,7 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 	}
 
 	for (; count > 0; data++, count--) {
-#ifdef JUMP_SCROLL
+#ifdef HAVE_JUMP_SCROLL
 		switch (edp->abortstate.state) {
 		case ABORT_FAILED_JUMP_SCROLL:
 			/*
@@ -1145,7 +1142,7 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 	return processed;
 }
 
-#ifdef JUMP_SCROLL
+#ifdef HAVE_JUMP_SCROLL
 int
 wsemul_vt100_jump_scroll(struct wsemul_vt100_emuldata *edp, const u_char *data,
     u_int count, int kernel)

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.23 2012/07/22 18:28:36 shadchin Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.24 2013/10/18 13:54:09 miod Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -75,10 +75,6 @@
  * Mouse driver.
  */
 
-#ifndef	SMALL_KERNEL
-#define	BURNER_SUPPORT
-#endif
-
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
@@ -93,6 +89,7 @@
 #include <sys/vnode.h>
 #include <sys/poll.h>
 
+#include <dev/wscons/wscons_features.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 #include <dev/wscons/wseventvar.h>
@@ -481,7 +478,7 @@ out:
 		sc->sc_ub = ub;
 		evar->put = put;
 		WSEVENT_WAKEUP(evar);
-#ifdef BURNER_SUPPORT
+#ifdef HAVE_BURNER_SUPPORT
 		/* wsdisplay_burn(sc->sc_displaydv, WSDISPLAY_BURN_MOUSE); */
 #endif
 #if NWSMUX > 0

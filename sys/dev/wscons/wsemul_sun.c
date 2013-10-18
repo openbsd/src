@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.28 2009/09/05 16:51:19 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.29 2013/10/18 13:54:09 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -38,16 +38,13 @@
  * Color support from NetBSD's rcons color code, and wsemul_vt100.
  */
 
-#ifndef	SMALL_KERNEL
-#define	JUMP_SCROLL
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
 
+#include <dev/wscons/wscons_features.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsemulvar.h>
@@ -593,7 +590,7 @@ wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 	struct wsemul_sun_emuldata *edp = cookie;
 	u_int processed = 0;
 	u_char c;
-#ifdef JUMP_SCROLL
+#ifdef HAVE_JUMP_SCROLL
 	int lines;
 #endif
 	int rc = 0;
@@ -626,7 +623,7 @@ wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 	}
 
 	for (; count > 0; data++, count--) {
-#ifdef JUMP_SCROLL
+#ifdef HAVE_JUMP_SCROLL
 		switch (edp->abortstate.state) {
 		case ABORT_FAILED_JUMP_SCROLL:
 			/*
@@ -738,7 +735,7 @@ wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 	return processed;
 }
 
-#ifdef JUMP_SCROLL
+#ifdef HAVE_JUMP_SCROLL
 int
 wsemul_sun_jump_scroll(struct wsemul_sun_emuldata *edp, const u_char *data,
     u_int count, int kernel)
