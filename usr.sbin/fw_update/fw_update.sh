@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $OpenBSD: fw_update.sh,v 1.16 2013/08/20 22:42:08 halex Exp $
+# $OpenBSD: fw_update.sh,v 1.17 2013/10/18 23:25:02 halex Exp $
 # Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -38,6 +38,14 @@ setpath() {
 
 	[[ $tag == -!(stable) ]] && version=snapshots
 	export PKG_PATH=http://firmware.openbsd.org/firmware/$version/
+}
+
+perform() {
+	if [ "$verbose" ]; then
+		"$@"
+	else
+		"$@" 2>/dev/null
+	fi
 }
 
 all=false
@@ -100,11 +108,11 @@ fi
 # Install missing firmware
 if [ "$install" ]; then
 	verbose "Installing firmware files:$install."
-	$PKG_ADD $nop $verbose $install 2>/dev/null
+	perform $PKG_ADD $nop $verbose $install
 fi
 
 # Update installed firmware
 if [ "$update" ]; then
 	verbose "Updating firmware files:$update."
-	$PKG_ADD $extra $nop $verbose -u $update 2>/dev/null
+	perform $PKG_ADD $extra $nop $verbose -u $update
 fi
