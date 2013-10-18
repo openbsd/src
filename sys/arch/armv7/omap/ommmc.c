@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.5 2013/10/14 18:53:52 syl Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.6 2013/10/18 06:34:10 syl Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -210,8 +210,6 @@ int	ommmc_intr(void *);
 #define MMC_RESET_CMD	2
 #define MMC_RESET_ALL	(MMC_RESET_CMD|MMC_RESET_DAT)
 
-#define HDEVNAME(sc)	((sc)->sc_dev.dv_xname)
-
 /* flag values */
 #define SHF_USE_DMA		0x0001
 
@@ -306,7 +304,7 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 	/* FIXME prcm_enableclock(sc->clockbit); */
 
 	sc->sc_ih = arm_intr_establish(oa->oa_dev->irq[0], IPL_SDMMC,
-	    ommmc_intr, sc, sc->sc_dev.dv_xname);
+	    ommmc_intr, sc, DEVNAME(sc));
 
 #if 0
 	/* XXX - IIRC firmware should set this */
@@ -345,13 +343,12 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 #endif
 	if (sc->clkbase == 0) {
 		/* The attachment driver must tell us. */
-		printf("%s: base clock frequency unknown\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: base clock frequency unknown\n", DEVNAME(sc));
 		goto err;
 	} else if (sc->clkbase < 10000 || sc->clkbase > 96000) {
 		/* SDHC 1.0 supports only 10-63 MHz. */
 		printf("%s: base clock frequency out of range: %u MHz\n",
-		    sc->sc_dev.dv_xname, sc->clkbase / 1000);
+		    DEVNAME(sc), sc->clkbase / 1000);
 		goto err;
 	}
 
@@ -739,14 +736,14 @@ ommmc_wait_state(struct ommmc_softc *sc, uint32_t mask, uint32_t value)
 	int timeout;
 
 	state = HREAD4(sc, MMCHS_PSTATE);
-	DPRINTF(3,("%s: wait_state %x %x %x(state=%b)\n", HDEVNAME(sc),
+	DPRINTF(3,("%s: wait_state %x %x %x(state=%b)\n", DEVNAME(sc),
 	    mask, value, state, state, MMCHS_PSTATE_FMT));
 	for (timeout = 1000; timeout > 0; timeout--) {
 		if (((state = HREAD4(sc, MMCHS_PSTATE)) & mask) == value)
 			return (0);
 		delay(10);
 	}
-	DPRINTF(0,("%s: timeout waiting for %x (state=%b)\n", HDEVNAME(sc),
+	DPRINTF(0,("%s: timeout waiting for %x (state=%b)\n", DEVNAME(sc),
 	    value, state, MMCHS_PSTATE_FMT));
 	return (ETIMEDOUT);
 }
@@ -818,7 +815,7 @@ ommmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 #endif
 
 	DPRINTF(1,("%s: cmd %u done (flags=%#x error=%d)\n",
-	    HDEVNAME(sc), cmd->c_opcode, cmd->c_flags, cmd->c_error));
+	    DEVNAME(sc), cmd->c_opcode, cmd->c_flags, cmd->c_error));
 	SET(cmd->c_flags, SCF_ITSDONE);
 }
 
@@ -832,7 +829,7 @@ ommmc_start_command(struct ommmc_softc *sc, struct sdmmc_command *cmd)
 	int s;
 
 	DPRINTF(1,("%s: start cmd %u arg=%#x data=%#x dlen=%d flags=%#x "
-	    "proc=\"%s\"\n", HDEVNAME(sc), cmd->c_opcode, cmd->c_arg,
+	    "proc=\"%s\"\n", DEVNAME(sc), cmd->c_opcode, cmd->c_arg,
 	    cmd->c_data, cmd->c_datalen, cmd->c_flags, curproc ?
 	    curproc->p_comm : ""));
 
@@ -848,14 +845,14 @@ ommmc_start_command(struct ommmc_softc *sc, struct sdmmc_command *cmd)
 		if (cmd->c_datalen % blksize > 0) {
 			/* XXX: Split this command. (1.7.4) */
 			printf("%s: data not a multiple of %d bytes\n",
-			    HDEVNAME(sc), blksize);
+			    DEVNAME(sc), blksize);
 			return (EINVAL);
 		}
 	}
 
 	/* Check limit imposed by 9-bit block count. (1.7.2) */
 	if (blkcount > MMCHS_BLK_NBLK_MAX) {
-		printf("%s: too much data\n", HDEVNAME(sc));
+		printf("%s: too much data\n", DEVNAME(sc));
 		return (EINVAL);
 	}
 
@@ -912,7 +909,7 @@ ommmc_start_command(struct ommmc_softc *sc, struct sdmmc_command *cmd)
 	/* XXX: Set DMA start address if SHF_USE_DMA is set. */
 
 	DPRINTF(1,("%s: cmd=%#x blksize=%d blkcount=%d\n",
-	    HDEVNAME(sc), command, blksize, blkcount));
+	    DEVNAME(sc), command, blksize, blkcount));
 
 	/*
 	 * Start a CPU data transfer.  Writing to the high order byte
@@ -940,7 +937,7 @@ ommmc_transfer_data(struct ommmc_softc *sc, struct sdmmc_command *cmd)
 	error = 0;
 	datalen = cmd->c_datalen;
 
-	DPRINTF(1,("%s: resp=%#x datalen=%d\n", HDEVNAME(sc),
+	DPRINTF(1,("%s: resp=%#x datalen=%d\n", DEVNAME(sc),
 	    MMC_R1(cmd->c_resp), datalen));
 
 	while (datalen > 0) {
@@ -972,7 +969,7 @@ ommmc_transfer_data(struct ommmc_softc *sc, struct sdmmc_command *cmd)
 	SET(cmd->c_flags, SCF_ITSDONE);
 
 	DPRINTF(1,("%s: data transfer done (error=%d)\n",
-	    HDEVNAME(sc), cmd->c_error));
+	    DEVNAME(sc), cmd->c_error));
 }
 
 void
@@ -1019,7 +1016,7 @@ ommmc_soft_reset(struct ommmc_softc *sc, int mask)
 
 	int timo;
 
-	DPRINTF(1,("%s: software reset reg=%#x\n", HDEVNAME(sc), mask));
+	DPRINTF(1,("%s: software reset reg=%#x\n", DEVNAME(sc), mask));
 
 	HSET4(sc, MMCHS_SYSCTL, mask);
 	delay(10);
@@ -1029,7 +1026,7 @@ ommmc_soft_reset(struct ommmc_softc *sc, int mask)
 		delay(10);
 	}
 	if (timo == 0) {
-		DPRINTF(1,("%s: timeout reg=%#x\n", HDEVNAME(sc),
+		DPRINTF(1,("%s: timeout reg=%#x\n", DEVNAME(sc),
 		    HREAD4(sc, MMCHS_SYSCTL)));
 		return (ETIMEDOUT);
 	}
@@ -1057,7 +1054,7 @@ ommmc_wait_intr(struct ommmc_softc *sc, int mask, int timo)
 	}
 	sc->intr_status &= ~status;
 
-	DPRINTF(2,("%s: intr status %#x error %#x\n", HDEVNAME(sc), status,
+	DPRINTF(2,("%s: intr status %#x error %#x\n", DEVNAME(sc), status,
 	    sc->intr_error_status));
 
 	/* Command timeout has higher priority than command complete. */
@@ -1086,7 +1083,7 @@ ommmc_intr(void *arg)
 
 	/* Acknowledge the interrupts we are about to handle. */
 	HWRITE4(sc, MMCHS_STAT, status);
-	DPRINTF(2,("%s: interrupt status=%b\n", HDEVNAME(sc),
+	DPRINTF(2,("%s: interrupt status=%b\n", DEVNAME(sc),
 	    status, MMCHS_STAT_FMT));
 
 	/*
@@ -1124,7 +1121,7 @@ ommmc_intr(void *arg)
 	 * Service SD card interrupts.
 	 */
 	if (ISSET(status, MMCHS_STAT_CIRQ)) {
-		DPRINTF(0,("%s: card interrupt\n", HDEVNAME(sc)));
+		DPRINTF(0,("%s: card interrupt\n", DEVNAME(sc)));
 		HCLR4(sc, MMCHS_STAT, MMCHS_STAT_CIRQ);
 		sdmmc_card_intr(sc->sdmmc);
 	}
