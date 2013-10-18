@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.19 2013/06/01 22:22:13 mlarkin Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.20 2013/10/18 15:09:22 mlarkin Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -143,7 +143,6 @@ x86_64_ipi_halt_realmode(struct cpu_info *ci)
 {
 	/* Halt CPUs and park in real mode */
 
-	SCHED_ASSERT_UNLOCKED();
 	fpusave_cpu(ci, 1);
 	disable_intr();
 	wbinvd();
