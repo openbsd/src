@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.16 2013/10/18 14:47:47 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.17 2013/10/18 14:48:54 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -157,6 +157,7 @@ void		slowcgi_paused(int, short, void *);
 void		slowcgi_accept(int, short, void *);
 void		slowcgi_request(int, short, void *);
 void		slowcgi_response(int, short, void *);
+void		slowcgi_add_response(struct request *, struct fcgi_response *);
 void		slowcgi_timeout(int, short, void *);
 void		slowcgi_sig_handler(int, short, void *);
 size_t		parse_record(uint8_t * , size_t, struct request *);
@@ -422,7 +423,7 @@ slowcgi_accept(int fd, short events, void *arg)
 
 	event_set(&c->ev, s, EV_READ | EV_PERSIST, slowcgi_request, c);
 	event_add(&c->ev, NULL);
-
+	event_set(&c->resp_ev, s, EV_WRITE | EV_PERSIST, slowcgi_response, c);
 	event_set(&c->tmo, s, 0, slowcgi_timeout, c);
 	event_add(&c->tmo, &timeout);
 	requests->request = c;
@@ -478,6 +479,13 @@ slowcgi_sig_handler(int sig, short event, void *arg)
 		lerr(1, "unexpected signal: %d", sig);
 
 	}
+}
+
+void
+slowcgi_add_response(struct request *c, struct fcgi_response *resp)
+{
+	TAILQ_INSERT_TAIL(&c->response_head, resp, entry);
+	event_add(&c->resp_ev, NULL);
 }
 
 void
@@ -865,7 +873,7 @@ create_end_record(struct request *c)
 	resp->data_pos = 0;
 	resp->data_len = sizeof(struct fcgi_end_request_body) +
 	    sizeof(struct fcgi_record_header);
-	TAILQ_INSERT_TAIL(&c->response_head, resp, entry);	
+	slowcgi_add_response(c, resp);
 }
 
 void
@@ -902,12 +910,7 @@ script_in(int fd, struct event *ev, struct request *c, uint8_t type)
 	header->content_len = htons(n);
 	resp->data_pos = 0;
 	resp->data_len = n + sizeof(struct fcgi_record_header);
-	TAILQ_INSERT_TAIL(&c->response_head, resp, entry);
-
-	event_del(&c->resp_ev);
-	event_set(&c->resp_ev, EVENT_FD(&c->ev), EV_WRITE | EV_PERSIST,
-	    slowcgi_response, c);
-	event_add(&c->resp_ev, NULL);
+	slowcgi_add_response(c, resp);
 
 	if (n == 0) {
 		if (type == FCGI_STDOUT)
