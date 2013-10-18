@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.14 2013/10/18 14:44:36 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.15 2013/10/18 14:46:47 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -706,10 +706,8 @@ parse_stdin(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 
 	TAILQ_INSERT_TAIL(&c->stdin_head, node, entry);
 
-	event_del(&c->script_stdin_ev);
-	event_set(&c->script_stdin_ev, EVENT_FD(&c->script_ev), EV_WRITE |
-	    EV_PERSIST, script_out, c);
-	event_add(&c->script_stdin_ev, NULL);
+	if (event_initialized(&c->script_stdin_ev))
+		event_add(&c->script_stdin_ev, NULL);
 }
 
 size_t
@@ -763,14 +761,16 @@ void
 exec_cgi(struct request *c)
 {
 	struct env_val	*env_entry;
-	int		 s[2], s_err[2], i;
+	int		 s_in[2], s_out[2], s_err[2], i;
 	pid_t		 pid;
 	char		*argv[2];
 	char		**env;
 
 	i = 0;
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, s) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, s_in) == -1)
+		lerr(1, "socketpair");
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, s_out) == -1)
 		lerr(1, "socketpair");
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, s_err) == -1)
 		lerr(1, "socketpair");
@@ -782,11 +782,12 @@ exec_cgi(struct request *c)
 		return;
 	case 0:
 		/* Child process */
-		close(s[0]);
+		close(s_in[0]);
+		close(s_out[0]);
 		close(s_err[0]);
-		if (dup2(s[1], STDIN_FILENO) == -1)
+		if (dup2(s_in[1], STDIN_FILENO) == -1)
 			_exit(1);
-		if (dup2(s[1], STDOUT_FILENO) == -1)
+		if (dup2(s_out[1], STDOUT_FILENO) == -1)
 			_exit(1);
 		if (dup2(s_err[1], STDERR_FILENO) == -1)
 			_exit(1);
@@ -802,19 +803,27 @@ exec_cgi(struct request *c)
 
 	}
 	/* Parent process*/
-	close(s[1]);
+	close(s_in[1]);
+	close(s_out[1]);
 	close(s_err[1]);
 
-	fcntl(s[0], F_SETFD, FD_CLOEXEC);
+	fcntl(s_in[0], F_SETFD, FD_CLOEXEC);
+	fcntl(s_out[0], F_SETFD, FD_CLOEXEC);
 	fcntl(s_err[0], F_SETFD, FD_CLOEXEC);
 
-	if (ioctl(s[0], FIONBIO, &on) == -1)
+	if (ioctl(s_in[0], FIONBIO, &on) == -1)
+		lerr(1, "script ioctl(FIONBIO)");
+	if (ioctl(s_out[0], FIONBIO, &on) == -1)
 		lerr(1, "script ioctl(FIONBIO)");
 	if (ioctl(s_err[0], FIONBIO, &on) == -1)
 		lerr(1, "script ioctl(FIONBIO)");
 
 	c->script_pid = pid;
-	event_set(&c->script_ev, s[0], EV_READ | EV_PERSIST, script_std_in, c);
+	event_set(&c->script_stdin_ev, s_in[0], EV_WRITE | EV_PERSIST,
+	    script_out, c);
+	event_add(&c->script_stdin_ev, NULL);
+	event_set(&c->script_ev, s_out[0], EV_READ | EV_PERSIST,
+	    script_std_in, c);
 	event_add(&c->script_ev, NULL);
 	event_set(&c->script_err_ev, s_err[0], EV_READ | EV_PERSIST,
 	    script_err_in, c);
@@ -934,7 +943,7 @@ script_out(int fd, short events, void *arg)
 
 	while ((node = TAILQ_FIRST(&c->stdin_head))) {
 		if (node->data_len == 0) { /* end of stdin marker */
-			shutdown(fd, SHUT_WR);
+			close(fd);
 			break;
 		}
 		n = write(fd, node->data + node->data_pos, node->data_len);
@@ -951,6 +960,7 @@ script_out(int fd, short events, void *arg)
 			free(node);
 		}
 	}
+	event_del(&c->script_stdin_ev);
 }
 
 void
