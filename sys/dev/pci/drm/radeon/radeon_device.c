@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_device.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_device.c,v 1.2 2013/10/18 12:34:52 deraadt Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1231,6 +1231,8 @@ int radeon_suspend_kms(struct drm_device *dev)
 	}
 #endif
 	rdev = dev->dev_private;
+	if (rdev->shutdown)
+		return 0;
 
 #ifdef notyet
 	if (dev->switch_power_state == DRM_SWITCH_POWER_OFF)

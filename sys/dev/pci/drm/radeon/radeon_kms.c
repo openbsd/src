@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.5 2013/09/08 11:59:45 jsg Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.6 2013/10/18 12:34:52 deraadt Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -592,6 +592,7 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 }
 #endif
 
+	rdev->shutdown = true;
 	if (rootvp == NULL)
 		mountroothook_establish(radeondrm_attachhook, rdev);
 	else
