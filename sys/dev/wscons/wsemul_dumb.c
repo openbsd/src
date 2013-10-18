@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_dumb.c,v 1.10 2010/08/28 12:48:14 miod Exp $ */
+/* $OpenBSD: wsemul_dumb.c,v 1.11 2013/10/18 22:06:41 miod Exp $ */
 /* $NetBSD: wsemul_dumb.c,v 1.7 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -47,7 +47,7 @@ void	*wsemul_dumb_cnattach(const struct wsscreen_descr *, void *,
 void	*wsemul_dumb_attach(int, const struct wsscreen_descr *,
 				 void *, int, int, void *, long);
 u_int	wsemul_dumb_output(void *, const u_char *, u_int, int);
-int	wsemul_dumb_translate(void *, keysym_t, const char **);
+int	wsemul_dumb_translate(void *, kbd_t, keysym_t, const u_char **);
 void	wsemul_dumb_detach(void *, u_int *, u_int *);
 void	wsemul_dumb_resetop(void *, enum wsemul_resetops);
 
@@ -285,7 +285,8 @@ wsemul_dumb_output(void *cookie, const u_char *data, u_int count, int kernel)
 }
 
 int
-wsemul_dumb_translate(void *cookie, keysym_t in, const char **out)
+wsemul_dumb_translate(void *cookie, kbd_t layout, keysym_t in,
+    const u_char **out)
 {
 	return (0);
 }

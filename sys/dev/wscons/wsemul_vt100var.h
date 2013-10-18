@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100var.h,v 1.9 2009/09/05 14:49:20 miod Exp $ */
+/* $OpenBSD: wsemul_vt100var.h,v 1.10 2013/10/18 22:06:41 miod Exp $ */
 /* $NetBSD: wsemul_vt100var.h,v 1.5 2000/04/28 21:56:17 mycroft Exp $ */
 
 /*
@@ -54,6 +54,7 @@ struct wsemul_vt100_emuldata {
 #define VTFL_CURSORON	0x040
 #define VTFL_NATCHARSET	0x080	/* national replacement charset mode */
 #define VTFL_SAVEDCURS	0x100	/* we have a saved cursor state */
+#define VTFL_UTF8	0x200	/* utf-8 character set */
 	long curattr, bkgdattr;		/* currently used attribute */
 	int attrflags, fgcol, bgcol;	/* properties of curattr */
 	u_int scrreg_startrow;
@@ -87,6 +88,15 @@ struct wsemul_vt100_emuldata {
 	int savedattrflags, savedfgcol, savedbgcol;
 	int savedchartab0, savedchartab1;
 	u_int *savedchartab_G[4];
+
+	struct wsemul_inputstate instate;	/* userland input state */
+	struct wsemul_inputstate kstate;	/* kernel input state */
+
+#ifdef HAVE_UTF8_SUPPORT
+	u_char translatebuf[6];
+#else
+	u_char translatebuf[1];
+#endif
 };
 
 /* some useful utility macros */
@@ -133,10 +143,11 @@ int	wsemul_vt100_scrollup(struct wsemul_vt100_emuldata *, int);
 int	wsemul_vt100_scrolldown(struct wsemul_vt100_emuldata *, int);
 int	wsemul_vt100_ed(struct wsemul_vt100_emuldata *, int);
 int	wsemul_vt100_el(struct wsemul_vt100_emuldata *, int);
-int	wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *, u_char);
+int	wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *,
+	    struct wsemul_inputstate *);
 void	wsemul_vt100_handle_dcs(struct wsemul_vt100_emuldata *);
 
-int	wsemul_vt100_translate(void *cookie, keysym_t, const char **);
+int	wsemul_vt100_translate(void *cookie, kbd_t, keysym_t, const u_char **);
 
 void	vt100_initchartables(struct wsemul_vt100_emuldata *);
 int	vt100_setnrc(struct wsemul_vt100_emuldata *, int);

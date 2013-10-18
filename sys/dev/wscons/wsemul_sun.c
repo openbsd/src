@@ -1,6 +1,22 @@
-/* $OpenBSD: wsemul_sun.c,v 1.29 2013/10/18 13:54:09 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.30 2013/10/18 22:06:41 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
+/*
+ * Copyright (c) 2007, 2013 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice, this permission notice, and the disclaimer below
+ * appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
  *
@@ -56,7 +72,7 @@ void	*wsemul_sun_cnattach(const struct wsscreen_descr *, void *,
 void	*wsemul_sun_attach(int, const struct wsscreen_descr *,
     void *, int, int, void *, long);
 u_int	wsemul_sun_output(void *, const u_char *, u_int, int);
-int	wsemul_sun_translate(void *, keysym_t, const char **);
+int	wsemul_sun_translate(void *, kbd_t, keysym_t, const u_char **);
 void	wsemul_sun_detach(void *, u_int *, u_int *);
 void	wsemul_sun_resetop(void *, enum wsemul_resetops);
 
@@ -72,7 +88,10 @@ const struct wsemul_ops wsemul_sun_ops = {
 
 #define	SUN_EMUL_STATE_NORMAL	0	/* normal processing */
 #define	SUN_EMUL_STATE_HAVEESC	1	/* seen start of ctl seq */
-#define	SUN_EMUL_STATE_CONTROL	2	/* processing ctl seq */
+#define	SUN_EMUL_STATE_CONTROL	2	/* processing ESC [ ctl seq */
+#define	SUN_EMUL_STATE_PERCENT	3	/* processing ESC % ctl seq */
+
+#define	SUN_EMUL_FLAGS_UTF8	0x01	/* UTF-8 character set */
 
 #define	SUN_EMUL_NARGS	2		/* max # of args to a command */
 
@@ -86,6 +105,7 @@ struct wsemul_sun_emuldata {
 	long defattr;			/* default attribute (rendition) */
 
 	u_int state;			/* processing state */
+	u_int flags;
 	u_int args[SUN_EMUL_NARGS];	/* command args, if CONTROL */
 	int nargs;			/* number of args */
 
@@ -93,6 +113,15 @@ struct wsemul_sun_emuldata {
 	long curattr, bkgdattr;		/* currently used attribute */
 	long kernattr;			/* attribute for kernel output */
 	int attrflags, fgcol, bgcol;	/* properties of curattr */
+
+	struct wsemul_inputstate instate;	/* userland input state */
+	struct wsemul_inputstate kstate;	/* kernel input state */
+
+#ifdef HAVE_UTF8_SUPPORT
+	u_char translatebuf[6];
+#else
+	u_char translatebuf[1];
+#endif
 
 #ifdef DIAGNOSTIC
 	int console;
@@ -104,11 +133,18 @@ void	wsemul_sun_init(struct wsemul_sun_emuldata *,
 int	wsemul_sun_jump_scroll(struct wsemul_sun_emuldata *, const u_char *,
 	    u_int, int);
 void	wsemul_sun_reset(struct wsemul_sun_emuldata *);
-int	wsemul_sun_output_lowchars(struct wsemul_sun_emuldata *, u_char, int);
-int	wsemul_sun_output_normal(struct wsemul_sun_emuldata *, u_char, int);
-void	wsemul_sun_output_haveesc(struct wsemul_sun_emuldata *, u_char);
-int	wsemul_sun_output_control(struct wsemul_sun_emuldata *, u_char);
-int	wsemul_sun_control(struct wsemul_sun_emuldata *, u_char);
+int	wsemul_sun_output_lowchars(struct wsemul_sun_emuldata *,
+	    struct wsemul_inputstate *, int);
+int	wsemul_sun_output_normal(struct wsemul_sun_emuldata *,
+	    struct wsemul_inputstate *, int);
+int	wsemul_sun_output_haveesc(struct wsemul_sun_emuldata *,
+	    struct wsemul_inputstate *);
+int	wsemul_sun_output_control(struct wsemul_sun_emuldata *,
+	    struct wsemul_inputstate *);
+int	wsemul_sun_output_percent(struct wsemul_sun_emuldata *,
+	    struct wsemul_inputstate *);
+int	wsemul_sun_control(struct wsemul_sun_emuldata *,
+	    struct wsemul_inputstate *);
 int	wsemul_sun_selectattribute(struct wsemul_sun_emuldata *, int, int, int,
 	    long *, long *);
 int	wsemul_sun_scrollup(struct wsemul_sun_emuldata *, u_int);
@@ -141,12 +177,17 @@ wsemul_sun_init(struct wsemul_sun_emuldata *edp,
 void
 wsemul_sun_reset(struct wsemul_sun_emuldata *edp)
 {
+	edp->flags = 0;
 	edp->state = SUN_EMUL_STATE_NORMAL;
 	edp->bkgdattr = edp->curattr = edp->defattr;
 	edp->attrflags = 0;
 	edp->fgcol = WSCOL_BLACK;
 	edp->bgcol = WSCOL_WHITE;
 	edp->scrolldist = 1;
+	edp->instate.inchar = 0;
+	edp->instate.mbleft = 0;
+	edp->kstate.inchar = 0;
+	edp->kstate.mbleft = 0;
 }
 
 void *
@@ -222,13 +263,13 @@ wsemul_sun_attach(int console, const struct wsscreen_descr *type, void *cookie,
 }
 
 int
-wsemul_sun_output_lowchars(struct wsemul_sun_emuldata *edp, u_char c,
-    int kernel)
+wsemul_sun_output_lowchars(struct wsemul_sun_emuldata *edp,
+    struct wsemul_inputstate *instate, int kernel)
 {
 	u_int n;
 	int rc = 0;
 
-	switch (c) {
+	switch (instate->inchar) {
 	case ASCII_NUL:
 	default:
 		/* ignore */
@@ -298,13 +339,16 @@ wsemul_sun_output_lowchars(struct wsemul_sun_emuldata *edp, u_char c,
 }
 
 int
-wsemul_sun_output_normal(struct wsemul_sun_emuldata *edp, u_char c, int kernel)
+wsemul_sun_output_normal(struct wsemul_sun_emuldata *edp,
+    struct wsemul_inputstate *instate, int kernel)
 {
 	int rc;
+	u_int outchar;
 
+	(*edp->emulops->mapchar)(edp->emulcookie, instate->inchar, &outchar);
 	WSEMULOP(rc, edp, &edp->abortstate, putchar,
 	    (edp->emulcookie, edp->crow, edp->ccol,
-	     c, kernel ? edp->kernattr : edp->curattr));
+	     outchar, kernel ? edp->kernattr : edp->curattr));
 	if (rc != 0)
 		return rc;
 
@@ -327,34 +371,41 @@ wsemul_sun_output_normal(struct wsemul_sun_emuldata *edp, u_char c, int kernel)
 	return 0;
 }
 
-void
-wsemul_sun_output_haveesc(struct wsemul_sun_emuldata *edp, u_char c)
+int
+wsemul_sun_output_haveesc(struct wsemul_sun_emuldata *edp,
+    struct wsemul_inputstate *instate)
 {
-	switch (c) {
+	switch (instate->inchar) {
 	case '[':		/* continuation of multi-char sequence */
 		edp->nargs = 0;
 		bzero(edp->args, sizeof (edp->args));
 		edp->state = SUN_EMUL_STATE_CONTROL;
 		break;
-
+#ifdef HAVE_UTF8_SUPPORT
+	case '%':
+		edp->state = SUN_EMUL_STATE_PERCENT;
+		break;
+#endif
 	default:
 #ifdef DEBUG
-		printf("ESC%c unknown\n", c);
+		printf("ESC %x unknown\n", instate->inchar);
 #endif
 		edp->state = SUN_EMUL_STATE_NORMAL;	/* XXX is this wise? */
 		break;
 	}
+	return 0;
 }
 
 int
-wsemul_sun_control(struct wsemul_sun_emuldata *edp, u_char c)
+wsemul_sun_control(struct wsemul_sun_emuldata *edp,
+    struct wsemul_inputstate *instate)
 {
 	u_int n, src, dst;
 	int flags, fgcol, bgcol;
 	long attr, bkgdattr;
 	int rc = 0;
 
-	switch (c) {
+	switch (instate->inchar) {
 	case '@':		/* "Insert Character (ICH)" */
 		n = min(NORMALIZE(ARG(0,1)), COLS_LEFT + 1);
 		src = edp->ccol;
@@ -541,12 +592,13 @@ setattr:
 }
 
 int
-wsemul_sun_output_control(struct wsemul_sun_emuldata *edp, u_char c)
+wsemul_sun_output_control(struct wsemul_sun_emuldata *edp,
+    struct wsemul_inputstate *instate)
 {
 	int oargs;
 	int rc;
 
-	switch (c) {
+	switch (instate->inchar) {
 	case '0': case '1': case '2': case '3': case '4': /* argument digit */
 	case '5': case '6': case '7': case '8': case '9':
 		/*
@@ -559,7 +611,7 @@ wsemul_sun_output_control(struct wsemul_sun_emuldata *edp, u_char c)
 			edp->args[edp->nargs = SUN_EMUL_NARGS - 1] = 0;
 		}
 		edp->args[edp->nargs] = (edp->args[edp->nargs] * 10) +
-		    (c - '0');
+		    (instate->inchar - '0');
 		break;
 
 	case ';':		/* argument terminator */
@@ -570,7 +622,7 @@ wsemul_sun_output_control(struct wsemul_sun_emuldata *edp, u_char c)
 		oargs = edp->nargs++;
 		if (edp->nargs > SUN_EMUL_NARGS)
 			edp->nargs = SUN_EMUL_NARGS;
-		rc = wsemul_sun_control(edp, c);
+		rc = wsemul_sun_control(edp, instate);
 		if (rc != 0) {
 			/* undo nargs progress */
 			edp->nargs = oargs;
@@ -584,12 +636,31 @@ wsemul_sun_output_control(struct wsemul_sun_emuldata *edp, u_char c)
 	return 0;
 }
 
+#ifdef HAVE_UTF8_SUPPORT
+int
+wsemul_sun_output_percent(struct wsemul_sun_emuldata *edp,
+    struct wsemul_inputstate *instate)
+{
+	switch (instate->inchar) {
+	case 'G':
+		edp->flags |= SUN_EMUL_FLAGS_UTF8;
+		edp->kstate.mbleft = edp->instate.mbleft = 0;
+		break;
+	case '@':
+		edp->flags &= ~SUN_EMUL_FLAGS_UTF8;
+		break;
+	}
+	edp->state = SUN_EMUL_STATE_NORMAL;
+	return 0;
+}
+#endif
+
 u_int
 wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 {
 	struct wsemul_sun_emuldata *edp = cookie;
+	struct wsemul_inputstate *instate;
 	u_int processed = 0;
-	u_char c;
 #ifdef HAVE_JUMP_SCROLL
 	int lines;
 #endif
@@ -599,6 +670,8 @@ wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 	if (kernel && !edp->console)
 		panic("wsemul_sun_output: kernel output, not console");
 #endif
+
+	instate = kernel ? &edp->kstate : &edp->instate;
 
 	switch (edp->abortstate.state) {
 	case ABORT_FAILED_CURSOR:
@@ -622,7 +695,7 @@ wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 		break;
 	}
 
-	for (; count > 0; data++, count--) {
+	for (;;) {
 #ifdef HAVE_JUMP_SCROLL
 		switch (edp->abortstate.state) {
 		case ABORT_FAILED_JUMP_SCROLL:
@@ -671,9 +744,18 @@ wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 
 		wsemul_resume_abort(&edp->abortstate);
 
-		c = *data;
-		if (c < ' ') {
-			rc = wsemul_sun_output_lowchars(edp, c, kernel);
+		if (wsemul_getchar(&data, &count, instate,
+#ifdef HAVE_UTF8_SUPPORT
+		    (edp->state == SUN_EMUL_STATE_NORMAL && !kernel) ?
+		      edp->flags & SUN_EMUL_FLAGS_UTF8 : 0
+#else
+		    0
+#endif
+		    ) != 0)
+			break;
+
+		if (instate->inchar < ' ') {
+			rc = wsemul_sun_output_lowchars(edp, instate, kernel);
 			if (rc != 0)
 				break;
 			processed++;
@@ -681,7 +763,7 @@ wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 		}
 
 		if (kernel) {
-			rc = wsemul_sun_output_normal(edp, c, 1);
+			rc = wsemul_sun_output_normal(edp, instate, 1);
 			if (rc != 0)
 				break;
 			processed++;
@@ -690,21 +772,26 @@ wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 
 		switch (edp->state) {
 		case SUN_EMUL_STATE_NORMAL:
-			rc = wsemul_sun_output_normal(edp, c, 0);
+			rc = wsemul_sun_output_normal(edp, instate, 0);
 			break;
 		case SUN_EMUL_STATE_HAVEESC:
-			wsemul_sun_output_haveesc(edp, c);
+			rc = wsemul_sun_output_haveesc(edp, instate);
 			break;
 		case SUN_EMUL_STATE_CONTROL:
-			rc = wsemul_sun_output_control(edp, c);
+			rc = wsemul_sun_output_control(edp, instate);
 			break;
+#ifdef HAVE_UTF8_SUPPORT
+		case SUN_EMUL_STATE_PERCENT:
+			rc = wsemul_sun_output_percent(edp, instate);
+			break;
+#endif
 		default:
 #ifdef DIAGNOSTIC
 			panic("wsemul_sun: invalid state %d", edp->state);
 #else
 			/* try to recover, if things get screwed up... */
 			edp->state = SUN_EMUL_STATE_NORMAL;
-			rc = wsemul_sun_output_normal(edp, c, 0);
+			rc = wsemul_sun_output_normal(edp, instate, 0);
 #endif
 			break;
 		}
@@ -740,18 +827,26 @@ int
 wsemul_sun_jump_scroll(struct wsemul_sun_emuldata *edp, const u_char *data,
     u_int count, int kernel)
 {
-	u_char curchar;
 	u_int pos, lines;
+	struct wsemul_inputstate tmpstate;
 
 	lines = 0;
 	pos = edp->ccol;
-	for (; count != 0; data++, count--) {
-		curchar = *data;
-		if (curchar == ASCII_FF ||
-		    curchar == ASCII_VT || curchar == ASCII_ESC)
+	tmpstate = kernel ? edp->kstate : edp->instate;	/* structure copy */
+
+	while (wsemul_getchar(&data, &count, &tmpstate,
+#ifdef HAVE_UTF8_SUPPORT
+	    kernel ? 0 : edp->flags & SUN_EMUL_FLAGS_UTF8
+#else
+	    0
+#endif
+	    ) == 0) {
+		if (tmpstate.inchar == ASCII_FF ||
+		    tmpstate.inchar == ASCII_VT ||
+		    tmpstate.inchar == ASCII_ESC)
 			break;
 
-		switch (curchar) {
+		switch (tmpstate.inchar) {
 		case ASCII_BS:
 			if (pos > 0)
 				pos--;
@@ -769,11 +864,11 @@ wsemul_sun_jump_scroll(struct wsemul_sun_emuldata *edp, const u_char *data,
 		default:
 			if (++pos >= edp->ncols) {
 				pos = 0;
-				curchar = ASCII_LF;
+				tmpstate.inchar = ASCII_LF;
 			}
 			break;
 		}
-		if (curchar == ASCII_LF) {
+		if (tmpstate.inchar == ASCII_LF) {
 			if (++lines >= edp->nrows - 1)
 				break;
 		}
@@ -849,7 +944,7 @@ wsemul_sun_selectattribute(struct wsemul_sun_emuldata *edp, int flags,
 	return (0);
 }
 
-static const char *sun_fkeys[] = {
+static const u_char *sun_fkeys[] = {
 	"\033[224z",	/* F1 */
 	"\033[225z",
 	"\033[226z",
@@ -864,7 +959,7 @@ static const char *sun_fkeys[] = {
 	"\033[235z",	/* F12 */
 };
 
-static const char *sun_lkeys[] = {
+static const u_char *sun_lkeys[] = {
 	"\033[207z",	/* KS_Help */
 	NULL,		/* KS_Execute */
 	"\033[200z",	/* KS_Find */
@@ -880,13 +975,20 @@ static const char *sun_lkeys[] = {
 };
 
 int
-wsemul_sun_translate(void *cookie, keysym_t in, const char **out)
+wsemul_sun_translate(void *cookie, kbd_t layout, keysym_t in,
+    const u_char **out)
 {
-	static char c;
+	struct wsemul_sun_emuldata *edp = cookie;
+
+	if (KS_GROUP(in) == KS_GROUP_Ascii) {
+		*out = edp->translatebuf;
+		return (wsemul_utf8_translate(KS_VALUE(in), layout,
+		    edp->translatebuf, edp->flags & SUN_EMUL_FLAGS_UTF8));
+	}
 
 	if (KS_GROUP(in) == KS_GROUP_Keypad && (in & 0x80) == 0) {
-		c = in & 0xff; /* turn into ASCII */
-		*out = &c;
+		edp->translatebuf[0] = in & 0xff; /* turn into ASCII */
+		*out = edp->translatebuf;
 		return (1);
 	}
 

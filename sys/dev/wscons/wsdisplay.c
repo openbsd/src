@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.113 2013/10/18 13:54:08 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.114 2013/10/18 22:06:41 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1602,11 +1602,11 @@ wsdisplay_emulinput(void *v, const u_char *data, u_int count)
  * Calls from the keyboard interface.
  */
 void
-wsdisplay_kbdinput(struct device *dev, keysym_t *ks, int num)
+wsdisplay_kbdinput(struct device *dev, kbd_t layout, keysym_t *ks, int num)
 {
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
 	struct wsscreen *scr;
-	const char *dp;
+	const u_char *dp;
 	int count;
 	struct tty *tp;
 
@@ -1616,15 +1616,11 @@ wsdisplay_kbdinput(struct device *dev, keysym_t *ks, int num)
 
 
 	tp = scr->scr_tty;
-	for (; num > 0; num--, ks++) {
-		if (KS_GROUP(*ks) == KS_GROUP_Ascii)
-			(*linesw[tp->t_line].l_rint)(KS_VALUE(*ks), tp);
-		else {
-			count = (*scr->scr_dconf->wsemul->translate)
-			    (scr->scr_dconf->wsemulcookie, *ks, &dp);
-			while (count-- > 0)
-				(*linesw[tp->t_line].l_rint)(*dp++, tp);
-		}
+	for (; num > 0; num--) {
+		count = (*scr->scr_dconf->wsemul->translate)
+		    (scr->scr_dconf->wsemulcookie, layout, *ks++, &dp);
+		while (count-- > 0)
+			(*linesw[tp->t_line].l_rint)(*dp++, tp);
 	}
 }
 

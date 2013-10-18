@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.34 2011/04/05 19:12:13 miod Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.35 2013/10/18 22:06:42 miod Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -36,7 +36,6 @@
 /*
  * Keysymbols encoded as 16-bit Unicode. Special symbols
  * are encoded in the private area (0xe000 - 0xf8ff).
- * Currently only ISO Latin-1 subset is supported.
  *
  * This file is parsed from userland. Encode keysyms as:
  *
@@ -251,10 +250,10 @@
 #define	KS_thorn 		0xfe
 #define	KS_ydiaeresis 		0xff
 
-#define KS_Odoubleacute 	0x150
-#define KS_odoubleacute 	0x151
-#define KS_Udoubleacute 	0x170
-#define KS_udoubleacute 	0x171
+#define KS_Odoubleacute 	0x0150
+#define KS_odoubleacute 	0x0151
+#define KS_Udoubleacute 	0x0170
+#define KS_udoubleacute 	0x0171
 
 /*
  * Group Dead (dead accents)
@@ -269,216 +268,217 @@
 #define	KS_dead_cedilla 	0x0327
 
 /*
- * Group Cyrillic (koi8-r)
+ * Group Cyrillic
  */
 
-#define KS_Cyrillic_A		0xe1
-#define KS_Cyrillic_BE		0xe2
-#define KS_Cyrillic_VE		0xf7
-#define KS_Cyrillic_GE		0xe7
-#define KS_Cyrillic_DE		0xe4
-#define KS_Cyrillic_IE		0xe5
-#define KS_Cyrillic_YO		0xb3
-#define KS_Cyrillic_ZHE		0xf6
-#define KS_Cyrillic_ZE		0xfa
-#define KS_Cyrillic_I		0xe9
-#define KS_Cyrillic_ISHORT	0xea
-#define KS_Cyrillic_IUKR	0xb6
-#define KS_Cyrillic_YI		0xb7
-#define KS_Cyrillic_KA		0xeb
-#define KS_Cyrillic_EL		0xec
-#define KS_Cyrillic_EM		0xed
-#define KS_Cyrillic_EN		0xee
-#define KS_Cyrillic_O		0xef
-#define KS_Cyrillic_PE		0xf0
-#define KS_Cyrillic_ER		0xf2
-#define KS_Cyrillic_ES		0xf3
-#define KS_Cyrillic_TE		0xf4
-#define KS_Cyrillic_U		0xf5
-#define KS_Cyrillic_EF		0xe6
-#define KS_Cyrillic_HA		0xe8
-#define KS_Cyrillic_TSE		0xe3
-#define KS_Cyrillic_CHE		0xfe
-#define KS_Cyrillic_SHA		0xfb
-#define KS_Cyrillic_SCHA	0xfd
-#define KS_Cyrillic_HSIGHN	0xff
-#define KS_Cyrillic_YERU	0xf9
-#define KS_Cyrillic_SSIGHN	0xf8
-#define KS_Cyrillic_E		0xfc
-#define KS_Cyrillic_YU		0xe0
-#define KS_Cyrillic_YA		0xf1
-#define KS_Cyrillic_a		0xc1
-#define KS_Cyrillic_be		0xc2
-#define KS_Cyrillic_ve		0xd7
-#define KS_Cyrillic_ge		0xc7
-#define KS_Cyrillic_de		0xc4
-#define KS_Cyrillic_ie		0xc5
-#define KS_Cyrillic_yo		0xa3
-#define KS_Cyrillic_zhe		0xd6
-#define KS_Cyrillic_ze		0xda
-#define KS_Cyrillic_i		0xc9
-#define KS_Cyrillic_ishort	0xca
-#define KS_Cyrillic_iukr	0xa6
-#define KS_Cyrillic_yi		0xa7
-#define KS_Cyrillic_ka		0xcb
-#define KS_Cyrillic_el		0xcc
-#define KS_Cyrillic_em		0xcd
-#define KS_Cyrillic_en		0xce
-#define KS_Cyrillic_o		0xcf
-#define KS_Cyrillic_pe		0xd0
-#define KS_Cyrillic_er		0xd2
-#define KS_Cyrillic_es		0xd3
-#define KS_Cyrillic_te		0xd4
-#define KS_Cyrillic_u		0xd5
-#define KS_Cyrillic_ef		0xc6
-#define KS_Cyrillic_ha		0xc8
-#define KS_Cyrillic_tse		0xc3
-#define KS_Cyrillic_che		0xde
-#define KS_Cyrillic_sha		0xdb
-#define KS_Cyrillic_scha	0xdd
-#define KS_Cyrillic_hsighn	0xdf
-#define KS_Cyrillic_yeru	0xd9
-#define KS_Cyrillic_ssighn	0xd8
-#define KS_Cyrillic_e		0xdc
-#define KS_Cyrillic_yu		0xc0
-#define KS_Cyrillic_ya		0xd1
-#define KS_Cyrillic_gheukr	0xad
-#define KS_Cyrillic_GHEUKR	0xbd
-#define KS_Cyrillic_yeukr	0xa4
-#define KS_Cyrillic_YEUKR	0xb4
+#define KS_Cyrillic_YO		0x0401
+#define KS_Cyrillic_YEUKR	0x0404
+#define KS_Cyrillic_IUKR	0x0406
+#define KS_Cyrillic_YI		0x0407
+#define KS_Cyrillic_A		0x0410
+#define KS_Cyrillic_BE		0x0411
+#define KS_Cyrillic_VE		0x0412
+#define KS_Cyrillic_GE		0x0413
+#define KS_Cyrillic_DE		0x0414
+#define KS_Cyrillic_IE		0x0415
+#define KS_Cyrillic_ZHE		0x0416
+#define KS_Cyrillic_ZE		0x0417
+#define KS_Cyrillic_I		0x0418
+#define KS_Cyrillic_ISHORT	0x0419
+#define KS_Cyrillic_KA		0x041a
+#define KS_Cyrillic_EL		0x041b
+#define KS_Cyrillic_EM		0x041c
+#define KS_Cyrillic_EN		0x041d
+#define KS_Cyrillic_O		0x041e
+#define KS_Cyrillic_PE		0x041f
+#define KS_Cyrillic_ER		0x0420
+#define KS_Cyrillic_ES		0x0421
+#define KS_Cyrillic_TE		0x0422
+#define KS_Cyrillic_U		0x0423
+#define KS_Cyrillic_EF		0x0424
+#define KS_Cyrillic_HA		0x0425
+#define KS_Cyrillic_TSE		0x0426
+#define KS_Cyrillic_CHE		0x0427
+#define KS_Cyrillic_SHA		0x0428
+#define KS_Cyrillic_SCHA	0x0429
+#define KS_Cyrillic_HSIGHN	0x042a
+#define KS_Cyrillic_YERU	0x042b
+#define KS_Cyrillic_SSIGHN	0x042c
+#define KS_Cyrillic_E		0x042d
+#define KS_Cyrillic_YU		0x042e
+#define KS_Cyrillic_YA		0x042f
+#define KS_Cyrillic_a		0x0430
+#define KS_Cyrillic_be		0x0431
+#define KS_Cyrillic_ve		0x0432
+#define KS_Cyrillic_ge		0x0433
+#define KS_Cyrillic_de		0x0434
+#define KS_Cyrillic_ie		0x0435
+#define KS_Cyrillic_zhe		0x0436
+#define KS_Cyrillic_ze		0x0437
+#define KS_Cyrillic_i		0x0438
+#define KS_Cyrillic_ishort	0x0439
+#define KS_Cyrillic_ka		0x043a
+#define KS_Cyrillic_el		0x043b
+#define KS_Cyrillic_em		0x043c
+#define KS_Cyrillic_en		0x043d
+#define KS_Cyrillic_o		0x043e
+#define KS_Cyrillic_pe		0x043f
+#define KS_Cyrillic_er		0x0440
+#define KS_Cyrillic_es		0x0441
+#define KS_Cyrillic_te		0x0442
+#define KS_Cyrillic_u		0x0443
+#define KS_Cyrillic_ef		0x0444
+#define KS_Cyrillic_ha		0x0445
+#define KS_Cyrillic_tse		0x0446
+#define KS_Cyrillic_che		0x0447
+#define KS_Cyrillic_sha		0x0448
+#define KS_Cyrillic_scha	0x0449
+#define KS_Cyrillic_hsighn	0x044a
+#define KS_Cyrillic_yeru	0x044b
+#define KS_Cyrillic_ssighn	0x044c
+#define KS_Cyrillic_e		0x044d
+#define KS_Cyrillic_yu		0x044e
+#define KS_Cyrillic_ya		0x044f
+#define KS_Cyrillic_yo		0x0451
+#define KS_Cyrillic_yeukr	0x0454
+#define KS_Cyrillic_iukr	0x0456
+#define KS_Cyrillic_yi		0x0457
+#define KS_Cyrillic_GHEUKR	0x0490
+#define KS_Cyrillic_gheukr	0x0491
 
 /*
- * Group Latin-2 (iso8859-2)
+ * Group Latin-2
  */
 
-#define KS_L2_Aogonek		0xa1
-#define KS_L2_breve		0xa2
-#define KS_L2_Lstroke		0xa3
-#define KS_L2_Lcaron		0xa5
-#define KS_L2_Sacute		0xa6
-#define KS_L2_Scaron		0xa9
-#define KS_L2_Scedilla		0xaa
-#define KS_L2_Tcaron		0xab
-#define KS_L2_Zacute		0xac
-#define KS_L2_Zcaron		0xae
-#define KS_L2_Zdotabove		0xaf
-#define KS_L2_aogonek		0xb1
-#define KS_L2_ogonek		0xb2
-#define KS_L2_lstroke		0xb3
-#define KS_L2_lcaron		0xb5
-#define KS_L2_sacute		0xb6
-#define KS_L2_caron		0xb7
-#define KS_L2_scaron		0xb9
-#define KS_L2_scedilla		0xba
-#define KS_L2_tcaron		0xbb
-#define KS_L2_zacute		0xbc
-#define KS_L2_dblacute		0xbd
-#define KS_L2_zcaron		0xbe
-#define KS_L2_zdotabove		0xbf
-#define KS_L2_Racute		0xc0
-#define KS_L2_Abreve		0xc3
-#define KS_L2_Lacute		0xc5
-#define KS_L2_Cacute		0xc6
-#define KS_L2_Ccaron		0xc8
-#define KS_L2_Eogonek		0xca
-#define KS_L2_Ecaron		0xcc
-#define KS_L2_Dcaron		0xcf
-#define KS_L2_Dstroke		0xd0
-#define KS_L2_Nacute		0xd1
-#define KS_L2_Ncaron		0xd2
-#define KS_L2_Odoubleacute	0xd5
-#define KS_L2_Rcaron		0xd8
-#define KS_L2_Uring		0xd9
-#define KS_L2_Udoubleacute	0xdb
-#define KS_L2_Tcedilla		0xde
-#define KS_L2_racute		0xe0
-#define KS_L2_abreve		0xe3
-#define KS_L2_lacute		0xe5
-#define KS_L2_cacute		0xe6
-#define KS_L2_ccaron		0xe8
-#define KS_L2_eogonek		0xea
-#define KS_L2_ecaron		0xec
-#define KS_L2_dcaron		0xef
-#define KS_L2_dstroke		0xf0
-#define KS_L2_nacute		0xf1
-#define KS_L2_odoubleacute	0xf5
-#define KS_L2_rcaron		0xf8
-#define KS_L2_uring		0xf9
-#define KS_L2_udoubleacute	0xfb
-#define KS_L2_tcedilla		0xfe
-#define KS_L2_dotabove		0xff
+#define KS_L2_Abreve		0x0102
+#define KS_L2_abreve		0x0103
+#define KS_L2_Aogonek		0x0104
+#define KS_L2_aogonek		0x0105
+#define KS_L2_Cacute		0x0106
+#define KS_L2_cacute		0x0107
+#define KS_L2_Ccaron		0x010c
+#define KS_L2_ccaron		0x010d
+#define KS_L2_Dcaron		0x010e
+#define KS_L2_dcaron		0x010f
+#define KS_L2_Dstroke		0x0110
+#define KS_L2_dstroke		0x0111
+#define KS_L2_Eogonek		0x0118
+#define KS_L2_eogonek		0x0119
+#define KS_L2_Ecaron		0x011a
+#define KS_L2_ecaron		0x011b
+#define KS_L2_Lacute		0x0139
+#define KS_L2_lacute		0x013a
+#define KS_L2_Lcaron		0x013d
+#define KS_L2_lcaron		0x013e
+#define KS_L2_Lstroke		0x0141
+#define KS_L2_lstroke		0x0142
+#define KS_L2_Nacute		0x0143
+#define KS_L2_nacute		0x0144
+#define KS_L2_Ncaron		0x0147
+#define KS_L2_Odoubleacute	0x0150
+#define KS_L2_odoubleacute	0x0151
+#define KS_L2_Racute		0x0154
+#define KS_L2_racute		0x0155
+#define KS_L2_Rcaron		0x0158
+#define KS_L2_rcaron		0x0159
+#define KS_L2_Sacute		0x015a
+#define KS_L2_sacute		0x015b
+#define KS_L2_Scedilla		0x015e
+#define KS_L2_scedilla		0x015f
+#define KS_L2_Scaron		0x0160
+#define KS_L2_scaron		0x0161
+#define KS_L2_Tcedilla		0x0162
+#define KS_L2_tcedilla		0x0163
+#define KS_L2_Tcaron		0x0164
+#define KS_L2_tcaron		0x0165
+#define KS_L2_Uring		0x016e
+#define KS_L2_uring		0x016f
+#define KS_L2_Udoubleacute	0x0170
+#define KS_L2_udoubleacute	0x0171
+#define KS_L2_Zacute		0x0179
+#define KS_L2_zacute		0x017a
+#define KS_L2_Zdotabove		0x017b
+#define KS_L2_zdotabove		0x017c
+#define KS_L2_Zcaron		0x017d
+#define KS_L2_zcaron		0x017e
+
+#define KS_L2_caron		0x02c7
+#define KS_L2_breve		0x02d8
+#define KS_L2_dotabove		0x02d9
+#define KS_L2_ogonek		0x02db
+#define KS_L2_dblacute		0x02dd
 
 /*
- * Group Latin-5 (iso8859-9)
+ * Group Latin-5
  */
 
-#define KS_L5_Gbreve		0xd0
-#define KS_L5_Idotabove		0xdd
-#define KS_L5_Scedilla		0xde
-#define KS_L5_gbreve		0xf0
-#define KS_L5_idotless		0xfd
-#define KS_L5_scedilla		0xfe
+#define KS_L5_Gbreve		0x011e
+#define KS_L5_gbreve		0x011f
+#define KS_L5_Idotabove		0x0130
+#define KS_L5_idotless		0x0131
+#define KS_L5_Scedilla		0x015e
+#define KS_L5_scedilla		0x015f
 
  /*
- * Group Latin-7 (iso8859-13)
+ * Group Latin-7
  */
 
-#define KS_L7_rightdblquot     0xa1
-#define KS_L7_dbllow9quot      0xa5
-#define KS_L7_Ostroke          0xa8
-#define KS_L7_Rcedilla         0xaa
-#define KS_L7_AE               0xaf
-#define KS_L7_leftdblquot      0xb4
-#define KS_L7_ostroke          0xb8
-#define KS_L7_rcedilla         0xba
-#define KS_L7_ae               0xbf
-#define KS_L7_Aogonek          0xc0
-#define KS_L7_Iogonek          0xc1
-#define KS_L7_Amacron          0xc2
-#define KS_L7_Cacute           0xc3
-#define KS_L7_Eogonek          0xc6
-#define KS_L7_Emacron          0xc7
-#define KS_L7_Ccaron           0xc8
-#define KS_L7_Zacute           0xca
-#define KS_L7_Edot             0xcb
-#define KS_L7_Gcedilla         0xcc
-#define KS_L7_Kcedilla         0xcd
-#define KS_L7_Imacron          0xce
-#define KS_L7_Lcedilla         0xcf
-#define KS_L7_Scaron           0xd0
-#define KS_L7_Nacute           0xd1
-#define KS_L7_Ncedilla         0xd2
-#define KS_L7_Omacron          0xd4
-#define KS_L7_Uogonek          0xd8
-#define KS_L7_Lstroke          0xd9
-#define KS_L7_Sacute           0xda
-#define KS_L7_Umacron          0xdb
-#define KS_L7_Zdot             0xdd
-#define KS_L7_Zcaron           0xde
-#define KS_L7_aogonek          0xe0
-#define KS_L7_iogonek          0xe1
-#define KS_L7_amacron          0xe2
-#define KS_L7_cacute           0xe3
-#define KS_L7_eogonek          0xe6
-#define KS_L7_emacron          0xe7
-#define KS_L7_ccaron           0xe8
-#define KS_L7_zacute           0xea
-#define KS_L7_edot             0xeb
-#define KS_L7_gcedilla         0xec
-#define KS_L7_kcedilla         0xed
-#define KS_L7_imacron          0xee
-#define KS_L7_lcedilla         0xef
-#define KS_L7_scaron           0xf0
-#define KS_L7_nacute           0xf1
-#define KS_L7_ncedilla         0xf2
-#define KS_L7_omacron          0xf4
-#define KS_L7_uogonek          0xf8
-#define KS_L7_lstroke          0xf9
-#define KS_L7_sacute           0xfa
-#define KS_L7_umacron          0xfb
-#define KS_L7_zdot             0xfd
-#define KS_L7_zcaron           0xfe
-#define KS_L7_rightsnglquot    0xff
+#define KS_L7_rightdblquot	0x201d
+#define KS_L7_dbllow9quot	0x201e
+#define KS_L7_Ostroke		0x00d8
+#define KS_L7_Rcedilla		0x0156
+#define KS_L7_AE		0x00c0
+#define KS_L7_leftdblquot	0x201c
+#define KS_L7_ostroke		0x00f8
+#define KS_L7_rcedilla		0x0157
+#define KS_L7_ae		0x00e6
+#define KS_L7_Aogonek		0x0104
+#define KS_L7_Iogonek		0x012e
+#define KS_L7_Amacron		0x0100
+#define KS_L7_Cacute		0x0106
+#define KS_L7_Eogonek		0x0118
+#define KS_L7_Emacron		0x0112
+#define KS_L7_Ccaron		0x010c
+#define KS_L7_Zacute		0x0179
+#define KS_L7_Edot		0x0116
+#define KS_L7_Gcedilla		0x0122
+#define KS_L7_Kcedilla		0x0136
+#define KS_L7_Imacron		0x012a
+#define KS_L7_Lcedilla		0x013b
+#define KS_L7_Scaron		0x0160
+#define KS_L7_Nacute		0x0143
+#define KS_L7_Ncedilla		0x0145
+#define KS_L7_Omacron		0x014c
+#define KS_L7_Uogonek		0x0172
+#define KS_L7_Lstroke		0x0141
+#define KS_L7_Sacute		0x015a
+#define KS_L7_Umacron		0x016a
+#define KS_L7_Zdot		0x017b
+#define KS_L7_Zcaron		0x017d
+#define KS_L7_aogonek		0x0105
+#define KS_L7_iogonek		0x012f
+#define KS_L7_amacron		0x0101
+#define KS_L7_cacute		0x0107
+#define KS_L7_eogonek		0x0119
+#define KS_L7_emacron		0x0113
+#define KS_L7_ccaron		0x010d
+#define KS_L7_zacute		0x017a
+#define KS_L7_edot		0x0117
+#define KS_L7_gcedilla		0x0123
+#define KS_L7_kcedilla		0x0137
+#define KS_L7_imacron		0x012b
+#define KS_L7_lcedilla		0x013c
+#define KS_L7_scaron		0x0161
+#define KS_L7_nacute		0x0144
+#define KS_L7_ncedilla		0x0146
+#define KS_L7_omacron		0x014d
+#define KS_L7_uogonek		0x0173
+#define KS_L7_lstroke		0x0142
+#define KS_L7_sacute		0x015b
+#define KS_L7_umacron		0x016b
+#define KS_L7_zdot		0x017c
+#define KS_L7_zcaron		0x017e
+#define KS_L7_rightsnglquot	0x2019
 
 /*
  * Group 1 (modifiers)

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.18 2013/06/11 18:15:55 deraadt Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.19 2013/10/18 22:06:41 miod Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -30,6 +30,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <dev/wscons/wscons_features.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -214,11 +215,18 @@ wsemul_vt100_el(struct wsemul_vt100_emuldata *edp, int arg)
  * handle commands after CSI (ESC[)
  */
 int
-wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp, u_char c)
+wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
+    struct wsemul_inputstate *instate)
 {
 	int n, help, flags, fgcol, bgcol;
 	long attr, bkgdattr;
+	u_char c;
 	int rc = 0;
+ 
+	if (instate->inchar >= 0x100)
+		c = 0x00;	/* cause the switch below to end in default: */
+	else
+		c = (u_char)instate->inchar;
 
 #define A3(a, b, c) (((a) << 16) | ((b) << 8) | (c))
 	switch (A3(edp->modif1, edp->modif2, c)) {
@@ -666,7 +674,8 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 		break;
 	default:
 #ifdef VT100_PRINTUNKNOWN
-		printf("CSI%c (%d, %d) unknown\n", c, ARG(0), ARG(1));
+		printf("CSI %x (%d, %d) unknown\n",
+		    instate->inchar, ARG(0), ARG(1));
 #endif
 		break;
 	}
@@ -793,7 +802,10 @@ wsemul_vt100_handle_dcs(struct wsemul_vt100_emuldata *edp)
 		}
 		break;
 	default:
-		panic("wsemul_vt100_handle_dcs: bad type %d", edp->dcstype);
+#ifdef VT100_PRINTUNKNOWN
+		printf("wsemul_vt100_handle_dcs: bad type %d\n", edp->dcstype);
+#endif
+		break;
 	}
 	edp->dcstype = 0;
 }

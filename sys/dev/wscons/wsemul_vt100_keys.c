@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_keys.c,v 1.6 2013/04/14 19:40:12 miod Exp $ */
+/* $OpenBSD: wsemul_vt100_keys.c,v 1.7 2013/10/18 22:06:41 miod Exp $ */
 /* $NetBSD: wsemul_vt100_keys.c,v 1.3 1999/04/22 20:06:02 mycroft Exp $ */
 
 /*
@@ -30,6 +30,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <dev/wscons/wscons_features.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsksymvar.h>
@@ -37,7 +38,7 @@
 #include <dev/wscons/wsemulvar.h>
 #include <dev/wscons/wsemul_vt100var.h>
 
-static const char *vt100_fkeys[] = {
+static const u_char *vt100_fkeys[] = {
 	"\033[11~",	/* F1 */
 	"\033[12~",
 	"\033[13~",		/* F1-F5 normally don't send codes */
@@ -64,14 +65,14 @@ static const char *vt100_fkeys[] = {
 	"\033[38~"
 };
 
-static const char *vt100_pfkeys[] = {
+static const u_char *vt100_pfkeys[] = {
 	"\033OP",	/* PF1 */
 	"\033OQ",
 	"\033OR",
 	"\033OS",	/* PF4 */
 };
 
-static const char *vt100_numpad[] = {
+static const u_char *vt100_numpad[] = {
 	"\033Op",	/* KP 0 */
 	"\033Oq",	/* KP 1 */
 	"\033Or",	/* KP 2 */
@@ -85,10 +86,16 @@ static const char *vt100_numpad[] = {
 };
 
 int
-wsemul_vt100_translate(void *cookie, keysym_t in, const char **out)
+wsemul_vt100_translate(void *cookie, kbd_t layout, keysym_t in,
+    const u_char **out)
 {
 	struct wsemul_vt100_emuldata *edp = cookie;
-	static char c;
+
+	if (KS_GROUP(in) == KS_GROUP_Ascii) {
+		*out = edp->translatebuf;
+		return (wsemul_utf8_translate(KS_VALUE(in), layout,
+		    edp->translatebuf, edp->flags & VTFL_UTF8));
+	}
 
 	if (in >= KS_f1 && in <= KS_f24) {
 		*out = vt100_fkeys[in - KS_f1];
@@ -135,8 +142,8 @@ wsemul_vt100_translate(void *cookie, keysym_t in, const char **out)
 		}
 	} else {
 		if (!(in & 0x80)) {
-			c = in & 0xff; /* turn into ASCII */
-			*out = &c;
+			edp->translatebuf[0] = in & 0xff; /* turn into ASCII */
+			*out = edp->translatebuf;
 			return (1);
 		}
 	}

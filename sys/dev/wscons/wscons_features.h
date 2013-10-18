@@ -1,4 +1,4 @@
-/* $OpenBSD: wscons_features.h,v 1.2 2013/10/18 14:17:23 miod Exp $ */
+/* $OpenBSD: wscons_features.h,v 1.3 2013/10/18 22:06:40 miod Exp $ */
 /* public domain */
 
 /*
@@ -15,6 +15,9 @@
  *	wsdisplay supports this
  * HAVE_JUMP_SCROLL
  *	defined to enable jump scroll in the textmode emulation code
+ * HAVE_UTF8_SUPPORT
+ *	defined to enable UTF-8 mode and escape sequences in the textmode
+ *	emulation code
  * HAVE_RESTARTABLE_EMULOPS
  *	defined to disable most of the restartable emulops code (to be used
  *	only if all wsdisplay drivers are compliant, i.e. no udl(4) in the
@@ -28,6 +31,7 @@
 #define	HAVE_BURNER_SUPPORT
 #define	HAVE_SCROLLBACK_SUPPORT
 #define	HAVE_JUMP_SCROLL
+#define	HAVE_UTF8_SUPPORT
 #define	HAVE_RESTARTABLE_EMULOPS
 #endif
 

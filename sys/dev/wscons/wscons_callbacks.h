@@ -1,4 +1,4 @@
-/* $OpenBSD: wscons_callbacks.h,v 1.8 2010/11/20 20:52:10 miod Exp $ */
+/* $OpenBSD: wscons_callbacks.h,v 1.9 2013/10/18 22:06:40 miod Exp $ */
 /* $NetBSD: wscons_callbacks.h,v 1.16 2001/11/10 17:14:51 augustss Exp $ */
 
 /*
@@ -41,7 +41,7 @@ void	wsdisplay_set_console_kbd(struct wsevsrc *);
 /*
  * Calls to the display interface from the keyboard interface.
  */
-void	wsdisplay_kbdinput(struct device *v, keysym_t *, int);
+void	wsdisplay_kbdinput(struct device *v, kbd_t, keysym_t *, int);
 void	wsdisplay_rawkbdinput(struct device *v, u_char *, int);
 int	wsdisplay_switch(struct device *, int, int);
 enum wsdisplay_resetops {

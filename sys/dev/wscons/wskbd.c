@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.73 2013/10/18 13:54:09 miod Exp $ */
+/* $OpenBSD: wskbd.c,v 1.74 2013/10/18 22:06:42 miod Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -511,6 +511,7 @@ wskbd_repeat(void *v)
 		/* deliver keys */
 		if (sc->sc_displaydv != NULL)
 			wsdisplay_kbdinput(sc->sc_displaydv,
+			    sc->id->t_keymap->layout,
 			    sc->id->t_symbols, sc->sc_repeating);
 	} else {
 		/* queue event */
@@ -629,6 +630,7 @@ wskbd_input(struct device *dev, u_int type, int value)
 				}
 #endif
 				wsdisplay_kbdinput(sc->sc_displaydv,
+				    sc->id->t_keymap->layout,
 				    sc->id->t_symbols, num);
 			}
 
