@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.12 2013/10/18 14:42:18 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.13 2013/10/18 14:43:21 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -840,10 +840,13 @@ create_end_record(struct request *c)
 	    fcgi_end_request_body));
 	header->padding_len = 0;
 	header->reserved = 0;
-	end_request = (struct fcgi_end_request_body *) resp->data +
-	    sizeof(struct fcgi_record_header);
+	end_request = (struct fcgi_end_request_body *) (resp->data +
+	    sizeof(struct fcgi_record_header));
 	end_request->app_status = htonl(c->script_status);
 	end_request->protocol_status = FCGI_REQUEST_COMPLETE;
+	end_request->reserved[0] = 0;
+	end_request->reserved[1] = 0;
+	end_request->reserved[2] = 0;
 	resp->data_pos = 0;
 	resp->data_len = sizeof(struct fcgi_end_request_body) +
 	    sizeof(struct fcgi_record_header);
