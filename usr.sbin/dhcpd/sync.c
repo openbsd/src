@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.14 2013/10/18 13:44:35 krw Exp $	*/
+/*	$OpenBSD: sync.c,v 1.15 2013/10/18 15:19:40 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Bob Beck <beck@openbsd.org>
@@ -275,7 +275,7 @@ sync_recv(void)
 	len = ntohs(hdr->sh_length);
 
 	/* Compute and validate HMAC */
-	bcopy(hdr->sh_hmac, hmac[0], DHCP_SYNC_HMAC_LEN);
+	memcpy(hmac[0], hdr->sh_hmac, DHCP_SYNC_HMAC_LEN);
 	bzero(hdr->sh_hmac, DHCP_SYNC_HMAC_LEN);
 	HMAC(EVP_sha1(), sync_key, strlen(sync_key), buf, len,
 	    hmac[1], &hmac_len);

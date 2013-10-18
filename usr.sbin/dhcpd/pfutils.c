@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfutils.c,v 1.9 2007/12/23 21:52:16 jmc Exp $ */
+/*	$OpenBSD: pfutils.c,v 1.10 2013/10/18 15:19:39 krw Exp $ */
 /*
  * Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
  *
@@ -147,7 +147,7 @@ pf_change_table(int fd, int op, struct in_addr ip, char *table)
 	io.pfrio_size = 1;
 
 	bzero(&addr, sizeof(addr));
-	bcopy(&ip, &addr.pfra_ip4addr, 4);
+	memcpy(&addr.pfra_ip4addr, &ip, 4);
 	addr.pfra_af = AF_INET;
 	addr.pfra_net = 32;
 
@@ -167,11 +167,11 @@ pf_kill_state(int fd, struct in_addr ip)
 	bzero(&psk, sizeof(psk));
 	bzero(&target, sizeof(target));
 
-	bcopy(&ip.s_addr, &target.v4, 4);
+	memcpy(&target.v4, &ip.s_addr, 4);
 	psk.psk_af = AF_INET;
 
 	/* Kill all states from target */
-	bcopy(&target, &psk.psk_src.addr.v.a.addr,
+	memcpy(&psk.psk_src.addr.v.a.addr, &target,
 	    sizeof(psk.psk_src.addr.v.a.addr));
 	memset(&psk.psk_src.addr.v.a.mask, 0xff,
 	    sizeof(psk.psk_src.addr.v.a.mask));
@@ -181,7 +181,7 @@ pf_kill_state(int fd, struct in_addr ip)
 
 	/* Kill all states to target */
 	bzero(&psk.psk_src, sizeof(psk.psk_src));
-	bcopy(&target, &psk.psk_dst.addr.v.a.addr,
+	memcpy(&psk.psk_dst.addr.v.a.addr, &target,
 	    sizeof(psk.psk_dst.addr.v.a.addr));
 	memset(&psk.psk_dst.addr.v.a.mask, 0xff,
 	    sizeof(psk.psk_dst.addr.v.a.mask));
@@ -230,7 +230,7 @@ pfmsg(char c, struct lease *lp)
 		return;
 
 	cmd.type = c;
-	bcopy(lp->ip_addr.iabuf, &cmd.ip.s_addr, 4);
+	memcpy(&cmd.ip.s_addr, lp->ip_addr.iabuf, 4);
 
 	switch (c) {
 	case 'A': /* address is being abandoned */
