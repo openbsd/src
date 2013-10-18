@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.37 2013/05/09 12:57:01 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.38 2013/10/18 11:16:52 sthen Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -182,7 +182,7 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 
 	/* invalid sequence number */
 	if (ntohl(lsa->hdr.seq_num) == RESV_SEQ_NUM) {
-		log_warnx("ls_check: bad seq num");
+		log_warnx("lsa_check: bad seq num");
 		return (0);
 	}
 
