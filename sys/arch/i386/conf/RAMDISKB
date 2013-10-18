@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.124 2013/10/05 17:05:15 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.125 2013/10/18 21:57:55 miod Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -162,7 +162,7 @@ mfi*	at pci?			# LSI MegaRAID SAS controllers
 scsibus* at scsi?
 sd*	at scsibus?		# SCSI disk drives
 #st*	at scsibus?		# SCSI tape drives
-cd*	at scsibus?		# SCSI CD-ROM drives
+#cd*	at scsibus?		# SCSI CD-ROM drives
 #ch*	at scsibus?		# SCSI autochangers
 #uk*	at scsibus?		# SCSI unknown devices
 
