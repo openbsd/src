@@ -1,4 +1,4 @@
-/* $OpenBSD: omap4.c,v 1.1 2013/09/04 14:38:30 patrick Exp $ */
+/* $OpenBSD: omap4.c,v 1.2 2013/10/18 15:23:58 syl Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -56,8 +56,8 @@
 #define UART3_IRQ	74
 #define UART4_IRQ	70
 
-#define HSMMCx_SIZE	0x300
-#define HSMMC1_ADDR	0x4809c000
+#define HSMMCx_SIZE	0x200
+#define HSMMC1_ADDR	0x4809c100
 #define HSMMC1_IRQ	83
 
 #define PRM_ADDR	0x4a306000

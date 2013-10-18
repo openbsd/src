@@ -1,4 +1,4 @@
-/* $OpenBSD: am335x.c,v 1.3 2013/10/10 19:40:02 syl Exp $ */
+/* $OpenBSD: am335x.c,v 1.4 2013/10/18 15:23:58 syl Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -87,9 +87,9 @@
 #define UART4_IRQ	45
 #define UART5_IRQ	46
 
-#define HSMMCx_SIZE	0x300
-#define HSMMC0_ADDR	0x48060000
-#define HSMMC1_ADDR	0x481d8000
+#define HSMMCx_SIZE	0x200
+#define HSMMC0_ADDR	0x48060100
+#define HSMMC1_ADDR	0x481d8100
 #define HSMMC0_IRQ	64
 #define HSMMC1_IRQ	28
 

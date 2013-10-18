@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.6 2013/10/18 06:34:10 syl Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.7 2013/10/18 15:23:58 syl Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -280,22 +280,14 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 	struct ommmc_softc		*sc = (struct ommmc_softc *) self;
 	struct omap_attach_args		*oa = args;
 	struct sdmmcbus_attach_args	 saa;
-	int				 baseaddr;
 	int				 error = 1;
 	uint32_t			 caps;
 
 	/* XXX - ICLKEN, FCLKEN? */
 
-	baseaddr = oa->oa_dev->mem[0].addr;
-	if (board_id == BOARD_ID_OMAP4_PANDA ||
-	    board_id == BOARD_ID_AM335X_BEAGLEBONE) {
-		/* omap4430 has mmc registers offset +0x100 */
-		baseaddr += 0x100;
-	}
-
 	sc->sc_iot = oa->oa_iot;
-	if (bus_space_map(sc->sc_iot, baseaddr, oa->oa_dev->mem[0].size,
-	    0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, oa->oa_dev->mem[0].addr,
+	    oa->oa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
 	printf("\n");
