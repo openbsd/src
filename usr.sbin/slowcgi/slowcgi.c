@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.13 2013/10/18 14:43:21 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.14 2013/10/18 14:44:36 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -1012,10 +1012,10 @@ dump_fcgi_record(const char *p, struct fcgi_record_header *h)
 
 	if (h->type == FCGI_BEGIN_REQUEST)
 		dump_fcgi_begin_request_body(p,
-		    (struct fcgi_begin_request_body *)((char *)h) + sizeof(*h));
+		    (struct fcgi_begin_request_body *)(h + 1));
 	else if (h->type == FCGI_END_REQUEST)
 		dump_fcgi_end_request_body(p,
-		    (struct fcgi_end_request_body *)((char *)h) + sizeof(*h));
+		    (struct fcgi_end_request_body *)(h + 1));
 }
 
 void
