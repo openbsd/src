@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.20 2010/03/27 14:11:38 krw Exp $ */
+/*	$OpenBSD: memory.c,v 1.21 2013/10/18 13:44:35 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -639,8 +639,8 @@ abandon_lease(struct lease *lease, char *message)
 	lease->flags |= ABANDONED_LEASE;
 	lt = *lease;
 	lt.ends = cur_time + abtime;
-	warning("Abandoning IP address %s for %d seconds: %s",
-	    piaddr(lease->ip_addr), abtime, message);
+	warning("Abandoning IP address %s for %lld seconds: %s",
+	    piaddr(lease->ip_addr), (long long)abtime, message);
 	lt.hardware_addr.htype = 0;
 	lt.hardware_addr.hlen = 0;
 	lt.uid = NULL;
