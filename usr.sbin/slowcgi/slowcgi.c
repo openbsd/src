@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.11 2013/09/19 09:21:29 blambert Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.12 2013/10/18 14:42:18 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/un.h>
 #include <sys/wait.h>
 #include <err.h>
+#include <fcntl.h>
 #include <ctype.h>
 #include <errno.h>
 #include <event.h>
@@ -307,6 +308,7 @@ slowcgi_listen(char *path, gid_t gid)
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		lerr(1, "slowcgi_listen: socket");
+	fcntl(fd, F_SETFD, FD_CLOEXEC);
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
@@ -388,6 +390,7 @@ slowcgi_accept(int fd, short events, void *arg)
 		}
 	}
 
+	fcntl(s, F_SETFD, FD_CLOEXEC);
 	if (ioctl(s, FIONBIO, &on) == -1)
 		lerr(1, "request ioctl(FIONBIO)");
 
@@ -801,6 +804,10 @@ exec_cgi(struct request *c)
 	/* Parent process*/
 	close(s[1]);
 	close(s_err[1]);
+
+	fcntl(s[0], F_SETFD, FD_CLOEXEC);
+	fcntl(s_err[0], F_SETFD, FD_CLOEXEC);
+
 	if (ioctl(s[0], FIONBIO, &on) == -1)
 		lerr(1, "script ioctl(FIONBIO)");
 	if (ioctl(s_err[0], FIONBIO, &on) == -1)
