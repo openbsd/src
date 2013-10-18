@@ -2564,6 +2564,8 @@
 ./usr/share/man/man5/ldapd.conf.5
 ./usr/share/man/man5/ldpd.conf.5
 ./usr/share/man/man5/login.conf.5
+./usr/share/man/man5/macppc
+./usr/share/man/man5/macppc/boot.conf.5
 ./usr/share/man/man5/magic.5
 ./usr/share/man/man5/mailer.conf.5
 ./usr/share/man/man5/malloc.conf.5
@@ -2882,6 +2884,7 @@
 ./usr/share/man/man8/macppc/ZZZ.8
 ./usr/share/man/man8/macppc/apm.8
 ./usr/share/man/man8/macppc/apmd.8
+./usr/share/man/man8/macppc/boot.8
 ./usr/share/man/man8/macppc/boot_macppc.8
 ./usr/share/man/man8/macppc/eeprom.8
 ./usr/share/man/man8/macppc/gpioctl.8
