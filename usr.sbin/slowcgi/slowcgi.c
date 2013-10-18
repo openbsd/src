@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.15 2013/10/18 14:46:47 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.16 2013/10/18 14:47:47 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -241,6 +241,7 @@ char 			*fcgi_socket = "/var/www/run/slowcgi.sock";
 int
 main(int argc, char *argv[])
 {
+	extern char *__progname;
 	struct passwd	*pw;
 	int		 c;
 
@@ -268,6 +269,11 @@ main(int argc, char *argv[])
 	if (!debug && daemon(1, 0) == -1)
 		err(1, "daemon");
 
+	if (!debug) {
+		openlog(__progname, LOG_PID|LOG_NDELAY, LOG_DAEMON);
+		logger = &syslogger;
+	}
+		
 	event_init();
 
 	slowcgi_listen(fcgi_socket, pw->pw_gid);
