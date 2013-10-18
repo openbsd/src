@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2011/07/08 21:39:32 drahn Exp $
+#	$OpenBSD: Makefile,v 1.20 2013/10/18 14:04:03 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -23,8 +23,6 @@ RAMDISK=	RAMDISKBIG
 BOOT?=		/usr/mdec/boot
 BOOTXX?=	/usr/mdec/bootxx
 
-RDSETROOT=	elfrdsetroot
-
 .include "${TOP}/inst-common/Makefile.inc"
 
 LISTS+=		${.CURDIR}/list.local
@@ -44,9 +42,9 @@ bsd.rd:	bsd.rd_unz
 	${STRIP} bsd.strip
 	${GZIPCMD} -c ${GZIPFLAGS} bsd.strip > bsd.rd
 
-bsd.rd_unz: bsd ${IMAGE} ${RDSETROOT}
+bsd.rd_unz: bsd ${IMAGE} rdsetroot
 	cp bsd bsd.rd_unz
-	${.OBJDIR}/${RDSETROOT} bsd.rd_unz ${IMAGE}
+	${.OBJDIR}/rdsetroot bsd.rd_unz ${IMAGE}
 
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/alpha/conf && config ${RAMDISK}
@@ -58,7 +56,7 @@ ${IMAGE}:	do_prep do_mount do_files do_umount
 	mv -f ${REALIMAGE} ${IMAGE}
 
 elfrdsetroot: ${TOP}/../common/elfrdsetroot.c
-	${HOSTCC} ${HOSTCFLAGS} -o elfrdsetroot \
+	${HOSTCC} ${HOSTCFLAGS} -o rdsetroot \
 	    ${TOP}/../common/elfrdsetroot.c ${TOP}/../common/elf32.c \
 	    ${TOP}/../common/elf64.c
 

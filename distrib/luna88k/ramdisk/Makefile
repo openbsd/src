@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2013/10/15 22:46:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.16 2013/10/18 14:04:04 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -57,7 +57,7 @@ rd_teardown:
 
 rdsetroot:	${TOP}/../common/elfrdsetroot.c
 	${HOSTCC} -o rdsetroot \
-	    ${TOP}/../common/rdsetroot.c ${TOP}/../common/elf32.c \
+	    ${TOP}/../common/elfrdsetroot.c ${TOP}/../common/elf32.c \
 	    ${TOP}/../common/elf64.c
 
 unconfig:

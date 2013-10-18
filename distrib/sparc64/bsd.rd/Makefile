@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2013/10/15 22:46:53 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.27 2013/10/18 14:04:05 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -27,9 +27,7 @@ RAMDISK=	RAMDISK
 BOOT?=		/usr/mdec/boot
 BOOTXX?=	/usr/mdec/bootxx
 
-RDSETROOT=	elfrdsetroot
-
-CLEANFILES+=	bsd.rd_unz elfrdsetroot
+CLEANFILES+=	bsd.rd_unz rdsetroot
 
 #.include "${TOP}/common/Makefile.inc"
 
@@ -48,9 +46,9 @@ bsd.rd:	bsd.rd_unz
 	${STRIP} bsd.strip
 	${GZIPCMD} -c ${GZIPFLAGS} bsd.strip > bsd.rd
 
-bsd.rd_unz: bsd ${IMAGE} ${RDSETROOT}
+bsd.rd_unz: bsd ${IMAGE} rdsetroot
 	cp bsd bsd.rd_unz
-	${.OBJDIR}/${RDSETROOT} bsd.rd_unz ${IMAGE}
+	${.OBJDIR}/rdsetroot bsd.rd_unz ${IMAGE}
 
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/sparc64/conf && config ${RAMDISK}
@@ -61,8 +59,8 @@ bsd:
 ${IMAGE}:	do_prep do_mount do_files do_umount
 	mv -f ${REALIMAGE} ${IMAGE}
 
-elfrdsetroot: ${TOP}/../common/elfrdsetroot.c
-	${HOSTCC} ${HOSTCFLAGS} -o elfrdsetroot \
+rdsetroot:	${TOP}/../common/elfrdsetroot.c
+	${HOSTCC} ${HOSTCFLAGS} -o rdsetroot \
 	    ${TOP}/../common/elfrdsetroot.c ${TOP}/../common/elf32.c \
 	    ${TOP}/../common/elf64.c
 
@@ -100,9 +98,6 @@ rd_teardown:
 	-vnconfig -u ${VND}
 	cp ${REALIMAGE} ${IMAGE}
 	rm ${REALIMAGE}
-
-rdsetroot:	${TOP}/../../common/rdsetroot.c
-	${HOSTCC} -o rdsetroot ${TOP}/../../common/rdsetroot.c
 
 unconfig:
 	-umount -f ${MOUNT_POINT}

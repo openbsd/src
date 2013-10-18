@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.24 2011/07/08 21:39:32 drahn Exp $
+#	$OpenBSD: Makefile.inc,v 1.25 2013/10/18 14:04:04 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -25,8 +25,6 @@ FLOPPYBLKS?=	2880
 FLOPPYTYPE?=	floppy
 BOOT?=		/usr/mdec/boot
 BOOTXX?=	/usr/mdec/bootxx
-
-RDSETROOT=	elfrdsetroot
 
 .include "${TOP}/inst-common/Makefile.inc"
 
@@ -68,9 +66,9 @@ bsd.gz:	bsd.rd
 	${STRIP} bsd.strip
 	${GZIPCMD} -c ${GZIPFLAGS} bsd.strip > bsd.gz
 
-bsd.rd: bsd ${IMAGE} ${RDSETROOT}
+bsd.rd: bsd ${IMAGE} rdsetroot
 	cp bsd bsd.rd
-	${.OBJDIR}/${RDSETROOT} bsd.rd ${IMAGE}
+	${.OBJDIR}/rdsetroot bsd.rd ${IMAGE}
 
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/alpha/conf && config ${RAMDISK}
@@ -81,8 +79,8 @@ bsd:
 ${IMAGE}:	do_prep do_mount do_files do_umount
 	mv -f ${REALIMAGE} ${IMAGE}
 
-elfrdsetroot: ${TOP}/../common/elfrdsetroot.c
-	${HOSTCC} ${HOSTCFLAGS} -o elfrdsetroot \
+rdsetroot: ${TOP}/../common/elfrdsetroot.c
+	${HOSTCC} ${HOSTCFLAGS} -o rdsetroot \
 	    ${TOP}/../common/elfrdsetroot.c ${TOP}/../common/elf32.c \
 	    ${TOP}/../common/elf64.c
 

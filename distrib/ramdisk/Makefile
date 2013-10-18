@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.42 2013/10/14 00:00:12 guenther Exp $
+#	$OpenBSD: Makefile,v 1.43 2013/10/18 14:04:04 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -21,7 +21,6 @@ REALIMAGE!=	echo /var/tmp/image.${PID}
 IMAGE?=		ramdisk${REV}.fs
 IMAGESIZE?=	8192 # 4MB in 512 byte blocks
 NEWFS_WILL_FAIL?=false
-RDSETROOT?=	elfrdsetroot
 RDSETROOT_EXT_SRC=${.CURDIR}/../common/elf32.c ${.CURDIR}/../common/elf64.c
 CRUNCHGENOPTS?=-E
 KERNEL?=	RAMDISK
@@ -84,17 +83,17 @@ bsd:
 	    ${MAKE} clean && ${MAKE} depend && COPTS=-Os ${MAKE}
 	cp ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${KERNEL}/bsd bsd
 
-bsd.rd:	bsd ${IMAGE} ${RDSETROOT}
+bsd.rd:	bsd ${IMAGE} rdsetroot
 	cp bsd bsd.rd
-	${.OBJDIR}/${RDSETROOT} bsd.rd ${IMAGE}
+	${.OBJDIR}/rdsetroot bsd.rd ${IMAGE}
 	${STRIP} bsd.rd
 
 bsd.gz:	bsd.rd
 	${GZIPCMD} ${GZIPFLAGS} < bsd.rd > bsd.gz
 
-${RDSETROOT}: ${.CURDIR}/../common/${RDSETROOT}.c ${RDSETROOT_EXT_SRC}
-	${HOSTCC} ${HOSTCCFLAGS} -o ${RDSETROOT} ${RDSETROOT_EXT_SRC} \
-	    ${.CURDIR}/../common/${RDSETROOT}.c
+rdsetroot: ${.CURDIR}/../common/elfrdsetroot.c ${RDSETROOT_EXT_SRC}
+	${HOSTCC} ${HOSTCCFLAGS} -o rdsetroot ${RDSETROOT_EXT_SRC} \
+	    ${.CURDIR}/../common/elfrdsetroot.c
 
 ${IMAGE}: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} count=${IMAGESIZE}
