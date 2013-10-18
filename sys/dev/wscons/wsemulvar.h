@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemulvar.h,v 1.13 2010/07/01 02:33:06 maja Exp $ */
+/* $OpenBSD: wsemulvar.h,v 1.14 2013/10/18 14:17:23 miod Exp $ */
 /* $NetBSD: wsemulvar.h,v 1.6 1999/01/17 15:46:15 drochner Exp $ */
 
 /*
@@ -47,6 +47,8 @@
  */
 
 #ifdef	_KERNEL
+
+#include <dev/wscons/wscons_features.h>
 
 struct device;
 struct wsdisplay_emulops;
@@ -165,6 +167,7 @@ wsemul_reset_abortstate(struct wsemul_abortstate *was)
  * Wrapper macro to handle failing emulops calls consistently.
  */
 
+#ifdef HAVE_RESTARTABLE_EMULOPS
 #define	WSEMULOP(rc, edp, was, rutin, args) \
 do { \
 	if ((was)->skip != 0) { \
@@ -176,5 +179,12 @@ do { \
 	if ((rc) == 0) \
 		(was)->done++; \
 } while (0)
+#else
+#define	WSEMULOP(rc, edp, was, rutin, args) \
+do { \
+	(void)(*(edp)->emulops->rutin) args ; \
+	(rc) = 0; \
+} while(0)
+#endif
 
 #endif	/* _KERNEL */
