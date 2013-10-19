@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.36 2013/09/14 02:28:01 guenther Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.37 2013/10/19 09:24:57 reyk Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -233,10 +233,10 @@ hook_disestablish(struct hook_desc_head *head, void *vhook)
 void
 dohooks(struct hook_desc_head *head, int flags)
 {
-	struct hook_desc *hdp;
+	struct hook_desc *hdp, *hdp_temp;
 
 	if ((flags & HOOK_REMOVE) == 0) {
-		TAILQ_FOREACH(hdp, head, hd_list) {
+		TAILQ_FOREACH_SAFE(hdp, head, hd_list, hdp_temp) {
 			(*hdp->hd_fn)(hdp->hd_arg);
 		}
 	} else {
