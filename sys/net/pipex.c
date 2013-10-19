@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.44 2013/10/17 16:27:43 bluhm Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.45 2013/10/19 10:51:41 henning Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1976,7 +1976,9 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 	udp->uh_sport = session->local.sin6.sin6_port;
 	udp->uh_dport = session->peer.sin6.sin6_port;
 	udp->uh_ulen = htons(plen);
+	udp->uh_sum = 0;
 
+	m0->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
 	m0->m_pkthdr.rcvif = session->pipex_iface->ifnet_this;
 #if NPF > 0
 	pf_pkt_addr_changed(m0);
@@ -1990,13 +1992,6 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 		ip->ip_len = htons(hlen + plen);
 		ip->ip_ttl = MAXTTL;
 		ip->ip_tos = 0;
-
-		if (udpcksum) {
-			udp->uh_sum = in_cksum_phdr(ip->ip_src.s_addr,
-			   ip->ip_dst.s_addr, htons(plen  + IPPROTO_UDP));
-			m0->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
-		} else
-			udp->uh_sum = 0;
 
 		if (ip_output(m0, NULL, NULL, IP_IPSECFLOW, NULL, NULL,
 		    session->proto.l2tp.ipsecflowinfo) != 0) {
@@ -2017,10 +2012,6 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 		    &session->peer.sin6, NULL, NULL);
 		/* ip6->ip6_plen will be filled in ip6_output. */
 
-		udp->uh_sum = 0;
-		if ((udp->uh_sum = in6_cksum(m0, IPPROTO_UDP,
-		    sizeof(struct ip6_hdr), plen)) == 0)
-			udp->uh_sum = 0xffff;
 		if (ip6_output(m0, NULL, NULL, 0, NULL, NULL, NULL) != 0) {
 			PIPEX_DBG((session, LOG_DEBUG, "ip6_output failed."));
 			goto drop;
