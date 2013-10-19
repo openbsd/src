@@ -1,4 +1,4 @@
-/*	$OpenBSD: link.h,v 1.14 2004/01/22 21:48:02 espie Exp $	*/
+/*	$OpenBSD: link.h,v 1.15 2013/10/19 09:00:18 deraadt Exp $	*/
 /*	$NetBSD: link.h,v 1.10 1996/01/09 00:00:11 pk Exp $	*/
 
 /*
@@ -37,8 +37,6 @@
 
 #ifdef __ELF__
 #include <link_elf.h>
-#else
-#include <link_aout.h>
 #endif
 
 /*
