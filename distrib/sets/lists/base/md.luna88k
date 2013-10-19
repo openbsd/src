@@ -1614,7 +1614,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/libmilter/milter.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/link.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/link_aout.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/link_elf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/login_cap.ph

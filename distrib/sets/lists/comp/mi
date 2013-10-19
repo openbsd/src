@@ -1031,7 +1031,6 @@
 ./usr/include/libmilter/milter.h
 ./usr/include/limits.h
 ./usr/include/link.h
-./usr/include/link_aout.h
 ./usr/include/link_elf.h
 ./usr/include/locale.h
 ./usr/include/login_cap.h

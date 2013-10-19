@@ -1231,7 +1231,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/libmilter/milter.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/link.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/link_aout.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/link_elf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/login_cap.ph

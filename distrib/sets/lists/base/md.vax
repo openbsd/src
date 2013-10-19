@@ -1089,7 +1089,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/libmilter/milter.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/link.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/link_aout.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/link_elf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/login_cap.ph

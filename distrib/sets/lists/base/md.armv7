@@ -1779,7 +1779,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/libmilter/milter.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/link.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/link_aout.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/link_elf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/login_cap.ph

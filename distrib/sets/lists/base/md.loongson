@@ -1713,7 +1713,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/libmilter/milter.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/link.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/link_aout.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/link_elf.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/login_cap.ph

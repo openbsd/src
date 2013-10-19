@@ -1740,7 +1740,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/libmilter/milter.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/link.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/link_aout.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/link_elf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/login_cap.ph

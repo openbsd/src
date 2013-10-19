@@ -1799,7 +1799,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/libmilter/milter.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/link.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/link_aout.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/link_elf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/login_cap.ph
