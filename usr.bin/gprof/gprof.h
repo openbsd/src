@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.h,v 1.13 2007/12/09 19:51:30 espie Exp $	*/
+/*	$OpenBSD: gprof.h,v 1.14 2013/10/19 13:51:40 deraadt Exp $	*/
 /*	$NetBSD: gprof.h,v 1.13 1996/04/01 21:54:06 mark Exp $	*/
 
 /*
@@ -296,8 +296,7 @@ int		totalcmp(nltype **, nltype **);
 #define	TALLYDEBUG	8
 #define	TIMEDEBUG	16
 #define	SAMPLEDEBUG	32
-#define	AOUTDEBUG	64
-#define	ELFDEBUG	AOUTDEBUG
+#define	ELFDEBUG	64
 #define	CALLDEBUG	128
 #define	LOOKUPDEBUG	256
 #define	PROPDEBUG	512
