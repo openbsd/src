@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.36 2013/10/17 16:27:41 bluhm Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.37 2013/10/19 10:49:31 henning Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -125,9 +125,6 @@ int	copy_flow_ipfix_6_to_m(struct pflow_ipfix_flow6 *flow,
 struct if_clone	pflow_cloner =
     IF_CLONE_INITIALIZER("pflow", pflow_clone_create,
     pflow_clone_destroy);
-
-/* from udp_usrreq.c */
-extern int udpcksum;
 
 void
 pflowattach(int npflow)
@@ -1535,6 +1532,8 @@ pflow_sendout_mbuf(struct pflow_softc *sc, struct mbuf *m)
 	ui->ui_dst = sc->sc_receiver_ip;
 	ui->ui_dport = sc->sc_receiver_port;
 	ui->ui_ulen = htons(sizeof(struct udphdr) + len);
+	ui->ui_sum = 0;
+	m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
 
 	ip = (struct ip *)ui;
 	ip->ip_v = IPVERSION;
@@ -1544,18 +1543,6 @@ pflow_sendout_mbuf(struct pflow_softc *sc, struct mbuf *m)
 	ip->ip_tos = IPTOS_LOWDELAY;
 	ip->ip_ttl = IPDEFTTL;
 	ip->ip_len = htons(sizeof(struct udpiphdr) + len);
-
-	/*
-	 * Compute the pseudo-header checksum; defer further checksumming
-	 * until ip_output() or hardware (if it exists).
-	 */
-	if (udpcksum) {
-		m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
-		ui->ui_sum = in_cksum_phdr(ui->ui_src.s_addr,
-		    ui->ui_dst.s_addr, htons(len + sizeof(struct udphdr) +
-		    IPPROTO_UDP));
-	} else
-		ui->ui_sum = 0;	
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf) {
