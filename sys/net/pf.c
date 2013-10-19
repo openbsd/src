@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.844 2013/10/17 16:27:41 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.845 2013/10/19 10:47:53 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6742,20 +6742,10 @@ pf_cksum(struct pf_pdesc *pd, struct mbuf *m)
 	switch (pd->proto) {
 	case IPPROTO_TCP:
 		pd->hdr.tcp->th_sum = 0;
-		if (pd->af == AF_INET) {
-			pd->hdr.tcp->th_sum = in_cksum_phdr(pd->src->v4.s_addr,
-			    pd->dst->v4.s_addr, htons(pd->tot_len -
-			    pd->off + IPPROTO_TCP));
-		}
 		m->m_pkthdr.csum_flags |= M_TCP_CSUM_OUT;
 		break;
 	case IPPROTO_UDP:
 		pd->hdr.udp->uh_sum = 0;
-		if (pd->af == AF_INET) {
-			pd->hdr.udp->uh_sum = in_cksum_phdr(pd->src->v4.s_addr,
-			    pd->dst->v4.s_addr, htons(pd->tot_len -
-			    pd->off + IPPROTO_UDP));
-		}
 		m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
 		break;
 	case IPPROTO_ICMP:
