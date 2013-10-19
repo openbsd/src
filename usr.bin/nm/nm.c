@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.33 2011/02/06 18:34:00 jasper Exp $	*/
+/*	$OpenBSD: nm.c,v 1.34 2013/10/19 08:59:48 deraadt Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -37,7 +37,6 @@
 #include <sys/mman.h>
 #include <a.out.h>
 #include <elf_abi.h>
-#include <stab.h>
 #include <ar.h>
 #include <ranlib.h>
 #include <unistd.h>
@@ -45,9 +44,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <link.h>
-#ifdef __ELF__
-#include <link_aout.h>
-#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,7 +59,6 @@
 #define	STRTABMAG	"//"
 
 union hdr {
-	struct exec aout;
 	Elf32_Ehdr elf32;
 	Elf64_Ehdr elf64;
 };
@@ -95,23 +91,21 @@ int rev;
 int fname(const void *, const void *);
 int rname(const void *, const void *);
 int value(const void *, const void *);
-int (*sfunc)(const void *, const void *) = fname;
 char *otherstring(struct nlist *);
-char *typestring(unsigned int);
-char typeletter(struct nlist *, int);
+int (*sfunc)(const void *, const void *) = fname;
+char typeletter(struct nlist *);
 
 /* some macros for symbol type (nlist.n_type) handling */
-#define	IS_DEBUGGER_SYMBOL(x)	((x) & N_STAB)
 #define	IS_EXTERNAL(x)		((x) & N_EXT)
 #define	SYMBOL_TYPE(x)		((x) & (N_TYPE | N_STAB))
 
 void	 pipe2cppfilt(void);
 void	 usage(void);
-char	*symname(struct nlist *, int);
+char	*symname(struct nlist *);
 int	process_file(int, const char *);
 int	show_archive(int, const char *, FILE *);
 int	show_file(int, int, const char *, FILE *fp, off_t, union hdr *);
-void	print_symbol(const char *, struct nlist *, int);
+void	print_symbol(const char *, struct nlist *);
 
 #define	OPTSTRING_NM	"aABCegnoprsuvw"
 const struct option longopts_nm[] = {
@@ -256,7 +250,7 @@ process_file(int count, const char *fname)
 	bzero(&exec_head, sizeof(exec_head));
 	bytes = fread((char *)&exec_head, 1, sizeof(exec_head), fp);
 	if (bytes < sizeof(exec_head)) {
-		if (bytes < sizeof(exec_head.aout) || IS_ELF(exec_head.elf32)) {
+		if (bytes < sizeof(exec_head.elf32) || IS_ELF(exec_head.elf32)) {
 			warnx("%s: bad format", fname);
 			(void)fclose(fp);
 			return(1);
@@ -265,7 +259,7 @@ process_file(int count, const char *fname)
 	rewind(fp);
 
 	/* this could be an archive */
-	if (!IS_ELF(exec_head.elf32) && N_BADMAG(exec_head.aout)) {
+	if (!IS_ELF(exec_head.elf32)) {
 		if (fread(magic, sizeof(magic), (size_t)1, fp) != 1 ||
 		    strncmp(magic, ARMAG, SARMAG)) {
 			warnx("%s: not object file or archive", fname);
@@ -609,11 +603,10 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 {
 	u_long text, data, bss, total;
 	struct nlist *np, *names, **snames;
-	int i, aout, nrawnames, nnames;
+	int i, nrawnames, nnames;
 	size_t stabsize;
 	off_t staboff;
 
-	aout = 0;
 	if (IS_ELF(head->elf32) &&
 	    head->elf32.e_ident[EI_CLASS] == ELFCLASS32 &&
 	    head->elf32.e_ident[EI_VERSION] == ELF_TARG_VER) {
@@ -645,108 +638,7 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 		free(shdr);
 		if (i)
 			return (i);
-
-	} else if (BAD_OBJECT(head->aout)) {
-		if (warn_fmt)
-			warnx("%s: bad format", name);
-		return (1);
-	} else do {
-		u_int32_t w;
-
-		aout++;
-
-		fix_header_order(&head->aout);
-
-		if (issize) {
-			text = head->aout.a_text;
-			data = head->aout.a_data;
-			bss = head->aout.a_bss;
-			break;
-		}
-
-		/* stop if the object file contains no symbol table */
-		if (!head->aout.a_syms) {
-			warnx("%s: no name list", name);
-			return(1);
-		}
-
-		if (fseeko(fp, foff + N_SYMOFF(head->aout), SEEK_SET)) {
-			warn("%s", name);
-			return(1);
-		}
-
-#ifdef __LP64__
-		nrawnames = head->aout.a_syms / sizeof(struct nlist32);
-#else
-		nrawnames = head->aout.a_syms / sizeof(*names);
-#endif
-		/* get memory for the symbol table */
-		if ((names = calloc(nrawnames, sizeof(struct nlist))) == NULL) {
-			warn("%s: malloc names", name);
-			return (1);
-		}
-
-		if ((snames = calloc(nrawnames, sizeof(struct nlist *))) == NULL) {
-			warn("%s: malloc snames", name);
-			free(names);
-			return (1);
-		}
-
-#ifdef __LP64__
-		for (np = names, i = nrawnames; i--; np++) {
-			struct nlist32 nl32;
-
-			if (fread(&nl32, sizeof(nl32), 1, fp) != 1) {
-				warnx("%s: cannot read symbol table", name);
-				free(snames);
-				free(names);
-				return (1);
-			}
-			np->n_type = nl32.type;
-			np->n_other = nl32.other;
-			if (byte_sex(N_GETMID(head->aout)) != BYTE_ORDER) {
-				np->n_un.n_strx = swap32(nl32.strx);
-				np->n_desc = swap16(nl32.desc);
-				np->n_value = swap32(nl32.value);
-			} else {
-				np->n_un.n_strx = nl32.strx;
-				np->n_desc = nl32.desc;
-				np->n_value = nl32.value;
-			}
-		}
-#else
-		if (fread(names, head->aout.a_syms, 1, fp) != 1) {
-			warnx("%s: cannot read symbol table", name);
-			free(snames);
-			free(names);
-			return (1);
-		}
-		fix_nlists_order(names, nrawnames, N_GETMID(head->aout));
-#endif
-
-		staboff = ftello(fp);
-		/*
-		 * Following the symbol table comes the string table.
-		 * The first 4-byte-integer gives the total size of the
-		 * string table _including_ the size specification itself.
-		 */
-		if (fread(&w, sizeof(w), (size_t)1, fp) != 1) {
-			warnx("%s: cannot read stab size", name);
-			free(snames);
-			free(names);
-			return(1);
-		}
-		stabsize = fix_32_order(w, N_GETMID(head->aout));
-		MMAP(stab, stabsize, PROT_READ, MAP_PRIVATE|MAP_FILE,
-		    fileno(fp), staboff);
-		if (stab == MAP_FAILED) {
-			free(snames);
-			free(names);
-			return (1);
-		}
-
-		stabsize -= 4;		/* we already have the size */
-	} while (0);
+	}
 
 	if (issize) {
 		static int first = 1;
@@ -799,10 +691,6 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 			np->n_un.n_name = stab + np->n_un.n_strx;
 		else
 			np->n_un.n_name = "";
-		if (aout && SYMBOL_TYPE(np->n_type) == N_UNDF && np->n_value)
-			np->n_type = N_COMM | (np->n_type & N_EXT);
-		if (!print_all_symbols && IS_DEBUGGER_SYMBOL(np->n_type))
-			continue;
 		if (print_only_external_symbols && !IS_EXTERNAL(np->n_type))
 			continue;
 		if (print_only_undefined_symbols &&
@@ -824,7 +712,7 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 		if (show_extensions && snames[i] != names &&
 		    SYMBOL_TYPE((snames[i] -1)->n_type) == N_INDR)
 			continue;
-		print_symbol(name, snames[i], aout);
+		print_symbol(name, snames[i]);
 	}
 
 	free(snames);
@@ -834,12 +722,9 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 }
 
 char *
-symname(struct nlist *sym, int aout)
+symname(struct nlist *sym)
 {
-	if (demangle && sym->n_un.n_name[0] == '_' && aout)
-		return sym->n_un.n_name + 1;
-	else
-		return sym->n_un.n_name;
+	return sym->n_un.n_name;
 }
 
 /*
@@ -847,7 +732,7 @@ symname(struct nlist *sym, int aout)
  *	show one symbol
  */
 void
-print_symbol(const char *name, struct nlist *sym, int aout)
+print_symbol(const char *name, struct nlist *sym)
 {
 	if (print_file_each_line)
 		(void)printf("%s:", name);
@@ -866,91 +751,16 @@ print_symbol(const char *name, struct nlist *sym, int aout)
 			(void)printf("%08lx", sym->n_value);
 
 		/* print type information */
-		if (IS_DEBUGGER_SYMBOL(sym->n_type))
-			(void)printf(" - %02x %04x %5s ", sym->n_other,
-			    sym->n_desc&0xffff, typestring(sym->n_type));
-		else if (show_extensions)
-			(void)printf(" %c%2s ", typeletter(sym, aout),
-			    otherstring(sym));
+		if (show_extensions)
+			(void)printf(" %c   ", typeletter(sym));
 		else
-			(void)printf(" %c ", typeletter(sym, aout));
+			(void)printf(" %c  ", typeletter(sym));
 	}
 
-	if (SYMBOL_TYPE(sym->n_type) == N_INDR && show_extensions) {
-		printf("%s -> %s\n", symname(sym, aout), symname(sym+1, aout));
-	}
+	if (SYMBOL_TYPE(sym->n_type) == N_INDR && show_extensions)
+		printf("%s -> %s\n", symname(sym), symname(sym+1));
 	else
-		(void)puts(symname(sym, aout));
-}
-
-char *
-otherstring(struct nlist *sym)
-{
-	static char buf[3];
-	char *result;
-
-	result = buf;
-
-	if (N_BIND(sym) == BIND_WEAK)
-		*result++ = 'w';
-	if (N_AUX(sym) == AUX_OBJECT)
-		*result++ = 'o';
-	else if (N_AUX(sym) == AUX_FUNC)
-		*result++ = 'f';
-	*result++ = 0;
-	return buf;
-}
-
-/*
- * typestring()
- *	return the a description string for an STAB entry
- */
-char *
-typestring(unsigned int type)
-{
-	switch(type) {
-	case N_BCOMM:
-		return("BCOMM");
-	case N_ECOML:
-		return("ECOML");
-	case N_ECOMM:
-		return("ECOMM");
-	case N_ENTRY:
-		return("ENTRY");
-	case N_FNAME:
-		return("FNAME");
-	case N_FUN:
-		return("FUN");
-	case N_GSYM:
-		return("GSYM");
-	case N_LBRAC:
-		return("LBRAC");
-	case N_LCSYM:
-		return("LCSYM");
-	case N_LENG:
-		return("LENG");
-	case N_LSYM:
-		return("LSYM");
-	case N_PC:
-		return("PC");
-	case N_PSYM:
-		return("PSYM");
-	case N_RBRAC:
-		return("RBRAC");
-	case N_RSYM:
-		return("RSYM");
-	case N_SLINE:
-		return("SLINE");
-	case N_SO:
-		return("SO");
-	case N_SOL:
-		return("SOL");
-	case N_SSYM:
-		return("SSYM");
-	case N_STSYM:
-		return("STSYM");
-	}
-	return("???");
+		(void)puts(symname(sym));
 }
 
 /*
@@ -960,11 +770,11 @@ typestring(unsigned int type)
  *	external, lower case for internal symbols.
  */
 char
-typeletter(struct nlist *np, int aout)
+typeletter(struct nlist *np)
 {
 	int ext = IS_EXTERNAL(np->n_type);
 
-	if (!aout && !IS_DEBUGGER_SYMBOL(np->n_type) && np->n_other)
+	if (np->n_other)
 		return np->n_other;
 
 	switch(SYMBOL_TYPE(np->n_type)) {
