@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.50 2013/08/28 06:58:57 mpi Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.51 2013/10/19 14:46:30 mpi Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -408,26 +408,6 @@ loioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		if (ifr == 0) {
-			error = EAFNOSUPPORT;		/* XXX */
-			break;
-		}
-		switch (ifr->ifr_addr.sa_family) {
-
-#ifdef INET
-		case AF_INET:
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			break;
-#endif /* INET6 */
-
-		default:
-			error = EAFNOSUPPORT;
-			break;
-		}
 		break;
 
 	case SIOCSIFMTU:

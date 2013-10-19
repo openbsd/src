@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.18 2013/03/28 16:45:16 tedu Exp $ */
+/* $OpenBSD: if_vether.c,v 1.19 2013/10/19 14:46:31 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -169,24 +169,8 @@ vetherioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCADDMULTI:
-	case SIOCDELMULTI: {
-		if (ifr == 0) {
-			error = EAFNOSUPPORT;	   /* XXX */
-			break;
-		}
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ac) :
-		    ether_delmulti(ifr, &sc->sc_ac);
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware
-			 * filter accordingly. The good thing is we do
-			 * not have a hardware filter (:
-			 */
-			error = 0;
-		}
+	case SIOCDELMULTI:
 		break;
-	}
 
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:

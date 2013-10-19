@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.63 2013/10/17 16:27:40 bluhm Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.64 2013/10/19 14:46:30 mpi Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -372,19 +372,6 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		switch (ifr->ifr_addr.sa_family) {
-#ifdef INET
-		case AF_INET:	/* IP supports Multicast */
-			break;
-#endif /* INET */
-#ifdef INET6
-		case AF_INET6:	/* IP6 supports Multicast */
-			break;
-#endif /* INET6 */
-		default:  /* Other protocols doesn't support Multicast */
-			error = EAFNOSUPPORT;
-			break;
-		}
 		break;
 
 	case SIOCSIFPHYADDR:

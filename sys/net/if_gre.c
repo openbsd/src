@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.63 2013/10/17 16:27:40 bluhm Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.64 2013/10/19 14:46:30 mpi Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -479,23 +479,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if (ifr == 0) {
-			error = EAFNOSUPPORT;
-			break;
-		}
-		switch (ifr->ifr_addr.sa_family) {
-#ifdef INET
-		case AF_INET:
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			break;
-#endif
-		default:
-			error = EAFNOSUPPORT;
-			break;
-		}
 		break;
 	case GRESPROTO:
 		/* Check for superuser */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.7 2013/10/19 11:37:20 reyk Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.8 2013/10/19 14:46:31 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -354,15 +354,6 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if (ifr == 0) {
-			error = EAFNOSUPPORT;
-			break;
-		}
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ac) :
-		    ether_delmulti(ifr, &sc->sc_ac);
-		if (error == ENETRESET)
-			error = 0;
 		break;
 
 	case SIOCGIFMEDIA:

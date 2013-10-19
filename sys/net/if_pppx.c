@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.25 2013/10/17 16:27:41 bluhm Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.26 2013/10/19 14:46:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -1102,19 +1102,6 @@ pppx_if_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		switch (ifr->ifr_addr.sa_family) {
-#ifdef INET
-		case AF_INET:
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			break;
-#endif
-		default:
-			error = EAFNOSUPPORT;
-			break;
-		}
 		break;
 
 	case SIOCSIFMTU:
