@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.17 2013/10/18 14:48:54 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.18 2013/10/19 14:18:35 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -123,6 +123,9 @@ struct request {
 	struct event			script_ev;
 	struct event			script_err_ev;
 	struct event			script_stdin_ev;
+	int				stdin_fd_closed;
+	int				stdout_fd_closed;
+	int				stderr_fd_closed;
 	uint8_t				script_flags;
 	uint8_t				request_started;
 };
@@ -418,6 +421,7 @@ slowcgi_accept(int fd, short events, void *arg)
 	c->buf_pos = 0;
 	c->buf_len = 0;
 	c->request_started = 0;
+	c->stdin_fd_closed = c->stdout_fd_closed = c->stderr_fd_closed = 0;
 	TAILQ_INIT(&c->response_head);
 	TAILQ_INIT(&c->stdin_head);
 
@@ -924,6 +928,10 @@ script_in(int fd, struct event *ev, struct request *c, uint8_t type)
 		}
 		event_del(ev);
 		close(fd);
+		if (type == FCGI_STDOUT)
+			c->stdout_fd_closed = 1;
+		else
+			c->stderr_fd_closed = 1;
 	}
 }
 
@@ -953,6 +961,7 @@ script_out(int fd, short events, void *arg)
 	while ((node = TAILQ_FIRST(&c->stdin_head))) {
 		if (node->data_len == 0) { /* end of stdin marker */
 			close(fd);
+			c->stdin_fd_closed = 1;
 			break;
 		}
 		n = write(fd, node->data + node->data_pos, node->data_len);
@@ -986,15 +995,18 @@ cleanup_request(struct request *c)
 	if (event_initialized(&c->resp_ev))
 		event_del(&c->resp_ev);
 	if (event_initialized(&c->script_ev)) {
-		close(EVENT_FD(&c->script_ev));
+		if (!c->stdout_fd_closed)
+			close(EVENT_FD(&c->script_ev));
 		event_del(&c->script_ev);
 	}
 	if (event_initialized(&c->script_err_ev)) {
-		close(EVENT_FD(&c->script_err_ev));
+		if (!c->stderr_fd_closed)
+			close(EVENT_FD(&c->script_err_ev));
 		event_del(&c->script_err_ev);
 	}
 	if (event_initialized(&c->script_stdin_ev)) {
-		close(EVENT_FD(&c->script_stdin_ev));
+		if (!c->stdin_fd_closed)
+			close(EVENT_FD(&c->script_stdin_ev));
 		event_del(&c->script_stdin_ev);
 	}
 	close(c->fd);
