@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.conf.5,v 1.13 2013/07/16 11:13:33 schwarze Exp $
+.\"	$OpenBSD: dhcpd.conf.5,v 1.14 2013/10/19 18:15:39 schwarze Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
 .\" The Internet Software Consortium.    All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: October 19 2013 $
 .Dt DHCPD.CONF 5
 .Os
 .Sh NAME
@@ -612,7 +612,7 @@ The
 .Ic filename
 statement
 .Pp
-.D1 Ic filename Ar \&"filename\&" ;
+.D1 Ic filename Qq Ar filename ;
 .Pp
 The
 .Ic filename
@@ -627,7 +627,7 @@ The
 .Ic server-name
 statement
 .Pp
-.D1 Ic server-name Ar \&"name\&" ;
+.D1 Ic server-name Qq Ar name ;
 .Pp
 The
 .Ic server-name

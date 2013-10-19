@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sendmail.8,v 1.37 2012/09/27 12:18:20 jmc Exp $
+.\"	$OpenBSD: sendmail.8,v 1.38 2013/10/19 18:15:39 schwarze Exp $
 .\"
 .\" Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
 .\"	All rights reserved.
@@ -13,7 +13,7 @@
 .\"
 .\"     $Sendmail: sendmail.8,v 8.60 2011/03/07 23:44:48 ca Exp $
 .\"
-.Dd $Mdocdate: September 27 2012 $
+.Dd $Mdocdate: October 19 2013 $
 .Dt SENDMAIL 8
 .Os
 .Sh NAME
@@ -305,37 +305,37 @@ but run in the foreground.
 Process jobs in queue group called
 .Ar name
 only.
-.It Xo Fl q Ns Op Ar \&! Ns
+.It Xo Fl q Ns Op Cm \&! Ns
 .Cm I Ns Ar substr
 .Xc
 Limit processed jobs to those containing
 .Ar substr
 as a substring of the queue ID or not when
-.Em !\&
+.Cm !\&
 is specified.
-.It Xo Fl q Ns Op Ar \&! Ns
+.It Xo Fl q Ns Op Cm \&! Ns
 .Cm Q Ns Ar substr
 .Xc
 Limit processed jobs to quarantined jobs containing
 .Ar substr
 as a substring of the quarantine reason or not when
-.Em !\&
+.Cm !\&
 is specified.
-.It Xo Fl q Ns Op Ar \&! Ns
+.It Xo Fl q Ns Op Cm \&! Ns
 .Cm R Ns Ar substr
 .Xc
 Limit processed jobs to those containing
 .Ar substr
 as a substring of one of the recipients or not when
-.Em !\&
+.Cm !\&
 is specified.
-.It Xo Fl q Ns Op Ar \&! Ns
+.It Xo Fl q Ns Op Cm \&! Ns
 .Cm S Ns Ar substr
 .Xc
 Limit processed jobs to those containing
 .Ar substr
 as a substring of the sender or not when
-.Em !\&
+.Cm !\&
 is specified.
 .It Fl R Ar return
 Set the amount of the message to be returned

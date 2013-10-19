@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.107 2013/08/26 16:54:04 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.108 2013/10/19 18:15:39 schwarze Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: August 26 2013 $
+.Dd $Mdocdate: October 19 2013 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -965,12 +965,12 @@ If
 or
 .Ar new_string
 do not contain the pattern matching character
-.Ar %
+.Sq %
 then it is assumed that they are
 anchored at the end of each word, so only suffixes or entire
 words may be replaced.
 Otherwise
-.Ar %
+.Sq %
 is the substring of
 .Ar old_string
 to be replaced in
@@ -988,9 +988,9 @@ extensions, except for the standard
 style variable substitution.
 .Pp
 The interpretation of
-.Ar %
+.Sq %
 and
-.Ar $
+.Sq $
 in
 .At V
 variable substitutions is not mandated by POSIX, though it is

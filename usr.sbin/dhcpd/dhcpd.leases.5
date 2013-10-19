@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.leases.5,v 1.9 2013/07/16 11:13:33 schwarze Exp $
+.\"	$OpenBSD: dhcpd.leases.5,v 1.10 2013/10/19 18:15:39 schwarze Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: October 19 2013 $
 .Dt DHCPD.LEASES 5
 .Os
 .Sh NAME
@@ -123,7 +123,7 @@ hostname is recorded using the
 .Ic client-hostname
 statement.
 .Pp
-.D1 Ic client-hostname Ar \&"hostname\&" ;
+.D1 Ic client-hostname Qq Ar hostname ;
 .Pp
 If the client sends its hostname using the
 .Ic Hostname
@@ -131,7 +131,7 @@ option, it is recorded using the
 .Ic hostname
 statement.
 .Pp
-.D1 Ic hostname Ar \&"hostname\&" ;
+.D1 Ic hostname Qq Ar hostname ;
 .Pp
 The DHCP server may determine that a lease has been misused in some
 way, either because a client that has been assigned a lease NAKs it,
