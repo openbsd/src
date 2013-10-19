@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.270 2013/10/19 14:05:14 reyk Exp $	*/
+/*	$OpenBSD: if.c,v 1.271 2013/10/19 14:54:18 mikeb Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -81,6 +81,7 @@
 #include <sys/ioctl.h>
 #include <sys/domain.h>
 #include <sys/sysctl.h>
+#include <sys/workq.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -153,6 +154,8 @@ struct if_clone	*if_clone_lookup(const char *, int *);
 
 void	if_congestion_clear(void *);
 int	if_group_egress_build(void);
+
+void	if_link_state_change_task(void *, void *);
 
 int	ifai_cmp(struct ifaddr_item *,  struct ifaddr_item *);
 void	ifa_item_insert(struct sockaddr *, struct ifaddr *, struct ifnet *);
@@ -1111,17 +1114,35 @@ if_up(struct ifnet *ifp)
 }
 
 /*
- * Process a link state change.
- * NOTE: must be called at splsoftnet or equivalent.
+ * Schedule a link state change task.
  */
 void
 if_link_state_change(struct ifnet *ifp)
 {
-	rt_ifmsg(ifp);
+	/* try to put the routing table update task on syswq */
+	workq_add_task(NULL, 0, if_link_state_change_task,
+	    (void *)((unsigned long)ifp->if_index), NULL);
+}
+
+/*
+ * Process a link state change.
+ */
+void
+if_link_state_change_task(void *arg, void *unused)
+{
+	unsigned int index = (unsigned long)arg;
+	struct ifnet *ifp;
+	int s;
+
+	s = splsoftnet();
+	if ((ifp = if_get(index)) != NULL) {
+		rt_ifmsg(ifp);
 #ifndef SMALL_KERNEL
-	rt_if_track(ifp);
+		rt_if_track(ifp);
 #endif
-	dohooks(ifp->if_linkstatehooks, 0);
+		dohooks(ifp->if_linkstatehooks, 0);
+	}
+	splx(s);
 }
 
 /*
