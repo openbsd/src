@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.211 2013/10/17 16:27:43 bluhm Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.212 2013/10/19 09:23:59 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2129,8 +2129,8 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 		    ia->ia_ifp->if_type != IFT_CARP &&
 		    (ia->ia_ifp->if_flags & IFF_MULTICAST) &&
 		    (i == 4)) {
-			if (!ia_if)
-				ia_if = ia;
+			ia_if = ia;
+			break;
 		}
 	}
 
