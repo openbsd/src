@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.31 2013/07/03 15:34:48 sf Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.32 2013/10/19 15:49:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -321,6 +321,13 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 #endif
 			handled = 1;
 			break;
+		case THINKPAD_BUTTON_HIBERNATE:
+#ifndef SMALL_KERNEL
+			acpi_addtask(sc->sc_acpi, acpi_sleep_task, 
+			    sc->sc_acpi, ACPI_STATE_S4);
+#endif
+			handled = 1;
+			break;
 		case THINKPAD_BACKLIGHT_CHANGED:
 		case THINKPAD_BRIGHTNESS_CHANGED:
 		case THINKPAD_BUTTON_BATTERY_INFO:
@@ -330,7 +337,6 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 		case THINKPAD_BUTTON_FN_F1:
 		case THINKPAD_BUTTON_FN_F6:
 		case THINKPAD_BUTTON_FN_SPACE:
-		case THINKPAD_BUTTON_HIBERNATE:
 		case THINKPAD_BUTTON_LOCK_SCREEN:
 		case THINKPAD_BUTTON_POINTER_SWITCH:
 		case THINKPAD_BUTTON_THINKLIGHT:
