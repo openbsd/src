@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.20 2013/10/01 12:41:48 reyk Exp $	*/
+/*	$OpenBSD: trap.c,v 1.21 2013/10/19 14:18:39 blambert Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -101,8 +101,9 @@ trap_imsg(struct imsgev *iev, pid_t pid)
 
 				switch (sm->snmp_type) {
 				case SNMP_OBJECT:
-					if (sm->snmp_len != sizeof(ostr))
+					if (sm->snmp_len > sizeof(ostr) - 1)
 						goto imsgdone;
+					bzero(&ostr, sizeof(ostr));
 					bcopy(sm + 1, &ostr, sm->snmp_len);
 					a = ber_add_oidstring(a, ostr);
 					break;
