@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.62 2013/05/21 17:44:30 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.63 2013/10/19 08:29:30 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -69,7 +69,7 @@ struct uhub_softc {
 #define UHUB_IS_HIGH_SPEED(sc) (UHUB_PROTO(sc) != UDPROTO_FSHUB)
 #define UHUB_IS_SINGLE_TT(sc) (UHUB_PROTO(sc) == UDPROTO_HSHUBSTT)
 
-usbd_status uhub_explore(struct usbd_device *hub);
+int uhub_explore(struct usbd_device *hub);
 void uhub_intr(struct usbd_xfer *, void *, usbd_status);
 
 /*
@@ -326,7 +326,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	dev->hub = NULL;
 }
 
-usbd_status
+int
 uhub_explore(struct usbd_device *dev)
 {
 	usb_hub_descriptor_t *hd = &dev->hub->hubdesc;
@@ -338,14 +338,14 @@ uhub_explore(struct usbd_device *dev)
 	int change, status, reconnect;
 
 	if (usbd_is_dying(dev))
-		return (USBD_IOERROR);
+		return (EIO);
 
 	if (!sc->sc_running)
-		return (USBD_NOT_STARTED);
+		return (ENXIO);
 
 	/* Ignore hubs that are too deep. */
 	if (dev->depth > USB_HUB_MAX_DEPTH)
-		return (USBD_TOO_DEEP);
+		return (EOPNOTSUPP);
 
 	for (port = 1; port <= hd->bNbrPorts; port++) {
 		up = &dev->hub->ports[port-1];
@@ -476,7 +476,8 @@ uhub_explore(struct usbd_device *dev)
 				up->device->hub->explore(up->device);
 		}
 	}
-	return (USBD_NORMAL_COMPLETION);
+
+	return (0);
 }
 
 int
