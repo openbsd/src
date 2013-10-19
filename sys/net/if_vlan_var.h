@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan_var.h,v 1.22 2013/09/17 13:34:18 mpi Exp $	*/
+/*	$OpenBSD: if_vlan_var.h,v 1.23 2013/10/19 14:05:14 reyk Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -56,10 +56,10 @@ struct	ifvlan {
 		u_int16_t ifvm_type; /* non-standard ethertype or 0x8100 */
 	}	ifv_mib;
 	LIST_HEAD(__vlan_mchead, vlan_mc_entry)	vlan_mc_listhead;
-	LIST_ENTRY(ifvlan) ifv_list;	/* list of vlan on the same hash */
-	LIST_ENTRY(ifvlan) ifv_next;	/* list of vlan on a phys interface */
+	LIST_ENTRY(ifvlan) ifv_list;
 	int ifv_flags;
 	void *lh_cookie;
+	void *dh_cookie;
 };
 
 #define	ifv_if		ifv_ac.ac_if
@@ -97,7 +97,6 @@ struct	vlanreq {
 };
 
 #ifdef _KERNEL
-int	vlan_input(struct ether_header *eh, struct mbuf *m);
-void	vlan_ifdetach(struct ifnet *);
+extern	int vlan_input(struct ether_header *eh, struct mbuf *m);
 #endif /* _KERNEL */
 #endif /* _NET_IF_VLAN_VAR_H_ */

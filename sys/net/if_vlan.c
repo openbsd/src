@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.98 2013/09/17 13:34:18 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.99 2013/10/19 14:05:14 reyk Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -93,6 +93,7 @@ void	vlan_ether_purgemulti(struct ifvlan *);
 void	vlan_ether_resetmulti(struct ifvlan *, struct ifnet *);
 int	vlan_clone_create(struct if_clone *, int);
 int	vlan_clone_destroy(struct ifnet *);
+void	vlan_ifdetach(void *);
 
 struct if_clone vlan_cloner =
     IF_CLONE_INITIALIZER("vlan", vlan_clone_create, vlan_clone_destroy);
@@ -169,16 +170,17 @@ vlan_clone_destroy(struct ifnet *ifp)
 }
 
 void
-vlan_ifdetach(struct ifnet *ifp)
+vlan_ifdetach(void *ptr)
 {
-	struct ifvlan *ifv, *nifv;
-
+	struct ifvlan *ifv = (struct ifvlan *)ptr;
 	/*
-	 * Destroy the vlan interfaces because the parent has been
-	 * detached.
+	 * Destroy the vlan interface because the parent has been
+	 * detached. Set the dh_cookie to NULL because we're running
+	 * inside of dohooks which is told to disestablish the hook
+	 * for us (otherwise we would kill the TAILQ element...).
 	 */
-	LIST_FOREACH_SAFE(ifv, &ifp->if_vlist, ifv_next, nifv)
-		vlan_clone_destroy(&ifv->ifv_if);
+	ifv->dh_cookie = NULL;
+	vlan_clone_destroy(&ifv->ifv_if);
 }
 
 void
@@ -450,7 +452,8 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	    vlan_vlandev_state, ifv);
 
 	/* Register callback if parent wants to unregister */
-	LIST_INSERT_HEAD(&p->if_vlist, ifv, ifv_next);
+	ifv->dh_cookie = hook_establish(p->if_detachhooks, 1,
+	    vlan_ifdetach, ifv);
 
 	vlan_vlandev_state(ifv);
 	splx(s);
@@ -482,7 +485,9 @@ vlan_unconfig(struct ifnet *ifp, struct ifnet *newp)
 	LIST_REMOVE(ifv, ifv_list);
 	if (ifv->lh_cookie != NULL)
 		hook_disestablish(p->if_linkstatehooks, ifv->lh_cookie);
-	LIST_REMOVE(ifv, ifv_next);
+	/* The cookie is NULL if disestablished externally */
+	if (ifv->dh_cookie != NULL)
+		hook_disestablish(p->if_detachhooks, ifv->dh_cookie);
 	/* Reset link state */
 	if (newp != NULL) {
 		ifp->if_link_state = LINK_STATE_INVALID;

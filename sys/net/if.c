@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.269 2013/10/19 11:11:24 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.270 2013/10/19 14:05:14 reyk Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -65,10 +65,9 @@
 #include "bpfilter.h"
 #include "bridge.h"
 #include "carp.h"
-#include "ether.h"
 #include "pf.h"
 #include "trunk.h"
-#include "vlan.h"
+#include "ether.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,10 +132,6 @@
 
 #if NPF > 0
 #include <net/pfvar.h>
-#endif
-
-#if NVLAN > 0
-#include <net/if_vlan_var.h>
 #endif
 
 void	if_attachsetup(struct ifnet *);
@@ -291,10 +286,6 @@ if_attachsetup(struct ifnet *ifp)
 		if_attachdomain1(ifp);
 #if NPF > 0
 	pfi_attach_ifnet(ifp);
-#endif
-
-#if NVLAN > 0
-	LIST_INIT(&ifp->if_vlist);
 #endif
 
 	/* Announce the interface. */
@@ -456,6 +447,9 @@ if_attach_common(struct ifnet *ifp)
 	ifp->if_linkstatehooks = malloc(sizeof(*ifp->if_linkstatehooks),
 	    M_TEMP, M_WAITOK);
 	TAILQ_INIT(ifp->if_linkstatehooks);
+	ifp->if_detachhooks = malloc(sizeof(*ifp->if_detachhooks),
+	    M_TEMP, M_WAITOK);
+	TAILQ_INIT(ifp->if_detachhooks);
 }
 
 void
@@ -515,10 +509,8 @@ if_detach(struct ifnet *ifp)
 	ifp->if_ioctl = if_detached_ioctl;
 	ifp->if_watchdog = if_detached_watchdog;
 
-#if NVLAN > 0
-	if (!LIST_EMPTY(&ifp->if_vlist))
-		vlan_ifdetach(ifp);
-#endif
+	/* Call detach hooks, ie. to remove vlan interfaces */
+	dohooks(ifp->if_detachhooks, HOOK_REMOVE | HOOK_FREE);
 
 #if NTRUNK > 0
 	if (ifp->if_type == IFT_IEEE8023ADLAG)
@@ -621,6 +613,7 @@ do { \
 
 	free(ifp->if_addrhooks, M_TEMP);
 	free(ifp->if_linkstatehooks, M_TEMP);
+	free(ifp->if_detachhooks, M_TEMP);
 
 	for (dp = domains; dp; dp = dp->dom_next) {
 		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])
