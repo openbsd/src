@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.225 2013/06/11 16:42:14 deraadt Exp $	*/
+/*	$OpenBSD: ami.c,v 1.226 2013/10/19 13:03:43 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1398,6 +1398,12 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		return;
 
 	case INQUIRY:
+		if (ISSET(((struct scsi_inquiry *)xs->cmd)->flags, SI_EVPD)) {
+			xs->error = XS_DRIVER_STUFFUP;
+			scsi_done(xs);
+			return;
+		}
+
 		AMI_DPRINTF(AMI_D_CMD, ("INQUIRY tgt %d ", target));
 		bzero(&inq, sizeof(inq));
 		inq.device = T_DIRECT;
