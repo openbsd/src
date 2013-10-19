@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: parse_structinfo.pl,v 1.1 2013/10/15 19:23:24 guenther Exp $
+#	$OpenBSD: parse_structinfo.pl,v 1.2 2013/10/19 21:02:50 guenther Exp $
 #
 # Copyright (c) 2009 Miodrag Vallat.
 # Copyright (c) 2013 Philip Guenther.
@@ -194,6 +194,15 @@ while (<>) {
     }
 }
 
+# Pick a type for ddb_field_off: if the offsets and sizes are all less than
+# 65536 then we'll use u_short, otherwise u_int.
+my $f_type = "u_short";
+if ($max_offs > 65535 || $max_fsize > 65535 || $max_ssize > 65535) {
+    $f_type = "u_int";
+    print STDERR "Using u_int for struct/field sizes and offsets\n";
+}
+
+
 print <<EOM;
 /*
  * THIS IS A GENERATED FILE.  DO NOT EDIT!
@@ -202,24 +211,26 @@ print <<EOM;
 #include <sys/param.h>
 #include <sys/types.h>
 
+typedef $f_type ddb_field_off;
+
 struct ddb_struct_info {
 	u_short name;
-	u_short size;
+	ddb_field_off size;
 	u_short fmin, fmax;
 };
 struct ddb_field_info {
 	u_short name;
 	u_short sidx;
-	u_short offs;
-	u_short size;
+	ddb_field_off offs;
+	ddb_field_off size;
 	u_short nitems;
 };
 struct ddb_field_offsets {
-	u_short offs;
+	ddb_field_off offs;
 	u_short list;
 };
 struct ddb_field_sizes {
-	u_short size;
+	ddb_field_off size;
 	u_short list;
 };
 EOM
@@ -257,8 +268,7 @@ sub resolve_string
 }
 
 # Check for overflow and, if so, print some stats
-if ($soff > 65535 || $max_offs > 65535 || $max_fsize > 65535 ||
-    $max_ssize > 65535 || @structs > 65535 || @fields > 65535) {
+if ($soff > 65535 || @structs > 65535 || @fields > 65535) {
     print STDERR <<EOM;
 ERROR: value of range of u_short  Time to change types?
 
@@ -296,7 +306,7 @@ printf "};\n\n";
 
 
 # Given a mapping from values to fields that have that value, generate
-# two C arrays, one containing lists of fields which each value, in order,
+# two C arrays: one containing lists of fields with each value, in order;
 # the other indexing into that one for each value.  I.e., to get the
 # fields that have a given value, find the value in the second array and
 # then iterate from where that points into the first array until you hit
@@ -304,7 +314,7 @@ printf "};\n\n";
 sub print_reverse_mapping
 {
     my($prefix, $map, $max) = @_;
-    print "static const u_short ddb_fields_by_${prefix}[] = {";
+    print "static const ddb_field_off ddb_fields_by_${prefix}[] = {";
     my @heads;
     my $w = 0;
     foreach my $val (sort { $a <=> $b } keys %$map) {
@@ -318,7 +328,6 @@ sub print_reverse_mapping
     print "static const struct ddb_field_${prefix}s",
 		" ddb_field_${prefix}s[$max] = {\n";
     foreach my $h (@heads) {
-	#print "\t{ $h->[0], ddb_fields_by_${prefix} + $h->[1] },\n";
 	print "\t{ $h->[0], $h->[1] },\n";
     }
     print "};\n";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_struct.c,v 1.2 2013/10/15 19:23:24 guenther Exp $	*/
+/*	$OpenBSD: db_struct.c,v 1.3 2013/10/19 21:02:50 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -100,7 +100,7 @@ db_struct_print_field(uint fidx, int flags, db_expr_t baseaddr)
 		db_printf("bitfield");
 		/* basecol irrelevant from there on */
 	} else {
-		snprintf(tmpfmt, sizeof tmpfmt, "%hu", field->size);
+		snprintf(tmpfmt, sizeof tmpfmt, "%u", (u_int)field->size);
 		basecol += strlen(tmpfmt) + 1;
 		db_printf("%s ", tmpfmt);
 	}
@@ -179,7 +179,7 @@ db_struct_offset_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 {
 	db_expr_t offset = 0;
 	const struct ddb_field_offsets *field;
-	const u_short *fidx;
+	const ddb_field_off *fidx;
 	uint oidx;
 	int width;
 	char tmpfmt[28];
@@ -268,8 +268,9 @@ db_struct_layout_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 	 * Display the structure contents.
 	 */
 
-	db_printf("struct %s at %p (%hu bytes)\n",
-	    ddb_structfield_strings + struc->name, (void *)addr, struc->size);
+	db_printf("struct %s at %p (%u bytes)\n",
+	    ddb_structfield_strings + struc->name, (void *)addr,
+	    (u_int)struc->size);
 	for (fidx = struc->fmin; fidx <= struc->fmax; fidx++)
 		db_struct_print_field(fidx, DBSP_VALUE, addr);
 }
