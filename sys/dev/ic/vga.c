@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.58 2013/10/18 17:38:33 miod Exp $ */
+/* $OpenBSD: vga.c,v 1.59 2013/10/19 14:32:45 miod Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -854,12 +854,6 @@ vga_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 		return (EINVAL); /* XXX 1 byte per line */
 	if (data->firstchar != 0 || data->numchars != 256)
 		return (EINVAL);
-#ifndef WSCONS_SUPPORT_PCVTFONTS
-	if (data->encoding == WSDISPLAY_FONTENC_PCVT) {
-		printf("vga: pcvt font support not built in, see vga(4)\n");
-		return (EINVAL);
-	}
-#endif
 
 	if (data->index < 0) {
 		for (slot = 0; slot < 8; slot++)
@@ -1052,141 +1046,6 @@ vga_copyrows(void *id, int srcrow, int dstrow, int nrows)
 	return 0;
 }
 
-#ifdef WSCONS_SUPPORT_PCVTFONTS
-
-#define NOTYET 0xffff
-static const u_int16_t pcvt_unichars[0xa0] = {
-/* 0 */	_e006U,
-	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
-	NOTYET,
-	0x2409, /* SYMBOL FOR HORIZONTAL TABULATION */
-	0x240a, /* SYMBOL FOR LINE FEED */
-	0x240b, /* SYMBOL FOR VERTICAL TABULATION */
-	0x240c, /* SYMBOL FOR FORM FEED */
-	0x240d, /* SYMBOL FOR CARRIAGE RETURN */
-	NOTYET, NOTYET,
-/* 1 */	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
-	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
-/* 2 */	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
-	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
-/* 3 */	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
-	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
-/* 4 */	0x03c1, /* GREEK SMALL LETTER RHO */
-	0x03c8, /* GREEK SMALL LETTER PSI */
-	0x2202, /* PARTIAL DIFFERENTIAL */
-	0x03bb, /* GREEK SMALL LETTER LAMDA */
-	0x03b9, /* GREEK SMALL LETTER IOTA */
-	0x03b7, /* GREEK SMALL LETTER ETA */
-	0x03b5, /* GREEK SMALL LETTER EPSILON */
-	0x03c7, /* GREEK SMALL LETTER CHI */
-	0x2228, /* LOGICAL OR */
-	0x2227, /* LOGICAL AND */
-	0x222a, /* UNION */
-	0x2283, /* SUPERSET OF */
-	0x2282, /* SUBSET OF */
-	0x03a5, /* GREEK CAPITAL LETTER UPSILON */
-	0x039e, /* GREEK CAPITAL LETTER XI */
-	0x03a8, /* GREEK CAPITAL LETTER PSI */
-/* 5 */	0x03a0, /* GREEK CAPITAL LETTER PI */
-	0x21d2, /* RIGHTWARDS DOUBLE ARROW */
-	0x21d4, /* LEFT RIGHT DOUBLE ARROW */
-	0x039b, /* GREEK CAPITAL LETTER LAMDA */
-	0x0398, /* GREEK CAPITAL LETTER THETA */
-	0x2243, /* ASYMPTOTICALLY EQUAL TO */
-	0x2207, /* NABLA */
-	0x2206, /* INCREMENT */
-	0x221d, /* PROPORTIONAL TO */
-	0x2234, /* THEREFORE */
-	0x222b, /* INTEGRAL */
-	0x2215, /* DIVISION SLASH */
-	0x2216, /* SET MINUS */
-	_e00eU,
-	_e00dU,
-	_e00bU,
-/* 6 */	_e00cU,
-	_e007U,
-	_e008U,
-	_e009U,
-	_e00aU,
-	0x221a, /* SQUARE ROOT */
-	0x03c9, /* GREEK SMALL LETTER OMEGA */
-	0x00a5, /* YEN SIGN */
-	0x03be, /* GREEK SMALL LETTER XI */
-	0x00fd, /* LATIN SMALL LETTER Y WITH ACUTE */
-	0x00fe, /* LATIN SMALL LETTER THORN */
-	0x00f0, /* LATIN SMALL LETTER ETH */
-	0x00de, /* LATIN CAPITAL LETTER THORN */
-	0x00dd, /* LATIN CAPITAL LETTER Y WITH ACUTE */
-	0x00d7, /* MULTIPLICATION SIGN */
-	0x00d0, /* LATIN CAPITAL LETTER ETH */
-/* 7 */	0x00be, /* VULGAR FRACTION THREE QUARTERS */
-	0x00b8, /* CEDILLA */
-	0x00b4, /* ACUTE ACCENT */
-	0x00af, /* MACRON */
-	0x00ae, /* REGISTERED SIGN */
-	0x00ad, /* SOFT HYPHEN */
-	0x00ac, /* NOT SIGN */
-	0x00a8, /* DIAERESIS */
-	0x2260, /* NOT EQUAL TO */
-	_e005U,
-	_e004U,
-	_e003U,
-	_e002U,
-	_e001U,
-	0x03c5, /* GREEK SMALL LETTER UPSILON */
-	0x00f8, /* LATIN SMALL LETTER O WITH STROKE */
-/* 8 */	0x0153, /* LATIN SMALL LIGATURE OE */
-	0x00f5, /* LATIN SMALL LETTER O WITH TILDE !!!doc bug */
-	0x00e3, /* LATIN SMALL LETTER A WITH TILDE */
-	0x0178, /* LATIN CAPITAL LETTER Y WITH DIAERESIS */
-	0x00db, /* LATIN CAPITAL LETTER U WITH CIRCUMFLEX */
-	0x00da, /* LATIN CAPITAL LETTER U WITH ACUTE */
-	0x00d9, /* LATIN CAPITAL LETTER U WITH GRAVE */
-	0x00d8, /* LATIN CAPITAL LETTER O WITH STROKE */
-	0x0152, /* LATIN CAPITAL LIGATURE OE */
-	0x00d5, /* LATIN CAPITAL LETTER O WITH TILDE */
-	0x00d4, /* LATIN CAPITAL LETTER O WITH CIRCUMFLEX */
-	0x00d3, /* LATIN CAPITAL LETTER O WITH ACUTE */
-	0x00d2, /* LATIN CAPITAL LETTER O WITH GRAVE */
-	0x00cf, /* LATIN CAPITAL LETTER I WITH DIAERESIS */
-	0x00ce, /* LATIN CAPITAL LETTER I WITH CIRCUMFLEX */
-	0x00cd, /* LATIN CAPITAL LETTER I WITH ACUTE */
-/* 9 */	0x00cc, /* LATIN CAPITAL LETTER I WITH GRAVE */
-	0x00cb, /* LATIN CAPITAL LETTER E WITH DIAERESIS */
-	0x00ca, /* LATIN CAPITAL LETTER E WITH CIRCUMFLEX */
-	0x00c8, /* LATIN CAPITAL LETTER E WITH GRAVE */
-	0x00c3, /* LATIN CAPITAL LETTER A WITH TILDE */
-	0x00c2, /* LATIN CAPITAL LETTER A WITH CIRCUMFLEX */
-	0x00c1, /* LATIN CAPITAL LETTER A WITH ACUTE */
-	0x00c0, /* LATIN CAPITAL LETTER A WITH GRAVE */
-	0x00b9, /* SUPERSCRIPT ONE */
-	0x00b7, /* MIDDLE DOT */
-	0x03b6, /* GREEK SMALL LETTER ZETA */
-	0x00b3, /* SUPERSCRIPT THREE */
-	0x00a9, /* COPYRIGHT SIGN */
-	0x00a4, /* CURRENCY SIGN */
-	0x03ba, /* GREEK SMALL LETTER KAPPA */
-	_e000U
-};
-
-int vga_pcvt_mapchar(int, unsigned int *);
-
-int
-vga_pcvt_mapchar(int uni, unsigned int *index)
-{
-	int i;
-
-	for (i = 0; i < 0xa0; i++) /* 0xa0..0xff are reserved */
-		if (uni == pcvt_unichars[i]) {
-			*index = i;
-			return (5);
-		}
-	*index = 0x99; /* middle dot */
-	return (0);
-}
-
-#endif /* WSCONS_SUPPORT_PCVTFONTS */
-
 int _vga_mapchar(void *, struct vgafont *, int, unsigned int *);
 
 int
@@ -1199,16 +1058,12 @@ _vga_mapchar(void *id, struct vgafont *font, int uni, unsigned int *index)
 			*index = uni;
 			return (5);
 		} else {
-			*index = ' ';
+			*index = '?';
 			return (0);
 		}
 		break;
 	case WSDISPLAY_FONTENC_IBM:
 		return (pcdisplay_mapchar(id, uni, index));
-#ifdef WSCONS_SUPPORT_PCVTFONTS
-	case WSDISPLAY_FONTENC_PCVT:
-		return (vga_pcvt_mapchar(uni, index));
-#endif
 	default:
 #ifdef VGAFONTDEBUG
 		printf("_vga_mapchar: encoding=%d\n", font->encoding);
