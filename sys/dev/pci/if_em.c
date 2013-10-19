@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.269 2013/01/27 04:18:02 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.270 2013/10/19 15:45:33 naddy Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -211,10 +211,8 @@ int  em_rxfill(struct em_softc *);
 void em_rxeof(struct em_softc *);
 void em_receive_checksum(struct em_softc *, struct em_rx_desc *,
 			 struct mbuf *);
-#ifdef EM_CSUM_OFFLOAD
 void em_transmit_checksum_setup(struct em_softc *, struct mbuf *,
 				u_int32_t *, u_int32_t *);
-#endif
 void em_iff(struct em_softc *);
 #ifdef EM_DEBUG
 void em_print_hw_stats(struct em_softc *);
@@ -1121,14 +1119,11 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	if (map->dm_nsegs > sc->num_tx_desc_avail - 2)
 		goto fail;
 
-#ifdef EM_CSUM_OFFLOAD
-	if (sc->hw.mac_type >= em_82543)
+	if (sc->hw.mac_type >= em_82543 && sc->hw.mac_type != em_82575 &&
+	    sc->hw.mac_type != em_82580 && sc->hw.mac_type != em_i350)
 		em_transmit_checksum_setup(sc, m_head, &txd_upper, &txd_lower);
 	else
 		txd_upper = txd_lower = 0;
-#else
-	txd_upper = txd_lower = 0;
-#endif
 
 	i = sc->next_avail_tx_desc;
 	if (sc->pcix_82544)
@@ -1853,10 +1848,9 @@ em_setup_interface(struct em_softc *sc)
 		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
-#ifdef EM_CSUM_OFFLOAD
-	if (sc->hw.mac_type >= em_82543)
-		ifp->if_capabilities |= IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4;
-#endif
+	if (sc->hw.mac_type >= em_82543 && sc->hw.mac_type != em_82575 &&
+	    sc->hw.mac_type != em_82580 && sc->hw.mac_type != em_i350)
+		ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 
 	/* 
 	 * Specify the media types supported by this adapter and register
@@ -2275,7 +2269,6 @@ em_free_transmit_structures(struct em_softc *sc)
 		sc->txtag = NULL;
 }
 
-#ifdef EM_CSUM_OFFLOAD
 /*********************************************************************
  *
  *  The offload context needs to be set when we transfer the first
@@ -2356,7 +2349,6 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp,
 	sc->num_tx_desc_avail--;
 	sc->next_avail_tx_desc = curr_txd;
 }
-#endif /* EM_CSUM_OFFLOAD */
 
 /**********************************************************************
  *
