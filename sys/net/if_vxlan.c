@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.5 2013/10/15 10:24:41 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.6 2013/10/19 11:20:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -64,10 +64,14 @@ void	 vxlanstart(struct ifnet *);
 int	 vxlan_clone_create(struct if_clone *, int);
 int	 vxlan_clone_destroy(struct ifnet *);
 void	 vxlan_multicast_cleanup(struct ifnet *);
+int	 vxlan_join_multicast(struct ifnet *, struct sockaddr_in *,
+	    struct sockaddr_in *);
 int	 vxlan_media_change(struct ifnet *);
 void	 vxlan_media_status(struct ifnet *, struct ifmediareq *);
 int	 vxlan_config(struct ifnet *, struct sockaddr *, struct sockaddr *);
 int	 vxlan_output(struct ifnet *, struct mbuf *);
+void	 vxlan_addr_change(void *);
+void	 vxlan_link_change(void *);
 
 struct if_clone	vxlan_cloner =
     IF_CLONE_INITIALIZER("vxlan", vxlan_clone_create, vxlan_clone_destroy);
@@ -174,11 +178,55 @@ vxlan_multicast_cleanup(struct ifnet *ifp)
 {
 	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
 	struct ip_moptions	*imo = &sc->sc_imo;
+	struct ifnet		*mifp = imo->imo_multicast_ifp;
+
+	if (mifp != NULL && sc->sc_ahcookie != NULL) {
+		hook_disestablish(mifp->if_addrhooks, sc->sc_ahcookie);
+		sc->sc_ahcookie = NULL;
+	}
+	if (mifp != NULL && sc->sc_lhcookie != NULL) {
+		hook_disestablish(mifp->if_linkstatehooks, sc->sc_lhcookie);
+		sc->sc_lhcookie = NULL;
+	}
 
 	if (imo->imo_num_memberships > 0) {
 		in_delmulti(imo->imo_membership[--imo->imo_num_memberships]);
 		imo->imo_multicast_ifp = NULL;
 	}
+}
+
+int
+vxlan_join_multicast(struct ifnet *ifp, struct sockaddr_in *src,
+    struct sockaddr_in *dst)
+{
+	struct vxlan_softc	*sc = ifp->if_softc;
+	struct ip_moptions	*imo = &sc->sc_imo;
+	struct ifaddr		*ifa;
+
+	if (!IN_MULTICAST(dst->sin_addr.s_addr))
+		return (0);
+
+	if (src->sin_addr.s_addr == INADDR_ANY ||
+	    IN_MULTICAST(src->sin_addr.s_addr))
+		return (EINVAL);
+	if ((ifa = ifa_ifwithaddr(sintosa(src),
+	    sc->sc_rtableid)) == NULL || ifa->ifa_ifp == NULL ||
+	    (ifa->ifa_ifp->if_flags & IFF_MULTICAST) == 0)
+		return (EADDRNOTAVAIL);
+
+ 	if ((imo->imo_membership[0] =
+	    in_addmulti(&dst->sin_addr, ifa->ifa_ifp)) == NULL)
+		return (ENOBUFS);
+
+	imo->imo_num_memberships++;
+	imo->imo_multicast_ifp = ifa->ifa_ifp;
+	if (sc->sc_ttl > 0)
+		imo->imo_multicast_ttl = sc->sc_ttl;
+	else
+		imo->imo_multicast_ttl = IP_DEFAULT_MULTICAST_TTL;
+	imo->imo_multicast_loop = 0;
+
+	return (0);
 }
 
 void
@@ -212,9 +260,9 @@ vxlan_config(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	struct ip_moptions	*imo = &sc->sc_imo;
 #ifdef INET
 	struct sockaddr_in	*src4, *dst4;
-	struct ifaddr		*ifa;
 #endif
-	int			 reset = 0;
+	int			 reset = 0, error;
+	struct ifnet		*mifp = imo->imo_multicast_ifp;
 
 	if (src != NULL && dst != NULL) {
 		/* XXX inet6 is not supported */
@@ -233,33 +281,28 @@ vxlan_config(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 
 	if (src4->sin_len != sizeof(*src4) || dst4->sin_len != sizeof(*dst4))
 		return (EINVAL);
-
-	if (IN_MULTICAST(dst4->sin_addr.s_addr)) {
-		if (src4->sin_addr.s_addr == INADDR_ANY ||
-		    IN_MULTICAST(src4->sin_addr.s_addr))
-			return (EINVAL);
-		if ((ifa = ifa_ifwithaddr(sintosa(src4),
-		    sc->sc_rtableid)) == NULL ||
-		    ifa->ifa_ifp == NULL ||
-		    (ifa->ifa_ifp->if_flags & IFF_MULTICAST) == 0)
-			return (EADDRNOTAVAIL);
-	}
 #endif
 
 	vxlan_multicast_cleanup(ifp);
 
 #ifdef INET
 	if (IN_MULTICAST(dst4->sin_addr.s_addr)) {
-		if ((imo->imo_membership[0] =
-		    in_addmulti(&dst4->sin_addr, ifa->ifa_ifp)) == NULL)
-			return (ENOBUFS);
-		imo->imo_num_memberships++;
-		imo->imo_multicast_ifp = ifa->ifa_ifp;
-		if (sc->sc_ttl > 0)
-			imo->imo_multicast_ttl = sc->sc_ttl;
-		else
-			imo->imo_multicast_ttl = IP_DEFAULT_MULTICAST_TTL;
-		imo->imo_multicast_loop = 0;
+		if ((error = vxlan_join_multicast(ifp, src4, dst4)) != 0)
+			return (error);
+
+		mifp = imo->imo_multicast_ifp;
+
+		/* Insert addr and link state hooks at head */
+		if ((sc->sc_ahcookie =
+		    hook_establish(mifp->if_addrhooks,
+		    0, vxlan_addr_change, sc)) == NULL)
+			panic("%s: cannot allocate %s address hook",
+			    __func__, mifp->if_xname);
+		if ((sc->sc_lhcookie =
+		    hook_establish(mifp->if_linkstatehooks,
+		    0, vxlan_link_change, sc)) == NULL)
+			panic("%s: cannot allocate %s linkstate hook",
+			    __func__, mifp->if_xname);
 	}
 	if (dst4->sin_port)
 		sc->sc_dstport = dst4->sin_port;
@@ -601,4 +644,40 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 #endif
 
 	return (error);
+}
+
+void
+vxlan_addr_change(void *arg)
+{
+	struct vxlan_softc	*sc = arg;
+	struct ifnet		*ifp = &sc->sc_ac.ac_if;
+	int			 s;
+
+	/*
+	 * Reset the configuration after resume or any possible address
+	 * configuration changes.
+	 */
+	s = splnet();
+	if (vxlan_config(ifp, NULL, NULL) != 0) {
+		bzero(&sc->sc_src, sizeof(sc->sc_src));
+		bzero(&sc->sc_dst, sizeof(sc->sc_dst));
+	}
+	splx(s);
+}
+
+void
+vxlan_link_change(void *arg)
+{
+	struct vxlan_softc	*sc = arg;
+	struct ifnet		*ifp = &sc->sc_ac.ac_if;
+	int			 s;
+
+	/*
+	 * The machine might have lost its multicast associations after
+	 * link state changes.  This fixes a problem with VMware after
+	 * suspend/resume of the host or guest.
+	 */
+	s = splnet();
+	(void)vxlan_config(ifp, NULL, NULL);
+	splx(s);
 }
