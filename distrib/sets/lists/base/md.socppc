@@ -1415,6 +1415,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/ascii.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/unicode.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/wscons_callbacks.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/wscons_features.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/wsconsio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/wsdisplay_usl_io.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/wsdisplayvar.ph
@@ -2187,7 +2188,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sqlite3.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sqlite3ext.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl
-./usr/libdata/perl5/site_perl/powerpc-openbsd/stab.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/stdarg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/stddef.ph

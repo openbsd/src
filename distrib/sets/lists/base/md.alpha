@@ -1472,6 +1472,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/wscons/ascii.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/wscons/unicode.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/wscons/wscons_callbacks.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/wscons/wscons_features.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/wscons/wsconsio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/wscons/wsdisplay_usl_io.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/wscons/wsdisplayvar.ph
@@ -2154,7 +2155,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sqlite3.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sqlite3ext.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ssl
-./usr/libdata/perl5/site_perl/alpha-openbsd/stab.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/stdarg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/stddef.ph

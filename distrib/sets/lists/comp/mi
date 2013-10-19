@@ -846,6 +846,7 @@
 ./usr/include/dev/wscons/ascii.h
 ./usr/include/dev/wscons/unicode.h
 ./usr/include/dev/wscons/wscons_callbacks.h
+./usr/include/dev/wscons/wscons_features.h
 ./usr/include/dev/wscons/wsconsio.h
 ./usr/include/dev/wscons/wsdisplay_usl_io.h
 ./usr/include/dev/wscons/wsdisplayvar.h
@@ -1401,7 +1402,6 @@
 ./usr/include/sqlite3.h
 ./usr/include/sqlite3ext.h
 ./usr/include/ssl
-./usr/include/stab.h
 ./usr/include/stdarg.h
 ./usr/include/stdbool.h
 ./usr/include/stddef.h

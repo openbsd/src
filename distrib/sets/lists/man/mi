@@ -2491,7 +2491,6 @@
 ./usr/share/man/man4/zyd.4
 ./usr/share/man/man5
 ./usr/share/man/man5/.rhosts.5
-./usr/share/man/man5/a.out.5
 ./usr/share/man/man5/acct.5
 ./usr/share/man/man5/aliases.5
 ./usr/share/man/man5/amd64
@@ -2565,7 +2564,6 @@
 ./usr/share/man/man5/ldpd.conf.5
 ./usr/share/man/man5/login.conf.5
 ./usr/share/man/man5/macppc
-./usr/share/man/man5/macppc/boot.conf.5
 ./usr/share/man/man5/magic.5
 ./usr/share/man/man5/mailer.conf.5
 ./usr/share/man/man5/malloc.conf.5
@@ -2623,7 +2621,6 @@
 ./usr/share/man/man5/spamd.conf.5
 ./usr/share/man/man5/ssh_config.5
 ./usr/share/man/man5/sshd_config.5
-./usr/share/man/man5/stab.5
 ./usr/share/man/man5/sudoers.5
 ./usr/share/man/man5/sysctl.conf.5
 ./usr/share/man/man5/syslog.conf.5
@@ -2884,7 +2881,6 @@
 ./usr/share/man/man8/macppc/ZZZ.8
 ./usr/share/man/man8/macppc/apm.8
 ./usr/share/man/man8/macppc/apmd.8
-./usr/share/man/man8/macppc/boot.8
 ./usr/share/man/man8/macppc/boot_macppc.8
 ./usr/share/man/man8/macppc/eeprom.8
 ./usr/share/man/man8/macppc/gpioctl.8

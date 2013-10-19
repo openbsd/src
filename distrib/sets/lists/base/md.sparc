@@ -906,6 +906,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wscons/ascii.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wscons/unicode.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wscons/wscons_callbacks.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wscons/wscons_features.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wscons/wsconsio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wscons/wsdisplay_usl_io.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wscons/wsdisplayvar.ph
@@ -1646,7 +1647,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sqlite3.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sqlite3ext.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ssl
-./usr/libdata/perl5/site_perl/sparc-openbsd/stab.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/stdarg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/stddef.ph

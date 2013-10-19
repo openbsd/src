@@ -1356,6 +1356,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/wscons/ascii.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/wscons/unicode.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/wscons/wscons_callbacks.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/wscons/wscons_features.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/wscons/wsconsio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/wscons/wsdisplay_usl_io.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/wscons/wsdisplayvar.ph
@@ -2061,7 +2062,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sqlite3.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sqlite3ext.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ssl
-./usr/libdata/perl5/site_perl/m88k-openbsd/stab.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/stdarg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/stddef.ph
