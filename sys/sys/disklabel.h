@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.56 2013/09/11 01:42:21 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.57 2013/10/19 09:32:15 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -445,7 +445,7 @@ int	 readdisklabel(dev_t, void (*)(struct buf *), struct disklabel *, int);
 int	 writedisklabel(dev_t, void (*)(struct buf *), struct disklabel *);
 int	 bounds_check_with_label(struct buf *, struct disklabel *);
 int	 readdoslabel(struct buf *, void (*)(struct buf *),
-	    struct disklabel *, int *, int);
+	    struct disklabel *, daddr_t *, int);
 #ifdef CD9660
 int iso_disklabelspoof(dev_t dev, void (*strat)(struct buf *),
 	struct disklabel *lp);

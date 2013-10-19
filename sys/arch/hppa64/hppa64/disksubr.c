@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.68 2011/09/22 13:41:38 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.69 2013/10/19 09:32:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -39,7 +39,7 @@
 #include <sys/disk.h>
 
 int	readliflabel(struct buf *, void (*)(struct buf *),
-	    struct disklabel *, int *, int);
+	    struct disklabel *, daddr_t *, int);
 
 /*
  * Attempt to read a disk label from a device
@@ -93,7 +93,7 @@ done:
 
 int
 readliflabel(struct buf *bp, void (*strat)(struct buf *),
-    struct disklabel *lp, int *partoffp, int spoofonly)
+    struct disklabel *lp, daddr_t *partoffp, int spoofonly)
 {
 	struct buf *dbp = NULL;
 	struct lifdir *p;
@@ -258,7 +258,8 @@ done:
 int
 writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 {
-	int error = EIO, partoff = -1;
+	daddr_t partoff = -1;
+	int error = EIO;
 	int offset;
 	struct disklabel *dlp;
 	struct buf *bp = NULL;

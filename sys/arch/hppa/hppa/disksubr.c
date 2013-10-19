@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.83 2011/07/10 04:49:38 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.84 2013/10/19 09:32:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -39,7 +39,7 @@
 #include <sys/disk.h>
 
 int	readliflabel(struct buf *, void (*)(struct buf *),
-	    struct disklabel *, int *, int);
+	    struct disklabel *, daddr_t *, int);
 
 /*
  * Attempt to read a disk label from a device
@@ -93,13 +93,14 @@ done:
 
 int
 readliflabel(struct buf *bp, void (*strat)(struct buf *),
-    struct disklabel *lp, int *partoffp, int spoofonly)
+    struct disklabel *lp, daddr_t *partoffp, int spoofonly)
 {
 	struct buf *dbp = NULL;
 	struct lifdir *p;
 	struct lifvol *lvp;
 	int error = 0;
-	int fsoff = 0, openbsdstart = MAXLIFSPACE, i;
+	daddr_t fsoff = 0, openbsdstart = MAXLIFSPACE;
+	int i;
 
 	/* read LIF volume header */
 	bp->b_blkno = btodb(LIF_VOLSTART);
@@ -216,7 +217,7 @@ finished:
 	if (partoffp)
 		*partoffp = fsoff;
 	else {
-		DL_SETBSTART(lp, openbsdstart);
+		DL_SETBSTART(lp, DL_BLKTOSEC(lp, openbsdstart));
 		DL_SETBEND(lp, DL_GETDSIZE(lp));	/* XXX */
 	}
 
@@ -258,7 +259,8 @@ done:
 int
 writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 {
-	int error = EIO, partoff = -1;
+	daddr_t partoff = -1;
+	int error = EIO;
 	int offset;
 	struct disklabel *dlp;
 	struct buf *bp = NULL;

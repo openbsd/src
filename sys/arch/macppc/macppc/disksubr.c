@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.77 2011/07/10 16:16:08 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.78 2013/10/19 09:32:14 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #include <sys/disk.h>
 
 int	readdpmelabel(struct buf *, void (*)(struct buf *),
-	    struct disklabel *, int *, int);
+	    struct disklabel *, daddr_t *, int);
 
 /*
  * Attempt to read a disk label from a device
@@ -99,10 +99,10 @@ done:
 
 int
 readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
-    struct disklabel *lp, int *partoffp, int spoofonly)
+    struct disklabel *lp, daddr_t *partoffp, int spoofonly)
 {
 	int i, part_cnt, n, hfspartoff = -1;
-	u_int64_t hfspartend = DL_GETDSIZE(lp);
+	long long hfspartend = DL_GETDSIZE(lp);
 	struct part_map_entry *part;
 
 	/* First check for a DPME (HFS) disklabel */
@@ -200,7 +200,8 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 int
 writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 {
-	int error = EIO, partoff = -1;
+	daddr_t partoff = -1;
+	int error = EIO;
 	int offset;
 	struct disklabel *dlp;
 	struct buf *bp = NULL;
