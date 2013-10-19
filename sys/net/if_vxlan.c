@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.6 2013/10/19 11:20:08 reyk Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.7 2013/10/19 11:37:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -157,7 +157,7 @@ vxlan_clone_destroy(struct ifnet *ifp)
 	struct vxlan_softc	*sc = ifp->if_softc;
 	int			 s;
 
-	s = splsoftnet();
+	s = splnet();
 	vxlan_multicast_cleanup(ifp);
 	splx(s);
 
@@ -383,7 +383,7 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCDIFPHYADDR:
 		if ((error = suser(p, 0)) != 0)
 			break;
-		s = splsoftnet();
+		s = splnet();
 		vxlan_multicast_cleanup(ifp);
 		bzero(&sc->sc_src, sizeof(sc->sc_src));
 		bzero(&sc->sc_dst, sizeof(sc->sc_dst));
@@ -411,7 +411,7 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EINVAL;
 			break;
 		}
-		s = splsoftnet();
+		s = splnet();
 		sc->sc_rtableid = ifr->ifr_rdomainid;
 		(void)vxlan_config(ifp, NULL, NULL);
 		splx(s);
@@ -430,7 +430,7 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		if (sc->sc_ttl == (u_int8_t)ifr->ifr_ttl)
 			break;
-		s = splsoftnet();
+		s = splnet();
 		sc->sc_ttl = (u_int8_t)(ifr->ifr_ttl);
 		(void)vxlan_config(ifp, NULL, NULL);
 		splx(s);
@@ -447,7 +447,7 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EINVAL;
 			break;
 		}
-		s = splsoftnet();
+		s = splnet();
 		sc->sc_vnetid = (u_int32_t)ifr->ifr_vnetid;
 		(void)vxlan_config(ifp, NULL, NULL);
 		splx(s);
