@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.168 2013/10/17 16:27:44 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.169 2013/10/19 10:38:55 henning Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1077,21 +1077,11 @@ udp_output(struct mbuf *m, ...)
 	ui->ui_sport = inp->inp_lport;
 	ui->ui_dport = inp->inp_fport;
 	ui->ui_ulen = ui->ui_len;
-
-	/*
-	 * Compute the pseudo-header checksum; defer further checksumming
-	 * until ip_output() or hardware (if it exists).
-	 */
-	if (udpcksum) {
-		m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
-		ui->ui_sum = in_cksum_phdr(ui->ui_src.s_addr,
-		    ui->ui_dst.s_addr, htons((u_int16_t)len +
-		    sizeof (struct udphdr) + IPPROTO_UDP));
-	} else
-		ui->ui_sum = 0;
 	((struct ip *)ui)->ip_len = htons(sizeof (struct udpiphdr) + len);
 	((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;
 	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;
+	if (udpcksum)
+		m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
 
 	udpstat.udps_opackets++;
 

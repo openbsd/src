@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.247 2013/10/18 09:04:03 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.248 2013/10/19 10:38:54 henning Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -2083,6 +2083,25 @@ in_delayed_cksum(struct mbuf *m)
 void
 in_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 {
+	/* some hw and in_delayed_cksum need the pseudo header cksum */
+	if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT|M_UDP_CSUM_OUT)) {
+		struct ip *ip;
+		u_int16_t csum, offset;
+
+		ip  = mtod(m, struct ip *);
+		offset = ip->ip_hl << 2;
+		csum = in_cksum_phdr(ip->ip_src.s_addr, ip->ip_dst.s_addr,
+		    htonl(ntohs(ip->ip_len) - offset + ip->ip_p));
+		if (ip->ip_p == IPPROTO_TCP)
+			offset += offsetof(struct tcphdr, th_sum);
+		else if (ip->ip_p == IPPROTO_UDP)
+			offset += offsetof(struct udphdr, uh_sum);
+		if ((offset + sizeof(u_int16_t)) > m->m_len)
+			m_copyback(m, offset, sizeof(csum), &csum, M_NOWAIT);
+		else
+			*(u_int16_t *)(mtod(m, caddr_t) + offset) = csum;
+	}
+
 	if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_TCPv4) ||
 		    ifp->if_bridgeport != NULL) {

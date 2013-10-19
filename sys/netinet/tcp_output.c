@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.99 2013/08/12 21:57:16 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.100 2013/10/19 10:38:55 henning Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -947,28 +947,8 @@ send:
 	}
 #endif /* TCP_SIGNATURE */
 
-	/*
-	 * Put TCP length in extended header, and then
-	 * checksum extended header and data.
-	 */
-	switch (tp->pf) {
-	case 0:	/*default to PF_INET*/
-#ifdef INET
-	case AF_INET:
-		/* Defer checksumming until later (ip_output() or hardware) */
-		m->m_pkthdr.csum_flags |= M_TCP_CSUM_OUT;
-		if (len + optlen)
-			th->th_sum = in_cksum_addword(th->th_sum,
-			    htons((u_int16_t)(len + optlen)));
-		break;
-#endif /* INET */
-#ifdef INET6
-	case AF_INET6:
-		th->th_sum = in6_cksum(m, IPPROTO_TCP, sizeof(struct ip6_hdr),
-			hdrlen - sizeof(struct ip6_hdr) + len);
-		break;
-#endif /* INET6 */
-	}
+	/* Defer checksumming until later (ip_output() or hardware) */
+	m->m_pkthdr.csum_flags |= M_TCP_CSUM_OUT;
 
 	/*
 	 * In transmit state, time the transmission and arrange for
