@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.90 2013/01/17 02:00:33 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.91 2013/10/19 15:04:25 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -548,23 +548,16 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 		printf("prefix %s/%u ", log_addr(&r->match.prefix.addr),
 		    r->match.prefix.len);
 
-	if (r->match.prefix.addr.aid == 0 && r->match.prefixlen.aid) {
-		if (r->match.prefixlen.aid == AID_INET)
-			printf("inet ");
-		if (r->match.prefixlen.aid == AID_INET6)
-			printf("inet6 ");
-	}
-
-	if (r->match.prefixlen.op) {
-		if (r->match.prefixlen.op == OP_RANGE ||
-		    r->match.prefixlen.op == OP_XRANGE) {
-			printf("prefixlen %u ", r->match.prefixlen.len_min);
-			print_op(r->match.prefixlen.op);
-			printf(" %u ", r->match.prefixlen.len_max);
+	if (r->match.prefix.op) {
+		if (r->match.prefix.op == OP_RANGE ||
+		    r->match.prefix.op == OP_XRANGE) {
+			printf("prefixlen %u ", r->match.prefix.len_min);
+			print_op(r->match.prefix.op);
+			printf(" %u ", r->match.prefix.len_max);
 		} else {
 			printf("prefixlen ");
-			print_op(r->match.prefixlen.op);
-			printf(" %u ", r->match.prefixlen.len_min);
+			print_op(r->match.prefix.op);
+			printf(" %u ", r->match.prefix.len_min);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.279 2013/09/27 08:23:10 sthen Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.280 2013/10/19 15:04:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -748,7 +748,10 @@ struct ext_comm_pairs {
 
 struct filter_prefix {
 	struct bgpd_addr	addr;
+	u_int8_t		op;
 	u_int8_t		len;
+	u_int8_t		len_min;
+	u_int8_t		len_max;
 };
 
 struct filter_nexthop {
@@ -758,16 +761,8 @@ struct filter_nexthop {
 #define FILTER_NEXTHOP_NEIGHBOR	2
 };
 
-struct filter_prefixlen {
-	enum comp_ops		op;
-	u_int8_t		aid;
-	u_int8_t		len_min;
-	u_int8_t		len_max;
-};
-
 struct filter_match {
 	struct filter_prefix		prefix;
-	struct filter_prefixlen		prefixlen;
 	struct filter_nexthop		nexthop;
 	struct filter_as		as;
 	struct filter_aslen		aslen;

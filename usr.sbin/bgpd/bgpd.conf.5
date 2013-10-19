@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.128 2013/10/17 09:14:02 blambert Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.129 2013/10/19 15:04:25 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 17 2013 $
+.Dd $Mdocdate: October 19 2013 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1156,11 +1156,6 @@ deny from { 128.251.16.1, 251.128.16.2, group hojo }
 .Pp
 .It Pq Ic inet Ns | Ns Ic inet6
 This rule applies only to routes matching the stated address family.
-The address family needs to be set only in rules that use
-.Ic prefixlen
-without specifying a
-.Ic prefix
-beforehand.
 .Pp
 .It Ic max-as-len Ar len
 This rule applies only to
@@ -1193,37 +1188,30 @@ in which case the nexthop is compared against the address of the neighbor.
 Nexthop filtering is not supported on locally announced networks and one must
 take into consideration previous rules overwriting nexthops.
 .Pp
-.It Xo
-.Ic prefix
-.Ar address Ns Li / Ns Ar len
-.Xc
+.It Ic prefix Ar address Ns Li / Ns Ar len
+.It Ic prefix Ar address Ns Li / Ns Ar len Ic prefixlen Ar range
+.It Ic prefix Ar address Ns Li / Ns Ar len Ic or-longer
 This rule applies only to
 .Em UPDATES
 for the specified prefix.
 .Pp
-Multiple
-.Ar address Ns Li / Ns Ar len
-entries may be specified,
+Multiple entries may be specified,
 separated by commas or whitespace,
 if enclosed in curly brackets:
 .Bd -literal -offset indent
-deny from any prefix { 192.168.0.0/16, 10.0.0.0/8 }
+deny from any prefix { 192.168.0.0/16, 10.0.0.0/8 or-longer }
 .Ed
 .Pp
 Multiple lists can also be specified, which is useful for
 macro expansion:
 .Bd -literal -offset indent
 good="{ 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8 }"
-bad="{ 224.0.0.0/4, 240.0.0.0/4 }"
+bad="{ 224.0.0.0/4 prefixlen >= 4, 240.0.0.0/4 prefixlen >= 4 }"
 ugly="{ 127.0.0.1/8, 169.254.0.0/16 }"
 
 deny from any prefix { $good $bad $ugly }
 .Ed
 .Pp
-.It Ic prefixlen Ar range
-This rule applies only to
-.Em UPDATES
-for prefixes where the prefixlen matches.
 Prefix length ranges are specified by using these operators:
 .Bd -literal -offset indent
 =	(equal)
@@ -1250,14 +1238,16 @@ Or, to match all prefix lengths < 8 or > 12, and hence the CIDR netmasks
 prefixlen 8><12
 .Ed
 .Pp
-.Ic prefixlen
-can be used together with
-.Ic prefix .
-.Pp
 This will match all prefixes in the 10.0.0.0/8 netblock with netmasks longer
 than 16:
 .Bd -literal -offset indent
 prefix 10.0.0.0/8 prefixlen > 16
+.Ed
+.Pp
+.Ic or-longer
+is a shorthand for:
+.Bd -literal -offset indent
+.Ic prefix Ar address Ns Li / Ns Ar len Ic prexiflen Ic >= Ar len
 .Ed
 .Pp
 .It Ic quick

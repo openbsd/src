@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.15 2013/09/27 08:23:11 sthen Exp $ */
+/*	$OpenBSD: util.c,v 1.16 2013/10/19 15:04:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -422,6 +422,8 @@ prefix_compare(const struct bgpd_addr *a, const struct bgpd_addr *b,
 
 	switch (a->aid) {
 	case AID_INET:
+		if (prefixlen == 0)
+			return (0);
 		if (prefixlen > 32)
 			fatalx("prefix_cmp: bad IPv4 prefixlen");
 		mask = htonl(prefixlen2mask(prefixlen));
@@ -431,6 +433,8 @@ prefix_compare(const struct bgpd_addr *a, const struct bgpd_addr *b,
 			return (aa - ba);
 		return (0);
 	case AID_INET6:
+		if (prefixlen == 0)
+			return (0);
 		if (prefixlen > 128)
 			fatalx("prefix_cmp: bad IPv6 prefixlen");
 		for (i = 0; i < prefixlen / 8; i++)

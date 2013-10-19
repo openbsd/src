@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.69 2013/08/14 20:34:27 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.70 2013/10/19 15:04:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -329,58 +329,26 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 			return (0);
 
 		/* test prefixlen stuff too */
-		switch (f->match.prefixlen.op) {
-		case OP_NONE:
-			/* perfect match */
+		switch (f->match.prefix.op) {
+		case OP_NONE: /* perfect match */
+		case OP_EQ:
 			return (plen == f->match.prefix.len);
-		case OP_RANGE:
-			return ((plen >= f->match.prefixlen.len_min) &&
-			    (plen <= f->match.prefixlen.len_max));
-		case OP_XRANGE:
-			return ((plen < f->match.prefixlen.len_min) ||
-			    (plen > f->match.prefixlen.len_max));
-		case OP_EQ:
-			return (plen == f->match.prefixlen.len_min);
 		case OP_NE:
-			return (plen != f->match.prefixlen.len_min);
-		case OP_LE:
-			return (plen <= f->match.prefixlen.len_min);
-		case OP_LT:
-			return (plen < f->match.prefixlen.len_min);
-		case OP_GE:
-			return (plen >= f->match.prefixlen.len_min);
-		case OP_GT:
-			return (plen > f->match.prefixlen.len_min);
-		}
-		/* NOTREACHED */
-	} else if (f->match.prefixlen.op != OP_NONE) {
-		/* only prefixlen without a prefix */
-
-		if (f->match.prefixlen.aid != prefix->aid)
-			/* don't use IPv4 rules for IPv6 and vice versa */
-			return (0);
-
-		switch (f->match.prefixlen.op) {
-		case OP_NONE:
-			fatalx("internal filter bug");
+			return (plen != f->match.prefix.len_min);
 		case OP_RANGE:
-			return ((plen >= f->match.prefixlen.len_min) &&
-			    (plen <= f->match.prefixlen.len_max));
+			return ((plen >= f->match.prefix.len_min) &&
+			    (plen <= f->match.prefix.len_max));
 		case OP_XRANGE:
-			return ((plen < f->match.prefixlen.len_min) ||
-			    (plen > f->match.prefixlen.len_max));
-		case OP_EQ:
-			return (plen == f->match.prefixlen.len_min);
-		case OP_NE:
-			return (plen != f->match.prefixlen.len_min);
+			return ((plen < f->match.prefix.len_min) ||
+			    (plen > f->match.prefix.len_max));
 		case OP_LE:
-			return (plen <= f->match.prefixlen.len_min);
+			return (plen <= f->match.prefix.len_min);
 		case OP_LT:
-			return (plen < f->match.prefixlen.len_min);
+			return (plen < f->match.prefix.len_min);
 		case OP_GE:
-			return (plen >= f->match.prefixlen.len_min);
+			return (plen >= f->match.prefix.len_min);
 		case OP_GT:
-			return (plen > f->match.prefixlen.len_min);
+			return (plen > f->match.prefix.len_min);
 		}
 		/* NOTREACHED */
 	}
