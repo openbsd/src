@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.27 2013/10/20 09:41:31 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.28 2013/10/20 11:16:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -45,11 +45,6 @@
 #include "ahci.h"
 #include "sd.h"
 
-#if NWD > 0
-#include <dev/ata/atavar.h>
-#include <dev/ata/wdvar.h>
-#endif
-
 /* Hibernate support */
 void    hibernate_enter_resume_4k_pte(vaddr_t, paddr_t);
 void    hibernate_enter_resume_4k_pde(vaddr_t);
@@ -79,8 +74,11 @@ get_hibernate_io_function(void)
 	if (blkname == NULL)
 		return NULL;
 #if NWD > 0
-	if (strcmp(blkname, "wd") == 0)
+	if (strcmp(blkname, "wd") == 0) {
+		extern int wd_hibernate_io(dev_t dev, daddr_t blkno,
+		    vaddr_t addr, size_t size, int op, void *page);
 		return wd_hibernate_io;
+	}
 #endif
 #if NAHCI > 0 && NSD > 0
 	if (strcmp(blkname, "sd") == 0) {
