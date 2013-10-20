@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.38 2012/12/04 02:38:50 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.39 2013/10/20 03:07:35 guenther Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ main(int argc, char *argv[])
 			break;
 		case 'r':		/* user specified seconds */
 			rflag = 1;
-			tval = atol(optarg);
+			tval = atoll(optarg);
 			break;
 		case 'u':		/* do everything in UTC */
 			if (setenv("TZ", "UTC", 1) == -1)
