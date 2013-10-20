@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.55 2013/10/14 23:26:22 krw Exp $	*/
+/*	$OpenBSD: xy.c,v 1.56 2013/10/20 10:11:16 krw Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ xygetdisklabel(xy, b)
 	lp->d_secsize = XYFM_BPS;
 	if (sl->sl_magic == SUN_DKMAGIC) {
 		lp->d_secpercyl = sl->sl_nsectors * sl->sl_ntracks;
-		DL_SETDSIZE(lp, (daddr_t)lp->d_secpercyl * sl->sl_ncylinders);
+		DL_SETDSIZE(lp, (u_int64_t)lp->d_secpercyl * sl->sl_ncylinders);
 	} else {
 		lp->d_secpercyl = 1;
 	}

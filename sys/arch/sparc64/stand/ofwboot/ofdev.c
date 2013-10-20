@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.18 2013/06/11 16:42:12 deraadt Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.19 2013/10/20 10:11:17 krw Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -272,7 +272,7 @@ disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 	secpercyl = sl->sl_nsectors * sl->sl_ntracks;
 	lp->d_secpercyl = secpercyl;
 	if (DL_GETDSIZE(lp) == 0)
-		DL_SETDSIZE(lp, (daddr_t)secpercyl * sl->sl_ncylinders);
+		DL_SETDSIZE(lp, (u_int64_t)secpercyl * sl->sl_ncylinders);
 	lp->d_version = 1;
 
 	memcpy(&lp->d_uid, &sl->sl_uid, sizeof(lp->d_uid));

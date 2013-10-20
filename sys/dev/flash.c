@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.26 2013/06/11 16:42:13 deraadt Exp $	*/
+/*	$OpenBSD: flash.c,v 1.27 2013/10/20 10:11:17 krw Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -969,7 +969,7 @@ flashgetdefaultlabel(dev_t dev, struct flash_softc *sc,
 	lp->d_nsectors = sc->sc_flashdev->capacity / lp->d_ntracks
 	    / lp->d_ncylinders;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
-	DL_SETDSIZE(lp, (daddr_t)lp->d_ncylinders * lp->d_secpercyl);
+	DL_SETDSIZE(lp, (u_int64_t)lp->d_ncylinders * lp->d_secpercyl);
 
 	lp->d_version = 1;
 
