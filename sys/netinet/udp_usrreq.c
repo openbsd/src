@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.169 2013/10/19 10:38:55 henning Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.170 2013/10/20 11:03:01 phessler Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -565,7 +565,8 @@ udp_input(struct mbuf *m, ...)
 #ifdef INET6
 		if (ip6)
 			inp = in6_pcbhashlookup(&udbtable, &ip6->ip6_src,
-			    uh->uh_sport, &ip6->ip6_dst, uh->uh_dport);
+			    uh->uh_sport, &ip6->ip6_dst, uh->uh_dport,
+			    m->m_pkthdr.rdomain);
 		else
 #endif /* INET6 */
 		inp = in_pcbhashlookup(&udbtable, ip->ip_src, uh->uh_sport,
@@ -585,7 +586,8 @@ udp_input(struct mbuf *m, ...)
 #ifdef INET6
 		if (ip6) {
 			inp = in6_pcblookup_listen(&udbtable,
-			    &ip6->ip6_dst, uh->uh_dport, inpl_reverse, m);
+			    &ip6->ip6_dst, uh->uh_dport, inpl_reverse, m,
+			    m->m_pkthdr.rdomain);
 		} else
 #endif /* INET6 */
 		inp = in_pcblookup_listen(&udbtable,
@@ -870,7 +872,8 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 			 * payload.
 			 */
 			if (in6_pcbhashlookup(&udbtable, &sa6.sin6_addr,
-			    uh.uh_dport, &sa6_src.sin6_addr, uh.uh_sport))
+			    uh.uh_dport, &sa6_src.sin6_addr, uh.uh_sport,
+			    rdomain))
 				valid = 1;
 #if 0
 			/*
@@ -881,7 +884,8 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 			 * is really ours.
 			 */
 			else if (in6_pcblookup_listen(&udbtable,
-			    &sa6_src.sin6_addr, uh.uh_sport, 0);
+			    &sa6_src.sin6_addr, uh.uh_sport, 0,
+			    rdomain))
 				valid = 1;
 #endif
 
@@ -904,10 +908,10 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		}
 
 		(void) in6_pcbnotify(&udbtable, &sa6, uh.uh_dport,
-		    &sa6_src, uh.uh_sport, cmd, cmdarg, notify);
+		    &sa6_src, uh.uh_sport, rdomain, cmd, cmdarg, notify);
 	} else {
 		(void) in6_pcbnotify(&udbtable, &sa6, 0,
-		    &sa6_any, 0, cmd, cmdarg, notify);
+		    &sa6_any, 0, rdomain, cmd, cmdarg, notify);
 	}
 }
 #endif

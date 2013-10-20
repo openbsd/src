@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.59 2013/10/17 16:27:47 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.60 2013/10/20 11:03:03 phessler Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -305,7 +305,7 @@ rip6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		 */
 		in6p = NULL;
 		in6p = in6_pcbhashlookup(&rawin6pcbtable, &sa6->sin6_addr, 0,
-		    &sa6_src->sin6_addr, 0);
+		    &sa6_src->sin6_addr, 0, rdomain);
 #if 0
 		if (!in6p) {
 			/*
@@ -317,7 +317,8 @@ rip6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 			 */
 			in6p = in_pcblookup(&rawin6pcbtable, &sa6->sin6_addr, 0,
 			    (struct in6_addr *)&sa6_src->sin6_addr, 0,
-			    INPLOOKUP_WILDCARD | INPLOOKUP_IPV6);
+			    INPLOOKUP_WILDCARD | INPLOOKUP_IPV6,
+			    rdomain);
 		}
 #endif
 
@@ -344,7 +345,7 @@ rip6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 	}
 
 	(void) in6_pcbnotify(&rawin6pcbtable, sa6, 0,
-	    sa6_src, 0, cmd, cmdarg, notify);
+	    sa6_src, 0, rdomain, cmd, cmdarg, notify);
 }
 
 /*

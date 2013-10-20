@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.120 2013/10/17 16:27:45 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.121 2013/10/20 11:03:02 phessler Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -283,7 +283,7 @@ in6_ifremloop(struct ifaddr *ifa)
 		 * a subnet-router anycast address on an interface attached
 		 * to a shared medium.
 		 */
-		rt = rtalloc1(ifa->ifa_addr, 0, 0);
+		rt = rtalloc1(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
 		if (rt != NULL && (rt->rt_flags & RTF_HOST) != 0 &&
 		    (rt->rt_ifp->if_flags & IFF_LOOPBACK) != 0) {
 			rt->rt_refcnt--;

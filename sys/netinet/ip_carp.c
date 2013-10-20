@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.213 2013/10/19 16:09:53 bluhm Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.214 2013/10/20 11:03:01 phessler Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1241,7 +1241,7 @@ carp_send_ad(void *v)
 		m->m_pkthdr.len = len;
 		m->m_pkthdr.rcvif = NULL;
 		m->m_pkthdr.pf.prio = CARP_IFQ_PRIO;
-		/* XXX m->m_pkthdr.rdomain = sc->sc_if.if_rdomain; */
+		m->m_pkthdr.rdomain = sc->sc_if.if_rdomain;
 		m->m_len = len;
 		MH_ALIGN(m, m->m_len);
 		m->m_flags |= M_MCAST;
@@ -2123,6 +2123,7 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 		if (ia->ia_ifp != &sc->sc_if &&
 		    ia->ia_ifp->if_type != IFT_CARP &&
 		    (ia->ia_ifp->if_flags & IFF_MULTICAST) &&
+		    ia->ia_ifp->if_rdomain == sc->sc_if.if_rdomain &&
 		    (i == 4))
 			break;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.121 2013/10/19 10:38:55 henning Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.122 2013/10/20 11:03:01 phessler Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -728,7 +728,7 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		 */
 		inp = in6_pcbhashlookup(&tcbtable, &sa6->sin6_addr,
 		    th.th_dport, (struct in6_addr *)&sa6_src->sin6_addr,
-		    th.th_sport);
+		    th.th_sport, rdomain);
 		if (cmd == PRC_MSGSIZE) {
 			/*
 			 * Depending on the value of "valid" and routing table
@@ -752,10 +752,10 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		     inet6ctlerrmap[cmd] == ENETUNREACH ||
 		     inet6ctlerrmap[cmd] == EHOSTDOWN))
 			syn_cache_unreach((struct sockaddr *)sa6_src,
-			    sa, &th, /* XXX */ 0);
+			    sa, &th, rdomain);
 	} else {
 		(void) in6_pcbnotify(&tcbtable, sa6, 0,
-		    sa6_src, 0, cmd, NULL, notify);
+		    sa6_src, 0, rdomain, cmd, NULL, notify);
 	}
 }
 #endif
@@ -901,7 +901,7 @@ tcp6_mtudisc_callback(faddr)
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *faddr;
 	(void) in6_pcbnotify(&tcbtable, &sin6, 0,
-	    &sa6_any, 0, PRC_MSGSIZE, NULL, tcp_mtudisc);
+	    &sa6_any, 0, /* XXX rdomain */ 0, PRC_MSGSIZE, NULL, tcp_mtudisc);
 }
 #endif /* INET6 */
 

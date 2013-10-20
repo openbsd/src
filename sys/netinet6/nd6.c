@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.102 2013/08/28 06:58:57 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.103 2013/10/20 11:03:02 phessler Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -948,10 +948,6 @@ nd6_nud_hint(struct rtentry *rt, struct in6_addr *dst6, int force)
 	}
 }
 
-/*
- * info - XXX: unused
- */
-
 void
 nd6_rtrequest(int req, struct rtentry *rt)
 {
@@ -1023,7 +1019,8 @@ nd6_rtrequest(int req, struct rtentry *rt)
 			 * (RTF_LLINFO && !ln case).
 			 */
 			rt_setgate(rt, rt_key(rt),
-				   (struct sockaddr *)&null_sdl, 0);
+			    (struct sockaddr *)&null_sdl,
+			    rt->rt_ifp->if_rdomain);
 			gate = rt->rt_gateway;
 			SDL(gate)->sdl_type = ifp->if_type;
 			SDL(gate)->sdl_index = ifp->if_index;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.106 2013/08/21 09:05:22 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.107 2013/10/20 11:03:01 phessler Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -722,6 +722,7 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 		struct route ro;
 
 		bzero((caddr_t) &ro, sizeof(ro));
+		ro.ro_tableid = m->m_pkthdr.rdomain;
 		dst = satosin(&ro.ro_dst);
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
@@ -925,6 +926,7 @@ icmp_mtudisc_clone(struct in_addr dst, u_int rtableid)
 	int error;
 
 	bzero(&ro, sizeof(ro));
+	ro.ro_tableid = rtableid;
 	sin = satosin(&ro.ro_dst);
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof(*sin);

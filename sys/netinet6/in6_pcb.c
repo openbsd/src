@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.56 2013/05/31 15:04:24 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.57 2013/10/20 11:03:02 phessler Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -269,7 +269,7 @@ in6_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 			t = in_pcblookup(head,
 			    (struct in_addr *)&zeroin6_addr, 0,
 			    (struct in_addr *)&sin6->sin6_addr, lport,
-			    wild, /* XXX */ 0);
+			    wild, inp->inp_rtableid);
 
 			if (t && (reuseport & t->inp_socket->so_options) == 0)
 				return EADDRINUSE;
@@ -346,7 +346,7 @@ in6_pcbsetport(struct in6_addr *laddr, struct inpcb *inp, struct proc *p)
 			lport = htons(*lastport);
 		} while (in_baddynamic(*lastport, so->so_proto->pr_protocol) ||
 		    in_pcblookup(table, &zeroin6_addr, 0,
-		    &inp->inp_laddr6, lport, wild, /* XXX */ 0));
+		    &inp->inp_laddr6, lport, wild, inp->inp_rtableid));
 	} else {
 		/*
 		 * counting up
@@ -364,7 +364,7 @@ in6_pcbsetport(struct in6_addr *laddr, struct inpcb *inp, struct proc *p)
 			lport = htons(*lastport);
 		} while (in_baddynamic(*lastport, so->so_proto->pr_protocol) ||
 		    in_pcblookup(table, &zeroin6_addr, 0,
-		    &inp->inp_laddr6, lport, wild, /* XXX */ 0));
+		    &inp->inp_laddr6, lport, wild, inp->inp_rtableid));
 	}
 
 	inp->inp_lport = lport;
@@ -445,7 +445,7 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 
 	if (in_pcblookup(inp->inp_table, &sin6->sin6_addr, sin6->sin6_port,
 	    IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) ? in6a : &inp->inp_laddr6,
-	    inp->inp_lport, INPLOOKUP_IPV6, /* XXX */ 0)) {
+	    inp->inp_lport, INPLOOKUP_IPV6, inp->inp_rtableid)) {
 		return (EADDRINUSE);
 	}
 	if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6)) {
@@ -479,8 +479,8 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
  */
 int
 in6_pcbnotify(struct inpcbtable *head, struct sockaddr_in6 *dst, 
-    uint fport_arg, const struct sockaddr_in6 *src, uint lport_arg, int cmd, 
-    void *cmdarg, void (*notify)(struct inpcb *, int))
+    uint fport_arg, const struct sockaddr_in6 *src, uint lport_arg,
+    u_int rdomain, int cmd, void *cmdarg, void (*notify)(struct inpcb *, int))
 {
 	struct inpcb *inp, *ninp;
 	u_short fport = fport_arg, lport = lport_arg;
@@ -501,6 +501,7 @@ in6_pcbnotify(struct inpcbtable *head, struct sockaddr_in6 *dst,
 		return (0);
 	}
 
+	rdomain = rtable_l2(rdomain);
 	/*
 	 * note that src can be NULL when we get notify by local fragmentation.
 	 */
@@ -590,6 +591,7 @@ in6_pcbnotify(struct inpcbtable *head, struct sockaddr_in6 *dst,
 			goto do_notify;
 		else if (!IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6,
 					     &dst->sin6_addr) ||
+			 rtable_l2(inp->inp_rtableid) != rdomain ||
 			 inp->inp_socket == 0 ||
 			 (lport && inp->inp_lport != lport) ||
 			 (!IN6_IS_ADDR_UNSPECIFIED(&sa6_src.sin6_addr) &&

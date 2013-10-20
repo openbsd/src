@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.72 2013/07/01 14:22:20 bluhm Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.73 2013/10/20 11:03:02 phessler Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -427,7 +427,8 @@ nd6_rtmsg(int cmd, struct rtentry *rt)
 		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 	}
 
-	rt_missmsg(cmd, &info, rt->rt_flags, rt->rt_ifp, 0, 0);
+	rt_missmsg(cmd, &info, rt->rt_flags, rt->rt_ifp, 0,
+	    rt->rt_ifp->if_rdomain);
 }
 
 void
@@ -1947,7 +1948,7 @@ in6_init_address_ltimes(struct nd_prefix *new, struct in6_addrlifetime *lt6)
 void
 rt6_flush(struct in6_addr *gateway, struct ifnet *ifp)
 {
-	struct radix_node_head *rnh = rt_gettable(AF_INET6, 0);
+	struct radix_node_head *rnh = rt_gettable(AF_INET6, ifp->if_rdomain);
 	int s = splsoftnet();
 
 	/* We'll care only link-local addresses */
