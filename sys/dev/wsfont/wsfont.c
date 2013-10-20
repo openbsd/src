@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.32 2013/10/19 14:34:20 miod Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.33 2013/10/20 09:35:36 miod Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -35,6 +35,7 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/malloc.h>
+#include <sys/queue.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -116,52 +117,54 @@
 #include <dev/wsfont/gallant12x22.h>
 #endif
 
-/* Placeholder struct used for linked list */
 struct font {
-	struct	font *next;
-	struct	font *prev;
+	TAILQ_ENTRY(font) chain;
 	struct	wsdisplay_font *font;
 	u_short	lockcount;
 	u_short	cookie;
 	u_short	flg;
 };
+TAILQ_HEAD(, font) list;
 
 /* Our list of built-in fonts */
-static struct font *list, builtin_fonts[] = {
+static struct font builtin_fonts[] = {
+#define BUILTIN_FONT(f, c) \
+	{ .font = &(f), .cookie = (c), .lockcount = 0, \
+	  .flg = WSFONT_STATIC | WSFONT_BUILTIN }
 #ifdef FONT_BOLD8x16
-	{ NULL, NULL, &bold8x16, 0, 1, WSFONT_STATIC | WSFONT_BUILTIN  },
+	BUILTIN_FONT(bold8x16, 1),
 #endif
 #ifdef FONT_BOLD8x16_ISO1
-	{ NULL, NULL, &bold8x16_iso1, 0, 2, WSFONT_STATIC | WSFONT_BUILTIN },
+	BUILTIN_FONT(bold8x16_iso1, 2),
 #endif
 #ifdef FONT_COURIER11x18
-	{ NULL, NULL, &courier11x18, 0, 3, WSFONT_STATIC | WSFONT_BUILTIN },
+	BUILTIN_FONT(courier11x18, 3),
 #endif
 #ifdef FONT_GALLANT12x22
-	{ NULL, NULL, &gallant12x22, 0, 4, WSFONT_STATIC | WSFONT_BUILTIN },
+	BUILTIN_FONT(gallant12x22, 4),
 #endif
 #ifdef FONT_LUCIDA16x29
-	{ NULL, NULL, &lucida16x29, 0, 5, WSFONT_STATIC | WSFONT_BUILTIN },
+	BUILTIN_FONT(lucida16x29, 5),
 #endif
 #ifdef FONT_QVSS8x15
-	{ NULL, NULL, &qvss8x15, 0, 6, WSFONT_STATIC | WSFONT_BUILTIN },
+	BUILTIN_FONT(qvss8x15, 6),
 #endif
 #ifdef FONT_VT220L8x8
-	{ NULL, NULL, &vt220l8x8, 0, 7, WSFONT_STATIC | WSFONT_BUILTIN },
+	BUILTIN_FONT(vt220l8x8, 7),
 #endif
 #ifdef FONT_VT220L8x10
-	{ NULL, NULL, &vt220l8x10, 0, 8, WSFONT_STATIC | WSFONT_BUILTIN },
+	BUILTIN_FONT(vt220l8x10, 8),
 #endif
 #ifdef FONT_SONY8x16
-	{ NULL, NULL, &sony8x16, 0, 9, WSFONT_STATIC | WSFONT_BUILTIN },
+	BUILTIN_FONT(sony8x16, 9),
 #endif
 #ifdef FONT_SONY12x24
-	{ NULL, NULL, &sony12x24, 0, 10, WSFONT_STATIC | WSFONT_BUILTIN },
+	BUILTIN_FONT(sony12x24, 10),
 #endif
 #ifdef FONT_OMRON12x20
-	{ NULL, NULL, &omron12x20, 0, 11, WSFONT_STATIC | WSFONT_BUILTIN },
+	BUILTIN_FONT(omron12x20, 11),
 #endif
-	{ NULL, NULL, NULL, 0 },
+#undef BUILTIN_FONT
 };
 
 #if !defined(SMALL_KERNEL) || defined(__alpha__)
@@ -273,7 +276,7 @@ wsfont_enum(void (*cb)(char *, int, int, int))
 
 	s = splhigh();
 
-	for (ent = list; ent; ent = ent->next) {
+	TAILQ_FOREACH(ent, &list, chain) {
 		f = ent->font;
 		cb(f->name, f->fontwidth, f->fontheight, f->stride);
 	}
@@ -374,15 +377,16 @@ void
 wsfont_init(void)
 {
 	static int again;
-	int i;
+	unsigned int i;
 
 	if (again != 0)
 		return;
 	again = 1;
 
-	for (i = 0; builtin_fonts[i].font != NULL; i++) {
-		builtin_fonts[i].next = list;
-		list = &builtin_fonts[i];
+	TAILQ_INIT(&list);
+
+	for (i = 0; i < nitems(builtin_fonts); i++) {
+		TAILQ_INSERT_TAIL(&list, &builtin_fonts[i], chain);
 	}
 }
 
@@ -394,7 +398,7 @@ wsfont_find0(int cookie)
 {
 	struct font *ent;
 
-	for (ent = list; ent != NULL; ent = ent->next)
+	TAILQ_FOREACH(ent, &list, chain)
 		if (ent->cookie == cookie)
 			return (ent);
 
@@ -412,7 +416,7 @@ wsfont_find(char *name, int width, int height, int stride)
 
 	s = splhigh();
 
-	for (ent = list; ent != NULL; ent = ent->next) {
+	TAILQ_FOREACH(ent, &list, chain) {
 		if (height != 0 && ent->font->fontheight != height)
 			continue;
 
@@ -458,8 +462,6 @@ wsfont_add(struct wsdisplay_font *font, int copy)
 	ent->lockcount = 0;
 	ent->flg = 0;
 	ent->cookie = cookiegen++;
-	ent->next = list;
-	ent->prev = NULL;
 
 	/* Is this font statically allocated? */
 	if (!copy) {
@@ -478,7 +480,7 @@ wsfont_add(struct wsdisplay_font *font, int copy)
 	}
 
 	/* Now link into the list and return */
-	list = ent;
+	TAILQ_INSERT_TAIL(&list, ent, chain);
 	splx(s);
 	return (0);
 }
@@ -512,14 +514,7 @@ wsfont_remove(int cookie)
 	}
 
 	/* Remove from list, free entry */
-	if (ent->prev)
-		ent->prev->next = ent->next;
-	else
-		list = ent->next;
-
-	if (ent->next)
-		ent->next->prev = ent->prev;
-
+	TAILQ_REMOVE(&list, ent, chain);
 	free(ent, M_DEVBUF);
 	splx(s);
 	return (0);
