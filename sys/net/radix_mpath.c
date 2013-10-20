@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.19 2013/04/10 08:50:59 mpi Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.20 2013/10/20 13:23:35 claudio Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -366,10 +366,6 @@ rt_mpath_conflict(struct radix_node_head *rnh, struct rtentry *rt,
 		if (rt1->rt_gateway->sa_len != rt->rt_gateway->sa_len ||
 		    bcmp(rt1->rt_gateway, rt->rt_gateway,
 		    rt1->rt_gateway->sa_len))
-			continue;
-
-		/* check the route priority */
-		if (rt1->rt_priority != rt->rt_priority)
 			continue;
 
 		/* all key/mask/gateway are the same.  conflicting entry. */
