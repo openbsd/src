@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.28 2013/10/20 11:16:56 deraadt Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.29 2013/10/20 20:03:03 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -339,6 +339,8 @@ hibernate_disable_intr_machdep(void)
 void
 hibernate_quiesce_cpus(void)
 {
+        KASSERT(CPU_IS_PRIMARY(curcpu()));
+
 	/* Start the hatched (but idling) APs */
 	cpu_boot_secondary_processors();
 

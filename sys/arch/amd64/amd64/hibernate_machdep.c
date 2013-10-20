@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.16 2013/10/20 11:16:56 deraadt Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.17 2013/10/20 20:03:03 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -395,25 +395,12 @@ hibernate_disable_intr_machdep(void)
 void
 hibernate_quiesce_cpus(void)
 {
-	int i;
-
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
 
 	/* Start the hatched (but idling) APs */
 	cpu_boot_secondary_processors();
 
-	/* 
-	 * Wait for cpus to halt so we know their FPU state has been
-	 * saved and their caches have been written back.
-	 */
-	x86_broadcast_ipi(X86_IPI_HALT_REALMODE);
-	for (i = 0; i < ncpus; i++) {
-		struct cpu_info *ci = cpu_info[i];
-
-		if (CPU_IS_PRIMARY(ci))
-			continue;
-		while (ci->ci_flags & CPUF_RUNNING)
-			;
-	}
+	/* Now shut them down */
+	acpi_sleep_mp();	
 }
 #endif /* MULTIPROCESSOR */
