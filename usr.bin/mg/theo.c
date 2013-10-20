@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.127 2013/10/08 19:52:49 reyk Exp $	*/
+/*	$OpenBSD: theo.c,v 1.128 2013/10/20 09:34:20 blambert Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -169,7 +169,8 @@ static const char *talk[] = {
 	"We have two kinds of developers - those that deal with their own shit and those that deal with other people's shit.",
 	"If people keep adding such huge stuff, soon mg will be bigger than emacs.",
 	"this change comes down to: This year, next year, 5 years from now, 10 years from now, or Oh fuck.",
-	"backwards compatibility is king, and will remain king, until 2038."
+	"backwards compatibility is king, and will remain king, until 2038.",
+	"I don't know if the Internet's safe yet."
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
