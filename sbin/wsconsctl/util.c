@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.60 2013/10/20 10:43:47 miod Exp $ */
+/*	$OpenBSD: util.c,v 1.61 2013/10/20 22:07:57 miod Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -305,6 +305,9 @@ pr_field(const char *pre, struct field *f, const char *sep)
 	case FMT_SCREEN:
 		print_screen((struct wsdisplay_screentype *) f->valp);
 		break;
+	case FMT_STRING:
+		printf("%s", (const char *)f->valp);
+		break;
 	default:
 		errx(1, "internal error: pr_field: no format %d", f->format);
 		break;
@@ -455,6 +458,9 @@ rd_field(struct field *f, char *val, int merge)
 
 		break;
 	}
+	case FMT_STRING:
+		strlcpy(f->valp, val, WSFONT_NAME_SIZE);
+		break;
 	default:
 		errx(1, "internal error: rd_field: no format %d", f->format);
 		break;

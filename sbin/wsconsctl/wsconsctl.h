@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.h,v 1.13 2010/08/20 00:20:55 fgsch Exp $	*/
+/*	$OpenBSD: wsconsctl.h,v 1.14 2013/10/20 22:07:57 miod Exp $	*/
 /*	$NetBSD: wsconsctl.h 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -46,7 +46,8 @@ struct field {
 #define FMT_KBMAP	105		/* keyboard map */
 #define FMT_SCALE	106		/* wsmouse scale */
 #define FMT_EMUL	107		/* wsdisplay emulations */
-#define FMT_SCREEN	108		/* wddisplay screen types */
+#define FMT_SCREEN	108		/* wsdisplay screen types */
+#define FMT_STRING	109		/* free string */
 	int format;
 #define FLG_RDONLY	0x0001		/* variable cannot be modified */
 #define FLG_WRONLY	0x0002		/* variable cannot be displayed */

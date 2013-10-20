@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.18 2013/08/18 16:32:23 guenther Exp $	*/
+/*	$OpenBSD: display.c,v 1.19 2013/10/20 22:07:57 miod Exp $	*/
 /*	$NetBSD: display.c,v 1.1 1998/12/28 14:01:16 hannken Exp $ */
 
 /*-
@@ -45,6 +45,7 @@ u_int width, height, depth;
 int focus;
 struct field_pc brightness, contrast, backlight;
 int burnon, burnoff, vblank, kbdact, msact, outact;
+char fontname[WSFONT_NAME_SIZE];
 struct wsdisplay_emultype emuls;
 struct wsdisplay_screentype screens;
 
@@ -66,6 +67,7 @@ struct field display_field_tab[] = {
     { "kbdact",		&kbdact,	FMT_BOOL,	FLG_MODIFY|FLG_INIT },
     { "msact",		&msact,		FMT_BOOL,	FLG_MODIFY|FLG_INIT },
     { "outact",		&outact,	FMT_BOOL,	FLG_MODIFY|FLG_INIT },
+    { "font",		fontname,	FMT_STRING,	FLG_WRONLY },
     { NULL }
 };
 
@@ -182,6 +184,7 @@ display_put_values(int fd)
 {
 	struct wsdisplay_param param;
 	struct wsdisplay_burner burners;
+	struct wsdisplay_font font;
 	struct field *pf;
 	const char *cmd_str;
 	void *ptr;
@@ -232,6 +235,10 @@ display_put_values(int fd)
 
 			fillioctl(WSDISPLAYIO_SBURNER);
 			ptr = &burners;
+		} else if (ptr == fontname) {
+			bzero(&font, sizeof(font));
+			strlcpy(font.name, ptr, sizeof font.name);
+			fillioctl(WSDISPLAYIO_USEFONT);
 		} else
 			cmd = 0;
 
