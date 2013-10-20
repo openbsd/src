@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.4 2013/06/11 16:42:09 deraadt Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.5 2013/10/20 13:25:21 stsp Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -37,6 +37,15 @@
 /* List of softraid volumes. */
 struct sr_boot_volume_head sr_volumes;
 
+/* Metadata from keydisks. */
+struct sr_boot_keydisk {
+	struct sr_uuid	kd_uuid;
+	u_int8_t	kd_key[SR_CRYPTO_MAXKEYBYTES];
+	SLIST_ENTRY(sr_boot_keydisk) kd_link;
+};
+SLIST_HEAD(sr_boot_keydisk_head, sr_boot_keydisk);
+struct sr_boot_keydisk_head sr_keydisks;
+
 void
 srprobe_meta_opt_load(struct sr_metadata *sm, struct sr_meta_opt_head *som)
 {
@@ -60,7 +69,7 @@ srprobe_meta_opt_load(struct sr_metadata *sm, struct sr_meta_opt_head *som)
 		/* Unsupported old fixed length optional metadata. */
 		if (omh->som_length == 0) {
 			omh = (struct sr_meta_opt_hdr *)((void *)omh +
-			    omh->som_length);
+			    SR_OLD_META_OPT_SIZE);
 			continue;
 		}
 
@@ -91,6 +100,40 @@ srprobe_meta_opt_load(struct sr_metadata *sm, struct sr_meta_opt_head *som)
 }
 
 void
+srprobe_keydisk_load(struct sr_metadata *sm)
+{
+	struct sr_meta_opt_hdr	*omh;
+	struct sr_meta_keydisk	*skm;
+	struct sr_boot_keydisk	*kd;
+	int i;
+
+	/* Process optional metadata. */
+	omh = (struct sr_meta_opt_hdr *)((u_int8_t *)(sm + 1) +
+	    sizeof(struct sr_meta_chunk) * sm->ssdi.ssd_chunk_no);
+	for (i = 0; i < sm->ssdi.ssd_opt_no; i++) {
+
+		/* Unsupported old fixed length optional metadata. */
+		if (omh->som_length == 0) {
+			omh = (struct sr_meta_opt_hdr *)((void *)omh +
+			    SR_OLD_META_OPT_SIZE);
+			continue;
+		}
+
+		if (omh->som_type != SR_OPT_KEYDISK) {
+			omh = (struct sr_meta_opt_hdr *)((void *)omh +
+			    omh->som_length);
+			continue;
+		}
+
+		kd = alloc(sizeof(struct sr_boot_keydisk));
+		bcopy(&sm->ssdi.ssd_uuid, &kd->kd_uuid, sizeof(kd->kd_uuid));
+		skm = (struct sr_meta_keydisk*)omh;
+		bcopy(&skm->skm_maskkey, &kd->kd_key, sizeof(kd->kd_key));
+		SLIST_INSERT_HEAD(&sr_keydisks, kd, kd_link);
+	}
+}
+
+void
 srprobe(void)
 {
 	struct sr_boot_volume *bv, *bv1, *bv2;
@@ -105,6 +148,7 @@ srprobe(void)
 
 	/* Probe for softraid volumes. */
 	SLIST_INIT(&sr_volumes);
+	SLIST_INIT(&sr_keydisks);
 
 	md = alloc(SR_META_SIZE * 512);
 
@@ -139,6 +183,12 @@ srprobe(void)
 
 			/* XXX - validate checksum. */
 
+			/* Handle key disks separately... */
+			if (md->ssdi.ssd_level == SR_KEYDISK_LEVEL) {
+				srprobe_keydisk_load(md);
+				continue;
+			}
+
 			/* Locate chunk-specific metadata for this chunk. */
 			mc = (struct sr_meta_chunk *)(md + 1);
 			mc += md->ssdi.ssd_chunk_id;
@@ -156,10 +206,6 @@ srprobe(void)
 			bc->sbc_chunk_id = md->ssdi.ssd_chunk_id;
 			bc->sbc_ondisk = md->ssd_ondisk;
 			bc->sbc_state = mc->scm_status;
-
-			/* Handle key disks separately... later. */
-			if (md->ssdi.ssd_level == SR_KEYDISK_LEVEL)
-				continue;
 
 			SLIST_FOREACH(bv, &sr_volumes, sbv_link) {
 				if (bcmp(&md->ssdi.ssd_uuid, &bv->sbv_uuid,
@@ -268,8 +314,8 @@ srprobe(void)
 			    bv->sbv_flags & BIOC_SCBOOTABLE ? "*" : "");
 	}
 
-	if (md)
-		free(md, 0);
+	explicit_bzero(md, SR_META_SIZE * 512);
+	free(md, 0);
 }
 
 int
@@ -382,7 +428,7 @@ sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
 	buf = alloca(DEV_BSIZE);
 	sr_strategy(bv, F_READ, start, sizeof(struct disklabel), buf, NULL);
 
-#if BIOS_DEBUG
+#ifdef BIOS_DEBUG
 	printf("sr_getdisklabel: magic %lx\n",
 	    ((struct disklabel *)buf)->d_magic);
 	for (i = 0; i < MAXPARTITIONS; i++)
@@ -424,6 +470,7 @@ void
 sr_clear_keys(void)
 {
 	struct sr_boot_volume *bv;
+	struct sr_boot_keydisk *kd;
 
 	SLIST_FOREACH(bv, &sr_volumes, sbv_link) {
 		if (bv->sbv_level != 'C')
@@ -438,6 +485,10 @@ sr_clear_keys(void)
 			free(bv->sbv_maskkey, 0);
 			bv->sbv_maskkey = NULL;
 		}
+	}
+	SLIST_FOREACH(kd, &sr_keydisks, kd_link) {
+		explicit_bzero(kd, sizeof(*kd));
+		free(kd, 0);
 	}
 }
 
@@ -467,6 +518,7 @@ int
 sr_crypto_decrypt_keys(struct sr_boot_volume *bv)
 {
 	struct sr_meta_crypto *cm;
+	struct sr_boot_keydisk	*kd;
 	struct sr_meta_opt_item *omi;
 	struct sr_crypto_kdf_pbkdf2 *kdfhint;
 	struct sr_crypto_kdfinfo kdfinfo;
@@ -499,26 +551,34 @@ sr_crypto_decrypt_keys(struct sr_boot_volume *bv)
 		goto done;
 	}
 
-	printf("Passphrase: ");
-	for (i = 0; i < PASSPHRASE_LENGTH - 1; i++) {
-		c = cngetc();
-		if (c == '\r' || c == '\n')
+	SLIST_FOREACH(kd, &sr_keydisks, kd_link) {
+		if (bcmp(&kd->kd_uuid, &bv->sbv_uuid, sizeof(kd->kd_uuid)) == 0)
 			break;
-		passphrase[i] = (c & 0xff);
 	}
-	passphrase[i] = 0;
-	printf("\n");
+	if (kd) {
+		bcopy(&kd->kd_key, &kdfinfo.maskkey, sizeof(kdfinfo.maskkey));
+	} else {
+		printf("Passphrase: ");
+		for (i = 0; i < PASSPHRASE_LENGTH - 1; i++) {
+			c = cngetc();
+			if (c == '\r' || c == '\n')
+				break;
+			passphrase[i] = (c & 0xff);
+		}
+		passphrase[i] = 0;
+		printf("\n");
 
 #ifdef BIOS_DEBUG
-	printf("Got passphrase: %s with len %d\n",
-	    passphrase, strlen(passphrase));
+		printf("Got passphrase: %s with len %d\n",
+		    passphrase, strlen(passphrase));
 #endif
 
-	if (pkcs5_pbkdf2(passphrase, strlen(passphrase), kdfhint->salt,
-	    sizeof(kdfhint->salt), kdfinfo.maskkey, sizeof(kdfinfo.maskkey),
-	    kdfhint->rounds) != 0) {
-		printf("pbkdf2 failed\n");
-		goto done;
+		if (pkcs5_pbkdf2(passphrase, strlen(passphrase), kdfhint->salt,
+		    sizeof(kdfhint->salt), kdfinfo.maskkey,
+		    sizeof(kdfinfo.maskkey), kdfhint->rounds) != 0) {
+			printf("pbkdf2 failed\n");
+			goto done;
+		}
 	}
 
 	/* kdfinfo->maskkey now has key. */
@@ -540,11 +600,11 @@ sr_crypto_decrypt_keys(struct sr_boot_volume *bv)
 	    sizeof(kdfinfo.maskkey), keys, SR_CRYPTO_KEYBLOCK_BYTES, digest);
 
 	if (bcmp(digest, cm->chk_hmac_sha1.sch_mac, sizeof(digest))) {
-		printf("incorrect passphrase\n");
+		printf("incorrect passphrase or keydisk\n");
 		goto done;
 	}
 
-	/* Keys will be cleared before boot and from _rtt. */
+	/* Keys and keydisks will be cleared before boot and from _rtt. */
 	bv->sbv_keys = keys;
 	bv->sbv_maskkey = alloc(sizeof(kdfinfo.maskkey));
 	bcopy(&kdfinfo.maskkey, bv->sbv_maskkey, sizeof(kdfinfo.maskkey));
