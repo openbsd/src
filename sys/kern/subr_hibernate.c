@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.62 2013/10/20 09:27:39 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.63 2013/10/20 09:44:17 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1316,6 +1316,7 @@ hibernate_copy_chunk_to_piglet(paddr_t img_cur, vaddr_t piglet, size_t size)
 		src += ct;
 		dest += ct;
 	}
+	wbinvd();
 
 	/* Copy remaining pages */	
 	while (src < size + img_cur) {
@@ -1327,6 +1328,9 @@ hibernate_copy_chunk_to_piglet(paddr_t img_cur, vaddr_t piglet, size_t size)
 		src += ct;
 		dest += ct;
 	}
+
+	hibernate_flush();
+	wbinvd();
 }
 
 /*
