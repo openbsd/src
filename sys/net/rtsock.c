@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.127 2013/08/28 06:58:57 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.128 2013/10/20 12:35:48 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -368,8 +368,9 @@ route_input(struct mbuf *m0, ...)
 		/* filter messages that the process does not want */
 		rop = (struct routecb *)rp;
 		rtm = mtod(m, struct rt_msghdr *);
-		if (rop->msgfilter != 0 && !(rop->msgfilter & (1 <<
-		    rtm->rtm_type)))
+		/* but RTM_DESYNC can't be filtered */
+		if (rtm->rtm_type != RTM_DESYNC && rop->msgfilter != 0 &&
+		    !(rop->msgfilter & (1 << rtm->rtm_type)))
 			continue;
 		switch (rtm->rtm_type) {
 		case RTM_IFANNOUNCE:
@@ -543,6 +544,8 @@ route_output(struct mbuf *m, ...)
 
 	/* make sure that kernel-only bits are not set */
 	rtm->rtm_priority &= RTP_MASK;
+	rtm->rtm_flags &= ~(RTF_DONE|RTF_CLONED|RTF_MPATH);
+	rtm->rtm_fmask &= RTF_FMASK;
 
 	if (rtm->rtm_priority != 0) {
 		if (rtm->rtm_priority > RTP_MAX) {
@@ -837,9 +840,9 @@ report:
 			}
 #endif
 			/* Hack to allow some flags to be toggled */
-			if (rtm->rtm_fmask & RTF_FMASK)
-				rt->rt_flags = (rt->rt_flags &
-				    ~rtm->rtm_fmask) |
+			if (rtm->rtm_fmask)
+				rt->rt_flags =
+				    (rt->rt_flags & ~rtm->rtm_fmask) |
 				    (rtm->rtm_flags & rtm->rtm_fmask);
 
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,

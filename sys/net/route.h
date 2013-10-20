@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.78 2012/09/19 16:14:01 blambert Exp $	*/
+/*	$OpenBSD: route.h,v 1.79 2013/10/20 12:35:47 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ struct rtentry {
 /* mask of RTF flags that are allowed to be modified by RTM_CHANGE */
 #define RTF_FMASK	\
     (RTF_PROTO1 | RTF_PROTO2 | RTF_PROTO3 | RTF_BLACKHOLE | \
-     RTF_REJECT | RTF_STATIC)
+     RTF_REJECT | RTF_STATIC | RTF_MPLS)
 
 #ifndef _KERNEL
 /* obsoleted */
