@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.112 2013/10/11 08:07:12 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.113 2013/10/20 17:28:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -155,8 +155,8 @@ server_client_lost(struct client *c)
 	free(c->ttyname);
 	free(c->term);
 
-	evbuffer_free (c->stdin_data);
-	evbuffer_free (c->stdout_data);
+	evbuffer_free(c->stdin_data);
+	evbuffer_free(c->stdout_data);
 	if (c->stderr_data != c->stdout_data)
 		evbuffer_free (c->stderr_data);
 
@@ -932,7 +932,10 @@ server_client_msg_command(struct client *c, struct imsg *imsg)
 	}
 	cmd_free_argv(argc, argv);
 
-	cmdq_run(c->cmdq, cmdlist);
+	if (c != cfg_client || cfg_finished)
+		cmdq_run(c->cmdq, cmdlist);
+	else
+		cmdq_append(c->cmdq, cmdlist);
 	cmd_list_free(cmdlist);
 	return;
 

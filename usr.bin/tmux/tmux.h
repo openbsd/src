@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.430 2013/10/10 12:39:25 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.431 2013/10/20 17:28:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1510,6 +1510,7 @@ extern struct cmd_q *cfg_cmd_q;
 extern int cfg_finished;
 extern int cfg_references;
 extern struct causelist cfg_causes;
+extern struct client *cfg_client;
 int		 load_cfg(const char *, struct cmd_q *, char **);
 void		 cfg_default_done(struct cmd_q *);
 void		 cfg_show_causes(struct session *);
