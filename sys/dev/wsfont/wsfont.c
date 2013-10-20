@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.33 2013/10/20 09:35:36 miod Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.34 2013/10/20 16:44:48 miod Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -268,7 +268,7 @@ wsfont_revbyte(struct wsdisplay_font *font)
  * Enumerate the list of fonts
  */
 void
-wsfont_enum(void (*cb)(char *, int, int, int))
+wsfont_enum(void (*cb)(const char *, int, int, int))
 {
 	struct wsdisplay_font *f;
 	struct font *ent;
@@ -409,7 +409,7 @@ wsfont_find0(int cookie)
  * Find a font.
  */
 int
-wsfont_find(char *name, int width, int height, int stride)
+wsfont_find(const char *name, int width, int height, int stride)
 {
 	struct font *ent;
 	int s;
@@ -445,7 +445,6 @@ wsfont_add(struct wsdisplay_font *font, int copy)
 {
 	static int cookiegen = 666;
 	struct font *ent;
-	size_t size;
 	int s;
 
 	s = splhigh();
@@ -463,20 +462,18 @@ wsfont_add(struct wsdisplay_font *font, int copy)
 	ent->flg = 0;
 	ent->cookie = cookiegen++;
 
-	/* Is this font statically allocated? */
-	if (!copy) {
-		ent->font = font;
-		ent->flg = WSFONT_STATIC;
-	} else {
+	/*
+	 * If we are coming from a WSDISPLAYIO_LDFONT ioctl, we need to
+	 * make a copy of the wsdisplay_font struct, but not of font->bits.
+	 */
+	if (copy) {
 		ent->font = (struct wsdisplay_font *)malloc(sizeof *ent->font,
 		    M_DEVBUF, M_WAITOK);
-
 		memcpy(ent->font, font, sizeof(*ent->font));
-
-		size = font->fontheight * font->numchars * font->stride;
-		ent->font->data = (void *)malloc(size, M_DEVBUF, M_WAITOK);
-		memcpy(ent->font->data, font->data, size);
 		ent->flg = 0;
+	} else {
+		ent->font = font;
+		ent->flg = WSFONT_STATIC;
 	}
 
 	/* Now link into the list and return */

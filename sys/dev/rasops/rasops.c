@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.28 2013/10/18 17:38:34 miod Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.29 2013/10/20 16:44:47 miod Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -175,6 +175,9 @@ int	rasops_vcons_copyrows(void *, int, int, int);
 int	rasops_vcons_eraserows(void *, int, int, long);
 int	rasops_vcons_alloc_attr(void *, int, int, int, long *);
 void	rasops_vcons_unpack_attr(void *, long, int *, int *, int *);
+
+int	rasops_add_font(struct rasops_info *, struct wsdisplay_font *);
+int	rasops_use_font(struct rasops_info *, struct wsdisplay_font *);
 
 /*
  * Initialize a 'rasops_info' descriptor.
@@ -1622,4 +1625,85 @@ rasops_vcons_unpack_attr(void *cookie, long attr, int *fg, int *bg,
 	struct rasops_screen *scr = cookie;
 
 	rasops_unpack_attr(scr->rs_ri, attr, fg, bg, underline);
+}
+
+/*
+ * Font management.
+ *
+ * Fonts usable on raster frame buffers are managed by wsfont, and are not
+ * tied to any particular display.
+ */
+
+int
+rasops_add_font(struct rasops_info *ri, struct wsdisplay_font *font)
+{
+	/* only accept matching metrics */
+	if (font->fontwidth != ri->ri_font->fontwidth ||
+	    font->fontheight != ri->ri_font->fontheight)
+		return EINVAL;
+
+	/* for raster consoles, only accept ISO Latin-1 or Unicode encoding */
+	if (font->encoding != WSDISPLAY_FONTENC_ISO)
+		return EINVAL;
+
+	if (wsfont_add(font, 1) != 0)
+		return EEXIST;	/* name collision */
+
+	font->index = -1;	/* do not store in wsdisplay_softc */
+
+	return 0;
+}
+
+int
+rasops_use_font(struct rasops_info *ri, struct wsdisplay_font *font)
+{
+	int wsfcookie;
+	struct wsdisplay_font *wsf;
+	const char *name;
+
+	/* allow an empty font name to revert to the initial font choice */
+	name = font->name;
+	if (*name == '\0')
+		name = NULL;
+
+	wsfcookie = wsfont_find(name, ri->ri_font->fontwidth,
+	    ri->ri_font->fontheight, 0);
+	if (wsfcookie < 0) {
+		wsfcookie = wsfont_find(name, 0, 0, 0);
+		if (wsfcookie < 0)
+			return ENOENT;	/* font exist, but different metrics */
+		else
+			return EINVAL;
+	}
+	if (wsfont_lock(wsfcookie, &wsf, WSDISPLAY_FONTORDER_KNOWN,
+	    WSDISPLAY_FONTORDER_KNOWN) < 0)
+		return EINVAL;
+
+	/* if (ri->ri_wsfcookie >= 0) */
+		wsfont_unlock(ri->ri_wsfcookie);
+	ri->ri_wsfcookie = wsfcookie;
+	ri->ri_font = wsf;
+	ri->ri_fontscale = ri->ri_font->fontheight * ri->ri_font->stride;
+
+	return 0;
+}
+
+int
+rasops_load_font(void *v, void *cookie, struct wsdisplay_font *font)
+{
+	struct rasops_info *ri = v;
+
+	/*
+	 * For now, we want to only allow loading fonts of the same
+	 * metrics as the currently in-use font. This requires the
+	 * rasops struct to have been correctly configured, and a
+	 * font to have been selected.
+	 */
+	if ((ri->ri_flg & RI_CFGDONE) == 0 || ri->ri_font == NULL)
+		return EINVAL;
+
+	if (font->data != NULL)
+		return rasops_add_font(ri, font);
+	else
+		return rasops_use_font(ri, font);
 }

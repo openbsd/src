@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.13 2013/06/28 20:06:50 kettenis Exp $ */
+/*	$OpenBSD: rasops.h,v 1.14 2013/10/20 16:44:48 miod Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -173,6 +173,7 @@ int	rasops_alloc_screen(void *, void **, int *, int *, long *);
 void	rasops_free_screen(void *, void *);
 int	rasops_show_screen(void *, void *, int,
 	    void (*)(void *, int, int), void *);
+int	rasops_load_font(void *, void *, struct wsdisplay_font *);
 int	rasops_getchar(void *, int, int, struct wsdisplay_charcell *);
 
 extern const u_char	rasops_isgray[16];
