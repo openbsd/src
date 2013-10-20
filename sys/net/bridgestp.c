@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.45 2013/10/17 16:27:40 bluhm Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.46 2013/10/20 08:48:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -31,10 +31,6 @@
  * Implementation of the spanning tree protocol as defined in
  * ISO/IEC 802.1D-2004, June 9, 2004.
  */
-
-#if 0
-__FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/net/bridgestp.c,v 1.25 2006/11/03 03:34:04 thompsa Exp $");
-#endif
 
 #include "bridge.h"
 
