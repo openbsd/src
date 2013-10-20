@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.27 2013/08/20 17:44:36 kettenis Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.28 2013/10/20 21:24:01 miod Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -57,7 +57,6 @@ struct device;
  */
 
 #define WSDISPLAY_MAXSCREEN	12
-#define WSDISPLAY_MAXFONT	8
 
 /*
  * Emulation functions, for displays that can support glass-tty terminal
@@ -141,6 +140,7 @@ struct wsdisplay_accessops {
 	int	(*show_screen)(void *, void *, int,
 			       void (*) (void *, int, int), void *);
 	int	(*load_font)(void *, void *, struct wsdisplay_font *);
+	int	(*list_font)(void *, struct wsdisplay_font *);
 	void	(*scrollback)(void *, void *, int);
 	int	(*getchar)(void *, int, int, struct wsdisplay_charcell *);
 	void	(*burn_screen)(void *, u_int, u_int);

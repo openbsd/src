@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.34 2013/10/20 16:44:48 miod Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.35 2013/10/20 21:24:01 miod Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -268,18 +268,16 @@ wsfont_revbyte(struct wsdisplay_font *font)
  * Enumerate the list of fonts
  */
 void
-wsfont_enum(void (*cb)(const char *, int, int, int))
+wsfont_enum(int (*cb)(void *, struct wsdisplay_font *), void *cbarg)
 {
-	struct wsdisplay_font *f;
 	struct font *ent;
 	int s;
 
 	s = splhigh();
 
-	TAILQ_FOREACH(ent, &list, chain) {
-		f = ent->font;
-		cb(f->name, f->fontwidth, f->fontheight, f->stride);
-	}
+	TAILQ_FOREACH(ent, &list, chain)
+		if (cb(cbarg, ent->font) != 0)
+			break;
 
 	splx(s);
 }

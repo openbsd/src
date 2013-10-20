@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.h,v 1.9 2013/10/20 16:44:48 miod Exp $ */
+/*	$OpenBSD: wsfont.h,v 1.10 2013/10/20 21:24:01 miod Exp $ */
 /*	$NetBSD: wsfont.h,v 1.12 2000/06/13 13:37:07 ad Exp $	*/
 
 /*-
@@ -69,7 +69,7 @@ void	wsfont_init(void);
 int	wsfont_find(const char *, int, int, int);
 int	wsfont_add(struct wsdisplay_font *, int);
 int	wsfont_remove(int);
-void	wsfont_enum(void (*)(const char *, int, int, int));
+void	wsfont_enum(int (*)(void *, struct wsdisplay_font *), void *);
 int	wsfont_lock(int, struct wsdisplay_font **, int, int);
 int	wsfont_unlock(int);
 int	wsfont_map_unichar(struct wsdisplay_font *, int);

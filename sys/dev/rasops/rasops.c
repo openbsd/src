@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.29 2013/10/20 16:44:47 miod Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.30 2013/10/20 21:24:00 miod Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -178,6 +178,7 @@ void	rasops_vcons_unpack_attr(void *, long, int *, int *, int *);
 
 int	rasops_add_font(struct rasops_info *, struct wsdisplay_font *);
 int	rasops_use_font(struct rasops_info *, struct wsdisplay_font *);
+int	rasops_list_font_cb(void *, struct wsdisplay_font *);
 
 /*
  * Initialize a 'rasops_info' descriptor.
@@ -1706,4 +1707,55 @@ rasops_load_font(void *v, void *cookie, struct wsdisplay_font *font)
 		return rasops_add_font(ri, font);
 	else
 		return rasops_use_font(ri, font);
+}
+
+struct rasops_list_font_ctx {
+	struct rasops_info *ri;
+	int cnt;
+	struct wsdisplay_font *font;
+};
+
+int
+rasops_list_font_cb(void *cbarg, struct wsdisplay_font *font)
+{
+	struct rasops_list_font_ctx *ctx = cbarg;
+
+	if (font->fontheight != ctx->ri->ri_font->fontheight ||
+	    font->fontwidth != ctx->ri->ri_font->fontwidth)
+		return 0;
+
+	if (ctx->cnt-- == 0) {
+		ctx->font = font;
+		return 1;
+	}
+
+	return 0;
+}
+
+int
+rasops_list_font(void *v, struct wsdisplay_font *font)
+{
+	struct rasops_info *ri = v;
+	struct rasops_list_font_ctx ctx;
+	int idx;
+
+	if ((ri->ri_flg & RI_CFGDONE) == 0 || ri->ri_font == NULL)
+		return EINVAL;
+
+	if (font->index < 0)
+		return EINVAL;
+
+	ctx.ri = ri;
+	ctx.cnt = font->index;
+	ctx.font = NULL;
+	wsfont_enum(rasops_list_font_cb, &ctx);
+
+	if (ctx.font == NULL)
+		return EINVAL;
+
+	idx = font->index;
+	*font = *ctx.font;	/* struct copy */
+	font->index = idx;
+	font->cookie = font->data = NULL;	/* don't leak kernel pointers */
+	return 0;
 }

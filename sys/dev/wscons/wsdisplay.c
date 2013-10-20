@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.115 2013/10/20 13:20:14 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.116 2013/10/20 21:24:01 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -176,8 +176,6 @@ struct wsdisplay_softc {
 	int	sc_burnman;
 	int	sc_burnflags;
 #endif
-
-	struct wsdisplay_font sc_fonts[WSDISPLAY_MAXFONT];
 
 	int	sc_isconsole;
 
@@ -1343,8 +1341,6 @@ wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 #define d ((struct wsdisplay_font *)data)
 		if (!sc->sc_accessops->load_font)
 			return (EINVAL);
-		if (d->index >= WSDISPLAY_MAXFONT)
-			return (EINVAL);
 		fontsz = d->fontheight * d->stride * d->numchars;
 		if (fontsz > WSDISPLAY_MAXFONTSZ)
 			return (EINVAL);
@@ -1360,15 +1356,14 @@ wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 		  (*sc->sc_accessops->load_font)(sc->sc_accesscookie, 0, d);
 		if (error)
 			free(buf, M_DEVBUF);
-		else if (d->index >= 0 || d->index < WSDISPLAY_MAXFONT)
-			sc->sc_fonts[d->index] = *d;
 		return (error);
 
 	case WSDISPLAYIO_LSFONT:
-		if (d->index < 0 || d->index >= WSDISPLAY_MAXFONT)
+		if (!sc->sc_accessops->list_font)
 			return (EINVAL);
-		*d = sc->sc_fonts[d->index];
-		return (0);
+		error =
+		  (*sc->sc_accessops->list_font)(sc->sc_accesscookie, d);
+		return (error);
 
 	case WSDISPLAYIO_DELFONT:
 		return (EINVAL);

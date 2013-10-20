@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.60 2013/10/20 20:07:29 miod Exp $ */
+/* $OpenBSD: vga.c,v 1.61 2013/10/20 21:24:00 miod Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -245,6 +245,7 @@ void	vga_free_screen(void *, void *);
 int	vga_show_screen(void *, void *, int,
 			void (*) (void *, int, int), void *);
 int	vga_load_font(void *, void *, struct wsdisplay_font *);
+int	vga_list_font(void *, struct wsdisplay_font *);
 void	vga_scrollback(void *, void *, int);
 void	vga_burner(void *v, u_int on, u_int flags);
 int	vga_getchar(void *, int, int, struct wsdisplay_charcell *);
@@ -258,6 +259,7 @@ const struct wsdisplay_accessops vga_accessops = {
 	.free_screen = vga_free_screen,
 	.show_screen = vga_show_screen,
 	.load_font = vga_load_font,
+	.list_font = vga_list_font,
 	.scrollback = vga_scrollback,
 	.getchar = vga_getchar,
 	.burn_screen = vga_burner
@@ -499,7 +501,7 @@ vga_init(struct vga_config *vc, bus_space_tag_t iot, bus_space_tag_t memt)
 
 	vc->vc_fonts[0] = &vga_builtinfont;
 	for (i = 1; i < 8; i++)
-		vc->vc_fonts[i] = 0;
+		vc->vc_fonts[i] = NULL;
 
 	vc->currentfontset1 = vc->currentfontset2 = 0;
 
@@ -886,6 +888,35 @@ vga_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 	vc->vc_fonts[slot] = f;
 	data->cookie = f;
 	data->index = slot;
+
+	return (0);
+}
+
+int
+vga_list_font(void *v, struct wsdisplay_font *data)
+{
+	struct vga_config *vc = v;
+	struct vgafont *f;
+
+	if (data->index < 0 || data->index >= nitems(vc->vc_fonts))
+		return EINVAL;
+
+	if ((f = vc->vc_fonts[data->index]) == NULL)
+		return EINVAL;
+
+	strlcpy(data->name, f->name, sizeof data->name);
+#ifdef notyet
+	data->firstchar = f->firstchar;
+	data->numchars = f->numchars;
+#else
+	data->firstchar = 0;
+	data->numchars = 256;
+#endif
+	data->encoding = f->encoding;
+	data->fontwidth = 8;
+	data->fontheight = f->height;
+	data->stride = 1;
+	data->bitorder = data->byteorder = WSDISPLAY_FONTORDER_L2R;
 
 	return (0);
 }
