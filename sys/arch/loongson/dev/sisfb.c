@@ -1,4 +1,4 @@
-/*	$OpenBSD: sisfb.c,v 1.2 2010/12/26 15:40:59 miod Exp $	*/
+/*	$OpenBSD: sisfb.c,v 1.3 2013/10/20 20:07:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -92,15 +92,11 @@ int	sisfb_show_screen(void *, void *, int, void (*)(void *, int, int),
 paddr_t	sisfb_mmap(void *, off_t, int);
 
 struct wsdisplay_accessops sisfb_accessops = {
-	sisfb_ioctl,
-	sisfb_mmap,
-	sisfb_alloc_screen,
-	sisfb_free_screen,
-	sisfb_show_screen,
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	NULL	/* burner */
+	.ioctl = sisfb_ioctl,
+	.mmap = sisfb_mmap,
+	.alloc_screen = sisfb_alloc_screen,
+	.free_screen = sisfb_free_screen,
+	.show_screen = sisfb_show_screen
 };
 
 int	sisfb_getcmap(uint8_t *, struct wsdisplay_cmap *);

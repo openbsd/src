@@ -1,4 +1,4 @@
-/*	$OpenBSD: newport.c,v 1.6 2013/04/20 20:26:26 miod Exp $	*/
+/*	$OpenBSD: newport.c,v 1.7 2013/10/20 20:07:24 miod Exp $	*/
 /*	$NetBSD: newport.c,v 1.15 2009/05/12 23:51:25 macallan Exp $	*/
 
 /*
@@ -119,16 +119,11 @@ int	newport_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
 
 struct wsdisplay_accessops newport_accessops = {
-	newport_ioctl,
-	newport_mmap,
-	newport_alloc_screen,
-	newport_free_screen,
-	newport_show_screen,
-	NULL,		/* load_font */
-	NULL,		/* scrollback */
-	NULL,		/* getchar */
-	NULL,		/* burner */
-	NULL		/* pollc */
+	.ioctl = newport_ioctl,
+	.mmap = newport_mmap,
+	.alloc_screen = newport_alloc_screen,
+	.free_screen = newport_free_screen,
+	.show_screen = newport_show_screen
 };
 
 int	newport_do_cursor(struct rasops_info *);

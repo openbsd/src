@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.21 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.22 2013/10/20 20:07:28 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -196,15 +196,12 @@ int	gpx_show_screen(void *, void *, int,
 void	gpx_burner(void *, u_int, u_int);
 
 const struct wsdisplay_accessops gpx_accessops = {
-	gpx_ioctl,
-	gpx_mmap,
-	gpx_alloc_screen,
-	gpx_free_screen,
-	gpx_show_screen,
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	gpx_burner
+	.ioctl = gpx_ioctl,
+	.mmap = gpx_mmap,
+	.alloc_screen = gpx_alloc_screen,
+	.free_screen = gpx_free_screen,
+	.show_screen = gpx_show_screen,
+	.burn_screen = gpx_burner
 };
 
 void	gpx_clear_screen(struct gpx_screen *);

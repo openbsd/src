@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfb.c,v 1.1 2009/03/09 22:36:43 kettenis Exp $	*/
+/*	$OpenBSD: gfb.c,v 1.2 2013/10/20 20:07:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -43,15 +43,7 @@ void	gfb_attach(struct device *, struct device *, void *);
 int	gfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 struct wsdisplay_accessops gfb_accessops = {
-	gfb_ioctl,
-	NULL,	/* mmap */
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	NULL,	/* burner */
+	.ioctl = gfb_ioctl
 };
 
 struct cfdriver gfb_cd = {

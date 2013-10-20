@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfxp.c,v 1.12 2010/11/26 21:03:36 miod Exp $	*/
+/*	$OpenBSD: gfxp.c,v 1.13 2013/10/20 20:07:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -127,16 +127,8 @@ int	gfxp_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	gfxp_mmap(void *, off_t, int);
 
 struct wsdisplay_accessops gfxp_accessops = {
-	gfxp_ioctl,
-	gfxp_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	NULL,	/* burner */
-	NULL	/* pollc */
+	.ioctl = gfxp_ioctl,
+	.mmap = gfxp_mmap
 };
 
 int	gfxp_match(struct device *, void *, void *);

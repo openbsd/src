@@ -1,4 +1,4 @@
-/* $OpenBSD: omdisplay.c,v 1.1 2013/09/04 14:38:31 patrick Exp $ */
+/* $OpenBSD: omdisplay.c,v 1.2 2013/10/20 20:07:22 miod Exp $ */
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
  *
@@ -464,15 +464,12 @@ struct cfdriver omdisplay_cd = {
 };
 
 struct wsdisplay_accessops omdisplay_accessops = {
-	omdisplay_ioctl,
-	omdisplay_mmap,
-	omdisplay_alloc_screen,
-	omdisplay_free_screen,
-	omdisplay_show_screen,
-	NULL,	/* load font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	omdisplay_burner
+	.ioctl = omdisplay_ioctl,
+	.mmap = omdisplay_mmap,
+	.alloc_screen = omdisplay_alloc_screen,
+	.free_screen = omdisplay_free_screen,
+	.show_screen = omdisplay_show_screen,
+	.burn_screen = omdisplay_burner
 
 };
 

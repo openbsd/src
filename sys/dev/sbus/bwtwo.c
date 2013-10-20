@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.18 2008/12/27 17:23:03 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.19 2013/10/20 20:07:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -109,15 +109,9 @@ int bwtwo_is_console(int);
 void bwtwo_burner(void *, u_int, u_int);
 
 struct wsdisplay_accessops bwtwo_accessops = {
-	bwtwo_ioctl,
-	bwtwo_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	bwtwo_burner,
+	.ioctl = bwtwo_ioctl,
+	.mmap = bwtwo_mmap,
+	.burn_screen = bwtwo_burner
 };
 
 int	bwtwomatch(struct device *, void *, void *);

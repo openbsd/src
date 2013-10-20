@@ -1,4 +1,4 @@
-/*	$OpenBSD: tvrx.c,v 1.2 2011/12/30 12:47:19 miod Exp $	*/
+/*	$OpenBSD: tvrx.c,v 1.3 2013/10/20 20:07:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2011, Miodrag Vallat.
@@ -135,15 +135,12 @@ int	tvrx_ioctl(void *, u_long, caddr_t, int, struct proc *);
 void	tvrx_burner(void *, u_int, u_int);
 
 struct	wsdisplay_accessops	tvrx_accessops = {
-	tvrx_ioctl,
-	diofb_mmap,
-	diofb_alloc_screen,
-	diofb_free_screen,
-	diofb_show_screen,
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	tvrx_burner
+	.ioctl = tvrx_ioctl,
+	.mmap = diofb_mmap,
+	.alloc_screen = diofb_alloc_screen,
+	.free_screen = diofb_free_screen,
+	.show_screen = diofb_show_screen,
+	.burn_screen = tvrx_burner
 };
 
 /*

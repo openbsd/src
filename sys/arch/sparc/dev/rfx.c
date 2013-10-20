@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfx.c,v 1.14 2008/12/26 22:30:21 miod Exp $	*/
+/*	$OpenBSD: rfx.c,v 1.15 2013/10/20 20:07:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -126,16 +126,9 @@ int	rfx_putcmap(struct rfx_cmap *, struct wsdisplay_cmap *);
 void	rfx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 struct wsdisplay_accessops rfx_accessops = {
-	rfx_ioctl,
-	rfx_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	rfx_burner,
-	NULL	/* pollc */
+	.ioctl = rfx_ioctl,
+	.mmap = rfx_mmap,
+	.burn_screen = rfx_burner
 };
 
 int	rfxmatch(struct device *, void *, void *);

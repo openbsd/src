@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.56 2013/09/04 16:33:06 mpi Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.57 2013/10/20 20:07:23 miod Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -77,15 +77,12 @@ int	vgafb_console_init(struct vgafb_softc *);
 int	vgafb_mapregs(struct vgafb_softc *, struct pci_attach_args *);
 
 struct wsdisplay_accessops vgafb_accessops = {
-	vgafb_ioctl,
-	vgafb_mmap,
-	vgafb_alloc_screen,
-	vgafb_free_screen,
-	vgafb_show_screen,
-	NULL,		/* load_font */
-	NULL,		/* scrollback */
-	NULL,		/* getchar */
-	vgafb_burn,	/* burner */
+	.ioctl = vgafb_ioctl,
+	.mmap = vgafb_mmap,
+	.alloc_screen = vgafb_alloc_screen,
+	.free_screen = vgafb_free_screen,
+	.show_screen = vgafb_show_screen,
+	.burn_screen = vgafb_burn
 };
 
 int	vgafb_getcmap(uint8_t *, struct wsdisplay_cmap *);

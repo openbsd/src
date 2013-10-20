@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbox.c,v 1.15 2007/01/07 15:13:52 miod Exp $	*/
+/*	$OpenBSD: gbox.c,v 1.16 2013/10/20 20:07:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -130,15 +130,12 @@ int	gbox_ioctl(void *, u_long, caddr_t, int, struct proc *);
 void	gbox_burner(void *, u_int, u_int);
 
 struct	wsdisplay_accessops	gbox_accessops = {
-	gbox_ioctl,
-	diofb_mmap,
-	diofb_alloc_screen,
-	diofb_free_screen,
-	diofb_show_screen,
-	NULL,   /* load_font */
-	NULL,   /* scrollback */
-	NULL,   /* getchar */
-	gbox_burner
+	.ioctl = gbox_ioctl,
+	.mmap = diofb_mmap,
+	.alloc_screen = diofb_alloc_screen,
+	.free_screen = diofb_free_screen,
+	.show_screen = diofb_show_screen,
+	.burn_screen = gbox_burner
 };
 
 /*

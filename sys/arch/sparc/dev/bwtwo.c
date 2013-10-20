@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.38 2010/07/10 19:32:24 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.39 2013/10/20 20:07:25 miod Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -96,16 +96,9 @@ int	bwtwo_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	bwtwo_mmap(void *, off_t, int);
 
 struct wsdisplay_accessops bwtwo_accessops = {
-	bwtwo_ioctl,
-	bwtwo_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	bwtwo_burner,
-	NULL	/* pollc */
+	.ioctl = bwtwo_ioctl,
+	.mmap = bwtwo_mmap,
+	.burn_screen = bwtwo_burner
 };
 
 

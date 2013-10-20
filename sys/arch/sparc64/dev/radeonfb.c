@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeonfb.c,v 1.4 2011/02/21 07:54:47 kettenis Exp $	*/
+/*	$OpenBSD: radeonfb.c,v 1.5 2013/10/20 20:07:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -121,16 +121,8 @@ int	radeonfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	radeonfb_mmap(void *, off_t, int);
 
 struct wsdisplay_accessops radeonfb_accessops = {
-	radeonfb_ioctl,
-	radeonfb_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	NULL,	/* burner */
-	NULL	/* pollc */
+	.ioctl = radeonfb_ioctl,
+	.mmap = radeonfb_mmap
 };
 
 int	radeonfb_match(struct device *, void *, void *);

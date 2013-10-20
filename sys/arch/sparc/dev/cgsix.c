@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.43 2010/07/10 19:32:24 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.44 2013/10/20 20:07:25 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -133,16 +133,9 @@ int	cgsix_ras_eraserows(void *, int, int, long);
 void	cgsix_ras_init(struct cgsix_softc *);
 
 struct wsdisplay_accessops cgsix_accessops = {
-	cgsix_ioctl,
-	cgsix_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	cgsix_burner,
-	NULL	/* pollc */
+	.ioctl = cgsix_ioctl,
+	.mmap = cgsix_mmap,
+	.burn_screen = cgsix_burner
 };
 
 int	cgsixmatch(struct device *, void *, void *);

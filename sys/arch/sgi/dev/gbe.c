@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbe.c,v 1.19 2013/05/30 16:15:01 deraadt Exp $ */
+/*	$OpenBSD: gbe.c,v 1.20 2013/10/20 20:07:24 miod Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Joel Sing <jsing@openbsd.org>
@@ -151,16 +151,12 @@ struct wsscreen_descr gbe_stdscreen = {
 };
 
 struct wsdisplay_accessops gbe_accessops = {
-	gbe_ioctl,
-	gbe_mmap,
-	gbe_alloc_screen,
-	gbe_free_screen,
-	gbe_show_screen,
-	NULL,		/* load_font */
-	NULL,		/* scrollback */
-	NULL,		/* getchar */
-	gbe_burner,
-	NULL		/* pollc */
+	.ioctl = gbe_ioctl,
+	.mmap = gbe_mmap,
+	.alloc_screen = gbe_alloc_screen,
+	.free_screen = gbe_free_screen,
+	.show_screen = gbe_show_screen,
+	.burn_screen = gbe_burner
 };
 
 const struct wsscreen_descr *gbe_scrlist[] = {

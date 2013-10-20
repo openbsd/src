@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcg.c,v 1.19 2011/09/19 21:53:02 miod Exp $	*/
+/*	$OpenBSD: lcg.c,v 1.20 2013/10/20 20:07:28 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -128,15 +128,12 @@ int	lcg_show_screen(void *, void *, int,
 void	lcg_burner(void *, u_int, u_int);
 
 const struct wsdisplay_accessops lcg_accessops = {
-	lcg_ioctl,
-	lcg_mmap,
-	lcg_alloc_screen,
-	lcg_free_screen,
-	lcg_show_screen,
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	lcg_burner
+	.ioctl = lcg_ioctl,
+	.mmap = lcg_mmap,
+	.alloc_screen = lcg_alloc_screen,
+	.free_screen = lcg_free_screen,
+	.show_screen = lcg_show_screen,
+	.burn_screen = lcg_burner
 };
 
 int	lcg_alloc_attr(void *, int, int, int, long *);

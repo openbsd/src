@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbox.c,v 1.14 2006/08/11 18:33:13 miod Exp $	*/
+/*	$OpenBSD: rbox.c,v 1.15 2013/10/20 20:07:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -126,15 +126,12 @@ int	rbox_ioctl(void *, u_long, caddr_t, int, struct proc *);
 void	rbox_burner(void *, u_int, u_int);
 
 struct	wsdisplay_accessops	rbox_accessops = {
-	rbox_ioctl,
-	diofb_mmap,
-	diofb_alloc_screen,
-	diofb_free_screen,
-	diofb_show_screen,
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	rbox_burner
+	.ioctl = rbox_ioctl,
+	.mmap = diofb_mmap,
+	.alloc_screen = diofb_alloc_screen,
+	.free_screen = diofb_free_screen,
+	.show_screen = diofb_show_screen,
+	.burn_screen = rbox_burner
 };
 
 /*

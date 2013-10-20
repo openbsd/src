@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgeight.c,v 1.30 2010/06/07 19:43:45 miod Exp $	*/
+/*	$OpenBSD: cgeight.c,v 1.31 2013/10/20 20:07:25 miod Exp $	*/
 /*	$NetBSD: cgeight.c,v 1.13 1997/05/24 20:16:04 pk Exp $	*/
 
 /*
@@ -92,16 +92,9 @@ paddr_t	cgeight_mmap(void *, off_t, int);
 void	cgeight_reset(struct cgeight_softc *, int);
 
 struct wsdisplay_accessops cgeight_accessops = {
-	cgeight_ioctl,
-	cgeight_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	fb_pfour_burner,
-	NULL	/* pollc */
+	.ioctl = cgeight_ioctl,
+	.mmap = cgeight_mmap,
+	.burn_screen = fb_pfour_burner
 };
 
 void	cgeightattach(struct device *, struct device *, void *);

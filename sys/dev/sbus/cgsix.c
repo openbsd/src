@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.58 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.59 2013/10/20 20:07:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -74,15 +74,9 @@ int cgsix_setcursor(struct cgsix_softc *, struct wsdisplay_cursor *);
 int cgsix_updatecursor(struct cgsix_softc *, u_int);
 
 struct wsdisplay_accessops cgsix_accessops = {
-	cgsix_ioctl,
-	cgsix_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	cgsix_burner,
+	.ioctl = cgsix_ioctl,
+	.mmap = cgsix_mmap,
+	.burn_screen = cgsix_burner
 };
 
 int	cgsixmatch(struct device *, void *, void *);

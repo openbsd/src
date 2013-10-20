@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfour.c,v 1.29 2010/06/07 19:43:45 miod Exp $	*/
+/*	$OpenBSD: cgfour.c,v 1.30 2013/10/20 20:07:25 miod Exp $	*/
 /*	$NetBSD: cgfour.c,v 1.13 1997/05/24 20:16:06 pk Exp $	*/
 
 /*
@@ -91,16 +91,9 @@ paddr_t	cgfour_mmap(void *, off_t, int);
 void	cgfour_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 struct wsdisplay_accessops cgfour_accessops = {
-	cgfour_ioctl,
-	cgfour_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	fb_pfour_burner,
-	NULL	/* pollc */
+	.ioctl = cgfour_ioctl,
+	.mmap = cgfour_mmap,
+	.burn_screen = fb_pfour_burner
 };
 
 void	cgfourattach(struct device *, struct device *, void *);

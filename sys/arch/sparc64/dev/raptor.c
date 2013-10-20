@@ -1,4 +1,4 @@
-/*	$OpenBSD: raptor.c,v 1.7 2010/08/07 03:50:01 krw Exp $	*/
+/*	$OpenBSD: raptor.c,v 1.8 2013/10/20 20:07:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -133,16 +133,8 @@ int	raptor_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	raptor_mmap(void *, off_t, int);
 
 struct wsdisplay_accessops raptor_accessops = {
-	raptor_ioctl,
-	raptor_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	NULL,	/* burner */
-	NULL	/* pollc */
+	.ioctl = raptor_ioctl,
+	.mmap = raptor_mmap
 };
 
 int	raptor_match(struct device *, void *, void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.c,v 1.23 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: p9000.c,v 1.24 2013/10/20 20:07:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -87,16 +87,9 @@ void	p9000_burner(void *, u_int, u_int);
 int	p9000_intr(void *);
 
 struct wsdisplay_accessops p9000_accessops = {
-	p9000_ioctl,
-	p9000_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	p9000_burner,
-	NULL	/* pollc */
+	.ioctl = p9000_ioctl,
+	.mmap = p9000_mmap,
+	.burn_screen = p9000_burner
 };
 
 int	p9000_ras_copycols(void *, int, int, int, int);

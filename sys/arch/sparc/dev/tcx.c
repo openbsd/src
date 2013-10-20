@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.46 2013/05/31 22:07:49 deraadt Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.47 2013/10/20 20:07:26 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -125,16 +125,9 @@ void	tcx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 void	tcx_stipple(struct tcx_softc *, int, int, int, int, int);
 
 struct wsdisplay_accessops tcx_accessops = {
-	tcx_ioctl,
-	tcx_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,   /* load_font */
-	NULL,   /* scrollback */
-	NULL,   /* getchar */
-	tcx_burner,
-	NULL	/* pollc */
+	.ioctl = tcx_ioctl,
+	.mmap = tcx_mmap,
+	.burn_screen = tcx_burner
 };
 
 int	tcxmatch(struct device *, void *, void *);

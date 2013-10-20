@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.37 2013/05/31 22:07:49 deraadt Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.38 2013/10/20 20:07:25 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -156,16 +156,9 @@ int	cgfourteen_putcmap(union cgfourteen_cmap *, struct wsdisplay_cmap *);
 void	cgfourteen_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 struct wsdisplay_accessops cgfourteen_accessops = {
-	cgfourteen_ioctl,
-	cgfourteen_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	cgfourteen_burner,
-	NULL	/* pollc */
+	.ioctl = cgfourteen_ioctl,
+	.mmap = cgfourteen_mmap,
+	.burn_screen = cgfourteen_burner
 };
 
 void	cgfourteenattach(struct device *, struct device *, void *);

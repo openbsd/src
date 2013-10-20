@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.23 2013/06/11 18:15:55 deraadt Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.24 2013/10/20 20:07:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -118,15 +118,12 @@ int	cfxga_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
 
 struct wsdisplay_accessops cfxga_accessops = {
-	cfxga_ioctl,
-	cfxga_mmap,
-	cfxga_alloc_screen,
-	cfxga_free_screen,
-	cfxga_show_screen,
-	NULL,
-	NULL,
-	NULL,
-	cfxga_burner
+	.ioctl = cfxga_ioctl,
+	.mmap = cfxga_mmap,
+	.alloc_screen = cfxga_alloc_screen,
+	.free_screen = cfxga_free_screen,
+	.show_screen = cfxga_show_screen,
+	.burn_screen = cfxga_burner
 };
 
 /*

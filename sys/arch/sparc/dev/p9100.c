@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.51 2013/05/31 22:07:49 deraadt Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.52 2013/10/20 20:07:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005, 2006, 2008, Miodrag Vallat.
@@ -135,16 +135,9 @@ u_int	p9100_read_ramdac(struct p9100_softc *, u_int);
 void	p9100_write_ramdac(struct p9100_softc *, u_int, u_int);
 
 struct wsdisplay_accessops p9100_accessops = {
-	p9100_ioctl,
-	p9100_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	p9100_burner,
-	NULL	/* pollc */
+	.ioctl = p9100_ioctl,
+	.mmap = p9100_mmap,
+	.burn_screen = p9100_burner
 };
 
 int	p9100_ras_copycols(void *, int, int, int, int);

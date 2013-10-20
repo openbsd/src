@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgx.c,v 1.12 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: mgx.c,v 1.13 2013/10/20 20:07:31 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -133,15 +133,9 @@ int	mgx_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	mgx_mmap(void *, off_t, int);
 
 struct wsdisplay_accessops mgx_accessops = {
-	mgx_ioctl,
-	mgx_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	mgx_burner
+	.ioctl = mgx_ioctl,
+	.mmap = mgx_mmap,
+	.burn_screen = mgx_burner
 };
 
 int	mgx_getcmap(u_int8_t *, struct wsdisplay_cmap *);

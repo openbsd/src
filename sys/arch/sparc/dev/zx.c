@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.25 2013/09/28 06:43:42 mlarkin Exp $	*/
+/*	$OpenBSD: zx.c,v 1.26 2013/10/20 20:07:26 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -128,16 +128,9 @@ void	zx_reset(struct zx_softc *, u_int);
 void	zx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 struct wsdisplay_accessops zx_accessops = {
-	zx_ioctl,
-	zx_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	zx_burner,
-	NULL	/* pollc */
+	.ioctl = zx_ioctl,
+	.mmap = zx_mmap,
+	.burn_screen = zx_burner
 };
 
 /* Force 32-bit writes. */

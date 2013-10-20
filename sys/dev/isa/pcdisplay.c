@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay.c,v 1.11 2010/08/28 12:48:14 miod Exp $ */
+/* $OpenBSD: pcdisplay.c,v 1.12 2013/10/20 20:07:29 miod Exp $ */
 /* $NetBSD: pcdisplay.c,v 1.9.4.1 2000/06/30 16:27:48 simonb Exp $ */
 
 /*
@@ -114,12 +114,11 @@ static int pcdisplay_show_screen(void *, void *, int,
 				 void (*) (void *, int, int), void *);
 
 const struct wsdisplay_accessops pcdisplay_accessops = {
-	pcdisplay_ioctl,
-	pcdisplay_mmap,
-	pcdisplay_alloc_screen,
-	pcdisplay_free_screen,
-	pcdisplay_show_screen,
-	0 /* load_font */
+	.ioctl = pcdisplay_ioctl,
+	.mmap = pcdisplay_mmap,
+	.alloc_screen = pcdisplay_alloc_screen,
+	.free_screen = pcdisplay_free_screen,
+	.show_screen = pcdisplay_show_screen
 };
 
 static int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.8 2013/10/20 10:43:48 miod Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.9 2013/10/20 20:07:29 miod Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -317,15 +317,13 @@ struct wsscreen_list radeondrm_screenlist = {
 };
 
 struct wsdisplay_accessops radeondrm_accessops = {
-	radeondrm_wsioctl,
-	radeondrm_wsmmap,
-	radeondrm_alloc_screen,
-	radeondrm_free_screen,
-	radeondrm_show_screen,
-	NULL,
-	NULL,
-	radeondrm_getchar,
-	radeondrm_burner
+	.ioctl = radeondrm_wsioctl,
+	.mmap = radeondrm_wsmmap,
+	.alloc_screen = radeondrm_alloc_screen,
+	.free_screen = radeondrm_free_screen,
+	.show_screen = radeondrm_show_screen,
+	.getchar = radeondrm_getchar,
+	.burn_screen = radeondrm_burner
 };
 
 int

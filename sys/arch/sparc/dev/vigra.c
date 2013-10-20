@@ -1,4 +1,4 @@
-/*	$OpenBSD: vigra.c,v 1.18 2008/12/26 22:30:21 miod Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.19 2013/10/20 20:07:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
@@ -193,16 +193,9 @@ int	vigra_putcmap(union vigracmap *, struct wsdisplay_cmap *, int);
 void	vigra_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 struct wsdisplay_accessops vigra_accessops = {
-	vigra_ioctl,
-	vigra_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	vigra_burner,
-	NULL	/* pollc */
+	.ioctl = vigra_ioctl,
+	.mmap = vigra_mmap,
+	.burn_screen = vigra_burner
 };
 
 int	vigramatch(struct device *, void *, void *);

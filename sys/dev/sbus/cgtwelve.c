@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelve.c,v 1.7 2013/05/31 22:07:45 deraadt Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.8 2013/10/20 20:07:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.  All rights reserved.
@@ -98,15 +98,8 @@ static __inline__ void cgtwelve_ramdac_wraddr(struct cgtwelve_softc *sc,
 	    u_int32_t addr);
 
 struct wsdisplay_accessops cgtwelve_accessops = {
-	cgtwelve_ioctl,
-	cgtwelve_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	NULL	/* burner */
+	.ioctl = cgtwelve_ioctl,
+	.mmap = cgtwelve_mmap
 };
 
 int	cgtwelvematch(struct device *, void *, void *);

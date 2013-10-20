@@ -1,4 +1,4 @@
-/*	$OpenBSD: legss.c,v 1.4 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: legss.c,v 1.5 2013/10/20 20:07:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -149,15 +149,11 @@ int	legss_show_screen(void *, void *, int,
 	    void (*) (void *, int, int), void *);
 
 const struct wsdisplay_accessops legss_accessops = {
-	legss_ioctl,
-	legss_mmap,
-	legss_alloc_screen,
-	legss_free_screen,
-	legss_show_screen,
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	NULL	/* burner */
+	.ioctl = legss_ioctl,
+	.mmap = legss_mmap,
+	.alloc_screen = legss_alloc_screen,
+	.free_screen = legss_free_screen,
+	.show_screen = legss_show_screen
 };
 
 int	legss_setup_screen(struct legss_screen *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.40 2013/10/20 10:43:47 miod Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.41 2013/10/20 20:07:29 miod Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -607,15 +607,13 @@ struct wsscreen_list inteldrm_screenlist = {
 };
 
 struct wsdisplay_accessops inteldrm_accessops = {
-	inteldrm_wsioctl,
-	inteldrm_wsmmap,
-	inteldrm_alloc_screen,
-	inteldrm_free_screen,
-	inteldrm_show_screen,
-	NULL,
-	NULL,
-	inteldrm_getchar,
-	inteldrm_burner
+	.ioctl = inteldrm_wsioctl,
+	.mmap = inteldrm_wsmmap,
+	.alloc_screen = inteldrm_alloc_screen,
+	.free_screen = inteldrm_free_screen,
+	.show_screen = inteldrm_show_screen,
+	.getchar = inteldrm_getchar,
+	.burn_screen = inteldrm_burner
 };
 
 extern int (*ws_get_param)(struct wsdisplay_param *);

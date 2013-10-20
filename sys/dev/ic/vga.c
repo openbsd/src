@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.59 2013/10/19 14:32:45 miod Exp $ */
+/* $OpenBSD: vga.c,v 1.60 2013/10/20 20:07:29 miod Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -252,15 +252,15 @@ int	vga_getchar(void *, int, int, struct wsdisplay_charcell *);
 void vga_doswitch(struct vga_config *);
 
 const struct wsdisplay_accessops vga_accessops = {
-	vga_ioctl,
-	vga_mmap,
-	vga_alloc_screen,
-	vga_free_screen,
-	vga_show_screen,
-	vga_load_font,
-	vga_scrollback,
-	vga_getchar,
-	vga_burner
+	.ioctl = vga_ioctl,
+	.mmap = vga_mmap,
+	.alloc_screen = vga_alloc_screen,
+	.free_screen = vga_free_screen,
+	.show_screen = vga_show_screen,
+	.load_font = vga_load_font,
+	.scrollback = vga_scrollback,
+	.getchar = vga_getchar,
+	.burn_screen = vga_burner
 };
 
 /*

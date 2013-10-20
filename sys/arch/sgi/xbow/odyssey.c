@@ -1,4 +1,4 @@
-/*	$OpenBSD: odyssey.c,v 1.7 2012/04/16 22:17:16 miod Exp $ */
+/*	$OpenBSD: odyssey.c,v 1.8 2013/10/20 20:07:24 miod Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -139,16 +139,12 @@ struct wsscreen_descr odyssey_stdscreen = {
 };
 
 struct wsdisplay_accessops odyssey_accessops = {
-	odyssey_ioctl,
-	odyssey_mmap,
-	odyssey_alloc_screen,
-	odyssey_free_screen,
-	odyssey_show_screen,
-	NULL,			/* load_font */
-	NULL,			/* scrollback */
-	NULL,			/* getchar */
-	odyssey_burner,
-	NULL			/* pollc */
+	.ioctl = odyssey_ioctl,
+	.mmap = odyssey_mmap,
+	.alloc_screen = odyssey_alloc_screen,
+	.free_screen = odyssey_free_screen,
+	.show_screen = odyssey_show_screen,
+	.burn_screen = odyssey_burner
 };
 
 const struct wsscreen_descr *odyssey_scrlist[] = {

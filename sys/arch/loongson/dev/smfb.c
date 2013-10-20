@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.14 2012/10/03 21:44:51 miod Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.15 2013/10/20 20:07:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -117,15 +117,12 @@ paddr_t	smfb_mmap(void *, off_t, int);
 void	smfb_burner(void *, uint, uint);
 
 struct wsdisplay_accessops smfb_accessops = {
-	smfb_ioctl,
-	smfb_mmap,
-	smfb_alloc_screen,
-	smfb_free_screen,
-	smfb_show_screen,
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	smfb_burner
+	.ioctl = smfb_ioctl,
+	.mmap = smfb_mmap,
+	.alloc_screen = smfb_alloc_screen,
+	.free_screen = smfb_free_screen,
+	.show_screen = smfb_show_screen,
+	.burn_screen = smfb_burner
 };
 
 int	smfb_setup(struct smfb *, bus_space_tag_t, bus_space_handle_t,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.17 2011/09/20 21:11:33 miod Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.18 2013/10/20 20:07:28 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -142,15 +142,11 @@ int	lcspx_show_screen(void *, void *, int,
 	    void (*) (void *, int, int), void *);
 
 const struct wsdisplay_accessops lcspx_accessops = {
-	lcspx_ioctl,
-	lcspx_mmap,
-	lcspx_alloc_screen,
-	lcspx_free_screen,
-	lcspx_show_screen,
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	NULL	/* burner */
+	.ioctl = lcspx_ioctl,
+	.mmap = lcspx_mmap,
+	.alloc_screen = lcspx_alloc_screen,
+	.free_screen = lcspx_free_screen,
+	.show_screen = lcspx_show_screen
 };
 
 int	lcspx_getcmap(struct lcspx_screen *, struct wsdisplay_cmap *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.21 2013/07/16 22:31:15 miod Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.22 2013/10/20 20:07:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -292,16 +292,9 @@ paddr_t	ifb_mmap(void *, off_t, int);
 void	ifb_burner(void *, u_int, u_int);
 
 struct wsdisplay_accessops ifb_accessops = {
-	ifb_ioctl,
-	ifb_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	ifb_burner,
-	NULL	/* pollc */
+	.ioctl = ifb_ioctl,
+	.mmap = ifb_mmap,
+	.burn_screen = ifb_burner
 };
 
 int	ifbmatch(struct device *, void *, void *);

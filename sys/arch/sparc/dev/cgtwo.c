@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwo.c,v 1.38 2010/06/07 19:43:45 miod Exp $	*/
+/*	$OpenBSD: cgtwo.c,v 1.39 2013/10/20 20:07:25 miod Exp $	*/
 /*	$NetBSD: cgtwo.c,v 1.22 1997/05/24 20:16:12 pk Exp $ */
 
 /*
@@ -120,16 +120,9 @@ int	cgtwo_putcmap(struct cgtwo_softc *, struct wsdisplay_cmap *);
 void	cgtwo_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 struct wsdisplay_accessops cgtwo_accessops = {
-	cgtwo_ioctl,
-	cgtwo_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	cgtwo_burner,
-	NULL	/* pollc */
+	.ioctl = cgtwo_ioctl,
+	.mmap = cgtwo_mmap,
+	.burn_screen = cgtwo_burner
 };
 
 int	cgtwomatch(struct device *, void *, void *);

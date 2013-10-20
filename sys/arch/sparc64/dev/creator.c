@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.45 2009/12/16 11:06:17 jasper Exp $	*/
+/*	$OpenBSD: creator.c,v 1.46 2013/10/20 20:07:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -70,15 +70,8 @@ void	creator_load_firmware(void *);
 void	creator_load_sram(struct creator_softc *, u_int32_t *, u_int32_t);
 
 struct wsdisplay_accessops creator_accessops = {
-	creator_ioctl,
-	creator_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	NULL,	/* burner */
+	.ioctl = creator_ioctl,
+	.mmap = creator_mmap
 };
 
 struct cfdriver creator_cd = {

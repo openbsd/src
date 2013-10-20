@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.44 2008/12/27 17:23:03 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.45 2013/10/20 20:07:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -138,15 +138,9 @@ void cgthree_burner(void *, u_int, u_int);
 void cgthree_reset(struct cgthree_softc *);
 
 struct wsdisplay_accessops cgthree_accessops = {
-	cgthree_ioctl,
-	cgthree_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	cgthree_burner,
+	.ioctl = cgthree_ioctl,
+	.mmap = cgthree_mmap,
+	.burn_screen = cgthree_burner
 };
 
 int	cgthreematch(struct device *, void *, void *);

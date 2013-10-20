@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.59 2012/07/08 16:36:23 kettenis Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.60 2013/10/20 20:07:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -83,16 +83,8 @@ int vgafb_putcmap(struct vgafb_softc *, struct wsdisplay_cmap *);
 void vgafb_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 struct wsdisplay_accessops vgafb_accessops = {
-	vgafb_ioctl,
-	vgafb_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	NULL,	/* burner */
-	NULL	/* pollc */
+	.ioctl = vgafb_ioctl,
+	.mmap = vgafb_mmap
 };
 
 int	vgafbmatch(struct device *, void *, void *);

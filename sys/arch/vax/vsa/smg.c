@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.24 2010/12/26 15:41:00 miod Exp $	*/
+/*	$OpenBSD: smg.c,v 1.25 2013/10/20 20:07:28 miod Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -182,15 +182,12 @@ int	smg_show_screen(void *, void *, int,
 void	smg_burner(void *, u_int, u_int);
 
 const struct wsdisplay_accessops smg_accessops = {
-	smg_ioctl,
-	smg_mmap,
-	smg_alloc_screen,
-	smg_free_screen,
-	smg_show_screen,
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	smg_burner
+	.ioctl = smg_ioctl,
+	.mmap = smg_mmap,
+	.alloc_screen = smg_alloc_screen,
+	.free_screen = smg_free_screen,
+	.show_screen = smg_show_screen,
+	.burn_screen = smg_burner
 };
 
 void	smg_blockmove(struct rasops_info *, u_int, u_int, u_int, u_int, u_int,

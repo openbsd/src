@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.25 2013/05/30 16:15:01 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.26 2013/10/20 20:07:28 miod Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -96,15 +96,12 @@ int	lcd_param(struct pxa2x0_lcd_softc *, u_long,
     struct wsdisplay_param *);
 
 const struct wsdisplay_accessops lcd_accessops = {
-	lcd_ioctl,
-	pxa2x0_lcd_mmap,
-	pxa2x0_lcd_alloc_screen,
-	pxa2x0_lcd_free_screen,
-	lcd_show_screen,
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	lcd_burner
+	.ioctl = lcd_ioctl,
+	.mmap = pxa2x0_lcd_mmap,
+	.alloc_screen = pxa2x0_lcd_alloc_screen,
+	.free_screen = pxa2x0_lcd_free_screen,
+	.show_screen = lcd_show_screen,
+	.burn_screen = lcd_burner
 };
 
 struct cfattach lcd_pxaip_ca = {

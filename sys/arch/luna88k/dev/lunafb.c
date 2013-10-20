@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.15 2013/08/16 08:47:00 aoyama Exp $ */
+/* $OpenBSD: lunafb.c,v 1.16 2013/10/20 20:07:23 miod Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -135,15 +135,11 @@ int   omfb_show_screen(void *, void *, int,
 				void (*) (void *, int, int), void *);
 
 const struct wsdisplay_accessops omfb_accessops = {
-	omfbioctl,
-	omfbmmap,
-	omfb_alloc_screen,
-	omfb_free_screen,
-	omfb_show_screen,
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	NULL	/* burner */
+	.ioctl = omfbioctl,
+	.mmap = omfbmmap,
+	.alloc_screen = omfb_alloc_screen,
+	.free_screen = omfb_free_screen,
+	.show_screen = omfb_show_screen
 };
 
 int  omfbmatch(struct device *, void *, void *);

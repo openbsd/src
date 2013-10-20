@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfb.c,v 1.20 2010/12/26 15:40:58 miod Exp $	*/
+/*	$OpenBSD: sfb.c,v 1.21 2013/10/20 20:07:22 miod Exp $	*/
 /*	$NetBSD: sfb.c,v 1.7 1996/12/05 01:39:44 cgd Exp $	*/
 
 /*
@@ -110,11 +110,11 @@ void	sfb_unblank(struct sfb_devconfig *);
 #endif
 
 struct wsdisplay_accessops sfb_accessops = {
-        sfbioctl,
-        sfbmmap,
-        sfb_alloc_screen,
-        sfb_free_screen,
-        sfb_show_screen,
+        .ioctl = sfbioctl,
+        .mmap = sfbmmap,
+        .alloc_screen = sfb_alloc_screen,
+        .free_screen = sfb_free_screen,
+        .show_screen = sfb_show_screen
 };
 
 int

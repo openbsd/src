@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfb.c,v 1.22 2010/12/26 15:40:58 miod Exp $	*/
+/*	$OpenBSD: cfb.c,v 1.23 2013/10/20 20:07:22 miod Exp $	*/
 /*	$NetBSD: cfb.c,v 1.7 1996/12/05 01:39:39 cgd Exp $	*/
 
 /*
@@ -107,11 +107,11 @@ static int      cfb_show_screen(void *, void *, int,
 		    void (*) (void *, int, int), void *);
 
 struct wsdisplay_accessops cfb_accessops = {
-	cfbioctl,
-	cfbmmap,
-	cfb_alloc_screen,
-	cfb_free_screen,
-	cfb_show_screen,
+	.ioctl = cfbioctl,
+	.mmap = cfbmmap,
+	.alloc_screen = cfb_alloc_screen,
+	.free_screen = cfb_free_screen,
+	.show_screen = cfb_show_screen
 };
 
 int

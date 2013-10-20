@@ -1,4 +1,4 @@
-/*	$OpenBSD: impact.c,v 1.3 2013/06/11 18:15:55 deraadt Exp $	*/
+/*	$OpenBSD: impact.c,v 1.4 2013/10/20 20:07:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2010, 2012 Miodrag Vallat.
@@ -122,16 +122,11 @@ int	impact_show_screen(void *, void *, int, void (*)(void *, int, int),
 static struct impact_screen impact_cons;
 
 struct wsdisplay_accessops impact_accessops = {
-	impact_ioctl,
-	impact_mmap,
-	impact_alloc_screen,
-	impact_free_screen,
-	impact_show_screen,
-	NULL,			/* load_font */
-	NULL,			/* scrollback */
-	NULL,			/* getchar */
-	NULL,			/* burner */
-	NULL			/* pollc */
+	.ioctl = impact_ioctl,
+	.mmap = impact_mmap,
+	.alloc_screen = impact_alloc_screen,
+	.free_screen = impact_free_screen,
+	.show_screen = impact_show_screen
 };
 
 int

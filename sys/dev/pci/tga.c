@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.36 2011/04/07 15:30:16 miod Exp $ */
+/* $OpenBSD: tga.c,v 1.37 2013/10/20 20:07:30 miod Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -153,15 +153,12 @@ struct wsscreen_list tga_screenlist = {
 };
 
 struct wsdisplay_accessops tga_accessops = {
-	tga_ioctl,
-	tga_mmap,
-	tga_alloc_screen,
-	tga_free_screen,
-	tga_show_screen,
-	NULL,			/* load_font */
-	NULL,			/* scrollback */
-	NULL,			/* getchar */
-	tga_burner,
+	.ioctl = tga_ioctl,
+	.mmap = tga_mmap,
+	.alloc_screen = tga_alloc_screen,
+	.free_screen = tga_free_screen,
+	.show_screen = tga_show_screen,
+	.burn_screen = tga_burner
 };
 
 void	tga_blank(struct tga_devconfig *);

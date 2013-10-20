@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.76 2013/05/30 16:15:02 deraadt Exp $ */
+/*	$OpenBSD: udl.c,v 1.77 2013/10/20 20:07:31 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -212,15 +212,12 @@ struct wsscreen_list udl_screenlist = {
 };
 
 struct wsdisplay_accessops udl_accessops = {
-	udl_ioctl,
-	udl_mmap,
-	udl_alloc_screen,
-	udl_free_screen,
-	udl_show_screen,
-	NULL,
-	NULL,
-	NULL,
-	udl_burner
+	.ioctl = udl_ioctl,
+	.mmap = udl_mmap,
+	.alloc_screen = udl_alloc_screen,
+	.free_screen = udl_free_screen,
+	.show_screen = udl_show_screen,
+	.burn_screen = udl_burner
 };
 
 /*

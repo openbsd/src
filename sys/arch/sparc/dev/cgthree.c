@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.35 2008/12/26 22:30:21 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.36 2013/10/20 20:07:25 miod Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -116,16 +116,9 @@ paddr_t	cgthree_mmap(void *, off_t, int);
 void	cgthree_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 struct wsdisplay_accessops cgthree_accessops = {
-	cgthree_ioctl,
-	cgthree_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL,	/* load_font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	cgthree_burner,
-	NULL	/* pollc */
+	.ioctl = cgthree_ioctl,
+	.mmap = cgthree_mmap,
+	.burn_screen = cgthree_burner
 };
 
 int	cgthreematch(struct device *, void *, void *);
