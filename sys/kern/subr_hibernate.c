@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.64 2013/10/20 10:01:29 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.65 2013/10/20 10:08:05 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1120,7 +1120,8 @@ hibernate_block_io(union hibernate_info *hib_info, daddr_t blkctr,
 
 	error = biowait(bp);
 	if (error) {
-		printf("hibernate_block_io biowait failed %d\n", error);
+		printf("hib block_io biowait error %d blk %lld size %zu\n",
+			error, (long long)blkctr, xfer_size);
 		error = (*bdsw->d_close)(hib_info->device, 0, S_IFCHR,
 		    curproc);
 		if (error)
