@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.19 2013/10/20 09:36:29 benno Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.20 2013/10/20 16:47:24 deraadt Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -116,7 +116,7 @@ struct request {
 	size_t				buf_pos;
 	size_t				buf_len;
 	struct fcgi_response_head	response_head;
-	struct fcgi_stdin_head		stdin_head;	
+	struct fcgi_stdin_head		stdin_head;
 	uint16_t			id;
 	char				script_name[MAXPATHLEN];
 	struct env_head			env;
@@ -246,7 +246,7 @@ struct timeval		timeout = { TIMEOUT_DEFAULT, 0 };
 struct slowcgi_proc	slowcgi_proc;
 int			debug = 0;
 int			on = 1;
-char 			*fcgi_socket = "/var/www/run/slowcgi.sock";
+char			*fcgi_socket = "/var/www/run/slowcgi.sock";
 
 int
 main(int argc, char *argv[])
@@ -283,7 +283,7 @@ main(int argc, char *argv[])
 		openlog(__progname, LOG_PID|LOG_NDELAY, LOG_DAEMON);
 		logger = &syslogger;
 	}
-		
+
 	event_init();
 
 	slowcgi_listen(fcgi_socket, pw->pw_gid);
@@ -379,7 +379,7 @@ accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
 	int ret;
 	if (getdtablecount() + reserve +
 	    (*counter * FD_NEEDED) >= getdtablesize()) {
-		ldebug("inflight fds exceded");
+		ldebug("inflight fds exceeded");
 		errno = EMFILE;
 		return -1;
 	}
@@ -409,7 +409,7 @@ slowcgi_accept(int fd, short events, void *arg)
 
 	len = sizeof(ss);
 	if ((s = accept_reserve(fd, (struct sockaddr *)&ss,
-	    &len, FD_RESERVE, &cgi_inflight)) == -1) {		
+	    &len, FD_RESERVE, &cgi_inflight)) == -1) {
 		switch (errno) {
 		case EINTR:
 		case EWOULDBLOCK:
@@ -473,7 +473,7 @@ slowcgi_sig_handler(int sig, short event, void *arg)
 {
 	struct request		*c;
 	struct requests		*ncs;
-	struct slowcgi_proc 	*p;
+	struct slowcgi_proc	*p;
 	pid_t			 pid;
 	int			 status;
 
@@ -509,7 +509,7 @@ slowcgi_sig_handler(int sig, short event, void *arg)
 		break;
 	default:
 		lerr(1, "unexpected signal: %d", sig);
-
+		break;
 	}
 }
 
@@ -523,10 +523,10 @@ slowcgi_add_response(struct request *c, struct fcgi_response *resp)
 void
 slowcgi_response(int fd, short events, void *arg)
 {
-	struct request		 	*c;
+	struct request			*c;
 	struct fcgi_record_header	*header;
 	struct fcgi_response		*resp;
-	ssize_t 			 n;
+	ssize_t				 n;
 
 	c = arg;
 
@@ -563,14 +563,14 @@ void
 slowcgi_request(int fd, short events, void *arg)
 {
 	struct request	*c;
-	size_t 		 n, parsed;
+	size_t		 n, parsed;
 
 	c = arg;
 	parsed = 0;
 
 	n = read(fd, c->buf + c->buf_pos + c->buf_len,
 	    FCGI_RECORD_SIZE - c->buf_pos-c->buf_len);
-	
+
 	switch (n) {
 	case -1:
 		switch (errno) {
@@ -617,7 +617,7 @@ void
 parse_begin_request(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 {
 	struct fcgi_begin_request_body	*b;
-	
+
 	/* XXX -- FCGI_CANT_MPX_CONN */
 	if (c->request_started) {
 		lwarnx("unexpected FCGI_BEGIN_REQUEST, ignoring");
@@ -759,7 +759,7 @@ parse_stdin(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 size_t
 parse_record(uint8_t *buf, size_t n, struct request *c)
 {
-	struct fcgi_record_header 	*h;
+	struct fcgi_record_header	*h;
 
 	if (n < sizeof(struct fcgi_record_header))
 		return (0);
@@ -791,6 +791,7 @@ parse_record(uint8_t *buf, size_t n, struct request *c)
 		break;
 	default:
 		lwarnx("unimplemented type %d", h->type);
+		break;
 	}
 
 	return (sizeof(struct fcgi_record_header) + ntohs(h->content_len)
@@ -850,6 +851,7 @@ exec_cgi(struct request *c)
 		_exit(1);
 
 	}
+
 	/* Parent process*/
 	close(s_in[1]);
 	close(s_out[1]);
@@ -915,7 +917,7 @@ script_in(int fd, struct event *ev, struct request *c, uint8_t type)
 {
 	struct fcgi_response		*resp;
 	struct fcgi_record_header	*header;
-	ssize_t 			 n;
+	ssize_t				 n;
 
 	if ((resp = malloc(sizeof(struct fcgi_response))) == NULL) {
 		lwarnx("cannot malloc fcgi_response");
@@ -929,8 +931,8 @@ script_in(int fd, struct event *ev, struct request *c, uint8_t type)
 	header->reserved = 0;
 
 	n = read(fd, resp->data + sizeof(struct fcgi_record_header),
-	     FCGI_CONTENT_SIZE);
-	
+	    FCGI_CONTENT_SIZE);
+
 	if (n == -1) {
 		switch (errno) {
 		case EINTR:
@@ -984,7 +986,7 @@ script_out(int fd, short events, void *arg)
 {
 	struct request		*c;
 	struct fcgi_stdin	*node;
-	ssize_t 		 n;
+	ssize_t			 n;
 
 	c = arg;
 
