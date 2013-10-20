@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.18 2013/10/19 14:18:35 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.19 2013/10/20 09:36:29 benno Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -68,6 +68,9 @@
 #define FCGI_OVERLOADED		2
 #define FCGI_UNKNOWN_ROLE	3
 
+#define FD_RESERVE		5
+#define FD_NEEDED		6
+volatile int cgi_inflight = 0;
 
 struct listener {
 	struct event	ev, pause;
@@ -128,6 +131,7 @@ struct request {
 	int				stderr_fd_closed;
 	uint8_t				script_flags;
 	uint8_t				request_started;
+	int				inflight_fds_accounted;
 };
 
 struct requests {
@@ -157,6 +161,8 @@ struct fcgi_end_request_body {
 __dead void	usage(void);
 void		slowcgi_listen(char *, gid_t);
 void		slowcgi_paused(int, short, void *);
+int		accept_reserve(int, struct sockaddr *, socklen_t *, int,
+		    volatile int *);
 void		slowcgi_accept(int, short, void *);
 void		slowcgi_request(int, short, void *);
 void		slowcgi_response(int, short, void *);
@@ -366,6 +372,25 @@ slowcgi_paused(int fd, short events, void *arg)
 	event_add(&l->ev, NULL);
 }
 
+int
+accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
+	int reserve, volatile int *counter)
+{
+	int ret;
+	if (getdtablecount() + reserve +
+	    (*counter * FD_NEEDED) >= getdtablesize()) {
+		ldebug("inflight fds exceded");
+		errno = EMFILE;
+		return -1;
+	}
+
+	if ((ret = accept(sockfd, addr, addrlen)) > -1) {
+		(*counter)++;
+		ldebug("inflight incremented, now %d", *counter);
+	}
+	return ret;
+}
+
 void
 slowcgi_accept(int fd, short events, void *arg)
 {
@@ -383,8 +408,8 @@ slowcgi_accept(int fd, short events, void *arg)
 	c = NULL;
 
 	len = sizeof(ss);
-	s = accept(fd, (struct sockaddr *)&ss, &len);
-	if (s == -1) {
+	if ((s = accept_reserve(fd, (struct sockaddr *)&ss,
+	    &len, FD_RESERVE, &cgi_inflight)) == -1) {		
 		switch (errno) {
 		case EINTR:
 		case EWOULDBLOCK:
@@ -408,12 +433,14 @@ slowcgi_accept(int fd, short events, void *arg)
 	if (c == NULL) {
 		lwarn("cannot calloc request");
 		close(s);
+		cgi_inflight--;
 		return;
 	}
 	requests = calloc(1, sizeof(*requests));
 	if (requests == NULL) {
 		lwarn("cannot calloc requests");
 		close(s);
+		cgi_inflight--;
 		free(c);
 		return;
 	}
@@ -422,6 +449,7 @@ slowcgi_accept(int fd, short events, void *arg)
 	c->buf_len = 0;
 	c->request_started = 0;
 	c->stdin_fd_closed = c->stdout_fd_closed = c->stderr_fd_closed = 0;
+	c->inflight_fds_accounted = 0;
 	TAILQ_INIT(&c->response_head);
 	TAILQ_INIT(&c->stdin_head);
 
@@ -792,6 +820,8 @@ exec_cgi(struct request *c)
 		lerr(1, "socketpair");
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, s_err) == -1)
 		lerr(1, "socketpair");
+	cgi_inflight--;
+	c->inflight_fds_accounted = 1;
 	ldebug("fork: %s", c->script_name);
 
 	switch (pid = fork()) {
@@ -1033,6 +1063,8 @@ cleanup_request(struct request *c)
 			break;
 		}
 	}
+	if (! c->inflight_fds_accounted)
+		cgi_inflight--;
 	free(c);
 }
 
