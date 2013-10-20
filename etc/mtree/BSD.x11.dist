@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.30 2013/09/29 14:00:02 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.31 2013/10/20 11:50:57 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -76,10 +76,6 @@
                 freetype2
                     freetype
                         config
-                        ..
-                        internal
-                            services
-                            ..
                         ..
                     ..
                 ..
