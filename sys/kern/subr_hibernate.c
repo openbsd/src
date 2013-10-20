@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.65 2013/10/20 10:08:05 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.66 2013/10/20 17:16:47 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1230,6 +1230,8 @@ hibernate_resume(void)
 	pmap_kenter_pa(HIBERNATE_HIBALLOC_PAGE, HIBERNATE_HIBALLOC_PAGE,
 	    VM_PROT_ALL);
 	pmap_activate(curproc);
+
+	printf("Unpacking image...\n");
 
 	/* Switch stacks */
 	hibernate_switch_stack_machdep();
