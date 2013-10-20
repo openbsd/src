@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.144 2013/10/17 16:27:46 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.145 2013/10/20 13:44:24 henning Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -3182,13 +3182,6 @@ in6_delayed_cksum(struct mbuf *m, u_int8_t nxt)
 	if (offset <= 0 || nxtp != nxt)
 		/* If the desired next protocol isn't found, punt. */
 		return;
-
-	if (nxt == IPPROTO_ICMPV6) {
-		struct icmp6_hdr *icmp6;
-		icmp6 = (struct icmp6_hdr *)(mtod(m, caddr_t) + offset);
-		icmp6->icmp6_cksum = 0;
-	}
-
 	csum = (u_int16_t)(in6_cksum(m, nxt, offset, m->m_pkthdr.len - offset));
 
 	switch (nxt) {
