@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.63 2013/10/20 09:44:17 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.64 2013/10/20 10:01:29 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1156,8 +1156,10 @@ hibernate_resume(void)
 
 	/* Get current running machine's hibernate info */
 	bzero(&hiber_info, sizeof(hiber_info));
-	if (get_hibernate_info(&hiber_info, 0))
+	if (get_hibernate_info(&hiber_info, 0)) {
+		DPRINTF("couldn't retrieve machine's hibernate info\n");
 		return;
+	}
 
 	/* Read hibernate info from disk */
 	s = splbio();
@@ -1167,11 +1169,16 @@ hibernate_resume(void)
 
 	if (hibernate_block_io(&hiber_info,
 	    hiber_info.sig_offset - hiber_info.swap_offset,
-	    hiber_info.secsize, (vaddr_t)&disk_hiber_info, 0))
-		panic("error in hibernate read");
+	    hiber_info.secsize, (vaddr_t)&disk_hiber_info, 0)) {
+		DPRINTF("error in hibernate read");
+		splx(s);
+		return;
+	}
 
 	/* Check magic number */
 	if (disk_hiber_info.magic != HIBERNATE_MAGIC) {
+		DPRINTF("wrong magic number in hibernate signature: %x\n",
+			disk_hiber_info.magic);
 		splx(s);
 		return;
 	}
@@ -1181,6 +1188,7 @@ hibernate_resume(void)
 	 * to prevent accidental resume or endless resume cycles later.
 	 */
 	if (hibernate_clear_signature()) {
+		DPRINTF("error clearing hibernate signature block\n");
 		splx(s);
 		return;
 	}
@@ -1190,6 +1198,7 @@ hibernate_resume(void)
 	 * this means we should do a resume from hibernate.
 	 */
 	if (hibernate_compare_signature(&hiber_info, &disk_hiber_info)) {
+		DPRINTF("mismatched hibernate signature block\n");
 		splx(s);
 		return;
 	}
@@ -1942,16 +1951,19 @@ hibernate_suspend(void)
 	/* Stash the piglet VA so we can free it in the resuming kernel */
 	global_piglet_va = hib_info.piglet_va;
 
+	DPRINTF("hibernate: writing chunks\n");
 	if (hibernate_write_chunks(&hib_info)) {
 		DPRINTF("hibernate_write_chunks failed\n");
 		return (1);
 	}
 
+	DPRINTF("hibernate: writing chunktable\n");
 	if (hibernate_write_chunktable(&hib_info)) {
 		DPRINTF("hibernate_write_chunktable failed\n");
 		return (1);
 	}
 
+	DPRINTF("hibernate: writing signature\n");
 	if (hibernate_write_signature(&hib_info)) {
 		DPRINTF("hibernate_write_signature failed\n");
 		return (1);
