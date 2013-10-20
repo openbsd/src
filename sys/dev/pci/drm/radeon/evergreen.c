@@ -1,4 +1,4 @@
-/*	$OpenBSD: evergreen.c,v 1.4 2013/09/01 10:36:31 jsg Exp $	*/
+/*	$OpenBSD: evergreen.c,v 1.5 2013/10/20 15:45:08 kettenis Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -3382,7 +3382,7 @@ restart_ih:
 		workq_queue_task(NULL, &rdev->hotplug_task, 0,
 		    radeon_hotplug_work_func, rdev, NULL);
 	if (queue_hdmi)
-		workq_queue_task(NULL, &rdev->hotplug_task, 0,
+		workq_queue_task(NULL, &rdev->audio_task, 0,
 		    r600_audio_update_hdmi, rdev, NULL);
 	rdev->ih.rptr = rptr;
 	WREG32(IH_RB_RPTR, rdev->ih.rptr);

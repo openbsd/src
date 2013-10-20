@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs600.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: rs600.c,v 1.2 2013/10/20 15:45:09 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -758,7 +758,7 @@ int rs600_irq_process(struct radeon_device *rdev)
 		workq_queue_task(NULL, &rdev->hotplug_task, 0,
 		    radeon_hotplug_work_func, rdev, NULL);
 	if (queue_hdmi)
-		workq_queue_task(NULL, &rdev->hotplug_task, 0,
+		workq_queue_task(NULL, &rdev->audio_task, 0,
 		    r600_audio_update_hdmi, rdev, NULL);
 	if (rdev->msi_enabled) {
 		switch (rdev->family) {
