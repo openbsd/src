@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.7 2013/10/18 14:35:20 deraadt Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.8 2013/10/20 10:43:48 miod Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -331,7 +331,13 @@ struct wsdisplay_accessops radeondrm_accessops = {
 int
 radeondrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	return (-1);
+	switch (cmd) {
+	case WSDISPLAYIO_GTYPE:
+		*(int *)data = WSDISPLAY_TYPE_KMS;
+		return 0;
+	default:
+		return -1;
+	}
 }
 
 paddr_t

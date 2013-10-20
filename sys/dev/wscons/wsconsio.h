@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.67 2012/10/29 11:54:45 stsp Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.68 2013/10/20 10:43:48 miod Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -327,6 +327,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_GRTWO	66	/* SGI GR2 */
 #define		WSDISPLAY_TYPE_NEWPORT	67	/* SGI Newport */
 #define		WSDISPLAY_TYPE_LIGHT	68	/* SGI Light */
+#define		WSDISPLAY_TYPE_KMS	69	/* KMS framebuffer */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {

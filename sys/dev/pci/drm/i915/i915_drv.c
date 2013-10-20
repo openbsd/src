@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.39 2013/09/30 06:47:48 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.40 2013/10/20 10:43:47 miod Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -630,6 +630,9 @@ inteldrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	extern u32 _intel_panel_get_max_backlight(struct drm_device *);
 
 	switch (cmd) {
+	case WSDISPLAYIO_GTYPE:
+		*(int *)data = WSDISPLAY_TYPE_KMS;
+		return 0;
 	case WSDISPLAYIO_GETPARAM:
 		if (ws_get_param && ws_get_param(dp) == 0)
 			return 0;
