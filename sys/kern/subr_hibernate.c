@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.61 2013/10/03 03:51:16 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.62 2013/10/20 09:27:39 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -45,7 +45,7 @@
  * ----------------------------------------------------------------------------
  * 0				I/O page used during resume
  * 1*PAGE_SIZE		 	I/O page used during hibernate suspend
- * 2*PAGE_SIZE			unused
+ * 2*PAGE_SIZE		 	I/O page used during hibernate suspend
  * 3*PAGE_SIZE			copy page used during hibernate suspend
  * 4*PAGE_SIZE			final chunk ordering list (8 pages)
  * 12*PAGE_SIZE			piglet chunk ordering list (8 pages)
@@ -1518,7 +1518,10 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 		hibernate_state->hib_stream.avail_in = 0;
 		hibernate_state->hib_stream.next_out =
 		    (caddr_t)hibernate_io_page + (PAGE_SIZE - out_remaining);
-		hibernate_state->hib_stream.avail_out = out_remaining;
+
+		/* We have an extra output page available for finalize */
+		hibernate_state->hib_stream.avail_out =
+			out_remaining + PAGE_SIZE;
 
 		if ((err = deflate(&hibernate_state->hib_stream, Z_FINISH)) !=
 		    Z_STREAM_END) {
@@ -1528,7 +1531,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 
 		out_remaining = hibernate_state->hib_stream.avail_out;
 
-		used = PAGE_SIZE - out_remaining;
+		used = 2*PAGE_SIZE - out_remaining;
 		nblocks = used / hiber_info->secsize;
 
 		/* Round up to next block if needed */
@@ -1877,7 +1880,6 @@ hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
 
 			blkctr += (read_size / hib_info->secsize);
 
-			hibernate_flush();
 			pmap_kremove(tempva, PAGE_SIZE);
 			pmap_kremove(tempva + PAGE_SIZE, PAGE_SIZE);
 			processed += read_size;
