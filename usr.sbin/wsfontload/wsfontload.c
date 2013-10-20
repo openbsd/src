@@ -1,4 +1,4 @@
-/* $OpenBSD: wsfontload.c,v 1.11 2006/08/07 10:43:20 kettenis Exp $ */
+/* $OpenBSD: wsfontload.c,v 1.12 2013/10/20 13:22:44 miod Exp $ */
 /* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,8 +48,6 @@
 #include <dev/wscons/wsconsio.h>
 
 #define DEFDEV		"/dev/ttyCcfg"
-#define DEFWIDTH	8
-#define DEFHEIGHT	16
 #define DEFENC		WSDISPLAY_FONTENC_ISO
 #define DEFBITORDER	WSDISPLAY_FONTORDER_L2R
 #define DEFBYTEORDER	WSDISPLAY_FONTORDER_L2R
@@ -69,15 +68,16 @@ usage(void)
 	exit(1);
 }
 
-static const
-struct {
+static const struct {
 	const char *name;
 	int val;
 } encodings[] = {
 	{"iso",  WSDISPLAY_FONTENC_ISO},
 	{"ibm",  WSDISPLAY_FONTENC_IBM},
+#if 0
 	{"pcvt", WSDISPLAY_FONTENC_PCVT},
 	{"iso7", WSDISPLAY_FONTENC_ISO7},
+#endif
 };
 
 int
@@ -85,21 +85,16 @@ main(int argc, char *argv[])
 {
 	char *wsdev, *p;
 	struct wsdisplay_font f;
-	int c, res, wsfd, ffd, list, i;
+	int c, res, wsfd, ffd, type, list, i;
+	int defwidth, defheight;
+	struct stat stat;
 	size_t len;
 	void *buf;
 
 	wsdev = DEFDEV;
-	f.index = -1;
-	f.fontwidth = DEFWIDTH;
-	f.fontheight = DEFHEIGHT;
-	f.firstchar = 0;
-	f.numchars = 256;
-	f.stride = 0;
-	f.encoding = DEFENC;
-	f.name[0] = 0;
-	f.bitorder = DEFBITORDER;
-	f.byteorder = DEFBYTEORDER;
+	memset(&f, 0, sizeof f);
+	f.firstchar = f.numchars = -1;
+	f.encoding = -1;
 
 	list = 0;
 	while ((c = getopt(argc, argv, "bB:e:f:h:lN:w:")) != -1) {
@@ -184,8 +179,51 @@ main(int argc, char *argv[])
 	} else
 		ffd = 0;
 
-	if (!f.stride)
+	res = ioctl(wsfd, WSDISPLAYIO_GTYPE, &type);
+	if (res != 0)
+		type = WSDISPLAY_TYPE_UNKNOWN;
+
+	switch (type) {
+	/* text-mode VGA */
+	case WSDISPLAY_TYPE_ISAVGA:
+	case WSDISPLAY_TYPE_PCIVGA:
+		defwidth = 8;
+		defheight = 16;
+		break;
+	/* raster frame buffers */
+	default:
+		/* XXX ought to be computed from the frame buffer resolution */
+		defwidth = 12;
+		defheight = 22;
+		break;
+	}
+
+	f.index = -1;
+	if (f.fontwidth == 0)
+		f.fontwidth = defwidth;
+	if (f.fontheight == 0)
+		f.fontheight = defheight;
+	if (f.stride == 0)
 		f.stride = (f.fontwidth + 7) / 8;
+	if (f.encoding < 0)
+		f.encoding = DEFENC;
+	if (f.bitorder == 0)
+		f.bitorder = DEFBITORDER;
+	if (f.byteorder == 0)
+		f.byteorder = DEFBYTEORDER;
+
+	if (f.firstchar < 0)
+		f.firstchar = 0;
+
+	if (f.numchars < 0) {
+		f.numchars = 256;
+		if (argc > 0) {
+			if (fstat(ffd, &stat) == 0)
+				f.numchars = stat.st_size /
+				    f.stride / f.fontheight;
+		}
+	}
+
 	len = f.fontheight * f.numchars * f.stride;
 	if (!len)
 		errx(1, "invalid font size");
