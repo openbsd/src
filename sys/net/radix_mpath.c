@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.20 2013/10/20 13:23:35 claudio Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.21 2013/10/20 16:17:36 claudio Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ rn_mpath_reprio(struct radix_node *rn, int newprio)
 			prioinv = 1;
 		t = tt;
 	} else {
-		mid = rn_mpath_count(tt) / 2;
+		mid = rn_mpath_active_count(tt) / 2;
 		do {
 			t = tt;
 			tt = rn_mpath_next(tt, 0);
@@ -234,7 +234,7 @@ rn_mpath_reprio(struct radix_node *rn, int newprio)
 }
 
 int
-rn_mpath_count(struct radix_node *rn)
+rn_mpath_active_count(struct radix_node *rn)
 {
 	int i;
 
@@ -413,7 +413,7 @@ rtalloc_mpath(struct route *ro, u_int32_t *srcaddrp)
 #if defined(INET) || defined(INET6)
 	/* gw selection by Hash-Threshold (RFC 2992) */
 	rn = (struct radix_node *)ro->ro_rt;
-	npaths = rn_mpath_count(rn);
+	npaths = rn_mpath_active_count(rn);
 	hash = rn_mpath_hash(ro, srcaddrp) & 0xffff;
 	threshold = 1 + (0xffff / npaths);
 	while (hash > threshold && rn) {

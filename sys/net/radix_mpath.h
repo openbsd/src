@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.h,v 1.9 2010/05/07 13:33:16 claudio Exp $	*/
+/*	$OpenBSD: radix_mpath.h,v 1.10 2013/10/20 16:17:37 claudio Exp $	*/
 /*	$KAME: radix_mpath.h,v 1.9 2004/03/30 11:21:49 keiichi Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ int	rn_mpath_capable(struct radix_node_head *);
 struct radix_node *rn_mpath_next(struct radix_node *, int);
 struct radix_node *rn_mpath_prio(struct radix_node *, u_int8_t);
 void	rn_mpath_reprio(struct radix_node *, int);
-int	rn_mpath_count(struct radix_node *);
+int	rn_mpath_active_count(struct radix_node *);
 struct rtentry *rt_mpath_matchgate(struct rtentry *, struct sockaddr *,
 	    u_int8_t);
 int	rt_mpath_conflict(struct radix_node_head *, struct rtentry *,

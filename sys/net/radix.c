@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.30 2012/07/10 15:53:34 blambert Exp $	*/
+/*	$OpenBSD: radix.c,v 1.31 2013/10/20 16:17:36 claudio Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -581,7 +581,7 @@ rn_addroute(void *v_arg, void *n_arg, struct radix_node_head *head,
 					break;
 				}
 
-				mid = rn_mpath_count(tt) / 2;
+				mid = rn_mpath_active_count(tt) / 2;
 				do {
 					t = tt;
 					tt = rn_mpath_next(tt, 0);
