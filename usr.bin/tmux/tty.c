@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.162 2013/06/23 13:10:48 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.163 2013/10/20 09:37:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -224,7 +224,7 @@ tty_start_tty(struct tty *tty)
 			tty->flags |= TTY_FOCUS;
 			tty_puts(tty, "\033[?1004h");
 		}
-		tty_puts(tty, "\033[c\033[>4;1m\033[m");
+		tty_puts(tty, "\033[c");
 	}
 
 	tty->cx = UINT_MAX;
@@ -292,7 +292,6 @@ tty_stop_tty(struct tty *tty)
 			tty->flags &= ~TTY_FOCUS;
 			tty_puts(tty, "\033[?1004l");
 		}
-		tty_raw(tty, "\033[>4m\033[m");
 	}
 
 	tty_raw(tty, tty_term_string(tty->term, TTYC_RMCUP));
