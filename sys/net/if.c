@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.271 2013/10/19 14:54:18 mikeb Exp $	*/
+/*	$OpenBSD: if.c,v 1.272 2013/10/20 13:21:56 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2070,7 +2070,7 @@ if_group_egress_build(void)
 			if (rt->rt_ifp)
 				if_addgroup(rt->rt_ifp, IFG_EGRESS);
 #ifndef SMALL_KERNEL
-			rt = rt_mpath_next(rt, 0);
+			rt = rt_mpath_next(rt);
 #else
 			rt = NULL;
 #endif
@@ -2084,7 +2084,7 @@ if_group_egress_build(void)
 			if (rt->rt_ifp)
 				if_addgroup(rt->rt_ifp, IFG_EGRESS);
 #ifndef SMALL_KERNEL
-			rt = rt_mpath_next(rt, 0);
+			rt = rt_mpath_next(rt);
 #else
 			rt = NULL;
 #endif

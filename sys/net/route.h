@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.79 2013/10/20 12:35:47 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.80 2013/10/20 13:21:57 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -413,6 +413,6 @@ int	 rtdeletemsg(struct rtentry *, u_int);
 struct radix_node_head	*rt_gettable(sa_family_t, u_int);
 struct rtentry		*rt_lookup(struct sockaddr *, struct sockaddr *, u_int);
 
-struct rtentry *rt_mpath_next(struct rtentry *, int);
+struct rtentry *rt_mpath_next(struct rtentry *);
 #endif /* _KERNEL */
 #endif /* _NET_ROUTE_H_ */

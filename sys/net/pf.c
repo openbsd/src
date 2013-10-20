@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.846 2013/10/20 11:03:00 phessler Exp $ */
+/*	$OpenBSD: pf.c,v 1.847 2013/10/20 13:21:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5443,7 +5443,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 
 			if (kif->pfik_ifp == ifp)
 				ret = 1;
-			rt = rt_mpath_next(rt, 0);
+			rt = rt_mpath_next(rt);
 		} while (check_mpath == 1 && rt != NULL && ret == 0);
 	} else
 		ret = 0;
