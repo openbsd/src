@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.155 2013/10/19 09:32:15 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.156 2013/10/20 13:15:35 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -648,7 +648,8 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_int openmask)
 	for (i = 0; i < MAXPARTITIONS; i++) {
 		opp = &olp->d_partitions[i];
 		npp = &nlp->d_partitions[i];
-		if ((openmask & (1 << i)) && (DL_GETPOFFSET(npp) != DL_GETPOFFSET(opp) ||
+		if ((openmask & (1 << i)) &&
+		    (DL_GETPOFFSET(npp) != DL_GETPOFFSET(opp) ||
 		    DL_GETPSIZE(npp) < DL_GETPSIZE(opp)))
 			return (EBUSY);
 		/*
