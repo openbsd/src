@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mopd.8,v 1.17 2013/08/14 08:39:32 jmc Exp $
+.\"	$OpenBSD: mopd.8,v 1.18 2013/10/20 07:40:43 jmc Exp $
 .\"
 .\" Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
 .\"
@@ -22,9 +22,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" @(#) $OpenBSD: mopd.8,v 1.17 2013/08/14 08:39:32 jmc Exp $
+.\" @(#) $OpenBSD: mopd.8,v 1.18 2013/10/20 07:40:43 jmc Exp $
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: October 20 2013 $
 .Dt MOPD 8
 .Os
 .Sh NAME
@@ -63,9 +63,7 @@ and it might be a soft link to another file.
 .Pp
 .Nm
 supports two kinds of files.
-The file is first checked to see if it is in
-.Xr a.out 5
-format.
+The file is first checked to see if it is in a.out format.
 If not, a few of Digital's formats are checked.
 .Pp
 In normal operation,
@@ -118,7 +116,6 @@ Show version of
 .Sh AUTHORS
 .An Mats O Jansson Aq Mt moj@stacken.kth.se
 .Sh BUGS
-.Xr a.out 5
-isn't supported yet on
+a.out isn't supported yet on
 .Pf non- Bx
 implementations (otherOS).

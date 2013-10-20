@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.40 2011/09/03 22:59:07 jmc Exp $
+.\"	$OpenBSD: rdist.1,v 1.41 2013/10/20 07:40:42 jmc Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"	$From: rdist.man,v 6.34 1996/01/29 22:37:19 mcooper Exp $
 .\"	@(#)rdist.1	6.6 (Berkeley) 5/13/86
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: October 20 2013 $
 .Dt RDIST 1
 .Os
 .Sh NAME
@@ -315,9 +315,7 @@ If this option is enabled, then any files listed in the file list in the
 distfile that are directories are not recursively scanned.
 Only the existence, ownership, and mode of the directory are checked.
 .It Ic noexec
-Automatically exclude executable binary files that are in
-.Xr a.out 5
-or
+Automatically exclude executable binary files in
 .Xr elf 5
 format from being checked or updated.
 .It Ic numchkgroup
