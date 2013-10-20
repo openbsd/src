@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.26 2013/08/24 23:43:36 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.27 2013/10/20 09:41:31 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -161,7 +161,7 @@ hibernate_enter_resume_4m_pde(vaddr_t va, paddr_t pa)
 	pt_entry_t *pde, npde;
 
 	pde = s4pde_4m(va);
-	npde = (pa & PMAP_PA_MASK_4M) | PG_RW | PG_V | PG_u | PG_M | PG_PS;
+	npde = (pa & PMAP_PA_MASK_4M) | PG_RW | PG_V | PG_M | PG_PS;
 	*pde = npde;
 }
 
@@ -174,7 +174,7 @@ hibernate_enter_resume_4k_pte(vaddr_t va, paddr_t pa)
 	pt_entry_t *pte, npte;
 
 	pte = s4pte_4k(va);
-	npte = (pa & PMAP_PA_MASK) | PG_RW | PG_V | PG_u | PG_M;
+	npte = (pa & PMAP_PA_MASK) | PG_RW | PG_V | PG_M;
 	*pte = npte;
 }
 
@@ -187,7 +187,7 @@ hibernate_enter_resume_4k_pde(vaddr_t va)
 	pt_entry_t *pde, npde;
 
 	pde = s4pde_4k(va);
-	npde = (HIBERNATE_PT_PAGE & PMAP_PA_MASK) | PG_RW | PG_V | PG_u | PG_M;
+	npde = (HIBERNATE_PT_PAGE & PMAP_PA_MASK) | PG_RW | PG_V | PG_M;
 	*pde = npde;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.14 2013/08/24 23:43:36 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.15 2013/10/20 09:41:31 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -168,39 +168,39 @@ hibernate_enter_resume_2m_pde(vaddr_t va, paddr_t pa)
 			pde = (pt_entry_t *)(HIBERNATE_PD_LOW +
 				(pl2_pi(va) * sizeof(pt_entry_t)));
 			npde = (pa & L2_MASK) | 
-				PG_RW | PG_V | PG_u | PG_M | PG_PS;
+				PG_RW | PG_V | PG_M | PG_PS;
 			*pde = npde;
 		} else {
 			/* Map the 1GB containing region */
 			pde = (pt_entry_t *)(HIBERNATE_PDPT_LOW +
 				(pl3_pi(va) * sizeof(pt_entry_t)));
-			npde = (HIBERNATE_PD_LOW2) | PG_RW | PG_V | PG_u;
+			npde = (HIBERNATE_PD_LOW2) | PG_RW | PG_V;
 			*pde = npde;
 
 			/* Map 2MB region */
 			pde = (pt_entry_t *)(HIBERNATE_PD_LOW2 +
 				(pl2_pi(va) * sizeof(pt_entry_t)));
 			npde = (pa & L2_MASK) |
-				PG_RW | PG_V | PG_u | PG_M | PG_PS;
+				PG_RW | PG_V | PG_M | PG_PS;
 			*pde = npde; 
 		}
 	} else {
 		/* First map the 512GB containing region */
 		pde = (pt_entry_t *)(HIBERNATE_PML4T +
 			(pl4_pi(va) * sizeof(pt_entry_t)));
-		npde = (HIBERNATE_PDPT_HI) | PG_RW | PG_V | PG_u;
+		npde = (HIBERNATE_PDPT_HI) | PG_RW | PG_V;
 		*pde = npde;
 
 		/* Map the 1GB containing region */
 		pde = (pt_entry_t *)(HIBERNATE_PDPT_HI +
 			(pl3_pi(va) * sizeof(pt_entry_t)));
-		npde = (HIBERNATE_PD_HI) | PG_RW | PG_V | PG_u;
+		npde = (HIBERNATE_PD_HI) | PG_RW | PG_V;
 		*pde = npde;
 
 		/* Map the requested 2MB region */
 		pde = (pt_entry_t *)(HIBERNATE_PD_HI +
 			(pl2_pi(va) * sizeof(pt_entry_t)));
-		npde = (pa & L2_MASK) | PG_RW | PG_V | PG_u | PG_PS;
+		npde = (pa & L2_MASK) | PG_RW | PG_V | PG_PS;
 		*pde = npde;
 	}
 }
@@ -216,7 +216,7 @@ hibernate_enter_resume_4k_pte(vaddr_t va, paddr_t pa)
 	/* Map the page */
 	pde = (pt_entry_t *)(HIBERNATE_PT_LOW +
 		(pl1_pi(va) * sizeof(pt_entry_t)));
-	npde = (pa & PMAP_PA_MASK) | PG_RW | PG_V | PG_u;
+	npde = (pa & PMAP_PA_MASK) | PG_RW | PG_V;
 	*pde = npde;
 }
 
@@ -270,19 +270,19 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 	/* First 512GB PML4E */
 	pde = (pt_entry_t *)(HIBERNATE_PML4T +
 		(pl4_pi(0) * sizeof(pt_entry_t)));
-	npde = (HIBERNATE_PDPT_LOW) | PG_RW | PG_V | PG_u;
+	npde = (HIBERNATE_PDPT_LOW) | PG_RW | PG_V;
 	*pde = npde;
 
 	/* First 1GB PDPTE */
 	pde = (pt_entry_t *)(HIBERNATE_PDPT_LOW +
 		(pl3_pi(0) * sizeof(pt_entry_t)));
-	npde = (HIBERNATE_PD_LOW) | PG_RW | PG_V | PG_u;
+	npde = (HIBERNATE_PD_LOW) | PG_RW | PG_V;
 	*pde = npde;
 	
 	/* PD for first 2MB */
 	pde = (pt_entry_t *)(HIBERNATE_PD_LOW +
 		(pl2_pi(0) * sizeof(pt_entry_t)));
-	npde = (HIBERNATE_PT_LOW) | PG_RW | PG_V | PG_u;
+	npde = (HIBERNATE_PT_LOW) | PG_RW | PG_V;
 	*pde = npde;
 
 	/*
