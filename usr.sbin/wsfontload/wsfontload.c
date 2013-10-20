@@ -1,4 +1,4 @@
-/* $OpenBSD: wsfontload.c,v 1.12 2013/10/20 13:22:44 miod Exp $ */
+/* $OpenBSD: wsfontload.c,v 1.13 2013/10/20 16:09:25 miod Exp $ */
 /* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
@@ -83,7 +83,7 @@ static const struct {
 int
 main(int argc, char *argv[])
 {
-	char *wsdev, *p;
+	char *wsdev, *infile, *p;
 	struct wsdisplay_font f;
 	int c, res, wsfd, ffd, type, list, i;
 	int defwidth, defheight;
@@ -171,13 +171,16 @@ main(int argc, char *argv[])
 	}
 
 	if (argc > 0) {
-		ffd = open(argv[0], O_RDONLY, 0);
+		infile = argv[0];
+		ffd = open(infile, O_RDONLY, 0);
 		if (ffd < 0)
-			err(4, "open %s", argv[0]);
+			err(4, "open %s", infile);
 		if (!*f.name)
-			strlcpy(f.name, argv[0], WSFONT_NAME_SIZE);
-	} else
-		ffd = 0;
+			strlcpy(f.name, infile, WSFONT_NAME_SIZE);
+	} else {
+		infile = "stdin";
+		ffd = STDIN_FILENO;
+	}
 
 	res = ioctl(wsfd, WSDISPLAYIO_GTYPE, &type);
 	if (res != 0)
@@ -233,9 +236,9 @@ main(int argc, char *argv[])
 		errx(1, "malloc");
 	res = read(ffd, buf, len);
 	if (res < 0)
-		err(4, "read %s", argv[0]);
+		err(4, "read %s", infile);
 	if (res != len)
-		errx(4, "short read on %s", argv[0]);
+		errx(4, "short read on %s", infile);
 
 	f.data = buf;
 
