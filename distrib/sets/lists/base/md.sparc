@@ -691,8 +691,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/musyccreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/musyccvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/neoreg.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/noctreg.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/noctvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/nofnreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/nofnvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pccbbreg.ph

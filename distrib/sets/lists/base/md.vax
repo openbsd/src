@@ -617,8 +617,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/musyccreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/musyccvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/neoreg.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/noctreg.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/noctvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/nofnreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/nofnvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/pccbbreg.ph

@@ -1271,8 +1271,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/musyccreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/musyccvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/neoreg.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/noctreg.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/noctvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/nofnreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/nofnvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pccbbreg.ph
