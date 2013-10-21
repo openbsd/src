@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.114 2013/08/20 21:04:40 jmc Exp $ */
+/* $OpenBSD: netcat.c,v 1.115 2013/10/21 08:59:49 phessler Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -588,11 +588,9 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 		    res0->ai_protocol)) < 0)
 			continue;
 
-		if (rtableid) {
-			if (setsockopt(s, SOL_SOCKET, SO_RTABLE, &rtableid,
-			    sizeof(rtableid)) == -1)
-				err(1, "setsockopt SO_RTABLE");
-		}
+		if (setsockopt(s, SOL_SOCKET, SO_RTABLE, &rtableid,
+		    sizeof(rtableid)) == -1)
+			err(1, "setsockopt SO_RTABLE");
 
 		/* Bind to a local port or source address if specified. */
 		if (sflag || pflag) {
@@ -699,11 +697,9 @@ local_listen(char *host, char *port, struct addrinfo hints)
 		    res0->ai_protocol)) < 0)
 			continue;
 
-		if (rtableid) {
-			if (setsockopt(s, IPPROTO_IP, SO_RTABLE, &rtableid,
-			    sizeof(rtableid)) == -1)
-				err(1, "setsockopt SO_RTABLE");
-		}
+		if (setsockopt(s, SOL_SOCKET, SO_RTABLE, &rtableid,
+		    sizeof(rtableid)) == -1)
+			err(1, "setsockopt SO_RTABLE");
 
 		ret = setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &x, sizeof(x));
 		if (ret == -1)
