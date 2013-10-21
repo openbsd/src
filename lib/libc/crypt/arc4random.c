@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.25 2013/10/01 18:34:57 markus Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.26 2013/10/21 20:33:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -156,31 +156,6 @@ _rs_random_u32(u_int32_t *val)
 	memset(rs_buf + RSBUFSZ - rs_have, 0, sizeof(*val));
 	rs_have -= sizeof(*val);
 	return;
-}
-
-void
-arc4random_stir(void)
-{
-	_ARC4_LOCK();
-	_rs_stir();
-	_ARC4_UNLOCK();
-}
-
-void
-arc4random_addrandom(u_char *dat, int datlen)
-{
-	int m;
-
-	_ARC4_LOCK();
-	if (!rs_initialized)
-		_rs_stir();
-	while (datlen > 0) {
-		m = MIN(datlen, KEYSZ + IVSZ);
-		_rs_rekey(dat, m);
-		dat += m;
-		datlen -= m;
-	}
-	_ARC4_UNLOCK();
 }
 
 u_int32_t

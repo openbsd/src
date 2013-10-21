@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.18 2010/10/28 08:34:37 mikeb Exp $
+#	$OpenBSD: Makefile.inc,v 1.19 2013/10/21 20:33:23 deraadt Exp $
 
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/crypt ${LIBCSRCDIR}/crypt
 
@@ -11,5 +11,4 @@ MLINKS+=crypt.3 des_setkey.3 blowfish.3 blf_key.3 blowfish.3 blf_enc.3
 MLINKS+=blowfish.3 blf_dec.3 blowfish.3 blf_ecb_encrypt.3
 MLINKS+=blowfish.3 blf_ecb_decrypt.3 blowfish.3 blf_cbc_encrypt.3
 MLINKS+=blowfish.3 blf_cbc_decrypt.3
-MLINKS+=arc4random.3 arc4random_stir.3 arc4random.3 arc4random_addrandom.3
 MLINKS+=arc4random.3 arc4random_buf.3 arc4random.3 arc4random_uniform.3
