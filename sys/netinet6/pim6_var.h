@@ -1,4 +1,4 @@
-/*	$OpenBSD: pim6_var.h,v 1.9 2007/12/14 18:33:41 deraadt Exp $	*/
+/*	$OpenBSD: pim6_var.h,v 1.10 2013/10/21 10:04:02 deraadt Exp $	*/
 /*	$KAME: pim6_var.h,v 1.8 2000/06/06 08:07:43 jinmei Exp $	*/
 
 /*
@@ -51,11 +51,11 @@ struct pim6stat {
 	u_int64_t pim6s_snd_registers;	/* sent registers		*/
 };
 
-#if (defined(KERNEL)) || (defined(_KERNEL))
+#ifdef _KERNEL
 extern struct pim6stat pim6stat;
 int pim6_input(struct mbuf **, int *, int);
 int pim6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 /*
  * Names for PIM6 sysctl objects
