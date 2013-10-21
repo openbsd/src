@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.33 2012/10/20 09:54:20 stsp Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.34 2013/10/21 16:13:49 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -214,7 +214,7 @@ struct athn_serdes {
 
 /* Rx queue software indexes. */
 #define ATHN_QID_LP		0
-#define ATHN_QID_HP		0
+#define ATHN_QID_HP		1
 
 /* Tx queue software indexes. */
 #define ATHN_QID_AC_BE		0
