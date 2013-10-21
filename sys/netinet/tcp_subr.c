@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.122 2013/10/20 11:03:01 phessler Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.123 2013/10/21 08:42:24 phessler Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -891,17 +891,12 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
  * Path MTU Discovery handlers.
  */
 void
-tcp6_mtudisc_callback(faddr)
-	struct in6_addr *faddr;
+tcp6_mtudisc_callback(sin6, rdomain)
+	struct sockaddr_in6 *sin6;
+	u_int rdomain;
 {
-	struct sockaddr_in6 sin6;
-
-	bzero(&sin6, sizeof(sin6));
-	sin6.sin6_family = AF_INET6;
-	sin6.sin6_len = sizeof(struct sockaddr_in6);
-	sin6.sin6_addr = *faddr;
-	(void) in6_pcbnotify(&tcbtable, &sin6, 0,
-	    &sa6_any, 0, /* XXX rdomain */ 0, PRC_MSGSIZE, NULL, tcp_mtudisc);
+	(void) in6_pcbnotify(&tcbtable, sin6, 0,
+	    &sa6_any, 0, rdomain, PRC_MSGSIZE, NULL, tcp_mtudisc);
 }
 #endif /* INET6 */
 

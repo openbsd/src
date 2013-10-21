@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.131 2013/10/17 16:27:45 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.132 2013/10/21 08:42:25 phessler Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ extern int icmp6_nodeinfo;
  */
 struct icmp6_mtudisc_callback {
 	LIST_ENTRY(icmp6_mtudisc_callback) mc_list;
-	void (*mc_func)(struct in6_addr *);
+	void (*mc_func)(struct sockaddr_in6 *, u_int);
 };
 
 LIST_HEAD(, icmp6_mtudisc_callback) icmp6_mtudisc_callbacks =
@@ -248,7 +248,7 @@ icmp6_errcount(struct icmp6errstat *stat, int type, int code)
  * Register a Path MTU Discovery callback.
  */
 void
-icmp6_mtudisc_callback_register(void (*func)(struct in6_addr *))
+icmp6_mtudisc_callback_register(void (*func)(struct sockaddr_in6 *, u_int))
 {
 	struct icmp6_mtudisc_callback *mc;
 
@@ -1142,7 +1142,9 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 		sin6.sin6_addr.s6_addr16[1] =
 		    htons(m->m_pkthdr.rcvif->if_index);
 	}
-	/* sin6.sin6_scope_id = XXX: should be set if DST is a scoped addr */
+	sin6.sin6_scope_id = in6_addr2scopeid(m->m_pkthdr.rcvif,
+	    &sin6.sin6_addr);
+
 	rt = icmp6_mtudisc_clone(sin6tosa(&sin6), m->m_pkthdr.rdomain);
 
 	if (rt && (rt->rt_flags & RTF_HOST) &&
@@ -1163,7 +1165,7 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	 */
 	for (mc = LIST_FIRST(&icmp6_mtudisc_callbacks); mc != NULL;
 	     mc = LIST_NEXT(mc, mc_list))
-		(*mc->mc_func)(&sin6.sin6_addr);
+		(*mc->mc_func)(&sin6, m->m_pkthdr.rdomain);
 }
 
 /*
@@ -2349,11 +2351,11 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		bcopy(&src6, &ssrc.sin6_addr, sizeof(struct in6_addr));
 		rtredirect(sin6tosa(&sdst), sin6tosa(&sgw), NULL,
 		    RTF_GATEWAY | RTF_HOST, sin6tosa(&ssrc),
-		    &newrt, /* XXX */ 0);
+		    &newrt, m->m_pkthdr.rdomain);
 
 		if (newrt) {
 			(void)rt_timer_add(newrt, icmp6_redirect_timeout,
-			    icmp6_redirect_timeout_q, /* XXX */ 0);
+			    icmp6_redirect_timeout_q, m->m_pkthdr.rdomain);
 			rtfree(newrt);
 		}
 	}
@@ -2786,7 +2788,7 @@ icmp6_mtudisc_clone(struct sockaddr *dst, u_int rdomain)
 		rt = nrt;
 	}
 	error = rt_timer_add(rt, icmp6_mtudisc_timeout,
-			icmp6_mtudisc_timeout_q, /* XXX */ 0);
+			icmp6_mtudisc_timeout_q, rdomain);
 	if (error) {
 		rtfree(rt);
 		return NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.102 2013/08/12 21:57:16 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.103 2013/10/21 08:42:24 phessler Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -590,7 +590,7 @@ void	 tcp_mtudisc(struct inpcb *, int);
 void	 tcp_mtudisc_increase(struct inpcb *, int);
 #ifdef INET6
 void	tcp6_mtudisc(struct inpcb *, int);
-void	tcp6_mtudisc_callback(struct in6_addr *);
+void	tcp6_mtudisc_callback(struct sockaddr_in6 *, u_int);
 #endif
 struct tcpcb *
 	 tcp_newtcpcb(struct inpcb *);
