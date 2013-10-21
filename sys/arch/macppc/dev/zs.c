@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.21 2013/04/21 14:44:16 sebastia Exp $	*/
+/*	$OpenBSD: zs.c,v 1.22 2013/10/21 08:25:42 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -36,8 +36,8 @@
  * Zilog Z8530 Dual UART driver (machine-dependent part)
  *
  * Runs two serial lines per chip using slave drivers.
- * Plain tty/async lines use the zs_async slave.
- * Sun keyboard/mouse uses the zs_kbd/zs_ms slaves.
+ * Plain tty/async lines use the zstty slave.
+ * Sun keyboard/mouse uses the zskbd/zsms slaves.
  * Other ports use their own mice & keyboard slaves.
  *
  * Credits & history:
@@ -74,11 +74,6 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
-/* Are these in a header file anywhere? */
-/* Booter flags interface */
-#define ZSMAC_RAW	0x01
-#define ZSMAC_LOCALTALK	0x02
-
 #include "zsc.h"	/* get the # of zs chips defined */
 
 /*
@@ -86,13 +81,6 @@
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
 int zs_major = 7;
-
-/*
- * abort detection on console will now timeout after iterating on a loop
- * the following # of times. Cheep hack. Also, abort detection is turned
- * off after a timeout (i.e. maybe there's not a terminal hooked up).
- */
-#define ZSABORT_DELAY 3000000
 
 struct zsdevice {
 	/* Yes, they are backwards. */
@@ -168,15 +156,11 @@ struct cfattach zsc_ca = {
 	sizeof(struct zsc_softc), zsc_match, zsc_attach
 };
 
-extern struct cfdriver zsc_cd;
-
 int zshard(void *);
 void zssoft(void *);
 #ifdef ZS_TXDMA
 int zs_txdma_int(void *);
 #endif
-
-cons_decl(zs);
 
 /*
  * Is the zs chip present?
@@ -216,7 +200,7 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 	struct zs_chanstate *cs;
 	struct zsdevice *zsd;
 	int zsc_unit, channel;
-	int s, theflags;
+	int s;
 	int node, intr[3][3];
 	u_int regs[16];
 
@@ -303,13 +287,11 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 		xcs->cs_clocks[2].flags = ZSC_TRXDIV | ZSC_VARIABLE;
 		xcs->cs_clock_count = 3;
 		if (channel == 0) {
-			theflags = 0; /*mac68k_machine.modem_flags;*/
 			/*xcs->cs_clocks[1].clk = mac68k_machine.modem_dcd_clk;*/
 			/*xcs->cs_clocks[2].clk = mac68k_machine.modem_cts_clk;*/
 			xcs->cs_clocks[1].clk = 0;
 			xcs->cs_clocks[2].clk = 0;
 		} else {
-			theflags = 0; /*mac68k_machine.print_flags;*/
 			xcs->cs_clocks[1].flags = ZSC_VARIABLE;
 			/*
 			 * Yes, we aren't defining ANY clock source enables for the
@@ -332,28 +314,6 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 		xcs->cs_psource = 0;
 		xcs->cs_cclk_flag = 0;  /* Nothing fancy by default */
 		xcs->cs_pclk_flag = 0;
-
-		if (theflags & ZSMAC_RAW) {
-			zsc_args.hwflags |= ZS_HWFLAG_RAW;
-			printf(" (raw defaults)");
-		}
-
-		/*
-		 * XXX - This might be better done with a "stub" driver
-		 * (to replace zstty) that ignores LocalTalk for now.
-		 */
-		if (theflags & ZSMAC_LOCALTALK) {
-			printf(" shielding from LocalTalk");
-			cs->cs_defspeed = 1;
-			cs->cs_creg[ZSRR_BAUDLO] = cs->cs_preg[ZSRR_BAUDLO] = 0xff;
-			cs->cs_creg[ZSRR_BAUDHI] = cs->cs_preg[ZSRR_BAUDHI] = 0xff;
-			zs_write_reg(cs, ZSRR_BAUDLO, 0xff);
-			zs_write_reg(cs, ZSRR_BAUDHI, 0xff);
-			/*
-			 * If we might have LocalTalk, then make sure we have the
-			 * Baud rate low-enough to not do any damage.
-			 */
-		}
 
 		/*
 		 * We used to disable chip interrupts here, but we now
@@ -739,7 +699,7 @@ zs_set_speed(cs, bps)
 int
 zs_set_modes(cs, cflag)
 	struct zs_chanstate *cs;
-	int cflag;	/* bits per second */
+	int cflag;
 {
 	struct xzs_chanstate *xcs = (void*)cs;
 	int s;
@@ -852,7 +812,8 @@ zs_write_reg(cs, reg, val)
 	ZS_DELAY();
 }
 
-u_char zs_read_csr(cs)
+u_char
+zs_read_csr(cs)
 	struct zs_chanstate *cs;
 {
 	u_char val;
@@ -864,7 +825,8 @@ u_char zs_read_csr(cs)
 	return val;
 }
 
-void  zs_write_csr(cs, val)
+void
+zs_write_csr(cs, val)
 	struct zs_chanstate *cs;
 	u_char val;
 {
@@ -873,7 +835,8 @@ void  zs_write_csr(cs, val)
 	ZS_DELAY();
 }
 
-u_char zs_read_data(cs)
+u_char
+zs_read_data(cs)
 	struct zs_chanstate *cs;
 {
 	u_char val;
@@ -883,7 +846,8 @@ u_char zs_read_data(cs)
 	return val;
 }
 
-void  zs_write_data(cs, val)
+void
+zs_write_data(cs, val)
 	struct zs_chanstate *cs;
 	u_char val;
 {
@@ -897,8 +861,6 @@ void  zs_write_data(cs, val)
  * This should be modified to turn on/off modem in PBG4, etc.
  */
 void macobio_modem_power(int enable);
-int zs_enable(struct zs_chanstate *cs);
-void zs_disable(struct zs_chanstate *cs);
 
 int
 zs_enable(cs)
@@ -1161,4 +1123,3 @@ zscnpollc(dev, on)
 		swallow_zsintrs--;
 #endif
 }
-
