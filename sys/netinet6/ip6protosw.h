@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6protosw.h,v 1.9 2013/06/01 16:22:05 bluhm Exp $	*/
+/*	$OpenBSD: ip6protosw.h,v 1.10 2013/10/21 12:40:50 deraadt Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -30,8 +30,6 @@
  * SUCH DAMAGE.
  *
  */
-
-/*	BSDI protosw.h,v 2.3 1996/10/11 16:02:40 pjd Exp	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
