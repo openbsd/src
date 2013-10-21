@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.34 2013/10/19 08:59:48 deraadt Exp $	*/
+/*	$OpenBSD: nm.c,v 1.35 2013/10/21 02:59:52 deraadt Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -754,7 +754,7 @@ print_symbol(const char *name, struct nlist *sym)
 		if (show_extensions)
 			(void)printf(" %c   ", typeletter(sym));
 		else
-			(void)printf(" %c  ", typeletter(sym));
+			(void)printf(" %c ", typeletter(sym));
 	}
 
 	if (SYMBOL_TYPE(sym->n_type) == N_INDR && show_extensions)
