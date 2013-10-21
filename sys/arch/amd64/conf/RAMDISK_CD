@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.128 2013/09/08 02:53:40 reyk Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.129 2013/10/21 05:52:15 dlg Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -187,6 +187,7 @@ siop*	at pci?			# NCR 538XX SCSI controllers(new)
 adw*	at pci?			# AdvanSys ULTRA WIDE SCSI
 pcscp*	at pci?			# AMD 53c974 PCscsi-PCI SCSI
 #trm*	at pci?			# Tekram DC-3x5U SCSI Controllers
+vmwpvs*	at pci?			# VMware ParaVirtual SCSI
 softraid0	at root		# Software RAID
 
 # I2O

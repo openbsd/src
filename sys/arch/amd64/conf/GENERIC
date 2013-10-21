@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.349 2013/09/08 02:53:40 reyk Exp $
+#	$OpenBSD: GENERIC,v 1.350 2013/10/21 05:52:15 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -360,6 +360,7 @@ siop*	at pci?				# NCR 538XX SCSI controllers
 adw*	at pci?				# AdvanSys ULTRA WIDE SCSI
 pcscp*	at pci?				# AMD 53c974 PCscsi-PCI SCSI
 #trm*	at pci?				# Tekram DC-3x5U SCSI Controllers
+vmwpvs*	at pci?				# VMware ParaVirtual SCSI
 
 scsibus* at scsi?
 sd*	at scsibus?			# SCSI disk drives

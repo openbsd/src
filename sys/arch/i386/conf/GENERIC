@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.756 2013/09/14 01:37:02 guenther Exp $
+#	$OpenBSD: GENERIC,v 1.757 2013/10/21 05:52:15 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -469,6 +469,7 @@ uha1	at isa? disable port 0x334 # UltraStor [13]4f SCSI controllers
 uha*	at eisa?		# UltraStor 24f SCSI controllers
 wds0	at isa? disable port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 #wds1	at isa? port 0x358 irq 11 drq 5
+vmwpvs*	at pci?			# VMware ParaVirtual SCSI
 
 scsibus* at scsi?
 sd*	at scsibus?		# SCSI disk drives
