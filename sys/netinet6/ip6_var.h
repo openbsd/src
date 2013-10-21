@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.46 2013/06/01 16:22:05 bluhm Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.47 2013/10/21 12:27:16 deraadt Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -218,6 +218,9 @@ struct	ip6stat {
 #define	IPV6_UNSPECSRC		0x01	/* allow :: as the source address */
 #define	IPV6_FORWARDING		0x02	/* most of IPv6 header exists */
 #define	IPV6_MINMTU		0x04	/* use minimum MTU (IPV6_USE_MIN_MTU) */
+
+extern int ip6_mtudisc_timeout;		/* mtu discovery */
+extern struct rttimer_queue *icmp6_mtudisc_timeout_q;
 
 extern struct	ip6stat ip6stat;	/* statistics */
 extern int	ip6_defhlim;		/* default hop limit */

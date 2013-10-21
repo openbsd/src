@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.132 2013/10/21 08:42:25 phessler Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.133 2013/10/21 12:27:14 deraadt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -148,8 +148,7 @@ struct icmp6_mtudisc_callback {
 LIST_HEAD(, icmp6_mtudisc_callback) icmp6_mtudisc_callbacks =
     LIST_HEAD_INITIALIZER(icmp6_mtudisc_callbacks);
 
-static struct rttimer_queue *icmp6_mtudisc_timeout_q = NULL;
-extern int pmtu_expire;
+struct rttimer_queue *icmp6_mtudisc_timeout_q = NULL;
 
 /* XXX do these values make any sense? */
 static int icmp6_mtudisc_hiwat = 1280;
@@ -184,7 +183,7 @@ void
 icmp6_init(void)
 {
 	mld6_init();
-	icmp6_mtudisc_timeout_q = rt_timer_queue_create(pmtu_expire);
+	icmp6_mtudisc_timeout_q = rt_timer_queue_create(ip6_mtudisc_timeout);
 	icmp6_redirect_timeout_q = rt_timer_queue_create(icmp6_redirtimeout);
 }
 
@@ -2744,18 +2743,11 @@ icmp6_ctloutput(int op, struct socket *so, int level, int optname,
 int
 icmp6_ratelimit(const struct in6_addr *dst, const int type, const int code)
 {
-	int ret;
-
-	ret = 0;	/* okay to send */
-
 	/* PPS limit */
 	if (!ppsratecheck(&icmp6errppslim_last, &icmp6errpps_count,
-	    icmp6errppslim)) {
-		/* The packet is subject to rate limit */
-		ret++;
-	}
-
-	return ret;
+	    icmp6errppslim))
+		return 1;	/* The packet is subject to rate limit */
+	return 0;		/* okay to send */
 }
 
 struct rtentry *

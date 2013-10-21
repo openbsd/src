@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.217 2013/08/21 09:02:12 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.218 2013/10/21 12:27:12 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -75,8 +75,6 @@
 #include <net/if_types.h>
 #include <netinet/ip_carp.h>
 #endif
-
-#define IPMTUDISCTIMEOUT (10 * 60)	/* as per RFC 1191 */
 
 struct ipqhead ipq;
 

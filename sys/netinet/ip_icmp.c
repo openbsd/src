@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.107 2013/10/20 11:03:01 phessler Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.108 2013/10/21 12:27:11 deraadt Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -1073,14 +1073,11 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 int
 icmp_ratelimit(const struct in_addr *dst, const int type, const int code)
 {
-
 	/* PPS limit */
 	if (!ppsratecheck(&icmperrppslim_last, &icmperrpps_count,
 	    icmperrppslim))
-		return 1;
-
-	/*okay to send*/
-	return 0;
+		return 1;	/* The packet is subject to rate limit */
+	return 0;	/* okay to send */
 }
 
 void
@@ -1128,7 +1125,7 @@ icmp_do_exthdr(struct mbuf *m, u_int16_t class, u_int8_t ctype, void *buf,
 		/* exthdr already present, giving up */
 		return (0);
 
-	/* the actuall offset starts after the common ICMP header */
+	/* the actual offset starts after the common ICMP header */
 	hlen += ICMP_MINLEN;
 	/* exthdr must start on a word boundary */
 	off = roundup(ntohs(ip->ip_len) - hlen, sizeof(u_int32_t));
