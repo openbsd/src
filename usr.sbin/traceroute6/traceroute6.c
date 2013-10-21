@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.49 2012/04/06 17:43:03 deraadt Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.50 2013/10/21 08:47:10 phessler Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -344,6 +344,8 @@ main(int argc, char *argv[])
 	struct hostent *hp;
 	size_t size;
 	uid_t uid;
+	u_int rtableid;
+	const char *errstr;
 
 	/*
 	 * Receive ICMP
@@ -374,7 +376,7 @@ main(int argc, char *argv[])
 
 	seq = 0;
 
-	while ((ch = getopt(argc, argv, "Adf:g:Ilm:np:q:rs:w:v")) != -1)
+	while ((ch = getopt(argc, argv, "Adf:g:Ilm:np:q:rs:w:vV:")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag++;
@@ -483,6 +485,16 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			verbose++;
+			break;
+		case 'V':
+			rtableid = (unsigned int)strtonum(optarg, 0,
+			    RT_TABLEID_MAX, &errstr);
+			if (errstr)
+				errx(1, "rtable value is %s: %s",
+				    errstr, optarg);
+			if (setsockopt(rcvsock, SOL_SOCKET, SO_RTABLE,
+			    &rtableid, sizeof(rtableid)) == -1)
+				err(1, "setsockopt SO_RTABLE");
 			break;
 		case 'w':
 			ep = NULL;
@@ -613,6 +625,9 @@ main(int argc, char *argv[])
 			perror("socket(SOCK_DGRAM)");
 			exit(5);
 		}
+		if (setsockopt(sndsock, SOL_SOCKET, SO_RTABLE,
+		    &rtableid, sizeof(rtableid)) == -1)
+			err(1, "setsockopt SO_RTABLE");
 	}
 #ifdef SO_SNDBUF
 	i = datalen;
@@ -697,7 +712,7 @@ main(int argc, char *argv[])
 
 	Src.sin6_port = htons(0);
 	if (bind(sndsock, (struct sockaddr *)&Src, Src.sin6_len) < 0) {
-		perror("bind");
+		perror("bind sndsock");
 		exit(1);
 	}
 
@@ -1203,6 +1218,7 @@ usage(void)
 
 	fprintf(stderr,
 "usage: traceroute6 [-AdIlnrv] [-f firsthop] [-g gateway] [-m hoplimit]\n"
-"       [-p port] [-q probes] [-s src] [-w waittime] host [datalen]\n");
+"       [-p port] [-q probes] [-s src] [-V rtableid] [-w waittime]\n"
+"       host [datalen]\n");
 	exit(1);
 }

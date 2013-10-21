@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.84 2013/05/31 19:46:57 naddy Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.85 2013/10/21 08:47:10 phessler Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -271,6 +271,7 @@ main(int argc, char *argv[])
 	size_t rthlen;
 	int mflag = 0;
 	uid_t uid;
+	u_int rtableid;
 
 	/* just to be sure */
 	memset(&smsghdr, 0, sizeof(smsghdr));
@@ -279,7 +280,7 @@ main(int argc, char *argv[])
 	preload = 0;
 	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
 	while ((ch = getopt(argc, argv,
-	    "a:b:c:dEefHg:h:I:i:l:mnNp:qRS:s:tvwW")) != -1) {
+	    "a:b:c:dEefHg:h:I:i:l:mnNp:qRS:s:tvV:wW")) != -1) {
 		switch (ch) {
 		case 'a':
 		{
@@ -472,6 +473,13 @@ main(int argc, char *argv[])
 		case 'v':
 			options |= F_VERBOSE;
 			break;
+		case 'V':
+			rtableid = (unsigned int)strtonum(optarg, 0,
+			    RT_TABLEID_MAX, &errstr);
+			if (errstr)
+				errx(1, "rtable value is %s: %s",
+				    errstr, optarg);
+			break;
 		case 'w':
 			options &= ~F_NOUSERDATA;
 			options |= F_FQDN;
@@ -535,6 +543,10 @@ main(int argc, char *argv[])
 	if ((s = socket(res->ai_family, res->ai_socktype,
 	    res->ai_protocol)) < 0)
 		err(1, "socket");
+
+	if (setsockopt(s, SOL_SOCKET, SO_RTABLE, &rtableid,
+	    sizeof(rtableid)) == -1)
+		err(1, "setsockopt SO_RTABLE");
 
 	/* set the source address if specified. */
 	if ((options & F_SRCADDR) &&
@@ -2462,6 +2474,7 @@ usage(void)
 #endif
 	    "] [-a addrtype] [-b bufsiz] [-c count] [-g gateway]\n\t"
 	    "[-h hoplimit] [-I interface] [-i wait] [-l preload] [-p pattern]"
-	    "\n\t[-S sourceaddr] [-s packetsize] [hops ...] host\n");
+	    "\n\t[-S sourceaddr] [-s packetsize] [-V rtable] [hops ...]"
+	    " host\n");
 	exit(1);
 }
