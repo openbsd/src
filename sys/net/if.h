@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.149 2013/10/19 14:05:14 reyk Exp $	*/
+/*	$OpenBSD: if.h,v 1.150 2013/10/21 15:10:29 benno Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ __END_DECLS
  * routing and gateway routines maintaining information used to locate
  * interfaces.  These routines live in the files if.c and route.c
  */
-/*  XXX fast fix for SNMP, going away soon */
+
 #include <sys/time.h>
 
 struct mbuf;
