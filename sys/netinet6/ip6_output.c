@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.146 2013/10/21 08:44:13 phessler Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.147 2013/10/21 12:40:39 deraadt Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1300,11 +1300,9 @@ ip6_ctloutput(int op, struct socket *so, int level, int optname,
 		case PRCO_SETOPT:
 			switch (optname) {
 			case IPV6_2292PKTOPTIONS:
-			{
 				error = ip6_pcbopts(&inp->inp_outputopts6,
-						    m, so);
+				    m, so);
 				break;
-			}
 
 			/*
 			 * Use of some Hop-by-Hop options or some
