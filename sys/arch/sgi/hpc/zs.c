@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.10 2012/09/29 18:54:39 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.11 2013/10/21 12:14:51 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.37 2011/02/20 07:59:50 matt Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  * Zilog Z8530 Dual UART driver (machine-dependent part)
  *
  * Runs two serial lines per chip using slave drivers.
- * Plain tty/async lines use the zs_async slave.
+ * Plain tty/async lines use the zstty slave.
  */
 
 #include <sys/param.h>

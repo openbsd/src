@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.24 2013/04/21 14:44:16 sebastia Exp $	*/
+/*	$OpenBSD: zs.c,v 1.25 2013/10/21 12:14:53 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -34,8 +34,8 @@
  * Zilog Z8530 Dual UART driver (machine-dependent part)
  *
  * Runs two serial lines per chip using slave drivers.
- * Plain tty/async lines use the zs_async slave.
- * Sun keyboard/mouse uses the zs_kbd/zs_ms slaves.
+ * Plain tty/async lines use the zstty slave.
+ * Sun keyboard/mouse uses the zskbd/zsms slaves.
  */
 
 #include <sys/param.h>
@@ -170,7 +170,6 @@ extern int stdinnode;
 extern int fbnode;
 
 /* Interrupt handlers. */
-int zscheckintr(void *);
 static int zshard(void *);
 static void zssoft(void *);
 
@@ -178,10 +177,6 @@ static int zs_get_speed(struct zs_chanstate *);
 
 /* Console device support */
 static int zs_console_flags(int, int, int);
-
-/* Power management hooks */
-int  zs_enable(struct zs_chanstate *);
-void zs_disable(struct zs_chanstate *);
 
 /*
  * Is the zs chip present?
@@ -494,25 +489,6 @@ zshard(arg)
 	return (rval);
 }
 
-int
-zscheckintr(arg)
-	void *arg;
-{
-	struct zsc_softc *zsc;
-	int unit, rval;
-
-	rval = 0;
-	for (unit = 0; unit < zs_cd.cd_ndevs; unit++) {
-
-		zsc = zs_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		rval = (zshard((void *)zsc) || rval);
-	}
-	return (rval);
-}
-
-
 /*
  * We need this only for TTY_DEBUG purposes.
  */
@@ -595,7 +571,7 @@ zs_set_speed(cs, bps)
 int
 zs_set_modes(cs, cflag)
 	struct zs_chanstate *cs;
-	int cflag;	/* bits per second */
+	int cflag;
 {
 	int s;
 
@@ -680,7 +656,8 @@ zs_read_csr(cs)
 	return (val);
 }
 
-void  zs_write_csr(cs, val)
+void
+zs_write_csr(cs, val)
 	struct zs_chanstate *cs;
 	u_char val;
 {
@@ -688,7 +665,8 @@ void  zs_write_csr(cs, val)
 	ZS_DELAY();
 }
 
-u_char zs_read_data(cs)
+u_char
+zs_read_data(cs)
 	struct zs_chanstate *cs;
 {
 	u_char val;
@@ -698,7 +676,8 @@ u_char zs_read_data(cs)
 	return (val);
 }
 
-void  zs_write_data(cs, val)
+void
+zs_write_data(cs, val)
 	struct zs_chanstate *cs;
 	u_char val;
 {
@@ -849,8 +828,10 @@ zscnpollc(dev, on)
 	 * being generated.
 	 */
 
-	if (on) swallow_zsintrs++;
-	else swallow_zsintrs--;
+	if (on)
+		swallow_zsintrs++;
+	else
+		swallow_zsintrs--;
 }
 
 int
@@ -896,4 +877,3 @@ zs_console_flags(promunit, node, channel)
 
 	return (flags);
 }
-
