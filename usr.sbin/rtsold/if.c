@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.25 2011/03/23 00:59:49 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.26 2013/10/21 08:46:07 phessler Exp $	*/
 /*	$KAME: if.c,v 1.18 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -74,6 +74,26 @@ ifinit(void)
 
 	return(0);
 }
+
+int
+get_rdomain(char *name)
+{
+	int rv = 0, s;
+	struct ifreq ifr;
+
+	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
+		warnmsg(LOG_ERR, __func__,
+		    "get_rdomain socket: %s", strerror(errno));
+
+	memset(&ifr, 0, sizeof(ifr));
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCGIFRDOMAIN, (caddr_t)&ifr) != -1)
+	    rv = ifr.ifr_rdomainid;
+
+	close(s);
+	return rv;
+}
+
 
 int
 interface_up(char *name)

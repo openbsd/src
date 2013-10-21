@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.h,v 1.15 2013/04/21 19:42:32 florian Exp $	*/
+/*	$OpenBSD: rtsold.h,v 1.16 2013/10/21 08:46:07 phessler Exp $	*/
 /*	$KAME: rtsold.h,v 1.14 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ struct ifinfo *find_ifinfo(int ifindex);
 void rtsol_timer_update(struct ifinfo *);
 extern void warnmsg(int, const char *, const char *, ...)
      __attribute__((__format__(__printf__, 3, 4)));
-extern char **autoifprobe(void);
+extern char **autoifprobe(u_int);
 
 /* if.c */
 extern int ifinit(void);
@@ -83,7 +83,7 @@ extern int getinet6sysctl(int, int);
 extern int setinet6sysctl(int, int, int);
 
 /* rtsol.c */
-extern int sockopen(void);
+extern int sockopen(u_int);
 extern void sendpacket(struct ifinfo *);
 extern void rtsol_input(int);
 

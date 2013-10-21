@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.49 2013/04/21 19:42:32 florian Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.50 2013/10/21 08:46:07 phessler Exp $	*/
 /*	$KAME: rtsold.c,v 1.75 2004/01/03 00:00:07 itojun Exp $	*/
 
 /*
@@ -102,6 +102,7 @@ int
 main(int argc, char *argv[])
 {
 	int s, ch, once = 0;
+	u_int rdomain;
 	struct timeval *timeout;
 	char *argv0, *opts;
 	struct pollfd set[2];
@@ -207,12 +208,17 @@ main(int argc, char *argv[])
 	if (!fflag)
 		daemon(0, 0);		/* act as a daemon */
 
+	if (aflag)
+		rdomain = getrtable();
+	else
+		rdomain = get_rdomain(*argv);
+
 	/*
 	 * Open a socket for sending RS and receiving RA.
 	 * This should be done before calling ifinit(), since the function
 	 * uses the socket.
 	 */
-	if ((s = sockopen()) < 0) {
+	if ((s = sockopen(rdomain)) < 0) {
 		warnmsg(LOG_ERR, __func__, "failed to open a socket");
 		exit(1);
 		/*NOTREACHED*/
@@ -229,8 +235,12 @@ main(int argc, char *argv[])
 		exit(1);
 		/*NOTREACHED*/
 	}
-	if (aflag)
-		argv = autoifprobe();
+	if (aflag) {
+		argv = autoifprobe(rdomain);
+	} else {
+		warnmsg(LOG_DEBUG, __func__, "setting rdomain %u", rdomain);
+		setrtable(rdomain);
+	}
 	while (argv && *argv) {
 		if (ifconfig(*argv)) {
 			warnmsg(LOG_ERR, __func__,
@@ -685,7 +695,7 @@ warnmsg(int priority, const char *func, const char *msg, ...)
  * return a list of interfaces which is suitable to sending an RS.
  */
 char **
-autoifprobe(void)
+autoifprobe(u_int rdomain)
 {
 	static char **argv = NULL;
 	static int n = 0;
@@ -718,6 +728,8 @@ autoifprobe(void)
 			continue;
 
 		if (ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+		if (get_rdomain(ifa->ifa_name) != rdomain)
 			continue;
 
 		found = 0;
