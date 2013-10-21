@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.91 2013/10/04 14:28:16 phessler Exp $ */
+/*	$OpenBSD: client.c,v 1.92 2013/10/21 08:48:22 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -135,9 +135,6 @@ client_query(struct ntp_peer *p)
 	if (p->state < STATE_DNS_DONE || p->addr == NULL)
 		return (-1);
 
-	if (p->addr->ss.ss_family != AF_INET && p->rtable != -1)
-		return (-1);
-
 	if (p->query->fd == -1) {
 		struct sockaddr *sa = (struct sockaddr *)&p->addr->ss;
 
@@ -145,8 +142,8 @@ client_query(struct ntp_peer *p)
 		    0)) == -1)
 			fatal("client_query socket");
 
-		if (p->addr->ss.ss_family == AF_INET && p->rtable != -1 &&
-		    setsockopt(p->query->fd, IPPROTO_IP, SO_RTABLE,
+		if (p->rtable != -1 &&
+		    setsockopt(p->query->fd, SOL_SOCKET, SO_RTABLE,
 		    &p->rtable, sizeof(p->rtable)) == -1)
 			fatal("client_query setsockopt SO_RTABLE");
 		if (connect(p->query->fd, sa, SA_LEN(sa)) == -1) {
@@ -252,7 +249,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	}
 
 	if (p->rtable != -1 &&
-	    setsockopt(p->query->fd, IPPROTO_IP, SO_RTABLE, &p->rtable,
+	    setsockopt(p->query->fd, SOL_SOCKET, SO_RTABLE, &p->rtable,
 	    sizeof(p->rtable)) == -1)
 		fatal("client_dispatch setsockopt SO_RTABLE");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.50 2012/09/20 12:43:16 patrick Exp $ */
+/*	$OpenBSD: parse.y,v 1.51 2013/10/21 08:48:22 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -162,8 +162,7 @@ main		: LISTEN ON address listen_opts	{
 					fatal(NULL);
 				if (p->addr != NULL)
 					p->state = STATE_DNS_DONE;
-				if (!(p->rtable > 0 && p->addr &&
-				    p->addr->ss.ss_family != AF_INET))
+				if (!(p->rtable > 0 && p->addr))
 					TAILQ_INSERT_TAIL(&conf->ntp_peers,
 					    p, entry);
 				h = next;
@@ -202,8 +201,7 @@ main		: LISTEN ON address listen_opts	{
 				fatal(NULL);
 			if (p->addr != NULL)
 				p->state = STATE_DNS_DONE;
-			if (!(p->rtable > 0 && p->addr &&
-			    p->addr->ss.ss_family != AF_INET))
+			if (!(p->rtable > 0 && p->addr))
 				TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
 			free($2->name);
 			free($2);
