@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.272 2013/10/20 13:21:56 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.273 2013/10/21 08:44:13 phessler Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1213,6 +1213,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	size_t bytesdone;
 	short oif_flags;
 	const char *label;
+	short up = 0;
 
 	switch (cmd) {
 
@@ -1495,6 +1496,16 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		/* XXX hell this is ugly */
 		if (ifr->ifr_rdomainid != ifp->if_rdomain) {
 			s = splnet();
+			if (ifp->if_flags & IFF_UP)
+				up = 1;
+			/*
+			 * We are tearing down the world.
+			 * Take down the IF so:
+			 * 1. everything that cares gets a message
+			 * 2. the automagic IPv6 bits are recreated
+			 */
+			if (up)
+				if_down(ifp);
 			rt_if_remove(ifp);
 #ifdef INET
 			rti_delete(ifp);
@@ -1504,7 +1515,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 #endif
 #ifdef INET6
 			in6_ifdetach(ifp);
-			ifp->if_xflags |= IFXF_NOINET6;
 #endif
 #ifdef INET
 			in_ifdetach(ifp);
@@ -1651,6 +1661,12 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			splx(s);
 		}
 #endif
+	}
+	/* If we took down the IF, bring it back */
+	if (up) {
+		s = splnet();
+		if_up(ifp);
+		splx(s);
 	}
 	return (error);
 }
