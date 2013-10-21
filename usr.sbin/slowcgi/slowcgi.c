@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.22 2013/10/21 18:17:58 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.23 2013/10/21 18:19:27 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -827,7 +827,23 @@ exec_cgi(struct request *c)
 
 	switch (pid = fork()) {
 	case -1:
+		c->script_status = errno;
+
 		lwarn("fork");
+
+		close(s_in[0]);
+		close(s_out[0]);
+		close(s_err[0]);
+
+		close(s_in[1]);
+		close(s_out[1]);
+		close(s_err[1]);
+
+		c->stdin_fd_closed = c->stdout_fd_closed =
+		    c->stderr_fd_closed = 1;
+		c->script_flags = (STDOUT_DONE | STDERR_DONE | SCRIPT_DONE);
+
+		create_end_record(c);
 		return;
 	case 0:
 		/* Child process */
