@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.2 2013/10/07 06:29:13 yuo Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -18,7 +18,7 @@
 
 /*
  * ASIX Electronics AX88178a USB 2.0 ethernet and AX88179 USB 3.0 Ethernet
- * driver. Used in the
+ * driver. 
  */
 
 #include "bpfilter.h"
@@ -77,16 +77,18 @@ int	axendebug = 0;
  * Various supported device vendors/products.
  */
 const struct axen_type axen_devs[] = {
-//	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88178A}, AX178A },
+#if 0 /* not tested */
+	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88178A}, AX178A },
+#endif
 	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88179}, AX179 }
 };
 
 #define axen_lookup(v, p) ((struct axen_type *)usb_lookup(axen_devs, v, p))
 
-int axen_match(struct device *, void *, void *); 
-void axen_attach(struct device *, struct device *, void *); 
-int axen_detach(struct device *, int); 
-int axen_activate(struct device *, int); 
+int	axen_match(struct device *, void *, void *); 
+void	axen_attach(struct device *, struct device *, void *); 
+int	axen_detach(struct device *, int); 
+int	axen_activate(struct device *, int); 
 
 struct cfdriver axen_cd = { 
 	NULL, "axen", DV_IFNET 
@@ -100,33 +102,35 @@ const struct cfattach axen_ca = {
 	axen_activate, 
 };
 
-int axen_tx_list_init(struct axen_softc *);
-int axen_rx_list_init(struct axen_softc *);
+int	axen_tx_list_init(struct axen_softc *);
+int	axen_rx_list_init(struct axen_softc *);
 struct mbuf *axen_newbuf(void);
-int axen_encap(struct axen_softc *, struct mbuf *, int);
-void axen_rxeof(struct usbd_xfer *, void *, usbd_status);
-void axen_txeof(struct usbd_xfer *, void *, usbd_status);
-void axen_tick(void *);
-void axen_tick_task(void *);
-void axen_start(struct ifnet *);
-int axen_ioctl(struct ifnet *, u_long, caddr_t);
-void axen_init(void *);
-void axen_stop(struct axen_softc *);
-void axen_watchdog(struct ifnet *);
-int axen_miibus_readreg(struct device *, int, int);
-void axen_miibus_writereg(struct device *, int, int, int);
-void axen_miibus_statchg(struct device *);
-int axen_cmd(struct axen_softc *, int, int, int, void *);
-int axen_ifmedia_upd(struct ifnet *);
-void axen_ifmedia_sts(struct ifnet *, struct ifmediareq *);
-void axen_reset(struct axen_softc *sc);
-int axen_ax88179_eeprom(struct axen_softc *, void *);
+int	axen_encap(struct axen_softc *, struct mbuf *, int);
+void	axen_rxeof(struct usbd_xfer *, void *, usbd_status);
+void	axen_txeof(struct usbd_xfer *, void *, usbd_status);
+void	axen_tick(void *);
+void	axen_tick_task(void *);
+void	axen_start(struct ifnet *);
+int	axen_ioctl(struct ifnet *, u_long, caddr_t);
+void	axen_init(void *);
+void	axen_stop(struct axen_softc *);
+void	axen_watchdog(struct ifnet *);
+int	axen_miibus_readreg(struct device *, int, int);
+void	axen_miibus_writereg(struct device *, int, int, int);
+void	axen_miibus_statchg(struct device *);
+int	axen_cmd(struct axen_softc *, int, int, int, void *);
+int	axen_ifmedia_upd(struct ifnet *);
+void	axen_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+void	axen_reset(struct axen_softc *sc);
+#if 0 /* not used */
+int	axen_ax88179_eeprom(struct axen_softc *, void *);
+#endif
 
-void axen_iff(struct axen_softc *);
-void axen_lock_mii(struct axen_softc *sc);
-void axen_unlock_mii(struct axen_softc *sc);
+void	axen_iff(struct axen_softc *);
+void	axen_lock_mii(struct axen_softc *sc);
+void	axen_unlock_mii(struct axen_softc *sc);
 
-void axen_ax88179_init(struct axen_softc *);
+void	axen_ax88179_init(struct axen_softc *);
 
 /* Get exclusive access to the MII registers */
 void
@@ -151,7 +155,7 @@ axen_cmd(struct axen_softc *sc, int cmd, int index, int val, void *buf)
 	usbd_status		err;
 
 	if (usbd_is_dying(sc->axen_udev))
-		return(0);
+		return 0;
 
 	if (AXEN_CMD_DIR(cmd))
 		req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -167,11 +171,11 @@ axen_cmd(struct axen_softc *sc, int cmd, int index, int val, void *buf)
 	    cmd, val, AXEN_CMD_LEN(cmd)));
 
 	if (err) {
-		DPRINTF(("axen_cmd err: cmd: %d\n", cmd));
-		return(-1);
+		DPRINTF(("axen_cmd err: cmd: %d, error: %d\n", cmd, err));
+		return -1;
 	}
 
-	return(0);
+	return 0;
 }
 
 int
@@ -184,11 +188,11 @@ axen_miibus_readreg(struct device *dev, int phy, int reg)
 
 	if (usbd_is_dying(sc->axen_udev)) {
 		DPRINTF(("axen: dying\n"));
-		return(0);
+		return 0;
 	}
 
 	if (sc->axen_phyno != phy)
-		return (0);
+		return 0;
 
 	axen_lock_mii(sc);
 	err = axen_cmd(sc, AXEN_CMD_MII_READ_REG, reg, phy, &val);
@@ -196,17 +200,18 @@ axen_miibus_readreg(struct device *dev, int phy, int reg)
 
 	if (err) {
 		printf("axen%d: read PHY failed\n", sc->axen_unit);
-		return(-1);
+		return -1;
 	}
-	DPRINTFN(2,("axen_miibus_readreg: phy 0x%x reg 0x%x val 0x%x\n",
-	    phy, reg, UGETW(val)));
 
 	ival = UGETW(val);
+	DPRINTFN(2,("axen_miibus_readreg: phy 0x%x reg 0x%x val 0x%x\n",
+	    phy, reg, ival));
+
 	if (reg == MII_BMSR) {
 		ival &= ~BMSR_EXTCAP;
 	}
 
-	return (ival);
+	return ival;
 }
 
 void
@@ -218,13 +223,13 @@ axen_miibus_writereg(struct device *dev, int phy, int reg, int val)
 
 	if (usbd_is_dying(sc->axen_udev))
 		return;
+
 	if (sc->axen_phyno != phy)
 		return;
 
 	USETW(uval, val);
-
 	axen_lock_mii(sc);
-	err = axen_cmd(sc, AXEN_CMD_MII_WRITE_REG, reg, phy, uval);
+	err = axen_cmd(sc, AXEN_CMD_MII_WRITE_REG, reg, phy, &uval);
 	axen_unlock_mii(sc);
 	DPRINTFN(2, ("axen_miibus_writereg: phy 0x%x reg 0x%x val 0x%0x\n",
 	    phy, reg, val));
@@ -291,7 +296,9 @@ axen_miibus_statchg(struct device *dev)
 
 	DPRINTF(("axen_miibus_statchg: val=0x%x\n", val));
 	USETW(wval, val);
+	axen_lock_mii(sc);
 	err = axen_cmd(sc, AXEN_CMD_MAC_WRITE2, 2, AXEN_MEDIUM_STATUS, &wval);
+	axen_unlock_mii(sc);
 	if (err) {
 		printf("%s: media change failed\n", sc->axen_dev.dv_xname);
 		return;
@@ -306,15 +313,21 @@ axen_ifmedia_upd(struct ifnet *ifp)
 {
 	struct axen_softc	*sc = ifp->if_softc;
 	struct mii_data		*mii = GET_MII(sc);
+	int err;
+
+	sc->axen_link = 0;
 
 	if (mii->mii_instance) {
 		struct mii_softc	*miisc;
 		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
 			mii_phy_reset(miisc);
 	}
-	mii_mediachg(mii);
 
-	return (0);
+	err = mii_mediachg(mii);
+	if (err == ENXIO)
+		return 0;
+	else
+		return err;
 }
 
 /*
@@ -336,8 +349,8 @@ axen_iff(struct axen_softc *sc)
 {
 	struct ifnet		*ifp = GET_IFP(sc);
 	struct arpcom		*ac = &sc->arpcom;
-	struct ether_multi *enm;
-	struct ether_multistep step;
+	struct ether_multi	*enm;
+	struct ether_multistep	step;
 	u_int32_t		h = 0;
 	u_int16_t		rxmode;
 	u_int8_t		hashtbl[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -349,6 +362,7 @@ axen_iff(struct axen_softc *sc)
 	rxmode = 0;
 
 	/* Enable receiver, set RX mode */
+	axen_lock_mii(sc);
 	axen_cmd(sc, AXEN_CMD_MAC_READ2, 2, AXEN_MAC_RXCTL, &wval);
 	rxmode = UGETW(wval);
 	rxmode &= ~(AXEN_RXCTL_ACPT_ALL_MCAST | AXEN_RXCTL_ACPT_PHY_MCAST |
@@ -374,9 +388,7 @@ axen_iff(struct axen_softc *sc)
 		while (enm != NULL) {
 			h = ether_crc32_be(enm->enm_addrlo,
 			    ETHER_ADDR_LEN) >> 26;
-
 			hashtbl[h / 8] |= 1 << (h % 8);
-
 			ETHER_NEXT_MULTI(step, enm);
 		}
 	}
@@ -385,6 +397,7 @@ axen_iff(struct axen_softc *sc)
 	    (void *)&hashtbl);
 	USETW(wval, rxmode);
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE2, 2, AXEN_MAC_RXCTL, &wval);
+	axen_unlock_mii(sc);
 }
 
 void
@@ -399,6 +412,7 @@ axen_reset(struct axen_softc *sc)
 	return;
 }
 
+#if 0 /* not used */
 #define AXEN_GPIO_WRITE(x,y) do {                                \
 	axen_cmd(sc, AXEN_CMD_WRITE_GPIO, 0, (x), NULL);          \
 	usbd_delay_ms(sc->axen_udev, (y));			\
@@ -407,10 +421,10 @@ axen_reset(struct axen_softc *sc)
 int
 axen_ax88179_eeprom(struct axen_softc *sc, void *addr)
 {
-	int i, retry;
-	uWord buf;
-	uint8_t eeprom[20];
-	uint16_t csum;
+	int		i, retry;
+	uWord		buf;
+	uint8_t		eeprom[20];
+	uint16_t	csum;
 
 	for (i = 0; i < 6; i++) {
 		/* set eeprom address */
@@ -440,7 +454,6 @@ axen_ax88179_eeprom(struct axen_softc *sc, void *addr)
 		/* sanity check */
 		if ((i == 0) && (eeprom[0] == 0xff))
 			return EINVAL;
-
 	}
 
 	/* check checksum */
@@ -451,19 +464,20 @@ axen_ax88179_eeprom(struct axen_softc *sc, void *addr)
 		return EINVAL;
 	}
 
-	printf("eeprom checksum ok\n");
 	memcpy(addr, eeprom, ETHER_ADDR_LEN);
-	return(0);
+	return 0;
 }
-
+#endif
 
 void
 axen_ax88179_init(struct axen_softc *sc)
 {
-	uWord wval;
-	uByte val;
-	u_int16_t ctl, temp;
+	uWord		wval;
+	uByte		val;
+	u_int16_t 	ctl, temp;
 	struct axen_qctrl qctrl;
+
+	axen_lock_mii(sc);
 
 	/* XXX: ? */
 	axen_cmd(sc, AXEN_CMD_MAC_READ, 1, AXEN_UNK_05, &val);
@@ -497,12 +511,12 @@ axen_ax88179_init(struct axen_softc *sc)
 	val = AXEN_MONITOR_NONE;
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_MONITOR_MODE, &val);
 
-	/* enable Auto Detach */
+	/* enable auto detach */
 	axen_cmd(sc, AXEN_CMD_EEPROM_READ, 2, AXEN_EEPROM_STAT, &wval);
 	temp = UGETW(wval);
 	DPRINTFN(2,("EEPROM0x43 = 0x%04x\n", temp));
 	if (!(temp == 0xffff) && !(temp & 0x0100)) {
-		/* Enable Auto Detach bit */
+		/* Enable auto detach bit */
 		val = 0;
 		axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_PHYCLK, &val);
 		val = AXEN_PHYCLK_ULR;
@@ -547,20 +561,24 @@ axen_ax88179_init(struct axen_softc *sc)
 		break;
 	default:
 		printf("unknown uplink bus:0x%02x\n", val);
+		axen_unlock_mii(sc);
 		return;
 	}
 	axen_cmd(sc, AXEN_CMD_MAC_SET_RXSR, 5, AXEN_RX_BULKIN_QCTRL, &qctrl);
 
-	/* set buffer high/low watermark to pause/resume */
-	/* write 2byte will set high/log simultaneous with AXEN_PAUSE_HIGH... */
-	val = 0x34; // or 0x3c in OSX
+	/*
+	 * set buffer high/low watermark to pause/resume.
+	 * write 2byte will set high/log simultaneous with AXEN_PAUSE_HIGH.
+	 * XXX: what is the best value? OSX driver uses 0x3c-0x4c as LOW-HIGH
+	 * watermark parameters.
+	 */
+	val = 0x34;
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_PAUSE_LOW_WATERMARK, &val);
-	val = 0x52; // or 0x4c in OSX
+	val = 0x52;
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_PAUSE_HIGH_WATERMARK, &val);
 
 	/* Set RX/TX configuration. */
 	/* Offloadng enable */
-	/* RX */
 #ifdef AXEN_TOE
 	val = AXEN_RXCOE_IPv4 | AXEN_RXCOE_TCPv4 | AXEN_RXCOE_UDPv4 |
 	      AXEN_RXCOE_TCPv6 | AXEN_RXCOE_UDPv6;
@@ -568,7 +586,7 @@ axen_ax88179_init(struct axen_softc *sc)
 	val = AXEN_RXCOE_OFF;
 #endif
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_RX_COE, &val);
-	/* TX */
+
 #ifdef AXEN_TOE
 	val = AXEN_TXCOE_IPv4 | AXEN_TXCOE_TCPv4 | AXEN_TXCOE_UDPv4 |
 	      AXEN_TXCOE_TCPv6 | AXEN_TXCOE_UDPv6;
@@ -601,7 +619,7 @@ axen_ax88179_init(struct axen_softc *sc)
 
 	axen_cmd(sc, AXEN_CMD_MAC_READ2, 2, AXEN_MEDIUM_STATUS, &wval);
 	DPRINTF(("axen: current medium mode: 0x%04x\n", UGETW(wval)));
-
+	axen_unlock_mii(sc);
 
 #if 0 /* XXX: TBD.... */
 #define GMII_LED_ACTIVE		0x1a
@@ -630,7 +648,7 @@ axen_match(struct device *parent, void *match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 
 	if (!uaa->iface)
-		return(UMATCH_NONE);
+		return UMATCH_NONE;
 
 	return (axen_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
@@ -639,17 +657,17 @@ axen_match(struct device *parent, void *match, void *aux)
 void
 axen_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct axen_softc *sc = (struct axen_softc *)self;
-	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
-	usbd_status err;
+	struct axen_softc	*sc = (struct axen_softc *)self;
+	struct usb_attach_arg	*uaa = aux;
+	struct usbd_device	*dev = uaa->device;
+	usbd_status		 err;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	struct mii_data	*mii;
-	u_char eaddr[ETHER_ADDR_LEN];
-	char *devname = sc->axen_dev.dv_xname;
-	struct ifnet *ifp;
-	int i, s;
+	struct mii_data		*mii;
+	u_char			 eaddr[ETHER_ADDR_LEN];
+	char			*devname = sc->axen_dev.dv_xname;
+	struct ifnet		*ifp;
+	int			 i, s;
 
 	sc->axen_unit = self->dv_unit; /*device_get_unit(self);*/
 	sc->axen_udev = dev;
@@ -669,7 +687,8 @@ axen_attach(struct device *parent, struct device *self, void *aux)
 	usb_init_task(&sc->axen_stop_task, (void (*)(void *))axen_stop, sc,
 	    USB_TASK_TYPE_GENERIC);
 
-	err = usbd_device2interface_handle(dev, AXEN_IFACE_IDX, &sc->axen_iface);
+	err = usbd_device2interface_handle(dev, AXEN_IFACE_IDX,
+	    &sc->axen_iface);
 	if (err) {
 		printf("%s: getting interface handle failed\n",
 		    sc->axen_dev.dv_xname);
@@ -707,6 +726,7 @@ axen_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	s = splnet();
+
 	sc->axen_phyno = AXEN_PHY_ID;
 	DPRINTF((" get_phyno %d\n", sc->axen_phyno));
 
@@ -719,9 +739,10 @@ axen_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 #else /* use MAC command */
+	axen_lock_mii(sc);
 	axen_cmd(sc, AXEN_CMD_MAC_READ_ETHER, 6, AXEN_CMD_MAC_NODE_ID, &eaddr);
+	axen_unlock_mii(sc);
 #endif
-
 
 	axen_ax88179_init(sc);
 
@@ -737,8 +758,7 @@ axen_attach(struct device *parent, struct device *self, void *aux)
 
 	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
-
-	/* Initialize interface info.*/
+	/* Initialize interface info. */
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_softc = sc;
 	strlcpy(ifp->if_xname, devname, IFNAMSIZ);
@@ -837,7 +857,7 @@ axen_detach(struct device *self, int flags)
 	}
 	splx(s);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -852,28 +872,29 @@ axen_activate(struct device *self, int act)
 		usbd_deactivate(sc->axen_udev);
 		break;
 	}
-	return (0);
+
+	return 0;
 }
 
 struct mbuf *
 axen_newbuf(void)
 {
-	struct mbuf		*m;
+	struct mbuf *m;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
-		return (NULL);
+		return NULL;
 
 	MCLGET(m, M_DONTWAIT);
 	if (!(m->m_flags & M_EXT)) {
 		m_freem(m);
-		return (NULL);
+		return NULL;
 	}
 
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
 	m_adj(m, ETHER_ALIGN);
 
-	return (m);
+	return m;
 }
 
 int
@@ -894,17 +915,17 @@ axen_rx_list_init(struct axen_softc *sc)
 		if (c->axen_xfer == NULL) {
 			c->axen_xfer = usbd_alloc_xfer(sc->axen_udev);
 			if (c->axen_xfer == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 			c->axen_buf = usbd_alloc_buffer(c->axen_xfer,
 			    sc->axen_bufsz);
 			if (c->axen_buf == NULL) {
 				usbd_free_xfer(c->axen_xfer);
-				return (ENOBUFS);
+				return ENOBUFS;
 			}
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -925,17 +946,17 @@ axen_tx_list_init(struct axen_softc *sc)
 		if (c->axen_xfer == NULL) {
 			c->axen_xfer = usbd_alloc_xfer(sc->axen_udev);
 			if (c->axen_xfer == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 			c->axen_buf = usbd_alloc_buffer(c->axen_xfer,
 			    sc->axen_bufsz);
 			if (c->axen_buf == NULL) {
 				usbd_free_xfer(c->axen_xfer);
-				return (ENOBUFS);
+				return ENOBUFS;
 			}
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -949,14 +970,14 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct axen_softc	*sc = c->axen_sc;
 	struct ifnet		*ifp = GET_IFP(sc);
 	u_char			*buf = c->axen_buf;
-	int			total_len;
 	struct mbuf		*m;
+	u_int32_t		total_len;
 	u_int32_t		rx_hdr, pkt_hdr;
 	u_int32_t		*hdr_p;
 	u_int16_t		hdr_offset, pkt_count;
 	size_t			pkt_len;
-	int			s;
 	size_t			temp;
+	int			s;
 
 	DPRINTFN(10,("%s: %s: enter\n", sc->axen_dev.dv_xname,__func__));
 
@@ -995,9 +1016,8 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	hdr_offset = (u_int16_t)(rx_hdr >> 16);
 	pkt_count  = (u_int16_t)(rx_hdr & 0xffff);
 
-
 	if (total_len > sc->axen_bufsz) {
-		printf("rxeof!!!!!!!!!! too large transfer\n");
+		printf("rxeof: too large transfer\n");
 		goto done;
 	}
 		
@@ -1015,12 +1035,15 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	 * ax88179 will pack multiple ip packet to a USB transaction.
 	 * process all of packets in the buffer
 	 */
-#define AXEN_MAX_PACKED_PACKET 200 /* XXX */
+
+#if 1 /* XXX: paranoiac check. need to remove later */
+#define AXEN_MAX_PACKED_PACKET 200 
 	if (pkt_count > AXEN_MAX_PACKED_PACKET) {
 		DPRINTF(("Too many packets (%d) in a transaction, discard.\n", 
 		    pkt_count));
 		goto done;
 	}
+#endif
 
 	do {
 		if ((buf[0] != 0xee) || (buf[1] != 0xee)){
@@ -1031,16 +1054,14 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 		pkt_hdr = letoh32(*hdr_p);
 		pkt_len = (pkt_hdr >> 16) & 0x1fff;
-#if 0		
-		printf("rxeof: packet#%d, pkt_hdr 0x%08x, pkt_len %d\n", 
-		   pkt_count, pkt_hdr, pkt_len);
-#endif
+		DPRINTFN(10,("rxeof: packet#%d, pkt_hdr 0x%08x, pkt_len %d\n", 
+		   pkt_count, pkt_hdr, pkt_len));
 
 		if ((pkt_hdr & AXEN_RXHDR_CRC_ERR) ||
 	    	    (pkt_hdr & AXEN_RXHDR_DROP_ERR)) {
 	    		ifp->if_ierrors++;
 			/* move to next pkt header */
-			printf("crc err(pkt#%d)\n", pkt_count);
+			DPRINTF(("crc err(pkt#%d)\n", pkt_count));
 			goto nextpkt;
 		}
 
@@ -1112,15 +1133,12 @@ done:
 	usbd_transfer(xfer);
 
 	DPRINTFN(10,("%s: %s: start rx\n", sc->axen_dev.dv_xname, __func__));
-
-	return;
 }
 
 /*
  * A frame was downloaded to the chip. It's safe for us to clean up
  * the list buffers.
  */
-
 void
 axen_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
@@ -1163,7 +1181,6 @@ axen_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	ifp->if_opackets++;
 	splx(s);
-	return;
 }
 
 void
@@ -1182,7 +1199,6 @@ axen_tick(void *xsc)
 
 	/* Perform periodic stuff in process context */
 	usb_add_task(sc->axen_udev, &sc->axen_tick_task);
-
 }
 
 void
@@ -1254,12 +1270,12 @@ axen_encap(struct axen_softc *sc, struct mbuf *m, int idx)
 	err = usbd_transfer(c->axen_xfer);
 	if (err != USBD_IN_PROGRESS) {
 		axen_stop(sc);
-		return(EIO);
+		return EIO;
 	}
 
 	sc->axen_cdata.axen_tx_cnt++;
 
-	return(0);
+	return 0;
 }
 
 void
@@ -1301,8 +1317,6 @@ axen_start(struct ifnet *ifp)
 	 * Set a timeout in case the chip goes out to lunch.
 	 */
 	ifp->if_timer = 5;
-
-	return;
 }
 
 void
@@ -1324,11 +1338,9 @@ axen_init(void *xsc)
 	 */
 	axen_reset(sc);
 
-
 	/* XXX: ? */
 	bval = 0x01;
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_UNK_28, &bval);
-
 
 	/* Init RX ring. */
 	if (axen_rx_list_init(sc) == ENOBUFS) {
@@ -1348,10 +1360,13 @@ axen_init(void *xsc)
 	axen_iff(sc);
 
 	/* Enable receiver, set RX mode */
+	axen_lock_mii(sc);
 	axen_cmd(sc, AXEN_CMD_MAC_READ2, 2, AXEN_MAC_RXCTL, &wval);
 	rxmode = UGETW(wval);
 	rxmode |= AXEN_RXCTL_START;
+	USETW(wval, rxmode);
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE2, 2, AXEN_MAC_RXCTL, &wval);
+	axen_unlock_mii(sc);
 
 	/* Open RX and TX pipes. */
 	err = usbd_open_pipe(sc->axen_iface, sc->axen_ed[AXEN_ENDPT_RX],
@@ -1398,7 +1413,8 @@ axen_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct axen_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	struct ifaddr		*ifa = (struct ifaddr *)data;
-	int			s, error = 0;
+	int			s;
+	int			error = 0;
 
 	s = splnet();
 
@@ -1432,7 +1448,7 @@ axen_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 #if 0
 	case SCIOCSIFMTU:
-		/* XXX need to set AX_MEDIUM_UMUBO_EN here? */
+		/* XXX need to set AX_MEDIUM_JUMBO_EN here? */
 		/* fall through */
 #endif
 	default:
@@ -1446,7 +1462,8 @@ axen_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 
 	splx(s);
-	return(error);
+
+	return error;
 }
 
 void
@@ -1548,6 +1565,7 @@ axen_stop(struct axen_softc *sc)
 
 	/* Free TX resources. */
 	for (i = 0; i < AXEN_TX_LIST_CNT; i++) {
+
 		if (sc->axen_cdata.axen_tx_chain[i].axen_mbuf != NULL) {
 			m_freem(sc->axen_cdata.axen_tx_chain[i].axen_mbuf);
 			sc->axen_cdata.axen_tx_chain[i].axen_mbuf = NULL;
@@ -1560,4 +1578,3 @@ axen_stop(struct axen_softc *sc)
 
 	sc->axen_link = 0;
 }
-
