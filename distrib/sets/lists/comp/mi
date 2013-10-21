@@ -3203,9 +3203,7 @@
 ./usr/share/man/man3/alloca.3
 ./usr/share/man/man3/alphasort.3
 ./usr/share/man/man3/arc4random.3
-./usr/share/man/man3/arc4random_addrandom.3
 ./usr/share/man/man3/arc4random_buf.3
-./usr/share/man/man3/arc4random_stir.3
 ./usr/share/man/man3/arc4random_uniform.3
 ./usr/share/man/man3/asctime.3
 ./usr/share/man/man3/asctime_r.3

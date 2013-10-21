@@ -25,7 +25,7 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd5.4/3.3.6/include
 ./usr/lib/gcc-lib/m68k-unknown-openbsd5.4/3.3.6/specs
 ./usr/lib/libasn1.so.20.0
-./usr/lib/libc.so.70.0
+./usr/lib/libc.so.71.0
 ./usr/lib/libcom_err.so.20.0
 ./usr/lib/libcrypto.so.23.0
 ./usr/lib/libcurses.so.13.0
