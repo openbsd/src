@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.h,v 1.10 2013/10/21 10:07:04 deraadt Exp $	*/
+/*	$OpenBSD: ip6_mroute.h,v 1.11 2013/10/21 12:36:14 deraadt Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -29,8 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/*	BSDI ip_mroute.h,v 2.5 1996/10/11 16:01:48 pjd Exp	*/
 
 /*
  * Definitions for IP multicast forwarding.
@@ -194,7 +192,7 @@ struct sioc_mif_req6 {
 	u_int64_t obytes;	/* Output byte count on mif		*/
 };
 
-#if defined(_KERNEL) || defined(KERNEL)
+#if defined(_KERNEL)
 /*
  * The kernel's multicast-interface structure.
  */
