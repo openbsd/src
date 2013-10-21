@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.24 2010/08/30 21:35:55 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.25 2013/10/21 10:36:09 miod Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -820,6 +820,30 @@ pxa2x0_lcd_mmap(void *v, off_t offset, int prot)
 
 	return (bus_dmamem_mmap(sc->dma_tag, screen->segs, screen->nsegs,
 	    offset, prot, BUS_DMA_WAITOK | BUS_DMA_COHERENT));
+}
+
+int
+pxa2x0_lcd_load_font(void *v, void *emulcookie, struct wsdisplay_font *font)
+{
+	struct pxa2x0_lcd_softc *sc = v;
+	struct pxa2x0_lcd_screen *screen = sc->active;
+
+	if (screen == NULL)
+		return ENXIO;
+
+	return rasops_load_font(&screen->rinfo, emulcookie, font);
+}
+
+int
+pxa2x0_lcd_list_font(void *v, struct wsdisplay_font *font)
+{
+	struct pxa2x0_lcd_softc *sc = v;
+	struct pxa2x0_lcd_screen *screen = sc->active;
+
+	if (screen == NULL)
+		return ENXIO;
+
+	return rasops_list_font(&screen->rinfo, font);
 }
 
 void

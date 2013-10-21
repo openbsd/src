@@ -1,4 +1,4 @@
-/*	$OpenBSD: grtwo.c,v 1.6 2013/06/11 18:15:55 deraadt Exp $	*/
+/*	$OpenBSD: grtwo.c,v 1.7 2013/10/21 10:36:17 miod Exp $	*/
 /* $NetBSD: grtwo.c,v 1.11 2009/11/22 19:09:15 mbalmer Exp $	 */
 
 /*
@@ -132,6 +132,8 @@ int	grtwo_alloc_screen(void *, const struct wsscreen_descr *, void **,
 void	grtwo_free_screen(void *, void *);
 int	grtwo_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
+int	grtwo_load_font(void *, void *, struct wsdisplay_font *);
+int	grtwo_list_font(void *, struct wsdisplay_font *);
 
 static struct wsdisplay_accessops grtwo_accessops = {
 	.ioctl = grtwo_ioctl,
@@ -139,6 +141,8 @@ static struct wsdisplay_accessops grtwo_accessops = {
 	.alloc_screen = grtwo_alloc_screen,
 	.free_screen = grtwo_free_screen,
 	.show_screen = grtwo_show_screen,
+	.load_font = grtwo_load_font,
+	.list_font = grtwo_list_font
 };
 
 int	grtwo_cursor(void *, int, int, int);
@@ -847,4 +851,22 @@ paddr_t
 grtwo_mmap(void *v, off_t offset, int prot)
 {
 	return -1;
+}
+
+int
+grtwo_load_font(void *v, void *emulcookie, struct wsdisplay_font *font)
+{
+	struct grtwo_devconfig *dc = v;
+	struct rasops_info *ri = &dc->dc_ri;
+
+	return rasops_load_font(ri, emulcookie, font);
+}
+
+int
+grtwo_list_font(void *v, struct wsdisplay_font *font)
+{
+	struct grtwo_devconfig *dc = v;
+	struct rasops_info *ri = &dc->dc_ri;
+
+	return rasops_list_font(ri, font);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.57 2013/10/20 20:07:23 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.58 2013/10/21 10:36:16 miod Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -70,6 +70,8 @@ int	vgafb_alloc_screen(void *, const struct wsscreen_descr *, void **,
 void	vgafb_free_screen(void *, void *);
 int	vgafb_show_screen(void *, void *, int, void (*cb)(void *, int, int),
 	    void *);
+int	vgafb_load_font(void *, void *, struct wsdisplay_font *);
+int	vgafb_list_font(void *, struct wsdisplay_font *);
 void	vgafb_burn(void *v, u_int , u_int);
 void	vgafb_restore_default_colors(struct vgafb_softc *);
 int	vgafb_is_console(int);
@@ -82,6 +84,8 @@ struct wsdisplay_accessops vgafb_accessops = {
 	.alloc_screen = vgafb_alloc_screen,
 	.free_screen = vgafb_free_screen,
 	.show_screen = vgafb_show_screen,
+	.load_font = vgafb_load_font,
+	.list_font = vgafb_list_font,
 	.burn_screen = vgafb_burn
 };
 
@@ -471,6 +475,24 @@ vgafb_show_screen(void *v, void *cookie, int waitok,
 		return (0);
 
 	return rasops_show_screen(ri, cookie, waitok, cb, cbarg);
+}
+
+int
+vgafb_load_font(void *v, void *emulcookie, struct wsdisplay_font *font)
+{
+	struct vgafb_softc *sc = v;
+	struct rasops_info *ri = &sc->sc_ri;
+
+	return rasops_load_font(ri, emulcookie, font);
+}
+
+int
+vgafb_list_font(void *v, struct wsdisplay_font *font)
+{
+	struct vgafb_softc *sc = v;
+	struct rasops_info *ri = &sc->sc_ri;
+
+	return rasops_list_font(ri, font);
 }
 
 int

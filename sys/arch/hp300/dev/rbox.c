@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbox.c,v 1.15 2013/10/20 20:07:23 miod Exp $	*/
+/*	$OpenBSD: rbox.c,v 1.16 2013/10/21 10:36:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -131,6 +131,8 @@ struct	wsdisplay_accessops	rbox_accessops = {
 	.alloc_screen = diofb_alloc_screen,
 	.free_screen = diofb_free_screen,
 	.show_screen = diofb_show_screen,
+	.load_font = diofb_load_font,
+	.list_font = diofb_list_font,
 	.burn_screen = rbox_burner
 };
 

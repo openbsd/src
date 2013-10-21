@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.25 2013/10/20 20:07:28 miod Exp $	*/
+/*	$OpenBSD: smg.c,v 1.26 2013/10/21 10:36:21 miod Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -179,6 +179,8 @@ int	smg_alloc_screen(void *, const struct wsscreen_descr *,
 void	smg_free_screen(void *, void *);
 int	smg_show_screen(void *, void *, int,
 	    void (*) (void *, int, int), void *);
+int	smg_load_font(void *, void *, struct wsdisplay_font *);
+int	smg_list_font(void *, struct wsdisplay_font *);
 void	smg_burner(void *, u_int, u_int);
 
 const struct wsdisplay_accessops smg_accessops = {
@@ -187,6 +189,8 @@ const struct wsdisplay_accessops smg_accessops = {
 	.alloc_screen = smg_alloc_screen,
 	.free_screen = smg_free_screen,
 	.show_screen = smg_show_screen,
+	.load_font = smg_load_font,
+	.list_font = smg_list_font,
 	.burn_screen = smg_burner
 };
 
@@ -467,6 +471,26 @@ smg_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
 	return (0);
+}
+
+int
+smg_load_font(void *v, void *emulcookie, struct wsdisplay_font *font)
+{
+	struct smg_softc *sc = v;
+	struct smg_screen *ss = sc->sc_scr;
+	struct rasops_info *ri = &ss->ss_ri;
+
+	return rasops_load_font(ri, emulcookie, font);
+}
+
+int
+smg_list_font(void *v, struct wsdisplay_font *font)
+{
+	struct smg_softc *sc = v;
+	struct smg_screen *ss = sc->sc_scr;
+	struct rasops_info *ri = &ss->ss_ri;
+
+	return rasops_list_font(ri, font);
 }
 
 void

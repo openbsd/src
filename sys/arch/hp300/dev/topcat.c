@@ -1,4 +1,4 @@
-/*	$OpenBSD: topcat.c,v 1.17 2013/10/20 20:07:23 miod Exp $	*/
+/*	$OpenBSD: topcat.c,v 1.18 2013/10/21 10:36:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -134,6 +134,8 @@ struct	wsdisplay_accessops	topcat_accessops = {
 	.alloc_screen = diofb_alloc_screen,
 	.free_screen = diofb_free_screen,
 	.show_screen = diofb_show_screen,
+	.load_font = diofb_load_font,
+	.list_font = diofb_list_font,
 	.burn_screen = topcat_burner
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.41 2013/10/20 20:07:29 miod Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.42 2013/10/21 10:36:24 miod Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -586,6 +586,8 @@ void inteldrm_free_screen(void *, void *);
 int inteldrm_show_screen(void *, void *, int,
     void (*)(void *, int, int), void *);
 void inteldrm_doswitch(void *, void *);
+int inteldrm_load_font(void *, void *, struct wsdisplay_font *);
+int inteldrm_list_font(void *, struct wsdisplay_font *);
 int inteldrm_getchar(void *, int, int, struct wsdisplay_charcell *);
 void inteldrm_burner(void *, u_int, u_int);
 
@@ -613,6 +615,8 @@ struct wsdisplay_accessops inteldrm_accessops = {
 	.free_screen = inteldrm_free_screen,
 	.show_screen = inteldrm_show_screen,
 	.getchar = inteldrm_getchar,
+	.load_font = inteldrm_load_font,
+	.list_font = inteldrm_list_font,
 	.burn_screen = inteldrm_burner
 };
 
@@ -727,6 +731,24 @@ inteldrm_getchar(void *v, int row, int col, struct wsdisplay_charcell *cell)
 	struct rasops_info *ri = &dev_priv->ro;
 
 	return rasops_getchar(ri, row, col, cell);
+}
+
+int
+inteldrm_load_font(void *v, void *cookie, struct wsdisplay_font *font)
+{
+	struct inteldrm_softc *dev_priv = v;
+	struct rasops_info *ri = &dev_priv->ro;
+
+	return rasops_load_font(ri, cookie, font);
+}
+
+int
+inteldrm_list_font(void *v, struct wsdisplay_font *font)
+{
+	struct inteldrm_softc *dev_priv = v;
+	struct rasops_info *ri = &dev_priv->ro;
+
+	return rasops_list_font(ri, font);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.15 2013/10/20 20:07:24 miod Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.16 2013/10/21 10:36:14 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -109,12 +109,14 @@ struct cfdriver smfb_cd = {
 
 int	smfb_alloc_screen(void *, const struct wsscreen_descr *, void **, int *,
 	    int *, long *);
+void	smfb_burner(void *, uint, uint);
 void	smfb_free_screen(void *, void *);
 int	smfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	smfb_list_font(void *, struct wsdisplay_font *);
+int	smfb_load_font(void *, void *, struct wsdisplay_font *);
+paddr_t	smfb_mmap(void *, off_t, int);
 int	smfb_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
-paddr_t	smfb_mmap(void *, off_t, int);
-void	smfb_burner(void *, uint, uint);
 
 struct wsdisplay_accessops smfb_accessops = {
 	.ioctl = smfb_ioctl,
@@ -122,6 +124,8 @@ struct wsdisplay_accessops smfb_accessops = {
 	.alloc_screen = smfb_alloc_screen,
 	.free_screen = smfb_free_screen,
 	.show_screen = smfb_show_screen,
+	.load_font = smfb_load_font,
+	.list_font = smfb_list_font,
 	.burn_screen = smfb_burner
 };
 
@@ -309,6 +313,24 @@ smfb_mmap(void *v, off_t offset, int prot)
 		return -1;
 
 	return XKPHYS_TO_PHYS((paddr_t)ri->ri_bits) + offset;
+}
+
+int
+smfb_load_font(void *v, void *emulcookie, struct wsdisplay_font *font)
+{
+	struct smfb_softc *sc = (struct smfb_softc *)v;
+	struct rasops_info *ri = &sc->sc_fb->ri;
+
+	return rasops_load_font(ri, emulcookie, font);
+}
+
+int
+smfb_list_font(void *v, struct wsdisplay_font *font)
+{
+	struct smfb_softc *sc = (struct smfb_softc *)v;
+	struct rasops_info *ri = &sc->sc_fb->ri;
+
+	return rasops_list_font(ri, font);
 }
 
 void

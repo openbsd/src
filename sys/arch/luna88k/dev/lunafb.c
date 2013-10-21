@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.16 2013/10/20 20:07:23 miod Exp $ */
+/* $OpenBSD: lunafb.c,v 1.17 2013/10/21 10:36:15 miod Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -126,20 +126,24 @@ const struct wsscreen_list omfb_screenlist = {
 	sizeof(_omfb_scrlist) / sizeof(struct wsscreen_descr *), _omfb_scrlist
 };
 
-int   omfbioctl(void *, u_long, caddr_t, int, struct proc *);
-paddr_t omfbmmap(void *, off_t, int);
-int   omfb_alloc_screen(void *, const struct wsscreen_descr *,
-				      void **, int *, int *, long *);
-void  omfb_free_screen(void *, void *);
-int   omfb_show_screen(void *, void *, int,
-				void (*) (void *, int, int), void *);
+int	omfbioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	omfbmmap(void *, off_t, int);
+int	omfb_alloc_screen(void *, const struct wsscreen_descr *,
+	    void **, int *, int *, long *);
+void	omfb_free_screen(void *, void *);
+int	omfb_show_screen(void *, void *, int, void (*) (void *, int, int),
+	    void *);
+int	omfb_load_font(void *, void *, struct wsdisplay_font *);
+int	omfb_list_font(void *, struct wsdisplay_font *);
 
 const struct wsdisplay_accessops omfb_accessops = {
 	.ioctl = omfbioctl,
 	.mmap = omfbmmap,
 	.alloc_screen = omfb_alloc_screen,
 	.free_screen = omfb_free_screen,
-	.show_screen = omfb_show_screen
+	.show_screen = omfb_show_screen,
+	.load_font = omfb_load_font,
+	.list_font = omfb_list_font
 };
 
 int  omfbmatch(struct device *, void *, void *);
@@ -558,4 +562,22 @@ omfb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *cbarg;
 {
 	return 0;
+}
+
+int
+omfb_load_font(void *v, void *emulcookie, struct wsdisplay_font *font)
+{
+	struct omfb_softc *sc = v;
+	struct rasops_info *ri = &sc->sc_dc->dc_ri;
+
+	return rasops_load_font(ri, emulcookie, font);
+}
+
+int
+omfb_list_font(void *v, struct wsdisplay_font *font)
+{
+	struct omfb_softc *sc = v;
+	struct rasops_info *ri = &sc->sc_dc->dc_ri;
+
+	return rasops_list_font(ri, font);
 }

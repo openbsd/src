@@ -1,4 +1,4 @@
-/*	$OpenBSD: legss.c,v 1.5 2013/10/20 20:07:28 miod Exp $	*/
+/*	$OpenBSD: legss.c,v 1.6 2013/10/21 10:36:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -147,13 +147,17 @@ int	legss_alloc_screen(void *, const struct wsscreen_descr *,
 void	legss_free_screen(void *, void *);
 int	legss_show_screen(void *, void *, int,
 	    void (*) (void *, int, int), void *);
+int	legss_load_font(void *, void *, struct wsdisplay_font *);
+int	legss_list_font(void *, struct wsdisplay_font *);
 
 const struct wsdisplay_accessops legss_accessops = {
 	.ioctl = legss_ioctl,
 	.mmap = legss_mmap,
 	.alloc_screen = legss_alloc_screen,
 	.free_screen = legss_free_screen,
-	.show_screen = legss_show_screen
+	.show_screen = legss_show_screen,
+	.load_font = legss_load_font,
+	.list_font = legss_list_font
 };
 
 int	legss_setup_screen(struct legss_screen *);
@@ -334,6 +338,26 @@ legss_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
 	return 0;
+}
+
+int
+legss_load_font(void *v, void *emulcookie, struct wsdisplay_font *font)
+{
+	struct legss_softc *sc = v;
+	struct legss_screen *ss = sc->sc_scr;
+	struct rasops_info *ri = &ss->ss_ri;
+
+	return rasops_load_font(ri, emulcookie, font);
+}
+
+int
+legss_list_font(void *v, struct wsdisplay_font *font)
+{
+	struct legss_softc *sc = v;
+	struct legss_screen *ss = sc->sc_scr;
+	struct rasops_info *ri = &ss->ss_ri;
+
+	return rasops_list_font(ri, font);
 }
 
 int

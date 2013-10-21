@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofbvar.h,v 1.10 2006/08/11 18:33:13 miod Exp $	*/
+/*	$OpenBSD: diofbvar.h,v 1.11 2013/10/21 10:36:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -123,6 +123,8 @@ void	diofb_free_screen(void *, void *);
 paddr_t	diofb_mmap(void *, off_t, int);
 int	diofb_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
+int	diofb_load_font(void *, void *, struct wsdisplay_font *);
+int	diofb_list_font(void *, struct wsdisplay_font *);
 
 int	diofb_mono_windowmove(struct diofb *, u_int16_t, u_int16_t, u_int16_t,
 	    u_int16_t, u_int16_t, u_int16_t, int16_t, int16_t);

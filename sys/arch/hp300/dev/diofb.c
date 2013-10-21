@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofb.c,v 1.19 2013/09/28 21:10:58 miod Exp $	*/
+/*	$OpenBSD: diofb.c,v 1.20 2013/10/21 10:36:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -485,7 +485,7 @@ diofb_show_screen(void *v, void *cookie, int waitok,
 }
 
 paddr_t
-diofb_mmap(void * v, off_t offset, int prot)
+diofb_mmap(void *v, off_t offset, int prot)
 {
 	struct diofb *fb = v;
 
@@ -525,4 +525,22 @@ diofb_getcmap(struct diofb *fb, struct wsdisplay_cmap *cm)
 		return (error);
 
 	return (0);
+}
+
+int
+diofb_load_font(void *v, void *emulcookie, struct wsdisplay_font *font)
+{
+	struct diofb *fb = v;
+	struct rasops_info *ri = &fb->ri;
+
+	return rasops_load_font(ri, emulcookie, font);
+}
+
+int
+diofb_list_font(void *v, struct wsdisplay_font *font)
+{
+	struct diofb *fb = v;
+	struct rasops_info *ri = &fb->ri;
+
+	return rasops_list_font(ri, font);
 }

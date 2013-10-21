@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.53 2013/08/15 18:29:56 kettenis Exp $	*/
+/*	$OpenBSD: fb.c,v 1.54 2013/10/21 10:36:18 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -130,6 +130,8 @@ int	fb_alloc_screen(void *, const struct wsscreen_descr *, void **,
 void	fb_free_screen(void *, void *);
 int	fb_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
+int	fb_load_font(void *, void *, struct wsdisplay_font *);
+int	fb_list_font(void *, struct wsdisplay_font *);
 
 void
 fb_setsize(struct sunfb *sf, int def_depth, int def_width, int def_height,
@@ -574,6 +576,10 @@ fbwscons_attach(struct sunfb *sf, struct wsdisplay_accessops *op, int isconsole)
 		op->free_screen = fb_free_screen;
 		op->show_screen = fb_show_screen;
 	}
+	if (op->load_font == NULL) {
+		op->load_font = fb_load_font;
+		op->list_font = fb_list_font;
+	}
 
 	sf->sf_scrlist[0] = &sf->sf_wsd;
 	sf->sf_wsl.nscreens = 1;
@@ -631,6 +637,24 @@ fb_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int),
     void *cbarg)
 {
 	return (0);
+}
+
+int
+fb_load_font(void *v, void *emulcookie, struct wsdisplay_font *font)
+{
+	struct sunfb *sf = v;
+	struct rasops_info *ri = &sf->sf_ro;
+
+	return rasops_load_font(ri, emulcookie, font);
+}
+
+int
+fb_list_font(void *v, struct wsdisplay_font *font)
+{
+	struct sunfb *sf = v;
+	struct rasops_info *ri = &sf->sf_ro;
+
+	return rasops_list_font(ri, font);
 }
 
 #if defined(SUN4)

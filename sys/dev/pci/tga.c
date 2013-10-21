@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.37 2013/10/20 20:07:30 miod Exp $ */
+/* $OpenBSD: tga.c,v 1.38 2013/10/21 10:36:23 miod Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -88,21 +88,25 @@ struct tga_devconfig tga_console_dc;
 
 int	tga_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	tga_mmap(void *, off_t, int);
-int	tga_copyrows(void *, int, int, int);
-int	tga_copycols(void *, int, int, int, int);
 int	tga_alloc_screen(void *, const struct wsscreen_descr *,
 	    void **, int *, int *, long *);
 void	tga_free_screen(void *, void *);
 int	tga_show_screen(void *, void *, int,
 			   void (*) (void *, int, int), void *);
+int	tga_load_font(void *, void *, struct wsdisplay_font *);
+int	tga_list_font(void *, struct wsdisplay_font *);
 void	tga_burner(void *, u_int, u_int);
+
+int	tga_copyrows(void *, int, int, int);
+int	tga_copycols(void *, int, int, int, int);
+int	tga_eraserows(void *, int, int, long);
+int	tga_erasecols(void *, int, int, int, long);
+int	tga_putchar(void *c, int row, int col, u_int uc, long attr);
+
 int	tga_rop(struct rasops_info *, int, int, int, int,
 	struct rasops_info *, int, int);
 int	tga_rop_vtov(struct rasops_info *, int, int, int,
 	int, struct rasops_info *, int, int );
-int	tga_putchar(void *c, int row, int col, u_int uc, long attr);
-int	tga_eraserows(void *, int, int, long);
-int	tga_erasecols(void *, int, int, int, long);
 void	tga2_init(struct tga_devconfig *);
 
 void	tga_config_interrupts(struct device *);
@@ -158,6 +162,8 @@ struct wsdisplay_accessops tga_accessops = {
 	.alloc_screen = tga_alloc_screen,
 	.free_screen = tga_free_screen,
 	.show_screen = tga_show_screen,
+	.load_font = tga_load_font,
+	.list_font = tga_list_font,
 	.burn_screen = tga_burner
 };
 
@@ -766,6 +772,62 @@ tga_show_screen(v, cookie, waitok, cb, cbarg)
 {
 
 	return (0);
+}
+
+int
+tga_load_font(void *v, void *emulcookie, struct wsdisplay_font *font)
+{
+	struct tga_softc *sc = v;
+	struct tga_devconfig *dc = sc->sc_dc;
+	struct rasops_info *ri = &dc->dc_rinfo;
+	int wsfcookie;
+	struct wsdisplay_font *wsf;
+	const char *name;
+
+	/*
+	 * We can't use rasops_load_font() directly, as we need to make
+	 * sure that, when switching fonts, the font bits are set up in
+	 * the correct bit order.
+	 */
+
+	if (font->data != NULL)
+		return rasops_load_font(ri, emulcookie, font);
+
+	/* allow an empty font name to revert to the initial font choice */
+	name = font->name;
+	if (*name == '\0')
+		name = NULL;
+
+	wsfcookie = wsfont_find(name, ri->ri_font->fontwidth,
+	    ri->ri_font->fontheight, 0);
+	if (wsfcookie < 0) {
+		wsfcookie = wsfont_find(name, 0, 0, 0);
+		if (wsfcookie < 0)
+			return ENOENT;
+		else
+			return EINVAL;
+	}
+	if (wsfont_lock(wsfcookie, &wsf,
+	    WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R) <= 0)
+		return EINVAL;
+
+	/* if (ri->ri_wsfcookie >= 0) */
+		wsfont_unlock(ri->ri_wsfcookie);
+	ri->ri_wsfcookie = wsfcookie;
+	ri->ri_font = wsf;
+	ri->ri_fontscale = ri->ri_font->fontheight * ri->ri_font->stride;
+
+	return 0;
+}
+
+int
+tga_list_font(void *v, struct wsdisplay_font *font)
+{
+	struct tga_softc *sc = v;
+	struct tga_devconfig *dc = sc->sc_dc;
+	struct rasops_info *ri = &dc->dc_rinfo;
+
+	return rasops_list_font(ri, font);
 }
 
 int

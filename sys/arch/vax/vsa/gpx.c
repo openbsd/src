@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.22 2013/10/20 20:07:28 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.23 2013/10/21 10:36:20 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -193,6 +193,8 @@ int	gpx_alloc_screen(void *, const struct wsscreen_descr *,
 void	gpx_free_screen(void *, void *);
 int	gpx_show_screen(void *, void *, int,
 	    void (*) (void *, int, int), void *);
+int	gpx_load_font(void *, void *, struct wsdisplay_font *);
+int	gpx_list_font(void *, struct wsdisplay_font *);
 void	gpx_burner(void *, u_int, u_int);
 
 const struct wsdisplay_accessops gpx_accessops = {
@@ -201,6 +203,8 @@ const struct wsdisplay_accessops gpx_accessops = {
 	.alloc_screen = gpx_alloc_screen,
 	.free_screen = gpx_free_screen,
 	.show_screen = gpx_show_screen,
+	.load_font = gpx_load_font,
+	.list_font = gpx_list_font,
 	.burn_screen = gpx_burner
 };
 
@@ -474,6 +478,64 @@ gpx_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
 	return (0);
+}
+
+int
+gpx_load_font(void *v, void *emulcookie, struct wsdisplay_font *font)
+{
+	struct gpx_softc *sc = v;
+	struct gpx_screen *ss = sc->sc_scr;
+	struct rasops_info *ri = &ss->ss_ri;
+	int wsfcookie;
+	struct wsdisplay_font *wsf;
+	const char *name;
+
+	/*
+	 * We can't use rasops_load_font() directly, as we need to make
+	 * sure that, when switching fonts, the font bits are set up in
+	 * the correct bit order, and uploaded off-screen.
+	 */
+
+	if (font->data != NULL)
+		return rasops_load_font(ri, emulcookie, font);
+
+	/* allow an empty font name to revert to the initial font choice */
+	name = font->name;
+	if (*name == '\0')
+		name = NULL;
+
+	wsfcookie = wsfont_find(name, ri->ri_font->fontwidth,
+	    ri->ri_font->fontheight, 0);
+	if (wsfcookie < 0) {
+		wsfcookie = wsfont_find(name, 0, 0, 0);
+		if (wsfcookie < 0)
+			return ENOENT;
+		else
+			return EINVAL;
+	}
+	if (wsfont_lock(wsfcookie, &wsf,
+	    WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R) <= 0)
+		return EINVAL;
+
+	/* if (ri->ri_wsfcookie >= 0) */
+		wsfont_unlock(ri->ri_wsfcookie);
+	ri->ri_wsfcookie = wsfcookie;
+	ri->ri_font = wsf;
+	ri->ri_fontscale = ri->ri_font->fontheight * ri->ri_font->stride;
+
+	gpx_upload_font(ss);
+
+	return 0;
+}
+
+int
+gpx_list_font(void *v, struct wsdisplay_font *font)
+{
+	struct gpx_softc *sc = v;
+	struct gpx_screen *ss = sc->sc_scr;
+	struct rasops_info *ri = &ss->ss_ri;
+
+	return rasops_list_font(ri, font);
 }
 
 void

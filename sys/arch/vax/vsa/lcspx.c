@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.18 2013/10/20 20:07:28 miod Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.19 2013/10/21 10:36:21 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -140,13 +140,17 @@ int	lcspx_alloc_screen(void *, const struct wsscreen_descr *,
 void	lcspx_free_screen(void *, void *);
 int	lcspx_show_screen(void *, void *, int,
 	    void (*) (void *, int, int), void *);
+int	lcspx_load_font(void *, void *, struct wsdisplay_font *);
+int	lcspx_list_font(void *, struct wsdisplay_font *);
 
 const struct wsdisplay_accessops lcspx_accessops = {
 	.ioctl = lcspx_ioctl,
 	.mmap = lcspx_mmap,
 	.alloc_screen = lcspx_alloc_screen,
 	.free_screen = lcspx_free_screen,
-	.show_screen = lcspx_show_screen
+	.show_screen = lcspx_show_screen,
+	.load_font = lcspx_load_font,
+	.list_font = lcspx_list_font
 };
 
 int	lcspx_getcmap(struct lcspx_screen *, struct wsdisplay_cmap *);
@@ -513,6 +517,26 @@ lcspx_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
 	return (0);
+}
+
+int
+lcspx_load_font(void *v, void *emulcookie, struct wsdisplay_font *font)
+{
+	struct lcspx_softc *sc = v;
+	struct lcspx_screen *ss = sc->sc_scr;
+	struct rasops_info *ri = &ss->ss_ri;
+
+	return rasops_load_font(ri, emulcookie, font);
+}
+
+int
+lcspx_list_font(void *v, struct wsdisplay_font *font)
+{
+	struct lcspx_softc *sc = v;
+	struct lcspx_screen *ss = sc->sc_scr;
+	struct rasops_info *ri = &ss->ss_ri;
+
+	return rasops_list_font(ri, font);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvbox.c,v 1.14 2013/10/20 20:07:22 miod Exp $	*/
+/*	$OpenBSD: dvbox.c,v 1.15 2013/10/21 10:36:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -131,6 +131,8 @@ struct	wsdisplay_accessops	dvbox_accessops = {
 	.alloc_screen = diofb_alloc_screen,
 	.free_screen = diofb_free_screen,
 	.show_screen = diofb_show_screen,
+	.load_font = diofb_load_font,
+	.list_font = diofb_list_font,
 	.burn_screen = dvbox_burner
 };
 

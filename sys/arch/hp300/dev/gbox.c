@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbox.c,v 1.16 2013/10/20 20:07:22 miod Exp $	*/
+/*	$OpenBSD: gbox.c,v 1.17 2013/10/21 10:36:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -135,6 +135,8 @@ struct	wsdisplay_accessops	gbox_accessops = {
 	.alloc_screen = diofb_alloc_screen,
 	.free_screen = diofb_free_screen,
 	.show_screen = diofb_show_screen,
+	.load_font = diofb_load_font,
+	.list_font = diofb_list_font,
 	.burn_screen = gbox_burner
 };
 

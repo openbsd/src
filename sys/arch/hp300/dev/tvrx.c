@@ -1,4 +1,4 @@
-/*	$OpenBSD: tvrx.c,v 1.3 2013/10/20 20:07:23 miod Exp $	*/
+/*	$OpenBSD: tvrx.c,v 1.4 2013/10/21 10:36:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2011, Miodrag Vallat.
@@ -140,6 +140,8 @@ struct	wsdisplay_accessops	tvrx_accessops = {
 	.alloc_screen = diofb_alloc_screen,
 	.free_screen = diofb_free_screen,
 	.show_screen = diofb_show_screen,
+	.load_font = diofb_load_font,
+	.list_font = diofb_list_font,
 	.burn_screen = tvrx_burner
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.24 2013/10/20 20:07:30 miod Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.25 2013/10/21 10:36:25 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -114,6 +114,8 @@ void	cfxga_burner(void *, u_int, u_int);
 void	cfxga_free_screen(void *, void *);
 int	cfxga_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	cfxga_mmap(void *, off_t, int);
+int	cfxga_load_font(void *, void *, struct wsdisplay_font *);
+int	cfxga_list_font(void *, struct wsdisplay_font *);
 int	cfxga_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
 
@@ -123,6 +125,8 @@ struct wsdisplay_accessops cfxga_accessops = {
 	.alloc_screen = cfxga_alloc_screen,
 	.free_screen = cfxga_free_screen,
 	.show_screen = cfxga_show_screen,
+	.load_font = cfxga_load_font,
+	.list_font = cfxga_list_font,
 	.burn_screen = cfxga_burner
 };
 
@@ -658,6 +662,30 @@ cfxga_show_screen(void *v, void *cookie, int waitok,
 	cfxga_reset_and_repaint(sc);	/* will turn video on if scr != NULL */
 
 	return (0);
+}
+
+int
+cfxga_load_font(void *v, void *emulcookie, struct wsdisplay_font *font)
+{
+	struct cfxga_softc *sc = v;
+	struct cfxga_screen *scr = sc->sc_active;
+
+	if (scr == NULL)
+		return ENXIO;
+
+	return rasops_load_font(&scr->scr_ri, emulcookie, font);
+}
+
+int
+cfxga_list_font(void *v, struct wsdisplay_font *font)
+{
+	struct cfxga_softc *sc = v;
+	struct cfxga_screen *scr = sc->sc_active;
+
+	if (scr == NULL)
+		return ENXIO;
+
+	return rasops_list_font(&scr->scr_ri, font);
 }
 
 /*

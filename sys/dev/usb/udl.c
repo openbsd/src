@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.77 2013/10/20 20:07:31 miod Exp $ */
+/*	$OpenBSD: udl.c,v 1.78 2013/10/21 10:36:26 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -85,6 +85,8 @@ int		udl_alloc_screen(void *, const struct wsscreen_descr *,
 void		udl_free_screen(void *, void *);
 int		udl_show_screen(void *, void *, int,
 		    void (*)(void *, int, int), void *);
+int		udl_load_font(void *, void *, struct wsdisplay_font *);
+int		udl_list_font(void *, struct wsdisplay_font *);
 void		udl_burner(void *, u_int, u_int);
 
 int		udl_copycols(void *, int, int, int, int);
@@ -217,6 +219,8 @@ struct wsdisplay_accessops udl_accessops = {
 	.alloc_screen = udl_alloc_screen,
 	.free_screen = udl_free_screen,
 	.show_screen = udl_show_screen,
+	.load_font = udl_load_font,
+	.list_font = udl_list_font,
 	.burn_screen = udl_burner
 };
 
@@ -693,6 +697,24 @@ udl_show_screen(void *v, void *cookie, int waitok,
 	DPRINTF(1, "%s: %s\n", DN(sc), FUNC);
 
 	return (0);
+}
+
+int
+udl_load_font(void *v, void *emulcookie, struct wsdisplay_font *font)
+{
+	struct udl_softc *sc = v;
+	struct rasops_info *ri = &sc->sc_ri;
+
+	return rasops_load_font(ri, emulcookie, font);
+}
+
+int
+udl_list_font(void *v, struct wsdisplay_font *font)
+{
+	struct udl_softc *sc = v;
+	struct rasops_info *ri = &sc->sc_ri;
+
+	return rasops_list_font(ri, font);
 }
 
 void

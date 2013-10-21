@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.h,v 1.11 2005/12/22 18:45:46 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.h,v 1.12 2013/10/21 10:36:10 miod Exp $ */
 /* $NetBSD: pxa2x0_lcd.h,v 1.2 2003/06/17 09:43:14 bsh Exp $ */
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -138,9 +138,12 @@ int	pxa2x0_lcd_alloc_screen(void *, const struct wsscreen_descr *,
 	    void **, int *, int *, long *);
 void	pxa2x0_lcd_free_screen(void *, void *);
 int	pxa2x0_lcd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	pxa2x0_lcd_load_font(void *, void *, struct wsdisplay_font *);
+int	pxa2x0_lcd_list_font(void *, struct wsdisplay_font *);
 paddr_t	pxa2x0_lcd_mmap(void *, off_t, int);
 int	pxa2x0_lcd_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
+
 void	pxa2x0_lcd_power(int, void *);
 void	pxa2x0_lcd_suspend(struct pxa2x0_lcd_softc *);
 void	pxa2x0_lcd_resume(struct pxa2x0_lcd_softc *);

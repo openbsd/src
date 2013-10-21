@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.26 2013/10/20 20:07:28 miod Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.27 2013/10/21 10:36:22 miod Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -88,12 +88,11 @@ const struct wsscreen_list lcd_screen_list = {
 };
 
 int	lcd_ioctl(void *, u_long, caddr_t, int, struct proc *);
-void	lcd_burner(void *, u_int, u_int);
 int	lcd_show_screen(void *, void *, int,
 	    void (*)(void *, int, int), void *);
+void	lcd_burner(void *, u_int, u_int);
 
-int	lcd_param(struct pxa2x0_lcd_softc *, u_long,
-    struct wsdisplay_param *);
+int	lcd_param(struct pxa2x0_lcd_softc *, u_long, struct wsdisplay_param *);
 
 const struct wsdisplay_accessops lcd_accessops = {
 	.ioctl = lcd_ioctl,
@@ -101,6 +100,8 @@ const struct wsdisplay_accessops lcd_accessops = {
 	.alloc_screen = pxa2x0_lcd_alloc_screen,
 	.free_screen = pxa2x0_lcd_free_screen,
 	.show_screen = lcd_show_screen,
+	.load_font = pxa2x0_lcd_load_font,
+	.list_font = pxa2x0_lcd_list_font,
 	.burn_screen = lcd_burner
 };
 
