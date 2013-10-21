@@ -1,6 +1,7 @@
-/*	$Id: libmdoc.h,v 1.51 2012/11/17 00:25:20 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.52 2013/10/21 23:32:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -34,6 +35,8 @@ struct	mdoc {
 #define	MDOC_PPHRASE	 (1 << 5) /* within a partial phrase */
 #define	MDOC_FREECOL	 (1 << 6) /* `It' invocation should close */
 #define	MDOC_SYNOPSIS	 (1 << 7) /* SYNOPSIS-style formatting */
+#define	MDOC_KEEP	 (1 << 8) /* in a word keep */
+#define	MDOC_SMOFF	 (1 << 9) /* spacing is off */
 	enum mdoc_next	  next; /* where to put the next node */
 	struct mdoc_node *last; /* the last node parsed */
 	struct mdoc_node *first; /* the first node parsed */
@@ -57,8 +60,8 @@ struct	mdoc_macro {
 #define	MDOC_PARSED	 (1 << 1)
 #define	MDOC_EXPLICIT	 (1 << 2)
 #define	MDOC_PROLOGUE	 (1 << 3)
-#define	MDOC_IGNDELIM	 (1 << 4) 
-	/* Reserved words in arguments treated as text. */
+#define	MDOC_IGNDELIM	 (1 << 4)
+#define	MDOC_JOIN	 (1 << 5)
 };
 
 enum	margserr {
@@ -107,6 +110,7 @@ __BEGIN_DECLS
 int		  mdoc_macro(MACRO_PROT_ARGS);
 int		  mdoc_word_alloc(struct mdoc *, 
 			int, int, const char *);
+void		  mdoc_word_append(struct mdoc *, const char *);
 int		  mdoc_elem_alloc(struct mdoc *, int, int, 
 			enum mdoct, struct mdoc_arg *);
 int		  mdoc_block_alloc(struct mdoc *, int, int, 

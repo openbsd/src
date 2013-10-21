@@ -1,7 +1,7 @@
-/*	$Id: mdoc.c,v 1.94 2013/10/03 19:32:25 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.95 2013/10/21 23:32:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -578,6 +578,23 @@ mdoc_word_alloc(struct mdoc *mdoc, int line, int pos, const char *p)
 	return(1);
 }
 
+void
+mdoc_word_append(struct mdoc *mdoc, const char *p)
+{
+	struct mdoc_node	*n;
+	char			*addstr, *newstr;
+
+	n = mdoc->last;
+	addstr = roff_strdup(mdoc->roff, p);
+	if (-1 == asprintf(&newstr, "%s %s", n->string, addstr)) {
+		perror(NULL);
+		exit((int)MANDOCLEVEL_SYSERR);
+	}
+	free(addstr);
+	free(n->string);
+	n->string = newstr;
+	mdoc->next = MDOC_NEXT_SIBLING;
+}
 
 static void
 mdoc_node_free(struct mdoc_node *p)

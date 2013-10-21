@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.114 2013/10/06 22:45:13 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.115 2013/10/21 23:32:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -1670,10 +1670,16 @@ ebool(struct mdoc *mdoc)
 
 	assert(MDOC_TEXT == mdoc->last->child->type);
 
-	if (0 == strcmp(mdoc->last->child->string, "on"))
+	if (0 == strcmp(mdoc->last->child->string, "on")) {
+		if (MDOC_Sm == mdoc->last->tok)
+			mdoc->flags &= ~MDOC_SMOFF;
 		return(1);
-	if (0 == strcmp(mdoc->last->child->string, "off"))
+	}
+	if (0 == strcmp(mdoc->last->child->string, "off")) {
+		if (MDOC_Sm == mdoc->last->tok)
+			mdoc->flags |= MDOC_SMOFF;
 		return(1);
+	}
 
 	mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_BADBOOL);
 	return(1);
