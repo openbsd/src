@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arc4random.9,v 1.6 2013/06/04 19:27:03 schwarze Exp $
+.\"	$OpenBSD: arc4random.9,v 1.7 2013/10/21 20:35:09 deraadt Exp $
 .\"
 .\" Copyright (c) 1996,2000 Michael Shalayeff
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: October 21 2013 $
 .Dt ARC4RANDOM 9
 .Os
 .Sh NAME
@@ -53,6 +53,13 @@
 .Fn arc4random_uniform "u_int32_t upper_bound"
 .Sh DESCRIPTION
 The
+.Fn add_random
+functions below insert random input into a confusing mesh of
+hash functions to create a pool to be used by the
+.Pa arc4random
+series of functions.
+.Pp
+The
 .Fn add_mouse_randomness ,
 .Fn add_tty_randomness ,
 .Fn add_net_randomness ,
@@ -61,9 +68,8 @@ and
 .Fn add_audio_randomness
 routines are used to
 supply data for the random data source device for further processing.
-The processing involves calculating inter-event timedelta and measuring
-entropy contained in the resulting delta-T; the argument data supplied
-is just mixed into the pool and does not increase the entropy counter.
+The processing involves calculating inter-event timedelta and inserting
+it into a pool which is cryptographically mixed multiple times.
 .Pp
 .Fn add_true_randomness
 does not involve the usual timing calculations,
@@ -78,13 +84,22 @@ mostly by means of timing the random driver's operations.
 .Fn arc4random
 and
 .Fn arc4random_buf
-provide random numbers.
-They may be called safely in any kernel context.
+provide random numbers and are intended to be called in any
+circumstance where random numbers are required.
 .Pp
 .Fn arc4random_uniform
 will return a uniformly distributed random number less than
 .Fa upper_bound ,
 avoiding "modulo bias" when the upper bound is not a power of two.
+In the worst case, this function may consume multiple iterations
+to ensure uniformity; see the source code to understand the problem
+and solution.
+.Pp
+.Fn arc4random ,
+.Fn arc4random_buf ,
+and
+.Fn arc4random_uniform
+may be called in nearly any kernel context.
 .Sh SEE ALSO
 .Xr arc4random 3 ,
 .Xr pchb 4 ,

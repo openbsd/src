@@ -1,4 +1,4 @@
-.\" $OpenBSD: arc4random.3,v 1.29 2013/06/05 03:39:22 tedu Exp $
+.\" $OpenBSD: arc4random.3,v 1.30 2013/10/21 20:35:09 deraadt Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -30,16 +30,14 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: October 21 2013 $
 .Dt ARC4RANDOM 3
 .Os
 .Sh NAME
 .Nm arc4random ,
 .Nm arc4random_buf ,
-.Nm arc4random_uniform ,
-.Nm arc4random_stir ,
-.Nm arc4random_addrandom
-.Nd arc4 random number generator
+.Nm arc4random_uniform
+.Nd random number generator
 .Sh SYNOPSIS
 .In stdlib.h
 .Ft u_int32_t
@@ -48,65 +46,54 @@
 .Fn arc4random_buf "void *buf" "size_t nbytes"
 .Ft u_int32_t
 .Fn arc4random_uniform "u_int32_t upper_bound"
-.Ft void
-.Fn arc4random_stir "void"
-.Ft void
-.Fn arc4random_addrandom "u_char *dat" "int datlen"
 .Sh DESCRIPTION
-The
-.Fn arc4random
-function provides a high quality 32-bit pseudo-random
-number very quickly.
-.Fn arc4random
-seeds itself on a regular basis from the kernel strong random number
-subsystem described in
-.Xr random 4 .
-On each call, an ARC4 generator is used to generate a new result.
-The
-.Fn arc4random
-function uses the ARC4 cipher key stream generator,
-which uses 8*8 8-bit S-Boxes.
-The S-Boxes can be in about (2**1700) states.
-.Pp
-.Fn arc4random
-provides a cryptographically secure pseudo-random number generator,
-as opposed to the fast but poor quality interfaces described in
+This family of functions provides higher quality data than those
+described in
 .Xr rand 3 ,
 .Xr random 3 ,
 and
 .Xr drand48 3 .
+.Pp
+Use of these functions is encouraged for almost all random number
+consumption because the other interfaces are deficient in either
+quality, portability, standardization, or availability.
+These functions can be called in almost all coding environments,
+including
+.Xr pthreads 3
+and
+.Xr chroot 2 .
+.Pp
+High quality 32-bit pseudo-random numbers are generated very quickly.
+On each call, a cryptographic pseudo-random number generator is used
+to generate a new result.
+One data pool is used for all consumers in a process, so that consumption
+under program flow can act as additional stirring.
+The subsystem is re-seeded from the kernel random number subsystem using
+.Xr sysctl 3
+on a regular basis, and also upon
+.Xr fork 2 .
+.Pp
+The
+.Fn arc4random
+function returns a single 32-bit value.
 .Pp
 .Fn arc4random_buf
 fills the region
 .Fa buf
 of length
 .Fa nbytes
-with ARC4-derived random data.
+with random data.
 .Pp
 .Fn arc4random_uniform
-will return a uniformly distributed random number less than
+will return a single 32-bit value, uniformly distributed but less than
 .Fa upper_bound .
-.Fn arc4random_uniform
-is recommended over constructions like
+This is recommended over constructions like
 .Dq Li arc4random() % upper_bound
 as it avoids "modulo bias" when the upper bound is not a power of two.
+In the worst case, this function may consume multiple iterations
+to ensure uniformity; see the source code to understand the problem
+and solution.
 .Pp
-The
-.Fn arc4random_stir
-function reads data using
-.Xr sysctl 3
-from
-.Va kern.arandom
-and uses it to permute the S-Boxes via
-.Fn arc4random_addrandom .
-.Pp
-There is no need to call
-.Fn arc4random_stir
-before using
-.Fn arc4random ,
-since
-.Fn arc4random
-automatically initializes itself.
 .Sh RETURN VALUES
 These functions are always successful, and no return value is
 reserved to indicate an error.
@@ -115,21 +102,16 @@ reserved to indicate an error.
 .Xr rand48 3 ,
 .Xr random 3
 .Sh HISTORY
-An algorithm called
-.Pa RC4
-was designed by RSA Data Security, Inc.
-It was considered a trade secret.
-Because it was a trade secret, it obviously could not be patented.
-A clone of this was posted anonymously to USENET and confirmed to
-be equivalent by several sources who had access to the original cipher.
-Because of the trade secret situation, RSA Data Security, Inc. could
-do nothing about the release of the
-.Ql Alleged RC4
-algorithm.
-Since
-.Pa RC4
-was trademarked, the cipher is now referred to as
-.Pa ARC4 .
 .Pp
 These functions first appeared in
 .Ox 2.1 .
+.Pp
+The original version of this random number generator used the
+RC4 (also known as ARC4) algorithm.
+In
+.Ox 5.5 ,
+it was replaced with the ChaCha20 cipher, and it may be replaced
+again in the future as cryptographic techniques advance.
+techniques advance.
+A good mnemonic is
+.Dq A Replacement Call for Random .
