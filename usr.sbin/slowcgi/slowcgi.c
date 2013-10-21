@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.21 2013/10/21 18:16:28 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.22 2013/10/21 18:17:58 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -537,7 +537,7 @@ slowcgi_response(int fd, short events, void *arg)
 
 		n = write(fd, resp->data + resp->data_pos, resp->data_len);
 		if (n == -1) {
-			if (errno == EAGAIN)
+			if (errno == EAGAIN || errno == EINTR)
 				return;
 			cleanup_request(c);
 			return;
@@ -998,7 +998,7 @@ script_out(int fd, short events, void *arg)
 		}
 		n = write(fd, node->data + node->data_pos, node->data_len);
 		if (n == -1) {
-			if (errno == EAGAIN)
+			if (errno == EAGAIN || errno == EINTR)
 				return;
 			event_del(&c->script_stdin_ev);
 			return;
