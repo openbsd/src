@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.20 2010/04/02 17:03:58 zinovik Exp $ */
+/*	$OpenBSD: confpars.c,v 1.21 2013/10/21 12:02:25 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -737,6 +737,9 @@ void parse_subnet_declaration(cfile, share)
 	memcpy(iaddr.iabuf, addr, len);
 	iaddr.len = len;
 	subnet->netmask = iaddr;
+
+	/* Save only the subnet number. */
+	subnet->net = subnet_number(subnet->net, subnet->netmask);
 
 	enter_subnet(subnet);
 
