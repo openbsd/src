@@ -872,7 +872,7 @@ collate(struct timeval *t)
 	struct timeval tp;
 	u_long delta;
 
-	GET_TIME(tp);
+	microtime(&tp);
 
 	if (TV_LT(*t, tp))
 	{
@@ -1033,7 +1033,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 #ifdef UPCALL_TIMING
 		struct timeval tp;
 
-		GET_TIME(tp);
+		microtime(&tp);
 #endif /* UPCALL_TIMING */
 
 		mrt6stat.mrt6s_no_route++;
