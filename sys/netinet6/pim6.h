@@ -1,4 +1,4 @@
-/*	$OpenBSD: pim6.h,v 1.3 2005/12/10 01:30:14 deraadt Exp $	*/
+/*	$OpenBSD: pim6.h,v 1.4 2013/10/21 10:05:18 deraadt Exp $	*/
 /*	$KAME: pim6.h,v 1.3 2000/03/25 07:23:58 sumikawa Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 #define PIM_VERSION	2
 struct pim {
-#if defined(BYTE_ORDER) && (BYTE_ORDER == LITTLE_ENDIAN)
+#if _BYTE_ORDER == LITTLE_ENDIAN
 	u_int	pim_type:4, /* the PIM message type, currently they are:
 			     * Hello, Register, Register-Stop, Join/Prune,
 			     * Bootstrap, Assert, Graft (PIM-DM only),
