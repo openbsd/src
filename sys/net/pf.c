@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.848 2013/10/20 13:42:36 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.849 2013/10/21 09:39:23 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3756,6 +3756,10 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 			u_int16_t icmpid = (icmp_dir == PF_IN) ? sport : dport;
 
 			if (icmpid != pd->hdr.icmp->icmp_id) {
+				if (pd->csum_status == PF_CSUM_UNKNOWN)
+					pf_check_proto_cksum(pd, pd->off,
+					    pd->tot_len - pd->off, pd->proto,
+					    pd->af);
 				pd->hdr.icmp->icmp_id = icmpid;
 				rewrite = 1;
 			}
@@ -4597,8 +4601,13 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 					pd->destchg = 1;
 				}
 
-				if (nk->port[iidx] !=  pd->hdr.icmp->icmp_id)
+				if (nk->port[iidx] !=  pd->hdr.icmp->icmp_id) {
+					if (pd->csum_status == PF_CSUM_UNKNOWN)
+						pf_check_proto_cksum(pd,
+						    pd->off, pd->tot_len -
+						    pd->off, pd->proto, pd->af);
 					pd->hdr.icmp->icmp_id = nk->port[iidx];
+				}
 
 				m_copyback(pd->m, pd->off, ICMP_MINLEN,
 				    pd->hdr.icmp, M_NOWAIT);
@@ -4627,9 +4636,14 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 					pd->destchg = 1;
 				}
 
-				if (nk->port[iidx] != pd->hdr.icmp6->icmp6_id)
+				if (nk->port[iidx] != pd->hdr.icmp6->icmp6_id) {
+					if (pd->csum_status == PF_CSUM_UNKNOWN)
+						pf_check_proto_cksum(pd,
+						    pd->off, pd->tot_len -
+						    pd->off, pd->proto, pd->af);
 					pd->hdr.icmp6->icmp6_id =
 					    nk->port[iidx];
+				}
 
 				m_copyback(pd->m, pd->off,
 				    sizeof(struct icmp6_hdr), pd->hdr.icmp6,
