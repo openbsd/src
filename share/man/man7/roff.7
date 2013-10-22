@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.23 2013/10/14 01:42:25 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.24 2013/10/22 20:37:54 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 14 2013 $
+.Dd $Mdocdate: October 22 2013 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -670,6 +670,9 @@ This request takes effect only locally, may be overridden by macros
 and escape sequences, and is only supported in
 .Xr man 7
 for now.
+.Ss \&hw
+Specify hyphenation points in words.
+This line-scoped request is currently ignored.
 .Ss \&hy
 Set automatic hyphenation mode.
 This line-scoped request is currently ignored.
