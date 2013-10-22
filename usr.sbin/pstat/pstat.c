@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.86 2013/08/22 04:43:41 guenther Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.87 2013/10/22 16:40:27 guenther Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -988,7 +988,7 @@ ttyprt(struct itty *tp)
 void
 filemode(void)
 {
-	struct kinfo_file2 *kf;
+	struct kinfo_file *kf;
 	char flagbuf[16], *fbp;
 	static char *dtypes[] = { "???", "inode", "socket", "pipe", "kqueue", "crypto", "systrace" };
 	int mib[2], maxfile, nfile;
@@ -1019,9 +1019,9 @@ filemode(void)
 	}
 
 	if (!totalflag) {
-		kf = kvm_getfile2(kd, KERN_FILE_BYFILE, 0, sizeof *kf, &nfile);
+		kf = kvm_getfiles(kd, KERN_FILE_BYFILE, 0, sizeof *kf, &nfile);
 		if (kf == NULL) {
-			warnx("kvm_getfile2: %s", kvm_geterr(kd));
+			warnx("kvm_getfiles: %s", kvm_geterr(kd));
 			return;
 		}
 	}

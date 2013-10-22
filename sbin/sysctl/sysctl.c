@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.194 2013/07/18 05:02:57 guenther Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.195 2013/10/22 16:40:28 guenther Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -387,7 +387,6 @@ parse(char *string, int flags)
 			warnx("use dmesg to view %s", string);
 			return;
 		case KERN_VNODE:
-		case KERN_FILE:
 			if (flags == 0)
 				return;
 			warnx("use pstat to view %s information", string);
@@ -439,7 +438,7 @@ parse(char *string, int flags)
 		case KERN_EMUL:
 			sysctl_emul(string, newval, flags);
 			return;
-		case KERN_FILE2:
+		case KERN_FILE:
 			if (flags == 0)
 				return;
 			warnx("use fstat to view %s information", string);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_private.h,v 1.17 2011/03/12 04:54:28 guenther Exp $ */
+/*	$OpenBSD: kvm_private.h,v 1.18 2013/10/22 16:40:27 guenther Exp $ */
 /*	$NetBSD: kvm_private.h,v 1.7 1996/05/05 04:32:15 gwr Exp $	*/
 
 /*-
@@ -101,6 +101,6 @@ void	*_kvm_realloc(kvm_t *kd, void *, size_t);
 void	 _kvm_syserr(kvm_t *kd, const char *program, const char *fmt, ...);
 ssize_t	 _kvm_pread(kvm_t *, int, void *, size_t, off_t);
 ssize_t	 _kvm_pwrite(kvm_t *, int, const void *, size_t, off_t);
-int	 _kvm_stat_cd9660(kvm_t *, struct kinfo_file2 *, struct vnode *);
-int	 _kvm_stat_udf(kvm_t *, struct kinfo_file2 *, struct vnode *);
-int	 _kvm_stat_ntfs(kvm_t *, struct kinfo_file2 *, struct vnode *);
+int	 _kvm_stat_cd9660(kvm_t *, struct kinfo_file *, struct vnode *);
+int	 _kvm_stat_udf(kvm_t *, struct kinfo_file *, struct vnode *);
+int	 _kvm_stat_ntfs(kvm_t *, struct kinfo_file *, struct vnode *);

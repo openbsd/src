@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.20 2013/08/18 16:32:24 guenther Exp $	*/
+/*	$OpenBSD: unix.c,v 1.21 2013/10/22 16:40:28 guenther Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -42,9 +42,8 @@
 #include <sys/un.h>
 #include <sys/unpcb.h>
 #define _KERNEL
-struct uio;
-struct proc;
 #include <sys/file.h>
+#undef _KERNEL
 
 #include <netinet/in.h>
 
@@ -54,65 +53,42 @@ struct proc;
 #include <kvm.h>
 #include "netstat.h"
 
-static	void unixdomainpr(struct socket *, caddr_t, u_long);
-
-static struct	file *file, *fileNFILE;
-static int	fcnt;
-extern	kvm_t *kvmd;
+static	void unixdomainpr(const struct kinfo_file *, u_long);
 
 void
-unixpr(u_long off, u_long pcbaddr)
+unixpr(kvm_t *kvmd, u_long pcbaddr)
 {
-	struct file *fp;
+	struct kinfo_file *kf;
 	struct socket sock, *so = &sock;
-	char *filebuf;
-	struct protosw *unixsw = (struct protosw *)off;
+	int i, fcnt;
 
-	filebuf = kvm_getfiles(kvmd, KERN_FILE, 0, &fcnt);
-	if (filebuf == NULL) {
+	kf = kvm_getfiles(kvmd, KERN_FILE_BYFILE, 0, sizeof(*kf), &fcnt);
+	if (kf == NULL) {
 		printf("Out of memory (file table).\n");
 		return;
 	}
-	file = (struct file *)(filebuf + sizeof(fp));
-	fileNFILE = file + fcnt;
-	for (fp = file; fp < fileNFILE; fp++) {
-		if (fp->f_count == 0 || fp->f_type != DTYPE_SOCKET)
-			continue;
-		if (kread((u_long)fp->f_data, so, sizeof (*so)))
-			continue;
-		/* kludge */
-		if (so->so_proto >= unixsw && so->so_proto <= unixsw + 2)
-			if (so->so_pcb)
-				unixdomainpr(so, fp->f_data, pcbaddr);
+	for (i = 0; i < fcnt; i++) {
+		if (kf[i].f_count != 0 && kf[i].f_type == DTYPE_SOCKET &&
+		    kf[i].so_family == AF_LOCAL && (kf[i].so_pcb != 0 ||
+		    kf[i].unp_path[0] != '\0'))
+			unixdomainpr(&kf[i], pcbaddr);
 	}
 }
 
-static	char *socktype[] =
+static	const char *socktype[] =
     { "#0", "stream", "dgram", "raw", "rdm", "seqpacket" };
 
 static void
-unixdomainpr(struct socket *so, caddr_t soaddr, u_long pcbaddr)
+unixdomainpr(const struct kinfo_file *kf, u_long pcbaddr)
 {
-	struct unpcb unpcb, *unp = &unpcb;
-	struct mbuf mbuf, *m;
-	struct sockaddr_un *sa = NULL;
 	static int first = 1;
 
 	if (Pflag) {
-		if (pcbaddr == (u_long)soaddr)
+		if (pcbaddr == kf->f_data)
 			socket_dump(pcbaddr);
 		return;
 	}
 
-	if (kread((u_long)so->so_pcb, unp, sizeof (*unp)))
-		return;
-	if (unp->unp_addr) {
-		m = &mbuf;
-		if (kread((u_long)unp->unp_addr, m, sizeof (*m)))
-			m = NULL;
-		sa = (struct sockaddr_un *)(m->m_dat);
-	} else
-		m = NULL;
 	if (first) {
 		printf("Active UNIX domain sockets\n");
 		printf("%-*.*s %-6.6s %-6.6s %-6.6s %*.*s %*.*s %*.*s %*.*s Addr\n",
@@ -121,17 +97,17 @@ unixdomainpr(struct socket *so, caddr_t soaddr, u_long pcbaddr)
 		    PLEN, PLEN, "Refs", PLEN, PLEN, "Nextref");
 		first = 0;
 	}
-	printf("%*p %-6.6s %6ld %6ld %*p %*p %*p %*p",
-	    PLEN, hideroot ? 0 : soaddr,
-	    socktype[so->so_type], so->so_rcv.sb_cc, so->so_snd.sb_cc,
-	    PLEN, hideroot ? 0 : unp->unp_vnode,
-	    PLEN, hideroot ? 0 : unp->unp_conn,
-	    PLEN, hideroot ? 0 : unp->unp_refs,
-	    PLEN, hideroot ? 0 : unp->unp_nextref);
-	if (m)
-		printf(" %.*s",
-		    (int)(m->m_len - (int)(sizeof(*sa) - sizeof(sa->sun_path))),
-		    sa->sun_path);
+
+#define	FAKE_PTR(p)	(PLEN - ((p) ? 0 : 2)), p, ((p) ? "" : "x0")
+	printf("%#*llx%s %-6.6s %6ld %6ld %#*llx%s %#*llx%s %#*llx%s %#*llx%s",
+	    FAKE_PTR(kf->f_data), socktype[kf->so_type],
+	    kf->so_rcv_cc, kf->so_snd_cc,
+	    FAKE_PTR(kf->v_un),
+	    FAKE_PTR(kf->unp_conn),
+	    FAKE_PTR(kf->unp_refs),
+	    FAKE_PTR(kf->unp_nextref));
+	if (kf->unp_path[0] != '\0')
+		printf(" %.*s", KI_UNPPATHLEN, kf->unp_path);
 	putchar('\n');
 }
 

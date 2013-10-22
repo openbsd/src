@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.138 2013/09/22 17:28:33 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.139 2013/10/22 16:40:26 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ struct ctlname {
 #define	KERN_CLOCKRATE		12	/* struct: struct clockinfo */
 #define	KERN_VNODE		13	/* struct: vnode structures */
 /*define gap: was KERN_PROC	14	*/
-#define	KERN_FILE		15	/* struct: file entries */
+/*define gap: was KERN_FILE	15	*/
 #define	KERN_PROF		16	/* node: kernel profiling info */
 #define	KERN_POSIX1		17	/* int: POSIX.1 version */
 #define	KERN_NGROUPS		18	/* int: # of supplemental group ids */
@@ -173,7 +173,7 @@ struct ctlname {
 #define	KERN_MAXLOCKSPERUID	70	/* int: locks per uid */
 #define	KERN_CPTIME2		71	/* array: cp_time2 */
 #define	KERN_CACHEPCT		72	/* buffer cache % of physmem */
-#define	KERN_FILE2		73	/* struct: file entries */
+#define	KERN_FILE		73	/* struct: file entries */
 /* was define KERN_RTHREADS	74	*/
 #define	KERN_CONSDEV		75	/* dev_t: console terminal device */
 #define	KERN_NETLIVELOCKS	76	/* int: number of network livelocks */
@@ -197,7 +197,7 @@ struct ctlname {
 	{ "clockrate", CTLTYPE_STRUCT }, \
 	{ "vnode", CTLTYPE_STRUCT }, \
 	{ "gap", 0 }, \
-	{ "file", CTLTYPE_STRUCT }, \
+	{ "gap", 0 }, \
 	{ "profiling", CTLTYPE_NODE }, \
 	{ "posix1version", CTLTYPE_INT }, \
 	{ "ngroups", CTLTYPE_INT }, \
@@ -255,7 +255,7 @@ struct ctlname {
  	{ "maxlocksperuid", CTLTYPE_INT }, \
  	{ "cp_time2", CTLTYPE_STRUCT }, \
 	{ "bufcachepercent", CTLTYPE_INT }, \
-	{ "file2", CTLTYPE_STRUCT }, \
+	{ "file", CTLTYPE_STRUCT }, \
 	{ "gap", 0 }, \
 	{ "consdev", CTLTYPE_STRUCT }, \
 	{ "netlivelocks", CTLTYPE_INT }, \
@@ -608,7 +608,7 @@ do {									\
 
 
 /*
- * kern.file2 returns an array of these structures, which are designed
+ * kern.file returns an array of these structures, which are designed
  * both to be immune to 32/64 bit emulation issues and to
  * provide backwards compatibility.  The order differs slightly from
  * that of the real struct file, and some fields are taken from other
@@ -626,8 +626,9 @@ do {									\
 #define KERN_FILE_TRACE		-4
 
 #define KI_MNAMELEN		96	/* rounded up from 90 */
+#define KI_UNPPATHLEN		104
 
-struct kinfo_file2 {
+struct kinfo_file {
 	uint64_t	f_fileaddr;	/* PTR: address of struct file */
 	uint32_t	f_flag;		/* SHORT: flags (see fcntl.h) */
 	uint32_t	f_iflags;	/* INT: internal flags */
@@ -665,6 +666,7 @@ struct kinfo_file2 {
 	uint32_t	so_type;	/* SHORT: socket type */
 	uint32_t	so_state;	/* SHORT: socket state */
 	uint64_t	so_pcb;		/* PTR: socket pcb */
+					/* for non-root: -1 if not NULL */
 	uint32_t	so_protocol;	/* SHORT: socket protocol type */
 	uint32_t	so_family;	/* INT: socket domain family */
 	uint64_t	inp_ppcb;	/* PTR: pointer to per-protocol pcb */
@@ -699,6 +701,12 @@ struct kinfo_file2 {
 	uint64_t	so_splice;	/* PTR: f_data of spliced socket */
 	int64_t		so_splicelen;	/* OFF_T: already spliced count or */
 					/* -1 if this is target of splice */
+	uint64_t	so_rcv_cc;	/* LONG: chars in receive buf */
+	uint64_t	so_snd_cc;	/* LONG: chars in send buf */
+	uint64_t	unp_refs;	/* PTR: connected sockets */
+	uint64_t	unp_nextref;	/* PTR: link to next connected socket */
+	uint64_t	unp_addr;	/* PTR: address of the socket address */
+	char		unp_path[KI_UNPPATHLEN];
 };
 
 /*
@@ -879,8 +887,7 @@ int sysctl__string(void *, size_t *, void *, size_t, char *, int, int);
 int sysctl_rdstring(void *, size_t *, void *, const char *);
 int sysctl_rdstruct(void *, size_t *, void *, const void *, int);
 int sysctl_struct(void *, size_t *, void *, size_t, void *, int);
-int sysctl_file(char *, size_t *, struct proc *);
-int sysctl_file2(int *, u_int, char *, size_t *, struct proc *);
+int sysctl_file(int *, u_int, char *, size_t *, struct proc *);
 int sysctl_doproc(int *, u_int, char *, size_t *);
 struct radix_node;
 struct walkarg;

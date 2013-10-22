@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.95 2013/03/20 15:23:37 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.96 2013/10/22 16:40:28 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/file.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
@@ -42,6 +41,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <kvm.h>
 #include <limits.h>
 #include <netdb.h>
@@ -162,6 +162,7 @@ main(int argc, char *argv[])
 	u_int tableid;
 	int Tflag = 0;
 	int repeatcount = 0;
+	int need_nlist;
 
 	hideroot = getuid();
 
@@ -331,6 +332,10 @@ main(int argc, char *argv[])
 	}
 #endif
 
+	need_nlist = !mflag && (pflag || nlistf != NULL || memf != NULL ||
+	    (!iflag && !sflag && (rflag ? Aflag :
+	    (gflag || af != AF_UNIX || Pflag))));
+
 	/*
 	 * Discard setgid privileges if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
@@ -341,8 +346,8 @@ main(int argc, char *argv[])
 		if (setresgid(gid, gid, gid) == -1)
 			err(1, "setresgid");
 
-	if ((kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY,
-	    buf)) == NULL) {
+	if ((kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY |
+	    (need_nlist ? 0 : KVM_NO_FILES), buf)) == NULL) {
 		fprintf(stderr, "%s: kvm_openfiles: %s\n", __progname, buf);
 		exit(1);
 	}
@@ -351,7 +356,7 @@ main(int argc, char *argv[])
 		if (setresgid(gid, gid, gid) == -1)
 			err(1, "setresgid");
 
-	if (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) {
+	if (need_nlist && (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0)) {
 		if (nlistf)
 			fprintf(stderr, "%s: %s: no namelist\n", __progname,
 			    nlistf);
@@ -429,7 +434,7 @@ main(int argc, char *argv[])
 			printproto(tp, tp->pr_name, AF_INET6, tableid,
 			    pcbaddr);
 	if ((af == AF_UNIX || af == AF_UNSPEC) && !sflag)
-		unixpr(nl[N_UNIXSW].n_value, pcbaddr);
+		unixpr(kvmd, pcbaddr);
 	exit(0);
 }
 

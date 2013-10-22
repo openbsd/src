@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.75 2013/03/31 01:42:28 bluhm Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.76 2013/10/22 16:40:27 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -102,25 +102,25 @@ int 	signo;	/* signal to send (fuser only) */
 kvm_t *kd;
 uid_t uid;
 
-void fstat_dofile(struct kinfo_file2 *);
+void fstat_dofile(struct kinfo_file *);
 void fstat_header(void);
 void getinetproto(int);
 void usage(void);
 int getfname(char *);
-void cryptotrans(struct kinfo_file2 *);
-void kqueuetrans(struct kinfo_file2 *);
-void pipetrans(struct kinfo_file2 *);
-struct kinfo_file2 *splice_find(char, u_int64_t);
-void splice_insert(char, u_int64_t, struct kinfo_file2 *);
-void find_splices(struct kinfo_file2 *, int);
-void print_inet_details(struct kinfo_file2 *);
+void cryptotrans(struct kinfo_file *);
+void kqueuetrans(struct kinfo_file *);
+void pipetrans(struct kinfo_file *);
+struct kinfo_file *splice_find(char, u_int64_t);
+void splice_insert(char, u_int64_t, struct kinfo_file *);
+void find_splices(struct kinfo_file *, int);
+void print_inet_details(struct kinfo_file *);
 #ifdef INET6
-void print_inet6_details(struct kinfo_file2 *);
+void print_inet6_details(struct kinfo_file *);
 #endif
-void print_sock_details(struct kinfo_file2 *);
-void socktrans(struct kinfo_file2 *);
-void systracetrans(struct kinfo_file2 *);
-void vtrans(struct kinfo_file2 *);
+void print_sock_details(struct kinfo_file *);
+void socktrans(struct kinfo_file *);
+void systracetrans(struct kinfo_file *);
+void vtrans(struct kinfo_file *);
 const char *inet6_addrstr(struct in6_addr *);
 int signame_to_signum(char *);
 void hide(void *p);
@@ -137,7 +137,7 @@ int
 main(int argc, char *argv[])
 {
 	struct passwd *passwd;
-	struct kinfo_file2 *kf, *kflast;
+	struct kinfo_file *kf, *kflast;
 	int arg, ch, what;
 	char *memf, *nlistf, *optstr;
 	char buf[_POSIX2_LINE_MAX];
@@ -271,7 +271,7 @@ main(int argc, char *argv[])
 		checkfile = 1;
 	}
 
-	if ((kf = kvm_getfile2(kd, what, arg, sizeof(*kf), &cnt)) == NULL)
+	if ((kf = kvm_getfiles(kd, what, arg, sizeof(*kf), &cnt)) == NULL)
 		errx(1, "%s", kvm_geterr(kd));
 
 	find_splices(kf, cnt);
@@ -336,7 +336,7 @@ pid_t	Pid;
  * print open files attributed to this process
  */
 void
-fstat_dofile(struct kinfo_file2 *kf)
+fstat_dofile(struct kinfo_file *kf)
 {
 
 	Uname = user_from_uid(kf->p_uid, 0);
@@ -378,7 +378,7 @@ fstat_dofile(struct kinfo_file2 *kf)
 }
 
 void
-vtrans(struct kinfo_file2 *kf)
+vtrans(struct kinfo_file *kf)
 {
 	const char *badtype = NULL;
 	char rw[3], mode[12];
@@ -471,7 +471,7 @@ vtrans(struct kinfo_file2 *kf)
 }
 
 void
-pipetrans(struct kinfo_file2 *kf)
+pipetrans(struct kinfo_file *kf)
 {
 	void *maxaddr;
 
@@ -502,7 +502,7 @@ pipetrans(struct kinfo_file2 *kf)
 }
 
 void
-kqueuetrans(struct kinfo_file2 *kf)
+kqueuetrans(struct kinfo_file *kf)
 {
 	PREFIX(kf->fd_fd);
 
@@ -518,7 +518,7 @@ kqueuetrans(struct kinfo_file2 *kf)
 }
 
 void
-cryptotrans(struct kinfo_file2 *kf)
+cryptotrans(struct kinfo_file *kf)
 {
 	PREFIX(kf->fd_fd);
 
@@ -530,7 +530,7 @@ cryptotrans(struct kinfo_file2 *kf)
 }
 
 void
-systracetrans(struct kinfo_file2 *kf)
+systracetrans(struct kinfo_file *kf)
 {
 	PREFIX(kf->fd_fd);
 
@@ -570,7 +570,7 @@ inet6_addrstr(struct in6_addr *p)
 #endif
 
 void
-splice_insert(char type, u_int64_t ptr, struct kinfo_file2 *data)
+splice_insert(char type, u_int64_t ptr, struct kinfo_file *data)
 {
 	ENTRY entry, *found;
 
@@ -584,7 +584,7 @@ splice_insert(char type, u_int64_t ptr, struct kinfo_file2 *data)
 		found->data = NULL;
 }
 
-struct kinfo_file2 *
+struct kinfo_file *
 splice_find(char type, u_int64_t ptr)
 {
 	ENTRY entry, *found;
@@ -597,7 +597,7 @@ splice_find(char type, u_int64_t ptr)
 }
 
 void
-find_splices(struct kinfo_file2 *kf, int cnt)
+find_splices(struct kinfo_file *kf, int cnt)
 {
 	int i, created;
 
@@ -617,7 +617,7 @@ find_splices(struct kinfo_file2 *kf, int cnt)
 }
 
 void
-print_inet_details(struct kinfo_file2 *kf)
+print_inet_details(struct kinfo_file *kf)
 {
 	struct in_addr laddr, faddr;
 
@@ -653,7 +653,7 @@ print_inet_details(struct kinfo_file2 *kf)
 
 #ifdef INET6
 void
-print_inet6_details(struct kinfo_file2 *kf)
+print_inet6_details(struct kinfo_file *kf)
 {
 	char xaddrbuf[NI_MAXHOST + 2];
 	struct in6_addr laddr6, faddr6;
@@ -700,7 +700,7 @@ print_inet6_details(struct kinfo_file2 *kf)
 #endif
 
 void
-print_sock_details(struct kinfo_file2 *kf)
+print_sock_details(struct kinfo_file *kf)
 {
 	if (kf->so_family == AF_INET)
 		print_inet_details(kf);
@@ -711,7 +711,7 @@ print_sock_details(struct kinfo_file2 *kf)
 }
 
 void
-socktrans(struct kinfo_file2 *kf)
+socktrans(struct kinfo_file *kf)
 {
 	static char *stypename[] = {
 		"unused",	/* 0 */
@@ -809,7 +809,7 @@ socktrans(struct kinfo_file2 *kf)
 		hide((void *)(uintptr_t)kf->f_data);
 	}
 	if (kf->so_splice != 0 || kf->so_splicelen == -1) {
-		struct kinfo_file2 *from, *to;
+		struct kinfo_file *from, *to;
 
 		from = splice_find('<', kf->f_data);
 		to = NULL;

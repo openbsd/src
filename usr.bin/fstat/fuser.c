@@ -1,4 +1,4 @@
-/*	$OpenBSD: fuser.c,v 1.2 2009/07/19 12:56:19 millert Exp $	*/
+/*	$OpenBSD: fuser.c,v 1.3 2013/10/22 16:40:28 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -65,7 +65,7 @@
  * to a file held by a process (kf), else 0.
  */
 static int
-match(struct filearg *fa, struct kinfo_file2 *kf)
+match(struct filearg *fa, struct kinfo_file *kf)
 {
 	if (fa->dev == kf->va_fsid) {
 		if (cflg)
@@ -77,11 +77,11 @@ match(struct filearg *fa, struct kinfo_file2 *kf)
 }
 
 /*
- * Examine kinfo_file2 struct and record the details if they
+ * Examine kinfo_file struct and record the details if they
  * match a watched file.
  */
 void
-fuser_check(struct kinfo_file2 *kf)
+fuser_check(struct kinfo_file *kf)
 {
 	struct filearg *fa;
 	struct fuser *fu;

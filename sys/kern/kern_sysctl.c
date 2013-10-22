@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.240 2013/07/09 15:37:43 beck Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.241 2013/10/22 16:40:26 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -72,6 +72,7 @@
 #include <sys/protosw.h>
 #include <sys/timetc.h>
 #include <sys/evcount.h>
+#include <sys/un.h>
 #include <sys/unpcb.h>
 
 #include <sys/mount.h>
@@ -121,7 +122,7 @@ int sysctl_sensors(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_emul(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_cptime2(int *, u_int, void *, size_t *, void *, size_t);
 
-void fill_file2(struct kinfo_file2 *, struct file *, struct filedesc *,
+void fill_file(struct kinfo_file *, struct file *, struct filedesc *,
     int, struct vnode *, struct proc *, struct proc *, int);
 void fill_kproc(struct proc *, struct kinfo_proc *, int, int);
 
@@ -293,7 +294,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		case KERN_EVCOUNT:
 		case KERN_TIMECOUNTER:
 		case KERN_CPTIME2:
-		case KERN_FILE2:
+		case KERN_FILE:
 			break;
 		default:
 			return (ENOTDIR);	/* overloaded */
@@ -372,11 +373,9 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_PROC_CWD:
 		return (sysctl_proc_cwd(name + 1, namelen - 1, oldp, oldlenp,
 		     p));
-	case KERN_FILE2:
-		return (sysctl_file2(name + 1, namelen - 1, oldp, oldlenp, p));
-#endif
 	case KERN_FILE:
-		return (sysctl_file(oldp, oldlenp, p));
+		return (sysctl_file(name + 1, namelen - 1, oldp, oldlenp, p));
+#endif
 	case KERN_MBSTAT:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &mbstat,
 		    sizeof(mbstat)));
@@ -993,72 +992,9 @@ sysctl_rdstruct(void *oldp, size_t *oldlenp, void *newp, const void *sp,
 	return (error);
 }
 
-/*
- * Get file structures.
- */
-int
-sysctl_file(char *where, size_t *sizep, struct proc *p)
-{
-	int buflen, error;
-	struct file *fp, cfile;
-	char *start = where;
-	struct ucred *cred = p->p_ucred;
-
-	buflen = *sizep;
-	if (where == NULL) {
-		/*
-		 * overestimate by KERN_FILESLOP files
-		 */
-		*sizep = sizeof(filehead) +
-		    (nfiles + KERN_FILESLOP) * sizeof(struct file);
-		return (0);
-	}
-
-	/*
-	 * first copyout filehead
-	 */
-	if (buflen < sizeof(filehead)) {
-		*sizep = 0;
-		return (0);
-	}
-	error = copyout((caddr_t)&filehead, where, sizeof(filehead));
-	if (error)
-		return (error);
-	buflen -= sizeof(filehead);
-	where += sizeof(filehead);
-
-	/*
-	 * followed by an array of file structures
-	 */
-	LIST_FOREACH(fp, &filehead, f_list) {
-		if (buflen < sizeof(struct file)) {
-			*sizep = where - start;
-			return (ENOMEM);
-		}
-
-		/* Only let the superuser or the owner see some information */
-		bcopy(fp, &cfile, sizeof (struct file));
-		if (suser(p, 0) != 0 && cred->cr_uid != fp->f_cred->cr_uid) {
-			cfile.f_offset = (off_t)-1;
-			cfile.f_rxfer = 0;
-			cfile.f_wxfer = 0;
-			cfile.f_seek = 0;
-			cfile.f_rbytes = 0;
-			cfile.f_wbytes = 0;
-		}
-		error = copyout(&cfile, where, sizeof (struct file));
-		if (error)
-			return (error);
-		buflen -= sizeof(struct file);
-		where += sizeof(struct file);
-	}
-	*sizep = where - start;
-	return (0);
-}
-
 #ifndef SMALL_KERNEL
 void
-fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
+fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 	  int fd, struct vnode *vp, struct proc *pp, struct proc *p,
 	  int show_pointers)
 {
@@ -1139,8 +1075,12 @@ fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
 		kf->so_state = so->so_state;
 		if (show_pointers)
 			kf->so_pcb = PTRTOINT64(so->so_pcb);
+		else
+			kf->so_pcb = -1;
 		kf->so_protocol = so->so_proto->pr_protocol;
 		kf->so_family = so->so_proto->pr_domain->dom_family;
+		kf->so_rcv_cc = so->so_rcv.sb_cc;
+		kf->so_snd_cc = so->so_snd.sb_cc;
 		if (so->so_splice) {
 			if (show_pointers)
 				kf->so_splice = PTRTOINT64(so->so_splice);
@@ -1182,8 +1122,19 @@ fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
 		case AF_UNIX: {
 			struct unpcb *unpcb = so->so_pcb;
 
-			if (show_pointers)
-				kf->unp_conn = PTRTOINT64(unpcb->unp_conn);
+			if (show_pointers) {
+				kf->unp_conn	= PTRTOINT64(unpcb->unp_conn);
+				kf->unp_refs	= PTRTOINT64(unpcb->unp_refs);
+				kf->unp_nextref	= PTRTOINT64(unpcb->unp_nextref);
+				kf->v_un	= PTRTOINT64(unpcb->unp_vnode);
+				kf->unp_addr	= PTRTOINT64(unpcb->unp_addr);
+			}
+			if (unpcb->unp_addr != NULL) {
+				struct sockaddr_un *un = mtod(unpcb->unp_addr,
+				    struct sockaddr_un *);
+				memcpy(kf->unp_path, un->sun_path, un->sun_len
+				    - offsetof(struct sockaddr_un,sun_path));
+			}
 			break;
 		    }
 		}
@@ -1230,10 +1181,10 @@ fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
  * Get file structures.
  */
 int
-sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
+sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
     struct proc *p)
 {
-	struct kinfo_file2 *kf;
+	struct kinfo_file *kf;
 	struct filedesc *fdp;
 	struct file *fp;
 	struct proc *pp;
@@ -1264,7 +1215,7 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 
 #define FILLIT(fp, fdp, i, vp, pp) do {				\
 	if (buflen >= elem_size && elem_count > 0) {		\
-		fill_file2(kf, fp, fdp, i, vp, pp, p, show_pointers);	\
+		fill_file(kf, fp, fdp, i, vp, pp, p, show_pointers);	\
 		error = copyout(kf, dp, outsize);		\
 		if (error)					\
 			break;					\

@@ -45,6 +45,6 @@ extern struct fileargs fileargs;
 
 extern char *__progname;
 
-void fuser_check(struct kinfo_file2 *);
+void fuser_check(struct kinfo_file *);
 void fuser_run(void);
 void usage(void);

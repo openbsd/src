@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.65 2013/03/20 15:23:37 deraadt Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.66 2013/10/22 16:40:28 guenther Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -31,6 +31,8 @@
  *
  *	from: @(#)netstat.h	8.2 (Berkeley) 1/4/94
  */
+
+#include <kvm.h>
 
 /* What is the max length of a pointer printed with %p (including 0x)? */
 #define PLEN	(LONG_BIT / 4 + 2)
@@ -132,7 +134,7 @@ void	nsprotopr(u_long, char *);
 
 void	intpr(int, int);
 
-void	unixpr(u_long, u_long);
+void	unixpr(kvm_t *, u_long);
 
 void	mroutepr(u_long, u_long, u_long);
 void	mrt_stats(void);
