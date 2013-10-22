@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.60 2013/06/09 16:21:50 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.61 2013/10/22 18:15:58 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -547,6 +547,10 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease)
 		break;
 	case TOK_FIXED_ADDR:
 		if (!parse_ip_addr(cfile, &lease->address))
+			return;
+		break;
+	case TOK_NEXT_SERVER:
+		if (!parse_ip_addr(cfile, &lease->next_server))
 			return;
 		break;
 	case TOK_MEDIUM:

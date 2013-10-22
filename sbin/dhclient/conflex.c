@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.22 2013/06/09 01:51:58 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.23 2013/10/22 18:15:58 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file. */
 
@@ -337,6 +337,7 @@ static const struct keywords {
 	{ "link-timeout",			TOK_LINK_TIMEOUT },
 	{ "media",				TOK_MEDIA },
 	{ "medium",				TOK_MEDIUM },
+	{ "next-server",			TOK_NEXT_SERVER },
 	{ "option",				TOK_OPTION },
 	{ "prepend",				TOK_PREPEND },
 	{ "rebind",				TOK_REBIND },

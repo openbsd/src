@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.262 2013/09/09 20:30:05 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.263 2013/10/22 18:15:58 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1048,6 +1048,10 @@ packet_to_lease(struct in_addr client_addr, struct option_data *options)
 	memcpy(&lease->address.s_addr, &client->packet.yiaddr,
 	    sizeof(in_addr_t));
 
+	/* Save the siaddr (a.k.a. next-server) info. */
+	memcpy(&lease->next_server.s_addr, &client->packet.siaddr,
+	    sizeof(in_addr_t));
+
 	/* If the server name was filled out, copy it. */
 	if ((!lease->options[DHO_DHCP_OPTION_OVERLOAD].len ||
 	    !(lease->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)) &&
@@ -1695,6 +1699,13 @@ lease_as_string(char *type, struct client_lease *lease)
 	    "%s  interface \"%s\";\n  fixed-address %s;\n",
 	    type, (lease->is_bootp) ? "  bootp;\n" : "", ifi->name,
 	    inet_ntoa(lease->address));
+	if (rslt == -1 || rslt >= sz)
+		return (NULL);
+	p += rslt;
+	sz -= rslt;
+
+	rslt = snprintf(p, sz, "  next-server %s;\n",
+	    inet_ntoa(lease->next_server));
 	if (rslt == -1 || rslt >= sz)
 		return (NULL);
 	p += rslt;
