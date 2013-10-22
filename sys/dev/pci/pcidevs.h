@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1692 2013/10/02 14:29:26 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1693 2013/10/22 09:25:59 dlg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -282,6 +282,7 @@
 #define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm */
 #define	PCI_VENDOR_PDC	0x15e9		/* Pacific Data */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
+#define	PCI_VENDOR_BROCADE	0x1657		/* Brocade */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_ZYDAS	0x167b		/* ZyDAS */
 #define	PCI_VENDOR_SAMSUNG	0x167d		/* Samsung */
@@ -2027,6 +2028,14 @@
 #define	PCI_PRODUCT_BROADCOM_5860	0x5860		/* 5860 */
 #define	PCI_PRODUCT_BROADCOM_5861	0x5861		/* 5861 */
 #define	PCI_PRODUCT_BROADCOM_5862	0x5862		/* 5862 */
+
+/* Brocade products */
+#define	PCI_PRODUCT_BROCADE_X2XFC	0x0013		/* 425/825/42B/82B */
+#define	PCI_PRODUCT_BROCADE_1XXXCNA	0x0014		/* 1010/1020/1007/1741 */
+#define	PCI_PRODUCT_BROCADE_X1XFC	0x0017		/* 415/815/41B/81B */
+#define	PCI_PRODUCT_BROCADE_804	0x0021		/* 804 */
+#define	PCI_PRODUCT_BROCADE_1860	0x0022		/* 1860 */
+#define	PCI_PRODUCT_BROCADE_4X0FC	0x0646		/* 410/420 */
 
 /* Brooktree products */
 #define	PCI_PRODUCT_BROOKTREE_BT848	0x0350		/* BT848 */

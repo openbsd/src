@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1692 2013/10/02 14:29:26 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1693 2013/10/22 09:25:59 dlg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6282,6 +6282,30 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5862,
 	    "5862",
+	},
+	{
+	    PCI_VENDOR_BROCADE, PCI_PRODUCT_BROCADE_X2XFC,
+	    "425/825/42B/82B",
+	},
+	{
+	    PCI_VENDOR_BROCADE, PCI_PRODUCT_BROCADE_1XXXCNA,
+	    "1010/1020/1007/1741",
+	},
+	{
+	    PCI_VENDOR_BROCADE, PCI_PRODUCT_BROCADE_X1XFC,
+	    "415/815/41B/81B",
+	},
+	{
+	    PCI_VENDOR_BROCADE, PCI_PRODUCT_BROCADE_804,
+	    "804",
+	},
+	{
+	    PCI_VENDOR_BROCADE, PCI_PRODUCT_BROCADE_1860,
+	    "1860",
+	},
+	{
+	    PCI_VENDOR_BROCADE, PCI_PRODUCT_BROCADE_4X0FC,
+	    "410/420",
 	},
 	{
 	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT848,
@@ -23514,6 +23538,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_EUMITCOM,
 	    "Eumitcom",
+	},
+	{
+	    PCI_VENDOR_BROCADE,
+	    "Brocade",
 	},
 	{
 	    PCI_VENDOR_NETSEC,
