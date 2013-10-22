@@ -1,4 +1,4 @@
-.\" $OpenBSD: arc4random.3,v 1.31 2013/10/22 06:40:36 deraadt Exp $
+.\" $OpenBSD: arc4random.3,v 1.32 2013/10/22 06:51:41 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -93,7 +93,6 @@ as it avoids "modulo bias" when the upper bound is not a power of two.
 In the worst case, this function may consume multiple iterations
 to ensure uniformity; see the source code to understand the problem
 and solution.
-.Pp
 .Sh RETURN VALUES
 These functions are always successful, and no return value is
 reserved to indicate an error.
@@ -102,14 +101,13 @@ reserved to indicate an error.
 .Xr rand48 3 ,
 .Xr random 3
 .Sh HISTORY
-.Pp
 These functions first appeared in
 .Ox 2.1 .
 .Pp
 The original version of this random number generator used the
 RC4 (also known as ARC4) algorithm.
 In
-.Ox 5.5 ,
+.Ox 5.5
 it was replaced with the ChaCha20 cipher, and it may be replaced
 again in the future as cryptographic techniques advance.
 A good mnemonic is
