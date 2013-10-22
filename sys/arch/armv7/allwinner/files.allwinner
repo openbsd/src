@@ -1,0 +1,50 @@
+#	$OpenBSD: files.allwinner,v 1.1 2013/10/22 13:22:20 jasper Exp $
+
+define	allwinner {}
+device	allwinner: allwinner
+attach	allwinner at mainbus
+file	arch/armv7/allwinner/allwinner_machdep.c	allwinner
+file	arch/armv7/allwinner/allwinner.c	allwinner
+file	arch/armv7/allwinner/awa1x.c		allwinner
+file	arch/armv7/allwinner/awa20.c		allwinner
+
+device	awccmu
+attach	awccmu at allwinner
+file	arch/armv7/allwinner/awccmu.c		awccmu
+
+device	awpio {}: gpiobus
+attach	awpio at allwinner
+file	arch/armv7/allwinner/awpio.c		awpio
+
+device	a1xintc
+attach	a1xintc at allwinner
+file	arch/armv7/allwinner/a1xintc.c		a1xintc
+
+device	awtimer
+attach	awtimer at allwinner
+file	arch/armv7/allwinner/awtimer.c		awtimer
+
+device	awdog
+attach	awdog at allwinner
+file	arch/armv7/allwinner/awdog.c		awdog
+
+device	awrtc
+attach	awrtc at allwinner
+file	arch/armv7/allwinner/awrtc.c		awrtc
+
+attach	ahci at allwinner with awahci
+file	arch/armv7/allwinner/awahci.c		awahci
+
+#attach ohci at allwinner with awohci
+#file	arch/armv7/allwinner/awohci.c		awohci
+
+attach	ehci at allwinner with awehci
+file	arch/armv7/allwinner/awehci.c		awehci
+
+device	awuart
+attach	awuart at allwinner
+file	arch/armv7/allwinner/awuart.c		awuart
+
+device	awe: ether, ifnet, mii, ifmedia
+attach	awe at allwinner
+file	arch/armv7/allwinner/awe.c		awe
