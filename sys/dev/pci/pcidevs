@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1692 2013/10/02 14:29:26 jsg Exp $
+$OpenBSD: pcidevs,v 1.1693 2013/10/22 09:25:59 dlg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -277,6 +277,7 @@ vendor	QUICKNET	0x15e2	Quicknet Technologies
 vendor	NDC		0x15e8	National Datacomm
 vendor	PDC		0x15e9	Pacific Data
 vendor	EUMITCOM	0x1638	Eumitcom
+vendor	BROCADE		0x1657	Brocade
 vendor	NETSEC		0x1660	NetSec
 vendor	ZYDAS		0x167b	ZyDAS
 vendor	SAMSUNG		0x167d	Samsung
@@ -2022,6 +2023,14 @@ product BROADCOM 5825		0x5825	5825
 product BROADCOM 5860		0x5860	5860
 product BROADCOM 5861		0x5861	5861
 product BROADCOM 5862		0x5862	5862
+
+/* Brocade products */
+product BROCADE X2XFC		0x0013	425/825/42B/82B
+product BROCADE 1XXXCNA		0x0014	1010/1020/1007/1741
+product BROCADE X1XFC		0x0017	415/815/41B/81B
+product BROCADE 804		0x0021	804
+product BROCADE 1860		0x0022	1860
+product BROCADE 4X0FC		0x0646  410/420
 
 /* Brooktree products */
 product BROOKTREE BT848		0x0350	BT848
