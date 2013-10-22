@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.88 2013/10/22 07:41:23 florian Exp $	*/
+/*	$OpenBSD: file.c,v 1.89 2013/10/22 09:54:16 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -674,10 +674,9 @@ writeout(FILE ** ffp, struct buffer *bp, char *fn)
 
 	if (stat(fn, &statbuf) == -1 && errno == ENOENT) {
 		errno = 0;
+		(void)xdirname(dp, fn, sizeof(dp));
+		(void)strlcat(dp, "/", sizeof(dp));
 		if (access(dp, W_OK) && errno == EACCES) {
-			(void)xdirname(dp, fn, sizeof(dp));
-			(void)strlcat(dp, "/", sizeof(dp));
-
 			ewprintf("Directory %s write-protected", dp);
 			return (FIOERR);
 		} else if (errno == ENOENT) {
