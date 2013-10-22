@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.9 2013/09/03 16:48:26 patrick Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.10 2013/10/22 15:18:06 patrick Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -3539,6 +3539,7 @@ pmap_pte_init_armv7(void)
 	__asm __volatile("mcr p15, 2, %0, c0, c0, 0" :: "r" (0) );
 	__asm __volatile("mrc p15, 1, %0, c0, c0, 0" : "=r" (cachereg) );
 	if ((cachereg & 0x80000000) == 0) {
+#if 0
 		/*
 		 * pmap_pte_init_generic() has defaulted to write-through
 		 * settings for pte pages, but the cache does not support
@@ -3548,6 +3549,11 @@ pmap_pte_init_armv7(void)
 		pte_l1_s_cache_mode_pt = L1_S_B|L1_S_C;
 		pte_l2_l_cache_mode_pt = L2_B|L2_C;
 		pte_l2_s_cache_mode_pt = L2_B|L2_C;
+#endif
+		/* XXX: Don't cache PTEs, until write-back is fixed. */
+		pte_l1_s_cache_mode_pt = L1_S_V7_TEX(1);
+		pte_l2_l_cache_mode_pt = L2_V7_L_TEX(1);
+		pte_l2_s_cache_mode_pt = L2_V7_S_TEX(1);
 	}
 }
 
