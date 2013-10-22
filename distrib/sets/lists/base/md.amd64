@@ -113,7 +113,7 @@
 ./usr/lib/libkafs.so.20.0
 ./usr/lib/libkdc.so.1.0
 ./usr/lib/libkrb5.so.20.0
-./usr/lib/libkvm.so.14.0
+./usr/lib/libkvm.so.15.0
 ./usr/lib/libm.so.9.0
 ./usr/lib/libmenu.so.6.0
 ./usr/lib/libmenuw.so.6.0
