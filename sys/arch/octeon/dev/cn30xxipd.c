@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxipd.c,v 1.2 2012/12/05 23:20:14 deraadt Exp $	*/
+/*	$OpenBSD: cn30xxipd.c,v 1.3 2013/10/22 14:06:08 bcallah Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -312,7 +312,7 @@ cn30xxipd_int_summary(struct cn30xxipd_softc *sc)
 int
 cn30xxipd_intr_drop(void *arg)
 {
-	octeon_write_csr(CIU_INT0_SUM0, CIU_INTX_SUM0_IPD_DRP);
+	octeon_xkphys_write_8(CIU_INT0_SUM0, CIU_INTX_SUM0_IPD_DRP);
 	cn30xxipd_intr_drop_evcnt.ev_count++;
 	return (1);
 }

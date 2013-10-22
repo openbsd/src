@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.7 2013/09/19 00:15:59 jmatthew Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.8 2013/10/22 14:06:08 bcallah Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1431,7 +1431,7 @@ cn30xxgmx_intr_rml_gmx1(void)
 int
 cn30xxgmx_intr_drop(void *arg)
 {
-	octeon_write_csr(CIU_INT0_SUM0, CIU_INTX_SUM0_GMX_DRP);
+	octeon_xkphys_write_8(CIU_INT0_SUM0, CIU_INTX_SUM0_GMX_DRP);
 	cn30xxgmx_intr_drop_evcnt.ev_count++;
 	return (1);
 }
