@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.17 2013/09/12 11:54:04 rapha Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.18 2013/10/22 16:49:27 syl Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -42,6 +42,14 @@ int	sdmmc_mem_mmc_switch(struct sdmmc_function *, uint8_t, uint8_t, uint8_t);
 
 int	sdmmc_mem_sd_init(struct sdmmc_softc *, struct sdmmc_function *);
 int	sdmmc_mem_mmc_init(struct sdmmc_softc *, struct sdmmc_function *);
+int	sdmmc_mem_single_read_block(struct sdmmc_function *, int, u_char *,
+	size_t);
+int	sdmmc_mem_read_block_subr(struct sdmmc_function *, int, u_char *,
+	size_t);
+int	sdmmc_mem_single_write_block(struct sdmmc_function *, int, u_char *,
+	size_t);
+int	sdmmc_mem_write_block_subr(struct sdmmc_function *, int, u_char *,
+	size_t);
 
 #ifdef SDMMC_DEBUG
 #define DPRINTF(s)	printf s
@@ -551,14 +559,13 @@ sdmmc_mem_set_blocklen(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 }
 
 int
-sdmmc_mem_read_block(struct sdmmc_function *sf, int blkno, u_char *data,
+sdmmc_mem_read_block_subr(struct sdmmc_function *sf, int blkno, u_char *data,
     size_t datalen)
 {
 	struct sdmmc_softc *sc = sf->sc;
 	struct sdmmc_command cmd;
 	int error;
 
-	rw_enter_write(&sc->sc_lock);
 
 	if ((error = sdmmc_select_card(sc, sf)) != 0)
 		goto err;
@@ -602,19 +609,52 @@ sdmmc_mem_read_block(struct sdmmc_function *sf, int blkno, u_char *data,
 	} while (!ISSET(MMC_R1(cmd.c_resp), MMC_R1_READY_FOR_DATA));
 
 err:
-	rw_exit(&sc->sc_lock);
-	return error;
+	return (error);
 }
 
 int
-sdmmc_mem_write_block(struct sdmmc_function *sf, int blkno, u_char *data,
+sdmmc_mem_single_read_block(struct sdmmc_function *sf, int blkno, u_char *data,
+    size_t datalen)
+{
+	int error;
+	int i;
+
+	for (i = 0; i < datalen / sf->csd.sector_size; i++) {
+		error = sdmmc_mem_read_block_subr(sf, blkno + i, data + i *
+		    sf->csd.sector_size, sf->csd.sector_size);
+		if (error)
+			break;
+	}
+
+	return (error);
+}
+
+int
+sdmmc_mem_read_block(struct sdmmc_function *sf, int blkno, u_char *data,
+    size_t datalen)
+{
+	struct sdmmc_softc *sc = sf->sc;
+	int error;
+
+	rw_enter_write(&sc->sc_lock);
+
+	if (ISSET(sc->sc_caps, SMC_CAPS_SINGLE_ONLY)) {
+		error = sdmmc_mem_single_read_block(sf, blkno, data, datalen);
+	} else {
+		error = sdmmc_mem_read_block_subr(sf, blkno, data, datalen);
+	}
+
+	rw_exit(&sc->sc_lock);
+	return (error);
+}
+
+int
+sdmmc_mem_write_block_subr(struct sdmmc_function *sf, int blkno, u_char *data,
     size_t datalen)
 {
 	struct sdmmc_softc *sc = sf->sc;
 	struct sdmmc_command cmd;
 	int error;
-
-	rw_enter_write(&sc->sc_lock);
 
 	if ((error = sdmmc_select_card(sc, sf)) != 0)
 		goto err;
@@ -657,6 +697,41 @@ sdmmc_mem_write_block(struct sdmmc_function *sf, int blkno, u_char *data,
 	} while (!ISSET(MMC_R1(cmd.c_resp), MMC_R1_READY_FOR_DATA));
 
 err:
+	return (error);
+}
+
+int
+sdmmc_mem_single_write_block(struct sdmmc_function *sf, int blkno, u_char *data,
+    size_t datalen)
+{
+	int error;
+	int i;
+
+	for (i = 0; i < datalen / sf->csd.sector_size; i++) {
+		error = sdmmc_mem_write_block_subr(sf, blkno + i, data + i *
+		    sf->csd.sector_size, sf->csd.sector_size);
+		if (error)
+			break;
+	}
+
+	return (error);
+}
+
+int
+sdmmc_mem_write_block(struct sdmmc_function *sf, int blkno, u_char *data,
+    size_t datalen)
+{
+	struct sdmmc_softc *sc = sf->sc;
+	int error;
+
+	rw_enter_write(&sc->sc_lock);
+
+	if (ISSET(sc->sc_caps, SMC_CAPS_SINGLE_ONLY)) {
+		error = sdmmc_mem_single_write_block(sf, blkno, data, datalen);
+	} else {
+		error = sdmmc_mem_write_block_subr(sf, blkno, data, datalen);
+	}
+
 	rw_exit(&sc->sc_lock);
-	return error;
+	return (error);
 }
