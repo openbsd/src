@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.21 2013/10/21 12:37:42 deraadt Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.22 2013/10/22 15:08:55 naddy Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -246,10 +246,7 @@ udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6,
 		ip6->ip6_src	= *laddr;
 		ip6->ip6_dst	= *faddr;
 
-		if ((udp6->uh_sum = in6_cksum(m, IPPROTO_UDP,
-		    sizeof(struct ip6_hdr), plen)) == 0) {
-			udp6->uh_sum = 0xffff;
-		}
+		m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
 
 		flags = 0;
 		if (in6p->in6p_flags & IN6P_MINMTU)
