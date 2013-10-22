@@ -1,9 +1,9 @@
-dnl	$OpenBSD: prep,v 1.1 2013/09/04 20:00:26 patrick Exp $
+dnl	$OpenBSD: prep,v 1.2 2013/10/22 16:24:11 jasper Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
 At the moment the only way to boot the OpenBSD install is to copy the
-miniroot for your board "miniroot-{am335x,beagle,panda}-{:--:}OSrev.fs"
+miniroot for your board "miniroot-{am335x,beagle,imx,panda}-{:--:}OSrev.fs"
 image to a sdcard.
 
 As a result you need another machine to plug the sdcard in. Any
