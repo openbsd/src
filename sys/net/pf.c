@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.849 2013/10/21 09:39:23 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.850 2013/10/22 15:35:57 lteo Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5325,8 +5325,10 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 		}
 		}
 	}
-	if (copyback)
+	if (copyback) {
 		pf_cksum(pd, pd->m);
+		m_copyback(pd->m, pd->off, pd->hdrlen, pd->hdr.any, M_NOWAIT);
+	}
 
 	return (PF_PASS);
 }
