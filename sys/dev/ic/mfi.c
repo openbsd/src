@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.147 2013/10/09 09:40:01 jmatthew Exp $ */
+/* $OpenBSD: mfi.c,v 1.148 2013/10/23 13:05:38 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1628,6 +1628,11 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 		/* nothing yet */
 		break;
 	}
+
+	if (sc->sc_ld_details[i].mld_cfg.mlc_prop.mlp_cur_cache_policy & 0x01)
+		bv->bv_cache = BIOC_CVWRITEBACK;
+	else
+		bv->bv_cache = BIOC_CVWRITETHROUGH;
 
 	/*
 	 * The RAID levels are determined per the SNIA DDF spec, this is only

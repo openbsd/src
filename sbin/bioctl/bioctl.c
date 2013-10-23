@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.112 2012/09/10 11:28:47 jsing Exp $       */
+/* $OpenBSD: bioctl.c,v 1.113 2013/10/23 13:05:38 kettenis Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -334,7 +334,8 @@ bio_status(struct bio_status *bs)
 void
 bio_inq(char *name)
 {
-	char 			*status, size[64], scsiname[16], volname[32];
+	char 			*status, *cache;
+	char			size[64], scsiname[16], volname[32];
 	char			percent[10], seconds[20];
 	int			i, d, volheader, hotspare, unused;
 	char			encname[16], serial[32];
@@ -409,6 +410,17 @@ bio_inq(char *name)
 		default:
 			status = BIOC_SVINVALID_S;
 		}
+		switch (bv.bv_cache) {
+		case BIOC_CVWRITEBACK:
+			cache = BIOC_CVWRITEBACK_S;
+			break;
+		case BIOC_CVWRITETHROUGH:
+			cache = BIOC_CVWRITETHROUGH_S;
+			break;
+		case BIOC_CVUNKNOWN:
+		default:
+			cache = BIOC_CVUNKNOWN_S;
+		}
 
 		snprintf(volname, sizeof volname, "%s %u",
 		    bi.bi_dev, bv.bv_volid);
@@ -437,9 +449,9 @@ bio_inq(char *name)
 				    percent, seconds);
 				break;
 			default:
-				printf("%11s %-10s %14s %-7s RAID%u%s%s\n",
+				printf("%11s %-10s %14s %-7s RAID%u%s%s %s\n",
 				    volname, status, size, bv.bv_dev,
-				    bv.bv_level, percent, seconds);
+				    bv.bv_level, percent, seconds, cache);
 				break;
 			}
 			
