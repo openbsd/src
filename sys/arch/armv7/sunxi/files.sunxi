@@ -1,0 +1,50 @@
+#	$OpenBSD: files.sunxi,v 1.1 2013/10/23 17:08:47 jasper Exp $
+
+define	sunxi {}
+device	sunxi: sunxi
+attach	sunxi at mainbus
+file	arch/armv7/sunxi/sunxi_machdep.c	sunxi
+file	arch/armv7/sunxi/sunxi.c	sunxi
+file	arch/armv7/sunxi/sun4i.c		sunxi
+file	arch/armv7/sunxi/sun7i.c		sunxi
+
+device	sxiccmu
+attach	sxiccmu at sunxi
+file	arch/armv7/sunxi/sxiccmu.c		sxiccmu
+
+device	sxipio {}: gpiobus
+attach	sxipio at sunxi
+file	arch/armv7/sunxi/sxipio.c		sxipio
+
+device	a1xintc
+attach	a1xintc at sunxi
+file	arch/armv7/sunxi/a1xintc.c		a1xintc
+
+device	sxitimer
+attach	sxitimer at sunxi
+file	arch/armv7/sunxi/sxitimer.c		sxitimer
+
+device	sxidog
+attach	sxidog at sunxi
+file	arch/armv7/sunxi/sxidog.c		sxidog
+
+device	sxirtc
+attach	sxirtc at sunxi
+file	arch/armv7/sunxi/sxirtc.c		sxirtc
+
+attach	ahci at sunxi with sxiahci
+file	arch/armv7/sunxi/sxiahci.c		sxiahci
+
+#attach ohci at sunxi with sxiohci
+#file	arch/armv7/sunxi/sxiohci.c		sxiohci
+
+attach	ehci at sunxi with sxiehci
+file	arch/armv7/sunxi/sxiehci.c		sxiehci
+
+device	sxiuart
+attach	sxiuart at sunxi
+file	arch/armv7/sunxi/sxiuart.c		sxiuart
+
+device	sxie: ether, ifnet, mii, ifmedia
+attach	sxie at sunxi
+file	arch/armv7/sunxi/sxie.c			sxie

@@ -1,4 +1,4 @@
-/*	$OpenBSD: allwinner_machdep.c,v 1.1 2013/10/22 13:22:18 jasper Exp $	*/
+/*	$OpenBSD: sunxi_machdep.c,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -136,7 +136,7 @@
 #include <arm/armv7/armv7var.h>
 
 #include <machine/machine_reg.h>
-#include <armv7/allwinner/allwinnervar.h>
+#include <armv7/sunxi/sunxivar.h>
 
 #include "wsdisplay.h"
 
@@ -211,8 +211,8 @@ uint32_t	board_id;
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 
 extern struct user *proc0paddr;
-extern void awdog_reset(void);
-extern int awuartcnattach(bus_space_tag_t, bus_addr_t, int, long, tcflag_t);
+extern void sxidog_reset(void);
+extern int sxiuartcnattach(bus_space_tag_t, bus_addr_t, int, long, tcflag_t);
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
@@ -220,7 +220,7 @@ extern int awuartcnattach(bus_space_tag_t, bus_addr_t, int, long, tcflag_t);
 int   safepri = 0;
 
 /* Prototypes */
-void	allwinner_powerdown(void);
+void	sunxi_powerdown(void);
 
 char	bootargs[MAX_BOOT_STRING];
 void	process_kernel_args(char *);
@@ -243,7 +243,7 @@ int comcnspeed = CONSPEED;
 int comcnmode = CONMODE;
 
 void
-allwinner_powerdown(void)
+sunxi_powerdown(void)
 {
 	/* XXX */
 }
@@ -279,7 +279,7 @@ boot(int howto)
 		}
 		printf("rebooting...\n");
 		delay(500000);
-		awdog_reset();
+		sxidog_reset();
 		printf("reboot failed; spinning\n");
 		while(1);
 		/*NOTREACHED*/
@@ -315,7 +315,7 @@ boot(int howto)
 
 			printf("\nAttempting to power down...\n");
 			delay(500000);
-			allwinner_powerdown();
+			sunxi_powerdown();
 		}
 
 		printf("The operating system has halted.\n");
@@ -325,7 +325,7 @@ boot(int howto)
 
 	printf("rebooting...\n");
 	delay(500000);
-	awdog_reset();
+	sxidog_reset();
 	printf("reboot failed; spinning\n");
 	while(1);
 	/*NOTREACHED*/
@@ -880,18 +880,18 @@ consinit(void)
 	consinit_called = 1;
 
 	switch (board_id) {
-	case BOARD_ID_A10_CUBIE:
-	case BOARD_ID_A20_CUBIE:
+	case BOARD_ID_SUN4I_A10:
+	case BOARD_ID_SUN7I_A20:
 		consaddr = 0x01c28000;	/* UART0 */
 		consfreq = 24000000;
 		break;
 	default:
-		awuartcnattach(&armv7_a4x_bs_tag, consaddr, comcnspeed,
+		sxiuartcnattach(&armv7_a4x_bs_tag, consaddr, comcnspeed,
 		    consfreq, comcnmode);
 		panic("board type %x unknown", board_id);
 	}
 
-	awuartcnattach(&armv7_a4x_bs_tag, consaddr, comcnspeed, consfreq,
+	sxiuartcnattach(&armv7_a4x_bs_tag, consaddr, comcnspeed, consfreq,
 	    comcnmode);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: awccmu.c,v 1.1 2013/10/22 13:22:19 jasper Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -28,8 +28,8 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <armv7/allwinner/allwinnervar.h>
-#include <armv7/allwinner/awccmuvar.h>
+#include <armv7/sunxi/sunxivar.h>
+#include <armv7/sunxi/sxiccmuvar.h>
 
 #ifdef DEBUG_CCMU
 #define DPRINTF(x)	do { printf x; } while (0)
@@ -89,46 +89,46 @@
 #define	CCMU_USB1_RESET			(1 << 1)
 #define	CCMU_USB0_RESET			(1 << 0)
 
-struct awccmu_softc {
+struct sxiccmu_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 };
 
-void	awccmu_attach(struct device *, struct device *, void *);
-void	awccmu_enablemodule(int);
+void	sxiccmu_attach(struct device *, struct device *, void *);
+void	sxiccmu_enablemodule(int);
 
-struct cfattach	awccmu_ca = {
-	sizeof (struct awccmu_softc), NULL, awccmu_attach
+struct cfattach	sxiccmu_ca = {
+	sizeof (struct sxiccmu_softc), NULL, sxiccmu_attach
 };
 
-struct cfdriver awccmu_cd = {
-	NULL, "awccmu", DV_DULL
+struct cfdriver sxiccmu_cd = {
+	NULL, "sxiccmu", DV_DULL
 };
 
 void
-awccmu_attach(struct device *parent, struct device *self, void *args)
+sxiccmu_attach(struct device *parent, struct device *self, void *args)
 {
-	struct awccmu_softc *sc = (struct awccmu_softc *)self;
-	struct aw_attach_args *aw = args;
+	struct sxiccmu_softc *sc = (struct sxiccmu_softc *)self;
+	struct sxi_attach_args *sxi = args;
 
-	sc->sc_iot = aw->aw_iot;
+	sc->sc_iot = sxi->sxi_iot;
 
-	if (bus_space_map(sc->sc_iot, aw->aw_dev->mem[0].addr,
-	    aw->aw_dev->mem[0].size, 0, &sc->sc_ioh))
-		panic("awccmu_attach: bus_space_map failed!");
+	if (bus_space_map(sc->sc_iot, sxi->sxi_dev->mem[0].addr,
+	    sxi->sxi_dev->mem[0].size, 0, &sc->sc_ioh))
+		panic("sxiccmu_attach: bus_space_map failed!");
 
 	printf("\n");
 }
 
 /* XXX spl? */
 void
-awccmu_enablemodule(int mod)
+sxiccmu_enablemodule(int mod)
 {
-	struct awccmu_softc *sc = awccmu_cd.cd_devs[0];
+	struct sxiccmu_softc *sc = sxiccmu_cd.cd_devs[0];
 	uint32_t reg;
 
-	DPRINTF(("\nawccmu_enablemodule: mod %d\n", mod));
+	DPRINTF(("\nsxiccmu_enablemodule: mod %d\n", mod));
 
 	switch (mod) {
 	case CCMU_EHCI0:
@@ -140,7 +140,7 @@ awccmu_enablemodule(int mod)
 		AWSET4(sc, CCMU_USB_CLK, CCMU_USB2_RESET | CCMU_USB_PHY);
 		break;
 	case CCMU_OHCI:
-		panic("awccmu_enablemodule: XXX OHCI!");
+		panic("sxiccmu_enablemodule: XXX OHCI!");
 		break;
 	case CCMU_AHCI:
 		reg = AWREAD4(sc, CCMU_PLL6_CFG);

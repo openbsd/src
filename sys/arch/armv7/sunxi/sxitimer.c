@@ -1,4 +1,4 @@
-/*	$OpenBSD: awtimer.c,v 1.1 2013/10/22 13:22:19 jasper Exp $	*/
+/*	$OpenBSD: sxitimer.c,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -32,9 +32,9 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <armv7/allwinner/allwinnervar.h>
-#include <armv7/allwinner/allwinnerreg.h>
-/* #include <armv7/allwinner/awpiovar.h> */
+#include <armv7/sunxi/sunxivar.h>
+#include <armv7/sunxi/sunxireg.h>
+/* #include <armv7/sunxi/sxipiovar.h> */
 
 #define	TIMER_IER 		0x00
 #define	TIMER_ISR 		0x04
@@ -82,33 +82,33 @@
 #define	STATTIMER		1
 #define	CNTRTIMER		2
 
-void	awtimer_attach(struct device *, struct device *, void *);
-int	awtimer_tickintr(void *);
-int	awtimer_statintr(void *);
-void	awtimer_cpu_initclocks(void);
-void	awtimer_setstatclockrate(int);
-uint64_t	awtimer_readcnt64(void);
-uint32_t	awtimer_readcnt32(void);
-void	awtimer_delay(u_int);
+void	sxitimer_attach(struct device *, struct device *, void *);
+int	sxitimer_tickintr(void *);
+int	sxitimer_statintr(void *);
+void	sxitimer_cpu_initclocks(void);
+void	sxitimer_setstatclockrate(int);
+uint64_t	sxitimer_readcnt64(void);
+uint32_t	sxitimer_readcnt32(void);
+void	sxitimer_delay(u_int);
 
-u_int awtimer_get_timecount(struct timecounter *);
+u_int sxitimer_get_timecount(struct timecounter *);
 
-static struct timecounter awtimer_timecounter = {
-	awtimer_get_timecount, NULL, 0xffffffff, 0, "awtimer", 0, NULL
+static struct timecounter sxitimer_timecounter = {
+	sxitimer_get_timecount, NULL, 0xffffffff, 0, "sxitimer", 0, NULL
 };
 
-bus_space_tag_t		awtimer_iot;
-bus_space_handle_t	awtimer_ioh;
-bus_space_handle_t	awtimer_cntr_ioh;
+bus_space_tag_t		sxitimer_iot;
+bus_space_handle_t	sxitimer_ioh;
+bus_space_handle_t	sxitimer_cntr_ioh;
 
-uint32_t awtimer_freq[] = {
+uint32_t sxitimer_freq[] = {
 	TIMER0_FREQUENCY,
 	TIMER1_FREQUENCY,
 	TIMER2_FREQUENCY,
 	0
 };
 
-uint32_t awtimer_irq[] = {
+uint32_t sxitimer_irq[] = {
 	TIMER0_IRQ,
 	TIMER1_IRQ,
 	TIMER2_IRQ,
@@ -124,72 +124,72 @@ bus_addr_t cntr64_ctrl = CNT64_CTRL;
 bus_addr_t cntr64_low = CNT64_LOW;
 bus_addr_t cntr64_high = CNT64_HIGH;
 
-struct awtimer_softc {
+struct sxitimer_softc {
 	struct device		sc_dev;
 };
 
-struct cfattach	awtimer_ca = {
-	sizeof (struct awtimer_softc), NULL, awtimer_attach
+struct cfattach	sxitimer_ca = {
+	sizeof (struct sxitimer_softc), NULL, sxitimer_attach
 };
 
-struct cfdriver awtimer_cd = {
-	NULL, "awtimer", DV_DULL
+struct cfdriver sxitimer_cd = {
+	NULL, "sxitimer", DV_DULL
 };
 
 void
-awtimer_attach(struct device *parent, struct device *self, void *args)
+sxitimer_attach(struct device *parent, struct device *self, void *args)
 {
-	struct aw_attach_args	*aw = args;
+	struct sxi_attach_args	*sxi = args;
 	uint32_t freq, ival, now, cr, v;
 	int unit = self->dv_unit;
 
 	if (unit != 0)
 		goto skip_init;
 
-	awtimer_iot = aw->aw_iot;
+	sxitimer_iot = sxi->sxi_iot;
 
-	if (bus_space_map(awtimer_iot, aw->aw_dev->mem[0].addr,
-	    aw->aw_dev->mem[0].size, 0, &awtimer_ioh))
-		panic("awtimer_attach: bus_space_map failed!");
+	if (bus_space_map(sxitimer_iot, sxi->sxi_dev->mem[0].addr,
+	    sxi->sxi_dev->mem[0].size, 0, &sxitimer_ioh))
+		panic("sxitimer_attach: bus_space_map failed!");
 
 
-	if (board_id == BOARD_ID_A20_CUBIE) {
-		if (bus_space_map(awtimer_iot, CPUCNTRS_ADDR, CPUCNTRS_SIZE,
-		    0, &awtimer_cntr_ioh))
-			panic("awtimer_attach: bus_space_map failed!");
+	if (board_id == BOARD_ID_SUN7I_A20) {
+		if (bus_space_map(sxitimer_iot, CPUCNTRS_ADDR, CPUCNTRS_SIZE,
+		    0, &sxitimer_cntr_ioh))
+			panic("sxitimer_attach: bus_space_map failed!");
 
 		cntr64_ctrl = OSC24M_CNT64_CTRL;
 		cntr64_low = OSC24M_CNT64_LOW;
 		cntr64_high = OSC24M_CNT64_HIGH;
 
-		v = bus_space_read_4(awtimer_iot, awtimer_cntr_ioh,
+		v = bus_space_read_4(sxitimer_iot, sxitimer_cntr_ioh,
 		    cntr64_ctrl);
-		bus_space_write_4(awtimer_iot, awtimer_cntr_ioh, cntr64_ctrl,
+		bus_space_write_4(sxitimer_iot, sxitimer_cntr_ioh, cntr64_ctrl,
 		    v | CNT64_SYNCH);
-		bus_space_write_4(awtimer_iot, awtimer_cntr_ioh, cntr64_ctrl,
+		bus_space_write_4(sxitimer_iot, sxitimer_cntr_ioh, cntr64_ctrl,
 		    v & ~CNT64_SYNCH);
 	} else
-		awtimer_cntr_ioh = awtimer_ioh;
+		sxitimer_cntr_ioh = sxitimer_ioh;
 
 	/* clear counter, loop until ready */
-	bus_space_write_4(awtimer_iot, awtimer_cntr_ioh, cntr64_ctrl,
+	bus_space_write_4(sxitimer_iot, sxitimer_cntr_ioh, cntr64_ctrl,
 	    CNT64_CLR_EN); /* XXX as a side-effect counter clk src=OSC24M */
-	while (bus_space_read_4(awtimer_iot, awtimer_cntr_ioh, cntr64_ctrl)
+	while (bus_space_read_4(sxitimer_iot, sxitimer_cntr_ioh, cntr64_ctrl)
 	    & CNT64_CLR_EN)
 		continue;
 
 	/* setup timers */
-	cr = bus_space_read_4(awtimer_iot, awtimer_ioh, LOSC_CTRL);
+	cr = bus_space_read_4(sxitimer_iot, sxitimer_ioh, LOSC_CTRL);
 	cr |= OSC32K_SRC_SEL; /* ext 32.768KHz OSC src */
-	bus_space_write_4(awtimer_iot, awtimer_ioh, LOSC_CTRL, cr);
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh, LOSC_CTRL, cr);
 
 skip_init:
 	/* timers are down-counters, from interval to 0 */
 	now = 0xffffffff; /* known big value */
-	freq = awtimer_freq[unit];
+	freq = sxitimer_freq[unit];
 
 	/* stop timer, and set clk src */
-	bus_space_write_4(awtimer_iot, awtimer_ioh,
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_CTRL(unit),
 	    freq == 24000000 ? TIMER_OSC24M : TIMER_LSOSC);
 
@@ -207,7 +207,7 @@ skip_init:
 		/* 100/1000 or 128/1024 ? */
 		stathz = 128;
 		profhz = 1024;
-		awtimer_setstatclockrate(stathz);
+		sxitimer_setstatclockrate(stathz);
 
 		ival = stat_tpi = freq / stathz;
 		stat_nextevt = now - ival;
@@ -217,19 +217,19 @@ skip_init:
 	case CNTRTIMER:
 		ival = now;
 
-		awtimer_timecounter.tc_frequency = freq;
-		tc_init(&awtimer_timecounter);
-		arm_clock_register(awtimer_cpu_initclocks, awtimer_delay,
-		    awtimer_setstatclockrate, NULL);
+		sxitimer_timecounter.tc_frequency = freq;
+		tc_init(&sxitimer_timecounter);
+		arm_clock_register(sxitimer_cpu_initclocks, sxitimer_delay,
+		    sxitimer_setstatclockrate, NULL);
 
 		printf(": cntrtimer @ %dKHz", freq / 1000);
 		break;
 	default:
-		panic("awtimer_attach: unit = %d", unit);
+		panic("sxitimer_attach: unit = %d", unit);
 		break;
 	}
 
-	bus_space_write_4(awtimer_iot, awtimer_ioh,
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_INTV(unit), ival);
 
 	printf("\n");
@@ -242,36 +242,36 @@ skip_init:
  */
 
 void
-awtimer_cpu_initclocks(void)
+sxitimer_cpu_initclocks(void)
 {
 	uint32_t isr, ier;
 
 	/* establish interrupts */
-	arm_intr_establish(awtimer_irq[TICKTIMER], IPL_CLOCK,
-	    awtimer_tickintr, NULL, "tick");
-	arm_intr_establish(awtimer_irq[STATTIMER], IPL_STATCLOCK,
-	    awtimer_statintr, NULL, "stattick");
+	arm_intr_establish(sxitimer_irq[TICKTIMER], IPL_CLOCK,
+	    sxitimer_tickintr, NULL, "tick");
+	arm_intr_establish(sxitimer_irq[STATTIMER], IPL_STATCLOCK,
+	    sxitimer_statintr, NULL, "stattick");
 
 	/* clear timer interrupt pending bits */
-	isr = bus_space_read_4(awtimer_iot, awtimer_ioh, TIMER_ISR);
+	isr = bus_space_read_4(sxitimer_iot, sxitimer_ioh, TIMER_ISR);
 	isr |= TIMER_IRQ(STATTIMER) | TIMER_IRQ(TICKTIMER);
-	bus_space_write_4(awtimer_iot, awtimer_ioh, TIMER_ISR, isr);
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh, TIMER_ISR, isr);
 
 	/* enable timer IRQs */
-	ier = bus_space_read_4(awtimer_iot, awtimer_ioh, TIMER_IER);
+	ier = bus_space_read_4(sxitimer_iot, sxitimer_ioh, TIMER_IER);
 	ier |= TIMER_IRQ(STATTIMER) | TIMER_IRQ(TICKTIMER);
-	bus_space_write_4(awtimer_iot, awtimer_ioh, TIMER_IER, ier);
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh, TIMER_IER, ier);
 
 	/* enable timers */
-	bus_space_write_4(awtimer_iot, awtimer_ioh,
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_CTRL(CNTRTIMER),
 	    TIMER_ENABLE | TIMER_RELOAD | TIMER_CONTINOUS);
 
-	bus_space_write_4(awtimer_iot, awtimer_ioh,
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_CTRL(STATTIMER),
 	    TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
 
-	bus_space_write_4(awtimer_iot, awtimer_ioh,
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_CTRL(TICKTIMER),
 	    TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
 }
@@ -294,7 +294,7 @@ awtimer_cpu_initclocks(void)
  */
 /* XXX update above comment */
 int
-awtimer_tickintr(void *frame)
+sxitimer_tickintr(void *frame)
 {
 	uint32_t now, nextevent;
 	int rc = 0;
@@ -302,10 +302,10 @@ awtimer_tickintr(void *frame)
 	splassert(IPL_CLOCK);	
 
 	/* clear timer pending interrupt bit */
-	bus_space_write_4(awtimer_iot, awtimer_ioh,
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_ISR, TIMER_IRQ(TICKTIMER));
 
-	now = awtimer_readcnt32();
+	now = sxitimer_readcnt32();
 
 	while ((int32_t)(now - tick_nextevt) < 0) {
 		tick_nextevt -= tick_tpi;
@@ -334,10 +334,10 @@ awtimer_tickintr(void *frame)
 		tick_nextevt = now;
 	}
 
-	bus_space_write_4(awtimer_iot, awtimer_ioh,
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_INTV(TICKTIMER), nextevent);
 
-	bus_space_write_4(awtimer_iot, awtimer_ioh,
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_CTRL(TICKTIMER),
 	    TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
 
@@ -345,7 +345,7 @@ awtimer_tickintr(void *frame)
 }
 
 int
-awtimer_statintr(void *frame)
+sxitimer_statintr(void *frame)
 {
 	uint32_t now, nextevent, r;
 	int rc = 0;
@@ -353,10 +353,10 @@ awtimer_statintr(void *frame)
 	splassert(IPL_STATCLOCK);	
 
 	/* clear timer pending interrupt bit */
-	bus_space_write_4(awtimer_iot, awtimer_ioh,
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_ISR, TIMER_IRQ(STATTIMER));
 
-	now = awtimer_readcnt32();
+	now = sxitimer_readcnt32();
 	while ((int32_t)(now - stat_nextevt) < 0) {
 		do {
 			r = random() & (statvar -1);
@@ -382,10 +382,10 @@ awtimer_statintr(void *frame)
 		stat_nextevt = now;
 	}
 
-	bus_space_write_4(awtimer_iot, awtimer_ioh,
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_INTV(STATTIMER), nextevent);
 
-	bus_space_write_4(awtimer_iot, awtimer_ioh,
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_CTRL(STATTIMER),
 	    TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
 
@@ -393,14 +393,14 @@ awtimer_statintr(void *frame)
 }
 
 uint64_t
-awtimer_readcnt64(void)
+sxitimer_readcnt64(void)
 {
 	uint32_t low, high;
 
 	/* latch counter, loop until ready */
-	bus_space_write_4(awtimer_iot, awtimer_cntr_ioh,
+	bus_space_write_4(sxitimer_iot, sxitimer_cntr_ioh,
 	    cntr64_ctrl, CNT64_RL_EN);
-	while (bus_space_read_4(awtimer_iot, awtimer_cntr_ioh, cntr64_ctrl)
+	while (bus_space_read_4(sxitimer_iot, sxitimer_cntr_ioh, cntr64_ctrl)
 	    & CNT64_RL_EN)
 		continue;
 
@@ -409,38 +409,38 @@ awtimer_readcnt64(void)
 	 * iirc. A20 manual mentions that low should be read first.
 	 */
 	/* XXX check above */
-	low = bus_space_read_4(awtimer_iot, awtimer_cntr_ioh, cntr64_low);
-	high = bus_space_read_4(awtimer_iot, awtimer_cntr_ioh, cntr64_high);
+	low = bus_space_read_4(sxitimer_iot, sxitimer_cntr_ioh, cntr64_low);
+	high = bus_space_read_4(sxitimer_iot, sxitimer_cntr_ioh, cntr64_high);
 	return (uint64_t)high << 32 | low;
 }
 
 uint32_t
-awtimer_readcnt32(void)
+sxitimer_readcnt32(void)
 {
-	return bus_space_read_4(awtimer_iot, awtimer_ioh,
+	return bus_space_read_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_CURR(CNTRTIMER));
 }
 
 void
-awtimer_delay(u_int usecs)
+sxitimer_delay(u_int usecs)
 {
 	uint64_t oclock, timeout;
 
-	oclock = awtimer_readcnt64();
+	oclock = sxitimer_readcnt64();
 	timeout = oclock + (COUNTER_FREQUENCY / 1000000) * usecs;
 
 	while (oclock < timeout)
-		oclock = awtimer_readcnt64();
+		oclock = sxitimer_readcnt64();
 }
 
 void
-awtimer_setstatclockrate(int newhz)
+sxitimer_setstatclockrate(int newhz)
 {
 	int minint, statint, s;
 	
 	s = splstatclock();
 
-	statint = awtimer_freq[STATTIMER] / newhz;
+	statint = sxitimer_freq[STATTIMER] / newhz;
 	/* calculate largest 2^n which is smaller than just over half statint */
 	statvar = 0x40000000; /* really big power of two */
 	minint = statint / 2 + 100;
@@ -458,7 +458,7 @@ awtimer_setstatclockrate(int newhz)
 }
 
 u_int
-awtimer_get_timecount(struct timecounter *tc)
+sxitimer_get_timecount(struct timecounter *tc)
 {
-	return (u_int)UINT_MAX - awtimer_readcnt32();
+	return (u_int)UINT_MAX - sxitimer_readcnt32();
 }

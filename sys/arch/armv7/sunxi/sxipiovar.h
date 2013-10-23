@@ -1,4 +1,4 @@
-/*	$OpenBSD: awpiovar.h,v 1.1 2013/10/22 13:22:19 jasper Exp $	*/
+/*	$OpenBSD: sxipiovar.h,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
 /*
  * Copyright (c) 2013 Artturi Alm
  *
@@ -33,9 +33,9 @@
 #define AWPIO_SATA_PWR		40
 #define	AWPIO_EMAC_NPINS	18	/* PORTA 0-17 */
 
-int awpio_getcfg(int);
-void awpio_setcfg(int, int);
-int awpio_getpin(int);
-void awpio_setpin(int);
-void awpio_clrpin(int);
-int awpio_togglepin(int);
+int sxipio_getcfg(int);
+void sxipio_setcfg(int, int);
+int sxipio_getpin(int);
+void sxipio_setpin(int);
+void sxipio_clrpin(int);
+int sxipio_togglepin(int);

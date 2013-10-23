@@ -1,4 +1,4 @@
-/*	$OpenBSD: awccmuvar.h,v 1.1 2013/10/22 13:22:19 jasper Exp $	*/
+/*	$OpenBSD: sxiccmuvar.h,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-void awccmu_enablemodule(int);
+void sxiccmu_enablemodule(int);
 
 enum CCMU_MODULES {
 	CCMU_EHCI0,

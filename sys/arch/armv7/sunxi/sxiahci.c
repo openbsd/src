@@ -27,10 +27,10 @@
 #include <dev/ic/ahcivar.h>
 #include <dev/ic/ahcireg.h>
 
-#include <armv7/allwinner/allwinnervar.h>
-#include <armv7/allwinner/allwinnerreg.h>
-#include <armv7/allwinner/awccmuvar.h>
-#include <armv7/allwinner/awpiovar.h>
+#include <armv7/sunxi/sunxivar.h>
+#include <armv7/sunxi/sunxireg.h>
+#include <armv7/sunxi/sxiccmuvar.h>
+#include <armv7/sunxi/sxipiovar.h>
 
 #define	AWAHCI_CAP	0x0000
 #define	AWAHCI_GHC	0x0004
@@ -43,52 +43,52 @@
 #define	AWAHCI_TIMEOUT	0x100000
 #define AWAHCI_PWRPIN	40
 
-void	awahci_attach(struct device *, struct device *, void *);
-int	awahci_detach(struct device *, int);
-int	awahci_activate(struct device *, int);
+void	sxiahci_attach(struct device *, struct device *, void *);
+int	sxiahci_detach(struct device *, int);
+int	sxiahci_activate(struct device *, int);
 
 extern int ahci_intr(void *);
 extern u_int32_t ahci_read(struct ahci_softc *, bus_size_t);
 extern void ahci_write(struct ahci_softc *, bus_size_t, u_int32_t);
 
-struct awahci_softc {
+struct sxiahci_softc {
 	struct ahci_softc	sc;
 
 };
 
-struct cfattach awahci_ca = {
-	sizeof(struct awahci_softc),
+struct cfattach sxiahci_ca = {
+	sizeof(struct sxiahci_softc),
 	NULL,
-	awahci_attach,
-	awahci_detach,
-	awahci_activate
+	sxiahci_attach,
+	sxiahci_detach,
+	sxiahci_activate
 };
 
-struct cfdriver awahci_cd = {
+struct cfdriver sxiahci_cd = {
 	NULL, "ahci", DV_DULL
 };
 
 void
-awahci_attach(struct device *parent, struct device *self, void *args)
+sxiahci_attach(struct device *parent, struct device *self, void *args)
 {
-	struct aw_attach_args *aw = args;
-	struct awahci_softc *awsc = (struct awahci_softc *)self;
-	struct ahci_softc *sc = &awsc->sc;
+	struct sxi_attach_args *sxi = args;
+	struct sxiahci_softc *sxisc = (struct sxiahci_softc *)self;
+	struct ahci_softc *sc = &sxisc->sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	uint32_t timo;
 
-	sc->sc_iot = iot = aw->aw_iot;
-	sc->sc_ios = aw->aw_dev->mem[0].size;
-	sc->sc_dmat = aw->aw_dmat;
+	sc->sc_iot = iot = sxi->sxi_iot;
+	sc->sc_ios = sxi->sxi_dev->mem[0].size;
+	sc->sc_dmat = sxi->sxi_dmat;
 
-	if (bus_space_map(sc->sc_iot, aw->aw_dev->mem[0].addr,
-	    aw->aw_dev->mem[0].size, 0, &sc->sc_ioh))
-		panic("awahci_attach: bus_space_map failed!");
+	if (bus_space_map(sc->sc_iot, sxi->sxi_dev->mem[0].addr,
+	    sxi->sxi_dev->mem[0].size, 0, &sc->sc_ioh))
+		panic("sxiahci_attach: bus_space_map failed!");
 	ioh = sc->sc_ioh;
 
 	/* enable clock */
-	awccmu_enablemodule(CCMU_AHCI);
+	sxiccmu_enablemodule(CCMU_AHCI);
 	delay(5000);
 
 	/* XXX setup magix */
@@ -127,7 +127,7 @@ awahci_attach(struct device *parent, struct device *self, void *args)
 	while ((AWREAD4(sc, AWAHCI_PHYCS0) >> 28 & 3) != 2 && --timo)
 		delay(10);
 	if (!timo)
-		printf("awahci_attach: AHCI phy power up failed.\n");
+		printf("sxiahci_attach: AHCI phy power up failed.\n");
 
 	AWSET4(sc, AWAHCI_PHYCS2, 1 << 24);
 
@@ -135,16 +135,16 @@ awahci_attach(struct device *parent, struct device *self, void *args)
 	while ((AWREAD4(sc, AWAHCI_PHYCS2) & (1 << 24)) && --timo)
 		delay(10);
 	if (!timo)
-		printf("awahci_attach: AHCI phy calibration failed.\n");
+		printf("sxiahci_attach: AHCI phy calibration failed.\n");
 
 	delay(15000);
 	AWWRITE4(sc, AWAHCI_RWC, 7);
 
 	/* power up phy */
-	awpio_setcfg(AWAHCI_PWRPIN, AWPIO_OUTPUT);
-	awpio_setpin(AWAHCI_PWRPIN);
+	sxipio_setcfg(AWAHCI_PWRPIN, AWPIO_OUTPUT);
+	sxipio_setpin(AWAHCI_PWRPIN);
 
-	sc->sc_ih = arm_intr_establish(aw->aw_dev->irq[0], IPL_BIO,
+	sc->sc_ih = arm_intr_establish(sxi->sxi_dev->irq[0], IPL_BIO,
 	    ahci_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");
@@ -167,10 +167,10 @@ unmap:
 }
 
 int
-awahci_detach(struct device *self, int flags)
+sxiahci_detach(struct device *self, int flags)
 {
-	struct awahci_softc *awsc = (struct awahci_softc *) self;
-	struct ahci_softc *sc = &awsc->sc;
+	struct sxiahci_softc *sxisc = (struct sxiahci_softc *) self;
+	struct ahci_softc *sc = &sxisc->sc;
 
 	ahci_detach(sc, flags);
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
@@ -178,10 +178,10 @@ awahci_detach(struct device *self, int flags)
 }
 
 int
-awahci_activate(struct device *self, int act)
+sxiahci_activate(struct device *self, int act)
 {
-	struct awahci_softc *awsc = (struct awahci_softc *) self;
-	struct ahci_softc *sc = &awsc->sc;
+	struct sxiahci_softc *sxisc = (struct sxiahci_softc *) self;
+	struct ahci_softc *sc = &sxisc->sc;
 
 	return ahci_activate((struct device *)sc, act);
 }

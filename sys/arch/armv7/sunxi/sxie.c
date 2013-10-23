@@ -1,4 +1,4 @@
-/*	$OpenBSD: awe.c,v 1.1 2013/10/22 13:22:19 jasper Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -51,9 +51,9 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <armv7/allwinner/allwinnervar.h>
-#include <armv7/allwinner/awccmuvar.h>
-#include <armv7/allwinner/awpiovar.h>
+#include <armv7/sunxi/sunxivar.h>
+#include <armv7/sunxi/sxiccmuvar.h>
+#include <armv7/sunxi/sxipiovar.h>
 
 /* configuration registers */
 #define	AWE_CR			0x0000
@@ -153,7 +153,7 @@
 
 #define AWE_ROUNDUP(size, unit) (((size) + (unit) - 1) & ~((unit) - 1))
 
-struct awe_softc {
+struct sxie_softc {
 	struct device			sc_dev;
 	struct arpcom			sc_ac;
 	struct mii_data			sc_mii;
@@ -166,55 +166,55 @@ struct awe_softc {
 	uint32_t			txf_inuse;
 };
 
-struct awe_softc *awe_sc;
+struct sxie_softc *sxie_sc;
 
-void	awe_attach(struct device *, struct device *, void *);
-void	awe_setup_interface(struct awe_softc *, struct device *);
-void	awe_socware_init(struct awe_softc *);
-int	awe_ioctl(struct ifnet *, u_long, caddr_t);
-void	awe_start(struct ifnet *);
-void	awe_watchdog(struct ifnet *);
-void	awe_init(struct awe_softc *);
-void	awe_stop(struct awe_softc *);
-void	awe_reset(struct awe_softc *);
-void	awe_iff(struct awe_softc *, struct ifnet *);
-struct mbuf * awe_newbuf(void);
-int	awe_intr(void *);
-void	awe_recv(struct awe_softc *);
-int	awe_miibus_readreg(struct device *, int, int);
-void	awe_miibus_writereg(struct device *, int, int, int);
-void	awe_miibus_statchg(struct device *);
-int	awe_ifm_change(struct ifnet *);
-void	awe_ifm_status(struct ifnet *, struct ifmediareq *);
+void	sxie_attach(struct device *, struct device *, void *);
+void	sxie_setup_interface(struct sxie_softc *, struct device *);
+void	sxie_socware_init(struct sxie_softc *);
+int	sxie_ioctl(struct ifnet *, u_long, caddr_t);
+void	sxie_start(struct ifnet *);
+void	sxie_watchdog(struct ifnet *);
+void	sxie_init(struct sxie_softc *);
+void	sxie_stop(struct sxie_softc *);
+void	sxie_reset(struct sxie_softc *);
+void	sxie_iff(struct sxie_softc *, struct ifnet *);
+struct mbuf * sxie_newbuf(void);
+int	sxie_intr(void *);
+void	sxie_recv(struct sxie_softc *);
+int	sxie_miibus_readreg(struct device *, int, int);
+void	sxie_miibus_writereg(struct device *, int, int, int);
+void	sxie_miibus_statchg(struct device *);
+int	sxie_ifm_change(struct ifnet *);
+void	sxie_ifm_status(struct ifnet *, struct ifmediareq *);
 
-struct cfattach awe_ca = {
-	sizeof (struct awe_softc), NULL, awe_attach
+struct cfattach sxie_ca = {
+	sizeof (struct sxie_softc), NULL, sxie_attach
 };
 
-struct cfdriver awe_cd = {
-	NULL, "awe", DV_IFNET
+struct cfdriver sxie_cd = {
+	NULL, "sxie", DV_IFNET
 };
 
 void
-awe_attach(struct device *parent, struct device *self, void *args)
+sxie_attach(struct device *parent, struct device *self, void *args)
 {
-	struct aw_attach_args *aw = args;
-	struct awe_softc *sc = (struct awe_softc *) self;
+	struct sxi_attach_args *sxi = args;
+	struct sxie_softc *sc = (struct sxie_softc *) self;
 	struct mii_data *mii;
 	struct ifnet *ifp;
 	int s;
 
-	sc->sc_iot = aw->aw_iot;
+	sc->sc_iot = sxi->sxi_iot;
 
-	if (bus_space_map(sc->sc_iot, aw->aw_dev->mem[0].addr,
-	    aw->aw_dev->mem[0].size, 0, &sc->sc_ioh))
-		panic("awe_attach: bus_space_map ioh failed!");
+	if (bus_space_map(sc->sc_iot, sxi->sxi_dev->mem[0].addr,
+	    sxi->sxi_dev->mem[0].size, 0, &sc->sc_ioh))
+		panic("sxie_attach: bus_space_map ioh failed!");
 
-	awe_socware_init(sc);
+	sxie_socware_init(sc);
 	sc->txf_inuse = 0;
 
-	sc->sc_ih = arm_intr_establish(aw->aw_dev->irq[0], IPL_NET,
-	    awe_intr, sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = arm_intr_establish(sxi->sxi_dev->irq[0], IPL_NET,
+	    sxie_intr, sc, sc->sc_dev.dv_xname);
 
 	printf("\n");
 
@@ -228,9 +228,9 @@ awe_attach(struct device *parent, struct device *self, void *args)
 	ifp->if_softc = sc;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_ioctl = awe_ioctl;
-	ifp->if_start = awe_start;
-	ifp->if_watchdog = awe_watchdog;
+	ifp->if_ioctl = sxie_ioctl;
+	ifp->if_start = sxie_start;
+	ifp->if_watchdog = sxie_watchdog;
 	ifp->if_capabilities = IFCAP_VLAN_MTU; /* XXX status check in recv? */
 
 	IFQ_SET_MAXLEN(&ifp->if_snd, 1);
@@ -239,12 +239,12 @@ awe_attach(struct device *parent, struct device *self, void *args)
 	/* Initialize MII/media info. */
 	mii = &sc->sc_mii;
 	mii->mii_ifp = ifp;
-	mii->mii_readreg = awe_miibus_readreg;
-	mii->mii_writereg = awe_miibus_writereg;
-	mii->mii_statchg = awe_miibus_statchg;
+	mii->mii_readreg = sxie_miibus_readreg;
+	mii->mii_writereg = sxie_miibus_writereg;
+	mii->mii_statchg = sxie_miibus_statchg;
 	mii->mii_flags = MIIF_AUTOTSLEEP;
 
-	ifmedia_init(&mii->mii_media, 0, awe_ifm_change, awe_ifm_status);
+	ifmedia_init(&mii->mii_media, 0, sxie_ifm_change, sxie_ifm_status);
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
@@ -257,18 +257,18 @@ awe_attach(struct device *parent, struct device *self, void *args)
 	ether_ifattach(ifp);
 	splx(s);
 
-	awe_sc = sc;
+	sxie_sc = sc;
 }
 
 void
-awe_socware_init(struct awe_softc *sc)
+sxie_socware_init(struct sxie_softc *sc)
 {
 	int i;
 	uint32_t reg;
 
 	for (i = 0; i < AWPIO_EMAC_NPINS; i++)
-		awpio_setcfg(i, 2); /* mux pins to EMAC */
-	awccmu_enablemodule(CCMU_EMAC);
+		sxipio_setcfg(i, 2); /* mux pins to EMAC */
+	sxiccmu_enablemodule(CCMU_EMAC);
 
 	/* MII clock cfg */
 	AWCMS4(sc, AWE_MACMCFG, 15 << 2, 13 << 2);
@@ -298,7 +298,7 @@ awe_socware_init(struct awe_softc *sc)
 }
 
 void
-awe_setup_interface(struct awe_softc *sc, struct device *dev)
+sxie_setup_interface(struct sxie_softc *sc, struct device *dev)
 {
 	uint32_t clr_m, set_m;
 
@@ -318,7 +318,7 @@ awe_setup_interface(struct awe_softc *sc, struct device *dev)
 	    AWE_MACPRE | AWE_MACLPE | AWE_MACNB | AWE_MACBNB |
 	    AWE_MACED;
 	set_m = AWE_MACFLC | AWE_MACCRC | AWE_MACPC;
-	set_m |= awe_miibus_readreg(dev, sc->sc_phyno, 0) >> 8 & 1;
+	set_m |= sxie_miibus_readreg(dev, sc->sc_phyno, 0) >> 8 & 1;
 	AWCMS4(sc, AWE_MACCR1, clr_m, set_m);
 
 	/* XXX */
@@ -341,18 +341,18 @@ awe_setup_interface(struct awe_softc *sc, struct device *dev)
 	    sc->sc_ac.ac_enaddr[1] << 8 |
 	    sc->sc_ac.ac_enaddr[2]);
 
-	awe_reset(sc);
+	sxie_reset(sc);
 	/* XXX possibly missing delay in here. */
 }
 
 void
-awe_init(struct awe_softc *sc)
+sxie_init(struct sxie_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct device *dev = (struct device *)sc;
 	int phyreg;
 	
-	awe_reset(sc);
+	sxie_reset(sc);
 
 	AWWRITE4(sc, AWE_INTCR, AWE_INTR_DISABLE);
 
@@ -366,13 +366,13 @@ awe_init(struct awe_softc *sc)
 	/* zero rx counter */
 	AWWRITE4(sc, AWE_RXFBC, 0);
 
-	awe_setup_interface(sc, dev);
+	sxie_setup_interface(sc, dev);
 
 	/* power up PHY */
-	awe_miibus_writereg(dev, sc->sc_phyno, 0,
-	    awe_miibus_readreg(dev, sc->sc_phyno, 0) & ~(1 << 11));
+	sxie_miibus_writereg(dev, sc->sc_phyno, 0,
+	    sxie_miibus_readreg(dev, sc->sc_phyno, 0) & ~(1 << 11));
 	delay(1000);
-	phyreg = awe_miibus_readreg(dev, sc->sc_phyno, 0);
+	phyreg = sxie_miibus_readreg(dev, sc->sc_phyno, 0);
 
 	/* set duplex */
 	AWCMS4(sc, AWE_MACCR1, 1, phyreg >> 8 & 1);
@@ -388,13 +388,13 @@ awe_init(struct awe_softc *sc)
 
 	AWSET4(sc, AWE_INTCR, AWE_INTR_ENABLE);
 
-	awe_start(ifp);
+	sxie_start(ifp);
 }
 
 int
-awe_intr(void *arg)
+sxie_intr(void *arg)
 {
-	struct awe_softc *sc = arg;
+	struct sxie_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	uint32_t pending;
 
@@ -408,7 +408,7 @@ awe_intr(void *arg)
 	 */
 	if (pending & 0x0100) {
 		if (ifp->if_flags & IFF_RUNNING)
-			awe_recv(sc);
+			sxie_recv(sc);
 	}
 
 	pending &= 3;
@@ -428,7 +428,7 @@ awe_intr(void *arg)
 	}
 
 	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
-		awe_start(ifp);
+		sxie_start(ifp);
 
 	AWSET4(sc, AWE_INTCR, AWE_INTR_ENABLE);
 
@@ -439,9 +439,9 @@ awe_intr(void *arg)
  * XXX there's secondary tx fifo to be used.
  */
 void
-awe_start(struct ifnet *ifp)
+sxie_start(struct ifnet *ifp)
 {
-	struct awe_softc *sc = ifp->if_softc;
+	struct sxie_softc *sc = ifp->if_softc;
 	struct mbuf *m;
 	struct mbuf *head;
 	uint8_t *td;
@@ -463,13 +463,13 @@ trynext:
 		return;
 
 	if (m->m_pkthdr.len > AWE_MAX_PKT_SIZE) {
-		printf("awe_start: packet too big\n");
+		printf("sxie_start: packet too big\n");
 		m_freem(m);
 		return;
 	}
 
 	if (sc->txf_inuse > 1) {
-		printf("awe_start: tx fifos in use.\n");
+		printf("sxie_start: tx fifos in use.\n");
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
@@ -504,18 +504,18 @@ trynext:
 }
 
 void
-awe_stop(struct awe_softc *sc)
+sxie_stop(struct sxie_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
-	awe_reset(sc);
+	sxie_reset(sc);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
 }
 
 void
-awe_reset(struct awe_softc *sc)
+sxie_reset(struct sxie_softc *sc)
 {
 	/* reset the controller */
 	AWWRITE4(sc, AWE_CR, 0);
@@ -525,24 +525,24 @@ awe_reset(struct awe_softc *sc)
 }
 
 void
-awe_watchdog(struct ifnet *ifp)
+sxie_watchdog(struct ifnet *ifp)
 {
-	struct awe_softc *sc = ifp->if_softc;
+	struct sxie_softc *sc = ifp->if_softc;
 	if (sc->pauseframe) {
 		ifp->if_timer = 5;
 		return;
 	}
 	printf("%s: watchdog tx timeout\n", sc->sc_dev.dv_xname);
 	ifp->if_oerrors++;
-	awe_init(sc);
-	awe_start(ifp);
+	sxie_init(sc);
+	sxie_start(ifp);
 }
 
 /*
  * XXX DMA?
  */
 void
-awe_recv(struct awe_softc *sc)
+sxie_recv(struct sxie_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	uint32_t fbc, reg;
@@ -571,7 +571,7 @@ trynext:
 		goto err_out;
 	}
 	
-	m = awe_newbuf();
+	m = sxie_newbuf();
 	if (m == NULL)
 		goto err_out;
 
@@ -613,9 +613,9 @@ err_out:
 }
 
 int
-awe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+sxie_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct awe_softc *sc = ifp->if_softc;
+	struct sxie_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
@@ -626,7 +626,7 @@ awe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFADDR:
 		if (!(ifp->if_flags & IFF_UP)) {
 			ifp->if_flags |= IFF_UP;
-			awe_init(sc);
+			sxie_init(sc);
 		}
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
@@ -638,9 +638,9 @@ awe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				error = ENETRESET;
 			else
-				awe_init(sc);
+				sxie_init(sc);
 		} else if (ifp->if_flags & IFF_RUNNING)
-			awe_stop(sc);
+			sxie_stop(sc);
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
@@ -651,7 +651,7 @@ awe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			awe_iff(sc, ifp);
+			sxie_iff(sc, ifp);
 		error = 0;
 	}
 
@@ -660,7 +660,7 @@ awe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 struct mbuf *
-awe_newbuf(void)
+sxie_newbuf(void)
 {
 	struct mbuf *m;
 
@@ -678,7 +678,7 @@ awe_newbuf(void)
 }
 
 void
-awe_iff(struct awe_softc *sc, struct ifnet *ifp)
+sxie_iff(struct sxie_softc *sc, struct ifnet *ifp)
 {
 	/* XXX set interface features */
 }
@@ -687,9 +687,9 @@ awe_iff(struct awe_softc *sc, struct ifnet *ifp)
  * MII
  */
 int
-awe_miibus_readreg(struct device *dev, int phy, int reg)
+sxie_miibus_readreg(struct device *dev, int phy, int reg)
 {
-	struct awe_softc *sc = (struct awe_softc *)dev;
+	struct sxie_softc *sc = (struct sxie_softc *)dev;
 	int timo = AWE_MII_TIMEOUT;
 
 	AWWRITE4(sc, AWE_MACMADR, phy << 8 | reg);
@@ -699,7 +699,7 @@ awe_miibus_readreg(struct device *dev, int phy, int reg)
 		delay(10);
 #ifdef DIAGNOSTIC
 	if (!timo)
-		printf("%s: awe_miibus_readreg timeout.\n",
+		printf("%s: sxie_miibus_readreg timeout.\n",
 		    sc->sc_dev.dv_xname);
 #endif
 
@@ -709,9 +709,9 @@ awe_miibus_readreg(struct device *dev, int phy, int reg)
 }
 
 void
-awe_miibus_writereg(struct device *dev, int phy, int reg, int val)
+sxie_miibus_writereg(struct device *dev, int phy, int reg, int val)
 {
-	struct awe_softc *sc = (struct awe_softc *)dev;
+	struct sxie_softc *sc = (struct sxie_softc *)dev;
 	int timo = AWE_MII_TIMEOUT;
 
 	AWWRITE4(sc, AWE_MACMADR, phy << 8 | reg);
@@ -721,7 +721,7 @@ awe_miibus_writereg(struct device *dev, int phy, int reg, int val)
 		delay(10);
 #ifdef DIAGNOSTIC
 	if (!timo)
-		printf("%s: awe_miibus_readreg timeout.\n",
+		printf("%s: sxie_miibus_readreg timeout.\n",
 		    sc->sc_dev.dv_xname);
 #endif
 
@@ -731,11 +731,11 @@ awe_miibus_writereg(struct device *dev, int phy, int reg, int val)
 }
 
 void
-awe_miibus_statchg(struct device *dev)
+sxie_miibus_statchg(struct device *dev)
 {
 	/* XXX */
 #if 0
-	struct awe_softc *sc = (struct awe_softc *)dev;
+	struct sxie_softc *sc = (struct sxie_softc *)dev;
 
 	switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
 	case IFM_10_T:
@@ -749,9 +749,9 @@ awe_miibus_statchg(struct device *dev)
 }
 
 int
-awe_ifm_change(struct ifnet *ifp)
+sxie_ifm_change(struct ifnet *ifp)
 {
-	struct awe_softc *sc = ifp->if_softc;
+	struct sxie_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
 
 	if (mii->mii_instance) {
@@ -764,9 +764,9 @@ awe_ifm_change(struct ifnet *ifp)
 }
 
 void
-awe_ifm_status(struct ifnet *ifp, struct ifmediareq *ifmr)
+sxie_ifm_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
-	struct awe_softc *sc = (struct awe_softc *)ifp->if_softc;
+	struct sxie_softc *sc = (struct sxie_softc *)ifp->if_softc;
 
 	mii_pollstat(&sc->sc_mii);
 	ifmr->ifm_active = sc->sc_mii.mii_media_active;

@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC-ALLWINNER,v 1.1 2013/10/22 13:22:20 jasper Exp $
+# $OpenBSD: GENERIC-SUNXI,v 1.1 2013/10/23 17:08:47 jasper Exp $
 #
 # GENERIC machine description file
 #
@@ -55,31 +55,31 @@ config		bsd	swap generic
 mainbus0	at root
 cpu0		at mainbus?
 
-# Allwinner A1x/A20 SoC
-allwinner0	at mainbus?
+# Sunxi A1x/A20 SoC
+sunxi0	at mainbus?
 
 # A1x only
-a1xintc*	at allwinner?		# interrupt controller
+a1xintc*	at sunxi?		# interrupt controller
 
 # A20 only
 cortex0		at mainbus?
 ampintc*	at cortex?
 #agtimer*	at cortex?
 
-# Allwinner on-chip devices
-awpio*		at allwinner?		# GPIO pins for leds & PHYs
-awccmu*		at allwinner?		# Clock Control Module/Unit
-awtimer*	at allwinner?
-awdog*		at allwinner?		# watchdog timer
-awrtc*		at allwinner?		# Real Time Clock
-awuart*		at allwinner?		# onboard UARTs
-awe*		at allwinner?
-ahci*		at allwinner?		# AHCI/SATA (shim)
-ehci*		at allwinner?		# EHCI (shim)
-#ohci*		at allwinner?		# OHCI (shim)
-#usbotg0	at allwinner?
+# Sunxi on-chip devices
+sxipio*		at sunxi?		# GPIO pins for leds & PHYs
+sxiccmu*	at sunxi?		# Clock Control Module/Unit
+sxitimer*	at sunxi?
+sxidog*		at sunxi?		# watchdog timer
+sxirtc*		at sunxi?		# Real Time Clock
+sxiuart*	at sunxi?		# onboard UARTs
+sxie*		at sunxi?
+ahci*		at sunxi?		# AHCI/SATA (shim)
+ehci*		at sunxi?		# EHCI (shim)
+#ohci*		at sunxi?		# OHCI (shim)
+#usbotg0	at sunxi?
 
-gpio*		at awpio?
+gpio*		at sxipio?
 
 # USB bus support
 usb*		at ehci?	#flags 0x1

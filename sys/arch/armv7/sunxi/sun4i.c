@@ -1,4 +1,4 @@
-/*	$OpenBSD: awa1x.c,v 1.1 2013/10/22 13:22:19 jasper Exp $	*/
+/*	$OpenBSD: sun4i.c,v 1.1 2013/10/23 17:08:47 jasper Exp $	*/
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
  *
@@ -20,20 +20,20 @@
 
 #include <machine/bus.h>
 
-#include <armv7/allwinner/allwinnervar.h>
-#include <armv7/allwinner/allwinnerreg.h>
+#include <armv7/sunxi/sunxivar.h>
+#include <armv7/sunxi/sunxireg.h>
 
-struct aw_dev awa1x_devs[] = {
+struct sxi_dev sxia1x_devs[] = {
 
 	/* 'Port IO' */
-	{ .name = "awpio",
+	{ .name = "sxipio",
 	  .unit = 0,
 	  .mem = { { PIO_ADDR, PIOx_SIZE } },
 	  .irq = { PIO_IRQ }
 	},
 
 	/* Clock Control Module/Unit */
-	{ .name = "awccmu",
+	{ .name = "sxiccmu",
 	  .unit = 0,
 	  .mem = { { CCMU_ADDR, CCMU_SIZE } },
 	},
@@ -45,81 +45,81 @@ struct aw_dev awa1x_devs[] = {
 	},
 
 	/* Timers/Counters, resources mapped on first unit */
-	{ .name = "awtimer",
+	{ .name = "sxitimer",
 	  .unit = 0,
 	  .mem = {	{ TIMER_ADDR, TIMERx_SIZE },
 			{ CPUCNTRS_ADDR, CPUCNTRS_ADDR } }
 	},
-	{ .name = "awtimer",
+	{ .name = "sxitimer",
 	  .unit = 1,
 	},
-	{ .name = "awtimer",
+	{ .name = "sxitimer",
 	  .unit = 2,
 	},
 
 	/* Watchdog Timer */
-	{ .name = "awdog",
+	{ .name = "sxidog",
 	  .unit = 0,
 	  .mem = { { WDOG_ADDR, WDOG_SIZE } }
 	},
 
 	/* Real Time Clock */
-	{ .name = "awrtc",
+	{ .name = "sxirtc",
 	  .unit = 0,
 	  .mem = { { RTC_ADDR, RTC_SIZE } }
 	},
 
 	/* DMA Controller */
-	{ .name = "awdmac",
+	{ .name = "sxidmac",
 	  .unit = 0,
 	  .mem = { { DMAC_ADDR, DMAC_SIZE } },
 	  .irq = { DMAC_IRQ }
 	},
 
 	/* UART */
-	{ .name = "awuart",
+	{ .name = "sxiuart",
 	  .unit = 0,
 	  .mem = { { UART0_ADDR, UARTx_SIZE } },
 	  .irq = { UART0_IRQ }
 	},
-	{ .name = "awuart",
+	{ .name = "sxiuart",
 	  .unit = 1,
 	  .mem = { { UART1_ADDR, UARTx_SIZE } },
 	  .irq = { UART1_IRQ }
 	},
-	{ .name = "awuart",
+	{ .name = "sxiuart",
 	  .unit = 2,
 	  .mem = { { UART2_ADDR, UARTx_SIZE } },
 	  .irq = { UART2_IRQ }
 	},
-	{ .name = "awuart",
+	{ .name = "sxiuart",
 	  .unit = 3,
 	  .mem = { { UART3_ADDR, UARTx_SIZE } },
 	  .irq = { UART3_IRQ }
 	},
-	{ .name = "awuart",
+	{ .name = "sxiuart",
 	  .unit = 4,
 	  .mem = { { UART4_ADDR, UARTx_SIZE } },
 	  .irq = { UART4_IRQ }
 	},
-	{ .name = "awuart",
+	{ .name = "sxiuart",
 	  .unit = 5,
 	  .mem = { { UART5_ADDR, UARTx_SIZE } },
 	  .irq = { UART5_IRQ }
 	},
-	{ .name = "awuart",
+	{ .name = "sxiuart",
 	  .unit = 6,
 	  .mem = { { UART6_ADDR, UARTx_SIZE } },
 	  .irq = { UART6_IRQ }
 	},
-	{ .name = "awuart",
+	{ .name = "sxiuart",
 	  .unit = 7,
 	  .mem = { { UART7_ADDR, UARTx_SIZE } },
 	  .irq = { UART7_IRQ }
 	},
 
 	/* EMAC */
-	{ .name = "awe",
+	{ .name = "sxie",
 	  .unit = 0,
 	  .mem = {	{ EMAC_ADDR, EMAC_SIZE },
 			{ AWESRAM_ADDR, AWESRAM_SIZE } },
@@ -161,9 +161,9 @@ struct aw_dev awa1x_devs[] = {
 	}
 };
 
-void awa1x_init(void);
+void sxia1x_init(void);
 void
-awa1x_init(void)
+sxia1x_init(void)
 {
-	aw_set_devs(awa1x_devs);
+	sxi_set_devs(sxia1x_devs);
 }

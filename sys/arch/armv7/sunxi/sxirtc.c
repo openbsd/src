@@ -1,4 +1,4 @@
-/*	$OpenBSD: awrtc.c,v 1.1 2013/10/22 13:22:19 jasper Exp $	*/
+/*	$OpenBSD: sxirtc.c,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2013 Artturi Alm
@@ -28,7 +28,7 @@
 
 #include <machine/bus.h>
 
-#include <armv7/allwinner/allwinnervar.h>
+#include <armv7/sunxi/sunxivar.h>
 
 #define	AWRTC_YYMMDD	0x00
 #define	AWRTC_HHMMSS	0x04
@@ -40,48 +40,48 @@
 
 
 /* XXX other way around than bus_space_subregion? */
-extern bus_space_handle_t awtimer_ioh;
+extern bus_space_handle_t sxitimer_ioh;
 
 extern todr_chip_handle_t todr_handle;
 
-struct awrtc_softc {
+struct sxirtc_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 };
 
-void	awrtc_attach(struct device *, struct device *, void *);
+void	sxirtc_attach(struct device *, struct device *, void *);
 
-struct cfattach awrtc_ca = {
-	sizeof(struct device), NULL, awrtc_attach
+struct cfattach sxirtc_ca = {
+	sizeof(struct device), NULL, sxirtc_attach
 };
 
-struct cfdriver awrtc_cd = {
-	NULL, "awrtc", DV_DULL
+struct cfdriver sxirtc_cd = {
+	NULL, "sxirtc", DV_DULL
 };
 
-int	awrtc_gettime(todr_chip_handle_t, struct timeval *);
-int	awrtc_settime(todr_chip_handle_t, struct timeval *);
+int	sxirtc_gettime(todr_chip_handle_t, struct timeval *);
+int	sxirtc_settime(todr_chip_handle_t, struct timeval *);
 
 void
-awrtc_attach(struct device *parent, struct device *self, void *args)
+sxirtc_attach(struct device *parent, struct device *self, void *args)
 {
-	struct awrtc_softc *sc = (struct awrtc_softc *)self;
-	struct aw_attach_args *aw = args;
+	struct sxirtc_softc *sc = (struct sxirtc_softc *)self;
+	struct sxi_attach_args *sxi = args;
 	todr_chip_handle_t handle;
 
 	handle = malloc(sizeof(struct todr_chip_handle), M_DEVBUF, M_NOWAIT);
 	if (handle == NULL)
-		panic("awrtc_attach: couldn't allocate todr_handle");
+		panic("sxirtc_attach: couldn't allocate todr_handle");
 
-	sc->sc_iot = aw->aw_iot;
-	if (bus_space_subregion(sc->sc_iot, awtimer_ioh,
-	    aw->aw_dev->mem[0].addr, aw->aw_dev->mem[0].size, &sc->sc_ioh))
-		panic("awrtc_attach: bus_space_subregion failed!");
+	sc->sc_iot = sxi->sxi_iot;
+	if (bus_space_subregion(sc->sc_iot, sxitimer_ioh,
+	    sxi->sxi_dev->mem[0].addr, sxi->sxi_dev->mem[0].size, &sc->sc_ioh))
+		panic("sxirtc_attach: bus_space_subregion failed!");
 
 	handle->cookie = self;
-	handle->todr_gettime = awrtc_gettime;
-	handle->todr_settime = awrtc_settime;
+	handle->todr_gettime = sxirtc_gettime;
+	handle->todr_settime = sxirtc_settime;
 	handle->todr_getcal = NULL;
 	handle->todr_setcal = NULL;
 	handle->bus_cookie = NULL;
@@ -92,9 +92,9 @@ awrtc_attach(struct device *parent, struct device *self, void *args)
 }
 
 int
-awrtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
+sxirtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 {
-	struct awrtc_softc *sc = (struct awrtc_softc *)handle->cookie;
+	struct sxirtc_softc *sc = (struct sxirtc_softc *)handle->cookie;
 	struct clock_ymdhms dt;
 	uint32_t reg;
 
@@ -121,9 +121,9 @@ awrtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 }
 
 int
-awrtc_settime(todr_chip_handle_t handle, struct timeval *tv)
+sxirtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 {
-	struct awrtc_softc *sc = (struct awrtc_softc *)handle->cookie;
+	struct sxirtc_softc *sc = (struct sxirtc_softc *)handle->cookie;
 	struct clock_ymdhms dt;
 
 	clock_secs_to_ymdhms(tv->tv_sec, &dt);

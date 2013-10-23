@@ -1,4 +1,4 @@
-/*	$OpenBSD: a1xintc.c,v 1.1 2013/10/22 13:22:18 jasper Exp $	*/
+/*	$OpenBSD: a1xintc.c,v 1.1 2013/10/23 17:08:47 jasper Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -25,10 +25,10 @@
 
 #include <machine/bus.h>
 
-#include <armv7/allwinner/allwinnervar.h>
-#include <armv7/allwinner/allwinnerreg.h>
-#include <armv7/allwinner/awpiovar.h>
-#include <armv7/allwinner/a1xintc.h>
+#include <armv7/sunxi/sunxivar.h>
+#include <armv7/sunxi/sunxireg.h>
+#include <armv7/sunxi/sxipiovar.h>
+#include <armv7/sunxi/a1xintc.h>
 
 #ifdef DEBUG_INTC
 #define DPRINTF(x)	do { if (intcdebug) printf x; } while (0)
@@ -159,12 +159,12 @@ int intc_attached = 0;
 void
 a1xintc_attach(struct device *parent, struct device *self, void *args)
 {
-	struct aw_attach_args *aw = args;
+	struct sxi_attach_args *sxi = args;
 	int i, j;
 
-	intc_iot = aw->aw_iot;
-	if (bus_space_map(intc_iot, aw->aw_dev->mem[0].addr,
-	    aw->aw_dev->mem[0].size, 0, &intc_ioh))
+	intc_iot = sxi->sxi_iot;
+	if (bus_space_map(intc_iot, sxi->sxi_dev->mem[0].addr,
+	    sxi->sxi_dev->mem[0].size, 0, &intc_ioh))
 		panic("a1xintc_attach: bus_space_map failed!");
 
 	/* disable/mask/clear all interrupts */
@@ -318,9 +318,9 @@ intc_irq_handler(void *frame)
 	if (irq == 0)
 		return;
 	if (irq == 1)
-		awpio_togglepin(AWPIO_LED_BLUE);
+		sxipio_togglepin(AWPIO_LED_BLUE);
 
-	awpio_setpin(AWPIO_LED_GREEN);
+	sxipio_setpin(AWPIO_LED_GREEN);
 
 	prio = intc_handler[irq].iq_irq;
 	s = intc_splraise(prio);
@@ -356,7 +356,7 @@ intc_irq_handler(void *frame)
 	}
 	intc_splx(s);
 
-	awpio_clrpin(AWPIO_LED_GREEN);
+	sxipio_clrpin(AWPIO_LED_GREEN);
 }
 
 void *

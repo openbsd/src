@@ -1,4 +1,4 @@
-/*	$OpenBSD: awehci.c,v 1.1 2013/10/22 13:22:19 jasper Exp $ */
+/*	$OpenBSD: sxiehci.c,v 1.1 2013/10/23 17:08:48 jasper Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -58,14 +58,14 @@
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 
-#include <armv7/allwinner/allwinnervar.h>
-#include <armv7/allwinner/awccmuvar.h>
-#include <armv7/allwinner/awpiovar.h>
+#include <armv7/sunxi/sunxivar.h>
+#include <armv7/sunxi/sxiccmuvar.h>
+#include <armv7/sunxi/sxipiovar.h>
 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 
-#define EHCI_HC_DEVSTR		"Allwinner Integrated USB 2.0 controller"
+#define EHCI_HC_DEVSTR		"Sunxi Integrated USB 2.0 controller"
 
 #define USB_PMU_IRQ_ENABLE	0x800
 
@@ -78,20 +78,20 @@
 #define AHB_INCR4		(1 << 9)
 #define AHB_INCR8		(1 << 10)
 
-void	awehci_attach(struct device *, struct device *, void *);
-int	awehci_detach(struct device *, int);
-int	awehci_activate(struct device *, int);
+void	sxiehci_attach(struct device *, struct device *, void *);
+int	sxiehci_detach(struct device *, int);
+int	sxiehci_activate(struct device *, int);
 
-struct awehci_softc {
+struct sxiehci_softc {
 	struct ehci_softc	 sc;
 	void			*sc_ih;
 };
 
-int awehci_init(struct awehci_softc *, int);
+int sxiehci_init(struct sxiehci_softc *, int);
 
-struct cfattach awehci_ca = {
-	sizeof (struct awehci_softc), NULL, awehci_attach,
-	awehci_detach, awehci_activate
+struct cfattach sxiehci_ca = {
+	sizeof (struct sxiehci_softc), NULL, sxiehci_attach,
+	sxiehci_detach, sxiehci_activate
 };
 
 /* XXX
@@ -99,39 +99,39 @@ struct cfattach awehci_ca = {
  * instead of disestablishing interrupt and unmapping space etc..
  */
 void
-awehci_attach(struct device *parent, struct device *self, void *aux)
+sxiehci_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct awehci_softc	*sc = (struct awehci_softc *)self;
-	struct aw_attach_args	*aw = aux;
+	struct sxiehci_softc	*sc = (struct sxiehci_softc *)self;
+	struct sxi_attach_args	*sxi = aux;
 	usbd_status		 r;
 	char			*devname = sc->sc.sc_bus.bdev.dv_xname;
 
-	sc->sc.iot = aw->aw_iot;
-	sc->sc.sc_bus.dmatag = aw->aw_dmat;
-	sc->sc.sc_size = aw->aw_dev->mem[0].size;
+	sc->sc.iot = sxi->sxi_iot;
+	sc->sc.sc_bus.dmatag = sxi->sxi_dmat;
+	sc->sc.sc_size = sxi->sxi_dev->mem[0].size;
 
-	if (bus_space_map(sc->sc.iot, aw->aw_dev->mem[0].addr,
-		aw->aw_dev->mem[0].size, 0, &sc->sc.ioh)) {
+	if (bus_space_map(sc->sc.iot, sxi->sxi_dev->mem[0].addr,
+		sxi->sxi_dev->mem[0].size, 0, &sc->sc.ioh)) {
 		printf(": cannot map mem space\n");
 		goto out;
 	}
 
 	printf("\n");
 
-	if (awehci_init(sc, self->dv_unit))
+	if (sxiehci_init(sc, self->dv_unit))
 		return;
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
 	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
 
-	sc->sc_ih = arm_intr_establish(aw->aw_dev->irq[0], IPL_USB,
+	sc->sc_ih = arm_intr_establish(sxi->sxi_dev->irq[0], IPL_USB,
 	    ehci_intr, &sc->sc, devname);
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");
 		printf("XXX - disable ehci");
 #if 0
-		awccmu_disable(CCMU_EHCI+unit?);
+		sxiccmu_disable(CCMU_EHCI+unit?);
 #endif
 		goto mem0;
 	}
@@ -142,7 +142,7 @@ awehci_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: init failed, error=%d\n", devname, r);
 		printf("XXX - disable ehci");
 #if 0
-		awccmu_disable(CCMU_EHCI+unit?);
+		sxiccmu_disable(CCMU_EHCI+unit?);
 #endif
 		goto intr;
 	}
@@ -163,13 +163,13 @@ out:
 }
 
 int
-awehci_init(struct awehci_softc *sc, int unit)
+sxiehci_init(struct sxiehci_softc *sc, int unit)
 {
 	uint32_t r, val;
 	int pin, mod;
 
 	if (unit > 1)
-		panic("awehci_init: unit >1 %d", unit);
+		panic("sxiehci_init: unit >1 %d", unit);
 	else if (unit == 0) {
 		pin = AWPIO_USB1_PWR;
 		r = SDRAM_REG_HPCR_USB1;
@@ -180,11 +180,11 @@ awehci_init(struct awehci_softc *sc, int unit)
 		mod = CCMU_EHCI1;
 	}
 
-	awccmu_enablemodule(mod);
+	sxiccmu_enablemodule(mod);
 
 	/* power up */
-	awpio_setcfg(pin, AWPIO_OUTPUT);
-	awpio_setpin(pin);
+	sxipio_setcfg(pin, AWPIO_OUTPUT);
+	sxipio_setpin(pin);
 
 	val = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USB_PMU_IRQ_ENABLE);
 	val |= AHB_INCR8;	/* AHB INCR8 enable */
@@ -201,9 +201,9 @@ awehci_init(struct awehci_softc *sc, int unit)
 }
 
 int
-awehci_detach(struct device *self, int flags)
+sxiehci_detach(struct device *self, int flags)
 {
-	struct awehci_softc *sc = (struct awehci_softc *)self;
+	struct sxiehci_softc *sc = (struct sxiehci_softc *)self;
 	int rv;
 
 	rv = ehci_detach(&sc->sc, flags);
@@ -221,16 +221,16 @@ awehci_detach(struct device *self, int flags)
 	}
 	/* XXX */
 #if 0
-	awccmu_disable(CCMU_EHCI+unit?);
-	awpio_clrpin(pin);
+	sxiccmu_disable(CCMU_EHCI+unit?);
+	sxipio_clrpin(pin);
 #endif
 	return (0);
 }
 
 int
-awehci_activate(struct device *self, int act)
+sxiehci_activate(struct device *self, int act)
 {
-	struct awehci_softc *sc = (struct awehci_softc *)self;
+	struct sxiehci_softc *sc = (struct sxiehci_softc *)self;
 
 	switch (act) {
 	case DVACT_SUSPEND:

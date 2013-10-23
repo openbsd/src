@@ -1,4 +1,4 @@
-/*	$OpenBSD: awpio.c,v 1.1 2013/10/22 13:22:19 jasper Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -27,8 +27,8 @@
 
 #include <dev/gpio/gpiovar.h>
 
-#include <armv7/allwinner/allwinnervar.h>
-#include <armv7/allwinner/awpiovar.h>
+#include <armv7/sunxi/sunxivar.h>
+#include <armv7/sunxi/sxipiovar.h>
 
 #define	AWPIO_NPORT		9
 #define	AWPIO_PA_NPIN		18
@@ -56,7 +56,7 @@ struct intrhand {
 	char *ih_name;
 };
 
-struct awpio_softc {
+struct sxipio_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -82,44 +82,44 @@ struct awpio_softc {
 #define	AWPIO_INT_STA		0x0214
 #define	AWPIO_INT_DEB		0x0218 /* debounce register */
 
-void awpio_attach(struct device *, struct device *, void *);
-void awpio_attach_gpio(struct device *);
+void sxipio_attach(struct device *, struct device *, void *);
+void sxipio_attach_gpio(struct device *);
 
-struct cfattach awpio_ca = {
-	sizeof (struct awpio_softc), NULL, awpio_attach
+struct cfattach sxipio_ca = {
+	sizeof (struct sxipio_softc), NULL, sxipio_attach
 };
 
-struct cfdriver awpio_cd = {
-	NULL, "awpio", DV_DULL
+struct cfdriver sxipio_cd = {
+	NULL, "sxipio", DV_DULL
 };
 
-struct awpio_softc	*awpio_sc = NULL;
-bus_space_tag_t		 awpio_iot;
-bus_space_handle_t	 awpio_ioh;
+struct sxipio_softc	*sxipio_sc = NULL;
+bus_space_tag_t		 sxipio_iot;
+bus_space_handle_t	 sxipio_ioh;
 
 void
-awpio_attach(struct device *parent, struct device *self, void *args)
+sxipio_attach(struct device *parent, struct device *self, void *args)
 {
-	struct awpio_softc *sc = (struct awpio_softc *)self;
-	struct aw_attach_args *aw = args;
+	struct sxipio_softc *sc = (struct sxipio_softc *)self;
+	struct sxi_attach_args *sxi = args;
 
 	/* XXX check unit, bail if != 0 */
 
-	sc->sc_iot = awpio_iot = aw->aw_iot;
-	if (bus_space_map(awpio_iot, aw->aw_dev->mem[0].addr,
-	    aw->aw_dev->mem[0].size, 0, &sc->sc_ioh))
-		panic("awpio_attach: bus_space_map failed!");
-	awpio_ioh = sc->sc_ioh;
+	sc->sc_iot = sxipio_iot = sxi->sxi_iot;
+	if (bus_space_map(sxipio_iot, sxi->sxi_dev->mem[0].addr,
+	    sxi->sxi_dev->mem[0].size, 0, &sc->sc_ioh))
+		panic("sxipio_attach: bus_space_map failed!");
+	sxipio_ioh = sc->sc_ioh;
 
-	awpio_sc = sc;
+	sxipio_sc = sc;
 
-	sc->sc_irq = aw->aw_dev->irq[0];
-	awpio_setcfg(AWPIO_LED_GREEN, AWPIO_OUTPUT);
-	awpio_setcfg(AWPIO_LED_BLUE, AWPIO_OUTPUT);
-	awpio_setpin(AWPIO_LED_GREEN);
-	awpio_setpin(AWPIO_LED_BLUE);
+	sc->sc_irq = sxi->sxi_dev->irq[0];
+	sxipio_setcfg(AWPIO_LED_GREEN, AWPIO_OUTPUT);
+	sxipio_setcfg(AWPIO_LED_BLUE, AWPIO_OUTPUT);
+	sxipio_setpin(AWPIO_LED_GREEN);
+	sxipio_setpin(AWPIO_LED_BLUE);
 
-	config_defer(self, awpio_attach_gpio);
+	config_defer(self, sxipio_attach_gpio);
 
 	printf("\n");
 }
@@ -128,47 +128,47 @@ awpio_attach(struct device *parent, struct device *self, void *args)
  * GPIO support code
  */
 
-int	awpio_pin_read(void *, int);
-void	awpio_pin_write(void *, int, int);
-void	awpio_pin_ctl(void *, int, int);
+int	sxipio_pin_read(void *, int);
+void	sxipio_pin_write(void *, int, int);
+void	sxipio_pin_ctl(void *, int, int);
 
-static const struct gpio_chipset_tag awpio_gpio_tag = {
-	.gp_pin_read = awpio_pin_read,
-	.gp_pin_write = awpio_pin_write,
-	.gp_pin_ctl = awpio_pin_ctl
+static const struct gpio_chipset_tag sxipio_gpio_tag = {
+	.gp_pin_read = sxipio_pin_read,
+	.gp_pin_write = sxipio_pin_write,
+	.gp_pin_ctl = sxipio_pin_ctl
 };
 
 int
-awpio_pin_read(void *portno, int pin)
+sxipio_pin_read(void *portno, int pin)
 {
-	return awpio_getpin((*(uint32_t *)portno * 32) + pin)
+	return sxipio_getpin((*(uint32_t *)portno * 32) + pin)
 	    ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
 }
 
 void
-awpio_pin_write(void *portno, int pin, int val)
+sxipio_pin_write(void *portno, int pin, int val)
 {
 	if (val)
-		awpio_setpin((*(uint32_t *)portno * 32) + pin);
+		sxipio_setpin((*(uint32_t *)portno * 32) + pin);
 	else
-		awpio_clrpin((*(uint32_t *)portno * 32) + pin);
+		sxipio_clrpin((*(uint32_t *)portno * 32) + pin);
 }
 
 void
-awpio_pin_ctl(void *portno, int pin, int flags)
+sxipio_pin_ctl(void *portno, int pin, int flags)
 {
 	if (ISSET(flags, GPIO_PIN_OUTPUT))
-		awpio_setcfg((*(uint32_t *)portno * 32) + pin, AWPIO_OUTPUT);
+		sxipio_setcfg((*(uint32_t *)portno * 32) + pin, AWPIO_OUTPUT);
 	else
-		awpio_setcfg((*(uint32_t *)portno * 32) + pin, AWPIO_INPUT);
+		sxipio_setcfg((*(uint32_t *)portno * 32) + pin, AWPIO_INPUT);
 }
 
 /* XXX ugly, but cookie has no other purposeful use. */
-static const uint32_t awpio_ports[AWPIO_NPORT] = {
+static const uint32_t sxipio_ports[AWPIO_NPORT] = {
 	0, 1, 2, 3, 4, 5, 6, 7, 8
 };
 
-static const int awpio_last_pin[AWPIO_NPORT] = {
+static const int sxipio_last_pin[AWPIO_NPORT] = {
 	AWPIO_PA_NPIN,
 	AWPIO_PB_NPIN,
 	AWPIO_PC_NPIN,
@@ -181,9 +181,9 @@ static const int awpio_last_pin[AWPIO_NPORT] = {
 };
 
 void
-awpio_attach_gpio(struct device *parent)
+sxipio_attach_gpio(struct device *parent)
 {
-	struct awpio_softc *sc = (struct awpio_softc *)parent;
+	struct sxipio_softc *sc = (struct sxipio_softc *)parent;
 	struct gpiobus_attach_args gba;
 	int cfg, pin, port;
 	/* get value & state of enabled pins, and disable those in use */
@@ -191,7 +191,7 @@ awpio_attach_gpio(struct device *parent)
 	port = 0;
 next:
 	sc->sc_gpio_pins[port][pin].pin_num = pin;
-	cfg = awpio_getcfg((port * 32) + pin);
+	cfg = sxipio_getcfg((port * 32) + pin);
 #if DEBUG
 	printf("port %d pin %d cfg %d\n", port, pin, cfg);
 #endif
@@ -199,7 +199,7 @@ next:
 		sc->sc_gpio_pins[port][pin].pin_caps =
 		    GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
 		sc->sc_gpio_pins[port][pin].pin_state =
-		    awpio_getpin((port * 32) + pin);
+		    sxipio_getpin((port * 32) + pin);
 		sc->sc_gpio_pins[port][pin].pin_flags = GPIO_PIN_SET |
 		    cfg ? GPIO_PIN_OUTPUT : GPIO_PIN_INPUT;
 	} else {
@@ -209,11 +209,11 @@ next:
 		sc->sc_gpio_pins[port][pin].pin_flags = 0;
 	}
 
-	if (++pin < awpio_last_pin[port])
+	if (++pin < sxipio_last_pin[port])
 		goto next;
 
-	bcopy(&awpio_gpio_tag, &sc->sc_gpio_tag[port], sizeof(awpio_gpio_tag));
-	sc->sc_gpio_tag[port].gp_cookie = (void *)&awpio_ports[port];
+	bcopy(&sxipio_gpio_tag, &sc->sc_gpio_tag[port], sizeof(sxipio_gpio_tag));
+	sc->sc_gpio_tag[port].gp_cookie = (void *)&sxipio_ports[port];
 	gba.gba_name = "gpio";
 	gba.gba_gc = &sc->sc_gpio_tag[port];
 	gba.gba_pins = &sc->sc_gpio_pins[port][0];
@@ -227,13 +227,13 @@ next:
 }
 
 /*
- * Lower Port I/O for MD code under arch/armv7/allwinner.
- * XXX see the comment in awpiovar.h
+ * Lower Port I/O for MD code under arch/armv7/sunxi.
+ * XXX see the comment in sxipiovar.h
  */
 int
-awpio_getcfg(int pin)
+sxipio_getcfg(int pin)
 {
-	struct awpio_softc *sc = awpio_sc;
+	struct sxipio_softc *sc = sxipio_sc;
 	uint32_t bit, data, off, reg, port;
 	int s;
 
@@ -252,9 +252,9 @@ awpio_getcfg(int pin)
 }
 
 void
-awpio_setcfg(int pin, int mux)
+sxipio_setcfg(int pin, int mux)
 {
-	struct awpio_softc *sc = awpio_sc;
+	struct sxipio_softc *sc = sxipio_sc;
 	uint32_t bit, cmask, mask, off, reg, port;
 	int s;
 
@@ -273,9 +273,9 @@ awpio_setcfg(int pin, int mux)
 }
 
 int
-awpio_getpin(int pin)
+sxipio_getpin(int pin)
 {
-	struct awpio_softc *sc = awpio_sc;
+	struct sxipio_softc *sc = sxipio_sc;
 	uint32_t bit, data, mask, reg, port;
 	int s;
 
@@ -294,9 +294,9 @@ awpio_getpin(int pin)
 }
 
 void
-awpio_setpin(int pin)
+sxipio_setpin(int pin)
 {
-	struct awpio_softc *sc = awpio_sc;
+	struct sxipio_softc *sc = sxipio_sc;
 	uint32_t bit, mask, reg, port;
 	int s;
 
@@ -313,9 +313,9 @@ awpio_setpin(int pin)
 }
 
 void
-awpio_clrpin(int pin)
+sxipio_clrpin(int pin)
 {
-	struct awpio_softc *sc = awpio_sc;
+	struct sxipio_softc *sc = sxipio_sc;
 	uint32_t bit, mask, reg, port;
 	int s;
 
@@ -332,9 +332,9 @@ awpio_clrpin(int pin)
 }
 
 int
-awpio_togglepin(int pin)
+sxipio_togglepin(int pin)
 {
-	struct awpio_softc *sc = awpio_sc;
+	struct sxipio_softc *sc = sxipio_sc;
 	uint32_t bit, data, mask, reg, port;
 	int s;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: allwinnerreg.h,v 1.1 2013/10/22 13:22:18 jasper Exp $	*/
+/*	$OpenBSD: sunxireg.h,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
 /*
  * Copyright (c) 2013 Artturi Alm
  *
@@ -105,5 +105,5 @@
 #define	GIC_SIZE		0x8000
 #define	CPUCONFG_ADDR		0x01c25c00 /* not in use */
 #define	CPUCONFG_SIZE		0x200
-#define	CPUCNTRS_ADDR		0x01c25200 /* used by awtimer */
+#define	CPUCNTRS_ADDR		0x01c25200 /* used by sxitimer */
 #define	CPUCNTRS_SIZE		0x200

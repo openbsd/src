@@ -1,4 +1,4 @@
-/*	$OpenBSD: a1xintc.h,v 1.1 2013/10/22 13:22:18 jasper Exp $ */
+/*	$OpenBSD: a1xintc.h,v 1.1 2013/10/23 17:08:47 jasper Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *

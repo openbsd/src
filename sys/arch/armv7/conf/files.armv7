@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.4 2013/10/22 13:22:20 jasper Exp $
+#	$OpenBSD: files.armv7,v 1.5 2013/10/23 17:08:47 jasper Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -57,6 +57,6 @@ include "dev/bluetooth/files.bluetooth"
 include "dev/gpio/files.gpio"
 
 # SoC includes
-include "arch/armv7/allwinner/files.allwinner"
 include "arch/armv7/imx/files.imx"
 include "arch/armv7/omap/files.omap"
+include "arch/armv7/sunxi/files.sunxi"

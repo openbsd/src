@@ -1,4 +1,4 @@
-/* $OpenBSD: awdog.c,v 1.1 2013/10/22 13:22:19 jasper Exp $ */
+/* $OpenBSD: sxidog.c,v 1.1 2013/10/23 17:08:48 jasper Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -27,10 +27,10 @@
 #include <machine/intr.h>
 #include <machine/bus.h>
 
-#include <armv7/allwinner/allwinnervar.h>
+#include <armv7/sunxi/sunxivar.h>
 
 /* XXX other way around than bus_space_subregion? */
-extern bus_space_handle_t awtimer_ioh;
+extern bus_space_handle_t sxitimer_ioh;
 
 /* registers */
 #define WDOG_CR			0x00
@@ -56,59 +56,59 @@ extern bus_space_handle_t awtimer_ioh;
 #define WDOG_RST_EN		(1 << 1) /* system reset */
 #define WDOG_EN			(1 << 0)
 
-struct awdog_softc {
+struct sxidog_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 };
 
-struct awdog_softc *awdog_sc = NULL;	/* for awdog_reset() */
+struct sxidog_softc *sxidog_sc = NULL;	/* for sxidog_reset() */
 
-void awdog_attach(struct device *, struct device *, void *);
-int awdog_callback(void *, int);
+void sxidog_attach(struct device *, struct device *, void *);
+int sxidog_callback(void *, int);
 #if 0
-int awdog_intr(void *);
+int sxidog_intr(void *);
 #endif
-void awdog_reset(void);
+void sxidog_reset(void);
 
-struct cfattach	awdog_ca = {
-	sizeof (struct awdog_softc), NULL, awdog_attach
+struct cfattach	sxidog_ca = {
+	sizeof (struct sxidog_softc), NULL, sxidog_attach
 };
 
-struct cfdriver awdog_cd = {
-	NULL, "awdog", DV_DULL
+struct cfdriver sxidog_cd = {
+	NULL, "sxidog", DV_DULL
 };
 
 void
-awdog_attach(struct device *parent, struct device *self, void *args)
+sxidog_attach(struct device *parent, struct device *self, void *args)
 {
-	struct aw_attach_args *aw = args;
-	struct awdog_softc *sc = (struct awdog_softc *)self;
+	struct sxi_attach_args *sxi = args;
+	struct sxidog_softc *sc = (struct sxidog_softc *)self;
 
-	sc->sc_iot = aw->aw_iot;
-	if (bus_space_subregion(sc->sc_iot, awtimer_ioh,
-	    aw->aw_dev->mem[0].addr, aw->aw_dev->mem[0].size, &sc->sc_ioh))
-		panic("awdog_attach: bus_space_subregion failed!");
+	sc->sc_iot = sxi->sxi_iot;
+	if (bus_space_subregion(sc->sc_iot, sxitimer_ioh,
+	    sxi->sxi_dev->mem[0].addr, sxi->sxi_dev->mem[0].size, &sc->sc_ioh))
+		panic("sxidog_attach: bus_space_subregion failed!");
 
 #ifdef DEBUG
 	printf(": ctrl %x mode %x\n", AWREAD4(sc, WDOG_CR),
 	    AWREAD4(sc, WDOG_MR));
 #endif
 #if 0
-	(void)intc_intr_establish(aw->aw_dev->irq[0], IPL_HIGH, /* XXX */
-	    awdog_intr, sc, sc->sc_dev.dv_xname);
+	(void)intc_intr_establish(sxi->sxi_dev->irq[0], IPL_HIGH, /* XXX */
+	    sxidog_intr, sc, sc->sc_dev.dv_xname);
 #endif
-	awdog_sc = sc;
+	sxidog_sc = sc;
 
-	wdog_register(awdog_callback, sc);
+	wdog_register(sxidog_callback, sc);
 
 	printf("\n");
 }
 
 int
-awdog_callback(void *arg, int period)
+sxidog_callback(void *arg, int period)
 {
-	struct awdog_softc *sc = (struct awdog_softc *)arg;
+	struct sxidog_softc *sc = (struct sxidog_softc *)arg;
 
 	if (period > 0x0b)
 		period = 0x0b;
@@ -129,9 +129,9 @@ awdog_callback(void *arg, int period)
 
 #if 0
 int
-awdog_intr(void *arg)
+sxidog_intr(void *arg)
 {
-	struct awdog_softc *sc = (struct awdog_softc *)arg;
+	struct sxidog_softc *sc = (struct sxidog_softc *)arg;
 
 	/* XXX */
 	AWWRITE4(sc, WDOG_CR, WDOG_CTRL_KEY | WDOG_RESTART);
@@ -140,13 +140,13 @@ awdog_intr(void *arg)
 #endif
 
 void
-awdog_reset(void)
+sxidog_reset(void)
 {
-	if (awdog_sc == NULL)
+	if (sxidog_sc == NULL)
 		return;
 
-	AWWRITE4(awdog_sc, WDOG_MR, WDOG_INTV_VALUE(0x00) |
+	AWWRITE4(sxidog_sc, WDOG_MR, WDOG_INTV_VALUE(0x00) |
 	    WDOG_RST_EN | WDOG_EN);
-	AWWRITE4(awdog_sc, WDOG_CR, WDOG_CTRL_KEY | WDOG_RESTART);
+	AWWRITE4(sxidog_sc, WDOG_CR, WDOG_CTRL_KEY | WDOG_RESTART);
 	delay(900000);
 }
