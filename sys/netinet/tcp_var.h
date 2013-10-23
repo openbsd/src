@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.103 2013/10/21 08:42:24 phessler Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.104 2013/10/23 19:49:11 deraadt Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -252,9 +252,7 @@ struct tcp_opt_info {
 union syn_cache_sa {
 	struct sockaddr sa;
 	struct sockaddr_in sin;
-#if 1 /*def INET6*/
 	struct sockaddr_in6 sin6;
-#endif
 };
 
 struct syn_cache {
