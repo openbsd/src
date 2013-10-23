@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.117 2013/10/21 12:27:16 deraadt Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.118 2013/10/23 19:57:50 deraadt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -925,8 +925,7 @@ ip6_unknown_opt(u_int8_t *optp, struct mbuf *m, int off)
 void
 ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 {
-#define IS2292(x, y)	((in6p->in6p_flags & IN6P_RFC2292) ? (x) : (y))
-# define in6p_flags	inp_flags
+#define IS2292(x, y)	((in6p->inp_flags & IN6P_RFC2292) ? (x) : (y))
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 
 #ifdef SO_TIMESTAMP
@@ -942,7 +941,7 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 #endif
 
 	/* RFC 2292 sec. 5 */
-	if ((in6p->in6p_flags & IN6P_PKTINFO) != 0) {
+	if ((in6p->inp_flags & IN6P_PKTINFO) != 0) {
 		struct in6_pktinfo pi6;
 		bcopy(&ip6->ip6_dst, &pi6.ipi6_addr, sizeof(struct in6_addr));
 		if (IN6_IS_SCOPE_EMBED(&pi6.ipi6_addr))
@@ -956,7 +955,7 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 			mp = &(*mp)->m_next;
 	}
 
-	if ((in6p->in6p_flags & IN6P_HOPLIMIT) != 0) {
+	if ((in6p->inp_flags & IN6P_HOPLIMIT) != 0) {
 		int hlim = ip6->ip6_hlim & 0xff;
 		*mp = sbcreatecontrol((caddr_t) &hlim, sizeof(int),
 		    IS2292(IPV6_2292HOPLIMIT, IPV6_HOPLIMIT), IPPROTO_IPV6);
@@ -964,7 +963,7 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 			mp = &(*mp)->m_next;
 	}
 
-	if ((in6p->in6p_flags & IN6P_TCLASS) != 0) {
+	if ((in6p->inp_flags & IN6P_TCLASS) != 0) {
 		u_int32_t flowinfo;
 		int tclass;
 
@@ -985,7 +984,7 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 	 * returned to normal user.
 	 * See also RFC 2292 section 6 (or RFC 3542 section 8).
 	 */
-	if ((in6p->in6p_flags & IN6P_HOPOPTS) != 0) {
+	if ((in6p->inp_flags & IN6P_HOPOPTS) != 0) {
 		/*
 		 * Check if a hop-by-hop options header is contatined in the
 		 * received packet, and if so, store the options as ancillary
@@ -1030,7 +1029,7 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 	}
 
 	/* IPV6_DSTOPTS and IPV6_RTHDR socket options */
-	if ((in6p->in6p_flags & (IN6P_RTHDR | IN6P_DSTOPTS)) != 0) {
+	if ((in6p->inp_flags & (IN6P_RTHDR | IN6P_DSTOPTS)) != 0) {
 		struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 		int nxt = ip6->ip6_nxt, off = sizeof(struct ip6_hdr);
 
@@ -1078,7 +1077,7 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 
 			switch (nxt) {
 			case IPPROTO_DSTOPTS:
-				if (!(in6p->in6p_flags & IN6P_DSTOPTS))
+				if (!(in6p->inp_flags & IN6P_DSTOPTS))
 					break;
 
 				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
@@ -1089,7 +1088,7 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 				break;
 
 			case IPPROTO_ROUTING:
-				if (!(in6p->in6p_flags & IN6P_RTHDR))
+				if (!(in6p->inp_flags & IN6P_RTHDR))
 					break;
 
 				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
@@ -1125,7 +1124,6 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 	  loopend:
 	  	;
 	}
-# undef in6p_flags
 }
 
 /*

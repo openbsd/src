@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.133 2013/10/21 12:27:14 deraadt Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.134 2013/10/23 19:57:50 deraadt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -101,33 +101,6 @@
 #if NPF > 0
 #include <net/pfvar.h>
 #endif
-
-/* inpcb members */
-#define in6pcb		inpcb
-#define in6p_laddr	inp_laddr6
-#define in6p_faddr	inp_faddr6
-#define in6p_icmp6filt	inp_icmp6filt
-#define in6p_route	inp_route
-#define in6p_socket	inp_socket
-#define in6p_flags	inp_flags
-#define in6p_moptions	inp_moptions6
-#define in6p_outputopts	inp_outputopts6
-#define in6p_ip6	inp_ipv6
-#define in6p_flowinfo	inp_flowinfo
-#define in6p_sp		inp_sp
-#define in6p_next	inp_next
-#define in6p_prev	inp_prev
-/* macro names */
-#define sotoin6pcb	sotoinpcb
-/* function names */
-#define in6_pcbdetach	in_pcbdetach
-#define in6_rtchange	in_rtchange
-
-/*
- * for KAME src sync over BSD*'s.  XXX: FreeBSD (>=3) are VERY different from
- * others...
- */
-#define in6p_ip6_nxt	inp_ipv6.ip6_nxt
 
 struct icmp6stat icmp6stat;
 
@@ -1883,8 +1856,8 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 {
 	struct mbuf *m = *mp;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-	struct in6pcb *in6p;
-	struct in6pcb *last = NULL;
+	struct inpcb *in6p;
+	struct inpcb *last = NULL;
 	struct sockaddr_in6 rip6src;
 	struct icmp6_hdr *icmp6;
 	struct mbuf *opts = NULL;
@@ -1902,9 +1875,9 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 	(void)in6_recoverscope(&rip6src, &ip6->ip6_src, m->m_pkthdr.rcvif);
 
 	CIRCLEQ_FOREACH(in6p, &rawin6pcbtable.inpt_queue, inp_queue) {
-		if (!(in6p->in6p_flags & INP_IPV6))
+		if (!(in6p->inp_flags & INP_IPV6))
 			continue;
-		if (in6p->in6p_ip6_nxt != IPPROTO_ICMPV6)
+		if (in6p->inp_ipv6.ip6_nxt != IPPROTO_ICMPV6)
 			continue;
 #if NPF > 0
 		if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
@@ -1913,53 +1886,53 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 			/* XXX rdomain support */
 			if ((divert = pf_find_divert(m)) == NULL)
 				continue;
-			if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr,
+			if (!IN6_ARE_ADDR_EQUAL(&in6p->inp_laddr6,
 			    &divert->addr.v6))
 				continue;
 		} else
 #endif
-		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) &&
-		   !IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, &ip6->ip6_dst))
+		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->inp_laddr6) &&
+		   !IN6_ARE_ADDR_EQUAL(&in6p->inp_laddr6, &ip6->ip6_dst))
 			continue;
-		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr) &&
-		   !IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, &ip6->ip6_src))
+		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->inp_faddr6) &&
+		   !IN6_ARE_ADDR_EQUAL(&in6p->inp_faddr6, &ip6->ip6_src))
 			continue;
-		if (in6p->in6p_icmp6filt
+		if (in6p->inp_icmp6filt
 		    && ICMP6_FILTER_WILLBLOCK(icmp6->icmp6_type,
-				 in6p->in6p_icmp6filt))
+				 in6p->inp_icmp6filt))
 			continue;
 		if (last) {
 			struct	mbuf *n;
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
-				if (last->in6p_flags & IN6P_CONTROLOPTS)
+				if (last->inp_flags & IN6P_CONTROLOPTS)
 					ip6_savecontrol(last, n, &opts);
 				/* strip intermediate headers */
 				m_adj(n, off);
-				if (sbappendaddr(&last->in6p_socket->so_rcv,
+				if (sbappendaddr(&last->inp_socket->so_rcv,
 				    sin6tosa(&rip6src), n, opts) == 0) {
 					/* should notify about lost packet */
 					m_freem(n);
 					if (opts)
 						m_freem(opts);
 				} else
-					sorwakeup(last->in6p_socket);
+					sorwakeup(last->inp_socket);
 				opts = NULL;
 			}
 		}
 		last = in6p;
 	}
 	if (last) {
-		if (last->in6p_flags & IN6P_CONTROLOPTS)
+		if (last->inp_flags & IN6P_CONTROLOPTS)
 			ip6_savecontrol(last, m, &opts);
 		/* strip intermediate headers */
 		m_adj(m, off);
-		if (sbappendaddr(&last->in6p_socket->so_rcv,
+		if (sbappendaddr(&last->inp_socket->so_rcv,
 		    sin6tosa(&rip6src), m, opts) == 0) {
 			m_freem(m);
 			if (opts)
 				m_freem(opts);
 		} else
-			sorwakeup(last->in6p_socket);
+			sorwakeup(last->inp_socket);
 	} else {
 		m_freem(m);
 		ip6stat.ip6s_delivered--;
@@ -2642,11 +2615,6 @@ fail:
 		m_freem(m0);
 }
 
-/* NRL PCB */
-#define sotoin6pcb	sotoinpcb
-#define in6pcb		inpcb
-#define in6p_icmp6filt	inp_icmp6filt
-
 /*
  * ICMPv6 socket option processing.
  */
@@ -2655,7 +2623,7 @@ icmp6_ctloutput(int op, struct socket *so, int level, int optname,
     struct mbuf **mp)
 {
 	int error = 0;
-	struct in6pcb *in6p = sotoin6pcb(so);
+	struct inpcb *in6p = sotoinpcb(so);
 	struct mbuf *m = *mp;
 
 	if (level != IPPROTO_ICMPV6) {
@@ -2676,11 +2644,11 @@ icmp6_ctloutput(int op, struct socket *so, int level, int optname,
 				break;
 			}
 			p = mtod(m, struct icmp6_filter *);
-			if (!p || !in6p->in6p_icmp6filt) {
+			if (!p || !in6p->inp_icmp6filt) {
 				error = EINVAL;
 				break;
 			}
-			bcopy(p, in6p->in6p_icmp6filt,
+			bcopy(p, in6p->inp_icmp6filt,
 				sizeof(struct icmp6_filter));
 			error = 0;
 			break;
@@ -2700,14 +2668,14 @@ icmp6_ctloutput(int op, struct socket *so, int level, int optname,
 		    {
 			struct icmp6_filter *p;
 
-			if (!in6p->in6p_icmp6filt) {
+			if (!in6p->inp_icmp6filt) {
 				error = EINVAL;
 				break;
 			}
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);
 			m->m_len = sizeof(struct icmp6_filter);
 			p = mtod(m, struct icmp6_filter *);
-			bcopy(in6p->in6p_icmp6filt, p,
+			bcopy(in6p->inp_icmp6filt, p,
 				sizeof(struct icmp6_filter));
 			error = 0;
 			break;
@@ -2722,11 +2690,6 @@ icmp6_ctloutput(int op, struct socket *so, int level, int optname,
 
 	return (error);
 }
-
-/* NRL PCB */
-#undef sotoin6pcb
-#undef in6pcb
-#undef in6p_icmp6filt
 
 /*
  * Perform rate limit check.

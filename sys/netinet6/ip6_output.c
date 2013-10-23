@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.147 2013/10/21 12:40:39 deraadt Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.148 2013/10/23 19:57:50 deraadt Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2034,14 +2034,14 @@ ip6_raw_ctloutput(int op, struct socket *so, int level, int optname,
 				if (optval != icmp6off)
 					error = EINVAL;
 			} else
-				inp->in6p_cksum = optval;
+				inp->inp_cksum6 = optval;
 			break;
 
 		case PRCO_GETOPT:
 			if (so->so_proto->pr_protocol == IPPROTO_ICMPV6)
 				optval = icmp6off;
 			else
-				optval = inp->in6p_cksum;
+				optval = inp->inp_cksum6;
 
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);
 			m->m_len = sizeof(int);

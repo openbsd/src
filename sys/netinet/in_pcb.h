@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.80 2013/10/20 11:03:00 phessler Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.81 2013/10/23 19:57:50 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -142,9 +142,9 @@ struct inpcb {
 	struct ipsec_ref *inp_ipsec_remoteauth;
 #define	inp_flowinfo	inp_hu.hu_ipv6.ip6_flow
 
-	int	in6p_cksum;
+	int	inp_cksum6;
 #ifndef _KERNEL
-#define inp_csumoffset	in6p_cksum
+#define inp_csumoffset	inp_cksum6
 #endif
 	struct	icmp6_filter *inp_icmp6filt;
 	struct	pf_state_key *inp_pf_sk;
@@ -190,12 +190,8 @@ struct inpcbtable {
  */
 #define	INP_IPV6	0x100	/* sotopf(inp->inp_socket) == PF_INET6 */
 
-#if 1	/*KAME*/
 /*
- * Flags in in6p_flags
- * We define KAME's original flags in higher 16 bits as much as possible
- * for compatibility with *bsd*s.
- * XXX: Should IN6P_HIGHPORT and IN6P_LOWPORT be moved as well?
+ * Flags in inp_flags for IPV6
  */
 #define IN6P_HIGHPORT		INP_HIGHPORT	/* user wants "high" port */
 #define IN6P_LOWPORT		INP_LOWPORT	/* user wants "low" port */
@@ -219,7 +215,6 @@ struct inpcbtable {
 				 IN6P_DSTOPTS|IN6P_RTHDR|IN6P_RTHDRDSTOPTS|\
 				 IN6P_TCLASS|IN6P_AUTOFLOWLABEL|IN6P_RFC2292|\
 				 IN6P_MTU|IN6P_RECVDSTPORT)
-#endif
 
 #define	INPLOOKUP_WILDCARD	1
 #define	INPLOOKUP_SETLOCAL	2

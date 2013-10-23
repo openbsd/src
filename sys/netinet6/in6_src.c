@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.34 2013/10/21 08:42:25 phessler Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.35 2013/10/23 19:57:50 deraadt Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -572,20 +572,16 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
  *     hop limit of the interface specified by router advertisement.
  * 3. The system default hoplimit.
 */
-#define in6pcb		inpcb
-#define in6p_hops	inp_hops	
 int
-in6_selecthlim(struct in6pcb *in6p, struct ifnet *ifp)
+in6_selecthlim(struct inpcb *in6p, struct ifnet *ifp)
 {
-	if (in6p && in6p->in6p_hops >= 0)
-		return (in6p->in6p_hops);
+	if (in6p && in6p->inp_hops >= 0)
+		return (in6p->inp_hops);
 	else if (ifp)
 		return (ND_IFINFO(ifp)->chlim);
 	else
 		return (ip6_defhlim);
 }
-#undef in6pcb
-#undef in6p_hops
 
 /*
  * generate kernel-internal form (scopeid embedded into s6_addr16[1]).
@@ -607,8 +603,6 @@ in6_embedscope(in6, sin6, in6p, ifpp)
 	struct in6_addr *in6;
 	const struct sockaddr_in6 *sin6;
 	struct inpcb *in6p;
-#define in6p_outputopts	inp_outputopts6
-#define in6p_moptions	inp_moptions6
 	struct ifnet **ifpp;
 {
 	struct ifnet *ifp = NULL;
@@ -631,17 +625,17 @@ in6_embedscope(in6, sin6, in6p, ifpp)
 		 * KAME assumption: link id == interface id
 		 */
 
-		if (in6p && in6p->in6p_outputopts &&
-		    (pi = in6p->in6p_outputopts->ip6po_pktinfo) &&
+		if (in6p && in6p->inp_outputopts6 &&
+		    (pi = in6p->inp_outputopts6->ip6po_pktinfo) &&
 		    pi->ipi6_ifindex) {
 			ifp = if_get(pi->ipi6_ifindex);
 			if (ifp == NULL)
 				return ENXIO;  /* XXX EINVAL? */
 			in6->s6_addr16[1] = htons(pi->ipi6_ifindex);
 		} else if (in6p && IN6_IS_ADDR_MULTICAST(in6) &&
-			   in6p->in6p_moptions &&
-			   in6p->in6p_moptions->im6o_multicast_ifp) {
-			ifp = in6p->in6p_moptions->im6o_multicast_ifp;
+			   in6p->inp_moptions6 &&
+			   in6p->inp_moptions6->im6o_multicast_ifp) {
+			ifp = in6p->inp_moptions6->im6o_multicast_ifp;
 			in6->s6_addr16[1] = htons(ifp->if_index);
 		} else if (scopeid) {
 			ifp = if_get(scopeid);
@@ -657,8 +651,6 @@ in6_embedscope(in6, sin6, in6p, ifpp)
 
 	return 0;
 }
-#undef in6p_outputopts
-#undef in6p_moptions
 
 /*
  * generate standard sockaddr_in6 from embedded form.
