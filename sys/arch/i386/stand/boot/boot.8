@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.55 2012/09/27 12:26:28 jmc Exp $
+.\"	$OpenBSD: boot.8,v 1.56 2013/10/23 05:05:19 mlarkin Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: September 27 2012 $
+.Dd $Mdocdate: October 23 2013 $
 .Dt BOOT 8 i386
 .Os
 .Sh NAME
@@ -211,7 +211,7 @@ Otherwise the arguments specify how to modify the
 memory configuration.
 They take the form of:
 .Pp
-.Dl =<size>[KMG]
+.Dl =<size>[KkMmGg]
 .Dl [+-]<size>@<address>
 .Pp
 Meaning to add(+), exempt(-) or limit(=) the amount of memory specified by
