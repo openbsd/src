@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.62 2013/10/17 16:27:40 bluhm Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.63 2013/10/23 15:12:42 mpi Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -95,7 +95,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_var.h>
 #endif
 #include <netinet/if_ether.h>
 #include <net/if_fddi.h>

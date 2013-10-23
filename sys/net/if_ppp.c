@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.70 2013/10/19 14:46:30 mpi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.71 2013/10/23 15:12:42 mpi Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -128,7 +128,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #else
 #ifdef _KERNEL

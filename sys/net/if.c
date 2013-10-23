@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.273 2013/10/21 08:44:13 phessler Exp $	*/
+/*	$OpenBSD: if.c,v 1.274 2013/10/23 15:12:42 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -92,7 +92,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_var.h>
 #include <netinet/if_ether.h>
 #include <netinet/igmp.h>
 #ifdef MROUTING

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.45 2013/10/17 16:27:44 bluhm Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.46 2013/10/23 15:12:42 mpi Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -55,7 +55,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_var.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>

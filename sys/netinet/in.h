@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.99 2013/10/23 13:39:35 mpi Exp $	*/
+/*	$OpenBSD: in.h,v 1.100 2013/10/23 15:12:42 mpi Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -824,6 +824,8 @@ in_cksum_addword(u_int16_t a, u_int16_t b)
 	return (sum);
 }
 
+extern	   int inetctlerrmap[];
+extern	   struct ifqueue ipintrq;	/* ip packet input queue */
 extern	   struct in_addr zeroin_addr;
 
 int	   in_broadcast(struct in_addr, struct ifnet *, u_int);
@@ -832,9 +834,13 @@ int	   in_cksum(struct mbuf *, int);
 int	   in4_cksum(struct mbuf *, u_int8_t, int, int);
 void	   in_delayed_cksum(struct mbuf *);
 int	   in_localaddr(struct in_addr, u_int);
-char	  *inet_ntoa(struct in_addr);
 void	   in_proto_cksum_out(struct mbuf *, struct ifnet *);
 void	   in_ifdetach(struct ifnet *);
+int	   in_mask2len(struct in_addr *);
+
+char	  *inet_ntoa(struct in_addr);
+int	   inet_nat64(int, const void *, void *, const void *, u_int8_t);
+int	   inet_nat46(int, const void *, void *, const void *, u_int8_t);
 
 #define	in_hosteq(s,t)	((s).s_addr == (t).s_addr)
 #define	in_nullhost(x)	((x).s_addr == INADDR_ANY)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.25 2013/10/23 13:39:35 mpi Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.26 2013/10/23 15:12:42 mpi Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -83,9 +83,6 @@ struct	in_aliasreq {
 #ifdef	_KERNEL
 TAILQ_HEAD(in_ifaddrhead, in_ifaddr);
 extern	struct	in_ifaddrhead in_ifaddr;
-extern	struct	ifqueue	ipintrq;		/* ip packet input queue */
-extern	int	inetctlerrmap[];
-
 
 /*
  * Macro for finding the interface (ifnet structure) corresponding to one
@@ -182,10 +179,6 @@ struct	in_multi *in_addmulti(struct in_addr *, struct ifnet *);
 void	in_delmulti(struct in_multi *);
 void	in_ifscrub(struct ifnet *, struct in_ifaddr *);
 int	in_control(struct socket *, u_long, caddr_t, struct ifnet *);
-
-int	inet_nat64(int, const void *, void *, const void *, u_int8_t);
-int	inet_nat46(int, const void *, void *, const void *, u_int8_t);
-int	in_mask2len(struct in_addr *);
 #endif
 
 #endif /* _NETINET_IN_VAR_H_ */
