@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.8 2013/10/22 14:06:08 bcallah Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.9 2013/10/23 09:35:36 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1120,15 +1120,11 @@ cn30xxgmx_rgmii_set_filter(struct cn30xxgmx_port_softc *sc)
 		while (enm != NULL) {
 			int i;
 
-			dprintf("%d: lo(%02x:%02x:%02x:%02x:%02x:%02x) - "
-			    "hi(%02x:%02x:%02x:%02x:%02x:%02x)\n",
+			dprintf("%d: %02x:%02x:%02x:%02x:%02x:%02x\n"
 			    multi + 1,
 			    enm->enm_addrlo[0], enm->enm_addrlo[1],
 			    enm->enm_addrlo[2], enm->enm_addrlo[3],
-			    enm->enm_addrlo[4], enm->enm_addrlo[5],
-			    enm->enm_addrhi[0], enm->enm_addrhi[1],
-			    enm->enm_addrhi[2], enm->enm_addrhi[3],
-			    enm->enm_addrhi[4], enm->enm_addrhi[5]);
+			    enm->enm_addrlo[4], enm->enm_addrlo[5]);
 			multi++;
 
 			SET(cam_en, 1ULL << multi); /* XXX */
