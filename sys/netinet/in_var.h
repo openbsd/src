@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.24 2013/10/18 09:04:03 mpi Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.25 2013/10/23 13:39:35 mpi Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -85,7 +85,6 @@ TAILQ_HEAD(in_ifaddrhead, in_ifaddr);
 extern	struct	in_ifaddrhead in_ifaddr;
 extern	struct	ifqueue	ipintrq;		/* ip packet input queue */
 extern	int	inetctlerrmap[];
-void	in_socktrim(struct sockaddr_in *);
 
 
 /*

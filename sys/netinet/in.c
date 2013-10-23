@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.87 2013/10/18 09:04:02 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.88 2013/10/23 13:39:35 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -87,6 +87,7 @@
 
 #ifdef INET
 
+void in_socktrim(struct sockaddr_in *);
 void in_len2mask(struct in_addr *, int);
 int in_lifaddr_ioctl(struct socket *, u_long, caddr_t,
 	struct ifnet *);
