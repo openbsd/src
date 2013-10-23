@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.5 2013/10/14 03:11:27 dlg Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.6 2013/10/23 01:15:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -148,6 +148,20 @@ struct vmwpvs_sge {
 	u_int32_t		flags;
 } __packed;
 
+struct vmwpvs_ring_msg {
+	u_int32_t		type;
+	u_int32_t		__args[31];
+} __packed;
+
+struct vmwpvs_ring_msg_dev {
+	u_int32_t		type;
+	u_int32_t		bus;
+	u_int32_t		target;
+	u_int8_t		lun[8];
+
+	u_int32_t		__pad[27];
+} __packed;
+
 struct vmwpvs_cfg_cmd {
 	u_int64_t		cmp_addr;
 	u_int32_t		pg_addr;
@@ -156,13 +170,20 @@ struct vmwpvs_cfg_cmd {
 	u_int32_t		__reserved;
 } __packed;
 
-#define VMWPVS_MAX_RING_PAGES	32
+#define VMWPVS_MAX_RING_PAGES		32
 struct vmwpvs_setup_rings_cmd {
 	u_int32_t		req_pages;
 	u_int32_t		cmp_pages;
 	u_int64_t		state_ppn;
 	u_int64_t		req_page_ppn[VMWPVS_MAX_RING_PAGES];
 	u_int64_t		cmp_page_ppn[VMWPVS_MAX_RING_PAGES];
+} __packed;
+
+#define VMWPVS_MAX_MSG_RING_PAGES	16
+struct vmwpvs_setup_rings_msg {
+	u_int32_t		msg_pages;
+	u_int32_t		__reserved;
+	u_int64_t		msg_page_ppn[VMWPVS_MAX_MSG_RING_PAGES];
 } __packed;
 
 #define VMWPVS_CMD_FIRST		0
