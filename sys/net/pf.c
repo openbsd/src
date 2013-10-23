@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.852 2013/10/23 15:12:42 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.853 2013/10/23 16:13:54 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4980,6 +4980,8 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 					pf_change_ap(pd, pd2.dst,
 					    &uh.uh_sum, &nk->addr[pd2.didx],
 					    nk->port[didx], nk->af);
+					uh.uh_sport = nk->port[sidx];
+					uh.uh_dport = nk->port[didx];
 					m_copyback(pd2.m, pd2.off, sizeof(uh),
 					    &uh, M_NOWAIT);
 					pd->m->m_pkthdr.rdomain = nk->rdomain;
