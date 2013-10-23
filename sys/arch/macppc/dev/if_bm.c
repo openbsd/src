@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.27 2009/08/25 20:39:36 miod Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.28 2013/10/23 10:31:19 mpi Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -847,6 +847,7 @@ bmac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 void
 bmac_setladrf(struct bmac_softc *sc)
 {
+	struct arpcom *ac = &sc->arpcom;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -867,28 +868,17 @@ bmac_setladrf(struct bmac_softc *sc)
 		return;
 	}
 
+	if (ac->ac_multirangecnt > 0)
+		ifp->if_flags |= IFF_ALLMULTI;
+
 	if (ifp->if_flags & IFF_ALLMULTI) {
 		hash[3] = hash[2] = hash[1] = hash[0] = 0xffff;
 		goto chipit;
 	}
 
 	hash[3] = hash[2] = hash[1] = hash[0] = 0;
-	ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
+	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			/*
-			 * We must listen to a range of multicast addresses.
-			 * For now, just accept all multicasts, rather than
-			 * trying to set only those filter bits needed to match
-			 * the range.  (At this time, the only use of address
-			 * ranges is for IP multicast routing, for which the
-			 * range is big enough to require all bits set.)
-			 */
-			hash[3] = hash[2] = hash[1] = hash[0] = 0xffff;
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto chipit;
-		}
-
 		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
 
 		/* Just want the 6 most significant bits. */
