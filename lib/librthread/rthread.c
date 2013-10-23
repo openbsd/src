@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.73 2013/07/30 15:31:01 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.74 2013/10/23 05:59:46 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -461,7 +461,27 @@ fail1:
 int
 pthread_kill(pthread_t thread, int sig)
 {
-	return (kill(thread->tid, sig) == 0 ? 0 : errno);
+	pid_t tid;
+	int ret;
+
+	/* killing myself?  do it without locking */
+	if (thread == TCB_THREAD())
+		return (kill(thread->tid, sig) == 0 ? 0 : errno);
+
+	/* block the other thread from exiting */
+	_spinlock(&thread->flags_lock);
+	if (thread->flags & THREAD_DYING)
+		ret = (thread->flags & THREAD_DETACHED) ? ESRCH : 0;
+	else {
+		tid = thread->tid;
+		if (tid == 0) {
+			/* should be impossible without DYING being set */
+			ret = ESRCH;
+		} else
+			ret = kill(tid, sig) == 0 ? 0 : errno;
+	}
+	_spinunlock(&thread->flags_lock);
+	return (ret);
 }
 
 int
@@ -473,10 +493,27 @@ pthread_equal(pthread_t t1, pthread_t t2)
 int
 pthread_cancel(pthread_t thread)
 {
+	pid_t tid;
 
-	_rthread_setflag(thread, THREAD_CANCELED);
-	if (thread->flags & THREAD_CANCEL_ENABLE)
-		kill(thread->tid, SIGTHR);
+	_spinlock(&thread->flags_lock);
+	tid = thread->tid;
+	if ((thread->flags & (THREAD_DYING | THREAD_CANCELED)) == 0 &&
+	    tid != 0) {
+		thread->flags |= THREAD_CANCELED;
+
+		if (thread->flags & THREAD_CANCEL_ENABLE) {
+
+			/* canceling myself?  release the lock first */
+			if (thread == TCB_THREAD()) {
+				_spinunlock(&thread->flags_lock);
+				kill(tid, SIGTHR);
+				return (0);
+			}
+
+			kill(tid, SIGTHR);
+		}
+	}
+	_spinunlock(&thread->flags_lock);
 	return (0);
 }
 
