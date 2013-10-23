@@ -1,4 +1,4 @@
-/* $OpenBSD: sxidog.c,v 1.1 2013/10/23 17:08:48 jasper Exp $ */
+/* $OpenBSD: sxidog.c,v 1.2 2013/10/23 18:01:52 jasper Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -91,8 +91,8 @@ sxidog_attach(struct device *parent, struct device *self, void *args)
 		panic("sxidog_attach: bus_space_subregion failed!");
 
 #ifdef DEBUG
-	printf(": ctrl %x mode %x\n", AWREAD4(sc, WDOG_CR),
-	    AWREAD4(sc, WDOG_MR));
+	printf(": ctrl %x mode %x\n", SXIREAD4(sc, WDOG_CR),
+	    SXIREAD4(sc, WDOG_MR));
 #endif
 #if 0
 	(void)intc_intr_establish(sxi->sxi_dev->irq[0], IPL_HIGH, /* XXX */
@@ -119,10 +119,10 @@ sxidog_callback(void *arg, int period)
 	 * to the user manual, so just set new timeout and enable it.
 	 * XXX 
 	 */
-	AWWRITE4(sc, WDOG_MR, WDOG_EN | WDOG_RST_EN |
+	SXIWRITE4(sc, WDOG_MR, WDOG_EN | WDOG_RST_EN |
 	    WDOG_INTV_VALUE(period));
 	/* reset */
-	AWWRITE4(sc, WDOG_CR, WDOG_CTRL_KEY | WDOG_RESTART);
+	SXIWRITE4(sc, WDOG_CR, WDOG_CTRL_KEY | WDOG_RESTART);
 	
 	return period;
 }
@@ -134,7 +134,7 @@ sxidog_intr(void *arg)
 	struct sxidog_softc *sc = (struct sxidog_softc *)arg;
 
 	/* XXX */
-	AWWRITE4(sc, WDOG_CR, WDOG_CTRL_KEY | WDOG_RESTART);
+	SXIWRITE4(sc, WDOG_CR, WDOG_CTRL_KEY | WDOG_RESTART);
 	return 1;
 }
 #endif
@@ -145,8 +145,8 @@ sxidog_reset(void)
 	if (sxidog_sc == NULL)
 		return;
 
-	AWWRITE4(sxidog_sc, WDOG_MR, WDOG_INTV_VALUE(0x00) |
+	SXIWRITE4(sxidog_sc, WDOG_MR, WDOG_INTV_VALUE(0x00) |
 	    WDOG_RST_EN | WDOG_EN);
-	AWWRITE4(sxidog_sc, WDOG_CR, WDOG_CTRL_KEY | WDOG_RESTART);
+	SXIWRITE4(sxidog_sc, WDOG_CR, WDOG_CTRL_KEY | WDOG_RESTART);
 	delay(900000);
 }

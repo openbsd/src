@@ -1,4 +1,4 @@
-/*	$OpenBSD: a1xintc.c,v 1.1 2013/10/23 17:08:47 jasper Exp $	*/
+/*	$OpenBSD: a1xintc.c,v 1.2 2013/10/23 18:01:52 jasper Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -318,9 +318,9 @@ intc_irq_handler(void *frame)
 	if (irq == 0)
 		return;
 	if (irq == 1)
-		sxipio_togglepin(AWPIO_LED_BLUE);
+		sxipio_togglepin(SXIPIO_LED_BLUE);
 
-	sxipio_setpin(AWPIO_LED_GREEN);
+	sxipio_setpin(SXIPIO_LED_GREEN);
 
 	prio = intc_handler[irq].iq_irq;
 	s = intc_splraise(prio);
@@ -356,7 +356,7 @@ intc_irq_handler(void *frame)
 	}
 	intc_splx(s);
 
-	sxipio_clrpin(AWPIO_LED_GREEN);
+	sxipio_clrpin(SXIPIO_LED_GREEN);
 }
 
 void *

@@ -32,16 +32,16 @@
 #include <armv7/sunxi/sxiccmuvar.h>
 #include <armv7/sunxi/sxipiovar.h>
 
-#define	AWAHCI_CAP	0x0000
-#define	AWAHCI_GHC	0x0004
-#define	AWAHCI_PI	0x000c
-#define	AWAHCI_PHYCS0	0x00c0
-#define	AWAHCI_PHYCS1	0x00c4
-#define	AWAHCI_PHYCS2	0x00c8
-#define	AWAHCI_TIMER1MS	0x00e0
-#define	AWAHCI_RWC	0x00fc
-#define	AWAHCI_TIMEOUT	0x100000
-#define AWAHCI_PWRPIN	40
+#define	SXIAHCI_CAP	0x0000
+#define	SXIAHCI_GHC	0x0004
+#define	SXIAHCI_PI	0x000c
+#define	SXIAHCI_PHYCS0	0x00c0
+#define	SXIAHCI_PHYCS1	0x00c4
+#define	SXIAHCI_PHYCS2	0x00c8
+#define	SXIAHCI_TIMER1MS	0x00e0
+#define	SXIAHCI_RWC	0x00fc
+#define	SXIAHCI_TIMEOUT	0x100000
+#define SXIAHCI_PWRPIN	40
 
 void	sxiahci_attach(struct device *, struct device *, void *);
 int	sxiahci_detach(struct device *, int);
@@ -92,57 +92,57 @@ sxiahci_attach(struct device *parent, struct device *self, void *args)
 	delay(5000);
 
 	/* XXX setup magix */
-	AWWRITE4(sc, AWAHCI_RWC, 0);
+	SXIWRITE4(sc, SXIAHCI_RWC, 0);
 	delay(10);
 
-	AWSET4(sc, AWAHCI_PHYCS1, 1 << 19);
+	SXISET4(sc, SXIAHCI_PHYCS1, 1 << 19);
 	delay(10);
 
-	AWCMS4(sc, AWAHCI_PHYCS0, 1 << 25,
+	SXICMS4(sc, SXIAHCI_PHYCS0, 1 << 25,
 	    1 << 23 | 1 << 24 | 1 << 18 | 1 << 26);
 	delay(10);
 
-	AWCMS4(sc, AWAHCI_PHYCS1,
+	SXICMS4(sc, SXIAHCI_PHYCS1,
 	    1 << 16 | 1 << 12 | 1 << 11 | 1 << 8 | 1 << 6,
 	    1 << 17 | 1 << 10 | 1 << 9 | 1 << 7);
 	delay(10);
 
-	AWSET4(sc, AWAHCI_PHYCS1, 1 << 28 | 1 << 15); 
+	SXISET4(sc, SXIAHCI_PHYCS1, 1 << 28 | 1 << 15); 
 	delay(10);
 
-	AWCLR4(sc, AWAHCI_PHYCS1, 1 << 19); 
+	SXICLR4(sc, SXIAHCI_PHYCS1, 1 << 19); 
 	delay(10);
 
-	AWCMS4(sc, AWAHCI_PHYCS0, 1 << 21 | 1 << 20, 1 << 22);
+	SXICMS4(sc, SXIAHCI_PHYCS0, 1 << 21 | 1 << 20, 1 << 22);
 	delay(10);
 
-	AWCMS4(sc, AWAHCI_PHYCS2, 1 << 7 | 1 << 6,
+	SXICMS4(sc, SXIAHCI_PHYCS2, 1 << 7 | 1 << 6,
 	    1 << 9 | 1 << 8 | 1 << 5);
 	delay(5000);
 
-	AWSET4(sc, AWAHCI_PHYCS0, 1 << 19);
+	SXISET4(sc, SXIAHCI_PHYCS0, 1 << 19);
 	delay(20);
 
-	timo = AWAHCI_TIMEOUT;
-	while ((AWREAD4(sc, AWAHCI_PHYCS0) >> 28 & 3) != 2 && --timo)
+	timo = SXIAHCI_TIMEOUT;
+	while ((SXIREAD4(sc, SXIAHCI_PHYCS0) >> 28 & 3) != 2 && --timo)
 		delay(10);
 	if (!timo)
 		printf("sxiahci_attach: AHCI phy power up failed.\n");
 
-	AWSET4(sc, AWAHCI_PHYCS2, 1 << 24);
+	SXISET4(sc, SXIAHCI_PHYCS2, 1 << 24);
 
-	timo = AWAHCI_TIMEOUT;
-	while ((AWREAD4(sc, AWAHCI_PHYCS2) & (1 << 24)) && --timo)
+	timo = SXIAHCI_TIMEOUT;
+	while ((SXIREAD4(sc, SXIAHCI_PHYCS2) & (1 << 24)) && --timo)
 		delay(10);
 	if (!timo)
 		printf("sxiahci_attach: AHCI phy calibration failed.\n");
 
 	delay(15000);
-	AWWRITE4(sc, AWAHCI_RWC, 7);
+	SXIWRITE4(sc, SXIAHCI_RWC, 7);
 
 	/* power up phy */
-	sxipio_setcfg(AWAHCI_PWRPIN, AWPIO_OUTPUT);
-	sxipio_setpin(AWAHCI_PWRPIN);
+	sxipio_setcfg(SXIAHCI_PWRPIN, SXIPIO_OUTPUT);
+	sxipio_setpin(SXIAHCI_PWRPIN);
 
 	sc->sc_ih = arm_intr_establish(sxi->sxi_dev->irq[0], IPL_BIO,
 	    ahci_intr, sc, sc->sc_dev.dv_xname);
@@ -151,8 +151,8 @@ sxiahci_attach(struct device *parent, struct device *self, void *args)
 		goto unmap;
 	}
 
-	AWWRITE4(sc, AWAHCI_PI, 1);
-	AWCLR4(sc, AWAHCI_CAP, AHCI_REG_CAP_SPM);
+	SXIWRITE4(sc, SXIAHCI_PI, 1);
+	SXICLR4(sc, SXIAHCI_CAP, AHCI_REG_CAP_SPM);
 	sc->sc_flags |= AHCI_F_NO_PMP; /* XXX enough? */
 	if (ahci_attach(sc) != 0) {
 		/* error printed by ahci_attach */

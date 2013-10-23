@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunxireg.h,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
+/*	$OpenBSD: sunxireg.h,v 1.2 2013/10/23 18:01:52 jasper Exp $	*/
 /*
  * Copyright (c) 2013 Artturi Alm
  *
@@ -88,8 +88,8 @@
 #define	EMAC_ADDR		0x01c0b000
 #define	EMAC_SIZE		0x1000
 #define	EMAC_IRQ		55
-#define	AWESRAM_ADDR		0x00008000 /* combined area for EMAC fifos */
-#define	AWESRAM_SIZE		0x4000
+#define	SXIESRAM_ADDR		0x00008000 /* combined area for EMAC fifos */
+#define	SXIESRAM_SIZE		0x4000
 
 /* Security System */
 #define	SS_ADDR			0x01c15000 /* not in use */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiuart.c,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
+/*	$OpenBSD: sxiuart.c,v 1.2 2013/10/23 18:01:52 jasper Exp $	*/
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  * Copyright (c) 2013 Artturi Alm
@@ -80,9 +80,9 @@ struct sxiuart_softc {
 	uint8_t		sc_initialize;
 	uint8_t		sc_cua;
 	uint8_t 	*sc_ibuf, *sc_ibufp, *sc_ibufhigh, *sc_ibufend;
-#define AWUART_IBUFSIZE 128
-#define AWUART_IHIGHWATER 100
-	uint8_t		sc_ibufs[2][AWUART_IBUFSIZE];
+#define SXIUART_IBUFSIZE 128
+#define SXIUART_IHIGHWATER 100
+	uint8_t		sc_ibufs[2][SXIUART_IBUFSIZE];
 };
 
 
@@ -170,19 +170,19 @@ sxiuartattach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_frequency = 24000000; /* XXX */
 
-	if ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, AWUART_IIR) &
+	if ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, SXIUART_IIR) &
 	  IIR_BUSY) == IIR_BUSY)
-		(void)bus_space_read_4(sc->sc_iot, sc->sc_ioh, AWUART_USR);
+		(void)bus_space_read_4(sc->sc_iot, sc->sc_ioh, SXIUART_USR);
 	sc->sc_ier = 0;
 	/* disable interrupts */
-	bus_space_write_1(iot, ioh, AWUART_IER, sc->sc_ier);
+	bus_space_write_1(iot, ioh, SXIUART_IER, sc->sc_ier);
 
 	/* clear and disable fifo */
-	bus_space_write_1(iot, ioh, AWUART_FCR, 0 | RFIFOR | XFIFOR);
+	bus_space_write_1(iot, ioh, SXIUART_FCR, 0 | RFIFOR | XFIFOR);
 
 	s = splhigh();
 	SET(sc->sc_mcr, MCR_DTR | MCR_RTS | MCR_IENABLE);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AWUART_MCR, sc->sc_mcr);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SXIUART_MCR, sc->sc_mcr);
 	splx(s);
 
 	arm_intr_establish(sxi->sxi_dev->irq[0], IPL_TTY,
@@ -202,10 +202,10 @@ sxiuart_intr(void *arg)
 	uint8_t c, iir, lsr, msr, delta;
 	uint8_t *p;
 
-	iir = bus_space_read_1(iot, ioh, AWUART_IIR);
+	iir = bus_space_read_1(iot, ioh, SXIUART_IIR);
 
 	if ((iir & IIR_IMASK) == IIR_BUSY) {
-		(void)bus_space_read_1(iot, ioh, AWUART_USR);
+		(void)bus_space_read_1(iot, ioh, SXIUART_USR);
 		return (0);
 	}
 	if (ISSET(iir, IIR_NOPEND))
@@ -217,7 +217,7 @@ sxiuart_intr(void *arg)
 	tp = sc->sc_tty;
 	cnt = 0;
 loop:
-	lsr = bus_space_read_1(iot, ioh, AWUART_LSR);
+	lsr = bus_space_read_1(iot, ioh, SXIUART_LSR);
 	if (ISSET(lsr, LSR_RXRDY)) {
 		if (cnt == 0) {
 			p = sc->sc_ibufp;
@@ -225,7 +225,7 @@ loop:
 		}
 		cnt++;
 
-		c = bus_space_read_1(iot, ioh, AWUART_RBR);
+		c = bus_space_read_1(iot, ioh, SXIUART_RBR);
 		if (ISSET(lsr, LSR_BI)) {
 #if defined(DDB)
 			if (ISSET(sc->sc_hwflags,
@@ -248,14 +248,14 @@ loop:
 			    ISSET(tp->t_cflag, CRTSCTS)) {
 				/* XXX */
 				CLR(sc->sc_mcr, MCR_RTS);
-				bus_space_write_1(iot, ioh, AWUART_MCR, sc->sc_mcr);
+				bus_space_write_1(iot, ioh, SXIUART_MCR, sc->sc_mcr);
 			}
 		}
 		goto loop;
 	} else if (cnt > 0)
 		sc->sc_ibufp = p;
 
-	msr = bus_space_read_1(iot, ioh, AWUART_MSR);
+	msr = bus_space_read_1(iot, ioh, SXIUART_MSR);
 	if (msr != sc->sc_msr) {
 		delta = msr ^ sc->sc_msr;
 
@@ -269,7 +269,7 @@ loop:
 			    (*linesw[tp->t_line].l_modem)(tp,
 			    ISSET(msr, MSR_DCD)) == 0) {
 				CLR(sc->sc_mcr, sc->sc_dtr);
-				bus_space_write_1(iot, ioh, AWUART_MCR,
+				bus_space_write_1(iot, ioh, SXIUART_MCR,
 				    sc->sc_mcr);
 			}
 		}
@@ -285,7 +285,7 @@ loop:
 		(*linesw[tp->t_line].l_start)(tp);
 	}
 
-	iir = bus_space_read_1(iot, ioh, AWUART_IIR);
+	iir = bus_space_read_1(iot, ioh, SXIUART_IIR);
 
 	if (ISSET(iir, IIR_NOPEND))
 		goto done;
@@ -312,7 +312,7 @@ sxiuart_param(struct tty *tp, struct termios *t)
 	if (t->c_ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
 		return (EINVAL);
 
-	/* XXX get prev state of AWUART_LCR_SBREAK bit */
+	/* XXX get prev state of SXIUART_LCR_SBREAK bit */
 
 	switch (ISSET(t->c_cflag, CSIZE)) {
 	case CS5:
@@ -340,7 +340,7 @@ sxiuart_param(struct tty *tp, struct termios *t)
 
 	if (ospeed == 0) {
 		CLR(sc->sc_mcr, MCR_DTR);
-		bus_space_write_1(iot, ioh, AWUART_MCR, sc->sc_mcr);
+		bus_space_write_1(iot, ioh, SXIUART_MCR, sc->sc_mcr);
 	}
 
 	if (ospeed != 0) { /* XXX sc_initialize? */
@@ -354,30 +354,30 @@ sxiuart_param(struct tty *tp, struct termios *t)
 				return (error);
 			}
 		}
-		bus_space_write_1(iot, ioh, AWUART_LCR, lcr | LCR_DLAB);
+		bus_space_write_1(iot, ioh, SXIUART_LCR, lcr | LCR_DLAB);
 		ratediv = 13;
-		bus_space_write_1(iot, ioh, AWUART_DLL, ratediv);
-		bus_space_write_1(iot, ioh, AWUART_DLH, ratediv >> 8);
-		bus_space_write_1(iot, ioh, AWUART_LCR, lcr);
+		bus_space_write_1(iot, ioh, SXIUART_DLL, ratediv);
+		bus_space_write_1(iot, ioh, SXIUART_DLH, ratediv >> 8);
+		bus_space_write_1(iot, ioh, SXIUART_LCR, lcr);
 		SET(sc->sc_mcr, MCR_DTR);
-		bus_space_write_1(iot, ioh, AWUART_MCR, sc->sc_mcr);
+		bus_space_write_1(iot, ioh, SXIUART_MCR, sc->sc_mcr);
 	} else
-		bus_space_write_1(iot, ioh, AWUART_LCR, lcr);
+		bus_space_write_1(iot, ioh, SXIUART_LCR, lcr);
 
 	/* setup fifo */
-	bus_space_write_1(iot, ioh, AWUART_FCR, FIFOE | FIFO_RXT0);
+	bus_space_write_1(iot, ioh, SXIUART_FCR, FIFOE | FIFO_RXT0);
 
 	/* When not using CRTSCTS, RTS follows DTR. */
 	if (!ISSET(t->c_cflag, CRTSCTS)) {
 		if (ISSET(sc->sc_mcr, MCR_DTR)) {
 			if (!ISSET(sc->sc_mcr, MCR_RTS)) {
 				SET(sc->sc_mcr, MCR_RTS);
-				bus_space_write_1(iot, ioh, AWUART_MCR, sc->sc_mcr);
+				bus_space_write_1(iot, ioh, SXIUART_MCR, sc->sc_mcr);
 			}
 		} else {
 			if (ISSET(sc->sc_mcr, MCR_RTS)) {
 				CLR(sc->sc_mcr, MCR_RTS);
-				bus_space_write_1(iot, ioh, AWUART_MCR, sc->sc_mcr);
+				bus_space_write_1(iot, ioh, SXIUART_MCR, sc->sc_mcr);
 			}
 		}
 		sc->sc_dtr = MCR_DTR | MCR_RTS;
@@ -400,7 +400,7 @@ sxiuart_param(struct tty *tp, struct termios *t)
 	    ISSET(oldcflag, MDMBUF) != ISSET(tp->t_cflag, MDMBUF) &&
 	    (*linesw[tp->t_line].l_modem)(tp, 0) == 0) {
 		CLR(sc->sc_mcr, sc->sc_dtr);
-		bus_space_write_1(iot, ioh, AWUART_MCR, sc->sc_mcr);
+		bus_space_write_1(iot, ioh, SXIUART_MCR, sc->sc_mcr);
 	}
 
 
@@ -446,19 +446,19 @@ sxiuart_start(struct tty *tp)
 
 	if (!ISSET(sc->sc_ier, IER_ETXRDY)) {
 		SET(sc->sc_ier, IER_ETXRDY);
-		bus_space_write_1(iot, ioh, AWUART_IER, sc->sc_ier);
+		bus_space_write_1(iot, ioh, SXIUART_IER, sc->sc_ier);
 	}
 
 	n = q_to_b(&tp->t_outq, buf, sizeof(buf));
 	for (i = 0; i < n; i++)
-		bus_space_write_1(iot, ioh, AWUART_THR, buf[i]);
+		bus_space_write_1(iot, ioh, SXIUART_THR, buf[i]);
 	bzero(buf, n);
 	splx(s);
 	return;
 stopped:
 	if (ISSET(sc->sc_ier, IER_ETXRDY)) {
 		CLR(sc->sc_ier, IER_ETXRDY);
-		bus_space_write_1(iot, ioh, AWUART_IER, sc->sc_ier);
+		bus_space_write_1(iot, ioh, SXIUART_IER, sc->sc_ier);
 	}
 	splx(s);
 }
@@ -492,7 +492,7 @@ sxiuart_raisedtr(void *arg)
 	struct sxiuart_softc *sc = arg;
 
 	SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AWUART_MCR, sc->sc_mcr);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SXIUART_MCR, sc->sc_mcr);
 }
 
 void
@@ -526,8 +526,8 @@ sxiuart_softint(void *arg)
 
 	sc->sc_ibufp = sc->sc_ibuf = (ibufp == sc->sc_ibufs[0]) ?
 				     sc->sc_ibufs[1] : sc->sc_ibufs[0];
-	sc->sc_ibufhigh = sc->sc_ibuf + AWUART_IHIGHWATER;
-	sc->sc_ibufend = sc->sc_ibuf + AWUART_IBUFSIZE;
+	sc->sc_ibufhigh = sc->sc_ibuf + SXIUART_IHIGHWATER;
+	sc->sc_ibufend = sc->sc_ibuf + SXIUART_IBUFSIZE;
 
 	if (tp == NULL || !ISSET(tp->t_state, TS_ISOPEN)) {
 		splx(s);
@@ -538,7 +538,7 @@ sxiuart_softint(void *arg)
 	    !ISSET(sc->sc_mcr, MCR_RTS)) {
 		/* XXX */
 		SET(sc->sc_mcr, MCR_RTS);
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, AWUART_MCR,
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, SXIUART_MCR,
 		    sc->sc_mcr);
 	}
 
@@ -610,25 +610,25 @@ sxiuartopen(dev_t dev, int flag, int mode, struct proc *p)
 		ttsetwater(tp);
 
 		sc->sc_ibufp = sc->sc_ibuf = sc->sc_ibufs[0];
-		sc->sc_ibufhigh = sc->sc_ibuf + AWUART_IHIGHWATER;
-		sc->sc_ibufend = sc->sc_ibuf + AWUART_IBUFSIZE;
+		sc->sc_ibufhigh = sc->sc_ibuf + SXIUART_IHIGHWATER;
+		sc->sc_ibufend = sc->sc_ibuf + SXIUART_IBUFSIZE;
 
 		iot = sc->sc_iot;
 		ioh = sc->sc_ioh;
 
-		bus_space_write_1(iot, ioh, AWUART_FCR, FIFOE | FIFO_RXT2);
+		bus_space_write_1(iot, ioh, SXIUART_FCR, FIFOE | FIFO_RXT2);
 		delay(100);
-		while (ISSET(bus_space_read_1(iot, ioh, AWUART_LSR),
+		while (ISSET(bus_space_read_1(iot, ioh, SXIUART_LSR),
 		    LSR_RXRDY))
-			(void)bus_space_read_1(iot, ioh, AWUART_RBR);
+			(void)bus_space_read_1(iot, ioh, SXIUART_RBR);
 
 		sc->sc_mcr = MCR_DTR | MCR_RTS | MCR_IENABLE;
-		bus_space_write_1(iot, ioh, AWUART_MCR, sc->sc_mcr);
+		bus_space_write_1(iot, ioh, SXIUART_MCR, sc->sc_mcr);
 
 		sc->sc_ier = IER_ERXRDY | IER_ERLS | IER_EMSC;
-		bus_space_write_1(iot, ioh, AWUART_IER, sc->sc_ier);
+		bus_space_write_1(iot, ioh, SXIUART_IER, sc->sc_ier);
 
-		sc->sc_msr = bus_space_read_1(iot, ioh, AWUART_MSR);
+		sc->sc_msr = bus_space_read_1(iot, ioh, SXIUART_MSR);
 		if (ISSET(sc->sc_swflags, COM_SW_SOFTCAR) || DEVCUA(dev) ||
 		    ISSET(sc->sc_msr, MSR_DCD) ||
 		    ISSET(tp->t_cflag, MDMBUF))
@@ -704,7 +704,7 @@ sxiuartclose(dev_t dev, int flag, int mode, struct proc *p)
 	if (ISSET(tp->t_state, TS_WOPEN)) {
 		/* tty device is waiting for carrier; drop dtr then re-raise */
 		CLR(sc->sc_mcr, MCR_DTR | MCR_RTS);
-		bus_space_write_1(iot, ioh, AWUART_MCR, sc->sc_mcr);
+		bus_space_write_1(iot, ioh, SXIUART_MCR, sc->sc_mcr);
 		timeout_add(&sc->sc_dtr_tmo, hz * 2);
 	} else {
 		/* no one else waiting; turn off the uart */
@@ -788,29 +788,29 @@ sxiuartioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 	case TIOCSBRK:
 		SET(sc->sc_lcr, LCR_SBREAK);
-		bus_space_write_1(iot, ioh, AWUART_LCR, sc->sc_lcr);
+		bus_space_write_1(iot, ioh, SXIUART_LCR, sc->sc_lcr);
 		break;
 	case TIOCCBRK:
 		CLR(sc->sc_lcr, LCR_SBREAK);
-		bus_space_write_1(iot, ioh, AWUART_LCR, sc->sc_lcr);
+		bus_space_write_1(iot, ioh, SXIUART_LCR, sc->sc_lcr);
 		break;
 	case TIOCSDTR:
 		SET(sc->sc_mcr, sc->sc_dtr);
-		bus_space_write_1(iot, ioh, AWUART_MCR, sc->sc_mcr);
+		bus_space_write_1(iot, ioh, SXIUART_MCR, sc->sc_mcr);
 		break;
 	case TIOCCDTR:
 		CLR(sc->sc_mcr, sc->sc_dtr);
-		bus_space_write_1(iot, ioh, AWUART_MCR, sc->sc_mcr);
+		bus_space_write_1(iot, ioh, SXIUART_MCR, sc->sc_mcr);
 		break;
 	case TIOCMSET:
 		CLR(sc->sc_mcr, MCR_DTR | MCR_RTS);
 	case TIOCMBIS:
 		SET(sc->sc_mcr, tiocm_xxx2mcr(*(int *)data));
-		bus_space_write_1(iot, ioh, AWUART_MCR, sc->sc_mcr);
+		bus_space_write_1(iot, ioh, SXIUART_MCR, sc->sc_mcr);
 		break;
 	case TIOCMBIC:
 		CLR(sc->sc_mcr, tiocm_xxx2mcr(*(int *)data));
-		bus_space_write_1(iot, ioh, AWUART_MCR, sc->sc_mcr);
+		bus_space_write_1(iot, ioh, SXIUART_MCR, sc->sc_mcr);
 		break;
 	case TIOCMGET: {
 		u_char m;
@@ -830,7 +830,7 @@ sxiuartioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			SET(bits, TIOCM_DSR);
 		if (ISSET(m, MSR_RI | MSR_TERI))
 			SET(bits, TIOCM_RI);
-		if (bus_space_read_1(iot, ioh, AWUART_IER))
+		if (bus_space_read_1(iot, ioh, SXIUART_IER))
 			SET(bits, TIOCM_LE);
 		*(int *)data = bits;
 		break;
@@ -944,19 +944,19 @@ sxiuartcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, long freq,
 	sxiuartconscflag = cflag;
 
 	s = splhigh();
-	bus_space_write_1(iot, sxiuartconsioh, AWUART_LCR, LCR_DLAB);
+	bus_space_write_1(iot, sxiuartconsioh, SXIUART_LCR, LCR_DLAB);
 
 	ratediv = 13; /* for 115200baud with 24000000hz freq */
-	bus_space_write_1(iot, sxiuartconsioh, AWUART_DLL, ratediv);
-	bus_space_write_1(iot, sxiuartconsioh, AWUART_DLH, ratediv >> 8);
-	bus_space_write_1(iot, sxiuartconsioh, AWUART_LCR, LCR_8BITS);
+	bus_space_write_1(iot, sxiuartconsioh, SXIUART_DLL, ratediv);
+	bus_space_write_1(iot, sxiuartconsioh, SXIUART_DLH, ratediv >> 8);
+	bus_space_write_1(iot, sxiuartconsioh, SXIUART_LCR, LCR_8BITS);
 
-	bus_space_write_1(iot, sxiuartconsioh, AWUART_MCR, MCR_DTR | MCR_RTS);
-	bus_space_write_1(iot, sxiuartconsioh, AWUART_IER, 0);
+	bus_space_write_1(iot, sxiuartconsioh, SXIUART_MCR, MCR_DTR | MCR_RTS);
+	bus_space_write_1(iot, sxiuartconsioh, SXIUART_IER, 0);
 
-	bus_space_write_1(iot, sxiuartconsioh, AWUART_FCR, FIFOE | FIFO_RXT0);
+	bus_space_write_1(iot, sxiuartconsioh, SXIUART_FCR, FIFOE | FIFO_RXT0);
 
-	(void)bus_space_read_1(iot, sxiuartconsioh, AWUART_IIR);
+	(void)bus_space_read_1(iot, sxiuartconsioh, SXIUART_IIR);
 	splx(s);
 
 	cn_tab = &sxiuartcons;
@@ -973,12 +973,12 @@ sxiuartcngetc(dev_t dev)
 	s = splhigh();
 
 	while (!ISSET(bus_space_read_1(sxiuartconsiot, sxiuartconsioh,
-	    AWUART_LSR), LSR_RXRDY))
+	    SXIUART_LSR), LSR_RXRDY))
 		continue;
-	c = bus_space_read_1(sxiuartconsiot, sxiuartconsioh, AWUART_RBR);
+	c = bus_space_read_1(sxiuartconsiot, sxiuartconsioh, SXIUART_RBR);
 
 	/* clear any pending interrupts */
-	(void)bus_space_read_1(sxiuartconsiot, sxiuartconsioh, AWUART_IIR);
+	(void)bus_space_read_1(sxiuartconsiot, sxiuartconsioh, SXIUART_IIR);
 
 	splx(s);
 	return (c);
@@ -991,10 +991,10 @@ sxiuartcnputc(dev_t dev, int c)
 	int timo = 500;
 
 	while (!ISSET(bus_space_read_1(sxiuartconsiot, sxiuartconsioh,
-	    AWUART_LSR), LSR_THRE) && --timo)
+	    SXIUART_LSR), LSR_THRE) && --timo)
 		continue;
 
-	bus_space_write_1(sxiuartconsiot, sxiuartconsioh, AWUART_THR,
+	bus_space_write_1(sxiuartconsiot, sxiuartconsioh, SXIUART_THR,
 	    (uint8_t)c);
 	bus_space_barrier(sxiuartconsiot, sxiuartconsioh, 0, 1,
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);

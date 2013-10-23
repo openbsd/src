@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.2 2013/10/23 18:01:52 jasper Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -56,102 +56,102 @@
 #include <armv7/sunxi/sxipiovar.h>
 
 /* configuration registers */
-#define	AWE_CR			0x0000
-#define	AWE_TXMODE		0x0004
-#define	AWE_TXFLOW		0x0008
-#define	AWE_TXCR0		0x000c
-#define	AWE_TXCR1		0x0010
-#define	AWE_TXINS		0x0014
-#define	AWE_TXPKTLEN0		0x0018
-#define	AWE_TXPKTLEN1		0x001c
-#define	AWE_TXSR		0x0020
-#define	AWE_TXIO0		0x0024
-#define	AWE_TXIO1		0x0028
-#define	AWE_TXTSVL0		0x002c
-#define	AWE_TXTSVH0		0x0030
-#define	AWE_TXTSVL1		0x0034
-#define	AWE_TXTSVH1		0x0038
-#define	AWE_RXCR		0x003c
-#define	AWE_RXHASH0		0x0040
-#define	AWE_RXHASH1		0x0044
-#define	AWE_RXSR		0x0048
-#define	AWE_RXIO		0x004C
-#define	AWE_RXFBC		0x0050
-#define	AWE_INTCR		0x0054
-#define	AWE_INTSR		0x0058
-#define	AWE_MACCR0		0x005C
-#define	AWE_MACCR1		0x0060
-#define	AWE_MACIPGT		0x0064
-#define	AWE_MACIPGR		0x0068
-#define	AWE_MACCLRT		0x006C
-#define	AWE_MACMFL		0x0070
-#define	AWE_MACSUPP		0x0074
-#define	AWE_MACTEST		0x0078
-#define	AWE_MACMCFG		0x007C
-#define	AWE_MACMCMD		0x0080
-#define	AWE_MACMADR		0x0084
-#define	AWE_MACMWTD		0x0088
-#define	AWE_MACMRDD		0x008C
-#define	AWE_MACMIND		0x0090
-#define	AWE_MACSSRR		0x0094
-#define	AWE_MACA0		0x0098
-#define	AWE_MACA1		0x009c
-#define	AWE_MACA2		0x00a0
+#define	SXIE_CR			0x0000
+#define	SXIE_TXMODE		0x0004
+#define	SXIE_TXFLOW		0x0008
+#define	SXIE_TXCR0		0x000c
+#define	SXIE_TXCR1		0x0010
+#define	SXIE_TXINS		0x0014
+#define	SXIE_TXPKTLEN0		0x0018
+#define	SXIE_TXPKTLEN1		0x001c
+#define	SXIE_TXSR		0x0020
+#define	SXIE_TXIO0		0x0024
+#define	SXIE_TXIO1		0x0028
+#define	SXIE_TXTSVL0		0x002c
+#define	SXIE_TXTSVH0		0x0030
+#define	SXIE_TXTSVL1		0x0034
+#define	SXIE_TXTSVH1		0x0038
+#define	SXIE_RXCR		0x003c
+#define	SXIE_RXHASH0		0x0040
+#define	SXIE_RXHASH1		0x0044
+#define	SXIE_RXSR		0x0048
+#define	SXIE_RXIO		0x004C
+#define	SXIE_RXFBC		0x0050
+#define	SXIE_INTCR		0x0054
+#define	SXIE_INTSR		0x0058
+#define	SXIE_MACCR0		0x005C
+#define	SXIE_MACCR1		0x0060
+#define	SXIE_MACIPGT		0x0064
+#define	SXIE_MACIPGR		0x0068
+#define	SXIE_MACCLRT		0x006C
+#define	SXIE_MACMFL		0x0070
+#define	SXIE_MACSUPP		0x0074
+#define	SXIE_MACTEST		0x0078
+#define	SXIE_MACMCFG		0x007C
+#define	SXIE_MACMCMD		0x0080
+#define	SXIE_MACMADR		0x0084
+#define	SXIE_MACMWTD		0x0088
+#define	SXIE_MACMRDD		0x008C
+#define	SXIE_MACMIND		0x0090
+#define	SXIE_MACSSRR		0x0094
+#define	SXIE_MACA0		0x0098
+#define	SXIE_MACA1		0x009c
+#define	SXIE_MACA2		0x00a0
 
 /* i once spent hours on pretty defines, cvs up ate 'em. these shall do */
-#define AWE_INTR_ENABLE		0x010f
-#define AWE_INTR_DISABLE	0x0000
-#define AWE_INTR_CLEAR		0x0000
+#define SXIE_INTR_ENABLE		0x010f
+#define SXIE_INTR_DISABLE	0x0000
+#define SXIE_INTR_CLEAR		0x0000
 
-#define	AWE_RX_ENABLE		0x0004
-#define	AWE_TX_ENABLE		0x0003
-#define	AWE_RXTX_ENABLE		0x0007
+#define	SXIE_RX_ENABLE		0x0004
+#define	SXIE_TX_ENABLE		0x0003
+#define	SXIE_RXTX_ENABLE		0x0007
 
-#define	AWE_RXDRQM		0x0002
-#define	AWE_RXTM		0x0004
-#define	AWE_RXFLUSH		0x0008
-#define	AWE_RXPA		0x0010
-#define	AWE_RXPCF		0x0020
-#define	AWE_RXPCRCE		0x0040
-#define	AWE_RXPLE		0x0080
-#define	AWE_RXPOR		0x0100
-#define	AWE_RXUCAD		0x10000
-#define	AWE_RXDAF		0x20000
-#define	AWE_RXMCO		0x100000
-#define	AWE_RXMHF		0x200000
-#define	AWE_RXBCO		0x400000
-#define	AWE_RXSAF		0x1000000
-#define	AWE_RXSAIF		0x2000000
+#define	SXIE_RXDRQM		0x0002
+#define	SXIE_RXTM		0x0004
+#define	SXIE_RXFLUSH		0x0008
+#define	SXIE_RXPA		0x0010
+#define	SXIE_RXPCF		0x0020
+#define	SXIE_RXPCRCE		0x0040
+#define	SXIE_RXPLE		0x0080
+#define	SXIE_RXPOR		0x0100
+#define	SXIE_RXUCAD		0x10000
+#define	SXIE_RXDAF		0x20000
+#define	SXIE_RXMCO		0x100000
+#define	SXIE_RXMHF		0x200000
+#define	SXIE_RXBCO		0x400000
+#define	SXIE_RXSAF		0x1000000
+#define	SXIE_RXSAIF		0x2000000
 
-#define	AWE_MACRXFC		0x0004
-#define	AWE_MACTXFC		0x0008
-#define AWE_MACSOFTRESET	0x8000
+#define	SXIE_MACRXFC		0x0004
+#define	SXIE_MACTXFC		0x0008
+#define SXIE_MACSOFTRESET	0x8000
 
-#define	AWE_MACDUPLEX		0x0001	/* full = 1 */
-#define	AWE_MACFLC		0x0002
-#define	AWE_MACHF		0x0004
-#define	AWE_MACDCRC		0x0008
-#define	AWE_MACCRC		0x0010
-#define	AWE_MACPC		0x0020
-#define	AWE_MACVC		0x0040
-#define	AWE_MACADP		0x0080
-#define	AWE_MACPRE		0x0100
-#define	AWE_MACLPE		0x0200
-#define	AWE_MACNB		0x1000
-#define	AWE_MACBNB		0x2000
-#define	AWE_MACED		0x4000
+#define	SXIE_MACDUPLEX		0x0001	/* full = 1 */
+#define	SXIE_MACFLC		0x0002
+#define	SXIE_MACHF		0x0004
+#define	SXIE_MACDCRC		0x0008
+#define	SXIE_MACCRC		0x0010
+#define	SXIE_MACPC		0x0020
+#define	SXIE_MACVC		0x0040
+#define	SXIE_MACADP		0x0080
+#define	SXIE_MACPRE		0x0100
+#define	SXIE_MACLPE		0x0200
+#define	SXIE_MACNB		0x1000
+#define	SXIE_MACBNB		0x2000
+#define	SXIE_MACED		0x4000
 
-#define	AWE_RX_ERRLENOOR	0x0040
-#define	AWE_RX_ERRLENCHK	0x0020
-#define	AWE_RX_ERRCRC		0x0010
-#define	AWE_RX_ERRRCV		0x0008 /* XXX receive code violation ? */
-#define	AWE_RX_ERRMASK		0x0070
+#define	SXIE_RX_ERRLENOOR	0x0040
+#define	SXIE_RX_ERRLENCHK	0x0020
+#define	SXIE_RX_ERRCRC		0x0010
+#define	SXIE_RX_ERRRCV		0x0008 /* XXX receive code violation ? */
+#define	SXIE_RX_ERRMASK		0x0070
 
-#define	AWE_MII_TIMEOUT	100
-#define AWE_MAX_RXD		8
-#define AWE_MAX_PKT_SIZE	ETHER_MAX_DIX_LEN
+#define	SXIE_MII_TIMEOUT	100
+#define SXIE_MAX_RXD		8
+#define SXIE_MAX_PKT_SIZE	ETHER_MAX_DIX_LEN
 
-#define AWE_ROUNDUP(size, unit) (((size) + (unit) - 1) & ~((unit) - 1))
+#define SXIE_ROUNDUP(size, unit) (((size) + (unit) - 1) & ~((unit) - 1))
 
 struct sxie_softc {
 	struct device			sc_dev;
@@ -266,23 +266,23 @@ sxie_socware_init(struct sxie_softc *sc)
 	int i;
 	uint32_t reg;
 
-	for (i = 0; i < AWPIO_EMAC_NPINS; i++)
+	for (i = 0; i < SXIPIO_EMAC_NPINS; i++)
 		sxipio_setcfg(i, 2); /* mux pins to EMAC */
 	sxiccmu_enablemodule(CCMU_EMAC);
 
 	/* MII clock cfg */
-	AWCMS4(sc, AWE_MACMCFG, 15 << 2, 13 << 2);
+	SXICMS4(sc, SXIE_MACMCFG, 15 << 2, 13 << 2);
 
-	AWWRITE4(sc, AWE_INTCR, AWE_INTR_DISABLE);
-	AWSET4(sc, AWE_INTSR, AWE_INTR_CLEAR);
+	SXIWRITE4(sc, SXIE_INTCR, SXIE_INTR_DISABLE);
+	SXISET4(sc, SXIE_INTSR, SXIE_INTR_CLEAR);
 
 #if 1
 	/* set lladdr with values set in u-boot */
-	reg = AWREAD4(sc, AWE_MACA0);
+	reg = SXIREAD4(sc, SXIE_MACA0);
 	sc->sc_ac.ac_enaddr[3] = reg >> 16 & 0xff;
 	sc->sc_ac.ac_enaddr[4] = reg >> 8 & 0xff;
 	sc->sc_ac.ac_enaddr[5] = reg & 0xff;
-	reg = AWREAD4(sc, AWE_MACA1);
+	reg = SXIREAD4(sc, SXIE_MACA1);
 	sc->sc_ac.ac_enaddr[0] = reg >> 16 & 0xff;
 	sc->sc_ac.ac_enaddr[1] = reg >> 8 & 0xff;
 	sc->sc_ac.ac_enaddr[2] = reg & 0xff;
@@ -303,40 +303,40 @@ sxie_setup_interface(struct sxie_softc *sc, struct device *dev)
 	uint32_t clr_m, set_m;
 
 	/* configure TX */
-	AWCMS4(sc, AWE_TXMODE, 3, 1);	/* cpu mode */
+	SXICMS4(sc, SXIE_TXMODE, 3, 1);	/* cpu mode */
 
 	/* configure RX */
-	clr_m = AWE_RXDRQM | AWE_RXTM | AWE_RXPA | AWE_RXPCF |
-	    AWE_RXPCRCE | AWE_RXPLE | AWE_RXMHF | AWE_RXSAF |
-	    AWE_RXSAIF;
-	set_m = AWE_RXPOR | AWE_RXUCAD | AWE_RXDAF | AWE_RXBCO;
-	AWCMS4(sc, AWE_RXCR, clr_m, set_m);
+	clr_m = SXIE_RXDRQM | SXIE_RXTM | SXIE_RXPA | SXIE_RXPCF |
+	    SXIE_RXPCRCE | SXIE_RXPLE | SXIE_RXMHF | SXIE_RXSAF |
+	    SXIE_RXSAIF;
+	set_m = SXIE_RXPOR | SXIE_RXUCAD | SXIE_RXDAF | SXIE_RXBCO;
+	SXICMS4(sc, SXIE_RXCR, clr_m, set_m);
 
 	/* configure MAC */
-	AWSET4(sc, AWE_MACCR0, AWE_MACTXFC | AWE_MACRXFC);
-	clr_m =	AWE_MACHF | AWE_MACDCRC | AWE_MACVC | AWE_MACADP |
-	    AWE_MACPRE | AWE_MACLPE | AWE_MACNB | AWE_MACBNB |
-	    AWE_MACED;
-	set_m = AWE_MACFLC | AWE_MACCRC | AWE_MACPC;
+	SXISET4(sc, SXIE_MACCR0, SXIE_MACTXFC | SXIE_MACRXFC);
+	clr_m =	SXIE_MACHF | SXIE_MACDCRC | SXIE_MACVC | SXIE_MACADP |
+	    SXIE_MACPRE | SXIE_MACLPE | SXIE_MACNB | SXIE_MACBNB |
+	    SXIE_MACED;
+	set_m = SXIE_MACFLC | SXIE_MACCRC | SXIE_MACPC;
 	set_m |= sxie_miibus_readreg(dev, sc->sc_phyno, 0) >> 8 & 1;
-	AWCMS4(sc, AWE_MACCR1, clr_m, set_m);
+	SXICMS4(sc, SXIE_MACCR1, clr_m, set_m);
 
 	/* XXX */
-	AWWRITE4(sc, AWE_MACIPGT, 0x0015);
-	AWWRITE4(sc, AWE_MACIPGR, 0x0c12);
+	SXIWRITE4(sc, SXIE_MACIPGT, 0x0015);
+	SXIWRITE4(sc, SXIE_MACIPGR, 0x0c12);
 
 	/* XXX set collision window */
-	AWWRITE4(sc, AWE_MACCLRT, 0x370f);
+	SXIWRITE4(sc, SXIE_MACCLRT, 0x370f);
 
 	/* set max frame length */
-	AWWRITE4(sc, AWE_MACMFL, AWE_MAX_PKT_SIZE);
+	SXIWRITE4(sc, SXIE_MACMFL, SXIE_MAX_PKT_SIZE);
 
 	/* set lladdr */
-	AWWRITE4(sc, AWE_MACA0,
+	SXIWRITE4(sc, SXIE_MACA0,
 	    sc->sc_ac.ac_enaddr[3] << 16 |
 	    sc->sc_ac.ac_enaddr[4] << 8 |
 	    sc->sc_ac.ac_enaddr[5]);
-	AWWRITE4(sc, AWE_MACA1,
+	SXIWRITE4(sc, SXIE_MACA1,
 	    sc->sc_ac.ac_enaddr[0] << 16 |
 	    sc->sc_ac.ac_enaddr[1] << 8 |
 	    sc->sc_ac.ac_enaddr[2]);
@@ -354,17 +354,17 @@ sxie_init(struct sxie_softc *sc)
 	
 	sxie_reset(sc);
 
-	AWWRITE4(sc, AWE_INTCR, AWE_INTR_DISABLE);
+	SXIWRITE4(sc, SXIE_INTCR, SXIE_INTR_DISABLE);
 
-	AWSET4(sc, AWE_INTSR, AWE_INTR_CLEAR);
+	SXISET4(sc, SXIE_INTSR, SXIE_INTR_CLEAR);
 
-	AWSET4(sc, AWE_RXCR, AWE_RXFLUSH);
+	SXISET4(sc, SXIE_RXCR, SXIE_RXFLUSH);
 
 	/* soft reset */
-	AWCLR4(sc, AWE_MACCR0, AWE_MACSOFTRESET);
+	SXICLR4(sc, SXIE_MACCR0, SXIE_MACSOFTRESET);
 
 	/* zero rx counter */
-	AWWRITE4(sc, AWE_RXFBC, 0);
+	SXIWRITE4(sc, SXIE_RXFBC, 0);
 
 	sxie_setup_interface(sc, dev);
 
@@ -375,18 +375,18 @@ sxie_init(struct sxie_softc *sc)
 	phyreg = sxie_miibus_readreg(dev, sc->sc_phyno, 0);
 
 	/* set duplex */
-	AWCMS4(sc, AWE_MACCR1, 1, phyreg >> 8 & 1);
+	SXICMS4(sc, SXIE_MACCR1, 1, phyreg >> 8 & 1);
 
 	/* set speed */
-	AWCMS4(sc, AWE_MACSUPP, 1 << 8, (phyreg >> 13 & 1) << 8);
+	SXICMS4(sc, SXIE_MACSUPP, 1 << 8, (phyreg >> 13 & 1) << 8);
 
-	AWSET4(sc, AWE_CR, AWE_RXTX_ENABLE);
+	SXISET4(sc, SXIE_CR, SXIE_RXTX_ENABLE);
 
 	/* Indicate we are up and running. */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	AWSET4(sc, AWE_INTCR, AWE_INTR_ENABLE);
+	SXISET4(sc, SXIE_INTCR, SXIE_INTR_ENABLE);
 
 	sxie_start(ifp);
 }
@@ -398,10 +398,10 @@ sxie_intr(void *arg)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	uint32_t pending;
 
-	AWWRITE4(sc, AWE_INTCR, AWE_INTR_DISABLE);
+	SXIWRITE4(sc, SXIE_INTCR, SXIE_INTR_DISABLE);
 
-	pending = AWREAD4(sc, AWE_INTSR);
-	AWWRITE4(sc, AWE_INTSR, pending);
+	pending = SXIREAD4(sc, SXIE_INTSR);
+	SXIWRITE4(sc, SXIE_INTSR, pending);
 
 	/*
 	 * Handle incoming packets.
@@ -430,7 +430,7 @@ sxie_intr(void *arg)
 	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
 		sxie_start(ifp);
 
-	AWSET4(sc, AWE_INTCR, AWE_INTR_ENABLE);
+	SXISET4(sc, SXIE_INTCR, SXIE_INTR_ENABLE);
 
 	return 1;
 }
@@ -446,7 +446,7 @@ sxie_start(struct ifnet *ifp)
 	struct mbuf *head;
 	uint8_t *td;
 	uint32_t fifo;
-	uint32_t txbuf[AWE_MAX_PKT_SIZE / sizeof(uint32_t)]; /* XXX !!! */
+	uint32_t txbuf[SXIE_MAX_PKT_SIZE / sizeof(uint32_t)]; /* XXX !!! */
 
 	if (sc->txf_inuse > 1)
 		ifp->if_flags |= IFF_OACTIVE;
@@ -462,7 +462,7 @@ trynext:
 	if (m == NULL)
 		return;
 
-	if (m->m_pkthdr.len > AWE_MAX_PKT_SIZE) {
+	if (m->m_pkthdr.len > SXIE_MAX_PKT_SIZE) {
 		printf("sxie_start: packet too big\n");
 		m_freem(m);
 		return;
@@ -476,21 +476,21 @@ trynext:
 
 	/* select fifo */
 	fifo = sc->txf_inuse;
-	AWWRITE4(sc, AWE_TXINS, fifo);
+	SXIWRITE4(sc, SXIE_TXINS, fifo);
 
 	sc->txf_inuse++;
 
 	/* set packet length */
-	AWWRITE4(sc, AWE_TXPKTLEN0 + (fifo * 4), m->m_pkthdr.len);
+	SXIWRITE4(sc, SXIE_TXPKTLEN0 + (fifo * 4), m->m_pkthdr.len);
 
 	/* copy the actual packet to fifo XXX through 'align buffer'.. */
 	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)td);
 	bus_space_write_multi_4(sc->sc_iot, sc->sc_ioh,
-	    AWE_TXIO0 + (fifo * 4),
-	    (uint32_t *)td, AWE_ROUNDUP(m->m_pkthdr.len, 4) >> 2);
+	    SXIE_TXIO0 + (fifo * 4),
+	    (uint32_t *)td, SXIE_ROUNDUP(m->m_pkthdr.len, 4) >> 2);
 
 	/* transmit to PHY from fifo */
-	AWSET4(sc, AWE_TXCR0 + (fifo * 4), 1);
+	SXISET4(sc, SXIE_TXCR0 + (fifo * 4), 1);
 	ifp->if_timer = 5;
 	IFQ_DEQUEUE(&ifp->if_snd, m);
 
@@ -518,9 +518,9 @@ void
 sxie_reset(struct sxie_softc *sc)
 {
 	/* reset the controller */
-	AWWRITE4(sc, AWE_CR, 0);
+	SXIWRITE4(sc, SXIE_CR, 0);
 	delay(200);
-	AWWRITE4(sc, AWE_CR, 1);
+	SXIWRITE4(sc, SXIE_CR, 1);
 	delay(200);
 }
 
@@ -550,9 +550,9 @@ sxie_recv(struct sxie_softc *sc)
 	uint16_t pktstat;
 	int16_t pktlen;
 	int rlen;
-	char rxbuf[AWE_MAX_PKT_SIZE]; /* XXX !!! */
+	char rxbuf[SXIE_MAX_PKT_SIZE]; /* XXX !!! */
 trynext:
-	fbc = AWREAD4(sc, AWE_RXFBC);
+	fbc = SXIREAD4(sc, SXIE_RXFBC);
 	if (!fbc)
 		return;
 
@@ -560,13 +560,13 @@ trynext:
 	 * first bit of MSB is packet valid flag,
 	 * it is 'padded' with 0x43414d = "MAC"
 	 */
-	reg = AWREAD4(sc, AWE_RXIO);
+	reg = SXIREAD4(sc, SXIE_RXIO);
 	if (reg != 0x0143414d) {	/* invalid packet */
 		/* disable, flush, enable */
-		AWCLR4(sc, AWE_CR, AWE_RX_ENABLE);
-		AWSET4(sc, AWE_RXCR, AWE_RXFLUSH);
-		while (AWREAD4(sc, AWE_RXCR) & AWE_RXFLUSH);
-		AWSET4(sc, AWE_CR, AWE_RX_ENABLE);
+		SXICLR4(sc, SXIE_CR, SXIE_RX_ENABLE);
+		SXISET4(sc, SXIE_RXCR, SXIE_RXFLUSH);
+		while (SXIREAD4(sc, SXIE_RXCR) & SXIE_RXFLUSH);
+		SXISET4(sc, SXIE_CR, SXIE_RX_ENABLE);
 
 		goto err_out;
 	}
@@ -575,16 +575,16 @@ trynext:
 	if (m == NULL)
 		goto err_out;
 
-	reg = AWREAD4(sc, AWE_RXIO);
+	reg = SXIREAD4(sc, SXIE_RXIO);
 	pktstat = (uint16_t)reg >> 16;
 	pktlen = (int16_t)reg; /* length of useful data */
 
-	if (pktstat & AWE_RX_ERRMASK || pktlen < ETHER_MIN_LEN) {
+	if (pktstat & SXIE_RX_ERRMASK || pktlen < ETHER_MIN_LEN) {
 		ifp->if_ierrors++;
 		goto trynext;
 	}
-	if (pktlen > AWE_MAX_PKT_SIZE)
-		pktlen = AWE_MAX_PKT_SIZE; /* XXX is truncating ok? */
+	if (pktlen > SXIE_MAX_PKT_SIZE)
+		pktlen = SXIE_MAX_PKT_SIZE; /* XXX is truncating ok? */
 
 	ifp->if_ipackets++;
 	m->m_pkthdr.rcvif = ifp;
@@ -594,11 +594,11 @@ trynext:
 
 	/* read the actual packet from fifo XXX through 'align buffer'.. */
 	if (pktlen & 3)
-		rlen = AWE_ROUNDUP(pktlen, 4);
+		rlen = SXIE_ROUNDUP(pktlen, 4);
 	else
 		rlen = pktlen;
 	bus_space_read_multi_4(sc->sc_iot, sc->sc_ioh,
-	    AWE_RXIO, (uint32_t *)&rxbuf[0], rlen >> 2);
+	    SXIE_RXIO, (uint32_t *)&rxbuf[0], rlen >> 2);
 	memcpy(mtod(m, char *), (char *)&rxbuf[0], pktlen);
 
 	/* push the packet up */
@@ -690,12 +690,12 @@ int
 sxie_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct sxie_softc *sc = (struct sxie_softc *)dev;
-	int timo = AWE_MII_TIMEOUT;
+	int timo = SXIE_MII_TIMEOUT;
 
-	AWWRITE4(sc, AWE_MACMADR, phy << 8 | reg);
+	SXIWRITE4(sc, SXIE_MACMADR, phy << 8 | reg);
 
-	AWWRITE4(sc, AWE_MACMCMD, 1);
-	while (AWREAD4(sc, AWE_MACMIND) & 1 && --timo)
+	SXIWRITE4(sc, SXIE_MACMCMD, 1);
+	while (SXIREAD4(sc, SXIE_MACMIND) & 1 && --timo)
 		delay(10);
 #ifdef DIAGNOSTIC
 	if (!timo)
@@ -703,21 +703,21 @@ sxie_miibus_readreg(struct device *dev, int phy, int reg)
 		    sc->sc_dev.dv_xname);
 #endif
 
-	AWWRITE4(sc, AWE_MACMCMD, 0);
+	SXIWRITE4(sc, SXIE_MACMCMD, 0);
 	
-	return AWREAD4(sc, AWE_MACMRDD) & 0xffff;
+	return SXIREAD4(sc, SXIE_MACMRDD) & 0xffff;
 }
 
 void
 sxie_miibus_writereg(struct device *dev, int phy, int reg, int val)
 {
 	struct sxie_softc *sc = (struct sxie_softc *)dev;
-	int timo = AWE_MII_TIMEOUT;
+	int timo = SXIE_MII_TIMEOUT;
 
-	AWWRITE4(sc, AWE_MACMADR, phy << 8 | reg);
+	SXIWRITE4(sc, SXIE_MACMADR, phy << 8 | reg);
 
-	AWWRITE4(sc, AWE_MACMCMD, 1);
-	while (AWREAD4(sc, AWE_MACMIND) & 1 && --timo)
+	SXIWRITE4(sc, SXIE_MACMCMD, 1);
+	while (SXIREAD4(sc, SXIE_MACMIND) & 1 && --timo)
 		delay(10);
 #ifdef DIAGNOSTIC
 	if (!timo)
@@ -725,9 +725,9 @@ sxie_miibus_writereg(struct device *dev, int phy, int reg, int val)
 		    sc->sc_dev.dv_xname);
 #endif
 
-	AWWRITE4(sc, AWE_MACMCMD, 0);
+	SXIWRITE4(sc, SXIE_MACMCMD, 0);
 
-	AWWRITE4(sc, AWE_MACMWTD, val);
+	SXIWRITE4(sc, SXIE_MACMWTD, val);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.2 2013/10/23 18:01:52 jasper Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -30,20 +30,20 @@
 #include <armv7/sunxi/sunxivar.h>
 #include <armv7/sunxi/sxipiovar.h>
 
-#define	AWPIO_NPORT		9
-#define	AWPIO_PA_NPIN		18
-#define	AWPIO_PB_NPIN		24
-#define	AWPIO_PC_NPIN		25
-#define	AWPIO_PD_NPIN		28
-#define	AWPIO_PE_NPIN		12
-#define	AWPIO_PF_NPIN		6
-#define	AWPIO_PG_NPIN		12
-#define	AWPIO_PH_NPIN		28
-#define	AWPIO_PI_NPIN		22
-#define	AWPIO_NPIN	(AWPIO_PA_NPIN + AWPIO_PB_NPIN + AWPIO_PC_NPIN + \
-	AWPIO_PD_NPIN + AWPIO_PE_NPIN + AWPIO_PF_NPIN + AWPIO_PG_NPIN + \
-	AWPIO_PH_NPIN + AWPIO_PI_NPIN)
-#define	AWPIO_PS_NPIN		84 /* for DRAM controller */
+#define	SXIPIO_NPORT		9
+#define	SXIPIO_PA_NPIN		18
+#define	SXIPIO_PB_NPIN		24
+#define	SXIPIO_PC_NPIN		25
+#define	SXIPIO_PD_NPIN		28
+#define	SXIPIO_PE_NPIN		12
+#define	SXIPIO_PF_NPIN		6
+#define	SXIPIO_PG_NPIN		12
+#define	SXIPIO_PH_NPIN		28
+#define	SXIPIO_PI_NPIN		22
+#define	SXIPIO_NPIN	(SXIPIO_PA_NPIN + SXIPIO_PB_NPIN + SXIPIO_PC_NPIN + \
+	SXIPIO_PD_NPIN + SXIPIO_PE_NPIN + SXIPIO_PF_NPIN + SXIPIO_PG_NPIN + \
+	SXIPIO_PH_NPIN + SXIPIO_PI_NPIN)
+#define	SXIPIO_PS_NPIN		84 /* for DRAM controller */
 
 
 struct intrhand {
@@ -66,21 +66,21 @@ struct sxipio_softc {
 	int 			sc_min_il;
 	int			sc_irq;
 
-	struct gpio_chipset_tag	 sc_gpio_tag[AWPIO_NPORT];
-	gpio_pin_t		 sc_gpio_pins[AWPIO_NPORT][32];
+	struct gpio_chipset_tag	 sc_gpio_tag[SXIPIO_NPORT];
+	gpio_pin_t		 sc_gpio_pins[SXIPIO_NPORT][32];
 
 	struct intrhand		*sc_handlers[32];
 };
 
-#define	AWPIO_CFG(port, pin)	0x00 + ((port) * 0x24) + ((pin) << 2)
-#define	AWPIO_DAT(port)		0x10 + ((port) * 0x24)
+#define	SXIPIO_CFG(port, pin)	0x00 + ((port) * 0x24) + ((pin) << 2)
+#define	SXIPIO_DAT(port)		0x10 + ((port) * 0x24)
 /* XXX add support for registers below */
-#define	AWPIO_DRV(port, pin)	0x14 + ((port) * 0x24) + ((pin) << 2)
-#define	AWPIO_PUL(port, pin)	0x1c + ((port) * 0x24) + ((pin) << 2)
-#define	AWPIO_INT_CFG0(port)	0x0200 + ((port) * 0x04)
-#define	AWPIO_INT_CTL		0x0210
-#define	AWPIO_INT_STA		0x0214
-#define	AWPIO_INT_DEB		0x0218 /* debounce register */
+#define	SXIPIO_DRV(port, pin)	0x14 + ((port) * 0x24) + ((pin) << 2)
+#define	SXIPIO_PUL(port, pin)	0x1c + ((port) * 0x24) + ((pin) << 2)
+#define	SXIPIO_INT_CFG0(port)	0x0200 + ((port) * 0x04)
+#define	SXIPIO_INT_CTL		0x0210
+#define	SXIPIO_INT_STA		0x0214
+#define	SXIPIO_INT_DEB		0x0218 /* debounce register */
 
 void sxipio_attach(struct device *, struct device *, void *);
 void sxipio_attach_gpio(struct device *);
@@ -114,10 +114,10 @@ sxipio_attach(struct device *parent, struct device *self, void *args)
 	sxipio_sc = sc;
 
 	sc->sc_irq = sxi->sxi_dev->irq[0];
-	sxipio_setcfg(AWPIO_LED_GREEN, AWPIO_OUTPUT);
-	sxipio_setcfg(AWPIO_LED_BLUE, AWPIO_OUTPUT);
-	sxipio_setpin(AWPIO_LED_GREEN);
-	sxipio_setpin(AWPIO_LED_BLUE);
+	sxipio_setcfg(SXIPIO_LED_GREEN, SXIPIO_OUTPUT);
+	sxipio_setcfg(SXIPIO_LED_BLUE, SXIPIO_OUTPUT);
+	sxipio_setpin(SXIPIO_LED_GREEN);
+	sxipio_setpin(SXIPIO_LED_BLUE);
 
 	config_defer(self, sxipio_attach_gpio);
 
@@ -158,26 +158,26 @@ void
 sxipio_pin_ctl(void *portno, int pin, int flags)
 {
 	if (ISSET(flags, GPIO_PIN_OUTPUT))
-		sxipio_setcfg((*(uint32_t *)portno * 32) + pin, AWPIO_OUTPUT);
+		sxipio_setcfg((*(uint32_t *)portno * 32) + pin, SXIPIO_OUTPUT);
 	else
-		sxipio_setcfg((*(uint32_t *)portno * 32) + pin, AWPIO_INPUT);
+		sxipio_setcfg((*(uint32_t *)portno * 32) + pin, SXIPIO_INPUT);
 }
 
 /* XXX ugly, but cookie has no other purposeful use. */
-static const uint32_t sxipio_ports[AWPIO_NPORT] = {
+static const uint32_t sxipio_ports[SXIPIO_NPORT] = {
 	0, 1, 2, 3, 4, 5, 6, 7, 8
 };
 
-static const int sxipio_last_pin[AWPIO_NPORT] = {
-	AWPIO_PA_NPIN,
-	AWPIO_PB_NPIN,
-	AWPIO_PC_NPIN,
-	AWPIO_PD_NPIN,
-	AWPIO_PE_NPIN,
-	AWPIO_PF_NPIN,
-	AWPIO_PG_NPIN,
-	AWPIO_PH_NPIN,
-	AWPIO_PI_NPIN
+static const int sxipio_last_pin[SXIPIO_NPORT] = {
+	SXIPIO_PA_NPIN,
+	SXIPIO_PB_NPIN,
+	SXIPIO_PC_NPIN,
+	SXIPIO_PD_NPIN,
+	SXIPIO_PE_NPIN,
+	SXIPIO_PF_NPIN,
+	SXIPIO_PG_NPIN,
+	SXIPIO_PH_NPIN,
+	SXIPIO_PI_NPIN
 };
 
 void
@@ -222,7 +222,7 @@ next:
 	config_found(&sc->sc_dev, &gba, gpiobus_print);
 
 	pin = 0;
-	if (++port < AWPIO_NPORT)
+	if (++port < SXIPIO_NPORT)
 		goto next;
 }
 
@@ -239,12 +239,12 @@ sxipio_getcfg(int pin)
 
 	port = pin >> 5;
 	bit = pin - (port << 5);
-	reg = AWPIO_CFG(port, bit >> 3);
+	reg = SXIPIO_CFG(port, bit >> 3);
 	off = (bit & 7) << 2;
 
 	s = splhigh();
 
-	data = AWREAD4(sc, reg);
+	data = SXIREAD4(sc, reg);
 
 	splx(s);
 
@@ -260,14 +260,14 @@ sxipio_setcfg(int pin, int mux)
 
 	port = pin >> 5;
 	bit = pin - (port << 5);
-	reg = AWPIO_CFG(port, bit >> 3);
+	reg = SXIPIO_CFG(port, bit >> 3);
 	off = (bit & 7) << 2;
 	cmask = 7 << off;
 	mask = mux << off;
 
 	s = splhigh();
 
-	AWCMS4(sc, reg, cmask, mask);
+	SXICMS4(sc, reg, cmask, mask);
 
 	splx(s);
 }
@@ -281,12 +281,12 @@ sxipio_getpin(int pin)
 
 	port = pin >> 5;
 	bit = pin - (port << 5);
-	reg = AWPIO_DAT(port);
+	reg = SXIPIO_DAT(port);
 	mask = 1 << (bit & 31);
 
 	s = splhigh();
 
-	data = AWREAD4(sc, reg);
+	data = SXIREAD4(sc, reg);
 
 	splx(s);
 
@@ -302,12 +302,12 @@ sxipio_setpin(int pin)
 
 	port = pin >> 5;
 	bit = pin - (port << 5);
-	reg = AWPIO_DAT(port);
+	reg = SXIPIO_DAT(port);
 	mask = 1 << (bit & 31);
 
 	s = splhigh();
 
-	AWSET4(sc, reg, mask);
+	SXISET4(sc, reg, mask);
 
 	splx(s);
 }
@@ -321,12 +321,12 @@ sxipio_clrpin(int pin)
 
 	port = pin >> 5;
 	bit = pin - (port << 5);
-	reg = AWPIO_DAT(port);
+	reg = SXIPIO_DAT(port);
 	mask = 1 << (bit & 31);
 
 	s = splhigh();
 
-	AWCLR4(sc, reg, mask);
+	SXICLR4(sc, reg, mask);
 
 	splx(s);
 }
@@ -340,13 +340,13 @@ sxipio_togglepin(int pin)
 
 	port = pin >> 5;
 	bit = pin - (port << 5);
-	reg = AWPIO_DAT(port);
+	reg = SXIPIO_DAT(port);
 	mask = 1 << (bit & 31);
 
 	s = splhigh();
 
-	data = AWREAD4(sc, reg);
-	AWWRITE4(sc, reg, data ^ mask);
+	data = SXIREAD4(sc, reg);
+	SXIWRITE4(sc, reg, data ^ mask);
 
 	splx(s);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirtc.c,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
+/*	$OpenBSD: sxirtc.c,v 1.2 2013/10/23 18:01:52 jasper Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2013 Artturi Alm
@@ -30,8 +30,8 @@
 
 #include <armv7/sunxi/sunxivar.h>
 
-#define	AWRTC_YYMMDD	0x00
-#define	AWRTC_HHMMSS	0x04
+#define	SXIRTC_YYMMDD	0x00
+#define	SXIRTC_HHMMSS	0x04
 
 #define LEAPYEAR(y)        \
     (((y) % 4 == 0 &&    \
@@ -98,13 +98,13 @@ sxirtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 	struct clock_ymdhms dt;
 	uint32_t reg;
 
-	reg = AWREAD4(sc, AWRTC_HHMMSS);
+	reg = SXIREAD4(sc, SXIRTC_HHMMSS);
 	dt.dt_sec = reg & 0x3f;
 	dt.dt_min = reg >> 8 & 0x3f;
 	dt.dt_hour = reg >> 16 & 0x1f;
 	dt.dt_wday = reg >> 29 & 0x07;
 
-	reg = AWREAD4(sc, AWRTC_YYMMDD);
+	reg = SXIREAD4(sc, SXIRTC_YYMMDD);
 	dt.dt_day = reg & 0x1f;
 	dt.dt_mon = reg >> 8 & 0x0f;
 	dt.dt_year = (reg >> 16 & 0x3f) + 2010; /* 0xff on A20 */
@@ -134,11 +134,11 @@ sxirtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 	    dt.dt_mon > 12 || dt.dt_mon == 0)
 		return 1;
 
-	AWCMS4(sc, AWRTC_HHMMSS, 0xe0000000 | 0x1f0000 | 0x3f00 | 0x3f,
+	SXICMS4(sc, SXIRTC_HHMMSS, 0xe0000000 | 0x1f0000 | 0x3f00 | 0x3f,
 	    dt.dt_sec | (dt.dt_min << 8) | (dt.dt_hour << 16) |
 	    (dt.dt_wday << 29));
 
-	AWCMS4(sc, AWRTC_YYMMDD, 0x00400000 | 0x003f0000 | 0x0f00 | 0x1f,
+	SXICMS4(sc, SXIRTC_YYMMDD, 0x00400000 | 0x003f0000 | 0x0f00 | 0x1f,
 	   dt.dt_day | (dt.dt_mon << 8) | ((dt.dt_year - 2010) << 16) |
 	   (LEAPYEAR(dt.dt_year) << 22));
 

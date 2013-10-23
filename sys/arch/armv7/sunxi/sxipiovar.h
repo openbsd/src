@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipiovar.h,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
+/*	$OpenBSD: sxipiovar.h,v 1.2 2013/10/23 18:01:52 jasper Exp $	*/
 /*
  * Copyright (c) 2013 Artturi Alm
  *
@@ -23,15 +23,15 @@
  * these pin defines.
  */
 
-#define	AWPIO_INPUT		0
-#define	AWPIO_OUTPUT		1
+#define	SXIPIO_INPUT		0
+#define	SXIPIO_OUTPUT		1
 
-#define AWPIO_USB1_PWR		230
-#define AWPIO_USB2_PWR		227
-#define AWPIO_LED_GREEN		244
-#define AWPIO_LED_BLUE		245
-#define AWPIO_SATA_PWR		40
-#define	AWPIO_EMAC_NPINS	18	/* PORTA 0-17 */
+#define SXIPIO_USB1_PWR		230
+#define SXIPIO_USB2_PWR		227
+#define SXIPIO_LED_GREEN		244
+#define SXIPIO_LED_BLUE		245
+#define SXIPIO_SATA_PWR		40
+#define	SXIPIO_EMAC_NPINS	18	/* PORTA 0-17 */
 
 int sxipio_getcfg(int);
 void sxipio_setcfg(int, int);

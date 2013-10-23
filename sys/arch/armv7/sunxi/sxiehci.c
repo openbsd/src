@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiehci.c,v 1.1 2013/10/23 17:08:48 jasper Exp $ */
+/*	$OpenBSD: sxiehci.c,v 1.2 2013/10/23 18:01:52 jasper Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -171,11 +171,11 @@ sxiehci_init(struct sxiehci_softc *sc, int unit)
 	if (unit > 1)
 		panic("sxiehci_init: unit >1 %d", unit);
 	else if (unit == 0) {
-		pin = AWPIO_USB1_PWR;
+		pin = SXIPIO_USB1_PWR;
 		r = SDRAM_REG_HPCR_USB1;
 		mod = CCMU_EHCI0;
 	} else {
-		pin = AWPIO_USB2_PWR;
+		pin = SXIPIO_USB2_PWR;
 		r = SDRAM_REG_HPCR_USB2;
 		mod = CCMU_EHCI1;
 	}
@@ -183,7 +183,7 @@ sxiehci_init(struct sxiehci_softc *sc, int unit)
 	sxiccmu_enablemodule(mod);
 
 	/* power up */
-	sxipio_setcfg(pin, AWPIO_OUTPUT);
+	sxipio_setcfg(pin, SXIPIO_OUTPUT);
 	sxipio_setpin(pin);
 
 	val = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USB_PMU_IRQ_ENABLE);

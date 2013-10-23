@@ -1,19 +1,19 @@
-#define	AWUART_RBR	0x00
-#define	AWUART_THR	0x00
-#define AWUART_DLL	0x00
-#define AWUART_DLH	0x04
-#define AWUART_IER	0x04
-#define AWUART_IIR	0x08
-#define AWUART_FCR	0x08
-#define AWUART_LCR	0x0c
-#define AWUART_MCR	0x10
-#define AWUART_LSR	0x14
-#define AWUART_MSR	0x18
-#define AWUART_SCH	0x1c
-#define AWUART_USR	0x7c
-#define AWUART_TFL	0x80
-#define AWUART_RFL	0x84
-#define AWUART_HALT	0xa4
+#define	SXIUART_RBR	0x00
+#define	SXIUART_THR	0x00
+#define SXIUART_DLL	0x00
+#define SXIUART_DLH	0x04
+#define SXIUART_IER	0x04
+#define SXIUART_IIR	0x08
+#define SXIUART_FCR	0x08
+#define SXIUART_LCR	0x0c
+#define SXIUART_MCR	0x10
+#define SXIUART_LSR	0x14
+#define SXIUART_MSR	0x18
+#define SXIUART_SCH	0x1c
+#define SXIUART_USR	0x7c
+#define SXIUART_TFL	0x80
+#define SXIUART_RFL	0x84
+#define SXIUART_HALT	0xa4
 
 /* interrupt enable register */
 #define IER_PTIME	0x80

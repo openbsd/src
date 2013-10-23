@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.2 2013/10/23 18:01:52 jasper Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -132,35 +132,35 @@ sxiccmu_enablemodule(int mod)
 
 	switch (mod) {
 	case CCMU_EHCI0:
-		AWSET4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_EHCI0);
-		AWSET4(sc, CCMU_USB_CLK, CCMU_USB1_RESET | CCMU_USB_PHY);
+		SXISET4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_EHCI0);
+		SXISET4(sc, CCMU_USB_CLK, CCMU_USB1_RESET | CCMU_USB_PHY);
 		break;
 	case CCMU_EHCI1:
-		AWSET4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_EHCI1);
-		AWSET4(sc, CCMU_USB_CLK, CCMU_USB2_RESET | CCMU_USB_PHY);
+		SXISET4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_EHCI1);
+		SXISET4(sc, CCMU_USB_CLK, CCMU_USB2_RESET | CCMU_USB_PHY);
 		break;
 	case CCMU_OHCI:
 		panic("sxiccmu_enablemodule: XXX OHCI!");
 		break;
 	case CCMU_AHCI:
-		reg = AWREAD4(sc, CCMU_PLL6_CFG);
+		reg = SXIREAD4(sc, CCMU_PLL6_CFG);
 		reg &= ~(CCMU_PLL6_BYPASS_EN | CCMU_PLL6_FACTOR_M |
 		    CCMU_PLL6_FACTOR_N);
 		reg |= CCMU_PLL6_EN | CCMU_PLL6_SATA_CLK_EN;
 		reg |= 25 << 8;
 		reg |= (reg >> 4 & 3);
-		AWWRITE4(sc, CCMU_PLL6_CFG, reg);
+		SXIWRITE4(sc, CCMU_PLL6_CFG, reg);
 
-		AWSET4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_SATA);
+		SXISET4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_SATA);
 		delay(1000);
 
-		AWWRITE4(sc, CCMU_SATA_CLK, CCMU_SCLK_GATING);
+		SXIWRITE4(sc, CCMU_SATA_CLK, CCMU_SCLK_GATING);
 		break;
 	case CCMU_EMAC:
-		AWSET4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_EMAC);
+		SXISET4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_EMAC);
 		break;
 	case CCMU_DMA:
-		AWSET4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_DMA);
+		SXISET4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_DMA);
 		break;
 	case CCMU_UART0:
 	case CCMU_UART1:
@@ -170,7 +170,7 @@ sxiccmu_enablemodule(int mod)
 	case CCMU_UART5:
 	case CCMU_UART6:
 	case CCMU_UART7:
-		AWSET4(sc, CCMU_APB_GATING1, CCMU_APB_GATING_UARTx(mod - CCMU_UART0));
+		SXISET4(sc, CCMU_APB_GATING1, CCMU_APB_GATING_UARTx(mod - CCMU_UART0));
 		break;
 	default:
 		break;

@@ -1,4 +1,4 @@
-/* $OpenBSD: sunxi.c,v 1.1 2013/10/23 17:08:48 jasper Exp $ */
+/* $OpenBSD: sunxi.c,v 1.2 2013/10/23 18:01:52 jasper Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -169,7 +169,7 @@ sunxi_attach(struct device *parent, struct device *self, void *aux)
 	    &sc->sc_ioh))
 		panic("sunxi_attach: bus_space_map failed!");
 	/* map the part of SRAM dedicated to EMAC to EMAC */
-	AWSET4(sc, 4, 5 << 2);
+	SXISET4(sc, 4, 5 << 2);
 #endif
 
 	/* Directly configure on-board devices (dev* in config file). */
