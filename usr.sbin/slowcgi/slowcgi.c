@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.23 2013/10/21 18:19:27 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.24 2013/10/23 15:29:21 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -478,31 +478,32 @@ slowcgi_sig_handler(int sig, short event, void *arg)
 	int			 status;
 
 	p = arg;
-	c = NULL;
 
 	switch (sig) {
 	case SIGCHLD:
-		pid = wait(&status);
-		SLIST_FOREACH(ncs, &p->requests, entry)
-			if (ncs->request->script_pid == pid) {
-				c = ncs->request;
-				break;
+		while((pid = waitpid(WAIT_ANY, &status, WNOHANG)) != -1) {
+			c = NULL;
+			SLIST_FOREACH(ncs, &p->requests, entry)
+				if (ncs->request->script_pid == pid) {
+					c = ncs->request;
+					break;
+				}
+			if (c == NULL) {
+				lwarnx("caught exit of unknown child %i", pid);
+				continue;
 			}
-		if (c == NULL) {
-			lwarnx("caught exit of unknown child %i", pid);
-			break;
+
+			if (WIFSIGNALED(status))
+				c->script_status = WTERMSIG(status);
+			else
+				c->script_status = WEXITSTATUS(status);
+
+			if (c->script_flags == (STDOUT_DONE | STDERR_DONE))
+				create_end_record(c);
+			c->script_flags |= SCRIPT_DONE;
+
+			ldebug("wait: %s", c->script_name);
 		}
-
-		if (WIFSIGNALED(status))
-			c->script_status = WTERMSIG(status);
-		else
-			c->script_status = WEXITSTATUS(status);
-
-		if (c->script_flags == (STDOUT_DONE | STDERR_DONE))
-			create_end_record(c);
-		c->script_flags |= SCRIPT_DONE;
-
-		ldebug("wait: %s", c->script_name);
 		break;
 	case SIGPIPE:
 		/* ignore */
