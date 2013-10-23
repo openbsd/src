@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.13 2013/10/10 21:24:59 miod Exp $	*/
+/*	$OpenBSD: board.h,v 1.14 2013/10/23 10:07:14 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat
  *
@@ -139,7 +139,8 @@ extern const struct board *platform;/* just to have people confuse both names */
 #define	INTSRC_ETHERNET2	8	/* second on-board Ethernet */
 #define	INTSRC_SCSI1		9	/* first on-board SCSI controller */
 #define	INTSRC_SCSI2		10	/* second on-board SCSI controller */
-#define	NINTSRC_SYSCON		11	/* total number of non-VME sources */
+#define	INTSRC_DMA		11	/* DMA completion interrupt */
+#define	NINTSRC_SYSCON		12	/* total number of non-VME sources */
 #define	INTSRC_VME(lvl)	(NINTSRC_SYSCON + (lvl) - 1)	/* seven VME levels */
 
 #define	IS_VME_INTSRC(intsrc)		((intsrc) >= NINTSRC_SYSCON)

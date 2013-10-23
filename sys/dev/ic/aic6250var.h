@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6250var.h,v 1.1 2013/10/15 01:41:46 miod Exp $	*/
+/*	$OpenBSD: aic6250var.h,v 1.2 2013/10/23 10:07:14 miod Exp $	*/
 
 /*
  * Copyright (c) 2010, 2013 Miodrag Vallat.
@@ -190,6 +190,10 @@ struct aic6250_softc {
 	int	sc_freq;		/* Clock frequency in MHz */
 	int	sc_minsync;		/* Minimum sync period / 4 */
 	int	sc_maxsync;		/* Maximum sync period / 4 */
+
+	/* DMA function set from MD code */
+	int	(*sc_dma_start)(struct aic6250_softc *, void *, size_t, int);
+	int	(*sc_dma_done)(struct aic6250_softc *);
 };
 
 #if AIC_DEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: oaic_syscon.c,v 1.1 2013/10/15 01:41:44 miod Exp $	*/
+/*	$OpenBSD: oaic_syscon.c,v 1.2 2013/10/23 10:07:14 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -33,6 +33,9 @@
 
 #include <dev/ic/aic6250reg.h>
 #include <dev/ic/aic6250var.h>
+#if 0
+#include <aviion/dev/dmavar.h>
+#endif
 
 int	oaic_syscon_match(struct device *, void *, void *);
 void	oaic_syscon_attach(struct device *, struct device *, void *);
@@ -42,6 +45,9 @@ struct oaic_syscon_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	struct intrhand		sc_ih;
+#if 0
+	uint8_t			sc_dmac;
+#endif
 };
 
 const struct cfattach oaic_syscon_ca = {
@@ -51,6 +57,13 @@ const struct cfattach oaic_syscon_ca = {
 
 uint8_t	oaic_read(struct aic6250_softc *, uint);
 void	oaic_write(struct aic6250_softc *, uint, uint8_t);
+
+#if 0
+int	oaic_dmastart(struct aic6250_softc *, void *, size_t, int);
+int	oaic_dmadone(struct aic6250_softc *);
+void	oaic_dmago(void *);
+void	oaic_dmastop(void *);
+#endif
 
 int
 oaic_syscon_match(struct device *parent, void *match, void *aux)
@@ -122,6 +135,11 @@ oaic_syscon_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_read = oaic_read;
 	sc->sc_write = oaic_write;
 
+#if 0
+	sc->sc_dma_start = oaic_dmastart;
+	sc->sc_dma_done = oaic_dmadone;
+#endif
+
 	aic6250_attach(sc);
 
 	ssc->sc_ih.ih_fn = (int(*)(void *))aic6250_intr;
@@ -149,3 +167,72 @@ oaic_write(struct aic6250_softc *sc, uint reg, uint8_t val)
 
 	bus_space_write_4(ssc->sc_iot, ssc->sc_ioh, reg << 2, val);
 }
+
+#if 0
+int
+oaic_dmastart(struct aic6250_softc *sc, void *addr, size_t size, int datain)
+{
+	struct oaic_syscon_softc *osc = (struct oaic_syscon_softc *)sc;
+	char *vaddr = (char *)addr;
+
+	/*
+	 * The DMA engine can only operate on 16-bit words.
+	 */
+	if (size & 1)
+		return EINVAL;
+
+	osc->sc_dmac = AIC_DC_DMA_XFER_EN | (datain ? 0 : AIC_DC_TRANSFER_DIR);
+	if ((vaddr_t)vaddr & 1) {
+		if (datain) {
+			/*
+			 * The AIC_DC_ODD_XFER_START bit ought to have been
+			 * set before changing phase to DATA IN.
+			 */
+			return EINVAL;
+		}
+		vaddr--;
+		osc->sc_dmac |= AIC_DC_ODD_XFER_START;
+	}
+	
+	return dma_req(vaddr, size,
+	    datain ? DMADIR_FROM_DEVICE : DMADIR_TO_DEVICE,
+	    oaic_dmago, oaic_dmastop, sc);
+}
+
+void
+oaic_dmago(void *v)
+{
+	struct aic6250_softc *sc = (struct aic6250_softc *)v;
+	struct oaic_syscon_softc *osc = (struct oaic_syscon_softc *)sc;
+
+	sc->sc_flags |= AIC_DOINGDMA;
+
+	oaic_write(sc, AIC_DMA_BYTE_COUNT_H, sc->sc_dleft >> 16);
+	oaic_write(sc, AIC_DMA_BYTE_COUNT_M, sc->sc_dleft >> 8);
+	oaic_write(sc, AIC_DMA_BYTE_COUNT_L, sc->sc_dleft);
+	oaic_write(sc, AIC_DMA_CNTRL, osc->sc_dmac);
+}
+
+void
+oaic_dmastop(void *v)
+{
+	struct aic6250_softc *sc = (struct aic6250_softc *)v;
+
+	sc->sc_flags &= ~AIC_DOINGDMA;
+}
+
+int
+oaic_dmadone(struct aic6250_softc *sc)
+{
+	int resid;
+
+	resid = oaic_read(sc, AIC_DMA_BYTE_COUNT_H) << 16 |
+	    oaic_read(sc, AIC_DMA_BYTE_COUNT_M) << 8 |
+	    oaic_read(sc, AIC_DMA_BYTE_COUNT_L);
+
+	sc->sc_dp += sc->sc_dleft - resid;
+	sc->sc_dleft = resid;
+
+	return 0;
+}
+#endif

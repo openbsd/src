@@ -1,4 +1,4 @@
-/*	$OpenBSD: av530_machdep.c,v 1.11 2013/10/10 21:24:58 miod Exp $	*/
+/*	$OpenBSD: av530_machdep.c,v 1.12 2013/10/23 10:07:14 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -428,6 +428,7 @@ av530_intsrc(int i)
 		0,
 		0,
 		0,
+		0,
 		AV530_IRQ_VME1,
 		AV530_IRQ_VME2,
 		AV530_IRQ_VME3,
@@ -455,6 +456,7 @@ av530_exintsrc(int i)
 		AV530_EXIRQ_LAN1,
 		AV530_EXIRQ_SCSI0,
 		AV530_EXIRQ_SCSI1,
+		0,
 		0,
 		0,
 		0,

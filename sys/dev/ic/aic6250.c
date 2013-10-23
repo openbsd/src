@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6250.c,v 1.1 2013/10/15 01:41:45 miod Exp $	*/
+/*	$OpenBSD: aic6250.c,v 1.2 2013/10/23 10:07:14 miod Exp $	*/
 
 /*
  * Copyright (c) 2010, 2013 Miodrag Vallat.
@@ -99,6 +99,9 @@
 #endif
 
 #define	AIC_ABORT_TIMEOUT	2000	/* time to wait for abort */
+
+/* threshold length for DMA transfer */
+#define	AIC_MIN_DMA_LEN		32
 
 /* End of customizable parameters */
 
@@ -1376,10 +1379,19 @@ aic6250_intr(void *arg)
 
 loop:
 	sr0 = (*sc->sc_read)(sc, AIC_STATUS_REG0);
+
 	/*
 	 * First check for abnormal conditions, such as reset.
 	 */
 	AIC_MISC(("sr0:0x%02x ", sr0));
+
+	/*
+	 * Check for the end of a DMA operation before doing anything else...
+	 */
+	if ((sc->sc_flags & AIC_DOINGDMA) != 0 &&
+	    (sr0 & AIC_SR1_CMD_DONE) != 0) {
+		(*sc->sc_dma_done)(sc);
+	}
 
 	if ((sr0 & AIC_SR0_SCSI_RST_OCCURED) != 0) {
 		printf("%s: SCSI bus reset\n", sc->sc_dev.dv_xname);
@@ -1618,6 +1630,13 @@ loop:
 		}
 	}
 
+	/*
+	 * Do not change phase (yet) if we have a pending DMA operation.
+	 */
+	if ((sc->sc_flags & AIC_DOINGDMA) != 0) {
+		goto out;
+	}
+
 dophase:
 	if ((sr0 & AIC_SR0_SCSI_REQ_ON) == 0) {
 		/* Wait for AIC_SR0_SCSI_REQ_ON. */
@@ -1665,6 +1684,17 @@ dophase:
 		if (sc->sc_state != AIC_CONNECTED)
 			break;
 		AIC_MISC(("dataout dleft=%lu ", (u_long)sc->sc_dleft));
+		if (sc->sc_dma_start != NULL &&
+		    sc->sc_dleft > AIC_MIN_DMA_LEN) {
+			AIC_ASSERT(sc->sc_nexus != NULL);
+			acb = sc->sc_nexus;
+			if ((acb->xs->flags & SCSI_POLL) == 0 &&
+			    (*sc->sc_dma_start)
+			    (sc, sc->sc_dp, sc->sc_dleft, 0) == 0) {
+				sc->sc_prevphase = PH_DATAOUT;
+				goto out;
+			}
+		}
 		n = aic6250_dataout_pio(sc, sc->sc_dp, sc->sc_dleft, PH_DATAOUT);
 		sc->sc_dp += n;
 		sc->sc_dleft -= n;
@@ -1675,6 +1705,17 @@ dophase:
 		if (sc->sc_state != AIC_CONNECTED)
 			break;
 		AIC_MISC(("datain %lu ", (u_long)sc->sc_dleft));
+		if (sc->sc_dma_start != NULL &&
+		    sc->sc_dleft > AIC_MIN_DMA_LEN) {
+			AIC_ASSERT(sc->sc_nexus != NULL);
+			acb = sc->sc_nexus;
+			if ((acb->xs->flags & SCSI_POLL) == 0 &&
+			    (*sc->sc_dma_start)
+			    (sc, sc->sc_dp, sc->sc_dleft, 1) == 0) {
+				sc->sc_prevphase = PH_DATAIN;
+				goto out;
+			}
+		}
 		n = aic6250_datain_pio(sc, sc->sc_dp, sc->sc_dleft, PH_DATAIN);
 		sc->sc_dp += n;
 		sc->sc_dleft -= n;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.25 2013/10/10 21:24:58 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.26 2013/10/23 10:07:14 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat.
  *
@@ -522,7 +522,7 @@ av400_intsrc(int i)
 		AV400_IRQ_ECI,
 		0,
 		AV400_IRQ_SCI,
-		0,
+		AV400_IRQ_DTC,
 		AV400_IRQ_VME1,
 		AV400_IRQ_VME2,
 		AV400_IRQ_VME3,
@@ -558,7 +558,7 @@ static const u_int av400_obio_vec[32] = {
 	INTSRC_VME(3),		/* VME3 */
 	0,			/* DWP */
 	INTSRC_VME(4),		/* VME4 */
-	0,			/* DTC */
+	INTSRC_DMA,		/* DTC */
 	INTSRC_VME(5),		/* VME5 */
 	INTSRC_ETHERNET1,	/* ECI */
 	INTSRC_DUART2,		/* DI2 */
