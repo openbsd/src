@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.340 2013/08/25 18:34:21 mikeb Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.341 2013/10/23 20:38:23 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2893,12 +2893,14 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * 5700 B0 chips do not support checksumming correctly due
 	 * to hardware bugs.
+	 *
+	 * It seems all controllers have a bug that can generate UDP
+	 * datagrams with a checksum value 0 when TX UDP checksum     
+	 * offloading is enabled. Generating UDP checksum value 0 is
+	 * a violation of RFC 768.
 	 */
 	if (sc->bge_chipid != BGE_CHIPID_BCM5700_B0)
-		ifp->if_capabilities |= IFCAP_CSUM_IPv4;
-#if 0	/* TCP/UDP checksum offload breaks with pf(4) */
-		ifp->if_capabilities |= IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4;
-#endif
+		ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4;
 
 	if (BGE_IS_JUMBO_CAPABLE(sc))
 		ifp->if_hardmtu = BGE_JUMBO_MTU;
