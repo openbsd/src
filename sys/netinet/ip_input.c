@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.218 2013/10/21 12:27:12 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.219 2013/10/23 19:09:28 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -104,9 +104,6 @@ int	ip_defttl = IPDEFTTL;
 int	ip_mtudisc = 1;
 u_int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
 int	ip_directedbcast = 0;
-#ifdef DIAGNOSTIC
-int	ipprintfs = 0;
-#endif
 
 struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
 
@@ -1275,10 +1272,6 @@ save_rte(struct mbuf *m, u_char *option, struct in_addr dst)
 	unsigned olen;
 
 	olen = option[IPOPT_OLEN];
-#ifdef DIAGNOSTIC
-	if (ipprintfs)
-		printf("%s: olen %d\n", __func__, olen);
-#endif
 	if (olen > sizeof(isr->isr_hdr) + sizeof(isr->isr_routes))
 		return;
 
@@ -1324,21 +1317,12 @@ ip_srcroute(struct mbuf *m0)
 
 	/* length is (nhops+1)*sizeof(addr) + sizeof(nop + header) */
 	m->m_len = (isr->isr_nhops + 1) * sizeof(struct in_addr) + OPTSIZ;
-#ifdef DIAGNOSTIC
-	if (ipprintfs)
-		printf("%s: nhops %d mlen %d", __func__, isr->isr_nhops,
-		    m->m_len);
-#endif
 
 	/*
 	 * First save first hop for return route
 	 */
 	p = &(isr->isr_routes[isr->isr_nhops - 1]);
 	*(mtod(m, struct in_addr *)) = *p--;
-#ifdef DIAGNOSTIC
-	if (ipprintfs)
-		printf(" hops %x", ntohl(mtod(m, struct in_addr *)->s_addr));
-#endif
 
 	/*
 	 * Copy option fields and padding (nop) to mbuf.
@@ -1354,20 +1338,12 @@ ip_srcroute(struct mbuf *m0)
 	 * reversing the path (pointers are now aligned).
 	 */
 	while (p >= isr->isr_routes) {
-#ifdef DIAGNOSTIC
-		if (ipprintfs)
-			printf(" %x", ntohl(q->s_addr));
-#endif
 		*q++ = *p--;
 	}
 	/*
 	 * Last hop goes to final destination.
 	 */
 	*q = isr->isr_dst;
-#ifdef DIAGNOSTIC
-	if (ipprintfs)
-		printf(" %x\n", ntohl(q->s_addr));
-#endif
 	m_tag_delete(m0, (struct m_tag *)isr);
 	return (m);
 }
@@ -1432,11 +1408,6 @@ ip_forward(struct mbuf *m, int srcrt)
 	n_long dest;
 
 	dest = 0;
-#ifdef DIAGNOSTIC
-	if (ipprintfs)
-		printf("forward: src %x dst %x ttl %x\n", ip->ip_src.s_addr,
-		    ip->ip_dst.s_addr, ip->ip_ttl);
-#endif
 	if (m->m_flags & (M_BCAST|M_MCAST) || in_canforward(ip->ip_dst) == 0) {
 		ipstat.ips_cantforward++;
 		m_freem(m);
@@ -1514,10 +1485,6 @@ ip_forward(struct mbuf *m, int srcrt)
 		    /* Router requirements says to only send host redirects */
 		    type = ICMP_REDIRECT;
 		    code = ICMP_REDIRECT_HOST;
-#ifdef DIAGNOSTIC
-		    if (ipprintfs)
-			printf("redirect (%d) to %x\n", code, (u_int32_t)dest);
-#endif
 		}
 	}
 
