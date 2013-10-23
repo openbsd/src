@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.850 2013/10/22 15:35:57 lteo Exp $ */
+/*	$OpenBSD: pf.c,v 1.851 2013/10/23 11:06:56 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2157,7 +2157,8 @@ pf_translate_icmp_af(int af, void *arg)
 		/* aligns well with a icmpv4 nextmtu */
 		icmp6->icmp6_mtu = htonl(mtu);
 		/* icmpv4 pptr is a one most significant byte */
-		icmp6->icmp6_pptr = htonl(ptr << 24);
+		if (ptr >= 0)
+			icmp6->icmp6_pptr = htonl(ptr << 24);
 		break;
 	case AF_INET6:
 		icmp4 = arg;
@@ -2249,7 +2250,8 @@ pf_translate_icmp_af(int af, void *arg)
 		icmp4->icmp_type = type;
 		icmp4->icmp_code = code;
 		icmp4->icmp_nextmtu = htons(mtu);
-		icmp4->icmp_void = htonl(ptr);
+		if (ptr >= 0)
+			icmp4->icmp_void = htonl(ptr);
 		break;
 	}
 
