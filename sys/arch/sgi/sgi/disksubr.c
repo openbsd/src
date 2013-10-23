@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.27 2013/10/19 09:32:15 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.28 2013/10/23 11:19:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -179,8 +179,8 @@ readsgilabel(struct buf *bp, void (*strat)(struct buf *),
 		}
 	}
 
-	DL_SETBSTART(lp, DL_BLKTOSEC(fsoffs));
-	DL_SETBEND(lp, DL_BLKTOSEC(fsend));
+	DL_SETBSTART(lp, DL_BLKTOSEC(lp, fsoffs));
+	DL_SETBEND(lp, DL_BLKTOSEC(lp, fsend));
 	lp->d_version = 1;
 	lp->d_flags = D_VENDOR;
 	lp->d_checksum = 0;
@@ -191,8 +191,8 @@ finished:
 	if (partoffp)
 		*partoffp = fsoffs;
 	else {
-		DL_SETBSTART(lp, DL_BLKTOSEC(fsoffs));
-		DL_SETBEND(lp, DL_BLKTOSEC(fsend));
+		DL_SETBSTART(lp, DL_BLKTOSEC(lp, fsoffs));
+		DL_SETBEND(lp, DL_BLKTOSEC(lp, fsend));
 	}
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
