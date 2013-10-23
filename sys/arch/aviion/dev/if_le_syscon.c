@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_syscon.c,v 1.14 2013/09/24 20:14:34 miod Exp $	*/
+/*	$OpenBSD: if_le_syscon.c,v 1.15 2013/10/23 22:14:22 miod Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -100,6 +100,7 @@ struct cfattach le_syscon_ca = {
 	sizeof(struct le_softc), le_syscon_match, le_syscon_attach
 };
 
+void	le_syscon_hwinit_ilacc(struct lance_softc *);
 int	le_syscon_intr_ilacc(void *);
 int	le_syscon_intr_lance(void *);
 uint16_t le_syscon_rdcsr(struct lance_softc *, uint16_t);
@@ -277,13 +278,14 @@ le_syscon_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_rdcsr = le_syscon_rdcsr;
 	sc->sc_wrcsr = le_syscon_wrcsr;
 	sc->sc_hwreset = NULL;
-	sc->sc_hwinit = NULL;
+	if (lesc->sc_ilacc)
+		sc->sc_hwinit = le_syscon_hwinit_ilacc;
+	else
+		sc->sc_hwinit = NULL;
 
 	if (lesc->sc_ilacc) {
-		le_syscon_wrcsr(sc, LE_CSR4, LE_C4_DMAPLUS | LE_C4_UINT);
+		le_syscon_hwinit_ilacc(sc);
 		am79900_config(&lesc->u.sc_am79900);
-		/* Chip is stopped. Set "software style" to 32-bit. */
-		le_syscon_wrcsr(sc, LE_CSR58, 2);
 	} else
 		am7990_config(&lesc->u.sc_am7990);
 
@@ -298,6 +300,13 @@ le_syscon_attach(struct device *parent, struct device *self, void *aux)
 	sysconintr_establish(intsrc, &lesc->sc_ih, self->dv_xname);
 }
 
+void
+le_syscon_hwinit_ilacc(struct lance_softc *sc)
+{
+	le_syscon_wrcsr(sc, LE_CSR4,
+	    LE_C4_DMAPLUS | LE_C4_UINT | LE_C4_TXSTRTM);
+}
+
 int
 le_syscon_intr_ilacc(void *v)
 {
@@ -308,7 +317,7 @@ le_syscon_intr_ilacc(void *v)
 	/* Acknowledge TX start. XXX how to disable this? */
 	csr4 = le_syscon_rdcsr(sc, LE_CSR4);
 	if (csr4 & LE_C4_TXSTRT) {
-		le_syscon_wrcsr(sc, LE_CSR4, csr4);
+		le_syscon_wrcsr(sc, LE_CSR4, csr4 | LE_C4_TXSTRTM);
 		return 1;
 	}
 
