@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.63 2013/10/23 15:12:42 mpi Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.64 2013/10/23 19:24:59 deraadt Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -222,31 +222,6 @@ fddi_output(ifp0, m0, dst, rt0)
 		type = htons(ETHERTYPE_IPV6);
 		break;
 #endif
-#if 0	/*NRL IPv6*/
-#ifdef INET6
-	case AF_INET6:
-		/*
-		 * The bottom line here is to either queue the outgoing packet
-		 * in the discovery engine, or fill in edst with something
-		 * that'll work.
-		 */
-		if (m->m_flags & M_MCAST) {
-			/*
-			 * If multicast dest., then use IPv6 -> Ethernet mcast
-			 * mapping.  Really simple.
-			 */
-			ETHER_MAP_IN6_MULTICAST(((struct sockaddr_in6 *)dst)->sin6_addr,
-			    edst);
-		} else {
-			/* Do unicast neighbor discovery stuff. */
-			if (!ipv6_discov_resolve(ifp, rt, m, dst, edst))
- 				return 0;
-		}
-		type = htons(ETHERTYPE_IPV6);
-		break;
-#endif /* INET6 */
-#endif
-
 	case pseudo_AF_HDRCMPLT:
 		fh = (struct fddi_header *)dst->sa_data;
 		hdrcmplt = 1;
