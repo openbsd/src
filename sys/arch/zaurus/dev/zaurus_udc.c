@@ -1,3 +1,4 @@
+/*	$OpenBSD: zaurus_udc.c,v 1.3 2013/10/24 22:40:10 aalm Exp $	*/
 /*
  * Copyright (c) 2009 Marek Vasut <marex@openbsd.org>
  *

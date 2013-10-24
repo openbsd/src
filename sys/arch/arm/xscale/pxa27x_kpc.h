@@ -1,3 +1,4 @@
+/*	$OpenBSD: pxa27x_kpc.h,v 1.2 2013/10/24 22:40:10 aalm Exp $	*/
 /*
  * Copyright (c) 2009 Marek Vasut <marex@openbsd.org>
  *

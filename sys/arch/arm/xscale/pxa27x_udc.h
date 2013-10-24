@@ -1,3 +1,4 @@
+/*	$OpenBSD: pxa27x_udc.h,v 1.4 2013/10/24 22:40:10 aalm Exp $	*/
 /*
  * Copyright (c) 2009 Marek Vasut <marex@openbsd.org>
  *
