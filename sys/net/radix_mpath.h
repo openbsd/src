@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.h,v 1.10 2013/10/20 16:17:37 claudio Exp $	*/
+/*	$OpenBSD: radix_mpath.h,v 1.11 2013/10/24 18:50:16 deraadt Exp $	*/
 /*	$KAME: radix_mpath.h,v 1.9 2004/03/30 11:21:49 keiichi Exp $	*/
 
 /*
@@ -55,6 +55,6 @@ int	rt_mpath_conflict(struct radix_node_head *, struct rtentry *,
 	    struct sockaddr *, int);
 void	rtalloc_mpath(struct route *, u_int32_t *);
 int	rn_mpath_inithead(void **, int);
-#endif
+#endif /* _KERNEL */
 
 #endif /* _NET_RADIX_MPATH_H_ */

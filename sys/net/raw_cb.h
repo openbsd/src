@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_cb.h,v 1.8 2009/11/13 20:54:05 claudio Exp $	*/
+/*	$OpenBSD: raw_cb.h,v 1.9 2013/10/24 18:50:16 deraadt Exp $	*/
 /*	$NetBSD: raw_cb.h,v 1.9 1996/02/13 22:00:41 christos Exp $	*/
 
 /*
@@ -47,8 +47,6 @@ struct rawcb {
 	struct	sockproto rcb_proto;	/* protocol family, protocol */
 };
 
-#define	sotorawcb(so)		((struct rawcb *)(so)->so_pcb)
-
 /*
  * Nominal space allocated to a raw socket.
  */
@@ -56,8 +54,10 @@ struct rawcb {
 #define	RAWRCVQ		8192
 
 #ifdef _KERNEL
+
 extern LIST_HEAD(rawcbhead, rawcb) rawcb;		/* head of list */
 
+#define	sotorawcb(so)		((struct rawcb *)(so)->so_pcb)
 int	 raw_attach(struct socket *, int);
 void	 *raw_ctlinput(int, struct sockaddr *, u_int, void *);
 void	 raw_detach(struct rawcb *);
@@ -66,6 +66,6 @@ void	 raw_init(void);
 void	 raw_input(struct mbuf *, ...);
 int	 raw_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
-
 #endif /* _KERNEL */
+
 #endif /* _NET_RAW_CB_H_ */

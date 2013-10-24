@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.h,v 1.6 2013/10/24 11:14:35 deraadt Exp $	*/
+/*	$OpenBSD: trunklacp.h,v 1.7 2013/10/24 18:50:16 deraadt Exp $	*/
 /*	$NetBSD: ieee8023ad_impl.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
 
 /*
@@ -29,46 +29,8 @@
  * $FreeBSD: src/sys/net/ieee8023ad_lacp.h,v 1.11 2008/03/17 01:26:44 thompsa Exp $
  */
 
-/*
- * IEEE802.3ad LACP implementation details.
- */
-#define	LACP_TIMER_CURRENT_WHILE	0
-#define	LACP_TIMER_PERIODIC		1
-#define	LACP_TIMER_WAIT_WHILE		2
-#define	LACP_NTIMER			3
-
-#define	LACP_TIMER_ARM(port, timer, val) \
-	(port)->lp_timer[(timer)] = (val)
-#define	LACP_TIMER_DISARM(port, timer) \
-	(port)->lp_timer[(timer)] = 0
-#define	LACP_TIMER_ISARMED(port, timer) \
-	((port)->lp_timer[(timer)] > 0)
-
-/*
- * IEEE802.3ad LACP protocol definitions.
- */
-#define	LACP_STATE_ACTIVITY	(1<<0)
-#define	LACP_STATE_TIMEOUT	(1<<1)
-#define	LACP_STATE_AGGREGATION	(1<<2)
-#define	LACP_STATE_SYNC		(1<<3)
-#define	LACP_STATE_COLLECTING	(1<<4)
-#define	LACP_STATE_DISTRIBUTING	(1<<5)
-#define	LACP_STATE_DEFAULTED	(1<<6)
-#define	LACP_STATE_EXPIRED	(1<<7)
-
-#define	LACP_PORT_NTT		0x00000001
-#define	LACP_PORT_MARK		0x00000002
-
-#define	LACP_STATE_BITS		\
-	"\020"			\
-	"\001ACTIVITY"		\
-	"\002TIMEOUT"		\
-	"\003AGGREGATION"	\
-	"\004SYNC"		\
-	"\005COLLECTING"	\
-	"\006DISTRIBUTING"	\
-	"\007DEFAULTED"		\
-	"\010EXPIRED"
+#ifndef _NET_TRUNKLACP_H_
+#define _NET_TRUNKLACP_H_
 
 /*
  * IEEE802.3 slow protocols (on-wire) definitions.
@@ -146,6 +108,49 @@ struct lacp_markerinfo {
 	u_int32_t		mi_rq_xid;
 	u_int8_t		mi_pad[2];
 } __packed;
+
+#ifdef _KERNEL
+
+/*
+ * IEEE802.3ad LACP implementation details.
+ */
+#define	LACP_TIMER_CURRENT_WHILE	0
+#define	LACP_TIMER_PERIODIC		1
+#define	LACP_TIMER_WAIT_WHILE		2
+#define	LACP_NTIMER			3
+
+#define	LACP_TIMER_ARM(port, timer, val) \
+	(port)->lp_timer[(timer)] = (val)
+#define	LACP_TIMER_DISARM(port, timer) \
+	(port)->lp_timer[(timer)] = 0
+#define	LACP_TIMER_ISARMED(port, timer) \
+	((port)->lp_timer[(timer)] > 0)
+
+/*
+ * IEEE802.3ad LACP protocol definitions.
+ */
+#define	LACP_STATE_ACTIVITY	(1<<0)
+#define	LACP_STATE_TIMEOUT	(1<<1)
+#define	LACP_STATE_AGGREGATION	(1<<2)
+#define	LACP_STATE_SYNC		(1<<3)
+#define	LACP_STATE_COLLECTING	(1<<4)
+#define	LACP_STATE_DISTRIBUTING	(1<<5)
+#define	LACP_STATE_DEFAULTED	(1<<6)
+#define	LACP_STATE_EXPIRED	(1<<7)
+
+#define	LACP_PORT_NTT		0x00000001
+#define	LACP_PORT_MARK		0x00000002
+
+#define	LACP_STATE_BITS		\
+	"\020"			\
+	"\001ACTIVITY"		\
+	"\002TIMEOUT"		\
+	"\003AGGREGATION"	\
+	"\004SYNC"		\
+	"\005COLLECTING"	\
+	"\006DISTRIBUTING"	\
+	"\007DEFAULTED"		\
+	"\010EXPIRED"
 
 struct markerdu {
 	struct slowprothdr	mdu_sph;
@@ -255,7 +260,6 @@ struct lacp_softc {
 #define LACP_UNLOCK(_lsc)		mtx_unlock(&(_lsc)->lsc_mtx)
 #define LACP_LOCK_ASSERT(_lsc)		mtx_assert(&(_lsc)->lsc_mtx, MA_OWNED)
 
-#ifdef _KERNEL
 struct mbuf	*lacp_input(struct trunk_port *,
 		    struct ether_header *, struct mbuf *);
 struct trunk_port *lacp_select_tx_port(struct trunk_softc *, struct mbuf *);
@@ -269,7 +273,6 @@ void		lacp_linkstate(struct trunk_port *);
 void		lacp_req(struct trunk_softc *, caddr_t);
 void		lacp_portreq(struct trunk_port *, caddr_t);
 u_int		lacp_port_status(struct trunk_port *);
-#endif /* _KERNEL */
 
 /* following constants don't include terminating NUL */
 #define	LACP_MACSTR_MAX		(2*6 + 5)
@@ -285,3 +288,7 @@ u_int		lacp_port_status(struct trunk_port *);
 #define	LACP_LAGIDSTR_MAX	\
 	(1 + LACP_PARTNERSTR_MAX + 1 + LACP_PARTNERSTR_MAX + 1)
 #define	LACP_STATESTR_MAX	(255) /* XXX */
+
+#endif /* _KERNEL */
+
+#endif /* _NET_TRUNKLACP_H_ */

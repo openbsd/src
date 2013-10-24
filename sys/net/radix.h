@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.h,v 1.19 2012/12/28 17:52:06 gsoares Exp $	*/
+/*	$OpenBSD: radix.h,v 1.20 2013/10/24 18:50:16 deraadt Exp $	*/
 /*	$NetBSD: radix.h,v 1.8 1996/02/13 22:00:37 christos Exp $	*/
 
 /*
@@ -154,4 +154,5 @@ struct radix_node	*rn_lookup(void *, void *, struct radix_node_head *);
 struct radix_node	*rn_match(void *, struct radix_node_head *);
 
 #endif /* _KERNEL */
+
 #endif /* _NET_RADIX_H_ */

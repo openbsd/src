@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.81 2013/10/24 11:14:35 deraadt Exp $	*/
+/*	$OpenBSD: route.h,v 1.82 2013/10/24 18:50:16 deraadt Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -34,8 +34,6 @@
 
 #ifndef _NET_ROUTE_H_
 #define _NET_ROUTE_H_
-
-#include <sys/queue.h>
 
 /*
  * Kernel resident routing tables.
@@ -83,6 +81,9 @@ struct rt_metrics {
 #define	RTTTOPRHZ(r)	((r) / (RTM_RTTUNIT / PR_SLOWHZ))
 
 #ifdef _KERNEL
+
+#include <sys/queue.h>
+
 /*
  * We distinguish between routes to hosts and routes to networks,
  * preferring the former if available.  For each route we infer

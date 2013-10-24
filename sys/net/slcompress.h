@@ -1,4 +1,4 @@
-/*	$OpenBSD: slcompress.h,v 1.8 2013/10/24 11:14:35 deraadt Exp $	*/
+/*	$OpenBSD: slcompress.h,v 1.9 2013/10/24 18:50:16 deraadt Exp $	*/
 /*	$NetBSD: slcompress.h,v 1.11 1997/05/17 21:12:11 christos Exp $	*/
 
 /*
@@ -109,6 +109,7 @@
 
 #define TCP_PUSH_BIT 0x10
 
+#ifdef _KERNEL
 
 /*
  * "state" data for each active tcp conversation on the wire.  This is
@@ -154,7 +155,6 @@ struct slcompress {
 /* flag values */
 #define SLF_TOSS 1		/* tossing rcvd frames because of input err */
 
-#ifdef _KERNEL
 void	sl_compress_init(struct slcompress *);
 void	sl_compress_setup(struct slcompress *, int);
 u_int	sl_compress_tcp(struct mbuf *,
