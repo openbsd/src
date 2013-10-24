@@ -1,4 +1,4 @@
-/* $OpenBSD: tcpdrop.c,v 1.11 2013/07/09 19:35:52 gsoares Exp $ */
+/* $OpenBSD: tcpdrop.c,v 1.12 2013/10/24 02:55:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
@@ -23,7 +23,6 @@
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <netinet/ip_var.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 

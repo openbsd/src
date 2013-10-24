@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.23 2013/01/08 10:38:19 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.24 2013/10/24 02:55:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -22,13 +22,6 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <sys/tree.h>
-
-#include <net/if.h>
-#include <netinet/in_systm.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
 
 #include <stdio.h>
 #include <stdlib.h>
