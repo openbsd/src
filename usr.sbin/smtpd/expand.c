@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.23 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: expand.c,v 1.24 2013/10/24 20:39:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -61,6 +61,8 @@ expand_insert(struct expand *expand, struct expandnode *node)
 {
 	struct expandnode *xn;
 
+	node->parent = expand->parent;
+
 	log_trace(TRACE_EXPAND, "expand: %p: expand_insert() called for %s",
 	    expand, expandnode_info(node));
 	if (node->type == EXPAND_USERNAME &&
@@ -78,7 +80,6 @@ expand_insert(struct expand *expand, struct expandnode *node)
 		return;
 	}
 
-	log_trace(TRACE_EXPAND, "expand: %p: inserting node", expand);
 	xn = xmemdup(node, sizeof *xn, "expand_insert");
 	xn->rule = expand->rule;
 	xn->parent = expand->parent;
@@ -91,6 +92,7 @@ expand_insert(struct expand *expand, struct expandnode *node)
 	if (expand->queue)
 		TAILQ_INSERT_TAIL(expand->queue, xn, tq_entry);
 	expand->nb_nodes++;
+	log_trace(TRACE_EXPAND, "expand: %p: inserted node %p", expand, xn);
 }
 
 void
@@ -121,6 +123,9 @@ expand_free(struct expand *expand)
 int
 expand_cmp(struct expandnode *e1, struct expandnode *e2)
 {
+	struct expandnode *p1, *p2;
+	int		   r;
+
 	if (e1->type < e2->type)
 		return -1;
 	if (e1->type > e2->type)
@@ -138,7 +143,49 @@ expand_cmp(struct expandnode *e1, struct expandnode *e2)
 	if (e1->userbase > e2->userbase)
 		return 1;
 
-	return memcmp(&e1->u, &e2->u, sizeof(e1->u));
+	r = memcmp(&e1->u, &e2->u, sizeof(e1->u));
+	if (r)
+		return (r);
+
+
+	if (e1->parent == e2->parent)
+		return (0);
+
+	if (e1->parent == NULL)
+		return (-1);
+	if (e2->parent == NULL)
+		return (1);
+
+	/*
+	 * The same node can be expanded in for different dest context.
+	 * Wen need to distinguish between those.
+	 */
+	for(p1 = e1->parent; p1->type != EXPAND_ADDRESS; p1 = p1->parent)
+		;
+	for(p2 = e2->parent; p2->type != EXPAND_ADDRESS; p2 = p2->parent)
+		;
+	if (p1 < p2)
+		return (-1);
+	if (p1 > p2)
+		return (1);
+
+	if (e1->type != EXPAND_FILENAME && e1->type != EXPAND_FILTER)
+		return (0);
+
+	/*
+	 * For external delivery, we need to distinguish between users.
+	 * If we can't find a username, we assume it is _smtpd.
+	 */
+	for(p1 = e1->parent; p1 && p1->type != EXPAND_USERNAME; p1 = p1->parent)
+		;
+	for(p2 = e2->parent; p2 && p2->type != EXPAND_USERNAME; p2 = p2->parent)
+		;
+	if (p1 < p2)
+		return (-1);
+	if (p1 > p2)
+		return (1);
+
+	return (0);
 }
 
 static int
@@ -221,6 +268,7 @@ expandnode_info(struct expandnode *e)
 	static char	buffer[1024];
 	const char     *type = NULL;
 	const char     *value = NULL;
+	char		tmp[64];
 
 	switch (e->type) {
 	case EXPAND_FILTER:
@@ -253,22 +301,24 @@ expandnode_info(struct expandnode *e)
 	strlcat(buffer, ":", sizeof buffer);
 	if (strlcat(buffer, value, sizeof buffer) >= sizeof buffer)
 		return NULL;
-	if (e->mapping || e->userbase) {
-		strlcat(buffer, " [", sizeof buffer);
-		if (e->mapping) {
-			strlcat(buffer, "mapping=", sizeof buffer);
-			strlcat(buffer, e->mapping->t_name, sizeof buffer);
-			if (e->userbase)
-				strlcat(buffer, ", ", sizeof buffer);
 
-		}
-		if (e->userbase) {
-			strlcat(buffer, "userbase=", sizeof buffer);
-			strlcat(buffer, e->userbase->t_name, sizeof buffer);
-		}
-		if (strlcat(buffer, "]", sizeof buffer) >= sizeof buffer)
-			return NULL;
+	snprintf(tmp, sizeof(tmp), "[parent=%p", e->parent);
+	if (strlcat(buffer, tmp, sizeof buffer) >= sizeof buffer)
+		return NULL;
+
+	if (e->mapping) {
+		strlcat(buffer, ", mapping=", sizeof buffer);
+		strlcat(buffer, e->mapping->t_name, sizeof buffer);
 	}
+
+	if (e->userbase) {
+		strlcat(buffer, ", userbase=", sizeof buffer);
+		strlcat(buffer, e->userbase->t_name, sizeof buffer);
+	}
+
+	if (strlcat(buffer, "]", sizeof buffer) >= sizeof buffer)
+		return NULL;
+
 	return buffer;
 }
 
