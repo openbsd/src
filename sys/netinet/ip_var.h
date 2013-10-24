@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.47 2013/10/21 12:27:13 deraadt Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.48 2013/10/24 11:17:36 deraadt Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -35,7 +35,13 @@
 #ifndef _NETINET_IP_VAR_H_
 #define _NETINET_IP_VAR_H_
 
-#include <sys/queue.h>
+/*
+ * Structure stored in mbuf in inpcb.ip_options
+ * and passed to ip_output when ip options are in use.
+ * The actual length of the options (including ipopt_dst)
+ * is in m_len.
+ */
+#define	MAX_IPOPTLEN	40
 
 /*
  * Overlay for ip header used by other protocols (tcp, udp).
@@ -46,58 +52,6 @@ struct ipovly {
 	u_int16_t ih_len;		/* protocol length */
 	struct	  in_addr ih_src;	/* source internet address */
 	struct	  in_addr ih_dst;	/* destination internet address */
-};
-
-/*
- * Ip reassembly queue structures.
- */
-LIST_HEAD(ipqehead, ipqent);
-struct ipqent {
-	LIST_ENTRY(ipqent) ipqe_q;
-	struct ip	*ipqe_ip;
-	struct mbuf	*ipqe_m;	/* mbuf contains packet */
-	u_int8_t	ipqe_mff;	/* for IP fragmentation */
-};
-
-/*
- * Ip reassembly queue structure.  Each fragment
- * being reassembled is attached to one of these structures.
- * They are timed out after ipq_ttl drops to 0, and may also
- * be reclaimed if memory becomes tight.
- */
-struct ipq {
-	LIST_ENTRY(ipq) ipq_q;		/* to other reass headers */
-	u_int8_t  ipq_ttl;		/* time for reass q to live */
-	u_int8_t  ipq_p;		/* protocol of this fragment */
-	u_int16_t ipq_id;		/* sequence id for reassembly */
-	struct	  ipqehead ipq_fragq;	/* to ip fragment queue */
-	struct	  in_addr ipq_src, ipq_dst;
-};
-
-/*
- * Structure stored in mbuf in inpcb.ip_options
- * and passed to ip_output when ip options are in use.
- * The actual length of the options (including ipopt_dst)
- * is in m_len.
- */
-#define	MAX_IPOPTLEN	40
-
-struct ipoption {
-	struct	in_addr ipopt_dst;	/* first-hop dst if source routed */
-	int8_t	ipopt_list[MAX_IPOPTLEN];	/* options proper */
-};
-
-/*
- * Structure attached to inpcb.ip_moptions and
- * passed to ip_output when IP multicast options are in use.
- */
-struct ip_moptions {
-	struct	  ifnet *imo_multicast_ifp; /* ifp for outgoing multicasts */
-	u_int8_t  imo_multicast_ttl;	/* TTL for outgoing multicasts */
-	u_int8_t  imo_multicast_loop;	/* 1 => hear sends if a member */
-	u_int16_t imo_num_memberships;	/* no. memberships this socket */
-	u_int16_t imo_max_memberships;	/* max memberships this socket */
-	struct	  in_multi **imo_membership; /* group memberships */
 };
 
 struct	ipstat {
@@ -135,7 +89,54 @@ struct	ipstat {
 	u_long	ips_notmember;		/* multicasts for unregistered groups */
 };
 
+struct ipoption {
+	struct	in_addr ipopt_dst;	/* first-hop dst if source routed */
+	int8_t	ipopt_list[MAX_IPOPTLEN];	/* options proper */
+};
+
 #ifdef _KERNEL
+
+/*
+ * Structure attached to inpcb.ip_moptions and
+ * passed to ip_output when IP multicast options are in use.
+ */
+struct ip_moptions {
+	struct	  ifnet *imo_multicast_ifp; /* ifp for outgoing multicasts */
+	u_int8_t  imo_multicast_ttl;	/* TTL for outgoing multicasts */
+	u_int8_t  imo_multicast_loop;	/* 1 => hear sends if a member */
+	u_int16_t imo_num_memberships;	/* no. memberships this socket */
+	u_int16_t imo_max_memberships;	/* max memberships this socket */
+	struct	  in_multi **imo_membership; /* group memberships */
+};
+
+#include <sys/queue.h>
+
+/*
+ * Ip reassembly queue structures.
+ */
+LIST_HEAD(ipqehead, ipqent);
+struct ipqent {
+	LIST_ENTRY(ipqent) ipqe_q;
+	struct ip	*ipqe_ip;
+	struct mbuf	*ipqe_m;	/* mbuf contains packet */
+	u_int8_t	ipqe_mff;	/* for IP fragmentation */
+};
+
+/*
+ * Ip reassembly queue structure.  Each fragment
+ * being reassembled is attached to one of these structures.
+ * They are timed out after ipq_ttl drops to 0, and may also
+ * be reclaimed if memory becomes tight.
+ */
+struct ipq {
+	LIST_ENTRY(ipq) ipq_q;		/* to other reass headers */
+	u_int8_t  ipq_ttl;		/* time for reass q to live */
+	u_int8_t  ipq_p;		/* protocol of this fragment */
+	u_int16_t ipq_id;		/* sequence id for reassembly */
+	struct	  ipqehead ipq_fragq;	/* to ip fragment queue */
+	struct	  in_addr ipq_src, ipq_dst;
+};
+
 /* flags passed to ip_output as last parameter */
 #define	IP_FORWARDING		0x1		/* most of ip header exists */
 #define	IP_RAWOUTPUT		0x2		/* raw ip header exists */
