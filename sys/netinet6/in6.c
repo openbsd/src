@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.121 2013/10/20 11:03:02 phessler Exp $	*/
+/*	$OpenBSD: in6.c,v 1.122 2013/10/24 11:20:18 deraadt Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1969,13 +1969,13 @@ in6_addrscope(struct in6_addr *addr)
 
 		switch (scope) {
 		case 0x80:
-			return IPV6_ADDR_SCOPE_LINKLOCAL;
+			return __IPV6_ADDR_SCOPE_LINKLOCAL;
 			break;
 		case 0xc0:
-			return IPV6_ADDR_SCOPE_SITELOCAL;
+			return __IPV6_ADDR_SCOPE_SITELOCAL;
 			break;
 		default:
-			return IPV6_ADDR_SCOPE_GLOBAL; /* just in case */
+			return __IPV6_ADDR_SCOPE_GLOBAL; /* just in case */
 			break;
 		}
 	}
@@ -1989,29 +1989,29 @@ in6_addrscope(struct in6_addr *addr)
 		 * return scope doesn't work.
 		 */
 		switch (scope) {
-		case IPV6_ADDR_SCOPE_INTFACELOCAL:
-			return IPV6_ADDR_SCOPE_INTFACELOCAL;
+		case __IPV6_ADDR_SCOPE_INTFACELOCAL:
+			return __IPV6_ADDR_SCOPE_INTFACELOCAL;
 			break;
-		case IPV6_ADDR_SCOPE_LINKLOCAL:
-			return IPV6_ADDR_SCOPE_LINKLOCAL;
+		case __IPV6_ADDR_SCOPE_LINKLOCAL:
+			return __IPV6_ADDR_SCOPE_LINKLOCAL;
 			break;
-		case IPV6_ADDR_SCOPE_SITELOCAL:
-			return IPV6_ADDR_SCOPE_SITELOCAL;
+		case __IPV6_ADDR_SCOPE_SITELOCAL:
+			return __IPV6_ADDR_SCOPE_SITELOCAL;
 			break;
 		default:
-			return IPV6_ADDR_SCOPE_GLOBAL;
+			return __IPV6_ADDR_SCOPE_GLOBAL;
 			break;
 		}
 	}
 
 	if (bcmp(&in6addr_loopback, addr, sizeof(*addr) - 1) == 0) {
 		if (addr->s6_addr8[15] == 1) /* loopback */
-			return IPV6_ADDR_SCOPE_INTFACELOCAL;
+			return __IPV6_ADDR_SCOPE_INTFACELOCAL;
 		if (addr->s6_addr8[15] == 0) /* unspecified */
-			return IPV6_ADDR_SCOPE_LINKLOCAL;
+			return __IPV6_ADDR_SCOPE_LINKLOCAL;
 	}
 
-	return IPV6_ADDR_SCOPE_GLOBAL;
+	return __IPV6_ADDR_SCOPE_GLOBAL;
 }
 
 /*
@@ -2025,12 +2025,12 @@ in6_addr2scopeid(struct ifnet *ifp, struct in6_addr *addr)
 	int scope = in6_addrscope(addr);
 
 	switch(scope) {
-	case IPV6_ADDR_SCOPE_INTFACELOCAL:
-	case IPV6_ADDR_SCOPE_LINKLOCAL:
+	case __IPV6_ADDR_SCOPE_INTFACELOCAL:
+	case __IPV6_ADDR_SCOPE_LINKLOCAL:
 		/* XXX: we do not distinguish between a link and an I/F. */
 		return (ifp->if_index);
 
-	case IPV6_ADDR_SCOPE_SITELOCAL:
+	case __IPV6_ADDR_SCOPE_SITELOCAL:
 		return (0);	/* XXX: invalid. */
 
 	default:

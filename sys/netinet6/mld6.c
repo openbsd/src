@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.30 2013/10/17 16:27:46 bluhm Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.31 2013/10/24 11:20:18 deraadt Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ mld6_start_listening(struct in6_multi *in6m)
 	mld_all_nodes_linklocal.s6_addr16[1] =
 	    htons(in6m->in6m_ifp->if_index); /* XXX */
 	if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr, &mld_all_nodes_linklocal) ||
-	    IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) < IPV6_ADDR_SCOPE_LINKLOCAL) {
+	    __IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) < __IPV6_ADDR_SCOPE_LINKLOCAL) {
 		in6m->in6m_timer = 0;
 		in6m->in6m_state = MLD_OTHERLISTENER;
 	} else {
@@ -153,7 +153,7 @@ mld6_stop_listening(struct in6_multi *in6m)
 
 	if (in6m->in6m_state == MLD_IREPORTEDLAST &&
 	    (!IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr, &mld_all_nodes_linklocal)) &&
-	    IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) > IPV6_ADDR_SCOPE_INTFACELOCAL)
+	    __IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) > __IPV6_ADDR_SCOPE_INTFACELOCAL)
 		mld6_sendpkt(in6m, MLD_LISTENER_DONE,
 		    &mld_all_routers_linklocal);
 }
@@ -244,8 +244,8 @@ mld6_input(struct mbuf *m, int off)
 		LIST_FOREACH(in6m, &ia->ia6_multiaddrs, in6m_entry) {
 			if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr,
 						&mld_all_nodes_linklocal) ||
-			    IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) <
-			    IPV6_ADDR_SCOPE_LINKLOCAL)
+			    __IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) <
+			    __IPV6_ADDR_SCOPE_LINKLOCAL)
 				continue;
 
 			if (IN6_IS_ADDR_UNSPECIFIED(&mldh->mld_addr) ||

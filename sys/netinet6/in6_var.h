@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.42 2013/10/14 11:07:42 mpi Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.43 2013/10/24 11:20:18 deraadt Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -86,6 +86,7 @@ struct in6_addrlifetime {
 	u_int32_t ia6t_pltime;	/* prefix lifetime */
 };
 
+#ifdef _KERNEL
 struct nd_ifinfo;
 struct in6_ifextra {
 	struct in6_ifstat *in6_ifstat;
@@ -121,6 +122,7 @@ struct	in6_ifaddr {
 	/* multicast addresses joined from the kernel */
 	LIST_HEAD(, in6_multi_mship) ia6_memberships;
 };
+#endif /* _KERNEL */
 
 /*
  * IPv6 interface statistics, as defined in RFC2465 Ipv6IfStatsEntry (p12).
@@ -374,7 +376,7 @@ struct	in6_rrenumreq {
 	(((d)->s6_addr32[1] ^ (a)->s6_addr32[1]) & (m)->s6_addr32[1]) == 0 && \
 	(((d)->s6_addr32[2] ^ (a)->s6_addr32[2]) & (m)->s6_addr32[2]) == 0 && \
 	(((d)->s6_addr32[3] ^ (a)->s6_addr32[3]) & (m)->s6_addr32[3]) == 0 )
-#endif
+#endif /* _KERNEL */
 
 #define SIOCSIFADDR_IN6		 _IOW('i', 12, struct in6_ifreq)
 #define SIOCGIFADDR_IN6		_IOWR('i', 33, struct in6_ifreq)
@@ -386,7 +388,7 @@ struct	in6_rrenumreq {
  */
 #define SIOCSIFDSTADDR_IN6	 _IOW('i', 14, struct in6_ifreq)
 #define SIOCSIFNETMASK_IN6	 _IOW('i', 22, struct in6_ifreq)
-#endif
+#endif /* _KERNEL */
 
 #define SIOCGIFDSTADDR_IN6	_IOWR('i', 34, struct in6_ifreq)
 #define SIOCGIFNETMASK_IN6	_IOWR('i', 37, struct in6_ifreq)
@@ -444,9 +446,7 @@ struct	in6_rrenumreq {
 #ifdef _KERNEL
 #define IN6_ARE_SCOPE_CMP(a,b) ((a)-(b))
 #define IN6_ARE_SCOPE_EQUAL(a,b) ((a)==(b))
-#endif
 
-#ifdef _KERNEL
 TAILQ_HEAD(in6_ifaddrhead, in6_ifaddr);
 extern struct in6_ifaddrhead in6_ifaddr;
 
@@ -479,7 +479,6 @@ do {									\
 	}								\
 	(ia) = (struct in6_ifaddr *)ifa;				\
 } while (0)
-#endif /* _KERNEL */
 
 /*
  * Multi-cast membership entry.  One for each group/ifp that a PCB
@@ -500,7 +499,6 @@ struct	in6_multi {
 	u_int	in6m_timer;		/* MLD6 listener report timer */
 };
 
-#ifdef _KERNEL
 /*
  * Macro for iterating over all the in6_multi records linked to a given
  * interface.

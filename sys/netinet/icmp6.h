@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.37 2013/10/21 08:42:24 phessler Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.38 2013/10/24 11:20:16 deraadt Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 /*
@@ -103,13 +103,6 @@ struct icmp6_hdr {
 #define ICMP6_MEMBERSHIP_REPORT		131	/* group membership report */
 #define ICMP6_MEMBERSHIP_REDUCTION	132	/* group membership termination */
 
-#ifndef _KERNEL
-/* the followings are for backward compatibility to old KAME apps. */
-#define MLD6_LISTENER_QUERY	MLD_LISTENER_QUERY
-#define MLD6_LISTENER_REPORT	MLD_LISTENER_REPORT
-#define MLD6_LISTENER_DONE	MLD_LISTENER_DONE
-#endif
-
 #define ND_ROUTER_SOLICIT		133	/* router solicitation */
 #define ND_ROUTER_ADVERT		134	/* router advertisement */
 #define ND_NEIGHBOR_SOLICIT		135	/* neighbor solicitation */
@@ -129,12 +122,6 @@ struct icmp6_hdr {
 /* The definitions below are experimental. TBA */
 #define MLD_MTRACE_RESP			200	/* mtrace response(to sender) */
 #define MLD_MTRACE			201	/* mtrace messages */
-
-#ifndef _KERNEL
-/* the followings are for backward compatibility to old KAME apps. */
-#define MLD6_MTRACE_RESP	MLD_MTRACE_RESP
-#define MLD6_MTRACE		MLD_MTRACE
-#endif
 
 #define ICMP6_MAXTYPE			201
 
@@ -177,17 +164,6 @@ struct mld_hdr {
 	struct icmp6_hdr	mld_icmp6_hdr;
 	struct in6_addr		mld_addr; /* multicast address */
 } __packed;
-
-/* definitions to provide backward compatibility to old KAME applications */
-#ifndef _KERNEL
-#define mld6_hdr	mld_hdr
-#define mld6_type	mld_type
-#define mld6_code	mld_code
-#define mld6_cksum	mld_cksum
-#define mld6_maxdelay	mld_maxdelay
-#define mld6_reserved	mld_reserved
-#define mld6_addr	mld_addr
-#endif
 
 /* shortcut macro definitions */
 #define mld_type	mld_icmp6_hdr.icmp6_type
@@ -255,17 +231,9 @@ struct nd_neighbor_advert {	/* neighbor advertisement */
 #define nd_na_code		nd_na_hdr.icmp6_code
 #define nd_na_cksum		nd_na_hdr.icmp6_cksum
 #define nd_na_flags_reserved	nd_na_hdr.icmp6_data32[0]
-#if _BYTE_ORDER == _BIG_ENDIAN
-#define ND_NA_FLAG_ROUTER		0x80000000
-#define ND_NA_FLAG_SOLICITED		0x40000000
-#define ND_NA_FLAG_OVERRIDE		0x20000000
-#else
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-#define ND_NA_FLAG_ROUTER		0x80
-#define ND_NA_FLAG_SOLICITED		0x40
-#define ND_NA_FLAG_OVERRIDE		0x20
-#endif
-#endif
+#define ND_NA_FLAG_ROUTER		htonl(0x80000000)
+#define ND_NA_FLAG_SOLICITED		htonl(0x40000000)
+#define ND_NA_FLAG_OVERRIDE		htonl(0x20000000)
 
 struct nd_redirect {		/* redirect */
 	struct icmp6_hdr	nd_rd_hdr;
@@ -350,7 +318,6 @@ struct nd_opt_dnssl {		/* DNSSL option */
 /*
  * icmp6 namelookup
  */
-
 struct icmp6_namelookup {
 	struct icmp6_hdr 	icmp6_nl_hdr;
 	u_int8_t	icmp6_nl_nonce[8];
@@ -384,49 +351,16 @@ struct icmp6_nodeinfo {
 #define NI_QTYPE_NODEADDR	3 /* Node Addresses */
 #define NI_QTYPE_IPV4ADDR	4 /* IPv4 Addresses */
 
-#if _BYTE_ORDER == _BIG_ENDIAN
-#define NI_SUPTYPE_FLAG_COMPRESS	0x1
-#define NI_FQDN_FLAG_VALIDTTL		0x1
-#elif _BYTE_ORDER == _LITTLE_ENDIAN
-#define NI_SUPTYPE_FLAG_COMPRESS	0x0100
-#define NI_FQDN_FLAG_VALIDTTL		0x0100
-#endif
+#define NI_SUPTYPE_FLAG_COMPRESS	htons(0x0001)
+#define NI_FQDN_FLAG_VALIDTTL		htons(0x0001)
 
-#ifdef NAME_LOOKUPS_04
-#if _BYTE_ORDER == _BIG_ENDIAN
-#define NI_NODEADDR_FLAG_LINKLOCAL	0x1
-#define NI_NODEADDR_FLAG_SITELOCAL	0x2
-#define NI_NODEADDR_FLAG_GLOBAL		0x4
-#define NI_NODEADDR_FLAG_ALL		0x8
-#define NI_NODEADDR_FLAG_TRUNCATE	0x10
-#define NI_NODEADDR_FLAG_ANYCAST	0x20 /* just experimental. not in spec */
-#elif _BYTE_ORDER == _LITTLE_ENDIAN
-#define NI_NODEADDR_FLAG_LINKLOCAL	0x0100
-#define NI_NODEADDR_FLAG_SITELOCAL	0x0200
-#define NI_NODEADDR_FLAG_GLOBAL		0x0400
-#define NI_NODEADDR_FLAG_ALL		0x0800
-#define NI_NODEADDR_FLAG_TRUNCATE	0x1000
-#define NI_NODEADDR_FLAG_ANYCAST	0x2000 /* just experimental. not in spec */
-#endif
-#else  /* draft-ietf-ipngwg-icmp-name-lookups-05 (and later?) */
-#if _BYTE_ORDER == _BIG_ENDIAN
-#define NI_NODEADDR_FLAG_TRUNCATE	0x1
-#define NI_NODEADDR_FLAG_ALL		0x2
-#define NI_NODEADDR_FLAG_COMPAT		0x4
-#define NI_NODEADDR_FLAG_LINKLOCAL	0x8
-#define NI_NODEADDR_FLAG_SITELOCAL	0x10
-#define NI_NODEADDR_FLAG_GLOBAL		0x20
-#define NI_NODEADDR_FLAG_ANYCAST	0x40 /* just experimental. not in spec */
-#elif _BYTE_ORDER == _LITTLE_ENDIAN
-#define NI_NODEADDR_FLAG_TRUNCATE	0x0100
-#define NI_NODEADDR_FLAG_ALL		0x0200
-#define NI_NODEADDR_FLAG_COMPAT		0x0400
-#define NI_NODEADDR_FLAG_LINKLOCAL	0x0800
-#define NI_NODEADDR_FLAG_SITELOCAL	0x1000
-#define NI_NODEADDR_FLAG_GLOBAL		0x2000
-#define NI_NODEADDR_FLAG_ANYCAST	0x4000 /* just experimental. not in spec */
-#endif
-#endif
+#define NI_NODEADDR_FLAG_TRUNCATE	htons(0x0001)
+#define NI_NODEADDR_FLAG_ALL		htons(0x0002)
+#define NI_NODEADDR_FLAG_COMPAT		htons(0x0004)
+#define NI_NODEADDR_FLAG_LINKLOCAL	htons(0x0008)
+#define NI_NODEADDR_FLAG_SITELOCAL	htons(0x0010)
+#define NI_NODEADDR_FLAG_GLOBAL		htons(0x0020)
+#define NI_NODEADDR_FLAG_ANYCAST	htons(0x0040)	/* not in spec */
 
 struct ni_reply_fqdn {
 	u_int32_t ni_fqdn_ttl;	/* TTL */
@@ -485,13 +419,8 @@ struct rr_pco_use {		/* use prefix part */
 #define ICMP6_RR_PCOUSE_RAFLAGS_ONLINK	0x80
 #define ICMP6_RR_PCOUSE_RAFLAGS_AUTO	0x40
 
-#if _BYTE_ORDER == _BIG_ENDIAN
-#define ICMP6_RR_PCOUSE_FLAGS_DECRVLTIME     0x80000000
-#define ICMP6_RR_PCOUSE_FLAGS_DECRPLTIME     0x40000000
-#elif _BYTE_ORDER == _LITTLE_ENDIAN
-#define ICMP6_RR_PCOUSE_FLAGS_DECRVLTIME     0x80
-#define ICMP6_RR_PCOUSE_FLAGS_DECRPLTIME     0x40
-#endif
+#define ICMP6_RR_PCOUSE_FLAGS_DECRVLTIME     htonl(0x80000000)
+#define ICMP6_RR_PCOUSE_FLAGS_DECRPLTIME     htonl(0x40000000)
 
 struct rr_result {		/* router renumbering result message */
 	u_int16_t	rrr_flags;
@@ -500,13 +429,8 @@ struct rr_result {		/* router renumbering result message */
 	u_int32_t	rrr_ifid;
 	struct	in6_addr rrr_prefix;
 } __packed;
-#if _BYTE_ORDER == _BIG_ENDIAN
-#define ICMP6_RR_RESULT_FLAGS_OOB		0x0002
-#define ICMP6_RR_RESULT_FLAGS_FORBIDDEN		0x0001
-#elif _BYTE_ORDER == _LITTLE_ENDIAN
-#define ICMP6_RR_RESULT_FLAGS_OOB		0x0200
-#define ICMP6_RR_RESULT_FLAGS_FORBIDDEN		0x0100
-#endif
+#define ICMP6_RR_RESULT_FLAGS_OOB		htons(0x0002)
+#define ICMP6_RR_RESULT_FLAGS_FORBIDDEN		htons(0x0001)
 
 /*
  * icmp6 filter structures.
@@ -516,23 +440,10 @@ struct icmp6_filter {
 	u_int32_t icmp6_filt[8];
 };
 
-#ifdef _KERNEL
-#define	ICMP6_FILTER_SETPASSALL(filterp) \
-do {								\
-	int i; u_char *p;					\
-	p = (u_char *)filterp;					\
-	for (i = 0; i < sizeof(struct icmp6_filter); i++)	\
-		p[i] = 0xff;					\
-} while (0)
-#define	ICMP6_FILTER_SETBLOCKALL(filterp) \
-	bzero(filterp, sizeof(struct icmp6_filter))
-#else /* _KERNEL */
 #define	ICMP6_FILTER_SETPASSALL(filterp) \
 	memset(filterp, 0xff, sizeof(struct icmp6_filter))
 #define	ICMP6_FILTER_SETBLOCKALL(filterp) \
 	memset(filterp, 0x00, sizeof(struct icmp6_filter))
-#endif /* _KERNEL */
-
 #define	ICMP6_FILTER_SETPASS(type, filterp) \
 	(((filterp)->icmp6_filt[(type) >> 5]) |= (1 << ((type) & 31)))
 #define	ICMP6_FILTER_SETBLOCK(type, filterp) \
@@ -614,15 +525,11 @@ struct icmp6stat {
 #define ICMPV6CTL_STATS		1
 #define ICMPV6CTL_REDIRACCEPT	2	/* accept/process redirects */
 #define ICMPV6CTL_REDIRTIMEOUT	3	/* redirect cache time */
-#if 0	/*obsoleted*/
-#define ICMPV6CTL_ERRRATELIMIT	5	/* ICMPv6 error rate limitation */
-#endif
 #define ICMPV6CTL_ND6_PRUNE	6
 #define ICMPV6CTL_ND6_DELAY	8
 #define ICMPV6CTL_ND6_UMAXTRIES	9
 #define ICMPV6CTL_ND6_MMAXTRIES		10
 #define ICMPV6CTL_ND6_USELOOPBACK	11
-/*#define ICMPV6CTL_ND6_PROXYALL	12	obsoleted, do not reuse here */
 #define ICMPV6CTL_NODEINFO	13
 #define ICMPV6CTL_ERRPPSLIMIT	14	/* ICMPv6 error pps limitation */
 #define ICMPV6CTL_ND6_MAXNUDHINT	15
@@ -684,11 +591,11 @@ struct icmp6stat {
 #define RTF_PROBEMTU	RTF_PROTO1
 
 #ifdef _KERNEL
-# ifdef __STDC__
+
 struct	rtentry;
 struct	rttimer;
 struct	in6_multi;
-# endif
+
 void	icmp6_init(void);
 void	icmp6_paramerror(struct mbuf *, int);
 void	icmp6_error(struct mbuf *, int, int, int);
@@ -764,5 +671,6 @@ do { \
 
 extern int	icmp6_rediraccept;	/* accept/process redirects */
 extern int	icmp6_redirtimeout;	/* cache time for redirect routes */
+
 #endif /* _KERNEL */
 #endif /* _NETINET_ICMP6_H_ */

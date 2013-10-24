@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.69 2013/10/20 11:03:02 phessler Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.70 2013/10/24 11:20:18 deraadt Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -121,9 +121,9 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	if (IN6_IS_ADDR_UNSPECIFIED(&saddr6)) {
 		/* dst has to be solicited node multicast address. */
 		/* don't check ifindex portion */
-		if (daddr6.s6_addr16[0] == IPV6_ADDR_INT16_MLL &&
+		if (daddr6.s6_addr16[0] == __IPV6_ADDR_INT16_MLL &&
 		    daddr6.s6_addr32[1] == 0 &&
-		    daddr6.s6_addr32[2] == IPV6_ADDR_INT32_ONE &&
+		    daddr6.s6_addr32[2] == __IPV6_ADDR_INT32_ONE &&
 		    daddr6.s6_addr8[12] == 0xff) {
 			; /*good*/
 		} else {
@@ -406,10 +406,10 @@ nd6_ns_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	if (daddr6)
 		dst_sa.sin6_addr = *daddr6;
 	else {
-		dst_sa.sin6_addr.s6_addr16[0] = IPV6_ADDR_INT16_MLL;
+		dst_sa.sin6_addr.s6_addr16[0] = __IPV6_ADDR_INT16_MLL;
 		dst_sa.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 		dst_sa.sin6_addr.s6_addr32[1] = 0;
-		dst_sa.sin6_addr.s6_addr32[2] = IPV6_ADDR_INT32_ONE;
+		dst_sa.sin6_addr.s6_addr32[2] = __IPV6_ADDR_INT32_ONE;
 		dst_sa.sin6_addr.s6_addr32[3] = taddr6->s6_addr32[3];
 		dst_sa.sin6_addr.s6_addr8[12] = 0xff;
 	}
@@ -936,11 +936,11 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	dst_sa.sin6_addr = *daddr6;
 	if (IN6_IS_ADDR_UNSPECIFIED(daddr6)) {
 		/* reply to DAD */
-		dst_sa.sin6_addr.s6_addr16[0] = IPV6_ADDR_INT16_MLL;
+		dst_sa.sin6_addr.s6_addr16[0] = __IPV6_ADDR_INT16_MLL;
 		dst_sa.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 		dst_sa.sin6_addr.s6_addr32[1] = 0;
 		dst_sa.sin6_addr.s6_addr32[2] = 0;
-		dst_sa.sin6_addr.s6_addr32[3] = IPV6_ADDR_INT32_ONE;
+		dst_sa.sin6_addr.s6_addr32[3] = __IPV6_ADDR_INT32_ONE;
 
 		flags &= ~ND_NA_FLAG_SOLICITED;
 	}

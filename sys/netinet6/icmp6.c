@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.134 2013/10/23 19:57:50 deraadt Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.135 2013/10/24 11:20:18 deraadt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1672,15 +1672,15 @@ ni6_addrs(struct icmp6_nodeinfo *ni6, struct mbuf *m, struct ifnet **ifpp,
 
 			/* What do we have to do about ::1? */
 			switch (in6_addrscope(&ifa6->ia_addr.sin6_addr)) {
-			case IPV6_ADDR_SCOPE_LINKLOCAL:
+			case __IPV6_ADDR_SCOPE_LINKLOCAL:
 				if ((niflags & NI_NODEADDR_FLAG_LINKLOCAL) == 0)
 					continue;
 				break;
-			case IPV6_ADDR_SCOPE_SITELOCAL:
+			case __IPV6_ADDR_SCOPE_SITELOCAL:
 				if ((niflags & NI_NODEADDR_FLAG_SITELOCAL) == 0)
 					continue;
 				break;
-			case IPV6_ADDR_SCOPE_GLOBAL:
+			case __IPV6_ADDR_SCOPE_GLOBAL:
 				if ((niflags & NI_NODEADDR_FLAG_GLOBAL) == 0)
 					continue;
 				break;
@@ -1752,15 +1752,15 @@ ni6_store_addrs(struct icmp6_nodeinfo *ni6, struct icmp6_nodeinfo *nni6,
 
 			/* What do we have to do about ::1? */
 			switch (in6_addrscope(&ifa6->ia_addr.sin6_addr)) {
-			case IPV6_ADDR_SCOPE_LINKLOCAL:
+			case __IPV6_ADDR_SCOPE_LINKLOCAL:
 				if ((niflags & NI_NODEADDR_FLAG_LINKLOCAL) == 0)
 					continue;
 				break;
-			case IPV6_ADDR_SCOPE_SITELOCAL:
+			case __IPV6_ADDR_SCOPE_SITELOCAL:
 				if ((niflags & NI_NODEADDR_FLAG_SITELOCAL) == 0)
 					continue;
 				break;
-			case IPV6_ADDR_SCOPE_GLOBAL:
+			case __IPV6_ADDR_SCOPE_GLOBAL:
 				if ((niflags & NI_NODEADDR_FLAG_GLOBAL) == 0)
 					continue;
 				break;
