@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_sqlite.c,v 1.6 2013/07/22 13:14:49 eric Exp $	*/
+/*	$OpenBSD: table_sqlite.c,v 1.7 2013/10/24 20:26:45 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -154,7 +154,7 @@ table_sqlite_update(void)
 		{ "query_domain",	1 },
 		{ "query_credentials",	2 },
 		{ "query_netaddr",	1 },
-		{ "query_userinfo",	4 },
+		{ "query_userinfo",	3 },
 		{ "query_source",	1 },
 		{ "query_mailaddr",	1 },
 		{ "query_addrname",	1 },
@@ -353,7 +353,7 @@ table_sqlite_query(const char *key, int service)
 
 	stmt = NULL;
 	for(i = 0; i < SQL_MAX; i++)
-		if (service == 1 << i) {
+		if (service == (1 << i)) {
 			stmt = statements[i];
 			break;
 		}
@@ -450,11 +450,10 @@ table_sqlite_lookup(int service, const char *key, char *dst, size_t sz)
 		}
 		break;
 	case K_USERINFO:
-		if (snprintf(dst, sz, "%s:%i:%i:%s",
-		    sqlite3_column_text(stmt, 0),
+		if (snprintf(dst, sz, "%i:%i:%s",
+		    sqlite3_column_int(stmt, 0),
 		    sqlite3_column_int(stmt, 1),
-		    sqlite3_column_int(stmt, 2),
-		    sqlite3_column_text(stmt, 3)) > (ssize_t)sz) {
+		    sqlite3_column_text(stmt, 2)) > (ssize_t)sz) {
 			log_warnx("warn: table-sqlite: result too large");
 			r = -1;
 		}
@@ -474,6 +473,7 @@ table_sqlite_lookup(int service, const char *key, char *dst, size_t sz)
 		r = -1;
 	}
 
+	sqlite3_reset(stmt);
 	return (r);
 }
 
