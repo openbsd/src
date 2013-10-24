@@ -19,17 +19,6 @@
 
 typedef	void (*edma_intr_cb_t)(void *);
 
-struct edma_softc {
-	struct device		sc_dev;
-
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_tpcc;
-
-	void			*sc_ih_comp;
-	edma_intr_cb_t		sc_intr_cb[64];
-	void			*sc_intr_dat[64];
-};
-
 /*
  *	EDMA PaRAM dma descriptors
  */

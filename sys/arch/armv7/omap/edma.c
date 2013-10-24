@@ -22,10 +22,58 @@
 
 #include <armv7/omap/omapvar.h>
 #include <armv7/omap/prcmvar.h>
-#include <armv7/omap/edmareg.h>
 #include <armv7/omap/edmavar.h>
 
 #define DEVNAME(s)		((s)->sc_dev.dv_xname)
+
+struct edma_softc {
+	struct device		sc_dev;
+
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_tpcc;
+
+	void			*sc_ih_comp;
+	edma_intr_cb_t		sc_intr_cb[64];
+	void			*sc_intr_dat[64];
+};
+
+#define EDMA_NUM_DMA_CHANS	64
+#define EDMA_NUM_QDMA_CHANS	8
+#define EDMA_TPCC_DHCM(x)	(0x100 + (x * 4))
+#define EDMA_REG_X(x)		(0x1000 + (0x200 * x))
+#define EDMA_TPCC_PID		0x0
+#define EDMA_TPCC_EMCR		0x308
+#define EDMA_TPCC_EMCRH		0x30c
+#define EDMA_TPCC_CCERRCLR	0x31c
+#define EDMA_TPCC_DRAE0		0x340
+#define EDMA_TPCC_DRAEH0	0x344
+#define EDMA_TPCC_ESR		0x1010
+#define EDMA_TPCC_ESRH		0x1014
+#define EDMA_TPCC_EESR		0x1030
+#define EDMA_TPCC_EESRH		0x1034
+#define EDMA_TPCC_SECR		0x1040
+#define EDMA_TPCC_SECRH		0x1044
+#define EDMA_TPCC_IER		0x1050
+#define EDMA_TPCC_IERH		0x1054
+#define EDMA_TPCC_IECR		0x1058
+#define EDMA_TPCC_IECRH		0x105c
+#define EDMA_TPCC_IESR		0x1060
+#define EDMA_TPCC_IESRH		0x1064
+#define EDMA_TPCC_IPR		0x1068
+#define EDMA_TPCC_IPRH		0x106c
+#define EDMA_TPCC_ICR		0x1070
+#define EDMA_TPCC_ICRH		0x1074
+#define EDMA_TPCC_IEVAL		0x1078
+#define EDMA_TPCC_OPT(x)	(0x4000 + (x * 0x20))
+
+#define TPCC_READ_4(sc, reg)						\
+	(bus_space_read_4((sc)->sc_iot, (sc)->sc_tpcc, (reg)))
+#define TPCC_WRITE_4(sc, reg, val)					\
+	(bus_space_write_4((sc)->sc_iot, (sc)->sc_tpcc, (reg), (val)))
+#define TPCC_SET(sc, reg, val)						\
+	(TPCC_WRITE_4((sc), (reg), (TPCC_READ_4(sc, reg) | (val))))
+#define TPCC_FILTSET(sc, reg, val, filt)				\
+	(TPCC_WRITE_4((sc), (reg), (TPCC_READ_4(sc, reg) & (filt)) | (val)))
 
 struct edma_softc *edma_sc;
 
