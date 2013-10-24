@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.10 2013/09/19 00:15:59 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.11 2013/10/24 20:47:08 pirofti Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -32,6 +32,7 @@ iobus0		at mainbus0
 uartbus0	at mainbus0
 
 octcf0		at iobus0
+octrng0		at iobus0
 
 com0		at uartbus0
 com1		at uartbus0

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.14 2013/08/15 06:54:35 kettenis Exp $
+#	$OpenBSD: files.octeon,v 1.15 2013/10/24 20:47:08 pirofti Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -67,6 +67,11 @@ file	arch/octeon/dev/cn30xxsmi.c			iobus
 device	octcf: disk
 attach	octcf at iobus
 file	arch/octeon/dev/octcf.c				octcf
+
+# On-board RNG
+device	octrng
+attach	octrng at iobus
+file	arch/octeon/dev/octrng.c			octrng
 
 device	cn30xxgmx {}
 attach	cn30xxgmx at iobus
