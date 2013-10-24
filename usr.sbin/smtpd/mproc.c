@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.4 2013/07/19 15:18:42 eric Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.5 2013/10/24 19:20:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -170,8 +170,15 @@ mproc_dispatch(int fd, short event, void *arg)
 
 	if (event & EV_WRITE) {
 		n = msgbuf_write2(&p->imsgbuf.w);
-		if (n == -1)
-			fatal("msgbuf_write");
+		if (n == -1) {
+			/* this pipe is dead, so remove the event handler */
+			if (smtpd_process != PROC_CONTROL ||
+			    p->proc != PROC_CLIENT)
+				log_warnx("warn: %s -> %s: pipe closed",
+				    proc_name(smtpd_process),  p->name);
+			p->handler(p, NULL);
+			return;
+		}
 		p->bytes_out += n;
 		p->bytes_queued -= n;
 	}
