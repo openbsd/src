@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp6.c,v 1.10 2011/09/17 19:56:19 bluhm Exp $	*/
+/*	$OpenBSD: print-icmp6.c,v 1.11 2013/10/24 09:33:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -607,7 +607,7 @@ icmp6_opt_print(register const u_char *bp, int resid)
 void
 mld6_print(register const u_char *bp)
 {
-	register struct mld6_hdr *mp = (struct mld6_hdr *)bp;
+	register struct mld_hdr *mp = (struct mld_hdr *)bp;
 	register const u_char *ep;
 
 	/* 'ep' points to the end of avaible data. */
@@ -616,8 +616,8 @@ mld6_print(register const u_char *bp)
 	if ((u_char *)mp + sizeof(*mp) > ep)
 		return;
 
-	printf("max resp delay: %d ", ntohs(mp->mld6_maxdelay));
-	printf("addr: %s", ip6addr_string(&mp->mld6_addr));
+	printf("max resp delay: %d ", ntohs(mp->mld_maxdelay));
+	printf("addr: %s", ip6addr_string(&mp->mld_addr));
 
 	return;
 }
