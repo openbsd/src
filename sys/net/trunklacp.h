@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.h,v 1.5 2009/09/09 15:01:18 reyk Exp $	*/
+/*	$OpenBSD: trunklacp.h,v 1.6 2013/10/24 11:14:35 deraadt Exp $	*/
 /*	$NetBSD: ieee8023ad_impl.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
 
 /*
@@ -255,6 +255,7 @@ struct lacp_softc {
 #define LACP_UNLOCK(_lsc)		mtx_unlock(&(_lsc)->lsc_mtx)
 #define LACP_LOCK_ASSERT(_lsc)		mtx_assert(&(_lsc)->lsc_mtx, MA_OWNED)
 
+#ifdef _KERNEL
 struct mbuf	*lacp_input(struct trunk_port *,
 		    struct ether_header *, struct mbuf *);
 struct trunk_port *lacp_select_tx_port(struct trunk_softc *, struct mbuf *);
@@ -268,6 +269,7 @@ void		lacp_linkstate(struct trunk_port *);
 void		lacp_req(struct trunk_softc *, caddr_t);
 void		lacp_portreq(struct trunk_port *, caddr_t);
 u_int		lacp_port_status(struct trunk_port *);
+#endif /* _KERNEL */
 
 /* following constants don't include terminating NUL */
 #define	LACP_MACSTR_MAX		(2*6 + 5)

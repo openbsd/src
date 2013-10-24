@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.853 2013/10/23 16:13:54 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.854 2013/10/24 11:14:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -831,10 +831,10 @@ pf_state_key_addr_setup(struct pf_pdesc *pd, void *arg, int sidx,
 		break;
 	default:
 		if (multi == PF_ICMP_MULTI_LINK) {
-			key->addr[sidx].addr32[0] = IPV6_ADDR_INT32_MLL;
+			key->addr[sidx].addr32[0] = __IPV6_ADDR_INT32_MLL;
 			key->addr[sidx].addr32[1] = 0;
 			key->addr[sidx].addr32[2] = 0;
-			key->addr[sidx].addr32[3] = IPV6_ADDR_INT32_ONE;
+			key->addr[sidx].addr32[3] = __IPV6_ADDR_INT32_ONE;
 			saddr = NULL; /* overwritten */
 		}
 	}

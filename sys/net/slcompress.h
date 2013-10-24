@@ -1,4 +1,4 @@
-/*	$OpenBSD: slcompress.h,v 1.7 2003/06/02 23:28:12 millert Exp $	*/
+/*	$OpenBSD: slcompress.h,v 1.8 2013/10/24 11:14:35 deraadt Exp $	*/
 /*	$NetBSD: slcompress.h,v 1.11 1997/05/17 21:12:11 christos Exp $	*/
 
 /*
@@ -154,6 +154,7 @@ struct slcompress {
 /* flag values */
 #define SLF_TOSS 1		/* tossing rcvd frames because of input err */
 
+#ifdef _KERNEL
 void	sl_compress_init(struct slcompress *);
 void	sl_compress_setup(struct slcompress *, int);
 u_int	sl_compress_tcp(struct mbuf *,
@@ -161,5 +162,6 @@ u_int	sl_compress_tcp(struct mbuf *,
 int	sl_uncompress_tcp(u_char **, int, u_int, struct slcompress *);
 int	sl_uncompress_tcp_core(u_char *, int, int, u_int,
   	    struct slcompress *, u_char **, u_int *);
+#endif /* _KERNEL */
 
 #endif /* _NET_SLCOMPRESS_H_ */

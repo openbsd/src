@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.17 2006/03/25 22:41:47 djm Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.18 2013/10/24 11:14:33 deraadt Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -39,6 +39,8 @@
 
 #ifndef _NET_BPFDESC_H_
 #define _NET_BPFDESC_H_
+
+#ifdef _KERNEL
 
 #include <sys/selinfo.h>
 
@@ -102,7 +104,6 @@ struct bpf_if {
 	struct ifnet *bif_ifp;		/* correspoding interface */
 };
 
-#ifdef _KERNEL
 int	 bpf_setf(struct bpf_d *, struct bpf_program *, int);
 #endif /* _KERNEL */
 #endif /* _NET_BPFDESC_H_ */

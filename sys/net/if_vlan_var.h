@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan_var.h,v 1.23 2013/10/19 14:05:14 reyk Exp $	*/
+/*	$OpenBSD: if_vlan_var.h,v 1.24 2013/10/24 11:14:33 deraadt Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -34,6 +34,33 @@
 #ifndef _NET_IF_VLAN_VAR_H_
 #define _NET_IF_VLAN_VAR_H_
 
+struct	ether_vlan_header {
+	u_char	evl_dhost[ETHER_ADDR_LEN];
+	u_char	evl_shost[ETHER_ADDR_LEN];
+	u_int16_t evl_encap_proto;
+	u_int16_t evl_tag;
+	u_int16_t evl_proto;
+};
+
+#define	EVL_VLID_MASK	0x0FFF
+#define	EVL_VLANOFTAG(tag) ((tag) & EVL_VLID_MASK)
+#define	EVL_PRIOFTAG(tag) (((tag) >> EVL_PRIO_BITS) & 7)
+#define	EVL_ENCAPLEN	4	/* length in octets of encapsulation */
+#define	EVL_PRIO_MAX	7
+#define	EVL_PRIO_BITS	13
+
+/* sysctl(3) tags, for compatibility purposes */
+#define	VLANCTL_PROTO	1
+#define	VLANCTL_MAX	2
+
+/*
+ * Configuration structure for SIOCSETVLAN and SIOCGETVLAN ioctls.
+ */
+struct	vlanreq {
+	char	vlr_parent[IFNAMSIZ];
+	u_short	vlr_tag;
+};
+
 #ifdef _KERNEL
 #define mc_enm	mc_u.mcu_enm
 
@@ -67,36 +94,8 @@ struct	ifvlan {
 #define	ifv_prio	ifv_mib.ifvm_prio
 #define	ifv_type	ifv_mib.ifvm_type
 #define	IFVF_PROMISC	0x01
-#endif /* _KERNEL */
 
-struct	ether_vlan_header {
-	u_char	evl_dhost[ETHER_ADDR_LEN];
-	u_char	evl_shost[ETHER_ADDR_LEN];
-	u_int16_t evl_encap_proto;
-	u_int16_t evl_tag;
-	u_int16_t evl_proto;
-};
-
-#define	EVL_VLID_MASK	0x0FFF
-#define	EVL_VLANOFTAG(tag) ((tag) & EVL_VLID_MASK)
-#define	EVL_PRIOFTAG(tag) (((tag) >> EVL_PRIO_BITS) & 7)
-#define	EVL_ENCAPLEN	4	/* length in octets of encapsulation */
-#define	EVL_PRIO_MAX	7
-#define	EVL_PRIO_BITS	13
-
-/* sysctl(3) tags, for compatibility purposes */
-#define	VLANCTL_PROTO	1
-#define	VLANCTL_MAX	2
-
-/*
- * Configuration structure for SIOCSETVLAN and SIOCGETVLAN ioctls.
- */
-struct	vlanreq {
-	char	vlr_parent[IFNAMSIZ];
-	u_short	vlr_tag;
-};
-
-#ifdef _KERNEL
 extern	int vlan_input(struct ether_header *eh, struct mbuf *m);
 #endif /* _KERNEL */
+
 #endif /* _NET_IF_VLAN_VAR_H_ */
