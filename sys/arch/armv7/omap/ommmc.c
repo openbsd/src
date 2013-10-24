@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.7 2013/10/18 15:23:58 syl Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.8 2013/10/24 19:39:46 syl Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -283,8 +283,6 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 	int				 error = 1;
 	uint32_t			 caps;
 
-	/* XXX - ICLKEN, FCLKEN? */
-
 	sc->sc_iot = oa->oa_iot;
 	if (bus_space_map(sc->sc_iot, oa->oa_dev->mem[0].addr,
 	    oa->oa_dev->mem[0].size, 0, &sc->sc_ioh))
@@ -292,8 +290,8 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 
 	printf("\n");
 
-	/* XXX DMA channels? */
-	/* FIXME prcm_enableclock(sc->clockbit); */
+	/* Enable ICLKEN, FCLKEN? */
+	prcm_enablemodule(PRCM_MMC0 + oa->oa_dev->unit);
 
 	sc->sc_ih = arm_intr_establish(oa->oa_dev->irq[0], IPL_SDMMC,
 	    ommmc_intr, sc, DEVNAME(sc));

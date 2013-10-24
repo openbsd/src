@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.3 2013/10/10 19:40:02 syl Exp $ */
+/* $OpenBSD: prcm.c,v 1.4 2013/10/24 19:39:46 syl Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -252,8 +252,12 @@ uint32_t
 prcm_v3_bit(int mod)
 {
 	switch(mod) {
-	case PRCM_MMC:
+	case PRCM_MMC0:
 		return PRCM_CLK_EN_MMC1;
+	case PRCM_MMC1:
+		return PRCM_CLK_EN_MMC2;
+	case PRCM_MMC2:
+		return PRCM_CLK_EN_MMC3;
 	case PRCM_USB:
 		return PRCM_CLK_EN_USB;
 	default:
@@ -269,8 +273,12 @@ prcm_am335x_clkctrl(int mod)
 		return PRCM_AM335X_TIMER2_CLKCTRL;
 	case PRCM_TIMER3:
 		return PRCM_AM335X_TIMER3_CLKCTRL;
-	case PRCM_MMC:
+	case PRCM_MMC0:
 		return PRCM_AM335X_MMC0_CLKCTRL;
+	case PRCM_MMC1:
+		return PRCM_AM335X_MMC1_CLKCTRL;
+	case PRCM_MMC2:
+		return PRCM_AM335X_MMC2_CLKCTRL;
 	case PRCM_USB:
 		return PRCM_AM335X_USB0_CLKCTRL;
 	case PRCM_TPCC:

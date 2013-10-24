@@ -1,4 +1,4 @@
-/* $OpenBSD: am335x_prcmreg.h,v 1.2 2013/10/10 19:40:02 syl Exp $ */
+/* $OpenBSD: am335x_prcmreg.h,v 1.3 2013/10/24 19:39:46 syl Exp $ */
 /*
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
  *
@@ -29,6 +29,8 @@
 #define PRCM_AM335X_GPIO2_CLKCTRL	0x00b0
 #define PRCM_AM335X_GPIO3_CLKCTRL	0x00b4
 #define PRCM_AM335X_TPCC_CLKCTRL	0x00bc
+#define PRCM_AM335X_MMC1_CLKCTRL	0x00f4
+#define PRCM_AM335X_MMC2_CLKCTRL	0x00f8
 #define PRCM_AM335X_TPTC1_CLKCTRL	0x00fc
 #define PRCM_AM335X_TPTC2_CLKCTRL	0x0100
 #define PRCM_AM335X_CM_WKUP		0x0400
