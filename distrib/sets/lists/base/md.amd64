@@ -136,7 +136,7 @@
 ./usr/lib/libsndio.so.5.0
 ./usr/lib/libsqlite3.so.26.0
 ./usr/lib/libssl.so.20.0
-./usr/lib/libstdc++.so.56.0
+./usr/lib/libstdc++.so.57.0
 ./usr/lib/libtermcap.so.13.0
 ./usr/lib/libtermlib.so.13.0
 ./usr/lib/libusbhid.so.6.0
