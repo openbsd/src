@@ -1,4 +1,4 @@
-/* $OpenBSD: imxenet.c,v 1.2 2013/10/05 23:05:12 patrick Exp $ */
+/* $OpenBSD: imxenet.c,v 1.3 2013/10/24 08:28:11 mpi Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -40,7 +40,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
