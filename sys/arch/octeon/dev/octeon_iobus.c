@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.4 2013/06/02 20:29:36 jasper Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.5 2013/10/24 20:45:03 pirofti Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -154,12 +154,14 @@ struct machine_bus_dma_tag iobus_bus_dma_tag = {
 const struct iobus_unit iobus_units[] = {
 	{ OCTEON_CF_BASE, 0 },			/* octcf */
 	{ 0, 0 },				/* pcibus */
-	{ GMX0_BASE_PORT0, CIU_INT_GMX_DRP0 }	/* cn30xxgmx */
+	{ GMX0_BASE_PORT0, CIU_INT_GMX_DRP0 },	/* cn30xxgmx */
+	{ OCTEON_RNG_BASE, 0 },			/* octrng */
 };
 struct iobus_attach_args iobus_children[] = {
 	IOBUSDEV("octcf", 0, &iobus_units[0]),
 	IOBUSDEV("pcibus", 0, &iobus_units[1]),
-	IOBUSDEV("cn30xxgmx", 0, &iobus_units[2])
+	IOBUSDEV("cn30xxgmx", 0, &iobus_units[2]),
+	IOBUSDEV("octrng", 0, &iobus_units[3])
 };
 #undef	IOBUSDEV
 

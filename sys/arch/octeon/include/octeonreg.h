@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonreg.h,v 1.2 2013/06/09 20:20:11 deraadt Exp $	*/
+/*	$OpenBSD: octeonreg.h,v 1.3 2013/10/24 20:45:03 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -35,6 +35,7 @@
 #define OCTEON_MIO_BOOT_BASE	0x1180000000000ULL
 #define OCTEON_UART0_BASE	0x1180000000800ULL
 #define OCTEON_UART1_BASE	0x1180000000C00ULL
+#define OCTEON_RNG_BASE		0x1400000000000ULL
 
 #define MIO_BOOT_REG_CFG0	0x0
 #define MIO_BOOT_REG_CFG(x)	(MIO_BOOT_REG_CFG0+((x)*8))
