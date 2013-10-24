@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.9 2013/10/23 09:35:36 mpi Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.10 2013/10/24 22:32:29 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -96,8 +96,6 @@ static int	cn30xxgmx_rgmii_enable(struct cn30xxgmx_port_softc *, int);
 static int	cn30xxgmx_rgmii_speed(struct cn30xxgmx_port_softc *);
 static int	cn30xxgmx_rgmii_speed_newlink(struct cn30xxgmx_port_softc *,
 		    uint64_t *);
-static int	cn30xxgmx_rgmii_speed_newlink_log(
-		    struct cn30xxgmx_port_softc *, uint64_t);
 static int	cn30xxgmx_rgmii_speed_speed(struct cn30xxgmx_port_softc *);
 static int	cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *);
 static int	cn30xxgmx_rgmii_set_mac_addr(struct cn30xxgmx_port_softc *,
@@ -109,6 +107,8 @@ void		cn30xxgmx_intr_evcnt_attach(struct cn30xxgmx_softc *);
 void		cn30xxgmx_dump(void);
 void		cn30xxgmx_debug_reset(void);
 int		cn30xxgmx_intr_drop(void *);
+static int	cn30xxgmx_rgmii_speed_newlink_log(
+		    struct cn30xxgmx_port_softc *, uint64_t);
 #endif
 
 static const int	cn30xxgmx_rx_adr_cam_regs[] = {
@@ -689,7 +689,9 @@ cn30xxgmx_rgmii_speed(struct cn30xxgmx_port_softc *sc)
 	if (sc->sc_link == newlink) {
 		return 0;
 	}
+#ifdef OCTEON_ETH_DEBUG
 	cn30xxgmx_rgmii_speed_newlink_log(sc, newlink);
+#endif
 	sc->sc_link = newlink;
 
 	switch (sc->sc_link & RXN_RX_INBND_SPEED) {
@@ -779,6 +781,7 @@ cn30xxgmx_rgmii_speed_newlink(struct cn30xxgmx_port_softc *sc,
 	return 0;
 }
 
+#ifdef OCTEON_ETH_DEBUG
 static int
 cn30xxgmx_rgmii_speed_newlink_log(struct cn30xxgmx_port_softc *sc,
     uint64_t newlink)
@@ -850,6 +853,7 @@ cn30xxgmx_rgmii_speed_newlink_log(struct cn30xxgmx_port_softc *sc,
 
 	return 0;
 }
+#endif
 
 static int
 cn30xxgmx_rgmii_speed_speed(struct cn30xxgmx_port_softc *sc)
