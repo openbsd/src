@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.79 2013/06/17 19:11:54 guenther Exp $ */
+/*	$OpenBSD: unistd.h,v 1.80 2013/10/24 07:34:56 guenther Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -428,7 +428,7 @@ int	 setreuid(uid_t, uid_t);
 void	 swab(const void *, void *, size_t);
 void	 sync(void);
 int	 truncate(const char *, off_t);
-unsigned int	 ualarm(unsigned int, unsigned int);
+useconds_t	 ualarm(useconds_t, useconds_t);
 int	 usleep(useconds_t);
 pid_t	 vfork(void);
 #endif

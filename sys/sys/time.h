@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.33 2013/09/14 01:35:02 guenther Exp $	*/
+/*	$OpenBSD: time.h,v 1.34 2013/10/24 07:34:56 guenther Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -42,8 +42,8 @@
  * and used in other calls.
  */
 struct timeval {
-	time_t	tv_sec;		/* seconds */
-	long	tv_usec;	/* and microseconds */
+	time_t		tv_sec;		/* seconds */
+	suseconds_t	tv_usec;	/* and microseconds */
 };
 
 #ifndef _TIMESPEC_DECLARED

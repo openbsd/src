@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.7 2013/09/14 01:35:02 guenther Exp $	*/
+/*	$OpenBSD: _types.h,v 1.8 2013/10/24 07:34:56 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -57,7 +57,7 @@ typedef	__uint64_t	__rlim_t;	/* resource limit */
 typedef	__uint8_t	__sa_family_t;	/* sockaddr address family type */
 typedef	__int32_t	__segsz_t;	/* segment size */
 typedef	__uint32_t	__socklen_t;	/* length type for network syscalls */
-typedef	__int32_t	__suseconds_t;	/* microseconds (signed) */
+typedef	long		__suseconds_t;	/* microseconds (signed) */
 typedef	__int32_t	__swblk_t;	/* swap offset */
 typedef	__int64_t	__time_t;	/* epoch time */
 typedef	__int32_t	__timer_t;	/* POSIX timer identifiers */
