@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.100 2013/10/19 10:38:55 henning Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.101 2013/10/24 11:31:43 mpi Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -94,11 +94,6 @@
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
-
-#ifdef INET6
-#include <netinet6/tcpipv6.h>
-#include <netinet6/in6_var.h>
-#endif /* INET6 */
 
 #ifdef notyet
 extern struct mbuf *m_copypack();

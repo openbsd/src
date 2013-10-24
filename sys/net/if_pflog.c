@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.56 2013/10/23 15:12:42 mpi Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.57 2013/10/24 11:31:43 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -62,9 +62,7 @@
 #ifndef INET
 #include <netinet/in.h>
 #endif
-#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
-#include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
 #endif /* INET6 */
 

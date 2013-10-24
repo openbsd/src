@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.43 2013/10/24 11:20:18 deraadt Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.44 2013/10/24 11:31:43 mpi Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -457,11 +457,6 @@ do {								\
 		((struct in6_ifextra *)((ifp)->if_afdata[AF_INET6]))->in6_ifstat->tag++; \
 } while (0)
 
-extern struct ifqueue ip6intrq;		/* IP6 packet input queue */
-extern struct in6_addr zeroin6_addr;
-extern u_char inet6ctlerrmap[];
-extern unsigned long in6_maxmtu;
-
 /*
  * Macro for finding the internet address structure (in6_ifaddr) corresponding
  * to a given interface (ifnet structure).
@@ -549,7 +544,6 @@ void	in6_purgemkludge(struct ifnet *);
 struct in6_ifaddr *in6ifa_ifpforlinklocal(struct ifnet *, int);
 struct in6_ifaddr *in6ifa_ifpwithaddr(struct ifnet *, struct in6_addr *);
 int	in6_ifpprefix(const struct ifnet *, const struct in6_addr *);
-char	*ip6_sprintf(struct in6_addr *);
 int	in6_addr2scopeid(struct ifnet *, struct in6_addr *);
 int	in6_matchlen(struct in6_addr *, struct in6_addr *);
 int	in6_are_prefix_equal(struct in6_addr *, struct in6_addr *, int);
@@ -557,13 +551,6 @@ void	in6_prefixlen2mask(struct in6_addr *, int);
 void	in6_purgeprefix(struct ifnet *);
 void	in6_ifaddloop(struct ifaddr *);
 void	in6_ifremloop(struct ifaddr *);
-
-struct inpcb;
-int in6_embedscope(struct in6_addr *, const struct sockaddr_in6 *,
-	struct inpcb *, struct ifnet **);
-int in6_recoverscope(struct sockaddr_in6 *, const struct in6_addr *,
-	struct ifnet *);
-void in6_clearscope(struct in6_addr *);
 #endif /* _KERNEL */
 
 #endif /* _NETINET6_IN6_VAR_H_ */

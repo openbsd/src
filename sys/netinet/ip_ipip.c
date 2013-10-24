@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.50 2013/10/23 15:12:42 mpi Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.51 2013/10/24 11:31:43 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -66,10 +66,6 @@
 
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ipip.h>
-
-#ifdef INET6
-#include <netinet6/in6_var.h>
-#endif
 
 #include "bpfilter.h"
 

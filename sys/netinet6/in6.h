@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.67 2013/10/24 11:20:18 deraadt Exp $	*/
+/*	$OpenBSD: in6.h,v 1.68 2013/10/24 11:31:43 mpi Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -417,16 +417,32 @@ typedef	__socklen_t	socklen_t;	/* length type for network syscalls */
 #endif /* __BSD_VISIBLE */
 
 #ifdef _KERNEL
+
+extern	u_char inet6ctlerrmap[];
+extern	struct ifqueue ip6intrq;	/* IP6 packet input queue */
+extern	struct in6_addr zeroin6_addr;
+extern	unsigned long in6_maxmtu;
+
 struct cmsghdr;
 
 int	in6_cksum(struct mbuf *, u_int8_t, u_int32_t, u_int32_t);
-extern void in6_proto_cksum_out(struct mbuf *, struct ifnet *);
+void	in6_proto_cksum_out(struct mbuf *, struct ifnet *);
 int	in6_localaddr(struct in6_addr *);
 int	in6_addrscope(struct in6_addr *);
 struct	in6_ifaddr *in6_ifawithscope(struct ifnet *, struct in6_addr *, u_int);
-extern void in6_if_up(struct ifnet *);
+void	in6_if_up(struct ifnet *);
 void 	in6_get_rand_ifid(struct ifnet *, struct in6_addr *);
 int	in6_mask2len(struct in6_addr *, u_char *);
+
+char	*ip6_sprintf(struct in6_addr *);
+
+struct inpcb;
+
+int	in6_embedscope(struct in6_addr *, const struct sockaddr_in6 *,
+	    struct inpcb *, struct ifnet **);
+int	in6_recoverscope(struct sockaddr_in6 *, const struct in6_addr *,
+	    struct ifnet *);
+void	in6_clearscope(struct in6_addr *);
 
 struct sockaddr;
 struct sockaddr_in6;
