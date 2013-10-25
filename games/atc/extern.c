@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.c,v 1.4 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: extern.c,v 1.5 2013/10/25 21:57:10 millert Exp $	*/
 /*	$NetBSD: extern.c,v 1.4 1995/04/27 21:22:19 mycroft Exp $	*/
 
 /*-
@@ -46,7 +46,9 @@
 
 char		GAMES[] =	"Game_List";
 
-int		clck, safe_planes, start_time, test_mode, makenoise;
+int		clck, safe_planes, test_mode, makenoise;
+
+time_t		start_time;
 
 const char	*file;
 
