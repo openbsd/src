@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.h,v 1.6 2011/12/14 08:33:18 robert Exp $	*/
+/*	$OpenBSD: linux_misc.h,v 1.7 2013/10/25 04:51:39 guenther Exp $	*/
 /*	$NetBSD: linux_misc.h,v 1.3 1999/05/13 00:31:57 thorpej Exp $	*/
 
 /*-
@@ -64,19 +64,31 @@ struct linux_sysinfo {
 	char _f[20-2*sizeof(long)-sizeof(int)];
 };
 
+struct linux_rusage {
+	struct linux_timeval ru_utime;	/* user time used */
+	struct linux_timeval ru_stime;	/* system time used */
+	long	ru_maxrss;		/* max resident set size */
+	long	ru_ixrss;		/* integral shared text memory size */
+	long	ru_idrss;		/* integral unshared data " */
+	long	ru_isrss;		/* integral unshared stack " */
+	long	ru_minflt;		/* page reclaims */
+	long	ru_majflt;		/* page faults */
+	long	ru_nswap;		/* swaps */
+	long	ru_inblock;		/* block input operations */
+	long	ru_oublock;		/* block output operations */
+	long	ru_msgsnd;		/* messages sent */
+	long	ru_msgrcv;		/* messages received */
+	long	ru_nsignals;		/* signals received */
+	long	ru_nvcsw;		/* voluntary context switches */
+	long	ru_nivcsw;		/* involuntary " */
+};
+
+
 /*
  * Options passed to the Linux wait4() system call.
  */
 #define	LINUX_WAIT4_WNOHANG	0x00000001
 #define	LINUX_WAIT4_WUNTRACED	0x00000002
 #define	LINUX_WAIT4_WCLONE	0x80000000
-
-#ifdef _KERNEL
-__BEGIN_DECLS
-void bsd_to_linux_wstat(int *);
-int linux_select1(struct proc *, register_t *, int, fd_set *, fd_set *,
-    fd_set *, struct timeval *);
-__END_DECLS
-#endif /* !_KERNEL */
 
 #endif /* !_LINUX_MISC_H_ */

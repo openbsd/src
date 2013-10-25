@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.81 2013/08/13 05:52:21 guenther Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.82 2013/10/25 04:51:39 guenther Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -70,6 +70,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <compat/linux/linux_types.h>
+#include <compat/linux/linux_time.h>
 #include <compat/linux/linux_fcntl.h>
 #include <compat/linux/linux_misc.h>
 #include <compat/linux/linux_mmap.h>
@@ -83,12 +84,16 @@
 #include <compat/common/compat_dir.h>
 
 /* linux_misc.c */
-static void bsd_to_linux_statfs(struct statfs *, struct linux_statfs *);
+void	bsd_to_linux_statfs(const struct statfs *, struct linux_statfs *);
+void	bsd_to_linux_statfs64(const struct statfs *, struct linux_statfs64 *);
 int	linux_select1(struct proc *, register_t *, int, fd_set *,
-     fd_set *, fd_set *, struct timeval *);
-static int getdents_common(struct proc *, void *, register_t *, int);
-static void linux_to_bsd_mmap_args(struct sys_mmap_args *,
-    const struct linux_sys_mmap2_args *);
+	     fd_set *, fd_set *, struct linux_timeval *);
+int	getdents_common(struct proc *, void *, register_t *, int);
+void	linux_to_bsd_mmap_args(struct sys_mmap_args *,
+	    const struct linux_sys_mmap2_args *);
+void	bsd_to_linux_rusage(struct linux_rusage *, const struct rusage *);
+void	bsd_to_linux_wstat(int *);
+
 
 /*
  * The information on a terminated (or stopped) process needs
@@ -106,6 +111,20 @@ bsd_to_linux_wstat(status)
 	else if (WIFSTOPPED(*status))
 		*status = (*status & ~0xff00) |
 		    (bsd_to_linux_sig[WSTOPSIG(*status)] << 8);
+}
+
+/*
+ * Convert an rusage to Linux format: small time_t in the timevals
+ */
+void
+bsd_to_linux_rusage(struct linux_rusage *lrup, const struct rusage *rup)
+{
+	bsd_to_linux_timeval(&lrup->ru_utime, &rup->ru_utime);
+	bsd_to_linux_timeval(&lrup->ru_utime, &rup->ru_utime);
+	memcpy(&lrup->ru_maxrss, &rup->ru_maxrss,
+	    offsetof(struct rusage, ru_nivcsw) -
+	    offsetof(struct rusage, ru_maxrss) +
+	    sizeof(lrup->ru_nivcsw));
 }
 
 /*
@@ -133,9 +152,8 @@ linux_sys_waitpid(p, v, retval)
 }
 
 /*
- * wait4(2). Passed on to the OpenBSD call, surrounded by code to reserve
- * some space for an OpenBSD-style wait status, and converting it to what
- * Linux wants.
+ * wait4(2): handle conversion of the options on entry and status and rusage
+ * on return.
  */
 int
 linux_sys_wait4(p, v, retval)
@@ -147,17 +165,10 @@ linux_sys_wait4(p, v, retval)
 		syscallarg(int) pid;
 		syscallarg(int *) status;
 		syscallarg(int) options;
-		syscallarg(struct rusage *) rusage;
+		syscallarg(struct linux_rusage *) rusage;
 	} */ *uap = v;
-	struct sys_wait4_args w4a;
-	int error, *status, tstat, linux_options, options;
-	caddr_t sg;
-
-	if (SCARG(uap, status) != NULL) {
-		sg = stackgap_init(p->p_emul);
-		status = (int *) stackgap_alloc(&sg, sizeof *status);
-	} else
-		status = NULL;
+	struct rusage ru;
+	int error, status, linux_options, options;
 
 	linux_options = SCARG(uap, options);
 	options = 0;
@@ -172,26 +183,54 @@ linux_sys_wait4(p, v, retval)
 	if (linux_options & LINUX_WAIT4_WCLONE)
 		options |= WALTSIG;
 
-	SCARG(&w4a, pid) = SCARG(uap, pid);
-	SCARG(&w4a, status) = status;
-	SCARG(&w4a, options) = options;
-	SCARG(&w4a, rusage) = SCARG(uap, rusage);
-
-	if ((error = sys_wait4(p, &w4a, retval)))
+	if ((error = dowait4(p, SCARG(uap, pid),
+	    SCARG(uap, status) ? &status : NULL, options,
+	    SCARG(uap, rusage) ? &ru : NULL, retval)))
 		return error;
 
 	atomic_clearbits_int(&p->p_siglist, sigmask(SIGCHLD));
 
-	if (status != NULL) {
-		if ((error = copyin(status, &tstat, sizeof tstat)))
-			return error;
+	if (SCARG(uap, rusage) != NULL) {
+		struct linux_rusage lru;
 
-		bsd_to_linux_wstat(&tstat);
-		return copyout(&tstat, SCARG(uap, status), sizeof tstat);
+		bsd_to_linux_rusage(&lru, &ru);
+		if ((error = copyout(&lru, SCARG(uap, rusage), sizeof lru)))
+			return error;
+	}
+	if (SCARG(uap, status) != NULL) {
+		bsd_to_linux_wstat(&status);
+		return copyout(&status, SCARG(uap, status), sizeof status);
 	}
 
 	return 0;
 }
+
+/*
+ * getrusage(2): convert rusage on return
+ */
+int
+linux_sys_getrusage(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_getrusage_args /* {
+		syscallarg(int) who;
+		syscallarg(struct linux_rusage *) rusage;
+	} */ *uap = v;
+	struct rusage ru;
+	int error;
+
+	error = dogetrusage(p, SCARG(uap, who), &ru);
+	if (error == 0) {
+		struct linux_rusage lru;
+
+		bsd_to_linux_rusage(&lru, &ru);
+		error = copyout(&lru, SCARG(uap, rusage), sizeof lru);
+	}
+	return error;
+}
+
 
 int
 linux_sys_setresgid16(p, v, retval)
@@ -365,8 +404,8 @@ linux_sys_time(p, v, retval)
  * the length of a name in a dir entry in a field, which
  * we fake (probably the wrong way).
  */
-static void
-bsd_to_linux_statfs(struct statfs *bsp, struct linux_statfs *lsp)
+void
+bsd_to_linux_statfs(const struct statfs *bsp, struct linux_statfs *lsp)
 {
 
 	/*
@@ -447,8 +486,8 @@ linux_sys_statfs(p, v, retval)
 	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
 }
 
-static void
-bsd_to_linux_statfs64(struct statfs *bsp, struct linux_statfs64 *lsp)
+void
+bsd_to_linux_statfs64(const struct statfs *bsp, struct linux_statfs64 *lsp)
 {
 
 	/*
@@ -763,7 +802,7 @@ linux_sys_mmap2(p, v, retval)
 	return sys_mmap(p, &cma, retval);
 }
 
-static void
+void
 linux_to_bsd_mmap_args(cma, uap)
 	struct sys_mmap_args *cma;
 	const struct linux_sys_mmap2_args *uap;
@@ -853,7 +892,7 @@ linux_sys_times(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_times_args /* {
-		syscallarg(struct times *) tms;
+		syscallarg(struct linux_tms *) tms;
 	} */ *uap = v;
 	struct timeval t, ut, st;
 	struct linux_tms ltms;
@@ -1135,7 +1174,7 @@ linux_sys_getdents(p, v, retval)
 	return getdents_common(p, v, retval, 0);
 }
 
-static int
+int
 getdents_common(p, v, retval, is64bit)
 	struct proc *p;
 	void *v;
@@ -1222,7 +1261,7 @@ linux_sys_select(p, v, retval)
 		syscallarg(fd_set *) readfds;
 		syscallarg(fd_set *) writefds;
 		syscallarg(fd_set *) exceptfds;
-		syscallarg(struct timeval *) timeout;
+		syscallarg(struct linux_timeval *) timeout;
 	} */ *uap = v;
 
 	return linux_select1(p, retval, SCARG(uap, nfds), SCARG(uap, readfds),
@@ -1236,14 +1275,11 @@ linux_sys_select(p, v, retval)
  * 2) select never returns ERESTART on Linux, always return EINTR
  */
 int
-linux_select1(p, retval, nfds, readfds, writefds, exceptfds, timeout)
-	struct proc *p;
-	register_t *retval;
-	int nfds;
-	fd_set *readfds, *writefds, *exceptfds;
-	struct timeval *timeout;
+linux_select1(struct proc *p, register_t *retval, int nfds, fd_set *readfds,
+    fd_set *writefds, fd_set *exceptfds, struct linux_timeval *timeout)
 {
 	struct sys_select_args bsa;
+	struct linux_timeval lutv;
 	struct timeval tv0, tv1, utv, *tvp;
 	caddr_t sg;
 	int error;
@@ -1252,22 +1288,20 @@ linux_select1(p, retval, nfds, readfds, writefds, exceptfds, timeout)
 	SCARG(&bsa, in) = readfds;
 	SCARG(&bsa, ou) = writefds;
 	SCARG(&bsa, ex) = exceptfds;
-	SCARG(&bsa, tv) = timeout;
 
 	/*
 	 * Store current time for computation of the amount of
 	 * time left.
 	 */
 	if (timeout) {
-		if ((error = copyin(timeout, &utv, sizeof(utv))))
+		if ((error = copyin(timeout, &lutv, sizeof(lutv))))
 			return error;
+		linux_to_bsd_timeval(&utv, &lutv);
 		if (itimerfix(&utv)) {
 			/*
 			 * The timeval was invalid.  Convert it to something
 			 * valid that will act as it does under Linux.
 			 */
-			sg = stackgap_init(p->p_emul);
-			tvp = stackgap_alloc(&sg, sizeof(utv));
 			utv.tv_sec += utv.tv_usec / 1000000;
 			utv.tv_usec %= 1000000;
 			if (utv.tv_usec < 0) {
@@ -1276,12 +1310,16 @@ linux_select1(p, retval, nfds, readfds, writefds, exceptfds, timeout)
 			}
 			if (utv.tv_sec < 0)
 				timerclear(&utv);
-			if ((error = copyout(&utv, tvp, sizeof(utv))))
-				return error;
-			SCARG(&bsa, tv) = tvp;
 		}
+
+		sg = stackgap_init(p->p_emul);
+		tvp = stackgap_alloc(&sg, sizeof(utv));
+		if ((error = copyout(&utv, tvp, sizeof(utv))))
+			return error;
+		SCARG(&bsa, tv) = tvp;
 		microtime(&tv0);
-	}
+	} else
+		SCARG(&bsa, tv) = NULL;
 
 	error = sys_select(p, &bsa, retval);
 	if (error) {
@@ -1291,7 +1329,8 @@ linux_select1(p, retval, nfds, readfds, writefds, exceptfds, timeout)
 		 */
 		if (error == ERESTART)
 			error = EINTR;
-		return error;
+		else if (error != EINTR)
+			return error;
 	}
 
 	if (timeout) {
@@ -1309,11 +1348,12 @@ linux_select1(p, retval, nfds, readfds, writefds, exceptfds, timeout)
 				timerclear(&utv);
 		} else
 			timerclear(&utv);
-		if ((error = copyout(&utv, timeout, sizeof(utv))))
+		bsd_to_linux_timeval(&lutv, &utv);	/* can't fail */
+		if ((error = copyout(&lutv, timeout, sizeof(lutv))))
 			return error;
 	}
 
-	return 0;
+	return (error);
 }
 
 /*

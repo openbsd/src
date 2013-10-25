@@ -1,4 +1,4 @@
-/* $OpenBSD: linux_futex.c,v 1.14 2013/04/10 13:17:41 pirofti Exp $ */
+/* $OpenBSD: linux_futex.c,v 1.15 2013/10/25 04:51:38 guenther Exp $ */
 /*	$NetBSD: linux_futex.c,v 1.26 2010/07/07 01:30:35 chs Exp $ */
 
 /*-
@@ -118,7 +118,7 @@ linux_sys_futex(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) val3;
 	} */ *uap = v;
 
-	struct l_timespec lts;
+	struct linux_timespec lts;
 	struct timespec ts = {0, 0};
 	int error;
 
@@ -128,7 +128,7 @@ linux_sys_futex(struct proc *p, void *v, register_t *retval)
 		    &lts, sizeof(lts))) != 0) {
 			return error;
 		}
-		linux_to_native_timespec(&ts, &lts);
+		linux_to_bsd_timespec(&ts, &lts);
 	}
 	
 	return linux_do_futex(p, uap, retval, &ts);

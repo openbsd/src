@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_time.h,v 1.3 2013/05/10 10:31:16 pirofti Exp $	*/
+/*	$OpenBSD: linux_time.h,v 1.4 2013/10/25 04:51:39 guenther Exp $	*/
 /*
  * Copyright (c) 2011 Paul Irofti <pirofti@openbsd.org>
  *
@@ -18,8 +18,31 @@
 #ifndef _LINUX_TIME_H_
 #define _LINUX_TIME_H_
 
-int native_to_linux_timespec(struct l_timespec *, struct timespec *);
-void linux_to_native_timespec(struct timespec *, struct l_timespec *);
-int linux_to_native_clockid(clockid_t *, clockid_t);
+/* BSD to linux can fail with EOVERFLOW */
+int	bsd_to_linux_timespec(struct linux_timespec *,
+	    const struct timespec *);
+int	bsd_to_linux_itimerval(struct linux_itimerval *,
+	    const struct itimerval *);
+
+/* linux to BSD can't fail for time_t-based stuff, but can for clockid_t */
+void	linux_to_bsd_timespec(struct timespec *,
+	    const struct linux_timespec *);
+void	linux_to_bsd_itimerval(struct itimerval *,
+	    const struct linux_itimerval *);
+int	linux_to_bsd_clockid(clockid_t *, clockid_t);
+
+
+/* the timespec conversion functions also handle timeval */
+static inline int
+bsd_to_linux_timeval(struct linux_timeval *ltp, const struct timeval *ntp)
+{
+	return (bsd_to_linux_timespec((void *)ltp, (const void *)ntp));
+}
+static inline void
+linux_to_bsd_timeval(struct timeval *ntp, const struct linux_timeval *ltp)
+{
+	linux_to_bsd_timespec((void *)ntp, (const void *)ltp);
+}
+
 
 #endif

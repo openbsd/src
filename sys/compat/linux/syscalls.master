@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.72 2013/08/13 05:52:22 guenther Exp $
+	$OpenBSD: syscalls.master,v 1.73 2013/10/25 04:51:39 guenther Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -98,7 +98,7 @@
 40	STD		{ int linux_sys_rmdir(char *path); }
 41	NOARGS		{ int sys_dup(u_int fd); }
 42	NOARGS		{ int sys_pipe(int *fdp); }
-43	STD		{ int linux_sys_times(struct times *tms); }
+43	STD		{ int linux_sys_times(struct linux_tms *tms); }
 44	STD		{ int linux_sys_prof(void); }
 45	STD		{ int linux_sys_brk(char *nsize); }
 46	NOARGS		linux_setgid16 { int sys_setgid(gid_t gid); }
@@ -143,8 +143,9 @@
 			    struct linux_rlimit *rlp); }
 76	STD		{ int linux_sys_getrlimit(u_int which, \
 			    struct linux_rlimit *rlp); }
-77	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
-78	NOARGS		{ int t32_sys_gettimeofday(struct timeval *tp, \
+77	STD		{ int linux_sys_getrusage(int who, \
+			    struct linux_rusage *rusage); }
+78	STD		{ int linux_sys_gettimeofday(struct linux_timeval *tp, \
 			    struct timezone *tzp); }
 79	NOARGS		{ int sys_settimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
@@ -185,10 +186,11 @@
 #endif
 102	STD		{ int linux_sys_socketcall(int what, void *args); }
 103	STD		{ int linux_sys_klog(void); }
-104	NOARGS		{ int sys_setitimer(u_int which, \
-			    struct itimerval *itv, struct itimerval *oitv); }
-105	NOARGS		{ int sys_getitimer(u_int which, \
-			    struct itimerval *itv); }
+104	STD		{ int linux_sys_setitimer(u_int which, \
+			    struct linux_itimerval *itv, \
+			    struct linux_itimerval *oitv); }
+105	STD		{ int linux_sys_getitimer(u_int which, \
+			    struct linux_itimerval *itv); }
 106	STD		{ int linux_sys_stat(char *path, \
 			    struct linux_stat *sp); }
 107	STD		{ int linux_sys_lstat(char *path, \
@@ -204,9 +206,9 @@
 112	STD		{ int linux_sys_idle(void); }
 113	STD		{ int linux_sys_vm86old(void); }
 114	STD		{ int linux_sys_wait4(int pid, int *status, \
-			    int options, struct rusage *rusage); }
+			    int options, struct linux_rusage *rusage); }
 115	STD		{ int linux_sys_swapoff(void); }
-116	STD		{ int linux_sys_sysinfo(struct linux_sys_sysinfo_args *sysinfo); }
+116	STD		{ int linux_sys_sysinfo(struct linux_sysinfo *sysinfo); }
 117	STD		{ int linux_sys_ipc(int what, int a1, int a2, int a3, \
 			    caddr_t ptr); }
 118	NOARGS		{ int sys_fsync(int fd); }
@@ -244,7 +246,7 @@
 			    unsigned count); }
 142	STD		{ int linux_sys_select(int nfds, fd_set *readfds, \
 			    fd_set *writefds, fd_set *exceptfds, \
-			    struct timeval *timeout); }
+			    struct linux_timeval *timeout); }
 143	NOARGS		{ int sys_flock(int fd, int how); }
 144	NOARGS		{ int sys_msync(void *addr, int len, int fl); }
 145	NOARGS		{ int sys_readv(int fd, struct iovec *iovp, \
@@ -269,8 +271,9 @@
 159	STD		{ int linux_sys_sched_get_priority_max(int policy); }
 160	STD		{ int linux_sys_sched_get_priority_min(int policy); }
 161	STD		{ int linux_sys_sched_rr_get_interval(void); }
-162	NOARGS		{ int t32_sys_nanosleep(const struct timespec32 *rqtp, \
-				struct timespec32 *rmtp); }
+162	STD		{ int linux_sys_nanosleep( \
+				const struct linux_timespec *rqtp, \
+				struct linux_timespec *rmtp); }
 163	STD		{ int linux_sys_mremap(void *old_address, \
 			    size_t old_size, size_t new_size, long flags); }
 164	STD		{ int linux_sys_setresuid16(u_int16_t ruid, \
@@ -383,7 +386,7 @@
 238	UNIMPL		linux_sys_tkill
 239	UNIMPL		linux_sys_sendfile64
 240	STD		{ int linux_sys_futex(int *uaddr, int op, int val, \
-			    const struct linux_timespec *timeout,	   \
+			    const struct linux_timespec *timeout, \
 			    int *uaddr2, int val3); }
 241	UNIMPL		linux_sys_sched_setaffinity
 242	UNIMPL		linux_sys_sched_getaffinity
@@ -412,9 +415,9 @@
 263	UNIMPL		linux_sys_timer_delete
 264	UNIMPL		linux_sys_clock_settime
 265	STD		{ int linux_sys_clock_gettime(clockid_t which, \
-			    struct l_timespec *tp); }
+			    struct linux_timespec *tp); }
 266	STD		{ int linux_sys_clock_getres(clockid_t which, \
-			    struct l_timespec *tp); }
+			    struct linux_timespec *tp); }
 267	UNIMPL		linux_sys_clock_nanosleep
 268	STD		{ int linux_sys_statfs64(char *path, \
 			    struct linux_statfs64 *sp); }
