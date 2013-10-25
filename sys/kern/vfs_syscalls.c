@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.198 2013/09/14 01:35:01 guenther Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.199 2013/10/25 14:56:52 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2940,7 +2940,7 @@ sys_pwrite(struct proc *p, void *v, register_t *retval)
 
 	FREF(fp);
 
-	/* dofilewrite() will FRELE the descriptor for us */
+	/* dofilewritev() will FRELE the descriptor for us */
 	return (dofilewritev(p, fd, fp, &iov, 1, 0, &offset, retval));
 }
 
