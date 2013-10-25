@@ -1369,9 +1369,9 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/usb/udl.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/usb/udlio.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/usb/uftdireg.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/usb/uhcireg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/usb/uhcivar.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/usb/uhid_rdesc.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/usb/uhidev.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/usb/ukbdvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/usb/umass_quirks.ph

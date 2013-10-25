@@ -1304,9 +1304,9 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/udl.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/udlio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/uftdireg.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/uhcireg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/uhcivar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/uhid_rdesc.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/uhidev.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/ukbdvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/umass_quirks.ph

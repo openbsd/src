@@ -795,9 +795,9 @@
 ./usr/include/dev/usb/udl.h
 ./usr/include/dev/usb/udlio.h
 ./usr/include/dev/usb/uftdireg.h
-./usr/include/dev/usb/ugraphire_rdesc.h
 ./usr/include/dev/usb/uhcireg.h
 ./usr/include/dev/usb/uhcivar.h
+./usr/include/dev/usb/uhid_rdesc.h
 ./usr/include/dev/usb/uhidev.h
 ./usr/include/dev/usb/ukbdvar.h
 ./usr/include/dev/usb/umass_quirks.h
