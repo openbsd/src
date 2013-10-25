@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.40 2013/07/22 13:11:11 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.41 2013/10/25 14:21:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -668,8 +668,9 @@ mta_enter_state(struct mta_session *s, int newstate)
 				break;
 			}
 
-			log_debug("mta: debug: last connection: hanging on for %is",
-			    s->relay->limits->sessdelay_keepalive - s->hangon);
+			log_debug("mta: debug: last connection: hanging on for %llds",
+			    (long long)(s->relay->limits->sessdelay_keepalive -
+			    s->hangon));
 			s->flags |= MTA_HANGON;
 			runq_schedule(hangon, time(NULL) + 1, NULL, s);
 			break;
