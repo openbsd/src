@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.608 2013/10/24 19:02:07 jasper Exp $
+$OpenBSD: usbdevs,v 1.609 2013/10/25 02:55:58 jeremy Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2861,6 +2861,7 @@ product MICROSOFT WLINTELLIMOUSE 0x008c	Wireless Optical IntelliMouse
 product MICROSOFT WLNOTEBOOK	0x00b9	Wireless Optical Mouse (Model 1023)
 product MICROSOFT WLNOTEBOOK3	0x00d2	Wireless Optical Mouse 3000 (Model 1049)
 product MICROSOFT WLNOTEBOOK2	0x00e1	Wireless Optical Mouse 3000 (Model 1056)
+product MICROSOFT XBOX360_CONTROLLER 0x028e XBOX 360 Controller
 product MICROSOFT XBOX360	0x0292	XBOX 360 WLAN
 product MICROSOFT LIFECAM	0x074a	Microsoft LifeCam
 
