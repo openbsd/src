@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.32 2013/07/19 21:14:52 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.33 2013/10/25 18:58:10 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -79,7 +79,7 @@ scheduler_imsg(struct mproc *p, struct imsg *imsg)
 	uint32_t       		 penalty;
 	size_t			 n, i;
 	time_t			 timestamp;
-	int			 v;
+	int			 v, r;
 
 	switch (imsg->hdr.type) {
 
@@ -263,8 +263,10 @@ scheduler_imsg(struct mproc *p, struct imsg *imsg)
 		else
 			log_debug("debug: scheduler: "
 			    "scheduling evp:%016" PRIx64, id);
-		backend->schedule(id);
+		r = backend->schedule(id);
 		scheduler_reset_events();
+		m_compose(p, r ? IMSG_CTL_OK : IMSG_CTL_FAIL, imsg->hdr.peerid,
+		    0, -1, NULL, 0);
 		return;
 
 	case IMSG_MTA_SCHEDULE:
@@ -281,8 +283,10 @@ scheduler_imsg(struct mproc *p, struct imsg *imsg)
 		else
 			log_debug("debug: scheduler: "
 			    "removing evp:%016" PRIx64, id);
-		backend->remove(id);
+		r = backend->remove(id);
 		scheduler_reset_events();
+		m_compose(p, r ? IMSG_CTL_OK : IMSG_CTL_FAIL, imsg->hdr.peerid,
+		    0, -1, NULL, 0);
 		return;
 
 	case IMSG_CTL_PAUSE_EVP:
@@ -293,8 +297,10 @@ scheduler_imsg(struct mproc *p, struct imsg *imsg)
 		else
 			log_debug("debug: scheduler: "
 			    "suspending evp:%016" PRIx64, id);
-		backend->suspend(id);
+		r = backend->suspend(id);
 		scheduler_reset_events();
+		m_compose(p, r ? IMSG_CTL_OK : IMSG_CTL_FAIL, imsg->hdr.peerid,
+		    0, -1, NULL, 0);
 		return;
 
 	case IMSG_CTL_RESUME_EVP:
@@ -305,8 +311,10 @@ scheduler_imsg(struct mproc *p, struct imsg *imsg)
 		else
 			log_debug("debug: scheduler: "
 			    "resuming evp:%016" PRIx64, id);
-		backend->resume(id);
+		r = backend->resume(id);
 		scheduler_reset_events();
+		m_compose(p, r ? IMSG_CTL_OK : IMSG_CTL_FAIL, imsg->hdr.peerid,
+		    0, -1, NULL, 0);
 		return;
 	}
 

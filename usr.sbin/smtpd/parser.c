@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.35 2013/07/19 13:41:23 eric Exp $	*/
+/*	$OpenBSD: parser.c,v 1.36 2013/10/25 18:58:10 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot	<eric@openbsd.org>
@@ -215,7 +215,7 @@ cmd_run(int argc, char **argv)
 	if (node->cmd == NULL)
 		goto fail;
 
-	return (node->cmd(np, param));
+	return (node->cmd(np, np ? param : NULL));
 
 fail:
 	fprintf(stderr, "possibilities are:\n");
