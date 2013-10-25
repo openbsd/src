@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.34 2013/08/28 06:58:57 mpi Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.35 2013/10/25 02:54:42 deraadt Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -38,42 +38,13 @@
 #define RTF_ANNOUNCE	RTF_PROTO2
 #endif
 
-#include <sys/queue.h>
-#include <sys/timeout.h>
-
-struct	llinfo_nd6 {
-	struct	llinfo_nd6 *ln_next;
-	struct	llinfo_nd6 *ln_prev;
-	struct	rtentry *ln_rt;
-	struct	mbuf *ln_hold;	/* last packet until resolved/timeout */
-	time_t	ln_expire;	/* lifetime for NDP state transition */
-	long	ln_asked;	/* number of queries already sent for addr */
-	int	ln_byhint;	/* # of times we made it reachable by UL hint */
-	short	ln_state;	/* reachability state */
-	short	ln_router;	/* 2^0: ND6 router bit */
-
-	long	ln_ntick;
-	struct	timeout ln_timer_ch;
-};
-
 #define ND6_LLINFO_PURGE	-3
 #define ND6_LLINFO_NOSTATE	-2
-/*
- * We don't need the WAITDELETE state any more, but we keep the definition
- * in a comment line instead of removing it. This is necessary to avoid
- * unintentionally reusing the value for another purpose, which might
- * affect backward compatibility with old applications.
- * (20000711 jinmei@kame.net)
- */
-/* #define ND6_LLINFO_WAITDELETE	-1 */
 #define ND6_LLINFO_INCOMPLETE	0
 #define ND6_LLINFO_REACHABLE	1
 #define ND6_LLINFO_STALE	2
 #define ND6_LLINFO_DELAY	3
 #define ND6_LLINFO_PROBE	4
-
-#define ND6_IS_LLINFO_PROBREACH(n) ((n)->ln_state > ND6_LLINFO_INCOMPLETE)
-#define ND6_LLINFO_PERMANENT(n)	((n)->ln_expire == 0)
 
 struct nd_ifinfo {
 	u_int32_t linkmtu;		/* LinkMTU */
@@ -93,16 +64,6 @@ struct nd_ifinfo {
 
 #define ND6_IFF_PERFORMNUD	0x1
 #define ND6_IFF_ACCEPT_RTADV	0x2
-
-#ifdef _KERNEL
-#define ND_IFINFO(ifp) \
-	(((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->nd_ifinfo)
-#define IN6_LINKMTU(ifp) \
-	((ND_IFINFO(ifp)->linkmtu && ND_IFINFO(ifp)->linkmtu < (ifp)->if_mtu) \
-	    ? ND_IFINFO(ifp)->linkmtu \
-	    : ((ND_IFINFO(ifp)->maxmtu && ND_IFINFO(ifp)->maxmtu < (ifp)->if_mtu) \
-		? ND_IFINFO(ifp)->maxmtu : (ifp)->if_mtu))
-#endif
 
 struct in6_nbrinfo {
 	char ifname[IFNAMSIZ];	/* if name, e.g. "en0" */
@@ -164,6 +125,38 @@ struct	in6_ndifreq {
 #define ND6_PRIV_PREFERRED_LIFETIME	86400	/* 1 day */
 
 #ifdef _KERNEL
+
+#include <sys/queue.h>
+#include <sys/timeout.h>
+
+#define ND_IFINFO(ifp) \
+	(((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->nd_ifinfo)
+
+#define IN6_LINKMTU(ifp) \
+	((ND_IFINFO(ifp)->linkmtu && ND_IFINFO(ifp)->linkmtu < (ifp)->if_mtu) \
+	    ? ND_IFINFO(ifp)->linkmtu \
+	    : ((ND_IFINFO(ifp)->maxmtu && ND_IFINFO(ifp)->maxmtu < (ifp)->if_mtu) \
+		? ND_IFINFO(ifp)->maxmtu : (ifp)->if_mtu))
+
+
+struct	llinfo_nd6 {
+	struct	llinfo_nd6 *ln_next;
+	struct	llinfo_nd6 *ln_prev;
+	struct	rtentry *ln_rt;
+	struct	mbuf *ln_hold;	/* last packet until resolved/timeout */
+	time_t	ln_expire;	/* lifetime for NDP state transition */
+	long	ln_asked;	/* number of queries already sent for addr */
+	int	ln_byhint;	/* # of times we made it reachable by UL hint */
+	short	ln_state;	/* reachability state */
+	short	ln_router;	/* 2^0: ND6 router bit */
+
+	long	ln_ntick;
+	struct	timeout ln_timer_ch;
+};
+
+#define ND6_IS_LLINFO_PROBREACH(n) ((n)->ln_state > ND6_LLINFO_INCOMPLETE)
+#define ND6_LLINFO_PERMANENT(n)	((n)->ln_expire == 0)
+
 /* node constants */
 #define MAX_REACHABLE_TIME		3600000	/* msec */
 #define REACHABLE_TIME			30000	/* msec */
@@ -218,7 +211,6 @@ struct nd_pfxrouter {
 
 LIST_HEAD(nd_prhead, nd_prefix);
 
-/* nd6.c */
 extern int nd6_prune;
 extern int nd6_delay;
 extern int nd6_umaxtries;
@@ -260,8 +252,6 @@ union nd_opts {
 #define nd_opts_last		nd_opt_each.last
 #define nd_opts_done		nd_opt_each.done
 
-/* XXX: need nd6_var.h?? */
-/* nd6.c */
 void nd6_init(void);
 struct nd_ifinfo *nd6_ifattach(struct ifnet *);
 void nd6_ifdetach(struct nd_ifinfo *);
@@ -288,7 +278,6 @@ int nd6_storelladdr(struct ifnet *, struct rtentry *, struct mbuf *,
 int nd6_sysctl(int, void *, size_t *, void *, size_t);
 int nd6_need_cache(struct ifnet *);
 
-/* nd6_nbr.c */
 void nd6_na_input(struct mbuf *, int, int);
 void nd6_na_output(struct ifnet *, struct in6_addr *,
 	struct in6_addr *, u_long, int, struct sockaddr *);
@@ -300,7 +289,6 @@ void nd6_dad_start(struct ifaddr *, int *);
 void nd6_dad_stop(struct ifaddr *);
 void nd6_dad_duplicated(struct ifaddr *);
 
-/* nd6_rtr.c */
 void nd6_rs_input(struct mbuf *, int, int);
 void nd6_ra_input(struct mbuf *, int, int);
 void prelist_del(struct nd_prefix *);
