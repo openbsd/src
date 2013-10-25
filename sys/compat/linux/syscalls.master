@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.73 2013/10/25 04:51:39 guenther Exp $
+	$OpenBSD: syscalls.master,v 1.74 2013/10/25 05:10:03 guenther Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -75,7 +75,7 @@
 22	STD		{ int linux_sys_umount(char *specialfile); }
 23	NOARGS		linux_setuid16 { int sys_setuid(uid_t uid); }
 24	STD		linux_getuid16 { uid_t linux_sys_getuid(void); }
-25	STD		{ int linux_sys_stime(linux_time_t *t); }
+25	UNIMPL		stime
 #ifdef PTRACE
 26	STD		{ int linux_sys_ptrace(void); }
 #else
@@ -147,8 +147,7 @@
 			    struct linux_rusage *rusage); }
 78	STD		{ int linux_sys_gettimeofday(struct linux_timeval *tp, \
 			    struct timezone *tzp); }
-79	NOARGS		{ int sys_settimeofday(struct timeval *tp, \
-			    struct timezone *tzp); }
+79	UNIMPL		settimeofday
 80	NOARGS		linux_getgroups { int sys_getgroups(u_int gidsetsize, \
 			    gid_t *gidset); }
 81	NOARGS		linux_setgroups { int sys_setgroups(u_int gidsetsize, \

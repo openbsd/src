@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.82 2013/10/25 04:51:39 guenther Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.83 2013/10/25 05:10:03 guenther Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -1519,33 +1519,6 @@ linux_sys_nice(p, v, retval)
 	SCARG(&bsa, who) = 0;
 	SCARG(&bsa, prio) = SCARG(uap, incr);
 	return sys_setpriority(p, &bsa, retval);
-}
-
-int
-linux_sys_stime(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_time_args /* {
-		linux_time_t *t;
-	} */ *uap = v;
-	struct timespec ats;
-	linux_time_t tt;
-	int error;
-
-	if ((error = suser(p, 0)) != 0)
-		return (error);
-
-	if ((error = copyin(SCARG(uap, t), &tt, sizeof(tt))) != 0)
-		return (error);
-
-	ats.tv_sec = tt;
-	ats.tv_nsec = 0;
-
-	error = settime(&ats);
-
-	return (error);
 }
 
 int
