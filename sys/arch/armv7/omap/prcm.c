@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.4 2013/10/24 19:39:46 syl Exp $ */
+/* $OpenBSD: prcm.c,v 1.5 2013/10/25 15:43:12 syl Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -354,6 +354,8 @@ void
 prcm_v4_enablemodule(struct prcm_softc *sc, int mod)
 {
 	switch (mod) {
+		case PRCM_MMC0:
+			break;
 		case PRCM_USBP1_PHY:
 		case PRCM_USBP2_PHY:
 			prcm_v4_hsusbhost_set_source(mod, 0);
