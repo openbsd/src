@@ -1,4 +1,4 @@
-/*	$OpenBSD: crib.c,v 1.16 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: crib.c,v 1.17 2013/10/25 18:31:29 millert Exp $	*/
 /*	$NetBSD: crib.c,v 1.7 1997/07/10 06:47:29 mikel Exp $	*/
 
 /*-
@@ -214,9 +214,9 @@ game(void)
 						*foo = '\0';
 				} while (*foo != '\0');
 			}
-			i = (rand() >> 4) % CARDS;	/* random cut */
+			i = arc4random_uniform(CARDS);	/* random cut */
 			do {	/* comp cuts deck */
-				j = (rand() >> 4) % CARDS;
+				j = arc4random_uniform(CARDS);
 			} while (j == i);
 			addmsg(quiet ? "You cut " : "You cut the ");
 			msgcard(deck[i], FALSE);
@@ -396,7 +396,7 @@ cut(bool mycrib, int pos)
 					*foo = '\0';
 			} while (*foo != '\0');
 		}
-		i = (rand() >> 4) % (CARDS - pos);
+		i = arc4random_uniform(CARDS - pos);
 		turnover = deck[i + pos];
 		addmsg(quiet ? "You cut " : "You cut the ");
 		msgcard(turnover, FALSE);
@@ -407,7 +407,7 @@ cut(bool mycrib, int pos)
 			win = chkscr(&cscore, 2);
 		}
 	} else {
-		i = (rand() >> 4) % (CARDS - pos) + pos;
+		i = arc4random_uniform(CARDS - pos) + pos;
 		turnover = deck[i];
 		addmsg(quiet ? "I cut " : "I cut the ");
 		msgcard(turnover, FALSE);

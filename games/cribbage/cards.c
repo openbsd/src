@@ -1,4 +1,4 @@
-/*	$OpenBSD: cards.c,v 1.5 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: cards.c,v 1.6 2013/10/25 18:31:29 millert Exp $	*/
 /*	$NetBSD: cards.c,v 1.3 1995/03/21 15:08:41 cgd Exp $	*/
 
 /*-
@@ -47,9 +47,6 @@ makedeck(CARD d[])
 {
 	int i, j, k;
 
-	i = time(NULL);
-	i = ((i & 0xff) << 8) | ((i >> 8) & 0xff) | 1;
-	srand(i);
 	k = 0;
 	for (i = 0; i < RANKS; i++)
 		for (j = 0; j < SUITS; j++) {
@@ -69,7 +66,7 @@ shuffle(CARD d[])
 	CARD c;
 
 	for (j = CARDS; j > 0; --j) {
-		k = (rand() >> 4) % j;		/* random 0 <= k < j */
+		k = arc4random_uniform(j);	/* random 0 <= k < j */
 		c = d[j - 1];			/* exchange (j - 1) and k */
 		d[j - 1] = d[k];
 		d[k] = c;
