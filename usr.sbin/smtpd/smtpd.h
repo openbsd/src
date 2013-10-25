@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.423 2013/07/19 22:22:39 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.424 2013/10/25 21:31:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1065,7 +1065,6 @@ void dns_imsg(struct mproc *, struct imsg *);
 
 /* enqueue.c */
 int		 enqueue(int, char **);
-int		 enqueue_offline(int, char **);
 
 
 /* envelope.c */
@@ -1365,6 +1364,7 @@ void log_envelope(const struct envelope *, const char *, const char *,
 void session_socket_blockmode(int, enum blockmodes);
 void session_socket_no_linger(int);
 int session_socket_error(int);
+int getmailname(char *, size_t);
 
 
 /* waitq.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.109 2013/10/25 18:58:10 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.110 2013/10/25 21:31:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -725,7 +725,7 @@ do_show_stats(int argc, struct parameter *argv)
 				    (long long)kv.val.u.tv.tv_usec);
 				break;
 			case STAT_TIMESPEC:
-				printf("%s=%lli.%06li\n",
+				printf("%s=%lld.%06ld\n",
 				    kv.key,
 				    (long long)kv.val.u.ts.tv_sec * 1000000 +
 				    kv.val.u.ts.tv_nsec / 1000000,
@@ -795,9 +795,7 @@ main(int argc, char **argv)
 	if (strcmp(__progname, "sendmail") == 0 ||
 	    strcmp(__progname, "send-mail") == 0) {
 		sendmail = 1;
-		if (srv_connect())
-			return (enqueue(argc, argv));
-		return (enqueue_offline(argc, argv));
+		return (enqueue(argc, argv));
 	}
 
 	if (geteuid())
