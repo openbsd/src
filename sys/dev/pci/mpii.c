@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.69 2013/01/25 04:25:21 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.70 2013/10/25 16:21:35 mikeb Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -747,9 +747,8 @@ mpii_load_xs(struct mpii_ccb *ccb)
 		return (1);
 	}
 
-	/* safe default staring flags */
+	/* safe default starting flags */
 	flags = MPII_SGE_FL_TYPE_SIMPLE | MPII_SGE_FL_SIZE_64;
-	/* if data out */
 	if (xs->flags & SCSI_DATA_OUT)
 		flags |= MPII_SGE_FL_DIR_OUT;
 
@@ -759,8 +758,8 @@ mpii_load_xs(struct mpii_ccb *ccb)
 			sge->sg_hdr |= htole32(MPII_SGE_FL_LAST);
 			/* offset to the chain sge from the beginning */
 			io->chain_offset = ((caddr_t)csge - (caddr_t)io) / 4;
-			/* lenght of the chain buffer */
-			len = (dmap->dm_nsegs - i - 1) * sizeof(*sge);
+			/* length of the sgl segment we're pointing to */
+			len = (dmap->dm_nsegs - i) * sizeof(*sge);
 			csge->sg_hdr = htole32(MPII_SGE_FL_TYPE_CHAIN |
 			    MPII_SGE_FL_SIZE_64 | len);
 			/* address of the next sge */
