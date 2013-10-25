@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.84 2013/10/08 03:50:08 guenther Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.85 2013/10/25 04:42:48 guenther Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -47,8 +47,6 @@
 
 
 struct timeval adjtimedelta;		/* unapplied time correction */
-
-void	itimerround(struct timeval *);
 
 /* 
  * Time of day and interval timer support.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.128 2013/10/08 03:50:07 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.129 2013/10/25 04:42:48 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -439,9 +439,6 @@ reaper(void)
 	}
 }
 
-int	dowait4(struct proc *, pid_t, int *, int, struct rusage *,
-	    register_t *);
-
 int
 sys_wait4(struct proc *q, void *v, register_t *retval)
 {
@@ -452,10 +449,14 @@ sys_wait4(struct proc *q, void *v, register_t *retval)
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
 	struct rusage ru;
-	int error;
+	int status, error;
 
-	error = dowait4(q, SCARG(uap, pid), SCARG(uap, status),
+	error = dowait4(q, SCARG(uap, pid),
+	    SCARG(uap, status) ? &status : NULL,
 	    SCARG(uap, options), SCARG(uap, rusage) ? &ru : NULL, retval);
+	if (error == 0 && SCARG(uap, status)) {
+		error = copyout(&status, SCARG(uap, status), sizeof(status));
+	}
 	if (error == 0 && SCARG(uap, rusage)) {
 		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
 	}
@@ -469,7 +470,7 @@ dowait4(struct proc *q, pid_t pid, int *statusp, int options,
 	int nfound;
 	struct process *pr;
 	struct proc *p;
-	int status, error;
+	int error;
 
 	if (pid == 0)
 		pid = -q->p_p->ps_pgid;
@@ -499,13 +500,8 @@ loop:
 		if (p->p_stat == SZOMB) {
 			retval[0] = p->p_pid;
 
-			if (statusp != NULL) {
-				status = p->p_xstat;	/* convert to int */
-				error = copyout(&status,
-				    statusp, sizeof(status));
-				if (error)
-					return (error);
-			}
+			if (statusp != NULL)
+				*statusp = p->p_xstat;	/* convert to int */
 			if (rusage != NULL)
 				memcpy(rusage, pr->ps_ru, sizeof(*rusage));
 			proc_finish_wait(q, p);
@@ -518,13 +514,9 @@ loop:
 			atomic_setbits_int(&pr->ps_flags, PS_WAITED);
 			retval[0] = p->p_pid;
 
-			if (statusp != NULL) {
-				status = W_STOPCODE(pr->ps_single->p_xstat);
-				error = copyout(&status, statusp,
-				    sizeof(status));
-			} else
-				error = 0;
-			return (error);
+			if (statusp != NULL)
+				*statusp = W_STOPCODE(pr->ps_single->p_xstat);
+			return (0);
 		}
 		if (p->p_stat == SSTOP &&
 		    (pr->ps_flags & PS_WAITED) == 0 &&
@@ -534,25 +526,17 @@ loop:
 			atomic_setbits_int(&pr->ps_flags, PS_WAITED);
 			retval[0] = p->p_pid;
 
-			if (statusp != NULL) {
-				status = W_STOPCODE(p->p_xstat);
-				error = copyout(&status, statusp,
-				    sizeof(status));
-			} else
-				error = 0;
-			return (error);
+			if (statusp != NULL)
+				*statusp = W_STOPCODE(p->p_xstat);
+			return (0);
 		}
 		if ((options & WCONTINUED) && (p->p_flag & P_CONTINUED)) {
 			atomic_clearbits_int(&p->p_flag, P_CONTINUED);
 			retval[0] = p->p_pid;
 
-			if (statusp != NULL) {
-				status = _WCONTINUED;
-				error = copyout(&status, statusp,
-				    sizeof(status));
-			} else
-				error = 0;
-			return (error);
+			if (statusp != NULL)
+				*statusp = _WCONTINUED;
+			return (0);
 		}
 	}
 	if (nfound == 0)

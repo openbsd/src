@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.45 2013/09/14 03:06:41 guenther Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.46 2013/10/25 04:42:48 guenther Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -420,8 +420,6 @@ calcru(struct tusage *tup, struct timeval *up, struct timeval *sp,
 	if (ip != NULL)
 		TIMESPEC_TO_TIMEVAL(ip, &i);
 }
-
-int	dogetrusage(struct proc *, int, struct rusage *);
 
 /* ARGSUSED */
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resource.h,v 1.13 2013/09/14 01:35:02 guenther Exp $	*/
+/*	$OpenBSD: resource.h,v 1.14 2013/10/25 04:42:48 guenther Exp $	*/
 /*	$NetBSD: resource.h,v 1.14 1996/02/09 18:25:27 christos Exp $	*/
 
 /*
@@ -113,6 +113,7 @@ extern struct loadavg averunnable;
 struct process;
 int	dosetrlimit(struct proc *, u_int, struct rlimit *);
 int	donice(struct proc *, struct process *, int);
+int	dogetrusage(struct proc *, int, struct rusage *);
 
 #else
 __BEGIN_DECLS
