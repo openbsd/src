@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.46 2013/09/20 15:34:50 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.47 2013/10/25 03:09:59 jeremy Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -55,8 +55,10 @@
 
 #include <dev/usb/uhidev.h>
 
-/* Report descriptor for broken Wacom Graphire */
-#include <dev/usb/ugraphire_rdesc.h>
+#ifndef SMALL_KERNEL
+/* Replacement report descriptors for devices shipped with broken ones */
+#include <dev/usb/uhid_rdesc.h>
+#endif /* !SMALL_KERNEL */
 
 #ifdef UHIDEV_DEBUG
 #define DPRINTF(x)	do { if (uhidevdebug) printf x; } while (0)
@@ -99,7 +101,15 @@ uhidev_match(struct device *parent, void *match, void *aux)
 	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
 	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id == NULL || id->bInterfaceClass != UICLASS_HID)
+	if (id == NULL)
+		return (UMATCH_NONE);
+#ifndef SMALL_KERNEL
+	if (uaa->vendor == USB_VENDOR_MICROSOFT &&
+	    uaa->product == USB_PRODUCT_MICROSOFT_XBOX360_CONTROLLER &&
+	    id->bInterfaceNumber == 0)
+		return (UMATCH_VENDOR_PRODUCT);
+#endif /* !SMALL_KERNEL */
+	if (id->bInterfaceClass != UICLASS_HID)
 		return (UMATCH_NONE);
 	if (usbd_get_quirks(uaa->device)->uq_flags & UQ_BAD_HID)
 		return (UMATCH_NONE);
@@ -180,6 +190,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX need to extend this */
 	descptr = NULL;
+#ifndef SMALL_KERNEL
 	if (uaa->vendor == USB_VENDOR_WACOM) {
 		static uByte reportbuf[] = {2, 2, 2};
 
@@ -200,7 +211,13 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 			/* Keep descriptor */
 			break;
 		}
+	} else if (uaa->vendor == USB_VENDOR_MICROSOFT &&
+	    uaa->product == USB_PRODUCT_MICROSOFT_XBOX360_CONTROLLER) {
+		/* The Xbox 360 gamepad has no report descriptor. */
+		size = sizeof uhid_xb360gp_report_descr;
+		descptr = uhid_xb360gp_report_descr;
 	}
+#endif /* !SMALL_KERNEL */
 
 	if (descptr) {
 		desc = malloc(size, M_USBDEV, M_NOWAIT);

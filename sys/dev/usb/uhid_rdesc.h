@@ -1,7 +1,9 @@
-/*	$OpenBSD: ugraphire_rdesc.h,v 1.3 2006/01/06 03:36:32 brad Exp $ */
+/*	$OpenBSD: uhid_rdesc.h,v 1.1 2013/10/25 03:09:59 jeremy Exp $ */
 /*	$NetBSD: ugraphire_rdesc.h,v 1.1 2000/12/29 01:47:49 augustss Exp $	*/
+/*	$FreeBSD: uxb360gp_rdesc.h,v 1.3 2008/05/24 18:35:55 ed Exp $ */
 /*
  * Copyright (c) 2000 Nick Hibma <n_hibma@freebsd.org>
+ * Copyright (c) 2005 Ed Schouten <ed@FreeBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -175,3 +177,99 @@ static uByte uhid_graphire3_4x5_report_descr[] = {
     0xc0                           /* END_COLLECTION */
 };
 
+/*
+ * The descriptor has no output report format, thus preventing you from
+ * controlling the LEDs and the built-in rumblers.
+ */
+static const uByte uhid_xb360gp_report_descr[] = {
+    0x05, 0x01,		/* USAGE PAGE (Generic Desktop)		*/
+    0x09, 0x05,		/* USAGE (Gamepad)			*/
+    0xa1, 0x01,		/* COLLECTION (Application)		*/
+    /* Unused */
+    0x75, 0x08,		/*  REPORT SIZE (8)			*/
+    0x95, 0x01,		/*  REPORT COUNT (1)			*/
+    0x81, 0x01,		/*  INPUT (Constant)			*/
+    /* Byte count */
+    0x75, 0x08,		/*  REPORT SIZE (8)			*/
+    0x95, 0x01,		/*  REPORT COUNT (1)			*/
+    0x05, 0x01,		/*  USAGE PAGE (Generic Desktop)	*/
+    0x09, 0x3b,		/*  USAGE (Byte Count)			*/
+    0x81, 0x01,		/*  INPUT (Constant)			*/
+    /* D-Pad */
+    0x05, 0x01,		/*  USAGE PAGE (Generic Desktop)	*/
+    0x09, 0x01,		/*  USAGE (Pointer)			*/
+    0xa1, 0x00,		/*  COLLECTION (Physical)		*/
+    0x75, 0x01,		/*   REPORT SIZE (1)			*/
+    0x15, 0x00,		/*   LOGICAL MINIMUM (0)		*/
+    0x25, 0x01,		/*   LOGICAL MAXIMUM (1)		*/
+    0x35, 0x00,		/*   PHYSICAL MINIMUM (0)		*/
+    0x45, 0x01,		/*   PHYSICAL MAXIMUM (1)		*/
+    0x95, 0x04,		/*   REPORT COUNT (4)			*/
+    0x05, 0x01,		/*   USAGE PAGE (Generic Desktop)	*/
+    0x09, 0x90,		/*   USAGE (D-Pad Up)			*/
+    0x09, 0x91,		/*   USAGE (D-Pad Down)			*/
+    0x09, 0x93,		/*   USAGE (D-Pad Left)			*/
+    0x09, 0x92,		/*   USAGE (D-Pad Right)		*/
+    0x81, 0x02,		/*   INPUT (Data, Variable, Absolute)	*/
+    0xc0,		/*  END COLLECTION			*/
+    /* Buttons 5-11 */
+    0x75, 0x01,		/*  REPORT SIZE (1)			*/
+    0x15, 0x00,		/*  LOGICAL MINIMUM (0)			*/
+    0x25, 0x01,		/*  LOGICAL MAXIMUM (1)			*/
+    0x35, 0x00,		/*  PHYSICAL MINIMUM (0)		*/
+    0x45, 0x01,		/*  PHYSICAL MAXIMUM (1)		*/
+    0x95, 0x07,		/*  REPORT COUNT (7)			*/
+    0x05, 0x09,		/*  USAGE PAGE (Button)			*/
+    0x09, 0x08,		/*  USAGE (Button 8)			*/
+    0x09, 0x07,		/*  USAGE (Button 7)			*/
+    0x09, 0x09,		/*  USAGE (Button 9)			*/
+    0x09, 0x0a,		/*  USAGE (Button 10)			*/
+    0x09, 0x05,		/*  USAGE (Button 5)			*/
+    0x09, 0x06,		/*  USAGE (Button 6)			*/
+    0x09, 0x0b,		/*  USAGE (Button 11)			*/
+    0x81, 0x02,		/*  INPUT (Data, Variable, Absolute)	*/
+    /* Unused */
+    0x75, 0x01,		/*  REPORT SIZE (1)			*/
+    0x95, 0x01,		/*  REPORT COUNT (1)			*/
+    0x81, 0x01,		/*  INPUT (Constant)			*/
+    /* Buttons 1-4 */
+    0x75, 0x01,		/*  REPORT SIZE (1)			*/
+    0x15, 0x00,		/*  LOGICAL MINIMUM (0)			*/
+    0x25, 0x01,		/*  LOGICAL MAXIMUM (1)			*/
+    0x35, 0x00,		/*  PHYSICAL MINIMUM (0)		*/
+    0x45, 0x01,		/*  PHYSICAL MAXIMUM (1)		*/
+    0x95, 0x04,		/*  REPORT COUNT (4)			*/
+    0x05, 0x09,		/*  USAGE PAGE (Button)			*/
+    0x19, 0x01,		/*  USAGE MINIMUM (Button 1)		*/
+    0x29, 0x04,		/*  USAGE MAXIMUM (Button 4)		*/
+    0x81, 0x02,		/*  INPUT (Data, Variable, Absolute)	*/
+    /* Triggers */
+    0x75, 0x08,		/*  REPORT SIZE (8)			*/
+    0x15, 0x00,		/*  LOGICAL MINIMUM (0)			*/
+    0x26, 0xff, 0x00,	/*  LOGICAL MAXIMUM (255)		*/
+    0x35, 0x00,		/*  PHYSICAL MINIMUM (0)		*/
+    0x46, 0xff, 0x00,	/*  PHYSICAL MAXIMUM (255)		*/
+    0x95, 0x02,		/*  REPORT SIZE (2)			*/
+    0x05, 0x01,		/*  USAGE PAGE (Generic Desktop)	*/
+    0x09, 0x32,		/*  USAGE (Z)				*/
+    0x09, 0x35,		/*  USAGE (Rz)				*/
+    0x81, 0x02,		/*  INPUT (Data, Variable, Absolute)	*/
+    /* Sticks */
+    0x75, 0x10,		/*  REPORT SIZE (16)			*/
+    0x16, 0x00, 0x80,	/*  LOGICAL MINIMUM (-32768)		*/
+    0x26, 0xff, 0x7f,	/*  LOGICAL MAXIMUM (32767)		*/
+    0x36, 0x00, 0x80,	/*  PHYSICAL MINIMUM (-32768)		*/
+    0x46, 0xff, 0x7f,	/*  PHYSICAL MAXIMUM (32767)		*/
+    0x95, 0x04,		/*  REPORT COUNT (4)			*/
+    0x05, 0x01,		/*  USAGE PAGE (Generic Desktop)	*/
+    0x09, 0x30,		/*  USAGE (X)				*/
+    0x09, 0x31,		/*  USAGE (Y)				*/
+    0x09, 0x33,		/*  USAGE (Rx)				*/
+    0x09, 0x34,		/*  USAGE (Ry)				*/
+    0x81, 0x02,		/*  INPUT (Data, Variable, Absolute)	*/
+    /* Unused */
+    0x75, 0x30,		/*  REPORT SIZE (48)			*/
+    0x95, 0x01,		/*  REPORT COUNT (1)			*/
+    0x81, 0x01,		/*  INPUT (Constant)			*/
+    0xc0,		/* END COLLECTION			*/
+};
