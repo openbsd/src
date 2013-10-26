@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_gem.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_gem.c,v 1.2 2013/10/26 20:31:49 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -591,9 +591,9 @@ int radeon_mode_dumb_destroy(struct drm_file *file_priv,
 			     struct drm_device *dev,
 			     uint32_t handle)
 {
-	printf("%s stub\n", __func__);
-	return ENOSYS;
-#ifdef notyet
+#if 0
 	return drm_gem_handle_delete(file_priv, handle);
+#else
+	return drm_handle_delete(file_priv, handle);
 #endif
 }

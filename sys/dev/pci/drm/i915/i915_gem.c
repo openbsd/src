@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.37 2013/10/05 07:30:06 jsg Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.38 2013/10/26 20:31:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -276,9 +276,11 @@ int i915_gem_dumb_destroy(struct drm_file *file,
 			  struct drm_device *dev,
 			  uint32_t handle)
 {
-	printf("%s stub\n", __func__);
-	return -ENOSYS;
-//	return (drm_gem_handle_delete(file, handle));
+#if 0
+	return drm_gem_handle_delete(file, handle);
+#else
+	return drm_handle_delete(file, handle);
+#endif
 }
 
 /**

@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.114 2013/09/30 03:26:21 jsg Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.115 2013/10/26 20:31:48 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -1551,6 +1551,35 @@ again:
 	return (0);
 }
 
+int
+drm_handle_delete(struct drm_file *file_priv, int handle)
+{
+	struct drm_handle	*han, find;
+	struct drm_obj		*obj;
+	struct drm_device	*dev;
+
+	find.handle = handle;
+	mtx_enter(&file_priv->table_lock);
+	han = SPLAY_FIND(drm_obj_tree, &file_priv->obj_tree, &find);
+	if (han == NULL) {
+		mtx_leave(&file_priv->table_lock);
+		return (EINVAL);
+	}
+
+	obj = han->obj;
+	SPLAY_REMOVE(drm_obj_tree, &file_priv->obj_tree, han);
+	mtx_leave(&file_priv->table_lock);
+
+	drm_free(han);
+
+	dev = obj->dev;
+	DRM_LOCK();
+	drm_handle_unref(obj);
+	DRM_UNLOCK();
+
+	return (0);
+}
+
 struct drm_obj *
 drm_gem_object_lookup(struct drm_device *dev, struct drm_file *file_priv,
     int handle)
@@ -1579,31 +1608,11 @@ drm_gem_close_ioctl(struct drm_device *dev, void *data,
     struct drm_file *file_priv)
 {
 	struct drm_gem_close	*args = data;
-	struct drm_handle	*han, find;
-	struct drm_obj		*obj;
 
 	if ((dev->driver->flags & DRIVER_GEM) == 0)
 		return (ENODEV);
 
-	find.handle = args->handle;
-	mtx_enter(&file_priv->table_lock);
-	han = SPLAY_FIND(drm_obj_tree, &file_priv->obj_tree, &find);
-	if (han == NULL) {
-		mtx_leave(&file_priv->table_lock);
-		return (EINVAL);
-	}
-
-	obj = han->obj;
-	SPLAY_REMOVE(drm_obj_tree, &file_priv->obj_tree, han);
-	mtx_leave(&file_priv->table_lock);
-
-	drm_free(han);
-
-	DRM_LOCK();
-	drm_handle_unref(obj);
-	DRM_UNLOCK();
-
-	return (0);
+	return (drm_handle_delete(file_priv, args->handle));
 }
 
 int
