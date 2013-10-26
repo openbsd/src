@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2013/10/21 09:12:55 phessler Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2013/10/26 21:33:29 sthen Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ static int default_forward=0;
 #endif
 
 int family = AF_UNSPEC;
-u_int rtableid;
+int rtableid = -1;
 
 /*
  * Initialize variables.
@@ -173,7 +173,6 @@ main(argc, argv)
 	 * passed 
 	 */
 	autologin = -1;
-	rtableid = getrtable();
 
 	while ((ch = getopt(argc, argv, "4678DEKLS:X:ab:cde:fFk:l:n:rt:V:x"))
 	    != -1) {
@@ -327,7 +326,7 @@ main(argc, argv)
 #endif
 			break;
 		case 'V':
-			rtableid = (unsigned int)strtonum(optarg, 0,
+			rtableid = (int)strtonum(optarg, 0,
 			    RT_TABLEID_MAX, &errstr);
 			if (errstr) {
 				fprintf(stderr, "%s: Warning: "

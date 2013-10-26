@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.116 2013/10/21 09:12:55 phessler Exp $ */
+/* $OpenBSD: netcat.c,v 1.117 2013/10/26 21:33:29 sthen Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -87,7 +87,7 @@ int	Iflag;					/* TCP receive buffer size */
 int	Oflag;					/* TCP send buffer size */
 int	Sflag;					/* TCP MD5 signature option */
 int	Tflag = -1;				/* IP Type of Service */
-u_int	rtableid;
+int	rtableid = -1;
 
 int timeout = -1;
 int family = AF_UNSPEC;
@@ -202,7 +202,7 @@ main(int argc, char *argv[])
 			uflag = 1;
 			break;
 		case 'V':
-			rtableid = (unsigned int)strtonum(optarg, 0,
+			rtableid = (int)strtonum(optarg, 0,
 			    RT_TABLEID_MAX, &errstr);
 			if (errstr)
 				errx(1, "rtable %s: %s", errstr, optarg);
@@ -589,8 +589,8 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 		    res0->ai_protocol)) < 0)
 			continue;
 
-		if (setsockopt(s, SOL_SOCKET, SO_RTABLE, &rtableid,
-		    sizeof(rtableid)) == -1)
+		if (rtableid >= 0 && (setsockopt(s, SOL_SOCKET, SO_RTABLE,
+		    &rtableid, sizeof(rtableid)) == -1))
 			err(1, "setsockopt SO_RTABLE");
 
 		/* Bind to a local port or source address if specified. */
@@ -698,8 +698,8 @@ local_listen(char *host, char *port, struct addrinfo hints)
 		    res0->ai_protocol)) < 0)
 			continue;
 
-		if (setsockopt(s, SOL_SOCKET, SO_RTABLE, &rtableid,
-		    sizeof(rtableid)) == -1)
+		if (rtableid >= 0 && (setsockopt(s, IPPROTO_IP, SO_RTABLE,
+		    &rtableid, sizeof(rtableid)) == -1))
 			err(1, "setsockopt SO_RTABLE");
 
 		ret = setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &x, sizeof(x));
