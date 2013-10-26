@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.3 2013/10/24 08:28:11 mpi Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.4 2013/10/26 20:20:22 jasper Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -50,6 +50,7 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
+#include <armv7/sunxi/sunxireg.h>
 #include <armv7/sunxi/sunxivar.h>
 #include <armv7/sunxi/sxiccmuvar.h>
 #include <armv7/sunxi/sxipiovar.h>
@@ -159,6 +160,7 @@ struct sxie_softc {
 	int				sc_phyno;
 	bus_space_tag_t			sc_iot;
 	bus_space_handle_t		sc_ioh;
+	bus_space_handle_t		sc_sid_ioh;
 	void				*sc_ih; /* Interrupt handler */
 	uint32_t			intr_status; /* soft interrupt status */
 	uint32_t			pauseframe;
@@ -209,18 +211,18 @@ sxie_attach(struct device *parent, struct device *self, void *args)
 	    sxi->sxi_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("sxie_attach: bus_space_map ioh failed!");
 
+	if (bus_space_map(sc->sc_iot, SID_ADDR, SID_SIZE, 0, &sc->sc_sid_ioh))
+		panic("sxie_attach: bus_space_map sid_ioh failed!");
+
 	sxie_socware_init(sc);
 	sc->txf_inuse = 0;
 
 	sc->sc_ih = arm_intr_establish(sxi->sxi_dev->irq[0], IPL_NET,
 	    sxie_intr, sc, sc->sc_dev.dv_xname);
 
-	printf("\n");
-
 	s = splnet();
 
-	printf("%s: address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_ac.ac_enaddr));
+	printf(", address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	/* XXX verify flags & capabilities */
 	ifp = &sc->sc_ac.ac_if;
@@ -262,7 +264,7 @@ sxie_attach(struct device *parent, struct device *self, void *args)
 void
 sxie_socware_init(struct sxie_softc *sc)
 {
-	int i;
+	int i, have_mac = 0;
 	uint32_t reg;
 
 	for (i = 0; i < SXIPIO_EMAC_NPINS; i++)
@@ -275,23 +277,39 @@ sxie_socware_init(struct sxie_softc *sc)
 	SXIWRITE4(sc, SXIE_INTCR, SXIE_INTR_DISABLE);
 	SXISET4(sc, SXIE_INTSR, SXIE_INTR_CLEAR);
 
-#if 1
-	/* set lladdr with values set in u-boot */
+	/*
+	 * If u-boot doesn't set emac, use the Security ID area
+	 * to generate a consistent MAC address of.
+	 */
 	reg = SXIREAD4(sc, SXIE_MACA0);
-	sc->sc_ac.ac_enaddr[3] = reg >> 16 & 0xff;
-	sc->sc_ac.ac_enaddr[4] = reg >> 8 & 0xff;
-	sc->sc_ac.ac_enaddr[5] = reg & 0xff;
-	reg = SXIREAD4(sc, SXIE_MACA1);
-	sc->sc_ac.ac_enaddr[0] = reg >> 16 & 0xff;
-	sc->sc_ac.ac_enaddr[1] = reg >> 8 & 0xff;
-	sc->sc_ac.ac_enaddr[2] = reg & 0xff;
-#else
-	/* set lladdr */
-	memset(sc->sc_ac.ac_enaddr, 0xff, ETHER_ADDR_LEN);
-	arc4random_buf(sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
-	sc->sc_ac.ac_enaddr[0] &= ~3;
-	sc->sc_ac.ac_enaddr[0] |= 2;
-#endif
+	if (reg != 0) {
+		sc->sc_ac.ac_enaddr[3] = reg >> 16 & 0xff;
+		sc->sc_ac.ac_enaddr[4] = reg >> 8 & 0xff;
+		sc->sc_ac.ac_enaddr[5] = reg & 0xff;
+		reg = SXIREAD4(sc, SXIE_MACA1);
+		sc->sc_ac.ac_enaddr[0] = reg >> 16 & 0xff;
+		sc->sc_ac.ac_enaddr[1] = reg >> 8 & 0xff;
+		sc->sc_ac.ac_enaddr[2] = reg & 0xff;
+
+		have_mac = 1;
+	}
+
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_sid_ioh, 0x0);
+
+	if (!have_mac && reg != 0) {
+		sc->sc_ac.ac_enaddr[0] = 0x02;
+		sc->sc_ac.ac_enaddr[1] = reg & 0xff;
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_sid_ioh, 0x0c);
+		sc->sc_ac.ac_enaddr[2] = reg >> 24 & 0xff;
+		sc->sc_ac.ac_enaddr[3] = reg >> 16 & 0xff;
+		sc->sc_ac.ac_enaddr[4] = reg >> 8 & 0xff;
+		sc->sc_ac.ac_enaddr[5] = reg & 0xff;
+
+		have_mac = 1;
+	}
+
+	if (!have_mac)
+		ether_fakeaddr(&sc->sc_ac.ac_if);
 
 	sc->sc_phyno = 1;
 }
