@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.14 2013/10/14 00:20:49 dlg Exp $ */
+/*	$OpenBSD: vmt.c,v 1.15 2013/10/26 21:05:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -158,6 +158,7 @@ struct vm_rpc {
 
 int	vmt_match(struct device *, void *, void *);
 void	vmt_attach(struct device *, struct device *, void *);
+int	vmt_activate(struct device *, int);
 
 struct vmt_softc {
 	struct device		sc_dev;
@@ -181,7 +182,9 @@ struct vmt_softc {
 struct cfattach vmt_ca = {
 	sizeof(struct vmt_softc),
 	vmt_match,
-	vmt_attach
+	vmt_attach,
+	NULL,
+	vmt_activate
 };
 
 struct cfdriver vmt_cd = {
@@ -210,13 +213,13 @@ void vmt_probe_cmd(struct vm_backdoor *, uint16_t);
 void vmt_tclo_state_change_success(struct vmt_softc *, int, char);
 void vmt_do_reboot(struct vmt_softc *);
 void vmt_do_shutdown(struct vmt_softc *);
+void vmt_shutdown(void *);
 
 void vmt_update_guest_info(struct vmt_softc *);
 void vmt_update_guest_uptime(struct vmt_softc *);
 
 void vmt_tick(void *);
 void vmt_tclo_tick(void *);
-void vmt_shutdown_hook(void *);
 
 extern char hostname[MAXHOSTNAMELEN];
 
@@ -285,8 +288,6 @@ vmt_attach(struct device *parent, struct device *self, void *aux)
 		goto free;
 	}
 
-	shutdownhook_establish(vmt_shutdown_hook, sc);
-
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
 
@@ -309,6 +310,20 @@ vmt_attach(struct device *parent, struct device *self, void *aux)
 free:
 	free(sc->sc_rpc_buf, M_DEVBUF);
 }
+
+int
+vmt_activate(struct device *self, int act)
+{
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		vmt_shutdown(self);
+		break;
+	}
+	return (rv);
+}
+
 
 void
 vmt_update_guest_uptime(struct vmt_softc *sc)
@@ -426,7 +441,7 @@ vmt_do_reboot(struct vmt_softc *sc)
 }
 
 void
-vmt_shutdown_hook(void *arg)
+vmt_shutdown(void *arg)
 {
 	struct vmt_softc *sc = arg;
 
