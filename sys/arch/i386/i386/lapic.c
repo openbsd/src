@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.32 2013/06/02 18:16:42 gerhard Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.33 2013/10/26 16:55:12 kettenis Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -234,7 +234,6 @@ u_int32_t lapic_per_second;
 u_int32_t lapic_frac_usec_per_cycle;
 u_int64_t lapic_frac_cycle_per_usec;
 u_int32_t lapic_delaytab[26];
-u_int64_t scaled_pentium_mhz;
 
 void
 lapic_clockintr(void *arg)
@@ -368,8 +367,6 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		tmp = (lapic_per_second * (u_int64_t)1 << 32) / 1000000;
 
 		lapic_frac_cycle_per_usec = tmp;
-
-		scaled_pentium_mhz = (1ULL << 32) / cpuspeed;
 
 		/*
 		 * Compute delay in cycles for likely short delays in usec.
