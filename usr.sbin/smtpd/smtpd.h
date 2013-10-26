@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.424 2013/10/25 21:31:23 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.425 2013/10/26 20:32:48 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -451,38 +451,6 @@ struct envelope {
 	time_t				lasttry;
 	time_t				nexttry;
 	time_t				lastbounce;
-};
-
-enum envelope_field {
-	EVP_VERSION,
-	EVP_TAG,
-	EVP_MSGID,
-	EVP_TYPE,
-	EVP_HELO,
-	EVP_HOSTNAME,
-	EVP_ERRORLINE,
-	EVP_SOCKADDR,
-	EVP_SENDER,
-	EVP_RCPT,
-	EVP_DEST,
-	EVP_CTIME,
-	EVP_EXPIRE,
-	EVP_RETRY,
-	EVP_LASTTRY,
-	EVP_LASTBOUNCE,
-	EVP_FLAGS,
-	EVP_MDA_METHOD,
-	EVP_MDA_BUFFER,
-	EVP_MDA_USER,
-	EVP_MDA_USERTABLE,
-	EVP_MTA_RELAY,
-	EVP_MTA_RELAY_AUTH,
-	EVP_MTA_RELAY_CERT,
-	EVP_MTA_RELAY_SOURCE,
-	EVP_MTA_RELAY_HELO,
-	EVP_BOUNCE_TYPE,
-	EVP_BOUNCE_DELAY,
-	EVP_BOUNCE_EXPIRE,
 };
 
 struct listener {
@@ -1069,10 +1037,6 @@ int		 enqueue(int, char **);
 
 /* envelope.c */
 void envelope_set_errormsg(struct envelope *, char *, ...);
-char *envelope_ascii_field_name(enum envelope_field);
-int envelope_ascii_load(enum envelope_field, struct envelope *, char *);
-int envelope_ascii_dump(enum envelope_field, const struct envelope *, char *,
-    size_t);
 int envelope_load_buffer(struct envelope *, const char *, size_t);
 int envelope_dump_buffer(const struct envelope *, char *, size_t);
 
