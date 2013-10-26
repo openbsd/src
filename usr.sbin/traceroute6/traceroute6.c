@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.50 2013/10/21 08:47:10 phessler Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.51 2013/10/26 21:21:45 sthen Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -344,7 +344,7 @@ main(int argc, char *argv[])
 	struct hostent *hp;
 	size_t size;
 	uid_t uid;
-	u_int rtableid;
+	int rtableid = -1;
 	const char *errstr;
 
 	/*
@@ -487,7 +487,7 @@ main(int argc, char *argv[])
 			verbose++;
 			break;
 		case 'V':
-			rtableid = (unsigned int)strtonum(optarg, 0,
+			rtableid = (int)strtonum(optarg, 0,
 			    RT_TABLEID_MAX, &errstr);
 			if (errstr)
 				errx(1, "rtable value is %s: %s",
@@ -625,7 +625,7 @@ main(int argc, char *argv[])
 			perror("socket(SOCK_DGRAM)");
 			exit(5);
 		}
-		if (setsockopt(sndsock, SOL_SOCKET, SO_RTABLE,
+		if (rtableid >= 0 && setsockopt(sndsock, SOL_SOCKET, SO_RTABLE,
 		    &rtableid, sizeof(rtableid)) == -1)
 			err(1, "setsockopt SO_RTABLE");
 	}
