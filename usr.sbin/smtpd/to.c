@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.9 2013/10/26 12:27:59 eric Exp $	*/
+/*	$OpenBSD: to.c,v 1.10 2013/10/26 20:55:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -356,7 +356,7 @@ text_to_relayhost(struct relayhost *relay, const char *s)
 			return 0;
 
 		/* no schema, default to smtp+tls:// */
-		i = 1;
+		i = 2;
 		p = buffer;
 	}
 	else
