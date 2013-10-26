@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa_session.c,v 1.18 2013/07/19 16:02:00 eric Exp $	*/
+/*	$OpenBSD: mfa_session.c,v 1.19 2013/10/26 12:27:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -378,7 +378,7 @@ mfa_drain_query(struct mfa_query *q)
 
 		log_trace(TRACE_MFA,
 		    "filter: query 0x%016"PRIx64" done: "
-		    "status=%s code=%i response=\"%s\"",
+		    "status=%s code=%d response=\"%s\"",
 		    q->qid,
 		    status_to_str(q->smtp.status),
 		    q->smtp.code,

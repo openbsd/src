@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_api.c,v 1.2 2013/07/20 09:06:46 eric Exp $	*/
+/*	$OpenBSD: table_api.c,v 1.3 2013/10/26 12:27:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -199,7 +199,7 @@ table_msg_dispatch(void)
 		break;
 
 	default:
-		log_warnx("warn: table-api: bad message %i", imsg.hdr.type);
+		log_warnx("warn: table-api: bad message %d", imsg.hdr.type);
 		fatalx("table-api: exiting");
 	}
 }

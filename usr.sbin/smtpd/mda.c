@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.94 2013/07/19 15:14:23 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.95 2013/10/26 12:27:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -270,7 +270,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 				return;
 			}
 
-			log_debug("debug: mda: got message fd %i "
+			log_debug("debug: mda: got message fd %d "
 			    "for session %016"PRIx64 " evpid %016"PRIx64,
 			    imsg->fd, s->id, e->id);
 
@@ -401,7 +401,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 				return;
 			}
 
-			log_debug("debug: mda: got mda fd %i "
+			log_debug("debug: mda: got mda fd %d "
 			    "for session %016"PRIx64 " evpid %016"PRIx64,
 			    imsg->fd, s->id, s->evp->id);
 

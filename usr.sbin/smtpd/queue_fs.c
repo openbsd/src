@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fs.c,v 1.1 2013/07/19 20:37:07 eric Exp $	*/
+/*	$OpenBSD: queue_fs.c,v 1.2 2013/10/26 12:27:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -215,7 +215,7 @@ again:
 	if (stat(corruptdir, &sb) != -1 || errno != ENOENT) {
 		fsqueue_message_corrupt_path(msgid, corruptdir,
 		    sizeof(corruptdir));
-		snprintf(buf, sizeof(buf), ".%i", retry++);
+		snprintf(buf, sizeof(buf), ".%d", retry++);
 		strlcat(corruptdir, buf, sizeof(corruptdir));
 		goto again;
 	}

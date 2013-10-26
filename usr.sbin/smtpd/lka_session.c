@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.57 2013/07/19 08:12:19 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.58 2013/10/26 12:27:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -420,7 +420,7 @@ lka_find_ancestor(struct expandnode *xn, enum expand_type type)
 	while (xn && (xn->type != type))
 		xn = xn->parent;
 	if (xn == NULL) {
-		log_warnx("warn: lka_find_ancestor: no ancestors of type %i",
+		log_warnx("warn: lka_find_ancestor: no ancestors of type %d",
 		    type);
 		fatalx(NULL);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.41 2013/10/25 14:21:06 deraadt Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.42 2013/10/26 12:27:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -544,7 +544,7 @@ mta_connect(struct mta_session *s)
 	else
 		schema = "smtp://";
 
-	log_info("smtp-out: Connecting to %s%s:%i (%s) on session"
+	log_info("smtp-out: Connecting to %s%s:%d (%s) on session"
 	    " %016"PRIx64"...", schema, sa_to_text(s->route->dst->sa),
 	    portno, s->route->dst->ptrname, s->id);
 
@@ -970,7 +970,7 @@ mta_response(struct mta_session *s, char *line)
 		} else {
 			s->rcptcount = 0;
 			if (s->relay->limits->sessdelay_transaction) {
-				log_debug("debug: mta: waiting for %llis before next transaction",
+				log_debug("debug: mta: waiting for %llds before next transaction",
 				    (long long int)s->relay->limits->sessdelay_transaction);
 				s->hangon = s->relay->limits->sessdelay_transaction -1;
 				s->flags |= MTA_HANGON;
@@ -987,7 +987,7 @@ mta_response(struct mta_session *s, char *line)
 		mta_flush_failedqueue(s);
 		s->rcptcount = 0;
 		if (s->relay->limits->sessdelay_transaction) {
-			log_debug("debug: mta: waiting for %llis after reset",
+			log_debug("debug: mta: waiting for %llds after reset",
 			    (long long int)s->relay->limits->sessdelay_transaction);
 			s->hangon = s->relay->limits->sessdelay_transaction -1;
 			s->flags |= MTA_HANGON;

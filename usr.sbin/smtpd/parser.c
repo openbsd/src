@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.36 2013/10/25 18:58:10 eric Exp $	*/
+/*	$OpenBSD: parser.c,v 1.37 2013/10/26 12:27:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot	<eric@openbsd.org>
@@ -165,7 +165,7 @@ cmd_check(const char *str, struct node *node, struct parameter *res)
 		return (1);
 
 	default:
-		errx(1, "bad token type: %i", node->type);
+		errx(1, "bad token type: %d", node->type);
 		return (0);
 	}
 }
@@ -239,7 +239,7 @@ cmd_show_params(int argc, struct parameter *argv)
 			printf(" str:\"%s\"", argv[i].u.u_str);
 			break;
 		case P_INT:
-			printf(" int:%i", argv[i].u.u_int);
+			printf(" int:%d", argv[i].u.u_int);
 			break;
 		case P_MSGID:
 			printf(" msgid:%08"PRIx32, argv[i].u.u_msgid);
@@ -251,7 +251,7 @@ cmd_show_params(int argc, struct parameter *argv)
 			printf(" routeid:%016"PRIx64, argv[i].u.u_routeid);
 			break;
 		default:
-			printf(" ???:%i", argv[i].type);
+			printf(" ???:%d", argv[i].type);
 		}
 	}
 	printf ("\n");

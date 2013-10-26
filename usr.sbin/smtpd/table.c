@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.7 2013/07/20 09:06:46 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.8 2013/10/26 12:27:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -143,7 +143,7 @@ table_lookup(struct table *table, const char *key, enum table_service kind,
 		    (lk) ? table_dump_lookup(kind, lk): "found",
 		    lk ? "\"" : "");
 	else
-		log_trace(TRACE_LOOKUP, "lookup: %s \"%s\" as %s in table %s:%s -> %i",
+		log_trace(TRACE_LOOKUP, "lookup: %s \"%s\" as %s in table %s:%s -> %d",
 		    lk ? "lookup" : "check",
 		    lkey,
 		    table_service_name(kind),
@@ -173,7 +173,7 @@ table_fetch(struct table *table, enum table_service kind, union lookup *lk)
 		    (lk) ? table_dump_lookup(kind, lk): "found",
 		    lk ? "\"" : "");
 	else
-		log_trace(TRACE_LOOKUP, "lookup: fetch %s from table %s:%s -> %i",
+		log_trace(TRACE_LOOKUP, "lookup: fetch %s from table %s:%s -> %d",
 		    table_service_name(kind),
 		    table_backend_name(table->t_backend),
 		    table->t_name,
@@ -639,13 +639,13 @@ table_dump_lookup(enum table_service s, union lookup *lk)
 		break;
 
 	case K_NETADDR:
-		snprintf(buf, sizeof(buf), "%s/%i",
+		snprintf(buf, sizeof(buf), "%s/%d",
 		    sockaddr_to_text((struct sockaddr *)&lk->netaddr.ss),
 		    lk->netaddr.bits);
 		break;
 
 	case K_USERINFO:
-		snprintf(buf, sizeof(buf), "%s:%i:%i:%s",
+		snprintf(buf, sizeof(buf), "%s:%d:%d:%s",
 		    lk->userinfo.username,
 		    lk->userinfo.uid,
 		    lk->userinfo.gid,

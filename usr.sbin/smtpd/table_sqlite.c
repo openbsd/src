@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_sqlite.c,v 1.7 2013/10/24 20:26:45 eric Exp $	*/
+/*	$OpenBSD: table_sqlite.c,v 1.8 2013/10/26 12:27:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -450,7 +450,7 @@ table_sqlite_lookup(int service, const char *key, char *dst, size_t sz)
 		}
 		break;
 	case K_USERINFO:
-		if (snprintf(dst, sz, "%i:%i:%s",
+		if (snprintf(dst, sz, "%d:%d:%s",
 		    sqlite3_column_int(stmt, 0),
 		    sqlite3_column_int(stmt, 1),
 		    sqlite3_column_text(stmt, 2)) > (ssize_t)sz) {
@@ -469,7 +469,7 @@ table_sqlite_lookup(int service, const char *key, char *dst, size_t sz)
 		}
 		break;
 	default:
-		log_warnx("warn: table-sqlite: unknown service %i", service);
+		log_warnx("warn: table-sqlite: unknown service %d", service);
 		r = -1;
 	}
 

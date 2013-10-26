@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter_api.c,v 1.8 2013/07/19 16:02:00 eric Exp $	*/
+/*	$OpenBSD: filter_api.c,v 1.9 2013/10/26 12:27:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -325,7 +325,7 @@ filter_dispatch(struct mproc *p, struct imsg *imsg)
 	uint64_t		 id, qid;
 	int			 status, event, hook;
 
-	log_debug("debug: %s: imsg %i", filter_name, imsg->hdr.type);
+	log_debug("debug: %s: imsg %d", filter_name, imsg->hdr.type);
 
 	switch (imsg->hdr.type) {
 	case IMSG_FILTER_REGISTER:
@@ -481,7 +481,7 @@ imsg_to_str(int imsg)
 {
 	static char buf[32];
 
-	snprintf(buf, sizeof(buf), "%i", imsg);
+	snprintf(buf, sizeof(buf), "%d", imsg);
 
 	return (buf);
 }

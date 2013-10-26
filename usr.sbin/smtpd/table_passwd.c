@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_passwd.c,v 1.3 2013/10/24 20:07:16 eric Exp $	*/
+/*	$OpenBSD: table_passwd.c,v 1.4 2013/10/26 12:27:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -174,7 +174,7 @@ table_passwd_lookup(int service, const char *key, char *dst, size_t sz)
 		}
 		break;
 	case K_USERINFO:
-		if (snprintf(dst, sz, "%i:%i:%s",
+		if (snprintf(dst, sz, "%d:%d:%s",
 			pw.pw_uid, pw.pw_gid, pw.pw_dir)
 		    > (ssize_t)sz) {
 			log_warnx("warn: table-passwd: result too large");
@@ -182,7 +182,7 @@ table_passwd_lookup(int service, const char *key, char *dst, size_t sz)
 		}
 		break;
 	default:
-		log_warnx("warn: table-passwd: unknown service %i",
+		log_warnx("warn: table-passwd: unknown service %d",
 		    service);
 		r = -1;
 	}
