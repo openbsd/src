@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.684 2013/08/19 21:07:22 halex Exp $
+#	$OpenBSD: install.sub,v 1.685 2013/10/27 22:36:06 uwe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -100,9 +100,11 @@ stripcom () {
 
 	[[ -f $1 ]] || return
 
+	set -o noglob
 	while read _l; do
 		[[ -n ${_l%%#*} ]] && echo $_l
 	done <$1
+	set +o noglob
 }
 
 # Prints the supplied parameters properly escaped for future sh/ksh parsing.
@@ -246,6 +248,7 @@ _ask() {
 	trap "_redo=1" TERM
 	lock; dmesg >/tmp/update; unlock
 	echo -n "${_q:+$_q }${_def:+[$_def] }"
+	_autorespond "$_q" "$_def" && echo "$resp" && retrap && return
 	read resp
 	lock; rm /tmp/update; unlock
 	if ((_redo)); then
@@ -268,6 +271,30 @@ _ask() {
 	return $_redo
 }
 
+tolower() {
+	echo "$1" | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/'
+}
+
+_autorespond() {
+	local _q=$1 _def=$2 _key _value _i=0
+	[[ -n $RESPONSEFILE ]] || return
+	while IFS== read _key _value; do
+		_key=${_key##+( |	])} _value=${_value##+( |	)}
+		_key=${_key%%+( |	])} _value=${_value%%+( |	)}
+		_q=$(tolower "$_q")
+		_key=$(tolower "$_key")
+		[[ $_q == *"$_key"* ]] && resp=$_value && let _i++
+	done < $RESPONSEFILE
+	(( _i == 1 )) && return
+	(( !_i )) && [[ -n $_def ]] && resp=$_def && return
+	if (( !_i )); then
+		echo "\nQuestion has no answer in response file."
+		exit 1
+	fi
+	echo "\nQuestion has multiple answers in response file."
+	exit 1
+}
+
 # Ask for user input, which is returned in $resp.
 # Any parameters are passed on to _ask(), which is called
 # repeatedly until it succeds.
@@ -277,6 +304,14 @@ ask() {
 
 # Ask for a password twice, saving the input in $_password
 askpassword() {
+	if $auto; then
+		echo -n "Password for $1 account? "
+		_autorespond "Password for $1 account?"
+		echo '<provided>'
+		_password=$resp
+		return
+	fi
+
 	while :; do
 		askpass "Password for $1 account? (will not echo)"
 		_password=$resp
@@ -372,7 +407,9 @@ ask_yn() {
 #
 # At exit $resp holds selected item, or 'done'
 ask_which() {
-	local _name=$1 _query=$2 _list=$3 _def=$4 _dynlist _dyndef
+	local _name=$1 _query=$2 _list=$3 _def=$4 _dynlist _dyndef _key
+
+	_key=$(echo "$_name" | sed 's/[^[:alnum:]]/_/g')
 
 	while :; do
 		# Put both lines in ask prompt, rather than use a
@@ -392,13 +429,22 @@ ask_which() {
 		echo "Available ${_name}s are: $_dynlist."
 		echo -n "Which one $_query? (or 'done') "
 		[[ -n $_dyndef ]] && echo -n "[$_dyndef] "
-		_ask || continue
+		if _autorespond "${_name}s" done; then
+			eval ": \${ask_which_resp_$_key=\"\$resp done\"}"
+			eval "set -- \$ask_which_resp_$_key"
+			resp=$1; shift
+			eval "ask_which_resp_$_key=\$*"
+			echo "$resp"
+		else
+			_ask || continue
+		fi
 		[[ -z $resp ]] && resp="$_dyndef"
 
 		# Quote $resp to prevent user from confusing isin() by
 		# entering something like 'a a'.
 		isin "$resp" $_dynlist done && break
 		echo "'$resp' is not a valid choice."
+		$auto && exit 1
 	done
 }
 
@@ -518,6 +564,7 @@ __EOT
 			isin $_f $_selected && echo "[X] $_f" || echo "[ ] $_f"
 		done | showcols | sed 's/^/    /'
 		ask "Set name(s)? (or 'abort' or 'done')" done
+		$auto && resp="$resp done"
 
 		set -o noglob
 		for resp in $resp; do
@@ -560,6 +607,7 @@ configure_ifs() {
 	while :; do
 		# Create new vlan if possible.
 		ifconfig vlan$_vl create >/dev/null 2>&1
+
 		ask_which "network interface" "do you wish to configure" \
 			'$(get_ifdevs)' \
 			${_p:-'$( (ifconfig netboot 2>/dev/null | sed -n '\''1s/:.*//p'\''; get_ifdevs) | sed q )'}
@@ -1566,6 +1614,9 @@ install_sets() {
 		n*|N*)	isin nfs $_locs && install_nfs && method=nfs ;;
 		t*|T*)	isin tape $_locs && install_tape && method=tape ;;
 		esac
+
+		# Install sets only once, in non-interactive installations.
+		$auto && break
 	done
 }
 
@@ -1952,6 +2003,10 @@ __EOT
 #
 # #######################################################################
 
+# Check if we're supposed to run non-interactively before losing the
+# command arguments with some "set --" magic.
+[ "$1" = auto ] && auto=true || auto=false
+
 ROOTDISK=
 ROOTDEV=
 PACKAGE_PATH=
@@ -2029,13 +2084,62 @@ for _ifs in $(get_ifdevs dhcp); do
 	ifconfig $_ifs delete down -group dhcp 2>/dev/null
 done
 
-cat <<__EOT
+# Fetch a response file from the "netboot" interface.
+get_responsefile() {
+	# Fetching the response file requires DHCP, even if the
+	# machine was booted via RARP and TFTP.
+	[ -x /sbin/dhclient ] || return
+
+	# Did we do a netboot?
+	BOOTDEV=$(ifconfig netboot 2>/dev/null | sed "/^	/d;s/:.*//")
+	[[ -n $BOOTDEV ]] || return
+
+	# Try to get a DHCP lease.  This whole process is done in the
+	# background, so it doesn't matter how long the timeout is.
+	dhclient $BOOTDEV
+	[ -s /var/db/dhclient.leases.$BOOTDEV ] || return
+
+	# Get the "next-server" address?
+	SERVER=$(sed "/next-server/s/^.* \([^ ]*\);$/\1/p;d" \
+	    /var/db/dhclient.leases.$BOOTDEV)
+	[[ -n $SERVER ]] || return
+
+	URL="http://$SERVER/install.conf"
+	ftp -o "$1" "$URL"
+	[ -s "$1" ] || return
+}
+
+# Fully automatic installation?
+if $auto && [[ -z $RESPONSEFILE ]]; then
+	responsefile=/install.conf
+	[ -f $responsefile ] || get_responsefile $responsefile
+	if [ ! -f $responsefile ]; then
+		echo "No response file found; automatic installation aborted."
+		exit 1
+	fi
+
+	echo -n "Performing non-interactive installation..."
+	RESPONSEFILE=$responsefile $0 auto >>/install.log 2>&1 <&-
+	# XXX: Isn't the installer's exit code reliable?
+	if grep -q CONGRATULATIONS /install.log; then
+		echo "done."
+		cp /install.log /mnt/install.log
+		exec reboot
+	else
+		echo "failed; check /install.log"
+		exit 1
+	fi
+fi
+
+if ! $auto; then
+	cat <<__EOT
 At any prompt except password prompts you can escape to a shell by
 typing '!'. Default answers are shown in []'s and are selected by
 pressing RETURN.  You can exit this program at any time by pressing
 Control-C, but this can leave your system in an inconsistent state.
 
 __EOT
+fi
 
 # Configure the terminal and keyboard.
 set_term

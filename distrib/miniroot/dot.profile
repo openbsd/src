@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.17 2011/07/08 23:53:53 halex Exp $
+#	$OpenBSD: dot.profile,v 1.18 2013/10/27 22:36:06 uwe Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -64,9 +64,48 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 Welcome to the $OBSD installation program.
 __EOT
+
+	# Did we netboot?  If so, then start the automatic installation
+	# after a timeout, but only the very first time around.
+	timeout=false
+	timer_pid=
+	if [ ! -f /tmp/noai ] && ifconfig netboot >/dev/null 2>&1; then
+		echo "Starting non-interactive installation in 5 seconds..."
+		>/tmp/noai
+
+		trap 'kill $timeout_pid 2>/dev/null' INT EXIT
+		trap 'timeout=true' TERM
+
+		# Stop monitoring background processes to avoid printing
+		# job completion notices in interactive shell mode.  This
+		# doesn't stop the "[1] <pid>" on starting a job though;
+		# that's why re redirect stdout and stderr temporarily.
+		set +m
+		exec 3<&1 4<&2 >/dev/null 2>&1
+		(sleep 5; kill $$) &
+		timer_pid=$!
+		exec 1<&3 2<&4 3<&- 4<&-
+		set +m
+	fi
+
 	while :; do
-		read REPLY?'(I)nstall, (U)pgrade or (S)hell? '
+		echo -n '(A)utoinstall, (I)nstall, (U)pgrade or (S)hell? '
+		read REPLY
+
+		# If the timeout has expired, begin the installation.
+		if $timeout; then
+			timeout=false
+			echo
+			REPLY=a
+		else
+			# User has made a choice; stop the read timeout.
+			[ -n "$timer_pid" ] && kill $timer_pid 2>/dev/null
+			timer_pid=
+		fi
+
 		case $REPLY in
+		a*|A*)	/install auto && break
+			;;
 		i*|I*)	/install && break
 			;;
 		u*|U*)	/upgrade && break
