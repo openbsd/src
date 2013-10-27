@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.2 2013/10/21 15:30:38 patrick Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.3 2013/10/27 20:27:09 aalm Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -461,10 +461,10 @@ imxesdhc_card_detect(sdmmc_chipset_handle_t sch)
 		return imxgpio_get_bit(gpio) ? 0 : 1;
 	case BOARD_ID_IMX6_WANDBOARD:
 		switch (sc->unit) {
-			case 1:
+			case 0:
 				gpio = 0*32 + 2;
 				break;
-			case 3:
+			case 2:
 				gpio = 3*32 + 9;
 				break;
 			default:
