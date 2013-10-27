@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.24 2013/04/16 19:24:53 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.25 2013/10/27 18:31:24 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -930,7 +930,7 @@ recvfile(char *new, opt_t opts, int mode, char *owner, char *group,
 	 * Install new (temporary) file as the actual target
 	 */
 	if (rename(new, target) < 0) {
-		static char fmt[] = "%s -> %s: rename failed: %s";
+		static const char fmt[] = "%s -> %s: rename failed: %s";
 		struct stat stb;
 		/*
 		 * If the rename failed due to "Text file busy", then

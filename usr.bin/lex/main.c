@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2011/06/08 20:22:02 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2013/10/27 18:31:24 guenther Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -33,7 +33,7 @@
  * PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/main.c,v 1.12 2011/06/08 20:22:02 jmc Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/main.c,v 1.13 2013/10/27 18:31:24 guenther Exp $ */
 
 
 #include "flexdef.h"
@@ -110,11 +110,11 @@ int num_input_files;
 char *program_name = "flex";
 
 #ifndef SHORT_FILE_NAMES
-static char *outfile_template = "lex.%s.%s";
-static char *backing_name = "lex.backup";
+static const char outfile_template[] = "lex.%s.%s";
+static const char backing_name[] = "lex.backup";
 #else
-static char *outfile_template = "lex%s.%s";
-static char *backing_name = "lex.bck";
+static const char outfile_template[] = "lex%s.%s";
+static const char backing_name[] = "lex.bck";
 #endif
 
 #ifdef THINK_C

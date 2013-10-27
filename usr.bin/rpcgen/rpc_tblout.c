@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_tblout.c,v 1.14 2012/12/05 23:20:26 deraadt Exp $	*/
+/*	$OpenBSD: rpc_tblout.c,v 1.15 2013/10/27 18:31:24 guenther Exp $	*/
 /*	$NetBSD: rpc_tblout.c,v 1.3 1995/06/24 15:00:15 pk Exp $	*/
 
 /*
@@ -47,14 +47,14 @@
 
 static char tabstr[TABCOUNT+1] = "\t\t\t\t\t";
 
-static char tbl_hdr[] = "struct rpcgen_table %s_table[] = {\n";
-static char tbl_end[] = "};\n";
+static const char tbl_hdr[] = "struct rpcgen_table %s_table[] = {\n";
+static const char tbl_end[] = "};\n";
 
-static char null_entry[] = "\n\t(char *(*)())0,\n\
+static const char null_entry[] = "\n\t(char *(*)())0,\n\
 \t(xdrproc_t) xdr_void,\t\t\t0,\n\
 \t(xdrproc_t) xdr_void,\t\t\t0,\n";
 
-static char tbl_nproc[] = "int %s_nproc =\n\tsizeof(%s_table)/sizeof(%s_table[0]);\n\n";
+static const char tbl_nproc[] = "int %s_nproc =\n\tsizeof(%s_table)/sizeof(%s_table[0]);\n\n";
 
 static void write_table(definition *);
 static void printit(char *, char *);

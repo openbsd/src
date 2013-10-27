@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.109 2013/04/09 08:58:46 sthen Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.110 2013/10/27 18:31:24 guenther Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -95,7 +95,7 @@ char		*SSL_readline(SSL *, size_t *);
 
 #define EMPTYSTRING(x)	((x) == NULL || (*(x) == '\0'))
 
-static const char *at_encoding_warning =
+static const char at_encoding_warning[] =
     "Extra `@' characters in usernames and passwords should be encoded as %%40";
 
 jmp_buf	httpabort;

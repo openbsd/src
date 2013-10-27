@@ -1,4 +1,4 @@
-/* $OpenBSD: rpc_main.c,v 1.25 2010/09/01 14:43:34 millert Exp $	 */
+/* $OpenBSD: rpc_main.c,v 1.26 2013/10/27 18:31:24 guenther Exp $	 */
 /* $NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	 */
 
 /*
@@ -420,7 +420,7 @@ c_initialize(void)
 
 }
 
-char            rpcgen_table_dcl[] = "struct rpcgen_table {\n\
+static const char rpcgen_table_dcl[] = "struct rpcgen_table {\n\
 	char	*(*proc)();\n\
 	xdrproc_t	xdr_arg;\n\
 	unsigned int	len_arg;\n\

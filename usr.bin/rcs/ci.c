@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.215 2013/04/17 00:20:52 deraadt Exp $	*/
+/*	$OpenBSD: ci.c,v 1.216 2013/10/27 18:31:24 guenther Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -472,10 +472,9 @@ checkin_update(struct checkin_params *pb)
 	if (pb->date != DATE_NOW) {
 		time_t head_date = rcs_rev_getdate(pb->file, pb->frev);
 		if (pb->date <= head_date) {
-			char dbuf1[256], dbuf2[256], *fmt;
+			static const char fmt[] = "%Y/%m/%d %H:%M:%S";
+			char dbuf1[256], dbuf2[256];
 			struct tm *t, *t_head;
-
-			fmt = "%Y/%m/%d %H:%M:%S";
 
 			t = gmtime(&pb->date);
 			strftime(dbuf1, sizeof(dbuf1), fmt, t);

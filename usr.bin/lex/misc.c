@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.12 2006/03/04 16:18:06 miod Exp $	*/
+/*	$OpenBSD: misc.c,v 1.13 2013/10/27 18:31:24 guenther Exp $	*/
 
 /* misc - miscellaneous flex routines */
 
@@ -33,7 +33,7 @@
  * PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/misc.c,v 1.12 2006/03/04 16:18:06 miod Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/misc.c,v 1.13 2013/10/27 18:31:24 guenther Exp $ */
 
 #include "flexdef.h"
 
@@ -395,7 +395,7 @@ int do_infile;
 	{
 	char directive[MAXLINE], filename[MAXLINE];
 	char *s1, *s2, *s3;
-	static char line_fmt[] = "#line %d \"%s\"\n";
+	static const char line_fmt[] = "#line %d \"%s\"\n";
 
 	if ( ! gen_line_dirs )
 		return;
