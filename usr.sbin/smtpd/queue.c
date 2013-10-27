@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.153 2013/07/19 21:14:52 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.154 2013/10/27 07:56:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -528,6 +528,7 @@ queue(void)
 	case -1:
 		fatal("queue: cannot fork");
 	case 0:
+		post_fork(PROC_QUEUE);
 		break;
 	default:
 		return (pid);

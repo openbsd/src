@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.33 2013/10/25 18:58:10 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.34 2013/10/27 07:56:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -370,6 +370,7 @@ scheduler(void)
 	case -1:
 		fatal("scheduler: cannot fork");
 	case 0:
+		post_fork(PROC_SCHEDULER);
 		break;
 	default:
 		return (pid);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.199 2013/10/26 12:27:59 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.200 2013/10/27 07:56:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -136,6 +136,7 @@ int	profiling = 0;
 int	verbose = 0;
 int	debug = 0;
 int	foreground = 0;
+int	control_socket = -1;
 
 struct tree	 children;
 
@@ -721,6 +722,9 @@ main(int argc, char *argv[])
 	if (geteuid())
 		errx(1, "need root privileges");
 
+	/* the control socket ensures that only one smtpd instance is running */
+	control_socket = control_create_socket();
+
 	if (!queue_init(backend_queue, 1))
 		errx(1, "could not initialize queue backend");
 
@@ -874,9 +878,6 @@ fork_peers(void)
 	init_pipes();
 
 	child_add(queue(), CHILD_DAEMON, proc_title(PROC_QUEUE));
-	if (env->sc_queue_key)
-		memset(env->sc_queue_key, 0, strlen(env->sc_queue_key));
-
 	child_add(control(), CHILD_DAEMON, proc_title(PROC_CONTROL));
 	child_add(lka(), CHILD_DAEMON, proc_title(PROC_LKA));
 	child_add(mda(), CHILD_DAEMON, proc_title(PROC_MDA));
@@ -884,6 +885,20 @@ fork_peers(void)
 	child_add(mta(), CHILD_DAEMON, proc_title(PROC_MTA));
 	child_add(scheduler(), CHILD_DAEMON, proc_title(PROC_SCHEDULER));
 	child_add(smtp(), CHILD_DAEMON, proc_title(PROC_SMTP));
+
+	post_fork(PROC_PARENT);
+}
+
+void
+post_fork(int proc)
+{
+	if (proc != PROC_QUEUE && env->sc_queue_key)
+		memset(env->sc_queue_key, 0, strlen(env->sc_queue_key));
+
+	if (proc != PROC_CONTROL) {
+		close(control_socket);
+		control_socket = -1;
+	}
 }
 
 struct child *

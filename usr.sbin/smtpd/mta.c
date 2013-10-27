@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.164 2013/10/26 12:27:59 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.165 2013/10/27 07:56:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -443,6 +443,7 @@ mta(void)
 	case -1:
 		fatal("mta: cannot fork");
 	case 0:
+		post_fork(PROC_MTA);
 		break;
 	default:
 		return (pid);

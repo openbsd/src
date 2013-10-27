@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.127 2013/07/19 11:14:08 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.128 2013/10/27 07:56:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -240,6 +240,7 @@ smtp(void)
 	case -1:
 		fatal("smtp: cannot fork");
 	case 0:
+		post_fork(PROC_SMTP);
 		break;
 	default:
 		return (pid);

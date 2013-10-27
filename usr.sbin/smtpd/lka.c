@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.154 2013/07/19 11:14:08 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.155 2013/10/27 07:56:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -582,6 +582,7 @@ lka(void)
 	case -1:
 		fatal("lka: cannot fork");
 	case 0:
+		post_fork(PROC_LKA);
 		break;
 	default:
 		return (pid);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.95 2013/10/26 12:27:59 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.96 2013/10/27 07:56:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -500,6 +500,7 @@ mda(void)
 	case -1:
 		fatal("mda: cannot fork");
 	case 0:
+		post_fork(PROC_MDA);
 		break;
 	default:
 		return (pid);

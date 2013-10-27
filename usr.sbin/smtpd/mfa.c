@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.79 2013/07/19 16:02:00 eric Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.80 2013/10/27 07:56:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -215,6 +215,7 @@ mfa(void)
 	case -1:
 		fatal("filter: cannot fork");
 	case 0:
+		post_fork(PROC_MFA);
 		break;
 	default:
 		return (pid);
