@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.5 2013/10/23 17:08:47 jasper Exp $
+#	$OpenBSD: files.armv7,v 1.6 2013/10/27 03:06:25 aalm Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -55,6 +55,9 @@ include "dev/bluetooth/files.bluetooth"
 
 # Machine-independent GPIO drivers
 include "dev/gpio/files.gpio"
+
+# Machine-independent 1-Wire drivers
+include "dev/onewire/files.onewire"
 
 # SoC includes
 include "arch/armv7/imx/files.imx"

@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC-SUNXI,v 1.1 2013/10/23 17:08:47 jasper Exp $
+# $OpenBSD: GENERIC-SUNXI,v 1.2 2013/10/27 03:06:25 aalm Exp $
 #
 # GENERIC machine description file
 #
@@ -141,6 +141,19 @@ st*		at scsibus?
 cd*		at scsibus?
 ch*		at scsibus?
 uk*		at scsibus?
+
+# GPIO "pin bus" drivers
+gpioiic*	at gpio?		# I2C bus bit-banging
+iic*		at gpioiic?
+gpioow*		at gpio?		# 1-Wire bus bit-banging
+onewire*	at gpioow?
+
+# 1-Wire devices
+option	ONEWIREVERBOSE
+owid*		at onewire?		# ID
+owsbm*		at onewire?		# Smart Battery Monitor
+owtemp*		at onewire?		# Temperature
+owctr*		at onewire?		# Counter device
 
 # Pseudo-Devices
 pseudo-device hotplug         1       # devices hot plugging
