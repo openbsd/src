@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.28 2013/09/30 07:06:24 jmc Exp $
+ * $OpenBSD: calendar.music,v 1.29 2013/10/27 19:00:22 sthen Exp $
  */
 
 #ifndef _calendar_music_
@@ -96,6 +96,7 @@
 02/29	Gioacchino Rossini is born in Pesaro, Italy, 1792
 03/01	Jim Morrison is busted for obscenity in Miami, 1969
 03/01	Frederic Chopin is born in Zelazowa Wola, Warsaw, Poland, 1810
+03/02	Lou Reed born in Brooklyn, New York, 1942
 03/02	Blues guitarist Rory Gallagher is born in Ballyshannon, Ireland, 1949
 03/02	Bedrich Smetana is born, 1824
 03/03	Buffalo Springfield is formed in Los Angeles, 1966
@@ -428,6 +429,7 @@
 10/25	Johann Strauss II, "The Waltz King", is born in Vienna, 1825
 10/26	Domenico Scarlatti is born in Naples, Italy, 1685
 10/27	Niccolo Paganini is born in Genoa, Italy, 1782
+10/27	Lou Reed dies, 2013
 10/28	Howard Hanson is born in Wahoo, Nebraska, 1896
 10/29	Duane Allman dies in motorcycle crash near Macon, Georgia, 1971
 10/30	Grace Slick is born in Chicago, 1939
