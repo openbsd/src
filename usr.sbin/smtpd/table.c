@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.8 2013/10/26 12:27:59 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.9 2013/10/27 18:13:28 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -704,6 +704,8 @@ parse_sockaddr(struct sockaddr *sa, int family, const char *str)
 		return (0);
 
 	case PF_INET6:
+		if (strncasecmp("ipv6:", str, 5) == 0)
+			str += 5;
 		cp = strchr(str, SCOPE_DELIMITER);
 		if (cp) {
 			str2 = strdup(str);
