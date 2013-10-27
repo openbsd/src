@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.h,v 1.11 2013/10/21 12:36:14 deraadt Exp $	*/
+/*	$OpenBSD: ip6_mroute.h,v 1.12 2013/10/27 20:57:39 deraadt Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -236,12 +236,9 @@ struct mf6c {
  */
 #ifndef _NETINET_IP_MROUTE_H_
 struct rtdetq {		/* XXX: rtdetq is also defined in ip_mroute.h */
-    struct mbuf 	*m;		/* A copy of the packet	    	    */
-    struct ifnet	*ifp;		/* Interface pkt came in on 	    */
-#ifdef UPCALL_TIMING
-    struct timeval	t;		/* Timestamp */
-#endif /* UPCALL_TIMING */
-    struct rtdetq	*next;
+	struct mbuf	*m;		/* A copy of the packet	    	    */
+	struct ifnet	*ifp;		/* Interface pkt came in on 	    */
+	struct rtdetq	*next;
 };
 #endif /* _NETINET_IP_MROUTE_H_ */
 

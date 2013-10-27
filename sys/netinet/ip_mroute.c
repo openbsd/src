@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.62 2013/10/23 15:12:42 mpi Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.63 2013/10/27 20:57:39 deraadt Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -145,9 +145,6 @@ static void update_mfc_params(struct mfc *, struct mfcctl2 *);
 static void init_mfc_params(struct mfc *, struct mfcctl2 *);
 static void expire_mfc(struct mfc *);
 static int add_mfc(struct mbuf *);
-#ifdef UPCALL_TIMING
-static void collate(struct timeval *);
-#endif
 static int del_mfc(struct mbuf *);
 static int set_api_config(struct mbuf *); /* chose API capabilities */
 static int get_api_support(struct mbuf *);
@@ -356,10 +353,6 @@ mfc_find(struct in_addr *o, struct in_addr *g)
 		break;							\
 	}								\
 } while (/*CONSTCOND*/ 0)
-
-#ifdef UPCALL_TIMING
-u_int32_t upcall_data[51];
-#endif /* UPCALL_TIMING */
 
 /*
  * Handle MRT setsockopt commands to modify the multicast routing tables.
@@ -1125,9 +1118,6 @@ add_mfc(struct mbuf *m)
 					ip_mdq(rte->m, rte->ifp, rt);
 				}
 				m_freem(rte->m);
-#ifdef UPCALL_TIMING
-				collate(&rte->t);
-#endif /* UPCALL_TIMING */
 				free(rte, M_MRTABLE);
 			}
 		}
@@ -1177,31 +1167,6 @@ add_mfc(struct mbuf *m)
 	splx(s);
 	return (0);
 }
-
-#ifdef UPCALL_TIMING
-/*
- * collect delay statistics on the upcalls
- */
-static void
-collate(struct timeval *t)
-{
-	u_int32_t d;
-	struct timeval tp;
-	u_int32_t delta;
-
-	microtime(&tp);
-
-	if (timercmp(t, &tp, <)) {
-		TV_DELTA(tp, *t, delta);
-
-		d = delta >> 10;
-		if (d > 50)
-			d = 50;
-
-		++upcall_data[d];
-	}
-}
-#endif /* UPCALL_TIMING */
 
 /*
  * Delete an mfc entry
@@ -1344,11 +1309,6 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 		struct rtdetq *rte;
 		u_int32_t hash;
 		int hlen = ip->ip_hl << 2;
-#ifdef UPCALL_TIMING
-		struct timeval tp;
-
-		microtime(&tp);
-#endif /* UPCALL_TIMING */
 
 		++mrtstat.mrts_mfc_misses;
 
@@ -1491,9 +1451,6 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 		rte->next = NULL;
 		rte->m = mb0;
 		rte->ifp = ifp;
-	#ifdef UPCALL_TIMING
-		rte->t = tp;
-	#endif /* UPCALL_TIMING */
 
 		splx(s);
 

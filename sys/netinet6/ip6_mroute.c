@@ -230,12 +230,6 @@ static int pim6;
 #define TV_LT(a, b) (((a).tv_usec < (b).tv_usec && \
 	      (a).tv_sec <= (b).tv_sec) || (a).tv_sec < (b).tv_sec)
 
-#ifdef UPCALL_TIMING
-#define UPCALL_MAX	50
-u_long upcall_data[UPCALL_MAX + 1];
-static void collate();
-#endif /* UPCALL_TIMING */
-
 int get_sg_cnt(struct sioc_sg_req6 *);
 int get_mif6_cnt(struct sioc_mif_req6 *);
 int ip6_mrouter_init(struct socket *, int, int);
@@ -256,9 +250,6 @@ ip6_mrouter_set(int cmd, struct socket *so, struct mbuf *m)
 		return (EACCES);
 
 	switch (cmd) {
-#ifdef MRT6_OINIT
-	case MRT6_OINIT:
-#endif
 	case MRT6_INIT:
 		if (m == NULL || m->m_len < sizeof(int))
 			return (EINVAL);
@@ -786,9 +777,6 @@ add_m6fc(struct mf6cctl *mfccp)
 					ip6_mdq(rte->m, rte->ifp, rt);
 				}
 				m_freem(rte->m);
-#ifdef UPCALL_TIMING
-				collate(&(rte->t));
-#endif /* UPCALL_TIMING */
 				free(rte, M_MRTABLE);
 				rte = n;
 			}
@@ -860,32 +848,6 @@ add_m6fc(struct mf6cctl *mfccp)
 	splx(s);
 	return 0;
 }
-
-#ifdef UPCALL_TIMING
-/*
- * collect delay statistics on the upcalls
- */
-static void
-collate(struct timeval *t)
-{
-	u_long d;
-	struct timeval tp;
-	u_long delta;
-
-	microtime(&tp);
-
-	if (TV_LT(*t, tp))
-	{
-		TV_DELTA(tp, *t, delta);
-	
-		d = delta >> 10;
-		if (d > UPCALL_MAX)
-			d = UPCALL_MAX;
-	
-		++upcall_data[d];
-	}
-}
-#endif /* UPCALL_TIMING */
 
 /*
  * Delete an mfc entry
@@ -1029,12 +991,6 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 		struct mbuf *mb0;
 		struct rtdetq *rte;
 		u_long hash;
-/*		int i, npkts;*/
-#ifdef UPCALL_TIMING
-		struct timeval tp;
-
-		microtime(&tp);
-#endif /* UPCALL_TIMING */
 
 		mrt6stat.mrt6s_no_route++;
 #ifdef MRT6DEBUG
@@ -1081,9 +1037,6 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 
 		if (rt == NULL) {
 			struct mrt6msg *im;
-#ifdef MRT6_OINIT
-			struct omrt6msg *oim;
-#endif
 
 			/* no upcall, so make a new entry */
 			rt = (struct mf6c *)malloc(sizeof(*rt), M_MRTABLE,
@@ -1117,17 +1070,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 			sin6.sin6_addr = ip6->ip6_src;
 	
 			im = NULL;
-#ifdef MRT6_OINIT
-			oim = NULL;
-#endif
 			switch (ip6_mrouter_ver) {
-#ifdef MRT6_OINIT
-			case MRT6_OINIT:
-				oim = mtod(mm, struct omrt6msg *);
-				oim->im6_msgtype = MRT6MSG_NOCACHE;
-				oim->im6_mbz = 0;
-				break;
-#endif
 			case MRT6_INIT:
 				im = mtod(mm, struct mrt6msg *);
 				im->im6_msgtype = MRT6MSG_NOCACHE;
@@ -1153,11 +1096,6 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 				;
 
 			switch (ip6_mrouter_ver) {
-#ifdef MRT6_OINIT
-			case MRT6_OINIT:
-				oim->im6_mif = mifi;
-				break;
-#endif
 			case MRT6_INIT:
 				im->im6_mif = mifi;
 				break;
@@ -1214,10 +1152,6 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 		rte->next = NULL;
 		rte->m = mb0;
 		rte->ifp = ifp;
-#ifdef UPCALL_TIMING
-		rte->t = tp;
-#endif /* UPCALL_TIMING */
-
 		splx(s);
 
 		return 0;
@@ -1338,9 +1272,6 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct mf6c *rt)
 
 				struct mbuf *mm;
 				struct mrt6msg *im;
-#ifdef MRT6_OINIT
-				struct omrt6msg *oim;
-#endif
 
 				mm = m_copy(m, 0, sizeof(struct ip6_hdr));
 				if (mm &&
@@ -1350,18 +1281,8 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct mf6c *rt)
 				if (mm == NULL)
 					return ENOBUFS;
 	
-#ifdef MRT6_OINIT
-				oim = NULL;
-#endif
 				im = NULL;
 				switch (ip6_mrouter_ver) {
-#ifdef MRT6_OINIT
-				case MRT6_OINIT:
-					oim = mtod(mm, struct omrt6msg *);
-					oim->im6_msgtype = MRT6MSG_WRONGMIF;
-					oim->im6_mbz = 0;
-					break;
-#endif
 				case MRT6_INIT:
 					im = mtod(mm, struct mrt6msg *);
 					im->im6_msgtype = MRT6MSG_WRONGMIF;
@@ -1382,12 +1303,6 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct mf6c *rt)
 				sin6.sin6_len = sizeof(sin6);
 				sin6.sin6_family = AF_INET6;
 				switch (ip6_mrouter_ver) {
-#ifdef MRT6_OINIT
-				case MRT6_OINIT:
-					oim->im6_mif = iif;
-					sin6.sin6_addr = oim->im6_src;
-					break;
-#endif
 				case MRT6_INIT:
 					im->im6_mif = iif;
 					sin6.sin6_addr = im->im6_src;
