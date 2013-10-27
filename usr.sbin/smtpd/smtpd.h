@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.426 2013/10/27 07:56:25 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.427 2013/10/27 11:01:47 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -557,10 +557,13 @@ struct deliver {
 	struct userinfo		userinfo;
 };
 
+#define MAX_FILTER_PER_CHAIN	16
 struct filter {
-	struct imsgproc	       *process;
+	int			chain;
+	int			done;
 	char			name[MAX_FILTER_NAME];
 	char			path[SMTPD_MAXPATHLEN];
+	char			filters[MAX_FILTER_NAME][MAX_FILTER_PER_CHAIN];
 };
 
 struct mta_host {
@@ -1098,9 +1101,10 @@ void mfa_filter_connect(uint64_t, const struct sockaddr *,
     const struct sockaddr *, const char *);
 void mfa_filter_mailaddr(uint64_t, int, const struct mailaddr *);
 void mfa_filter_line(uint64_t, int, const char *);
+void mfa_filter_eom(uint64_t, int, size_t);
 void mfa_filter(uint64_t, int);
 void mfa_filter_event(uint64_t, int);
-void mfa_filter_data(uint64_t, const char *);
+void mfa_build_fd_chain(uint64_t, int);
 
 /* mproc.c */
 int mproc_fork(struct mproc *, const char*, const char *);

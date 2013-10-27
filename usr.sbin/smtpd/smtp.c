@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.128 2013/10/27 07:56:25 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.129 2013/10/27 11:01:47 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -76,7 +76,6 @@ smtp_imsg(struct mproc *p, struct imsg *imsg)
 
 	if (p->proc == PROC_MFA) {
 		switch (imsg->hdr.type) {
-		case IMSG_MFA_SMTP_DATA:
 		case IMSG_MFA_SMTP_RESPONSE:
 			smtp_session_imsg(p, imsg);
 			return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.80 2013/10/27 07:56:25 eric Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.81 2013/10/27 11:01:47 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
+#include <inttypes.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -37,9 +38,25 @@
 #include "smtpd.h"
 #include "log.h"
 
+struct mfa_tx {
+	uint64_t	 reqid;
+	struct io	 io;
+	struct iobuf	 iobuf;
+	FILE		*ofile;
+	size_t		 datain;
+	size_t		 datalen;
+	int		 eom;
+	int		 error;
+};
+
 static void mfa_imsg(struct mproc *, struct imsg *);
 static void mfa_shutdown(void);
 static void mfa_sig_handler(int, short, void *);
+static void mfa_tx_io(struct io *, int);
+static int mfa_tx(uint64_t, int);
+static void mfa_tx_done(struct mfa_tx *);
+
+struct tree tx_tree;
 
 static void
 mfa_imsg(struct mproc *p, struct imsg *imsg)
@@ -49,7 +66,8 @@ mfa_imsg(struct mproc *p, struct imsg *imsg)
 	struct msg		 m;
 	const char		*line, *hostname;
 	uint64_t		 reqid;
-	int			 v;
+	uint32_t		 datalen; /* XXX make it off_t? */
+	int			 v, success, fdout;
 
 	if (p->proc == PROC_SMTP) {
 		switch (imsg->hdr.type) {
@@ -98,16 +116,9 @@ mfa_imsg(struct mproc *p, struct imsg *imsg)
 		case IMSG_MFA_REQ_EOM:
 			m_msg(&m, imsg);
 			m_get_id(&m, &reqid);
+			m_get_u32(&m, &datalen);
 			m_end(&m);
-			mfa_filter(reqid, HOOK_EOM);
-			return;
-
-		case IMSG_MFA_SMTP_DATA:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_string(&m, &line);
-			m_end(&m);
-			mfa_filter_data(reqid, line);
+			mfa_filter_eom(reqid, HOOK_EOM, datalen);
 			return;
 
 		case IMSG_MFA_EVENT_RSET:
@@ -136,6 +147,20 @@ mfa_imsg(struct mproc *p, struct imsg *imsg)
 			m_get_id(&m, &reqid);
 			m_end(&m);
 			mfa_filter_event(reqid, HOOK_DISCONNECT);
+			return;
+		}
+	}
+
+	if (p->proc == PROC_QUEUE) {
+		switch (imsg->hdr.type) {
+		case IMSG_QUEUE_MESSAGE_FILE:
+			m_msg(&m, imsg);
+			m_get_id(&m, &reqid);
+			m_get_int(&m, &success);
+			m_end(&m);
+
+			fdout = mfa_tx(reqid, imsg->fd);
+			mfa_build_fd_chain(reqid, fdout);
 			return;
 		}
 	}
@@ -271,4 +296,105 @@ mfa_ready(void)
 {
 	log_debug("debug: mfa ready");
 	mproc_enable(p_smtp);
+}
+
+static int
+mfa_tx(uint64_t reqid, int fdout)
+{
+	struct mfa_tx	*tx;
+	int		 sp[2];
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) == -1) {
+		log_warn("warn: mfa: socketpair");
+		return (-1);
+	}
+
+	tx = xcalloc(1, sizeof(*tx), "mfa_tx");
+
+	if ((tx->ofile = fdopen(fdout, "w")) == NULL) {
+		log_warn("warn: mfa: fdopen");
+		free(tx);
+		close(sp[0]);
+		close(sp[1]);
+		return (-1);
+	}
+
+	iobuf_init(&tx->iobuf, 0, 0);
+	io_init(&tx->io, sp[0], tx, mfa_tx_io, &tx->iobuf);
+	io_set_read(&tx->io);
+	tx->reqid = reqid;
+	tree_xset(&tx_tree, reqid, tx);
+
+	return (sp[1]);
+}
+
+static void
+mfa_tx_io(struct io *io, int evt)
+{
+	struct mfa_tx	*tx = io->arg;
+	size_t		 len, n;
+	char		*data;
+
+	switch (evt) {
+	case IO_DATAIN:
+		data = iobuf_data(&tx->iobuf);
+		len = iobuf_len(&tx->iobuf);
+		log_debug("debug: mfa: tx data (%zu) for req %016"PRIx64,
+		    len, tx->reqid);
+		n = fwrite(data, 1, len, tx->ofile);
+		if (n != len) {
+			tx->error = 1;
+			break;
+		}
+		tx->datain += n;
+		iobuf_drop(&tx->iobuf, n);
+		iobuf_normalize(&tx->iobuf);
+		return;
+
+	case IO_DISCONNECTED:
+		log_debug("debug: mfa: tx done for req %016"PRIx64,
+		    tx->reqid);
+		break;
+
+	default:
+		log_debug("debug: mfa: tx error for req %016"PRIx64,
+		    tx->reqid);
+		tx->error = 1;
+		break;
+	}
+
+	io_clear(&tx->io);
+	iobuf_clear(&tx->iobuf);
+	fclose(tx->ofile);
+	tx->ofile = NULL;
+	if (tx->eom)
+		mfa_tx_done(tx);
+}
+
+static void
+mfa_tx_done(struct mfa_tx *tx)
+{
+	log_debug("debug: mfa: tx done for %016"PRIx64, tx->reqid);
+
+	if (!tx->error && tx->datain != tx->datalen) {
+		log_debug("debug: mfa: tx datalen mismatch: %zu/%zu",
+		    tx->datain, tx->datalen);
+		tx->error = 1;
+	}
+
+	if (tx->error) {
+		log_debug("debug: mfa: tx error");
+
+		m_create(p_smtp, IMSG_MFA_SMTP_RESPONSE, 0, 0, -1);
+		m_add_id(p_smtp, tx->reqid);
+		m_add_int(p_smtp, MFA_FAIL);
+		m_add_u32(p_smtp, 0);
+		m_add_string(p_smtp, "Internal server error");
+		m_close(p_smtp);
+	}
+#if 0
+	else
+		mfa_filter(tx->reqid, HOOK_EOM);
+#endif
+	free(tx);
 }

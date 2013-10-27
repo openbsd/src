@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.8 2013/07/19 21:34:31 eric Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.9 2013/10/27 11:01:47 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -57,12 +57,11 @@ enum filter_imsg {
 	IMSG_FILTER_REGISTER,
 	IMSG_FILTER_EVENT,
 	IMSG_FILTER_QUERY,
+	IMSG_FILTER_PIPE_SETUP,
+	IMSG_FILTER_PIPE_ABORT,
 	IMSG_FILTER_NOTIFY,
-	IMSG_FILTER_DATA,
-	IMSG_FILTER_RESPONSE,
+	IMSG_FILTER_RESPONSE
 };
-
-#define	FILTER_ALTERDATA	0x01 /* The filter wants to alter the message */
 
 /* XXX - server side requires mfa_session.c update on filter_hook changes */
 enum filter_hook {
@@ -242,20 +241,20 @@ void filter_api_no_chroot(void);
 
 void filter_api_loop(void);
 void filter_api_accept(uint64_t);
-void filter_api_accept_notify(uint64_t);
+void filter_api_accept_notify(uint64_t, uint64_t *);
 void filter_api_reject(uint64_t, enum filter_status);
 void filter_api_reject_code(uint64_t, enum filter_status, uint32_t,
     const char *);
-void filter_api_data(uint64_t, const char *);
+void filter_api_writeln(uint64_t, const char *);
 
 void filter_api_on_notify(void(*)(uint64_t, enum filter_status));
-void filter_api_on_connect(void(*)(uint64_t, uint64_t, struct filter_connect *));
-void filter_api_on_helo(void(*)(uint64_t, uint64_t, const char *));
-void filter_api_on_mail(void(*)(uint64_t, uint64_t, struct mailaddr *));
-void filter_api_on_rcpt(void(*)(uint64_t, uint64_t, struct mailaddr *));
-void filter_api_on_data(void(*)(uint64_t, uint64_t));
-void filter_api_on_dataline(void(*)(uint64_t, const char *), int);
-void filter_api_on_eom(void(*)(uint64_t, uint64_t));
+void filter_api_on_connect(void(*)(uint64_t, struct filter_connect *));
+void filter_api_on_helo(void(*)(uint64_t, const char *));
+void filter_api_on_mail(void(*)(uint64_t, struct mailaddr *));
+void filter_api_on_rcpt(void(*)(uint64_t, struct mailaddr *));
+void filter_api_on_data(void(*)(uint64_t));
+void filter_api_on_dataline(void(*)(uint64_t, const char *));
+void filter_api_on_eom(void(*)(uint64_t));
 void filter_api_on_event(void(*)(uint64_t, enum filter_hook));
 
 /* queue */

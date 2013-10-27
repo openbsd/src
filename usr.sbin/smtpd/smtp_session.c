@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.185 2013/10/26 12:27:59 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.186 2013/10/27 11:01:47 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -318,15 +318,6 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		io_reload(&s->io);
 		return;
 
-	case IMSG_MFA_SMTP_DATA:
-		m_msg(&m, imsg);
-		m_get_id(&m, &reqid);
-		m_get_string(&m, &line);
-		m_end(&m);
-		if ((s = tree_get(&wait_mfa_data, reqid)))
-			smtp_message_write(s, line);
-		return;
-
 	case IMSG_MFA_SMTP_RESPONSE:
 		m_msg(&m, imsg);
 		m_get_id(&m, &reqid);
@@ -553,7 +544,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		if (resp_ca_cert->status == CA_FAIL) {
 			log_info("smtp-in: Disconnecting session %016" PRIx64
 			    ": CA failure", s->id);
-			smtp_free(s, "CA failure");	
+			smtp_free(s, "CA failure");
 			return;
 		}
 
@@ -833,6 +824,7 @@ smtp_io(struct io *io, int evt)
 
 			m_create(p_mfa, IMSG_MFA_REQ_EOM, 0, 0, -1);
 			m_add_id(p_mfa, s->id);
+			m_add_u32(p_mfa, s->datalen);
 			m_close(p_mfa);
 			smtp_wait_mfa(s, IMSG_MFA_REQ_EOM);
 			return;
