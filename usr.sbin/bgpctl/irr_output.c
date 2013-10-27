@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_output.c,v 1.13 2007/03/05 17:28:21 henning Exp $ */
+/*	$OpenBSD: irr_output.c,v 1.14 2013/10/27 18:49:25 guenther Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -196,7 +196,6 @@ void
 print_rule(FILE *fh, struct policy_item *pi, char *sourceas,
     struct irr_prefix *prefix)
 {
-	char	*fmt = "allow quick %s %s%s%s%s%s\n";
 	char	*peer = "any";
 	char	*action = "";
 	char	*dir;
@@ -240,5 +239,6 @@ print_rule(FILE *fh, struct policy_item *pi, char *sourceas,
 		}
 	}
 
-	fprintf(fh, fmt, dir, peer, srcas[0], srcas[1], pbuf, action);
+	fprintf(fh, "allow quick %s %s%s%s%s%s\n", dir, peer,
+	    srcas[0], srcas[1], pbuf, action);
 }

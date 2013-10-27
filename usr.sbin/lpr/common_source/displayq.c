@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.32 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.33 2013/10/27 18:49:25 guenther Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -73,8 +73,8 @@ static int	first;		/* first file in ``files'' column? */
 static int	lflag;		/* long output option */
 static off_t	totsize;	/* total print job size in bytes */
 
-static const char *head0 = "Rank   Owner      Job  Files";
-static const char *head1 = "Total Size\n";
+static const char head0[] = "Rank   Owner      Job  Files";
+static const char head1[] = "Total Size\n";
 
 static void	alarmer(int);
 static void	inform(char *, int);

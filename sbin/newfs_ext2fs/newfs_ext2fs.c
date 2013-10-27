@@ -1,4 +1,4 @@
-/* $OpenBSD: newfs_ext2fs.c,v 1.7 2012/12/04 02:27:00 deraadt Exp $ */
+/* $OpenBSD: newfs_ext2fs.c,v 1.8 2013/10/27 18:54:03 guenther Exp $ */
 /*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
@@ -478,8 +478,6 @@ usage(void)
 	exit(EXIT_FAILURE);
 }
 
-char lmsg[] = "%s: can't read disk label; disk type must be specified";
-
 struct disklabel *
 getdisklabel(const char *s, int fd)
 {
@@ -497,7 +495,9 @@ getdisklabel(const char *s, int fd)
 			return (lp);
 		}
 		warn("ioctl (GDINFO)");
-		errx(EXIT_FAILURE, lmsg, s);
+		errx(EXIT_FAILURE,
+		    "%s: can't read disk label; disk type must be specified",
+		    s);
 	}
 	return (&lab);
 }

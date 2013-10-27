@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bootp.c,v 1.17 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-bootp.c,v 1.18 2013/10/27 18:49:25 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -443,7 +443,7 @@ static void
 cmu_print(register const u_char *bp, register u_int length)
 {
 	register const struct cmu_vend *cmu;
-	char *fmt = " %s:%s";
+	static const char fmt[] = " %s:%s";
 
 #define PRINTCMUADDR(m, s) { TCHECK(cmu->m); \
     if (cmu->m.s_addr != 0) \

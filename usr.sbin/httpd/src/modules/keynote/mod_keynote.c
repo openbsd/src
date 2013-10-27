@@ -459,7 +459,7 @@ keynote_fake_assertion(request_rec *r, int sessid, X509 *cert, EVP_PKEY *pkey, X
     char *akey, *ikey, *buf, *stext, *itext;
     char before[15], after[15];
     char *timecomp, *timecomp2;
-    char *fmt = "Authorizer: \"%s%s\"\nLicensees: \"%s%s\"\n"
+    static const char fmt[] = "Authorizer: \"%s%s\"\nLicensees: \"%s%s\"\n"
 	"Conditions: %s >= \"%s\" && %s <= \"%s\";\n";
 
     if (pkey && pkey->type != EVP_PKEY_RSA && pkey->type != EVP_PKEY_DSA) {

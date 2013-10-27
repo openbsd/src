@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.25 2011/10/02 06:25:53 nicm Exp $	*/
+/*	$OpenBSD: options.c,v 1.26 2013/10/27 18:49:25 guenther Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -399,7 +399,7 @@ static struct cmd {
 #define IMPLEMENTATION ""
 #endif
 
-static char *usage_string = "\
+static const char usage_string[] = "\
 pppd version %s patch level %d%s\n\
 Usage: %s [ options ], where options are:\n\
 	<device>	Communicate over the named device\n\

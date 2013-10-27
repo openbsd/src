@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.113 2010/06/29 19:50:16 reyk Exp $	 */
+/* $OpenBSD: x509.c,v 1.114 2013/10/27 18:54:03 guenther Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -102,11 +102,11 @@ static int	bucket_mask;
 int
 x509_generate_kn(int id, X509 *cert)
 {
-	char	*fmt = "Authorizer: \"rsa-hex:%s\"\nLicensees: \"rsa-hex:%s"
+	static const char fmt[] = "Authorizer: \"rsa-hex:%s\"\nLicensees: \"rsa-hex:%s"
 		    "\"\nConditions: %s >= \"%s\" && %s <= \"%s\";\n";
 	char	*ikey = NULL, *skey = NULL, *buf = NULL;
 	char	isname[256], subname[256];
-	char	*fmt2 = "Authorizer: \"DN:%s\"\nLicensees: \"DN:%s\"\n"
+	static const char fmt2[] = "Authorizer: \"DN:%s\"\nLicensees: \"DN:%s\"\n"
 		    "Conditions: %s >= \"%s\" && %s <= \"%s\";\n";
 	X509_NAME *issuer, *subject;
 	struct keynote_deckey dc;
