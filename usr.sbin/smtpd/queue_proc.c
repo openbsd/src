@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_proc.c,v 1.1 2013/07/19 20:37:07 eric Exp $	*/
+/*	$OpenBSD: queue_proc.c,v 1.2 2013/10/27 18:21:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -126,7 +126,7 @@ queue_proc_message_create(uint32_t *msgid)
 	queue_proc_call();
 	queue_proc_read(&r, sizeof(r));
 	if (r == 1)
-		queue_proc_read(msgid, sizeof(msgid));
+		queue_proc_read(msgid, sizeof(*msgid));
 	queue_proc_end();
 
 	return (r);
