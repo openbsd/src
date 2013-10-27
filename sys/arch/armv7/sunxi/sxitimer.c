@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitimer.c,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
+/*	$OpenBSD: sxitimer.c,v 1.2 2013/10/27 12:58:53 jasper Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -44,10 +44,10 @@
 #define	TIMER_INTV(x)		(0x14 + (0x10 * (x)))
 #define	TIMER_CURR(x)		(0x18 + (0x10 * (x)))
 
-/* A20 counter */
-#define	OSC24M_CNT64_CTRL	0x280
-#define	OSC24M_CNT64_LOW	0x284
-#define	OSC24M_CNT64_HIGH	0x288
+/* A20 counter, relative to CPUCNTRS_ADDR */
+#define	OSC24M_CNT64_CTRL	0x80
+#define	OSC24M_CNT64_LOW	0x84
+#define	OSC24M_CNT64_HIGH	0x88
 
 /* A1X counter */
 #define	CNT64_CTRL		0xa0
