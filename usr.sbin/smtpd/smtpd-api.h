@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.9 2013/10/27 11:01:47 eric Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.10 2013/10/27 17:47:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -118,6 +118,8 @@ enum {
 	PROC_SCHEDULER_ROLLBACK,
 	PROC_SCHEDULER_UPDATE,
 	PROC_SCHEDULER_DELETE,
+	PROC_SCHEDULER_HOLD,
+	PROC_SCHEDULER_RELEASE,
 	PROC_SCHEDULER_BATCH,
 	PROC_SCHEDULER_MESSAGES,
 	PROC_SCHEDULER_ENVELOPES,
@@ -137,6 +139,7 @@ enum envelope_flags {
 	EF_PENDING		= 0x10,
 	EF_INFLIGHT		= 0x20,
 	EF_SUSPEND		= 0x40,
+	EF_HOLD			= 0x80,
 };
 
 struct evpstate {
@@ -277,6 +280,8 @@ void scheduler_api_on_commit(size_t(*)(uint32_t));
 void scheduler_api_on_rollback(size_t(*)(uint32_t));
 void scheduler_api_on_update(int(*)(struct scheduler_info *));
 void scheduler_api_on_delete(int(*)(uint64_t));
+void scheduler_api_on_hold(int(*)(uint64_t, uint64_t));
+void scheduler_api_on_release(int(*)(uint64_t, int));
 void scheduler_api_on_batch(int(*)(int, struct scheduler_batch *));
 void scheduler_api_on_messages(size_t(*)(uint32_t, uint32_t *, size_t));
 void scheduler_api_on_envelopes(size_t(*)(uint64_t, struct evpstate *, size_t));

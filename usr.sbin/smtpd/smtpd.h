@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.427 2013/10/27 11:01:47 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.428 2013/10/27 17:47:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -145,12 +145,11 @@ union lookup {
 	struct addrname		 addrname;
 };
 
-/* XXX */
 /*
  * Bump IMSG_VERSION whenever a change is made to enum imsg_type.
  * This will ensure that we can never use a wrong version of smtpctl with smtpd.
  */
-#define	IMSG_VERSION		5
+#define	IMSG_VERSION		6
 
 enum imsg_type {
 	IMSG_NONE,
@@ -210,6 +209,8 @@ enum imsg_type {
 	IMSG_DELIVERY_TEMPFAIL,
 	IMSG_DELIVERY_PERMFAIL,
 	IMSG_DELIVERY_LOOP,
+	IMSG_DELIVERY_HOLD,
+	IMSG_DELIVERY_RELEASE,
 
 	IMSG_BOUNCE_INJECT,
 
@@ -226,7 +227,6 @@ enum imsg_type {
 	IMSG_MFA_EVENT_COMMIT,
 	IMSG_MFA_EVENT_ROLLBACK,
 	IMSG_MFA_EVENT_DISCONNECT,
-	IMSG_MFA_SMTP_DATA,
 	IMSG_MFA_SMTP_RESPONSE,
 
 	IMSG_MTA_TRANSFER,
@@ -677,6 +677,10 @@ struct mta_limits {
 	time_t	sessdelay_keepalive;
 
 	int	family;
+
+	int	task_hiwat;
+	int	task_lowat;
+	int	task_release;
 };
 
 struct mta_relay {
@@ -697,6 +701,7 @@ struct mta_relay {
 	char			*heloname;
 	char			*secret;
 
+	int			 state;
 	size_t			 ntask;
 	TAILQ_HEAD(, mta_task)	 tasks;
 
@@ -781,6 +786,8 @@ struct scheduler_backend {
 
 	int	(*update)(struct scheduler_info *);
 	int	(*delete)(uint64_t);
+	int	(*hold)(uint64_t, uint64_t);
+	int	(*release)(uint64_t, int);
 
 	int	(*batch)(int, struct scheduler_batch *);
 

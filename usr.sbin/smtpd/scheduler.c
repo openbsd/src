@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.34 2013/10/27 07:56:25 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.35 2013/10/27 17:47:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -73,7 +73,7 @@ scheduler_imsg(struct mproc *p, struct imsg *imsg)
 	struct envelope		 evp;
 	struct scheduler_info	 si;
 	struct msg		 m;
-	uint64_t		 evpid, id;
+	uint64_t		 evpid, id, holdq;
 	uint32_t		 msgid, msgids[MSGBATCHSIZE];
 	uint32_t       		 inflight;
 	uint32_t       		 penalty;
@@ -201,6 +201,30 @@ scheduler_imsg(struct mproc *p, struct imsg *imsg)
 		stat_increment("scheduler.delivery.loop", 1);
 		stat_decrement("scheduler.envelope.inflight", 1);
 		stat_decrement("scheduler.envelope", 1);
+		scheduler_reset_events();
+		return;
+
+	case IMSG_DELIVERY_HOLD:
+		m_msg(&m, imsg);
+		m_get_evpid(&m, &evpid);
+		m_get_id(&m, &holdq);
+		m_end(&m);
+		log_trace(TRACE_SCHEDULER,
+		    "scheduler: holding evp:%016" PRIx64 " on %016" PRIx64,
+		    evpid, holdq);
+		backend->hold(evpid, holdq);
+		stat_decrement("scheduler.envelope.inflight", 1);
+		scheduler_reset_events();
+		return;
+
+	case IMSG_DELIVERY_RELEASE:
+		m_msg(&m, imsg);
+		m_get_id(&m, &holdq);
+		m_get_int(&m, &r);
+		m_end(&m);
+		log_trace(TRACE_SCHEDULER,
+		    "scheduler: releasing %d on holdq %016" PRIx64, r, holdq);
+		backend->release(holdq, r);
 		scheduler_reset_events();
 		return;
 

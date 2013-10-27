@@ -1,4 +1,4 @@
-/*	$OpenBSD: limit.c,v 1.1 2013/07/19 21:14:52 eric Exp $	*/
+/*	$OpenBSD: limit.c,v 1.2 2013/10/27 17:47:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -57,6 +57,10 @@ limit_mta_set_defaults(struct mta_limits *limits)
 	limits->sessdelay_keepalive = 10;
 
 	limits->family = AF_UNSPEC;
+
+	limits->task_hiwat = 50;
+	limits->task_lowat = 30;
+	limits->task_release = 10;
 }
 
 int
@@ -97,6 +101,14 @@ limit_mta_set(struct mta_limits *limits, const char *key, int64_t value)
 		limits->sessdelay_transaction = value;
 	else if (!strcmp(key, "session-keepalive"))
 		limits->sessdelay_keepalive = value;
+
+	else if (!strcmp(key, "task-hiwat"))
+		limits->task_hiwat = value;
+	else if (!strcmp(key, "task-lowat"))
+		limits->task_lowat = value;
+	else if (!strcmp(key, "task-release"))
+		limits->task_release = value;
+
 	else
 		return (0);
 

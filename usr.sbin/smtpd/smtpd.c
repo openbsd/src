@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.201 2013/10/27 11:01:47 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.202 2013/10/27 17:47:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1491,6 +1491,8 @@ imsg_to_str(int type)
 	CASE(IMSG_DELIVERY_TEMPFAIL);
 	CASE(IMSG_DELIVERY_PERMFAIL);
 	CASE(IMSG_DELIVERY_LOOP);
+	CASE(IMSG_DELIVERY_HOLD);
+	CASE(IMSG_DELIVERY_RELEASE);
 
 	CASE(IMSG_BOUNCE_INJECT);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_proc.c,v 1.1 2013/07/19 21:34:31 eric Exp $	*/
+/*	$OpenBSD: scheduler_proc.c,v 1.2 2013/10/27 17:47:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -247,6 +247,58 @@ scheduler_proc_delete(uint64_t evpid)
 }
 
 static int
+scheduler_proc_hold(uint64_t evpid, uint64_t holdq)
+{
+	struct ibuf	*buf;
+	int		 r;
+
+	log_debug("debug: scheduler-proc: PROC_SCHEDULER_HOLD");
+
+	buf = imsg_create(&ibuf, PROC_SCHEDULER_HOLD, 0, 0,
+	    sizeof(evpid) + sizeof(holdq));
+	if (buf == NULL)
+		return (-1);
+	if (imsg_add(buf, &evpid, sizeof(evpid)) == -1)
+		return (-1);
+	if (imsg_add(buf, &holdq, sizeof(holdq)) == -1)
+		return (-1);
+	imsg_close(&ibuf, buf);
+
+	scheduler_proc_call();
+
+	scheduler_proc_read(&r, sizeof(r));
+	scheduler_proc_end();
+
+	return (r);
+}
+
+static int
+scheduler_proc_release(uint64_t holdq, int n)
+{
+	struct ibuf	*buf;
+	int		 r;
+
+	log_debug("debug: scheduler-proc: PROC_SCHEDULER_RELEASE");
+
+	buf = imsg_create(&ibuf, PROC_SCHEDULER_RELEASE, 0, 0,
+	    sizeof(holdq) + sizeof(n));
+	if (buf == NULL)
+		return (-1);
+	if (imsg_add(buf, &holdq, sizeof(holdq)) == -1)
+		return (-1);
+	if (imsg_add(buf, &n, sizeof(n)) == -1)
+		return (-1);
+	imsg_close(&ibuf, buf);
+
+	scheduler_proc_call();
+
+	scheduler_proc_read(&r, sizeof(r));
+	scheduler_proc_end();
+
+	return (r);
+}
+
+static int
 scheduler_proc_batch(int typemask, struct scheduler_batch *ret)
 {
 	struct ibuf	*buf;
@@ -413,6 +465,8 @@ struct scheduler_backend scheduler_backend_proc = {
 	scheduler_proc_rollback,
 	scheduler_proc_update,
 	scheduler_proc_delete,
+	scheduler_proc_hold,
+	scheduler_proc_release,
 	scheduler_proc_batch,
 	scheduler_proc_messages,
 	scheduler_proc_envelopes,
