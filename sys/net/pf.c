@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.854 2013/10/24 11:14:33 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.855 2013/10/28 12:09:41 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4862,8 +4862,12 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 						pd->proto = IPPROTO_ICMP;
 					else
 						pd->proto = IPPROTO_ICMPV6;
-					th.th_sport = nk->port[sidx];
-					th.th_dport = nk->port[didx];
+					pf_change_ap(pd, pd2.src, &th.th_sport,
+					    &nk->addr[pd2.sidx], nk->port[sidx],
+					    nk->af);
+					pf_change_ap(pd, pd2.dst, &th.th_dport,
+					    &nk->addr[pd2.didx], nk->port[didx],
+					    nk->af);
 					m_copyback(pd2.m, pd2.off, 8, &th,
 					    M_NOWAIT);
 					pd->m->m_pkthdr.rdomain = nk->rdomain;
@@ -4974,14 +4978,12 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 						pd->proto = IPPROTO_ICMP;
 					else
 						pd->proto = IPPROTO_ICMPV6;
-					pf_change_ap(pd, pd2.src,
-					    &uh.uh_sum, &nk->addr[pd2.sidx],
-					    nk->port[sidx], nk->af);
-					pf_change_ap(pd, pd2.dst,
-					    &uh.uh_sum, &nk->addr[pd2.didx],
-					    nk->port[didx], nk->af);
-					uh.uh_sport = nk->port[sidx];
-					uh.uh_dport = nk->port[didx];
+					pf_change_ap(pd, pd2.src, &uh.uh_sport,
+					    &nk->addr[pd2.sidx], nk->port[sidx],
+					    nk->af);
+					pf_change_ap(pd, pd2.dst, &uh.uh_dport,
+					    &nk->addr[pd2.didx], nk->port[didx],
+					    nk->af);
 					m_copyback(pd2.m, pd2.off, sizeof(uh),
 					    &uh, M_NOWAIT);
 					pd->m->m_pkthdr.rdomain = nk->rdomain;
