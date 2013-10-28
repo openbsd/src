@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urlreg.h,v 1.14 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: if_urlreg.h,v 1.15 2013/10/28 16:08:08 mpi Exp $ */
 /*	$NetBSD: if_urlreg.h,v 1.1 2002/03/28 21:09:11 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -80,7 +80,7 @@
 #define	 URL_TCR_TXRR1		(1<<7) /* TX Retry Count */
 #define	 URL_TCR_TXRR0		(1<<6) /* TX Retry Count */
 #define	 URL_TCR_IFG1		(1<<4) /* Interframe Gap Time */
-#define	 URL_TCR_IFG0		(1<<4) /* Interframe Gap Time */
+#define	 URL_TCR_IFG0		(1<<3) /* Interframe Gap Time */
 #define	 URL_TCR_NOCRC		(1<<0) /* no CRC Append */
 
 #define	URL_RCR			0x0130 /* Receive Configuration Register */
@@ -118,7 +118,7 @@
 #define	URL_ANLP		0x146 /* Auto-negotiation link partner ability register */
 
 
-typedef	uWord url_rxhdr_t;	/* Recive Header */
+typedef	uWord url_rxhdr_t;	/* Receive Header */
 #define	URL_RXHDR_BYTEC_MASK	(0x0fff) /* RX bytes count */
 #define	URL_RXHDR_VALID_MASK	(0x1000) /* Valid packet */
 #define	URL_RXHDR_RUNTPKT_MASK	(0x2000) /* Runt packet */
