@@ -1,4 +1,4 @@
-/*	$OpenBSD: beagle_machdep.c,v 1.3 2013/10/28 09:15:09 patrick Exp $ */
+/*	$OpenBSD: beagle_machdep.c,v 1.4 2013/10/28 13:43:12 patrick Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -714,7 +714,7 @@ initarm(void *arg0, void *arg1, void *arg2)
 
 	/* Now we fill in the L2 pagetable for the kernel static code/data */
 	{
-		extern char etext[], _end[];
+		extern char etext[];
 		size_t textsize = (u_int32_t) etext - KERNEL_TEXT_BASE;
 		size_t totalsize = (u_int32_t) esym - KERNEL_TEXT_BASE;
 		u_int logical;
