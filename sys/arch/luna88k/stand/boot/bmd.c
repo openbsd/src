@@ -1,4 +1,4 @@
-/*	$OpenBSD: bmd.c,v 1.1 2013/10/28 22:13:12 miod Exp $	*/
+/*	$OpenBSD: bmd.c,v 1.2 2013/10/28 22:19:07 miod Exp $	*/
 /*	$NetBSD: bmd.c,v 1.2 2013/01/20 13:35:43 tsutsui Exp $	*/
 
 /*
@@ -478,7 +478,6 @@ void
 bmd_draw_char(char *raddr, char *waddr, int col, int row, int c)
 {
 	volatile u_short  *p,  *q, *fp;
-	volatile u_short  *lp, *lq;
 	int i;
 
 	fp = &bmdfont[c][0];
@@ -497,33 +496,25 @@ bmd_draw_char(char *raddr, char *waddr, int col, int row, int c)
 		break;
 
 	case 1:
-		lp = (u_short *) ( raddr + (( row * FB_HIGHT ) << 8 ) + (( col / 4 ) * 6 ));
-		lq = (u_short *) ( waddr + (( row * FB_HIGHT ) << 8 ) + (( col / 4 ) * 6 ));
+		p = (u_short *) ( raddr + (( row * FB_HIGHT ) << 8 ) + (( col / 4 ) * 6 ));
+		q = (u_short *) ( waddr + (( row * FB_HIGHT ) << 8 ) + (( col / 4 ) * 6 ));
 		for (i = 0; i < FB_HIGHT; i++) {
-#if 0
-			*lq = (*lp & 0xFFF000FF) | ((u_long)(*fp & 0xFFF0) << 4);
-#else
-			lq[0] = (lp[0] & 0xFFF0) | ((*fp & 0xF000) >> 12);
-			lq[1] = (lp[1] & 0x00FF) | ((*fp & 0x0FF0) << 4);
-#endif
-			lp += 128;
-			lq += 128;
+			q[0] = (p[0] & 0xFFF0) | ((*fp & 0xF000) >> 12);
+			q[1] = (p[1] & 0x00FF) | ((*fp & 0x0FF0) << 4);
+			p += 128;
+			q += 128;
 			fp++;
 		}
 		break;
 
 	case 2:
-		lp = (u_short *) ( raddr + (( row * FB_HIGHT ) << 8 ) + (( col / 4 ) * 6 ) + 2 );
-		lq = (u_short *) ( waddr + (( row * FB_HIGHT ) << 8 ) + (( col / 4 ) * 6 ) + 2 );
+		p = (u_short *) ( raddr + (( row * FB_HIGHT ) << 8 ) + (( col / 4 ) * 6 ) + 2 );
+		q = (u_short *) ( waddr + (( row * FB_HIGHT ) << 8 ) + (( col / 4 ) * 6 ) + 2 );
 		for (i = 0; i < FB_HIGHT; i++) {
-#if 0
-			*lq = (*lp & 0xFF000FFF) | ((u_long)(*fp & 0xFFF0) << 8);
-#else
-			lq[0] = (lp[0] & 0xFF00) | ((*fp & 0xFF00) >> 8);
-			lq[1] = (lp[1] & 0x0FFF) | ((*fp & 0x00F0) << 8);
-#endif
-			lp += 128;
-			lq += 128;
+			q[0] = (p[0] & 0xFF00) | ((*fp & 0xFF00) >> 8);
+			q[1] = (p[1] & 0x0FFF) | ((*fp & 0x00F0) << 8);
+			p += 128;
+			q += 128;
 			fp++;
 		}
 		break;
@@ -548,7 +539,6 @@ void
 bmd_reverse_char(char *raddr, char *waddr, int col, int row)
 {
 	volatile u_short  *p,  *q;
-	volatile u_short  *lp, *lq;
 	int i;
 
 	switch (col%4) {
@@ -564,32 +554,24 @@ bmd_reverse_char(char *raddr, char *waddr, int col, int row)
 		break;
 
 	case 1:
-		lp = (u_short *) ( raddr + (( row * FB_HIGHT ) << 8 ) + (( col / 4 ) * 6 ));
-		lq = (u_short *) ( waddr + (( row * FB_HIGHT ) << 8 ) + (( col / 4 ) * 6 ));
+		p = (u_short *) ( raddr + (( row * FB_HIGHT ) << 8 ) + (( col / 4 ) * 6 ));
+		q = (u_short *) ( waddr + (( row * FB_HIGHT ) << 8 ) + (( col / 4 ) * 6 ));
 		for (i = 0; i < FB_HIGHT; i++) {
-#if 0
-			*lq = (*lp & 0xFFF000FF) | (~(*lp) & 0x000FFF00);
-#else
-			lq[0] = (lp[0] & 0xFFF0) | (~lp[0] & 0x000F);
-			lq[1] = (lp[1] & 0x00FF) | (~lp[1] & 0xFF00);
-#endif
-			lp += 128;
-			lq += 128;
+			q[0] = (p[0] & 0xFFF0) | (~p[0] & 0x000F);
+			q[1] = (p[1] & 0x00FF) | (~p[1] & 0xFF00);
+			p += 128;
+			q += 128;
 		}
 		break;
 
 	case 2:
-		lp = (u_short *) ( raddr + (( row * FB_HIGHT ) << 8 ) + (( col / 4 ) * 6 ) + 2 );
-		lq = (u_short *) ( waddr + (( row * FB_HIGHT ) << 8 ) + (( col / 4 ) * 6 ) + 2 );
+		p = (u_short *) ( raddr + (( row * FB_HIGHT ) << 8 ) + (( col / 4 ) * 6 ) + 2 );
+		q = (u_short *) ( waddr + (( row * FB_HIGHT ) << 8 ) + (( col / 4 ) * 6 ) + 2 );
 		for (i = 0; i < FB_HIGHT; i++) {
-#if 0
-			*lq = (*lp & 0xFF000FFF) | (~(*lp) & 0x00FFF000);
-#else
-			lq[0] = (lp[0] & 0xFF00) | (~lp[0] & 0x00FF);
-			lq[1] = (lp[1] & 0x0FFF) | (~lp[1] & 0xF000);
-#endif
-			lp += 128;
-			lq += 128;
+			q[0] = (p[0] & 0xFF00) | (~p[0] & 0x00FF);
+			q[1] = (p[1] & 0x0FFF) | (~p[1] & 0xF000);
+			p += 128;
+			q += 128;
 		}
 		break;
 
@@ -622,41 +604,41 @@ bmd_erase_char(char *raddr, char *waddr, int col, int row)
  */
 
 void
-bmd_erase_screen(volatile u_short *lp)
+bmd_erase_screen(volatile u_short *p)
 {
 	int i, j;
 
 	for (i = 0; i < SB_HIGHT; i++) {
 		for (j = 0; j < SS_WIDTH; j++)
-			*lp++ = 0;
-		SKIP_NEXT_LINE(lp);
+			*p++ = 0;
+		SKIP_NEXT_LINE(p);
 	}
 
 	return;
 }
 
 void
-bmd_scroll_screen(volatile u_short *lp, volatile u_short *lq,
+bmd_scroll_screen(volatile u_short *p, volatile u_short *q,
     int xmin, int xmax, int ymin, int ymax)
 {
 	int i, j;
 
-	lp += ((PS_WIDTH * FB_HIGHT) * (ymin + 1));
-	lq += ((PS_WIDTH * FB_HIGHT) *  ymin);
+	p += ((PS_WIDTH * FB_HIGHT) * (ymin + 1));
+	q += ((PS_WIDTH * FB_HIGHT) *  ymin);
 
 	for (i = 0; i < ((ymax - ymin -1) * FB_HIGHT); i++) {
 		for (j = 0; j < SS_WIDTH; j++) {
-			*lq++ = *lp++;
+			*q++ = *p++;
 		}
-		lp += (PS_WIDTH - SS_WIDTH);
-		lq += (PS_WIDTH - SS_WIDTH);
+		p += (PS_WIDTH - SS_WIDTH);
+		q += (PS_WIDTH - SS_WIDTH);
 	}
 
 	for (i = 0; i < FB_HIGHT; i++) {
 		for (j = 0; j < SS_WIDTH; j++) {
-			*lq++ = 0;
+			*q++ = 0;
 		}
-		lq += (PS_WIDTH - SS_WIDTH);
+		q += (PS_WIDTH - SS_WIDTH);
 	}
 
 }
