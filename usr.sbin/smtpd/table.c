@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.9 2013/10/27 18:13:28 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.10 2013/10/28 18:49:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -567,7 +567,17 @@ table_parse_lookup(enum table_service service, const char *key,
 			return (-1);
 
 		p = strchr(line, ':');
-		if (p == NULL || p == line || p == line + len - 1)
+		if (p == NULL) {
+			if (strlcpy(lk->creds.username, key, sizeof (lk->creds.username))
+			    >= sizeof (lk->creds.username))
+				return (-1);
+			if (strlcpy(lk->creds.password, line, sizeof(lk->creds.password))
+			    >= sizeof(lk->creds.password))
+				return (-1);
+			return (1);
+		}
+
+		if (p == line || p == line + len - 1)
 			return (-1);
 
 		memmove(lk->creds.username, line, p - line);
