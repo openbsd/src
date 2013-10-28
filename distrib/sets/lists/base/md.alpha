@@ -962,8 +962,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/pcdisplayvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/pcf8584var.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/pckbcvar.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/pdqreg.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/pdqvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/pgtreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/pgtvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/pt2254a.ph
@@ -1835,7 +1833,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_bridge.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_dl.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_enc.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_fddi.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_gif.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_gre.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_llc.ph

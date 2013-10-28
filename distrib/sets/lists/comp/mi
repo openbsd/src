@@ -336,8 +336,6 @@
 ./usr/include/dev/ic/pcdisplayvar.h
 ./usr/include/dev/ic/pcf8584var.h
 ./usr/include/dev/ic/pckbcvar.h
-./usr/include/dev/ic/pdqreg.h
-./usr/include/dev/ic/pdqvar.h
 ./usr/include/dev/ic/pgtreg.h
 ./usr/include/dev/ic/pgtvar.h
 ./usr/include/dev/ic/pt2254a.h
@@ -1069,7 +1067,6 @@
 ./usr/include/net/if_bridge.h
 ./usr/include/net/if_dl.h
 ./usr/include/net/if_enc.h
-./usr/include/net/if_fddi.h
 ./usr/include/net/if_gif.h
 ./usr/include/net/if_gre.h
 ./usr/include/net/if_llc.h
@@ -6312,6 +6309,7 @@
 ./usr/share/man/man3/ypprot_err.3
 ./usr/share/man/man3/zlibCompileFlags.3
 ./usr/share/man/man3/zlibVersion.3
+./usr/share/man/man9
 ./usr/share/man/man9/FREF.9
 ./usr/share/man/man9/FRELE.9
 ./usr/share/man/man9/KASSERT.9
@@ -6945,6 +6943,8 @@
 ./usr/share/man/man9/ulmax.9
 ./usr/share/man/man9/ulmin.9
 ./usr/share/man/man9/uprintf.9
+./usr/share/man/man9/usbd_setup_xfer.9
+./usr/share/man/man9/usbd_transfer.9
 ./usr/share/man/man9/uvm.9
 ./usr/share/man/man9/uvm_chgkprot.9
 ./usr/share/man/man9/uvm_coredump.9

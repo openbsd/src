@@ -1663,12 +1663,9 @@
 ./usr/share/man/man4/exphy.4
 ./usr/share/man/man4/fd.4
 ./usr/share/man/man4/fdc.4
-./usr/share/man/man4/fea.4
 ./usr/share/man/man4/fins.4
 ./usr/share/man/man4/fintek.4
 ./usr/share/man/man4/fms.4
-./usr/share/man/man4/fpa.4
-./usr/share/man/man4/fta.4
 ./usr/share/man/man4/fuse.4
 ./usr/share/man/man4/fxp.4
 ./usr/share/man/man4/gcu.4
@@ -2707,6 +2704,7 @@
 ./usr/share/man/man8/armish/boot.8
 ./usr/share/man/man8/armv7
 ./usr/share/man/man8/armv7/MAKEDEV.8
+./usr/share/man/man8/armv7/gpioctl.8
 ./usr/share/man/man8/arp.8
 ./usr/share/man/man8/atactl.8
 ./usr/share/man/man8/authpf-noip.8
@@ -3177,6 +3175,3 @@
 ./usr/share/man/man8/zaurus/zzz.8
 ./usr/share/man/man8/zdump.8
 ./usr/share/man/man8/zic.8
-./usr/share/man/man9
-./usr/share/man/man9/usbd_setup_xfer.9
-./usr/share/man/man9/usbd_transfer.9
