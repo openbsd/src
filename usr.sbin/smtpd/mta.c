@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.166 2013/10/27 17:47:53 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.167 2013/10/28 09:40:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -326,6 +326,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 				log_debug("debug: Failed MX query for %s:",
 				    domain->name);
 			}
+			domain->lastmxquery = time(NULL);
 			waitq_run(&domain->mxs, domain);
 			return;
 
@@ -720,7 +721,6 @@ mta_query_mx(struct mta_relay *relay)
 			dns_query_host(id, relay->domain->name);
 		else
 			dns_query_mx(id, relay->domain->name);
-		relay->domain->lastmxquery = time(NULL);
 	}
 	relay->status |= RELAY_WAIT_MX;
 	mta_relay_ref(relay);
