@@ -1,4 +1,4 @@
-/*	$OpenBSD: blt.c,v 1.1 2005/08/31 20:53:49 kettenis Exp $	*/
+/*	$OpenBSD: blt.c,v 1.2 2013/10/28 08:47:43 jsg Exp $	*/
 /*
  *	Written by Mark Kettenis <kettenis@openbsd.org> 2004 Public Domain
  */
@@ -8,6 +8,7 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include <string.h>
 
 typedef unsigned FbStip;
 typedef unsigned FbBits;
