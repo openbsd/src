@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: stests,v 1.4 2008/12/12 15:45:51 otto Exp $
+#	$OpenBSD: stests,v 1.5 2013/10/28 08:41:20 jsg Exp $
 #	from: @(#)stests	8.1 (Berkeley) 6/6/93
 
 #Latest version.  My sort passes all tests because I wrote it.
@@ -452,6 +452,7 @@ linecount C xx 2
 #---------------------------------------------------------------
 TEST=19; echo $TEST	# -i, -d, -f
 cat <<! >xx.c
+#include <stdio.h>
 run(i,j){ for( ; i<=j; i++) printf("%.3o %c\n",i,i); }
 main(){	run(0, 011);		/* 012=='\n' */
 	run(013, 0377); }
@@ -459,6 +460,7 @@ main(){	run(0, 011);		/* 012=='\n' */
 cc xx.c
 a.out >in
 cat <<! >xx.c
+#include <stdio.h>
 run(i,j){ for( ; i<=j; i++) printf("%.3o %c\n",i,i); }
 main(){ run(0, 011);
 	run(013, ' '-1);
@@ -471,6 +473,7 @@ a.out >out
 xsort A -i -k 2
 
 cat <<! >xx.c
+#include <stdio.h>
 run(i,j){ for( ; i<=j; i++) printf("%.3o %c\n",i,i); }
 main(){	run(0, 010);		/* 011=='\t', 012=='\n' */
 	run(013, ' '-1);
@@ -490,6 +493,7 @@ a.out >out
 xsort B -d -k 2
 
 cat <<! >xx.c
+#include <stdio.h>
 run(i,j){ for( ; i<=j; i++) printf("%.3o %c\n",i,i); }
 main(){	int i;
 	run(0, 011);
@@ -529,6 +533,7 @@ xsort C -dfb
 #---------------------------------------------------------------
 TEST=21; echo $TEST	# behavior of null bytes
 cat <<'!' >xx.c
+#include <stdio.h>
 main() { printf("%cb\n%ca\n",0,0); }
 !
 cc xx.c
