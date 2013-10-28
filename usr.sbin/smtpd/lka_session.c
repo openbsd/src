@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.58 2013/10/26 12:27:59 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.59 2013/10/28 09:14:58 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -380,11 +380,14 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		/* no aliases found, query forward file */
 		lks->rule = rule;
 		lks->node = xn;
+
+		bzero(&fwreq, sizeof(fwreq));
 		fwreq.id = lks->id;
 		(void)strlcpy(fwreq.user, lk.userinfo.username, sizeof(fwreq.user));
 		(void)strlcpy(fwreq.directory, lk.userinfo.directory, sizeof(fwreq.directory));
 		fwreq.uid = lk.userinfo.uid;
 		fwreq.gid = lk.userinfo.gid;
+
 		m_compose(p_parent, IMSG_PARENT_FORWARD_OPEN, 0, 0, -1,
 		    &fwreq, sizeof(fwreq));
 		lks->flags |= F_WAITING;
