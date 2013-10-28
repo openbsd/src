@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.8 2013/10/24 19:39:46 syl Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.9 2013/10/28 20:45:20 syl Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -280,7 +280,6 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 	struct ommmc_softc		*sc = (struct ommmc_softc *) self;
 	struct omap_attach_args		*oa = args;
 	struct sdmmcbus_attach_args	 saa;
-	int				 error = 1;
 	uint32_t			 caps;
 
 	sc->sc_iot = oa->oa_iot;
@@ -295,6 +294,10 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_ih = arm_intr_establish(oa->oa_dev->irq[0], IPL_SDMMC,
 	    ommmc_intr, sc, DEVNAME(sc));
+	if (sc->sc_ih == NULL) {
+		printf("%s: cannot map interrupt\n", DEVNAME(sc));
+		goto err;
+	}
 
 #if 0
 	/* XXX - IIRC firmware should set this */
@@ -309,7 +312,7 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 	/*
 	 * Reset the host controller and enable interrupts.
 	 */
-	(void)ommmc_host_reset(sc);
+	ommmc_host_reset(sc);
 
 	/* Determine host capabilities. */
 	caps = HREAD4(sc, MMCHS_CAPA);
@@ -377,9 +380,6 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 		printf("invalid capability blocksize in capa %08x,"
 		    " trying 512\n", HREAD4(sc, MMCHS_CAPA));
 	}
-
-	sc->maxblklen = 512; /* XXX */
-
 	/*
 	 * Attach the generic SD/MMC bus driver.  (The bus driver must
 	 * not invoke any chipset functions before it is attached.)
@@ -394,14 +394,15 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 
 	sc->sdmmc = config_found(&sc->sc_dev, &saa, NULL);
 	if (sc->sdmmc == NULL) {
-		error = 0;
+		printf("%s: can't attach sdmmc\n", DEVNAME(sc));
 		goto err;
 	}
 
 	return;
-
 err:
-	return;
+	if (sc->sc_ih != NULL)
+		arm_intr_disestablish(sc->sc_ih);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, oa->oa_dev->mem[0].size);
 }
 
 
