@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.5 2013/10/25 15:43:12 syl Exp $ */
+/* $OpenBSD: prcm.c,v 1.6 2013/10/28 11:11:50 rapha Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -186,6 +186,16 @@ prcm_v3_setup(struct prcm_softc *sc)
 	prcm_fmask_addr[PRCM_REG_CORE_CLK3] = PRCM_REG_CORE_CLK3_FADDR;
 	prcm_imask_addr[PRCM_REG_CORE_CLK3] = PRCM_REG_CORE_CLK3_IADDR;
 
+	prcm_fmask_mask[PRCM_REG_WKUP] = PRCM_REG_WKUP_FMASK;
+	prcm_imask_mask[PRCM_REG_WKUP] = PRCM_REG_WKUP_IMASK;
+	prcm_fmask_addr[PRCM_REG_WKUP] = PRCM_REG_WKUP_FADDR;
+	prcm_imask_addr[PRCM_REG_WKUP] = PRCM_REG_WKUP_IADDR;
+	
+	prcm_fmask_mask[PRCM_REG_PER] = PRCM_REG_PER_FMASK;
+	prcm_imask_mask[PRCM_REG_PER] = PRCM_REG_PER_IMASK;
+	prcm_fmask_addr[PRCM_REG_PER] = PRCM_REG_PER_FADDR;
+	prcm_imask_addr[PRCM_REG_PER] = PRCM_REG_PER_IADDR;
+
 	prcm_fmask_mask[PRCM_REG_USBHOST] = PRCM_REG_USBHOST_FMASK;
 	prcm_imask_mask[PRCM_REG_USBHOST] = PRCM_REG_USBHOST_IMASK;
 	prcm_fmask_addr[PRCM_REG_USBHOST] = PRCM_REG_USBHOST_FADDR;
@@ -260,6 +270,18 @@ prcm_v3_bit(int mod)
 		return PRCM_CLK_EN_MMC3;
 	case PRCM_USB:
 		return PRCM_CLK_EN_USB;
+	case PRCM_GPIO0:
+		return PRCM_CLK_EN_GPIO1;
+	case PRCM_GPIO1:
+		return PRCM_CLK_EN_GPIO2;
+	case PRCM_GPIO2:
+		return PRCM_CLK_EN_GPIO3;
+	case PRCM_GPIO3:
+		return PRCM_CLK_EN_GPIO4;
+	case PRCM_GPIO4:
+		return PRCM_CLK_EN_GPIO5;
+	case PRCM_GPIO5:
+		return PRCM_CLK_EN_GPIO6;
 	default:
 		panic("%s: module not found\n", __func__);
 	}
@@ -281,6 +303,14 @@ prcm_am335x_clkctrl(int mod)
 		return PRCM_AM335X_MMC2_CLKCTRL;
 	case PRCM_USB:
 		return PRCM_AM335X_USB0_CLKCTRL;
+	case PRCM_GPIO0:
+		return PRCM_AM335X_GPIO0_CLKCTRL;
+	case PRCM_GPIO1:
+		return PRCM_AM335X_GPIO1_CLKCTRL;
+	case PRCM_GPIO2:
+		return PRCM_AM335X_GPIO2_CLKCTRL;
+	case PRCM_GPIO3:
+		return PRCM_AM335X_GPIO3_CLKCTRL;
 	case PRCM_TPCC:
 		return PRCM_AM335X_TPCC_CLKCTRL;
 	case PRCM_TPTC0:
@@ -367,6 +397,14 @@ prcm_v4_enablemodule(struct prcm_softc *sc, int mod)
 		case PRCM_USBP2_HSIC:
 			prcm_v4_hsusbhost_activate(mod);
 			return;
+		case  PRCM_GPIO0:
+		case  PRCM_GPIO1:
+		case  PRCM_GPIO2:
+		case  PRCM_GPIO3:
+		case  PRCM_GPIO4:
+		case  PRCM_GPIO5:
+			/* XXX */
+			break;
 	default:
 		panic("%s: module not found\n", __func__);
 	}

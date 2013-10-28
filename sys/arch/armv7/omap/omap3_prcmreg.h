@@ -1,4 +1,4 @@
-/* $OpenBSD: omap3_prcmreg.h,v 1.2 2013/10/23 11:11:31 rapha Exp $ */
+/* $OpenBSD: omap3_prcmreg.h,v 1.3 2013/10/28 11:11:50 rapha Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2012 Dale Rahn <drahn@dalerahn.com>
  *
@@ -97,7 +97,9 @@
 #define	CM_CLKSEL4_PLL		0x0d4C
 #define	CM_CLKSEL5_PLL		0x0d50
 #define	CM_FCLKEN_PER		0x1000
+#define CM_FCLKEN_PER_MSK	0x0003ffff
 #define	CM_ICLKEN_PER		0x1010
+#define CM_ICLKEN_PER_MSK	0x0003ffff
 #define	CM_IDLEST_PER		0x1020
 #define	CM_AUTOIDLE_PER		0x1030
 #define	CM_CLKSEL_PER		0x1040
