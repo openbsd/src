@@ -1,4 +1,4 @@
-/*	$OpenBSD: beagle_machdep.c,v 1.2 2013/09/28 14:16:41 miod Exp $ */
+/*	$OpenBSD: beagle_machdep.c,v 1.3 2013/10/28 09:15:09 patrick Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -457,6 +457,7 @@ initarm(void *arg0, void *arg1, void *arg2)
 	paddr_t memstart;
 	psize_t memsize;
 	extern void omap4_smc_call(uint32_t, uint32_t);
+	extern u_int32_t esym;  /* &_end if no symbols are loaded */
 
 #if 0
 	int led_data = 0;
@@ -569,8 +570,7 @@ initarm(void *arg0, void *arg1, void *arg2)
 	physical_end = physical_start + (bootconfig.dram[0].pages * PAGE_SIZE);
 
 	{
-		extern char _end[];
-		physical_freestart = (((unsigned long)_end - KERNEL_TEXT_BASE +0xfff) & ~0xfff) + memstart;
+		physical_freestart = (((unsigned long)esym - KERNEL_TEXT_BASE +0xfff) & ~0xfff) + memstart;
 		physical_freeend = memstart+memsize;
 	}
 
@@ -617,7 +617,7 @@ initarm(void *arg0, void *arg1, void *arg2)
 	(var).pv_va = KERNEL_BASE + (var).pv_pa - physical_start;
 
 #define alloc_pages(var, np)				\
-	(var) = physical_freestart ;			\
+	(var) = physical_freestart;			\
 	physical_freestart += ((np) * PAGE_SIZE);	\
 	if (physical_freeend < physical_freestart)	\
 		panic("initarm: out of memory");	\
@@ -628,7 +628,7 @@ initarm(void *arg0, void *arg1, void *arg2)
 	kernel_l1pt.pv_pa = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
-		if (((physical_freestart) & (L1_TABLE_SIZE - 1)) == 0
+		if ((physical_freestart & (L1_TABLE_SIZE - 1)) == 0
 		    && kernel_l1pt.pv_pa == 0) {
 			valloc_pages(kernel_l1pt, L1_TABLE_SIZE / PAGE_SIZE);
 		} else {
@@ -716,7 +716,7 @@ initarm(void *arg0, void *arg1, void *arg2)
 	{
 		extern char etext[], _end[];
 		size_t textsize = (u_int32_t) etext - KERNEL_TEXT_BASE;
-		size_t totalsize = (u_int32_t) _end - KERNEL_TEXT_BASE;
+		size_t totalsize = (u_int32_t) esym - KERNEL_TEXT_BASE;
 		u_int logical;
 
 		textsize = (textsize + PGOFSET) & ~PGOFSET;
