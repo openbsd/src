@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK-IMX,v 1.3 2013/10/05 23:05:11 patrick Exp $
+# $OpenBSD: RAMDISK-IMX,v 1.4 2013/10/28 14:10:41 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -31,7 +31,8 @@ options	DDB		# kernel debugger
 options	DIAGNOSTIC
 option DDB_SAFE_CONSOLE
 options	FIFO		# FIFOs; RECOMMENDED
-#options	NFSCLIENT	# NFS 
+option	EXT2FS          # Second Extended Filesystem
+#option	NFSCLIENT	# NFS 
 
 makeoptions	KERNEL_BASE_PHYS="0x10800000"
 makeoptions	KERNEL_BASE_VIRT="0xc0800000"

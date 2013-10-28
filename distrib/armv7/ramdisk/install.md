@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.1 2013/09/04 20:00:23 patrick Exp $
+#	$OpenBSD: install.md,v 1.2 2013/10/28 14:10:41 patrick Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -32,34 +32,91 @@
 # machine dependent section of installation/upgrade script.
 #
 
+# This code runs when the script is initally sourced to set up 
+# MDSETS, SANESETS and DEFAULTSETS 
+
+dmesg | grep "^omap0 at mainbus0:" >/dev/null
+if [[ $? == 0 ]]; then
+        MDPLAT=OMAP
+	LOADADDR=0x82800000
+fi
+dmesg | grep "^imx0 at mainbus0:" >/dev/null
+if [[ $? == 0 ]]; then
+        MDPLAT=IMX
+	LOADADDR=0x18800000
+fi
+
+MDSETS="bsd.${MDPLAT} bsd.rd.${MDPLAT} bsd.${MDPLAT}.umg bsd.rd.${MDPLAT}.umg"
+SANESETS="bsd.${MDPLAT}"
+DEFAULTSETS=${MDSETS}
+
+NEWFSARGS_msdos="-F 16 -L boot"
+NEWFSARGS_ext2fs="-v boot"
+
 md_installboot() {
 	local _disk=$1
 	mount /dev/${_disk}i /mnt/mnt
-	/mnt/usr/sbin/chroot /mnt /usr/sbin/mkuboot -a arm -o linux \
-		-e 0x80300000 -l 0x80300000 /bsd /mnt/bsd.umg
-	cp -r /tmp/u-boots/* /mnt/usr/mdec/
+
 	BEAGLE=$(scan_dmesg '/^omap0 at mainbus0: \(BeagleBoard\).*/s//\1/p')
 	BEAGLEBONE=$(scan_dmesg '/^omap0 at mainbus0: \(BeagleBone\).*/s//\1/p')
 	PANDA=$(scan_dmesg '/^omap0 at mainbus0: \(PandaBoard\)/s//\1/p')
-	if [[ -n $BEAGLE ]]; then
-		cp /mnt/usr/mdec/beagle/{mlo,u-boot.bin} /mnt/mnt/
-	elif [[ -n $BEAGLEBONE ]]; then
-		cp /mnt/usr/mdec/am335x/{mlo,u-boot.img} /mnt/mnt/
-	elif [[ -n $PANDA ]]; then
-		cp /mnt/usr/mdec/panda/{mlo,u-boot.bin} /mnt/mnt/
-	fi
-	cat > /mnt/mnt/uenv.txt<<__EOT
-bootcmd=mmc rescan ; setenv loadaddr 0x82800000 ; setenv bootargs sd0i:/bsd.umg ; fatload mmc 0 \${loadaddr} bsd.umg ; bootm \${loadaddr} ;
+	IMX=$(scan_dmesg '/^imx0 at mainbus0: \(i.MX6.*\)/s//IMX/p')
+
+        if [[ -f /mnt/bsd.${MDPLAT} ]]; then
+                mv /mnt/bsd.${MDPLAT} /mnt/bsd
+        fi
+        if [[ -f /mnt/bsd.${MDPLAT}.umg ]]; then
+                mv /mnt/bsd.${MDPLAT}.umg /mnt/mnt/bsd.umg
+        fi
+        if [[ -f /mnt/bsd.mp.${MDPLAT} ]]; then
+                mv /mnt/bsd.mp.${MDPLAT} /mnt/bsd.mp
+        fi
+        if [[ -f /mnt/bsd.rd.${MDPLAT} ]]; then
+                mv /mnt/bsd.rd.${MDPLAT} /mnt/bsd.rd
+        fi
+        if [[ -f /mnt/bsd.rd.${MDPLAT}.umg ]]; then
+                mv /mnt/bsd.rd.${MDPLAT}.umg /mnt/mnt/bsdrd.umg
+        fi
+
+	# extracted on all machines, so make snap works.
+	tar -C /mnt/ -xf /usr/mdec/u-boots.tgz 
+
+	if [[ ${MDPLAT} == "OMAP" ]]; then
+
+		if [[ -n $BEAGLE ]]; then
+			cp /mnt/usr/mdec/beagle/{mlo,u-boot.bin} /mnt/mnt/
+		elif [[ -n $BEAGLEBONE ]]; then
+			cp /mnt/usr/mdec/am335x/{mlo,u-boot.img} /mnt/mnt/
+		elif [[ -n $PANDA ]]; then
+			cp /mnt/usr/mdec/panda/{mlo,u-boot.bin} /mnt/mnt/
+		fi
+		cat > /mnt/mnt/uenv.txt<<__EOT
+bootcmd=mmc rescan ; setenv loadaddr ${LOADADDR}; setenv bootargs sd0i:/bsd.umg ; fatload mmc 0 \${loadaddr} bsd.umg ; bootm \${loadaddr} ;
 uenvcmd=boot
 __EOT
+	else 
+		cat > /tmp/6x_bootscript.scr<<__EOT
+; setenv loadaddr ${LOADADDR} ; setenv bootargs sd0i:/bsd.umg ; for dtype in sata mmc ; do for disk in 0 1 ; do \${dtype} dev \${disk} ; for fs in fat ext2 ; do if \${fs}load \${dtype} \${disk}:1 \${loadaddr} bsd.umg ; then bootm \${loadaddr} ; fi ; done; done; done; echo; echo failed to load bsd.umg 
+__EOT
+		mkuboot -t script -a arm -o linux /tmp/6x_bootscript.scr /mnt/mnt/6x_bootscript
+	fi
 }
 
 md_prep_fdisk() {
 	local _disk=$1 _q _d
 
-	mount /dev/sd0i /mnt2
-	cp -r /mnt2/u-boots/ /tmp/
-	umount /mnt2
+	local bootparttype="C"
+	local bootfstype="msdos"
+	local newfs_args=${NEWFSARGS_msdos}
+
+	# imx needs an ext2fs filesystem
+	IMX=$(scan_dmesg '/^imx0 at mainbus0: \(i.MX6.*\)/s//IMX/p')
+	if [[ -n $IMX ]]; then
+		bootparttype="83"
+		bootfstype="ext2fs"
+		newfs_args=${NEWFSARGS_ext2fs}
+	fi
+
 	while :; do
 		_d=whole
 		if [[ -n $(fdisk $_disk | grep 'Signature: 0xAA55') ]]; then
@@ -70,11 +127,11 @@ md_prep_fdisk() {
 		ask "Use (W)hole disk$_q or (E)dit the MBR?" "$_d"
 		case $resp in
 		w*|W*)
-			echo -n "Creating a FAT partition and an OpenBSD partition for rest of $_disk..."
+			echo -n "Creating a ${bootfstype} partition and an OpenBSD partition for rest of $_disk..."
 			fdisk -e ${_disk} <<__EOT >/dev/null
 reinit
 e 0
-C
+${bootparttype}
 n
 64
 32768
@@ -89,7 +146,7 @@ quit
 __EOT
 			echo "done."
 			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
-			newfs -t msdos ${_disk}i
+			newfs -t ${bootfstype} ${newfs_args} ${_disk}i
 			return ;;
 		e*|E*)
 			# Manually configure the MBR.
@@ -100,7 +157,7 @@ and one MBR partition on which kernels are located which are loaded
 by U-Boot. Neither partition will overlap any other partition.
 
 The OpenBSD MBR partition will have an id of 'A6' and the boot MBR
-partition will have an id of 'C' (MSDOS). The boot partition will be
+partition will have an id of '${bootparttype}' (${bootfstype}). The boot partition will be
 at least 16MB and be the first 'MSDOS' partition on the disk.
 
 $(fdisk ${_disk})

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.1 2013/09/04 20:00:23 patrick Exp $
+#	$OpenBSD: list,v 1.2 2013/10/28 14:10:41 patrick Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -46,6 +46,7 @@ LINK	instbin					sbin/mount_msdos
 LINK	instbin					sbin/mount_nfs
 LINK	instbin					sbin/newfs
 LINK	instbin					sbin/newfs_msdos
+LINK	instbin					sbin/newfs_ext2fs
 LINK	instbin					sbin/ping
 LINK	instbin					sbin/ping6
 LINK	instbin					sbin/reboot sbin/halt
@@ -57,8 +58,12 @@ LINK	instbin					usr/bin/grep usr/bin/fgrep usr/bin/egrep
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/less usr/bin/more
 LINK	instbin					usr/bin/sed
+LINK	instbin					usr/sbin/mkuboot
 LINK	instbin					sbin/sysctl
 LINK	instbin					sbin/bioctl
+
+# this is the list from distrib/miniroot/makeconf.awk with -lz added.
+LIBS	-lstubs -lutil -lotermcap -lm -lz
 
 # copy the MAKEDEV script and make some devices
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
@@ -82,6 +87,7 @@ SCRIPT	${CURDIR}/../../miniroot/upgrade.sh	upgrade
 SCRIPT	${CURDIR}/../../miniroot/install.sh	install
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
 SPECIAL	chmod 755 install upgrade
+SPECIAL	tar cvf usr/mdec/u-boots.tgz /usr/mdec/
 
 HASH	var/hash
 TZ

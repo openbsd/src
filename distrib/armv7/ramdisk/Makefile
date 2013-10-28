@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2013/10/15 22:46:49 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2013/10/28 14:10:41 patrick Exp $
 
 REV=	${OSrev}
 
@@ -21,6 +21,8 @@ VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
 
+KERNADDR_OMAP=0x80300000
+KERNADDR_IMX=0x10800000
 
 DISKTYPE=       rdroot2.5M
 NBLKS=		5120
@@ -38,7 +40,7 @@ ALLBSD=
 ALLBSDRD=
 .for SOC in ${ALLSOC}
 ALLBSD+=	bsd.${SOC}
-ALLBSDRD+=	${BSD_RD}.${SOC}
+ALLBSDRD+=	${BSD_RD}.${SOC} ${BSD_RD}.${SOC}.umg
 all:	${ALLBSDRD}
 .endfor
 
@@ -52,6 +54,8 @@ bsd.${SOC}:
 ${BSD_RD}.${SOC}: ${CBIN} ${IMAGE} bsd.${SOC} rdsetroot
 	cp bsd.${SOC} ${BSD_RD}.${SOC}
 	${.OBJDIR}/rdsetroot ${BSD_RD}.${SOC} ${IMAGE}
+	mkuboot -a arm -o linux -e ${KERNADDR_${SOC}} -l ${KERNADDR_${SOC}} \
+	    ${BSD_RD}.${SOC} ${BSD_RD}.${SOC}.umg
 .endfor
 
 ${IMAGE}: rd_setup do_files rd_teardown

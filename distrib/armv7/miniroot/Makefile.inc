@@ -3,6 +3,7 @@ REV=	${OSrev}
 BSD_RD=		bsd.rd.OMAP
 
 IMAGE=	miniroot-${BOARD}-${REV}.fs
+MKUBOOT?=	mkuboot
 
 MOUNT_POINT=	/mnt
 
@@ -17,6 +18,15 @@ PID!=		echo $$$$
 
 NBLKS=		36864
 
+FS?=		msdos
+PART_ID?=C
+
+NEWFS_ARGS_msdos=-F 16 -L boot
+NEWFS_ARGS_ext2fs=-v boot
+
+cleandir: clean
+clean:
+	rm -f ${IMAGE}
 
 .ifndef DESTDIR
 all ${IMAGE}:
@@ -30,20 +40,27 @@ ${IMAGE}: rd_setup do_files rd_teardown
 .endif
 
 do_files:
-	echo 'bootcmd=mmc rescan ; setenv loadaddr 0x82800000 ; setenv bootargs sd0i:/bsd.umg ; fatload mmc 0 $${loadaddr} bsd.umg ; bootm $${loadaddr} ;\nuenvcmd=boot' > ${MOUNT_POINT}/uenv.txt
+.if ${PLATFORM} == "OMAP"
 	cp /usr/mdec/${BOARD}/mlo ${MOUNT_POINT}/mlo
+	echo "bootcmd=mmc rescan ; setenv loadaddr ${LOADADDR} ; setenv bootargs sd0i:/bsd.umg ; fatload mmc 0 \$${loadaddr} bsd.umg ; bootm \$${loadaddr} ;\nuenvcmd=boot" > ${MOUNT_POINT}/uenv.txt
 	cp /usr/mdec/${BOARD}/u-boot.* ${MOUNT_POINT}/
 	mkdir ${MOUNT_POINT}/u-boots
 	cp -r /usr/mdec/{am335x,beagle,panda} ${MOUNT_POINT}/u-boots
-	mkuboot -a arm -o linux -e 0x80300000 -l 0x80300000 \
-		${.OBJDIR}/../../ramdisk/bsd.rd.OMAP ${MOUNT_POINT}/bsd.umg
+.endif
+.if ${PLATFORM} == "IMX"
+	echo "; setenv loadaddr ${LOADADDR} ; setenv bootargs sd0i:/bsd.umg ; for dtype in sata mmc ; do for disk in 0 1 ; do \$${dtype} dev \$${disk} ; for fs in fat ext2 ; do if \$${fs}load \$${dtype} \$${disk}:1 \$${loadaddr} bsd.umg ; then  bootm \$${loadaddr} ; fi ; done; done; done; echo; echo failed to load bsd.umg" > 6x_bootscript.cmd
+	${MKUBOOT} -t script -a arm -o linux 6x_bootscript.cmd 6x_bootscript.scr
+	cp 6x_bootscript.scr ${MOUNT_POINT}/6x_bootscript
+
+.endif
+	cp ${.OBJDIR}/../../ramdisk/bsd.rd.${PLATFORM}.umg ${MOUNT_POINT}/bsd.umg
 
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
 	vnconfig -c ${VND} ${IMAGE}
 	fdisk -c 2 -h 255 -s 63 -yi ${VND} >/dev/null
-	echo 'u\ne 0\nC\ny\n0\n1\n1\n1\n254\n63\nf 0\nw\nq\n' | fdisk -c 2 -h 255 -s 63 -e ${VND} >/dev/null
-	newfs_msdos -F 16 -L boot ${VND_RIDEV} >/dev/null
+	echo "u\ne 0\n${PART_ID}\ny\n0\n1\n1\n1\n254\n63\nf 0\nw\nq\n" | fdisk -c 2 -h 255 -s 63 -e ${VND} >/dev/null
+	newfs_${FS} ${NEWFS_ARGS_${FS}} ${VND_RIDEV} >/dev/null
 	mount ${VND_IDEV} ${MOUNT_POINT}
 
 rd_teardown:
