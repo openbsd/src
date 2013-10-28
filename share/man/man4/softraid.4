@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.31 2013/03/12 14:00:57 jmc Exp $
+.\"	$OpenBSD: softraid.4,v 1.32 2013/10/28 15:15:08 stsp Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 12 2013 $
+.Dd $Mdocdate: October 28 2013 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -107,6 +107,21 @@ discipline.
 It writes data to each chunk in sequence to provide increased capacity.
 CONCAT does not provide redundancy.
 .El
+.Pp
+.Xr installboot 8
+may be used to install
+.Xr boot 8
+in
+.Nm
+volume meta data to allow booting from the volume.
+Boot support is currently limited to the CRYPTO and RAID 1 disciplines
+on amd64 and i386 platforms.
+At the
+.Xr boot 8
+prompt, softraid volumes have names beginning with
+.Sq sr
+and can be booted from like a normal disk device.
+CRYPTO volumes will require a decryption passphrase or keydisk at boot time.
 .Sh EXAMPLES
 An example to create a 3 chunk RAID 1 from scratch is as follows:
 .Pp
@@ -153,11 +168,26 @@ The RAID volume is now ready to be used as a normal disk device.
 See
 .Xr bioctl 8
 for more information on configuration of RAID sets.
+.Pp
+Install
+.Xr boot 8
+on the RAID volume:
+.Bd -literal -offset indent
+# /usr/mdec/installboot /boot /usr/mdec/biosboot sd0
+.Ed
+.Pp
+At the
+.Xr boot 8
+prompt, load the /bsd kernel from the RAID volume:
+.Bd -literal -offset indent
+boot> boot sr0a:/bsd
+.Ed
 .Sh SEE ALSO
 .Xr bio 4 ,
 .Xr bioctl 8 ,
 .Xr disklabel 8 ,
 .Xr fdisk 8 ,
+.Xr installboot 8 ,
 .Xr newfs 8
 .Sh HISTORY
 The
@@ -177,10 +207,6 @@ The RAID 4 and 5 disciplines do not initialize the parity upon creation.
 This is due to the scrub functionality not being currently implemented.
 .Pp
 Currently there is no automated mechanism to recover from failed disks.
-.Pp
-.Nm
-has boot support only for the CRYPTO and RAID 1 disciplines,
-and only on amd64 and i386 platforms.
 .Pp
 Sparc hardware needs to use fstype
 .Dq 4.2BSD
