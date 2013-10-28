@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.43 2013/10/27 20:39:44 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.44 2013/10/28 17:02:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -330,16 +330,15 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 		}
 
-		resp_ca_cert = xmemdup(imsg->data, sizeof *resp_ca_cert, "mta:ca_cert");
+		resp_ca_cert = xmemdup(imsg->data, sizeof *resp_ca_cert,
+		    "mta:ca_cert");
 		if (resp_ca_cert == NULL)
 			fatal(NULL);
 		resp_ca_cert->cert = xstrdup((char *)imsg->data +
 		    sizeof *resp_ca_cert, "mta:ca_cert");
-
 		resp_ca_cert->key = xstrdup((char *)imsg->data +
 		    sizeof *resp_ca_cert + resp_ca_cert->cert_len,
 		    "mta:ca_key");
-
 		ssl = ssl_mta_init(resp_ca_cert->cert, resp_ca_cert->cert_len,
 		    resp_ca_cert->key, resp_ca_cert->key_len);
 		if (ssl == NULL)
@@ -351,7 +350,6 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 		free(resp_ca_cert->cert);
 		free(resp_ca_cert->key);
 		free(resp_ca_cert);
-
 		return;
 
 	case IMSG_LKA_SSL_VERIFY:
@@ -1107,6 +1105,7 @@ mta_io(struct io *io, int evt)
 	size_t			 len;
 	const char		*error;
 	int			 cont;
+	X509			*x;
 
 	log_trace(TRACE_IO, "mta: %p: %s %s", s, io_strevent(evt),
 	    io_strio(io));
@@ -1137,11 +1136,14 @@ mta_io(struct io *io, int evt)
 		}
 
 	case IO_TLSVERIFIED:
-		if (SSL_get_peer_certificate(s->io.ssl))
+		x = SSL_get_peer_certificate(s->io.ssl);
+		if (x) {
 			log_info("smtp-out: Server certificate verification %s "
 			    "on session %016"PRIx64,
 			    (s->flags & MTA_VERIFIED) ? "succeeded" : "failed",
 			    s->id);
+			X509_free(x);
+		}
 
 		if (s->use_smtps) {
 			mta_enter_state(s, MTA_BANNER);
@@ -1549,6 +1551,7 @@ mta_verify_certificate(struct mta_session *s)
 	m_composev(p_lka, IMSG_LKA_SSL_VERIFY_CERT, 0, 0, -1,
 	    iov, nitems(iov));
 	free(req_ca_vrfy.cert);
+	X509_free(x);
 
 	if (xchain) {		
 		/* Send the chain, one cert at a time */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_smtpd.c,v 1.2 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: ssl_smtpd.c,v 1.3 2013/10/28 17:02:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -46,8 +46,8 @@
 void *
 ssl_mta_init(char *cert, off_t cert_len, char *key, off_t key_len)
 {
-	SSL_CTX		*ctx;
-	SSL		*ssl = NULL;
+	SSL_CTX	*ctx = NULL;
+	SSL	*ssl = NULL;
 
 	ctx = ssl_ctx_create();
 
@@ -65,11 +65,14 @@ ssl_mta_init(char *cert, off_t cert_len, char *key, off_t key_len)
 	if (!SSL_set_ssl_method(ssl, SSLv23_client_method()))
 		goto err;
 
+	SSL_CTX_free(ctx);
 	return (void *)(ssl);
 
 err:
 	if (ssl != NULL)
 		SSL_free(ssl);
+	if (ctx != NULL)
+		SSL_CTX_free(ctx);
 	ssl_error("ssl_mta_init");
 	return (NULL);
 }
@@ -89,7 +92,7 @@ dummy_verify(int ok, X509_STORE_CTX *store)
 void *
 ssl_smtp_init(void *ssl_ctx, char *cert, off_t cert_len, char *key, off_t key_len)
 {
-	SSL *ssl = NULL;
+	SSL	*ssl = NULL;
 
 	log_debug("debug: session_start_ssl: switching to SSL");
 

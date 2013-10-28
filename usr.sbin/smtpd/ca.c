@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.1 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: ca.c,v 1.2 2013/10/28 17:02:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -21,7 +21,33 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
+#include "log.h"
+
 int	ca_X509_verify(X509 *, STACK_OF(X509) *, const char *, const char *, const char **);
+
+static int
+verify_cb(int ok, X509_STORE_CTX *ctx)
+{
+	switch (X509_STORE_CTX_get_error(ctx)) {
+	case X509_V_OK:
+		break;
+        case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
+		log_warnx("warn: unable to get issuer cert");
+		break;
+        case X509_V_ERR_CERT_NOT_YET_VALID:
+        case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
+		log_warnx("warn: certificate not yet valid");
+		break;
+        case X509_V_ERR_CERT_HAS_EXPIRED:
+        case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
+		log_warnx("warn: certificate has expired");
+		break;
+        case X509_V_ERR_NO_EXPLICIT_POLICY:
+		log_warnx("warn: no explicit policy");
+		break;
+	}
+	return ok;
+}
 
 int
 ca_X509_verify(X509 *certificate, STACK_OF(X509) *chain, const char *CAfile,
@@ -42,6 +68,8 @@ ca_X509_verify(X509 *certificate, STACK_OF(X509) *chain, const char *CAfile,
 
 	if (X509_STORE_CTX_init(xsc, store, certificate, chain) != 1)
 		goto end;
+
+	X509_STORE_CTX_set_verify_cb(xsc, verify_cb);
 
 	ret = X509_verify_cert(xsc);
 

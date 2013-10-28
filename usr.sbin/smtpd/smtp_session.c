@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.186 2013/10/27 11:01:47 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.187 2013/10/28 17:02:08 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -277,6 +277,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 	uint64_t			 reqid, evpid;
 	uint32_t			 code, msgid;
 	int				 status, success, dnserror;
+	X509				*x;
 
 	switch (imsg->hdr.type) {
 	case IMSG_DNS_PTR:
@@ -382,17 +383,15 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		    evpid_to_msgid(s->evp.id));
 
 		if (s->flags & SF_SECURE) {
+			x = SSL_get_peer_certificate(s->io.ssl);
 			fprintf(s->ofile,
 			    "\tTLS version=%s cipher=%s bits=%d verify=%s;\n",
 			    SSL_get_cipher_version(s->io.ssl),
 			    SSL_get_cipher_name(s->io.ssl),
 			    SSL_get_cipher_bits(s->io.ssl, NULL),
-			    "NO");
-			/* XXX - this can be uncommented when we *fully* verify */
-			/*
-			 *  (s->flags & SF_VERIFIED) ? "YES" :
-			 *  (SSL_get_peer_certificate(s->io.ssl) ? "FAIL" : "NO"));
-			 */
+			    (s->flags & SF_VERIFIED) ? "YES" : (x ? "FAIL" : "NO"));
+			if (x)
+				X509_free(x);
 		}
 
 		if (s->rcptcount == 1) {
@@ -566,6 +565,8 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 
 		bzero(resp_ca_cert->cert, resp_ca_cert->cert_len);
 		bzero(resp_ca_cert->key, resp_ca_cert->key_len);
+		free(resp_ca_cert->cert);
+		free(resp_ca_cert->key);
 		free(resp_ca_cert);
 		return;
 
@@ -734,6 +735,7 @@ smtp_io(struct io *io, int evt)
 	struct smtp_session    *s = io->arg;
 	char		       *line;
 	size_t			len, i;
+	X509		       *x;
 
 	log_trace(TRACE_IO, "smtp: %p: %s %s", s, io_strevent(evt),
 	    io_strio(io));
@@ -756,11 +758,14 @@ smtp_io(struct io *io, int evt)
 		/* No verification required, cascade */
 
 	case IO_TLSVERIFIED:
-		if (SSL_get_peer_certificate(s->io.ssl))
+		x = SSL_get_peer_certificate(s->io.ssl);
+		if (x) {
 			log_info("smtp-in: Client certificate verification %s "
 			    "on session %016"PRIx64,
 			    (s->flags & SF_VERIFIED) ? "succeeded" : "failed",
 			    s->id);
+			X509_free(x);
+		}
 
 		if (s->listener->flags & F_SMTPS) {
 			stat_increment("smtp.smtps", 1);
@@ -1587,6 +1592,7 @@ smtp_verify_certificate(struct smtp_session *s)
 	m_composev(p_lka, IMSG_LKA_SSL_VERIFY_CERT, 0, 0, -1,
 	    iov, nitems(iov));
 	free(req_ca_vrfy.cert);
+	X509_free(x);
 
 	if (xchain) {		
 		/* Send the chain, one cert at a time */
