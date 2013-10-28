@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.95 2013/09/12 23:06:44 krw Exp $	*/
+/*	$OpenBSD: ping.c,v 1.96 2013/10/28 15:05:35 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -491,7 +491,7 @@ main(int argc, char *argv[])
 			err(1, "Cannot set the receive buffer size");
 	}
 	if (bufspace < IP_MAXPACKET)
-		warnx("Could only allocate a receive buffer of %i bytes (default %i)",
+		warnx("Could only allocate a receive buffer of %d bytes (default %d)",
 		    bufspace, IP_MAXPACKET);
 
 	if (to->sin_family == AF_INET)

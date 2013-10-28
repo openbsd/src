@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.274 2013/10/17 16:27:39 bluhm Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.275 2013/10/28 15:05:35 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2792,7 +2792,7 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	printf("%s: ", name);
 	printb("flags", flags | (xflags << 16), IFFBITS);
 	if (rdomainid)
-		printf(" rdomain %i", rdomainid);
+		printf(" rdomain %d", rdomainid);
 	if (metric)
 		printf(" metric %lu", metric);
 	if (mtu)
@@ -4505,9 +4505,9 @@ in_getaddr(const char *s, int which)
 	if (which == ADDR && strrchr(s, '/') != NULL &&
 	    (bits = inet_net_pton(AF_INET, s, &tsin.sin_addr,
 	    sizeof(tsin.sin_addr))) != -1) {
-		l = snprintf(p, sizeof(p), "%i", bits);
+		l = snprintf(p, sizeof(p), "%d", bits);
 		if (l >= sizeof(p) || l == -1)
-			errx(1, "%i: bad prefixlen", bits);
+			errx(1, "%d: bad prefixlen", bits);
 		in_getprefix(p, MASK);
 		memcpy(&sin->sin_addr, &tsin.sin_addr, sizeof(sin->sin_addr));
 	} else if (inet_aton(s, &sin->sin_addr) == 0) {

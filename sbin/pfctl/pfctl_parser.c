@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.295 2013/10/12 12:16:12 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.296 2013/10/28 15:05:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -783,9 +783,9 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 	}
 	if (r->onrdomain >= 0) {
 		if (r->ifnot)
-			printf(" on ! rdomain %i", r->onrdomain);
+			printf(" on ! rdomain %d", r->onrdomain);
 		else
-			printf(" on rdomain %i", r->onrdomain);
+			printf(" on rdomain %d", r->onrdomain);
 	}
 	if (r->af) {
 		if (r->af == AF_INET)

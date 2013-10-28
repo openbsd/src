@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.164 2013/10/18 08:38:52 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.165 2013/10/28 15:05:35 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -173,7 +173,7 @@ main(int argc, char **argv)
 	kw = keyword(*argv);
 	if (Tflag && Terr != 0 && kw != K_ADD) {
 		errno = Terr;
-		err(1, "routing table %i", tableid);
+		err(1, "routing table %d", tableid);
 	}
 	switch (kw) {
 	case K_EXEC:
