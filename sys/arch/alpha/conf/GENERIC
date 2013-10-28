@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.232 2013/09/05 19:42:06 sasano Exp $
+#	$OpenBSD: GENERIC,v 1.233 2013/10/28 12:33:32 mpi Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -167,7 +167,6 @@ asc*	at	tc?
 #cfb*	at	tc?
 #sfb*	at	tc?
 le*	at	tc?
-fta*	at	tc?			# DEC DEFTA FDDI cards
 
 # PCI host bus adapter support
 apecs*	at	mainbus?

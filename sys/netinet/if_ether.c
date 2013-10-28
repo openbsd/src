@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.108 2013/10/14 16:06:33 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.109 2013/10/28 12:33:32 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -54,7 +54,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
-#include <net/if_fddi.h>
 #include <net/if_types.h>
 
 #include <netinet/in.h>
@@ -164,24 +163,8 @@ arp_rtrequest(int req, struct rtentry *rt)
 		timeout_add_sec(&arptimer_to, 1);
 	}
 
-	if (rt->rt_flags & RTF_GATEWAY) {
-		if (req != RTM_ADD)
-			return;
-
-		/*
-		 * linklayers with particular link MTU limitation.  it is a bit
-		 * awkward to have FDDI handling here, we should split ARP from
-		 * netinet/if_ether.c like NetBSD does.
-		 */
-		switch (rt->rt_ifp->if_type) {
-		case IFT_FDDI:
-			if (rt->rt_ifp->if_mtu > FDDIIPMTU)
-				rt->rt_rmx.rmx_mtu = FDDIIPMTU;
-			break;
-		}
-
+	if (rt->rt_flags & RTF_GATEWAY)
 		return;
-	}
 
 	switch (req) {
 
@@ -210,18 +193,6 @@ arp_rtrequest(int req, struct rtentry *rt)
 			 * from it do not need their expiration time set.
 			 */
 			rt->rt_expire = time_second;
-			/*
-			 * linklayers with particular link MTU limitation.
-			 */
-			switch (rt->rt_ifp->if_type) {
-			case IFT_FDDI:
-				if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0 &&
-				    (rt->rt_rmx.rmx_mtu > FDDIIPMTU ||
-				     (rt->rt_rmx.rmx_mtu == 0 &&
-				      rt->rt_ifp->if_mtu > FDDIIPMTU)))
-					rt->rt_rmx.rmx_mtu = FDDIIPMTU;
-				break;
-			}
 			break;
 		}
 		/* Announce a new entry if requested. */

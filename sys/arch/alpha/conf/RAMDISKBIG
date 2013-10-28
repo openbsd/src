@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.87 2012/12/10 04:30:56 brad Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.88 2013/10/28 12:33:32 mpi Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -130,7 +130,6 @@ asc*	at tc?
 #cfb*	at tc?
 #sfb*	at tc?
 le*	at tc?
-fta*	at tc?				# DEC DEFTA FDDI cards
 
 # PCI host bus adapter support
 apecs*	at mainbus?

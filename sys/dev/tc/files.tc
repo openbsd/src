@@ -1,4 +1,4 @@
-#	$OpenBSD: files.tc,v 1.10 2013/09/24 20:11:05 miod Exp $
+#	$OpenBSD: files.tc,v 1.11 2013/10/28 12:33:32 mpi Exp $
 #	$NetBSD: files.tc,v 1.26 2001/11/28 10:21:24 lukem Exp $
 #
 # Config file and device description for machine-independent
@@ -27,11 +27,6 @@ file	dev/tc/if_le_tc.c		le_tc
 device	bba: audio, am7930, mulaw
 attach	bba at ioasic
 file	dev/tc/bba.c			bba
-
-# DEFTA FDDI controller
-device	fta: pdq, fddi, ifnet
-attach	fta at tc
-file	dev/tc/if_fta.c			fta
 
 # TCDS dual channel SCSI
 device	tcds {[chip = -1]}

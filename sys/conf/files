@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.559 2013/10/20 21:16:35 miod Exp $
+#	$OpenBSD: files,v 1.560 2013/10/28 12:33:32 mpi Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -61,12 +61,10 @@ define	i2c_bitbang
 # 1-Wire bus bit-banging
 define	onewire_bitbang
 
-# net device attributes - we have generic code for ether(net),
-# and fddi.
+# net device attributes - we have generic code for ether(net)
 define	crypto
 define	systrace
 define	ether
-define	fddi
 define	sppp
 define	wlan
 define	bluetooth
@@ -75,7 +73,6 @@ define	bluetooth
 # of device drivers.
 define	ncr5380sbc	# NCR 5380 SCSI Bus Controller
 define	ncr53c7xx	# NCR 53c7xx SCSI Bus Controller
-define	pdq		# DEC FDDI chipset
 define	dp8390nic	# 8390-family Ethernet controllers
 define	rtl80x9		# RealTek 8019/8029 NE2000-compatible
 define	dl10019		# DL10019/10022-family Ethernet controllers
@@ -624,8 +621,6 @@ file dev/firmload.c			firmload
 file dev/flash.c			flash			needs-flag
 file dev/ic/ncr5380sbc.c		ncr5380sbc
 file dev/ic/ncr53c7xx.c			ncr53c7xx
-file dev/ic/pdq.c			pdq
-file dev/ic/pdq_ifsubr.c		pdq
 file dev/ic/dp8390.c			dp8390nic
 file dev/ic/rtl80x9.c			rtl80x9
 file dev/ic/tea5757.c			tea5757
@@ -771,8 +766,7 @@ file tmpfs/tmpfs_fifoops.c		tmpfs & fifo
 file net/bpf.c				bpfilter		needs-count
 file net/bpf_filter.c			bpfilter
 file net/if.c
-file net/if_ethersubr.c			ether | inet | fddi	needs-flag
-file net/if_fddisubr.c			fddi
+file net/if_ethersubr.c			ether | inet		needs-flag
 file net/if_spppsubr.c			sppp
 file net/if_loop.c			loop
 file net/if_media.c			ifmedia

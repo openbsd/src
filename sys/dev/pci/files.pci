@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.297 2013/10/20 08:43:44 mlarkin Exp $
+#	$OpenBSD: files.pci,v 1.298 2013/10/28 12:33:32 mpi Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -248,11 +248,6 @@ file	dev/pci/if_de.c			de
 # device declaration in sys/conf/files
 attach	ep at pci with ep_pci
 file	dev/pci/if_ep_pci.c		ep_pci
-
-# Digital DEFPA PCI FDDI Controller
-device	fpa: pdq, fddi, ifnet
-attach	fpa at pci
-file	dev/pci/if_fpa.c		fpa
 
 # AMD PCnet-PCI Ethernet controller family
 device pcn: ether, ifnet, ifmedia, mii

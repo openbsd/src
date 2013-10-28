@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.214 2013/10/20 11:03:01 phessler Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.215 2013/10/28 12:33:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -57,10 +57,6 @@
 
 /* for arc4random() */
 #include <dev/rndvar.h>
-
-#if NFDDI > 0
-#include <net/if_fddi.h>
-#endif
 
 #include <crypto/sha1.h>
 
