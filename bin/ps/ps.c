@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.56 2013/09/22 17:28:34 guenther Exp $	*/
+/*	$OpenBSD: ps.c,v 1.57 2013/10/28 13:05:53 okan Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -116,19 +116,23 @@ main(int argc, char *argv[])
 	ttydev = NODEV;
 	memf = nlistf = swapf = NULL;
 	while ((ch = getopt(argc, argv,
-	    "acCegHhjkLlM:mN:O:o:p:rSTt:U:uvW:wx")) != -1)
+	    "AaCcegHhjkLlM:mN:O:o:p:rSTt:U:uvW:wx")) != -1)
 		switch (ch) {
+		case 'A':
+			all = 1;
+			xflg = 1;
+			break;
 		case 'a':
 			all = 1;
+			break;
+		case 'C':
+			rawcpu = 1;
 			break;
 		case 'c':
 			commandonly = 1;
 			break;
 		case 'e':			/* XXX set ufmt */
 			needenv = 1;
-			break;
-		case 'C':
-			rawcpu = 1;
 			break;
 		case 'g':
 			break;			/* no-op */
@@ -462,7 +466,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-aCceHhjkLlmrSTuvwx] [-M core] [-N system] [-O fmt] [-o fmt] [-p pid]\n",
+	    "usage: %s [-AaCceHhjkLlmrSTuvwx] [-M core] [-N system] [-O fmt] [-o fmt] [-p pid]\n",
 	    __progname);	
 	(void)fprintf(stderr,
 	    "%-*s[-t tty] [-U username] [-W swap]\n", (int)strlen(__progname) + 8, "");
