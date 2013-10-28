@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.218 2013/10/17 16:27:40 bluhm Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.219 2013/10/28 12:39:42 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -58,7 +58,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/if_ether.h>
@@ -1616,9 +1615,12 @@ bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
 	 */
 	etype = ntohs(eh->ether_type);
 	if (!(m->m_flags & M_VLANTAG) && etype == ETHERTYPE_IP) {
-		struct in_ifaddr *ia;
-		IFP_TO_IA(ifp, ia);
-		if (!ia)
+		struct ifaddr *ifa;
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+			if (ifa->ifa_addr->sa_family == AF_INET)
+				break;
+		}
+		if (ifa == NULL)
 			return;
 	}
 #endif
