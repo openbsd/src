@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkuboot.c,v 1.2 2013/07/28 18:07:16 miod Exp $	*/
+/*	$OpenBSD: mkuboot.c,v 1.3 2013/10/28 09:00:06 patrick Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -70,10 +70,18 @@ struct image_header {
 
 extern char *__progname;
 
+extern u_long	elf32_copy_elf(int, const char *, int, const char *, u_long,
+	    struct image_header *);
+extern u_long	elf64_copy_elf(int, const char *, int, const char *, u_long,
+	    struct image_header *);
+
 u_long	copy_data(int, const char *, int, const char *, u_long,
 	    struct image_header *, Elf_Word);
-u_long	copy_elf(int, const char *, int, const char *, u_long,
+u_long	(*copy_elf)(int, const char *, int, const char *, u_long,
 	    struct image_header *);
+
+u_long	copy_mem(void *, int, const char *, u_long, struct image_header *,
+	    Elf_Word);
 u_long	copy_raw(int, const char *, int, const char *, u_long,
 	    struct image_header *);
 u_long	fill_zeroes(int, const char *, u_long, struct image_header *, Elf_Word);
@@ -210,7 +218,7 @@ main(int argc, char *argv[])
 	ih.ih_arch = mapptr->id;
 	ih.ih_type = typemapptr->id;
 	ih.ih_comp = IH_COMP_NONE;
-	strlcpy(ih.ih_name, imgname, sizeof ih.ih_name);
+	strlcpy((char *)ih.ih_name, imgname, sizeof ih.ih_name);
 
 	ifd = open(iname, O_RDONLY);
 	if (ifd < 0)
@@ -234,11 +242,11 @@ main(int argc, char *argv[])
 	if (ih.ih_type == IH_TYPE_SCRIPT) {
 		/* scripts have two extra words of size/pad */
 		fsize = htobe32(sb.st_size);
-		crc = crc32(crc, (void *)&fsize, sizeof(fsize));
+		crc = crc32(crc, (Bytef *)&fsize, sizeof(fsize));
 		if (write(ofd, &fsize, sizeof fsize) != sizeof fsize)
 			err(1, "%s", oname);
 		fsize = 0;
-		crc = crc32(crc, (void *)&fsize, sizeof(fsize));
+		crc = crc32(crc, (Bytef *)&fsize, sizeof(fsize));
 		if (write(ofd, &fsize, sizeof fsize) != sizeof fsize)
 			err(1, "%s", oname);
 	}
@@ -256,7 +264,7 @@ main(int argc, char *argv[])
 	ih.ih_size = htobe32(ih.ih_size);
 
 	/* Calculate header CRC. */
-	crc = crc32(0, (void *)&ih, sizeof ih);
+	crc = crc32(0, (Bytef *)&ih, sizeof ih);
 	ih.ih_hcrc = htobe32(crc);
 
 	/* Write finalized header. */
@@ -282,79 +290,16 @@ is_elf(int ifd, const char *iname)
 
 	if (lseek(ifd, 0, SEEK_SET) != 0)
 		err(1, "%s", iname);
-
-	return IS_ELF(ehdr);
-}
-
-u_long
-copy_elf(int ifd, const char *iname, int ofd, const char *oname, u_long crc,
-    struct image_header *ih)
-{
-	ssize_t nbytes;
-	Elf_Ehdr ehdr;
-	Elf_Phdr phdr;
-	Elf_Addr vaddr;
-	int i;
-
-	nbytes = read(ifd, &ehdr, sizeof ehdr);
-	if (nbytes == -1)
-		err(1, "%s", iname);
-	if (nbytes != sizeof ehdr)
+	if (!IS_ELF(ehdr))
 		return 0;
 
-	for (i = 0; i < ehdr.e_phnum; i++) {
-#ifdef DEBUG
-		fprintf(stderr, "phdr %d/%d\n", i, ehdr.e_phnum);
-#endif
-		if (lseek(ifd, ehdr.e_phoff + i * ehdr.e_phentsize, SEEK_SET) ==
-		    (off_t)-1)
-			err(1, "%s", iname);
-		if (read(ifd, &phdr, sizeof phdr) != sizeof(phdr))
-			err(1, "%s", iname);
-
-#ifdef DEBUG
-		fprintf(stderr, "vaddr %p offset %p filesz %p memsz %p\n",
-		    phdr.p_vaddr, phdr.p_offset, phdr.p_filesz, phdr.p_memsz);
-#endif
-		if (i == 0)
-			vaddr = phdr.p_vaddr;
-		else if (vaddr != phdr.p_vaddr) {
-#ifdef DEBUG
-			fprintf(stderr, "gap %p->%p\n", vaddr, phdr.p_vaddr);
-#endif
-			/* fill the gap between the previous phdr if any */
-			crc = fill_zeroes(ofd, oname, crc, ih,
-			    phdr.p_vaddr - vaddr);
-			vaddr = phdr.p_vaddr;
-		}
-
-		if (phdr.p_filesz != 0) {
-#ifdef DEBUG
-			fprintf(stderr, "copying %p from infile %p\n",
-			    phdr.p_filesz, phdr.p_offset);
-#endif
-			if (lseek(ifd, phdr.p_offset, SEEK_SET) == (off_t)-1)
-				err(1, "%s", iname);
-			crc = copy_data(ifd, iname, ofd, oname, crc, ih,
-			    phdr.p_filesz);
-			if (phdr.p_memsz - phdr.p_filesz != 0) {
-#ifdef DEBUG
-				fprintf(stderr, "zeroing %p\n",
-				    phdr.p_memsz - phdr.p_filesz);
-#endif
-				crc = fill_zeroes(ofd, oname, crc, ih,
-				    phdr.p_memsz - phdr.p_filesz);
-			}
-		}
-		/*
-		 * If p_filesz == 0, this is likely .bss, which we do not
-		 * need to provide. If it's not the last phdr, the gap
-		 * filling code will output the necessary zeroes anyway.
-		 */
-		vaddr += phdr.p_memsz;
-	}
-
-	return crc;
+	if (ehdr.e_ident[EI_CLASS] == ELFCLASS32)
+		copy_elf = elf32_copy_elf;
+	else if (ehdr.e_ident[EI_CLASS] == ELFCLASS64)
+		copy_elf = elf64_copy_elf;
+	else
+		err(1, "%s: invalid elf, not 32 or 64 bit", iname);
+	return 1;
 }
 
 u_long
@@ -371,7 +316,27 @@ copy_data(int ifd, const char *iname, int ofd, const char *oname, u_long crc,
 			err(1, "%s", iname);
 		if (write(ofd, buf, nbytes) != nbytes)
 			err(1, "%s", oname);
-		crc = crc32(crc, buf, nbytes);
+		crc = crc32(crc, (Bytef *)buf, nbytes);
+		ih->ih_size += nbytes;
+		size -= nbytes;
+	}
+
+	return crc;
+}
+
+u_long
+copy_mem(void *mem, int ofd, const char *oname, u_long crc,
+    struct image_header *ih, Elf_Word size)
+{
+	ssize_t nbytes;
+	char *memp = (char *)mem;
+
+	while (size != 0) {
+		nbytes = size > BUFSIZ ? BUFSIZ : size;
+		if (write(ofd, memp, nbytes) != nbytes)
+			err(1, "%s", oname);
+		crc = crc32(crc, (Bytef *)memp, nbytes);
+		memp += nbytes;
 		ih->ih_size += nbytes;
 		size -= nbytes;
 	}
@@ -392,7 +357,7 @@ fill_zeroes(int ofd, const char *oname, u_long crc, struct image_header *ih,
 		nbytes = write(ofd, buf, chunk);
 		if (nbytes != chunk)
 			err(1, "%s", oname);
-		crc = crc32(crc, buf, nbytes);
+		crc = crc32(crc, (Bytef *)buf, nbytes);
 		ih->ih_size += nbytes;
 		size -= nbytes;
 	}
@@ -412,7 +377,7 @@ copy_raw(int ifd, const char *iname, int ofd, const char *oname, u_long crc,
 			err(1, "%s", iname);
 		if (write(ofd, buf, nbytes) != nbytes)
 			err(1, "%s", oname);
-		crc = crc32(crc, buf, nbytes);
+		crc = crc32(crc, (Bytef *)buf, nbytes);
 		ih->ih_size += nbytes;
 	}
 
