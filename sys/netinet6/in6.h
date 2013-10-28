@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.68 2013/10/24 11:31:43 mpi Exp $	*/
+/*	$OpenBSD: in6.h,v 1.69 2013/10/28 21:02:35 deraadt Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -74,7 +74,6 @@
  * has the table of implementation/integration differences.
  */
 #define __KAME__
-#define __KAME_VERSION		"OpenBSD-current"
 
 /*
  * IPv6 address
@@ -593,7 +592,6 @@ ifatoia6(struct ifaddr *ifa)
 #define IPV6CTL_DAD_COUNT	16
 #define IPV6CTL_AUTO_FLOWLABEL	17
 #define IPV6CTL_DEFMCASTHLIM	18
-#define IPV6CTL_KAME_VERSION	20
 #define IPV6CTL_USE_DEPRECATED	21	/* use deprecated addr (RFC2462 5.5.4) */
 #define IPV6CTL_RR_PRUNE	22	/* walk timer for router renumbering */
 #define IPV6CTL_V6ONLY		24
@@ -634,7 +632,7 @@ ifatoia6(struct ifaddr *ifa)
 	{ "auto_flowlabel", CTLTYPE_INT }, \
 	{ "defmcasthlim", CTLTYPE_INT }, \
 	{ 0, 0 }, \
-	{ "kame_version", CTLTYPE_STRING }, \
+	{ 0, 0 }, \
 	{ "use_deprecated", CTLTYPE_INT }, \
 	{ "rr_prune", CTLTYPE_INT }, \
 	{ 0, 0 }, \
