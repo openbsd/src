@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.h,v 1.12 2013/10/27 20:57:39 deraadt Exp $	*/
+/*	$OpenBSD: ip6_mroute.h,v 1.13 2013/10/29 19:05:45 deraadt Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -48,9 +48,6 @@
 /*
  * Multicast Routing set/getsockopt commands.
  */
-#ifdef _KERNEL
-#define MRT6_OINIT		100	/* initialize forwarder (omrt6msg) */
-#endif
 #define MRT6_DONE		101	/* shut down forwarder */
 #define MRT6_ADD_MIF		102	/* add multicast interface */
 #define MRT6_DEL_MIF		103	/* delete multicast interface */
@@ -65,26 +62,22 @@
 typedef u_short mifi_t;		/* type of a mif index */
 #define MAXMIFS		64
 
-#ifndef	IF_SETSIZE
-#define	IF_SETSIZE	256
-#endif
-
-typedef	u_int32_t	if_mask;
-#define	NIFBITS	(sizeof(if_mask) * NBBY)	/* bits per mask */
-
-#ifndef howmany
-#define	howmany(x, y)	(((x) + ((y) - 1)) / (y))
-#endif
-
+/*
+ * Assume inclusion of sys/param.h or sys/select.h for howmany()
+ */
+#define	__NIFBITS	(sizeof(uint32_t) * 8)	/* bits per mask */
 typedef	struct if_set {
-	if_mask	ifs_bits[howmany(IF_SETSIZE, NIFBITS)];
+	uint32_t	ifs_bits[howmany(256, __NIFBITS)];
 } if_set;
 
-#define	IF_SET(n, p)	((p)->ifs_bits[(n)/NIFBITS] |= (1 << ((n) % NIFBITS)))
-#define	IF_CLR(n, p)	((p)->ifs_bits[(n)/NIFBITS] &= ~(1 << ((n) % NIFBITS)))
-#define	IF_ISSET(n, p)	((p)->ifs_bits[(n)/NIFBITS] & (1 << ((n) % NIFBITS)))
-#define	IF_COPY(f, t)	bcopy(f, t, sizeof(*(f)))
-#define	IF_ZERO(p)	bzero(p, sizeof(*(p)))
+#define	IF_SET(n, p) \
+	((p)->ifs_bits[(n)/__NIFBITS] |= (1U << ((n) % __NIFBITS)))
+#define	IF_CLR(n, p) \
+	((p)->ifs_bits[(n)/__NIFBITS] &= ~(1U << ((n) % __NIFBITS)))
+#define	IF_ISSET(n, p) \
+	((p)->ifs_bits[(n)/__NIFBITS] & (1U << ((n) % __NIFBITS)))
+#define	IF_COPY(f, t)	memcpy(t, f, sizeof(*(f)))
+#define	IF_ZERO(p)	memset(p, 0, sizeof(*(p)))
 
 /*
  * Argument structure for MRT6_ADD_IF.
@@ -128,27 +121,6 @@ struct mrt6stat {
 	u_int64_t mrt6s_pkt2large;     	/* pkts dropped - size > BKT SIZE  */
 	u_int64_t mrt6s_upq_sockfull;	/* upcalls dropped - socket full   */
 };
-
-#ifdef MRT6_OINIT
-/*
- * Struct used to communicate from kernel to multicast router
- * note the convenient similarity to an IPv6 header.
- * XXX old version, superseded by mrt6msg.
- */
-struct omrt6msg {
-	u_long	    unused1;
-	u_char	    im6_msgtype;		/* what type of message	    */
-#if 0
-#define MRT6MSG_NOCACHE	1
-#define MRT6MSG_WRONGMIF	2
-#define MRT6MSG_WHOLEPKT	3		/* used for user level encap*/
-#endif
-	u_char	    im6_mbz;			/* must be zero		    */
-	u_char	    im6_mif;			/* mif rec'd on		    */
-	u_char	    unused2;
-	struct in6_addr  im6_src, im6_dst;
-};
-#endif
 
 /*
  * Structure used to communicate from kernel to multicast router.
