@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.428 2013/10/27 17:47:53 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.429 2013/10/29 11:23:58 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -577,7 +577,6 @@ struct mta_host {
 
 #define HOST_IGNORE	0x01
 	int			 flags;
-	int			 nerror;
 };
 
 struct mta_mx {
@@ -647,6 +646,7 @@ struct mta_route {
 #define ROUTE_DISABLED_NET	0x10
 #define ROUTE_DISABLED_SMTP	0x20
 	int			 flags;
+	int			 nerror;
 	int			 penalty;
 	int			 refcount;
 	size_t			 nconn;

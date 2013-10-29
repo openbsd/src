@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.167 2013/10/28 09:40:07 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.168 2013/10/29 11:23:58 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -42,7 +42,7 @@
 #include "smtpd.h"
 #include "log.h"
 
-#define MAXERROR_PER_HOST	4
+#define MAXERROR_PER_ROUTE	4
 
 #define DELAY_CHECK_SOURCE	1
 #define DELAY_CHECK_SOURCE_SLOW	10
@@ -397,7 +397,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			SPLAY_FOREACH(route, mta_route_tree, &routes) {
 				v = runq_pending(runq_route, NULL, route, &t);
 				snprintf(buf, sizeof(buf),
-				    "%llu. %s %c%c%c%c nconn=%zu penalty=%d timeout=%s",
+				    "%llu. %s %c%c%c%c nconn=%zu nerror=%d penalty=%d timeout=%s",
 				    (unsigned long long)route->id,
 				    mta_route_to_text(route),
 				    route->flags & ROUTE_NEW ? 'N' : '-',
@@ -405,6 +405,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 				    route->flags & ROUTE_RUNQ ? 'Q' : '-',
 				    route->flags & ROUTE_KEEPALIVE ? 'K' : '-',
 				    route->nconn,
+				    route->nerror,
 				    route->penalty,
 				    v ? duration_to_text(t - time(NULL)) : "-");
 				m_compose(p, IMSG_CTL_MTA_SHOW_ROUTES,
@@ -414,6 +415,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			m_compose(p, IMSG_CTL_MTA_SHOW_ROUTES, imsg->hdr.peerid,
 			    0, -1, NULL, 0);
 			return;
+
 		case IMSG_CTL_MTA_SHOW_HOSTSTATS:
 			iter = NULL;
 			while (dict_iter(&hoststat, &iter, &hostname,
@@ -549,27 +551,15 @@ mta_source_error(struct mta_relay *relay, struct mta_route *route, const char *e
 	c->flags |= CONNECTOR_ERROR_SOURCE;
 }
 
-/*
- * TODO:
- * Currently all errors are reported on the host itself.  Technically,
- * it should depend on the error, and it would be probably better to report
- * it at the connector level.  But we would need to have persistent routes
- * for that.  Hosts are "naturally" persisted, as they are referenced from
- * the MX list on the domain.
- * Also, we need a timeout on that.
- */
 void
 mta_route_error(struct mta_relay *relay, struct mta_route *route)
 {
-	route->dst->nerror++;
+	route->nerror += 1;
 
-	if (route->dst->flags & HOST_IGNORE)
-		return;
-
-	if (route->dst->nerror > MAXERROR_PER_HOST) {
-		log_info("smtp-out: Too many errors on host %s: ignoring this MX",
-		    mta_host_to_text(route->dst));
-		route->dst->flags |= HOST_IGNORE;
+	if (route->nerror > MAXERROR_PER_ROUTE) {
+		log_info("smtp-out: Too many errors on %s: "
+		    "disabling for a while", mta_route_to_text(route));
+		mta_route_disable(route, 2, ROUTE_DISABLED_SMTP);
 	}
 }
 
@@ -584,6 +574,7 @@ mta_route_ok(struct mta_relay *relay, struct mta_route *route)
 	log_debug("debug: mta-routing: route %s is now valid.",
 	    mta_route_to_text(route));
 
+	route->nerror = 0;
 	route->flags &= ~ROUTE_NEW;
 
 	c = mta_connector(relay, route->src);
@@ -1157,6 +1148,7 @@ mta_route_enable(struct mta_route *route)
 		    mta_route_to_text(route));
 		route->flags &= ~ROUTE_DISABLED;
 		route->flags |= ROUTE_NEW;
+		route->nerror = 0;
 	}
 
 	if (route->penalty) {
