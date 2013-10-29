@@ -1,4 +1,4 @@
-.\"	$OpenBSD: task_add.9,v 1.1 2013/10/29 04:35:20 dlg Exp $
+.\"	$OpenBSD: task_add.9,v 1.2 2013/10/29 04:35:46 dlg Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -30,7 +30,7 @@
 .Ft struct taskq *
 .Fn "taskq_systq" "void"
 .Ft struct taskq *
-.Fn "taskq_create" "const char *name" "u_int nthreads" "int ipl"
+.Fn "taskq_create" "const char *name" "unsigned int nthreads" "int ipl"
 .Ft void
 .Fn "taskq_destroy" "struct taskq *tq"
 .Ft void
