@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.429 2013/10/29 11:23:58 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.430 2013/10/29 14:30:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -28,6 +28,7 @@
 #include "iobuf.h"
 
 #define CONF_FILE		 "/etc/mail/smtpd.conf"
+#define MAILNAME_FILE		 "/etc/mail/mailname"
 #define CA_FILE			 "/etc/ssl/cert.pem"
 #define MAX_LISTEN		 16
 #define PROC_COUNT		 10

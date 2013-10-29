@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.100 2013/10/29 13:22:54 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.101 2013/10/29 14:30:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -752,8 +752,8 @@ getmailname(char *hostname, size_t len)
 	size_t	 buflen;
 	int	 error, ret = 0;
 
-	/* First, check if we have "/etc/mailname" */
-	if ((fp = fopen("/etc/mailname", "r")) == NULL)
+	/* First, check if we have MAILNAME_FILE */
+	if ((fp = fopen(MAILNAME_FILE, "r")) == NULL)
 		goto nomailname;
 
 	if ((buf = fgetln(fp, &buflen)) == NULL)
@@ -770,7 +770,7 @@ getmailname(char *hostname, size_t len)
 	}
 
 	if (strlcpy(hostname, buf, len) >= len)
-		fprintf(stderr, "/etc/mailname entry too long");
+		fprintf(stderr, MAILNAME_FILE " entry too long");
 	else {
 		ret = 1;
 		goto end;

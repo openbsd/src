@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.105 2013/08/08 07:08:34 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.106 2013/10/29 14:30:05 eric Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: August 8 2013 $
+.Dd $Mdocdate: October 29 2013 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -185,7 +185,7 @@ and to the default server name.
 See the
 .Sx FILES
 entry for
-.Pa /etc/mailname
+.Pa /etc/mail/mailname
 below for details of how the server name is determined.
 .It Ic for local virtual Aq Ar vmap
 This rule applies to mail destined to
@@ -661,7 +661,7 @@ For example, with recipient "User+Tag@Example.org":
 Default
 .Xr smtpd 8
 configuration file.
-.It Pa /etc/mailname
+.It Pa /etc/mail/mailname
 If this file exists,
 the first line is used as the server name.
 Otherwise, the server name is derived from the local hostname returned by
