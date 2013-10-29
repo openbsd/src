@@ -58,9 +58,6 @@ Boston, MA 02111-1307, USA.  */
 #undef	CPP_OS_DEFAULT_SPEC
 #define CPP_OS_DEFAULT_SPEC "%(cpp_os_openbsd)"
 
-#undef LINKER_NAME 
-#define LINKER_NAME "ld"
-
 #undef LINK_SPEC
 #define LINK_SPEC "%{shared:-shared} \
   %{!shared: \
