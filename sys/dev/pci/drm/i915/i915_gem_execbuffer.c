@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.15 2013/10/05 07:30:06 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.16 2013/10/29 06:30:57 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -52,7 +52,7 @@
 #include <machine/pmap.h>
 
 #include <sys/queue.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 static void *kmap_atomic(struct vm_page *);
 static void kunmap_atomic(void *);

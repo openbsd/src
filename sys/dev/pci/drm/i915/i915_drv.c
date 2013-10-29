@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.42 2013/10/21 10:36:24 miod Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.43 2013/10/29 06:30:57 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -55,7 +55,7 @@
 #include <machine/pmap.h>
 
 #include <sys/queue.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 #if 0
 #	define INTELDRM_WATCH_COHERENCY
 #	define WATCH_INACTIVE
@@ -497,6 +497,7 @@ i915_drm_freeze(struct drm_device *dev)
 		}
 
 		timeout_del(&dev_priv->rps.delayed_resume_to);
+		task_del(taskq_systq(), &dev_priv->rps.delayed_resume_task);
 
 		intel_modeset_disable(dev);
 
@@ -910,9 +911,9 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	dev_priv->workq = workq_create("intelrel", 1, IPL_TTY);
-	if (dev_priv->workq == NULL) {
-		printf("couldn't create workq\n");
+	dev_priv->mm.retire_taskq = taskq_create("intelrel", 1, IPL_TTY);
+	if (dev_priv->mm.retire_taskq == NULL) {
+		printf("couldn't create taskq\n");
 		return;
 	}
 
@@ -1554,12 +1555,8 @@ void
 inteldrm_timeout(void *arg)
 {
 	struct inteldrm_softc *dev_priv = arg;
-	int err;
 
-	err = workq_add_task(dev_priv->workq, 0, i915_gem_retire_work_handler,
-	    dev_priv, NULL);
-	if (err)
-		DRM_ERROR("failed to run retire handler\n");
+	task_add(dev_priv->mm.retire_taskq, &dev_priv->mm.retire_task);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.12 2013/09/08 11:59:45 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.13 2013/10/29 06:30:57 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -7175,7 +7175,7 @@ static void intel_crtc_destroy(struct drm_crtc *crtc)
 	mtx_leave(&dev->event_lock);
 
 	if (work) {
-//		cancel_work_sync(&work->work);
+		task_del(taskq_systq(), &work->task);
 		free(work, M_DRM);
 	}
 
@@ -7243,7 +7243,7 @@ static void do_intel_finish_page_flip(struct drm_device *dev,
 	atomic_clear_int(&obj->pending_flip, 1 << intel_crtc->plane);
 	wakeup(&dev_priv->pending_flip_queue);
 
-	workq_queue_task(NULL, &work->task, 0, intel_unpin_work_fn, work, NULL);
+	task_add(taskq_systq(), &work->task);
 
 //	trace_i915_flip_complete(intel_crtc->plane, work->pending_flip_obj);
 }
@@ -7564,6 +7564,7 @@ static int intel_crtc_page_flip(struct drm_crtc *crtc,
 	work->event = event;
 	work->crtc = crtc;
 	work->old_fb_obj = to_intel_framebuffer(old_fb)->obj;
+	task_set(&work->task, intel_unpin_work_fn, work, NULL);
 
 	ret = drm_vblank_get(dev, intel_crtc->pipe);
 	if (ret)
@@ -9462,7 +9463,7 @@ void intel_modeset_gem_init(struct drm_device *dev)
 
 void intel_modeset_cleanup(struct drm_device *dev)
 {
-//	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc;
 	struct intel_crtc *intel_crtc;
 
@@ -9497,10 +9498,8 @@ void intel_modeset_cleanup(struct drm_device *dev)
 	/* Disable the irq before mode object teardown, for the irq might
 	 * enqueue unpin/hotplug work. */
 	drm_irq_uninstall(dev);
-#ifdef notyet
-	cancel_work_sync(&dev_priv->hotplug_work);
-	cancel_work_sync(&dev_priv->rps.work);
-#endif
+	task_del(taskq_systq(), &dev_priv->hotplug_task);
+	task_del(taskq_systq(), &dev_priv->rps.task);
 
 	/* flush any delayed tasks or pending work */
 #ifdef notyet

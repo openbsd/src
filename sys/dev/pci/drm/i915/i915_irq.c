@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.7 2013/08/13 10:23:50 jsg Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.8 2013/10/29 06:30:57 jsg Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -471,9 +471,7 @@ static void ivybridge_handle_parity_error(struct drm_device *dev)
 	I915_WRITE(GTIMR, dev_priv->gt_irq_mask);
 	mtx_leave(&dev_priv->irq_lock);
 
-	workq_queue_task(NULL, &dev_priv->l3_parity.error_task, 0,
-	    ivybridge_parity_work, dev_priv, NULL);
-	
+	task_add(taskq_systq(), &dev_priv->l3_parity.error_task);
 }
 
 static void snb_gt_irq_handler(struct drm_device *dev,
@@ -519,8 +517,7 @@ static void gen6_queue_rps_work(struct drm_i915_private *dev_priv,
 	POSTING_READ(GEN6_PMIMR);
 	mtx_leave(&dev_priv->rps.lock);
 
-	workq_queue_task(NULL, &dev_priv->rps.task, 0, gen6_pm_rps_work,
-	    dev_priv, NULL);
+	task_add(taskq_systq(), &dev_priv->rps.task);
 }
 
 static int valleyview_intr(void *arg)
@@ -581,8 +578,7 @@ static int valleyview_intr(void *arg)
 			DRM_DEBUG_DRIVER("hotplug event received, stat 0x%08x\n",
 					 hotplug_status);
 			if (hotplug_status & dev_priv->hotplug_supported_mask)
-				workq_queue_task(NULL, &dev_priv->hotplug_task,
-				    0, i915_hotplug_work_func, dev_priv, NULL);
+				task_add(taskq_systq(), &dev_priv->hotplug_task);
 
 			I915_WRITE(PORT_HOTPLUG_STAT, hotplug_status);
 			I915_READ(PORT_HOTPLUG_STAT);
@@ -609,8 +605,7 @@ static void ibx_irq_handler(struct drm_device *dev, u32 pch_iir)
 	int pipe;
 
 	if (pch_iir & SDE_HOTPLUG_MASK)
-		workq_queue_task(NULL, &dev_priv->hotplug_task, 0,
-		    i915_hotplug_work_func, dev_priv, NULL);
+		task_add(taskq_systq(), &dev_priv->hotplug_task);
 
 	if (pch_iir & SDE_AUDIO_POWER_MASK)
 		DRM_DEBUG_DRIVER("PCH audio power change on port %d\n",
@@ -653,8 +648,7 @@ static void cpt_irq_handler(struct drm_device *dev, u32 pch_iir)
 	int pipe;
 
 	if (pch_iir & SDE_HOTPLUG_MASK_CPT)
-		workq_queue_task(NULL, &dev_priv->hotplug_task, 0,
-		    i915_hotplug_work_func, dev_priv, NULL);
+		task_add(taskq_systq(), &dev_priv->hotplug_task);
 
 	if (pch_iir & SDE_AUDIO_POWER_MASK_CPT)
 		DRM_DEBUG_DRIVER("PCH audio power change on port %d\n",
@@ -1473,8 +1467,7 @@ void i915_handle_error(struct drm_device *dev, bool wedged)
 			wakeup(ring);
 	}
 
-	workq_queue_task(NULL, &dev_priv->error_task, 0,
-	    i915_error_work_func, dev_priv, NULL);
+	task_add(taskq_systq(), &dev_priv->error_task);
 }
 
 static void i915_pageflip_stall_check(struct drm_device *dev, int pipe)
@@ -2377,8 +2370,7 @@ static int i915_intr(void *arg)
 			DRM_DEBUG_DRIVER("hotplug event received, stat 0x%08x\n",
 				  hotplug_status);
 			if (hotplug_status & dev_priv->hotplug_supported_mask)
-				workq_queue_task(NULL, &dev_priv->hotplug_task,
-				    0, i915_hotplug_work_func, dev_priv, NULL);
+				task_add(taskq_systq(), &dev_priv->hotplug_task);
 
 			I915_WRITE(PORT_HOTPLUG_STAT, hotplug_status);
 			POSTING_READ(PORT_HOTPLUG_STAT);
@@ -2614,8 +2606,7 @@ static int i965_intr(void *arg)
 			DRM_DEBUG_DRIVER("hotplug event received, stat 0x%08x\n",
 				  hotplug_status);
 			if (hotplug_status & dev_priv->hotplug_supported_mask)
-				workq_queue_task(NULL, &dev_priv->hotplug_task,
-				    0, i915_hotplug_work_func, dev_priv, NULL);
+				task_add(taskq_systq(), &dev_priv->hotplug_task);
 
 			I915_WRITE(PORT_HOTPLUG_STAT, hotplug_status);
 			I915_READ(PORT_HOTPLUG_STAT);
@@ -2698,6 +2689,16 @@ static void i965_irq_uninstall(struct drm_device * dev)
 
 void intel_irq_init(struct drm_device *dev)
 {
+	struct drm_i915_private *dev_priv = dev->dev_private;
+
+	task_set(&dev_priv->hotplug_task, i915_hotplug_work_func,
+	    dev_priv, NULL);
+	task_set(&dev_priv->error_task, i915_error_work_func,
+	    dev_priv, NULL);
+	task_set(&dev_priv->rps.task, gen6_pm_rps_work,
+	    dev_priv, NULL);
+	task_set(&dev_priv->l3_parity.error_task, ivybridge_parity_work,
+	    dev_priv, NULL);
 
 	dev->driver->get_vblank_counter = i915_get_vblank_counter;
 	dev->max_vblank_count = 0xffffff; /* only 24 bits of frame count */

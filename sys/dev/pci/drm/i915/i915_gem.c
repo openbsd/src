@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.38 2013/10/26 20:31:48 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.39 2013/10/29 06:30:57 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -51,7 +51,7 @@
 #include <machine/pmap.h>
 
 #include <sys/queue.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 static void i915_gem_object_flush_gtt_write_domain(struct drm_i915_gem_object *obj);
 static void i915_gem_object_flush_cpu_write_domain(struct drm_i915_gem_object *obj);
@@ -3877,6 +3877,7 @@ i915_gem_idle(struct drm_device *dev)
 
 	/* Cancel the retire work handler, which should be idle now. */
 	timeout_del(&dev_priv->mm.retire_timer);
+	task_del(dev_priv->mm.retire_taskq, &dev_priv->mm.retire_task);
 
 	return 0;
 }
@@ -4172,6 +4173,8 @@ i915_gem_load(struct drm_device *dev)
 		init_ring_lists(&dev_priv->ring[i]);
 	for (i = 0; i < I915_MAX_NUM_FENCES; i++)
 		INIT_LIST_HEAD(&dev_priv->fence_regs[i].lru_list);
+	task_set(&dev_priv->mm.retire_task, i915_gem_retire_work_handler,
+	    dev_priv, NULL);
 	timeout_set(&dev_priv->mm.retire_timer, inteldrm_timeout, dev_priv);
 #if 0
 	init_completion(&dev_priv->error_completion);

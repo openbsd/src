@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.10 2013/08/13 10:23:52 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.11 2013/10/29 06:30:57 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -307,8 +307,7 @@ intel_fbc_work_tick(void *arg)
 {
 	struct intel_fbc_work *work = arg;
 
-	workq_queue_task(NULL, &work->task, 0,
-	    intel_fbc_work_fn, work, NULL);
+	task_add(taskq_systq(), &work->task);
 }
 
 static void intel_cancel_fbc_work(struct drm_i915_private *dev_priv)
@@ -322,7 +321,8 @@ static void intel_cancel_fbc_work(struct drm_i915_private *dev_priv)
 	 * dev_priv->fbc_work, so we can perform the cancellation
 	 * entirely asynchronously.
 	 */
-	if (timeout_del(&dev_priv->fbc_work->to))
+	timeout_del(&dev_priv->fbc_work->to);
+	if (task_del(taskq_systq(), &dev_priv->fbc_work->task))
 		/* tasklet was killed before being run, clean up */
 		free(dev_priv->fbc_work, M_DRM);
 
@@ -354,6 +354,7 @@ void intel_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 	work->crtc = crtc;
 	work->fb = crtc->fb;
 	work->interval = interval;
+	task_set(&work->task, intel_fbc_work_fn, work, NULL);
 	timeout_set(&work->to, intel_fbc_work_tick, work);
 
 	dev_priv->fbc_work = work;
@@ -3475,6 +3476,7 @@ void intel_disable_gt_powersave(struct drm_device *dev)
 		ironlake_disable_rc6(dev);
 	} else if (INTEL_INFO(dev)->gen >= 6 && !IS_VALLEYVIEW(dev)) {
 		timeout_del(&dev_priv->rps.delayed_resume_to);
+		task_del(taskq_systq(), &dev_priv->rps.delayed_resume_task);
 		rw_enter_write(&dev_priv->rps.hw_lock);
 		gen6_disable_rps(dev);
 		rw_exit_write(&dev_priv->rps.hw_lock);
@@ -3497,8 +3499,7 @@ intel_gen6_powersave_tick(void *arg)
 {
 	drm_i915_private_t *dev_priv = arg;
 
-	workq_queue_task(NULL, &dev_priv->rps.delayed_resume_task, 0,
-	    intel_gen6_powersave_work, dev_priv, NULL);
+	task_add(taskq_systq(), &dev_priv->rps.delayed_resume_task);
 }
 
 void intel_enable_gt_powersave(struct drm_device *dev)
@@ -4474,6 +4475,8 @@ void intel_gt_init(struct drm_device *dev)
 		dev_priv->gt.force_wake_get = __gen6_gt_force_wake_get;
 		dev_priv->gt.force_wake_put = __gen6_gt_force_wake_put;
 	}
+	task_set(&dev_priv->rps.delayed_resume_task, intel_gen6_powersave_work,
+	    dev_priv, NULL);
 	timeout_set(&dev_priv->rps.delayed_resume_to, intel_gen6_powersave_tick,
 	    dev_priv);
 }

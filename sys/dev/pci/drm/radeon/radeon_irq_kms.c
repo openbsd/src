@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_irq_kms.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_irq_kms.c,v 1.2 2013/10/29 06:30:57 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -250,6 +250,9 @@ radeon_msi_ok(struct radeon_device *rdev)
 int radeon_irq_kms_init(struct radeon_device *rdev)
 {
 	int r = 0;
+
+	task_set(&rdev->hotplug_task, radeon_hotplug_work_func, rdev, NULL);
+	task_set(&rdev->audio_task, r600_audio_update_hdmi, rdev, NULL);
 
 	mtx_init(&rdev->irq.lock, IPL_TTY);
 	r = drm_vblank_init(rdev->ddev, rdev->num_crtc);

@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.30 2013/10/05 07:30:05 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.31 2013/10/29 06:30:57 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -36,7 +36,7 @@
 #include "intel_bios.h"
 #include "intel_ringbuffer.h"
 
-#include <sys/workq.h>
+#include <sys/task.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
@@ -445,7 +445,7 @@ struct i915_suspend_saved_registers {
 };
 
 struct intel_gen6_power_mgmt {
-	struct workq_task task;
+	struct task task;
 	u32 pm_iir;
 	/* lock - irqsave spinlock that protectects the work_struct and
 	 * pm_iir. */
@@ -457,7 +457,7 @@ struct intel_gen6_power_mgmt {
 	u8 min_delay;
 	u8 max_delay;
 
-	struct workq_task delayed_resume_task;
+	struct task delayed_resume_task;
 	struct timeout delayed_resume_to;
 
 	/*
@@ -491,7 +491,7 @@ struct intel_ilk_power_mgmt {
 
 struct intel_l3_parity {
 	u32 *remap_info;
-	struct workq_task error_task;
+	struct task error_task;
 };
 
 /*
@@ -558,7 +558,6 @@ struct inteldrm_softc {
 			caddr_t			kva;
 		} i8xx;
 	}			 ifp;
-	struct workq		*workq;
 	struct vm_page		*pgs;
 
 	/* Protects user_irq_refcount and irq_mask reg */
@@ -576,7 +575,7 @@ struct inteldrm_softc {
 	u_int32_t		 pch_irq_mask;
 
 	u_int32_t		 hotplug_supported_mask;
-	struct workq_task	 hotplug_task;
+	struct task	 	 hotplug_task;
 
 	int			 num_pipe;
 	int			 num_pch_pll;
@@ -637,7 +636,7 @@ struct inteldrm_softc {
 	/* number of ioctls + faults in flight */
 	int			 entries;
 
-	struct workq_task error_task;
+	struct task error_task;
 
 	enum intel_pch pch_type;
 	unsigned short pch_id;
@@ -741,6 +740,10 @@ struct inteldrm_softc {
 		size_t mappable_gtt_total;
 		size_t object_memory;
 		u32 object_count;
+
+		/* for gem retire handler */
+		struct taskq *retire_taskq;
+		struct task retire_task;
 	} mm;
 
 	/* for hangcheck */

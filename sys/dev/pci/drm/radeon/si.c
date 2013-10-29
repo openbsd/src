@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.3 2013/09/01 10:39:38 jsg Exp $	*/
+/*	$OpenBSD: si.c,v 1.4 2013/10/29 06:30:57 jsg Exp $	*/
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -3991,8 +3991,7 @@ restart_ih:
 		rptr &= rdev->ih.ptr_mask;
 	}
 	if (queue_hotplug)
-		workq_queue_task(NULL, &rdev->hotplug_task, 0,
-		    radeon_hotplug_work_func, rdev, NULL);
+		task_add(taskq_systq(), &rdev->hotplug_task);
 	rdev->ih.rptr = rptr;
 	WREG32(IH_RB_RPTR, rdev->ih.rptr);
 	atomic_set(&rdev->ih.lock, 0);

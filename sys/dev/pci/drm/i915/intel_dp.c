@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_dp.c,v 1.8 2013/08/13 10:23:51 jsg Exp $	*/
+/*	$OpenBSD: intel_dp.c,v 1.9 2013/10/29 06:30:57 jsg Exp $	*/
 /*
  * Copyright © 2008 Intel Corporation
  *
@@ -1106,8 +1106,7 @@ ironlake_panel_vdd_tick(void *arg)
 {
 	struct intel_dp *intel_dp = arg;
 
-	workq_queue_task(NULL, &intel_dp->panel_vdd_task, 0,
-	    ironlake_panel_vdd_work, intel_dp, NULL);
+	task_add(taskq_systq(), &intel_dp->panel_vdd_task);
 }
 
 void ironlake_edp_panel_vdd_off(struct intel_dp *intel_dp, bool sync)
@@ -2521,6 +2520,7 @@ void intel_dp_encoder_destroy(struct drm_encoder *encoder)
 	drm_encoder_cleanup(encoder);
 	if (is_edp(intel_dp)) {
 		timeout_del(&intel_dp->panel_vdd_to);
+		task_del(taskq_systq(), &intel_dp->panel_vdd_task);
 		ironlake_panel_vdd_off_sync(intel_dp);
 	}
 	free(intel_dig_port, M_DRM);
@@ -2787,6 +2787,8 @@ intel_dp_init_connector(struct intel_digital_port *intel_dig_port,
 	connector->interlace_allowed = true;
 	connector->doublescan_allowed = 0;
 
+	task_set(&intel_dp->panel_vdd_task, ironlake_panel_vdd_work, intel_dp,
+	    NULL);
 	timeout_set(&intel_dp->panel_vdd_to, ironlake_panel_vdd_tick, intel_dp);
 
 	intel_connector_attach_encoder(intel_connector, intel_encoder);

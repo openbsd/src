@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_tiling.c,v 1.7 2013/08/13 10:23:49 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_tiling.c,v 1.8 2013/10/29 06:30:57 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -49,7 +49,7 @@
 #include <machine/pmap.h>
 
 #include <sys/queue.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 /** @file i915_gem_tiling.c
  *

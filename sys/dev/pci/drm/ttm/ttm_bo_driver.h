@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_driver.h,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_driver.h,v 1.2 2013/10/29 06:30:57 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 Vmware, Inc., Palo Alto, CA., USA
@@ -31,6 +31,7 @@
 #ifndef _TTM_BO_DRIVER_H_
 #define _TTM_BO_DRIVER_H_
 
+#include <sys/task.h>
 #include <dev/pci/drm/ttm/ttm_bo_api.h>
 #include <dev/pci/drm/ttm/ttm_memory.h>
 #include <dev/pci/drm/ttm/ttm_module.h>
@@ -567,7 +568,7 @@ struct ttm_bo_device {
 	 * Internal protection.
 	 */
 
-	struct workq_task task;
+	struct task task;
 	struct timeout to;
 
 	bool need_dma32;

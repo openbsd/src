@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon.h,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon.h,v 1.2 2013/10/29 06:30:57 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -539,7 +539,7 @@ void radeon_scratch_free(struct radeon_device *rdev, uint32_t reg);
  */
 
 struct radeon_unpin_work {
-	struct workq_task task;
+	struct task task;
 	struct radeon_device *rdev;
 	int crtc_id;
 	struct radeon_fence *fence;
@@ -1097,7 +1097,7 @@ struct radeon_pm {
 	/* selected pm method */
 	enum radeon_pm_method     pm_method;
 	/* dynpm power management */
-	struct workq_task	dynpm_idle_task;
+	struct task		dynpm_idle_task;
 	struct timeout		dynpm_idle_to;
 
 	enum radeon_dynpm_state	dynpm_state;
@@ -1648,8 +1648,8 @@ struct radeon_device {
 	int msi_enabled; /* msi enabled */
 	struct r600_ih ih; /* r6/700 interrupt ring */
 	struct si_rlc rlc;
-	struct workq_task hotplug_task;
-	struct workq_task audio_task;
+	struct task hotplug_task;
+	struct task audio_task;
 	int num_crtc; /* number of crtcs */
 	struct rwlock dc_hw_i2c_rwlock; /* display controller hw i2c rwlock */
 	bool audio_enabled;

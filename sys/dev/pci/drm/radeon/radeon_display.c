@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_display.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_display.c,v 1.2 2013/10/29 06:30:57 jsg Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -345,7 +345,7 @@ void radeon_crtc_handle_flip(struct radeon_device *rdev, int crtc_id)
 	drm_vblank_put(rdev->ddev, radeon_crtc->crtc_id);
 	radeon_fence_unref(&work->fence);
 	radeon_post_page_flip(work->rdev, work->crtc_id);
-	workq_queue_task(NULL, &work->task, 0, radeon_unpin_work_func, work, NULL);
+	task_add(taskq_systq(), &work->task);
 }
 
 static int radeon_crtc_page_flip(struct drm_crtc *crtc,
@@ -386,6 +386,8 @@ static int radeon_crtc_page_flip(struct drm_crtc *crtc,
 	if (rbo->tbo.sync_obj)
 		work->fence = radeon_fence_ref(rbo->tbo.sync_obj);
 	mtx_leave(&rbo->tbo.bdev->fence_lock);
+
+	task_set(&work->task, radeon_unpin_work_func, work, NULL);
 
 	/* We borrow the event spin lock for protecting unpin_work */
 	mtx_enter(&dev->event_lock);

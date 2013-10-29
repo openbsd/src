@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.h,v 1.1 2013/03/18 12:36:51 jsg Exp $	*/
+/*	$OpenBSD: drm_crtc.h,v 1.2 2013/10/29 06:30:57 jsg Exp $	*/
 /*
  * Copyright © 2006 Keith Packard
  * Copyright © 2007-2008 Dave Airlie
@@ -28,7 +28,7 @@
 
 #include <sys/types.h>
 #include <dev/i2c/i2cvar.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 #include "drm_mode.h"
 
 #include "drm_fourcc.h"
@@ -796,7 +796,7 @@ struct drm_mode_config {
 	bool poll_enabled;
 	bool poll_running;
 	struct timeout output_poll_to;
-	struct workq_task poll_task;
+	struct task poll_task;
 
 	/* pointers to standard properties */
 	struct list_head property_blob_list;

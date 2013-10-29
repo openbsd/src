@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc_helper.c,v 1.3 2013/09/02 06:25:27 jsg Exp $	*/
+/*	$OpenBSD: drm_crtc_helper.c,v 1.4 2013/10/29 06:30:57 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -1023,8 +1023,7 @@ drm_output_poll_tick(void *arg)
 {
 	struct drm_device *dev = arg;
 
-	workq_queue_task(NULL, &dev->mode_config.poll_task, 0,
-	    drm_output_poll_execute, dev, NULL);
+	task_add(taskq_systq(), &dev->mode_config.poll_task);
 }
 
 void drm_kms_helper_poll_disable(struct drm_device *dev)
@@ -1032,6 +1031,7 @@ void drm_kms_helper_poll_disable(struct drm_device *dev)
 	if (!dev->mode_config.poll_enabled)
 		return;
 	timeout_del(&dev->mode_config.output_poll_to);
+	task_del(taskq_systq(), &dev->mode_config.poll_task);
 }
 EXPORT_SYMBOL(drm_kms_helper_poll_disable);
 
@@ -1057,6 +1057,8 @@ EXPORT_SYMBOL(drm_kms_helper_poll_enable);
 
 void drm_kms_helper_poll_init(struct drm_device *dev)
 {
+	task_set(&dev->mode_config.poll_task, drm_output_poll_execute, dev,
+	    NULL);
 	timeout_set(&dev->mode_config.output_poll_to, drm_output_poll_tick,
 	    dev);
 	dev->mode_config.poll_enabled = true;

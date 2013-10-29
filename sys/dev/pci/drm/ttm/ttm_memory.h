@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_memory.h,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: ttm_memory.h,v 1.2 2013/10/29 06:30:57 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -28,6 +28,8 @@
 
 #ifndef TTM_MEMORY_H
 #define TTM_MEMORY_H
+
+#include <sys/task.h>
 
 /**
  * struct ttm_mem_shrink - callback to shrink TTM memory usage.
@@ -70,10 +72,8 @@ struct ttm_mem_zone;
 struct ttm_mem_global {
 	u_int kobj_ref;
 	struct ttm_mem_shrink *shrink;
-#ifdef notyet
-	struct workqueue_struct *swap_queue;
-#endif
-	struct workq_task task;
+	struct taskq *swap_queue;
+	struct task task;
 	bool task_queued;
 	struct mutex lock;
 	struct ttm_mem_zone *zones[TTM_MEM_MAX_ZONES];

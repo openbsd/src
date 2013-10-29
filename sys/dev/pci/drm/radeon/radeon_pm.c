@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_pm.c,v 1.2 2013/08/26 05:01:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_pm.c,v 1.3 2013/10/29 06:30:57 jsg Exp $	*/
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -442,6 +442,7 @@ radeon_set_pm_method(struct device *dev,
 		rdev->pm.pm_method = PM_METHOD_PROFILE;
 		rw_exit_write(&rdev->pm.rwlock);
 		timeout_del(&rdev->pm.dynpm_idle_to);
+		task_del(taskq_systq(), &rdev->pm.dynpm_idle_task);
 	} else {
 		count = -EINVAL;
 		goto fail;
@@ -572,6 +573,7 @@ void radeon_pm_suspend(struct radeon_device *rdev)
 	rw_exit_write(&rdev->pm.rwlock);
 
 	timeout_del(&rdev->pm.dynpm_idle_to);
+	task_del(taskq_systq(), &rdev->pm.dynpm_idle_task);
 }
 
 void radeon_pm_resume(struct radeon_device *rdev)
@@ -654,6 +656,8 @@ int radeon_pm_init(struct radeon_device *rdev)
 	if (ret)
 		return ret;
 
+	task_set(&rdev->pm.dynpm_idle_task, radeon_dynpm_idle_work_handler,
+	    rdev, NULL);
 	timeout_set(&rdev->pm.dynpm_idle_to, radeon_dynpm_idle_tick, rdev);
 
 	if (rdev->pm.num_power_states > 1) {
@@ -696,6 +700,7 @@ void radeon_pm_fini(struct radeon_device *rdev)
 		rw_exit_write(&rdev->pm.rwlock);
 
 		timeout_del(&rdev->pm.dynpm_idle_to);
+		task_del(taskq_systq(), &rdev->pm.dynpm_idle_task);
 
 #ifdef notyet
 		device_remove_file(rdev->dev, &dev_attr_power_profile);
@@ -739,6 +744,7 @@ void radeon_pm_compute_clocks(struct radeon_device *rdev)
 			if (rdev->pm.active_crtc_count > 1) {
 				if (rdev->pm.dynpm_state == DYNPM_STATE_ACTIVE) {
 					timeout_del(&rdev->pm.dynpm_idle_to);
+					task_del(taskq_systq(), &rdev->pm.dynpm_idle_task);
 
 					rdev->pm.dynpm_state = DYNPM_STATE_PAUSED;
 					rdev->pm.dynpm_planned_action = DYNPM_ACTION_DEFAULT;
@@ -765,6 +771,7 @@ void radeon_pm_compute_clocks(struct radeon_device *rdev)
 			} else { /* count == 0 */
 				if (rdev->pm.dynpm_state != DYNPM_STATE_MINIMUM) {
 					timeout_del(&rdev->pm.dynpm_idle_to);
+					task_del(taskq_systq(), &rdev->pm.dynpm_idle_task);
 
 					rdev->pm.dynpm_state = DYNPM_STATE_MINIMUM;
 					rdev->pm.dynpm_planned_action = DYNPM_ACTION_MINIMUM;
@@ -816,8 +823,7 @@ radeon_dynpm_idle_tick(void *arg)
 {
 	struct radeon_device *rdev = arg;
 
-	workq_queue_task(NULL, &rdev->pm.dynpm_idle_task, 0,
-	    radeon_dynpm_idle_work_handler, rdev, NULL);
+	task_add(taskq_systq(), &rdev->pm.dynpm_idle_task);
 }
 
 void

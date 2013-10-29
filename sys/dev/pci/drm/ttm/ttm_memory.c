@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_memory.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: ttm_memory.c,v 1.2 2013/10/29 06:30:57 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -362,11 +362,10 @@ ttm_mem_global_init(struct ttm_mem_global *glob)
 	struct ttm_mem_zone *zone;
 #endif
 
-	mtx_init(&glob->lock, IPL_NONE);
-#ifdef notyet
-	glob->swap_queue = create_singlethread_workqueue("ttm_swap");
-#endif
+	mtx_init(&glob->lock, IPL_TTY);
+	glob->swap_queue = taskq_create("ttm_swap", 1, IPL_TTY);
 	glob->task_queued = false;
+	task_set(&glob->task, ttm_shrink_work, glob, NULL);
 
 	refcount_init(&glob->kobj_ref, 1);
 
@@ -410,11 +409,8 @@ ttm_mem_global_release(struct ttm_mem_global *glob)
 	ttm_page_alloc_fini();
 	ttm_dma_page_alloc_fini();
 
-#ifdef notyet
-	flush_workqueue(glob->swap_queue);
-	destroy_workqueue(glob->swap_queue);
+	taskq_destroy(glob->swap_queue);
 	glob->swap_queue = NULL;
-#endif
 	for (i = 0; i < glob->num_zones; ++i) {
 		zone = glob->zones[i];
 		if (refcount_release(&zone->kobj_ref))
@@ -448,8 +444,7 @@ ttm_check_swapping(struct ttm_mem_global *glob)
 	mtx_leave(&glob->lock);
 
 	if (unlikely(needs_swapping))
-		workq_queue_task(NULL, &glob->task, 0, ttm_shrink_work, glob,
-		    NULL);
+		task_add(glob->swap_queue, &glob->task);
 }
 
 void
