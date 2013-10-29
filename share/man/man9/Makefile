@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.184 2013/09/20 15:34:52 mpi Exp $
+#	$OpenBSD: Makefile,v 1.185 2013/10/29 05:14:20 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -25,7 +25,7 @@ MAN=	altq.9 aml_evalnode.9 atomic.9 audio.9 autoconf.9 bio_register.9 \
 	route.9 rwlock.9 sensor_attach.9 \
 	shutdownhook_establish.9 tsleep.9 spl.9 startuphook_establish.9 \
 	socreate.9 sosplice.9 style.9 syscall.9 systrace.9 sysctl_int.9 \
-	tc_init.9 time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 \
+	task_add.9 tc_init.9 time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 \
 	usbd_transfer.9 \
 	vfs.9 vfs_busy.9 \
 	vfs_cache.9 vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 \
@@ -323,6 +323,10 @@ MLINKS+=sysctl_int.9 sysctl_int_arr.9 sysctl_int.9 sysctl_quad.9 \
 	sysctl_int.9 sysctl_struct.9 sysctl_int.9 ctlname.9
 MLINKS+=systrace.9 systrace_redirect.9 \
 	systrace.9 systrace_fork.9 systrace.9 systrace_exit.9
+MLINKS+=task_add.9 task_set.9 \
+	task_add.9 task_del.9 \
+	task_add.9 taskq_create.9 \
+	task_add.9 taskq_destroy.9
 MLINKS+=time.9 boottime.9 time.9 mono_time.9 time.9 runtime.9
 MLINKS+=timeout.9 timeout_add.9 timeout.9 timeout_set.9 \
 	timeout.9 timeout_pending.9 timeout.9 timeout_del.9 \
