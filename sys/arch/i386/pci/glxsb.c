@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.26 2013/08/25 22:50:04 mikeb Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.27 2013/10/29 21:44:50 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -32,7 +32,7 @@
 #include <sys/timeout.h>
 
 #include <machine/bus.h>
-#include <machine/pctr.h>
+#include <machine/cpufunc.h>
 
 #include <dev/rndvar.h>
 #include <dev/pci/pcivar.h>
@@ -398,15 +398,25 @@ glxsb_crypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 		case CRYPTO_AES_CBC:
 
 			if (c->cri_klen != 128) {
-				swd = malloc(sizeof(struct swcr_data), M_CRYPTO_DATA,
-				    M_NOWAIT|M_ZERO);
+				swd = malloc(sizeof(struct swcr_data),
+				    M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
 				if (swd == NULL) {
 					glxsb_crypto_freesession(sesn);
 					return (ENOMEM);
 				}
 				ses->ses_swd_enc = swd;
 				txf = &enc_xform_rijndael128;
-				if (txf->setkey(&(swd->sw_kschedule), c->cri_key,
+				if (txf->ctxsize > 0) {
+					swd->sw_kschedule =
+					    malloc(txf->ctxsize,
+						M_CRYPTO_DATA,
+						M_NOWAIT|M_ZERO);
+					if (swd->sw_kschedule == NULL) {
+						glxsb_crypto_freesession(sesn);
+						return (EINVAL);
+					}
+				}
+				if (txf->setkey(swd->sw_kschedule, c->cri_key,
 				    c->cri_klen / 8) < 0) {
 					glxsb_crypto_freesession(sesn);
 					return (EINVAL);
