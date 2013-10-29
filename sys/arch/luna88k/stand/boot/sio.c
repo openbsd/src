@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.1 2013/10/28 22:13:13 miod Exp $	*/
+/*	$OpenBSD: sio.c,v 1.2 2013/10/29 18:51:37 miod Exp $	*/
 /*	$NetBSD: sio.c,v 1.3 2013/01/21 11:58:12 tsutsui Exp $	*/
 
 /*
@@ -88,12 +88,6 @@ struct rcvbuf	rcvbuf[NSIO];
 
 int	sioconsole = -1;
 struct	siodevice *sio_addr[2];
-int	cur_unit;
-
-
-#define	siounit(x)	( x & 0xffff )
-#define isprint(c)      ((c >= 0x20) && (c < 0x7F) ? 1 : 0)
-
 
 void
 _siointr(void)
@@ -153,14 +147,14 @@ siocnprobe(struct consdev *cp)
 	/* locate the major number */
 
 	/* initialize required fields */
-	cp->cn_dev = cur_unit = 0;
+	cp->cn_dev = 0;
 	cp->cn_pri = CN_LOWPRI;
 }
 
 void
 siocninit(struct consdev *cp)
 {
-	int unit = siounit(cp->cn_dev);
+	int unit = cp->cn_dev;
 
 	sioinit();
 	sioconsole = unit;
@@ -169,7 +163,7 @@ siocninit(struct consdev *cp)
 int
 siocngetc(dev_t dev)
 {
-	int c, unit = siounit(dev);
+	int c, unit = dev;
 
 	_siointr();
 	if (RBUF_EMPTY(unit))
@@ -183,7 +177,7 @@ siocngetc(dev_t dev)
 void
 siocnputc(dev_t dev, int c)
 {
-	int unit = siounit(dev);
+	int unit = dev;
 
 	if (sioconsole == -1) {
 		(void) sioinit();

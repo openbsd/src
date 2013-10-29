@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.1 2013/10/28 22:13:12 miod Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.2 2013/10/29 18:51:37 miod Exp $	*/
 /*	$NetBSD: init_main.c,v 1.6 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -121,7 +121,6 @@ main(void)
 {
 	int i, status = 0;
 	const char *machstr;
-	int netboot = 0;
 	int unit, part;
 
 	/* Determine the machine type from FUSE ROM data.  */
@@ -170,7 +169,7 @@ main(void)
 	unit = 0;	/* XXX should parse monitor's Boot-file constant */
 	part = 0;
 	snprintf(default_file, sizeof(default_file),
-	    "%s(%d,%d)%s", netboot ? "le" : "sd", unit, part, "bsd");
+	    "sd(%d,%d)%s", unit, part, "bsd");
 
 	/* auto-boot? (SW1) */
 	if ((dipswitch & 0x8000) != 0) {

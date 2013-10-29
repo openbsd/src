@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioconf.c,v 1.1 2013/10/28 22:13:12 miod Exp $	*/
+/*	$OpenBSD: ioconf.c,v 1.2 2013/10/29 18:51:37 miod Exp $	*/
 /*	$NetBSD: ioconf.c,v 1.3 2013/01/14 01:37:57 tsutsui Exp $	*/
 
 /*
@@ -75,10 +75,6 @@
 #include <luna88k/stand/boot/samachdep.h>
 #include <luna88k/stand/boot/device.h>
 
-
-#define C (void *)
-#define D (struct driver *)
-
 extern struct driver scdriver;
 extern struct driver sddriver;
 extern struct driver ledriver;
@@ -86,20 +82,20 @@ extern struct driver stdriver;
 
 struct hp_ctlr hp_cinit[] = {
 /*	driver,		unit,	alive,	addr,	flags */
-	{ &scdriver,	0,	0,	C 0x0,	0x0 },
-	{ &scdriver,	1,	0,	C 0x0,	0x0 },
+	{ &scdriver,	0,	0,	NULL,	0x0 },
+	{ &scdriver,	1,	0,	NULL,	0x0 },
 	{0},
 };
 
 struct hp_device hp_dinit[] = {
-/*driver,	cdriver,	unit,	ctlr,	slave,	addr,	dk,	flags*/
-{ &sddriver,	&scdriver,	0,	0,	6,	C 0x0,	1,	0x0 },
-{ &sddriver,	&scdriver,	1,	0,	5,	C 0x0,	1,	0x0 },
-{ &sddriver,	&scdriver,	2,	1,	6,	C 0x0,	1,	0x0 },
-{ &sddriver,	&scdriver,	3,	1,	5,	C 0x0,	1,	0x0 },
-{ &ledriver,	NULL,		0,	0,	0,	C 0x0,	0,	0x0 },
+/*driver,	cdriver,	unit,	ctlr,	slave */
+{ &sddriver,	&scdriver,	0,	0,	6 },
+{ &sddriver,	&scdriver,	1,	0,	5 },
+{ &sddriver,	&scdriver,	2,	1,	6 },
+{ &sddriver,	&scdriver,	3,	1,	5 },
+{ &ledriver,	NULL,		0,	0,	0 },
 #ifdef notyet
-{ &stdriver,	&scdriver,	0,	0,	4,	C 0x0,	0,	0x0 },
+{ &stdriver,	&scdriver,	0,	0,	4 },
 #endif
 {0}
 };

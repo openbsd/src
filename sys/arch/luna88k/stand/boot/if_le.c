@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.1 2013/10/28 22:13:12 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.2 2013/10/29 18:51:37 miod Exp $	*/
 /* $NetBSD: if_le.c,v 1.3 2013/01/22 15:48:40 tsutsui Exp $ */
 
 /*
@@ -117,19 +117,19 @@ leinit(void *arg)
 	void *reg, *mem;
 	uint8_t eaddr[6];
 
-	reg = hd->hp_addr;
+	reg = hd->hpd_addr;
 	mem = (void *)0x71010000;	/* XXX */
 
 	myetheraddr(eaddr);
 
-	cookie = lance_attach(hd->hp_unit, reg, mem, eaddr);
+	cookie = lance_attach(hd->hpd_unit, reg, mem, eaddr);
 	if (cookie == NULL)
 		return 0;
 
 	printf("%s%d: Am7990 LANCE Ethernet, mem at 0x%x\n",
-	    hd->hp_driver->d_name, hd->hp_unit, (uint32_t)mem);
+	    hd->hpd_driver->d_name, hd->hpd_unit, (uint32_t)mem);
 	printf("%s%d: Ethernet address = %s\n",
-	    hd->hp_driver->d_name, hd->hp_unit,
+	    hd->hpd_driver->d_name, hd->hpd_unit,
 	    ether_sprintf(eaddr));
 
 	return 1;

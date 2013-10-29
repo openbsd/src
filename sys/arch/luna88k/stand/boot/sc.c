@@ -1,4 +1,4 @@
-/*	$OpenBSD: sc.c,v 1.1 2013/10/28 22:13:13 miod Exp $	*/
+/*	$OpenBSD: sc.c,v 1.2 2013/10/29 18:51:37 miod Exp $	*/
 /*	$NetBSD: sc.c,v 1.4 2013/01/22 15:48:40 tsutsui Exp $	*/
 
 /*
@@ -87,15 +87,16 @@
 
 #define SCSI_ID		7
 
-static int scinit(void *);
-static void screset(int);
-static int issue_select(struct scsidevice *, u_char);
-static void ixfer_start(struct scsidevice *, int, u_char, int);
-static void ixfer_out(struct scsidevice *, int, u_char *);
-static void ixfer_in(struct scsidevice *, int, u_char *);
-static int scrun(int, int, u_char *, int, u_char *, int, volatile int *);
-static int scfinish(int);
-static void scabort(struct scsi_softc *, struct scsidevice *);
+int scinit(void *);
+int scintr(void);
+void screset(int);
+int issue_select(struct scsidevice *, u_char);
+void ixfer_start(struct scsidevice *, int, u_char, int);
+void ixfer_out(struct scsidevice *, int, u_char *);
+void ixfer_in(struct scsidevice *, int, u_char *);
+int scrun(int, int, u_char *, int, u_char *, int, volatile int *);
+int scfinish(int);
+void scabort(struct scsi_softc *, struct scsidevice *);
 
 struct	driver scdriver = {
 	scinit, "sc"
@@ -190,10 +191,10 @@ issue_select(struct scsidevice *hd, u_char target)
 	hd->scsi_pctl = 0;
 	hd->scsi_temp = (1 << SCSI_ID) | (1 << target);
 
-	/* select timeout is hardcoded to 2ms */
-	hd->scsi_tch = 0;
-	hd->scsi_tcm = 32;
-	hd->scsi_tcl = 4;
+	/* select timeout is hardcoded to 250ms */
+	hd->scsi_tch = 2;
+	hd->scsi_tcm = 113;
+	hd->scsi_tcl = 3;
 
 	hd->scsi_scmd = SCMD_SELECT;
 
@@ -253,8 +254,14 @@ int
 scrun(int ctlr, int slave, u_char *cdb, int cdblen, u_char *buf, int len,
     volatile int *lock)
 {
-	struct scsi_softc *hs = &scsi_softc[ctlr];
-	struct scsidevice *hd = (struct scsidevice *) hs->sc_hc->hp_addr;
+	struct scsi_softc *hs;
+	struct scsidevice *hd;
+
+	if (ctlr < 0 || ctlr >= NSC)
+		return 0;
+
+	hs = &scsi_softc[ctlr];
+	hd = (struct scsidevice *)hs->sc_hc->hp_addr;
 
 	if (hd->scsi_ssts & (SSTS_INITIATOR|SSTS_TARGET|SSTS_BUSY))
 		return(0);
@@ -387,8 +394,8 @@ scsi_test_unit_rdy(int ctlr, int slave, int unit)
 	}
 
 	while ((lock == SC_IN_PROGRESS) || (lock == SC_DISCONNECTED)) {
-		scintr();
-		DELAY(10);
+		if (scintr())
+			DELAY(10);
 	}
 
 	status = scfinish(ctlr);
@@ -433,8 +440,8 @@ scsi_request_sense(int ctlr, int slave, int unit, u_char *buf, unsigned int len)
 	}
 
 	while ((lock == SC_IN_PROGRESS) || (lock == SC_DISCONNECTED)) {
-		scintr();
-		DELAY(10);
+		if (scintr())
+			DELAY(10);
 	}
 
 	status = scfinish(ctlr);
@@ -471,8 +478,8 @@ scsi_immed_command(int ctlr, int slave, int unit, struct scsi_fmt_cdb *cdb,
 	}
 
 	while ((lock == SC_IN_PROGRESS) || (lock == SC_DISCONNECTED)) {
-		scintr();
-		DELAY(10);
+		if (scintr())
+			DELAY(10);
 	}
 
 	status = scfinish(ctlr);

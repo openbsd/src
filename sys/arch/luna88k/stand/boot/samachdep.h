@@ -1,4 +1,4 @@
-/*	$OpenBSD: samachdep.h,v 1.1 2013/10/28 22:13:13 miod Exp $	*/
+/*	$OpenBSD: samachdep.h,v 1.2 2013/10/29 18:51:37 miod Exp $	*/
 /*	$NetBSD: samachdep.h,v 1.10 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ int atoi(char *);
 int badaddr(void *, int);
 
 /* font.c */
-extern u_short bmdfont[][20];
+extern const u_short bmdfont[][20];
 
 /* getline.c */
 int getline(char *, char *);
@@ -141,7 +141,6 @@ int scsi_immed_command(int, int, int, struct scsi_fmt_cdb *, u_char *,
     unsigned int);
 int scsi_request_sense(int, int, int, u_char *, unsigned int);
 int scsi_test_unit_rdy(int, int, int);
-int scintr(void);
 
 /* sd.c */
 int sdstrategy(void *, int, daddr32_t, size_t, void *, size_t *);

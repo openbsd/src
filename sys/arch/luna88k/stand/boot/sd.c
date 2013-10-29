@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.1 2013/10/28 22:13:13 miod Exp $	*/
+/*	$OpenBSD: sd.c,v 1.2 2013/10/29 18:51:37 miod Exp $	*/
 /*	$NetBSD: sd.c,v 1.5 2013/01/22 15:48:40 tsutsui Exp $	*/
 
 /*
@@ -90,15 +90,12 @@ struct	disklabel sdlabel[NSD];
 
 struct	sd_softc {
 	struct	hp_device *sc_hd;
-	struct	devqueue sc_dq;
-	int	sc_format_pid;	/* process using "format" mode */
 	short	sc_flags;
 	short	sc_type;	/* drive type */
 	short	sc_punit;	/* physical unit (scsi lun) */
 	u_short	sc_bshift;	/* convert device blocks to DEV_BSIZE blks */
 	u_int	sc_blks;	/* number of blocks on device */
 	int	sc_blksize;	/* device block size in bytes */
-	u_int	sc_wpms;	/* average xfer rate in 16 bit wds/sec. */
 };
 
 struct sd_devdata {
@@ -106,8 +103,8 @@ struct sd_devdata {
 	int	part;		/* partition */
 };
 
-static int sdinit(void *);
-static int sdident(struct sd_softc *, struct hp_device *);
+int sdinit(void *);
+int sdident(struct sd_softc *, struct hp_device *);
 
 struct	driver sddriver = {
 	sdinit, "sd"
@@ -121,7 +118,6 @@ struct sd_devdata sd_devdata[NSD];
 
 #define	sdunit(x)	((minor(x) >> 3) & 0x7)
 #define sdpart(x)	(minor(x) & 0x7)
-#define	sdpunit(x)	((x) & 7)
 
 static struct scsi_inquiry inqbuf;
 static struct scsi_fmt_cdb inq = {
@@ -144,8 +140,8 @@ sdident(struct sd_softc *sc, struct hp_device *hd)
 	int i;
 	int tries = 10;
 
-	ctlr = hd->hp_ctlr;
-	slave = hd->hp_slave;
+	ctlr = hd->hpd_ctlr;
+	slave = hd->hpd_slave;
 	unit = sc->sc_punit;
 
 	/*
@@ -197,7 +193,7 @@ sdident(struct sd_softc *sc, struct hp_device *hd)
 		if (idstr[i] != ' ')
 			break;
 	idstr[i+1] = 0;
-	printf("sd%d: %s %s rev %s", hd->hp_unit, idstr, &idstr[8],
+	printf("sd%d: %s %s rev %s", hd->hpd_unit, idstr, &idstr[8],
 	       &idstr[24]);
 
 	printf(", %d bytes/sect x %d sectors\n", sc->sc_blksize, sc->sc_blks);
@@ -211,7 +207,6 @@ sdident(struct sd_softc *sc, struct hp_device *hd)
 			++sc->sc_bshift;
 		sc->sc_blks <<= sc->sc_bshift;
 	}
-	sc->sc_wpms = 32 * (60 * DEV_BSIZE / 2);	/* XXX */
 	return(inqbuf.type);
 }
 
@@ -219,17 +214,17 @@ int
 sdinit(void *arg)
 {
 	struct hp_device *hd = arg;
-	struct sd_softc *sc = &sd_softc[hd->hp_unit];
+	struct sd_softc *sc = &sd_softc[hd->hpd_unit];
 	struct disklabel *lp;
 	char *msg;
 
 #ifdef DEBUG
-	printf("sdinit: hd->hp_unit = %d\n", hd->hp_unit);
-	printf("sdinit: hd->hp_ctlr = %d, hd->hp_slave = %d\n",
-	       hd->hp_ctlr, hd->hp_slave);
+	printf("sdinit: hd->hpd_unit = %d\n", hd->hpd_unit);
+	printf("sdinit: hd->hpd_ctlr = %d, hd->hpd_slave = %d\n",
+	       hd->hpd_ctlr, hd->hpd_slave);
 #endif
 	sc->sc_hd = hd;
-	sc->sc_punit = sdpunit(hd->hp_flags);
+	sc->sc_punit = 0;	/* XXX no LUN support yet */
 	sc->sc_type = sdident(sc, hd);
 	if (sc->sc_type < 0)
 		return(0);
@@ -238,7 +233,7 @@ sdinit(void *arg)
 	 * Use the default sizes until we've read the label,
 	 * or longer if there isn't one there.
 	 */
-	lp = &sdlabel[hd->hp_unit];
+	lp = &sdlabel[hd->hpd_unit];
 
 	if (lp->d_secpercyl == 0) {
 		lp->d_secsize = DEV_BSIZE;
@@ -253,9 +248,9 @@ sdinit(void *arg)
 	/*
 	 * read disklabel
 	 */
-	msg = readdisklabel(hd->hp_ctlr, hd->hp_slave, lp);
+	msg = readdisklabel(hd->hpd_ctlr, hd->hpd_slave, lp);
 	if (msg != NULL)
-		printf("sd%d: %s\n", hd->hp_unit, msg);
+		printf("sd%d: %s\n", hd->hpd_unit, msg);
 
 	sc->sc_flags = SDF_ALIVE;
 	return(1);
@@ -329,8 +324,8 @@ sdstrategy(void *devdata, int func, daddr32_t dblk, size_t size, void *v_buf,
 	if (unit < 0 || unit >= NSD)
 		return(-1);
 
-	ctlr  = sc->sc_hd->hp_ctlr;
-	slave = sc->sc_hd->hp_slave;
+	ctlr  = sc->sc_hd->hpd_ctlr;
+	slave = sc->sc_hd->hpd_slave;
 
 	lp = &sdlabel[unit];
 	blk = dblk + (lp->d_partitions[part].p_offset >> sc->sc_bshift);

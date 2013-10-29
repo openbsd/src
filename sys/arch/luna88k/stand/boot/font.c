@@ -1,4 +1,4 @@
-/*	$OpenBSD: font.c,v 1.1 2013/10/28 22:13:12 miod Exp $	*/
+/*	$OpenBSD: font.c,v 1.2 2013/10/29 18:51:37 miod Exp $	*/
 /*	$NetBSD: font.c,v 1.2 2013/01/20 13:35:43 tsutsui Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/param.h>
 
-u_short bmdfont[][20] = {
+const u_short bmdfont[][20] = {
 	{			/* 0x00 */
 		0x0000,		/* ---------------- */
 		0x0000,		/* ---------------- */
