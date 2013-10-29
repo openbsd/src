@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_cond_timedwait.c,v 1.5 2003/11/27 19:38:19 marc Exp $	*/
+/*	$OpenBSD: pthread_cond_timedwait.c,v 1.6 2013/10/29 02:56:15 jsg Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -98,8 +98,8 @@ main(int argc, char *argv[])
 			/* expected behaviour */
 			CHECKe(gettimeofday(&endtime, NULL));
 			timersub(&endtime, &begtime, &endtime);
-			printf("Got timeout %d in %ld.%06ld seconds\n", ix,
-			       endtime.tv_sec, endtime.tv_usec);
+			printf("Got timeout %d in %lld.%06ld seconds\n", ix,
+			       (long long)endtime.tv_sec, endtime.tv_usec);
 			break;
 		default:
 			DIE(ret, "pthread_cond_timedwait");
