@@ -1,4 +1,4 @@
-.\"	$OpenBSD: task_add.9,v 1.2 2013/10/29 04:35:46 dlg Exp $
+.\"	$OpenBSD: task_add.9,v 1.3 2013/10/29 07:57:57 jmc Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -126,12 +126,12 @@ was added to the taskq or 0 if it was already on the taskq.
 will remove the task structure
 .Fa t
 from the taskq
-.Ta tq .
+.Fa tq .
 If the work was already executed or has not been added to the taskq,
 the call will have no effect.
 Calling
 .Fn task_del
-for gainst a different taskq than the one given in a previous call to
+against a different taskq than the one given in a previous call to
 .Fn task_add
 is an error and will lead to undefined behaviour.
 If the work was actually removed from the taskq it will return 1, otherwise 0.
