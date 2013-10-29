@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.190 2013/08/26 01:59:22 dlg Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.191 2013/10/29 04:23:16 dlg Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -75,6 +75,7 @@
 #include <sys/mbuf.h>
 #include <sys/pipe.h>
 #include <sys/workq.h>
+#include <sys/task.h>
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -148,6 +149,7 @@ void	crypto_init(void);
 void	init_exec(void);
 void	kqueue_init(void);
 void	workq_init(void);
+void	taskq_init(void);
 
 extern char sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
@@ -340,6 +342,7 @@ main(void *framep)
 
 	/* Initialize work queues */
 	workq_init();
+	taskq_init();
 
 	random_start();
 
