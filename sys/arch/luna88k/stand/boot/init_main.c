@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.2 2013/10/29 18:51:37 miod Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.3 2013/10/29 21:49:07 miod Exp $	*/
 /*	$NetBSD: init_main.c,v 1.6 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ char *argv[MAXARGS];
 #define BOOT_TIMEOUT 5
 int boot_timeout = BOOT_TIMEOUT;
 
-char  prompt[16] = "boot> ";
+static const char prompt[] = "boot> ";
 
 int debug;
 
@@ -119,7 +119,7 @@ char fuse_rom_data[FUSE_ROM_BYTES];
 int
 main(void)
 {
-	int i, status = 0;
+	int status = ST_NORMAL;
 	const char *machstr;
 	int unit, part;
 
@@ -134,10 +134,10 @@ main(void)
 	 * Initialize the console before we print anything out.
 	 */
 	if (machtype == LUNA_88K) {
-		machstr  = "LUNA-88K";
+		machstr  = "luna88k";
 		cpuspeed = MHZ_25;
 	} else {
-		machstr  = "LUNA88K-2";
+		machstr  = "luna88k-2";
 		cpuspeed = MHZ_33;
 	}
 
@@ -145,14 +145,7 @@ main(void)
 
 	cninit();
 
-	printf("\nOpenBSD/luna88k boot 0.1\n");
-
-	i = *((int *)0x1104);
-	printf("Machine model   = %s\n", machstr);
-	printf("Physical Memory = 0x%x  ", i);
-	i >>= 20;
-	printf("(%d MB)\n", i);
-	printf("\n");
+	printf("\nOpenBSD/%s boot 0.2\n\n", machstr);
 
 	/*
 	 * IO configuration
@@ -161,10 +154,6 @@ main(void)
 #ifdef SUPPORT_ETHERNET
 	try_bootp = 1;
 #endif
-
-	find_devs();
-	configure();
-	printf("\n");
 
 	unit = 0;	/* XXX should parse monitor's Boot-file constant */
 	part = 0;
@@ -198,11 +187,11 @@ main(void)
 
 			status = parse(argc, argv);
 			if (status == ST_NOTFOUND)
-				printf("Command \"%s\" is not found !!\n", argv[0]);
+				printf("unknown command \"%s\"\n", argv[0]);
 		}
-	} while(status != ST_EXIT);
+	} while (status != ST_EXIT);
 
-	exit();
+	_rtt();
 	/* NOTREACHED */
 }
 
@@ -238,7 +227,7 @@ get_fuse_rom_data(void)
 void
 _rtt(void)
 {
-	*(volatile unsigned int *)0x6d000010 = 0;
+	*(volatile unsigned int *)RESET_CPU_ALL = 0;
 	for (;;) ;
 	/* NOTREACHED */
 }

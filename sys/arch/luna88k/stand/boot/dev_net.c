@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_net.c,v 1.1 2013/10/28 22:13:12 miod Exp $	*/
+/*	$OpenBSD: dev_net.c,v 1.2 2013/10/29 21:49:07 miod Exp $	*/
 /*	$NetBSD: dev_net.c,v 1.26 2011/07/17 20:54:52 joerg Exp $	*/
 
 /*-
@@ -71,6 +71,10 @@ static int netdev_sock = -1;
 static int netdev_opens;
 
 static int net_getparams(int);
+
+#ifdef DEBUG
+int debug;
+#endif
 
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.

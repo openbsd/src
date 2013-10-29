@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2013/10/28 22:13:12 miod Exp $
+#	$OpenBSD: Makefile,v 1.2 2013/10/29 21:49:07 miod Exp $
 #	$NetBSD: Makefile,v 1.9 2013/01/22 15:48:40 tsutsui Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
@@ -23,7 +23,7 @@ LINKFORMAT=	-static -N -Ttext ${TEXTADDR} -T ${LDSCRIPT} \
 		--warn-common -nopie
 
 SRCS=	locore.S
-SRCS+=	init_main.c autoconf.c ioconf.c
+SRCS+=	init_main.c
 SRCS+=	fault.c setjmp.S
 SRCS+=	bcd.c
 SRCS+=	devopen.c

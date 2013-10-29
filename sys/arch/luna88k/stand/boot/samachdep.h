@@ -1,4 +1,4 @@
-/*	$OpenBSD: samachdep.h,v 1.2 2013/10/29 18:51:37 miod Exp $	*/
+/*	$OpenBSD: samachdep.h,v 1.3 2013/10/29 21:49:07 miod Exp $	*/
 /*	$NetBSD: samachdep.h,v 1.10 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -35,13 +35,8 @@
 #include <sys/param.h>
 #include <lib/libsa/stand.h>
 
-#define	NSCSI		2
-#define NSD		8
-
 #define MHZ_25		25
 #define MHZ_33		33
-
-#define MAXDEVNAME	16
 
 struct consdev;
 typedef struct label_t {
@@ -85,10 +80,6 @@ void cninit(void);
 int cngetc(void);
 void cnputc(int);
 
-/* devopen.c */
-extern	u_int opendev;
-int atoi(char *);
-
 /* fault.c */
 int badaddr(void *, int);
 
@@ -96,10 +87,7 @@ int badaddr(void *, int);
 extern const u_short bmdfont[][20];
 
 /* getline.c */
-int getline(char *, char *);
-
-/* if_le.c */
-int leinit(void *);
+int getline(const char *, char *);
 
 /* init_main.c */
 extern int cpuspeed;
@@ -112,8 +100,8 @@ extern char fuse_rom_data[];
 int kbd_decode(u_char);
 
 /* lance.c */
-void *lance_attach(int, void *, void *, uint8_t *);
-void *lance_cookie(int);
+void *lance_attach(uint, void *, void *, uint8_t *);
+void *lance_cookie(uint);
 uint8_t *lance_eaddr(void *);
 int lance_init(void *);
 int lance_get(void *, void *, size_t);
@@ -136,11 +124,13 @@ int parse(int, char **);
 int getargs(char *, char **, int);
 
 /* sc.c */
-struct scsi_fmt_cdb;
-int scsi_immed_command(int, int, int, struct scsi_fmt_cdb *, u_char *,
-    unsigned int);
-int scsi_request_sense(int, int, int, u_char *, unsigned int);
-int scsi_test_unit_rdy(int, int, int);
+struct scsi_softc;
+int scinit(struct scsi_softc *, uint);
+struct scsi_generic_cdb;
+int scsi_immed_command(struct scsi_softc *, int, int, struct scsi_generic_cdb *,
+    u_char *, unsigned int);
+int scsi_request_sense(struct scsi_softc *, int, int, u_char *, unsigned int);
+int scsi_test_unit_rdy(struct scsi_softc *, int, int);
 
 /* sd.c */
 int sdstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
@@ -156,7 +146,7 @@ void siocnputc(dev_t, int);
 void sioinit(void);
 
 /* ufs_disklabel.c */
-char *readdisklabel(int, int, struct disklabel *);
+char *readdisklabel(struct scsi_softc *, uint, struct disklabel *);
 
 #define DELAY(n)	delay(n)
 

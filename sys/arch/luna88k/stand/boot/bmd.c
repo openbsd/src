@@ -1,4 +1,4 @@
-/*	$OpenBSD: bmd.c,v 1.3 2013/10/29 18:51:37 miod Exp $	*/
+/*	$OpenBSD: bmd.c,v 1.4 2013/10/29 21:49:07 miod Exp $	*/
 /*	$NetBSD: bmd.c,v 1.2 2013/01/20 13:35:43 tsutsui Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
 
 
 #include <sys/param.h>
+#include <machine/board.h>
 #include <luna88k/stand/boot/samachdep.h>
 
 /*
@@ -279,8 +280,8 @@ bmd_escape_1(int c)
 void
 bmdinit(void)
 {
-	volatile uint32_t *bmd_rfcnt = (uint32_t *) 0xB1000000;
-	volatile long *bmd_bmsel = (long *)0xB1040000;
+	volatile uint32_t *bmd_rfcnt = (volatile uint32_t *)BMAP_RFCNT;
+	volatile long *bmd_bmsel = (volatile long *)BMAP_BMSEL;
 	struct bmd_softc *bp = &bmd_softc;
 	struct bmd_linec *bq;
 	int i;
@@ -290,8 +291,8 @@ bmdinit(void)
 	 *  adjust plane position
 	 */
 
-	bp->bc_raddr = (char *) 0xB10C0008;		/* plane-0 hardware address */
-	bp->bc_waddr = (char *) 0xB1080008;		/* common bitmap hardware address */
+	bp->bc_raddr = (char *)(BMAP_BMAP0 + 8);	/* plane-0 hardware address */
+	bp->bc_waddr = (char *)(BMAP_BMP + 8);		/* common bitmap hardware address */
 	rfcnt.p.rfc_hcnt = 7;				/* shift left   16 dot */
 	rfcnt.p.rfc_vcnt = -27;				/* shift down    1 dot */
 	*bmd_rfcnt = rfcnt.u;
@@ -333,7 +334,7 @@ bmdinit(void)
 void
 bmdadjust(short hcnt, short vcnt)
 {
-	volatile uint32_t *bmd_rfcnt = (uint32_t *) 0xB1000000;
+	volatile uint32_t *bmd_rfcnt = (volatile uint32_t *)BMAP_RFCNT;
 	union bmd_rfcnt rfcnt;
 
 	printf("bmdadjust: hcnt = %d, vcnt = %d\n", hcnt, vcnt);

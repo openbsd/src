@@ -1,4 +1,4 @@
-/*	$OpenBSD: getline.c,v 1.1 2013/10/28 22:13:12 miod Exp $	*/
+/*	$OpenBSD: getline.c,v 1.2 2013/10/29 21:49:07 miod Exp $	*/
 /*	$NetBSD: getline.c,v 1.2 2013/01/20 07:32:45 tsutsui Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
 #include <luna88k/stand/boot/samachdep.h>
 
 int
-getline(char *prompt, char *buff)
+getline(const char *prompt, char *buff)
 {
 	int c;
 	char *p = buff;

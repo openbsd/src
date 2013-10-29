@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.2 2013/10/29 18:51:37 miod Exp $	*/
+/*	$OpenBSD: sio.c,v 1.3 2013/10/29 21:49:07 miod Exp $	*/
 /*	$NetBSD: sio.c,v 1.3 2013/01/21 11:58:12 tsutsui Exp $	*/
 
 /*
@@ -76,6 +76,7 @@
 #define NSIO 2
 
 #include <sys/param.h>
+#include <machine/board.h>
 #include <luna88k/stand/boot/samachdep.h>
 #include <luna88k/stand/boot/sioreg.h>
 #include <luna88k/stand/boot/rcvbuf.h>
@@ -135,8 +136,8 @@ siointr(int unit)
 void
 siocnprobe(struct consdev *cp)
 {
-	sio_addr[0] = (struct siodevice *) 0x51000000;
-	sio_addr[1] = (struct siodevice *) 0x51000008;
+	sio_addr[0] = (struct siodevice *)OBIO_SIO;
+	sio_addr[1] = (struct siodevice *)OBIO_SIO + 1;
 
 	/* make sure hardware exists */
 	if (badaddr(sio_addr[0], 4) != 0) {

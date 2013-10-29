@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.1 2013/10/28 22:13:12 miod Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.2 2013/10/29 21:49:07 miod Exp $	*/
 /*	$NetBSD: devopen.c,v 1.3 2013/01/16 15:46:20 tsutsui Exp $	*/
 
 /*
@@ -75,6 +75,8 @@
 #include <luna88k/stand/boot/samachdep.h>
 #include <machine/disklabel.h>
 
+#define MAXDEVNAME	16
+
 static int make_device(const char *, int *, int *, int *, char **);
 
 int
@@ -124,21 +126,21 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 {
 	const char *cp;
 	struct devsw *dp;
-	int major, unit, part;
+	int major, unit = 0, part = 0;
 	int i;
 	char devname[MAXDEVNAME + 1];
 
 	/*
 	 * parse path strings
 	 */
-							/* find end of dev type name */
+				/* find end of dev type name */
 	for (cp = str, i = 0; *cp != '\0' && *cp != '(' && i < MAXDEVNAME; i++)
 			devname[i] = *cp++;
 	if (*cp != '(') {
 		return (-1);
 	}
 	devname[i] = '\0';
-							/* compare dev type name */
+				/* compare dev type name */
 	for (dp = devsw; dp->dv_name; dp++)
 		if (!strcmp(devname, dp->dv_name))
 			break;
@@ -147,40 +149,44 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 		return (-1);
 	}
 	major = dp - devsw;
-							/* get unit number */
-	unit = *cp++ - '0';
-	if (*cp >= '0' && *cp <= '9')
-		unit = unit * 10 + *cp++ - '0';
-	if (unit < 0 || unit > 63) {
+				/* get mixed controller and unit number */
+	for (; *cp != ',' && *cp != ')'; cp++) {
+		if (*cp == '\0')
+			return -1;
+		if (*cp >= '0' && *cp <= '9')
+			unit = unit * 10 + *cp - '0';
+	}
+	if (unit < 0 || unit >= 20 || (unit % 10) > 7) {
 #ifdef DEBUG
 		printf("%s: invalid unit number (%d)\n", __func__, unit);
 #endif
 		return (-1);
 	}
-							/* get partition offset */
-	if (*cp++ != ',') {
-		return (-1);
+				/* get optional partition number */
+	if (*cp == ',')
+		cp++;
+
+	for (; /* *cp != ',' && */ *cp != ')'; cp++) {
+		if (*cp == '\0')
+			return -1;
+		if (*cp >= '0' && *cp <= '9')
+			part = part * 10 + *cp - '0';
 	}
-	part = *cp - '0';
-							/* check out end of dev spec */
-	for (;;) {
-		if (*cp == ')')
-			break;
-		if (*cp++)
-			continue;
-		return (-1);
-	}
-	if (part < 0 || part > MAXPARTITIONS) {
+	if (part < 0 || part >= MAXPARTITIONS) {
 #ifdef DEBUG
 		printf("%s: invalid partition number (%d)\n", __func__, part);
 #endif
 		return (-1);
 	}
-
+				/* check out end of dev spec */
 	*devp  = major;
 	*unitp = unit;
 	*partp = part;
-	*fname = (char *)cp + 1;	/* XXX */
+	cp++;
+	if (*cp == '\0')
+		*fname = "bsd";
+	else
+		*fname = (char *)cp;	/* XXX */
 #ifdef DEBUG
 	printf("%s: major = %d, unit = %d, part = %d, fname = %s\n",
 	    __func__, major, unit, part, *fname);

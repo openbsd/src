@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.2 2013/10/29 18:51:37 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.3 2013/10/29 21:49:07 miod Exp $	*/
 /* $NetBSD: if_le.c,v 1.3 2013/01/22 15:48:40 tsutsui Exp $ */
 
 /*
@@ -69,8 +69,6 @@
 #include <lib/libsa/net.h>
 #include <lib/libsa/netif.h>
 
-#include <luna88k/stand/boot/device.h>
-
 /* libsa netif_driver glue functions */
 static int  le_match(struct netif *, void *);
 static int  le_probe(struct netif *, void *);
@@ -80,12 +78,6 @@ static int  le_put(struct iodesc *, void *, size_t);
 static void le_end(struct netif *);
 
 static void myetheraddr(uint8_t *);
-
-/* luna88k driver glue stuff */
-struct driver ledriver = {
-	leinit,
-	"le"
-};
 
 /* libsa netif glue stuff */
 struct netif_stats le_stats;
@@ -105,32 +97,26 @@ struct netif_driver le_netif_driver = {
 	sizeof(le_ifs) / sizeof(le_ifs[0]),
 };
 
-#ifdef DEBUG
-int debug;
-#endif
-
 int
-leinit(void *arg)
+leinit(void)
 {
-	struct hp_device *hd = arg;
 	void *cookie;
 	void *reg, *mem;
 	uint8_t eaddr[6];
 
-	reg = hd->hpd_addr;
-	mem = (void *)0x71010000;	/* XXX */
+	reg = (void *)LANCE_ADDR;
+	mem = (void *)(TRI_PORT_RAM + 0x010000);	/* XXX */
+
+	if (badaddr(reg, 4) != 0)
+		return 0;
 
 	myetheraddr(eaddr);
 
-	cookie = lance_attach(hd->hpd_unit, reg, mem, eaddr);
+	cookie = lance_attach(0, reg, mem, eaddr);
 	if (cookie == NULL)
 		return 0;
 
-	printf("%s%d: Am7990 LANCE Ethernet, mem at 0x%x\n",
-	    hd->hpd_driver->d_name, hd->hpd_unit, (uint32_t)mem);
-	printf("%s%d: Ethernet address = %s\n",
-	    hd->hpd_driver->d_name, hd->hpd_unit,
-	    ether_sprintf(eaddr));
+	printf("le0: Ethernet address %s\n", ether_sprintf(eaddr));
 
 	return 1;
 }
@@ -144,6 +130,8 @@ le_match(struct netif *nif, void *machdep_hint)
 	/* XXX should check nif_unit and unit number in machdep_hint path */
 
 	cookie = lance_cookie(nif->nif_unit);
+	if (cookie == NULL && nif->nif_unit == 0 && leinit() != 0)
+		cookie = lance_cookie(nif->nif_unit);
 	if (cookie == NULL)
 		return 0;
 
@@ -259,7 +247,7 @@ myetheraddr(uint8_t *ether)
 		}
 		break;
 	case LUNA_88K2:
-		ds1220 = (void *)0xF1000008;
+		ds1220 = (void *)(LANCE_ADDR + 8);
 		loc = 12;
 		for (i = 0; i < 6; i++) {
 			unsigned int u, l, hex;

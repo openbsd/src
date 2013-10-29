@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_disksubr.c,v 1.1 2013/10/28 22:13:13 miod Exp $	*/
+/*	$OpenBSD: ufs_disksubr.c,v 1.2 2013/10/29 21:49:07 miod Exp $	*/
 /*	$NetBSD: ufs_disksubr.c,v 1.2 2013/01/14 01:37:57 tsutsui Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ sun_extended_sum(struct sun_disklabel *sl, void *end)
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(int ctlr, int id, struct disklabel *lp)
+readdisklabel(struct scsi_softc *sc, uint tgt, struct disklabel *lp)
 {
 	u_char *bp = lbl_buff;
 	struct sun_disklabel *slp;
@@ -121,7 +121,7 @@ readdisklabel(int ctlr, int id, struct disklabel *lp)
 	struct sun_dkpart *spp;
 	u_short cksum = 0, *sp1, *sp2;
 	int i, secpercyl;
-	static struct scsi_fmt_cdb cdb = {
+	static struct scsi_generic_cdb cdb = {
 		6,
 		{ CMD_READ, 0, 0, 0, 1, 0 }
 	};
@@ -133,7 +133,7 @@ readdisklabel(int ctlr, int id, struct disklabel *lp)
 		lp->d_partitions[0].p_size = 0x1fffffff;
 	lp->d_partitions[0].p_offset = 0;
 
-	if (scsi_immed_command(ctlr, id, 0, &cdb, bp, DEV_BSIZE) != 0)
+	if (scsi_immed_command(sc, tgt, 0, &cdb, bp, DEV_BSIZE) != 0)
 		return "I/O error";
 
 	slp = (struct sun_disklabel *)bp;

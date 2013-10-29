@@ -1,4 +1,4 @@
-/*	$OpenBSD: lance.c,v 1.1 2013/10/28 22:13:12 miod Exp $	*/
+/*	$OpenBSD: lance.c,v 1.2 2013/10/29 21:49:07 miod Exp $	*/
 /*	$NetBSD: lance.c,v 1.1 2013/01/13 14:10:55 tsutsui Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static int lance_do_initialize(struct le_softc *);
 static struct le_softc lesc[NLE];
 
 void *
-lance_attach(int unit, void *reg, void *mem, uint8_t *eaddr)
+lance_attach(uint unit, void *reg, void *mem, uint8_t *eaddr)
 {
 	struct le_softc *sc;
 
@@ -95,7 +95,7 @@ lance_attach(int unit, void *reg, void *mem, uint8_t *eaddr)
 }
 
 void *
-lance_cookie(int unit)
+lance_cookie(uint unit)
 {
 	struct le_softc *sc;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getsecs.c,v 1.1 2013/10/28 22:13:12 miod Exp $	*/
+/*	$OpenBSD: getsecs.c,v 1.2 2013/10/29 21:49:07 miod Exp $	*/
 /*	$NetBSD: getsecs.c,v 1.1 2013/01/13 14:10:55 tsutsui Exp $	*/
 
 /*-
@@ -46,14 +46,14 @@ getsecs(void)
 
 	if (machtype == LUNA_88K) {
 		volatile uint32_t *mclock =
-		    (volatile uint32_t *)(0x45000000 + MK_NVRAM_SPACE);
+		    (volatile uint32_t *)(NVRAM_ADDR + MK_NVRAM_SPACE);
 		mclock[MK_CSR] |= MK_CSR_READ << 24;
 		t =  bcdtobin(mclock[MK_SEC] >> 24);
 		t += bcdtobin(mclock[MK_MIN] >> 24) * 60;
 		t += bcdtobin(mclock[MK_HOUR] >> 24) * 60 * 60;
 		mclock[MK_CSR] &= ~(MK_CSR_READ << 24);
 	} else {
-		volatile uint8_t *chiptime = (volatile uint8_t *)0x45000000;
+		volatile uint8_t *chiptime = (volatile uint8_t *)NVRAM_ADDR;
 		volatile u_int8_t *chipdata = chiptime + 1;
 
 		uint8_t c;

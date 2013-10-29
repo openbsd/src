@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsivar.h,v 1.1 2013/10/28 22:13:13 miod Exp $	*/
+/*	$OpenBSD: scsivar.h,v 1.2 2013/10/29 21:49:07 miod Exp $	*/
 /*	$NetBSD: scsivar.h,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
 
 /*
@@ -71,8 +71,11 @@
  *	@(#)scsivar.h	8.1 (Berkeley) 6/10/93
  */
 
+struct scsidevice;
+
 struct	scsi_softc {
-	struct	hp_ctlr *sc_hc;
+	struct	scsidevice *sc_sd;
+	int	sc_unit;
 	u_char	*sc_buf;				/* Data Buffer Pointor*/
 	u_char	*sc_cdb;				/* CDB Buffer Pointor */
 	volatile int *sc_lock;				/* Lock Flag addres   */

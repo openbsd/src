@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.1 2013/10/28 22:13:12 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.2 2013/10/29 21:49:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -46,6 +46,7 @@
 #define _LOCORE
 
 #include <machine/asm.h>
+#include <machine/board.h>
 #include <machine/psl.h>
 
 	.text
@@ -93,10 +94,10 @@ ASLOCAL(main_start)
 	or	%r31, %r31, %lo16(_ASM_LABEL(__start))
 
 	/* read dip switch settings */
-	or.u	%r11, %r0,  %hi16(0x49000000)
-	ld.bu	%r10, %r11, %lo16(0x49000000)
+	or.u	%r11, %r0,  %hi16(OBIO_PIO0A)
+	ld.bu	%r10, %r11, %lo16(OBIO_PIO0A)
 	mak	%r10, %r10, 0<8>
-	ld.bu	%r12, %r11, %lo16(0x49000004)
+	ld.bu	%r12, %r11, %lo16(OBIO_PIO0B)
 	or	%r10, %r10, %r12
 
 	or.u	%r11, %r0,  %hi16(_C_LABEL(dipswitch))
