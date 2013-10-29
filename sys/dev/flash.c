@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.27 2013/10/20 10:11:17 krw Exp $	*/
+/*	$OpenBSD: flash.c,v 1.28 2013/10/29 21:58:38 krw Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -881,12 +881,15 @@ flashstart(struct flash_softc *sc)
 void
 _flashstart(struct flash_softc *sc, struct buf *bp)
 {
+	struct disklabel *lp;
 	int part;
 	daddr_t offset;
 	long pgno;
 
 	part = flashpart(bp->b_dev);
-	offset = DL_GETPOFFSET(&sc->sc_dk.dk_label->d_partitions[part]) +
+
+	lp = sc->sc_dk.dk_label;
+	offset = DL_SECTOBLK(lp, DL_GETPOFFSET(&lp->d_partitions[part])) +
 	    bp->b_blkno;
 	pgno = offset / (sc->sc_flashdev->pagesize / DEV_BSIZE);
 
