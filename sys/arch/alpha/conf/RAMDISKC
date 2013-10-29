@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.2 2013/03/10 19:07:40 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.3 2013/10/29 22:33:10 deraadt Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
 
@@ -68,7 +68,6 @@ pci*	at ppb?
 #en*	at pci?				# ENI PCI ATM (untested)
 #ep*	at pci?				# 3COM 3c59x (untested)
 #xl*	at pci?				# 3COM 3c9xx (untested)
-#fpa*	at pci?				# DEC DEFPA FDDI cards
 siop*	at pci?				# NCR 53c8xx SCSI
 pceb*	at pci?				# Intel PCI-EISA bridge
 vga*	at pci?				# PCI VGA graphics

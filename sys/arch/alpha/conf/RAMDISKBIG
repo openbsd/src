@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.88 2013/10/28 12:33:32 mpi Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.89 2013/10/29 22:33:10 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -179,7 +179,6 @@ fxp*	at pci?				# EtherExpress 10/100B ethernet
 ep*	at pci?				# 3COM 3c59x
 xl*	at pci?				# 3COM 3c9xx
 txp*	at pci?				# 3COM 3CR990
-fpa*	at pci?				# DEC DEFPA FDDI cards
 bge*	at pci?				# Broadcom BCM570x (aka Tigon3)
 vge*	at pci?				# VIA VT612x
 re*	at pci?				# Realtek 8169/8169S/8110S
@@ -277,7 +276,6 @@ cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom card
 #ahc0	at isa?				# Adaptec 284x SCSI controllers
 
 # EISA devices
-fea*	at eisa?			# DEC DEFEA FDDI cards
 ahc*	at eisa?			# Adaptec 274x, aic7770 SCSI
 
 # SCSI devices

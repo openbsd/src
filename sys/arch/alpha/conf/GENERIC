@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.233 2013/10/28 12:33:32 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.234 2013/10/29 22:33:10 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -219,7 +219,6 @@ fxp*	at pci?				# EtherExpress 10/100B ethernet
 ep*	at pci?				# 3COM 3c59x
 xl*	at pci?				# 3COM 3c9xx
 txp*	at pci?				# 3COM 3CR990
-fpa*	at pci?				# DEC DEFPA FDDI cards
 bge*	at pci?				# Broadcom BCM57xx (aka Tigon3)
 vge*	at pci?				# VIA VT612x
 re*	at pci?				# Realtek 8169/8169S/8110S
@@ -355,7 +354,6 @@ fd*	at fdc?
 #ahc0	at isa?				# Adaptec 284x SCSI controllers
 
 # EISA devices
-fea*	at eisa?			# DEC DEFEA FDDI cards
 ahc*	at eisa?			# Adaptec 274x, aic7770 SCSI
 
 # SCSI devices
