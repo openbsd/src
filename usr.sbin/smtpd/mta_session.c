@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.44 2013/10/28 17:02:08 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.45 2013/10/29 17:04:45 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -494,7 +494,7 @@ mta_connect(struct mta_session *s)
 			s->flags |= MTA_WAIT;
 			return;
 		}
-		if (s->relay->heloname)
+		else if (s->relay->heloname)
 			s->helo = xstrdup(s->relay->heloname, "mta_connect");
 		else
 			s->helo = xstrdup(env->sc_hostname, "mta_connect");

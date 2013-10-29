@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.168 2013/10/29 11:23:58 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.169 2013/10/29 17:04:45 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1525,7 +1525,7 @@ mta_relay(struct envelope *e)
 		key.domain = mta_domain(e->dest.domain, 0);
 	}
 
-	key.flags = e->agent.mta.relay.flags;
+	key.flags |= e->agent.mta.relay.flags;
 	key.port = e->agent.mta.relay.port;
 	key.cert = e->agent.mta.relay.cert;
 	if (!key.cert[0])
@@ -1542,6 +1542,9 @@ mta_relay(struct envelope *e)
 	key.helotable = e->agent.mta.relay.helotable;
 	if (!key.helotable[0])
 		key.helotable = NULL;
+	key.heloname = e->agent.mta.relay.heloname;
+	if (!key.heloname[0])
+		key.heloname = NULL;
 
 	if ((r = SPLAY_FIND(mta_relay_tree, &relays, &key)) == NULL) {
 		r = xcalloc(1, sizeof *r, "mta_relay");
@@ -1564,6 +1567,9 @@ mta_relay(struct envelope *e)
 		if (key.helotable)
 			r->helotable = xstrdup(key.helotable,
 			    "mta: helotable");
+		if (key.heloname)
+			r->heloname = xstrdup(key.heloname,
+			    "mta: heloname");
 		SPLAY_INSERT(mta_relay_tree, &relays, r);
 		stat_increment("mta.relay", 1);
 	} else {
@@ -1605,6 +1611,7 @@ mta_relay_unref(struct mta_relay *relay)
 	free(relay->backupname);
 	free(relay->cert);
 	free(relay->helotable);
+	free(relay->heloname);
 	free(relay->secret);
 	free(relay->sourcetable);
 
@@ -1657,7 +1664,7 @@ mta_relay_to_text(struct mta_relay *relay)
 		strlcat(buf, "mx", sizeof buf);
 	}
 
-	if (relay->flags & RELAY_BACKUP) {
+	if (relay->backupname) {
 		strlcat(buf, sep, sizeof buf);
 		strlcat(buf, "backup=", sizeof buf);
 		strlcat(buf, relay->backupname, sizeof buf);
@@ -1667,6 +1674,18 @@ mta_relay_to_text(struct mta_relay *relay)
 		strlcat(buf, sep, sizeof buf);
 		strlcat(buf, "sourcetable=", sizeof buf);
 		strlcat(buf, relay->sourcetable, sizeof buf);
+	}
+
+	if (relay->helotable) {
+		strlcat(buf, sep, sizeof buf);
+		strlcat(buf, "helotable=", sizeof buf);
+		strlcat(buf, relay->helotable, sizeof buf);
+	}
+
+	if (relay->heloname) {
+		strlcat(buf, sep, sizeof buf);
+		strlcat(buf, "heloname=", sizeof buf);
+		strlcat(buf, relay->heloname, sizeof buf);
 	}
 
 	strlcat(buf, "]", sizeof buf);
@@ -1707,6 +1726,18 @@ mta_relay_cmp(const struct mta_relay *a, const struct mta_relay *b)
 	if (a->sourcetable && b->sourcetable == NULL)
 		return (1);
 	if (a->sourcetable && ((r = strcmp(a->sourcetable, b->sourcetable))))
+		return (r);
+	if (a->helotable == NULL && b->helotable)
+		return (-1);
+	if (a->helotable && b->helotable == NULL)
+		return (1);
+	if (a->helotable && ((r = strcmp(a->helotable, b->helotable))))
+		return (r);
+	if (a->heloname == NULL && b->heloname)
+		return (-1);
+	if (a->heloname && b->heloname == NULL)
+		return (1);
+	if (a->heloname && ((r = strcmp(a->heloname, b->heloname))))
 		return (r);
 
 	if (a->cert == NULL && b->cert)

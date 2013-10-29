@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.430 2013/10/29 14:30:05 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.431 2013/10/29 17:04:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -114,6 +114,7 @@ struct relayhost {
 	char authtable[SMTPD_MAXPATHLEN];
 	char authlabel[SMTPD_MAXPATHLEN];
 	char sourcetable[SMTPD_MAXPATHLEN];
+	char heloname[SMTPD_MAXPATHLEN];
 	char helotable[SMTPD_MAXPATHLEN];
 };
 
