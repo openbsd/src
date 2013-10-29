@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.25 2012/12/05 23:20:26 deraadt Exp $	*/
+/*	$OpenBSD: config.h,v 1.26 2013/10/29 15:37:56 espie Exp $	*/
 /*	$NetBSD: config.h,v 1.30 1997/02/02 21:12:30 thorpej Exp $	*/
 
 /*
@@ -339,6 +339,10 @@ void	defoption(const char *name);
 int	devbase_has_instances(struct devbase *, int);
 int	deva_has_instances(struct deva *, int);
 void	setupdirs(void);
+int	pflag;
+char 	*sflag;
+char	*bflag;
+char	*startdir;
 
 /* mkheaders.c */
 int	mkheaders(void);

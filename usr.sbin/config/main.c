@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.44 2012/06/22 22:02:29 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.45 2013/10/29 15:37:56 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -93,13 +93,19 @@ usage(void)
 	exit(1);
 }
 
+int pflag = 0;
+char *sflag = NULL;
+char *bflag = NULL;
+char *startdir;
+
 int
 main(int argc, char *argv[])
 {
 	char *p;
 	const char *last_component;
 	char *outfile = NULL;
-	int pflag, ch, eflag, uflag, fflag;
+	int ch, eflag, uflag, fflag;
+	char dirbuffer[PATH_MAX];
 
 	pflag = eflag = uflag = fflag = 0;
 	while ((ch = getopt(argc, argv, "egpfb:s:o:u")) != -1) {
@@ -148,10 +154,12 @@ main(int argc, char *argv[])
 			break;
 
 		case 'b':
+			bflag = optarg;
 			builddir = optarg;
 			break;
 
 		case 's':
+			sflag = optarg;
 			srcdir = optarg;
 			break;
 
@@ -163,7 +171,15 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 	if (argc > 1 || (eflag && argv[0] == NULL))
+
 		usage();
+	if (bflag) {
+		startdir = getcwd(dirbuffer, sizeof dirbuffer);
+		if (startdir == NULL)
+			warn("Use of -b and can't getcwd, no make config");
+	} else {
+		startdir = "../../conf";
+	}
 
 	if (eflag) {
 #ifdef MAKE_BOOTSTRAP
