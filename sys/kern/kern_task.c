@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.3 2013/10/29 04:34:21 dlg Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.4 2013/10/29 23:39:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -70,7 +70,7 @@ taskq_create(const char *name, unsigned int nthreads, int ipl)
 {
 	struct taskq *tq;
 
-	tq = malloc(sizeof(*tq), M_DEVBUF, M_NOWAIT);
+	tq = malloc(sizeof(*tq), M_DEVBUF, M_WAITOK);
 	if (tq == NULL)
 		return (NULL);
 
