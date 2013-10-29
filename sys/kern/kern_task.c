@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.2 2013/10/29 04:32:08 dlg Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.3 2013/10/29 04:34:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -19,8 +19,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/pool.h>
-#include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/kthread.h>
 #include <sys/task.h>
