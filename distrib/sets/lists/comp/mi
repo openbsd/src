@@ -1513,6 +1513,7 @@
 ./usr/include/sys/syslimits.h
 ./usr/include/sys/syslog.h
 ./usr/include/sys/systm.h
+./usr/include/sys/task.h
 ./usr/include/sys/termios.h
 ./usr/include/sys/time.h
 ./usr/include/sys/timeb.h
@@ -6912,6 +6913,12 @@
 ./usr/share/man/man9/systrace_exit.9
 ./usr/share/man/man9/systrace_fork.9
 ./usr/share/man/man9/systrace_redirect.9
+./usr/share/man/man9/task_add.9
+./usr/share/man/man9/task_del.9
+./usr/share/man/man9/task_set.9
+./usr/share/man/man9/task_systq.9
+./usr/share/man/man9/taskq_create.9
+./usr/share/man/man9/taskq_destroy.9
 ./usr/share/man/man9/tc_init.9
 ./usr/share/man/man9/tick.9
 ./usr/share/man/man9/tickadj.9
