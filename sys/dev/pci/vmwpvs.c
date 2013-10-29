@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.6 2013/10/23 01:15:00 dlg Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.7 2013/10/29 05:47:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/kernel.h>
 #include <sys/rwlock.h>
 #include <sys/dkio.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 
@@ -152,6 +153,11 @@ struct vmwpvs_ring_msg {
 	u_int32_t		type;
 	u_int32_t		__args[31];
 } __packed;
+#define VMWPVS_MSG_COUNT	((VMWPVS_RING_PAGES * VMWPVS_PAGE_SIZE) / \
+				    sizeof(struct vmwpvs_ring_msg))
+
+#define VMWPVS_MSG_T_ADDED	0
+#define VMWPVS_MSG_T_REMOVED	1
 
 struct vmwpvs_ring_msg_dev {
 	u_int32_t		type;
@@ -298,9 +304,10 @@ struct vmwpvs_softc {
 	bus_size_t		sc_ios;
 	bus_dma_tag_t		sc_dmat;
 
-	struct vmwpvs_dmamem	*sc_ring_state;
 	struct vmwpvs_dmamem	*sc_req_ring;
 	struct vmwpvs_dmamem	*sc_cmp_ring;
+	struct vmwpvs_dmamem	*sc_msg_ring;
+	struct vmwpvs_dmamem	*sc_ring_state;
 	struct mutex		sc_ring_mtx;
 
 	struct vmwpvs_dmamem	*sc_sgls;
@@ -310,6 +317,8 @@ struct vmwpvs_softc {
 	struct mutex		sc_ccb_mtx;
 
 	void			*sc_ih;
+
+	struct task		sc_msg_task;
 
 	u_int			sc_bus_width;
 
@@ -370,6 +379,8 @@ void		vmwpvs_dmamem_free(struct vmwpvs_softc *,
 void		vmwpvs_cmd(struct vmwpvs_softc *, u_int32_t, void *, size_t);
 int		vmwpvs_get_config(struct vmwpvs_softc *);
 void		vmwpvs_setup_rings(struct vmwpvs_softc *);
+void		vmwpvs_setup_msg_ring(struct vmwpvs_softc *);
+void		vmwpvs_msg_task(void *, void *);
 
 struct vmwpvs_ccb *
 		vmwpvs_scsi_cmd_poll(struct vmwpvs_softc *);
@@ -396,8 +407,9 @@ vmwpvs_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct scsibus_attach_args saa;
 	pcireg_t memtype;
-	u_int i, r;
+	u_int i, r, use_msg;
 	int (*isr)(void *) = vmwpvs_intx;
+	u_int32_t intmask;
 	pci_intr_handle_t ih;
 
 	struct vmwpvs_ccb *ccb;
@@ -411,6 +423,7 @@ vmwpvs_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bus_width = 16;
 	mtx_init(&sc->sc_ring_mtx, IPL_BIO);
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
+	task_set(&sc->sc_msg_task, vmwpvs_msg_task, sc, NULL);
 	SIMPLEQ_INIT(&sc->sc_ccb_list);
 
 	for (r = PCI_MAPREG_START; r < PCI_MAPREG_END; r += sizeof(memtype)) {
@@ -438,8 +451,11 @@ vmwpvs_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unable to map interrupt\n");
 		goto unmap;
 	}
-
 	printf(": %s\n", pci_intr_string(sc->sc_pc, ih));
+
+	/* do we have msg support? */
+	vmwpvs_write(sc, VMWPVS_R_COMMAND, VMWPVS_CMD_SETUP_MSG_RING);
+	use_msg = (vmwpvs_read(sc, VMWPVS_R_COMMAND_STATUS) != 0xffffffff);
 
 	if (vmwpvs_get_config(sc) != 0) {
 		printf("%s: get configuration failed\n", DEVNAME(sc));
@@ -466,13 +482,23 @@ vmwpvs_attach(struct device *parent, struct device *self, void *aux)
 		goto free_req_ring;
 	}
 
+	if (use_msg) {
+		sc->sc_msg_ring = vmwpvs_dmamem_zalloc(sc,
+		    VMWPVS_RING_PAGES * VMWPVS_PAGE_SIZE);
+		if (sc->sc_msg_ring == NULL) {
+			printf("%s: unable to allocate msg ring\n",
+			    DEVNAME(sc));
+			goto free_cmp_ring;
+		}
+	}
+
 	r = (VMWPVS_RING_PAGES * VMWPVS_PAGE_SIZE) /
 	    sizeof(struct vmwpvs_ring_req);
 
 	sc->sc_sgls = vmwpvs_dmamem_alloc(sc, r * sizeof(struct vmwpvs_sgl));
 	if (sc->sc_sgls == NULL) {
 		printf("%s: unable to allocate sgls\n", DEVNAME(sc));
-		goto free_cmp_ring;
+		goto free_msg_ring;
 	}
 
 	sc->sc_sense = vmwpvs_dmamem_alloc(sc, r * VMWPVS_SENSELEN);
@@ -508,21 +534,33 @@ vmwpvs_attach(struct device *parent, struct device *self, void *aux)
 		vmwpvs_ccb_put(sc, ccb);
 	}
 
-
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
 	    isr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL)
-		goto unmap;
+		goto free_msg_ring;
 
 	bus_dmamap_sync(sc->sc_dmat, VMWPVS_DMA_MAP(sc->sc_cmp_ring), 0,
 	    VMWPVS_RING_PAGES * VMWPVS_PAGE_SIZE, BUS_DMASYNC_PREREAD);
 	bus_dmamap_sync(sc->sc_dmat, VMWPVS_DMA_MAP(sc->sc_req_ring), 0,
 	    VMWPVS_RING_PAGES * VMWPVS_PAGE_SIZE, BUS_DMASYNC_PREWRITE);
+	if (use_msg) {
+		bus_dmamap_sync(sc->sc_dmat, VMWPVS_DMA_MAP(sc->sc_msg_ring), 0,
+		    VMWPVS_RING_PAGES * VMWPVS_PAGE_SIZE, BUS_DMASYNC_PREREAD);
+	}
 	bus_dmamap_sync(sc->sc_dmat, VMWPVS_DMA_MAP(sc->sc_ring_state), 0,
 	    VMWPVS_PAGE_SIZE, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
+	intmask = VMWPVS_INTR_CMPL_MASK;
+
 	vmwpvs_setup_rings(sc);
-	vmwpvs_write(sc, VMWPVS_R_INTR_MASK, VMWPVS_INTR_CMPL_MASK);
+	if (use_msg) {
+		vmwpvs_setup_msg_ring(sc);
+		intmask |= VMWPVS_INTR_MSG_MASK;
+	}
+
+	vmwpvs_write(sc, VMWPVS_R_INTR_MASK, intmask);
+
+	/* controller init is done, lets plug the midlayer in */
 
 	scsi_iopool_init(&sc->sc_iopool, sc, vmwpvs_ccb_get, vmwpvs_ccb_put);
 
@@ -540,7 +578,6 @@ vmwpvs_attach(struct device *parent, struct device *self, void *aux)
 	    &saa, scsiprint);
 
 	return;
-
 free_ccbs:
 	while ((ccb = vmwpvs_ccb_get(sc)) != NULL)
 		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
@@ -549,6 +586,9 @@ free_ccbs:
 	vmwpvs_dmamem_free(sc, sc->sc_sense);
 free_sgl:
 	vmwpvs_dmamem_free(sc, sc->sc_sgls);
+free_msg_ring:
+	if (use_msg)
+		vmwpvs_dmamem_free(sc, sc->sc_msg_ring);
 free_cmp_ring:
 	vmwpvs_dmamem_free(sc, sc->sc_cmp_ring);
 free_req_ring:
@@ -581,6 +621,23 @@ vmwpvs_setup_rings(struct vmwpvs_softc *sc)
 		cmd.cmp_page_ppn[i] = ppn + i;
 
 	vmwpvs_cmd(sc, VMWPVS_CMD_SETUP_RINGS, &cmd, sizeof(cmd));
+}
+
+void
+vmwpvs_setup_msg_ring(struct vmwpvs_softc *sc)
+{
+	struct vmwpvs_setup_rings_msg cmd;
+	u_int64_t ppn;
+	u_int i;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.msg_pages = VMWPVS_RING_PAGES;
+
+	ppn = VMWPVS_DMA_DVA(sc->sc_msg_ring) >> VMWPVS_PAGE_SHIFT;
+	for (i = 0; i < VMWPVS_RING_PAGES; i++)
+		cmd.msg_page_ppn[i] = ppn + i;
+
+	vmwpvs_cmd(sc, VMWPVS_CMD_SETUP_MSG_RING, &cmd, sizeof(cmd));
 }
 
 int
@@ -666,6 +723,7 @@ vmwpvs_intr(void *xsc)
 	struct vmwpvs_ccb_list list = SIMPLEQ_HEAD_INITIALIZER(list);
 	struct vmwpvs_ccb *ccb;
 	u_int32_t cons, prod;
+	int msg;
 
 	mtx_enter(&sc->sc_ring_mtx);
 
@@ -674,6 +732,8 @@ vmwpvs_intr(void *xsc)
 	cons = s->cmp_cons;
 	prod = s->cmp_prod;
 	s->cmp_cons = prod;
+
+	msg = (sc->sc_msg_ring != NULL && s->msg_cons != s->msg_prod);
 
 	bus_dmamap_sync(sc->sc_dmat, VMWPVS_DMA_MAP(sc->sc_ring_state), 0,
 	    VMWPVS_PAGE_SIZE, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -699,7 +759,94 @@ vmwpvs_intr(void *xsc)
 		scsi_done(ccb->ccb_xs);
 	}
 
+	if (msg)
+		task_add(taskq_systq(), &sc->sc_msg_task);
+
 	return (1);
+}
+
+void
+vmwpvs_msg_task(void *xsc, void *xnull)
+{
+	struct vmwpvs_softc *sc = xsc;
+	volatile struct vmwpvw_ring_state *s =
+	    VMWPVS_DMA_KVA(sc->sc_ring_state);
+	struct vmwpvs_ring_msg *ring = VMWPVS_DMA_KVA(sc->sc_msg_ring);
+	struct vmwpvs_ring_msg *msg;
+	struct vmwpvs_ring_msg_dev *dvmsg;
+	u_int32_t cons, prod;
+
+	mtx_enter(&sc->sc_ring_mtx);
+	bus_dmamap_sync(sc->sc_dmat, VMWPVS_DMA_MAP(sc->sc_ring_state), 0,
+	    VMWPVS_PAGE_SIZE, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	cons = s->msg_cons;
+	prod = s->msg_prod;
+	bus_dmamap_sync(sc->sc_dmat, VMWPVS_DMA_MAP(sc->sc_ring_state), 0,
+	    VMWPVS_PAGE_SIZE, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	mtx_leave(&sc->sc_ring_mtx);
+
+	/*
+	 * we dont have to lock around the msg ring cos the system taskq has
+	 * only one thread.
+	 */
+
+	bus_dmamap_sync(sc->sc_dmat, VMWPVS_DMA_MAP(sc->sc_msg_ring), 0,
+	    VMWPVS_RING_PAGES * VMWPVS_PAGE_SIZE, BUS_DMASYNC_POSTREAD);
+	while (cons != prod) {
+		msg = &ring[cons++ % VMWPVS_MSG_COUNT];
+
+		switch (letoh32(msg->type)) {
+		case VMWPVS_MSG_T_ADDED:
+			dvmsg = (struct vmwpvs_ring_msg_dev *)msg;
+			if (letoh32(dvmsg->bus) != 0) {
+				printf("%s: ignoring request to add device"
+				    " on bus %d\n", DEVNAME(sc),
+				    letoh32(msg->type));
+				break;
+			}
+
+			if (scsi_probe_lun(sc->sc_scsibus,
+			    letoh32(dvmsg->target), dvmsg->lun[1]) != 0) {
+				printf("%s: error probing target %d lun %d\n",
+				    DEVNAME(sc), letoh32(dvmsg->target),
+				    dvmsg->lun[1]);
+			};
+			break;
+
+		case VMWPVS_MSG_T_REMOVED:
+			dvmsg = (struct vmwpvs_ring_msg_dev *)msg;
+			if (letoh32(dvmsg->bus) != 0) {
+				printf("%s: ignorint request to remove device"
+				    " on bus %d\n", DEVNAME(sc),
+				    letoh32(msg->type));
+				break;
+			}
+
+			if (scsi_detach_lun(sc->sc_scsibus,
+			    letoh32(dvmsg->target), dvmsg->lun[1],
+			    DETACH_FORCE) != 0) {
+				printf("%s: error detaching target %d lun %d\n",
+				    DEVNAME(sc), letoh32(dvmsg->target),
+				    dvmsg->lun[1]);
+			};
+			break;
+
+		default:
+			printf("%s: unknown msg type %u\n", DEVNAME(sc),
+			    letoh32(msg->type));
+			break;
+		}
+	}
+	bus_dmamap_sync(sc->sc_dmat, VMWPVS_DMA_MAP(sc->sc_msg_ring), 0,
+	    VMWPVS_RING_PAGES * VMWPVS_PAGE_SIZE, BUS_DMASYNC_PREREAD);
+
+	mtx_enter(&sc->sc_ring_mtx);
+	bus_dmamap_sync(sc->sc_dmat, VMWPVS_DMA_MAP(sc->sc_ring_state), 0,
+	    VMWPVS_PAGE_SIZE, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	s->msg_cons = prod;
+	bus_dmamap_sync(sc->sc_dmat, VMWPVS_DMA_MAP(sc->sc_ring_state), 0,
+	    VMWPVS_PAGE_SIZE, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	mtx_leave(&sc->sc_ring_mtx);
 }
 
 void
