@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.52 2013/08/07 01:06:42 bluhm Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.53 2013/10/29 10:01:20 mpi Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -139,7 +139,6 @@ struct upl_softc {
 	uByte			sc_ibuf;
 
 	char			sc_dying;
-	char			sc_attached;
 	u_int			sc_rx_errs;
 	struct timeval		sc_rx_notice;
 	u_int			sc_intr_errs;
@@ -297,7 +296,6 @@ upl_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
-	sc->sc_attached = 1;
 	splx(s);
 }
 
@@ -309,10 +307,6 @@ upl_detach(struct device *self, int flags)
 	int			s;
 
 	DPRINTFN(2,("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
-
-	/* Detached before attached finished, so just bail out. */
-	if (!sc->sc_attached)
-		return (0);
 
 	s = splusb();
 
@@ -330,7 +324,6 @@ upl_detach(struct device *self, int flags)
 		       sc->sc_dev.dv_xname);
 #endif
 
-	sc->sc_attached = 0;
 	splx(s);
 
 	return (0);
