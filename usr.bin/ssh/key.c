@@ -1,4 +1,4 @@
-/* $OpenBSD: key.c,v 1.104 2013/05/19 02:42:42 djm Exp $ */
+/* $OpenBSD: key.c,v 1.105 2013/10/29 09:42:11 djm Exp $ */
 /*
  * read_bignum():
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -52,6 +52,7 @@
 #include "ssh2.h"
 
 static int to_blob(const Key *, u_char **, u_int *, int);
+static Key *key_from_blob2(const u_char *, u_int, int);
 
 static struct KeyCert *
 cert_new(void)
@@ -994,6 +995,18 @@ key_alg_list(void)
 	return ret;
 }
 
+int
+key_type_is_cert(int type)
+{
+	const struct keytype *kt;
+
+	for (kt = keytypes; kt->type != -1; kt++) {
+		if (kt->type == type)
+			return kt->cert;
+	}
+	return 0;
+}
+
 u_int
 key_size(const Key *k)
 {
@@ -1348,8 +1361,8 @@ cert_parse(Buffer *b, Key *key, const u_char *blob, u_int blen)
 	}
 	buffer_clear(&tmp);
 
-	if ((key->cert->signature_key = key_from_blob(sig_key,
-	    sklen)) == NULL) {
+	if ((key->cert->signature_key = key_from_blob2(sig_key, sklen, 0))
+	    == NULL) {
 		error("%s: Signature key invalid", __func__);
 		goto out;
 	}
@@ -1386,8 +1399,8 @@ cert_parse(Buffer *b, Key *key, const u_char *blob, u_int blen)
 	return ret;
 }
 
-Key *
-key_from_blob(const u_char *blob, u_int blen)
+static Key *
+key_from_blob2(const u_char *blob, u_int blen, int allow_cert)
 {
 	Buffer b;
 	int rlen, type, nid = -1;
@@ -1408,7 +1421,10 @@ key_from_blob(const u_char *blob, u_int blen)
 	type = key_type_from_name(ktype);
 	if (key_type_plain(type) == KEY_ECDSA)
 		nid = key_ecdsa_nid_from_name(ktype);
-
+	if (!allow_cert && key_type_is_cert(type)) {
+		error("key_from_blob: certificate not allowed in this context");
+		goto out;
+	}
 	switch (type) {
 	case KEY_RSA_CERT:
 		(void)buffer_get_string_ptr_ret(&b, NULL); /* Skip nonce */
@@ -1501,6 +1517,12 @@ key_from_blob(const u_char *blob, u_int blen)
 		EC_POINT_free(q);
 	buffer_free(&b);
 	return key;
+}
+
+Key *
+key_from_blob(const u_char *blob, u_int blen)
+{
+	return key_from_blob2(blob, blen, 1);
 }
 
 static int
@@ -1691,16 +1713,7 @@ key_is_cert(const Key *k)
 {
 	if (k == NULL)
 		return 0;
-	switch (k->type) {
-	case KEY_RSA_CERT_V00:
-	case KEY_DSA_CERT_V00:
-	case KEY_RSA_CERT:
-	case KEY_DSA_CERT:
-	case KEY_ECDSA_CERT:
-		return 1;
-	default:
-		return 0;
-	}
+	return key_type_is_cert(k->type);
 }
 
 /* Return the cert-less equivalent to a certified key type */
