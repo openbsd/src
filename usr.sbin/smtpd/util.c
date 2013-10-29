@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.99 2013/10/27 18:50:59 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.100 2013/10/29 13:22:54 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -642,8 +642,13 @@ uint64_t
 generate_uid(void)
 {
 	static uint32_t id;
+	static uint8_t	inited;
 	uint64_t	uid;
 
+	if (!inited) {
+		id = arc4random();
+		inited = 1;
+	}
 	while ((uid = ((uint64_t)(id++) << 32 | arc4random())) == 0)
 		;
 
