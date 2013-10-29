@@ -76,7 +76,7 @@ along with GCC; see the file COPYING.  If not see
 /* Under OpenBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */
 #undef STANDARD_STARTFILE_PREFIX
-#define STANDARD_STARTFILE_PREFIX	"/usr/local/lib/"
+#define STANDARD_STARTFILE_PREFIX	"/usr/lib/"
 
 #endif
 
