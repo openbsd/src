@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 2013/10/28 22:13:12 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.2 2013/10/29 22:13:28 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.3 2013/01/16 15:46:20 tsutsui Exp $	*/
 
 /*
@@ -34,6 +34,8 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
+
+#include <dev/cons.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -110,3 +112,15 @@ struct fs_ops file_system_nfs[] = { FS_OPS(nfs) };
 #define MAX_NFSYS	5
 struct fs_ops file_system[MAX_NFSYS];
 int	nfsys = 1;		/* we always know which one we want */
+
+/*
+ * Console configuration
+ */
+
+struct	consdev constab[] = {
+	{ bmccnprobe,	bmccninit,	bmccngetc,	bmccnputc },
+	{ siocnprobe,	siocninit,	siocngetc,	siocnputc },
+	{ 0 },
+};
+
+struct consdev *cn_tab;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.3 2013/10/29 21:49:07 miod Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.4 2013/10/29 22:13:28 miod Exp $	*/
 /*	$NetBSD: init_main.c,v 1.6 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -70,6 +70,32 @@
  *
  *	@(#)init_main.c	8.2 (Berkeley) 8/15/93
  */
+/*
+ * Mach Operating System
+ * Copyright (c) 1993-1991 Carnegie Mellon University
+ * Copyright (c) 1991 OMRON Corporation
+ * All Rights Reserved.
+ *
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ *
+ * CARNEGIE MELLON AND OMRON ALLOW FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON AND OMRON DISCLAIM ANY LIABILITY OF ANY KIND
+ * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ *
+ * Carnegie Mellon requests users of this software to return to
+ *
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ *
+ * any improvements or extensions that they make and grant Carnegie the
+ * rights to redistribute these changes.
+ */
 
 #include <sys/param.h>
 #include <machine/board.h>
@@ -79,7 +105,9 @@
 #include "dev_net.h"
 
 static void get_fuse_rom_data(void);
+static void get_nvram_data(void);
 static int get_plane_numbers(void);
+static const char *nvram_by_symbol(char *);
 
 int cpuspeed;	/* for DELAY() macro */
 int machtype;
@@ -116,11 +144,20 @@ struct fuse_rom_byte {
 #define FUSE_ROM_BYTES		(FUSE_ROM_SPACE / sizeof(struct fuse_rom_byte))
 char fuse_rom_data[FUSE_ROM_BYTES];
 
+#define NNVSYM		8
+#define NVSYMLEN	16
+#define NVVALLEN	16
+struct nvram_t {
+	char symbol[1 + NVSYMLEN];
+	char value[1 + NVVALLEN];
+} nvram[NNVSYM];
+
 int
 main(void)
 {
 	int status = ST_NORMAL;
 	const char *machstr;
+	const char *nvv;
 	int unit, part;
 
 	/* Determine the machine type from FUSE ROM data.  */
@@ -141,24 +178,33 @@ main(void)
 		cpuspeed = MHZ_33;
 	}
 
-	nplane   = get_plane_numbers();
-
+	nplane = get_plane_numbers();
 	cninit();
 
-	printf("\nOpenBSD/%s boot 0.2\n\n", machstr);
-
-	/*
-	 * IO configuration
-	 */
+	printf("\nOpenBSD/%s boot 0.3\n\n", machstr);
 
 #ifdef SUPPORT_ETHERNET
 	try_bootp = 1;
 #endif
 
-	unit = 0;	/* XXX should parse monitor's Boot-file constant */
-	part = 0;
+        /* Determine the 'auto-boot' device from NVRAM data */
+        get_nvram_data();
+
+	nvv = nvram_by_symbol("boot_unit");
+	if (nvv != NULL)
+		unit = (int)strtol(nvv, NULL, 10);
+	else
+		unit = 0;
+	nvv = nvram_by_symbol("boot_partition");
+	if (nvv != NULL)
+		part = (int)strtol(nvv, NULL, 10);
+	else
+		part = 0;
+
+	nvv = nvram_by_symbol("boot_device");
+
 	snprintf(default_file, sizeof(default_file),
-	    "sd(%d,%d)%s", unit, part, "bsd");
+	    "%s(%d,%d)%s", nvv != NULL ? nvv : "sd", unit, part, "bsd");
 
 	/* auto-boot? (SW1) */
 	if ((dipswitch & 0x8000) != 0) {
@@ -222,6 +268,65 @@ get_fuse_rom_data(void)
 		           (((p->l) >> 28) & 0x0000000f));
 		p++;                                                                            
 	}
+}
+
+/* Get data from NVRAM */
+
+void
+get_nvram_data(void)
+{
+	int i, j;
+	u_int8_t *page;
+	char buf[NVSYMLEN], *data;
+
+	if (machtype == LUNA_88K) {
+		data = (char *)(NVRAM_ADDR + 0x80);
+
+		for (i = 0; i < NNVSYM; i++) {
+			for (j = 0; j < NVSYMLEN; j++) {
+				buf[j] = *data;
+				data += 4;
+			}
+			strncpy(nvram[i].symbol, buf, sizeof(nvram[i].symbol));
+
+			for (j = 0; j < NVVALLEN; j++) {
+				buf[j] = *data;
+				data += 4;
+			}
+			strncpy(nvram[i].value, buf, sizeof(nvram[i].value));
+		}
+	} else if (machtype == LUNA_88K2) {
+		page = (u_int8_t *)(NVRAM_ADDR_88K2 + 0x20);
+
+		for (i = 0; i < NNVSYM; i++) {
+			*page = (u_int8_t)i;
+
+			data = (char *)NVRAM_ADDR_88K2;
+			strncpy(nvram[i].symbol, data, sizeof(nvram[i].symbol));
+
+			data = (char *)(NVRAM_ADDR_88K2 + 0x10);
+			strncpy(nvram[i].value, data, sizeof(nvram[i].value));
+		}
+	}
+}
+
+const char *
+nvram_by_symbol(symbol)
+	char *symbol;
+{
+	const char *value;
+	int i;
+
+	value = NULL;
+
+	for (i = 0; i < NNVSYM; i++) {
+		if (strncmp(nvram[i].symbol, symbol, NVSYMLEN) == 0) {
+			value = nvram[i].value;
+			break;
+		}
+	}
+
+	return value;
 }
 
 void
