@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.10 2013/10/22 15:18:06 patrick Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.11 2013/10/29 12:10:02 patrick Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -3520,6 +3520,19 @@ pmap_pte_init_armv7(void)
 	 * settings eventually
 	 */
 	pmap_pte_init_generic();
+
+	/* write-allocate should be tested */
+	pte_l1_s_cache_mode = L1_S_C|L1_S_B;
+	pte_l2_l_cache_mode = L2_C|L2_B;
+	pte_l2_s_cache_mode = L2_C|L2_B;
+
+	pte_l1_s_cache_mode_pt = L1_S_C;
+	pte_l2_l_cache_mode_pt = L2_C;
+	pte_l2_s_cache_mode_pt = L2_C;
+
+	pte_l1_s_cache_mask = L1_S_CACHE_MASK_v7;
+	pte_l2_l_cache_mask = L2_L_CACHE_MASK_v7;
+	pte_l2_s_cache_mask = L2_S_CACHE_MASK_v7;
 
 	pte_l1_s_coherent = L1_S_COHERENT_v7;
 	pte_l2_l_coherent = L2_L_COHERENT_v7;
