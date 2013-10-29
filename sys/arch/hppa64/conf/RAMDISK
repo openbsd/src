@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.16 2013/08/20 14:27:27 ajacoutot Exp $
+#	$OpenBSD: RAMDISK,v 1.17 2013/10/29 22:37:25 deraadt Exp $
 #
 # Diskless kernel config
 #
@@ -129,7 +129,6 @@ siop*	at pci?			# NCR 538XX SCSI controllers(new)
 #ti*	at pci?			# Alteon Tigon 1Gb ethernet
 #txp*	at pci?			# 3com 3CR990
 #epic*	at pci?			# SMC EPIC/100 ethernet
-#fpa*	at pci?			# DEC DEFPA FDDI
 dc*	at pci?			# 21143, "tulip" clone ethernet
 #dc*	at cardbus?
 #rl*	at pci?			# RealTek 81[23]9 ethernet
