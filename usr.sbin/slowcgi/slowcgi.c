@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.24 2013/10/23 15:29:21 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.25 2013/10/29 17:59:47 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -253,7 +253,25 @@ main(int argc, char *argv[])
 {
 	extern char *__progname;
 	struct passwd	*pw;
-	int		 c;
+	struct stat	 sb;
+	int		 c, fd;
+
+	/*
+	 * Ensure we have fds 0-2 open so that we have no fd overlaps
+	 * in exec_cgi() later. Just exit on error, we don't have enough
+	 * fds open to output an error message anywhere.
+	 */
+	for (c=0; c < 3; c++) {
+		if (fstat(c, &sb) == -1) {
+			if ((fd = open("/dev/null", O_RDWR)) != -1) {
+				if (dup2(fd, c) == -1)
+					exit(1);
+				if (fd > c)
+					close(fd);
+			} else
+				exit(1);
+		}
+	}
 
 	while ((c = getopt(argc, argv, "ds:")) != -1) {
 		switch (c) {
@@ -851,12 +869,18 @@ exec_cgi(struct request *c)
 		close(s_in[0]);
 		close(s_out[0]);
 		close(s_err[0]);
+
 		if (dup2(s_in[1], STDIN_FILENO) == -1)
 			_exit(1);
 		if (dup2(s_out[1], STDOUT_FILENO) == -1)
 			_exit(1);
 		if (dup2(s_err[1], STDERR_FILENO) == -1)
 			_exit(1);
+
+		close(s_in[1]);
+		close(s_out[1]);
+		close(s_err[1]);
+
 		argv[0] = c->script_name;
 		argv[1] = NULL;
 		if ((env = calloc(c->env_count + 1, sizeof(char*))) == NULL)
