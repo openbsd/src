@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.115 2013/05/15 08:29:24 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.116 2013/10/30 02:13:52 dlg Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #include <sys/conf.h>
 #include <sys/audioio.h>
 #include <sys/device.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
@@ -353,6 +353,7 @@ audioattach(struct device *parent, struct device *self, void *aux)
 		 sc->sc_inports.allports, sc->sc_outports.allports));
 
 	timeout_set(&sc->sc_resume_to, audio_resume_to, sc);
+	task_set(&sc->sc_resume_task, audio_resume_task, sc, NULL);
 }
 
 int
@@ -1181,8 +1182,7 @@ void
 audio_resume_to(void *v)
 {
 	struct audio_softc *sc = v;
-	workq_queue_task(NULL, &sc->sc_resume_task, 0,
-	    audio_resume_task, sc, 0);
+	task_add(systq, &sc->sc_resume_task);
 }
 
 void

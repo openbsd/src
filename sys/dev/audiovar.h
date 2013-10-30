@@ -1,4 +1,4 @@
-/*	$OpenBSD: audiovar.h,v 1.13 2010/09/21 20:08:11 jakemsr Exp $	*/
+/*	$OpenBSD: audiovar.h,v 1.14 2013/10/30 02:13:53 dlg Exp $	*/
 /*	$NetBSD: audiovar.h,v 1.18 1998/03/03 09:16:16 augustss Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ struct audio_softc {
 #define	AUDIO_QUIESCE_START	1
 #define	AUDIO_QUIESCE_SILENT	2
 	struct timeout sc_resume_to;
-	struct workq_task sc_resume_task;
+	struct task sc_resume_task;
 	u_char	sc_mute;
 
 #ifdef AUDIO_INTR_TIME
