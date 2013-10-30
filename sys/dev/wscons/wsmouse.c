@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.24 2013/10/18 13:54:09 miod Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.25 2013/10/30 18:00:57 shadchin Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -452,13 +452,11 @@ wsmouse_input(struct device *wsmousedev, u_int btns, /* 0 is up */
 		ub ^= d;
 	}
 
-	if (flags & WSMOUSE_INPUT_SYNC) {
-		NEXT;
-		ev->type = WSCONS_EVENT_SYNC;
-		ev->value = 0;
-		TIMESTAMP;
-		ADVANCE;
-	}
+	NEXT;
+	ev->type = WSCONS_EVENT_SYNC;
+	ev->value = 0;
+	TIMESTAMP;
+	ADVANCE;
 
 	/* XXX fake wscons_event notifying wsmoused(8) to close mouse device */
 	if (flags & WSMOUSE_INPUT_WSMOUSED_CLOSE) {

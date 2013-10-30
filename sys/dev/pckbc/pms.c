@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.48 2013/09/20 14:07:30 stsp Exp $ */
+/* $OpenBSD: pms.c,v 1.49 2013/10/30 18:00:56 shadchin Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -1155,8 +1155,7 @@ pms_proc_synaptics(struct pms_softc *sc)
 	if (syn->wsmode == WSMOUSE_NATIVE) {
 		wsmouse_input(sc->sc_wsmousedev, buttons, x, y, z, w,
 		    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
-		    WSMOUSE_INPUT_ABSOLUTE_Z | WSMOUSE_INPUT_ABSOLUTE_W |
-		    WSMOUSE_INPUT_SYNC);
+		    WSMOUSE_INPUT_ABSOLUTE_Z | WSMOUSE_INPUT_ABSOLUTE_W);
 	} else {
 		dx = dy = 0;
 		if (z > SYNAPTICS_PRESSURE) {
@@ -1470,8 +1469,7 @@ pms_proc_alps(struct pms_softc *sc)
 
 		wsmouse_input(sc->sc_wsmousedev, buttons, x, y, z, w,
 		    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
-		    WSMOUSE_INPUT_ABSOLUTE_Z | WSMOUSE_INPUT_ABSOLUTE_W |
-		    WSMOUSE_INPUT_SYNC);
+		    WSMOUSE_INPUT_ABSOLUTE_Z | WSMOUSE_INPUT_ABSOLUTE_W);
 
 		alps->old_fin = fin;
 	} else {
@@ -2321,8 +2319,7 @@ elantech_send_input(struct pms_softc *sc, int x, int y, int z, int w)
 		    WSMOUSE_INPUT_ABSOLUTE_X |
 		    WSMOUSE_INPUT_ABSOLUTE_Y |
 		    WSMOUSE_INPUT_ABSOLUTE_Z |
-		    WSMOUSE_INPUT_ABSOLUTE_W |
-		    WSMOUSE_INPUT_SYNC);
+		    WSMOUSE_INPUT_ABSOLUTE_W);
 	} else {
 		dx = dy = 0;
 
