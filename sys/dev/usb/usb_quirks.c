@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.68 2013/03/08 02:21:43 jcs Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.69 2013/10/30 12:28:19 aoyama Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -156,6 +156,7 @@ const struct usbd_quirk_entry {
  { USB_VENDOR_MUSTEK2, USB_PRODUCT_MUSTEK2_PM800,	ANY,	{ UQ_BAD_HID }},
  { USB_VENDOR_OMRON, USB_PRODUCT_OMRON_BX35F,		ANY,	{ UQ_BAD_HID }},
  { USB_VENDOR_OMRON, USB_PRODUCT_OMRON_BX50F,		ANY,	{ UQ_BAD_HID }},
+ { USB_VENDOR_OMRON, USB_PRODUCT_OMRON_BY35S,		ANY,	{ UQ_BAD_HID }},
  { USB_VENDOR_TENX, USB_PRODUCT_TENX_MISSILE,		ANY,	{ UQ_BAD_HID }},
  { USB_VENDOR_TERRATEC, USB_PRODUCT_TERRATEC_AUREON,	ANY,	{ UQ_BAD_HID }},
  { USB_VENDOR_TI, USB_PRODUCT_TI_MSP430,		ANY,	{ UQ_BAD_HID }},
