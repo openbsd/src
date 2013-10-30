@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.30 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.31 2013/10/30 20:33:00 millert Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ char *header[] =
     "short *yyss;",
     "short *yysslim;",
     "YYSTYPE *yyvs;",
-    "int yystacksize;",
+    "unsigned int yystacksize;",
     0
 };
 
@@ -138,7 +138,8 @@ char *body[] =
     "static int yygrowstack()",
     "#endif",
     "{",
-    "    int newsize, i;",
+    "    unsigned int newsize;",
+    "    long sslen;",
     "    short *newss;",
     "    YYSTYPE *newvs;",
     "",
@@ -148,7 +149,7 @@ char *body[] =
     "        return -1;",
     "    else if ((newsize *= 2) > YYMAXDEPTH)",
     "        newsize = YYMAXDEPTH;",
-    "    i = yyssp - yyss;",
+    "    sslen = yyssp - yyss;",
     "#ifdef SIZE_MAX",
     "#define YY_SIZE_MAX SIZE_MAX",
     "#else",
@@ -161,7 +162,7 @@ char *body[] =
     "    if (newss == NULL)",
     "        goto bail;",
     "    yyss = newss;",
-    "    yyssp = newss + i;",
+    "    yyssp = newss + sslen;",
     "    if (newsize && YY_SIZE_MAX / newsize < sizeof *newvs)",
     "        goto bail;",
     "    newvs = yyvs ? (YYSTYPE *)realloc(yyvs, newsize * sizeof *newvs) :",
@@ -169,7 +170,7 @@ char *body[] =
     "    if (newvs == NULL)",
     "        goto bail;",
     "    yyvs = newvs;",
-    "    yyvsp = newvs + i;",
+    "    yyvsp = newvs + sslen;",
     "    yystacksize = newsize;",
     "    yysslim = yyss + newsize - 1;",
     "    return 0;",
