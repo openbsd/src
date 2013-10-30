@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.91 2013/10/27 07:56:25 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.92 2013/10/30 21:37:48 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -121,6 +121,8 @@ control_imsg(struct mproc *p, struct imsg *imsg)
 	}
 	if (p->proc == PROC_MTA) {
 		switch (imsg->hdr.type) {
+		case IMSG_CTL_MTA_SHOW_HOSTS:
+		case IMSG_CTL_MTA_SHOW_RELAYS:
 		case IMSG_CTL_MTA_SHOW_ROUTES:
 		case IMSG_CTL_MTA_SHOW_HOSTSTATS:
 			c = tree_get(&ctl_conns, imsg->hdr.peerid);
@@ -705,6 +707,8 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		    imsg->data, imsg->hdr.len - sizeof(imsg->hdr));
 		return;
 
+	case IMSG_CTL_MTA_SHOW_HOSTS:
+	case IMSG_CTL_MTA_SHOW_RELAYS:
 	case IMSG_CTL_MTA_SHOW_ROUTES:
 	case IMSG_CTL_MTA_SHOW_HOSTSTATS:
 		if (c->euid)

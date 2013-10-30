@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.111 2013/10/27 17:47:53 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.112 2013/10/30 21:37:48 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -679,6 +679,22 @@ do_show_queue(int argc, struct parameter *argv)
 }
 
 static int
+do_show_hosts(int argc, struct parameter *argv)
+{
+	srv_show_cmd(IMSG_CTL_MTA_SHOW_HOSTS, NULL, 0);
+
+	return (0);
+}
+
+static int
+do_show_relays(int argc, struct parameter *argv)
+{
+	srv_show_cmd(IMSG_CTL_MTA_SHOW_RELAYS, NULL, 0);
+
+	return (0);
+}
+
+static int
 do_show_routes(int argc, struct parameter *argv)
 {
 	srv_show_cmd(IMSG_CTL_MTA_SHOW_ROUTES, NULL, 0);
@@ -827,6 +843,8 @@ main(int argc, char **argv)
 	cmd_install("show message <evpid>",	do_show_message);
 	cmd_install("show queue",		do_show_queue);
 	cmd_install("show queue <msgid>",	do_show_queue);
+	cmd_install("show hosts",		do_show_hosts);
+	cmd_install("show relays",		do_show_relays);
 	cmd_install("show routes",		do_show_routes);
 	cmd_install("show stats",		do_show_stats);
 	cmd_install("stop",			do_stop);
