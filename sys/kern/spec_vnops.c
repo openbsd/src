@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.77 2013/10/29 03:11:08 guenther Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.78 2013/10/30 03:16:49 guenther Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ spec_open(void *v)
 		if (cdevsw[maj].d_flags & D_CLONE)
 			return (spec_open_clone(ap));
 		VOP_UNLOCK(vp, 0, p);
-		error = (*cdevsw[maj].d_open)(dev, ap->a_mode, S_IFCHR, ap->a_p);
+		error = (*cdevsw[maj].d_open)(dev, ap->a_mode, S_IFCHR, p);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 		return (error);
 
@@ -171,7 +171,7 @@ spec_open(void *v)
 		 */
 		if ((error = vfs_mountedon(vp)) != 0)
 			return (error);
-		return ((*bdevsw[maj].d_open)(dev, ap->a_mode, S_IFBLK, ap->a_p));
+		return ((*bdevsw[maj].d_open)(dev, ap->a_mode, S_IFBLK, p));
 	case VNON:
 	case VLNK:
 	case VDIR:
@@ -490,10 +490,10 @@ spec_close(void *v)
 		 * if the reference count is 2 (this last descriptor
 		 * plus the session), release the reference from the session.
 		 */
-		if (vcount(vp) == 2 && ap->a_p && ap->a_p->p_p->ps_pgrp &&
-		    vp == ap->a_p->p_p->ps_pgrp->pg_session->s_ttyvp) {
+		if (vcount(vp) == 2 && p != NULL && p->p_p->ps_pgrp &&
+		    vp == p->p_p->ps_pgrp->pg_session->s_ttyvp) {
 			vrele(vp);
-			ap->a_p->p_p->ps_pgrp->pg_session->s_ttyvp = NULL;
+			p->p_p->ps_pgrp->pg_session->s_ttyvp = NULL;
 		}
 		if (cdevsw[major(dev)].d_flags & D_CLONE)
 			return (spec_close_clone(ap));
@@ -517,10 +517,10 @@ spec_close(void *v)
 		 * vclean(), the vnode is already locked.
 		 */
 		if (!(vp->v_flag & VXLOCK))
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, ap->a_p);
-		error = vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 0, 0);
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+		error = vinvalbuf(vp, V_SAVE, ap->a_cred, p, 0, 0);
 		if (!(vp->v_flag & VXLOCK))
-			VOP_UNLOCK(vp, 0, ap->a_p);
+			VOP_UNLOCK(vp, 0, p);
 		if (error)
 			return (error);
 		/*
@@ -568,15 +568,16 @@ int
 spec_setattr(void *v)
 {
 	struct vop_getattr_args	*ap = v;
+	struct proc		*p = ap->a_p;
 	struct vnode		*vp = ap->a_vp;
 	int			 error;
 
 	if (!(vp->v_flag & VCLONE))
 		return (EBADF);
 
-	vn_lock(vp->v_specparent, LK_EXCLUSIVE|LK_RETRY, ap->a_p);
-	error = VOP_SETATTR(vp->v_specparent, ap->a_vap, ap->a_cred, ap->a_p);
-	VOP_UNLOCK(vp, 0, ap->a_p);
+	vn_lock(vp->v_specparent, LK_EXCLUSIVE|LK_RETRY, p);
+	error = VOP_SETATTR(vp->v_specparent, ap->a_vap, ap->a_cred, p);
+	VOP_UNLOCK(vp, 0, p);
 
 	return (error);
 }
