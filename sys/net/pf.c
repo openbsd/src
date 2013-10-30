@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.855 2013/10/28 12:09:41 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.856 2013/10/30 11:21:26 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3789,6 +3789,18 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 			}
 			if (PF_ANEQ(daddr, pd->dst, pd->af)) {
 				pf_change_a6(pd, pd->dst, daddr);
+				rewrite = 1;
+			}
+		}
+		if (virtual_type == htons(ICMP6_ECHO_REQUEST)) {
+			u_int16_t icmpid = (icmp_dir == PF_IN) ? sport : dport;
+
+			if (icmpid != pd->hdr.icmp6->icmp6_id) {
+				if (pd->csum_status == PF_CSUM_UNKNOWN)
+					pf_check_proto_cksum(pd, pd->off,
+					    pd->tot_len - pd->off, pd->proto,
+					    pd->af);
+				pd->hdr.icmp6->icmp6_id = icmpid;
 				rewrite = 1;
 			}
 		}

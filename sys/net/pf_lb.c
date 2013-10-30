@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.29 2013/10/30 11:18:32 mikeb Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.30 2013/10/30 11:21:26 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -201,7 +201,7 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 		 * similar 2 portloop in in_pcbbind
 		 */
 		if (!(pd->proto == IPPROTO_TCP || pd->proto == IPPROTO_UDP ||
-		    pd->proto == IPPROTO_ICMP)) {
+		    pd->proto == IPPROTO_ICMP || pd->proto == IPPROTO_ICMPV6)) {
 			/* XXX bug: icmp states dont use the id on both
 			 * XXX sides (traceroute -I through nat) */
 			key.port[1] = pd->nsport;
