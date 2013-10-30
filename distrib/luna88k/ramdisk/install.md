@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.15 2013/09/22 20:52:48 miod Exp $
+#       $OpenBSD: install.md,v 1.16 2013/10/30 20:43:50 miod Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -38,6 +38,7 @@ NCPU=$(sysctl -n hw.ncpufound)
 ((NCPU > 1)) && { DEFAULTSETS="bsd bsd.rd bsd.mp" ; SANESETS="bsd bsd.mp" ; }
 
 md_installboot() {
+	cat /mnt/usr/mdec/boot > /mnt/boot
 }
 
 md_prep_disklabel() {
