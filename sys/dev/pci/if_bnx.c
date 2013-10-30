@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.102 2013/10/23 20:22:12 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.103 2013/10/30 04:08:07 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -2596,6 +2596,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	TAILQ_INIT(&sc->tx_used_pkts);
 	sc->tx_pkt_count = 0;
 	mtx_init(&sc->tx_pkt_mtx, IPL_NET);
+	task_set(&sc->tx_alloc_task, bnx_alloc_pkts, sc, NULL);
 
 	/*
 	 * Allocate DMA memory for the Rx buffer descriptor chain,
@@ -3768,10 +3769,6 @@ bnx_alloc_pkts(void *xsc, void *arg)
 		mtx_leave(&sc->tx_pkt_mtx);
 	}
 
-	mtx_enter(&sc->tx_pkt_mtx);
-	CLR(sc->bnx_flags, BNX_ALLOC_PKTS_FLAG);
-	mtx_leave(&sc->tx_pkt_mtx);
-
 	s = splnet();
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		bnx_start(ifp);
@@ -4865,17 +4862,17 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 	u_int16_t		debug_prod;
 #endif
 	u_int32_t		addr, prod_bseq;
-	int			i, error;
+	int			i, error, add;
 
 	mtx_enter(&sc->tx_pkt_mtx);
 	pkt = TAILQ_FIRST(&sc->tx_free_pkts);
 	if (pkt == NULL) {
-		if (sc->tx_pkt_count <= TOTAL_TX_BD &&
-		    !ISSET(sc->bnx_flags, BNX_ALLOC_PKTS_FLAG) &&
-		    workq_add_task(NULL, 0, bnx_alloc_pkts, sc, NULL) == 0)
-			SET(sc->bnx_flags, BNX_ALLOC_PKTS_FLAG);
-
+		add = (sc->tx_pkt_count <= TOTAL_TX_BD);
 		mtx_leave(&sc->tx_pkt_mtx);
+
+		if (add)
+			task_add(systq, &sc->tx_alloc_task);
+
 		return (ENOMEM);
 	}
 	TAILQ_REMOVE(&sc->tx_free_pkts, pkt, pkt_entry);
