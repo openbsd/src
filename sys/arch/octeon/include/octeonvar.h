@@ -312,10 +312,32 @@ octeon_xkphys_read_8(paddr_t address)
 	return (*p);
 }
 
+#define	MIO_BOOT_BIST_STAT			0x00011800000000f8ULL
 static inline void
 octeon_xkphys_write_8(paddr_t address, uint64_t value)
 {
 	*(volatile uint64_t *)(PHYS_TO_XKPHYS(address, CCA_NC)) = value;
+
+	/*
+	 * It seems an immediate read is necessary when doing a write to an RSL
+	 * register in order to complete the write.
+	 * We use MIO_BOOT_BIST_STAT because it's apparently the fastest
+	 * write.
+	 */
+
+	/*
+	 * XXX
+	 * This if would be better writen as:
+	 * if ((address & 0xffffff0000000000ULL) == OCTEON_MIO_BOOT_BASE) {
+	 * but octeonreg.h can't be included here and we want this inlined
+	 *
+	 * Note that the SDK masks with 0x7ffff but that doesn't make sense.
+	 * This is a physical address.
+	 */
+	if (((address >> 40) & 0xfffff) == (0x118)) {
+		value = *(volatile uint64_t *)
+		    (PHYS_TO_XKPHYS(MIO_BOOT_BIST_STAT, CCA_NC));
+	}
 }
 
 static inline void
