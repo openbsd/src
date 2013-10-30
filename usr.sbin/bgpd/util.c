@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.16 2013/10/19 15:04:26 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.17 2013/10/30 17:28:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -118,18 +118,18 @@ log_rd(u_int64_t rd)
 	case EXT_COMMUNITY_TWO_AS:
 		u32 = rd & 0xffffffff;
 		u16 = (rd >> 32) & 0xffff;
-		snprintf(buf, sizeof(buf), "rd %i:%i", u16, u32);
+		snprintf(buf, sizeof(buf), "rd %hu:%u", u16, u32);
 		break;
 	case EXT_COMMUNITY_FOUR_AS:
 		u32 = (rd >> 16) & 0xffffffff;
 		u16 = rd & 0xffff;
-		snprintf(buf, sizeof(buf), "rd %s:%i", log_as(u32), u16);
+		snprintf(buf, sizeof(buf), "rd %s:%hu", log_as(u32), u16);
 		break;
 	case EXT_COMMUNITY_IPV4:
 		u32 = (rd >> 16) & 0xffffffff;
 		u16 = rd & 0xffff;
 		addr.s_addr = htonl(u32);
-		snprintf(buf, sizeof(buf), "rd %s:%i", inet_ntoa(addr), u16);
+		snprintf(buf, sizeof(buf), "rd %s:%hu", inet_ntoa(addr), u16);
 		break;
 	default:
 		return ("rd ?");

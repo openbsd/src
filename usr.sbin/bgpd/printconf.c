@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.91 2013/10/19 15:04:25 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.92 2013/10/30 17:28:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -89,7 +89,7 @@ print_community(int as, int type)
 	else if (as == COMMUNITY_NEIGHBOR_AS)
 		printf("neighbor-as:");
 	else
-		printf("%d:", as);
+		printf("%u:", (unsigned int)as);
 
 	if (type == COMMUNITY_ANY)
 		printf("* ");
@@ -104,15 +104,15 @@ print_extcommunity(struct filter_extcommunity *c)
 {
 	switch (c->type & EXT_COMMUNITY_VALUE) {
 	case EXT_COMMUNITY_TWO_AS:
-		printf("%s %i:%i ", log_ext_subtype(c->subtype),
+		printf("%s %hu:%u ", log_ext_subtype(c->subtype),
 		    c->data.ext_as.as, c->data.ext_as.val);
 		break;
 	case EXT_COMMUNITY_IPV4:
-		printf("%s %s:%i ", log_ext_subtype(c->subtype),
+		printf("%s %s:%u ", log_ext_subtype(c->subtype),
 		    inet_ntoa(c->data.ext_ip.addr), c->data.ext_ip.val);
 		break;
 	case EXT_COMMUNITY_FOUR_AS:
-		printf("%s %s:%i ", log_ext_subtype(c->subtype),
+		printf("%s %s:%u ", log_ext_subtype(c->subtype),
 		    log_as(c->data.ext_as4.as4), c->data.ext_as.val);
 		break;
 	case EXT_COMMUNITY_OPAQUE:
