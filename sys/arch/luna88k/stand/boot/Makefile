@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2013/10/29 22:13:28 miod Exp $
+#	$OpenBSD: Makefile,v 1.4 2013/10/30 20:39:05 miod Exp $
 #	$NetBSD: Makefile,v 1.9 2013/01/22 15:48:40 tsutsui Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
@@ -61,14 +61,15 @@ ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
 	${LD} ${LINKFORMAT} -x -o ${PROG}.elf ${OBJS} ${LIBS}
 	${OBJCOPY} -S -O a.out-m88k-openbsd --impure ${PROG}.elf ${PROG}
 
+install: ${PROG}
+	install -m 555 -g bin -o bin ${PROG} ${DESTDIR}${MDEC_DIR}
+
 CLEANFILES+=	${PROG}.elf
 
 .if ${MACHINE} != "luna88k"
-.if !make(obj)
 .BEGIN:
 	@([ -h machine ] || ln -s ${.CURDIR}/../../include machine)
 	@([ -h m88k ] || ln -s ${.CURDIR}/../../../m88k/include m88k)
-.endif
 .endif
 
 .include <bsd.prog.mk>
