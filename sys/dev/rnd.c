@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.143 2013/07/09 08:57:24 blambert Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.144 2013/10/30 02:13:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -120,7 +120,7 @@
 #include <sys/fcntl.h>
 #include <sys/timeout.h>
 #include <sys/mutex.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 #include <sys/msgbuf.h>
 
 #include <crypto/md5.h>
@@ -547,6 +547,7 @@ struct rc4_ctx arc4random_state = { 0, 0, { 1, 2, 3, 4, 5, 6 } };
 
 struct mutex rndlock = MUTEX_INITIALIZER(IPL_HIGH);
 struct timeout arc4_timeout;
+struct task arc4_task;
 
 void arc4_reinit(void *v);		/* timeout to start reinit */
 void arc4_init(void *, void *);		/* actually do the reinit */
@@ -658,7 +659,7 @@ arc4_init(void *v, void *w)
 void
 arc4_reinit(void *v)
 {
-	workq_add_task(NULL, 0, arc4_init, NULL, NULL);
+	task_add(systq, &arc4_task);
 	/* 10 minutes, per dm@'s suggestion */
 	timeout_add_sec(&arc4_timeout, 10 * 60);
 }
@@ -693,6 +694,7 @@ random_start(void)
 
 	dequeue_randomness(NULL);
 	arc4_init(NULL, NULL);
+	task_set(&arc4_task, arc4_init, NULL, NULL);
 	timeout_set(&arc4_timeout, arc4_reinit, NULL);
 	arc4_reinit(NULL);
 	timeout_set(&rnd_timeout, dequeue_randomness, NULL);
