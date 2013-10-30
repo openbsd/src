@@ -1,4 +1,4 @@
-.\"	$OpenBSD: task_add.9,v 1.3 2013/10/29 07:57:57 jmc Exp $
+.\"	$OpenBSD: task_add.9,v 1.4 2013/10/30 02:11:32 dlg Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 29 2013 $
+.Dd $Mdocdate: October 30 2013 $
 .Dt TASK_ADD 9
 .Os
 .Sh NAME
@@ -27,8 +27,6 @@
 .Nd task queues
 .Sh SYNOPSIS
 .In sys/task.h
-.Ft struct taskq *
-.Fn "taskq_systq" "void"
 .Ft struct taskq *
 .Fn "taskq_create" "const char *name" "unsigned int nthreads" "int ipl"
 .Ft void
@@ -43,12 +41,10 @@
 The
 taskq
 API provides a mechanism to defer work to a process context.
-.Pp
-.Fn taskq_systq
-returns a pointer to the shared system taskq.
-The system taskq is serviced by a single thread and can therefore
-provide predictable ordering of work.
-Work can be scheduled on the system taskq from callers at or below IPL_HIGH.
+.\" .Pp
+.\" The system taskq is serviced by a single thread and can therefore
+.\" provide predictable ordering of work.
+.\" Work can be scheduled on the system taskq from callers at or below IPL_HIGH.
 .Pp
 .Fn taskq_create
 allocates a taskq and a set of threads to be used to complete work
@@ -140,7 +136,6 @@ If the work was actually removed from the taskq it will return 1, otherwise 0.
 and
 .Fn taskq_destroy
 can be called during autoconf, or from process context.
-.Fn taskq_systq ,
 .Fn task_set ,
 .Fn task_add ,
 and

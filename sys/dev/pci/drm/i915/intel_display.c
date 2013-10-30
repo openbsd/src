@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.13 2013/10/29 06:30:57 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.14 2013/10/30 02:11:32 dlg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -7175,7 +7175,7 @@ static void intel_crtc_destroy(struct drm_crtc *crtc)
 	mtx_leave(&dev->event_lock);
 
 	if (work) {
-		task_del(taskq_systq(), &work->task);
+		task_del(systq, &work->task);
 		free(work, M_DRM);
 	}
 
@@ -7243,7 +7243,7 @@ static void do_intel_finish_page_flip(struct drm_device *dev,
 	atomic_clear_int(&obj->pending_flip, 1 << intel_crtc->plane);
 	wakeup(&dev_priv->pending_flip_queue);
 
-	task_add(taskq_systq(), &work->task);
+	task_add(systq, &work->task);
 
 //	trace_i915_flip_complete(intel_crtc->plane, work->pending_flip_obj);
 }
@@ -9498,8 +9498,8 @@ void intel_modeset_cleanup(struct drm_device *dev)
 	/* Disable the irq before mode object teardown, for the irq might
 	 * enqueue unpin/hotplug work. */
 	drm_irq_uninstall(dev);
-	task_del(taskq_systq(), &dev_priv->hotplug_task);
-	task_del(taskq_systq(), &dev_priv->rps.task);
+	task_del(systq, &dev_priv->hotplug_task);
+	task_del(systq, &dev_priv->rps.task);
 
 	/* flush any delayed tasks or pending work */
 #ifdef notyet

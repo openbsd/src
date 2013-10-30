@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo.c,v 1.3 2013/10/29 06:30:57 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo.c,v 1.4 2013/10/30 02:11:33 dlg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -754,7 +754,7 @@ ttm_bo_delayed_tick(void *arg)
 {
 	struct ttm_bo_device *bdev = arg;
 
-	task_add(taskq_systq(), &bdev->task);
+	task_add(systq, &bdev->task);
 }
 
 void
@@ -805,7 +805,7 @@ int
 ttm_bo_lock_delayed_workqueue(struct ttm_bo_device *bdev)
 {
 	timeout_del(&bdev->to);
-	task_del(taskq_systq(), &bdev->task);
+	task_del(systq, &bdev->task);
 	return 0;
 }
 EXPORT_SYMBOL(ttm_bo_lock_delayed_workqueue);
@@ -1608,7 +1608,7 @@ ttm_bo_device_release(struct ttm_bo_device *bdev)
 	rw_exit_write(&glob->device_list_rwlock);
 
 	timeout_del(&bdev->to);
-	task_del(taskq_systq(), &bdev->task);
+	task_del(systq, &bdev->task);
 
 	while (ttm_bo_delayed_delete(bdev, true))
 		;

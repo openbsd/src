@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.4 2013/10/29 23:39:02 dlg Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.5 2013/10/30 02:11:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -48,6 +48,8 @@ struct taskq taskq_sys = {
 	TAILQ_HEAD_INITIALIZER(taskq_sys.tq_worklist)
 };
 
+struct taskq *const systq = &taskq_sys;
+
 void	taskq_init(void); /* called in init_main.c */
 void	taskq_create_thread(void *);
 int	taskq_next_work(struct taskq *, struct task *);
@@ -56,13 +58,7 @@ void	taskq_thread(void *);
 void
 taskq_init(void)
 {
-	kthread_create_deferred(taskq_create_thread, &taskq_sys);
-}
-
-struct taskq *
-taskq_systq(void)
-{
-	return (&taskq_sys);
+	kthread_create_deferred(taskq_create_thread, systq);
 }
 
 struct taskq *

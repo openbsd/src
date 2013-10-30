@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.7 2013/10/29 05:47:15 dlg Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.8 2013/10/30 02:11:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -760,7 +760,7 @@ vmwpvs_intr(void *xsc)
 	}
 
 	if (msg)
-		task_add(taskq_systq(), &sc->sc_msg_task);
+		task_add(systq, &sc->sc_msg_task);
 
 	return (1);
 }
