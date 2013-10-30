@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.28 2013/10/24 11:31:43 mpi Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.29 2013/10/30 11:18:32 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -254,6 +254,10 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 		case PF_POOL_RANDOM:
 		case PF_POOL_ROUNDROBIN:
 		case PF_POOL_LEASTSTATES:
+			/*
+			 * pick a different source address since we're out
+			 * of free port choices for the current one.
+			 */
 			if (pf_map_addr(pd->naf, r, &pd->nsaddr, naddr,
 			    &init_addr, sn, &r->nat, PF_SN_NAT))
 				return (1);
