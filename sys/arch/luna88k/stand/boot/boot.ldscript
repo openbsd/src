@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.ldscript,v 1.1 2013/10/28 22:13:12 miod Exp $	*/
+/*	$OpenBSD: boot.ldscript,v 1.2 2013/10/30 18:40:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -32,7 +32,7 @@ SECTIONS
 		*(.rodata*)
 		PROVIDE(etext = ABSOLUTE(.));
 		FILL(0xf4005800)
-		. = ALIGN(0x1000);
+		. = ALIGN(0x10);
 	}
 	.data :
 	{
