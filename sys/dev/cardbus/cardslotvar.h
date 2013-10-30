@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardslotvar.h,v 1.5 2010/01/13 09:10:33 jsg Exp $	*/
+/*	$OpenBSD: cardslotvar.h,v 1.6 2013/10/30 08:47:20 mpi Exp $	*/
 /*	$NetBSD: cardslotvar.h,v 1.5 2000/03/13 23:52:38 soren Exp $	*/
 
 /*
@@ -73,6 +73,7 @@ struct cardslot_softc {
 
 	/* An event queue for the thread which processes slot state events. */
 	SIMPLEQ_HEAD(, cardslot_event) sc_events;
+	struct task sc_event_task;
 };
 
 #define CARDSLOT_STATUS_CARD_MASK     0x07

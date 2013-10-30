@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardslot.c,v 1.15 2013/05/30 16:15:01 deraadt Exp $	*/
+/*	$OpenBSD: cardslot.c,v 1.16 2013/10/30 08:47:20 mpi Exp $	*/
 /*	$NetBSD: cardslot.c,v 1.9 2000/03/22 09:35:06 haya Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 #include <sys/syslog.h>
 #include <sys/kthread.h>
 #include <sys/pool.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 
@@ -62,6 +62,7 @@ STATIC void cardslotattach(struct device *, struct device *, void *);
 
 STATIC int cardslotmatch(struct device *, void *, void *);
 STATIC void cardslot_event(void *arg1, void *arg2);
+STATIC void cardslot_process_event(struct cardslot_softc *);
 
 STATIC int cardslot_cb_print(void *aux, const char *pcic);
 STATIC int cardslot_16_print(void *, const char *);
@@ -110,6 +111,7 @@ cardslotattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_cb_softc = NULL;
 	sc->sc_16_softc = NULL;
 	SIMPLEQ_INIT(&sc->sc_events);
+	task_set(&sc->sc_event_task, cardslot_event, sc, NULL);
 
 	printf(" slot %d flags %x\n", sc->sc_slot,
 	    sc->sc_dev.dv_cfdata->cf_flags);
@@ -212,7 +214,7 @@ cardslot_event_throw(struct cardslot_softc *sc, int ev)
 	SIMPLEQ_INSERT_TAIL(&sc->sc_events, ce, ce_q);
 	splx(s);
 
-	workq_add_task(NULL, 0, cardslot_event, sc, NULL);
+	task_add(systq, &sc->sc_event_task);
 }
 
 /*
@@ -226,6 +228,15 @@ STATIC void
 cardslot_event(void *arg1, void *arg2)
 {
 	struct cardslot_softc *sc = arg1;
+
+	while (!SIMPLEQ_EMPTY(&sc->sc_events))
+		cardslot_process_event(sc);
+}
+
+
+STATIC void
+cardslot_process_event(struct cardslot_softc *sc)
+{
 	struct cardslot_event *ce;
 	int s, ev;
 
