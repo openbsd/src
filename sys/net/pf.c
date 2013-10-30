@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.856 2013/10/30 11:21:26 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.857 2013/10/30 11:35:10 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6785,10 +6785,12 @@ pf_cksum(struct pf_pdesc *pd, struct mbuf *m)
 		pd->hdr.icmp->icmp_cksum = 0;
 		m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 		break;
+#ifdef INET6
 	case IPPROTO_ICMPV6:
 		pd->hdr.icmp6->icmp6_cksum = 0;
 		m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 		break;
+#endif /* INET6 */
 	default:
 		/* nothing */
 		break;
