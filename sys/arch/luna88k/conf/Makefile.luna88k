@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.luna88k,v 1.49 2013/10/15 19:23:28 guenther Exp $
+#	$OpenBSD: Makefile.luna88k,v 1.50 2013/10/30 18:20:59 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -12,7 +12,6 @@
 
 SIZE?=	size
 STRIP?=	strip
-OBJCOPY?= objcopy
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -39,8 +38,7 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
-LINKFLAGS=	-T ${_machdir}/conf/ld.script -Ttext 0x20000 -e __start -X -N \
-		    --warn-common -nopie
+LINKFLAGS=	-Ttext 0x20000 -e __start -X -N --warn-common -nopie
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h
@@ -78,7 +76,7 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_HEAD} vers.o $${OBJS}'; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_HEAD} vers.o ${OBJS}
-SYSTEM_LD_TAIL=	@${SIZE} $@
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
@@ -91,10 +89,6 @@ SYSTEM_LD_TAIL+=; \
 .else
 LINKFLAGS+=	-S -x
 .endif
-SYSTEM_LD_TAIL+=; \
-		echo ${OBJCOPY} -O a.out-m88k-openbsd --impure $@; \
-		${OBJCOPY} -O a.out-m88k-openbsd --impure $@; \
-		chmod 755 $@
 
 %LOAD
 
