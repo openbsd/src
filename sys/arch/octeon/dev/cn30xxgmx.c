@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.10 2013/10/24 22:32:29 jasper Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.11 2013/10/30 20:48:04 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -287,8 +287,7 @@ cn30xxgmx_print(void *aux, const char *pnp)
 		printf("%s at %s", ga->ga_name, pnp);
 #endif
 
-	printf(" address=0x%016llx: %s", ga->ga_addr,
-	    types[ga->ga_port_type]);
+	printf(": %s", types[ga->ga_port_type]);
 
 	return UNCONF;
 }
