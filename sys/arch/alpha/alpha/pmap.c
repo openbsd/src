@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.63 2012/04/10 15:50:52 guenther Exp $ */
+/* $OpenBSD: pmap.c,v 1.64 2013/10/31 03:33:37 dlg Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -459,7 +459,7 @@ struct pool_allocator pmap_l1pt_allocator = {
 	pmap_l1pt_alloc, pmap_l1pt_free, 0,
 };
 
-int	pmap_l1pt_ctor(void *, void *, int);
+void	pmap_l1pt_ctor(pt_entry_t *);
 
 /*
  * PV table management functions.
@@ -894,7 +894,6 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	    &pool_allocator_nointr);
 	pool_init(&pmap_l1pt_pool, PAGE_SIZE, 0, 0, 0, "l1ptpl",
 	    &pmap_l1pt_allocator);
-	pool_set_ctordtor(&pmap_l1pt_pool, pmap_l1pt_ctor, NULL, NULL);
 	pool_init(&pmap_asn_pool, pmap_ncpuids * sizeof(u_int), 0, 0, 0,
 	    "pmasnpl", &pool_allocator_nointr);
 	pool_init(&pmap_asngen_pool, pmap_ncpuids * sizeof(u_long), 0, 0, 0,
@@ -3438,6 +3437,7 @@ pmap_lev1map_create(pmap_t pmap, cpuid_t cpu_id)
 		return (ENOMEM);
 	}
 
+	pmap_l1pt_ctor(l1pt);
 	pmap->pm_lev1map = l1pt;
 
 	simple_unlock(&pmap_growkernel_slock);
@@ -3506,12 +3506,12 @@ pmap_lev1map_destroy(pmap_t pmap, cpuid_t cpu_id)
 /*
  * pmap_l1pt_ctor:
  *
- *	Pool cache constructor for L1 PT pages.
+ *	Constructor for L1 PT pages.
  */
-int
-pmap_l1pt_ctor(void *arg, void *object, int flags)
+void
+pmap_l1pt_ctor(pt_entry_t *l1pt)
 {
-	pt_entry_t *l1pt = object, pte;
+	pt_entry_t pte;
 	int i;
 
 	/*
@@ -3532,8 +3532,6 @@ pmap_l1pt_ctor(void *arg, void *object, int flags)
 	pte = ((ALPHA_K0SEG_TO_PHYS((vaddr_t) l1pt) >> PGSHIFT) << PG_SHIFT) |
 	    PG_V | PG_KRE | PG_KWE;
 	l1pt[l1pte_index(VPTBASE)] = pte;
-
-	return (0);
 }
 
 /*
@@ -3541,7 +3539,7 @@ pmap_l1pt_ctor(void *arg, void *object, int flags)
  *
  *	Page allocator for L1 PT pages.
  */
-void *
+void
 pmap_l1pt_alloc(struct pool *pp, int flags, int *slowdown)
 {
 	paddr_t ptpa;
