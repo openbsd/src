@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.62 2013/10/31 10:12:19 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.63 2013/10/31 20:06:59 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -583,13 +583,7 @@ usbd_clear_endpoint_stall(struct usbd_pipe *pipe)
 	USETW(req.wIndex, pipe->endpoint->edesc->bEndpointAddress);
 	USETW(req.wLength, 0);
 	err = usbd_do_request(dev, &req, 0);
-#if 0
-XXX should we do this?
-	if (!err) {
-		pipe->state = USBD_PIPE_ACTIVE;
-		/* XXX activate pipe */
-	}
-#endif
+
 	return (err);
 }
 
