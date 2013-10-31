@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.233 2013/05/31 06:27:08 rpe Exp $
+#	$OpenBSD: install.sh,v 1.234 2013/10/31 19:15:20 halex Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -284,8 +284,7 @@ echo "done."
 apply
 
 if [[ -n $user ]]; then
-	_encr="*"
-	[[ -n "$userpass" ]] && _encr=$(/mnt/usr/bin/encrypt -b 8 -- "$userpass")
+	_encr=$(encr_pwd "$userpass")
 	uline="${user}:${_encr}:1000:1000:staff:0:0:${username}:/home/${user}:/bin/ksh"
 	echo "$uline" >> /mnt/etc/master.passwd
 	echo "${user}:*:1000:" >> /mnt/etc/group
@@ -303,7 +302,7 @@ q" | ed /mnt/etc/group 2>/dev/null
 fi
 
 if [[ -n "$_rootpass" ]]; then
-	_encr=$(/mnt/usr/bin/encrypt -b 8 -- "$_rootpass")
+	_encr=$(encr_pwd "$_rootpass")
 	echo "1,s@^root::@root:${_encr}:@
 w
 q" | ed /mnt/etc/master.passwd 2>/dev/null

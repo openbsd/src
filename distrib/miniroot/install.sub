@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.685 2013/10/27 22:36:06 uwe Exp $
+#	$OpenBSD: install.sub,v 1.686 2013/10/31 19:15:20 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -321,6 +321,17 @@ askpassword() {
 
 		echo "Passwords do not match, try again."
 	done
+}
+
+encr_pwd() {
+	local _p=$1
+	if [[ -z $_p ]]; then
+		echo '*'
+	elif [[ $_p == \$2?\$[0-9][0-9]\$* && ${#_p} > 40 ]]; then
+		echo "$_p"
+	else
+		/mnt/usr/bin/encrypt -b 8 -- "$_p"
+	fi
 }
 
 user_setup() {
