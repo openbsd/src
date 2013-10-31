@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.25 2013/10/29 17:59:47 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.26 2013/10/31 21:53:16 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -337,6 +337,7 @@ slowcgi_listen(char *path, gid_t gid)
 {
 	struct listener		 *l = NULL;
 	struct sockaddr_un	 sun;
+	size_t			 len;
 	mode_t			 old_umask, mode;
 	int			 fd;
 
@@ -346,7 +347,10 @@ slowcgi_listen(char *path, gid_t gid)
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
+	len = strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
+	if (len >= sizeof(sun.sun_path))
+		lerrx(1, "socket path to long");
+	sun.sun_len = len;
 
 	if (unlink(path) == -1)
 		if (errno != ENOENT)
