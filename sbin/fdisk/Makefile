@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.38 2011/06/23 22:46:12 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.39 2013/10/31 22:37:17 schwarze Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -29,7 +29,7 @@ PROG=	fdisk
 SRCS=	fdisk.c user.c misc.c disk.c mbr.c part.c cmd.c manual.c
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
-CLEANFILES+=manual.c
+CLEANFILES += fdisk.cat8 manual.c
 
 .include <bsd.own.mk>
 

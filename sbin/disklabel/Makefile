@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.53 2011/06/23 22:46:12 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.54 2013/10/31 22:37:17 schwarze Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c editor.c manual.c
@@ -6,8 +6,7 @@ DPADD=	${LIBUTIL}
 LDADD=	-lutil
 MAN=	disklabel.8 disklabel.5
 
-
-CLEANFILES+=manual.c
+CLEANFILES += disklabel.cat8 manual.c
 
 .include <bsd.own.mk>
 
