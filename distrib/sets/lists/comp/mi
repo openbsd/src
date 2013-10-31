@@ -6916,7 +6916,6 @@
 ./usr/share/man/man9/task_add.9
 ./usr/share/man/man9/task_del.9
 ./usr/share/man/man9/task_set.9
-./usr/share/man/man9/task_systq.9
 ./usr/share/man/man9/taskq_create.9
 ./usr/share/man/man9/taskq_destroy.9
 ./usr/share/man/man9/tc_init.9
