@@ -1,4 +1,4 @@
-/*	$OpenBSD: workq.h,v 1.6 2009/09/02 14:05:05 dlg Exp $ */
+/*	$OpenBSD: workq.h,v 1.7 2013/10/31 04:33:32 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -36,6 +36,7 @@ struct workq_task {
 #define WQ_WAITOK	(1<<0)
 #define WQ_MPSAFE	(1<<1)
 
+#ifdef _KERNEL
 struct workq;
 
 struct workq	*workq_create(const char *, int, int);
@@ -44,5 +45,6 @@ int		workq_add_task(struct workq *, int /* flags */, workq_fn,
 void		workq_queue_task(struct workq *, struct workq_task *,
 		    int /* flags */, workq_fn, void *, void *);
 void		workq_destroy(struct workq *);
+#endif /* _KERNEL */
 
 #endif /* _SYS_WORKQ_H_ */
