@@ -1,10 +1,19 @@
-#	$OpenBSD: Makefile,v 1.1 2012/01/31 00:14:02 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2013/10/31 01:24:06 bluhm Exp $
 
 # The following ports must be installed:
 #
 # python-2.7          interpreted object-oriented programming language
 # py-libdnet          python interface to libdnet
 # scapy               powerful interactive packet manipulation in python
+
+# Check wether all required python packages are installed.  If some
+# are missing print a warning and skip the tests, but do not fail.
+PYTHON_IMPORT != python2.7 -c 'from scapy.all import *' 2>&1 || true
+.if ! empty(PYTHON_IMPORT)
+regress:
+	@echo '${PYTHON_IMPORT}'
+	@echo install python and the scapy module for additional tests
+.endif
 
 # This test needs a manual setup of two machines
 # Set up machines: SRC DST
@@ -19,12 +28,12 @@
 # Configure Addresses on the machines.
 # Adapt interface and addresse variables to your local setup.
 #
-SRC_IF =	tun0
-SRC_MAC =	fe:e1:ba:d1:56:1f
-DST_MAC =	52:54:00:12:34:50
+SRC_IF ?=
+SRC_MAC ?=
+DST_MAC ?=
 
-SRC_OUT6 =	fdd7:e83e:66bc:211:fce1:baff:fed1:561f
-DST_IN6 =	fdd7:e83e:66bc:211:5054:ff:fe12:3450
+SRC_OUT6 ?=
+DST_IN6 ?=
 
 # pf rules on DST should look like this:
 #
@@ -50,6 +59,14 @@ DST_IN6 =	fdd7:e83e:66bc:211:5054:ff:fe12:3450
 # - request  NS from interface address   to target unicast
 # - response NA from interface address   to source of NS
 
+.if empty (SRC_IF) || empty (SRC_MAC) || empty (DST_MAC) || \
+    empty (SRC_OUT6) || empty (DST_IN6)
+regress:
+	@echo this tests needs a remote machine to operate on
+	@echo SRC_IF SRC_MAC DST_MAC SRC_OUT6 DST_IN6 are empty
+	@echo fill out these variables for additional tests
+.endif
+
 depend: addr.py
 
 # Create python include file containing the addresses.
@@ -63,6 +80,14 @@ addr.py: Makefile
 	echo '${var}6 = "${${var}6}"' >>$@.tmp
 .endfor
 	mv $@.tmp $@
+
+# Set variables so that make runs with and without obj directory.
+# Only do that if necessary to keep visible output short.
+.if ${.CURDIR} == ${.OBJDIR}
+PYTHON =	python2.7 ./
+.else
+PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 ${.CURDIR}/
+.endif
 
 # Clear neighbor cache and ping all addresses.  This ensures that
 # the ip addresses are configured and all routing table are set up
@@ -81,28 +106,28 @@ TARGETS +=	nd6_dad
 run-regress-nd6_dad: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check duplicate address detection
-	${SUDO} python2.7 nd6_dad.py
+	${SUDO} ${PYTHON}nd6_dad.py
 
 # Send hand-crafted address resolution neighbor solicitation packet
 TARGETS +=	nd6_ar
 run-regress-nd6_ar: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check address resolution
-	${SUDO} python2.7 nd6_ar.py
+	${SUDO} ${PYTHON}nd6_ar.py
 
 # Send hand-crafted unsolicited neighbor advertisement packet
 TARGETS +=	nd6_una
 run-regress-nd6_una: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check unsolicited neighbor advertisement
-	${SUDO} python2.7 nd6_una.py
+	${SUDO} ${PYTHON}nd6_una.py
 
 # Send hand-crafted neighbor unreachability detection solicitation packet
 TARGETS +=	nd6_nud
 run-regress-nd6_nud: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check neighbor unreachability detection
-	${SUDO} python2.7 nd6_nud.py
+	${SUDO} ${PYTHON}nd6_nud.py
 
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 

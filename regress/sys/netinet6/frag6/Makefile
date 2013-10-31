@@ -1,10 +1,19 @@
-#	$OpenBSD: Makefile,v 1.8 2013/07/23 22:38:45 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.9 2013/10/31 01:24:06 bluhm Exp $
 
 # The following ports must be installed:
 #
 # python-2.7          interpreted object-oriented programming language
 # py-libdnet          python interface to libdnet
 # scapy               powerful interactive packet manipulation in python
+
+# Check wether all required python packages are installed.  If some
+# are missing print a warning and skip the tests, but do not fail.
+PYTHON_IMPORT != python2.7 -c 'from scapy.all import *' 2>&1 || true
+.if ! empty(PYTHON_IMPORT)
+regress:
+	@echo '${PYTHON_IMPORT}'
+	@echo install python and the scapy module for additional tests
+.endif
 
 # This test needs a manual setup of two machines
 # Set up machines: SRC DST
@@ -20,12 +29,20 @@
 # Configure Addresses on the machines.
 # Adapt interface and addresse variables to your local setup.
 #
-SRC_IF =	tun0
-SRC_MAC =	fe:e1:ba:d1:56:1f
-DST_MAC =	52:54:00:12:34:50
+SRC_IF ?=
+SRC_MAC ?=
+DST_MAC ?=
 
-SRC_OUT6 =	fdd7:e83e:66bc:211:fce1:baff:fed1:561f
-DST_IN6 =	fdd7:e83e:66bc:211:5054:ff:fe12:3450
+SRC_OUT6 ?=
+DST_IN6 ?=
+
+.if empty (SRC_IF) || empty (SRC_MAC) || empty (DST_MAC) || \
+    empty (SRC_OUT6) || empty (DST_IN6)
+regress:
+	@echo this tests needs a remote machine to operate on
+	@echo SRC_IF SRC_MAC DST_MAC SRC_OUT6 DST_IN6 are empty
+	@echo fill out these variables for additional tests
+.endif
 
 depend: addr.py
 
@@ -36,10 +53,17 @@ addr.py: Makefile
 	echo 'SRC_MAC = "${SRC_MAC}"' >>$@.tmp
 	echo 'DST_MAC = "${DST_MAC}"' >>$@.tmp
 .for var in SRC_OUT DST_IN
-	echo '${var} = "${${var}}"' >>$@.tmp
 	echo '${var}6 = "${${var}6}"' >>$@.tmp
 .endfor
 	mv $@.tmp $@
+
+# Set variables so that make runs with and without obj directory.
+# Only do that if necessary to keep visible output short.
+.if ${.CURDIR} == ${.OBJDIR}
+PYTHON =	python2.7 ./
+.else
+PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 ${.CURDIR}/
+.endif
 
 # Ping all addresses.  This ensures that the ip addresses are configured
 # and all routing table are set up to allow bidirectional packet flow.
@@ -66,112 +90,112 @@ TARGETS +=	frag6
 run-regress-frag6: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 reassembly
-	${SUDO} python2.7 frag6.py
+	${SUDO} ${PYTHON}frag6.py
 
 # An hop by hop options extension header before the fragment header
 TARGETS +=	frag6-ext
 run-regress-frag6-ext: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 extension header reassembly
-	${SUDO} python2.7 frag6_ext.py
+	${SUDO} ${PYTHON}frag6_ext.py
 
 # An destination options extension header after the fragment header
 TARGETS +=	frag6-opt
 run-regress-frag6-opt: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 destination option reassembly
-	${SUDO} python2.7 frag6_opt.py
+	${SUDO} ${PYTHON}frag6_opt.py
 
 # fragmented packet with head overlapping first fragment
 TARGETS +=	frag6-overhead0
 run-regress-frag6-overhead0: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 head overlapping first fragment
-	${SUDO} python2.7 frag6_overhead0.py
+	${SUDO} ${PYTHON}frag6_overhead0.py
 
 # fragmented packet with head overlapping second fragment
 TARGETS +=	frag6-overhead
 run-regress-frag6-overhead: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 head overlapping second fragment
-	${SUDO} python2.7 frag6_overhead.py
+	${SUDO} ${PYTHON}frag6_overhead.py
 
 # fragmented packet with tail overlapping last fragment
 TARGETS +=	frag6-overtail
 run-regress-frag6-overtail: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 tail overlapping last fragment
-	${SUDO} python2.7 frag6_overtail.py
+	${SUDO} ${PYTHON}frag6_overtail.py
 
 # fragmented packet with overlap, drop future fragments
 TARGETS +=	frag6-overdrop
 run-regress-frag6-overdrop: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 overlap drop future fragments
-	${SUDO} python2.7 frag6_overdrop.py
+	${SUDO} ${PYTHON}frag6_overdrop.py
 
 # fragmented packet with overlap, atomic fragment must be processed
 TARGETS +=	frag6-overatomic
 run-regress-frag6-overatomic: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 overlapping and atomic fragments
-	${SUDO} python2.7 frag6_overatomic.py
+	${SUDO} ${PYTHON}frag6_overatomic.py
 
 # atomic fragment with short fragmented payload
 TARGETS +=	frag6-shortatomic
 run-regress-frag6-shortatomic: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 short atomic fragments
-	${SUDO} python2.7 frag6_shortatomic.py
+	${SUDO} ${PYTHON}frag6_shortatomic.py
 
 # fragmented packet permuted fragments
 TARGETS +=	frag6-permute
 run-regress-frag6-permute: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 permuted fragments
-	${SUDO} python2.7 frag6_permute.py
+	${SUDO} ${PYTHON}frag6_permute.py
 
 # fragmented packet with zero length first fragment
 TARGETS +=	frag6-zerofirst
 run-regress-frag6-zerofirst: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 zero length first fragment
-	${SUDO} python2.7 frag6_zerofirst.py
+	${SUDO} ${PYTHON}frag6_zerofirst.py
 
 # fragmented packet with zero length second fragment
 TARGETS +=	frag6-zerosecond
 run-regress-frag6-zerosecond: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 zero length second fragment
-	${SUDO} python2.7 frag6_zerosecond.py
+	${SUDO} ${PYTHON}frag6_zerosecond.py
 
 # atomic fragmented udp packet
 TARGETS +=	frag6-udpatomic
 run-regress-frag6-udpatomic: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 atomic udp fragment
-	${SUDO} python2.7 frag6_udpatomic.py
+	${SUDO} ${PYTHON}frag6_udpatomic.py
 
 # fragmented udp packet after header
 TARGETS +=	frag6-udpheader
 run-regress-frag6-udpheader: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 udp header fragment
-	${SUDO} python2.7 frag6_udpheader.py
+	${SUDO} ${PYTHON}frag6_udpheader.py
 
 # fragmented udp packet within payload
 TARGETS +=	frag6-udppayload
 run-regress-frag6-udppayload: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 udp payload fragment
-	${SUDO} python2.7 frag6_udppayload.py
+	${SUDO} ${PYTHON}frag6_udppayload.py
 
 # fragmented icmp packet not within 60 second timeout, test takes 90 seconds
 TARGETS +=	frag6-timeout
 run-regress-frag6-timeout: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 fragment timeout
-	${SUDO} python2.7 frag6_timeout.py
+	${SUDO} ${PYTHON}frag6_timeout.py
 
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
