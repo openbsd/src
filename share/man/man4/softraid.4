@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.32 2013/10/28 15:15:08 stsp Exp $
+.\"	$OpenBSD: softraid.4,v 1.33 2013/10/31 17:54:57 stsp Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 28 2013 $
+.Dd $Mdocdate: October 31 2013 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -111,9 +111,9 @@ CONCAT does not provide redundancy.
 .Xr installboot 8
 may be used to install
 .Xr boot 8
-in
+in the boot storage area of the
 .Nm
-volume meta data to allow booting from the volume.
+volume.
 Boot support is currently limited to the CRYPTO and RAID 1 disciplines
 on amd64 and i386 platforms.
 At the
@@ -173,7 +173,7 @@ Install
 .Xr boot 8
 on the RAID volume:
 .Bd -literal -offset indent
-# /usr/mdec/installboot /boot /usr/mdec/biosboot sd0
+# /usr/mdec/installboot /usr/mdec/boot /usr/mdec/biosboot sd0
 .Ed
 .Pp
 At the
