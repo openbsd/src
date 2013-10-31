@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.115 2013/10/06 21:37:12 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.116 2013/10/31 11:24:10 sthen Exp $
 This is a list of currently known FTP and HTTP servers at the time
 of the OSREV release.  For a more recent list, please refer to
 
@@ -134,10 +134,6 @@ South Africa:
     http://mirror.is.co.za/mirror/ftp.openbsd.org (Johannesburg)
     ftp://ftp.is.co.za/mirror/ftp.openbsd.org (Johannesburg)
 
-Spain:
-    http://mirror.cdmon.com/pub/OpenBSD (Barcelona)
-    ftp://mirror.cdmon.com/pub/OpenBSD (Barcelona)
-
 Sweden:
     http://ftp.eu.openbsd.org/pub/OpenBSD (Stockholm)
     ftp://ftp.eu.openbsd.org/pub/OpenBSD (Stockholm)
@@ -172,7 +168,6 @@ USA:
     ftp://filedump.se.rit.edu/pub/OpenBSD (Rochester, NY)
     http://openbsd.mirrors.hoobly.com (Pittsburgh, PA)
     http://mirror.ece.vt.edu/pub/OpenBSD (Blacksburg, VA)
-    http://mirror.servihoo.net/pub/OpenBSD (Kansas City, MO)
     http://openbsd.mirrors.pair.com (Pittsburgh, PA)
     ftp://openbsd.mirrors.pair.com (Pittsburgh, PA)
     http://mirrors.gigenet.com/pub/OpenBSD (Arlington Heights, IL)
