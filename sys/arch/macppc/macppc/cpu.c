@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.73 2013/10/09 17:43:50 mpi Exp $ */
+/*	$OpenBSD: cpu.c,v 1.74 2013/10/31 08:26:12 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -47,17 +47,8 @@
 #include <machine/bat.h>
 #include <machine/cpu.h>
 #include <machine/trap.h>
+#include <powerpc/hid.h>
 
-/* only valid on 603(e,ev) and G3, G4 */
-#define HID0_DOZE	(1 << (31-8))
-#define HID0_NAP	(1 << (31-9))
-#define HID0_SLEEP	(1 << (31-10))
-#define HID0_DPM	(1 << (31-11))
-#define HID0_SGE	(1 << (31-24))
-#define HID0_BTIC	(1 << (31-26))
-#define HID0_LRSTK	(1 << (31-27))
-#define HID0_FOLD	(1 << (31-28))
-#define HID0_BHT	(1 << (31-29))
 extern u_int32_t	hid0_idle;
 
 /* SCOM addresses (24-bit) */

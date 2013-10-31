@@ -1,4 +1,4 @@
-/*	$OpenBSD: dfs.c,v 1.1 2011/05/25 07:42:15 mpi Exp $	*/
+/*	$OpenBSD: dfs.c,v 1.2 2013/10/31 08:26:12 mpi Exp $	*/
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
  *
@@ -24,9 +24,7 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 #include <macppc/pci/macobio.h>
-
-#define DFS2	(1 << 22)	/* Divide-by-Two */
-#define DFS4	(1 << 23)	/* Divide-by-Four (MPC7448 Specific) */
+#include <powerpc/hid.h>
 
 extern int perflevel;
 
@@ -84,10 +82,10 @@ dfs_attach(struct device *parent, struct device *self, void *aux)
 
 	hid1 = ppc_mfhid1();
 
-	if (hid1 & DFS4) {
+	if (hid1 & HID1_DFS4) {
 		ppc_curfreq = ppc_maxfreq / 4;
 		perflevel = 25;
-	} else if (hid1 & DFS2) {
+	} else if (hid1 & HID1_DFS2) {
 		ppc_curfreq = ppc_maxfreq / 2;
 		perflevel = 50;
 	}
@@ -144,14 +142,14 @@ dfs_scale_frequency(u_int freq_scale)
 	s = splhigh();
 	hid1 = ppc_mfhid1();
 
-	hid1 &= ~(DFS2 | DFS4);
+	hid1 &= ~(HID1_DFS2 | HID1_DFS4);
 	switch (freq_scale) {
 	case FREQ_QUARTER:
-		hid1 |= DFS4;
+		hid1 |= HID1_DFS4;
 		ppc_curfreq = ppc_maxfreq / 4;
 		break;
 	case FREQ_HALF:
-		hid1 |= DFS2;
+		hid1 |= HID1_DFS2;
 		ppc_curfreq = ppc_maxfreq / 2;
 		break;
 	case FREQ_FULL: /* FALLTHROUGH */
