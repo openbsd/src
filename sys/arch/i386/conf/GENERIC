@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.758 2013/10/28 12:33:32 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.759 2013/10/31 09:57:02 pirofti Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -23,7 +23,7 @@ option		APERTURE	# in-kernel aperture driver for XFree86
 #option		KGDB		# Remote debugger support; exclusive of DDB
 #option		"KGDB_DEVNAME=\"com\"",KGDBADDR=0x2f8,KGDBRATE=9600
 
-#option		COMPAT_LINUX	# binary compatibility with Linux
+option		COMPAT_LINUX	# binary compatibility with Linux
 
 option		PROCFS		# /proc
 option		NTFS		# NTFS support
