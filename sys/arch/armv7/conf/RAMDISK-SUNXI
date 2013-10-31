@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK-SUNXI,v 1.1 2013/10/23 17:08:47 jasper Exp $
+# $OpenBSD: RAMDISK-SUNXI,v 1.2 2013/10/31 17:17:03 jasper Exp $
 #
 # GENERIC machine description file
 #
@@ -82,8 +82,6 @@ ahci*		at sunxi?		# AHCI/SATA (shim)
 ehci*		at sunxi?		# EHCI (shim)
 #ohci*		at sunxi?		# OHCI (shim)
 #usbotg0	at sunxi?
-
-#gpio*		at awpio?
 
 # USB bus support
 usb*		at ehci?	#flags 0x1
