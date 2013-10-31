@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.61 2013/10/14 08:27:54 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.62 2013/10/31 10:12:19 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -656,12 +656,6 @@ usbd_device2interface_handle(struct usbd_device *dev, u_int8_t ifaceno,
 		return (USBD_INVAL);
 	*iface = &dev->ifaces[ifaceno];
 	return (USBD_NORMAL_COMPLETION);
-}
-
-struct usbd_device *
-usbd_pipe2device_handle(struct usbd_pipe *pipe)
-{
-	return (pipe->device);
 }
 
 /* XXXX use altno */
