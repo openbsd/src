@@ -1,4 +1,4 @@
-/*	$OpenBSD: accept.c,v 1.2 2013/10/15 20:21:24 renato Exp $ */
+/*	$OpenBSD: accept.c,v 1.3 2013/10/31 16:56:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2012 Claudio Jeker <claudio@openbsd.org>
@@ -77,7 +77,7 @@ accept_del(int fd)
 
 	LIST_FOREACH(av, &accept_queue.queue, entry)
 		if (av->fd == fd) {
-			log_debug("accept_del: %i removed from queue", fd);
+			log_debug("accept_del: %d removed from queue", fd);
 			event_del(&av->ev);
 			LIST_REMOVE(av, entry);
 			free(av);
