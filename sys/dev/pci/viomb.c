@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.6 2013/07/02 15:46:14 sf Exp $	 */
+/* $OpenBSD: viomb.c,v 1.7 2013/10/31 01:54:43 dlg Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 /*
  * Copyright (c) 2012 Talypov Dinar <dinar@i-nk.ru>
@@ -30,7 +30,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 #include <sys/pool.h>
 #include <uvm/uvm.h>
 #include <dev/pci/pcidevs.h>
@@ -93,8 +93,8 @@ struct viomb_softc {
 	u_int32_t		sc_npages;
 	u_int32_t		sc_actual;
 	struct balloon_req	sc_req;
-	struct workq_task	sc_task;
-	int			sc_workq_queued;
+	struct taskq		*sc_taskq;
+	struct task		sc_task;
 	struct pglist		sc_balloon_pages;
 };
 
@@ -116,8 +116,6 @@ struct cfattach viomb_ca = {
 struct cfdriver viomb_cd = {
 	NULL, "viomb", DV_DULL
 };
-
-struct workq *viomb_workq;
 
 int
 viomb_match(struct device *parent, void *match, void *aux)
@@ -198,9 +196,11 @@ viomb_attach(struct device *parent, struct device *self, void *aux)
 		goto err_dmamap;
 	}
 
-	viomb_workq = workq_create("viomb", 1, IPL_BIO);
-	if (viomb_workq == NULL)
+	sc->sc_taskq = taskq_create("viomb", 1, IPL_BIO);
+	if (sc->sc_taskq == NULL)
 		goto err_dmamap;
+	task_set(&sc->sc_task, viomb_worker, sc, NULL);
+
 	printf("\n");
 	return;
 err_dmamap:
@@ -223,11 +223,8 @@ viomb_config_change(struct virtio_softc *vsc)
 {
 	struct viomb_softc *sc = (struct viomb_softc *)vsc->sc_child;
 
-	if (sc->sc_workq_queued == 0){
-		workq_queue_task(viomb_workq, &sc->sc_task, 0,
-				 viomb_worker, sc, NULL);
-		sc->sc_workq_queued = 1;
-	}
+	task_add(sc->sc_taskq, &sc->sc_task);
+
 	return (1);
 }
 
@@ -238,7 +235,6 @@ viomb_worker(void *arg1, void *arg2)
 	int s;
 
 	s = splbio();
-	sc->sc_workq_queued = 0;
 	viomb_read_config(sc);
 	if (sc->sc_npages > sc->sc_actual){
 		VIOMBDEBUG(sc, "inflating balloon from %u to %u.\n",
@@ -422,12 +418,11 @@ viomb_inflate_intr(struct virtqueue *vq)
 	virtio_write_device_config_4(vsc, VIRTIO_BALLOON_CONFIG_ACTUAL,
 				     sc->sc_actual + nvpages);
 	viomb_read_config(sc);
+
 	/* if we have more work to do, add it to the task list */
-	if (sc->sc_npages > sc->sc_actual && sc->sc_workq_queued == 0){
-		workq_queue_task(viomb_workq, &sc->sc_task, 0,
-				 viomb_worker, sc, NULL);
-		sc->sc_workq_queued = 1;
-	}
+	if (sc->sc_npages > sc->sc_actual)
+		task_add(sc->sc_taskq, &sc->sc_task);
+
 	return (1);
 }
 
@@ -458,10 +453,8 @@ viomb_deflate_intr(struct virtqueue *vq)
 	viomb_read_config(sc);
 
 	/* if we have more work to do, add it to tasks list */
-	if (sc->sc_npages < sc->sc_actual && sc->sc_workq_queued == 0){
-		workq_queue_task(viomb_workq, &sc->sc_task, 0,
-				 viomb_worker, sc, NULL);
-		sc->sc_workq_queued = 1;
-	}
+	if (sc->sc_npages < sc->sc_actual)
+		task_add(sc->sc_taskq, &sc->sc_task);
+
 	return(1);
 }
