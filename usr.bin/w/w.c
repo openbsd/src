@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.52 2013/08/22 04:43:41 guenther Exp $	*/
+/*	$OpenBSD: w.c,v 1.53 2013/10/31 02:00:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -40,7 +40,6 @@
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/tty.h>

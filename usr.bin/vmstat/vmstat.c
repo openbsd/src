@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.124 2013/10/08 03:04:17 guenther Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.125 2013/10/31 02:00:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -33,7 +33,6 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/namei.h>
