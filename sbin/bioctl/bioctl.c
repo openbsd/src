@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.113 2013/10/23 13:05:38 kettenis Exp $       */
+/* $OpenBSD: bioctl.c,v 1.114 2013/10/31 00:47:20 kettenis Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -524,7 +524,7 @@ bio_inq(char *name)
 			    volname, status, size, scsiname, encname,
 			    bd.bd_vendor);
 			if (verbose)
-				printf("%7s %-10s %14s %-7s %-6s '%s'\n",
+				printf("%11s %-10s %14s %-7s %-6s '%s'\n",
 				    "", "", "", "", "", serial);
 		}
 	}
