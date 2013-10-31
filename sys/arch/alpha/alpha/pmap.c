@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.64 2013/10/31 03:33:37 dlg Exp $ */
+/* $OpenBSD: pmap.c,v 1.65 2013/10/31 03:48:31 deraadt Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -3539,7 +3539,7 @@ pmap_l1pt_ctor(pt_entry_t *l1pt)
  *
  *	Page allocator for L1 PT pages.
  */
-void
+void *
 pmap_l1pt_alloc(struct pool *pp, int flags, int *slowdown)
 {
 	paddr_t ptpa;
