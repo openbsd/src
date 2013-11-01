@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.48 2013/11/01 12:05:26 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.49 2013/11/01 17:42:59 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -75,21 +75,18 @@ int uhidev_maxrepid(void *buf, int len);
 int uhidevprint(void *aux, const char *pnp);
 int uhidevsubmatch(struct device *parent, void *cf, void *aux);
 
-int uhidev_match(struct device *, void *, void *); 
-void uhidev_attach(struct device *, struct device *, void *); 
-int uhidev_detach(struct device *, int); 
-int uhidev_activate(struct device *, int); 
+int uhidev_match(struct device *, void *, void *);
+void uhidev_attach(struct device *, struct device *, void *);
+int uhidev_detach(struct device *, int);
+int uhidev_activate(struct device *, int);
 
-struct cfdriver uhidev_cd = { 
-	NULL, "uhidev", DV_DULL 
-}; 
+struct cfdriver uhidev_cd = {
+	NULL, "uhidev", DV_DULL
+};
 
-const struct cfattach uhidev_ca = { 
-	sizeof(struct uhidev_softc), 
-	uhidev_match, 
-	uhidev_attach, 
-	uhidev_detach, 
-	uhidev_activate, 
+const struct cfattach uhidev_ca = {
+	sizeof(struct uhidev_softc), uhidev_match, uhidev_attach,
+	uhidev_detach, uhidev_activate,
 };
 
 int
@@ -180,8 +177,8 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 * Check that we found an input interrupt endpoint. The output interrupt
-	 * endpoint is optional
+	 * Check that we found an input interrupt endpoint.
+	 * The output interrupt endpoint is optional
 	 */
 	if (sc->sc_iep_addr == -1) {
 		printf("%s: no input interrupt endpoint\n", sc->sc_dev.dv_xname);
@@ -473,7 +470,7 @@ uhidev_open(struct uhidev *scd)
 	/* Set up input interrupt pipe. */
 	DPRINTF(("uhidev_open: isize=%d, ep=0x%02x\n", sc->sc_isize,
 	    sc->sc_iep_addr));
-		
+
 	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_iep_addr,
 		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_ibuf,
 		  sc->sc_isize, uhidev_intr, USBD_DEFAULT_INTERVAL);
@@ -525,7 +522,7 @@ uhidev_open(struct uhidev *scd)
 			goto out3;
 		}
 	}
-	
+
 	return (0);
 
 out3:
