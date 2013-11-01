@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmuvar.h,v 1.1 2013/10/23 17:08:48 jasper Exp $	*/
+/*	$OpenBSD: sxiccmuvar.h,v 1.2 2013/11/01 21:15:05 aalm Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -16,11 +16,13 @@
  */
 
 void sxiccmu_enablemodule(int);
+void sxiccmu_disablemodule(int);
 
 enum CCMU_MODULES {
 	CCMU_EHCI0,
 	CCMU_EHCI1,
-	CCMU_OHCI,
+	CCMU_OHCI0,
+	CCMU_OHCI1,
 	CCMU_AHCI,
 	CCMU_EMAC,
 	CCMU_DMA,
@@ -35,5 +37,11 @@ enum CCMU_MODULES {
 	CCMU_TWI0,
 	CCMU_TWI1,
 	CCMU_TWI2,
-	CCMU_TWI3
+	CCMU_TWI3,
+	CCMU_TWI4,
+	CCMU_SDMMC0,
+	CCMU_SDMMC1,
+	CCMU_SDMMC2,
+	CCMU_SDMMC3,
+	CCMU_PIO
 };

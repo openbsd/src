@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.2 2013/10/23 18:01:52 jasper Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.3 2013/11/01 21:15:05 aalm Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -58,10 +58,7 @@
 #define	CCMU_AHB_GATING_SS		(1 << 5)
 #define	CCMU_AHB_GATING_DMA		(1 << 6)
 #define	CCMU_AHB_GATING_BIST		(1 << 7)
-#define	CCMU_AHB_GATING_SDMMC0		(1 << 8)
-#define	CCMU_AHB_GATING_SDMMC1		(1 << 9)
-#define	CCMU_AHB_GATING_SDMMC2		(1 << 10)
-#define	CCMU_AHB_GATING_SDMMC3		(1 << 11)
+#define	CCMU_AHB_GATING_SDMMCx(x)	(1 << (8 + (x)))
 #define	CCMU_AHB_GATING_NAND		(1 << 13)
 #define	CCMU_AHB_GATING_EMAC		(1 << 17)
 #define	CCMU_AHB_GATING_SATA		(1 << 25)
@@ -71,6 +68,7 @@
 #define	CCMU_APB_GATING1		0x6c
 #define	CCMU_APB_GATING_UARTx(x)	(1 << (16 + (x)))
 #define	CCMU_APB_GATING_TWIx(x)		(1 << (x))
+#define	CCMU_APB_GATING_TWI4		(1 << 15)
 
 #define	CCMU_NAND_CLK			0x80
 #define	CCMU_NAND_CLK_SRC_GATING_OSC24M	(0 << 24)
@@ -85,6 +83,7 @@
 #define	CCMU_USB_PHY			(1 << 8)
 #define	CCMU_SCLK_GATING_OHCI1		(1 << 7)
 #define	CCMU_SCLK_GATING_OHCI0		(1 << 6)
+#define	CCMU_OHCI_CLK_SRC		(1 << 4)
 #define	CCMU_USB2_RESET			(1 << 2)
 #define	CCMU_USB1_RESET			(1 << 1)
 #define	CCMU_USB0_RESET			(1 << 0)
@@ -130,6 +129,7 @@ sxiccmu_enablemodule(int mod)
 
 	DPRINTF(("\nsxiccmu_enablemodule: mod %d\n", mod));
 
+	/* XXX reorder? */
 	switch (mod) {
 	case CCMU_EHCI0:
 		SXISET4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_EHCI0);
@@ -139,8 +139,15 @@ sxiccmu_enablemodule(int mod)
 		SXISET4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_EHCI1);
 		SXISET4(sc, CCMU_USB_CLK, CCMU_USB2_RESET | CCMU_USB_PHY);
 		break;
-	case CCMU_OHCI:
-		panic("sxiccmu_enablemodule: XXX OHCI!");
+	case CCMU_OHCI0:
+		SXISET4(sc, CCMU_USB_CLK, CCMU_OHCI_CLK_SRC);
+		SXISET4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_OHCI0);
+		SXISET4(sc, CCMU_USB_CLK, CCMU_SCLK_GATING_OHCI0);
+		break;
+	case CCMU_OHCI1:
+		SXISET4(sc, CCMU_USB_CLK, CCMU_OHCI_CLK_SRC);
+		SXISET4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_OHCI1);
+		SXISET4(sc, CCMU_USB_CLK, CCMU_SCLK_GATING_OHCI1);
 		break;
 	case CCMU_AHCI:
 		reg = SXIREAD4(sc, CCMU_PLL6_CFG);
@@ -170,7 +177,96 @@ sxiccmu_enablemodule(int mod)
 	case CCMU_UART5:
 	case CCMU_UART6:
 	case CCMU_UART7:
-		SXISET4(sc, CCMU_APB_GATING1, CCMU_APB_GATING_UARTx(mod - CCMU_UART0));
+		SXISET4(sc, CCMU_APB_GATING1,
+		    CCMU_APB_GATING_UARTx(mod - CCMU_UART0));
+		break;
+	case CCMU_SDMMC0:
+	case CCMU_SDMMC1:
+	case CCMU_SDMMC2:
+	case CCMU_SDMMC3:
+		SXISET4(sc, CCMU_AHB_GATING0,
+		    CCMU_AHB_GATING_SDMMCx(mod - CCMU_SDMMC0));
+		break;
+	case CCMU_TWI0:
+	case CCMU_TWI1:
+	case CCMU_TWI2:
+	case CCMU_TWI3:
+	case CCMU_TWI4:
+		SXISET4(sc, CCMU_APB_GATING1, mod == CCMU_TWI4
+		    ? CCMU_APB_GATING_TWI4
+		    : CCMU_APB_GATING_TWIx(mod - CCMU_TWI0));
+		break;
+	case CCMU_PIO:
+		SXISET4(sc, CCMU_APB_GATING0, CCMU_APB_GATING_PIO);
+		break;
+	default:
+		break;
+	}
+}
+
+void
+sxiccmu_disablemodule(int mod)
+{
+	struct sxiccmu_softc *sc = sxiccmu_cd.cd_devs[0];
+
+	DPRINTF(("\nsxiccmu_disablemodule: mod %d\n", mod));
+
+	switch (mod) {
+	case CCMU_EHCI0:
+		SXICLR4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_EHCI0);
+		SXICLR4(sc, CCMU_USB_CLK, CCMU_USB1_RESET | CCMU_USB_PHY);
+		break;
+	case CCMU_EHCI1:
+		SXICLR4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_EHCI1);
+		SXICLR4(sc, CCMU_USB_CLK, CCMU_USB2_RESET | CCMU_USB_PHY);
+		break;
+	case CCMU_OHCI0:
+		SXICLR4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_OHCI0);
+		SXICLR4(sc, CCMU_USB_CLK, CCMU_SCLK_GATING_OHCI0);
+	case CCMU_OHCI1:
+		SXICLR4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_OHCI1);
+		SXICLR4(sc, CCMU_USB_CLK, CCMU_SCLK_GATING_OHCI1);
+		break;
+	case CCMU_AHCI:
+		/* XXX possibly wrong */
+		SXICLR4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_SATA);
+		SXIWRITE4(sc, CCMU_SATA_CLK, 0);
+		break;
+	case CCMU_EMAC:
+		SXICLR4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_EMAC);
+		break;
+	case CCMU_DMA:
+		SXICLR4(sc, CCMU_AHB_GATING0, CCMU_AHB_GATING_DMA);
+		break;
+	case CCMU_UART0:
+	case CCMU_UART1:
+	case CCMU_UART2:
+	case CCMU_UART3:
+	case CCMU_UART4:
+	case CCMU_UART5:
+	case CCMU_UART6:
+	case CCMU_UART7:
+		SXICLR4(sc, CCMU_APB_GATING1,
+		    CCMU_APB_GATING_UARTx(mod - CCMU_UART0));
+		break;
+	case CCMU_SDMMC0:
+	case CCMU_SDMMC1:
+	case CCMU_SDMMC2:
+	case CCMU_SDMMC3:
+		SXICLR4(sc, CCMU_AHB_GATING0,
+		    CCMU_AHB_GATING_SDMMCx(mod - CCMU_SDMMC0));
+		break;
+	case CCMU_TWI0:
+	case CCMU_TWI1:
+	case CCMU_TWI2:
+	case CCMU_TWI3:
+	case CCMU_TWI4:
+		SXICLR4(sc, CCMU_APB_GATING1, mod == CCMU_TWI4
+		    ? CCMU_APB_GATING_TWI4
+		    : CCMU_APB_GATING_TWIx(mod - CCMU_TWI0));
+		break;
+	case CCMU_PIO:
+		SXICLR4(sc, CCMU_APB_GATING0, CCMU_APB_GATING_PIO);
 		break;
 	default:
 		break;
