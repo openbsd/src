@@ -1,4 +1,4 @@
-/*	$OpenBSD: for.c,v 1.43 2013/05/06 11:29:18 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.44 2013/11/01 17:54:37 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -185,11 +185,15 @@ For_Eval(const char *line)
 	free(sub);
 	if (arg->nvars != 1 && n % arg->nvars != 0) {
 		LstNode ln;
+
 		Parse_Error(PARSE_FATAL, "Wrong number of items in for loop");
 		(void)fprintf(stderr, "%lu items for %d variables:", 
 		    n, arg->nvars);
-		for (ln = Lst_First(&arg->lst); ln != NULL; ln = Lst_Adv(ln))
-			(void)fprintf(stderr, " %s", Lst_Datum(ln));
+		for (ln = Lst_First(&arg->lst); ln != NULL; ln = Lst_Adv(ln)) {
+			char *p = Lst_Datum(ln);
+
+			(void)fprintf(stderr, " %s", p);
+		}
 		(void)fprintf(stderr, "\n");
 		return 0;
 	}
