@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhcivar.h,v 1.27 2013/11/01 12:00:54 mpi Exp $ */
+/*	$OpenBSD: uhcivar.h,v 1.28 2013/11/01 17:29:02 mpi Exp $ */
 /*	$NetBSD: uhcivar.h,v 1.36 2002/12/31 00:39:11 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
@@ -63,21 +63,15 @@ typedef union {
  * the interrupt all structs are linked together so they can be
  * searched at interrupt time.
  */
-struct uhci_intr_info {
-	struct uhci_softc *sc;
-	struct usbd_xfer *xfer;
+struct uhci_xfer {
+	struct usbd_xfer xfer;
+	LIST_ENTRY(uhci_xfer) inext;
 	struct uhci_soft_td *stdstart;
 	struct uhci_soft_td *stdend;
-	LIST_ENTRY(uhci_intr_info) list;
+	int curframe;
 #ifdef DIAGNOSTIC
 	int isdone;
 #endif
-};
-
-struct uhci_xfer {
-	struct usbd_xfer xfer;
-	struct uhci_intr_info iinfo;
-	int curframe;
 };
 
 #define UXFER(xfer) ((struct uhci_xfer *)(xfer))
@@ -159,7 +153,7 @@ struct uhci_softc {
 	char sc_isreset;
 	char sc_suspend;
 
-	LIST_HEAD(, uhci_intr_info) sc_intrhead;
+	LIST_HEAD(, uhci_xfer) sc_intrhead;
 
 	/* Info for the root hub interrupt "pipe". */
 	int sc_ival;			/* time between root hub intrs */
