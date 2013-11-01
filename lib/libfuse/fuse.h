@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.h,v 1.7 2013/07/05 11:08:15 syl Exp $ */
+/* $OpenBSD: fuse.h,v 1.8 2013/11/01 18:16:22 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -34,16 +34,31 @@ struct fuse_args;
 struct fuse_session;
 
 struct fuse_file_info {
-	int32_t		 flags;		/* open(2) flags */
-	uint32_t	 fh_old;	/* old file handle */
-	int32_t		 writepage;
-	uint32_t	 direct_io:1;
-	uint32_t	 keep_cache:1;
-	uint32_t	 flush:1;
-	uint32_t	 __padd:29;
-	uint64_t	 fh;		/* file handle */
-	uint64_t	 lock_owner;
+	int32_t		flags;		/* open(2) flags */
+	uint32_t	fh_old;		/* old file handle */
+	int32_t		writepage;
+	uint32_t	direct_io:1;
+	uint32_t	keep_cache:1;
+	uint32_t	flush:1;
+	uint32_t	nonseekable:1;
+	uint32_t	__padd:27;
+	uint32_t	flock_release : 1;
+	uint64_t	fh;		/* file handle */
+	uint64_t	lock_owner;
 };
+
+/* unused but needed for gvfs compilation */
+#define FUSE_CAP_ASYNC_READ	(1 << 0)
+#define FUSE_CAP_POSIX_LOCKS	(1 << 1)
+#define FUSE_CAP_ATOMIC_O_TRUNC	(1 << 3)
+#define FUSE_CAP_EXPORT_SUPPORT	(1 << 4)
+#define FUSE_CAP_BIG_WRITES	(1 << 5)
+#define FUSE_CAP_DONT_MASK	(1 << 6)
+#define FUSE_CAP_SPLICE_WRITE	(1 << 7)
+#define FUSE_CAP_SPLICE_MOVE	(1 << 8)
+#define FUSE_CAP_SPLICE_READ	(1 << 9)
+#define FUSE_CAP_FLOCK_LOCKS	(1 << 10)
+#define FUSE_CAP_IOCTL_DIR	(1 << 11)
 
 struct fuse_conn_info {
 	uint32_t	proto_major;
@@ -51,7 +66,11 @@ struct fuse_conn_info {
 	uint32_t	async_read;
 	uint32_t	max_write;
 	uint32_t	max_readahead;
-	uint32_t	reserved[27];
+	uint32_t	capable;
+	uint32_t	want;
+	uint32_t	max_background;
+	uint32_t	congestion_threshold;
+	uint32_t	reserved[23];
 };
 
 struct fuse_context {
