@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.47 2013/10/25 03:09:59 jeremy Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.48 2013/11/01 12:05:26 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -611,27 +611,33 @@ uhidev_set_report(struct uhidev *scd, int type, void *data, int len)
 	return retstat;
 }
 
-void
+usbd_status
 uhidev_set_report_async(struct uhidev *scd, int type, void *data, int len)
 {
-	/* XXX */
-	char buf[100];
-	if (scd->sc_report_id) {
-		buf[0] = scd->sc_report_id;
-		if ((uint)len > sizeof(buf) - 1) {
-#ifdef DIAGNOSTIC
-			printf("%s: report length too large (%d)\n",
-			    scd->sc_dev.dv_xname, len);
-#endif
-			return;
-		}
-		memcpy(buf+1, data, len);
-		len++;
-		data = buf;
-	}
+	char *buf;
+	usbd_status retstat;
 
-	usbd_set_report_async(scd->sc_parent->sc_iface, type,
-			      scd->sc_report_id, data, len);
+	if (scd->sc_report_id == 0)
+		return usbd_set_report_async(scd->sc_parent->sc_iface, type,
+					     scd->sc_report_id, data, len);
+
+	buf = malloc(len + 1, M_TEMP, M_NOWAIT);
+	if (buf == NULL)
+		return (USBD_NOMEM);
+	buf[0] = scd->sc_report_id;
+	memcpy(buf+1, data, len);
+
+	retstat = usbd_set_report_async(scd->sc_parent->sc_iface, type,
+					scd->sc_report_id, buf, len + 1);
+
+	/*
+	 * Since report requests are write-only it is safe to free
+	 * the buffer right after submitting the transfer because
+	 * it won't be used afterward.
+	 */
+	free(buf, M_TEMP);
+
+	return retstat;
 }
 
 usbd_status

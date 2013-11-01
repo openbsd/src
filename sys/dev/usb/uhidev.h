@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.h,v 1.13 2013/05/07 08:44:38 mpi Exp $	*/
+/*	$OpenBSD: uhidev.h,v 1.14 2013/11/01 12:05:26 mpi Exp $	*/
 /*	$NetBSD: uhidev.h,v 1.3 2002/10/08 09:56:17 dan Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ void uhidev_get_report_desc(struct uhidev_softc *, void **, int *);
 int uhidev_open(struct uhidev *);
 void uhidev_close(struct uhidev *);
 int uhidev_ioctl(struct uhidev *, u_long, caddr_t, int, struct proc *);
-usbd_status uhidev_set_report(struct uhidev *scd, int type, void *data,int len);
-void uhidev_set_report_async(struct uhidev *scd, int type, void *data, int len);
+usbd_status uhidev_set_report(struct uhidev *, int, void *, int);
+usbd_status uhidev_set_report_async(struct uhidev *, int, void *, int);
 usbd_status uhidev_get_report(struct uhidev *scd, int type, void *data,int len);
 usbd_status uhidev_write(struct uhidev_softc *, void *, int);
