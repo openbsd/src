@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhcivar.h,v 1.26 2013/05/30 16:15:02 deraadt Exp $ */
+/*	$OpenBSD: uhcivar.h,v 1.27 2013/11/01 12:00:54 mpi Exp $ */
 /*	$NetBSD: uhcivar.h,v 1.36 2002/12/31 00:39:11 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
@@ -77,7 +77,6 @@ struct uhci_intr_info {
 struct uhci_xfer {
 	struct usbd_xfer xfer;
 	struct uhci_intr_info iinfo;
-	struct usb_task	abort_task;
 	int curframe;
 };
 

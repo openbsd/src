@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.52 2013/10/19 08:29:30 mpi Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.53 2013/11/01 12:00:54 mpi Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -210,6 +210,7 @@ struct usbd_xfer {
 
 	void		       *hcpriv; /* private use by the HC driver */
 
+	struct usb_task		abort_task;
 	struct timeout		timeout_handle;
 };
 

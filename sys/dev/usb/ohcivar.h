@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcivar.h,v 1.33 2013/05/30 16:15:02 deraadt Exp $ */
+/*	$OpenBSD: ohcivar.h,v 1.34 2013/11/01 12:00:54 mpi Exp $ */
 /*	$NetBSD: ohcivar.h,v 1.32 2003/02/22 05:24:17 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -130,7 +130,6 @@ struct ohci_softc {
 
 struct ohci_xfer {
 	struct usbd_xfer xfer;
-	struct usb_task	abort_task;
 };
 
 usbd_status	ohci_checkrev(struct ohci_softc *);

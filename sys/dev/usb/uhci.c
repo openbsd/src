@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.99 2013/06/25 09:24:34 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.100 2013/11/01 12:00:54 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1253,7 +1253,7 @@ uhci_check_intr(struct uhci_softc *sc, struct uhci_intr_info *ii)
  done:
 	DPRINTFN(12, ("uhci_check_intr: ii=%p done\n", ii));
 	timeout_del(&ii->xfer->timeout_handle);
-	usb_rem_task(ii->xfer->pipe->device, &UXFER(ii->xfer)->abort_task);
+	usb_rem_task(ii->xfer->pipe->device, &ii->xfer->abort_task);
 	uhci_idone(ii);
 }
 
@@ -1402,9 +1402,9 @@ uhci_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
-	usb_init_task(&uxfer->abort_task, uhci_timeout_task, ii->xfer,
+	usb_init_task(&ii->xfer->abort_task, uhci_timeout_task, ii->xfer,
 	    USB_TASK_TYPE_ABORT);
-	usb_add_task(uxfer->xfer.pipe->device, &uxfer->abort_task);
+	usb_add_task(uxfer->xfer.pipe->device, &ii->xfer->abort_task);
 }
 
 void
@@ -1843,7 +1843,7 @@ uhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 		s = splusb();
 		xfer->status = status;	/* make software ignore it */
 		timeout_del(&xfer->timeout_handle);
-		usb_rem_task(xfer->pipe->device, &UXFER(xfer)->abort_task);
+		usb_rem_task(xfer->pipe->device, &xfer->abort_task);
 		usb_transfer_complete(xfer);
 		splx(s);
 		return;
@@ -1858,7 +1858,7 @@ uhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	s = splusb();
 	xfer->status = status;	/* make software ignore it */
 	timeout_del(&xfer->timeout_handle);
-	usb_rem_task(xfer->pipe->device, &UXFER(xfer)->abort_task);
+	usb_rem_task(xfer->pipe->device, &xfer->abort_task);
 	DPRINTFN(1,("uhci_abort_xfer: stop ii=%p\n", ii));
 	for (std = ii->stdstart; std != NULL; std = std->link.std)
 		std->td.td_status &= htole32(~(UHCI_TD_ACTIVE | UHCI_TD_IOC));

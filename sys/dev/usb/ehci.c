@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.134 2013/06/12 11:42:01 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.135 2013/11/01 12:00:53 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -740,7 +740,7 @@ ehci_check_qh_intr(struct ehci_softc *sc, struct ehci_xfer *ex)
  done:
 	DPRINTFN(12, ("ehci_check_intr: ex=%p done\n", ex));
 	timeout_del(&ex->xfer.timeout_handle);
-	usb_rem_task(ex->xfer.pipe->device, &ex->abort_task);
+	usb_rem_task(ex->xfer.pipe->device, &ex->xfer.abort_task);
 	ehci_idone(ex);
 }
 
@@ -788,7 +788,7 @@ ehci_check_itd_intr(struct ehci_softc *sc, struct ehci_xfer *ex) {
 done:
 	DPRINTFN(12, ("ehci_check_itd_intr: ex=%p done\n", ex));
 	timeout_del(&ex->xfer.timeout_handle);
-	usb_rem_task(ex->xfer.pipe->device, &ex->abort_task);
+	usb_rem_task(ex->xfer.pipe->device, &ex->xfer.abort_task);
 	ehci_idone(ex);
 }
 
@@ -1182,7 +1182,7 @@ ehci_allocx(struct usbd_bus *bus)
 
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct ehci_xfer));
-		usb_init_task(&EXFER(xfer)->abort_task, ehci_timeout_task,
+		usb_init_task(&xfer->abort_task, ehci_timeout_task,
 		    xfer, USB_TASK_TYPE_ABORT);
 		EXFER(xfer)->ehci_xfer_flags = 0;
 #ifdef DIAGNOSTIC
@@ -2742,7 +2742,7 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 		s = splusb();
 		xfer->status = status;	/* make software ignore it */
 		timeout_del(&xfer->timeout_handle);
-		usb_rem_task(epipe->pipe.device, &exfer->abort_task);
+		usb_rem_task(epipe->pipe.device, &xfer->abort_task);
 		usb_transfer_complete(xfer);
 		splx(s);
 		return;
@@ -2776,7 +2776,7 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	exfer->ehci_xfer_flags |= EHCI_XFER_ABORTING;
 	xfer->status = status;	/* make software ignore it */
 	timeout_del(&xfer->timeout_handle);
-	usb_rem_task(epipe->pipe.device, &exfer->abort_task);
+	usb_rem_task(epipe->pipe.device, &xfer->abort_task);
 	splx(s);
 
 	/*
@@ -2852,7 +2852,7 @@ ehci_abort_isoc_xfer(struct usbd_xfer *xfer, usbd_status status)
 		s = splusb();
 		xfer->status = status;
 		timeout_del(&xfer->timeout_handle);
-		usb_rem_task(epipe->pipe.device, &exfer->abort_task);
+		usb_rem_task(epipe->pipe.device, &xfer->abort_task);
 		usb_transfer_complete(xfer);
 		splx(s);
 		return;
@@ -2877,7 +2877,7 @@ ehci_abort_isoc_xfer(struct usbd_xfer *xfer, usbd_status status)
 
 	xfer->status = status;
 	timeout_del(&xfer->timeout_handle);
-	usb_rem_task(epipe->pipe.device, &exfer->abort_task);
+	usb_rem_task(epipe->pipe.device, &xfer->abort_task);
 
 	s = splusb();
 	for (itd = exfer->itdstart; itd != NULL; itd = itd->xfer_next) {
@@ -2926,7 +2926,7 @@ ehci_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
-	usb_add_task(exfer->xfer.pipe->device, &exfer->abort_task);
+	usb_add_task(exfer->xfer.pipe->device, &exfer->xfer.abort_task);
 }
 
 void
