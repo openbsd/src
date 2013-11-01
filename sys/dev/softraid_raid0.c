@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.41 2013/06/11 16:42:13 deraadt Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.42 2013/11/01 17:36:19 krw Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -135,7 +135,7 @@ sr_raid0_rw(struct sr_workunit *wu)
 
 	DNPRINTF(SR_D_DIS, "%s: %s: front end io: lba %lld size %d\n",
 	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
-	    blk, xs->datalen);
+	    (long long)blk, xs->datalen);
 
 	/* all offs are in bytes */
 	lbaoffs = blk << DEV_BSHIFT;
@@ -159,8 +159,10 @@ sr_raid0_rw(struct sr_workunit *wu)
 		    "chunkoffs %lld physoffs %lld length %lld "
 		    "leftover %lld data %p\n",
 		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, sd->sd_name,
-		    lbaoffs, strip_no, chunk, stripoffs, chunkoffs, physoffs,
-		    length, leftover, data);
+		    (long long)lbaoffs, (long long)strip_no, (long long)chunk,
+		    (long long)stripoffs, (long long)chunkoffs,
+		    (long long)physoffs, (long long)length, (long long)leftover,
+		    data);
 
 		blk = physoffs >> DEV_BSHIFT;
 		ccb = sr_ccb_rw(sd, chunk, blk, length, data, xs->flags, 0);

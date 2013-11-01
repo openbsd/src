@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.16 2013/06/11 16:42:05 deraadt Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.17 2013/11/01 17:36:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -70,15 +70,17 @@ ufsscan(int fd, daddr_t beg, daddr_t end, int flags)
 			if (sb->fs_magic == FS_MAGIC) {
 				if (flags & FLAG_VERBOSE)
 					printf("block %lld id %x,%x size %d\n",
-					    blk + (n/512), sb->fs_id[0],
-					    sb->fs_id[1], sb->fs_ffs1_size);
+					    (long long)(blk + (n/512)),
+					    sb->fs_id[0], sb->fs_id[1],
+					    sb->fs_ffs1_size);
 
 				if (((blk+(n/512)) - lastblk) == (SBSIZE/512)) {
 					if (flags & FLAG_LABELS ) {
 						printf("X: %lld %lld 4.2BSD %d %d %d # %s\n",
 						    ((off_t)sb->fs_ffs1_size *
 						    sb->fs_fsize / 512),
-						    blk+(n/512)-(2*SBSIZE/512),
+						    (long long)(blk + (n/512) -
+						    (2*SBSIZE/512)),
 						    sb->fs_fsize, sb->fs_bsize,
 						    sb->fs_cpg, lastmount);
 					} else {
@@ -87,7 +89,8 @@ ufsscan(int fd, daddr_t beg, daddr_t end, int flags)
 
 						printf("ffs at %lld size %lld "
 						    "mount %s time %s",
-						    blk+(n/512)-(2*SBSIZE/512),
+						    (long long)(blk+(n/512) -
+						    (2*SBSIZE/512)),
 						    (long long)(off_t)sb->fs_ffs1_size *
 						    sb->fs_fsize,
 						    lastmount, ctime(&t));

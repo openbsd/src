@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.40 2013/06/11 16:42:04 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.41 2013/11/01 17:36:18 krw Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -239,10 +239,13 @@ checkfilesys(char *filesys, char *mntpt, long auxdata, int child)
 	n_ffree = sblock.fs_cstotal.cs_nffree;
 	n_bfree = sblock.fs_cstotal.cs_nbfree;
 	pwarn("%lld files, %lld used, %lld free ",
-	    n_files, n_blks, n_ffree + sblock.fs_frag * n_bfree);
+	    n_files, (long long)n_blks,
+	    (long long)(n_ffree + sblock.fs_frag * n_bfree));
 	printf("(%lld frags, %lld blocks, %lld.%lld%% fragmentation)\n",
-	    n_ffree, n_bfree, (n_ffree * 100) / sblock.fs_dsize,
-	    ((n_ffree * 1000 + sblock.fs_dsize / 2) / sblock.fs_dsize) % 10);
+	    (long long)n_ffree, (long long)n_bfree,
+	    (long long)((n_ffree * 100) / sblock.fs_dsize),
+	    (long long)(((n_ffree * 1000 + sblock.fs_dsize / 2) /
+	    sblock.fs_dsize) % 10));
 	if (debug &&
 	    (n_files -= maxino - ROOTINO - sblock.fs_cstotal.cs_nifree))
 		printf("%lld files missing\n", n_files);
@@ -252,11 +255,11 @@ checkfilesys(char *filesys, char *mntpt, long auxdata, int child)
 		n_blks += cgsblock(&sblock, 0) - cgbase(&sblock, 0);
 		n_blks += howmany(sblock.fs_cssize, sblock.fs_fsize);
 		if (n_blks -= maxfsblock - (n_ffree + sblock.fs_frag * n_bfree))
-			printf("%lld blocks missing\n", n_blks);
+			printf("%lld blocks missing\n", (long long)n_blks);
 		if (duplist != NULL) {
 			printf("The following duplicate blocks remain:");
 			for (dp = duplist; dp; dp = dp->next)
-				printf(" %lld,", dp->dup);
+				printf(" %lld,", (long long)dp->dup);
 			printf("\n");
 		}
 		if (zlnhead != NULL) {

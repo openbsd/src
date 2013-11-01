@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.72 2013/10/14 23:26:22 krw Exp $	*/
+/*	$OpenBSD: hd.c,v 1.73 2013/11/01 17:36:19 krw Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -1049,7 +1049,7 @@ hderror(unit)
 		hdprinterr("fault", sp->c_fef, err_fault);
 		hdprinterr("access", sp->c_aef, err_access);
 		hdprinterr("info", sp->c_ief, err_info);
-		printf("    block: %lld, P1-P10: ", hwbn);
+		printf("    block: %lld, P1-P10: ", (long long)hwbn);
 		printf("0x%04x", *(u_int *)&sp->c_raw[0]);
 		printf("%04x", *(u_int *)&sp->c_raw[4]);
 		printf("%02x\n", *(u_short *)&sp->c_raw[8]);

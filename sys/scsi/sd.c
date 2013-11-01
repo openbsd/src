@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.250 2013/10/03 14:07:42 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.251 2013/11/01 17:36:19 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -532,7 +532,7 @@ sdstrategy(struct buf *bp)
 	}
 
 	SC_DEBUG(sc->sc_link, SDEV_DB2, ("sdstrategy: %ld bytes @ blk %lld\n",
-	    bp->b_bcount, bp->b_blkno));
+	    bp->b_bcount, (long long)bp->b_blkno));
 	/*
 	 * If the device has been made invalid, error out
 	 */
@@ -1325,7 +1325,8 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 			return (ENXIO);
 #else	/* SD_DUMP_NOT_TRUSTED */
 		/* Let's just talk about this first... */
-		printf("sd%d: dump addr 0x%x, blk %lld\n", unit, va, blkno);
+		printf("sd%d: dump addr 0x%x, blk %lld\n", unit, va,
+		    (long long)blkno);
 		delay(500 * 1000);	/* half a second */
 #endif	/* SD_DUMP_NOT_TRUSTED */
 

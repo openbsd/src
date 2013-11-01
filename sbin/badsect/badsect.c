@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.21 2013/06/11 16:42:02 deraadt Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.22 2013/11/01 17:36:18 krw Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -147,20 +147,21 @@ chkuse(daddr_t blkno, int cnt)
 
 	fsbn = dbtofsb(fs, blkno);
 	if (fsbn+cnt > fs->fs_ffs1_size) {
-		fprintf(stderr, "block %lld out of range of file system\n", blkno);
+		fprintf(stderr, "block %lld out of range of file system\n",
+		    (long long)blkno);
 		return (1);
 	}
 	cg = dtog(fs, fsbn);
 	if (fsbn < cgdmin(fs, cg)) {
 		if (cg == 0 || (fsbn+cnt) > cgsblock(fs, cg)) {
-			fprintf(stderr, "block %lld in non-data area: cannot attach\n",
-				blkno);
+			fprintf(stderr, "block %lld in non-data area: cannot "
+			    "attach\n", (long long)blkno);
 			return (1);
 		}
 	} else {
 		if ((fsbn+cnt) > cgbase(fs, cg+1)) {
-			fprintf(stderr, "block %lld in non-data area: cannot attach\n",
-				blkno);
+			fprintf(stderr, "block %lld in non-data area: cannot "
+			    "attach\n", (long long)blkno);
 			return (1);
 		}
 	}
@@ -173,7 +174,8 @@ chkuse(daddr_t blkno, int cnt)
 	}
 	bn = dtogd(fs, fsbn);
 	if (isclr(cg_blksfree(&acg), bn))
-		fprintf(stderr, "Warning: sector %lld is in use\n", blkno);
+		fprintf(stderr, "Warning: sector %lld is in use\n", 
+		    (long long)blkno);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.212 2013/10/03 14:07:41 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.213 2013/11/01 17:36:19 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -458,7 +458,7 @@ cdstrategy(struct buf *bp)
 	}
 
 	SC_DEBUG(sc->sc_link, SDEV_DB2, ("cdstrategy: %ld bytes @ blk %lld\n",
-	    bp->b_bcount, bp->b_blkno));
+	    bp->b_bcount, (long long)bp->b_blkno));
 	/*
 	 * If the device has been made invalid, error out
 	 * maybe the media changed, or no media loaded

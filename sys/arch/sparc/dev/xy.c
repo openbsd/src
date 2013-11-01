@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.56 2013/10/20 10:11:16 krw Exp $	*/
+/*	$OpenBSD: xy.c,v 1.57 2013/11/01 17:36:19 krw Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -1238,7 +1238,7 @@ xyc_startbuf(xycsc, xysc, bp)
 #ifdef XYC_DEBUG
 	printf("xyc_startbuf: %s%c: %s block %lld\n",
 	    xysc->sc_dev.dv_xname, 'a' + partno,
-	    (bp->b_flags & B_READ) ? "read" : "write", bp->b_blkno);
+	    (bp->b_flags & B_READ) ? "read" : "write", (long long)bp->b_blkno);
 	printf("xyc_startbuf: b_bcount %d, b_data 0x%x\n",
 	    bp->b_bcount, bp->b_data);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.81 2013/10/07 21:00:45 krw Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.82 2013/11/01 17:36:19 krw Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -195,10 +195,11 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	 * Verify that its last block can actually be accessed.
 	 */
 	if (Oflag <= 1 && fssize > INT_MAX)
-		errx(13, "preposterous size %lld, max is %d", fssize, INT_MAX);
+		errx(13, "preposterous size %lld, max is %d", (long long)fssize,
+		    INT_MAX);
 	if (Oflag == 2 && fssize > MAXDISKSIZE)
-		errx(13, "preposterous size %lld, max is %lld", fssize,
-		    MAXDISKSIZE);
+		errx(13, "preposterous size %lld, max is %lld",
+		    (long long)fssize, MAXDISKSIZE);
 
 	wtfs(fssize - (sectorsize / DEV_BSIZE), sectorsize, (char *)&sblock);
 
@@ -1015,7 +1016,7 @@ rdfs(daddr_t bno, int size, void *bf)
 	}
 	n = pread(fsi, bf, size, (off_t)bno * DEV_BSIZE);
 	if (n != size) {
-		err(34, "rdfs: read error on block %lld", bno);
+		err(34, "rdfs: read error on block %lld", (long long)bno);
 	}
 }
 
@@ -1035,7 +1036,7 @@ wtfs(daddr_t bno, int size, void *bf)
 		return;
 	n = pwrite(fso, bf, size, (off_t)bno * DEV_BSIZE);
 	if (n != size) {
-		err(36, "wtfs: write error on block %lld", bno);
+		err(36, "wtfs: write error on block %lld", (long long)bno);
 	}
 }
 

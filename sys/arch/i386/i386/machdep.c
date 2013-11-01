@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.527 2013/10/17 08:02:15 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.528 2013/11/01 17:36:19 krw Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2803,7 +2803,7 @@ dumpsys()
 		maddr = ptoa(dumpmem[i].start);
 		blkno = dumplo + btodb(maddr) + 1;
 #if 0
-		printf("(%d %lld %d) ", maddr, blkno, npg);
+		printf("(%d %lld %d) ", maddr, (long long)blkno, npg);
 #endif
 		for (j = npg; j--; maddr += NBPG, blkno += btodb(NBPG)) {
 
@@ -2812,7 +2812,7 @@ dumpsys()
 				printf("%ld ",
 				    (ptoa(dumpsize) - maddr) / (1024 * 1024));
 #if 0
-			printf("(%x %lld) ", maddr, blkno);
+			printf("(%x %lld) ", maddr, (long long)blkno);
 #endif
 			pmap_enter(pmap_kernel(), dumpspace, maddr,
 			    VM_PROT_READ, PMAP_WIRED);

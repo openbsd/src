@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.60 2013/10/20 10:11:16 krw Exp $	*/
+/*	$OpenBSD: xd.c,v 1.61 2013/11/01 17:36:19 krw Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -1381,7 +1381,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 #ifdef XDC_DEBUG
 	printf("xdc_startbuf: %s%c: %s block %lld\n",
 	    xdsc->sc_dev.dv_xname, 'a' + partno,
-	    (bp->b_flags & B_READ) ? "read" : "write", bp->b_blkno);
+	    (bp->b_flags & B_READ) ? "read" : "write", (long long)bp->b_blkno);
 	printf("xdc_startbuf: b_bcount %d, b_data 0x%x\n",
 	    bp->b_bcount, bp->b_data);
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.311 2013/07/19 17:14:13 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.312 2013/11/01 17:36:19 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2051,7 +2051,7 @@ sr_ccb_rw(struct sr_discipline *sd, int chunk, daddr_t blkno,
 	DNPRINTF(SR_D_DIS, "%s: %s %s ccb "
 	    "b_bcount %d b_blkno %lld b_flags 0x%0x b_data %p\n",
 	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, sd->sd_name,
-	    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
+	    ccb->ccb_buf.b_bcount, (long long)ccb->ccb_buf.b_blkno,
 	    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
 
 out:
@@ -2069,7 +2069,7 @@ sr_ccb_done(struct sr_ccb *ccb)
 	    " b_flags 0x%0x block %lld target %d\n",
 	    DEVNAME(sc), sd->sd_meta->ssd_devname, sd->sd_name,
 	    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_resid, ccb->ccb_buf.b_flags,
-	    ccb->ccb_buf.b_blkno, ccb->ccb_target);
+	    (long long)ccb->ccb_buf.b_blkno, ccb->ccb_target);
 
 	splassert(IPL_BIO);
 
@@ -2078,14 +2078,16 @@ sr_ccb_done(struct sr_ccb *ccb)
 
 	if (ccb->ccb_buf.b_flags & B_ERROR) {
 		DNPRINTF(SR_D_INTR, "%s: i/o error on block %lld target %d\n",
-		    DEVNAME(sc), ccb->ccb_buf.b_blkno, ccb->ccb_target);
+		    DEVNAME(sc), (long long)ccb->ccb_buf.b_blkno,
+		    ccb->ccb_target);
 		if (ISSET(sd->sd_capabilities, SR_CAP_REDUNDANT))
 			sd->sd_set_chunk_state(sd, ccb->ccb_target,
 			    BIOC_SDOFFLINE);
 		else
 			printf("%s: i/o error on block %lld target %d "
-			    "b_error %d\n", DEVNAME(sc), ccb->ccb_buf.b_blkno,
-			    ccb->ccb_target, ccb->ccb_buf.b_error);
+			    "b_error %d\n", DEVNAME(sc),
+			    (long long)ccb->ccb_buf.b_blkno, ccb->ccb_target,
+			    ccb->ccb_buf.b_error);
 		ccb->ccb_state = SR_CCB_FAILED;
 		wu->swu_ios_failed++;
 	} else {
@@ -4543,8 +4545,8 @@ sr_validate_io(struct sr_workunit *wu, daddr_t *blk, char *func)
 	if (wu->swu_blk_end > sd->sd_meta->ssdi.ssd_size) {
 		DNPRINTF(SR_D_DIS, "%s: %s out of bounds start: %lld "
 		    "end: %lld length: %d\n",
-		    DEVNAME(sd->sd_sc), func, wu->swu_blk_start,
-		    wu->swu_blk_end, xs->datalen);
+		    DEVNAME(sd->sd_sc), func, (long long)wu->swu_blk_start,
+		    (long long)wu->swu_blk_end, xs->datalen);
 
 		sd->sd_scsi_sense.error_code = SSD_ERRCODE_CURRENT |
 		    SSD_ERRCODE_VALID;

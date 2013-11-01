@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.37 2013/06/11 16:42:05 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.38 2013/11/01 17:36:18 krw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -288,10 +288,11 @@ loop:
 		warnx("read error from %s: %s: [block %lld]: count=%d",
 		    disk, strerror(errno), (long long)blkno, size);
 	else
-		warnx("short read error from %s: [block %lld]: count=%d, got=%d",
-		    disk, (long long)blkno, size, cnt);
+		warnx("short read error from %s: [block %lld]: count=%d, "
+		    "got=%d", disk, (long long)blkno, size, cnt);
 	if (++breaderrors > BREADEMAX)
-		errx(1, "More than %d block read errors from %s", BREADEMAX, disk);
+		errx(1, "More than %d block read errors from %s", BREADEMAX,
+		    disk);
 	/*
 	 * Zero buffer, then try to read each sector of buffer separately.
 	 */
@@ -302,12 +303,13 @@ loop:
 		if ((cnt = read(diskfd, buf, (int)dev_bsize)) == dev_bsize)
 			continue;
 		if (cnt == -1) {
-			warnx("read error from %s: %s: [sector %lld]: count=%ld",
-			    disk, strerror(errno), (long long)blkno, dev_bsize);
+			warnx("read error from %s: %s: [sector %lld]: "
+			    "count=%ld", disk, strerror(errno),
+			    (long long)blkno, dev_bsize);
 			continue;
 		}
-		warnx("short read error from %s: [sector %lld]: count=%ld, got=%d",
-		    disk, (long long)blkno, dev_bsize, cnt);
+		warnx("short read error from %s: [sector %lld]: count=%ld, "
+		    "got=%d", disk, (long long)blkno, dev_bsize, cnt);
 	}
 }
 

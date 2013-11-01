@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.156 2013/10/20 13:15:35 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.157 2013/11/01 17:36:19 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -765,22 +765,23 @@ diskerr(struct buf *bp, char *dname, char *what, int pri, int blkdone,
 	    bp->b_flags & B_READ ? "read" : "writ");
 	sn = bp->b_blkno;
 	if (bp->b_bcount <= DEV_BSIZE)
-		(*pr)("%lld", sn);
+		(*pr)("%lld", (long long)sn);
 	else {
 		if (blkdone >= 0) {
 			sn += blkdone;
-			(*pr)("%lld of ", sn);
+			(*pr)("%lld of ", (long long)sn);
 		}
-		(*pr)("%lld-%lld", bp->b_blkno,
-		    bp->b_blkno + (bp->b_bcount - 1) / DEV_BSIZE);
+		(*pr)("%lld-%lld", (long long)bp->b_blkno,
+		    (long long)(bp->b_blkno + (bp->b_bcount - 1) / DEV_BSIZE));
 	}
 	if (lp && (blkdone >= 0 || bp->b_bcount <= lp->d_secsize)) {
 		sn += DL_SECTOBLK(lp, DL_GETPOFFSET(&lp->d_partitions[part]));
-		(*pr)(" (%s%d bn %lld; cn %lld", dname, unit, sn,
-		    sn / DL_SECTOBLK(lp, lp->d_secpercyl));
+		(*pr)(" (%s%d bn %lld; cn %lld", dname, unit, (long long)sn,
+		    (long long)(sn / DL_SECTOBLK(lp, lp->d_secpercyl)));
 		sn %= DL_SECTOBLK(lp, lp->d_secpercyl);
-		(*pr)(" tn %lld sn %lld)", sn / DL_SECTOBLK(lp, lp->d_nsectors),
-		    sn % DL_SECTOBLK(lp, lp->d_nsectors));
+		(*pr)(" tn %lld sn %lld)",
+		    (long long)(sn / DL_SECTOBLK(lp, lp->d_nsectors)),
+		    (long long)(sn % DL_SECTOBLK(lp, lp->d_nsectors)));
 	}
 }
 

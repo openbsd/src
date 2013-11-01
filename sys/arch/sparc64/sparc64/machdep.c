@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.148 2013/09/28 12:40:32 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.149 2013/11/01 17:36:19 krw Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -802,7 +802,7 @@ dumpsys()
 
 	error = pmap_dumpmmu(dump, blkno);
 	blkno += pmap_dumpsize();
-printf("starting dump, blkno %lld\n", blkno);
+printf("starting dump, blkno %lld\n", (long long)blkno);
 	for (mp = mem; mp->size; mp++) {
 		u_int64_t i = 0, n;
 		paddr_t maddr = mp->start;

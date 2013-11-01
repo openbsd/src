@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.95 2013/11/01 11:40:20 dlg Exp $	*/
+/*	$OpenBSD: fd.c,v 1.96 2013/11/01 17:36:19 krw Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -412,8 +412,9 @@ fdstrategy(struct buf *bp)
  	bp->b_cylinder = bp->b_blkno / (fd_bsize / DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef FD_DEBUG
-	printf("fdstrategy: b_blkno %lld b_bcount %d blkno %lld cylin %d sz %d\n",
-	    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylinder, sz);
+	printf("fdstrategy: b_blkno %lld b_bcount %d blkno %lld cylin %d "
+	    "sz %d\n", (long long)bp->b_blkno, bp->b_bcount,
+	    (long long)fd->sc_blkno, bp->b_cylinder, sz);
 #endif
 
 	/* Queue I/O */
@@ -834,7 +835,7 @@ loop:
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
 			printf("blkno %lld nblks %d\n",
-			    fd->sc_blkno, fd->sc_nblks);
+			    (long long)fd->sc_blkno, fd->sc_nblks);
 #endif
 			fdretry(fd);
 			goto loop;

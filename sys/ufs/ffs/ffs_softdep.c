@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.120 2013/08/09 08:20:05 syl Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.121 2013/11/01 17:36:19 krw Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -1528,8 +1528,9 @@ allocdirect_merge(struct allocdirectlst *adphead, struct allocdirect *newadp,
 	    newadp->ad_oldsize != oldadp->ad_newsize ||
 	    newadp->ad_lbn >= NDADDR) {
 		FREE_LOCK(&lk);
-		panic("allocdirect_merge: old %lld != new %lld || lbn %lld >= %d",
-		    newadp->ad_oldblkno, oldadp->ad_newblkno, newadp->ad_lbn,
+		panic("allocdirect_merge: old %lld != new %lld || lbn %lld >= "
+		    "%d", (long long)newadp->ad_oldblkno,
+		    (long long)oldadp->ad_newblkno, (long long)newadp->ad_lbn,
 		    NDADDR);
 	}
 	newadp->ad_oldblkno = oldadp->ad_oldblkno;
@@ -3425,15 +3426,16 @@ initiate_write_inodeblock_ufs1(struct inodedep *inodedep, struct buf *bp)
 		    (d1 = dp->di_db[adp->ad_lbn]) != (d2 = adp->ad_newblkno)) {
 			FREE_LOCK(&lk);
 			panic("%s: direct pointer #%lld mismatch %d != %d",
-			    "softdep_write_inodeblock", adp->ad_lbn, d1, d2);
+			    "softdep_write_inodeblock", (long long)adp->ad_lbn,
+			    d1, d2);
 		}
 		if (adp->ad_lbn >= NDADDR &&
 		    (d1 = dp->di_ib[adp->ad_lbn - NDADDR]) !=
 		    (d2 = adp->ad_newblkno)) {
 			FREE_LOCK(&lk);
 			panic("%s: indirect pointer #%lld mismatch %d != %d",
-			    "softdep_write_inodeblock", adp->ad_lbn - NDADDR,
-			    d1, d2);
+			    "softdep_write_inodeblock", (long long)(adp->ad_lbn -
+			    NDADDR), d1, d2);
 		}
 		deplist |= 1 << adp->ad_lbn;
 		if ((adp->ad_state & ATTACHED) == 0) {
@@ -3571,7 +3573,8 @@ initiate_write_inodeblock_ufs2(struct inodedep *inodedep, struct buf *bp)
 		    (d2 = adp->ad_newblkno)) {
 			FREE_LOCK(&lk);
 			panic("%s: direct pointer #%lld mismatch %lld != %lld",
-			    "softdep_write_inodeblock", adp->ad_lbn, d1, d2);
+			    "softdep_write_inodeblock", (long long)adp->ad_lbn,
+			    d1, d2);
 		}
 		deplist |= 1 << adp->ad_lbn;
 		if ((adp->ad_state & ATTACHED) == 0) {
@@ -3638,15 +3641,16 @@ initiate_write_inodeblock_ufs2(struct inodedep *inodedep, struct buf *bp)
 		    (d1 = dp->di_db[adp->ad_lbn]) != (d2 = adp->ad_newblkno)) {
 			FREE_LOCK(&lk);
 			panic("%s: direct pointer #%lld mismatch %lld != %lld",
-			    "softdep_write_inodeblock", adp->ad_lbn, d1, d2);
+			    "softdep_write_inodeblock", (long long)adp->ad_lbn,
+			    d1, d2);
 		}
 		if (adp->ad_lbn >= NDADDR &&
 		    (d1 = dp->di_ib[adp->ad_lbn - NDADDR]) !=
 		    (d2 = adp->ad_newblkno)) {
 			FREE_LOCK(&lk);
 			panic("%s: indirect pointer #%lld mismatch %lld != %lld",
-			    "softdep_write_inodeblock", adp->ad_lbn - NDADDR,
-			    d1, d2);
+			    "softdep_write_inodeblock", (long long)(adp->ad_lbn -
+			    NDADDR), d1, d2);
 		}
 		deplist |= 1 << adp->ad_lbn;
 		if ((adp->ad_state & ATTACHED) == 0) {
@@ -4033,7 +4037,8 @@ handle_written_inodeblock(struct inodedep *inodedep, struct buf *bp)
 				if (dp1->di_db[adp->ad_lbn] != adp->ad_oldblkno)
 					 panic("%s: %s #%lld mismatch %d != %lld",
 					     "handle_written_inodeblock",
-					     "direct pointer", adp->ad_lbn,
+					     "direct pointer",
+					     (long long)adp->ad_lbn,
 					     dp1->di_db[adp->ad_lbn],
 					     adp->ad_oldblkno);
 				dp1->di_db[adp->ad_lbn] = adp->ad_newblkno;
@@ -4042,7 +4047,7 @@ handle_written_inodeblock(struct inodedep *inodedep, struct buf *bp)
 					panic("%s: %s #%lld allocated as %d",
 					    "handle_written_inodeblock",
 					    "indirect pointer",
-					    adp->ad_lbn - NDADDR,
+					    (long long)(adp->ad_lbn - NDADDR),
 					    dp1->di_ib[adp->ad_lbn - NDADDR]);
 				dp1->di_ib[adp->ad_lbn - NDADDR] =
 				   adp->ad_newblkno;
@@ -4050,18 +4055,19 @@ handle_written_inodeblock(struct inodedep *inodedep, struct buf *bp)
 		} else {
 			if (adp->ad_lbn < NDADDR) {
 				if (dp2->di_db[adp->ad_lbn] != adp->ad_oldblkno)
-					panic("%s: %s #%lld mismatch %lld != %lld",
-					    "handle_written_inodeblock",
-					    "direct pointer", adp->ad_lbn,
+					panic("%s: %s #%lld mismatch %lld != "
+					    "%lld", "handle_written_inodeblock",
+					    "direct pointer",
+					    (long long)adp->ad_lbn,
 					    dp2->di_db[adp->ad_lbn],
-					    adp->ad_oldblkno);
+					    (long long)adp->ad_oldblkno);
 				dp2->di_db[adp->ad_lbn] = adp->ad_newblkno;
 			} else {
 				if (dp2->di_ib[adp->ad_lbn - NDADDR] != 0)
 					panic("%s: %s #%lld allocated as %lld",
 					    "handle_written_inodeblock",
 					    "indirect pointer",
-					    adp->ad_lbn - NDADDR,
+					    (long long)(adp->ad_lbn - NDADDR),
 					    dp2->di_ib[adp->ad_lbn - NDADDR]);
 				dp2->di_ib[adp->ad_lbn - NDADDR] =
 				    adp->ad_newblkno;
@@ -5651,7 +5657,7 @@ worklist_print(struct worklist *wk, int full,
 	case D_PAGEDEP:
 		pagedep = WK_PAGEDEP(wk);
 		(*pr)("mount %p ino %u lbn %lld\n", pagedep->pd_mnt,
-		    pagedep->pd_ino, pagedep->pd_lbn);
+		    pagedep->pd_ino, (long long)pagedep->pd_lbn);
 		break;
 	case D_INODEDEP:
 		inodedep = WK_INODEDEP(wk);
@@ -5664,8 +5670,8 @@ worklist_print(struct worklist *wk, int full,
 	case D_NEWBLK:
 		newblk = WK_NEWBLK(wk);
 		(*pr)("fs %p newblk %lld state %d bmsafemap %p\n",
-		    newblk->nb_fs, newblk->nb_newblkno, newblk->nb_state,
-		    newblk->nb_bmsafemap);
+		    newblk->nb_fs, (long long)newblk->nb_newblkno,
+		    newblk->nb_state, newblk->nb_bmsafemap);
 		break;
 	case D_BMSAFEMAP:
 		bmsafemap = WK_BMSAFEMAP(wk);
@@ -5673,9 +5679,10 @@ worklist_print(struct worklist *wk, int full,
 		break;
 	case D_ALLOCDIRECT:
 		adp = WK_ALLOCDIRECT(wk);
-		(*pr)("lbn %lld newlbk %lld oldblk %lld newsize %ld olsize %ld\n"
-		    "%s  bp %p inodedep %p freefrag %p\n", adp->ad_lbn,
-		    adp->ad_newblkno, adp->ad_oldblkno, adp->ad_newsize,
+		(*pr)("lbn %lld newlbk %lld oldblk %lld newsize %ld olsize "
+		    "%ld\n%s  bp %p inodedep %p freefrag %p\n",
+		    (long long)adp->ad_lbn, (long long)adp->ad_newblkno,
+		    (long long)adp->ad_oldblkno, adp->ad_newsize,
 		    adp->ad_oldsize,
 		    prefix, adp->ad_buf, adp->ad_inodedep, adp->ad_freefrag);
 		break;
@@ -5688,14 +5695,15 @@ worklist_print(struct worklist *wk, int full,
 		aip = WK_ALLOCINDIR(wk);
 		(*pr)("off %d newblk %lld oldblk %lld freefrag %p\n"
 		    "%s  indirdep %p buf %p\n", aip->ai_offset,
-		    aip->ai_newblkno, aip->ai_oldblkno, aip->ai_freefrag,
-		    prefix, aip->ai_indirdep, aip->ai_buf);
+		    (long long)aip->ai_newblkno, (long long)aip->ai_oldblkno,
+		    aip->ai_freefrag, prefix, aip->ai_indirdep, aip->ai_buf);
 		break;
 	case D_FREEFRAG:
 		freefrag = WK_FREEFRAG(wk);
 		(*pr)("vnode %p mp %p blkno %lld fsize %ld ino %u\n",
-		    freefrag->ff_devvp, freefrag->ff_mnt, freefrag->ff_blkno,
-		    freefrag->ff_fragsize, freefrag->ff_inum);
+		    freefrag->ff_devvp, freefrag->ff_mnt,
+		    (long long)freefrag->ff_blkno, freefrag->ff_fragsize,
+		    freefrag->ff_inum);
 		break;
 	case D_FREEBLKS:
 		freeblks = WK_FREEBLKS(wk);

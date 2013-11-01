@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.150 2013/06/11 16:42:14 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.151 2013/11/01 17:36:19 krw Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -310,7 +310,8 @@ vndstrategy(struct buf *bp)
 			printf("%s: sloppy %s from proc %d (%s): "
 			    "blkno %lld bcount %ld\n", sc->sc_dev.dv_xname,
 			    (bp->b_flags & B_READ) ? "read" : "write",
-			    pr->p_pid, pr->p_comm, bp->b_blkno, origbcount);
+			    pr->p_pid, pr->p_comm, (long long)bp->b_blkno,
+			    origbcount);
 		}
 #endif
 	}
