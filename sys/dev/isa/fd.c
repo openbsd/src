@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.94 2013/06/11 16:42:15 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.95 2013/11/01 11:40:20 dlg Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -119,7 +119,8 @@ struct fd_softc {
 
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
-	struct buf sc_q;	/* head of buf chain */
+	struct bufq sc_bufq;	/* pending I/O */
+	struct buf *sc_bp;	/* the current I/O */
 	struct timeout fd_motor_on_to;
 	struct timeout fd_motor_off_to;
 	struct timeout fdtimeout_to;
@@ -299,6 +300,7 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	 */
 	fd->sc_dk.dk_flags = DKF_NOLABELREAD;
 	fd->sc_dk.dk_name = fd->sc_dev.dv_xname;
+	bufq_init(&fd->sc_bufq, BUFQ_DEFAULT);
 	disk_attach(&fd->sc_dev, &fd->sc_dk);
 
 	/* Setup timeout structures */
@@ -414,11 +416,13 @@ fdstrategy(struct buf *bp)
 	    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylinder, sz);
 #endif
 
+	/* Queue I/O */
+	bufq_queue(&fd->sc_bufq, bp);
+
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
-	disksort(&fd->sc_q, bp);
 	timeout_del(&fd->fd_motor_off_to); /* a good idea */
-	if (!fd->sc_q.b_active)
+	if (fd->sc_bp == NULL)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
 	else {
@@ -449,7 +453,7 @@ fdstart(struct fd_softc *fd)
 	int active = !TAILQ_EMPTY(&fdc->sc_link.fdlink.sc_drives);
 
 	/* Link into controller queue. */
-	fd->sc_q.b_active = 1;
+	fd->sc_bp = bufq_dequeue(&fd->sc_bufq);
 	TAILQ_INSERT_TAIL(&fdc->sc_link.fdlink.sc_drives, fd, sc_drivechain);
 
 	/* If controller not already active, start it. */
@@ -464,6 +468,10 @@ fdfinish(struct fd_softc *fd, struct buf *bp)
 
 	splassert(IPL_BIO);
 
+	bp->b_resid = fd->sc_bcount;
+	fd->sc_skip = 0;
+	fd->sc_bp = bufq_dequeue(&fd->sc_bufq);
+
 	/*
 	 * Move this drive to the end of the queue to give others a `fair'
 	 * chance.  We only force a switch if N operations are completed while
@@ -473,15 +481,11 @@ fdfinish(struct fd_softc *fd, struct buf *bp)
 	if (TAILQ_NEXT(fd, sc_drivechain) != NULL && ++fd->sc_ops >= 8) {
 		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_link.fdlink.sc_drives, fd, sc_drivechain);
-		if (bp->b_actf) {
+		if (fd->sc_bp != NULL) {
 			TAILQ_INSERT_TAIL(&fdc->sc_link.fdlink.sc_drives, fd,
 					  sc_drivechain);
-		} else
-			fd->sc_q.b_active = 0;
+		}
 	}
-	bp->b_resid = fd->sc_bcount;
-	fd->sc_skip = 0;
-	fd->sc_q.b_actf = bp->b_actf;
 
 	biodone(bp);
 	/* turn off motor 5s from now */
@@ -661,11 +665,10 @@ loop:
 	}
 	fd_bsize = FD_BSIZE(fd);
 
-	bp = fd->sc_q.b_actf;
+	bp = fd->sc_bp;
 	if (bp == NULL) {
 		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_link.fdlink.sc_drives, fd, sc_drivechain);
-		fd->sc_q.b_active = 0;
 		goto loop;
 	}
 
@@ -927,7 +930,7 @@ fdtimeout(void *arg)
 #endif
 	fdcstatus(&fd->sc_dev, 0, "timeout");
 
-	if (fd->sc_q.b_actf)
+	if (fd->sc_bp != NULL)
 		fdc->sc_state++;
 	else
 		fdc->sc_state = DEVIDLE;
@@ -940,7 +943,7 @@ void
 fdretry(struct fd_softc *fd)
 {
 	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
-	struct buf *bp = fd->sc_q.b_actf;
+	struct buf *bp = fd->sc_bp;
 
 	if (fd->sc_opts & FDOPT_NORETRY)
 	    goto fail;
