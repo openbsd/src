@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.12 2013/06/11 16:42:10 deraadt Exp $ */
+/*	$OpenBSD: octcf.c,v 1.13 2013/11/01 01:06:03 dlg Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -111,7 +111,7 @@ struct octcf_softc {
 	/* General disk infos */
 	struct device sc_dev;
 	struct disk sc_dk;
-	struct buf sc_q;
+	struct bufq sc_bufq;
 	struct buf *sc_bp;
 	struct ataparams sc_params;/* drive characteristics found */
 	int sc_flags;
@@ -260,6 +260,7 @@ octcfattach(struct device *parent, struct device *self, void *aux)
 	 * Initialize disk structures.
 	 */
 	wd->sc_dk.dk_name = wd->sc_dev.dv_xname;
+	bufq_init(&wd->sc_bufq, BUFQ_DEFAULT);
 
 	/* Attach disk. */
 	disk_attach(&wd->sc_dev, &wd->sc_dk);
@@ -326,9 +327,11 @@ octcfstrategy(struct buf *bp)
 		goto bad;
 	}
 
+	/* Queue the I/O */
+	bufq_queue(&wd->sc_bufq, bp);
+
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
-	disksort(&wd->sc_q, bp);
 	octcfstart(wd);
 	splx(s);
 	device_unref(&wd->sc_dev);
@@ -352,18 +355,11 @@ void
 octcfstart(void *arg)
 {
 	struct octcf_softc *wd = arg;
-	struct buf *dp, *bp;
+	struct buf *bp;
 
 	OCTCFDEBUG_PRINT(("%s %s\n", __func__, wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
-	while (1) {
-		/* Remove the next buffer from the queue or stop. */
-		dp = &wd->sc_q;
-		bp = dp->b_actf;
-		if (bp == NULL)
-			return;
-		dp->b_actf = bp->b_actf;
-
+	while ((bp = bufq_dequeue(&wd->sc_bufq)) != NULL) {
 		/* Transfer this buffer now. */
 		_octcfstart(wd, bp);
 	}
