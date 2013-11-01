@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.39 2013/06/11 16:42:13 deraadt Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.40 2013/11/01 20:27:21 krw Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -205,7 +205,7 @@ ra_putonline(struct ra_softc *ra)
 	if (rc != EIO)
 		ra->ra_state = DK_OPEN;
 
-	printf("%s: %luMB, %lu bytes/sector, %lld sectors\n",
+	printf("%s: %luMB, %lu bytes/sector, %lu sectors\n",
 	    ra->ra_dev.dv_xname,
 	    ra->ra_unitsize / (1048576 / dl->d_secsize),
 	    dl->d_secsize, ra->ra_unitsize);
