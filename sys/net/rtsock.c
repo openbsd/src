@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.130 2013/10/31 18:10:21 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.131 2013/11/01 20:09:14 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1576,36 +1576,36 @@ struct rt_msghdr *
 rtmsg_4to5(struct mbuf *m, int *len)
 {
 	struct rt_msghdr *rtm;
-	struct rt_omsghdr *ortm;
+	struct rt_omsghdr ortm;
 
 	*len += sizeof(struct rt_msghdr) - sizeof(struct rt_omsghdr);
 	R_Malloc(rtm, struct rt_msghdr *, *len);
 	if (rtm == NULL)
 		return (NULL);
 	bzero(rtm, sizeof(struct rt_msghdr));
-	ortm = mtod(m, struct rt_omsghdr *);
+	m_copydata(m, 0, sizeof(struct rt_omsghdr), (caddr_t)&ortm);
 	rtm->rtm_msglen = *len;
 	rtm->rtm_version = RTM_VERSION;
-	rtm->rtm_type = ortm->rtm_type;
+	rtm->rtm_type = ortm.rtm_type;
 	rtm->rtm_hdrlen = sizeof(struct rt_msghdr);
 
-	rtm->rtm_index = ortm->rtm_index;
-	rtm->rtm_tableid = ortm->rtm_tableid;
-	rtm->rtm_priority = ortm->rtm_priority;
-	rtm->rtm_mpls = ortm->rtm_mpls;
-	rtm->rtm_addrs = ortm->rtm_addrs;
-	rtm->rtm_flags = ortm->rtm_flags;
-	rtm->rtm_fmask = ortm->rtm_fmask;
-	rtm->rtm_pid = ortm->rtm_pid;
-	rtm->rtm_seq = ortm->rtm_seq;
-	rtm->rtm_errno = ortm->rtm_errno;
-	rtm->rtm_inits = ortm->rtm_inits;
+	rtm->rtm_index = ortm.rtm_index;
+	rtm->rtm_tableid = ortm.rtm_tableid;
+	rtm->rtm_priority = ortm.rtm_priority;
+	rtm->rtm_mpls = ortm.rtm_mpls;
+	rtm->rtm_addrs = ortm.rtm_addrs;
+	rtm->rtm_flags = ortm.rtm_flags;
+	rtm->rtm_fmask = ortm.rtm_fmask;
+	rtm->rtm_pid = ortm.rtm_pid;
+	rtm->rtm_seq = ortm.rtm_seq;
+	rtm->rtm_errno = ortm.rtm_errno;
+	rtm->rtm_inits = ortm.rtm_inits;
 
 	/* copy just the interesting stuff ignore the rest */
-	rtm->rtm_rmx.rmx_pksent = ortm->rtm_rmx.rmx_pksent;
-	rtm->rtm_rmx.rmx_expire = (int64_t)ortm->rtm_rmx.rmx_expire;
-	rtm->rtm_rmx.rmx_locks = ortm->rtm_rmx.rmx_locks;
-	rtm->rtm_rmx.rmx_mtu = ortm->rtm_rmx.rmx_mtu;
+	rtm->rtm_rmx.rmx_pksent = ortm.rtm_rmx.rmx_pksent;
+	rtm->rtm_rmx.rmx_expire = (int64_t)ortm.rtm_rmx.rmx_expire;
+	rtm->rtm_rmx.rmx_locks = ortm.rtm_rmx.rmx_locks;
+	rtm->rtm_rmx.rmx_mtu = ortm.rtm_rmx.rmx_mtu;
 
 	m_copydata(m, sizeof(struct rt_omsghdr),
 	    *len - sizeof(struct rt_msghdr),
