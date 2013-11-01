@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.4 2013/08/01 21:26:30 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.5 2013/11/01 18:33:10 bluhm Exp $
 
-.if defined(REGRESS_FULL)
 SUBDIR +=	pf_divert
-.endif
+
+.MAIN: regress
 
 PROG=		pf_print_test
 CLEANFILES=	pf_print_host.c
