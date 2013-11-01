@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2013/10/28 14:10:41 patrick Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2013/11/01 20:35:52 jasper Exp $
 
-ALLSOC=IMX OMAP
+ALLSOC=IMX OMAP SUNXI
 KERNELS=
 MDEXT=
 
@@ -13,6 +13,7 @@ MDEXT+=		bsd.rd.${SOC}.umg
 
 KERNADDR_OMAP=0x80300000
 KERNADDR_IMX=0x10800000
+KERNADDR_SUNXI=0x40800000
 
 .for CONF K in ${KERNELS}
 .  if !target($K)

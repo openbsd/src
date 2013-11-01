@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.2 2013/10/28 14:10:41 patrick Exp $
+#	$OpenBSD: install.md,v 1.3 2013/11/01 20:35:52 jasper Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,6 +45,11 @@ if [[ $? == 0 ]]; then
         MDPLAT=IMX
 	LOADADDR=0x18800000
 fi
+dmesg | grep "^sunxi0 at mainbus0:" >/dev/null
+if [[ $? == 0 ]]; then
+	MDPLAT=SUNXI
+	LOADADDR=0x40200000
+fi
 
 MDSETS="bsd.${MDPLAT} bsd.rd.${MDPLAT} bsd.${MDPLAT}.umg bsd.rd.${MDPLAT}.umg"
 SANESETS="bsd.${MDPLAT}"
@@ -61,6 +66,7 @@ md_installboot() {
 	BEAGLEBONE=$(scan_dmesg '/^omap0 at mainbus0: \(BeagleBone\).*/s//\1/p')
 	PANDA=$(scan_dmesg '/^omap0 at mainbus0: \(PandaBoard\)/s//\1/p')
 	IMX=$(scan_dmesg '/^imx0 at mainbus0: \(i.MX6.*\)/s//IMX/p')
+	SUNXI=$(scan_dmesg '/^sunxi0 at mainbus0: \(A.*\)/s//SUNXI/p')
 
         if [[ -f /mnt/bsd.${MDPLAT} ]]; then
                 mv /mnt/bsd.${MDPLAT} /mnt/bsd
@@ -94,11 +100,18 @@ md_installboot() {
 bootcmd=mmc rescan ; setenv loadaddr ${LOADADDR}; setenv bootargs sd0i:/bsd.umg ; fatload mmc 0 \${loadaddr} bsd.umg ; bootm \${loadaddr} ;
 uenvcmd=boot
 __EOT
-	else 
+	elif [[ ${MDPLAT} == "IMX" ]]; then
 		cat > /tmp/6x_bootscript.scr<<__EOT
 ; setenv loadaddr ${LOADADDR} ; setenv bootargs sd0i:/bsd.umg ; for dtype in sata mmc ; do for disk in 0 1 ; do \${dtype} dev \${disk} ; for fs in fat ext2 ; do if \${fs}load \${dtype} \${disk}:1 \${loadaddr} bsd.umg ; then bootm \${loadaddr} ; fi ; done; done; done; echo; echo failed to load bsd.umg 
 __EOT
 		mkuboot -t script -a arm -o linux /tmp/6x_bootscript.scr /mnt/mnt/6x_bootscript
+	elif [[ ${MDPLAT} == "SUNXI" ]]; then
+		cat > /mnt/mnt/uenv.txt<<__EOT
+bootargs=sd0i:/bsd
+mmcboot=mmc rescan ; fatload mmc 0 ${LOADADDR} bsd.umg && bootm ${LOADADDR};
+uenvcmd=run mmcboot;
+__EOT
+		cp /mnt/usr/mdec/sunxi/{sunxi-spl,u-boot}.bin /mnt/mnt/
 	fi
 }
 
