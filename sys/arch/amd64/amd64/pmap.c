@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.65 2013/06/02 16:45:12 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.66 2013/11/01 01:09:43 dlg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -277,9 +277,7 @@ TAILQ_HEAD(pg_to_free, vm_page);
  */
 
 struct pool pmap_pdp_pool;
-u_int pmap_pdp_cache_generation;
-
-int	pmap_pdp_ctor(void *, void *, int);
+void pmap_pdp_ctor(pd_entry_t *);
 
 extern vaddr_t msgbuf_vaddr;
 extern paddr_t msgbuf_paddr;
@@ -677,9 +675,7 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	 */
 
 	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, 0, 0, "pdppl",
-		  &pool_allocator_nointr);
-	pool_set_ctordtor(&pmap_pdp_pool, pmap_pdp_ctor, NULL, NULL);
-
+	    &pool_allocator_nointr);
 
 	/*
 	 * ensure the TLB is sync'd with reality by flushing it...
@@ -952,10 +948,9 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t **pdes)
  * pmap_pdp_ctor: constructor for the PDP cache.
  */
 
-int
-pmap_pdp_ctor(void *arg, void *object, int flags)
+void
+pmap_pdp_ctor(pd_entry_t *pdir)
 {
-	pd_entry_t *pdir = object;
 	paddr_t pdirpa;
 	int npde;
 
@@ -983,8 +978,6 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 #if VM_MIN_KERNEL_ADDRESS != KERNBASE
 	pdir[pl4_pi(KERNBASE)] = PDP_BASE[pl4_pi(KERNBASE)];
 #endif
-
-	return (0);
 }
 
 /*
@@ -999,7 +992,6 @@ pmap_create(void)
 {
 	struct pmap *pmap;
 	int i;
-	u_int gen;
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 
@@ -1020,14 +1012,8 @@ pmap_create(void)
 	 * have already allocated kernel PTPs to cover the range...
 	 */
 
-try_again:
-	gen = pmap_pdp_cache_generation;
 	pmap->pm_pdir = pool_get(&pmap_pdp_pool, PR_WAITOK);
-
-	if (gen != pmap_pdp_cache_generation) {
-		pool_put(&pmap_pdp_pool, pmap->pm_pdir);
-		goto try_again;
-	}
+	pmap_pdp_ctor(pmap->pm_pdir);
 
 	pmap->pm_pdirpa = pmap->pm_pdir[PDIR_SLOT_PTE] & PG_FRAME;
 
@@ -2286,7 +2272,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 #if 0  
 		pool_cache_invalidate(&pmap_pdp_cache);
 #endif
-		pmap_pdp_cache_generation++;
 	}
 	pmap_maxkvaddr = maxkvaddr;
 	splx(s);
