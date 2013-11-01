@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.121 2013/09/24 09:20:12 espie Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.122 2013/11/01 17:17:25 deraadt Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -257,7 +257,6 @@ extern	int syncdelay;			/* seconds to delay syncing vnodes */
 extern	int rushjob;			/* # of slots syncer should run ASAP */
 extern void    vhold(struct vnode *);
 extern void    vdrop(struct vnode *);
-#endif /* _KERNEL */
 
 /* vnode operations */
 struct vops {
@@ -299,7 +298,6 @@ struct vops {
 	int	(*vop_kqfilter)(void *);
 };
 
-#ifdef _KERNEL
 extern struct vops dead_vops;
 extern struct vops spec_vops;
  
