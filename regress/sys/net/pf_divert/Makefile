@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2013/08/11 21:49:04 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.5 2013/11/01 18:07:45 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -101,7 +101,7 @@ run-regress-$a: $a
 
 # make perl syntax check for all args files
 
-.PHONY: syntax
+.PHONY: syntax check-setup
 
 syntax: stamp-syntax
 
@@ -110,5 +110,19 @@ stamp-syntax: ${ARGS}
 	@perl -c ${PERLPATH}$a
 .endfor
 	@date >$@
+
+# Check wether the address, route and remote setup is correct
+check-setup:
+	ping -n -c 1 ${LOCAL_ADDR}
+	ping -n -c 1 ${REMOTE_ADDR}
+	ping6 -n -c 1 ${LOCAL_ADDR6}
+	ping6 -n -c 1 ${REMOTE_ADDR6}
+	route get -inet ${FAKE_ADDR} | grep 'if address: ${LOCAL_ADDR}$$'
+	route get -inet ${FAKE_ADDR} | grep 'gateway: ${REMOTE_ADDR}$$'
+	route get -inet6 ${FAKE_ADDR6} | grep 'if address: ${LOCAL_ADDR6}$$'
+	route get -inet6 ${FAKE_ADDR6} | grep 'gateway: ${REMOTE_ADDR6}$$'
+	ssh ${REMOTE_SSH} ${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
+	ssh ${REMOTE_SSH} ${SUDO} pfctl -si | grep '^Status: Enabled '
+	ssh ${REMOTE_SSH} perl -MIO::Socket::INET6 -MIO::Socket::INET6 -e 1
 
 .include <bsd.regress.mk>
