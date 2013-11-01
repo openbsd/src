@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.143 2013/06/29 09:08:41 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.144 2013/11/01 10:42:38 henning Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 29 2013 $
+.Dd $Mdocdate: November 1 2013 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -544,17 +544,16 @@ The following
 fragment uses queues for all IPsec traffic with special
 handling for developers and employees:
 .Bd -literal -offset indent
-altq on sk0 cbq bandwidth 1000Mb \e
-	queue { deflt, developers, employees, ipsec }
-    queue deflt bandwidth 10% priority 0 cbq(default ecn)
-    queue developers bandwidth 75% priority 7 cbq(borrow red)
-    queue employees bandwidth 5% cbq(red)
-    queue ipsec bandwidth 10% cbq(red)
+queue std on sk0 bandwidth 100M
+queue   deflt parent std bandwidth 10M default
+queue   developers parent std bandwidth 75M
+queue   employees parent std bandwidth 5M
+queue   ipsec parent std bandwidth 10M
 
-pass out on sk0 proto esp queue ipsec
+pass out on sk0 proto esp set queue ipsec
 
-pass out on sk0 tagged ipsec-developers.bar.org queue developers
-pass out on sk0 tagged ipsec-employees.bar.org queue employees
+pass out on sk0 tagged ipsec-developers.bar.org set queue developers
+pass out on sk0 tagged ipsec-employees.bar.org set queue employees
 .Ed
 .Pp
 The tags will be assigned by the following

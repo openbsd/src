@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.25 2013/07/16 09:45:28 schwarze Exp $
+.\" $OpenBSD: iked.conf.5,v 1.26 2013/11/01 10:42:38 henning Exp $
 .\"
 .\" Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: November 1 2013 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -624,17 +624,16 @@ The following
 fragment uses queues for all IPsec traffic with special
 handling for developers and employees:
 .Bd -literal -offset indent
-altq on ix0 cbq bandwidth 1000Mb \e
-	queue { deflt, developers, employees, ipsec }
-    queue deflt bandwidth 10% priority 0 cbq(default ecn)
-    queue developers bandwidth 75% priority 7 cbq(borrow red)
-    queue employees bandwidth 5% cbq(red)
-    queue ipsec bandwidth 10% cbq(red)
+queue std on ix0 bandwidth 100M
+queue   deflt parent std bandwidth 10M default
+queue   developers parent std bandwidth 75M
+queue   employees parent std bandwidth 5M
+queue   ipsec parent std bandwidth 10M
 
-pass out on ix0 proto esp queue ipsec
+pass out on ix0 proto esp set queue ipsec
 
-pass out on ix0 tagged ipsec-developers.example.com queue developers
-pass out on ix0 tagged ipsec-employees.example.com queue employees
+pass out on ix0 tagged ipsec-developers.example.com set queue developers
+pass out on ix0 tagged ipsec-employees.example.com set queue employees
 .Ed
 .Pp
 The following example assigns the tags in the
