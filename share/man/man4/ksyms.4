@@ -1,4 +1,4 @@
-.\" $OpenBSD: ksyms.4,v 1.12 2007/05/31 19:19:50 jmc Exp $
+.\" $OpenBSD: ksyms.4,v 1.13 2013/11/01 12:08:51 fgsch Exp $
 .\"
 .\" Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: November 1 2013 $
 .Dt KSYMS 4
 .Os
 .Sh NAME
@@ -27,14 +27,7 @@ The
 .Pa /dev/ksyms
 device masquerades as an
 .Ox
-native executable
-.Po
-.Em a.out
-or
-.Em ELF ,
-depending on the platform
-.Pc
-with the symbols from the running kernel as its symbol segment.
+native executable with the symbols from the running kernel as its symbol segment.
 Use of
 .Pa /dev/ksyms
 requires that the boot loader preserve the kernel symbols and place
