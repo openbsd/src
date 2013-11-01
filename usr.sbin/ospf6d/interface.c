@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.20 2012/09/17 13:49:27 bluhm Exp $ */
+/*	$OpenBSD: interface.c,v 1.21 2013/11/01 17:18:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -842,7 +842,7 @@ if_set_ipv6_checksum(int fd)
 {
 	int	offset = offsetof(struct ospf_hdr, chksum);
 
-	log_debug("if_set_ipv6_checksum setting cksum offset to %i", offset);
+	log_debug("if_set_ipv6_checksum setting cksum offset to %d", offset);
 	if (setsockopt(fd, IPPROTO_IPV6, IPV6_CHECKSUM, &offset,
 	     sizeof(offset)) < 0) {
 		log_warn("if_set_ipv6_checksum: error setting IPV6_CHECKSUM");
