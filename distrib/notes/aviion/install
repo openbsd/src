@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.2 2013/10/15 13:28:07 miod Exp $
+dnl	$OpenBSD: install,v 1.3 2013/11/01 23:32:09 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -23,6 +23,29 @@ ECOFF format, bsd.rd.xcf, which should be located in a place where the TFTP
 daemon can find it (remember, many TFTP daemons run in a chroot'ed
 environment).
 
+The kernel can then be booted with:
+
+    SCM> b inen()
+
+(replace `inen' with the device name for your Ethernet interface, such as
+ `dgen').
+
+On some systems with older PROM, due to a PROM limitation, attempting to
+load the kernel in memory past 3MB will fail, with the PROM seemingly stuck.
+If all attempts to load the kernel image fail at the same byte count, but
+pressing ^C brings the SCM> prompt back, it will be necessary to load the
+kernel in two steps, by first loading the boot loader (which fits within
+3MB), and have it download the kernel.
+
+In that case, the symbolic link in the TFTP server should point to `boot'
+instead of `bsd.rd.xcf'. The bootloader will then attempt to load the
+kernel from an NFS server, after issueing a RARP query (to get an IP
+address) and a BOOTPARAMS query (to know which NFS server to connect to).
+
+For further details about diskless boot can be found in the diskless(8)
+manual page, which is available online at
+    http://www.openbsd.org/cgi-bin/man.cgi?query=diskless
+
 
 Booting from DG/UX:
 
@@ -37,6 +60,7 @@ if it the installation kernel has been copied to the root partition, or
     SCM> b sd()partition_name:/bsd.rd.xcf
 
 if it has been copied to a different partition (such as `usr').
+
 
 dnl document tape boot once the bootloader is st(4) capable
 dnl
