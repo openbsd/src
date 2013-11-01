@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.63 2013/03/02 19:40:08 guenther Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.64 2013/11/01 19:05:10 guenther Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -216,11 +216,10 @@ __wcsconv(wchar_t *wcsarg, int prec)
 #include <locale.h>
 #include <math.h>
 #include "floatio.h"
+#include "gdtoa.h"
 
 #define	DEFPREC		6
 
-extern char *__dtoa(double, int, int, int *, int *, char **);
-extern void  __freedtoa(char *);
 static int exponent(char *, int, int);
 #endif /* FLOATING_POINT */
 

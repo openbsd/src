@@ -1,4 +1,4 @@
-/*	$OpenBSD: gcvt.c,v 1.12 2010/09/25 13:19:19 millert Exp $	*/
+/*	$OpenBSD: gcvt.c,v 1.13 2013/11/01 19:05:11 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2006, 2010
@@ -25,9 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-extern char *__dtoa(double, int, int, int *, int *, char **);
-extern void  __freedtoa(char *);
+#include "gdtoa.h"
 
 #define DEFPREC	6
 
