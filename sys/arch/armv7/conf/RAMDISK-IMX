@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK-IMX,v 1.4 2013/10/28 14:10:41 patrick Exp $
+# $OpenBSD: RAMDISK-IMX,v 1.5 2013/11/01 20:26:51 jasper Exp $
 #
 # GENERIC machine description file
 #
@@ -161,5 +161,5 @@ pseudo-device	bpfilter	1	# packet filter
 pseudo-device	rd		1	# ram disk
 
 # RAMDISK stuff
-options	MINIROOTSIZE=5120
+options	MINIROOTSIZE=10240
 options	RAMDISK_HOOKS
