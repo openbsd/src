@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.38 2013/11/01 09:45:33 sthen Exp $
+#	$OpenBSD: inter.phone,v 1.39 2013/11/01 09:47:03 sthen Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -1367,19 +1367,19 @@
 44:8718:Special (non-Internet) Services up to 10p:United Kingdom
 44:872:Special (non-Internet) Services up to 10p:United Kingdom
 44:899:Internal routing services:United Kingdom
-44:900:Premium Rate '<=60ppm with £5 call-cap' or 'single-drop <=£1':United Kingdom
-44:901:Premium Rate '<=60ppm with £5 call-cap' or 'single-drop <=£1':United Kingdom
-44:902:Premium Rate '<=60ppm with £5 call-cap' or 'single-drop <=£1':United Kingdom
-44:903:Premium Rate 'open ended time dependent charge' or 'single-drop <=£1.50':United Kingdom
-44:904:Premium Rate 'open ended time dependent charge' or 'single-drop <=£1.50':United Kingdom
-44:905:Premium Rate 'open ended time dependent charge' or 'single-drop <=£1.50':United Kingdom
-44:906:Premium Rate 'open ended time dependent charge' or 'single-drop <=£1.50':United Kingdom
-44:907:Premium Rate 'pay for product, >£1':United Kingdom
+44:900:Premium Rate '<=60ppm with GBP5 call-cap' or 'single-drop <=GBP1':United Kingdom
+44:901:Premium Rate '<=60ppm with GBP5 call-cap' or 'single-drop <=GBP1':United Kingdom
+44:902:Premium Rate '<=60ppm with GBP5 call-cap' or 'single-drop <=GBP1':United Kingdom
+44:903:Premium Rate 'open ended time dependent charge' or 'single-drop <=GBP1.50':United Kingdom
+44:904:Premium Rate 'open ended time dependent charge' or 'single-drop <=GBP1.50':United Kingdom
+44:905:Premium Rate 'open ended time dependent charge' or 'single-drop <=GBP1.50':United Kingdom
+44:906:Premium Rate 'open ended time dependent charge' or 'single-drop <=GBP1.50':United Kingdom
+44:907:Premium Rate 'pay for product, >GBP1':United Kingdom
 44:908:Premium Rate 'sexual entertainment services':United Kingdom
 44:909:Premium Rate 'sexual entertainment services':United Kingdom
-44:911:Premium Rate 'open ended time dependent charge' or 'single-drop <=£1.50':United Kingdom
-44:912:Premium Rate '<=60ppm with £5 call-cap' or 'single-drop <=£1':United Kingdom
-44:913:Premium Rate 'open ended time dependent charge' or 'single-drop <=£1.50':United Kingdom
+44:911:Premium Rate 'open ended time dependent charge' or 'single-drop <=GBP1.50':United Kingdom
+44:912:Premium Rate '<=60ppm with GBP5 call-cap' or 'single-drop <=GBP1':United Kingdom
+44:913:Premium Rate 'open ended time dependent charge' or 'single-drop <=GBP1.50':United Kingdom
 44:982:Premium Rate 'sexual entertainment services':United Kingdom
 44:983:Premium Rate 'sexual entertainment services':United Kingdom
 44:984:Premium Rate 'sexual entertainment services':United Kingdom
