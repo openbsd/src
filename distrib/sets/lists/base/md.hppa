@@ -99,6 +99,7 @@
 ./usr/lib/libexpat.so.11.0
 ./usr/lib/libform.so.6.0
 ./usr/lib/libformw.so.6.0
+./usr/lib/libfuse.so.1.0
 ./usr/lib/libgssapi.so.7.0
 ./usr/lib/libhdb.so.1.0
 ./usr/lib/libheimbase.so.1.0

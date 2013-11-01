@@ -527,6 +527,7 @@
 ./usr/lib/gcc-lib
 ./usr/lib/pkgconfig
 ./usr/lib/pkgconfig/expat.pc
+./usr/lib/pkgconfig/fuse.pc
 ./usr/lib/pkgconfig/libcrypto.pc
 ./usr/lib/pkgconfig/libssl.pc
 ./usr/lib/pkgconfig/openssl.pc
