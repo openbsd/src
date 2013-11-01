@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.h,v 1.3 2013/10/31 13:19:17 pelikan Exp $	*/
+/*	$OpenBSD: hfsc.h,v 1.4 2013/11/01 23:00:02 pelikan Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -32,6 +32,8 @@
  */
 #ifndef _HFSC_H_
 #define	_HFSC_H_
+
+#include <sys/timeout.h>
 
 /* hfsc class flags */
 #define	HFSC_RED		0x0001	/* use RED */
@@ -242,6 +244,7 @@ struct hfsc_if {
 	u_int	hif_classid;			/* class id sequence number */
 
 	hfsc_ellist_t *hif_eligible;			/* eligible list */
+	struct timeout hif_defer;	/* for queues that weren't ready */
 };
 
 #define HFSC_CLK_SHIFT		8

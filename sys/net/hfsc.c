@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.3 2013/10/31 13:19:17 pelikan Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.4 2013/11/01 23:00:02 pelikan Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -74,6 +74,7 @@ int		 hfsc_addq(struct hfsc_class *, struct mbuf *);
 struct mbuf	*hfsc_getq(struct hfsc_class *);
 struct mbuf	*hfsc_pollq(struct hfsc_class *);
 void		 hfsc_purgeq(struct hfsc_class *);
+void		 hfsc_deferred(void *);
 void		 hfsc_update_cfmin(struct hfsc_class *);
 void		 hfsc_set_active(struct hfsc_class *, int);
 void		 hfsc_set_passive(struct hfsc_class *);
@@ -140,6 +141,9 @@ hfsc_attach(struct ifnet *ifp)
 	hif->hif_eligible = hfsc_ellist_alloc();
 	hif->hif_ifq = (struct ifqueue *)&ifp->if_snd; /* XXX cast temp */
 	ifp->if_snd.ifq_hfsc = hif;
+	timeout_set(&hif->hif_defer, hfsc_deferred, ifp);
+	/* XXX HRTIMER don't schedule it yet, only when some packets wait. */
+	timeout_add(&hif->hif_defer, 1);
 
 	return (0);
 }
@@ -147,6 +151,7 @@ hfsc_attach(struct ifnet *ifp)
 int
 hfsc_detach(struct ifnet *ifp)
 {
+	timeout_del(&ifp->if_snd.ifq_hfsc->hif_defer);
 	free(ifp->if_snd.ifq_hfsc, M_DEVBUF);
 	ifp->if_snd.ifq_hfsc = NULL;
 
@@ -557,6 +562,7 @@ hfsc_dequeue(struct ifqueue *ifq, int remove)
 
 				cl = tcl;
 			}
+			/* XXX HRTIMER plan hfsc_deferred precisely here. */
 			if (cl == NULL)
 				return (NULL);
 		}
@@ -601,6 +607,21 @@ hfsc_dequeue(struct ifqueue *ifq, int remove)
 	}
 
 	return (m);
+}
+
+void
+hfsc_deferred(void *arg)
+{
+	struct ifnet *ifp = arg;
+	int s;
+
+	s = splnet();
+	if (HFSC_ENABLED(&ifp->if_snd) && !IFQ_IS_EMPTY(&ifp->if_snd))
+		if_start(ifp);
+	splx(s);
+
+	/* XXX HRTIMER nearest virtual/fit time is likely less than 1/HZ. */
+	timeout_add(&ifp->if_snd.ifq_hfsc->hif_defer, 1);
 }
 
 int
