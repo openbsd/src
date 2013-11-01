@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.39 2013/11/01 09:47:03 sthen Exp $
+#	$OpenBSD: inter.phone,v 1.40 2013/11/01 13:13:06 bluhm Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -1715,28 +1715,28 @@
 48:22:Warsaw:Poland
 48:42:Lodz:Poland
 48:58:Gdansk:Poland
-49:201:Essen:Germany, Fed. Rep. of
-49:202:Wuppertal:Germany, Fed. Rep. of
-49:203:Duisburg:Germany, Fed. Rep. of
-49:209:Gelsenkirchen:Germany, Fed. Rep. of
-49:211:Duesseldorf:Germany, Fed. Rep. of
-49:221:Cologne (Koeln):Germany, Fed. Rep. of
-49:228:Bonn:Germany, Fed. Rep. of
-49:231:Dortmund:Germany, Fed. Rep. of
-49:30:Berlin:Germany, Fed. Rep. of
-49:335:Frankfurt/Oder:Germany, Fed. Rep. of
-49:341:Leipzig:Germany, Fed. Rep. of
-49:351:Dresden:Germany, Fed. Rep. of
-49:371:Chemnitz:Germany, Fed. Rep. of
-49:40:Hamburg:Germany, Fed. Rep. of
-49:421:Bremen:Germany, Fed. Rep. of
-49:511:Hannover:Germany, Fed. Rep. of
-49:69:Frankfurt/Main:Germany, Fed. Rep. of
-49:711:Stuttgart:Germany, Fed. Rep. of
-49:89:Munich (Muenchen):Germany, Fed. Rep. of
-49:911:Nuremberg:Germany, Fed. Rep. of
-49:721:Karlsruhe:Germany, Fed. Rep. of
-49:941:Regensburg:Germany, Fed. Rep. of
+49:201:Essen:Germany
+49:202:Wuppertal:Germany
+49:203:Duisburg:Germany
+49:209:Gelsenkirchen:Germany
+49:211:Duesseldorf:Germany
+49:221:Cologne (Koeln):Germany
+49:228:Bonn:Germany
+49:231:Dortmund:Germany
+49:30:Berlin:Germany
+49:335:Frankfurt/Oder:Germany
+49:341:Leipzig:Germany
+49:351:Dresden:Germany
+49:371:Chemnitz:Germany
+49:40:Hamburg:Germany
+49:421:Bremen:Germany
+49:511:Hannover:Germany
+49:69:Frankfurt/Main:Germany
+49:711:Stuttgart:Germany
+49:89:Munich (Muenchen):Germany
+49:911:Nuremberg:Germany
+49:721:Karlsruhe:Germany
+49:941:Regensburg:Germany
 51:14:Callao:Peru
 51:14:Lima:Peru
 51:54:Arequipa:Peru
