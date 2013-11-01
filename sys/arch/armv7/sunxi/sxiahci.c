@@ -127,16 +127,20 @@ sxiahci_attach(struct device *parent, struct device *self, void *args)
 	timo = SXIAHCI_TIMEOUT;
 	while ((SXIREAD4(sc, SXIAHCI_PHYCS0) >> 28 & 3) != 2 && --timo)
 		delay(10);
-	if (!timo)
-		printf("sxiahci_attach: AHCI phy power up failed.\n");
+	if (!timo) {
+		printf(": AHCI phy power up failed.\n");
+		goto dismod;
+	}
 
 	SXISET4(sc, SXIAHCI_PHYCS2, 1 << 24);
 
 	timo = SXIAHCI_TIMEOUT;
 	while ((SXIREAD4(sc, SXIAHCI_PHYCS2) & (1 << 24)) && --timo)
 		delay(10);
-	if (!timo)
-		printf("sxiahci_attach: AHCI phy calibration failed.\n");
+	if (!timo) {
+		printf(": AHCI phy calibration failed.\n");
+		goto dismod;
+	}
 
 	delay(15000);
 	SXIWRITE4(sc, SXIAHCI_RWC, 7);
@@ -149,7 +153,7 @@ sxiahci_attach(struct device *parent, struct device *self, void *args)
 	    ahci_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");
-		goto unmap;
+		goto clrpwr;
 	}
 
 	SXIWRITE4(sc, SXIAHCI_PI, 1);
@@ -163,7 +167,10 @@ sxiahci_attach(struct device *parent, struct device *self, void *args)
 	return;
 irq:
 	arm_intr_disestablish(sc->sc_ih);
-unmap:
+clrpwr:
+	sxipio_clrpin(SXIAHCI_PWRPIN);
+dismod:
+	sxiccmu_disablemodule(CCMU_AHCI);
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 }
 
