@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.50 2013/10/17 08:02:21 deraadt Exp $ */
+/*	$OpenBSD: kvm.c,v 1.51 2013/11/01 15:57:56 deraadt Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -35,7 +35,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -45,6 +44,7 @@
 #include <sys/exec.h>
 #include <sys/kcore.h>
 
+#include <errno.h>
 #include <ctype.h>
 #include <db.h>
 #include <fcntl.h>

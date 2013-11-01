@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mips64.c,v 1.12 2009/12/07 18:49:14 miod Exp $ */
+/*	$OpenBSD: kvm_mips64.c,v 1.13 2013/11/01 15:57:56 deraadt Exp $ */
 /*	$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <unistd.h>
