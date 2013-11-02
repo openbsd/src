@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.102 2013/10/06 17:06:26 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.103 2013/11/02 20:39:24 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 6 2013 $
+.Dd $Mdocdate: November 2 2013 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -477,6 +477,7 @@ in the alphabetical
 .Bl -column "Brq, Bro, Brc" description
 .It Sx \&Lb Ta function library (one argument)
 .It Sx \&In Ta include file (one argument)
+.It Sx \&Fd Ta other preprocessor directive (>0 arguments)
 .It Sx \&Ft Ta function type (>0 arguments)
 .It Sx \&Fo , \&Fc Ta function block: Ar funcname
 .It Sx \&Fn Ta function name:
@@ -1425,9 +1426,12 @@ See also
 .Sx \&Er
 and
 .Sx \&Ev
-for special-purpose constants and
+for special-purpose constants,
 .Sx \&Va
-for variable symbols.
+for variable symbols, and
+.Sx \&Fd
+for listing preprocessor variable definitions in the
+.Em SYNOPSIS .
 .Ss \&Dx
 Format the
 .Dx
@@ -1588,15 +1592,32 @@ See also
 End a function context started by
 .Sx \&Fo .
 .Ss \&Fd
-Historically used to document include files.
-This usage has been deprecated in favour of
+Preprocessor directive, in particular for listing it in the
+.Em SYNOPSIS .
+Historically, it was also used to document include files.
+The latter usage has been deprecated in favour of
 .Sx \&In .
-Do not use this macro.
+.Pp
+Its syntax is as follows:
+.Bd -ragged -offset indent
+.Pf \. Sx \&Fd
+.Li # Ns Ar directive
+.Op Ar argument ...
+.Ed
+.Pp
+Examples:
+.Dl \&.Fd #define sa_handler __sigaction_u.__sa_handler
+.Dl \&.Fd #define SIO_MAXNFDS
+.Dl \&.Fd #ifdef FS_DEBUG
+.Dl \&.Ft void
+.Dl \&.Fn dbg_open \(dqconst char *\(dq
+.Dl \&.Fd #endif
 .Pp
 See also
-.Sx MANUAL STRUCTURE
+.Sx MANUAL STRUCTURE ,
+.Sx \&In ,
 and
-.Sx \&In .
+.Sx \&Dv .
 .Ss \&Fl
 Command-line flag or option.
 Used when listing arguments to command-line utilities.
