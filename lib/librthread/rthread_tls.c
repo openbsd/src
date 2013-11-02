@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_tls.c,v 1.15 2013/07/30 16:19:33 guenther Exp $ */
+/*	$OpenBSD: rthread_tls.c,v 1.16 2013/11/02 22:37:17 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -96,7 +96,6 @@ _rthread_findstorage(pthread_key_t key)
 	struct rthread_storage *rs;
 	pthread_t self;
 
-	_spinlock(&rkeyslock);
 	if (!rkeys[key].used) {
 		rs = NULL;
 		goto out;
@@ -119,7 +118,6 @@ _rthread_findstorage(pthread_key_t key)
 	}
 
 out:
-	_spinunlock(&rkeyslock);
 	return (rs);
 }
 
@@ -169,8 +167,8 @@ _rthread_tls_destructors(pthread_t thread)
 				void (*destructor)(void *) =
 				    rkeys[rs->keyid].destructor;
 				void *data = rs->data;
-				_spinunlock(&rkeyslock);
 				rs->data = NULL;
+				_spinunlock(&rkeyslock);
 				destructor(data);
 				_spinlock(&rkeyslock);
 			}
