@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_gem.c,v 1.2 2013/10/26 20:31:49 kettenis Exp $	*/
+/*	$OpenBSD: radeon_gem.c,v 1.3 2013/11/02 22:58:10 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -143,7 +143,7 @@ void radeon_gem_fini(struct radeon_device *rdev)
 }
 
 /*
- * Call from drm_handle_create which appear in both new and open ioctl
+ * Call from drm_gem_handle_create which appear in both new and open ioctl
  * case.
  */
 int radeon_gem_object_open(struct drm_obj *obj, struct drm_file *file_priv)
@@ -274,14 +274,9 @@ int radeon_gem_create_ioctl(struct drm_device *dev, void *data,
 		r = radeon_gem_handle_lockup(rdev, r);
 		return r;
 	}
-#if 0
 	r = drm_gem_handle_create(filp, gobj, &handle);
 	/* drop reference from allocate - handle holds it now */
 	drm_gem_object_unreference_unlocked(gobj);
-#else
-	/* we give our reference to the handle */
-	r = drm_handle_create(filp, gobj, &handle);
-#endif
 	if (r) {
 		rw_exit_read(&rdev->exclusive_lock);
 		r = radeon_gem_handle_lockup(rdev, r);
@@ -572,14 +567,9 @@ int radeon_mode_dumb_create(struct drm_file *file_priv,
 	if (r)
 		return -ENOMEM;
 
-#if 0
 	r = drm_gem_handle_create(file_priv, gobj, &handle);
 	/* drop reference from allocate - handle holds it now */
 	drm_gem_object_unreference_unlocked(gobj);
-#else
-	/* we give our reference to the handle */
-	r = drm_handle_create(file_priv, gobj, &handle);
-#endif
 	if (r) {
 		return r;
 	}
@@ -591,9 +581,5 @@ int radeon_mode_dumb_destroy(struct drm_file *file_priv,
 			     struct drm_device *dev,
 			     uint32_t handle)
 {
-#if 0
 	return drm_gem_handle_delete(file_priv, handle);
-#else
-	return drm_handle_delete(file_priv, handle);
-#endif
 }

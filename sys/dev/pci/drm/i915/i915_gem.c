@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.40 2013/11/02 14:37:19 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.41 2013/11/02 22:58:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -250,11 +250,17 @@ i915_gem_create(struct drm_file *file,
 	if (obj == NULL)
 		return -ENOMEM;
 
-	ret = -drm_handle_create(file, &obj->base, &handle);
-	if (ret != 0) {
-		drm_unref(&obj->base.uobj);
+	ret = drm_gem_handle_create(file, &obj->base, &handle);
+	if (ret) {
+		drm_gem_object_release(&obj->base);
+		i915_gem_info_remove_obj(dev->dev_private, obj->base.size);
+		pool_put(&dev->objpl, obj);
 		return ret;
 	}
+
+	/* drop reference from allocate - handle holds it now */
+	drm_gem_object_unreference(&obj->base);
+	trace_i915_gem_object_create(obj);
 
 	*handle_p = handle;
 	return 0;
@@ -276,11 +282,7 @@ int i915_gem_dumb_destroy(struct drm_file *file,
 			  struct drm_device *dev,
 			  uint32_t handle)
 {
-#if 0
 	return drm_gem_handle_delete(file, handle);
-#else
-	return drm_handle_delete(file, handle);
-#endif
 }
 
 /**

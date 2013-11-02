@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_trace.h,v 1.2 2013/09/30 06:47:48 jsg Exp $	*/
+/*	$OpenBSD: i915_trace.h,v 1.3 2013/11/02 22:58:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -14,6 +14,11 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+static inline void
+trace_i915_gem_object_create(struct drm_i915_gem_object *obj)
+{
+}
 
 static inline void
 trace_i915_gem_request_add(struct intel_ring_buffer *ring, u32 seqno)

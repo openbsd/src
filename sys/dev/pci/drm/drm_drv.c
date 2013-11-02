@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.115 2013/10/26 20:31:48 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.116 2013/11/02 22:58:10 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -78,8 +78,9 @@ int	 drm_file_cmp(struct drm_file *, struct drm_file *);
 SPLAY_PROTOTYPE(drm_file_tree, drm_file, link, drm_file_cmp);
 
 /* functions used by the per-open handle  code to grab references to object */
-void	 drm_handle_ref(struct drm_obj *);
-void	 drm_handle_unref(struct drm_obj *);
+void	 drm_gem_object_handle_reference(struct drm_obj *);
+void	 drm_gem_object_handle_unreference(struct drm_obj *);
+void	 drm_gem_object_handle_unreference_unlocked(struct drm_obj *);
 
 int	 drm_handle_cmp(struct drm_handle *, struct drm_handle *);
 int	 drm_name_cmp(struct drm_obj *, struct drm_obj *);
@@ -579,7 +580,7 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 		while ((han = SPLAY_ROOT(&file_priv->obj_tree)) != NULL) {
 			SPLAY_REMOVE(drm_obj_tree, &file_priv->obj_tree, han);
 			mtx_leave(&file_priv->table_lock);
-			drm_handle_unref(han->obj);
+			drm_gem_object_handle_unreference(han->obj);
 			drm_free(han);
 			mtx_enter(&file_priv->table_lock);
 		}
@@ -650,7 +651,7 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 	case DRM_IOCTL_MODESET_CTL:
 		return (drm_modeset_ctl(dev, data, file_priv));
 	case DRM_IOCTL_GEM_CLOSE:
-		return (drm_gem_close_ioctl(dev, data, file_priv));
+		return -drm_gem_close_ioctl(dev, data, file_priv);
 
 	/* removed */
 	case DRM_IOCTL_GET_MAP:
@@ -702,7 +703,7 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 		case DRM_IOCTL_GEM_FLINK:
 			return (drm_gem_flink_ioctl(dev, data, file_priv));
 		case DRM_IOCTL_GEM_OPEN:
-			return (drm_gem_open_ioctl(dev, data, file_priv));
+			return -drm_gem_open_ioctl(dev, data, file_priv);
 		case DRM_IOCTL_GET_CAP:
 			return (drm_getcap(dev, data, file_priv));
 
@@ -1525,14 +1526,20 @@ drm_gem_object_release(struct drm_obj *obj)
 		wakeup(obj);
 }
 
+/**
+ * Create a handle for this object. This adds a handle reference
+ * to the object, which includes a regular reference count. Callers
+ * will likely want to dereference the object afterwards.
+ */
 int
-drm_handle_create(struct drm_file *file_priv, struct drm_obj *obj,
-    int *handlep)
+drm_gem_handle_create(struct drm_file *file_priv,
+		       struct drm_obj *obj,
+		       u32 *handlep)
 {
 	struct drm_handle	*han;
 
 	if ((han = drm_calloc(1, sizeof(*han))) == NULL)
-		return (ENOMEM);
+		return -ENOMEM;
 
 	han->obj = obj;
 	mtx_enter(&file_priv->table_lock);
@@ -1546,73 +1553,82 @@ again:
 	    &file_priv->obj_tree, han))
 		goto again;
 	mtx_leave(&file_priv->table_lock);
-	
-	drm_handle_ref(obj);
-	return (0);
+
+	drm_gem_object_handle_reference(obj);
+
+	return 0;
 }
 
+/**
+ * Removes the mapping from handle to filp for this object.
+ */
 int
-drm_handle_delete(struct drm_file *file_priv, int handle)
+drm_gem_handle_delete(struct drm_file *filp, u32 handle)
 {
-	struct drm_handle	*han, find;
-	struct drm_obj		*obj;
-	struct drm_device	*dev;
+	struct drm_obj *obj;
+	struct drm_handle *han, find;
 
 	find.handle = handle;
-	mtx_enter(&file_priv->table_lock);
-	han = SPLAY_FIND(drm_obj_tree, &file_priv->obj_tree, &find);
+	mtx_enter(&filp->table_lock);
+	han = SPLAY_FIND(drm_obj_tree, &filp->obj_tree, &find);
 	if (han == NULL) {
-		mtx_leave(&file_priv->table_lock);
-		return (EINVAL);
+		mtx_leave(&filp->table_lock);
+		return -EINVAL;
 	}
 
 	obj = han->obj;
-	SPLAY_REMOVE(drm_obj_tree, &file_priv->obj_tree, han);
-	mtx_leave(&file_priv->table_lock);
+	SPLAY_REMOVE(drm_obj_tree, &filp->obj_tree, han);
+	mtx_leave(&filp->table_lock);
 
 	drm_free(han);
 
-	dev = obj->dev;
-	DRM_LOCK();
-	drm_handle_unref(obj);
-	DRM_UNLOCK();
+	drm_gem_object_handle_unreference_unlocked(obj);
 
-	return (0);
+	return 0;
 }
 
+/** Returns a reference to the object named by the handle. */
 struct drm_obj *
-drm_gem_object_lookup(struct drm_device *dev, struct drm_file *file_priv,
-    int handle)
+drm_gem_object_lookup(struct drm_device *dev, struct drm_file *filp,
+		      u32 handle)
 {
-	struct drm_obj		*obj;
-	struct drm_handle	*han, search;
+	struct drm_obj *obj;
+	struct drm_handle *han, search;
 
+	mtx_enter(&filp->table_lock);
+
+	/* Check if we currently have a reference on the object */
 	search.handle = handle;
-
-	mtx_enter(&file_priv->table_lock);
-	han = SPLAY_FIND(drm_obj_tree, &file_priv->obj_tree, &search);
+	han = SPLAY_FIND(drm_obj_tree, &filp->obj_tree, &search);
 	if (han == NULL) {
-		mtx_leave(&file_priv->table_lock);
-		return (NULL);
+		mtx_leave(&filp->table_lock);
+		return NULL;
 	}
-
 	obj = han->obj;
-	drm_ref(&obj->uobj);
-	mtx_leave(&file_priv->table_lock);
 
-	return (obj);
+	drm_gem_object_reference(obj);
+
+	mtx_leave(&filp->table_lock);
+
+	return obj;
 }
 
+/**
+ * Releases the handle to an mm object.
+ */
 int
 drm_gem_close_ioctl(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
+		    struct drm_file *file_priv)
 {
-	struct drm_gem_close	*args = data;
+	struct drm_gem_close *args = data;
+	int ret;
 
-	if ((dev->driver->flags & DRIVER_GEM) == 0)
-		return (ENODEV);
+	if (!(dev->driver->flags & DRIVER_GEM))
+		return -ENODEV;
 
-	return (drm_handle_delete(file_priv, args->handle));
+	ret = drm_gem_handle_delete(file_priv, args->handle);
+
+	return ret;
 }
 
 int
@@ -1649,60 +1665,53 @@ again:
 	return (0);
 }
 
+/**
+ * Open an object using the global name, returning a handle and the size.
+ *
+ * This handle (of course) holds a reference to the object, so the object
+ * will not go away until the handle is deleted.
+ */
 int
 drm_gem_open_ioctl(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
+		   struct drm_file *file_priv)
 {
-	struct drm_gem_open	*args = data;
-	struct drm_obj		*obj, search;
-	int			 ret, handle;
+	struct drm_gem_open *args = data;
+	struct drm_obj *obj, search;
+	int ret;
+	u32 handle;
 
 	if (!(dev->driver->flags & DRIVER_GEM))
-		return (ENODEV);
+		return -ENODEV;
 
-	search.name = args->name;
 	mtx_enter(&dev->obj_name_lock);
+	search.name = args->name;
 	obj = SPLAY_FIND(drm_name_tree, &dev->name_tree, &search);
-	if (obj != NULL)
-		drm_ref(&obj->uobj);
+	if (obj)
+		drm_gem_object_reference(obj);
 	mtx_leave(&dev->obj_name_lock);
-	if (obj == NULL)
-		return (ENOENT);
+	if (!obj)
+		return -ENOENT;
 
-	/* this gives our reference to the handle */
-	ret = drm_handle_create(file_priv, obj, &handle);
-	if (ret) {
-		drm_unref(&obj->uobj);
-		return (ret);
-	}
+	ret = drm_gem_handle_create(file_priv, obj, &handle);
+	drm_gem_object_unreference_unlocked(obj);
+	if (ret)
+		return ret;
 
 	args->handle = handle;
 	args->size = obj->size;
 
-        return (0);
+        return 0;
 }
 
-/*
- * grab a reference for a per-open handle. 
- * The object contains a handlecount too because if all handles disappear we
- * need to also remove the global name (names initially are per open unless the
- * flink ioctl is called.
- */
 void
-drm_handle_ref(struct drm_obj *obj)
+drm_gem_object_handle_reference(struct drm_obj *obj)
 {
-	/* we are given the reference from the caller, so just
-	 * crank handlecount.
-	 */
+	drm_gem_object_reference(obj);
 	obj->handlecount++;
 }
 
-/*
- * Remove the reference owned by a per-open handle. If we're the last one,
- * remove the reference from flink, too.
- */
 void
-drm_handle_unref(struct drm_obj *obj)
+drm_gem_object_handle_unreference(struct drm_obj *obj)
 {
 	/* do this first in case this is the last reference */
 	if (--obj->handlecount == 0) {
@@ -1714,12 +1723,23 @@ drm_handle_unref(struct drm_obj *obj)
 			obj->name = 0;
 			mtx_leave(&dev->obj_name_lock);
 			/* name held a reference to object */
-			drm_unref(&obj->uobj);
+			drm_gem_object_unreference(obj);
 		} else {
 			mtx_leave(&dev->obj_name_lock);
 		}
 	}
-	drm_unref(&obj->uobj);
+
+	drm_gem_object_unreference(obj);
+}
+
+void
+drm_gem_object_handle_unreference_unlocked(struct drm_obj *obj)
+{
+	struct drm_device *dev = obj->dev;
+
+	DRM_LOCK();
+	drm_gem_object_handle_unreference(obj);
+	DRM_UNLOCK();
 }
 
 /**

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.14 2013/10/30 02:11:32 dlg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.15 2013/11/02 22:58:10 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -8717,8 +8717,7 @@ static int intel_user_framebuffer_create_handle(struct drm_framebuffer *fb,
 	struct intel_framebuffer *intel_fb = to_intel_framebuffer(fb);
 	struct drm_i915_gem_object *obj = intel_fb->obj;
 
-	drm_gem_object_reference(&obj->base);
-	return drm_handle_create(file, &obj->base, handle);
+	return drm_gem_handle_create(file, &obj->base, handle);
 }
 
 static const struct drm_framebuffer_funcs intel_fb_funcs = {
