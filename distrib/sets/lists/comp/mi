@@ -54,6 +54,7 @@
 ./usr/include/crypto/blf.h
 ./usr/include/crypto/cast.h
 ./usr/include/crypto/castsb.h
+./usr/include/crypto/chacha_private.h
 ./usr/include/crypto/cmac.h
 ./usr/include/crypto/cryptodev.h
 ./usr/include/crypto/cryptosoft.h

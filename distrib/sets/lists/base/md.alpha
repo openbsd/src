@@ -681,6 +681,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/blf.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/cast.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/castsb.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/chacha_private.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/cmac.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/cryptosoft.ph

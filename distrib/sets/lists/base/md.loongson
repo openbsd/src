@@ -597,6 +597,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/blf.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/cast.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/castsb.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/chacha_private.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/cmac.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/crypto/cryptosoft.ph

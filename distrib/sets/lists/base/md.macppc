@@ -632,6 +632,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/blf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/cast.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/castsb.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/chacha_private.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/cmac.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/cryptosoft.ph
