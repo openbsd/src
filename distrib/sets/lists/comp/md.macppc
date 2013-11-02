@@ -615,6 +615,7 @@
 ./usr/include/powerpc/fenv.h
 ./usr/include/powerpc/fpu.h
 ./usr/include/powerpc/frame.h
+./usr/include/powerpc/hid.h
 ./usr/include/powerpc/ieee.h
 ./usr/include/powerpc/ieeefp.h
 ./usr/include/powerpc/intr.h
