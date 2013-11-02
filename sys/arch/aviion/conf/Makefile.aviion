@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.aviion,v 1.43 2013/11/02 23:06:18 miod Exp $
+#	$OpenBSD: Makefile.aviion,v 1.44 2013/11/02 23:42:12 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -38,7 +38,8 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
-LINKFLAGS=	-Ttext 0x80000 -e __start -X -N --warn-common -nopie
+LINKFLAGS=	-T ${_machdir}/conf/ld.script \
+		-Ttext 0x80000 -e __start -X -N --warn-common -nopie
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h
