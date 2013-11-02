@@ -1,4 +1,4 @@
-/*	$OpenBSD: specdev.h,v 1.33 2013/08/06 08:22:37 kettenis Exp $	*/
+/*	$OpenBSD: specdev.h,v 1.34 2013/11/02 00:16:31 deraadt Exp $	*/
 /*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
 
 /*
@@ -82,9 +82,10 @@ struct cloneinfo {
 #define	SPECHASH(rdev)	(((unsigned)((rdev>>5)+(rdev)))%SPECHSZ)
 #endif
 
+#ifdef	_KERNEL
+
 extern struct vnode *speclisth[SPECHSZ];
 
-#ifdef	_KERNEL
 /*
  * Prototypes for special file operations on vnodes.
  */
