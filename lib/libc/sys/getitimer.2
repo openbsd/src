@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getitimer.2,v 1.23 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: getitimer.2,v 1.24 2013/11/02 02:32:51 tedu Exp $
 .\"	$NetBSD: getitimer.2,v 1.6 1995/10/12 15:40:54 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getitimer.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: November 2 2013 $
 .Dt GETITIMER 2
 .Os
 .Sh NAME
@@ -203,6 +203,7 @@ or
 specified a time that was too large to be handled.
 .El
 .Sh SEE ALSO
+.Xr clock_gettime 2 ,
 .Xr gettimeofday 2 ,
 .Xr poll 2 ,
 .Xr select 2 ,
