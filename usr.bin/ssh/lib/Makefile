@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.67 2013/01/17 23:00:01 djm Exp $
+#	$OpenBSD: Makefile,v 1.68 2013/11/02 21:59:15 markus Exp $
 
 .PATH:		${.CURDIR}/..
 .include "${.CURDIR}/../Makefile.inc"
@@ -13,7 +13,7 @@ SRCS=	authfd.c authfile.c bufaux.c bufec.c bufbn.c buffer.c canohost.c \
 	ssh-dss.c ssh-rsa.c ssh-ecdsa.c dh.c kexdh.c kexgex.c kexecdh.c \
 	kexdhc.c kexgexc.c kexecdhc.c msg.c progressmeter.c dns.c \
 	monitor_fdpass.c umac.c addrmatch.c schnorr.c jpake.c ssh-pkcs11.c \
-	krl.c
+	krl.c smult_curve25519_ref.c kexc25519.c kexc25519c.c
 
 SRCS+=	umac128.c
 CLEANFILES+=   umac128.c
