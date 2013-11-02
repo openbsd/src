@@ -974,6 +974,7 @@
 ./usr/include/kerberosV/gssapi/gssapi.h
 ./usr/include/kerberosV/gssapi/gssapi_krb5.h
 ./usr/include/kerberosV/gssapi/gssapi_oid.h
+./usr/include/kerberosV/gssapi/gssapi_spnego.h
 ./usr/include/kerberosV/hdb-protos.h
 ./usr/include/kerberosV/hdb.h
 ./usr/include/kerberosV/hdb_asn1.h

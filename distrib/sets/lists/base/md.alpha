@@ -1741,6 +1741,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosV/gssapi/gssapi.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosV/gssapi/gssapi_krb5.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosV/gssapi/gssapi_oid.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosV/gssapi/gssapi_spnego.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosV/hdb-protos.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosV/hdb.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kerberosV/hdb_asn1.ph
