@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.39 2013/10/29 06:30:57 jsg Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.40 2013/11/02 14:37:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1314,12 +1314,13 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 		uao_reference(obj->uao);
 
 done:
-	if (ret == 0)
-		args->addr_ptr = (uint64_t) addr + (args->offset & PAGE_MASK);
-	else
-		drm_unref(&obj->uobj);
+	drm_gem_object_unreference_unlocked(obj);
+	if (ret)
+		return ret;
 
-	return ret;
+	args->addr_ptr = (uint64_t) addr + (args->offset & PAGE_MASK);
+
+	return 0;
 }
 
 int
