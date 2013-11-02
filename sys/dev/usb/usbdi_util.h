@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.h,v 1.22 2013/09/20 15:34:51 mpi Exp $ */
+/*	$OpenBSD: usbdi_util.h,v 1.23 2013/11/02 12:23:58 mpi Exp $ */
 /*	$NetBSD: usbdi_util.h,v 1.28 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.h,v 1.9 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -34,8 +34,6 @@
 
 usbd_status	usbd_get_desc(struct usbd_device *dev, int type,
 		    int index, int len, void *desc);
-usbd_status	usbd_get_config_desc(struct usbd_device *, int,
-		    usb_config_descriptor_t *);
 usbd_status	usbd_set_address(struct usbd_device *dev, int addr);
 usbd_status	usbd_get_port_status(struct usbd_device *,
 		    int, usb_port_status_t *);

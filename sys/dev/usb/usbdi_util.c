@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.32 2013/09/20 15:34:51 mpi Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.33 2013/11/02 12:23:58 mpi Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -67,26 +67,6 @@ usbd_get_desc(struct usbd_device *dev, int type, int index, int len, void *desc)
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, len);
 	return (usbd_do_request(dev, &req, desc));
-}
-
-usbd_status
-usbd_get_config_desc(struct usbd_device *dev, int confidx,
-    usb_config_descriptor_t *d)
-{
-	usbd_status err;
-
-	DPRINTFN(3,("usbd_get_config_desc: confidx=%d\n", confidx));
-	err = usbd_get_desc(dev, UDESC_CONFIG, confidx,
-	    USB_CONFIG_DESCRIPTOR_SIZE, d);
-	if (err)
-		return (err);
-	if (d->bDescriptorType != UDESC_CONFIG) {
-		DPRINTFN(-1,("usbd_get_config_desc: confidx=%d, bad desc "
-		    "len=%d type=%d\n", confidx, d->bLength,
-		    d->bDescriptorType));
-		return (USBD_INVAL);
-	}
-	return (USBD_NORMAL_COMPLETION);
 }
 
 usbd_status
