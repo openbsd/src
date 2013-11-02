@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.luna88k,v 1.50 2013/10/30 18:20:59 miod Exp $
+#	$OpenBSD: Makefile.luna88k,v 1.51 2013/11/02 23:06:18 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -38,7 +38,7 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
-LINKFLAGS=	-Ttext 0x20000 -e __start -X -N --warn-common -nopie
+LINKFLAGS=	-Ttext 0x80000 -e __start -X -N --warn-common -nopie
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h

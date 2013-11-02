@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.42 2013/05/17 22:51:59 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.43 2013/11/02 23:06:18 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -48,7 +48,7 @@
  * space, but the kernel must be linked with a start address past these 64KB.
  */
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
-#define	KERNTEXTOFF	0x00010000	/* start of kernel text */
+#define	KERNTEXTOFF	0x00080000	/* start of kernel text */
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #if !defined(_LOCORE)

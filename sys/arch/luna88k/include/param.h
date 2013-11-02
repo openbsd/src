@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.4 2013/03/23 16:12:24 deraadt Exp $ */
+/*	$OpenBSD: param.h,v 1.5 2013/11/02 23:06:18 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -49,6 +49,6 @@
  * these 128KB.
  */
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
-#define	KERNTEXTOFF	0x00020000	/* start of kernel text */
+#define	KERNTEXTOFF	0x00080000	/* start of kernel text */
 
 #endif /* _MACHINE_PARAM_H_ */
