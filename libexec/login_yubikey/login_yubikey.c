@@ -1,4 +1,4 @@
-/* $OpenBSD: login_yubikey.c,v 1.6 2013/06/04 18:49:12 mcbride Exp $ */
+/* $OpenBSD: login_yubikey.c,v 1.7 2013/11/02 15:34:13 benno Exp $ */
 
 /*
  * Copyright (c) 2010 Daniel Hartmeier <daniel@benzedrine.cx>
@@ -233,8 +233,8 @@ yubikey_login(const char *username, const char *password)
 		r = yubikey_parse((uint8_t *)password, (uint8_t *)key, &tok, i++);
 		switch (r) {
 		case EMSGSIZE:
-			syslog(LOG_INFO, "user %s failed: password %s: %s",
-			    username, password, "too short.");
+			syslog(LOG_INFO, "user %s failed: password too short.",
+			    username);
 			return (AUTH_FAILED);
 		case EINVAL: 	/* keyboard mapping invalid */
 			continue;
@@ -257,13 +257,13 @@ yubikey_login(const char *username, const char *password)
 			}
 			break; /* uid matches */
 		case -1:
-			syslog(LOG_INFO, "user %s: %p could not decode "
+			syslog(LOG_INFO, "user %s: could not decode password"
 			    "with any keymap (%d crc ok)",
-			    username, password, crcok);
+			    username, crcok);
 			return (AUTH_FAILED);
 		default: 
-			syslog(LOG_DEBUG, "user %s failed: %s: %s",
-			    username, password, strerror(r));
+			syslog(LOG_DEBUG, "user %s failed: %s",
+			    username, strerror(r));
 			return (AUTH_FAILED);
 		}
 		break; /* only reached through the bottom of case 0 */
