@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.58 2013/09/23 04:47:09 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.59 2013/11/02 23:10:30 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, 2013, Miodrag Vallat.
  *
@@ -88,6 +88,7 @@ extern	void m8820x_zeropage(vaddr_t);
 extern	void m8820x_copypage(vaddr_t, vaddr_t);
 
 cpuid_t	m8820x_init(void);
+void	m8820x_batc_setup(cpuid_t, apr_t);
 void	m8820x_cpu_configuration_print(int);
 void	m8820x_shutdown(void);
 apr_t	m8820x_apr_cmode(void);
@@ -106,6 +107,7 @@ void	m8820x_initialize_cpu(cpuid_t);
 
 const struct cmmu_p cmmu8820x = {
 	m8820x_init,
+	m8820x_batc_setup,
 	m8820x_setup_board_config,
 	m8820x_cpu_configuration_print,
 	m8820x_shutdown,
@@ -170,6 +172,9 @@ void	m8820x_cmmu_inv_locked(int, paddr_t, psize_t);
 #if defined(__luna88k__) && !defined(MULTIPROCESSOR)
 void	m8820x_enable_other_cmmu_cache(void);
 #endif
+
+void	m8820x_dbatc_set(cpuid_t, uint, uint32_t);
+void	m8820x_ibatc_set(cpuid_t, uint, uint32_t);
 
 /* Flags passed to m8820x_cmmu_set_*() */
 #define MODE_VAL		0x01
@@ -334,6 +339,82 @@ m8820x_cmmu_wait(int cpu)
 		(void)cmmu->cmmu_regs[CMMU_SSR];
 #endif
 	}
+}
+
+/*
+ * BATC routines
+ */
+
+void
+m8820x_dbatc_set(cpuid_t cpu, uint batcno, uint32_t batc)
+{
+	m8820x_cmmu_set_reg_if_mode(CMMU_BWP(batcno), batc, cpu, DATA_CMMU);
+}
+
+void
+m8820x_ibatc_set(cpuid_t cpu, uint batcno, uint32_t batc)
+{
+	m8820x_cmmu_set_reg_if_mode(CMMU_BWP(batcno), batc, cpu, INST_CMMU);
+}
+
+void
+m8820x_batc_setup(cpuid_t cpu, apr_t cmode)
+{
+	paddr_t s_text, e_text, s_data, e_data;
+	uint batcno;
+	uint32_t batc, proto;
+	extern caddr_t kernelstart;
+	extern caddr_t etext;
+	extern caddr_t end;
+
+	proto = BATC_SO | BATC_V;
+	if (cmode & CACHE_WT)
+		proto |= BATC_WT;
+	if (cmode & CACHE_INH)
+		proto |= BATC_INH;
+
+	s_text = round_batc((paddr_t)&kernelstart);
+	e_text = round_batc((paddr_t)&etext);
+	s_data = trunc_batc((paddr_t)&etext);
+#if 0 /* not until pmap makes sure kvm starts on a BATC boundary */
+	e_data = round_batc((paddr_t)&end);
+#else
+	e_data = trunc_batc((paddr_t)&end);
+#endif
+
+	/* map s_text..e_text with IBATC */
+	batcno = 0;
+	while (s_text != e_text) {
+		batc = (s_text >> BATC_BLKSHIFT) << BATC_VSHIFT;
+		batc |= (s_text >> BATC_BLKSHIFT) << BATC_PSHIFT;
+		batc |= proto;
+#ifdef DEBUG
+		printf("cpu%d ibat%d %p(%08x)\n", cpu, batcno, s_text, batc);
+#endif
+		m8820x_ibatc_set(cpu, batcno, batc);
+		s_text += BATC_BLKBYTES;
+		if (++batcno == BATC_MAX)
+			break;
+	}
+
+#if !defined(MULTIPROCESSOR)	/* XXX */
+	/* map s_data..e_data with DBATC */
+	if (cmode & CACHE_GLOBAL)
+		proto |= BATC_GLOBAL;
+	batcno = 0;
+	while (s_data != e_data) {
+		batc = (s_data >> BATC_BLKSHIFT) << BATC_VSHIFT;
+		batc |= (s_data >> BATC_BLKSHIFT) << BATC_PSHIFT;
+		batc |= proto;
+#ifdef DEBUG
+		printf("cpu%d dbat%d %p(%08x)\n", cpu, batcno, s_data, batc);
+#endif
+		m8820x_dbatc_set(cpu, batcno, batc);
+		s_data += BATC_BLKBYTES;
+		if (++batcno == BATC_MAX)
+			break;
+	}
+#endif
 }
 
 /*

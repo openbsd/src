@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.257 2013/10/17 08:02:17 deraadt Exp $	*/
+/* $OpenBSD: machdep.c,v 1.258 2013/11/02 23:10:29 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -811,7 +811,7 @@ mvme_bootstrap()
 {
 	extern struct consdev *cn_tab;
 	struct mvmeprom_brdid brdid;
-	vaddr_t avail_start;
+	extern vaddr_t avail_start;
 	extern vaddr_t avail_end;
 #ifndef MULTIPROCESSOR
 	cpuid_t master_cpu;
@@ -916,6 +916,8 @@ mvme_bootstrap()
 	initmsgbuf((caddr_t)pmap_steal_memory(MSGBUFSIZE, NULL, NULL),
 	    MSGBUFSIZE);
 
+	pmap_bootstrap(0, 0x10000);	/* BUG needs 64KB */
+
 #if defined (MVME187) || defined (MVME197)
 	/*
 	 * Get ethernet buffer - need ETHERPAGES pages physically contiguous.
@@ -924,15 +926,10 @@ mvme_bootstrap()
 	if (brdtyp == BRD_187 || brdtyp == BRD_8120 || brdtyp == BRD_197) {
 		etherlen = ETHERPAGES * PAGE_SIZE;
 		etherbuf = (void *)uvm_pageboot_alloc(etherlen);
+		pmap_cache_ctrl((paddr_t)etherbuf, (paddr_t)etherbuf + etherlen,
+		    CACHE_INH);
 	}
 #endif /* defined (MVME187) || defined (MVME197) */
-
-	pmap_bootstrap(0, 0x10000);	/* BUG needs 64KB */
-
-#if defined (MVME187) || defined (MVME197)
-	if (etherlen != 0)
-		pmap_cache_ctrl((paddr_t)etherbuf, (paddr_t)etherbuf + etherlen,		    CACHE_INH);
-#endif
 
 	/* Initialize the "u-area" pages. */
 	bzero((caddr_t)curpcb, USPACE);

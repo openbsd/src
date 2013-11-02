@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.13 2013/01/05 11:20:56 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.14 2013/11/02 23:10:30 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -97,7 +97,6 @@ typedef	u_int32_t	apr_t;
 #define	BATC_WT		0x00000010
 #define	BATC_SO		0x00000020
 
-
 /*
  * Segment table entries
  */
@@ -139,24 +138,6 @@ typedef u_int32_t	pt_entry_t;
 #define	PDT_WP(pte)	(*(pte) & PG_PROT)
 
 /*
- * Indirect descriptors (mc8110)
- */
-
-typedef	u_int32_t	pt_ind_entry_t;
-
-/* validity bits */
-#define	IND_V		0x00000001
-#define	IND_NV		0x00000000
-#define	IND_MASKED	0x00000002
-#define	IND_UNMASKED	0x00000003
-#define	IND_MASK	0x00000003
-
-#define	IND_FRAME	0xfffffffc
-#define	IND_SHIFT	2
-
-#define	IND_PDA(x)	((x) & IND_FRAME >> IND_SHIFT)
-
-/*
  * Number of entries in a page table.
  */
 
@@ -187,22 +168,19 @@ typedef	u_int32_t	pt_ind_entry_t;
  * Parameters and macros for BATC
  */
 
-/* number of bits to BATC shift (log2(BATC_BLKBYTES)) */
-#define BATC_BLKSHIFT	19
-/* 'block' size of a BATC entry mapping */
-#define BATC_BLKBYTES	(1 << BATC_BLKSHIFT)
-/* BATC block mask */
-#define BATC_BLKMASK	(BATC_BLKBYTES-1)
-/* number of BATC entries */
-#define BATC_MAX	8
+/* 8820x fixed size BATC */
+#define	BATC_BLKSHIFT	19
+#define	BATC_BLKBYTES	(1 << BATC_BLKSHIFT)
+#define	BATC_BLKMASK	(BATC_BLKBYTES-1)
+/* number of programmable BATC entries */
+#define	BATC_MAX	8
 
 /* physical and logical block address */
 #define	BATC_PSHIFT	6
-#define	BATC_VSHIFT	(BATC_PSHIFT + (32 - BATC_BLKSHIFT))
+#define	BATC_VSHIFT	19
 
-#define BATC_BLK_ALIGNED(x)	((x & BATC_BLKMASK) == 0)
-
-#define M88K_BTOBLK(x)	(x >> BATC_BLKSHIFT)
+#define	trunc_batc(a)	((a) & ~BATC_BLKMASK)
+#define	round_batc(a)	trunc_batc((a) + BATC_BLKBYTES - 1)
 
 static pt_entry_t invalidate_pte(pt_entry_t *);
 static __inline__ pt_entry_t

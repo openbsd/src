@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.72 2013/08/26 20:29:34 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.73 2013/11/02 23:10:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -83,6 +83,7 @@
  * VM externals
  */
 extern paddr_t last_addr;
+vaddr_t avail_start;
 vaddr_t avail_end;
 vaddr_t virtual_avail = VM_MIN_KERNEL_ADDRESS;
 vaddr_t virtual_end = VM_MAX_KERNEL_ADDRESS;
@@ -139,6 +140,12 @@ apr_t	userland_apr = CACHE_GLOBAL | CACHE_DFL | APR_V;
 
 #define	KERNEL_APR_CMODE	(kernel_apr & (CACHE_MASK & ~CACHE_GLOBAL))
 #define	USERLAND_APR_CMODE	(userland_apr & (CACHE_MASK & ~CACHE_GLOBAL))
+
+/*
+ * Address and size of the temporary firmware mapping
+ */
+paddr_t	s_firmware;
+psize_t	l_firmware;
 
 /*
  * Internal routines
@@ -533,12 +540,12 @@ pmap_map(paddr_t pa, psize_t sz, vm_prot_t prot, u_int cmode)
 void
 pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 {
-	paddr_t s_text, e_text;
-	unsigned int nsdt, npdt;
+	paddr_t s_low, s_text, e_text;
+	unsigned int npdtpg, nsdt, npdt;
 	unsigned int i;
 	sdt_entry_t *sdt;
-	pt_entry_t *pdt, template;
-	paddr_t pa, sptpa, eptpa;
+	pt_entry_t *pte, template;
+	paddr_t pa, sdtpa, ptepa;
 	const struct pmap_table *ptable;
 	extern void *kernelstart;
 	extern void *etext;
@@ -562,14 +569,46 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 	DPRINTF(CD_BOOT, ("avail_end %08x pages %08x nsdt %08x npdt %08x\n",
 	    avail_end, atop(avail_end), nsdt, npdt));
 
-	sdt = (sdt_entry_t *)uvm_pageboot_alloc(PAGE_SIZE);
-	pdt = (pt_entry_t *)
-	    uvm_pageboot_alloc(round_page(npdt * sizeof(pt_entry_t)));
-	DPRINTF(CD_BOOT, ("kernel sdt %p", sdt));
-	sptpa = (paddr_t)sdt;
+	/*
+	 * Since page tables may need specific cacheability settings,
+	 * we need to make sure they will not end up in the BATC
+	 * mapping the end of the kernel data.
+	 *
+	 * The CMMU initialization code will try, whenever possible, to
+	 * setup 512KB BATC entries to map the kernel text and data,
+	 * therefore platform-specific code is expected to register a
+	 * non-overlapping range of pages (so that their cacheability
+	 * can be controlled at the PTE level).
+	 *
+	 * If there is enough room between the firmware image and the
+	 * beginning of the BATC-mapped region, we will setup the
+	 * initial page tables there (and actually try to setup as many
+	 * second level pages as possible, since this memory is not
+	 * given to the VM system).
+	 */
+
+	npdtpg = atop(round_page(npdt * sizeof(pt_entry_t)));
+	s_low = trunc_batc(s_text);
+
+	if (e_rom == 0)
+		s_rom = e_rom = PAGE_SIZE;
+	DPRINTF(CD_BOOT, ("nsdt %d npdt %d npdtpg %d\n", nsdt, npdt, npdtpg));
+	DPRINTF(CD_BOOT, ("area below the kernel %p-%p: %d pages, need %d\n",
+	    e_rom, s_low, atop(s_low - e_rom), npdtpg + 1));
+	if (e_rom < s_low && npdtpg + 1 <= atop(s_low - e_rom)) {
+		sdtpa = e_rom;
+		ptepa = sdtpa + PAGE_SIZE;
+	} else {
+		sdtpa = (paddr_t)uvm_pageboot_alloc(PAGE_SIZE);
+		ptepa = (paddr_t)uvm_pageboot_alloc(ptoa(npdtpg));
+	}
+
+	sdt = (sdt_entry_t *)sdtpa;
+	pte = (pt_entry_t *)ptepa;
 	pmap_kernel()->pm_stab = sdt;
-	pa = (paddr_t)pdt;
-	eptpa = pa + round_page(npdt * sizeof(pt_entry_t));
+
+	DPRINTF(CD_BOOT, ("kernel sdt %p", sdt));
+	pa = ptepa;
 	for (i = nsdt; i != 0; i--) {
 		*sdt++ = pa | SG_SO | SG_RW | PG_M | SG_V;
 		pa += PAGE_SIZE;
@@ -577,42 +616,45 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 	DPRINTF(CD_BOOT, ("-%p\n", sdt));
 	for (i = (PAGE_SIZE / sizeof(sdt_entry_t)) - nsdt; i != 0; i--)
 		*sdt++ = SG_NV;
-	KDASSERT((vaddr_t)sdt == (vaddr_t)pdt);
-	DPRINTF(CD_BOOT, ("kernel pdt %p", pdt));
+	KDASSERT((vaddr_t)sdt == ptepa);
 
+	DPRINTF(CD_BOOT, ("kernel pte %p", pte));
 	/* memory below the kernel image */
 	for (i = atop(s_text); i != 0; i--)
-		*pdt++ = PG_NV;
+		*pte++ = PG_NV;
 	/* kernel text */
 	pa = s_text;
 	for (i = atop(e_text) - atop(pa); i != 0; i--) {
-		*pdt++ = pa | PG_SO | PG_RO | PG_W | PG_V;
+		*pte++ = pa | PG_SO | PG_RO | PG_W | PG_V;
 		pa += PAGE_SIZE;
 	}
 	/* kernel data and symbols */
-	for (i = atop(sptpa) - atop(pa); i != 0; i--) {
+	for (i = atop(avail_start) - atop(pa); i != 0; i--) {
 #ifdef MULTIPROCESSOR
-		*pdt++ = pa | PG_SO | PG_RW | PG_M_U | PG_W | PG_V | CACHE_WT;
+		*pte++ = pa | PG_SO | PG_RW | PG_M_U | PG_W | PG_V | CACHE_WT;
 #else
-		*pdt++ = pa | PG_SO | PG_RW | PG_M_U | PG_W | PG_V;
+		*pte++ = pa | PG_SO | PG_RW | PG_M_U | PG_W | PG_V;
 #endif
-		pa += PAGE_SIZE;
-	}
-	/* kernel page tables */
-	pte_cmode = cmmu_pte_cmode();
-	template = PG_SO | PG_RW | PG_M_U | PG_W | PG_V | pte_cmode;
-	for (i = atop(eptpa) - atop(pa); i != 0; i--) {
-		*pdt++ = pa | template;
 		pa += PAGE_SIZE;
 	}
 	/* regular memory */
 	for (i = atop(avail_end) - atop(pa); i != 0; i--) {
-		*pdt++ = pa | PG_SO | PG_RW | PG_M_U | PG_V;
+		*pte++ = pa | PG_SO | PG_RW | PG_M_U | PG_V;
 		pa += PAGE_SIZE;
 	}
-	DPRINTF(CD_BOOT, ("-%p, pa %08x\n", pdt, pa));
-	for (i = (pt_entry_t *)round_page((vaddr_t)pdt) - pdt; i != 0; i--)
-		*pdt++ = PG_NV;
+	DPRINTF(CD_BOOT, ("-%p, pa %08x\n", pte, pa));
+	for (i = (pt_entry_t *)round_page((vaddr_t)pte) - pte; i != 0; i--)
+		*pte++ = PG_NV;
+
+	/* kernel page tables */
+	pte_cmode = cmmu_pte_cmode();
+	template = PG_SO | PG_RW | PG_M_U | PG_W | PG_V | pte_cmode;
+	pa = sdtpa;
+	pte = (pt_entry_t *)ptepa + atop(pa);
+	for (i = 1 + npdtpg; i != 0; i--) {
+		*pte++ = pa | template;
+		pa += PAGE_SIZE;
+	}
 
 	/*
 	 * Create all the machine-specific mappings.
@@ -621,8 +663,12 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 	 * XXX VM_MAX_KERNEL_ADDRESS.
 	 */
 
-	if (e_rom != s_rom)
-		pmap_map(s_rom, e_rom - s_rom, UVM_PROT_RW, CACHE_INH);
+	if (e_rom != s_rom) {
+		s_firmware = s_rom;
+		l_firmware = e_rom - s_rom;
+		pmap_map(s_firmware, l_firmware, UVM_PROT_RW, CACHE_INH);
+	}
+
 	for (ptable = pmap_table_build(); ptable->size != (vsize_t)-1; ptable++)
 		if (ptable->size != 0)
 			pmap_map(ptable->start, ptable->size,
@@ -645,10 +691,10 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 	 */
 
 	pmap_kernel()->pm_count = 1;
-	pmap_kernel()->pm_apr = sptpa | kernel_apr;
+	pmap_kernel()->pm_apr = sdtpa | kernel_apr;
 
 	DPRINTF(CD_BOOT, ("default apr %08x kernel apr %08x\n",
-	    kernel_apr, sptpa));
+	    kernel_apr, sdtpa));
 
 	pmap_bootstrap_cpu(cpu_number());
 }
@@ -665,7 +711,23 @@ pmap_bootstrap_cpu(cpuid_t cpu)
 #ifdef PMAPDEBUG
 	printf("cpu%d: running virtual\n", cpu);
 #endif
+
+	cmmu_batc_setup(cpu, kernel_apr & CACHE_MASK);
+
 	curcpu()->ci_curpmap = NULL;
+}
+
+/*
+ * [MD]
+ * Remove firmware mappings when they are no longer necessary.
+ */
+void
+pmap_unmap_firmware()
+{
+	if (l_firmware != 0) {
+		pmap_kremove(s_firmware, l_firmware);
+		pmap_update(pmap_kernel());
+	}
 }
 
 /*

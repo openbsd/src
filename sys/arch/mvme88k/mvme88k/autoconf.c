@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.48 2011/10/09 17:01:34 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.49 2013/11/02 23:10:30 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -99,12 +99,10 @@ cpu_configure()
 	/* NO BUG CALLS FROM NOW ON */
 
 	/*
-	 * Switch to our final trap vectors, and unmap whatever is below
-	 * the kernel.
+	 * Switch to our final trap vectors, and unmap the BUG data area.
 	 */
 	set_vbr(kernel_vbr);
-	pmap_kremove(0, (vsize_t)kernel_vbr);
-	pmap_update(pmap_kernel());
+	pmap_unmap_firmware();
 
 	cold = 0;
 

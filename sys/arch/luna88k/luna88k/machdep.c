@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.92 2013/11/02 17:49:19 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.93 2013/11/02 23:10:29 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1000,7 +1000,7 @@ void
 luna88k_bootstrap()
 {
 	extern const struct cmmu_p cmmu8820x;
-	vaddr_t avail_start;
+	extern vaddr_t avail_start;
 	extern vaddr_t avail_end;
 #ifndef MULTIPROCESSOR
 	cpuid_t master_cpu;

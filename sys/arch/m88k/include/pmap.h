@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.22 2013/05/17 22:33:25 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.23 2013/11/02 23:10:30 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -61,10 +61,12 @@ void	pmap_bootstrap(paddr_t, paddr_t);
 void	pmap_bootstrap_cpu(cpuid_t);
 void	pmap_cache_ctrl(vaddr_t, vaddr_t, u_int);
 void	pmap_page_uncache(paddr_t);
+int	pmap_set_modify(pmap_t, vaddr_t);
+void	pmap_unmap_firmware(void);
+boolean_t pmap_unsetbit(struct vm_page *, int);
+
 #define pmap_unuse_final(p)		/* nothing */
 #define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
-int	pmap_set_modify(pmap_t, vaddr_t);
-boolean_t pmap_unsetbit(struct vm_page *, int);
 
 int	pmap_translation_info(pmap_t, vaddr_t, paddr_t *, uint32_t *);
 /*

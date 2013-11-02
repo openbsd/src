@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.19 2013/11/02 17:49:19 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.20 2013/11/02 23:10:29 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -40,6 +40,8 @@
 #include <sys/disklabel.h>
 #include <sys/kernel.h>
 
+#include <uvm/uvm.h>
+
 #include <machine/asm_macro.h>   /* enable/disable interrupts */
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -77,9 +79,10 @@ cpu_configure()
 		panic("no mainbus found");
 
 	/*
-	 * Switch to our final trap vectors.
+	 * Switch to our final trap vectors, and unmap the PROM data area.
 	 */
 	set_vbr(kernel_vbr);
+	pmap_unmap_firmware();
 
 	cold = 0;
 

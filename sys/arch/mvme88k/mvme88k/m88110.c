@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.80 2013/08/15 19:32:12 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.81 2013/11/02 23:10:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011, Miodrag Vallat.
@@ -94,6 +94,7 @@ extern	void m88110_copypage(vaddr_t, vaddr_t);
 
 cpuid_t	m88110_init(void);
 cpuid_t	m88410_init(void);
+void	m88110_batc_setup(cpuid_t, apr_t);
 void	m88110_setup_board_config(void);
 void	m88410_setup_board_config(void);
 void	m88110_cpu_configuration_print(int);
@@ -127,6 +128,7 @@ void	m88410_initialize_cpu(cpuid_t);
  */
 const struct cmmu_p cmmu88110 = {
 	m88110_init,
+	m88110_batc_setup,
 	m88110_setup_board_config,
 	m88110_cpu_configuration_print,
 	m88110_shutdown,
@@ -154,6 +156,7 @@ const struct cmmu_p cmmu88110 = {
  */
 const struct cmmu_p cmmu88410 = {
 	m88410_init,
+	m88110_batc_setup,
 	m88410_setup_board_config,
 	m88410_cpu_configuration_print,
 	m88110_shutdown,
@@ -288,6 +291,11 @@ m88410_init(void)
 	cpu = m88110_cpu_number();
 	m88410_initialize_cpu(cpu);
 	return (cpu);
+}
+
+void
+m88110_batc_setup(cpuid_t cpu, apr_t cmode)
+{
 }
 
 cpuid_t

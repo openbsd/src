@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.30 2013/05/17 22:33:25 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.31 2013/11/02 23:10:30 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -36,6 +36,7 @@
 /* machine dependent cmmu function pointer structure */
 struct cmmu_p {
 	cpuid_t (*init)(void);
+	void (*batc_setup)(cpuid_t, apr_t);
 	void (*setup_board_config)(void);
 	void (*cpu_configuration_print)(int);
 	void (*shutdown)(void);
@@ -80,6 +81,7 @@ extern __cpu_simple_lock_t cmmu_cpu_lock;
 #endif	/* MULTIPROCESSOR */
 
 #define cmmu_init			(cmmu->init)
+#define cmmu_batc_setup			(cmmu->batc_setup)
 #define setup_board_config		(cmmu->setup_board_config)
 #define	cpu_configuration_print(cpu)	(cmmu->cpu_configuration_print)(cpu)
 #define	cmmu_shutdown			(cmmu->shutdown)
