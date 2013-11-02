@@ -1,9 +1,10 @@
-/*	$OpenBSD: rnd.c,v 1.144 2013/10/30 02:13:16 dlg Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.145 2013/11/02 19:37:25 markus Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
  * Copyright (c) 2008 Damien Miller.
  * Copyright (c) 1996, 1997, 2000-2002 Michael Shalayeff.
+ * Copyright (c) 2013 Markus Friedl.
  * Copyright Theodore Ts'o, 1994, 1995, 1996, 1997, 1998, 1999.
  * All rights reserved.
  *
@@ -124,7 +125,9 @@
 #include <sys/msgbuf.h>
 
 #include <crypto/md5.h>
-#include <crypto/arc4.h>
+
+#define KEYSTREAM_ONLY
+#include <crypto/chacha_private.h>
 
 #include <dev/rndvar.h>
 
@@ -522,28 +525,7 @@ extract_entropy(u_int8_t *buf, int nbytes)
 	explicit_bzero(buffer, sizeof(buffer));
 }
 
-/*
- * Bytes of key material for each rc4 instance.
- */
-#define	ARC4_KEY_BYTES		64
-
-/*
- * Throw away a multiple of the first N words of output, as suggested
- * in the paper "Weaknesses in the Key Scheduling Algorithm of RC4"
- * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)  If the start
- * of a new RC stream is an event that a consumer could spot, we drop
- * the strictly recommended amount (ceil(n/log e) = 6).  If consumers
- * only see random sub-streams, we cheat and do less computation.
- */
-#define	ARC4_STATE		256
-#define	ARC4_DISCARD_SAFE	6
-#define	ARC4_DISCARD_CHEAP	4
-
-/*
- * Start with an unstable state so that rc4_getbytes() can
- * operate (poorly) before rc4_keysetup().
- */
-struct rc4_ctx arc4random_state = { 0, 0, { 1, 2, 3, 4, 5, 6 } };
+/* random keystream by ChaCha */
 
 struct mutex rndlock = MUTEX_INITIALIZER(IPL_HIGH);
 struct timeout arc4_timeout;
@@ -552,6 +534,135 @@ struct task arc4_task;
 void arc4_reinit(void *v);		/* timeout to start reinit */
 void arc4_init(void *, void *);		/* actually do the reinit */
 
+#define KEYSZ	32
+#define IVSZ	8
+#define BLOCKSZ	64
+#define RSBUFSZ	(16*BLOCKSZ)
+static int rs_initialized;
+static chacha_ctx rs;		/* chacha context for random keystream */
+static u_char rs_buf[RSBUFSZ];	/* keystream blocks */
+static size_t rs_have;		/* valid bytes at end of rs_buf */
+static size_t rs_count;		/* bytes till reseed */
+
+static inline void _rs_rekey(u_char *dat, size_t datlen);
+
+static inline void
+_rs_init(u_char *buf, size_t n)
+{
+	KASSERT(n >= KEYSZ + IVSZ);
+	chacha_keysetup(&rs, buf, KEYSZ * 8, 0);
+	chacha_ivsetup(&rs, buf + KEYSZ);
+}
+
+static void
+_rs_seed(u_char *buf, size_t n)
+{
+	if (!rs_initialized) {
+		rs_initialized = 1;
+		_rs_init(buf, n);
+	} else
+		_rs_rekey(buf, n);
+
+	/* invalidate rs_buf */
+	rs_have = 0;
+	memset(rs_buf, 0, RSBUFSZ);
+
+	rs_count = 1600000;
+}
+
+static void
+_rs_stir(int do_lock)
+{
+	struct timespec ts;
+	u_int8_t buf[KEYSZ + IVSZ], *p;
+	int i;
+
+	/*
+	 * Use MD5 PRNG data and a system timespec; early in the boot
+	 * process this is the best we can do -- some architectures do
+	 * not collect entropy very well during this time, but may have
+	 * clock information which is better than nothing.
+	 */
+	extract_entropy((u_int8_t *)buf, sizeof buf);
+
+	nanotime(&ts);
+	for (p = (u_int8_t *)&ts, i = 0; i < sizeof(ts); i++)
+		buf[i] ^= p[i];
+
+	if (do_lock)
+		mtx_enter(&rndlock);
+	_rs_seed(buf, sizeof(buf));
+	rndstats.arc4_nstirs++;
+	if (do_lock)
+		mtx_leave(&rndlock);
+
+	explicit_bzero(buf, sizeof(buf));
+}
+
+static inline void
+_rs_stir_if_needed(size_t len)
+{
+	if (rs_count <= len || !rs_initialized)
+		_rs_stir(0);
+	else
+		rs_count -= len;
+}
+
+static inline void
+_rs_rekey(u_char *dat, size_t datlen)
+{
+#ifndef KEYSTREAM_ONLY
+	memset(rs_buf, 0,RSBUFSZ);
+#endif
+	/* fill rs_buf with the keystream */
+	chacha_encrypt_bytes(&rs, rs_buf, rs_buf, RSBUFSZ);
+	/* mix in optional user provided data */
+	if (dat) {
+		size_t i, m;
+
+		m = MIN(datlen, KEYSZ + IVSZ);
+		for (i = 0; i < m; i++)
+			rs_buf[i] ^= dat[i];
+	}
+	/* immediately reinit for backtracking resistance */
+	_rs_init(rs_buf, KEYSZ + IVSZ);
+	memset(rs_buf, 0, KEYSZ + IVSZ);
+	rs_have = RSBUFSZ - KEYSZ - IVSZ;
+}
+
+static inline void
+_rs_random_buf(void *_buf, size_t n)
+{
+	u_char *buf = (u_char *)_buf;
+	size_t m;
+
+	_rs_stir_if_needed(n);
+	while (n > 0) {
+		if (rs_have > 0) {
+			m = MIN(n, rs_have);
+			memcpy(buf, rs_buf + RSBUFSZ - rs_have, m);
+			memset(rs_buf + RSBUFSZ - rs_have, 0, m);
+			buf += m;
+			n -= m;
+			rs_have -= m;
+		}
+		if (rs_have == 0)
+			_rs_rekey(NULL, 0);
+	}
+}
+
+static inline void
+_rs_random_u32(u_int32_t *val)
+{
+	_rs_stir_if_needed(sizeof(*val));
+	if (rs_have < sizeof(*val))
+		_rs_rekey(NULL, 0);
+	memcpy(val, rs_buf + RSBUFSZ - rs_have, sizeof(*val));
+	memset(rs_buf + RSBUFSZ - rs_have, 0, sizeof(*val));
+	rs_have -= sizeof(*val);
+	return;
+}
+
 /* Return one word of randomness from an RC4 generator */
 u_int32_t
 arc4random(void)
@@ -559,7 +670,7 @@ arc4random(void)
 	u_int32_t ret;
 
 	mtx_enter(&rndlock);
-	rc4_getbytes(&arc4random_state, (u_char *)&ret, sizeof(ret));
+	_rs_random_u32(&ret);
 	rndstats.arc4_reads += sizeof(ret);
 	mtx_leave(&rndlock);
 	return ret;
@@ -572,7 +683,7 @@ void
 arc4random_buf(void *buf, size_t n)
 {
 	mtx_enter(&rndlock);
-	rc4_getbytes(&arc4random_state, (u_char *)buf, n);
+	_rs_random_buf(buf, n);
 	rndstats.arc4_reads += n;
 	mtx_leave(&rndlock);
 }
@@ -617,40 +728,7 @@ arc4random_uniform(u_int32_t upper_bound)
 void
 arc4_init(void *v, void *w)
 {
-	struct rc4_ctx new_ctx;
-	struct timespec ts;
-	u_int8_t buf[ARC4_KEY_BYTES], *p;
-	int i;
-
-	/*
-	 * Use MD5 PRNG data and a system timespec; early in the boot
-	 * process this is the best we can do -- some architectures do
-	 * not collect entropy very well during this time, but may have
-	 * clock information which is better than nothing.
-	 */
-	extract_entropy((u_int8_t *)buf, sizeof buf);
-	if (timeout_initialized(&rnd_timeout))
-		nanotime(&ts);
-	for (p = (u_int8_t *)&ts, i = 0; i < sizeof(ts); i++)
-		buf[i] ^= p[i];
-
-	/* Carry over some state from the previous PRNG instance */
-	mtx_enter(&rndlock);
-	if (rndstats.arc4_nstirs > 0)
-		rc4_crypt(&arc4random_state, buf, buf, sizeof(buf));
-	mtx_leave(&rndlock);
-
-	rc4_keysetup(&new_ctx, buf, sizeof(buf));
-	rc4_skip(&new_ctx, ARC4_STATE * ARC4_DISCARD_CHEAP);
-
-	mtx_enter(&rndlock);
-	bcopy(&new_ctx, &arc4random_state, sizeof(new_ctx));
-	rndstats.rnd_used += sizeof(buf) * 8;
-	rndstats.arc4_nstirs++;
-	mtx_leave(&rndlock);
-
-	explicit_bzero(buf, sizeof(buf));
-	explicit_bzero(&new_ctx, sizeof(new_ctx));
+	_rs_stir(1);
 }
 
 /*
@@ -667,6 +745,8 @@ arc4_reinit(void *v)
 void
 random_init(void)
 {
+	int off;
+
 	rnd_states[RND_SRC_TIMER].dont_count_entropy = 1;
 	rnd_states[RND_SRC_TRUE].dont_count_entropy = 1;
 	rnd_states[RND_SRC_TRUE].max_entropy = 1;
@@ -676,7 +756,8 @@ random_init(void)
 	 * NOTE: We assume there are at 8192 bytes mapped after version,
 	 * because we want to pull some "code" in as well.
 	 */
-	rc4_keysetup(&arc4random_state, (u_int8_t *)&version, 8192);
+	for (off = 0; off < 8192 - KEYSZ - IVSZ; off += KEYSZ + IVSZ)
+		_rs_seed((u_int8_t *)version + off, KEYSZ + IVSZ);
 }
 
 void
@@ -723,8 +804,8 @@ randomclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 /*
- * Maximum number of bytes to serve directly from the main arc4random
- * pool. Larger requests are served from a discrete arc4 instance keyed
+ * Maximum number of bytes to serve directly from the main ChaCha
+ * pool. Larger requests are served from a discrete ChaCha instance keyed
  * from the main pool.
  */
 #define ARC4_MAIN_MAX_BYTES	2048
@@ -732,8 +813,8 @@ randomclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 randomread(dev_t dev, struct uio *uio, int ioflag)
 {
-	u_char lbuf[ARC4_KEY_BYTES];
-	struct rc4_ctx lctx;
+	u_char lbuf[KEYSZ+IVSZ];
+	chacha_ctx	lctx;
 	size_t		total = uio->uio_resid;
 	u_char		*buf;
 	int		myctx = 0, ret = 0;
@@ -744,8 +825,8 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 	buf = malloc(POOLBYTES, M_TEMP, M_WAITOK);
 	if (total > ARC4_MAIN_MAX_BYTES) {
 		arc4random_buf(lbuf, sizeof(lbuf));
-		rc4_keysetup(&lctx, lbuf, sizeof(lbuf));
-		rc4_skip(&lctx, ARC4_STATE * ARC4_DISCARD_SAFE);
+		chacha_keysetup(&lctx, lbuf, KEYSZ * 8, 0);
+		chacha_ivsetup(&lctx, lbuf + KEYSZ);
 		explicit_bzero(lbuf, sizeof(lbuf));
 		myctx = 1;
 	}
@@ -753,9 +834,12 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 	while (ret == 0 && uio->uio_resid > 0) {
 		int	n = min(POOLBYTES, uio->uio_resid);
 
-		if (myctx)
-			rc4_getbytes(&lctx, buf, n);
-		else
+		if (myctx) {
+#ifndef KEYSTREAM_ONLY
+			bzero(buf, n);
+#endif
+			chacha_encrypt_bytes(&lctx, buf, buf, n);
+		} else
 			arc4random_buf(buf, n);
 		ret = uiomove((caddr_t)buf, n, uio);
 		if (ret == 0 && uio->uio_resid > 0)
