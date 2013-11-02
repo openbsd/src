@@ -1,3 +1,4 @@
+/* $OpenBSD: kexc25519.c,v 1.2 2013/11/02 22:02:14 markus Exp $ */
 /*
  * Copyright (c) 2001, 2013 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
