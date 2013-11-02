@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.33 2013/05/12 14:15:31 ratchov Exp $	*/
+/*	$OpenBSD: vector.S,v 1.34 2013/11/02 14:23:38 kettenis Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -245,6 +245,7 @@ NENTRY(resume_iret)
 NENTRY(alltraps)
 	INTRENTRY
 	sti
+	.globl	calltrap
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
