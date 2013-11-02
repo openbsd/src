@@ -1,14 +1,14 @@
-# $OpenBSD: Makefile,v 1.8 2013/07/02 19:00:09 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.9 2013/11/02 14:15:07 ajacoutot Exp $
 
 LIB=	gssapi
 
 GEN_GSSAPI=	asn1_GSSAPIContextToken.x gssapi_asn1-priv.hx gssapi_asn1.hx
 
-#GEN_SPNEGO=	asn1_ContextFlags.x asn1_MechType.x asn1_MechTypeList.x asn1_NegHints.x \
-#		asn1_NegTokenInit.x asn1_NegTokenInitWin.x asn1_NegTokenResp.x asn1_NegotiationToken.x \
-#		asn1_NegotiationTokenWin.x spnego_asn1-priv.hx spnego_asn1.hx
+GEN_SPNEGO=	asn1_ContextFlags.x asn1_MechType.x asn1_MechTypeList.x asn1_NegHints.x \
+		asn1_NegTokenInit.x asn1_NegTokenInitWin.x asn1_NegTokenResp.x asn1_NegotiationToken.x \
+		asn1_NegotiationTokenWin.x spnego_asn1-priv.hx spnego_asn1.hx
 
-GEN=	${GEN_GSSAPI} #${GEN_SPNEGO}
+GEN=	${GEN_GSSAPI} ${GEN_SPNEGO}
 
 GGEN=	asn1_ContextFlags.x		\
 	asn1_GSSAPIContextToken.x	\
@@ -158,11 +158,12 @@ spnegosrc = \
 
 KRB5SRC=	${krb5src:S@/@__@}
 MECHSRC=	${mechsrc:S@/@__@}
-#SPNEGOSRC=	${spnegosrc:S@/@__@}
+SPNEGOSRC=	${spnegosrc:S@/@__@}
 
 
 SRCS=	${KRB5SRC} \
 	${MECHSRC} \
+	${SPNEGOSRC} \
 	gkrb5_err.c \
 	gkrb5_err.h \
 	${GEN:S/.x$/.c/:S/.hx$/.h/}
@@ -175,13 +176,15 @@ OIDINCSDIR=	${INCLUDEDIR}/gssapi
 KRB5INCS=	gssapi.h gssapi_krb5.h
 KRB5INCSDIR=	${INCLUDEDIR}/gssapi
 
-#SPNEGOINCS=	gssapi_spnego.h
-#SPNEGOINCSDIR=	${INCLUDEDIR}/gssapi
+SPNEGOINCS=	gssapi_spnego.h
+SPNEGOINCSDIR=	${INCLUDEDIR}/gssapi
 
-INCSGROUPS=	INCS OIDINCS KRB5INCS #SPNEGOINCS
+INCSGROUPS=	INCS OIDINCS KRB5INCS SPNEGOINCS
 
 GEN+=		gssapi_asn1.hx \
-		gssapi_asn1-priv.hx
+		gssapi_asn1-priv.hx \
+		spnego_asn1.hx \
+		spnego_asn1-priv.hx
 
 MPAGES=		gssapi.3 \
 		gss_acquire_cred.3 \
@@ -241,6 +244,7 @@ CPPFLAGS=	-I${KRB5DIR}/lib/gssapi \
 		-I${KRB5DIR}/lib/gssapi/gssapi \
 		-I${KRB5DIR}/lib/gssapi/krb5 \
 		-I${KRB5DIR}/lib/gssapi/mech \
+		-I${KRB5DIR}/lib/gssapi/spnego \
 		-I${KRB5DIR}/lib/krb5 \
 		-I${KRB5DIR}/lib/asn1 \
 		-I${KRB5DIR}/lib/roken -I.
@@ -248,7 +252,7 @@ CPPFLAGS=	-I${KRB5DIR}/lib/gssapi \
 CLEANFILES=	${GEN} ${GEN:S/.x$/.c/:S/.hx$/.h/} gssapi_asn1_files spnego_asn1_files \
 		gssapi_asn1-template.c spnego_asn1-template.c
 
-.for i in ${KRB5SRC} ${MECHSRC}
+.for i in ${KRB5SRC} ${MECHSRC} ${SPNEGOSRC}
 CLEANFILES+=$i
 SRCS+=$i
 
@@ -258,6 +262,9 @@ ${i}: ${i:S@__@/@}
 
 ${GEN_GSSAPI}: gssapi.asn1
 	${ASN1_COMPILE} ${.ALLSRC:M*.asn1} gssapi_asn1
+
+${GEN_SPNEGO}: spnego.asn1 spnego.opt
+	${ASN1_COMPILE} --option-file=${.ALLSRC:M*.opt} ${.ALLSRC:M*.asn1} spnego_asn1
 
 .SUFFIXES: .h .c .x .hx
 
@@ -271,4 +278,5 @@ ${GEN_GSSAPI}: gssapi.asn1
 
 .SUFFIXES: .h .c .x .hx
 
-.PATH: ${KRB5DIR}/lib/gssapi/gssapi ${KRB5DIR}/lib/gssapi ${KRB5DIR}/lib/gssapi/krb5 ${KRB5DIR}/lib/gssapi/mech
+.PATH:	${KRB5DIR}/lib/gssapi/gssapi ${KRB5DIR}/lib/gssapi ${KRB5DIR}/lib/gssapi/krb5 \
+	${KRB5DIR}/lib/gssapi/mech ${KRB5DIR}/lib/gssapi/spnego

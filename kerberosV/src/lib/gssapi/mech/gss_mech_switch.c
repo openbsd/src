@@ -252,9 +252,7 @@ _gss_load_mech(void)
 	}
 
 	add_builtin(__gss_krb5_initialize());
-#ifndef __OpenBSD__
 	add_builtin(__gss_spnego_initialize());
-#endif
 #ifndef NO_NTLM
 	add_builtin(__gss_ntlm_initialize());
 #endif
