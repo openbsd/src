@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.20 2013/10/18 15:07:58 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.21 2013/11/02 00:42:16 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -494,7 +494,8 @@ NENTRY(hibernate_switch_stack_machdep)
 	ret
 
 NENTRY(hibernate_flush)
-	invlpg  HIBERNATE_INFLATE_PAGE
+	movq	$HIBERNATE_PML4T, %rax
+	movq	%rax, %cr3
 	ret
 #endif /* HIBERNATE */
 
