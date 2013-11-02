@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.73 2013/09/20 15:34:50 mpi Exp $ */
+/*	$OpenBSD: ugen.c,v 1.74 2013/11/02 01:41:17 jeremy Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -112,7 +112,7 @@ int ugen_do_write(struct ugen_softc *, int, struct uio *, int);
 int ugen_do_ioctl(struct ugen_softc *, int, u_long,
 			 caddr_t, int, struct proc *);
 int ugen_set_config(struct ugen_softc *sc, int configno);
-usbd_status ugen_set_interface(struct ugen_softc *, int, int);
+int ugen_set_interface(struct ugen_softc *, int, int);
 int ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx);
 
 #define UGENUNIT(n) ((minor(n) >> 4) & 0xf)
@@ -197,7 +197,7 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 	struct ugen_endpoint *sce;
 	u_int8_t niface, nendpt;
 	int ifaceno, endptno, endpt;
-	usbd_status err;
+	int err;
 	int dir;
 
 	DPRINTFN(1,("ugen_set_config: %s to configno %d, sc=%p\n",
@@ -260,7 +260,7 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 			sce->iface = iface;
 		}
 	}
-	return (USBD_NORMAL_COMPLETION);
+	return (0);
 }
 
 int
@@ -894,12 +894,12 @@ ugen_isoc_rintr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 	selwakeup(&sce->rsel);
 }
 
-usbd_status
+int 
 ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 {
 	struct usbd_interface *iface;
 	usb_endpoint_descriptor_t *ed;
-	usbd_status err;
+	int err;
 	struct ugen_endpoint *sce;
 	u_int8_t niface, nendpt, endptno, endpt;
 	int dir;
@@ -968,7 +968,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 	      caddr_t addr, int flag, struct proc *p)
 {
 	struct ugen_endpoint *sce;
-	usbd_status err;
+	int err;
 	struct usbd_interface *iface;
 	struct usb_config_desc *cd;
 	usb_config_descriptor_t *cdesc;

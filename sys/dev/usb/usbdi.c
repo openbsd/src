@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.63 2013/10/31 20:06:59 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.64 2013/11/02 01:41:17 jeremy Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -611,26 +611,26 @@ usbd_clear_endpoint_toggle(struct usbd_pipe *pipe)
 	pipe->methods->cleartoggle(pipe);
 }
 
-usbd_status
+int
 usbd_endpoint_count(struct usbd_interface *iface, u_int8_t *count)
 {
 #ifdef DIAGNOSTIC
 	if (iface == NULL || iface->idesc == NULL) {
 		printf("usbd_endpoint_count: NULL pointer\n");
-		return (USBD_INVAL);
+		return (1);
 	}
 #endif
 	*count = iface->idesc->bNumEndpoints;
-	return (USBD_NORMAL_COMPLETION);
+	return (0);
 }
 
-usbd_status
+int
 usbd_interface_count(struct usbd_device *dev, u_int8_t *count)
 {
 	if (dev->cdesc == NULL)
-		return (USBD_NOT_CONFIGURED);
+		return (1);
 	*count = dev->cdesc->bNumInterface;
-	return (USBD_NORMAL_COMPLETION);
+	return (0);
 }
 
 void
