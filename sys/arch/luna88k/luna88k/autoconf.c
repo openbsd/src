@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.18 2011/12/13 15:23:51 aoyama Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.19 2013/11/02 17:49:19 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -77,11 +77,17 @@ cpu_configure()
 		panic("no mainbus found");
 
 	/*
+	 * Switch to our final trap vectors.
+	 */
+	set_vbr(kernel_vbr);
+
+	cold = 0;
+
+	/*
 	 * Turn external interrupts on.
 	 */
 	set_psr(get_psr() & ~PSR_IND);
 	spl0();
-	cold = 0;
 }
 
 void
@@ -127,7 +133,8 @@ get_autoboot_device(void)
 				strlcpy(autoboot.cont, "spc1", sizeof(autoboot.cont));
 				c = value[1];
 			}
-		}
+		} else
+			c = -1;
 
 		if ((c >= '0') && (c <= '6'))
 			autoboot.targ = 6 - (c - '0');

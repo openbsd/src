@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.91 2013/10/17 08:02:16 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.92 2013/11/02 17:49:19 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -118,6 +118,7 @@ void	luna88k_bootstrap(void);
 #ifdef MULTIPROCESSOR
 void	luna88k_ipi_handler(struct trapframe *);
 #endif
+void	luna88k_vector_init(uint32_t *, uint32_t *);
 char	*nvram_by_symbol(char *);
 void	powerdown(void);
 void	savectx(struct pcb *);
@@ -193,6 +194,7 @@ struct nvram_t {
 	char value[NVVALLEN];
 } nvram[NNVSYM];
 
+register_t kernel_vbr;
 int physmem;	  /* available physical memory, in pages */
 
 struct vm_map *exec_map = NULL;
@@ -790,6 +792,8 @@ secondary_main()
 	__cpu_simple_lock(&cpu_boot_mutex);
 	__cpu_simple_unlock(&cpu_boot_mutex);
 
+	set_vbr(kernel_vbr);
+
 	spl0();
 	SCHED_LOCK(s);
 	set_psr(get_psr() & ~PSR_IND);
@@ -966,6 +970,26 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (EOPNOTSUPP);
 	}
 	/*NOTREACHED*/
+}
+
+void
+luna88k_vector_init(uint32_t *bootvbr, uint32_t *vectors)
+{
+	extern vaddr_t vector_init(uint32_t *, uint32_t *, int); /* gross */
+	extern int kernelstart;
+
+	/*
+	 * Set up bootstrap vectors, overwriting the existing PROM vbr
+	 * page.
+	 */
+	vector_init(bootvbr, vectors, 1);
+
+	/*
+	 * Set up final vectors. These will be used by all processors,
+	 * once autoconf is over.
+	 */
+	kernel_vbr = trunc_page((vaddr_t)&kernelstart);
+	vector_init((uint32_t *)kernel_vbr, vectors, 0);
 }
 
 /*

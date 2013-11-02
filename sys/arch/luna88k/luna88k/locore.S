@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.28 2013/10/28 22:15:22 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.29 2013/11/02 17:49:19 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -79,6 +79,27 @@
 
 GLOBAL(kernelstart)
 GLOBAL(kernel_text)
+
+	/*
+	 * Room for the kernel (post-autoconf) VBR page.
+	 * Note this page is in kernel text, in order to be write-protected
+	 * by pmap_bootstrap().
+	 */
+
+	.balign	PAGE_SIZE
+	.space	PAGE_SIZE
+
+	/*
+	 * The 88100 may execute the first instruction of the next trap
+	 * handler, as documented in its Errata. Processing trap #511
+	 * would then fall into the next page, unless the address computation
+	 * wraps, or software traps are exempt from the issue - the Errata
+	 * does not provide more detail.
+	 * Although the MVME BUG does not add an extra NOP after its VBR page,
+	 * it is cheap to add an extra NOP for safety.
+	 */
+	NOP
+
 ASGLOBAL(__start)
 	/*
 	 * A few identical jump instructions to make sure the pipeline is
@@ -106,7 +127,7 @@ ASLOCAL(main_start)
 
 	bsr	_ASM_LABEL(setup_psr)
 
-	stcr	%r0,  VBR	/* set Vector Base Register to 0, ALWAYS! */
+	stcr	%r0,  VBR		/* start with VBR set to zero */
 	FLUSH_PIPELINE
 
 	/*
@@ -189,9 +210,9 @@ ASLOCAL(main_init)
 
 	or.u	%r3,  %r0,  %hi16(_C_LABEL(vector_list))
 	or	%r3,  %r3,  %lo16(_C_LABEL(vector_list))
-	or	%r4,  %r0,  1
-	bsr.n	_C_LABEL(vector_init)
-	 ldcr	%r2,  VBR
+
+	bsr.n	_C_LABEL(luna88k_vector_init)
+	 ldcr	%r2, VBR
 
 	/* PIO stuff */
 	or	%r10, %r0,  0xb6		/* initialize pio 0 */
