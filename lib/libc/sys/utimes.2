@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utimes.2,v 1.18 2013/03/31 05:07:55 guenther Exp $
+.\"	$OpenBSD: utimes.2,v 1.19 2013/11/02 17:25:34 espie Exp $
 .\"	$NetBSD: utimes.2,v 1.9 1996/04/23 10:34:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)utimes.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: March 31 2013 $
+.Dd $Mdocdate: November 2 2013 $
 .Dt UTIMES 2
 .Os
 .Sh NAME
@@ -253,6 +253,7 @@ does not match the owner of the file and is not the superuser.
 The file system containing the file is mounted read-only.
 .El
 .Sh SEE ALSO
+.Xr clock_gettime 2 ,
 .Xr stat 2 ,
 .Xr utime 3
 .Sh STANDARDS
