@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.17 2012/06/16 00:08:32 jmatthew Exp $ */
+/*	$OpenBSD: ldape.c,v 1.18 2013/11/02 13:31:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -132,7 +132,8 @@ ldap_refer(struct request *req, const char *basedn, struct search *search,
 			scope_str = "sub";
 	}
 
-	log_debug("sending referral in response %u on msgid %i", type, req->msgid);
+	log_debug("sending referral in response %u on msgid %lld",
+	    type, req->msgid);
 
 	if ((root = ber_add_sequence(NULL)) == NULL)
 		goto fail;
@@ -461,7 +462,7 @@ ldape_imsgev(struct imsgev *iev, int code, struct imsg *imsg)
 {
 	switch (code) {
 	case IMSGEV_IMSG:
-		log_debug("%s: got imsg %i on fd %i",
+		log_debug("%s: got imsg %d on fd %d",
 		    __func__, imsg->hdr.type, iev->ibuf.fd);
 		switch (imsg->hdr.type) {
 		case IMSG_LDAPD_AUTH_RESULT:
@@ -510,7 +511,7 @@ ldape_auth_result(struct imsg *imsg)
 	struct conn		*conn;
 	struct auth_res		*ares = imsg->data;
 
-	log_debug("authentication on conn %i/%lld = %d", ares->fd, ares->msgid,
+	log_debug("authentication on conn %d/%lld = %d", ares->fd, ares->msgid,
 	    ares->ok);
 	conn = conn_by_fd(ares->fd);
 	if (conn->bind_req != NULL && conn->bind_req->msgid == ares->msgid)
@@ -531,7 +532,7 @@ ldape_open_result(struct imsg *imsg)
 	/* make sure path is null-terminated */
 	oreq->path[MAXPATHLEN] = '\0';
 
-	log_debug("open(%s) returned fd %i", oreq->path, imsg->fd);
+	log_debug("open(%s) returned fd %d", oreq->path, imsg->fd);
 
 	TAILQ_FOREACH(ns, &conf->namespaces, next) {
 		if (namespace_has_referrals(ns))

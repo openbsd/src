@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.30 2010/09/01 12:13:21 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.31 2013/11/02 13:31:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -1224,10 +1224,10 @@ btree_search_node(struct btree *bt, struct mpage *mp, struct btval *key,
 			rc = bt_cmp(bt, key, &nodekey, &mp->prefix);
 
 		if (IS_LEAF(mp))
-			DPRINTF("found leaf index %u [%.*s], rc = %i",
+			DPRINTF("found leaf index %u [%.*s], rc = %d",
 			    i, (int)nodekey.size, (char *)nodekey.data, rc);
 		else
-			DPRINTF("found branch index %u [%.*s -> %u], rc = %i",
+			DPRINTF("found branch index %u [%.*s -> %u], rc = %d",
 			    i, (int)node->ksize, (char *)NODEKEY(node),
 			    node->n_pgno, rc);
 
@@ -1947,7 +1947,7 @@ btree_add_node(struct btree *bt, struct mpage *mp, indx_t indx,
 	p = mp->page;
 	assert(p->upper >= p->lower);
 
-	DPRINTF("add node [%.*s] to %s page %u at index %i, key size %zu",
+	DPRINTF("add node [%.*s] to %s page %u at index %d, key size %zu",
 	    key ? (int)key->size : 0, key ? (char *)key->data : NULL,
 	    IS_LEAF(mp) ? "leaf" : "branch",
 	    mp->pgno, indx, key ? key->size : 0);
@@ -2711,7 +2711,7 @@ btree_split(struct btree *bt, struct mpage **mpp, unsigned int *newindxp,
 	mp = *mpp;
 	newindx = *newindxp;
 
-	DPRINTF("-----> splitting %s page %u and adding [%.*s] at index %i",
+	DPRINTF("-----> splitting %s page %u and adding [%.*s] at index %d",
 	    IS_LEAF(mp) ? "leaf" : "branch", mp->pgno,
 	    (int)newkey->size, (char *)newkey->data, *newindxp);
 	DPRINTF("page %u has prefix [%.*s]", mp->pgno,
@@ -2937,7 +2937,7 @@ btree_txn_put(struct btree *bt, struct btree_txn *txn,
 		}
 		if (leaf == NULL) {		/* append if not found */
 			ki = NUMKEYS(mp);
-			DPRINTF("appending key at index %i", ki);
+			DPRINTF("appending key at index %d", ki);
 		}
 	} else if (errno == ENOENT) {
 		/* new file, just write a root leaf page */
@@ -2954,7 +2954,7 @@ btree_txn_put(struct btree *bt, struct btree_txn *txn,
 		goto done;
 
 	assert(IS_LEAF(mp));
-	DPRINTF("there are %lu keys, should insert new key at index %i",
+	DPRINTF("there are %lu keys, should insert new key at index %u",
 		NUMKEYS(mp), ki);
 
 	/* Copy the key pointer as it is modified by the prefix code. The

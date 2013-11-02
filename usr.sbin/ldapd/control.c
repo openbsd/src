@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.8 2012/06/16 00:08:32 jmatthew Exp $	*/
+/*	$OpenBSD: control.c,v 1.9 2013/11/02 13:31:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -158,7 +158,7 @@ control_accept(int listenfd, short event, void *arg)
 		return;
 	}
 
-	log_debug("accepted control fd %i", connfd);
+	log_debug("accepted control fd %d", connfd);
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
 	imsgev_init(&c->iev, connfd, cs, control_imsgev, control_needfd);
 }
@@ -185,7 +185,7 @@ control_close(int fd, struct control_sock *cs)
 		return;
 	}
 
-	log_debug("close control fd %i", c->iev.ibuf.fd);
+	log_debug("close control fd %d", c->iev.ibuf.fd);
 	TAILQ_REMOVE(&ctl_conns, c, entry);
 	imsgev_clear(&c->iev);
 
@@ -248,7 +248,7 @@ control_imsgev(struct imsgev *iev, int code, struct imsg *imsg)
 		return;
 	}
 
-	log_debug("%s: got imsg %i on fd %i", __func__, imsg->hdr.type, fd);
+	log_debug("%s: got imsg %d on fd %d", __func__, imsg->hdr.type, fd);
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_STATS:
 		if (send_stats(iev) == -1) {
