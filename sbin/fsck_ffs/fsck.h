@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.27 2013/06/11 16:42:04 deraadt Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.28 2013/11/02 00:08:17 krw Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ struct bufarea *getdatablk(daddr_t, long);
 #define	dirty(bp)	(bp)->b_dirty = 1
 #define	initbarea(bp) \
 	(bp)->b_dirty = 0; \
-	(bp)->b_bno = (daddr_t)-1; \
+	(bp)->b_bno = -1; \
 	(bp)->b_flags = 0;
 
 #define	sbdirty()	sblk.b_dirty = 1
@@ -257,7 +257,7 @@ char	*lfname;		/* lost & found directory name */
 int	lfmode;			/* lost & found directory creation mode */
 
 daddr_t	n_blks;			/* number of blocks in use */
-daddr_t	n_files;		/* number of files in use */
+int64_t	n_files;		/* number of files in use */
 
 #define	clearinode(dp)	\
 	if (sblock.fs_magic == FS_UFS1_MAGIC) {	\

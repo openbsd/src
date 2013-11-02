@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_disksubr.c,v 1.2 2013/10/29 21:49:07 miod Exp $	*/
+/*	$OpenBSD: ufs_disksubr.c,v 1.3 2013/11/02 00:08:17 krw Exp $	*/
 /*	$NetBSD: ufs_disksubr.c,v 1.2 2013/01/14 01:37:57 tsutsui Exp $	*/
 
 /*
@@ -158,7 +158,7 @@ readdisklabel(struct scsi_softc *sc, uint tgt, struct disklabel *lp)
 	secpercyl = slp->sl_nsectors * slp->sl_ntracks;
 	lp->d_secpercyl = secpercyl;
 	if (DL_GETDSIZE(lp) == 0)
-		DL_SETDSIZE(lp, (daddr_t)secpercyl * slp->sl_ncylinders);
+		DL_SETDSIZE(lp, (u_int64_t)secpercyl * slp->sl_ncylinders);
 	lp->d_version = 1;
 
 	memcpy(&lp->d_uid, &slp->sl_uid, sizeof(slp->sl_uid));

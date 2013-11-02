@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.115 2013/06/11 16:42:19 deraadt Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.116 2013/11/02 00:08:17 krw Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1196,7 +1196,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		error = VOP_BMAP(sdp->swd_vp, byteoff / sdp->swd_bsize,
 				 	&vp, &nbn, &nra);
 
-		if (error == 0 && nbn == (daddr_t)-1) {
+		if (error == 0 && nbn == -1) {
 			/*
 			 * this used to just set error, but that doesn't
 			 * do the right thing.  Instead, it causes random
