@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.11 2013/10/07 18:08:51 syl Exp $ */
+/* $OpenBSD: fuse.c,v 1.12 2013/11/02 09:00:49 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -33,6 +33,26 @@
 
 static struct fuse_session *sigse;
 static struct fuse_context *ictx = NULL;
+
+enum {
+	KEY_HELP,
+	KEY_HELP_WITHOUT_HEADER,
+	KEY_VERSION,
+	KEY_DEBUG
+};
+
+static struct fuse_opt fuse_core_opts[] = {
+	FUSE_OPT_KEY("-h",		KEY_HELP),
+	FUSE_OPT_KEY("--help",		KEY_HELP),
+	FUSE_OPT_KEY("-ho",		KEY_HELP_WITHOUT_HEADER),
+	FUSE_OPT_KEY("-V",		KEY_VERSION),
+	FUSE_OPT_KEY("--version",	KEY_VERSION),
+	FUSE_OPT_KEY("debug",		KEY_DEBUG),
+	FUSE_OPT_KEY("-d",		KEY_DEBUG),
+	FUSE_OPT_KEY("-f",		KEY_DEBUG),
+	FUSE_OPT_KEY("-s",		KEY_DEBUG),
+	FUSE_OPT_END
+};
 
 int
 fuse_loop(struct fuse *fuse)
@@ -184,7 +204,7 @@ fuse_unmount(const char *dir, unused struct fuse_chan *ch)
 int
 fuse_is_lib_option(unused const char *opt)
 {
-	return (0);
+	return (fuse_opt_match(fuse_core_opts, opt));
 }
 
 int
@@ -303,18 +323,84 @@ fuse_set_signal_handlers(unused struct fuse_session *se)
 	return (0);
 }
 
+static void
+dump_help(void)
+{
+	fprintf(stderr, "FUSE options:\n"
+	    "    -d   -o debug          enable debug output (implies -f)\n"
+	    "    -V                     print fuse version\n"
+	    "\n");
+}
+
+static void
+dump_version(void)
+{
+	fprintf(stderr, "FUSE library version %i\n", FUSE_USE_VERSION);
+}
+
+static int
+ifuse_process_opt(void *data, const char *arg, int key, struct fuse_args *args)
+{
+	struct fuse_core_opt *opt = data;
+	struct stat st;
+	int res;
+
+	switch (key) {
+		case KEY_DEBUG:
+			return (0);
+		case KEY_HELP:
+		case KEY_HELP_WITHOUT_HEADER:
+			dump_help();
+			return (0);
+		case KEY_VERSION:
+			dump_version();
+			return (1);
+		case FUSE_OPT_KEY_NONOPT:
+			if (opt->mp == NULL) {
+				opt->mp = realpath(arg, opt->mp);
+				res = stat(opt->mp, &st);
+
+				if (!opt->mp || res == -1) {
+					fprintf(stderr, "fuse: bad mount point "
+					    "%s : %s\n", arg, strerror(errno));
+					return (-1);
+				}
+
+				if (!S_ISDIR(st.st_mode)) {
+					fprintf(stderr, "fuse: bad mount point "
+					    "%s : %s\n", arg,
+					    strerror(ENOTDIR));
+					return (-1);
+				}
+			} else {
+				fprintf(stderr, "fuse: invalid argument %s\n",
+				    arg);
+				return (-1);
+			}
+			break;
+		default:
+			fprintf(stderr, "fuse: unknown option %s\n", arg);
+			return (-1);
+	}
+	return (0);
+}
+
 int
 fuse_parse_cmdline(struct fuse_args *args, char **mp, int *mt, unused int *fg)
 {
-	int i;
+	struct fuse_core_opt opt;
 
 #ifdef DEBUG
 	ifuse_debug_init();
 #endif
+	bzero(&opt, sizeof(opt));
+	if (fuse_opt_parse(args, &opt, fuse_core_opts, ifuse_process_opt) == -1)
+		return (-1);
 
-	for (i = args->argc - 1; i > 0 && *args->argv[i] == '-'; --i)
-		;
-	*mp = args->argv[i];
+	if (opt.mp == NULL)
+		return (-1);
+
+	*mp = strdup(opt.mp);
 	*mt = 0;
 
 	return (0);
@@ -342,25 +428,29 @@ fuse_teardown(struct fuse *fuse, char *mp)
 int
 fuse_main(int argc, char **argv, const struct fuse_operations *ops, void *data)
 {
-	struct fuse *fuse;
+	struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
 	struct fuse_chan *fc;
-	struct fuse_args args;
-	char *mountpoint;
+	struct fuse *fuse;
+	char *mp = NULL;
 	int mt, fg;
+	int error = -1;
 
-	args.argc = argc;
-	args.argv = argv;
-	fuse_parse_cmdline(&args, &mountpoint, &mt, &fg);
+	if (fuse_parse_cmdline(&args, &mp, &mt, &fg))
+		goto err;
 
 	fuse_daemonize(0);
 
-	if ((fc = fuse_mount(mountpoint, NULL)) == NULL)
-		return (-1);
+	if ((fc = fuse_mount(mp, NULL)) == NULL)
+		goto err;
 
 	if ((fuse = fuse_new(fc, NULL, ops, sizeof(*(ops)), data)) == NULL) {
 		free(fc);
-		return (-1);
+		goto err;
 	}
 
-	return (fuse_loop(fuse));
+	error = fuse_loop(fuse);
+err:
+	if (mp)
+		free(mp);
+	return (error);
 }

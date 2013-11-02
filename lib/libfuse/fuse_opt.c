@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.5 2013/07/11 11:41:12 syl Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.6 2013/11/02 09:00:49 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
@@ -217,56 +217,94 @@ fuse_opt_add_arg(struct fuse_args *args, const char *name)
 	return (fuse_opt_insert_arg(args, args->argc, name));
 }
 
+static int
+parse_opt(struct fuse_opt *o, const char *val, void *data, fuse_opt_proc_t f,
+    struct fuse_args *arg)
+{
+	int ret;
+	int found = 0;
+
+	for(; o->templ; o++) {
+		if (strcmp(val, o->templ) == 0) {
+			if (o->val == FUSE_OPT_KEY_DISCARD)
+				return (1);
+
+			ret = f(data, val, o->val, arg);
+
+			if (ret == -1)
+				return (ret);
+			if (ret == 1)
+				fuse_opt_add_arg(arg, val);
+			found++;
+			break;
+		}
+	}
+
+	if (!found) {
+		printf("fuse: unknown option %s\n", val);
+		return (-1);
+	}
+
+	return (0);
+}
+
+/*
+ * this code is not very sexy but we are forced to follow
+ * the fuse api.
+ *
+ * when f() returns 1 we need to keep the arg
+ * when f() returns 0 we need to discard the arg
+ */
 int
 fuse_opt_parse(struct fuse_args *args, void *data, struct fuse_opt *opt,
     fuse_opt_proc_t f)
 {
+	struct fuse_args outargs = FUSE_ARGS_INIT(args->argc, args->argv);
 	const char *arg;
-	struct fuse_opt *good;
-	int ret;
-	int i, j;
+	int ret = 0;
+	int i;
 
-	for (i = 0; i < args->argc; i++) {
+	if (!f || !args || !args->argc || !args->argv)
+		return (0);
+
+	bzero(&outargs, sizeof(args));
+	fuse_opt_add_arg(&outargs, args->argv[0]);
+
+	for (i = 1; i < args->argc; i++) {
 		arg = args->argv[i];
 
 		/* not - and not -- */
 		if (arg[0] != '-') {
-			ret = (f) ? f(data, arg, FUSE_OPT_KEY_NONOPT, 0) : 0;
+			ret = f(data, arg, FUSE_OPT_KEY_NONOPT, 0);
 
+			if (ret == 1)
+				fuse_opt_add_arg(&outargs, arg);
 			if (ret == -1)
+				goto err;
+		} else if (arg[1] == 'o') {
+			if (arg[2])
+				arg += 2;	/* -ofoo,bar */
+			else
+				i++;		/* -o foo,bar*/
+			if (ret != 0)
 				return (ret);
 		} else {
-			switch (arg[1]) {
-			case 'o':
-				DPRINTF("%s: -o X,Y not supported yet.\n",
-				    __func__);
-				break ;
-			case '-':
-				DPRINTF("%s: long option not supported yet.",
-				    __func__);
-				break ;
-			default:
-				good = NULL;
-				for (j = 0; opt[j].templ != NULL; j++)
-					if (strcmp(arg, opt[j].templ) == 0) {
-						good = &opt[j];
-						break ;
-					}
+			ret = parse_opt(opt, arg, data, f, &outargs);
 
-				if (!good)
-					break ;
-
-				if (good->val == -1 && f) {
-					ret = f(data, arg, good->val, 0);
-
-					if (ret == -1)
-						return (ret);
-				}
-				break;
-			}
+			if (ret == -1)
+				goto err;
 		}
 	}
-	return (0);
+	ret = 0;
+
+err:
+	/* Update args */
+	fuse_opt_free_args(args);
+	args->allocated = outargs.allocated;
+	args->argc = outargs.argc;
+	args->argv = outargs.argv;
+
+	return (ret);
 }
 
 int
