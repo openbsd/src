@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.116 2013/11/02 00:08:17 krw Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.117 2013/11/02 04:14:13 deraadt Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -129,8 +129,8 @@ struct swapdev {
 #define	swd_dev		swd_se.se_dev		/* device id */
 #define	swd_flags	swd_se.se_flags		/* flags:inuse/enable/fake */
 #define	swd_priority	swd_se.se_priority	/* our priority */
-#define	swd_inuse	swd_se.se_inuse		/* our priority */
-#define	swd_nblks	swd_se.se_nblks		/* our priority */
+#define	swd_inuse	swd_se.se_inuse		/* blocks used */
+#define	swd_nblks	swd_se.se_nblks		/* total blocks */
 	char			*swd_path;	/* saved pathname of device */
 	int			swd_pathlen;	/* length of pathname */
 	int			swd_npages;	/* #pages we can use */
