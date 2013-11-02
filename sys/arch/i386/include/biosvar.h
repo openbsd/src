@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.60 2013/03/23 16:12:23 deraadt Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.61 2013/11/02 15:02:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -199,12 +199,6 @@ typedef struct _bios_consdev {
 	int	consaddr;
 	int	consfreq;
 } __packed bios_consdev_t;
-
-/* XXX Remove before OpenBSD 5.3 gets released. */
-typedef struct _bios_oconsdev {
-	dev_t	consdev;
-	int	conspeed;
-} __packed bios_oconsdev_t;
 
 #define BOOTARG_SMPINFO 6		/* struct mp_float[] */
 

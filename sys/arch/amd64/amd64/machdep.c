@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.169 2013/10/05 17:25:00 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.170 2013/11/02 15:02:27 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1856,7 +1856,7 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 #endif
 #endif
 		case BOOTARG_CONSDEV:
-			if (q->ba_size >= sizeof(bios_oconsdev_t) +
+			if (q->ba_size >= sizeof(bios_consdev_t) +
 			    offsetof(struct _boot_args32, ba_arg)) {
 				bios_consdev_t *cdp =
 				    (bios_consdev_t*)q->ba_arg;
@@ -1864,10 +1864,7 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 				static const int ports[] =
 				    { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
 				int unit = minor(cdp->consdev);
-				int consaddr = -1;
-				if (q->ba_size >= sizeof(bios_consdev_t) +
-				    offsetof(struct _boot_args32, ba_arg))
-					consaddr = cdp->consaddr;
+				int consaddr = cdp->consaddr;
 				if (consaddr == -1 && unit >= 0 &&
 				    unit < (sizeof(ports)/sizeof(ports[0])))
 					consaddr = ports[unit];
