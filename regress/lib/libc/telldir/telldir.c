@@ -1,60 +1,20 @@
-/*	$OpenBSD: telldir.c,v 1.3 2013/08/20 01:13:54 guenther Exp $	*/
+/*	$OpenBSD: telldir.c,v 1.4 2013/11/03 00:20:24 schwarze Exp $	*/
 
 /*	Written by Otto Moerbeek, 2006,  Public domain.	*/
 
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <dirent.h>
 #include <err.h>
 #include <limits.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 
+#include "utils.h"
 
 #define NFILES 1000
 
-void
-createfiles(void)
-{
-	int i, fd;
-	char file[PATH_MAX];
-
-	mkdir("d", 0755);
-	for (i = 0; i < NFILES; i++) {
-		snprintf(file, sizeof file, "d/%d", i);
-		if ((fd = open(file, O_CREAT | O_WRONLY, 0600)) == -1)
-			err(1, "open %s", file);
-		close(fd);
-	}
-}
-
-void
-delfiles(void)
-{
-	DIR *dp;
-	struct dirent *f;
-	char file[PATH_MAX];
-
-	dp = opendir("d");
-	if (dp == NULL)
-		err(1, "opendir");
-	while (f = readdir(dp)) {
-		if (strcmp(f->d_name, ".") == 0 ||
-		    strcmp(f->d_name, "..") == 0)
-			continue;
-		snprintf(file, sizeof file, "d/%s", f->d_name);
-		if (unlink(file) == -1)
-			err(1, "unlink %s", f->d_name);
-	}
-	closedir(dp);
-	if (rmdir("d") == -1)
-		err(1, "rmdir");
-}
-
-void
-loop(DIR *dp, int i)
+static void
+longloop(DIR *dp, int i)
 {
 	struct dirent *f;
 	char file[PATH_MAX];
@@ -62,6 +22,9 @@ loop(DIR *dp, int i)
 
 	rewinddir(dp);
 	snprintf(file, sizeof file, "%d", i);
+
+	/* Scan through all files, remember where file i is. */
+
 	for (;;) {
 		pos = telldir(dp);
 		f = readdir(dp);
@@ -72,35 +35,37 @@ loop(DIR *dp, int i)
 	}
 	if (remember == -1)
 		errx(1, "remember %s", file);
+
+	/* Go back to i, checking seekdir, telldir and readdir. */
+
 	seekdir(dp, remember);
 	if ((t = telldir(dp)) != remember)
-		errx(1, "tell after seek %s %ld != %ld", file, t, pos);
+		errx(1, "tell after seek %s %ld != %ld", file, t, remember);
 	if ((t = telldir(dp)) != remember)
-		errx(1, "tell after tell %s %ld != %ld", file, t, pos);
+		errx(1, "tell after tell %s %ld != %ld", file, t, remember);
 	f = readdir(dp);
 	if (f == NULL)
-		err(1, "seek to %s %ld", file, remember);
+		errx(1, "readdir %s at %ld", file, remember);
 
 	if (strcmp(f->d_name, file) != 0)
-		err(1, "name mismatch: %s != %s\n", f->d_name, file);
+		errx(1, "name mismatch: %s != %s", f->d_name, file);
 }
 
-int
-main(void)
+void
+longseek(void)
 {
 	DIR *dp;
 	int i;
 
-	createfiles();
+	createfiles(NFILES);
 
 	dp = opendir("d");
 	if (dp == NULL)
-		err(1, "opendir");
+		err(1, "longseek: opendir");
 
 	for (i = 0; i < NFILES; i++)
-		loop(dp, (i + NFILES/2) % NFILES);
+		longloop(dp, (i + NFILES/2) % NFILES);
 
 	closedir(dp);
 	delfiles();
-	return 0;
 }
