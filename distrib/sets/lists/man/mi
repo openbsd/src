@@ -429,6 +429,7 @@
 ./usr/share/man/man1/klist.1
 ./usr/share/man/man1/krb5-config.1
 ./usr/share/man/man1/ksh.1
+./usr/share/man/man1/kswitch.1
 ./usr/share/man/man1/ktrace.1
 ./usr/share/man/man1/lam.1
 ./usr/share/man/man1/last.1
@@ -2814,6 +2815,7 @@
 ./usr/share/man/man8/iostat.8
 ./usr/share/man/man8/iprop-log.8
 ./usr/share/man/man8/iprop.8
+./usr/share/man/man8/ipropd-master.8
 ./usr/share/man/man8/ipsecctl.8
 ./usr/share/man/man8/isakmpd.8
 ./usr/share/man/man8/iscsictl.8
