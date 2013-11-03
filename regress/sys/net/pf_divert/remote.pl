@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.4 2013/06/05 04:34:27 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.5 2013/11/03 00:32:36 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -37,14 +37,19 @@ require 'funcs.pl';
 sub usage {
 	die <<"EOF";
 usage:
-    remote.pl af bindaddr connectaddr connectport [test-args.pl]
+    remote.pl af bindaddr connectaddr connectport test-args.pl
 	Only start remote relay.
-    remote.pl af localaddr fakeaddr remotessh [test-args.pl]
+    remote.pl af bindaddr connectaddr connectport bindport test-args.pl
+	Only start remote relay with fixed port, needed for reuse.
+    remote.pl af localaddr fakeaddr remotessh test-args.pl
 	Run test with local client and server.  Remote relay is
 	started automatically with ssh on remotessh.
+    remote.pl af localaddr fakeaddr remotessh clientport serverport test-args.pl
+	Run test with local client and server and fixed port, needed for reuse.
 EOF
 }
 
+my $command = "$0 @ARGV";
 my $test;
 our %args;
 if (@ARGV) {
@@ -64,9 +69,17 @@ if (@ARGV) {
 	    if ref $protocol eq 'CODE';
 }
 my $mode =
-	@ARGV == 3 && $ARGV[0] !~ /^\d+$/ && $ARGV[2] =~ /^\d+$/ ? "divert"  :
-	@ARGV == 3 && $ARGV[0] !~ /^\d+$/ && $ARGV[2] !~ /^\d+$/ ? "auto"   :
+	@ARGV >= 3 && $ARGV[0] !~ /^\d+$/ && $ARGV[2] =~ /^\d+$/ ? "divert" :
+	@ARGV >= 3 && $ARGV[0] !~ /^\d+$/ && $ARGV[2] !~ /^\d+$/ ? "auto"   :
 	usage();
+my($clientport, $serverport, $bindport);
+if (@ARGV == 5 && $mode eq "auto") {
+	($clientport, $serverport) = @ARGV[3,4];
+} elsif (@ARGV == 4 && $mode eq "divert") {
+	($bindport) = $ARGV[3];
+} elsif (@ARGV != 3) {
+	usage();
+}
 
 my($c, $l, $r, $s, $logfile);
 my $func	= \&write_read_stream;
@@ -95,6 +108,7 @@ if ($local eq "server") {
 	    protocol		=> $protocol,
 	    listenaddr		=> $mode ne "divert" ? $ARGV[0] :
 		$af eq "inet" ? "127.0.0.1" : "::1",
+	    listenport		=> $serverport || $bindport,
 	    srcaddr		=> $srcaddr,
 	    dstaddr		=> $dstaddr,
 	);
@@ -107,6 +121,8 @@ if ($mode eq "auto") {
 	    af			=> $af,
 	    remotessh		=> $ARGV[2],
 	    bindaddr		=> $ARGV[1],
+	    bindport		=> $remote eq "client" ?
+		$clientport : $serverport,
 	    connect		=> $remote eq "client",
 	    connectaddr		=> $ARGV[0],
 	    connectport		=> $s ? $s->{listenport} : 0,
@@ -128,10 +144,12 @@ if ($local eq "client") {
 	    connectport		=> $r ? $r->{listenport} : $ARGV[2],
 	    bindany		=> $mode eq "divert",
 	    bindaddr		=> $ARGV[0],
+	    bindport		=> $clientport || $bindport,
 	    srcaddr		=> $srcaddr,
 	    dstaddr		=> $dstaddr,
 	);
 }
+$l->{log}->print("local command: $command\n");
 
 if ($mode eq "divert") {
 	open(my $log, '<', $l->{logfile})
