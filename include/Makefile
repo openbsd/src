@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.177 2013/10/19 09:00:18 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.178 2013/11/03 11:48:49 sthen Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -43,7 +43,7 @@ PRDIRS=
 RDIRS=	../lib/librthread ../lib/libcompat ../lib/libcurses \
 	../lib/libform ../lib/libssl ../lib/libmenu \
 	../lib/libocurses ../lib/libossaudio ../lib/libpanel ../lib/librpcsvc \
-	../lib/libskey ../lib/libedit ../lib/libexpat \
+	../lib/libskey ../lib/libedit ../lib/libexpat ../lib/libfuse \
 	../lib/libpcap ../lib/libsqlite3 ../lib/libutil ../lib/libusbhid \
 	../lib/libwrap \
 	../lib/libz ../lib/libkeynote ../lib/libevent ../usr.bin/lex \
