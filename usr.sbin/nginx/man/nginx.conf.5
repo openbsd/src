@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nginx.conf.5,v 1.3 2013/11/03 18:13:34 florian Exp $
+.\"	$OpenBSD: nginx.conf.5,v 1.4 2013/11/03 18:22:47 schwarze Exp $
 .\"
 .\" Copyright (C) 2002-2012 Igor Sysoev
 .\" Copyright (C) 2011-2013 Nginx, Inc.
@@ -41,7 +41,7 @@ It is known for its high performance, stability, rich feature set, simple
 configuration, and low resource consumption.
 .Pp
 The configuration file consists of a list of configuration directives:
-.Bd -offset indent -nofill
+.Bd -offset indent -ragged
 .Ar list
 .Li ::=
 .Op Ar directive
@@ -55,7 +55,7 @@ directives.
 Such whitespace is semantically insignificant.
 .Pp
 The syntax of a configuration directive is:
-.Bd -offset indent -nofill
+.Bd -offset indent -ragged
 .Ar directive
 .Li ::=
 .Ar keyword
@@ -74,7 +74,7 @@ directive, a semicolon is required, even at the end of a list.
 .Pp
 As a special cases of a configuration directive, the syntax of a
 configuration context is:
-.Bd -offset indent -nofill
+.Bd -offset indent -ragged
 .Ar context
 .Li ::=
 .Ar keyword
@@ -88,13 +88,13 @@ Contexts may be nested, and they freely intermix with other directives
 on each nesting level.
 .Pp
 The syntax of whitespace is:
-.Bd -offset indent -nofill
+.Bd -offset indent -ragged
 .Ar ws
 .Li ::=
 .Ar ws-char
 .Op Ar opt-ws
 .Ed
-.Bd -offset indent -nofill
+.Bd -offset indent -ragged
 .Ar ws-char
 .Li ::=
 .Aq space
@@ -103,13 +103,13 @@ The syntax of whitespace is:
 .Li \&|
 .Aq newline
 .Ed
-.Bd -offset indent -nofill
+.Bd -offset indent -ragged
 .Ar opt-ws
 .Li ::=
 .Pq Ar comment | ws-char
 .Op Ar opt-ws
 .Ed
-.Bd -offset indent -nofill
+.Bd -offset indent -ragged
 .Ar comment
 .Li ::=
 .Qq #
@@ -289,7 +289,7 @@ error_log syslog:server=192.168.1.1 debug;
 error_log syslog:server=unix:/var/log/nginx.sock;
 error_log syslog:server=[2001:db8::1]:12345,facility=local7,tag=nginx error;
 .Ed
-.It Ic env Ar variable Oo Ns = Ns Ar value Oc
+.It Ic env Ar variable Ns Oo = Ns Ar value Oc
 .Bl -tag -width Ds -compact
 .It default: Ev TZ
 .It context: main
@@ -682,8 +682,7 @@ location /video/ {
 .Pp
 In addition, starting from FreeBSD 5.2.1 and nginx 0.8.12, AIO can also be used
 to pre-load data for
-.Fn sendfile
-:
+.Fn sendfile :
 .Bd -literal -offset indent
 location /video/ {
     sendfile       on;
@@ -975,8 +974,8 @@ and the link and object that the link points to have different owners.
 When checking symbolic links (parameters
 .Cm on
 and
-.Cm if_not_owner
-), all components of the pathname are normally checked.
+.Cm if_not_owner ) ,
+all components of the pathname are normally checked.
 Checking of symbolic links in the initial part of the pathname may be avoided by
 specifying additionally the
 .Cm from Ns = Ns Ar part
@@ -1014,7 +1013,7 @@ The
 and
 .Sx Module ngx_http_dav_module
 modules currently ignore this directive.
-.It Ic error_page Ar code No ... Oo Ns = Ns Oo Ar response Oc Oc Ar uri
+.It Ic error_page Ar code No ... Oo = Ns Oo Ar response Oc Oc Ar uri
 .Bl -tag -width Ds -compact
 .It default:
 .It context: Ic http , Ic server , Ic location , Ic if in location
@@ -1383,9 +1382,33 @@ again.
 The wait-read-ignore cycle is repeated, but no longer than specified by the
 .Ic lingering_time
 directive.
-.It Ic listen Ar address Oo : Ar port Oc Oo Cm default_server Oc Oo Cm ssl Oc Oo Cm spdy Oc Oo Cm setfib Ns = Ns Ar number Oc Oo Cm backlog Ns = Ns Ar number Oc Oo Cm rcvbuf Ns = Ns Ar size Oc Oo Cm sndbuf Ns = Ns Ar size Oc Oo Cm accept_filter Ns = Ns Ar filter Oc Oo Cm deferred Oc Oo Cm bind Oc Oo Cm ipv6only Ns = Ns Cm on | Cm off Oc Oo Cm so_keepalive Ns = Ns Cm on | Cm off | Oo Ar keepidle Oc : Oo Ar keepintvl Oc : Oo Ar keepcnt Oc Oc
-.It Ic listen Ar port Oo Cm default_server Oc Oo Cm ssl Oc Oo Cm spdy Oc Oo Cm setfib Ns = Ns Ar number Oc Oo Cm backlog Ns = Ns Ar number Oc Oo Cm rcvbuf Ns = Ns Ar size Oc Oo Cm sndbuf Ns = Ns Ar size Oc Oo Cm accept_filter Ns = Ns Ar filter Oc Oo Cm deferred Oc Oo Cm bind Oc Oo Cm ipv6only Ns = Ns Cm on | Cm off Oc Oo Cm so_keepalive Ns = Ns Cm on | Cm off | Oo Ar keepidle Oc : Oo Ar keepintvl Oc : Oo Ar keepcnt Oc Oc
-.It Ic listen Cm unix Ns : Ns Ar path Oo Cm default_server Oc Oo Cm ssl Oc Oo Cm spdy Oc Oo Cm backlog Ns = Ns Ar number Oc Oo Cm rcvbuf Ns = Ns Ar size Oc Oo Cm sndbuf Ns = Ns Ar size Oc Oo Cm accept_filter Ns = Ns Ar filter Oc Oo Cm deferred Oc Oo Cm bind Oc Oo Cm so_keepalive Ns = Ns Cm on | Cm off | Oo Ar keepidle Oc : Oo Ar keepintvl Oc : Oo Ar keepcnt Oc Oc
+.It Ic listen Ar address Ns Oo : Ns Ar port Oc  Oo Cm default_server Oc \
+    Oo Cm ssl Oc  Oo Cm spdy Oc  Oo Cm setfib Ns = Ns Ar number Oc \
+    Oo Cm backlog Ns = Ns Ar number Oc  Oo Cm rcvbuf Ns = Ns Ar size Oc \
+    Oo Cm sndbuf Ns = Ns Ar size Oc \
+    Oo Cm accept_filter Ns = Ns Ar filter Oc \
+    Oo Cm deferred Oc  Oo Cm bind Oc \
+    Oo Cm ipv6only Ns = Ns Cm on | Cm off Oc \
+    Oo Cm so_keepalive Ns = Ns Cm on | Cm off | \
+       Oo Ar keepidle Ns Oc : Ns Oo Ar keepintvl Oc : Ns Oo Ar keepcnt Oc Oc
+.It Ic listen Ar port  Oo Cm default_server Oc  Oo Cm ssl Oc \
+    Oo Cm spdy Oc  Oo Cm setfib Ns = Ns Ar number Oc \
+    Oo Cm backlog Ns = Ns Ar number Oc  Oo Cm rcvbuf Ns = Ns Ar size Oc \
+    Oo Cm sndbuf Ns = Ns Ar size Oc \
+    Oo Cm accept_filter Ns = Ns Ar filter Oc \
+    Oo Cm deferred Oc  Oo Cm bind Oc \
+    Oo Cm ipv6only Ns = Ns Cm on | Cm off Oc \
+    Oo Cm so_keepalive Ns = Ns Cm on | Cm off | \
+       Oo Ar keepidle Oc : Ns Oo Ar keepintvl Oc : Ns Oo Ar keepcnt Oc Oc
+.It Ic listen Cm unix : Ns Ar path  Oo Cm default_server Oc \
+    Oo Cm ssl Oc  Oo Cm spdy Oc  Oo Cm backlog Ns = Ns Ar number Oc \
+    Oo Cm rcvbuf Ns = Ns Ar size Oc \
+    Oo Cm sndbuf Ns = Ns Ar size Oc \
+    Oo Cm accept_filter Ns = Ns Ar filter Oc \
+    Oo Cm deferred Oc  Oo Cm bind Oc \
+    Oo Cm so_keepalive Ns = Ns Cm on | Cm off | \
+       Oo Ar keepidle Oc : Ns Oo Ar keepintvl Oc : Ns Oo Ar keepcnt Oc Oc
+.Pp
 .Bl -tag -width Ds -compact
 .It default: *:80 | *:8000
 .It context: Ic server
@@ -1562,7 +1585,8 @@ This parameter is turned on by default.
 It can only be set once on start.
 Prior to version 1.3.4, if this parameter was omitted then the operating
 system's settings were in effect for the socket.
-.It Cm so_keepalive Ns = Ns Cm on | Cm off | Oo Ar keepidle Oc : Oo Ar keepintvl Oc : Oo Ar keepcnt Oc
+.It Cm so_keepalive Ns = Ns Cm on | Cm off | \
+    Oo Ar keepidle Oc : Ns Oo Ar keepintvl Oc : Ns Oo Ar keepcnt Oc
 this parameter (1.1.11) configures the TCP keepalive behavior for the listening
 socket.
 If this parameter is omitted then the operating system's settings will be in
@@ -1598,13 +1622,13 @@ For example,
 so_keepalive=30m::10
 .Ed
 .Pp
-will set the idle timeout (
-.Dv TCP_KEEPIDLE
-) to 30 minutes, leave the probe interval (
-.Dv TCP_KEEPINTVL
-) at its system default, and set the probes count (
-.Dv TCP_KEEPCNT
-) to 10 probes.
+will set the idle timeout
+.Pq Dv TCP_KEEPIDLE
+to 30 minutes, leave the probe interval
+.Pq Dv TCP_KEEPINTVL
+at its system default, and set the probes count
+.Pq Dv TCP_KEEPCNT
+to 10 probes.
 .El
 .Pp
 Example:
@@ -2347,8 +2371,7 @@ location = /images/default.gif {
 The last parameter can also point to a named location, as shown in examples
 below.
 Starting from version 0.7.51, the last parameter can also be a
-.Ar code
-:
+.Ar code :
 .Bd -literal -offset indent
 location / {
     try_files $uri $uri/index.html $uri.html =404;
@@ -3607,8 +3630,7 @@ If not disabled, processing of these header fields has the following effect:
 X-Accel-Expires, Expires, Cache-Control and Set-Cookie set the parameters of
 response
 .Ic fastcgi_cache_valid
-caching
-;
+caching;
 .It
 X-Accel-Redirect performs an
 .Ic internal
@@ -4913,9 +4935,12 @@ For example, half-request per second is 30r/m.
 .El
 .Ss Module ngx_http_log_module
 .Bl -tag -width Ds
-.It Ic access_log Ar path Oo Ar format Oo Cm buffer Ns = Ns Ar size Oo Cm flush Ns = Ns Ar time Oc Oc Oc
-.It Ic access_log Ar path Ar format Cm gzip Oo Ns = Ns level Oc Oo Cm buffer Ns = Ns Ar size Oc Oo Cm flush Ns = Ns Ar time Oc
-.It Ic access_log Cm syslog Ns : Ns Cm server Ns = Ns Ar address Oo , Ar parameter Ns = Ns Ar value Oc Oo Ar format Oc
+.It Ic access_log Ar path Oo Ar format Oo Cm buffer Ns = Ns Ar size \
+    Oo Cm flush Ns = Ns Ar time Oc Oc Oc
+.It Ic access_log Ar path Ar format Cm gzip Ns Oo = Ns level Oc \
+    Oo Cm buffer Ns = Ns Ar size Oc Oo Cm flush Ns = Ns Ar time Oc
+.It Ic access_log Cm syslog : Ns Cm server Ns = Ns Ar address \
+    Oo , Ar parameter Ns = Ns Ar value Oc Oo Ar format Oc
 .It Ic access_log Cm off
 .Bl -tag -width Ds -compact
 .It default: Pa logs/access.log Cm combined
@@ -6226,8 +6251,7 @@ In this case, the directive should be specified without a URI.
 When the URI is changed inside a proxied location using the
 .Ic rewrite
 directive, and this same configuration will be used to process a request
-.Pq Ic break
-:
+.Pq Ic break :
 .Bd -literal -offset indent
 location /name/ {
     rewrite    /name/([^/]+) /users?name=$1 break;
@@ -6818,11 +6842,8 @@ directives are inherited from the previous configuration level.
 A condition may be any of the following:
 .Bl -bullet
 .It
-a variable name; false if the value of a variable is an empty string or
-0
-;
-Before version 1.0.1, any string starting with
-0
+a variable name; false if the value of a variable is an empty string or 0;
+Before version 1.0.1, any string starting with 0
 was considered a false value.
 .It
 comparison of a variable with a string using the
@@ -7499,7 +7520,8 @@ and
 parameters are supported starting from versions 1.1.13 and 1.0.12, so when the
 OpenSSL version 1.0.1 or higher is used on older nginx versions, these protocols
 work, but cannot be disabled.
-.It Ic ssl_session_cache Cm off | Cm none | Oo Cm builtin Oo : Ar size Oc Oc Oo Cm shared: Ar name: Ar size Oc
+.It Ic ssl_session_cache Cm off | Cm none | \
+    Oo Cm builtin Ns Oo : Ns Ar size Oc Oc Oo Cm shared: Ar name: Ar size Oc
 .Bl -tag -width Ds -compact
 .It default: Cm none
 .It context: Ic http , Ic server
