@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2012/09/02 23:23:51 pascal Exp $
+#	$OpenBSD: Makefile,v 1.12 2013/11/03 21:36:44 deraadt Exp $
 #	$NetBSD: Makefile,v 1.2 1995/09/30 21:43:38 pk Exp $
 
 .PATH:	${.CURDIR}/../common
@@ -33,7 +33,6 @@ ${PROG}: ${OBJS} elfclean
 	./elfclean ${.TARGET}.elf
 	objcopy -j .text -j .data -j .bss -O a.out-sparc-netbsd \
 	    ${.TARGET}.elf ${.TARGET}.aout
-	@size ${.TARGET}.aout
 	(echo -n 01 | tr 01 '\01\03'; tail +3c ${.TARGET}.aout) > ${.TARGET}
 	@rm ${.TARGET}.aout ${.TARGET}.elf
 
