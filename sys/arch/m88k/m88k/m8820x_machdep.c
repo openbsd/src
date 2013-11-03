@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.59 2013/11/02 23:10:30 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.60 2013/11/03 09:42:55 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, 2013, Miodrag Vallat.
  *
@@ -360,11 +360,12 @@ m8820x_ibatc_set(cpuid_t cpu, uint batcno, uint32_t batc)
 void
 m8820x_batc_setup(cpuid_t cpu, apr_t cmode)
 {
-	paddr_t s_text, e_text, s_data, e_data;
+	paddr_t s_text, e_text, s_data, e_data,	e_rodata;
 	uint batcno;
 	uint32_t batc, proto;
 	extern caddr_t kernelstart;
 	extern caddr_t etext;
+	extern caddr_t erodata;
 	extern caddr_t end;
 
 	proto = BATC_SO | BATC_V;
@@ -374,8 +375,8 @@ m8820x_batc_setup(cpuid_t cpu, apr_t cmode)
 		proto |= BATC_INH;
 
 	s_text = round_batc((paddr_t)&kernelstart);
-	e_text = round_batc((paddr_t)&etext);
-	s_data = trunc_batc((paddr_t)&etext);
+	s_data = e_text = round_batc((paddr_t)&etext);
+	e_rodata = round_batc((paddr_t)&erodata);
 #if 0 /* not until pmap makes sure kvm starts on a BATC boundary */
 	e_data = round_batc((paddr_t)&end);
 #else
@@ -397,8 +398,7 @@ m8820x_batc_setup(cpuid_t cpu, apr_t cmode)
 			break;
 	}
 
-#if !defined(MULTIPROCESSOR)	/* XXX */
-	/* map s_data..e_data with DBATC */
+	/* map e_text..e_data with DBATC */
 	if (cmode & CACHE_GLOBAL)
 		proto |= BATC_GLOBAL;
 	batcno = 0;
@@ -406,6 +406,12 @@ m8820x_batc_setup(cpuid_t cpu, apr_t cmode)
 		batc = (s_data >> BATC_BLKSHIFT) << BATC_VSHIFT;
 		batc |= (s_data >> BATC_BLKSHIFT) << BATC_PSHIFT;
 		batc |= proto;
+		if (s_data < e_rodata)
+			batc |= BATC_PROT;
+#if defined(MULTIPROCESSOR)	/* XXX */
+		else
+			break;
+#endif
 #ifdef DEBUG
 		printf("cpu%d dbat%d %p(%08x)\n", cpu, batcno, s_data, batc);
 #endif
@@ -414,7 +420,6 @@ m8820x_batc_setup(cpuid_t cpu, apr_t cmode)
 		if (++batcno == BATC_MAX)
 			break;
 	}
-#endif
 }
 
 /*

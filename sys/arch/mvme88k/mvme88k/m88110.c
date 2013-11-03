@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.81 2013/11/02 23:10:30 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.82 2013/11/03 09:42:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011, Miodrag Vallat.
@@ -181,23 +181,39 @@ const struct cmmu_p cmmu88410 = {
 size_t mc88410_linesz[2] = { 5, 5 };		/* log2 of L2 cache line size */
 size_t mc88410_cachesz[2] = { 256, 256 };	/* L2 cache size in KB */
 
-void patc_clear(void);
+void m88110_dbatc_set(uint, uint32_t);
+void m88110_ibatc_set(uint, uint32_t);
+void m88110_patc_clear(void);
 
 void m88110_cmmu_wb_locked(paddr_t, psize_t);
 void m88110_cmmu_wbinv_locked(paddr_t, psize_t);
 void m88110_cmmu_inv_locked(paddr_t, psize_t);
 
 void
-patc_clear(void)
+m88110_dbatc_set(uint batno, uint32_t val)
 {
-	int i;
+	set_dir(batno);
+	set_dbp(val);
+}
 
-	for (i = 0; i < 32; i++) {
-		set_dir(i << 5);
+void
+m88110_ibatc_set(uint batno, uint32_t val)
+{
+	set_iir(batno);
+	set_ibp(val);
+}
+
+void
+m88110_patc_clear(void)
+{
+	uint patcno;
+
+	for (patcno = 0; patcno < 32; patcno++) {
+		set_dir(patcno << 5);
 		set_dppu(0);
 		set_dppl(0);
 
-		set_iir(i << 5);
+		set_iir(patcno << 5);
 		set_ippu(0);
 		set_ippl(0);
 	}
@@ -296,6 +312,66 @@ m88410_init(void)
 void
 m88110_batc_setup(cpuid_t cpu, apr_t cmode)
 {
+	paddr_t s_text, e_text, s_data, e_data,	e_rodata;
+	uint batcno;
+	uint32_t batc, proto;
+	extern caddr_t kernelstart;
+	extern caddr_t etext;
+	extern caddr_t erodata;
+	extern caddr_t end;
+
+	proto = BATC_SO | BATC_V;
+	if (cmode & CACHE_WT)
+		proto |= BATC_WT;
+	if (cmode & CACHE_INH)
+		proto |= BATC_INH;
+
+	s_text = round_batc((paddr_t)&kernelstart);
+	s_data = e_text = round_batc((paddr_t)&etext);
+	e_rodata = round_batc((paddr_t)&erodata);
+#if 0 /* not until pmap makes sure kvm starts on a BATC boundary */
+	e_data = round_batc((paddr_t)&end);
+#else
+	e_data = trunc_batc((paddr_t)&end);
+#endif
+
+	/* map s_text..e_text with IBATC */
+	batcno = 0;
+	while (s_text != e_text) {
+		batc = (s_text >> BATC_BLKSHIFT) << BATC_VSHIFT;
+		batc |= (s_text >> BATC_BLKSHIFT) << BATC_PSHIFT;
+		batc |= proto;
+#ifdef DEBUG
+		printf("cpu%d ibat%d %p(%08x)\n", cpu, batcno, s_text, batc);
+#endif
+		m88110_ibatc_set(batcno, batc);
+		s_text += BATC_BLKBYTES;
+		if (++batcno == BATC_MAX)
+			break;
+	}
+
+	/* map e_text..e_data with DBATC */
+	if (cmode & CACHE_GLOBAL)
+		proto |= BATC_GLOBAL;
+	batcno = 0;
+	while (s_data != e_data) {
+		batc = (s_data >> BATC_BLKSHIFT) << BATC_VSHIFT;
+		batc |= (s_data >> BATC_BLKSHIFT) << BATC_PSHIFT;
+		batc |= proto;
+		if (s_data < e_rodata)
+			batc |= BATC_PROT;
+#if defined(MULTIPROCESSOR)	/* XXX */
+		else
+			break;
+#endif
+#ifdef DEBUG
+		printf("cpu%d dbat%d %p(%08x)\n", cpu, batcno, s_data, batc);
+#endif
+		m88110_dbatc_set(batcno, batc);
+		s_data += BATC_BLKBYTES;
+		if (++batcno == BATC_MAX)
+			break;
+	}
 }
 
 cpuid_t
@@ -329,7 +405,7 @@ m88110_initialize_cpu(cpuid_t cpu)
 	}
 
 	/* clear PATCs */
-	patc_clear();
+	m88110_patc_clear();
 
 	ictl = BATC_512K | CMMU_ICTL_DID | CMMU_ICTL_CEN | CMMU_ICTL_BEN;
 
@@ -487,7 +563,7 @@ m88110_set_sapr(apr_t ap)
 	set_isap(ap);
 	set_dsap(ap);
 
-	patc_clear();
+	m88110_patc_clear();
 
 	set_icmd(CMMU_ICMD_INV_UATC);
 	set_icmd(CMMU_ICMD_INV_SATC);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.1 2013/11/02 23:42:12 miod Exp $	*/
+/*	$OpenBSD: ld.script,v 1.2 2013/11/03 09:42:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -16,11 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- * This linker script is used to merge .rodata into .text and pad .text to
- * a page size. This allows objcopy to correctly be able to convert it to
- * an OMAGIC binary, suitable to be booted from the PROM.
- */
 OUTPUT_FORMAT("elf32-m88k")
 OUTPUT_ARCH(m88k)
 ENTRY(__start)
@@ -29,11 +24,15 @@ SECTIONS
 	.text :
 	{
 		*(.text)
-		*(.rodata*)
 		PROVIDE(etext = ABSOLUTE(.));
-		FILL(0)
-		. = ALIGN(0x80000);
 	}
+	. = ALIGN(0x80000);
+	.rodata :
+	{
+		*(.rodata*)
+		PROVIDE(erodata = ABSOLUTE(.));
+	}
+	. = ALIGN(0x80000);
 	.data :
 	{
 		*(.data)

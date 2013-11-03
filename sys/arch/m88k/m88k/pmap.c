@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.73 2013/11/02 23:10:30 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.74 2013/11/03 09:42:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -540,7 +540,7 @@ pmap_map(paddr_t pa, psize_t sz, vm_prot_t prot, u_int cmode)
 void
 pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 {
-	paddr_t s_low, s_text, e_text;
+	paddr_t s_low, s_text, e_rodata;
 	unsigned int npdtpg, nsdt, npdt;
 	unsigned int i;
 	sdt_entry_t *sdt;
@@ -548,12 +548,12 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 	paddr_t pa, sdtpa, ptepa;
 	const struct pmap_table *ptable;
 	extern void *kernelstart;
-	extern void *etext;
+	extern void *erodata;
 
 	virtual_avail = (vaddr_t)avail_end;
 
 	s_text = trunc_page((vaddr_t)&kernelstart);
-	e_text = round_page((vaddr_t)&etext);
+	e_rodata = round_page((vaddr_t)&erodata);
 
 	/*
 	 * Reserve space for 1:1 memory mapping in supervisor space.
@@ -622,9 +622,9 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 	/* memory below the kernel image */
 	for (i = atop(s_text); i != 0; i--)
 		*pte++ = PG_NV;
-	/* kernel text */
+	/* kernel text and rodata */
 	pa = s_text;
-	for (i = atop(e_text) - atop(pa); i != 0; i--) {
+	for (i = atop(e_rodata) - atop(pa); i != 0; i--) {
 		*pte++ = pa | PG_SO | PG_RO | PG_W | PG_V;
 		pa += PAGE_SIZE;
 	}
