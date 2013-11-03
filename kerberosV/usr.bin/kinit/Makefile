@@ -1,6 +1,8 @@
-# $OpenBSD: Makefile,v 1.16 2013/08/10 14:54:03 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.17 2013/11/03 11:56:40 ajacoutot Exp $
 
 PROG=	kinit
+MPAGES=	kinit.1
+MSRC=	${KRB5DIR}/kuser
 CPPFLAGS=	-I${KRB5DIR}/lib/roken
 DPADD=	${LIBKAFS} ${LIBKRB5} ${LIBROKEN} ${LIBVERS} \
 	${LIBASN1} ${LIBCRYPTO}

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2013/07/22 12:55:29 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.7 2013/11/03 11:56:40 ajacoutot Exp $
 
 LIB=	roken
 INCS=	roken.h \
@@ -72,6 +72,9 @@ SRCS=	base64.c \
 	warnerr.c \
 	write_pid.c \
 	xfree.c
+
+MPAGES=		getarg.3 parse_time.3 rtbl.3 ecalloc.3
+MSRC=		${KRB5DIR}/lib/roken
 
 CPPFLAGS=	-I${KRB5DIR}/lib/roken -I.
 CPPFLAGS+=	-DBUILD_ROKEN_LIB

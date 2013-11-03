@@ -1,32 +1,8 @@
-# $OpenBSD: Makefile,v 1.7 2013/07/10 05:07:53 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.8 2013/11/03 11:56:40 ajacoutot Exp $
 
 LIB=	hdb
 
-MPAGES=	HDB.3 hdb_entry_ex.3
 MSRC=		${KRB5DIR}/doc/doxyout/hdb/man/man3
-
-MLINKS=	HDB.3 hdb__del.3 \
-	HDB.3 hdb__get.3 \
-	HDB.3 hdb__put.3 \
-	HDB.3 hdb_auth_status.3 \
-	HDB.3 hdb_check_constrained_delegation.3 \
-	HDB.3 hdb_check_pkinit_ms_upn_match.3 \
-	HDB.3 hdb_check_s4u2self.3 \
-	HDB.3 hdb_close.3 \
-	HDB.3 hdb_destroy.3 \
-	HDB.3 hdb_fetch_kvno.3 \
-	HDB.3 hdb_firstkey.3 \
-	HDB.3 hdb_free.3 \
-	HDB.3 hdb_get_realms.3 \
-	HDB.3 hdb_lock.3 \
-	HDB.3 hdb_name.3 \
-	HDB.3 hdb_nextkey.3 \
-	HDB.3 hdb_open.3 \
-	HDB.3 hdb_password.3 \
-	HDB.3 hdb_remove.3 \
-	HDB.3 hdb_rename.3 \
-	HDB.3 hdb_store.3 \
-	HDB.3 hdb_unlock.3
 
 INCS=	hdb-protos.h \
 	hdb.h

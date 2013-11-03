@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.10 2013/08/10 14:54:03 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.11 2013/11/03 11:56:40 ajacoutot Exp $
 
 PROG=	kcc
-MPAGES=	klist.1
+MPAGES=	klist.1 kswitch.1
 MSRC=	${KRB5DIR}/kuser
 LINKS=	${BINDIR}/kcc ${BINDIR}/klist
 CPPFLAGS=	-I${KRB5DIR}/lib/asn1 \

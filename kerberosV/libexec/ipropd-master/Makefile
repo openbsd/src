@@ -1,7 +1,9 @@
-# $OpenBSD: Makefile,v 1.15 2013/07/10 11:14:39 ajacoutot Exp $
+# $OpenBSD: Makefile,v 1.16 2013/11/03 11:56:40 ajacoutot Exp $
 
 PROG=	ipropd-master
 MPAGES=	iprop.8
+MLINKS= iprop.8	ipropd-master.8 \
+	iprop.8	ipropd-master.8
 MSRC=	${KRB5DIR}/lib/kadm5
 SRCS=	ipropd_common.c ipropd_master.c kadm5_err.h
 CPPFLAGS=	-I${KRB5DIR}/lib/krb5 -I${KRB5DIR}/lib/asn1 -I${KRB5DIR}/lib/roken \
