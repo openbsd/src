@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_syscall.h,v 1.77 2013/10/25 05:10:33 guenther Exp $	*/
+/*	$OpenBSD: linux_syscall.h,v 1.78 2013/11/03 13:56:03 pirofti Exp $	*/
 
 /*
  * System call numbers.
@@ -258,9 +258,6 @@
 
 /* syscall: "readlink" ret: "int" args: "char *" "char *" "int" */
 #define	LINUX_SYS_readlink	85
-
-/* syscall: "uselib" ret: "int" args: "char *" */
-#define	LINUX_SYS_uselib	86
 
 /* syscall: "swapon" ret: "int" args: "char *" */
 #define	LINUX_SYS_swapon	87

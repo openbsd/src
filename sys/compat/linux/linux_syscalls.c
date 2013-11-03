@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_syscalls.c,v 1.77 2013/10/25 05:10:33 guenther Exp $	*/
+/*	$OpenBSD: linux_syscalls.c,v 1.78 2013/11/03 13:56:03 pirofti Exp $	*/
 
 /*
  * System call names.
@@ -102,7 +102,7 @@ char *linux_syscallnames[] = {
 	"symlink",			/* 83 = symlink */
 	"olstat",			/* 84 = olstat */
 	"readlink",			/* 85 = readlink */
-	"uselib",			/* 86 = uselib */
+	"#86 (unimplemented linux_sys_uselib)",		/* 86 = unimplemented linux_sys_uselib */
 	"swapon",			/* 87 = swapon */
 	"reboot",			/* 88 = reboot */
 	"readdir",			/* 89 = readdir */

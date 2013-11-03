@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_syscallargs.h,v 1.79 2013/10/25 05:10:33 guenther Exp $	*/
+/*	$OpenBSD: linux_syscallargs.h,v 1.80 2013/11/03 13:56:03 pirofti Exp $	*/
 
 /*
  * System call argument lists.
@@ -231,10 +231,6 @@ struct linux_sys_readlink_args {
 	syscallarg(char *) name;
 	syscallarg(char *) buf;
 	syscallarg(int) count;
-};
-
-struct linux_sys_uselib_args {
-	syscallarg(char *) path;
 };
 
 struct linux_sys_swapon_args {
@@ -761,7 +757,6 @@ int	linux_sys_oldselect(struct proc *, void *, register_t *);
 int	linux_sys_symlink(struct proc *, void *, register_t *);
 int	linux_sys_lstat(struct proc *, void *, register_t *);
 int	linux_sys_readlink(struct proc *, void *, register_t *);
-int	linux_sys_uselib(struct proc *, void *, register_t *);
 int	linux_sys_swapon(struct proc *, void *, register_t *);
 int	sys_reboot(struct proc *, void *, register_t *);
 int	linux_sys_readdir(struct proc *, void *, register_t *);

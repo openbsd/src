@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sysent.c,v 1.78 2013/10/25 05:10:33 guenther Exp $	*/
+/*	$OpenBSD: linux_sysent.c,v 1.79 2013/11/03 13:56:03 pirofti Exp $	*/
 
 /*
  * System call switch table.
@@ -203,8 +203,8 @@ struct sysent linux_sysent[] = {
 	    linux_sys_lstat },			/* 84 = olstat */
 	{ 3, s(struct linux_sys_readlink_args), 0,
 	    linux_sys_readlink },		/* 85 = readlink */
-	{ 1, s(struct linux_sys_uselib_args), 0,
-	    linux_sys_uselib },			/* 86 = uselib */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 86 = unimplemented linux_sys_uselib */
 	{ 1, s(struct linux_sys_swapon_args), 0,
 	    linux_sys_swapon },			/* 87 = swapon */
 	{ 1, s(struct sys_reboot_args), 0,
