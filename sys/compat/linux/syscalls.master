@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.74 2013/10/25 05:10:03 guenther Exp $
+	$OpenBSD: syscalls.master,v 1.75 2013/11/03 13:52:44 pirofti Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -158,7 +158,7 @@
 			    struct linux_stat *up); } olstat
 85	STD		{ int linux_sys_readlink(char *name, char *buf, \
 			    int count); }
-86	STD		{ int linux_sys_uselib(char *path); }
+86	UNIMPL		linux_sys_uselib
 87	STD		{ int linux_sys_swapon(char *name); }
 88	NOARGS		{ int sys_reboot(int opt); }
 89	STD		{ int linux_sys_readdir(int fd, caddr_t dent, \
