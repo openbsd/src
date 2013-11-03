@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.30 2013/08/07 01:06:35 bluhm Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.31 2013/11/03 04:24:28 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -612,12 +612,8 @@ jme_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
-
-#ifdef JME_CHECKSUM
-	ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
-				IFCAP_CSUM_UDPv4;
-#endif
+	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
+	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
