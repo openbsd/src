@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nginx.conf.5,v 1.2 2013/11/03 17:34:39 schwarze Exp $
+.\"	$OpenBSD: nginx.conf.5,v 1.3 2013/11/03 18:13:34 florian Exp $
 .\"
 .\" Copyright (C) 2002-2012 Igor Sysoev
 .\" Copyright (C) 2011-2013 Nginx, Inc.
@@ -2523,6 +2523,190 @@ Sets the maximum
 .Ar size
 of the variables hash table.
 The details of setting up hash tables are provided in a separate document.
+.El
+.Ss Embedded Variables
+The
+.Sx Module ngx_http_core_module
+module supports embedded variables with names matching the Apache Server
+variables.
+First of all, these are variables representing client request header fields,
+such as
+.Va $http_user_agent ,
+.Va $http_cookie ,
+and so on.
+Also there are other variables:
+.Bl -tag -width Ds
+.It Va $arg_ Ns Ar name
+argument
+.Ar name
+in the request line
+.It Va $args
+arguments in the request line
+.It Va $binary_remote_addr
+client address in a binary form, value's length is always 4 bytes
+.It Va $body_bytes_sent
+number of bytes sent to a client, not counting the response header; this
+variable is compatible with the
+.Qq %B
+parameter of the mod_log_config Apache module
+.It Va $bytes_sent
+number of bytes sent to a client (1.3.8, 1.2.5)
+.It Va $connection
+connection serial number (1.3.8, 1.2.5)
+.It Va $connection_requests
+current number of requests made through a connection (1.3.8, 1.2.5)
+.It Va $content_length
+Content-Length request header field
+.It Va $content_type
+Content-Type request header field
+.It Va $cookie_ Ns Ar name
+the
+.Ar name
+cookie
+.It Va $document_root
+.Ic root
+or
+.Ic alias
+directive's value for the current request
+.It Va $document_uri
+same as
+.Va $uri
+.It Va $host
+in this order of precedence: host name from the request line, or host name from
+the Host request header field, or the server name matching a request
+.It Va $hostname
+host name
+.It Va $http_ Ns Ar name
+arbitrary request header field; the last part of a variable name is the field
+name converted to lower case with dashes replaced by underscores
+.It Va $https
+.Qq on
+if connection operates in SSL mode, or an empty string otherwise
+.It Va $is_args
+.Qo ? Qc
+if a request line has arguments, or an empty string otherwise
+.It Va $limit_rate
+setting this variable enables response rate limiting; see
+.Ic limit_rate
+.It Va $msec
+current time in seconds with the milliseconds resolution (1.3.9, 1.2.6)
+.It Va $nginx_version
+nginx version
+.It Va $pid
+PID of the worker process
+.It Va $pipe
+.Qq p
+if request was pipelined,
+.Qo . Qc
+otherwise (1.3.12, 1.2.7)
+.It Va $query_string
+same as
+.Va $args
+.It Va $realpath_root
+an absolute pathname corresponding to the
+.Ic root
+or
+.Ic alias
+directive's value for the current request, with all symbolic links resolved to
+real paths
+.It Va $remote_addr
+client address
+.It Va $remote_port
+client port
+.It Va $remote_user
+user name supplied with the Basic authentication
+.It Va $request
+full original request line
+.It Va $request_body
+request body
+.Pp
+The variable's value is made available in locations processed by the
+.Ic proxy_pass
+and
+.Ic fastcgi_pass
+directives.
+.It Va $request_body_file
+name of a temporary file with the request body
+.Pp
+At the end of processing, the file needs to be removed.
+To always write the request body to a file,
+.Ic client_body_in_file_only
+needs to be enabled.
+When the name of a temporary file is passed in a proxied request or in a request
+to a FastCGI server, passing the request body should be disabled by the
+.Ic proxy_pass_request_body Cm off
+and
+.Ic fastcgi_pass_request_body Cm off
+directives, respectively.
+.It Va $request_completion
+.Qq OK
+if a request has completed, or an empty string otherwise
+.It Va $request_filename
+file path for the current request, based on the
+.Ic root
+or
+.Ic alias
+directives, and the request URI
+.It Va $request_length
+request length (including request line, header, and request body) (1.3.12,
+1.2.7)
+.It Va $request_method
+request method, usually
+.Cm GET
+or
+.Cm POST
+.It Va $request_time
+request processing time in seconds with a milliseconds resolution (1.3.9,
+1.2.6); time elapsed since the first bytes were read from the client
+.It Va $request_uri
+full original request URI (with arguments)
+.It Va $scheme
+request scheme,
+.Qq http
+or
+.Qq https
+.It Va $sent_http_ Ns Ar name
+arbitrary response header field; the last part of a variable name is the field
+name converted to lower case with dashes replaced by underscores
+.It Va $server_addr
+an address of the server which accepted a request
+.Pp
+Computing a value of this variable usually requires one system call.
+To avoid a system call, the
+.Ic listen
+directives must specify addresses and use the
+.Ic bind
+parameter.
+.It Va $server_name
+name of the server which accepted a request
+.It Va $server_port
+port of the server which accepted a request
+.It Va $server_protocol
+request protocol, usually
+.Qq HTTP/1.0
+or
+.Qq HTTP/1.1
+.It Va $status
+response status (1.3.2, 1.2.2)
+.It Va $tcpinfo_rtt ,
+.Va $tcpinfo_rttvar ,
+.Va $tcpinfo_snd_cwnd ,
+.Va $tcpinfo_rcv_space
+information about the client TCP connection; available on systems that support
+the
+.Dv TCP_INFO
+socket option
+.It Va $time_iso8601
+local time in the ISO 8601 standard format (1.3.12, 1.2.7)
+.It Va $time_local
+local time in the Common Log Format (1.3.12, 1.2.7)
+.It Va $uri
+current URI in request, normalized
+.Pp
+The value of
+.Va $uri
+may change during request processing, e.g. when doing internal redirects, or
+when using index files.
 .El
 .Ss Module ngx_http_access_module
 .Bl -tag -width Ds
