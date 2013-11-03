@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.95 2013/06/25 02:53:47 beck Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.96 2013/11/03 13:50:24 miod Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -564,7 +564,7 @@ nfsrv_init(int terminating)
 void
 nfssvc_iod(void *arg)
 {
-	struct proc *p = (struct proc *)arg;
+	struct proc *p = curproc;
 	struct buf *bp, *nbp;
 	int i, myiod;
 	struct vnode *vp;
@@ -657,7 +657,6 @@ nfssvc_iod(void *arg)
 void
 nfs_getset_niothreads(int set)
 {
-	struct proc *p;
 	int i, have, start;
 	
 	for (have = 0, i = 0; i < NFS_MAXASYNCDAEMON; i++)
@@ -671,7 +670,7 @@ nfs_getset_niothreads(int set)
 		start = nfs_niothreads - have;
 
 		while (start > 0) {
-			kthread_create(nfssvc_iod, p, &p, "nfsio");
+			kthread_create(nfssvc_iod, NULL, NULL, "nfsio");
 			start--;
 		}
 

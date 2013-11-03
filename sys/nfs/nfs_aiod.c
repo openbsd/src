@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_aiod.c,v 1.4 2009/08/27 23:39:46 thib Exp $	*/
+/*	$OpenBSD: nfs_aiod.c,v 1.5 2013/11/03 13:50:24 miod Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -72,10 +72,7 @@ nfs_aiod(void *arg)
 {
 	struct nfs_aiod	*aiod;
 	struct nfsmount	*nmp;
-	struct proc	*p;
 	struct buf	*bp;
-
-	p = (struct proc *)arg;
 
 	aiod = malloc(sizeof(*aiod), M_TEMP, M_WAITOK|M_ZERO);
 	mtx_enter(&nfs_aiodl_mtx);
@@ -165,7 +162,6 @@ int
 nfs_set_naiod(int howmany)
 {
 	struct nfs_aiod	*aiod;
-	struct proc	*p;
 	int		 want, error;
 
 	KASSERT(howmany >= 0);
@@ -181,7 +177,7 @@ nfs_set_naiod(int howmany)
 		/* Add more. */	
 		want = min(want, NFS_MAXASYNCDAEMON);
 		while (want > 0) {
-			error = kthread_create(nfs_aiod, p, &p, "nfsaio");
+			error = kthread_create(nfs_aiod, NULL, NULL, "nfsaio");
 			if (error)
 				return (error);
 			want--;
