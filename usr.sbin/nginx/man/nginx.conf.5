@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nginx.conf.5,v 1.1 2013/11/03 09:58:52 florian Exp $
+.\"	$OpenBSD: nginx.conf.5,v 1.2 2013/11/03 17:34:39 schwarze Exp $
 .\"
 .\" Copyright (C) 2002-2012 Igor Sysoev
 .\" Copyright (C) 2011-2013 Nginx, Inc.
@@ -39,6 +39,91 @@
 is an HTTP and reverse proxy server, as well as a mail proxy server.
 It is known for its high performance, stability, rich feature set, simple
 configuration, and low resource consumption.
+.Pp
+The configuration file consists of a list of configuration directives:
+.Bd -offset indent -nofill
+.Ar list
+.Li ::=
+.Op Ar directive
+.Op Ar opt-ws
+.Op Ar list
+.Ed
+.Pp
+Lists may be empty, they may contain leading and trailing whitespace
+and comments, and they may contain whitespace and comments between
+directives.
+Such whitespace is semantically insignificant.
+.Pp
+The syntax of a configuration directive is:
+.Bd -offset indent -nofill
+.Ar directive
+.Li ::=
+.Ar keyword
+.Ar ws
+.Ar arguments
+.Op Ar ws
+.Qq Li \&;
+.Li \&|
+.Ar context
+.Ed
+.Pp
+In this case, whitespace is required to separate the keyword from
+the arguments.
+A context may not be followed by a semicolon, but after every other
+directive, a semicolon is required, even at the end of a list.
+.Pp
+As a special cases of a configuration directive, the syntax of a
+configuration context is:
+.Bd -offset indent -nofill
+.Ar context
+.Li ::=
+.Ar keyword
+.Op Ar ws
+.Qq Li \&{
+.Op Ar list
+.Qq Li \&}
+.Ed
+.Pp
+Contexts may be nested, and they freely intermix with other directives
+on each nesting level.
+.Pp
+The syntax of whitespace is:
+.Bd -offset indent -nofill
+.Ar ws
+.Li ::=
+.Ar ws-char
+.Op Ar opt-ws
+.Ed
+.Bd -offset indent -nofill
+.Ar ws-char
+.Li ::=
+.Aq space
+.Li \&|
+.Aq tab
+.Li \&|
+.Aq newline
+.Ed
+.Bd -offset indent -nofill
+.Ar opt-ws
+.Li ::=
+.Pq Ar comment | ws-char
+.Op Ar opt-ws
+.Ed
+.Bd -offset indent -nofill
+.Ar comment
+.Li ::=
+.Qq #
+.Op Ao non-newline character Ac ...
+.Aq newline
+.Ed
+.Pp
+Comments start with a hash character and extend to the end of the line.
+They can start at the beginning of a line, after the semicolon or closing
+brace at the end of a directive, or after any whitespace character,
+even in the middle of a directive.
+.Pp
+In the following, all keywords are listed, and their arguments are
+explained.
 .Ss Core functionality
 .Bl -tag -width Ds
 .It Ic accept_mutex Cm on | Cm off
@@ -8382,5 +8467,19 @@ matches any MIME type (0.8.29).
 If the transformation result is an HTML response, its MIME type is changed to
 text/html.
 .El
+.Sh FILES
+.Pa /etc/nginx/nginx.conf
+.Sh EXAMPLES
+The following is a valid configuration file, but such creative use
+of whitespace is not recommended:
+.Bd -offset indent -literal
+worker_processes #whitespace is required here
+auto
+#a comment is allowed here
+;events{}user #whitespace is again required here
+www
+#and here, too
+www;# but not here
+.Ed
 .Sh SEE ALSO
 .Xr nginx 8
