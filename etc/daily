@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.76 2013/01/06 14:11:12 deraadt Exp $
+#	$OpenBSD: daily,v 1.77 2013/11/03 18:28:34 deraadt Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 # For local additions, create the file /etc/daily.local.
@@ -49,7 +49,7 @@ if [ -d /tmp -a ! -L /tmp ]; then
 	cd /tmp && {
 	find -x . \
 	    \( -path './ssh-*' -o -path ./.X11-unix -o -path ./.ICE-unix \
-	    	-o -path ./portslocks \) \
+		-o -path ./portslocks \) \
 	    -prune -o -type f -atime +3 -execdir rm -f -- {} \; 2>/dev/null
 	find -x . -type d -mtime +1 ! -path ./vi.recover ! -path ./.X11-unix \
 	    ! -path ./.ICE-unix ! -path ./portslocks ! -name . \
@@ -60,7 +60,7 @@ if [ -d /var/tmp -a ! -L /var/tmp ]; then
 	cd /var/tmp && {
 	find -x . \
 	    \( -path './ssh-*' -o -path ./.X11-unix -o -path ./.ICE-unix \
-	    	-o -path ./portslocks \) \
+		-o -path ./portslocks \) \
 	    -prune -o ! -type d -atime +7 -execdir rm -f -- {} \; 2>/dev/null
 	find -x . -type d -mtime +1 ! -path ./vi.recover ! -path ./.X11-unix \
 	    ! -path ./.ICE-unix ! -path ./portslocks ! -name . \
@@ -108,7 +108,7 @@ while [ "X$ROOTBACKUP" = X1 ]; do
 	IFS=,
 	for d in `sysctl -n hw.disknames`; do
 		# If the provided disk name is a duid, substitute the device.
-		if [ X$bakdisk = X${d#*:} ]; then 
+		if [ X$bakdisk = X${d#*:} ]; then
 			bakdisk=${d%:*}
 			rootbak=$bakdisk$bakpart
 		fi
