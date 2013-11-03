@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2013/11/03 00:32:36 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.7 2013/11/03 14:03:35 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -109,13 +109,31 @@ run-regress-${inet}-${a:R}: ${a}
 run-regress-${inet}-reuse-${proto}:
 	@echo
 	@echo $@
-	time ${SUDO} SUDO=${SUDO} ktrace -i perl ${PERLINC} ${PERLPATH}remote.pl ${inet} ${LOCAL_${addr}} ${FAKE_${addr}} ${REMOTE_SSH} ${PERLPATH}args-${proto}-reply.pl
+	time ${SUDO} SUDO=${SUDO} perl ${PERLINC} ${PERLPATH}remote.pl ${inet} ${LOCAL_${addr}} ${FAKE_${addr}} ${REMOTE_SSH} ${PERLPATH}args-${proto}-reply.pl
 	sed -n '/^connect peer:/s/.* //p' client.log >client.port
 	sed -n '/^connect sock:/s/.* //p' client.log >server.port
 .if "tcp" == ${proto}
 	${SUDO} tcpdrop ${LOCAL_${addr}} `cat client.port` ${FAKE_${addr}} `cat server.port`
 .endif
 	time ${SUDO} SUDO=${SUDO} perl ${PERLINC} ${PERLPATH}remote.pl ${inet} ${LOCAL_${addr}} ${FAKE_${addr}} ${REMOTE_SSH} `cat client.port` `cat server.port` ${PERLPATH}args-${proto}-to.pl
+.if "rip" == ${proto}
+	if ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | \
+	    grep 'all 254 ${FAKE_${addr}} .. ${LOCAL_${addr}} '; \
+		then false; \
+	fi
+.else
+.if "inet" == ${inet}
+	if ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | \
+	    grep 'all ${proto} ${FAKE_${addr}}:'`cat server.port`' .. ${LOCAL_${addr}}:'`cat client.port`' '; \
+		then false; \
+	fi
+.else
+	if ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | \
+	    grep 'all ${proto} ${FAKE_${addr}}\['`cat server.port`\]' .. ${LOCAL_${addr}}\['`cat client.port`'\] '; \
+		then false; \
+	fi
+.endif
+.endif
 .endfor
 
 .endfor
