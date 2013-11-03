@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cosh.3,v 1.14 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: cosh.3,v 1.15 2013/11/03 18:28:27 martynas Exp $
 .\" Copyright (c) 1989, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)cosh.3	5.1 (Berkeley) 5/2/91
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: November 3 2013 $
 .Dt COSH 3
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@ If the magnitude of x is too large,
 .Fn coshf "x"
 and
 .Fn coshl "x"
-return Inf and set the global variable
+return \*(If and set the global variable
 .Va errno
 to ERANGE.
 .Sh SEE ALSO

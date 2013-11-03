@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exp.3,v 1.27 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: exp.3,v 1.28 2013/11/03 18:28:27 martynas Exp $
 .\"
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)exp.3	6.12 (Berkeley) 7/31/91
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: November 3 2013 $
 .Dt EXP 3
 .Os
 .Sh NAME
@@ -336,13 +336,13 @@ The function
 .Fn pow x 0
 returns x**0 = 1 for all x including x = 0,
 .if n \
-Infinity
+\*(If
 .if t \
 \(if
 (not found on a
 .Tn VAX ) ,
 and
-.Em NaN
+.Em \*(Na
 (the reserved
 operand on a
 .Tn VAX ) .
@@ -382,7 +382,7 @@ x(0) = y(0) = 0, then x(z)**y(z) \(-> 1 as z \(-> 0.
 .It
 If 0**0 = 1, then
 .if n \
-infinity**0 = 1/0**0 = 1 too; and
+\*(If**0 = 1/0**0 = 1 too; and
 .if t \
 \(if**0 = 1/0**0 = 1 too; and
 then \*(Na**0 = 1 too because x**0 = 1 for all finite
