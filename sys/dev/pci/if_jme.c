@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.31 2013/11/03 04:24:28 brad Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.32 2013/11/03 23:27:33 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -154,13 +154,8 @@ jme_miibus_readreg(struct device *dev, int phy, int reg)
 	int i;
 
 	/* For FPGA version, PHY address 0 should be ignored. */
-	if (sc->jme_caps & JME_CAP_FPGA) {
-		if (phy == 0)
-			return (0);
-	} else {
-		if (sc->jme_phyaddr != phy)
-			return (0);
-	}
+	if ((sc->jme_caps & JME_CAP_FPGA) && phy == 0)
+		return (0);
 
 	CSR_WRITE_4(sc, JME_SMI, SMI_OP_READ | SMI_OP_EXECUTE |
 	    SMI_PHY_ADDR(phy) | SMI_REG_ADDR(reg));
@@ -189,13 +184,8 @@ jme_miibus_writereg(struct device *dev, int phy, int reg, int val)
 	int i;
 
 	/* For FPGA version, PHY address 0 should be ignored. */
-	if (sc->jme_caps & JME_CAP_FPGA) {
-		if (phy == 0)
-			return;
-	} else {
-		if (sc->jme_phyaddr != phy)
-			return;
-	}
+	if ((sc->jme_caps & JME_CAP_FPGA) && phy == 0)
+		return;
 
 	CSR_WRITE_4(sc, JME_SMI, SMI_OP_WRITE | SMI_OP_EXECUTE |
 	    ((val << SMI_DATA_SHIFT) & SMI_DATA_MASK) |
@@ -627,7 +617,8 @@ jme_attach(struct device *parent, struct device *self, void *aux)
 
 	ifmedia_init(&sc->sc_miibus.mii_media, 0, jme_mediachange,
 	    jme_mediastatus);
-	mii_attach(self, &sc->sc_miibus, 0xffffffff, MII_PHY_ANY,
+	mii_attach(self, &sc->sc_miibus, 0xffffffff,
+	    sc->jme_caps & JME_CAP_FPGA ? MII_PHY_ANY : sc->jme_phyaddr,
 	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 
 	if (LIST_FIRST(&sc->sc_miibus.mii_phys) == NULL) {
