@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.121 2013/11/01 17:36:19 krw Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.122 2013/11/03 02:22:07 krw Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -4035,12 +4035,13 @@ handle_written_inodeblock(struct inodedep *inodedep, struct buf *bp)
 		if (fstype == UM_UFS1) {
 			if (adp->ad_lbn < NDADDR) {
 				if (dp1->di_db[adp->ad_lbn] != adp->ad_oldblkno)
-					 panic("%s: %s #%lld mismatch %d != %lld",
+					 panic("%s: %s #%lld mismatch %d != "
+					     "%lld",
 					     "handle_written_inodeblock",
 					     "direct pointer",
 					     (long long)adp->ad_lbn,
 					     dp1->di_db[adp->ad_lbn],
-					     adp->ad_oldblkno);
+					     (long long)adp->ad_oldblkno);
 				dp1->di_db[adp->ad_lbn] = adp->ad_newblkno;
 			} else {
 				if (dp1->di_ib[adp->ad_lbn - NDADDR] != 0)
