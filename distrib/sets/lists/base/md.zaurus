@@ -1487,6 +1487,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/fstab.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/fts.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ftw.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/fuse.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/fuse_opt.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/g++
 ./usr/libdata/perl5/site_perl/arm-openbsd/g++/FlexLexer.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/g++/arm-unknown-openbsd5.4

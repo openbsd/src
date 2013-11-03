@@ -1469,6 +1469,8 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/fstab.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/fts.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/ftw.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/fuse.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/fuse_opt.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/g++
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/g++/FlexLexer.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/g++/backward

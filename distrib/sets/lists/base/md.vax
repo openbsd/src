@@ -878,6 +878,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/fstab.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/fts.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ftw.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/fuse.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/fuse_opt.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/g++
 ./usr/libdata/perl5/site_perl/vax-openbsd/g++/FlexLexer.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/g++/backward

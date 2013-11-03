@@ -1519,6 +1519,8 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/fstab.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/fts.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ftw.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/fuse.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/fuse_opt.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/g++
 ./usr/libdata/perl5/site_perl/alpha-openbsd/g++/FlexLexer.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/g++/alpha-unknown-openbsd5.4

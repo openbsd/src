@@ -1428,6 +1428,8 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/fstab.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/fts.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/ftw.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/fuse.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/fuse_opt.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/g++
 ./usr/libdata/perl5/site_perl/sh-openbsd/g++/FlexLexer.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/g++/backward

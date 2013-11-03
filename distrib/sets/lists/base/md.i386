@@ -1475,6 +1475,8 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/fstab.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/fts.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ftw.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/fuse.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/fuse_opt.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/g++
 ./usr/libdata/perl5/site_perl/i386-openbsd/g++/FlexLexer.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/g++/backward

@@ -1435,6 +1435,8 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/fstab.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/fts.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/ftw.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/fuse.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/fuse_opt.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/g++
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/g++/FlexLexer.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/g++/backward

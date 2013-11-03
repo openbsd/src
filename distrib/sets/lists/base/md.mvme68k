@@ -1402,6 +1402,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/fstab.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/fts.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/ftw.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/fuse.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/fuse_opt.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/g++
 ./usr/libdata/perl5/site_perl/m68k-openbsd/g++/FlexLexer.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/g++/backward

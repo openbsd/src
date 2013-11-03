@@ -953,6 +953,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/fstab.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/fts.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ftw.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/fuse.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/fuse_opt.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/g++
 ./usr/libdata/perl5/site_perl/sparc-openbsd/g++/FlexLexer.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/g++/backward

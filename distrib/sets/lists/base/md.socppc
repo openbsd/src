@@ -1462,6 +1462,8 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/fstab.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/fts.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ftw.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/fuse.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/fuse_opt.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g++
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g++/FlexLexer.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g++/backward
