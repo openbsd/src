@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.h,v 1.9 2013/11/03 13:52:44 pirofti Exp $	*/
+/*	$OpenBSD: linux_exec.h,v 1.10 2013/11/03 14:32:32 pirofti Exp $	*/
 /*	$NetBSD: linux_exec.h,v 1.5 1995/10/07 06:27:01 mycroft Exp $	*/
 
 /*
@@ -35,34 +35,6 @@
 
 #ifndef	_LINUX_EXEC_H_
 #define	_LINUX_EXEC_H_
-
-#define LINUX_M_I386	100
-/* Sparc? Alpha? */
-
-/* XXX linux_machdep.h ? */
-#ifdef __i386__
-#define LINUX_MID_MACHINE LINUX_M_I386
-#endif
-
-#define LINUX_N_MAGIC(ep)    ((ep)->a_midmag & 0xffff)
-#define LINUX_N_MACHTYPE(ep) (((ep)->a_midmag >> 16) & 0xff)
-
-#define LINUX_N_TXTOFF(x,m) \
- ((m) == ZMAGIC ? 1024 : ((m) == QMAGIC ? 0 : sizeof (struct exec)))
-
-#define LINUX_N_DATOFF(x,m) (LINUX_N_TXTOFF(x,m) + (x).a_text)
-
-#define LINUX_N_TXTADDR(x,m) ((m) == QMAGIC ? PAGE_SIZE : 0)
-
-#define LINUX__N_SEGMENT_ROUND(x) (((x) + NBPG - 1) & ~(NBPG - 1))
-
-#define LINUX__N_TXTENDADDR(x,m) (LINUX_N_TXTADDR(x,m)+(x).a_text)
-
-#define LINUX_N_DATADDR(x,m) \
-    ((m)==OMAGIC? (LINUX__N_TXTENDADDR(x,m)) \
-     : (LINUX__N_SEGMENT_ROUND (LINUX__N_TXTENDADDR(x,m))))
-
-#define LINUX_N_BSSADDR(x,m) (LINUX_N_DATADDR(x,m) + (x).a_data)
 
 int exec_linux_elf32_makecmds(struct proc *, struct exec_package *);
 
