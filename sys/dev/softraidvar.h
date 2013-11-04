@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.139 2013/06/11 16:42:13 deraadt Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.140 2013/11/04 21:02:57 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -19,25 +19,9 @@
 #ifndef SOFTRAIDVAR_H
 #define SOFTRAIDVAR_H
 
-#include <sys/socket.h>
-#include <sys/vnode.h>
-
-#include <net/if.h>
-#include <netinet/in.h>
-#include <netinet/if_ether.h>
-
-#include <crypto/md5.h>
-
 #define SR_META_VERSION		5	/* bump when sr_metadata changes */
 #define SR_META_SIZE		64	/* save space at chunk beginning */
 #define SR_META_OFFSET		16	/* skip 8192 bytes at chunk beginning */
-
-#define SR_META_V3_SIZE		64
-#define SR_META_V3_OFFSET	16
-#define SR_META_V3_DATA_OFFSET	(SR_META_V3_OFFSET + SR_META_V3_SIZE)
-
-#define SR_META_F_NATIVE	0	/* Native metadata format. */
-#define SR_META_F_INVALID	-1
 
 #define SR_BOOT_OFFSET		(SR_META_OFFSET + SR_META_SIZE)
 #define SR_BOOT_LOADER_SIZE	320	/* Size of boot loader storage. */
@@ -45,6 +29,71 @@
 #define SR_BOOT_BLOCKS_SIZE	128	/* Size of boot block storage. */
 #define SR_BOOT_BLOCKS_OFFSET	(SR_BOOT_LOADER_OFFSET + SR_BOOT_LOADER_SIZE)
 #define SR_BOOT_SIZE		(SR_BOOT_LOADER_SIZE + SR_BOOT_BLOCKS_SIZE)
+
+#define SR_CRYPTO_MAXKEYBYTES	32	/* max bytes in a key (AES-XTS-256) */
+#define SR_CRYPTO_MAXKEYS	32	/* max keys per volume */
+#define SR_CRYPTO_KEYBITS	512	/* AES-XTS with 2 * 256 bit keys */
+#define SR_CRYPTO_KEYBYTES	(SR_CRYPTO_KEYBITS >> 3)
+#define SR_CRYPTO_KDFHINTBYTES	256	/* size of opaque KDF hint */
+#define SR_CRYPTO_CHECKBYTES	64	/* size of generic key chksum struct */
+#define SR_CRYPTO_KEY_BLKSHIFT	30	/* 0.5TB per key */
+
+/* this is a generic hint for KDF done in userland, not interpreted by the kernel. */
+struct sr_crypto_genkdf {
+	u_int32_t	len;
+	u_int32_t	type;
+#define SR_CRYPTOKDFT_INVALID	0
+#define SR_CRYPTOKDFT_PBKDF2	1
+#define SR_CRYPTOKDFT_KEYDISK	2
+};
+
+/* this is a hint for KDF using PKCS#5.  Not interpreted by the kernel */
+struct sr_crypto_kdf_pbkdf2 {
+	u_int32_t	len;
+	u_int32_t	type;
+	u_int32_t	rounds;
+	u_int8_t	salt[128];
+};
+
+/*
+ * this structure is used to copy masking keys and KDF hints from/to userland.
+ * the embedded hint structures are not interpreted by the kernel.
+ */
+struct sr_crypto_kdfinfo {
+	u_int32_t	len;
+	u_int32_t	flags;
+#define SR_CRYPTOKDF_INVALID	(0)
+#define SR_CRYPTOKDF_KEY	(1<<0)
+#define SR_CRYPTOKDF_HINT	(1<<1)
+	u_int8_t	maskkey[SR_CRYPTO_MAXKEYBYTES];
+	union {
+		struct sr_crypto_genkdf		generic;
+		struct sr_crypto_kdf_pbkdf2	pbkdf2;
+	}		_kdfhint;
+#define genkdf		_kdfhint.generic
+#define pbkdf2		_kdfhint.pbkdf2
+};
+
+#define SR_IOCTL_GET_KDFHINT		0x01	/* Get KDF hint. */
+#define SR_IOCTL_CHANGE_PASSPHRASE	0x02	/* Change passphase. */
+
+struct sr_crypto_kdfpair {
+	void		*kdfinfo1;
+	u_int32_t	kdfsize1;
+	void		*kdfinfo2;
+	u_int32_t	kdfsize2;
+};
+
+#if defined(_KERNEL) || defined(_STANDALONE)
+
+#include <crypto/md5.h>
+
+#define SR_META_V3_SIZE		64
+#define SR_META_V3_OFFSET	16
+#define SR_META_V3_DATA_OFFSET	(SR_META_V3_OFFSET + SR_META_V3_SIZE)
+
+#define SR_META_F_NATIVE	0	/* Native metadata format. */
+#define SR_META_F_INVALID	-1
 
 #define SR_HEADER_SIZE		(SR_META_SIZE + SR_BOOT_SIZE)
 #define SR_DATA_OFFSET		(SR_META_OFFSET + SR_HEADER_SIZE)
@@ -117,14 +166,6 @@ struct sr_meta_chunk {
 	u_int8_t		scm_checksum[MD5_DIGEST_LENGTH];
 	u_int32_t		scm_status;	/* use bio bioc_disk status */
 } __packed;
-
-#define SR_CRYPTO_MAXKEYBYTES	32	/* max bytes in a key (AES-XTS-256) */
-#define SR_CRYPTO_MAXKEYS	32	/* max keys per volume */
-#define SR_CRYPTO_KEYBITS	512	/* AES-XTS with 2 * 256 bit keys */
-#define SR_CRYPTO_KEYBYTES	(SR_CRYPTO_KEYBITS >> 3)
-#define SR_CRYPTO_KDFHINTBYTES	256	/* size of opaque KDF hint */
-#define SR_CRYPTO_CHECKBYTES	64	/* size of generic key chksum struct */
-#define SR_CRYPTO_KEY_BLKSHIFT	30	/* 0.5TB per key */
 
 /*
  * Check that HMAC-SHA1_k(decrypted scm_key) == sch_mac, where
@@ -199,59 +240,6 @@ struct sr_meta_opt_item {
 
 SLIST_HEAD(sr_meta_opt_head, sr_meta_opt_item);
 
-/* this is a generic hint for KDF done in userland, not interpreted by the kernel. */
-struct sr_crypto_genkdf {
-	u_int32_t	len;
-	u_int32_t	type;
-#define SR_CRYPTOKDFT_INVALID	0
-#define SR_CRYPTOKDFT_PBKDF2	1
-#define SR_CRYPTOKDFT_KEYDISK	2
-};
-
-/* this is a hint for KDF using PKCS#5.  Not interpreted by the kernel */
-struct sr_crypto_kdf_pbkdf2 {
-	u_int32_t	len;
-	u_int32_t	type;
-	u_int32_t	rounds;
-	u_int8_t	salt[128];
-};
-
-/*
- * this structure is used to copy masking keys and KDF hints from/to userland.
- * the embedded hint structures are not interpreted by the kernel.
- */
-struct sr_crypto_kdfinfo {
-	u_int32_t	len;
-	u_int32_t	flags;
-#define SR_CRYPTOKDF_INVALID	(0)
-#define SR_CRYPTOKDF_KEY	(1<<0)
-#define SR_CRYPTOKDF_HINT	(1<<1)
-	u_int8_t	maskkey[SR_CRYPTO_MAXKEYBYTES];
-	union {
-		struct sr_crypto_genkdf		generic;
-		struct sr_crypto_kdf_pbkdf2	pbkdf2;
-	}		_kdfhint;
-#define genkdf		_kdfhint.generic
-#define pbkdf2		_kdfhint.pbkdf2
-};
-
-#define SR_IOCTL_GET_KDFHINT		0x01	/* Get KDF hint. */
-#define SR_IOCTL_CHANGE_PASSPHRASE	0x02	/* Change passphase. */
-
-struct sr_crypto_kdfpair {
-	void		*kdfinfo1;
-	u_int32_t	kdfsize1;
-	void		*kdfinfo2;
-	u_int32_t	kdfsize2;
-};
-
-struct sr_aoe_config {
-	char		nic[IFNAMSIZ];
-	struct ether_addr dsteaddr;
-	unsigned short	shelf;
-	unsigned char	slot;
-};
-
 struct sr_boot_chunk {
 	struct sr_metadata *sbc_metadata;
 	dev_t		sbc_mm;			/* Device major/minor. */
@@ -296,11 +284,13 @@ struct sr_boot_volume {
 
 SLIST_HEAD(sr_boot_volume_head, sr_boot_volume);
 
+#endif /* _KERNEL | _STANDALONE */
+
 #ifdef _KERNEL
+
 #include <dev/biovar.h>
 
 #include <sys/buf.h>
-#include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/rwlock.h>
 
@@ -458,6 +448,7 @@ struct sr_crypto {
 	u_int64_t		scr_sid[SR_CRYPTO_MAXKEYS];
 };
 
+#ifdef AOE
 /* ata over ethernet */
 #define SR_RAIDAOE_NOWU		2
 struct sr_aoe {
@@ -466,6 +457,7 @@ struct sr_aoe {
 	struct ifnet		*sra_ifp;
 	struct ether_addr	sra_eaddr;
 };
+#endif /* AOE */
 
 #define SR_CONCAT_NOWU		16
 struct sr_concat {

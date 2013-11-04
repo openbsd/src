@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.51 2013/11/01 17:36:19 krw Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.52 2013/11/04 21:02:57 deraadt Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -34,6 +34,7 @@
 #include <sys/mount.h>
 #include <sys/sensors.h>
 #include <sys/stat.h>
+#include <sys/pool.h>
 #include <sys/conf.h>
 #include <sys/uio.h>
 

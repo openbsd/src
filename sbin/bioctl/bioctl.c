@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.114 2013/10/31 00:47:20 kettenis Exp $       */
+/* $OpenBSD: bioctl.c,v 1.115 2013/11/04 21:02:58 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -27,13 +27,12 @@
  *
  */
 
+#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/dkio.h>
-#include <sys/param.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <dev/biovar.h>
 #include <dev/softraidvar.h>
+#include <dev/biovar.h>
 
 #include <errno.h>
 #include <err.h>
@@ -43,9 +42,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <ctype.h>
 #include <vis.h>
 #include <readpassphrase.h>
+
+#ifdef AOE
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+
+struct sr_aoe_config 	*create_aoe(u_int16_t, char *);
+#endif /* AOE */
 
 struct locator {
 	int		channel;
@@ -69,7 +75,6 @@ int			bio_getvolbyname(char *);
 void			bio_setstate(char *, int, char *);
 void			bio_setblink(char *, char *, int);
 void			bio_blink(char *, int, int);
-struct sr_aoe_config 	*create_aoe(u_int16_t, char *);
 void			bio_createraid(u_int16_t, char *, char *);
 void			bio_deleteraid(char *);
 void			bio_changepass(char *);
@@ -759,6 +764,7 @@ bio_blink(char *enclosure, int target, int blinktype)
 	close(bioh);
 }
 
+#ifdef AOE
 struct sr_aoe_config *
 create_aoe(u_int16_t level, char *dev_list)
 {
@@ -802,6 +808,7 @@ create_aoe(u_int16_t level, char *dev_list)
 invalid:
 	errx(1, "invalid AOE dev list: use nic,dsteaddr,shelf,slot");
 }
+#endif /* AOE */
 
 void
 bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
@@ -818,11 +825,14 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 	if (!dev_list)
 		errx(1, "no devices specified");
 
+#ifdef AOE
 	if (level == 'a') {
 		sac = create_aoe(level, dev_list);
 		no_dev = 0;
 		dt = NULL;
-	} else  {
+	} else
+#endif /* AOE */
+	{
 		dt = (dev_t *)malloc(BIOC_CRMAXLEN);
 		if (!dt)
 			err(1, "not enough memory for dev_t list");
@@ -869,11 +879,14 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 	create.bc_flags = BIOC_SCDEVT | cflags;
 	create.bc_key_disk = NODEV;
 
+#ifdef AOE
 	if (level == 'a') {
 		create.bc_opaque = sac;
 		create.bc_opaque_size = sizeof(*sac);
 		create.bc_opaque_flags = BIOC_SOIN;
-	} else if (level == 'C' && key_disk == NULL) {
+	} else
+#endif /* AOE */
+	if (level == 'C' && key_disk == NULL) {
 
 		memset(&kdfinfo, 0, sizeof(kdfinfo));
 		memset(&kdfhint, 0, sizeof(kdfhint));

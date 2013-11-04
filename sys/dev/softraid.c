@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.312 2013/11/01 17:36:19 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.313 2013/11/04 21:02:57 deraadt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -33,6 +33,7 @@
 #include <sys/queue.h>
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
+#include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/sensors.h>
 #include <sys/stat.h>
