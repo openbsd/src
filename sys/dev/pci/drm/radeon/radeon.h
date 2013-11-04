@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon.h,v 1.2 2013/10/29 06:30:57 jsg Exp $	*/
+/*	$OpenBSD: radeon.h,v 1.3 2013/11/04 12:19:26 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1567,6 +1567,9 @@ struct radeon_device {
 	struct workq_task		switchwqt;
 	struct rasops_info		ro;
 	int				console;
+
+	struct task			burner_task;
+	int				burner_dpms_mode;
 
 #ifdef __sparc64__
 	struct sunfb			sf;

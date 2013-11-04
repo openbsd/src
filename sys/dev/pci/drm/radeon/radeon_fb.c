@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_fb.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_fb.c,v 1.2 2013/11/04 12:19:26 kettenis Exp $	*/
 /*
  * Copyright © 2007 David Airlie
  *
@@ -63,6 +63,7 @@ static struct fb_ops radeonfb_ops = {
 int radeonfb_create_pinned_object(struct radeon_fbdev *,
     struct drm_mode_fb_cmd2 *, struct drm_obj **);
 
+void radeondrm_burner_cb(void *, void *);
 
 int radeon_align_pitch(struct radeon_device *rdev, int width, int bpp, bool tiled)
 {
@@ -425,6 +426,8 @@ int radeon_fbdev_init(struct radeon_device *rdev)
 		return ret;
 	}
 
+	task_set(&rdev->burner_task, radeondrm_burner_cb, rdev, NULL);
+
 	drm_fb_helper_single_add_all_connectors(&rfbdev->helper);
 #ifdef __sparc64__
 {
@@ -456,6 +459,8 @@ void radeon_fbdev_fini(struct radeon_device *rdev)
 {
 	if (!rdev->mode_info.rfbdev)
 		return;
+
+	task_del(systq, &rdev->burner_task);
 
 	radeon_fbdev_destroy(rdev->ddev, rdev->mode_info.rfbdev);
 	free(rdev->mode_info.rfbdev, M_DRM);
@@ -490,17 +495,30 @@ void
 radeondrm_burner(void *v, u_int on, u_int flags)
 {
 	struct radeon_device *rdev = v;
-	struct drm_fb_helper *helper = &rdev->mode_info.rfbdev->helper;
-	int dpms_mode;
+
+	task_del(systq, &rdev->burner_task);
 
 	if (on)
-		dpms_mode = DRM_MODE_DPMS_ON;
+		rdev->burner_dpms_mode = DRM_MODE_DPMS_ON;
 	else {
 		if (flags & WSDISPLAY_BURN_VBLANK)
-			dpms_mode = DRM_MODE_DPMS_OFF;
+			rdev->burner_dpms_mode = DRM_MODE_DPMS_OFF;
 		else
-			dpms_mode = DRM_MODE_DPMS_STANDBY;
+			rdev->burner_dpms_mode = DRM_MODE_DPMS_STANDBY;
 	}
 
-	drm_fb_helper_dpms(helper, dpms_mode);
+	/*
+	 * Setting the DPMS mode may sleep while waiting for vblank so
+	 * hand things off to a taskq.
+	 */
+	task_add(systq, &rdev->burner_task);
+}
+
+void
+radeondrm_burner_cb(void *arg1, void *arg2)
+{
+	struct radeon_device *rdev = arg1;
+	struct drm_fb_helper *helper = &rdev->mode_info.rfbdev->helper;
+
+	drm_fb_helper_dpms(helper, rdev->burner_dpms_mode);
 }
