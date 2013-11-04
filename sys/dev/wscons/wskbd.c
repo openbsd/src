@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.74 2013/10/18 22:06:42 miod Exp $ */
+/* $OpenBSD: wskbd.c,v 1.75 2013/11/04 11:57:26 mpi Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -95,7 +95,6 @@
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
-#include <sys/workq.h>
 
 #include <ddb/db_var.h>
 
@@ -298,7 +297,7 @@ static struct wskbd_internal wskbd_console_data;
 void	wskbd_update_layout(struct wskbd_internal *, kbd_t);
 
 #if NAUDIO > 0
-extern int wskbd_set_mixervolume(long dir, int out);
+extern int wskbd_set_mixervolume(long, long);
 #endif
 
 void
@@ -1644,16 +1643,13 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 		switch (ksym) {
 #if NAUDIO > 0
 		case KS_AudioMute:
-			workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
-			    (void *)(long)0, (void *)(int)1);
+			wskbd_set_mixervolume(0, 1);
 			return (0);
 		case KS_AudioLower:
-			workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
-			    (void *)(long)-1, (void*)(int)1);
+			wskbd_set_mixervolume(-1, 1);
 			return (0);
 		case KS_AudioRaise:
-			workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
-			    (void *)(long)1, (void*)(int)1);
+			wskbd_set_mixervolume(1, 1);
 			return (0);
 #endif
 		default:

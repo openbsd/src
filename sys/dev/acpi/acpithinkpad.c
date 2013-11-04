@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.33 2013/10/30 05:03:16 mlarkin Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.34 2013/11/04 11:57:26 mpi Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -18,7 +18,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/workq.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -116,7 +115,7 @@ void    thinkpad_sensor_attach(struct acpithinkpad_softc *sc);
 void    thinkpad_sensor_refresh(void *);
 
 #if NAUDIO > 0 && NWSKBD > 0
-extern int wskbd_set_mixervolume(long dir, int out);
+extern int wskbd_set_mixervolume(long, long);
 #endif
 
 struct cfattach acpithinkpad_ca = {
@@ -318,8 +317,7 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 			break;
 		case THINKPAD_BUTTON_MICROPHONE_MUTE:
 #if NAUDIO > 0 && NWSKBD > 0
-			workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
-			    (void *)(long)0, (void *)(int)0);
+			wskbd_set_mixervolume(0, 0);
 #endif
 			handled = 1;
 			break;

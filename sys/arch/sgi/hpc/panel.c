@@ -1,4 +1,4 @@
-/*	$OpenBSD: panel.c,v 1.1 2012/04/17 15:23:01 miod Exp $	*/
+/*	$OpenBSD: panel.c,v 1.2 2013/11/04 11:57:26 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -22,7 +22,6 @@
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/timeout.h>
-#include <sys/workq.h>
 
 #include <machine/autoconf.h>
 #include <mips64/archtype.h>
@@ -36,7 +35,7 @@
 
 #include "audio.h"
 #include "wskbd.h"
-extern int wskbd_set_mixervolume(long);
+extern int wskbd_set_mixervolume(long, long);
 
 struct panel_softc {
 	struct device		 sc_dev;
@@ -222,7 +221,6 @@ panel_volume_adjust(struct panel_softc *sc, uint8_t reg)
 		return;
 	}
 
-	workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
-	    (void *)adjust, (void *)(int)1);
+	wskbd_set_mixervolume(adjust, 1);
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: abtn.c,v 1.14 2011/06/15 21:32:04 miod Exp $	*/
+/*	$OpenBSD: abtn.c,v 1.15 2013/11/04 11:57:26 mpi Exp $	*/
 /*	$NetBSD: abtn.c,v 1.1 1999/07/12 17:48:26 tsubai Exp $	*/
 
 /*-
@@ -61,7 +61,7 @@ void abtn_adbcomplete(caddr_t, caddr_t, int);
 #if NWSKBD > 0 
 extern int cd_eject(void);
 #if NAUDIO > 0
-extern int wskbd_set_mixervolume(long dir);
+extern int wskbd_set_mixervolume(long, long);
 #endif
 #endif
 
@@ -130,18 +130,15 @@ abtn_adbcomplete(caddr_t buffer, caddr_t data, int adb_command)
 #if NAUDIO > 0 && NWSKBD > 0
 	case 0x08:	/* mute */
 	case 0x01:	/* mute, AV hardware */
-		workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
-		    (void *)(long)0, (void *)(int)1);
+		wskbd_set_mixervolume(0, 1);
 		break;
 	case 0x07:	/* decrease volume */
 	case 0x02:	/* decrease volume, AV hardware */
-		workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
-		    (void *)(long)-1, (void *)(int)1);
+		wskbd_set_mixervolume(-1, 1);
 		break;
 	case 0x06:	/* increase volume */
 	case 0x03:	/* increase volume, AV hardware */
-		workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
-		    (void *)(long)1, (void *)(int)1);
+		wskbd_set_mixervolume(1, 1);
 		break;
 #endif
 	case 0x0c:	/* mirror display key */

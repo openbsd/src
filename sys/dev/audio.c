@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.116 2013/10/30 02:13:52 dlg Exp $	*/
+/*	$OpenBSD: audio.c,v 1.117 2013/11/04 11:57:26 mpi Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -217,7 +217,8 @@ struct filterops audioread_filtops =
 
 #if NWSKBD > 0
 /* Mixer manipulation using keyboard */
-int wskbd_set_mixervolume(long, int);
+int wskbd_set_mixervolume(long, long);
+void wskbd_set_mixervolume_callback(void *, void *);
 #endif
 
 /*
@@ -354,6 +355,10 @@ audioattach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->sc_resume_to, audio_resume_to, sc);
 	task_set(&sc->sc_resume_task, audio_resume_task, sc, NULL);
+#if NWSKBD > 0
+	task_set(&sc->sc_mixer_task, wskbd_set_mixervolume_callback, NULL,
+	    NULL);
+#endif /* NWSKBD > 0 */
 }
 
 int
@@ -3334,25 +3339,47 @@ filt_audiowrite(struct knote *kn, long hint)
 
 #if NWSKBD > 0
 int
-wskbd_set_mixervolume(long dir, int out)
+wskbd_set_mixervolume(long dir, long out)
 {
 	struct audio_softc *sc;
-	mixer_devinfo_t mi;
-	int error;
-	u_int gain;
-	u_char balance, mute;
-	struct au_mixer_ports *ports;
 
 	if (audio_cd.cd_ndevs == 0 || (sc = audio_cd.cd_devs[0]) == NULL) {
 		DPRINTF(("wskbd_set_mixervolume: audio_cd\n"));
 		return (ENXIO);
 	}
 
+	task_del(systq, &sc->sc_mixer_task);
+	task_set(&sc->sc_mixer_task, wskbd_set_mixervolume_callback,
+	    (void *)dir, (void *)out);
+	task_add(systq, &sc->sc_mixer_task);
+
+	return (0);
+}
+
+void
+wskbd_set_mixervolume_callback(void *arg1, void *arg2)
+{
+	struct audio_softc *sc;
+	struct au_mixer_ports *ports;
+	mixer_devinfo_t mi;
+	u_char balance, mute;
+	long dir, out;
+	u_int gain;
+	int error;
+
+	if (audio_cd.cd_ndevs == 0 || (sc = audio_cd.cd_devs[0]) == NULL) {
+		DPRINTF(("%s: audio_cd\n", __func__));
+		return;
+	}
+
+	dir = (long)arg1;
+	out = (long)arg2;
+
 	ports = out ? &sc->sc_outports : &sc->sc_inports;
 
 	if (ports->master == -1) {
-		DPRINTF(("wskbd_set_mixervolume: master == -1\n"));
-		return (ENXIO);
+		DPRINTF(("%s: master == -1\n", __func__));
+		return;
 	}
 
 	if (dir == 0) {
@@ -3360,18 +3387,16 @@ wskbd_set_mixervolume(long dir, int out)
 
 		error = au_get_mute(sc, ports, &mute);
 		if (error != 0) {
-			DPRINTF(("wskbd_set_mixervolume:"
-			    " au_get_mute: %d\n", error));
-			return (error);
+			DPRINTF(("%s: au_get_mute: %d\n", __func__, error));
+			return;
 		}
 
 		mute = !mute;
 
 		error = au_set_mute(sc, ports, mute);
 		if (error != 0) {
-			DPRINTF(("wskbd_set_mixervolume:"
-			    " au_set_mute: %d\n", error));
-			return (error);
+			DPRINTF(("%s: au_set_mute: %d\n", __func__, error));
+			return;
 		}
 	} else {
 		/* Raise or lower volume */
@@ -3379,9 +3404,8 @@ wskbd_set_mixervolume(long dir, int out)
 		mi.index = ports->master;
 		error = sc->hw_if->query_devinfo(sc->hw_hdl, &mi);
 		if (error != 0) {
-			DPRINTF(("wskbd_set_mixervolume:"
-			    " query_devinfo: %d\n", error));
-			return (error);
+			DPRINTF(("%s: query_devinfo: %d\n", __func__, error));
+			return;
 		}
 
 		au_get_gain(sc, ports, &gain, &balance);
@@ -3393,12 +3417,9 @@ wskbd_set_mixervolume(long dir, int out)
 
 		error = au_set_gain(sc, ports, gain, balance);
 		if (error != 0) {
-			DPRINTF(("wskbd_set_mixervolume:"
-			    " au_set_gain: %d\n", error));
-			return (error);
+			DPRINTF(("%s: au_set_gain: %d\n", __func__, error));
+			return;
 		}
 	}
-
-	return (0);
 }
 #endif /* NWSKBD > 0 */
