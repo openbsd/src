@@ -1,4 +1,4 @@
-#	$OpenBSD: files.zaurus,v 1.27 2011/05/15 08:52:48 matthieu Exp $
+#	$OpenBSD: files.zaurus,v 1.28 2013/11/04 14:07:16 deraadt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -89,9 +89,6 @@ file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/fpe-arm/armfpe_glue.S		armfpe
 file	arch/arm/fpe-arm/armfpe_init.c		armfpe
 file	arch/arm/fpe-arm/armfpe.s		armfpe
-
-# Machine-independent I2O drivers.
-include "dev/i2o/files.i2o"
 
 # Include WSCONS stuff
 include "dev/wscons/files.wscons"

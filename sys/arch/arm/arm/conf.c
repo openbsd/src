@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.36 2013/08/20 14:27:25 ajacoutot Exp $	*/
+/*	$OpenBSD: conf.c,v 1.37 2013/11/04 14:11:29 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -127,11 +127,6 @@ cdev_decl(pci);
 #include "uhid.h"
 #include "ulpt.h"
 #include "urio.h"
-
-/*
- * Bluetooth devices
- */
-#include "bthub.h"
 
 /*
  * WSCONS devices
@@ -386,7 +381,7 @@ struct cdevsw cdevsw[] = {
 	cdev_ptm_init(NPTY,ptm),		/* 98: pseudo-tty ptm device */
 	cdev_spkr_init(NSPKR,spkr),		/* 99: PC speaker */
 	cdev_vscsi_init(NVSCSI,vscsi),		/* 100: vscsi */
-	cdev_bthub_init(NBTHUB,bthub),		/* 101: bthub */
+	cdev_notdef(),
 	cdev_disk_init(1,diskmap),		/* 102: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),		/* 103: pppx */
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.144 2013/08/20 14:27:28 ajacoutot Exp $	*/
+/*	$OpenBSD: conf.c,v 1.145 2013/11/04 14:11:29 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -143,10 +143,8 @@ cdev_decl(cy);
 #include "video.h"
 #include "midi.h"
 #include "joy.h"
-#include "bthub.h"
 #include "pctr.h"
 #include "bios.h"
-#include "iop.h"
 #include "bktr.h"
 #include "ksyms.h"
 #include "usb.h"
@@ -273,7 +271,7 @@ struct cdevsw	cdevsw[] =
 #endif
 	cdev_pf_init(NPF,pf),		/* 73: packet filter */
 	cdev_notdef(),			/* 74: ALTQ (deprecated) */
-	cdev_iop_init(NIOP,iop),	/* 75: I2O IOP control interface */
+	cdev_notdef(),
 	cdev_radio_init(NRADIO, radio), /* 76: generic radio I/O */
 	cdev_notdef(),			/* 77: was USB scanners */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 78: system call tracing */
@@ -284,7 +282,7 @@ struct cdevsw	cdevsw[] =
 	cdev_gpio_init(NGPIO,gpio),	/* 83: GPIO interface */
 	cdev_nvram_init(NNVRAM,nvram),	/* 84: NVRAM interface */
 	cdev_notdef(),			/* 85: ACPI (deprecated) */
-	cdev_bthub_init(NBTHUB,bthub),	/* 86: bthub */
+	cdev_notdef(),
 	cdev_agp_init(NAGP,agp),	/* 87: agp */
 	cdev_drm_init(NDRM,drm),	/* 88: drm */
 	cdev_amdmsr_init(NAMDMSR,amdmsr),	/* 89: amdmsr */

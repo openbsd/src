@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.72 2013/08/20 14:27:24 ajacoutot Exp $	*/
+/*	$OpenBSD: conf.c,v 1.73 2013/11/04 14:11:27 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -123,7 +123,6 @@ cdev_decl(cy);
 #include "pci.h"
 cdev_decl(pci);
 #endif
-#include "bthub.h"
 
 #include "systrace.h"
 #include "hotplug.h"
@@ -191,7 +190,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),
 #endif
 	cdev_bio_init(NBIO,bio),	/* 53: ioctl tunnel */
-	cdev_iop_init(NIOP, iop),	/* 54: I2O IOP control interface */
+	cdev_notdef(),
 	cdev_ptm_init(NPTY,ptm),	/* 55: pseudo-tty ptm device */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 56: devices hot plugging */
 	cdev_crypto_init(NCRYPTO,crypto), /* 57: /dev/crypto */
@@ -199,7 +198,7 @@ struct cdevsw	cdevsw[] =
 	cdev_radio_init(NRADIO,radio), /* 59: generic radio I/O */
 	cdev_mouse_init(NWSMUX, wsmux),	/* 60: ws multiplexor */
 	cdev_vscsi_init(NVSCSI, vscsi),	/* 61: vscsi */
-	cdev_bthub_init(NBTHUB, bthub), /* 62: bthub */
+	cdev_notdef(),
 	cdev_disk_init(1,diskmap),	/* 63: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 64: pppx */
 	cdev_urio_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */

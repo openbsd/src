@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armish,v 1.15 2011/11/15 22:27:52 deraadt Exp $
+#	$OpenBSD: files.armish,v 1.16 2013/11/04 14:07:15 deraadt Exp $
 
 maxpartitions   16
 maxusers	2 8 64
@@ -25,9 +25,6 @@ file	arch/arm/arm/irq_dispatch.S
 #file	arch/armish/dev/iq80310_timer.c
 
 include "dev/i2c/files.i2c"
-
-# Machine-independent I2O drivers.
-include "dev/i2o/files.i2o"
 
 # ARM i80321 files
 include "arch/arm/xscale/files.i80321"

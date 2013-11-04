@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.125 2013/08/20 14:27:32 ajacoutot Exp $	*/
+/*	$OpenBSD: conf.h,v 1.126 2013/11/04 14:07:15 deraadt Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -418,13 +418,6 @@ extern struct cdevsw cdevsw[];
 	(dev_type_stop((*))) enodev, 0, selfalse, \
 	(dev_type_mmap((*))) enodev }
 
-/* open, close, init */
-#define cdev_iop_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, selfalse, \
-	(dev_type_mmap((*))) enodev }
-
 /* open, close, ioctl */
 #define cdev_radio_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
@@ -476,13 +469,6 @@ extern struct cdevsw cdevsw[];
 
 /* open, close, ioctl */
 #define       cdev_bio_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, selfalse, \
-	(dev_type_mmap((*))) enodev }
-
-/* open, close, ioctl */
-#define       cdev_bthub_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, selfalse, \
@@ -598,11 +584,6 @@ bdev_decl(sw);
 bdev_decl(vnd);
 cdev_decl(vnd);
 
-bdev_decl(raid);
-cdev_decl(raid);
-
-cdev_decl(iop);
-
 cdev_decl(ch);
 
 bdev_decl(sd);
@@ -646,7 +627,6 @@ cdev_decl(systrace);
 
 cdev_decl(bio);
 cdev_decl(vscsi);
-cdev_decl(bthub);
 
 cdev_decl(gpr);
 cdev_decl(bktr);

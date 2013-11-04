@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.143 2013/11/01 21:22:31 miod Exp $
+#	$OpenBSD: files.sparc64,v 1.144 2013/11/04 14:07:16 deraadt Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -73,7 +73,6 @@ attach	prtc at mainbus
 file	arch/sparc64/dev/prtc.c			prtc
 
 include	"dev/sbus/files.sbus"
-include	"dev/i2o/files.i2o"
 include	"dev/mii/files.mii"
 include	"dev/atapiscsi/files.atapiscsi"
 include	"dev/ata/files.ata"

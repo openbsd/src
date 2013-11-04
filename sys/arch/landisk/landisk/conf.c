@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.26 2013/08/20 14:27:28 ajacoutot Exp $	*/
+/*	$OpenBSD: conf.c,v 1.27 2013/11/04 14:11:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -117,11 +117,6 @@ cdev_decl(pci);
 #include "uhid.h"
 #include "ulpt.h"
 #include "urio.h"
-
-/*
- * Bluetooth devices
- */
-#include "bthub.h"
 
 /*
  * WSCONS devices
@@ -361,7 +356,7 @@ struct cdevsw cdevsw[] = {
 	cdev_radio_init(NRADIO,radio),		/* 97: generic radio I/O */
 	cdev_ptm_init(NPTY,ptm),		/* 98: pseudo-tty ptm device */
 	cdev_vscsi_init(NVSCSI,vscsi),		/* 99: vscsi */
-	cdev_bthub_init(NBTHUB,bthub),		/* 100: bthub */
+	cdev_notdef(),
 	cdev_disk_init(1,diskmap),		/* 101: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),		/* 102: pppx */
 	cdev_fuse_init(NFUSE,fuse),		/* 103: fuse */

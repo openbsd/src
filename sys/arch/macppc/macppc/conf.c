@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.54 2013/08/27 21:02:53 mpi Exp $ */
+/*	$OpenBSD: conf.c,v 1.55 2013/11/04 14:11:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -112,7 +112,6 @@ cdev_decl(com);
 #include "inet.h"
 
 #include "apm.h"
-#include "bthub.h"
 #include "agp.h"
 cdev_decl(agp);
 #include "drm.h"
@@ -224,7 +223,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),
 #endif
 	cdev_notdef(),			/* 72: ALTQ (deprecated) */
-	cdev_iop_init(NIOP,iop),	/* 73: I2O IOP control interface */
+	cdev_notdef(),
 	cdev_notdef(),			/* 74: was USB scanners */
 	cdev_bktr_init(NBKTR,bktr),	/* 75: Bt848 video capture device */
 	cdev_radio_init(NRADIO, radio),	/* 76: generic radio I/O */
@@ -232,7 +231,7 @@ struct cdevsw cdevsw[] = {
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 78: devices hot plugging */
 	cdev_gpio_init(NGPIO,gpio),	/* 79: GPIO interface */
 	cdev_bio_init(NBIO,bio),	/* 80: ioctl tunnel */
-	cdev_bthub_init(NBTHUB,bthub),	/* 81: bthub */
+	cdev_notdef(),
 	cdev_openprom_init(1,openprom),	/* 82: /dev/openprom */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 83: vscsi */
 	cdev_disk_init(1,diskmap),	/* 84: disk mapper */

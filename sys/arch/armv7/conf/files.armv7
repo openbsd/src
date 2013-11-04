@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.7 2013/10/30 20:20:23 syl Exp $
+#	$OpenBSD: files.armv7,v 1.8 2013/11/04 14:07:16 deraadt Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -39,9 +39,6 @@ include "dev/atapiscsi/files.atapiscsi"
 
 # Machine-independent ATA drivers
 include "dev/ata/files.ata"
-
-# Machine-independent I2O drivers.
-include "dev/i2o/files.i2o"
 
 # Include WSCONS stuff
 include "dev/wscons/files.wscons"

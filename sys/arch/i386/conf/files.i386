@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.213 2013/08/15 06:54:35 kettenis Exp $
+#	$OpenBSD: files.i386,v 1.214 2013/11/04 14:07:16 deraadt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -69,11 +69,6 @@ major	{sd = 4}
 major	{st = 5}
 major	{cd = 6}
 major	{rd = 17}
-
-#
-# I2O
-#
-include "dev/i2o/files.i2o"
 
 #
 # Machine-independent ATAPI drivers

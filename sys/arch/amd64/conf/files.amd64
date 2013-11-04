@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.70 2013/08/15 06:54:35 kettenis Exp $
+#	$OpenBSD: files.amd64,v 1.71 2013/11/04 14:07:15 deraadt Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -71,8 +71,6 @@ include "dev/wsfont/files.wsfont"
 include	"dev/mii/files.mii"
 
 include	"scsi/files.scsi"
-
-include	"dev/i2o/files.i2o"
 
 include	"dev/atapiscsi/files.atapiscsi"
 include	"dev/ata/files.ata"

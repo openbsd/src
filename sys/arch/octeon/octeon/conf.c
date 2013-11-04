@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 2013/08/20 14:27:30 ajacoutot Exp $ */
+/*	$OpenBSD: conf.c,v 1.11 2013/11/04 14:11:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,7 +133,6 @@ cdev_decl(pci);
 #include "urio.h"
 #include "ucom.h"
 
-#include "bthub.h"
 #include "vscsi.h"
 #include "pppx.h"
 #include "fuse.h"
@@ -216,7 +215,7 @@ struct cdevsw	cdevsw[] =
 	cdev_urio_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
 	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 67: devices hotplugging */
-	cdev_bthub_init(NBTHUB,bthub),	/* 68: bluetooth hub */
+	cdev_notdef(),
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 69: vscsi */
 	cdev_disk_init(1,diskmap),	/* 70: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 71: pppx */

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.96 2013/08/15 06:54:35 kettenis Exp $
+#	$OpenBSD: files.alpha,v 1.97 2013/11/04 14:07:15 deraadt Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -45,9 +45,6 @@ major	{st = 2}
 major	{cd = 3}
 major	{sd = 8}
 major	{rd = 6}
-
-# I2O
-include	"dev/i2o/files.i2o"
 
 # Raster operations
 include	"dev/rasops/files.rasops"

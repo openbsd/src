@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.76 2013/08/28 07:03:02 mpi Exp $
+#	$OpenBSD: files.macppc,v 1.77 2013/11/04 14:07:16 deraadt Exp $
 
 #
 # macppc-specific configuration info
@@ -57,11 +57,6 @@ major	{sd = 2}
 major	{cd = 3}
 
 include "scsi/files.scsi"
-
-#
-# I2O
-#
-include "dev/i2o/files.i2o"
 
 include "dev/pci/files.pci"
 file	arch/macppc/pci/pciide_machdep.c		pciide

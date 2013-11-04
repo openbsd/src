@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.69 2013/08/20 14:27:31 ajacoutot Exp $	*/
+/*	$OpenBSD: conf.c,v 1.70 2013/11/04 14:11:29 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -107,8 +107,6 @@ cdev_decl(pci);
 #include "ulpt.h"
 #include "urio.h"
 #include "ucom.h"
-
-#include "bthub.h"
 
 #include "pf.h"
 
@@ -288,7 +286,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NSBBC,sbbc),	/* 126: SBBC console */
 	cdev_tty_init(NVCCTTY,vcctty),	/* 127: virtual console concentrator */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 128: vscsi */
-	cdev_bthub_init(NBTHUB,bthub),	/* 129: bluetooth hub */
+	cdev_notdef(),
 	cdev_disk_init(1,diskmap),	/* 130: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 131: pppx */
 	cdev_gen_init(NVLDCP,vldcp),	/* 132: vldcp */

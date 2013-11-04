@@ -1,4 +1,4 @@
-#	$OpenBSD: files.landisk,v 1.8 2011/03/03 09:36:25 jasper Exp $
+#	$OpenBSD: files.landisk,v 1.9 2013/11/04 14:07:16 deraadt Exp $
 #	$NetBSD: files.landisk,v 1.2 2006/09/07 01:55:02 uwe Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
@@ -44,11 +44,6 @@ include "scsi/files.scsi"
 #
 include "dev/ata/files.ata"
 include "dev/atapiscsi/files.atapiscsi"
-
-#
-# Machine-independent I2O drivers
-#
-include "dev/i2o/files.i2o"
 
 #
 # PCI bus

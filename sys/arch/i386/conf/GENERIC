@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.759 2013/10/31 09:57:02 pirofti Exp $
+#	$OpenBSD: GENERIC,v 1.760 2013/11/04 14:07:16 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -760,11 +760,6 @@ nofn*	at pci?			# Hi/fn 7814/7851/7854 crypto card
 ubsec*	at pci?			# Bluesteel Networks 5xxx crypto card
 safe*	at pci?			# SafeNet SafeXcel 1141/1741
 glxsb*	at pci?			# AMD Geode LX series processor security block
-
-# I2O
-iop*	at pci?			# I2O processor
-ioprbs*	at iop?			# I2O arrays
-iopsp*	at iop?			# I2O SCSI pass-through
 
 # GPIO ``pin bus'' drivers
 #gpioiic* at gpio? offset 0 mask 0x3	# I2C bus bit-banging

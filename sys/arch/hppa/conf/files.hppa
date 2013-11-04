@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.90 2011/12/21 23:12:03 miod Exp $
+#	$OpenBSD: files.hppa,v 1.91 2013/11/04 14:07:16 deraadt Exp $
 #
 # hppa-specific configuration info
 
@@ -28,9 +28,6 @@ include "scsi/files.scsi"
 major	{sd = 4}
 major	{st = 5}
 major	{cd = 6}
-
-# I2O
-include "dev/i2o/files.i2o"
 
 #
 # MI ATAPI drivers

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.51 2012/09/29 21:46:02 miod Exp $
+#	$OpenBSD: files.sgi,v 1.52 2013/11/04 14:07:16 deraadt Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -112,8 +112,6 @@ file	arch/sgi/pci/macepcibridge.c		macepcibr
 include	"scsi/files.scsi"
 major	{sd = 0}
 major	{cd = 3}
-
-include	"dev/i2o/files.i2o"
 
 #
 #	EISA Bus support

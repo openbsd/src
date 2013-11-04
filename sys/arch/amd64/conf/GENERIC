@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.351 2013/10/29 22:37:25 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.352 2013/11/04 14:07:15 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -584,11 +584,6 @@ lofn*	at pci?			# Hi/fn 6500 crypto card
 nofn*	at pci?			# Hi/fn 7814/7851/7854 crypto card
 ubsec*	at pci?			# Bluesteel Networks 5xxx crypto card
 safe*	at pci?			# SafeNet SafeXcel 1141/1741
-
-# I2O
-iop*	at pci?			# I2O processor
-ioprbs*	at iop?			# I2O arrays
-iopsp*	at iop?			# I2O SCSI pass-through
 
 # 1-Wire devices
 option ONEWIREVERBOSE

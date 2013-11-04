@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.226 2013/09/05 19:42:07 sasano Exp $g
+#	$OpenBSD: GENERIC,v 1.227 2013/11/04 14:07:16 deraadt Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -100,10 +100,6 @@ xge*		at pci?		# Neterion Xframe-I/II 10Gb ethernet
 mbg*		at pci?		# Meinberg Funkuhren radio clocks
 malo*		at pci?		# Marvell Libertas
 acx*		at pci?		# TI ACX100/ACX111 (802.11b/g)
-
-iop*		at pci?		# I2O processor
-ioprbs*		at iop?		# I2O arrays
-iopsp*		at iop?		# I2O SCSI pass-through
 
 amphy*		at mii?		# AMD 79C873 PHYs
 dcphy*		at mii?		# Digital Clone PHYs

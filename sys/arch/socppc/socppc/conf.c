@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.18 2013/08/20 14:27:31 ajacoutot Exp $ */
+/*	$OpenBSD: conf.c,v 1.19 2013/11/04 14:11:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -114,7 +114,6 @@ cdev_decl(pci);
 #include "urio.h"
 #include "ucom.h"
 
-#include "bthub.h"
 #include "vscsi.h"
 #include "pppx.h"
 #include "hotplug.h"
@@ -208,7 +207,7 @@ struct cdevsw cdevsw[] = {
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 78: vscsi */
 	cdev_notdef(),			/* 79 */
 	cdev_notdef(),			/* 80 */
-	cdev_bthub_init(NBTHUB,bthub),	/* 81: bluetooth hub */
+	cdev_notdef(),
 	cdev_disk_init(1,diskmap),	/* 82: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 83: pppx */
 	cdev_hotplug_init(NHOTPLUG,hotplug),	/* 84: devices hot plugging */

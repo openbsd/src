@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.24 2013/08/20 14:27:27 ajacoutot Exp $	*/
+/*	$OpenBSD: conf.c,v 1.25 2013/11/04 14:11:29 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -118,7 +118,6 @@ cdev_decl(pci);
 #include "urio.h"
 #include "ucom.h"
 
-#include "bthub.h"
 #include "fuse.h"
 
 struct cdevsw   cdevsw[] =
@@ -183,7 +182,7 @@ struct cdevsw   cdevsw[] =
 	cdev_lkm_dummy(),		/* 52: */
 	cdev_lkm_dummy(),		/* 53: */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 54: vscsi */
-	cdev_bthub_init(NBTHUB,bthub),	/* 55: bthub */
+	cdev_notdef(),
 	cdev_disk_init(1,diskmap),	/* 56: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 57: pppx */
 	cdev_fuse_init(NFUSE,fuse),	/* 58: fuse */

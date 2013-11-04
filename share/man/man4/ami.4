@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ami.4,v 1.43 2013/07/16 16:05:48 schwarze Exp $
+.\"	$OpenBSD: ami.4,v 1.44 2013/11/04 14:07:15 deraadt Exp $
 .\"
 .\" Michael Shalayeff, 2001. Public Domain.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: November 4 2013 $
 .Dt AMI 4
 .Os
 .Sh NAME
@@ -89,19 +89,6 @@ NEC MegaRAID PCI Express ROMB
 .Pp
 These controllers support RAID 0, RAID 1, RAID 5, JBOD,
 and superpositions of those configurations.
-.Pp
-Some cards support both I2O and a so-called
-.Sq Mass Storage
-mode of operation.
-This driver only supports the
-.Sq Mass Storage
-mode; I2O mode is supported
-by the
-.Xr iop 4
-driver.
-However it is recommended to use these cards in
-.Sq Mass Storage
-mode.
 .Pp
 Although the controllers are actual RAID controllers,
 the driver makes them look just like SCSI controllers.
