@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.55 2013/11/04 14:11:29 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.56 2013/11/04 17:14:26 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -88,8 +88,6 @@ cdev_decl(com);
 #include "wsdisplay.h"
 #include "wskbd.h"
 #include "wsmouse.h"
-
-#include "iop.h"
 
 #include "bpfilter.h"
 

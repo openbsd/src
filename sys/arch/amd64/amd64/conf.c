@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.43 2013/11/04 14:11:29 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.44 2013/11/04 17:14:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -143,7 +143,6 @@ cdev_decl(cy);
 #include "midi.h"
 #include "acpi.h"
 #include "pctr.h"
-#include "iop.h"
 #include "bktr.h"
 #include "ksyms.h"
 #include "usb.h"
