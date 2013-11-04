@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.116 2013/10/20 21:24:01 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.117 2013/11/04 05:45:04 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -768,8 +768,9 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 
 #ifdef HAVE_BURNER_SUPPORT
 	sc->sc_burnoutintvl = (hz * WSDISPLAY_DEFBURNOUT) / 1000;
-	sc->sc_burninintvl = (hz * WSDISPLAY_DEFBURNIN ) / 1000;
-	sc->sc_burnflags = 0;	/* off by default */
+	sc->sc_burninintvl = (hz * WSDISPLAY_DEFBURNIN) / 1000;
+	sc->sc_burnflags = WSDISPLAY_BURN_OUTPUT | WSDISPLAY_BURN_KBD |
+	    WSDISPLAY_BURN_MOUSE;
 	timeout_set(&sc->sc_burner, wsdisplay_burner, sc);
 	sc->sc_burnout = sc->sc_burnoutintvl;
 	wsdisplay_burn(sc, sc->sc_burnflags);
