@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.203 2013/06/02 17:21:38 jcs Exp $ */
+/* $OpenBSD: dsdt.c,v 1.204 2013/11/04 22:32:31 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -770,7 +770,7 @@ aml_lockfield(struct aml_scope *scope, struct aml_value *field)
 
 	/* Spin to acquire lock */
 	while (!st) {
-		st = acpi_acquire_global_lock(&acpi_softc->sc_facs->global_lock);
+		st = acpi_acquire_glk(&acpi_softc->sc_facs->global_lock);
 		/* XXX - yield/delay? */
 	}
 
@@ -790,7 +790,7 @@ aml_unlockfield(struct aml_scope *scope, struct aml_value *field)
 		return;
 
 	/* Release lock */
-	st = acpi_release_global_lock(&acpi_softc->sc_facs->global_lock);
+	st = acpi_release_glk(&acpi_softc->sc_facs->global_lock);
 	if (!st)
 		return;
 
