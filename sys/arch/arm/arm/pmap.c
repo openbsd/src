@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.44 2013/09/10 12:35:25 patrick Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.45 2013/11/04 00:35:30 dlg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -411,27 +411,9 @@ struct l2_dtable {
  * L2 allocation.
  */
 #define	pmap_alloc_l2_dtable()		\
-	    pool_get(&pmap_l2dtable_pool, PR_NOWAIT)
+	    pool_get(&pmap_l2dtable_pool, PR_NOWAIT|PR_ZERO)
 #define	pmap_free_l2_dtable(l2)		\
 	    pool_put(&pmap_l2dtable_pool, (l2))
-/*
-#define POOL_CACHE_PADDR
-*/
-#ifdef  POOL_CACHE_PADDR
-#define pmap_alloc_l2_ptp(pap)		\
-	    ((pt_entry_t *)pool_cache_get_paddr(&pmap_l2ptp_cache,\
-	    PR_NOWAIT, (pap)))
-#else
-static __inline pt_entry_t *
-pmap_alloc_l2_ptp(paddr_t *pap)		
-{
-	pt_entry_t *pted;
-
-	pted = pool_get(&pmap_l2ptp_pool, PR_NOWAIT);
-	(void)pmap_extract(pmap_kernel(), (vaddr_t)pted, pap);
-	return pted;
-}
-#endif /* POOL_CACHE_PADDR */
 
 /*
  * We try to map the page tables write-through, if possible.  However, not
@@ -480,8 +462,6 @@ struct pv_entry *pmap_remove_pv(struct vm_page *, pmap_t, vaddr_t);
 u_int		pmap_modify_pv(struct vm_page *, pmap_t, vaddr_t,
 		    u_int, u_int);
 
-int		pmap_pmap_ctor(void *, void *, int);
-
 void		pmap_alloc_l1(pmap_t);
 void		pmap_free_l1(pmap_t);
 static void	pmap_use_l1(pmap_t);
@@ -489,8 +469,7 @@ static void	pmap_use_l1(pmap_t);
 static struct l2_bucket *pmap_get_l2_bucket(pmap_t, vaddr_t);
 struct l2_bucket *pmap_alloc_l2_bucket(pmap_t, vaddr_t);
 void		pmap_free_l2_bucket(pmap_t, struct l2_bucket *, u_int);
-int		pmap_l2ptp_ctor(void *, void *, int);
-int		pmap_l2dtable_ctor(void *, void *, int);
+int		pmap_l2ptp_ctor(void *);
 
 static void	pmap_vac_me_harder(struct vm_page *, pmap_t, vaddr_t);
 void		pmap_vac_me_kpmap(struct vm_page *, pmap_t, vaddr_t);
@@ -1057,7 +1036,8 @@ pmap_alloc_l2_bucket(pmap_t pm, vaddr_t va)
 		 * No L2 page table has been allocated. Chances are, this
 		 * is because we just allocated the l2_dtable, above.
 		 */
-		if ((ptep = pmap_alloc_l2_ptp(&l2b->l2b_phys)) == NULL) {
+		ptep = pool_get(&pmap_l2ptp_pool, PR_NOWAIT|PR_ZERO);
+		if (ptep == NULL) {
 			/*
 			 * Oops, no more L2 page tables available at this
 			 * time. We may need to deallocate the l2_dtable
@@ -1069,6 +1049,8 @@ pmap_alloc_l2_bucket(pmap_t pm, vaddr_t va)
 			}
 			return (NULL);
 		}
+		pmap_l2ptp_ctor(ptep);
+		pmap_extract(pmap_kernel(), (vaddr_t)ptep, &l2b->l2b_phys);
 
 		l2->l2_occupancy++;
 		l2b->l2b_kva = ptep;
@@ -1171,7 +1153,7 @@ pmap_free_l2_bucket(pmap_t pm, struct l2_bucket *l2b, u_int count)
  * structures.
  */
 int
-pmap_l2ptp_ctor(void *arg, void *v, int flags)
+pmap_l2ptp_ctor(void *v)
 {
 	struct l2_bucket *l2b;
 	pt_entry_t *ptep, pte;
@@ -1205,24 +1187,7 @@ pmap_l2ptp_ctor(void *arg, void *v, int flags)
 		}
 	}
 
-	memset(v, 0, L2_TABLE_SIZE_REAL);
 	PTE_SYNC_RANGE(v, L2_TABLE_SIZE_REAL / sizeof(pt_entry_t));
-	return (0);
-}
-
-int
-pmap_l2dtable_ctor(void *arg, void *v, int flags)
-{
-
-	memset(v, 0, sizeof(struct l2_dtable));
-	return (0);
-}
-
-int
-pmap_pmap_ctor(void *arg, void *v, int flags)
-{
-
-	memset(v, 0, sizeof(struct pmap));
 	return (0);
 }
 
@@ -1887,7 +1852,7 @@ pmap_create(void)
 {
 	pmap_t pm;
 
-	pm = pool_get(&pmap_pmap_pool, PR_WAITOK);
+	pm = pool_get(&pmap_pmap_pool, PR_WAITOK|PR_ZERO);
 
 	simple_lock_init(&pm->pm_lock);
 	pm->pm_refs = 1;
@@ -3996,7 +3961,6 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	 */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
 	    &pool_allocator_nointr);
-	pool_set_ctordtor(&pmap_pmap_pool, pmap_pmap_ctor, NULL, NULL);
 
 	/*
 	 * Initialize the pv pool.
@@ -4009,15 +3973,12 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	 */
 	pool_init(&pmap_l2dtable_pool, sizeof(struct l2_dtable), 0, 0, 0,
 	    "l2dtblpl", NULL);
-	 pool_set_ctordtor(&pmap_l2dtable_pool, pmap_l2dtable_ctor, NULL,
-	     NULL);
 
 	/*
 	 * Initialise the L2 descriptor table pool and cache
 	 */
 	pool_init(&pmap_l2ptp_pool, L2_TABLE_SIZE_REAL, L2_TABLE_SIZE_REAL, 0,
 	    0, "l2ptppl", NULL);
-	pool_set_ctordtor(&pmap_l2ptp_pool, pmap_l2ptp_ctor, NULL, NULL);
 
 	cpu_dcache_wbinv_all();
 }
