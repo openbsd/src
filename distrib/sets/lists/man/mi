@@ -1792,10 +1792,7 @@
 ./usr/share/man/man4/inet6.4
 ./usr/share/man/man4/inphy.4
 ./usr/share/man/man4/inteldrm.4
-./usr/share/man/man4/iop.4
 ./usr/share/man/man4/iophy.4
-./usr/share/man/man4/ioprbs.4
-./usr/share/man/man4/iopsp.4
 ./usr/share/man/man4/ip.4
 ./usr/share/man/man4/ip6.4
 ./usr/share/man/man4/ipcomp.4
@@ -2811,7 +2808,6 @@
 ./usr/share/man/man8/inetd.8
 ./usr/share/man/man8/init.8
 ./usr/share/man/man8/intro.8
-./usr/share/man/man8/iopctl.8
 ./usr/share/man/man8/iostat.8
 ./usr/share/man/man8/iprop-log.8
 ./usr/share/man/man8/iprop.8
