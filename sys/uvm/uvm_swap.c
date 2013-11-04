@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.118 2013/11/04 19:41:17 deraadt Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.119 2013/11/04 19:42:47 deraadt Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -983,7 +983,20 @@ swap_on(struct proc *p, struct swapdev *sdp)
 	if (addr) {
 		if (extent_alloc_region(sdp->swd_ex, 0, addr, EX_WAITOK))
 			panic("disklabel reserve");
+		/* XXX: is extent synchronized with swd_npginuse? */
 	}
+#ifdef HIBERNATE
+	/*
+	 * Lock down the last region of primary disk swap, in case
+	 * hibernate needs to place a signature there.
+	 */
+	if (dev == swdevt[0].sw_dev && vp->v_type == VBLK && size > 3 ) {
+		if (extent_alloc_region(sdp->swd_ex,
+		    npages - 1 - 1, 1, EX_WAITOK))
+			panic("hibernate reserve");
+		/* XXX: is extent synchronized with swd_npginuse? */
+	}
+#endif
 
 	/*
 	 * add a ref to vp to reflect usage as a swap device.
