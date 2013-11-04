@@ -2816,6 +2816,7 @@
 ./usr/share/man/man8/iprop-log.8
 ./usr/share/man/man8/iprop.8
 ./usr/share/man/man8/ipropd-master.8
+./usr/share/man/man8/ipropd-slave.8
 ./usr/share/man/man8/ipsecctl.8
 ./usr/share/man/man8/isakmpd.8
 ./usr/share/man/man8/iscsictl.8
