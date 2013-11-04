@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.117 2013/11/02 04:14:13 deraadt Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.118 2013/11/04 19:41:17 deraadt Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -982,7 +982,7 @@ swap_on(struct proc *p, struct swapdev *sdp)
 	/* allocate the `saved' region from the extent so it won't be used */
 	if (addr) {
 		if (extent_alloc_region(sdp->swd_ex, 0, addr, EX_WAITOK))
-			panic("disklabel region");
+			panic("disklabel reserve");
 	}
 
 	/*
