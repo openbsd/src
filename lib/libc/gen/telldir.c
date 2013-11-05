@@ -1,4 +1,4 @@
-/*	$OpenBSD: telldir.c,v 1.15 2013/08/16 05:27:39 guenther Exp $ */
+/*	$OpenBSD: telldir.c,v 1.16 2013/11/05 09:36:05 schwarze Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,5 +67,6 @@ telldir(DIR *dirp)
 void
 __seekdir(DIR *dirp, long loc)
 {
+	dirp->dd_loc = 0;
 	dirp->dd_curpos = lseek(dirp->dd_fd, loc, SEEK_SET);
 }
