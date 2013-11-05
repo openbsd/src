@@ -1,4 +1,4 @@
-/*	$OpenBSD: octrng.c,v 1.2 2013/11/05 16:32:14 pirofti Exp $	*/
+/*	$OpenBSD: octrng.c,v 1.3 2013/11/05 16:34:45 pirofti Exp $	*/
 /*
  * Copyright (c) 2013 Paul Irofti <pirofti@openbsd.org>
  *
@@ -46,9 +46,9 @@ void	octrng_rnd(void *arg);
 
 #define OCTRNG_CONTROL_ADDR 0x0001180040000000ULL
 
-#define OCTRNG_RESET (1ULL << 60)
-#define OCTRNG_ENABLE_OUTPUT (1ULL << 62)
-#define OCTRNG_ENABLE_ENTROPY (1ULL << 63)
+#define OCTRNG_RESET (1ULL << 3)
+#define OCTRNG_ENABLE_OUTPUT (1ULL << 1)
+#define OCTRNG_ENABLE_ENTROPY (1ULL << 0)
 
 struct octrng_softc {
 	struct device sc_dev;
