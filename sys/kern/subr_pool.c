@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.123 2013/08/08 23:25:06 syl Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.124 2013/11/05 03:28:45 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -342,11 +342,6 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	if (pool_serial == 0)
 		panic("pool_init: too much uptime");
 
-        /* constructor, destructor, and arg */
-	pp->pr_ctor = NULL;
-	pp->pr_dtor = NULL;
-	pp->pr_arg = NULL;
-
 	/*
 	 * Decide whether to put the page header off page to avoid
 	 * wasting too large a part of the page. Off-page page headers
@@ -511,20 +506,9 @@ pool_get(struct pool *pp, int flags)
 	if (v == NULL)
 		return (v);
 
-	if (pp->pr_ctor) {
-		if (flags & PR_ZERO)
-			panic("pool_get: PR_ZERO when ctor set");
-		if (pp->pr_ctor(pp->pr_arg, v, flags)) {
-			mtx_enter(&pp->pr_mtx);
-			pp->pr_nget--;
-			pool_do_put(pp, v);
-			mtx_leave(&pp->pr_mtx);
-			v = NULL;
-		}
-	} else {
-		if (flags & PR_ZERO)
-			memset(v, 0, pp->pr_size);
-	}
+	if (flags & PR_ZERO)
+		memset(v, 0, pp->pr_size);
+
 	return (v);
 }
 
@@ -722,8 +706,6 @@ startover:
 void
 pool_put(struct pool *pp, void *v)
 {
-	if (pp->pr_dtor)
-		pp->pr_dtor(pp->pr_arg, v);
 	mtx_enter(&pp->pr_mtx);
 #ifdef POOL_DEBUG
 	if (pp->pr_roflags & PR_DEBUGCHK) {
@@ -1051,14 +1033,6 @@ pool_set_constraints(struct pool *pp, const struct kmem_pa_mode *mode)
 	pp->pr_crange = mode;
 }
 
-void
-pool_set_ctordtor(struct pool *pp, int (*ctor)(void *, void *, int),
-    void (*dtor)(void *, void *), void *arg)
-{
-	pp->pr_ctor = ctor;
-	pp->pr_dtor = dtor;
-	pp->pr_arg = arg;
-}
 /*
  * Release all complete pages that have not been used recently.
  *

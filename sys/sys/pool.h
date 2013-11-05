@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.43 2013/03/26 16:37:45 tedu Exp $	*/
+/*	$OpenBSD: pool.h,v 1.44 2013/11/05 03:28:44 dlg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -108,10 +108,6 @@ struct pool {
 	int		pr_curcolor;
 	int		pr_phoffset;	/* Offset in page of page header */
 
-	/* constructor, destructor, and arg */
-	int		(*pr_ctor)(void *, void *, int);
-	void		(*pr_dtor)(void *, void *);
-	void		*pr_arg;
 	/*
 	 * Warning message to be issued, and a per-time-delta rate cap,
 	 * if the hard limit is reached.
@@ -149,8 +145,6 @@ int		pool_sethardlimit(struct pool *, u_int, const char *, int);
 struct uvm_constraint_range; /* XXX */
 void		pool_set_constraints(struct pool *,
 		    const struct kmem_pa_mode *mode);
-void		pool_set_ctordtor(struct pool *, int (*)(void *, void *, int),
-		    void(*)(void *, void *), void *);
 
 /* these functions are locked */
 void		*pool_get(struct pool *, int) __malloc;
