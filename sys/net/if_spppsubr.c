@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.109 2013/10/24 11:31:43 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.110 2013/11/05 15:32:48 stsp Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -48,12 +48,8 @@
 #include <sys/mbuf.h>
 #include <sys/workq.h>
 
-#if defined (__OpenBSD__)
 #include <sys/timeout.h>
 #include <crypto/md5.h>
-#else
-#include <sys/md5.h>
-#endif
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -63,11 +59,6 @@
 /* for arc4random() */
 #include <dev/rndvar.h>
 
-#if defined (__FreeBSD__) || defined(__OpenBSD_) || defined(__NetBSD__)
-#include <machine/random.h>
-#endif
-#if defined (__NetBSD__) || defined (__OpenBSD__)
-#endif
 #include <sys/stdarg.h>
 
 #ifdef INET
@@ -76,25 +67,13 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
-# if defined (__FreeBSD__) || defined (__OpenBSD__)
-#  include <netinet/if_ether.h>
-# else
-#  include <net/ethertypes.h>
-# endif
+#include <netinet/if_ether.h>
 #endif
 
 #include <net/if_sppp.h>
 
-#if defined (__FreeBSD__)
-# define UNTIMEOUT(fun, arg, handle)	\
-	untimeout(fun, arg, handle)
-#elif defined(__OpenBSD__)
 # define UNTIMEOUT(fun, arg, handle)	\
 	timeout_del(&(handle))
-#else
-# define UNTIMEOUT(fun, arg, handle)	\
-	untimeout(fun, arg)
-#endif
 
 #define LOOPALIVECNT     		3	/* loopback detection tries */
 #define MAXALIVECNT    			3	/* max. missed alive packets */
@@ -252,20 +231,10 @@ struct cp {
 };
 
 static struct sppp *spppq;
-#if defined (__OpenBSD__)
 static struct timeout keepalive_ch;
-#endif
-#if defined (__FreeBSD__)
-static struct callout_handle keepalive_ch;
-#endif
 
-#if defined (__FreeBSD__)
-#define	SPP_FMT		"%s%d: "
-#define	SPP_ARGS(ifp)	(ifp)->if_name, (ifp)->if_unit
-#else
 #define	SPP_FMT		"%s: "
 #define	SPP_ARGS(ifp)	(ifp)->if_xname
-#endif
 
 /* almost every function needs these */
 #define STDDCL							\
@@ -461,13 +430,11 @@ static const struct cp *cps[IDX_COUNT] = {
  * Exported functions, comprising our interface to the lower layer.
  */
 
-#if defined(__OpenBSD__)
 /* Workaround */
 void
 spppattach(struct ifnet *ifp)
 {
 }
-#endif
 
 /*
  * Process the received packet.
@@ -892,12 +859,8 @@ sppp_attach(struct ifnet *ifp)
 
 	/* Initialize keepalive handler. */
 	if (! spppq) {
-#if defined (__FreeBSD__)
-		keepalive_ch = timeout(sppp_keepalive, 0, hz * 10);
-#elif defined(__OpenBSD__)
 		timeout_set(&keepalive_ch, sppp_keepalive, NULL);
 		timeout_add_sec(&keepalive_ch, 10);
-#endif
 	}
 
 	/* Insert new entry into the keepalive list. */
@@ -1197,11 +1160,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 			++sp->pp_loopcnt;
 
 			/* Generate new local sequence number */
-#if defined (__FreeBSD__) || defined (__NetBSD__) || defined(__OpenBSD__)
 			sp->pp_seq = arc4random();
-#else
-			sp->pp_seq ^= time.tv_sec ^ time.tv_usec;
-#endif
 			break;
 		}
 		sp->pp_loopcnt = 0;
@@ -1890,12 +1849,7 @@ sppp_increasing_timeout (const struct cp *cp, struct sppp *sp)
 	timo = sp->lcp.max_configure - sp->rst_counter[cp->protoidx];
 	if (timo < 1)
 		timo = 1;
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	sp->ch[cp->protoidx] = 
-	    timeout(cp->TO, (void *)sp, timo * sp->lcp.timeout);
-#elif defined(__OpenBSD__)
 	timeout_add(&sp->ch[cp->protoidx], timo * sp->lcp.timeout);
-#endif
 }
 
 HIDE void
@@ -2016,9 +1970,6 @@ sppp_lcp_init(struct sppp *sp)
 	sp->lcp.max_terminate = 2;
 	sp->lcp.max_configure = 10;
 	sp->lcp.max_failure = 10;
-#if defined (__FreeBSD__)
-	callout_handle_init(&sp->ch[IDX_LCP]);
-#endif
 }
 
 HIDE void
@@ -2606,11 +2557,7 @@ sppp_lcp_scr(struct sppp *sp)
 
 	if (sp->lcp.opts & (1 << LCP_OPT_MAGIC)) {
 		if (! sp->lcp.magic)
-#if defined (__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 			sp->lcp.magic = arc4random();
-#else
-			sp->lcp.magic = time.tv_sec + time.tv_usec;
-#endif
 		opt[i++] = LCP_OPT_MAGIC;
 		opt[i++] = 6;
 		opt[i++] = sp->lcp.magic >> 24;
@@ -2686,9 +2633,6 @@ sppp_ipcp_init(struct sppp *sp)
 	sp->ipcp.flags = 0;
 	sp->state[IDX_IPCP] = STATE_INITIAL;
 	sp->fail_counter[IDX_IPCP] = 0;
-#if defined (__FreeBSD__)
-	callout_handle_init(&sp->ch[IDX_IPCP]);
-#endif
 }
 
 HIDE void
@@ -3162,9 +3106,6 @@ sppp_ipv6cp_init(struct sppp *sp)
 	sp->ipv6cp.flags = 0;
 	sp->state[IDX_IPV6CP] = STATE_INITIAL;
 	sp->fail_counter[IDX_IPV6CP] = 0;
-#if defined (__FreeBSD__)
-	callout_handle_init(&sp->ch[IDX_IPV6CP]);
-#endif
 }
 
 HIDE void
@@ -3954,9 +3895,6 @@ sppp_chap_init(struct sppp *sp)
 	/* Chap doesn't have STATE_INITIAL at all. */
 	sp->state[IDX_CHAP] = STATE_CLOSED;
 	sp->fail_counter[IDX_CHAP] = 0;
-#if defined (__FreeBSD__)
-	callout_handle_init(&sp->ch[IDX_CHAP]);
-#endif
 }
 
 HIDE void
@@ -4040,11 +3978,7 @@ sppp_chap_tlu(struct sppp *sp)
 		 */
 		i = 300 + (arc4random() & 0x01fe);
 
-#if defined (__FreeBSD__)
-		sp->ch[IDX_CHAP] = timeout(chap.TO, (void *)sp, i * hz);
-#elif defined(__OpenBSD__)
 		timeout_add_sec(&sp->ch[IDX_CHAP], i);
-#endif
 	}
 
 	if (debug) {
@@ -4277,10 +4211,6 @@ sppp_pap_init(struct sppp *sp)
 	/* PAP doesn't have STATE_INITIAL at all. */
 	sp->state[IDX_PAP] = STATE_CLOSED;
 	sp->fail_counter[IDX_PAP] = 0;
-#if defined (__FreeBSD__)
-	callout_handle_init(&sp->ch[IDX_PAP]);
-	callout_handle_init(&sp->pap_my_to_ch);
-#endif
 }
 
 HIDE void
@@ -4295,12 +4225,7 @@ sppp_pap_open(struct sppp *sp)
 	if (sp->myauth.proto == PPP_PAP) {
 		/* we are peer, send a request, and start a timer */
 		pap.scr(sp);
-#if defined (__FreeBSD__)
-		sp->pap_my_to_ch =
-		    timeout(sppp_pap_my_TO, (void *)sp, sp->lcp.timeout);
-#elif defined (__OpenBSD__)
 		timeout_add(&sp->pap_my_to_ch, sp->lcp.timeout);
-#endif
 	}
 }
 
@@ -4593,12 +4518,7 @@ sppp_keepalive(void *dummy)
 		}
 	}
 	splx(s);
-#if defined (__FreeBSD__)
-	keepalive_ch = timeout(sppp_keepalive, 0, hz * 10);
-#endif
-#if defined (__OpenBSD__)
 	timeout_add_sec(&keepalive_ch, 10);
-#endif
 }
 
 /*
@@ -4619,14 +4539,8 @@ sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst,
 	 * Pick the first AF_INET address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
-#if defined (__FreeBSD__)
-	for (ifa = ifp->if_addrhead.tqh_first, si = 0;
-	     ifa;
-	     ifa = ifa->ifa_link.tqe_next)
-#else
 	si = 0;
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
-#endif
 	{
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
@@ -4712,14 +4626,8 @@ sppp_set_ip_addrs(void *arg1, void *arg2)
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 
-#if defined (__FreeBSD__)
-	for (ifa = ifp->if_addrhead.tqh_first, si = 0;
-	     ifa;
-	     ifa = ifa->ifa_link.tqe_next)
-#else
 	si = 0;
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
-#endif
 	{
 		if (ifa->ifa_addr->sa_family == AF_INET)
 		{
