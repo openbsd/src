@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.686 2013/10/31 19:15:20 halex Exp $
+#	$OpenBSD: install.sub,v 1.687 2013/11/05 19:54:40 uwe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -53,6 +53,10 @@
 #
 
 # OpenBSD install/upgrade script common subroutines and initialization code
+
+# Check if we're supposed to run non-interactively before losing the
+# command arguments with some "set --" magic.
+[ "$1" = auto ] && auto=true || auto=false
 
 # Include machine-dependent functions and definitions.
 #
@@ -215,22 +219,24 @@ retrap() {
 # of that file
 rm -f /tmp/update
 
-# Start listener process looking for dmesg changes
-(
-	while :; do
-		lock
-		if test -e /tmp/update && [[ "`dmesg`" != "`cat /tmp/update`" ]]; then
-			dmesg >/tmp/update
-			kill -TERM 2>/dev/null $$ || exit 1
-		fi
-		unlock
-		sleep .5
-	done
-) |&
-cppid=$!
+if ! $auto; then
+	# Start listener process looking for dmesg changes
+	(
+		while :; do
+			lock
+			if test -e /tmp/update && [[ "`dmesg`" != "`cat /tmp/update`" ]]; then
+				dmesg >/tmp/update
+				kill -TERM 2>/dev/null $$ || exit 1
+			fi
+			unlock
+			sleep .5
+		done
+	) |&
+	cppid=$!
 
-# Kill the child on exit
-retrap
+	# Kill the child on exit
+	retrap
+fi
 
 # Issue a read into the global variable $resp. If the dmesg output is
 # changed while inside this function, the current read will be aborted
@@ -244,11 +250,11 @@ retrap
 _ask() {
 	local _q=$1 _def=$2 _int _redo=0 _pid
 
-	trap "_int=1" INT
-	trap "_redo=1" TERM
 	lock; dmesg >/tmp/update; unlock
 	echo -n "${_q:+$_q }${_def:+[$_def] }"
-	_autorespond "$_q" "$_def" && echo "$resp" && retrap && return
+	_autorespond "$_q" "$_def" && echo "$resp" && return
+	trap "_int=1" INT
+	trap "_redo=1" TERM
 	read resp
 	lock; rm /tmp/update; unlock
 	if ((_redo)); then
@@ -2013,10 +2019,6 @@ __EOT
 # code here rather than at the top of the file.
 #
 # #######################################################################
-
-# Check if we're supposed to run non-interactively before losing the
-# command arguments with some "set --" magic.
-[ "$1" = auto ] && auto=true || auto=false
 
 ROOTDISK=
 ROOTDEV=
