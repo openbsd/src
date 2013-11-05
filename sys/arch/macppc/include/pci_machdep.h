@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.1 2013/08/07 07:29:18 mpi Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.2 2013/11/05 10:12:35 mpi Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.7 2001/07/20 00:07:14 eeh Exp $ */
 
 /*
@@ -95,6 +95,7 @@ int		pci_ether_hw_addr(pci_chipset_tag_t, uint8_t *);
 #define pci_probe_device_hook(c, a)	(0)
 
 #define pci_min_powerstate(c, t)	(PCI_PMCSR_STATE_D3)
+#define pci_set_powerstate_md(c, t, s, p)
 
 #define pci_dev_postattach(a, b)
 

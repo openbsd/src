@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.8 2012/09/04 19:39:08 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.9 2013/11/05 10:12:35 mpi Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*
@@ -85,5 +85,6 @@ void landisk_pci_conf_interrupt(void *v, int bus, int dev, int pin,
 #define	pci_probe_device_hook(c, a)	(0)
 
 #define	pci_min_powerstate(c, t)	(PCI_PMCSR_STATE_D3)
+#define	pci_set_powerstate_md(c, t, s, p)
 
 #define	pci_dev_postattach(a, b)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.31 2012/08/29 09:32:09 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.32 2013/11/05 10:12:35 mpi Exp $	*/
 /* $NetBSD: pci_machdep.h,v 1.7 2001/07/20 00:07:14 eeh Exp $ */
 
 /*
@@ -105,6 +105,7 @@ int		sparc64_pci_enumerate_bus(struct pci_softc *,
 #define	pci_probe_device_hook(c, a)	(0)
 
 #define	pci_min_powerstate(c, t)	(PCI_PMCSR_STATE_D3)
+#define	pci_set_powerstate_md(c, t, s, p)
 
 #define pciide_machdep_compat_intr_establish(a, b, c, d, e) (NULL)
 #define pciide_machdep_compat_intr_disestablish(a, b) do { } while (0)

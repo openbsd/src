@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.27 2012/09/04 19:37:40 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.28 2013/11/05 10:12:35 mpi Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.6 1996/11/19 04:49:21 cgd Exp $	*/
 
 /*
@@ -117,6 +117,7 @@ int alpha_sysctl_chipset(int *, u_int, char *, size_t *);
 #define	pci_probe_device_hook(c, a)	(0)
 
 #define	pci_min_powerstate(c, t)	(PCI_PMCSR_STATE_D3)
+#define	pci_set_powerstate_md(c, t, s, p)
 
 /*
  * alpha-specific PCI functions.

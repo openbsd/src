@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.6 2013/04/23 16:37:23 bcallah Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.7 2013/11/05 10:12:35 mpi Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -113,6 +113,7 @@ static inline void pci_conf_write_db(void * c, pcitag_t t, int r, pcireg_t v,
 #define	pci_probe_device_hook(c, a)	(0)
 
 #define	pci_min_powerstate(c, t)	(PCI_PMCSR_STATE_D3)
+#define	pci_set_powerstate_md(c, t, s, p)
 
 /*
  * Functions used during early system configuration.
