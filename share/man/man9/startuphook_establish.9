@@ -1,4 +1,4 @@
-.\"	$OpenBSD: startuphook_establish.9,v 1.6 2013/06/04 19:27:13 schwarze Exp $
+.\"	$OpenBSD: startuphook_establish.9,v 1.7 2013/11/05 20:20:14 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Niklas Hallqvist.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: November 5 2013 $
 .Dt STARTUPHOOK_ESTABLISH 9
 .Os
 .Sh NAME
@@ -78,12 +78,6 @@ returns an opaque pointer describing the newly established
 startup hook.
 Otherwise, it returns
 .Dv NULL .
-.Sh EXAMPLES
-It may be appropriate to use a startup hook to provide potential root or
-swap devices that have delayed configuration.
-The
-.Xr iop 4
-shows an example of this usage.
 .Sh SEE ALSO
 .Xr dohooks 9 ,
 .Xr doshutdownhooks 9 ,
