@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.119 2013/11/04 19:42:47 deraadt Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.120 2013/11/05 06:02:45 deraadt Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -2024,21 +2024,16 @@ gotit:
 }
 
 #ifdef HIBERNATE
-/*
- * Check if free swap available at end of swap dev swdev.
- * Used by hibernate to check for usable swap area before writing the image
- */
 int
-uvm_swap_check_range(dev_t swdev, size_t size)
+uvm_hibswap(dev_t dev, u_long *sp, u_long *ep)
 {
 	struct swapdev *sdp, *swd = NULL;
 	struct swappri *spp;
-	struct extent *ex;
-	struct extent_region *exr;
-	int r = 0, start,  npages = size / PAGE_SIZE;
+	struct extent_region *exr, *exrn;
+	u_long start = 0, end = 0, size = 0;
 
 	/* no swap devices configured yet? */
-	if (uvmexp.nswapdev < 1)
+	if (uvmexp.nswapdev < 1 || dev != swdevt[0].sw_dev)
 		return (1);
 
 	for (spp = LIST_FIRST(&swap_priority); spp != NULL;
@@ -2046,28 +2041,34 @@ uvm_swap_check_range(dev_t swdev, size_t size)
 		for (sdp = CIRCLEQ_FIRST(&spp->spi_swapdev);
 		     sdp != (void *)&spp->spi_swapdev;
 		     sdp = CIRCLEQ_NEXT(sdp,swd_next)) {
-			if (sdp->swd_dev == swdev)
+			if (sdp->swd_dev == dev)
 				swd = sdp;
 		}
 
-	if (swd == NULL)
+	if (swd == NULL || (swd->swd_flags & SWF_ENABLE) == 0)
 		return (1);
 
-	if ((swd->swd_flags & SWF_ENABLE) == 0)
-		return (1);
-
-	ex = swd->swd_ex;
-	start = swd->swd_drumsize-npages;
-
-	if (npages > swd->swd_drumsize)
-		return (1); 
-
-	LIST_FOREACH(exr, &ex->ex_regions, er_link)
-		{
-			if (exr->er_end >= start)
-				r = 1;
+	LIST_FOREACH(exr, &swd->swd_ex->ex_regions, er_link) {
+		u_long gapstart, gapend, gapsize;
+	
+		gapstart = exr->er_end + 1;
+		exrn = LIST_NEXT(exr, er_link);
+		if (!exrn)
+			break;
+		gapend = exrn->er_start - 1;
+		gapsize = gapend - gapstart;
+		if (gapsize > size) {
+			start = gapstart;
+			end = gapend;
+			size = gapsize;
 		}
+	}
 
-	return (r);
+	if (size) {
+		*sp = start;
+		*ep = end;
+		return (0);
+	}
+	return (1);
 }
 #endif /* HIBERNATE */

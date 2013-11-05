@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.67 2013/11/05 00:51:58 krw Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.68 2013/11/05 06:02:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -728,12 +728,6 @@ get_hibernate_info(union hibernate_info *hiber_info, int suspend)
 	if (get_hibernate_info_md(hiber_info))
 		goto fail;
 
-	/* Calculate memory image location in swap */
-	hiber_info->image_offset = DL_GETPOFFSET(&dl.d_partitions[1]) +
-	    DL_GETPSIZE(&dl.d_partitions[1]) -
-	    (hiber_info->image_size / hiber_info->secsize) -
-	    sizeof(union hibernate_info)/hiber_info->secsize -
-	    chunktable_size;
 
 	return (0);
 fail:
@@ -1208,8 +1202,6 @@ hibernate_resume(void)
 	hibernate_quiesce_cpus();
 #endif /* MULTIPROCESSOR */
 
-	printf("Unhibernating...");
-
 	/* Read the image from disk into the image (pig) area */
 	if (hibernate_read_image(&disk_hiber_info))
 		goto fail;
@@ -1671,7 +1663,9 @@ hibernate_read_image(union hibernate_info *hiber_info)
 
 	disk_size = compressed_size;
 
-	printf(" (image size: %zu)\n", compressed_size);
+	printf("unhibernating @ block %lld length %lu blocks\n",
+	    hiber_info->sig_offset - chunktable_size,
+	    compressed_size);
 
 	/* Allocate the pig area */
 	pig_sz = compressed_size + HIBERNATE_CHUNK_SIZE;
@@ -1927,7 +1921,7 @@ int
 hibernate_suspend(void)
 {
 	union hibernate_info hib_info;
-	size_t swap_size;
+	u_long start, end;
 
 	/*
 	 * Calculate memory ranges, swap offsets, etc.
@@ -1939,13 +1933,25 @@ hibernate_suspend(void)
 		return (1);
 	}
 
-	swap_size = hib_info.image_size + hib_info.secsize +
-		HIBERNATE_CHUNK_TABLE_SIZE;
-
-	if (uvm_swap_check_range(hib_info.device, swap_size)) {
-		printf("insufficient swap space for hibernate\n");
+	/* Find a page-addressed region in swap [start,end] */
+	if (uvm_hibswap(hib_info.device, &start, &end)) {
+		printf("cannot find any swap\n");
 		return (1);
 	}
+
+	if (end - start < 1000) {
+		printf("%lu\n is too small", end - start);
+		return (1);
+	}
+
+	/* Calculate block offsets in swap */
+	hib_info.image_offset = ctod(start) + hib_info.swap_offset;
+
+#if 0
+	/* XXX side effect */
+	printf("hibernate @ block %lld max-length %lu blocks\n",
+	    hib_info.image_offset, ctod(end) - ctod(start));
+#endif
 
 	pmap_kenter_pa(HIBERNATE_HIBALLOC_PAGE, HIBERNATE_HIBALLOC_PAGE,
 		VM_PROT_ALL);
