@@ -1,4 +1,4 @@
-.\" $OpenBSD: em.4,v 1.50 2013/03/30 05:34:53 brad Exp $
+.\" $OpenBSD: em.4,v 1.51 2013/11/05 03:51:43 brad Exp $
 .\" Copyright (c) 2002 Intel Corporation
 .\" All rights reserved.
 .\" Redistribution and use in source and binary forms of the Software, with or without
@@ -28,7 +28,7 @@
 .\" * Other names and brands may be claimed as the property of others.
 .\"
 .\" $FreeBSD: em.4,v 1.18 2005/01/30 12:29:06 yar Exp $
-.Dd $Mdocdate: March 30 2013 $
+.Dd $Mdocdate: November 5 2013 $
 .Dt EM 4
 .Os
 .Sh NAME
@@ -163,10 +163,10 @@ Supermicro AOC-PG-I2+ Dual Port Server Adapter
 .Pp
 The
 .Nm
-driver supports IPv4 receive IP/TCP/UDP checksum offload on all but
-82542-based adapters, VLAN tag insertion and stripping, and Jumbo
-frames on all but 82562V, 82566DC/82566DM and 82573E/82573L/82573V-based
-adapters.
+driver supports IPv4 receive IP/TCP/UDP checksum offload and transmit TCP/UDP
+checksum offload on all but 82542-based adapters, VLAN tag insertion and
+stripping, and Jumbo frames on all but 82562V, 82566DC/82566DM and
+82573E/82573L/82573V-based adapters.
 The 82562V Ethernet controller chip only supports 10/100 media types.
 .Pp
 The

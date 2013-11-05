@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bnx.4,v 1.28 2013/07/16 16:05:48 schwarze Exp $
+.\"	$OpenBSD: bnx.4,v 1.29 2013/11/05 03:51:43 brad Exp $
 .\"
 .\"Copyright (c) 2006 Broadcom Corporation
 .\" David Christensen <davidch@broadcom.com>.  All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/bce.4,v 1.2 2006/04/10 20:12:17 brueffer Exp $
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: November 5 2013 $
 .Dt BNX 4
 .Os
 .Sh NAME
@@ -78,6 +78,7 @@ driver under
 .Ox :
 .Bd -literal -offset indent
 IPv4 receive IP/TCP/UDP checksum offload
+IPv4 transmit TCP/UDP checksum offload
 .\"Jumbo frames (up to 9022 bytes)
 VLAN tag insertion and stripping
 Interrupt coalescing
