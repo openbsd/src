@@ -1,4 +1,4 @@
-/*	$OpenBSD: octrng.c,v 1.3 2013/11/05 16:34:45 pirofti Exp $	*/
+/*	$OpenBSD: octrng.c,v 1.4 2013/11/05 16:37:06 pirofti Exp $	*/
 /*
  * Copyright (c) 2013 Paul Irofti <pirofti@openbsd.org>
  *
@@ -67,10 +67,20 @@ struct cfdriver octrng_cd = {
 	NULL, "octrng", DV_DULL
 };
 
+
 int
 octrng_match(struct device *parent, void *match, void *aux)
 {
+	struct iobus_attach_args *aa = aux;
+	struct cfdata *cf = match;
+	
 	/* XXX: check for board type */
+
+	if (aa->aa_name == NULL ||
+	    strcmp(aa->aa_name, cf->cf_driver->cd_name) != 0)
+		return (0);
+
+
 	return (1);
 }
 
