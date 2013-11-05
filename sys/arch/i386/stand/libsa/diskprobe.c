@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.36 2013/11/05 13:55:58 krw Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.37 2013/11/05 15:17:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -272,12 +272,12 @@ cdprobe(void)
 	dip->disklabel.d_sbsize = 2048;
 
 	/* 'a' partition covering the "whole" disk */
-	DL_SETPSOFFSET(&dip->disklabel.d_partitions[0], 0);
+	DL_SETPOFFSET(&dip->disklabel.d_partitions[0], 0);
 	DL_SETPSIZE(&dip->disklabel.d_partitions[0], 100);
 	dip->disklabel.d_partitions[0].p_fstype = FS_UNUSED;
 
 	/* The raw partition is special */
-	DL_SETPSOFFSET(&dip->disklabel.d_partitions[RAW_PART], 0);
+	DL_SETPOFFSET(&dip->disklabel.d_partitions[RAW_PART], 0);
 	DL_SETPSIZE(&dip->disklabel.d_partitions[RAW_PART], 100);
 	dip->disklabel.d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 
