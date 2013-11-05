@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.71 2013/09/16 08:17:02 dcoppa Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.72 2013/11/05 16:05:30 deraadt Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -159,7 +159,6 @@ target(all, radio, 0)dnl
 target(all, tuner, 0)dnl
 target(all, rmidi, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 target(all, uall)dnl
-target(all, iop, 0, 1)dnl
 target(all, pci, 0, 1, 2, 3)dnl
 twrget(all, wsmouse, wscons)dnl
 target(all, par, 0)dnl
@@ -262,8 +261,6 @@ _mkdev(flo, fd*,
 	M r${nam}b	c $chr Add($n, 1) 640 operator
 	M r${nam}c	c $chr Add($n, 2) 640 operator
 	M r${nam}i	c $chr Add($n, 8) 640 operator-}, 664)dnl
-__devitem(iop, iop*, I2O controller devices)dnl
-_mcdev(iop, iop*, iop, {-major_iop_c-}, 660)dnl
 __devitem(wd, {-wd*-}, {-quote(winchester)disk drives (ST506{-,-} IDE{-,-} ESDI{-,-} RLL{-,-} ...)-})dnl
 __devitem(vnd, vnd*, quote(file)pseudo-disk devices)dnl
 _mkdev(vnd, vnd*, {-dodisk vnd $U major_vnd_b major_vnd_c $U 0{--}ifstep(vnd)-})dnl
