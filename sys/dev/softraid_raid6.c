@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.54 2013/11/01 17:36:19 krw Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.55 2013/11/05 08:55:58 reyk Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -130,8 +130,8 @@ sr_raid6_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 	 */
 	sd->sd_meta->ssdi.ssd_strip_size = MAXPHYS;
 	sd->sd_meta->ssdi.ssd_size = (coerced_size &
-	    ~((sd->sd_meta->ssdi.ssd_strip_size >> DEV_BSHIFT) - 1)) *
-	    (no_chunk - 2);
+	    ~(((u_int64_t)sd->sd_meta->ssdi.ssd_strip_size >>
+	    DEV_BSHIFT) - 1)) * (no_chunk - 2);
 
 	return sr_raid6_init(sd);
 }
