@@ -1,4 +1,4 @@
-/*	$OpenBSD: seekdir.c,v 1.9 2007/06/05 18:11:48 kurt Exp $ */
+/*	$OpenBSD: seekdir.c,v 1.10 2013/11/05 20:36:51 schwarze Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,19 +28,21 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <dirent.h>
+#include <unistd.h>
+
 #include "thread_private.h"
 #include "telldir.h"
 
 /*
  * Seek to an entry in a directory.
- * __seekdir is in telldir.c so that it can share opaque data structures.
+ * Only values returned by "telldir" should be passed to seekdir.
  */
 void
 seekdir(DIR *dirp, long loc)
 {
 	_MUTEX_LOCK(&dirp->dd_lock);
-	__seekdir(dirp, loc);
+	dirp->dd_loc = 0;
+	dirp->dd_curpos = lseek(dirp->dd_fd, loc, SEEK_SET);
 	_MUTEX_UNLOCK(&dirp->dd_lock);
 }

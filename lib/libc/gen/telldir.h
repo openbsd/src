@@ -1,4 +1,4 @@
-/*	$OpenBSD: telldir.h,v 1.6 2013/08/13 05:52:13 guenther Exp $	*/
+/*	$OpenBSD: telldir.h,v 1.7 2013/11/05 20:36:51 schwarze Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,8 +46,5 @@ struct _dirdesc {
 	off_t	dd_curpos;	/* current cookie */
 	void	*dd_lock;	/* mutex to protect struct */
 };
-
-long		_telldir_unlocked(DIR *);
-void		__seekdir(DIR *, long);
 
 #endif

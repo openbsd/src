@@ -1,5 +1,5 @@
-/*	$OpenBSD: rewinddir.c,v 1.10 2013/08/13 05:52:12 guenther Exp $ */
-/*-
+/*	$OpenBSD: rewinddir.c,v 1.11 2013/11/05 20:36:51 schwarze Exp $ */
+/*
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -28,16 +28,12 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <dirent.h>
-
 #include "thread_private.h"
 #include "telldir.h"
 
 void
 rewinddir(DIR *dirp)
 {
-	_MUTEX_LOCK(&dirp->dd_lock);
-	__seekdir(dirp, 0);
-	_MUTEX_UNLOCK(&dirp->dd_lock);
+	seekdir(dirp, 0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: telldir.c,v 1.16 2013/11/05 09:36:05 schwarze Exp $ */
+/*	$OpenBSD: telldir.c,v 1.17 2013/11/05 20:36:51 schwarze Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,45 +28,21 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/queue.h>
 #include <dirent.h>
-#include <stdlib.h>
-#include <unistd.h>
-
 #include "thread_private.h"
 #include "telldir.h"
-
-int _readdir_unlocked(DIR *, struct dirent **, int);
 
 /*
  * return a pointer into a directory
  */
-long
-_telldir_unlocked(DIR *dirp)
-{
-	return (dirp->dd_curpos);
-}
-
 long
 telldir(DIR *dirp)
 {
 	long i;
 
 	_MUTEX_LOCK(&dirp->dd_lock);
-	i = _telldir_unlocked(dirp);
+	i = dirp->dd_curpos;
 	_MUTEX_UNLOCK(&dirp->dd_lock);
 
 	return (i);
-}
-
-/*
- * seek to an entry in a directory.
- * Only values returned by "telldir" should be passed to seekdir.
- */
-void
-__seekdir(DIR *dirp, long loc)
-{
-	dirp->dd_loc = 0;
-	dirp->dd_curpos = lseek(dirp->dd_fd, loc, SEEK_SET);
 }
