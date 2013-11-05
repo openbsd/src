@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.68 2013/11/05 06:02:44 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.69 2013/11/05 07:38:26 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1947,11 +1947,9 @@ hibernate_suspend(void)
 	/* Calculate block offsets in swap */
 	hib_info.image_offset = ctod(start) + hib_info.swap_offset;
 
-#if 0
 	/* XXX side effect */
-	printf("hibernate @ block %lld max-length %lu blocks\n",
+	DPRINTF("hibernate @ block %lld max-length %lu blocks\n",
 	    hib_info.image_offset, ctod(end) - ctod(start));
-#endif
 
 	pmap_kenter_pa(HIBERNATE_HIBALLOC_PAGE, HIBERNATE_HIBALLOC_PAGE,
 		VM_PROT_ALL);
