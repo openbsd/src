@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.275 2013/10/28 15:05:35 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.276 2013/11/05 21:04:52 bluhm Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3163,7 +3163,8 @@ settunnel(const char *src, const char *dst)
 	int ecode;
 	struct if_laddrreq req;
 
-	if (strchr (dst, ':') == NULL) {
+	if (strchr(dst, ':') == NULL || strchr(dst, ':') != strrchr(dst, ':')) {
+		/* no port or IPv6 */
 		dstip = dst;
 		dstport = NULL;
 	} else {
