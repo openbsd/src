@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.68 2013/08/07 01:06:41 bluhm Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.69 2013/11/05 10:20:04 mpi Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -333,6 +333,7 @@ kue_load_fw(struct kue_softc *sc)
 void
 kue_setmulti(struct kue_softc *sc)
 {
+	struct arpcom		*ac = &sc->arpcom;
 	struct ifnet		*ifp = GET_IFP(sc);
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
@@ -340,7 +341,7 @@ kue_setmulti(struct kue_softc *sc)
 
 	DPRINTFN(5,("%s: %s: enter\n", sc->kue_dev.dv_xname, __func__));
 
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
 allmulti:
 		ifp->if_flags |= IFF_ALLMULTI;
 		sc->kue_rxfilt |= KUE_RXFILT_ALLMULTI;
@@ -352,11 +353,9 @@ allmulti:
 	sc->kue_rxfilt &= ~KUE_RXFILT_ALLMULTI;
 
 	i = 0;
-	ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
+	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (i == KUE_MCFILTCNT(sc) ||
-		    memcmp(enm->enm_addrlo, enm->enm_addrhi,
-			ETHER_ADDR_LEN) != 0)
+		if (i == KUE_MCFILTCNT(sc))
 			goto allmulti;
 
 		memcpy(KUE_MCFILT(sc, i), enm->enm_addrlo, ETHER_ADDR_LEN);

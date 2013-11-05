@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.62 2013/08/07 01:06:41 bluhm Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.63 2013/11/05 10:20:04 mpi Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -342,6 +342,7 @@ cue_getmac(struct cue_softc *sc, void *buf)
 void
 cue_setmulti(struct cue_softc *sc)
 {
+	struct arpcom		*ac = &sc->arpcom;
 	struct ifnet		*ifp;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
@@ -352,8 +353,7 @@ cue_setmulti(struct cue_softc *sc)
 	DPRINTFN(2,("%s: cue_setmulti if_flags=0x%x\n",
 		    sc->cue_dev.dv_xname, ifp->if_flags));
 
-	if (ifp->if_flags & IFF_PROMISC) {
-allmulti:
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		for (i = 0; i < CUE_MCAST_TABLE_LEN; i++)
 			sc->cue_mctab[i] = 0xFF;
@@ -367,12 +367,8 @@ allmulti:
 		sc->cue_mctab[i] = 0;
 
 	/* now program new ones */
-	ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
+	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo,
-		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0)
-			goto allmulti;
-
 		h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) &
 		    ((1 << CUE_BITS) - 1);
 		sc->cue_mctab[h >> 3] |= 1 << (h & 0x7);
