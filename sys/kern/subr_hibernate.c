@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.66 2013/10/20 17:16:47 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.67 2013/11/05 00:51:58 krw Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -663,7 +663,7 @@ get_hibernate_info(union hibernate_info *hiber_info, int suspend)
 
 	/* Make sure we have a swap partition. */
 	if (dl.d_partitions[1].p_fstype != FS_SWAP ||
-	    dl.d_partitions[1].p_size == 0)
+	    DL_GETPSIZE(&dl.d_partitions[1]) == 0)
 		return (1);
 
 	hiber_info->secsize = dl.d_secsize;
@@ -679,8 +679,8 @@ get_hibernate_info(union hibernate_info *hiber_info, int suspend)
 	hiber_info->swap_offset = dl.d_partitions[1].p_offset;
 
 	/* Calculate signature block location */
-	hiber_info->sig_offset = dl.d_partitions[1].p_offset +
-	    dl.d_partitions[1].p_size -
+	hiber_info->sig_offset = DL_GETPOFFSET(&dl.d_partitions[1]) +
+	    DL_GETPSIZE(&dl.d_partitions[1]) -
 	    sizeof(union hibernate_info)/hiber_info->secsize;
 
 	chunktable_size = HIBERNATE_CHUNK_TABLE_SIZE / hiber_info->secsize;
@@ -729,8 +729,8 @@ get_hibernate_info(union hibernate_info *hiber_info, int suspend)
 		goto fail;
 
 	/* Calculate memory image location in swap */
-	hiber_info->image_offset = dl.d_partitions[1].p_offset +
-	    dl.d_partitions[1].p_size -
+	hiber_info->image_offset = DL_GETPOFFSET(&dl.d_partitions[1]) +
+	    DL_GETPSIZE(&dl.d_partitions[1]) -
 	    (hiber_info->image_size / hiber_info->secsize) -
 	    sizeof(union hibernate_info)/hiber_info->secsize -
 	    chunktable_size;

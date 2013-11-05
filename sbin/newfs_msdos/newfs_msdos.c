@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.20 2010/05/18 04:41:14 dlg Exp $	*/
+/*	$OpenBSD: newfs_msdos.c,v 1.21 2013/11/05 00:51:58 krw Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -740,12 +740,12 @@ getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
 	if (part == -1)
 	    part = RAW_PART;
 	if (part >= lp->d_npartitions ||
-	    !lp->d_partitions[part].p_size)
+	    !DL_GETPSIZE(&lp->d_partitions[part]))
 	    errx(1, "%s: partition is unavailable", fname);
 	if (!oflag && part != -1)
-	    bpb->hid += lp->d_partitions[part].p_offset;
+	    bpb->hid += DL_GETPOFFSET(&lp->d_partitions[part]);
 	if (!bpb->bsec)
-	    bpb->bsec = lp->d_partitions[part].p_size;
+	    bpb->bsec = DL_GETPSIZE(&lp->d_partitions[part]);
 	if (!bpb->bps)
 	    bpb->bps = ckgeom(fname, lp->d_secsize, "bytes/sector");
 	if (!bpb->spt)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.49 2013/06/11 16:42:04 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.50 2013/11/05 00:51:58 krw Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -611,8 +611,8 @@ calcsb(char *dev, int devfd, struct fs *fs)
 	fs->fs_bsize = fs->fs_fsize * fs->fs_frag;
 	fs->fs_cpg = pp->p_cpg;
 	fs->fs_nspf = fs->fs_fsize / lp->d_secsize;
-	/* unit for fs->fs_size is fragments, for pp->p_size it is sectors */
-	fs->fs_size = pp->p_size / fs->fs_nspf;
+	/* unit for fs->fs_size is fragments, for DL_GETPSIZE() it is sectors */
+	fs->fs_size = DL_GETPSIZE(pp) / fs->fs_nspf;
 	fs->fs_ntrak = lp->d_ntracks;
 	fs->fs_nsect = lp->d_nsectors;
 	fs->fs_spc = lp->d_secpercyl;
@@ -629,7 +629,7 @@ again:
 	fs->fs_cgoffset = roundup(
 		howmany(fs->fs_nsect, NSPF(fs)), fs->fs_frag);
 	fs->fs_fpg = (fs->fs_cpg * fs->fs_spc) / NSPF(fs);
-	fs->fs_ncg = howmany(pp->p_size / fs->fs_spc, fs->fs_cpg);
+	fs->fs_ncg = howmany(DL_GETPSIZE(pp) / fs->fs_spc, fs->fs_cpg);
 	for (fs->fs_fsbtodb = 0, i = NSPF(fs); i > 1; i >>= 1)
 		fs->fs_fsbtodb++;
 	/*

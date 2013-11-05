@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.10 2013/03/24 19:20:34 deraadt Exp $	*/
+/*	$OpenBSD: wd.c,v 1.11 2013/11/05 00:51:58 krw Exp $	*/
 /*	$NetBSD: wd.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -126,13 +126,13 @@ wdgetdefaultlabel(wd, lp)
 	strncpy(lp->d_typename, wd->sc_params.atap_model, 16);
 	strncpy(lp->d_packname, "fictitious", 16);
 	if (wd->sc_capacity > UINT32_MAX)
-		lp->d_secperunit = UINT32_MAX;
+		DL_SETDSIZE(lp, UINT32_MAX);
 	else
-		lp->d_secperunit = wd->sc_capacity;
+		DL_SETDSIZE(lp, wd->sc_capacity);
 	lp->d_flags = 0;
 
-	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
+	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
+	DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
 	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 	lp->d_npartitions = MAXPARTITIONS;
 

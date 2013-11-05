@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.19 2013/10/20 10:11:17 krw Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.20 2013/11/05 00:51:58 krw Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -416,12 +416,12 @@ search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
 	int error;
 	
 	/* minimal requirements for archetypal disk label */
-	if (lp->d_secperunit == 0)
-		lp->d_secperunit = 0x1fffffff;
+	if (DL_GETDSIZE(lp) == 0)
+		DL_SETDSIZE(lp, 0x1fffffff);
 	lp->d_npartitions = MAXPARTITIONS;
-	if (lp->d_partitions[0].p_size == 0)
-		lp->d_partitions[0].p_size = 0x1fffffff;
-	lp->d_partitions[0].p_offset = 0;
+	if (DL_GETPSIZE(&lp->d_partitions[0]) == 0)
+		DL_SETPSIZE(&lp->d_partitions[0], 0x1fffffff);
+	DL_SETPOFFSET(&lp->d_partitions[0], 0);
 
 	if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &read)
 	    || read != DEV_BSIZE)

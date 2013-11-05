@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.93 2013/10/07 10:05:24 krw Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.94 2013/11/05 00:51:58 krw Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -342,7 +342,7 @@ main(int argc, char *argv[])
 		mfsfakelabel.d_ntracks = 16;
 		mfsfakelabel.d_ncylinders = 16;
 		mfsfakelabel.d_secpercyl = 1024;
-		mfsfakelabel.d_secperunit = 16384;
+		DL_SETDSIZE(&mfsfakelabel, 16384);
 		mfsfakelabel.d_npartitions = 1;
 		mfsfakelabel.d_version = 1;
 		DL_SETPSIZE(&mfsfakelabel.d_partitions[0], 16384);

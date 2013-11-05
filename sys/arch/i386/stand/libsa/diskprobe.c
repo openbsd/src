@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.34 2012/11/01 00:55:38 jsing Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.35 2013/11/05 00:51:58 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -266,19 +266,19 @@ cdprobe(void)
 
 	strncpy(dip->disklabel.d_packname, "fictitious",
 	    sizeof(dip->disklabel.d_packname));
-	dip->disklabel.d_secperunit = 100;
+	DL_SETDSIZE(&dip->disklabel, 100);
 
 	dip->disklabel.d_bbsize = 2048;
 	dip->disklabel.d_sbsize = 2048;
 
 	/* 'a' partition covering the "whole" disk */
-	dip->disklabel.d_partitions[0].p_offset = 0;
-	dip->disklabel.d_partitions[0].p_size = 100;
+	DL_SETPSOFFSET(&dip->disklabel.d_partitions[0], 0);
+	DL_SETDSIZE(&dip->disklabel.d_partitions[0], 100);
 	dip->disklabel.d_partitions[0].p_fstype = FS_UNUSED;
 
 	/* The raw partition is special */
-	dip->disklabel.d_partitions[RAW_PART].p_offset = 0;
-	dip->disklabel.d_partitions[RAW_PART].p_size = 100;
+	DL_SETPSOFFSET(&dip->disklabel.d_partitions[RAW_PART], 0);
+	DL_SETDSIZE(&dip->disklabel.d_partitions[RAW_PART], 100);
 	dip->disklabel.d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 
 	dip->disklabel.d_npartitions = MAXPARTITIONS;
