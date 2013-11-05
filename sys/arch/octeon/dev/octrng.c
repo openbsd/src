@@ -1,4 +1,4 @@
-/*	$OpenBSD: octrng.c,v 1.1 2013/10/24 20:45:03 pirofti Exp $	*/
+/*	$OpenBSD: octrng.c,v 1.2 2013/11/05 16:32:14 pirofti Exp $	*/
 /*
  * Copyright (c) 2013 Paul Irofti <pirofti@openbsd.org>
  *
@@ -30,7 +30,6 @@ int	octrng_match(struct device *, void *, void *);
 void	octrng_attach(struct device *, struct device *, void *);
 void	octrng_rnd(void *arg);
 
-#define OCTRNG_DEBUG
 #ifdef OCTRNG_DEBUG
 #define DPRINTF(x)	printf x
 #else
