@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-pkcs11.c,v 1.9 2013/11/02 20:03:54 markus Exp $ */
+/* $OpenBSD: ssh-pkcs11.c,v 1.10 2013/11/06 23:05:59 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -222,14 +222,14 @@ pkcs11_rsa_private_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa,
 	CK_ULONG		tlen = 0;
 	CK_RV			rv;
 	CK_OBJECT_CLASS		private_key_class = CKO_PRIVATE_KEY;
-	CK_BBOOL		true = CK_TRUE;
+	CK_BBOOL		true_val = CK_TRUE;
 	CK_MECHANISM		mech = {
 		CKM_RSA_PKCS, NULL_PTR, 0
 	};
 	CK_ATTRIBUTE		key_filter[] = {
 		{CKA_CLASS, &private_key_class, sizeof(private_key_class) },
 		{CKA_ID, NULL, 0},
-		{CKA_SIGN, &true, sizeof(true) }
+		{CKA_SIGN, &true_val, sizeof(true_val) }
 	};
 	char			*pin, prompt[1024];
 	int			rval = -1;
