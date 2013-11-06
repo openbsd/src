@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.71 2013/11/06 08:00:17 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.72 2013/11/06 23:58:25 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -335,6 +335,7 @@ void		mpii_eventnotify_done(struct mpii_ccb *);
 void		mpii_eventack(void *, void *);
 void		mpii_eventack_done(struct mpii_ccb *);
 void		mpii_event_process(struct mpii_softc *, struct mpii_rcb *);
+void		mpii_event_done(struct mpii_softc *, struct mpii_rcb *);
 void		mpii_event_sas(struct mpii_softc *,
 		    struct mpii_msg_event_reply *);
 void		mpii_event_raid(struct mpii_softc *,
@@ -1829,6 +1830,16 @@ mpii_event_process(struct mpii_softc *sc, struct mpii_rcb *rcb)
 		DNPRINTF(MPII_D_EVT, "%s:  unhandled event 0x%02x\n",
 		    DEVNAME(sc), letoh16(enp->event));
 	}
+
+	mpii_event_done(sc, rcb);
+}
+
+void
+mpii_event_done(struct mpii_softc *sc, struct mpii_rcb *rcb)
+{
+	struct mpii_msg_event_reply *enp = rcb->rcb_reply;
+
+	printf("%s: %s\n", DEVNAME(sc), __func__);
 
 	if (enp->ack_required) {
 		mtx_enter(&sc->sc_evt_ack_mtx);
