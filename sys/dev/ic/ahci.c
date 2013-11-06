@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.3 2013/07/09 17:53:46 deraadt Exp $ */
+/*	$OpenBSD: ahci.c,v 1.4 2013/11/06 12:06:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -3170,6 +3170,8 @@ ahci_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		struct ahci_ccb *ccb;
 		struct ahci_cmd_hdr *hdr_buf;
 		int pmp_port;
+		daddr_t poffset;
+		size_t psize;
 	} *my = page;
 	struct ata_fis_h2d *fis;
 	u_int32_t sector_count;
@@ -3188,6 +3190,9 @@ ahci_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		paddr_t page_phys;
 		u_int64_t item_phys;
 		u_int32_t cmd;
+
+		my->poffset = blkno;
+		my->psize = size;
 
 		/* map dev to an ahci port */
 		disk = disk_lookup(&sd_cd, DISKUNIT(dev));
@@ -3302,6 +3307,10 @@ ahci_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		ahci_activate(&my->ap->ap_sc->sc_dev, DVACT_RESUME);
 		return (0);
 	}
+
+	if (blkno > my->psize)
+		return (E2BIG);
+	blkno += my->poffset;
 
 	/* build fis */
 	sector_count = size / 512;	/* dlg promises this is okay */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.45 2013/01/17 02:36:45 deraadt Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.46 2013/11/06 12:06:58 deraadt Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -121,6 +121,8 @@ wd_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int op, voi
 		struct wd_softc wd;
 		struct wdc_xfer xfer;
 		struct channel_softc chp;
+		daddr_t poffset;
+		size_t psize;
 	} *my = page;
 	struct wd_softc *real_wd, *wd = &my->wd;
 	struct wdc_xfer *xfer = &my->xfer;
@@ -129,8 +131,11 @@ wd_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int op, voi
 	extern struct cfdriver wd_cd;
 
 	/* early call for initialization */
-	if (op == HIB_INIT)
+	if (op == HIB_INIT) {
+		my->poffset = blkno;
+		my->psize = size;
 		return(0);
+	}
 
 	real_wd = (struct wd_softc *)disk_lookup(&wd_cd, DISKUNIT(dev));
 	if (real_wd == NULL)
@@ -145,6 +150,10 @@ wd_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int op, voi
 		(cfd->cf_attach->ca_activate)(dv, DVACT_RESUME);
 		return (0);
 	}
+
+	if (blkno > my->psize)
+		return (E2BIG);
+	blkno += my->poffset;
 
 	/*
 	 * Craft a fake set of softc and related structures

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.70 2013/11/06 00:52:46 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.71 2013/11/06 12:06:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -675,12 +675,8 @@ get_hibernate_info(union hibernate_info *hiber_info, int suspend)
 	/* Magic number */
 	hiber_info->magic = HIBERNATE_MAGIC;
 	
-	/* Calculate swap offset from start of disk */
-	hiber_info->swap_offset = dl.d_partitions[1].p_offset;
-
 	/* Calculate signature block location */
-	hiber_info->sig_offset = DL_GETPOFFSET(&dl.d_partitions[1]) +
-	    DL_GETPSIZE(&dl.d_partitions[1]) -
+	hiber_info->sig_offset = DL_GETPSIZE(&dl.d_partitions[1]) -
 	    sizeof(union hibernate_info)/hiber_info->secsize;
 
 	chunktable_size = HIBERNATE_CHUNK_TABLE_SIZE / hiber_info->secsize;
@@ -708,8 +704,10 @@ get_hibernate_info(union hibernate_info *hiber_info, int suspend)
 		 * a matching HIB_DONE call performed after the write is
 		 * completed.	
 		 */
-		if (hiber_info->io_func(hiber_info->device, 0,
-		    (vaddr_t)NULL, 0, HIB_INIT, hiber_info->io_page))
+		if (hiber_info->io_func(hiber_info->device,
+		    DL_GETPOFFSET(&dl.d_partitions[1]),
+		    (vaddr_t)NULL, DL_GETPSIZE(&dl.d_partitions[1]),
+		    HIB_INIT, hiber_info->io_page))
 			goto fail;
 
 	} else {
@@ -1000,9 +998,9 @@ hibernate_clear_signature(void)
 
 	/* Write (zeroed) hibernate info to disk */
 	DPRINTF("clearing hibernate signature block location: %lld\n",
-		hiber_info.sig_offset - hiber_info.swap_offset);
+		hiber_info.sig_offset);
 	if (hibernate_block_io(&hiber_info,
-	    hiber_info.sig_offset - hiber_info.swap_offset,
+	    hiber_info.sig_offset,
 	    hiber_info.secsize, (vaddr_t)&blank_hiber_info, 1))
 		printf("Warning: could not clear hibernate signature\n");
 
@@ -1160,10 +1158,10 @@ hibernate_resume(void)
 	s = splbio();
 
 	DPRINTF("reading hibernate signature block location: %lld\n",
-		hiber_info.sig_offset - hiber_info.swap_offset);
+		hiber_info.sig_offset);
 
 	if (hibernate_block_io(&hiber_info,
-	    hiber_info.sig_offset - hiber_info.swap_offset,
+	    hiber_info.sig_offset,
 	    hiber_info.secsize, (vaddr_t)&disk_hiber_info, 0)) {
 		DPRINTF("error in hibernate read");
 		splx(s);
@@ -1634,8 +1632,7 @@ hibernate_read_image(union hibernate_info *hiber_info)
 	/* Calculate total chunk table size in disk blocks */
 	chunktable_size = HIBERNATE_CHUNK_TABLE_SIZE / hiber_info->secsize;
 
-	blkctr = hiber_info->sig_offset - chunktable_size -
-			hiber_info->swap_offset;
+	blkctr = hiber_info->sig_offset - chunktable_size;
 
 	chunktable = (vaddr_t)km_alloc(HIBERNATE_CHUNK_TABLE_SIZE, &kv_any,
 	    &kp_none, &kd_nowait);
@@ -1868,7 +1865,7 @@ hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
 	img_cur = pig_start;
 
 	for (i = 0; i < nfchunks; i++) {
-		blkctr = chunks[fchunks[i]].offset - hib_info->swap_offset;
+		blkctr = chunks[fchunks[i]].offset;
 		processed = 0;
 		compressed_size = chunks[fchunks[i]].compressed_size;
 
@@ -1943,7 +1940,7 @@ hibernate_suspend(void)
 	}
 
 	/* Calculate block offsets in swap */
-	hib_info.image_offset = ctod(start) + hib_info.swap_offset;
+	hib_info.image_offset = ctod(start);
 
 	/* XXX side effect */
 	DPRINTF("hibernate @ block %lld max-length %lu blocks\n",
