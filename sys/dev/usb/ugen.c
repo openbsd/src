@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.74 2013/11/02 01:41:17 jeremy Exp $ */
+/*	$OpenBSD: ugen.c,v 1.75 2013/11/06 16:58:13 pirofti Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -101,7 +101,6 @@ struct ugen_softc {
 #define IN  1
 
 	int sc_refcnt;
-	u_char sc_dying;
 	u_char sc_secondary;
 };
 
@@ -171,7 +170,7 @@ ugen_attach(struct device *parent, struct device *self, void *aux)
 		if (err) {
 			printf("%s: setting configuration index 0 failed\n",
 			       sc->sc_dev.dv_xname);
-			sc->sc_dying = 1;
+			usbd_deactivate(sc->sc_udev);
 			return;
 		}
 	}
@@ -182,7 +181,7 @@ ugen_attach(struct device *parent, struct device *self, void *aux)
 	if (err) {
 		printf("%s: setting configuration %d failed\n",
 		       sc->sc_dev.dv_xname, conf);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 }
@@ -286,7 +285,7 @@ ugenopen(dev_t dev, int flag, int mode, struct proc *p)
 	DPRINTFN(5, ("ugenopen: flag=%d, mode=%d, unit=%d endpt=%d\n",
 		     flag, mode, unit, endpt));
 
-	if (sc == NULL || sc->sc_dying)
+	if (sc == NULL || usbd_is_dying(sc->sc_udev))
 		return (ENXIO);
 
 	if (sc->sc_is_open[endpt])
@@ -483,7 +482,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 
 	DPRINTFN(5, ("%s: ugenread: %d\n", sc->sc_dev.dv_xname, endpt));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	if (endpt == USB_CONTROL_ENDPOINT)
@@ -515,7 +514,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			    (sce->timeout * hz) / 1000);
 			sce->state &= ~UGEN_ASLP;
 			DPRINTFN(5, ("ugenread: woke, error=%d\n", error));
-			if (sc->sc_dying)
+			if (usbd_is_dying(sc->sc_udev))
 				error = EIO;
 			if (error == EWOULDBLOCK) {	/* timeout, return 0 */
 				error = 0;
@@ -587,7 +586,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			    (sce->timeout * hz) / 1000);
 			sce->state &= ~UGEN_ASLP;
 			DPRINTFN(5, ("ugenread: woke, error=%d\n", error));
-			if (sc->sc_dying)
+			if (usbd_is_dying(sc->sc_udev))
 				error = EIO;
 			if (error == EWOULDBLOCK) {	/* timeout, return 0 */
 				error = 0;
@@ -651,7 +650,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 
 	DPRINTFN(5, ("%s: ugenwrite: %d\n", sc->sc_dev.dv_xname, endpt));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	if (endpt == USB_CONTROL_ENDPOINT)
@@ -752,7 +751,7 @@ ugen_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return (0);
@@ -981,7 +980,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 	u_int8_t conf, alt;
 
 	DPRINTFN(5, ("ugenioctl: cmd=%08lx\n", cmd));
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	switch (cmd) {
@@ -1264,7 +1263,7 @@ ugenpoll(dev_t dev, int events, struct proc *p)
 
 	sc = ugen_cd.cd_devs[UGENUNIT(dev)];
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (POLLERR);
 
 	/* XXX always IN */
@@ -1376,7 +1375,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 
 	sc = ugen_cd.cd_devs[UGENUNIT(dev)];
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (ENXIO);
 
 	/* XXX always IN */
