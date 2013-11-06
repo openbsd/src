@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.76 2013/11/06 19:48:37 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.77 2013/11/06 19:50:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1378,7 +1378,7 @@ hibernate_write_chunks(union hibernate_info *hib)
 	size_t nblocks, out_remaining, used;
 	struct hibernate_disk_chunk *chunks;
 	vaddr_t hibernate_io_page = hib->piglet_va + PAGE_SIZE;
-	daddr_t blkctr = hib->image_offset, offset = 0;
+	daddr_t blkctr = 0, offset = 0;
 	int i, err;
 	struct hibernate_zlib_state *hibernate_state;
 
@@ -1438,7 +1438,7 @@ hibernate_write_chunks(union hibernate_info *hib)
 		range_base = chunks[i].base;
 		range_end = chunks[i].end;
 
-		chunks[i].offset = blkctr;
+		chunks[i].offset = blkctr + hib->image_offset;
 
 		/* Reset zlib for deflate */
 		if (hibernate_zlib_reset(hib, 1) != Z_OK) {
@@ -1484,13 +1484,12 @@ hibernate_write_chunks(union hibernate_info *hib)
 					nblocks =
 					    PAGE_SIZE / DEV_BSIZE;
 
-					if ((err = hib->io_func(
-					    hib->dev,
-					    blkctr, (vaddr_t)hibernate_io_page,
-					    PAGE_SIZE, HIB_W,
-					    hib->io_page))) {
+					if ((err = hib->io_func(hib->dev,
+					    blkctr + hib->image_offset,
+					    (vaddr_t)hibernate_io_page,
+					    PAGE_SIZE, HIB_W, hib->io_page))) {
 						DPRINTF("hib write error %d\n",
-							err);
+						    err);
 						return (err);
 					}
 
@@ -1537,7 +1536,7 @@ hibernate_write_chunks(union hibernate_info *hib)
 			nblocks ++;
 
 		/* Write final block(s) for this chunk */
-		if ((err = hib->io_func(hib->dev, blkctr,
+		if ((err = hib->io_func(hib->dev, blkctr + hib->image_offset,
 		    (vaddr_t)hibernate_io_page, nblocks*DEV_BSIZE,
 		    HIB_W, hib->io_page))) {
 			DPRINTF("hib final write error %d\n", err);
@@ -1546,7 +1545,7 @@ hibernate_write_chunks(union hibernate_info *hib)
 
 		blkctr += nblocks;
 
-		offset = blkctr;
+		offset = blkctr + hib->image_offset;
 		chunks[i].compressed_size = (offset - chunks[i].offset) *
 		    DEV_BSIZE;
 	}
