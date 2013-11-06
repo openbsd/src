@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1693 2013/10/22 09:25:59 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1694 2013/11/06 11:05:10 stsp Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5605,6 +5605,7 @@
 
 /* Realtek products */
 #define	PCI_PRODUCT_REALTEK_RTS5209	0x5209		/* RTS5209 Card Reader */
+#define	PCI_PRODUCT_REALTEK_RTS5229	0x5229		/* RTS5229 Card Reader */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 */
 #define	PCI_PRODUCT_REALTEK_RT8139D	0x8039		/* 8139D */
 #define	PCI_PRODUCT_REALTEK_RT8129	0x8129		/* 8129 */
