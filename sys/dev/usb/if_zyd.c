@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.92 2013/11/05 10:20:05 mpi Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.93 2013/11/06 15:55:15 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -795,11 +795,11 @@ zyd_cmd(struct zyd_softc *sc, uint16_t code, const void *idata, int ilen,
 			splx(s);
 		printf("%s: could not send command (error=%s)\n",
 		    sc->sc_dev.dv_xname, usbd_errstr(error));
-		(void)usbd_free_xfer(xfer);
+		usbd_free_xfer(xfer);
 		return EIO;
 	}
 	if (!(flags & ZYD_CMD_FLAG_READ)) {
-		(void)usbd_free_xfer(xfer);
+		usbd_free_xfer(xfer);
 		return 0;	/* write: don't wait for reply */
 	}
 	/* wait at most one second for command reply */
@@ -807,7 +807,7 @@ zyd_cmd(struct zyd_softc *sc, uint16_t code, const void *idata, int ilen,
 	sc->odata = NULL;	/* in case answer is received too late */
 	splx(s);
 
-	(void)usbd_free_xfer(xfer);
+	usbd_free_xfer(xfer);
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.64 2013/11/02 01:41:17 jeremy Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.65 2013/11/06 15:55:15 jeremy Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -411,14 +411,14 @@ usbd_alloc_xfer(struct usbd_device *dev)
 	return (xfer);
 }
 
-usbd_status
+void
 usbd_free_xfer(struct usbd_xfer *xfer)
 {
 	DPRINTFN(5,("usbd_free_xfer: %p\n", xfer));
 	if (xfer->rqflags & (URQ_DEV_DMABUF | URQ_AUTO_DMABUF))
 		usbd_free_buffer(xfer);
 	xfer->device->bus->methods->freex(xfer->device->bus, xfer);
-	return (USBD_NORMAL_COMPLETION);
+	return;
 }
 
 void

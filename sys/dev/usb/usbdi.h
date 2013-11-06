@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.56 2013/11/02 01:41:17 jeremy Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.57 2013/11/06 15:55:15 jeremy Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -88,7 +88,7 @@ usbd_status usbd_open_pipe(struct usbd_interface *iface, u_int8_t address,
 usbd_status usbd_close_pipe(struct usbd_pipe *pipe);
 usbd_status usbd_transfer(struct usbd_xfer *req);
 struct usbd_xfer *usbd_alloc_xfer(struct usbd_device *);
-usbd_status usbd_free_xfer(struct usbd_xfer *xfer);
+void usbd_free_xfer(struct usbd_xfer *xfer);
 void usbd_setup_xfer(struct usbd_xfer *xfer, struct usbd_pipe *pipe,
     void *priv, void *buffer, u_int32_t length, u_int16_t flags,
     u_int32_t timeout, usbd_callback);
