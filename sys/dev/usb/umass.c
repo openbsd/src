@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.64 2013/05/30 16:15:02 deraadt Exp $ */
+/*	$OpenBSD: umass.c,v 1.65 2013/11/06 14:37:31 pirofti Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -680,7 +680,7 @@ umass_activate(struct device *dev, int act)
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		if (scbus == NULL || scbus->sc_child == NULL)
 			break;
 		rv = config_deactivate(scbus->sc_child);
@@ -726,7 +726,7 @@ umass_polled_transfer(struct umass_softc *sc, struct usbd_xfer *xfer)
 {
 	usbd_status err;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (USBD_IOERROR);
 
 	/*
@@ -787,7 +787,7 @@ umass_setup_transfer(struct umass_softc *sc, struct usbd_pipe *pipe,
 {
 	usbd_status err;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (USBD_IOERROR);
 
 	/* Initialise a USB transfer and then schedule it */
@@ -822,7 +822,7 @@ umass_setup_ctrl_transfer(struct umass_softc *sc, usb_device_request_t *req,
 {
 	usbd_status err;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (USBD_IOERROR);
 
 	/* Initialise a USB control transfer and then schedule it */
@@ -892,7 +892,7 @@ void
 umass_clear_endpoint_stall(struct umass_softc *sc, int endpt,
     struct usbd_xfer *xfer)
 {
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	DPRINTF(UDMASS_BBB, ("%s: Clear endpoint 0x%02x stall\n",
@@ -931,7 +931,7 @@ umass_bbb_reset(struct umass_softc *sc, int status)
 		("sc->sc_wire == 0x%02x wrong for umass_bbb_reset\n",
 		sc->sc_wire));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	/*
@@ -981,7 +981,7 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 		("sc->sc_wire == 0x%02x wrong for umass_bbb_transfer\n",
 		sc->sc_wire));
 
-	if (sc->sc_dying) {
+	if (usbd_is_dying(sc->sc_udev)) {
 		sc->polled_xfer_status = USBD_IOERROR;
 		return;
 	}
@@ -1097,7 +1097,7 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv, usbd_status err)
 		("sc->sc_wire == 0x%02x wrong for umass_bbb_state\n",
 		sc->sc_wire));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	/*
@@ -1426,7 +1426,7 @@ umass_cbi_reset(struct umass_softc *sc, int status)
 		("sc->sc_wire == 0x%02x wrong for umass_cbi_reset\n",
 		sc->sc_wire));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	/*
@@ -1482,7 +1482,7 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 		("sc->sc_wire == 0x%02x wrong for umass_cbi_transfer\n",
 		sc->sc_wire));
 
-	if (sc->sc_dying) {
+	if (usbd_is_dying(sc->sc_udev)) {
 		sc->polled_xfer_status = USBD_IOERROR;
 		return;
 	}
@@ -1548,7 +1548,7 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,  usbd_status err)
 		("sc->sc_wire == 0x%02x wrong for umass_cbi_state\n",
 		sc->sc_wire));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umassvar.h,v 1.13 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: umassvar.h,v 1.14 2013/11/06 14:37:31 pirofti Exp $ */
 /*	$NetBSD: umassvar.h,v 1.20 2003/09/08 19:31:01 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -258,7 +258,6 @@ struct umass_softc {
 #endif
 
 	int			sc_xfer_flags;
-	char			sc_dying;
 	int			sc_refcnt;
 	int			sc_sense;
 

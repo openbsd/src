@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.39 2013/04/22 01:19:09 deraadt Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.40 2013/11/06 14:37:31 pirofti Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 		sc_link->target, sc_link->lun, xs, xs->cmd->opcode,
 		xs->datalen, sc_link->quirks, xs->flags & SCSI_POLL));
 
-	if (sc->sc_dying) {
+	if (usbd_is_dying(sc->sc_udev)) {
 		xs->error = XS_DRIVER_STUFFUP;
 		goto done;
 	}
