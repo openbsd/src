@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.100 2013/05/15 08:29:26 ratchov Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.101 2013/11/06 16:13:42 pirofti Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -251,7 +251,6 @@ struct uaudio_softc {
 	struct mixerctl *sc_ctls;	/* mixer controls */
 	int		 sc_nctls;	/* # of mixer controls */
 	struct device	*sc_audiodev;
-	char		 sc_dying;
 	int		 sc_quirks;
 };
 
@@ -595,7 +594,7 @@ uaudio_activate(struct device *self, int act)
 	case DVACT_DEACTIVATE:
 		if (sc->sc_audiodev != NULL)
 			rv = config_deactivate(sc->sc_audiodev);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return (rv);
@@ -629,7 +628,7 @@ uaudio_query_encoding(void *addr, struct audio_encoding *fp)
 {
 	struct uaudio_softc *sc = addr;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	if (sc->sc_nalts == 0 || sc->sc_altflags == 0)
@@ -2134,7 +2133,7 @@ uaudio_query_devinfo(void *addr, mixer_devinfo_t *mi)
 	int n, nctls, i;
 
 	DPRINTFN(2,("uaudio_query_devinfo: index=%d\n", mi->index));
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	n = mi->index;
@@ -2216,7 +2215,7 @@ uaudio_open(void *addr, int flags)
 	struct uaudio_softc *sc = addr;
 
 	DPRINTF(("uaudio_open: sc=%p\n", sc));
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	if ((flags & FWRITE) && !(sc->sc_mode & AUMODE_PLAY))
@@ -2299,7 +2298,7 @@ uaudio_getdev(void *addr, struct audio_device *retp)
 	struct uaudio_softc *sc = addr;
 
 	DPRINTF(("uaudio_mixer_getdev:\n"));
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	*retp = uaudio_device;
@@ -2578,7 +2577,7 @@ uaudio_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 
 	DPRINTFN(2,("uaudio_mixer_get_port: index=%d\n", cp->dev));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	n = cp->dev - UAC_NCLASSES;
@@ -2622,7 +2621,7 @@ uaudio_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 	int i, n, vals[MIX_MAX_CHAN];
 
 	DPRINTFN(2,("uaudio_mixer_set_port: index = %d\n", cp->dev));
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	n = cp->dev - UAC_NCLASSES;
@@ -2665,7 +2664,7 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 	usbd_status err;
 	int i, s;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	DPRINTFN(3,("uaudio_trigger_input: sc=%p start=%p end=%p "
@@ -2707,7 +2706,7 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	usbd_status err;
 	int i, s;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	DPRINTFN(3,("uaudio_trigger_output: sc=%p start=%p end=%p "
@@ -2898,7 +2897,7 @@ uaudio_chan_ptransfer(struct chan *ch)
 	u_char *pos;
 	int i, n, size, residue, total;
 
-	if (ch->sc->sc_dying)
+	if (usbd_is_dying(ch->sc->sc_udev))
 		return;
 
 	/* Pick the next channel buffer. */
@@ -3003,7 +3002,7 @@ uaudio_chan_psync_transfer(struct chan *ch)
 	struct syncbuf *sb;
 	int i, size, total = 0;
 
-	if (ch->sc->sc_dying)
+	if (usbd_is_dying(ch->sc->sc_udev))
 		return;
 
 	/* Pick the next sync buffer. */
@@ -3088,7 +3087,7 @@ uaudio_chan_rtransfer(struct chan *ch)
 	struct chanbuf *cb;
 	int i, size, residue, total;
 
-	if (ch->sc->sc_dying)
+	if (usbd_is_dying(ch->sc->sc_udev))
 		return;
 
 	/* Pick the next channel buffer. */
@@ -3457,7 +3456,7 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 	struct audio_params *p;
 	int mode;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	if (((usemode & AUMODE_PLAY) && sc->sc_playchan.pipe != NULL) ||
