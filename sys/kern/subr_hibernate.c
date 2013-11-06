@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.77 2013/11/06 19:50:56 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.78 2013/11/06 19:53:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1378,7 +1378,7 @@ hibernate_write_chunks(union hibernate_info *hib)
 	size_t nblocks, out_remaining, used;
 	struct hibernate_disk_chunk *chunks;
 	vaddr_t hibernate_io_page = hib->piglet_va + PAGE_SIZE;
-	daddr_t blkctr = 0, offset = 0;
+	daddr_t blkctr = 0;
 	int i, err;
 	struct hibernate_zlib_state *hibernate_state;
 
@@ -1545,9 +1545,8 @@ hibernate_write_chunks(union hibernate_info *hib)
 
 		blkctr += nblocks;
 
-		offset = blkctr + hib->image_offset;
-		chunks[i].compressed_size = (offset - chunks[i].offset) *
-		    DEV_BSIZE;
+		chunks[i].compressed_size = (blkctr + hib->image_offset -
+		    chunks[i].offset) * DEV_BSIZE;
 	}
 
 	return (0);
