@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.59 2013/04/15 09:23:02 mglocker Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.60 2013/11/06 16:59:02 pirofti Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -96,8 +96,6 @@ struct	uplcom_softc {
 	int			 sc_rts;	/* current RTS state */
 
 	struct device		*sc_subdev;	/* ucom device */
-
-	u_char			 sc_dying;	/* disconnecting */
 
 	u_char			 sc_lsr;	/* Local status register */
 	u_char			 sc_msr;	/* uplcom status register */
@@ -243,7 +241,7 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	if (err) {
 		printf("%s: failed to set configuration, err=%s\n",
 			devname, usbd_errstr(err));
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -253,7 +251,7 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	if (cdesc == NULL) {
 		printf("%s: failed to get configuration descriptor\n",
 			sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -262,7 +260,7 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	if (ddesc == NULL) {
 		printf("%s: failed to get device descriptor\n",
 		    sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -291,7 +289,7 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	if (err) {
 		printf("\n%s: failed to get interface, err=%s\n",
 			devname, usbd_errstr(err));
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -305,7 +303,7 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor for %d\n",
 				sc->sc_dev.dv_xname, i);
-			sc->sc_dying = 1;
+			usbd_deactivate(sc->sc_udev);
 			return;
 		}
 
@@ -319,7 +317,7 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_intr_number== -1) {
 		printf("%s: Could not find interrupt in\n",
 			sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -343,8 +341,8 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 				UPLCOM_SECOND_IFACE_INDEX, &sc->sc_iface);
 		if (err) {
 			printf("\n%s: failed to get second interface, err=%s\n",
-							devname, usbd_errstr(err));
-			sc->sc_dying = 1;
+			    devname, usbd_errstr(err));
+			usbd_deactivate(sc->sc_udev);
 			return;
 		}
 	}
@@ -359,7 +357,7 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor for %d\n",
 				sc->sc_dev.dv_xname, i);
-			sc->sc_dying = 1;
+			usbd_deactivate(sc->sc_udev);
 			return;
 		}
 
@@ -375,14 +373,14 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	if (uca.bulkin == -1) {
 		printf("%s: Could not find data bulk in\n",
 			sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
 	if (uca.bulkout == -1) {
 		printf("%s: Could not find data bulk out\n",
 			sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -404,7 +402,7 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	if (err) {
 		printf("%s: reset failed, %s\n", sc->sc_dev.dv_xname,
 			usbd_errstr(err));
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -446,7 +444,7 @@ uplcom_activate(struct device *self, int act)
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)
 			rv = config_deactivate(sc->sc_subdev);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return (rv);
@@ -682,7 +680,7 @@ uplcom_open(void *addr, int portno)
 	usbd_status uerr;
 	int err;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	DPRINTF(("uplcom_open: sc=%p\n", sc));
@@ -746,7 +744,7 @@ uplcom_close(void *addr, int portno)
 	struct uplcom_softc *sc = addr;
 	int err;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	DPRINTF(("uplcom_close: close\n"));
@@ -772,7 +770,7 @@ uplcom_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	u_char *buf = sc->sc_intr_buf;
 	u_char pstatus;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
@@ -825,7 +823,7 @@ uplcom_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
 	struct uplcom_softc *sc = addr;
 	int error = 0;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	DPRINTF(("uplcom_ioctl: cmd=0x%08lx\n", cmd));
