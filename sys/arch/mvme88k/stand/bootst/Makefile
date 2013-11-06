@@ -1,7 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.17 2013/01/16 20:45:09 miod Exp $
-
-SIZE?=	size
+#	$OpenBSD: Makefile,v 1.18 2013/11/06 19:37:06 miod Exp $
 
 S=	${.CURDIR}/../../../..
 DEFS= -DSTANDALONE -DCOMPAT_NOLABEL
@@ -33,7 +31,6 @@ all: ${ALL}
 bootst.bug: ${STAGE1_CRT} ${OBJS} ${LIBS}
 	${LD} ${LDFLAGS} -o $@ \
 	    ${STAGE1_CRT} ${OBJS} ${LIBS} `${CC} -print-libgcc-file-name`
-	@${SIZE} bootst.bug
 
 bootst stboot: bootst.bug ${WRTVID}
 	${WRTVID} bootst.bug

@@ -1,6 +1,5 @@
-#	$OpenBSD: Makefile,v 1.20 2013/05/12 10:43:45 miod Exp $
+#	$OpenBSD: Makefile,v 1.21 2013/11/06 19:37:06 miod Exp $
 
-SIZE?=	size
 STRIP?= strip
 
 S=	${.CURDIR}/../../../..

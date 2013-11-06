@@ -1,7 +1,6 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.15 2013/02/02 13:36:06 miod Exp $
+#	$OpenBSD: Makefile,v 1.16 2013/11/06 19:37:06 miod Exp $
 
-SIZE?=	size
 STRIP?=	strip
 
 S=	${.CURDIR}/../../../..
@@ -33,7 +32,6 @@ all: ${ALL}
 bootst.bug: ${BUGCRT} ${OBJS} ${LIBS}
 	${LD} ${LDFLAGS} -o $@ \
 	    ${BUGCRT} ${OBJS} ${LIBS} `${CC} -print-libgcc-file-name`
-	@${SIZE} bootst.bug
 
 bootst stboot: bootst.bug ${WRTVID}
 	${STRIP} -I a.out-m68k-netbsd -o bootst.strip bootst.bug
