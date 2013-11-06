@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubt.c,v 1.24 2013/08/07 15:56:03 tedu Exp $	*/
+/*	$OpenBSD: ubt.c,v 1.25 2013/11/06 17:04:47 pirofti Exp $	*/
 /*	$NetBSD: ubt.c,v 1.35 2008/07/28 14:19:26 drochner Exp $	*/
 
 /*-
@@ -153,7 +153,6 @@ struct ubt_softc {
 	struct device		 sc_dev;
 	struct usbd_device	*sc_udev;
 	int			 sc_refcnt;
-	int			 sc_dying;
 	int			 sc_enabled;
 
 	/* Control Interface */
@@ -488,7 +487,7 @@ ubt_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return (0);
@@ -889,7 +888,7 @@ ubt_xmit_cmd_start(struct ubt_softc *sc)
 	struct mbuf *m;
 	int len;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (IF_IS_EMPTY(&sc->sc_cmd_queue))
@@ -952,8 +951,8 @@ ubt_xmit_cmd_complete(struct usbd_xfer *xfer, void *h, usbd_status status)
 		return;
 	}
 
-	if (sc->sc_dying) {
-		DPRINTF("sc_dying\n");
+	if (usbd_is_dying(sc->sc_udev))
+		DPRINTF("dying\n");
 		return;
 	}
 
@@ -996,7 +995,7 @@ ubt_xmit_acl_start(struct ubt_softc *sc)
 	usbd_status status;
 	int len;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (IF_IS_EMPTY(&sc->sc_aclwr_queue))
@@ -1062,7 +1061,7 @@ ubt_xmit_acl_complete(struct usbd_xfer *xfer, void *h, usbd_status status)
 		return;
 	}
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
@@ -1102,7 +1101,7 @@ ubt_xmit_sco_start(struct ubt_softc *sc)
 {
 	int i;
 
-	if (sc->sc_dying || sc->sc_scowr_size == 0)
+	if (usbd_is_dying(sc->sc_udev) || sc->sc_scowr_size == 0)
 		return;
 
 	for (i = 0 ; i < UBT_NXFERS ; i++) {
@@ -1226,7 +1225,7 @@ ubt_xmit_sco_complete(struct usbd_xfer *xfer, void *h, usbd_status status)
 		return;
 	}
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
@@ -1282,7 +1281,7 @@ ubt_recv_event(struct usbd_xfer *xfer, void *h, usbd_status status)
 	DPRINTFN(15, "sc=%p status=%s (%d)\n",
 		    sc, usbd_errstr(status), status);
 
-	if (status != USBD_NORMAL_COMPLETION || sc->sc_dying)
+	if (status != USBD_NORMAL_COMPLETION || usbd_is_dying(sc->sc_udev))
 		return;
 
 	usbd_get_xfer_status(xfer, NULL, &buf, &count, NULL);
@@ -1308,11 +1307,12 @@ ubt_recv_acl_start(struct ubt_softc *sc)
 
 	DPRINTFN(15, "sc=%p\n", sc);
 
-	if (sc->sc_aclrd_busy || sc->sc_dying) {
-		DPRINTF("sc_aclrd_busy=%d, sc_dying=%d\n",
-			sc->sc_aclrd_busy,
-			sc->sc_dying);
-
+	if (sc->sc_aclrd_busy) {
+		DPRINTF("sc_aclrd_busy=%d\n", sc->sc_aclrd_busy);
+		return;
+	}
+	if (usbd_is_dying(sc->sc_udev)) {
+		DPRINTF("dying");
 		return;
 	}
 
@@ -1360,8 +1360,8 @@ ubt_recv_acl_complete(struct usbd_xfer *xfer, void *h, usbd_status status)
 		return;
 	}
 
-	if (sc->sc_dying) {
-		DPRINTF("sc_dying\n");
+	if (usbd_is_dying(sc->sc_udev)) {
+		DPRINTF("dying\n");
 		return;
 	}
 
@@ -1402,10 +1402,13 @@ ubt_recv_sco_start1(struct ubt_softc *sc, struct ubt_isoc_xfer *isoc)
 
 	DPRINTFN(15, "sc=%p, isoc=%p\n", sc, isoc);
 
-	if (isoc->busy || sc->sc_dying || sc->sc_scord_size == 0) {
-		DPRINTF("%s%s%s\n",
+	if (usbd_is_dying(sc->sc_udev)) {
+		DPRINTF("dying");
+		return;
+	}
+	if (isoc->busy || sc->sc_scord_size == 0) {
+		DPRINTF("%s%s\n",
 			isoc->busy ? " busy" : "",
-			sc->sc_dying ? " dying" : "",
 			sc->sc_scord_size == 0 ? " size=0" : "");
 
 		return;
@@ -1450,8 +1453,8 @@ ubt_recv_sco_complete(struct usbd_xfer *xfer, void *h, usbd_status status)
 		return;
 	}
 
-	if (sc->sc_dying) {
-		DPRINTF("sc_dying\n");
+	if (usbd_is_dying(sc->sc_udev)) {
+		DPRINTF("dying\n");
 		return;
 	}
 
