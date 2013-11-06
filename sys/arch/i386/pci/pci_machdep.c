@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.76 2013/07/10 21:31:12 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.77 2013/11/06 10:40:36 mpi Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -941,6 +941,8 @@ pci_init_extents(void)
 #include "acpi.h"
 #if NACPI > 0
 void acpi_pci_match(struct device *, struct pci_attach_args *);
+pcireg_t acpi_pci_min_powerstate(pci_chipset_tag_t, pcitag_t);
+void acpi_pci_set_powerstate(pci_chipset_tag_t, pcitag_t, int, int);
 #endif
 
 void
@@ -951,10 +953,6 @@ pci_dev_postattach(struct device *dev, struct pci_attach_args *pa)
 #endif
 }
 
-#if NACPI > 0
-pcireg_t acpi_pci_min_powerstate(pci_chipset_tag_t, pcitag_t);
-#endif
-
 pcireg_t
 pci_min_powerstate(pci_chipset_tag_t pc, pcitag_t tag)
 {
@@ -962,5 +960,13 @@ pci_min_powerstate(pci_chipset_tag_t pc, pcitag_t tag)
 	return acpi_pci_min_powerstate(pc, tag);
 #else
 	return pci_get_powerstate(pc, tag);
+#endif
+}
+
+void
+pci_set_powerstate_md(pci_chipset_tag_t pc, pcitag_t tag, int state, int pre)
+{
+#if NACPI > 0
+	acpi_pci_set_powerstate(pc, tag, state, pre);
 #endif
 }

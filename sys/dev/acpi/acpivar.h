@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.75 2012/11/27 17:38:46 pirofti Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.76 2013/11/06 10:40:36 mpi Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -26,6 +26,8 @@
 #include <sys/rwlock.h>
 #include <machine/biosvar.h>
 
+#include "acpipwrres.h"
+
 /* #define ACPI_DEBUG */
 #ifdef ACPI_DEBUG
 extern int acpi_debug;
@@ -43,6 +45,7 @@ extern u_int8_t acpi_lapic_flags[LAPIC_MAP_SIZE];
 
 struct klist;
 struct acpiec_softc;
+struct acpipwrres_softc;
 
 struct acpivideo_softc {
 	struct device sc_dev;
@@ -88,6 +91,19 @@ struct acpi_wakeq {
 	int				 q_gpe;
 	int				 q_state;
 };
+
+#if NACPIPWRRES > 0
+struct acpi_pwrres {
+	SIMPLEQ_ENTRY(acpi_pwrres)	 p_next;
+	struct aml_node			*p_node;	/* device's node */
+	int				 p_state;	/* current state */
+
+	int				 p_res_state;
+	struct acpipwrres_softc		*p_res_sc;
+};
+
+typedef SIMPLEQ_HEAD(, acpi_pwrres) acpi_pwrreshead_t;
+#endif /* NACPIPWRRES > 0 */
 
 typedef SIMPLEQ_HEAD(, acpi_q) acpi_qhead_t;
 typedef SIMPLEQ_HEAD(, acpi_wakeq) acpi_wakeqhead_t;
@@ -193,6 +209,9 @@ struct acpi_softc {
 	struct acpi_fadt	*sc_fadt;
 	acpi_qhead_t		 sc_tables;
 	acpi_wakeqhead_t	 sc_wakedevs;
+#if NACPIPWRRES > 0
+	acpi_pwrreshead_t	 sc_pwrresdevs;
+#endif /* NACPIPWRRES > 0 */
 
 	/*
 	 * Second-level information from FADT
@@ -308,6 +327,11 @@ int	acpiec_intr(struct acpiec_softc *);
 void	acpiec_read(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
 void	acpiec_write(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
 void	acpiec_handle_events(struct acpiec_softc *);
+
+#if NACPIPWRRES > 0
+int	acpipwrres_ref_incr(struct acpipwrres_softc *, struct aml_node *);
+int	acpipwrres_ref_decr(struct acpipwrres_softc *, struct aml_node *);
+#endif /* NACPIPWRRES > 0 */
 
 int	acpi_read_pmreg(struct acpi_softc *, int, int);
 void	acpi_write_pmreg(struct acpi_softc *, int, int, int);

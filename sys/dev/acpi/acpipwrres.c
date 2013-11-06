@@ -1,5 +1,7 @@
-/* $OpenBSD: acpipwrres.c,v 1.4 2010/07/21 19:35:15 deraadt Exp $ */
+/* $OpenBSD: acpipwrres.c,v 1.5 2013/11/06 10:40:36 mpi Exp $ */
+
 /*
+ * Copyright (c) 2013 Martin Pieuchot <mpi@openbsd.org>
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -14,6 +16,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
@@ -31,10 +34,6 @@
 
 int	acpipwrres_match(struct device *, void *, void *);
 void	acpipwrres_attach(struct device *, struct device *, void *);
-int	acpipwrres_notify(struct aml_node *, int, void *);
-
-#define	NOTIFY_PWRRES_OFF	0
-#define NOTIFY_PWRRES_ON	1
 
 #ifdef ACPIPWRRES_DEBUG
 #define DPRINTF(x)	printf x
@@ -51,11 +50,11 @@ struct acpipwrres_softc {
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
 
-	TAILQ_HEAD(acpipwrres_cons_h, acpipwrres_consumer)	sc_cons;
+	SIMPLEQ_HEAD(, acpipwrres_consumer)	sc_cons;
+	int					sc_cons_ref;
 
 	int	sc_level;
 	int	sc_order;
-	int	sc_ncons;
 	int	sc_state;
 #define ACPIPWRRES_OFF		0
 #define ACPIPWRRES_ON		1
@@ -64,7 +63,7 @@ struct acpipwrres_softc {
 
 struct acpipwrres_consumer {
 	struct aml_node				*cs_node;
-	TAILQ_ENTRY(acpipwrres_consumer)	cs_link;
+	SIMPLEQ_ENTRY(acpipwrres_consumer)	cs_next;
 };
 
 struct cfattach acpipwrres_ca = {
@@ -75,6 +74,8 @@ struct cfdriver acpipwrres_cd = {
 	NULL, "acpipwrres", DV_DULL
 };
 
+int	acpipwrres_hascons(struct acpipwrres_softc *, struct aml_node *);
+int	acpipwrres_addcons(struct acpipwrres_softc *, struct aml_node *);
 int	acpipwrres_foundcons(struct aml_node *, void *);
 
 int
@@ -93,9 +94,10 @@ acpipwrres_match(struct device *parent, void *match, void *aux)
 void
 acpipwrres_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct acpipwrres_softc	*sc = (struct acpipwrres_softc *)self;
-	struct acpi_attach_args *aaa = aux;
-	struct aml_value	res;
+	struct acpipwrres_softc		*sc = (struct acpipwrres_softc *)self;
+	struct acpi_attach_args		*aaa = aux;
+	struct aml_value		res;
+	struct acpipwrres_consumer	*cons;
 
 	extern struct aml_node	aml_root;
 
@@ -103,10 +105,7 @@ acpipwrres_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_devnode = aaa->aaa_node;
 	memset(&res, 0, sizeof res);
 
-	printf(": %s\n", sc->sc_devnode->name);
-
-	aml_register_notify(sc->sc_devnode, aaa->aaa_dev,
-	    acpipwrres_notify, sc, ACPIDEV_NOPOLL);
+	printf(": %s", sc->sc_devnode->name);
 
 	if (!aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &res)) {
 		sc->sc_state = (int)aml_val2int(&res);
@@ -115,7 +114,7 @@ acpipwrres_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_state = ACPIPWRRES_UNK;
 	} else
 		sc->sc_state = ACPIPWRRES_UNK;
-	DPRINTF(("%s: state = %d\n", DEVNAME(sc), sc->sc_state));
+	DPRINTF(("\n%s: state = %d\n", DEVNAME(sc), sc->sc_state));
 	if (aml_evalnode(sc->sc_acpi, aaa->aaa_node, 0, NULL, &res) == 0) {
 		sc->sc_level = res.v_powerrsrc.pwr_level;
 		sc->sc_order = res.v_powerrsrc.pwr_order;
@@ -125,50 +124,140 @@ acpipwrres_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Get the list of consumers */
-	TAILQ_INIT(&sc->sc_cons);
+	SIMPLEQ_INIT(&sc->sc_cons);
+#if notyet
 	aml_find_node(&aml_root, "_PRW", acpipwrres_foundcons, sc);
+#endif
 	aml_find_node(&aml_root, "_PR0", acpipwrres_foundcons, sc);
 	aml_find_node(&aml_root, "_PR1", acpipwrres_foundcons, sc);
 	aml_find_node(&aml_root, "_PR2", acpipwrres_foundcons, sc);
+	aml_find_node(&aml_root, "_PR3", acpipwrres_foundcons, sc);
+
+	DPRINTF(("%s", DEVNAME(sc)));
+	if (!SIMPLEQ_EMPTY(&sc->sc_cons)) {
+		printf(": resource for");
+		SIMPLEQ_FOREACH(cons, &sc->sc_cons, cs_next)
+			printf(" %s%s", cons->cs_node->name,
+			   (SIMPLEQ_NEXT(cons, cs_next) == NULL) ? "" : ",");
+	}
+	printf("\n");
 }
 
 int
-acpipwrres_notify(struct aml_node *node, int notify, void *arg)
+acpipwrres_ref_incr(struct acpipwrres_softc *sc, struct aml_node *node)
 {
-	int				fmatch = 0;
-	struct acpipwrres_consumer	*cons;
-	struct acpipwrres_softc		*sc = arg;
 	struct aml_value		res;
 
-	memset(&res, 0, sizeof res);
+	if (!acpipwrres_hascons(sc, node))
+		return (1);
 
-	TAILQ_FOREACH(cons, &sc->sc_cons, cs_link)
-		if (cons->cs_node == node) {
-			fmatch = 1;
-			break;
-		}
-	if (!fmatch)
-		return (0);
+	DPRINTF(("%s: dev %s ON %d\n", DEVNAME(sc), node->name,
+	    sc->sc_cons_ref));
 
-	switch (notify) {
-	case NOTIFY_PWRRES_ON:
-		DPRINTF(("pwr: on devs %d\n", sc->sc_ncons));
-		if (sc->sc_ncons++ == 0)
-			aml_evalname(sc->sc_acpi, sc->sc_devnode, "_ON", 0, NULL,
-			    &res);
+	if (sc->sc_cons_ref++ == 0) {
+		memset(&res, 0, sizeof(res));
+		aml_evalname(sc->sc_acpi, sc->sc_devnode, "_ON", 0,
+		    NULL, &res);
 		aml_freevalue(&res);
-		break;
-	case NOTIFY_PWRRES_OFF:
-		DPRINTF(("pwr: off devs %d\n", sc->sc_ncons));
-		if (--sc->sc_ncons == 0)
-			aml_evalname(sc->sc_acpi, sc->sc_devnode, "_OFF", 0, NULL,
-			    &res);
-		aml_freevalue(&res);
-		break;
-	default:
-		printf("%s: unknown event 0x%02x\n", DEVNAME(sc), notify);
-		break;
 	}
+
+	return (0);
+}
+
+int
+acpipwrres_ref_decr(struct acpipwrres_softc *sc, struct aml_node *node)
+{
+	struct aml_value		res;
+
+	if (!acpipwrres_hascons(sc, node))
+		return (1);
+
+	DPRINTF(("%s: dev %s OFF %d\n", DEVNAME(sc), node->name,
+	    sc->sc_cons_ref));
+
+	if (--sc->sc_cons_ref == 0) {
+		memset(&res, 0, sizeof(res));
+		aml_evalname(sc->sc_acpi, sc->sc_devnode, "_OFF", 0,
+		    NULL, &res);
+		aml_freevalue(&res);
+	}
+
+	return (0);
+}
+
+int
+acpipwrres_hascons(struct acpipwrres_softc *sc, struct aml_node *node)
+{
+	struct acpipwrres_consumer	*cons;
+
+	SIMPLEQ_FOREACH(cons, &sc->sc_cons, cs_next) {
+		if (cons->cs_node == node)
+			return (1);
+	}
+
+	return (0);
+}
+
+int
+acpipwrres_addcons(struct acpipwrres_softc *sc, struct aml_node *node)
+{
+	struct acpipwrres_consumer	*cons;
+	struct acpi_pwrres		*pr;
+	int				state;
+
+	/*
+	 * Add handlers to put the device into Dx states.
+	 *
+	 * XXX What about PRW?
+	 */
+	if (strcmp(node->name, "_PR0") == 0) {
+		state = ACPI_STATE_D0;
+	} else if (strcmp(node->name, "_PR1") == 0) {
+		state = ACPI_STATE_D1;
+	} else if (strcmp(node->name, "_PR2") == 0) {
+		state = ACPI_STATE_D2;
+	} else if (strcmp(node->name, "_PR3") == 0) {
+		state = ACPI_STATE_D3;
+	} else {
+		return (0);
+	}
+
+	if (!acpipwrres_hascons(sc, node->parent)) {
+		cons = malloc(sizeof(*cons), M_DEVBUF, M_NOWAIT | M_ZERO);
+		if (cons == NULL)
+			return (ENOMEM);
+
+		cons->cs_node = node->parent;
+		SIMPLEQ_INSERT_TAIL(&sc->sc_cons, cons, cs_next);
+	}
+
+	DPRINTF(("%s: resource for %s (D%d) \n", DEVNAME(sc),
+	    node->parent->name, state));
+
+	/*
+	 * Make sure we attach only once the same Power Resource for a
+	 * given state.
+	 */
+	SIMPLEQ_FOREACH(pr, &sc->sc_acpi->sc_pwrresdevs, p_next) {
+		if (pr->p_node == node->parent &&
+		    pr->p_res_state == state &&
+		    pr->p_res_sc == sc) {
+			DPRINTF(("error: pr for %s already set\n",
+			   aml_nodename(pr->p_node)));
+			return (EINVAL);
+		}
+	}
+
+	pr = malloc(sizeof(struct acpi_pwrres), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (pr == NULL)
+		return (ENOMEM);
+
+	pr->p_node = node->parent;
+	pr->p_state = -1;
+	pr->p_res_state = state;
+	pr->p_res_sc = sc;
+
+	SIMPLEQ_INSERT_TAIL(&sc->sc_acpi->sc_pwrresdevs, pr, p_next);
 
 	return (0);
 }
@@ -176,35 +265,58 @@ acpipwrres_notify(struct aml_node *node, int notify, void *arg)
 int
 acpipwrres_foundcons(struct aml_node *node, void *arg)
 {
-	int				i = 0;
-	struct acpipwrres_consumer	*cons;
-	struct aml_node			*pnode;
 	struct acpipwrres_softc		*sc = (struct acpipwrres_softc *)arg;
-	struct aml_value		res;
+	struct aml_value		res, *ref;
+	int				i = 0;
 
 	extern struct aml_node	aml_root;
 
-	memset(&res, 0, sizeof res);
+	memset(&res, 0, sizeof(res));
 
 	if (aml_evalnode(sc->sc_acpi, node, 0, NULL, &res) == -1) {
 		DPRINTF(("pwr: consumer not found\n"));
-		return (-1);
-	} else {
-		DPRINTF(("%s: node name %s\n", DEVNAME(sc), aml_nodename(node)));
-		if (!strcmp(node->name, "_PRW"))
-			i = 2;          /* _PRW first two values are ints */
-		for (; i < res.length; i++) {
-			pnode = aml_searchname(&aml_root,
-			    res.v_package[i]->v_string);
-			if (pnode == sc->sc_devnode) {
-				DPRINTF(("%s: consumer match\n", DEVNAME(sc)));
-				cons = malloc(sizeof *cons, M_DEVBUF,
-				    M_WAITOK | M_ZERO);
-				cons->cs_node = pnode;
-				TAILQ_INSERT_HEAD(&sc->sc_cons, cons, cs_link);
-			}
-		}
+		return (1);
 	}
+
+	if (res.type != AML_OBJTYPE_PACKAGE) {
+		DPRINTF(("%s: %s is not a package\n", DEVNAME(sc),
+		    aml_nodename(node)));
+		aml_freevalue(&res);
+		return (1);
+	}
+
+	DPRINTF(("%s: node name %s\n", DEVNAME(sc), aml_nodename(node)));
+	if (!strcmp(node->name, "_PRW"))
+		i = 2;          /* _PRW first two values are ints */
+
+	for (; i < res.length; i++) {
+		ref = res.v_package[i];
+
+		if (ref->type == AML_OBJTYPE_STRING) {
+			struct aml_node	*pnode;
+
+			pnode = aml_searchrel(&aml_root, ref->v_string);
+			if (pnode == NULL) {
+				DPRINTF(("%s: device %s not found\n",
+				    DEVNAME(sc), ref->v_string));
+				continue;
+			}
+			ref = pnode->value;
+		}
+
+		if (ref->type == AML_OBJTYPE_OBJREF)
+			ref = ref->v_objref.ref;
+
+		if (ref->type != AML_OBJTYPE_POWERRSRC) {
+			DPRINTF(("%s: object reference has a wrong type (%d)\n",
+			    DEVNAME(sc), ref->type));
+			continue;
+		}
+
+		if (ref->node == sc->sc_devnode)
+			(void)acpipwrres_addcons(sc, node);
+	}
+	aml_freevalue(&res);
 
 	return (0);
 }

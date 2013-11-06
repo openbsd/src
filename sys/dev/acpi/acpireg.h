@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.28 2012/07/13 11:51:41 pirofti Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.29 2013/11/06 10:40:36 mpi Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -700,6 +700,14 @@ struct acpi_ivrs {
 #define ACPI_STATE_S3		3
 #define ACPI_STATE_S4		4
 #define ACPI_STATE_S5		5
+
+/*
+ * Device Power States
+ */
+#define ACPI_STATE_D0		0
+#define ACPI_STATE_D1		1
+#define ACPI_STATE_D2		2
+#define ACPI_STATE_D3		3
 
 /*
  * ACPI Device IDs
