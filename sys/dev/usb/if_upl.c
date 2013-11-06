@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.53 2013/10/29 10:01:20 mpi Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.54 2013/11/06 17:33:26 pirofti Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -138,7 +138,6 @@ struct upl_softc {
 
 	uByte			sc_ibuf;
 
-	char			sc_dying;
 	u_int			sc_rx_errs;
 	struct timeval		sc_rx_notice;
 	u_int			sc_intr_errs;
@@ -338,7 +337,7 @@ upl_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return (0);
@@ -456,7 +455,7 @@ upl_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	int			total_len = 0;
 	int			s;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
@@ -543,7 +542,7 @@ upl_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct ifnet		*ifp = &sc->sc_if;
 	int			s;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	s = splnet();
@@ -624,7 +623,7 @@ upl_start(struct ifnet *ifp)
 	struct upl_softc	*sc = ifp->if_softc;
 	struct mbuf		*m_head = NULL;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	DPRINTFN(10,("%s: %s: enter\n", sc->sc_dev.dv_xname,__func__));
@@ -667,7 +666,7 @@ upl_init(void *xsc)
 	struct ifnet		*ifp = &sc->sc_if;
 	int			s;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	DPRINTFN(10,("%s: %s: enter\n", sc->sc_dev.dv_xname,__func__));
@@ -761,7 +760,7 @@ upl_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	DPRINTFN(15,("%s: %s: enter\n", sc->sc_dev.dv_xname,__func__));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
@@ -801,7 +800,7 @@ upl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct ifreq		*ifr = (struct ifreq *)data;
 	int			s, error = 0;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	DPRINTFN(5,("%s: %s: cmd=0x%08lx\n",
@@ -855,7 +854,7 @@ upl_watchdog(struct ifnet *ifp)
 
 	DPRINTFN(5,("%s: %s: enter\n", sc->sc_dev.dv_xname,__func__));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	ifp->if_oerrors++;
