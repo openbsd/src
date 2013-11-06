@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.62 2013/01/14 23:06:09 deraadt Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.63 2013/11/06 17:08:57 deraadt Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -571,8 +571,8 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 		 * 
 		 * We will transition step by step to the new model.
 		 */
-		eip.eip_ver = 0;
-		eip.eip_oldver = ETHERIP_VERSION;
+		eip.eip_ver = ETHERIP_VERSION;
+		eip.eip_oldver = 0;
 		eip.eip_pad = 0;
 		m_copyback(m, hlen - sizeof(struct etherip_header),
 		    sizeof(struct etherip_header), &eip, M_NOWAIT);
