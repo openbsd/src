@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.73 2013/11/06 18:41:00 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.74 2013/11/06 19:45:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -651,10 +651,10 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 		return (1);
 
 	/* Calculate hibernate device */
-	hib->device = swdevt[0].sw_dev;
+	hib->dev = swdevt[0].sw_dev;
 
 	/* Read disklabel (used to calculate signature and image offsets) */
-	dl_ret = disk_readlabel(&dl, hib->device, err_string, 128);
+	dl_ret = disk_readlabel(&dl, hib->dev, err_string, 128);
 
 	if (dl_ret) {
 		printf("Hibernate error reading disklabel: %s\n", dl_ret);
@@ -702,7 +702,7 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 		 * a matching HIB_DONE call performed after the write is
 		 * completed.	
 		 */
-		if (hib->io_func(hib->device,
+		if (hib->io_func(hib->dev,
 		    DL_GETPOFFSET(&dl.d_partitions[1]),
 		    (vaddr_t)NULL, DL_GETPSIZE(&dl.d_partitions[1]),
 		    HIB_INIT, hib->io_page))
@@ -928,7 +928,7 @@ int
 hibernate_write_signature(union hibernate_info *hib)
 {
 	/* Write hibernate info to disk */
-	return (hib->io_func(hib->device, hib->sig_offset,
+	return (hib->io_func(hib->dev, hib->sig_offset,
 	    (vaddr_t)hib, DEV_BSIZE, HIB_W,
 	    hib->io_page));
 }
@@ -965,7 +965,7 @@ hibernate_write_chunktable(union hibernate_info *hib)
 
 	/* Write chunk table */
 	for (i = 0; i < hibernate_chunk_table_size; i += MAXPHYS) {
-		if ((err = hib->io_func(hib->device,
+		if ((err = hib->io_func(hib->dev,
 		    chunkbase + (i/DEV_BSIZE),
 		    (vaddr_t)(hibernate_chunk_table_start + i),
 		    MAXPHYS, HIB_W, hib->io_page))) {
@@ -1089,9 +1089,9 @@ hibernate_block_io(union hibernate_info *hib, daddr_t blkctr,
 	int error;
 
 	bp = geteblk(xfer_size);
-	bdsw = &bdevsw[major(hib->device)];
+	bdsw = &bdevsw[major(hib->dev)];
 
-	error = (*bdsw->d_open)(hib->device, FREAD, S_IFCHR, curproc);
+	error = (*bdsw->d_open)(hib->dev, FREAD, S_IFCHR, curproc);
 	if (error) {
 		printf("hibernate_block_io open failed\n");
 		return (1);
@@ -1104,7 +1104,7 @@ hibernate_block_io(union hibernate_info *hib, daddr_t blkctr,
 	bp->b_blkno = blkctr;
 	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
 	SET(bp->b_flags, B_BUSY | (iswrite ? B_WRITE : B_READ) | B_RAW);
-	bp->b_dev = hib->device;
+	bp->b_dev = hib->dev;
 	bp->b_cylinder = 0;
 	(*bdsw->d_strategy)(bp);
 
@@ -1112,14 +1112,14 @@ hibernate_block_io(union hibernate_info *hib, daddr_t blkctr,
 	if (error) {
 		printf("hib block_io biowait error %d blk %lld size %zu\n",
 			error, (long long)blkctr, xfer_size);
-		error = (*bdsw->d_close)(hib->device, 0, S_IFCHR,
+		error = (*bdsw->d_close)(hib->dev, 0, S_IFCHR,
 		    curproc);
 		if (error)
 			printf("hibernate_block_io error close failed\n");
 		return (1);
 	}
 
-	error = (*bdsw->d_close)(hib->device, FREAD, S_IFCHR, curproc);
+	error = (*bdsw->d_close)(hib->dev, FREAD, S_IFCHR, curproc);
 	if (error) {
 		printf("hibernate_block_io close failed\n");
 		return (1);
@@ -1491,7 +1491,7 @@ hibernate_write_chunks(union hibernate_info *hib)
 					    PAGE_SIZE / DEV_BSIZE;
 
 					if ((err = hib->io_func(
-					    hib->device,
+					    hib->dev,
 					    blkctr, (vaddr_t)hibernate_io_page,
 					    PAGE_SIZE, HIB_W,
 					    hib->io_page))) {
@@ -1543,7 +1543,7 @@ hibernate_write_chunks(union hibernate_info *hib)
 			nblocks ++;
 
 		/* Write final block(s) for this chunk */
-		if ((err = hib->io_func(hib->device, blkctr,
+		if ((err = hib->io_func(hib->dev, blkctr,
 		    (vaddr_t)hibernate_io_page, nblocks*DEV_BSIZE,
 		    HIB_W, hib->io_page))) {
 			DPRINTF("hib final write error %d\n", err);
@@ -1927,7 +1927,7 @@ hibernate_suspend(void)
 	}
 
 	/* Find a page-addressed region in swap [start,end] */
-	if (uvm_hibswap(hib.device, &start, &end)) {
+	if (uvm_hibswap(hib.dev, &start, &end)) {
 		printf("cannot find any swap\n");
 		return (1);
 	}
@@ -1976,7 +1976,7 @@ hibernate_suspend(void)
 	 * Give the device-specific I/O function a notification that we're
 	 * done, and that it can clean up or shutdown as needed.
 	 */
-	hib.io_func(hib.device, 0, (vaddr_t)NULL, 0,
+	hib.io_func(hib.dev, 0, (vaddr_t)NULL, 0,
 	    HIB_DONE, hib.io_page);
 
 	return (0);
