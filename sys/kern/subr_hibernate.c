@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.75 2013/11/06 19:47:30 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.76 2013/11/06 19:48:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -667,7 +667,7 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 		return (1);
 
 	/* Make sure the signature can fit in one block */
-	if(sizeof(union hibernate_info) > DEV_BSIZE)
+	if (sizeof(union hibernate_info) > DEV_BSIZE)
 		return (1);
 
 	/* Magic number */
@@ -702,8 +702,7 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 		 * a matching HIB_DONE call performed after the write is
 		 * completed.	
 		 */
-		if (hib->io_func(hib->dev,
-		    DL_GETPOFFSET(&dl.d_partitions[1]),
+		if (hib->io_func(hib->dev, DL_GETPOFFSET(&dl.d_partitions[1]),
 		    (vaddr_t)NULL, DL_GETPSIZE(&dl.d_partitions[1]),
 		    HIB_INIT, hib->io_page))
 			goto fail;
@@ -1573,7 +1572,7 @@ hibernate_zlib_reset(union hibernate_info *hib, int deflate)
 	hibernate_state =
 	    (struct hibernate_zlib_state *)HIBERNATE_HIBALLOC_PAGE;
 
-	if(!deflate)
+	if (!deflate)
 		pva = (char *)((paddr_t)pva & (PIGLET_PAGE_MASK));
 
 	hibernate_zlib_start = (vaddr_t)(pva + (28 * PAGE_SIZE));
@@ -1971,8 +1970,7 @@ hibernate_suspend(void)
 	 * Give the device-specific I/O function a notification that we're
 	 * done, and that it can clean up or shutdown as needed.
 	 */
-	hib.io_func(hib.dev, 0, (vaddr_t)NULL, 0,
-	    HIB_DONE, hib.io_page);
+	hib.io_func(hib.dev, 0, (vaddr_t)NULL, 0, HIB_DONE, hib.io_page);
 
 	return (0);
 }
