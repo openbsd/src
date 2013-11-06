@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx.c,v 1.4 2013/05/31 21:28:31 deraadt Exp $	*/
+/*	$OpenBSD: rtsx.c,v 1.5 2013/11/06 13:51:02 stsp Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -18,7 +18,7 @@
  */
 
 /*
- * Realtek RTS5209 Card Reader driver.
+ * Realtek RTS5209/RTS5229 Card Reader driver.
  */
 
 #include <sys/param.h>
@@ -162,7 +162,7 @@ struct cfdriver rtsx_cd = {
  */
 int
 rtsx_attach(struct rtsx_softc *sc, bus_space_tag_t iot,
-    bus_space_handle_t ioh, bus_size_t iosize, bus_dma_tag_t dmat)
+    bus_space_handle_t ioh, bus_size_t iosize, bus_dma_tag_t dmat, int flags)
 {
 	struct sdmmcbus_attach_args saa;
 	u_int32_t sdio_cfg;
@@ -170,6 +170,7 @@ rtsx_attach(struct rtsx_softc *sc, bus_space_tag_t iot,
 	sc->iot = iot;
 	sc->ioh = ioh;
 	sc->dmat = dmat;
+	sc->flags = flags;
 
 	if (rtsx_init(sc, 1))
 		return 1;
@@ -214,6 +215,25 @@ int
 rtsx_init(struct rtsx_softc *sc, int attaching)
 {
 	u_int32_t status;
+	u_int8_t version;
+	int error;
+
+	/* Read IC version from dummy register. */
+	if (sc->flags & RTSX_F_5229) {
+		RTSX_READ(sc, RTSX_DUMMY_REG, &version);
+		switch (version & 0x0F) {
+		case RTSX_IC_VERSION_A:
+		case RTSX_IC_VERSION_B:
+		case RTSX_IC_VERSION_D:
+			break;
+		case RTSX_IC_VERSION_C:
+			sc->flags |= RTSX_F_5229_TYPE_C;
+			break;
+		default:
+			printf("rtsx_init: unknown ic %02x\n", version);
+			return (1);
+		}
+	}
 
 	/* Enable interrupt write-clear (default is read-clear). */
 	RTSX_CLR(sc, RTSX_NFTS_TX_CTRL, RTSX_INT_READ_CLR);
@@ -235,7 +255,11 @@ rtsx_init(struct rtsx_softc *sc, int attaching)
 	delay(200);
 
 	/* XXX magic numbers from linux driver */
-	if (rtsx_write_phy(sc, 0x00, 0xB966)) {
+	if (sc->flags & RTSX_F_5209)
+		error = rtsx_write_phy(sc, 0x00, 0xB966);
+	else
+		error = rtsx_write_phy(sc, 0x00, 0xBA42);
+	if (error) {
 		printf("%s: cannot write phy register\n", DEVNAME(sc));
 		return (1);
 	}
@@ -269,8 +293,17 @@ rtsx_init(struct rtsx_softc *sc, int attaching)
 	RTSX_SET(sc, RTSX_PETXCFG, RTSX_PETXCFG_CLKREQ_PIN);
 
 	/* Set up LED GPIO. */
-	RTSX_WRITE(sc, RTSX_CARD_GPIO, 0x03);
-	RTSX_WRITE(sc, RTSX_CARD_GPIO_DIR, 0x03);
+	if (sc->flags & RTSX_F_5209) {
+		RTSX_WRITE(sc, RTSX_CARD_GPIO, 0x03);
+		RTSX_WRITE(sc, RTSX_CARD_GPIO_DIR, 0x03);
+	} else {
+		RTSX_SET(sc, RTSX_GPIO_CTL, RTSX_GPIO_LED_ON);
+		/* Switch LDO3318 source from DV33 to 3V3. */
+		RTSX_CLR(sc, RTSX_LDO_PWR_SEL, RTSX_LDO_PWR_SEL_DV33);
+		RTSX_SET(sc, RTSX_LDO_PWR_SEL, RTSX_LDO_PWR_SEL_3V3);
+		/* Set default OLT blink period. */
+		RTSX_SET(sc, RTSX_OLT_LED_CTL, RTSX_OLT_LED_PERIOD);
+	}
 
 	return (0);
 }
@@ -310,17 +343,29 @@ rtsx_activate(struct device *self, int act)
 int
 rtsx_led_enable(struct rtsx_softc *sc)
 {
-	RTSX_CLR(sc, RTSX_CARD_GPIO, RTSX_CARD_GPIO_LED_OFF);
-	RTSX_WRITE(sc, RTSX_CARD_AUTO_BLINK,
-	    RTSX_LED_BLINK_EN | RTSX_LED_BLINK_SPEED);
+	if (sc->flags & RTSX_F_5209) {
+		RTSX_CLR(sc, RTSX_CARD_GPIO, RTSX_CARD_GPIO_LED_OFF);
+		RTSX_WRITE(sc, RTSX_CARD_AUTO_BLINK,
+		    RTSX_LED_BLINK_EN | RTSX_LED_BLINK_SPEED);
+	} else {
+		RTSX_SET(sc, RTSX_GPIO_CTL, RTSX_GPIO_LED_ON);
+		RTSX_SET(sc, RTSX_OLT_LED_CTL, RTSX_OLT_LED_AUTOBLINK);
+	}
+
 	return 0;
 }
 
 int
 rtsx_led_disable(struct rtsx_softc *sc)
 {
-	RTSX_CLR(sc, RTSX_CARD_AUTO_BLINK, RTSX_LED_BLINK_EN);
-	RTSX_WRITE(sc, RTSX_CARD_GPIO, RTSX_CARD_GPIO_LED_OFF);
+	if (sc->flags & RTSX_F_5209) {
+		RTSX_CLR(sc, RTSX_CARD_AUTO_BLINK, RTSX_LED_BLINK_EN);
+		RTSX_WRITE(sc, RTSX_CARD_GPIO, RTSX_CARD_GPIO_LED_OFF);
+	} else {
+		RTSX_CLR(sc, RTSX_OLT_LED_CTL, RTSX_OLT_LED_AUTOBLINK);
+		RTSX_CLR(sc, RTSX_GPIO_CTL, RTSX_GPIO_LED_ON);
+	}
+
 	return 0;
 }
 
@@ -373,10 +418,17 @@ rtsx_card_detect(sdmmc_chipset_handle_t sch)
 	return ISSET(sc->flags, RTSX_F_CARD_PRESENT);
 }
 
+/*
+ * Notice that the meaning of RTSX_PWR_GATE_CTRL changes between RTS5209 and
+ * RTS5229. In RTS5209 it is a mask of disabled power gates, while in RTS5229
+ * it is a mask of *enabled* gates.
+ */
+
 int
 rtsx_bus_power_off(struct rtsx_softc *sc)
 {
 	int error;
+	u_int8_t disable3;
 
 	error = rtsx_stop_sd_clock(sc);
 	if (error)
@@ -386,14 +438,23 @@ rtsx_bus_power_off(struct rtsx_softc *sc)
 	RTSX_CLR(sc, RTSX_CARD_OE, RTSX_CARD_OUTPUT_EN);
 
 	/* Turn off power. */
-	RTSX_SET(sc, RTSX_PWR_GATE_CTRL, RTSX_LDO3318_OFF);
+	disable3 = RTSX_PULL_CTL_DISABLE3;
+	if (sc->flags & RTSX_F_5209)
+		RTSX_SET(sc, RTSX_PWR_GATE_CTRL, RTSX_LDO3318_OFF);
+	else {
+		RTSX_CLR(sc, RTSX_PWR_GATE_CTRL, RTSX_LDO3318_VCC1 |
+		    RTSX_LDO3318_VCC2);
+		if (sc->flags & RTSX_F_5229_TYPE_C)
+			disable3 = RTSX_PULL_CTL_DISABLE3_TYPE_C;
+	}
+
 	RTSX_SET(sc, RTSX_CARD_PWR_CTL, RTSX_SD_PWR_OFF);
 	RTSX_CLR(sc, RTSX_CARD_PWR_CTL, RTSX_PMOS_STRG_800mA);
 
 	/* Disable pull control. */
 	RTSX_WRITE(sc, RTSX_CARD_PULL_CTL1, RTSX_PULL_CTL_DISABLE12);
 	RTSX_WRITE(sc, RTSX_CARD_PULL_CTL2, RTSX_PULL_CTL_DISABLE12);
-	RTSX_WRITE(sc, RTSX_CARD_PULL_CTL3, RTSX_PULL_CTL_DISABLE3);
+	RTSX_WRITE(sc, RTSX_CARD_PULL_CTL3, disable3);
 
 	return 0;
 }
@@ -401,6 +462,8 @@ rtsx_bus_power_off(struct rtsx_softc *sc)
 int
 rtsx_bus_power_on(struct rtsx_softc *sc)
 {
+	u_int8_t enable3;
+
 	/* Select SD card. */
 	RTSX_WRITE(sc, RTSX_CARD_SELECT, RTSX_SD_MOD_SEL);
 	RTSX_WRITE(sc, RTSX_CARD_SHARE_MODE, RTSX_CARD_SHARE_48_SD);
@@ -409,14 +472,32 @@ rtsx_bus_power_on(struct rtsx_softc *sc)
 	/* Enable pull control. */
 	RTSX_WRITE(sc, RTSX_CARD_PULL_CTL1, RTSX_PULL_CTL_ENABLE12);
 	RTSX_WRITE(sc, RTSX_CARD_PULL_CTL2, RTSX_PULL_CTL_ENABLE12);
-	RTSX_WRITE(sc, RTSX_CARD_PULL_CTL3, RTSX_PULL_CTL_ENABLE3);
+	if (sc->flags & RTSX_F_5229_TYPE_C)
+		enable3 = RTSX_PULL_CTL_ENABLE3_TYPE_C;
+	else
+		enable3 = RTSX_PULL_CTL_ENABLE3;
+	RTSX_WRITE(sc, RTSX_CARD_PULL_CTL3, enable3);
 
-	/* Enable card power. */
+	/*
+	 * To avoid a current peak, enable card power in two phases with a
+	 * delay in between.
+	 */
+
+	/* Partial power. */
 	RTSX_SET(sc, RTSX_CARD_PWR_CTL, RTSX_SD_PARTIAL_PWR_ON);
-	RTSX_SET(sc, RTSX_PWR_GATE_CTRL, RTSX_LDO3318_SUSPEND);
+	if (sc->flags & RTSX_F_5229)
+		RTSX_SET(sc, RTSX_PWR_GATE_CTRL, RTSX_LDO3318_VCC1);
+	else
+		RTSX_SET(sc, RTSX_PWR_GATE_CTRL, RTSX_LDO3318_SUSPEND);
+
 	delay(200);
+
+	/* Full power. */
 	RTSX_CLR(sc, RTSX_CARD_PWR_CTL, RTSX_SD_PWR_OFF);
-	RTSX_CLR(sc, RTSX_PWR_GATE_CTRL, RTSX_LDO3318_OFF);
+	if (sc->flags & RTSX_F_5209)
+		RTSX_CLR(sc, RTSX_PWR_GATE_CTRL, RTSX_LDO3318_OFF);
+	else
+		RTSX_SET(sc, RTSX_PWR_GATE_CTRL, RTSX_LDO3318_VCC2);
 
 	/* Enable SD card output. */
 	RTSX_WRITE(sc, RTSX_CARD_OE, RTSX_SD_OUTPUT_EN);

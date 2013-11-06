@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsxvar.h,v 1.1 2012/11/29 23:36:34 stsp Exp $	*/
+/*	$OpenBSD: rtsxvar.h,v 1.2 2013/11/06 13:51:02 stsp Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -41,12 +41,15 @@ struct rtsx_softc {
 
 /* Host controller functions called by the attachment driver. */
 int	rtsx_attach(struct rtsx_softc *, bus_space_tag_t,
-	    bus_space_handle_t, bus_size_t, bus_dma_tag_t);
+	    bus_space_handle_t, bus_size_t, bus_dma_tag_t, int);
 int	rtsx_activate(struct device *, int);
 int	rtsx_intr(void *);
 
 /* flag values */
 #define	RTSX_F_CARD_PRESENT	0x01
 #define	RTSX_F_SDIO_SUPPORT	0x02
+#define	RTSX_F_5209		0x04
+#define	RTSX_F_5229		0x08
+#define	RTSX_F_5229_TYPE_C	0x10
 
 #endif

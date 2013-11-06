@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx_pci.c,v 1.3 2013/01/05 15:42:44 stsp Exp $	*/
+/*	$OpenBSD: rtsx_pci.c,v 1.4 2013/11/06 13:51:02 stsp Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -53,9 +53,12 @@ rtsx_pci_match(struct device *parent, void *match, void *aux)
 	 * devices advertise a SYSTEM/SDHC class in addition to the UNDEFINED
 	 * device class. Let sdhc(4) handle the SYSTEM/SDHC ones.
 	 */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS5209 &&
-	    PCI_CLASS(pa->pa_class) == PCI_CLASS_UNDEFINED)
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_REALTEK ||
+	    PCI_CLASS(pa->pa_class) != PCI_CLASS_UNDEFINED)
+		return 0;
+
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS5209 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS5229)
 		return 1;
 
 	return 0;
@@ -71,6 +74,7 @@ rtsx_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t size;
+	int flags;
 
 	if ((pci_conf_read(pa->pa_pc, pa->pa_tag, RTSX_CFG_PCI)
 	    & RTSX_CFG_ASIC) != 0) {
@@ -106,6 +110,11 @@ rtsx_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
-	if (rtsx_attach(&sc->sc, iot, ioh, size, pa->pa_dmat) != 0)
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS5209)
+		flags = RTSX_F_5209;
+	else
+		flags = RTSX_F_5229;
+
+	if (rtsx_attach(&sc->sc, iot, ioh, size, pa->pa_dmat, flags) != 0)
 		printf("%s: can't initialize chip\n", sc->sc.sc_dev.dv_xname);
 }

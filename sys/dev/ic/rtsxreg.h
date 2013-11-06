@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsxreg.h,v 1.1 2012/11/29 23:36:34 stsp Exp $	*/
+/*	$OpenBSD: rtsxreg.h,v 1.2 2013/11/06 13:51:02 stsp Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -148,6 +148,14 @@
 #define	RTSX_RCCTL_F_400K	0x0
 #define	RTSX_RCCTL_F_2M		0x1
 
+/* RTS5229-only. */
+#define	RTSX_OLT_LED_CTL	0xFC1E
+#define	RTSX_OLT_LED_PERIOD	0x02
+#define	RTSX_OLT_LED_AUTOBLINK	0x08
+
+#define	RTSX_GPIO_CTL		0xFC1F
+#define	RTSX_GPIO_LED_ON	0x02
+
 /* Host controller commands. */
 #define	RTSX_READ_REG_CMD	0
 #define	RTSX_WRITE_REG_CMD	1
@@ -183,10 +191,12 @@
 #define	RTSX_CARD_PULL_CTL2	0xFD61
 #define	RTSX_CARD_PULL_CTL3	0xFD62
 
-#define	RTSX_PULL_CTL_DISABLE12	0x55
-#define	RTSX_PULL_CTL_DISABLE3	0xD5
-#define	RTSX_PULL_CTL_ENABLE12	0xAA
-#define	RTSX_PULL_CTL_ENABLE3	0xE9
+#define	RTSX_PULL_CTL_DISABLE12		0x55
+#define	RTSX_PULL_CTL_DISABLE3		0xD5
+#define	RTSX_PULL_CTL_DISABLE3_TYPE_C	0xE5
+#define	RTSX_PULL_CTL_ENABLE12		0xAA
+#define	RTSX_PULL_CTL_ENABLE3		0xE9
+#define	RTSX_PULL_CTL_ENABLE3_TYPE_C	0xD9
 
 /* SD configuration register 1 (clock divider, bus mode and width). */
 #define	RTSX_SD_CFG1		0xFDA0
@@ -448,7 +458,12 @@
 #define	RTSX_LDO3318_ON		0x00
 #define	RTSX_LDO3318_SUSPEND	0x04
 #define	RTSX_LDO3318_OFF	0x06
+#define	RTSX_LDO3318_VCC1	0x02
+#define	RTSX_LDO3318_VCC2	0x04
 #define	RTSX_PWD_SUSPEND_EN	0xFE76
+#define	RTSX_LDO_PWR_SEL	0xFE78
+#define	RTSX_LDO_PWR_SEL_3V3	0x01
+#define	RTSX_LDO_PWR_SEL_DV33	0x03
 
 #define	RTSX_PHY_RWCTL		0xFE3C
 #define	RTSX_PHY_READ		0x00
@@ -464,7 +479,7 @@
 #define	RTSX_PETXCFG		0xFE49
 #define	RTSX_PETXCFG_CLKREQ_PIN	0x08
 
-#define	RTSX_CARD_AUTO_BLINK	0xFE56
+#define	RTSX_CARD_AUTO_BLINK	0xFD56
 #define	RTSX_LED_BLINK_EN	0x08
 #define	RTSX_LED_BLINK_SPEED	0x05
 
@@ -484,6 +499,8 @@
 #define	RTSX_SD30_DRIVE_SEL_1V8		0x03
 #define	RTSX_SD30_DRIVE_SEL_MASK	0x07
 
+#define	RTSX_DUMMY_REG		0xFE90
+
 #define	RTSX_SG_INT		0x04
 #define	RTSX_SG_END		0x02
 #define	RTSX_SG_VALID		0x01
@@ -491,5 +508,10 @@
 #define	RTSX_SG_NO_OP		0x00
 #define	RTSX_SG_TRANS_DATA	(0x02 << 4)
 #define	RTSX_SG_LINK_DESC	(0x03 << 4)
+
+#define	RTSX_IC_VERSION_A	0x00
+#define	RTSX_IC_VERSION_B	0x01
+#define	RTSX_IC_VERSION_C	0x02
+#define	RTSX_IC_VERSION_D	0x03
 
 #endif
