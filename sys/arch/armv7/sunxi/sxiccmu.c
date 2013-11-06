@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.3 2013/11/01 21:15:05 aalm Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.4 2013/11/06 19:03:07 syl Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -28,7 +28,8 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <armv7/sunxi/sunxivar.h>
+#include <armv7/armv7/armv7var.h>
+#include <armv7/sunxi/sunxireg.h>
 #include <armv7/sunxi/sxiccmuvar.h>
 
 #ifdef DEBUG_CCMU
@@ -109,12 +110,12 @@ void
 sxiccmu_attach(struct device *parent, struct device *self, void *args)
 {
 	struct sxiccmu_softc *sc = (struct sxiccmu_softc *)self;
-	struct sxi_attach_args *sxi = args;
+	struct armv7_attach_args *aa = args;
 
-	sc->sc_iot = sxi->sxi_iot;
+	sc->sc_iot = aa->aa_iot;
 
-	if (bus_space_map(sc->sc_iot, sxi->sxi_dev->mem[0].addr,
-	    sxi->sxi_dev->mem[0].size, 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("sxiccmu_attach: bus_space_map failed!");
 
 	printf("\n");

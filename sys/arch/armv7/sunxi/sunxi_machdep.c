@@ -28,7 +28,7 @@
 
 #include <arm/cortex/smc.h>
 #include <arm/armv7/armv7var.h>
-#include <armv7/sunxi/sunxivar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/armv7/armv7_machdep.h>
 
 extern int sxiuartcnattach(bus_space_tag_t, bus_addr_t, int, long, tcflag_t);

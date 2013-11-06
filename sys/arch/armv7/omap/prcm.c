@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.6 2013/10/28 11:11:50 rapha Exp $ */
+/* $OpenBSD: prcm.c,v 1.7 2013/11/06 19:03:07 syl Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -58,7 +58,7 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <arm/cpufunc.h>
-#include <armv7/omap/omapvar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
 
 #include <armv7/omap/am335x_prcmreg.h>
@@ -117,11 +117,11 @@ struct cfdriver prcm_cd = {
 void
 prcm_attach(struct device *parent, struct device *self, void *args)
 {
-	struct omap_attach_args *oa = args;
+	struct armv7_attach_args *aa = args;
 	struct prcm_softc *sc = (struct prcm_softc *) self;
 	u_int32_t reg;
 
-	sc->sc_iot = oa->oa_iot;
+	sc->sc_iot = aa->aa_iot;
 
 	switch (board_id) {
 	case BOARD_ID_AM335X_BEAGLEBONE:
@@ -144,18 +144,18 @@ prcm_attach(struct device *parent, struct device *self, void *args)
 		break;
 	}
 
-	if (bus_space_map(sc->sc_iot, oa->oa_dev->mem[0].addr,
-	    oa->oa_dev->mem[0].size, 0, &sc->sc_prcm))
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_prcm))
 		panic("prcm_attach: bus_space_map failed!");
 
 	if (sc->cm1_avail &&
-	    bus_space_map(sc->sc_iot, oa->oa_dev->mem[1].addr,
-	    oa->oa_dev->mem[1].size, 0, &sc->sc_cm1))
+	    bus_space_map(sc->sc_iot, aa->aa_dev->mem[1].addr,
+	    aa->aa_dev->mem[1].size, 0, &sc->sc_cm1))
 		panic("prcm_attach: bus_space_map failed!");
 
 	if (sc->cm2_avail &&
-	    bus_space_map(sc->sc_iot, oa->oa_dev->mem[2].addr,
-	    oa->oa_dev->mem[2].size, 0, &sc->sc_cm2))
+	    bus_space_map(sc->sc_iot, aa->aa_dev->mem[2].addr,
+	    aa->aa_dev->mem[2].size, 0, &sc->sc_cm2))
 		panic("prcm_attach: bus_space_map failed!");
 
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_prcm, PRCM_REVISION);
@@ -190,7 +190,7 @@ prcm_v3_setup(struct prcm_softc *sc)
 	prcm_imask_mask[PRCM_REG_WKUP] = PRCM_REG_WKUP_IMASK;
 	prcm_fmask_addr[PRCM_REG_WKUP] = PRCM_REG_WKUP_FADDR;
 	prcm_imask_addr[PRCM_REG_WKUP] = PRCM_REG_WKUP_IADDR;
-	
+
 	prcm_fmask_mask[PRCM_REG_PER] = PRCM_REG_PER_FMASK;
 	prcm_imask_mask[PRCM_REG_PER] = PRCM_REG_PER_IMASK;
 	prcm_fmask_addr[PRCM_REG_PER] = PRCM_REG_PER_FADDR;

@@ -1,4 +1,4 @@
-/* $OpenBSD: omapid.c,v 1.1 2013/09/04 14:38:31 patrick Exp $ */
+/* $OpenBSD: omapid.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
 /*
  * Copyright (c) 2013 Dale Rahn <drahn@dalerahn.com>
  *
@@ -25,7 +25,7 @@
 #include <sys/timeout.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <armv7/omap/omapvar.h>
+#include <armv7/armv7/armv7var.h>
 
 /* registers */
 #define O4_ID_SIZE	0x1000
@@ -63,15 +63,15 @@ void amptimer_set_clockrate(int32_t new_frequency); /* XXX */
 void
 omapid_attach(struct device *parent, struct device *self, void *args)
 {
-	struct omap_attach_args *oa = args;
+	struct armv7_attach_args *aa = args;
 	struct omapid_softc *sc = (struct omapid_softc *) self;
 	uint32_t rev;
 	uint32_t newclockrate = 0;
 	char *board;
 
-	sc->sc_iot = oa->oa_iot;
-	if (bus_space_map(sc->sc_iot, oa->oa_dev->mem[0].addr,
-	    oa->oa_dev->mem[0].size, 0, &sc->sc_ioh))
+	sc->sc_iot = aa->aa_iot;
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("omapid: bus_space_map failed!");
 
 	omapid_sc = sc;

@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.1 2013/09/04 14:38:31 patrick Exp $ */
+/* $OpenBSD: omgpio.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -27,7 +27,7 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <armv7/omap/omapvar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/omap/omgpiovar.h>
 
 /* OMAP3 registers */
@@ -176,13 +176,13 @@ omgpio_match(struct device *parent, void *v, void *aux)
 void
 omgpio_attach(struct device *parent, struct device *self, void *args)
 {
-	struct omap_attach_args *oa = args;
+	struct armv7_attach_args *aa = args;
 	struct omgpio_softc *sc = (struct omgpio_softc *) self;
 	u_int32_t rev;
 
-	sc->sc_iot = oa->oa_iot;
-	if (bus_space_map(sc->sc_iot, oa->oa_dev->mem[0].addr,
-	    oa->oa_dev->mem[0].size, 0, &sc->sc_ioh))
+	sc->sc_iot = aa->aa_iot;
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("omgpio_attach: bus_space_map failed!");
 
 
@@ -209,7 +209,7 @@ omgpio_attach(struct device *parent, struct device *self, void *args)
 	printf(" omap%d rev %d.%d\n", sc->sc_omap_ver, rev >> 4 & 0xf,
 	    rev & 0xf);
 
-	sc->sc_irq = oa->oa_dev->irq[0];
+	sc->sc_irq = aa->aa_dev->irq[0];
 
 	if (sc->sc_omap_ver == 3) {
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,

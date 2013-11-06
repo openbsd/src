@@ -28,7 +28,7 @@
 #include <dev/ic/ahcivar.h>
 #include <dev/ic/ahcireg.h>
 
-#include <armv7/sunxi/sunxivar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
 #include <armv7/sunxi/sxiccmuvar.h>
 #include <armv7/sunxi/sxipiovar.h>
@@ -72,19 +72,19 @@ struct cfdriver sxiahci_cd = {
 void
 sxiahci_attach(struct device *parent, struct device *self, void *args)
 {
-	struct sxi_attach_args *sxi = args;
+	struct armv7_attach_args *aa = args;
 	struct sxiahci_softc *sxisc = (struct sxiahci_softc *)self;
 	struct ahci_softc *sc = &sxisc->sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	uint32_t timo;
 
-	sc->sc_iot = iot = sxi->sxi_iot;
-	sc->sc_ios = sxi->sxi_dev->mem[0].size;
-	sc->sc_dmat = sxi->sxi_dmat;
+	sc->sc_iot = iot = aa->aa_iot;
+	sc->sc_ios = aa->aa_dev->mem[0].size;
+	sc->sc_dmat = aa->aa_dmat;
 
-	if (bus_space_map(sc->sc_iot, sxi->sxi_dev->mem[0].addr,
-	    sxi->sxi_dev->mem[0].size, 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("sxiahci_attach: bus_space_map failed!");
 	ioh = sc->sc_ioh;
 
@@ -108,10 +108,10 @@ sxiahci_attach(struct device *parent, struct device *self, void *args)
 	    1 << 17 | 1 << 10 | 1 << 9 | 1 << 7);
 	delay(10);
 
-	SXISET4(sc, SXIAHCI_PHYCS1, 1 << 28 | 1 << 15); 
+	SXISET4(sc, SXIAHCI_PHYCS1, 1 << 28 | 1 << 15);
 	delay(10);
 
-	SXICLR4(sc, SXIAHCI_PHYCS1, 1 << 19); 
+	SXICLR4(sc, SXIAHCI_PHYCS1, 1 << 19);
 	delay(10);
 
 	SXICMS4(sc, SXIAHCI_PHYCS0, 1 << 21 | 1 << 20, 1 << 22);
@@ -149,7 +149,7 @@ sxiahci_attach(struct device *parent, struct device *self, void *args)
 	sxipio_setcfg(SXIAHCI_PWRPIN, SXIPIO_OUTPUT);
 	sxipio_setpin(SXIAHCI_PWRPIN);
 
-	sc->sc_ih = arm_intr_establish(sxi->sxi_dev->irq[0], IPL_BIO,
+	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_BIO,
 	    ahci_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunxireg.h,v 1.5 2013/10/27 12:58:53 jasper Exp $	*/
+/*	$OpenBSD: sunxireg.h,v 1.6 2013/11/06 19:03:07 syl Exp $	*/
 /*
  * Copyright (c) 2013 Artturi Alm
  *
@@ -14,6 +14,28 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#define SXIREAD1(sc, reg)						\
+	(bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, (reg)))
+#define SXIWRITE1(sc, reg, val)						\
+	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
+#define SXISET1(sc, reg, bits)						\
+	SXIWRITE1((sc), (reg), SXIREAD1((sc), (reg)) | (bits))
+#define SXICLR1(sc, reg, bits)						\
+	SXIWRITE1((sc), (reg), SXIREAD1((sc), (reg)) & ~(bits))
+#define	SXICMS1(sc, reg, mask, bits)					\
+	SXIWRITE1((sc), (reg), (SXIREAD1((sc), (reg)) & ~(mask)) | (bits))
+
+#define SXIREAD4(sc, reg)						\
+	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
+#define SXIWRITE4(sc, reg, val)						\
+	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
+#define SXISET4(sc, reg, bits)						\
+	SXIWRITE4((sc), (reg), SXIREAD4((sc), (reg)) | (bits))
+#define SXICLR4(sc, reg, bits)						\
+	SXIWRITE4((sc), (reg), SXIREAD4((sc), (reg)) & ~(bits))
+#define	SXICMS4(sc, reg, mask, bits)					\
+	SXIWRITE4((sc), (reg), (SXIREAD4((sc), (reg)) & ~(mask)) | (bits))
 
 #define	TIMER0_FREQUENCY	(32768)
 #define	TIMER1_FREQUENCY	(32768)

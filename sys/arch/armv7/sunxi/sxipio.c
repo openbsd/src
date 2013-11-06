@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.4 2013/11/03 14:08:56 rapha Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.5 2013/11/06 19:03:07 syl Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -27,7 +27,8 @@
 
 #include <dev/gpio/gpiovar.h>
 
-#include <armv7/sunxi/sunxivar.h>
+#include <armv7/armv7/armv7var.h>
+#include <armv7/sunxi/sunxireg.h>
 #include <armv7/sunxi/sxipiovar.h>
 
 #include "gpio.h"
@@ -103,19 +104,19 @@ void
 sxipio_attach(struct device *parent, struct device *self, void *args)
 {
 	struct sxipio_softc *sc = (struct sxipio_softc *)self;
-	struct sxi_attach_args *sxi = args;
+	struct armv7_attach_args *aa = args;
 
 	/* XXX check unit, bail if != 0 */
 
-	sc->sc_iot = sxipio_iot = sxi->sxi_iot;
-	if (bus_space_map(sxipio_iot, sxi->sxi_dev->mem[0].addr,
-	    sxi->sxi_dev->mem[0].size, 0, &sc->sc_ioh))
+	sc->sc_iot = sxipio_iot = aa->aa_iot;
+	if (bus_space_map(sxipio_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("sxipio_attach: bus_space_map failed!");
 	sxipio_ioh = sc->sc_ioh;
 
 	sxipio_sc = sc;
 
-	sc->sc_irq = sxi->sxi_dev->irq[0];
+	sc->sc_irq = aa->aa_dev->irq[0];
 	sxipio_setcfg(SXIPIO_LED_GREEN, SXIPIO_OUTPUT);
 	sxipio_setcfg(SXIPIO_LED_BLUE, SXIPIO_OUTPUT);
 	sxipio_setpin(SXIPIO_LED_GREEN);

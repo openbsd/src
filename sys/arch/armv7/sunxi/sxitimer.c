@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitimer.c,v 1.2 2013/10/27 12:58:53 jasper Exp $	*/
+/*	$OpenBSD: sxitimer.c,v 1.3 2013/11/06 19:03:07 syl Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -32,7 +32,7 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <armv7/sunxi/sunxivar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
 /* #include <armv7/sunxi/sxipiovar.h> */
 
@@ -139,17 +139,17 @@ struct cfdriver sxitimer_cd = {
 void
 sxitimer_attach(struct device *parent, struct device *self, void *args)
 {
-	struct sxi_attach_args	*sxi = args;
+	struct armv7_attach_args *aa = args;
 	uint32_t freq, ival, now, cr, v;
 	int unit = self->dv_unit;
 
 	if (unit != 0)
 		goto skip_init;
 
-	sxitimer_iot = sxi->sxi_iot;
+	sxitimer_iot = aa->aa_iot;
 
-	if (bus_space_map(sxitimer_iot, sxi->sxi_dev->mem[0].addr,
-	    sxi->sxi_dev->mem[0].size, 0, &sxitimer_ioh))
+	if (bus_space_map(sxitimer_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sxitimer_ioh))
 		panic("sxitimer_attach: bus_space_map failed!");
 
 

@@ -21,7 +21,7 @@
 
 #include <machine/bus.h>
 
-#include <armv7/omap/omapvar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
 #include <armv7/omap/edmavar.h>
 
@@ -92,16 +92,16 @@ struct cfdriver edma_cd = {
 void
 edma_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct omap_attach_args *oaa = aux;
+	struct armv7_attach_args *aa = aux;
 	struct edma_softc *sc = (struct edma_softc *)self;
 	uint32_t rev;
 	int i;
 
-	sc->sc_iot = oaa->oa_iot;
+	sc->sc_iot = aa->aa_iot;
 
 	/* Map Base address for TPCC and TPCTX */
-	if (bus_space_map(sc->sc_iot, oaa->oa_dev->mem[0].addr,
-	    oaa->oa_dev->mem[0].size, 0, &sc->sc_tpcc)) {
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_tpcc)) {
 		printf("%s: bus_space_map failed for TPCC\n", DEVNAME(sc));
 		return ;
 	}
@@ -115,12 +115,12 @@ edma_attach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX IPL_VM ? */
 	/* Enable interrupts line */
-	sc->sc_ih_comp = arm_intr_establish(oaa->oa_dev->irq[0], IPL_VM,
+	sc->sc_ih_comp = arm_intr_establish(aa->aa_dev->irq[0], IPL_VM,
 	    edma_comp_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih_comp == NULL) {
 		printf("%s: unable to establish interrupt comp\n", DEVNAME(sc));
 		bus_space_unmap(sc->sc_iot, sc->sc_tpcc,
-		    oaa->oa_dev->mem[0].size);
+		    aa->aa_dev->mem[0].size);
 		return ;
 	}
 

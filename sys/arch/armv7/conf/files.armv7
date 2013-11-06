@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.8 2013/11/04 14:07:16 deraadt Exp $
+#	$OpenBSD: files.armv7,v 1.9 2013/11/06 19:03:07 syl Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -21,6 +21,7 @@ file	arch/arm/arm/irq_dispatch.S
 file	arch/arm/arm/softintr.c
 
 # Generic MD files
+file	arch/armv7/armv7/armv7.c
 file	arch/armv7/armv7/armv7_machdep.c
 file	arch/armv7/armv7/autoconf.c
 file	arch/arm/arm/disksubr.c			disk

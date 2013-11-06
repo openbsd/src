@@ -1,4 +1,4 @@
-/* $OpenBSD: imxahci.c,v 1.1 2013/09/06 20:45:53 patrick Exp $ */
+/* $OpenBSD: imxahci.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -27,7 +27,7 @@
 
 #include <dev/ic/ahcivar.h>
 
-#include <armv7/imx/imxvar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxiomuxcvar.h>
 
@@ -96,20 +96,20 @@ struct cfdriver imxahci_cd = {
 void
 imxahci_attach(struct device *parent, struct device *self, void *args)
 {
-	struct imx_attach_args *ia = args;
+	struct armv7_attach_args *aa = args;
 	struct imxahci_softc *imxsc = (struct imxahci_softc *) self;
 	struct ahci_softc *sc = &imxsc->sc;
 	uint32_t timeout = 0x100000;
 
-	sc->sc_iot = ia->ia_iot;
-	sc->sc_ios = ia->ia_dev->mem[0].size;
-	sc->sc_dmat = ia->ia_dmat;
+	sc->sc_iot = aa->aa_iot;
+	sc->sc_ios = aa->aa_dev->mem[0].size;
+	sc->sc_dmat = aa->aa_dmat;
 
-	if (bus_space_map(sc->sc_iot, ia->ia_dev->mem[0].addr,
-	    ia->ia_dev->mem[0].size, 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("imxahci_attach: bus_space_map failed!");
 
-	sc->sc_ih = arm_intr_establish(ia->ia_dev->irq[0], IPL_BIO,
+	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_BIO,
 	    ahci_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");

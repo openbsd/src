@@ -1,11 +1,11 @@
-#	$OpenBSD: files.imx,v 1.1 2013/09/06 20:45:53 patrick Exp $
+#	$OpenBSD: files.imx,v 1.2 2013/11/06 19:03:07 syl Exp $
 
 define imx {}
 device imx: imx
 attach imx at mainbus
 file	arch/armv7/imx/imx_machdep.c		imx
 file	arch/armv7/imx/imx.c			imx
-file	arch/armv7/imx/imx6.c			imx
+file	arch/armv7/imx/imx6.c
 
 # serial ports
 device imxuart

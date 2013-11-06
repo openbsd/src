@@ -1,4 +1,4 @@
-/* $OpenBSD: omap4.c,v 1.2 2013/10/18 15:23:58 syl Exp $ */
+/* $OpenBSD: omap4.c,v 1.3 2013/11/06 19:03:07 syl Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -19,10 +19,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <machine/bus.h>
-#include <arch/arm/armv7/armv7var.h>
 
-#include <armv7/omap/omapvar.h>
+#include <machine/bus.h>
+
+#include <armv7/armv7/armv7var.h>
 
 #define OMAPID_ADDR	0x4a002000
 #define OMAPID_SIZE	0x1000
@@ -81,7 +81,7 @@
 #define USBOHCI_SIZE	0x400
 #define USBEHCI_IRQ	77
 
-struct omap_dev omap4_devs[] = {
+struct armv7_dev omap4_devs[] = {
 
 	/*
 	 * Power, Reset and Clock Manager
@@ -196,5 +196,5 @@ struct omap_dev omap4_devs[] = {
 void
 omap4_init(void)
 {
-	omap_set_devs(omap4_devs);
+	armv7_set_devs(omap4_devs);
 }

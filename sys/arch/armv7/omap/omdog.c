@@ -1,4 +1,4 @@
-/*	$OpenBSD: omdog.c,v 1.2 2013/11/01 12:15:15 fgsch Exp $	*/
+/*	$OpenBSD: omdog.c,v 1.3 2013/11/06 19:03:07 syl Exp $	*/
 /*
  * Copyright (c) 2013 Federico G. Schwindt <fgsch@openbsd.org>
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
@@ -26,7 +26,7 @@
 #include <sys/timeout.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <armv7/omap/omapvar.h>
+#include <armv7/armv7/armv7var.h>
 
 #define WIDR		0x00			/* Identification Register */
 #define WCLR		0x24			/* Control Register */
@@ -74,13 +74,13 @@ struct cfdriver omdog_cd = {
 void
 omdog_attach(struct device *parent, struct device *self, void *args)
 {
-	struct omap_attach_args *oa = args;
+	struct armv7_attach_args *aa = args;
 	struct omdog_softc *sc = (struct omdog_softc *) self;
 	u_int32_t rev;
 
-	sc->sc_iot = oa->oa_iot;
-	if (bus_space_map(sc->sc_iot, oa->oa_dev->mem[0].addr,
-	    oa->oa_dev->mem[0].size, 0, &sc->sc_ioh))
+	sc->sc_iot = aa->aa_iot;
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
 	rev = bus_space_read_4(sc->sc_iot, sc->sc_ioh, WIDR);

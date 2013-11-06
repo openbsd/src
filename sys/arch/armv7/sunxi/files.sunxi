@@ -1,12 +1,12 @@
-#	$OpenBSD: files.sunxi,v 1.1 2013/10/23 17:08:47 jasper Exp $
+#	$OpenBSD: files.sunxi,v 1.2 2013/11/06 19:03:07 syl Exp $
 
 define	sunxi {}
 device	sunxi: sunxi
 attach	sunxi at mainbus
 file	arch/armv7/sunxi/sunxi_machdep.c	sunxi
-file	arch/armv7/sunxi/sunxi.c	sunxi
-file	arch/armv7/sunxi/sun4i.c		sunxi
-file	arch/armv7/sunxi/sun7i.c		sunxi
+file	arch/armv7/sunxi/sunxi.c		sunxi
+file	arch/armv7/sunxi/sun4i.c
+file	arch/armv7/sunxi/sun7i.c
 
 device	sxiccmu
 attach	sxiccmu at sunxi

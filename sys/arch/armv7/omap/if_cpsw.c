@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.18 2013/09/12 10:28:03 dlg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.19 2013/11/06 19:03:07 syl Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <arch/armv7/omap/omapvar.h>
+#include <arch/armv7/armv7/armv7var.h>
 #include <arch/armv7/omap/sitara_cm.h>
 #include <arch/armv7/omap/if_cpswreg.h>
 
@@ -323,7 +323,7 @@ void
 cpsw_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cpsw_softc *sc = (struct cpsw_softc *)self;
-	struct omap_attach_args *oa = aux;
+	struct armv7_attach_args *aa = aux;
 	struct arpcom * const ac = &sc->sc_ac;
 	struct ifnet * const ifp = &ac->ac_if;
 	u_int32_t idver;
@@ -334,26 +334,26 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 
 	cpsw_get_mac_addr(sc);
 
-	sc->sc_rxthih = arm_intr_establish(oa->oa_dev->irq[0] +
+	sc->sc_rxthih = arm_intr_establish(aa->aa_dev->irq[0] +
 	    CPSW_INTROFF_RXTH, IPL_NET, cpsw_rxthintr, sc, DEVNAME(sc));
-	sc->sc_rxih = arm_intr_establish(oa->oa_dev->irq[0] +
+	sc->sc_rxih = arm_intr_establish(aa->aa_dev->irq[0] +
 	    CPSW_INTROFF_RX, IPL_NET, cpsw_rxintr, sc, DEVNAME(sc));
-	sc->sc_txih = arm_intr_establish(oa->oa_dev->irq[0] +
+	sc->sc_txih = arm_intr_establish(aa->aa_dev->irq[0] +
 	    CPSW_INTROFF_TX, IPL_NET, cpsw_txintr, sc, DEVNAME(sc));
-	sc->sc_miscih = arm_intr_establish(oa->oa_dev->irq[0] +
+	sc->sc_miscih = arm_intr_establish(aa->aa_dev->irq[0] +
 	    CPSW_INTROFF_MISC, IPL_NET, cpsw_miscintr, sc, DEVNAME(sc));
 
-	sc->sc_bst = oa->oa_iot;
-	sc->sc_bdt = oa->oa_dmat;
+	sc->sc_bst = aa->aa_iot;
+	sc->sc_bdt = aa->aa_dmat;
 
-	error = bus_space_map(sc->sc_bst, oa->oa_dev->mem[0].addr,
-	    oa->oa_dev->mem[0].size, 0, &sc->sc_bsh);
+	error = bus_space_map(sc->sc_bst, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_bsh);
 	if (error) {
 		printf("can't map registers: %d\n", error);
 		return;
 	}
 
-	sc->sc_txdescs_pa = oa->oa_dev->mem[0].addr +
+	sc->sc_txdescs_pa = aa->aa_dev->mem[0].addr +
 	    CPSW_CPPI_RAM_TXDESCS_BASE;
 	error = bus_space_subregion(sc->sc_bst, sc->sc_bsh,
 	    CPSW_CPPI_RAM_TXDESCS_BASE, CPSW_CPPI_RAM_TXDESCS_SIZE,
@@ -363,7 +363,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_rxdescs_pa = oa->oa_dev->mem[0].addr +
+	sc->sc_rxdescs_pa = aa->aa_dev->mem[0].addr +
 	    CPSW_CPPI_RAM_RXDESCS_BASE;
 	error = bus_space_subregion(sc->sc_bst, sc->sc_bsh,
 	    CPSW_CPPI_RAM_RXDESCS_BASE, CPSW_CPPI_RAM_RXDESCS_SIZE,

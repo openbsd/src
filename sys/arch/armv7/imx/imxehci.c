@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.1 2013/09/06 20:45:53 patrick Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -30,7 +30,7 @@
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 
-#include <armv7/imx/imxvar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxgpiovar.h>
 
@@ -85,35 +85,35 @@ void
 imxehci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct imxehci_softc	*sc = (struct imxehci_softc *)self;
-	struct imx_attach_args	*ia = aux;
+	struct armv7_attach_args *aa = aux;
 	usbd_status		r;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 
-	sc->sc.iot = ia->ia_iot;
-	sc->sc.sc_bus.dmatag = ia->ia_dmat;
-	sc->sc.sc_size = ia->ia_dev->mem[0].size;
+	sc->sc.iot = aa->aa_iot;
+	sc->sc.sc_bus.dmatag = aa->aa_dmat;
+	sc->sc.sc_size = aa->aa_dev->mem[0].size;
 
 	/* Map I/O space */
-	if (bus_space_map(sc->sc.iot, ia->ia_dev->mem[0].addr,
-		ia->ia_dev->mem[0].size, 0, &sc->sc.ioh)) {
+	if (bus_space_map(sc->sc.iot, aa->aa_dev->mem[0].addr,
+		aa->aa_dev->mem[0].size, 0, &sc->sc.ioh)) {
 		printf(": cannot map mem space\n");
 		goto out;
 	}
 
-	if (bus_space_map(sc->sc.iot, ia->ia_dev->mem[1].addr,
-		ia->ia_dev->mem[1].size, 0, &sc->uh_ioh)) {
+	if (bus_space_map(sc->sc.iot, aa->aa_dev->mem[1].addr,
+		aa->aa_dev->mem[1].size, 0, &sc->uh_ioh)) {
 		printf(": cannot map mem space\n");
 		goto mem0;
 	}
 
-	if (bus_space_map(sc->sc.iot, ia->ia_dev->mem[2].addr,
-		ia->ia_dev->mem[2].size, 0, &sc->ph_ioh)) {
+	if (bus_space_map(sc->sc.iot, aa->aa_dev->mem[2].addr,
+		aa->aa_dev->mem[2].size, 0, &sc->ph_ioh)) {
 		printf(": cannot map mem space\n");
 		goto mem1;
 	}
 
-	if (bus_space_map(sc->sc.iot, ia->ia_dev->mem[3].addr,
-		ia->ia_dev->mem[3].size, 0, &sc->nc_ioh)) {
+	if (bus_space_map(sc->sc.iot, aa->aa_dev->mem[3].addr,
+		aa->aa_dev->mem[3].size, 0, &sc->nc_ioh)) {
 		printf(": cannot map mem space\n");
 		goto mem2;
 	}
@@ -191,7 +191,7 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	EOWRITE4(&sc->sc, EHCI_PORTSC(1),
 	    EOREAD4(&sc->sc, EHCI_PORTSC(1)) & ~EHCI_PS_PTS_UTMI_MASK);
 
-	sc->sc_ih = arm_intr_establish(ia->ia_dev->irq[0], IPL_USB,
+	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_USB,
 	    ehci_intr, &sc->sc, devname);
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");
@@ -214,11 +214,11 @@ intr:
 	arm_intr_disestablish(sc->sc_ih);
 	sc->sc_ih = NULL;
 mem3:
-	bus_space_unmap(sc->sc.iot, sc->nc_ioh, ia->ia_dev->mem[3].addr);
+	bus_space_unmap(sc->sc.iot, sc->nc_ioh, aa->aa_dev->mem[3].addr);
 mem2:
-	bus_space_unmap(sc->sc.iot, sc->ph_ioh, ia->ia_dev->mem[2].addr);
+	bus_space_unmap(sc->sc.iot, sc->ph_ioh, aa->aa_dev->mem[2].addr);
 mem1:
-	bus_space_unmap(sc->sc.iot, sc->uh_ioh, ia->ia_dev->mem[1].addr);
+	bus_space_unmap(sc->sc.iot, sc->uh_ioh, aa->aa_dev->mem[1].addr);
 mem0:
 	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 	sc->sc.sc_size = 0;

@@ -28,7 +28,7 @@
 
 #include <arm/cortex/smc.h>
 #include <arm/armv7/armv7var.h>
-#include <armv7/imx/imxvar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxuartvar.h>
 #include <armv7/armv7/armv7_machdep.h>
 

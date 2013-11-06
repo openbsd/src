@@ -1,4 +1,4 @@
-/* $OpenBSD: intc.c,v 1.1 2013/09/04 14:38:30 patrick Exp $ */
+/* $OpenBSD: intc.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -22,7 +22,7 @@
 #include <sys/device.h>
 #include <sys/evcount.h>
 #include <machine/bus.h>
-#include <armv7/omap/omapvar.h>
+#include <armv7/armv7/armv7var.h>
 #include "intc.h"
 
 #define INTC_NUM_IRQ intc_nirq
@@ -113,13 +113,13 @@ int intc_attached = 0;
 void
 intc_attach(struct device *parent, struct device *self, void *args)
 {
-	struct omap_attach_args *oa = args;
+	struct armv7_attach_args *aa = args;
 	int i;
 	u_int32_t rev;
 
-	intc_iot = oa->oa_iot;
-	if (bus_space_map(intc_iot, oa->oa_dev->mem[0].addr,
-	    oa->oa_dev->mem[0].size, 0, &intc_ioh))
+	intc_iot = aa->aa_iot;
+	if (bus_space_map(intc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &intc_ioh))
 		panic("intc_attach: bus_space_map failed!");
 
 	rev = bus_space_read_4(intc_iot, intc_ioh, INTC_REVISION);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirtc.c,v 1.2 2013/10/23 18:01:52 jasper Exp $	*/
+/*	$OpenBSD: sxirtc.c,v 1.3 2013/11/06 19:03:07 syl Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2013 Artturi Alm
@@ -28,7 +28,8 @@
 
 #include <machine/bus.h>
 
-#include <armv7/sunxi/sunxivar.h>
+#include <armv7/armv7/armv7var.h>
+#include <armv7/sunxi/sunxireg.h>
 
 #define	SXIRTC_YYMMDD	0x00
 #define	SXIRTC_HHMMSS	0x04
@@ -67,16 +68,16 @@ void
 sxirtc_attach(struct device *parent, struct device *self, void *args)
 {
 	struct sxirtc_softc *sc = (struct sxirtc_softc *)self;
-	struct sxi_attach_args *sxi = args;
+	struct armv7_attach_args *aa = args;
 	todr_chip_handle_t handle;
 
 	handle = malloc(sizeof(struct todr_chip_handle), M_DEVBUF, M_NOWAIT);
 	if (handle == NULL)
 		panic("sxirtc_attach: couldn't allocate todr_handle");
 
-	sc->sc_iot = sxi->sxi_iot;
+	sc->sc_iot = aa->aa_iot;
 	if (bus_space_subregion(sc->sc_iot, sxitimer_ioh,
-	    sxi->sxi_dev->mem[0].addr, sxi->sxi_dev->mem[0].size, &sc->sc_ioh))
+	    aa->aa_dev->mem[0].addr, aa->aa_dev->mem[0].size, &sc->sc_ioh))
 		panic("sxirtc_attach: bus_space_subregion failed!");
 
 	handle->cookie = self;

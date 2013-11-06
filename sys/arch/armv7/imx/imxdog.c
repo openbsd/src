@@ -1,4 +1,4 @@
-/* $OpenBSD: imxdog.c,v 1.1 2013/09/06 20:45:53 patrick Exp $ */
+/* $OpenBSD: imxdog.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -25,7 +25,7 @@
 #include <sys/timeout.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <armv7/imx/imxvar.h>
+#include <armv7/armv7/armv7var.h>
 
 /* registers */
 #define WCR		0x00
@@ -56,12 +56,12 @@ struct cfdriver imxdog_cd = {
 void
 imxdog_attach(struct device *parent, struct device *self, void *args)
 {
-	struct imx_attach_args *ia = args;
+	struct armv7_attach_args *aa = args;
 	struct imxdog_softc *sc = (struct imxdog_softc *) self;
 
-	sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(sc->sc_iot, ia->ia_dev->mem[0].addr,
-	    ia->ia_dev->mem[0].size, 0, &sc->sc_ioh))
+	sc->sc_iot = aa->aa_iot;
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("imxdog_attach: bus_space_map failed!");
 
 	printf("\n");

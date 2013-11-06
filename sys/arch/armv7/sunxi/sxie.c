@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.4 2013/10/26 20:20:22 jasper Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.5 2013/11/06 19:03:07 syl Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -50,8 +50,8 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
+#include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
-#include <armv7/sunxi/sunxivar.h>
 #include <armv7/sunxi/sxiccmuvar.h>
 #include <armv7/sunxi/sxipiovar.h>
 
@@ -199,16 +199,16 @@ struct cfdriver sxie_cd = {
 void
 sxie_attach(struct device *parent, struct device *self, void *args)
 {
-	struct sxi_attach_args *sxi = args;
+	struct armv7_attach_args *aa = args;
 	struct sxie_softc *sc = (struct sxie_softc *) self;
 	struct mii_data *mii;
 	struct ifnet *ifp;
 	int s;
 
-	sc->sc_iot = sxi->sxi_iot;
+	sc->sc_iot = aa->aa_iot;
 
-	if (bus_space_map(sc->sc_iot, sxi->sxi_dev->mem[0].addr,
-	    sxi->sxi_dev->mem[0].size, 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("sxie_attach: bus_space_map ioh failed!");
 
 	if (bus_space_map(sc->sc_iot, SID_ADDR, SID_SIZE, 0, &sc->sc_sid_ioh))
@@ -217,7 +217,7 @@ sxie_attach(struct device *parent, struct device *self, void *args)
 	sxie_socware_init(sc);
 	sc->txf_inuse = 0;
 
-	sc->sc_ih = arm_intr_establish(sxi->sxi_dev->irq[0], IPL_NET,
+	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_NET,
 	    sxie_intr, sc, sc->sc_dev.dv_xname);
 
 	s = splnet();

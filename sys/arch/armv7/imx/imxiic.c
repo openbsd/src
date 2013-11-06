@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.1 2013/09/06 20:45:53 patrick Exp $ */
+/* $OpenBSD: imxiic.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -23,7 +23,7 @@
 #include <sys/systm.h>
 #include <machine/bus.h>
 
-#include <armv7/imx/imxvar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxiomuxcvar.h>
 #include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxiicvar.h>
@@ -98,17 +98,17 @@ void
 imxiic_attach(struct device *parent, struct device *self, void *args)
 {
 	struct imxiic_softc *sc = (struct imxiic_softc *)self;
-	struct imx_attach_args *ia = args;
+	struct armv7_attach_args *aa = args;
 
-	sc->sc_iot = ia->ia_iot;
-	sc->sc_ios = ia->ia_dev->mem[0].size;
-	sc->unit = ia->ia_dev->unit;
-	if (bus_space_map(sc->sc_iot, ia->ia_dev->mem[0].addr,
-	    ia->ia_dev->mem[0].size, 0, &sc->sc_ioh))
+	sc->sc_iot = aa->aa_iot;
+	sc->sc_ios = aa->aa_dev->mem[0].size;
+	sc->unit = aa->aa_dev->unit;
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("imxiic_attach: bus_space_map failed!");
 
 #if 0
-	sc->sc_ih = arm_intr_establish(ia->ia_dev->irq[0], IPL_BIO,
+	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_BIO,
 	    imxiic_intr, sc, sc->sc_dev.dv_xname);
 #endif
 

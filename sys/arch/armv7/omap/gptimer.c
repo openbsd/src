@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.1 2013/09/04 14:38:30 patrick Exp $ */
+/* $OpenBSD: gptimer.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -31,7 +31,7 @@
 #include <sys/timetc.h>
 #include <dev/clock_subr.h>
 #include <machine/bus.h>
-#include <armv7/omap/omapvar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
 
 #include <machine/intr.h>
@@ -140,13 +140,13 @@ struct cfdriver gptimer_cd = {
 void
 gptimer_attach(struct device *parent, struct device *self, void *args)
 {
-	struct omap_attach_args *oa = args;
+	struct armv7_attach_args *aa = args;
 	bus_space_handle_t ioh;
 	u_int32_t rev;
 
-	gptimer_iot = oa->oa_iot;
-	if (bus_space_map(gptimer_iot, oa->oa_dev->mem[0].addr,
-	    oa->oa_dev->mem[0].size, 0, &ioh))
+	gptimer_iot = aa->aa_iot;
+	if (bus_space_map(gptimer_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &ioh))
 		panic("gptimer_attach: bus_space_map failed!");
 
 	rev = bus_space_read_4(gptimer_iot, ioh, GP_TIDR);
@@ -154,7 +154,7 @@ gptimer_attach(struct device *parent, struct device *self, void *args)
 	printf(" rev %d.%d\n", rev >> 4 & 0xf, rev & 0xf);
 	if (self->dv_unit == 0) {
 		gptimer_ioh0 = ioh;
-		gptimer_irq = oa->oa_dev->irq[0];
+		gptimer_irq = aa->aa_dev->irq[0];
 		bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TCLR, 0);
 	} else if (self->dv_unit == 1) {
 		/* start timer because it is used in delay */
@@ -172,7 +172,7 @@ gptimer_attach(struct device *parent, struct device *self, void *args)
 	}
 	else
 		panic("attaching too many gptimers at 0x%x",
-		    oa->oa_dev->mem[0].addr);
+		    aa->aa_dev->mem[0].addr);
 
 	arm_clock_register(gptimer_cpu_initclocks, gptimer_delay,
 	    gptimer_setstatclockrate, NULL);

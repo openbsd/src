@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.1 2013/09/06 20:45:54 patrick Exp $ */
+/* $OpenBSD: imxuart.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -39,7 +39,7 @@
 #include <machine/bus.h>
 #include <armv7/imx/imxuartreg.h>
 #include <armv7/imx/imxuartvar.h>
-#include <armv7/imx/imxvar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxccmvar.h>
 
 #define DEVUNIT(x)      (minor(x) & 0x7f)
@@ -136,18 +136,18 @@ struct cdevsw imxuartdev =
 void
 imxuartattach(struct device *parent, struct device *self, void *args)
 {
-	struct imx_attach_args *ia = args;
+	struct armv7_attach_args *aa = args;
 	struct imxuart_softc *sc = (struct imxuart_softc *) self;
 
-	sc->sc_irq = arm_intr_establish(ia->ia_dev->irq[0], IPL_TTY,
+	sc->sc_irq = arm_intr_establish(aa->aa_dev->irq[0], IPL_TTY,
 	    imxuart_intr, sc, sc->sc_dev.dv_xname);
 
-	sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(sc->sc_iot, ia->ia_dev->mem[0].addr,
-	    ia->ia_dev->mem[0].size, 0, &sc->sc_ioh))
+	sc->sc_iot = aa->aa_iot;
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("imxuartattach: bus_space_map failed!");
 
-	if (ia->ia_dev->mem[0].addr == imxuartconsaddr)
+	if (aa->aa_dev->mem[0].addr == imxuartconsaddr)
 		printf(" console");
 
 	timeout_set(&sc->sc_diag_tmo, imxuart_diag, sc);

@@ -1,4 +1,4 @@
-/* $OpenBSD: sxidog.c,v 1.2 2013/10/23 18:01:52 jasper Exp $ */
+/* $OpenBSD: sxidog.c,v 1.3 2013/11/06 19:03:07 syl Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -27,7 +27,8 @@
 #include <machine/intr.h>
 #include <machine/bus.h>
 
-#include <armv7/sunxi/sunxivar.h>
+#include <armv7/sunxi/sunxireg.h>
+#include <armv7/armv7/armv7var.h>
 
 /* XXX other way around than bus_space_subregion? */
 extern bus_space_handle_t sxitimer_ioh;
@@ -82,12 +83,12 @@ struct cfdriver sxidog_cd = {
 void
 sxidog_attach(struct device *parent, struct device *self, void *args)
 {
-	struct sxi_attach_args *sxi = args;
+	struct armv7_attach_args *aa = args;
 	struct sxidog_softc *sc = (struct sxidog_softc *)self;
 
-	sc->sc_iot = sxi->sxi_iot;
+	sc->sc_iot = aa->aa_iot;
 	if (bus_space_subregion(sc->sc_iot, sxitimer_ioh,
-	    sxi->sxi_dev->mem[0].addr, sxi->sxi_dev->mem[0].size, &sc->sc_ioh))
+	    aa->aa_dev->mem[0].addr, aa->aa_dev->mem[0].size, &sc->sc_ioh))
 		panic("sxidog_attach: bus_space_subregion failed!");
 
 #ifdef DEBUG
@@ -95,7 +96,7 @@ sxidog_attach(struct device *parent, struct device *self, void *args)
 	    SXIREAD4(sc, WDOG_MR));
 #endif
 #if 0
-	(void)intc_intr_establish(sxi->sxi_dev->irq[0], IPL_HIGH, /* XXX */
+	(void)intc_intr_establish(aa->aa_dev->irq[0], IPL_HIGH, /* XXX */
 	    sxidog_intr, sc, sc->sc_dev.dv_xname);
 #endif
 	sxidog_sc = sc;
@@ -117,13 +118,13 @@ sxidog_callback(void *arg, int period)
 	/*
 	 * clearing bits in mode reg has no effect according
 	 * to the user manual, so just set new timeout and enable it.
-	 * XXX 
+	 * XXX
 	 */
 	SXIWRITE4(sc, WDOG_MR, WDOG_EN | WDOG_RST_EN |
 	    WDOG_INTV_VALUE(period));
 	/* reset */
 	SXIWRITE4(sc, WDOG_CR, WDOG_CTRL_KEY | WDOG_RESTART);
-	
+
 	return period;
 }
 

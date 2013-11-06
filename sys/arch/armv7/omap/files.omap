@@ -1,13 +1,13 @@
-#	$OpenBSD: files.omap,v 1.3 2013/11/04 20:14:16 syl Exp $
+#	$OpenBSD: files.omap,v 1.4 2013/11/06 19:03:07 syl Exp $
 
 define omap {}
 device omap: omap
 attach omap at mainbus
 file	arch/armv7/omap/omap_machdep.c		omap
 file	arch/armv7/omap/omap.c			omap
-file	arch/armv7/omap/omap3.c			omap
-file	arch/armv7/omap/omap4.c			omap
-file	arch/armv7/omap/am335x.c		omap
+file	arch/armv7/omap/omap3.c
+file	arch/armv7/omap/omap4.c
+file	arch/armv7/omap/am335x.c
 
 device ommmc: sdmmcbus
 attach ommmc at omap

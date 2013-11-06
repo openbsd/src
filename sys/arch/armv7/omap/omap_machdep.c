@@ -17,6 +17,7 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/termios.h>
 
@@ -28,7 +29,7 @@
 
 #include <arm/cortex/smc.h>
 #include <arm/armv7/armv7var.h>
-#include <armv7/omap/omapvar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/armv7/armv7_machdep.h>
 
 extern void omap4_smc_call(uint32_t, uint32_t);

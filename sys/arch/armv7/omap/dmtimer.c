@@ -32,7 +32,7 @@
 #include <sys/timetc.h>
 #include <dev/clock_subr.h>
 #include <machine/bus.h>
-#include <armv7/omap/omapvar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
 
 #include <machine/intr.h>
@@ -145,23 +145,23 @@ void
 dmtimer_attach(struct device *parent, struct device *self, void *args)
 {
 	struct dmtimer_softc	*sc = (struct dmtimer_softc *)self;
-	struct omap_attach_args	*oa = args;
+	struct armv7_attach_args *aa = args;
 	bus_space_handle_t	ioh;
 	u_int32_t		rev, cfg;
 
-	sc->sc_iot = oa->oa_iot;
+	sc->sc_iot = aa->aa_iot;
 
-	if (bus_space_map(sc->sc_iot, oa->oa_dev->mem[0].addr,
-	    oa->oa_dev->mem[0].size, 0, &ioh))
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &ioh))
 		panic("%s: bus_space_map failed!\n", __func__);
 
-	
+
 	prcm_setclock(1, PRCM_CLK_SPEED_32);
 	prcm_setclock(2, PRCM_CLK_SPEED_32);
 	prcm_enablemodule(PRCM_TIMER2);
 	prcm_enablemodule(PRCM_TIMER3);
-	
-	/* reset */	
+
+	/* reset */
 	bus_space_write_4(sc->sc_iot, ioh, DM_TIOCP_CFG,
 	    DM_TIOCP_CFG_SOFTRESET);
 	while (bus_space_read_4(sc->sc_iot, ioh, DM_TIOCP_CFG)
@@ -170,7 +170,7 @@ dmtimer_attach(struct device *parent, struct device *self, void *args)
 
 	if (self->dv_unit == 0) {
 		dmtimer_ioh0 = ioh;
-		dmtimer_irq = oa->oa_dev->irq[0];
+		dmtimer_irq = aa->aa_dev->irq[0];
 		/* enable write posted mode */
 		bus_space_write_4(sc->sc_iot, ioh, DM_TSICR, DM_TSICR_POSTED);
 		/* stop timer */
@@ -186,7 +186,7 @@ dmtimer_attach(struct device *parent, struct device *self, void *args)
 		bus_space_write_4(sc->sc_iot, ioh, DM_TLDR, 0);
 		bus_space_write_4(sc->sc_iot, ioh, DM_TCLR,
 		    DM_TCLR_AR | DM_TCLR_ST);
-		
+
 		dmtimer_timecounter.tc_frequency = TIMER_FREQUENCY;
 		dmtimer_timecounter.tc_priv = sc;
 		tc_init(&dmtimer_timecounter);
@@ -195,7 +195,7 @@ dmtimer_attach(struct device *parent, struct device *self, void *args)
 	}
 	else
 		panic("attaching too many dmtimers at 0x%x",
-		    oa->oa_dev->mem[0].addr);
+		    aa->aa_dev->mem[0].addr);
 
 	/* set IDLEMODE to smart-idle */
 	cfg = bus_space_read_4(sc->sc_iot, ioh, DM_TIOCP_CFG);
@@ -206,7 +206,7 @@ dmtimer_attach(struct device *parent, struct device *self, void *args)
 	printf(" rev %d.%d\n", (rev & DM_TIDR_MAJOR) >> 8, rev & DM_TIDR_MINOR);
 }
 
-/* 
+/*
  * See comment in arm/xscale/i80321_clock.c
  *
  * Counter is count up, but with autoreload timers it is not possible

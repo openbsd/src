@@ -1,4 +1,4 @@
-/* $OpenBSD: imxenet.c,v 1.3 2013/10/24 08:28:11 mpi Exp $ */
+/* $OpenBSD: imxenet.c,v 1.4 2013/11/06 19:03:07 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -47,7 +47,7 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <armv7/imx/imxvar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxenet.h>
 #include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxgpiovar.h>
@@ -207,18 +207,18 @@ struct cfdriver imxenet_cd = {
 void
 imxenet_attach(struct device *parent, struct device *self, void *args)
 {
-	struct imx_attach_args *ia = args;
+	struct armv7_attach_args *aa = args;
 	struct imxenet_softc *sc = (struct imxenet_softc *) self;
 	struct mii_data *mii;
 	struct ifnet *ifp;
 	int tsize, rsize, tbsize, rbsize, s;
 
-	sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(sc->sc_iot, ia->ia_dev->mem[0].addr,
-	    ia->ia_dev->mem[0].size, 0, &sc->sc_ioh))
+	sc->sc_iot = aa->aa_iot;
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("imxenet_attach: bus_space_map failed!");
 
-	sc->sc_dma_tag = ia->ia_dmat;
+	sc->sc_dma_tag = aa->aa_dmat;
 
 	/* power it up */
 	imxccm_enable_enet();
@@ -242,7 +242,7 @@ imxenet_attach(struct device *parent, struct device *self, void *args)
 	HWRITE4(sc, ENET_EIMR, 0);
 	HWRITE4(sc, ENET_EIR, 0xffffffff);
 
-	sc->sc_ih = arm_intr_establish(ia->ia_dev->irq[0], IPL_NET,
+	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_NET,
 	    imxenet_intr, sc, sc->sc_dev.dv_xname);
 
 	tsize = ENET_MAX_TXD * sizeof(struct imxenet_buf_desc);
@@ -342,7 +342,7 @@ rxdma:
 txdma:
 	imxenet_dma_free(sc, &sc->txdma);
 bad:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, ia->ia_dev->mem[0].size);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, aa->aa_dev->mem[0].size);
 }
 
 void

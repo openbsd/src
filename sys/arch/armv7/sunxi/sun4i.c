@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun4i.c,v 1.2 2013/10/23 18:01:52 jasper Exp $	*/
+/*	$OpenBSD: sun4i.c,v 1.3 2013/11/06 19:03:07 syl Exp $	*/
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
  *
@@ -20,10 +20,10 @@
 
 #include <machine/bus.h>
 
-#include <armv7/sunxi/sunxivar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
 
-struct sxi_dev sxia1x_devs[] = {
+struct armv7_dev sxia1x_devs[] = {
 
 	/* 'Port IO' */
 	{ .name = "sxipio",
@@ -161,9 +161,8 @@ struct sxi_dev sxia1x_devs[] = {
 	}
 };
 
-void sxia1x_init(void);
 void
 sxia1x_init(void)
 {
-	sxi_set_devs(sxia1x_devs);
+	armv7_set_devs(sxia1x_devs);
 }

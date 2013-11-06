@@ -1,4 +1,4 @@
-/* $OpenBSD: am335x.c,v 1.4 2013/10/18 15:23:58 syl Exp $ */
+/* $OpenBSD: am335x.c,v 1.5 2013/11/06 19:03:07 syl Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -21,7 +21,7 @@
 #include <sys/param.h>
 #include <machine/bus.h>
 
-#include <armv7/omap/omapvar.h>
+#include <armv7/armv7/armv7var.h>
 
 #define PRCM_SIZE	0x2000
 #define PRCM_ADDR	0x44E00000
@@ -97,7 +97,7 @@
 #define CPSW_ADDR	0x4A100000
 #define CPSW_IRQ	40
 
-struct omap_dev am335x_devs[] = {
+struct armv7_dev am335x_devs[] = {
 
 	/*
 	 * Power, Reset and Clock Manager
@@ -202,5 +202,5 @@ struct omap_dev am335x_devs[] = {
 void
 am335x_init(void)
 {
-	omap_set_devs(am335x_devs);
+	armv7_set_devs(am335x_devs);
 }

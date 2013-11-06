@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.3 2013/10/27 20:27:09 aalm Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.4 2013/11/06 19:03:07 syl Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -31,7 +31,7 @@
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcvar.h>
 
-#include <armv7/imx/imxvar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/imx/imxccmvar.h>
 #include <armv7/imx/imxgpiovar.h>
 
@@ -244,22 +244,22 @@ void
 imxesdhc_attach(struct device *parent, struct device *self, void *args)
 {
 	struct imxesdhc_softc		*sc = (struct imxesdhc_softc *) self;
-	struct imx_attach_args		*ia = args;
+	struct armv7_attach_args	*aa = args;
 	struct sdmmcbus_attach_args	 saa;
 	int				 error = 1;
 	uint32_t			 caps;
 
-	sc->unit = ia->ia_dev->unit;
-	sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(sc->sc_iot, ia->ia_dev->mem[0].addr,
-	    ia->ia_dev->mem[0].size, 0, &sc->sc_ioh))
+	sc->unit = aa->aa_dev->unit;
+	sc->sc_iot = aa->aa_iot;
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("imxesdhc_attach: bus_space_map failed!");
 
 	printf("\n");
 
 	/* XXX DMA channels? */
 
-	sc->sc_ih = arm_intr_establish(ia->ia_dev->irq[0], IPL_SDMMC,
+	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_SDMMC,
 	   imxesdhc_intr, sc, sc->sc_dev.dv_xname);
 
 	/*
@@ -274,7 +274,7 @@ imxesdhc_attach(struct device *parent, struct device *self, void *args)
 	/*
 	 * Determine the base clock frequency. (2.2.24)
 	 */
-	sc->clkbase = imxccm_get_usdhx(ia->ia_dev->unit + 1);
+	sc->clkbase = imxccm_get_usdhx(aa->aa_dev->unit + 1);
 
 	/*
 	 * Determine SD bus voltage levels supported by the controller.

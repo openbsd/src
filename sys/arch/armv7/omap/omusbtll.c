@@ -1,4 +1,4 @@
-/* $OpenBSD: omusbtll.c,v 1.1 2013/09/04 14:38:31 patrick Exp $ */
+/* $OpenBSD: omusbtll.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
 /*
  * Copyright (c) 2010 Dale Rahn <drahn@openbsd.org>
  *
@@ -23,7 +23,7 @@
 #include <sys/evcount.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <armv7/omap/omapvar.h>
+#include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
 
 /* registers */
@@ -106,12 +106,12 @@ void
 omusbtll_attach(struct device *parent, struct device *self, void *args)
 {
 	struct omusbtll_softc *sc = (struct omusbtll_softc *) self;
-	struct omap_attach_args *oa = args;
+	struct armv7_attach_args *aa = args;
 	u_int32_t rev;
 
-	sc->sc_iot = oa->oa_iot;
-	if (bus_space_map(sc->sc_iot, oa->oa_dev->mem[0].addr,
-	    oa->oa_dev->mem[0].size, 0, &sc->sc_ioh)) {
+	sc->sc_iot = aa->aa_iot;
+	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh)) {
 		printf("%s: bus_space_map failed!\n", __func__);
 		return;
 	}

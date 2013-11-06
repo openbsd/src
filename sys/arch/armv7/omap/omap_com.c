@@ -1,4 +1,4 @@
-/* $OpenBSD: omap_com.c,v 1.1 2013/09/04 14:38:31 patrick Exp $ */
+/* $OpenBSD: omap_com.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
 /*
  * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
@@ -48,7 +48,7 @@
 /* pick up armv7_a4x_bs_tag */
 #include <arch/arm/armv7/armv7var.h>
 
-#include <armv7/omap/omapvar.h>
+#include <armv7/armv7/armv7var.h>
 
 #define com_isr 8
 #define ISR_RECV	(ISR_RXPL | ISR_XMODE | ISR_RCVEIR)
@@ -57,7 +57,7 @@ void	omapuart_attach(struct device *, struct device *, void *);
 int	omapuart_activate(struct device *, int);
 
 struct cfattach com_omap_ca = {
-	sizeof (struct com_softc), NULL, omapuart_attach, NULL, 
+	sizeof (struct com_softc), NULL, omapuart_attach, NULL,
 	omapuart_activate
 };
 
@@ -65,22 +65,22 @@ void
 omapuart_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (struct com_softc *)self;
-	struct omap_attach_args *oa = aux;
+	struct armv7_attach_args *aa = aux;
 
 	sc->sc_iot = &armv7_a4x_bs_tag;	/* XXX: This sucks */
-	sc->sc_iobase = oa->oa_dev->mem[0].addr;
+	sc->sc_iobase = aa->aa_dev->mem[0].addr;
 	sc->sc_frequency = 48000000;
 	sc->sc_uarttype = COM_UART_TI16750;
 
 	if (bus_space_map(sc->sc_iot, sc->sc_iobase,
-	    oa->oa_dev->mem[0].size, 0, &sc->sc_ioh)) {
+	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh)) {
 		printf("%s: bus_space_map failed\n", __func__);
 		return;
 	}
 
 	com_attach_subr(sc);
 
-	(void)arm_intr_establish(oa->oa_dev->irq[0], IPL_TTY, comintr,
+	(void)arm_intr_establish(aa->aa_dev->irq[0], IPL_TTY, comintr,
 	    sc, sc->sc_dev.dv_xname);
 }
 
