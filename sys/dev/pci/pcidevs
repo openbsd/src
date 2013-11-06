@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1693 2013/10/22 09:25:59 dlg Exp $
+$OpenBSD: pcidevs,v 1.1694 2013/11/06 11:05:10 stsp Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -5600,6 +5600,7 @@ product RDC R6061_EHCI		0x6061	R6061 USB
 
 /* Realtek products */
 product REALTEK RTS5209		0x5209	RTS5209 Card Reader
+product REALTEK RTS5229		0x5229	RTS5229 Card Reader
 product REALTEK RT8029		0x8029	8029
 product REALTEK RT8139D		0x8039	8139D
 product REALTEK RT8129		0x8129	8129
