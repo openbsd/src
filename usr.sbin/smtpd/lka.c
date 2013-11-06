@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.157 2013/10/28 17:02:08 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.158 2013/11/06 10:01:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -103,6 +103,24 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			m_get_envelope(&m, &evp);
 			m_end(&m);
 			lka_session(reqid, &evp);
+			return;
+
+		case IMSG_LKA_HELO:
+			m_msg(&m, imsg);
+			m_get_id(&m, &reqid);
+			m_get_string(&m, &tablename);
+			m_get_sockaddr(&m, (struct sockaddr *)&ss);
+			m_end(&m);
+
+			ret = lka_addrname(tablename, (struct sockaddr*)&ss,
+			    &addrname);
+
+			m_create(p, IMSG_LKA_HELO, 0, 0, -1);
+			m_add_id(p, reqid);
+			m_add_int(p, ret);
+			if (ret == LKA_OK)
+				m_add_string(p, addrname.name);
+			m_close(p);
 			return;
 
 		case IMSG_LKA_SSL_INIT:
@@ -427,6 +445,16 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			env->sc_tables_dict = tables_dict;
 			rule->r_senders = table_find(imsg->data, NULL);
 			if (rule->r_senders == NULL)
+				fatalx("lka: tables inconsistency");
+			env->sc_tables_dict = tmp;
+			return;
+
+		case IMSG_CONF_RULE_RECIPIENT:
+			rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
+			tmp = env->sc_tables_dict;
+			env->sc_tables_dict = tables_dict;
+			rule->r_recipients = table_find(imsg->data, NULL);
+			if (rule->r_recipients == NULL)
 				fatalx("lka: tables inconsistency");
 			env->sc_tables_dict = tmp;
 			return;

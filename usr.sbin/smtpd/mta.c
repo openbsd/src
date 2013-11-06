@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.170 2013/10/30 21:37:48 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.171 2013/11/06 10:01:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1551,6 +1551,8 @@ mta_relay(struct envelope *e)
 		key.flags |= RELAY_MX;
 	} else {
 		key.domain = mta_domain(e->dest.domain, 0);
+		if (!(e->agent.mta.relay.flags & RELAY_STARTTLS))
+			key.flags |= RELAY_TLS_OPTIONAL;
 	}
 
 	key.flags |= e->agent.mta.relay.flags;

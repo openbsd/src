@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.28 2013/05/24 17:03:14 eric Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.29 2013/11/06 10:01:29 eric Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -35,7 +35,7 @@
 
 static int ruleset_check_source(struct table *,
     const struct sockaddr_storage *, int);
-static int ruleset_check_sender(struct table *, const struct mailaddr *);
+static int ruleset_check_mailaddr(struct table *, const struct mailaddr *);
 
 struct rule *
 ruleset_match(const struct envelope *evp)
@@ -47,24 +47,39 @@ ruleset_match(const struct envelope *evp)
 
 	TAILQ_FOREACH(r, env->sc_rules, r_entry) {
 
-		if (r->r_tag[0] != '\0' && strcmp(r->r_tag, evp->tag) != 0)
-			continue;
+		if (r->r_tag[0] != '\0') {
+			ret = strcmp(r->r_tag, evp->tag);
+			if (ret != 0 && !r->r_nottag)
+				continue;
+			if (ret == 0 && r->r_nottag)
+				continue;
+		}
 
 		ret = ruleset_check_source(r->r_sources, ss, evp->flags);
 		if (ret == -1) {
 			errno = EAGAIN;
 			return (NULL);
 		}
-		if (ret == 0)
+		if ((ret == 0 && !r->r_notsources) || (ret != 0 && r->r_notsources))
 			continue;
 
 		if (r->r_senders) {
-			ret = ruleset_check_sender(r->r_senders, &evp->sender);
+			ret = ruleset_check_mailaddr(r->r_senders, &evp->sender);
 			if (ret == -1) {
 				errno = EAGAIN;
 				return (NULL);
 			}
-			if (ret == 0)
+			if ((ret == 0 && !r->r_notsenders) || (ret != 0 && r->r_notsenders))
+				continue;
+		}
+
+		if (r->r_recipients) {
+			ret = ruleset_check_mailaddr(r->r_recipients, &evp->dest);
+			if (ret == -1) {
+				errno = EAGAIN;
+				return (NULL);
+			}
+			if ((ret == 0 && !r->r_notrecipients) || (ret != 0 && r->r_notrecipients))
 				continue;
 		}
 
@@ -75,19 +90,21 @@ ruleset_match(const struct envelope *evp)
 			errno = EAGAIN;
 			return NULL;
 		}
-		if (ret) {
-			if (r->r_desttype == DEST_VDOM &&
-			    (r->r_action == A_RELAY || r->r_action == A_RELAYVIA)) {
-				if (! aliases_virtual_check(r->r_mapping,
-					&evp->rcpt)) {
-					return NULL;
-				}
+		if ((ret == 0 && !r->r_notdestination) || (ret != 0 && r->r_notdestination))
+			continue;
+
+		if (r->r_desttype == DEST_VDOM &&
+		    (r->r_action == A_RELAY || r->r_action == A_RELAYVIA)) {
+			if (! aliases_virtual_check(r->r_mapping,
+				&evp->rcpt)) {
+				return NULL;
 			}
-			goto matched;
 		}
+		goto matched;
 	}
 
 	errno = 0;
+	log_trace(TRACE_RULES, "no rule matched");
 	return (NULL);
 
 matched:
@@ -120,7 +137,7 @@ ruleset_check_source(struct table *table, const struct sockaddr_storage *ss,
 }
 
 static int
-ruleset_check_sender(struct table *table, const struct mailaddr *maddr)
+ruleset_check_mailaddr(struct table *table, const struct mailaddr *maddr)
 {
 	const char	*key;
 
@@ -138,6 +155,5 @@ ruleset_check_sender(struct table *table, const struct mailaddr *maddr)
 	default:
 		break;
 	}
-
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.55 2013/10/26 12:27:59 eric Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.56 2013/11/06 10:01:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -235,74 +235,44 @@ ssl_ctx_create(void)
 }
 
 int
-ssl_load_certfile(struct ssl **sp, const char *path, const char *name, uint8_t flags)
+ssl_load_certificate(struct ssl *s, const char *pathname)
 {
-	struct ssl     *s;
-	char		pathname[PATH_MAX];
-	int		ret;
-
-	if ((s = calloc(1, sizeof(*s))) == NULL)
-		fatal(NULL);
-
-	s->flags = flags;
-	(void)strlcpy(s->ssl_name, name, sizeof(s->ssl_name));
-
-	ret =  snprintf(pathname, sizeof(pathname), "%s/%s.crt",
-	    path ? path : "/etc/ssl", name);
-	if (ret == -1 || (size_t)ret >= sizeof pathname)
-		goto err;
 	s->ssl_cert = ssl_load_file(pathname, &s->ssl_cert_len, 0755);
 	if (s->ssl_cert == NULL)
-		goto err;
+		return 0;
+	return 1;
+}
 
-	ret = snprintf(pathname, sizeof(pathname), "%s/%s.key",
-	    path ? path : "/etc/ssl/private", name);
-	if (ret == -1 || (size_t)ret >= sizeof pathname)
-		goto err;
+int
+ssl_load_keyfile(struct ssl *s, const char *pathname)
+{
 	s->ssl_key = ssl_load_file(pathname, &s->ssl_key_len, 0700);
 	if (s->ssl_key == NULL)
-		goto err;
+		return 0;
+	return 1;
+}
 
-	ret = snprintf(pathname, sizeof(pathname), "%s/%s.ca",
-	    path ? path : "/etc/ssl", name);
-	if (ret == -1 || (size_t)ret >= sizeof pathname)
-		goto err;
+int
+ssl_load_cafile(struct ssl *s, const char *pathname)
+{
 	s->ssl_ca = ssl_load_file(pathname, &s->ssl_ca_len, 0755);
-	if (s->ssl_ca == NULL) {
-		if (errno == EACCES)
-			goto err;
-		log_info("info: No CA found in %s", pathname);
-	}
+	if (s->ssl_ca == NULL)
+		return 0;
+	return 1;
+}
 
-	ret = snprintf(pathname, sizeof(pathname), "%s/%s.dh",
-	    path ? path : "/etc/ssl", name);
-	if (ret == -1 || (size_t)ret >= sizeof pathname)
-		goto err;
+int
+ssl_load_dhparams(struct ssl *s, const char *pathname)
+{
 	s->ssl_dhparams = ssl_load_file(pathname, &s->ssl_dhparams_len, 0755);
 	if (s->ssl_dhparams == NULL) {
 		if (errno == EACCES)
-			goto err;
+			return 0;
 		log_info("info: No DH parameters found in %s: "
 		    "using built-in parameters", pathname);
 	}
-
-	*sp = s;
-	return (1);
-
-err:
-	if (s->ssl_cert != NULL)
-		free(s->ssl_cert);
-	if (s->ssl_key != NULL)
-		free(s->ssl_key);
-	if (s->ssl_ca != NULL)
-		free(s->ssl_ca);
-	if (s->ssl_dhparams != NULL)
-		free(s->ssl_dhparams);
-	if (s != NULL)
-		free(s);
-	return (0);
+	return 1;
 }
-
 
 const char *
 ssl_to_text(const SSL *ssl)

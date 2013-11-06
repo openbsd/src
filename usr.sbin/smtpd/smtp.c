@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.129 2013/10/27 11:01:47 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.130 2013/11/06 10:01:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -66,6 +66,7 @@ smtp_imsg(struct mproc *p, struct imsg *imsg)
 		switch (imsg->hdr.type) {
 		case IMSG_DNS_PTR:
 		case IMSG_LKA_EXPAND_RCPT:
+		case IMSG_LKA_HELO:
 		case IMSG_LKA_AUTHENTICATE:
 		case IMSG_LKA_SSL_INIT:
 		case IMSG_LKA_SSL_VERIFY:
@@ -296,7 +297,7 @@ smtp_setup_events(void)
 
 	TAILQ_FOREACH(l, env->sc_listeners, entry) {
 		log_debug("debug: smtp: listen on %s port %d flags 0x%01x"
-		    " cert \"%s\"", ss_to_text(&l->ss), ntohs(l->port),
+		    " pki \"%s\"", ss_to_text(&l->ss), ntohs(l->port),
 		    l->flags, l->ssl_cert_name);
 
 		session_socket_blockmode(l->fd, BM_NONBLOCK);
@@ -361,6 +362,8 @@ smtp_enqueue(uid_t *euid)
 		strlcpy(listener->tag, "local", sizeof(listener->tag));
 		listener->ss.ss_family = AF_LOCAL;
 		listener->ss.ss_len = sizeof(struct sockaddr *);
+		strlcpy(listener->hostname, "localhost",
+		    sizeof(listener->hostname));
 	}
 
 	/*

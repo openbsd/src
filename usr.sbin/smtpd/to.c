@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.11 2013/10/28 10:32:17 eric Exp $	*/
+/*	$OpenBSD: to.c,v 1.12 2013/11/06 10:01:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -321,8 +321,12 @@ text_to_relayhost(struct relayhost *relay, const char *s)
 {
 	static const struct schema {
 		const char	*name;
-		uint8_t		 flags;
+		uint16_t       	 flags;
 	} schemas [] = {
+		/*
+		 * new schemas should be *appended* otherwise the default
+		 * schema index needs to be updated later in this function.
+		 */
 		{ "smtp://",		0				},
 		{ "lmtp://",		F_LMTP				},
 		{ "smtp+tls://",       	F_TLS_OPTIONAL 			},
@@ -330,8 +334,8 @@ text_to_relayhost(struct relayhost *relay, const char *s)
 		{ "tls://",		F_STARTTLS			},
 		{ "smtps+auth://",	F_SMTPS|F_AUTH			},
 		{ "tls+auth://",	F_STARTTLS|F_AUTH		},
-		{ "ssl://",		F_SMTPS|F_STARTTLS		},
-		{ "ssl+auth://",	F_SMTPS|F_STARTTLS|F_AUTH	},
+		{ "secure://",		F_SMTPS|F_STARTTLS		},
+		{ "secure+auth://",	F_SMTPS|F_STARTTLS|F_AUTH	},
 		{ "backup://",		F_BACKUP       			}
 	};
 	const char     *errstr = NULL;
@@ -414,10 +418,10 @@ relayhost_to_text(const struct relayhost *relay)
 	bzero(buf, sizeof buf);
 	switch (relay->flags) {
 	case F_SMTPS|F_STARTTLS|F_AUTH:
-		strlcat(buf, "ssl+auth://", sizeof buf);
+		strlcat(buf, "secure+auth://", sizeof buf);
 		break;
 	case F_SMTPS|F_STARTTLS:
-		strlcat(buf, "ssl://", sizeof buf);
+		strlcat(buf, "secure://", sizeof buf);
 		break;
 	case F_STARTTLS|F_AUTH:
 		strlcat(buf, "tls+auth://", sizeof buf);
@@ -425,10 +429,16 @@ relayhost_to_text(const struct relayhost *relay)
 	case F_SMTPS|F_AUTH:
 		strlcat(buf, "smtps+auth://", sizeof buf);
 		break;
+	case F_STARTTLS|F_TLS_VERIFY:
+		strlcat(buf, "tls://", sizeof buf);
+		break;
 	case F_STARTTLS:
 		strlcat(buf, "tls://", sizeof buf);
 		break;
 	case F_SMTPS:
+		strlcat(buf, "smtps://", sizeof buf);
+		break;
+	case F_SMTPS|F_TLS_VERIFY:
 		strlcat(buf, "smtps://", sizeof buf);
 		break;
 	case F_BACKUP:
@@ -501,19 +511,26 @@ rule_to_text(struct rule *r)
 	bzero(buf, sizeof buf);
 	strlcpy(buf, r->r_decision == R_ACCEPT  ? "accept" : "reject", sizeof buf);
 	if (r->r_tag[0]) {
-		strlcat(buf, " on ", sizeof buf);
+		strlcat(buf, " tagged ", sizeof buf);
+		if (r->r_nottag)
+			strlcat(buf, "! ", sizeof buf);
 		strlcat(buf, r->r_tag, sizeof buf);
 	}
 	strlcat(buf, " from ", sizeof buf);
+	if (r->r_notsources)
+		strlcat(buf, "! ", sizeof buf);
 	strlcat(buf, r->r_sources->t_name, sizeof buf);
 
+	strlcat(buf, " for ", sizeof buf);
+	if (r->r_notdestination)
+		strlcat(buf, "! ", sizeof buf);
 	switch (r->r_desttype) {
 	case DEST_DOM:
 		if (r->r_destination == NULL) {
-			strlcat(buf, " for any", sizeof buf);
+			strlcat(buf, " any", sizeof buf);
 			break;
 		}
-		strlcat(buf, " for domain ", sizeof buf);
+		strlcat(buf, " domain ", sizeof buf);
 		strlcat(buf, r->r_destination->t_name, sizeof buf);
 		if (r->r_mapping) {
 			strlcat(buf, " alias ", sizeof buf);
@@ -522,11 +539,11 @@ rule_to_text(struct rule *r)
 		break;
 	case DEST_VDOM:
 		if (r->r_destination == NULL) {
-			strlcat(buf, " for any virtual ", sizeof buf);
+			strlcat(buf, " any virtual ", sizeof buf);
 			strlcat(buf, r->r_mapping->t_name, sizeof buf);
 			break;
 		}
-		strlcat(buf, " for domain ", sizeof buf);
+		strlcat(buf, " domain ", sizeof buf);
 		strlcat(buf, r->r_destination->t_name, sizeof buf);
 		strlcat(buf, " virtual ", sizeof buf);
 		strlcat(buf, r->r_mapping->t_name, sizeof buf);
@@ -563,6 +580,8 @@ rule_to_text(struct rule *r)
 		strlcat(buf, " deliver to lmtp \"", sizeof buf);
 		strlcat(buf, r->r_value.buffer, sizeof buf);
 		strlcat(buf, "\"", sizeof buf);
+		break;
+	case A_NONE:
 		break;
 	}
 	    

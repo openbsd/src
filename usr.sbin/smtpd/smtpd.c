@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.203 2013/10/30 21:37:48 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.204 2013/11/06 10:01:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -75,7 +75,7 @@ static int	offline_enqueue(char *);
 static void	purge_task(int, short, void *);
 static void	log_imsg(int, int, struct imsg *);
 static int	parent_auth_user(const char *, const char *);
-static void	load_ssl_trees(void);
+static void	load_ssl_tree(void);
 
 enum child_type {
 	CHILD_DAEMON,
@@ -343,8 +343,6 @@ parent_send_config_smtp(void)
 	m_compose(p_smtp, IMSG_CONF_START, 0, 0, -1, NULL, 0);
 
 	while (dict_iter(env->sc_ssl_dict, &iter, NULL, (void **)&s)) {
-		if (!(s->flags & F_SCERT))
-			continue;
 		iov[0].iov_base = s;
 		iov[0].iov_len = sizeof(*s);
 		iov[1].iov_base = s->ssl_cert;
@@ -454,6 +452,12 @@ parent_send_config_lka()
 			    0, 0, -1,
 			    &r->r_senders->t_name,
 			    sizeof(r->r_senders->t_name));
+		}
+		if (r->r_recipients) {
+			m_compose(p_lka, IMSG_CONF_RULE_RECIPIENT,
+			    0, 0, -1,
+			    &r->r_recipients->t_name,
+			    sizeof(r->r_recipients->t_name));
 		}
 		if (r->r_destination) {
 			m_compose(p_lka, IMSG_CONF_RULE_DESTINATION,
@@ -711,7 +715,7 @@ main(int argc, char *argv[])
 		errx(1, "config file exceeds SMTPD_MAXPATHLEN");
 
 	if (env->sc_opts & SMTPD_OPT_NOACTION) {
-		load_ssl_trees();
+		load_ssl_tree();
 		fprintf(stderr, "configuration OK\n");
 		exit(0);
 	}
@@ -760,7 +764,7 @@ main(int argc, char *argv[])
 		errx(1, "machine does not have a hostname set");
 	env->sc_uptime = time(NULL);
 
-	load_ssl_trees();
+	load_ssl_tree();
 
 	fork_peers();
 
@@ -814,44 +818,33 @@ main(int argc, char *argv[])
 }
 
 static void
-load_ssl_trees(void)
+load_ssl_tree(void)
 {
-	struct listener	*l;
 	struct ssl	*ssl;
-	struct rule	*r;
+	void		*iter_dict;
+	const char	*k;
 
-	log_debug("debug: init server-ssl tree");
-	TAILQ_FOREACH(l, env->sc_listeners, entry) {
-		if (!(l->flags & F_SSL))
-			continue;
+	log_debug("debug: init ssl-tree");
+	iter_dict = NULL;
+	while (dict_iter(env->sc_ssl_dict, &iter_dict, &k, (void **)&ssl)) {
+		log_debug("debug: loading pki information for %s", k);
 
-		ssl = dict_get(env->sc_ssl_dict, l->ssl_cert_name);
-		if (ssl == NULL) {
-			if (! ssl_load_certfile(&ssl, "/etc/mail/certs",
-			    l->ssl_cert_name, F_SCERT))
-				errx(1, "cannot load certificate: %s",
-				    l->ssl_cert_name);
-			dict_set(env->sc_ssl_dict, ssl->ssl_name, ssl);
-		}
-	}
+		if (ssl->ssl_cert_file == NULL)
+			errx(1, "load_ssl_tree: missing certificate file for %s", k);
+		if (ssl->ssl_key_file == NULL)
+			errx(1, "load_ssl_tree: missing key file for %s", k);
 
-	log_debug("debug: init client-ssl tree");
-	TAILQ_FOREACH(r, env->sc_rules, r_entry) {
-		if (r->r_action != A_RELAY && r->r_action != A_RELAYVIA)
-			continue;
-		if (! r->r_value.relayhost.cert[0])
-			continue;
+		if (! ssl_load_certificate(ssl, ssl->ssl_cert_file))
+			errx(1, "load_ssl_tree: failed to load certificate file for %s", k);
+		if (! ssl_load_keyfile(ssl, ssl->ssl_key_file))
+			errx(1, "load_ssl_tree: failed to load certificate file for %s", k);
 
-		ssl = dict_get(env->sc_ssl_dict, r->r_value.relayhost.cert);
-		if (ssl)
-			ssl->flags |= F_CCERT;
-		else {
-			if (! ssl_load_certfile(&ssl, "/etc/mail/certs",
-			    r->r_value.relayhost.cert, F_CCERT))
-				errx(1, "cannot load certificate: %s",
-				    r->r_value.relayhost.cert);
-			dict_set(env->sc_ssl_dict, ssl->ssl_name, ssl);
-		}
+		if (ssl->ssl_ca_file)
+			if (! ssl_load_cafile(ssl, ssl->ssl_ca_file))
+				errx(1, "load_ssl_tree: failed to load CA file for %s", k);
+		if (ssl->ssl_dhparams_file)
+			if (! ssl_load_dhparams(ssl, ssl->ssl_dhparams_file))
+				errx(1, "load_ssl_tree: failed to load dhparams file for %s", k);
 	}
 }
 
@@ -1349,7 +1342,7 @@ static void
 log_imsg(int to, int from, struct imsg *imsg)
 {
 
-	if (to == PROC_CONTROL)
+	if (to == PROC_CONTROL && imsg->hdr.type == IMSG_STAT_SET)
 		return;
 
 	if (imsg->fd != -1)

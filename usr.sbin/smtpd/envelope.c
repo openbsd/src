@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.21 2013/10/26 20:32:48 eric Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.22 2013/11/06 10:01:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -44,6 +44,7 @@
 #include "smtpd.h"
 #include "log.h"
 
+static int envelope_upgrade_v1(struct dict *);
 static int envelope_ascii_load(struct envelope *, struct dict *);
 static void envelope_ascii_dump(const struct envelope *, char **, size_t *,
     const char *);
@@ -139,8 +140,16 @@ envelope_load_buffer(struct envelope *ep, const char *ibuf, size_t buflen)
 
 	switch (version) {
 	case 1:
-		/* very very okd envelopes may still have this */
-		dict_pop(&d, "msgid");
+		log_debug("debug: upgrading envelope to version 1");
+		if (!envelope_upgrade_v1(&d)) {
+			log_debug("debug: failed to upgrade envelope to version 1");
+			goto end;
+		}
+		/* FALLTRHOUGH */
+	case 2:
+		/* Can be missing in some v2 envelopes */
+		if (dict_get(&d, "smtpname") == NULL)
+			dict_xset(&d, "smtpname", env->sc_hostname);
 		break;
 	default:
 		log_debug("debug: bad envelope version %lld", version);
@@ -165,6 +174,7 @@ envelope_dump_buffer(const struct envelope *ep, char *dest, size_t len)
 	envelope_ascii_dump(ep, &dest, &len, "version");
 	envelope_ascii_dump(ep, &dest, &len, "tag");
 	envelope_ascii_dump(ep, &dest, &len, "type");
+	envelope_ascii_dump(ep, &dest, &len, "smtpname");
 	envelope_ascii_dump(ep, &dest, &len, "helo");
 	envelope_ascii_dump(ep, &dest, &len, "hostname");
 	envelope_ascii_dump(ep, &dest, &len, "errorline");
@@ -190,7 +200,9 @@ envelope_dump_buffer(const struct envelope *ep, char *dest, size_t len)
 		envelope_ascii_dump(ep, &dest, &len, "mta-relay");
 		envelope_ascii_dump(ep, &dest, &len, "mta-relay-auth");
 		envelope_ascii_dump(ep, &dest, &len, "mta-relay-cert");
-		envelope_ascii_dump(ep, &dest, &len, "mta-relay-helo");
+		envelope_ascii_dump(ep, &dest, &len, "mta-relay-flags");
+		envelope_ascii_dump(ep, &dest, &len, "mta-relay-heloname");
+		envelope_ascii_dump(ep, &dest, &len, "mta-relay-helotable");
 		envelope_ascii_dump(ep, &dest, &len, "mta-relay-source");
 		break;
 	case D_BOUNCE:
@@ -347,6 +359,23 @@ ascii_load_mta_relay_url(struct relayhost *relay, char *buf)
 }
 
 static int
+ascii_load_mta_relay_flags(uint16_t *dest, char *buf)
+{
+	char *flag;
+
+	while ((flag = strsep(&buf, " ,|")) != NULL) {
+		if (strcasecmp(flag, "verify") == 0)
+			*dest |= F_TLS_VERIFY;
+		else if (strcasecmp(flag, "tls") == 0)
+			*dest |= F_STARTTLS;
+		else
+			return 0;
+	}
+
+	return 1;
+}
+
+static int
 ascii_load_bounce_type(enum bounce_type *dest, char *buf)
 {
 	if (strcasecmp(buf, "error") == 0)
@@ -432,7 +461,14 @@ ascii_load_field(const char *field, struct envelope *ep, char *buf)
 		return ascii_load_string(ep->agent.mta.relay.cert, buf,
 		    sizeof ep->agent.mta.relay.cert);
 
-	if (strcasecmp("mta-relay-helo", field) == 0)
+	if (strcasecmp("mta-relay-flags", field) == 0)
+		return ascii_load_mta_relay_flags(&ep->agent.mta.relay.flags, buf);
+
+	if (strcasecmp("mta-relay-heloname", field) == 0)
+		return ascii_load_string(ep->agent.mta.relay.heloname, buf,
+		    sizeof ep->agent.mta.relay.heloname);
+
+	if (strcasecmp("mta-relay-helotable", field) == 0)
 		return ascii_load_string(ep->agent.mta.relay.helotable, buf,
 		    sizeof ep->agent.mta.relay.helotable);
 
@@ -448,6 +484,9 @@ ascii_load_field(const char *field, struct envelope *ep, char *buf)
 
 	if (strcasecmp("sender", field) == 0)
 		return ascii_load_mailaddr(&ep->sender, buf);
+
+	if (strcasecmp("smtpname", field) == 0)
+		return ascii_load_string(ep->smtpname, buf, sizeof(ep->smtpname));
 
 	if (strcasecmp("sockaddr", field) == 0)
 		return ascii_load_sockaddr(&ep->ss, buf);
@@ -594,6 +633,28 @@ ascii_dump_mta_relay_url(const struct relayhost *relay, char *buf, size_t len)
 }
 
 static int
+ascii_dump_mta_relay_flags(uint16_t flags, char *buf, size_t len)
+{
+	size_t cpylen = 0;
+
+	buf[0] = '\0';
+	if (flags) {
+		if (flags & F_TLS_VERIFY) {
+			if (buf[0] != '\0')
+				strlcat(buf, " ", len);
+			cpylen = strlcat(buf, "verify", len);
+		}
+		if (flags & F_STARTTLS) {
+			if (buf[0] != '\0')
+				strlcat(buf, " ", len);
+			cpylen = strlcat(buf, "tls", len);
+		}
+	}
+
+	return cpylen < len ? 1 : 0;
+}
+
+static int
 ascii_dump_bounce_type(enum bounce_type type, char *dest, size_t len)
 {
 	char *p = NULL;
@@ -683,7 +744,15 @@ ascii_dump_field(const char *field, const struct envelope *ep,
 		return ascii_dump_string(ep->agent.mta.relay.cert,
 		    buf, len);
 
-	if (strcasecmp(field, "mta-relay-helo") == 0)
+	if (strcasecmp(field, "mta-relay-flags") == 0)
+		return ascii_dump_mta_relay_flags(ep->agent.mta.relay.flags,
+		    buf, len);
+
+	if (strcasecmp(field, "mta-relay-heloname") == 0)
+		return ascii_dump_string(ep->agent.mta.relay.heloname,
+		    buf, len);
+
+	if (strcasecmp(field, "mta-relay-helotable") == 0)
 		return ascii_dump_string(ep->agent.mta.relay.helotable,
 		    buf, len);
 
@@ -699,6 +768,9 @@ ascii_dump_field(const char *field, const struct envelope *ep,
 
 	if (strcasecmp(field, "sender") == 0)
 		return ascii_dump_mailaddr(&ep->sender, buf, len);
+
+	if (strcasecmp(field, "smtpname") == 0)
+		return ascii_dump_string(ep->smtpname, buf, len);
 
 	if (strcasecmp(field, "sockaddr") == 0)
 		return ascii_dump_string(ss_to_text(&ep->ss), buf, len);
@@ -739,4 +811,42 @@ envelope_ascii_dump(const struct envelope *ep, char **dest, size_t *len, const c
 	return;
 err:
 	*dest = NULL;
+}
+
+static int
+envelope_upgrade_v1(struct dict *d)
+{
+	static char	 buf_relay[1024];
+	char		*val;
+
+	/*
+	 * very very old envelopes had a "msgid" field
+	 */
+	dict_pop(d, "msgid");
+
+	/*
+	 * rename "mta-relay-helo" field to "mta-relay-helotable"
+	 */
+	if ((val = dict_get(d, "mta-relay-helo"))) {
+		dict_xset(d, "mta-relay-helotable", val);
+		dict_xpop(d, "mta-relay-helo");
+	}
+
+	/*
+	 * "ssl" becomes "secure" in "mta-relay" scheme
+	 */
+	if ((val = dict_get(d, "mta-relay"))) {
+		if (strncasecmp("ssl://", val, 6) == 0) {
+			if (! bsnprintf(buf_relay, sizeof(buf_relay), "secure://%s", val+6))
+				return (0);
+			dict_set(d, "mta-relay", buf_relay);
+		}
+		else if (strncasecmp("ssl+auth://", val, 11) == 0) {
+			if (! bsnprintf(buf_relay, sizeof(buf_relay), "secure+auth://%s", val+11))
+				return (0);
+			dict_set(d, "mta-relay", buf_relay);
+		}
+	}
+
+	return (1);
 }

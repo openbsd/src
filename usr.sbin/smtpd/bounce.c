@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.58 2013/10/26 12:27:58 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.59 2013/11/06 10:01:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -65,12 +65,14 @@ struct bounce_message {
 	TAILQ_ENTRY(bounce_message)	 entry;
 	uint32_t			 msgid;
 	struct delivery_bounce		 bounce;
+	char				*smtpname;
 	char				*to;
 	time_t				 timeout;
 	TAILQ_HEAD(, bounce_envelope)	 envelopes;
 };
 
 struct bounce_session {
+	char				*smtpname;
 	struct bounce_message		*msg;
 	FILE				*msgfp;
 	int				 state;
@@ -139,19 +141,21 @@ bounce_add(uint64_t evpid)
 
 	key.msgid = evpid_to_msgid(evpid);
 	key.bounce = evp.agent.bounce;
+	key.smtpname = evp.smtpname;
 	msg = SPLAY_FIND(bounce_message_tree, &messages, &key);
 	if (msg == NULL) {
 		msg = xcalloc(1, sizeof(*msg), "bounce_add");
 		msg->msgid = key.msgid;
 		msg->bounce = key.bounce;
-		SPLAY_INSERT(bounce_message_tree, &messages, msg);
 
 		TAILQ_INIT(&msg->envelopes);
 
+		msg->smtpname = xstrdup(evp.smtpname, "bounce_add");
 		snprintf(buf, sizeof(buf), "%s@%s", evp.sender.user,
 		    evp.sender.domain);
 		msg->to = xstrdup(buf, "bounce_add");
 		nmessage += 1;
+		SPLAY_INSERT(bounce_message_tree, &messages, msg);
 		log_debug("debug: bounce: new message %08" PRIx32,
 		    msg->msgid);
 		stat_increment("bounce.message", 1);
@@ -168,8 +172,8 @@ bounce_add(uint64_t evpid)
 	be->id = evpid;
 	be->report = xstrdup(buf, "bounce_add");
 	TAILQ_INSERT_TAIL(&msg->envelopes, be, entry);
-	log_debug("debug: bounce: adding report %16"PRIx64": %s", be->id,
-	    be->report);
+	buf[strcspn(buf, "\n")] = '\0';
+	log_debug("debug: bounce: adding report %16"PRIx64": %s", be->id, buf);
 
 	msg->timeout = time(NULL) + 1;
 	TAILQ_INSERT_TAIL(&pending, msg, entry);
@@ -182,16 +186,23 @@ void
 bounce_fd(int fd)
 {
 	struct bounce_session	*s;
+	struct bounce_message	*msg;
 
 	log_debug("debug: bounce: got enqueue socket %d", fd);
 
-	if (fd == -1) {
+	if (fd == -1 || TAILQ_EMPTY(&pending)) {
+		log_debug("debug: bounce: cancelling");
+		if (fd != -1)
+			close(fd);
 		running -= 1;
 		bounce_drain();
 		return;
 	}
 
+	msg = TAILQ_FIRST(&pending);
+
 	s = xcalloc(1, sizeof(*s), "bounce_fd");
+	s->smtpname = xstrdup(msg->smtpname, "bounce_fd");
 	s->state = BOUNCE_EHLO;
 	iobuf_xinit(&s->iobuf, 0, 0, "bounce_run");
 	io_init(&s->io, fd, s, bounce_io, &s->iobuf);
@@ -323,11 +334,20 @@ bounce_next_message(struct bounce_session *s)
 	struct bounce_message	*msg;
 	char			 buf[SMTPD_MAXLINESIZE];
 	int			 fd;
+	time_t			 now;
 
     again:
 
-	msg = TAILQ_FIRST(&pending);
-	if (msg == NULL || msg->timeout > time(NULL))
+	now = time(NULL);
+
+	TAILQ_FOREACH(msg, &pending, entry) {
+		if (msg->timeout > now)
+			continue;
+		if (strcmp(msg->smtpname, s->smtpname))
+			continue;
+		break;
+	}
+	if (msg == NULL)
 		return (0);
 
 	TAILQ_REMOVE(&pending, msg, entry);
@@ -360,7 +380,7 @@ bounce_next(struct bounce_session *s)
 
 	switch (s->state) {
 	case BOUNCE_EHLO:
-		bounce_send(s, "EHLO %s", env->sc_hostname);
+		bounce_send(s, "EHLO %s", s->smtpname);
 		s->state = BOUNCE_MAIL;
 		break;
 
@@ -401,7 +421,7 @@ bounce_next(struct bounce_session *s)
 		    NOTICE_INTRO
 		    "\n",
 		    (s->msg->bounce.type == B_ERROR) ? "error" : "warning",
-		    env->sc_hostname,
+		    s->smtpname,
 		    s->msg->to,
 		    time_to_text(time(NULL)));
 
@@ -515,6 +535,7 @@ bounce_delivery(struct bounce_message *msg, int delivery, const char *status)
 			queue_envelope_delete(be->id);
 		}
 		TAILQ_REMOVE(&msg->envelopes, be, entry);
+		free(be->report);
 		free(be);
 		n += 1;
 	}
@@ -522,6 +543,8 @@ bounce_delivery(struct bounce_message *msg, int delivery, const char *status)
 	nmessage -= 1;
 	stat_decrement("bounce.message", 1);
 	stat_decrement("bounce.envelope", n);
+	free(msg->smtpname);
+	free(msg->to);
 	free(msg);
 }
 
@@ -563,6 +586,8 @@ bounce_free(struct bounce_session *s)
 
 	iobuf_clear(&s->iobuf);
 	io_clear(&s->io);
+
+	free(s->smtpname);
 	free(s);
 
 	running -= 1;
@@ -648,10 +673,15 @@ static int
 bounce_message_cmp(const struct bounce_message *a,
     const struct bounce_message *b)
 {
+	int r;
+
 	if (a->msgid < b->msgid)
 		return (-1);
 	if (a->msgid > b->msgid)
 		return (1);
+	if ((r = strcmp(a->smtpname, b->smtpname)))
+		return (r);
+
 	return memcmp(&a->bounce, &b->bounce, sizeof (a->bounce));
 }
 

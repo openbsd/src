@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.432 2013/10/30 21:37:48 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.433 2013/11/06 10:01:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -30,24 +30,16 @@
 #define CONF_FILE		 "/etc/mail/smtpd.conf"
 #define MAILNAME_FILE		 "/etc/mail/mailname"
 #define CA_FILE			 "/etc/ssl/cert.pem"
-#define MAX_LISTEN		 16
+
 #define PROC_COUNT		 10
-#define MAX_NAME_SIZE		 64
 
 #define MAX_HOPS_COUNT		 100
 #define	DEFAULT_MAX_BODY_SIZE	(35*1024*1024)
-
 #define MAX_TAG_SIZE		 32
-
-#define	MAX_TABLE_BACKEND_SIZE	 32
-
-/* return and forward path size */
 #define	MAX_FILTER_NAME		 32
 
 #define	EXPAND_BUFFER		 1024
 
-#define SMTPD_QUEUE_INTERVAL	 (15 * 60)
-#define SMTPD_QUEUE_MAXINTERVAL	 (4 * 60 * 60)
 #define SMTPD_QUEUE_EXPIRY	 (4 * 24 * 60 * 60)
 #define SMTPD_USER		 "_smtpd"
 #define SMTPD_QUEUE_USER	 "_smtpq"
@@ -80,9 +72,8 @@
 #define	F_STARTTLS_REQUIRE	0x20
 #define	F_AUTH_REQUIRE		0x40
 #define	F_LMTP			0x80
-
-#define F_SCERT			0x01
-#define F_CCERT			0x02
+#define	F_MASK_SOURCE		0x100
+#define	F_TLS_VERIFY		0x200
 
 /* must match F_* for mta */
 #define RELAY_STARTTLS		0x01
@@ -93,6 +84,7 @@
 #define RELAY_BACKUP		0x10	/* XXX - MUST BE SYNC-ED WITH F_BACKUP */
 #define RELAY_MX		0x20
 #define RELAY_LMTP		0x80
+#define	RELAY_TLS_VERIFY	0x200
 
 struct userinfo {
 	char username[SMTPD_MAXLOGNAME];
@@ -107,14 +99,14 @@ struct netaddr {
 };
 
 struct relayhost {
-	uint8_t flags;
+	uint16_t flags;
 	char hostname[SMTPD_MAXHOSTNAMELEN];
 	uint16_t port;
 	char cert[SMTPD_MAXPATHLEN];
 	char authtable[SMTPD_MAXPATHLEN];
 	char authlabel[SMTPD_MAXPATHLEN];
 	char sourcetable[SMTPD_MAXPATHLEN];
-	char heloname[SMTPD_MAXPATHLEN];
+	char heloname[SMTPD_MAXHOSTNAMELEN];
 	char helotable[SMTPD_MAXPATHLEN];
 };
 
@@ -325,6 +317,7 @@ enum dest_type {
 };
 
 enum action_type {
+	A_NONE,
 	A_RELAY,
 	A_RELAYVIA,
 	A_MAILDIR,
@@ -342,10 +335,19 @@ enum decision {
 struct rule {
 	TAILQ_ENTRY(rule)		r_entry;
 	enum decision			r_decision;
+	uint8_t				r_nottag;
 	char				r_tag[MAX_TAG_SIZE];
+
+	uint8_t				r_notsources;
 	struct table		       *r_sources;
+
+	uint8_t				r_notsenders;
 	struct table		       *r_senders;
 
+	uint8_t				r_notrecipients;
+	struct table		       *r_recipients;
+
+	uint8_t				r_notdestination;
 	enum dest_type			r_desttype;
 	struct table		       *r_destination;
 
@@ -359,6 +361,7 @@ struct rule {
 	struct table		       *r_mapping;
 	struct table		       *r_userbase;
 	time_t				r_qexpire;
+	uint8_t				r_forwardonly;
 };
 
 struct delivery_mda {
@@ -424,7 +427,7 @@ struct expand {
 	struct expandnode		*parent;
 };
 
-#define	SMTPD_ENVELOPE_VERSION		1
+#define	SMTPD_ENVELOPE_VERSION		2
 struct envelope {
 	TAILQ_ENTRY(envelope)		entry;
 
@@ -434,6 +437,7 @@ struct envelope {
 	uint64_t			id;
 	enum envelope_flags		flags;
 
+	char				smtpname[SMTPD_MAXHOSTNAMELEN];
 	char				helo[SMTPD_MAXHOSTNAMELEN];
 	char				hostname[SMTPD_MAXHOSTNAMELEN];
 	char				errorline[SMTPD_MAXLINESIZE];
@@ -459,7 +463,7 @@ struct envelope {
 };
 
 struct listener {
-	uint8_t			 flags;
+	uint16_t       		 flags;
 	int			 fd;
 	struct sockaddr_storage	 ss;
 	in_port_t		 port;
@@ -470,7 +474,8 @@ struct listener {
 	void			*ssl_ctx;
 	char			 tag[MAX_TAG_SIZE];
 	char			 authtable[SMTPD_MAXLINESIZE];
-	char			 helo[SMTPD_MAXHOSTNAMELEN];
+	char			 hostname[SMTPD_MAXHOSTNAMELEN];
+	char			 hostnametable[SMTPD_MAXPATHLEN];
 	TAILQ_ENTRY(listener)	 entry;
 };
 

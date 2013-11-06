@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.45 2013/10/29 17:04:45 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.46 2013/11/06 10:01:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -324,10 +324,19 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 
 		if (resp_ca_cert->status == CA_FAIL) {
-			log_info("smtp-out: Disconnecting session %016"PRIx64
-			    ": CA failure", s->id);
-			mta_free(s);
-			return;
+			if (s->relay->cert) {
+				log_info("smtp-out: Disconnecting session %016"PRIx64
+				    ": CA failure", s->id);
+				mta_free(s);
+				return;
+			}
+			else {
+				ssl = ssl_mta_init(NULL, 0, NULL, 0);
+				if (ssl == NULL)
+					fatal("mta: ssl_mta_init");
+				io_start_tls(&s->io, ssl);
+				return;
+			}
 		}
 
 		resp_ca_cert = xmemdup(imsg->data, sizeof *resp_ca_cert,
@@ -360,6 +369,12 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 
 		if (resp_ca_vrfy->status == CA_OK)
 			s->flags |= MTA_VERIFIED;
+		else if (s->relay->flags & F_TLS_VERIFY) {
+			errno = 0;
+			mta_error(s, "SSL certificate check failed");
+			mta_free(s);
+			return;
+		}
 
 		mta_io(&s->io, IO_TLSVERIFIED);
 		io_resume(&s->io, IO_PAUSE_IN);
@@ -1495,22 +1510,20 @@ static void
 mta_start_tls(struct mta_session *s)
 {
 	struct ca_cert_req_msg	req_ca_cert;
-	void		       *ssl;
+	const char	       *certname;
 
-	if (s->relay->cert) {
-		req_ca_cert.reqid = s->id;
-		strlcpy(req_ca_cert.name, s->relay->cert,
-		    sizeof req_ca_cert.name);
-		m_compose(p_lka, IMSG_LKA_SSL_INIT, 0, 0, -1,
-		    &req_ca_cert, sizeof(req_ca_cert));
-		tree_xset(&wait_ssl_init, s->id, s);
-		s->flags |= MTA_WAIT;
-		return;
-	}
-	ssl = ssl_mta_init(NULL, 0, NULL, 0);
-	if (ssl == NULL)
-		fatal("mta: ssl_mta_init");
-	io_start_tls(&s->io, ssl);
+	if (s->relay->cert)
+		certname = s->relay->cert;
+	else
+		certname = s->helo;
+
+	req_ca_cert.reqid = s->id;
+	strlcpy(req_ca_cert.name, certname, sizeof req_ca_cert.name);
+	m_compose(p_lka, IMSG_LKA_SSL_INIT, 0, 0, -1,
+	    &req_ca_cert, sizeof(req_ca_cert));
+	tree_xset(&wait_ssl_init, s->id, s);
+	s->flags |= MTA_WAIT;
+	return;
 }
 
 static int
