@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.120 2013/11/05 06:02:45 deraadt Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.121 2013/11/06 07:46:31 dlg Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/syscallargs.h>
 #include <sys/swap.h>
 #include <sys/disk.h>
+#include <sys/task.h>
 #if defined(NFSCLIENT)
 #include <sys/socket.h>
 #include <sys/domain.h>
@@ -192,7 +193,7 @@ struct vndxfer {
 
 struct vndbuf {
 	struct buf	vb_buf;
-	struct vndxfer	*vb_xfer;
+	struct task	vb_task;
 };
 
 
@@ -1290,7 +1291,8 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 				max(0, bp->b_validend - (bp->b_bcount-resid)));
 		}
 
-		nbp->vb_xfer = vnx;	/* patch it back in to vnx */
+		/* patch it back to the vnx */
+		task_set(&nbp->vb_task, sw_reg_iodone_internal, nbp, vnx);
 
 		/* XXX: In case the underlying bufq is disksort: */
 		nbp->vb_buf.b_cylinder = nbp->vb_buf.b_blkno;
@@ -1365,26 +1367,22 @@ sw_reg_start(struct swapdev *sdp)
  * => note that we can recover the vndbuf struct by casting the buf ptr
  *
  * XXX:
- * We only put this onto a workq here, because of the maxactive game since
+ * We only put this onto a taskq here, because of the maxactive game since
  * it basically requires us to call back into VOP_STRATEGY() (where we must
  * be able to sleep) via sw_reg_start().
  */
 void
 sw_reg_iodone(struct buf *bp)
 {
-	struct bufq_swapreg	*bq;
-
-	bq = (struct bufq_swapreg *)&bp->b_bufq;
-
-	workq_queue_task(NULL, &bq->bqf_wqtask, 0,
-	    (workq_fn)sw_reg_iodone_internal, bp, NULL);
+	struct vndbuf *vbp = (struct vndbuf *)bp;
+	task_add(systq, &vbp->vb_task);
 }
 
 void
-sw_reg_iodone_internal(void *arg0, void *unused)
+sw_reg_iodone_internal(void *xvbp, void *xvnx)
 {
-	struct vndbuf *vbp = (struct vndbuf *)arg0;
-	struct vndxfer *vnx = vbp->vb_xfer;
+	struct vndbuf *vbp = xvbp;
+	struct vndxfer *vnx = xvnx;
 	struct buf *pbp = vnx->vx_bp;		/* parent buffer */
 	struct swapdev	*sdp = vnx->vx_sdp;
 	int resid, s;
