@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.70 2013/10/25 16:21:35 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.71 2013/11/06 08:00:17 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -1896,6 +1896,8 @@ mpii_sas_remove_device(struct mpii_softc *sc, u_int16_t handle)
 	mpii_wait(sc, ccb);
 	if (ccb->ccb_rcb != NULL)
 		mpii_push_reply(sc, ccb->ccb_rcb);
+
+	scsi_io_put(&sc->sc_iopool, ccb);
 }
 
 int
