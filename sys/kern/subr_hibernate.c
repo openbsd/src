@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.74 2013/11/06 19:45:47 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.75 2013/11/06 19:47:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -936,12 +936,7 @@ hibernate_write_signature(union hibernate_info *hib)
 /*
  * Write the memory chunk table to the area in swap immediately
  * preceding the signature block. The chunk table is stored
- * in the piglet when this function is called.
- *
- * Return values:
- *
- * 0   -  success
- * EIO -  I/O error writing the chunktable
+ * in the piglet when this function is called.  Returns errno.
  */
 int
 hibernate_write_chunktable(union hibernate_info *hib)
@@ -970,7 +965,7 @@ hibernate_write_chunktable(union hibernate_info *hib)
 		    (vaddr_t)(hibernate_chunk_table_start + i),
 		    MAXPHYS, HIB_W, hib->io_page))) {
 			DPRINTF("chunktable write error: %d\n", err);
-			return (EIO);
+			return (err);
 		}
 	}
 
@@ -1497,7 +1492,7 @@ hibernate_write_chunks(union hibernate_info *hib)
 					    hib->io_page))) {
 						DPRINTF("hib write error %d\n",
 							err);
-						return (EIO);
+						return (err);
 					}
 
 					blkctr += nblocks;
@@ -1530,7 +1525,7 @@ hibernate_write_chunks(union hibernate_info *hib)
 		if ((err = deflate(&hibernate_state->hib_stream, Z_FINISH)) !=
 		    Z_STREAM_END) {
 			DPRINTF("deflate error in output stream: %d\n", err);
-			return (EIO);
+			return (err);
 		}
 
 		out_remaining = hibernate_state->hib_stream.avail_out;
@@ -1547,7 +1542,7 @@ hibernate_write_chunks(union hibernate_info *hib)
 		    (vaddr_t)hibernate_io_page, nblocks*DEV_BSIZE,
 		    HIB_W, hib->io_page))) {
 			DPRINTF("hib final write error %d\n", err);
-			return (EIO);
+			return (err);
 		}
 
 		blkctr += nblocks;
