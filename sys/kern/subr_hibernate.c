@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.69 2013/11/05 07:38:26 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.70 2013/11/06 00:52:46 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1676,8 +1676,6 @@ hibernate_read_image(union hibernate_info *hiber_info)
 
 	/* Calculate image extents. Pig image must end on a chunk boundary. */
 	image_end = pig_end & ~(HIBERNATE_CHUNK_SIZE - 1);
-	image_start = pig_start;
-
 	image_start = image_end - disk_size;
 
 	hibernate_read_chunks(hiber_info, image_start, image_end, disk_size,
