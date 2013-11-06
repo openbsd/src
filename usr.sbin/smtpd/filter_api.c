@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter_api.c,v 1.10 2013/10/27 11:01:47 eric Exp $	*/
+/*	$OpenBSD: filter_api.c,v 1.11 2013/11/06 10:12:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -676,11 +676,11 @@ filter_dispatch_dataline(uint64_t id, const char *data)
 static void
 filter_trigger_eom(struct filter_session *s)
 {
-	log_debug("debug: filter-api:%s: tx eom (%zu) for %p", filter_name, s->pipe.datalen, s->id);
+	log_debug("debug: filter-api:%s: tx eom (%zu) for %016"PRIx64, filter_name, s->pipe.datalen, s->id);
 
 	if (!s->pipe.error && s->pipe.idatalen != s->pipe.datalen) {
 		log_debug("debug: filter-api:%s: tx datalen mismatch: %zu/%zu",
-		    filter_name, s->pipe.idatalen != s->pipe.datalen);
+		    filter_name, s->pipe.idatalen, s->pipe.datalen);
 		s->pipe.error = 1;
 	}
 	if (s->pipe.error) {
