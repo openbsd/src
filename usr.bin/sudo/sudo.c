@@ -1199,6 +1199,9 @@ set_loginclass(pw)
 {
     int errflags;
 
+    if (!def_use_loginclass)
+	return;
+
     /*
      * Don't make it a fatal error if the user didn't specify the login
      * class themselves.  We do this because if login.conf gets
@@ -1220,11 +1223,11 @@ set_loginclass(pw)
 		(pw->pw_uid == 0) ? LOGIN_DEFROOTCLASS : LOGIN_DEFCLASS;
     }
 
+    /* Make sure specified login class is valid. */
     lc = login_getclass(login_class);
     if (!lc || !lc->lc_class || strcmp(lc->lc_class, login_class) != 0) {
 	log_error(errflags, "unknown login class: %s", login_class);
-	if (!lc)
-	    lc = login_getclass(NULL);	/* needed for login_getstyle() later */
+	def_use_loginclass = FALSE;
     }
 }
 #else
