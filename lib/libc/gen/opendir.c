@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendir.c,v 1.25 2013/10/06 17:57:11 guenther Exp $ */
+/*	$OpenBSD: opendir.c,v 1.26 2013/11/06 20:35:25 schwarze Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -111,6 +111,7 @@ __fdopendir(int fd)
 		return (NULL);
 	}
 
+	dirp->dd_size = 0;
 	dirp->dd_loc = 0;
 	dirp->dd_fd = fd;
 	dirp->dd_lock = NULL;
