@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_private.h,v 1.7 2013/11/02 09:00:49 syl Exp $ */
+/* $OpenBSD: fuse_private.h,v 1.8 2013/11/06 19:53:20 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -83,6 +83,7 @@ struct fuse {
 	struct tree		vnode_tree;
 	struct dict		name_tree;
 	uint64_t		max_ino;
+	void			*private_data;
 
 	struct fuse_config	conf;
 	struct fuse_session	se;

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.12 2013/11/02 09:00:49 syl Exp $ */
+/* $OpenBSD: fuse.c,v 1.13 2013/11/06 19:53:20 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -104,6 +104,7 @@ fuse_loop(struct fuse *fuse)
 			ctx.gid = fuse->conf.gid;
 			ctx.pid = fuse->conf.pid;
 			ctx.umask = fuse->conf.umask;
+			ctx.private_data = fuse->private_data;
 			ictx = &ctx;
 
 			ret = ifuse_exec_opcode(fuse, &fbuf);
@@ -242,6 +243,7 @@ fuse_new(struct fuse_chan *fc, unused struct fuse_args *args,
 	fuse->fc = fc;
 	fuse->max_ino = FUSE_ROOT_INO;
 	fuse->se.args = fuse;
+	fuse->private_data = userdata;
 
 	if ((root = alloc_vn(fuse, "/", FUSE_ROOT_INO, 0)) == NULL) {
 		free(fuse);
