@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.99 2013/08/08 17:54:11 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.100 2013/11/06 10:41:16 mpi Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -696,7 +696,13 @@ int
 pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int state)
 {
 	pcireg_t reg;
-	int offset;
+	int offset, ostate = state;
+
+	/*
+	 * Warn the firmware that we are going to put the device
+	 * into the given state.
+	 */
+	pci_set_powerstate_md(pc, tag, state, 1);
 
 	if (pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &offset, 0)) {
 		if (state == PCI_PMCSR_STATE_D3) {
@@ -714,17 +720,23 @@ pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int state)
 		}
 		reg = pci_conf_read(pc, tag, offset + PCI_PMCSR);
 		if ((reg & PCI_PMCSR_STATE_MASK) != state) {
-			int ostate = reg & PCI_PMCSR_STATE_MASK;
+			ostate = reg & PCI_PMCSR_STATE_MASK;
 
 			pci_conf_write(pc, tag, offset + PCI_PMCSR,
 			    (reg & ~PCI_PMCSR_STATE_MASK) | state);
 			if (state == PCI_PMCSR_STATE_D3 ||
 			    ostate == PCI_PMCSR_STATE_D3)
 				delay(10 * 1000);
-			return (ostate);
 		}
 	}
-	return (state);
+
+	/*
+	 * Warn the firmware that the device is now in the given
+	 * state.
+	 */
+	pci_set_powerstate_md(pc, tag, state, 0);
+
+	return (ostate);
 }
 
 #ifndef PCI_MACHDEP_ENUMERATE_BUS
