@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.71 2013/11/06 12:06:58 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.72 2013/11/06 17:03:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -666,10 +666,8 @@ get_hibernate_info(union hibernate_info *hiber_info, int suspend)
 	    DL_GETPSIZE(&dl.d_partitions[1]) == 0)
 		return (1);
 
-	hiber_info->secsize = dl.d_secsize;
-
 	/* Make sure the signature can fit in one block */
-	if(sizeof(union hibernate_info) > hiber_info->secsize)
+	if(sizeof(union hibernate_info) > DEV_BSIZE)
 		return (1);
 
 	/* Magic number */
@@ -677,9 +675,9 @@ get_hibernate_info(union hibernate_info *hiber_info, int suspend)
 	
 	/* Calculate signature block location */
 	hiber_info->sig_offset = DL_GETPSIZE(&dl.d_partitions[1]) -
-	    sizeof(union hibernate_info)/hiber_info->secsize;
+	    sizeof(union hibernate_info)/DEV_BSIZE;
 
-	chunktable_size = HIBERNATE_CHUNK_TABLE_SIZE / hiber_info->secsize;
+	chunktable_size = HIBERNATE_CHUNK_TABLE_SIZE / DEV_BSIZE;
 
 	/* Stash kernel version information */
 	bzero(&hiber_info->kernel_version, 128);
@@ -931,7 +929,7 @@ hibernate_write_signature(union hibernate_info *hiber_info)
 {
 	/* Write hibernate info to disk */
 	return (hiber_info->io_func(hiber_info->device, hiber_info->sig_offset,
-	    (vaddr_t)hiber_info, hiber_info->secsize, HIB_W,
+	    (vaddr_t)hiber_info, DEV_BSIZE, HIB_W,
 	    hiber_info->io_page));
 }
 
@@ -957,7 +955,7 @@ hibernate_write_chunktable(union hibernate_info *hiber_info)
 	hibernate_chunk_table_size = HIBERNATE_CHUNK_TABLE_SIZE;
 
 	chunkbase = hiber_info->sig_offset -
-	    (hibernate_chunk_table_size / hiber_info->secsize);
+	    (hibernate_chunk_table_size / DEV_BSIZE);
 
 	hibernate_chunk_table_start = hiber_info->piglet_va +
 	    HIBERNATE_CHUNK_SIZE;
@@ -968,7 +966,7 @@ hibernate_write_chunktable(union hibernate_info *hiber_info)
 	/* Write chunk table */
 	for (i = 0; i < hibernate_chunk_table_size; i += MAXPHYS) {
 		if ((err = hiber_info->io_func(hiber_info->device,
-		    chunkbase + (i/hiber_info->secsize),
+		    chunkbase + (i/DEV_BSIZE),
 		    (vaddr_t)(hibernate_chunk_table_start + i),
 		    MAXPHYS, HIB_W, hiber_info->io_page))) {
 			DPRINTF("chunktable write error: %d\n", err);
@@ -1001,7 +999,7 @@ hibernate_clear_signature(void)
 		hiber_info.sig_offset);
 	if (hibernate_block_io(&hiber_info,
 	    hiber_info.sig_offset,
-	    hiber_info.secsize, (vaddr_t)&blank_hiber_info, 1))
+	    DEV_BSIZE, (vaddr_t)&blank_hiber_info, 1))
 		printf("Warning: could not clear hibernate signature\n");
 
 	return (0);
@@ -1162,7 +1160,7 @@ hibernate_resume(void)
 
 	if (hibernate_block_io(&hiber_info,
 	    hiber_info.sig_offset,
-	    hiber_info.secsize, (vaddr_t)&disk_hiber_info, 0)) {
+	    DEV_BSIZE, (vaddr_t)&disk_hiber_info, 0)) {
 		DPRINTF("error in hibernate read");
 		splx(s);
 		return;
@@ -1490,7 +1488,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 				if (out_remaining == 0) {
 					/* Filled up the page */
 					nblocks =
-					    PAGE_SIZE / hiber_info->secsize;
+					    PAGE_SIZE / DEV_BSIZE;
 
 					if ((err = hiber_info->io_func(
 					    hiber_info->device,
@@ -1538,15 +1536,15 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 		out_remaining = hibernate_state->hib_stream.avail_out;
 
 		used = 2*PAGE_SIZE - out_remaining;
-		nblocks = used / hiber_info->secsize;
+		nblocks = used / DEV_BSIZE;
 
 		/* Round up to next block if needed */
-		if (used % hiber_info->secsize != 0)
+		if (used % DEV_BSIZE != 0)
 			nblocks ++;
 
 		/* Write final block(s) for this chunk */
 		if ((err = hiber_info->io_func(hiber_info->device, blkctr,
-		    (vaddr_t)hibernate_io_page, nblocks*hiber_info->secsize,
+		    (vaddr_t)hibernate_io_page, nblocks*DEV_BSIZE,
 		    HIB_W, hiber_info->io_page))) {
 			DPRINTF("hib final write error %d\n", err);
 			return (EIO);
@@ -1556,7 +1554,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 
 		offset = blkctr;
 		chunks[i].compressed_size = (offset - chunks[i].offset) *
-		    hiber_info->secsize;
+		    DEV_BSIZE;
 	}
 
 	return (0);
@@ -1630,7 +1628,7 @@ hibernate_read_image(union hibernate_info *hiber_info)
 	pmap_activate(curproc);
 
 	/* Calculate total chunk table size in disk blocks */
-	chunktable_size = HIBERNATE_CHUNK_TABLE_SIZE / hiber_info->secsize;
+	chunktable_size = HIBERNATE_CHUNK_TABLE_SIZE / DEV_BSIZE;
 
 	blkctr = hiber_info->sig_offset - chunktable_size;
 
@@ -1642,7 +1640,7 @@ hibernate_read_image(union hibernate_info *hiber_info)
 
 	/* Read the chunktable from disk into the piglet chunktable */
 	for (i = 0; i < HIBERNATE_CHUNK_TABLE_SIZE;
-	    i += PAGE_SIZE, blkctr += PAGE_SIZE/hiber_info->secsize) {
+	    i += PAGE_SIZE, blkctr += PAGE_SIZE/DEV_BSIZE) {
 		pmap_kenter_pa(chunktable + i, piglet_chunktable + i,
 		    VM_PROT_ALL);
 		pmap_update(pmap_kernel());
@@ -1883,7 +1881,7 @@ hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
 			hibernate_block_io(hib_info, blkctr, read_size,
 			    tempva + (img_cur & PAGE_MASK), 0);
 
-			blkctr += (read_size / hib_info->secsize);
+			blkctr += (read_size / DEV_BSIZE);
 
 			pmap_kremove(tempva, PAGE_SIZE);
 			pmap_kremove(tempva + PAGE_SIZE, PAGE_SIZE);
