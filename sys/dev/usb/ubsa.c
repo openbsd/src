@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.57 2013/04/15 09:23:02 mglocker Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.58 2013/11/07 07:32:36 pirofti Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -164,8 +164,6 @@ struct	ubsa_softc {
 
 	struct device		*sc_subdev;	/* ucom device */
 
-	u_char			 sc_dying;	/* disconnecting */
-
 };
 
 void ubsa_intr(struct usbd_xfer *, void *, usbd_status);
@@ -280,7 +278,7 @@ ubsa_attach(struct device *parent, struct device *self, void *aux)
 	if (err) {
 		printf("%s: failed to set configuration: %s\n",
 		    devname, usbd_errstr(err));
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		goto error;
 	}
 
@@ -290,7 +288,7 @@ ubsa_attach(struct device *parent, struct device *self, void *aux)
 	if (cdesc == NULL) {
 		printf("%s: failed to get configuration descriptor\n",
 		    devname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		goto error;
 	}
 
@@ -300,7 +298,7 @@ ubsa_attach(struct device *parent, struct device *self, void *aux)
 	if (err) {
 		printf("%s: failed to get interface: %s\n",
 			devname, usbd_errstr(err));
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		goto error;
 	}
 
@@ -314,7 +312,7 @@ ubsa_attach(struct device *parent, struct device *self, void *aux)
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor for %d\n",
 			    sc->sc_dev.dv_xname, i);
-			sc->sc_dying = 1;
+			usbd_deactivate(sc->sc_udev);
 			goto error;
 		}
 
@@ -335,19 +333,19 @@ ubsa_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_intr_number == -1) {
 		printf("%s: Could not find interrupt in\n", devname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		goto error;
 	}
 
 	if (uca.bulkin == -1) {
 		printf("%s: Could not find data bulk in\n", devname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		goto error;
 	}
 
 	if (uca.bulkout == -1) {
 		printf("%s: Could not find data bulk out\n", devname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		goto error;
 	}
 
@@ -404,7 +402,7 @@ ubsa_activate(struct device *self, int act)
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)
 			rv = config_deactivate(sc->sc_subdev);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return (rv);
@@ -611,7 +609,7 @@ ubsa_open(void *addr, int portno)
 	struct ubsa_softc *sc = addr;
 	int err;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (ENXIO);
 
 	DPRINTF(("ubsa_open: sc = %p\n", sc));
@@ -644,7 +642,7 @@ ubsa_close(void *addr, int portno)
 	struct ubsa_softc *sc = addr;
 	int err;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	DPRINTF(("ubsa_close: close\n"));
@@ -674,7 +672,7 @@ ubsa_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	buf = sc->sc_intr_buf;
 	cdcbuf = (struct usb_cdc_notification *)sc->sc_intr_buf;
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
