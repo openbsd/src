@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.385 2013/08/14 08:39:28 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.386 2013/11/07 01:25:27 juanfra Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: November 7 2013 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1518,6 +1518,8 @@ do
     case $$archive in
 	*.tar.xz)
 	  xzcat ${FULLDISTDIR}/$$archive| tar xf -;;
+	*.tar.lz)
+	  lunzip -c ${FULLDISTDIR}/$$archive| tar xf -;;
 	*.zip)
 	  unzip -q ${FULLDISTDIR}/$$archive -d ${WRKDIR};;
 	*.tar.bz2)
@@ -2103,7 +2105,7 @@ In the normal distpatch stage (when
 .Ev PATCHFILES
 is not empty), this is the contents of a case statement, used to apply
 distribution patches.
-Fragments are automatically appended to handle gzip'ed and bzip'ed
+Fragments are automatically appended to handle gzip'ed, bzip'ed and lzip'ed
 patches, so that the default case is more or less equivalent to the following
 shell fragment:
 .Bd -literal
@@ -2114,6 +2116,8 @@ do
     case $$patchfile in
 	*.bz2)
 	  bzip2 -dc $$patchfile | ${PATCH} ${PATCH_DIST_ARGS};;
+	*.lz)
+	  lunzip -c $$patchfile | ${PATCH} ${PATCH_DIST_ARGS};;
 	*.Z|*.gz)
 	  gzcat $$patchfile | ${PATCH} ${PATCH_DIST_ARGS};;
 	*)
