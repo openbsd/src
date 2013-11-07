@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.99 2013/10/19 14:05:14 reyk Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.100 2013/11/07 11:19:32 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -173,13 +173,7 @@ void
 vlan_ifdetach(void *ptr)
 {
 	struct ifvlan *ifv = (struct ifvlan *)ptr;
-	/*
-	 * Destroy the vlan interface because the parent has been
-	 * detached. Set the dh_cookie to NULL because we're running
-	 * inside of dohooks which is told to disestablish the hook
-	 * for us (otherwise we would kill the TAILQ element...).
-	 */
-	ifv->dh_cookie = NULL;
+
 	vlan_clone_destroy(&ifv->ifv_if);
 }
 
@@ -483,17 +477,15 @@ vlan_unconfig(struct ifnet *ifp, struct ifnet *newp)
 
 	s = splnet();
 	LIST_REMOVE(ifv, ifv_list);
-	if (ifv->lh_cookie != NULL)
-		hook_disestablish(p->if_linkstatehooks, ifv->lh_cookie);
-	/* The cookie is NULL if disestablished externally */
-	if (ifv->dh_cookie != NULL)
-		hook_disestablish(p->if_detachhooks, ifv->dh_cookie);
+	splx(s);
+
+	hook_disestablish(p->if_linkstatehooks, ifv->lh_cookie);
+	hook_disestablish(p->if_detachhooks, ifv->dh_cookie);
 	/* Reset link state */
 	if (newp != NULL) {
 		ifp->if_link_state = LINK_STATE_INVALID;
 		if_link_state_change(ifp);
 	}
-	splx(s);
 
 	/*
  	 * Since the interface is being unconfigured, we need to
