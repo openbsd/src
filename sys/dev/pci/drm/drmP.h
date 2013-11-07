@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.151 2013/11/02 22:58:10 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.152 2013/11/07 05:33:05 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -173,6 +173,10 @@ do {									\
 	if (condition)							\
 		printf("WARNING %s failed at %s:%d\n",			\
 		    _WARN_STR(condition), __FILE__, __LINE__);		\
+	(condition);							\
+})
+
+#define WARN_ON_ONCE(condition) ({					\
 	(condition);							\
 })
 

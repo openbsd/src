@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_cursor.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_cursor.c,v 1.2 2013/11/07 05:33:05 jsg Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -272,9 +272,7 @@ int radeon_crtc_cursor_move(struct drm_crtc *crtc,
 				cursor_end = x - xorigin + w;
 				if (!(cursor_end & 0x7f)) {
 					x--;
-#ifdef notyet
 					WARN_ON_ONCE(x < 0);
-#endif
 				}
 			}
 		}
