@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.h,v 1.8 2013/11/01 18:16:22 syl Exp $ */
+/* $OpenBSD: fuse.h,v 1.9 2013/11/07 18:15:09 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -163,6 +163,8 @@ int fuse_version(void);
 int fuse_main(int, char **, const struct fuse_operations *, void *);
 struct fuse *fuse_new(struct fuse_chan *, struct fuse_args *,
     const struct fuse_operations *, size_t, void *);
+struct fuse *fuse_setup(int, char **, const struct fuse_operations *,
+    size_t, char **, int *, void *);
 int fuse_parse_cmdline(struct fuse_args *, char **, int *, int *);
 struct fuse_chan *fuse_mount(const char *, struct fuse_args *);
 void fuse_remove_signal_handlers(struct fuse_session *);
@@ -177,6 +179,7 @@ void fuse_unmount(const char *, struct fuse_chan *);
 int fuse_daemonize(int);
 void fuse_destroy(struct fuse *);
 void fuse_teardown(struct fuse *, char *);
+int fuse_invalidate(struct fuse *, const char *);
 
 #ifdef __cplusplus
 }

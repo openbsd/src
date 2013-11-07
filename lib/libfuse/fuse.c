@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.13 2013/11/06 19:53:20 syl Exp $ */
+/* $OpenBSD: fuse.c,v 1.14 2013/11/07 18:15:09 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -428,31 +428,50 @@ fuse_teardown(struct fuse *fuse, char *mp)
 }
 
 int
-fuse_main(int argc, char **argv, const struct fuse_operations *ops, void *data)
+fuse_invalidate(struct fuse *f, const char *path)
+{
+	return (EINVAL);
+}
+
+struct fuse *
+fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
+    size_t size, char **mp, int *mt, void *data)
 {
 	struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
 	struct fuse_chan *fc;
 	struct fuse *fuse;
-	char *mp = NULL;
-	int mt, fg;
-	int error = -1;
+	int fg;
 
-	if (fuse_parse_cmdline(&args, &mp, &mt, &fg))
+	if (fuse_parse_cmdline(&args, mp, mt, &fg))
 		goto err;
 
 	fuse_daemonize(0);
 
-	if ((fc = fuse_mount(mp, NULL)) == NULL)
+	if ((fc = fuse_mount(*mp, NULL)) == NULL)
 		goto err;
 
-	if ((fuse = fuse_new(fc, NULL, ops, sizeof(*(ops)), data)) == NULL) {
+	if ((fuse = fuse_new(fc, NULL, ops, size, data)) == NULL) {
 		free(fc);
 		goto err;
 	}
 
-	error = fuse_loop(fuse);
+	return (fuse);
 err:
 	if (mp)
 		free(mp);
-	return (error);
+	return (NULL);
+}
+
+int
+fuse_main(int argc, char **argv, const struct fuse_operations *ops, void *data)
+{
+	struct fuse *fuse;
+	char *mp = NULL;
+	int mt;
+
+	fuse = fuse_setup(argc, argv, ops, sizeof(*ops), &mp, &mt, data);
+	if (!fuse)
+		return (-1);
+
+	return (fuse_loop(fuse));
 }
