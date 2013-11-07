@@ -1,4 +1,4 @@
-/*	$OpenBSD: uark.c,v 1.17 2013/04/15 09:23:01 mglocker Exp $	*/
+/*	$OpenBSD: uark.c,v 1.18 2013/11/07 11:50:38 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -67,8 +67,6 @@ struct uark_softc {
 
 	u_char			 sc_msr;
 	u_char			 sc_lsr;
-
-	u_char			 sc_dying;
 };
 
 void	uark_get_status(void *, int portno, u_char *lsr, u_char *msr);
@@ -138,7 +136,7 @@ uark_attach(struct device *parent, struct device *self, void *aux)
 	if (usbd_set_config_index(sc->sc_udev, UARK_CONFIG_NO, 1) != 0) {
 		printf("%s: could not set configuration no\n",
 		    sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -148,7 +146,7 @@ uark_attach(struct device *parent, struct device *self, void *aux)
 	if (error != 0) {
 		printf("%s: could not get interface handle\n",
 		    sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -160,7 +158,7 @@ uark_attach(struct device *parent, struct device *self, void *aux)
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor found for %d\n",
 			    sc->sc_dev.dv_xname, i);
-			sc->sc_dying = 1;
+			usbd_deactivate(sc->sc_udev);
 			return;
 		}
 
@@ -174,7 +172,7 @@ uark_attach(struct device *parent, struct device *self, void *aux)
 
 	if (uca.bulkin == -1 || uca.bulkout == -1) {
 		printf("%s: missing endpoint\n", sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -215,7 +213,7 @@ uark_activate(struct device *self, int act)
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)
 			rv = config_deactivate(sc->sc_subdev);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return (rv);
