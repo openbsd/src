@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.65 2013/11/02 01:41:17 jeremy Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.66 2013/11/07 11:13:31 pirofti Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -89,8 +89,6 @@ struct uftdi_softc {
 	u_char			 sc_lsr;
 
 	struct device		*sc_subdev;
-
-	u_char			 sc_dying;
 
 	u_int			 last_lcr;
 };
@@ -891,7 +889,7 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 
 bad:
 	DPRINTF(("uftdi_attach: ATTACH ERROR\n"));
-	sc->sc_dying = 1;
+	usbd_deactivate(sc->sc_udev);
 }
 
 int
@@ -904,7 +902,7 @@ uftdi_activate(struct device *self, int act)
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)
 			rv = config_deactivate(sc->sc_subdev);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return (rv);
@@ -934,7 +932,7 @@ uftdi_open(void *vsc, int portno)
 
 	DPRINTF(("uftdi_open: sc=%p\n", sc));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	/* Perform a full reset on the device */
@@ -1058,7 +1056,7 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 
 	DPRINTF(("uftdi_param: sc=%p\n", sc));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	switch (sc->sc_type) {
