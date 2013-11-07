@@ -1,4 +1,4 @@
-/*	$OpenBSD: udsbr.c,v 1.24 2013/04/15 09:23:02 mglocker Exp $	*/
+/*	$OpenBSD: udsbr.c,v 1.25 2013/11/07 12:06:25 pirofti Exp $	*/
 /*	$NetBSD: udsbr.c,v 1.7 2002/07/11 21:14:27 augustss Exp $	*/
 
 /*
@@ -83,8 +83,6 @@ struct udsbr_softc {
 	u_int32_t		 sc_freq;
 
 	struct device		*sc_child;
-
-	char			 sc_dying;
 };
 
 int	udsbr_req(struct udsbr_softc *sc, int ureq, int value, int index);
@@ -170,7 +168,6 @@ udsbr_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
 		if (sc->sc_child != NULL)
 			rv = config_deactivate(sc->sc_child);
 		break;
