@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.66 2013/08/06 19:05:57 miod Exp $
+#	$OpenBSD: Makefile,v 1.67 2013/11/07 09:24:17 eric Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -34,7 +34,7 @@ SRCS+=		scheduler_null.c
 SRCS+=		scheduler_proc.c
 SRCS+=		stat_ramstat.c
 
-MAN=		smtpd.8 smtpd.conf.5
+MAN=		smtpd.8 smtpd.conf.5 table.5
 BINDIR=		/usr/sbin
 
 LDADD+=		-levent -lutil -lssl -lcrypto -lm -lz
