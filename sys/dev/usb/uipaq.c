@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.21 2013/04/15 09:23:02 mglocker Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.22 2013/11/07 12:07:18 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -82,8 +82,6 @@ struct uipaq_softc {
 	u_int16_t		 sc_lcr;	/* state for DTR/RTS */
 
 	u_int16_t		 sc_flags;
-
-	u_char			 sc_dying;
 };
 
 /* Callback routines */
@@ -240,7 +238,7 @@ uipaq_attach(struct device *parent, struct device *self, void *aux)
 
 bad:
 	DPRINTF(("uipaq_attach: ATTACH ERROR\n"));
-	sc->sc_dying = 1;
+	usbd_deactivate(sc->sc_udev);
 }
 
 
@@ -364,7 +362,7 @@ uipaq_activate(struct device *self, int act)
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)
 			rv = config_deactivate(sc->sc_subdev);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return (rv);
