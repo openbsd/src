@@ -581,6 +581,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/intr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/kcore.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/limits.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/lock.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/m88100.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/aviion/m8820x.ph

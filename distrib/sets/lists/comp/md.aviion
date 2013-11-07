@@ -32,6 +32,7 @@
 ./usr/include/aviion/intr.h
 ./usr/include/aviion/kcore.h
 ./usr/include/aviion/limits.h
+./usr/include/aviion/loadfile_machdep.h
 ./usr/include/aviion/lock.h
 ./usr/include/aviion/m88100.h
 ./usr/include/aviion/m8820x.h
