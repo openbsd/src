@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.172 2013/04/26 14:53:19 mpi Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.173 2013/11/07 11:14:26 pirofti Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -336,7 +336,7 @@ uvideo_enable(void *v)
 
 	DPRINTF(1, "%s: uvideo_enable sc=%p\n", DEVNAME(sc), sc);
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	if (sc->sc_enabled)
@@ -370,7 +370,7 @@ uvideo_open(void *addr, int flags, int *size, uint8_t *buffer,
 
 	DPRINTF(1, "%s: uvideo_open: sc=%p\n", DEVNAME(sc), sc);
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	/* pointers to upper video layer */
@@ -568,7 +568,7 @@ uvideo_activate(struct device *self, int act)
 	case DVACT_DEACTIVATE:
 		if (sc->sc_videodev != NULL)
 			config_deactivate(sc->sc_videodev);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 
@@ -1929,7 +1929,7 @@ uvideo_vs_start_isoc_ixfer(struct uvideo_softc *sc,
 
 	DPRINTF(2, "%s: %s\n", DEVNAME(sc), __func__);
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	for (i = 0; i < sc->sc_nframes; i++)
