@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.92 2013/09/20 15:34:51 mpi Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.93 2013/11/07 10:34:20 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -71,7 +71,6 @@ struct umsm_softc {
 	struct usbd_interface	*sc_iface;
 	int			 sc_iface_no;
 	struct device		*sc_subdev;
-	u_char			 sc_dying;
 	uint16_t		 sc_flag;
 
 	/* interrupt ep */
@@ -370,7 +369,7 @@ umsm_attach(struct device *parent, struct device *self, void *aux)
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor found for %d\n",
 			    sc->sc_dev.dv_xname, i);
-			sc->sc_dying = 1;
+			usbd_deactivate(sc->sc_udev);
 			return;
 		}
 
@@ -389,7 +388,7 @@ umsm_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (uca.bulkin == -1 || uca.bulkout == -1) {
 		printf("%s: missing endpoint\n", sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -424,7 +423,7 @@ umsm_detach(struct device *self, int flags)
 		sc->sc_intr_pipe = NULL;
 	}
 
-	sc->sc_dying = 1;
+	usbd_deactivate(sc->sc_udev);
 	if (sc->sc_subdev != NULL) {
 		rv = config_detach(sc->sc_subdev, flags);
 		sc->sc_subdev = NULL;
@@ -443,7 +442,7 @@ umsm_activate(struct device *self, int act)
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)
 			rv = config_deactivate(sc->sc_subdev);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return (rv);
@@ -455,7 +454,7 @@ umsm_open(void *addr, int portno)
 	struct umsm_softc *sc = addr;
 	int err;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (ENXIO);
 
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
@@ -486,7 +485,7 @@ umsm_close(void *addr, int portno)
 	struct umsm_softc *sc = addr;
 	int err;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (sc->sc_intr_pipe != NULL) {
@@ -514,7 +513,7 @@ umsm_intr(struct usbd_xfer *xfer, void *priv,
 	u_char mstatus;
 
 	buf = (struct usb_cdc_notification *)sc->sc_intr_buf;
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {

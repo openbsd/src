@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.20 2013/04/15 09:23:02 mglocker Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.21 2013/11/07 10:32:51 pirofti Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -139,7 +139,6 @@ struct	uticom_softc {
 	u_char			sc_msr;		/* uticom status register */
 
 	struct device		*sc_subdev;
-	u_char			 sc_dying;
 };
 
 static	usbd_status uticom_reset(struct uticom_softc *);
@@ -261,7 +260,7 @@ uticom_attach_hook(void *arg)
 	if (err) {
 		printf("%s: failed to set configuration: %s\n",
 		    sc->sc_dev.dv_xname, usbd_errstr(err));
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -271,7 +270,7 @@ uticom_attach_hook(void *arg)
 	if (cdesc == NULL) {
 		printf("%s: failed to get configuration descriptor\n",
 		    sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -280,7 +279,7 @@ uticom_attach_hook(void *arg)
 	if (err) {
 		printf("%s: failed to get interface: %s\n",
 		    sc->sc_dev.dv_xname, usbd_errstr(err));
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -293,7 +292,7 @@ uticom_attach_hook(void *arg)
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor for %d\n",
 			    sc->sc_dev.dv_xname, i);
-			sc->sc_dying = 1;
+			usbd_deactivate(sc->sc_udev);
 			return;
 		}
 
@@ -307,7 +306,7 @@ uticom_attach_hook(void *arg)
 		if (uca.bulkout == -1) {
 			printf("%s: could not find data bulk out\n",
 			    sc->sc_dev.dv_xname);
-			sc->sc_dying = 1;
+			usbd_deactivate(sc->sc_udev);
 			return;
 		}
 	}
@@ -317,7 +316,7 @@ uticom_attach_hook(void *arg)
 	if (status) {
 		printf("%s: firmware download failed\n",
 		    sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	} else {
 		DPRINTF(("%s: firmware download succeeded\n",
@@ -328,7 +327,7 @@ uticom_attach_hook(void *arg)
 	if (status) {
 		printf("%s: error reloading device descriptor\n",
 		    sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -341,7 +340,7 @@ fwload_done:
 	if (err) {
 		printf("%s: failed to set configuration: %s\n",
 		    sc->sc_dev.dv_xname, usbd_errstr(err));
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -350,7 +349,7 @@ fwload_done:
 	if (cdesc == NULL) {
 		printf("%s: failed to get configuration descriptor\n",
 		    sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -360,7 +359,7 @@ fwload_done:
 	if (err) {
 		printf("%s: failed to get interface: %s\n",
 		    sc->sc_dev.dv_xname, usbd_errstr(err));
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -373,7 +372,7 @@ fwload_done:
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor for %d\n",
 			    sc->sc_dev.dv_xname, i);
-			sc->sc_dying = 1;
+			usbd_deactivate(sc->sc_udev);
 			return;
 		}
 
@@ -388,7 +387,7 @@ fwload_done:
 	if (sc->sc_intr_number == -1) {
 		printf("%s: could not find interrupt in\n",
 		    sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -404,7 +403,7 @@ fwload_done:
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor for %d\n",
 			    sc->sc_dev.dv_xname, i);
-			sc->sc_dying = 1;
+			usbd_deactivate(sc->sc_udev);
 			return;
 		}
 
@@ -420,14 +419,14 @@ fwload_done:
 	if (uca.bulkin == -1) {
 		printf("%s: could not find data bulk in\n",
 		    sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
 	if (uca.bulkout == -1) {
 		printf("%s: could not find data bulk out\n",
 		    sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -448,7 +447,7 @@ fwload_done:
 	if (err) {
 		printf("%s: reset failed: %s\n",
 		    sc->sc_dev.dv_xname, usbd_errstr(err));
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		return;
 	}
 
@@ -469,7 +468,7 @@ uticom_activate(struct device *self, int act)
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)
 			rv = config_deactivate(sc->sc_subdev);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return (rv);
@@ -736,7 +735,7 @@ uticom_open(void *addr, int portno)
 	struct uticom_softc *sc = addr;
 	usbd_status err;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (ENXIO);
 
 	DPRINTF(("%s: uticom_open\n", sc->sc_dev.dv_xname));
@@ -766,7 +765,7 @@ uticom_close(void *addr, int portno)
 	usb_device_request_t req;
 	usbd_status err;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -805,7 +804,7 @@ uticom_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct uticom_softc *sc = priv;
 	u_char *buf = sc->sc_intr_buf;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
@@ -881,7 +880,7 @@ uticom_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
 	struct uticom_softc *sc = addr;
 	int error = 0;
 
-	if (sc->sc_ucom.sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	DPRINTF(("uticom_ioctl: cmd = 0x%08lx\n", cmd));
