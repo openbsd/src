@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.22 2013/04/15 09:23:02 mglocker Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.23 2013/11/07 12:52:15 pirofti Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -120,9 +120,6 @@ struct ucycom_softc {
 	int			 sc_swflags;
 
 	struct device		*sc_subdev;
-
-	/* flags */
-	u_char			 sc_dying;
 };
 
 /* Callback routines */
@@ -264,7 +261,7 @@ ucycom_open(void *addr, int portno)
 
 	DPRINTF(("ucycom_open: complete\n"));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	/* Allocate an output report buffer */
@@ -297,7 +294,7 @@ ucycom_close(void *addr, int portno)
 	struct ucycom_softc *sc = addr;
 	int s;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	s = splusb();
@@ -393,7 +390,7 @@ ucycom_param(void *addr, int portno, struct termios *t)
 	uint8_t cfg;
 	int err;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	switch (t->c_ospeed) {
@@ -598,7 +595,7 @@ ucycom_activate(struct device *self, int act)
 	case DVACT_DEACTIVATE:
 		if (sc->sc_subdev != NULL)
 			rv = config_deactivate(sc->sc_subdev);
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return (rv);

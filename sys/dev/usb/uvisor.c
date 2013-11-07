@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.46 2013/04/15 09:23:02 mglocker Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.47 2013/11/07 12:54:35 pirofti Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -138,8 +138,6 @@ struct uvisor_softc {
 	int			sc_numcon;
 
 	u_int16_t		sc_flags;
-
-	u_char			sc_dying;
 };
 
 usbd_status uvisor_init(struct uvisor_softc *,
@@ -372,7 +370,7 @@ uvisor_attach(struct device *parent, struct device *self, void *aux)
 
 bad:
 	DPRINTF(("uvisor_attach: ATTACH ERROR\n"));
-	sc->sc_dying = 1;
+	usbd_deactivate(sc->sc_udev);
 }
 
 int
@@ -389,7 +387,7 @@ uvisor_activate(struct device *self, int act)
 				if (r)
 					rv = r;
 			}
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return (rv);
@@ -482,7 +480,7 @@ uvisor_close(void *addr, int portno)
 	struct uvisor_connection_info coninfo; /* XXX ? */
 	int actlen;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	req.bmRequestType = UT_READ_VENDOR_ENDPOINT; /* XXX read? */

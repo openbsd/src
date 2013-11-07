@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.50 2013/07/05 07:56:36 mpi Exp $ */
+/*	$OpenBSD: umodem.c,v 1.51 2013/11/07 12:53:14 pirofti Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -103,7 +103,6 @@ struct umodem_softc {
 	struct device		*sc_subdev;	/* ucom device */
 
 	u_char			 sc_opening;	/* lock during open */
-	u_char			 sc_dying;	/* disconnecting */
 
 	int			 sc_ctl_notify;	/* Notification endpoint */
 	struct usbd_pipe	*sc_notify_pipe; /* Notification pipe */
@@ -402,7 +401,7 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
  bad:
-	sc->sc_dying = 1;
+	usbd_deactivate(sc->sc_udev);
 }
 
 int
@@ -456,7 +455,7 @@ umodem_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct umodem_softc *sc = priv;
 	u_char mstatus;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
@@ -575,7 +574,7 @@ umodem_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
 	struct umodem_softc *sc = addr;
 	int error = 0;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	DPRINTF(("umodemioctl: cmd=0x%08lx\n", cmd));
@@ -750,7 +749,7 @@ umodem_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		if (sc->sc_subdev)
 			rv = config_deactivate(sc->sc_subdev);
 		break;
