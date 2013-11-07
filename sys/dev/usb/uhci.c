@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.102 2013/11/07 10:16:27 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.103 2013/11/07 20:37:33 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1418,16 +1418,17 @@ uhci_timeout_task(void *addr)
 void
 uhci_waitintr(struct uhci_softc *sc, struct usbd_xfer *xfer)
 {
-	int timo = xfer->timeout;
-	struct uhci_xfer *ex;
-
-	DPRINTFN(10,("uhci_waitintr: timeout = %dms\n", timo));
+	int timo;
+	u_int32_t intrs;
 
 	xfer->status = USBD_IN_PROGRESS;
-	for (; timo >= 0; timo--) {
+	for (timo = xfer->timeout; timo >= 0; timo--) {
 		usb_delay_ms(&sc->sc_bus, 1);
-		DPRINTFN(20,("uhci_waitintr: 0x%04x\n", UREAD2(sc, UHCI_STS)));
-		if (UREAD2(sc, UHCI_STS) & UHCI_STS_ALLINTRS) {
+		if (sc->sc_bus.dying)
+			break;
+		intrs = UREAD2(sc, UHCI_STS) & UHCI_STS_ALLINTRS;
+		DPRINTFN(15,("uhci_waitintr: 0x%04x\n", intrs));
+		if (intrs) {
 			uhci_intr1(sc);
 			if (xfer->status != USBD_IN_PROGRESS)
 				return;
@@ -1436,7 +1437,8 @@ uhci_waitintr(struct uhci_softc *sc, struct usbd_xfer *xfer)
 
 	/* Timeout */
 	DPRINTF(("uhci_waitintr: timeout\n"));
-	uhci_idone(ex);
+	xfer->status = USBD_TIMEOUT;
+	usb_transfer_complete(xfer);
 }
 
 void
