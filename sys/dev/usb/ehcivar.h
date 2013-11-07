@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcivar.h,v 1.27 2013/11/01 12:00:54 mpi Exp $ */
+/*	$OpenBSD: ehcivar.h,v 1.28 2013/11/07 10:15:15 mpi Exp $ */
 /*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $	*/
 
 /*
@@ -83,7 +83,6 @@ struct ehci_xfer {
 	struct ehci_soft_qtd *sqtdend;
 	struct ehci_soft_itd *itdstart;
 	struct ehci_soft_itd *itdend;
-	u_int isoc_len;
 	u_int32_t ehci_xfer_flags;
 #ifdef DIAGNOSTIC
 	int isdone;

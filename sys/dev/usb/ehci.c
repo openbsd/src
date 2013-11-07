@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.135 2013/11/01 12:00:53 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.136 2013/11/07 10:15:15 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -3595,14 +3595,13 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 	struct ehci_soft_itd *itd, *prev, *start, *stop;
 	struct usb_dma *dma_buf;
 	int i, j, k, frames, uframes, ufrperframe;
-	int s, trans_count, offs, total_length;
+	int s, trans_count, offs;
 	int frindex;
 
 	start = NULL;
 	prev = NULL;
 	itd = NULL;
 	trans_count = 0;
-	total_length = 0;
 	exfer = (struct ehci_xfer *) xfer;
 	sc = (struct ehci_softc *)xfer->pipe->device->bus;
 	epipe = (struct ehci_pipe *)xfer->pipe;
@@ -3716,7 +3715,6 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 			    EHCI_ITD_SET_OFFS(EHCI_PAGE_OFFSET(DMAADDR(dma_buf,
 			    offs))));
 
-			total_length += xfer->frlengths[trans_count];
 			offs += xfer->frlengths[trans_count];
 			trans_count++;
 
@@ -3724,7 +3722,7 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 				itd->itd.itd_ctl[j] |= htole32(EHCI_ITD_IOC);
 				break;
 			}
-		}       
+		}
 
 		/* Step 1.75, set buffer pointers. To simplify matters, all
 		 * pointers are filled out for the next 7 hardware pages in
@@ -3774,7 +3772,6 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 
 	stop = itd;
 	stop->xfer_next = NULL;
-	exfer->isoc_len = total_length;
 
 	/*
 	 * Part 2: Transfer descriptors have now been set up, now they must
