@@ -1,4 +1,4 @@
-/*	$OpenBSD: usps.c,v 1.3 2013/04/15 09:23:02 mglocker Exp $   */
+/*	$OpenBSD: usps.c,v 1.4 2013/11/07 10:44:37 pirofti Exp $   */
 
 /*
  * Copyright (c) 2011 Yojiro UO <yuo@nui.org>
@@ -80,7 +80,6 @@ struct usps_softc {
 	uint8_t			 sc_buf[16];
 	uint8_t			 *sc_intrbuf;
 
-	u_char			 sc_dying;
 	uint16_t		 sc_flag;
 
 	/* device info */
@@ -311,7 +310,7 @@ usps_detach(struct device *self, int flags)
 	struct usps_softc *sc = (struct usps_softc *)self;
 	int i, rv = 0, s;
 
-	sc->sc_dying = 1;
+	usbd_deactivate(sc->sc_udev);
 
 	s = splusb();
 	if (sc->sc_ipipe != NULL) {
@@ -353,7 +352,7 @@ usps_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return (0);
@@ -421,7 +420,7 @@ usps_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct usps_port_sensor *ps;
 	int i, total;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
