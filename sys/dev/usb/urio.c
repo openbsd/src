@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.43 2013/09/20 15:34:51 mpi Exp $	*/
+/*	$OpenBSD: urio.c,v 1.44 2013/11/07 13:10:43 pirofti Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -80,7 +80,6 @@ struct urio_softc {
 	struct usbd_pipe	*sc_out_pipe;
 
 	int			sc_refcnt;
-	char			sc_dying;
 };
 
 #define URIOUNIT(n) (minor(n))
@@ -231,7 +230,7 @@ urio_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return (0);
@@ -252,7 +251,7 @@ urioopen(dev_t dev, int flag, int mode, struct proc *p)
 	DPRINTFN(5, ("urioopen: flag=%d, mode=%d, unit=%d\n",
 		     flag, mode, URIOUNIT(dev)));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	if (sc->sc_in_pipe != NULL)
@@ -311,7 +310,7 @@ urioread(dev_t dev, struct uio *uio, int flag)
 
 	DPRINTFN(5, ("urioread: %d\n", URIOUNIT(dev)));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	xfer = usbd_alloc_xfer(sc->sc_udev);
@@ -368,7 +367,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 	DPRINTFN(5, ("uriowrite: unit=%d, len=%ld\n", URIOUNIT(dev),
 		     (long)uio->uio_resid));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	xfer = usbd_alloc_xfer(sc->sc_udev);
@@ -432,7 +431,7 @@ urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 	sc = urio_cd.cd_devs[unit];
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	rcmd = (struct urio_command *)addr;
