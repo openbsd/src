@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.100 2013/11/07 11:19:32 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.101 2013/11/08 09:18:27 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -446,7 +446,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	    vlan_vlandev_state, ifv);
 
 	/* Register callback if parent wants to unregister */
-	ifv->dh_cookie = hook_establish(p->if_detachhooks, 1,
+	ifv->dh_cookie = hook_establish(p->if_detachhooks, 0,
 	    vlan_ifdetach, ifv);
 
 	vlan_vlandev_state(ifv);
