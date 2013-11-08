@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.1 2013/10/30 20:20:23 syl Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.2 2013/11/08 00:08:13 aalm Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -214,6 +214,8 @@ int   safepri = 0;
 /* Prototypes */
 
 char	bootargs[MAX_BOOT_STRING];
+int	bootstrap_bs_map(void *, bus_addr_t, bus_size_t, int,
+    bus_space_handle_t *);
 void	process_kernel_args(char *);
 void	parse_uboot_tags(void *);
 void	consinit(void);
@@ -333,35 +335,37 @@ read_ttb(void)
 /*
  * simple memory mapping function used in early bootstrap stage
  * before pmap is initialized.
- * size and cacheability are ignored and map one section with nocache.
+ * ignores cacheability and does map the sections with nocache.
  */
 static vaddr_t section_free = 0xfd000000; /* XXX - huh */
 
-int bootstrap_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
-    int flags, bus_space_handle_t *bshp);
 int
 bootstrap_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
     int flags, bus_space_handle_t *bshp)
 {
-	u_long startpa;
+	u_long startpa, pa, endpa;
 	vaddr_t va;
 	pd_entry_t *pagedir = read_ttb();
 	/* This assumes PA==VA for page directory */
 
 	va = section_free;
-	section_free += L1_S_SIZE;
 
-	/*
-	startpa = trunc_page(bpa);
-	*/
 	startpa = bpa & ~L1_S_OFFSET;
-	pmap_map_section((vaddr_t)pagedir, va, startpa,
-	    VM_PROT_READ | VM_PROT_WRITE, PTE_NOCACHE);
-	cpu_tlb_flushD();
+	endpa = (bpa + size) & ~L1_S_OFFSET;
+	if ((bpa + size) & L1_S_OFFSET)
+		endpa += L1_S_SIZE;
 
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
 
-	return(0);
+	for (pa = startpa; pa < endpa; pa += L1_S_SIZE, va += L1_S_SIZE)
+		pmap_map_section((vaddr_t)pagedir, va, pa,
+		    VM_PROT_READ | VM_PROT_WRITE, PTE_NOCACHE);
+
+	cpu_tlb_flushD();
+
+	section_free = va;
+
+	return 0;
 }
 
 static void
