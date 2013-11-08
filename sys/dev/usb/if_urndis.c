@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.41 2013/10/29 10:01:20 mpi Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.42 2013/11/08 10:12:20 pirofti Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -160,7 +160,7 @@ urndis_ctrl_send(struct urndis_softc *sc, void *buf, size_t len)
 {
 	usbd_status err;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return(0);
 
 	err = urndis_ctrl_msg(sc, UT_WRITE_CLASS_INTERFACE, UR_GET_STATUS,
@@ -993,7 +993,7 @@ urndis_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	ifa = (struct ifaddr *)data;
 	error = 0;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
 	s = splnet();
@@ -1041,7 +1041,7 @@ urndis_watchdog(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	ifp->if_oerrors++;
@@ -1183,7 +1183,7 @@ urndis_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if (sc->sc_dying || (ifp->if_flags & IFF_OACTIVE))
+	if (usbd_is_dying(sc->sc_udev) || (ifp->if_flags & IFF_OACTIVE))
 		return;
 
 	IFQ_POLL(&ifp->if_snd, m_head);
@@ -1230,7 +1230,7 @@ urndis_rxeof(struct usbd_xfer *xfer,
 	ifp = GET_IFP(sc);
 	total_len = 0;
 
-	if (sc->sc_dying || !(ifp->if_flags & IFF_RUNNING))
+	if (usbd_is_dying(sc->sc_udev) || !(ifp->if_flags & IFF_RUNNING))
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
@@ -1274,7 +1274,7 @@ urndis_txeof(struct usbd_xfer *xfer,
 
 	DPRINTF(("%s: urndis_txeof\n", DEVNAME(sc)));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	s = splnet();
@@ -1534,7 +1534,7 @@ urndis_activate(struct device *self, int devact)
 
 	switch (devact) {
 	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 
