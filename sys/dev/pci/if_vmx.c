@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.13 2013/09/08 02:18:00 reyk Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.14 2013/11/08 22:36:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -132,7 +132,7 @@ struct {
 };
 #endif
 
-#define JUMBO_LEN (1024*9)
+#define JUMBO_LEN (1024 * 9 - ETHER_ALIGN)
 #define DMAADDR(map) ((map)->dm_segs[0].ds_addr)
 
 #define READ_BAR0(sc, reg) bus_space_read_4((sc)->sc_iot0, (sc)->sc_ioh0, reg)
@@ -274,7 +274,11 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 		ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 	if (sc->sc_ds->upt_features & UPT1_F_VLAN)
 		ifp->if_capabilities |= IFCAP_VLAN_MTU | IFCAP_VLAN_HWTAGGING;
+
+	IFQ_SET_MAXLEN(&ifp->if_snd, NTXDESC);
 	IFQ_SET_READY(&ifp->if_snd);
+
+	m_clsetwms(ifp, JUMBO_LEN, 2, NRXDESC - 1);
 
 	ifmedia_init(&sc->sc_media, IFM_IMASK, vmxnet3_media_change,
 	    vmxnet3_media_status);
@@ -853,7 +857,7 @@ vmxnet3_getbuf(struct vmxnet3_softc *sc, struct vmxnet3_rxring *ring)
 	struct vmxnet3_rxdesc *rxd = &ring->rxd[idx];
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
-	int size, btype;
+	int btype;
 
 	if (ring->m[idx])
 		panic("vmxnet3_getbuf: buffer has mbuf");
@@ -870,15 +874,11 @@ vmxnet3_getbuf(struct vmxnet3_softc *sc, struct vmxnet3_rxring *ring)
 		btype = VMXNET3_BTYPE_BODY;
 #endif
 
-	size = ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
-#if NVLAN > 0
-	size += ETHER_VLAN_ENCAP_LEN;
-#endif
-	m = MCLGETI(NULL, M_DONTWAIT, ifp, size);
+	m = MCLGETI(NULL, M_DONTWAIT, ifp, JUMBO_LEN);
 	if (m == NULL)
 		return -1;
 
-	m->m_pkthdr.len = m->m_len = size;
+	m->m_pkthdr.len = m->m_len = JUMBO_LEN;
 	m_adj(m, ETHER_ALIGN);
 	ring->m[idx] = m;
 
