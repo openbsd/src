@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp-common.c,v 1.24 2013/05/17 00:13:14 djm Exp $ */
+/* $OpenBSD: sftp-common.c,v 1.25 2013/11/08 11:15:19 dtucker Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
@@ -34,6 +34,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <util.h>
 
 #include "xmalloc.h"
