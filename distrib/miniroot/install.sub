@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.689 2013/11/09 19:32:55 rpe Exp $
+#	$OpenBSD: install.sub,v 1.690 2013/11/09 19:38:59 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1145,6 +1145,7 @@ install_files() {
 		for _n in $THESETS; do echo $_n; done | showcols | sed 's/^/    /'
 		COLUMNS=$_col
 
+		$auto && exit 1
 		echo
 		return
 	fi
