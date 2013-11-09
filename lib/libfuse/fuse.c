@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.14 2013/11/07 18:15:09 syl Exp $ */
+/* $OpenBSD: fuse.c,v 1.15 2013/11/09 10:35:31 stsp Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -360,9 +360,14 @@ ifuse_process_opt(void *data, const char *arg, int key, struct fuse_args *args)
 		case FUSE_OPT_KEY_NONOPT:
 			if (opt->mp == NULL) {
 				opt->mp = realpath(arg, opt->mp);
-				res = stat(opt->mp, &st);
+				if (opt->mp == NULL) {
+					fprintf(stderr, "fuse: realpath: "
+					    "%s : %s\n", arg, strerror(errno));
+					return (-1);
+				}
 
-				if (!opt->mp || res == -1) {
+				res = stat(opt->mp, &st);
+				if (res == -1) {
 					fprintf(stderr, "fuse: bad mount point "
 					    "%s : %s\n", arg, strerror(errno));
 					return (-1);
