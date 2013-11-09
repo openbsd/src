@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.89 2013/09/28 08:53:41 mlarkin Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.90 2013/11/09 04:05:58 jsg Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -64,6 +64,13 @@ const struct puc_device_description puc_devs[] = {
 	},
 	{   /* Intel 7 Series KT */
 	    {   PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_KT, 0x0000, 0x0000 },
+	    {	0xffff,	0xffff,				      0x0000, 0x0000 },
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+	    },
+	},
+	{   /* Intel 8 Series KT */
+	    {   PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8SERIES_KT, 0x0000, 0x0000 },
 	    {	0xffff,	0xffff,				      0x0000, 0x0000 },
 	    {
 		{ PUC_COM_POW2(0), 0x10, 0x0000 },
