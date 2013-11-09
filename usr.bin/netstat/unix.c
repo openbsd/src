@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.21 2013/10/22 16:40:28 guenther Exp $	*/
+/*	$OpenBSD: unix.c,v 1.22 2013/11/09 20:04:13 guenther Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -59,7 +59,6 @@ void
 unixpr(kvm_t *kvmd, u_long pcbaddr)
 {
 	struct kinfo_file *kf;
-	struct socket sock, *so = &sock;
 	int i, fcnt;
 
 	kf = kvm_getfiles(kvmd, KERN_FILE_BYFILE, 0, sizeof(*kf), &fcnt);
@@ -99,7 +98,7 @@ unixdomainpr(const struct kinfo_file *kf, u_long pcbaddr)
 	}
 
 #define	FAKE_PTR(p)	(PLEN - ((p) ? 0 : 2)), p, ((p) ? "" : "x0")
-	printf("%#*llx%s %-6.6s %6ld %6ld %#*llx%s %#*llx%s %#*llx%s %#*llx%s",
+	printf("%#*llx%s %-6.6s %6llu %6llu %#*llx%s %#*llx%s %#*llx%s %#*llx%s",
 	    FAKE_PTR(kf->f_data), socktype[kf->so_type],
 	    kf->so_rcv_cc, kf->so_snd_cc,
 	    FAKE_PTR(kf->v_un),
