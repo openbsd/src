@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.15 2013/11/09 10:35:31 stsp Exp $ */
+/* $OpenBSD: fuse.c,v 1.16 2013/11/09 13:39:37 stsp Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -191,15 +191,11 @@ bad:
 void
 fuse_unmount(const char *dir, unused struct fuse_chan *ch)
 {
-	int ret;
-
 	if (ch->dead)
-		return ;
+		return;
 
-	if ((ret = unmount(dir, MNT_UPDATE)) == -1)
+	if (unmount(dir, MNT_UPDATE) == -1)
 		DPERROR(__func__);
-
-	return ;
 }
 
 int
