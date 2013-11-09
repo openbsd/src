@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.31 2013/06/11 16:42:04 deraadt Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.32 2013/11/09 15:53:20 krw Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -1901,7 +1901,7 @@ main(int argc, char **argv)
 	DBG_FUNC("main")
 	char	*device;
 	int	ch;
-	unsigned int	size = 0;
+	long long	size = 0;
 	unsigned int	Nflag = 0;
 	int	ExpertFlag = 0;
 	struct stat	st;
@@ -1909,6 +1909,7 @@ main(int argc, char **argv)
 	struct partition	*pp;
 	int	i,fsi,fso;
 	char	reply[5];
+	const char *errstr;
 #ifdef FSMAXSNAP
 	int	j;
 #endif /* FSMAXSNAP */
@@ -1924,8 +1925,8 @@ main(int argc, char **argv)
 			quiet = 1;
 			break;
 		case 's':
-			size = (size_t)atol(optarg);
-			if (size < 1)
+			size = strtonum(optarg, 1, LLONG_MAX, &errstr);
+			if (errstr)
 				usage();
 			break;
 		case 'v': /* for compatibility to newfs */
@@ -2023,7 +2024,7 @@ main(int argc, char **argv)
 	sblock.fs_size = dbtofsb(&osblock, pp->p_size);
 	if (size != 0) {
 		if (size > pp->p_size) {
-			errx(1, "there is not enough space (%d < %d)",
+			errx(1, "there is not enough space (%d < %lld)",
 			    pp->p_size, size);
 		}
 		sblock.fs_size = dbtofsb(&osblock, size);
