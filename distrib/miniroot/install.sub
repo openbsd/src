@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.688 2013/11/08 21:34:35 rpe Exp $
+#	$OpenBSD: install.sub,v 1.689 2013/11/09 19:32:55 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -277,18 +277,13 @@ _ask() {
 	return $_redo
 }
 
-tolower() {
-	echo "$1" | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/'
-}
-
 _autorespond() {
-	local _q=$1 _def=$2 _key _value _i=0
+	typeset -l _q=$1 _key
+	local _def=$2 _value _i=0
 	[[ -n $RESPONSEFILE ]] || return
 	while IFS== read _key _value; do
 		_key=${_key##+( |	])} _value=${_value##+( |	)}
 		_key=${_key%%+( |	])} _value=${_value%%+( |	)}
-		_q=$(tolower "$_q")
-		_key=$(tolower "$_key")
 		[[ $_q == *"$_key"* ]] && resp=$_value && let _i++
 	done < $RESPONSEFILE
 	(( _i == 1 )) && return
