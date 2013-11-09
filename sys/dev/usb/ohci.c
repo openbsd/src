@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.115 2013/11/01 12:00:54 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.116 2013/11/09 08:46:05 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -72,8 +72,6 @@ int ohcidebug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
-#define mstohz(ms) ((ms) * hz / 1000)
 
 /*
  * The OHCI controller is little endian, so on big endian machines
@@ -1704,7 +1702,7 @@ ohci_device_request(struct usbd_xfer *xfer)
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
                 timeout_del(&xfer->timeout_handle);
                 timeout_set(&xfer->timeout_handle, ohci_timeout, xfer);
-                timeout_add(&xfer->timeout_handle, mstohz(xfer->timeout));
+                timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
 	}
 	splx(s);
 
@@ -2879,7 +2877,7 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
                 timeout_del(&xfer->timeout_handle);
                 timeout_set(&xfer->timeout_handle, ohci_timeout, xfer);
-                timeout_add(&xfer->timeout_handle, mstohz(xfer->timeout));
+                timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
 	}
 
 #if 0

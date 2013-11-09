@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.103 2013/11/07 20:37:33 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.104 2013/11/09 08:46:05 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -80,8 +80,6 @@ int uhcinoloop = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
-#define mstohz(ms) ((ms) * hz / 1000)
 
 /*
  * The UHCI controller is little endian, so on big endian machines
@@ -569,7 +567,7 @@ uhci_activate(struct device *self, int act)
 			timeout_del(&sc->sc_poll_handle);
 			timeout_set(&sc->sc_poll_handle, uhci_poll_hub,
 			    sc->sc_intr_xfer);
-			timeout_add(&sc->sc_poll_handle, sc->sc_ival);
+			timeout_add_msec(&sc->sc_poll_handle, sc->sc_ival);
 		}
 #ifdef UHCI_DEBUG
 		if (uhcidebug > 2)
@@ -867,7 +865,7 @@ uhci_poll_hub(void *addr)
 
 	timeout_del(&sc->sc_poll_handle);
 	timeout_set(&sc->sc_poll_handle, uhci_poll_hub, xfer);
-	timeout_add(&sc->sc_poll_handle, sc->sc_ival);
+	timeout_add_msec(&sc->sc_poll_handle, sc->sc_ival);
 
 	p = KERNADDR(&xfer->dmabuf, 0);
 	p[0] = 0;
@@ -3417,10 +3415,10 @@ uhci_root_intr_start(struct usbd_xfer *xfer)
 	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
 
-	sc->sc_ival = mstohz(xfer->pipe->endpoint->edesc->bInterval);
+	sc->sc_ival = xfer->pipe->endpoint->edesc->bInterval;
 	timeout_del(&sc->sc_poll_handle);
 	timeout_set(&sc->sc_poll_handle, uhci_poll_hub, xfer);
-	timeout_add(&sc->sc_poll_handle, sc->sc_ival);
+	timeout_add_msec(&sc->sc_poll_handle, sc->sc_ival);
 	sc->sc_intr_xfer = xfer;
 	return (USBD_IN_PROGRESS);
 }
