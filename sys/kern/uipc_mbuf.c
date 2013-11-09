@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.175 2013/08/21 05:21:45 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.176 2013/11/09 06:38:42 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -383,7 +383,7 @@ m_cldrop(struct ifnet *ifp, int pi)
 	mclp = &ifp->if_data.ifi_mclpool[pi];
 	if (m_livelock == 0 && ISSET(ifp->if_flags, IFF_RUNNING) &&
 	    mclp->mcl_alive <= 4 && mclp->mcl_cwm < mclp->mcl_hwm &&
-	    mclp->mcl_grown < ticks) {
+	    mclp->mcl_grown - ticks < 0) {
 		/* About to run out, so increase the current watermark */
 		mclp->mcl_cwm++;
 		mclp->mcl_grown = ticks;
