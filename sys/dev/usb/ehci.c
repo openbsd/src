@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.136 2013/11/07 10:15:15 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.137 2013/11/09 08:40:32 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1182,8 +1182,6 @@ ehci_allocx(struct usbd_bus *bus)
 
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct ehci_xfer));
-		usb_init_task(&xfer->abort_task, ehci_timeout_task,
-		    xfer, USB_TASK_TYPE_ABORT);
 		EXFER(xfer)->ehci_xfer_flags = 0;
 #ifdef DIAGNOSTIC
 		EXFER(xfer)->isdone = 1;
@@ -2915,10 +2913,6 @@ ehci_timeout(void *addr)
 	struct ehci_softc *sc = (struct ehci_softc *)epipe->pipe.device->bus;
 
 	DPRINTF(("ehci_timeout: exfer=%p\n", exfer));
-#if defined(EHCI_DEBUG) && defined(USB_DEBUG)
-	if (ehcidebug > 1)
-		usbd_dump_pipe(exfer->xfer.pipe);
-#endif
 
 	if (sc->sc_bus.dying) {
 		ehci_abort_xfer(&exfer->xfer, USBD_TIMEOUT);
@@ -2926,6 +2920,8 @@ ehci_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
+	usb_init_task(&exfer->xfer.abort_task, ehci_timeout_task, addr,
+	    USB_TASK_TYPE_ABORT);
 	usb_add_task(exfer->xfer.pipe->device, &exfer->xfer.abort_task);
 }
 
