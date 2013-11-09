@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.690 2013/11/09 19:38:59 rpe Exp $
+#	$OpenBSD: install.sub,v 1.691 2013/11/09 22:37:53 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -404,6 +404,8 @@ ask_yn() {
 		y|yes)	resp=y ; return ;;
 		n|no)	resp=n ; return ;;
 		esac
+		echo "'$resp' is not a valid choice."
+		$auto && exit 1
 	done
 }
 
