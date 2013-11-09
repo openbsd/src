@@ -1,4 +1,4 @@
-/*	$OpenBSD: a2coff.c,v 1.8 2013/10/17 15:53:47 deraadt Exp $	*/
+/*	$OpenBSD: a2coff.c,v 1.9 2013/11/09 20:17:55 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2013, Miodrag Vallat
  *
@@ -25,7 +25,7 @@
  */
 
 /*
- * Quick and dirty a.out to 88K BCS ECOFF converter. Will only work for
+ * Quick and dirty ELF to 88K BCS ECOFF converter. Will only work for
  * standalone binaries with no relocations, and will drop symbols.
  * Also, bss is merged into the data section to cope with PROMs which
  * do not zero-fill the bss upon loading (sad but true).
@@ -41,13 +41,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include <a.out.h>
-/* overwrite __LDPGSZ if not a native binary */
-#ifndef	m88k
-#undef	__LDPGSZ
-#define	__LDPGSZ	0x1000
-#endif	/* m88k */
-
+#include <a.out.h>	/* ZMAGIC */
 #define	ELFSIZE		32
 #include <sys/exec_elf.h>
 
@@ -120,8 +114,7 @@ struct ecoff_exechdr {
 
 #define	round(qty, pow2)	(((qty) + (pow2 - 1)) & ~(pow2 - 1UL))
 
-int	convert_aout(const char *, int, int, struct exec *);
-int	convert_elf(const char *, int, int, Elf_Ehdr *);
+void	convert_elf(const char *, int, int, Elf_Ehdr *);
 void	copybits(int, int, u_int32_t);
 void	usage(void);
 void	zerobits(int, u_int32_t);
@@ -129,13 +122,9 @@ void	zerobits(int, u_int32_t);
 int
 main(int argc, char *argv[])
 {
-	union {
-		struct exec aout;
-		Elf_Ehdr elf;
-	} head;
+	Elf_Ehdr head;
 	int infd, outfd;
 	int n;
-	int rc;
 
 	if (argc != 3)
 		usage();
@@ -148,21 +137,19 @@ main(int argc, char *argv[])
 	if (n < sizeof(head))
 		err(1, "read");
 
-	if (!IS_ELF(head.elf) && !N_BADMAG(head.aout))
+	if (!IS_ELF(head))
 		err(1, "%s: bad magic", argv[1]);
 
 	outfd = open(argv[2], O_WRONLY | O_TRUNC | O_CREAT, 0644);
 	if (outfd < 0)
 		err(1, argv[2]);
 
-	if (IS_ELF(head.elf))
-		rc = convert_elf(argv[1], infd, outfd, &head.elf);
-	else
-		rc = convert_aout(argv[1], infd, outfd, &head.aout);
+	convert_elf(argv[1], infd, outfd, &head);
 
 	close(infd);
 	close(outfd);
-	exit(rc);
+
+	exit(0);
 }
 
 char buf[4096];
@@ -188,7 +175,7 @@ zerobits(int to, u_int32_t count)
 {
 	int chunk;
 
-	bzero(buf, sizeof buf);
+	memset(buf, 0, sizeof buf);
 	while (count != 0) {
 		chunk = min(count, sizeof buf);
 		if (write(to, buf, chunk) != chunk)
@@ -206,158 +193,26 @@ usage(void)
 	exit(1);
 }
 
-int
-convert_aout(const char *infile, int infd, int outfd, struct exec *head)
-{
-	struct ecoff_exechdr ehead;
-	struct ecoff_scnhdr escn[3];
-	off_t outpos;
-	uint32_t chunk;
-	int n;
-
-	if (head->a_trsize || head->a_drsize) {
-		printf("%s: has relocations\n", infile);
-		return 1;
-	}
-
-	/*
-	 * Header
-	 */
-
-	ehead.f.f_magic = 0x016d;		/* MC88OMAGIC */
-	ehead.f.f_nscns = 3;
-	ehead.f.f_timdat = 0;			/* ignored */
-	ehead.f.f_symptr = 0;			/* ignored */
-	ehead.f.f_nsyms = 0;			/* ignored */
-	ehead.f.f_opthdr = sizeof ehead.a;
-	ehead.f.f_flags = 0x020f;
-		/* F_RELFLG | F_EXEC | F_LNNO | 8 | F_AR16WR */
-
-	ehead.a.magic = N_GETMAGIC(*head);	/* ZMAGIC */
-	ehead.a.vstamp = 0;			/* ignored */
-	ehead.a.tsize = head->a_text;		/* ignored */
-	ehead.a.dsize = head->a_data;		/* ignored */
-	ehead.a.bsize = head->a_bss;		/* ignored */
-	ehead.a.entry = head->a_entry;
-	ehead.a.text_start = N_TXTADDR(*head);	/* ignored */
-	ehead.a.data_start = N_DATADDR(*head);	/* ignored */
-
-	n = write(outfd, &ehead, sizeof(ehead));
-	if (n != sizeof(ehead))
-		err(1, "write");
-
-	/*
-	 * Sections.
-	 * Note that we merge .bss into .data since the PROM will not
-	 * clear it and locore does not do this either.
-	 */
-
-	strncpy(escn[0].s_name, ".text", sizeof escn[0].s_name);
-	escn[0].s_paddr = N_TXTADDR(*head);	/* ignored, 1:1 mapping */
-	escn[0].s_size = round(head->a_text, 8);
-	escn[0].s_scnptr = round(sizeof(ehead) + sizeof(escn), MINIMAL_ALIGN);
-	escn[0].s_relptr = 0;
-	escn[0].s_lnnoptr = 0;
-	escn[0].s_nlnno = 0;
-	escn[0].s_flags = 0x20;	/* STYP_TEXT */
-
-	strncpy(escn[1].s_name, ".data", sizeof escn[1].s_name);
-	escn[1].s_paddr = N_DATADDR(*head);	/* ignored, 1:1 mapping */
-	escn[1].s_scnptr = escn[0].s_scnptr + escn[0].s_size;
-	escn[1].s_size = round(head->a_data + head->a_bss, MINIMAL_ALIGN);
-	escn[1].s_relptr = 0;
-	escn[1].s_lnnoptr = 0;
-	escn[1].s_nlnno = 0;
-	escn[1].s_flags = 0x40;	/* STYP_DATA */
-
-	strncpy(escn[2].s_name, ".bss", sizeof escn[2].s_name);
-	escn[2].s_paddr = N_BSSADDR(*head) + head->a_bss;
-						/* ignored, 1:1 mapping */
-	escn[2].s_scnptr = 0;			/* nothing in the file */
-	escn[2].s_size = 0;
-	escn[2].s_relptr = 0;
-	escn[2].s_lnnoptr = 0;
-	escn[2].s_nlnno = 0;
-	escn[2].s_flags = 0x80;	/* STYP_BSS */
-
-	/* adjust load addresses */
-	escn[0].s_paddr += (head->a_entry & ~(__LDPGSZ - 1)) - __LDPGSZ;
-	escn[1].s_paddr += (head->a_entry & ~(__LDPGSZ - 1)) - __LDPGSZ;
-	escn[2].s_paddr += (head->a_entry & ~(__LDPGSZ - 1)) - __LDPGSZ;
-	escn[0].s_vaddr = escn[0].s_paddr;
-	escn[1].s_vaddr = escn[1].s_paddr;
-	escn[2].s_vaddr = escn[2].s_paddr;
-
-	n = write(outfd, &escn, sizeof(escn));
-	if (n != sizeof(escn))
-		err(1, "write");
-
-	/*
-	 * Copy text section
-	 */
-
-#ifdef DEBUG
-	printf("copying %s: source %lx dest %lx size %x\n",
-	    escn[0].s_name, N_TXTOFF(*head), escn[0].s_scnptr, head->a_text);
-#endif
-	if (lseek(outfd, escn[0].s_scnptr, SEEK_SET) == (off_t) -1)
-		err(1, "seek");
-	if (lseek(infd, N_TXTOFF(*head), SEEK_SET) == (off_t) -1)
-		err(1, "seek");
-	copybits(infd, outfd, head->a_text);
-
-	/*
-	 * Copy data section
-	 */
-
-#ifdef DEBUG
-	printf("copying %s: source %lx dest %lx size %x\n",
-	    escn[1].s_name, N_DATOFF(*head), escn[1].s_scnptr, head->a_data);
-#endif
-	if (lseek(outfd, escn[1].s_scnptr, SEEK_SET) == (off_t) -1)
-		err(1, "seek");
-	outpos = escn[1].s_scnptr;
-	if (lseek(infd, N_DATOFF(*head), SEEK_SET) == (off_t) -1)
-		err(1, "seek");
-	copybits(infd, outfd, head->a_data);
-	outpos += head->a_data;
-
-	/*
-	 * ``Copy'' bss section
-	 */
-
-#ifdef DEBUG
-	printf("copying %s: size %lx\n", escn[2].s_name,
-	    round(head->a_data + head->a_bss, MINIMAL_ALIGN) - head->a_data);
-#endif
-	chunk = round(head->a_data + head->a_bss, MINIMAL_ALIGN) - head->a_data;
-	zerobits(outfd, chunk);
-	outpos += chunk;
-
-	/*
-	 * Round file to a multiple of 512 bytes, since older PROM
-	 * (at least rev 1.20 on AV530) will reject files not being
-	 * properly rounded.
-	 */
-	if ((outpos % ECOFF_ALIGN) != 0)
-		zerobits(outfd, ECOFF_ALIGN - (outpos % ECOFF_ALIGN));
-
-	return 0;
-}
-
-int
+/*
+ * Convert an ELF binary into BCS ECOFF format.
+ * We merge all program headers into a single ECOFF section for simplicity.
+ * However, PROM version 01.14 on AV4300 will fail to load a BCS binary
+ * unless it has a non-empty data section, so we put the smallest possible
+ * bunch of zeroes as a second section to appease it.
+ */
+void
 convert_elf(const char *infile, int infd, int outfd, Elf_Ehdr *ehdr)
 {
 	struct ecoff_exechdr ehead;
 	struct ecoff_scnhdr escn[2];
-	Elf_Phdr phdr[1];
+	Elf_Phdr phdr[3];
 	off_t outpos;
+	uint delta;
+	Elf_Addr minaddr, maxaddr;
 	int n;
 
-	if (ehdr->e_phnum != 1) {
-		printf("%s: too many program headers\n", infile);
-		return 1;
-	}
+	if (ehdr->e_phnum > 3)
+		errx(1, "%s: too many program headers", infile);
 
 	memset(phdr, 0, sizeof phdr);
 	for (n = 0; n < ehdr->e_phnum; n++) {
@@ -367,6 +222,17 @@ convert_elf(const char *infile, int infd, int outfd, Elf_Ehdr *ehdr)
 		if (read(infd, phdr + n, sizeof phdr[0]) != sizeof(phdr[0]))
 			err(1, "read");
 	}
+
+	maxaddr = 0;
+	minaddr = (Elf_Addr)-1;
+
+	for (n = 0; n < ehdr->e_phnum; n++) {
+		if (phdr[n].p_paddr < minaddr)
+			minaddr = phdr[n].p_paddr;
+		if (phdr[n].p_paddr + phdr[n].p_memsz > maxaddr)
+			maxaddr = phdr[n].p_paddr + phdr[n].p_memsz;
+	}
+	maxaddr = round(maxaddr, MINIMAL_ALIGN);
 
 	/*
 	 * Header
@@ -382,34 +248,26 @@ convert_elf(const char *infile, int infd, int outfd, Elf_Ehdr *ehdr)
 		/* F_RELFLG | F_EXEC | F_LNNO | 8 | F_AR16WR */
 
 	ehead.a.magic = ZMAGIC;
-	ehead.a.tsize = round(phdr[0].p_filesz, MINIMAL_ALIGN);	/* ignored */
+	ehead.a.tsize = maxaddr - minaddr;			/* ignored */
 	ehead.a.dsize = MINIMAL_ALIGN;				/* ignored */
 	ehead.a.bsize = 0;					/* ignored */
 	ehead.a.entry = ehdr->e_entry;
-	ehead.a.text_start = phdr[0].p_paddr;			/* ignored */
-	ehead.a.data_start = phdr[0].p_paddr + ehead.a.tsize;	/* ignored */
+	ehead.a.text_start = minaddr;				/* ignored */
+	ehead.a.data_start = maxaddr;				/* ignored */
 
 	n = write(outfd, &ehead, sizeof(ehead));
 	if (n != sizeof(ehead))
 		err(1, "write");
 
 	/*
-	 * Sections.
-	 * Note that we merge .bss into .data since the PROM may not
-	 * clear it and locore does not do this either.
+	 * Sections
 	 */
 
 	strncpy(escn[0].s_name, ".text", sizeof escn[0].s_name);
-	escn[0].s_paddr = phdr[0].p_paddr;	/* ignored, 1:1 mapping */
-	escn[0].s_size = round(phdr[0].p_memsz, MINIMAL_ALIGN);
+	escn[0].s_paddr = minaddr;		/* ignored, 1:1 mapping */
+	escn[0].s_size = maxaddr - minaddr;
 	escn[0].s_scnptr = round(sizeof(ehead) + sizeof(escn), MINIMAL_ALIGN);
 	escn[0].s_flags = 0x20;	/* STYP_TEXT */
-
-	/*
-	 * PROM version 01.14 on AV4300 will fail to load a BCS binary
-	 * unless it has a non-empty data section. Declare the smallest
-	 * possible bunch of zeroes to appease it.
-	 */
 
 	strncpy(escn[1].s_name, ".data", sizeof escn[1].s_name);
 	escn[1].s_paddr = escn[0].s_paddr + escn[0].s_size;
@@ -426,23 +284,33 @@ convert_elf(const char *infile, int infd, int outfd, Elf_Ehdr *ehdr)
 		err(1, "write");
 
 	/*
-	 * Copy ``text'' section (first program header: text, rodata, and
-	 * maybe data and bss if they are contiguous).
+	 * Copy ``text'' section (all program headers).
 	 */
 
+	outpos = escn[0].s_scnptr;
+	if (lseek(outfd, outpos, SEEK_SET) == (off_t) -1)
+		err(1, "seek");
+	for (n = 0; n < ehdr->e_phnum; n++) {
+		if (n != 0) {
+			delta = (phdr[n].p_paddr - phdr[n - 1].p_paddr) -
+			    phdr[n - 1].p_memsz;
+			if (delta != 0) {
+				zerobits(outfd, delta);
+				outpos += delta;
+			}
+		}
 #ifdef DEBUG
-	printf("copying %s: source %lx dest %lx size %x\n",
-	    escn[0].s_name, phdr[0].p_offset, escn[0].s_scnptr,
-	    phdr[0].p_filesz);
+		printf("copying %s: source %x dest %llx size %x\n",
+		    escn[0].s_name, phdr[n].p_offset, outpos, phdr[n].p_filesz);
 #endif
-	if (lseek(outfd, escn[0].s_scnptr, SEEK_SET) == (off_t) -1)
-		err(1, "seek");
-	if (lseek(infd, phdr[0].p_offset, SEEK_SET) == (off_t) -1)
-		err(1, "seek");
-	copybits(infd, outfd, phdr[0].p_filesz);
-	if (escn[0].s_size != phdr[0].p_filesz)
-		zerobits(outfd, escn[0].s_size - phdr[0].p_filesz);
-	outpos = escn[0].s_scnptr + escn[0].s_size;
+		if (lseek(infd, phdr[n].p_offset, SEEK_SET) == (off_t) -1)
+			err(1, "seek");
+		copybits(infd, outfd, phdr[n].p_filesz);
+		delta = phdr[n].p_memsz - phdr[n].p_filesz;
+		if (delta != 0)
+			zerobits(outfd, delta);
+		outpos += phdr[n].p_memsz;
+	}
 
 	/*
 	 * Fill ``data'' section.
@@ -459,6 +327,4 @@ convert_elf(const char *infile, int infd, int outfd, Elf_Ehdr *ehdr)
 
 	if ((outpos % ECOFF_ALIGN) != 0)
 		zerobits(outfd, ECOFF_ALIGN - (outpos % ECOFF_ALIGN));
-
-	return 0;
 }
