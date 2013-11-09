@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.12 2013/10/15 22:46:52 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2013/11/09 22:35:40 miod Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1995/07/18 04:13:14 briggs Exp $
 #
 
@@ -22,10 +22,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CBIN}.conf
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
-
-#${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-#	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
+	${MAKE} -f ${CBIN}.mk all
 
 #${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 #	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
