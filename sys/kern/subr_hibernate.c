@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.79 2013/11/09 04:38:42 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.80 2013/11/09 06:54:00 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -760,42 +760,6 @@ hibernate_zlib_free(void *unused, void *addr)
 	    (struct hibernate_zlib_state *)HIBERNATE_HIBALLOC_PAGE;
 
 	hib_free(&hibernate_state->hiballoc_arena, addr);
-}
-
-/*
- * Gets the next RLE value from the image stream
- */
-int
-hibernate_get_next_rle(void)
-{
-	int rle, i;
-	struct hibernate_zlib_state *hibernate_state;
-
-	hibernate_state =
-	    (struct hibernate_zlib_state *)HIBERNATE_HIBALLOC_PAGE;
-
-	/* Read RLE code */
-	hibernate_state->hib_stream.next_out = (char *)&rle;
-	hibernate_state->hib_stream.avail_out = sizeof(rle);
-
-	i = inflate(&hibernate_state->hib_stream, Z_FULL_FLUSH);
-	if (i != Z_OK && i != Z_STREAM_END) {
-		/*
-		 * XXX - this will likely reboot/hang most machines
-		 *       since the console output buffer will be unmapped,
-		 *       but there's not much else we can do here.
-		 */
-		panic("inflate rle error");
-	}
-
-	/* Sanity check what RLE value we got */
-	if (rle > HIBERNATE_CHUNK_SIZE/PAGE_SIZE || rle < 0)
-		panic("invalid RLE code");
-
-	if (i == Z_STREAM_END)
-		rle = -1;
-
-	return rle;
 }
 
 /*
