@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.108 2013/09/14 01:35:01 guenther Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.109 2013/11/09 06:52:15 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -107,6 +107,8 @@ tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
 	struct sleep_state sls;
 	int error, error1;
 
+	KASSERT((priority & ~(PRIMASK | PCATCH)) == 0);
+
 	if (cold || panicstr) {
 		int s;
 		/*
@@ -146,6 +148,8 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 {
 	struct sleep_state sls;
 	int error, error1, spl;
+
+	KASSERT((priority & ~(PRIMASK | PCATCH | PNORELOCK)) == 0);
 
 	sleep_setup(&sls, ident, priority, wmesg);
 	sleep_setup_timeout(&sls, timo);
