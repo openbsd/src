@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.78 2013/11/06 19:53:08 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.79 2013/11/09 04:38:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -943,13 +943,9 @@ hibernate_write_chunktable(union hibernate_info *hib)
 	struct hibernate_disk_chunk *chunks;
 	vaddr_t hibernate_chunk_table_start;
 	size_t hibernate_chunk_table_size;
-	daddr_t chunkbase;
 	int i, err;
 
 	hibernate_chunk_table_size = HIBERNATE_CHUNK_TABLE_SIZE;
-
-	chunkbase = hib->sig_offset -
-	    (hibernate_chunk_table_size / DEV_BSIZE);
 
 	hibernate_chunk_table_start = hib->piglet_va +
 	    HIBERNATE_CHUNK_SIZE;
@@ -960,7 +956,7 @@ hibernate_write_chunktable(union hibernate_info *hib)
 	/* Write chunk table */
 	for (i = 0; i < hibernate_chunk_table_size; i += MAXPHYS) {
 		if ((err = hib->io_func(hib->dev,
-		    chunkbase + (i/DEV_BSIZE),
+		    hib->chunktable_offset + (i/DEV_BSIZE),
 		    (vaddr_t)(hibernate_chunk_table_start + i),
 		    MAXPHYS, HIB_W, hib->io_page))) {
 			DPRINTF("chunktable write error: %d\n", err);
@@ -1549,6 +1545,7 @@ hibernate_write_chunks(union hibernate_info *hib)
 		    chunks[i].offset) * DEV_BSIZE;
 	}
 
+	hib->chunktable_offset = hib->image_offset + blkctr;
 	return (0);
 }
 
@@ -1622,7 +1619,7 @@ hibernate_read_image(union hibernate_info *hib)
 	/* Calculate total chunk table size in disk blocks */
 	chunktable_size = HIBERNATE_CHUNK_TABLE_SIZE / DEV_BSIZE;
 
-	blkctr = hib->sig_offset - chunktable_size;
+	blkctr = hib->chunktable_offset;
 
 	chunktable = (vaddr_t)km_alloc(HIBERNATE_CHUNK_TABLE_SIZE, &kv_any,
 	    &kp_none, &kd_nowait);

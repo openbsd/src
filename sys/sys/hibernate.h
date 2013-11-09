@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.28 2013/11/06 19:45:45 deraadt Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.29 2013/11/09 04:38:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -88,6 +88,7 @@ union hibernate_info {
 		size_t				chunk_ctr;
 		dev_t				dev;
 		daddr_t				sig_offset;
+		daddr_t				chunktable_offset;
 		daddr_t				image_offset;
 		paddr_t				piglet_pa;
 		vaddr_t				piglet_va;
