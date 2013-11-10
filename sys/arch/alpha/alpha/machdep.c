@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.143 2013/10/17 08:02:14 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.144 2013/11/10 19:23:14 guenther Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1722,6 +1722,7 @@ setregs(p, pack, stack, retval)
 #ifdef DEBUG
 	for (i = 0; i < FRAME_SIZE; i++)
 		tfp->tf_regs[i] = 0xbabefacedeadbeef;
+	tfp->tf_regs[FRAME_A1] = 0;
 #else
 	bzero(tfp->tf_regs, FRAME_SIZE * sizeof tfp->tf_regs[0]);
 #endif
