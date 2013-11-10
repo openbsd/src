@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.58 2013/11/03 14:18:55 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.59 2013/11/10 04:59:06 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ struct disklabel {
 	u_int32_t d_ntracks;		/* # of tracks per cylinder */
 	u_int32_t d_ncylinders;		/* # of data cylinders per unit */
 	u_int32_t d_secpercyl;		/* # of data sectors per cylinder */
-	u_int32_t d_secperunit;		/* # of data sectors per unit */
+	u_int32_t d_secperunit;		/* # of data sectors (low part) */
 
 	u_char	d_uid[8];		/* Unique label identifier. */
 
@@ -136,8 +136,8 @@ struct disklabel {
 	u_int32_t d_bbsize;		/* size of boot area at sn0, bytes */
 	u_int32_t d_sbsize;		/* max size of fs superblock, bytes */
 	struct	partition {		/* the partition table */
-		u_int32_t p_size;	/* number of sectors in partition */
-		u_int32_t p_offset;	/* starting sector */
+		u_int32_t p_size;	/* number of sectors (low part) */
+		u_int32_t p_offset;	/* starting sector (low part) */
 		u_int16_t p_offseth;	/* starting sector (high part) */
 		u_int16_t p_sizeh;	/* number of sectors (high part) */
 		u_int8_t p_fstype;	/* filesystem type, see below */
