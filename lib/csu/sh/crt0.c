@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.5 2012/12/05 23:19:57 deraadt Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.6 2013/11/10 19:30:40 guenther Exp $	*/
 /*	$NetBSD: crt0.c,v 1.10 2004/08/26 21:16:41 thorpej Exp $ */
 
 /*
@@ -60,23 +60,10 @@ extern void     _mcleanup(void);
 extern unsigned char _etext, _eprol;
 #endif /* MCRT0 */
 
-extern	void	_start(void);
-void		___start(int, char *[], char *[], void *,
-				const void *, void (*)(void));
-
-__asm(	"	.text			\n"
-	"	.align 2		\n"
-	"	.globl _start		\n"
-	"	.globl __start		\n"
-	"_start:			\n"
-	"__start:			\n"
-	"	mov.l	r9,@-r15	\n"
-	"	bra ___start		\n"
-	"	 mov.l	r8,@-r15");
+void		__start(int, char *[], char *[], void (*)(void));
 
 void
-___start(int argc, char **argv, char **envp, void *ps_strings,
-	const void *obj, void (*cleanup)(void))
+__start(int argc, char **argv, char **envp, void (*cleanup)(void))
 {
 	char *s;
 
@@ -103,9 +90,8 @@ ___start(int argc, char **argv, char **envp, void *ps_strings,
 		__progname = __progname_storage;
 	}
 
-#if 0
-	atexit(cleanup);
-#endif
+	if (cleanup)
+		atexit(cleanup);
 #ifdef MCRT0
 	atexit(_mcleanup);
 	monstartup((u_long)&_eprol, (u_long)&_etext);
