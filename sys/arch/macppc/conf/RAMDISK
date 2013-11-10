@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.97 2013/11/04 14:07:16 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.98 2013/11/10 12:10:43 mpi Exp $
 #
 # PPC GENERIC config file
 #
@@ -182,6 +182,26 @@ wi*		at uhub?		# WaveLAN IEEE 802.11DS
 #uyap*		at uhub?		# Y@P firmware loader
 #ugen*		at uhub?		# USB Generic driver
 umass*		at uhub?		# USB Mass Storage devices
+
+# I2C bus support
+iic*		at kiic?
+#iic*		at piic?
+#iic*		at smu?
+
+# I2C devices
+#lmtemp*		at iic?
+#lmenv*		at iic?
+#maxtmp*		at iic?
+#adc*		at iic?
+#tsl*		at iic?
+#admtmp*		at iic?
+#pcagpio*	at iic?
+#gpio*		at pcagpio?
+#maxds*		at iic?
+fcu*		at iic?
+#adt*		at iic?
+#asms*		at iic?
+#spdmem*		at mem?
 
 # CardBus bus support
 cardbus*	at cardslot?
