@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.3 2007/10/17 20:10:44 chl Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.4 2013/11/10 18:49:34 guenther Exp $	*/
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
  * All rights reserved.
@@ -30,8 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <stdlib.h>
+#include <limits.h>
 
 static char	*_strrchr(char *, char);
 
@@ -52,8 +52,6 @@ __asm(" .text				;\
 	.globl	_start			;\
 _start:					;\
 __start:				;\
-	movq	%rbx,%r9		;\
-	movq	%rcx,%r8		;\
 	movq	%rdx,%rcx		;\
 	movq	(%rsp),%rdi		;\
 	leaq	16(%rsp,%rdi,8),%rdx	;\
@@ -65,13 +63,7 @@ __start:				;\
 ");
 
 void
-___start(argc, argv, envp, cleanup, obj, ps_strings)
-	int argc;
-	char **argv;
-	char ** envp;
-	void (*cleanup)(void);			/* from shared loader */
-	const void *obj;			/* from shared loader */
-	struct ps_strings *ps_strings;
+___start(int argc, char **argv, char **envp, void (*cleanup)(void))
 {
 	char *namep;
 	char *s;
@@ -89,6 +81,9 @@ ___start(argc, argv, envp, cleanup, obj, ps_strings)
 		*s = '\0';
 		__progname = __progname_storage;
 	}
+
+	if (cleanup)
+		atexit(cleanup);
 
 #ifdef MCRT0
 	atexit(_mcleanup);
