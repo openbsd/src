@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.3 2012/12/05 23:19:57 deraadt Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.4 2013/11/10 19:44:17 guenther Exp $	*/
 /*	$NetBSD: crt0.c,v 1.6 2002/01/01 01:31:06 thorpej Exp $	*/
 
 /*
@@ -53,8 +53,7 @@ extern unsigned char _etext, _eprol;
 #endif /* MCRT0 */
 
 extern	void	_start(void);
-void		___start(int, char *[], char *[], void *,
-				const void *, void (*)(void));
+void		___start(int, char *[], char *[], void (*)(void));
 
 __asm("	.text			\n"
 "	.align	0		\n"
@@ -62,9 +61,7 @@ __asm("	.text			\n"
 "	.globl	__start		\n"
 "_start:			\n"
 "__start:			\n"
-"	mov	r5, r2		/* cleanup */		\n"
-"	mov	r4, r1		/* obj_main */		\n"
-"	mov	r3, r0		/* ps_strings */	\n"
+"	mov	r3, r0		/* cleanup */		\n"
 "	/* Get argc, argv, and envp from stack */	\n"
 "	ldr	r0, [sp, #0x0000]	\n"
 "	add	r1, sp, #0x0004		\n"
@@ -85,8 +82,7 @@ __asm("	.text			\n"
 */
 
 void
-___start(int argc, char **argv, char **envp, void *ps_strings,
-	const void *obj, void (*cleanup)(void))
+___start(int argc, char **argv, char **envp, void (*cleanup)(void))
 {
 	char *s;
 
@@ -104,9 +100,8 @@ ___start(int argc, char **argv, char **envp, void *ps_strings,
 		__progname = __progname_storage;
 	}
 
-#if 0
-	atexit(cleanup);
-#endif
+	if (cleanup)
+		atexit(cleanup);
 #ifdef MCRT0
 	atexit(_mcleanup);
 	monstartup((u_long)&_eprol, (u_long)&_etext);
