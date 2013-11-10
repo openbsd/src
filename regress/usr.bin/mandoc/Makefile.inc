@@ -1,19 +1,19 @@
-# $OpenBSD: Makefile.inc,v 1.7 2011/11/17 16:28:45 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.8 2013/11/10 14:58:44 schwarze Exp $
 
 # --- programs ---
 
-DIFF=diff -au
-MANDOC?=mandoc
+DIFF = diff -au
+MANDOC ?= mandoc
 
 
 # --- lists of targets ---
 
-ASCIIFILES=${REGRESS_TARGETS:C/$/.mandoc_ascii/}
-ASCIIDIFFS=${REGRESS_TARGETS:C/$/.diff_ascii/}
+ASCIIFILES = ${REGRESS_TARGETS:C/$/.mandoc_ascii/}
+ASCIIDIFFS = ${REGRESS_TARGETS:C/$/.diff_ascii/}
 
-MANFILES=${REGRESS_TARGETS:C/$/.mandoc_man/} ${REGRESS_TARGETS:C/$/.in_man/}
-MANDIFFS=${REGRESS_TARGETS:C/$/.diff_man/}
-SKIP_TMAN?=
+MANFILES = ${REGRESS_TARGETS:C/$/.mandoc_man/} ${REGRESS_TARGETS:C/$/.in_man/}
+MANDIFFS = ${REGRESS_TARGETS:C/$/.diff_man/}
+SKIP_TMAN ?=
 
 
 # --- convenience targets ---
@@ -84,17 +84,17 @@ tman-clean:
 
 # --- the groff program ---
 
-NROFF=/usr/local/bin/nroff -c -mandoc -Tascii
+NROFF = /usr/local/bin/nroff -c -mandoc -Tascii
 
 
 # --- the list of targets ---
 
-SKIP_GROFF?=
+SKIP_GROFF ?=
 
-OUTFILES=
+OUTFILES =
 .for t in ${REGRESS_TARGETS}
 .  if empty(SKIP_GROFF:M${t})
-OUTFILES+=${t}.out_ascii
+OUTFILES += ${t}.out_ascii
 .  endif
 .endfor
 
