@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc_char.7,v 1.16 2013/07/13 19:27:47 schwarze Exp $
+.\"	$OpenBSD: mandoc_char.7,v 1.17 2013/11/10 14:32:11 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2013 $
+.Dd $Mdocdate: November 10 2013 $
 .Dt MANDOC_CHAR 7
 .Os
 .Sh NAME
@@ -661,7 +661,12 @@ The escape sequence
 .Pp
 is interpreted as a Unicode codepoint.
 The codepoint must be in the range above U+0080 and less than U+10FFFF.
-For compatibility, points must be zero-padded to four characters; if
+For compatibility, the hexadecimal digits 
+.Sq A
+to
+.Sq F
+must be given as uppercase characters,
+and points must be zero-padded to four characters; if
 greater than four characters, no zero padding is allowed.
 Unicode surrogates are not allowed.
 .Sh NUMBERED CHARACTERS
