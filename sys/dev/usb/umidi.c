@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.37 2013/05/15 08:29:26 ratchov Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.38 2013/11/10 10:22:39 pirofti Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@ umidi_attach(struct device *parent, struct device *self, void *aux)
 	return;
 error:
 	printf("%s: disabled.\n", sc->sc_dev.dv_xname);
-	sc->sc_dying = 1;
+	usbd_deactivate(sc->sc_udev);
 }
 
 int
@@ -235,7 +235,7 @@ umidi_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_DEACTIVATE:
 		DPRINTFN(1,("umidi_activate (deactivate)\n"));
-		sc->sc_dying = 1;
+		usbd_deactivate(sc->sc_udev);
 		deactivate_all_mididevs(sc);
 		break;
 	}
@@ -277,7 +277,7 @@ umidi_open(void *addr,
 		return ENXIO;
 	if (mididev->opened)
 		return EBUSY;
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return EIO;
 
 	mididev->opened = 1;
@@ -1161,7 +1161,7 @@ out_jack_output(struct umidi_jack *j, int d)
 	struct umidi_softc *sc = ep->sc;
 	int s;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return 1;
 	if (!j->opened)
 		return 1;
@@ -1195,7 +1195,7 @@ out_jack_flush(struct umidi_jack *j)
 	struct umidi_endpoint *ep = j->endpoint;
 	int s;
 
-	if (ep->sc->sc_dying || !j->opened)
+	if (usbd_is_dying(ep->sc->sc_udev) || !j->opened)
 		return;
 		
 	s = splusb();	
@@ -1215,7 +1215,7 @@ in_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct umidi_endpoint *ep = (struct umidi_endpoint *)priv;
 	struct umidi_jack *jack;
 
-	if (ep->sc->sc_dying)
+	if (usbd_is_dying(ep->sc->sc_udev))
 		return;
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &remain, NULL);
@@ -1248,7 +1248,7 @@ out_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct umidi_jack *j;
 	unsigned pending;
 	
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	ep->used = 0;

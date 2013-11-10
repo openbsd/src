@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidivar.h,v 1.15 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: umidivar.h,v 1.16 2013/11/10 10:22:39 pirofti Exp $ */
 /*	$NetBSD: umidivar.h,v 1.5 2002/09/12 21:00:42 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -104,8 +104,6 @@ struct umidi_softc {
 	struct usbd_device	*sc_udev;
 	struct usbd_interface	*sc_iface;
 	struct umidi_quirk	*sc_quirk;
-
-	int			sc_dying;
 
 	int			sc_out_num_jacks;
 	struct umidi_jack	*sc_out_jacks;
