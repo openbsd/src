@@ -1,0 +1,9 @@
+.TH CHAR-UNICODE-MAN 1 "November 10, 2013" OpenBSD
+.SH NAME
+char-unicode-mdoc \- unicode characters in man code
+.SH DESCRIPTION
+Copyright symbol: \[u00A9]
+.PP
+m-dash: \[u2014]
+.PP
+nabla: \[u1D6C1]

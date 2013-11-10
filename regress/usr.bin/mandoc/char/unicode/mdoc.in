@@ -1,0 +1,12 @@
+.Dd November 10, 2013
+.Dt CHAR-UNICODE-MDOC 1
+.Os OpenBSD
+.Sh NAME
+.Nm char-unicode-mdoc
+.Nd unicode characters in mdoc code
+.Sh DESCRIPTION
+Copyright symbol: \[u00A9]
+.Pp
+m-dash: \[u2014]
+.Pp
+nabla: \[u1D6C1]
