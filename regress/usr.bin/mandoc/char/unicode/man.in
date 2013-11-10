@@ -2,8 +2,8 @@
 .SH NAME
 char-unicode-mdoc \- unicode characters in man code
 .SH DESCRIPTION
-Copyright symbol: \[u00A9]
+Copyright symbol: \[u00A9] = \C'u00A9'
 .PP
-m-dash: \[u2014]
+m-dash: \[u2014] = \C'u2014'
 .PP
-nabla: \[u1D6C1]
+nabla: \[u1D6C1] = \C'u1D6C1'

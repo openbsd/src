@@ -4,10 +4,10 @@ NNAAMMEE
      cchhaarr--uunniiccooddee--mmddoocc – unicode characters in mdoc code
 
 DDEESSCCRRIIPPTTIIOONN
-     Copyright symbol: ©
+     Copyright symbol: © = ©
 
-     m-dash: —
+     m-dash: — = —
 
-     nabla: 𝛁
+     nabla: 𝛁 = 𝛁
 
 OpenBSD                        November 10, 2013                       OpenBSD

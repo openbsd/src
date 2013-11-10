@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc_char.7,v 1.18 2013/11/10 17:47:42 jmc Exp $
+.\"	$OpenBSD: mandoc_char.7,v 1.19 2013/11/10 20:17:14 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -655,11 +655,11 @@ manual.
 .It \e*(Ai   Ta \*(Ai       Ta ANSI standard name
 .El
 .Sh UNICODE CHARACTERS
-The escape sequence
+The escape sequences
 .Pp
-.Dl \e[uXXXX]
+.Dl \e[uXXXX] and \eC'uXXXX'
 .Pp
-is interpreted as a Unicode codepoint.
+are interpreted as Unicode codepoints.
 The codepoint must be in the range above U+0080 and less than U+10FFFF.
 For compatibility, the hexadecimal digits
 .Sq A

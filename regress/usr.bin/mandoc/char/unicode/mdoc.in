@@ -5,8 +5,8 @@
 .Nm char-unicode-mdoc
 .Nd unicode characters in mdoc code
 .Sh DESCRIPTION
-Copyright symbol: \[u00A9]
+Copyright symbol: \[u00A9] = \C'u00A9'
 .Pp
-m-dash: \[u2014]
+m-dash: \[u2014] = \C'u2014'
 .Pp
-nabla: \[u1D6C1]
+nabla: \[u1D6C1] = \C'u1D6C1'
