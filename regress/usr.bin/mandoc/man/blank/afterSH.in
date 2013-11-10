@@ -1,0 +1,77 @@
+.TH BLANK-AFTERSH 1 "November 10, 2013" OpenBSD
+.SH NAME
+blank-afterSH \- handling of blank lines right after a section heading
+.SH DESCRIPTION
+
+blank line before text
+.SH DESCRIPTION 2
+
+.PP
+blank line before PP
+.SH DESCRIPTION 3
+
+.RS 6n
+blank line before RS
+.RE
+.SH DESCRIPTION 4
+
+.IP TAG
+blank line before an indented paragraph
+.SH DESCRIPTION 5
+
+.TP
+TAG
+blank line before a tagged paragraph
+.SH DESCRIPTION 6
+
+.HP
+blank line before a hanged paragraph
+.SH DESCRIPTION 7
+
+.br
+blank line before br
+.SH DESCRIPTION 8
+
+.sp
+blank line before sp
+.SH DESCRIPTION 10
+
+
+double blank line before text
+.SH DESCRIPTION 12
+
+
+.PP
+double blank line before PP
+.SH DESCRIPTION 13
+
+
+.RS 6n
+double blank line before RS
+.RE
+.SH DESCRIPTION 14
+
+
+.IP TAG
+double blank line before an indented paragraph
+.SH DESCRIPTION 15
+
+
+.TP
+TAG
+double blank line before a tagged paragraph
+.SH DESCRIPTION 16
+
+
+.HP
+double blank line before a hanged paragraph
+.SH DESCRIPTION 17
+
+
+.br
+double blank line before br
+.SH DESCRIPTION 18
+
+
+.sp
+double blank line before sp

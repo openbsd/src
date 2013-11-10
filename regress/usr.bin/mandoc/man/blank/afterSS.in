@@ -1,0 +1,78 @@
+.TH BLANK-AFTERSS 1 "November 10, 2013" OpenBSD
+.SH NAME
+blank-afterSS \- handling of blank lines right after a subsection heading
+.SH DESCRIPTION
+.SS 1
+
+blank line before text
+.SS 2
+
+.PP
+blank line before PP
+.SS 3
+
+.RS 6n
+blank line before RS
+.RE
+.SS 4
+
+.IP TAG
+blank line before an indented paragraph
+.SS 5
+
+.TP
+TAG
+blank line before a tagged paragraph
+.SS 6
+
+.HP
+blank line before a hanged paragraph
+.SS 7
+
+.br
+blank line before br
+.SS 8
+
+.sp
+blank line before sp
+.SS 10
+
+
+double blank line before text
+.SS 12
+
+
+.PP
+double blank line before PP
+.SS 13
+
+
+.RS 6n
+double blank line before RS
+.RE
+.SS 14
+
+
+.IP TAG
+double blank line before an indented paragraph
+.SS 15
+
+
+.TP
+TAG
+double blank line before a tagged paragraph
+.SS 16
+
+
+.HP
+double blank line before a hanged paragraph
+.SS 17
+
+
+.br
+double blank line before br
+.SS 18
+
+
+.sp
+double blank line before sp
