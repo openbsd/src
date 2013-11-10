@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.70 2013/10/17 20:51:28 schwarze Exp $ */
+/*	$Id: man.c,v 1.71 2013/11/10 22:53:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -425,16 +425,22 @@ man_ptext(struct man *man, int line, char *buf, int offs)
 		return(man_descope(man, line, offs));
 	}
 
-	/* Pump blank lines directly into the backend. */
-
 	for (i = offs; ' ' == buf[i]; i++)
 		/* Skip leading whitespace. */ ;
 
+	/*
+	 * Blank lines are ignored right after headings
+	 * but add a single vertical space elsewhere.
+	 */
+
 	if ('\0' == buf[i]) {
 		/* Allocate a blank entry. */
-		if ( ! man_elem_alloc(man, line, offs, MAN_sp))
-			return(0);
-		man->next = MAN_NEXT_SIBLING;
+		if (MAN_SH != man->last->tok &&
+		    MAN_SS != man->last->tok) {
+			if ( ! man_elem_alloc(man, line, offs, MAN_sp))
+				return(0);
+			man->next = MAN_NEXT_SIBLING;
+		}
 		return(1);
 	}
 
