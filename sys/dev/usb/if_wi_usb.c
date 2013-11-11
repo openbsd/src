@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.58 2013/08/07 01:06:43 bluhm Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.59 2013/11/11 15:00:35 pirofti Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -149,7 +149,6 @@ struct wi_usb_softc {
 	struct wi_usb_chain	wi_usb_rx_chain[WI_USB_RX_LIST_CNT];
 
 	int			wi_usb_refcnt;
-	char			wi_usb_dying;
 	char			wi_usb_attached;
 	int			wi_usb_intr_errs;
 	struct timeval		wi_usb_rx_notice;
@@ -1096,7 +1095,7 @@ wi_usb_txeof(struct usbd_xfer *xfer, void *priv,
 
 	int			s;
 
-	if (sc->wi_usb_dying)
+	if (usbd_is_dying(sc->wi_usb_udev))
 		return;
 
 	s = splnet();
@@ -1142,7 +1141,7 @@ wi_usb_txeof_frm(struct usbd_xfer *xfer, void *priv,
 	int			s;
 	int			err = 0;
 
-	if (sc->wi_usb_dying)
+	if (usbd_is_dying(sc->wi_usb_udev))
 		return;
 
 	s = splnet();
@@ -1338,7 +1337,7 @@ wi_usb_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		sc->wi_usb_dying = 1;
+		usbd_deactivate(sc->wi_usb_udev);
 		sc->wi_thread_info->dying = 1;
 		break;
 	}
@@ -1374,7 +1373,7 @@ wi_usb_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	int			total_len = 0;
 	u_int16_t		rtype;
 
-	if (sc->wi_usb_dying)
+	if (usbd_is_dying(sc->wi_usb_udev))
 		return;
 
 	DPRINTFN(10,("%s: %s: enter status=%d\n", sc->wi_usb_dev.dv_xname,
@@ -1495,7 +1494,7 @@ wi_usb_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	DPRINTFN(2,("%s: %s: enter\n", sc->wi_usb_dev.dv_xname, __func__));
 
-	if (sc->wi_usb_dying)
+	if (usbd_is_dying(sc->wi_usb_udev))
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
