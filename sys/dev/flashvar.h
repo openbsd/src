@@ -1,4 +1,4 @@
-/*	$OpenBSD: flashvar.h,v 1.6 2013/05/30 16:15:01 deraadt Exp $	*/
+/*	$OpenBSD: flashvar.h,v 1.7 2013/11/11 03:03:34 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -77,7 +77,7 @@ struct flash_softc {
 	struct device		 sc_dev;
 	/* Disk device information */
 	struct disk		 sc_dk;
-	struct buf		 sc_q; 
+	struct bufq		 sc_bufq;
 	struct buf		*sc_bp;
 	int			 sc_flags;
 	/* Flash controller tag */
