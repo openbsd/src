@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr_time.c,v 1.14 2009/10/27 23:59:49 deraadt Exp $	*/
+/*	$OpenBSD: pr_time.c,v 1.15 2013/11/11 23:06:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -95,10 +95,11 @@ pr_idle(time_t idle)
 
 	/* If idle more than an hour, print as HH:MM. */
 	else if (idle >= SECSPERHOUR)
-		(void)printf(" %2d:%02d ",
-		    idle / SECSPERHOUR, (idle % SECSPERHOUR) / SECSPERMIN);
+		(void)printf(" %2lld:%02lld ",
+		    (long long)idle / SECSPERHOUR,
+		    ((long long)idle % SECSPERHOUR) / SECSPERMIN);
 
 	/* Else print the minutes idle. */
 	else
-		(void)printf("    %2d ", idle / SECSPERMIN);
+		(void)printf("    %2lld ", (long long)idle / SECSPERMIN);
 }
