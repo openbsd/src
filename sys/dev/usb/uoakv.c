@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoakv.c,v 1.4 2013/04/15 09:23:02 mglocker Exp $   */
+/*	$OpenBSD: uoakv.c,v 1.5 2013/11/11 09:16:03 pirofti Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -60,7 +60,6 @@ struct uoakv_sensor {
 
 struct uoakv_softc {
 	struct uhidev		 sc_hdev;
-	u_char			 sc_dying;
 
 	/* uoak common */
 	struct uoak_softc	 sc_uoak_softc;
@@ -83,7 +82,6 @@ const struct usb_devno uoakv_devs[] = {
 int  uoakv_match(struct device *, void *, void *);
 void uoakv_attach(struct device *, struct device *, void *);
 int  uoakv_detach(struct device *, int);
-int  uoakv_activate(struct device *, int);
 
 void uoakv_intr(struct uhidev *, void *, u_int);
 void uoakv_refresh(void *);
@@ -104,7 +102,6 @@ const struct cfattach uoakv_ca = {
 	uoakv_match,
 	uoakv_attach,
 	uoakv_detach,
-	uoakv_activate,
 
 };
 
@@ -225,19 +222,6 @@ uoakv_detach(struct device *self, int flags)
 	return (rv);
 }
 
-int
-uoakv_activate(struct device *self, int act)
-{
-	struct uoakv_softc *sc = (struct uoakv_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
-		break;
-	}
-	return (0);
-}
-
 void
 uoakv_intr(struct uhidev *addr, void *ibuf, u_int len)
 {
@@ -246,8 +230,6 @@ uoakv_intr(struct uhidev *addr, void *ibuf, u_int len)
 	int i, idx, frame;
 	int16_t val;
 
-	if (sc->sc_dying)
-		return;
 	if (scc->sc_ibuf == NULL)
 		return;
 

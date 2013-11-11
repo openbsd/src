@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.49 2013/11/01 17:42:59 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.50 2013/11/11 09:16:03 pirofti Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -354,6 +354,7 @@ uhidev_activate(struct device *self, int act)
 				if (r && r != EOPNOTSUPP)
 					rv = r;
 			}
+		usbd_deactivate(sc->sc_udev);
 		break;
 	}
 	return (rv);
@@ -392,6 +393,9 @@ uhidev_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 	u_char *p;
 	u_int rep;
 	u_int32_t cc;
+
+	if (usbd_is_dying(sc->sc_udev))
+		return;
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &cc, NULL);
 
