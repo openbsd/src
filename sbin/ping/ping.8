@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.48 2013/08/14 08:39:30 jmc Exp $
+.\"	$OpenBSD: ping.8,v 1.49 2013/11/11 18:02:02 jca Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: November 11 2013 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -86,6 +86,8 @@ bit.
 Set the
 .Dv SO_DEBUG
 option on the socket being used.
+This option has no effect on
+.Ox .
 .It Fl E
 Emit an audible beep (by sending an ASCII BEL character to the
 standard error output) when no packet is received before the next
