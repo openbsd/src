@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.30 2013/10/29 10:01:20 mpi Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.31 2013/11/11 10:09:40 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -384,8 +384,6 @@ cdcef_rxeof(struct usbf_xfer *xfer, void *priv,
 		if (sc->sc_rxeof_errors++ > 10) {
 			printf("%s: too many errors, disabling\n",
 			    DEVNAME(sc));
-			/* sc->sc_dying = 1; */
-			// return;
 		}
 		goto done;
 	}
@@ -514,11 +512,6 @@ cdcef_watchdog(struct ifnet *ifp)
 {
 	struct cdcef_softc	*sc = ifp->if_softc;
 	int s;
-
-#if 0
-	if (sc->sc_dying)
-		return;
-#endif
 
 	ifp->if_oerrors++;
 	printf("%s: watchdog timeout\n", DEVNAME(sc));
