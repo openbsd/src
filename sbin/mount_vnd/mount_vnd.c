@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_vnd.c,v 1.13 2013/04/23 19:57:02 deraadt Exp $	*/
+/*	$OpenBSD: mount_vnd.c,v 1.14 2013/11/11 23:08:02 deraadt Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -77,7 +77,6 @@ main(int argc, char **argv)
 	int	 ch, rv, action, opt_c, opt_k, opt_K, opt_l, opt_u;
 	char	*key, *mntopts, *rounds, *saltopt;
 	size_t	 keylen = 0;
-	const char *errstr;
 	extern char *__progname;
 	struct disklabel *dp = NULL;
 
