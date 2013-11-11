@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.264 2013/11/11 15:39:20 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.265 2013/11/11 17:16:11 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1345,13 +1345,15 @@ send_request(void)
 		client->interval = client->active->expiry - cur_time + 1;
 
 	/*
-	 * If the lease rebind time has elapsed, or if we're not yet bound,
-	 * broadcast the DHCPREQUEST rather than unicasting.
+ 	 * If the reboot timeout has expired, or the lease rebind time has
+	 * elapsed, or if we're not yet bound, broadcast the DHCPREQUEST rather
+	 * than unicasting.
 	 */
 	memset(&destination, 0, sizeof(destination));
 	if (client->state == S_REQUESTING ||
 	    client->state == S_REBOOTING ||
-	    cur_time > client->active->rebind)
+	    cur_time > client->active->rebind ||
+	    interval > config->reboot_timeout)
 		destination.sin_addr.s_addr = INADDR_BROADCAST;
 	else
 		destination.sin_addr.s_addr = client->destination.s_addr;
@@ -1359,8 +1361,7 @@ send_request(void)
 	destination.sin_family = AF_INET;
 	destination.sin_len = sizeof(destination);
 
-	if ((client->state != S_REQUESTING) &&
-	    (interval <= config->reboot_timeout))
+	if (client->state != S_REQUESTING)
 		from.s_addr = client->active->address.s_addr;
 	else
 		from.s_addr = INADDR_ANY;
