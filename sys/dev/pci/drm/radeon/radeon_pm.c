@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_pm.c,v 1.4 2013/10/30 02:11:33 dlg Exp $	*/
+/*	$OpenBSD: radeon_pm.c,v 1.5 2013/11/11 03:08:20 dlg Exp $	*/
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -874,7 +874,7 @@ radeon_dynpm_idle_work_handler(void *arg1, void *arg2)
 		 * to false since we want to wait for vbl to avoid flicker.
 		 */
 		if (rdev->pm.dynpm_planned_action != DYNPM_ACTION_NONE &&
-		    ticks > rdev->pm.dynpm_action_timeout) {
+		    ticks - rdev->pm.dynpm_action_timeout > 0) {
 			radeon_pm_get_dynpm_state(rdev);
 			radeon_pm_set_clocks(rdev);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sandrv.c,v 1.14 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: if_sandrv.c,v 1.15 2013/11/11 03:08:20 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -904,7 +904,7 @@ sdla_exec(sdlahw_t *hw, unsigned long offset)
 	sdla_peek(hw, offset, (void*)&value, 1);
 	for (nloops = 1; value == 0x01; ++ nloops) {
 		DELAY(EXEC_DELAY);
-		if (ticks > tstop || nloops > MAX_NLOOPS) {
+		if (ticks - tstop > 0 || nloops > MAX_NLOOPS) {
 			log(LOG_INFO, "%s: Timeout %lu ticks (max=%lu) "
 			    "loops %lu (max=%u)\n", hw->devname,
 			    (ticks-tstop+EXEC_TIMEOUT),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.76 2013/08/07 01:06:28 bluhm Exp $	*/
+/*	$OpenBSD: athn.c,v 1.77 2013/11/11 03:08:20 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1239,7 +1239,7 @@ athn_calib_to(void *arg)
 	/* Do periodic (every 4 minutes) PA calibration. */
 	if (AR_SREV_9285_11_OR_LATER(sc) &&
 	    !AR_SREV_9380_10_OR_LATER(sc) &&
-	    ticks >= sc->pa_calib_ticks + 240 * hz) {
+	    (ticks - sc->pa_calib_ticks + 240 * hz) >= 0) {
 		sc->pa_calib_ticks = ticks;
 		if (AR_SREV_9271(sc))
 			ar9271_pa_calib(sc);
