@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.219 2013/10/23 19:09:28 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.220 2013/11/11 09:15:34 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -123,19 +123,6 @@ struct ipstat ipstat;
 
 void	ip_ours(struct mbuf *);
 int	in_ouraddr(struct in_addr, struct mbuf *);
-
-char *
-inet_ntoa(ina)
-	struct in_addr ina;
-{
-	static char buf[4*sizeof "123"];
-	unsigned char *ucp = (unsigned char *)&ina;
-
-	snprintf(buf, sizeof buf, "%d.%d.%d.%d",
-	    ucp[0] & 0xff, ucp[1] & 0xff,
-	    ucp[2] & 0xff, ucp[3] & 0xff);
-	return (buf);
-}
 
 /*
  * Used to save the IP options in case a protocol wants to respond

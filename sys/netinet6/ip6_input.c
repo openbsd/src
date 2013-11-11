@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.119 2013/10/28 21:02:35 deraadt Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.120 2013/11/11 09:15:35 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -480,11 +480,14 @@ ip6_input(struct mbuf *m)
 			deliverifp = ia6->ia_ifp;	/* correct? */
 			goto hbhcheck;
 		} else {
+			char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
+
+			inet_ntop(AF_INET6, &ip6->ip6_src, src, sizeof(src));
+			inet_ntop(AF_INET6, &ip6->ip6_dst, dst, sizeof(dst));
 			/* address is not ready, so discard the packet. */
 			nd6log((LOG_INFO,
 			    "ip6_input: packet to an unready address %s->%s\n",
-			    ip6_sprintf(&ip6->ip6_src),
-			    ip6_sprintf(&ip6->ip6_dst)));
+			    src, dst));
 
 			goto bad;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.110 2013/11/05 15:32:48 stsp Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.111 2013/11/11 09:15:34 mpi Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -3173,6 +3173,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	int ifidcount;
 	int type;
 	int collision, nohisaddr;
+	char addr[INET6_ADDRSTRLEN];
 
 	len -= 4;
 	origlen = len;
@@ -3268,7 +3269,8 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 
 				if (debug) {
 					addlog(" %s [%s]",
-					    ip6_sprintf(&desiredaddr),
+					    inet_ntop(AF_INET6, &desiredaddr,
+						addr, sizeof(addr)),
 					    sppp_cp_type_name(type));
 				}
 				continue;
@@ -3290,7 +3292,9 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 				bcopy(&suggestaddr.s6_addr[8], &p[2], 8);
 			}
 			if (debug)
-				addlog(" %s [%s]", ip6_sprintf(&desiredaddr),
+				addlog(" %s [%s]",
+				    inet_ntop(AF_INET6, &desiredaddr, addr,
+					sizeof(addr)),
 				    sppp_cp_type_name(type));
 			break;
 		}
@@ -3312,7 +3316,9 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 
 		if (debug) {
 			addlog(" send %s suggest %s\n",
-			    sppp_cp_type_name(type), ip6_sprintf(&suggestaddr));
+			    sppp_cp_type_name(type),
+			    inet_ntop(AF_INET6, &suggestaddr, addr,
+				sizeof(addr)));
 		}
 		sppp_cp_send(sp, PPP_IPV6CP, type, h->ident, rlen, buf);
 	}
@@ -3368,6 +3374,7 @@ sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 	struct ifnet *ifp = &sp->pp_if;
 	int debug = ifp->if_flags & IFF_DEBUG;
 	struct in6_addr suggestaddr;
+	char addr[INET6_ADDRSTRLEN];
 
 	len -= 4;
 
@@ -3397,7 +3404,8 @@ sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 			sp->ipv6cp.opts |= (1 << IPV6CP_OPT_IFID);
 			if (debug)
 				addlog(" [suggestaddr %s]",
-				       ip6_sprintf(&suggestaddr));
+				    inet_ntop(AF_INET6, &suggestaddr, addr,
+					sizeof(addr)));
 #ifdef IPV6CP_MYIFID_DYN
 			/*
 			 * When doing dynamic address assignment,

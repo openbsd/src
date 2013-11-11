@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.117 2013/10/23 15:12:42 mpi Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.118 2013/11/11 09:15:35 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -398,11 +398,15 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 			    tdbp->tdb_proxy.sin.sin_addr.s_addr) ||
 			    (tdbp->tdb_proxy.sa.sa_family != AF_INET &&
 				tdbp->tdb_proxy.sa.sa_family != 0)) {
+#if ENCDEBUG
+				char addr[INET_ADDRSTRLEN];
+#endif
 
 				DPRINTF(("ipsec_common_input_cb(): inner "
 				    "source address %s doesn't correspond to "
 				    "expected proxy source %s, SA %s/%08x\n",
-				    inet_ntoa4(ipn.ip_src),
+				    inet_ntop(AF_INET, &ipn.ip_src,
+					addr, sizeof(addr)),
 				    ipsp_address(tdbp->tdb_proxy),
 				    ipsp_address(tdbp->tdb_dst),
 				    ntohl(tdbp->tdb_spi)));
@@ -439,11 +443,15 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 				&tdbp->tdb_proxy.sin6.sin6_addr)) ||
 			    (tdbp->tdb_proxy.sa.sa_family != AF_INET6 &&
 				tdbp->tdb_proxy.sa.sa_family != 0)) {
+#if ENCDEBUG
+				char addr[INET6_ADDRSTRLEN];
+#endif
 
 				DPRINTF(("ipsec_common_input_cb(): inner "
 				    "source address %s doesn't correspond to "
 				    "expected proxy source %s, SA %s/%08x\n",
-				    ip6_sprintf(&ip6n.ip6_src),
+				    inet_ntop(AF_INET6, &ip6n.ip6_src,
+					addr, sizeof(addr)),
 				    ipsp_address(tdbp->tdb_proxy),
 				    ipsp_address(tdbp->tdb_dst),
 				    ntohl(tdbp->tdb_spi)));
@@ -505,11 +513,15 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 				tdbp->tdb_proxy.sin.sin_addr.s_addr) ||
 			    (tdbp->tdb_proxy.sa.sa_family != AF_INET &&
 				tdbp->tdb_proxy.sa.sa_family != 0)) {
+#if ENCDEBUG
+				char addr[INET_ADDRSTRLEN];
+#endif
 
 				DPRINTF(("ipsec_common_input_cb(): inner "
 				    "source address %s doesn't correspond to "
 				    "expected proxy source %s, SA %s/%08x\n",
-				    inet_ntoa4(ipn.ip_src),
+				    inet_ntop(AF_INET, &ipn.ip_src,
+					addr, sizeof(addr)),
 				    ipsp_address(tdbp->tdb_proxy),
 				    ipsp_address(tdbp->tdb_dst),
 				    ntohl(tdbp->tdb_spi)));
@@ -546,11 +558,15 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 				&tdbp->tdb_proxy.sin6.sin6_addr)) ||
 			    (tdbp->tdb_proxy.sa.sa_family != AF_INET6 &&
 				tdbp->tdb_proxy.sa.sa_family != 0)) {
+#if ENCDEBUG
+				char addr[INET6_ADDRSTRLEN];
+#endif
 
 				DPRINTF(("ipsec_common_input_cb(): inner "
 				    "source address %s doesn't correspond to "
 				    "expected proxy source %s, SA %s/%08x\n",
-				    ip6_sprintf(&ip6n.ip6_src),
+				    inet_ntop(AF_INET6, &ip6n.ip6_src,
+					addr, sizeof(addr)),
 				    ipsp_address(tdbp->tdb_proxy),
 				    ipsp_address(tdbp->tdb_dst),
 				    ntohl(tdbp->tdb_spi)));

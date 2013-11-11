@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.50 2013/10/20 11:03:02 phessler Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.51 2013/11/11 09:15:35 mpi Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -423,9 +423,11 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		i = (paf6->ip6af_off + paf6->ip6af_frglen) - ip6af->ip6af_off;
 		if (i > 0) {
 #if 0				/* suppress the noisy log */
+			char ip[INET6_ADDRSTRLEN];
 			log(LOG_ERR, "%d bytes of a fragment from %s "
 			    "overlaps the previous fragment\n",
-			    i, ip6_sprintf(&q6->ip6q_src));
+			    i,
+			    inet_ntop(AF_INET6, &q6->ip6q_src, ip, sizeof(ip)));
 #endif
 			free(ip6af, M_FTABLE);
 			goto flushfrags;
@@ -435,9 +437,11 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		i = (ip6af->ip6af_off + ip6af->ip6af_frglen) - af6->ip6af_off;
 		if (i > 0) {
 #if 0				/* suppress the noisy log */
+			char ip[INET6_ADDRSTRLEN];
 			log(LOG_ERR, "%d bytes of a fragment from %s "
 			    "overlaps the succeeding fragment",
-			    i, ip6_sprintf(&q6->ip6q_src));
+			    i,
+			    inet_ntop(AF_INET6, &q6->ip6q_src, ip, sizeof(ip)));
 #endif
 			free(ip6af, M_FTABLE);
 			goto flushfrags;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.29 2013/09/20 23:51:44 fgsch Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.30 2013/11/11 09:15:35 mpi Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -121,6 +121,7 @@ nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 	struct sockaddr_in *sin;
 	struct ifnet *ifp;
 	struct socket *so;
+	char addr[INET_ADDRSTRLEN];
 	int error;
 
 	/*
@@ -171,7 +172,8 @@ nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 	 */
 	if ((error = revarpwhoami(&my_ip, ifp)) != 0)
 		panic("reverse arp not answered by rarpd(8) or dhcpd(8)");
-	printf("nfs_boot: client_addr=%s\n", inet_ntoa(my_ip));
+	inet_ntop(AF_INET, &my_ip, addr, sizeof(addr));
+	printf("nfs_boot: client_addr=%s\n", addr);
 
 	/*
 	 * Do enough of ifconfig(8) so that the chosen interface
@@ -208,8 +210,8 @@ nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 	error = bp_whoami(&bp_sin, &my_ip, &gw_ip);
 	if (error)
 		panic("nfs_boot: bootparam whoami, error=%d", error);
-	printf("nfs_boot: server_addr=%s hostname=%s\n",
-	    inet_ntoa(bp_sin.sin_addr), hostname);
+	inet_ntop(AF_INET, &bp_sin.sin_addr, addr, sizeof(addr));
+	printf("nfs_boot: server_addr=%s hostname=%s\n", addr, hostname);
 
 #ifdef	NFS_BOOT_GATEWAY
 	/*
@@ -246,7 +248,8 @@ nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 		info.rti_info[RTAX_NETMASK] = &mask;
 		info.rti_flags = (RTF_UP | RTF_GATEWAY | RTF_STATIC);
 
-		printf("nfs_boot: gateway=%s\n", inet_ntoa(gw_ip));
+		inet_ntop(AF_INET, gw_ip, addr, sizeof(addr));
+		printf("nfs_boot: gateway=%s\n", addr);
 		/* add, dest, gw, mask, flags, 0 */
 		error = rtrequest1(RTM_ADD, &info, RTP_STATIC, NULL, 0);
 		if (error)

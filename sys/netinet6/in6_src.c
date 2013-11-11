@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.35 2013/10/23 19:57:50 deraadt Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.36 2013/11/11 09:15:35 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -330,15 +330,17 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	dst = &dstsock->sin6_addr;
 
 #if 0
+	char ip[INET6_ADDRSTRLEN];
+
 	if (dstsock->sin6_addr.s6_addr32[0] == 0 &&
 	    dstsock->sin6_addr.s6_addr32[1] == 0 &&
 	    !IN6_IS_ADDR_LOOPBACK(&dstsock->sin6_addr)) {
 		printf("in6_selectroute: strange destination %s\n",
-		       ip6_sprintf(&dstsock->sin6_addr));
+		    inet_ntop(AF_INET6, &dstsock->sin6_addr, ip, sizeof(ip)));
 	} else {
 		printf("in6_selectroute: destination = %s%%%d\n",
-		       ip6_sprintf(&dstsock->sin6_addr),
-		       dstsock->sin6_scope_id); /* for debug */
+		    inet_ntop(AF_INET6, &dstsock->sin6_addr, ip, sizeof(ip)),
+		    dstsock->sin6_scope_id); /* for debug */
 	}
 #endif
 

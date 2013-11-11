@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.274 2013/10/23 15:12:42 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.275 2013/11/11 09:15:34 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2266,15 +2266,19 @@ ifa_print_rb(void)
 	struct ifaddr_item *ifai, *p;
 	RB_FOREACH(p, ifaddr_items, &ifaddr_items) {
 		for (ifai = p; ifai; ifai = ifai->ifai_next) {
+			char addr[INET6_ADDRSTRLEN];
+
 			switch (ifai->ifai_addr->sa_family) {
 			case AF_INET:
-				printf("%s", inet_ntoa((satosin(
-				    ifai->ifai_addr))->sin_addr));
+				printf("%s", inet_ntop(AF_INET,
+				    &satosin(ifai->ifai_addr)->sin_addr,
+				    addr, sizeof(addr)));
 				break;
 #ifdef INET6
 			case AF_INET6:
-				printf("%s", ip6_sprintf(&(satosin6(
-				    ifai->ifai_addr))->sin6_addr));
+				printf("%s", inet_ntop(AF_INET6,
+				    &(satosin6(ifai->ifai_addr))->sin6_addr,
+				    addr, sizeof(addr)));
 				break;
 #endif
 			case AF_LINK:

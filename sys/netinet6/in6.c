@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.122 2013/10/24 11:20:18 deraadt Exp $	*/
+/*	$OpenBSD: in6.c,v 1.123 2013/11/11 09:15:35 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -179,10 +179,13 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 	e = rtrequest1(cmd, &info, RTP_CONNECTED, &nrt,
 	    ifa->ifa_ifp->if_rdomain);
 	if (e != 0) {
+		char addr[INET6_ADDRSTRLEN];
 		log(LOG_ERR, "in6_ifloop_request: "
 		    "%s operation failed for %s (errno=%d)\n",
 		    cmd == RTM_ADD ? "ADD" : "DELETE",
-		    ip6_sprintf(&ifatoia6(ifa)->ia_addr.sin6_addr), e);
+		    inet_ntop(AF_INET6,
+			&ifatoia6(ifa)->ia_addr.sin6_addr, addr, sizeof(addr)),
+		    e);
 	}
 
 	/*
@@ -752,6 +755,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	struct in6_addrlifetime *lt;
 	struct in6_multi_mship *imm;
 	struct rtentry *rt;
+	char addr[INET6_ADDRSTRLEN];
 
 	splsoftassert(IPL_SOFTNET);
 
@@ -870,7 +874,8 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		 */
 		nd6log((LOG_INFO,
 		    "in6_update_ifa: valid lifetime is 0 for %s\n",
-		    ip6_sprintf(&ifra->ifra_addr.sin6_addr)));
+		    inet_ntop(AF_INET6, &ifra->ifra_addr.sin6_addr,
+		        addr, sizeof(addr))));
 
 		if (ia == NULL)
 			return (0); /* there's nothing to do */
@@ -918,7 +923,8 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		    in6_mask2len(&ia->ia_prefixmask.sin6_addr, NULL) != plen) {
 			nd6log((LOG_INFO, "in6_update_ifa: the prefix length of an"
 			    " existing (%s) address should not be changed\n",
-			    ip6_sprintf(&ia->ia_addr.sin6_addr)));
+			    inet_ntop(AF_INET6, &ia->ia_addr.sin6_addr,
+				addr, sizeof(addr))));
 			error = EINVAL;
 			goto unlink;
 		}
@@ -938,7 +944,8 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		    (e = rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST)) != 0) {
 			nd6log((LOG_ERR, "in6_update_ifa: failed to remove "
 			    "a route to the old destination: %s\n",
-			    ip6_sprintf(&ia->ia_addr.sin6_addr)));
+			    inet_ntop(AF_INET6, &ia->ia_addr.sin6_addr,
+				addr, sizeof(addr))));
 			/* proceed anyway... */
 		} else
 			ia->ia_flags &= ~IFA_ROUTE;
@@ -1019,7 +1026,8 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		if (!imm) {
 			nd6log((LOG_ERR, "in6_update_ifa: "
 			    "addmulti failed for %s on %s (errno=%d)\n",
-			    ip6_sprintf(&llsol.sin6_addr),
+			    inet_ntop(AF_INET6, &llsol.sin6_addr,
+				addr, sizeof(addr)),
 			    ifp->if_xname, error));
 			goto cleanup;
 		}
@@ -1080,7 +1088,8 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			nd6log((LOG_WARNING,
 			    "in6_update_ifa: addmulti failed for "
 			    "%s on %s (errno=%d)\n",
-			    ip6_sprintf(&mltaddr.sin6_addr),
+			    inet_ntop(AF_INET6, &mltaddr.sin6_addr,
+				addr, sizeof(addr)),
 			    ifp->if_xname, error));
 			goto cleanup;
 		}
@@ -1094,7 +1103,8 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			if (!imm) {
 				nd6log((LOG_WARNING, "in6_update_ifa: "
 				    "addmulti failed for %s on %s (errno=%d)\n",
-				    ip6_sprintf(&mltaddr.sin6_addr),
+				    inet_ntop(AF_INET6, &mltaddr.sin6_addr,
+					addr, sizeof(addr)),
 				    ifp->if_xname, error));
 				/* XXX not very fatal, go on... */
 			} else {
@@ -1145,7 +1155,8 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		if (!imm) {
 			nd6log((LOG_WARNING, "in6_update_ifa: "
 			    "addmulti failed for %s on %s (errno=%d)\n",
-			    ip6_sprintf(&mltaddr.sin6_addr),
+			    inet_ntop(AF_INET6, &mltaddr.sin6_addr,
+				addr, sizeof(addr)),
 			    ifp->if_xname, error));
 			goto cleanup;
 		}
@@ -1198,11 +1209,13 @@ in6_purgeaddr(struct ifaddr *ifa)
 
 		if ((e = rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST))
 		    != 0) {
+			char addr[INET6_ADDRSTRLEN];
 			log(LOG_ERR, "in6_purgeaddr: failed to remove "
 			    "a route to the p2p destination: %s on %s, "
 			    "errno=%d\n",
-			    ip6_sprintf(&ia->ia_addr.sin6_addr), ifp->if_xname,
-			    e);
+			    inet_ntop(AF_INET6, &ia->ia_addr.sin6_addr,
+				addr, sizeof(addr)),
+			    ifp->if_xname, e);
 			/* proceed anyway... */
 		} else
 			ia->ia_flags &= ~IFA_ROUTE;
@@ -1238,11 +1251,15 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 
 	/* Release the reference to the base prefix. */
 	if (ia->ia6_ndpr == NULL) {
+		char addr[INET6_ADDRSTRLEN];
+
 		if (!IN6_IS_ADDR_LINKLOCAL(IA6_IN6(ia)) &&
 		    !IN6_IS_ADDR_LOOPBACK(IA6_IN6(ia)) &&
 		    !IN6_ARE_ADDR_EQUAL(IA6_MASKIN6(ia), &in6mask128))
 			log(LOG_NOTICE, "in6_unlink_ifa: interface address "
-			    "%s has no prefix\n", ip6_sprintf(IA6_IN6(ia)));
+			    "%s has no prefix\n",
+			    inet_ntop(AF_INET6, IA6_IN6(ia), addr,
+				sizeof(addr)));
 	} else {
 		ia->ia6_flags &= ~IN6_IFF_AUTOCONF;
 		if (--ia->ia6_ndpr->ndpr_refcnt == 0)
@@ -1904,59 +1921,6 @@ in6_ifpprefix(const struct ifnet *ifp, const struct in6_addr *addr)
 }
 
 /*
- * Convert IP6 address to printable (loggable) representation.
- */
-static char digits[] = "0123456789abcdef";
-static int ip6round = 0;
-char *
-ip6_sprintf(struct in6_addr *addr)
-{
-	static char ip6buf[8][48];
-	int i;
-	char *cp;
-	u_short *a = (u_short *)addr;
-	u_char *d;
-	int dcolon = 0;
-
-	ip6round = (ip6round + 1) & 7;
-	cp = ip6buf[ip6round];
-
-	for (i = 0; i < 8; i++) {
-		if (dcolon == 1) {
-			if (*a == 0) {
-				if (i == 7)
-					*cp++ = ':';
-				a++;
-				continue;
-			} else
-				dcolon = 2;
-		}
-		if (*a == 0) {
-			if (dcolon == 0 && *(a + 1) == 0) {
-				if (i == 0)
-					*cp++ = ':';
-				*cp++ = ':';
-				dcolon = 1;
-			} else {
-				*cp++ = '0';
-				*cp++ = ':';
-			}
-			a++;
-			continue;
-		}
-		d = (u_char *)a;
-		*cp++ = digits[*d >> 4];
-		*cp++ = digits[*d++ & 0xf];
-		*cp++ = digits[*d >> 4];
-		*cp++ = digits[*d & 0xf];
-		*cp++ = ':';
-		a++;
-	}
-	*--cp = 0;
-	return (ip6buf[ip6round]);
-}
-
-/*
  * Get a scope of the address. Node-local, link-local, site-local or global.
  */
 int
@@ -2164,17 +2128,26 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 			src_scope = in6_addrscope(IFA_IN6(ifa));
 
 #ifdef ADDRSELECT_DEBUG		/* should be removed after stabilization */
+		{
+			char adst[INET6_ADDRSTRLEN], asrc[INET6_ADDRSTRLEN];
+			char bestaddr[INET6_ADDRSTRLEN];
+
+
 			dscopecmp = IN6_ARE_SCOPE_CMP(src_scope, dst_scope);
 			printf("in6_ifawithscope: dst=%s bestaddr=%s, "
 			       "newaddr=%s, scope=%x, dcmp=%d, bcmp=%d, "
 			       "matchlen=%d, flgs=%x\n",
-			       ip6_sprintf(dst),
-			       ifa_best ? ip6_sprintf(&ifa_best->ia_addr.sin6_addr) : "none",
-			       ip6_sprintf(IFA_IN6(ifa)), src_scope,
-			       dscopecmp,
+			       inet_ntop(AF_INET6, dst, adst, sizeof(adst)),
+			       (ifa_best == NULL) ? "none" :
+			       inet_ntop(AF_INET6, &ifa_best->ia_addr.sin6_addr,
+			           bestaddr, sizeof(bestaddr)),
+			       inet_ntop(AF_INET6, IFA_IN6(ifa),
+			           asrc, sizeof(asrc)),
+			       src_scope, dscopecmp,
 			       ifa_best ? IN6_ARE_SCOPE_CMP(src_scope, best_scope) : -1,
 			       in6_matchlen(IFA_IN6(ifa), dst),
 			       ifatoia6(ifa)->ia6_flags);
+		}
 #endif
 
 			/*

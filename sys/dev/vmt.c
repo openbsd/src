@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.15 2013/10/26 21:05:09 deraadt Exp $ */
+/*	$OpenBSD: vmt.c,v 1.16 2013/11/11 09:15:34 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -621,8 +621,11 @@ vmt_tclo_tick(void *xarg)
 		}
 
 		if (guest_ip != NULL) {
+			char ip[INET_ADDRSTRLEN];
+
+			inet_ntop(AF_INET, &guest_ip->sin_addr, ip, sizeof(ip));
 			if (vm_rpc_send_rpci_tx(sc, "info-set guestinfo.ip %s",
-			    inet_ntoa(guest_ip->sin_addr)) != 0) {
+			    ip) != 0) {
 				printf("%s: unable to send guest IP address\n", DEVNAME(sc));
 				sc->sc_rpc_error = 1;
 			}

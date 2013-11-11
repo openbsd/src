@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.110 2013/10/31 18:10:21 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.111 2013/11/11 09:15:34 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -346,6 +346,7 @@ arpresolve(struct arpcom *ac, struct rtentry *rt, struct mbuf *m,
 	struct llinfo_arp *la;
 	struct sockaddr_dl *sdl;
 	struct mbuf *mh;
+	char addr[INET_ADDRSTRLEN];
 
 	if (m->m_flags & M_BCAST) {	/* broadcast */
 		bcopy((caddr_t)etherbroadcastaddr, (caddr_t)desten,
@@ -360,8 +361,8 @@ arpresolve(struct arpcom *ac, struct rtentry *rt, struct mbuf *m,
 		la = (struct llinfo_arp *)rt->rt_llinfo;
 		if (la == NULL)
 			log(LOG_DEBUG, "arpresolve: %s: route without link "
-			    "local address\n",
-			    inet_ntoa(satosin(dst)->sin_addr));
+			    "local address\n", inet_ntop(AF_INET,
+				&satosin(dst)->sin_addr, addr, sizeof(addr)));
 	} else {
 		if ((la = arplookup(satosin(dst)->sin_addr.s_addr, RT_REPORT, 0,
 		    ac->ac_if.if_rdomain)) != NULL)
@@ -369,7 +370,8 @@ arpresolve(struct arpcom *ac, struct rtentry *rt, struct mbuf *m,
 		else
 			log(LOG_DEBUG,
 			    "arpresolve: %s: can't allocate llinfo\n",
-			    inet_ntoa(satosin(dst)->sin_addr));
+			    inet_ntop(AF_INET, &satosin(dst)->sin_addr,
+				addr, sizeof(addr)));
 	}
 	if (la == 0 || rt == 0) {
 		m_freem(m);
@@ -545,6 +547,7 @@ in_arpinput(struct mbuf *m)
 #if NCARP > 0
 	u_int8_t *ether_shost = NULL;
 #endif
+	char addr[INET_ADDRSTRLEN];
 	int op;
 
 	ea = mtod(m, struct ether_arp *);
@@ -618,14 +621,16 @@ in_arpinput(struct mbuf *m)
 	if (ETHER_IS_MULTICAST(&ea->arp_sha[0]))
 		if (!bcmp((caddr_t)ea->arp_sha, (caddr_t)etherbroadcastaddr,
 		    sizeof (ea->arp_sha))) {
+			inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
 			log(LOG_ERR, "arp: ether address is broadcast for "
-			    "IP address %s!\n", inet_ntoa(isaddr));
+			    "IP address %s!\n", addr);
 			goto out;
 		}
 	if (myaddr.s_addr && isaddr.s_addr == myaddr.s_addr) {
+		inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
 		log(LOG_ERR,
 		   "duplicate IP address %s sent from ethernet address %s\n",
-		   inet_ntoa(isaddr), ether_sprintf(ea->arp_sha));
+		   addr, ether_sprintf(ea->arp_sha));
 		itaddr = myaddr;
 		goto reply;
 	}
@@ -635,10 +640,10 @@ in_arpinput(struct mbuf *m)
 		if (sdl->sdl_alen) {
 		    if (bcmp(ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
 			if (rt->rt_flags & RTF_PERMANENT_ARP) {
+				inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
 				log(LOG_WARNING,
 				   "arp: attempt to overwrite permanent "
-				   "entry for %s by %s on %s\n",
-				   inet_ntoa(isaddr),
+				   "entry for %s by %s on %s\n", addr,
 				   ether_sprintf(ea->arp_sha),
 				   ac->ac_if.if_xname);
 				goto out;
@@ -646,18 +651,22 @@ in_arpinput(struct mbuf *m)
 #if NCARP > 0
 				if (ac->ac_if.if_type != IFT_CARP)
 #endif
+				{
+					inet_ntop(AF_INET, &isaddr,
+					    addr, sizeof(addr));
 					log(LOG_WARNING,
 					   "arp: attempt to overwrite entry for"
-					   " %s on %s by %s on %s\n",
-					   inet_ntoa(isaddr),
+					   " %s on %s by %s on %s\n", addr,
 					   rt->rt_ifp->if_xname,
 					   ether_sprintf(ea->arp_sha),
 					   ac->ac_if.if_xname);
+				}
 				goto out;
 			} else {
+				inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
 				log(LOG_INFO,
 				   "arp info overwritten for %s by %s on %s\n",
-				   inet_ntoa(isaddr),
+				   addr,
 				   ether_sprintf(ea->arp_sha),
 				   ac->ac_if.if_xname);
 				rt->rt_expire = 1; /* no longer static */
@@ -675,10 +684,11 @@ in_arpinput(struct mbuf *m)
 		    ac->ac_if.if_carpdev == rt->rt_ifp) &&
 #endif
 		    1) {
+			inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
 			log(LOG_WARNING,
 			    "arp: attempt to add entry for %s "
-			    "on %s by %s on %s\n",
-			    inet_ntoa(isaddr), rt->rt_ifp->if_xname,
+			    "on %s by %s on %s\n", addr,
+			    rt->rt_ifp->if_xname,
 			    ether_sprintf(ea->arp_sha),
 			    ac->ac_if.if_xname);
 			goto out;

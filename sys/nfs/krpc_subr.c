@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.21 2013/08/27 03:32:12 deraadt Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.22 2013/11/11 09:15:35 mpi Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -215,6 +215,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	struct uio auio;
 	int error, rcvflg, timo, secs, len;
 	static u_int32_t xid = 0;
+	char addr[INET_ADDRSTRLEN];
 	int *ip;
 	struct timeval tv;
 
@@ -356,7 +357,8 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 			timo++;
 		else
 			printf("RPC timeout for server %s (0x%x) prog %u\n",
-			    inet_ntoa(sin->sin_addr),
+			    inet_ntop(AF_INET, &sin->sin_addr,
+				addr, sizeof(addr)),
 			    ntohl(sin->sin_addr.s_addr), prog);
 
 		/*

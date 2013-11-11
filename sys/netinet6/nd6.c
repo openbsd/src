@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.104 2013/10/28 12:33:32 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.105 2013/11/11 09:15:35 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -692,10 +692,12 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp)
 			if ((e = rtrequest1(RTM_ADD, &info, RTP_CONNECTED,
 			    &rt, ifp->if_rdomain)) != 0) {
 #if 0
+				char ip[INET6_ADDRSTRLEN];
 				log(LOG_ERR,
 				    "nd6_lookup: failed to add route for a "
 				    "neighbor(%s), errno=%d\n",
-				    ip6_sprintf(addr6), e);
+				    inet_ntop(AF_INET6, addr6, ip, sizeof(ip)),
+				    e);
 #endif
 				return (NULL);
 			}
@@ -726,9 +728,10 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp)
 	    rt->rt_gateway->sa_family != AF_LINK || rt->rt_llinfo == NULL ||
 	    (ifp && rt->rt_ifa->ifa_ifp != ifp)) {
 		if (create) {
+			char addr[INET6_ADDRSTRLEN];
 			nd6log((LOG_DEBUG,
 			    "nd6_lookup: failed to lookup %s (if = %s)\n",
-			    ip6_sprintf(addr6),
+			    inet_ntop(AF_INET6, addr6, addr, sizeof(addr)),
 			    ifp ? ifp->if_xname : "unspec"));
 		}
 		return (NULL);
@@ -1186,9 +1189,12 @@ nd6_rtrequest(int req, struct rtentry *rt)
 				llsol.s6_addr8[12] = 0xff;
 
 				if (in6_addmulti(&llsol, ifp, &error)) {
+					char addr[INET6_ADDRSTRLEN];
 					nd6log((LOG_ERR, "%s: failed to join "
 					    "%s (errno=%d)\n", ifp->if_xname,
-					    ip6_sprintf(&llsol), error));
+					    inet_ntop(AF_INET6, &llsol,
+						addr, sizeof(addr)),
+					    error));
 				}
 			}
 		}
@@ -1426,8 +1432,10 @@ fail:
 	 */
 
 	if (llchange) {
+		char addr[INET6_ADDRSTRLEN];
 		log(LOG_INFO, "ndp info overwritten for %s by %s on %s\n",
-		    ip6_sprintf(from), ether_sprintf(lladdr), ifp->if_xname);
+		    inet_ntop(AF_INET6, from, addr, sizeof(addr)),
+		    ether_sprintf(lladdr), ifp->if_xname);
 	}
 	if (lladdr) {		/* (3-5) and (7) */
 		/*
@@ -1696,10 +1704,14 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 	if (!ln || !rt) {
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0 &&
 		    !(ND_IFINFO(ifp)->flags & ND6_IFF_PERFORMNUD)) {
+			char addr[INET6_ADDRSTRLEN];
+
 			log(LOG_DEBUG,
 			    "nd6_output: can't allocate llinfo for %s "
 			    "(ln=%p, rt=%p)\n",
-			    ip6_sprintf(&dst->sin6_addr), ln, rt);
+			    inet_ntop(AF_INET6, &dst->sin6_addr,
+				addr, sizeof(addr)),
+			    ln, rt);
 			senderr(EIO);	/* XXX: good error? */
 		}
 
@@ -1852,9 +1864,12 @@ nd6_storelladdr(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 	}
 	sdl = SDL(rt->rt_gateway);
 	if (sdl->sdl_alen == 0) {
+		char addr[INET6_ADDRSTRLEN];
 		/* this should be impossible, but we bark here for debugging */
 		printf("nd6_storelladdr: sdl_alen == 0, dst=%s, if=%s\n",
-		    ip6_sprintf(&satosin6(dst)->sin6_addr), ifp->if_xname);
+		    inet_ntop(AF_INET6, &satosin6(dst)->sin6_addr,
+			addr, sizeof(addr)),
+		    ifp->if_xname);
 		m_freem(m);
 		return (0);
 	}
@@ -1982,6 +1997,7 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 		struct sockaddr_in6 *sin6;
 		struct sockaddr_in6 *s6;
 		struct nd_pfxrouter *pfr;
+		char addr[INET6_ADDRSTRLEN];
 
 		if (oldp && p + 1 <= pe)
 		{
@@ -1993,7 +2009,8 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 			    &p->prefix.sin6_addr, pr->ndpr_ifp) != 0)
 				log(LOG_ERR,
 				    "scope error in prefix list (%s)\n",
-				    ip6_sprintf(&p->prefix.sin6_addr));
+				    inet_ntop(AF_INET6, &p->prefix.sin6_addr,
+					addr, sizeof(addr)));
 			p->raflags = pr->ndpr_raf;
 			p->prefixlen = pr->ndpr_plen;
 			p->vltime = pr->ndpr_vltime;

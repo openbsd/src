@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.561 2013/10/29 04:23:16 dlg Exp $
+#	$OpenBSD: files,v 1.562 2013/11/11 09:15:34 mpi Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -820,6 +820,7 @@ file netinet/in.c			inet
 file netinet/in_pcb.c			inet
 file netinet/in_proto.c			inet
 file netinet/inet_nat64.c		inet & pf
+file netinet/inet_ntop.c		inet | inet6
 file netinet/ip_divert.c		inet & pf
 file netinet/ip_icmp.c			inet
 file netinet/ip_id.c			inet

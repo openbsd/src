@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.108 2013/10/21 12:27:11 deraadt Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.109 2013/11/11 09:15:34 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -323,11 +323,12 @@ icmp_input(struct mbuf *m, ...)
 	icmplen = ntohs(ip->ip_len) - hlen;
 #ifdef ICMPPRINTFS
 	if (icmpprintfs) {
-		char buf[4 * sizeof("123")];
+		char dst[INET_ADDRSTRLEN], src[INET_ADDRSTRLEN];
 
-		strlcpy(buf, inet_ntoa(ip->ip_dst), sizeof buf);
-		printf("icmp_input from %s to %s, len %d\n",
-		    inet_ntoa(ip->ip_src), buf, icmplen);
+		inet_ntop(AF_INET, &ip->ip_dst, dst, sizeof(dst));
+		inet_ntop(AF_INET, &ip->ip_src, src, sizeof(src));
+
+		printf("icmp_input from %s to %s, len %d\n", src, dst, icmplen);
 	}
 #endif
 	if (icmplen < ICMP_MINLEN) {
@@ -614,12 +615,13 @@ reflect:
 
 #ifdef	ICMPPRINTFS
 		if (icmpprintfs) {
-			char buf[4 * sizeof("123")];
-			strlcpy(buf, inet_ntoa(icp->icmp_ip.ip_dst),
-			    sizeof buf);
+			char gw[INET_ADDRSTRLEN], dst[INET_ADDRSTRLEN];
 
-			printf("redirect dst %s to %s\n",
-			    buf, inet_ntoa(icp->icmp_gwaddr));
+			inet_ntop(AF_INET, &icp->icmp_gwaddr, gw, sizeof(gw));
+			inet_ntop(AF_INET, &icp->icmp_ip.ip_dst,
+			    dst, sizeof(dst));
+
+			printf("redirect dst %s to %s\n", dst, gw);
 		}
 #endif
 
@@ -842,11 +844,12 @@ icmp_send(struct mbuf *m, struct mbuf *opts)
 	icp->icmp_cksum = in4_cksum(m, 0, hlen, ntohs(ip->ip_len) - hlen);
 #ifdef ICMPPRINTFS
 	if (icmpprintfs) {
-		char buf[4 * sizeof("123")];
+		char dst[INET_ADDRSTRLEN], src[INET_ADDRSTRLEN];
 
-		strlcpy(buf, inet_ntoa(ip->ip_dst), sizeof buf);
-		printf("icmp_send dst %s src %s\n",
-		    buf, inet_ntoa(ip->ip_src));
+		inet_ntop(AF_INET, &ip->ip_dst, dst, sizeof(dst));
+		inet_ntop(AF_INET, &ip->ip_src, src, sizeof(src));
+
+		printf("icmp_send dst %s src %s\n", dst, src);
 	}
 #endif
 	(void)ip_output(m, opts, (void *)NULL, 0, (void *)NULL, (void *)NULL);

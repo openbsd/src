@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.62 2013/10/17 16:27:46 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.63 2013/11/11 09:15:35 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -105,6 +105,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 #endif
 #endif /* IPSEC */
 	u_int rtableid = 0;
+	char src6[INET6_ADDRSTRLEN], dst6[INET6_ADDRSTRLEN];
 
 	/*
 	 * Do not forward packets to multicast destination (should be handled
@@ -119,11 +120,12 @@ ip6_forward(struct mbuf *m, int srcrt)
 		/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard) */
 		if (ip6_log_time + ip6_log_interval < time_second) {
 			ip6_log_time = time_second;
+			inet_ntop(AF_INET6, &ip6->ip6_src, src6, sizeof(src6));
+			inet_ntop(AF_INET6, &ip6->ip6_dst, dst6, sizeof(dst6));
 			log(LOG_DEBUG,
 			    "cannot forward "
 			    "from %s to %s nxt %d received on %s\n",
-			    ip6_sprintf(&ip6->ip6_src),
-			    ip6_sprintf(&ip6->ip6_dst),
+			    src6, dst6,
 			    ip6->ip6_nxt,
 			    m->m_pkthdr.rcvif->if_xname);
 		}
@@ -307,11 +309,12 @@ reroute:
 
 		if (ip6_log_time + ip6_log_interval < time_second) {
 			ip6_log_time = time_second;
+			inet_ntop(AF_INET6, &ip6->ip6_src, src6, sizeof(src6));
+			inet_ntop(AF_INET6, &ip6->ip6_dst, dst6, sizeof(dst6));
 			log(LOG_DEBUG,
 			    "cannot forward "
 			    "src %s, dst %s, nxt %d, rcvif %s, outif %s\n",
-			    ip6_sprintf(&ip6->ip6_src),
-			    ip6_sprintf(&ip6->ip6_dst),
+			    src6, dst6,
 			    ip6->ip6_nxt,
 			    m->m_pkthdr.rcvif->if_xname, rt->rt_ifp->if_xname);
 		}
@@ -432,10 +435,11 @@ reroute:
 		if ((rt->rt_flags & (RTF_BLACKHOLE|RTF_REJECT)) == 0)
 #endif
 		{
+			inet_ntop(AF_INET6, &ip6->ip6_src, src6, sizeof(src6));
+			inet_ntop(AF_INET6, &ip6->ip6_dst, dst6, sizeof(dst6));
 			printf("ip6_forward: outgoing interface is loopback. "
 			       "src %s, dst %s, nxt %d, rcvif %s, outif %s\n",
-			       ip6_sprintf(&ip6->ip6_src),
-			       ip6_sprintf(&ip6->ip6_dst),
+			       src6, dst6,
 			       ip6->ip6_nxt, m->m_pkthdr.rcvif->if_xname,
 			       rt->rt_ifp->if_xname);
 		}

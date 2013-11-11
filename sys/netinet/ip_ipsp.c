@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.191 2013/10/24 11:31:43 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.192 2013/11/11 09:15:34 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -981,34 +981,28 @@ tdb_add_inp(struct tdb *tdb, struct inpcb *inp, int inout)
 }
 
 #ifdef ENCDEBUG
-/* Return a printable string for the IPv4 address. */
-char *
-inet_ntoa4(struct in_addr ina)
-{
-	static char buf[4][4 * sizeof "123" + 4];
-	unsigned char *ucp = (unsigned char *) &ina;
-	static int i = 3;
-
-	i = (i + 1) % 4;
-	snprintf(buf[i], sizeof buf[0], "%d.%d.%d.%d",
-	    ucp[0] & 0xff, ucp[1] & 0xff,
-	    ucp[2] & 0xff, ucp[3] & 0xff);
-	return (buf[i]);
-}
-
 /* Return a printable string for the address. */
-char *
+const char *
 ipsp_address(union sockaddr_union sa)
 {
+	static char ipspbuf[4][INET6_ADDRSTRLEN];
+	static int ipspround = 0;
+	char *buf;
+
+	ipspround = (ipspround + 1) % 4;
+	buf = ipspbuf[ipspround];
+
 	switch (sa.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
-		return inet_ntoa4(sa.sin.sin_addr);
+		return inet_ntop(AF_INET, &sa.sin.sin_addr,
+		    buf, INET_ADDRSTRLEN);
 #endif /* INET */
 
 #ifdef INET6
 	case AF_INET6:
-		return ip6_sprintf(&sa.sin6.sin6_addr);
+		return inet_ntop(AF_INET6, &sa.sin6.sin6_addr,
+		    buf, INET6_ADDRSTRLEN);
 #endif /* INET6 */
 
 	default:

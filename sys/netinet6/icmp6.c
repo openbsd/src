@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.135 2013/10/24 11:20:18 deraadt Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.136 2013/11/11 09:15:35 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -391,6 +391,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	int off = *offp;
 	int icmp6len = m->m_pkthdr.len - *offp;
 	int code, sum, noff;
+	char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
 	icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_msg);
 
@@ -419,7 +420,8 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	if ((sum = in6_cksum(m, IPPROTO_ICMPV6, off, icmp6len)) != 0) {
 		nd6log((LOG_ERR,
 		    "ICMP6 checksum error(%d|%x) %s\n",
-		    icmp6->icmp6_type, sum, ip6_sprintf(&ip6->ip6_src)));
+		    icmp6->icmp6_type, sum,
+		    inet_ntop(AF_INET6, &ip6->ip6_src, src, sizeof(src))));
 		icmp6stat.icp6s_checksum++;
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
 		goto freeit;
@@ -823,8 +825,9 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	default:
 		nd6log((LOG_DEBUG,
 		    "icmp6_input: unknown type %d(src=%s, dst=%s, ifid=%d)\n",
-		    icmp6->icmp6_type, ip6_sprintf(&ip6->ip6_src),
-		    ip6_sprintf(&ip6->ip6_dst),
+		    icmp6->icmp6_type,
+		    inet_ntop(AF_INET6, &ip6->ip6_src, src, sizeof(src)),
+		    inet_ntop(AF_INET6, &ip6->ip6_dst, dst, sizeof(dst)),
 		    m->m_pkthdr.rcvif ? m->m_pkthdr.rcvif->if_index : 0));
 		if (icmp6->icmp6_type < ICMP6_ECHO_REQUEST) {
 			/* ICMPv6 error: MUST deliver it by spec... */
@@ -2060,6 +2063,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	if (src == 0) {
 		int e;
 		struct route_in6 ro;
+		char addr[INET6_ADDRSTRLEN];
 
 		/*
 		 * This case matches to multicasts, our anycast, or unicasts
@@ -2076,7 +2080,9 @@ icmp6_reflect(struct mbuf *m, size_t off)
 			nd6log((LOG_DEBUG,
 			    "icmp6_reflect: source can't be determined: "
 			    "dst=%s, error=%d\n",
-			    ip6_sprintf(&sa6_src.sin6_addr), e));
+			    inet_ntop(AF_INET6, &sa6_src.sin6_addr,
+				addr, sizeof(addr)),
+			    e));
 			goto bad;
 		}
 	}
@@ -2137,9 +2143,15 @@ const char *
 icmp6_redirect_diag(struct in6_addr *src6, struct in6_addr *dst6, 
     struct in6_addr *tgt6)
 {
-	static char buf[1024];
+	static char buf[1024]; /* XXX */
+	char src[INET6_ADDRSTRLEN];
+	char dst[INET6_ADDRSTRLEN];
+	char tgt[INET6_ADDRSTRLEN];
+
 	snprintf(buf, sizeof(buf), "(src=%s dst=%s tgt=%s)",
-		 ip6_sprintf(src6), ip6_sprintf(dst6), ip6_sprintf(tgt6));
+		 inet_ntop(AF_INET6, src6, src, sizeof(src)),
+		 inet_ntop(AF_INET6, dst6, dst, sizeof(dst)),
+		 inet_ntop(AF_INET6, tgt6, tgt, sizeof(tgt)));
 	return buf;
 }
 
@@ -2159,6 +2171,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	struct in6_addr redtgt6;
 	struct in6_addr reddst6;
 	union nd_opts ndopts;
+	char addr[INET6_ADDRSTRLEN];
 
 	if (!ifp)
 		return;
@@ -2186,14 +2199,16 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	if (!IN6_IS_ADDR_LINKLOCAL(&src6)) {
 		nd6log((LOG_ERR,
 			"ICMP6 redirect sent from %s rejected; "
-			"must be from linklocal\n", ip6_sprintf(&src6)));
+			"must be from linklocal\n",
+			inet_ntop(AF_INET6, &src6, addr, sizeof(addr))));
 		goto bad;
 	}
 	if (ip6->ip6_hlim != 255) {
 		nd6log((LOG_ERR,
 			"ICMP6 redirect sent from %s rejected; "
 			"hlim=%d (must be 255)\n",
-			ip6_sprintf(&src6), ip6->ip6_hlim));
+			inet_ntop(AF_INET6, &src6, addr, sizeof(addr)),
+			ip6->ip6_hlim));
 		goto bad;
 	}
 	if (IN6_IS_ADDR_MULTICAST(&reddst6)) {
@@ -2230,7 +2245,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 				"ICMP6 redirect rejected; "
 				"not equal to gw-for-src=%s (must be same): "
 				"%s\n",
-				ip6_sprintf(gw6),
+				inet_ntop(AF_INET6, gw6, addr, sizeof(addr)),
 				icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
 			RTFREE(rt);
 			goto bad;
@@ -2279,7 +2294,8 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		nd6log((LOG_INFO,
 			"icmp6_redirect_input: lladdrlen mismatch for %s "
 			"(if %d, icmp6 packet %d): %s\n",
-			ip6_sprintf(&redtgt6), ifp->if_addrlen, lladdrlen - 2,
+			inet_ntop(AF_INET6, &redtgt6, addr, sizeof(addr)),
+			ifp->if_addrlen, lladdrlen - 2,
 			icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
 		goto bad;
 	}

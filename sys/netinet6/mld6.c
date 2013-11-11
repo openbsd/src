@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.31 2013/10/24 11:20:18 deraadt Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.32 2013/11/11 09:15:35 mpi Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -178,10 +178,12 @@ mld6_input(struct mbuf *m, int off)
 	ip6 = mtod(m, struct ip6_hdr *);/* in case mpullup */
 	if (!IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_src)) {
 #if 0
+		char src[INET6_ADDRSTRLEN], grp[INET6_ADDRSTRLEN];
+
 		log(LOG_ERR,
 		    "mld_input: src %s is not link-local (grp=%s)\n",
-		    ip6_sprintf(&ip6->ip6_src),
-		    ip6_sprintf(&mldh->mld_addr));
+		    inet_ntop(AF_INET6, &ip6->ip6_src, src, sizeof(src)),
+		    inet_ntop(AF_INET6, &mldh->mld_addr, grp, sizeof(grp)));
 #endif
 		/*
 		 * spec (RFC2710) does not explicitly

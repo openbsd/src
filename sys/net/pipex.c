@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.47 2013/10/24 11:31:43 mpi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.48 2013/11/11 09:15:34 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -652,9 +652,12 @@ pipex_lookup_by_ip_address(struct in_addr addr)
 	    &pipex_in4, &pipex_in4mask, &pipex_rd_head4);
 
 #ifdef PIPEX_DEBUG
-	if (session == NULL)
+	if (session == NULL) {
+		char buf[INET_ADDRSTRLEN];
+
 		PIPEX_DBG((NULL, LOG_DEBUG, "<%s> session not found (addr=%s)",
-		    __func__, inet_ntoa(addr)));
+		    __func__, inet_ntop(AF_INET, &addr, buf, sizeof(buf))));
+	}
 #endif
 
 	return (session);
@@ -1146,9 +1149,11 @@ pipex_ip_input(struct mbuf *m0, struct pipex_session *session)
 		ip = mtod(m0, struct ip *);
 		if ((ip->ip_src.s_addr & session->ip_netmask.sin_addr.s_addr) !=
 		    session->ip_address.sin_addr.s_addr) {
+			char src[INET_ADDRSTRLEN];
+
 			pipex_session_log(session, LOG_DEBUG,
 			    "ip packet discarded by ingress filter (src %s)",
-			    inet_ntoa(ip->ip_src));
+			    inet_ntop(AF_INET, &ip->ip_src, src, sizeof(src)));
 			goto drop;
 		}
 	}
