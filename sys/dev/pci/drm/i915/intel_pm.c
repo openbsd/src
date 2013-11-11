@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.12 2013/10/30 02:11:33 dlg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.13 2013/11/11 02:59:01 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -3771,6 +3771,11 @@ static void haswell_init_clock_gating(struct drm_device *dev)
 			GEN7_WA_FOR_GEN7_L3_CONTROL);
 	I915_WRITE(GEN7_L3_CHICKEN_MODE_REGISTER,
 			GEN7_WA_L3_CHICKEN_MODE);
+
+	/* L3 caching of data atomics doesn't work -- disable it. */
+	I915_WRITE(HSW_SCRATCH1, HSW_SCRATCH1_L3_DATA_ATOMICS_DISABLE);
+	I915_WRITE(HSW_ROW_CHICKEN3,
+		   _MASKED_BIT_ENABLE(HSW_ROW_CHICKEN3_L3_GLOBAL_ATOMICS_DISABLE));
 
 	/* This is required by WaCatErrorRejectionIssue */
 	I915_WRITE(GEN7_SQ_CHICKEN_MBCUNIT_CONFIG,

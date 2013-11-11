@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_reg.h,v 1.3 2013/11/11 02:43:20 jsg Exp $	*/
+/*	$OpenBSD: i915_reg.h,v 1.4 2013/11/11 02:59:01 jsg Exp $	*/
 /* Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  *
@@ -3489,6 +3489,9 @@
 #define GEN7_SQ_CHICKEN_MBCUNIT_CONFIG		0x9030
 #define  GEN7_SQ_CHICKEN_MBCUNIT_SQINTMOB	(1<<11)
 
+#define HSW_SCRATCH1				0xb038
+#define  HSW_SCRATCH1_L3_DATA_ATOMICS_DISABLE	(1<<27)
+
 #define HSW_FUSE_STRAP		0x42014
 #define  HSW_CDCLK_LIMIT	(1 << 24)
 
@@ -4324,6 +4327,9 @@
 #define GEN7_ROW_CHICKEN2		0xe4f4
 #define GEN7_ROW_CHICKEN2_GT2		0xf4f4
 #define   DOP_CLOCK_GATING_DISABLE	(1<<0)
+
+#define HSW_ROW_CHICKEN3		0xe49c
+#define  HSW_ROW_CHICKEN3_L3_GLOBAL_ATOMICS_DISABLE    (1 << 6)
 
 #define G4X_AUD_VID_DID			0x62020
 #define INTEL_AUDIO_DEVCL		0x808629FB
