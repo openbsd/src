@@ -1,0 +1,21 @@
+.TH RS-LONELYRE 1 "November 10, 2013" OpenBSD
+.SH NAME
+RS-lonelyRE \- closing RS that is not open
+.SH DESCRIPTION
+.RS
+indented text
+.RE
+.TP 6n
+tag
+body
+.RE
+out of body
+.IP tag 6n
+body
+.RE
+out of body
+.HP 6n
+Here we need some text that is long enough to span more than one
+output line, such that we can see the hanging indentation.
+.RE
+out of body

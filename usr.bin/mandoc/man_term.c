@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.91 2013/10/17 20:51:30 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.92 2013/11/11 00:35:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -675,6 +675,7 @@ post_IP(DECL_ARGS)
 		break;
 	case (MAN_BODY):
 		term_newln(p);
+		p->offset = mt->offset;
 		break;
 	default:
 		break;
@@ -762,6 +763,7 @@ post_TP(DECL_ARGS)
 		break;
 	case (MAN_BODY):
 		term_newln(p);
+		p->offset = mt->offset;
 		break;
 	default:
 		break;

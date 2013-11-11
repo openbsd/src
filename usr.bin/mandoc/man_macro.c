@@ -1,7 +1,7 @@
-/*	$Id: man_macro.c,v 1.39 2013/10/17 20:51:30 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.40 2013/11/11 00:35:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2012 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -294,10 +294,12 @@ blk_close(MACRO_PROT_ARGS)
 		if (ntok == nn->tok && MAN_BLOCK == nn->type)
 			break;
 
-	if (NULL != nn)
-		man_unscope(man, nn, MANDOCERR_MAX);
-	else
+	if (NULL == nn) {
 		man_pmsg(man, line, ppos, MANDOCERR_NOSCOPE);
+		if ( ! rew_scope(MAN_BLOCK, man, MAN_PP))
+			return(0);
+	} else 
+		man_unscope(man, nn, MANDOCERR_MAX);
 
 	return(1);
 }
