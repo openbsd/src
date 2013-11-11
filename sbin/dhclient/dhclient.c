@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.265 2013/11/11 17:16:11 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.266 2013/11/11 18:43:45 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -651,7 +651,6 @@ void
 state_selecting(void)
 {
 	struct client_lease *lp, *picked;
-	time_t cur_time;
 
 	cancel_timeout();
 
@@ -676,8 +675,6 @@ state_selecting(void)
 		state_panic();
 		return;
 	}
-
-	time(&cur_time);
 
 	/* If it was a BOOTREPLY, we can just take the lease right now. */
 	if (!picked->options[DHO_DHCP_MESSAGE_TYPE].len) {
@@ -717,7 +714,8 @@ state_selecting(void)
 
 	client->destination.s_addr = INADDR_BROADCAST;
 	client->state = S_REQUESTING;
-	client->first_sending = cur_time;
+	client->first_sending = time(NULL);
+
 	client->interval = 0;
 
 	/*
