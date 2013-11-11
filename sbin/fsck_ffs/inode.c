@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.40 2013/11/03 02:22:07 krw Exp $	*/
+/*	$OpenBSD: inode.c,v 1.41 2013/11/11 18:51:06 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -239,7 +239,7 @@ chkrange(daddr_t blk, int cnt)
 	if (cnt > sblock.fs_frag ||
 	    fragnum(&sblock, blk) + cnt > sblock.fs_frag) {
 		if (debug)
-			printf("bad size: blk %lld, offset %lld, size %lld\n",
+			printf("bad size: blk %lld, offset %lld, size %d\n",
 			    (long long)blk, (long long)fragnum(&sblock, blk),
 			    cnt);
 		return (1);
