@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.122 2013/10/22 18:15:58 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.123 2013/11/11 21:00:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -241,12 +241,10 @@ char *parse_string(FILE *);
 int parse_ip_addr(FILE *, struct in_addr *);
 void parse_hardware_param(FILE *, struct hardware *);
 void parse_lease_time(FILE *, time_t *);
-int parse_numeric_aggregate(FILE *, unsigned char *, int, int, int);
 void convert_num(unsigned char *, char *, int, int);
 time_t parse_date(FILE *);
 
 /* bpf.c */
-int if_register_bpf(void);
 void if_register_send(void);
 void if_register_receive(void);
 ssize_t send_packet(struct in_addr, struct sockaddr_in *, struct hardware *);
@@ -255,7 +253,6 @@ ssize_t receive_packet(struct sockaddr_in *, struct hardware *);
 /* dispatch.c */
 void discover_interface(void);
 void dispatch(void);
-void got_one(void);
 void set_timeout(time_t, void (*)(void));
 void set_timeout_interval(time_t, void (*)(void));
 void cancel_timeout(void);
@@ -280,7 +277,6 @@ void putShort(unsigned char *, int);
 /* dhclient.c */
 extern char *path_dhclient_conf;
 extern char *path_dhclient_db;
-extern char path_option_db[MAXPATHLEN];
 extern int log_perror;
 extern int routefd;
 
@@ -288,33 +284,9 @@ void dhcpoffer(struct in_addr, struct option_data *, char *);
 void dhcpack(struct in_addr, struct option_data *, char *);
 void dhcpnak(struct in_addr, struct option_data *, char *);
 
-void send_discover(void);
-void send_request(void);
-void send_decline(void);
-
-void state_reboot(void);
-void state_init(void);
-void state_selecting(void);
-void state_bound(void);
-void state_panic(void);
-
-void bind_lease(void);
-
-void make_discover(struct client_lease *);
-void make_request(struct client_lease *);
-void make_decline(struct client_lease *);
-
 void free_client_lease(struct client_lease *);
-void rewrite_client_leases(void);
-void rewrite_option_db(struct client_lease *, struct client_lease *);
-char *lease_as_string(char *, struct client_lease *);
-
-struct client_lease *packet_to_lease(struct in_addr, struct option_data *);
-void go_daemon(void);
 
 void routehandler(void);
-
-void sendhup(struct client_lease *);
 
 /* packet.c */
 void assemble_hw_header(unsigned char *, int *, struct hardware *);
@@ -327,14 +299,6 @@ ssize_t decode_udp_ip_header(unsigned char *, int, struct sockaddr_in *,
 /* clparse.c */
 int read_client_conf(void);
 void read_client_leases(void);
-void parse_client_statement(FILE *);
-int parse_X(FILE *, u_int8_t *, int);
-int parse_option_list(FILE *, u_int8_t *, size_t);
-void parse_interface_declaration(FILE *);
-void parse_client_lease_statement(FILE *, int);
-void parse_client_lease_declaration(FILE *, struct client_lease *);
-int parse_option_decl(FILE *, struct option_data *);
-void parse_reject_statement(FILE *);
 
 /* kroute.c */
 void delete_addresses(char *, int);
@@ -345,3 +309,7 @@ void add_address(char *, int, struct in_addr, struct in_addr);
 void flush_routes(char *, int);
 
 void add_route(int, struct in_addr, struct in_addr, struct in_addr, int, int);
+
+void sendhup(struct client_lease *);
+
+int resolv_conf_priority(int);

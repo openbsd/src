@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.28 2013/05/02 16:35:27 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.29 2013/11/11 21:00:01 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -50,6 +50,8 @@
 #include <netinet/udp.h>
 
 #define BPF_FORMAT "/dev/bpf%d"
+
+int if_register_bpf(void);
 
 /*
  * Called by get_interface_list for each interface that's discovered.

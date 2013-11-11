@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.24 2013/05/02 16:35:27 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.25 2013/11/11 21:00:01 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -42,6 +42,8 @@
 
 #include "dhcpd.h"
 #include "dhctoken.h"
+
+int parse_numeric_aggregate(FILE *, unsigned char *, int, int, int);
 
 /*
  * Skip to the semicolon ending the current statement.   If we encounter

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.61 2013/10/22 18:15:58 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.62 2013/11/11 21:00:01 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -42,6 +42,15 @@
 
 #include "dhcpd.h"
 #include "dhctoken.h"
+
+void parse_client_statement(FILE *);
+int parse_X(FILE *, u_int8_t *, int);
+int parse_option_list(FILE *, u_int8_t *, size_t);
+void parse_interface_declaration(FILE *);
+void parse_client_lease_statement(FILE *, int);
+void parse_client_lease_declaration(FILE *, struct client_lease *);
+int parse_option_decl(FILE *, struct option_data *);
+void parse_reject_statement(FILE *);
 
 /*
  * client-conf-file :== client-declarations EOF

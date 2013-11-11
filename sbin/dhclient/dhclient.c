@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.266 2013/11/11 18:43:45 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.267 2013/11/11 21:00:01 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -93,7 +93,6 @@ struct imsgbuf *unpriv_ibuf;
 void		 sighdlr(int);
 int		 findproto(char *, int);
 struct sockaddr	*get_ifa(char *, int);
-int		 resolv_conf_priority(int);
 void		 usage(void);
 int		 res_hnok(const char *dn);
 char		*option_as_string(unsigned int code, unsigned char *data, int len);
@@ -113,6 +112,29 @@ void add_static_routes(int, struct option_data *);
 void add_classless_static_routes(int, struct option_data *);
 
 int compare_lease(struct client_lease *, struct client_lease *);
+
+void state_reboot(void);
+void state_init(void);
+void state_selecting(void);
+void state_bound(void);
+void state_panic(void);
+
+void send_discover(void);
+void send_request(void);
+void send_decline(void);
+
+void bind_lease(void);
+
+void make_discover(struct client_lease *);
+void make_request(struct client_lease *);
+void make_decline(struct client_lease *);
+
+void rewrite_client_leases(void);
+void rewrite_option_db(struct client_lease *, struct client_lease *);
+char *lease_as_string(char *, struct client_lease *);
+
+struct client_lease *packet_to_lease(struct in_addr, struct option_data *);
+void go_daemon(void);
 
 #define	ROUNDUP(a) \
 	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))

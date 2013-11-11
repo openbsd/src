@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.81 2013/07/06 01:12:20 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.82 2013/11/11 21:00:01 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -49,6 +49,8 @@
 #include <poll.h>
 
 struct dhcp_timeout timeout;
+
+void got_one(void);
 
 /*
  * Use getifaddrs() to get a list of all the attached interfaces.  Find
