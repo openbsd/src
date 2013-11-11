@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.10 2013/10/31 01:59:33 deraadt Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.11 2013/11/11 23:07:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -29,14 +29,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <sys/proc.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/sysctl.h>
 #include <sys/types.h>
+#include <sys/resource.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
