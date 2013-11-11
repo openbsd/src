@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.115 2013/11/04 21:02:58 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.116 2013/11/11 23:07:52 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -38,6 +38,7 @@
 #include <err.h>
 #include <fcntl.h>
 #include <util.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -816,7 +817,9 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 	struct bioc_createraid	create;
 	struct sr_crypto_kdfinfo kdfinfo;
 	struct sr_crypto_kdf_pbkdf2 kdfhint;
+#ifdef AOE
 	struct sr_aoe_config	*sac;
+#endif /* AOE */
 	struct stat		sb;
 	int			rv, no_dev, fd;
 	dev_t			*dt;
