@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_context.c,v 1.3 2013/11/07 05:33:05 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_context.c,v 1.4 2013/11/11 02:43:20 jsg Exp $	*/
 /*
  * Copyright © 2011-2012 Intel Corporation
  *
@@ -117,7 +117,7 @@ static int get_context_size(struct drm_device *dev)
 	case 7:
 		reg = I915_READ(GEN7_CXT_SIZE);
 		if (IS_HASWELL(dev))
-			ret = HSW_CXT_TOTAL_SIZE(reg) * 64;
+			ret = HSW_CXT_TOTAL_SIZE;
 		else
 			ret = GEN7_CXT_TOTAL_SIZE(reg) * 64;
 		break;
