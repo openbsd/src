@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.h,v 1.5 2013/10/07 18:15:22 syl Exp $ */
+/* $OpenBSD: fusebuf.h,v 1.6 2013/11/11 14:18:49 stsp Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon
  * Copyright (c) 2013 Martin Pieuchot
@@ -25,13 +25,13 @@
 #define	FUSEBUFSIZE	(sizeof(struct fusebuf))
 #define FUSEBUFMAXSIZE	(4096*1024)
 
-/* header at beginning of each fusebuf(9): */
+/* header at beginning of each fusebuf: */
 struct fb_hdr {
 	SIMPLEQ_ENTRY(fusebuf)	fh_next;	/* next buffer in chain */
 	size_t			fh_len;		/* Amount of data */
 	uint32_t		fh_err;		/* Err code to pass back */
 	int			fh_type;	/* type of data */
-	ino_t			fh_ino;		/* Inode of this fusebuf(9) */
+	ino_t			fh_ino;		/* Inode of this fusebuf */
 	uint64_t		fh_uuid;	/* Uuid to track the answer */
 };
 
@@ -52,7 +52,7 @@ struct fb_io {
  *
  * F_databuf can be superior to FUSELEN for fusefs_read, fusefs_writes and
  * fusefs_readdir. If it is the case the transfer will be split in N
- * fusebuf(9) with a changing offset in FD_io.
+ * fusebuf with a changing offset in FD_io.
  *
  * When the userland file system answers to this operation it uses
  * the same ID (fh_uuid).
@@ -86,7 +86,7 @@ struct fusebuf {
 
 /*
  * Macros for type conversion
- * fbtod(fb,t) -	convert fusebuf(9) pointer to data pointer of correct
+ * fbtod(fb,t) -	convert fusebuf pointer to data pointer of correct
  *			type
  */
 #define	fbtod(fb,t)	((t)((fb)->fb_dat))
@@ -100,7 +100,7 @@ struct fusebuf {
 #define FUSE_FATTR_MTIME	(1 << 5)
 #define FUSE_FATTR_FH		(1 << 6)
 
-/* fusebuf(9) types */
+/* fusebuf types */
 #define	FBT_LOOKUP	0
 #define FBT_GETATTR	1
 #define FBT_SETATTR	2
@@ -133,7 +133,7 @@ struct fusebuf {
 /* The node ID of the root inode */
 #define FUSE_ROOT_ID	1
 
-/* fusebuf(9) prototypes */
+/* fusebuf prototypes */
 struct	fusebuf *fb_setup(size_t, ino_t, int, struct proc *);
 int	fb_queue(dev_t, struct fusebuf *);
 void	fb_delete(struct fusebuf *);
