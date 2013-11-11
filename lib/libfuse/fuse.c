@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.16 2013/11/09 13:39:37 stsp Exp $ */
+/* $OpenBSD: fuse.c,v 1.17 2013/11/11 14:23:01 stsp Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -61,7 +61,7 @@ fuse_loop(struct fuse *fuse)
 	struct fuse_context ctx;
 	struct fb_ioctl_xch ioexch;
 	struct kevent ev;
-	int error = 0;
+	ssize_t n;
 	int ret;
 
 	fuse->fc->kq = kqueue();
@@ -76,8 +76,8 @@ fuse_loop(struct fuse *fuse)
 		if (ret == -1)
 			DPERROR(__func__);
 		else if (ret > 0) {
-			error = read(fuse->fc->fd, &fbuf, sizeof(fbuf));
-			if (error != sizeof(fbuf)) {
+			n = read(fuse->fc->fd, &fbuf, sizeof(fbuf));
+			if (n != sizeof(fbuf)) {
 				fprintf(stderr, "%s: bad fusebuf read\n",
 				    __func__);
 				return (-1);
@@ -113,7 +113,7 @@ fuse_loop(struct fuse *fuse)
 				return (ret);
 			}
 
-			ret = write(fuse->fc->fd, &fbuf, sizeof(fbuf));
+			n = write(fuse->fc->fd, &fbuf, sizeof(fbuf));
 			if (fbuf.fb_len) {
 				if (fbuf.fb_dat == NULL) {
 					fprintf(stderr, "%s: fb_dat is Null\n",
@@ -132,7 +132,7 @@ fuse_loop(struct fuse *fuse)
 			}
 			ictx = NULL;
 
-			if (ret != FUSEBUFSIZE) {
+			if (n != FUSEBUFSIZE) {
 				errno = EINVAL;
 				return (-1);
 			}
