@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.95 2013/06/19 08:59:02 espie Exp $
+.\" $OpenBSD: ports.7,v 1.96 2013/11/11 21:14:29 zhuk Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: June 19 2013 $
+.Dd $Mdocdate: November 11 2013 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -195,7 +195,7 @@ is non empty, then
 .Ev REPORT_PROBLEM
 will default to:
 .Bd -literal -offset indent
-echo $$d ($@) >$${REPORT_PROBLEM_LOGFILE}
+echo $$subdir ($@) >>$${REPORT_PROBLEM_LOGFILE}
 .Ed
 .Pp
 That is, any failure will append the faulty directory name together
