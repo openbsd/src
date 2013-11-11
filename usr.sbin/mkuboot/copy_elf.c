@@ -1,4 +1,4 @@
-/*      $OpenBSD: copy_elf.c,v 1.2 2013/11/01 14:47:47 syl Exp $       */
+/*      $OpenBSD: copy_elf.c,v 1.3 2013/11/11 07:56:02 patrick Exp $       */
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -102,7 +102,8 @@ ELFNAME(copy_elf)(int ifd, const char *iname, int ofd, const char *oname,
 	vaddr += roundup((sizeof(Elf_Ehdr) + sz), sizeof(Elf_Addr));
 	off = roundup((sizeof(Elf_Ehdr) + sz), sizeof(Elf_Addr));
 	for (i = 0; i < letoh16(elf.e_shnum); i++) {
-		if (esym == 0 && elfoff2h(shp[i].sh_flags) & SHF_WRITE)
+		if (esym == 0 && elfoff2h(shp[i].sh_flags) & SHF_WRITE &&
+		    elfoff2h(shp[i].sh_flags) & SHF_ALLOC)
 			esym = elfoff2h(shp[i].sh_addr);
 
 		if (letoh32(shp[i].sh_type) == SHT_SYMTAB ||
@@ -238,21 +239,33 @@ ELFNAME(copy_elf)(int ifd, const char *iname, int ofd, const char *oname,
 	crc = copy_mem(&elf, ofd, oname, crc, ih, sizeof(elf));
 	crc = copy_mem(wshp, ofd, oname, crc, ih, sz);
 	off = sizeof(elf) + sz;
+	vaddr += sizeof(elf) + sz;
 
 	off = roundup((sizeof(Elf_Ehdr) + sz), sizeof(Elf_Addr));
 	for (i = 0; i < letoh16(elf.e_shnum); i++) {
 		if (letoh32(shp[i].sh_type) == SHT_SYMTAB ||
 		    letoh32(shp[i].sh_type) == SHT_STRTAB) {
+			Elf_Addr align;
 			/* data is at shp[i].sh_offset of len shp[i].sh_size */
 			if (lseek(ifd, elfoff2h(shp[i].sh_offset), SEEK_SET)
 			    == -1)
 				err(1, "%s", iname);
 
 			off += elfoff2h(shp[i].sh_size);
+			vaddr += elfoff2h(shp[i].sh_size);
 			crc = copy_data(ifd, iname, ofd, oname, crc, ih,
 			    elfoff2h(shp[i].sh_size));
+			align = roundup(elfoff2h(shp[i].sh_size),
+			    sizeof(Elf_Addr)) - elfoff2h(shp[i].sh_size);
+			if (align != 0) {
+				vaddr += align;
+				crc = fill_zeroes(ofd, oname, crc, ih, align);
+			}
 		}
 	}
+
+	if (vaddr != esymval)
+		warnx("esymval and vaddr mismatch %lx %lx\n", esymval, vaddr);
 
 	return crc;
 }
