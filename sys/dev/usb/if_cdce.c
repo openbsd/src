@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.55 2013/08/07 01:06:41 bluhm Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.56 2013/11/11 12:38:16 pirofti Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -394,7 +394,7 @@ cdce_start(struct ifnet *ifp)
 	struct cdce_softc	*sc = ifp->if_softc;
 	struct mbuf		*m_head = NULL;
 
-	if (sc->cdce_dying || (ifp->if_flags & IFF_OACTIVE))
+	if (usbd_is_dying(sc->cdce_udev) || (ifp->if_flags & IFF_OACTIVE))
 		return;
 
 	IFQ_POLL(&ifp->if_snd, m_head);
@@ -529,7 +529,7 @@ cdce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct ifaddr		*ifa = (struct ifaddr *)data;
 	int			 s, error = 0;
 
-	if (sc->cdce_dying)
+	if (usbd_is_dying(sc->cdce_udev))
 		return (EIO);
 
 	s = splnet();
@@ -573,7 +573,7 @@ cdce_watchdog(struct ifnet *ifp)
 {
 	struct cdce_softc	*sc = ifp->if_softc;
 
-	if (sc->cdce_dying)
+	if (usbd_is_dying(sc->cdce_udev))
 		return;
 
 	ifp->if_oerrors++;
@@ -750,7 +750,7 @@ cdce_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	int			 total_len = 0;
 	int			 s;
 
-	if (sc->cdce_dying || !(ifp->if_flags & IFF_RUNNING))
+	if (usbd_is_dying(sc->cdce_udev) || !(ifp->if_flags & IFF_RUNNING))
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
@@ -765,7 +765,7 @@ cdce_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		if (sc->cdce_rxeof_errors++ > 10) {
 			printf("%s: too many errors, disabling\n",
 			    sc->cdce_dev.dv_xname);
-			sc->cdce_dying = 1;
+			usbd_deactivate(sc->cdce_udev);
 			return;
 		}
 		goto done;
@@ -826,7 +826,7 @@ cdce_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	usbd_status		 err;
 	int			 s;
 
-	if (sc->cdce_dying)
+	if (usbd_is_dying(sc->cdce_udev))
 		return;
 
 	s = splnet();
@@ -873,7 +873,7 @@ cdce_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		sc->cdce_dying = 1;
+		usbd_deactivate(sc->cdce_udev);
 		break;
 	}
 	return (0);

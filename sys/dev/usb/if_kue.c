@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.69 2013/11/05 10:20:04 mpi Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.70 2013/11/11 12:38:39 pirofti Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -591,7 +591,7 @@ kue_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		sc->kue_dying = 1;
+		usbd_deactivate(sc->kue_udev);
 		break;
 	}
 	return (0);
@@ -708,7 +708,7 @@ kue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	DPRINTFN(10,("%s: %s: enter status=%d\n", sc->kue_dev.dv_xname,
 		     __func__, status));
 
-	if (sc->kue_dying)
+	if (usbd_is_dying(sc->kue_udev))
 		return;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
@@ -806,7 +806,7 @@ kue_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
 
-	if (sc->kue_dying)
+	if (usbd_is_dying(sc->kue_udev))
 		return;
 
 	s = splnet();
@@ -894,7 +894,7 @@ kue_start(struct ifnet *ifp)
 
 	DPRINTFN(10,("%s: %s: enter\n", sc->kue_dev.dv_xname,__func__));
 
-	if (sc->kue_dying)
+	if (usbd_is_dying(sc->kue_udev))
 		return;
 
 	if (ifp->if_flags & IFF_OACTIVE)
@@ -1045,7 +1045,7 @@ kue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	DPRINTFN(5,("%s: %s: enter\n", sc->kue_dev.dv_xname,__func__));
 
-	if (sc->kue_dying)
+	if (usbd_is_dying(sc->kue_udev))
 		return (EIO);
 
 #ifdef DIAGNOSTIC
@@ -1119,7 +1119,7 @@ kue_watchdog(struct ifnet *ifp)
 
 	DPRINTFN(5,("%s: %s: enter\n", sc->kue_dev.dv_xname,__func__));
 
-	if (sc->kue_dying)
+	if (usbd_is_dying(sc->kue_udev))
 		return;
 
 	ifp->if_oerrors++;
