@@ -26,7 +26,6 @@
 #include "dev.h"
 #include "midi.h"
 #include "wav.h"
-#include "opt.h"
 #ifdef DEBUG
 #include "dbg.h"
 #endif

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.102 2012/12/03 15:35:25 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.103 2013/11/12 06:47:34 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 3 2012 $
+.Dd $Mdocdate: November 12 2013 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -31,7 +31,6 @@
 .Op Fl h Ar fmt
 .Op Fl i Ar file
 .Op Fl j Ar flag
-.Op Fl m Ar mode
 .Op Fl o Ar file
 .Op Fl q Ar port
 .Op Fl r Ar rate
@@ -144,28 +143,7 @@ to any number of MIDI outputs, similarly to a hardware MIDI thru box.
 Only MIDI ports
 .Pq Fl q
 and MIDI files
-.Po
-.Fl io
-preceded by
-.Fl m Ar midi
-.Pc
 can be attached to it.
-.It Fl m Ar mode
-Set the stream mode.
-Valid modes are
-.Ar play ,
-.Ar rec ,
-.Ar mon ,
-and
-.Ar midi ,
-corresponding to playback, recording, monitoring and MIDI control.
-A monitoring stream is a fake recording stream corresponding to
-the mix of all playback streams.
-Multiple modes can be specified, separated by commas,
-but the same stream cannot be used for both recording and monitoring.
-The default is
-.Ar play , Ns Ar rec , Ns Ar midi
-(i.e. full-duplex with MIDI control enabled).
 .It Fl n
 Create a loopback pseudo audio device.
 Send input streams

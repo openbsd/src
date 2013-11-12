@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.141 2012/12/03 15:35:25 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.142 2013/11/12 06:47:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -39,30 +39,13 @@
 #include "aproc.h"
 #include "conf.h"
 #include "dev.h"
-#include "listen.h"
 #include "midi.h"
-#include "opt.h"
 #include "wav.h"
 #ifdef DEBUG
 #include "dbg.h"
 #endif
 
-/*
- * unprivileged user name
- */
-#ifndef SNDIO_USER
-#define SNDIO_USER	"_sndio"
-#endif
-
-/*
- * priority when run as root
- */
-#ifndef SNDIO_PRIO
-#define SNDIO_PRIO	(-20)
-#endif
-
 #define PROG_AUCAT	"aucat"
-#define PROG_SNDIOD	"sndiod"
 
 /*
  * sample rate if no ``-r'' is used
@@ -85,28 +68,15 @@
 #define DEFAULT_BUFSZ	7860
 #endif
 
-/*
- * default device in server mode
- */
-#ifndef DEFAULT_DEV
-#define DEFAULT_DEV "rsnd/0"
-#endif
-
 #ifdef DEBUG
 volatile sig_atomic_t debug_level = 1;
 #endif
 volatile sig_atomic_t quit_flag = 0;
 
-char aucat_usage[] = "usage: " PROG_AUCAT " [-dMn] "
+char aucat_usage[] = "usage: " PROG_AUCAT " [-dMn]\n\t"
     "[-C min:max] [-c min:max] [-e enc] [-f device]\n\t"
-    "[-h fmt] [-i file] [-j flag] [-m mode] [-o file] [-q port]\n\t"
+    "[-h fmt] [-i file] [-j flag] [-o file] [-q port]\n\t"
     "[-r rate] [-t mode] [-v volume] [-w flag] [-x policy]\n";
-
-char sndiod_usage[] = "usage: " PROG_SNDIOD " [-dM] [-a flag] [-b nframes] "
-    "[-C min:max] [-c min:max] [-e enc]\n\t"
-    "[-f device] [-j flag] [-L addr] [-m mode] [-q port] [-r rate]\n\t"
-    "[-s name] [-t mode] [-U unit] [-v volume] [-w flag] [-x policy]\n\t"
-    "[-z nframes]\n";
 
 /*
  * SIGINT handler, it raises the quit flag. If the flag is already set,
@@ -219,34 +189,6 @@ opt_xrun(void)
 	errx(1, "%s: bad underrun/overrun policy", optarg);
 }
 
-unsigned int
-opt_mode(void)
-{
-	unsigned int mode = 0;
-	char *p = optarg;
-	size_t len;
-
-	for (p = optarg; *p != '\0'; p++) {
-		len = strcspn(p, ",");
-		if (strncmp("play", p, len) == 0) {
-			mode |= MODE_PLAY;
-		} else if (strncmp("rec", p, len) == 0) {
-			mode |= MODE_REC;
-		} else if (strncmp("mon", p, len) == 0) {
-			mode |= MODE_MON;
-		} else if (strncmp("midi", p, len) == 0) {
-			mode |= MODE_MIDIMASK;
-		} else 
-			errx(1, "%s: bad mode", optarg);
-		p += len;
-		if (*p == '\0')
-			break;
-	}
-	if (mode == 0)
-		errx(1, "empty mode");
-	return mode;
-}
-
 void
 setsig(void)
 {
@@ -294,46 +236,6 @@ unsetsig(void)
 		err(1, "unsetsig(int): sigaction failed\n");
 }
 
-void
-getbasepath(char *base, size_t size)
-{
-	uid_t uid;
-	struct stat sb;
-	mode_t mask;
-
-	uid = geteuid();
-	if (uid == 0) {
-		mask = 022;
-		snprintf(base, PATH_MAX, "/tmp/aucat");
-	} else {
-		mask = 077;
-		snprintf(base, PATH_MAX, "/tmp/aucat-%u", uid);
-	}
-	if (mkdir(base, 0777 & ~mask) < 0) {
-		if (errno != EEXIST)
-			err(1, "mkdir(\"%s\")", base);
-	}
-	if (stat(base, &sb) < 0)
-		err(1, "stat(\"%s\")", base);
-	if (sb.st_uid != uid || (sb.st_mode & mask) != 0)
-		errx(1, "%s has wrong permissions", base);
-}
-
-void
-privdrop(void)
-{
-	struct passwd *pw;
-
-	if ((pw = getpwnam(SNDIO_USER)) == NULL)
-		errx(1, "unknown user %s", SNDIO_USER);
-	if (setpriority(PRIO_PROCESS, 0, SNDIO_PRIO) < 0)
-		err(1, "setpriority");
-	if (setgroups(1, &pw->pw_gid) ||
-	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		err(1, "cannot drop privileges");
-}
-
 struct dev *
 mkdev(char *path, int mode, int bufsz, int round, int hold, int autovol)
 {
@@ -364,37 +266,15 @@ mkdev(char *path, int mode, int bufsz, int round, int hold, int autovol)
 	return d;
 }
 
-struct opt *
-mkopt(char *path, struct dev *d, struct aparams *rpar, struct aparams *ppar,
-    int mode, int vol, int mmc, int join)
-{
-	struct opt *o;
-
-	if (d->reqmode & MODE_LOOP)
-		errx(1, "%s: can't attach to loopback", path);
-	if (d->reqmode & MODE_THRU)
-		mode = MODE_MIDIMASK;
-	if (!rpar->rate)
-		ppar->rate = rpar->rate = DEFAULT_RATE;
-	o = opt_new(path, d, rpar, ppar, MIDI_TO_ADATA(vol), mmc, join, mode);
-	if (o == NULL)
-		errx(1, "%s: couldn't create subdev", path);
-	dev_adjpar(d, o->mode, rpar, ppar);
-	return o;
-}
-
 int
 main(int argc, char **argv)
 {
-	char *prog, *optstr, *usagestr;
 	int c, background, unit, active;
-	char base[PATH_MAX], path[PATH_MAX];
 	unsigned int mode, hdr, xrun, rate, join, mmc, vol;
 	unsigned int hold, autovol, bufsz, round;
 	const char *str;
 	struct aparams ppar, rpar;
 	struct dev *d, *dnext;
-	struct listen *l;
 	struct wav *w;
 
 	/*
@@ -421,23 +301,8 @@ main(int argc, char **argv)
 	setsig();
 	filelist_init();
 
-	prog = strrchr(argv[0], '/');
-	if (prog == NULL)
-		prog = argv[0];
-	else
-		prog++;
-	if (strcmp(prog, PROG_AUCAT) == 0) {
- 		optstr = "a:b:c:C:de:f:h:i:j:L:m:Mno:q:r:s:t:U:v:w:x:z:";
-		usagestr = aucat_usage;
-		hold = 1;
-	} else if (strcmp(prog, PROG_SNDIOD) == 0) {
-		optstr = "a:b:c:C:de:f:j:L:m:Mq:r:s:t:U:v:w:x:z:";
-		usagestr = sndiod_usage;
-		background = 1;
-	} else
-		errx(1, "%s: can't determine program to run", prog);
-
-	while ((c = getopt(argc, argv, optstr)) != -1) {
+	while ((c = getopt(argc, argv,
+		    "a:b:c:C:de:f:h:i:j:Mno:q:r:t:v:w:x:z:")) != -1) {
 		switch (c) {
 		case 'd':
 #ifdef DEBUG
@@ -445,19 +310,6 @@ main(int argc, char **argv)
 				debug_level++;
 #endif
 			background = 0;
-			break;
-		case 'U':
-			if (listen_list)
-				errx(1, "-U must come before -L");
-			unit = strtonum(optarg, 0, MIDI_MAXCTL, &str);
-			if (str)
-				errx(1, "%s: unit number is %s", optarg, str);
-			break;
-		case 'L':
-			listen_new_tcp(optarg, AUCAT_PORT + unit);
-			break;
-		case 'm':
-			mode = opt_mode();
 			break;
 		case 'h':
 			hdr = opt_hdr();
@@ -510,22 +362,11 @@ main(int argc, char **argv)
 				errx(1, "%s: couldn't create stream", optarg);
 			dev_adjpar(d, w->mode, &w->hpar, NULL);
 			break;
-		case 's':
-			if ((d = dev_list) == NULL) {
-				d = mkdev(DEFAULT_DEV, 0, bufsz, round,
-				    hold, autovol);
-			}
-			mkopt(optarg, d, &rpar, &ppar, mode, vol, mmc, join);
-			/* XXX: set device rate, if never set */
-			break;
 		case 'q':
 			d = mkdev(NULL, mode, bufsz, round, 1, autovol);
 			if (!devctl_add(d, optarg, MODE_MIDIMASK))
 				errx(1, "%s: can't open port", optarg);
 			d->reqmode |= MODE_MIDIMASK;
-			break;
-		case 'a':
-			hold = opt_onoff();
 			break;
 		case 'w':
 			autovol = opt_onoff();
@@ -550,41 +391,27 @@ main(int argc, char **argv)
 			mkdev("midithru", MODE_THRU, 0, 0, hold, 0);
 			break;
 		default:
-			fputs(usagestr, stderr);
+			fputs(aucat_usage, stderr);
 			exit(1);
 		}
 	}
 	argc -= optind;
 	argv += optind;
 	if (argc > 0) {
-		fputs(usagestr, stderr);
+		fputs(aucat_usage, stderr);
 		exit(1);
 	}
 	if (wav_list) {
-		if (opt_list || listen_list)
-			errx(1, "-io not allowed in server mode");
 		if ((d = dev_list) && d->next)
-			errx(1, "only one device allowed in non-server mode");
+			errx(1, "only one device allowed");
 		if ((d->reqmode & MODE_THRU) && d->ctl_list == NULL) {
 			if (!devctl_add(d, "default", MODE_MIDIMASK))
 				errx(1, "%s: can't open port", optarg);
 			d->reqmode |= MODE_MIDIMASK;
 		}
 	} else {
-		if (dev_list == NULL)
-			mkdev(DEFAULT_DEV, 0, bufsz, round, hold, autovol);
-		for (d = dev_list; d != NULL; d = d->next) {
-			if (opt_byname("default", d->num))
-				continue;
-			mkopt("default", d, &rpar, &ppar, mode, vol, mmc, join);
-		}
-	}
-	if (opt_list) {
-		getbasepath(base, sizeof(base));
-		snprintf(path, PATH_MAX, "%s/%s%u", base, AUCAT_PATH, unit);
-		listen_new_un(path);
-		if (geteuid() == 0)
-			privdrop();
+		fputs(aucat_usage, stderr);
+		exit(1);
 	}
 	for (w = wav_list; w != NULL; w = w->next) {
 		if (!wav_init(w))
@@ -595,18 +422,6 @@ main(int argc, char **argv)
 			exit(1);
 		if (d->autostart && (d->mode & MODE_AUDIOMASK))
 			dev_mmcstart(d);
-	}
-	for (l = listen_list; l != NULL; l = l->next) {
-		if (!listen_init(l))
-			exit(1);
-	}
-	if (background) {
-#ifdef DEBUG
-		debug_level = 0;
-		dbg_flush();
-#endif
-		if (daemon(0, 0) < 0)
-			err(1, "daemon");
 	}
 
 	/*
@@ -625,14 +440,12 @@ main(int argc, char **argv)
 		}
 		if (dev_list == NULL)
 			break;
-		if (!opt_list && !active)
+		if (!active)
 			break;
 		if (!file_poll())
 			break;
 	}
   fatal:
-	while (listen_list != NULL)
-		file_close(&listen_list->file);
 
 	/*
 	 * give a chance to drain
@@ -645,10 +458,6 @@ main(int argc, char **argv)
 	while (dev_list)
 		dev_del(dev_list);
 	filelist_done();
-	if (opt_list) {
-		if (rmdir(base) < 0 && errno != ENOTEMPTY && errno != EPERM)
-			warn("rmdir(\"%s\")", base);
-	}
 	unsetsig();
 	return 0;
 }
