@@ -1,4 +1,4 @@
-/* $OpenBSD: command.c,v 1.12 2012/07/15 06:55:28 nicm Exp $ */
+/* $OpenBSD: command.c,v 1.13 2013/11/12 13:54:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -36,6 +36,8 @@ void	pipe_command(void);
 void	connect_command(void);
 void	send_file(void);
 void	send_xmodem(void);
+void	set_speed(void);
+void	start_record(void);
 
 void
 pipe_command(void)

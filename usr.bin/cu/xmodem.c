@@ -1,4 +1,4 @@
-/* $OpenBSD: xmodem.c,v 1.5 2013/07/20 19:27:47 naddy Exp $ */
+/* $OpenBSD: xmodem.c,v 1.6 2013/11/12 13:54:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -38,6 +38,11 @@
 #define XMODEM_C   '\103'
 
 volatile sig_atomic_t xmodem_stop;
+
+void		xmodem_signal(int sig);
+uint16_t	xmodem_crc16(const u_char *buf, size_t len);
+int		xmodem_read(char *c);
+int		xmodem_write(const u_char *buf, size_t len);
 
 void
 xmodem_signal(int sig)

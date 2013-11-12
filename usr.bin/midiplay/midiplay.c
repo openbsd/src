@@ -1,4 +1,4 @@
-/*	$OpenBSD: midiplay.c,v 1.15 2012/01/26 04:17:04 lum Exp $	*/
+/*	$OpenBSD: midiplay.c,v 1.16 2013/11/12 13:54:51 deraadt Exp $	*/
 /*	$NetBSD: midiplay.c,v 1.8 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -85,6 +85,7 @@ void midireset(void);
 u_long getvar(struct track *);
 void playfile(FILE *, char *);
 void playdata(u_char *, u_int, char *);
+void sigalrm(int);
 int main(int argc, char **argv);
 
 extern char *__progname;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.29 2013/05/23 01:33:08 tedu Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.30 2013/11/12 13:54:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -51,6 +51,7 @@ extern char *__progname;
 char buffer[_PASSWORD_LEN];
 
 void	usage(void);
+int	ideal_rounds(void);
 void	print_passwd(char *, int, void *);
 
 void
@@ -68,7 +69,7 @@ usage(void)
  * We are aiming for something that takes between 0.25 and 0.5 seconds.
  */
 int
-ideal_rounds()
+ideal_rounds(void)
 {
 	clock_t before, after;
 	int r = 8;
