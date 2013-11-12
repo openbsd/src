@@ -1,4 +1,4 @@
-/*	$OpenBSD: readdir_r.c,v 1.5 2013/11/06 22:26:14 schwarze Exp $ */
+/*	$OpenBSD: readdir_r.c,v 1.6 2013/11/12 20:19:23 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +34,6 @@
 #include <string.h>
 #include "telldir.h"
 #include "thread_private.h"
-
-int _readdir_unlocked(DIR *, struct dirent **);
 
 int
 readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result)
