@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip.c,v 1.12 2009/04/10 18:19:41 ratchov Exp $	*/
+/*	$OpenBSD: rip.c,v 1.13 2013/11/12 17:57:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Alexey Vatchenko <av@bsdua.org>
@@ -38,6 +38,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "extern.h"
 
 extern int fd;
 extern int msf;
@@ -84,7 +86,7 @@ static int	write_sector(int, u_char *, u_int32_t);
 
 int		read_data_sector(u_int32_t, u_char *, u_int32_t);
 
-struct track_info {
+struct track {
 	int fd;		/* descriptor of output file */
 	struct sio_hdl *hdl; /* sndio handle */
 	struct sio_par par; /* sndio parameters */
@@ -95,15 +97,15 @@ struct track_info {
 	u_int32_t end_lba;	/* starting address of the next track */
 };
 
-int	read_track(struct track_info *);
+int	read_track(struct track *);
 
-int	rip_next_track(struct track_info *);
-int	play_next_track(struct track_info *);
+int	rip_next_track(struct track *);
+int	play_next_track(struct track *);
 
 static int	rip_tracks_loop(struct track_pair *tp, u_int n_tracks,
-		    int (*next_track)(struct track_info *));
+		    int (*next_track)(struct track *));
 
-int	rip_tracks(char *arg, int (*next_track)(struct track_info *),
+int	rip_tracks(char *arg, int (*next_track)(struct track *),
 	    int issorted);
 
 /* Next-Track function exit codes */
@@ -358,7 +360,7 @@ read_data_sector(u_int32_t lba, u_char *sec, u_int32_t secsize)
 }
 
 int
-read_track(struct track_info *ti)
+read_track(struct track *ti)
 {
 	struct timeval tv, otv, atv;
 	u_int32_t i, blksize, n_sec;
@@ -418,7 +420,7 @@ read_track(struct track_info *ti)
 }
 
 int
-rip_next_track(struct track_info *info)
+rip_next_track(struct track *info)
 {
 	int error;
 	u_int32_t size;
@@ -449,7 +451,7 @@ rip_next_track(struct track_info *info)
 }
 
 int
-play_next_track(struct track_info *info)
+play_next_track(struct track *info)
 {
 	if (!info->isaudio)
 		return (NXTRACK_SKIP);
@@ -508,9 +510,9 @@ bad:
 
 static int
 rip_tracks_loop(struct track_pair *tp, u_int n_tracks,
-    int (*next_track)(struct track_info *))
+    int (*next_track)(struct track *))
 {
-	struct track_info info;
+	struct track info;
 	u_char trk;
 	u_int i;
 	char order;
@@ -582,7 +584,7 @@ rip_tracks_loop(struct track_pair *tp, u_int n_tracks,
 }
 
 int
-rip_tracks(char *arg, int (*next_track)(struct track_info *), int issorted)
+rip_tracks(char *arg, int (*next_track)(struct track *), int issorted)
 {
 	struct track_pair_head list;
 	struct track_pair *tp;
