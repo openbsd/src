@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.47 2013/03/03 19:11:34 guenther Exp $	*/
+/*	$OpenBSD: lex.c,v 1.48 2013/11/12 04:36:02 deraadt Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -65,6 +65,7 @@ static Lex_state *push_state_(State_info *, Lex_state *);
 static Lex_state *pop_state_(State_info *, Lex_state *);
 static char	*special_prompt_expand(char *);
 static int	dopprompt(const char *, int, const char **, int);
+int		promptlen(const char *cp, const char **spp);
 
 static int backslash_skip;
 static int ignore_backslash_newline;

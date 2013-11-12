@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.35 2011/05/05 19:51:48 krw Exp $	*/
+/*	$OpenBSD: mt.c,v 1.36 2013/11/12 04:36:02 deraadt Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -82,6 +82,11 @@ struct commands {
 void printreg(char *, u_int, char *);
 void status(struct mtget *);
 void usage(void);
+
+int		_rmtopendev(char *path, int oflags, int dflags, char **realpath);
+int		_rmtmtioctop(int fd, struct mtop *com);
+struct mtget	*_rmtstatus(int fd);
+void		_rmtclose(void);
 
 char	*host = NULL;	/* remote host (if any) */
 

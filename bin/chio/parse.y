@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2009/03/31 21:03:48 tobias Exp $ */
+/*	$OpenBSD: parse.y,v 1.15 2013/11/12 04:36:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Bob Beck <beck@openbsd.org>
@@ -51,6 +51,8 @@ int		 lookup(char *);
 int		 lgetc(int);
 int		 lungetc(int);
 int		 findeol(void);
+char		*parse_tapedev(const char *, const char *, int);
+struct changer	*new_changer(char *);
 
 struct changer {
 	TAILQ_ENTRY(changer)	  entry;
