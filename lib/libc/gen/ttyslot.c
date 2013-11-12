@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyslot.c,v 1.7 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: ttyslot.c,v 1.8 2013/11/12 06:07:12 deraadt Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 int
 ttyslot(void)
