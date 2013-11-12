@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.38 2013/06/18 21:06:03 miod Exp $	*/
+/*	$OpenBSD: fs.h,v 1.39 2013/11/12 14:20:52 krw Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -454,7 +454,8 @@ struct ocg {
 
 /*
  * Turn file system block numbers into disk block addresses.
- * This maps file system blocks to device size blocks.
+ * This maps file system blocks to DEV_BSIZE (a.k.a. 512-byte) size disk
+ * blocks.
  */
 #define fsbtodb(fs, b)	((b) << (fs)->fs_fsbtodb)
 #define	dbtofsb(fs, b)	((b) >> (fs)->fs_fsbtodb)
