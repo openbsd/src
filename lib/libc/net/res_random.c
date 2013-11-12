@@ -1,4 +1,4 @@
-/* $OpenBSD: res_random.c,v 1.19 2013/04/17 03:07:40 deraadt Exp $ */
+/* $OpenBSD: res_random.c,v 1.20 2013/11/12 07:00:24 deraadt Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -130,7 +130,7 @@ pmod(u_int16_t gen, u_int16_t exp, u_int16_t mod)
 /*
  * 15-bit permutation based on Luby-Rackoff block cipher
  */
-u_int
+static u_int
 permute15(u_int in)
 {
 	int i;
