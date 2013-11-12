@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor_fdpass.c,v 1.5 2012/04/04 17:24:49 deraadt Exp $	*/
+/*	$OpenBSD: monitor_fdpass.c,v 1.6 2013/11/12 04:44:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthieu Herrb
@@ -26,6 +26,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include "monitor.h"
 
 void
 send_fd(int sock, int fd)
