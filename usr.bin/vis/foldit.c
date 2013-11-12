@@ -1,4 +1,4 @@
-/*	$OpenBSD: foldit.c,v 1.6 2013/11/12 13:54:51 deraadt Exp $	*/
+/*	$OpenBSD: foldit.c,v 1.7 2013/11/12 22:51:18 deraadt Exp $	*/
 /*	$NetBSD: foldit.c,v 1.4 1994/12/20 16:13:02 jtc Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@ again:
 			col = 0;
 			break;
 		case '\t':
-			col = col + 8 &~ 07;
+			col = (col + 8) & ~07;
 			break;
 		case '\b':
 			col = col ? col - 1 : 0;
