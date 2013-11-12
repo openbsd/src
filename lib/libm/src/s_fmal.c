@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fmal.c,v 1.2 2012/12/05 23:20:04 deraadt Exp $	*/
+/*	$OpenBSD: s_fmal.c,v 1.3 2013/11/12 19:00:38 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Schultz <das@FreeBSD.ORG>
@@ -86,7 +86,7 @@ fmal(long double x, long double y, long double z)
 		case FE_TONEAREST:
 			return (x * y);
 		case FE_TOWARDZERO:
-			if (x > 0.0 ^ y < 0.0 ^ z < 0.0)
+			if ((x > 0.0) ^ (y < 0.0) ^ (z < 0.0))
 				return (x * y);
 			feholdexcept(&env);
 			r = x * y;
@@ -122,17 +122,17 @@ fmal(long double x, long double y, long double z)
 		case FE_TONEAREST:
 			return (z);
 		case FE_TOWARDZERO:
-			if (x > 0.0 ^ y < 0.0 ^ z < 0.0)
+			if ((x > 0.0) ^ (y < 0.0) ^ (z < 0.0))
 				return (z);
 			else
 				return (nextafterl(z, 0));
 		case FE_DOWNWARD:
-			if (x > 0.0 ^ y < 0.0)
+			if ((x > 0.0) ^ (y < 0.0))
 				return (z);
 			else
 				return (nextafterl(z, -INFINITY));
 		default:	/* FE_UPWARD */
-			if (x > 0.0 ^ y < 0.0)
+			if ((x > 0.0) ^ (y < 0.0))
 				return (nextafterl(z, INFINITY));
 			else
 				return (z);
