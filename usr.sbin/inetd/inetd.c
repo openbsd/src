@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.135 2013/04/19 18:03:16 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.136 2013/11/12 19:44:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -289,6 +289,12 @@ int	dg_broadcast(struct in_addr *in);
 
 #define NUMINT	(sizeof(intab) / sizeof(struct inent))
 char	*CONFIG = _PATH_INETDCONF;
+
+void		fd_grow(fd_set **fdsp, int *bytes, int fd);
+int		dg_badinput(struct sockaddr *sa);
+void		inetd_setproctitle(char *a, int s);
+void		initring(void);
+u_int32_t	machtime(void);
 
 void
 fd_grow(fd_set **fdsp, int *bytes, int fd)
