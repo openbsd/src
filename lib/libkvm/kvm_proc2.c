@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.16 2013/03/20 14:46:45 deraadt Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.17 2013/11/12 14:49:41 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,17 +126,18 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 
 	for (; cnt < maxcnt && p != NULL; p = LIST_NEXT(&proc, p_list)) {
 		if (KREAD(kd, (u_long)p, &proc)) {
-			_kvm_err(kd, kd->program, "can't read proc at %x", p);
+			_kvm_err(kd, kd->program, "can't read proc at %lx",
+			    (u_long)p);
 			return (-1);
 		}
 		if (KREAD(kd, (u_long)proc.p_p, &process)) {
-			_kvm_err(kd, kd->program, "can't read process at %x",
-			    proc.p_p);
+			_kvm_err(kd, kd->program, "can't read process at %lx",
+			    (u_long)proc.p_p);
 			return (-1);
 		}
 		if (KREAD(kd, (u_long)process.ps_cred, &pcred)) {
-			_kvm_err(kd, kd->program, "can't read pcred at %x",
-			    process.ps_cred);
+			_kvm_err(kd, kd->program, "can't read pcred at %lx",
+			    (u_long)process.ps_cred);
 			return (-1);
 		}
 		if ((proc.p_flag & P_THREAD) == 0)
@@ -144,44 +145,44 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 		else {
 			if (KREAD(kd, (u_long)process.ps_mainproc, &proc2)) {
 				_kvm_err(kd, kd->program,
-				    "can't read proc at %x",
-				    process.ps_mainproc);
+				    "can't read proc at %lx",
+				    (u_long)process.ps_mainproc);
 				return (-1);
 			}
 			process_pid = proc2.p_pid;
 		}
 		if (KREAD(kd, (u_long)pcred.pc_ucred, &ucred)) {
-			_kvm_err(kd, kd->program, "can't read ucred at %x",
-			    pcred.pc_ucred);
+			_kvm_err(kd, kd->program, "can't read ucred at %lx",
+			    (u_long)pcred.pc_ucred);
 			return (-1);
 		}
 		if (KREAD(kd, (u_long)process.ps_pgrp, &pgrp)) {
-			_kvm_err(kd, kd->program, "can't read pgrp at %x",
-			    process.ps_pgrp);
+			_kvm_err(kd, kd->program, "can't read pgrp at %lx",
+			    (u_long)process.ps_pgrp);
 			return (-1);
 		}
 		if (KREAD(kd, (u_long)pgrp.pg_session, &sess)) {
-			_kvm_err(kd, kd->program, "can't read session at %x",
-			    pgrp.pg_session);
+			_kvm_err(kd, kd->program, "can't read session at %lx",
+			    (u_long)pgrp.pg_session);
 			return (-1);
 		}
 		if ((process.ps_flags & PS_CONTROLT) && sess.s_ttyp != NULL &&
 		    KREAD(kd, (u_long)sess.s_ttyp, &tty)) {
-			_kvm_err(kd, kd->program,
-			    "can't read tty at %x", sess.s_ttyp);
+			_kvm_err(kd, kd->program, "can't read tty at %lx",
+			    (u_long)sess.s_ttyp);
 			return (-1);
 		}
 		if (process.ps_pptr) {
 			if (KREAD(kd, (u_long)process.ps_pptr, &process2)) {
 				_kvm_err(kd, kd->program,
-				    "can't read process at %x",
-				    process.ps_pptr);
+				    "can't read process at %lx",
+				    (u_long)process.ps_pptr);
 				return (-1);
 			}
 			if (KREAD(kd, (u_long)process2.ps_mainproc, &proc2)) {
 				_kvm_err(kd, kd->program,
-				    "can't read proc at %x",
-				    process2.ps_mainproc);
+				    "can't read proc at %lx",
+				    (u_long)process2.ps_mainproc);
 				return (-1);
 			}
 			parent_pid = proc2.p_pid;
@@ -191,13 +192,14 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 		if (sess.s_leader) {
 			if (KREAD(kd, (u_long)sess.s_leader, &process2)) {
 				_kvm_err(kd, kd->program,
-				    "can't read proc at %x", sess.s_leader);
+				    "can't read proc at %lx",
+				    (u_long)sess.s_leader);
 				return (-1);
 			}
 			if (KREAD(kd, (u_long)process2.ps_mainproc, &proc2)) {
 				_kvm_err(kd, kd->program,
-				    "can't read proc at %x",
-				    process2.ps_mainproc);
+				    "can't read proc at %lx",
+				    (u_long)process2.ps_mainproc);
 				return (-1);
 			}
 			leader_pid = proc2.p_pid;
@@ -206,8 +208,9 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 			leader_pid = 0;
 		if (proc.p_sigacts) {
 			if (KREAD(kd, (u_long)proc.p_sigacts, &sa)) {
-				_kvm_err(kd, kd->program, "can't read sigacts at %x",
-				    proc.p_sigacts);
+				_kvm_err(kd, kd->program,
+				    "can't read sigacts at %lx",
+				    (u_long)proc.p_sigacts);
 				return (-1);
 			}
 			sap = &sa;
@@ -302,8 +305,8 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 				    tty.t_pgrp != process.ps_pgrp &&
 				    KREAD(kd, (u_long)tty.t_pgrp, &pgrp)) {
 					_kvm_err(kd, kd->program,
-					    "can't read tpgrp at &x",
-					    tty.t_pgrp);
+					    "can't read tpgrp at %lx",
+					    (u_long)tty.t_pgrp);
 					return (-1);
 				}
 				kp.p_tpgid = tty.t_pgrp ? pgrp.pg_id : -1;
@@ -334,7 +337,8 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 			    tty.t_pgrp != process.ps_pgrp &&
 			    KREAD(kd, (u_long)tty.t_pgrp, &pgrp)) {
 				_kvm_err(kd, kd->program,
-				    "can't read tpgrp at &x", tty.t_pgrp);
+				    "can't read tpgrp at %lx",
+				    (u_long)tty.t_pgrp);
 				return (-1);
 			}
 			kp.p_tpgid = tty.t_pgrp ? pgrp.pg_id : -1;
