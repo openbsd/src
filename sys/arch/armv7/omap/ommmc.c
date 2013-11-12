@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.10 2013/11/06 19:03:07 syl Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.11 2013/11/12 17:51:52 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -43,6 +43,7 @@
 #define MMCHS_SYSSTATUS	0x014
 #define MMCHS_CSRE	0x024
 #define MMCHS_SYSTEST	0x028
+#define  MMCHS_SYSTEST_SDCD	(1 << 15)
 #define MMCHS_CON	0x02C
 #define  MMCHS_CON_INIT	(1<<1)
 #define  MMCHS_CON_DW8	(1<<5)
@@ -528,13 +529,9 @@ ommmc_host_maxblklen(sdmmc_chipset_handle_t sch)
 int
 ommmc_card_detect(sdmmc_chipset_handle_t sch)
 {
-#if 0
 	struct ommmc_softc *sc = sch;
-	return ISSET(HREAD4(sc, SDHC_PRESENT_STATE), SDHC_CARD_INSERTED) ?
+	return !ISSET(HREAD4(sc, MMCHS_SYSTEST), MMCHS_SYSTEST_SDCD) ?
 	    1 : 0;
-#else
-	return (1); /* XXX */
-#endif
 }
 
 /*
