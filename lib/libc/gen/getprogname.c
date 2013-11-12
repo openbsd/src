@@ -1,4 +1,4 @@
-/* $OpenBSD: getprogname.c,v 1.2 2013/05/31 21:19:01 tedu Exp $ */
+/* $OpenBSD: getprogname.c,v 1.3 2013/11/12 06:09:48 deraadt Exp $ */
 /*
  * Copyright (c) 2013 Antoine Jacoutot <ajacoutot@openbsd.org>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <stdlib.h>
 
 extern const char *__progname;
 

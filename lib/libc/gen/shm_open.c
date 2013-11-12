@@ -1,4 +1,4 @@
-/* $OpenBSD: shm_open.c,v 1.3 2013/10/25 19:42:18 tedu Exp $ */
+/* $OpenBSD: shm_open.c,v 1.4 2013/11/12 06:09:48 deraadt Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 /* SHA256_DIGEST_STRING_LENGTH includes nul */
 /* "/tmp/" + sha256 + ".shm" */
