@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_scalbnl.c,v 1.2 2012/12/05 23:20:04 deraadt Exp $	*/
+/*	$OpenBSD: s_scalbnl.c,v 1.3 2013/11/12 18:28:02 martynas Exp $	*/
 /* @(#)s_scalbn.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -65,10 +65,11 @@ scalbnl (long double x, int n)
         if (k >= 0x7fff) return huge*copysignl(huge,x); /* overflow  */
         if (k > 0) 				/* normal result */
 	    {u.bits.ext_exp = k; return u.e;}
-        if (k <= -128)
+        if (k <= -128) {
             if (n > 50000) 	/* in case integer overflow in n+k */
 		return huge*copysign(huge,x);	/*overflow*/
 	    else return tiny*copysign(tiny,x); 	/*underflow*/
+	}
         k += 128;				/* subnormal result */
 	u.bits.ext_exp = k;
         return u.e*0x1p-128;

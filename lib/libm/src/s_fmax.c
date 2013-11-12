@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fmax.c,v 1.9 2013/07/03 04:46:36 espie Exp $	*/
+/*	$OpenBSD: s_fmax.c,v 1.10 2013/11/12 18:28:02 martynas Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -38,11 +38,12 @@ fmax(double x, double y)
 		return (x);
 
 	/* Handle comparisons of signed zeroes. */
-	if (signbit(x) != signbit(y))
+	if (signbit(x) != signbit(y)) {
 		if (signbit(x))
 			return (y);
 		else
 			return (x);
+	}
 
 	return (x > y ? x : y);
 }
