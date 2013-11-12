@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.57 2013/03/13 08:51:18 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.58 2013/11/12 06:56:00 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -201,7 +201,7 @@ aucat_wdata(struct aucat *hdl, const void *buf, size_t len,
 	return n;
 }
 
-int
+static int
 aucat_mkcookie(unsigned char *cookie)
 {
 	struct stat sb;
@@ -282,7 +282,7 @@ bad_gen:
 	return 1;
 }
 
-int
+static int
 aucat_connect_tcp(struct aucat *hdl, char *host, unsigned int unit)
 {
 	int s, error, opt;
@@ -329,7 +329,7 @@ aucat_connect_tcp(struct aucat *hdl, char *host, unsigned int unit)
 	return 1;
 }
 
-int
+static int
 aucat_connect_un(struct aucat *hdl, unsigned int unit)
 {
 	struct sockaddr_un ca;
