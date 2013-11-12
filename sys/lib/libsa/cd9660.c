@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.13 2011/03/13 00:13:53 deraadt Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.14 2013/11/12 19:55:12 deraadt Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.1 1996/09/30 16:01:19 ws Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ int
 cd9660_open(char *path, struct open_file *f)
 {
 	struct file *fp = 0;
-	void *buf;
+	char *buf;
 	struct iso_primary_descriptor *vd;
 	size_t buf_size, nread, psize, dsize;
 	daddr32_t bno;
@@ -143,7 +143,7 @@ cd9660_open(char *path, struct open_file *f)
 	/* First find the volume descriptor */
 	buf = alloc(buf_size = ISO_DEFAULT_BLOCK_SIZE);
 	dp = (struct iso_directory_record *)buf;
-	vd = buf;
+	vd = (struct iso_primary_descriptor *)buf;
 	for (bno = 16;; bno++) {
 		twiddle();
 		rc = f->f_dev->dv_strategy(f->f_devdata, F_READ, cdb2devb(bno),
@@ -197,22 +197,22 @@ cd9660_open(char *path, struct open_file *f)
 		path++;
 
 	while (*path) {
-		if ((void *)pp >= buf + psize)
+		if ((char *)pp >= buf + psize)
 			break;
 		if (isonum_722(pp->parent) != parent)
 			break;
 		if (!pnmatch(path, pp)) {
-			pp = (struct ptable_ent *)((void *)pp + PTSIZE(pp));
+			pp = (struct ptable_ent *)((char *)pp + PTSIZE(pp));
 			ent++;
 			continue;
 		}
 		path += isonum_711(pp->namlen) + 1;
 		parent = ent;
 		bno = isonum_732(pp->block) + isonum_711(pp->extlen);
-		while ((void *)pp < buf + psize) {
+		while ((char *)pp < buf + psize) {
 			if (isonum_722(pp->parent) == parent)
 				break;
-			pp = (struct ptable_ent *)((void *)pp + PTSIZE(pp));
+			pp = (struct ptable_ent *)((char *)pp + PTSIZE(pp));
 			ent++;
 		}
 	}
@@ -248,7 +248,7 @@ cd9660_open(char *path, struct open_file *f)
 		if (dirmatch(path, dp))
 			break;
 		psize += isonum_711(dp->length);
-		dp = (struct iso_directory_record *)((void *)dp +
+		dp = (struct iso_directory_record *)((char *)dp +
 		    isonum_711(dp->length));
 	}
 
@@ -295,7 +295,7 @@ cd9660_read(struct open_file *f, void *start, size_t size, size_t *resid)
 	int rc = 0;
 	daddr32_t bno;
 	char buf[ISO_DEFAULT_BLOCK_SIZE];
-	char *dp;
+	char *dp, *st = start;
 	size_t nread, off;
 
 	while (size) {
@@ -306,7 +306,7 @@ cd9660_read(struct open_file *f, void *start, size_t size, size_t *resid)
 		    || size < ISO_DEFAULT_BLOCK_SIZE)
 			dp = buf;
 		else
-			dp = start;
+			dp = st;
 		twiddle();
 		rc = f->f_dev->dv_strategy(f->f_devdata, F_READ, cdb2devb(bno),
 					   ISO_DEFAULT_BLOCK_SIZE, dp, &nread);
@@ -316,7 +316,7 @@ cd9660_read(struct open_file *f, void *start, size_t size, size_t *resid)
 			return EIO;
 
 		/*
-		 * off is either 0 in the dp == start case or
+		 * off is either 0 in the dp == st case or
 		 * the offset to the interesting data into the buffer of 'buf'
 		 */
 		off = fp->off & (ISO_DEFAULT_BLOCK_SIZE - 1);
@@ -328,9 +328,9 @@ cd9660_read(struct open_file *f, void *start, size_t size, size_t *resid)
 			nread = (fp->size - fp->off);
 
 		if (dp == buf)
-			bcopy(buf + off, start, nread);
+			bcopy(buf + off, st, nread);
 
-		start += nread;
+		st += nread;
 		fp->off += nread;
 		size -= nread;
 	}
