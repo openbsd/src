@@ -1,4 +1,4 @@
-/*	$OpenBSD: getsecs.c,v 1.2 2013/10/29 21:49:07 miod Exp $	*/
+/*	$OpenBSD: getsecs.c,v 1.3 2013/11/12 13:56:23 aoyama Exp $	*/
 /*	$NetBSD: getsecs.c,v 1.1 2013/01/13 14:10:55 tsutsui Exp $	*/
 
 /*-
@@ -65,9 +65,11 @@ getsecs(void)
 		_DS_SET(DS_REGB, c);
 
 		/* update in progress; spin loop */
-		*chiptime = DS_REGA;
-		while (*chipdata & DS_REGA_UIP)
-			;
+		for (;;) {
+			*chiptime = DS_REGA;
+			if ((*chipdata & DS_REGA_UIP) == 0)
+				break;
+		}
 
 		*chiptime = DS_SEC;
 		t =  bcdtobin(*chipdata);

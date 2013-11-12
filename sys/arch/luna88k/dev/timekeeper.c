@@ -1,4 +1,4 @@
-/* $OpenBSD: timekeeper.c,v 1.7 2013/08/10 22:27:13 aoyama Exp $ */
+/* $OpenBSD: timekeeper.c,v 1.8 2013/11/12 13:56:23 aoyama Exp $ */
 /* $NetBSD: timekeeper.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
 
 /*-
@@ -252,9 +252,11 @@ dsclock_get(dev, base, dt)
 	_DS_SET(DS_REGB, c);
 
 	/* update in progress; spin loop */
-	*chiptime = DS_REGA;
-	while (*chipdata & DS_REGA_UIP)
-		;
+	for (;;) {
+		*chiptime = DS_REGA;
+		if ((*chipdata & DS_REGA_UIP) == 0)
+			break;
+	}
 
 	_DS_GET_BCD(DS_SEC,   dt->dt_sec);
 	_DS_GET_BCD(DS_MIN,   dt->dt_min);
