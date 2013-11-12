@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.38 2013/11/12 14:07:53 deraadt Exp $	*/
+/*	$OpenBSD: nm.c,v 1.39 2013/11/12 19:37:39 deraadt Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -91,6 +91,9 @@ int value(const void *, const void *);
 char *otherstring(struct nlist *);
 int (*sfunc)(const void *, const void *) = fname;
 char typeletter(struct nlist *);
+int mmbr_name(struct ar_hdr *, char **, int, int *, FILE *);
+int show_symtab(off_t, u_long, const char *, FILE *);
+int show_symdef(off_t, u_long, const char *, FILE *);
 
 /* some macros for symbol type (nlist.n_type) handling */
 #define	IS_EXTERNAL(x)		((x) & N_EXT)
@@ -401,7 +404,7 @@ show_symdef(off_t off, u_long len, const char *name, FILE *fp)
 {
 	struct ranlib *prn, *eprn;
 	struct ar_hdr ar_head;
-	void *symdef;
+	char *symdef;
 	char *strtab, *p;
 	u_long size;
 	int namelen, rval = 0;
@@ -420,7 +423,7 @@ show_symdef(off_t off, u_long len, const char *name, FILE *fp)
 	}
 
 	size = *(u_long *)symdef;
-	prn = symdef + sizeof(u_long);
+	prn = (struct ranlib *)(symdef + sizeof(u_long));
 	eprn = prn + size / sizeof(*prn);
 	strtab = symdef + sizeof(u_long) + size + sizeof(u_long);
 
@@ -602,7 +605,6 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 	struct nlist *np, *names, **snames;
 	int i, nrawnames, nnames;
 	size_t stabsize;
-	off_t staboff;
 
 	if (IS_ELF(head->elf32) &&
 	    head->elf32.e_ident[EI_CLASS] == ELFCLASS32 &&
