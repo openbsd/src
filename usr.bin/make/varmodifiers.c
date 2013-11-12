@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.33 2012/10/18 17:54:43 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.34 2013/11/12 17:44:03 deraadt Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -1464,7 +1464,7 @@ VarModifiers_Apply(char *str, const struct Name *name, SymTable *ctxt,
 		if (DEBUG(VAR))
 			printf("Applying :%c to \"%s\"\n", *tstr, str);
 
-		mod = choose_mod[*tstr];
+		mod = choose_mod[(unsigned char)*tstr];
 		arg = NULL;
 
 		if (mod != NULL && (!mod->atstart || atstart))
