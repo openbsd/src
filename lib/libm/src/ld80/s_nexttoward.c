@@ -76,6 +76,10 @@ nexttoward(double x, long double y)
 	}
 	if(hy<0x00100000) {
 	    volatile double u = x*x;		/* underflow */
+	    if(u==x) {
+		INSERT_WORDS(x,hx,lx);
+		return x;
+	    }
 	}
 	INSERT_WORDS(x,hx,lx);
 	return x;

@@ -68,6 +68,10 @@ nexttowardf(float x, long double y)
 	}
 	if(hy<0x00800000) {
 	    volatile float u = x*x;		/* underflow */
+	    if(u==x) {
+		SET_FLOAT_WORD(x,hx);
+		return x;
+	    }
 	}
 	SET_FLOAT_WORD(x,hx);
 	return x;

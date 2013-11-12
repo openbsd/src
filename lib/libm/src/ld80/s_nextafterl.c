@@ -79,6 +79,10 @@ nextafterl(long double x, long double y)
 	if(esy==0x7fff) return x+x;		/* overflow  */
 	if(esy==0) {
 	    volatile long double u = x*x;	/* underflow */
+	    if(u==x) {
+		SET_LDOUBLE_WORDS(x,esx,hx,lx);
+		return x;
+	    }
 	}
 	SET_LDOUBLE_WORDS(x,esx,hx,lx);
 	return x;
