@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.692 2013/11/12 13:20:47 rpe Exp $
+#	$OpenBSD: install.sub,v 1.693 2013/11/12 15:30:11 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -2097,28 +2097,29 @@ done
 
 # Fetch a response file from the "netboot" interface.
 get_responsefile() {
+	local _bootdev _rf=$1 _server
 	# Fetching the response file requires DHCP, even if the
 	# machine was booted via RARP and TFTP.
 	[[ -x /sbin/dhclient ]] || return
 
 	# Did we do a netboot?
-	BOOTDEV=$(get_ifdevs netboot)
-	[[ -n $BOOTDEV ]] || return
+	_bootdev=$(get_ifdevs netboot)
+	[[ -n $_bootdev ]] || return
 
 	# Take interface down killing a dhclient from a previous attempt
 	# and so free up the only bpf which exists in this installstage.
-	ifconfig $BOOTDEV down
+	ifconfig $_bootdev down
 
 	# Try to get a DHCP lease.  This whole process is done in the
 	# background, so it doesn't matter how long the timeout is.
-	dhclient $BOOTDEV
+	dhclient $_bootdev
 
 	# Get the "next-server" address?
-	SERVER=$(sed "/next-server/s/^.* \([^ ]*\);$/\1/p;d" \
-	    /var/db/dhclient.leases.$BOOTDEV 2>/dev/null)
-	[[ -n $SERVER ]] || return
+	_server=$(sed "/next-server/s/^.* \([^ ]*\);$/\1/p;d" \
+	    /var/db/dhclient.leases.$_bootdev 2>/dev/null)
+	[[ -n $_server ]] || return
 
-	ftp -o "$1" "http://$SERVER/install.conf"
+	ftp -o "$_rf" "http://$_server/install.conf"
 	[[ -s $1 ]]
 }
 
