@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.82 2012/02/10 23:05:54 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.83 2013/11/12 19:36:29 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -258,11 +258,13 @@ u_char packet[512], *outpacket;	/* last inbound (icmp) packet */
 int wait_for_reply(int, struct sockaddr_in *, struct timeval *);
 void send_probe(int, u_int8_t, int, struct sockaddr_in *);
 int packet_ok(u_char *, int, struct sockaddr_in *, int, int);
+void dump_packet(void);
 void print_exthdr(u_char *, int);
 void print(u_char *, int, struct sockaddr_in *);
 char *inetname(struct in_addr);
 void print_asn(struct in_addr);
 u_short in_cksum(u_short *, int);
+char *pr_type(u_int8_t);
 int map_tos(char *, int *);
 void usage(void);
 
@@ -1195,7 +1197,7 @@ void
 print_asn(struct in_addr in)
 {
 	const u_char *uaddr = (const u_char *)&in.s_addr;
-	int i, counter;
+	int counter;
 	struct rrsetinfo *answers = NULL;
 	char qbuf[MAXDNAME];
 
@@ -1208,7 +1210,7 @@ print_asn(struct in_addr in)
 	for (counter = 0; counter < answers->rri_nrdatas; counter++) {
 		char *p, *as = answers->rri_rdatas[counter].rdi_data;
 		as++; /* skip first byte, it contains length */
-		if (p = strchr(as,'|')) {
+		if ((p = strchr(as,'|'))) {
 			printf(counter ? ", " : " [");
 			p[-1] = 0;
 			printf("AS%s", as);

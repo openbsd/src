@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.51 2013/10/26 21:21:45 sthen Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.52 2013/11/12 19:36:30 deraadt Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -1195,12 +1195,12 @@ print_asn(struct sockaddr *sa)
 	if (strlcat(qbuf, "origin6.asn.cymru.com",
 	    sizeof(qbuf)) >= sizeof(qbuf))
 		return;
-	if (n = getrrsetbyname(qbuf, C_IN, T_TXT, 0, &answers))
+	if ((n = getrrsetbyname(qbuf, C_IN, T_TXT, 0, &answers)))
 		return;
 	for (counter = 0; counter < answers->rri_nrdatas; counter++) {
 		char *p, *as = answers->rri_rdatas[counter].rdi_data;
 		as++; /* skip first byte, it contains length */
-		if (p = strchr(as,'|')) {
+		if ((p = strchr(as,'|'))) {
 			printf(counter ? ", " : " [");
 			p[-1] = 0;
 			printf("AS%s", as);
