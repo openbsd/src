@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_tgammal.c,v 1.3 2013/08/05 18:13:19 kettenis Exp $	*/
+/*	$OpenBSD: e_tgammal.c,v 1.4 2013/11/12 20:35:19 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -59,6 +59,8 @@
 
 #include <float.h>
 #include <math.h>
+
+#include "math_private.h"
 
 /*
 tgamma(x+2)  = tgamma(x+2) P(x)/Q(x)
@@ -181,7 +183,6 @@ static long double SN[9] = {
 
 static const long double PIL = 3.1415926535897932384626L;
 
-extern long double __polevll(long double, void *, int);
 static long double stirf ( long double );
 
 /* Gamma function computed by Stirling's formula.

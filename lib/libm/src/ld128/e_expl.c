@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_expl.c,v 1.2 2011/07/20 21:02:51 martynas Exp $	*/
+/*	$OpenBSD: e_expl.c,v 1.3 2013/11/12 20:35:18 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -75,6 +75,8 @@
 #include <float.h>
 #include <math.h>
 
+#include "math_private.h"
+
 /* Pade' coefficients for exp(x) - 1
    Theoretical peak relative error = 2.2e-37,
    relative peak error spread = 9.2e-38
@@ -107,8 +109,6 @@ static const long double twom10000 = 0x1p-10000L;
 #else
 static volatile long double twom10000 = 0x1p-10000L;
 #endif
-
-extern long double __polevll(long double, void *, int);
 
 long double
 expl(long double x)

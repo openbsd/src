@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_private.h,v 1.15 2011/07/26 11:43:01 martynas Exp $	*/
+/*	$OpenBSD: math_private.h,v 1.16 2013/11/12 20:35:09 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -411,5 +411,7 @@ struct Double {
  */
 double __exp__D(double, double);
 struct Double __log__D(double);
+long double __p1evll(long double, void *, int);
+long double __polevll(long double, void *, int);
 
 #endif /* _MATH_PRIVATE_H_ */

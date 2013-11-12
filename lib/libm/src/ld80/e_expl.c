@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_expl.c,v 1.2 2011/07/20 21:02:51 martynas Exp $	*/
+/*	$OpenBSD: e_expl.c,v 1.3 2013/11/12 20:35:19 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -74,6 +74,8 @@
 
 #include <math.h>
 
+#include "math_private.h"
+
 static long double P[3] = {
  1.2617719307481059087798E-4L,
  3.0299440770744196129956E-2L,
@@ -90,8 +92,6 @@ static const long double C2 = 1.4286068203094172321215E-6L;
 static const long double MAXLOGL = 1.1356523406294143949492E4L;
 static const long double MINLOGL = -1.13994985314888605586758E4L;
 static const long double LOG2EL = 1.4426950408889634073599E0L;
-
-extern long double __polevll(long double, void *, int);
 
 long double
 expl(long double x)

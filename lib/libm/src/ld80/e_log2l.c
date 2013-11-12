@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_log2l.c,v 1.1 2011/07/06 00:02:42 martynas Exp $	*/
+/*	$OpenBSD: e_log2l.c,v 1.2 2013/11/12 20:35:19 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -65,6 +65,8 @@
 
 #include <math.h>
 
+#include "math_private.h"
+
 /* Coefficients for ln(1+x) = x - x**2/2 + x**3 P(x)/Q(x)
  * 1/sqrt(2) <= x < sqrt(2)
  * Theoretical peak relative error = 6.2e-22
@@ -110,8 +112,6 @@ static long double S[4] = {
 #define LOG2EA 4.4269504088896340735992e-1L
 
 #define SQRTH 0.70710678118654752440L
-extern long double __polevll(long double, void *, int);
-extern long double __p1evll(long double, void *, int);
 
 long double
 log2l(long double x)

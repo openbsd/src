@@ -1,4 +1,4 @@
-/*	$OpenBSD: polevll.c,v 1.1 2011/07/06 00:02:42 martynas Exp $	*/
+/*	$OpenBSD: polevll.c,v 1.2 2013/11/12 20:35:09 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -61,6 +61,8 @@
  */
 
 #include <math.h>
+
+#include "math_private.h"
 
 /*
  * Polynomial evaluator:

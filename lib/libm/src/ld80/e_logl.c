@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_logl.c,v 1.2 2011/07/20 21:02:51 martynas Exp $	*/
+/*	$OpenBSD: e_logl.c,v 1.3 2013/11/12 20:35:19 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -65,6 +65,8 @@
 
 #include <math.h>
 
+#include "math_private.h"
+
 /* Coefficients for log(1+x) = x - x**2/2 + x**3 P(x)/Q(x)
  * 1/sqrt(2) <= x < sqrt(2)
  * Theoretical peak relative error = 2.32e-20
@@ -110,9 +112,6 @@ static const long double C1 = 6.9314575195312500000000E-1L;
 static const long double C2 = 1.4286068203094172321215E-6L;
 
 #define SQRTH 0.70710678118654752440L
-
-extern long double __polevll(long double, void *, int);
-extern long double __p1evll(long double, void *, int);
 
 long double
 logl(long double x)

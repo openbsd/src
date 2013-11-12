@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_powl.c,v 1.4 2013/08/02 20:23:28 kettenis Exp $	*/
+/*	$OpenBSD: e_powl.c,v 1.5 2013/11/12 20:35:19 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
@@ -74,6 +74,8 @@
 
 #include <float.h>
 #include <math.h>
+
+#include "math_private.h"
 
 /* Table size */
 #define NXT 32
@@ -196,8 +198,6 @@ static const long double twom10000 = 0x1p-10000L;
 static volatile long double twom10000 = 0x1p-10000L;
 #endif
 
-extern long double __polevll(long double, void *, int);
-extern long double __p1evll(long double, void *, int);
 static long double reducl( long double );
 static long double powil ( long double, int );
 
