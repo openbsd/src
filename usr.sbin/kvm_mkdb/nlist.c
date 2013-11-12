@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.43 2013/10/15 05:15:12 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.44 2013/11/12 13:11:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,9 +51,7 @@
 #include <sys/file.h>
 #include <sys/sysctl.h>
 
-#ifdef _NLIST_DO_ELF
 #include <elf_abi.h>
-#endif
 
 typedef struct nlist NLIST;
 #define	_strx	n_un.n_strx
@@ -62,7 +60,8 @@ typedef struct nlist NLIST;
 static char *kfile;
 static char *fmterr;
 
-#ifdef _NLIST_DO_ELF
+int	__elf_knlist(int fd, DB *db, int ksyms);
+
 int
 __elf_knlist(int fd, DB *db, int ksyms)
 {
@@ -303,20 +302,11 @@ done:
 		free(sh);
 	return (error);
 }
-#endif /* _NLIST_DO_ELF */
-
-static struct knlist_handlers {
-	int	(*fn)(int fd, DB *db, int ksyms);
-} nlist_fn[] = {
-#ifdef _NLIST_DO_ELF
-	{ __elf_knlist },
-#endif
-};
 
 int
 create_knlist(char *name, int fd, DB *db)
 {
-	int i, error, ksyms;
+	int error, ksyms;
 
 	if (strcmp(name, _PATH_KSYMS) == 0) {
 		ksyms = 1;
@@ -324,13 +314,11 @@ create_knlist(char *name, int fd, DB *db)
 		ksyms = 0;
 	}
 
-	for (i = 0; i < sizeof(nlist_fn)/sizeof(nlist_fn[0]); i++) {
-		fmterr = NULL;
-		kfile = name;
-		/* rval of 1 means wrong executable type */
-		if ((error = (nlist_fn[i].fn)(fd, db, ksyms)) != 1)
-			break;
-	}
+	fmterr = NULL;
+	kfile = name;
+	/* rval of 1 means wrong executable type */
+	error = __elf_knlist(fd, db, ksyms);
+
 	if (fmterr != NULL)
 		warnx("%s: %s: %s", kfile, fmterr, strerror(EFTYPE));
 
