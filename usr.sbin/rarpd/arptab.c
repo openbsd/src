@@ -1,4 +1,4 @@
-/*	$OpenBSD: arptab.c,v 1.21 2013/08/15 13:43:33 bluhm Exp $ */
+/*	$OpenBSD: arptab.c,v 1.22 2013/11/12 19:49:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -65,7 +65,7 @@
 static pid_t pid;
 static int s = -1;
 
-void
+static void
 getsocket(void)
 {
 	s = socket(PF_ROUTE, SOCK_RAW, 0);
