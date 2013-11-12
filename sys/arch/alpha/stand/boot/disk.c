@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.12 2011/03/13 00:13:52 deraadt Exp $	*/
+/*	$OpenBSD: disk.c,v 1.13 2013/11/12 01:37:40 krw Exp $	*/
 /*	$NetBSD: disk.c,v 1.6 1997/04/06 08:40:33 cgd Exp $	*/
 
 /*
@@ -132,8 +132,8 @@ diskopen(f, ctlr, unit, part)
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_secpercyl = 1;
 	lp->d_npartitions = MAXPARTITIONS;
-	lp->d_partitions[part].p_offset = 0;
-	lp->d_partitions[part].p_size = 0x7fffffff;
+	DL_SETPOFFSET(&lp->d_partitions[part], 0);
+	DL_SETPSIZE(&lp->d_partitions[part], 0x7fffffff);
 	i = diskstrategy(sc, F_READ,
 	    (daddr32_t)LABELSECTOR, DEV_BSIZE, buf, &cnt);
 	if (i || cnt != DEV_BSIZE) {
@@ -143,8 +143,8 @@ diskopen(f, ctlr, unit, part)
 		    DISKMAGIC) {
 		/* No label at all.  Fake all partitions as whole disk. */
 		for (i = 0; i < MAXPARTITIONS; i++) {
-			lp->d_partitions[part].p_offset = 0;
-			lp->d_partitions[part].p_size = 0x7fffffff;
+			DL_SETPOFFSET(&lp->d_partitions[part], 0);
+			DL_SETPSIZE(&lp->d_partitions[part], 0x7fffffff);
 		}
 	} else {
 		msg = getdisklabel(buf + LABELOFFSET, lp);
@@ -154,7 +154,8 @@ diskopen(f, ctlr, unit, part)
 		}
 	}
 
-	if (part >= lp->d_npartitions || lp->d_partitions[part].p_size == 0) {
+	if (part >= lp->d_npartitions ||
+	    DL_GETPSIZE(&lp->d_partitions[part]) == 0) {
 bad:		free(sc, sizeof(struct disk_softc));
 		return (ENXIO);
 	}
