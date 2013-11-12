@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_rmt.c,v 1.29 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: pmap_rmt.c,v 1.30 2013/11/12 06:59:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -196,7 +196,7 @@ newgetbroadcastnets(struct in_addr **addrsp)
 	return i;
 }
 
-typedef bool_t (*resultproc_t)();
+typedef bool_t (*resultproc_t)(caddr_t, struct sockaddr_in *);
 
 enum clnt_stat 
 clnt_broadcast(u_long prog,	/* program number */
