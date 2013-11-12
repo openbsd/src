@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.263 2013/10/20 16:35:31 deraadt Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.264 2013/11/12 20:14:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1369,6 +1369,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(rule, &pr->rule, sizeof(struct pf_rule));
+		bzero(&pr->rule.entries, sizeof(pr->rule.entries));
+		pr->rule.kif = NULL;
+		pr->rule.nat.kif = NULL;
+		pr->rule.rdr.kif = NULL;
+		pr->rule.route.kif = NULL;
+		pr->rule.rcv_kif = NULL;
+		pr->rule.anchor = NULL;
+		pr->rule.overload_tbl = NULL;
 		if (pf_anchor_copyout(ruleset, rule, pr)) {
 			error = EBUSY;
 			break;
@@ -2567,6 +2575,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 
 			bcopy(n, pstore, sizeof(*pstore));
+			pstore->rule.ptr = NULL;
+			pstore->kif = NULL;
 			if (n->rule.ptr != NULL)
 				pstore->rule.nr = n->rule.ptr->nr;
 			pstore->creation = secs - pstore->creation;
