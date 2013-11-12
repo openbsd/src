@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.34 2013/08/30 06:46:39 jsg Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.35 2013/11/12 19:48:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -53,6 +53,10 @@ void dump_pcie_linkspeed(int, int, int, uint8_t);
 void print_pcie_ls(uint8_t);
 int dump_rom(int, int, int);
 int dump_vga_bios(void);
+
+void	dump_type0(int bus, int dev, int func);
+void	dump_type1(int bus, int dev, int func);
+void	dump_type2(int bus, int dev, int func);
 
 __dead void
 usage(void)
@@ -296,7 +300,7 @@ void
 dump_pcie_linkspeed(int bus, int dev, int func, uint8_t ptr)
 {
 	u_int32_t lcap, sreg, lcap2 = 0, xcap;
-	u_int8_t cap, cwidth, cspeed, swidth, sspeed;
+	u_int8_t cwidth, cspeed, swidth, sspeed;
 
 	if (pci_read(bus, dev, func, ptr + PCI_PCIE_XCAP, &xcap) != 0)
 		return;
