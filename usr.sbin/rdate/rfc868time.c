@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc868time.c,v 1.8 2013/04/20 17:55:46 deraadt Exp $	*/
+/*	$OpenBSD: rfc868time.c,v 1.9 2013/11/12 22:27:13 deraadt Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -58,9 +58,13 @@
 /* seconds from midnight Jan 1900 - 1970 */
 #define DIFFERENCE 2208988800UL
 
+void
+rfc868time_client(const char *hostname, int family, struct timeval *new,
+    struct timeval *adjust, int leapflag);
+
 
 void
-rfc868time_client (const char *hostname, int family, struct timeval *new,
+rfc868time_client(const char *hostname, int family, struct timeval *new,
     struct timeval *adjust, int leapflag)
 {
 	struct addrinfo hints, *res0, *res;

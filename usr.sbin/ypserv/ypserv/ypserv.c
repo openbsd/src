@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.37 2010/01/20 23:20:28 schwarze Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.38 2013/11/12 22:27:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -45,9 +45,11 @@
 #include <rpc/pmap_clnt.h>
 #include <memory.h>
 #include <syslog.h>
+#include <dbm.h>
 #include "acl.h"
 #include "yplog.h"
 #include "ypdef.h"
+#include "ypserv.h"
 #include <sys/wait.h>
 
 void ypdb_init(void);

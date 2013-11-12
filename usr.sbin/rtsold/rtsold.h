@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.h,v 1.16 2013/10/21 08:46:07 phessler Exp $	*/
+/*	$OpenBSD: rtsold.h,v 1.17 2013/11/12 22:27:13 deraadt Exp $	*/
 /*	$KAME: rtsold.h,v 1.14 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -74,6 +74,7 @@ extern char **autoifprobe(u_int);
 
 /* if.c */
 extern int ifinit(void);
+int get_rdomain(char *);
 extern int interface_up(char *);
 extern int interface_status(struct ifinfo *);
 extern int lladdropt_length(struct sockaddr_dl *);

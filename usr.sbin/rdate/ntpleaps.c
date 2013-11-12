@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpleaps.c,v 1.10 2013/04/20 17:55:51 deraadt Exp $	*/
+/*	$OpenBSD: ntpleaps.c,v 1.11 2013/11/12 22:27:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Thorsten Glaser. All rights reserved.
@@ -31,7 +31,7 @@
 
 /* Leap second support for NTP clients (generic) */
 
-static const char RCSId[] = "$OpenBSD: ntpleaps.c,v 1.10 2013/04/20 17:55:51 deraadt Exp $";
+static const char RCSId[] = "$OpenBSD: ntpleaps.c,v 1.11 2013/11/12 22:27:13 deraadt Exp $";
 
 
 /*
@@ -52,6 +52,8 @@ static const char RCSId[] = "$OpenBSD: ntpleaps.c,v 1.10 2013/04/20 17:55:51 der
 
 static u_int64_t *leapsecs;
 static unsigned int leapsecs_num;
+
+u_int32_t	read_be_dword(u_int8_t *ptr);
 
 
 int

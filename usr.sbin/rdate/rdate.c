@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.29 2013/08/16 19:47:43 guenther Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.30 2013/11/12 22:27:13 deraadt Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -57,10 +57,11 @@
 #define logwtmp(a,b,c)
 #endif
 
-void rfc868time_client (const char *, int, struct timeval *, struct timeval *, int);
-void ntp_client (const char *, int, struct timeval *, struct timeval *, int);
+void rfc868time_client(const char *, int, struct timeval *, struct timeval *, int);
+void ntp_client(const char *, int, struct timeval *, struct timeval *, int);
 
 extern char    *__progname;
+__dead void	usage(void);
 
 __dead void
 usage(void)

@@ -68,7 +68,7 @@ void	usage(void);
 int	repquota(struct fstab *, int, char *);
 int	hasquota(struct fstab *, int, char **);
 int	oneof(char *, char *[], int);
-
+char	*timeprt(time_t);
 int
 main(int argc, char *argv[])
 {

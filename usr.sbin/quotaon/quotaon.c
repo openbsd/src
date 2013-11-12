@@ -52,6 +52,14 @@ int	gflag;		/* operate on group quotas */
 int	uflag;		/* operate on user quotas */
 int	vflag;		/* verbose */
 
+void	usage(char *whoami);
+int	hasquota(struct fstab *fs, int type, char **qfnamep, int force);
+int	quotaonoff(struct fstab *fs, int offmode, int type, char *qfpathname);
+int	oneof(char *target, char *list[], int cnt);
+int	readonly(struct fstab *fs);
+
+
+int
 main(int argc, char *argv[])
 {
 	struct fstab *fs;
@@ -133,6 +141,7 @@ main(int argc, char *argv[])
 	exit(errs);
 }
 
+void
 usage(char *whoami)
 {
 

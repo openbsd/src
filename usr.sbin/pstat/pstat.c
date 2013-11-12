@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.87 2013/10/22 16:40:27 guenther Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.88 2013/11/12 22:27:11 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -117,6 +117,7 @@ int	nfs_print(struct vnode *);
 void	swapmode(void);
 void	ttymode(void);
 void	ttyprt(struct itty *);
+void	tty2itty(struct tty *tp, struct itty *itp);
 void	ufs_header(void);
 int	ufs_print(struct vnode *);
 void	ext2fs_header(void);

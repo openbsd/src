@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.16 2013/08/13 12:39:02 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.17 2013/11/12 22:27:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -187,6 +187,10 @@ void		tftp_wrq_end(int, short, void *);
 int		parse_options(struct tftp_client *, char *, size_t,
 		    struct opt_client *);
 int		validate_access(struct tftp_client *, const char *);
+
+struct tftp_client *
+		client_alloc(void);
+void		client_free(struct tftp_client *client);
 
 struct formats {
 	const char	*f_mode;
@@ -561,7 +565,7 @@ tftpd_events(void)
 }
 
 struct tftp_client *
-client_alloc()
+client_alloc(void)
 {
 	struct tftp_client *client;
 
