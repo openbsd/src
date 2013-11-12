@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.149 2012/12/22 07:32:17 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.150 2013/11/12 06:57:54 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -717,7 +717,7 @@ alloc_chunk_info(struct dir_info *d, int bits)
 	size = ALIGN(size);
 
 	if (LIST_EMPTY(&d->chunk_info_list[bits])) {
-		void *q;
+		char *q;
 		int i;
 
 		q = MMAP(MALLOC_PAGESIZE);
@@ -1436,7 +1436,7 @@ calloc(size_t nmemb, size_t size)
 static void *
 mapalign(struct dir_info *d, size_t alignment, size_t sz, int zero_fill)
 {
-	void *p, *q;
+	char *p, *q;
 
 	if (alignment < MALLOC_PAGESIZE || ((alignment - 1) & alignment) != 0) {
 		wrterror("mapalign bad alignment", NULL);
@@ -1459,7 +1459,7 @@ mapalign(struct dir_info *d, size_t alignment, size_t sz, int zero_fill)
 	p = map(d, sz + alignment, zero_fill);
 	if (p == MAP_FAILED)
 		return MAP_FAILED;
-	q = (void *)(((uintptr_t)p + alignment - 1) & ~(alignment - 1));
+	q = (char *)(((uintptr_t)p + alignment - 1) & ~(alignment - 1));
 	if (q != p) {
 		if (munmap(p, q - p))
 			wrterror("munmap", p);
