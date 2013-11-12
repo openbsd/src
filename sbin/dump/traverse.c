@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.27 2013/06/11 16:42:04 deraadt Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.28 2013/11/12 04:59:02 deraadt Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -63,6 +63,7 @@ union dinode {
 static	int dirindir(ino_t, daddr_t, int, off_t *, off_t *, int);
 static	void dmpindir(ino_t, daddr_t, int, off_t *);
 static	int searchdir(ino_t, daddr_t, long, off_t, off_t *, int);
+void	fs_mapinodes(ino_t maxino, off_t *tapesize, int *anydirskipped);
 
 /*
  * This is an estimation of the number of TP_BSIZE blocks in the file.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.83 2013/11/03 02:22:07 krw Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.84 2013/11/12 04:59:02 deraadt Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -144,6 +144,7 @@ static		void checksz(void);
 #ifndef STANDALONE
 volatile sig_atomic_t cur_cylno;
 volatile const char *cur_fsys;
+void	siginfo(int sig);
 
 void
 siginfo(int sig)

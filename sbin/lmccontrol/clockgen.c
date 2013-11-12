@@ -1,5 +1,5 @@
-/* $OpenBSD: clockgen.c,v 1.3 2004/08/08 19:04:25 deraadt Exp $ */
-/* $Id: clockgen.c,v 1.3 2004/08/08 19:04:25 deraadt Exp $ */
+/* $OpenBSD: clockgen.c,v 1.4 2013/11/12 04:59:02 deraadt Exp $ */
+/* $Id: clockgen.c,v 1.4 2013/11/12 04:59:02 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -52,6 +52,8 @@
 
 typedef struct lmc___ctl lmc_ctl_t;
 #include <dev/pci/if_lmcioctl.h>
+
+void lmc_av9110_freq(u_int32_t target, lmc_av9110_t *av);
 
 #define T1_FREF  20000000
 #define T1_FMIN  30000000

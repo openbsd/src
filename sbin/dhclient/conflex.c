@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.23 2013/10/22 18:15:58 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.24 2013/11/12 04:59:00 deraadt Exp $	*/
 
 /* Lexical scanner for dhclient config file. */
 
@@ -354,6 +354,8 @@ static const struct keywords {
 	{ "timeout",				TOK_TIMEOUT },
 	{ "token-ring",				TOK_TOKEN_RING }
 };
+
+int	kw_cmp(const void *k, const void *e);
 
 int
 kw_cmp(const void *k, const void *e)

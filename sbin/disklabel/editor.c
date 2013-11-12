@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.276 2013/10/21 07:59:34 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.277 2013/11/12 04:59:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -152,6 +152,8 @@ void	set_geometry(struct disklabel *, struct disklabel *, struct disklabel *,
 void	zero_partitions(struct disklabel *);
 u_int64_t max_partition_size(struct disklabel *, int);
 void	display_edit(struct disklabel *, char, u_int64_t);
+int64_t	getphysmem(void);
+void	psize(u_int64_t sz, char unit, struct disklabel *lp);
 
 static u_int64_t starting_sector;
 static u_int64_t ending_sector;
@@ -512,6 +514,7 @@ getphysmem(void)
 	int64_t physmem;
 	size_t sz = sizeof(physmem);
 	int mib[] = { CTL_HW, HW_PHYSMEM64 };
+
 	if (sysctl(mib, 2, &physmem, &sz, NULL, (size_t)0) == -1)
 		errx(4, "can't get mem size");
 	return physmem;

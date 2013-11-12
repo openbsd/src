@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.37 2013/11/02 00:08:16 krw Exp $	*/
+/*	$OpenBSD: tape.c,v 1.38 2013/11/12 04:59:02 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -69,6 +69,10 @@ static	void enslave(void);
 static	void flushtape(void);
 static	void killall(void);
 static	void rollforward(void);
+
+void	tperror(int signo);
+void	sigpipe(int signo);
+void	proceed(int signo);
 
 /*
  * Concurrent dump mods (Caltech) - disk block reading and tape writing
