@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.151 2013/11/01 17:36:19 krw Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.152 2013/11/12 14:11:07 krw Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -383,9 +383,9 @@ vndbdevsize(struct vnode *vp, struct proc *p)
 		return (0);
 	if (bsw->d_ioctl(dev, DIOCGPART, (caddr_t)&pi, FREAD, p))
 		return (0);
-	DNPRINTF(VDB_INIT, "vndbdevsize: size %li secsize %li\n",
-	    (long)pi.part->p_size,(long)pi.disklab->d_secsize);
-	return (pi.part->p_size);
+	DNPRINTF(VDB_INIT, "vndbdevsize: size %llu secsize %u\n",
+	    DL_GETPSIZE(pi.part), pi.disklab->d_secsize);
+	return (DL_GETPSIZE(pi.part));
 }
 
 /* ARGSUSED */
