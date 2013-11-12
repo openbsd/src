@@ -1,4 +1,4 @@
-/* $OpenBSD: elf_hide.c,v 1.6 2010/07/20 02:08:15 deraadt Exp $ */
+/* $OpenBSD: elf_hide.c,v 1.7 2013/11/12 19:48:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Dale Rahn.
@@ -45,22 +45,25 @@
 extern	int elf_mangle;
 
 void	load_strtab(Elf_Ehdr * pehdr, char *pexe);
-void	dump_strtab();
+void	dump_strtab(void);
 char	*get_str(int indx);
 
 void	load_symtab(Elf_Ehdr * pehdr, char *pexe);
-void	dump_symtab();
+void	dump_symtab(Elf_Shdr * symsect, Elf_Sym * symtab, int symtabsize);
+void	fprint_str(FILE * channel, int indx);
 
 void	load_shstr_tab(Elf_Ehdr * pehdr, char *pexe);
 char	*get_shstr(int indx);
 void	fprint_shstr(FILE * channel, int indx);
 
-void	hide_sym();
+void	hide_sym(Elf_Ehdr * ehdr, Elf_Shdr * symsect,
+	    Elf_Sym * symtab, int symtabsize, int symtabsecnum);
 void	reorder_syms(Elf_Ehdr * ehdr, Elf_Shdr * symsect,
 	    Elf_Sym * symtab, int symtabsize, int symtabsecnum);
 typedef long    Symmap;
 void	renum_reloc_syms(Elf_Ehdr * ehdr, Symmap * symmap,
 	    int symtabsecnum);
+void	elf_hide(int pfile, char *p);
 
 
 char           *pexe;
