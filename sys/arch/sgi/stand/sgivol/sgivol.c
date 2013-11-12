@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgivol.c,v 1.18 2012/05/29 06:32:57 matthew Exp $	*/
+/*	$OpenBSD: sgivol.c,v 1.19 2013/11/12 01:48:43 krw Exp $	*/
 /*	$NetBSD: sgivol.c,v 1.8 2003/11/08 04:59:00 sekiya Exp $	*/
 
 /*-
@@ -260,8 +260,8 @@ display_vol(void)
 	for (i = 0; i < sizeof(struct sgilabel) / sizeof(int32_t); ++i)
 		checksum += betoh32(l[i]);
 
-	printf("disklabel shows %d sectors with %d bytes per sector\n",
-	    lbl.d_secperunit, lbl.d_secsize);
+	printf("disklabel shows %lld sectors with %u bytes per sector\n",
+	    DL_GETDSIZE(&lbl), lbl.d_secsize);
 	printf("checksum: %08x%s\n", checksum, checksum == 0 ? "" : " *ERROR*");
 	printf("root part: %d\n", betoh32(volhdr->root));
 	printf("swap part: %d\n", betoh32(volhdr->swap));
@@ -315,14 +315,14 @@ init_volhdr(void)
 	volhdr->dp.dp_interleave = 1;
 	volhdr->dp.dp_nretries = htobe32(22);
 	volhdr->partitions[10].blocks =
-	    htobe32(DL_SECTOBLK(&lbl, lbl.d_secperunit));
+	    htobe32(DL_SECTOBLK(&lbl, DL_GETDSIZE(&lbl)));
 	volhdr->partitions[10].first = 0;
 	volhdr->partitions[10].type = htobe32(SGI_PTYPE_VOLUME);
 	volhdr->partitions[8].blocks = htobe32(DL_SECTOBLK(&lbl, volhdr_size));
 	volhdr->partitions[8].first = 0;
 	volhdr->partitions[8].type = htobe32(SGI_PTYPE_VOLHDR);
 	volhdr->partitions[0].blocks =
-	    htobe32(DL_SECTOBLK(&lbl, lbl.d_secperunit - volhdr_size));
+	    htobe32(DL_SECTOBLK(&lbl, DL_GETDSIZE(&lbl) - volhdr_size));
 	volhdr->partitions[0].first = htobe32(DL_SECTOBLK(&lbl, volhdr_size));
 	volhdr->partitions[0].type = htobe32(SGI_PTYPE_BSD);
 	write_volhdr();
@@ -567,7 +567,7 @@ allocate_space(int size)
 		}
 		++n;
 	}
-	if (first + blocks > lbl.d_secperunit)
+	if (first + blocks > DL_GETDIZE(&lbl))
 		first = -1;
 	/* XXX assumes volume header is partition 8 */
 	/* XXX assumes volume header starts at 0? */
