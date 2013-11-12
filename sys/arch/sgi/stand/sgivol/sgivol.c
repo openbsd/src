@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgivol.c,v 1.19 2013/11/12 01:48:43 krw Exp $	*/
+/*	$OpenBSD: sgivol.c,v 1.20 2013/11/12 23:31:34 krw Exp $	*/
 /*	$NetBSD: sgivol.c,v 1.8 2003/11/08 04:59:00 sekiya Exp $	*/
 
 /*-
@@ -260,7 +260,7 @@ display_vol(void)
 	for (i = 0; i < sizeof(struct sgilabel) / sizeof(int32_t); ++i)
 		checksum += betoh32(l[i]);
 
-	printf("disklabel shows %lld sectors with %u bytes per sector\n",
+	printf("disklabel shows %llu sectors with %u bytes per sector\n",
 	    DL_GETDSIZE(&lbl), lbl.d_secsize);
 	printf("checksum: %08x%s\n", checksum, checksum == 0 ? "" : " *ERROR*");
 	printf("root part: %d\n", betoh32(volhdr->root));
