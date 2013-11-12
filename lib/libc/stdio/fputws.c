@@ -1,4 +1,4 @@
-/*	$OpenBSD: fputws.c,v 1.6 2013/04/17 17:40:35 tedu Exp $	*/
+/*	$OpenBSD: fputws.c,v 1.7 2013/11/12 07:04:35 deraadt Exp $	*/
 /* $NetBSD: fputws.c,v 1.1 2003/03/07 07:11:37 tshiozak Exp $ */
 
 /*-
@@ -34,8 +34,7 @@
 #include <stdio.h>
 #include <wchar.h>
 #include "local.h"
-
-wint_t __fputwc_unlock(wchar_t wc, FILE *fp);
+#include "fvwrite.h"
 
 int
 fputws(ws, fp)

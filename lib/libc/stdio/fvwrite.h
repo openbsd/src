@@ -1,4 +1,4 @@
-/*	$OpenBSD: fvwrite.h,v 1.5 2003/06/02 20:18:37 millert Exp $	*/
+/*	$OpenBSD: fvwrite.h,v 1.6 2013/11/12 07:04:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,3 +46,4 @@ struct __suio {
 };
 
 extern int __sfvwrite(FILE *, struct __suio *);
+wint_t __fputwc_unlock(wchar_t wc, FILE *fp);
