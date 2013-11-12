@@ -37,7 +37,7 @@
  */
 
 double
-ldexp (double value, int exp)
+ldexp(double value, int exp)
 {
 	double temp;
 #if __GNUC__ >= 2

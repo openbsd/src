@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldexp.c,v 1.2 2005/08/07 16:40:13 espie Exp $	*/
+/*	$OpenBSD: ldexp.c,v 1.3 2013/11/12 06:05:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -32,12 +32,14 @@
  * SUCH DAMAGE.
  */
 
+#include <math.h>
+
 /*
  * ldexp(value, exp): return value * (2 ** exp).
  */
 
 double
-ldexp (double value, int exp)
+ldexp(double value, int exp)
 {
 	double temp;
 #if __GNUC__ >= 2
