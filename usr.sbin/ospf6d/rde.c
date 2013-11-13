@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.60 2012/09/17 13:49:27 bluhm Exp $ */
+/*	$OpenBSD: rde.c,v 1.61 2013/11/13 20:49:49 benno Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -266,7 +266,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
+		if (msgbuf_write(&ibuf->w) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
 	}
 
@@ -638,7 +638,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
+		if (msgbuf_write(&ibuf->w) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
 	}
 

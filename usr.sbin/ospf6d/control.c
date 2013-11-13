@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.20 2013/03/22 14:25:31 sthen Exp $ */
+/*	$OpenBSD: control.c,v 1.21 2013/11/13 20:49:49 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -228,7 +228,7 @@ control_dispatch_imsg(int fd, short event, void *bula)
 		}
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&c->iev.ibuf.w) == -1) {
+		if (msgbuf_write(&c->iev.ibuf.w) == -1 && errno != EAGAIN) {
 			control_close(fd);
 			return;
 		}
