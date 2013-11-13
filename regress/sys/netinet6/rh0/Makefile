@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2013/10/31 01:24:06 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2013/11/13 23:13:04 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -71,24 +71,12 @@ PYTHON =	python2.7 ./
 PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 ${.CURDIR}/
 .endif
 
-# Check routes.  This ensures that and the local routing tables is set up.
-TARGETS +=	route6
-run-regress-route6:
+# Send ping6 packet without routing header type 0
+TARGETS +=	rh0-none
+run-regress-rh0-none: addr.py
 	@echo '\n======== $@ ========'
-.for ip in DST_OUT SRT_IN
-	@echo Check route6 destination ${ip}6 gateway DST_IN6:
-	route -n get -inet6 ${${ip}6}/64 | grep 'gateway: ${DST_IN6}$$'
-.endfor
-
-# Ping all addresses.  This ensures that the ip addresses are configured
-# and all routing tables are set up to allow bidirectional packet flow.
-TARGETS +=	ping6
-run-regress-ping6:
-	@echo '\n======== $@ ========'
-.for ip in SRC_OUT DST_IN DST_OUT
-	@echo Check ping6 ${ip}6:
-	ping6 -n -c 1 ${${ip}6}
-.endfor
+	@echo Check without routing header type 0
+	${SUDO} ${PYTHON}rh0_none.py
 
 # Send ping6 packet with routing header type 0 but empty address list
 TARGETS +=	rh0-empty
@@ -114,5 +102,18 @@ run-regress-rh0-route: addr.py
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
 CLEANFILES +=		addr.py *.pyc *.log
+
+.PHONY: check-setup
+
+# Check wether the address, route and remote setup is correct
+check-setup:
+	route -n get -inet6 ${SRC_OUT6} | grep 'interface: lo0$$'
+	ping6 -n -c 1 ${SRC_OUT6}
+	route -n get -inet6 ${DST_IN6} | grep 'interface: ${SRC_IF}$$'
+	ping6 -n -c 1 ${DST_IN6}
+	route -n get -inet6 ${DST_OUT6} | grep 'gateway: ${DST_IN6}$$'
+	ping6 -n -c 1 ${DST_OUT6}
+	route -n get -inet6 ${SRT_IN6} | grep 'gateway: ${DST_IN6}$$'
+	ndp -n ${DST_IN6} | grep ' ${DST_MAC} '
 
 .include <bsd.regress.mk>
