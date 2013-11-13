@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpd.h,v 1.16 2012/12/05 23:20:06 deraadt Exp $	*/
+/*	$OpenBSD: tcpd.h,v 1.17 2013/11/13 19:38:12 jca Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -90,9 +90,6 @@ __END_DECLS
 #define NOT_INADDR(s) (s[strspn(s,"01234567890./")] != 0)
 
 /* Global functions. */
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #define fromhost sock_host		/* no TLI support needed */
 
@@ -112,10 +109,6 @@ extern char *xgets(char *, int, FILE *);
 extern char *split_at(char *, int);
 extern int dot_quad_addr_new(char *, in_addr_t *);
 extern in_addr_t dot_quad_addr(char *);
-
-#ifdef __cplusplus
-}
-#endif
 
 /* Global variables. */
 
