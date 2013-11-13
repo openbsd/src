@@ -31,9 +31,9 @@ for a in ans:
 		if code != 0:
 			print "WRONG PARAMETER PROBLEM CODE"
 			exit(2)
-		prt=pprob.ptr
-		print "prt=%#d" % (prt)
-		if prt != 42:
+		ptr=pprob.ptr
+		print "ptr=%#d" % (ptr)
+		if ptr != 42:
 			print "WRONG PARAMETER PROBLEM POINTER"
 			exit(2)
 		exit(0)
