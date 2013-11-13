@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_np.c,v 1.8 2013/03/31 22:43:53 kurt Exp $	*/
+/*	$OpenBSD: rthread_np.c,v 1.9 2013/11/13 16:56:17 deraadt Exp $	*/
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2005 Otto Moerbeek <otto@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/lock.h>
 #include <sys/resource.h>
 #include <sys/queue.h>
+#include <sys/sysctl.h>
 
 #include <errno.h>
 #include <pthread.h>
@@ -60,32 +61,44 @@ pthread_main_np(void)
 int
 pthread_stackseg_np(pthread_t thread, stack_t *sinfo)
 {
-	int ret;
-	struct rlimit rl;
-
 	if (thread->stack) {
 		sinfo->ss_sp = thread->stack->sp;
 		sinfo->ss_size = thread->stack->len;
 		if (thread->stack->guardsize != 1)
 			sinfo->ss_size -= thread->stack->guardsize;
 		sinfo->ss_flags = 0;
-		ret = 0;
+		return (0);
 	} else if (thread == &_initial_thread) {
-		if (getrlimit(RLIMIT_STACK, &rl) != 0)
-			return (EAGAIN);
+		static struct _ps_strings _ps;
+		static struct rlimit rl;
+		static int gotself;
+
+		if (gotself == 0) {
+			int mib[2];
+			size_t len;
+
+			if (getrlimit(RLIMIT_STACK, &rl) != 0)
+				return (EAGAIN);
+
+			mib[0] = CTL_VM;
+			mib[1] = VM_PSSTRINGS;
+			len = sizeof(_ps);
+			if (sysctl(mib, 2, &_ps, &len, NULL, 0) != 0)
+				return (EAGAIN);
+			gotself = 1;
+		}
 
 		/*
-		 * round_page() stack rlim_cur and
-		 * trunc_page() USRSTACK to be consistent with
-		 * the way the kernel sets up the stack.
+		 * Provides a rough estimation of stack bounds.   Caller
+		 * likely wants to know for the purpose of inspecting call
+		 * frames, but VM_PSSTRINGS points to process arguments...
+		 * 
+		 * XXXX This interface ignores MACHINE_STACK_GROWS_UP.
 		 */
-		sinfo->ss_size = ROUND_TO_PAGE((size_t)rl.rlim_cur);
-		sinfo->ss_sp = (caddr_t) (USRSTACK & ~(_thread_pagesize - 1));
+		sinfo->ss_sp = _ps.val;
+		sinfo->ss_size = (size_t)rl.rlim_cur;
 		sinfo->ss_flags = 0;
-		ret = 0;
-
-	} else
-		ret = EAGAIN;
-
-	return ret;
+		return (0);
+	}
+	return (EAGAIN);
 }
