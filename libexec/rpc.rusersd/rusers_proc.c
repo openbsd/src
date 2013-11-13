@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers_proc.c,v 1.23 2012/12/04 02:38:51 deraadt Exp $	*/
+/*	$OpenBSD: rusers_proc.c,v 1.24 2013/11/13 15:24:21 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -71,42 +71,28 @@ extern int from_inetd;
 FILE *ufp;
 
 static long
-getidle(char *tty)
+getidle(char *tty, size_t len)
 {
 	char devname[PATH_MAX];
 	struct stat st;
 	long idle;
 	time_t now;
 
-	idle = 0;
-	if (*tty == 'X') {
-		long kbd_idle, mouse_idle;
-#if !defined(__i386__)
-		kbd_idle = getidle("kbd");
-#else
-		/*
-		 * XXX Icky i386 console hack.
-		 */
-		kbd_idle = getidle("vga");
-#endif
-		mouse_idle = getidle("mouse");
-		idle = (kbd_idle < mouse_idle) ? kbd_idle : mouse_idle;
-	} else {
-		snprintf(devname, sizeof devname, "%s/%.*s", _PATH_DEV,
-		    sizeof(tty), tty);
-		if (stat(devname, &st) < 0) {
+	snprintf(devname, sizeof devname, "%s/%.*s", _PATH_DEV,
+	    len, tty);
+	if (stat(devname, &st) < 0) {
 #ifdef DEBUG
-			printf("%s: %m\n", devname);
+		printf("%s: %m\n", devname);
 #endif
-			return (0);
-		}
-		time(&now);
-#ifdef DEBUG
-		printf("%s: now=%d atime=%d\n", devname, now, st.st_atime);
-#endif
-		idle = now - st.st_atime;
-		idle = (idle + 30) / 60; /* secs->mins */
+		return (0);
 	}
+	time(&now);
+#ifdef DEBUG
+	printf("%s: now=%lld atime=%lld\n", devname, (long long)now,
+	    (long long)st.st_atime);
+#endif
+	idle = now - st.st_atime;
+	idle = (idle + 30) / 60; /* secs->mins */
 	if (idle < 0)
 		idle = 0;
 
@@ -171,7 +157,8 @@ do_names_3(int all)
 		if (*usr.ut_name && *usr.ut_line) {
 			utmps[nusers].ut_type = RUSERS_USER_PROCESS;
 			utmps[nusers].ut_time = usr.ut_time;
-			utmps[nusers].ut_idle = getidle(usr.ut_line);
+			utmps[nusers].ut_idle = getidle(usr.ut_line,
+			    sizeof usr.ut_line);
 			utmps[nusers].ut_line = line[nusers];
 			memset(line[nusers], 0, sizeof(line[nusers]));
 			memcpy(line[nusers], usr.ut_line, UT_LINESIZE);
@@ -234,7 +221,8 @@ do_names_2(int all)
 		if (*usr.ut_name && *usr.ut_line) {
 			utmp_idlep[nusers] = &utmp_idle[nusers];
 			utmp_idle[nusers].ui_utmp.ut_time = usr.ut_time;
-			utmp_idle[nusers].ui_idle = getidle(usr.ut_line);
+			utmp_idle[nusers].ui_idle = getidle(usr.ut_line,
+			    sizeof usr.ut_line);
 			utmp_idle[nusers].ui_utmp.ut_line = line[nusers];
 			memset(line[nusers], 0, sizeof(line[nusers]));
 			memcpy(line[nusers], usr.ut_line, UT_LINESIZE);
