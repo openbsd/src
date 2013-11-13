@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.693 2013/11/12 15:30:11 rpe Exp $
+#	$OpenBSD: install.sub,v 1.694 2013/11/13 07:16:55 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -2126,8 +2126,7 @@ get_responsefile() {
 # Fully automatic installation?
 if $auto && [[ -z $RESPONSEFILE ]]; then
 	responsefile=/install.conf
-	[ -f $responsefile ] || get_responsefile $responsefile
-	if [ ! -f $responsefile ]; then
+	if ! get_responsefile $responsefile; then
 		echo "No response file found; automatic installation aborted."
 		exit 1
 	fi
