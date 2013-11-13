@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.158 2013/11/06 10:01:29 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.159 2013/11/13 08:39:33 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -127,7 +127,9 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			req_ca_cert = imsg->data;
 			resp_ca_cert.reqid = req_ca_cert->reqid;
 
-			ssl = dict_get(env->sc_ssl_dict, req_ca_cert->name);
+			xlowercase(buf, req_ca_cert->name, sizeof(buf));
+			log_debug("debug: lka: looking up pki \"%s\"", buf);
+			ssl = dict_get(env->sc_ssl_dict, buf);
 			if (ssl == NULL) {
 				resp_ca_cert.status = CA_FAIL;
 				m_compose(p, IMSG_LKA_SSL_INIT, 0, 0, -1, &resp_ca_cert,
@@ -246,7 +248,9 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			req_ca_cert = imsg->data;
 			resp_ca_cert.reqid = req_ca_cert->reqid;
 
-			ssl = dict_get(env->sc_ssl_dict, req_ca_cert->name);
+			xlowercase(buf, req_ca_cert->name, sizeof(buf));
+			log_debug("debug: lka: looking up pki \"%s\"", buf);
+			ssl = dict_get(env->sc_ssl_dict, buf);
 			if (ssl == NULL) {
 				resp_ca_cert.status = CA_FAIL;
 				m_compose(p, IMSG_LKA_SSL_INIT, 0, 0, -1, &resp_ca_cert,
