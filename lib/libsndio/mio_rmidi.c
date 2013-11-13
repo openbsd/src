@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_rmidi.c,v 1.12 2012/10/27 12:08:25 ratchov Exp $	*/
+/*	$OpenBSD: mio_rmidi.c,v 1.13 2013/11/13 22:38:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -52,7 +52,7 @@ static struct mio_ops mio_rmidi_ops = {
 };
 
 struct mio_hdl *
-mio_rmidi_open(const char *str, unsigned int mode, int nbio)
+_mio_rmidi_open(const char *str, unsigned int mode, int nbio)
 {
 	int fd, flags;
 	struct mio_rmidi_hdl *hdl;
@@ -64,13 +64,13 @@ mio_rmidi_open(const char *str, unsigned int mode, int nbio)
 		str++;
 		break;
 	default:
-		DPRINTF("sio_sun_open: %s: '/<devnum>' expected\n", str);
+		DPRINTF("_sio_sun_open: %s: '/<devnum>' expected\n", str);
 		return NULL;
 	}
 	hdl = malloc(sizeof(struct mio_rmidi_hdl));
 	if (hdl == NULL)
 		return NULL;
-	mio_create(&hdl->mio, &mio_rmidi_ops, mode, nbio);
+	_mio_create(&hdl->mio, &mio_rmidi_ops, mode, nbio);
 
 	snprintf(path, sizeof(path), "/dev/rmidi%s", str);
 	if (mode == (MIO_OUT | MIO_IN))

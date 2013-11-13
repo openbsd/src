@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.58 2013/11/12 06:56:00 deraadt Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.59 2013/11/13 22:38:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -36,18 +36,17 @@
 #include "aucat.h"
 #include "debug.h"
 
-
 /*
  * read a message, return 0 if not completed
  */
 int
-aucat_rmsg(struct aucat *hdl, int *eof)
+_aucat_rmsg(struct aucat *hdl, int *eof)
 {
 	ssize_t n;
 	unsigned char *data;
 
 	if (hdl->rstate != RSTATE_MSG) {
-		DPRINTF("aucat_rmsg: bad state\n");
+		DPRINTF("_aucat_rmsg: bad state\n");
 		abort();
 	}
 	while (hdl->rtodo > 0) {
@@ -58,12 +57,12 @@ aucat_rmsg(struct aucat *hdl, int *eof)
 				continue;
 			if (errno != EAGAIN) {
 				*eof = 1;
-				DPERROR("aucat_rmsg: read");
+				DPERROR("_aucat_rmsg: read");
 			}
 			return 0;
 		}
 		if (n == 0) {
-			DPRINTF("aucat_rmsg: eof\n");
+			DPRINTF("_aucat_rmsg: eof\n");
 			*eof = 1;
 			return 0;
 		}
@@ -83,7 +82,7 @@ aucat_rmsg(struct aucat *hdl, int *eof)
  * write a message, return 0 if not completed
  */
 int
-aucat_wmsg(struct aucat *hdl, int *eof)
+_aucat_wmsg(struct aucat *hdl, int *eof)
 {
 	ssize_t n;
 	unsigned char *data;
@@ -92,7 +91,7 @@ aucat_wmsg(struct aucat *hdl, int *eof)
 		hdl->wstate = WSTATE_MSG;
 		hdl->wtodo = sizeof(struct amsg);
 	if (hdl->wstate != WSTATE_MSG) {
-		DPRINTF("aucat_wmsg: bad state\n");
+		DPRINTF("_aucat_wmsg: bad state\n");
 		abort();
 	}
 	while (hdl->wtodo > 0) {
@@ -103,7 +102,7 @@ aucat_wmsg(struct aucat *hdl, int *eof)
 				continue;
 			if (errno != EAGAIN) {
 				*eof = 1;
-				DPERROR("aucat_wmsg: write");
+				DPERROR("_aucat_wmsg: write");
 			}
 			return 0;
 		}
@@ -120,12 +119,12 @@ aucat_wmsg(struct aucat *hdl, int *eof)
 }
 
 size_t
-aucat_rdata(struct aucat *hdl, void *buf, size_t len, int *eof)
+_aucat_rdata(struct aucat *hdl, void *buf, size_t len, int *eof)
 {
 	ssize_t n;
 
 	if (hdl->rstate != RSTATE_DATA) {
-		DPRINTF("aucat_rdata: bad state\n");
+		DPRINTF("_aucat_rdata: bad state\n");
 		abort();
 	}
 	if (len > hdl->rtodo)
@@ -135,12 +134,12 @@ aucat_rdata(struct aucat *hdl, void *buf, size_t len, int *eof)
 			continue;
 		if (errno != EAGAIN) {
 			*eof = 1;
-			DPERROR("aucat_rdata: read");
+			DPERROR("_aucat_rdata: read");
 		}
 		return 0;
 	}
 	if (n == 0) {
-		DPRINTF("aucat_rdata: eof\n");
+		DPRINTF("_aucat_rdata: eof\n");
 		*eof = 1;
 		return 0;
 	}
@@ -149,12 +148,12 @@ aucat_rdata(struct aucat *hdl, void *buf, size_t len, int *eof)
 		hdl->rstate = RSTATE_MSG;
 		hdl->rtodo = sizeof(struct amsg);
 	}
-	DPRINTFN(2, "aucat_rdata: read: n = %zd\n", n);
+	DPRINTFN(2, "_aucat_rdata: read: n = %zd\n", n);
 	return n;
 }
 
 size_t
-aucat_wdata(struct aucat *hdl, const void *buf, size_t len,
+_aucat_wdata(struct aucat *hdl, const void *buf, size_t len,
    unsigned int wbpf, int *eof)
 {
 	ssize_t n;
@@ -174,13 +173,13 @@ aucat_wdata(struct aucat *hdl, const void *buf, size_t len,
 		hdl->wstate = WSTATE_MSG;
 		/* FALLTHROUGH */
 	case WSTATE_MSG:
-		if (!aucat_wmsg(hdl, eof))
+		if (!_aucat_wmsg(hdl, eof))
 			return 0;
 	}
 	if (len > hdl->wtodo)
 		len = hdl->wtodo;
 	if (len == 0) {
-		DPRINTF("aucat_wdata: len == 0\n");
+		DPRINTF("_aucat_wdata: len == 0\n");
 		abort();
 	}
 	while ((n = write(hdl->fd, buf, len)) < 0) {
@@ -188,11 +187,11 @@ aucat_wdata(struct aucat *hdl, const void *buf, size_t len,
 			continue;
 		if (errno != EAGAIN) {
 			*eof = 1;
-			DPERROR("aucat_wdata: write");
+			DPERROR("_aucat_wdata: write");
 		}
 		return 0;
 	}
-	DPRINTFN(2, "aucat_wdata: write: n = %zd\n", n);
+	DPRINTFN(2, "_aucat_wdata: write: n = %zd\n", n);
 	hdl->wtodo -= n;
 	if (hdl->wtodo == 0) {
 		hdl->wstate = WSTATE_IDLE;
@@ -407,7 +406,7 @@ parsestr(const char *str, char *rstr, unsigned int max)
 }
 
 int
-aucat_open(struct aucat *hdl, const char *str, unsigned int mode,
+_aucat_open(struct aucat *hdl, const char *str, unsigned int mode,
     unsigned int type)
 {
 	extern char *__progname;
@@ -446,7 +445,7 @@ aucat_open(struct aucat *hdl, const char *str, unsigned int mode,
 		return 0;
 	}
 	devnum += type * 16; /* XXX */
-	DPRINTF("aucat_open: host=%s unit=%u devnum=%u opt=%s\n",
+	DPRINTF("_aucat_open: host=%s unit=%u devnum=%u opt=%s\n",
 	    host, unit, devnum, opt);
 	if (host[0] != '\0') {
 		if (!aucat_connect_tcp(hdl, host, unit))
@@ -473,7 +472,7 @@ aucat_open(struct aucat *hdl, const char *str, unsigned int mode,
 	if (!aucat_mkcookie(hdl->wmsg.u.auth.cookie))
 		goto bad_connect;
 	hdl->wtodo = sizeof(struct amsg);
-	if (!aucat_wmsg(hdl, &eof))
+	if (!_aucat_wmsg(hdl, &eof))
 		goto bad_connect;
 	AMSG_INIT(&hdl->wmsg);
 	hdl->wmsg.cmd = htonl(AMSG_HELLO);
@@ -485,10 +484,10 @@ aucat_open(struct aucat *hdl, const char *str, unsigned int mode,
 	strlcpy(hdl->wmsg.u.hello.opt, opt,
 	    sizeof(hdl->wmsg.u.hello.opt));
 	hdl->wtodo = sizeof(struct amsg);
-	if (!aucat_wmsg(hdl, &eof))
+	if (!_aucat_wmsg(hdl, &eof))
 		goto bad_connect;
 	hdl->rtodo = sizeof(struct amsg);
-	if (!aucat_rmsg(hdl, &eof)) {
+	if (!_aucat_rmsg(hdl, &eof)) {
 		DPRINTF("aucat_init: mode refused\n");
 		goto bad_connect;
 	}
@@ -504,7 +503,7 @@ aucat_open(struct aucat *hdl, const char *str, unsigned int mode,
 }
 
 void
-aucat_close(struct aucat *hdl, int eof)
+_aucat_close(struct aucat *hdl, int eof)
 {
 	char dummy[1];
 
@@ -512,7 +511,7 @@ aucat_close(struct aucat *hdl, int eof)
 		AMSG_INIT(&hdl->wmsg);
 		hdl->wmsg.cmd = htonl(AMSG_BYE);
 		hdl->wtodo = sizeof(struct amsg);
-		if (!aucat_wmsg(hdl, &eof))
+		if (!_aucat_wmsg(hdl, &eof))
 			goto bad_close;
 		while (read(hdl->fd, dummy, 1) < 0 && errno == EINTR)
 			; /* nothing */
@@ -523,10 +522,10 @@ aucat_close(struct aucat *hdl, int eof)
 }
 
 int
-aucat_setfl(struct aucat *hdl, int nbio, int *eof)
+_aucat_setfl(struct aucat *hdl, int nbio, int *eof)
 {
 	if (fcntl(hdl->fd, F_SETFL, nbio ? O_NONBLOCK : 0) < 0) {
-		DPERROR("aucat_setfl: fcntl");
+		DPERROR("_aucat_setfl: fcntl");
 		*eof = 1;
 		return 0;
 	}
@@ -534,7 +533,7 @@ aucat_setfl(struct aucat *hdl, int nbio, int *eof)
 }
 
 int
-aucat_pollfd(struct aucat *hdl, struct pollfd *pfd, int events)
+_aucat_pollfd(struct aucat *hdl, struct pollfd *pfd, int events)
 {
 	if (hdl->rstate == RSTATE_MSG)
 		events |= POLLIN;
@@ -544,10 +543,10 @@ aucat_pollfd(struct aucat *hdl, struct pollfd *pfd, int events)
 }
 
 int
-aucat_revents(struct aucat *hdl, struct pollfd *pfd)
+_aucat_revents(struct aucat *hdl, struct pollfd *pfd)
 {
 	int revents = pfd->revents;
 
-	DPRINTFN(2, "aucat_revents: revents: %x\n", revents);
+	DPRINTFN(2, "_aucat_revents: revents: %x\n", revents);
 	return revents;
 }

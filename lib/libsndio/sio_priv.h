@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_priv.h,v 1.6 2013/08/24 12:32:35 ratchov Exp $	*/
+/*	$OpenBSD: sio_priv.h,v 1.7 2013/11/13 22:38:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -66,14 +66,14 @@ struct sio_ops {
 	void (*getvol)(struct sio_hdl *);
 };
 
-struct sio_hdl *sio_aucat_open(const char *, unsigned, int);
-struct sio_hdl *sio_sun_open(const char *, unsigned, int);
-void sio_create(struct sio_hdl *, struct sio_ops *, unsigned, int);
-void sio_destroy(struct sio_hdl *);
-void sio_onmove_cb(struct sio_hdl *, int);
-void sio_onvol_cb(struct sio_hdl *, unsigned);
+struct sio_hdl *_sio_aucat_open(const char *, unsigned, int);
+struct sio_hdl *_sio_sun_open(const char *, unsigned, int);
+void _sio_create(struct sio_hdl *, struct sio_ops *, unsigned, int);
+void _sio_destroy(struct sio_hdl *);
+void _sio_onmove_cb(struct sio_hdl *, int);
+void _sio_onvol_cb(struct sio_hdl *, unsigned);
 #ifdef DEBUG
-void sio_printpos(struct sio_hdl *);
+void _sio_printpos(struct sio_hdl *);
 #endif
 
 #endif /* !defined(SNDIO_PRIV_H) */

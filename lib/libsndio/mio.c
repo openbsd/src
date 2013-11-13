@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio.c,v 1.17 2012/11/23 07:03:28 ratchov Exp $	*/
+/*	$OpenBSD: mio.c,v 1.18 2013/11/13 22:38:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -39,7 +39,7 @@ mio_open(const char *str, unsigned int mode, int nbio)
 	const char *p;
 
 #ifdef DEBUG
-	sndio_debug_init();
+	_sndio_debug_init();
 #endif
 	if ((mode & (MIO_OUT | MIO_IN)) == 0)
 		return NULL;
@@ -51,27 +51,27 @@ mio_open(const char *str, unsigned int mode, int nbio)
 			str = portany;
 	}
 	if (strcmp(str, portany) == 0) {
-		hdl = mio_aucat_open("/0", mode, nbio, 1);
+		hdl = _mio_aucat_open("/0", mode, nbio, 1);
 		if (hdl != NULL)
 			return hdl;
-		return mio_rmidi_open("/0", mode, nbio);
+		return _mio_rmidi_open("/0", mode, nbio);
 	}
-	if ((p = sndio_parsetype(str, "snd")) != NULL ||
-	    (p = sndio_parsetype(str, "aucat")) != NULL)
-		return mio_aucat_open(p, mode, nbio, 0);
-	if ((p = sndio_parsetype(str, "midithru")) != NULL)
-		return mio_aucat_open(p, mode, nbio, 1);
-	if ((p = sndio_parsetype(str, "midi")) != NULL)
-		return mio_aucat_open(p, mode, nbio, 2);
-	if ((p = sndio_parsetype(str, "rmidi")) != NULL) {
-		return mio_rmidi_open(p, mode, nbio);
+	if ((p = _sndio_parsetype(str, "snd")) != NULL ||
+	    (p = _sndio_parsetype(str, "aucat")) != NULL)
+		return _mio_aucat_open(p, mode, nbio, 0);
+	if ((p = _sndio_parsetype(str, "midithru")) != NULL)
+		return _mio_aucat_open(p, mode, nbio, 1);
+	if ((p = _sndio_parsetype(str, "midi")) != NULL)
+		return _mio_aucat_open(p, mode, nbio, 2);
+	if ((p = _sndio_parsetype(str, "rmidi")) != NULL) {
+		return _mio_rmidi_open(p, mode, nbio);
 	}
 	DPRINTF("mio_open: %s: unknown device type\n", str);
 	return NULL;
 }
 
 void
-mio_create(struct mio_hdl *hdl, struct mio_ops *ops,
+_mio_create(struct mio_hdl *hdl, struct mio_ops *ops,
     unsigned int mode, int nbio)
 {
 	hdl->ops = ops;

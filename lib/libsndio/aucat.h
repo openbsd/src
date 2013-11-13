@@ -17,14 +17,14 @@ struct aucat {
 	unsigned maxwrite;		/* bytes we're allowed to write */
 };
 
-int aucat_rmsg(struct aucat *, int *);
-int aucat_wmsg(struct aucat *, int *);
-size_t aucat_rdata(struct aucat *, void *, size_t, int *);
-size_t aucat_wdata(struct aucat *, const void *, size_t, unsigned, int *);
-int aucat_open(struct aucat *, const char *, unsigned, unsigned);
-void aucat_close(struct aucat *, int);
-int aucat_pollfd(struct aucat *, struct pollfd *, int);
-int aucat_revents(struct aucat *, struct pollfd *);
-int aucat_setfl(struct aucat *, int, int *);
+int _aucat_rmsg(struct aucat *, int *);
+int _aucat_wmsg(struct aucat *, int *);
+size_t _aucat_rdata(struct aucat *, void *, size_t, int *);
+size_t _aucat_wdata(struct aucat *, const void *, size_t, unsigned, int *);
+int _aucat_open(struct aucat *, const char *, unsigned, unsigned);
+void _aucat_close(struct aucat *, int);
+int _aucat_pollfd(struct aucat *, struct pollfd *, int);
+int _aucat_revents(struct aucat *, struct pollfd *);
+int _aucat_setfl(struct aucat *, int, int *);
 
 #endif /* !defined(AUCAT_H) */

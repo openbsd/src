@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.14 2013/08/24 12:32:34 ratchov Exp $	*/
+/*	$OpenBSD: sio.c,v 1.15 2013/11/13 22:38:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -48,7 +48,7 @@ sio_open(const char *str, unsigned int mode, int nbio)
 	const char *p;
 
 #ifdef DEBUG
-	sndio_debug_init();
+	_sndio_debug_init();
 #endif
 	if ((mode & (SIO_PLAY | SIO_REC)) == 0)
 		return NULL;
@@ -60,24 +60,24 @@ sio_open(const char *str, unsigned int mode, int nbio)
 			str = devany;
 	}
 	if (strcmp(str, devany) == 0) {
-		hdl = sio_aucat_open("/0", mode, nbio);
+		hdl = _sio_aucat_open("/0", mode, nbio);
 		if (hdl != NULL)
 			return hdl;
-		return sio_sun_open("/0", mode, nbio);
+		return _sio_sun_open("/0", mode, nbio);
 	}
-	if ((p = sndio_parsetype(str, "snd")) != NULL ||
-	    (p = sndio_parsetype(str, "aucat")) != NULL)
-		return sio_aucat_open(p, mode, nbio);
-	if ((p = sndio_parsetype(str, "rsnd")) != NULL ||
-	    (p = sndio_parsetype(str, "sun")) != NULL) {
-		return sio_sun_open(p, mode, nbio);
+	if ((p = _sndio_parsetype(str, "snd")) != NULL ||
+	    (p = _sndio_parsetype(str, "aucat")) != NULL)
+		return _sio_aucat_open(p, mode, nbio);
+	if ((p = _sndio_parsetype(str, "rsnd")) != NULL ||
+	    (p = _sndio_parsetype(str, "sun")) != NULL) {
+		return _sio_sun_open(p, mode, nbio);
 	}
 	DPRINTF("sio_open: %s: unknown device type\n", str);
 	return NULL;
 }
 
 void
-sio_create(struct sio_hdl *hdl, struct sio_ops *ops,
+_sio_create(struct sio_hdl *hdl, struct sio_ops *ops,
     unsigned int mode, int nbio)
 {
 	hdl->ops = ops;
@@ -385,7 +385,7 @@ sio_revents(struct sio_hdl *hdl, struct pollfd *pfd)
 #ifdef DEBUG
 	struct timespec ts0, ts1;
 
-	if (sndio_debug >= 2)
+	if (_sndio_debug >= 2)
 		clock_gettime(CLOCK_MONOTONIC, &ts0);
 #endif
 	if (hdl->eof)
@@ -397,7 +397,7 @@ sio_revents(struct sio_hdl *hdl, struct pollfd *pfd)
 	if (!hdl->started)
 		return revents & POLLHUP;
 #ifdef DEBUG
-	if (sndio_debug >= 3) {
+	if (_sndio_debug >= 3) {
 		clock_gettime(CLOCK_MONOTONIC, &ts1);
 		DPRINTF("%09lld: sio_revents: revents = 0x%x, took %lldns\n",
 		    1000000000LL * ts0.tv_sec +
@@ -434,7 +434,7 @@ sio_onmove(struct sio_hdl *hdl, void (*cb)(void *, int), void *addr)
 
 #ifdef DEBUG
 void
-sio_printpos(struct sio_hdl *hdl)
+_sio_printpos(struct sio_hdl *hdl)
 {	
 	struct timespec ts;
 	long long rpos, rdiff;
@@ -474,12 +474,12 @@ sio_printpos(struct sio_hdl *hdl)
 #endif
 
 void
-sio_onmove_cb(struct sio_hdl *hdl, int delta)
+_sio_onmove_cb(struct sio_hdl *hdl, int delta)
 {
 #ifdef DEBUG
 	hdl->cpos += delta;
-	if (sndio_debug >= 2)
-		sio_printpos(hdl);
+	if (_sndio_debug >= 2)
+		_sio_printpos(hdl);
 #endif
 	if (hdl->move_cb)
 		hdl->move_cb(hdl->move_addr, delta);
@@ -515,7 +515,7 @@ sio_onvol(struct sio_hdl *hdl, void (*cb)(void *, unsigned int), void *addr)
 }
 
 void
-sio_onvol_cb(struct sio_hdl *hdl, unsigned int ctl)
+_sio_onvol_cb(struct sio_hdl *hdl, unsigned int ctl)
 {
 	if (hdl->vol_cb)
 		hdl->vol_cb(hdl->vol_addr, ctl);
