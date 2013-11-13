@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.33 2013/11/02 12:23:58 mpi Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.34 2013/11/13 13:48:08 pirofti Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -38,11 +38,14 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 
+#include <machine/bus.h>
+
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 
 #ifdef USB_DEBUG
 #define DPRINTF(x)	do { if (usbdebug) printf x; } while (0)
@@ -52,6 +55,13 @@ extern int usbdebug;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
+
+static void
+usbd_interface2device_handle(struct usbd_interface *iface,
+    struct usbd_device **dev)
+{
+	*dev = iface->device;
+}
 
 usbd_status
 usbd_get_desc(struct usbd_device *dev, int type, int index, int len, void *desc)

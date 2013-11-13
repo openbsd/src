@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.60 2013/06/26 07:53:20 mpi Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.61 2013/11/13 13:48:08 pirofti Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -413,7 +413,7 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 	DPRINTFN(0,("ukbd_cngetc: enter\n"));
 	kbd->sc_polling = 1;
 	while (kbd->sc_npollchar <= 0)
-		usbd_dopoll(sc->sc_hdev.sc_parent->sc_iface);
+		usbd_dopoll(sc->sc_hdev.sc_parent->sc_udev);
 	kbd->sc_polling = 0;
 	hidkbd_cngetc(kbd, type, data);
 	DPRINTFN(0,("ukbd_cngetc: return 0x%02x\n", *data));
@@ -423,16 +423,14 @@ void
 ukbd_cnpollc(void *v, int on)
 {
 	struct ukbd_softc *sc = v;
-	struct usbd_device *dev;
 
 	DPRINTFN(2,("ukbd_cnpollc: sc=%p on=%d\n", v, on));
 
-	usbd_interface2device_handle(sc->sc_hdev.sc_parent->sc_iface, &dev);
 	if (on)
 		sc->sc_spl = splusb();
 	else
 		splx(sc->sc_spl);
-	usbd_set_polling(dev, on);
+	usbd_set_polling(sc->sc_hdev.sc_parent->sc_udev, on);
 }
 
 void

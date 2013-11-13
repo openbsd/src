@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.65 2013/11/06 15:55:15 jeremy Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.66 2013/11/13 13:48:08 pirofti Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -633,13 +633,6 @@ usbd_interface_count(struct usbd_device *dev, u_int8_t *count)
 	return (0);
 }
 
-void
-usbd_interface2device_handle(struct usbd_interface *iface,
-    struct usbd_device **dev)
-{
-	*dev = iface->device;
-}
-
 usbd_status
 usbd_device2interface_handle(struct usbd_device *dev, u_int8_t ifaceno,
     struct usbd_interface **iface)
@@ -1030,9 +1023,9 @@ usbd_get_quirks(struct usbd_device *dev)
  * Called from keyboard driver when in polling mode.
  */
 void
-usbd_dopoll(struct usbd_interface *iface)
+usbd_dopoll(struct usbd_device *udev)
 {
-	iface->device->bus->methods->do_poll(iface->device->bus);
+	udev->bus->methods->do_poll(udev->bus);
 }
 
 void
