@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.7 2011/01/02 13:40:07 miod Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.8 2013/11/13 20:35:59 miod Exp $	*/
 
 /* 
  * Mach Operating System
@@ -63,7 +63,38 @@ luna88k_board_table[] = {
 	{ PC_BASE,		PC_SPACE,		RW,	CI },
 #endif
 	{ MROM_ADDR,		MROM_SPACE,		R,	CI },
-	{ BMAP_START,		BMAP_SPACE,		RW,	CI },
+	{ BMAP_RFCNT,		PAGE_SIZE,		RW,	CI },
+	{ BMAP_BMSEL,		PAGE_SIZE,		RW,	CI },
+	{ BMAP_BMP,		BMAP_BMAP0 - BMAP_BMP,	RW,	CI },
+	{ BMAP_BMAP0,		BMAP_BMAP1 - BMAP_BMAP0, RW,	CI },
+#if 0 /* not until console or X11 needs them */
+	{ BMAP_BMAP1,		BMAP_BMAP2 - BMAP_BMAP1, RW,	CI },
+	{ BMAP_BMAP2,		BMAP_BMAP3 - BMAP_BMAP2, RW,	CI },
+	{ BMAP_BMAP3,		BMAP_BMAP4 - BMAP_BMAP3, RW,	CI },
+	{ BMAP_BMAP4,		BMAP_BMAP5 - BMAP_BMAP4, RW,	CI },
+	{ BMAP_BMAP5,		BMAP_BMAP6 - BMAP_BMAP5, RW,	CI },
+	{ BMAP_BMAP6,		BMAP_BMAP7 - BMAP_BMAP6, RW,	CI },
+	{ BMAP_BMAP7,		BMAP_FN - BMAP_BMAP7,	RW,	CI },
+#else
+	{ BMAP_BMAP1,		PAGE_SIZE,		RW,	CI },
+	{ BMAP_BMAP2,		PAGE_SIZE,		RW,	CI },
+	{ BMAP_BMAP3,		PAGE_SIZE,		RW,	CI },
+	{ BMAP_BMAP4,		PAGE_SIZE,		RW,	CI },
+	{ BMAP_BMAP5,		PAGE_SIZE,		RW,	CI },
+	{ BMAP_BMAP6,		PAGE_SIZE,		RW,	CI },
+	{ BMAP_BMAP7,		PAGE_SIZE,		RW,	CI },
+#endif
+	{ BMAP_FN,		PAGE_SIZE,		RW,	CI },
+#if 0 /* not until console or X11 needs them */
+	{ BMAP_FN0,		PAGE_SIZE,		RW,	CI },
+	{ BMAP_FN1,		PAGE_SIZE,		RW,	CI },
+	{ BMAP_FN2,		PAGE_SIZE,		RW,	CI },
+	{ BMAP_FN3,		PAGE_SIZE,		RW,	CI },
+	{ BMAP_FN4,		PAGE_SIZE,		RW,	CI },
+	{ BMAP_FN5,		PAGE_SIZE,		RW,	CI },
+	{ BMAP_FN6,		PAGE_SIZE,		RW,	CI },
+	{ BMAP_FN7,		PAGE_SIZE,		RW,	CI },
+#endif
 	{ BMAP_PALLET0,		PAGE_SIZE,		RW,	CI },
 	{ BMAP_PALLET1,		PAGE_SIZE,		RW,	CI },
 	{ BMAP_PALLET2,		PAGE_SIZE,		RW,	CI },
