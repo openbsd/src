@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.30 2013/10/18 14:44:39 deraadt Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.31 2013/11/13 05:41:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -89,7 +89,7 @@ static int	buildhints(void);
 static int	readhints(void);
 static void	listhints(void);
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr,

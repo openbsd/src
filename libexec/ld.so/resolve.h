@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.69 2013/06/01 09:57:55 miod Exp $ */
+/*	$OpenBSD: resolve.h,v 1.70 2013/11/13 05:41:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -233,6 +233,7 @@ Elf_Addr _dl_bind(elf_object_t *object, int index);
 int	_dl_match_file(struct sod *sodp, const char *name, int namelen);
 char	*_dl_find_shlib(struct sod *sodp, char **searchpath, int nohints);
 void	_dl_load_list_free(struct load_list *load_list);
+void	_dl_debug_state(void);
 
 void	_dl_thread_kern_go(void);
 void	_dl_thread_kern_stop(void);

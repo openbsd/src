@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.37 2013/03/20 21:49:59 kurt Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.38 2013/11/13 05:41:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -102,7 +102,7 @@ _dl_match_file(struct sod *sodp, const char *name, int namelen)
  * sodp is updated with the minor if this matches.
  */
 
-int
+static int
 _dl_cmp_sod(struct sod *sodp, const struct sod *lsod)
 {
 	int match;
@@ -220,7 +220,7 @@ nohints:
 	return NULL;
 }
 
-elf_object_t *
+static elf_object_t *
 _dl_lookup_object(const char *req_name, struct sod *req_sod)
 {
 	elf_object_t *object = _dl_objects;
@@ -243,7 +243,7 @@ _dl_lookup_object(const char *req_name, struct sod *req_sod)
 	return(NULL);
 }
 
-elf_object_t *
+static elf_object_t *
 _dl_find_loaded_shlib(const char *req_name, struct sod req_sod, int flags)
 {
 	elf_object_t *object;
@@ -432,7 +432,7 @@ _dl_link_dlopen(elf_object_t *dep)
 	DL_DEB(("linking %s as dlopen()ed\n", dep->load_name));
 }
 
-void
+static void
 _dl_child_refcnt_decrement(elf_object_t *object)
 {
 	struct dep_node *n;

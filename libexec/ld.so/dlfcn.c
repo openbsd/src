@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.88 2013/03/24 01:37:23 deraadt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.89 2013/11/13 05:41:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -149,7 +149,7 @@ dlsym(void *handle, const char *name)
 	elf_object_t	*object;
 	elf_object_t	*dynobj;
 	const elf_object_t	*pobj;
-	void		*retval;
+	char 		*retval;
 	const Elf_Sym	*sym = NULL;
 	int flags;
 
@@ -366,7 +366,7 @@ dlerror(void)
 	return (errmsg);
 }
 
-void
+static void
 _dl_tracefmt(int fd, elf_object_t *object, const char *fmt1, const char *fmt2,
     const char *objtypename)
 {

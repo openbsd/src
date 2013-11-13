@@ -1,4 +1,4 @@
-/* $OpenBSD: dl_prebind.c,v 1.12 2013/06/04 00:59:00 brad Exp $ */
+/* $OpenBSD: dl_prebind.c,v 1.13 2013/11/13 05:41:41 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -43,7 +43,7 @@ void prebind_dump_fixup(struct fixup *fixup, u_int32_t numfixups);
 void prebind_dump_libmap(u_int32_t *libmap, u_int32_t numlibs);
 struct prebind_footer *_dl_prebind_data_to_footer(void *data);
 
-void *_dl_prog_prebind_map;
+char *_dl_prog_prebind_map;
 struct prebind_footer *prog_footer;
 extern char *_dl_noprebind;
 extern char *_dl_prebind_validate;
@@ -135,8 +135,8 @@ prebind_load_fd(int fd, const char *name)
 	    MAP_FILE, fd, footer.prebind_base);
 	DL_DEB(("prebind_load_fd for lib %s\n", name));
 
-	nameidx = _dl_prog_prebind_map + prog_footer->nameidx_idx;
-	nametab = _dl_prog_prebind_map + prog_footer->nametab_idx;
+	nameidx = (void *)(_dl_prog_prebind_map + prog_footer->nameidx_idx);
+	nametab = (void *)(_dl_prog_prebind_map + prog_footer->nametab_idx);
 
 	/* libraries are loaded in random order, so we just have
 	 * to look thru the list to find ourselves
@@ -174,7 +174,7 @@ prebind_symcache(elf_object_t *object, int plt)
 	struct symcachetab *symcachetab;
 	struct prebind_footer *footer;
 	int i = 0, cur_obj = -1, idx;
-	void *prebind_map;
+	char *prebind_map;
 	char *c;
 	struct fixup *fixup;
 	elf_object_t *obj;
@@ -221,17 +221,17 @@ prebind_symcache(elf_object_t *object, int plt)
 	prebind_map = (void *)object->prebind_data;
 
 	if (plt) {
-		symcachetab = prebind_map + footer->pltsymcache_idx;
+		symcachetab = (void *)(prebind_map + footer->pltsymcache_idx);
 		symcache_cnt = footer->pltsymcache_cnt;
 //		DL_DEB(("loading plt %d\n", symcache_cnt));
 	} else {
-		symcachetab = prebind_map + footer->symcache_idx;
+		symcachetab = (void *)(prebind_map + footer->symcache_idx);
 		symcache_cnt = footer->symcache_cnt;
 //		DL_DEB(("loading got %d\n", symcache_cnt));
 	}
 
-	libmap = _dl_prog_prebind_map + prog_footer->libmap_idx;
-	idxtolib = _dl_prog_prebind_map + libmap[cur_obj];
+	libmap = (void *)(_dl_prog_prebind_map + prog_footer->libmap_idx);
+	idxtolib = (void *)(_dl_prog_prebind_map + libmap[cur_obj]);
 
 	for (i = 0; i < symcache_cnt; i++) {
 		struct elf_object *tobj;
@@ -270,9 +270,12 @@ prebind_symcache(elf_object_t *object, int plt)
 	}
 
 	if (!plt) {
-		fixupidx = _dl_prog_prebind_map + prog_footer->fixup_idx;
-		fixup = _dl_prog_prebind_map + fixupidx[2*cur_obj];
-		fixupcnt = _dl_prog_prebind_map + prog_footer->fixupcnt_idx;
+		fixupidx = (void *)(_dl_prog_prebind_map +
+		    prog_footer->fixup_idx);
+		fixup = (void *)(_dl_prog_prebind_map +
+		    fixupidx[2*cur_obj]);
+		fixupcnt = (void *)(_dl_prog_prebind_map +
+		    prog_footer->fixupcnt_idx);
 
 		for (i = 0; i < fixupcnt[2*cur_obj]; i++) {
 			struct fixup *f;
@@ -303,9 +306,12 @@ prebind_symcache(elf_object_t *object, int plt)
 		}
 	} else {
 
-		fixupidx = _dl_prog_prebind_map + prog_footer->fixup_idx;
-		fixup = _dl_prog_prebind_map + fixupidx[2*cur_obj+1];
-		fixupcnt = _dl_prog_prebind_map + prog_footer->fixupcnt_idx;
+		fixupidx = (void *)(_dl_prog_prebind_map +
+		    prog_footer->fixup_idx);
+		fixup = (void *)(_dl_prog_prebind_map +
+		    fixupidx[2*cur_obj+1]);
+		fixupcnt = (void *)(_dl_prog_prebind_map +
+		    prog_footer->fixupcnt_idx);
 
 #if 0
 		DL_DEB(("prebind loading symbols fixup plt %s\n",
@@ -387,8 +393,10 @@ _dl_prebind_pre_resolve()
 	int idx;
 
 	if (_dl_prog_prebind_map != NULL) {
-		nameidx = _dl_prog_prebind_map + prog_footer->nameidx_idx;
-		nametab = _dl_prog_prebind_map + prog_footer->nametab_idx;
+		nameidx = (void *)(_dl_prog_prebind_map +
+		    prog_footer->nameidx_idx);
+		nametab = (void *)(_dl_prog_prebind_map +
+		    prog_footer->nametab_idx);
 		for (idx = 1, object = _dl_objects->next; object != NULL;
 		    object = object->next, idx++) {
 			if (object->prebind_data == NULL) {

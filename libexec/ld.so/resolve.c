@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.63 2013/06/01 09:57:55 miod Exp $ */
+/*	$OpenBSD: resolve.c,v 1.64 2013/11/13 05:41:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -357,7 +357,7 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 	return (object);
 }
 
-void
+static void
 _dl_tailq_free(struct dep_node *n)
 {
 	struct dep_node *next;
@@ -371,7 +371,6 @@ _dl_tailq_free(struct dep_node *n)
 
 elf_object_t *free_objects;
 
-void _dl_cleanup_objects(void);
 void
 _dl_cleanup_objects()
 {
@@ -420,11 +419,6 @@ _dl_remove_object(elf_object_t *object)
 	free_objects = object;
 }
 
-
-int _dl_find_symbol_obj(elf_object_t *object, const char *name,
-    unsigned long hash, int flags, const Elf_Sym **ref,
-    const Elf_Sym **weak_sym,
-    elf_object_t **weak_object);
 
 sym_cache *_dl_symcache;
 int _dl_symcachestat_hits;
@@ -503,6 +497,58 @@ _dl_newsymsearch(void)
 		}
 		_dl_searchnum = 1;
 	}
+}
+
+static int
+_dl_find_symbol_obj(elf_object_t *object, const char *name, unsigned long hash,
+    int flags, const Elf_Sym **this, const Elf_Sym **weak_sym,
+    elf_object_t **weak_object)
+{
+	const Elf_Sym	*symt = object->dyn.symtab;
+	const char	*strt = object->dyn.strtab;
+	long	si;
+	const char *symn;
+
+	for (si = object->buckets[hash % object->nbuckets];
+	    si != STN_UNDEF; si = object->chains[si]) {
+		const Elf_Sym *sym = symt + si;
+
+		if (sym->st_value == 0)
+			continue;
+
+		if (ELF_ST_TYPE(sym->st_info) != STT_NOTYPE &&
+		    ELF_ST_TYPE(sym->st_info) != STT_OBJECT &&
+		    ELF_ST_TYPE(sym->st_info) != STT_FUNC)
+			continue;
+
+		symn = strt + sym->st_name;
+		if (sym != *this && _dl_strcmp(symn, name))
+			continue;
+
+		/* allow this symbol if we are referring to a function
+		 * which has a value, even if section is UNDEF.
+		 * this allows &func to refer to PLT as per the
+		 * ELF spec. st_value is checked above.
+		 * if flags has SYM_PLT set, we must have actual
+		 * symbol, so this symbol is skipped.
+		 */
+		if (sym->st_shndx == SHN_UNDEF) {
+			if ((flags & SYM_PLT) || sym->st_value == 0 ||
+			    ELF_ST_TYPE(sym->st_info) != STT_FUNC)
+				continue;
+		}
+
+		if (ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
+			*this = sym;
+			return 1;
+		} else if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
+			if (!*weak_sym) {
+				*weak_sym = sym;
+				*weak_object = object;
+			}
+		}
+	}
+	return 0;
 }
 
 Elf_Addr
@@ -636,58 +682,6 @@ found:
 		*pobj = object;
 
 	return (object->obj_base);
-}
-
-int
-_dl_find_symbol_obj(elf_object_t *object, const char *name, unsigned long hash,
-    int flags, const Elf_Sym **this, const Elf_Sym **weak_sym,
-    elf_object_t **weak_object)
-{
-	const Elf_Sym	*symt = object->dyn.symtab;
-	const char	*strt = object->dyn.strtab;
-	long	si;
-	const char *symn;
-
-	for (si = object->buckets[hash % object->nbuckets];
-	    si != STN_UNDEF; si = object->chains[si]) {
-		const Elf_Sym *sym = symt + si;
-
-		if (sym->st_value == 0)
-			continue;
-
-		if (ELF_ST_TYPE(sym->st_info) != STT_NOTYPE &&
-		    ELF_ST_TYPE(sym->st_info) != STT_OBJECT &&
-		    ELF_ST_TYPE(sym->st_info) != STT_FUNC)
-			continue;
-
-		symn = strt + sym->st_name;
-		if (sym != *this && _dl_strcmp(symn, name))
-			continue;
-
-		/* allow this symbol if we are referring to a function
-		 * which has a value, even if section is UNDEF.
-		 * this allows &func to refer to PLT as per the
-		 * ELF spec. st_value is checked above.
-		 * if flags has SYM_PLT set, we must have actual
-		 * symbol, so this symbol is skipped.
-		 */
-		if (sym->st_shndx == SHN_UNDEF) {
-			if ((flags & SYM_PLT) || sym->st_value == 0 ||
-			    ELF_ST_TYPE(sym->st_info) != STT_FUNC)
-				continue;
-		}
-
-		if (ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
-			*this = sym;
-			return 1;
-		} else if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
-			if (!*weak_sym) {
-				*weak_sym = sym;
-				*weak_object = object;
-			}
-		}
-	}
-	return 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.22 2013/07/15 00:01:58 jca Exp $ */
+/* $OpenBSD: prebind.c,v 1.23 2013/11/13 05:41:43 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -129,6 +129,8 @@ int	objarray_sz;
 
 void	copy_oldsymcache(int objidx, void *prebind_data);
 void	elf_load_existing_prebind(struct elf_object *object, int fd);
+void	insert_sym_objcache(struct elf_object *, int,
+	    const struct elf_object *, const Elf_Sym *, int);
 
 struct elf_object * elf_load_object(void *pexe, const char *name);
 void elf_free_object(struct elf_object *object);
@@ -137,7 +139,7 @@ int load_obj_needed(struct elf_object *object);
 int load_lib(const char *name, struct elf_object *parent);
 elf_object_t * elf_load_shlib_hint(struct sod *sod, struct sod *req_sod,
     int use_hints, const char *libpath);
-char * elf_find_shlib(struct sod *sodp, const char *searchpath,
+char *elf_find_shlib(struct sod *sodp, const char *searchpath,
     int nohints);
 elf_object_t * elf_tryload_shlib(const char *libname);
 int elf_match_file(struct sod *sodp, char *name, int namelen);
@@ -2242,8 +2244,8 @@ copy_oldsymcache(int objidx, void *prebind_map)
 	c += offset;
 	footer = (void *)c;
 
-	nameidx = prebind_map + footer->nameidx_idx;
-	nametab = prebind_map + footer->nametab_idx;
+	nameidx = (void *)((char *)prebind_map + footer->nameidx_idx);
+	nametab = (void *)((char *)prebind_map + footer->nametab_idx);
 
 	idxtolib = xcalloc(footer->numlibs, sizeof(int));
 	found = 0;
@@ -2271,7 +2273,7 @@ copy_oldsymcache(int objidx, void *prebind_map)
 
 	/* build idxtolibs */
 	tcache = objarray[objidx].symcache;
-	symcache = prebind_map + footer->symcache_idx;
+	symcache = (void *)((char *)prebind_map + footer->symcache_idx);
 
 	for (i = 0; i < footer->symcache_cnt; i++) {
 		tobj = objarray[idxtolib[symcache[i].obj_idx]].obj;
@@ -2282,7 +2284,7 @@ copy_oldsymcache(int objidx, void *prebind_map)
 	}
 
 	tcache = objarray[objidx].pltsymcache;
-	symcache = prebind_map + footer->pltsymcache_idx;
+	symcache = (void *)((char *)prebind_map + footer->pltsymcache_idx);
 	for (i = 0; i < footer->pltsymcache_cnt; i++) {
 		tobj = objarray[idxtolib[symcache[i].obj_idx]].obj;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: prebind_path.c,v 1.1 2013/03/20 21:49:59 kurt Exp $	*/
+/*	$OpenBSD: prebind_path.c,v 1.2 2013/11/13 05:41:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Kurt Miller <kurt@intricatesoftware.com>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
+#include "util.h"
 
 void *
 _dl_malloc(size_t need)

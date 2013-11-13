@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.26 2013/06/09 13:10:19 miod Exp $	*/
+/*	$OpenBSD: util.c,v 1.27 2013/11/13 05:41:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -52,8 +52,8 @@ __stack_smash_handler(char func[], int damaged)
 /*
  * Static vars usable after bootstrapping.
  */
-static void *_dl_malloc_pool = 0;
-static long *_dl_malloc_free = 0;
+static char *_dl_malloc_pool;
+static long *_dl_malloc_free;
 
 char *
 _dl_strdup(const char *orig)
@@ -98,7 +98,7 @@ _dl_malloc(size_t need)
 	have = _dl_round_page((long)_dl_malloc_pool) - (long)_dl_malloc_pool;
 	if (need > have) {
 		if (have >= 8 + DL_MALLOC_ALIGN) {
-			p = _dl_malloc_pool;
+			p = (void *)_dl_malloc_pool;
 			p = (void *) ((long)p + DL_MALLOC_ALIGN);
 			p[-1] = have;
 			_dl_free((void *)p);		/* move to freelist */
@@ -111,7 +111,7 @@ _dl_malloc(size_t need)
 			_dl_exit(7);
 		}
 	}
-	p = _dl_malloc_pool;
+	p = (void *)_dl_malloc_pool;
 	_dl_malloc_pool += need;
 	_dl_memset(p, 0, need);
 	p = (void *) ((long)p + DL_MALLOC_ALIGN);
