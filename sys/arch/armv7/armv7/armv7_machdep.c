@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.2 2013/11/08 00:08:13 aalm Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.3 2013/11/13 07:03:11 uebayasi Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -281,6 +281,10 @@ boot(int howto)
 	 */
 	if (!(howto & RB_NOSYNC))
 		bootsync(howto);
+
+	if_downall();
+
+	uvm_shutdown();
 
 	/* Say NO to interrupts */
 	splhigh();
