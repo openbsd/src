@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.23 2011/04/27 07:52:11 sobrado Exp $	*/
+/*	$OpenBSD: du.c,v 1.24 2013/11/13 21:20:01 deraadt Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ struct links_entry {
 	ino_t	 ino;
 };
 
-int
+static int
 links_cmp(struct links_entry *e1, struct links_entry *e2)
 {
 	if (e1->dev == e2->dev) {
@@ -232,7 +232,7 @@ links_cmp(struct links_entry *e1, struct links_entry *e2)
 
 RB_HEAD(ltree, links_entry) links = RB_INITIALIZER(&links);
 
-RB_GENERATE(ltree, links_entry, entry, links_cmp);
+RB_GENERATE_STATIC(ltree, links_entry, entry, links_cmp);
 
 
 int
