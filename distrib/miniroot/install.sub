@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.694 2013/11/13 07:16:55 rpe Exp $
+#	$OpenBSD: install.sub,v 1.695 2013/11/13 19:17:22 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -284,7 +284,8 @@ _autorespond() {
 	while IFS== read _key _value; do
 		_key=${_key##+( |	])} _value=${_value##+( |	)}
 		_key=${_key%%+( |	])} _value=${_value%%+( |	)}
-		[[ $_q == *"$_key"* ]] && resp=$_value && let _i++
+		[[ $_q == *"$_key"* && -n $_value ]] &&
+			resp=$_value && let _i++
 	done < $RESPONSEFILE
 	(( _i == 1 )) && return
 	(( !_i )) && [[ -n $_def ]] && resp=$_def && return
