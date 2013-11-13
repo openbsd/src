@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.18 2006/12/16 06:18:35 ray Exp $ */
+/* $OpenBSD: signature.c,v 1.19 2013/11/13 16:28:17 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -389,8 +389,9 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
     void *kk = (void *) NULL;
     X509 *px509Cert;
     EVP_PKEY *pPublicKey;
-    unsigned char *ptr = (char *) NULL, *decoded = (char *) NULL;
-    int encoding, internalencoding, len = 0;
+    unsigned char *ptr = NULL, *decoded = NULL;
+    int encoding, internalencoding;
+    long len = 0;
 
     keynote_errno = 0;
     if (keytype == KEYNOTE_PRIVATE_KEY)
@@ -568,7 +569,7 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 	    return -1;
 	}
 
-	if(d2i_X509(&px509Cert, &decoded, len) == NULL)
+	if(d2i_X509(&px509Cert, (const unsigned char **)&decoded, len) == NULL)
 	{
 	    if (ptr)
 	      free(ptr);
@@ -1240,7 +1241,7 @@ kn_encode_key(struct keynote_deckey *dc, int iencoding,
 	    return (char *) NULL;
 	}
 
-	ptr = foo = (char *) calloc(i, sizeof(char));
+ 	ptr = foo = (char *) calloc(i, sizeof(char));
 	if (foo == (char *) NULL)
 	{
 	    keynote_errno = ERROR_MEMORY;
