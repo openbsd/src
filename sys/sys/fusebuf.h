@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.h,v 1.6 2013/11/11 14:18:49 stsp Exp $ */
+/* $OpenBSD: fusebuf.h,v 1.7 2013/11/13 17:53:54 stsp Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon
  * Copyright (c) 2013 Martin Pieuchot
@@ -29,7 +29,7 @@
 struct fb_hdr {
 	SIMPLEQ_ENTRY(fusebuf)	fh_next;	/* next buffer in chain */
 	size_t			fh_len;		/* Amount of data */
-	uint32_t		fh_err;		/* Err code to pass back */
+	int			fh_err;		/* errno to pass back */
 	int			fh_type;	/* type of data */
 	ino_t			fh_ino;		/* Inode of this fusebuf */
 	uint64_t		fh_uuid;	/* Uuid to track the answer */
