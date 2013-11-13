@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.123 2013/11/11 09:15:35 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.124 2013/11/13 08:27:24 stsp Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -991,7 +991,8 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 * source address.
 	 */
 	ia->ia6_flags &= ~IN6_IFF_DUPLICATED;	/* safety */
-	if (hostIsNew && in6if_do_dad(ifp))
+	if (hostIsNew && in6if_do_dad(ifp) &&
+	    (ifra->ifra_flags & IN6_IFF_NODAD) == 0)
 		ia->ia6_flags |= IN6_IFF_TENTATIVE;
 
 	/*
