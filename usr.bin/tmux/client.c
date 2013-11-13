@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.75 2013/10/10 12:35:30 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.76 2013/11/13 20:43:36 benno Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -464,7 +464,7 @@ client_callback(unused int fd, short events, void *data)
 	}
 
 	if (events & EV_WRITE) {
-		if (msgbuf_write(&client_ibuf.w) < 0)
+		if (msgbuf_write(&client_ibuf.w) < 0 && errno != EAGAIN)
 			goto lost_server;
 	}
 
