@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.332 2013/07/10 15:56:06 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.333 2013/11/13 20:41:01 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -513,7 +513,7 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 			pauseaccept = 0;
 
 		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLOUT)
-			if (msgbuf_write(&ibuf_main->w) < 0)
+			if (msgbuf_write(&ibuf_main->w) <= 0 && errno != EAGAIN)
 				fatal("pipe write error");
 
 		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLIN) {
@@ -523,7 +523,7 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 		}
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLOUT)
-			if (msgbuf_write(&ibuf_rde->w) < 0)
+			if (msgbuf_write(&ibuf_rde->w) <= 0 && errno != EAGAIN)
 				fatal("pipe write error");
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
@@ -1795,10 +1795,10 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 	}
 
 	if (pfd->revents & POLLOUT && p->wbuf.queued) {
-		if ((error = msgbuf_write(&p->wbuf)) < 0) {
-			if (error == -2)
+		if ((error = msgbuf_write(&p->wbuf)) <= 0 && errno != EAGAIN) {
+			if (error == 0)
 				log_peer_warnx(&p->conf, "Connection closed");
-			else
+			else if (error == -1)
 				log_peer_warn(&p->conf, "write error");
 			bgp_fsm(p, EVNT_CON_FATAL);
 			return (1);

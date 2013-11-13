@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.325 2013/08/14 20:34:26 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.326 2013/11/13 20:41:01 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -291,7 +291,7 @@ rde_main(int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2], int pipe_s2rctl[2],
 
 		if ((pfd[PFD_PIPE_MAIN].revents & POLLOUT) &&
 		    ibuf_main->w.queued)
-			if (msgbuf_write(&ibuf_main->w) < 0)
+			if (msgbuf_write(&ibuf_main->w) <= 0 && errno != EAGAIN)
 				fatal("pipe write error");
 
 		if (pfd[PFD_PIPE_MAIN].revents & POLLIN)
@@ -299,7 +299,7 @@ rde_main(int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2], int pipe_s2rctl[2],
 
 		if ((pfd[PFD_PIPE_SESSION].revents & POLLOUT) &&
 		    ibuf_se->w.queued)
-			if (msgbuf_write(&ibuf_se->w) < 0)
+			if (msgbuf_write(&ibuf_se->w) <= 0 && errno != EAGAIN)
 				fatal("pipe write error");
 
 		if (pfd[PFD_PIPE_SESSION].revents & POLLIN)
@@ -307,7 +307,8 @@ rde_main(int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2], int pipe_s2rctl[2],
 
 		if ((pfd[PFD_PIPE_SESSION_CTL].revents & POLLOUT) &&
 		    ibuf_se_ctl->w.queued)
-			if (msgbuf_write(&ibuf_se_ctl->w) < 0)
+			if (msgbuf_write(&ibuf_se_ctl->w) <= 0 &&
+			    errno != EAGAIN)
 				fatal("pipe write error");
 
 		if (pfd[PFD_PIPE_SESSION_CTL].revents & POLLIN)

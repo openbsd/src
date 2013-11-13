@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.79 2013/03/22 11:29:01 sthen Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.80 2013/11/13 20:43:00 benno Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -384,7 +384,7 @@ main_dispatch_ospfe(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
+		if (msgbuf_write(&ibuf->w) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
 	}
 
@@ -469,7 +469,7 @@ main_dispatch_rde(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
+		if (msgbuf_write(&ibuf->w) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
 	}
 

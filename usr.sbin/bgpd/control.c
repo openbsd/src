@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.74 2013/03/11 17:40:11 deraadt Exp $ */
+/*	$OpenBSD: control.c,v 1.75 2013/11/13 20:41:01 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -207,7 +207,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 	}
 
 	if (pfd->revents & POLLOUT)
-		if (msgbuf_write(&c->ibuf.w) < 0) {
+		if (msgbuf_write(&c->ibuf.w) <= 0 && errno != EAGAIN) {
 			*ctl_cnt -= control_close(pfd->fd);
 			return (1);
 		}
