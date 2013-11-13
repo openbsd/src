@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.205 2013/11/13 08:57:24 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.206 2013/11/13 13:02:44 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -54,7 +54,7 @@
 
 static void parent_imsg(struct mproc *, struct imsg *);
 static void usage(void);
-static void parent_shutdown(void);
+static void parent_shutdown(int);
 static void parent_send_config(int, short, void *);
 static void parent_send_config_lka(void);
 static void parent_send_config_mfa(void);
@@ -281,7 +281,7 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 
 		case IMSG_CTL_SHUTDOWN:
-			parent_shutdown();
+			parent_shutdown(0);
 			return;
 		}
 	}
@@ -300,7 +300,7 @@ usage(void)
 }
 
 static void
-parent_shutdown(void)
+parent_shutdown(int ret)
 {
 	void		*iter;
 	struct child	*child;
@@ -318,7 +318,7 @@ parent_shutdown(void)
 	unlink(SMTPD_SOCKET);
 
 	log_warnx("warn: parent terminating");
-	exit(0);
+	exit(ret);
 }
 
 static void
@@ -575,7 +575,7 @@ parent_sig_handler(int sig, short event, void *p)
 		} while (pid > 0 || (pid == -1 && errno == EINTR));
 
 		if (die)
-			parent_shutdown();
+			parent_shutdown(1);
 		break;
 	default:
 		fatalx("smtpd: unexpected signal");
