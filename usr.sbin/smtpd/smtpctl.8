@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.45 2013/08/26 16:54:04 jmc Exp $
+.\" $OpenBSD: smtpctl.8,v 1.46 2013/11/13 09:15:41 eric Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 26 2013 $
+.Dd $Mdocdate: November 13 2013 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -37,6 +37,21 @@ for
 .Pp
 The following commands are available:
 .Bl -tag -width Ds
+.It Cm encrypt Op Ar string
+Encrypt the password
+.Ar string
+to a representation suitable for user credentials and print it to the
+standard output.
+If
+.Ar string
+is not provided, cleartext passwords are read from standard input.
+.Pp
+It is advised to avoid providing the password as a parameter as it will be
+visible from
+.Xr top 1
+and
+.Xr ps 1
+output.
 .It Cm log brief
 Disable verbose debug logging.
 .It Cm log verbose
@@ -120,6 +135,11 @@ Mark a single envelope, or all envelopes with the same message ID,
 as ready for immediate delivery.
 .It Cm show envelope Ar envelope-id
 Display envelope content for the given ID.
+.It Cm show hosts
+Display the list of known remote MX hosts.
+For each of them, it shows the IP address, the canonical hostname,
+a reference count, the number of active connections to this host,
+and the elapsed time since the last connection.
 .It Cm show hoststats
 Display status of last delivery for domains that have been active in the
 last 4 hours.
@@ -177,6 +197,12 @@ is not running.
 .It
 Error string for the last failed delivery or relay attempt.
 .El
+.It Cm show relays
+Display the list of currently active relays and associated connectors.
+For each relay, it shows a number of counters and information on its
+internal state on a single line.
+Then comes the list of connectors
+(source addresses to connect from for this relay).
 .It Cm show routes
 Display status of routes currently known by
 .Xr smtpd 8 .

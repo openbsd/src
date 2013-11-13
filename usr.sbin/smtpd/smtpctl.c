@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.112 2013/10/30 21:37:48 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.113 2013/11/13 09:15:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -48,6 +48,7 @@
 #define PATH_GZCAT	"/usr/bin/gzcat"
 #define	PATH_CAT	"/bin/cat"
 #define PATH_QUEUE	"/queue"
+#define PATH_ENCRYPT	"/usr/bin/encrypt"
 
 int srv_connect(void);
 
@@ -803,6 +804,17 @@ do_update_table(int argc, struct parameter *argv)
 	return srv_check_result(1);
 }
 
+static int
+do_encrypt(int argc, struct parameter *argv)
+{
+	const char *p = NULL;
+
+	if (argv)
+		p = argv[0].u.u_str;
+	execl(PATH_ENCRYPT, "encrypt", p, NULL);
+	errx(1, "execl");
+}
+
 int
 main(int argc, char **argv)
 {
@@ -817,6 +829,8 @@ main(int argc, char **argv)
 	if (geteuid())
 		errx(1, "need root privileges");
 
+	cmd_install("encrypt",			do_encrypt);
+	cmd_install("encrypt <str>",		do_encrypt);
 	cmd_install("log brief",		do_log_brief);
 	cmd_install("log verbose",		do_log_verbose);
 	cmd_install("monitor",			do_monitor);
