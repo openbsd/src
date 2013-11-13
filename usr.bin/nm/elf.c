@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.21 2013/03/30 21:26:09 miod Exp $	*/
+/*	$OpenBSD: elf.c,v 1.22 2013/11/13 06:37:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -114,6 +114,9 @@
 #ifndef	STT_PARISC_MILLI
 #define	STT_PARISC_MILLI	STT_LOPROC + 0
 #endif
+
+int elf_shn2type(Elf_Ehdr *, u_int, const char *);
+int elf2nlist(Elf_Sym *, Elf_Ehdr *, Elf_Shdr *, char *, struct nlist *);
 
 int
 elf_fix_header(Elf_Ehdr *eh)
@@ -512,7 +515,7 @@ elf_symloadx(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
 			*pnrawnames = np - *pnames;
 		}
 	}
-
+	return (0);
 }
 
 int
