@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.6 2009/10/27 23:59:30 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.7 2013/11/13 22:37:15 deraadt Exp $	*/
 
  /*
   * General skeleton for adding options to the access control language. The
@@ -123,21 +123,21 @@ struct option {
 /* List of known keywords. Add yours here. */
 
 static struct option option_table[] = {
-    "user", user_option, NEED_ARG,
-    "group", group_option, NEED_ARG,
-    "umask", umask_option, NEED_ARG,
-    "linger", linger_option, NEED_ARG,
-    "keepalive", keepalive_option, 0,
-    "spawn", spawn_option, NEED_ARG | EXPAND_ARG,
-    "twist", twist_option, NEED_ARG | EXPAND_ARG | USE_LAST,
-    "rfc931", rfc931_option, OPT_ARG,
-    "setenv", setenv_option, NEED_ARG | EXPAND_ARG,
-    "nice", nice_option, OPT_ARG,
-    "severity", severity_option, NEED_ARG,
-    "allow", allow_option, USE_LAST,
-    "deny", deny_option, USE_LAST,
-    "banners", banners_option, NEED_ARG,
-    0,
+    { "user", user_option, NEED_ARG },
+    { "group", group_option, NEED_ARG },
+    { "umask", umask_option, NEED_ARG },
+    { "linger", linger_option, NEED_ARG },
+    { "keepalive", keepalive_option, 0 },
+    { "spawn", spawn_option, NEED_ARG | EXPAND_ARG },
+    { "twist", twist_option, NEED_ARG | EXPAND_ARG | USE_LAST },
+    { "rfc931", rfc931_option, OPT_ARG },
+    { "setenv", setenv_option, NEED_ARG | EXPAND_ARG },
+    { "nice", nice_option, OPT_ARG },
+    { "severity", severity_option, NEED_ARG },
+    { "allow", allow_option, USE_LAST },
+    { "deny", deny_option, USE_LAST },
+    { "banners", banners_option, NEED_ARG },
+    { 0 },
 };
 
 /* process_options - process access control options */
@@ -208,9 +208,8 @@ struct request_info *request;
 
 /* ARGSUSED */
 
-static void allow_option(value, request)
-char   *value;
-struct request_info *request;
+static void
+allow_option(char *value, struct request_info *request)
 {
     longjmp(tcpd_buf, AC_PERMIT);
 }
@@ -219,18 +218,16 @@ struct request_info *request;
 
 /* ARGSUSED */
 
-static void deny_option(value, request)
-char   *value;
-struct request_info *request;
+static void
+deny_option(char *value, struct request_info *request)
 {
     longjmp(tcpd_buf, AC_DENY);
 }
 
 /* banners_option - expand %<char>, terminate each line with CRLF */
 
-static void banners_option(value, request)
-char   *value;
-struct request_info *request;
+static void
+banners_option(char *value, struct request_info *request)
 {
     char    path[MAXPATHNAMELEN];
     char    ibuf[BUFSIZ];
@@ -265,7 +262,6 @@ char   *value;
 struct request_info *request;
 {
     struct group *grp;
-    struct group *getgrnam();
 
     if ((grp = getgrnam(value)) == 0)
 	tcpd_jump("unknown group: \"%s\"", value);
@@ -284,7 +280,6 @@ char   *value;
 struct request_info *request;
 {
     struct passwd *pwd;
-    struct passwd *getpwnam();
     char   *group;
 
     if ((group = split_at(value, '.')) != 0)
@@ -462,92 +457,90 @@ struct syslog_names {
 
 static struct syslog_names log_fac[] = {
 #ifdef LOG_KERN
-    "kern", LOG_KERN,
+    { "kern", LOG_KERN }, 
 #endif
 #ifdef LOG_USER
-    "user", LOG_USER,
+    { "user", LOG_USER },
 #endif
 #ifdef LOG_MAIL
-    "mail", LOG_MAIL,
+    { "mail", LOG_MAIL },
 #endif
 #ifdef LOG_DAEMON
-    "daemon", LOG_DAEMON,
+    { "daemon", LOG_DAEMON },
 #endif
 #ifdef LOG_AUTH
-    "auth", LOG_AUTH,
+    { "auth", LOG_AUTH },
 #endif
 #ifdef LOG_LPR
-    "lpr", LOG_LPR,
+    { "lpr", LOG_LPR },
 #endif
 #ifdef LOG_NEWS
-    "news", LOG_NEWS,
+    { "news", LOG_NEWS },
 #endif
 #ifdef LOG_UUCP
-    "uucp", LOG_UUCP,
+    { "uucp", LOG_UUCP },
 #endif
 #ifdef LOG_CRON
-    "cron", LOG_CRON,
+    { "cron", LOG_CRON },
 #endif
 #ifdef LOG_LOCAL0
-    "local0", LOG_LOCAL0,
+    { "local0", LOG_LOCAL0 },
 #endif
 #ifdef LOG_LOCAL1
-    "local1", LOG_LOCAL1,
+    { "local1", LOG_LOCAL1 },
 #endif
 #ifdef LOG_LOCAL2
-    "local2", LOG_LOCAL2,
+    { "local2", LOG_LOCAL2 },
 #endif
 #ifdef LOG_LOCAL3
-    "local3", LOG_LOCAL3,
+    { "local3", LOG_LOCAL3 },
 #endif
 #ifdef LOG_LOCAL4
-    "local4", LOG_LOCAL4,
+    { "local4", LOG_LOCAL4 },
 #endif
 #ifdef LOG_LOCAL5
-    "local5", LOG_LOCAL5,
+    { "local5", LOG_LOCAL5 },
 #endif
 #ifdef LOG_LOCAL6
-    "local6", LOG_LOCAL6,
+    { "local6", LOG_LOCAL6 },
 #endif
 #ifdef LOG_LOCAL7
-    "local7", LOG_LOCAL7,
+    { "local7", LOG_LOCAL7 },
 #endif
-    0,
+    { 0 },
 };
 
 static struct syslog_names log_sev[] = {
 #ifdef LOG_EMERG
-    "emerg", LOG_EMERG,
+    { "emerg", LOG_EMERG },
 #endif
 #ifdef LOG_ALERT
-    "alert", LOG_ALERT,
+    { "alert", LOG_ALERT },
 #endif
 #ifdef LOG_CRIT
-    "crit", LOG_CRIT,
+    { "crit", LOG_CRIT },
 #endif
 #ifdef LOG_ERR
-    "err", LOG_ERR,
+    { "err", LOG_ERR },
 #endif
 #ifdef LOG_WARNING
-    "warning", LOG_WARNING,
+    { "warning", LOG_WARNING },
 #endif
 #ifdef LOG_NOTICE
-    "notice", LOG_NOTICE,
+    { "notice", LOG_NOTICE },
 #endif
 #ifdef LOG_INFO
-    "info", LOG_INFO,
+    { "info", LOG_INFO },
 #endif
 #ifdef LOG_DEBUG
-    "debug", LOG_DEBUG,
+    { "debug", LOG_DEBUG },
 #endif
-    0,
+    { 0 },
 };
 
 /* severity_map - lookup facility or severity value */
 
-static int severity_map(table, name)
-struct syslog_names *table;
-char   *name;
+static int severity_map(struct syslog_names *table, char *name)
 {
     struct syslog_names *t;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.6 2009/10/27 23:59:30 deraadt Exp $	*/
+/*	$OpenBSD: update.c,v 1.7 2013/11/13 22:37:15 deraadt Exp $	*/
 
  /*
   * Routines for controlled update/initialization of request structures.
@@ -29,9 +29,8 @@
 
 /* request_fill - request update engine */
 
-static struct request_info *request_fill(request, ap)
-struct request_info *request;
-va_list ap;
+static struct request_info *request_fill(struct request_info *request,
+    va_list ap)
 {
     int     key;
     char   *ptr;

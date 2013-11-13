@@ -1,4 +1,4 @@
-/*	$OpenBSD: shell_cmd.c,v 1.3 2009/10/27 23:59:30 deraadt Exp $	*/
+/*	$OpenBSD: shell_cmd.c,v 1.4 2013/11/13 22:37:15 deraadt Exp $	*/
 
  /*
   * shell_cmd() takes a shell command after %<character> substitutions. The
@@ -28,7 +28,7 @@
 
 /* Forward declarations. */
 
-static void do_child();
+static void do_child(char *);
 
 /* shell_cmd - execute shell command */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc931.c,v 1.12 2009/10/27 23:59:30 deraadt Exp $	*/
+/*	$OpenBSD: rfc931.c,v 1.13 2013/11/13 22:37:15 deraadt Exp $	*/
 
 /* rfc1413 does an attempt at an ident query to a client. Originally written
  * by Wietse Venema, rewritten by Bob Beck <beck@openbsd.org> to avoid 
@@ -29,8 +29,7 @@ int rfc931_timeout = RFC931_TIMEOUT; /* global, legacy from tcpwrapper stuff */
 
 /*ARGSUSED*/
 static void
-timeout(s)
-	int s;
+timeout(int s)
 {     
 	ident_timeout = 1;
 }
