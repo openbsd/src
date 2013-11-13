@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.172 2013/10/09 08:56:38 phessler Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.173 2013/11/13 22:52:41 sthen Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -24,6 +24,7 @@
 #include <net/if_types.h>
 
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -387,7 +388,7 @@ main(int argc, char *argv[])
 	}
 
 	while (ibuf->w.queued)
-		if (msgbuf_write(&ibuf->w) < 0)
+		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
 			err(1, "write error");
 
 	while (!done) {
@@ -1826,7 +1827,7 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		imsg_compose(ibuf, IMSG_NETWORK_DONE, 0, 0, -1, NULL, 0);
 
 		while (ibuf->w.queued) {
-			if (msgbuf_write(&ibuf->w) < 0)
+			if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
 				err(1, "write error");
 		}
 	}
