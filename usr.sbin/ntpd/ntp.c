@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.119 2013/10/04 14:28:16 phessler Exp $ */
+/*	$OpenBSD: ntp.c,v 1.120 2013/11/13 20:44:39 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -335,7 +335,8 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 			}
 
 		if (nfds > 0 && (pfd[PFD_PIPE_MAIN].revents & POLLOUT))
-			if (msgbuf_write(&ibuf_main->w) < 0) {
+			if (msgbuf_write(&ibuf_main->w) <= 0 &&
+			    errno != EAGAIN) {
 				log_warn("pipe write error (to parent)");
 				ntp_quit = 1;
 			}
@@ -347,7 +348,8 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 		}
 
 		if (nfds > 0 && (pfd[PFD_PIPE_DNS].revents & POLLOUT))
-			if (msgbuf_write(&ibuf_dns->w) < 0) {
+			if (msgbuf_write(&ibuf_dns->w) <= 0 &&
+			    errno != EAGAIN) {
 				log_warn("pipe write error (to dns engine)");
 				ntp_quit = 1;
 			}

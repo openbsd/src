@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.74 2013/10/16 21:23:59 jmc Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.75 2013/11/13 20:44:39 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -217,7 +217,7 @@ main(int argc, char *argv[])
 		}
 
 		if (nfds > 0 && (pfd[PFD_PIPE].revents & POLLOUT))
-			if (msgbuf_write(&ibuf->w) < 0) {
+			if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN) {
 				log_warn("pipe write error (to child)");
 				quit = 1;
 			}
@@ -597,7 +597,7 @@ ctl_main(int argc, char *argv[])
 	}
 
 	while (ibuf_ctl->w.queued)
-		if (msgbuf_write(&ibuf_ctl->w) < 0)
+		if (msgbuf_write(&ibuf_ctl->w) <= 0 && errno != EAGAIN)
 			err(1, "ibuf_ctl: msgbuf_write error");
 
 	done = 0;
