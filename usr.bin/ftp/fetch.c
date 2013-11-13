@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.110 2013/10/27 18:31:24 guenther Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.111 2013/11/13 20:41:10 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -813,7 +813,7 @@ again:
 		if (strncasecmp(cp, CONTENTLEN, sizeof(CONTENTLEN) - 1) == 0) {
 			size_t s;
 			cp += sizeof(CONTENTLEN) - 1;
-			if (s=strcspn(cp, " \t"))
+			if ((s = strcspn(cp, " \t")))
 				*(cp+s) = 0;
 			filesize = strtonum(cp, 0, LLONG_MAX, &errstr);
 			if (errstr != NULL)
