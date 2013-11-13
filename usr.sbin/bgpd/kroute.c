@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.195 2013/05/22 21:00:36 sthen Exp $ */
+/*	$OpenBSD: kroute.c,v 1.196 2013/11/13 09:14:48 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -84,17 +84,17 @@ struct kif_node {
 	struct kif_kr6_head	 kroute6_l;
 };
 
-int	ktable_new(u_int, u_int, char *, char *, int);
-void	ktable_free(u_int);
-void	ktable_destroy(struct ktable *);
+int	ktable_new(u_int, u_int, char *, char *, int, u_int8_t);
+void	ktable_free(u_int, u_int8_t);
+void	ktable_destroy(struct ktable *, u_int8_t);
 struct ktable	*ktable_get(u_int);
 
-int	kr4_change(struct ktable *, struct kroute_full *);
-int	kr6_change(struct ktable *, struct kroute_full *);
-int	krVPN4_change(struct ktable *, struct kroute_full *);
-int	kr4_delete(struct ktable *, struct kroute_full *);
-int	kr6_delete(struct ktable *, struct kroute_full *);
-int	krVPN4_delete(struct ktable *, struct kroute_full *);
+int	kr4_change(struct ktable *, struct kroute_full *, u_int8_t);
+int	kr6_change(struct ktable *, struct kroute_full *, u_int8_t);
+int	krVPN4_change(struct ktable *, struct kroute_full *, u_int8_t);
+int	kr4_delete(struct ktable *, struct kroute_full *, u_int8_t);
+int	kr6_delete(struct ktable *, struct kroute_full *, u_int8_t);
+int	krVPN4_delete(struct ktable *, struct kroute_full *, u_int8_t);
 void	kr_net_delete(struct network *);
 struct network *kr_net_match(struct ktable *, struct kroute *);
 struct network *kr_net_match6(struct ktable *, struct kroute6 *);
@@ -107,6 +107,7 @@ int	kroute_compare(struct kroute_node *, struct kroute_node *);
 int	kroute6_compare(struct kroute6_node *, struct kroute6_node *);
 int	knexthop_compare(struct knexthop_node *, struct knexthop_node *);
 int	kif_compare(struct kif_node *, struct kif_node *);
+void	kr_fib_update_prio(u_int, u_int8_t);
 
 struct kroute_node	*kroute_find(struct ktable *, in_addr_t, u_int8_t,
 			    u_int8_t);
@@ -162,10 +163,12 @@ void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		if_change(u_short, int, struct if_data *);
 void		if_announce(void *);
 
-int		send_rtmsg(int, int, struct ktable *, struct kroute *);
-int		send_rt6msg(int, int, struct ktable *, struct kroute6 *);
+int		send_rtmsg(int, int, struct ktable *, struct kroute *,
+		    u_int8_t);
+int		send_rt6msg(int, int, struct ktable *, struct kroute6 *,
+		    u_int8_t);
 int		dispatch_rtmsg(void);
-int		fetchtable(struct ktable *);
+int		fetchtable(struct ktable *, u_int8_t);
 int		fetchifs(int);
 int		dispatch_rtmsg_addr(struct rt_msghdr *,
 		    struct sockaddr *[RTAX_MAX], struct ktable *);
@@ -237,7 +240,8 @@ kr_init(void)
 }
 
 int
-ktable_new(u_int rtableid, u_int rdomid, char *name, char *ifname, int fs)
+ktable_new(u_int rtableid, u_int rdomid, char *name, char *ifname, int fs,
+    u_int8_t fib_prio)
 {
 	struct ktable	**xkrt;
 	struct ktable	 *kt;
@@ -283,7 +287,7 @@ ktable_new(u_int rtableid, u_int rdomid, char *name, char *ifname, int fs)
 	}
 
 	/* ... and load it */
-	if (fetchtable(kt) == -1)
+	if (fetchtable(kt, fib_prio) == -1)
 		return (-1);
 	if (protect_lo(kt) == -1)
 		return (-1);
@@ -295,7 +299,7 @@ ktable_new(u_int rtableid, u_int rdomid, char *name, char *ifname, int fs)
 }
 
 void
-ktable_free(u_int rtableid)
+ktable_free(u_int rtableid, u_int8_t fib_prio)
 {
 	struct ktable	*kt, *nkt;
 
@@ -303,7 +307,7 @@ ktable_free(u_int rtableid)
 		return;
 
 	/* decouple from kernel, no new routes will be entered from here */
-	kr_fib_decouple(kt->rtableid);
+	kr_fib_decouple(kt->rtableid, fib_prio);
 
 	/* first unhook from the nexthop table */
 	nkt = ktable_get(kt->nhtableid);
@@ -317,16 +321,16 @@ ktable_free(u_int rtableid)
 	 *   free so check that kt != nkt).
 	 */
 	if (kt != nkt && nkt->nhrefcnt <= 0)
-		ktable_destroy(nkt);
+		ktable_destroy(nkt, fib_prio);
 	if (kt->nhrefcnt <= 0)
-		ktable_destroy(kt);
+		ktable_destroy(kt, fib_prio);
 }
 
 void
-ktable_destroy(struct ktable *kt)
+ktable_destroy(struct ktable *kt, u_int8_t fib_prio)
 {
 	/* decouple just to be sure, does not hurt */
-	kr_fib_decouple(kt->rtableid);
+	kr_fib_decouple(kt->rtableid, fib_prio);
 
 	log_debug("freeing ktable %s rtableid %u", kt->descr, kt->rtableid);
 	knexthop_clear(kt);
@@ -346,7 +350,8 @@ ktable_get(u_int rtableid)
 }
 
 int
-ktable_update(u_int rtableid, char *name, char *ifname, int flags)
+ktable_update(u_int rtableid, char *name, char *ifname, int flags, u_int8_t
+    fib_prio)
 {
 	struct ktable	*kt, *rkt;
 	u_int		 rdomid;
@@ -359,7 +364,7 @@ ktable_update(u_int rtableid, char *name, char *ifname, int flags)
 		if (rkt == NULL) {
 			char buf[32];
 			snprintf(buf, sizeof(buf), "rdomain_%d", rdomid);
-			if (ktable_new(rdomid, rdomid, buf, NULL, 0))
+			if (ktable_new(rdomid, rdomid, buf, NULL, 0, fib_prio))
 				return (-1);
 		} else {
 			/* there is no need for full fib synchronisation if
@@ -379,7 +384,7 @@ ktable_update(u_int rtableid, char *name, char *ifname, int flags)
 	kt = ktable_get(rtableid);
 	if (kt == NULL) {
 		if (ktable_new(rtableid, rdomid, name, ifname,
-		    !(flags & F_RIB_NOFIBSYNC)))
+		    !(flags & F_RIB_NOFIBSYNC), fib_prio))
 			return (-1);
 	} else {
 		/* fib sync has higher preference then no sync */
@@ -408,7 +413,7 @@ ktable_preload(void)
 }
 
 void
-ktable_postload(void)
+ktable_postload(u_int8_t fib_prio)
 {
 	struct ktable 	*kt;
 	u_int		 i;
@@ -417,7 +422,7 @@ ktable_postload(void)
 		if ((kt = ktable_get(i - 1)) == NULL)
 			continue;
 		if (kt->state == RECONF_DELETE)
-			ktable_free(i - 1);
+			ktable_free(i - 1, fib_prio);
 		else if (kt->state == RECONF_REINIT)
 			kt->fib_sync = kt->fib_conf;
 	}
@@ -452,7 +457,7 @@ ktable_exists(u_int rtableid, u_int *rdomid)
 }
 
 int
-kr_change(u_int rtableid, struct kroute_full *kl)
+kr_change(u_int rtableid, struct kroute_full *kl, u_int8_t fib_prio)
 {
 	struct ktable		*kt;
 
@@ -461,25 +466,25 @@ kr_change(u_int rtableid, struct kroute_full *kl)
 		return (0);
 	switch (kl->prefix.aid) {
 	case AID_INET:
-		return (kr4_change(kt, kl));
+		return (kr4_change(kt, kl, fib_prio));
 	case AID_INET6:
-		return (kr6_change(kt, kl));
+		return (kr6_change(kt, kl, fib_prio));
 	case AID_VPN_IPv4:
-		return (krVPN4_change(kt, kl));
+		return (krVPN4_change(kt, kl, fib_prio));
 	}
 	log_warnx("kr_change: not handled AID");
 	return (-1);
 }
 
 int
-kr4_change(struct ktable *kt, struct kroute_full *kl)
+kr4_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 {
 	struct kroute_node	*kr;
 	int			 action = RTM_ADD;
 	u_int16_t		 labelid;
 
 	if ((kr = kroute_find(kt, kl->prefix.v4.s_addr, kl->prefixlen,
-	    RTP_BGP)) != NULL)
+	    fib_prio)) != NULL)
 		action = RTM_CHANGE;
 
 	/* nexthop within 127/8 -> ignore silently */
@@ -502,7 +507,7 @@ kr4_change(struct ktable *kt, struct kroute_full *kl)
 		kr->r.prefixlen = kl->prefixlen;
 		kr->r.nexthop.s_addr = kl->nexthop.v4.s_addr;
 		kr->r.flags = kl->flags | F_BGPD_INSERTED;
-		kr->r.priority = RTP_BGP;
+		kr->r.priority = fib_prio;
 		kr->r.labelid = labelid;
 
 		if (kroute_insert(kt, kr) == -1) {
@@ -523,21 +528,21 @@ kr4_change(struct ktable *kt, struct kroute_full *kl)
 			kr->r.flags &= ~F_REJECT;
 	}
 
-	if (send_rtmsg(kr_state.fd, action, kt, &kr->r) == -1)
+	if (send_rtmsg(kr_state.fd, action, kt, &kr->r, fib_prio) == -1)
 		return (-1);
 
 	return (0);
 }
 
 int
-kr6_change(struct ktable *kt, struct kroute_full *kl)
+kr6_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 {
 	struct kroute6_node	*kr6;
 	struct in6_addr		 lo6 = IN6ADDR_LOOPBACK_INIT;
 	int			 action = RTM_ADD;
 	u_int16_t		 labelid;
 
-	if ((kr6 = kroute6_find(kt, &kl->prefix.v6, kl->prefixlen, RTP_BGP)) !=
+	if ((kr6 = kroute6_find(kt, &kl->prefix.v6, kl->prefixlen, fib_prio)) !=
 	    NULL)
 		action = RTM_CHANGE;
 
@@ -561,7 +566,7 @@ kr6_change(struct ktable *kt, struct kroute_full *kl)
 		memcpy(&kr6->r.nexthop, &kl->nexthop.v6,
 		    sizeof(struct in6_addr));
 		kr6->r.flags = kl->flags | F_BGPD_INSERTED;
-		kr6->r.priority = RTP_BGP;
+		kr6->r.priority = fib_prio;
 		kr6->r.labelid = labelid;
 
 		if (kroute6_insert(kt, kr6) == -1) {
@@ -583,14 +588,14 @@ kr6_change(struct ktable *kt, struct kroute_full *kl)
 			kr6->r.flags &= ~F_REJECT;
 	}
 
-	if (send_rt6msg(kr_state.fd, action, kt, &kr6->r) == -1)
+	if (send_rt6msg(kr_state.fd, action, kt, &kr6->r, fib_prio) == -1)
 		return (-1);
 
 	return (0);
 }
 
 int
-krVPN4_change(struct ktable *kt, struct kroute_full *kl)
+krVPN4_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 {
 	struct kroute_node	*kr;
 	int			 action = RTM_ADD;
@@ -598,7 +603,7 @@ krVPN4_change(struct ktable *kt, struct kroute_full *kl)
 	u_int16_t		 labelid;
 
 	if ((kr = kroute_find(kt, kl->prefix.vpn4.addr.s_addr, kl->prefixlen,
-	    RTP_BGP)) != NULL)
+	    fib_prio)) != NULL)
 		action = RTM_CHANGE;
 
 	/* nexthop within 127/8 -> ignore silently */
@@ -632,7 +637,7 @@ krVPN4_change(struct ktable *kt, struct kroute_full *kl)
 		kr->r.prefixlen = kl->prefixlen;
 		kr->r.nexthop.s_addr = kl->nexthop.v4.s_addr;
 		kr->r.flags = kl->flags | F_BGPD_INSERTED | F_MPLS;
-		kr->r.priority = RTP_BGP;
+		kr->r.priority = fib_prio;
 		kr->r.labelid = labelid;
 		kr->r.mplslabel = mplslabel;
 
@@ -655,14 +660,14 @@ krVPN4_change(struct ktable *kt, struct kroute_full *kl)
 			kr->r.flags &= ~F_REJECT;
 	}
 
-	if (send_rtmsg(kr_state.fd, action, kt, &kr->r) == -1)
+	if (send_rtmsg(kr_state.fd, action, kt, &kr->r, fib_prio) == -1)
 		return (-1);
 
 	return (0);
 }
 
 int
-kr_delete(u_int rtableid, struct kroute_full *kl)
+kr_delete(u_int rtableid, struct kroute_full *kl, u_int8_t fib_prio)
 {
 	struct ktable		*kt;
 
@@ -672,29 +677,29 @@ kr_delete(u_int rtableid, struct kroute_full *kl)
 
 	switch (kl->prefix.aid) {
 	case AID_INET:
-		return (kr4_delete(kt, kl));
+		return (kr4_delete(kt, kl, fib_prio));
 	case AID_INET6:
-		return (kr6_delete(kt, kl));
+		return (kr6_delete(kt, kl, fib_prio));
 	case AID_VPN_IPv4:
-		return (krVPN4_delete(kt, kl));
+		return (krVPN4_delete(kt, kl, fib_prio));
 	}
 	log_warnx("kr_change: not handled AID");
 	return (-1);
 }
 
 int
-kr4_delete(struct ktable *kt, struct kroute_full *kl)
+kr4_delete(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 {
 	struct kroute_node	*kr;
 
 	if ((kr = kroute_find(kt, kl->prefix.v4.s_addr, kl->prefixlen,
-	    RTP_BGP)) == NULL)
+	    fib_prio)) == NULL)
 		return (0);
 
 	if (!(kr->r.flags & F_BGPD_INSERTED))
 		return (0);
 
-	if (send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r) == -1)
+	if (send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r, fib_prio) == -1)
 		return (-1);
 
 	rtlabel_unref(kr->r.labelid);
@@ -706,18 +711,18 @@ kr4_delete(struct ktable *kt, struct kroute_full *kl)
 }
 
 int
-kr6_delete(struct ktable *kt, struct kroute_full *kl)
+kr6_delete(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 {
 	struct kroute6_node	*kr6;
 
-	if ((kr6 = kroute6_find(kt, &kl->prefix.v6, kl->prefixlen, RTP_BGP)) ==
+	if ((kr6 = kroute6_find(kt, &kl->prefix.v6, kl->prefixlen, fib_prio)) ==
 	    NULL)
 		return (0);
 
 	if (!(kr6->r.flags & F_BGPD_INSERTED))
 		return (0);
 
-	if (send_rt6msg(kr_state.fd, RTM_DELETE, kt, &kr6->r) == -1)
+	if (send_rt6msg(kr_state.fd, RTM_DELETE, kt, &kr6->r, fib_prio) == -1)
 		return (-1);
 
 	rtlabel_unref(kr6->r.labelid);
@@ -729,18 +734,18 @@ kr6_delete(struct ktable *kt, struct kroute_full *kl)
 }
 
 int
-krVPN4_delete(struct ktable *kt, struct kroute_full *kl)
+krVPN4_delete(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 {
 	struct kroute_node	*kr;
 
 	if ((kr = kroute_find(kt, kl->prefix.vpn4.addr.s_addr, kl->prefixlen,
-	    RTP_BGP)) == NULL)
+	    fib_prio)) == NULL)
 		return (0);
 
 	if (!(kr->r.flags & F_BGPD_INSERTED))
 		return (0);
 
-	if (send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r) == -1)
+	if (send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r, fib_prio) == -1)
 		return (-1);
 
 	rtlabel_unref(kr->r.labelid);
@@ -752,17 +757,17 @@ krVPN4_delete(struct ktable *kt, struct kroute_full *kl)
 }
 
 void
-kr_shutdown(void)
+kr_shutdown(u_int8_t fib_prio)
 {
 	u_int	i;
 
 	for (i = krt_size; i > 0; i--)
-		ktable_free(i - 1);
+		ktable_free(i - 1, fib_prio);
 	kif_clear();
 }
 
 void
-kr_fib_couple(u_int rtableid)
+kr_fib_couple(u_int rtableid, u_int8_t fib_prio)
 {
 	struct ktable		*kt;
 	struct kroute_node	*kr;
@@ -778,17 +783,27 @@ kr_fib_couple(u_int rtableid)
 
 	RB_FOREACH(kr, kroute_tree, &kt->krt)
 		if ((kr->r.flags & F_BGPD_INSERTED))
-			send_rtmsg(kr_state.fd, RTM_ADD, kt, &kr->r);
+			send_rtmsg(kr_state.fd, RTM_ADD, kt, &kr->r, fib_prio);
 	RB_FOREACH(kr6, kroute6_tree, &kt->krt6)
 		if ((kr6->r.flags & F_BGPD_INSERTED))
-			send_rt6msg(kr_state.fd, RTM_ADD, kt, &kr6->r);
+			send_rt6msg(kr_state.fd, RTM_ADD, kt, &kr6->r,
+			    fib_prio);
 
 	log_info("kernel routing table %u (%s) coupled", kt->rtableid,
 	    kt->descr);
 }
 
 void
-kr_fib_decouple(u_int rtableid)
+kr_fib_couple_all(u_int8_t fib_prio)
+{
+	u_int	 i;
+
+	for (i = krt_size; i > 0; i--)
+		kr_fib_couple(i - 1, fib_prio);
+}
+
+void
+kr_fib_decouple(u_int rtableid, u_int8_t fib_prio)
 {
 	struct ktable		*kt;
 	struct kroute_node	*kr;
@@ -802,15 +817,54 @@ kr_fib_decouple(u_int rtableid)
 
 	RB_FOREACH(kr, kroute_tree, &kt->krt)
 		if ((kr->r.flags & F_BGPD_INSERTED))
-			send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r);
+			send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r,
+			    fib_prio);
 	RB_FOREACH(kr6, kroute6_tree, &kt->krt6)
 		if ((kr6->r.flags & F_BGPD_INSERTED))
-			send_rt6msg(kr_state.fd, RTM_DELETE, kt, &kr6->r);
+			send_rt6msg(kr_state.fd, RTM_DELETE, kt, &kr6->r,
+			    fib_prio);
 
 	kt->fib_sync = 0;
 
 	log_info("kernel routing table %u (%s) decoupled", kt->rtableid,
 	    kt->descr);
+}
+
+void
+kr_fib_decouple_all(u_int8_t fib_prio)
+{
+	u_int	 i;
+
+	for (i = krt_size; i > 0; i--)
+		kr_fib_decouple(i - 1, fib_prio);
+}
+
+void
+kr_fib_update_prio(u_int rtableid, u_int8_t fib_prio)
+{
+	struct ktable		*kt;
+	struct kroute_node	*kr;
+	struct kroute6_node	*kr6;
+
+	if ((kt = ktable_get(rtableid)) == NULL)  /* table does not exist */
+		return;
+
+	RB_FOREACH(kr, kroute_tree, &kt->krt)
+		if ((kr->r.flags & F_BGPD_INSERTED))
+			kr->r.priority = fib_prio;
+
+	RB_FOREACH(kr6, kroute6_tree, &kt->krt6)
+		if ((kr6->r.flags & F_BGPD_INSERTED))
+			kr6->r.priority = fib_prio;
+}
+
+void
+kr_fib_update_prio_all(u_int8_t fib_prio)
+{
+	u_int	 i;
+
+	for (i = krt_size; i > 0; i--)
+		kr_fib_update_prio(i - 1, fib_prio);
 }
 
 int
@@ -2473,7 +2527,8 @@ if_announce(void *msg)
  */
 
 int
-send_rtmsg(int fd, int action, struct ktable *kt, struct kroute *kroute)
+send_rtmsg(int fd, int action, struct ktable *kt, struct kroute *kroute,
+    u_int8_t fib_prio)
 {
 	struct iovec		iov[7];
 	struct rt_msghdr	hdr;
@@ -2496,7 +2551,7 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute *kroute)
 	hdr.rtm_version = RTM_VERSION;
 	hdr.rtm_type = action;
 	hdr.rtm_tableid = kt->rtableid;
-	hdr.rtm_priority = RTP_BGP;
+	hdr.rtm_priority = fib_prio;
 	if (kroute->flags & F_BLACKHOLE)
 		hdr.rtm_flags |= RTF_BLACKHOLE;
 	if (kroute->flags & F_REJECT)
@@ -2608,7 +2663,8 @@ retry:
 }
 
 int
-send_rt6msg(int fd, int action, struct ktable *kt, struct kroute6 *kroute)
+send_rt6msg(int fd, int action, struct ktable *kt, struct kroute6 *kroute,
+    u_int8_t fib_prio)
 {
 	struct iovec		iov[5];
 	struct rt_msghdr	hdr;
@@ -2627,7 +2683,7 @@ send_rt6msg(int fd, int action, struct ktable *kt, struct kroute6 *kroute)
 	hdr.rtm_version = RTM_VERSION;
 	hdr.rtm_type = action;
 	hdr.rtm_tableid = kt->rtableid;
-	hdr.rtm_priority = RTP_BGP;
+	hdr.rtm_priority = fib_prio;
 	if (kroute->flags & F_BLACKHOLE)
 		hdr.rtm_flags |= RTF_BLACKHOLE;
 	if (kroute->flags & F_REJECT)
@@ -2715,7 +2771,7 @@ retry:
 }
 
 int
-fetchtable(struct ktable *kt)
+fetchtable(struct ktable *kt, u_int8_t fib_prio)
 {
 	size_t			 len;
 	int			 mib[7];
@@ -2863,15 +2919,16 @@ fetchtable(struct ktable *kt)
 			}
 
 		if (sa->sa_family == AF_INET) {
-			if (rtm->rtm_priority == RTP_BGP)  {
-				send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r);
+			if (rtm->rtm_priority == fib_prio)  {
+				send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r,
+				    fib_prio);
 				free(kr);
 			} else
 				kroute_insert(kt, kr);
 		} else if (sa->sa_family == AF_INET6) {
-			if (rtm->rtm_priority == RTP_BGP)  {
+			if (rtm->rtm_priority == fib_prio)  {
 				send_rt6msg(kr_state.fd, RTM_DELETE, kt,
-				    &kr6->r);
+				    &kr6->r, fib_prio);
 				free(kr6);
 			} else
 				kroute6_insert(kt, kr6);

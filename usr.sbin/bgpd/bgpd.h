@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.280 2013/10/19 15:04:25 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.281 2013/11/13 09:14:48 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -209,6 +209,7 @@ struct bgpd_config {
 	u_int16_t				 holdtime;
 	u_int16_t				 min_holdtime;
 	u_int16_t				 connectretry;
+	u_int8_t				 fib_priority;
 };
 
 enum announce_type {
@@ -932,15 +933,18 @@ int	 host(const char *, struct bgpd_addr *, u_int8_t *);
 
 /* kroute.c */
 int		 kr_init(void);
-int		 ktable_update(u_int, char *, char *, int);
+int		 ktable_update(u_int, char *, char *, int, u_int8_t);
 void		 ktable_preload(void);
-void		 ktable_postload(void);
+void		 ktable_postload(u_int8_t);
 int		 ktable_exists(u_int, u_int *);
-int		 kr_change(u_int, struct kroute_full *);
-int		 kr_delete(u_int, struct kroute_full *);
-void		 kr_shutdown(void);
-void		 kr_fib_couple(u_int);
-void		 kr_fib_decouple(u_int);
+int		 kr_change(u_int, struct kroute_full *,  u_int8_t);
+int		 kr_delete(u_int, struct kroute_full *, u_int8_t);
+void		 kr_shutdown(u_int8_t);
+void		 kr_fib_couple(u_int, u_int8_t);
+void		 kr_fib_couple_all(u_int8_t);
+void		 kr_fib_decouple(u_int, u_int8_t);
+void		 kr_fib_decouple_all(u_int8_t);
+void		 kr_fib_update_prio_all(u_int8_t);
 int		 kr_dispatch_msg(void);
 int		 kr_nexthop_add(u_int32_t, struct bgpd_addr *);
 void		 kr_nexthop_delete(u_int32_t, struct bgpd_addr *);

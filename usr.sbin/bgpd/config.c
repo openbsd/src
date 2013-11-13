@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.56 2010/10/24 17:20:08 deraadt Exp $ */
+/*	$OpenBSD: config.c,v 1.57 2013/11/13 09:14:48 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -64,6 +64,9 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 
 	if ((conf->flags & BGPD_FLAG_REFLECTOR) && conf->clusterid == 0)
 		conf->clusterid = conf->bgpid;
+
+	if (!conf->fib_priority)
+		conf->fib_priority = RTP_BGP;
 
 	free(xconf->csock);
 	free(xconf->rcsock);

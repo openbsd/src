@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.268 2013/10/19 15:04:25 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.269 2013/11/13 09:14:48 florian Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -170,7 +170,7 @@ typedef struct {
 
 %}
 
-%token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE RTABLE
+%token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE FIBPRIORITY RTABLE
 %token	RDOMAIN RD EXPORTTRGT IMPORTTRGT
 %token	RDE RIB EVALUATE IGNORE COMPARE
 %token	GROUP NEIGHBOR NETWORK
@@ -372,6 +372,13 @@ conf_main	: AS as4number		{
 			la->fd = -1;
 			memcpy(&la->sa, addr2sa(&$3, BGP_PORT), sizeof(la->sa));
 			TAILQ_INSERT_TAIL(listen_addrs, la, entry);
+		}
+		| FIBPRIORITY NUMBER		{
+			if ($2 <= RTP_NONE || $2 > RTP_MAX) {
+				yyerror("invalid fib-priority");
+				YYERROR;
+			}
+			conf->fib_priority = $2;
 		}
 		| FIBUPDATE yesno		{
 			struct rde_rib *rr;
@@ -2139,6 +2146,7 @@ lookup(char *s)
 		{ "evaluate",		EVALUATE},
 		{ "export-target",	EXPORTTRGT},
 		{ "ext-community",	EXTCOMMUNITY},
+		{ "fib-priority",	FIBPRIORITY},
 		{ "fib-update",		FIBUPDATE},
 		{ "from",		FROM},
 		{ "group",		GROUP},
@@ -2565,9 +2573,13 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	struct rde_rib		*rr;
 	struct rdomain		*rd;
 	int			 errors = 0;
+	u_int8_t		 old_prio;
+
+	old_prio = xconf->fib_priority;
 
 	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
 		fatal(NULL);
+
 	conf->opts = xconf->opts;
 	conf->csock = strdup(SOCKET_NAME);
 
@@ -2718,6 +2730,13 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	free(filter_l);
 	free(peerfilter_l);
 	free(groupfilter_l);
+
+	if (!errors && old_prio != RTP_NONE && old_prio !=
+	    xconf->fib_priority) {
+		kr_fib_decouple_all(old_prio);
+		kr_fib_update_prio_all(xconf->fib_priority);
+		kr_fib_couple_all(xconf->fib_priority);
+	}
 
 	return (errors ? -1 : 0);
 }

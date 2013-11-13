@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.172 2013/05/31 23:10:13 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.173 2013/11/13 09:14:48 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,7 +43,7 @@ int		check_child(pid_t, const char *);
 int		send_filterset(struct imsgbuf *, struct filter_set_head *);
 int		reconfigure(char *, struct bgpd_config *, struct mrt_head *,
 		    struct peer **);
-int		dispatch_imsg(struct imsgbuf *, int);
+int		dispatch_imsg(struct imsgbuf *, int, struct bgpd_config *);
 int		control_setup(struct bgpd_config *);
 
 int			 rfd = -1;
@@ -276,12 +276,14 @@ main(int argc, char *argv[])
 			}
 
 		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLIN) {
-			if (dispatch_imsg(ibuf_se, PFD_PIPE_SESSION) == -1)
+			if (dispatch_imsg(ibuf_se, PFD_PIPE_SESSION, &conf) ==
+			    -1)
 				quit = 1;
 		}
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
-			if (dispatch_imsg(ibuf_rde, PFD_PIPE_ROUTE) == -1)
+			if (dispatch_imsg(ibuf_rde, PFD_PIPE_ROUTE, &conf) ==
+			    -1)
 				quit = 1;
 		}
 
@@ -359,7 +361,7 @@ main(int argc, char *argv[])
 	control_cleanup(conf.csock);
 	control_cleanup(conf.rcsock);
 	carp_demote_shutdown();
-	kr_shutdown();
+	kr_shutdown(conf.fib_priority);
 	pftable_clear_all();
 	free(conf.listen_addrs);
 
@@ -468,7 +470,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	while ((rr = SIMPLEQ_FIRST(&ribnames))) {
 		SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
 		if (ktable_update(rr->rtableid, rr->name, NULL,
-		    rr->flags) == -1) {
+		    rr->flags, conf->fib_priority) == -1) {
 			log_warnx("failed to load rdomain %d",
 			    rr->rtableid);
 			return (-1);
@@ -505,7 +507,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	while ((rd = SIMPLEQ_FIRST(&rdom_l)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&rdom_l, entry);
 		if (ktable_update(rd->rtableid, rd->descr, rd->ifmpe,
-		    rd->flags) == -1) {
+		    rd->flags, conf->fib_priority) == -1) {
 			log_warnx("failed to load rdomain %d",
 			    rd->rtableid);
 			return (-1);
@@ -551,7 +553,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 }
 
 int
-dispatch_imsg(struct imsgbuf *ibuf, int idx)
+dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
 {
 	struct imsg		 imsg;
 	ssize_t			 n;
@@ -580,7 +582,8 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			else if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct kroute_full))
 				log_warnx("wrong imsg len");
-			else if (kr_change(imsg.hdr.peerid, imsg.data))
+			else if (kr_change(imsg.hdr.peerid, imsg.data,
+			    conf->fib_priority))
 				rv = -1;
 			break;
 		case IMSG_KROUTE_DELETE:
@@ -589,7 +592,8 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			else if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct kroute_full))
 				log_warnx("wrong imsg len");
-			else if (kr_delete(imsg.hdr.peerid, imsg.data))
+			else if (kr_delete(imsg.hdr.peerid, imsg.data,
+			    conf->fib_priority))
 				rv = -1;
 			break;
 		case IMSG_NEXTHOP_ADD:
@@ -652,13 +656,15 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			if (idx != PFD_PIPE_SESSION)
 				log_warnx("couple request not from SE");
 			else
-				kr_fib_couple(imsg.hdr.peerid);
+				kr_fib_couple(imsg.hdr.peerid,
+				    conf->fib_priority);
 			break;
 		case IMSG_CTL_FIB_DECOUPLE:
 			if (idx != PFD_PIPE_SESSION)
 				log_warnx("decouple request not from SE");
 			else
-				kr_fib_decouple(imsg.hdr.peerid);
+				kr_fib_decouple(imsg.hdr.peerid,
+				    conf->fib_priority);
 			break;
 		case IMSG_CTL_KROUTE:
 		case IMSG_CTL_KROUTE_ADDR:
@@ -704,7 +710,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 				    0, -1, NULL, 0);
 
 				/* finally fix kroute information */
-				ktable_postload();
+				ktable_postload(conf->fib_priority);
 
 				/* redistribute list needs to be reloaded too */
 				kr_reload();
