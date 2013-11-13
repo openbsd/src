@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.62 2013/08/22 04:43:41 guenther Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.63 2013/11/13 04:50:21 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -84,6 +84,8 @@ void setperf(int new_perf);
 void sigexit(int signo);
 void do_etc_file(const char *file);
 void sockunlink(void);
+void error(const char *fmt, const char *arg);
+void set_driver_messages(int fd, int mode);
 
 /* ARGSUSED */
 void
@@ -324,7 +326,7 @@ perf_status(struct apm_power_info *pinfo, int ncpu)
 		 * power and have a battery life greater than 15%, or if
 		 * the battery is absent
 		 */
-		if (pinfo->ac_state == APM_AC_ON && pinfo->battery_life > 15 ||
+		if ((pinfo->ac_state == APM_AC_ON && pinfo->battery_life > 15) ||
 		    pinfo->battery_state == APM_BATTERY_ABSENT)
 			forcehi = 1;		
 		break;
