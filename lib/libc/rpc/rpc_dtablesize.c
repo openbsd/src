@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_dtablesize.c,v 1.8 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: rpc_dtablesize.c,v 1.9 2013/11/13 15:40:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -33,6 +33,7 @@
 
 #include <unistd.h>
 #include <sys/types.h>
+#include <rpc/rpc.h>
 
 /*
  * Cache the result of getdtablesize(), so we don't have to do an
