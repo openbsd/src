@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.204 2013/11/06 10:01:29 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.205 2013/11/13 08:57:24 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1262,12 +1262,24 @@ offline_done(void)
 static int
 parent_forward_open(char *username, char *directory, uid_t uid, gid_t gid)
 {
-	char pathname[SMTPD_MAXPATHLEN];
-	int	fd;
+	char		pathname[SMTPD_MAXPATHLEN];
+	int		fd;
+	struct stat	sb;
 
 	if (! bsnprintf(pathname, sizeof (pathname), "%s/.forward",
 		directory))
 		fatal("smtpd: parent_forward_open: snprintf");
+
+	if (stat(directory, &sb) < 0) {
+		log_warn("warn: smtpd: parent_forward_open: %s", directory);
+		return -1;
+	}
+	if (sb.st_mode & S_ISVTX) {
+		log_warnx("warn: smtpd: parent_forward_open: %s is sticky",
+		    directory);
+		errno = EAGAIN;
+		return -1;
+	}
 
 	do {
 		fd = open(pathname, O_RDONLY);

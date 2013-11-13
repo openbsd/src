@@ -1,4 +1,4 @@
-.\"	$OpenBSD: forward.5,v 1.7 2013/01/26 09:37:23 gilles Exp $
+.\"	$OpenBSD: forward.5,v 1.8 2013/11/13 08:57:24 eric Exp $
 .\"
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 26 2013 $
+.Dd $Mdocdate: November 13 2013 $
 .Dt FORWARD 5
 .Os
 .Sh NAME
@@ -48,6 +48,20 @@ file are very strict and expansion is rejected if the file is
 group or world-writable;
 if the home directory is group writeable;
 or if the file is not owned by the user.
+.Pp
+Users should avoid editing directly the
+.Nm .forward
+file to prevent delivery failures from occurring if a message
+arrives while the file is not fully written.
+The best option is to use a temporary file and use the
+.Xr mv 1
+command to atomically overwrite the former
+.Nm .forward .
+Alternatively, setting the
+.Xr sticky 8
+bit on the home directory will cause the
+.Nm .forward
+lookup to return a temporary failure, causing mails to be deferred.
 .Sh FILES
 .Bl -tag -width "~/.forwardXXX" -compact
 .It Pa ~/.forward
