@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.125 2013/10/31 02:00:11 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.126 2013/11/13 22:26:02 chl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -131,10 +131,9 @@ int
 main(int argc, char *argv[])
 {
 	char errbuf[_POSIX2_LINE_MAX];
-	int c, todo = 0, reps = 0, mib[2];
+	int c, todo = 0, reps = 0;
 	const char *errstr;
 	u_int interval = 0;
-	size_t size;
 
 	while ((c = getopt(argc, argv, "c:fiM:mN:stw:vz")) != -1) {
 		switch (c) {
@@ -1018,7 +1017,6 @@ dopool_kvm(void)
 	struct pool pool, *pp = &pool;
 	long total = 0, inuse = 0;
 	u_long addr;
-	int kmfp;
 
 	kread(X_POOLHEAD, &pool_head, sizeof(pool_head));
 	addr = (u_long)SIMPLEQ_FIRST(&pool_head);
