@@ -1,4 +1,4 @@
-/*	$OpenBSD: findfp.c,v 1.13 2013/11/12 07:04:06 deraadt Exp $ */
+/*	$OpenBSD: findfp.c,v 1.14 2013/11/13 15:52:48 deraadt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -146,7 +146,7 @@ found:
  * XXX.  Force immediate allocation of internal memory.  Not used by stdio,
  * but documented historically for certain applications.  Bad applications.
  */
-static void
+void
 f_prealloc(void)
 {
 	struct glue *g;
