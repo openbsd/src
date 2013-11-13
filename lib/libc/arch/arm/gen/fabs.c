@@ -1,4 +1,4 @@
-/*	$OpenBSD: fabs.c,v 1.9 2013/03/28 18:09:38 martynas Exp $	*/
+/*	$OpenBSD: fabs.c,v 1.10 2013/11/13 15:21:48 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -17,6 +17,7 @@
 
 #include <sys/types.h>
 #include <machine/ieee.h>
+#include <math.h>
 
 /*
  * fabs(d) returns the absolute value of d.
