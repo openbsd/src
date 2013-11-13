@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.40 2012/10/30 20:03:16 gsoares Exp $	*/
+/*	$OpenBSD: sort.c,v 1.41 2013/11/13 15:07:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -82,7 +82,8 @@ static void usage(char *);
 #define CHECK_NFIELDS						\
 	if (++nfields == ND) {					\
 		ND += 10;					\
-		if ((p = realloc(fldtab, ND)) == NULL)		\
+		if ((p = realloc(fldtab,			\
+		    ND * sizeof(*fldtab))) == NULL)		\
 			errx(2, "cannot allocate memory");	\
 		ftpos = p + (ftpos - fldtab);			\
 		fldtab = p;					\
@@ -98,7 +99,7 @@ main(int argc, char *argv[])
 	struct field *fldtab, *ftpos;
 	union f_handle filelist;
 	FILE *outfp = NULL;
-	void *p;
+	struct field *p;
 
 	setlocale(LC_ALL, "");
 
