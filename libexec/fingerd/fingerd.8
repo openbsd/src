@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fingerd.8,v 1.18 2007/09/25 06:28:13 jmc Exp $
+.\"	$OpenBSD: fingerd.8,v 1.19 2013/11/14 08:50:04 bentley Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -28,9 +28,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fingerd.8	8.1 (Berkeley) 6/4/93
-.\"	$Id: fingerd.8,v 1.18 2007/09/25 06:28:13 jmc Exp $
+.\"	$Id: fingerd.8,v 1.19 2013/11/14 08:50:04 bentley Exp $
 .\"
-.Dd $Mdocdate: September 25 2007 $
+.Dd $Mdocdate: November 14 2013 $
 .Dt FINGERD 8
 .Os
 .Sh NAME
@@ -154,6 +154,13 @@ Queries without a user name are rejected.
 .Sh SEE ALSO
 .Xr finger 1 ,
 .Xr inetd 8
+.Sh STANDARDS
+.Rs
+.%A D. Zimmerman
+.%D December 1991
+.%R RFC 1288
+.%T The Finger User Information Protocol
+.Re
 .Sh HISTORY
 The
 .Nm
