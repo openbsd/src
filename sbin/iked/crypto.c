@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.9 2013/01/08 10:38:19 reyk Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.10 2013/11/14 12:38:20 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -384,7 +384,7 @@ cipher_update(struct iked_cipher *encr, void *in, size_t inlen,
 
 	olen = 0;
 	if (!EVP_CipherUpdate(encr->encr_ctx, out, &olen, in, inlen)) {
-		ca_sslerror();
+		ca_sslerror(__func__);
 		*outlen = 0;
 		return;
 	}
@@ -398,7 +398,7 @@ cipher_final(struct iked_cipher *encr, void *out, size_t *outlen)
 
 	olen = 0;
 	if (!EVP_CipherFinal_ex(encr->encr_ctx, out, &olen)) {
-		ca_sslerror();
+		ca_sslerror(__func__);
 		*outlen = 0;
 		return;
 	}
@@ -591,7 +591,7 @@ dsa_setkey(struct iked_dsa *dsa, void *key, size_t keylen, u_int8_t type)
 	return (dsa->dsa_keydata);
 
  sslerr:
-	ca_sslerror();
+	ca_sslerror(__func__);
  err:
 	log_debug("%s: error", __func__);
 
@@ -684,7 +684,7 @@ dsa_verify_final(struct iked_dsa *dsa, void *buf, size_t len)
 	} else {
 		if (EVP_VerifyFinal(dsa->dsa_ctx, buf, len,
 		    dsa->dsa_key) != 1) {
-			ca_sslerror();
+			ca_sslerror(__func__);
 			return (-1);
 		}
 	}

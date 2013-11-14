@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.22 2013/03/21 04:30:14 deraadt Exp $	*/
+/*	$OpenBSD: ca.c,v 1.23 2013/11/14 12:38:20 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -523,7 +523,7 @@ ca_reload(struct iked *env)
 		    X509_FILETYPE_PEM)) {
 			log_warn("%s: failed to load ca file %s", __func__,
 			    entry->d_name);
-			ca_sslerror();
+			ca_sslerror(__func__);
 			continue;
 		}
 		log_debug("%s: loaded ca file %s", __func__, entry->d_name);
@@ -549,7 +549,7 @@ ca_reload(struct iked *env)
 		    X509_FILETYPE_PEM)) {
 			log_warn("%s: failed to load crl file %s", __func__,
 			    entry->d_name);
-			ca_sslerror();
+			ca_sslerror(__func__);
 			continue;
 		}
 
@@ -619,7 +619,7 @@ ca_reload(struct iked *env)
 		    X509_FILETYPE_PEM)) {
 			log_warn("%s: failed to load cert file %s", __func__,
 			    entry->d_name);
-			ca_sslerror();
+			ca_sslerror(__func__);
 			continue;
 		}
 		log_debug("%s: loaded cert file %s", __func__, entry->d_name);
@@ -884,7 +884,7 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
 	ret = 0;
  sslerr:
 	if (ret != 0)
-		ca_sslerror();
+		ca_sslerror(__func__);
  done:
 	ibuf_release(idp.id_buf);
 	if (peerkey != NULL)
@@ -1115,11 +1115,11 @@ ca_sslinit(void)
 }
 
 void
-ca_sslerror(void)
+ca_sslerror(const char *caller)
 {
 	u_long		 error;
 
 	while ((error = ERR_get_error()) != 0)
-		log_warn("%s: %.100s", __func__,
+		log_warn("%s: %s: %.100s", __func__, caller,
 		    ERR_error_string(error, NULL));
 }

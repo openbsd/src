@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.56 2013/01/08 10:38:19 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.57 2013/11/14 12:38:20 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -779,7 +779,7 @@ int	 ca_setcert(struct iked *, struct iked_sahdr *, struct iked_id *,
 int	 ca_setauth(struct iked *, struct iked_sa *,
 	    struct ibuf *, enum privsep_procid);
 void	 ca_sslinit(void);
-void	 ca_sslerror(void);
+void	 ca_sslerror(const char *);
 char	*ca_asn1_name(u_int8_t *, size_t);
 char	*ca_x509_name(void *);
 
