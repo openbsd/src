@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.95 2012/12/05 23:20:18 deraadt Exp $ */
+/*	$OpenBSD: malo.c,v 1.96 2013/11/14 12:21:13 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -25,7 +25,7 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/socket.h>

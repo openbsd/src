@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.76 2011/04/05 19:54:35 jasper Exp $	*/
+/*	$OpenBSD: atw.c,v 1.77 2013/11/14 12:30:39 dlg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -559,6 +559,8 @@ atw_attach(struct atw_softc *sc)
 	    "RFMD", "Marvel (not supported)"};
 
 	sc->sc_txth = atw_txthresh_tab_lo;
+
+	task_set(&sc->sc_resume_t, atw_resume, sc, NULL);
 
 	SIMPLEQ_INIT(&sc->sc_txfreeq);
 	SIMPLEQ_INIT(&sc->sc_txdirtyq);
@@ -3985,8 +3987,7 @@ atw_activate(struct device *self, int act)
 			(*sc->sc_power)(sc, act);
 		break;
 	case DVACT_RESUME:
-		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
-		    atw_resume, sc, NULL);
+		task_add(systq, &sc->sc_resume_t);
 		break;
 	}
 	return 0;

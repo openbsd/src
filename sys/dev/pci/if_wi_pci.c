@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.48 2010/09/07 16:21:45 deraadt Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.49 2013/11/14 12:33:15 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -46,7 +46,7 @@
 #include <sys/timeout.h>
 #include <sys/socket.h>
 #include <sys/tree.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -88,7 +88,7 @@ void	wi_pci_plx_print_cis(struct wi_softc *);
 
 struct wi_pci_softc {
 	struct wi_softc		 sc_wi;		/* real softc */
-	struct workq_task	sc_resume_wqt;
+	struct task		 sc_resume_t;
 };
 
 struct cfattach wi_pci_ca = {
@@ -145,9 +145,12 @@ wi_pci_match(struct device *parent, void *match, void *aux)
 void
 wi_pci_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct wi_pci_softc *psc = (struct wi_pci_softc *)self;
 	struct wi_softc *sc = (struct wi_softc *)self;
 	struct pci_attach_args *pa = aux;
 	const struct wi_pci_product *pp;
+
+	task_set(&psc->sc_resume_t, wi_pci_resume, sc, NULL);
 
 	pp = wi_pci_lookup(pa);
 	if (pp->pp_attach(pa, sc) != 0)
@@ -170,8 +173,7 @@ wi_pci_activate(struct device *self, int act)
 		break;
 	case DVACT_RESUME:
 		if (ifp->if_flags & IFF_UP)
-			workq_queue_task(NULL, &psc->sc_resume_wqt, 0,
-			    wi_pci_resume, sc, NULL);
+			task_add(systq, &psc->sc_resume_t);
 		break;
 	}
 	return (0);

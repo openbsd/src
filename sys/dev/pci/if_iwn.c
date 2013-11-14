@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.124 2013/10/01 20:06:01 sf Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.125 2013/11/14 12:40:00 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -32,7 +32,7 @@
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
@@ -308,6 +308,8 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
+
+	task_set(&sc->sc_resume_t, iwn_resume, sc, NULL);
 
 	/*
 	 * Get the offset of the PCI Express Capability Structure in PCI
@@ -719,8 +721,7 @@ iwn_activate(struct device *self, int act)
 			iwn_stop(ifp, 0);
 		break;
 	case DVACT_RESUME:
-		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
-		    iwn_resume, sc, NULL);
+		task_add(systq, &sc->sc_resume_t);
 		break;
 	}
 

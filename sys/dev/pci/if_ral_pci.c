@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_pci.c,v 1.21 2013/08/01 09:21:09 kettenis Exp $  */
+/*	$OpenBSD: if_ral_pci.c,v 1.22 2013/11/14 12:28:48 dlg Exp $  */
 
 /*-
  * Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -31,7 +31,7 @@
 #include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -97,7 +97,7 @@ struct ral_pci_softc {
 	pci_chipset_tag_t	sc_pc;
 	void			*sc_ih;
 	bus_size_t		sc_mapsize;
-	struct workq_task	sc_resume_wqt;
+	struct task		sc_resume_t;
 };
 
 /* Base Address Register */
@@ -158,6 +158,8 @@ ral_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t memtype;
 	int error;
+
+	task_set(&psc->sc_resume_t, ral_pci_resume, psc, NULL);
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_RALINK) {
 		switch (PCI_PRODUCT(pa->pa_id)) {
@@ -241,8 +243,7 @@ ral_pci_activate(struct device *self, int act)
 		(*psc->sc_opns->suspend)(sc);
 		break;
 	case DVACT_RESUME:
-		workq_queue_task(NULL, &psc->sc_resume_wqt, 0,
-		    ral_pci_resume, psc, NULL);
+		task_add(systq, &psc->sc_resume_t);
 		break;
 	}
 

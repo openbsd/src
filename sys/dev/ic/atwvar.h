@@ -1,4 +1,4 @@
-/*	$OpenBSD: atwvar.h,v 1.24 2010/11/20 20:11:19 miod Exp $	*/
+/*	$OpenBSD: atwvar.h,v 1.25 2013/11/14 12:30:39 dlg Exp $	*/
 /*	$NetBSD: atwvar.h,v 1.13 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 #include <sys/queue.h>
 #include <sys/time.h>
 #include <sys/timeout.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 /*
  * Some misc. statics, useful for debugging.
@@ -279,7 +279,7 @@ struct atw_softc {
 		u_int8_t			pad[64];
 	} sc_txtapu;
 
-	struct workq_task	sc_resume_wqt;
+	struct task	sc_resume_t;
 };
 
 #define sc_rxtap	sc_rxtapu.tap

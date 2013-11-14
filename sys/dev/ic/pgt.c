@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.71 2013/10/01 20:05:59 sf Exp $  */
+/*	$OpenBSD: pgt.c,v 1.72 2013/11/14 12:24:18 dlg Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -58,7 +58,7 @@
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
@@ -579,6 +579,8 @@ pgt_attach(void *xsc)
 	//sc->sc_debug |= SC_DEBUG_RXANNEX;
 	//sc->sc_debug |= SC_DEBUG_RXFRAG;
 	//sc->sc_debug |= SC_DEBUG_RXETHER;
+
+	task_set(&sc->sc_resume_t, pgt_resume, sc, NULL);
 
 	/* enable card if possible */
 	if (sc->sc_enable != NULL)
@@ -3297,8 +3299,7 @@ pgt_activate(struct device *self, int act)
 			(*sc->sc_power)(sc, act);
 		break;
 	case DVACT_RESUME:
-		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
-		    pgt_resume, sc, NULL);
+		task_add(systq, &sc->sc_resume_t);
 		break;
 	}
 	return 0;

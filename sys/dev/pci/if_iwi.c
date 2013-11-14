@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.113 2013/10/01 20:06:00 sf Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.114 2013/11/14 12:39:14 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -31,7 +31,7 @@
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
@@ -173,6 +173,8 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
+
+	task_set(&sc->sc_resume_t, iwi_resume, sc, NULL);
 
 	/* clear device specific PCI configuration register 0x41 */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
@@ -343,8 +345,7 @@ iwi_activate(struct device *self, int act)
 			iwi_stop(ifp, 0);
 		break;
 	case DVACT_RESUME:
-		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
-		    iwi_resume, sc, NULL);
+		task_add(systq, &sc->sc_resume_t);
 		break;
 	}
 

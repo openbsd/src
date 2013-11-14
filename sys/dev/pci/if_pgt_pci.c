@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_pci.c,v 1.13 2010/08/27 20:06:39 deraadt Exp $  */
+/*	$OpenBSD: if_pgt_pci.c,v 1.14 2013/11/14 12:24:18 dlg Exp $  */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -31,7 +31,7 @@
 #include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

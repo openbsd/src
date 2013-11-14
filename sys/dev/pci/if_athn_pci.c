@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_pci.c,v 1.11 2011/01/08 10:02:32 damien Exp $	*/
+/*	$OpenBSD: if_athn_pci.c,v 1.12 2013/11/14 12:37:36 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -31,7 +31,7 @@
 #include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -69,7 +69,7 @@ struct athn_pci_softc {
 	bus_space_handle_t	sc_sh;
 	bus_size_t		sc_mapsize;
 	int			sc_cap_off;
-	struct workq_task	sc_resume_wqt;
+	struct task		sc_resume_t;
 };
 
 int		athn_pci_match(struct device *, void *, void *);
@@ -129,6 +129,8 @@ athn_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->ops.read = athn_pci_read;
 	sc->ops.write = athn_pci_write;
 	sc->ops.write_barrier = athn_pci_write_barrier;
+
+	task_set(&psc->sc_resume_t, athn_pci_resume, psc, NULL);
 
 	/*
 	 * Get the offset of the PCI Express Capability Structure in PCI
@@ -219,8 +221,7 @@ athn_pci_activate(struct device *self, int act)
 		athn_suspend(sc);
 		break;
 	case DVACT_RESUME:
-		workq_queue_task(NULL, &psc->sc_resume_wqt, 0,
-		    athn_pci_resume, psc, NULL);
+		task_add(NULL, &psc->sc_resume_t);
 		break;
 	}
 

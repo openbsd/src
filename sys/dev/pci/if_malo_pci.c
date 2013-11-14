@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malo_pci.c,v 1.6 2010/08/28 23:19:29 deraadt Exp $ */
+/*	$OpenBSD: if_malo_pci.c,v 1.7 2013/11/14 12:21:13 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -24,7 +24,7 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -103,6 +103,8 @@ malo_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	psc->sc_pc = pa->pa_pc;
 
+	task_set(&sc->sc_resume_t, malo_pci_resume, sc, NULL);
+
 	/* map control / status registers */
 	error = pci_mapreg_map(pa, MALO_PCI_BAR1,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
@@ -168,8 +170,7 @@ malo_pci_activate(struct device *self, int act)
 			malo_stop(sc);
 		break;
 	case DVACT_RESUME:
-		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
-		    malo_pci_resume, sc, NULL);
+		task_add(systq, &sc->sc_resume_t);
 		break;
 	}
 	return (0);

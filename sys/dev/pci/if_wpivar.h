@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpivar.h,v 1.23 2010/09/07 16:21:45 deraadt Exp $	*/
+/*	$OpenBSD: if_wpivar.h,v 1.24 2013/11/14 12:34:30 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -180,7 +180,7 @@ struct wpi_softc {
 	int8_t			maxpwr[IEEE80211_CHAN_MAX];
 
 	int			sc_tx_timer;
-	struct workq_task	sc_resume_wqt;
+	struct task		sc_resume_t;
 
 #if NBPFILTER > 0
 	caddr_t			sc_drvbpf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.h,v 1.10 2010/08/08 16:36:33 deraadt Exp $ */
+/*	$OpenBSD: malo.h,v 1.11 2013/11/14 12:21:13 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -124,7 +124,7 @@ struct malo_softc {
 #define sc_txtap	sc_txtapu.th
 	int		sc_txtap_len;
 #endif
-	struct workq_task	sc_resume_wqt;
+	struct task	sc_resume_t;
 };
 
 int malo_intr(void *arg);

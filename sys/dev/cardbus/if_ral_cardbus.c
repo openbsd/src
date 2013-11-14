@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_cardbus.c,v 1.19 2010/08/25 21:37:59 kettenis Exp $  */
+/*	$OpenBSD: if_ral_cardbus.c,v 1.20 2013/11/14 12:28:48 dlg Exp $  */
 
 /*-
  * Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -31,7 +31,7 @@
 #include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -103,7 +103,7 @@ struct ral_cardbus_softc {
 	pcireg_t		sc_bar_val;
 	int			sc_intrline;
 	pci_chipset_tag_t	sc_pc;
-	struct workq_task	sc_resume_wqt;
+	struct task		sc_resume_t;
 };
 
 int	ral_cardbus_match(struct device *, void *, void *);
@@ -164,6 +164,8 @@ ral_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	cardbus_devfunc_t ct = ca->ca_ct;
 	bus_addr_t base;
 	int error;
+
+	task_set(&csc->sc_resume_t, ral_cardbus_resume, csc, NULL);
 
 	if (PCI_VENDOR(ca->ca_id) == PCI_VENDOR_RALINK) {
 		switch (PCI_PRODUCT(ca->ca_id)) {
@@ -252,8 +254,7 @@ ral_cardbus_activate(struct device *self, int act)
 		(*csc->sc_opns->suspend)(sc);
 		break;
 	case DVACT_RESUME:
-		workq_queue_task(NULL, &csc->sc_resume_wqt, 0,
-		    ral_cardbus_resume, csc, NULL);
+		task_add(systq, &csc->sc_resume_t);
 		break;
 	}
 
