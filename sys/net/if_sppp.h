@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sppp.h,v 1.18 2013/07/10 07:46:10 mpi Exp $	*/
+/*	$OpenBSD: if_sppp.h,v 1.19 2013/11/14 16:52:33 stsp Exp $	*/
 /*	$NetBSD: if_sppp.h,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	*/
 
 /*
@@ -120,8 +120,8 @@ struct sipcp {
 #define IPCP_MYADDR_DYN   2	/* my address is dynamically assigned */
 #define IPCP_MYADDR_SEEN  4	/* have seen my address already */
 #define IPCP_HISADDR_DYN  8	/* his address is dynamically assigned */
-#define IPV6CP_MYIFID_DYN	2
-#define IPV6CP_MYIFID_SEEN	4
+#define IPV6CP_MYIFID_DYN	1 /* my ifid is dynamically assigned */
+#define IPV6CP_MYIFID_SEEN	2 /* have seen my suggested ifid */
 	u_int32_t saved_hisaddr; /* if hisaddr (IPv4) is dynamic, save
 				  * original one here, in network byte order */
 	u_int32_t req_hisaddr;	/* remote address requested */

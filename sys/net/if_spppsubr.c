@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.111 2013/11/11 09:15:34 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.112 2013/11/14 16:52:33 stsp Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -71,6 +71,10 @@
 #endif
 
 #include <net/if_sppp.h>
+
+#ifdef INET6
+#include <netinet6/in6_var.h>
+#endif
 
 # define UNTIMEOUT(fun, arg, handle)	\
 	timeout_del(&(handle))
@@ -318,8 +322,8 @@ HIDE void sppp_ipv6cp_scr(struct sppp *sp);
 HIDE const char *sppp_ipv6cp_opt_name(u_char opt);
 HIDE void sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src,
 			       struct in6_addr *dst, struct in6_addr *srcmask);
-HIDE void sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src);
-HIDE void sppp_gen_ip6_addr(struct sppp *sp, struct in6_addr *addr);
+HIDE void sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src, const struct in6_addr *dst);
+HIDE void sppp_update_ip6_addr(void *arg1, void *arg2);
 HIDE void sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest);
 
 HIDE void sppp_pap_input(struct sppp *sp, struct mbuf *m);
@@ -3126,17 +3130,13 @@ sppp_ipv6cp_open(struct sppp *sp)
 	STDDCL;
 	struct in6_addr myaddr, hisaddr;
 
-#ifdef IPV6CP_MYIFID_DYN
 	sp->ipv6cp.flags &= ~(IPV6CP_MYIFID_SEEN|IPV6CP_MYIFID_DYN);
-#else
-	sp->ipv6cp.flags &= ~IPV6CP_MYIFID_SEEN;
-#endif
 
-	sppp_get_ip6_addrs(sp, &myaddr, &hisaddr, 0);
+	sppp_get_ip6_addrs(sp, &myaddr, &hisaddr, NULL);
 	/*
 	 * If we don't have our address, this probably means our
 	 * interface doesn't want to talk IPv6 at all.  (This could
-	 * be the case if somebody wants to speak only IPX, for
+	 * be the case if the IFXF_NOINET6 flag is set, for
 	 * example.)  Don't open IPv6CP in this case.
 	 */
 	if (IN6_IS_ADDR_UNSPECIFIED(&myaddr)) {
@@ -3146,7 +3146,6 @@ sppp_ipv6cp_open(struct sppp *sp)
 			    SPP_ARGS(ifp));
 		return;
 	}
-	sp->ipv6cp.flags |= IPV6CP_MYIFID_SEEN;
 	sp->ipv6cp.opts |= (1 << IPV6CP_OPT_IFID);
 	sppp_open_event(&ipv6cp, sp);
 }
@@ -3239,7 +3238,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 		addlog("\n");
 
 	/* pass 2: parse option values */
-	sppp_get_ip6_addrs(sp, &myaddr, 0, 0);
+	sppp_get_ip6_addrs(sp, &myaddr, NULL, NULL);
 	if (debug)
 		log(LOG_DEBUG, "%s: ipv6cp parse opt values: ",
 		       SPP_ARGS(ifp));
@@ -3273,6 +3272,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 						addr, sizeof(addr)),
 					    sppp_cp_type_name(type));
 				}
+				sppp_set_ip6_addr(sp, &myaddr, &desiredaddr);
 				continue;
 			}
 
@@ -3397,53 +3397,33 @@ sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 			 */
 			if (len < 10 || p[1] != 10)
 				break;
+			sp->ipv6cp.flags |= IPV6CP_MYIFID_DYN;
 			memset(&suggestaddr, 0, sizeof(suggestaddr));
-			suggestaddr.s6_addr16[0] = htons(0xfe80);
 			bcopy(&p[2], &suggestaddr.s6_addr[8], 8);
-
-			sp->ipv6cp.opts |= (1 << IPV6CP_OPT_IFID);
-			if (debug)
-				addlog(" [suggestaddr %s]",
-				    inet_ntop(AF_INET6, &suggestaddr, addr,
-					sizeof(addr)));
-#ifdef IPV6CP_MYIFID_DYN
-			/*
-			 * When doing dynamic address assignment,
-			 * we accept his offer.
-			 */
-			if (sp->ipv6cp.flags & IPV6CP_MYIFID_DYN) {
-				struct in6_addr lastsuggest;
+			if (IN6_IS_ADDR_UNSPECIFIED(&suggestaddr) ||
+			    (sp->ipv6cp.flags & IPV6CP_MYIFID_SEEN)) {
 				/*
-				 * If <suggested myaddr from peer> equals to
-				 * <hisaddr we have suggested last time>,
-				 * we have a collision.  generate new random
-				 * ifid.
+				 * The peer didn't suggest anything,
+				 * or wants us to change a previously
+				 * suggested address.
+				 * Configure a new address for us.
 				 */
-				sppp_suggest_ip6_addr(sp,&lastsuggest);
-				if (IN6_ARE_ADDR_EQUAL(&suggestaddr,
-						 &lastsuggest)) {
-					if (debug)
-						addlog(" [random]");
-					sppp_gen_ip6_addr(sp, &suggestaddr);
-				}
-				sppp_set_ip6_addr(sp, &suggestaddr);
+				sppp_suggest_ip6_addr(sp, &suggestaddr);
+				sppp_set_ip6_addr(sp, &suggestaddr, NULL);
+				sp->ipv6cp.flags &= ~IPV6CP_MYIFID_SEEN;
+			} else {
+				/* Configure address suggested by peer. */
+				suggestaddr.s6_addr16[0] = htons(0xfe80);
+				sp->ipv6cp.opts |= (1 << IPV6CP_OPT_IFID);
+				if (debug)
+					addlog(" [suggestaddr %s]",
+					    inet_ntop(AF_INET6, &suggestaddr,
+					        addr, sizeof(addr)));
+				sppp_set_ip6_addr(sp, &suggestaddr, NULL);
 				if (debug)
 					addlog(" [agree]");
 				sp->ipv6cp.flags |= IPV6CP_MYIFID_SEEN;
 			}
-#else
-			/*
-			 * Since we do not do dynamic address assignment,
-			 * we ignore it and thus continue to negotiate
-			 * our already existing value.  This can possibly
-			 * go into infinite request-reject loop.
-			 *
-			 * This is not likely because we normally use
-			 * ifid based on MAC-address.
-			 * If you have no ethernet card on the node, too bad.
-			 * XXX should we use fail_counter?
-			 */
-#endif
 			break;
 #ifdef notyet
 		case IPV6CP_OPT_COMPRESS:
@@ -3491,7 +3471,7 @@ sppp_ipv6cp_scr(struct sppp *sp)
 	int i = 0;
 
 	if (sp->ipv6cp.opts & (1 << IPV6CP_OPT_IFID)) {
-		sppp_get_ip6_addrs(sp, &ouraddr, 0, 0);
+		sppp_get_ip6_addrs(sp, &ouraddr, NULL, NULL);
 		opt[i++] = IPV6CP_OPT_IFID;
 		opt[i++] = 10;
 		bcopy(&ouraddr.s6_addr[8], &opt[i], 8);
@@ -4746,39 +4726,27 @@ sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
 		   struct in6_addr *srcmask)
 {
 	struct ifnet *ifp = &sp->pp_if;
-	struct ifaddr *ifa;
-	struct sockaddr_in6 *si, *sm;
+	struct in6_ifaddr *ia;
 	struct in6_addr ssrc, ddst;
 
-	sm = NULL;
 	bzero(&ssrc, sizeof(ssrc));
 	bzero(&ddst, sizeof(ddst));
 	/*
 	 * Pick the first link-local AF_INET6 address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
-	si = 0;
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-		if (ifa->ifa_addr->sa_family == AF_INET6) {
-			si = (struct sockaddr_in6 *)ifa->ifa_addr;
-			sm = (struct sockaddr_in6 *)ifa->ifa_netmask;
-			if (si && IN6_IS_ADDR_LINKLOCAL(&si->sin6_addr))
-				break;
-		}
-	}
-
-	if (ifa) {
-		if (si && !IN6_IS_ADDR_UNSPECIFIED(&si->sin6_addr)) {
-			bcopy(&si->sin6_addr, &ssrc, sizeof(ssrc));
+	ia = in6ifa_ifpforlinklocal(ifp, 0);
+	if (ia) {
+		if (!IN6_IS_ADDR_UNSPECIFIED(&ia->ia_addr.sin6_addr)) {
+			bcopy(&ia->ia_addr.sin6_addr, &ssrc, sizeof(ssrc));
 			if (srcmask) {
-				bcopy(&sm->sin6_addr, srcmask,
+				bcopy(&ia->ia_prefixmask.sin6_addr, srcmask,
 				    sizeof(*srcmask));
 			}
 		}
 
-		si = (struct sockaddr_in6 *)ifa->ifa_dstaddr;
-		if (si && !IN6_IS_ADDR_UNSPECIFIED(&si->sin6_addr))
-			bcopy(&si->sin6_addr, &ddst, sizeof(ddst));
+		if (!IN6_IS_ADDR_UNSPECIFIED(&ia->ia_dstaddr.sin6_addr))
+			bcopy(&ia->ia_dstaddr.sin6_addr, &ddst, sizeof(ddst));
 	}
 
 	if (dst)
@@ -4787,70 +4755,111 @@ sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
 		bcopy(&ssrc, src, sizeof(*src));
 }
 
-#ifdef IPV6CP_MYIFID_DYN
-/*
- * Generate random ifid.
- */
+/* Task to update my IPv6 address from process context. */
 HIDE void
-sppp_gen_ip6_addr(struct sppp *sp, struct in6_addr *addr)
+sppp_update_ip6_addr(void *arg1, void *arg2)
 {
-	/* TBD */
+	struct sppp *sp = arg1;
+	struct ifnet *ifp = &sp->pp_if;
+	struct in6_aliasreq *ifra = arg2;
+	struct in6_addr mask = in6mask128;
+	struct in6_ifaddr *ia;
+	int s, error;
+
+	s = splnet();
+
+	ia = in6ifa_ifpforlinklocal(ifp, 0);
+	if (ia == NULL) {
+		/* IPv6 disabled? */
+		splx(s);
+		free(ifra, M_TEMP);
+		return;
+	}
+
+	/* Destination address can only be set for /128. */
+	if (!in6_are_prefix_equal(&ia->ia_prefixmask.sin6_addr, &mask, 128)) {
+		ifra->ifra_dstaddr.sin6_len = 0;
+		ifra->ifra_dstaddr.sin6_family = AF_UNSPEC;
+	}
+
+	ifra->ifra_lifetime = ia->ia6_lifetime;
+
+	error = in6_update_ifa(ifp, ifra, ia);
+	if (error) {
+		log(LOG_ERR, SPP_FMT
+		    "could not update IPv6 address (error %d)\n",
+		    SPP_ARGS(ifp), error);
+	}
+	splx(s);
+	free(ifra, M_TEMP);
 }
 
 /*
- * Set my IPv6 address.  Must be called at splnet.
+ * Configure my link-local address.
  */
 HIDE void
-sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
+sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src,
+	const struct in6_addr *dst)
 {
 	struct ifnet *ifp = &sp->pp_if;
-	struct ifaddr *ifa;
-	struct sockaddr_in6 *sin6;
+	struct in6_aliasreq *ifra;
 
-	/*
-	 * Pick the first link-local AF_INET6 address from the list,
-	 * aliases don't make any sense on a p2p link anyway.
+	ifra = malloc(sizeof(*ifra), M_TEMP, M_NOWAIT|M_ZERO);
+	if (ifra == NULL)
+		return;
+
+	bcopy(ifp->if_xname, ifra->ifra_name, sizeof(ifra->ifra_name));
+
+	ifra->ifra_addr.sin6_len = sizeof(struct sockaddr_in6);
+	ifra->ifra_addr.sin6_family = AF_INET6;
+	ifra->ifra_addr.sin6_addr = *src;
+	if (dst) {
+		ifra->ifra_dstaddr.sin6_len = sizeof(struct sockaddr_in6);
+		ifra->ifra_dstaddr.sin6_family = AF_INET6;
+		ifra->ifra_dstaddr.sin6_addr = *dst;
+	} else
+		ifra->ifra_dstaddr.sin6_family = AF_UNSPEC;
+
+	/* 
+	 * Don't change the existing prefixlen.
+	 * It is common to use a /64 for IPv6 over point-to-point links
+	 * to allow e.g. neighbour discovery and autoconf to work.
+	 * But it is legal to use other values.
 	 */
+	ifra->ifra_prefixmask.sin6_family = AF_UNSPEC;
 
-	sin6 = NULL;
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-		if (ifa->ifa_addr->sa_family == AF_INET6) {
-			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
-			if (sin6 && IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
-				break;
-		}
-	}
+	/* DAD is redundant after an IPv6CP exchange. */
+	ifra->ifra_flags |= IN6_IFF_NODAD;
 
-	if (ifa && sin6) {
-		struct sockaddr_in6 new_sin6 = *sin6;
-		bcopy(src, &new_sin6.sin6_addr, sizeof(new_sin6.sin6_addr));
-		dohooks(ifp->if_addrhooks, 0);
+	if (workq_add_task(NULL, 0, sppp_update_ip6_addr, sp, ifra)) {
+		free(ifra, M_TEMP);
+		printf("%s: workq_add_task failed, cannot set IPv6 "
+		    "addresses\n", ifp->if_xname);
 	}
 }
-#endif
 
 /*
- * Suggest a candidate address to be used by peer.
+ * Generate an address that differs from our existing address.
  */
 HIDE void
 sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest)
 {
 	struct in6_addr myaddr;
-	struct timeval tv;
+	u_int32_t random;
 
-	sppp_get_ip6_addrs(sp, &myaddr, 0, 0);
+	sppp_get_ip6_addrs(sp, &myaddr, NULL, NULL);
 
 	myaddr.s6_addr[8] &= ~0x02;	/* u bit to "local" */
-	getmicrouptime(&tv);
-	if ((tv.tv_usec & 0xff) == 0 && (tv.tv_sec & 0xff) == 0) {
+
+	random = arc4random();
+	if ((random & 0xff) == 0 && (random & 0xff00) == 0) {
 		myaddr.s6_addr[14] ^= 0xff;
 		myaddr.s6_addr[15] ^= 0xff;
 	} else {
-		myaddr.s6_addr[14] ^= (tv.tv_usec & 0xff);
-		myaddr.s6_addr[15] ^= (tv.tv_sec & 0xff);
+		myaddr.s6_addr[14] ^= (random & 0xff);
+		myaddr.s6_addr[15] ^= ((random & 0xff00) >> 8);
 	}
-	if (suggest)
-		bcopy(&myaddr, suggest, sizeof(myaddr));
+	bcopy(&myaddr, suggest, sizeof(myaddr));
 }
 #endif /*INET6*/
 
