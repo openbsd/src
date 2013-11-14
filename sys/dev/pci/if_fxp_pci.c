@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.58 2013/08/07 01:06:35 bluhm Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.59 2013/11/14 12:16:01 dlg Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -46,7 +46,7 @@
 #include <sys/socket.h>
 #include <sys/timeout.h>
 #include <sys/syslog.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
