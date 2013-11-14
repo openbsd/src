@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpctl.c,v 1.18 2013/10/01 17:20:39 reyk Exp $	*/
+/*	$OpenBSD: snmpctl.c,v 1.19 2013/11/14 20:48:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -181,7 +181,7 @@ main(int argc, char *argv[])
 	}
 
 	while (ibuf->w.queued)
-		if (msgbuf_write(&ibuf->w) < 0)
+		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
 			err(1, "write error");
 
 	while (!done) {

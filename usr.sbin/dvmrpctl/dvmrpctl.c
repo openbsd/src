@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpctl.c,v 1.10 2013/04/09 14:51:33 gilles Exp $ */
+/*	$OpenBSD: dvmrpctl.c,v 1.11 2013/11/14 20:48:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -28,6 +28,7 @@
 #include <net/if_types.h>
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -172,7 +173,7 @@ main(int argc, char *argv[])
 	}
 
 	while (ibuf->w.queued)
-		if (msgbuf_write(&ibuf->w) < 0)
+		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
 			err(1, "write error");
 
 	while (!done) {

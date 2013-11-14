@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.17 2013/08/16 19:47:42 guenther Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.18 2013/11/14 20:48:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Reyk Floeter <reyk@openbsd.org>
@@ -313,7 +313,7 @@ main(int argc, char *argv[])
 	}
 
 	while (ibuf->w.queued)
-		if (msgbuf_write(&ibuf->w) < 0)
+		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
 			err(1, "write error");
 
 	while (!done) {
