@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.114 2013/10/27 18:54:03 guenther Exp $	 */
+/* $OpenBSD: x509.c,v 1.115 2013/11/14 15:44:06 deraadt Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -1334,10 +1334,11 @@ char *
 x509_DN_string(u_int8_t *asn1, size_t sz)
 {
 	X509_NAME	*name;
-	u_int8_t	*p = asn1;
+	const u_int8_t	*p = asn1;
 	char		buf[256];	/* XXX Just a guess at a maximum length.  */
+	long len = sz;
 
-	name = d2i_X509_NAME(NULL, &p, sz);
+	name = d2i_X509_NAME(NULL, &p, len);
 	if (!name) {
 		log_print("x509_DN_string: d2i_X509_NAME failed");
 		return 0;
