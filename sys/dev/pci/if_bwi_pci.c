@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_pci.c,v 1.12 2010/08/08 12:02:25 mglocker Exp $ */
+/*	$OpenBSD: if_bwi_pci.c,v 1.13 2013/11/14 12:10:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -24,7 +24,7 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
-#include <sys/workq.h>
+#include <sys/task.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -125,6 +125,8 @@ bwi_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
 
+	task_set(&sc->sc_resume_t, bwi_pci_resume, sc, NULL);
+
 	/* map control / status registers */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BWI_PCI_BAR0); 
 	if (pci_mapreg_map(pa, BWI_PCI_BAR0, memtype, 0, &sc->sc_mem_bt,
@@ -191,8 +193,7 @@ bwi_pci_activate(struct device *self, int act)
 			bwi_stop(sc, 1);
 		break;
 	case DVACT_RESUME:
-		workq_queue_task(NULL, &sc->sc_resume_wqt, 0,
-		    bwi_pci_resume, sc, NULL);
+		task_add(systq, &sc->sc_resume_t);
 		break;
 	}
 
