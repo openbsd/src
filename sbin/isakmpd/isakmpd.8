@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.112 2013/07/14 16:37:41 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.113 2013/11/14 08:47:21 bentley Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: July 14 2013 $
+.Dd $Mdocdate: November 14 2013 $
 .Dt ISAKMPD 8
 .Os
 .Sh NAME
@@ -811,11 +811,44 @@ command is issued in the command FIFO.
 .Xr sasyncd 8 ,
 .Xr ssl 8 ,
 .Xr tcpdump 8
+.Sh STANDARDS
+.Rs
+.%A D. Piper
+.%D November 1998
+.%R RFC 2407
+.%T The Internet IP Security Domain of Interpretation for ISAKMP
+.Re
+.Pp
+.Rs
+.%A D. Maughan
+.%A M. Schertler
+.%A M. Schneider
+.%A J. Turner
+.%D November 1998
+.%R RFC 2408
+.%T Internet Security Association and Key Management Protocol (ISAKMP)
+.Re
+.Pp
+.Rs
+.%A D. Harkins
+.%A D. Carrel
+.%D November 1998
+.%R RFC 2409
+.%T The Internet Key Exchange (IKE)
+.Re
+.Pp
+.Rs
+.%A T. Kivinen
+.%A B. Swander
+.%A A. Huttunen
+.%A V. Volpe
+.%D January 2005
+.%R RFC 3947
+.%T Negotiation of NAT-Traversal in the IKE
+.Re
 .Sh HISTORY
-The ISAKMP/Oakley key management protocol is described in
-RFC 2407, RFC 2408, and RFC 2409.
-NAT-Traversal is described in RFC 3947.
-This implementation was done in 1998 by Niklas Hallqvist and Niels Provos,
+This implementation of the ISAKMP/Oakley key management protocol
+was done in 1998 by Niklas Hallqvist and Niels Provos,
 sponsored by Ericsson Radio Systems.
 .Sh CAVEATS
 When storing a trusted public key for an IPv6 identity, the
