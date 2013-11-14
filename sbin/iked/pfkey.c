@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.23 2013/03/21 04:30:14 deraadt Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.24 2013/11/14 12:44:51 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1265,6 +1265,11 @@ pfkey_init(struct iked *env, int fd)
 	struct sadb_msg		smsg;
 	struct iovec		iov;
 
+	/* Set up a timer to process messages deferred by the pfkey_reply */
+	pfkey_timer_tv.tv_sec = 1;
+	pfkey_timer_tv.tv_usec = 0;
+	evtimer_set(&pfkey_timer_ev, pfkey_timer_cb, env);
+
 	/* Register the pfkey socket event handler */
 	env->sc_pfkey = fd;
 	event_set(&env->sc_pfkeyev, env->sc_pfkey,
@@ -1299,11 +1304,6 @@ pfkey_init(struct iked *env, int fd)
 
 	if (pfkey_write(fd, &smsg, &iov, 1, NULL, NULL))
 		fatal("pfkey_init: failed to set up AH acquires");
-
-	/* Set up a timer to process messages deferred by the pfkey_reply */
-	pfkey_timer_tv.tv_sec = 1;
-	pfkey_timer_tv.tv_usec = 0;
-	evtimer_set(&pfkey_timer_ev, pfkey_timer_cb, env);
 
 	if (env->sc_opts & IKED_OPT_NOIPV6BLOCKING)
 		return;
