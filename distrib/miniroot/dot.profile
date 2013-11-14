@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.18 2013/10/27 22:36:06 uwe Exp $
+#	$OpenBSD: dot.profile,v 1.19 2013/11/14 15:20:54 halex Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -73,7 +73,8 @@ __EOT
 		echo "Starting non-interactive installation in 5 seconds..."
 		>/tmp/noai
 
-		trap 'kill $timeout_pid 2>/dev/null' INT EXIT
+		trap 'kill $timeout_pid 2>/dev/null' EXIT
+		trap 'exit 1' INT
 		trap 'timeout=true' TERM
 
 		# Stop monitoring background processes to avoid printing
