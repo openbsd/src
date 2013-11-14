@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.10 2013/01/08 10:38:19 reyk Exp $	*/
+/*	$OpenBSD: dh.c,v 1.11 2013/11/14 12:30:35 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -453,6 +453,10 @@ ec_init(struct group *group)
 		return (-1);
 	if (!EC_KEY_generate_key(group->ec))
 		return (-1);
+	if (!EC_KEY_check_key(group->ec)) {
+		EC_KEY_free(group->ec);
+		return (-1);
+	}
 	return (0);
 }
 
@@ -482,6 +486,7 @@ ec_create_shared(struct group *group, u_int8_t *secret, u_int8_t *exchange)
 {
 	const EC_GROUP	*ecgroup = NULL;
 	const BIGNUM	*privkey;
+	EC_KEY		*exkey = NULL;
 	EC_POINT	*exchangep = NULL, *secretp = NULL;
 	int		 ret = -1;
 
@@ -493,6 +498,17 @@ ec_create_shared(struct group *group, u_int8_t *secret, u_int8_t *exchange)
 	    ec_raw2point(group, exchange, ec_getlen(group))) == NULL)
 		goto done;
 
+	if ((exkey = EC_KEY_new()) == NULL)
+		goto done;
+	if (!EC_KEY_set_group(exkey, ecgroup))
+		goto done;
+	if (!EC_KEY_set_public_key(exkey, exchangep))
+		goto done;
+
+	/* validate exchangep */
+	if (!EC_KEY_check_key(exkey))
+		goto done;
+
 	if ((secretp = EC_POINT_new(ecgroup)) == NULL)
 		goto done;
 
@@ -502,6 +518,8 @@ ec_create_shared(struct group *group, u_int8_t *secret, u_int8_t *exchange)
 	ret = ec_point2raw(group, secretp, secret, ec_getlen(group));
 
  done:
+	if (exkey != NULL)
+		EC_KEY_free(exkey);
 	if (exchangep != NULL)
 		EC_POINT_clear_free(exchangep);
 	if (secretp != NULL)
@@ -559,6 +577,11 @@ ec_point2raw(struct group *group, const EC_POINT *point,
 
 	ret = 0;
  done:
+	/* Make sure to erase sensitive data */
+	if (x != NULL)
+		BN_clear(x);
+	if (y != NULL)
+		BN_clear(y);
 	BN_CTX_end(bnctx);
 	BN_CTX_free(bnctx);
 
@@ -612,6 +635,11 @@ ec_raw2point(struct group *group, u_int8_t *buf, size_t len)
  done:
 	if (ret != 0 && point != NULL)
 		EC_POINT_clear_free(point);
+	/* Make sure to erase sensitive data */
+	if (x != NULL)
+		BN_clear(x);
+	if (y != NULL)
+		BN_clear(y);
 	BN_CTX_end(bnctx);
 	BN_CTX_free(bnctx);
 
