@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.32 2013/11/11 09:15:35 mpi Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.33 2013/11/14 23:30:23 patrick Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -343,7 +343,7 @@ void
 mld6_checktimer(struct ifnet *ifp)
 {
 	struct in6_multi *in6m;
-	struct in6_ifaddr *ia;					\
+	struct in6_ifaddr *ia;
 
 	splsoftassert(IPL_SOFTNET);
 
