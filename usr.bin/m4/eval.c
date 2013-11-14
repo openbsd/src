@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.70 2012/04/12 17:00:11 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.71 2013/11/14 15:56:50 deraadt Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -262,8 +262,8 @@ expand_builtin(const char *argv[], int argc, int td)
 			doesyscmd(argv[2]);
 		break;
 	case INCLTYPE:
-		if (argc > 2)
-			if (!doincl(argv[2]))
+		if (argc > 2) {
+			if (!doincl(argv[2])) {
 				if (mimic_gnu) {
 					warn("%s at line %lu: include(%s)",
 					    CURRENT_NAME, CURRENT_LINE, argv[2]);
@@ -271,6 +271,8 @@ expand_builtin(const char *argv[], int argc, int td)
 				} else
 					err(1, "%s at line %lu: include(%s)",
 					    CURRENT_NAME, CURRENT_LINE, argv[2]);
+			}
+		}
 		break;
 
 	case SINCTYPE:
