@@ -1,4 +1,4 @@
-/*	$OpenBSD: uark.c,v 1.18 2013/11/07 11:50:38 pirofti Exp $	*/
+/*	$OpenBSD: uark.c,v 1.19 2013/11/15 08:25:31 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -207,16 +207,13 @@ int
 uark_activate(struct device *self, int act)
 {
 	struct uark_softc *sc = (struct uark_softc *)self;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
 		usbd_deactivate(sc->sc_udev);
 		break;
 	}
-	return (rv);
+	return (0);
 }
 
 void

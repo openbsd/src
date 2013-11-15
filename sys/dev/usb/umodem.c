@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.51 2013/11/07 12:53:14 pirofti Exp $ */
+/*	$OpenBSD: umodem.c,v 1.52 2013/11/15 08:25:31 pirofti Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -745,16 +745,13 @@ int
 umodem_activate(struct device *self, int act)
 {
 	struct umodem_softc *sc = (struct umodem_softc *)self;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->sc_udev);
-		if (sc->sc_subdev)
-			rv = config_deactivate(sc->sc_subdev);
 		break;
 	}
-	return (rv);
+	return (0);
 }
 
 int

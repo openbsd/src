@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.21 2013/11/07 10:32:51 pirofti Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.22 2013/11/15 08:25:31 pirofti Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -462,16 +462,13 @@ int
 uticom_activate(struct device *self, int act)
 {
 	struct uticom_softc *sc = (struct uticom_softc *)self;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
 		usbd_deactivate(sc->sc_udev);
 		break;
 	}
-	return (rv);
+	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.29 2013/11/07 10:34:02 pirofti Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.30 2013/11/15 08:25:31 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -338,16 +338,13 @@ int
 uslcom_activate(struct device *self, int act)
 {
 	struct uslcom_softc *sc = (struct uslcom_softc *)self;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
 		usbd_deactivate(sc->sc_udev);
 		break;
 	}
-	return (rv);
+	return (0);
 }
 
 int

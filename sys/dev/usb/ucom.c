@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.61 2013/07/15 13:52:05 mpi Exp $ */
+/*	$OpenBSD: ucom.c,v 1.62 2013/11/15 08:25:31 pirofti Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ int ucomdebug = 0;
 struct ucom_softc {
 	struct device		sc_dev;		/* base device */
 
-	struct usbd_device	*sc_udev;	/* USB device */
+	struct usbd_device	*sc_uparent;	/* USB device */
 	struct uhidev_softc	*sc_uhidev;	/* hid device (if deeper) */
 
 	struct usbd_interface	*sc_iface;	/* data interface */
@@ -119,7 +119,6 @@ struct ucom_softc {
 	struct rwlock		sc_lock;	/* lock during open */
 	int			sc_open;
 	int			sc_refcnt;
-	u_char			sc_dying;	/* disconnecting */
 };
 
 void	ucom_cleanup(struct ucom_softc *);
@@ -144,7 +143,6 @@ void	ucom_unlock(struct ucom_softc *);
 int ucom_match(struct device *, void *, void *); 
 void ucom_attach(struct device *, struct device *, void *); 
 int ucom_detach(struct device *, int); 
-int ucom_activate(struct device *, int); 
 
 struct cfdriver ucom_cd = { 
 	NULL, "ucom", DV_TTY 
@@ -155,7 +153,6 @@ const struct cfattach ucom_ca = {
 	ucom_match, 
 	ucom_attach, 
 	ucom_detach, 
-	ucom_activate, 
 };
 
 void
@@ -187,7 +184,7 @@ ucom_attach(struct device *parent, struct device *self, void *aux)
 		printf(", %s", uca->info);
 	printf("\n");
 
-	sc->sc_udev = uca->device;
+	sc->sc_uparent = uca->device;
 	sc->sc_iface = uca->iface;
 	sc->sc_bulkout_no = uca->bulkout;
 	sc->sc_bulkin_no = uca->bulkin;
@@ -279,21 +276,6 @@ ucom_detach(struct device *self, int flags)
 	return (0);
 }
 
-int
-ucom_activate(struct device *self, int act)
-{
-	struct ucom_softc *sc = (struct ucom_softc *)self;
-
-	DPRINTFN(5,("ucom_activate: %d\n", act));
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
-		break;
-	}
-	return (0);
-}
-
 void
 ucom_shutdown(struct ucom_softc *sc)
 {
@@ -323,7 +305,7 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (sc == NULL)
 		return (ENXIO);
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_uparent))
 		return (EIO);
 
 	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
@@ -378,7 +360,7 @@ ucom_do_open(dev_t dev, int flag, int mode, struct proc *p)
 			}
 
 			/* Allocate a request and an input buffer and start reading. */
-			sc->sc_ixfer = usbd_alloc_xfer(sc->sc_udev);
+			sc->sc_ixfer = usbd_alloc_xfer(sc->sc_uparent);
 			if (sc->sc_ixfer == NULL) {
 				error = ENOMEM;
 				goto fail_2;
@@ -391,7 +373,7 @@ ucom_do_open(dev_t dev, int flag, int mode, struct proc *p)
 				goto fail_2;
 			}
 
-			sc->sc_oxfer = usbd_alloc_xfer(sc->sc_udev);
+			sc->sc_oxfer = usbd_alloc_xfer(sc->sc_uparent);
 			if (sc->sc_oxfer == NULL) {
 				error = ENOMEM;
 				goto fail_3;
@@ -563,7 +545,7 @@ ucomclose(dev_t dev, int flag, int mode, struct proc *p)
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	int error;
 
-	if (sc == NULL || sc->sc_dying)
+	if (sc == NULL || usbd_is_dying(sc->sc_uparent))
 		return (EIO);
 
 	sc->sc_refcnt++;
@@ -609,7 +591,7 @@ ucomread(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp;
 	int error;
 
-	if (sc == NULL || sc->sc_dying)
+	if (sc == NULL || usbd_is_dying(sc->sc_uparent))
 		return (EIO);
 
 	sc->sc_refcnt++;
@@ -627,7 +609,7 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp;
 	int error;
 
-	if (sc == NULL || sc->sc_dying)
+	if (sc == NULL || usbd_is_dying(sc->sc_uparent))
 		return (EIO);
 
 	sc->sc_refcnt++;
@@ -659,7 +641,7 @@ ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	int error;
 
-	if (sc == NULL || sc->sc_dying)
+	if (sc == NULL || usbd_is_dying(sc->sc_uparent))
 		return (EIO);
 
 	sc->sc_refcnt++;
@@ -873,7 +855,7 @@ ucomparam(struct tty *tp, struct termios *t)
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(tp->t_dev)];
 	int error;
 
-	if (sc == NULL || sc->sc_dying)
+	if (sc == NULL || usbd_is_dying(sc->sc_uparent))
 		return (EIO);
 
 	/* Check requested parameters. */
@@ -970,7 +952,7 @@ ucomstart(struct tty *tp)
 	u_char *data;
 	int cnt;
 
-	if (sc == NULL || sc->sc_dying)
+	if (sc == NULL || usbd_is_dying(sc->sc_uparent))
 		return;
 
 	s = spltty();
@@ -1063,7 +1045,7 @@ ucomwritecb(struct usbd_xfer *xfer, void *p, usbd_status status)
 
 	DPRINTFN(5,("ucomwritecb: %p %p status=%d\n", xfer, p, status));
 
-	if (status == USBD_CANCELLED || sc->sc_dying)
+	if (status == USBD_CANCELLED || usbd_is_dying(sc->sc_uparent))
 		goto error;
 
 	if (sc->sc_bulkin_pipe != NULL) {
@@ -1141,7 +1123,7 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 	DPRINTFN(5,("ucomreadcb: status=%d\n", status));
 
 	if (status == USBD_CANCELLED || status == USBD_IOERROR ||
-	    sc->sc_dying) {
+	    usbd_is_dying(sc->sc_uparent)) {
 		DPRINTF(("ucomreadcb: dying\n"));
 		/* Send something to wake upper layer */
 		s = spltty();

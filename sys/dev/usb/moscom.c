@@ -1,4 +1,4 @@
-/*	$OpenBSD: moscom.c,v 1.18 2013/11/07 12:52:42 pirofti Exp $	*/
+/*	$OpenBSD: moscom.c,v 1.19 2013/11/15 08:25:30 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -280,16 +280,13 @@ int
 moscom_activate(struct device *self, int act)
 {
 	struct moscom_softc *sc = (struct moscom_softc *)self;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
 		usbd_deactivate(sc->sc_udev);
 		break;
 	}
-	return (rv);
+	return (0);
 }
 
 int

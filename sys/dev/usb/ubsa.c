@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.58 2013/11/07 07:32:36 pirofti Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.59 2013/11/15 08:25:31 pirofti Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -396,16 +396,13 @@ int
 ubsa_activate(struct device *self, int act)
 {
 	struct ubsa_softc *sc = (struct ubsa_softc *)self;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
 		usbd_deactivate(sc->sc_udev);
 		break;
 	}
-	return (rv);
+	return (0);
 }
 
 int

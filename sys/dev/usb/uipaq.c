@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.22 2013/11/07 12:07:18 pirofti Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.23 2013/11/15 08:25:31 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -356,16 +356,13 @@ int
 uipaq_activate(struct device *self, int act)
 {
 	struct uipaq_softc *sc = (struct uipaq_softc *)self;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
 		usbd_deactivate(sc->sc_udev);
 		break;
 	}
-	return (rv);
+	return (0);
 }
 
 int

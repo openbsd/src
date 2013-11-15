@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.66 2013/11/07 11:13:31 pirofti Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.67 2013/11/15 08:25:31 pirofti Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -896,16 +896,13 @@ int
 uftdi_activate(struct device *self, int act)
 {
 	struct uftdi_softc *sc = (struct uftdi_softc *)self;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
 		usbd_deactivate(sc->sc_udev);
 		break;
 	}
-	return (rv);
+	return (0);
 }
 
 int

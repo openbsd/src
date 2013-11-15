@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.17 2013/11/07 10:33:27 pirofti Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.18 2013/11/15 08:25:31 pirofti Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -331,17 +331,14 @@ int
 uchcom_activate(struct device *self, int act)
 {
 	struct uchcom_softc *sc = (struct uchcom_softc *)self;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
 		uchcom_close_intr_pipe(sc);
 		usbd_deactivate(sc->sc_udev);
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
 		break;
 	}
-	return rv;
+	return 0;
 }
 
 int
