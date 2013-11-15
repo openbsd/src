@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.858 2013/11/15 10:18:26 haesbaert Exp $ */
+/*	$OpenBSD: pf.c,v 1.859 2013/11/15 16:15:41 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6490,6 +6490,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0,
 		}
 	}
 	pd.eh = eh;
+	pd.m->m_pkthdr.pf.flags |= PF_TAG_PROCESSED;
 
 	switch (pd.virtual_proto) {
 

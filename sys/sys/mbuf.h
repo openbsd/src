@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.168 2013/10/13 10:10:04 reyk Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.169 2013/11/15 16:15:42 bluhm Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -100,6 +100,7 @@ struct pkthdr_pf {
 #define	PF_TAG_DIVERTED_PACKET		0x10
 #define	PF_TAG_REROUTE			0x20
 #define	PF_TAG_REFRAGMENTED		0x40	/* refragmented ipv6 packet */
+#define	PF_TAG_PROCESSED		0x80	/* packet was checked by pf */
 
 /* record/packet header in first mbuf of chain; valid if M_PKTHDR set */
 struct	pkthdr {
