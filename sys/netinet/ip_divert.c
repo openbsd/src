@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.13 2013/04/08 15:32:23 lteo Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.14 2013/11/15 16:46:15 lteo Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -203,7 +203,7 @@ divert_packet(struct mbuf *m, int dir)
 	struct inpcb *inp;
 	struct socket *sa = NULL;
 	struct sockaddr_in addr;
-	struct pf_divert *pd;
+	struct pf_divert *divert;
 
 	inp = NULL;
 	divstat.divs_ipackets++;
@@ -214,15 +214,15 @@ divert_packet(struct mbuf *m, int dir)
 		return (0);
 	}
 
-	pd = pf_find_divert(m);
-	if (pd == NULL) {
+	divert = pf_find_divert(m);
+	if (divert == NULL) {
 		divstat.divs_errors++;
 		m_freem(m);
 		return (0);
 	}
 
 	CIRCLEQ_FOREACH(inp, &divbtable.inpt_queue, inp_queue) {
-		if (inp->inp_lport != pd->port)
+		if (inp->inp_lport != divert->port)
 			continue;
 		if (inp->inp_divertfl == 0)
 			break;

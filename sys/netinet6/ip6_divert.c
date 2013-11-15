@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.14 2013/10/17 16:27:46 bluhm Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.15 2013/11/15 16:46:15 lteo Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -199,7 +199,7 @@ divert6_packet(struct mbuf *m, int dir)
 	struct inpcb *inp;
 	struct socket *sa = NULL;
 	struct sockaddr_in6 addr;
-	struct pf_divert *pd;
+	struct pf_divert *divert;
 
 	inp = NULL;
 	div6stat.divs_ipackets++;
@@ -210,15 +210,15 @@ divert6_packet(struct mbuf *m, int dir)
 		return (0);
 	}
 
-	pd = pf_find_divert(m);
-	if (pd == NULL) {
+	divert = pf_find_divert(m);
+	if (divert == NULL) {
 		div6stat.divs_errors++;
 		m_freem(m);
 		return (0);
 	}
 
 	CIRCLEQ_FOREACH(inp, &divb6table.inpt_queue, inp_queue) {
-		if (inp->inp_lport != pd->port)
+		if (inp->inp_lport != divert->port)
 			continue;
 		if (inp->inp_divertfl == 0)
 			break;
