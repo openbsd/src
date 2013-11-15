@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.47 2013/11/12 07:04:54 deraadt Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.48 2013/11/15 22:32:55 benno Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -708,10 +708,8 @@ getpwnam_r(const char *name, struct passwd *pw, char *buf, size_t buflen,
 {
 	struct passwd *pwret = NULL;
 	int flags = 0, *flagsp;
-	DB *savedb;
 
 	_THREAD_PRIVATE_MUTEX_LOCK(pw);
-	savedb = _pw_db;
 	if (!_pw_db && !__initdb())
 		goto fail;
 
@@ -728,7 +726,7 @@ getpwnam_r(const char *name, struct passwd *pw, char *buf, size_t buflen,
 	if (!pwret)
 		pwret = _pwhashbyname(name, buf, buflen, pw, flagsp);
 
-	if (savedb != _pw_db || !_pw_stayopen) {
+	if (!_pw_stayopen) {
 		(void)(_pw_db->close)(_pw_db);
 		_pw_db = NULL;
 	}
@@ -755,10 +753,8 @@ getpwuid_r(uid_t uid, struct passwd *pw, char *buf, size_t buflen,
 {
 	struct passwd *pwret = NULL;
 	int flags = 0, *flagsp;
-	DB *savedb;
 
 	_THREAD_PRIVATE_MUTEX_LOCK(pw);
-	savedb = _pw_db;
 	if (!_pw_db && !__initdb())
 		goto fail;
 
@@ -775,7 +771,7 @@ getpwuid_r(uid_t uid, struct passwd *pw, char *buf, size_t buflen,
 	if (!pwret)
 		pwret = _pwhashbyuid(uid, buf, buflen, pw, flagsp);
 
-	if (savedb != _pw_db || !_pw_stayopen) {
+	if (!_pw_stayopen) {
 		(void)(_pw_db->close)(_pw_db);
 		_pw_db = NULL;
 	}
