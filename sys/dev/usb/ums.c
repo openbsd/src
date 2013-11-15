@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.37 2013/08/15 15:01:48 edd Exp $ */
+/*	$OpenBSD: ums.c,v 1.38 2013/11/15 08:17:44 pirofti Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -59,7 +59,6 @@
 struct ums_softc {
 	struct uhidev	sc_hdev;
 	struct hidms	sc_ms;
-	char		sc_dying;
 };
 
 void ums_intr(struct uhidev *addr, void *ibuf, u_int len);
@@ -94,8 +93,7 @@ const struct cfattach ums_ca = {
 int
 ums_match(struct device *parent, void *match, void *aux)
 {
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	int size;
 	void *desc;
 
@@ -121,17 +119,18 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ums_softc *sc = (struct ums_softc *)self;
 	struct hidms *ms = &sc->sc_ms;
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
+	struct usb_attach_arg *uaa = uha->uaa;
 	int size, repid;
 	void *desc;
 	u_int32_t quirks;
 
 	sc->sc_hdev.sc_intr = ums_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
+	sc->sc_hdev.sc_udev = uaa->device;
 	sc->sc_hdev.sc_report_id = uha->reportid;
 
-	quirks = usbd_get_quirks(uha->parent->sc_udev)->uq_flags;
+	quirks = usbd_get_quirks(sc->sc_hdev.sc_udev)->uq_flags;
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	repid = uha->reportid;
 	sc->sc_hdev.sc_isize = hid_report_size(desc, size, hid_input, repid);
@@ -175,7 +174,6 @@ ums_activate(struct device *self, int act)
 	case DVACT_DEACTIVATE:
 		if (ms->sc_wsmousedev != NULL)
 			rv = config_deactivate(ms->sc_wsmousedev);
-		sc->sc_dying = 1;
 		break;
 	}
 	return (rv);
@@ -207,7 +205,7 @@ ums_enable(void *v)
 	struct hidms *ms = &sc->sc_ms;
 	int rv;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_hdev.sc_udev))
 		return EIO;
 
 	if ((rv = hidms_enable(ms)) != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.61 2013/11/13 13:48:08 pirofti Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.62 2013/11/15 08:17:44 pirofti Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -132,8 +132,6 @@ struct ukbd_softc {
 
 	int			sc_spl;
 
-	u_char			sc_dying;
-
 	struct hid_location	sc_apple_fn;
 
 	void			(*sc_munge)(void *, uint8_t *, u_int);
@@ -193,8 +191,7 @@ uint8_t	ukbd_translate(const struct ukbd_translation *, size_t, uint8_t);
 int
 ukbd_match(struct device *parent, void *match, void *aux)
 {
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	int size;
 	void *desc;
 
@@ -211,8 +208,7 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ukbd_softc *sc = (struct ukbd_softc *)self;
 	struct hidkbd *kbd = &sc->sc_kbd;
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	struct usb_hid_descriptor *hid;
 	u_int32_t qflags;
 	int dlen, repid;
@@ -221,6 +217,7 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_hdev.sc_intr = ukbd_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
+	sc->sc_hdev.sc_udev = uha->uaa->device;
 	sc->sc_hdev.sc_report_id = uha->reportid;
 
 	uhidev_get_report_desc(uha->parent, &desc, &dlen);
@@ -229,7 +226,7 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hdev.sc_osize = hid_report_size(desc, dlen, hid_output, repid);
 	sc->sc_hdev.sc_fsize = hid_report_size(desc, dlen, hid_feature, repid);
 
-	qflags = usbd_get_quirks(uha->parent->sc_udev)->uq_flags;
+	qflags = usbd_get_quirks(sc->sc_hdev.sc_udev)->uq_flags;
 	if (hidkbd_attach(self, kbd, 1, qflags, repid, desc, dlen) != 0)
 		return;
 
@@ -292,7 +289,7 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	/* Flash the leds; no real purpose, just shows we're alive. */
 	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM |
 		          WSKBD_LED_CAPS | WSKBD_LED_COMPOSE);
-	usbd_delay_ms(uha->parent->sc_udev, 400);
+	usbd_delay_ms(sc->sc_hdev.sc_udev, 400);
 	ukbd_set_leds(sc, 0);
 
 	hidkbd_attach_wskbd(kbd, layout, &ukbd_accessops);
@@ -309,7 +306,6 @@ ukbd_activate(struct device *self, int act)
 	case DVACT_DEACTIVATE:
 		if (kbd->sc_wskbddev != NULL)
 			rv = config_deactivate(kbd->sc_wskbddev);
-		sc->sc_dying = 1;
 		break;
 	}
 	return (rv);
@@ -351,7 +347,7 @@ ukbd_enable(void *v, int on)
 	struct hidkbd *kbd = &sc->sc_kbd;
 	int rv;
 
-	if (on && sc->sc_dying)
+	if (on && usbd_is_dying(sc->sc_hdev.sc_udev))
 		return EIO;
 
 	if ((rv = hidkbd_enable(kbd, on)) != 0)
@@ -372,7 +368,7 @@ ukbd_set_leds(void *v, int leds)
 	struct hidkbd *kbd = &sc->sc_kbd;
 	u_int8_t res;
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_hdev.sc_udev))
 		return;
 
 	if (sc->sc_ledsize && hidkbd_set_leds(kbd, leds, &res) != 0)
@@ -413,7 +409,7 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 	DPRINTFN(0,("ukbd_cngetc: enter\n"));
 	kbd->sc_polling = 1;
 	while (kbd->sc_npollchar <= 0)
-		usbd_dopoll(sc->sc_hdev.sc_parent->sc_udev);
+		usbd_dopoll(sc->sc_hdev.sc_udev);
 	kbd->sc_polling = 0;
 	hidkbd_cngetc(kbd, type, data);
 	DPRINTFN(0,("ukbd_cngetc: return 0x%02x\n", *data));
@@ -430,7 +426,7 @@ ukbd_cnpollc(void *v, int on)
 		sc->sc_spl = splusb();
 	else
 		splx(sc->sc_spl);
-	usbd_set_polling(sc->sc_hdev.sc_parent->sc_udev, on);
+	usbd_set_polling(sc->sc_hdev.sc_udev, on);
 }
 
 void

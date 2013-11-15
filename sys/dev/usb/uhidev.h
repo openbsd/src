@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.h,v 1.14 2013/11/01 12:05:26 mpi Exp $	*/
+/*	$OpenBSD: uhidev.h,v 1.15 2013/11/15 08:17:44 pirofti Exp $	*/
 /*	$NetBSD: uhidev.h,v 1.3 2002/10/08 09:56:17 dan Exp $	*/
 
 /*
@@ -64,6 +64,7 @@ struct uhidev_softc {
 
 struct uhidev {
 	struct device sc_dev;		/* base device */
+	struct usbd_device *sc_udev;	/* USB device */
 	struct uhidev_softc *sc_parent;
 	uByte sc_report_id;
 	u_int8_t sc_state;

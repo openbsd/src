@@ -1,4 +1,4 @@
-/*	$OpenBSD: utpms.c,v 1.2 2013/07/06 14:42:38 mpi Exp $	*/
+/*	$OpenBSD: utpms.c,v 1.3 2013/11/15 08:17:44 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -229,7 +229,6 @@ struct utpms_softc {
 	uint32_t sc_buttons;	      /* Button state. */
 	uint32_t sc_status;	      /* Status flags. */
 #define UTPMS_ENABLED 1		      /* Is the device enabled? */
-#define UTPMS_DYING 2		      /* Is the device dying? */
 #define UTPMS_VALID 4		      /* Is the previous sample valid? */
 };
 
@@ -265,8 +264,7 @@ const struct cfattach utpms_ca = {
 int
 utpms_match(struct device *parent, void *match, void *aux)
 {
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	usb_device_descriptor_t *udd;
 	int i;
 	uint16_t vendor, product;
@@ -292,8 +290,7 @@ void
 utpms_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct utpms_softc *sc = (struct utpms_softc *)self;
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	struct wsmousedev_attach_args a;
 	struct utpms_dev *pd;
 	usb_device_descriptor_t *udd;
@@ -301,6 +298,7 @@ utpms_attach(struct device *parent, struct device *self, void *aux)
 	uint16_t vendor, product;
 
 	sc->sc_datalen = UTPMS_DATA_LEN;
+	sc->sc_hdev.sc_udev = uha->uaa->device;
 
 	/* Fill in device-specific parameters. */
 	if ((udd = usbd_get_device_descriptor(uha->parent->sc_udev)) != NULL) {
@@ -375,7 +373,6 @@ utpms_activate(struct device *self, int act)
 		ret = 0;
 		if (sc->sc_wsmousedev != NULL)
 			ret = config_deactivate(sc->sc_wsmousedev);
-		sc->sc_status |= UTPMS_DYING;
 		return (ret);
 	}
 	return (EOPNOTSUPP);
@@ -387,7 +384,7 @@ utpms_enable(void *v)
 	struct utpms_softc *sc = v;
 
 	/* Check that we are not detaching or already enabled. */
-	if (sc->sc_status & UTPMS_DYING)
+	if (sc->sc_status & usbd_is_dying(sc->sc_hdev.sc_udev))
 		return (EIO);
 	if (sc->sc_status & UTPMS_ENABLED)
 		return (EBUSY);

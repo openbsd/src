@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.53 2011/07/03 15:47:17 matthew Exp $ */
+/*	$OpenBSD: uhid.c,v 1.54 2013/11/15 08:17:44 pirofti Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -83,7 +83,6 @@ struct uhid_softc {
 #define UHID_IMMED	0x02		/* return read data immediately */
 
 	int sc_refcnt;
-	u_char sc_dying;
 };
 
 #define	UHIDUNIT(dev)	(minor(dev))
@@ -100,7 +99,6 @@ int uhid_do_ioctl(struct uhid_softc*, u_long, caddr_t, int,
 int uhid_match(struct device *, void *, void *); 
 void uhid_attach(struct device *, struct device *, void *); 
 int uhid_detach(struct device *, int); 
-int uhid_activate(struct device *, int); 
 
 struct cfdriver uhid_cd = { 
 	NULL, "uhid", DV_DULL 
@@ -111,14 +109,12 @@ const struct cfattach uhid_ca = {
 	uhid_match, 
 	uhid_attach, 
 	uhid_detach, 
-	uhid_activate, 
 };
 
 int
 uhid_match(struct device *parent, void *match, void *aux)
 {
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 
 	DPRINTF(("uhid_match: report=%d\n", uha->reportid));
 
@@ -131,13 +127,13 @@ void
 uhid_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uhid_softc *sc = (struct uhid_softc *)self;
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	int size, repid;
 	void *desc;
 
 	sc->sc_hdev.sc_intr = uhid_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
+	sc->sc_hdev.sc_udev = uha->uaa->device;
 	sc->sc_hdev.sc_report_id = uha->reportid;
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
@@ -148,19 +144,6 @@ uhid_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": input=%d, output=%d, feature=%d\n",
 	    sc->sc_hdev.sc_isize, sc->sc_hdev.sc_osize, sc->sc_hdev.sc_fsize);
-}
-
-int
-uhid_activate(struct device *self, int act)
-{
-	struct uhid_softc *sc = (struct uhid_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
-		break;
-	}
-	return (0);
 }
 
 int
@@ -239,7 +222,7 @@ uhidopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	DPRINTF(("uhidopen: sc=%p\n", sc));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_hdev.sc_udev))
 		return (ENXIO);
 
 	error = uhidev_open(&sc->sc_hdev);
@@ -303,7 +286,7 @@ uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 		DPRINTFN(5, ("uhidread: sleep on %p\n", &sc->sc_q));
 		error = tsleep(&sc->sc_q, PZERO | PCATCH, "uhidrea", 0);
 		DPRINTFN(5, ("uhidread: woke, error=%d\n", error));
-		if (sc->sc_dying)
+		if (usbd_is_dying(sc->sc_hdev.sc_udev))
 			error = EIO;
 		if (error) {
 			sc->sc_state &= ~UHID_ASLP;
@@ -354,7 +337,7 @@ uhid_do_write(struct uhid_softc *sc, struct uio *uio, int flag)
 
 	DPRINTFN(1, ("uhidwrite\n"));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_hdev.sc_udev))
 		return (EIO);
 
 	size = sc->sc_hdev.sc_osize;
@@ -398,7 +381,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 
 	DPRINTFN(2, ("uhidioctl: cmd=%lx\n", cmd));
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_hdev.sc_udev))
 		return (EIO);
 
 	switch (cmd) {
@@ -438,14 +421,14 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 		break;
 
 	case USB_GET_DEVICEINFO:
-		usbd_fill_deviceinfo(sc->sc_hdev.sc_parent->sc_udev,
+		usbd_fill_deviceinfo(sc->sc_hdev.sc_udev,
 				     (struct usb_device_info *)addr, 1);
 		break;
 
         case USB_GET_STRING_DESC:
 	    {
 		struct usb_string_desc *si = (struct usb_string_desc *)addr;
-		err = usbd_get_string_desc(sc->sc_hdev.sc_parent->sc_udev,
+		err = usbd_get_string_desc(sc->sc_hdev.sc_udev,
 			si->usd_string_index,
 			si->usd_language_id, &si->usd_desc, &size);
 		if (err)
@@ -490,7 +473,7 @@ uhidpoll(dev_t dev, int events, struct proc *p)
 
 	sc = uhid_cd.cd_devs[UHIDUNIT(dev)];
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_hdev.sc_udev))
 		return (POLLERR);
 
 	s = splusb();
@@ -546,7 +529,7 @@ uhidkqfilter(dev_t dev, struct knote *kn)
 
 	sc = uhid_cd.cd_devs[UHIDUNIT(dev)];
 
-	if (sc->sc_dying)
+	if (usbd_is_dying(sc->sc_hdev.sc_udev))
 		return (EIO);
 
 	switch (kn->kn_filter) {
