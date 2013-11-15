@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.270 2013/10/19 15:45:33 naddy Exp $ */
+/* $OpenBSD: if_em.c,v 1.271 2013/11/15 14:53:03 deraadt Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -230,7 +230,6 @@ void em_82547_move_tail_locked(struct em_softc *);
 int  em_dma_malloc(struct em_softc *, bus_size_t, struct em_dma_alloc *,
 		   int);
 void em_dma_free(struct em_softc *, struct em_dma_alloc *);
-int  em_is_valid_ether_addr(u_int8_t *);
 u_int32_t em_fill_descriptors(u_int64_t address, u_int32_t length,
 			      PDESC_ARRAY desc_array);
 
@@ -499,11 +498,6 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	if (em_read_mac_addr(&sc->hw) < 0) {
 		printf("%s: EEPROM read error while reading mac address\n",
 		       sc->sc_dv.dv_xname);
-		goto err_mac_addr;
-	}
-
-	if (!em_is_valid_ether_addr(sc->hw.mac_addr)) {
-		printf("%s: Invalid mac address\n", sc->sc_dv.dv_xname);
 		goto err_mac_addr;
 	}
 
@@ -3043,17 +3037,6 @@ em_disable_intr(struct em_softc *sc)
 		E1000_WRITE_REG(&sc->hw, IMC, (0xffffffff & ~E1000_IMC_RXSEQ));
 	else
 		E1000_WRITE_REG(&sc->hw, IMC, 0xffffffff);
-}
-
-int
-em_is_valid_ether_addr(u_int8_t *addr)
-{
-	const char zero_addr[6] = { 0, 0, 0, 0, 0, 0 };
-
-	if ((addr[0] & 1) || (!bcmp(addr, zero_addr, ETHER_ADDR_LEN)))
-		return (FALSE);
-
-	return (TRUE);
 }
 
 void
