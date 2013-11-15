@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.21 2012/01/30 14:08:18 okan Exp $	*/
+/*	$OpenBSD: jot.c,v 1.22 2013/11/15 15:47:53 millert Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define	REPS_DEF	100
 #define	BEGIN_DEF	1
