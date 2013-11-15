@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpswreg.h,v 1.4 2013/09/12 04:23:28 dlg Exp $ */
+/* $OpenBSD: if_cpswreg.h,v 1.5 2013/11/15 14:31:52 fgsch Exp $ */
 
 /*-
  * Copyright (c) 2012 Damjan Marion <dmarion@Freebsd.org>
@@ -112,23 +112,25 @@
 #define CPSW_WR_C_RX_STAT(p)		(CPSW_WR_OFFSET + (0x10 * (p)) + 0x44)
 #define CPSW_WR_C_TX_STAT(p)		(CPSW_WR_OFFSET + (0x10 * (p)) + 0x48)
 #define CPSW_WR_C_MISC_STAT(p)		(CPSW_WR_OFFSET + (0x10 * (p)) + 0x4C)
+#define  CPSW_MISC_HOST_PEND			0x0004
 
 #define CPSW_CPPI_RAM_OFFSET		0x2000
 
-#define __BIT32(x) ((uint32_t)__BIT(x))
-#define __BITS32(x, y) ((uint32_t)__BITS((x), (y)))
-
-/* flags for desciptor word 3 */
-#define CPDMA_BD_SOP		__BIT32(31)
-#define CPDMA_BD_EOP		__BIT32(30)
-#define CPDMA_BD_OWNER		__BIT32(29)
-#define CPDMA_BD_EOQ		__BIT32(28)
-#define CPDMA_BD_TDOWNCMPLT	__BIT32(27)
-#define CPDMA_BD_PASSCRC	__BIT32(26)
-#define CPDMA_BD_PKT_ERR_MASK	__BITS32(21,20)
+#define CPDMA_BD_SOP			(1<<15)
+#define CPDMA_BD_EOP			(1<<14)
+#define CPDMA_BD_OWNER			(1<<13)
+#define CPDMA_BD_EOQ			(1<<12)
+#define CPDMA_BD_TDOWNCMPLT		(1<<11)
+#define CPDMA_BD_PASSCRC		(1<<10)
+#define CPDMA_BD_PKT_ERR_MASK		(3<< 4)
 
 struct cpsw_cpdma_bd {
-	uint32_t word[4];
+	uint32_t next;
+	uint32_t bufptr;
+	uint16_t buflen;
+	uint16_t bufoff;
+	uint16_t pktlen;
+	uint16_t flags;
 };
 
 /* Interrupt offsets */

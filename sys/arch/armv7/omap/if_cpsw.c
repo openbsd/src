@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.19 2013/11/06 19:03:07 syl Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.20 2013/11/15 14:31:52 fgsch Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -107,19 +107,6 @@
 
 #define RXDESC_NEXT(x) cpsw_rxdesc_adjust((x), 1)
 #define RXDESC_PREV(x) cpsw_rxdesc_adjust((x), -1)
-
-/* __BIT(n): nth bit, where __BIT(0) == 0x1. */
-#define __BIT(__n) \
-    (((uint32_t)(__n) >= NBBY * sizeof(uint32_t)) ? 0 : ((uint32_t)1 << (uint32_t)(__n)))
-
-/* __BITS(m, n): bits m through n, m < n. */
-#define __BITS(__m, __n) \
-    ((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
-
-/* find least significant bit that is set */
-#define __LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
-
-#define __SHIFTOUT(__x, __mask) (((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
 
 struct cpsw_ring_data {
 	bus_dmamap_t		 tx_dm[CPSW_NTXDESCS];
@@ -245,10 +232,8 @@ cpsw_get_txdesc(struct cpsw_softc * const sc, const u_int i,
     struct cpsw_cpdma_bd * const bdp)
 {
 	const bus_size_t o = sizeof(struct cpsw_cpdma_bd) * i;
-	uint32_t * const dp = bdp->word;
-	const bus_size_t c = nitems(bdp->word);
-
-	bus_space_read_region_4(sc->sc_bst, sc->sc_bsh_txdescs, o, dp, c);
+	bus_space_read_region_4(sc->sc_bst, sc->sc_bsh_txdescs, o,
+	    (uint32_t *)bdp, 4);
 }
 
 static inline void
@@ -256,10 +241,8 @@ cpsw_set_txdesc(struct cpsw_softc * const sc, const u_int i,
     struct cpsw_cpdma_bd * const bdp)
 {
 	const bus_size_t o = sizeof(struct cpsw_cpdma_bd) * i;
-	uint32_t * const dp = bdp->word;
-	const bus_size_t c = nitems(bdp->word);
-
-	bus_space_write_region_4(sc->sc_bst, sc->sc_bsh_txdescs, o, dp, c);
+	bus_space_write_region_4(sc->sc_bst, sc->sc_bsh_txdescs, o,
+	    (uint32_t *)bdp, 4);
 }
 
 static inline void
@@ -267,10 +250,8 @@ cpsw_get_rxdesc(struct cpsw_softc * const sc, const u_int i,
     struct cpsw_cpdma_bd * const bdp)
 {
 	const bus_size_t o = sizeof(struct cpsw_cpdma_bd) * i;
-	uint32_t * const dp = bdp->word;
-	const bus_size_t c = nitems(bdp->word);
-
-	bus_space_read_region_4(sc->sc_bst, sc->sc_bsh_rxdescs, o, dp, c);
+	bus_space_read_region_4(sc->sc_bst, sc->sc_bsh_rxdescs, o,
+	    (uint32_t *)bdp, 4);
 }
 
 static inline void
@@ -278,10 +259,8 @@ cpsw_set_rxdesc(struct cpsw_softc * const sc, const u_int i,
     struct cpsw_cpdma_bd * const bdp)
 {
 	const bus_size_t o = sizeof(struct cpsw_cpdma_bd) * i;
-	uint32_t * const dp = bdp->word;
-	const bus_size_t c = nitems(bdp->word);
-
-	bus_space_write_region_4(sc->sc_bst, sc->sc_bsh_rxdescs, o, dp, c);
+	bus_space_write_region_4(sc->sc_bst, sc->sc_bsh_rxdescs, o,
+	    (uint32_t *)bdp, 4);
 }
 
 static inline bus_addr_t
@@ -472,10 +451,8 @@ cpsw_start(struct ifnet *ifp)
 	struct cpsw_softc * const sc = ifp->if_softc;
 	struct cpsw_ring_data * const rdp = sc->sc_rdp;
 	struct cpsw_cpdma_bd bd;
-	uint32_t * const dw = bd.word;
 	struct mbuf *m;
 	bus_dmamap_t dm;
-	u_int sopi;	/* Start of Packet Index */
 	u_int eopi = ~0;
 	u_int seg;
 	u_int txfree;
@@ -541,20 +518,23 @@ cpsw_start(struct ifnet *ifp)
 
 		if (txstart == -1)
 			txstart = sc->sc_txnext;
-		sopi = eopi = sc->sc_txnext;
+		eopi = sc->sc_txnext;
 		for (seg = 0; seg < dm->dm_nsegs; seg++) {
-			dw[0] = cpsw_txdesc_paddr(sc,
+			bd.next = cpsw_txdesc_paddr(sc,
 			    TXDESC_NEXT(sc->sc_txnext));
-			dw[1] = dm->dm_segs[seg].ds_addr;
-			dw[2] = dm->dm_segs[seg].ds_len;
-			dw[3] = 0;
+			bd.bufptr = dm->dm_segs[seg].ds_addr;
+			bd.bufoff = 0;
+			bd.buflen = dm->dm_segs[seg].ds_len;
+			bd.pktlen = 0;
+			bd.flags = 0;
 
-			if (seg == 0)
-				dw[3] |= CPDMA_BD_SOP | CPDMA_BD_OWNER |
-				    MAX(mlen, CPSW_PAD_LEN);
+			if (seg == 0) {
+				bd.flags = CPDMA_BD_OWNER | CPDMA_BD_SOP;
+				bd.pktlen = MAX(mlen, CPSW_PAD_LEN);
+			}
 
 			if (seg == dm->dm_nsegs - 1 && !pad)
-				dw[3] |= CPDMA_BD_EOP;
+				bd.flags |= CPDMA_BD_EOP;
 
 			cpsw_set_txdesc(sc, sc->sc_txnext, &bd);
 			txfree--;
@@ -562,11 +542,13 @@ cpsw_start(struct ifnet *ifp)
 			sc->sc_txnext = TXDESC_NEXT(sc->sc_txnext);
 		}
 		if (pad) {
-			dw[0] = cpsw_txdesc_paddr(sc,
+			bd.next = cpsw_txdesc_paddr(sc,
 			    TXDESC_NEXT(sc->sc_txnext));
-			dw[1] = sc->sc_txpad_pa;
-			dw[2] = CPSW_PAD_LEN - mlen;
-			dw[3] = CPDMA_BD_EOP;
+			bd.bufptr = sc->sc_txpad_pa;
+			bd.bufoff = 0;
+			bd.buflen = CPSW_PAD_LEN - mlen;
+			bd.pktlen = 0;
+			bd.flags = CPDMA_BD_EOP;
 
 			cpsw_set_txdesc(sc, sc->sc_txnext, &bd);
 			txfree--;
@@ -658,7 +640,7 @@ cpsw_mii_wait(struct cpsw_softc * const sc, int reg)
 	u_int tries;
 
 	for(tries = 0; tries < 1000; tries++) {
-		if ((cpsw_read_4(sc, reg) & __BIT(31)) == 0)
+		if ((cpsw_read_4(sc, reg) & (1 << 31)) == 0)
 			return 0;
 		delay(1);
 	}
@@ -681,7 +663,7 @@ cpsw_mii_readreg(struct device *dev, int phy, int reg)
 		return 0;
 
 	v = cpsw_read_4(sc, MDIOUSERACCESS0);
-	if (v & __BIT(29))
+	if (v & (1 << 29))
 		return v & 0xffff;
 	else
 		return 0;
@@ -705,7 +687,7 @@ cpsw_mii_writereg(struct device *dev, int phy, int reg, int val)
 		goto out;
 
 	v = cpsw_read_4(sc, MDIOUSERACCESS0);
-	if ((v & __BIT(29)) == 0)
+	if ((v & (1 << 29)) == 0)
 out:
 		printf("%s error\n", __func__);
 
@@ -723,7 +705,6 @@ cpsw_new_rxbuf(struct cpsw_softc * const sc, const u_int i)
 	struct cpsw_ring_data * const rdp = sc->sc_rdp;
 	const u_int h = RXDESC_PREV(i);
 	struct cpsw_cpdma_bd bd;
-	uint32_t * const dw = bd.word;
 	struct mbuf *m;
 	int error = ENOBUFS;
 
@@ -760,10 +741,12 @@ cpsw_new_rxbuf(struct cpsw_softc * const sc, const u_int i)
 
 reuse:
 	/* (re-)setup the descriptor */
-	dw[0] = 0;
-	dw[1] = rdp->rx_dm[i]->dm_segs[0].ds_addr;
-	dw[2] = MIN(0x7ff, rdp->rx_dm[i]->dm_segs[0].ds_len);
-	dw[3] = CPDMA_BD_OWNER;
+	bd.next = 0;
+	bd.bufptr = rdp->rx_dm[i]->dm_segs[0].ds_addr;
+	bd.bufoff = 0;
+	bd.buflen = MIN(0x7ff, rdp->rx_dm[i]->dm_segs[0].ds_len);
+	bd.pktlen = 0;
+	bd.flags = CPDMA_BD_OWNER;
 
 	cpsw_set_rxdesc(sc, i, &bd);
 	/* and link onto ring */
@@ -1007,7 +990,6 @@ cpsw_rxintr(void *arg)
 	struct ifnet * const ifp = &sc->sc_ac.ac_if;
 	struct cpsw_ring_data * const rdp = sc->sc_rdp;
 	struct cpsw_cpdma_bd bd;
-	const uint32_t * const dw = bd.word;
 	bus_dmamap_t dm;
 	struct mbuf *m;
 	u_int i;
@@ -1025,15 +1007,15 @@ cpsw_rxintr(void *arg)
 
 		cpsw_get_rxdesc(sc, i, &bd);
 
-		if (ISSET(dw[3], CPDMA_BD_OWNER))
+		if (bd.flags & CPDMA_BD_OWNER)
 			break;
 
-		if (ISSET(dw[3], CPDMA_BD_TDOWNCMPLT)) {
+		if (bd.flags & CPDMA_BD_TDOWNCMPLT) {
 			sc->sc_rxrun = false;
 			return 1;
 		}
 
-		if ((dw[3] & (CPDMA_BD_SOP|CPDMA_BD_EOP)) !=
+		if ((bd.flags & (CPDMA_BD_SOP|CPDMA_BD_EOP)) !=
 		    (CPDMA_BD_SOP|CPDMA_BD_EOP)) {
 			/* Debugger(); */
 		}
@@ -1048,10 +1030,10 @@ cpsw_rxintr(void *arg)
 			goto next;
 		}
 
-		off = __SHIFTOUT(dw[2], (uint32_t)__BITS(26, 16));
-		len = __SHIFTOUT(dw[3], (uint32_t)__BITS(10,  0));
+		off = bd.bufoff;
+		len = bd.pktlen;
 
-		if (ISSET(dw[3], CPDMA_BD_PASSCRC))
+		if (bd.flags & CPDMA_BD_PASSCRC)
 			len -= ETHER_CRC_LEN;
 
 		m->m_pkthdr.rcvif = ifp;
@@ -1068,7 +1050,7 @@ cpsw_rxintr(void *arg)
 
 next:
 		sc->sc_rxhead = RXDESC_NEXT(sc->sc_rxhead);
-		if (ISSET(dw[3], CPDMA_BD_EOQ)) {
+		if (bd.flags & CPDMA_BD_EOQ) {
 			sc->sc_rxeoq = true;
 			break;
 		} else {
@@ -1108,7 +1090,6 @@ cpsw_txintr(void *arg)
 	struct ifnet * const ifp = &sc->sc_ac.ac_if;
 	struct cpsw_ring_data * const rdp = sc->sc_rdp;
 	struct cpsw_cpdma_bd bd;
-	const uint32_t * const dw = bd.word;
 	bool handled = false;
 	uint32_t tx0_cp;
 	u_int cpi;
@@ -1124,8 +1105,6 @@ cpsw_txintr(void *arg)
 		return 0;
 	}
 
-	cpi = (tx0_cp - sc->sc_txdescs_pa) / sizeof(struct cpsw_cpdma_bd);
-
 	for (;;) {
 		tx0_cp = cpsw_read_4(sc, CPSW_CPDMA_TX_CP(0));
 		cpi = (tx0_cp - sc->sc_txdescs_pa) /
@@ -1134,20 +1113,20 @@ cpsw_txintr(void *arg)
 
 		cpsw_get_txdesc(sc, sc->sc_txhead, &bd);
 
-		if (dw[2] == 0) {
+		if (bd.buflen == 0) {
 			/* Debugger(); */
 		}
 
-		if (ISSET(dw[3], CPDMA_BD_SOP) == 0)
+		if ((bd.flags & CPDMA_BD_SOP) == 0)
 			goto next;
 
-		if (ISSET(dw[3], CPDMA_BD_OWNER)) {
+		if (bd.flags & CPDMA_BD_OWNER) {
 			printf("pwned %x %x %x\n", cpi, sc->sc_txhead,
 			    sc->sc_txnext);
 			break;
 		}
 
-		if (ISSET(dw[3], CPDMA_BD_TDOWNCMPLT)) {
+		if (bd.flags & CPDMA_BD_TDOWNCMPLT) {
 			sc->sc_txrun = false;
 			return 1;
 		}
@@ -1167,9 +1146,10 @@ cpsw_txintr(void *arg)
 		ifp->if_flags &= ~IFF_OACTIVE;
 
 next:
-		if (ISSET(dw[3], CPDMA_BD_EOP) && ISSET(dw[3], CPDMA_BD_EOQ)) {
+		if ((bd.flags & (CPDMA_BD_EOP|CPDMA_BD_EOQ)) ==
+		    (CPDMA_BD_EOP|CPDMA_BD_EOQ))
 			sc->sc_txeoq = true;
-		}
+
 		if (sc->sc_txhead == cpi) {
 			cpsw_write_4(sc, CPSW_CPDMA_TX_CP(0),
 			    cpsw_txdesc_paddr(sc, cpi));
@@ -1177,10 +1157,8 @@ next:
 			break;
 		}
 		sc->sc_txhead = TXDESC_NEXT(sc->sc_txhead);
-		if (ISSET(dw[3], CPDMA_BD_EOP) && ISSET(dw[3], CPDMA_BD_EOQ)) {
-			sc->sc_txeoq = true;
+		if (sc->sc_txeoq == true)
 			break;
-		}
 	}
 
 	cpsw_write_4(sc, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_TX);
@@ -1213,10 +1191,7 @@ cpsw_miscintr(void *arg)
 	miscstat = cpsw_read_4(sc, CPSW_WR_C_MISC_STAT(0));
 	printf("%s %x FIRE\n", __func__, miscstat);
 
-#define CPSW_MISC_HOST_PEND __BIT32(2)
-#define CPSW_MISC_STAT_PEND __BIT32(3)
-
-	if (ISSET(miscstat, CPSW_MISC_HOST_PEND)) {
+	if (miscstat & CPSW_MISC_HOST_PEND) {
 		/* Host Error */
 		dmastat = cpsw_read_4(sc, CPSW_CPDMA_DMA_INTSTAT_MASKED);
 		printf("CPSW_CPDMA_DMA_INTSTAT_MASKED %x\n", dmastat);
