@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.20 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: ypwhich.c,v 1.21 2013/11/15 22:20:04 millert Exp $	*/
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -31,16 +31,16 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <ctype.h>
-#include <netdb.h>
 #include <err.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>

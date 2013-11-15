@@ -1,4 +1,4 @@
-/* $OpenBSD: lmccontrol.c,v 1.9 2006/12/06 05:56:03 jcs Exp $ */
+/* $OpenBSD: lmccontrol.c,v 1.10 2013/11/15 22:20:04 millert Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -44,6 +44,7 @@
 #include <err.h>
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nl.c,v 1.1 2013/09/08 18:59:07 jca Exp $ */
+/*	$OpenBSD: nl.c,v 1.2 2013/11/15 22:20:04 millert Exp $ */
 /*	$NetBSD: nl.c,v 1.11 2011/08/16 12:00:46 christos Exp $	*/
 
 /*-
@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <wchar.h>
 
 typedef enum {

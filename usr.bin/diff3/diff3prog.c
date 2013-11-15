@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3prog.c,v 1.12 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: diff3prog.c,v 1.13 2013/11/15 22:20:04 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -64,11 +64,12 @@
  *	@(#)diff3.c	8.1 (Berkeley) 6/6/93
  */
 
+#include <ctype.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <err.h>
+#include <unistd.h>
 
 /* diff3 - 3-way differential file comparison */
 

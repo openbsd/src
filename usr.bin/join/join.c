@@ -1,4 +1,4 @@
-/* $OpenBSD: join.c,v 1.21 2009/10/27 23:59:39 deraadt Exp $	*/
+/* $OpenBSD: join.c,v 1.22 2013/11/15 22:20:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 /*
  * There's a structure per input file which encapsulates the state of the

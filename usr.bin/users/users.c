@@ -1,4 +1,4 @@
-/*	$OpenBSD: users.c,v 1.9 2009/10/27 23:59:46 deraadt Exp $	*/
+/*	$OpenBSD: users.c,v 1.10 2013/11/15 22:20:04 millert Exp $	*/
 /*	$NetBSD: users.c,v 1.5 1994/12/20 15:58:19 jtc Exp $	*/
 
 /*
@@ -31,11 +31,13 @@
  */
 
 #include <sys/types.h>
-#include <utmp.h>
+
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
+#include <unistd.h>
+#include <utmp.h>
 
 typedef char	namebuf[UT_NAMESIZE];
 

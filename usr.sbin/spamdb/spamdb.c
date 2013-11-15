@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.27 2013/08/21 16:13:29 millert Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.28 2013/11/15 22:20:04 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -30,6 +30,7 @@
 #include <netdb.h>
 #include <ctype.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "grey.h"
 

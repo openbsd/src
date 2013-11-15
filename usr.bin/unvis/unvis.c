@@ -1,4 +1,4 @@
-/*	$OpenBSD: unvis.c,v 1.9 2009/10/27 23:59:46 deraadt Exp $	*/
+/*	$OpenBSD: unvis.c,v 1.10 2013/11/15 22:20:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -29,9 +29,10 @@
  * SUCH DAMAGE.
  */
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <err.h>
+#include <unistd.h>
 #include <vis.h>
 
 void process(FILE *fp, const char *filename);
