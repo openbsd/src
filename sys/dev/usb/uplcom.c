@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.61 2013/11/15 08:25:31 pirofti Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.62 2013/11/15 10:17:39 pirofti Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -747,10 +747,7 @@ uplcom_close(void *addr, int portno)
 	DPRINTF(("uplcom_close: close\n"));
 
 	if (sc->sc_intr_pipe != NULL) {
-		err = usbd_abort_pipe(sc->sc_intr_pipe);
-		if (err)
-			printf("%s: abort interrupt pipe failed: %s\n",
-				sc->sc_dev.dv_xname, usbd_errstr(err));
+		usbd_abort_pipe(sc->sc_intr_pipe);
 		err = usbd_close_pipe(sc->sc_intr_pipe);
 		if (err)
 			printf("%s: close interrupt pipe failed: %s\n",

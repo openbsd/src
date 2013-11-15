@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.66 2013/11/13 13:48:08 pirofti Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.67 2013/11/15 10:17:39 pirofti Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -529,7 +529,7 @@ usbd_interface2endpoint_descriptor(struct usbd_interface *iface, u_int8_t index)
 	return (iface->endpoints[index].edesc);
 }
 
-usbd_status
+void
 usbd_abort_pipe(struct usbd_pipe *pipe)
 {
 	struct usbd_xfer *xfer;
@@ -538,7 +538,7 @@ usbd_abort_pipe(struct usbd_pipe *pipe)
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
 		printf("usbd_abort_pipe: pipe==NULL\n");
-		return (USBD_NORMAL_COMPLETION);
+		return;
 	}
 #endif
 	s = splusb();
@@ -558,8 +558,6 @@ usbd_abort_pipe(struct usbd_pipe *pipe)
 	}
 	pipe->aborting = 0;
 	splx(s);
-
-	return (USBD_NORMAL_COMPLETION);
 }
 
 usbd_status

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.103 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.104 2013/11/15 10:17:39 pirofti Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -2301,11 +2301,7 @@ atu_stop(struct ifnet *ifp, int disable)
 
 	/* Stop transfers. */
 	if (sc->atu_ep[ATU_ENDPT_RX] != NULL) {
-		err = usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_RX]);
-		if (err) {
-			DPRINTF(("%s: abort rx pipe failed: %s\n",
-			    sc->atu_dev.dv_xname, usbd_errstr(err)));
-		}
+		usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_RX]);
 		err = usbd_close_pipe(sc->atu_ep[ATU_ENDPT_RX]);
 		if (err) {
 			DPRINTF(("%s: close rx pipe failed: %s\n",
@@ -2315,11 +2311,7 @@ atu_stop(struct ifnet *ifp, int disable)
 	}
 
 	if (sc->atu_ep[ATU_ENDPT_TX] != NULL) {
-		err = usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_TX]);
-		if (err) {
-			DPRINTF(("%s: abort tx pipe failed: %s\n",
-			    sc->atu_dev.dv_xname, usbd_errstr(err)));
-		}
+		usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_TX]);
 		err = usbd_close_pipe(sc->atu_ep[ATU_ENDPT_TX]);
 		if (err) {
 			DPRINTF(("%s: close tx pipe failed: %s\n",

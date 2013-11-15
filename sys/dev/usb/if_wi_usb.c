@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.59 2013/11/11 15:00:35 pirofti Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.60 2013/11/15 10:17:39 pirofti Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -442,11 +442,7 @@ wi_usb_detach(struct device *self, int flags)
 	}
 
 	if (sc->wi_usb_ep[WI_USB_ENDPT_INTR] != NULL) {
-		err = usbd_abort_pipe(sc->wi_usb_ep[WI_USB_ENDPT_INTR]);
-		if (err) {
-			printf("%s: abort intr pipe failed: %s\n",
-			    sc->wi_usb_dev.dv_xname, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->wi_usb_ep[WI_USB_ENDPT_INTR]);
 		err = usbd_close_pipe(sc->wi_usb_ep[WI_USB_ENDPT_INTR]);
 		if (err) {
 			printf("%s: close intr pipe failed: %s\n",
@@ -455,11 +451,7 @@ wi_usb_detach(struct device *self, int flags)
 		sc->wi_usb_ep[WI_USB_ENDPT_INTR] = NULL;
 	}
 	if (sc->wi_usb_ep[WI_USB_ENDPT_TX] != NULL) {
-		err = usbd_abort_pipe(sc->wi_usb_ep[WI_USB_ENDPT_TX]);
-		if (err) {
-			printf("%s: abort tx pipe failed: %s\n",
-			    sc->wi_usb_dev.dv_xname, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->wi_usb_ep[WI_USB_ENDPT_TX]);
 		err = usbd_close_pipe(sc->wi_usb_ep[WI_USB_ENDPT_TX]);
 		if (err) {
 			printf("%s: close tx pipe failed: %s\n",
@@ -468,11 +460,7 @@ wi_usb_detach(struct device *self, int flags)
 		sc->wi_usb_ep[WI_USB_ENDPT_TX] = NULL;
 	}
 	if (sc->wi_usb_ep[WI_USB_ENDPT_RX] != NULL) {
-		err = usbd_abort_pipe(sc->wi_usb_ep[WI_USB_ENDPT_RX]);
-		if (err) {
-			printf("%s: abort rx pipe failed: %s\n",
-			    sc->wi_usb_dev.dv_xname, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->wi_usb_ep[WI_USB_ENDPT_RX]);
 		err = usbd_close_pipe(sc->wi_usb_ep[WI_USB_ENDPT_RX]);
 		if (err) {
 			printf("%s: close rx pipe failed: %s\n",

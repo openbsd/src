@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.122 2013/08/07 01:06:41 bluhm Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.123 2013/11/15 10:17:39 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -1500,11 +1500,7 @@ axe_stop(struct axe_softc *sc)
 
 	/* Stop transfers. */
 	if (sc->axe_ep[AXE_ENDPT_RX] != NULL) {
-		err = usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_RX]);
-		if (err) {
-			printf("axe%d: abort rx pipe failed: %s\n",
-			    sc->axe_unit, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_RX]);
 		err = usbd_close_pipe(sc->axe_ep[AXE_ENDPT_RX]);
 		if (err) {
 			printf("axe%d: close rx pipe failed: %s\n",
@@ -1514,11 +1510,7 @@ axe_stop(struct axe_softc *sc)
 	}
 
 	if (sc->axe_ep[AXE_ENDPT_TX] != NULL) {
-		err = usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_TX]);
-		if (err) {
-			printf("axe%d: abort tx pipe failed: %s\n",
-			    sc->axe_unit, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_TX]);
 		err = usbd_close_pipe(sc->axe_ep[AXE_ENDPT_TX]);
 		if (err) {
 			printf("axe%d: close tx pipe failed: %s\n",
@@ -1528,11 +1520,7 @@ axe_stop(struct axe_softc *sc)
 	}
 
 	if (sc->axe_ep[AXE_ENDPT_INTR] != NULL) {
-		err = usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_INTR]);
-		if (err) {
-			printf("axe%d: abort intr pipe failed: %s\n",
-			    sc->axe_unit, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_INTR]);
 		err = usbd_close_pipe(sc->axe_ep[AXE_ENDPT_INTR]);
 		if (err) {
 			printf("axe%d: close intr pipe failed: %s\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.42 2013/11/08 10:12:20 pirofti Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.43 2013/11/15 10:17:39 pirofti Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -1129,10 +1129,7 @@ urndis_stop(struct urndis_softc *sc)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	if (sc->sc_bulkin_pipe != NULL) {
-		err = usbd_abort_pipe(sc->sc_bulkin_pipe);
-		if (err)
-			printf("%s: abort rx pipe failed: %s\n",
-			    DEVNAME(sc), usbd_errstr(err));
+		usbd_abort_pipe(sc->sc_bulkin_pipe);
 		err = usbd_close_pipe(sc->sc_bulkin_pipe);
 		if (err)
 			printf("%s: close rx pipe failed: %s\n",
@@ -1141,10 +1138,7 @@ urndis_stop(struct urndis_softc *sc)
 	}
 
 	if (sc->sc_bulkout_pipe != NULL) {
-		err = usbd_abort_pipe(sc->sc_bulkout_pipe);
-		if (err)
-			printf("%s: abort tx pipe failed: %s\n",
-			    DEVNAME(sc), usbd_errstr(err));
+		usbd_abort_pipe(sc->sc_bulkout_pipe);
 		err = usbd_close_pipe(sc->sc_bulkout_pipe);
 		if (err)
 			printf("%s: close tx pipe failed: %s\n",

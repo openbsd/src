@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.54 2013/11/06 17:33:26 pirofti Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.55 2013/11/15 10:17:39 pirofti Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -886,11 +886,7 @@ upl_stop(struct upl_softc *sc)
 
 	/* Stop transfers. */
 	if (sc->sc_ep[UPL_ENDPT_RX] != NULL) {
-		err = usbd_abort_pipe(sc->sc_ep[UPL_ENDPT_RX]);
-		if (err) {
-			printf("%s: abort rx pipe failed: %s\n",
-			sc->sc_dev.dv_xname, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->sc_ep[UPL_ENDPT_RX]);
 		err = usbd_close_pipe(sc->sc_ep[UPL_ENDPT_RX]);
 		if (err) {
 			printf("%s: close rx pipe failed: %s\n",
@@ -900,11 +896,7 @@ upl_stop(struct upl_softc *sc)
 	}
 
 	if (sc->sc_ep[UPL_ENDPT_TX] != NULL) {
-		err = usbd_abort_pipe(sc->sc_ep[UPL_ENDPT_TX]);
-		if (err) {
-			printf("%s: abort tx pipe failed: %s\n",
-			sc->sc_dev.dv_xname, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->sc_ep[UPL_ENDPT_TX]);
 		err = usbd_close_pipe(sc->sc_ep[UPL_ENDPT_TX]);
 		if (err) {
 			printf("%s: close tx pipe failed: %s\n",
@@ -914,11 +906,7 @@ upl_stop(struct upl_softc *sc)
 	}
 
 	if (sc->sc_ep[UPL_ENDPT_INTR] != NULL) {
-		err = usbd_abort_pipe(sc->sc_ep[UPL_ENDPT_INTR]);
-		if (err) {
-			printf("%s: abort intr pipe failed: %s\n",
-			sc->sc_dev.dv_xname, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->sc_ep[UPL_ENDPT_INTR]);
 		err = usbd_close_pipe(sc->sc_ep[UPL_ENDPT_INTR]);
 		if (err) {
 			printf("%s: close intr pipe failed: %s\n",

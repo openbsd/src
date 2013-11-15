@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.67 2013/08/07 01:06:43 bluhm Exp $ */
+/*	$OpenBSD: if_url.c,v 1.68 2013/11/15 10:17:39 pirofti Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -1138,10 +1138,7 @@ url_stop(struct ifnet *ifp, int disable)
 	/* Stop transfers */
 	/* RX endpoint */
 	if (sc->sc_pipe_rx != NULL) {
-		err = usbd_abort_pipe(sc->sc_pipe_rx);
-		if (err)
-			printf("%s: abort rx pipe failed: %s\n",
-			       sc->sc_dev.dv_xname, usbd_errstr(err));
+		usbd_abort_pipe(sc->sc_pipe_rx);
 		err = usbd_close_pipe(sc->sc_pipe_rx);
 		if (err)
 			printf("%s: close rx pipe failed: %s\n",
@@ -1151,10 +1148,7 @@ url_stop(struct ifnet *ifp, int disable)
 
 	/* TX endpoint */
 	if (sc->sc_pipe_tx != NULL) {
-		err = usbd_abort_pipe(sc->sc_pipe_tx);
-		if (err)
-			printf("%s: abort tx pipe failed: %s\n",
-			       sc->sc_dev.dv_xname, usbd_errstr(err));
+		usbd_abort_pipe(sc->sc_pipe_tx);
 		err = usbd_close_pipe(sc->sc_pipe_tx);
 		if (err)
 			printf("%s: close tx pipe failed: %s\n",
@@ -1166,10 +1160,7 @@ url_stop(struct ifnet *ifp, int disable)
 	/* XXX: Interrupt endpoint is not yet supported!! */
 	/* Interrupt endpoint */
 	if (sc->sc_pipe_intr != NULL) {
-		err = usbd_abort_pipe(sc->sc_pipe_intr);
-		if (err)
-			printf("%s: abort intr pipe failed: %s\n",
-			       sc->sc_dev.dv_xname, usbd_errstr(err));
+		usbd_abort_pipe(sc->sc_pipe_intr);
 		err = usbd_close_pipe(sc->sc_pipe_intr);
 		if (err)
 			printf("%s: close intr pipe failed: %s\n",

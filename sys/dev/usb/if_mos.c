@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.21 2013/08/07 01:06:41 bluhm Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.22 2013/11/15 10:17:39 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -1378,11 +1378,7 @@ mos_stop(struct mos_softc *sc)
 
 	/* Stop transfers. */
 	if (sc->mos_ep[MOS_ENDPT_RX] != NULL) {
-		err = usbd_abort_pipe(sc->mos_ep[MOS_ENDPT_RX]);
-		if (err) {
-			printf("%s: abort rx pipe failed: %s\n",
-			    sc->mos_dev.dv_xname, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->mos_ep[MOS_ENDPT_RX]);
 		err = usbd_close_pipe(sc->mos_ep[MOS_ENDPT_RX]);
 		if (err) {
 			printf("%s: close rx pipe failed: %s\n",
@@ -1392,11 +1388,7 @@ mos_stop(struct mos_softc *sc)
 	}
 
 	if (sc->mos_ep[MOS_ENDPT_TX] != NULL) {
-		err = usbd_abort_pipe(sc->mos_ep[MOS_ENDPT_TX]);
-		if (err) {
-			printf("%s: abort tx pipe failed: %s\n",
-			    sc->mos_dev.dv_xname, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->mos_ep[MOS_ENDPT_TX]);
 		err = usbd_close_pipe(sc->mos_ep[MOS_ENDPT_TX]);
 		if (err) {
 			printf("%s: close tx pipe failed: %s\n",
@@ -1406,11 +1398,7 @@ mos_stop(struct mos_softc *sc)
 	}
 
 	if (sc->mos_ep[MOS_ENDPT_INTR] != NULL) {
-		err = usbd_abort_pipe(sc->mos_ep[MOS_ENDPT_INTR]);
-		if (err) {
-			printf("%s: abort intr pipe failed: %s\n",
-			    sc->mos_dev.dv_xname, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->mos_ep[MOS_ENDPT_INTR]);
 		err = usbd_close_pipe(sc->mos_ep[MOS_ENDPT_INTR]);
 		if (err) {
 			printf("%s: close intr pipe failed: %s\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.70 2013/11/11 12:38:39 pirofti Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.71 2013/11/15 10:17:39 pirofti Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1154,11 +1154,7 @@ kue_stop(struct kue_softc *sc)
 
 	/* Stop transfers. */
 	if (sc->kue_ep[KUE_ENDPT_RX] != NULL) {
-		err = usbd_abort_pipe(sc->kue_ep[KUE_ENDPT_RX]);
-		if (err) {
-			printf("%s: abort rx pipe failed: %s\n",
-			    sc->kue_dev.dv_xname, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->kue_ep[KUE_ENDPT_RX]);
 		err = usbd_close_pipe(sc->kue_ep[KUE_ENDPT_RX]);
 		if (err) {
 			printf("%s: close rx pipe failed: %s\n",
@@ -1168,11 +1164,7 @@ kue_stop(struct kue_softc *sc)
 	}
 
 	if (sc->kue_ep[KUE_ENDPT_TX] != NULL) {
-		err = usbd_abort_pipe(sc->kue_ep[KUE_ENDPT_TX]);
-		if (err) {
-			printf("%s: abort tx pipe failed: %s\n",
-			    sc->kue_dev.dv_xname, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->kue_ep[KUE_ENDPT_TX]);
 		err = usbd_close_pipe(sc->kue_ep[KUE_ENDPT_TX]);
 		if (err) {
 			printf("%s: close tx pipe failed: %s\n",
@@ -1182,11 +1174,7 @@ kue_stop(struct kue_softc *sc)
 	}
 
 	if (sc->kue_ep[KUE_ENDPT_INTR] != NULL) {
-		err = usbd_abort_pipe(sc->kue_ep[KUE_ENDPT_INTR]);
-		if (err) {
-			printf("%s: abort intr pipe failed: %s\n",
-			    sc->kue_dev.dv_xname, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->kue_ep[KUE_ENDPT_INTR]);
 		err = usbd_close_pipe(sc->kue_ep[KUE_ENDPT_INTR]);
 		if (err) {
 			printf("%s: close intr pipe failed: %s\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.59 2013/11/15 08:25:31 pirofti Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.60 2013/11/15 10:17:39 pirofti Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -645,11 +645,7 @@ ubsa_close(void *addr, int portno)
 	DPRINTF(("ubsa_close: close\n"));
 
 	if (sc->sc_intr_pipe != NULL) {
-		err = usbd_abort_pipe(sc->sc_intr_pipe);
-		if (err)
-			printf("%s: abort interrupt pipe failed: %s\n",
-			    sc->sc_dev.dv_xname,
-			    usbd_errstr(err));
+		usbd_abort_pipe(sc->sc_intr_pipe);
 		err = usbd_close_pipe(sc->sc_intr_pipe);
 		if (err)
 			printf("%s: close interrupt pipe failed: %s\n",

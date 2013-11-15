@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.63 2013/11/05 10:20:04 mpi Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.64 2013/11/15 10:17:39 pirofti Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1190,11 +1190,7 @@ cue_stop(struct cue_softc *sc)
 
 	/* Stop transfers. */
 	if (sc->cue_ep[CUE_ENDPT_RX] != NULL) {
-		err = usbd_abort_pipe(sc->cue_ep[CUE_ENDPT_RX]);
-		if (err) {
-			printf("%s: abort rx pipe failed: %s\n",
-			sc->cue_dev.dv_xname, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->cue_ep[CUE_ENDPT_RX]);
 		err = usbd_close_pipe(sc->cue_ep[CUE_ENDPT_RX]);
 		if (err) {
 			printf("%s: close rx pipe failed: %s\n",
@@ -1204,11 +1200,7 @@ cue_stop(struct cue_softc *sc)
 	}
 
 	if (sc->cue_ep[CUE_ENDPT_TX] != NULL) {
-		err = usbd_abort_pipe(sc->cue_ep[CUE_ENDPT_TX]);
-		if (err) {
-			printf("%s: abort tx pipe failed: %s\n",
-			sc->cue_dev.dv_xname, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->cue_ep[CUE_ENDPT_TX]);
 		err = usbd_close_pipe(sc->cue_ep[CUE_ENDPT_TX]);
 		if (err) {
 			printf("%s: close tx pipe failed: %s\n",
@@ -1218,11 +1210,7 @@ cue_stop(struct cue_softc *sc)
 	}
 
 	if (sc->cue_ep[CUE_ENDPT_INTR] != NULL) {
-		err = usbd_abort_pipe(sc->cue_ep[CUE_ENDPT_INTR]);
-		if (err) {
-			printf("%s: abort intr pipe failed: %s\n",
-			sc->cue_dev.dv_xname, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->cue_ep[CUE_ENDPT_INTR]);
 		err = usbd_close_pipe(sc->cue_ep[CUE_ENDPT_INTR]);
 		if (err) {
 			printf("%s: close intr pipe failed: %s\n",

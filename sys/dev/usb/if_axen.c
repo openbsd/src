@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.4 2013/11/15 10:17:39 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -1510,11 +1510,7 @@ axen_stop(struct axen_softc *sc)
 
 	/* Stop transfers. */
 	if (sc->axen_ep[AXEN_ENDPT_RX] != NULL) {
-		err = usbd_abort_pipe(sc->axen_ep[AXEN_ENDPT_RX]);
-		if (err) {
-			printf("axen%d: abort rx pipe failed: %s\n",
-			    sc->axen_unit, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->axen_ep[AXEN_ENDPT_RX]);
 		err = usbd_close_pipe(sc->axen_ep[AXEN_ENDPT_RX]);
 		if (err) {
 			printf("axen%d: close rx pipe failed: %s\n",
@@ -1524,11 +1520,7 @@ axen_stop(struct axen_softc *sc)
 	}
 
 	if (sc->axen_ep[AXEN_ENDPT_TX] != NULL) {
-		err = usbd_abort_pipe(sc->axen_ep[AXEN_ENDPT_TX]);
-		if (err) {
-			printf("axen%d: abort tx pipe failed: %s\n",
-			    sc->axen_unit, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->axen_ep[AXEN_ENDPT_TX]);
 		err = usbd_close_pipe(sc->axen_ep[AXEN_ENDPT_TX]);
 		if (err) {
 			printf("axen%d: close tx pipe failed: %s\n",
@@ -1538,11 +1530,7 @@ axen_stop(struct axen_softc *sc)
 	}
 
 	if (sc->axen_ep[AXEN_ENDPT_INTR] != NULL) {
-		err = usbd_abort_pipe(sc->axen_ep[AXEN_ENDPT_INTR]);
-		if (err) {
-			printf("axen%d: abort intr pipe failed: %s\n",
-			    sc->axen_unit, usbd_errstr(err));
-		}
+		usbd_abort_pipe(sc->axen_ep[AXEN_ENDPT_INTR]);
 		err = usbd_close_pipe(sc->axen_ep[AXEN_ENDPT_INTR]);
 		if (err) {
 			printf("axen%d: close intr pipe failed: %s\n",

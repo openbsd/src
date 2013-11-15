@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.22 2013/11/15 08:25:31 pirofti Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.23 2013/11/15 10:17:39 pirofti Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -782,10 +782,7 @@ uticom_close(void *addr, int portno)
 	DPRINTF(("%s: uticom_close: close\n", sc->sc_dev.dv_xname));
 
 	if (sc->sc_intr_pipe != NULL) {
-		err = usbd_abort_pipe(sc->sc_intr_pipe);
-		if (err)
-			printf("%s: abort interrupt pipe failed: %s\n",
-			    sc->sc_dev.dv_xname, usbd_errstr(err));
+		usbd_abort_pipe(sc->sc_intr_pipe);
 		err = usbd_close_pipe(sc->sc_intr_pipe);
 		if (err)
 			printf("%s: close interrupt pipe failed: %s\n",
