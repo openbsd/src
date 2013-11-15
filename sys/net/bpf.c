@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.86 2013/11/12 01:12:09 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.87 2013/11/15 21:41:54 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1423,7 +1423,7 @@ bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
 	}
 
 	if (d->bd_fbuf && d->bd_rdStart &&
-	    (ticks - d->bd_rdStart > d->bd_rtout)) {
+	    (ticks - (d->bd_rtout + d->bd_rdStart) > 0)) {
 		/*
 		 * we could be selecting on the bpf, and we
 		 * may have timeouts set.  We got here by getting
