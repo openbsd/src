@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.59 2013/10/29 22:37:25 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.60 2013/11/15 19:42:20 sasano Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -105,6 +105,7 @@ wskbd*	at ukbd? mux 1
 #cue*	at uhub?		# CATC USB-EL1201A based Ethernet
 #kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 #upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
+#ugl*	at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
 #urio*	at uhub?		# Diamond Multimedia Rio 500
 #uyap*	at uhub?		# Y@P firmware loader
 #ugen*	at uhub?		# USB Generic driver

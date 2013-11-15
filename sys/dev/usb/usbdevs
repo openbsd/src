@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.612 2013/11/09 04:01:37 jsg Exp $
+$OpenBSD: usbdevs,v 1.613 2013/11/15 19:42:20 sasano Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1922,6 +1922,7 @@ product GCTSEMICON INSTALL	0x7f40	GDM720x MASS storage mode
 product GEMPLUS PROXPU		0x5501	Prox-PU/CU
 
 /* Genesys Logic products */
+product GENESYS GL620USB_A	0x0502	GL620USB-A GeneLink USB-USB Bridge
 product GENESYS GENELINK	0x05e3	GeneLink Host-Host Bridge
 product GENESYS GL650		0x0604	GL650 Hub
 product GENESYS GL641USB	0x0700	GL641USB CompactFlash

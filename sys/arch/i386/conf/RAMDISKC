@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.107 2013/10/28 12:33:32 mpi Exp $
+#	$OpenBSD: RAMDISKC,v 1.108 2013/11/15 19:42:20 sasano Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -116,6 +116,7 @@ wskbd*	at ukbd? mux 1
 #kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 #cdce*	at uhub?		# CDC Ethernet
 #upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
+#ugl*	at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
 #udav*	at uhub?		# Davicom DM9601 based Ethernet
 #url*	at uhub?		# Realtek RTL8150L based adapters
 #wi*	at uhub?		# WaveLAN IEEE 802.11DS

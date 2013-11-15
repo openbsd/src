@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.98 2013/11/10 12:10:43 mpi Exp $
+#	$OpenBSD: RAMDISK,v 1.99 2013/11/15 19:42:20 sasano Exp $
 #
 # PPC GENERIC config file
 #
@@ -171,6 +171,7 @@ kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 smsc*		at uhub?		# SMSC LAN95xx Ethernet
 cdce*		at uhub?		# CDC Ethernet
 upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
+ugl*		at uhub?		# Genesys Logic GL620A-USB host-to-host
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 mos*		at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
 ural*		at uhub?		# Ralink RT2500

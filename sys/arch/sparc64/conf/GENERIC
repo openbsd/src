@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.273 2013/09/05 19:42:08 sasano Exp $
+#	$OpenBSD: GENERIC,v 1.274 2013/11/15 19:42:20 sasano Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -218,6 +218,7 @@ urndis*	at uhub?		# Remote NDIS devices
 udav*	at uhub?		# Davicom DM9601 based Ethernet
 mos*	at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
 upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
+ugl*	at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
 ural*	at uhub?		# Ralink RT2500USB
 uath*	at uhub?		# Atheros AR5005UG/AR5005UX
 rsu*	at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU

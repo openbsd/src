@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.98 2013/10/29 22:37:25 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.99 2013/11/15 19:42:20 sasano Exp $
 #
 # Diskless kernel config
 #
@@ -150,6 +150,7 @@ smsc*	at uhub?		# SMSC LAN95xx Ethernet
 cdce*	at uhub?		# CDC Ethernet
 udav*	at uhub?		# Davicom DM9601 based Ethernet
 upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
+ugl*	at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
 #urio*	at uhub?		# Diamond Multimedia Rio 500
 #uyap*	at uhub?		# Y@P firmware loader

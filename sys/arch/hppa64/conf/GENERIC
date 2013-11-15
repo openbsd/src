@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.30 2013/10/29 22:37:25 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.31 2013/11/15 19:42:20 sasano Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -102,6 +102,7 @@ com1	at ssio? irq 3
 #urndis*	at uhub?		# Remote NDIS Ethernet
 #udav*	at uhub?		# Davicom DM9601 based Ethernet
 #upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
+#ugl*	at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
 #url*	at uhub?		# Realtek RTL8150L based adapters
 #wi*	at uhub?		# WaveLAN IEEE 802.11DS
 #urio*	at uhub?		# Diamond Multimedia Rio 500

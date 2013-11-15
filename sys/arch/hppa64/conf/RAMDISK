@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.17 2013/10/29 22:37:25 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.18 2013/11/15 19:42:20 sasano Exp $
 #
 # Diskless kernel config
 #
@@ -102,6 +102,7 @@ pcmcia*		at cardslot?
 #cdce*	at uhub?		# CDC Ethernet
 #udav*	at uhub?		# Davicom DM9601 based Ethernet
 #upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
+#ugl*	at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
 #url*	at uhub?		# Realtek RTL8150L based adapters
 #wi*	at uhub?		# WaveLAN IEEE 802.11DS
 #urio*	at uhub?		# Diamond Multimedia Rio 500

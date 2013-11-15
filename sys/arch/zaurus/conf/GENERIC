@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.89 2013/08/20 14:27:31 ajacoutot Exp $
+#	$OpenBSD: GENERIC,v 1.90 2013/11/15 19:42:20 sasano Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -115,6 +115,7 @@ smsc*		at uhub?		# SMSC LAN95xx Ethernet
 cdce*		at uhub?		# CDC Ethernet
 urndis*		at uhub?		# Remote NDIS devices
 upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
+ugl*		at uhub?		# Genesys Logic GL620A-USB host-to-host
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 ural*		at uhub?		# Ralink RT2500USB
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB

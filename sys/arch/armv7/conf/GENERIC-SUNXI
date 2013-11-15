@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC-SUNXI,v 1.2 2013/10/27 03:06:25 aalm Exp $
+# $OpenBSD: GENERIC-SUNXI,v 1.3 2013/11/15 19:42:20 sasano Exp $
 #
 # GENERIC machine description file
 #
@@ -121,6 +121,7 @@ kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 smsc*		at uhub?		# SMSC LAN95xx Ethernet
 cdce*		at uhub?		# CDC Ethernet
 upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
+ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 url*		at uhub?		# Realtek RTL8150L based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
