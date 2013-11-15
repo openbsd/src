@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.35 2013/05/24 07:58:46 ratchov Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.36 2013/11/15 16:46:27 brad Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -581,8 +581,7 @@ struct {
 #define NMAESTRO_PCITAB	lengthof(maestro_pcitab)
 
 int
-maestro_get_flags(pa)
-	struct pci_attach_args *pa;
+maestro_get_flags(struct pci_attach_args *pa)
 {
 	int i;
 
@@ -603,10 +602,7 @@ maestro_get_flags(pa)
  */
 
 int
-maestro_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+maestro_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -617,10 +613,7 @@ maestro_match(parent, match, aux)
 }
 
 void
-maestro_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+maestro_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
@@ -769,8 +762,7 @@ maestro_attach(parent, self, aux)
 }
 
 void
-maestro_init(sc)
-	struct maestro_softc *sc;
+maestro_init(struct maestro_softc *sc)
 {
 	int reg;
 	pcireg_t data;
@@ -851,19 +843,13 @@ maestro_init(sc)
  */
 
 int
-maestro_round_blocksize(self, blk)
-	void *self;
-	int blk;
+maestro_round_blocksize(void *self, int blk)
 {
 	return ((blk + 0xf) & ~0xf);
 }
 
 void *
-maestro_malloc(arg, dir, size, pool, flags)
-	void *arg;
-	int dir;
-	size_t size;
-	int pool, flags;
+maestro_malloc(void *arg, int dir, size_t size, int pool, int flags)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)arg;
 
@@ -871,9 +857,7 @@ maestro_malloc(arg, dir, size, pool, flags)
 }
 
 void
-maestro_free(self, ptr, pool)
-	void *self, *ptr;
-	int pool;
+maestro_free(void *self, void *ptr, int pool)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)self;
 
@@ -881,10 +865,7 @@ maestro_free(self, ptr, pool)
 }
 
 paddr_t
-maestro_mappage(self, mem, off, prot)
-	void *self, *mem;
-	off_t off;
-	int prot;
+maestro_mappage(void *self, void *mem, off_t off, int prot)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)self;
 
@@ -895,8 +876,7 @@ maestro_mappage(self, mem, off, prot)
 }
 
 int
-maestro_get_props(self)
-	void *self;
+maestro_get_props(void *self)
 {
 	/* struct maestro_softc *sc = (struct maestro_softc *)self; */
 
@@ -904,9 +884,7 @@ maestro_get_props(self)
 }
 
 int
-maestro_getdev(self, retp)
-	void *self;
-	struct audio_device *retp;
+maestro_getdev(void *self, struct audio_device *retp)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)self;
 
@@ -915,9 +893,7 @@ maestro_getdev(self, retp)
 }
 
 int
-maestro_set_port(self, cp)
-	void *self;
-	mixer_ctrl_t *cp;
+maestro_set_port(void *self, mixer_ctrl_t *cp)
 {
 	struct ac97_codec_if *c = ((struct maestro_softc *)self)->codec_if;
 	int rc;
@@ -933,9 +909,7 @@ maestro_set_port(self, cp)
 }
 
 int
-maestro_get_port(self, cp)
-	void *self;
-	mixer_ctrl_t *cp;
+maestro_get_port(void *self, mixer_ctrl_t *cp)
 {
 	struct ac97_codec_if *c = ((struct maestro_softc *)self)->codec_if;
 	int rc;
@@ -951,9 +925,7 @@ maestro_get_port(self, cp)
 }
 
 int
-maestro_query_devinfo(self, cp)
-	void *self;
-	mixer_devinfo_t *cp;
+maestro_query_devinfo(void *self, mixer_devinfo_t *cp)
 {
 	struct ac97_codec_if *c = ((struct maestro_softc *)self)->codec_if;
 	int rc;
@@ -985,9 +957,7 @@ struct audio_encoding maestro_tab[] = {
 };
 
 int
-maestro_query_encoding(hdl, fp)
-	void *hdl;
-	struct audio_encoding *fp;
+maestro_query_encoding(void *hdl, struct audio_encoding *fp)
 {
 	if (fp->index < 0 || fp->index >= lengthof(maestro_tab))
 		return (EINVAL);
@@ -1004,9 +974,7 @@ maestro_get_default_params(void *addr, int mode, struct audio_params *params)
 #define UNUSED __attribute__((unused))
 
 void
-maestro_set_speed(ch, prate)
-	struct maestro_channel *ch;
-	u_long *prate;
+maestro_set_speed(struct maestro_channel *ch, u_long *prate)
 {
 	ch->speed = *prate;
 	if ((ch->mode & (MAESTRO_8BIT | MAESTRO_STEREO)) == MAESTRO_8BIT)
@@ -1030,8 +998,7 @@ maestro_set_speed(ch, prate)
 }
 
 u_int
-maestro_calc_timer_freq(ch)
-	struct maestro_channel *ch;
+maestro_calc_timer_freq(struct maestro_channel *ch)
 {
 	u_int	ss = 2;
 
@@ -1041,8 +1008,7 @@ maestro_calc_timer_freq(ch)
 }
 
 void
-maestro_update_timer(sc)
-	struct maestro_softc *sc;
+maestro_update_timer(struct maestro_softc *sc)
 {
 	u_int freq = 0;
 	u_int n;
@@ -1063,10 +1029,8 @@ maestro_update_timer(sc)
 
 
 int
-maestro_set_params(hdl, setmode, usemode, play, rec)
-	void *hdl;
-	int setmode, usemode;
-	struct audio_params *play, *rec;
+maestro_set_params(void *hdl, int setmode, int usemode,
+    struct audio_params *play, struct audio_params *rec)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)hdl;
 	
@@ -1120,9 +1084,7 @@ maestro_set_params(hdl, setmode, usemode, play, rec)
 }
 
 int
-maestro_open(hdl, flags)
-	void *hdl;
-	int flags;
+maestro_open(void *hdl, int flags)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)hdl;
 	DPRINTF(("%s: open(%d)\n", sc->dev.dv_xname, flags));
@@ -1142,8 +1104,7 @@ maestro_open(hdl, flags)
 }
 
 void
-maestro_close(hdl)
-	void *hdl;
+maestro_close(void *hdl)
 {
 	struct maestro_softc *sc UNUSED = (struct maestro_softc *)hdl;
 	/* nothing to do */
@@ -1151,8 +1112,7 @@ maestro_close(hdl)
 
 
 void
-maestro_channel_stop(ch)
-	struct maestro_channel *ch;
+maestro_channel_stop(struct maestro_channel *ch)
 {
 	wp_apu_write(ch->sc, ch->num, APUREG_APUTYPE,
 	    APUTYPE_INACTIVE << APU_APUTYPE_SHIFT);
@@ -1171,8 +1131,7 @@ maestro_channel_stop(ch)
 }
 
 int
-maestro_halt_input(hdl)
-	void *hdl;
+maestro_halt_input(void *hdl)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)hdl;
 
@@ -1185,8 +1144,7 @@ maestro_halt_input(hdl)
 }
 
 int
-maestro_halt_output(hdl)
-	void *hdl;
+maestro_halt_output(void *hdl)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)hdl;
 
@@ -1199,13 +1157,8 @@ maestro_halt_output(hdl)
 }
 
 int
-maestro_trigger_input(hdl, start, end, blksize, intr, arg, param)
-	void *hdl;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+maestro_trigger_input(void *hdl, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)hdl;
 
@@ -1222,8 +1175,7 @@ maestro_trigger_input(hdl, start, end, blksize, intr, arg, param)
 }
 
 void
-maestro_channel_start(ch)
-	struct maestro_channel *ch;
+maestro_channel_start(struct maestro_channel *ch)
 {
 	struct maestro_softc *sc = ch->sc;
 	int n = ch->num;
@@ -1302,13 +1254,8 @@ maestro_channel_start(ch)
 }
 
 int
-maestro_trigger_output(hdl, start, end, blksize, intr, arg, param)
-	void *hdl;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+maestro_trigger_output(void *hdl, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)hdl;
 	u_int offset = ((caddr_t)start - sc->dmabase) >> 1;
@@ -1346,17 +1293,13 @@ maestro_trigger_output(hdl, start, end, blksize, intr, arg, param)
  */
 
 enum ac97_host_flags
-maestro_codec_flags(self)
-	void *self;
+maestro_codec_flags(void *self)
 {
 	return AC97_HOST_DONT_READ;
 }
 
 int
-maestro_read_codec(self, regno, datap)
-	void *self;
-	u_int8_t regno;
-	u_int16_t *datap;
+maestro_read_codec(void *self, u_int8_t regno, u_int16_t *datap)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)self;
 	int t;
@@ -1394,10 +1337,7 @@ maestro_read_codec(self, regno, datap)
 }
 
 int
-maestro_write_codec(self, regno, data)
-	void *self;
-	u_int8_t regno;
-	u_int16_t data;
+maestro_write_codec(void *self, u_int8_t regno, u_int16_t data)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)self;
 	int t;
@@ -1424,9 +1364,7 @@ maestro_write_codec(self, regno, data)
 }
 
 int
-maestro_attach_codec(self, cif)
-	void *self;
-	struct ac97_codec_if *cif;
+maestro_attach_codec(void *self, struct ac97_codec_if *cif)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)self;
 
@@ -1435,14 +1373,12 @@ maestro_attach_codec(self, cif)
 }
 
 void
-maestro_reset_codec(self)
-	void *self UNUSED;
+maestro_reset_codec(void *self UNUSED)
 {
 }
 
 void
-maestro_initcodec(self)
-	void *self;
+maestro_initcodec(void *self)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)self;
 	u_int16_t data;
@@ -1552,8 +1488,7 @@ maestro_activate(struct device *self, int act)
 }
 
 void
-maestro_channel_advance_dma(ch)
-	struct maestro_channel *ch;
+maestro_channel_advance_dma(struct maestro_channel *ch)
 {
 	wpreg_t pos;
 #ifdef AUDIO_DEBUG
@@ -1583,8 +1518,7 @@ maestro_channel_advance_dma(ch)
 
 /* Some maestro makes sometimes get desynchronized in stereo mode. */
 void
-maestro_channel_suppress_jitter(ch)
-	struct maestro_channel *ch;
+maestro_channel_suppress_jitter(struct maestro_channel *ch)
 {
 	int cp, diff;
 
@@ -1601,8 +1535,7 @@ maestro_channel_suppress_jitter(ch)
  * Interrupt handler interface
  */
 int
-maestro_intr(arg)
-	void *arg;
+maestro_intr(void *arg)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)arg;
 	u_int16_t status;
@@ -1816,10 +1749,7 @@ wc_ctrl_write(struct maestro_softc *sc, int ch, wcreg_t data)
  */
 
 salloc_t
-salloc_new(addr, size, nzones)
-	caddr_t addr;
-	size_t size;
-	int nzones;
+salloc_new(caddr_t addr, size_t size, int nzones)
 {
 	struct salloc_pool *pool;
 	struct salloc_zone *space;
@@ -1844,18 +1774,14 @@ salloc_new(addr, size, nzones)
 }
 
 void
-salloc_destroy(pool)
-	salloc_t pool;
+salloc_destroy(salloc_t pool)
 {
 	free(pool, M_TEMP);
 }
 
 void
-salloc_insert(pool, head, zone, merge)
-	salloc_t pool;
-	struct salloc_head *head;
-	struct salloc_zone *zone;
-	int merge;
+salloc_insert(salloc_t pool, struct salloc_head *head, struct salloc_zone *zone,
+    int merge)
 {
 	struct salloc_zone *prev, *next;
 
@@ -1886,9 +1812,7 @@ salloc_insert(pool, head, zone, merge)
 }
 
 caddr_t
-salloc_alloc(pool, size)
-	salloc_t pool;
-	size_t size;
+salloc_alloc(salloc_t pool, size_t size)
 {
 	struct salloc_zone *zone, *uzone;
 
@@ -1915,9 +1839,7 @@ salloc_alloc(pool, size)
 }
 
 void
-salloc_free(pool, addr)
-	salloc_t pool;
-	caddr_t addr;
+salloc_free(salloc_t pool, caddr_t addr)
 {
 	struct salloc_zone *zone;
 

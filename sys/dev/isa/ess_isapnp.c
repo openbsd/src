@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess_isapnp.c,v 1.6 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: ess_isapnp.c,v 1.7 2013/11/15 16:46:27 brad Exp $	*/
 /*	$NetBSD: ess_isa.c,v 1.4 1999/03/18 20:57:11 mycroft Exp $	*/
 
 /*-
@@ -58,16 +58,12 @@ struct cfattach ess_isapnp_ca = {
 };
 
 int
-ess_isapnp_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ess_isapnp_probe(struct device *parent, void *match, void *aux)
 {
 	return 1;
 }
 
-void ess_isapnp_attach(parent, self, aux)
-	 struct device *parent, *self;
-	 void *aux;
+void ess_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ess_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

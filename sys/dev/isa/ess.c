@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.18 2013/05/24 07:58:46 ratchov Exp $	*/
+/*	$OpenBSD: ess.c,v 1.19 2013/11/15 16:46:27 brad Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -275,8 +275,7 @@ void ess_printsc(struct ess_softc *);
 void ess_dump_mixer(struct ess_softc *);
 
 void
-ess_printsc(sc)
-	struct ess_softc *sc;
+ess_printsc(struct ess_softc *sc)
 {
 	int i;
 
@@ -301,8 +300,7 @@ ess_printsc(sc)
 }
 
 void
-ess_dump_mixer(sc)
-	struct ess_softc *sc;
+ess_dump_mixer(struct ess_softc *sc)
 {
 	printf("ESS_DAC_PLAY_VOL: mix reg 0x%02x=0x%02x\n",
 	       0x7C, ess_read_mix_reg(sc, 0x7C));
@@ -352,8 +350,7 @@ ess_dump_mixer(sc)
  * Configure the ESS chip for the desired audio base address.
  */
 int
-ess_config_addr(sc)
-	struct ess_softc *sc;
+ess_config_addr(struct ess_softc *sc)
 {
 	int iobase = sc->sc_iobase;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -446,8 +443,7 @@ ess_config_addr(sc)
  * DRQD drq5
  */
 void
-ess_config_irq(sc)
-	struct ess_softc *sc;
+ess_config_irq(struct ess_softc *sc)
 {
 	int v;
 
@@ -536,8 +532,7 @@ ess_config_irq(sc)
 
 
 void
-ess_config_drq(sc)
-	struct ess_softc *sc;
+ess_config_drq(struct ess_softc *sc)
 {
 	int v;
 
@@ -600,10 +595,8 @@ ess_config_drq(sc)
  * Set up registers after a reset.
  */
 void
-ess_setup(sc)
-	struct ess_softc *sc;
+ess_setup(struct ess_softc *sc)
 {
-
 	ess_config_irq(sc);
 	ess_config_drq(sc);
 
@@ -619,8 +612,7 @@ ess_setup(sc)
  * This routine sets the values of sc->sc_model and sc->sc_version.
  */
 int
-ess_identify(sc)
-	struct ess_softc *sc;
+ess_identify(struct ess_softc *sc)
 {
 	u_char reg1;
 	u_char reg2;
@@ -779,9 +771,7 @@ ess_identify(sc)
 
 
 int
-ess_setup_sc(sc, doinit)
-	struct ess_softc *sc;
-	int doinit;
+ess_setup_sc(struct ess_softc *sc, int doinit)
 {
 	/* Reset the chip. */
 	if (ess_reset(sc) != 0) {
@@ -802,8 +792,7 @@ ess_setup_sc(sc, doinit)
  * Probe for the ESS hardware.
  */
 int
-essmatch(sc)
-	struct ess_softc *sc;
+essmatch(struct ess_softc *sc)
 {
 	if (!ESS_BASE_VALID(sc->sc_iobase)) {
 		printf("ess: configured iobase 0x%x invalid\n", sc->sc_iobase);
@@ -885,8 +874,7 @@ irq_not1888:
  * pseudo-device driver.
  */
 void
-essattach(sc)
-	struct ess_softc *sc;
+essattach(struct ess_softc *sc)
 {
 	struct audio_attach_args arg;
 	struct audio_params pparams, rparams;
@@ -1035,9 +1023,7 @@ essattach(sc)
  */
 
 int
-ess_open(addr, flags)
-	void *addr;
-	int flags;
+ess_open(void *addr, int flags)
 {
 	struct ess_softc *sc = addr;
 
@@ -1056,8 +1042,7 @@ ess_open(addr, flags)
 }
 
 void
-ess_1788_close(addr)
-	void *addr;
+ess_1788_close(void *addr)
 {
 	struct ess_softc *sc = addr;
 
@@ -1073,8 +1058,7 @@ ess_1788_close(addr)
 }
 
 void
-ess_1888_close(addr)
-	void *addr;
+ess_1888_close(void *addr)
 {
 	struct ess_softc *sc = addr;
 
@@ -1095,8 +1079,7 @@ ess_1888_close(addr)
  * XXX should check FIFO empty bit.
  */
 int
-ess_drain(addr)
-	void *addr;
+ess_drain(void *addr)
 {
 	tsleep(addr, PWAIT | PCATCH, "essdr", hz/20); /* XXX */
 	return (0);
@@ -1104,9 +1087,7 @@ ess_drain(addr)
 
 /* XXX should use reference count */
 int
-ess_speaker_ctl(addr, newstate)
-	void *addr;
-	int newstate;
+ess_speaker_ctl(void *addr, int newstate)
 {
 	struct ess_softc *sc = addr;
 
@@ -1122,18 +1103,14 @@ ess_speaker_ctl(addr, newstate)
 }
 
 int
-ess_getdev(addr, retp)
-	void *addr;
-	struct audio_device *retp;
+ess_getdev(void *addr, struct audio_device *retp)
 {
 	*retp = ess_device;
 	return (0);
 }
 
 int
-ess_query_encoding(addr, fp)
-	void *addr;
-	struct audio_encoding *fp;
+ess_query_encoding(void *addr, struct audio_encoding *fp)
 {
 	/*struct ess_softc *sc = addr;*/
 
@@ -1196,10 +1173,8 @@ ess_query_encoding(addr, fp)
 }
 
 int
-ess_set_params(addr, setmode, usemode, play, rec)
-	void *addr;
-	int setmode, usemode;
-	struct audio_params *play, *rec;
+ess_set_params(void *addr, int setmode, int usemode,
+    struct audio_params *play, struct audio_params *rec)
 {
 	struct ess_softc *sc = addr;
 	struct audio_params *p;
@@ -1292,13 +1267,8 @@ ess_set_params(addr, setmode, usemode, play, rec)
 }
 
 int
-ess_audio1_trigger_output(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+ess_audio1_trigger_output(void *addr, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct ess_softc *sc = addr;
 	u_int8_t reg;
@@ -1371,13 +1341,8 @@ ess_audio1_trigger_output(addr, start, end, blksize, intr, arg, param)
 }
 
 int
-ess_audio2_trigger_output(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+ess_audio2_trigger_output(void *addr, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct ess_softc *sc = addr;
 	u_int8_t reg;
@@ -1441,13 +1406,8 @@ ess_audio2_trigger_output(addr, start, end, blksize, intr, arg, param)
 }
 
 int
-ess_audio1_trigger_input(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+ess_audio1_trigger_input(void *addr, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct ess_softc *sc = addr;
 	u_int8_t reg;
@@ -1520,8 +1480,7 @@ ess_audio1_trigger_input(addr, start, end, blksize, intr, arg, param)
 }
 
 int
-ess_audio1_halt(addr)
-	void *addr;
+ess_audio1_halt(void *addr)
 {
 	struct ess_softc *sc = addr;
 
@@ -1540,8 +1499,7 @@ ess_audio1_halt(addr)
 }
 
 int
-ess_audio2_halt(addr)
-	void *addr;
+ess_audio2_halt(void *addr)
 {
 	struct ess_softc *sc = addr;
 
@@ -1561,8 +1519,7 @@ ess_audio2_halt(addr)
 }
 
 int
-ess_audio1_intr(arg)
-	void *arg;
+ess_audio1_intr(void *arg)
 {
 	struct ess_softc *sc = arg;
 	u_int8_t reg;
@@ -1591,8 +1548,7 @@ ess_audio1_intr(arg)
 }
 
 int
-ess_audio2_intr(arg)
-	void *arg;
+ess_audio2_intr(void *arg)
 {
 	struct ess_softc *sc = arg;
 	u_int8_t reg;
@@ -1622,8 +1578,7 @@ ess_audio2_intr(arg)
 }
 
 void
-ess_audio1_poll(addr)
-	void *addr;
+ess_audio1_poll(void *addr)
 {
 	struct ess_softc *sc = addr;
 	int dmapos, dmacount;
@@ -1654,8 +1609,7 @@ ess_audio1_poll(addr)
 }
 
 void
-ess_audio2_poll(addr)
-	void *addr;
+ess_audio2_poll(void *addr)
 {
 	struct ess_softc *sc = addr;
 	int dmapos, dmacount;
@@ -1686,17 +1640,13 @@ ess_audio2_poll(addr)
 }
 
 int
-ess_round_blocksize(addr, blk)
-	void *addr;
-	int blk;
+ess_round_blocksize(void *addr, int blk)
 {
 	return ((blk + 7) & -8);	/* round for max DMA size */
 }
 
 int
-ess_set_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+ess_set_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct ess_softc *sc = addr;
 	int lgain, rgain;
@@ -1835,9 +1785,7 @@ ess_set_port(addr, cp)
 }
 
 int
-ess_get_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+ess_get_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct ess_softc *sc = addr;
 
@@ -1925,9 +1873,7 @@ ess_get_port(addr, cp)
 }
 
 int
-ess_query_devinfo(addr, dip)
-	void *addr;
-	mixer_devinfo_t *dip;
+ess_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
 	struct ess_softc *sc = addr;
 
@@ -2224,11 +2170,7 @@ ess_query_devinfo(addr, dip)
 }
 
 void *
-ess_malloc(addr, direction, size, pool, flags)
-	void *addr;
-	int direction;
-	size_t size;
-	int pool, flags;
+ess_malloc(void *addr, int direction, size_t size, int pool, int flags)
 {
 	struct ess_softc *sc = addr;
 	int drq;
@@ -2241,19 +2183,13 @@ ess_malloc(addr, direction, size, pool, flags)
 }
 
 void
-ess_free(addr, ptr, pool)
-	void *addr;
-	void *ptr;
-	int pool;
+ess_free(void *addr, void *ptr, int pool)
 {
 	isa_free(ptr, pool);
 }
 
 size_t
-ess_round_buffersize(addr, direction, size)
-	void *addr;
-	int direction;
-	size_t size;
+ess_round_buffersize(void *addr, int direction, size_t size)
 {
 	if (size > MAX_ISADMA)
 		size = MAX_ISADMA;
@@ -2261,28 +2197,20 @@ ess_round_buffersize(addr, direction, size)
 }
 
 paddr_t
-ess_mappage(addr, mem, off, prot)
-	void *addr;
-	void *mem;
-	off_t off;
-	int prot;
+ess_mappage(void *addr, void *mem, off_t off, int prot)
 {
 	return (isa_mappage(mem, off, prot));
 }
 
 int
-ess_1788_get_props(addr)
-	void *addr;
+ess_1788_get_props(void *addr)
 {
-
 	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT);
 }
 
 int
-ess_1888_get_props(addr)
-	void *addr;
+ess_1888_get_props(void *addr)
 {
-
 	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX);
 }
 
@@ -2296,8 +2224,7 @@ ess_1888_get_props(addr)
  * Return non-zero if the chip isn't detected.
  */
 int
-ess_reset(sc)
-	struct ess_softc *sc;
+ess_reset(struct ess_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -2415,9 +2342,7 @@ ess_set_gain(sc, port, on)
 
 /* Set the input device on devices without an input mixer. */
 int
-ess_set_in_port(sc, ord)
-	struct ess_softc *sc;
-	int ord;
+ess_set_in_port(struct ess_softc *sc, int ord)
 {
 	mixer_devinfo_t di;
 	int i;
@@ -2448,9 +2373,7 @@ ess_set_in_port(sc, ord)
 
 /* Set the input device levels on input-mixer-enabled devices. */
 int
-ess_set_in_ports(sc, mask)
-	struct ess_softc *sc;
-	int mask;
+ess_set_in_ports(struct ess_softc *sc, int mask)
 {
 	mixer_devinfo_t di;
 	int i, port;
@@ -2488,16 +2411,14 @@ ess_set_in_ports(sc, mask)
 }
 
 void
-ess_speaker_on(sc)
-	struct ess_softc *sc;
+ess_speaker_on(struct ess_softc *sc)
 {
 	/* Unmute the DAC. */
 	ess_set_gain(sc, ESS_DAC_PLAY_VOL, 1);
 }
 
 void
-ess_speaker_off(sc)
-	struct ess_softc *sc;
+ess_speaker_off(struct ess_softc *sc)
 {
 	/* Mute the DAC. */
 	ess_set_gain(sc, ESS_DAC_PLAY_VOL, 0);
@@ -2507,8 +2428,7 @@ ess_speaker_off(sc)
  * Calculate the time constant for the requested sampling rate.
  */
 u_int
-ess_srtotc(rate)
-	u_int rate;
+ess_srtotc(u_int rate)
 {
 	u_int tc;
 
@@ -2526,8 +2446,7 @@ ess_srtotc(rate)
  * Calculate the filter constant for the reuqested sampling rate.
  */
 u_int
-ess_srtofc(rate)
-	u_int rate;
+ess_srtofc(u_int rate)
 {
 	/*
 	 * The following formula is derived from the information in
@@ -2542,8 +2461,7 @@ ess_srtofc(rate)
  * Return the status of the DSP.
  */
 u_char
-ess_get_dsp_status(sc)
-	struct ess_softc *sc;
+ess_get_dsp_status(struct ess_softc *sc)
 {
 	return (EREAD1(sc->sc_iot, sc->sc_ioh, ESS_DSP_RW_STATUS));
 }
@@ -2554,8 +2472,7 @@ ess_get_dsp_status(sc)
  *					0 -> DSP not ready for reading
  */
 u_char
-ess_dsp_read_ready(sc)
-	struct ess_softc *sc;
+ess_dsp_read_ready(struct ess_softc *sc)
 {
 	return ((ess_get_dsp_status(sc) & ESS_DSP_READ_READY) ? 1 : 0);
 }
@@ -2566,8 +2483,7 @@ ess_dsp_read_ready(sc)
  *					0 -> DSP not ready for writing
  */
 u_char
-ess_dsp_write_ready(sc)
-	struct ess_softc *sc;
+ess_dsp_write_ready(struct ess_softc *sc)
 {
 	return ((ess_get_dsp_status(sc) & ESS_DSP_WRITE_BUSY) ? 0 : 1);
 }
@@ -2577,8 +2493,7 @@ ess_dsp_write_ready(sc)
  * Read a byte from the DSP.
  */
 int
-ess_rdsp(sc)
-	struct ess_softc *sc;
+ess_rdsp(struct ess_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -2601,9 +2516,7 @@ ess_rdsp(sc)
  * Write a byte to the DSP.
  */
 int
-ess_wdsp(sc, v)
-	struct ess_softc *sc;
-	u_char v;
+ess_wdsp(struct ess_softc *sc, u_char v)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -2627,10 +2540,7 @@ ess_wdsp(sc, v)
  * Write a value to one of the ESS extended registers.
  */
 int
-ess_write_x_reg(sc, reg, val)
-	struct ess_softc *sc;
-	u_char reg;
-	u_char val;
+ess_write_x_reg(struct ess_softc *sc, u_char reg, u_char val)
 {
 	int error;
 
@@ -2645,9 +2555,7 @@ ess_write_x_reg(sc, reg, val)
  * Read the value of one of the ESS extended registers.
  */
 u_char
-ess_read_x_reg(sc, reg)
-	struct ess_softc *sc;
-	u_char reg;
+ess_read_x_reg(struct ess_softc *sc, u_char reg)
 {
 	int error;
 	int val;
@@ -2663,10 +2571,7 @@ ess_read_x_reg(sc, reg)
 }
 
 void
-ess_clear_xreg_bits(sc, reg, mask)
-	struct ess_softc *sc;
-	u_char reg;
-	u_char mask;
+ess_clear_xreg_bits(struct ess_softc *sc, u_char reg, u_char mask)
 {
 	if (ess_write_x_reg(sc, reg, ess_read_x_reg(sc, reg) & ~mask) == -1)
 		DPRINTF(("Error clearing bits in extended register 0x%02x\n",
@@ -2674,10 +2579,7 @@ ess_clear_xreg_bits(sc, reg, mask)
 }
 
 void
-ess_set_xreg_bits(sc, reg, mask)
-	struct ess_softc *sc;
-	u_char reg;
-	u_char mask;
+ess_set_xreg_bits(struct ess_softc *sc, u_char reg, u_char mask)
 {
 	if (ess_write_x_reg(sc, reg, ess_read_x_reg(sc, reg) | mask) == -1)
 		DPRINTF(("Error setting bits in extended register 0x%02x\n",
@@ -2689,10 +2591,7 @@ ess_set_xreg_bits(sc, reg, mask)
  * Write a value to one of the ESS mixer registers.
  */
 void
-ess_write_mix_reg(sc, reg, val)
-	struct ess_softc *sc;
-	u_char reg;
-	u_char val;
+ess_write_mix_reg(struct ess_softc *sc, u_char reg, u_char val)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -2709,9 +2608,7 @@ ess_write_mix_reg(sc, reg, val)
  * Read the value of one of the ESS mixer registers.
  */
 u_char
-ess_read_mix_reg(sc, reg)
-	struct ess_softc *sc;
-	u_char reg;
+ess_read_mix_reg(struct ess_softc *sc, u_char reg)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -2727,29 +2624,20 @@ ess_read_mix_reg(sc, reg)
 }
 
 void
-ess_clear_mreg_bits(sc, reg, mask)
-	struct ess_softc *sc;
-	u_char reg;
-	u_char mask;
+ess_clear_mreg_bits(struct ess_softc *sc, u_char reg, u_char mask)
 {
 	ess_write_mix_reg(sc, reg, ess_read_mix_reg(sc, reg) & ~mask);
 }
 
 void
-ess_set_mreg_bits(sc, reg, mask)
-	struct ess_softc *sc;
-	u_char reg;
-	u_char mask;
+ess_set_mreg_bits(struct ess_softc *sc, u_char reg, u_char mask)
 {
 	ess_write_mix_reg(sc, reg, ess_read_mix_reg(sc, reg) | mask);
 }
 
 void
-ess_read_multi_mix_reg(sc, reg, datap, count)
-	struct ess_softc *sc;
-	u_char reg;
-	u_int8_t *datap;
-	bus_size_t count;
+ess_read_multi_mix_reg(struct ess_softc *sc, u_char reg, u_int8_t *datap,
+    bus_size_t count)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;

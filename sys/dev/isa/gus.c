@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.38 2013/06/26 09:39:56 kettenis Exp $	*/
+/*	$OpenBSD: gus.c,v 1.39 2013/11/15 16:46:27 brad Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -351,9 +351,7 @@ struct audio_device gus_device = {
 
 
 int
-gusopen(addr, flags)
-	void *addr;
-	int flags;
+gusopen(void *addr, int flags)
 {
 	struct gus_softc *sc = addr;
 
@@ -394,19 +392,14 @@ gusopen(addr, flags)
 }
 
 int
-gusmaxopen(addr, flags)
-	void *addr;
-	int flags;
+gusmaxopen(void *addr, int flags)
 {
 	struct ad1848_softc *ac = addr;
 	return gusopen(ac->parent, flags);
 }
 
 void
-gus_deinterleave(sc, buf, size)
-	struct gus_softc *sc;
-	void *buf;
-	int size;
+gus_deinterleave(struct gus_softc *sc, void *buf, int size)
 {
 	/* deinterleave the stereo data.  We can use sc->sc_deintr_buf
 	   for scratch space. */
@@ -459,12 +452,8 @@ gus_deinterleave(sc, buf, size)
  */
 
 int
-gusmax_dma_output(addr, buf, size, intr, arg)
-	void * addr;
-	void *buf;
-	int size;
-	void (*intr)(void *);
-	void *arg;
+gusmax_dma_output(void *addr, void *buf, int size, void (*intr)(void *),
+    void *arg)
 {
 	struct ad1848_softc *ac = addr;
 	return gus_dma_output(ac->parent, buf, size, intr, arg);
@@ -474,8 +463,7 @@ gusmax_dma_output(addr, buf, size, intr, arg)
  * called at splaudio() from interrupt handler.
  */
 void
-stereo_dmaintr(arg)
-	void *arg;
+stereo_dmaintr(void *arg)
 {
     struct gus_softc *sc = arg;
     struct stereo_dma_intr *sa = &sc->sc_stereo;
@@ -517,12 +505,7 @@ stereo_dmaintr(arg)
  * generic audio code.
  */
 int
-gus_dma_output(addr, buf, size, intr, arg)
-	void * addr;
-	void *buf;
-	int size;
-	void (*intr)(void *);
-	void *arg;
+gus_dma_output(void *addr, void *buf, int size, void (*intr)(void *), void *arg)
 {
 	struct gus_softc *sc = addr;
 	u_char *buffer = buf;
@@ -604,8 +587,7 @@ gus_dma_output(addr, buf, size, intr, arg)
 }
 
 void
-gusmax_close(addr)
-	void *addr;
+gusmax_close(void *addr)
 {
 	struct ad1848_softc *ac = addr;
 	struct gus_softc *sc = ac->parent;
@@ -621,13 +603,11 @@ gusmax_close(addr)
  * Close out device stuff.  Called at splaudio() from generic audio layer.
  */
 void
-gusclose(addr)
-	void *addr;
+gusclose(void *addr)
 {
 	struct gus_softc *sc = addr;
 
         DPRINTF(("gus_close: sc=%p\n", sc));
-
 
 /*	if (sc->sc_flags & GUS_DMAOUT_ACTIVE) */ {
 		gus_halt_out_dma(sc);
@@ -660,8 +640,7 @@ int gusvocintrcnt;
 #endif
 
 int
-gusintr(arg)
-	void *arg;
+gusintr(void *arg)
 {
 	struct gus_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -728,8 +707,7 @@ struct playcont {
 int playcntr;
 
 void
-gus_dmaout_timeout(arg)
-	void *arg;
+gus_dmaout_timeout(void *arg)
 {
 	struct gus_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -760,8 +738,7 @@ gus_dmaout_timeout(arg)
  */
 
 int
-gus_dmaout_intr(sc)
-	struct gus_softc *sc;
+gus_dmaout_intr(struct gus_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh2 = sc->sc_ioh2;
@@ -781,8 +758,7 @@ gus_dmaout_intr(sc)
 }
 
 void
-gus_dmaout_dointr(sc)
-	struct gus_softc *sc;
+gus_dmaout_dointr(struct gus_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh2 = sc->sc_ioh2;
@@ -935,8 +911,7 @@ gus_dmaout_dointr(sc)
  */
 
 int
-gus_voice_intr(sc)
-	struct gus_softc *sc;
+gus_voice_intr(struct gus_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh2 = sc->sc_ioh2;
@@ -1078,9 +1053,7 @@ gus_voice_intr(sc)
 }
 
 void
-gus_start_playing(sc, bufno)
-	struct gus_softc *sc;
-	int bufno;
+gus_start_playing(struct gus_softc *sc, int bufno)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh2 = sc->sc_ioh2;
@@ -1158,9 +1131,7 @@ gus_start_playing(sc, bufno)
 }
 
 int
-gus_continue_playing(sc, voice)
-	struct gus_softc *sc;
-	int voice;
+gus_continue_playing(struct gus_softc *sc, int voice)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh2 = sc->sc_ioh2;
@@ -1259,11 +1230,8 @@ gus_continue_playing(sc, voice)
  */
 
 void
-gusdmaout(sc, flags, gusaddr, buffaddr, length)
-	struct gus_softc *sc;
-	int flags, length;
-	u_long gusaddr;
-	caddr_t buffaddr;
+gusdmaout(struct gus_softc *sc, int flags, u_long gusaddr, caddr_t buffaddr,
+    int length)
 {
 	unsigned char c = (unsigned char) flags;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1333,10 +1301,7 @@ gusdmaout(sc, flags, gusaddr, buffaddr, length)
  */
 
 void
-gus_start_voice(sc, voice, intrs)
-	struct gus_softc *sc;
-	int voice;
-	int intrs;
+gus_start_voice(struct gus_softc *sc, int voice, int intrs)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh2 = sc->sc_ioh2;
@@ -1430,10 +1395,7 @@ gus_start_voice(sc, voice, intrs)
  */
 
 void
-gus_stop_voice(sc, voice, intrs_too)
-	struct gus_softc *sc;
-	int voice;
-	int intrs_too;
+gus_stop_voice(struct gus_softc *sc, int voice, int intrs_too)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh2 = sc->sc_ioh2;
@@ -1473,9 +1435,7 @@ gus_stop_voice(sc, voice, intrs_too)
  * Set the volume of a given voice.  Called at splaudio().
  */
 void
-gus_set_volume(sc, voice, volume)
-	struct gus_softc *sc;
-	int voice, volume;
+gus_set_volume(struct gus_softc *sc, int voice, int volume)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh2 = sc->sc_ioh2;
@@ -1505,10 +1465,8 @@ gus_set_volume(sc, voice, volume)
  */
 
 int
-gusmax_set_params(addr, setmode, usemode, p, r)
-	void *addr;
-	int setmode, usemode;
-	struct audio_params *p, *r;
+gusmax_set_params(void *addr, int setmode, int usemode, struct audio_params *p,
+    struct audio_params *r)
 {
 	struct ad1848_softc *ac = addr;
 	struct gus_softc *sc = ac->parent;
@@ -1522,10 +1480,8 @@ gusmax_set_params(addr, setmode, usemode, p, r)
 }
 
 int
-gus_set_params(addr, setmode, usemode, p, r)
-	void *addr;
-	int setmode, usemode;
-	struct audio_params *p, *r;
+gus_set_params(void *addr, int setmode, int usemode, struct audio_params *p,
+    struct audio_params *r)
 {
 	struct gus_softc *sc = addr;
 
@@ -1592,9 +1548,7 @@ gus_set_params(addr, setmode, usemode, p, r)
  */
 
 int
-gusmax_round_blocksize(addr, blocksize)
-	void * addr;
-	int blocksize;
+gusmax_round_blocksize(void *addr, int blocksize)
 {
 	struct ad1848_softc *ac = addr;
 	struct gus_softc *sc = ac->parent;
@@ -1640,8 +1594,7 @@ gus_round_blocksize(addr, blocksize)
 }
 
 int
-gus_get_out_gain(addr)
-	caddr_t addr;
+gus_get_out_gain(caddr_t addr)
 {
 	struct gus_softc *sc = (struct gus_softc *) addr;
 
@@ -1649,9 +1602,8 @@ gus_get_out_gain(addr)
 	return sc->sc_ogain / 2;
 }
 
-inline void gus_set_voices(sc, voices)
-struct gus_softc *sc;
-int voices;
+inline void
+gus_set_voices(struct gus_softc *sc, int voices)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh2 = sc->sc_ioh2;
@@ -1670,8 +1622,7 @@ int voices;
  */
 
 int
-gusmax_commit_settings(addr)
-	void * addr;
+gusmax_commit_settings(void *addr)
 {
 	struct ad1848_softc *ac = addr;
 	struct gus_softc *sc = ac->parent;
@@ -1687,8 +1638,7 @@ gusmax_commit_settings(addr)
  * Commit the settings.  Called at normal IPL.
  */
 int
-gus_commit_settings(addr)
-	void * addr;
+gus_commit_settings(void *addr)
 {
 	struct gus_softc *sc = addr;
 
@@ -1710,8 +1660,7 @@ gus_commit_settings(addr)
 }
 
 void
-gus_set_chan_addrs(sc)
-struct gus_softc *sc;
+gus_set_chan_addrs(struct gus_softc *sc)
 {
 	/*
 	 * We use sc_nbufs * blocksize bytes of storage in the on-board GUS
@@ -1748,9 +1697,7 @@ struct gus_softc *sc;
  */
 
 void
-gus_set_samprate(sc, voice, freq)
-	struct gus_softc *sc;
-	int voice, freq;
+gus_set_samprate(struct gus_softc *sc, int voice, int freq)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh2 = sc->sc_ioh2;
@@ -1787,9 +1734,7 @@ gus_set_samprate(sc, voice, freq)
  */
 
 void
-gus_set_recrate(sc, rate)
-	struct gus_softc *sc;
-	u_long rate;
+gus_set_recrate(struct gus_softc *sc, u_long rate)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh2 = sc->sc_ioh2;
@@ -1811,18 +1756,14 @@ gus_set_recrate(sc, rate)
  */
 
 int
-gusmax_speaker_ctl(addr, newstate)
-	void * addr;
-	int newstate;
+gusmax_speaker_ctl(void *addr, int newstate)
 {
 	struct ad1848_softc *sc = addr;
 	return gus_speaker_ctl(sc->parent, newstate);
 }
 
 int
-gus_speaker_ctl(addr, newstate)
-	void * addr;
-	int newstate;
+gus_speaker_ctl(void *addr, int newstate)
 {
 	struct gus_softc *sc = (struct gus_softc *) addr;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1844,9 +1785,7 @@ gus_speaker_ctl(addr, newstate)
 }
 
 int
-gus_linein_ctl(addr, newstate)
-	void * addr;
-	int newstate;
+gus_linein_ctl(void *addr, int newstate)
 {
 	struct gus_softc *sc = (struct gus_softc *) addr;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1868,9 +1807,7 @@ gus_linein_ctl(addr, newstate)
 }
 
 int
-gus_mic_ctl(addr, newstate)
-	void * addr;
-	int newstate;
+gus_mic_ctl(void *addr, int newstate)
 {
 	struct gus_softc *sc = (struct gus_softc *) addr;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1896,10 +1833,7 @@ gus_mic_ctl(addr, newstate)
  */
 
 void
-gus_set_endaddr(sc, voice, addr)
-	struct gus_softc *sc;
-	int voice;
-	u_long addr;
+gus_set_endaddr(struct gus_softc *sc, int voice, u_long addr)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh2 = sc->sc_ioh2;
@@ -1921,10 +1855,7 @@ gus_set_endaddr(sc, voice, addr)
  * Set current address.  Called at splaudio().
  */
 void
-gus_set_curaddr(sc, voice, addr)
-	struct gus_softc *sc;
-	int voice;
-	u_long addr;
+gus_set_curaddr(struct gus_softc *sc, int voice, u_long addr)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh2 = sc->sc_ioh2;
@@ -1947,9 +1878,7 @@ gus_set_curaddr(sc, voice, addr)
  * Get current GUS playback address.  Called at splaudio().
  */
 u_long
-gus_get_curaddr(sc, voice)
-	struct gus_softc *sc;
-	int voice;
+gus_get_curaddr(struct gus_softc *sc, int voice)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh2 = sc->sc_ioh2;
@@ -1977,8 +1906,7 @@ gus_get_curaddr(sc, voice)
  */
 
 u_long
-convert_to_16bit(address)
-	u_long address;
+convert_to_16bit(u_long address)
 {
 	u_long old_address;
 
@@ -1995,11 +1923,8 @@ convert_to_16bit(address)
  */
 
 void
-guspoke(iot, ioh2, address, value)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh2;
-	long address;
-	unsigned char value;
+guspoke(bus_space_tag_t iot, bus_space_handle_t ioh2, long address,
+    unsigned char value)
 {
 
 	/*
@@ -2023,10 +1948,7 @@ guspoke(iot, ioh2, address, value)
  */
 
 unsigned char
-guspeek(iot, ioh2, address)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh2;
-	u_long address;
+guspeek(bus_space_tag_t iot, bus_space_handle_t ioh2, u_long address)
 {
 
 	/*
@@ -2050,9 +1972,7 @@ guspeek(iot, ioh2, address)
  */
 
 void
-gusreset(sc, voices)
-	struct gus_softc *sc;
-	int voices;
+gusreset(struct gus_softc *sc, int voices)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh1 = sc->sc_ioh1;
@@ -2182,8 +2102,7 @@ gusreset(sc, voices)
 
 
 int
-gus_init_cs4231(sc)
-	struct gus_softc *sc;
+gus_init_cs4231(struct gus_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh1 = sc->sc_ioh1;
@@ -2235,9 +2154,7 @@ gus_init_cs4231(sc)
  */
 
 int
-gus_getdev(addr, dev)
-	void * addr;
-	struct audio_device *dev;
+gus_getdev(void *addr, struct audio_device *dev)
 {
 	*dev = gus_device;
 	return 0;
@@ -2248,30 +2165,22 @@ gus_getdev(addr, dev)
  */
 
 int
-gus_set_in_gain(addr, gain, balance)
-	caddr_t addr;
-	u_int gain;
-	u_char balance;
+gus_set_in_gain(caddr_t addr, u_int gain,  u_char balance)
 {
 	DPRINTF(("gus_set_in_gain called\n"));
 	return 0;
 }
 
 int
-gus_get_in_gain(addr)
-	caddr_t addr;
+gus_get_in_gain(caddr_t addr)
 {
 	DPRINTF(("gus_get_in_gain called\n"));
 	return 0;
 }
 
 int
-gusmax_dma_input(addr, buf, size, callback, arg)
-	void * addr;
-	void *buf;
-	int size;
-	void (*callback)(void *);
-	void *arg;
+gusmax_dma_input(void *addr, void *buf, int size, void (*callback)(void *),
+    void *arg)
 {
 	struct ad1848_softc *sc = addr;
 	return gus_dma_input(sc->parent, buf, size, callback, arg);
@@ -2282,12 +2191,8 @@ gusmax_dma_input(addr, buf, size, callback, arg)
  * Called at splaudio(), either from top-half or from interrupt handler.
  */
 int
-gus_dma_input(addr, buf, size, callback, arg)
-	void * addr;
-	void *buf;
-	int size;
-	void (*callback)(void *);
-	void *arg;
+gus_dma_input(void *addr, void *buf, int size, void (*callback)(void *),
+    void *arg)
 {
 	struct gus_softc *sc = addr;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -2335,8 +2240,7 @@ gus_dma_input(addr, buf, size, callback, arg)
 }
 
 int
-gus_dmain_intr(sc)
-	struct gus_softc *sc;
+gus_dmain_intr(struct gus_softc *sc)
 {
         void (*callback)(void *);
 	void *arg;
@@ -2363,8 +2267,7 @@ gus_dmain_intr(sc)
 }
 
 int
-gusmax_halt_out_dma(addr)
-	void * addr;
+gusmax_halt_out_dma(void *addr)
 {
 	struct ad1848_softc *sc = addr;
 	return gus_halt_out_dma(sc->parent);
@@ -2372,8 +2275,7 @@ gusmax_halt_out_dma(addr)
 
 
 int
-gusmax_halt_in_dma(addr)
-	void * addr;
+gusmax_halt_in_dma(void *addr)
 {
 	struct ad1848_softc *sc = addr;
 	return gus_halt_in_dma(sc->parent);
@@ -2383,8 +2285,7 @@ gusmax_halt_in_dma(addr)
  * Stop any DMA output.  Called at splaudio().
  */
 int
-gus_halt_out_dma(addr)
-	void * addr;
+gus_halt_out_dma(void *addr)
 {
 	struct gus_softc *sc = addr;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -2420,8 +2321,7 @@ gus_halt_out_dma(addr)
  * Stop any DMA output.  Called at splaudio().
  */
 int
-gus_halt_in_dma(addr)
-	void * addr;
+gus_halt_in_dma(void *addr)
 {
 	struct gus_softc *sc = addr;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -2468,9 +2368,7 @@ ad1848_devmap_t gusmapping[] = {
 int nummap = sizeof(gusmapping) / sizeof(gusmapping[0]);
 
 int
-gusmax_mixer_get_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+gusmax_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct ad1848_softc *ac = addr;
 	struct gus_softc *sc = ac->parent;
@@ -2509,9 +2407,7 @@ gusmax_mixer_get_port(addr, cp)
 }
 
 int
-gus_mixer_get_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+gus_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct gus_softc *sc = addr;
 	struct ics2101_softc *ic = &sc->sc_mixer;
@@ -2634,54 +2530,42 @@ gus_mixer_get_port(addr, cp)
 }
 
 void
-gusics_master_mute(ic, mute)
-	struct ics2101_softc *ic;
-	int mute;
+gusics_master_mute(struct ics2101_softc *ic, int mute)
 {
 	ics2101_mix_mute(ic, GUSMIX_CHAN_MASTER, ICSMIX_LEFT, mute);
 	ics2101_mix_mute(ic, GUSMIX_CHAN_MASTER, ICSMIX_RIGHT, mute);
 }
 
 void
-gusics_mic_mute(ic, mute)
-	struct ics2101_softc *ic;
-	int mute;
+gusics_mic_mute(struct ics2101_softc *ic, int mute)
 {
 	ics2101_mix_mute(ic, GUSMIX_CHAN_MIC, ICSMIX_LEFT, mute);
 	ics2101_mix_mute(ic, GUSMIX_CHAN_MIC, ICSMIX_RIGHT, mute);
 }
 
 void
-gusics_linein_mute(ic, mute)
-	struct ics2101_softc *ic;
-	int mute;
+gusics_linein_mute(struct ics2101_softc *ic, int mute)
 {
 	ics2101_mix_mute(ic, GUSMIX_CHAN_LINE, ICSMIX_LEFT, mute);
 	ics2101_mix_mute(ic, GUSMIX_CHAN_LINE, ICSMIX_RIGHT, mute);
 }
 
 void
-gusics_cd_mute(ic, mute)
-	struct ics2101_softc *ic;
-	int mute;
+gusics_cd_mute(struct ics2101_softc *ic, int mute)
 {
 	ics2101_mix_mute(ic, GUSMIX_CHAN_CD, ICSMIX_LEFT, mute);
 	ics2101_mix_mute(ic, GUSMIX_CHAN_CD, ICSMIX_RIGHT, mute);
 }
 
 void
-gusics_dac_mute(ic, mute)
-	struct ics2101_softc *ic;
-	int mute;
+gusics_dac_mute(struct ics2101_softc *ic, int mute)
 {
 	ics2101_mix_mute(ic, GUSMIX_CHAN_DAC, ICSMIX_LEFT, mute);
 	ics2101_mix_mute(ic, GUSMIX_CHAN_DAC, ICSMIX_RIGHT, mute);
 }
 
 int
-gusmax_mixer_set_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+gusmax_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct ad1848_softc *ac = addr;
 	struct gus_softc *sc = ac->parent;
@@ -2720,9 +2604,7 @@ gusmax_mixer_set_port(addr, cp)
 }
 
 int
-gus_mixer_set_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+gus_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct gus_softc *sc = addr;
 	struct ics2101_softc *ic = &sc->sc_mixer;
@@ -2880,8 +2762,7 @@ gus_mixer_set_port(addr, cp)
 }
 
 int
-gus_get_props(addr)
-	void *addr;
+gus_get_props(void *addr)
 {
 	struct gus_softc *sc = addr;
 	return AUDIO_PROP_MMAP |
@@ -2889,17 +2770,14 @@ gus_get_props(addr)
 }
 
 int
-gusmax_get_props(addr)
-	void *addr;
+gusmax_get_props(void *addr)
 {
 	struct ad1848_softc *ac = addr;
 	return gus_get_props(ac->parent);
 }
 
 int
-gusmax_mixer_query_devinfo(addr, dip)
-	void *addr;
-	mixer_devinfo_t *dip;
+gusmax_mixer_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
 	DPRINTF(("gusmax_query_devinfo: index=%d\n", dip->index));
 
@@ -3113,9 +2991,7 @@ gusmax_mixer_query_devinfo(addr, dip)
 }
 
 int
-gus_mixer_query_devinfo(addr, dip)
-	void *addr;
-	mixer_devinfo_t *dip;
+gus_mixer_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
 	struct gus_softc *sc = addr;
 
@@ -3268,9 +3144,7 @@ mute:
 }
 
 int
-gus_query_encoding(addr, fp)
-	void *addr;
-	struct audio_encoding *fp;
+gus_query_encoding(void *addr, struct audio_encoding *fp)
 {
 	switch (fp->index) {
 	case 0:
@@ -3338,8 +3212,7 @@ gus_query_encoding(addr, fp)
  */
 
 void
-gus_init_ics2101(sc)
-	struct gus_softc *sc;
+gus_init_ics2101(struct gus_softc *sc)
 {
 	struct ics2101_softc *ic = &sc->sc_mixer;
 	sc->sc_mixer.sc_iot = sc->sc_iot;
@@ -3419,9 +3292,7 @@ gus_init_ics2101(sc)
 
 
 void
-gus_subattach(sc, ia)
-	struct gus_softc *sc;
-	struct isa_attach_args *ia;
+gus_subattach(struct gus_softc *sc, struct isa_attach_args *ia)
 {
 	int		i;
 	bus_space_tag_t iot;
@@ -3639,9 +3510,7 @@ gus_subattach(sc, ia)
  */
 
 int
-gus_test_iobase (iot, iobase)
-	bus_space_tag_t iot;
-	int iobase;
+gus_test_iobase (bus_space_tag_t iot, int iobase)
 {
 	bus_space_handle_t ioh1, ioh2, ioh3, ioh4;
 	u_char s1, s2;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.39 2011/06/29 12:17:40 tedu Exp $	*/
+/*	$OpenBSD: wds.c,v 1.40 2013/11/15 16:46:27 brad Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -191,12 +191,8 @@ struct cfdriver wds_cd = {
 #define	WDS_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 
 integrate void
-wds_wait(iot, ioh, port, mask, val)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int port;
-	int mask;
-	int val;
+wds_wait(bus_space_tag_t iot, bus_space_handle_t ioh, int port, int mask,
+    int val)
 {
 	while ((bus_space_read_1(iot, ioh, port) & mask) != val)
 		;
@@ -206,10 +202,7 @@ wds_wait(iot, ioh, port, mask, val)
  * Write a command to the board's I/O ports.
  */
 int
-wds_cmd(sc, ibuf, icnt)
-	struct wds_softc *sc;
-	u_int8_t *ibuf;
-	int icnt;
+wds_cmd(struct wds_softc *sc,  u_int8_t *ibuf, int icnt)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -232,9 +225,7 @@ wds_cmd(sc, ibuf, icnt)
  * Check for the presence of a WD7000 SCSI controller.
  */
 int
-wdsprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+wdsprobe(struct device *parent, void *match, void *aux)
 {
 	register struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -258,11 +249,8 @@ wdsprobe(parent, match, aux)
 }
 
 int
-wdsprint(aux, name)
-	void *aux;
-	const char *name;
+wdsprint(void *aux, const char *name)
 {
-
 	if (name != NULL)
 		printf("%s: scsibus ", name);
 	return UNCONF;
@@ -272,9 +260,7 @@ wdsprint(aux, name)
  * Attach all available units.
  */
 void
-wdsattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wdsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct wds_softc *sc = (void *)self;
@@ -326,8 +312,7 @@ wdsattach(parent, self, aux)
 }
 
 integrate void
-wds_finish_scbs(sc)
-	struct wds_softc *sc;
+wds_finish_scbs(struct wds_softc *sc)
 {
 	struct wds_mbx_in *wmbi;
 	struct wds_scb *scb;
@@ -386,8 +371,7 @@ AGAIN:
  * Process an interrupt.
  */
 int
-wdsintr(arg)
-	void *arg;
+wdsintr(void *arg)
 {
 	struct wds_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -423,11 +407,8 @@ wdsintr(arg)
 }
 
 integrate void
-wds_reset_scb(sc, scb)
-	struct wds_softc *sc;
-	struct wds_scb *scb;
+wds_reset_scb(struct wds_softc *sc, struct wds_scb *scb)
 {
-
 	scb->flags = 0;
 }
 
@@ -435,8 +416,7 @@ wds_reset_scb(sc, scb)
  * Free the command structure, the outgoing mailbox and the data buffer.
  */
 void
-wds_scb_free(xsc, xscb)
-	void *xsc, *xscb;
+wds_scb_free(void *xsc, void *xscb)
 {
 	struct wds_softc *sc = xsc;
 	struct wds_scb *scb = xscb;
@@ -453,9 +433,7 @@ wds_scb_free(xsc, xscb)
 }
 
 void
-wds_free_buf(sc, buf)
-	struct wds_softc *sc;
-	struct wds_buf *buf;
+wds_free_buf(struct wds_softc *sc, struct wds_buf *buf)
 {
 	int s;
 
@@ -475,9 +453,7 @@ wds_free_buf(sc, buf)
 }
 
 integrate void
-wds_init_scb(sc, scb)
-	struct wds_softc *sc;
-	struct wds_scb *scb;
+wds_init_scb(struct wds_softc *sc, struct wds_scb *scb)
 {
 	int hashnum;
 
@@ -497,8 +473,7 @@ wds_init_scb(sc, scb)
  * Get a free scb
  */
 void *
-wds_scb_alloc(xsc)
-	void *xsc;
+wds_scb_alloc(void *xsc)
 {
 	struct wds_softc *sc = xsc;
 	struct wds_scb *scb;
@@ -515,9 +490,7 @@ wds_scb_alloc(xsc)
 }
 
 struct wds_buf *
-wds_get_buf(sc, flags)
-	struct wds_softc *sc;
-	int flags;
+wds_get_buf(struct wds_softc *sc, int flags)
 {
 	struct wds_buf *buf;
 	int s;
@@ -543,9 +516,7 @@ out:
 }
 
 struct wds_scb *
-wds_scb_phys_kv(sc, scb_phys)
-	struct wds_softc *sc;
-	u_long scb_phys;
+wds_scb_phys_kv(struct wds_softc *sc, u_long scb_phys)
 {
 	int hashnum = SCB_HASH(scb_phys);
 	struct wds_scb *scb = sc->sc_scbhash[hashnum];
@@ -565,11 +536,8 @@ wds_scb_phys_kv(sc, scb_phys)
  * Queue a SCB to be sent to the controller, and send it if possible.
  */
 void
-wds_queue_scb(sc, scb)
-	struct wds_softc *sc;
-	struct wds_scb *scb;
+wds_queue_scb(struct wds_softc *sc, struct wds_scb *scb)
 {
-
 	TAILQ_INSERT_TAIL(&sc->sc_waiting_scb, scb, chain);
 	wds_start_scbs(sc);
 }
@@ -578,8 +546,7 @@ wds_queue_scb(sc, scb)
  * Garbage collect mailboxes that are no longer in use.
  */
 void
-wds_collect_mbo(sc)
-	struct wds_softc *sc;
+wds_collect_mbo(struct wds_softc *sc)
 {
 	struct wds_mbx_out *wmbo;	/* Mail Box Out pointer */
 #ifdef WDSDIAG
@@ -608,8 +575,7 @@ wds_collect_mbo(sc)
  * Send as many SCBs as we have empty mailboxes for.
  */
 void
-wds_start_scbs(sc)
-	struct wds_softc *sc;
+wds_start_scbs(struct wds_softc *sc)
 {
 	struct wds_mbx_out *wmbo;	/* Mail Box Out pointer */
 	struct wds_scb *scb;
@@ -659,10 +625,7 @@ wds_start_scbs(sc)
  * Process the result of a SCSI command.
  */
 void
-wds_done(sc, scb, stat)
-	struct wds_softc *sc;
-	struct wds_scb *scb;
-	u_int8_t stat;
+wds_done(struct wds_softc *sc, struct wds_scb *scb, u_int8_t stat)
 {
 	struct scsi_xfer *xs = scb->xs;
 
@@ -747,9 +710,7 @@ wds_done(sc, scb, stat)
 }
 
 int
-wds_find(ia, sc)
-	struct isa_attach_args *ia;
-	struct wds_softc *sc;
+wds_find(struct isa_attach_args *ia, struct wds_softc *sc)
 {
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh = ia->ia_ioh;
@@ -819,8 +780,7 @@ ready:
  * Initialise the board and driver.
  */
 void
-wds_init(sc)
-	struct wds_softc *sc;
+wds_init(struct wds_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -869,8 +829,7 @@ wds_init(sc)
  * Read the board's firmware revision information.
  */
 void
-wds_inquire_setup_information(sc)
-	struct wds_softc *sc;
+wds_inquire_setup_information(struct wds_softc *sc)
 {
 	struct wds_scb *scb;
 	u_char *j;
@@ -927,8 +886,7 @@ wdsminphys(struct buf *bp, struct scsi_link *sl)
  * Send a SCSI command.
  */
 void
-wds_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+wds_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
 	struct wds_softc *sc = sc_link->adapter_softc;
@@ -1096,9 +1054,7 @@ bad:
  * Send a sense request.
  */
 void
-wds_sense(sc, scb)
-	struct wds_softc *sc;
-	struct wds_scb *scb;
+wds_sense(struct wds_softc *sc, struct wds_scb *scb)
 {
 	struct scsi_xfer *xs = scb->xs;
 	struct scsi_sense *ss = (void *)&scb->sense.scb;
@@ -1146,10 +1102,7 @@ wds_sense(sc, scb)
  * Poll a particular unit, looking for a particular scb
  */
 int
-wds_poll(sc, xs, count)
-	struct wds_softc *sc;
-	struct scsi_xfer *xs;
-	int count;
+wds_poll(struct wds_softc *sc, struct scsi_xfer *xs,  int count)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1178,10 +1131,7 @@ wds_poll(sc, xs, count)
  * Poll a particular unit, looking for a particular scb
  */
 int
-wds_ipoll(sc, scb, count)
-	struct wds_softc *sc;
-	struct wds_scb *scb;
-	int count;
+wds_ipoll(struct wds_softc *sc, struct wds_scb *scb, int count)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1207,8 +1157,7 @@ wds_ipoll(sc, scb, count)
 }
 
 void
-wds_timeout(arg)
-	void *arg;
+wds_timeout(void *arg)
 {
 	struct wds_scb *scb = arg;
 	struct scsi_xfer *xs;

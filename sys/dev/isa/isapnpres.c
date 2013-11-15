@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnpres.c,v 1.7 2010/06/24 21:17:59 jasper Exp $	*/
+/*	$OpenBSD: isapnpres.c,v 1.8 2013/11/15 16:46:27 brad Exp $	*/
 /*	$NetBSD: isapnpres.c,v 1.7.4.1 1997/11/20 07:46:13 mellon Exp $	*/
 
 /*
@@ -68,8 +68,7 @@ int isapnp_process_tag(u_char, u_char, u_char *,
  *	Wait for the next byte of resource data to become available
  */
 int
-isapnp_wait_status(sc)
-	struct isapnp_softc *sc;
+isapnp_wait_status(struct isapnp_softc *sc)
 {
 	int i;
 
@@ -88,8 +87,7 @@ isapnp_wait_status(sc)
  *	resources of the current card if needed.
  */
 struct isa_attach_args *
-isapnp_newdev(card)
-	struct isa_attach_args *card;
+isapnp_newdev(struct isa_attach_args *card)
 {
 	struct isa_attach_args *ipa, *dev = malloc(sizeof(*dev), M_DEVBUF, M_WAITOK);
 
@@ -117,8 +115,7 @@ isapnp_newdev(card)
  *	Add a new alternate configuration to a logical device
  */
 struct isa_attach_args *
-isapnp_newconf(dev)
-	struct isa_attach_args *dev;
+isapnp_newconf(struct isa_attach_args *dev)
 {
 	struct isa_attach_args *ipa, *conf = malloc(sizeof(*conf), M_DEVBUF, M_WAITOK);
 
@@ -150,9 +147,7 @@ isapnp_newconf(dev)
  *	Merge the common device configurations to the subconfigurations
  */
 void
-isapnp_merge(c, d)
-	struct isa_attach_args *c;
-	const struct isa_attach_args *d;
+isapnp_merge(struct isa_attach_args *c, const struct isa_attach_args *d)
 {
 	int i;
 
@@ -177,8 +172,7 @@ isapnp_merge(c, d)
  *	Flatten the tree to a list of config entries.
  */
 struct isa_attach_args *
-isapnp_flatten(card)
-	struct isa_attach_args *card;
+isapnp_flatten(struct isa_attach_args *card)
 {
 	struct isa_attach_args *dev, *conf, *d, *c, *pa;
 
@@ -223,9 +217,9 @@ isapnp_flatten(card)
  *	Process a resource tag
  */
 int
-isapnp_process_tag(tag, len, buf, card, dev, conf)
-	u_char tag, len, *buf;
-	struct isa_attach_args **card, **dev, **conf;
+isapnp_process_tag(u_char tag, u_char len, u_char *buf,
+    struct isa_attach_args **card, struct isa_attach_args **dev,
+    struct isa_attach_args **conf)
 {
 	char str[64];
 	struct isapnp_region *r;
@@ -437,10 +431,8 @@ isapnp_process_tag(tag, len, buf, card, dev, conf)
  *	Read the resources for card c
  */
 struct isa_attach_args *
-isapnp_get_resource(sc, c, template)
-	struct isapnp_softc *sc;
-	int c;
-	struct isa_attach_args *template;
+isapnp_get_resource(struct isapnp_softc *sc, int c,
+    struct isa_attach_args *template)
 {
 	u_char d, tag;
 	u_short len;

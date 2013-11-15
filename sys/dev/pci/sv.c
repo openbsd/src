@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.29 2013/05/24 07:58:47 ratchov Exp $ */
+/*      $OpenBSD: sv.c,v 1.30 2013/11/15 16:46:27 brad Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -197,27 +197,19 @@ static __inline__ void sv_write_indirect(struct sv_softc *, u_int8_t, u_int8_t )
 static void sv_init_mixer(struct sv_softc *);
 
 static __inline__ void
-sv_write (sc, reg, val)
-     struct sv_softc *sc;
-     u_int8_t reg, val;
-     
+sv_write (struct sv_softc *sc, u_int8_t reg, u_int8_t val)
 {
   bus_space_write_1(sc->sc_iot, sc->sc_ioh, reg, val);
 }
 
 static __inline__ u_int8_t
-sv_read (sc, reg)
-     struct sv_softc *sc;
-     u_int8_t reg;
-     
+sv_read (struct sv_softc *sc, u_int8_t reg)
 {
   return (bus_space_read_1(sc->sc_iot, sc->sc_ioh, reg));
 }
 
 static __inline__ u_int8_t
-sv_read_indirect (sc, reg)
-     struct sv_softc *sc;
-     u_int8_t reg;
+sv_read_indirect (struct sv_softc *sc, u_int8_t reg)
 {
     u_int8_t iaddr = 0;
 
@@ -231,9 +223,7 @@ sv_read_indirect (sc, reg)
 }
 
 static __inline__ void
-sv_write_indirect (sc, reg, val)
-     struct sv_softc *sc;
-     u_int8_t reg, val;
+sv_write_indirect (struct sv_softc *sc, u_int8_t reg, u_int8_t val)
 {
     u_int8_t iaddr = 0;
 #ifdef DIAGNOSTIC
@@ -255,9 +245,7 @@ sv_write_indirect (sc, reg, val)
 }
 
 int
-sv_match(parent, match, aux)
-     struct device *parent;
-     void *match, *aux;
+sv_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -269,10 +257,7 @@ sv_match(parent, match, aux)
 }
 
 static void
-sv_attach(parent, self, aux)
-     struct device *parent, *self;
-     void *aux;
-
+sv_attach(struct device *parent, struct device *self, void *aux)
 {
   struct sv_softc *sc = (struct sv_softc *)self;
   struct pci_attach_args *pa = aux;
@@ -395,8 +380,7 @@ sv_attach(parent, self, aux)
 
 #ifdef AUDIO_DEBUG
 void
-sv_dumpregs(sc)
-     struct sv_softc *sc;
+sv_dumpregs(struct sv_softc *sc)
 {
   int idx;
 
@@ -425,8 +409,7 @@ sv_dumpregs(sc)
 #endif
 
 int
-sv_intr(p)
-	void *p;
+sv_intr(void *p)
 {
   struct sv_softc *sc = p;
   u_int8_t intr;
@@ -453,11 +436,7 @@ sv_intr(p)
 }
 
 int
-sv_allocmem(sc, size, align, p)
-	struct sv_softc *sc;
-	size_t size;
-	size_t align;
-        struct sv_dma *p;
+sv_allocmem(struct sv_softc *sc, size_t size, size_t align, struct sv_dma *p)
 {
 	int error;
 
@@ -494,9 +473,7 @@ free:
 }
 
 int
-sv_freemem(sc, p)
-	struct sv_softc *sc;
-        struct sv_dma *p;
+sv_freemem(struct sv_softc *sc, struct sv_dma *p)
 {
 	bus_dmamap_unload(sc->sc_dmatag, p->map);
 	bus_dmamap_destroy(sc->sc_dmatag, p->map);
@@ -506,9 +483,7 @@ sv_freemem(sc, p)
 }
 
 int
-sv_open(addr, flags)
-	void *addr;
-	int flags;
+sv_open(void *addr, int flags)
 {
 
     struct sv_softc *sc = addr;
@@ -591,8 +566,7 @@ sv_open(addr, flags)
  * Close function is called at splaudio().
  */
 void
-sv_close(addr)
-	void *addr;
+sv_close(void *addr)
 {
 	struct sv_softc *sc = addr;
     
@@ -604,9 +578,7 @@ sv_close(addr)
 }
 
 int
-sv_query_encoding(addr, fp)
-	void *addr;
-	struct audio_encoding *fp;
+sv_query_encoding(void *addr, struct audio_encoding *fp)
 {
 	switch (fp->index) {
 	case 0:
@@ -667,10 +639,8 @@ sv_query_encoding(addr, fp)
 }
 
 int
-sv_set_params(addr, setmode, usemode, p, r)
-	void *addr;
-	int setmode, usemode;
-	struct audio_params *p, *r;
+sv_set_params(void *addr, int setmode, int usemode,
+    struct audio_params *p, struct audio_params *r)
 {
 	struct sv_softc *sc = addr;
 	void (*pswcode)(void *, u_char *buf, int cnt);
@@ -804,18 +774,13 @@ sv_set_params(addr, setmode, usemode, p, r)
 }
 
 int
-sv_round_blocksize(addr, blk)
-	void *addr;
-	int blk;
+sv_round_blocksize(void *addr, int blk)
 {
 	return ((blk + 31) & -32);	/* keep good alignment */
 }
 
 int
-sv_dma_init_input(addr, buf, cc)
-	void *addr;
-	void *buf;
-	int cc;
+sv_dma_init_input(void *addr, void *buf, int cc)
 {
 	struct sv_softc *sc = addr;
 	struct sv_dma *p;
@@ -843,10 +808,7 @@ sv_dma_init_input(addr, buf, cc)
 }
 
 int
-sv_dma_init_output(addr, buf, cc)
-	void *addr;
-	void *buf;
-	int cc;
+sv_dma_init_output(void *addr, void *buf, int cc)
 {
 	struct sv_softc *sc = addr;
 	struct sv_dma *p;
@@ -873,12 +835,7 @@ sv_dma_init_output(addr, buf, cc)
 }
 
 int
-sv_dma_output(addr, p, cc, intr, arg)
-	void *addr;
-	void *p;
-	int cc;
-	void (*intr)(void *);
-	void *arg;
+sv_dma_output(void *addr, void *p, int cc, void (*intr)(void *), void *arg)
 {
 	struct sv_softc *sc = addr;
 	u_int8_t mode;
@@ -903,12 +860,7 @@ sv_dma_output(addr, p, cc, intr, arg)
 }
 
 int
-sv_dma_input(addr, p, cc, intr, arg)
-	void *addr;
-	void *p;
-	int cc;
-	void (*intr)(void *);
-	void *arg;
+sv_dma_input(void *addr, void *p, int cc, void (*intr)(void *), void *arg)
 {
 	struct sv_softc *sc = addr;
 	u_int8_t mode;
@@ -932,8 +884,7 @@ sv_dma_input(addr, p, cc, intr, arg)
 }
 
 int
-sv_halt_out_dma(addr)
-	void *addr;
+sv_halt_out_dma(void *addr)
 {
 	struct sv_softc *sc = addr;
 	u_int8_t mode;
@@ -949,8 +900,7 @@ sv_halt_out_dma(addr)
 }
 
 int
-sv_halt_in_dma(addr)
-	void *addr;
+sv_halt_in_dma(void *addr)
 {
 	struct sv_softc *sc = addr;
 	u_int8_t mode;
@@ -966,9 +916,7 @@ sv_halt_in_dma(addr)
 }
 
 int
-sv_getdev(addr, retp)
-	void *addr;
-        struct audio_device *retp;
+sv_getdev(void *addr, struct audio_device *retp)
 {
 	*retp = sv_device;
         return (0);
@@ -1036,9 +984,7 @@ static const struct {
 #define SV_SRS_MODE (SV_LAST_MIXER + 4)
 
 int 
-sv_query_devinfo(addr, dip)
-	void *addr;
-	mixer_devinfo_t *dip;
+sv_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
 
   if (dip->index < 0)
@@ -1152,9 +1098,7 @@ on_off:
 }
 
 int
-sv_mixer_set_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+sv_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 {
   struct sv_softc *sc = addr;
   u_int8_t reg;
@@ -1317,9 +1261,7 @@ sv_mixer_set_port(addr, cp)
 }
 
 int
-sv_mixer_get_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+sv_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 {
   struct sv_softc *sc = addr;
   int val;
@@ -1419,8 +1361,7 @@ sv_mixer_get_port(addr, cp)
 
 
 static void
-sv_init_mixer(sc)
-     struct sv_softc *sc;
+sv_init_mixer(struct sv_softc *sc)
 {
   mixer_ctrl_t cp;
   int idx;
@@ -1443,12 +1384,7 @@ sv_init_mixer(sc)
 }
 
 void *
-sv_malloc(addr, direction, size, pool, flags)
-	void *addr;
-	int direction;
-	size_t size;
-	int pool;
-	int flags;
+sv_malloc(void *addr, int direction, size_t size, int pool, int flags)
 {
 	struct sv_softc *sc = addr;
         struct sv_dma *p;
@@ -1468,10 +1404,7 @@ sv_malloc(addr, direction, size, pool, flags)
 }
 
 void
-sv_free(addr, ptr, pool)
-	void *addr;
-	void *ptr;
-	int pool;
+sv_free(void *addr, void *ptr, int pool)
 {
 	struct sv_softc *sc = addr;
         struct sv_dma **p;
@@ -1487,11 +1420,7 @@ sv_free(addr, ptr, pool)
 }
 
 paddr_t
-sv_mappage(addr, mem, off, prot)
-	void *addr;
-        void *mem;
-        off_t off;
-	int prot;
+sv_mappage(void *addr, void *mem, off_t off, int prot)
 {
 	struct sv_softc *sc = addr;
         struct sv_dma *p;
@@ -1505,8 +1434,7 @@ sv_mappage(addr, mem, off, prot)
 }
 
 int
-sv_get_props(addr)
-	void *addr;
+sv_get_props(void *addr)
 {
 	return (AUDIO_PROP_MMAP | AUDIO_PROP_FULLDUPLEX);
 }

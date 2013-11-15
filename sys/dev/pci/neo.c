@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.28 2013/05/24 07:58:46 ratchov Exp $       */
+/*      $OpenBSD: neo.c,v 1.29 2013/11/15 16:46:27 brad Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -422,9 +422,7 @@ nm_loadcoeff(struct neo_softc *sc, int dir, int num)
 }
 
 int
-nmchan_getptr(sc, mode)
-        struct neo_softc *sc;
-	int mode;
+nmchan_getptr(struct neo_softc *sc, int mode)
 {
 	if (mode == AUMODE_PLAY)
 		return (nm_rd(sc, NM_PBUFFER_CURRP, 4) - sc->pbuf);
@@ -557,10 +555,7 @@ nm_init(struct neo_softc *sc)
 
 
 void
-neo_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+neo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct neo_softc *sc = (struct neo_softc *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
@@ -640,10 +635,7 @@ neo_activate(struct device *self, int act)
 }
 
 int
-neo_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+neo_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 #if 0
@@ -676,10 +668,7 @@ neo_match(parent, match, aux)
 }
 
 int
-neo_read_codec(sc_, a, d)
-        void *sc_;
-	u_int8_t a;
-	u_int16_t *d;
+neo_read_codec(void *sc_, u_int8_t a, u_int16_t *d)
 {
 	struct neo_softc *sc = sc_;
 
@@ -694,10 +683,7 @@ neo_read_codec(sc_, a, d)
 
 
 int
-neo_write_codec(sc_, a, d)
-        void *sc_;
-	u_int8_t a;
-	u_int16_t d;
+neo_write_codec(void *sc_, u_int8_t a, u_int16_t d)
 {
 	struct neo_softc *sc = sc_;
 	int cnt = 3;
@@ -717,9 +703,7 @@ neo_write_codec(sc_, a, d)
 
 
 int
-neo_attach_codec(sc_, codec_if)
-	void *sc_;
-	struct ac97_codec_if  *codec_if;
+neo_attach_codec(void *sc_, struct ac97_codec_if *codec_if)
 {
 	struct neo_softc *sc = sc_;
 
@@ -728,8 +712,7 @@ neo_attach_codec(sc_, codec_if)
 }
 
 void
-neo_reset_codec(sc)
-	void *sc;
+neo_reset_codec(void *sc)
 {
 	nm_wr(sc, 0x6c0, 0x01, 1);
 	nm_wr(sc, 0x6cc, 0x87, 1);
@@ -741,16 +724,13 @@ neo_reset_codec(sc)
 
 
 enum ac97_host_flags
-neo_flags_codec(sc)
-	void *sc;
+neo_flags_codec(void *sc)
 {
 	return (AC97_HOST_DONT_READANY);
 }
 
 int
-neo_open(addr, flags)
-	void *addr;
-	int flags;
+neo_open(void *addr, int flags)
 {
 	return (0);
 }
@@ -759,8 +739,7 @@ neo_open(addr, flags)
  * Close function is called at splaudio().
  */
 void
-neo_close(addr)
-	void *addr;
+neo_close(void *addr)
 {
 	struct neo_softc *sc = addr;
 
@@ -772,9 +751,7 @@ neo_close(addr)
 }
 
 int
-neo_query_encoding(addr, fp)
-	void *addr;
-	struct audio_encoding *fp;
+neo_query_encoding(void *addr, struct audio_encoding *fp)
 {
 	switch (fp->index) {
 	case 0:
@@ -842,10 +819,8 @@ neo_get_default_params(void *addr, int mode, struct audio_params *params)
 
 /* Todo: don't commit settings to card until we've verified all parameters */
 int
-neo_set_params(addr, setmode, usemode, play, rec)
-	void *addr;
-	int setmode, usemode;
-	struct audio_params *play, *rec;
+neo_set_params(void *addr, int setmode, int usemode,
+    struct audio_params *play, struct audio_params *rec)
 {
 	struct neo_softc *sc = addr;
 	u_int32_t base;
@@ -928,21 +903,14 @@ neo_set_params(addr, setmode, usemode, play, rec)
 }
 
 int
-neo_round_blocksize(addr, blk)
-	void *addr;
-	int blk;
+neo_round_blocksize(void *addr, int blk)
 {
 	return (NM_BUFFSIZE / 2);
 }
 
 int
-neo_trigger_output(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+neo_trigger_output(void *addr, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct neo_softc *sc = addr;
 	int ssz;
@@ -972,13 +940,8 @@ neo_trigger_output(addr, start, end, blksize, intr, arg, param)
 
 
 int
-neo_trigger_input(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+neo_trigger_input(void *addr, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct neo_softc *sc = addr;
 	int ssz;
@@ -1005,8 +968,7 @@ neo_trigger_input(addr, start, end, blksize, intr, arg, param)
 }
 
 int
-neo_halt_output(addr)
-	void *addr;
+neo_halt_output(void *addr)
 {
 	struct neo_softc *sc = (struct neo_softc *)addr;
 
@@ -1020,8 +982,7 @@ neo_halt_output(addr)
 }
 
 int
-neo_halt_input(addr)
-	void *addr;
+neo_halt_input(void *addr)
 {
 	struct neo_softc *sc = (struct neo_softc *)addr;
 
@@ -1034,18 +995,14 @@ neo_halt_input(addr)
 }
 
 int
-neo_getdev(addr, retp)
-	void *addr;
-	struct audio_device *retp;
+neo_getdev(void *addr, struct audio_device *retp)
 {
 	*retp = neo_device;
 	return (0);
 }
 
 int
-neo_mixer_set_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+neo_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct neo_softc *sc = addr;
 
@@ -1053,9 +1010,7 @@ neo_mixer_set_port(addr, cp)
 }
 
 int
-neo_mixer_get_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+neo_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct neo_softc *sc = addr;
 
@@ -1063,9 +1018,7 @@ neo_mixer_get_port(addr, cp)
 }
 
 int
-neo_query_devinfo(addr, dip)
-	void *addr;
-	mixer_devinfo_t *dip;
+neo_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
 	struct neo_softc *sc = addr;
 
@@ -1073,11 +1026,7 @@ neo_query_devinfo(addr, dip)
 }
 
 void *
-neo_malloc(addr, direction, size, pool, flags)
-	void *addr;
-	int  direction;
-	size_t size;
-	int pool, flags;
+neo_malloc(void *addr, int direction, size_t size, int pool, int flags)
 {
 	struct neo_softc *sc = addr;
 	void *rv = 0;
@@ -1097,28 +1046,20 @@ neo_malloc(addr, direction, size, pool, flags)
 }
 
 void
-neo_free(addr, ptr, pool)
-	void *addr;
-	void *ptr;
-	int pool;
+neo_free(void *addr, void *ptr, int pool)
 {
 	return;
 }
 
 size_t
-neo_round_buffersize(addr, direction, size)
-	void *addr;
-	int direction;
-	size_t size;
+neo_round_buffersize(void *addr, int direction, size_t size)
 {
 	return (NM_BUFFSIZE);
 }
 
 
 int
-neo_get_props(addr)
-	void *addr;
+neo_get_props(void *addr)
 {
-
 	return (AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX);
 }

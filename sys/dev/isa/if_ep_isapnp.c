@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_isapnp.c,v 1.12 2013/08/07 01:06:32 bluhm Exp $	*/
+/*	$OpenBSD: if_ep_isapnp.c,v 1.13 2013/11/15 16:46:27 brad Exp $	*/
 /*	$NetBSD: if_ep_isapnp.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
@@ -95,18 +95,14 @@ struct cfattach ep_isapnp_ca = {
  * calls we look for matching cards.
  */
 int
-ep_isapnp_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ep_isapnp_match(struct device *parent, void *match, void *aux)
 {
 	/* XXX This should be more intelligent */
 	return 1;
 }
 
 void
-ep_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ep_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ep_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

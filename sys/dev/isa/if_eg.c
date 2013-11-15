@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.33 2013/08/07 01:06:32 bluhm Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.34 2013/11/15 16:46:27 brad Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -137,8 +137,7 @@ static int egreadPCB(struct eg_softc *);
  */
 	
 static __inline void
-egprintpcb(sc)
-	struct eg_softc *sc;
+egprintpcb(struct eg_softc *sc)
 {
 	int i;
 	
@@ -148,8 +147,7 @@ egprintpcb(sc)
 
 
 static __inline void
-egprintstat(b)
-	u_char b;
+egprintstat(u_char b)
 {
 	DPRINTF(("%s %s %s %s %s %s %s\n", 
 	    (b & EG_STAT_HCRE)?"HCRE":"",
@@ -162,9 +160,7 @@ egprintstat(b)
 }
 
 static int
-egoutPCB(sc, b)
-	struct eg_softc *sc;
-	u_char b;
+egoutPCB(struct eg_softc *sc, u_char b)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -182,9 +178,7 @@ egoutPCB(sc, b)
 }
 	
 static int
-egreadPCBstat(sc, statb)
-	struct eg_softc *sc;
-	u_char statb;
+egreadPCBstat(struct eg_softc *sc, u_char statb)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -202,8 +196,7 @@ egreadPCBstat(sc, statb)
 }
 
 static int
-egreadPCBready(sc)
-	struct eg_softc *sc;
+egreadPCBready(struct eg_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -220,8 +213,7 @@ egreadPCBready(sc)
 }
 	
 static int
-egwritePCB(sc)
-	struct eg_softc *sc;
+egwritePCB(struct eg_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -254,8 +246,7 @@ egwritePCB(sc)
 }	
 	
 static int
-egreadPCB(sc)
-	struct eg_softc *sc;
+egreadPCB(struct eg_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -309,9 +300,7 @@ egreadPCB(sc)
  */
 
 int
-egprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+egprobe(struct device *parent, void *match, void *aux)
 {
 	struct eg_softc *sc = match;
 	struct isa_attach_args *ia = aux;
@@ -374,9 +363,7 @@ lose:
 }
 
 void
-egattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+egattach(struct device *parent, struct device *self, void *aux)
 {
 	struct eg_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -451,8 +438,7 @@ egattach(parent, self, aux)
 }
 
 void
-eginit(sc)
-	register struct eg_softc *sc;
+eginit(register struct eg_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -501,10 +487,8 @@ eginit(sc)
 }
 
 void
-egrecv(sc)
-	struct eg_softc *sc;
+egrecv(struct eg_softc *sc)
 {
-
 	while (sc->eg_incount < EG_INLEN) {
 		sc->eg_pcb[0] = EG_CMD_RECVPACKET;
 		sc->eg_pcb[1] = 0x08;
@@ -523,8 +507,7 @@ egrecv(sc)
 }
 
 void
-egstart(ifp)
-	struct ifnet *ifp;
+egstart(struct ifnet *ifp)
 {
 	struct eg_softc *sc = ifp->if_softc;
 	bus_space_tag_t bst = sc->sc_bst;
@@ -602,8 +585,7 @@ loop:
 }
 
 int
-egintr(arg)
-	void *arg;
+egintr(void *arg)
 {
 	struct eg_softc *sc = arg;
 	bus_space_tag_t bst = sc->sc_bst;
@@ -689,10 +671,7 @@ egintr(arg)
  * Pass a packet up to the higher levels.
  */
 void
-egread(sc, buf, len)
-	struct eg_softc *sc;
-	caddr_t buf;
-	int len;
+egread(struct eg_softc *sc, caddr_t buf, int len)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
@@ -730,10 +709,7 @@ egread(sc, buf, len)
  * convert buf into mbufs
  */
 struct mbuf *
-egget(sc, buf, totlen)
-	struct eg_softc *sc;
-	caddr_t buf;
-	int totlen;
+egget(struct eg_softc *sc, caddr_t buf, int totlen)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *top, **mp, *m;
@@ -774,10 +750,7 @@ egget(sc, buf, totlen)
 }
 
 int
-egioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+egioctl(register struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct eg_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -840,8 +813,7 @@ egioctl(ifp, cmd, data)
 }
 
 void
-egreset(sc)
-	struct eg_softc *sc;
+egreset(struct eg_softc *sc)
 {
 	int s;
 
@@ -853,8 +825,7 @@ egreset(sc)
 }
 
 void
-egwatchdog(ifp)
-	struct ifnet *ifp;
+egwatchdog(struct ifnet *ifp)
 {
 	struct eg_softc *sc = ifp->if_softc;
 
@@ -865,8 +836,7 @@ egwatchdog(ifp)
 }
 
 void
-egstop(sc)
-	register struct eg_softc *sc;
+egstop(register struct eg_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
