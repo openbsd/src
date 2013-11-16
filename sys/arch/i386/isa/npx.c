@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.58 2013/05/08 15:36:30 tedu Exp $	*/
+/*	$OpenBSD: npx.c,v 1.59 2013/11/16 21:00:02 brad Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -688,7 +688,7 @@ npxdna_xmm(struct cpu_info *ci)
 		 * thus leaking other process's execution history.
 		 */
 		fnclex();
-		__asm __volatile("ffree %%st(7)\n\tfld %0" : : "m" (zero));
+		__asm __volatile("ffree %%st(7)\n\tfldl %0" : : "m" (zero));
 		fxrstor(&sfp->sv_xmm);
 	}
 
