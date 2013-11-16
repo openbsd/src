@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_ntfs.c,v 1.3 2013/10/22 16:40:27 guenther Exp $	*/
+/*	$OpenBSD: kvm_ntfs.c,v 1.4 2013/11/16 00:37:11 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,8 +45,7 @@
 #include <db.h>
 
 #include "kvm_private.h"
-
-extern mode_t _kvm_getftype(enum vtype);
+#include "kvm_file.h"
 
 int
 _kvm_stat_ntfs(kvm_t *kd, struct kinfo_file *kf, struct vnode *vp)
