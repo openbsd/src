@@ -94,6 +94,7 @@ getdiskbyname(const char *name)
 		getnumdflt(dp->d_type, "dt", 0);
 	getnumdflt(dp->d_secpercyl, "sc", dp->d_nsectors * dp->d_ntracks);
 	/* XXX */
+	dp->d_secperunith = 0;
 	getnumdflt(dp->d_secperunit, "su", dp->d_secpercyl * dp->d_ncylinders);
 	getnumdflt(dp->d_bbsize, "bs", BBSIZE);
 	getnumdflt(dp->d_sbsize, "sb", SBSIZE);
@@ -111,12 +112,13 @@ getdiskbyname(const char *name)
 		psize[1] = pbsize[1] = pfsize[1] = poffset[1] = ptype[1] = p;
 		/* XXX */
 		if (cgetnum(buf, psize, &f) == -1)
-			pp->p_size = 0;
+			DL_SETPSIZE(pp, 0);
 		else {
 			u_int32_t fsize, frag = 8;
 
-			pp->p_size = f;
+			DL_SETPSIZE(pp, f);
 			/* XXX */
+			pp->p_offseth = 0;
 			getnum(pp->p_offset, poffset);
 			getnumdflt(fsize, pfsize, 0);
 			if (fsize) {
