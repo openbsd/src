@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.16 2013/10/29 06:30:57 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.17 2013/11/16 18:24:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -216,7 +216,7 @@ i915_gem_execbuffer_relocate_entry(struct drm_i915_gem_object *obj,
 
 	reloc->delta += target_offset;
 	if (use_cpu_reloc(obj)) {
-		uint32_t page_offset = reloc->offset & ~PAGE_MASK;
+		uint32_t page_offset = reloc->offset & PAGE_MASK;
 		char *vaddr;
 
 		ret = i915_gem_object_set_to_cpu_domain(obj, 1);
