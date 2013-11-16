@@ -1,4 +1,4 @@
-#	$OpenBSD: files.luna88k,v 1.18 2013/09/24 20:10:44 miod Exp $
+#	$OpenBSD: files.luna88k,v 1.19 2013/11/16 22:45:37 aoyama Exp $
 #
 maxpartitions 16
 
@@ -39,6 +39,7 @@ device fb: wsemuldisplaydev, rasops1
 attach fb at mainbus
 file arch/luna88k/dev/lunafb.c				fb
 file arch/luna88k/dev/omrasops.c			fb
+file arch/luna88k/dev/omrasops1.c			fb
 
 # Raster operations
 include "dev/rasops/files.rasops"
