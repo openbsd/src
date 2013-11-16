@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.162 2013/10/17 16:27:42 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.163 2013/11/16 00:36:01 chl Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -863,13 +863,8 @@ pf_normalize_tcp(struct pf_pdesc *pd)
 
 	/* If flags changed, or reserved data set, then adjust */
 	if (flags != th->th_flags || th->th_x2 != 0) {
-		u_int16_t	ov, nv;
-
-		ov = *(u_int16_t *)(&th->th_ack + 1);
 		th->th_flags = flags;
 		th->th_x2 = 0;
-		nv = *(u_int16_t *)(&th->th_ack + 1);
-
 		rewrite = 1;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.57 2013/10/24 11:31:43 mpi Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.58 2013/11/16 00:36:01 chl Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -310,7 +310,7 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	struct mbuf		*m, *mp, *mhdr, *mptr;
 	struct pfloghdr		*pfloghdr;
 	u_int			 count;
-	u_char			*dst, *mdst, *cp;
+	u_char			*dst, *mdst;
 	u_short			 reason;
 	int			 afto, hlen, mlen, off;
 	union pf_headers {
@@ -417,7 +417,6 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	mp = m_getptr(m, hlen, &off);
 	if (mp != NULL) {
 		bcopy(mp, mptr, sizeof(*mptr));
-		cp = mtod(mp, char *);
 		mptr->m_data += off;
 		mptr->m_len -= off;
 		mptr->m_flags &= ~M_PKTHDR;

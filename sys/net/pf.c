@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.860 2013/11/15 21:34:51 haesbaert Exp $ */
+/*	$OpenBSD: pf.c,v 1.861 2013/11/16 00:36:01 chl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4527,7 +4527,7 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
     u_short *reason)
 {
 	struct pf_addr  *saddr = pd->src, *daddr = pd->dst;
-	u_int16_t	*icmpsum, virtual_id, virtual_type;
+	u_int16_t	 virtual_id, virtual_type;
 	u_int8_t	 icmptype;
 	int		 icmp_dir, iidx, ret, multi, copyback = 0;
 
@@ -4537,13 +4537,11 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 #ifdef INET
 	case IPPROTO_ICMP:
 		icmptype = pd->hdr.icmp->icmp_type;
-		icmpsum = &pd->hdr.icmp->icmp_cksum;
 		break;
 #endif /* INET */
 #ifdef INET6
 	case IPPROTO_ICMPV6:
 		icmptype = pd->hdr.icmp6->icmp6_type;
-		icmpsum = &pd->hdr.icmp6->icmp6_cksum;
 		break;
 #endif /* INET6 */
 	}
@@ -4686,7 +4684,6 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 #ifdef INET6
 		struct ip6_hdr	 h2_6;
 #endif /* INET6 */
-		u_int16_t	*ipsum2;
 		int		 ipoff2;
 
 		/* Initialize pd2 fields valid for both packets with pd. */
@@ -4727,7 +4724,6 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 			pd2.tot_len = ntohs(h2.ip_len);
 			pd2.src = (struct pf_addr *)&h2.ip_src;
 			pd2.dst = (struct pf_addr *)&h2.ip_dst;
-			ipsum2 = &h2.ip_sum;
 			break;
 #endif /* INET */
 #ifdef INET6
@@ -4749,7 +4745,6 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 			    sizeof(struct ip6_hdr);
 			pd2.src = (struct pf_addr *)&h2_6.ip6_src;
 			pd2.dst = (struct pf_addr *)&h2_6.ip6_dst;
-			ipsum2 = NULL;
 			break;
 #endif /* INET6 */
 		}
@@ -5800,7 +5795,6 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 			    "pf_route6: m0->m_len < sizeof(struct ip6_hdr)");
 			goto bad;
 		}
-		ip6 = mtod(m0, struct ip6_hdr *);
 	}
 
 	/*
