@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.114 2013/11/14 12:34:30 dlg Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.115 2013/11/16 12:46:29 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -922,6 +922,8 @@ wpi_read_eeprom_channels(struct wpi_softc *sc, int n)
 			ic->ic_channels[chan].ic_freq =
 			    ieee80211_ieee2mhz(chan, IEEE80211_CHAN_5GHZ);
 			ic->ic_channels[chan].ic_flags = IEEE80211_CHAN_A;
+			/* We have at least one valid 5GHz channel. */
+			sc->sc_flags |= WPI_FLAG_HAS_5GHZ;
 		}
 
 		/* Is active scan allowed on this channel? */
