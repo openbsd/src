@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.51 2013/11/01 15:57:56 deraadt Exp $ */
+/*	$OpenBSD: kvm.c,v 1.52 2013/11/16 00:41:44 guenther Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -71,8 +71,7 @@ static int	clear_gap(kvm_t *, FILE *, int);
 static int	kvm_setfd(kvm_t *);
 
 char *
-kvm_geterr(kd)
-	kvm_t *kd;
+kvm_geterr(kvm_t *kd)
 {
 	return (kd->errbuf);
 }
