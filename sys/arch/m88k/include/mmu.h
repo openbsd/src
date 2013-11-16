@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.14 2013/11/02 23:10:30 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.15 2013/11/16 18:45:20 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -76,7 +76,7 @@
  * Area descriptors
  */
 
-typedef	u_int32_t	apr_t;
+typedef	uint32_t	apr_t;
 
 #define	APR_V		0x00000001	/* valid bit */
 
@@ -87,21 +87,10 @@ typedef	u_int32_t	apr_t;
 #define PATC_ENTRIES	56
 
 /*
- * BATC entries
- */
-
-#define	BATC_V		0x00000001
-#define	BATC_PROT	0x00000002
-#define	BATC_INH	0x00000004
-#define	BATC_GLOBAL	0x00000008
-#define	BATC_WT		0x00000010
-#define	BATC_SO		0x00000020
-
-/*
  * Segment table entries
  */
 
-typedef u_int32_t	sdt_entry_t;
+typedef uint32_t	sdt_entry_t;
 
 #define	SG_V		0x00000001
 #define	SG_NV		0x00000000
@@ -118,7 +107,7 @@ typedef u_int32_t	sdt_entry_t;
  * Page table entries
  */
 
-typedef u_int32_t	pt_entry_t;
+typedef uint32_t	pt_entry_t;
 
 #define	PG_V		0x00000001
 #define	PG_NV		0x00000000
@@ -165,8 +154,17 @@ typedef u_int32_t	pt_entry_t;
 #define	PDTIDX(va)	(((va) & PDT_MASK) >> PDT_SHIFT)
 
 /*
- * Parameters and macros for BATC
+ * BATC entries
  */
+
+#define	BATC_V		0x00000001
+#define	BATC_PROT	0x00000002
+#define	BATC_INH	0x00000004
+#define	BATC_GLOBAL	0x00000008
+#define	BATC_WT		0x00000010
+#define	BATC_SO		0x00000020
+
+typedef uint32_t	batc_t;
 
 /* 8820x fixed size BATC */
 #define	BATC_BLKSHIFT	19

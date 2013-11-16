@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.74 2013/11/03 09:42:55 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.75 2013/11/16 18:45:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -148,13 +148,20 @@ paddr_t	s_firmware;
 psize_t	l_firmware;
 
 /*
+ * Current BATC values.
+ */
+
+batc_t global_dbatc[BATC_MAX];
+batc_t global_ibatc[BATC_MAX];
+
+/*
  * Internal routines
  */
 void		 pmap_changebit(struct vm_page *, int, int);
 void		 pmap_clean_page(paddr_t);
 pt_entry_t	*pmap_expand(pmap_t, vaddr_t, int);
 pt_entry_t	*pmap_expand_kmap(vaddr_t, int);
-void		 pmap_map(paddr_t, psize_t, vm_prot_t, u_int);
+void		 pmap_map(paddr_t, psize_t, vm_prot_t, u_int, boolean_t);
 pt_entry_t	*pmap_pte(pmap_t, vaddr_t);
 void		 pmap_remove_page(struct vm_page *);
 void		 pmap_remove_pte(pmap_t, vaddr_t, pt_entry_t *,
@@ -242,29 +249,91 @@ int
 pmap_translation_info(pmap_t pmap, vaddr_t va, paddr_t *pap, uint32_t *ti)
 {
 	pt_entry_t *pte;
+	vaddr_t var;
+	uint batcno;
 	int s;
 	int rv;
 
 	/*
 	 * Check for a BATC translation first.
-	 * Even though we do not use BATC yet, 88100-based designs (with
-	 * 8820x CMMUs) have two hardwired BATC entries which map the
-	 * upper 1MB (so-called `utility space') 1:1 in supervisor space.
+	 * We only use BATC for supervisor mappings (i.e. pmap_kernel()).
 	 */
+
+	if (pmap == pmap_kernel()) {
+		/*
+		 * 88100-based designs (with 8820x CMMUs) have two hardwired
+		 * BATC entries which map the upper 1MB (so-called
+		 * `utility space') 1:1 in supervisor space.
+		 */
 #ifdef M88100
-	if (CPU_IS88100 && pmap == pmap_kernel()) {
-		if (va >= BATC9_VA) {
-			*pap = va;
-			*ti = BATC9 & CACHE_MASK;
-			return PTI_BATC;
+		if (CPU_IS88100) {
+			if (va >= BATC9_VA) {
+				*pap = va;
+				*ti = 0;
+				if (BATC9 & BATC_INH)
+					*ti |= CACHE_INH;
+				if (BATC9 & BATC_GLOBAL)
+					*ti |= CACHE_GLOBAL;
+				if (BATC9 & BATC_WT)
+					*ti |= CACHE_WT;
+				return PTI_BATC;
+			}
+			if (va >= BATC8_VA) {
+				*pap = va;
+				*ti = 0;
+				if (BATC8 & BATC_INH)
+					*ti |= CACHE_INH;
+				if (BATC8 & BATC_GLOBAL)
+					*ti |= CACHE_GLOBAL;
+				if (BATC8 & BATC_WT)
+					*ti |= CACHE_WT;
+				return PTI_BATC;
+			}
 		}
-		if (va >= BATC8_VA) {
-			*pap = va;
-			*ti = BATC8 & CACHE_MASK;
-			return PTI_BATC;
+#endif
+
+		/*
+		 * Now try all DBATC entries.
+		 * Note that pmap_translation_info() might be invoked (via
+		 * pmap_extract() ) for instruction faults; we *rely* upon
+		 * the fact that all executable mappings covered by IBATC
+		 * will be:
+		 * - read-only, with no RO->RW upgrade allowed
+		 * - dual mapped by ptes, so that pmap_extract() can still
+		 *   return a meaningful result.
+		 * Should this ever change, some kernel interfaces will need
+		 * to be made aware of (and carry on to callees) whether the
+		 * address should be resolved as an instruction or data
+		 * address.
+		 */
+		var = trunc_batc(va);
+		for (batcno = 0; batcno < BATC_MAX; batcno++) {
+			vaddr_t batcva;
+			paddr_t batcpa;
+			batc_t batc;
+
+			batc = global_dbatc[batcno];
+			if ((batc & BATC_V) == 0)
+				continue;
+
+			batcva = (batc << (BATC_BLKSHIFT - BATC_VSHIFT)) &
+			    ~BATC_BLKMASK;
+			if (batcva == var) {
+				batcpa = (batc <<
+				    (BATC_BLKSHIFT - BATC_PSHIFT)) &
+				    ~BATC_BLKMASK;
+				*pap = batcpa + (va - var);
+				*ti = 0;
+				if (batc & BATC_INH)
+					*ti |= CACHE_INH;
+				if (batc & BATC_GLOBAL)
+					*ti |= CACHE_GLOBAL;
+				if (batc & BATC_WT)
+					*ti |= CACHE_WT;
+				return PTI_BATC;
+			}
 		}
 	}
-#endif
 
 	/*
 	 * Check for a regular PTE translation.
@@ -500,11 +569,19 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
  * [INTERNAL]
  * Setup a wired mapping in pmap_kernel(). Similar to pmap_kenter_pa(),
  * but allows explicit cacheability control.
+ * This is only used at bootstrap time. Mappings may also be backed up
+ * by a BATC entry if requested and possible; but note that the BATC
+ * entries set up here may be overwritten by cmmu_batc_setup() later on
+ * (which is harmless since we are creating proper ptes anyway).
  */
 void
-pmap_map(paddr_t pa, psize_t sz, vm_prot_t prot, u_int cmode)
+pmap_map(paddr_t pa, psize_t sz, vm_prot_t prot, u_int cmode,
+    boolean_t may_use_batc)
 {
 	pt_entry_t *pte, npte;
+	batc_t batc;
+	uint npg, batcno;
+	paddr_t curpa;
 
 	DPRINTF(CD_MAP, ("pmap_map(%p, %p, %x, %x)\n",
 	    pa, sz, prot, cmode));
@@ -514,22 +591,70 @@ pmap_map(paddr_t pa, psize_t sz, vm_prot_t prot, u_int cmode)
 		    pa, pa + sz);
 #endif
 
+	sz = round_page(pa + sz) - trunc_page(pa);
+	pa = trunc_page(pa);
+
 	npte = m88k_protection(prot) | cmode | PG_W | PG_V;
 #ifdef M88110
 	if (CPU_IS88110 && m88k_protection(prot) != PG_RO)
 		npte |= PG_M;
 #endif
 
-	sz = atop(round_page(pa + sz) - trunc_page(pa));
-	pa = trunc_page(pa);
-	while (sz-- != 0) {
-		if ((pte = pmap_pte(pmap_kernel(), pa)) == NULL)
-			pte = pmap_expand_kmap(pa, 0);
+	npg = atop(sz);
+	curpa = pa;
+	while (npg-- != 0) {
+		if ((pte = pmap_pte(pmap_kernel(), curpa)) == NULL)
+			pte = pmap_expand_kmap(curpa, 0);
 
-		*pte = npte | pa;
-		pa += PAGE_SIZE;
+		*pte = npte | curpa;
+		curpa += PAGE_SIZE;
 		pmap_kernel()->pm_stats.resident_count++;
 		pmap_kernel()->pm_stats.wired_count++;
+	}
+
+	if (may_use_batc) {
+		sz = round_batc(pa + sz) - trunc_batc(pa);
+		pa = trunc_batc(pa);
+
+		batc = BATC_SO | BATC_V;
+		if ((prot & VM_PROT_WRITE) == 0)
+			batc |= BATC_PROT;
+		if (cmode & CACHE_INH)
+			batc |= BATC_INH;
+		if (cmode & CACHE_WT)
+			batc |= BATC_WT;
+		batc |= BATC_GLOBAL;	/* XXX 88110 SP */
+
+		for (; sz != 0; sz -= BATC_BLKBYTES, pa += BATC_BLKBYTES) {
+			/* check if an existing BATC covers this area */
+			for (batcno = 0; batcno < BATC_MAX; batcno++) {
+				if ((global_dbatc[batcno] & BATC_V) == 0)
+					continue;
+				curpa = (global_dbatc[batcno] <<
+				    (BATC_BLKSHIFT - BATC_PSHIFT)) &
+				    ~BATC_BLKMASK;
+				if (curpa == pa)
+					break;
+			}
+
+			/*
+			 * If there is a BATC covering this range, reuse it.
+			 * We assume all BATC-possible mappings will use the
+			 * same protection and cacheability settings.
+			 */
+			if (batcno != BATC_MAX)
+				continue;
+
+			/* create a new DBATC if possible */
+			for (batcno = BATC_MAX; batcno != 0; batcno--) {
+				if (global_dbatc[batcno - 1] & BATC_V)
+					continue;
+				global_dbatc[batcno - 1] = batc |
+				    ((pa >> BATC_BLKSHIFT) << BATC_PSHIFT) |
+				    ((pa >> BATC_BLKSHIFT) << BATC_VSHIFT);
+				break;
+			}
+		}
 	}
 }
 
@@ -666,13 +791,14 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 	if (e_rom != s_rom) {
 		s_firmware = s_rom;
 		l_firmware = e_rom - s_rom;
-		pmap_map(s_firmware, l_firmware, UVM_PROT_RW, CACHE_INH);
+		pmap_map(s_firmware, l_firmware, UVM_PROT_RW, CACHE_INH, FALSE);
 	}
 
 	for (ptable = pmap_table_build(); ptable->size != (vsize_t)-1; ptable++)
 		if (ptable->size != 0)
 			pmap_map(ptable->start, ptable->size,
-			    ptable->prot, ptable->cacheability);
+			    ptable->prot, ptable->cacheability,
+			    ptable->may_use_batc);
 
 	/*
 	 * Adjust cache settings according to the hardware we are running on.

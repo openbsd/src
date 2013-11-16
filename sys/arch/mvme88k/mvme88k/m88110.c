@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.82 2013/11/03 09:42:55 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.83 2013/11/16 18:45:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011, Miodrag Vallat.
@@ -181,23 +181,27 @@ const struct cmmu_p cmmu88410 = {
 size_t mc88410_linesz[2] = { 5, 5 };		/* log2 of L2 cache line size */
 size_t mc88410_cachesz[2] = { 256, 256 };	/* L2 cache size in KB */
 
-void m88110_dbatc_set(uint, uint32_t);
-void m88110_ibatc_set(uint, uint32_t);
+static inline
+void m88110_dbatc_set(uint, batc_t);
+static inline
+void m88110_ibatc_set(uint, batc_t);
 void m88110_patc_clear(void);
 
 void m88110_cmmu_wb_locked(paddr_t, psize_t);
 void m88110_cmmu_wbinv_locked(paddr_t, psize_t);
 void m88110_cmmu_inv_locked(paddr_t, psize_t);
 
+static inline
 void
-m88110_dbatc_set(uint batno, uint32_t val)
+m88110_dbatc_set(uint batno, batc_t val)
 {
 	set_dir(batno);
 	set_dbp(val);
 }
 
+static inline
 void
-m88110_ibatc_set(uint batno, uint32_t val)
+m88110_ibatc_set(uint batno, batc_t val)
 {
 	set_iir(batno);
 	set_ibp(val);
@@ -314,7 +318,7 @@ m88110_batc_setup(cpuid_t cpu, apr_t cmode)
 {
 	paddr_t s_text, e_text, s_data, e_data,	e_rodata;
 	uint batcno;
-	uint32_t batc, proto;
+	batc_t batc, proto;
 	extern caddr_t kernelstart;
 	extern caddr_t etext;
 	extern caddr_t erodata;
@@ -344,7 +348,7 @@ m88110_batc_setup(cpuid_t cpu, apr_t cmode)
 #ifdef DEBUG
 		printf("cpu%d ibat%d %p(%08x)\n", cpu, batcno, s_text, batc);
 #endif
-		m88110_ibatc_set(batcno, batc);
+		global_ibatc[batcno] = batc;
 		s_text += BATC_BLKBYTES;
 		if (++batcno == BATC_MAX)
 			break;
@@ -367,10 +371,15 @@ m88110_batc_setup(cpuid_t cpu, apr_t cmode)
 #ifdef DEBUG
 		printf("cpu%d dbat%d %p(%08x)\n", cpu, batcno, s_data, batc);
 #endif
-		m88110_dbatc_set(batcno, batc);
+		global_dbatc[batcno] = batc;
 		s_data += BATC_BLKBYTES;
 		if (++batcno == BATC_MAX)
 			break;
+	}
+
+	for (batcno = 0; batcno < BATC_MAX; batcno++) {
+		m88110_dbatc_set(batcno, global_dbatc[batcno]);
+		m88110_ibatc_set(batcno, global_ibatc[batcno]);
 	}
 }
 

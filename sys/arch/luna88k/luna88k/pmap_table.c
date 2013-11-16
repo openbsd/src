@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.8 2013/11/13 20:35:59 miod Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.9 2013/11/16 18:45:20 miod Exp $	*/
 
 /* 
  * Mach Operating System
@@ -65,8 +65,8 @@ luna88k_board_table[] = {
 	{ MROM_ADDR,		MROM_SPACE,		R,	CI },
 	{ BMAP_RFCNT,		PAGE_SIZE,		RW,	CI },
 	{ BMAP_BMSEL,		PAGE_SIZE,		RW,	CI },
-	{ BMAP_BMP,		BMAP_BMAP0 - BMAP_BMP,	RW,	CI },
-	{ BMAP_BMAP0,		BMAP_BMAP1 - BMAP_BMAP0, RW,	CI },
+	{ BMAP_BMP,		BMAP_BMAP0 - BMAP_BMP,	RW,	CI, TRUE },
+	{ BMAP_BMAP0,		BMAP_BMAP1 - BMAP_BMAP0, RW,	CI, TRUE },
 #if 0 /* not until console or X11 needs them */
 	{ BMAP_BMAP1,		BMAP_BMAP2 - BMAP_BMAP1, RW,	CI },
 	{ BMAP_BMAP2,		BMAP_BMAP3 - BMAP_BMAP2, RW,	CI },

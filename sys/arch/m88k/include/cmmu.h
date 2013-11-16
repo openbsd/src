@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.31 2013/11/02 23:10:30 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.32 2013/11/16 18:45:20 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -32,6 +32,8 @@
  * Prototypes and stuff for cmmu.c.
  */
 #if defined(_KERNEL) && !defined(_LOCORE)
+
+#include <machine/mmu.h>
 
 /* machine dependent cmmu function pointer structure */
 struct cmmu_p {
@@ -106,6 +108,12 @@ extern __cpu_simple_lock_t cmmu_cpu_lock;
 #define DMA_CACHE_INV		0x00
 #define DMA_CACHE_SYNC_INVAL	0x01
 #define DMA_CACHE_SYNC		0x02
+
+/*
+ * Current BATC values.
+ */
+
+extern batc_t global_dbatc[BATC_MAX], global_ibatc[BATC_MAX];
 
 #endif	/* _KERNEL && !_LOCORE */
 

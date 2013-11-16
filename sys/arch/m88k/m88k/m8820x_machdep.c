@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.60 2013/11/03 09:42:55 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.61 2013/11/16 18:45:20 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, 2013, Miodrag Vallat.
  *
@@ -173,8 +173,10 @@ void	m8820x_cmmu_inv_locked(int, paddr_t, psize_t);
 void	m8820x_enable_other_cmmu_cache(void);
 #endif
 
-void	m8820x_dbatc_set(cpuid_t, uint, uint32_t);
-void	m8820x_ibatc_set(cpuid_t, uint, uint32_t);
+static inline
+void	m8820x_dbatc_set(cpuid_t, uint, batc_t);
+static inline
+void	m8820x_ibatc_set(cpuid_t, uint, batc_t);
 
 /* Flags passed to m8820x_cmmu_set_*() */
 #define MODE_VAL		0x01
@@ -345,14 +347,16 @@ m8820x_cmmu_wait(int cpu)
  * BATC routines
  */
 
+static inline
 void
-m8820x_dbatc_set(cpuid_t cpu, uint batcno, uint32_t batc)
+m8820x_dbatc_set(cpuid_t cpu, uint batcno, batc_t batc)
 {
 	m8820x_cmmu_set_reg_if_mode(CMMU_BWP(batcno), batc, cpu, DATA_CMMU);
 }
 
+static inline
 void
-m8820x_ibatc_set(cpuid_t cpu, uint batcno, uint32_t batc)
+m8820x_ibatc_set(cpuid_t cpu, uint batcno, batc_t batc)
 {
 	m8820x_cmmu_set_reg_if_mode(CMMU_BWP(batcno), batc, cpu, INST_CMMU);
 }
@@ -362,7 +366,7 @@ m8820x_batc_setup(cpuid_t cpu, apr_t cmode)
 {
 	paddr_t s_text, e_text, s_data, e_data,	e_rodata;
 	uint batcno;
-	uint32_t batc, proto;
+	batc_t batc, proto;
 	extern caddr_t kernelstart;
 	extern caddr_t etext;
 	extern caddr_t erodata;
@@ -392,7 +396,7 @@ m8820x_batc_setup(cpuid_t cpu, apr_t cmode)
 #ifdef DEBUG
 		printf("cpu%d ibat%d %p(%08x)\n", cpu, batcno, s_text, batc);
 #endif
-		m8820x_ibatc_set(cpu, batcno, batc);
+		global_ibatc[batcno] = batc;
 		s_text += BATC_BLKBYTES;
 		if (++batcno == BATC_MAX)
 			break;
@@ -415,10 +419,15 @@ m8820x_batc_setup(cpuid_t cpu, apr_t cmode)
 #ifdef DEBUG
 		printf("cpu%d dbat%d %p(%08x)\n", cpu, batcno, s_data, batc);
 #endif
-		m8820x_dbatc_set(cpu, batcno, batc);
+		global_dbatc[batcno] = batc;
 		s_data += BATC_BLKBYTES;
 		if (++batcno == BATC_MAX)
 			break;
+	}
+
+	for (batcno = 0; batcno < BATC_MAX; batcno++) {
+		m8820x_dbatc_set(cpu, batcno, global_dbatc[batcno]);
+		m8820x_ibatc_set(cpu, batcno, global_ibatc[batcno]);
 	}
 }
 
