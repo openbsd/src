@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.3 2013/11/01 20:35:52 jasper Exp $
+#	$OpenBSD: install.md,v 1.4 2013/11/16 18:37:26 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -195,7 +195,7 @@ md_prep_disklabel() {
 			disklabel -h -A $_disk | egrep "^#  |^  [a-p]:"
 			ask "Use (A)uto layout, (E)dit auto layout, or create (C)ustom layout?" a
 			case $resp in
-			a*|A*)	_op=-w ; AUTOROOT=y ;;
+			a*|A*)	_op=-w ;;
 			e*|E*)	_op=-E ;;
 			c*|C*)	break ;;
 			*)	continue ;;

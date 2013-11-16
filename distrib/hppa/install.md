@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.21 2012/07/10 14:25:00 halex Exp $
+#	$OpenBSD: install.md,v 1.22 2013/11/16 18:37:27 rpe Exp $
 #
 # machine dependent section of installation/upgrade script.
 #
@@ -24,7 +24,7 @@ md_prep_disklabel() {
 			disklabel -h -A $_disk | egrep "^#  |^  [a-p]:"
 			ask "Use (A)uto layout, (E)dit auto layout, or create (C)ustom layout?" a
 			case $resp in
-			a*|A*)	_op=-w ; AUTOROOT=y ;;
+			a*|A*)	_op=-w ;;
 			e*|E*)	_op=-E ;;
 			c*|C*)	break ;;
 			*)	continue ;;

@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.2 2013/10/15 17:48:16 miod Exp $
+#       $OpenBSD: install.md,v 1.3 2013/11/16 18:37:26 rpe Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -119,7 +119,7 @@ __EOT
 			disklabel -h -A $_disk | egrep "^#  |^  [a-p]:"
 			ask "Use (A)uto layout, (E)dit auto layout, or create (C)ustom layout?" a
 			case $resp in
-			a*|A*)	_op=-w ; AUTOROOT=y ;;
+			a*|A*)	_op=-w ;;
 			e*|E*)	_op=-E ;;
 			c*|C*)	break ;;
 			*)	continue ;;

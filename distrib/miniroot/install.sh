@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.234 2013/10/31 19:15:20 halex Exp $
+#	$OpenBSD: install.sh,v 1.235 2013/11/16 18:37:27 rpe Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -101,7 +101,6 @@ while :; do
 	# /tmp/fstab.$DISK is created here with 'disklabel -f' or
 	# 'disklabel -F' depending on the value of $FSTABFLAG.
 	rm -f /tmp/*.$DISK
-	AUTOROOT=n
 	md_prep_disklabel $DISK || { DISK= ; continue ; }
 
 	# Make sure there is a '/' mount point.
