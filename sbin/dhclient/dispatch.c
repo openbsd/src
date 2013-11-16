@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.82 2013/11/11 21:00:01 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.83 2013/11/16 19:34:43 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -208,7 +208,8 @@ another:
 				routehandler();
 		}
 		if (fds[2].revents & POLLOUT) {
-			if (msgbuf_write(&unpriv_ibuf->w) == -1) {
+			if (msgbuf_write(&unpriv_ibuf->w) <= 0 &&
+			    errno != EAGAIN) {
 				warning("pipe write error to [priv]");
 				quit = INTERNALSIG;
 				continue;
