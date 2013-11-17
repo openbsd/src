@@ -1,7 +1,8 @@
 #!/usr/local/bin/python2.7
 # send a ping6 packet with routing header type 0
 # the address pointer is at the final destination
-# we expect a parameter problem from header scanning
+# hide the routing header behind a fragment header to avoid header scan
+# we expect an echo reply, as there are no more hops
 
 import os
 from addr import *
@@ -10,6 +11,7 @@ from scapy.all import *
 pid=os.getpid()
 payload="ABCDEFGHIJKLMNOP"
 packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/\
+    IPv6ExtHdrFragment(id=pid)/\
     IPv6ExtHdrRouting(addresses=[SRT_IN6, SRT_OUT6], segleft=0)/\
     ICMPv6EchoRequest(id=pid, data=payload)
 eth=Ether(src=SRC_MAC, dst=DST_MAC)/packet
@@ -24,18 +26,18 @@ ans=sniff(iface=SRC_IF, timeout=3, filter=
 for a in ans:
 	if a and a.type == scapy.layers.dot11.ETHER_TYPES.IPv6 and \
 	    ipv6nh[a.payload.nh] == 'ICMPv6' and \
-	    icmp6types[a.payload.payload.type] == 'Parameter problem':
-		pprob=a.payload.payload
-		code=pprob.code
-		print "code=%#d" % (code)
-		if code != 0:
-			print "WRONG PARAMETER PROBLEM CODE"
+	    icmp6types[a.payload.payload.type] == 'Echo Reply':
+		reply=a.payload.payload
+		id=reply.id
+		print "id=%#x" % (id)
+		if id != pid:
+			print "WRONG ECHO REPLY ID"
 			exit(2)
-		ptr=pprob.ptr
-		print "ptr=%#d" % (ptr)
-		if ptr != 42:
-			print "WRONG PARAMETER PROBLEM POINTER"
+		data=reply.data
+		print "payload=%s" % (data)
+		if data != payload:
+			print "WRONG PAYLOAD"
 			exit(2)
 		exit(0)
-print "NO ICMP6 PARAMETER PROBLEM"
+print "NO ICMP6 ECHO REPLY"
 exit(1)

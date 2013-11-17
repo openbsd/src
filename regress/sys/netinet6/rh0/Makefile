@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2013/11/13 23:13:04 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2013/11/17 20:16:27 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -99,6 +99,34 @@ run-regress-rh0-route: addr.py
 	@echo Check routing header type 0 to be source routed
 	${SUDO} ${PYTHON}rh0_route.py
 
+# Send with fragment and routing header type 0 but empty address list
+TARGETS +=	rh0-frag-empty
+run-regress-rh0-frag-empty: addr.py
+	@echo '\n======== $@ ========'
+	@echo Check fragment and routing header type 0 with empty address list
+	${SUDO} ${PYTHON}rh0_frag_empty.py
+
+TARGETS +=	rh0-frag-final
+# Send with fragment and routing header type 0 to the final destination
+run-regress-rh0-frag-final: addr.py
+	@echo '\n======== $@ ========'
+	@echo Check fragment and routing header type 0 to the final destination
+	${SUDO} ${PYTHON}rh0_frag_final.py
+
+TARGETS +=	rh0-frag-route
+# Send with fragment and routing header type 0 to be source routed
+run-regress-rh0-frag-route: addr.py
+	@echo '\n======== $@ ========'
+	@echo Check fragment and routing header type 0 to be source routed
+	${SUDO} ${PYTHON}rh0_frag_route.py
+
+TARGETS +=	rh0-frag2
+# Send with fragment and routing header type 0 to be source routed
+run-regress-rh0-frag2: addr.py
+	@echo '\n======== $@ ========'
+	@echo Check routing header type 0 in the second fragment
+	${SUDO} ${PYTHON}rh0_frag2.py
+
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
 CLEANFILES +=		addr.py *.pyc *.log
@@ -115,5 +143,8 @@ check-setup:
 	ping6 -n -c 1 ${DST_OUT6}
 	route -n get -inet6 ${SRT_IN6} | grep 'gateway: ${DST_IN6}$$'
 	ndp -n ${DST_IN6} | grep ' ${DST_MAC} '
+.if defined(REMOTE_SSH)
+	ssh ${REMOTE_SSH} ${SUDO} pfctl -si | grep '^Status: Disabled '
+.endif
 
 .include <bsd.regress.mk>

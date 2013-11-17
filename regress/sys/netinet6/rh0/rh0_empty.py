@@ -1,7 +1,7 @@
 #!/usr/local/bin/python2.7
 # send a ping6 packet with routing header type 0
 # the address list is empty
-# we expect an echo reply, as there are no more hops
+# we expect a parameter problem from header scanning
 
 import os
 from addr import *
@@ -24,18 +24,18 @@ ans=sniff(iface=SRC_IF, timeout=3, filter=
 for a in ans:
 	if a and a.type == scapy.layers.dot11.ETHER_TYPES.IPv6 and \
 	    ipv6nh[a.payload.nh] == 'ICMPv6' and \
-	    icmp6types[a.payload.payload.type] == 'Echo Reply':
-		reply=a.payload.payload
-		id=reply.id
-		print "id=%#x" % (id)
-		if id != pid:
-			print "WRONG ECHO REPLY ID"
+	    icmp6types[a.payload.payload.type] == 'Parameter problem':
+		pprob=a.payload.payload
+		code=pprob.code
+		print "code=%#d" % (code)
+		if code != 0:
+			print "WRONG PARAMETER PROBLEM CODE"
 			exit(2)
-		data=reply.data
-		print "payload=%s" % (data)
-		if data != payload:
-			print "WRONG PAYLOAD"
+		ptr=pprob.ptr
+		print "ptr=%#d" % (ptr)
+		if ptr != 42:
+			print "WRONG PARAMETER PROBLEM POINTER"
 			exit(2)
 		exit(0)
-print "NO ICMP6 ECHO REPLY"
+print "NO ICMP6 PARAMETER PROBLEM"
 exit(1)
