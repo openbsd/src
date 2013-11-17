@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.10 2013/10/21 10:36:24 miod Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.11 2013/11/17 13:41:26 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -335,7 +335,7 @@ radeondrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(int *)data = WSDISPLAY_TYPE_KMS;
+		*(int *)data = WSDISPLAY_TYPE_RADEONDRM;
 		return 0;
 	default:
 		return -1;

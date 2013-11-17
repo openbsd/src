@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.45 2013/11/16 16:15:36 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.46 2013/11/17 13:41:25 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -634,7 +634,7 @@ inteldrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(int *)data = WSDISPLAY_TYPE_KMS;
+		*(int *)data = WSDISPLAY_TYPE_INTELDRM;
 		return 0;
 	case WSDISPLAYIO_GETPARAM:
 		if (ws_get_param && ws_get_param(dp) == 0)
