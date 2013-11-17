@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.code.c,v 1.16 2009/10/27 23:59:39 deraadt Exp $
+ *	$OpenBSD: locate.code.c,v 1.17 2013/11/17 20:19:36 okan Exp $
  *
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.code.c,v 1.16 2009/10/27 23:59:39 deraadt Exp $
+ * 	$Id: locate.code.c,v 1.17 2013/11/17 20:19:36 okan Exp $
  */
 
 /*
@@ -79,11 +79,14 @@
  */
 
 #include <sys/param.h>
+
 #include <err.h>
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
+#include <unistd.h>
+
 #include "locate.h"
 
 #define	BGBUFSIZE	(NBG * 2)	/* size of bigram buffer */

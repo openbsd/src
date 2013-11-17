@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.25 2013/04/03 04:12:23 deraadt Exp $	*/
+/*	$OpenBSD: rup.c,v 1.26 2013/11/17 20:19:36 okan Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -39,6 +39,7 @@
 #include <rpc/pmap_clnt.h>
 #include <arpa/inet.h>
 #include <err.h>
+#include <unistd.h>
 
 #undef FSHIFT			/* Use protocol's shift and scale values */
 #undef FSCALE

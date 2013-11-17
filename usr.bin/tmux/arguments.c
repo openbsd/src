@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.5 2013/05/31 12:19:34 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.6 2013/11/17 20:19:36 okan Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -20,6 +20,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "tmux.h"
 
