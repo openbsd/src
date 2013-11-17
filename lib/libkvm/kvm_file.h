@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file.h,v 1.1 2013/11/16 00:37:11 guenther Exp $ */
+/*	$OpenBSD: kvm_file.h,v 1.2 2013/11/17 20:27:14 guenther Exp $ */
 /*	$NetBSD: kvm_private.h,v 1.7 1996/05/05 04:32:15 gwr Exp $	*/
 
 /*-
@@ -39,7 +39,9 @@
 /*
  * Functions used internally by kvm vnode/file routines
  */
+__BEGIN_HIDDEN_DECLS
 mode_t	_kvm_getftype(enum vtype);
 int	_kvm_stat_cd9660(kvm_t *, struct kinfo_file *, struct vnode *);
 int	_kvm_stat_udf(kvm_t *, struct kinfo_file *, struct vnode *);
 int	_kvm_stat_ntfs(kvm_t *, struct kinfo_file *, struct vnode *);
+__END_HIDDEN_DECLS

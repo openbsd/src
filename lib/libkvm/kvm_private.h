@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_private.h,v 1.21 2013/11/16 00:47:49 guenther Exp $ */
+/*	$OpenBSD: kvm_private.h,v 1.22 2013/11/17 20:27:14 guenther Exp $ */
 /*	$NetBSD: kvm_private.h,v 1.7 1996/05/05 04:32:15 gwr Exp $	*/
 
 /*-
@@ -90,6 +90,7 @@ struct __kvm {
 /*
  * Functions used internally by kvm, but across kvm modules.
  */
+__BEGIN_HIDDEN_DECLS
 void	 _kvm_err(kvm_t *kd, const char *program, const char *fmt, ...)
 	    __attribute__((__format__ (printf, 3, 4)));
 int	 _kvm_dump_mkheader(kvm_t *kd_live, kvm_t *kd_dump);
@@ -103,3 +104,4 @@ void	 _kvm_syserr(kvm_t *kd, const char *program, const char *fmt, ...)
 	    __attribute__((__format__ (printf, 3, 4)));
 ssize_t	 _kvm_pread(kvm_t *, int, void *, size_t, off_t);
 ssize_t	 _kvm_pwrite(kvm_t *, int, const void *, size_t, off_t);
+__END_HIDDEN_DECLS
