@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.47 2013/11/17 18:47:13 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.48 2013/11/17 20:04:47 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1630,24 +1630,6 @@ i915_reset(struct drm_device *dev)
 /*
  * Debug code from here.
  */
-#ifdef WATCH_INACTIVE
-void
-inteldrm_verify_inactive(struct inteldrm_softc *dev_priv, char *file,
-    int line)
-{
-	struct drm_obj		*obj;
-	struct drm_i915_gem_object *obj_priv;
-
-	TAILQ_FOREACH(obj_priv, &dev_priv->mm.inactive_list, list) {
-		obj = &obj_priv->base;
-		if (obj_priv->pin_count || obj_priv->active ||
-		    obj->write_domain & I915_GEM_GPU_DOMAINS)
-			DRM_ERROR("inactive %p (p $d a $d w $x) %s:%d\n",
-			    obj, obj_priv->pin_count, obj_priv->active,
-			    obj->write_domain, file, line);
-	}
-}
-#endif /* WATCH_INACTIVE */
 
 #if (INTELDRM_DEBUG > 1)
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.33 2013/11/17 18:47:13 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.34 2013/11/17 20:04:47 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1153,11 +1153,6 @@ void	i915_hws_info(int);
 void	i915_batchbuffer_info(int);
 void	i915_ringbuffer_data(int);
 void	i915_ringbuffer_info(int);
-#ifdef WATCH_INACTIVE
-void inteldrm_verify_inactive(struct inteldrm_softc *, char *, int);
-#else
-#define inteldrm_verify_inactive(dev,file,line)
-#endif
 
 int i915_gem_object_unbind(struct drm_i915_gem_object *);
 int i915_wait_seqno(struct intel_ring_buffer *, uint32_t);
