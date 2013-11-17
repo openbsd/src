@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.220 2013/11/11 09:15:34 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.221 2013/11/17 10:07:32 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1336,14 +1336,10 @@ ip_srcroute(struct mbuf *m0)
 }
 
 /*
- * Strip out IP options, at higher
- * level protocol in the kernel.
- * Second argument is buffer to which options
- * will be moved, and return value is their length.
- * XXX should be deleted; last arg currently ignored.
+ * Strip out IP options, at higher level protocol in the kernel.
  */
 void
-ip_stripoptions(struct mbuf *m, struct mbuf *mopt)
+ip_stripoptions(struct mbuf *m)
 {
 	int i;
 	struct ip *ip = mtod(m, struct ip *);
@@ -1358,6 +1354,7 @@ ip_stripoptions(struct mbuf *m, struct mbuf *mopt)
 	if (m->m_flags & M_PKTHDR)
 		m->m_pkthdr.len -= olen;
 	ip->ip_hl = sizeof(struct ip) >> 2;
+	ip->ip_len = htons(ntohs(ip->ip_len) - olen);
 }
 
 int inetctlerrmap[PRC_NCMDS] = {

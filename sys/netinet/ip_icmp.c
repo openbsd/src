@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.109 2013/11/11 09:15:34 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.110 2013/11/17 10:07:32 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -807,18 +807,7 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 				printf("%d\n", opts->m_len);
 #endif
 		}
-		/*
-		 * Now strip out original options by copying rest of first
-		 * mbuf's data back, and adjust the IP length.
-		 */
-		ip->ip_len = htons(ntohs(ip->ip_len) - optlen);
-		ip->ip_hl = sizeof(struct ip) >> 2;
-		m->m_len -= optlen;
-		if (m->m_flags & M_PKTHDR)
-			m->m_pkthdr.len -= optlen;
-		optlen += sizeof(struct ip);
-		bcopy((caddr_t)ip + optlen, (caddr_t)(ip + 1),
-		    m->m_len - sizeof(struct ip));
+		ip_stripoptions(m);
 	}
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	if (op)
