@@ -1,4 +1,4 @@
-/*	$OpenBSD: evergreen.c,v 1.7 2013/10/30 02:11:33 dlg Exp $	*/
+/*	$OpenBSD: evergreen.c,v 1.8 2013/11/17 15:12:47 jsg Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -1997,7 +1997,7 @@ static void evergreen_gpu_init(struct radeon_device *rdev)
 		rdev->config.evergreen.sx_max_export_size = 256;
 		rdev->config.evergreen.sx_max_export_pos_size = 64;
 		rdev->config.evergreen.sx_max_export_smx_size = 192;
-		rdev->config.evergreen.max_hw_contexts = 8;
+		rdev->config.evergreen.max_hw_contexts = 4;
 		rdev->config.evergreen.sq_num_cf_insts = 2;
 
 		rdev->config.evergreen.sc_prim_fifo_size = 0x40;
