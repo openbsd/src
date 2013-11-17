@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.41 2013/11/02 22:58:10 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.42 2013/11/17 14:29:45 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1161,7 +1161,8 @@ i915_gem_object_wait_rendering__nonblocking(struct drm_i915_gem_object *obj,
 	/* Manually manage the write flush as we may have not yet
 	 * retired the buffer.
 	 */
-	if (obj->last_write_seqno &&
+	if (ret == 0 &&
+	    obj->last_write_seqno &&
 	    i915_seqno_passed(seqno, obj->last_write_seqno)) {
 		obj->last_write_seqno = 0;
 		obj->base.write_domain &= ~I915_GEM_GPU_DOMAINS;
