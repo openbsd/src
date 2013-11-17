@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.87 2013/11/15 21:41:54 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.88 2013/11/17 08:58:35 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -172,8 +172,8 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
 
 	case DLT_ATM_RFC1483:
 		/*
-		 * en atm driver requires 4-byte atm pseudo header.
-		 * though it isn't standard, vpi:vci needs to be
+		 * An ATM driver requires 4-byte ATM pseudo header.
+		 * Though it isn't standard, vpi:vci needs to be
 		 * specified anyway.
 		 */
 		sockp->sa_family = AF_UNSPEC;
@@ -401,7 +401,7 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 	D_GET(d);
 
 	/*
-	 * bd_rdStart is tagged when we start the read, iff there's a timeout.
+	 * If there's a timeout, bd_rdStart is tagged when we start the read.
 	 * we can then figure out when we're done reading.
 	 */
 	if (d->bd_rtout != -1 && d->bd_rdStart == 0)
