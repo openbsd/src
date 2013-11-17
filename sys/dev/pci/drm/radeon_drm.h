@@ -1,4 +1,4 @@
-/* $OpenBSD: radeon_drm.h,v 1.8 2013/06/15 11:33:20 jsg Exp $ */
+/* $OpenBSD: radeon_drm.h,v 1.9 2013/11/17 14:23:22 kettenis Exp $ */
 /* radeon_drm.h -- Public header for the radeon driver -*- linux-c -*-
  *
  * Copyright 2000 Precision Insight, Inc., Cedar Park, Texas.
@@ -1007,5 +1007,7 @@ struct drm_radeon_info {
 #define SI_TILE_MODE_DEPTH_STENCIL_2D_2AA	3
 #define SI_TILE_MODE_DEPTH_STENCIL_2D_4AA	3
 #define SI_TILE_MODE_DEPTH_STENCIL_2D_8AA	2
+
+#define CIK_TILE_MODE_DEPTH_STENCIL_1D		5
 
 #endif
