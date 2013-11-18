@@ -1,4 +1,4 @@
-#	$OpenBSD: forward-control.sh,v 1.1 2012/12/02 20:47:48 djm Exp $
+#	$OpenBSD: forward-control.sh,v 1.2 2013/11/18 05:09:32 naddy Exp $
 #	Placed in the Public Domain.
 
 tid="sshd control of local and remote forwarding"
@@ -14,7 +14,7 @@ wait_for_file_to_appear() {
 	while test ! -e $_path ; do
 		test $_n -eq 1 && trace "waiting for $_path to appear"
 		_n=`expr $_n + 1`
-		test $_n -ge 5 && return 1
+		test $_n -ge 10 && return 1
 		sleep 1
 	done
 	return 0
@@ -26,7 +26,7 @@ wait_for_process_to_exit() {
 	while kill -0 $_pid 2>/dev/null ; do
 		test $_n -eq 1 && trace "waiting for $_pid to exit"
 		_n=`expr $_n + 1`
-		test $_n -ge 5 && return 1
+		test $_n -ge 10 && return 1
 		sleep 1
 	done
 	return 0
