@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.20 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: config.c,v 1.21 2013/11/18 11:47:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -67,7 +67,7 @@ purge_config(uint8_t what)
 		env->sc_rules = NULL;
 	}
 	if (what & PURGE_SSL) {
-		while (dict_poproot(env->sc_ssl_dict, NULL, (void **)&s)) {
+		while (dict_poproot(env->sc_ssl_dict, (void **)&s)) {
 			bzero(s->ssl_cert, s->ssl_cert_len);
 			bzero(s->ssl_key, s->ssl_key_len);
 			free(s->ssl_cert);

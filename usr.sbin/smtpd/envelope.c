@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.22 2013/11/06 10:01:29 eric Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.23 2013/11/18 11:47:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -161,7 +161,7 @@ envelope_load_buffer(struct envelope *ep, const char *ibuf, size_t buflen)
 	if (ret)
 		ep->version = SMTPD_ENVELOPE_VERSION;
 end:
-	while (dict_poproot(&d, NULL, NULL))
+	while (dict_poproot(&d, NULL))
 		;
 	return (ret);
 }

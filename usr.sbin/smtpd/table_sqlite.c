@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_sqlite.c,v 1.8 2013/10/26 12:27:59 eric Exp $	*/
+/*	$OpenBSD: table_sqlite.c,v 1.9 2013/11/18 11:47:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -494,7 +494,7 @@ table_sqlite_fetch(int service, char *dst, size_t sz)
 	    goto fetch;
 
 	source_iter = NULL;
-	while(dict_poproot(&sources, NULL, NULL))
+	while (dict_poproot(&sources, NULL))
 		;
 
 	while ((s = sqlite3_step(stmt_fetch_source)) == SQLITE_ROW)

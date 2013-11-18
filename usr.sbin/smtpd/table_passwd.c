@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_passwd.c,v 1.4 2013/10/26 12:27:59 eric Exp $	*/
+/*	$OpenBSD: table_passwd.c,v 1.5 2013/11/18 11:47:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -122,7 +122,7 @@ table_passwd_update(void)
 
 	/* swap passwd table and release old one*/
 	if (passwd)
-		while (dict_poproot(passwd, NULL, (void**)&buf))
+		while (dict_poproot(passwd, (void**)&buf))
 			free(buf);
 	passwd = npasswd;
 
@@ -135,7 +135,7 @@ err:
 
 	/* release passwd table */
 	if (npasswd) {
-		while (dict_poproot(npasswd, NULL, (void**)&buf))
+		while (dict_poproot(npasswd, (void**)&buf))
 			free(buf);
 		free(npasswd);
 	}

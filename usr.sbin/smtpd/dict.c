@@ -1,4 +1,4 @@
-/*	$OpenBSD: dict.c,v 1.3 2013/10/25 20:08:31 eric Exp $	*/
+/*	$OpenBSD: dict.c,v 1.4 2013/11/18 11:47:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -162,15 +162,13 @@ dict_xpop(struct dict *d, const char *k)
 }
 
 int
-dict_poproot(struct dict *d, const char **k, void **data)
+dict_poproot(struct dict *d, void **data)
 {
 	struct dictentry	*entry;
 
 	entry = SPLAY_ROOT(&d->dict);
 	if (entry == NULL)
 		return (0);
-	if (k)
-		*k = entry->key;
 	if (data)
 		*data = entry->data;
 	SPLAY_REMOVE(_dict, &d->dict, entry);

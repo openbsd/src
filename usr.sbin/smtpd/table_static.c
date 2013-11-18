@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.6 2013/10/28 18:50:23 eric Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.7 2013/11/18 11:47:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -161,7 +161,7 @@ table_static_update(struct table *table)
 		goto err;
 
 	/* replace former table, frees t */
-	while (dict_poproot(&table->t_dict, NULL, (void **)&p))
+	while (dict_poproot(&table->t_dict, (void **)&p))
 		free(p);
 	dict_merge(&table->t_dict, &t->t_dict);
 	table_destroy(t);

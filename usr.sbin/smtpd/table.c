@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.10 2013/10/28 18:49:14 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.11 2013/11/18 11:47:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -263,7 +263,7 @@ table_destroy(struct table *t)
 {
 	void	*p = NULL;
 
-	while (dict_poproot(&t->t_dict, NULL, (void **)&p))
+	while (dict_poproot(&t->t_dict, (void **)&p))
 		free(p);
 
 	dict_xpop(env->sc_tables_dict, t->t_name);
