@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.159 2013/11/13 08:39:33 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.160 2013/11/18 12:24:26 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -86,6 +86,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	uint64_t		 reqid;
 	size_t			 i;
 	int			 v;
+	const char	        *cafile = NULL;
 
 	if (imsg->hdr.type == IMSG_DNS_HOST ||
 	    imsg->hdr.type == IMSG_DNS_PTR ||
@@ -175,8 +176,11 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 				fatalx("lka:ca_vrfy: verify without a certificate");
 
 			resp_ca_vrfy.reqid = req_ca_vrfy_smtp->reqid;
-
-			if (! lka_X509_verify(req_ca_vrfy_smtp, CA_FILE, NULL))
+			ssl = dict_xget(env->sc_ssl_dict, req_ca_vrfy_smtp->pkiname);
+			cafile = CA_FILE;
+			if (ssl->ssl_ca_file)
+				cafile = ssl->ssl_ca_file;
+			if (! lka_X509_verify(req_ca_vrfy_smtp, cafile, NULL))
 				resp_ca_vrfy.status = CA_FAIL;
 			else
 				resp_ca_vrfy.status = CA_OK;
@@ -297,8 +301,12 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 				fatalx("lka:ca_vrfy: verify without a certificate");
 
 			resp_ca_vrfy.reqid = req_ca_vrfy_mta->reqid;
+			ssl = dict_get(env->sc_ssl_dict, req_ca_vrfy_mta->pkiname);
 
-			if (! lka_X509_verify(req_ca_vrfy_mta, CA_FILE, NULL))
+			cafile = CA_FILE;
+			if (ssl && ssl->ssl_ca_file)
+				cafile = ssl->ssl_ca_file;
+			if (! lka_X509_verify(req_ca_vrfy_mta, cafile, NULL))
 				resp_ca_vrfy.status = CA_FAIL;
 			else
 				resp_ca_vrfy.status = CA_OK;

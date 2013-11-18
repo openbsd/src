@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.433 2013/11/06 10:01:29 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.434 2013/11/18 12:24:26 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -973,6 +973,7 @@ struct ca_cert_resp_msg {
 
 struct ca_vrfy_req_msg {
 	uint64_t		reqid;
+	char			pkiname[SMTPD_MAXHOSTNAMELEN];
 	unsigned char  	       *cert;
 	off_t			cert_len;
 	size_t			n_chain;
