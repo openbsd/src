@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.203 2013/11/15 12:18:02 henning Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.204 2013/11/18 21:16:55 chl Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -422,7 +422,7 @@ pfsync_syncdev_state(void *arg)
 {
 	struct pfsync_softc *sc = arg;
 
-	if (!sc->sc_sync_if && !(sc->sc_if.if_flags & IFF_UP))
+	if (!sc->sc_sync_if || !(sc->sc_if.if_flags & IFF_UP))
 		return;
 
 	if (sc->sc_sync_if->if_link_state == LINK_STATE_DOWN) {
