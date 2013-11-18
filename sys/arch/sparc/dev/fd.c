@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.86 2013/11/12 16:04:09 krw Exp $	*/
+/*	$OpenBSD: fd.c,v 1.87 2013/11/18 01:56:35 dlg Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -217,7 +217,8 @@ struct fd_softc {
 
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
-	struct buf sc_q;	/* head of buf chain */
+	struct bufq sc_bufq;	/* pending I/O requests */
+	struct buf *sc_bp;	/* current I/O */
 
 	struct timeout fd_motor_on_to;
 	struct timeout fd_motor_off_to;
@@ -642,6 +643,7 @@ fdattach(parent, self, aux)
 	 */
 	fd->sc_dk.dk_flags = DKF_NOLABELREAD;
 	fd->sc_dk.dk_name = fd->sc_dv.dv_xname;
+	bufq_init(&fd->sc_bufq, BUFQ_DEFAULT);
 	disk_attach(&fd->sc_dv, &fd->sc_dk);
 
 	/*
@@ -732,11 +734,13 @@ fdstrategy(bp)
 		(long long)fd->sc_blkno, bp->b_cylinder);
 #endif
 
+	/* Queue transfer */
+	bufq_queue(&fd->sc_bufq, bp);
+
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
-	disksort(&fd->sc_q, bp);
 	timeout_del(&fd->fd_motor_off_to); /* a good idea */
-	if (!fd->sc_q.b_active)
+	if (fd->sc_bp == NULL)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
 	else {
@@ -767,7 +771,7 @@ fdstart(fd)
 	int active = !TAILQ_EMPTY(&fdc->sc_drives);
 
 	/* Link into controller queue. */
-	fd->sc_q.b_active = 1;
+	fd->sc_bp = bufq_dequeue(&fd->sc_bufq);
 	TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
 
 	/* If controller not already active, start it. */
@@ -782,6 +786,9 @@ fdfinish(fd, bp)
 {
 	struct fdc_softc *fdc = (void *)fd->sc_dv.dv_parent;
 
+	fd->sc_skip = 0;
+	fd->sc_bp = bufq_dequeue(&fd->sc_bufq);
+
 	/*
 	 * Move this drive to the end of the queue to give others a `fair'
 	 * chance.  We only force a switch if N operations are completed while
@@ -791,15 +798,11 @@ fdfinish(fd, bp)
 	if (TAILQ_NEXT(fd, sc_drivechain) != NULL && ++fd->sc_ops >= 8) {
 		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
-		if (bp->b_actf) {
+		if (fd->sc_bp != NULL)
 			TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
-		} else
-			fd->sc_q.b_active = 0;
 	}
-	bp->b_resid = fd->sc_bcount;
-	fd->sc_skip = 0;
-	fd->sc_q.b_actf = bp->b_actf;
 
+	bp->b_resid = fd->sc_bcount;
 	biodone(bp);
 	/* turn off motor 5s from now */
 	timeout_add_sec(&fd->fd_motor_off_to, 5);
@@ -1117,7 +1120,7 @@ fdctimeout(arg)
 		goto out;
 	}
 
-	if (fd->sc_q.b_actf)
+	if (fd->sc_bp != NULL)
 		fdc->sc_state++;
 	else
 		fdc->sc_state = DEVIDLE;
@@ -1285,11 +1288,10 @@ loop:
 	}
 
 	/* Is there a transfer to this drive?  If not, deactivate drive. */
-	bp = fd->sc_q.b_actf;
+	bp = fd->sc_bp;
 	if (bp == NULL) {
 		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
-		fd->sc_q.b_active = 0;
 		goto loop;
 	}
 
@@ -1663,7 +1665,7 @@ fdcretry(fdc)
 	int error = EIO;
 
 	fd = TAILQ_FIRST(&fdc->sc_drives);
-	bp = fd->sc_q.b_actf;
+	bp = fd->sc_bp;
 
 	fdc->sc_overruns = 0;
 	if (fd->sc_opts & FDOPT_NORETRY)
