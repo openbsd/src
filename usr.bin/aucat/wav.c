@@ -30,6 +30,36 @@
 #include "dbg.h"
 #endif
 
+void wav_dbg(struct wav *);
+void wav_conv(unsigned char *, unsigned int, short *);
+unsigned int wav_read(struct file *, unsigned char *, unsigned int);
+unsigned int wav_write(struct file *, unsigned char *, unsigned int);
+void wav_close(struct file *);
+int wav_attach(struct wav *, int);
+void wav_midiattach(struct wav *);
+void wav_allocbuf(struct wav *);
+void wav_freebuf(struct wav *);
+void wav_reset(struct wav *);
+void wav_exit(struct wav *);
+int wav_init(struct wav *);
+int wav_seekmmc(struct wav *);
+int wav_rdata(struct wav *);
+int wav_wdata(struct wav *);
+void wav_setvol(void *, unsigned int);
+void wav_startreq(void *);
+void wav_stopreq(void *);
+void wav_locreq(void *, unsigned int);
+void wav_quitreq(void *);
+int wav_autohdr(char *, struct dev *, unsigned int *, unsigned int *);
+void rwav_done(struct aproc *);
+int rwav_in(struct aproc *, struct abuf *);
+int rwav_out(struct aproc *, struct abuf *);
+struct aproc *rwav_new(struct file *);
+void wwav_done(struct aproc *);
+int wwav_in(struct aproc *, struct abuf *);
+int wwav_out(struct aproc *, struct abuf *);
+struct aproc *wwav_new(struct file *);
+
 short wav_ulawmap[256] = {
 	-32124, -31100, -30076, -29052, -28028, -27004, -25980, -24956,
 	-23932, -22908, -21884, -20860, -19836, -18812, -17788, -16764,

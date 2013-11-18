@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.h,v 1.1 2012/11/23 07:03:28 ratchov Exp $	*/
+/*	$OpenBSD: dsp.h,v 1.2 2013/11/18 17:37:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -157,5 +157,6 @@ void dec_init(struct conv *, struct aparams *, int);
 void cmap_add(struct cmap *, void *, void *, int, int);
 void cmap_copy(struct cmap *, void *, void *, int, int);
 void cmap_init(struct cmap *, int, int, int, int, int, int, int, int);
+int sqrtone(int, adata_t *, int, int, int);
 
 #endif /* !defined(DSP_H) */

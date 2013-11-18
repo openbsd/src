@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.4 2012/12/01 12:06:14 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.5 2013/11/18 17:37:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -84,6 +84,22 @@
 #ifndef DEFAULT_DEV
 #define DEFAULT_DEV "rsnd/0"
 #endif
+
+void sigint(int);
+void opt_ch(int *, int *);
+void opt_enc(struct aparams *);
+int opt_mmc(void);
+int opt_onoff(void);
+int getword(char *, char **);
+unsigned int opt_mode(void);
+void getbasepath(char *, size_t);
+void setsig(void);
+void unsetsig(void);
+void privdrop(void);
+struct dev *mkdev(char *, struct aparams *,
+    int, int, int, int, int, int);
+struct opt *mkopt(char *, struct dev *,
+    int, int, int, int, int, int, int, int);
 
 unsigned int log_level = 0;
 volatile sig_atomic_t quit_flag = 0;

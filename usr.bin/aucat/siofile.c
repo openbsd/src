@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.12 2012/06/27 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.13 2013/11/18 17:37:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -57,6 +57,7 @@ void siofile_stop(struct file *);
 int siofile_nfds(struct file *);
 int siofile_pollfd(struct file *, struct pollfd *, int);
 int siofile_revents(struct file *, struct pollfd *);
+void siofile_cb(void *, int);
 
 struct fileops siofile_ops = {
 	"sio",

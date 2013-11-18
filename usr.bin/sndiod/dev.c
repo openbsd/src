@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.6 2013/05/05 20:42:53 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.7 2013/11/18 17:37:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -27,16 +27,6 @@
 #include "sysex.h"
 #include "utils.h"
 
-int  dev_open(struct dev *);
-void dev_close(struct dev *);
-void dev_clear(struct dev *);
-void dev_master(struct dev *, unsigned int);
-
-void slot_attach(struct slot *);
-void slot_ready(struct slot *);
-void slot_mix_drop(struct slot *);
-void slot_sub_sil(struct slot *);
-
 void zomb_onmove(void *, int);
 void zomb_onvol(void *, unsigned int);
 void zomb_fill(void *);
@@ -47,10 +37,66 @@ void zomb_mmcstop(void *);
 void zomb_mmcloc(void *, unsigned int);
 void zomb_exit(void *);
 
+void dev_log(struct dev *);
+void dev_midi_qfr(struct dev *, int);
+void dev_midi_full(struct dev *);
+void dev_midi_vol(struct dev *, struct slot *);
+void dev_midi_master(struct dev *);
+void dev_midi_slotdesc(struct dev *, struct slot *);
+void dev_midi_dump(struct dev *);
 void dev_midi_imsg(void *, unsigned char *, int);
 void dev_midi_omsg(void *, unsigned char *, int);
 void dev_midi_fill(void *, int);
 void dev_midi_exit(void *);
+
+void dev_mon_snoop(struct dev *);
+int play_filt_resamp(struct slot *, void *, void *, int);
+int play_filt_dec(struct slot *, void *, void *, int);
+void dev_mix_badd(struct dev *, struct slot *);
+void dev_empty_cycle(struct dev *);
+void dev_mix_adjvol(struct dev *);
+void dev_mix_cycle(struct dev *);
+int rec_filt_resamp(struct slot *, void *, void *, int);
+int rec_filt_enc(struct slot *, void *, void *, int);
+void dev_sub_bcopy(struct dev *, struct slot *);
+void dev_sub_cycle(struct dev *);
+
+void dev_onmove(struct dev *, int);
+void dev_master(struct dev *, unsigned int);
+void dev_cycle(struct dev *);
+int dev_getpos(struct dev *);
+struct dev *dev_new(char *, struct aparams *, unsigned int, unsigned int,
+    unsigned int, unsigned int, unsigned int, unsigned int);
+void dev_adjpar(struct dev *, int, int, int, int, int);
+int dev_open(struct dev *);
+void dev_close(struct dev *);
+int dev_ref(struct dev *);
+void dev_unref(struct dev *);
+int dev_init(struct dev *);
+void dev_done(struct dev *);
+struct dev *dev_bynum(int);
+void dev_del(struct dev *);
+unsigned int dev_roundof(struct dev *, unsigned int);
+void dev_wakeup(struct dev *);
+void dev_clear(struct dev *);
+void dev_sync_attach(struct dev *);
+void dev_mmcstart(struct dev *);
+void dev_mmcstop(struct dev *);
+void dev_mmcloc(struct dev *, unsigned int);
+
+void slot_log(struct slot *);
+struct slot *slot_new(struct dev *, char *, struct slotops *, void *, int);
+void slot_del(struct slot *);
+void slot_setvol(struct slot *, unsigned int);
+void slot_attach(struct slot *);
+void slot_ready(struct slot *);
+void slot_start(struct slot *);
+void slot_detach(struct slot *);
+void slot_stop(struct slot *);
+void slot_write(struct slot *);
+void slot_read(struct slot *);
+void slot_mix_drop(struct slot *);
+void slot_sub_sil(struct slot *);
 
 struct midiops dev_midiops = {
 	dev_midi_imsg,

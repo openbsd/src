@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.73 2012/05/23 19:12:44 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.74 2013/11/18 17:37:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -59,6 +59,90 @@
  * writeable if there are samples to drop
  */
 #define SUB_WOK(buf) (ABUF_WOK(buf) || (buf)->w.sub.silence < 0)
+
+int zomb_in(struct aproc *, struct abuf *);
+int zomb_out(struct aproc *, struct abuf *);
+void zomb_eof(struct aproc *, struct abuf *);
+void zomb_hup(struct aproc *, struct abuf *);
+void zomb_newin(struct aproc *, struct abuf *);
+void zomb_newout(struct aproc *, struct abuf *);
+void zomb_ipos(struct aproc *, struct abuf *, int);
+void zomb_opos(struct aproc *, struct abuf *, int);
+
+int rfile_do(struct aproc *, unsigned int, unsigned int *);
+int rfile_in(struct aproc *, struct abuf *);
+int rfile_out(struct aproc *, struct abuf *);
+void rfile_done(struct aproc *);
+void rfile_eof(struct aproc *, struct abuf *);
+void rfile_hup(struct aproc *, struct abuf *);
+
+void wfile_done(struct aproc *);
+int wfile_do(struct aproc *, unsigned int, unsigned int *);
+int wfile_in(struct aproc *, struct abuf *);
+int wfile_out(struct aproc *, struct abuf *);
+void wfile_eof(struct aproc *, struct abuf *);
+void wfile_hup(struct aproc *, struct abuf *);
+
+void mix_drop(struct abuf *, int);
+void mix_bzero(struct abuf *, unsigned int);
+unsigned int mix_badd(struct abuf *, struct abuf *);
+int mix_xrun(struct aproc *, struct abuf *);
+int mix_in(struct aproc *, struct abuf *);
+int mix_out(struct aproc *, struct abuf *);
+void mix_eof(struct aproc *, struct abuf *);
+void mix_hup(struct aproc *, struct abuf *);
+void mix_newin(struct aproc *, struct abuf *);
+void mix_newout(struct aproc *, struct abuf *);
+void mix_opos(struct aproc *, struct abuf *, int);
+void mix_setmaster(struct aproc *);
+void mix_clear(struct aproc *);
+void mix_quit(struct aproc *);
+
+void sub_silence(struct abuf *, int);
+void sub_bcopy(struct abuf *, struct abuf *);
+int sub_xrun(struct aproc *, struct abuf *);
+int sub_in(struct aproc *, struct abuf *);
+int sub_out(struct aproc *, struct abuf *);
+void sub_eof(struct aproc *, struct abuf *);
+void sub_hup(struct aproc *, struct abuf *);
+void sub_newout(struct aproc *, struct abuf *);
+void sub_ipos(struct aproc *, struct abuf *, int);
+void sub_clear(struct aproc *);
+
+void resamp_bcopy(struct aproc *, struct abuf *, struct abuf *);
+int resamp_in(struct aproc *, struct abuf *);
+int resamp_out(struct aproc *, struct abuf *);
+void resamp_eof(struct aproc *, struct abuf *);
+void resamp_hup(struct aproc *, struct abuf *);
+void resamp_ipos(struct aproc *, struct abuf *, int);
+void resamp_opos(struct aproc *, struct abuf *, int);
+
+void enc_bcopy(struct aproc *, struct abuf *, struct abuf *);
+int enc_in(struct aproc *, struct abuf *);
+int enc_out(struct aproc *, struct abuf *);
+void enc_eof(struct aproc *, struct abuf *);
+void enc_hup(struct aproc *, struct abuf *);
+
+void dec_bcopy(struct aproc *, struct abuf *, struct abuf *);
+int dec_in(struct aproc *, struct abuf *);
+int dec_out(struct aproc *, struct abuf *);
+void dec_eof(struct aproc *, struct abuf *);
+void dec_hup(struct aproc *, struct abuf *);
+
+void join_bcopy(struct aproc *, struct abuf *, struct abuf *);
+int join_in(struct aproc *, struct abuf *);
+int join_out(struct aproc *, struct abuf *);
+void join_eof(struct aproc *, struct abuf *);
+void join_hup(struct aproc *, struct abuf *);
+
+void mon_flush(struct aproc *);
+void mon_snoop(struct aproc *, struct abuf *, unsigned int, unsigned int);
+int mon_in(struct aproc *, struct abuf *);
+void mon_clear(struct aproc *);
+int mon_out(struct aproc *, struct abuf *);
+void mon_eof(struct aproc *, struct abuf *);
+void mon_hup(struct aproc *, struct abuf *);
+void mon_ipos(struct aproc *, struct abuf *, int);
 
 #ifdef DEBUG
 void

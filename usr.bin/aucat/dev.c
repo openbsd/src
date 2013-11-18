@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.83 2013/11/12 06:47:34 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.84 2013/11/18 17:37:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -86,6 +86,11 @@ void dev_stop(struct dev *);
 void dev_clear(struct dev *);
 void dev_onmove(void *, int);
 int  devctl_open(struct dev *, struct devctl *);
+int  dev_getep(struct dev *, unsigned int, struct abuf **, struct abuf **);
+void dev_sync(struct dev *, unsigned int, struct abuf *, struct abuf *);
+int  dev_mkslot(struct dev *, char *);
+int  dev_try(struct dev *, int);
+
 
 struct dev *dev_list = NULL;
 unsigned int dev_sndnum = 0, dev_thrnum = 0;

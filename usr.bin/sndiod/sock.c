@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.6 2013/05/05 20:42:53 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.7 2013/11/18 17:37:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,38 +32,39 @@
 #include "sock.h"
 #include "utils.h"
 
-void sock_attach(struct sock *, int);
-int sock_read(struct sock *);
-int sock_write(struct sock *);
+void sock_log(struct sock *);
+void sock_close(struct sock *);
+void sock_slot_fill(void *);
+void sock_slot_flush(void *);
+void sock_slot_eof(void *);
+void sock_slot_onmove(void *, int);
+void sock_slot_onvol(void *, unsigned int);
+void sock_midi_imsg(void *, unsigned char *, int);
+void sock_midi_omsg(void *, unsigned char *, int);
+void sock_midi_fill(void *, int);
+struct sock *sock_new(int);
+void sock_slot_mmcstart(void *);
+void sock_slot_mmcstop(void *);
+void sock_slot_mmcloc(void *, unsigned int);
+void sock_exit(void *);
+int sock_fdwrite(struct sock *, void *, int);
+int sock_fdread(struct sock *, void *, int);
+int sock_rmsg(struct sock *);
+int sock_wmsg(struct sock *);
+int sock_rdata(struct sock *);
+int sock_wdata(struct sock *);
+int sock_setpar(struct sock *);
+int sock_auth(struct sock *);
+int sock_hello(struct sock *);
 int sock_execmsg(struct sock *);
 int sock_buildmsg(struct sock *);
-void sock_close(struct sock *);
-
+int sock_read(struct sock *);
+int sock_write(struct sock *);
 int sock_pollfd(void *, struct pollfd *);
 int sock_revents(void *, struct pollfd *);
 void sock_in(void *);
 void sock_out(void *);
 void sock_hup(void *);
-
-/*
- * slot call-backs
- */
-void sock_slot_onmove(void *, int);
-void sock_slot_onvol(void *, unsigned int);
-void sock_slot_fill(void *);
-void sock_slot_flush(void *);
-void sock_slot_eof(void *);
-void sock_slot_mmcstart(void *);
-void sock_slot_mmcstop(void *);
-void sock_slot_mmcloc(void *, unsigned int);
-void sock_exit(void *);
-
-/*
- * midi call-backs
- */
-void sock_midi_imsg(void *, unsigned char *, int);
-void sock_midi_omsg(void *, unsigned char *, int);
-void sock_midi_fill(void *, int);
 
 struct fileops sock_fileops = {
 	"sock",

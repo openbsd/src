@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.45 2012/10/27 08:31:59 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.46 2013/11/18 17:37:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -64,6 +64,22 @@
  */
 #define MIDI_CTLVOL	7		/* volume */
 #define MIDI_CTLPAN	11		/* pan */
+
+void midi_cb(void *);
+void midi_msg_info(struct aproc *, int, unsigned char *);
+void midi_msg_vol(struct aproc *, int, unsigned char *);
+void midi_msg_master(struct aproc *, unsigned char *);
+void midi_copy(struct abuf *, struct abuf *, unsigned char *, unsigned int);
+void midi_send(struct aproc *, struct abuf *, unsigned char *, unsigned int);
+void midi_copy_dump(struct aproc *, struct abuf *);
+void midi_onvoice(struct aproc *, struct abuf *);
+void midi_onsysex(struct aproc *, struct abuf *);
+int midi_in(struct aproc *, struct abuf *);
+int midi_out(struct aproc *, struct abuf *);
+void midi_eof(struct aproc *, struct abuf *);
+void midi_hup(struct aproc *, struct abuf *);
+void midi_newin(struct aproc *, struct abuf *);
+void midi_done(struct aproc *);
 
 /*
  * length of voice and common messages (status byte included)

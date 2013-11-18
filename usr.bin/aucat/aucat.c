@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.142 2013/11/12 06:47:34 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.143 2013/11/18 17:37:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -67,6 +67,19 @@
 #ifndef DEFAULT_BUFSZ
 #define DEFAULT_BUFSZ	7860
 #endif
+
+void sigint(int);
+void sigusr1(int);
+void sigusr2(int);
+void opt_ch(struct aparams *);
+void opt_enc(struct aparams *);
+int opt_hdr(void);
+int opt_mmc(void);
+int opt_onoff(void);
+int opt_xrun(void);
+void setsig(void);
+void unsetsig(void);
+struct dev *mkdev(char *, int, int, int, int, int);
 
 #ifdef DEBUG
 volatile sig_atomic_t debug_level = 1;
