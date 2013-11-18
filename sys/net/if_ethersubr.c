@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.158 2013/10/23 15:12:42 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.159 2013/11/18 20:22:23 deraadt Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -751,14 +751,13 @@ void
 ether_fakeaddr(struct ifnet *ifp)
 {
 	static int unit;
-	int rng;
+	int rng = arc4random();
 
 	/* Non-multicast; locally administered address */
 	((struct arpcom *)ifp)->ac_enaddr[0] = 0xfe;
 	((struct arpcom *)ifp)->ac_enaddr[1] = 0xe1;
 	((struct arpcom *)ifp)->ac_enaddr[2] = 0xba;
 	((struct arpcom *)ifp)->ac_enaddr[3] = 0xd0 | (unit++ & 0xf);
-	rng = cold ? random() ^ (long)ifp : arc4random();
 	((struct arpcom *)ifp)->ac_enaddr[4] = rng;
 	((struct arpcom *)ifp)->ac_enaddr[5] = rng >> 8;
 }
