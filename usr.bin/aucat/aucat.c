@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.143 2013/11/18 17:37:45 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.144 2013/11/18 17:51:59 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -282,7 +282,7 @@ mkdev(char *path, int mode, int bufsz, int round, int hold, int autovol)
 int
 main(int argc, char **argv)
 {
-	int c, background, unit, active;
+	int c, active;
 	unsigned int mode, hdr, xrun, rate, join, mmc, vol;
 	unsigned int hold, autovol, bufsz, round;
 	const char *str;
@@ -302,8 +302,6 @@ main(int argc, char **argv)
 	autovol = 1;
 	bufsz = 0;
 	round = 0;
-	unit = 0;
-	background = 0;
 	aparams_init(&ppar, 0, 1, DEFAULT_RATE);
 	aparams_init(&rpar, 0, 1, DEFAULT_RATE);
 	mode = MODE_MIDIMASK | MODE_PLAY | MODE_REC;
@@ -322,7 +320,6 @@ main(int argc, char **argv)
 			if (debug_level < 4)
 				debug_level++;
 #endif
-			background = 0;
 			break;
 		case 'h':
 			hdr = opt_hdr();
