@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.45 2013/06/21 06:08:50 guenther Exp $ */
+/*	$OpenBSD: rthread.h,v 1.46 2013/11/18 23:10:48 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -64,7 +64,7 @@ struct __sem {
 	struct _spinlock lock;
 	volatile int waitcount;
 	volatile int value;
-	int __pad;
+	struct __sem *shared;
 };
 
 TAILQ_HEAD(pthread_queue, pthread);
