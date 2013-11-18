@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.275 2013/11/11 09:15:34 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.276 2013/11/18 09:16:30 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -116,10 +116,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
-
-#if NTRUNK > 0
-#include <net/if_trunk.h>
 #endif
 
 #if NBRIDGE > 0
@@ -511,13 +507,12 @@ if_detach(struct ifnet *ifp)
 	ifp->if_ioctl = if_detached_ioctl;
 	ifp->if_watchdog = if_detached_watchdog;
 
-	/* Call detach hooks, ie. to remove vlan interfaces */
+	/*
+	 * Call detach hooks from head to tail.  To make sure detach
+	 * hooks are executed in the reverse order they were added, all
+	 * the hooks have to be added to the head!
+	 */
 	dohooks(ifp->if_detachhooks, HOOK_REMOVE | HOOK_FREE);
-
-#if NTRUNK > 0
-	if (ifp->if_type == IFT_IEEE8023ADLAG)
-		trunk_port_ifdetach(ifp);
-#endif
 
 #if NBRIDGE > 0
 	/* Remove the interface from any bridge it is part of.  */

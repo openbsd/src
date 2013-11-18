@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.17 2011/07/04 04:29:17 claudio Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.18 2013/11/18 09:16:30 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -136,6 +136,7 @@ struct trunk_port {
 	u_int32_t			tp_prio;	/* port priority */
 	u_int32_t			tp_flags;	/* port flags */
 	void				*lh_cookie;	/* if state hook */
+	void				*dh_cookie;	/* if detach hook */
 
 	/* Redirected callbacks */
 	void	(*tp_watchdog)(struct ifnet *);
@@ -219,7 +220,6 @@ struct trunk_lb {
 	struct trunk_port	*lb_ports[TRUNK_MAX_PORTS];
 };
 
-void	 	trunk_port_ifdetach(struct ifnet *);
 int	 	trunk_input(struct ifnet *, struct ether_header *,
 		    struct mbuf *);
 int		trunk_enqueue(struct ifnet *, struct mbuf *);

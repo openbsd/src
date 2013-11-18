@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.84 2013/06/20 12:03:40 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.85 2013/11/18 09:16:30 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -70,6 +70,7 @@ int	 trunk_port_create(struct trunk_softc *, struct ifnet *);
 int	 trunk_port_destroy(struct trunk_port *);
 void	 trunk_port_watchdog(struct ifnet *);
 void	 trunk_port_state(void *);
+void	 trunk_port_ifdetach(void *);
 int	 trunk_port_ioctl(struct ifnet *, u_long, caddr_t);
 struct trunk_port *trunk_port_get(struct trunk_softc *, struct ifnet *);
 int	 trunk_port_checkstacking(struct trunk_softc *);
@@ -381,9 +382,12 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	trunk_ether_cmdmulti(tp, SIOCADDMULTI);
 
 	/* Register callback for physical link state changes */
-	if (ifp->if_linkstatehooks != NULL)
-		tp->lh_cookie = hook_establish(ifp->if_linkstatehooks, 1,
-		    trunk_port_state, tp);
+	tp->lh_cookie = hook_establish(ifp->if_linkstatehooks, 1,
+	    trunk_port_state, tp);
+
+	/* Register callback if parent wants to unregister */
+	tp->dh_cookie = hook_establish(ifp->if_detachhooks, 0,
+	    trunk_port_ifdetach, tp);
 
 	if (tr->tr_port_create != NULL)
 		error = (*tr->tr_port_create)(tp);
@@ -433,8 +437,8 @@ trunk_port_destroy(struct trunk_port *tp)
 	ifp->if_ioctl = tp->tp_ioctl;
 	ifp->if_tp = NULL;
 
-	if (ifp->if_linkstatehooks != NULL)
-		hook_disestablish(ifp->if_linkstatehooks, tp->lh_cookie);
+	hook_disestablish(ifp->if_linkstatehooks, tp->lh_cookie);
+	hook_disestablish(ifp->if_detachhooks, tp->dh_cookie);
 
 	/* Finally, remove the port from the trunk */
 	SLIST_REMOVE(&tr->tr_ports, tp, trunk_port, tp_entries);
@@ -544,12 +548,9 @@ trunk_port_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 void
-trunk_port_ifdetach(struct ifnet *ifp)
+trunk_port_ifdetach(void *arg)
 {
-	struct trunk_port *tp;
-
-	if ((tp = (struct trunk_port *)ifp->if_tp) == NULL)
-		return;
+	struct trunk_port *tp = (struct trunk_port *)arg;
 
 	trunk_port_destroy(tp);
 }
