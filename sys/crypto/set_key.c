@@ -1,4 +1,4 @@
-/*	$OpenBSD: set_key.c,v 1.2 2002/10/27 13:24:26 miod Exp $	*/
+/*	$OpenBSD: set_key.c,v 1.3 2013/11/18 18:49:53 brad Exp $	*/
 
 /* lib/des/set_key.c */
 /* Copyright (C) 1995 Eric Young (eay@mincom.oz.au)
@@ -66,27 +66,26 @@ static int check_parity();
 
 int des_check_key=0;
 
-void des_set_odd_parity(key)
-des_cblock (*key);
-	{
+void
+des_set_odd_parity(des_cblock (*key))
+{
 	int i;
 
-	for (i=0; i<DES_KEY_SZ; i++)
-		(*key)[i]=odd_parity[(*key)[i]];
-	}
+	for (i = 0; i < DES_KEY_SZ; i++)
+		(*key)[i] = odd_parity[(*key)[i]];
+}
 
-static int check_parity(key)
-des_cblock (*key);
-	{
+static int
+check_parity(des_cblock (*key))
+{
 	int i;
 
-	for (i=0; i<DES_KEY_SZ; i++)
-		{
+	for (i = 0; i < DES_KEY_SZ; i++) {
 		if ((*key)[i] != odd_parity[(*key)[i]])
 			return(0);
-		}
-	return(1);
 	}
+	return (1);
+}
 
 /* Weak and semi week keys as take from
  * %A D.W. Davies
@@ -118,119 +117,117 @@ static des_cblock weak_keys[NUM_WEAK_KEY]={
 	{0xE0,0xFE,0xE0,0xFE,0xF1,0xFE,0xF1,0xFE},
 	{0xFE,0xE0,0xFE,0xE0,0xFE,0xF1,0xFE,0xF1}};
 
-int des_is_weak_key(key)
-des_cblock (*key);
-	{
+int
+des_is_weak_key(des_cblock (*key))
+{
 	int i;
 
-	for (i=0; i<NUM_WEAK_KEY; i++)
+	for (i = 0; i < NUM_WEAK_KEY; i++) {
 		/* Added == 0 to comparision, I obviously don't run
 		 * this section very often :-(, thanks to
 		 * engineering@MorningStar.Com for the fix
 		 * eay 93/06/29 */
-		if (bcmp(weak_keys[i],key,sizeof(des_cblock)) == 0) return(1);
-	return(0);
+		if (bcmp(weak_keys[i], key, sizeof(des_cblock)) == 0)
+			return (1);
 	}
+	return (0);
+}
 
 /* NOW DEFINED IN des_local.h
  * See ecb_encrypt.c for a pseudo description of these macros. 
- * #define PERM_OP(a,b,t,n,m) ((t)=((((a)>>(n))^(b))&(m)),\
+ * #define PERM_OP(a, b, t, n, m) ((t) = ((((a) >> (n))^(b)) & (m)),\
  * 	(b)^=(t),\
- * 	(a)=((a)^((t)<<(n))))
+ * 	(a) = ((a)^((t) << (n))))
  */
 
-#define HPERM_OP(a,t,n,m) ((t)=((((a)<<(16-(n)))^(a))&(m)),\
-	(a)=(a)^(t)^(t>>(16-(n))))
+#define HPERM_OP(a, t, n, m) ((t) = ((((a) << (16 - (n)))^(a)) & (m)),\
+	(a) = (a)^(t)^(t >> (16 - (n))))
 
-static int shifts2[16]={0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0};
+static int shifts2[16]={0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0};
 
 /* return 0 if key parity is odd (correct),
  * return -1 if key parity error,
  * return -2 if illegal weak key.
  */
-int des_set_key(key, schedule)
-des_cblock (*key);
-des_key_schedule schedule;
-	{
-	register u_int32_t c,d,t,s;
+int
+des_set_key(des_cblock (*key), des_key_schedule schedule)
+{
+	register u_int32_t c, d, t, s;
 	register unsigned char *in;
 	register u_int32_t *k;
 	register int i;
 
-	if (des_check_key)
-		{
+	if (des_check_key) {
 		if (!check_parity(key))
 			return(-1);
 
 		if (des_is_weak_key(key))
 			return(-2);
-		}
+	}
 
-	k=(u_int32_t *)schedule;
-	in=(unsigned char *)key;
+	k = (u_int32_t *) schedule;
+	in = (unsigned char *) key;
 
-	c2l(in,c);
-	c2l(in,d);
+	c2l(in, c);
+	c2l(in, d);
 
 	/* do PC1 in 60 simple operations */ 
-/*	PERM_OP(d,c,t,4,0x0f0f0f0fL);
-	HPERM_OP(c,t,-2, 0xcccc0000L);
-	HPERM_OP(c,t,-1, 0xaaaa0000L);
-	HPERM_OP(c,t, 8, 0x00ff0000L);
-	HPERM_OP(c,t,-1, 0xaaaa0000L);
-	HPERM_OP(d,t,-8, 0xff000000L);
-	HPERM_OP(d,t, 8, 0x00ff0000L);
-	HPERM_OP(d,t, 2, 0x33330000L);
-	d=((d&0x00aa00aaL)<<7L)|((d&0x55005500L)>>7L)|(d&0xaa55aa55L);
-	d=(d>>8)|((c&0xf0000000L)>>4);
-	c&=0x0fffffffL; */
+/*	PERM_OP(d, c, t, 4, 0x0f0f0f0fL);
+	HPERM_OP(c, t, -2, 0xcccc0000L);
+	HPERM_OP(c, t, -1, 0xaaaa0000L);
+	HPERM_OP(c, t, 8, 0x00ff0000L);
+	HPERM_OP(c, t, -1, 0xaaaa0000L);
+	HPERM_OP(d, t, -8, 0xff000000L);
+	HPERM_OP(d, t, 8, 0x00ff0000L);
+	HPERM_OP(d, t, 2, 0x33330000L);
+	d = ((d & 0x00aa00aaL) << 7L) | ((d & 0x55005500L) >> 7L) | (d & 0xaa55aa55L);
+	d = (d >> 8) | ((c & 0xf0000000L) >> 4);
+	c &= 0x0fffffffL; */
 
 	/* I now do it in 47 simple operations :-)
 	 * Thanks to John Fletcher (john_fletcher@lccmail.ocf.llnl.gov)
 	 * for the inspiration. :-) */
-	PERM_OP (d,c,t,4,0x0f0f0f0fL);
-	HPERM_OP(c,t,-2,0xcccc0000L);
-	HPERM_OP(d,t,-2,0xcccc0000L);
-	PERM_OP (d,c,t,1,0x55555555L);
-	PERM_OP (c,d,t,8,0x00ff00ffL);
-	PERM_OP (d,c,t,1,0x55555555L);
-	d=	(((d&0x000000ffL)<<16L)| (d&0x0000ff00L)     |
-		 ((d&0x00ff0000L)>>16L)|((c&0xf0000000L)>>4L));
-	c&=0x0fffffffL;
+	PERM_OP (d, c, t, 4, 0x0f0f0f0fL);
+	HPERM_OP(c, t, -2, 0xcccc0000L);
+	HPERM_OP(d, t, -2, 0xcccc0000L);
+	PERM_OP (d, c, t, 1, 0x55555555L);
+	PERM_OP (c, d, t, 8, 0x00ff00ffL);
+	PERM_OP (d, c, t, 1, 0x55555555L);
+	d = (((d & 0x000000ffL) << 16L) | (d & 0x0000ff00L) |
+	     ((d & 0x00ff0000L) >> 16L) | ((c & 0xf0000000L) >> 4L));
+	c &= 0x0fffffffL;
 
-	for (i=0; i<ITERATIONS; i++)
-		{
+	for (i = 0; i < ITERATIONS; i++) {
 		if (shifts2[i])
-			{ c=((c>>2L)|(c<<26L)); d=((d>>2L)|(d<<26L)); }
+			{ c = ((c >> 2L) | (c << 26L)); d = ((d >> 2L) | (d << 26L)); }
 		else
-			{ c=((c>>1L)|(c<<27L)); d=((d>>1L)|(d<<27L)); }
-		c&=0x0fffffffL;
-		d&=0x0fffffffL;
+			{ c = ((c >> 1L) | (c << 27L)); d = ((d >> 1L) | (d << 27L)); }
+		c &= 0x0fffffffL;
+		d &= 0x0fffffffL;
 		/* could be a few less shifts but I am to lazy at this
 		 * point in time to investigate */
-		s=	des_skb[0][ (c    )&0x3f                ]|
-			des_skb[1][((c>> 6)&0x03)|((c>> 7L)&0x3c)]|
-			des_skb[2][((c>>13)&0x0f)|((c>>14L)&0x30)]|
-			des_skb[3][((c>>20)&0x01)|((c>>21L)&0x06) |
-						  ((c>>22L)&0x38)];
-		t=	des_skb[4][ (d    )&0x3f                ]|
-			des_skb[5][((d>> 7L)&0x03)|((d>> 8L)&0x3c)]|
-			des_skb[6][ (d>>15L)&0x3f                ]|
-			des_skb[7][((d>>21L)&0x0f)|((d>>22L)&0x30)];
+		s = des_skb[0][ (c    ) & 0x3f                ]|
+		    des_skb[1][((c >> 6) & 0x03) | ((c >> 7L) & 0x3c)]|
+		    des_skb[2][((c >> 13) & 0x0f) | ((c >> 14L) & 0x30)]|
+		    des_skb[3][((c >> 20) & 0x01) | ((c >> 21L) & 0x06) |
+						  ((c >> 22L) & 0x38)];
+		t = des_skb[4][ (d    ) & 0x3f                ]|
+		    des_skb[5][((d >> 7L) & 0x03) | ((d >> 8L) & 0x3c)]|
+		    des_skb[6][ (d >> 15L) & 0x3f                ]|
+		    des_skb[7][((d >> 21L) & 0x0f) | ((d >> 22L) & 0x30)];
 
 		/* table contained 0213 4657 */
-		*(k++)=((t<<16L)|(s&0x0000ffffL))&0xffffffffL;
-		s=     ((s>>16L)|(t&0xffff0000L));
+		*(k++) = ((t << 16L) | (s & 0x0000ffffL)) & 0xffffffffL;
+		s = ((s >> 16L) | (t & 0xffff0000L));
 		
-		s=(s<<4L)|(s>>28L);
-		*(k++)=s&0xffffffffL;
-		}
-	return(0);
+		s = (s << 4L) | (s >> 28L);
+		*(k++) = s & 0xffffffffL;
 	}
+	return (0);
+}
 
-int des_key_sched(key, schedule)
-des_cblock (*key);
-des_key_schedule schedule;
-	{
-	return(des_set_key(key,schedule));
-	}
+int
+des_key_sched(des_cblock (*key), des_key_schedule schedule)
+{
+	return (des_set_key(key, schedule));
+}

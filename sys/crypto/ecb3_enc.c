@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecb3_enc.c,v 1.2 2002/10/27 13:24:26 miod Exp $	*/
+/*	$OpenBSD: ecb3_enc.c,v 1.3 2013/11/18 18:49:53 brad Exp $	*/
 
 /* lib/des/ecb3_enc.c */
 /* Copyright (C) 1995 Eric Young (eay@mincom.oz.au)
@@ -49,31 +49,28 @@
 
 #include "des_locl.h"
 
-void des_ecb3_encrypt(input, output, ks1, ks2, ks3, encrypt)
-des_cblock (*input);
-des_cblock (*output);
-des_key_schedule ks1;
-des_key_schedule ks2;
-des_key_schedule ks3;
-int encrypt;
-	{
-	register u_int32_t l0,l1;
-	register unsigned char *in,*out;
+void
+des_ecb3_encrypt(des_cblock (*input), des_cblock (*output),
+    des_key_schedule ks1, des_key_schedule ks2, des_key_schedule ks3,
+    int encrypt)
+{
+	register u_int32_t l0, l1;
+	register unsigned char *in, *out;
 	u_int32_t ll[2];
 
-	in=(unsigned char *)input;
-	out=(unsigned char *)output;
-	c2l(in,l0);
-	c2l(in,l1);
-	IP(l0,l1);
-	ll[0]=l0;
-	ll[1]=l1;
-	des_encrypt2(ll,ks1,encrypt);
-	des_encrypt2(ll,ks2,!encrypt);
-	des_encrypt2(ll,ks3,encrypt);
-	l0=ll[0];
-	l1=ll[1];
-	FP(l1,l0);
-	l2c(l0,out);
-	l2c(l1,out);
-	}
+	in = (unsigned char *) input;
+	out = (unsigned char *) output;
+	c2l(in, l0);
+	c2l(in, l1);
+	IP(l0, l1);
+	ll[0] = l0;
+	ll[1] = l1;
+	des_encrypt2(ll, ks1, encrypt);
+	des_encrypt2(ll, ks2, !encrypt);
+	des_encrypt2(ll, ks3, encrypt);
+	l0 = ll[0];
+	l1 = ll[1];
+	FP(l1, l0);
+	l2c(l0, out);
+	l2c(l1, out);
+}
