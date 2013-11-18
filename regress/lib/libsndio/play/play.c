@@ -9,6 +9,10 @@
 #include "tools.h"
 
 #define BUFSZ 0x100
+
+void cb(void *, int);
+void usage(void);
+
 unsigned char buf[BUFSZ];
 struct sio_par par;
 char *xstr[] = SIO_XSTRINGS;
@@ -93,7 +97,7 @@ main(int argc, char **argv) {
 		}
 	}
 
-	hdl = sio_open(NULL, SIO_PLAY, 0);
+	hdl = sio_open(SIO_DEVANY, SIO_PLAY, 0);
 	if (hdl == NULL) {
 		fprintf(stderr, "sio_open() failed\n");
 		exit(1);

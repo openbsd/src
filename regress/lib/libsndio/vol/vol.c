@@ -11,6 +11,10 @@
 #include "tools.h"
 
 #define BUFSZ 0x100
+
+void usage(void);
+void onvol(void *, unsigned);
+
 unsigned char buf[BUFSZ];
 struct sio_par par;
 unsigned vol = 0xdeadbeef;
@@ -95,7 +99,7 @@ main(int argc, char **argv) {
 		}
 	}
 
-	hdl = sio_open(NULL, SIO_PLAY, 0);
+	hdl = sio_open(SIO_DEVANY, SIO_PLAY, 0);
 	if (hdl == NULL) {
 		fprintf(stderr, "sio_open() failed\n");
 		exit(1);
@@ -115,7 +119,7 @@ main(int argc, char **argv) {
 		pfd[0].fd = tty;
 		pfd[0].events = POLLIN;
 		sio_pollfd(hdl, &pfd[1], POLLOUT);
-		if (poll(pfd, 2, INFTIM) < 0) {
+		if (poll(pfd, 2, -1) < 0) {
 			perror("poll");
 			exit(1);
 		}

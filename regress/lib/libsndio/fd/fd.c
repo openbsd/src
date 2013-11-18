@@ -16,6 +16,13 @@ struct buf {				/* simple circular fifo */
 	unsigned char data[BUF_LEN];
 };
 
+void cb(void *, int);
+void buf_read(struct buf *, int);
+void buf_write(struct buf *, int);
+unsigned buf_rec(struct buf *, struct sio_hdl *);
+unsigned buf_play(struct buf *, struct sio_hdl *);
+void usage(void);
+
 char *xstr[] = SIO_XSTRINGS;
 struct sio_par par;
 struct buf playbuf, recbuf;
@@ -38,7 +45,8 @@ cb(void *addr, int delta)
  * read buffer contents from a file without blocking
  */
 void
-buf_read(struct buf *buf, int fd) {
+buf_read(struct buf *buf, int fd)
+{
 	unsigned count, end, avail;
 	int n;
 
@@ -169,22 +177,26 @@ buf_play(struct buf *buf, struct sio_hdl *hdl)
 }
 
 void
-usage(void) {
+usage(void)
+{
 	fprintf(stderr,
 	    "usage: fd [-v] [-r rate] [-c ichan] [-C ochan] [-e enc] "
 	    "[-i file] [-o file]\n");
 }
  
 int
-main(int argc, char **argv) {
-	int ch, recfd, playfd, events, revents;
+main(int argc, char **argv)
+{
+	int ch, recfd, playfd, nfds, events, revents;
 	char *recpath, *playpath;
 	struct sio_hdl *hdl;
-	struct pollfd pfd;
-	struct timeval tv, otv, ntv;
-	unsigned mode, done;
+#define NFDS 16
+	struct pollfd pfd[NFDS];
+	unsigned mode;
 	
+	recfd = -1;
 	recpath = NULL;
+	playfd = -1;
 	playpath = NULL;
 
 	/*
@@ -260,9 +272,13 @@ main(int argc, char **argv) {
 		fprintf(stderr, "-i or -o option required\n");
 		exit(0);
 	}
-	hdl = sio_open(NULL, mode, 1);
+	hdl = sio_open(SIO_DEVANY, mode, 1);
 	if (hdl == NULL) {
 		fprintf(stderr, "sio_open() failed\n");
+		exit(1);
+	}
+	if (sio_nfds(hdl) > NFDS) {
+		fprintf(stderr, "too many descriptors to poll\n");
 		exit(1);
 	}
 	sio_onmove(hdl, cb, NULL);
@@ -281,7 +297,7 @@ main(int argc, char **argv) {
 	}
 
 	events = 0;	
-	if (recpath > 0) {
+	if (recpath) {
 		recfd = open(recpath, O_CREAT | O_WRONLY | O_TRUNC, 0666);
 		if (recfd < 0) {
 			perror(recpath);
@@ -289,7 +305,7 @@ main(int argc, char **argv) {
 		}
 		events |= POLLIN;
 	}
-	if (playpath > 0) {
+	if (playpath) {
 		playfd = open(playpath, O_RDONLY, 0);
 		if (playfd < 0) {
 			perror(playpath);
@@ -299,65 +315,27 @@ main(int argc, char **argv) {
 		buf_read(&playbuf, playfd);
 		buf_play(&playbuf, hdl);
 	}
-	gettimeofday(&otv, NULL);
 	for (;;) {
-		gettimeofday(&ntv, NULL);
-		timersub(&ntv, &otv, &tv);
-#if 0 /* trigger underrun */
-		if (playpath && (tv.tv_sec % 10) < 7) {
-			events |= POLLOUT;
-		} else
-			events &= ~POLLOUT;
-#endif
-#if 0 /* trigger overrun */
-		if (recpath && (tv.tv_sec % 10) < 7) {
-			events |= POLLIN;
-		} else
-			events &= ~POLLIN;
-#endif
-		//fprintf(stderr, "%ld.%06ld: polling for %d\n",
-		//    tv.tv_sec, tv.tv_usec, events);
-		sio_pollfd(hdl, &pfd, events);
-		while (poll(&pfd, 1, 1000) < 0) {
+		nfds = sio_pollfd(hdl, pfd, events);
+		while (poll(pfd, nfds, 1000) < 0) {
 			if (errno == EINTR)
 				continue;
 			perror("poll");
 			exit(1);
 		}
-		revents = sio_revents(hdl, &pfd);
-		gettimeofday(&ntv, NULL);
-		timersub(&ntv, &otv, &tv);
-		//fprintf(stderr, "%ld.%06ld: got %d\n",
-		//    tv.tv_sec, tv.tv_usec, revents);
+		revents = sio_revents(hdl, pfd);
 		if (revents & POLLHUP) {
 			fprintf(stderr, "device hangup\n");
 			exit(0);
 		}				
 		if (revents & POLLIN) {
-			done = buf_rec(&recbuf, hdl);
+			buf_rec(&recbuf, hdl);
 			buf_write(&recbuf, recfd);
-			//fprintf(stderr, "%ld.%06ld: recored %u\n",
-			//    tv.tv_sec, tv.tv_usec, done);
 		}
 		if (revents & POLLOUT) {
-			done = buf_play(&playbuf, hdl);
+			buf_play(&playbuf, hdl);
 			buf_read(&playbuf, playfd);
 		}
-#if 0
-		if (pos / par.rate > 2) {
-			if (!sio_stop(hdl)) {
-				fprintf(stderr, "sio_stop failed\n");
-				exit(1);
-			}
-			pos = plat = rlat = 0;
-			fprintf(stderr, "pausing...\n");
-			sleep(1);
-			if (!sio_start(hdl)) {
-				fprintf(stderr, "sio_start failed\n");
-				exit(1);
-			}
-		}
-#endif
 	}
 	sio_close(hdl);
 	return 0;
