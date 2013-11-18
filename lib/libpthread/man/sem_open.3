@@ -1,4 +1,4 @@
-.\" $OpenBSD: sem_open.3,v 1.5 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: sem_open.3,v 1.6 2013/11/18 23:17:52 tedu Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libc_r/man/sem_open.3,v 1.7 2001/10/01 16:09:09 ru Exp $
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: November 18 2013 $
 .Dt SEM_OPEN 3
 .Os
 .Sh NAME
@@ -46,11 +46,13 @@
 .Fn sem_unlink "const char *name"
 .Sh DESCRIPTION
 The
-.Fn sem_open ,
-.Fn sem_close ,
-and
+.Fn sem_open
+function opens and returns a named semaphore.
+The .Fn sem_close
+function closes a previously opened named semaphore without removing it.
+The
 .Fn sem_unlink
-functions are not supported by this implementation.
+function removes the named semaphore from the system without closing it.
 .Sh RETURN VALUES
 .Fn sem_open
 returns SEM_FAILED and sets
@@ -67,8 +69,10 @@ to indicate an error.
 .Fn sem_close ,
 and
 .Fn sem_unlink
-will fail:
+may fail:
 .Bl -tag -width Er
+.It Bq Er EPERM
+An attempt was made to open a shared semaphore owned by another user.
 .It Bq Er ENOSYS
 Function not supported by this implementation.
 .El
