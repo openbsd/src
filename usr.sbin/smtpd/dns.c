@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.68 2013/10/26 12:27:59 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.69 2013/11/18 11:55:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -103,6 +103,52 @@ dns_query_mx_preference(uint64_t id, const char *domain, const char *mx)
 	m_close(p_lka);
 }
 
+static int
+domainname_is_addr(const char *s, struct sockaddr *sa, socklen_t *sl)
+{
+	struct addrinfo	hints, *res;
+	socklen_t	sl2;
+	size_t		l;
+	char		buf[SMTPD_MAXDOMAINPARTSIZE];
+	int		i6, error;
+
+	if (*s != '[')
+		return (0);
+
+	i6 = (strncasecmp("[IPv6:", s, 6) == 0);
+	s += i6 ? 6 : 1;
+
+	l = strlcpy(buf, s, sizeof(buf));
+	if (l >= sizeof(buf) || l == 0 || buf[l - 1] != ']')
+		return (0);
+
+	buf[l - 1] = '\0';
+	bzero(&hints, sizeof(hints));
+	hints.ai_flags = AI_NUMERICHOST;
+	hints.ai_socktype = SOCK_STREAM;
+	if (i6)
+		hints.ai_family = AF_INET6;
+
+	res = NULL;
+	if ((error = getaddrinfo(buf, NULL, &hints, &res))) {
+		log_warnx("getaddrinfo: %s", gai_strerror(error));
+	}
+
+	if (!res)
+		return (0);
+
+	if (sa && sl) {
+		sl2 = *sl;
+		if (sl2 > res->ai_addrlen)
+			sl2 = res->ai_addrlen;
+		memmove(sa, res->ai_addr, sl2);
+		*sl = res->ai_addrlen;
+	}
+
+	freeaddrinfo(res);
+	return (1);
+}
+
 void
 dns_imsg(struct mproc *p, struct imsg *imsg)
 {
@@ -112,6 +158,7 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 	struct async		*as;
 	struct msg		 m;
 	const char		*domain, *mx, *host;
+	socklen_t		 sl;
 
 	s = xcalloc(1, sizeof *s, "dns_imsg");
 	s->type = imsg->hdr.type;
@@ -141,7 +188,36 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_string(&m, &domain);
 		m_end(&m);
 		strlcpy(s->name, domain, sizeof(s->name));
+
+		sa = (struct sockaddr *)&ss;
+		sl = sizeof(ss);
+
+		if (domainname_is_addr(domain, sa, &sl)) {
+			m_create(s->p, IMSG_DNS_HOST, 0, 0, -1);
+			m_add_id(s->p, s->reqid);
+			m_add_sockaddr(s->p, sa);
+			m_add_int(s->p, -1);
+			m_close(s->p);
+
+			m_create(s->p, IMSG_DNS_HOST_END, 0, 0, -1);
+			m_add_id(s->p, s->reqid);
+			m_add_int(s->p, DNS_OK);
+			m_close(s->p);
+			free(s);
+			return;
+		}
+
 		as = res_query_async(s->name, C_IN, T_MX, NULL);
+		if (as ==  NULL) {
+			log_warn("warn: req_query_async: %s", s->name);
+			m_create(s->p, IMSG_DNS_HOST_END, 0, 0, -1);
+			m_add_id(s->p, s->reqid);
+			m_add_int(s->p, DNS_EINVAL);
+			m_close(s->p);
+			free(s);
+			return;
+		}
+
 		async_run_event(as, dns_dispatch_mx, s);
 		return;
 
@@ -150,7 +226,20 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_string(&m, &mx);
 		m_end(&m);
 		strlcpy(s->name, mx, sizeof(s->name));
+
+		sa = (struct sockaddr *)&ss;
+		sl = sizeof(ss);
+
 		as = res_query_async(domain, C_IN, T_MX, NULL);
+		if (as == NULL) {
+			m_create(s->p, IMSG_DNS_MX_PREFERENCE, 0, 0, -1);
+			m_add_id(s->p, s->reqid);
+			m_add_int(s->p, DNS_ENOTFOUND);
+			m_close(s->p);
+			free(s);
+			return;
+		}
+
 		async_run_event(as, dns_dispatch_mx_preference, s);
 		return;
 
