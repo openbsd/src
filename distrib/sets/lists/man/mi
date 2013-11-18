@@ -2326,6 +2326,7 @@
 ./usr/share/man/man4/udsbr.4
 ./usr/share/man/man4/uftdi.4
 ./usr/share/man/man4/ugen.4
+./usr/share/man/man4/ugl.4
 ./usr/share/man/man4/ugold.4
 ./usr/share/man/man4/uguru.4
 ./usr/share/man/man4/uhci.4
