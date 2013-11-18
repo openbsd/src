@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.861 2013/11/16 00:36:01 chl Exp $ */
+/*	$OpenBSD: pf.c,v 1.862 2013/11/18 20:30:04 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3110,8 +3110,10 @@ pf_rule_to_actions(struct pf_rule *r, struct pf_rule_actions *a)
 		a->max_mss = r->max_mss;
 	a->flags |= (r->scrub_flags & (PFSTATE_NODF|PFSTATE_RANDOMID|
 	    PFSTATE_SETTOS|PFSTATE_SCRUB_TCP|PFSTATE_SETPRIO));
-	a->set_prio[0] = r->set_prio[0];
-	a->set_prio[1] = r->set_prio[1];
+	if (r->scrub_flags & PFSTATE_SETPRIO) {
+		a->set_prio[0] = r->set_prio[0];
+		a->set_prio[1] = r->set_prio[1];
+	}
 }
 
 #define PF_TEST_ATTRIB(t, a)			\
