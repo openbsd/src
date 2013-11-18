@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf.c,v 1.15 2013/04/15 09:23:02 mglocker Exp $	*/
+/*	$OpenBSD: usbf.c,v 1.16 2013/11/18 20:21:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -225,7 +225,7 @@ usbf_create_thread(void *arg)
 {
 	struct usbf_softc *sc = arg;
 
-	if (kthread_create(usbf_task_thread, sc, &sc->sc_proc, "%s",
+	if (kthread_create(usbf_task_thread, sc, &sc->sc_proc,
 	    DEVNAME(sc)) != 0) {
 		printf("%s: can't create task thread\n", DEVNAME(sc));
 		return;

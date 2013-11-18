@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.39 2012/10/17 22:49:27 deraadt Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.40 2013/11/18 20:21:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -433,7 +433,7 @@ apm_thread_create(void *v)
 	struct pxa2x0_apm_softc *sc = v;
 
 	if (kthread_create(apm_thread, sc, &sc->sc_thread,
-	    "%s", sc->sc_dev.dv_xname)) {
+	    sc->sc_dev.dv_xname)) {
 		/* apm_disconnect(sc); */
 		printf("%s: failed to create kernel thread, disabled",
 		    sc->sc_dev.dv_xname);

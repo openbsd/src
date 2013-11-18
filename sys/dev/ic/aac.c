@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.57 2013/11/13 05:47:58 mlarkin Exp $	*/
+/*	$OpenBSD: aac.c,v 1.58 2013/11/18 20:21:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -284,7 +284,7 @@ aac_create_thread(void *arg)
 {
 	struct aac_softc *sc = arg;
 
-	if (kthread_create(aac_command_thread, sc, &sc->aifthread, "%s",
+	if (kthread_create(aac_command_thread, sc, &sc->aifthread,
 	    sc->aac_dev.dv_xname)) {
 		/* TODO disable aac */
 		printf("%s: failed to create kernel thread, disabled",

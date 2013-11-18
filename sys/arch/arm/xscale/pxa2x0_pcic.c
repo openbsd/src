@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_pcic.c,v 1.17 2005/12/14 15:08:51 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_pcic.c,v 1.18 2013/11/18 20:21:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
@@ -403,6 +403,7 @@ pxapcic_create_event_thread(void *arg)
 {
 	struct pxapcic_socket *sock = arg;
 	struct pxapcic_softc *sc = sock->sc;
+	char name[MAXCOMLEN+1];
 	u_int cs;
 
 	/* If there's a card there, attach it. */
@@ -410,8 +411,9 @@ pxapcic_create_event_thread(void *arg)
 	if (cs == PXAPCIC_CARD_VALID)
 		pxapcic_attach_card(sock);
 
+	snprintf(name, sizeof name, "%s-%d", sc->sc_dev.dv_xname, sock->socket);
 	if (kthread_create(pxapcic_event_thread, sock, &sock->event_thread,
-	     sc->sc_dev.dv_xname, sock->socket ? "1" : "0")) {
+	     name))
 		printf("%s: unable to create event thread for %s\n",
 		     sc->sc_dev.dv_xname,  sock->socket ? "1" : "0");
 	}

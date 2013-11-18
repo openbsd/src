@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102.c,v 1.19 2009/04/10 20:54:57 miod Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.20 2013/11/18 20:21:51 deraadt Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  *
@@ -599,7 +599,7 @@ tslot_create_event_thread(void *v)
 	struct tslot_softc *sc = v;
 	const char *name = sc->sc_dev.dv_xname;
 
-	if (kthread_create(tslot_event_thread, sc, &sc->sc_thread, "%s",
+	if (kthread_create(tslot_event_thread, sc, &sc->sc_thread,
 	    name) != 0) {
 		panic("%s: unable to create event kthread", name);
 	}

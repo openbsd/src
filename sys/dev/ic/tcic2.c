@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2.c,v 1.8 2007/11/25 16:40:04 jmc Exp $	*/
+/*	$OpenBSD: tcic2.c,v 1.9 2013/11/18 20:21:51 deraadt Exp $	*/
 /*	$NetBSD: tcic2.c,v 1.3 2000/01/13 09:38:17 joda Exp $	*/
 
 #undef	TCICDEBUG
@@ -446,6 +446,7 @@ tcic_create_event_thread(arg)
 	void *arg;
 {
 	struct tcic_handle *h = arg;
+	char name[MAXCOMLEN+1];
 	const char *cs;
 
 	switch (h->sock) {
@@ -459,8 +460,8 @@ tcic_create_event_thread(arg)
 		panic("tcic_create_event_thread: unknown tcic socket");
 	}
 
-	if (kthread_create(tcic_event_thread, h, &h->event_thread,
-	    "%s,%s", h->sc->dev.dv_xname, cs)) {
+	snprintf(name, sizeof name, "%s,%s", h->sc->dev.dv_xname, cs);
+	if (kthread_create(tcic_event_thread, h, &h->event_thread, name)) {
 		printf("%s: unable to create event thread for sock 0x%02x\n",
 		    h->sc->dev.dv_xname, h->sock);
 		panic("tcic_create_event_thread");

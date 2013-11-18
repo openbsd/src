@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.24 2010/11/20 16:45:46 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.25 2013/11/18 20:21:51 deraadt Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * All rights reserved.
@@ -252,7 +252,7 @@ hil_attach_deferred(void *v)
 	 * Create asynchronous loop event handler thread.
 	 */
 	if (kthread_create(hil_thread, sc, &sc->sc_thread,
-	    "%s", sc->sc_dev.dv_xname) != 0) {
+	    sc->sc_dev.dv_xname) != 0) {
 		printf("%s: unable to create event thread\n",
 		    sc->sc_dev.dv_xname);
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.100 2012/10/17 22:49:27 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.101 2013/11/18 20:21:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -882,7 +882,7 @@ apm_thread_create(void *v)
 	}
 #endif
 
-	if (kthread_create(apm_thread, sc, &sc->sc_thread, "%s",
+	if (kthread_create(apm_thread, sc, &sc->sc_thread,
 	    sc->sc_dev.dv_xname)) {
 		apm_disconnect(sc);
 		printf("%s: failed to create kernel thread, disabled",

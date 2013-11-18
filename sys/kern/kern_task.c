@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.5 2013/10/30 02:11:32 dlg Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.6 2013/11/18 20:21:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -138,7 +138,7 @@ taskq_create_thread(void *arg)
 		tq->tq_running++;
 		mtx_leave(&tq->tq_mtx);
 
-		rv = kthread_create(taskq_thread, tq, NULL, "%s", tq->tq_name);
+		rv = kthread_create(taskq_thread, tq, NULL, tq->tq_name);
 		
 		mtx_enter(&tq->tq_mtx);
 		if (rv != 0) {

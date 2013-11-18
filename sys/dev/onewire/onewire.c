@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewire.c,v 1.13 2013/04/10 01:35:55 guenther Exp $	*/
+/*	$OpenBSD: onewire.c,v 1.14 2013/11/18 20:21:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -415,7 +415,7 @@ onewire_createthread(void *arg)
 	struct onewire_softc *sc = arg;
 
 	if (kthread_create(onewire_thread, sc, &sc->sc_thread,
-	    "%s", sc->sc_dev.dv_xname) != 0)
+	    sc->sc_dev.dv_xname) != 0)
 		printf("%s: can't create kernel thread\n",
 		    sc->sc_dev.dv_xname);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.28 2013/09/12 11:54:04 rapha Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.29 2013/11/18 20:21:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -176,7 +176,7 @@ sdmmc_create_thread(void *arg)
 	struct sdmmc_softc *sc = arg;
 
 	if (kthread_create(sdmmc_task_thread, sc, &sc->sc_task_thread,
-	    "%s", DEVNAME(sc)) != 0)
+	    DEVNAME(sc)) != 0)
 		printf("%s: can't create task thread\n", DEVNAME(sc));
 
 }

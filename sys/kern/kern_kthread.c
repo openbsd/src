@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.32 2013/03/28 16:55:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.33 2013/11/18 20:21:51 deraadt Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -56,11 +56,10 @@ int	kthread_create_now;
  */
 int
 kthread_create(void (*func)(void *), void *arg,
-    struct proc **newpp, const char *fmt, ...)
+    struct proc **newpp, const char *name)
 {
 	struct proc *p;
 	int error;
-	va_list ap;
 
 	/*
 	 * First, create the new process.  Share the memory, file
@@ -78,9 +77,7 @@ kthread_create(void (*func)(void *), void *arg,
 	atomic_setbits_int(&p->p_flag, P_SYSTEM);
 
 	/* Name it as specified. */
-	va_start(ap, fmt);
-	vsnprintf(p->p_comm, sizeof p->p_comm, fmt, ap);
-	va_end(ap);
+	strlcpy(p->p_comm, name, sizeof p->p_comm);
 
 	/* All done! */
 	if (newpp != NULL)

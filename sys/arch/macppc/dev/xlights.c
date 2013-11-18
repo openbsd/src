@@ -1,4 +1,4 @@
-/* $OpenBSD: xlights.c,v 1.5 2011/05/15 09:10:26 mpi Exp $ */
+/* $OpenBSD: xlights.c,v 1.6 2013/11/18 20:21:51 deraadt Exp $ */
 /*
  * Copyright (c) 2007 Gordon Willem Klok <gwk@openbsd,org>
  *
@@ -210,7 +210,9 @@ nodma:
 void
 xlights_deferred(void *v)
 {
-	kthread_create(xlights_theosDOT, v, NULL, "xlights");
+	struct xlights_softc *sc = (struct xlights_softc *)v;
+
+	kthread_create(xlights_theosDOT, v, NULL, sc->sc_dev.dv_xname);
 }
 
 /*

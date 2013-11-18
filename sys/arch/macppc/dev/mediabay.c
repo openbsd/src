@@ -1,4 +1,4 @@
-/*	$OpenBSD: mediabay.c,v 1.5 2012/12/05 23:20:13 deraadt Exp $	*/
+/*	$OpenBSD: mediabay.c,v 1.6 2013/11/18 20:21:51 deraadt Exp $	*/
 /*	$NetBSD: mediabay.c,v 1.9 2003/07/15 02:43:29 lukem Exp $	*/
 
 /*-
@@ -223,7 +223,8 @@ mediabay_create_kthread(v)
 {
 	struct mediabay_softc *sc = v;
 
-	kthread_create(mediabay_kthread, sc, &sc->sc_kthread, "media-bay");
+	kthread_create(mediabay_kthread, sc, &sc->sc_kthread,
+	    sc->sc_dev.dv_xname);
 }
 
 void
