@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.695 2013/11/13 19:17:22 rpe Exp $
+#	$OpenBSD: install.sub,v 1.696 2013/11/18 21:31:39 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -2098,7 +2098,7 @@ done
 
 # Fetch a response file from the "netboot" interface.
 get_responsefile() {
-	local _bootdev _rf=$1 _server
+	local _bootdev _mac _mode _server
 	# Fetching the response file requires DHCP, even if the
 	# machine was booted via RARP and TFTP.
 	[[ -x /sbin/dhclient ]] || return
@@ -2115,32 +2115,37 @@ get_responsefile() {
 	# background, so it doesn't matter how long the timeout is.
 	dhclient $_bootdev
 
-	# Get the "next-server" address?
+	# Extract next-server IP and the installer mode from attributes
+	# in the dhcp lease file. Use this together with the MAC from the
+	# netboot interface to assemble the URL.
 	_server=$(sed "/next-server/s/^.* \([^ ]*\);$/\1/p;d" \
 	    /var/db/dhclient.leases.$_bootdev 2>/dev/null)
-	[[ -n $_server ]] || return
-
-	ftp -o "$_rf" "http://$_server/install.conf"
-	[[ -s $1 ]]
+	_mode=$(sed -E '/filename/s/^.*auto_(install|upgrade).*$/\1/p;d' \
+	    /var/db/dhclient.leases.$_bootdev 2>/dev/null)
+	_mac=$(ifconfig $_bootdev | sed 's/.*lladdr \(.*\)/\1/p;d')
+	
+	ftp -o "/$_mode.conf" "http://$_server/$_mac-$_mode.conf"
+	[[ -s /$_mode.conf ]] && action=$_mode
 }
 
 # Fully automatic installation?
 if $auto && [[ -z $RESPONSEFILE ]]; then
-	responsefile=/install.conf
-	if ! get_responsefile $responsefile; then
+	action=
+	get_responsefile
+	if [[ -z $action ]]; then
 		echo "No response file found; automatic installation aborted."
 		exit 1
 	fi
 
-	echo -n "Performing non-interactive installation..."
-	RESPONSEFILE=$responsefile $0 auto >>/install.log 2>&1 <&-
+	echo -n "Performing non-interactive $action..."
+	RESPONSEFILE=/$action.conf /$action auto >>/$action.log 2>&1 <&-
 	# XXX: Isn't the installer's exit code reliable?
-	if grep -q CONGRATULATIONS /install.log; then
+	if grep -q CONGRATULATIONS /$action.log; then
 		echo "done."
-		cp /install.log /mnt/install.log
+		cp /$action.log /mnt/$action.log
 		exec reboot
 	else
-		echo "failed; check /install.log"
+		echo "failed; check /$action.log"
 		exit 1
 	fi
 fi
