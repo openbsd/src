@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.76 2013/10/01 20:06:01 sf Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.77 2013/11/18 19:43:00 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -210,8 +210,7 @@ int	ngedebug = 0;
 	CSR_WRITE_4(sc, NGE_MEAR, CSR_READ_4(sc, NGE_MEAR) & ~(x))
 
 void
-nge_delay(sc)
-	struct nge_softc	*sc;
+nge_delay(struct nge_softc *sc)
 {
 	int			idx;
 
@@ -220,8 +219,7 @@ nge_delay(sc)
 }
 
 void
-nge_eeprom_idle(sc)
-	struct nge_softc	*sc;
+nge_eeprom_idle(struct nge_softc *sc)
 {
 	int		i;
 
@@ -248,9 +246,7 @@ nge_eeprom_idle(sc)
  * Send a read command and address to the EEPROM, check for ACK.
  */
 void
-nge_eeprom_putbyte(sc, addr)
-	struct nge_softc	*sc;
-	int			addr;
+nge_eeprom_putbyte(struct nge_softc *sc, int addr)
 {
 	int			d, i;
 
@@ -277,10 +273,7 @@ nge_eeprom_putbyte(sc, addr)
  * Read a word of data stored in the EEPROM at address 'addr.'
  */
 void
-nge_eeprom_getword(sc, addr, dest)
-	struct nge_softc	*sc;
-	int			addr;
-	u_int16_t		*dest;
+nge_eeprom_getword(struct nge_softc *sc, int addr, u_int16_t *dest)
 {
 	int			i;
 	u_int16_t		word = 0;
@@ -323,12 +316,7 @@ nge_eeprom_getword(sc, addr, dest)
  * Read a sequence of words from the EEPROM.
  */
 void
-nge_read_eeprom(sc, dest, off, cnt, swap)
-	struct nge_softc	*sc;
-	caddr_t			dest;
-	int			off;
-	int			cnt;
-	int			swap;
+nge_read_eeprom(struct nge_softc *sc, caddr_t dest, int off, int cnt, int swap)
 {
 	int			i;
 	u_int16_t		word = 0, *ptr;
@@ -347,8 +335,7 @@ nge_read_eeprom(sc, dest, off, cnt, swap)
  * Sync the PHYs by setting data bit and strobing the clock 32 times.
  */
 void
-nge_mii_sync(sc)
-	struct nge_softc		*sc;
+nge_mii_sync(struct nge_softc *sc)
 {
 	int			i;
 
@@ -366,10 +353,7 @@ nge_mii_sync(sc)
  * Clock a series of bits through the MII.
  */
 void
-nge_mii_send(sc, bits, cnt)
-	struct nge_softc		*sc;
-	u_int32_t		bits;
-	int			cnt;
+nge_mii_send(struct nge_softc *sc, u_int32_t bits, int cnt)
 {
 	int			i;
 
@@ -392,9 +376,7 @@ nge_mii_send(sc, bits, cnt)
  * Read an PHY register through the MII.
  */
 int
-nge_mii_readreg(sc, frame)
-	struct nge_softc		*sc;
-	struct nge_mii_frame	*frame;
+nge_mii_readreg(struct nge_softc *sc, struct nge_mii_frame *frame)
 {
 	int			i, ack, s;
 
@@ -484,9 +466,7 @@ fail:
  * Write to a PHY register through the MII.
  */
 int
-nge_mii_writereg(sc, frame)
-	struct nge_softc		*sc;
-	struct nge_mii_frame	*frame;
+nge_mii_writereg(struct nge_softc *sc, struct nge_mii_frame *frame)
 {
 	int			s;
 
@@ -530,9 +510,7 @@ nge_mii_writereg(sc, frame)
 }
 
 int
-nge_miibus_readreg(dev, phy, reg)
-	struct device		*dev;
-	int			phy, reg;
+nge_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct nge_softc	*sc = (struct nge_softc *)dev;
 	struct nge_mii_frame	frame;
@@ -549,9 +527,7 @@ nge_miibus_readreg(dev, phy, reg)
 }
 
 void
-nge_miibus_writereg(dev, phy, reg, data)
-	struct device		*dev;
-	int			phy, reg, data;
+nge_miibus_writereg(struct device *dev, int phy, int reg, int data)
 {
 	struct nge_softc	*sc = (struct nge_softc *)dev;
 	struct nge_mii_frame	frame;
@@ -568,8 +544,7 @@ nge_miibus_writereg(dev, phy, reg, data)
 }
 
 void
-nge_miibus_statchg(dev)
-	struct device		*dev;
+nge_miibus_statchg(struct device *dev)
 {
 	struct nge_softc	*sc = (struct nge_softc *)dev;
 	struct mii_data		*mii = &sc->nge_mii;
@@ -602,8 +577,7 @@ nge_miibus_statchg(dev)
 }
 
 void
-nge_setmulti(sc)
-	struct nge_softc	*sc;
+nge_setmulti(struct nge_softc *sc)
 {
 	struct arpcom		*ac = &sc->arpcom;
 	struct ifnet		*ifp = &ac->ac_if;
@@ -664,8 +638,7 @@ allmulti:
 }
 
 void
-nge_reset(sc)
-	struct nge_softc	*sc;
+nge_reset(struct nge_softc *sc)
 {
 	int			i;
 
@@ -695,10 +668,7 @@ nge_reset(sc)
  * IDs against our list and return a device name if we find a match.
  */
 int
-nge_probe(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+nge_probe(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -714,9 +684,7 @@ nge_probe(parent, match, aux)
  * setup and ethernet/BPF attach.
  */
 void
-nge_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+nge_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct nge_softc	*sc = (struct nge_softc *)self;
 	struct pci_attach_args	*pa = aux;
@@ -942,8 +910,7 @@ fail_1:
  * Initialize the transmit descriptors.
  */
 int
-nge_list_tx_init(sc)
-	struct nge_softc	*sc;
+nge_list_tx_init(struct nge_softc *sc)
 {
 	struct nge_list_data	*ld;
 	struct nge_ring_data	*cd;
@@ -981,8 +948,7 @@ nge_list_tx_init(sc)
  * points back to the first.
  */
 int
-nge_list_rx_init(sc)
-	struct nge_softc	*sc;
+nge_list_rx_init(struct nge_softc *sc)
 {
 	struct nge_list_data	*ld;
 	struct nge_ring_data	*cd;
@@ -1016,10 +982,7 @@ nge_list_rx_init(sc)
  * Initialize an RX descriptor and attach an MBUF cluster.
  */
 int
-nge_newbuf(sc, c, m)
-	struct nge_softc	*sc;
-	struct nge_desc		*c;
-	struct mbuf		*m;
+nge_newbuf(struct nge_softc *sc, struct nge_desc *c, struct mbuf *m)
 {
 	struct mbuf		*m_new = NULL;
 
@@ -1064,8 +1027,7 @@ nge_newbuf(sc, c, m)
 }
 
 int
-nge_alloc_jumbo_mem(sc)
-	struct nge_softc	*sc;
+nge_alloc_jumbo_mem(struct nge_softc *sc)
 {
 	caddr_t			ptr, kva;
 	bus_dma_segment_t	seg;
@@ -1165,8 +1127,7 @@ out:
  * Allocate a jumbo buffer.
  */
 void *
-nge_jalloc(sc)
-	struct nge_softc	*sc;
+nge_jalloc(struct nge_softc *sc)
 {
 	struct nge_jpool_entry   *entry;
 
@@ -1185,10 +1146,7 @@ nge_jalloc(sc)
  * Release a jumbo buffer.
  */
 void
-nge_jfree(buf, size, arg)
-	caddr_t		buf;
-	u_int		size;
-	void		*arg;
+nge_jfree(caddr_t buf, u_int size, void *arg)
 {
 	struct nge_softc	*sc;
 	int		        i;
@@ -1228,8 +1186,7 @@ nge_jfree(buf, size, arg)
  * the higher level protocols.
  */
 void
-nge_rxeof(sc)
-	struct nge_softc	*sc;
+nge_rxeof(struct nge_softc *sc)
 {
         struct mbuf		*m;
         struct ifnet		*ifp;
@@ -1352,8 +1309,7 @@ nge_rxeof(sc)
  */
 
 void
-nge_txeof(sc)
-	struct nge_softc	*sc;
+nge_txeof(struct nge_softc *sc)
 {
 	struct nge_desc		*cur_tx;
 	struct ifnet		*ifp;
@@ -1407,8 +1363,7 @@ nge_txeof(sc)
 }
 
 void
-nge_tick(xsc)
-	void			*xsc;
+nge_tick(void *xsc)
 {
 	struct nge_softc	*sc = xsc;
 	struct mii_data		*mii = &sc->nge_mii;
@@ -1486,8 +1441,7 @@ nge_tick(xsc)
 }
 
 int
-nge_intr(arg)
-	void			*arg;
+nge_intr(void *arg)
 {
 	struct nge_softc	*sc;
 	struct ifnet		*ifp;
@@ -1575,10 +1529,7 @@ nge_intr(arg)
  * pointers to the fragment pointers.
  */
 int
-nge_encap(sc, m_head, txidx)
-	struct nge_softc	*sc;
-	struct mbuf		*m_head;
-	u_int32_t		*txidx;
+nge_encap(struct nge_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 {
 	struct nge_desc		*f = NULL;
 	struct mbuf		*m;
@@ -1639,8 +1590,7 @@ nge_encap(sc, m_head, txidx)
  */
 
 void
-nge_start(ifp)
-	struct ifnet		*ifp;
+nge_start(struct ifnet *ifp)
 {
 	struct nge_softc	*sc;
 	struct mbuf		*m_head = NULL;
@@ -1694,8 +1644,7 @@ nge_start(ifp)
 }
 
 void
-nge_init(xsc)
-	void			*xsc;
+nge_init(void *xsc)
 {
 	struct nge_softc	*sc = xsc;
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
@@ -1880,8 +1829,7 @@ nge_init(xsc)
  * Set mii media options.
  */
 int
-nge_ifmedia_mii_upd(ifp)
-	struct ifnet		*ifp;
+nge_ifmedia_mii_upd(struct ifnet *ifp)
 {
 	struct nge_softc	*sc = ifp->if_softc;
 	struct mii_data 	*mii = &sc->nge_mii;
@@ -1904,9 +1852,7 @@ nge_ifmedia_mii_upd(ifp)
  * Report current mii media status.
  */
 void
-nge_ifmedia_mii_sts(ifp, ifmr)
-	struct ifnet		*ifp;
-	struct ifmediareq	*ifmr;
+nge_ifmedia_mii_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct nge_softc	*sc = ifp->if_softc;
 	struct mii_data *mii = &sc->nge_mii;
@@ -1922,8 +1868,7 @@ nge_ifmedia_mii_sts(ifp, ifmr)
  * Set mii media options.
  */
 int
-nge_ifmedia_tbi_upd(ifp)
-	struct ifnet		*ifp;
+nge_ifmedia_tbi_upd(struct ifnet *ifp)
 {
 	struct nge_softc	*sc = ifp->if_softc;
 
@@ -1972,9 +1917,7 @@ nge_ifmedia_tbi_upd(ifp)
  * Report current tbi media status.
  */
 void
-nge_ifmedia_tbi_sts(ifp, ifmr)
-	struct ifnet		*ifp;
-	struct ifmediareq	*ifmr;
+nge_ifmedia_tbi_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct nge_softc	*sc = ifp->if_softc;
 	u_int32_t		bmcr;
@@ -2023,10 +1966,7 @@ nge_ifmedia_tbi_sts(ifp, ifmr)
 }
 
 int
-nge_ioctl(ifp, command, data)
-	struct ifnet		*ifp;
-	u_long			command;
-	caddr_t			data;
+nge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct nge_softc	*sc = ifp->if_softc;
 	struct ifaddr		*ifa = (struct ifaddr *) data;
@@ -2107,8 +2047,7 @@ nge_ioctl(ifp, command, data)
 }
 
 void
-nge_watchdog(ifp)
-	struct ifnet		*ifp;
+nge_watchdog(struct ifnet *ifp)
 {
 	struct nge_softc	*sc;
 
@@ -2131,8 +2070,7 @@ nge_watchdog(ifp)
  * RX and TX lists.
  */
 void
-nge_stop(sc)
-	struct nge_softc	*sc;
+nge_stop(struct nge_softc *sc)
 {
 	int			i;
 	struct ifnet		*ifp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.55 2013/10/01 20:06:01 sf Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.56 2013/11/18 19:43:00 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -251,11 +251,9 @@ int tl_intvec_rxeof(void *, u_int32_t);
 int tl_intvec_adchk(void *, u_int32_t);
 int tl_intvec_netsts(void *, u_int32_t);
 
-int tl_newbuf(struct tl_softc *,
-					struct tl_chain_onefrag *);
+int tl_newbuf(struct tl_softc *, struct tl_chain_onefrag *);
 void tl_stats_update(void *);
-int tl_encap(struct tl_softc *, struct tl_chain *,
-						struct mbuf *);
+int tl_encap(struct tl_softc *, struct tl_chain *, struct mbuf *);
 
 int tl_intr(void *);
 void tl_start(struct ifnet *);
@@ -267,8 +265,7 @@ int tl_ifmedia_upd(struct ifnet *);
 void tl_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 u_int8_t tl_eeprom_putbyte(struct tl_softc *, int);
-u_int8_t	tl_eeprom_getbyte(struct tl_softc *,
-						int, u_int8_t *);
+u_int8_t tl_eeprom_getbyte(struct tl_softc *, int, u_int8_t *);
 int tl_read_eeprom(struct tl_softc *, caddr_t, int, int);
 
 void tl_mii_sync(struct tl_softc *);
@@ -301,64 +298,50 @@ void tl_dio_clrbit(struct tl_softc *, int, int);
 void tl_dio_setbit16(struct tl_softc *, int, int);
 void tl_dio_clrbit16(struct tl_softc *, int, int);
 
-u_int8_t tl_dio_read8(sc, reg)
-	struct tl_softc		*sc;
-	int			reg;
+u_int8_t
+tl_dio_read8(struct tl_softc *sc, int reg)
 {
 	CSR_WRITE_2(sc, TL_DIO_ADDR, reg);
 	return(CSR_READ_1(sc, TL_DIO_DATA + (reg & 3)));
 }
 
-u_int16_t tl_dio_read16(sc, reg)
-	struct tl_softc		*sc;
-	int			reg;
+u_int16_t
+tl_dio_read16(struct tl_softc *sc, int reg)
 {
 	CSR_WRITE_2(sc, TL_DIO_ADDR, reg);
 	return(CSR_READ_2(sc, TL_DIO_DATA + (reg & 3)));
 }
 
-u_int32_t tl_dio_read32(sc, reg)
-	struct tl_softc		*sc;
-	int			reg;
+u_int32_t
+tl_dio_read32(struct tl_softc *sc, int reg)
 {
 	CSR_WRITE_2(sc, TL_DIO_ADDR, reg);
 	return(CSR_READ_4(sc, TL_DIO_DATA + (reg & 3)));
 }
 
-void tl_dio_write8(sc, reg, val)
-	struct tl_softc		*sc;
-	int			reg;
-	int			val;
+void
+tl_dio_write8(struct tl_softc *sc, int reg, int val)
 {
 	CSR_WRITE_2(sc, TL_DIO_ADDR, reg);
 	CSR_WRITE_1(sc, TL_DIO_DATA + (reg & 3), val);
-	return;
 }
 
-void tl_dio_write16(sc, reg, val)
-	struct tl_softc		*sc;
-	int			reg;
-	int			val;
+void
+tl_dio_write16(struct tl_softc *sc, int reg, int val)
 {
 	CSR_WRITE_2(sc, TL_DIO_ADDR, reg);
 	CSR_WRITE_2(sc, TL_DIO_DATA + (reg & 3), val);
-	return;
 }
 
-void tl_dio_write32(sc, reg, val)
-	struct tl_softc		*sc;
-	int			reg;
-	int			val;
+void
+tl_dio_write32(struct tl_softc *sc, int reg, int val)
 {
 	CSR_WRITE_2(sc, TL_DIO_ADDR, reg);
 	CSR_WRITE_4(sc, TL_DIO_DATA + (reg & 3), val);
-	return;
 }
 
-void tl_dio_setbit(sc, reg, bit)
-	struct tl_softc		*sc;
-	int			reg;
-	int			bit;
+void
+tl_dio_setbit(struct tl_softc *sc, int reg, int bit)
 {
 	u_int8_t			f;
 
@@ -366,14 +349,10 @@ void tl_dio_setbit(sc, reg, bit)
 	f = CSR_READ_1(sc, TL_DIO_DATA + (reg & 3));
 	f |= bit;
 	CSR_WRITE_1(sc, TL_DIO_DATA + (reg & 3), f);
-
-	return;
 }
 
-void tl_dio_clrbit(sc, reg, bit)
-	struct tl_softc		*sc;
-	int			reg;
-	int			bit;
+void
+tl_dio_clrbit(struct tl_softc *sc, int reg, int bit)
 {
 	u_int8_t			f;
 
@@ -381,14 +360,10 @@ void tl_dio_clrbit(sc, reg, bit)
 	f = CSR_READ_1(sc, TL_DIO_DATA + (reg & 3));
 	f &= ~bit;
 	CSR_WRITE_1(sc, TL_DIO_DATA + (reg & 3), f);
-
-	return;
 }
 
-void tl_dio_setbit16(sc, reg, bit)
-	struct tl_softc		*sc;
-	int			reg;
-	int			bit;
+void
+tl_dio_setbit16(struct tl_softc *sc, int reg, int bit)
 {
 	u_int16_t			f;
 
@@ -396,14 +371,10 @@ void tl_dio_setbit16(sc, reg, bit)
 	f = CSR_READ_2(sc, TL_DIO_DATA + (reg & 3));
 	f |= bit;
 	CSR_WRITE_2(sc, TL_DIO_DATA + (reg & 3), f);
-
-	return;
 }
 
-void tl_dio_clrbit16(sc, reg, bit)
-	struct tl_softc		*sc;
-	int			reg;
-	int			bit;
+void
+tl_dio_clrbit16(struct tl_softc *sc, int reg, int bit)
 {
 	u_int16_t			f;
 
@@ -411,16 +382,13 @@ void tl_dio_clrbit16(sc, reg, bit)
 	f = CSR_READ_2(sc, TL_DIO_DATA + (reg & 3));
 	f &= ~bit;
 	CSR_WRITE_2(sc, TL_DIO_DATA + (reg & 3), f);
-
-	return;
 }
 
 /*
  * Send an instruction or address to the EEPROM, check for ACK.
  */
-u_int8_t tl_eeprom_putbyte(sc, byte)
-	struct tl_softc		*sc;
-	int			byte;
+u_int8_t
+tl_eeprom_putbyte(struct tl_softc *sc, int byte)
 {
 	int			i, ack = 0;
 
@@ -433,11 +401,10 @@ u_int8_t tl_eeprom_putbyte(sc, byte)
 	 * Feed in each bit and strobe the clock.
 	 */
 	for (i = 0x80; i; i >>= 1) {
-		if (byte & i) {
+		if (byte & i)
 			tl_dio_setbit(sc, TL_NETSIO, TL_SIO_EDATA);
-		} else {
+		else
 			tl_dio_clrbit(sc, TL_NETSIO, TL_SIO_EDATA);
-		}
 		DELAY(1);
 		tl_dio_setbit(sc, TL_NETSIO, TL_SIO_ECLOK);
 		DELAY(1);
@@ -462,10 +429,8 @@ u_int8_t tl_eeprom_putbyte(sc, byte)
 /*
  * Read a byte of data stored in the EEPROM at address 'addr.'
  */
-u_int8_t tl_eeprom_getbyte(sc, addr, dest)
-	struct tl_softc		*sc;
-	int			addr;
-	u_int8_t		*dest;
+u_int8_t
+tl_eeprom_getbyte(struct tl_softc *sc, int addr, u_int8_t *dest)
 {
 	int			i;
 	u_int8_t		byte = 0;
@@ -530,11 +495,8 @@ u_int8_t tl_eeprom_getbyte(sc, addr, dest)
 /*
  * Read a sequence of bytes from the EEPROM.
  */
-int tl_read_eeprom(sc, dest, off, cnt)
-	struct tl_softc		*sc;
-	caddr_t			dest;
-	int			off;
-	int			cnt;
+int
+tl_read_eeprom(struct tl_softc *sc, caddr_t dest, int off, int cnt)
 {
 	int			err = 0, i;
 	u_int8_t		byte = 0;
@@ -549,8 +511,8 @@ int tl_read_eeprom(sc, dest, off, cnt)
 	return(err ? 1 : 0);
 }
 
-void tl_mii_sync(sc)
-	struct tl_softc		*sc;
+void
+tl_mii_sync(struct tl_softc *sc)
 {
 	int			i;
 
@@ -560,32 +522,25 @@ void tl_mii_sync(sc)
 		tl_dio_setbit(sc, TL_NETSIO, TL_SIO_MCLK);
 		tl_dio_clrbit(sc, TL_NETSIO, TL_SIO_MCLK);
 	}
-
-	return;
 }
 
-void tl_mii_send(sc, bits, cnt)
-	struct tl_softc		*sc;
-	u_int32_t		bits;
-	int			cnt;
+void
+tl_mii_send(struct tl_softc *sc, u_int32_t bits, int cnt)
 {
 	int			i;
 
 	for (i = (0x1 << (cnt - 1)); i; i >>= 1) {
 		tl_dio_clrbit(sc, TL_NETSIO, TL_SIO_MCLK);
-		if (bits & i) {
+		if (bits & i)
 			tl_dio_setbit(sc, TL_NETSIO, TL_SIO_MDATA);
-		} else {
+		else
 			tl_dio_clrbit(sc, TL_NETSIO, TL_SIO_MDATA);
-		}
 		tl_dio_setbit(sc, TL_NETSIO, TL_SIO_MCLK);
 	}
 }
 
-int tl_mii_readreg(sc, frame)
-	struct tl_softc		*sc;
-	struct tl_mii_frame	*frame;
-	
+int
+tl_mii_readreg(struct tl_softc *sc, struct tl_mii_frame *frame)
 {
 	int			i, ack, s;
 	int			minten = 0;
@@ -606,9 +561,8 @@ int tl_mii_readreg(sc, frame)
 	 * Turn off MII interrupt by forcing MINTEN low.
 	 */
 	minten = tl_dio_read8(sc, TL_NETSIO) & TL_SIO_MINTEN;
-	if (minten) {
+	if (minten)
 		tl_dio_clrbit(sc, TL_NETSIO, TL_SIO_MINTEN);
-	}
 
 	/*
  	 * Turn on data xmit.
@@ -666,9 +620,8 @@ fail:
 	tl_dio_clrbit(sc, TL_NETSIO, TL_SIO_MCLK);
 
 	/* Reenable interrupts */
-	if (minten) {
+	if (minten)
 		tl_dio_setbit(sc, TL_NETSIO, TL_SIO_MINTEN);
-	}
 
 	splx(s);
 
@@ -677,10 +630,8 @@ fail:
 	return(0);
 }
 
-int tl_mii_writereg(sc, frame)
-	struct tl_softc		*sc;
-	struct tl_mii_frame	*frame;
-	
+int
+tl_mii_writereg(struct tl_softc *sc, struct tl_mii_frame *frame)
 {
 	int			s;
 	int			minten;
@@ -700,9 +651,8 @@ int tl_mii_writereg(sc, frame)
 	 * Turn off MII interrupt by forcing MINTEN low.
 	 */
 	minten = tl_dio_read8(sc, TL_NETSIO) & TL_SIO_MINTEN;
-	if (minten) {
+	if (minten)
 		tl_dio_clrbit(sc, TL_NETSIO, TL_SIO_MINTEN);
-	}
 
 	/*
  	 * Turn on data output.
@@ -733,9 +683,8 @@ int tl_mii_writereg(sc, frame)
 	return(0);
 }
 
-int tl_miibus_readreg(dev, phy, reg)
-	struct device		*dev;
-	int			phy, reg;
+int
+tl_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct tl_softc *sc = (struct tl_softc *)dev;
 	struct tl_mii_frame	frame;
@@ -749,9 +698,8 @@ int tl_miibus_readreg(dev, phy, reg)
 	return(frame.mii_data);
 }
 
-void tl_miibus_writereg(dev, phy, reg, data)
-	struct device		*dev;
-	int			phy, reg, data;
+void
+tl_miibus_writereg(struct device *dev, int phy, int reg, int data)
 {
 	struct tl_softc *sc = (struct tl_softc *)dev;
 	struct tl_mii_frame	frame;
@@ -765,24 +713,22 @@ void tl_miibus_writereg(dev, phy, reg, data)
 	tl_mii_writereg(sc, &frame);
 }
 
-void tl_miibus_statchg(dev)
-	struct device *dev;
+void
+tl_miibus_statchg(struct device *dev)
 {
 	struct tl_softc *sc = (struct tl_softc *)dev;
 
-	if ((sc->sc_mii.mii_media_active & IFM_GMASK) == IFM_FDX) {
+	if ((sc->sc_mii.mii_media_active & IFM_GMASK) == IFM_FDX)
 		tl_dio_setbit(sc, TL_NETCMD, TL_CMD_DUPLEX);
-	} else {
+	else
 		tl_dio_clrbit(sc, TL_NETCMD, TL_CMD_DUPLEX);
-	}
 }
 
 /*
  * Set modes for bitrate devices.
  */
-void tl_setmode(sc, media)
-	struct tl_softc		*sc;
-	int			media;
+void
+tl_setmode(struct tl_softc *sc, int media)
 {
 	if (IFM_SUBTYPE(media) == IFM_10_5)
 		tl_dio_setbit(sc, TL_ACOMMIT, TL_AC_MTXD1);
@@ -808,8 +754,8 @@ void tl_setmode(sc, media)
  * Bytes 0-2 and 3-5 are symmetrical, so are folded together.  Then
  * the folded 24-bit value is split into 6-bit portions and XOR'd.
  */
-int tl_calchash(addr)
-	caddr_t			addr;
+int
+tl_calchash(caddr_t addr)
 {
 	int			t;
 
@@ -826,10 +772,8 @@ int tl_calchash(addr)
  * hold the station address, which leaves us free to use the other
  * three for multicast addresses.
  */
-void tl_setfilt(sc, addr, slot)
-	struct tl_softc		*sc;
-	caddr_t			addr;
-	int			slot;
+void
+tl_setfilt(struct tl_softc *sc, caddr_t addr, int slot)
 {
 	int			i;
 	u_int16_t		regaddr;
@@ -838,8 +782,6 @@ void tl_setfilt(sc, addr, slot)
 
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		tl_dio_write8(sc, regaddr + i, *(addr + i));
-
-	return;
 }
 
 /*
@@ -858,8 +800,8 @@ void tl_setfilt(sc, addr, slot)
  * the list once to find the tail, then traverse it again backwards to
  * update the multicast filter.
  */
-void tl_setmulti(sc)
-	struct tl_softc		*sc;
+void
+tl_setmulti(struct tl_softc *sc)
 {
 	struct ifnet		*ifp;
 	u_int32_t		hashes[2] = { 0, 0 };
@@ -896,9 +838,8 @@ void tl_setmulti(sc)
 	if (h) {
 		hashes[0] = hashes[1] = 0xffffffff;
 		ifp->if_flags |= IFF_ALLMULTI;
-	} else {
+	} else
 		hashes[0] = hashes[1] = 0x00000000;
-	}
 #endif
 
 	tl_dio_write32(sc, TL_HASH1, hashes[0]);
@@ -913,8 +854,8 @@ void tl_setmulti(sc)
  * second pause at the end to 'wait for the clocks to start' but in my
  * experience this isn't necessary.
  */
-void tl_hardreset(dev)
-	struct device *dev;
+void
+tl_hardreset(struct device *dev)
 {
 	struct tl_softc		*sc = (struct tl_softc *)dev;
 	int			i;
@@ -930,12 +871,10 @@ void tl_hardreset(dev)
 	while(tl_miibus_readreg(dev, 31, MII_BMCR) & BMCR_RESET);
 
 	DELAY(5000);
-	return;
 }
 
-void tl_softreset(sc, internal)
-	struct tl_softc		*sc;
-	int			internal;
+void
+tl_softreset(struct tl_softc *sc, int internal)
 {
         u_int32_t               cmd, dummy, i;
 
@@ -986,15 +925,13 @@ void tl_softreset(sc, internal)
 
 	/* Wait for things to settle down a little. */
 	DELAY(500);
-
-        return;
 }
 
 /*
  * Initialize the transmit lists.
  */
-int tl_list_tx_init(sc)
-	struct tl_softc		*sc;
+int
+tl_list_tx_init(struct tl_softc *sc)
 {
 	struct tl_chain_data	*cd;
 	struct tl_list_data	*ld;
@@ -1020,8 +957,8 @@ int tl_list_tx_init(sc)
 /*
  * Initialize the RX lists and allocate mbufs for them.
  */
-int tl_list_rx_init(sc)
-	struct tl_softc		*sc;
+int
+tl_list_rx_init(struct tl_softc *sc)
 {
 	struct tl_chain_data	*cd;
 	struct tl_list_data	*ld;
@@ -1051,9 +988,8 @@ int tl_list_rx_init(sc)
 	return(0);
 }
 
-int tl_newbuf(sc, c)
-	struct tl_softc		*sc;
-	struct tl_chain_onefrag	*c;
+int
+tl_newbuf(struct tl_softc *sc, struct tl_chain_onefrag *c)
 {
 	struct mbuf		*m_new = NULL;
 
@@ -1105,9 +1041,8 @@ int tl_newbuf(sc, c)
  * the buffers, it will generate an end of channel interrupt and wait
  * for us to empty the chain and restart the receiver.
  */
-int tl_intvec_rxeof(xsc, type)
-	void			*xsc;
-	u_int32_t		type;
+int
+tl_intvec_rxeof(void *xsc, u_int32_t type)
 {
 	struct tl_softc		*sc;
 	int			r = 0, total_len = 0;
@@ -1167,9 +1102,8 @@ int tl_intvec_rxeof(xsc, type)
 	 	 * want the packet, just forget it. We leave the mbuf in place
 	 	 * since it can be used again later.
 	 	 */
-		if (ifp->if_bpf) {
+		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-		}
 #endif
 		/* pass it on. */
 		ether_input_mbuf(ifp, m);
@@ -1185,9 +1119,8 @@ int tl_intvec_rxeof(xsc, type)
  * the card has hit the end of the receive buffer chain and we need to
  * empty out the buffers and shift the pointer back to the beginning again.
  */
-int tl_intvec_rxeoc(xsc, type)
-	void			*xsc;
-	u_int32_t		type;
+int
+tl_intvec_rxeoc(void *xsc, u_int32_t type)
 {
 	struct tl_softc		*sc;
 	int			r;
@@ -1207,9 +1140,8 @@ int tl_intvec_rxeoc(xsc, type)
 	return(r);
 }
 
-int tl_intvec_txeof(xsc, type)
-	void			*xsc;
-	u_int32_t		type;
+int
+tl_intvec_txeof(void *xsc, u_int32_t type)
 {
 	struct tl_softc		*sc;
 	int			r = 0;
@@ -1259,9 +1191,8 @@ int tl_intvec_txeof(xsc, type)
  * if the tl_txeoc flag is set, and only the TXEOC interrupt handler
  * can set this flag once tl_start() has cleared it.
  */
-int tl_intvec_txeoc(xsc, type)
-	void			*xsc;
-	u_int32_t		type;
+int
+tl_intvec_txeoc(void *xsc, u_int32_t type)
 {
 	struct tl_softc		*sc;
 	struct ifnet		*ifp;
@@ -1295,9 +1226,8 @@ int tl_intvec_txeoc(xsc, type)
 	return(1);
 }
 
-int tl_intvec_adchk(xsc, type)
-	void			*xsc;
-	u_int32_t		type;
+int
+tl_intvec_adchk(void *xsc, u_int32_t type)
 {
 	struct tl_softc		*sc;
 
@@ -1315,9 +1245,8 @@ int tl_intvec_adchk(xsc, type)
 	return(0);
 }
 
-int tl_intvec_netsts(xsc, type)
-	void			*xsc;
-	u_int32_t		type;
+int
+tl_intvec_netsts(void *xsc, u_int32_t type)
 {
 	struct tl_softc		*sc;
 	u_int16_t		netsts;
@@ -1332,8 +1261,8 @@ int tl_intvec_netsts(xsc, type)
 	return(1);
 }
 
-int tl_intr(xsc)
-	void			*xsc;
+int
+tl_intr(void *xsc)
 {
 	struct tl_softc		*sc;
 	struct ifnet		*ifp;
@@ -1401,8 +1330,8 @@ int tl_intr(xsc)
 	return r;
 }
 
-void tl_stats_update(xsc)
-	void			*xsc;
+void
+tl_stats_update(void *xsc)
 {
 	struct tl_softc		*sc;
 	struct ifnet		*ifp;
@@ -1451,17 +1380,14 @@ void tl_stats_update(xsc)
 		mii_tick(&sc->sc_mii);
 
 	splx(s);
-	return;
 }
 
 /*
  * Encapsulate an mbuf chain in a list by coupling the mbuf data
  * pointers to the fragment pointers.
  */
-int tl_encap(sc, c, m_head)
-	struct tl_softc		*sc;
-	struct tl_chain		*c;
-	struct mbuf		*m_head;
+int
+tl_encap(struct tl_softc *sc, struct tl_chain *c, struct mbuf *m_head)
 {
 	int			frag = 0;
 	struct tl_frag		*f = NULL;
@@ -1501,9 +1427,8 @@ int tl_encap(sc, c, m_head)
 		struct mbuf		*m_new = NULL;
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
+		if (m_new == NULL)
 			return(1);
-		}
 		if (m_head->m_pkthdr.len > MHLEN) {
 			MCLGET(m_new, M_DONTWAIT);
 			if (!(m_new->m_flags & M_EXT)) {
@@ -1549,8 +1474,8 @@ int tl_encap(sc, c, m_head)
  * copy of the pointers since the transmit list fragment pointers are
  * physical addresses.
  */
-void tl_start(ifp)
-	struct ifnet		*ifp;
+void
+tl_start(struct ifnet *ifp)
 {
 	struct tl_softc		*sc;
 	struct mbuf		*m_head = NULL;
@@ -1636,12 +1561,10 @@ void tl_start(ifp)
 	 * Set a timeout in case the chip goes out to lunch.
 	 */
 	ifp->if_timer = 10;
-
-	return;
 }
 
-void tl_init(xsc)
-	void			*xsc;
+void
+tl_init(void *xsc)
 {
 	struct tl_softc		*sc = xsc;
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
@@ -1704,11 +1627,10 @@ void tl_init(xsc)
 	CMD_SET(sc, TL_CMD_RT);
 	CSR_WRITE_4(sc, TL_CH_PARM, VTOPHYS(&sc->tl_ldata->tl_rx_list[0]));
 
-	if (!sc->tl_bitrate) {
+	if (!sc->tl_bitrate)
 		mii_mediachg(&sc->sc_mii);
-	} else {
+	else
 		tl_ifmedia_upd(ifp);
-	}
 
 	/* Send the RX go command */
 	CMD_SET(sc, TL_CMD_GO|TL_CMD_NES|TL_CMD_RT);
@@ -1720,16 +1642,13 @@ void tl_init(xsc)
 	timeout_add_sec(&sc->tl_stats_tmo, 1);
 	timeout_set(&sc->tl_wait_tmo, tl_wait_up, sc);
 	timeout_add_sec(&sc->tl_wait_tmo, 2);
-
-	return;
 }
 
 /*
  * Set media options.
  */
 int
-tl_ifmedia_upd(ifp)
-	struct ifnet *ifp;
+tl_ifmedia_upd(struct ifnet *ifp)
 {
 	struct tl_softc *sc = ifp->if_softc;
 
@@ -1744,9 +1663,8 @@ tl_ifmedia_upd(ifp)
 /*
  * Report current media status.
  */
-void tl_ifmedia_sts(ifp, ifmr)
-	struct ifnet		*ifp;
-	struct ifmediareq	*ifmr;
+void
+tl_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct tl_softc		*sc;
 	struct mii_data		*mii;
@@ -1770,14 +1688,10 @@ void tl_ifmedia_sts(ifp, ifmr)
 		ifmr->ifm_active = mii->mii_media_active;
 		ifmr->ifm_status = mii->mii_media_status;
 	}
-
-	return;
 }
 
-int tl_ioctl(ifp, command, data)
-	struct ifnet		*ifp;
-	u_long			command;
-	caddr_t			data;
+int
+tl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct tl_softc		*sc = ifp->if_softc;
 	struct ifaddr		*ifa = (struct ifaddr *) data;
@@ -1848,8 +1762,8 @@ int tl_ioctl(ifp, command, data)
 	return(error);
 }
 
-void tl_watchdog(ifp)
-	struct ifnet		*ifp;
+void
+tl_watchdog(struct ifnet *ifp)
 {
 	struct tl_softc		*sc;
 
@@ -1861,16 +1775,14 @@ void tl_watchdog(ifp)
 
 	tl_softreset(sc, 1);
 	tl_init(sc);
-
-	return;
 }
 
 /*
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
-void tl_stop(sc)
-	struct tl_softc		*sc;
+void
+tl_stop(struct tl_softc *sc)
 {
 	int			i;
 	struct ifnet		*ifp;
@@ -1924,15 +1836,10 @@ void tl_stop(sc)
 	bzero(&sc->tl_ldata->tl_tx_list, sizeof(sc->tl_ldata->tl_tx_list));
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-
-	return;
 }
 
 int
-tl_probe(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+tl_probe(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -1973,9 +1880,7 @@ tl_probe(parent, match, aux)
 }
 
 void
-tl_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tl_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tl_softc *sc = (struct tl_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -2173,8 +2078,7 @@ tl_attach(parent, self, aux)
 }
 
 void
-tl_wait_up(xsc)
-	void *xsc;
+tl_wait_up(void *xsc)
 {
 	struct tl_softc *sc = xsc;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
