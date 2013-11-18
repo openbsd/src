@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.39 2013/08/07 01:06:36 bluhm Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.40 2013/11/18 22:21:27 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -135,11 +135,6 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
 
-	/* Only enable MSI on RT810xE for now. */
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_REALTEK ||
-	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_REALTEK_RT8101E)
-		pa->pa_flags &= ~PCI_FLAGS_MSI_ENABLED;
-
 	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
 #ifndef SMALL_KERNEL
@@ -160,7 +155,9 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Allocate interrupt */
-	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
+	if (pci_intr_map_msi(pa, &ih) == 0)
+		sc->rl_flags |= RL_FLAG_MSI;
+	else if (pci_intr_map(pa, &ih) != 0) {
 		printf(": couldn't map interrupt\n");
 		return;
 	}
@@ -183,6 +180,24 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
 	    NULL, NULL))
 		sc->rl_flags |= RL_FLAG_PCIE;
+
+	if (!(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RT8139)) {
+		u_int8_t	cfg;
+
+		CSR_WRITE_1(sc, RL_EECMD, RL_EE_MODE);
+		cfg = CSR_READ_1(sc, RL_CFG2);
+		if (sc->rl_flags & RL_FLAG_MSI) {
+			cfg |= RL_CFG2_MSI;
+			CSR_WRITE_1(sc, RL_CFG2, cfg);
+		} else {
+			if ((cfg & RL_CFG2_MSI) != 0) {
+				cfg &= ~RL_CFG2_MSI;
+				CSR_WRITE_1(sc, RL_CFG2, cfg);
+			}
+		}
+		CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_OFF);
+	}
 
 	/* Call bus-independent attach routine */
 	if (re_attach(sc, intrstr)) {

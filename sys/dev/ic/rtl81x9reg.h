@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.77 2013/10/11 14:00:18 jsg Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.78 2013/11/18 22:21:27 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -425,6 +425,7 @@
 #define RL_CFG2_PCI_66MHZ	0x01
 #define RL_CFG2_PCI_64BIT	0x08
 #define RL_CFG2_AUXPWR		0x10
+#define RL_CFG2_MSI		0x20
 
 /*
  * Config 3 register
