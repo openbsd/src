@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.696 2013/11/18 21:31:39 rpe Exp $
+#	$OpenBSD: install.sub,v 1.697 2013/11/19 12:02:55 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -2098,7 +2098,7 @@ done
 
 # Fetch a response file from the "netboot" interface.
 get_responsefile() {
-	local _bootdev _mac _mode _server
+	local _bootdev _f _mac _mode _server
 	# Fetching the response file requires DHCP, even if the
 	# machine was booted via RARP and TFTP.
 	[[ -x /sbin/dhclient ]] || return
@@ -2124,8 +2124,10 @@ get_responsefile() {
 	    /var/db/dhclient.leases.$_bootdev 2>/dev/null)
 	_mac=$(ifconfig $_bootdev | sed 's/.*lladdr \(.*\)/\1/p;d')
 	
-	ftp -o "/$_mode.conf" "http://$_server/$_mac-$_mode.conf"
-	[[ -s /$_mode.conf ]] && action=$_mode
+	for _f in $_mac-$_mode $_mode; do
+		ftp -o "/$_mode.conf" "http://$_server/$_f.conf"
+		[[ -s /$_mode.conf ]] && action=$_mode && break
+	done
 }
 
 # Fully automatic installation?
