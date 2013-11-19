@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.53 2013/08/21 16:13:29 millert Exp $	*/
+/*	$OpenBSD: grey.c,v 1.54 2013/11/19 18:33:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -60,6 +60,24 @@ int server_lookup4(struct sockaddr_in *, struct sockaddr_in *,
     struct sockaddr_in *);
 int server_lookup6(struct sockaddr_in6 *, struct sockaddr_in6 *,
     struct sockaddr_in6 *);
+
+void	configure_spamd(char **, size_t, FILE *);
+int	server_lookup(struct sockaddr *, struct sockaddr *,
+	    struct sockaddr *);
+int	configure_pf(char **, int);
+char	*dequotetolower(const char *);
+void	readsuffixlists(void);
+void	freeaddrlists(void);
+int	addwhiteaddr(char *);
+int	addtrapaddr(char *);
+int	db_addrstate(DB *, char *);
+int	greyscan(char *);
+int	trapcheck(DB *, char *);
+int	twupdate(char *, char *, char *, char *, char *);
+int	twread(char *);
+int	greyreader(void);
+void	greyscanner(void);
+
 
 size_t whitecount, whitealloc;
 size_t trapcount, trapalloc;
@@ -721,7 +739,8 @@ twupdate(char *dbname, char *what, char *ip, char *source, char *expires)
 
 	now = time(NULL);
 	/* expiry times have to be in the future */
-	expire = strtonum(expires, now, sizeof(time_t) == sizeof(int) ? INT_MAX : LLONG_MAX, NULL);
+	expire = strtonum(expires, now,
+	    sizeof(time_t) == sizeof(int) ? INT_MAX : LLONG_MAX, NULL);
 	if (expire == 0)
 		return(-1);
 
