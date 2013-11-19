@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1696 2013/11/09 03:59:20 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1697 2013/11/19 04:18:16 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8856,6 +8856,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HD Graphics",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_HDA_1,
+	    "Core 4G HD Audio",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT1_2,
 	    "HD Graphics",
 	},
@@ -8940,7 +8944,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HD Graphics",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_HDA,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_HDA_2,
 	    "Core 4G HD Audio",
 	},
 	{
@@ -9002,6 +9006,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_R_CRW_GT1_1,
 	    "HD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_HDA_3,
+	    "Core 4G HD Audio",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_R_CRW_GT1_2,

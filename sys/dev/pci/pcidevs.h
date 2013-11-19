@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1696 2013/11/09 03:59:20 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1697 2013/11/19 04:18:16 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2822,6 +2822,7 @@
 #define	PCI_PRODUCT_INTEL_CORE4G_M_ULT_GT1	0x0a06		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_S_ULT_GT1	0x0a0a		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT1_1	0x0a0b		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_HDA_1	0x0a0c		/* Core 4G HD Audio */
 #define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT1_2	0x0a0e		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_D_ULT_GT2	0x0a12		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_M_ULT_GT2	0x0a16		/* HD Graphics */
@@ -2843,7 +2844,7 @@
 #define	PCI_PRODUCT_INTEL_CORE4G_PCIE_3	0x0c09		/* Core 4G PCIE */
 #define	PCI_PRODUCT_INTEL_CORE4G_S_SDV_GT1	0x0c0a		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_R_SDV_GT1_1	0x0c0b		/* HD Graphics */
-#define	PCI_PRODUCT_INTEL_CORE4G_HDA	0x0c0c		/* Core 4G HD Audio */
+#define	PCI_PRODUCT_INTEL_CORE4G_HDA_2	0x0c0c		/* Core 4G HD Audio */
 #define	PCI_PRODUCT_INTEL_CORE4G_R_SDV_GT1_2	0x0c0e		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_D_SDV_GT2	0x0c12		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_M_SDV_GT2	0x0c16		/* HD Graphics */
@@ -2859,6 +2860,7 @@
 #define	PCI_PRODUCT_INTEL_CORE4G_M_CRW_GT1	0x0d06		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_S_CRW_GT1	0x0d0a		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_R_CRW_GT1_1	0x0d0b		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_HDA_3	0x0d0c		/* Core 4G HD Audio */
 #define	PCI_PRODUCT_INTEL_CORE4G_R_CRW_GT1_2	0x0d0e		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_D_CRW_GT2	0x0d12		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_M_CRW_GT2	0x0d16		/* HD Graphics */
