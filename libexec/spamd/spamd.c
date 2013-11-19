@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.112 2012/06/19 17:43:40 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.113 2013/11/19 18:33:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Bob Beck.  All rights reserved.
@@ -98,6 +98,10 @@ int      match(const char *, const char *);
 void     nextstate(struct con *);
 void     handler(struct con *);
 void     handlew(struct con *, int one);
+char    *loglists(struct con *);
+void     getcaddr(struct con *);
+void     gethelo(char *, size_t, char *);
+int      read_configline(FILE *);
 
 char hostname[MAXHOSTNAMELEN];
 struct syslog_data sdata = SYSLOG_DATA_INIT;
@@ -679,13 +683,13 @@ closecon(struct con *cp)
 	slowdowntill = 0;
 
 	time(&tt);
-	syslog_r(LOG_INFO, &sdata, "%s: disconnected after %ld seconds.%s%s",
-	    cp->addr, (long)(tt - cp->s),
+	syslog_r(LOG_INFO, &sdata, "%s: disconnected after %lld seconds.%s%s",
+	    cp->addr, (long long)(tt - cp->s),
 	    ((cp->lists == NULL) ? "" : " lists:"),
 	    ((cp->lists == NULL) ? "": cp->lists));
 	if (debug > 0)
-		printf("%s connected for %ld seconds.\n", cp->addr,
-		    (long)(tt - cp->s));
+		printf("%s connected for %lld seconds.\n", cp->addr,
+		    (long long)(tt - cp->s));
 	if (cp->lists != NULL) {
 		free(cp->lists);
 		cp->lists = NULL;
@@ -1050,6 +1054,7 @@ main(int argc, char *argv[])
 	struct sockaddr_in lin;
 	int ch, s, conflisten = 0, syncfd = 0, i, omax = 0, one = 1;
 	u_short port;
+	long long passt, greyt, whitet;
 	struct servent *ent;
 	struct rlimit rlp;
 	char *bind_address = NULL;
@@ -1114,9 +1119,12 @@ main(int argc, char *argv[])
 			greylist = 0;
 			break;
 		case 'G':
-			if (sscanf(optarg, "%d:%d:%d", &passtime, &greyexp,
-			    &whiteexp) != 3)
+			if (sscanf(optarg, "%lld:%lld:%lld", &passt, &greyt,
+			    &whitet) != 3)
 				usage();
+			passtime = passt;
+			greyexp = greyt;
+			whiteexp = whitet;
 			/* convert to seconds from minutes */
 			passtime *= 60;
 			/* convert to seconds from hours */
