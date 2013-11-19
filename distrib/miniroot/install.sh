@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.235 2013/11/16 18:37:27 rpe Exp $
+#	$OpenBSD: install.sh,v 1.236 2013/11/19 22:20:06 halex Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -271,7 +271,7 @@ _f=dhclient.conf
 done)
 
 # Feed the random pool some junk before we read from it
-(dmesg; cat $SERVERLISTALL; sysctl; route -n show; df;
+(dmesg; cat $SERVERLISTALL /*.conf; sysctl; route -n show; df;
     ifconfig -A; hostname) >/mnt/dev/arandom 2>&1
 
 echo -n "done.\nGenerating initial host.random file..."
