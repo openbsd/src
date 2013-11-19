@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.101 2013/10/29 14:30:05 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.102 2013/11/19 10:22:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -445,7 +445,7 @@ valid_localpart(const char *s)
  * RFC 5322 defines theses characters as valid: !#$%&'*+-/=?^_`{|}~
  * some of them are potentially dangerous, and not so used after all.
  */
-#define IS_ATEXT(c)     (isalnum((int)(c)) || strchr("!%+-/=_", (c)))
+#define IS_ATEXT(c)     (isalnum((int)(c)) || strchr("*!%+-/=_", (c)))
 nextatom:
 	if (! IS_ATEXT(*s) || *s == '\0')
 		return 0;

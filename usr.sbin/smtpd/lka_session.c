@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.60 2013/11/06 10:01:29 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.61 2013/11/19 10:22:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -70,7 +70,7 @@ static void lka_resume(struct lka_session *);
 static size_t lka_expand_format(char *, size_t, const struct envelope *,
     const struct userinfo *);
 static void mailaddr_to_username(const struct mailaddr *, char *, size_t);
-static const char * mailaddr_tag(const struct mailaddr *);
+static int mailaddr_tag(const struct mailaddr *, char *, size_t);
 
 static int mod_lowercase(char *, size_t);
 static int mod_uppercase(char *, size_t);
@@ -83,7 +83,10 @@ struct modifiers {
 	{ "lowercase",	mod_lowercase },
 	{ "uppercase",	mod_uppercase },
 	{ "strip",	mod_strip },
+	{ "raw",	NULL },		/* special case, must stay last */
 };
+static const char	*unsafe = "*?";
+
 
 static int		init;
 static struct tree	sessions;
@@ -475,8 +478,8 @@ lka_submit(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 	union lookup		 lk;
 	struct envelope		*ep;
 	struct expandnode	*xn2;
-	const char		*tag;
-	int			r;
+	int			 r;
+	char			 tag[EXPAND_BUFFER];
 
 	ep = xmemdup(&lks->envelope, sizeof *ep, "lka_submit");
 	ep->expire = rule->r_qexpire;
@@ -545,8 +548,14 @@ lka_submit(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 			ep->agent.mda.method = rule->r_action;
 			strlcpy(ep->agent.mda.buffer, rule->r_value.buffer,
 			    sizeof ep->agent.mda.buffer);
-			tag = mailaddr_tag(&ep->dest);
-			if (rule->r_action == A_MAILDIR && tag && tag[0]) {
+
+			bzero(tag, sizeof tag);
+			if (! mailaddr_tag(&ep->dest, tag, sizeof tag)) {
+				lks->error = LKA_PERMFAIL;
+				free(ep);
+				return;
+			}
+			if (rule->r_action == A_MAILDIR && tag[0]) {
 				strlcat(ep->agent.mda.buffer, "/.",
 				    sizeof(ep->agent.mda.buffer));
 				strlcat(ep->agent.mda.buffer, tag,
@@ -586,6 +595,7 @@ lka_expand_token(char *dest, size_t len, const char *token,
 	ssize_t		begoff, endoff;
 	const char     *errstr = NULL;
 	int		replace = 1;
+	int		raw = 0;
 
 	begoff = 0;
 	endoff = EXPAND_BUFFER;
@@ -668,20 +678,23 @@ lka_expand_token(char *dest, size_t len, const char *token,
 	else
 		return 0;
 
+	if (string != tmp) {
+		if (strlcpy(tmp, string, sizeof tmp) >= sizeof tmp)
+			return 0;
+		string = tmp;
+	}
+
 	/*  apply modifiers */
 	if (mods != NULL) {
-		/* make sure we are working on tmp */
-		if (string != tmp) {
-			if (strlcpy(tmp, string, sizeof tmp) >= sizeof tmp)
-				return 0;
-			string = tmp;
-		}
-
 		do {
 			if ((sep = strchr(mods, '|')) != NULL)
 				*sep++ = '\0';
 			for (i = 0; (size_t)i < nitems(token_modifiers); ++i) {
-				if (! strcmp(token_modifiers[i].name, mods)) {
+				if (! strcasecmp(token_modifiers[i].name, mods)) {
+					if (token_modifiers[i].f == NULL) {
+						raw = 1;
+						break;
+					}
 					if (! token_modifiers[i].f(tmp, sizeof tmp))
 						return 0; /* modifier error */
 					break;
@@ -691,7 +704,12 @@ lka_expand_token(char *dest, size_t len, const char *token,
 				return 0; /* modifier not found */
 		} while ((mods = sep) != NULL);
 	}
-		
+	
+	if (! raw)
+		for (i = 0; (size_t)i < strlen(tmp); ++i)
+			if (strchr(unsafe, tmp[i]))
+				tmp[i] = ':';
+
 	/* expanded string is empty */
 	i = strlen(string);
 	if (i == 0)
@@ -826,18 +844,26 @@ mailaddr_to_username(const struct mailaddr *maddr, char *dst, size_t len)
 		*tag++ = '\0';
 }
 
-static const char *
-mailaddr_tag(const struct mailaddr *maddr)
+static int
+mailaddr_tag(const struct mailaddr *maddr, char *dest, size_t len)
 {
-	const char *tag;
+	char		*tag;
+	char		*sanitized;
 
 	if ((tag = strchr(maddr->user, TAG_CHAR))) {
 		tag++;
 		while (*tag == '.')
 			tag++;
 	}
+	if (tag == NULL)
+		return 1;
 
-	return (tag);
+	if (strlcpy(dest, tag, len) >= len)
+		return 0;
+	for (sanitized = dest; *sanitized; sanitized++)
+		if (strchr(unsafe, *sanitized))
+			*sanitized = ':';
+	return 1;
 }
 
 static int 
