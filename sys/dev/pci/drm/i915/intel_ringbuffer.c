@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.c,v 1.6 2013/11/17 18:47:13 kettenis Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.c,v 1.7 2013/11/19 15:08:04 jsg Exp $	*/
 /*
  * Copyright © 2008-2010 Intel Corporation
  *
@@ -770,13 +770,13 @@ gen5_ring_get_irq(struct intel_ring_buffer *ring)
 	if (!dev->irq_enabled)
 		return false;
 
-	mtx_enter(&dev_priv->irq_lock);
+//	mtx_enter(&dev_priv->irq_lock);
 	if (ring->irq_refcount++ == 0) {
 		dev_priv->gt_irq_mask &= ~ring->irq_enable_mask;
 		I915_WRITE(GTIMR, dev_priv->gt_irq_mask);
 		POSTING_READ(GTIMR);
 	}
-	mtx_leave(&dev_priv->irq_lock);
+//	mtx_leave(&dev_priv->irq_lock);
 
 	return true;
 }
@@ -787,13 +787,13 @@ gen5_ring_put_irq(struct intel_ring_buffer *ring)
 	struct drm_device *dev = ring->dev;
 	drm_i915_private_t *dev_priv = dev->dev_private;
 
-	mtx_enter(&dev_priv->irq_lock);
+//	mtx_enter(&dev_priv->irq_lock);
 	if (--ring->irq_refcount == 0) {
 		dev_priv->gt_irq_mask |= ring->irq_enable_mask;
 		I915_WRITE(GTIMR, dev_priv->gt_irq_mask);
 		POSTING_READ(GTIMR);
 	}
-	mtx_leave(&dev_priv->irq_lock);
+//	mtx_leave(&dev_priv->irq_lock);
 }
 
 static bool
@@ -805,13 +805,13 @@ i9xx_ring_get_irq(struct intel_ring_buffer *ring)
 	if (!dev->irq_enabled)
 		return false;
 
-	mtx_enter(&dev_priv->irq_lock);
+//	mtx_enter(&dev_priv->irq_lock);
 	if (ring->irq_refcount++ == 0) {
 		dev_priv->irq_mask &= ~ring->irq_enable_mask;
 		I915_WRITE(IMR, dev_priv->irq_mask);
 		POSTING_READ(IMR);
 	}
-	mtx_leave(&dev_priv->irq_lock);
+//	mtx_leave(&dev_priv->irq_lock);
 
 	return true;
 }
@@ -822,13 +822,13 @@ i9xx_ring_put_irq(struct intel_ring_buffer *ring)
 	struct drm_device *dev = ring->dev;
 	drm_i915_private_t *dev_priv = dev->dev_private;
 
-	mtx_enter(&dev_priv->irq_lock);
+//	mtx_enter(&dev_priv->irq_lock);
 	if (--ring->irq_refcount == 0) {
 		dev_priv->irq_mask |= ring->irq_enable_mask;
 		I915_WRITE(IMR, dev_priv->irq_mask);
 		POSTING_READ(IMR);
 	}
-	mtx_leave(&dev_priv->irq_lock);
+//	mtx_leave(&dev_priv->irq_lock);
 }
 
 static bool
@@ -840,13 +840,13 @@ i8xx_ring_get_irq(struct intel_ring_buffer *ring)
 	if (!dev->irq_enabled)
 		return false;
 
-	mtx_enter(&dev_priv->irq_lock);
+//	mtx_enter(&dev_priv->irq_lock);
 	if (ring->irq_refcount++ == 0) {
 		dev_priv->irq_mask &= ~ring->irq_enable_mask;
 		I915_WRITE16(IMR, dev_priv->irq_mask);
 		POSTING_READ16(IMR);
 	}
-	mtx_leave(&dev_priv->irq_lock);
+//	mtx_leave(&dev_priv->irq_lock);
 
 	return true;
 }
@@ -857,13 +857,13 @@ i8xx_ring_put_irq(struct intel_ring_buffer *ring)
 	struct drm_device *dev = ring->dev;
 	drm_i915_private_t *dev_priv = dev->dev_private;
 
-	mtx_enter(&dev_priv->irq_lock);
+//	mtx_enter(&dev_priv->irq_lock);
 	if (--ring->irq_refcount == 0) {
 		dev_priv->irq_mask |= ring->irq_enable_mask;
 		I915_WRITE16(IMR, dev_priv->irq_mask);
 		POSTING_READ16(IMR);
 	}
-	mtx_leave(&dev_priv->irq_lock);
+//	mtx_leave(&dev_priv->irq_lock);
 }
 
 void intel_ring_setup_status_page(struct intel_ring_buffer *ring)
@@ -946,7 +946,7 @@ gen6_ring_get_irq(struct intel_ring_buffer *ring)
 	 * blt/bsd rings on ivb. */
 	gen6_gt_force_wake_get(dev_priv);
 
-	mtx_enter(&dev_priv->irq_lock);
+//	mtx_enter(&dev_priv->irq_lock);
 	if (ring->irq_refcount++ == 0) {
 		if (HAS_L3_GPU_CACHE(dev) && ring->id == RCS)
 			I915_WRITE_IMR(ring, ~(ring->irq_enable_mask |
@@ -957,7 +957,7 @@ gen6_ring_get_irq(struct intel_ring_buffer *ring)
 		I915_WRITE(GTIMR, dev_priv->gt_irq_mask);
 		POSTING_READ(GTIMR);
 	}
-	mtx_leave(&dev_priv->irq_lock);
+//	mtx_leave(&dev_priv->irq_lock);
 
 	return true;
 }
@@ -968,7 +968,7 @@ gen6_ring_put_irq(struct intel_ring_buffer *ring)
 	struct drm_device *dev = ring->dev;
 	drm_i915_private_t *dev_priv = dev->dev_private;
 
-	mtx_enter(&dev_priv->irq_lock);
+//	mtx_enter(&dev_priv->irq_lock);
 	if (--ring->irq_refcount == 0) {
 		if (HAS_L3_GPU_CACHE(dev) && ring->id == RCS)
 			I915_WRITE_IMR(ring, ~GEN6_RENDER_L3_PARITY_ERROR);
@@ -978,7 +978,7 @@ gen6_ring_put_irq(struct intel_ring_buffer *ring)
 		I915_WRITE(GTIMR, dev_priv->gt_irq_mask);
 		POSTING_READ(GTIMR);
 	}
-	mtx_leave(&dev_priv->irq_lock);
+//	mtx_leave(&dev_priv->irq_lock);
 
 	gen6_gt_force_wake_put(dev_priv);
 }
