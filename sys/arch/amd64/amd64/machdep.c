@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.170 2013/11/02 15:02:27 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.171 2013/11/19 04:12:17 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1194,7 +1194,7 @@ cpu_init_extents(void)
 		if (extent_alloc_region(iomem_ex, mem_clusters[i].start,
 		    mem_clusters[i].size, EX_NOWAIT)) {
 			/* XXX What should we do? */
-			printf("WARNING: CAN'T ALLOCATE RAM (%lx-%lx)"
+			printf("WARNING: CAN'T ALLOCATE RAM (%llx-%llx)"
 			    " FROM IOMEM EXTENT MAP!\n", mem_clusters[i].start,
 			    mem_clusters[i].start + mem_clusters[i].size - 1);
 		}

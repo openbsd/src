@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.66 2013/11/01 01:09:43 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.67 2013/11/19 04:12:17 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -1048,7 +1048,7 @@ pmap_destroy(struct pmap *pmap)
 
 #ifdef DIAGNOSTIC
 	if (pmap->pm_cpus != 0)
-		printf("pmap_destroy: pmap %p cpus=0x%lx\n",
+		printf("pmap_destroy: pmap %p cpus=0x%llx\n",
 		    (void *)pmap, pmap->pm_cpus);
 #endif
 

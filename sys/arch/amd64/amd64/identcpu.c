@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.51 2013/09/26 14:38:51 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.52 2013/11/19 04:12:17 guenther Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -466,7 +466,7 @@ identifycpu(struct cpu_info *ci)
 	printf("%s: %s", ci->ci_dev->dv_xname, mycpu_model);
 
 	if (ci->ci_tsc_freq != 0)
-		printf(", %lu.%02lu MHz", (ci->ci_tsc_freq + 4999) / 1000000,
+		printf(", %llu.%02llu MHz", (ci->ci_tsc_freq + 4999) / 1000000,
 		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
 
 	if (ci->ci_flags & CPUF_PRIMARY) {
