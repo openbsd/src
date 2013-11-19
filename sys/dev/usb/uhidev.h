@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.h,v 1.15 2013/11/15 08:17:44 pirofti Exp $	*/
+/*	$OpenBSD: uhidev.h,v 1.16 2013/11/19 14:04:07 pirofti Exp $	*/
 /*	$NetBSD: uhidev.h,v 1.3 2002/10/08 09:56:17 dan Exp $	*/
 
 /*
@@ -82,7 +82,6 @@ struct uhidev_attach_arg {
 	struct uhidev_softc *parent;
 	int reportid;
 	int reportsize;
-	int matchlvl;
 };
 
 void uhidev_get_report_desc(struct uhidev_softc *, void **, int *);

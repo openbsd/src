@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.50 2013/11/11 09:16:03 pirofti Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.51 2013/11/19 14:04:07 pirofti Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -110,8 +110,6 @@ uhidev_match(struct device *parent, void *match, void *aux)
 		return (UMATCH_NONE);
 	if (usbd_get_quirks(uaa->device)->uq_flags & UQ_BAD_HID)
 		return (UMATCH_NONE);
-	if (uaa->matchlvl)
-		return (uaa->matchlvl);
 
 	return (UMATCH_IFACECLASS_GENERIC);
 }
@@ -332,10 +330,6 @@ int uhidevsubmatch(struct device *parent, void *match, void *aux)
 	if (cf->uhidevcf_reportid != UHIDEV_UNK_REPORTID &&
 	    cf->uhidevcf_reportid != uha->reportid)
 		return (0);
-	if (cf->uhidevcf_reportid == uha->reportid)
-		uha->matchlvl = UMATCH_VENDOR_PRODUCT;
-	else
-		uha->matchlvl = 0;
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 

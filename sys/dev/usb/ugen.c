@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.75 2013/11/06 16:58:13 pirofti Exp $ */
+/*	$OpenBSD: ugen.c,v 1.76 2013/11/19 14:04:07 pirofti Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -140,10 +140,6 @@ ugen_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-#if 0
-	if (uaa->matchlvl)
-		return (uaa->matchlvl);
-#endif
 	if (uaa->usegeneric) {
 		return (UMATCH_GENERIC);
 	} else
