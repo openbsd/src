@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.108 2013/11/18 12:24:26 eric Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.109 2013/11/19 10:01:20 eric Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 18 2013 $
+.Dd $Mdocdate: November 19 2013 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -549,6 +549,14 @@ If a
 .Ar domain
 is specified, the restriction only applies when connecting
 to MXs for this domain.
+.It Xo
+.Ic limit scheduler max-inflight
+.Ar num
+.Xc
+Suspend the scheduling of envelopes for deliver/relay until the number
+of inflight envelopes falls below
+.Ar num .
+Changing the default value might degrade performances.
 .It Xo
 .Bk -words
 .Ic listen on Ar interface
