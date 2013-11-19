@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020.c,v 1.17 2013/11/18 20:21:51 deraadt Exp $	*/
+/*	$OpenBSD: stp4020.c,v 1.18 2013/11/19 01:23:51 deraadt Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -298,7 +298,7 @@ stp4020_create_event_thread(arg)
 
 	if (kthread_create(stp4020_event_thread, sc, &sc->event_thread,
 	    sc->sc_dev.dv_xname)) {
-		panic("%s: unable to create event thread", name);
+		panic("%s: unable to create event thread", sc->sc_dev.dv_xname);
 	}
 }
 
