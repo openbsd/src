@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.71 2013/11/11 09:15:35 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.72 2013/11/19 09:00:43 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1061,7 +1061,6 @@ nd6_ifptomac(struct ifnet *ifp)
 {
 	switch (ifp->if_type) {
 	case IFT_ETHER:
-	case IFT_FDDI:
 	case IFT_IEEE1394:
 	case IFT_PROPVIRTUAL:
 	case IFT_CARP:

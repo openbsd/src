@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.62 2013/10/17 16:27:45 bluhm Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.63 2013/11/19 09:00:43 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -189,8 +189,6 @@ found:
 	/* IEEE802/EUI64 cases - what others? */
 	case IFT_ETHER:
 	case IFT_CARP:
-	case IFT_FDDI:
-	case IFT_ATM:
 	case IFT_IEEE1394:
 	case IFT_IEEE80211:
 		/* look at IEEE802/EUI64 only */
