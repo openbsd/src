@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.17 2013/11/16 18:24:59 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.18 2013/11/19 19:14:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -144,7 +144,7 @@ i915_gem_execbuffer_relocate_entry(struct drm_i915_gem_object *obj,
 	if (unlikely(IS_GEN6(dev) &&
 	    reloc->write_domain == I915_GEM_DOMAIN_INSTRUCTION &&
 	    !target_i915_obj->has_global_gtt_mapping)) {
-		i915_gem_gtt_rebind_object(target_i915_obj,
+		i915_gem_gtt_bind_object(target_i915_obj,
 					 target_i915_obj->cache_level);
 	}
 
@@ -421,7 +421,7 @@ i915_gem_execbuffer_unreserve_object(struct drm_i915_gem_object *obj)
 {
 	struct drm_i915_gem_exec_object2 *entry;
 
-	if (obj->dmamap == NULL)
+	if (obj->gtt_space == NULL)
 		return;
 
 	entry = obj->exec_entry;
@@ -493,7 +493,7 @@ i915_gem_execbuffer_reserve(struct intel_ring_buffer *ring,
 			struct drm_i915_gem_exec_object2 *entry = obj->exec_entry;
 			bool need_fence, need_mappable;
 
-			if (obj->dmamap == NULL)
+			if (obj->gtt_space == NULL)
 				continue;
 
 			need_fence =
@@ -513,7 +513,7 @@ i915_gem_execbuffer_reserve(struct intel_ring_buffer *ring,
 
 		/* Bind fresh objects */
 		list_for_each_entry(obj, objects, exec_list) {
-			if (obj->dmamap != NULL)
+			if (obj->gtt_space != NULL)
 				continue;
 
 			ret = i915_gem_execbuffer_reserve_object(obj, ring);
@@ -1058,7 +1058,7 @@ i915_gem_do_execbuffer(struct drm_device *dev, void *data,
 	 * hsw should have this fixed, but let's be paranoid and do it
 	 * unconditionally for now. */
 	if (flags & I915_DISPATCH_SECURE && !batch_obj->has_global_gtt_mapping)
-		i915_gem_gtt_rebind_object(batch_obj, batch_obj->cache_level);
+		i915_gem_gtt_bind_object(batch_obj, batch_obj->cache_level);
 
 	ret = i915_gem_execbuffer_move_to_gpu(ring, &objects);
 	if (ret)

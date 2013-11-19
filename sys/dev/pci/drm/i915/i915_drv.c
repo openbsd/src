@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.49 2013/11/19 15:08:03 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.50 2013/11/19 19:14:09 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1035,6 +1035,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (INTEL_INFO(dev)->gen < 3 || IS_I915G(dev) || IS_I915GM(dev))
 		ri->ri_flg |= RI_WRONLY;
+	ri->ri_flg |= RI_WRONLY;
 
 	inteldrm_stdscreen.capabilities = ri->ri_caps;
 	inteldrm_stdscreen.nrows = ri->ri_rows;

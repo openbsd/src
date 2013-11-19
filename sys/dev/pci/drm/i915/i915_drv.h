@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.35 2013/11/19 15:08:04 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.36 2013/11/19 19:14:09 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -248,6 +248,8 @@ struct intel_opregion {
 
 #define I915_FENCE_REG_NONE -1
 #define I915_MAX_NUM_FENCES 16
+/* 16 fences + sign bit for FENCE_REG_NONE */
+#define I915_MAX_NUM_FENCE_BITS 5
 
 struct drm_i915_fence_reg {
 	struct list_head lru_list;
@@ -505,7 +507,6 @@ struct intel_l3_parity {
 struct inteldrm_softc {
 	struct device		 dev;
 	struct device		*drmdev;
-	bus_dma_tag_t		 agpdmat; /* tag from intagp for GEM */
 	bus_dma_tag_t		 dmat;
 	bus_space_tag_t		 bst;
 	struct agp_map		*agph;
@@ -651,6 +652,10 @@ struct inteldrm_softc {
 	bool modeset_on_lid;
 
 	struct {
+		/** Bridge to intel-gtt-ko */
+		struct intel_gtt *gtt;
+		/** Memory allocator for GTT */
+		struct drm_mm gtt_space;
 		/** List of all objects in gtt_space. Used to restore gtt
 		 * mappings on resume */
 		struct list_head bound_list;
@@ -891,6 +896,8 @@ struct inteldrm_file {
 struct drm_i915_gem_object {
 	struct drm_obj				 base;
 
+	/** Current space allocated to this object in the GTT, if any. */
+	struct drm_mm_node *gtt_space;
 	struct list_head gtt_list;
 
 	/** This object's place on the active/flushing/inactive lists */
@@ -898,25 +905,6 @@ struct drm_i915_gem_object {
 	struct list_head			 mm_list;
 	/** This object's place in the batchbuffer or on the eviction list */
 	struct list_head			 exec_list;
-	/* GTT binding. */
-	bus_dmamap_t				 dmamap;
-	/* Current offset of the object in GTT space. */
-	bus_addr_t				 gtt_offset;
-	struct intel_ring_buffer		*ring;
-	u_int32_t				*bit_17;
-	/* extra flags to bus_dma */
-	int					 dma_flags;
-	/* Fence register for this object. needed for tiling. */
-	int					 fence_reg;
-
-	/** Breadcrumb of last rendering to the buffer. */
-	u_int32_t				 last_read_seqno;
-	u_int32_t				 last_write_seqno;
-	/** Breadcrumb of last fenced GPU access to the buffer. */
-	u_int32_t				 last_fenced_seqno;
-	/** Current tiling mode for the object. */
-	u_int32_t				 tiling_mode;
-	u_int32_t				 stride;
 
 	/**
 	 * This is set if the object is on the active lists (has pending
@@ -932,10 +920,21 @@ struct drm_i915_gem_object {
 	unsigned int dirty:1;
 
 	/**
+	 * Fence register bits (if any) for this object.  Will be set
+	 * as needed when mapped into the GTT.
+	 * Protected by dev->struct_mutex.
+	 */
+	signed int fence_reg:I915_MAX_NUM_FENCE_BITS;
+
+	/**
 	 * Advice: are the backing pages purgeable?
 	 */
 	unsigned int madv:2;
 
+	/**
+	 * Current tiling mode for the object.
+	 */
+	unsigned int tiling_mode:2;
 	/**
 	 * Whether the tiling parameters for the currently associated fence
 	 * register have changed. Note that for the purposes of tracking
@@ -981,6 +980,7 @@ struct drm_i915_gem_object {
 
 	unsigned int has_aliasing_ppgtt_mapping:1;
 	unsigned int has_global_gtt_mapping:1;
+	unsigned int has_dma_mapping:1;
 
 	bus_dma_segment_t *pages;
 	int pages_pin_count;
@@ -991,6 +991,27 @@ struct drm_i915_gem_object {
 	LIST_ENTRY(drm_i915_gem_object) exec_node;
 	unsigned long exec_handle;
 	struct drm_i915_gem_exec_object2 *exec_entry;
+
+	/**
+	 * Current offset of the object in GTT space.
+	 *
+	 * This is the same as gtt_space->start
+	 */
+	uint32_t gtt_offset;
+
+	struct intel_ring_buffer *ring;
+
+	/** Breadcrumb of last rendering to the buffer. */
+	uint32_t last_read_seqno;
+	uint32_t last_write_seqno;
+	/** Breadcrumb of last fenced GPU access to the buffer. */
+	uint32_t last_fenced_seqno;
+
+	/** Current tiling stride for the object, if it's tiled. */
+	uint32_t stride;
+
+	/** Record of address bit 17 of each page at last unbind. */
+	unsigned long *bit_17;
 
 	/** User space pin count and filp owning the pin */
 	uint32_t user_pin_count;
@@ -1288,8 +1309,15 @@ static inline void intel_opregion_enable_asle(struct drm_device *dev) { return; 
 /* i915_gem_gtt.c */
 void i915_gem_cleanup_aliasing_ppgtt(struct drm_device *dev);
 void i915_gem_restore_gtt_mappings(struct drm_device *dev);
-void i915_gem_gtt_rebind_object(struct drm_i915_gem_object *obj,
-				enum i915_cache_level);
+int __must_check i915_gem_gtt_prepare_object(struct drm_i915_gem_object *obj);
+void i915_gem_gtt_bind_object(struct drm_i915_gem_object *obj,
+				enum i915_cache_level cache_level);
+void i915_gem_gtt_unbind_object(struct drm_i915_gem_object *obj);
+void i915_gem_gtt_finish_object(struct drm_i915_gem_object *obj);
+void i915_gem_init_global_gtt(struct drm_device *dev,
+			      unsigned long start,
+			      unsigned long mappable_end,
+			      unsigned long end);
 
 /* modesetting */
 extern void intel_modeset_init_hw(struct drm_device *dev);

@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.152 2013/11/07 05:33:05 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.153 2013/11/19 19:14:09 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -71,6 +71,7 @@
 
 #include "drm_linux_list.h"
 #include "drm.h"
+#include "drm_mm.h"
 #include "drm_atomic.h"
 #include "agp.h"
 
@@ -778,7 +779,6 @@ struct drm_device {
 	atomic_t		 obj_count;
 	u_int			 obj_name;
 	atomic_t		 obj_memory;
-	uint32_t		 gtt_total;
 	SPLAY_HEAD(drm_name_tree, drm_obj)	name_tree;
 	struct pool				objpl;
 	

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_gtt.c,v 1.4 2013/10/05 07:30:06 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_gtt.c,v 1.5 2013/11/19 19:14:09 kettenis Exp $	*/
 /*
  * Copyright © 2010 Daniel Vetter
  *
@@ -29,9 +29,9 @@
 #include "i915_trace.h"
 #include "intel_drv.h"
 
-#ifdef notyet
 typedef uint32_t gtt_pte_t;
 
+#ifdef notyet
 /* PPGTT stuff */
 #define GEN6_GTT_ADDR_ENCODE(addr)	((addr) | (((addr) >> 28) & 0xff0))
 
@@ -344,11 +344,13 @@ void i915_gem_init_ppgtt(struct drm_device *dev)
 		I915_WRITE(RING_PP_DIR_BASE(ring), pd_offset);
 	}
 }
+#endif
 
 static bool do_idling(struct drm_i915_private *dev_priv)
 {
 	bool ret = dev_priv->mm.interruptible;
 
+#if 0
 	if (unlikely(dev_priv->mm.gtt->do_idle_maps)) {
 		dev_priv->mm.interruptible = false;
 		if (i915_gpu_idle(dev_priv->dev)) {
@@ -357,17 +359,21 @@ static bool do_idling(struct drm_i915_private *dev_priv)
 			udelay(10);
 		}
 	}
+#endif
 
 	return ret;
 }
 
 static void undo_idling(struct drm_i915_private *dev_priv, bool interruptible)
 {
+#if 0
 	if (unlikely(dev_priv->mm.gtt->do_idle_maps))
 		dev_priv->mm.interruptible = interruptible;
+#endif
 }
 
 
+#if 0
 static void i915_ggtt_clear_range(struct drm_device *dev,
 				 unsigned first_entry,
 				 unsigned num_entries)
@@ -393,35 +399,57 @@ static void i915_ggtt_clear_range(struct drm_device *dev,
 		iowrite32(scratch_pte, &gtt_base[i]);
 	readl(gtt_base);
 }
-#endif /* notyet */
+#else
+static void i915_ggtt_clear_range(struct drm_device *dev,
+				 unsigned first_entry,
+				 unsigned num_entries)
+{
+	struct agp_softc *sc = dev->agp->agpdev;
+	bus_addr_t addr = sc->sc_apaddr + (first_entry << PAGE_SHIFT);
+	int i;
+
+	for (i = 0; i < num_entries; i++) {
+		sc->sc_methods->unbind_page(sc->sc_chipc, addr);
+		addr += PAGE_SIZE;
+	}
+	agp_flush_cache();
+	sc->sc_methods->flush_tlb(sc->sc_chipc);
+}
+#endif
 
 void i915_gem_restore_gtt_mappings(struct drm_device *dev)
 {
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_i915_gem_object *obj;
+
+	/* First fill our portion of the GTT with scratch pages */
+	i915_ggtt_clear_range(dev, dev_priv->mm.gtt_start / PAGE_SIZE,
+			      (dev_priv->mm.gtt_end - dev_priv->mm.gtt_start) / PAGE_SIZE);
 
 	list_for_each_entry(obj, &dev_priv->mm.bound_list, gtt_list) {
 		i915_gem_clflush_object(obj);
-		i915_gem_gtt_rebind_object(obj, obj->cache_level);
+		i915_gem_gtt_bind_object(obj, obj->cache_level);
 	}
 
 	i915_gem_chipset_flush(dev);
 }
 
-#ifdef notyet
 int i915_gem_gtt_prepare_object(struct drm_i915_gem_object *obj)
 {
 	if (obj->has_dma_mapping)
 		return 0;
 
+#if 0
 	if (!dma_map_sg(&obj->base.dev->pdev->dev,
 			obj->pages->sgl, obj->pages->nents,
 			PCI_DMA_BIDIRECTIONAL))
 		return -ENOSPC;
+#endif
 
 	return 0;
 }
 
+#ifdef notyet
 /*
  * Binds an object into the global gtt with the specified cache level. The object
  * will be accessible to the GPU via commands whose operands reference offsets
@@ -470,7 +498,9 @@ static void gen6_ggtt_bind_object(struct drm_i915_gem_object *obj,
 	I915_WRITE(GFX_FLSH_CNTL_GEN6, GFX_FLSH_CNTL_EN);
 	POSTING_READ(GFX_FLSH_CNTL_GEN6);
 }
+#endif
 
+#if 0
 void i915_gem_gtt_bind_object(struct drm_i915_gem_object *obj,
 			      enum i915_cache_level cache_level)
 {
@@ -487,6 +517,51 @@ void i915_gem_gtt_bind_object(struct drm_i915_gem_object *obj,
 
 	obj->has_global_gtt_mapping = 1;
 }
+#else
+void i915_gem_gtt_bind_object(struct drm_i915_gem_object *obj,
+			      enum i915_cache_level cache_level)
+{
+	struct drm_device *dev = obj->base.dev;
+	unsigned int flags = (cache_level == I915_CACHE_NONE) ?
+		0 : BUS_DMA_COHERENT;
+	struct agp_softc *sc = dev->agp->agpdev;
+	bus_dma_segment_t *segp;
+	bus_addr_t addr = sc->sc_apaddr + obj->gtt_space->start;
+	int page_count = obj->base.size >> PAGE_SHIFT;
+	int i, n;
+
+	switch (cache_level) {
+	case I915_CACHE_NONE:
+		flags |= BUS_DMA_GTT_NOCACHE;
+		break;
+	case I915_CACHE_LLC:
+		flags |= BUS_DMA_GTT_CACHE_LLC;
+		break;
+	case I915_CACHE_LLC_MLC:
+		flags |= BUS_DMA_GTT_CACHE_LLC_MLC;
+		break;
+	default:
+		BUG();
+	}
+
+	segp = &obj->pages[0];
+	n = 0;
+	for (i = 0; i < page_count; i++) {
+		sc->sc_methods->bind_page(sc->sc_chipc, addr,
+					  segp->ds_addr + n, flags);
+		n += PAGE_SIZE;
+		if (n >= segp->ds_len) {
+			n = 0;
+			segp++;
+		}
+		addr += PAGE_SIZE;
+	}
+	agp_flush_cache();
+	sc->sc_methods->flush_tlb(sc->sc_chipc);
+
+	obj->has_global_gtt_mapping = 1;
+}
+#endif
 
 void i915_gem_gtt_unbind_object(struct drm_i915_gem_object *obj)
 {
@@ -505,10 +580,12 @@ void i915_gem_gtt_finish_object(struct drm_i915_gem_object *obj)
 
 	interruptible = do_idling(dev_priv);
 
+#ifdef notyet
 	if (!obj->has_dma_mapping)
 		dma_unmap_sg(&dev->pdev->dev,
 			     obj->pages->sgl, obj->pages->nents,
 			     PCI_DMA_BIDIRECTIONAL);
+#endif
 
 	undo_idling(dev_priv, interruptible);
 }
@@ -552,6 +629,7 @@ void i915_gem_init_global_gtt(struct drm_device *dev,
 	i915_ggtt_clear_range(dev, start / PAGE_SIZE, (end-start) / PAGE_SIZE);
 }
 
+#ifdef notyet
 static int setup_scratch_page(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -712,30 +790,3 @@ void i915_gem_gtt_fini(struct drm_device *dev)
 	kfree(dev_priv->mm.gtt);
 }
 #endif /* notyet */
-
-void
-i915_gem_gtt_rebind_object(struct drm_i915_gem_object *obj,
-			   enum i915_cache_level cache_level)
-{
-	struct drm_device *dev = obj->base.dev;
-	drm_i915_private_t *dev_priv = dev->dev_private;
-	int flags = obj->dma_flags;
-
-	switch (cache_level) {
-	case I915_CACHE_NONE:
-		flags |= BUS_DMA_GTT_NOCACHE;
-		break;
-	case I915_CACHE_LLC:
-		flags |= BUS_DMA_GTT_CACHE_LLC;
-		break;
-	case I915_CACHE_LLC_MLC:
-		flags |= BUS_DMA_GTT_CACHE_LLC_MLC;
-		break;
-	default:
-		BUG();
-	}
-
-	agp_bus_dma_rebind(dev_priv->agpdmat, obj->dmamap, flags);
-
-	obj->has_global_gtt_mapping = 1;
-}

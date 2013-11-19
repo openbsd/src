@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_dma.c,v 1.10 2013/08/07 19:49:05 kettenis Exp $	*/
+/*	$OpenBSD: i915_dma.c,v 1.11 2013/11/19 19:14:09 kettenis Exp $	*/
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*
@@ -371,8 +371,6 @@ cleanup_gem_stolen:
 void
 i915_driver_lastclose(struct drm_device *dev)
 {
-	struct inteldrm_softc	*dev_priv = dev->dev_private;
-	struct vm_page		*p;
 	int			 ret;
 
 	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
@@ -383,21 +381,6 @@ i915_driver_lastclose(struct drm_device *dev)
 	ret = i915_gem_idle(dev);
 	if (ret)
 		DRM_ERROR("failed to idle hardware: %d\n", ret);
-
-	if (dev_priv->agpdmat != NULL) {
-		/*
-		 * make sure we nuke everything, we may have mappings that we've
-		 * unrefed, but uvm has a reference to them for maps. Make sure
-		 * they get unbound and any accesses will segfault.
-		 * XXX only do ones in GEM.
-		 */
-		for (p = dev_priv->pgs; p < dev_priv->pgs +
-		    (dev->agp->info.ai_aperture_size / PAGE_SIZE); p++)
-			pmap_page_protect(p, VM_PROT_NONE);
-		agp_bus_dma_destroy((struct agp_softc *)dev->agp->agpdev,
-		    dev_priv->agpdmat);
-	}
-	dev_priv->agpdmat = NULL;
 }
 
 int

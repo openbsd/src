@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.c,v 1.7 2013/11/19 15:08:04 jsg Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.c,v 1.8 2013/11/19 19:14:09 kettenis Exp $	*/
 /*
  * Copyright © 2008-2010 Intel Corporation
  *
@@ -466,13 +466,6 @@ init_pipe_control(struct intel_ring_buffer *ring)
 	}
 
 	i915_gem_object_set_cache_level(obj, I915_CACHE_LLC);
-
-	/*
-	 * snooped gtt mapping please .
-	 * Normally this flag is only to dmamem_map, but it's been overloaded
-	 * for the agp mapping
-	 */
-        obj->dma_flags = BUS_DMA_COHERENT | BUS_DMA_READ;
 
 	ret = i915_gem_object_pin(obj, 4096, true, false);
 	if (ret)
@@ -1106,13 +1099,6 @@ static int init_status_page(struct intel_ring_buffer *ring)
 
 	i915_gem_object_set_cache_level(obj, I915_CACHE_LLC);
 
-	/*
-	 * snooped gtt mapping please .
-	 * Normally this flag is only to dmamem_map, but it's been overloaded
-	 * for the agp mapping
-	 */
-	obj->dma_flags = BUS_DMA_COHERENT | BUS_DMA_READ;
-
 	ret = i915_gem_object_pin(obj, 4096, true, false);
 	if (ret != 0) {
 		goto err_unref;
@@ -1174,25 +1160,9 @@ static int init_phys_hws_pga(struct intel_ring_buffer *ring)
 u32
 intel_read_status_page(struct intel_ring_buffer *ring, int reg)
 {
-	struct inteldrm_softc	*dev_priv = ring->dev->dev_private;
-	struct drm_device	*dev = ring->dev;
-	struct drm_i915_gem_object *obj_priv;
-	bus_dma_tag_t		 tag;
-	bus_dmamap_t		 map;
 	u32			 val;
 
-	if (I915_NEED_GFX_HWS(dev)) {
-		obj_priv = ring->status_page.obj;
-		map = obj_priv->dmamap;
-		tag = dev_priv->agpdmat;
-	} else {
-		map = dev_priv->status_page_dmah->map;
-		tag = dev->dmat;
-	}
-	/* Ensure that the compiler doesn't optimize away the load. */
-	bus_dmamap_sync(tag, map, 0, PAGE_SIZE, BUS_DMASYNC_POSTREAD);
 	val = ((volatile u_int32_t *)(ring->status_page.page_addr))[reg];
-	bus_dmamap_sync(tag, map, 0, PAGE_SIZE, BUS_DMASYNC_PREREAD);
 
 	return (val);
 }
