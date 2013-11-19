@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.15 2011/11/05 09:20:36 yasuoka Exp $	*/
+/*	$OpenBSD: server.c,v 1.16 2013/11/19 15:12:23 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -29,6 +29,7 @@
 #include <sys/uio.h>
 #include <sys/socket.h>
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
