@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.313 2013/11/04 21:02:57 deraadt Exp $ */
+/* $OpenBSD: softraid.c,v 1.314 2013/11/19 15:12:13 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -407,8 +407,8 @@ sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr_t offset,
 	int			rv = 1;
 	char			*dma_buf;
 
-	DNPRINTF(SR_D_MISC, "%s: sr_rw(0x%x, %p, %d, %llu 0x%x)\n",
-	    DEVNAME(sc), dev, buf, size, offset, flags);
+	DNPRINTF(SR_D_MISC, "%s: sr_rw(0x%x, %p, %zu, %lld 0x%x)\n",
+	    DEVNAME(sc), dev, buf, size, (long long)offset, flags);
 
 	dma_bufsize = (size > MAXPHYS) ? MAXPHYS : size;
 	dma_buf = dma_alloc(dma_bufsize, PR_WAITOK);
@@ -477,8 +477,8 @@ sr_meta_rw(struct sr_discipline *sd, dev_t dev, void *md, size_t size,
 {
 	int			rv = 1;
 
-	DNPRINTF(SR_D_META, "%s: sr_meta_rw(0x%x, %p, %d, %llu 0x%x)\n",
-	    DEVNAME(sd->sd_sc), dev, md, size, offset, flags);
+	DNPRINTF(SR_D_META, "%s: sr_meta_rw(0x%x, %p, %zu, %lld 0x%x)\n",
+	    DEVNAME(sd->sd_sc), dev, md, size, (long long)offset, flags);
 
 	if (md == NULL) {
 		printf("%s: sr_meta_rw: invalid metadata pointer\n",
@@ -1572,7 +1572,7 @@ sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 
 	/* Make sure this is a 512-byte/sector device. */
 	if (label.d_secsize != DEV_BSIZE) {
-		sr_error(sc, "%s has unsupported sector size (%d)",
+		sr_error(sc, "%s has unsupported sector size (%u)",
 		    devname, label.d_secsize);
 		goto unwind;
 	}
@@ -1586,7 +1586,8 @@ sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 		goto unwind;
 	}
 
-	size = DL_GETPSIZE(&label.d_partitions[part]) - SR_DATA_OFFSET;
+	size = DL_SECTOBLK(&label, DL_GETPSIZE(&label.d_partitions[part])) -
+	    SR_DATA_OFFSET;
 	if (size <= 0) {
 		DNPRINTF(SR_D_META, "%s: %s partition too small\n", DEVNAME(sc),
 		    devname);
@@ -1594,8 +1595,8 @@ sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 	}
 	ch_entry->src_size = size;
 
-	DNPRINTF(SR_D_META, "%s: probe found %s size %d\n", DEVNAME(sc),
-	    devname, size);
+	DNPRINTF(SR_D_META, "%s: probe found %s size %lld\n", DEVNAME(sc),
+	    devname, (long long)size);
 
 	return (SR_META_F_NATIVE);
 unwind:
@@ -1914,7 +1915,7 @@ sr_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size)
 {
 	size_t			copy_cnt;
 
-	DNPRINTF(SR_D_MISC, "sr_copy_internal_data xs: %p size: %d\n",
+	DNPRINTF(SR_D_MISC, "sr_copy_internal_data xs: %p size: %zu\n",
 	    xs, size);
 
 	if (xs->datalen) {
@@ -2866,7 +2867,7 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 		goto fail;
 	}
 	if (label.d_secsize != DEV_BSIZE) {
-		sr_error(sc, "%s has unsupported sector size (%d)",
+		sr_error(sc, "%s has unsupported sector size (%u)",
 		    devname, label.d_secsize);
 		goto fail;
 	}
@@ -2877,7 +2878,8 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 	}
 
 	/* Calculate partition size. */
-	size = DL_GETPSIZE(&label.d_partitions[part]) - SR_DATA_OFFSET;
+	size = DL_SECTOBLK(&label, DL_GETPSIZE(&label.d_partitions[part])) -
+	    SR_DATA_OFFSET;
 
 	/*
 	 * Create and populate chunk metadata.
@@ -3167,7 +3169,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 		goto done;
 	}
 	if (label.d_secsize != DEV_BSIZE) {
-		sr_error(sc, "%s has unsupported sector size (%d)",
+		sr_error(sc, "%s has unsupported sector size (%u)",
 		    devname, label.d_secsize);
 		goto done;
 	}
@@ -3178,14 +3180,15 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	}
 
 	/* Is the partition large enough? */
-	size = DL_GETPSIZE(&label.d_partitions[part]) - SR_DATA_OFFSET;
+	size = DL_SECTOBLK(&label, DL_GETPSIZE(&label.d_partitions[part])) -
+	    SR_DATA_OFFSET;
 	if (size < csize) {
-		sr_error(sc, "%s partition too small, at least %llu bytes "
-		    "required", devname, csize << DEV_BSHIFT);
+		sr_error(sc, "%s partition too small, at least %lld bytes "
+		    "required", devname, (long long)(csize << DEV_BSHIFT));
 		goto done;
 	} else if (size > csize)
-		sr_warn(sc, "%s partition too large, wasting %llu bytes",
-		    devname, (size - csize) << DEV_BSHIFT);
+		sr_warn(sc, "%s partition too large, wasting %lld bytes",
+		    devname, (long long)((size - csize) << DEV_BSHIFT));
 
 	/* Ensure that this chunk is not already in use. */
 	status = sr_chunk_in_use(sc, dev);

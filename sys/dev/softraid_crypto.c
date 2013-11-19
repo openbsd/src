@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.96 2013/11/04 21:02:57 deraadt Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.97 2013/11/19 15:12:13 krw Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -419,7 +419,7 @@ sr_crypto_encrypt(u_char *p, u_char *c, u_char *key, size_t size, int alg)
 		rv = 0;
 		break;
 	default:
-		DNPRINTF(SR_D_DIS, "%s: unsupported encryption algorithm %u\n",
+		DNPRINTF(SR_D_DIS, "%s: unsupported encryption algorithm %d\n",
 		    "softraid", alg);
 		rv = -1;
 		goto out;
@@ -445,7 +445,7 @@ sr_crypto_decrypt(u_char *c, u_char *p, u_char *key, size_t size, int alg)
 		rv = 0;
 		break;
 	default:
-		DNPRINTF(SR_D_DIS, "%s: unsupported encryption algorithm %u\n",
+		DNPRINTF(SR_D_DIS, "%s: unsupported encryption algorithm %d\n",
 		    "softraid", alg);
 		rv = -1;
 		goto out;
