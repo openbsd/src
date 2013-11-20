@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.127 2013/08/21 05:21:43 dlg Exp $	*/
+/*	$OpenBSD: dc.c,v 1.128 2013/11/20 08:36:36 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -918,7 +918,9 @@ dc_setfilt_21143(struct dc_softc *sc)
 	else
 		DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_RX_PROMISC);
 
-allmulti:
+	if (ac->ac_multirangecnt > 0)
+		ifp->if_flags |= IFF_ALLMULTI;
+
 	if (ifp->if_flags & IFF_ALLMULTI)
 		DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_RX_ALLMULTI);
 	else {
@@ -926,12 +928,6 @@ allmulti:
 
 		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
-			    ETHER_ADDR_LEN)) {
-				ifp->if_flags |= IFF_ALLMULTI;
-				goto allmulti;
-			}
-
 			h = dc_crc_le(sc, enm->enm_addrlo);
 			sp[h >> 4] |= htole32(1 << (h & 0xF));
 			ETHER_NEXT_MULTI(step, enm);
@@ -996,7 +992,9 @@ dc_setfilt_admtek(struct dc_softc *sc)
 	else
 		DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_RX_PROMISC);
 
-allmulti:
+	if (ac->ac_multirangecnt > 0)
+		ifp->if_flags |= IFF_ALLMULTI;
+
 	if (ifp->if_flags & IFF_ALLMULTI)
 		DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_RX_ALLMULTI);
 	else
@@ -1016,11 +1014,6 @@ allmulti:
 	/* now program new ones */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto allmulti;
-		}
-
 		if (DC_IS_CENTAUR(sc))
 			h = dc_crc_le(sc, enm->enm_addrlo);
 		else
