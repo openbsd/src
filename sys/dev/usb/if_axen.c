@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.4 2013/11/15 10:17:39 pirofti Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.5 2013/11/20 08:53:27 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -18,7 +18,7 @@
 
 /*
  * ASIX Electronics AX88178a USB 2.0 ethernet and AX88179 USB 3.0 Ethernet
- * driver. 
+ * driver.
  */
 
 #include "bpfilter.h"
@@ -46,7 +46,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
@@ -85,21 +84,21 @@ const struct axen_type axen_devs[] = {
 
 #define axen_lookup(v, p) ((struct axen_type *)usb_lookup(axen_devs, v, p))
 
-int	axen_match(struct device *, void *, void *); 
-void	axen_attach(struct device *, struct device *, void *); 
-int	axen_detach(struct device *, int); 
-int	axen_activate(struct device *, int); 
+int	axen_match(struct device *, void *, void *);
+void	axen_attach(struct device *, struct device *, void *);
+int	axen_detach(struct device *, int);
+int	axen_activate(struct device *, int);
 
-struct cfdriver axen_cd = { 
-	NULL, "axen", DV_IFNET 
-}; 
+struct cfdriver axen_cd = {
+	NULL, "axen", DV_IFNET
+};
 
-const struct cfattach axen_ca = { 
-	sizeof(struct axen_softc), 
-	axen_match, 
-	axen_attach, 
-	axen_detach, 
-	axen_activate, 
+const struct cfattach axen_ca = {
+	sizeof(struct axen_softc),
+	axen_match,
+	axen_attach,
+	axen_detach,
+	axen_activate,
 };
 
 int	axen_tx_list_init(struct axen_softc *);
