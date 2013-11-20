@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_tiling.c,v 1.9 2013/11/19 19:14:09 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_tiling.c,v 1.10 2013/11/20 21:55:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -328,17 +328,17 @@ i915_gem_set_tiling(struct drm_device *dev, void *data,
 
 	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
 	if (&obj->base == NULL)
-		return ENOENT;
+		return -ENOENT;
 	drm_hold_object(&obj->base);
 
 	if (!i915_tiling_ok(dev,
 			    args->stride, obj->base.size, args->tiling_mode)) {
-		ret = EINVAL;
+		ret = -EINVAL;
 		goto out;
 	}
 
 	if (obj->pin_count) {
-		ret = EBUSY;
+		ret = -EBUSY;
 		goto out;
 	}
 
@@ -437,7 +437,7 @@ i915_gem_get_tiling(struct drm_device *dev, void *data,
 
 	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
 	if (&obj->base == NULL)
-		return ENOENT;
+		return -ENOENT;
 	drm_hold_object(&obj->base);
 
 	DRM_LOCK();
