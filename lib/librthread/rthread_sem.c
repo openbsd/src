@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.11 2013/11/20 03:04:29 tedu Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.12 2013/11/20 03:16:39 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -186,6 +186,9 @@ sem_destroy(sem_t *semp)
 		errno = EBUSY;
 		return (-1);
 	}
+
+	if (sem->shared)
+		munmap(sem->shared, SEM_MMAP_SIZE);
 
 	*semp = NULL;
 	free(sem);
