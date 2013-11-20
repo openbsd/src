@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.25 2009/10/27 23:59:36 deraadt Exp $	*/
+/*	$OpenBSD: cal.c,v 1.26 2013/11/20 21:33:17 deraadt Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -197,7 +197,7 @@ main(int argc, char *argv[])
 			errx(1, "Unable to parse month");
 		/* FALLTHROUGH */
 	case 1:
-		if (argc == 1 && !isdigit(*argv[0])) {
+		if (argc == 1 && !isdigit((unsigned char)*argv[0])) {
 			month = parsemonth(*argv);
 			if (!month)
 				errx(1, "illegal year value: use 1-9999");
@@ -519,7 +519,7 @@ trim_trailing_spaces(char *s)
 
 	for (p = s; *p; ++p)
 		continue;
-	while (p > s && isspace(*--p))
+	while (p > s && isspace((unsigned char)*--p))
 		continue;
 	if (p > s)
 		++p;
