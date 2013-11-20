@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.72 2010/03/01 02:09:44 krw Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.73 2013/11/20 20:54:34 deraadt Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -205,7 +205,7 @@ help(void)
 		printf("\t");
 		for (i = c->min, s = c->name; *s; s++, i--) {
 			if (i > 0)
-				n = toupper(*s);
+				n = toupper((unsigned char)*s);
 			else
 				n = *s;
 			putchar(n);
@@ -455,7 +455,7 @@ run(int cmd, char *arg)
 		if (!open_cd(cdname, 0))
 			return (0);
 
-		while (isspace(*arg))
+		while (isspace((unsigned char)*arg))
 			arg++;
 
 		return play(arg);
@@ -531,7 +531,7 @@ run(int cmd, char *arg)
 		if (!open_cd(cdname, 0))
 			return (0);
 
-		while (isspace(*arg))
+		while (isspace((unsigned char)*arg))
 			arg++;
 
 		return cdrip(arg);
@@ -539,7 +539,7 @@ run(int cmd, char *arg)
 		if (!open_cd(cdname, 0))
 			return (0);
 
-		while (isspace(*arg))
+		while (isspace((unsigned char)*arg))
 			arg++;
 
 		return cdplay(arg);
@@ -712,7 +712,7 @@ play(char *arg)
 	 * sscanf() formats we catch any errant trailing characters.
 	 */
 	rc = strlen(arg) - 1;
-	while (rc >= 0 && isspace(arg[rc])) {
+	while (rc >= 0 && isspace((unsigned char)arg[rc])) {
 		arg[rc] = '\0';
 		rc--;
 	}
@@ -1524,15 +1524,16 @@ parse(char *buf, int *cmd)
 	char *p;
 	size_t len;
 
-	for (p=buf; isspace(*p); p++)
+	for (p=buf; isspace((unsigned char)*p); p++)
 		continue;
 
-	if (isdigit(*p) || (p[0] == '#' && isdigit(p[1]))) {
+	if (isdigit((unsigned char)*p) ||
+	    (p[0] == '#' && isdigit((unsigned char)p[1]))) {
 		*cmd = CMD_PLAY;
 		return (p);
 	}
 
-	for (buf = p; *p && ! isspace(*p); p++)
+	for (buf = p; *p && ! isspace((unsigned char)*p); p++)
 		continue;
 
 	len = p - buf;
@@ -1572,7 +1573,7 @@ parse(char *buf, int *cmd)
 		return (0);
 	}
 
-	while (isspace(*p))
+	while (isspace((unsigned char)*p))
 		p++;
 	return p;
 }

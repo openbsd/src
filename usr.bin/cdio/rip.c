@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip.c,v 1.13 2013/11/12 17:57:34 deraadt Exp $	*/
+/*	$OpenBSD: rip.c,v 1.14 2013/11/20 20:54:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Alexey Vatchenko <av@bsdua.org>
@@ -124,7 +124,7 @@ _parse_val(char *start, char *nxt, int *val)
 	if (n > 3 || n < 1)
 		return (-1);
 	for (p = start; p < nxt; p++) {
-		if (!isdigit(*p))
+		if (!isdigit((unsigned char)*p))
 			return (-1);
 	}
 
@@ -260,14 +260,14 @@ parse_tracks(struct track_pair_head *head, u_char first, u_char last,
 	p = (char *)arg;
 	for (;;) {
 		/* Skip trailing spaces */
-		while (*p != '\0' && isspace(*p))
+		while (*p != '\0' && isspace((unsigned char)*p))
 			++p;
 		if (*p == '\0')
 			break;
 
 		/* Search for the next space symbol */
 		nxt = p;
-		while (*nxt != '\0' && !isspace(*nxt))
+		while (*nxt != '\0' && !isspace((unsigned char)*nxt))
 			++nxt;
 		/* ``nxt'' can't be equal to ``p'' here */
 		error = _parse_pair(p, nxt, &val1, &val2);
