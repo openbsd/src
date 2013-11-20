@@ -1,4 +1,4 @@
-/*	$OpenBSD: xyvar.h,v 1.7 2011/06/05 18:40:33 matthew Exp $	*/
+/*	$OpenBSD: xyvar.h,v 1.8 2013/11/20 00:15:32 dlg Exp $	*/
 /*	$NetBSD: xyvar.h,v 1.4 1996/03/31 22:39:04 pk Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ struct xy_softc {
   u_char nsect;                    /* number of sectors per track */
   u_char hw_spt;                   /* as above, but includes spare sectors */
   struct xy_iorq *xyrq;		   /* this disk's ioreq structure */
-  struct buf xyq;		   /* queue'd I/O requests */
+  struct bufq xy_bufq;		   /* queue'd I/O requests */
   struct dkbad dkb;                /* bad144 sectors */
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.57 2013/11/01 17:36:19 krw Exp $	*/
+/*	$OpenBSD: xy.c,v 1.58 2013/11/20 00:15:32 dlg Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -508,10 +508,7 @@ xyattach(parent, self, aux)
 		xy->parent = xyc;
 
 		/* init queue of waiting bufs */
-
-		xy->xyq.b_active = 0;
-		xy->xyq.b_actf = 0;
-		xy->xyq.b_actb = &xy->xyq.b_actf; /* XXX b_actb: not used? */
+		bufq_init(&xy->xy_bufq, BUFQ_DEFAULT);
 
 		xy->xyrq = &xyc->reqs[xa->driveno];
 
@@ -1003,13 +1000,13 @@ xystrategy(bp)
 	if (bounds_check_with_label(bp, xy->sc_dk.dk_label) == -1)
 		goto done;
 
+	bufq_queue(&xy->xy_bufq, bp);
+
 	/*
 	 * now we know we have a valid buf structure that we need to do I/O
 	 * on.
 	 */
 	s = splbio();		/* protect the queues */
-
-	disksort(&xy->xyq, bp);
 
 	/* start 'em up */
 
@@ -1604,7 +1601,6 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 			    dvma_mapout((vaddr_t)iorq->dbufbase,
 					(vaddr_t)iorq->buf->b_data,
 					iorq->buf->b_bcount);
-			    iorq->xy->xyq.b_actf = iorq->buf->b_actf;
 			    disk_unbusy(&xycsc->reqs[lcv].xy->sc_dk,
 				(xycsc->reqs[lcv].buf->b_bcount -
 				xycsc->reqs[lcv].buf->b_resid),
@@ -1651,9 +1647,9 @@ xyc_start(xycsc, iorq)
 	if (iorq == NULL) {
 		for (lcv = 0; lcv < XYC_MAXDEV ; lcv++) {
 			if ((xy = xycsc->sc_drives[lcv]) == NULL) continue;
-			if (xy->xyq.b_actf == NULL) continue;
+			if (!bufq_peek(&xy->xy_bufq)) continue;
 			if (xy->xyrq->mode != XY_SUB_FREE) continue;
-			xyc_startbuf(xycsc, xy, xy->xyq.b_actf);
+			xyc_startbuf(xycsc, xy, bufq_dequeue(&xy->xy_bufq));
 		}
 	}
 	xyc_submit_iorq(xycsc, iorq, XY_SUB_NOQ);
@@ -1783,7 +1779,6 @@ xyc_remove_iorq(xycsc)
 			dvma_mapout((vaddr_t) iorq->dbufbase,
 				    (vaddr_t) bp->b_data,
 				    bp->b_bcount);
-			iorq->xy->xyq.b_actf = bp->b_actf;
 			disk_unbusy(&iorq->xy->sc_dk,
 			    (bp->b_bcount - bp->b_resid),
 			    (bp->b_flags & B_READ));
