@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.14 2013/04/24 16:01:10 tedu Exp $ */
+/* $OpenBSD: cu.c,v 1.15 2013/11/20 20:55:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -84,7 +84,7 @@ main(int argc, char **argv)
 	for (i = 1; i < argc; i++) {
 		if (strcmp("--", argv[i]) == 0)
 			break;
-		if (argv[i][0] != '-' || !isdigit(argv[i][1]))
+		if (argv[i][0] != '-' || !isdigit((unsigned char)argv[i][1]))
 			continue;
 
 		if (asprintf(&argv[i], "-s%s", &argv[i][1]) == -1)
