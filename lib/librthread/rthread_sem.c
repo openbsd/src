@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.10 2013/11/18 23:10:48 tedu Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.11 2013/11/20 03:04:29 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -127,9 +127,8 @@ sem_init(sem_t *semp, int pshared, unsigned int value)
 				name[i] = arc4random_uniform(255) + 1;
 			name[SEM_RANDOM_NAME_LEN - 1] = '\0';
 			sempshared = sem_open(name, O_CREAT|O_EXCL);
-			if (sempshared) {
+			if (sempshared)
 				break;
-			}
 			if (errno == EEXIST)
 				continue;
 			if (errno != EINVAL && errno != EPERM)
@@ -187,12 +186,6 @@ sem_destroy(sem_t *semp)
 		errno = EBUSY;
 		return (-1);
 	}
-
-	if (sem->shared)
-		if (munmap(sem->shared, SEM_MMAP_SIZE) == -1) {
-			warn("sem_destroy: someone borked shared memory");
-			abort();
-		}
 
 	*semp = NULL;
 	free(sem);
@@ -325,38 +318,39 @@ sem_open(const char *name, int oflag, ...)
 
 	if (oflag & ~(O_CREAT | O_EXCL)) {
 		errno = EINVAL;
-		return semp;
+		return (semp);
 	}
 
 	makesempath(name, sempath, sizeof(sempath));
 	fd = open(sempath, O_RDWR | O_NOFOLLOW | oflag, 0600);
 	if (fd == -1)
-		return semp;
+		return (semp);
 	if (fstat(fd, &sb) == -1 || !S_ISREG(sb.st_mode)) {
 		close(fd);
 		errno = EINVAL;
-		return semp;
+		return (semp);
 	}
 	if (sb.st_uid != getuid()) {
 		close(fd);
 		errno = EPERM;
-		return semp;
+		return (semp);
 	}
-	if (sb.st_size < SEM_MMAP_SIZE)
+	if (sb.st_size < SEM_MMAP_SIZE) {
 		if (ftruncate(fd, SEM_MMAP_SIZE) == -1) {
 			oerrno = errno;
 			close(fd);
 			errno = oerrno;
 			/* XXX can set errno to EIO, ENOTDIR... */
-			return semp;
+			return (semp);
 		}
+	}
 	shared = mmap(NULL, SEM_MMAP_SIZE, PROT_READ | PROT_WRITE,
 	    MAP_FILE | MAP_SHARED | MAP_HASSEMAPHORE, fd, 0);
 	oerrno = errno;
 	close(fd);
 	if (shared == MAP_FAILED) {
 		errno = oerrno;
-		return semp;
+		return (semp);
 	}
 	semp = malloc(sizeof(*semp));
 	sem = calloc(1, sizeof(*sem));
@@ -365,12 +359,12 @@ sem_open(const char *name, int oflag, ...)
 		free(semp);
 		munmap(shared, SEM_MMAP_SIZE);
 		errno = ENOSPC;
-		return SEM_FAILED;
+		return (SEM_FAILED);
 	}
 	*semp = sem;
 	sem->shared = shared;
 
-	return semp;
+	return (semp);
 }
 
 int
@@ -378,10 +372,7 @@ sem_close(sem_t *semp)
 {
 	sem_t sem = *semp;
 
-	if (munmap(sem->shared, SEM_MMAP_SIZE) == -1) {
-		warn("sem_close: someone borked shared memory");
-		abort();
-	}
+	munmap(sem->shared, SEM_MMAP_SIZE);
 	free(sem);
 	free(semp);
 
@@ -394,6 +385,6 @@ sem_unlink(const char *name)
 	char sempath[SEM_PATH_SIZE];
 
 	makesempath(name, sempath, sizeof(sempath));
-	return unlink(sempath);
+	return (unlink(sempath));
 }
 
