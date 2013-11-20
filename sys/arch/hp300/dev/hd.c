@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.73 2013/11/01 17:36:19 krw Exp $	*/
+/*	$OpenBSD: hd.c,v 1.74 2013/11/20 00:12:37 dlg Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -294,6 +294,7 @@ hdattach(parent, self, aux)
 	 */
 	sc->sc_dkdev.dk_name = sc->sc_dev.dv_xname;
 	disk_attach(&sc->sc_dev, &sc->sc_dkdev);
+	bufq_init(&sc->sc_bufq, BUFQ_DEFAULT);
 
 	sc->sc_slave = ha->ha_slave;
 	sc->sc_punit = ha->ha_punit;
@@ -630,9 +631,9 @@ hdclose(dev, flag, mode, p)
 	if (dk->dk_openmask == 0) {
 		rs->sc_flags |= HDF_CLOSING;
 		s = splbio();
-		while (rs->sc_tab.b_active) {
+		while (rs->sc_bp == NULL) {
 			rs->sc_flags |= HDF_WANTED;
-			tsleep((caddr_t)&rs->sc_tab, PRIBIO, "hdclose", 0);
+			tsleep((caddr_t)&rs->sc_bp, PRIBIO, "hdclose", 0);
 		}
 		splx(s);
 		rs->sc_flags &= ~(HDF_CLOSING);
@@ -669,11 +670,11 @@ hdstrategy(bp)
 	if (bounds_check_with_label(bp, rs->sc_dkdev.dk_label) == -1)
 		goto done;
 
+	bufq_queue(&rs->sc_bufq, bp);
+
 	s = splbio();
- 	dp = &rs->sc_tab;
-	disksort(dp, bp);
-	if (dp->b_active == 0) {
-		dp->b_active = 1;
+	if (rs->b_bp == NULL) {
+		rs->sc_bp = bufq_dequeue(rs->sc_bufq);
 		hdustart(rs);
 	}
 	splx(s);
@@ -710,7 +711,7 @@ hdustart(rs)
 {
 	struct buf *bp;
 
-	bp = rs->sc_tab.b_actf;
+	bp = rs->sc_bp;
 	rs->sc_addr = bp->b_data;
 	rs->sc_resid = bp->b_bcount;
 	if (hpibreq(rs->sc_dev.dv_parent, &rs->sc_hq))
@@ -722,24 +723,23 @@ hdfinish(rs, bp)
 	struct hd_softc *rs;
 	struct buf *bp;
 {
-	struct buf *dp = &rs->sc_tab;
 	int s;
 
 	rs->sc_errcnt = 0;
-	dp->b_actf = bp->b_actf;
 	bp->b_resid = 0;
 	s = splbio();
 	biodone(bp);
 	splx(s);
+
 	hpibfree(rs->sc_dev.dv_parent, &rs->sc_hq);
-	if (dp->b_actf)
-		return (dp->b_actf);
-	dp->b_active = 0;
-	if (rs->sc_flags & HDF_WANTED) {
+	rs->sc_bp = bufq_dequeue(&rs->sc_bufq);
+
+	if (rs->sc_bp == NULL && rs->sc_flags & HDF_WANTED) {
 		rs->sc_flags &= ~HDF_WANTED;
-		wakeup((caddr_t)dp);
+		wakeup((caddr_t)&rs->sc_bp);
 	}
-	return (NULL);
+
+	return (rs->sc_bp);
 }
 
 void
@@ -748,7 +748,7 @@ hdstart(arg)
 {
 	struct hd_softc *rs = arg;
 	struct disklabel *lp;
-	struct buf *bp = rs->sc_tab.b_actf;
+	struct buf *bp = rs->sc_bp;
 	int ctlr, slave;
 	daddr_t bn;
 
@@ -831,7 +831,7 @@ hdgo(arg)
 	void *arg;
 {
 	struct hd_softc *rs = arg;
-	struct buf *bp = rs->sc_tab.b_actf;
+	struct buf *bp = rs->sc_bp;
 	int rw, ctlr, slave;
 
 	ctlr = rs->sc_dev.dv_parent->dv_unit;
@@ -855,7 +855,7 @@ hdinterrupt(arg)
 {
 	struct hd_softc *rs = arg;
 	int unit = rs->sc_dev.dv_unit;
-	struct buf *bp = rs->sc_tab.b_actf;
+	struct buf *bp = rs->sc_bp;
 	u_char stat = 13;	/* in case hpibrecv fails */
 	int rv, restart, ctlr, slave;
 
@@ -1025,7 +1025,7 @@ hderror(unit)
 	 * Note that not all errors report a block number, in that case
 	 * we just use b_blkno.
  	 */
-	bp = rs->sc_tab.b_actf;
+	bp = rs->sc_bp;
 	pbn = DL_GETPOFFSET(&rs->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)]);
 	if ((sp->c_fef & FEF_CU) || (sp->c_fef & FEF_DR) ||
 	    (sp->c_ief & IEF_RRMASK)) {

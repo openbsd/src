@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdvar.h,v 1.11 2011/06/05 18:40:33 matthew Exp $	*/
+/*	$OpenBSD: hdvar.h,v 1.12 2013/11/20 00:12:37 dlg Exp $	*/
 /*	$NetBSD: rdvar.h,v 1.6 1997/01/30 09:14:19 thorpej Exp $	*/
 
 /*
@@ -70,7 +70,8 @@ struct	hd_softc {
 	struct	hd_iocmd sc_ioc;
 	struct	hd_rscmd sc_rsc;
 	struct	hd_stat sc_stat;
-	struct	buf sc_tab;		/* buffer queue */
+	struct	bufq sc_bufq;		/* buffer queue */
+	struct	buf *sc_bp;
 #ifdef DEBUG
 	struct	hdstats sc_stats;
 #endif
