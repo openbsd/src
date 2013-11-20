@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.41 2013/10/14 23:26:22 krw Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.42 2013/11/20 00:13:54 dlg Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -134,7 +134,7 @@ struct	hdcsoftc {
 	struct evcount sc_intrcnt;
 	struct vsbus_dma sc_vd;
 	vaddr_t sc_regs;		/* register addresses */
-	struct buf sc_buf_queue;
+	struct bufq sc_bufq;
 	struct buf *sc_active;
 	struct hdc9224_UDCreg sc_creg;	/* (command) registers to be written */
 	struct hdc9224_UDCreg sc_sreg;	/* (status) registers being read */
@@ -387,7 +387,7 @@ hdcintr(void *arg)
 	struct buf *bp;
 
 	sc->sc_status = HDC_RSTAT;
-	if (sc->sc_active == 0)
+	if (sc->sc_active == NULL)
 		return; /* Complain? */
 
 	if ((sc->sc_status & (DKC_ST_INTPEND | DKC_ST_DONE)) !=
@@ -395,7 +395,7 @@ hdcintr(void *arg)
 		return; /* Why spurious ints sometimes??? */
 
 	bp = sc->sc_active;
-	sc->sc_active = 0;
+	sc->sc_active = NULL;
 	if ((sc->sc_status & DKC_ST_TERMCOD) != DKC_TC_SUCCESS) {
 		int i;
 		u_char *g = (u_char *)&sc->sc_sreg;
@@ -455,8 +455,9 @@ hdstrategy(struct buf *bp)
 	if (bounds_check_with_label(bp, hd->sc_disk.dk_label) == -1)
 		goto done;
 
+	bufq_queue(&sc->sc_bufq, bp);
+
 	s = splbio();
-	disksort(&sc->sc_buf_queue, bp);
 	if (inq == 0) {
 		inq = 1;
 		vsbus_dma_start(&sc->sc_vd);
@@ -474,13 +475,11 @@ void
 hdc_qstart(void *arg)
 {
 	struct hdcsoftc *sc = arg;
-	struct buf *dp;
 
 	inq = 0;
 
 	hdcstart(sc, NULL);
-	dp = &sc->sc_buf_queue;
-	if (dp->b_actf != NULL) {
+	if (bufq_peek(&sc->sc_bufq)) {
 		vsbus_dma_start(&sc->sc_vd); /* More to go */
 		inq = 1;
 	}
@@ -492,22 +491,21 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 	struct hdc9224_UDCreg *p = &sc->sc_creg;
 	struct disklabel *lp;
 	struct hdsoftc *hd;
-	struct buf *dp, *bp;
+	struct buf *bp;
 	int cn, sn, tn, blks;
 	volatile char ch;
 	daddr_t bn;
 
 	splassert(IPL_BIO);
 
-	if (sc->sc_active)
+	if (sc->sc_active != NULL)
 		return; /* Already doing something */
 
 	if (ob == NULL) {
-		dp = &sc->sc_buf_queue;
-		if ((bp = dp->b_actf) == NULL)
+		bp = bufq_dequeue(&sc->sc_bufq);
+		if (bp == NULL)
 			return; /* Nothing to do */
 
-		dp->b_actf = bp->b_actf;
 		sc->sc_bufaddr = bp->b_data;
 		sc->sc_bytecnt = bp->b_bcount;
 		sc->sc_retries = 0;
