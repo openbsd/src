@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.128 2013/11/13 02:23:33 uebayasi Exp $ */
+/* $OpenBSD: machdep.c,v 1.129 2013/11/20 23:57:07 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -320,7 +320,7 @@ void
 consinit()
 {
 	/*
-	 * Init I/O memory resource map. Must be done before cninit()
+	 * Init I/O memory extent. Must be done before cninit()
 	 * is called; we may want to use iospace in the console routines.
 	 *
 	 * XXX console code uses the first page at iospace, so do not make
@@ -789,9 +789,9 @@ process_sstep(p, sstep)
  * Allocates a virtual range suitable for mapping in physical memory.
  * This differs from the bus_space routines in that it allocates on
  * physical page sizes instead of logical sizes. This implementation
- * uses resource maps when allocating space, which is allocated from 
- * the IOMAP submap. The implementation is similar to the uba resource
- * map handling. Size is given in pages.
+ * uses an extent to manage allocated space from the IOMAP submap.
+ * The implementation is similar to the uba resource map handling. Size
+ * is given in pages.
  * If the page requested is bigger than a logical page, space is
  * allocated from the kernel map instead.
  *

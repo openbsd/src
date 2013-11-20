@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.26 2013/09/28 12:40:32 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.27 2013/11/20 23:57:07 miod Exp $	*/
 /*	OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp 	*/
 
 /*
@@ -172,7 +172,7 @@ cpu_startup()
 
 	/*
 	 * Allocate DVMA space and dump into a privately managed
-	 * resource map for double mappings which is usable from
+	 * extent for double mappings which is usable from
 	 * interrupt contexts.
 	 */
 	if (uvm_km_valloc_wait(phys_map, (dvma_end-dvma_base)) != dvma_base)

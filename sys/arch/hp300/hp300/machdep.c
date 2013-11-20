@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.139 2013/09/28 12:40:29 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.140 2013/11/20 23:57:07 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -191,7 +191,7 @@ consinit()
 	conscode = CONSCODE_INVALID;
 
 	/*
-	 * Initialize the bus resource map.
+	 * Initialize the bus extent.
 	 */
 	extio = extent_create("extio",
 	    (u_long)extiobase, (u_long)extiobase + ptoa(eiomapsize),

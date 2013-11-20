@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.60 2013/09/21 10:04:42 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.61 2013/11/20 23:57:07 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -302,7 +302,7 @@ pmap_steal_memory(size, vstartp, vendp)
 /*
  * pmap_init() is called as part of vm init after memory management
  * is enabled. It is meant to do machine-specific allocations.
- * Here is the resource map for the user page tables inited.
+ * The extent for the user page tables is initialized here.
  */
 void 
 pmap_init() 

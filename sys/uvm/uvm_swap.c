@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.121 2013/11/06 07:46:31 dlg Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.122 2013/11/20 23:57:07 miod Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -288,10 +288,10 @@ uvm_swap_init(void)
 		panic("uvm_swap_init: can't get vnode for swap device");
 
 	/*
-	 * create swap block resource map to map /dev/drum.   the range
-	 * from 1 to INT_MAX allows 2 gigablocks of swap space.  note
-	 * that block 0 is reserved (used to indicate an allocation
-	 * failure, or no allocation).
+	 * create swap block extent to map /dev/drum. The extent spans
+	 * 1 to INT_MAX allows 2 gigablocks of swap space.  Note that
+	 * block 0 is reserved (used to indicate an allocation failure,
+	 * or no allocation).
 	 */
 	swapmap = extent_create("swapmap", 1, INT_MAX,
 				M_VMSWAP, 0, 0, EX_NOWAIT);
