@@ -1,4 +1,4 @@
-.\" $OpenBSD: sem_init.3,v 1.5 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: sem_init.3,v 1.6 2013/11/20 03:26:56 tedu Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libc_r/man/sem_init.3,v 1.11 2001/10/01 16:09:09 ru Exp $
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: November 20 2013 $
 .Dt SEM_INIT 3
 .Os
 .Sh NAME
@@ -47,8 +47,7 @@ to have the value
 .Fa value .
 A non-zero value for
 .Fa pshared
-specifies a shared semaphore that can be used by multiple processes, which this
-implementation is not capable of.
+specifies a shared semaphore that can be used by multiple processes.
 .Pp
 Following a successful call to
 .Fn sem_init ,
@@ -65,6 +64,11 @@ is no longer valid after a successful call to
 .Sh RETURN VALUES
 .Rv -std sem_init
 .Sh ERRORS
+It is an error to call
+.Fn sem_destroy
+on a named semaphore created by
+.Fn sem_open .
+.Pp
 .Fn sem_init
 will fail if:
 .Bl -tag -width Er
@@ -73,8 +77,6 @@ will fail if:
 exceeds SEM_VALUE_MAX.
 .It Bq Er ENOSPC
 Memory allocation error.
-.It Bq Er EPERM
-Unable to initialize a shared semaphore.
 .El
 .Sh SEE ALSO
 .Xr sem_destroy 3 ,
@@ -86,14 +88,3 @@ Unable to initialize a shared semaphore.
 .Fn sem_init
 conforms to
 .St -p1003.1-96 .
-.Pp
-This implementation does not support shared semaphores, and reports this fact
-by setting
-.Va errno
-to
-.Er EPERM .
-This is perhaps a stretch of the intention of POSIX, but is
-compliant, with the caveat that
-.Fn sem_init
-always reports a permissions error when an attempt to create a shared semaphore
-is made.
