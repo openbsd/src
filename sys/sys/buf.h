@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.90 2013/11/06 07:46:31 dlg Exp $	*/
+/*	$OpenBSD: buf.h,v 1.91 2013/11/20 23:52:42 dlg Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -63,11 +63,10 @@ LIST_HEAD(workhead, worklist);
  * Buffer queues
  */
 #define BUFQ_NSCAN_N	128
-#define BUFQ_DISKSORT	0
-#define BUFQ_FIFO	1
-#define BUFQ_NSCAN	2
+#define BUFQ_FIFO	0
+#define BUFQ_NSCAN	1
 #define BUFQ_DEFAULT	BUFQ_NSCAN
-#define BUFQ_HOWMANY	3
+#define BUFQ_HOWMANY	2
 
 /*
  * Write limits for bufq - defines high and low water marks for how

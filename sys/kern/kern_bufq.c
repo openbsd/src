@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.25 2013/04/10 01:35:55 guenther Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.26 2013/11/20 23:52:42 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -42,13 +42,6 @@ struct bufq_impl {
 	int		 (*impl_peek)(void *);
 };
 
-void		*bufq_disksort_create(void);
-void		 bufq_disksort_destroy(void *);
-void		 bufq_disksort_queue(void *, struct buf *);
-struct buf	*bufq_disksort_dequeue(void *);
-void		 bufq_disksort_requeue(void *, struct buf *);
-int		 bufq_disksort_peek(void *);
-
 void		*bufq_fifo_create(void);
 void		 bufq_fifo_destroy(void *);
 void		 bufq_fifo_queue(void *, struct buf *);
@@ -64,14 +57,6 @@ void		 bufq_nscan_requeue(void *, struct buf *);
 int		 bufq_nscan_peek(void *);
 
 const struct bufq_impl bufq_impls[BUFQ_HOWMANY] = {
-	{
-		bufq_disksort_create,
-		bufq_disksort_destroy,
-		bufq_disksort_queue,
-		bufq_disksort_dequeue,
-		bufq_disksort_requeue,
-		bufq_disksort_peek
-	},
 	{
 		bufq_fifo_create,
 		bufq_fifo_destroy,
@@ -323,61 +308,6 @@ bufq_restart(void)
 	mtx_leave(&bufqs_mtx);
 }
 
-/*
- * disksort implementation.
- */
-
-void *
-bufq_disksort_create(void)
-{
-	return (malloc(sizeof(struct buf), M_DEVBUF, M_NOWAIT | M_ZERO));
-}
-
-void
-bufq_disksort_destroy(void *data)
-{
-	free(data, M_DEVBUF);
-}
-
-void
-bufq_disksort_queue(void *data, struct buf *bp)
-{
-	disksort((struct buf *)data, bp);
-}
-
-struct buf *
-bufq_disksort_dequeue(void *data)
-{
-	struct buf	*bufq = data;
-	struct buf	*bp;
-
-	bp = bufq->b_actf;
-	if (bp != NULL)
-		bufq->b_actf = bp->b_actf;
-	if (bufq->b_actf == NULL)
-		bufq->b_actb = &bufq->b_actf;
-
-	return (bp);
-}
-
-void
-bufq_disksort_requeue(void *data, struct buf *bp)
-{
-	struct buf	*bufq = data;
-
-	bp->b_actf = bufq->b_actf;
-	bufq->b_actf = bp;
-	if (bp->b_actf == NULL)
-		bufq->b_actb = &bp->b_actf;
-}
-
-int
-bufq_disksort_peek(void *data)
-{
-	struct buf	*bufq = data;
-
-	return (bufq->b_actf != NULL);
-}
 
 /*
  * fifo implementation
@@ -444,9 +374,7 @@ bufq_fifo_peek(void *data)
  * nscan implementation
  */
 
-#define BUF_INORDER(ba, bb)			 \
-    (((ba)->b_cylinder < (bb)->b_cylinder) || \
-    ((ba)->b_cylinder == (bb)->b_cylinder && (ba)->b_blkno < (bb)->b_blkno))
+#define BUF_INORDER(ba, bb) ((ba)->b_blkno < (bb)->b_blkno)
 
 #define dsentries b_bufq.bufq_data_nscan.bqf_entries
 

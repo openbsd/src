@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.158 2013/11/18 17:45:01 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.159 2013/11/20 23:52:42 dlg Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -89,99 +89,6 @@ void (*softraid_disk_attach)(struct disk *, int);
 void sr_map_root(void);
 
 void disk_attach_callback(void *, void *);
-
-/*
- * Seek sort for disks.  We depend on the driver which calls us using b_resid
- * as the current cylinder number.
- *
- * The argument ap structure holds a b_actf activity chain pointer on which we
- * keep two queues, sorted in ascending cylinder order.  The first queue holds
- * those requests which are positioned after the current cylinder (in the first
- * request); the second holds requests which came in after their cylinder number
- * was passed.  Thus we implement a one way scan, retracting after reaching the
- * end of the drive to the first request on the second queue, at which time it
- * becomes the first queue.
- *
- * A one-way scan is natural because of the way UNIX read-ahead blocks are
- * allocated.
- */
-
-void
-disksort(struct buf *ap, struct buf *bp)
-{
-	struct buf *bq;
-
-	/* If the queue is empty, then it's easy. */
-	if (ap->b_actf == NULL) {
-		bp->b_actf = NULL;
-		ap->b_actf = bp;
-		return;
-	}
-
-	/*
-	 * If we lie after the first (currently active) request, then we
-	 * must locate the second request list and add ourselves to it.
-	 */
-	bq = ap->b_actf;
-	if (bp->b_cylinder < bq->b_cylinder) {
-		while (bq->b_actf) {
-			/*
-			 * Check for an ``inversion'' in the normally ascending
-			 * cylinder numbers, indicating the start of the second
-			 * request list.
-			 */
-			if (bq->b_actf->b_cylinder < bq->b_cylinder) {
-				/*
-				 * Search the second request list for the first
-				 * request at a larger cylinder number.  We go
-				 * before that; if there is no such request, we
-				 * go at end.
-				 */
-				do {
-					if (bp->b_cylinder <
-					    bq->b_actf->b_cylinder)
-						goto insert;
-					if (bp->b_cylinder ==
-					    bq->b_actf->b_cylinder &&
-					    bp->b_blkno < bq->b_actf->b_blkno)
-						goto insert;
-					bq = bq->b_actf;
-				} while (bq->b_actf);
-				goto insert;		/* after last */
-			}
-			bq = bq->b_actf;
-		}
-		/*
-		 * No inversions... we will go after the last, and
-		 * be the first request in the second request list.
-		 */
-		goto insert;
-	}
-	/*
-	 * Request is at/after the current request...
-	 * sort in the first request list.
-	 */
-	while (bq->b_actf) {
-		/*
-		 * We want to go after the current request if there is an
-		 * inversion after it (i.e. it is the end of the first
-		 * request list), or if the next request is a larger cylinder
-		 * than our request.
-		 */
-		if (bq->b_actf->b_cylinder < bq->b_cylinder ||
-		    bp->b_cylinder < bq->b_actf->b_cylinder ||
-		    (bp->b_cylinder == bq->b_actf->b_cylinder &&
-		    bp->b_blkno < bq->b_actf->b_blkno))
-			goto insert;
-		bq = bq->b_actf;
-	}
-	/*
-	 * Neither a second list nor a larger request... we go at the end of
-	 * the first list, which is the same as the end of the whole schebang.
-	 */
-insert:	bp->b_actf = bq->b_actf;
-	bq->b_actf = bp;
-}
 
 /*
  * Compute checksum for disk label.
@@ -720,9 +627,6 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp)
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
-	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylinder = (bp->b_blkno + DL_SECTOBLK(lp, DL_GETPOFFSET(p))) /
-	    DL_SECTOBLK(lp, lp->d_secpercyl);
 	return (0);
 
  bad:
