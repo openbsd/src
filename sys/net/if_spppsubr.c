@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.112 2013/11/14 16:52:33 stsp Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.113 2013/11/20 08:21:33 stsp Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -46,7 +46,6 @@
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/workq.h>
 
 #include <sys/timeout.h>
 #include <crypto/md5.h>
@@ -71,10 +70,6 @@
 #endif
 
 #include <net/if_sppp.h>
-
-#ifdef INET6
-#include <netinet6/in6_var.h>
-#endif
 
 # define UNTIMEOUT(fun, arg, handle)	\
 	timeout_del(&(handle))
@@ -291,6 +286,7 @@ HIDE void sppp_lcp_check_and_close(struct sppp *sp);
 HIDE int sppp_ncp_check(struct sppp *sp);
 
 HIDE void sppp_ipcp_init(struct sppp *sp);
+HIDE void sppp_ipcp_destroy(struct sppp *sp);
 HIDE void sppp_ipcp_up(struct sppp *sp);
 HIDE void sppp_ipcp_down(struct sppp *sp);
 HIDE void sppp_ipcp_open(struct sppp *sp);
@@ -306,6 +302,7 @@ HIDE void sppp_ipcp_tlf(struct sppp *sp);
 HIDE void sppp_ipcp_scr(struct sppp *sp);
 
 HIDE void sppp_ipv6cp_init(struct sppp *sp);
+HIDE void sppp_ipv6cp_destroy(struct sppp *sp);
 HIDE void sppp_ipv6cp_up(struct sppp *sp);
 HIDE void sppp_ipv6cp_down(struct sppp *sp);
 HIDE void sppp_ipv6cp_open(struct sppp *sp);
@@ -901,6 +898,9 @@ sppp_detach(struct ifnet *ifp)
 {
 	struct sppp **q, *p, *sp = (struct sppp*) ifp;
 	int i;
+
+	sppp_ipcp_destroy(sp);
+	sppp_ipv6cp_destroy(sp);
 
 	/* Remove the entry from the keepalive list. */
 	for (q = &spppq; (p = *q); q = &p->pp_next)
@@ -2637,6 +2637,15 @@ sppp_ipcp_init(struct sppp *sp)
 	sp->ipcp.flags = 0;
 	sp->state[IDX_IPCP] = STATE_INITIAL;
 	sp->fail_counter[IDX_IPCP] = 0;
+	task_set(&sp->ipcp.set_addr_task, sppp_set_ip_addrs, sp, NULL);
+	task_set(&sp->ipcp.clear_addr_task, sppp_clear_ip_addrs, sp, NULL);
+}
+
+HIDE void
+sppp_ipcp_destroy(struct sppp *sp)
+{
+	task_del(systq, &sp->ipcp.set_addr_task);
+	task_del(systq, &sp->ipcp.clear_addr_task);
 }
 
 HIDE void
@@ -2955,38 +2964,11 @@ sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 		addlog("\n");
 }
 
-struct sppp_set_ip_addrs_args {
-	struct sppp *sp;
-	u_int32_t myaddr;
-	u_int32_t hisaddr;
-};
-
 HIDE void
 sppp_ipcp_tlu(struct sppp *sp)
 {
-	struct ifnet *ifp = &sp->pp_if;
-	struct sppp_set_ip_addrs_args *args;
-
-	args = malloc(sizeof(*args), M_TEMP, M_NOWAIT);
-	if (args == NULL)
-		return;
-
-	args->sp = sp;
-
-	/* we are up. Set addresses and notify anyone interested */
-	sppp_get_ip_addrs(sp, &args->myaddr, &args->hisaddr, 0);
-	if ((sp->ipcp.flags & IPCP_MYADDR_DYN) &&
-	    (sp->ipcp.flags & IPCP_MYADDR_SEEN))
-		args->myaddr = sp->ipcp.req_myaddr;
-	if ((sp->ipcp.flags & IPCP_HISADDR_DYN) &&
-	    (sp->ipcp.flags & IPCP_HISADDR_SEEN))
-		args->hisaddr = sp->ipcp.req_hisaddr;
-
-	if (workq_add_task(NULL, 0, sppp_set_ip_addrs, args, NULL)) {
-		free(args, M_TEMP);
-		printf("%s: workq_add_task failed, cannot set "
-		    "addresses\n", ifp->if_xname);
-	}
+	if (sp->ipcp.req_myaddr != 0 || sp->ipcp.req_hisaddr != 0)
+		task_add(systq, &sp->ipcp.set_addr_task);
 }
 
 HIDE void
@@ -3043,15 +3025,9 @@ sppp_ipcp_tls(struct sppp *sp)
 HIDE void
 sppp_ipcp_tlf(struct sppp *sp)
 {
-	struct ifnet *ifp = &sp->pp_if;
-
 	if (sp->ipcp.flags & (IPCP_MYADDR_DYN|IPCP_HISADDR_DYN))
 		/* Some address was dynamic, clear it again. */
-		if (workq_add_task(NULL, 0,
-		    sppp_clear_ip_addrs, (void *)sp, NULL)) {
-			printf("%s: workq_add_task failed, cannot clear "
-			    "addresses\n", ifp->if_xname);
-		}
+		task_add(systq, &sp->ipcp.clear_addr_task);
 
 	/* we no longer need LCP */
 	sp->lcp.protos &= ~(1 << IDX_IPCP);
@@ -3110,6 +3086,14 @@ sppp_ipv6cp_init(struct sppp *sp)
 	sp->ipv6cp.flags = 0;
 	sp->state[IDX_IPV6CP] = STATE_INITIAL;
 	sp->fail_counter[IDX_IPV6CP] = 0;
+	task_set(&sp->ipv6cp.set_addr_task, sppp_update_ip6_addr, sp,
+	    &sp->ipv6cp.req_ifid);
+}
+
+HIDE void
+sppp_ipv6cp_destroy(struct sppp *sp)
+{
+	task_del(systq, &sp->ipv6cp.set_addr_task);
 }
 
 HIDE void
@@ -3494,6 +3478,11 @@ p		opt[i++] = 0;   /* TBD */
 #else /*INET6*/
 HIDE void
 sppp_ipv6cp_init(struct sppp *sp)
+{
+}
+
+HIDE void
+sppp_ipv6cp_destroy(struct sppp *sp)
 {
 }
 
@@ -4587,16 +4576,15 @@ sppp_update_gw(struct ifnet *ifp)
 }
 
 /*
- * Work queue task adding addresses from process context.
+ * Task adding addresses from process context.
  * If an address is 0, leave it the way it is.
  */
 HIDE void
 sppp_set_ip_addrs(void *arg1, void *arg2)
 {
-	struct sppp_set_ip_addrs_args *args = arg1;
-	struct sppp *sp = args->sp;
-	u_int32_t myaddr = args->myaddr;
-	u_int32_t hisaddr = args->hisaddr;
+	struct sppp *sp = arg1;
+	u_int32_t myaddr;
+	u_int32_t hisaddr;
 	struct ifnet *ifp = &sp->pp_if;
 	int debug = ifp->if_flags & IFF_DEBUG;
 	struct ifaddr *ifa;
@@ -4604,8 +4592,13 @@ sppp_set_ip_addrs(void *arg1, void *arg2)
 	struct sockaddr_in *dest;
 	int s;
 	
-	/* Arguments are now on local stack so free temporary storage. */
-	free(args, M_TEMP);
+	sppp_get_ip_addrs(sp, &myaddr, &hisaddr, NULL);
+	if ((sp->ipcp.flags & IPCP_MYADDR_DYN) &&
+	    (sp->ipcp.flags & IPCP_MYADDR_SEEN))
+		myaddr = sp->ipcp.req_myaddr;
+	if ((sp->ipcp.flags & IPCP_HISADDR_DYN) &&
+	    (sp->ipcp.flags & IPCP_HISADDR_SEEN))
+		hisaddr = sp->ipcp.req_hisaddr;
 
 	s = splsoftnet();
 
@@ -4656,7 +4649,7 @@ sppp_set_ip_addrs(void *arg1, void *arg2)
 }
 
 /*
- * Work queue task clearing addresses from process context.
+ * Task clearing addresses from process context.
  * Clear IP addresses.
  */
 HIDE void
@@ -4772,7 +4765,6 @@ sppp_update_ip6_addr(void *arg1, void *arg2)
 	if (ia == NULL) {
 		/* IPv6 disabled? */
 		splx(s);
-		free(ifra, M_TEMP);
 		return;
 	}
 
@@ -4791,7 +4783,6 @@ sppp_update_ip6_addr(void *arg1, void *arg2)
 		    SPP_ARGS(ifp), error);
 	}
 	splx(s);
-	free(ifra, M_TEMP);
 }
 
 /*
@@ -4802,12 +4793,9 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src,
 	const struct in6_addr *dst)
 {
 	struct ifnet *ifp = &sp->pp_if;
-	struct in6_aliasreq *ifra;
+	struct in6_aliasreq *ifra = &sp->ipv6cp.req_ifid;
 
-	ifra = malloc(sizeof(*ifra), M_TEMP, M_NOWAIT|M_ZERO);
-	if (ifra == NULL)
-		return;
-
+	bzero(ifra, sizeof(*ifra));
 	bcopy(ifp->if_xname, ifra->ifra_name, sizeof(ifra->ifra_name));
 
 	ifra->ifra_addr.sin6_len = sizeof(struct sockaddr_in6);
@@ -4831,11 +4819,7 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src,
 	/* DAD is redundant after an IPv6CP exchange. */
 	ifra->ifra_flags |= IN6_IFF_NODAD;
 
-	if (workq_add_task(NULL, 0, sppp_update_ip6_addr, sp, ifra)) {
-		free(ifra, M_TEMP);
-		printf("%s: workq_add_task failed, cannot set IPv6 "
-		    "addresses\n", ifp->if_xname);
-	}
+	task_add(systq, &sp->ipv6cp.set_addr_task);
 }
 
 /*
