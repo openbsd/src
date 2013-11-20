@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.435 2013/11/19 10:01:20 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.436 2013/11/20 09:22:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -505,7 +505,14 @@ struct smtpd {
 	char			       *sc_queue_key;
 	size_t				sc_queue_evpcache_size;
 
+	size_t				sc_mda_max_session;
+	size_t				sc_mda_max_user_session;
+	size_t				sc_mda_task_hiwat;
+	size_t				sc_mda_task_lowat;
+	size_t				sc_mda_task_release;
+
 	size_t				sc_scheduler_max_inflight;
+
 	int				sc_qexpire;
 #define MAX_BOUNCE_WARN			4
 	time_t				sc_bounce_warn[MAX_BOUNCE_WARN];
@@ -798,7 +805,7 @@ struct scheduler_backend {
 	int	(*update)(struct scheduler_info *);
 	int	(*delete)(uint64_t);
 	int	(*hold)(uint64_t, uint64_t);
-	int	(*release)(uint64_t, int);
+	int	(*release)(int, uint64_t, int);
 
 	int	(*batch)(int, struct scheduler_batch *);
 

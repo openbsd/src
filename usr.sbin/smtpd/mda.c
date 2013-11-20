@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.97 2013/10/28 09:14:58 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.98 2013/11/20 09:22:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -44,11 +44,6 @@
 
 #define MDA_HIWAT		65536
 
-#define MDA_MAXEVP		200000
-#define MDA_MAXEVPUSER		15000
-#define MDA_MAXSESS		50
-#define MDA_MAXSESSUSER		7
-
 struct mda_envelope {
 	TAILQ_ENTRY(mda_envelope)	 entry;
 	uint64_t			 id;
@@ -61,10 +56,13 @@ struct mda_envelope {
 	char				*buffer;
 };
 
-#define FLAG_USER_WAITINFO	0x01
-#define FLAG_USER_RUNNABLE	0x02
+#define USER_WAITINFO	0x01
+#define USER_RUNNABLE	0x02
+#define USER_ONHOLD	0x04
+#define USER_HOLDQ	0x08
 
 struct mda_user {
+	uint64_t			id;
 	TAILQ_ENTRY(mda_user)		entry;
 	TAILQ_ENTRY(mda_user)		entry_runnable;
 	char				name[SMTPD_MAXLOGNAME];
@@ -95,13 +93,17 @@ static void mda_done(struct mda_session *);
 static void mda_fail(struct mda_user *, int, const char *);
 static void mda_drain(void);
 static void mda_log(const struct mda_envelope *, const char *, const char *);
+static struct mda_user *mda_user(const struct envelope *);
+static void mda_user_free(struct mda_user *);
+static const char *mda_user_to_text(const struct mda_user *);
+static struct mda_envelope *mda_envelope(const struct envelope *);
+static void mda_envelope_free(struct mda_envelope *);
+static struct mda_session * mda_session(struct mda_user *);
 
-size_t			evpcount;
 static struct tree	sessions;
+static struct tree	users;
 
-static TAILQ_HEAD(, mda_user)	users;
 static TAILQ_HEAD(, mda_user)	runnable;
-size_t				running;
 
 static void
 mda_imsg(struct mproc *p, struct imsg *imsg)
@@ -115,7 +117,6 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 	struct msg		 m;
 	const void		*data;
 	const char		*error, *parent_error;
-	const char		*username, *usertable;
 	uint64_t		 reqid;
 	size_t			 sz;
 	char			 out[256], buf[SMTPD_MAXLINESIZE];
@@ -126,19 +127,13 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 		switch (imsg->hdr.type) {
 		case IMSG_LKA_USERINFO:
 			m_msg(&m, imsg);
-			m_get_string(&m, &usertable);
-			m_get_string(&m, &username);
+			m_get_id(&m, &reqid);
 			m_get_int(&m, (int *)&status);
 			if (status == LKA_OK)
 				m_get_data(&m, &data, &sz);
 			m_end(&m);
 
-			TAILQ_FOREACH(u, &users, entry)
-				if (!strcmp(username, u->name) &&
-				    !strcmp(usertable, u->usertable))
-					break;
-			if (u == NULL)
-				return;
+			u = tree_xget(&users, reqid);
 
 			if (status == LKA_TEMPFAIL)
 				mda_fail(u, 0,
@@ -148,8 +143,8 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 				    "Permanent failure in user lookup");
 			else {
 				memmove(&u->userinfo, data, sz);
-				u->flags &= ~FLAG_USER_WAITINFO;
-				u->flags |= FLAG_USER_RUNNABLE;
+				u->flags &= ~USER_WAITINFO;
+				u->flags |= USER_RUNNABLE;
 				TAILQ_INSERT_TAIL(&runnable, u, entry_runnable);
 				mda_drain();
 			}
@@ -165,91 +160,36 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			m_get_envelope(&m, &evp);
 			m_end(&m);
 
-			e = xcalloc(1, sizeof *e, "mda_envelope");
-			e->id = evp.id;
-			e->creation = evp.creation;
-			buf[0] = '\0';
-			if (evp.sender.user[0] && evp.sender.domain[0])
-				snprintf(buf, sizeof buf, "%s@%s",
-				    evp.sender.user, evp.sender.domain);
-			e->sender = xstrdup(buf, "mda_envelope:sender");
-			snprintf(buf, sizeof buf, "%s@%s",
-			    evp.dest.user, evp.dest.domain);
-			e->dest = xstrdup(buf, "mda_envelope:dest");
-			snprintf(buf, sizeof buf, "%s@%s",
-			    evp.rcpt.user, evp.rcpt.domain);
-			if (strcmp(buf, e->dest))
-				e->rcpt = xstrdup(buf, "mda_envelope:rcpt");
-			e->method = evp.agent.mda.method;
-			e->buffer = xstrdup(evp.agent.mda.buffer,
-			    "mda_envelope:buffer");
-			e->user = xstrdup(evp.agent.mda.username,
-			    "mda_envelope:user");
+			u = mda_user(&evp);
 
-			if (evpcount >= MDA_MAXEVP) {
-				log_debug("debug: mda: too many envelopes");
-				queue_tempfail(e->id, 0,
-				    "Too many envelopes in the delivery agent: "
-				    "will try again later");
-				mda_log(e, "TempFail",
-				    "Too many envelopes in the delivery agent: "
-				    "will try again later");
-				free(e->sender);
-				free(e->dest);
-				free(e->rcpt);
-				free(e->user);
-				free(e->buffer);
-				free(e);
+			if (u->evpcount >= env->sc_mda_task_hiwat) {
+				if (!(u->flags & USER_ONHOLD)) {
+					log_debug("debug: mda: hiwat reached for "
+					    "user \"%s\": holding envelopes",
+					    mda_user_to_text(u));
+					u->flags |= USER_ONHOLD;
+				}
+			}
+
+			if (u->flags & USER_ONHOLD) {
+				u->flags |= USER_HOLDQ;
+				m_create(p_queue, IMSG_DELIVERY_HOLD, 0, 0, -1);
+				m_add_evpid(p_queue, evp.id);
+				m_add_id(p_queue, u->id);
+				m_close(p_queue);
 				return;
 			}
 
-			username = evp.agent.mda.username;
-			usertable = evp.agent.mda.usertable;
-			TAILQ_FOREACH(u, &users, entry)
-			    if (!strcmp(username, u->name) &&
-				!strcmp(usertable, u->usertable))
-					break;
-
-			if (u == NULL) {
-				u = xcalloc(1, sizeof *u, "mda_user");
-				TAILQ_INSERT_TAIL(&users, u, entry);
-				TAILQ_INIT(&u->envelopes);
-				strlcpy(u->name, username, sizeof u->name);
-				strlcpy(u->usertable, usertable, sizeof u->usertable);
-				u->flags |= FLAG_USER_WAITINFO;
-				m_create(p_lka, IMSG_LKA_USERINFO, 0, 0, -1);
-				m_add_string(p_lka, usertable);
-				m_add_string(p_lka, username);
-				m_close(p_lka);
-				stat_increment("mda.user", 1);
-			} else if (u->evpcount >= MDA_MAXEVPUSER) {
-				log_debug("debug: mda: too many envelopes for "
-				    "\"%s\"", u->name);
-				queue_tempfail(e->id, 0,
-				    "Too many envelopes for this user in the "
-				    "delivery agent: will try again later");
-				mda_log(e, "TempFail",
-				    "Too many envelopes for this user in the "
-				    "delivery agent: will try again later");
-				free(e->sender);
-				free(e->dest);
-				free(e->rcpt);
-				free(e->user);
-				free(e->buffer);
-				free(e);
-				return;
-			} else if (!(u->flags & FLAG_USER_RUNNABLE) &&
-				   !(u->flags & FLAG_USER_WAITINFO)) {
-				u->flags |= FLAG_USER_RUNNABLE;
-				TAILQ_INSERT_TAIL(&runnable, u, entry_runnable);
-			}
-
-			stat_increment("mda.envelope", 1);
+			e = mda_envelope(&evp);
+			TAILQ_INSERT_TAIL(&u->envelopes, e, entry);
+			u->evpcount += 1;
 			stat_increment("mda.pending", 1);
 
-			evpcount += 1;
-			u->evpcount += 1;
-			TAILQ_INSERT_TAIL(&u->envelopes, e, entry);
+			if (!(u->flags & USER_RUNNABLE) &&
+			    !(u->flags & USER_WAITINFO)) {
+				u->flags |= USER_RUNNABLE;
+				TAILQ_INSERT_TAIL(&runnable, u, entry_runnable);
+			}
 
 			mda_drain();
 			return;
@@ -276,10 +216,10 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 
 			if ((s->datafp = fdopen(imsg->fd, "r")) == NULL) {
 				log_warn("warn: mda: fdopen");
+				close(imsg->fd);
 				queue_tempfail(e->id, 0, "fdopen failed");
 				mda_log(e, "TempFail", "fdopen failed");
 				mda_done(s);
-				close(imsg->fd);
 				return;
 			}
 
@@ -525,10 +465,8 @@ mda(void)
 		fatal("mda: cannot drop privileges");
 
 	tree_init(&sessions);
-	TAILQ_INIT(&users);
+	tree_init(&users);
 	TAILQ_INIT(&runnable);
-	evpcount = 0;
-	running = 0;
 
 	imsg_callback = mda_imsg;
 	event_init();
@@ -738,88 +676,67 @@ mda_fail(struct mda_user *user, int permfail, const char *error)
 			mda_log(e, "TempFail", error);
 			queue_tempfail(e->id, 0, error);
 		}
-		free(e->sender);
-		free(e->dest);
-		free(e->rcpt);
-		free(e->user);
-		free(e->buffer);
-		free(e);
-		stat_decrement("mda.envelope", 1);
+		mda_envelope_free(e);
 	}
 
-	TAILQ_REMOVE(&users, user, entry);
-	free(user);
-	stat_decrement("mda.user", 1);
+	mda_user_free(user);
 }
 
 static void
 mda_drain(void)
 {
-	struct mda_session	*s;
 	struct mda_user		*u;
 
 	while ((u = (TAILQ_FIRST(&runnable)))) {
+
 		TAILQ_REMOVE(&runnable, u, entry_runnable);
 
 		if (u->evpcount == 0 && u->running == 0) {
 			log_debug("debug: mda: all done for user \"%s\"",
-			    u->name);
-			TAILQ_REMOVE(&users, u, entry);
-			free(u);
-			stat_decrement("mda.user", 1);
+			    mda_user_to_text(u));
+			mda_user_free(u);
 			continue;
 		}
 
 		if (u->evpcount == 0) {
 			log_debug("debug: mda: no more envelope for \"%s\"",
-			    u->name);
-			u->flags &= ~FLAG_USER_RUNNABLE;
+			    mda_user_to_text(u));
+			u->flags &= ~USER_RUNNABLE;
 			continue;
 		}
 
-		if (u->running >= MDA_MAXSESSUSER) {
+		if (u->running >= env->sc_mda_max_user_session) {
 			log_debug("debug: mda: "
 			    "maximum number of session reached for user \"%s\"",
-			    u->name);
-			u->flags &= ~FLAG_USER_RUNNABLE;
+			    mda_user_to_text(u));
+			u->flags &= ~USER_RUNNABLE;
 			continue;
 		}
 
-		if (running >= MDA_MAXSESS) {
+		if (tree_count(&sessions) >= env->sc_mda_max_session) {
 			log_debug("debug: mda: "
 			    "maximum number of session reached");
 			TAILQ_INSERT_HEAD(&runnable, u, entry_runnable);
 			return;
 		}
 
-		s = xcalloc(1, sizeof *s, "mda_drain");
-		s->user = u;
-		s->evp = TAILQ_FIRST(&u->envelopes);
-		TAILQ_REMOVE(&u->envelopes, s->evp, entry);
-		s->id = generate_uid();
-		if (iobuf_init(&s->iobuf, 0, 0) == -1)
-			fatal("mda_drain");
-		s->io.sock = -1;
-		tree_xset(&sessions, s->id, s);
+		mda_session(u);
 
-		log_debug("debug: mda: new session %016" PRIx64
-		    " for user \"%s\" evpid %016" PRIx64, s->id, u->name,
-		    s->evp->id);
+		if (u->evpcount == env->sc_mda_task_lowat) {
+			if (u->flags & USER_ONHOLD) {
+				log_debug("debug: mda: down to lowat for user \"%s\": releasing",
+				    mda_user_to_text(u));
+				u->flags &= ~USER_ONHOLD;
+			}
+			if (u->flags & USER_HOLDQ) {
+				m_create(p_queue, IMSG_DELIVERY_RELEASE, 0, 0, -1);
+				m_add_id(p_queue, u->id);
+				m_add_int(p_queue, env->sc_mda_task_release);
+				m_close(p_queue);
+			}
+		}
 
-		m_create(p_queue, IMSG_QUEUE_MESSAGE_FD, 0, 0, -1);
-		m_add_id(p_queue, s->id);
-		m_add_msgid(p_queue, evpid_to_msgid(s->evp->id));
-		m_close(p_queue);
-
-		evpcount--;
-		u->evpcount--;
-		stat_decrement("mda.pending", 1);
-
-		running++;
-		u->running++;
-		stat_increment("mda.running", 1);
-
-		/* Re-add the user at the tail of the queue */
+		/* re-add the user at the tail of the queue */
 		TAILQ_INSERT_TAIL(&runnable, u, entry_runnable);
 	}
 }
@@ -827,37 +744,28 @@ mda_drain(void)
 static void
 mda_done(struct mda_session *s)
 {
-	struct mda_user	*u;
+	log_debug("debug: mda: session %016" PRIx64 " done", s->id);
 
 	tree_xpop(&sessions, s->id);
 
-	log_debug("debug: mda: session %016" PRIx64 " done", s->id);
+	mda_envelope_free(s->evp);
 
-	u = s->user;
-
-	running--;
-	u->running--;
-	stat_decrement("mda.running", 1);
+	s->user->running--;
+	if (!(s->user->flags & USER_RUNNABLE)) {
+		log_debug("debug: mda: user \"%s\" becomes runnable",
+		    s->user->name);
+		TAILQ_INSERT_TAIL(&runnable, s->user, entry_runnable);
+		s->user->flags |= USER_RUNNABLE;
+	}
 
 	if (s->datafp)
 		fclose(s->datafp);
 	io_clear(&s->io);
 	iobuf_clear(&s->iobuf);
 
-	free(s->evp->sender);
-	free(s->evp->dest);
-	free(s->evp->rcpt);
-	free(s->evp->user);
-	free(s->evp->buffer);
-	free(s->evp);
 	free(s);
-	stat_decrement("mda.envelope", 1);
 
-	if (!(u->flags & FLAG_USER_RUNNABLE)) {
-		log_debug("debug: mda: user \"%s\" becomes runnable", u->name);
-		TAILQ_INSERT_TAIL(&runnable, u, entry_runnable);
-		u->flags |= FLAG_USER_RUNNABLE;
-	}
+	stat_decrement("mda.running", 1);
 
 	mda_drain();
 }
@@ -896,4 +804,141 @@ mda_log(const struct mda_envelope *evp, const char *prefix, const char *status)
 	    method,
 	    duration_to_text(time(NULL) - evp->creation),
 	    status);
+}
+
+static struct mda_user *
+mda_user(const struct envelope *evp)
+{
+	struct mda_user	*u;
+	void		*i;
+
+	i = NULL;
+	while (tree_iter(&users, &i, NULL, (void**)(&u))) {
+		if (!strcmp(evp->agent.mda.username, u->name) &&
+		    !strcmp(evp->agent.mda.usertable, u->usertable))
+			return (u);
+	}
+
+	u = xcalloc(1, sizeof *u, "mda_user");
+	u->id = generate_uid();
+	TAILQ_INIT(&u->envelopes);
+	strlcpy(u->name, evp->agent.mda.username, sizeof(u->name));
+	strlcpy(u->usertable, evp->agent.mda.usertable,
+	    sizeof(u->usertable));
+
+	tree_xset(&users, u->id, u);
+
+	m_create(p_lka, IMSG_LKA_USERINFO, 0, 0, -1);
+	m_add_id(p_lka, u->id);
+	m_add_string(p_lka, evp->agent.mda.usertable);
+	m_add_string(p_lka, evp->agent.mda.username);
+	m_close(p_lka);
+	u->flags |= USER_WAITINFO;
+
+	stat_increment("mda.user", 1);
+
+	log_debug("mda: new user %llx for \"%s\"", u->id, mda_user_to_text(u));
+
+	return (u);
+}
+
+static void
+mda_user_free(struct mda_user *u)
+{
+	tree_xpop(&users, u->id);
+
+	if (u->flags & USER_HOLDQ) {
+		m_create(p_queue, IMSG_DELIVERY_RELEASE, 0, 0, -1);
+		m_add_id(p_queue, u->id);
+		m_add_int(p_queue, 0);
+		m_close(p_queue);
+	}
+
+	free(u);
+	stat_decrement("mda.user", 1);
+}
+
+static const char *
+mda_user_to_text(const struct mda_user *u)
+{
+	static char buf[1024];
+
+	snprintf(buf, sizeof(buf), "%s:%s", u->usertable, u->name);
+
+	return (buf);
+}
+
+static struct mda_envelope *
+mda_envelope(const struct envelope *evp)
+{
+	struct mda_envelope	*e;
+	char			 buf[SMTPD_MAXLINESIZE];
+
+	e = xcalloc(1, sizeof *e, "mda_envelope");
+	e->id = evp->id;
+	e->creation = evp->creation;
+	buf[0] = '\0';
+	if (evp->sender.user[0] && evp->sender.domain[0])
+		snprintf(buf, sizeof buf, "%s@%s",
+		    evp->sender.user, evp->sender.domain);
+	e->sender = xstrdup(buf, "mda_envelope:sender");
+	snprintf(buf, sizeof buf, "%s@%s", evp->dest.user, evp->dest.domain);
+	e->dest = xstrdup(buf, "mda_envelope:dest");
+	snprintf(buf, sizeof buf, "%s@%s", evp->rcpt.user, evp->rcpt.domain);
+	if (strcmp(buf, e->dest))
+		e->rcpt = xstrdup(buf, "mda_envelope:rcpt");
+	e->method = evp->agent.mda.method;
+	e->buffer = xstrdup(evp->agent.mda.buffer, "mda_envelope:buffer");
+	e->user = xstrdup(evp->agent.mda.username, "mda_envelope:user");
+
+	stat_increment("mda.envelope", 1);
+
+	return (e);
+}
+
+static void
+mda_envelope_free(struct mda_envelope *e)
+{
+	free(e->sender);
+	free(e->dest);
+	free(e->rcpt);
+	free(e->user);
+	free(e->buffer);
+	free(e);
+
+	stat_decrement("mda.envelope", 1);
+}
+
+static struct mda_session *
+mda_session(struct mda_user * u)
+{
+	struct mda_session *s;
+
+	s = xcalloc(1, sizeof *s, "mda_session");
+	s->id = generate_uid();
+	s->user = u;
+	s->io.sock = -1;
+	if (iobuf_init(&s->iobuf, 0, 0) == -1)
+		fatal("mda_session");
+
+	tree_xset(&sessions, s->id, s);
+
+	s->evp = TAILQ_FIRST(&u->envelopes);
+	TAILQ_REMOVE(&u->envelopes, s->evp, entry);
+	u->evpcount--;
+	u->running++;
+
+	stat_decrement("mda.pending", 1);
+	stat_increment("mda.running", 1);
+
+	log_debug("debug: mda: new session %016" PRIx64
+	    " for user \"%s\" evpid %016" PRIx64, s->id,
+	    mda_user_to_text(u), s->evp->id);
+
+	m_create(p_queue, IMSG_QUEUE_MESSAGE_FD, 0, 0, -1);
+	m_add_id(p_queue, s->id);
+	m_add_msgid(p_queue, evpid_to_msgid(s->evp->id));
+	m_close(p_queue);
+
+	return (s);
 }

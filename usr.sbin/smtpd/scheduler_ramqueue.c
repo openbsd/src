@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.32 2013/10/27 17:47:53 eric Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.33 2013/11/20 09:22:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -95,7 +95,7 @@ static size_t scheduler_ram_rollback(uint32_t);
 static int scheduler_ram_update(struct scheduler_info *);
 static int scheduler_ram_delete(uint64_t);
 static int scheduler_ram_hold(uint64_t, uint64_t);
-static int scheduler_ram_release(uint64_t, int);
+static int scheduler_ram_release(int, uint64_t, int);
 static int scheduler_ram_batch(int, struct scheduler_batch *);
 static size_t scheduler_ram_messages(uint32_t, uint32_t *, size_t);
 static size_t scheduler_ram_envelopes(uint64_t, struct evpstate *, size_t);
@@ -143,7 +143,7 @@ struct scheduler_backend scheduler_backend_ramqueue = {
 
 static struct rq_queue	ramqueue;
 static struct tree	updates;
-static struct tree	holdqs;
+static struct tree	holdqs[3]; /* delivery type */
 
 static time_t		currtime;
 
@@ -152,7 +152,9 @@ scheduler_ram_init(void)
 {
 	rq_queue_init(&ramqueue);
 	tree_init(&updates);
-	tree_init(&holdqs);
+	tree_init(&holdqs[D_MDA]);
+	tree_init(&holdqs[D_MTA]);
+	tree_init(&holdqs[D_BOUNCE]);
 
 	return (1);
 }
@@ -349,11 +351,11 @@ scheduler_ram_hold(uint64_t evpid, uint64_t holdq)
 		return (0);
 	}
 
-	hq = tree_get(&holdqs, holdq);
+	hq = tree_get(&holdqs[evp->type], holdq);
 	if (hq == NULL) {
 		hq = xcalloc(1, sizeof(*hq), "scheduler_hold");
 		TAILQ_INIT(&hq->q);
-		tree_xset(&holdqs, holdq, hq);
+		tree_xset(&holdqs[evp->type], holdq, hq);
 	}
 
 	evp->state = RQ_EVPSTATE_HELD;
@@ -371,7 +373,7 @@ scheduler_ram_hold(uint64_t evpid, uint64_t holdq)
 }
 
 static int
-scheduler_ram_release(uint64_t holdq, int n)
+scheduler_ram_release(int type, uint64_t holdq, int n)
 {
 	struct rq_holdq		*hq;
 	struct rq_envelope	*evp;
@@ -379,7 +381,7 @@ scheduler_ram_release(uint64_t holdq, int n)
 
 	currtime = time(NULL);
 
-	hq = tree_get(&holdqs, holdq);
+	hq = tree_get(&holdqs[type], holdq);
 	if (hq == NULL)
 		return (0);
 
@@ -400,7 +402,7 @@ scheduler_ram_release(uint64_t holdq, int n)
 	}
 
 	if (TAILQ_EMPTY(&hq->q)) {
-		tree_xpop(&holdqs, holdq);
+		tree_xpop(&holdqs[type], holdq);
 		free(hq);
 	}
 	stat_decrement("scheduler.ramqueue.hold", i);
@@ -833,10 +835,10 @@ rq_envelope_schedule(struct rq_queue *rq, struct rq_envelope *evp)
 	}
 
 	if (evp->state == RQ_EVPSTATE_HELD) {
-		hq = tree_xget(&holdqs, evp->holdq);
+		hq = tree_xget(&holdqs[evp->type], evp->holdq);
 		TAILQ_REMOVE(&hq->q, evp, entry);
 		if (TAILQ_EMPTY(&hq->q)) {
-			tree_xpop(&holdqs, evp->holdq);
+			tree_xpop(&holdqs[evp->type], evp->holdq);
 			free(hq);
 		}
 		evp->holdq = 0;
@@ -866,10 +868,10 @@ rq_envelope_remove(struct rq_queue *rq, struct rq_envelope *evp)
 	}
 
 	if (evp->state == RQ_EVPSTATE_HELD) {
-		hq = tree_xget(&holdqs, evp->holdq);
+		hq = tree_xget(&holdqs[evp->type], evp->holdq);
 		TAILQ_REMOVE(&hq->q, evp, entry);
 		if (TAILQ_EMPTY(&hq->q)) {
-			tree_xpop(&holdqs, evp->holdq);
+			tree_xpop(&holdqs[evp->type], evp->holdq);
 			free(hq);
 		}
 		evp->holdq = 0;
@@ -896,10 +898,10 @@ rq_envelope_suspend(struct rq_queue *rq, struct rq_envelope *evp)
 		return (0);
 
 	if (evp->state == RQ_EVPSTATE_HELD) {
-		hq = tree_xget(&holdqs, evp->holdq);
+		hq = tree_xget(&holdqs[evp->type], evp->holdq);
 		TAILQ_REMOVE(&hq->q, evp, entry);
 		if (TAILQ_EMPTY(&hq->q)) {
-			tree_xpop(&holdqs, evp->holdq);
+			tree_xpop(&holdqs[evp->type], evp->holdq);
 			free(hq);
 		}
 		evp->holdq = 0;

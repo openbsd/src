@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_proc.c,v 1.2 2013/10/27 17:47:53 eric Exp $	*/
+/*	$OpenBSD: scheduler_proc.c,v 1.3 2013/11/20 09:22:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -273,7 +273,7 @@ scheduler_proc_hold(uint64_t evpid, uint64_t holdq)
 }
 
 static int
-scheduler_proc_release(uint64_t holdq, int n)
+scheduler_proc_release(int type, uint64_t holdq, int n)
 {
 	struct ibuf	*buf;
 	int		 r;
@@ -283,6 +283,8 @@ scheduler_proc_release(uint64_t holdq, int n)
 	buf = imsg_create(&ibuf, PROC_SCHEDULER_RELEASE, 0, 0,
 	    sizeof(holdq) + sizeof(n));
 	if (buf == NULL)
+		return (-1);
+	if (imsg_add(buf, &type, sizeof(type)) == -1)
 		return (-1);
 	if (imsg_add(buf, &holdq, sizeof(holdq)) == -1)
 		return (-1);

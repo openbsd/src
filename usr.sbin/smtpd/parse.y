@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.128 2013/11/19 10:01:20 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.129 2013/11/20 09:22:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -254,6 +254,35 @@ bouncedelay	: STRING {
 bouncedelays	: bouncedelays ',' bouncedelay
 		| bouncedelay
 		| /* EMPTY */
+		;
+
+opt_limit_mda	: STRING NUMBER {
+			if (!strcmp($1, "max-session")) {
+				conf->sc_mda_max_session = $2;
+			}
+			else if (!strcmp($1, "max-session-per-user")) {
+				conf->sc_mda_max_user_session = $2;
+			}
+			else if (!strcmp($1, "task-lowat")) {
+				conf->sc_mda_task_lowat = $2;
+			}
+			else if (!strcmp($1, "task-hiwat")) {
+				conf->sc_mda_task_hiwat = $2;
+			}
+			else if (!strcmp($1, "task-release")) {
+				conf->sc_mda_task_release = $2;
+			}
+			else {
+				yyerror("invalid scheduler limit keyword: %s", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
+		}
+		;
+
+limits_mda	: opt_limit_mda limits_mda
+		| /* empty */
 		;
 
 opt_limit_mta	: INET4 {
@@ -548,6 +577,7 @@ main		: BOUNCEWARN {
 		| MAXMESSAGESIZE size {
 			conf->sc_maxsize = $2;
 		}
+		| LIMIT MDA limits_mda
 		| LIMIT MTA FOR DOMAIN STRING {
 			struct mta_limits	*d;
 
@@ -1526,6 +1556,12 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	conf->sc_opts = opts;
 
 	conf->sc_scheduler_max_inflight = 5000;
+
+	conf->sc_mda_max_session = 50;
+	conf->sc_mda_max_user_session = 7;
+	conf->sc_mda_task_hiwat = 50;
+	conf->sc_mda_task_lowat = 30;
+	conf->sc_mda_task_release = 10;
 
 	if ((file = pushfile(filename, 0)) == NULL) {
 		purge_config(PURGE_EVERYTHING);

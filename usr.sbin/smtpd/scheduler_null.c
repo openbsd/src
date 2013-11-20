@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_null.c,v 1.5 2013/10/27 17:47:53 eric Exp $	*/
+/*	$OpenBSD: scheduler_null.c,v 1.6 2013/11/20 09:22:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
@@ -37,7 +37,7 @@ static size_t scheduler_null_rollback(uint32_t);
 static int scheduler_null_update(struct scheduler_info *);
 static int scheduler_null_delete(uint64_t);
 static int scheduler_null_hold(uint64_t, uint64_t);
-static int scheduler_null_release(uint64_t, int);
+static int scheduler_null_release(int, uint64_t, int);
 static int scheduler_null_batch(int, struct scheduler_batch *);
 static size_t scheduler_null_messages(uint32_t, uint32_t *, size_t);
 static size_t scheduler_null_envelopes(uint64_t, struct evpstate *, size_t);
@@ -111,7 +111,7 @@ scheduler_null_hold(uint64_t evpid, uint64_t holdq)
 }
 
 static int
-scheduler_null_release(uint64_t holdq, int n)
+scheduler_null_release(int type, uint64_t holdq, int n)
 {
 	return (0);
 }
