@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: makemap.awk,v 1.13 2013/04/14 19:33:46 miod Exp $
+#	$OpenBSD: makemap.awk,v 1.14 2013/11/20 17:27:32 miod Exp $
 #
 # Copyright (c) 2005, Miodrag Vallat
 #
@@ -31,7 +31,7 @@
 #
 
 BEGIN {
-	rcsid = "$OpenBSD: makemap.awk,v 1.13 2013/04/14 19:33:46 miod Exp $"
+	rcsid = "$OpenBSD: makemap.awk,v 1.14 2013/11/20 17:27:32 miod Exp $"
 	ifdepth = 0
 	ignore = 0
 	declk = 0
@@ -141,11 +141,11 @@ BEGIN {
 	conv[105] = 113
 	conv[106] = 114
 	conv[107] = 115
-	conv[112] = 135
-	conv[115] = 136
-	conv[121] = 137
-	conv[123] = 138
-	conv[125] = 139
+	conv[112] = 136
+	conv[115] = 135
+	conv[121] = 138
+	conv[123] = 139
+	conv[125] = 137
 	conv[127] = 72
 	conv[156] = 88
 	conv[157] = 228
