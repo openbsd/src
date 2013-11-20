@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.97 2013/11/09 00:48:57 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.98 2013/11/20 17:01:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1030,7 +1030,7 @@ window_copy_search_up(struct window_pane *wp, const char *searchstr)
 
 	cis = 1;
 	for (ptr = searchstr; *ptr != '\0'; ptr++) {
-		if (*ptr != tolower(*ptr)) {
+		if (*ptr != tolower((u_char)*ptr)) {
 			cis = 0;
 			break;
 		}
@@ -1097,7 +1097,7 @@ window_copy_search_down(struct window_pane *wp, const char *searchstr)
 
 	cis = 1;
 	for (ptr = searchstr; *ptr != '\0'; ptr++) {
-		if (*ptr != tolower(*ptr)) {
+		if (*ptr != tolower((u_char)*ptr)) {
 			cis = 0;
 			break;
 		}
