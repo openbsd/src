@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpiovar.h,v 1.1 2013/09/04 14:38:31 patrick Exp $ */
+/* $OpenBSD: omgpiovar.h,v 1.2 2013/11/20 13:32:40 rapha Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -27,6 +27,10 @@ unsigned int omgpio_get_bit(unsigned int gpio);
 void omgpio_set_bit(unsigned int gpio);
 void omgpio_clear_bit(unsigned int gpio);
 void omgpio_set_dir(unsigned int gpio, unsigned int dir);
+
+int omgpio_pin_read(void *arg, int pin);
+void omgpio_pin_write(void *arg, int pin, int value);
+void omgpio_pin_ctl(void *arg, int pin, int flags);
 
 /* interrupts */
 void omgpio_clear_intr(unsigned int gpio);

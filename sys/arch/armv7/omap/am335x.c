@@ -1,4 +1,4 @@
-/* $OpenBSD: am335x.c,v 1.5 2013/11/06 19:03:07 syl Exp $ */
+/* $OpenBSD: am335x.c,v 1.6 2013/11/20 13:32:40 rapha Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -168,6 +168,34 @@ struct armv7_dev am335x_devs[] = {
 	  .unit = 0,
 	  .mem = { { UART0_ADDR, UARTx_SIZE } },
 	  .irq = { UART0_IRQ }
+	},
+
+	/*
+	 * GPIO 
+	 */
+
+	{ .name = "omgpio",
+	  .unit = 0,
+	  .mem = { { GPIO0_ADDR, GPIOx_SIZE } },
+	  .irq = { GPIO0_IRQ }
+	},
+
+	{ .name = "omgpio",
+	  .unit = 1,
+	  .mem = { { GPIO1_ADDR, GPIOx_SIZE } },
+	  .irq = { GPIO1_IRQ }
+	},
+
+	{ .name = "omgpio",
+	  .unit = 2,
+	  .mem = { { GPIO2_ADDR, GPIOx_SIZE } },
+	  .irq = { GPIO2_IRQ }
+	},
+
+	{ .name = "omgpio",
+	  .unit = 3,
+	  .mem = { { GPIO3_ADDR, GPIOx_SIZE } },
+	  .irq = { GPIO3_IRQ }
 	},
 
 	/*

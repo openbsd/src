@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
+/* $OpenBSD: omgpio.c,v 1.3 2013/11/20 13:32:40 rapha Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -21,14 +21,21 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/evcount.h>
+#include <sys/gpio.h>
 
 #include <arm/cpufunc.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <dev/gpio/gpiovar.h>
+
 #include <armv7/armv7/armv7var.h>
+#include <armv7/omap/prcmvar.h>
+#include <armv7/omap/sitara_cm.h>
 #include <armv7/omap/omgpiovar.h>
+
+#include "gpio.h"
 
 /* OMAP3 registers */
 #define	GPIO3_REVISION		0x00
@@ -57,7 +64,6 @@
 #define	GPIO3_SETWKUENA		0x84
 #define	GPIO3_CLEARDATAOUT	0x90
 #define	GPIO3_SETDATAOUT	0x94
-#define	GPIO3_SIZE		0x100
 
 /* OMAP4 registers */
 #define GPIO4_REVISION		0x00
@@ -73,11 +79,7 @@
 #define GPIO4_IRQWAKEN_0	0x44
 #define GPIO4_IRQWAKEN_1	0x48
 #define GPIO4_SYSSTATUS		0x114
-#define GPIO4_IRQSTATUS1	0x118
-#define GPIO4_IRQENABLE1	0x11C
 #define GPIO4_WAKEUPENABLE	0x120
-#define GPIO4_IRQSTATUS2	0x128
-#define GPIO4_IRQENABLE2	0x12C
 #define GPIO4_CTRL		0x130
 #define GPIO4_OE		0x134
 #define GPIO4_DATAIN		0x138
@@ -88,14 +90,37 @@
 #define GPIO4_FALLINGDETECT	0x14C
 #define GPIO4_DEBOUNCENABLE	0x150
 #define GPIO4_DEBOUNCINGTIME	0x154
-#define GPIO4_CLEARIRQENABLE1	0x160
-#define GPIO4_SETIRQENABLE1	0x164
-#define GPIO4_CLEARIRQENABLE2	0x170
-#define GPIO4_SETIRQENABLE2	0x174
 #define GPIO4_CLEARWKUPENA	0x180
 #define GPIO4_SETWKUENA		0x184
 #define GPIO4_CLEARDATAOUT	0x190
 #define GPIO4_SETDATAOUT	0x194
+
+/* AM335X registers */
+#define GPIO_AM335X_REVISION		0x00
+#define GPIO_AM335X_SYSCONFIG		0x10
+#define GPIO_AM335X_IRQSTATUS_RAW_0	0x24
+#define GPIO_AM335X_IRQSTATUS_RAW_1	0x28
+#define GPIO_AM335X_IRQSTATUS_0		0x2C
+#define GPIO_AM335X_IRQSTATUS_1		0x30
+#define GPIO_AM335X_IRQSTATUS_SET_0	0x34
+#define GPIO_AM335X_IRQSTATUS_SET_1	0x38
+#define GPIO_AM335X_IRQSTATUS_CLR_0	0x3c
+#define GPIO_AM335X_IRQSTATUS_CLR_1	0x40
+#define GPIO_AM335X_IRQWAKEN_0		0x44
+#define GPIO_AM335X_IRQWAKEN_1		0x48
+#define GPIO_AM335X_SYSSTATUS		0x114
+#define GPIO_AM335X_CTRL		0x130
+#define GPIO_AM335X_OE			0x134
+#define GPIO_AM335X_DATAIN		0x138
+#define GPIO_AM335X_DATAOUT		0x13C
+#define GPIO_AM335X_LEVELDETECT0	0x140
+#define GPIO_AM335X_LEVELDETECT1	0x144
+#define GPIO_AM335X_RISINGDETECT	0x148
+#define GPIO_AM335X_FALLINGDETECT	0x14C
+#define GPIO_AM335X_DEBOUNCENABLE	0x150
+#define GPIO_AM335X_DEBOUNCINGTIME	0x154
+#define GPIO_AM335X_CLEARDATAOUT	0x190
+#define GPIO_AM335X_SETDATAOUT		0x194
 
 #define GPIO_NUM_PINS		32
 
@@ -109,6 +134,37 @@ struct intrhand {
 	char *ih_name;
 };
 
+struct omgpio_regs {
+	u_int32_t	revision;
+	u_int32_t	sysconfig;
+	u_int32_t	irqstatus_raw0;		/* omap4/am335x only */
+	u_int32_t	irqstatus_raw1;		/* omap4/am335x only */
+	u_int32_t	irqstatus0;
+	u_int32_t	irqstatus1;
+	u_int32_t	irqstatus_set0;
+	u_int32_t	irqstatus_set1;
+	u_int32_t	irqstatus_clear0;
+	u_int32_t	irqstatus_clear1;
+	u_int32_t	irqwaken0;
+	u_int32_t	irqwaken1;
+	u_int32_t	sysstatus;
+	u_int32_t	wakeupenable;		/* omap3/omap4 only */
+	u_int32_t	ctrl;
+	u_int32_t	oe;
+	u_int32_t	datain;
+	u_int32_t	dataout;
+	u_int32_t	leveldetect0;
+	u_int32_t	leveldetect1;
+	u_int32_t	risingdetect;
+	u_int32_t	fallingdetect;
+	u_int32_t	debounceenable;
+	u_int32_t	debouncingtime;
+	u_int32_t	clearwkupena;		/* omap3/omap4 only */
+	u_int32_t	setwkupena;		/* omap3/omap4 only */
+	u_int32_t	cleardataout;
+	u_int32_t	setdataout;
+};
+
 struct omgpio_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
@@ -120,35 +176,26 @@ struct omgpio_softc {
 	int			sc_irq;
 	struct intrhand		*sc_handlers[GPIO_NUM_PINS];
 	int			sc_omap_ver;
-	unsigned int (*sc_get_bit)(struct omgpio_softc *sc,
-	    unsigned int gpio);
-	void (*sc_set_bit)(struct omgpio_softc *sc,
-	    unsigned int gpio);
-	void (*sc_clear_bit)(struct omgpio_softc *sc,
-	    unsigned int gpio);
-	void (*sc_set_dir)(struct omgpio_softc *sc,
-	    unsigned int gpio, unsigned int dir);
+	struct gpio_chipset_tag	sc_gpio_gc;
+	gpio_pin_t		sc_gpio_pins[GPIO_NUM_PINS];
+	struct omgpio_regs	sc_regs;
 };
 
 #define GPIO_PIN_TO_INST(x)	((x) >> 5)
 #define GPIO_PIN_TO_OFFSET(x)	((x) & 0x1f)
+#define DEVNAME(sc)	((sc)->sc_dev.dv_xname)
+#define READ4(sc, reg)		omgpio_read4(sc, reg)
+#define WRITE4(sc, reg, val)	omgpio_write4(sc, reg, val)
 
-int omgpio_match(struct device *parent, void *v, void *aux);
-void omgpio_attach(struct device *parent, struct device *self, void *args);
-void omgpio_recalc_interrupts(struct omgpio_softc *sc);
+u_int32_t omgpio_read4(struct omgpio_softc *, u_int32_t);
+void omgpio_write4(struct omgpio_softc *, u_int32_t, u_int32_t);
+int omgpio_match(struct device *, void *, void *);
+void omgpio_attach(struct device *, struct device *, void *);
+void omgpio_recalc_interrupts(struct omgpio_softc *);
 int omgpio_irq(void *);
 int omgpio_irq_dummy(void *);
-
-unsigned int omgpio_v3_get_bit(struct omgpio_softc *, unsigned int);
-void omgpio_v3_set_bit(struct omgpio_softc *, unsigned int);
-void omgpio_v3_clear_bit(struct omgpio_softc *, unsigned int);
-void omgpio_v3_set_dir(struct omgpio_softc *, unsigned int , unsigned int);
-unsigned int omgpio_v4_get_bit(struct omgpio_softc *, unsigned int);
-void omgpio_v4_set_bit(struct omgpio_softc *, unsigned int);
-void omgpio_v4_clear_bit(struct omgpio_softc *, unsigned int);
-void omgpio_v4_set_dir(struct omgpio_softc *, unsigned int, unsigned int);
-unsigned int omgpio_v4_get_dir(struct omgpio_softc *, unsigned int);
-
+int omgpio_pin_dir_read(struct omgpio_softc *, unsigned int);
+void omgpio_pin_dir_write(struct omgpio_softc *, unsigned int, unsigned int);
 
 struct cfattach omgpio_ca = {
 	sizeof (struct omgpio_softc), omgpio_match, omgpio_attach
@@ -158,13 +205,31 @@ struct cfdriver omgpio_cd = {
 	NULL, "omgpio", DV_DULL
 };
 
+u_int32_t
+omgpio_read4(struct omgpio_softc *sc, u_int32_t reg)
+{
+	if(reg == -1)
+		panic("%s: Invalid register address", DEVNAME(sc));
+
+	return bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg));
+}
+
+void
+omgpio_write4(struct omgpio_softc *sc, u_int32_t reg, u_int32_t val)
+{
+	if(reg == -1)
+		panic("%s: Invalid register address", DEVNAME(sc));
+
+	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val));
+}
+
 int
 omgpio_match(struct device *parent, void *v, void *aux)
 {
 	switch (board_id) {
 	case BOARD_ID_OMAP3_BEAGLE:
 	case BOARD_ID_OMAP3_OVERO:
-		break; /* continue trying */
+	case BOARD_ID_AM335X_BEAGLEBONE:
 	case BOARD_ID_OMAP4_PANDA:
 		break; /* continue trying */
 	default:
@@ -178,49 +243,146 @@ omgpio_attach(struct device *parent, struct device *self, void *args)
 {
 	struct armv7_attach_args *aa = args;
 	struct omgpio_softc *sc = (struct omgpio_softc *) self;
-	u_int32_t rev;
+	struct gpiobus_attach_args gba;
+	u_int32_t	rev;
+	int		i;
+
+	prcm_enablemodule(PRCM_GPIO0 + aa->aa_dev->unit);
 
 	sc->sc_iot = aa->aa_iot;
 	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
 	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
-		panic("omgpio_attach: bus_space_map failed!");
-
+		panic("%s: bus_space_map failed!", DEVNAME(sc));
 
 	switch (board_id) {
 	case BOARD_ID_OMAP3_BEAGLE:
 	case BOARD_ID_OMAP3_OVERO:
-		sc->sc_omap_ver  = 3;
-		sc->sc_get_bit  = omgpio_v3_get_bit;
-		sc->sc_set_bit = omgpio_v3_set_bit;
-		sc->sc_clear_bit = omgpio_v3_clear_bit;
-		sc->sc_set_dir = omgpio_v3_set_dir;
+		sc->sc_regs.revision = GPIO3_REVISION;
+		sc->sc_regs.sysconfig = GPIO3_SYSCONFIG;
+		sc->sc_regs.irqstatus_raw0 = -1;
+		sc->sc_regs.irqstatus_raw1 = -1;
+		sc->sc_regs.irqstatus0 = GPIO3_IRQSTATUS1;
+		sc->sc_regs.irqstatus1 = GPIO3_IRQSTATUS2;
+		sc->sc_regs.irqstatus_set0 = GPIO3_SETIRQENABLE1;
+		sc->sc_regs.irqstatus_set1 = GPIO3_SETIRQENABLE2;
+		sc->sc_regs.irqstatus_clear0 = GPIO3_CLEARIRQENABLE1;
+		sc->sc_regs.irqstatus_clear1 = GPIO3_CLEARIRQENABLE2;
+		sc->sc_regs.irqwaken0 = -1;
+		sc->sc_regs.irqwaken1 = -1;
+		sc->sc_regs.sysstatus = GPIO3_SYSSTATUS;
+		sc->sc_regs.wakeupenable = GPIO3_WAKEUPENABLE;
+		sc->sc_regs.ctrl = GPIO3_CTRL;
+		sc->sc_regs.oe = GPIO3_OE;
+		sc->sc_regs.datain = GPIO3_DATAIN;
+		sc->sc_regs.dataout = GPIO3_DATAOUT;
+		sc->sc_regs.leveldetect0 = GPIO3_LEVELDETECT0;
+		sc->sc_regs.leveldetect1 = GPIO3_LEVELDETECT1;
+		sc->sc_regs.risingdetect = GPIO3_RISINGDETECT;
+		sc->sc_regs.fallingdetect = GPIO3_FALLINGDETECT;
+		sc->sc_regs.debounceenable = GPIO3_DEBOUNCENABLE;
+		sc->sc_regs.debouncingtime = GPIO3_DEBOUNCINGTIME;
+		sc->sc_regs.clearwkupena = GPIO3_CLEARWKUENA;
+		sc->sc_regs.setwkupena = GPIO3_SETWKUENA;
+		sc->sc_regs.cleardataout = GPIO3_CLEARDATAOUT;
+		sc->sc_regs.setdataout = GPIO3_SETDATAOUT;
 		break;
 	case BOARD_ID_OMAP4_PANDA:
-		sc->sc_omap_ver  = 4;
-		sc->sc_get_bit  = omgpio_v4_get_bit;
-		sc->sc_set_bit = omgpio_v4_set_bit;
-		sc->sc_clear_bit = omgpio_v4_clear_bit;
-		sc->sc_set_dir = omgpio_v4_set_dir;
+		sc->sc_regs.revision = GPIO4_REVISION;
+		sc->sc_regs.sysconfig = GPIO4_SYSCONFIG;
+		sc->sc_regs.irqstatus_raw0 = GPIO4_IRQSTATUS_RAW_0;
+		sc->sc_regs.irqstatus_raw1 = GPIO4_IRQSTATUS_RAW_1;
+		sc->sc_regs.irqstatus0 = GPIO4_IRQSTATUS_0;
+		sc->sc_regs.irqstatus1 = GPIO4_IRQSTATUS_1;
+		sc->sc_regs.irqstatus_set0 = GPIO4_IRQSTATUS_SET_0;
+		sc->sc_regs.irqstatus_set1 = GPIO4_IRQSTATUS_SET_1;
+		sc->sc_regs.irqstatus_clear0 = GPIO4_IRQSTATUS_CLR_0;
+		sc->sc_regs.irqstatus_clear1 = GPIO4_IRQSTATUS_CLR_1;
+		sc->sc_regs.irqwaken0 = GPIO4_IRQWAKEN_0;
+		sc->sc_regs.irqwaken1 = GPIO4_IRQWAKEN_1;
+		sc->sc_regs.sysstatus = GPIO4_SYSSTATUS;
+		sc->sc_regs.wakeupenable = GPIO4_WAKEUPENABLE;
+		sc->sc_regs.ctrl = GPIO4_CTRL;
+		sc->sc_regs.oe = GPIO4_OE;
+		sc->sc_regs.datain = GPIO4_DATAIN;
+		sc->sc_regs.dataout = GPIO4_DATAOUT;
+		sc->sc_regs.leveldetect0 = GPIO4_LEVELDETECT0;
+		sc->sc_regs.leveldetect1 = GPIO4_LEVELDETECT1;
+		sc->sc_regs.risingdetect = GPIO4_RISINGDETECT;
+		sc->sc_regs.fallingdetect = GPIO4_FALLINGDETECT;
+		sc->sc_regs.debounceenable = GPIO4_DEBOUNCENABLE;
+		sc->sc_regs.debouncingtime = GPIO4_DEBOUNCINGTIME;
+		sc->sc_regs.clearwkupena = GPIO4_CLEARWKUPENA;
+		sc->sc_regs.setwkupena = GPIO4_SETWKUENA;
+		sc->sc_regs.cleardataout = GPIO4_CLEARDATAOUT;
+		sc->sc_regs.setdataout = GPIO4_SETDATAOUT;
+		break;
+	case BOARD_ID_AM335X_BEAGLEBONE:
+		sc->sc_regs.revision = GPIO_AM335X_REVISION;
+		sc->sc_regs.sysconfig = GPIO_AM335X_SYSCONFIG;
+		sc->sc_regs.irqstatus_raw0 = GPIO_AM335X_IRQSTATUS_RAW_0;
+		sc->sc_regs.irqstatus_raw1 = GPIO_AM335X_IRQSTATUS_RAW_1;
+		sc->sc_regs.irqstatus0 = GPIO_AM335X_IRQSTATUS_0;
+		sc->sc_regs.irqstatus1 = GPIO_AM335X_IRQSTATUS_1;
+		sc->sc_regs.irqstatus_set0 = GPIO_AM335X_IRQSTATUS_SET_0;
+		sc->sc_regs.irqstatus_set1 = GPIO_AM335X_IRQSTATUS_SET_1;
+		sc->sc_regs.irqstatus_clear0 = GPIO_AM335X_IRQSTATUS_CLR_0;
+		sc->sc_regs.irqstatus_clear1 = GPIO_AM335X_IRQSTATUS_CLR_1;
+		sc->sc_regs.irqwaken0 = GPIO_AM335X_IRQWAKEN_0;
+		sc->sc_regs.irqwaken1 = GPIO_AM335X_IRQWAKEN_1;
+		sc->sc_regs.sysstatus = GPIO_AM335X_SYSSTATUS;
+		sc->sc_regs.wakeupenable = -1;
+		sc->sc_regs.ctrl = GPIO_AM335X_CTRL;
+		sc->sc_regs.oe = GPIO_AM335X_OE;
+		sc->sc_regs.datain = GPIO_AM335X_DATAIN;
+		sc->sc_regs.dataout = GPIO_AM335X_DATAOUT;
+		sc->sc_regs.leveldetect0 = GPIO_AM335X_LEVELDETECT0;
+		sc->sc_regs.leveldetect1 = GPIO_AM335X_LEVELDETECT1;
+		sc->sc_regs.risingdetect = GPIO_AM335X_RISINGDETECT;
+		sc->sc_regs.fallingdetect = GPIO_AM335X_FALLINGDETECT;
+		sc->sc_regs.debounceenable = GPIO_AM335X_DEBOUNCENABLE;
+		sc->sc_regs.debouncingtime = GPIO_AM335X_DEBOUNCINGTIME;
+		sc->sc_regs.clearwkupena = -1;
+		sc->sc_regs.setwkupena = -1;
+		sc->sc_regs.cleardataout = GPIO_AM335X_CLEARDATAOUT;
+		sc->sc_regs.setdataout = GPIO_AM335X_SETDATAOUT;
 		break;
 	}
 
-	rev = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_REVISION);
+	rev = READ4(sc, sc->sc_regs.revision);
 
-	printf(" omap%d rev %d.%d\n", sc->sc_omap_ver, rev >> 4 & 0xf,
-	    rev & 0xf);
+	printf(": rev %d.%d\n", rev >> 4 & 0xf, rev & 0xf);
 
 	sc->sc_irq = aa->aa_dev->irq[0];
 
-	if (sc->sc_omap_ver == 3) {
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-		    GPIO3_CLEARIRQENABLE1, ~0);
-	} else if (sc->sc_omap_ver == 4) {
-		/* XXX - nothing? */
-	}
+	WRITE4(sc, sc->sc_regs.irqstatus_clear0, ~0);
+	WRITE4(sc, sc->sc_regs.irqstatus_clear1, ~0);
 
 	/* XXX - SYSCONFIG */
 	/* XXX - CTRL */
 	/* XXX - DEBOUNCE */
+
+	for (i = 0; i < GPIO_NUM_PINS; i++) {
+		sc->sc_gpio_pins[i].pin_num = i;
+		sc->sc_gpio_pins[i].pin_caps = GPIO_PIN_INPUT |
+		    GPIO_PIN_OUTPUT | GPIO_PIN_PULLUP | GPIO_PIN_PULLDOWN;
+		sc->sc_gpio_pins[i].pin_state = omgpio_pin_read(sc, i) ?
+		    GPIO_PIN_HIGH : GPIO_PIN_LOW;
+		sc->sc_gpio_pins[i].pin_flags = GPIO_PIN_SET;
+	}
+
+	sc->sc_gpio_gc.gp_cookie = sc;
+	sc->sc_gpio_gc.gp_pin_read = omgpio_pin_read;
+	sc->sc_gpio_gc.gp_pin_write = omgpio_pin_write;
+	sc->sc_gpio_gc.gp_pin_ctl = omgpio_pin_ctl;
+
+	gba.gba_name = "gpio";
+	gba.gba_gc = &sc->sc_gpio_gc;
+	gba.gba_pins = sc->sc_gpio_pins;
+	gba.gba_npins = GPIO_NUM_PINS;
+
+#if NGPIO > 0
+	config_found(&sc->sc_dev, &gba, gpiobus_print);
+#endif
 }
 
 /* XXX - This assumes MCU INTERRUPTS are IRQ1, and DSP are IRQ2 */
@@ -239,16 +401,12 @@ omgpio_set_function(unsigned int gpio, unsigned int fn)
 }
 #endif
 
-/*
- * get_bit() is not reliable if used on an output pin.
- */
-
 unsigned int
 omgpio_get_bit(unsigned int gpio)
 {
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
 
-	return sc->sc_get_bit(sc, gpio);
+	return omgpio_pin_read(sc, GPIO_PIN_TO_OFFSET(gpio));
 }
 
 void
@@ -256,7 +414,7 @@ omgpio_set_bit(unsigned int gpio)
 {
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
 
-	sc->sc_set_bit(sc, gpio);
+	omgpio_pin_write(sc, GPIO_PIN_TO_OFFSET(gpio), GPIO_PIN_HIGH);
 }
 
 void
@@ -264,119 +422,85 @@ omgpio_clear_bit(unsigned int gpio)
 {
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
 
-	sc->sc_clear_bit(sc, gpio);
+	omgpio_pin_write(sc, GPIO_PIN_TO_OFFSET(gpio), GPIO_PIN_LOW);
 }
+
 void
 omgpio_set_dir(unsigned int gpio, unsigned int dir)
 {
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
 
-	sc->sc_set_dir(sc, gpio, dir);
+	omgpio_pin_dir_write(sc, GPIO_PIN_TO_OFFSET(gpio), dir);
 }
 
-unsigned int
-omgpio_v3_get_bit(struct omgpio_softc *sc, unsigned int gpio)
+int
+omgpio_pin_read(void *arg, int pin)
 {
+	struct omgpio_softc *sc = arg;
 	u_int32_t reg;
 
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_DATAIN);
-	return (reg >> GPIO_PIN_TO_OFFSET(gpio)) & 0x1;
+	if(omgpio_pin_dir_read(sc, pin) == OMGPIO_DIR_IN)
+		reg = READ4(sc, sc->sc_regs.datain);
+	else
+		reg = READ4(sc, sc->sc_regs.dataout);
+	return (reg >> GPIO_PIN_TO_OFFSET(pin)) & 0x1;
 }
 
 void
-omgpio_v3_set_bit(struct omgpio_softc *sc, unsigned int gpio)
+omgpio_pin_write(void *arg, int pin, int value)
 {
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_SETDATAOUT,
-	    1 << GPIO_PIN_TO_OFFSET(gpio));
+	struct omgpio_softc *sc = arg;
+
+	if (value)
+		WRITE4(sc, sc->sc_regs.setdataout,
+		    1 << GPIO_PIN_TO_OFFSET(pin));
+	else
+		WRITE4(sc, sc->sc_regs.cleardataout,
+		    1 << GPIO_PIN_TO_OFFSET(pin));
 }
 
 void
-omgpio_v3_clear_bit(struct omgpio_softc *sc, unsigned int gpio)
+omgpio_pin_ctl(void *arg, int pin, int flags)
 {
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_CLEARDATAOUT,
-	    1 << GPIO_PIN_TO_OFFSET(gpio));
+	struct omgpio_softc *sc = arg;
+
+	if (flags & GPIO_PIN_INPUT)
+		omgpio_pin_dir_write(sc, pin, OMGPIO_DIR_IN);
+	else if (flags & GPIO_PIN_OUTPUT)
+		omgpio_pin_dir_write(sc, pin, OMGPIO_DIR_OUT);
+
+	if (board_id == BOARD_ID_AM335X_BEAGLEBONE)
+		sitara_cm_padconf_set_gpioflags(pin, flags);
 }
 
 void
-omgpio_v3_set_dir(struct omgpio_softc *sc, unsigned int gpio, unsigned int dir)
+omgpio_pin_dir_write(struct omgpio_softc *sc, unsigned int gpio,
+    unsigned int dir)
 {
 	int s;
 	u_int32_t reg;
 
 	s = splhigh();
 
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_DATAIN);
+	reg = READ4(sc, sc->sc_regs.oe);
 	if (dir == OMGPIO_DIR_IN)
 		reg |= 1 << GPIO_PIN_TO_OFFSET(gpio);
 	else
 		reg &= ~(1 << GPIO_PIN_TO_OFFSET(gpio));
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_OE, reg);
+	WRITE4(sc, sc->sc_regs.oe, reg);
 
 	splx(s);
 }
 
-unsigned int
-omgpio_v4_get_bit(struct omgpio_softc *sc, unsigned int gpio)
+int
+omgpio_pin_dir_read(struct omgpio_softc *sc, unsigned int gpio)
 {
 	u_int32_t reg;
-
-	if(omgpio_v4_get_dir(sc, gpio) == OMGPIO_DIR_IN)
-		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO4_DATAIN);
-	else
-		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO4_DATAOUT);
-	return (reg >> GPIO_PIN_TO_OFFSET(gpio)) & 0x1;
-}
-
-void
-omgpio_v4_set_bit(struct omgpio_softc *sc, unsigned int gpio)
-{
-
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO4_SETDATAOUT,
-		1 << GPIO_PIN_TO_OFFSET(gpio));
-}
-
-void
-omgpio_v4_clear_bit(struct omgpio_softc *sc, unsigned int gpio)
-{
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO4_CLEARDATAOUT,
-		1 << GPIO_PIN_TO_OFFSET(gpio));
-}
-
-void
-omgpio_v4_set_dir(struct omgpio_softc *sc, unsigned int gpio, unsigned int dir)
-{
-	int s;
-	u_int32_t reg;
-
-	s = splhigh();
-
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO4_OE);
-	if (dir == OMGPIO_DIR_IN)
-		reg |= 1 << GPIO_PIN_TO_OFFSET(gpio);
-	else
-		reg &= ~(1 << GPIO_PIN_TO_OFFSET(gpio));
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO4_OE, reg);
-
-	splx(s);
-}
-
-unsigned int
-omgpio_v4_get_dir(struct omgpio_softc *sc, unsigned int gpio)
-{
-	int s;
-	u_int32_t dir, reg;
-
-	s = splhigh();
-
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO4_OE);
+	reg = READ4(sc, sc->sc_regs.oe);
 	if (reg & (1 << GPIO_PIN_TO_OFFSET(gpio)))
-		dir = OMGPIO_DIR_IN;
+		return OMGPIO_DIR_IN;
 	else
-		dir = OMGPIO_DIR_OUT;
-
-	splx(s);
-
-	return dir;
+		return OMGPIO_DIR_OUT;
 }
 
 #if 0
@@ -385,8 +509,7 @@ omgpio_clear_intr(struct omgpio_softc *sc, unsigned int gpio)
 {
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_IRQSTATUS1,
-	    1 << GPIO_PIN_TO_OFFSET(gpio));
+	WRITE4(sc, sc->sc_regs.irqstatus0, 1 << GPIO_PIN_TO_OFFSET(gpio));
 }
 
 void
@@ -394,8 +517,7 @@ omgpio_intr_mask(struct omgpio_softc *sc, unsigned int gpio)
 {
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_CLEARIRQENABLE1,
-	    1 << GPIO_PIN_TO_OFFSET(gpio));
+	WRITE4(sc, sc->sc_regs.irqstatus_clear0, 1 << GPIO_PIN_TO_OFFSET(gpio));
 }
 
 void
@@ -403,8 +525,7 @@ omgpio_intr_unmask(struct omgpio_softc *sc, unsigned int gpio)
 {
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_SETIRQENABLE1,
-	    1 << GPIO_PIN_TO_OFFSET(gpio));
+	WRITE4(sc, sc->sc_regs.irqstatus_set0, 1 << GPIO_PIN_TO_OFFSET(gpio));
 }
 
 void
@@ -416,10 +537,10 @@ omgpio_intr_level(struct omgpio_softc *sc, unsigned int gpio, unsigned int level
 
 	s = splhigh();
 
-	fe = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_FALLINGDETECT);
-	re = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_RISINGDETECT);
-	l0 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_LEVELDETECT0);
-	l1 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_LEVELDETECT1);
+	fe = READ4(sc, sc->sc_regs.fallingdetect);
+	re = READ4(sc, sc->sc_regs.risingdetect);
+	l0 = READ4(sc, sc->sc_regs.leveldetect0);
+	l1 = READ4(sc, sc->sc_regs.leveldetect1);
 
 	bit = 1 << GPIO_PIN_TO_OFFSET(gpio);
 
@@ -467,10 +588,10 @@ omgpio_intr_level(struct omgpio_softc *sc, unsigned int gpio, unsigned int level
 		break;
 	}
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_FALLINGDETECT, fe);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_RISINGDETECT, re);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_LEVELDETECT0, l0);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_LEVELDETECT1, l1);
+	WRITE4(sc, sc->sc_regs.fallingdetect, fe);
+	WRITE4(sc, sc->sc_regs.risingdetect, re);
+	WRITE4(sc, sc->sc_regs.leveldetect0, l0);
+	WRITE4(sc, sc->sc_regs.leveldetect1, l1);
 
 	splx(s);
 }
@@ -560,7 +681,7 @@ omgpio_irq(void *v)
 	struct intrhand *ih;
 	int bit;
 
-	pending = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_IRQSTATUS1);
+	pending = READ4(sc, omgpio.irqstatus0);
 
 	while (pending != 0) {
 		bit = ffs(pending) - 1;
@@ -573,7 +694,7 @@ omgpio_irq(void *v)
 		} else {
 			panic("omgpio: irq fired no handler, gpio %x %x %x",
 				sc->sc_dev.dv_unit * 32 + bit, pending,
-	bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_IRQENABLE1)
+	READ4(sc, omgpio.irqstatus0)
 
 				);
 		}

@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC-OMAP,v 1.4 2013/11/15 19:42:20 sasano Exp $
+# $OpenBSD: GENERIC-OMAP,v 1.5 2013/11/20 13:32:40 rapha Exp $
 #
 # GENERIC machine description file
 #
@@ -29,6 +29,8 @@ makeoptions	KERNEL_BASE_VIRT="0xc0300000"
 options	BUILD_STARTUP_PAGETABLE
 options	STARTUP_PAGETABLE_ADDR=0x80200000
 options	SDRAM_START="0x80000000"
+
+option CONF_HAVE_GPIO
 
 #options		APERTURE
 
@@ -71,6 +73,7 @@ prcm*		at omap?			# power/clock controller
 sitaracm*	at omap?			# sitara control module
 omdog*		at omap?			# watchdog timer
 omgpio*		at omap?			# user-visible GPIO pins?
+gpio*		at omgpio?
 gptimer*	at omap?			# general purpose timers
 dmtimer*	at omap?			# am335x dual mode timers
 ommmc*		at omap?			# SD/MMC card controller
