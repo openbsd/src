@@ -1,4 +1,4 @@
-/*	$OpenBSD: odsyntax.c,v 1.21 2010/10/08 14:26:12 sobrado Exp $	*/
+/*	$OpenBSD: odsyntax.c,v 1.22 2013/11/20 21:21:50 deraadt Exp $	*/
 /*	$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*-
@@ -250,7 +250,7 @@ posixtypes(char *type_string)
 		extensions:
 			type_string++;
 			y = 2;
-			if (isupper(*type_string)) {
+			if (isupper((unsigned char)*type_string)) {
 				switch(*type_string) {
 				case 'C':
 					nbytes = sizeof(char);
@@ -270,7 +270,7 @@ posixtypes(char *type_string)
 					oldusage();
 				}
 				type_string++;
-			} else if (isdigit(*type_string))
+			} else if (isdigit((unsigned char)*type_string))
 				nbytes = strtol(type_string, &type_string, 10);
 			else
 				nbytes = 4;
