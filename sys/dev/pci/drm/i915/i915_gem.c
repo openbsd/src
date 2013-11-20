@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.45 2013/11/19 19:14:09 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.46 2013/11/20 02:03:52 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -3006,14 +3006,10 @@ i915_gem_object_bind_to_gtt(struct drm_i915_gem_object *obj,
 		ret = drm_mm_insert_node_generic(&dev_priv->mm.gtt_space, node,
 						 size, alignment, obj->cache_level);
 	if (ret) {
-#if 0
 		ret = i915_gem_evict_something(dev, size, alignment,
 					       obj->cache_level,
 					       map_and_fenceable,
 					       nonblocking);
-#else
-		ret = i915_gem_evict_something(dev_priv, size);
-#endif
 		if (ret == 0)
 			goto search_free;
 

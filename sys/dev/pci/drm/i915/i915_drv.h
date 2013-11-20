@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.36 2013/11/19 19:14:09 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.37 2013/11/20 02:03:52 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1222,9 +1222,12 @@ int i915_gem_context_destroy_ioctl(struct drm_device *dev, void *data,
 				   struct drm_file *file);
 
 /* i915_gem_evict.c */
-int i915_gem_evict_everything(struct drm_device *);
-int i915_gem_evict_something(struct inteldrm_softc *, size_t);
-int i915_gem_evict_inactive(struct inteldrm_softc *);
+int __must_check i915_gem_evict_something(struct drm_device *dev, int min_size,
+					  unsigned alignment,
+					  unsigned cache_level,
+					  bool mappable,
+					  bool nonblock);
+int i915_gem_evict_everything(struct drm_device *dev);
 
 /* i915_gem_tiling.c */
 void	i915_gem_detect_bit_6_swizzle(struct drm_device *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_trace.h,v 1.5 2013/11/19 15:08:04 jsg Exp $	*/
+/*	$OpenBSD: i915_trace.h,v 1.6 2013/11/20 02:03:52 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -48,5 +48,15 @@ trace_i915_gem_object_unbind(struct drm_i915_gem_object *obj)
 
 static inline void
 trace_i915_reg_rw(bool write, u32 reg, u64 val, int len)
+{
+}
+
+static inline void
+trace_i915_gem_evict(struct drm_device *dev, u32 size, u32 align, bool mappable)
+{
+}
+
+static inline void
+trace_i915_gem_evict_everything(struct drm_device *dev)
 {
 }
