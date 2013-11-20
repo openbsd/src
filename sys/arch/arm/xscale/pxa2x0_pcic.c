@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_pcic.c,v 1.18 2013/11/18 20:21:51 deraadt Exp $	*/
+/*	$OpenBSD: pxa2x0_pcic.c,v 1.19 2013/11/20 17:36:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
@@ -415,8 +415,7 @@ pxapcic_create_event_thread(void *arg)
 	if (kthread_create(pxapcic_event_thread, sock, &sock->event_thread,
 	     name))
 		printf("%s: unable to create event thread for %s\n",
-		     sc->sc_dev.dv_xname,  sock->socket ? "1" : "0");
-	}
+		     sc->sc_dev.dv_xname, sock->socket ? "1" : "0");
 #ifdef DO_CONFIG_PENDING
 	config_pending_decr();
 #endif
