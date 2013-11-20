@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.12 2013/11/20 03:16:39 tedu Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.13 2013/11/20 23:18:17 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -58,10 +58,8 @@ _sem_wait(sem_t sem, int tryonly, const struct timespec *abstime,
 	void *ident = (void *)&sem->waitcount;
 	int r;
 
-	if (sem->shared) {
-		sem = sem->shared;
+	if (sem->shared)
 		ident = SHARED_IDENT;
-	}
 
 	_spinlock(&sem->lock);
 	if (sem->value) {
@@ -96,10 +94,8 @@ _sem_post(sem_t sem)
 	void *ident = (void *)&sem->waitcount;
 	int rv = 0;
 
-	if (sem->shared) {
-		sem = sem->shared;
+	if (sem->shared)
 		ident = SHARED_IDENT;
-	}
 
 	_spinlock(&sem->lock);
 	sem->value++;
@@ -119,7 +115,12 @@ sem_init(sem_t *semp, int pshared, unsigned int value)
 {
 	sem_t sem, *sempshared;
 	int i, oerrno;
-	char name[SEM_RANDOM_NAME_LEN];    
+	char name[SEM_RANDOM_NAME_LEN];
+
+	if (!semp) {
+		errno = EINVAL;
+		return (-1);
+	}
 
 	if (pshared) {
 		while (1) {
@@ -145,9 +146,9 @@ sem_init(sem_t *semp, int pshared, unsigned int value)
 		}
 
 		sem = *sempshared;
-		free(sempshared);
 		sem->value = value;
 		*semp = sem;
+		free(sempshared);
 		return (0);
 	}
 
@@ -173,11 +174,10 @@ sem_destroy(sem_t *semp)
 {
 	sem_t sem;
 
-	if (!semp || !*semp) {
+	if (!semp || !(sem = *semp)) {
 		errno = EINVAL;
 		return (-1);
 	}
-	sem = *semp;
 
 	if (sem->waitcount) {
 #define MSG "sem_destroy on semaphore with waiters!\n"
@@ -187,11 +187,11 @@ sem_destroy(sem_t *semp)
 		return (-1);
 	}
 
-	if (sem->shared)
-		munmap(sem->shared, SEM_MMAP_SIZE);
-
 	*semp = NULL;
-	free(sem);
+	if (sem->shared)
+		munmap(sem, SEM_MMAP_SIZE);
+	else
+		free(sem);
 
 	return (0);
 }
@@ -199,15 +199,12 @@ sem_destroy(sem_t *semp)
 int
 sem_getvalue(sem_t *semp, int *sval)
 {
-	sem_t sem = *semp;
+	sem_t sem;
 
-	if (!semp || !*semp) {
+	if (!semp || !(sem = *semp)) {
 		errno = EINVAL;
 		return (-1);
 	}
-
-	if (sem->shared)
-		sem = sem->shared;
 
 	_spinlock(&sem->lock);
 	*sval = sem->value;
@@ -219,9 +216,9 @@ sem_getvalue(sem_t *semp, int *sval)
 int
 sem_post(sem_t *semp)
 {
-	sem_t sem = *semp;
+	sem_t sem;
 
-	if (!semp || !*semp) {
+	if (!semp || !(sem = *semp)) {
 		errno = EINVAL;
 		return (-1);
 	}
@@ -234,11 +231,11 @@ sem_post(sem_t *semp)
 int
 sem_wait(sem_t *semp)
 {
-	sem_t sem = *semp;
 	pthread_t self = pthread_self();
+	sem_t sem;
 	int r;
 
-	if (!semp || !*semp) {
+	if (!semp || !(sem = *semp)) {
 		errno = EINVAL;
 		return (-1);
 	}
@@ -258,11 +255,11 @@ sem_wait(sem_t *semp)
 int
 sem_timedwait(sem_t *semp, const struct timespec *abstime)
 {
-	sem_t sem = *semp;
 	pthread_t self = pthread_self();
+	sem_t sem;
 	int r;
 
-	if (!semp || !*semp) {
+	if (!semp || !(sem = *semp)) {
 		errno = EINVAL;
 		return (-1);
 	}
@@ -282,10 +279,10 @@ sem_timedwait(sem_t *semp, const struct timespec *abstime)
 int
 sem_trywait(sem_t *semp)
 {
-	sem_t sem = *semp;
+	sem_t sem;
 	int r;
 
-	if (!semp || !*semp) {
+	if (!semp || !(sem = *semp)) {
 		errno = EINVAL;
 		return (-1);
 	}
@@ -315,8 +312,8 @@ sem_open(const char *name, int oflag, ...)
 {
 	char sempath[SEM_PATH_SIZE];
 	struct stat sb;
-	int fd, oerrno;
-	sem_t sem, shared;
+	int created = 0, fd, oerrno;
+	sem_t sem;
 	sem_t *semp = SEM_FAILED;
 
 	if (oflag & ~(O_CREAT | O_EXCL)) {
@@ -338,7 +335,17 @@ sem_open(const char *name, int oflag, ...)
 		errno = EPERM;
 		return (semp);
 	}
-	if (sb.st_size < SEM_MMAP_SIZE) {
+	if (sb.st_size != SEM_MMAP_SIZE) {
+		if (!(oflag & O_CREAT)) {
+			close(fd);
+			errno = EINVAL;
+			return (semp);
+		}
+		if (sb.st_size != 0) {
+			close(fd);
+			errno = EINVAL;
+			return (semp);
+		}
 		if (ftruncate(fd, SEM_MMAP_SIZE) == -1) {
 			oerrno = errno;
 			close(fd);
@@ -346,26 +353,27 @@ sem_open(const char *name, int oflag, ...)
 			/* XXX can set errno to EIO, ENOTDIR... */
 			return (semp);
 		}
+		created = 1;
 	}
-	shared = mmap(NULL, SEM_MMAP_SIZE, PROT_READ | PROT_WRITE,
+	sem = mmap(NULL, SEM_MMAP_SIZE, PROT_READ | PROT_WRITE,
 	    MAP_FILE | MAP_SHARED | MAP_HASSEMAPHORE, fd, 0);
 	oerrno = errno;
 	close(fd);
-	if (shared == MAP_FAILED) {
+	if (sem == MAP_FAILED) {
 		errno = oerrno;
 		return (semp);
 	}
+	if (created)
+		sem->lock = _SPINLOCK_UNLOCKED_ASSIGN;
+	sem->shared = 1;
 	semp = malloc(sizeof(*semp));
-	sem = calloc(1, sizeof(*sem));
-	if (!semp || !sem) {
-		free(sem);
+	if (!semp) {
 		free(semp);
-		munmap(shared, SEM_MMAP_SIZE);
+		munmap(sem, SEM_MMAP_SIZE);
 		errno = ENOSPC;
 		return (SEM_FAILED);
 	}
 	*semp = sem;
-	sem->shared = shared;
 
 	return (semp);
 }
@@ -373,10 +381,14 @@ sem_open(const char *name, int oflag, ...)
 int
 sem_close(sem_t *semp)
 {
-	sem_t sem = *semp;
+	sem_t sem;
+	
+	if (!semp || !(sem = *semp) || !sem->shared) {
+		errno = EINVAL;
+		return (-1);
+	}
 
-	munmap(sem->shared, SEM_MMAP_SIZE);
-	free(sem);
+	munmap(sem, SEM_MMAP_SIZE);
 	free(semp);
 
 	return (0);
@@ -390,4 +402,3 @@ sem_unlink(const char *name)
 	makesempath(name, sempath, sizeof(sempath));
 	return (unlink(sempath));
 }
-
