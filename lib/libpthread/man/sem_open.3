@@ -1,4 +1,4 @@
-.\" $OpenBSD: sem_open.3,v 1.8 2013/11/19 07:59:12 jmc Exp $
+.\" $OpenBSD: sem_open.3,v 1.9 2013/11/20 03:19:39 tedu Exp $
 .\"
 .\" Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 19 2013 $
+.Dd $Mdocdate: November 20 2013 $
 .Dt SEM_OPEN 3
 .Os
 .Sh NAME
@@ -59,17 +59,24 @@ return -1 and set
 .Va errno
 to indicate an error.
 .Sh ERRORS
-.Fn sem_open ,
-.Fn sem_close ,
-and
-.Fn sem_unlink
-may fail:
+It is an error to call
+.Fn sem_close
+with an unnamed semaphore or to call
+.Fn sem_destory
+with a named semaphore.
+.Pp
+.Fn sem_open
+may fail if:
 .Bl -tag -width Er
 .It Bq Er ENOSPC
 Inusfficient memory is available.
 .It Bq Er EPERM
 An attempt was made to open a shared semaphore owned by another user.
 .El
+.Pp
+.Fn sem_unlink
+may fail for any of the reasons listed in
+.Xr unlink 2 .
 .Sh SEE ALSO
 .Xr sem_destroy 3 ,
 .Xr sem_getvalue 3 ,
