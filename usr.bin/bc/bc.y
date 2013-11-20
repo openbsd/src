@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.43 2013/11/12 13:54:51 deraadt Exp $	*/
+/*	$OpenBSD: bc.y,v 1.44 2013/11/20 21:33:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -947,7 +947,8 @@ yyerror(char *s)
 		n = asprintf(&str,
 		    "%s: %s:%d: %s: newline unexpected",
 		    __progname, filename, lineno, s);
-	else if (isspace(yytext[0]) || !isprint(yytext[0]))
+	else if (isspace((unsigned char)yytext[0]) ||
+	    !isprint((unsigned char)yytext[0]))
 		n = asprintf(&str,
 		    "%s: %s:%d: %s: ascii char 0x%02x unexpected",
 		    __progname, filename, lineno, s, yytext[0]);
