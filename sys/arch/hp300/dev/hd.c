@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.74 2013/11/20 00:12:37 dlg Exp $	*/
+/*	$OpenBSD: hd.c,v 1.75 2013/11/20 05:19:29 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -650,7 +650,6 @@ hdstrategy(bp)
 {
 	int unit = DISKUNIT(bp->b_dev);
 	struct hd_softc *rs;
-	struct buf *dp;
 	int s;
 
 	rs = hdlookup(unit);
@@ -673,8 +672,8 @@ hdstrategy(bp)
 	bufq_queue(&rs->sc_bufq, bp);
 
 	s = splbio();
-	if (rs->b_bp == NULL) {
-		rs->sc_bp = bufq_dequeue(rs->sc_bufq);
+	if (rs->sc_bp == NULL) {
+		rs->sc_bp = bufq_dequeue(&rs->sc_bufq);
 		hdustart(rs);
 	}
 	splx(s);
