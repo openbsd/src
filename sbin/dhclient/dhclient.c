@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.267 2013/11/11 21:00:01 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.268 2013/11/20 17:22:46 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1830,11 +1830,11 @@ int
 res_hnok(const char *name)
 {
 	const char *dn = name;
-	int pch = '.', ch = *dn++;
+	int pch = '.', ch = (unsigned char)*dn++;
 	int warn = 0;
 
 	while (ch != '\0') {
-		int nch = *dn++;
+		int nch = (unsigned char)*dn++;
 
 		if (ch == '.') {
 			;

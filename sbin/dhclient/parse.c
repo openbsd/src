@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.25 2013/11/11 21:00:01 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.26 2013/11/20 17:22:46 deraadt Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -256,7 +256,8 @@ convert_num(unsigned char *buf, char *str, int base, int size)
 			if (ptr[1] == 'x') {
 				base = 16;
 				ptr += 2;
-			} else if (isascii(ptr[1]) && isdigit(ptr[1])) {
+			} else if (isascii((unsigned char)ptr[1]) &&
+			    isdigit((unsigned char)ptr[1])) {
 				base = 8;
 				ptr += 1;
 			} else
