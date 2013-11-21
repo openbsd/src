@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.13 2013/11/20 23:18:17 tedu Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.14 2013/11/21 17:43:57 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sha2.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -315,10 +316,20 @@ sem_open(const char *name, int oflag, ...)
 	int created = 0, fd, oerrno;
 	sem_t sem;
 	sem_t *semp = SEM_FAILED;
+	mode_t unusedmode;
+	unsigned value = 0;
 
 	if (oflag & ~(O_CREAT | O_EXCL)) {
 		errno = EINVAL;
 		return (semp);
+	}
+
+	if (oflag & O_CREAT) {
+		va_list ap;
+		va_start(ap, oflag);
+		unusedmode = va_arg(ap, mode_t);
+		value = va_arg(ap, unsigned);
+		va_end(ap);
 	}
 
 	makesempath(name, sempath, sizeof(sempath));
@@ -363,8 +374,10 @@ sem_open(const char *name, int oflag, ...)
 		errno = oerrno;
 		return (semp);
 	}
-	if (created)
+	if (created) {
 		sem->lock = _SPINLOCK_UNLOCKED_ASSIGN;
+		sem->value = value;
+	}
 	sem->shared = 1;
 	semp = malloc(sizeof(*semp));
 	if (!semp) {
@@ -382,7 +395,7 @@ int
 sem_close(sem_t *semp)
 {
 	sem_t sem;
-	
+
 	if (!semp || !(sem = *semp) || !sem->shared) {
 		errno = EINVAL;
 		return (-1);
