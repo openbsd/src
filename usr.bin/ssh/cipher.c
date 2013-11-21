@@ -1,4 +1,4 @@
-/* $OpenBSD: cipher.c,v 1.90 2013/11/07 11:58:27 dtucker Exp $ */
+/* $OpenBSD: cipher.c,v 1.91 2013/11/21 00:45:44 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,9 +41,11 @@
 
 #include <string.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "xmalloc.h"
 #include "log.h"
+#include "misc.h"
 #include "cipher.h"
 
 extern const EVP_CIPHER *evp_ssh1_bf(void);
@@ -58,7 +60,9 @@ struct Cipher {
 	u_int	iv_len;		/* defaults to block_size */
 	u_int	auth_len;
 	u_int	discard_len;
-	u_int	cbc_mode;
+	u_int	flags;
+#define CFLAG_CBC		(1<<0)
+#define CFLAG_CHACHAPOLY	(1<<1)
 	const EVP_CIPHER	*(*evptype)(void);
 };
 
@@ -88,6 +92,8 @@ static const struct Cipher ciphers[] = {
 			SSH_CIPHER_SSH2, 16, 16, 12, 16, 0, 0, EVP_aes_128_gcm },
 	{ "aes256-gcm@openssh.com",
 			SSH_CIPHER_SSH2, 16, 32, 12, 16, 0, 0, EVP_aes_256_gcm },
+	{ "chacha20-poly1305@openssh.com",
+			SSH_CIPHER_SSH2, 8, 64, 0, 16, 0, CFLAG_CHACHAPOLY, NULL },
 
 	{ NULL,		SSH_CIPHER_INVALID, 0, 0, 0, 0, 0, 0, NULL }
 };
@@ -96,7 +102,7 @@ static const struct Cipher ciphers[] = {
 
 /* Returns a list of supported ciphers separated by the specified char. */
 char *
-cipher_alg_list(char sep)
+cipher_alg_list(char sep, int auth_only)
 {
 	char *ret = NULL;
 	size_t nlen, rlen = 0;
@@ -104,6 +110,8 @@ cipher_alg_list(char sep)
 
 	for (c = ciphers; c->name != NULL; c++) {
 		if (c->number != SSH_CIPHER_SSH2)
+			continue;
+		if (auth_only && c->auth_len == 0)
 			continue;
 		if (ret != NULL)
 			ret[rlen++] = sep;
@@ -136,7 +144,12 @@ cipher_authlen(const Cipher *c)
 u_int
 cipher_ivlen(const Cipher *c)
 {
-	return (c->iv_len ? c->iv_len : c->block_size);
+	/*
+	 * Default is cipher block size, except for chacha20+poly1305 that
+	 * needs no IV. XXX make iv_len == -1 default?
+	 */
+	return (c->iv_len != 0 || (c->flags & CFLAG_CHACHAPOLY) != 0) ?
+	    c->iv_len : c->block_size;
 }
 
 u_int
@@ -148,7 +161,7 @@ cipher_get_number(const Cipher *c)
 u_int
 cipher_is_cbc(const Cipher *c)
 {
-	return (c->cbc_mode);
+	return (c->flags & CFLAG_CBC) != 0;
 }
 
 u_int
@@ -264,8 +277,11 @@ cipher_init(CipherContext *cc, const Cipher *cipher,
 		    ivlen, cipher->name);
 	cc->cipher = cipher;
 
+	if ((cc->cipher->flags & CFLAG_CHACHAPOLY) != 0) {
+		chachapoly_init(&cc->cp_ctx, key, keylen);
+		return;
+	}
 	type = (*cipher->evptype)();
-
 	EVP_CIPHER_CTX_init(&cc->evp);
 	if (EVP_CipherInit(&cc->evp, type, NULL, (u_char *)iv,
 	    (do_encrypt == CIPHER_ENCRYPT)) == 0)
@@ -310,9 +326,15 @@ cipher_init(CipherContext *cc, const Cipher *cipher,
  * Both 'aadlen' and 'authlen' can be set to 0.
  */
 void
-cipher_crypt(CipherContext *cc, u_char *dest, const u_char *src,
+cipher_crypt(CipherContext *cc, u_int seqnr, u_char *dest, const u_char *src,
     u_int len, u_int aadlen, u_int authlen)
 {
+	if ((cc->cipher->flags & CFLAG_CHACHAPOLY) != 0) {
+		if (chachapoly_crypt(&cc->cp_ctx, seqnr, dest, src, len, aadlen,
+		    authlen, cc->encrypt) != 0)
+			fatal("Decryption integrity check failed");
+		return;
+	}
 	if (authlen) {
 		u_char lastiv[1];
 
@@ -354,10 +376,26 @@ cipher_crypt(CipherContext *cc, u_char *dest, const u_char *src,
 	}
 }
 
+/* Extract the packet length, including any decryption necessary beforehand */
+int
+cipher_get_length(CipherContext *cc, u_int *plenp, u_int seqnr,
+    const u_char *cp, u_int len)
+{
+	if ((cc->cipher->flags & CFLAG_CHACHAPOLY) != 0)
+		return chachapoly_get_length(&cc->cp_ctx, plenp, seqnr,
+		    cp, len);
+	if (len < 4)
+		return -1;
+	*plenp = get_u32(cp);
+	return 0;
+}
+
 void
 cipher_cleanup(CipherContext *cc)
 {
-	if (EVP_CIPHER_CTX_cleanup(&cc->evp) == 0)
+	if ((cc->cipher->flags & CFLAG_CHACHAPOLY) != 0)
+		bzero(&cc->cp_ctx, sizeof(&cc->cp_ctx));
+	else if (EVP_CIPHER_CTX_cleanup(&cc->evp) == 0)
 		error("cipher_cleanup: EVP_CIPHER_CTX_cleanup failed");
 }
 
@@ -397,6 +435,8 @@ cipher_get_keyiv_len(const CipherContext *cc)
 
 	if (c->number == SSH_CIPHER_3DES)
 		ivlen = 24;
+	else if ((cc->cipher->flags & CFLAG_CHACHAPOLY) != 0)
+		ivlen = 0;
 	else
 		ivlen = EVP_CIPHER_CTX_iv_length(&cc->evp);
 	return (ivlen);
@@ -407,6 +447,12 @@ cipher_get_keyiv(CipherContext *cc, u_char *iv, u_int len)
 {
 	const Cipher *c = cc->cipher;
 	int evplen;
+
+	if ((cc->cipher->flags & CFLAG_CHACHAPOLY) != 0) {
+		if (len != 0)
+			fatal("%s: wrong iv length %d != %d", __func__, len, 0);
+		return;
+	}
 
 	switch (c->number) {
 	case SSH_CIPHER_SSH2:
@@ -438,6 +484,9 @@ cipher_set_keyiv(CipherContext *cc, u_char *iv)
 {
 	const Cipher *c = cc->cipher;
 	int evplen = 0;
+
+	if ((cc->cipher->flags & CFLAG_CHACHAPOLY) != 0)
+		return;
 
 	switch (c->number) {
 	case SSH_CIPHER_SSH2:
