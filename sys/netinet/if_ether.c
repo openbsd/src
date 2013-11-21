@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.111 2013/11/11 09:15:34 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.112 2013/11/21 09:08:38 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -868,8 +868,8 @@ arp_ifinit(struct arpcom *ac, struct ifaddr *ifa)
 
 	/* Warn the user if another station has this IP address. */
 	arprequest(&ac->ac_if,
-	    &(IA_SIN(ifa)->sin_addr.s_addr),
-	    &(IA_SIN(ifa)->sin_addr.s_addr),
+	    &satosin(ifa->ifa_addr)->sin_addr.s_addr,
+	    &satosin(ifa->ifa_addr)->sin_addr.s_addr,
 	    ac->ac_enaddr);
 	ifa->ifa_rtrequest = arp_rtrequest;
 	ifa->ifa_flags |= RTF_CLONING;
