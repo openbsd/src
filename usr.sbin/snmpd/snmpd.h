@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.47 2013/10/17 08:42:44 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.48 2013/11/21 17:32:13 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -217,6 +217,26 @@ struct kif {
 	int			 if_flags;
 	u_short			 if_index;
 };
+#define	if_mtu		if_data.ifi_mtu
+#define	if_type		if_data.ifi_type
+#define	if_addrlen	if_data.ifi_addrlen
+#define	if_hdrlen	if_data.ifi_hdrlen
+#define	if_metric	if_data.ifi_metric
+#define	if_link_state	if_data.ifi_link_state
+#define	if_baudrate	if_data.ifi_baudrate
+#define	if_ipackets	if_data.ifi_ipackets
+#define	if_ierrors	if_data.ifi_ierrors
+#define	if_opackets	if_data.ifi_opackets
+#define	if_oerrors	if_data.ifi_oerrors
+#define	if_collisions	if_data.ifi_collisions
+#define	if_ibytes	if_data.ifi_ibytes
+#define	if_obytes	if_data.ifi_obytes
+#define	if_imcasts	if_data.ifi_imcasts
+#define	if_omcasts	if_data.ifi_omcasts
+#define	if_iqdrops	if_data.ifi_iqdrops
+#define	if_noproto	if_data.ifi_noproto
+#define	if_lastchange	if_data.ifi_lastchange
+#define	if_capabilities	if_data.ifi_capabilities
 
 #define F_CONNECTED		0x0001
 #define F_STATIC		0x0002

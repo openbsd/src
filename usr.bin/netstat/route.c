@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.91 2013/09/29 10:45:40 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.92 2013/11/21 17:32:13 mikeb Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #define _KERNEL
