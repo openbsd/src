@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.56 2013/11/21 16:34:50 krw Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.57 2013/11/21 17:06:45 krw Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -745,7 +745,8 @@ sr_raid6_addio(struct sr_workunit *wu, int chunk, daddr_t blkno,
 	struct sr_raid6_opaque  *pqbuf;
 
 	DNPRINTF(SR_D_DIS, "sr_raid6_addio: %s %d.%llx %llx %p:%p\n",
-	    (xsflags & SCSI_DATA_IN) ? "read" : "write", chunk, blkno, len,
+	    (xsflags & SCSI_DATA_IN) ? "read" : "write", chunk,
+	    (long long)blkno, (long long)len,
 	    pbuf, qbuf);
 
 	/* Allocate temporary buffer. */

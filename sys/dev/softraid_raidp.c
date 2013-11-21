@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.54 2013/11/21 16:34:51 krw Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.55 2013/11/21 17:06:45 krw Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -577,8 +577,8 @@ sr_raidp_addio(struct sr_workunit *wu, int chunk, daddr_t blkno,
 	struct sr_ccb		*ccb;
 
 	DNPRINTF(SR_D_DIS, "sr_raidp_addio: %s %d.%llx %llx %s\n",
-	    (xsflags & SCSI_DATA_IN) ? "read" : "write", chunk, blkno, len,
-	    xorbuf ? "X0R" : "-");
+	    (xsflags & SCSI_DATA_IN) ? "read" : "write", chunk, 
+	    (long long)blkno, (long long)len, xorbuf ? "X0R" : "-");
 
 	/* Allocate temporary buffer. */
 	if (data == NULL) {
