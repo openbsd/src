@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_file.c,v 1.6 2013/06/01 23:06:26 tedu Exp $	*/
+/*	$OpenBSD: rthread_file.c,v 1.7 2013/11/21 17:45:10 fgsch Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -182,7 +182,7 @@ void
 		 * The file is not locked, so this thread can
 		 * grab the lock:
 		 */
-		p = do_lock(idx, fp);
+		do_lock(idx, fp);
 
 	/*
 	 * The file is already locked, so check if the
