@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.2 2013/10/28 17:02:08 eric Exp $	*/
+/*	$OpenBSD: ca.c,v 1.3 2013/11/21 08:36:51 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -60,7 +60,10 @@ ca_X509_verify(X509 *certificate, STACK_OF(X509) *chain, const char *CAfile,
 	if ((store = X509_STORE_new()) == NULL)
 		goto end;
 
-	X509_STORE_load_locations(store, CAfile, NULL);
+	if (! X509_STORE_load_locations(store, CAfile, NULL)) {
+		log_warn("warn: unable to load CA file %s", CAfile);
+		goto end;
+	}
 	X509_STORE_set_default_paths(store);
 
 	if ((xsc = X509_STORE_CTX_new()) == NULL)
