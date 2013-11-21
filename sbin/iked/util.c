@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.19 2013/10/24 02:55:50 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.20 2013/11/21 17:46:17 millert Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -447,12 +447,12 @@ print_hexval(u_int8_t *buf, off_t offset, size_t length)
 }
 
 const char *
-print_bits(u_short v, char *bits)
+print_bits(u_short v, u_char *bits)
 {
 	static char	 buf[IKED_CYCLE_BUFFERS][BUFSIZ];
 	static int	 idx = 0;
 	u_int		 i, any = 0, j = 0;
-	char		 c;
+	u_char		 c;
 
 	if (!bits)
 		return ("");

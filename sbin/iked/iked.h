@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.57 2013/11/14 12:38:20 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.58 2013/11/21 17:46:17 millert Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -829,7 +829,7 @@ void	 lc_string(char *);
 void	 print_hex(u_int8_t *, off_t, size_t);
 void	 print_hexval(u_int8_t *, off_t, size_t);
 const char *
-	 print_bits(u_short, char *);
+	 print_bits(u_short, u_char *);
 int	 sockaddr_cmp(struct sockaddr *, struct sockaddr *, int);
 u_int8_t mask2prefixlen(struct sockaddr *);
 u_int8_t mask2prefixlen6(struct sockaddr *);
