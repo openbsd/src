@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_concat.c,v 1.18 2013/11/01 17:36:19 krw Exp $ */
+/* $OpenBSD: softraid_concat.c,v 1.19 2013/11/21 16:34:50 krw Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -98,9 +98,10 @@ sr_concat_rw(struct sr_workunit *wu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_ccb		*ccb;
 	struct sr_chunk		*scp;
-	daddr_t			blk, lbaoffs, chunk, chunksize;
-	daddr_t			no_chunk, chunkend, physoffs;
-	daddr_t			length, leftover;
+	daddr_t			blk;
+	int64_t			lbaoffs, physoffs;
+	int64_t			no_chunk, chunkend, chunk, chunksize;
+	int64_t			length, leftover;
 	u_int8_t		*data;
 
 	/* blk and scsi error will be handled by sr_validate_io */

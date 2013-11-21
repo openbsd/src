@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.53 2013/11/05 08:55:58 reyk Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.54 2013/11/21 16:34:51 krw Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -338,9 +338,11 @@ sr_raidp_rw(struct sr_workunit *wu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_chunk		*scp;
 	int			s, i;
-	daddr_t			blk, lbaoffs, strip_no, chunk, row_size;
-	daddr_t			strip_size, no_chunk, lba, chunk_offs, phys_offs;
-	daddr_t			strip_bits, length, parity, strip_offs, datalen;
+	daddr_t			blk, lba;
+	int64_t			chunk_offs, lbaoffs, phys_offs, strip_offs;
+	int64_t			strip_bits, strip_no, strip_size;
+	int64_t			chunk, no_chunk;
+	int64_t			length, parity, datalen, row_size;
 	void			*xorbuf, *data;
 
 	/* blk and scsi error will be handled by sr_validate_io */
@@ -632,8 +634,8 @@ sr_raidp_xor(void *a, void *b, int len)
 void
 sr_raidp_scrub(struct sr_discipline *sd)
 {
-	daddr_t strip_no, strip_size, no_chunk, parity, max_strip, strip_bits;
-	daddr_t i;
+	int64_t strip_no, strip_size, no_chunk, parity, max_strip, strip_bits;
+	int64_t i;
 	struct sr_workunit *wu_r, *wu_w;
 	int s, slept;
 	void *xorbuf;

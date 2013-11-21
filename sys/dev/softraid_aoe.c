@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.34 2013/09/20 08:08:45 tedu Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.35 2013/11/21 16:34:50 krw Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -464,7 +464,8 @@ sr_aoe_request_done(struct aoe_req *ar, struct aoe_packet *ap)
 	struct sr_discipline	*sd;
 	struct scsi_xfer	*xs;
 	struct sr_workunit	*wu;
-	daddr_t			blk, offset;
+	daddr_t			blk;
+	int64_t			offset;
 	int			len, s;
 
 	wu = ar->v;

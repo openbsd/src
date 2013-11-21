@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.43 2013/11/05 08:55:58 reyk Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.44 2013/11/21 16:34:50 krw Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -121,9 +121,11 @@ sr_raid0_rw(struct sr_workunit *wu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_ccb		*ccb;
 	struct sr_chunk		*scp;
-	daddr_t			blk, lbaoffs, strip_no, chunk, stripoffs;
-	daddr_t			strip_size, no_chunk, chunkoffs, physoffs;
-	daddr_t			strip_bits, length, leftover;
+	daddr_t			blk;
+	int64_t			chunkoffs, lbaoffs, physoffs, stripoffs;
+	int64_t			strip_bits, strip_no, strip_size;
+	int64_t			chunk, no_chunk;
+	int64_t			length, leftover;
 	u_int8_t		*data;
 
 	/* blk and scsi error will be handled by sr_validate_io */
