@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vte.c,v 1.7 2013/08/07 01:06:38 bluhm Exp $	*/
+/*	$OpenBSD: if_vte.c,v 1.8 2013/11/21 16:16:08 mpi Exp $	*/
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -47,7 +47,6 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_llc.h>
 #include <net/if_media.h>
 
 #ifdef INET

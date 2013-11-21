@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_bip.c,v 1.3 2010/07/20 15:36:03 matthew Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_bip.c,v 1.4 2013/11/21 16:16:08 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -33,7 +33,6 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
-#include <net/if_llc.h>
 
 #ifdef INET
 #include <netinet/in.h>

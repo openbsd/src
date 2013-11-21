@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.39 2010/08/07 03:50:02 krw Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.40 2013/11/21 16:16:08 mpi Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -50,7 +50,6 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
-#include <net/if_llc.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

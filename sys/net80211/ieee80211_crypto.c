@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.60 2011/01/11 15:42:05 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.61 2013/11/21 16:16:08 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -32,7 +32,6 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
-#include <net/if_llc.h>
 
 #ifdef INET
 #include <netinet/in.h>

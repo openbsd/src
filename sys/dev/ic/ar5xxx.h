@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.50 2012/01/28 12:45:22 stsp Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.51 2013/11/21 16:16:08 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -48,7 +48,6 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
-#include <net/if_llc.h>
 
 #ifdef INET
 #include <netinet/in.h>
