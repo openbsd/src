@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.51 2013/08/28 06:58:57 mpi Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.52 2013/11/21 16:34:33 mikeb Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -146,6 +146,7 @@ struct	ether_arp {
 #define	arp_pln	ea_hdr.ar_pln
 #define	arp_op	ea_hdr.ar_op
 
+#ifdef _KERNEL
 /*
  * Structure shared between the ethernet driver modules and
  * the address resolution code.  For example, each ec_softc or il_softc
@@ -171,6 +172,7 @@ struct llinfo_arp {
 };
 #define MAX_HOLD_QUEUE 10
 #define MAX_HOLD_TOTAL 100
+#endif
 
 struct sockaddr_inarp {
 	u_int8_t  sin_len;
@@ -206,7 +208,6 @@ void	arp_rtrequest(int, struct rtentry *);
 int	ether_addmulti(struct ifreq *, struct arpcom *);
 int	ether_delmulti(struct ifreq *, struct arpcom *);
 int	ether_multiaddr(struct sockaddr *, u_int8_t[], u_int8_t[]);
-#endif /* _KERNEL */
 
 /*
  * Ethernet multicast address structure.  There is one of these for each
@@ -273,8 +274,6 @@ do {									\
 	(step).e_enm = LIST_FIRST(&(ac)->ac_multiaddrs);		\
 	ETHER_NEXT_MULTI((step), (enm));				\
 } while (/* CONSTCOND */ 0)
-
-#ifdef _KERNEL
 
 #ifdef NFSCLIENT
 extern struct ifnet *revarp_ifp;
