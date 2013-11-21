@@ -1829,6 +1829,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/if_trunk.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/if_tun.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/if_types.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/net/if_var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/if_vlan_var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/if_vxlan.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/netisr.ph
