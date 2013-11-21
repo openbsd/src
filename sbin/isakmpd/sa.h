@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.h,v 1.49 2006/11/24 13:52:14 reyk Exp $	 */
+/* $OpenBSD: sa.h,v 1.50 2013/11/21 22:25:02 yasuoka Exp $	 */
 /* $EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	 */
 
 /*
@@ -223,7 +223,10 @@ struct sa {
 /* Establish the SA when it is needed.  */
 #define SA_FLAG_ONDEMAND	0x04
 
-/* This SA has been replaced by another newer one.  */
+/*
+ * This SA has been replaced by another newer one or the SA for another
+ * client behind same NAT.
+ */
 #define SA_FLAG_REPLACED	0x08
 
 /* This SA has seen a soft timeout and wants to be renegotiated on use.  */
@@ -263,6 +266,7 @@ extern struct sa *sa_lookup_by_name(char *, int);
 extern struct sa *sa_lookup_from_icookie(u_int8_t *);
 extern struct sa *sa_lookup_isakmp_sa(struct sockaddr *, u_int8_t *);
 extern void     sa_mark_replaced(struct sa *);
+extern void     sa_replace(struct sa *, struct sa *);
 extern void     sa_reference(struct sa *);
 extern void     sa_release(struct sa *);
 extern void     sa_remove(struct sa *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.117 2012/06/30 14:51:31 naddy Exp $	 */
+/* $OpenBSD: sa.c,v 1.118 2013/11/21 22:25:01 yasuoka Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -48,6 +48,7 @@
 #include "connection.h"
 #include "cookie.h"
 #include "doi.h"
+#include "dpd.h"
 #include "exchange.h"
 #include "isakmp.h"
 #include "log.h"
@@ -1328,6 +1329,22 @@ sa_mark_replaced(struct sa *sa)
 		sa->dpd_event = 0;
 	}
 	sa->flags |= SA_FLAG_REPLACED;
+}
+
+/* Replace SA */
+void
+sa_replace(struct sa *sa, struct sa *new_sa)
+{
+	LOG_DBG((LOG_SA, 60, "sa_replace: SA %p (%s) is replaced by SA %p (%s)",
+	    sa, sa->name ? sa->name : "unnamed",
+	    new_sa, new_sa->name ? new_sa->name : "unnamed"));
+	sa_mark_replaced(sa);
+	if (new_sa->flags & SA_FLAG_REPLACED) {
+		/* enable the dpd */
+		if ((new_sa->flags & SA_FLAG_DPD) == SA_FLAG_DPD)
+			dpd_start(new_sa);
+		new_sa->flags &= ~SA_FLAG_REPLACED;
+	}
 }
 
 /*

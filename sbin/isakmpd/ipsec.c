@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.138 2012/06/30 14:51:31 naddy Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.139 2013/11/21 22:25:01 yasuoka Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -132,6 +132,8 @@ static int      ipsec_validate_notification(u_int16_t);
 static int      ipsec_validate_proto(u_int8_t);
 static int      ipsec_validate_situation(u_int8_t *, size_t *, size_t);
 static int      ipsec_validate_transform_id(u_int8_t, u_int8_t);
+static int      ipsec_sa_check_flow(struct sa *, void *);
+static int      ipsec_sa_check_flow_any(struct sa *, void *);
 static int      ipsec_sa_tag(struct exchange *, struct sa *, struct sa *);
 
 static struct doi ipsec_doi = {
@@ -254,11 +256,20 @@ ipsec_sa_lookup(struct sockaddr *dst, u_int32_t spi, u_int8_t proto)
 static int
 ipsec_sa_check_flow(struct sa *sa, void *v_arg)
 {
+	if ((sa->flags & (SA_FLAG_READY | SA_FLAG_REPLACED)) != SA_FLAG_READY)
+		return 0;
+
+	return ipsec_sa_check_flow_any(sa, v_arg);
+}
+
+static int
+ipsec_sa_check_flow_any(struct sa *sa, void *v_arg)
+{
 	struct sa      *sa2 = v_arg;
 	struct ipsec_sa *isa = sa->data, *isa2 = sa2->data;
 
 	if (sa == sa2 || sa->phase != 2 ||
-	    (sa->flags & (SA_FLAG_READY | SA_FLAG_REPLACED)) != SA_FLAG_READY)
+	    (sa->flags & SA_FLAG_READY) != SA_FLAG_READY)
 		return 0;
 
 	if (isa->tproto != isa2->tproto || isa->sport != isa2->sport ||
@@ -1561,8 +1572,23 @@ ipsec_decode_transform(struct message *msg, struct sa *sa, struct proto *proto,
 static void
 ipsec_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 {
+	struct sa *new_sa;
+	struct ipsec_proto *iproto;
+
 	if (sa->phase == 1)
 		return;
+
+	iproto = proto->data;
+	/*
+	 * If the SA is using UDP encap and it replaced other SA,
+	 * enable the other SA to keep the flow for the other SAs.
+	 */
+	if ((iproto->encap_mode == IPSEC_ENCAP_UDP_ENCAP_TRANSPORT ||
+	    iproto->encap_mode == IPSEC_ENCAP_UDP_ENCAP_TRANSPORT_DRAFT) &&
+	    (sa->flags & SA_FLAG_REPLACED) == 0 &&
+	    (new_sa = sa_find(ipsec_sa_check_flow_any, sa)) != NULL &&
+	    new_sa->flags & SA_FLAG_REPLACED)
+		sa_replace(sa, new_sa);
 
 	/*
 	 * If the SA was not replaced and was not one acquired through the
