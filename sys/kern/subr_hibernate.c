@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.80 2013/11/09 06:54:00 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.81 2013/11/21 00:13:33 dlg Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1059,7 +1059,6 @@ hibernate_block_io(union hibernate_info *hib, daddr_t blkctr,
 	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
 	SET(bp->b_flags, B_BUSY | (iswrite ? B_WRITE : B_READ) | B_RAW);
 	bp->b_dev = hib->dev;
-	bp->b_cylinder = 0;
 	(*bdsw->d_strategy)(bp);
 
 	error = biowait(bp);

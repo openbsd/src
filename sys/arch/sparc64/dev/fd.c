@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.42 2013/11/02 22:58:49 dlg Exp $	*/
+/*	$OpenBSD: fd.c,v 1.43 2013/11/21 00:13:33 dlg Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -725,6 +725,7 @@ fdstrategy(bp)
 	if (bp->b_bcount == 0)
 		goto done;
 
+	bp->b_resid = bp->b_bcount;
 	sz = howmany(bp->b_bcount, DEV_BSIZE);
 
 	if (bp->b_blkno + sz > (fd->sc_type->size * DEV_BSIZE) / FD_BSIZE(fd)) {
@@ -732,7 +733,6 @@ fdstrategy(bp)
 		     - bp->b_blkno;
 		if (sz == 0) {
 			/* If exactly at end of disk, return EOF. */
-			bp->b_resid = bp->b_bcount;
 			goto done;
 		}
 		if (sz < 0) {
@@ -744,14 +744,11 @@ fdstrategy(bp)
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
- 	bp->b_cylinder = (bp->b_blkno * DEV_BSIZE) /
-	    (FD_BSIZE(fd) * fd->sc_type->seccyl);
-
 #ifdef FD_DEBUG
 	if (fdc_debug > 1)
-	    printf("fdstrategy: b_blkno %lld b_bcount %d blkno %lld cylin %d\n",
+	    printf("fdstrategy: b_blkno %lld b_bcount %d blkno %lld\n",
 		    (long long)bp->b_blkno, bp->b_bcount,
-		    (long long)fd->sc_blkno, bp->b_cylinder);
+		    (long long)fd->sc_blkno);
 #endif
 
 	/* Queue transfer */
@@ -822,7 +819,6 @@ fdfinish(fd, bp)
 			TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
 	}
 
-	bp->b_resid = fd->sc_bcount;
 	biodone(bp);
 	/* turn off motor 5s from now */
 	timeout_add_sec(&fd->sc_motoroff_to, 5);
@@ -1295,7 +1291,7 @@ fdcstate(fdc)
 
 	struct fd_softc *fd;
 	struct buf *bp;
-	int read, head, sec, nblks;
+	int read, head, sec, nblks, cylin;
 	struct fd_type *type;
 	struct fd_formb *finfo = NULL;
 
@@ -1329,6 +1325,9 @@ loop:
 
 	if (bp->b_flags & B_FORMAT)
 		finfo = (struct fd_formb *)bp->b_data;
+
+	cylin = ((bp->b_blkno * DEV_BSIZE) - (bp->b_bcount - bp->b_resid)) /
+	    (FD_BSIZE(fd) * fd->sc_type->seccyl);
 
 	switch (fdc->sc_state) {
 	case DEVIDLE:
@@ -1371,12 +1370,12 @@ loop:
 	doseek:
 		if ((fdc->sc_flags & FDC_EIS) &&
 		    (bp->b_flags & B_FORMAT) == 0) {
-			fd->sc_cylin = bp->b_cylinder;
+			fd->sc_cylin = cylin;
 			/* We use implied seek */
 			goto doio;
 		}
 
-		if (fd->sc_cylin == bp->b_cylinder)
+		if (fd->sc_cylin == cylin);
 			goto doio;
 
 		fd->sc_cylin = -1;
@@ -1398,7 +1397,7 @@ loop:
 		/* seek function */
 		FDC_WRFIFO(fdc, NE7CMD_SEEK);
 		FDC_WRFIFO(fdc, fd->sc_drive); /* drive number */
-		FDC_WRFIFO(fdc, bp->b_cylinder * fd->sc_type->step);
+		FDC_WRFIFO(fdc, cylin * fd->sc_type->step);
 		return (1);
 
 	case DODSKCHG:
@@ -1531,7 +1530,7 @@ loop:
 
 		/* Make sure seek really happened. */
 		if (fdc->sc_nstat != 2 || (st0 & 0xf8) != 0x20 ||
-		    cyl != bp->b_cylinder * fd->sc_type->step) {
+		    cyl != cylin * fd->sc_type->step) {
 #ifdef FD_DEBUG
 			if (fdc_debug)
 				fdcstatus(fdc, "seek failed");
@@ -1539,7 +1538,7 @@ loop:
 			fdcretry(fdc);
 			goto loop;
 		}
-		fd->sc_cylin = bp->b_cylinder;
+		fd->sc_cylin = cylin;
 		goto doio;
 
 	case IOTIMEDOUT:
@@ -1647,8 +1646,9 @@ loop:
 		fd->sc_blkno += fd->sc_nblks;
 		fd->sc_skip += fd->sc_nbytes;
 		fd->sc_bcount -= fd->sc_nbytes;
+		bp->b_resid -= fd->sc_nbytes;
 		if (finfo == NULL && fd->sc_bcount > 0) {
-			bp->b_cylinder = fd->sc_blkno / fd->sc_type->seccyl;
+			cylin = fd->sc_blkno / fd->sc_type->seccyl;
 			goto doseek;
 		}
 		fdfinish(fd, bp);
@@ -1796,6 +1796,7 @@ fdcretry(fdc)
 	failsilent:
 		bp->b_flags |= B_ERROR;
 		bp->b_error = error;
+		bp->b_resid = bp->b_bcount;
 		fdfinish(fd, bp);
 	}
 	fdc->sc_errors++;

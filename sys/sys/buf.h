@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.91 2013/11/20 23:52:42 dlg Exp $	*/
+/*	$OpenBSD: buf.h,v 1.92 2013/11/21 00:13:33 dlg Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -186,12 +186,6 @@ struct buf {
 	int	b_validend;		/* Offset of end of valid region. */
  	struct	workhead b_dep;		/* List of filesystem dependencies. */
 };
-
-/*
- * For portability with historic industry practice, the cylinder number has
- * to be maintained in the `b_resid' field.
- */
-#define	b_cylinder b_resid		/* Cylinder number for disksort(). */
 
 /* Device driver compatibility definitions. */
 #define	b_active b_bcount		/* Driver queue head: drive active. */

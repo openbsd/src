@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.96 2013/11/01 17:36:19 krw Exp $	*/
+/*	$OpenBSD: fd.c,v 1.97 2013/11/21 00:13:33 dlg Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -409,12 +409,12 @@ fdstrategy(struct buf *bp)
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
- 	bp->b_cylinder = bp->b_blkno / (fd_bsize / DEV_BSIZE) / fd->sc_type->seccyl;
+	bp->b_resid = bp->b_bcount;
 
 #ifdef FD_DEBUG
-	printf("fdstrategy: b_blkno %lld b_bcount %d blkno %lld cylin %d "
-	    "sz %d\n", (long long)bp->b_blkno, bp->b_bcount,
-	    (long long)fd->sc_blkno, bp->b_cylinder, sz);
+	printf("fdstrategy: b_blkno %lld b_bcount %d blkno %lld sz %d\n",
+	    (long long)bp->b_blkno, bp->b_bcount,
+	    (long long)fd->sc_blkno, sz);
 #endif
 
 	/* Queue I/O */
@@ -469,7 +469,6 @@ fdfinish(struct fd_softc *fd, struct buf *bp)
 
 	splassert(IPL_BIO);
 
-	bp->b_resid = fd->sc_bcount;
 	fd->sc_skip = 0;
 	fd->sc_bp = bufq_dequeue(&fd->sc_bufq);
 
@@ -652,7 +651,7 @@ fdintr(struct fdc_softc *fdc)
 	bus_space_tag_t iot = fdc->sc_iot;
 	bus_space_handle_t ioh = fdc->sc_ioh;
 	bus_space_handle_t ioh_ctl = fdc->sc_ioh_ctl;
-	int read, head, sec, i, nblks;
+	int read, head, sec, i, nblks, cylin;
 	struct fd_type *type;
 	struct fd_formb *finfo = NULL;
 	int fd_bsize;
@@ -675,6 +674,9 @@ loop:
 
 	if (bp->b_flags & B_FORMAT)
 	    finfo = (struct fd_formb *)bp->b_data;
+
+	cylin = ((bp->b_blkno * DEV_BSIZE) + (bp->b_bcount - bp->b_resid)) /
+	    (fd_bsize * fd->sc_type->seccyl);
 
 	switch (fdc->sc_state) {
 	case DEVIDLE:
@@ -708,7 +710,7 @@ loop:
 		/* FALLTHROUGH */
 	case DOSEEK:
 	doseek:
-		if (fd->sc_cylin == bp->b_cylinder)
+		if (fd->sc_cylin == cylin)
 			goto doio;
 
 		out_fdc(iot, ioh, NE7CMD_SPECIFY);/* specify command */
@@ -717,7 +719,7 @@ loop:
 
 		out_fdc(iot, ioh, NE7CMD_SEEK);	/* seek function */
 		out_fdc(iot, ioh, fd->sc_drive);	/* drive number */
-		out_fdc(iot, ioh, bp->b_cylinder * fd->sc_type->step);
+		out_fdc(iot, ioh, cylin * fd->sc_type->step);
 
 		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
@@ -805,14 +807,14 @@ loop:
 		/* Make sure seek really happened. */
 		out_fdc(iot, ioh, NE7CMD_SENSEI);
 		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 ||
-		    cyl != bp->b_cylinder * fd->sc_type->step) {
+		    cyl != cylin * fd->sc_type->step) {
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 2, "seek failed");
 #endif
 			fdretry(fd);
 			goto loop;
 		}
-		fd->sc_cylin = bp->b_cylinder;
+		fd->sc_cylin = cylin;
 		goto doio;
 
 	case IOTIMEDOUT:
@@ -848,11 +850,13 @@ loop:
 			printf("\n");
 			fdc->sc_errors = 0;
 		}
+
 		fd->sc_blkno += fd->sc_nblks;
 		fd->sc_skip += fd->sc_nbytes;
 		fd->sc_bcount -= fd->sc_nbytes;
+		bp->b_resid -= fd->sc_nbytes;
 		if (!finfo && fd->sc_bcount > 0) {
-			bp->b_cylinder = fd->sc_blkno / fd->sc_type->seccyl;
+			cylin = fd->sc_blkno / fd->sc_type->seccyl;
 			goto doseek;
 		}
 		fdfinish(fd, bp);
@@ -976,6 +980,7 @@ fdretry(struct fd_softc *fd)
 
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
+		bp->b_resid = bp->b_bcount;
 		fdfinish(fd, bp);
 	}
 	fdc->sc_errors++;

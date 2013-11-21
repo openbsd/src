@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.122 2013/11/20 23:57:07 miod Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.123 2013/11/21 00:13:33 dlg Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1293,9 +1293,6 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 
 		/* patch it back to the vnx */
 		task_set(&nbp->vb_task, sw_reg_iodone_internal, nbp, vnx);
-
-		/* XXX: In case the underlying bufq is disksort: */
-		nbp->vb_buf.b_cylinder = nbp->vb_buf.b_blkno;
 
 		s = splbio();
 		if (vnx->vx_error != 0) {
