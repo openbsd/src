@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrmt.c,v 1.20 2012/12/04 02:38:51 deraadt Exp $	*/
+/*	$OpenBSD: mtrmt.c,v 1.21 2013/11/21 15:54:45 deraadt Exp $	*/
 /*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
@@ -158,11 +158,11 @@ rmtgetconn(void)
 static int
 okname(char *cp0)
 {
-	char *cp;
+	unsigned char *cp;
 	int c;
 
 	for (cp = cp0; *cp; cp++) {
-		c = *cp;
+		c = (unsigned char)*cp;
 		if (!isascii(c) || !(isalnum(c) || c == '_' || c == '-')) {
 			warnx("invalid user name: %s", cp0);
 			return (0);

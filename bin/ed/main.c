@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.35 2013/01/15 20:26:28 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.36 2013/11/21 15:54:45 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -298,7 +298,7 @@ extract_addr_range(void)
 
 #define	SKIP_BLANKS() \
 	do { \
-		while (isspace(*ibufp) && *ibufp != '\n') \
+		while (isspace((unsigned char)*ibufp) && *ibufp != '\n') \
 			ibufp++; \
 	} while (0)
 
@@ -323,7 +323,7 @@ next_addr(void)
 
 	SKIP_BLANKS();
 	for (hd = ibufp;; first = 0)
-		switch ((c = *ibufp)) {
+		switch ((c = (unsigned char)*ibufp)) {
 		case '+':
 		case '\t':
 		case ' ':
@@ -331,7 +331,7 @@ next_addr(void)
 		case '^':
 			ibufp++;
 			SKIP_BLANKS();
-			if (isdigit(*ibufp)) {
+			if (isdigit((unsigned char)*ibufp)) {
 				STRTOI(n, ibufp);
 				addr += (c == '-' || c == '^') ? -n : n;
 			} else if (!isspace(c))
@@ -361,7 +361,7 @@ next_addr(void)
 		case '\'':
 			MUST_BE_FIRST();
 			ibufp++;
-			if ((addr = get_marked_node_addr(*ibufp++)) < 0)
+			if ((addr = get_marked_node_addr((unsigned char)*ibufp++)) < 0)
 				return ERR;
 			break;
 		case '%':
@@ -491,7 +491,7 @@ exec_command(void)
 	int c;
 
 	SKIP_BLANKS();
-	switch ((c = *ibufp++)) {
+	switch ((c = (unsigned char)*ibufp++)) {
 	case 'a':
 		GET_COMMAND_SUFFIX();
 		if (!isglobal) clear_undo_stack();
@@ -525,7 +525,7 @@ exec_command(void)
 		if (addr_cnt > 0) {
 			seterrmsg("unexpected address");
 			return ERR;
-		} else if (!isspace(*ibufp)) {
+		} else if (!isspace((unsigned char)*ibufp)) {
 			seterrmsg("unexpected command suffix");
 			return ERR;
 		} else if ((fnp = get_filename()) == NULL)
@@ -556,7 +556,7 @@ exec_command(void)
 		if (addr_cnt > 0) {
 			seterrmsg("unexpected address");
 			return ERR;
-		} else if (!isspace(*ibufp)) {
+		} else if (!isspace((unsigned char)*ibufp)) {
 			seterrmsg("unexpected command suffix");
 			return ERR;
 		} else if ((fnp = get_filename()) == NULL)
@@ -624,7 +624,7 @@ exec_command(void)
 			return ERR;
 		break;
 	case 'k':
-		c = *ibufp++;
+		c = (unsigned char)*ibufp++;
 		if (second_addr == 0) {
 			seterrmsg("invalid address");
 			return ERR;
@@ -688,7 +688,7 @@ exec_command(void)
 		gflag =  (modified && !scripted && c == 'q') ? EMOD : EOF;
 		break;
 	case 'r':
-		if (!isspace(*ibufp)) {
+		if (!isspace((unsigned char)*ibufp)) {
 			seterrmsg("unexpected command suffix");
 			return ERR;
 		} else if (addr_cnt == 0)
@@ -827,7 +827,7 @@ exec_command(void)
 			gflag = EOF;
 			ibufp++;
 		}
-		if (!isspace(*ibufp)) {
+		if (!isspace((unsigned char)*ibufp)) {
 			seterrmsg("unexpected command suffix");
 			return ERR;
 		} else if ((fnp = get_filename()) == NULL)

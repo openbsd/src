@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.58 2013/10/31 01:59:33 deraadt Exp $	*/
+/*	$OpenBSD: ps.c,v 1.59 2013/11/21 15:54:45 deraadt Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -444,7 +444,7 @@ kludge_oldps_options(char *s)
 		 * otherwise check for trailing number, which *may* be a
 		 * pid.
 		 */
-		while (cp >= s && isdigit(*cp))
+		while (cp >= s && isdigit((unsigned char)*cp))
 			--cp;
 	}
 	cp++;
@@ -454,7 +454,8 @@ kludge_oldps_options(char *s)
 	 * if there's a trailing number, and not a preceding 'p' (pid) or
 	 * 't' (tty) flag, then assume it's a pid and insert a 'p' flag.
 	 */
-	if (isdigit(*cp) && (cp == s || (cp[-1] != 't' && cp[-1] != 'p' &&
+	if (isdigit((unsigned char)*cp) &&
+	    (cp == s || (cp[-1] != 't' && cp[-1] != 'p' &&
 	    (cp - 1 == s || cp[-2] != 't'))))
 		*ns++ = 'p';
 	/* and append the number */

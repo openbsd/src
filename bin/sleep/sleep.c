@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.19 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.20 2013/11/21 15:54:46 deraadt Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 
 	cp = *argv;
 	while ((*cp != '\0') && (*cp != '.')) {
-		if (!isdigit(*cp))
+		if (!isdigit((unsigned char)*cp))
 			usage();
 		t = (secs * 10) + (*cp++ - '0');
 		if (t / 10 != secs)	/* oflow */
@@ -85,7 +85,7 @@ main(int argc, char *argv[])
 		for (i = 100000000; i > 0; i /= 10) {
 			if (*cp == '\0')
 				break;
-			if (!isdigit(*cp))
+			if (!isdigit((unsigned char)*cp))
 				usage();
 			nsecs += (*cp++ - '0') * i;
 		}
@@ -96,7 +96,7 @@ main(int argc, char *argv[])
 		 * checking the rest of the argument.
 		 */
 		while (*cp != '\0') {
-			if (!isdigit(*cp++))
+			if (!isdigit((unsigned char)*cp++))
 				usage();
 		}
 	}

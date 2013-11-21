@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.11 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: test.c,v 1.12 2013/11/21 15:54:46 deraadt Exp $	*/
 /*	$NetBSD: test.c,v 1.15 1995/03/21 07:04:06 cgd Exp $	*/
 
 /*
@@ -459,7 +459,7 @@ getn(const char *s)
 	if (errno != 0)
 		errx(2, "%s: out of range", s);
 
-	while (isspace(*p))
+	while (isspace((unsigned char)*p))
 		p++;
 
 	if (*p)

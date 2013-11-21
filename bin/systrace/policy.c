@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.33 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: policy.c,v 1.34 2013/11/21 15:54:46 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -362,7 +362,7 @@ systrace_policyfilename(char *dirname, const char *name)
 
 	p = name;
 	while (*p) {
-		if (!isalnum(*p)) {
+		if (!isalnum((unsigned char)*p)) {
 			if (i != plen)
 				file[i++] = '_';
 		} else
@@ -592,7 +592,7 @@ systrace_policyline(char *line)
 	/* Remove trailing white space */
 	p = line + strlen(line) - 1;
 	while (p > line) {
-		if (!isspace(*p))
+		if (!isspace((unsigned char)*p))
 			break;
 		*p-- = '\0';
 	}

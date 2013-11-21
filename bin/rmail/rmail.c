@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmail.c,v 1.25 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: rmail.c,v 1.26 2013/11/21 15:54:46 deraadt Exp $	*/
 /*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
@@ -141,7 +141,9 @@ main(int argc, char *argv[])
 		/* Use the "remote from" if it exists. */
 		for (p = addrp; (p = strchr(p + 1, 'r')) != NULL;)
 			if (!strncmp(p, "remote from ", 12)) {
-				for (t = p += 12; *t && !isspace(*t); ++t);
+				for (t = p += 12;
+				    *t && !isspace((unsigned char)*t); ++t)
+					;
 				*t = '\0';
 				if (debug)
 					(void)fprintf(stderr,
@@ -169,7 +171,8 @@ main(int argc, char *argv[])
 		/* 'p' now points to any system string from this line. */
 		if (p != NULL) {
 			/* Nul terminate it as necessary. */
-			for (t = p; *t && !isspace(*t); ++t);
+			for (t = p; *t && !isspace((unsigned char)*t); ++t)
+				;
 			*t = '\0';
 
 			/* If the first system, copy to the from_sys string. */
@@ -205,7 +208,8 @@ main(int argc, char *argv[])
 		}
 
 		/* Save off from user's address; the last one wins. */
-		for (p = addrp; *p && !isspace(*p); ++p);
+		for (p = addrp; *p && !isspace((unsigned char)*p); ++p)
+			;
 		*p = '\0';
 		if (*addrp == '\0')
 			addrp = "<>";

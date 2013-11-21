@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.48 2013/07/03 04:08:29 guenther Exp $	*/
+/*	$OpenBSD: tar.c,v 1.49 2013/11/21 15:54:45 deraadt Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -1228,7 +1228,7 @@ rd_xheader(ARCHD *arcn, char *buf, off_t size, char typeflag)
 		return (-1);
 
 	for (p = buf; size > 0; size -= len, p = nextp) {
-		if (!isdigit(*p)) {
+		if (!isdigit((unsigned char)*p)) {
 			paxwarn(1, "Invalid extended header record");
 			return (-1);
 		}

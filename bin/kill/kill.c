@@ -1,4 +1,4 @@
-/*	$OpenBSD: kill.c,v 1.10 2011/06/06 07:20:13 otto Exp $	*/
+/*	$OpenBSD: kill.c,v 1.11 2013/11/21 15:54:45 deraadt Exp $	*/
 /*	$NetBSD: kill.c,v 1.11 1995/09/07 06:30:27 jtc Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ main(int argc, char *argv[])
 		if (argc > 1)
 			usage();
 		if (argc == 1) {
-			if (!isdigit(**argv))
+			if (!isdigit((unsigned char)**argv))
 				usage();
 			numsig = strtol(*argv, &ep, 10);
 			if (*ep)
@@ -92,10 +92,10 @@ main(int argc, char *argv[])
 		argc--, argv++;
 	} else if (**argv == '-') {
 		++*argv;
-		if (isalpha(**argv)) {
+		if (isalpha((unsigned char)**argv)) {
 			if ((numsig = signame_to_signum(*argv)) < 0)
 				nosig(*argv);
-		} else if (isdigit(**argv)) {
+		} else if (isdigit((unsigned char)**argv)) {
 			numsig = strtol(*argv, &ep, 10);
 			if (*ep)
 				errx(1, "illegal signal number: %s", *argv);

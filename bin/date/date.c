@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.39 2013/10/20 03:07:35 guenther Exp $	*/
+/*	$OpenBSD: date.c,v 1.40 2013/11/21 15:54:44 deraadt Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 			break;
 		case 't':		/* minutes west of GMT */
 					/* error check; don't allow "PST" */
-			if (isdigit(*optarg)) {
+			if (isdigit((unsigned char)*optarg)) {
 				tz.tz_minuteswest = atoi(optarg);
 				break;
 			}
@@ -154,7 +154,7 @@ setthetime(char *p)
 	int yearset = 0;
 
 	for (t = p, dot = NULL; *t; ++t) {
-		if (isdigit(*t))
+		if (isdigit((unsigned char)*t))
 			continue;
 		if (*t == '.' && dot == NULL) {
 			dot = t;

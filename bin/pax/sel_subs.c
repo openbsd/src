@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.21 2012/12/04 02:24:45 deraadt Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.22 2013/11/21 15:54:45 deraadt Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -534,7 +534,7 @@ str_sec(const char *p, time_t *tval)
 	len = strlen(p);
 
 	for (t = p, dot = NULL; *t; ++t) {
-		if (isdigit(*t))
+		if (isdigit((unsigned char)*t))
 			continue;
 		if (*t == '.' && dot == NULL) {
 			dot = t;

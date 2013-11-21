@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.56 2013/04/15 15:54:17 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.57 2013/11/21 15:54:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -584,7 +584,7 @@ digest_filelist(const char *file, struct hash_function *defhash)
 			lbuf[len] = '\0';
 			buf = lbuf;
 		}
-		while (isspace(*buf))
+		while (isspace((unsigned char)*buf))
 			buf++;
 
 		/*
@@ -658,7 +658,7 @@ digest_filelist(const char *file, struct hash_function *defhash)
 					continue;
 			}
 			*p++ = '\0';
-			while (isspace(*p))
+			while (isspace((unsigned char)*p))
 				p++;
 			if (*p == '\0')
 				continue;
