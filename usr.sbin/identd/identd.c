@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.22 2013/11/12 19:47:52 deraadt Exp $ */
+/*	$OpenBSD: identd.c,v 1.23 2013/11/21 03:09:07 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -745,7 +745,7 @@ void
 identd_request(int fd, short events, void *arg)
 {
 	struct ident_client *c = arg;
-	char buf[64];
+	unsigned char buf[64];
 	ssize_t n, i;
 	char *errstr = unknown_err ? "UNKNOWN-ERROR" : "INVALID-PORT";
 
