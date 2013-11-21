@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.45 2013/10/05 21:17:29 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.46 2013/11/21 01:47:10 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -716,7 +716,7 @@ index_merge(const struct of *of, struct mparse *mp,
 			}
 			buf_appendb(buf, ")", 2);
 			for (p = buf->cp; '\0' != *p; p++)
-				*p = tolower(*p);
+				*p = tolower((unsigned char)*p);
 			key.data = buf->cp;
 			key.size = buf->len;
 			val.data = NULL;

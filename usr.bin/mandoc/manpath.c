@@ -1,4 +1,4 @@
-/*	$Id: manpath.c,v 1.6 2013/05/29 23:15:11 schwarze Exp $ */
+/*	$Id: manpath.c,v 1.7 2013/11/21 01:47:10 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -159,7 +159,7 @@ manpath_manconf(struct manpaths *dirs, const char *file)
 		if (strncmp(MAN_CONF_KEY, p, keysz))
 			continue;
 		p += keysz;
-		while (isspace(*p))
+		while (isspace((unsigned char)*p))
 			p++;
 		if ('\0' == *p)
 			continue;
