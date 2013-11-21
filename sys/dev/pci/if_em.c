@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.271 2013/11/15 14:53:03 deraadt Exp $ */
+/* $OpenBSD: if_em.c,v 1.272 2013/11/21 14:44:37 jsg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -130,6 +130,10 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82578DM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82579LM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82579V },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I217_LM },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I217_V },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_LM },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_V },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_COPPER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_FIBER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_SERDES },
@@ -788,6 +792,7 @@ em_init(void *arg)
 		break;
 	case em_pchlan:
 	case em_pch2lan:
+	case em_pch_lpt:
 		pba = E1000_PBA_26K;
 		break;
 	default:
@@ -1626,7 +1631,8 @@ em_allocate_pci_resources(struct em_softc *sc)
 	    sc->hw.mac_type == em_ich9lan ||
 	    sc->hw.mac_type == em_ich10lan ||
 	    sc->hw.mac_type == em_pchlan ||
-	    sc->hw.mac_type == em_pch2lan) {
+	    sc->hw.mac_type == em_pch2lan ||
+	    sc->hw.mac_type == em_pch_lpt) {
 		val = pci_conf_read(pa->pa_pc, pa->pa_tag, EM_FLASH);
 		if (PCI_MAPREG_TYPE(val) != PCI_MAPREG_TYPE_MEM) {
 			printf(": flash is not mem space\n");
