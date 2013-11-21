@@ -1553,6 +1553,7 @@
 ./usr/share/man/man4/armish/mem.4
 ./usr/share/man/man4/armv7
 ./usr/share/man/man4/armv7/cpsw.4
+./usr/share/man/man4/armv7/omgpio.4
 ./usr/share/man/man4/armv7/ommmc.4
 ./usr/share/man/man4/arp.4
 ./usr/share/man/man4/art.4
