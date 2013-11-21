@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/* $OpenBSD: cipher-chachapoly.c,v 1.2 2013/11/21 02:50:00 djm Exp $ */
+
 #include <sys/types.h>
 #include <stdarg.h> /* needed for log.h */
 #include <string.h>

@@ -3,6 +3,8 @@
  * poly1305-donna-unrolled.c from https://github.com/floodyberry/poly1305-donna
  */
 
+/* $OpenBSD: poly1305.c,v 1.2 2013/11/21 02:50:00 djm Exp $ */
+
 #include <sys/types.h>
 #include <stdint.h>
 
