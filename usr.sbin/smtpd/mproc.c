@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.5 2013/10/24 19:20:46 eric Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.6 2013/11/21 08:35:54 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -170,7 +170,7 @@ mproc_dispatch(int fd, short event, void *arg)
 
 	if (event & EV_WRITE) {
 		n = msgbuf_write2(&p->imsgbuf.w);
-		if (n == -1) {
+		if (n == 0 || (n == -1 && errno != EAGAIN)) {
 			/* this pipe is dead, so remove the event handler */
 			if (smtpd_process != PROC_CONTROL ||
 			    p->proc != PROC_CLIENT)
@@ -178,9 +178,10 @@ mproc_dispatch(int fd, short event, void *arg)
 				    proc_name(smtpd_process),  p->name);
 			p->handler(p, NULL);
 			return;
+		} else if (n != -1) {
+			p->bytes_out += n;
+			p->bytes_queued -= n;
 		}
-		p->bytes_out += n;
-		p->bytes_queued -= n;
 	}
 
 	for (;;) {
@@ -248,7 +249,7 @@ msgbuf_write2(struct msgbuf *msgbuf)
 
 again:
 	if ((n = sendmsg(msgbuf->fd, &msg, 0)) == -1) {
-		if (errno == EAGAIN || errno == EINTR)
+		if (errno == EINTR)
 			goto again;
 		if (errno == ENOBUFS)
 			errno = EAGAIN;
