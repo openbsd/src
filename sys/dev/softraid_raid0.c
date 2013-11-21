@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.44 2013/11/21 16:34:50 krw Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.45 2013/11/21 16:54:46 krw Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -162,10 +162,8 @@ sr_raid0_rw(struct sr_workunit *wu)
 		    "chunkoffs %lld physoffs %lld length %lld "
 		    "leftover %lld data %p\n",
 		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, sd->sd_name,
-		    (long long)lbaoffs, (long long)strip_no, (long long)chunk,
-		    (long long)stripoffs, (long long)chunkoffs,
-		    (long long)physoffs, (long long)length, (long long)leftover,
-		    data);
+		    lbaoffs, strip_no, chunk, stripoffs, chunkoffs, physoffs,
+		    length, leftover, data);
 
 		blk = physoffs >> DEV_BSHIFT;
 		ccb = sr_ccb_rw(sd, chunk, blk, length, data, xs->flags, 0);

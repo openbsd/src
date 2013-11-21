@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_concat.c,v 1.19 2013/11/21 16:34:50 krw Exp $ */
+/* $OpenBSD: softraid_concat.c,v 1.20 2013/11/21 16:54:46 krw Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -145,9 +145,7 @@ sr_concat_rw(struct sr_workunit *wu)
 		    "chunk %lld chunkend %lld physoffs %lld length %lld "
 		    "leftover %lld data %p\n",
 		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, sd->sd_name,
-		    (long long)lbaoffs, (long long)chunk, (long long)chunkend,
-		    (long long)physoffs, (long long)length, (long long)leftover,
-		    data);
+		    lbaoffs, chunk, chunkend, physoffs, length, leftover, data);
 
 		blk = physoffs >> DEV_BSHIFT;
 		ccb = sr_ccb_rw(sd, chunk, blk, length, data, xs->flags, 0);
