@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndisreg.h,v 1.18 2013/11/08 10:12:20 pirofti Exp $ */
+/*	$OpenBSD: if_urndisreg.h,v 1.19 2013/11/21 14:08:05 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -41,6 +41,7 @@ struct urndis_cdata {
 struct urndis_softc {
 	struct device			sc_dev;
 
+	char				sc_attached;
 	struct arpcom			sc_arpcom;
 
 	/* RNDIS device info */

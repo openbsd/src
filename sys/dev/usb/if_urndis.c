@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.43 2013/11/15 10:17:39 pirofti Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.44 2013/11/21 14:08:05 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -1487,6 +1487,7 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
+	sc->sc_attached = 1;
 
 	splx(s);
 }
@@ -1502,6 +1503,9 @@ urndis_detach(struct device *self, int flags)
 
 	DPRINTF(("urndis_detach: %s flags %u\n", DEVNAME(sc),
 	    flags));
+	
+	if (!sc->sc_attached)
+		return 0;
 
 	s = splusb();
 
@@ -1513,6 +1517,7 @@ urndis_detach(struct device *self, int flags)
 	}
 
 	urndis_stop(sc);
+	sc->sc_attached = 0;
 
 	splx(s);
 
