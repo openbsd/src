@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.13 2013/10/08 04:57:39 guenther Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.14 2013/11/21 22:03:26 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -276,9 +276,7 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 	size = fbuf->fb_io_len;
 	startsave = 0;
 
-	fbuf->fb_dat = malloc(FUSEBUFMAXSIZE);
-	bzero(fbuf->fb_dat, FUSEBUFMAXSIZE);
-
+	fbuf->fb_dat = malloc(size);
 	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
 
 	if (!vn->fd->filled) {
@@ -312,6 +310,9 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 		fbuf->fb_len = 0;
 		vn->fd->filled = 1;
 	}
+
+	if (fbuf->fb_len == 0)
+		free(fbuf->fb_dat);
 
 	return (0);
 }
@@ -426,6 +427,9 @@ ifuse_ops_read(struct fuse *f, struct fusebuf *fbuf)
 		fbuf->fb_len = ret;
 	else
 		fbuf->fb_err = ret;
+
+	if (fbuf->fb_len == 0)
+		free(fbuf->fb_dat);
 
 	return (0);
 }
@@ -557,15 +561,10 @@ ifuse_ops_readlink(struct fuse *f, struct fusebuf *fbuf)
 		ret = -ENOSYS;
 	free(realname);
 
-	if (!ret)
-		len = strnlen(name, PATH_MAX);
-	else
-		len = -1;
-
-	fbuf->fb_len = len + 1;
 	fbuf->fb_err = ret;
-
 	if (!ret) {
+		len = strnlen(name, PATH_MAX);
+		fbuf->fb_len = len + 1;
 		fbuf->fb_dat = malloc(fbuf->fb_len);
 		memcpy(fbuf->fb_dat, name, len);
 		fbuf->fb_dat[len] = '\0';
