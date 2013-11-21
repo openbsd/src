@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.277 2013/11/12 04:59:02 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.278 2013/11/21 17:24:34 millert Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -505,7 +505,7 @@ int	getinfo(struct ifreq *, int);
 void	getsock(int);
 void	printgroupattribs(char *);
 void	printif(char *, int);
-void	printb_status(unsigned short, char *);
+void	printb_status(unsigned short, unsigned char *);
 const char *get_linkstate(int, int);
 void	status(int, struct sockaddr_dl *, int);
 void	usage(int);
@@ -4556,10 +4556,10 @@ in_getprefix(const char *plen, int which)
  * Print a value a la the %b format of the kernel's printf
  */
 void
-printb(char *s, unsigned int v, char *bits)
+printb(char *s, unsigned int v, unsigned char *bits)
 {
 	int i, any = 0;
-	char c;
+	unsigned char c;
 
 	if (bits && *bits == 8)
 		printf("%s=%o", s, v);
@@ -4588,10 +4588,10 @@ printb(char *s, unsigned int v, char *bits)
  * A simple version of printb for status output
  */
 void
-printb_status(unsigned short v, char *bits)
+printb_status(unsigned short v, unsigned char *bits)
 {
 	int i, any = 0;
-	char c;
+	unsigned char c;
 
 	if (bits) {
 		bits++;
