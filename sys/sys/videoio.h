@@ -1,4 +1,4 @@
-/*	$OpenBSD: videoio.h,v 1.6 2010/11/20 20:11:19 miod Exp $	*/
+/*	$OpenBSD: videoio.h,v 1.7 2013/11/22 07:49:26 mpi Exp $	*/
 /*
  *  Video for Linux Two header file
  *
@@ -1328,9 +1328,11 @@ struct v4l2_streamparm {
 #define VIDIOC_TRY_EXT_CTRLS    _IOWR ('V', 73, struct v4l2_ext_controls)
 #define VIDIOC_ENUM_FRAMESIZES  _IOWR ('V', 74, struct v4l2_frmsizeenum)
 #define VIDIOC_ENUM_FRAMEINTERVALS      _IOWR ('V', 75, struct v4l2_frmivalenum)
+#if 0
 #define VIDIOC_G_ENC_INDEX      _IOR  ('V', 76, struct v4l2_enc_idx)
 #define VIDIOC_ENCODER_CMD      _IOWR ('V', 77, struct v4l2_encoder_cmd)
 #define VIDIOC_TRY_ENCODER_CMD  _IOWR ('V', 78, struct v4l2_encoder_cmd)
+#endif
 
 
 #ifdef __OLD_VIDIOC_
