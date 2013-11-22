@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.94 2013/11/05 00:51:58 krw Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.95 2013/11/22 04:12:48 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -273,7 +273,7 @@ main(int argc, char *argv[])
 				fatal("file system size invalid: %s", optarg);
 			fssize_usebytes = 0;    /* in case of multiple -s */
 			for (s1 = optarg; *s1 != '\0'; s1++)
-				if (isalpha(*s1)) {
+				if (isalpha((unsigned char)*s1)) {
 					fssize_usebytes = 1;
 					break;
 				}
@@ -406,11 +406,11 @@ main(int argc, char *argv[])
 		cp = strchr(argv[0], '\0') - 1;
 		if (cp == NULL ||
 		    ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
-		    && !isdigit(*cp)))
+		    && !isdigit((unsigned char)*cp)))
 			fatal("%s: can't figure out file system partition",
 			    argv[0]);
 		lp = getdisklabel(special, fsi);
-		if (isdigit(*cp))
+		if (isdigit((unsigned char)*cp))
 			pp = &lp->d_partitions[0];
 		else
 			pp = &lp->d_partitions[*cp - 'a'];
@@ -611,7 +611,7 @@ rewritelabel(char *s, int fd, struct disklabel *lp)
 		strncpy(specname, s, sizeof(specname) - 1);
 		specname[sizeof(specname) - 1] = '\0';
 		cp = specname + strlen(specname) - 1;
-		if (!isdigit(*cp))
+		if (!isdigit((unsigned char)*cp))
 			*cp = 'c';
 		cfd = open(specname, O_WRONLY);
 		if (cfd < 0)

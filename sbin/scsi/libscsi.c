@@ -1,4 +1,4 @@
-/*	$OpenBSD: libscsi.c,v 1.8 2010/11/16 19:55:34 jasper Exp $	*/
+/*	$OpenBSD: libscsi.c,v 1.9 2013/11/22 04:12:48 deraadt Exp $	*/
 
 /* Copyright (c) 1994 HD Associates
  * (contact: dufault@hda.com)
@@ -307,7 +307,7 @@ do_buff_decode(u_char *databuf, size_t len,
 			} else
 				plus = 0;
 
-			if (tolower(*fmt) == 'v') {
+			if (tolower((unsigned char)*fmt) == 'v') {
 				/* You can't suppress a seek value.  You also
 				 * can't have a variable seek when you are using
 				 * "arg_put".
@@ -421,7 +421,7 @@ next_field(char **pp, char *fmt, int *width_p, int *value_p, char *name,
 		case BETWEEN_FIELDS:
 			if (*p == 0)
 				state = DONE;
-			else if (isspace(*p))
+			else if (isspace((unsigned char)*p))
 				p++;
 			else if (*p == '#') {
 				while (*p && *p != '\n')
@@ -450,18 +450,18 @@ next_field(char **pp, char *fmt, int *width_p, int *value_p, char *name,
 				} else if (*p == '*') {
 					p++;
 					suppress = 1;
-				} else if (isxdigit(*p)) {
+				} else if (isxdigit((unsigned char)*p)) {
 					something = 1;
 					value = strtol(p, &p, 16);
 					state = START_FIELD;
-				} else if (tolower(*p) == 'v') {
+				} else if (tolower((unsigned char)*p) == 'v') {
 					p++;
 					something = 2;
 					value = *value_p;
 					state = START_FIELD;
 				}
 				/* try to work without the 'v' */
-				else if (tolower(*p) == 'i') {
+				else if (tolower((unsigned char)*p) == 'i') {
 					something = 2;
 					value = *value_p;
 					p++;
@@ -470,7 +470,7 @@ next_field(char **pp, char *fmt, int *width_p, int *value_p, char *name,
 					field_size = 8;
 					field_width = strtol(p, &p, 10);
 					state = DONE;
-				} else if (tolower(*p) == 't') {
+				} else if (tolower((unsigned char)*p) == 't') {
 					/* XXX: B can't work: Sees the 'b'
 					 * as a hex digit in "isxdigit".
 					 * try "t" for bit field.
@@ -483,10 +483,10 @@ next_field(char **pp, char *fmt, int *width_p, int *value_p, char *name,
 					field_size = 1;
 					field_width = strtol(p, &p, 10);
 					state = DONE;
-				} else if (tolower(*p) == 's') { /* Seek */
+				} else if (tolower((unsigned char)*p) == 's') { /* Seek */
 					*fmt = 's';
 					p++;
-					if (tolower(*p) == 'v') {
+					if (tolower((unsigned char)*p) == 'v') {
 						p++;
 						something = 2;
 						value = *value_p;
@@ -512,7 +512,7 @@ next_field(char **pp, char *fmt, int *width_p, int *value_p, char *name,
 			break;
 
 		case GET_FIELD:
-			if (isdigit(*p)) {
+			if (isdigit((unsigned char)*p)) {
 				*fmt = 'b';
 				field_size = 1;
 				field_width = strtol(p, &p, 10);

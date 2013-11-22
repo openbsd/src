@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.85 2013/10/21 08:47:10 phessler Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.86 2013/11/22 04:12:48 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1239,7 +1239,8 @@ dnsdecode(const u_char **sp, const u_char *ep, const u_char *base,
 				return NULL;	/*source overrun*/
 			while (i-- > 0 && cp < ep) {
 				l = snprintf(cresult, sizeof(cresult),
-				    isprint(*cp) ? "%c" : "\\%03o", *cp & 0xff);
+				    isprint((unsigned char)*cp) ? "%c" : "\\%03o",
+				    *cp & 0xff);
 				if (l >= sizeof(cresult) || l < 0)
 					return NULL;
 				if (strlcat(buf, cresult, bufsiz) >= bufsiz)
@@ -2395,7 +2396,7 @@ fill(char *bp, char *patp)
 	char *cp;
 
 	for (cp = patp; *cp; cp++)
-		if (!isxdigit(*cp))
+		if (!isxdigit((unsigned char)*cp))
 			errx(1, "patterns must be specified as hex digits");
 	ii = sscanf(patp,
 	    "%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x",

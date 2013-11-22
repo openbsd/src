@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.32 2012/10/19 15:56:40 henning Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.33 2013/11/22 04:12:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -1489,7 +1489,7 @@ interface_group(const char *ifname)
 		return (0);
 
 	/* Real interfaces must end in a number, interface groups do not */
-	if (isdigit(ifname[strlen(ifname) - 1]))
+	if (isdigit((unsigned char)ifname[strlen(ifname) - 1]))
 		return (0);
 	else
 		return (1);

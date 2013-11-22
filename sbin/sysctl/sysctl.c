@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.197 2013/11/15 22:20:04 millert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.198 2013/11/22 04:12:48 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -311,7 +311,7 @@ parse(char *string, int flags)
 	if ((cp = strchr(string, '=')) != NULL) {
 		*strchr(buf, '=') = '\0';
 		*cp++ = '\0';
-		while (isspace(*cp))
+		while (isspace((unsigned char)*cp))
 			cp++;
 		newval = cp;
 		newsize = strlen(cp);
@@ -2376,7 +2376,7 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 	}
 	numt = -1;
 	for (i = 0; typename[i] != '\0'; i++)
-		if (isdigit(typename[i])) {
+		if (isdigit((unsigned char)typename[i])) {
 			numt = atoi(&typename[i]);
 			typename[i] = '\0';
 			break;

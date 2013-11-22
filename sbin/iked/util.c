@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.20 2013/11/21 17:46:17 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.21 2013/11/22 04:12:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -407,7 +407,7 @@ void
 lc_string(char *str)
 {
 	for (; *str != '\0'; str++)
-		*str = tolower(*str);
+		*str = tolower((unsigned char)*str);
 }
 
 void
@@ -472,7 +472,7 @@ print_bits(u_short v, u_char *bits)
 			}
 			any = 1;
 			for (; (c = *bits) > 32; bits++) {
-				buf[idx][j++] = tolower(c);
+				buf[idx][j++] = tolower((unsigned char)c);
 				if (j >= sizeof(buf[idx]))
 					return (buf[idx]);
 			}
@@ -619,7 +619,7 @@ get_string(u_int8_t *ptr, size_t len)
 	char	*str;
 
 	for (i = 0; i < len; i++)
-		if (!isprint((char)ptr[i]))
+		if (!isprint(ptr[i]))
 			break;
 
 	if ((str = calloc(1, i + 1)) == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.296 2013/10/28 15:05:35 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.297 2013/11/22 04:12:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -309,12 +309,12 @@ string_to_loglevel(const char *name)
 	CODE *c;
 	char *p, buf[40];
 
-	if (isdigit(*name))
+	if (isdigit((unsigned char)*name))
 		return (atoi(name));
 
 	for (p = buf; *name && p < &buf[sizeof(buf) - 1]; p++, name++) {
-		if (isupper(*name))
-			*p = tolower(*name);
+		if (isupper((unsigned char)*name))
+			*p = tolower((unsigned char)*name);
 		else
 			*p = *name;
 	}

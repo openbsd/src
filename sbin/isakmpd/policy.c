@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.96 2013/04/16 19:26:00 deraadt Exp $	 */
+/* $OpenBSD: policy.c,v 1.97 2013/11/22 04:12:47 deraadt Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -919,7 +919,7 @@ policy_callback(char *name)
 			for (i = 0;
 			    i < id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ;
 			    i++)
-				if (!isprint(*(id + ISAKMP_ID_DATA_OFF -
+				if (!isprint((unsigned char)*(id + ISAKMP_ID_DATA_OFF -
 				    ISAKMP_GEN_SZ + i)))
 					break;
 			if (i >= id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ) {
@@ -1225,7 +1225,7 @@ policy_callback(char *name)
 				 */
 				for (i = 0;
 				    i < idremotesz - ISAKMP_ID_DATA_OFF; i++)
-					if (!isprint(*(idremote +
+					if (!isprint((unsigned char)*(idremote +
 					    ISAKMP_ID_DATA_OFF + i)))
 						break;
 				if (i >= idremotesz - ISAKMP_ID_DATA_OFF) {
@@ -1548,7 +1548,7 @@ policy_callback(char *name)
 				 */
 				for (i = 0;
 				    i < idlocalsz - ISAKMP_ID_DATA_OFF; i++)
-					if (!isprint(*(idlocal +
+					if (!isprint((unsigned char)*(idlocal +
 					    ISAKMP_ID_DATA_OFF + i)))
 						break;
 				if (i >= idlocalsz - ISAKMP_ID_DATA_OFF) {

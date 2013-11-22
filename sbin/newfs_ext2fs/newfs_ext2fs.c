@@ -1,4 +1,4 @@
-/* $OpenBSD: newfs_ext2fs.c,v 1.8 2013/10/27 18:54:03 guenther Exp $ */
+/* $OpenBSD: newfs_ext2fs.c,v 1.9 2013/11/22 04:14:01 deraadt Exp $ */
 /*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
@@ -518,10 +518,10 @@ getpartition(int fsi, const char *special, char *argv[], struct disklabel **dl)
 		warnx("%s: not a character-special device", special);
 	cp = strchr(argv[0], '\0') - 1;
 	if (cp == NULL || ((*cp < 'a' || *cp > ('a' + getmaxpartitions() - 1))
-	    && !isdigit(*cp)))
+	    && !isdigit((unsigned char)*cp)))
 		errx(EXIT_FAILURE, "%s: can't figure out file system partition", argv[0]);
 	lp = getdisklabel(special, fsi);
-	if (isdigit(*cp))
+	if (isdigit((unsigned char)*cp))
 		pp = &lp->d_partitions[0];
 	else
 		pp = &lp->d_partitions[*cp - 'a'];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.156 2012/07/10 13:58:33 lteo Exp $	*/
+/*	$OpenBSD: parse.y,v 1.157 2013/11/22 04:12:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1983,7 +1983,7 @@ parse_life(const char *value)
 
 	ret = sscanf(value, "%d%c", &seconds, &unit);
 	if (ret == 2) {
-		switch (tolower(unit)) {
+		switch (tolower((unsigned char)unit)) {
 		case 'm':
 			seconds *= 60;
 			break;

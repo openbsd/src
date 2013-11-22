@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_msdos.c,v 1.27 2012/12/04 02:27:00 deraadt Exp $	*/
+/*	$OpenBSD: mount_msdos.c,v 1.28 2013/11/22 04:12:48 deraadt Exp $	*/
 /*	$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $	*/
 
 /*
@@ -163,7 +163,8 @@ a_gid(char *s)
 	if ((gr = getgrnam(s)) != NULL)
 		gid = gr->gr_gid;
 	else {
-		for (gname = s; isdigit(*s); ++s);
+		for (gname = s; isdigit((unsigned char)*s); ++s)
+			;
 		if (!*s)
 			gid = atoi(gname);
 		else
@@ -182,7 +183,8 @@ a_uid(char *s)
 	if ((pw = getpwnam(s)) != NULL)
 		uid = pw->pw_uid;
 	else {
-		for (uname = s; isdigit(*s); ++s);
+		for (uname = s; isdigit((unsigned char)*s); ++s)
+			;
 		if (!*s)
 			uid = atoi(uname);
 		else

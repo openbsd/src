@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.21 2013/11/05 00:51:58 krw Exp $	*/
+/*	$OpenBSD: newfs_msdos.c,v 1.22 2013/11/22 04:14:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -714,11 +714,11 @@ getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
     s1 = fname;
     if ((s2 = strrchr(s1, '/')))
 	s1 = s2 + 1;
-    for (s2 = s1; *s2 && !isdigit(*s2); s2++);
+    for (s2 = s1; *s2 && !isdigit((unsigned char)*s2); s2++);
     if (!*s2 || s2 == s1)
 	s2 = NULL;
     else
-	while (isdigit(*++s2));
+	while (isdigit((unsigned char)*++s2));
     s1 = s2;
     if (s2 && *s2 >= 'a' && *s2 <= 'a' + MAXPARTITIONS - 1) {
 	part = *s2++ - 'a';
@@ -841,7 +841,7 @@ mklabel(u_int8_t *dest, const char *src)
     int c, i;
 
     for (i = 0; i < 11; i++) {
-	c = *src ? toupper(*src++) : ' ';
+	c = *src ? toupper((unsigned char)*src++) : ' ';
 	*dest++ = !i && c == '\xe5' ? 5 : c;
     }
 }

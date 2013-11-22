@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.102 2013/03/21 04:30:14 deraadt Exp $	 */
+/* $OpenBSD: conf.c,v 1.103 2013/11/22 04:12:47 deraadt Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -92,7 +92,7 @@ conf_hash(char *s)
 	u_int8_t hash = 0;
 
 	while (*s) {
-		hash = ((hash << 1) | (hash >> 7)) ^ tolower(*s);
+		hash = ((hash << 1) | (hash >> 7)) ^ tolower((unsigned char)*s);
 		s++;
 	}
 	return hash;
@@ -242,7 +242,7 @@ conf_parse_line(int trans, char *line, int ln, size_t sz)
 			val = line + i + 1 + strspn(line + i + 1, " \t");
 			/* Skip trailing whitespace, if any */
 			for (j = sz - (val - line) - 1; j > 0 &&
-			    isspace(val[j]); j--)
+			    isspace((unsigned char)val[j]); j--)
 				val[j] = '\0';
 			/* XXX Perhaps should we not ignore errors?  */
 			conf_set(trans, section, line, val, 0, 0);
@@ -763,11 +763,11 @@ conf_get_list(char *section, char *tag)
 	p = liststr;
 	while ((field = strsep(&p, ",")) != NULL) {
 		/* Skip leading whitespace */
-		while (isspace(*field))
+		while (isspace((unsigned char)*field))
 			field++;
 		/* Skip trailing whitespace */
 		if (p)
-			for (t = p - 1; t > field && isspace(*t); t--)
+			for (t = p - 1; t > field && isspace((unsigned char)*t); t--)
 				*t = '\0';
 		if (*field == '\0') {
 			log_print("conf_get_list: empty field, ignoring...");

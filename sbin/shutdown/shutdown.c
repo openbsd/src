@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.36 2009/12/24 10:06:35 sobrado Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.37 2013/11/22 04:12:48 deraadt Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -425,7 +425,7 @@ getoffset(char *timearg)
 
 	(void)time(&now);
 	if (*timearg == '+') {				/* +minutes */
-		if (!isdigit(*++timearg))
+		if (!isdigit((unsigned char)*++timearg))
 			badtime();
 		offset = atoi(timearg) * 60;
 		shuttime = now + offset;
@@ -434,7 +434,7 @@ getoffset(char *timearg)
 
 	/* handle hh:mm by getting rid of the colon */
 	for (p = timearg; *p; ++p) {
-		if (!isascii(*p) || !isdigit(*p)) {
+		if (!isascii((unsigned char)*p) || !isdigit((unsigned char)*p)) {
 			if (*p == ':' && strlen(p) == 3) {
 				p[0] = p[1];
 				p[1] = p[2];

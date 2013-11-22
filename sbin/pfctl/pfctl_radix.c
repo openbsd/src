@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.29 2011/07/27 00:26:10 mcbride Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.30 2013/11/22 04:12:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -542,7 +542,7 @@ pfr_next_token(char buf[BUF_SIZE], FILE *fp)
 
 	for (;;) {
 		/* skip spaces */
-		while (isspace(next_ch) && !feof(fp))
+		while (isspace((unsigned char)next_ch) && !feof(fp))
 			next_ch = fgetc(fp);
 		/* remove from '#' until end of line */
 		if (next_ch == '#')
@@ -562,7 +562,7 @@ pfr_next_token(char buf[BUF_SIZE], FILE *fp)
 		if (i < BUF_SIZE)
 			buf[i++] = next_ch;
 		next_ch = fgetc(fp);
-	} while (!feof(fp) && !isspace(next_ch));
+	} while (!feof(fp) && !isspace((unsigned char)next_ch));
 	if (i >= BUF_SIZE) {
 		errno = EINVAL;
 		return (-1);

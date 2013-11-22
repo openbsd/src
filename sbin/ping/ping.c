@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.96 2013/10/28 15:05:35 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.97 2013/11/22 04:12:48 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -1313,7 +1313,7 @@ fill(char *bp, char *patp)
 	char *cp;
 
 	for (cp = patp; *cp; cp++)
-		if (!isxdigit(*cp))
+		if (!isxdigit((unsigned char)*cp))
 			errx(1, "patterns must be specified as hex digits");
 	ii = sscanf(patp,
 	    "%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x",

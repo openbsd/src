@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.30 2013/03/21 04:30:14 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.31 2013/11/22 04:12:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -825,7 +825,7 @@ byte_spec	: NUMBER			{
 				yyerror("invalid byte specification: %s", $1);
 				YYERROR;
 			}
-			switch (toupper(unit)) {
+			switch (toupper((unsigned char)unit)) {
 			case 'K':
 				bytes *= 1024;
 				break;
@@ -854,7 +854,7 @@ time_spec	: NUMBER			{
 				yyerror("invalid time specification: %s", $1);
 				YYERROR;
 			}
-			switch (tolower(unit)) {
+			switch (tolower((unsigned char)unit)) {
 			case 'm':
 				seconds *= 60;
 				break;

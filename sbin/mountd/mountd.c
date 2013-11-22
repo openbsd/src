@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.71 2010/03/22 16:35:27 otto Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.72 2013/11/22 04:12:48 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -1429,7 +1429,7 @@ get_host(char *cp, struct grouplist *grp, struct grouplist *tgrp)
 	if (grp->gr_type != GT_NULL)
 		return (1);
 	if ((hp = gethostbyname(cp)) == NULL) {
-		if (isdigit(*cp)) {
+		if (isdigit((unsigned char)*cp)) {
 			if (inet_aton(cp, &saddr) == 0) {
 				syslog(LOG_ERR, "inet_aton failed for %s", cp);
 				return (1);
@@ -1826,7 +1826,7 @@ parsecred(char *namelist, struct ucred *cr)
 	 */
 	names = strsep(&namelist, " \t\n");
 	name = strsep(&names, ":");
-	if (isdigit(*name) || *name == '-')
+	if (isdigit((unsigned char)*name) || *name == '-')
 		pw = getpwuid(atoi(name));
 	else
 		pw = getpwnam(name);
@@ -1857,7 +1857,7 @@ parsecred(char *namelist, struct ucred *cr)
 	 */
 	if (pw != NULL)
 		cr->cr_uid = pw->pw_uid;
-	else if (isdigit(*name) || *name == '-')
+	else if (isdigit((unsigned char)*name) || *name == '-')
 		cr->cr_uid = atoi(name);
 	else {
 		syslog(LOG_ERR, "Unknown user: %s", name);
@@ -1866,7 +1866,7 @@ parsecred(char *namelist, struct ucred *cr)
 	cr->cr_ngroups = 0;
 	while (names != NULL && *names != '\0' && cr->cr_ngroups < NGROUPS) {
 		name = strsep(&names, ":");
-		if (isdigit(*name) || *name == '-') {
+		if (isdigit((unsigned char)*name) || *name == '-') {
 			cr->cr_groups[cr->cr_ngroups++] = atoi(name);
 		} else {
 			if ((gr = getgrnam(name)) == NULL) {

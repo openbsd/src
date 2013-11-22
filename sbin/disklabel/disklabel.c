@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.190 2013/10/15 20:13:02 bluhm Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.191 2013/11/22 04:12:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -182,7 +182,7 @@ main(int argc, char *argv[])
 				fprintf(stderr, "Valid units are bckmgt\n");
 				exit(1);
 			}
-			print_unit = tolower(optarg[0]);
+			print_unit = tolower((unsigned char)optarg[0]);
 			break;
 		case 'n':
 			donothing++;
@@ -521,7 +521,7 @@ makebootarea(char *boot, struct disklabel *dp)
 			p = dkname;
 		else
 			p++;
-		while (*p && !isdigit(*p))
+		while (*p && !isdigit((unsigned char)*p))
 			*np++ = *p++;
 		*np++ = '\0';
 
@@ -734,7 +734,7 @@ canonical_unit(struct disklabel *lp, char unit)
 		else
 			unit = 'T';
 	}
-	unit = toupper(unit);
+	unit = toupper((unsigned char)unit);
 
 	return (unit);
 }
@@ -960,7 +960,7 @@ getnum(char *nptr, u_int64_t min, u_int64_t max, const char **errstr)
 	char *p, c;
 	u_int64_t ret;
 
-	for (p = nptr; *p != '\0' && !isspace(*p); p++)
+	for (p = nptr; *p != '\0' && !isspace((unsigned char)*p); p++)
 		;
 	c = *p;
 	*p = '\0';
@@ -1224,7 +1224,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 					pp->p_fstype = cpp - fstypenames;
 					goto gottype;
 				}
-			if (isdigit(*cp))
+			if (isdigit((unsigned char)*cp))
 				v = GETNUM(pp->p_fstype, cp, 0, &errstr);
 			else
 				v = FSMAXTYPES;

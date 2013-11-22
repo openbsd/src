@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.277 2013/11/12 04:59:02 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.278 2013/11/22 04:12:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -370,9 +370,9 @@ editor(int f)
 				arg = getstring("Write new label?",
 				    "Write the modified label to disk?",
 				    "y");
-			} while (arg && tolower(*arg) != 'y' &&
-			    tolower(*arg) != 'n');
-			if (arg && tolower(*arg) == 'y') {
+			} while (arg && tolower((unsigned char)*arg) != 'y' &&
+			    tolower((unsigned char)*arg) != 'n');
+			if (arg && tolower((unsigned char)*arg) == 'y') {
 				if (writelabel(f, bootarea, &newlab) == 0) {
 					newlab = lab; /* lab now has UID info */
 					goto done;
@@ -1182,7 +1182,7 @@ getuint64(struct disklabel *lp, char *prompt, char *helpstring,
 		/* deal with units */
 		if (buf[0] != '\0' && n > 0) {
 			if ((flags & DO_CONVERSIONS)) {
-				switch (tolower(buf[n-1])) {
+				switch (tolower((unsigned char)buf[n-1])) {
 
 				case 'c':
 					mult = lp->d_secpercyl;
