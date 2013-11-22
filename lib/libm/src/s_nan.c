@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_nan.c,v 1.11 2013/07/03 04:46:36 espie Exp $	*/
+/*	$OpenBSD: s_nan.c,v 1.12 2013/11/22 18:27:25 deraadt Exp $	*/
 /*-
  * Copyright (c) 2007 David Schultz
  * All rights reserved.
@@ -77,7 +77,7 @@ _scan_nan(uint32_t *words, int num_words, const char *s)
 		s += 2;
 
 	/* Scan forwards in the string, looking for the end of the sequence. */
-	for (si = 0; isxdigit(s[si]); si++)
+	for (si = 0; isxdigit((unsigned char)s[si]); si++)
 		;
 
 	/* Scan backwards, filling in the bits in words[] as we go. */
@@ -88,7 +88,7 @@ _scan_nan(uint32_t *words, int num_words, const char *s)
 #endif
 		if (--si < 0)
 			break;
-		words[bitpos / 32] |= _digittoint(s[si]) << (bitpos % 32);
+		words[bitpos / 32] |= _digittoint((unsigned char)s[si]) << (bitpos % 32);
 	}
 }
 
