@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.29 2013/07/16 00:41:03 guenther Exp $
+#	$OpenBSD: mkioctls,v 1.30 2013/11/22 07:50:36 mpi Exp $
 
 #
 # Copyright (c) 1994
@@ -73,11 +73,14 @@ BEGIN {
 	print "#include <sys/scanio.h>"
 	print "#include <sys/scsiio.h>"
 	print "#include <sys/tty.h>"
+	print "#include <sys/videoio.h>"
 	print "#include <crypto/cryptodev.h>"
 	print "#include <dev/biovar.h>"
 	print "#include <dev/systrace.h>"
 	print "#include <dev/wscons/wsconsio.h>"
 	print "#include <dev/vndioctl.h>"
+	print "#include <dev/pci/drm/drm.h>"
+	print "#include <dev/usb/usb.h>"
 	print "#define COMPAT_43"
 	print "#include <sys/ioctl.h>"
 	print "#include \"kdump.h\""
@@ -89,7 +92,7 @@ BEGIN {
 	print ""
 }
 
-/^[ 	]*#[ 	]*define[ 	]+(AGPIOC_|ATAIO|AUDIO_|BIOC|CDIO|CIOC|CHIO|DIOC|GPIO|TIO|FIO|MTIOC|SIO|OSIO|SESIOC_|SIOC|PCIOC|PPPIOC|PPPOE|RIOC|RND|STRIOC|SCIOC|OSCIOC|TUN|VNDIOC|WSKBD|WSMOUSE|WSDISPLAY|WSMUX|PTM)[A-Z_0-9]*[ 	]+_IO/ {
+/^[ 	]*#[ 	]*define[ 	]+(AGPIOC_|ATAIO|AUDIO_|BIOC|CDIO|CIOC|CHIO|DIOC|DRM|GPIO|TIO|FIO|MTIOC|SIO|OSIO|SESIOC_|SIOC|PCIOC|PPPIOC|PPPOE|RIOC|RND|STRIOC|SCIOC|OSCIOC|TUN|USB|VIDIOC|VNDIOC|WSKBD|WSMOUSE|WSDISPLAY|WSMUX|PTM)[A-Z_0-9]*[ 	]+(DRM)?_IO/ {
 
 	# find where the name starts
 	for (i = 1; i <= NF; i++)
