@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.109 2012/11/24 11:06:08 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.110 2013/11/22 15:47:35 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -566,7 +566,7 @@ found_delimiter(const char *s)
 			p++;
 
 		/* Found the best match already. */
-		if (isspace(*p) || *p == '\0')
+		if (ISSPACE(*p) || *p == '\0')
 			return true;
 
 		do {
@@ -574,7 +574,7 @@ found_delimiter(const char *s)
 			if (*p == '\0')
 			    break;
 			p++;
-		} while (!isspace(*p));
+		} while (!ISSPACE(*p));
 
 		/* No better match later on... */
 		if (*p == '\0')
@@ -589,7 +589,7 @@ parse_do_targets(Lst paths, unsigned int *op, const char *line)
 	const char *cp;
 
 	do {
-		for (cp = line; *cp && !isspace(*cp) && *cp != '(';) {
+		for (cp = line; *cp && !ISSPACE(*cp) && *cp != '(';) {
 			if (*cp == '$')
 				/* Must be a dynamic source (would have been
 				 * expanded otherwise), so call the Var module
@@ -653,7 +653,7 @@ parse_do_targets(Lst paths, unsigned int *op, const char *line)
 	    	if (*line != '\0')
 			add_target_nodes(line, cp);
 
-		while (isspace(*cp))
+		while (ISSPACE(*cp))
 			cp++;
 		line = cp;
 	} while (*line != '!' && *line != ':' && *line);
@@ -762,7 +762,7 @@ parse_operator(const char **pos)
 	cp++;			/* Advance beyond operator */
 
 	/* Get to the first source */
-	while (isspace(*cp))
+	while (ISSPACE(*cp))
 		cp++;
 	*pos = cp;
 	return op;
@@ -893,7 +893,7 @@ ParseDoDependency(const char *line)	/* the line to parse */
 		     * If it was .NULL, the source is the suffix to use when a
 		     * file has no valid suffix.
 		     */
-		    while (*cp && !isspace(*cp))
+		    while (*cp && !ISSPACE(*cp))
 			    cp++;
 		    switch (specType) {
 		    case SPECIAL_SUFFIXES:
@@ -913,7 +913,7 @@ ParseDoDependency(const char *line)	/* the line to parse */
 		    }
 		    if (*cp != '\0')
 			cp++;
-		    while (isspace(*cp))
+		    while (ISSPACE(*cp))
 			cp++;
 		    line = cp;
 		}
@@ -925,7 +925,7 @@ ParseDoDependency(const char *line)	/* the line to parse */
 			 * archive specifications (i.e. things with left
 			 * parentheses in them) and handle them accordingly.
 			 */
-			while (*cp && !isspace(*cp)) {
+			while (*cp && !ISSPACE(*cp)) {
 				if (*cp == '(' && cp > line && cp[-1] != '$') {
 					/*
 					 * Only stop for a left parenthesis if
@@ -966,7 +966,7 @@ ParseDoDependency(const char *line)	/* the line to parse */
 				if (*cp)
 					cp++;
 			}
-			while (isspace(*cp))
+			while (ISSPACE(*cp))
 				cp++;
 			line = cp;
 		}
@@ -1159,7 +1159,7 @@ lookup_bsd_include(const char *file)
 	bool isSystem;
 
 	/* find starting delimiter */
-	while (isspace(*file))
+	while (ISSPACE(*file))
 		file++;
 
 	/* determine type of file */
@@ -1195,7 +1195,7 @@ lookup_sysv_style_include(const char *file, const char *directive,
 	const char *efile;
 
 	/* find beginning of name */
-	while (isspace(*file))
+	while (ISSPACE(*file))
 		file++;
 	if (*file == '\0') {
 		Parse_Error(PARSE_FATAL, "Filename missing from \"%s\"",
@@ -1203,7 +1203,7 @@ lookup_sysv_style_include(const char *file, const char *directive,
 		return;
 	}
 	/* sys5 delimits file up to next blank character or end of line */
-	for (efile = file; *efile != '\0' && !isspace(*efile);)
+	for (efile = file; *efile != '\0' && !ISSPACE(*efile);)
 		efile++;
 
 	handle_include_file(file, efile, true, errIfMissing);
@@ -1243,13 +1243,13 @@ handle_poison(const char *line)
 	bool paren_to_match = false;
 	const char *name, *ename;
 
-	while (isspace(*p))
+	while (ISSPACE(*p))
 		p++;
 	if (*p == '!') {
 		not = true;
 		p++;
 	}
-	while (isspace(*p))
+	while (ISSPACE(*p))
 		p++;
 	if (strncmp(p, "defined", 7) == 0) {
 		type = POISON_DEFINED;
@@ -1258,16 +1258,16 @@ handle_poison(const char *line)
 		type = POISON_EMPTY;
 		p += 5;
 	}
-	while (isspace(*p))
+	while (ISSPACE(*p))
 		p++;
 	if (*p == '(') {
 		paren_to_match = true;
 		p++;
 	}
-	while (isspace(*p))
+	while (ISSPACE(*p))
 		p++;
 	name = ename = p;
-	while (*p != '\0' && !isspace(*p)) {
+	while (*p != '\0' && !ISSPACE(*p)) {
 		if (*p == ')' && paren_to_match) {
 			paren_to_match = false;
 			p++;
@@ -1276,7 +1276,7 @@ handle_poison(const char *line)
 		p++;
 		ename = p;
 	}
-	while (isspace(*p))
+	while (ISSPACE(*p))
 		p++;
 	switch(type) {
 	case POISON_NORMAL:
@@ -1331,9 +1331,9 @@ handle_undef(const char *line)
 {
 	const char *eline;
 
-	while (isspace(*line))
+	while (ISSPACE(*line))
 		line++;
-	for (eline = line; !isspace(*eline) && *eline != '\0';)
+	for (eline = line; !ISSPACE(*eline) && *eline != '\0';)
 		eline++;
 	Var_Deletei(line, eline);
 	return true;
@@ -1345,7 +1345,7 @@ handle_bsd_command(Buffer linebuf, Buffer copy, const char *line)
 {
 	char *stripped;
 
-	while (isspace(*line))
+	while (ISSPACE(*line))
 		line++;
 
 	/* delegate basic classification to the conditional module */
@@ -1355,7 +1355,7 @@ handle_bsd_command(Buffer linebuf, Buffer copy, const char *line)
 		do {
 			line = Parse_ReadNextConditionalLine(linebuf);
 			if (line != NULL) {
-				while (isspace(*line))
+				while (ISSPACE(*line))
 					line++;
 					stripped = strip_comments(copy, line);
 			}
@@ -1450,7 +1450,7 @@ parse_as_special_line(Buffer buf, Buffer copy, const char *line)
 		return true;
 	if (FEATURES(FEATURE_SYSVINCLUDE) &&
 	    strncmp(line, "include", 7) == 0 &&
-	    isspace(line[7]) &&
+	    ISSPACE(line[7]) &&
 	    strchr(line, ':') == NULL) {
 	    /* It's an S3/S5-style "include".  */
 		lookup_sysv_include(line + 7, "include");
@@ -1458,14 +1458,14 @@ parse_as_special_line(Buffer buf, Buffer copy, const char *line)
 	}
 	if (FEATURES(FEATURE_CONDINCLUDE) &&
 	    strncmp(line, "sinclude", 8) == 0 &&
-	    isspace(line[8]) &&
+	    ISSPACE(line[8]) &&
 	    strchr(line, ':') == NULL) {
 		lookup_conditional_include(line+8, "sinclude");
 		return true;
 	}
 	if (FEATURES(FEATURE_CONDINCLUDE) &&
 	    strncmp(line, "-include", 8) == 0 &&
-	    isspace(line[8]) &&
+	    ISSPACE(line[8]) &&
 	    strchr(line, ':') == NULL) {
 		lookup_conditional_include(line+8, "-include");
 		return true;
@@ -1512,7 +1512,7 @@ parse_target_line(struct growableArray *targets, const char *line,
 	if (cmd != NULL) {
 		do {
 			cmd++;
-		} while (isspace(*cmd));
+		} while (ISSPACE(*cmd));
 		if (*cmd != '\0') {
 			parse_commands(targets, cmd);
 			*pcommands_seen = true;

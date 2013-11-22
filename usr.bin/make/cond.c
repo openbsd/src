@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.49 2013/04/23 14:32:53 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.50 2013/11/22 15:47:35 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -207,7 +207,7 @@ CondGetArg(const char **linePtr, struct Name *arg, const char *func,
 	 * work...
 	 */
 	if (parens) {
-		while (isspace(*cp))
+		while (ISSPACE(*cp))
 			cp++;
 		if (*cp == '(')
 			cp++;
@@ -218,12 +218,12 @@ CondGetArg(const char **linePtr, struct Name *arg, const char *func,
 	if (*cp == '\0')
 		return false;
 
-	while (isspace(*cp))
+	while (ISSPACE(*cp))
 		cp++;
 
 	cp = VarName_Get(cp, arg, NULL, true, find_cond);
 
-	while (isspace(*cp))
+	while (ISSPACE(*cp))
 		cp++;
 	if (parens) {
 		if (*cp == ')')
@@ -369,10 +369,10 @@ CondCvtArg(const char *str, double *value)
 
 		for (str += 2, i = 0; *str; str++) {
 			int x;
-			if (isdigit(*str))
+			if (ISDIGIT(*str))
 				x  = *str - '0';
-			else if (isxdigit(*str))
-				x = 10 + *str - (isupper(*str) ? 'A' : 'a');
+			else if (ISXDIGIT(*str))
+				x = 10 + *str - (ISUPPER(*str) ? 'A' : 'a');
 			else
 				return false;
 			i = (i << 4) + x;
@@ -395,7 +395,7 @@ CondHandleNumber(bool doEval)
 	char *lhs;
 
 	end = condExpr;
-	while (!isspace(*end) && strchr("!=><", *end) == NULL)
+	while (!ISSPACE(*end) && strchr("!=><", *end) == NULL)
 		end++;
 	lhs = Str_dupi(condExpr, end);
 	condExpr = end;
@@ -418,7 +418,7 @@ CondHandleVarSpec(bool doEval)
 		return Err;
 	condExpr += varSpecLen;
 
-	if (!isspace(*condExpr) &&
+	if (!ISSPACE(*condExpr) &&
 		strchr("!=><", *condExpr) == NULL) {
 		BUFFER buf;
 
@@ -429,7 +429,7 @@ CondHandleVarSpec(bool doEval)
 		if (doFree)
 			free(lhs);
 
-		for (;*condExpr && !isspace(*condExpr); condExpr++)
+		for (;*condExpr && !ISSPACE(*condExpr); condExpr++)
 			Buf_AddChar(&buf, *condExpr);
 
 		lhs = Var_Subst(Buf_Retrieve(&buf), NULL, doEval);
@@ -471,7 +471,7 @@ CondHandleComparison(char *lhs, bool doFree, bool doEval)
 
 	t = Err;
 	/* Skip whitespace to get to the operator.	*/
-	while (isspace(*condExpr))
+	while (ISSPACE(*condExpr))
 		condExpr++;
 
 	/* Make sure the operator is a valid one. If it isn't a
@@ -494,7 +494,7 @@ CondHandleComparison(char *lhs, bool doFree, bool doEval)
 
 		goto do_compare;
 	}
-	while (isspace(*condExpr))
+	while (ISSPACE(*condExpr))
 		condExpr++;
 	if (*condExpr == '\0') {
 		Parse_Error(PARSE_WARNING,
@@ -589,7 +589,7 @@ do_string_compare:
 				goto do_string_compare;
 			if (rhs == condExpr) {
 				/* Skip over the right-hand side.  */
-				while (!isspace(*condExpr) && *condExpr != '\0')
+				while (!ISSPACE(*condExpr) && *condExpr != '\0')
 					condExpr++;
 			}
 		}
@@ -678,7 +678,7 @@ CondHandleDefault(bool doEval)
 				/* A variable is empty when it just contains
 				 * spaces... 4/15/92, christos */
 				char *p;
-				for (p = val; isspace(*p); p++)
+				for (p = val; ISSPACE(*p); p++)
 					continue;
 				t = *p == '\0' ? True : False;
 			}
@@ -749,7 +749,7 @@ CondToken(bool doEval)
 		return t;
 	}
 
-	while (isspace(*condExpr))
+	while (ISSPACE(*condExpr))
 		condExpr++;
 	switch (*condExpr) {
 	case '(':
@@ -933,7 +933,7 @@ Cond_Eval(const char *line)
 
 	level = PARSE_FATAL;
 
-	for (end = line; islower(*end); end++)
+	for (end = line; ISLOWER(*end); end++)
 		;
 	/* quick path: recognize special targets early on */
 	if (*end == '.' || *end == ':')

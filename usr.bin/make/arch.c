@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.81 2013/04/23 14:32:53 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.82 2013/11/22 15:47:35 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -259,10 +259,10 @@ parse_archive(Buffer expand, const char **linePtr, Lst nodeLst, SymTable *ctxt)
 		 * a close paren).  */
 		bool subst_member = false;
 
-		while (isspace(*cp))
+		while (ISSPACE(*cp))
 			cp++;
 		member = cp;
-		while (*cp != '\0' && *cp != ')' && !isspace(*cp)) {
+		while (*cp != '\0' && *cp != ')' && !ISSPACE(*cp)) {
 			if (*cp == '$') {
 				if (!Var_ParseSkip(&cp, ctxt))
 					return false;
@@ -359,7 +359,7 @@ parse_archive(Buffer expand, const char **linePtr, Lst nodeLst, SymTable *ctxt)
 	 * entrance to the loop, cp is guaranteed to point at a ')') */
 	do {
 		cp++;
-	} while (isspace(*cp));
+	} while (ISSPACE(*cp));
 
 	*linePtr = cp;
 	return true;
@@ -471,7 +471,7 @@ read_archive(const char *archive, const char *earchive)
 			/* BSD 4.4 extended AR format: #1/<namelen>, with name
 			 * as the first <namelen> bytes of the file.  */
 			if (memcmp(memberName, AR_EFMT1, sizeof(AR_EFMT1) - 1)
-			    == 0 && isdigit(memberName[sizeof(AR_EFMT1) - 1])) {
+			    == 0 && ISDIGIT(memberName[sizeof(AR_EFMT1) - 1])) {
 
 				int elen = atoi(memberName +
 				    sizeof(AR_EFMT1)-1);
@@ -801,7 +801,7 @@ ArchFindMember(
 		/* BSD 4.4 extended AR format: #1/<namelen>, with name as the
 		 * first <namelen> bytes of the file.  */
 		if (memcmp(memberName, AR_EFMT1, sizeof(AR_EFMT1) - 1) == 0 &&
-		    isdigit(memberName[sizeof(AR_EFMT1) - 1])) {
+		    ISDIGIT(memberName[sizeof(AR_EFMT1) - 1])) {
 			char ename[PATH_MAX];
 
 			int elength = atoi(memberName + sizeof(AR_EFMT1)-1);

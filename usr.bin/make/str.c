@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.27 2010/07/19 19:46:44 espie Exp $	*/
+/*	$OpenBSD: str.c,v 1.28 2013/11/22 15:47:35 espie Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -202,7 +202,7 @@ iterate_words(const char **end)
 	char	state = 0;
 	start = *end;
 
-	while (isspace(*start))
+	while (ISSPACE(*start))
 		start++;
 	if (*start == '\0')
 		return NULL;

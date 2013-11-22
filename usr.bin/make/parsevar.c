@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsevar.c,v 1.14 2010/07/19 19:46:44 espie Exp $	*/
+/*	$OpenBSD: parsevar.c,v 1.15 2013/11/22 15:47:35 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ static const char *
 find_op1(const char *p)
 {
 	for(;; p++) {
-		if (isspace(*p) || *p == '$' || *p == '\0')
+		if (ISSPACE(*p) || *p == '$' || *p == '\0')
 			break;
 		if (p[strspn(p, "?:!+")] == '=')
 			break;
@@ -60,7 +60,7 @@ static const char *
 find_op2(const char *p)
 {
 	for(;; p++) {
-		if (isspace(*p) || *p == '$' || *p == '\0')
+		if (ISSPACE(*p) || *p == '$' || *p == '\0')
 			break;
 		if (p[strspn(p, "?:!+")] == '=')
 			break;
@@ -85,7 +85,7 @@ parse_variable_assignment(const char *line, int ctxt)
 	arg = VarName_Get(line, &name, NULL, true,
 	    FEATURES(FEATURE_SUNSHCMD) ? find_op1 : find_op2);
 
-	while (isspace(*arg))
+	while (ISSPACE(*arg))
 		arg++;
 
 	type = VAR_NORMAL;
@@ -140,7 +140,7 @@ parse_variable_assignment(const char *line, int ctxt)
 	}
 
 	arg++;
-	while (isspace(*arg))
+	while (ISSPACE(*arg))
 		arg++;
 	/* If the variable already has a value, we don't do anything.  */
 	if ((type & VAR_OPT) && Var_Definedi(name.s, name.e)) {

@@ -1,7 +1,7 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-/*	$OpenBSD: defines.h,v 1.13 2012/10/09 19:45:34 espie Exp $ */
+/*	$OpenBSD: defines.h,v 1.14 2013/11/22 15:47:35 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -109,5 +109,13 @@ extern int debug;
 #define CONCAT(a,b)	a##b
 
 #define DEBUG(module)	(debug & CONCAT(DEBUG_,module))
+
+#define ISLOWER(c) (islower((unsigned char)(c)))
+#define ISUPPER(c) (isupper((unsigned char)(c)))
+#define ISDIGIT(c) (isdigit((unsigned char)(c)))
+#define ISXDIGIT(c) (isxdigit((unsigned char)(c)))
+#define ISSPACE(c) (isspace((unsigned char)(c)))
+#define TOUPPER(c) (toupper((unsigned char)(c)))
+#define TOLOWER(c) (tolower((unsigned char)(c)))
 
 #endif

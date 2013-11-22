@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.34 2013/11/12 17:44:03 deraadt Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.35 2013/11/22 15:47:35 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -867,7 +867,7 @@ VarRESubstitute(struct Name *word, bool addSpace, Buffer buf, void *patternp)
 				rp++;
 			}
 			else if (*rp == '&' ||
-			    (*rp == '\\' && isdigit(rp[1]))) {
+			    (*rp == '\\' && ISDIGIT(rp[1]))) {
 				int n;
 				const char *subbuf;
 				int sublen;
@@ -1173,7 +1173,7 @@ do_upper(const char *s, const struct Name *n UNUSED, void *arg UNUSED)
 	len = strlen(s);
 	t = emalloc(len+1);
 	for (i = 0; i < len; i++)
-		t[i] = toupper(s[i]);
+		t[i] = TOUPPER(s[i]);
 	t[len] = '\0';
 	return t;
 }
@@ -1187,7 +1187,7 @@ do_lower(const char *s, const struct Name *n UNUSED, void *arg UNUSED)
 	len = strlen(s);
 	t = emalloc(len+1);
 	for (i = 0; i < len; i++)
-		t[i] = tolower(s[i]);
+		t[i] = TOLOWER(s[i]);
 	t[len] = '\0';
 	return t;
 }
