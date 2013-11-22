@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.7 2013/11/13 22:37:15 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.8 2013/11/22 07:49:44 deraadt Exp $	*/
 
  /*
   * General skeleton for adding options to the access control language. The
@@ -619,7 +619,7 @@ register char *string;
     char   *cp;
 
     for (cp = string; *cp; cp++) {
-	if (!isspace(*cp)) {
+	if (!isspace((unsigned char)*cp)) {
 	    if (start == 0)
 		start = cp;
 	    end = cp;
