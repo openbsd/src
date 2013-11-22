@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.61 2013/10/23 19:57:50 deraadt Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.62 2013/11/22 07:59:09 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -597,7 +597,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	if (req == PRU_CONTROL)
 		return (in6_control(so, (u_long)m, (caddr_t)nam,
-		    (struct ifnet *)control, p));
+		    (struct ifnet *)control));
 
 	switch (req) {
 	case PRU_ATTACH:

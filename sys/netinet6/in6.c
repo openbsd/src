@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.124 2013/11/13 08:27:24 stsp Exp $	*/
+/*	$OpenBSD: in6.c,v 1.125 2013/11/22 07:59:09 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -119,8 +119,7 @@ const struct in6_addr in6mask64 = IN6MASK64;
 const struct in6_addr in6mask96 = IN6MASK96;
 const struct in6_addr in6mask128 = IN6MASK128;
 
-int in6_lifaddr_ioctl(struct socket *, u_long, caddr_t, struct ifnet *,
-	    struct proc *);
+int in6_lifaddr_ioctl(struct socket *, u_long, caddr_t, struct ifnet *);
 int in6_ifinit(struct ifnet *, struct in6_ifaddr *, int);
 void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
 void in6_ifloop_request(int, struct ifaddr *);
@@ -332,8 +331,7 @@ in6_mask2len(struct in6_addr *mask, u_char *lim0)
 }
 
 int
-in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
-    struct proc *p)
+in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 {
 	struct	in6_ifreq *ifr = (struct in6_ifreq *)data;
 	struct	in6_ifaddr *ia = NULL;
@@ -389,7 +387,7 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 			return (EPERM);
 		/* FALLTHROUGH */
 	case SIOCGLIFADDR:
-		return in6_lifaddr_ioctl(so, cmd, data, ifp, p);
+		return in6_lifaddr_ioctl(so, cmd, data, ifp);
 	}
 
 	/*
@@ -1301,8 +1299,8 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
  * address encoding scheme. (see figure on page 8)
  */
 int
-in6_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data, 
-    struct ifnet *ifp, struct proc *p)
+in6_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
+    struct ifnet *ifp)
 {
 	struct if_laddrreq *iflr = (struct if_laddrreq *)data;
 	struct ifaddr *ifa;
@@ -1409,7 +1407,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 		in6_prefixlen2mask(&ifra.ifra_prefixmask.sin6_addr, prefixlen);
 
 		ifra.ifra_flags = iflr->flags & ~IFLR_PREFIX;
-		return in6_control(so, SIOCAIFADDR_IN6, (caddr_t)&ifra, ifp, p);
+		return in6_control(so, SIOCAIFADDR_IN6, (caddr_t)&ifra, ifp);
 	    }
 	case SIOCGLIFADDR:
 	case SIOCDLIFADDR:
@@ -1505,7 +1503,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 
 			ifra.ifra_flags = ia->ia6_flags;
 			return in6_control(so, SIOCDIFADDR_IN6, (caddr_t)&ifra,
-			    ifp, p);
+			    ifp);
 		}
 	    }
 	}

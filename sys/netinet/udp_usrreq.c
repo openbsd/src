@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.170 2013/10/20 11:03:01 phessler Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.171 2013/11/22 07:59:09 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1128,7 +1128,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 #ifdef INET6
 		if (inp->inp_flags & INP_IPV6)
 			return (in6_control(so, (u_long)m, (caddr_t)addr,
-			    (struct ifnet *)control, 0));
+			    (struct ifnet *)control));
 		else
 #endif /* INET6 */
 			return (in_control(so, (u_long)m, (caddr_t)addr,

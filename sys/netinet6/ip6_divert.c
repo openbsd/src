@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.15 2013/11/15 16:46:15 lteo Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.16 2013/11/22 07:59:09 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -277,7 +277,7 @@ divert6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 
 	if (req == PRU_CONTROL) {
 		return (in6_control(so, (u_long)m, (caddr_t)addr,
-		    (struct ifnet *)control, p));
+		    (struct ifnet *)control));
 	}
 	if (inp == NULL && req != PRU_ATTACH) {
 		error = EINVAL;
