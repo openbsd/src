@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_concat.c,v 1.20 2013/11/21 16:54:46 krw Exp $ */
+/* $OpenBSD: softraid_concat.c,v 1.21 2013/11/22 03:47:07 krw Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -112,7 +112,7 @@ sr_concat_rw(struct sr_workunit *wu)
 
 	DNPRINTF(SR_D_DIS, "%s: %s: front end io: lba %lld size %d\n",
 	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
-	    blk, xs->datalen);
+	    (long long)blk, xs->datalen);
 
 	/* All offsets are in bytes. */
 	lbaoffs = blk << DEV_BSHIFT;
