@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.80 2013/10/24 07:34:56 guenther Exp $ */
+/*	$OpenBSD: unistd.h,v 1.81 2013/11/22 21:32:49 millert Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -391,9 +391,6 @@ size_t	 confstr(int, char *, size_t)
 int	 getopt(int, char * const *, const char *);
 extern	 char *optarg;			/* getopt(3) external variables */
 extern	 int opterr, optind, optopt, optreset;
-/* XXX - getsubopt does not belong here */
-int	 getsubopt(char **, char * const *, char **);
-extern	 char *suboptarg;		/* getsubopt(3) external variable */
 #endif /* _GETOPT_DEFINED_ */
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.53 2013/10/21 20:33:24 deraadt Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.54 2013/11/22 21:32:49 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -248,6 +248,10 @@ int	 posix_openpt(int);
 char	*mkdtemp(char *);
 #endif
 
+#if __XPG_VISIBLE >= 420 || __POSIX_VISIBLE >= 20080
+int     getsubopt(char **, char * const *, char **);
+#endif
+
 #if __BSD_VISIBLE
 void	*alloca(size_t); 
 
@@ -274,14 +278,7 @@ const char *
 	getprogname(void);
 void	setprogname(const char *);
 
-#ifndef _GETOPT_DEFINED_
-#define _GETOPT_DEFINED_
-int	 getopt(int, char * const *, const char *);
-extern	 char *optarg;			/* getopt(3) external variables */
-extern	 int opterr, optind, optopt, optreset;
-int	 getsubopt(char **, char * const *, char **);
 extern	 char *suboptarg;		/* getsubopt(3) external variable */
-#endif /* _GETOPT_DEFINED_ */
 
 int	 mkstemps(char *, int);
 

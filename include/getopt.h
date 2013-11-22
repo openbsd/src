@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt.h,v 1.2 2008/06/26 05:42:04 ray Exp $	*/
+/*	$OpenBSD: getopt.h,v 1.3 2013/11/22 21:32:49 millert Exp $	*/
 /*	$NetBSD: getopt.h,v 1.4 2000/07/07 10:43:54 ad Exp $	*/
 
 /*-
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 /*
- * GNU-like getopt_long() and 4.4BSD getsubopt()/optreset extensions
+ * GNU-like getopt_long()
  */
 #define no_argument        0
 #define required_argument  1
@@ -64,14 +64,12 @@ int	 getopt_long_only(int, char * const *, const char *,
 #ifndef _GETOPT_DEFINED_
 #define _GETOPT_DEFINED_
 int	 getopt(int, char * const *, const char *);
-int	 getsubopt(char **, char * const *, char **);
 
 extern   char *optarg;                  /* getopt(3) external variables */
 extern   int opterr;
 extern   int optind;
 extern   int optopt;
 extern   int optreset;
-extern   char *suboptarg;               /* getsubopt(3) external variable */
 #endif
 __END_DECLS
  
