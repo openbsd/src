@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.47 2013/10/10 12:28:38 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.48 2013/11/22 20:58:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -95,13 +95,16 @@ cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 		cp = format_expand(ft, args_get(args, 'c'));
 		format_free(ft);
 
-		fd = open(cp, O_RDONLY|O_DIRECTORY);
-		free(cp);
-		if (fd == -1) {
-			cmdq_error(cmdq, "bad working directory: %s",
-			    strerror(errno));
-			return (CMD_RETURN_ERROR);
-		}
+		if (cp != NULL && *cp != '\0') {
+			fd = open(cp, O_RDONLY|O_DIRECTORY);
+			free(cp);
+			if (fd == -1) {
+				cmdq_error(cmdq, "bad working directory: %s",
+				    strerror(errno));
+				return (CMD_RETURN_ERROR);
+			}
+		} else if (cp != NULL)
+			free(cp);
 		cwd = fd;
 	} else if (cmdq->client != NULL && cmdq->client->session == NULL)
 		cwd = cmdq->client->cwd;
