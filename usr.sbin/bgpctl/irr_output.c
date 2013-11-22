@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_output.c,v 1.14 2013/10/27 18:49:25 guenther Exp $ */
+/*	$OpenBSD: irr_output.c,v 1.15 2013/11/22 15:15:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -40,7 +40,7 @@ char	*action_torule(char *);
 void	 print_rule(FILE *, struct policy_item *, char *, struct irr_prefix *);
 
 #define allowed_in_address(x) \
-	(isalnum(x) || x == '.' || x == ':' || x == '-')
+	(isalnum((unsigned char)x) || x == '.' || x == ':' || x == '-')
 
 int
 write_filters(char *outpath)

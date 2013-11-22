@@ -1,4 +1,4 @@
-/*	$OpenBSD: advcap.c,v 1.13 2008/04/21 20:40:55 rainer Exp $	*/
+/*	$OpenBSD: advcap.c,v 1.14 2013/11/22 15:15:17 deraadt Exp $	*/
 /*	$KAME: advcap.c,v 1.9 2002/05/29 14:28:35 itojun Exp $	*/
 
 /*
@@ -275,8 +275,8 @@ tskip(bp)
 			break;
 		case '\\':
 			bp++;
-			if (isdigit(*bp)) {
-				while (isdigit(*bp++))
+			if (isdigit((unsigned char)*bp)) {
+				while (isdigit((unsigned char)*bp++))
 					;
 			} else
 				bp++;
@@ -327,7 +327,7 @@ tgetnum(id)
 		if (*bp == '0')
 			base = 8;
 		i = 0;
-		while (isdigit(*bp))
+		while (isdigit((unsigned char)*bp))
 			i *= base, i += *bp++ - '0';
 		return (i);
 	}
@@ -429,11 +429,11 @@ nextc:
 			dp++;
 			if (*dp)
 				goto nextc;
-			if (isdigit(c)) {
+			if (isdigit((unsigned char)c)) {
 				c -= '0', i = 2;
 				do
 					c <<= 3, c |= *str++ - '0';
-				while (--i && isdigit(*str));
+				while (--i && isdigit((unsigned char)*str));
 			}
 			break;
 		}

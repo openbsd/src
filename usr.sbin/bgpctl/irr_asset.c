@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_asset.c,v 1.8 2009/04/14 21:10:54 jj Exp $ */
+/*	$OpenBSD: irr_asset.c,v 1.9 2013/11/22 15:15:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -59,7 +59,7 @@ asset_expand(char *s)
 	if ((name = calloc(1, strlen(s) + 1)) == NULL)
 		err(1, "asset_expand calloc");
 	for (i = 0; i < strlen(s); i++)
-		name[i] = toupper(s[i]);
+		name[i] = toupper((unsigned char)s[i]);
 
 	ass = asset_get(name);
 	asset_resolve(ass);
@@ -145,7 +145,8 @@ asset_membertype(char *name)
 	}
 
 	/* neither plain nor hierachical set definition, might be aut-num */
-	if (!strncmp(name, "AS", 2) && strlen(name) > 2 && isdigit(name[2]))
+	if (!strncmp(name, "AS", 2) && strlen(name) > 2 &&
+	    isdigit((unsigned char)name[2]))
 		return (T_AUTNUM);
 
 	return (T_UNKNOWN);
@@ -226,7 +227,7 @@ asset_addmember(char *s)
 	if ((as = calloc(1, strlen(s) + 1)) == NULL)
 		err(1, "asset_addmember strdup");
 	for (i = 0; i < strlen(s); i++)
-		as[i] = toupper(s[i]);
+		as[i] = toupper((unsigned char)s[i]);
 
 	if ((p = realloc(curass->members,
 	    (curass->n_members + 1) * sizeof(char *))) == NULL)

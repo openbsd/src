@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_parser.c,v 1.10 2012/06/30 08:14:07 sthen Exp $ */
+/*	$OpenBSD: irr_parser.c,v 1.11 2013/11/22 15:15:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -279,7 +279,7 @@ parse_policy(char *key, char *val)
 					goto ppoerr;
 				if (strlen(tok) < 3 ||
 				    strncasecmp(tok, "AS", 2) ||
-				    !isdigit(tok[2]))
+				    !isdigit((unsigned char)tok[2]))
 					errx(1, "peering spec \"%s\": format "
 					    "error, AS expected", tok);
 				pi->peer_as = strtonum(tok + 2, 1, UINT_MAX,
