@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.18 2011/03/12 17:50:47 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.19 2013/11/22 04:38:02 guenther Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -431,13 +431,15 @@ calcsb(char *dev, int devfd, struct m_ext2fs *fs)
 	struct partition *pp;
 	char *cp;
 
-	cp = strchr(dev, '\0') - 1;
-	if ((cp == (char *)-1 || (*cp < 'a' || *cp > 'h')) && !isdigit(*cp)) {
+	cp = strchr(dev, '\0');
+	if ((cp == NULL || (cp[-1] < 'a' || cp[-1] >= 'a' + MAXPARTITIONS)) &&
+	    !isdigit((unsigned char)cp[-1])) {
 		pfatal("%s: CANNOT FIGURE OUT FILE SYSTEM PARTITION\n", dev);
 		return (0);
 	}
+	cp--;
 	lp = getdisklabel(dev, devfd);
-	if (isdigit(*cp))
+	if (isdigit((unsigned char)*cp))
 		pp = &lp->d_partitions[0];
 	else
 		pp = &lp->d_partitions[*cp - 'a'];
