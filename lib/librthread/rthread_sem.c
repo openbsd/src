@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.14 2013/11/21 17:43:57 tedu Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.15 2013/11/22 07:48:41 deraadt Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -47,7 +47,7 @@
  * Size of memory to be mmap()'ed by named semaphores.
  * Should be >= SEM_PATH_SIZE and page-aligned.
  */
-#define SEM_MMAP_SIZE	PAGE_SIZE
+#define SEM_MMAP_SIZE	getpagesize()
 
 /*
  * Internal implementation of semaphores
