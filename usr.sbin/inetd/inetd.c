@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.136 2013/11/12 19:44:44 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.137 2013/11/23 17:24:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -766,7 +766,8 @@ doconfig(void)
 					/* XXX */
 					strncpy(protoname, sep->se_proto,
 						sizeof(protoname));
-					if (isdigit(protoname[strlen(protoname) - 1]))
+					if (isdigit((unsigned char)
+					    protoname[strlen(protoname) - 1]))
 						protoname[strlen(protoname) - 1] = '\0';
 					sp = getservbyname(sep->se_service,
 					    protoname);
@@ -821,7 +822,8 @@ doconfig(void)
 					/* XXX */
 					strncpy(protoname, sep->se_proto,
 						sizeof(protoname));
-					if (isdigit(protoname[strlen(protoname) - 1]))
+					if (isdigit((unsigned char)
+					    protoname[strlen(protoname) - 1]))
 						protoname[strlen(protoname) - 1] = '\0';
 					sp = getservbyname(sep->se_service,
 					    protoname);
@@ -1670,7 +1672,7 @@ initring(void)
 	endring = ring;
 
 	for (i = 0; i <= sizeof ring; ++i)
-		if (isprint(i))
+		if (isprint((unsigned char)i))
 			*endring++ = i;
 }
 
