@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_pci.c,v 1.12 2013/11/14 12:37:36 dlg Exp $	*/
+/*	$OpenBSD: if_athn_pci.c,v 1.13 2013/11/23 07:09:36 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -221,7 +221,7 @@ athn_pci_activate(struct device *self, int act)
 		athn_suspend(sc);
 		break;
 	case DVACT_RESUME:
-		task_add(NULL, &psc->sc_resume_t);
+		task_add(systq, &psc->sc_resume_t);
 		break;
 	}
 
