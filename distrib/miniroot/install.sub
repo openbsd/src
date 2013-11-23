@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.697 2013/11/19 12:02:55 rpe Exp $
+#	$OpenBSD: install.sub,v 1.698 2013/11/23 13:25:47 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -2007,6 +2007,7 @@ using the 'mail' command.
 __EOT
 
 	md_congrats
+	$auto && >/ai.done
 }
 
 # #######################################################################
@@ -2138,16 +2139,28 @@ if $auto && [[ -z $RESPONSEFILE ]]; then
 		echo "No response file found; automatic installation aborted."
 		exit 1
 	fi
-
+	rm -f /ai.done
 	echo -n "Performing non-interactive $action..."
-	RESPONSEFILE=/$action.conf /$action auto >>/$action.log 2>&1 <&-
-	# XXX: Isn't the installer's exit code reliable?
-	if grep -q CONGRATULATIONS /$action.log; then
+	RESPONSEFILE=/$action.conf /$action auto 2>&1 </dev/null |
+		sed 'w/ai.log'
+	if [[ -f /ai.done ]]; then
+		_sf=/mnt/var/mail/root
+		(_root="root@$(hostname)"
+		cat <<__EOT
+From $_root $(date -u '+%a %b %d %T %Y')
+Date: $(date '+%a, %d %b %Y %T %z (%Z)')
+From: root <$_root>
+To: $_root
+Subject: $action log
+
+__EOT
+		sed 's/^.*//;s/^\(>*From \)/>\1/' /ai.log
+		echo) >>$_sf
+		chmod 600 $_sf
 		echo "done."
-		cp /$action.log /mnt/$action.log
 		exec reboot
 	else
-		echo "failed; check /$action.log"
+		echo "failed; check /ai.log"
 		exit 1
 	fi
 fi
