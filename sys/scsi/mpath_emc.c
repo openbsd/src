@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_emc.c,v 1.14 2013/08/27 00:57:43 dlg Exp $ */
+/*	$OpenBSD: mpath_emc.c,v 1.15 2013/11/23 23:35:02 gsoares Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -234,7 +234,7 @@ emc_inquiry(struct emc_softc *sc, char *model, char *serial)
 
 	length = MIN(sc->sc_path.p_link->inqdata.additional_length + 5, 255);
 	if (length < 160) {
-		printf("%s: FC (Legacy)\n");
+		printf("%s: FC (Legacy)\n", DEVNAME(sc));
 		return (0);
 	}
 

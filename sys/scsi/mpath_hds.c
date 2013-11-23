@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_hds.c,v 1.12 2013/08/27 00:57:44 dlg Exp $ */
+/*	$OpenBSD: mpath_hds.c,v 1.13 2013/11/23 23:35:02 gsoares Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -152,12 +152,12 @@ hds_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_path.p_link = link;
 
 	if (hds_inquiry(link, &sc->sc_mode) != 0) {
-		printf("%s: unable to query controller mode\n");
+		printf("%s: unable to query controller mode\n", DEVNAME(sc));
 		return;
 	}
 
 	if (hds_info(sc) != 0) {
-		printf("%s: unable to query path info\n");
+		printf("%s: unable to query path info\n", DEVNAME(sc));
 		return;
 	}
 
