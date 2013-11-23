@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.52 2013/09/28 12:40:29 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.53 2013/11/23 07:20:52 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -542,37 +542,38 @@ boot(int howto)
 		/* (Unless the user explicitly asked for reboot.) */
 		if ((howto & RB_USERREQ) == 0)
 			howto |= RB_HALT;
-	} else {
-
-		boothowto = howto | (boothowto & RB_HALT);
-
-		if (!(howto & RB_NOSYNC)) {
-			waittime = 0;
-			vfs_shutdown();
-			/*
-			 * If we've been adjusting the clock, the todr
-			 * will be out of synch; adjust it now unless
-			 * the system was sitting in ddb.
-			 */
-			if ((howto & RB_TIMEBAD) == 0)
-				resettodr();
-			else
-				printf("WARNING: not updating battery clock\n");
-		}
-		if_downall();
-
-		/* XXX probably save howto into stable storage */
-
-		uvm_shutdown();
-		splhigh();
-
-		if (howto & RB_DUMP)
-			dumpsys();
-
-		doshutdownhooks();
-		if (!TAILQ_EMPTY(&alldevs))
-			config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+		goto haltsys;
 	}
+
+	boothowto = howto | (boothowto & RB_HALT);
+
+	if (!(howto & RB_NOSYNC)) {
+		waittime = 0;
+		vfs_shutdown();
+		/*
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now unless
+		 * the system was sitting in ddb.
+		 */
+		if ((howto & RB_TIMEBAD) == 0)
+			resettodr();
+		else
+			printf("WARNING: not updating battery clock\n");
+	}
+	if_downall();
+
+	/* XXX probably save howto into stable storage */
+
+	uvm_shutdown();
+	splhigh();
+
+	if (howto & RB_DUMP)
+		dumpsys();
+
+haltsys:
+	doshutdownhooks();
+	if (!TAILQ_EMPTY(&alldevs))
+		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
 
 	/* in case we came on powerfail interrupt */
 	if (cold_hook)
