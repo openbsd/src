@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkheaders.c,v 1.19 2011/10/02 22:20:49 edd Exp $	*/
+/*	$OpenBSD: mkheaders.c,v 1.20 2013/11/23 17:38:15 deraadt Exp $	*/
 /*	$NetBSD: mkheaders.c,v 1.12 1997/02/02 21:12:34 thorpej Exp $	*/
 
 /*
@@ -208,7 +208,8 @@ cntname(const char *src)
 	dst = buf;
 	*dst++ = 'N';
 	while ((c = *src++) != 0)
-		*dst++ = islower(c) ? toupper(c) : c;
+		*dst++ = islower((unsigned char)c) ?
+		    toupper((unsigned char)c) : c;
 	*dst = 0;
 	return (buf);
 }

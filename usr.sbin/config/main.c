@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.45 2013/10/29 15:37:56 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.46 2013/11/23 17:38:15 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -360,7 +360,8 @@ defoption(const char *name)
 	 */
 	low = emalloc(strlen(name) + 1);
 	for (n = name, p = low; (c = *n) != '\0'; n++)
-		*p++ = isupper(c) ? tolower(c) : c;
+		*p++ = isupper((unsigned char)c) ?
+		    tolower((unsigned char)c) : c;
 	*p = 0;
 
 	n = intern(low);
@@ -406,7 +407,8 @@ removeoption(const char *name)
 	low = emalloc(strlen(name) + 1);
 	/* make lowercase, then remove from select table */
 	for (n = name, p = low; (c = *n) != '\0'; n++)
-		*p++ = isupper(c) ? tolower(c) : c;
+		*p++ = isupper((unsigned char)c) ?
+		    tolower((unsigned char)c) : c;
 	*p = 0;
 	n = intern(low);
 	free(low);
@@ -429,7 +431,8 @@ addoption(const char *name, const char *value)
 	low = emalloc(strlen(name) + 1);
 	/* make lowercase, then add to select table */
 	for (n = name, p = low; (c = *n) != '\0'; n++)
-		*p++ = isupper(c) ? tolower(c) : c;
+		*p++ = isupper((unsigned char)c) ?
+		    tolower((unsigned char)c) : c;
 	*p = 0;
 	n = intern(low);
 	free(low);

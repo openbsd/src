@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.32 2011/10/02 22:20:50 edd Exp $	*/
+/*	$OpenBSD: sem.c,v 1.33 2013/11/23 17:38:15 deraadt Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -441,7 +441,7 @@ getdevattach(const char *name)
 		if (!isalnum(*p) && *p != '_')
 			goto badname;
 	}
-	if (isdigit(*--p)) {
+	if (isdigit((unsigned char)*--p)) {
 badname:
 		error("bad device attachment name `%s'", name);
 		return (&errdeva);
@@ -576,7 +576,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 	l = strlen(nv->nv_str);
 	cp = &nv->nv_str[l];
 	if (l > 1 && *--cp >= 'a' && *cp <= 'a'+maxpartitions &&
-	    isdigit(cp[-1])) {
+	    isdigit((unsigned char)cp[-1])) {
 		l--;
 		part = *cp - 'a';
 	}
@@ -1005,10 +1005,10 @@ split(const char *name, size_t nlen, char *base, size_t bsize, int *aunit)
 	size_t l;
 
 	l = nlen;
-	if (l < 2 || l >= bsize || isdigit(*name))
+	if (l < 2 || l >= bsize || isdigit((unsigned char)*name))
 		return (1);
 	c = (u_char)name[--l];
-	if (!isdigit(c)) {
+	if (!isdigit((unsigned char)c)) {
 		if (c == '*')
 			*aunit = STAR;
 		else if (c == '?')
@@ -1017,7 +1017,7 @@ split(const char *name, size_t nlen, char *base, size_t bsize, int *aunit)
 			return (1);
 	} else {
 		cp = &name[l];
-		while (isdigit(cp[-1]))
+		while (isdigit((unsigned char)cp[-1]))
 			l--, cp--;
 		*aunit = atoi(cp);
 	}
