@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.97 2013/09/10 20:53:09 millert Exp $ */
+/* $OpenBSD: user.c,v 1.98 2013/11/23 17:14:05 deraadt Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -569,7 +569,7 @@ append_group(char *user, int ngroups, const char **groups)
 			}
 			if (strncmp(groups[i], buf, j) == 0 &&
 			    groups[i][j] == '\0') {
-				while (isspace(buf[cc - 1]))
+				while (isspace((unsigned char)buf[cc - 1]))
 					cc--;
 				buf[(j = cc)] = '\0';
 				if (buf[strlen(buf) - 1] != ':')
@@ -620,7 +620,8 @@ valid_login(char *login_name)
 
 	for (cp = login_name ; *cp ; cp++) {
 		/* We allow '$' as the last character for samba */
-		if (!isalnum(*cp) && *cp != '.' && *cp != '_' && *cp != '-' &&
+		if (!isalnum((unsigned char)*cp) && *cp != '.' &&
+		    *cp != '_' && *cp != '-' &&
 		    !(*cp == '$' && *(cp + 1) == '\0')) {
 			return 0;
 		}
@@ -637,7 +638,8 @@ valid_group(char *group)
 	unsigned char	*cp;
 
 	for (cp = group ; *cp ; cp++) {
-		if (!isalnum(*cp) && *cp != '.' && *cp != '_' && *cp != '-') {
+		if (!isalnum((unsigned char)*cp) && *cp != '.' &&
+		    *cp != '_' && *cp != '-') {
 			return 0;
 		}
 	}
@@ -780,31 +782,31 @@ read_defaults(user_t *up)
 	if (fp != NULL) {
 		while ((s = fparseln(fp, &len, &lineno, NULL, 0)) != NULL) {
 			if (strncmp(s, "group", 5) == 0) {
-				for (cp = s + 5 ; isspace(*cp) ; cp++) {
+				for (cp = s + 5 ; isspace((unsigned char)*cp); cp++) {
 				}
 				memsave(&up->u_primgrp, cp, strlen(cp));
 			} else if (strncmp(s, "base_dir", 8) == 0) {
-				for (cp = s + 8 ; isspace(*cp) ; cp++) {
+				for (cp = s + 8 ; isspace((unsigned char)*cp); cp++) {
 				}
 				memsave(&up->u_basedir, cp, strlen(cp));
 			} else if (strncmp(s, "skel_dir", 8) == 0) {
-				for (cp = s + 8 ; isspace(*cp) ; cp++) {
+				for (cp = s + 8 ; isspace((unsigned char)*cp); cp++) {
 				}
 				memsave(&up->u_skeldir, cp, strlen(cp));
 			} else if (strncmp(s, "shell", 5) == 0) {
-				for (cp = s + 5 ; isspace(*cp) ; cp++) {
+				for (cp = s + 5 ; isspace((unsigned char)*cp); cp++) {
 				}
 				memsave(&up->u_shell, cp, strlen(cp));
 			} else if (strncmp(s, "password", 8) == 0) {
-				for (cp = s + 8 ; isspace(*cp) ; cp++) {
+				for (cp = s + 8 ; isspace((unsigned char)*cp); cp++) {
 				}
 				memsave(&up->u_password, cp, strlen(cp));
 			} else if (strncmp(s, "class", 5) == 0) {
-				for (cp = s + 5 ; isspace(*cp) ; cp++) {
+				for (cp = s + 5 ; isspace((unsigned char)*cp); cp++) {
 				}
 				memsave(&up->u_class, cp, strlen(cp));
 			} else if (strncmp(s, "inactive", 8) == 0) {
-				for (cp = s + 8 ; isspace(*cp) ; cp++) {
+				for (cp = s + 8 ; isspace((unsigned char)*cp); cp++) {
 				}
 				if (strcmp(cp, UNSET_INACTIVE) == 0) {
 					if (up->u_inactive) {
@@ -815,17 +817,17 @@ read_defaults(user_t *up)
 					memsave(&up->u_inactive, cp, strlen(cp));
 				}
 			} else if (strncmp(s, "range", 5) == 0) {
-				for (cp = s + 5 ; isspace(*cp) ; cp++) {
+				for (cp = s + 5 ; isspace((unsigned char)*cp); cp++) {
 				}
 				(void) save_range(up, cp);
 			} else if (strncmp(s, "preserve", 8) == 0) {
-				for (cp = s + 8 ; isspace(*cp) ; cp++) {
+				for (cp = s + 8 ; isspace((unsigned char)*cp); cp++) {
 				}
 				up->u_preserve = (strncmp(cp, "true", 4) == 0) ? 1 :
 						  (strncmp(cp, "yes", 3) == 0) ? 1 :
 						   atoi(cp);
 			} else if (strncmp(s, "expire", 6) == 0) {
-				for (cp = s + 6 ; isspace(*cp) ; cp++) {
+				for (cp = s + 6 ; isspace((unsigned char)*cp); cp++) {
 				}
 				if (strcmp(cp, UNSET_EXPIRY) == 0) {
 					if (up->u_expire) {
