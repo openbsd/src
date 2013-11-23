@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.109 2013/09/22 17:14:55 guenther Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.110 2013/11/23 19:07:51 guenther Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1379,7 +1379,8 @@ ufs_readdir(void *v)
 		char __pad[roundup(sizeof(struct dirent), 8)];
 	} u;
 	off_t off = uio->uio_offset;
-	struct direct *dp, *edp;
+	struct direct *dp;
+	char *edp;
 	caddr_t diskbuf;
 	size_t count, entries;
 	int readcnt, error;
@@ -1416,12 +1417,22 @@ ufs_readdir(void *v)
 	error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
 	readcnt -= auio.uio_resid;
 	dp = (struct direct *)diskbuf;
-	edp = (struct direct *)&diskbuf[readcnt];
-	while (error == 0 && dp < edp) {
-		if (dp->d_reclen <= offsetof(struct direct, d_name)) {
-			error = EIO;
-			break;
-		}
+	edp = &diskbuf[readcnt];
+
+	memset(&u, 0, sizeof(u));
+
+	/*
+	 * While
+	 *  - we haven't failed to VOP_READ or uiomove()
+	 *  - there's space in the read buf for the head of an entry
+	 *  - that entry has a valid d_reclen, and
+	 *  - there's space for the *entire* entry
+	 * then we're good to process this one.
+	 */
+	while (error == 0 &&
+	    (char *)dp + offsetof(struct direct, d_name) < edp &&
+	    dp->d_reclen > offsetof(struct direct, d_name) &&
+	    (char *)dp + dp->d_reclen <= edp) {
 		u.dn.d_reclen = roundup(dp->d_namlen+1 +
 		    offsetof(struct dirent, d_name), 8);
 		if (u.dn.d_reclen > uio->uio_resid)
@@ -1446,6 +1457,14 @@ ufs_readdir(void *v)
 		error = uiomove(&u.dn, u.dn.d_reclen, uio);
 		dp = (struct direct *)((char *)dp + dp->d_reclen);
 	}
+
+	/*
+	 * If there was room for an entry in what we read but its
+	 * d_reclen is bogus, fail
+	 */
+	if ((char *)dp + offsetof(struct direct, d_name) < edp &&
+	    dp->d_reclen <= offsetof(struct direct, d_name))
+		error = EIO;
 	free(diskbuf, M_TEMP);
 
 	uio->uio_offset = off;
