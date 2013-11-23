@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.19 2013/04/17 15:58:45 deraadt Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.20 2013/11/23 19:18:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -96,9 +96,7 @@ scan_atjobs(at_db *old_db, struct timeval *tv)
 			continue;
 		if (ep[0] != '.' || !isalpha((unsigned char)ep[1]))
 			continue;
-		queue = ep[1];
-		if (!isalpha(queue))
-			continue;
+		queue = (unsigned char)ep[1];
 
 		job = (atjob *)malloc(sizeof(*job));
 		if (job == NULL) {
