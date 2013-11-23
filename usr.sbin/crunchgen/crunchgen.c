@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.11 2013/10/14 07:06:25 guenther Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.12 2013/11/23 22:51:41 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -316,14 +316,14 @@ parse_line(char *line, int *fc, char **fv, int nf)
 	p = line;
 	*fc = 0;
 	while (1) {
-		while (isspace(*p))
+		while (isspace((unsigned char)*p))
 			p++;
 		if (*p == '\0' || *p == '#')
 			break;
 
 		if (*fc < nf)
 			fv[(*fc)++] = p;
-		while (*p && !isspace(*p) && *p != '#')
+		while (*p && !isspace((unsigned char)*p) && *p != '#')
 			p++;
 		if (*p == '\0' || *p == '#')
 			break;
@@ -698,16 +698,16 @@ fillin_program_objs(prog_t * p, char *path)
 			continue;
 		}
 		cp = line + 6;
-		while (isspace(*cp))
+		while (isspace((unsigned char)*cp))
 			cp++;
 		while (*cp) {
 			obj = cp;
-			while (*cp && !isspace(*cp))
+			while (*cp && !isspace((unsigned char)*cp))
 				cp++;
 			if (*cp)
 				*cp++ = '\0';
 			add_string(&p->objs, obj);
-			while (isspace(*cp))
+			while (isspace((unsigned char)*cp))
 				cp++;
 		}
 	}
@@ -859,7 +859,7 @@ genident(char *str)
 	for (d = s = n; *s != '\0'; s++) {
 		if (*s == '-')
 			*d++ = '_';
-		else if (*s == '_' || isalnum(*s))
+		else if (*s == '_' || isalnum((unsigned char)*s))
 			*d++ = *s;
 	}
 	*d = '\0';

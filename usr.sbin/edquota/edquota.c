@@ -699,11 +699,11 @@ alldigits(char *s)
 {
 	int c;
 
-	c = *s++;
+	c = (unsigned char)*s++;
 	do {
 		if (!isdigit(c))
 			return(0);
-	} while ((c = *s++));
+	} while ((c = (unsigned char)*s++));
 	return(1);
 }
 

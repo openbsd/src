@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.31 2013/06/04 21:43:11 tedu Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.32 2013/11/23 22:51:42 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -379,7 +379,7 @@ selectdrives(char *argv[])
 #define	BACKWARD_COMPATIBILITY
 	for (ndrives = 0; *argv; ++argv) {
 #ifdef	BACKWARD_COMPATIBILITY
-		if (isdigit(**argv))
+		if (isdigit((unsigned char)**argv))
 			break;
 #endif
 		for (i = 0; i < dk_ndrive; i++) {
