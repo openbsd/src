@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.7 2011/08/22 19:32:42 millert Exp $	*/
+/*	$OpenBSD: macros.h,v 1.8 2013/11/23 18:06:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -79,7 +79,6 @@
 			;
 #endif /* DEBUGGING */
 
-#define	MkUpper(ch)	(islower(ch) ? toupper(ch) : ch)
 #define	Set_LineNum(ln)	{Debug(DPARS|DEXT,("linenum=%d\n",ln)); \
 			 LineNumber = ln; \
 			}
