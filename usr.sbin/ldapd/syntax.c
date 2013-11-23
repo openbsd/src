@@ -1,4 +1,4 @@
-/*	$OpenBSD: syntax.c,v 1.1 2010/09/03 09:39:17 martinh Exp $ */
+/*	$OpenBSD: syntax.c,v 1.2 2013/11/23 18:02:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -180,7 +180,7 @@ syntax_is_integer(struct schema *schema, char *value, size_t len)
 	if (*value == '0')
 		return value[1] == '\0';
 	for (value++; *value != '\0'; value++)
-		if (!isdigit(*value))
+		if (!isdigit((unsigned char)*value))
 			return 0;
 	return 1;
 }
@@ -254,7 +254,7 @@ syntax_is_numeric_string(struct schema *schema, char *value, size_t len)
 	char	*p;
 
 	for (p = value; *p != '\0'; p++)
-		if (!isdigit(*p) || *p != ' ')
+		if (!isdigit((unsigned char)*p) || *p != ' ')
 			return 0;
 
 	return p != value;
@@ -267,7 +267,8 @@ syntax_is_time(struct schema *schema, char *value, size_t len, int gen)
 	char	*p = value;
 
 #define CHECK_RANGE(min, max)	\
-		if (!isdigit(p[0]) || !isdigit(p[1]))	\
+		if (!isdigit((unsigned char)p[0]) ||	\
+		    !isdigit((unsigned char)p[1]))	\
 			return 0;			\
 		n = (p[0] - '0') * 10 + (p[1] - '0');	\
 		if (n < min || n > max)			\
@@ -282,21 +283,22 @@ syntax_is_time(struct schema *schema, char *value, size_t len, int gen)
 	/* FIXME: should check number of days in month */
 	CHECK_RANGE(0, 23);			/* hour */
 
-	if (!gen || isdigit(*p)) {
+	if (!gen || isdigit((unsigned char)*p)) {
 		CHECK_RANGE(0, 59);		/* minute */
-		if (!gen && isdigit(*p))
+		if (!gen && isdigit((unsigned char)*p))
 			CHECK_RANGE(0, 59+gen);	/* second or leap-second */
 		if (*p == '\0')
 			return 1;
 	}
 						/* fraction */
-	if (!gen && ((*p == ',' || *p == '.') && !isdigit(*++p)))
+	if (!gen && ((*p == ',' || *p == '.') &&
+	    !isdigit((unsigned char)*++p)))
 		return 0;
 
 	if (*p == '-' || *p == '+') {
 		++p;
 		CHECK_RANGE(0, 23);		/* hour */
-		if (!gen || isdigit(*p))
+		if (!gen || isdigit((unsigned char)*p))
 			CHECK_RANGE(0, 59);	/* minute */
 	} else if (*p++ != 'Z')
 		return 0;
