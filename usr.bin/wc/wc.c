@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.14 2013/11/12 13:54:50 deraadt Exp $	*/
+/*	$OpenBSD: wc.c,v 1.15 2013/11/23 17:37:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -185,7 +185,7 @@ cnt(char *file)
 			 */
 			charct += len;
 			for (C = buf; len--; ++C) {
-				if (isspace (*C)) {
+				if (isspace(*C)) {
 					gotsp = 1;
 					if (*C == '\n')
 						++linect;
