@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.15 2010/01/23 00:32:12 schwarze Exp $	*/
+/*	$OpenBSD: cut.c,v 1.16 2013/11/23 17:30:29 deraadt Exp $	*/
 /*	$NetBSD: cut.c,v 1.9 1995/09/02 05:59:23 jtc Exp $	*/
 
 /*
@@ -139,13 +139,13 @@ get_list(char *list)
 			++p;
 			setautostart = 1;
 		}
-		if (isdigit(*p)) {
+		if (isdigit((unsigned char)*p)) {
 			start = stop = strtol(p, &p, 10);
 			if (setautostart && start > autostart)
 				autostart = start;
 		}
 		if (*p == '-') {
-			if (isdigit(p[1]))
+			if (isdigit((unsigned char)p[1]))
 				stop = strtol(p + 1, &p, 10);
 			if (*p == '-') {
 				++p;
