@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.59 2009/10/27 23:59:57 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.60 2013/11/24 01:06:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -839,7 +839,7 @@ direct(struct _dom_binding *ypdb, char *buf, int outlen)
 		}
 		*p = '\0';
 		p = line;
-		while (isspace(*p))
+		while (isspace((unsigned char)*p))
 			p++;
 		if (*p == '#')
 			continue;

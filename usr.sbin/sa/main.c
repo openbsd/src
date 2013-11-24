@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 2009/10/27 23:59:54 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 2013/11/24 01:06:19 deraadt Exp $	*/
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -316,7 +316,7 @@ acct_load(char *pn, int wr)
 		ci.ci_calls = 1;
 		for (i = 0; i < sizeof(ac.ac_comm) && ac.ac_comm[i] != '\0';
 		    i++) {
-			char c = ac.ac_comm[i];
+			unsigned char c = ac.ac_comm[i];
 
 			if (!isascii(c) || iscntrl(c)) {
 				ci.ci_comm[i] = '?';

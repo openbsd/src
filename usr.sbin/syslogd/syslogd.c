@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.108 2013/10/09 16:33:05 millert Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.109 2013/11/24 01:06:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -635,7 +635,7 @@ printline(char *hname, char *msg)
 	p = msg;
 	if (*p == '<') {
 		pri = 0;
-		while (isdigit(*++p))
+		while (isdigit((unsigned char)*++p))
 			pri = 10 * pri + (*p - '0');
 		if (*p == '>')
 			++p;
@@ -678,7 +678,7 @@ printsys(char *msg)
 		pri = DEFSPRI;
 		if (*p == '<') {
 			pri = 0;
-			while (isdigit(*++p))
+			while (isdigit((unsigned char)*++p))
 				pri = 10 * pri + (*p - '0');
 			if (*p == '>')
 				++p;
@@ -745,10 +745,10 @@ logmsg(int pri, char *msg, char *from, int flags)
 	prilev = LOG_PRI(pri);
 
 	/* extract program name */
-	while (isspace(*msg))
+	while (isspace((unsigned char)*msg))
 		msg++;
 	for (i = 0; i < NAME_MAX; i++) {
-		if (!isalnum(msg[i]) && msg[i] != '-')
+		if (!isalnum((unsigned char)msg[i]) && msg[i] != '-')
 			break;
 		prog[i] = msg[i];
 	}
@@ -1256,20 +1256,22 @@ init(void)
 		 * spaces and newline character. !prog is treated
 		 * specially: the following lines apply only to that program.
 		 */
-		for (p = cline; isspace(*p); ++p)
+		for (p = cline; isspace((unsigned char)*p); ++p)
 			continue;
 		if (*p == '\0' || *p == '#')
 			continue;
 		if (*p == '!') {
 			p++;
-			while (isspace(*p))
+			while (isspace((unsigned char)*p))
 				p++;
-			if (!*p || (*p == '*' && (!p[1] || isspace(p[1])))) {
+			if (!*p || (*p == '*' && (!p[1] ||
+			    isspace((unsigned char)p[1])))) {
 				strlcpy(prog, "*", sizeof(prog));
 				continue;
 			}
 			for (i = 0; i < NAME_MAX; i++) {
-				if (!isalnum(p[i]) && p[i] != '-' && p[i] != '!')
+				if (!isalnum((unsigned char)p[i]) &&
+				    p[i] != '-' && p[i] != '!')
 					break;
 				prog[i] = p[i];
 			}
@@ -1278,7 +1280,7 @@ init(void)
 		}
 		p = cline + strlen(cline);
 		while (p > cline)
-			if (!isspace(*--p)) {
+			if (!isspace((unsigned char)*--p)) {
 				p++;
 				break;
 			}
@@ -1596,7 +1598,7 @@ cfline(char *line, char *prog)
 
 		/* Copy buffer name */
 		for(i = 0; i < sizeof(f->f_un.f_mb.f_mname) - 1; i++) {
-			if (!isalnum(q[i]))
+			if (!isalnum((unsigned char)q[i]))
 				break;
 			f->f_un.f_mb.f_mname[i] = q[i];
 		}
@@ -1666,12 +1668,12 @@ decode(const char *name, const CODE *codetab)
 	const CODE *c;
 	char *p, buf[40];
 
-	if (isdigit(*name))
+	if (isdigit((unsigned char)*name))
 		return (atoi(name));
 
 	for (p = buf; *name && p < &buf[sizeof(buf) - 1]; p++, name++) {
-		if (isupper(*name))
-			*p = tolower(*name);
+		if (isupper((unsigned char)*name))
+			*p = tolower((unsigned char)*name);
 		else
 			*p = *name;
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.28 2013/04/18 02:29:59 deraadt Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.29 2013/11/24 01:06:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -182,7 +182,7 @@ static int p2l[MOUSE_MAXBUTTON] = {
 static char *
 skipspace(char *s)
 {
-	while (isspace(*s))
+	while (isspace((unsigned char)*s))
 		++s;
 	return s;
 }
@@ -198,7 +198,7 @@ mouse_installmap(char *arg)
 	while (*arg) {
 		arg = skipspace(arg);
 		s = arg;
-		while (isdigit(*arg))
+		while (isdigit((unsigned char)*arg))
 			++arg;
 		arg = skipspace(arg);
 		if ((arg <= s) || (*arg != '='))
@@ -207,9 +207,9 @@ mouse_installmap(char *arg)
 
 		arg = skipspace(++arg);
 		s = arg;
-		while (isdigit(*arg))
+		while (isdigit((unsigned char)*arg))
 			++arg;
-		if (arg <= s || (!isspace(*arg) && *arg != '\0'))
+		if (arg <= s || (!isspace((unsigned char)*arg) && *arg != '\0'))
 			return FALSE;
 		pbutton = atoi(s);
 
