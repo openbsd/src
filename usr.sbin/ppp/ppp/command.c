@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.93 2013/04/29 00:28:23 okan Exp $
+ * $OpenBSD: command.c,v 1.94 2013/11/24 00:54:30 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -3110,7 +3110,7 @@ RunListCommand(struct cmdargs const *arg)
 
 #ifndef NONAT
   if (arg->cmd->args == NatCommands &&
-      tolower(*arg->argv[arg->argn - 1]) == 'a') {
+      tolower((unsigned char)*arg->argv[arg->argn - 1]) == 'a') {
     if (arg->prompt)
       prompt_Printf(arg->prompt, "The alias command is deprecated\n");
     else
