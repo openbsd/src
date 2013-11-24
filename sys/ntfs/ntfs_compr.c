@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_compr.c,v 1.6 2013/01/14 02:41:03 jsing Exp $	*/
+/*	$OpenBSD: ntfs_compr.c,v 1.7 2013/11/24 16:02:30 jsing Exp $	*/
 /*	$NetBSD: ntfs_compr.c,v 1.1 2002/12/23 17:38:31 jdolecek Exp $	*/
 
 /*-
@@ -48,13 +48,13 @@ ntfs_uncompblock(u_int8_t *buf, u_int8_t *cbuf)
 	int pos, cpos;
 
 	len = GET_UINT16(cbuf) & 0xFFF;
-	dprintf(("ntfs_uncompblock: block length: %d + 3, 0x%x,0x%04x\n",
-	    len, len, GET_UINT16(cbuf)));
+	DPRINTF("ntfs_uncompblock: block length: %d + 3, 0x%x,0x%04x\n",
+	    len, len, GET_UINT16(cbuf));
 
 	if (!(GET_UINT16(cbuf) & 0x8000)) {
 		if ((len + 1) != NTFS_COMPBLOCK_SIZE) {
-			dprintf(("ntfs_uncompblock: len: %x instead of %d\n",
-			    len, 0xfff));
+			DPRINTF("ntfs_uncompblock: len: %x instead of %d\n",
+			    len, 0xfff);
 		}
 		memcpy(buf, cbuf + 2, len + 1);
 		bzero(buf + len + 1, NTFS_COMPBLOCK_SIZE - 1 - len);

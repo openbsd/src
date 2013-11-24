@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.35 2013/05/30 20:11:06 guenther Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.36 2013/11/24 16:02:30 jsing Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -323,7 +323,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp,
 
 	if (strncmp(ntmp->ntm_bootfile.bf_sysid, NTFS_BBID, NTFS_BBIDLEN)) {
 		error = EINVAL;
-		dprintf(("ntfs_mountfs: invalid boot block\n"));
+		DPRINTF("ntfs_mountfs: invalid boot block\n");
 		goto out;
 	}
 
@@ -334,11 +334,12 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp,
 		else
 			ntmp->ntm_bpmftrec = (1 << (-cpr)) / ntmp->ntm_bps;
 	}
-	dprintf(("ntfs_mountfs(): bps: %d, spc: %d, media: %x, mftrecsz: %d (%d sects)\n",
-		ntmp->ntm_bps,ntmp->ntm_spc,ntmp->ntm_bootfile.bf_media,
-		ntmp->ntm_mftrecsz,ntmp->ntm_bpmftrec));
-	dprintf(("ntfs_mountfs(): mftcn: 0x%x|0x%x\n",
-		(u_int32_t)ntmp->ntm_mftcn,(u_int32_t)ntmp->ntm_mftmirrcn));
+	DPRINTF("ntfs_mountfs(): bps: %d, spc: %d, media: %x, "
+	    "mftrecsz: %d (%d sects)\n", ntmp->ntm_bps, ntmp->ntm_spc,
+	    ntmp->ntm_bootfile.bf_media, ntmp->ntm_mftrecsz,
+	    ntmp->ntm_bpmftrec);
+	DPRINTF("ntfs_mountfs(): mftcn: 0x%x|0x%x\n",
+	    (u_int32_t)ntmp->ntm_mftcn, (u_int32_t)ntmp->ntm_mftmirrcn);
 
 	ntmp->ntm_mountp = mp;
 	ntmp->ntm_dev = dev;
@@ -355,10 +356,10 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp,
 	ntmp->ntm_wput = ntfs_utf8_wput;
 	ntmp->ntm_wcmp = ntfs_utf8_wcmp;
 
-	dprintf(("ntfs_mountfs(): case-%s,%s uid: %d, gid: %d, mode: %o\n",
-		(ntmp->ntm_flag & NTFS_MFLAG_CASEINS)?"insens.":"sens.",
-		(ntmp->ntm_flag & NTFS_MFLAG_ALLNAMES)?" allnames,":"",
-		ntmp->ntm_uid, ntmp->ntm_gid, ntmp->ntm_mode));
+	DPRINTF("ntfs_mountfs(): case-%s,%s uid: %d, gid: %d, mode: %o\n",
+	    (ntmp->ntm_flag & NTFS_MFLAG_CASEINS) ? "insens." : "sens.",
+	    (ntmp->ntm_flag & NTFS_MFLAG_ALLNAMES) ? " allnames," : "",
+	    ntmp->ntm_uid, ntmp->ntm_gid, ntmp->ntm_mode);
 
 	/*
 	 * We read in some system nodes to do not allow 
@@ -449,7 +450,7 @@ out1:
 			vrele(ntmp->ntm_sysvn[i]);
 
 	if (vflush(mp,NULLVP,0))
-		dprintf(("ntfs_mountfs: vflush failed\n"));
+		DPRINTF("ntfs_mountfs: vflush failed\n");
 
 out:
 	devvp->v_specmountpoint = NULL;
@@ -483,17 +484,17 @@ ntfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	struct ntfsmount *ntmp;
 	int error, ronly = 0, flags, i;
 
-	dprintf(("ntfs_unmount: unmounting...\n"));
+	DPRINTF("ntfs_unmount: unmounting...\n");
 	ntmp = VFSTONTFS(mp);
 
 	flags = 0;
 	if(mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
-	dprintf(("ntfs_unmount: vflushing...\n"));
+	DPRINTF("ntfs_unmount: vflushing...\n");
 	error = vflush(mp,NULLVP,flags | SKIPSYSTEM);
 	if (error) {
-		dprintf(("ntfs_unmount: vflush failed: %d\n",error));
+		DPRINTF("ntfs_unmount: vflush failed: %d\n", error);
 		return (error);
 	}
 
@@ -534,7 +535,7 @@ ntfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	/* free the toupper table, if this has been last mounted ntfs volume */
 	ntfs_toupper_unuse(p);
 
-	dprintf(("ntfs_unmount: freeing memory...\n"));
+	DPRINTF("ntfs_unmount: freeing memory...\n");
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	free(ntmp->ntm_ad, M_NTFSMNT);
@@ -548,8 +549,8 @@ ntfs_root(struct mount *mp, struct vnode **vpp)
 	struct vnode *nvp;
 	int error = 0;
 
-	dprintf(("ntfs_root(): sysvn: %p\n",
-		VFSTONTFS(mp)->ntm_sysvn[NTFS_ROOTINO]));
+	DPRINTF("ntfs_root(): sysvn: %p\n",
+	    VFSTONTFS(mp)->ntm_sysvn[NTFS_ROOTINO]);
 	error = VFS_VGET(mp, (ino_t)NTFS_ROOTINO, &nvp);
 	if(error) {
 		printf("ntfs_root: VFS_VGET failed: %d\n",error);
@@ -606,7 +607,7 @@ ntfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	struct ntfsmount *ntmp = VFSTONTFS(mp);
 	u_int64_t mftallocated;
 
-	dprintf(("ntfs_statfs():\n"));
+	DPRINTF("ntfs_statfs():\n");
 
 	mftallocated = VTOF(ntmp->ntm_sysvn[NTFS_MFTINO])->f_allocated;
 
@@ -632,7 +633,7 @@ ntfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 int
 ntfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 {
-	/*dprintf(("ntfs_sync():\n"));*/
+	/*DPRINTF("ntfs_sync():\n");*/
 	return (0);
 }
 
@@ -642,8 +643,8 @@ ntfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	struct ntfid *ntfhp = (struct ntfid *)fhp;
 	int error;
 
-	ddprintf(("ntfs_fhtovp(): %s: %d\n", mp->mnt_stat.f_mntonname,
-		ntfhp->ntfid_ino));
+	DDPRINTF("ntfs_fhtovp(): %s: %d\n",
+	    mp->mnt_stat.f_mntonname, ntfhp->ntfid_ino);
 
 	error = ntfs_vgetex(mp, ntfhp->ntfid_ino, ntfhp->ntfid_attr, NULL,
 			LK_EXCLUSIVE | LK_RETRY, 0, curproc, vpp); /* XXX */
@@ -664,8 +665,8 @@ ntfs_vptofh(struct vnode *vp, struct fid *fhp)
 	struct ntfid *ntfhp;
 	struct fnode *fn;
 
-	ddprintf(("ntfs_fhtovp(): %s: %p\n", vp->v_mount->mnt_stat.f_mntonname,
-		vp));
+	DDPRINTF("ntfs_fhtovp(): %s: %p\n",
+	    vp->v_mount->mnt_stat.f_mntonname, vp);
 
 	fn = VTOF(vp);
 	ntp = VTONT(vp);
@@ -690,9 +691,9 @@ ntfs_vgetex(struct mount *mp, ntfsino_t ino, u_int32_t attrtype, char *attrname,
 	struct vnode *vp;
 	enum vtype f_type;
 
-	dprintf(("ntfs_vgetex: ino: %d, attr: 0x%x:%s, lkf: 0x%lx, f: 0x%lx\n",
-		ino, attrtype, attrname?attrname:"", (u_long)lkflags,
-		(u_long)flags ));
+	DPRINTF("ntfs_vgetex: ino: %d, attr: 0x%x:%s, lkf: 0x%lx, f: 0x%lx\n",
+	    ino, attrtype, attrname ? attrname : "", (u_long)lkflags,
+	    (u_long)flags);
 
 	ntmp = VFSTONTFS(mp);
 	*vpp = NULL;
@@ -770,7 +771,7 @@ ntfs_vgetex(struct mount *mp, ntfsino_t ino, u_int32_t attrtype, char *attrname,
 
 		return (error);
 	}
-	dprintf(("ntfs_vget: vnode: %p for ntnode: %d\n", vp,ino));
+	DPRINTF("ntfs_vget: vnode: %p for ntnode: %d\n", vp, ino);
 
 	fp->f_vp = vp;
 	vp->v_data = fp;

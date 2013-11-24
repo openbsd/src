@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs.h,v 1.16 2013/06/11 16:42:17 deraadt Exp $	*/
+/*	$OpenBSD: ntfs.h,v 1.17 2013/11/24 16:02:30 jsing Exp $	*/
 /*	$NetBSD: ntfs.h,v 1.5 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -302,13 +302,13 @@ struct ntfsmount {
 #ifdef _KERNEL
 #if defined(NTFS_DEBUG)
 extern int ntfs_debug;
-#define DPRINTF(X, Y) do { if(ntfs_debug >= (X)) printf Y; } while(0)
-#define dprintf(a) DPRINTF(1, a)
-#define ddprintf(a) DPRINTF(2, a)
+#define DNPRINTF(n, x...) do { if(ntfs_debug >= (n)) printf(x); } while(0)
+#define DPRINTF(x...) DNPRINTF(1, x)
+#define DDPRINTF(x...) DNPRINTF(2, x)
 #else /* NTFS_DEBUG */
-#define DPRINTF(X, Y)
-#define dprintf(a)
-#define ddprintf(a)
+#define DNPRINTF(n, x...)
+#define DPRINTF(x...)
+#define DDPRINTF(x...)
 #endif
 
 extern struct vops ntfs_vops;

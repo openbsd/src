@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_conv.c,v 1.8 2010/08/12 04:26:56 tedu Exp $	*/
+/*	$OpenBSD: ntfs_conv.c,v 1.9 2013/11/24 16:02:30 jsing Exp $	*/
 /*	$NetBSD: ntfs_conv.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*-
@@ -100,7 +100,7 @@ ntfs_utf8_wput(char *s, size_t n, wchar wc)
         if (wc & 0xf800) {
                 if (n < 3) {
                         /* bound check failure */
-			ddprintf(("ntfs_utf8_wput: need 3 bytes\n"));
+			DDPRINTF("ntfs_utf8_wput: need 3 bytes\n");
                         return 0;
                 }
 
@@ -112,7 +112,7 @@ ntfs_utf8_wput(char *s, size_t n, wchar wc)
                 if (wc & 0x0780) {
                         if (n < 2) {
                                 /* bound check failure */
-				ddprintf(("ntfs_utf8_wput: need 2 bytes\n"));
+				DDPRINTF("ntfs_utf8_wput: need 2 bytes\n");
                                 return 0;
                         }
 
@@ -122,7 +122,7 @@ ntfs_utf8_wput(char *s, size_t n, wchar wc)
                 } else {
                         if (n < 1) {
                                 /* bound check failure */
-				ddprintf(("ntfs_utf8_wput: need 1 byte\n"));
+				DDPRINTF("ntfs_utf8_wput: need 1 byte\n");
                                 return 0;
                         }
 
