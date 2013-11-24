@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.101 2013/07/07 09:41:08 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.102 2013/11/24 12:36:13 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -114,7 +114,6 @@ static char *figure_out_MACHINE_ARCH(void);
 static char *figure_out_MACHINE_CPU(void);
 
 static char *chdir_verify_path(const char *, struct dirs *);
-static char *concat_verify(const char *, const char *, char, struct dirs *);
 static char *figure_out_CURDIR(void);
 static void setup_CURDIR_OBJDIR(struct dirs *, const char *);
 
@@ -515,31 +514,13 @@ figure_out_CURDIR()
 static char *
 chdir_verify_path(const char *path, struct dirs *d)
 {
-	struct stat sb;
-
-	if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
-		if (chdir(path)) {
-			(void)fprintf(stderr, "make warning: %s: %s.\n",
-			      path, strerror(errno));
-			return NULL;
-		} else {
-			if (path[0] != '/')
-				return Str_concat(d->current, path, '/');
-			else
-				return estrdup(path);
-		}
+	if (chdir(path) == 0) {
+		if (path[0] != '/')
+			return Str_concat(d->current, path, '/');
+		else
+			return estrdup(path);
 	}
-
 	return NULL;
-}
-
-static char *
-concat_verify(const char *p1, const char *p2, char c, struct dirs *d)
-{
-	char *tmp = Str_concat(p1, p2, c);
-	char *result = chdir_verify_path(tmp, d);
-	free(tmp);
-	return result;
 }
 
 static void
@@ -548,33 +529,19 @@ setup_CURDIR_OBJDIR(struct dirs *d, const char *machine)
 	char *path, *prefix;
 
 	d->current = figure_out_CURDIR();
-	d->object = NULL;
 	/*
 	 * If the MAKEOBJDIR (or by default, the _PATH_OBJDIR) directory
-	 * exists, change into it and build there.  (If a .${MACHINE} suffix
-	 * exists, use that directory instead).
-	 * Otherwise check MAKEOBJDIRPREFIX`cwd` (or by default,
-	 * _PATH_OBJDIRPREFIX`cwd`) and build there if it exists.
-	 * If all fails, use the current directory to build.
+	 * exists, change into it and build there.  
 	 *
 	 * Once things are initted,
 	 * have to add the original directory to the search path,
 	 * and modify the paths for the Makefiles appropriately.  The
 	 * current directory is also placed as a variable for make scripts.
 	 */
-	if ((prefix = getenv("MAKEOBJDIRPREFIX")) != NULL) {
-		d->object = concat_verify(prefix, d->current, 0, d);
-	} else if ((path = getenv("MAKEOBJDIR")) != NULL) {
-		d->object = chdir_verify_path(path, d);
-	} else {
+	if ((path = getenv("MAKEOBJDIR")) == NULL) {
 		path = _PATH_OBJDIR;
-		prefix = _PATH_OBJDIRPREFIX;
-		d->object = concat_verify(path, machine, '.', d);
-		if (!d->object)
-			d->object=chdir_verify_path(path, d);
-		if (!d->object)
-			d->object = concat_verify(prefix, d->current, 0, d);
-	}
+	} 
+	d->object = chdir_verify_path(path, d);
 	if (d->object == NULL)
 		d->object = d->current;
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.108 2013/10/19 18:15:39 schwarze Exp $
+.\"	$OpenBSD: make.1,v 1.109 2013/11/24 12:36:13 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: October 19 2013 $
+.Dd $Mdocdate: November 24 2013 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -698,49 +698,27 @@ A path to the directory where
 .Nm
 was executed.
 .It Va .OBJDIR
-A path to the directory where the targets are built.
+Path to the directory where targets are built.
 At startup,
 .Nm
-searches for an alternate directory to place target files -- it
-will attempt to change into this special directory.
-First, if
-.Ev MAKEOBJDIRPREFIX
-is defined,
+searches for an alternate directory to place target files.
 .Nm
-prepends its contents to the current directory name and tries for
-the resulting directory.
-If that fails,
-.Nm
-remains in the current directory.
-If
-.Ev MAKEOBJDIRPREFIX
-is not defined,
-.Nm
-checks
+tries to
+.Xr chdir 2
+into
 .Ev MAKEOBJDIR
-and tries to change into that directory.
+(or
+.Pa obj
+if
+.Ev MAKEOBJDIR
+is not defined),
+and sets
+.Va .OBJDIR
+accordingly.
 Should that fail,
-.Nm
-remains in the current directory.
-If
-.Ev MAKEOBJDIR
-is not defined, it tries to change into the directory named
-.Pa obj.${MACHINE}
-(see
-.Va MACHINE
-variable).
-If it still has found no special directory,
-.Nm
-next tries the directory named
-.Pa obj .
-If this fails,
-.Nm
-tries to prepend
-.Pa /usr/obj
-to the current directory name.
-Finally, if none of these directories are available
-.Nm
-will settle for and use the current directory.
+.Va .OBJDIR
+is set to
+.Va .CURDIR .
 .It Va .MAKEFLAGS
 The environment variable
 .Ev MAKEFLAGS
@@ -1572,10 +1550,6 @@ This implementation is a distant derivative of
 .Nm pmake ,
 originally written by Adam de Boor.
 .Sh BUGS
-The determination of
-.Va .OBJDIR
-is contorted to the point of absurdity.
-.Pp
 If the same target is specified several times in complete target rules,
 .Nm
 silently ignores all commands after the first non empty set of commands,
