@@ -1,4 +1,4 @@
-/*      $OpenBSD: pte.h,v 1.11 2011/03/23 16:54:37 pirofti Exp $      */
+/*      $OpenBSD: pte.h,v 1.12 2013/11/24 22:08:23 miod Exp $      */
 /*	$NetBSD: pte.h,v 1.21 2005/12/24 22:45:40 perry Exp $	  */
 
 /*
@@ -36,11 +36,9 @@
 
 #ifndef _LOCORE
 
-typedef u_int32_t	pt_entry_t;	/* Mach page table entry */
+typedef u_int32_t	pt_entry_t;	/* page table entry */
 
 #endif /* _LOCORE */
-
-#define	PT_ENTRY_NULL	((pt_entry_t *) 0)
 
 #define	PG_V		0x80000000
 #define	PG_NV		0x00000000
@@ -59,34 +57,42 @@ typedef u_int32_t	pt_entry_t;	/* Mach page table entry */
 #define	PG_PFNUM(x)	(((unsigned long)(x) & 0x3ffffe00) >> VAX_PGSHIFT)
 
 #ifndef _LOCORE
-extern pt_entry_t *Sysmap;
 /*
  * Kernel virtual address to page table entry and to physical address.
  */
-#endif
-
-#ifdef __ELF__
-#define VAX_SYSMAP	"Sysmap"
-#else
-#define VAX_SYSMAP	"_Sysmap"
+extern pt_entry_t *Sysmap;
 #endif
 
 #ifdef __GNUC__
-#define kvtopte(va) ({ \
-	pt_entry_t *r; \
-	__asm("extzv $9,$21,%1,%0;moval *" VAX_SYSMAP "[%0],%0" : "=r"(r) : "g"(va)); \
-	r; \
-})
-#define kvtophys(va) ({ \
-	paddr_t r; \
-	__asm("extzv $9,$21,%1,%0;ashl $9,*" VAX_SYSMAP "[%0],%0;insv %1,$0,$9,%0" \
-	    : "=&r"(r) : "g"(va) : "cc"); \
-	r; \
-})
+static inline pt_entry_t *
+kvtopte(vaddr_t va)
+{
+	pt_entry_t *pte;
+
+	__asm(
+		"extzv $9,$21,%1,%0\n\t"
+		"moval *Sysmap[%0],%0\n\t"
+	    : "=r"(pte)
+	    : "g"(va));
+	return pte;
+}
+static inline paddr_t
+kvtophys(vaddr_t va)
+{
+	paddr_t pa;
+
+	__asm(
+		"extzv $9,$21,%1,%0\n\t"
+		"ashl $9,*Sysmap[%0],%0\n\t"
+		"insv %1,$0,$9,%0\n\t"
+	    : "=&r"(pa)
+	    : "g"(va) : "cc");
+	return pa;
+}
 #else /* __GNUC__ */
 #define kvtopte(va) (&Sysmap[PG_PFNUM(va)])
 #define kvtophys(va) \
-	(((*kvtopte(va) & PG_FRAME) << VAX_PGSHIFT) | ((int)(va) & VAX_PGOFSET))
+    (((*kvtopte(va) & PG_FRAME) << VAX_PGSHIFT) | ((paddr_t)(va) & VAX_PGOFSET))
 #endif /* __GNUC__ */
 #define uvtopte(va, pcb) \
 	(((vaddr_t)(va) < 0x40000000) ? \

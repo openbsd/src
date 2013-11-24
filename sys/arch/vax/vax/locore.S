@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.7 2013/07/05 21:11:57 miod Exp $   */
+/*	$OpenBSD: locore.S,v 1.8 2013/11/24 22:08:25 miod Exp $   */
 /*	$NetBSD: intvec.s,v 1.39 1999/06/28 08:20:48 itojun Exp $   */
 
 /*
@@ -432,15 +432,19 @@ to:	movw	$0xfff,_C_LABEL(panic)		# Save all regs in panic
 	bleq	eskip				# Symbol table not present
 	addl3	_C_LABEL(esym), $0x3ff, %r0	# Use symbol end and round
 eskip:
-	bicl3	$0x3ff,%r0,_C_LABEL(proc0paddr)	# save proc0 uarea pointer
-	bicl3	$0x80000000,_C_LABEL(proc0paddr),%r0 # get phys proc0 uarea addr
+	bicl3	$0x3ff,%r0,%r1
+	movl	%r1,_C_LABEL(proc0paddr)	# save proc0 uarea pointer
+	bicl3	$0x80000000,%r1,%r0		# get phys proc0 uarea addr
+#if 0
+	movl	%r0,PCB_PADDR(%r1)		# save PCB physical address
+#endif
 	mtpr	%r0,$PR_PCBB			# Save in IPR PCBB
-	addl3	$USPACE,_C_LABEL(proc0paddr),%r0 # Get kernel stack top
+	addl3	$USPACE,%r1,%r0			# Get kernel stack top
 	mtpr	%r0,$PR_KSP			# put in IPR KSP
 	movl	%r0,_C_LABEL(Sysmap)		# SPT start addr after KSP
 
 # Set some registers in known state
-	movl	_C_LABEL(proc0paddr),%r0
+	movl	%r1,%r0
 	clrl	P0LR(%r0)
 	clrl	P1LR(%r0)
 	mtpr	$0,$PR_P0LR
@@ -572,16 +576,11 @@ JSBENTRY(__cpu_switchto)
 	movl	P_ADDR(%r1),%r0		# Get pointer to new pcb.
 	addl3	%r0,$IFTRAP,pcbtrap	# Save for copy* functions.
 
-	# inline kvtophys
-	extzv	$9,$21,%r0,%r1		# extract offset
-	movl	*_C_LABEL(Sysmap)[%r1],%r2 # get pte
-	ashl	$9,%r2,%r3		# shift to get phys address.
-
 #
 # Do the actual process switch. pc + psl are already on stack, from
 # the beginning of this routine.
 #
-	mtpr	%r3,$PR_PCBB
+	mtpr	PCB_PADDR(%r0),$PR_PCBB
 
 	pushl	CURPROC
 	calls	$1, _C_LABEL(pmap_activate)

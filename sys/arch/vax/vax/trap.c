@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.47 2013/07/13 17:28:36 deraadt Exp $     */
+/*	$OpenBSD: trap.c,v 1.48 2013/11/24 22:08:25 miod Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -150,6 +150,7 @@ fram:
 #ifdef nohwbug
 		panic("translation fault");
 #endif
+	case T_PTELEN|T_USER:	/* Page table length exceeded */
 	case T_ACCFLT|T_USER:
 		if (frame->code < 0) { /* Check for kernel space */
 			sv.sival_int = frame->code;
@@ -157,6 +158,9 @@ fram:
 			typ = SEGV_ACCERR;
 			break;
 		}
+		/* FALLTHROUGH */
+
+	case T_PTELEN:
 	case T_ACCFLT:
 #ifdef TRAPDEBUG
 if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
@@ -211,18 +215,6 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			if (umode != 0)
 				uvm_grow(p, addr);
 		}
-		break;
-
-	case T_PTELEN:
-		if (p && p->p_addr)
-			FAULTCHK;
-		panic("ptelen fault in system space: addr %lx pc %lx",
-		    frame->code, frame->pc);
-
-	case T_PTELEN|T_USER:	/* Page table length exceeded */
-		sv.sival_int = frame->code;
-		sig = SIGSEGV;
-		typ = SEGV_MAPERR;
 		break;
 
 	case T_BPTFLT|T_USER:

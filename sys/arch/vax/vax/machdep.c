@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.129 2013/11/20 23:57:07 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.130 2013/11/24 22:08:25 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -166,11 +166,12 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 * Also call CPU init on systems that need that.
 	 */
-	printf("%s%s [%08X %08X]\n", version, cpu_model, vax_cpudata, vax_siedata);
+	printf("%s%s [%08X %08X]\n", version,
+	    cpu_model, vax_cpudata, vax_siedata);
         if (dep_call->cpu_conf)
                 (*dep_call->cpu_conf)();
 
-	printf("real mem = %u (%uMB)\n", ptoa(physmem),
+	printf("real mem = %lu (%luMB)\n", ptoa(physmem),
 	    ptoa(physmem)/1024/1024);
 	mtpr(AST_NO, PR_ASTLVL);
 	spl0();
@@ -1341,6 +1342,7 @@ _start(struct rpb *prpb)
 
 	proc0.p_addr = (struct user *)proc0paddr; /* XXX */
 	bzero((struct user *)proc0paddr, sizeof(struct user));
+	proc0.p_addr->u_pcb.pcb_paddr = (paddr_t)proc0paddr - KERNBASE;
 
 	pmap_bootstrap();
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.7 2011/03/23 16:54:37 pirofti Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.8 2013/11/24 22:08:23 miod Exp $	*/
 /*	$NetBSD: pcb.h,v 1.10 1996/02/02 18:08:26 mycroft Exp $	*/
 
 /*
@@ -60,6 +60,10 @@ struct pcb {
 	/* Software registers, only used by kernel software */
 	void   *framep;		/* Pointer to syscall frame */
 	void   *iftrap;		/* Tells whether fault copy */
+
+	paddr_t	pcb_paddr;	/* physical address of PCB */
+	struct pmap *pcb_pm;	/* owning pmap */
+	struct pcb *pcb_pmnext;	/* next pcb that shares this pmap */
 };
 
 #define	AST_MASK 0x07000000

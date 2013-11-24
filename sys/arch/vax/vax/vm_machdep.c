@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.40 2013/10/17 08:02:18 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.41 2013/11/24 22:08:25 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.67 2000/06/29 07:14:34 mrg Exp $	     */
 
 /*
@@ -111,11 +111,24 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 #endif
 
 	/*
+	 * Clear new pcb
+	 */
+	pcb = &p2->p_addr->u_pcb;
+	bzero(pcb, sizeof (*pcb));
+
+	/*
 	 * Copy the trap frame.
 	 */
 	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
 	p2->p_addr->u_pcb.framep = tf;
 	bcopy(p1->p_addr->u_pcb.framep, tf, sizeof(*tf));
+
+	/*
+	 * Activate address space for the new process.
+	 * This writes the page table registers to the PCB.
+	 */
+	pcb->pcb_pm = NULL;
+	pmap_activate(p2);
 
 	/* Mark guard page invalid in kernel stack */
 	*kvtopte((u_int)p2->p_addr + REDZONEADDR) &= ~PG_V;
@@ -137,12 +150,12 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 * Set up internal defs in PCB. This matches the "fake" CALLS frame
 	 * that we constructed earlier.
 	 */
-	pcb = &p2->p_addr->u_pcb;
 	pcb->iftrap = NULL;
 	pcb->KSP = (long)cf;
 	pcb->FP = (long)cf;
 	pcb->AP = (long)&cf->ca_argno;
 	pcb->PC = (int)func + 2;	/* Skip save mask */
+	pcb->pcb_paddr = kvtophys((vaddr_t)pcb);
 
 	/*
 	 * If specified, give the child a different stack.
