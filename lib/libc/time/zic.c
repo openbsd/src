@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.34 2011/04/25 13:27:27 millert Exp $	*/
+/*	$OpenBSD: zic.c,v 1.35 2013/11/24 23:51:29 deraadt Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -2520,8 +2520,8 @@ register char *	cp;
 					exit(1);
 				}
 		} while (*cp != '\0' && *cp != '#' &&
-			(!isascii(*cp) || !isspace((unsigned char) *cp)));
-		if (isascii(*cp) && isspace((unsigned char) *cp))
+			(!isascii((unsigned char)*cp) || !isspace((unsigned char) *cp)));
+		if (isascii((unsigned char) *cp) && isspace((unsigned char) *cp))
 			++cp;
 		*dp = '\0';
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setmode.c,v 1.20 2007/09/02 15:19:16 deraadt Exp $	*/
+/*	$OpenBSD: setmode.c,v 1.21 2013/11/24 23:51:29 deraadt Exp $	*/
 /*	$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ setmode(const char *p)
 	 * If an absolute number, get it and return; disallow non-octal digits
 	 * or illegal bits.
 	 */
-	if (isdigit(*p)) {
+	if (isdigit((unsigned char)*p)) {
 		perml = strtoul(p, &ep, 8);
 		/* The test on perml will also catch overflow. */
 		if (*ep != '\0' || (perml & ~(STANDARD_BITS|S_ISTXT))) {

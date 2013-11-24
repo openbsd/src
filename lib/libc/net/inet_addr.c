@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_addr.c,v 1.9 2005/08/06 20:30:03 espie Exp $	*/
+/*	$OpenBSD: inet_addr.c,v 1.10 2013/11/24 23:51:28 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1990, 1993
@@ -94,7 +94,7 @@ inet_aton(const char *cp, struct in_addr *addr)
 		 * Values are specified as for C:
 		 * 0x=hex, 0=octal, isdigit=decimal.
 		 */
-		if (!isdigit(c))
+		if (!isdigit((unsigned char)c))
 			return (0);
 		val = 0; base = 10;
 		if (c == '0') {
@@ -105,12 +105,15 @@ inet_aton(const char *cp, struct in_addr *addr)
 				base = 8;
 		}
 		for (;;) {
-			if (isascii(c) && isdigit(c)) {
+			if (isascii((unsigned char)c) &&
+			    isdigit((unsigned char)c)) {
 				val = (val * base) + (c - '0');
 				c = *++cp;
-			} else if (base == 16 && isascii(c) && isxdigit(c)) {
+			} else if (base == 16 &&
+			    isascii((unsigned char)c) &&
+			    isxdigit((unsigned char)c)) {
 				val = (val << 4) |
-					(c + 10 - (islower(c) ? 'a' : 'A'));
+				    (c + 10 - (islower((unsigned char)c) ? 'a' : 'A'));
 				c = *++cp;
 			} else
 				break;
@@ -132,7 +135,8 @@ inet_aton(const char *cp, struct in_addr *addr)
 	/*
 	 * Check for trailing characters.
 	 */
-	if (c != '\0' && (!isascii(c) || !isspace(c)))
+	if (c != '\0' &&
+	    (!isascii((unsigned char)c) || !isspace((unsigned char)c)))
 		return (0);
 	/*
 	 * Concoct the address according to

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fnmatch.c,v 1.16 2011/12/06 11:47:46 stsp Exp $	*/
+/*	$OpenBSD: fnmatch.c,v 1.17 2013/11/24 23:51:29 deraadt Exp $	*/
 
 /* Copyright (c) 2011, VMware, Inc.
  * All rights reserved.
@@ -214,10 +214,13 @@ leadingclosebrace:
                 /* XXX: handle locale/MBCS comparison, advance by MBCS char width */
                 if ((**string >= *startch) && (**string <= **pattern))
                     result = 0;
-                else if (nocase && (isupper(**string) || isupper(*startch)
-                                                      || isupper(**pattern))
-                            && (tolower(**string) >= tolower(*startch)) 
-                            && (tolower(**string) <= tolower(**pattern)))
+                else if (nocase && (isupper((unsigned char)**string) ||
+			    isupper((unsigned char)*startch) ||
+                            isupper((unsigned char)**pattern))
+                            && (tolower((unsigned char)**string) >=
+			        tolower((unsigned char)*startch)) 
+                            && (tolower((unsigned char)**string) <=
+				tolower((unsigned char)**pattern)))
                     result = 0;
 
                 ++*pattern;
@@ -227,8 +230,10 @@ leadingclosebrace:
             /* XXX: handle locale/MBCS comparison, advance by MBCS char width */
             if ((**string == **pattern))
                 result = 0;
-            else if (nocase && (isupper(**string) || isupper(**pattern))
-                            && (tolower(**string) == tolower(**pattern)))
+            else if (nocase && (isupper((unsigned char)**string) ||
+			    isupper((unsigned char)**pattern))
+                            && (tolower((unsigned char)**string) ==
+				tolower((unsigned char)**pattern)))
                 result = 0;
 
             ++*pattern;
@@ -254,8 +259,10 @@ leadingclosebrace:
     /* XXX: handle locale/MBCS comparison, advance by the MBCS char width */
     if (**string == **pattern)
         result = 0;
-    else if (nocase && (isupper(**string) || isupper(**pattern))
-                    && (tolower(**string) == tolower(**pattern)))
+    else if (nocase && (isupper((unsigned char)**string) ||
+		    isupper((unsigned char)**pattern))
+                    && (tolower((unsigned char)**string) ==
+			tolower((unsigned char)**pattern)))
         result = 0;
 
     /* Refuse to advance over trailing slash or nulls

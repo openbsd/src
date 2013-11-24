@@ -214,9 +214,10 @@ __ivaliduser_sa(FILE *hostf, struct sockaddr *raddr, socklen_t salen,
 		if (*p == '#')
 			continue;
 		while (p < buf + buflen && *p != '\n' && *p != ' ' && *p != '\t') {
-			if (!isprint(*p))
+			if (!isprint((unsigned char)*p))
 				goto bail;
-			*p = isupper(*p) ? tolower(*p) : *p;
+			*p = isupper((unsigned char)*p) ?
+			    tolower((unsigned char)*p) : *p;
 			p++;
 		}
 		if (p >= buf + buflen)
@@ -230,7 +231,7 @@ __ivaliduser_sa(FILE *hostf, struct sockaddr *raddr, socklen_t salen,
 			user = p;
 			while (p < buf + buflen && *p != '\n' && *p != ' ' &&
 			    *p != '\t') {
-				if (!isprint(*p))
+				if (!isprint((unsigned char)*p))
 					goto bail;
 				p++;
 			}

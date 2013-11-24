@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.19 2013/09/30 12:02:32 millert Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.20 2013/11/24 23:51:29 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -87,7 +87,7 @@ auth_mkvalue(char *value)
 			*p++ = *value;
 			break;
 		default:
-			if (!isprint(*value)) {
+			if (!isprint((unsigned char)*value)) {
 				*p++ = '\\';
 				*p++ = ((*value >> 6) & 0x3) + '0';
 				*p++ = ((*value >> 3) & 0x7) + '0';

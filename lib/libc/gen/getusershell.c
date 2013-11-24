@@ -1,4 +1,4 @@
-/*	$OpenBSD: getusershell.c,v 1.10 2013/09/30 12:02:34 millert Exp $ */
+/*	$OpenBSD: getusershell.c,v 1.11 2013/11/24 23:51:29 deraadt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -124,7 +124,7 @@ initshells(void)
 		if (*cp == '#' || *cp == '\0')
 			continue;
 		*sp++ = cp;
-		while (!isspace(*cp) && *cp != '#' && *cp != '\0')
+		while (!isspace((unsigned char)*cp) && *cp != '#' && *cp != '\0')
 			cp++;
 		*cp++ = '\0';
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getttyent.c,v 1.12 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: getttyent.c,v 1.13 2013/11/24 23:51:29 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -72,7 +72,7 @@ getttyent(void)
 				;
 			continue;
 		}
-		while (isspace(*p))
+		while (isspace((unsigned char)*p))
 			++p;
 		if (*p && *p != '#')
 			break;
@@ -93,7 +93,8 @@ getttyent(void)
 	tty.ty_status = 0;
 	tty.ty_window = NULL;
 
-#define	scmp(e)	!strncmp(p, e, sizeof(e) - 1) && isspace(p[sizeof(e) - 1])
+#define	scmp(e)	!strncmp(p, e, sizeof(e) - 1) && \
+		isspace((unsigned char)p[sizeof(e) - 1])
 #define	vcmp(e)	!strncmp(p, e, sizeof(e) - 1) && p[sizeof(e) - 1] == '='
 	for (; *p; p = skip(p)) {
 		if (scmp(_TTYS_OFF))

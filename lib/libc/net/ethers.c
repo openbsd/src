@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethers.c,v 1.20 2005/08/06 20:30:03 espie Exp $	*/
+/*	$OpenBSD: ethers.c,v 1.21 2013/11/24 23:51:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -64,7 +64,7 @@ _ether_aton(const char *s, struct ether_addr *e)
 	long l;
 	char *pp;
 
-	while (isspace(*s))
+	while (isspace((unsigned char)*s))
 		s++;
 
 	/* expect 6 hex octets separated by ':' or space/NUL if last octet */
@@ -72,7 +72,9 @@ _ether_aton(const char *s, struct ether_addr *e)
 		l = strtol(s, &pp, 16);
 		if (pp == s || l > 0xFF || l < 0)
 			return (NULL);
-		if (!(*pp == ':' || (i == 5 && (isspace(*pp) || *pp == '\0'))))
+		if (!(*pp == ':' ||
+		    (i == 5 && (isspace((unsigned char)*pp) ||
+		    *pp == '\0'))))
 			return (NULL);
 		e->ether_addr_octet[i] = (u_char)l;
 		s = pp + 1;
@@ -216,7 +218,7 @@ ether_line(const char *line, struct ether_addr *e, char *hostname)
 		goto bad;
 
 	/* Now get the hostname */
-	while (isspace(*p))
+	while (isspace((unsigned char)*p))
 		p++;
 	if (*p == '\0')
 		goto bad;

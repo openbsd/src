@@ -1,4 +1,4 @@
-/*	$OpenBSD: base64.c,v 1.5 2006/10/21 09:55:03 otto Exp $	*/
+/*	$OpenBSD: base64.c,v 1.6 2013/11/24 23:51:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -199,7 +199,7 @@ b64_pton(src, target, targsize)
 	state = 0;
 	tarindex = 0;
 
-	while ((ch = *src++) != '\0') {
+	while ((ch = (unsigned char)*src++) != '\0') {
 		if (isspace(ch))	/* Skip whitespace anywhere. */
 			continue;
 
@@ -258,8 +258,8 @@ b64_pton(src, target, targsize)
 	 * on a byte boundary, and/or with erroneous trailing characters.
 	 */
 
-	if (ch == Pad64) {		/* We got a pad char. */
-		ch = *src++;		/* Skip it, get next. */
+	if (ch == Pad64) {			/* We got a pad char. */
+		ch = (unsigned char)*src++;	/* Skip it, get next. */
 		switch (state) {
 		case 0:		/* Invalid = in first position */
 		case 1:		/* Invalid = in second position */
@@ -267,13 +267,13 @@ b64_pton(src, target, targsize)
 
 		case 2:		/* Valid, means one byte of info */
 			/* Skip any number of spaces. */
-			for (; ch != '\0'; ch = *src++)
+			for (; ch != '\0'; ch = (unsigned char)*src++)
 				if (!isspace(ch))
 					break;
 			/* Make sure there is another trailing = sign. */
 			if (ch != Pad64)
 				return (-1);
-			ch = *src++;		/* Skip the = */
+			ch = (unsigned char)*src++;		/* Skip the = */
 			/* Fall through to "single trailing =" case. */
 			/* FALLTHROUGH */
 
@@ -282,7 +282,7 @@ b64_pton(src, target, targsize)
 			 * We know this char is an =.  Is there anything but
 			 * whitespace after it?
 			 */
-			for (; ch != '\0'; ch = *src++)
+			for (; ch != '\0'; ch = (unsigned char)*src++)
 				if (!isspace(ch))
 					return (-1);
 
