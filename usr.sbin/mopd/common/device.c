@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.c,v 1.15 2013/07/05 21:02:07 miod Exp $ */
+/*	$OpenBSD: device.c,v 1.16 2013/11/24 21:32:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -139,10 +139,10 @@ deviceInitOne(char *ifname)
 
 	unit = 0;
 	for (j = 0; j < strlen(ifname); j++) {
-		if (isalpha(ifname[j]))
+		if (isalpha((unsigned char)ifname[j]))
 			dev[j] = ifname[j];
 		else
-			if (isdigit(ifname[j])) {
+			if (isdigit((unsigned char)ifname[j])) {
 				unit = unit * 10 + ifname[j] - '0';
 				dev[j] = '\0';
 			}

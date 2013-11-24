@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.24 2012/11/29 02:15:44 guenther Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.25 2013/11/24 21:32:32 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.12 1997/10/05 15:12:06 mrg Exp $	*/
 
 /*
@@ -1061,14 +1061,14 @@ doarg(char *job)
 	/*
 	 * Check for job specified by number (example: 112 or 235ucbarpa).
 	 */
-	if (isdigit(*job)) {
+	if (isdigit((unsigned char)*job)) {
 		jobnum = 0;
 		do
 			jobnum = jobnum * 10 + (*job++ - '0');
-		while (isdigit(*job));
+		while (isdigit((unsigned char)*job));
 		for (qq = queue + nitems; --qq >= queue; ) {
 			n = 0;
-			for (cp = (*qq)->q_name+3; isdigit(*cp); )
+			for (cp = (*qq)->q_name+3; isdigit((unsigned char)*cp); )
 				n = n * 10 + (*cp++ - '0');
 			if (jobnum != n)
 				continue;

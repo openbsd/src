@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.51 2013/03/11 17:40:11 deraadt Exp $ */
+/*	$OpenBSD: lpd.c,v 1.52 2013/11/24 21:32:32 deraadt Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -528,11 +528,11 @@ doit(void)
 					continue;
 				}
 				*cp++ = '\0';
-				while (isspace(*cp))
+				while (isspace((unsigned char)*cp))
 					cp++;
 				if (*cp == '\0')
 					break;
-				if (isdigit(*cp)) {
+				if (isdigit((unsigned char)*cp)) {
 					if (requests >= MAXREQUESTS)
 						fatal("Too many requests");
 					requ[requests++] = atoi(cp);
@@ -564,11 +564,11 @@ doit(void)
 					continue;
 				}
 				*cp++ = '\0';
-				while (isspace(*cp))
+				while (isspace((unsigned char)*cp))
 					cp++;
 				if (*cp == '\0')
 					break;
-				if (isdigit(*cp)) {
+				if (isdigit((unsigned char)*cp)) {
 					if (requests >= MAXREQUESTS)
 						fatal("Too many requests");
 					requ[requests++] = atoi(cp);

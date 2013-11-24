@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpq.c,v 1.19 2009/10/27 23:59:52 deraadt Exp $	*/
+/*	$OpenBSD: lpq.c,v 1.20 2013/11/24 21:32:32 deraadt Exp $	*/
 /*	$NetBSD: lpq.c,v 1.9 1999/12/07 14:54:47 mrg Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ main(int argc, char **argv)
 		printer = DEFLP;
 
 	for (argc -= optind, argv += optind; argc; --argc, ++argv)
-		if (isdigit(argv[0][0])) {
+		if (isdigit((unsigned char)argv[0][0])) {
 			if (requests >= MAXREQUESTS)
 				fatal("too many requests");
 			requ[requests++] = atoi(*argv);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pac.c,v 1.19 2009/10/27 23:59:52 deraadt Exp $ */
+/*	$OpenBSD: pac.c,v 1.20 2013/11/24 21:32:32 deraadt Exp $ */
 /*	$NetBSD: pac.c,v 1.14 2000/04/27 13:40:18 msaitoh Exp $	*/
 
 /*
@@ -215,17 +215,17 @@ account(FILE *acct)
 
 	while (fgets(linebuf, sizeof(linebuf), acct) != NULL) {
 		cp = linebuf;
-		while (isspace(*cp))
+		while (isspace((unsigned char)*cp))
 			cp++;
 
 		/* get t, feet_per_page */
 		errno = 0;
 		t = strtod(cp, &ep);
-		if (!isspace(*ep) || errno == ERANGE)
+		if (!isspace((unsigned char)*ep) || errno == ERANGE)
 			continue;
 
 		/* get ic, runs_count (optional) */
-		for (cp = ep + 1; isspace(*cp); )
+		for (cp = ep + 1; isspace((unsigned char)*cp); )
 			cp++;
 		l = strtol(cp, &ep, 10);
 		if (cp == ep)
@@ -235,9 +235,9 @@ account(FILE *acct)
 		ic = (int)l;
 
 		/* get [hostname:]username */
-		for (cp = ep; isspace(*cp); cp++)
+		for (cp = ep; isspace((unsigned char)*cp); cp++)
 			;
-		for (cp2 = cp; *cp2 && !isspace(*cp2); cp2++)
+		for (cp2 = cp; *cp2 && !isspace((unsigned char)*cp2); cp2++)
 			;
 		*cp2 = '\0';
 		/* if -m was specified, don't use the hostname part */

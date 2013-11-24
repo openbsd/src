@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.33 2013/10/27 18:49:25 guenther Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.34 2013/11/24 21:32:32 deraadt Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -412,7 +412,7 @@ inlist(char *name, char *file)
 	/*
 	 * Check the request list
 	 */
-	for (n = 0, cp = file+3; isdigit(*cp); )
+	for (n = 0, cp = file+3; isdigit((unsigned char)*cp); )
 		n = n * 10 + (*cp++ - '0');
 	for (r = requ; r < &requ[requests]; r++)
 		if (*r == n && !strcmp(cp, from))

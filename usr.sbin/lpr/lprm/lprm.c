@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprm.c,v 1.18 2009/10/27 23:59:52 deraadt Exp $	*/
+/*	$OpenBSD: lprm.c,v 1.19 2013/11/24 21:32:32 deraadt Exp $	*/
 /*	$$NetBSD: lprm.c,v 1.9 1999/08/16 03:12:32 simonb Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ main(int argc, char **argv)
 	if (users < 0 && argc != 0)
 		usage();
 	while (argc > 0) {
-		if (isdigit(*argv[0])) {
+		if (isdigit((unsigned char)*argv[0])) {
 			if (requests >= MAXREQUESTS)
 				fatal("Too many requests");
 			requ[requests++] = atoi(argv[0]);
