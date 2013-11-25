@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.44 2013/03/05 16:09:10 sthen Exp $   */
+/*      $OpenBSD: whois.c,v 1.45 2013/11/25 18:06:32 deraadt Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -231,7 +231,7 @@ whois(const char *query, const char *server, const char *port, int flags)
 
 		if ((p = strstr(buf, WHOIS_SERVER_ID))) {
 			p += sizeof(WHOIS_SERVER_ID) - 1;
-			while (isblank(*p))
+			while (isblank((unsigned char)*p))
 				p++;
 			if ((len = strcspn(p, " \t\n\r"))) {
 				if ((nhost = malloc(len + 1)) == NULL)
