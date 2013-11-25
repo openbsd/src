@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.698 2013/11/23 13:25:47 rpe Exp $
+#	$OpenBSD: install.sub,v 1.699 2013/11/25 21:51:48 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -277,19 +277,33 @@ _ask() {
 	return $_redo
 }
 
+# Search question in $RESPONSEFILE, return answer in $resp
+#
+# - split question and answer at leftmost =
+# - strip leading/trailing blanks from question
+# - strip leading blanks from answer
+# - compare questions case insensitive
+# - ignore empty and comment lines and lines without =
+# - return default answer if provided and none is found in file
+# - treat empty/missing/multiple answers as error and exit
+#
+# $1 = the question to search for
+# $2 = the default answer
+#
 _autorespond() {
 	typeset -l _q=$1 _key
-	local _def=$2 _value _i=0
-	[[ -n $RESPONSEFILE ]] || return
-	while IFS== read _key _value; do
-		_key=${_key##+( |	])} _value=${_value##+( |	)}
-		_key=${_key%%+( |	])} _value=${_value%%+( |	)}
-		[[ $_q == *"$_key"* && -n $_value ]] &&
-			resp=$_value && let _i++
-	done < $RESPONSEFILE
-	(( _i == 1 )) && return
-	(( !_i )) && [[ -n $_def ]] && resp=$_def && return
-	if (( !_i )); then
+	local _def=$2 _i=0 _k _val
+	[[ -f $RESPONSEFILE ]] || return
+	while IFS= read -r _l; do
+		_k=${_l%%*([[:blank:]])=*} _val=${_l#*=}
+		_key=${_k##+([[:blank:]])} _val=${_val##+([[:blank:]])}
+		[[ $_k != "$_l" ]] || continue
+		[[ -n ${_key%%#*} && -n $_val ]] || continue
+		[[ $_q == *"$_key"* ]] && resp=$_val && let _i++
+	done <$RESPONSEFILE
+	((_i == 1)) && return	
+	if ((_i == 0)); then
+		[[ -n $_def ]] && resp=$_def && return
 		echo "\nQuestion has no answer in response file."
 		exit 1
 	fi
