@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.20 2013/11/25 14:04:59 mpi Exp $
+dnl	$OpenBSD: prep,v 1.21 2013/11/25 18:12:19 deraadt Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of Open Firmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -6,10 +6,9 @@ and diagnostics are performed but before control is handed to the
 operating system.
 
 To access Open Firmware, you should simultaneously hold down the
-Command, Option, O, and F keys immediately upon booting.  (On a PC keyboard,
-use the Windows key instead of the Command key and use Alt instead of the
-Option key).  You will be presented with information and a ">" prompt that
-will look something like this (example taken from a Power Macintosh G4):
+Command, Option, O, and F keys immediately upon booting.  You will
+be presented with information and a ">" prompt that will look something
+like this (example taken from a Power Macintosh G4):
 
 Apple PowerMac3,1 2.4f1 BootROM built on 02/18/00 at 09:44:35
 Copyright 1994-2000 Apple Computer, Inc.
