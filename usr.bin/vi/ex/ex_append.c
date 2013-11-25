@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_append.c,v 1.8 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_append.c,v 1.9 2013/11/25 23:27:11 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -253,15 +253,17 @@ ex_aci(sp, cmdp, cmd)
 	 * into the file, above.)
 	 */
 	memset(&tiq, 0, sizeof(TEXTH));
-	CIRCLEQ_INIT(&tiq);
+	TAILQ_INIT(&tiq);
 
 	if (ex_txt(sp, &tiq, 0, flags))
 		return (1);
 
-	for (cnt = 0, tp = CIRCLEQ_FIRST(&tiq);
-	    tp != (TEXT *)&tiq; ++cnt, tp = CIRCLEQ_NEXT(tp, q))
+	cnt = 0;
+	TAILQ_FOREACH(tp, &tiq, q) {
 		if (db_append(sp, 1, lno++, tp->lb, tp->len))
 			return (1);
+		cnt++;
+	}
 
 	/*
 	 * Set sp->lno to the final line number value (correcting for a

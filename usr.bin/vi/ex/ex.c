@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex.c,v 1.16 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex.c,v 1.17 2013/11/25 23:27:11 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -116,7 +116,7 @@ ex(spp)
 		 * If the user entered a single carriage return, send
 		 * ex_cmd() a separator -- it discards single newlines.
 		 */
-		tp = CIRCLEQ_FIRST(&sp->tiq);
+		tp = TAILQ_FIRST(&sp->tiq);
 		if (tp->len == 0) {
 			gp->excmd.cp = " ";	/* __TK__ why not |? */
 			gp->excmd.clen = 1;

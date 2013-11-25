@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.23 2013/05/14 11:51:41 millert Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.24 2013/11/25 23:27:11 krw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -297,9 +297,9 @@ v_txt(sp, vp, tm, lp, len, prompt, ai_line, rcount, flags)
 	 * copy it into the TEXT buffer.
 	 */
 	tiqh = &sp->tiq;
-	if (CIRCLEQ_FIRST(tiqh) != CIRCLEQ_END(tiqh)) {
-		tp = CIRCLEQ_FIRST(tiqh);
-		if (CIRCLEQ_NEXT(tp, q) != CIRCLEQ_END(tiqh) || tp->lb_len < len + 32) {
+	if (!TAILQ_EMPTY(tiqh)) {
+		tp = TAILQ_FIRST(tiqh);
+		if (TAILQ_NEXT(tp, q) || tp->lb_len < len + 32) {
 			text_lfree(tiqh);
 			goto newtp;
 		}
@@ -312,7 +312,7 @@ v_txt(sp, vp, tm, lp, len, prompt, ai_line, rcount, flags)
 	} else {
 newtp:		if ((tp = text_init(sp, lp, len, len + 32)) == NULL)
 			return (1);
-		CIRCLEQ_INSERT_HEAD(tiqh, tp, q);
+		TAILQ_INSERT_HEAD(tiqh, tp, q);
 	}
 
 	/* Set default termination condition. */
@@ -787,7 +787,7 @@ k_cr:		if (LF_ISSET(TXT_CR)) {
 		if ((ntp = text_init(sp, p,
 		    insert + owrite, insert + owrite + 32)) == NULL)
 			goto err;
-		CIRCLEQ_INSERT_TAIL(&sp->tiq, ntp, q);
+		TAILQ_INSERT_TAIL(&sp->tiq, ntp, q);
 
 		/* Set up bookkeeping for the new line. */
 		ntp->insert = insert;
@@ -1844,7 +1844,7 @@ txt_backup(sp, tiqh, tp, flagsp)
 	TEXT *ntp;
 
 	/* Get a handle on the previous TEXT structure. */
-	if ((ntp = CIRCLEQ_PREV(tp, q)) == CIRCLEQ_END(tiqh)) {
+	if ((ntp = TAILQ_PREV(tp, _texth, q))) {
 		if (!FL_ISSET(*flagsp, TXT_REPLAY))
 			msgq(sp, M_BERR,
 			    "193|Already at the beginning of the insert");
@@ -1864,7 +1864,7 @@ txt_backup(sp, tiqh, tp, flagsp)
 		FL_CLR(*flagsp, TXT_APPENDEOL);
 
 	/* Release the current TEXT. */
-	CIRCLEQ_REMOVE(tiqh, tp, q);
+	TAILQ_REMOVE(tiqh, tp, q);
 	text_free(tp);
 
 	/* Update the old line on the screen. */
@@ -2352,7 +2352,7 @@ txt_err(sp, tiqh)
 	 * We depend on at least one line number being set in the text
 	 * chain.
 	 */
-	for (lno = CIRCLEQ_FIRST(tiqh)->lno;
+	for (lno = TAILQ_FIRST(tiqh)->lno;
 	    !db_exist(sp, lno) && lno > 0; --lno);
 
 	sp->lno = lno == 0 ? 1 : lno;
@@ -2708,7 +2708,7 @@ txt_resolve(sp, tiqh, flags)
 	 * change, we have to redisplay it, otherwise the information cached
 	 * about the line will be wrong.
 	 */
-	tp = CIRCLEQ_FIRST(tiqh);
+	tp = TAILQ_FIRST(tiqh);
 
 	if (LF_ISSET(TXT_AUTOINDENT))
 		txt_ai_resolve(sp, tp, &changed);
@@ -2718,7 +2718,7 @@ txt_resolve(sp, tiqh, flags)
 	    (changed && vs_change(sp, tp->lno, LINE_RESET)))
 		return (1);
 
-	for (lno = tp->lno; (tp = CIRCLEQ_NEXT(tp, q)) != (void *)&sp->tiq; ++lno) {
+	for (lno = tp->lno; (tp = TAILQ_NEXT(tp, q)); ++lno) {
 		if (LF_ISSET(TXT_AUTOINDENT))
 			txt_ai_resolve(sp, tp, &changed);
 		else
@@ -2910,9 +2910,9 @@ txt_Rresolve(sp, tiqh, tp, orig_len)
 	 * Calculate how many characters the user has entered,
 	 * plus the blanks erased by <carriage-return>/<newline>s.
 	 */
-	for (ttp = CIRCLEQ_FIRST(tiqh), input_len = 0;;) {
+	for (ttp = TAILQ_FIRST(tiqh), input_len = 0;;) {
 		input_len += ttp == tp ? tp->cno : ttp->len + ttp->R_erase;
-		if ((ttp = CIRCLEQ_NEXT(ttp, q)) == CIRCLEQ_END(&sp->tiq))
+		if (!(ttp = TAILQ_NEXT(ttp, q)))
 			break;
 	}
 
@@ -2933,7 +2933,7 @@ txt_Rresolve(sp, tiqh, tp, orig_len)
 	if (input_len < orig_len) {
 		retain = MIN(tp->owrite, orig_len - input_len);
 		if (db_get(sp,
-		    CIRCLEQ_FIRST(tiqh)->lno, DBG_FATAL | DBG_NOCACHE, &p, NULL))
+		    TAILQ_FIRST(tiqh)->lno, DBG_FATAL | DBG_NOCACHE, &p, NULL))
 			return;
 		memcpy(tp->lb + tp->cno, p + input_len, retain);
 		tp->len -= tp->owrite - retain;

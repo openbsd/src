@@ -1,4 +1,4 @@
-/*	$OpenBSD: put.c,v 1.10 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: put.c,v 1.11 2013/11/25 23:27:11 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -62,7 +62,7 @@ put(sp, cbp, namep, cp, rp, append)
 			}
 		}
 	}
-	tp = CIRCLEQ_FIRST(&cbp->textq);
+	tp = TAILQ_FIRST(&cbp->textq);
 
 	/*
 	 * It's possible to do a put into an empty file, meaning that the cut
@@ -83,9 +83,8 @@ put(sp, cbp, namep, cp, rp, append)
 		if (db_last(sp, &lno))
 			return (1);
 		if (lno == 0) {
-			for (; tp != (void *)&cbp->textq;
-			    ++lno, ++sp->rptlines[L_ADDED],
-			    tp = CIRCLEQ_NEXT(tp, q))
+			for (; tp; ++lno, ++sp->rptlines[L_ADDED],
+			    tp = TAILQ_NEXT(tp, q))
 				if (db_append(sp, 1, lno, tp->lb, tp->len))
 					return (1);
 			rp->lno = 1;
@@ -98,8 +97,8 @@ put(sp, cbp, namep, cp, rp, append)
 	if (F_ISSET(cbp, CB_LMODE)) {
 		lno = append ? cp->lno : cp->lno - 1;
 		rp->lno = lno + 1;
-		for (; tp != CIRCLEQ_END(&cbp->textq);
-		    ++lno, ++sp->rptlines[L_ADDED], tp = CIRCLEQ_NEXT(tp, q))
+		for (; tp;
+		    ++lno, ++sp->rptlines[L_ADDED], tp = TAILQ_NEXT(tp, q))
 			if (db_append(sp, 1, lno, tp->lb, tp->len))
 				return (1);
 		rp->cno = 0;
@@ -161,7 +160,7 @@ put(sp, cbp, namep, cp, rp, append)
 	 * the intermediate lines, because the line changes will lose
 	 * the cached line.
 	 */
-	if (CIRCLEQ_NEXT(tp, q) == CIRCLEQ_END(&cbp->textq)) {
+	if (TAILQ_EMPTY(&cbp->textq)) {
 		if (clen > 0) {
 			memcpy(t, p, clen);
 			t += clen;
@@ -183,7 +182,7 @@ put(sp, cbp, namep, cp, rp, append)
 		 * Last part of original line; check for space, reset
 		 * the pointer into the buffer.
 		 */
-		ltp = CIRCLEQ_LAST(&cbp->textq);
+		ltp = TAILQ_LAST(&cbp->textq, _texth);
 		len = t - bp;
 		ADD_SPACE_RET(sp, bp, blen, ltp->len + clen);
 		t = bp + len;
@@ -211,9 +210,8 @@ put(sp, cbp, namep, cp, rp, append)
 		}
 
 		/* Output any intermediate lines in the CB. */
-		for (tp = CIRCLEQ_NEXT(tp, q);
-		    CIRCLEQ_NEXT(tp, q) != CIRCLEQ_END(&cbp->textq);
-		    ++lno, ++sp->rptlines[L_ADDED], tp = CIRCLEQ_NEXT(tp, q))
+		for (tp = TAILQ_NEXT(tp, q); TAILQ_NEXT(tp, q);
+		    ++lno, ++sp->rptlines[L_ADDED], tp = TAILQ_NEXT(tp, q))
 			if (db_append(sp, 1, lno, tp->lb, tp->len))
 				goto err;
 

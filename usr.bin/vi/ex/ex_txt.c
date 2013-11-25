@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_txt.c,v 1.10 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_txt.c,v 1.11 2013/11/25 23:27:11 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -70,9 +70,9 @@ ex_txt(sp, tiqh, prompt, flags)
 	 * last one if it's big enough.  (All TEXT bookkeeping fields default
 	 * to 0 -- text_init() handles this.)
 	 */
-	if (CIRCLEQ_FIRST(tiqh) != CIRCLEQ_END(tiqh)) {
-		tp = CIRCLEQ_FIRST(tiqh);
-		if (CIRCLEQ_NEXT(tp, q) != CIRCLEQ_END(tiqh) || tp->lb_len < 32) {
+	if (!TAILQ_EMPTY(tiqh)) {
+		tp = TAILQ_FIRST(tiqh);
+		if (TAILQ_NEXT(tp, q) || tp->lb_len < 32) {
 			text_lfree(tiqh);
 			goto newtp;
 		}
@@ -80,7 +80,7 @@ ex_txt(sp, tiqh, prompt, flags)
 	} else {
 newtp:		if ((tp = text_init(sp, NULL, 0, 32)) == NULL)
 			goto err;
-		CIRCLEQ_INSERT_HEAD(tiqh, tp, q);
+		TAILQ_INSERT_HEAD(tiqh, tp, q);
 	}
 
 	/* Set the starting line number. */
@@ -187,7 +187,7 @@ newtp:		if ((tp = text_init(sp, NULL, 0, 32)) == NULL)
 			 */
 			if (LF_ISSET(TXT_DOTTERM) && tp->len == tp->ai + 1 &&
 			    tp->lb[tp->len - 1] == '.') {
-notlast:			CIRCLEQ_REMOVE(tiqh, tp, q);
+notlast:			TAILQ_REMOVE(tiqh, tp, q);
 				text_free(tp);
 				goto done;
 			}
@@ -224,7 +224,7 @@ notlast:			CIRCLEQ_REMOVE(tiqh, tp, q);
 			 * into the queue.
 			 */
 			tp = ntp;
-			CIRCLEQ_INSERT_TAIL(tiqh, tp, q);
+			TAILQ_INSERT_TAIL(tiqh, tp, q);
 			break;
 		case K_CARAT:			/* Delete autoindent chars. */
 			if (tp->len <= tp->ai && LF_ISSET(TXT_AUTOINDENT))

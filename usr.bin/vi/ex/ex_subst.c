@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_subst.c,v 1.17 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_subst.c,v 1.18 2013/11/25 23:27:11 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -444,7 +444,7 @@ s(sp, cmdp, s, re, flags)
 			/* Ex text structure initialization. */
 			if (F_ISSET(sp, SC_EX)) {
 				memset(&tiq, 0, sizeof(TEXTH));
-				CIRCLEQ_INIT(&tiq);
+				TAILQ_INIT(&tiq);
 			}
 			break;
 		case 'g':
@@ -659,7 +659,7 @@ nextmatch:	match[0].rm_so = 0;
 					goto lquit;
 				if (ex_txt(sp, &tiq, 0, TXT_CR))
 					goto err;
-				ev.e_c = CIRCLEQ_FIRST(&tiq)->lb[0];
+				ev.e_c = TAILQ_FIRST(&tiq)->lb[0];
 			}
 
 			switch (ev.e_c) {

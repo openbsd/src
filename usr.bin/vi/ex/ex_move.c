@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_move.c,v 1.8 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_move.c,v 1.9 2013/11/25 23:27:11 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -50,7 +50,7 @@ ex_copy(sp, cmdp)
 	fm1 = cmdp->addr1;
 	fm2 = cmdp->addr2;
 	memset(&cb, 0, sizeof(cb));
-	CIRCLEQ_INIT(&cb.textq);
+	TAILQ_INIT(&cb.textq);
 	for (cnt = fm1.lno; cnt <= fm2.lno; ++cnt)
 		if (cut_line(sp, cnt, 0, CUT_LINE_TO_EOL, &cb)) {
 			rval = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.8 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: screen.c,v 1.9 2013/11/25 23:27:11 krw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -58,7 +58,7 @@ screen_init(gp, orig, spp)
 	 * we don't have the option information yet.
 	 */
 
-	CIRCLEQ_INIT(&sp->tiq);
+	TAILQ_INIT(&sp->tiq);
 
 /* PARTIALLY OR COMPLETELY COPIED FROM PREVIOUS SCREEN. */
 	if (orig == NULL) {
@@ -168,7 +168,7 @@ screen_end(sp)
 	}
 
 	/* Free any text input. */
-	if (CIRCLEQ_FIRST(&sp->tiq) != NULL)
+	if (TAILQ_FIRST(&sp->tiq) != NULL)
 		text_lfree(&sp->tiq);
 
 	/* Free alternate file name. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_ex.c,v 1.10 2009/11/14 17:44:53 jsg Exp $	*/
+/*	$OpenBSD: v_ex.c,v 1.11 2013/11/25 23:27:11 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -310,7 +310,7 @@ v_filter(sp, vp)
 	 * Entering <escape> on an empty line was historically an error,
 	 * this implementation doesn't bother.
 	 */
-	tp = CIRCLEQ_FIRST(&sp->tiq);
+	tp = TAILQ_FIRST(&sp->tiq);
 	if (tp->term != TERM_OK) {
 		vp->m_final.lno = sp->lno;
 		vp->m_final.cno = sp->cno;
@@ -409,7 +409,7 @@ v_ex(sp, vp)
 			if (v_tcmd(sp, vp, ':',
 			    TXT_BS | TXT_CEDIT | TXT_FILEC | TXT_PROMPT))
 				return (1);
-			tp = CIRCLEQ_FIRST(&sp->tiq);
+			tp = TAILQ_FIRST(&sp->tiq);
 
 			/*
 			 * If the user entered a single <esc>, they want to

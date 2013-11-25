@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.11 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: cut.c,v 1.12 2013/11/25 23:27:11 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -125,7 +125,7 @@ copyloop:
 	if (cbp == NULL) {
 		CALLOC_RET(sp, cbp, CB *, 1, sizeof(CB));
 		cbp->name = name;
-		CIRCLEQ_INIT(&cbp->textq);
+		TAILQ_INIT(&cbp->textq);
 		LIST_INSERT_HEAD(&sp->gp->cutq, cbp, q);
 	} else if (!append) {
 		text_lfree(&cbp->textq);
@@ -267,7 +267,7 @@ cut_line(sp, lno, fcno, clen, cbp)
 	}
 
 	/* Append to the end of the cut buffer. */
-	CIRCLEQ_INSERT_TAIL(&cbp->textq, tp, q);
+	TAILQ_INSERT_TAIL(&cbp->textq, tp, q);
 	cbp->len += tp->len;
 
 	return (0);
@@ -287,7 +287,7 @@ cut_close(gp)
 
 	/* Free cut buffer list. */
 	while ((cbp = LIST_FIRST(&gp->cutq)) != NULL) {
-		if (CIRCLEQ_FIRST(&cbp->textq) != CIRCLEQ_END(&cbp->textq))
+		if (!TAILQ_EMPTY(&cbp->textq))
 			text_lfree(&cbp->textq);
 		LIST_REMOVE(cbp, q);
 		free(cbp);
@@ -295,7 +295,7 @@ cut_close(gp)
 
 	/* Free default cut storage. */
 	cbp = &gp->dcb_store;
-	if (CIRCLEQ_FIRST(&cbp->textq) != CIRCLEQ_END(&cbp->textq))
+	if (!TAILQ_EMPTY(&cbp->textq))
 		text_lfree(&cbp->textq);
 }
 
@@ -342,8 +342,8 @@ text_lfree(headp)
 {
 	TEXT *tp;
 
-	while ((tp = CIRCLEQ_FIRST(headp)) != CIRCLEQ_END(headp)) {
-		CIRCLEQ_REMOVE(headp, tp, q);
+	while ((tp = TAILQ_FIRST(headp))) {
+		TAILQ_REMOVE(headp, tp, q);
 		text_free(tp);
 	}
 }

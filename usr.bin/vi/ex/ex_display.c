@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_display.c,v 1.7 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_display.c,v 1.8 2013/11/25 23:27:11 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -92,7 +92,7 @@ bdisplay(sp)
 	LIST_FOREACH(cbp, &sp->gp->cutq, q) {
 		if (isdigit(cbp->name))
 			continue;
-		if (CIRCLEQ_FIRST(&cbp->textq) != CIRCLEQ_END(&cbp->textq))
+		if (!TAILQ_EMPTY(&cbp->textq))
 			db(sp, cbp, NULL);
 		if (INTERRUPTED(sp))
 			return (0);
@@ -101,7 +101,7 @@ bdisplay(sp)
 	LIST_FOREACH(cbp, &sp->gp->cutq, q) {
 		if (!isdigit(cbp->name))
 			continue;
-		if (CIRCLEQ_FIRST(&cbp->textq) != CIRCLEQ_END(&cbp->textq))
+		if (!TAILQ_EMPTY(&cbp->textq))
 			db(sp, cbp, NULL);
 		if (INTERRUPTED(sp))
 			return (0);
@@ -129,7 +129,7 @@ db(sp, cbp, name)
 	(void)ex_printf(sp, "********** %s%s\n",
 	    name == NULL ? KEY_NAME(sp, cbp->name) : name,
 	    F_ISSET(cbp, CB_LMODE) ? " (line mode)" : " (character mode)");
-	CIRCLEQ_FOREACH(tp, &cbp->textq, q) {
+	TAILQ_FOREACH(tp, &cbp->textq, q) {
 		for (len = tp->len, p = tp->lb; len--; ++p) {
 			(void)ex_puts(sp, KEY_NAME(sp, *p));
 			if (INTERRUPTED(sp))

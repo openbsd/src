@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.h,v 1.6 2006/01/08 21:05:39 miod Exp $	*/
+/*	$OpenBSD: cut.h,v 1.7 2013/11/25 23:27:11 krw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -12,7 +12,7 @@
  */
 
 typedef struct _texth TEXTH;		/* TEXT list head structure. */
-CIRCLEQ_HEAD(_texth, _text);
+TAILQ_HEAD(_texth, _text);
 
 /* Cut buffers. */
 struct _cb {
@@ -27,7 +27,7 @@ struct _cb {
 
 /* Lines/blocks of text. */
 struct _text {				/* Text: a linked list of lines. */
-	CIRCLEQ_ENTRY(_text) q;		/* Linked list of text structures. */
+	TAILQ_ENTRY(_text) q;		/* Linked list of text structures. */
 	char	*lb;			/* Line buffer. */
 	size_t	 lb_len;		/* Line buffer length. */
 	size_t	 len;			/* Line length. */

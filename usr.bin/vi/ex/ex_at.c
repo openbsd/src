@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_at.c,v 1.8 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_at.c,v 1.9 2013/11/25 23:27:11 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -102,9 +102,10 @@ ex_at(sp, cmdp)
 	 * Build two copies of the command.  We need two copies because the
 	 * ex parser may step on the command string when it's parsing it.
 	 */
-	for (len = 0, tp = CIRCLEQ_LAST(&cbp->textq);
-	    tp != CIRCLEQ_END(&cbp->textq); tp = CIRCLEQ_PREV(tp, q))
+	len = 0;
+	TAILQ_FOREACH_REVERSE(tp, &cbp->textq, _texth, q) {
 		len += tp->len + 1;
+	}
 
 	MALLOC_RET(sp, ecp->cp, char *, len * 2);
 	ecp->o_cp = ecp->cp;
@@ -112,8 +113,8 @@ ex_at(sp, cmdp)
 	ecp->cp[len] = '\0';
 
 	/* Copy the buffer into the command space. */
-	for (p = ecp->cp + len, tp = CIRCLEQ_LAST(&cbp->textq);
-	    tp != CIRCLEQ_END(&cbp->textq); tp = CIRCLEQ_PREV(tp, q)) {
+	p = ecp->cp + len;
+	TAILQ_FOREACH_REVERSE(tp, &cbp->textq, _texth, q) {
 		memcpy(p, tp->lb, tp->len);
 		p += tp->len;
 		*p++ = '\n';

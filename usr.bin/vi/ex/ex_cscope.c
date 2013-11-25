@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cscope.c,v 1.17 2013/08/22 04:43:40 guenther Exp $	*/
+/*	$OpenBSD: ex_cscope.c,v 1.18 2013/11/25 23:27:11 krw Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -625,8 +625,8 @@ usage:		(void)csc_help(sp, "find");
 	if (p[0] == '"' && p[1] != '\0' && p[2] == '\0')
 		CBNAME(sp, cbp, p[1]);
 	if (cbp != NULL) {
-		p = CIRCLEQ_FIRST(&cbp->textq)->lb;
-		tlen = CIRCLEQ_FIRST(&cbp->textq)->len;
+		p = TAILQ_FIRST(&cbp->textq)->lb;
+		tlen = TAILQ_FIRST(&cbp->textq)->len;
 	} else
 		tlen = strlen(p);
 
