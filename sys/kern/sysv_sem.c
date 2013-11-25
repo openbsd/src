@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.44 2012/10/21 19:00:48 beck Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.45 2013/11/25 23:15:58 matthew Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -713,17 +713,16 @@ done:
 			 * we applied them.  This guarantees that we won't run
 			 * out of space as we roll things back out.
 			 */
-			if (i != 0) {
-				for (j = i - 1; j >= 0; j--) {
-					if ((sops[j].sem_flg & SEM_UNDO) == 0)
-						continue;
-					adjval = sops[j].sem_op;
-					if (adjval == 0)
-						continue;
-					if (semundo_adjust(p, &suptr, semid,
-					    sops[j].sem_num, adjval) != 0)
-						panic("semop - can't undo undos");
-				}
+			for (j = i; j > 0;) {
+				j--;
+				if ((sops[j].sem_flg & SEM_UNDO) == 0)
+					continue;
+				adjval = sops[j].sem_op;
+				if (adjval == 0)
+					continue;
+				if (semundo_adjust(p, &suptr, semid,
+				    sops[j].sem_num, adjval) != 0)
+					panic("semop - can't undo undos");
 			}
 
 			for (j = 0; j < nsops; j++)
