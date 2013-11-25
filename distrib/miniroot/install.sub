@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.699 2013/11/25 21:51:48 rpe Exp $
+#	$OpenBSD: install.sub,v 1.700 2013/11/25 23:02:04 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -473,7 +473,7 @@ ask_which() {
 		# entering something like 'a a'.
 		isin "$resp" $_dynlist done && break
 		echo "'$resp' is not a valid choice."
-		$auto && exit 1
+		$auto && [[ -n $RESPONSEFILE ]] && exit 1
 	done
 }
 
@@ -2118,8 +2118,22 @@ get_responsefile() {
 	# machine was booted via RARP and TFTP.
 	[[ -x /sbin/dhclient ]] || return
 
-	# Did we do a netboot?
+	# Select network interface for initial dhcp request
 	_bootdev=$(get_ifdevs netboot)
+	if [[ -z $_bootdev ]]; then
+		set -- $(get_ifdevs)
+		(($#)) || return
+		if (($# == 1)); then
+			_bootdev=$1
+		else
+			while :; do
+				ask_which "network interface" \
+				    "should be used for the initial DHCP request" \
+				    "$*"
+				isin "$resp" $* && _bootdev=$resp && break
+			done
+		fi
+	fi
 	[[ -n $_bootdev ]] || return
 
 	# Take interface down killing a dhclient from a previous attempt
