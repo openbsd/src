@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.388 2013/11/25 14:14:44 sthen Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.389 2013/11/25 14:39:29 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1534,6 +1534,7 @@ do
 	  gzip -dc ${FULLDISTDIR}/$$archive | tar xf -;;
     esac
 done
+.Ed
 .It Ev EXTRACT_ONLY
 Set to the list of distfiles to actually extract if some distfiles
 should not be extracted during the
