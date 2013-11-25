@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2013/03/04 11:54:13 otto Exp $	*/
+/*	$OpenBSD: parse.y,v 1.4 2013/11/25 12:57:18 benno Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
@@ -268,9 +268,9 @@ lookup(char *s)
 
 #define MAXPUSHBACK	128
 
-char	*parsebuf;
+u_char	*parsebuf;
 int	 parseindex;
-char	 pushback_buffer[MAXPUSHBACK];
+u_char	 pushback_buffer[MAXPUSHBACK];
 int	 pushback_index = 0;
 
 int
@@ -363,8 +363,8 @@ findeol(void)
 int
 yylex(void)
 {
-	char	 buf[8096];
-	char	*p;
+	u_char	 buf[8096];
+	u_char	*p;
 	int	 quotec, next, c;
 	int	 token;
 
@@ -405,7 +405,7 @@ yylex(void)
 				yyerror("string too long");
 				return (findeol());
 			}
-			*p++ = (char)c;
+			*p++ = c;
 		}
 		yylval.v.string = xstrdup(buf);
 		return (STRING);
