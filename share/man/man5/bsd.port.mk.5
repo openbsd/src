@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.387 2013/11/25 13:15:22 juanfra Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.388 2013/11/25 14:14:44 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2896,13 +2896,6 @@ Base location for ports that install stuff outside of
 .Pa ${LOCALBASE} .
 Defaults to
 .Pa /var .
-.It Ev VMEM_WARNING
-Set to
-.Sq Yes
-if the port requires a lot of memory to compile, and the user is
-likely to see a message like
-.Qq virtual memory exhausted
-with the default process limits.
 .It Ev WANTLIB
 Extra list of library specifications that a package will need.
 May include system and X11 libraries.
