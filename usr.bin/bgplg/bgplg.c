@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.c,v 1.11 2013/06/02 14:11:38 florian Exp $	*/
+/*	$OpenBSD: bgplg.c,v 1.12 2013/11/25 18:02:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -64,8 +64,8 @@ lg_urldecode(char *str)
 		i = c = 0;
 		while (i < len) {
 			if (str[i] == '%' && i <= (len - 2)) {
-				if (isxdigit(str[i + 1]) &&
-				    isxdigit(str[i + 2])) {
+				if (isxdigit((unsigned char)str[i + 1]) &&
+				    isxdigit((unsigned char)str[i + 2])) {
 					code[0] = str[i + 1];
 					code[1] = str[i + 2];
 					code[2] = 0;
@@ -111,7 +111,7 @@ lg_getenv(const char *name, int *lenp)
 		*lenp = len;
 
 #define allowed_in_string(_x)                                           \
-	(isalnum(_x) || strchr("-_.:/= ", _x))
+	(isalnum((unsigned char)_x) || strchr("-_.:/= ", _x))
 
 	for (i = 0; i < len; i++) {
 		if (ptr[i] == '&')
@@ -123,6 +123,7 @@ lg_getenv(const char *name, int *lenp)
 	}
 
 	return (ptr);
+#undef allowed_in_string
 }
 
 char *
@@ -159,7 +160,7 @@ lg_arg2argv(char *arg, int *argc)
 
 	/* Count elements */
 	for (i = 0; i < (len - 1); i++) {
-		if (isspace(arg[i])) {
+		if (isspace((unsigned char)arg[i])) {
 			/* filter out additional options */
 			if (arg[i + 1] == '-') {
 				printf("invalid input\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.61 2013/04/17 15:58:42 deraadt Exp $	*/
+/*	$OpenBSD: at.c,v 1.62 2013/11/25 18:02:50 deraadt Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -324,7 +324,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 				if (*ap == '\n')
 					(void)fprintf(fp, "\"\n\"");
 				else {
-					if (!isalnum(*ap)) {
+					if (!isalnum((unsigned char)*ap)) {
 						switch (*ap) {
 						case '%': case '/': case '{':
 						case '[': case ']': case '=':
@@ -354,7 +354,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 		if (*ap == '\n')
 			fprintf(fp, "\"\n\"");
 		else {
-			if (*ap != '/' && !isalnum(*ap))
+			if (*ap != '/' && !isalnum((unsigned char)*ap))
 				(void)fputc('\\', fp);
 
 			(void)fputc(*ap, fp);
@@ -539,7 +539,8 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 
 		if (strtot(dirent->d_name, &ep, &runtimer) == -1)
 			continue;
-		if (*ep != '.' || !isalpha(*(ep + 1)) || *(ep + 2) != '\0')
+		if (*ep != '.' || !isalpha((unsigned char)*(ep + 1)) ||
+		    *(ep + 2) != '\0')
 			continue;
 		queue = *(ep + 1);
 
@@ -659,7 +660,7 @@ process_jobs(int argc, char **argv, int what)
 
 		for (i = 0; i < argc; i++) {
 			l = strtol(argv[i], &ep, 10);
-			if (*ep == '.' && isalpha(*(ep + 1)) &&
+			if (*ep == '.' && isalpha((unsigned char)*(ep + 1)) &&
 			    *(ep + 2) == '\0' && l > 0 && l < INT_MAX)
 				jobs[jobs_len++] = argv[i];
 			else if ((pw = getpwnam(argv[i])) != NULL) {
@@ -690,7 +691,8 @@ process_jobs(int argc, char **argv, int what)
 
 		if (strtot(dirent->d_name, &ep, &runtimer) == -1)
 			continue;
-		if (*ep != '.' || !isalpha(*(ep + 1)) || *(ep + 2) != '\0')
+		if (*ep != '.' || !isalpha((unsigned char)*(ep + 1)) ||
+		    *(ep + 2) != '\0')
 			continue;
 
 		/* Check runtimer against argv; argc==0 means do all. */
@@ -989,7 +991,8 @@ main(int argc, char **argv)
 				usage();
 
 			atqueue = queue = *optarg;
-			if (!(islower(queue) || isupper(queue)))
+			if (!(islower((unsigned char)queue) ||
+			    isupper((unsigned char)queue)))
 				usage();
 
 			queue_set = 1;
@@ -1082,7 +1085,7 @@ main(int argc, char **argv)
 
 	case BATCH:
 		if (queue_set)
-			queue = toupper(queue);
+			queue = toupper((unsigned char)queue);
 		else
 			queue = DEFAULT_BATCH_QUEUE;
 

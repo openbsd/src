@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.25 2011/04/29 05:45:11 lum Exp $	*/
+/*	$OpenBSD: apply.c,v 1.26 2013/11/25 18:03:17 deraadt Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -90,7 +90,8 @@ main(int argc, char *argv[])
 	 * largest one.
 	 */
 	for (n = 0, p = argv[0]; *p != '\0'; ++p)
-		if (p[0] == magic && isdigit(p[1]) && p[1] != '0') {
+		if (p[0] == magic &&
+		    isdigit((unsigned char)p[1]) && p[1] != '0') {
 			++p;
 			if (p[0] - '0' > n)
 				n = p[0] - '0';
@@ -167,7 +168,8 @@ main(int argc, char *argv[])
 
 		/* Expand command argv references. */
 		for (p = cmd, q = c; *p != '\0'; ++p)
-			if (p[0] == magic && isdigit(p[1]) && p[1] != '0') {
+			if (p[0] == magic &&
+			    isdigit((unsigned char)p[1]) && p[1] != '0') {
 				strlcpy(q, argv[(++p)[0] - '0'], c + clen - q);
 				q += strlen(q);
 			} else

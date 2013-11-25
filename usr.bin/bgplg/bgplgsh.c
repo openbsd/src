@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplgsh.c,v 1.5 2013/06/02 14:11:38 florian Exp $	*/
+/*	$OpenBSD: bgplgsh.c,v 1.6 2013/11/25 18:02:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -61,7 +61,7 @@ lg_checkarg(char *arg)
 		return (0);
 
 #define allowed_in_string(_x)                                           \
-	((isalnum(_x) || isprint(_x)) &&				\
+	((isalnum((unsigned char)_x) || isprint((unsigned char)_x)) &&	\
 	(_x != '%' && _x != '\\' && _x != ';' && _x != '&' && _x != '|'))
 
 	for (i = 0; i < len; i++) {
@@ -70,7 +70,7 @@ lg_checkarg(char *arg)
 			return (EPERM);
 		}
 	}
-
+#undef allowed_in_string
 	return (0);
 }
 
@@ -88,7 +88,7 @@ lg_arg2argv(char *arg, int *argc)
 
 	/* Count elements */
 	for (i = 0; i < len; i++) {
-		if (isspace(arg[i])) {
+		if (isspace((unsigned char)arg[i])) {
 			/* filter out additional options */
 			if (arg[i + 1] == '-') {
 				printf("invalid input\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.18 2010/07/02 23:40:09 krw Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.19 2013/11/25 18:02:50 deraadt Exp $	*/
 
 /*
  * parsetime.c - parse time for at(1)
@@ -213,7 +213,7 @@ token(void)
 		 * we'll continue, which puts us up at the top of the while loop
 		 * to fetch the next argument in
 		 */
-		while (isspace(*sct))
+		while (isspace((unsigned char)*sct))
 			++sct;
 		if (!*sct) {
 			need = 1;
@@ -228,13 +228,13 @@ token(void)
 		/*
 		 * then see what it is
 		 */
-		if (isdigit(sc_token[0])) {
-			while (isdigit(*sct))
+		if (isdigit((unsigned char)sc_token[0])) {
+			while (isdigit((unsigned char)*sct))
 				sc_token[++idx] = *sct++;
 			sc_token[++idx] = 0;
 			return ((sc_tokid = NUMBER));
-		} else if (isalpha(sc_token[0])) {
-			while (isalpha(*sct))
+		} else if (isalpha((unsigned char)sc_token[0])) {
+			while (isalpha((unsigned char)*sct))
 				sc_token[++idx] = *sct++;
 			sc_token[++idx] = 0;
 			return (parse_token(sc_token));

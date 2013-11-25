@@ -1,4 +1,4 @@
-/*      $OpenBSD: apropos.c,v 1.15 2009/10/27 23:59:35 deraadt Exp $      */
+/*      $OpenBSD: apropos.c,v 1.16 2013/11/25 18:02:49 deraadt Exp $      */
 /*      $NetBSD: apropos.c,v 1.5 1995/09/04 20:46:20 tls Exp $      */
 
 /*
@@ -217,7 +217,7 @@ match(char *bp, char *str)
 void
 lowstr(char *from, char *to)
 {
-	char ch;
+	unsigned char ch;
 
 	while ((ch = *from++) && ch != '\n')
 		*to++ = isupper(ch) ? tolower(ch) : ch;
