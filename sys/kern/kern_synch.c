@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.110 2013/11/18 23:09:46 tedu Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.111 2013/11/25 15:24:18 tedu Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -423,7 +423,7 @@ thrsleep_unlock(void *lock, int lockflags)
 	return (error);
 }
 
-static int magicnumber;
+static int globalsleepaddr;
 
 int
 thrsleep(struct proc *p, struct sys___thrsleep_args *v)
@@ -490,7 +490,7 @@ thrsleep(struct proc *p, struct sys___thrsleep_args *v)
 	else {
 		void *sleepaddr = &p->p_thrslpid;
 		if (ident == -1)
-			sleepaddr = &magicnumber;
+			sleepaddr = &globalsleepaddr;
 		error = tsleep(sleepaddr, PUSER | PCATCH, "thrsleep",
 		    (int)to_ticks);
 	}
@@ -545,7 +545,7 @@ sys___thrwakeup(struct proc *p, void *v, register_t *retval)
 	if (ident == 0)
 		*retval = EINVAL;
 	else if (ident == -1)
-		wakeup(&magicnumber);
+		wakeup(&globalsleepaddr);
 	else {
 		TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link) {
 			if (q->p_thrslpid == ident) {
