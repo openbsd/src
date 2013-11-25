@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_network.c,v 1.10 2005/08/06 20:30:03 espie Exp $ */
+/*	$OpenBSD: inet_network.c,v 1.11 2013/11/25 17:29:19 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@ in_addr_t
 inet_network(const char *cp)
 {
 	in_addr_t val, base, n;
-	char c;
+	u_char c;
 	in_addr_t parts[4], *pp = parts;
 	int i;
 
