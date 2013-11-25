@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.92 2013/11/21 17:32:13 mikeb Exp $	*/
+/*	$OpenBSD: route.c,v 1.93 2013/11/25 12:48:39 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -171,7 +171,7 @@ again:
 	kread((u_long)rn, &rnode, sizeof(rnode));
 	if (rnode.rn_b < 0) {
 		if (Aflag)
-			printf("%-16p ", rn);
+			printf("%-16p ", hideroot ? 0 : rn);
 		if (rnode.rn_flags & RNF_ROOT) {
 			if (Aflag)
 				printf("(root node)%s",
@@ -190,7 +190,7 @@ again:
 			goto again;
 	} else {
 		if (Aflag && do_rtent) {
-			printf("%-16p ", rn);
+			printf("%-16p ", hideroot ? 0 : rn);
 			p_rtnode();
 		}
 		rn = rnode.rn_r;
@@ -237,8 +237,9 @@ p_rtnode(void)
 	} else {
 		snprintf(nbuf, sizeof nbuf, "(%d)", rnode.rn_b);
 		printf("%6.6s (%p) %16p : %16p", nbuf,
-		    hideroot ? 0 : rnode.rn_p, rnode.rn_l,
-		    rnode.rn_r);
+		    hideroot ? 0 : rnode.rn_p,
+		    hideroot ? 0 : rnode.rn_l,
+		    hideroot ? 0 : rnode.rn_r);
 	}
 
 	putchar(' ');
