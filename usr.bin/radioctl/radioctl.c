@@ -1,4 +1,4 @@
-/* $OpenBSD: radioctl.c,v 1.17 2010/06/29 05:00:05 tedu Exp $ */
+/* $OpenBSD: radioctl.c,v 1.18 2013/11/26 19:25:38 deraadt Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
 /*
@@ -481,7 +481,7 @@ parse_opt(char *s, struct opt_t *o) {
 			o->value = 0;
 		break;
 	default:
-		if (isdigit(*topt))
+		if (isdigit((unsigned char)*topt))
 			o->value = str_to_int(topt, o->option);
 		break;
 	}

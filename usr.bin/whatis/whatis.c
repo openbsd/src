@@ -1,4 +1,4 @@
-/*	$OpenBSD: whatis.c,v 1.14 2013/11/15 22:20:04 millert Exp $	*/
+/*	$OpenBSD: whatis.c,v 1.15 2013/11/26 19:25:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -170,13 +170,13 @@ match(char *bp, char *str)
 		return(0);
 	for (len = strlen(str);;) {
 		/* skip leading crud */
-		for (; *bp && !isalnum(*bp); ++bp)
+		for (; *bp && !isalnum((unsigned char)*bp); ++bp)
 			;
 		if (!*bp)
 			break;
 
 		/* check for word match first */
-		for (start = bp++; *bp == '_' || isalnum(*bp); ++bp)
+		for (start = bp++; *bp == '_' || isalnum((unsigned char)*bp); ++bp)
 			;
 		if (bp - start == len) {
 		    if (strncasecmp(start, str, len) == 0)
@@ -184,7 +184,8 @@ match(char *bp, char *str)
 		} else if (*bp && *bp != ',') {
 		    /* check for full string match */
 		    for (bp = start;
-			*bp && *bp != ',' && *bp != '(' && !isspace(*bp); ++bp)
+			*bp && *bp != ',' && *bp != '(' &&
+			!isspace((unsigned char)*bp); ++bp)
 			    ;
 		    if (bp - start == len && strncasecmp(start, str, len) == 0)
 			    return(1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.33 2013/04/19 14:35:40 okan Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.34 2013/11/26 19:25:39 deraadt Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ main(int argc, char *argv[])
 			iflag = 1;
 			break;
 		case 'r':
-			if (isdigit(*optarg)) {
+			if (isdigit((unsigned char)*optarg)) {
 				interval = atol(optarg) * SECSPERDAY;
 				if (interval < 0)
 					usage();
@@ -198,7 +198,7 @@ readheaders(void)
 			cont = 0;
 			if (strncasecmp(buf, "Auto-Submitted:", 15))
 				break;
-			for (p = buf + 15; isspace(*p); ++p)
+			for (p = buf + 15; isspace((unsigned char)*p); ++p)
 				;
 			/*
 			 * RFC 3834 section 2:
@@ -208,7 +208,7 @@ readheaders(void)
 			 */
 			if ((p[0] == 'n' || p[0] == 'N') &&
 			    (p[1] == 'o' || p[1] == 'O')) {
-				for (p += 2; isspace(*p); ++p)
+				for (p += 2; isspace((unsigned char)*p); ++p)
 					;
 				if (*p == '\0')
 					break;	/* Auto-Submitted: no */
@@ -244,7 +244,7 @@ readheaders(void)
 			    sizeof("Return-Path:")-1) ||
 			    (buf[12] != ' ' && buf[12] != '\t'))
 				break;
-			for (p = buf + 12; isspace(*p); ++p)
+			for (p = buf + 12; isspace((unsigned char)*p); ++p)
 				;
 			if (strlcpy(from, p, sizeof(from)) >= sizeof(from)) {
 				syslog(LOG_NOTICE,
@@ -260,7 +260,7 @@ readheaders(void)
 			cont = 0;
 			if (strncasecmp(buf, "Precedence:", 11))
 				break;
-			for (p = buf + 11; isspace(*p); ++p)
+			for (p = buf + 11; isspace((unsigned char)*p); ++p)
 				;
 			if (!strncasecmp(p, "junk", 4) ||
 			    !strncasecmp(p, "bulk", 4) ||
@@ -274,7 +274,7 @@ readheaders(void)
 			    sizeof("Subject:")-1) ||
 			    (buf[8] != ' ' && buf[8] != '\t'))
 				break;
-			for (p = buf + 8; isspace(*p); ++p)
+			for (p = buf + 8; isspace((unsigned char)*p); ++p)
 				;
 			if (strlcpy(subj, p, sizeof(subj)) >= sizeof(subj)) {
 				syslog(LOG_NOTICE,
@@ -296,7 +296,7 @@ readheaders(void)
 			cont = 1;
 			goto findme;
 		default:
-			if (!isspace(*buf) || !cont || tome) {
+			if (!isspace((unsigned char)*buf) || !cont || tome) {
 				cont = 0;
 				break;
 			}

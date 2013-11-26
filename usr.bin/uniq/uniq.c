@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.18 2009/10/27 23:59:46 deraadt Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.19 2013/11/26 19:25:39 deraadt Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -173,9 +173,9 @@ skip(char *str)
 	int nchars, nfields;
 
 	for (nfields = numfields; nfields && *str; nfields--) {
-		while (isblank(*str))
+		while (isblank((unsigned char)*str))
 			str++;
-		while (*str && !isblank(*str))
+		while (*str && !isblank((unsigned char)*str))
 			str++;
 	}
 	for (nchars = numchars; nchars-- && *str && *str != '\n'; ++str)
