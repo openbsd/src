@@ -2948,12 +2948,8 @@
 ./usr/share/man/man8/npppctl.8
 ./usr/share/man/man8/npppd.8
 ./usr/share/man/man8/nsd-checkconf.8
-./usr/share/man/man8/nsd-notify.8
-./usr/share/man/man8/nsd-patch.8
-./usr/share/man/man8/nsd-xfer.8
-./usr/share/man/man8/nsd-zonec.8
+./usr/share/man/man8/nsd-control.8
 ./usr/share/man/man8/nsd.8
-./usr/share/man/man8/nsdc.8
 ./usr/share/man/man8/nsupdate.8
 ./usr/share/man/man8/ntalkd.8
 ./usr/share/man/man8/ntpctl.8

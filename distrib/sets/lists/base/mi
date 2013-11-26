@@ -2754,11 +2754,8 @@
 ./usr/sbin/npppd
 ./usr/sbin/nsd
 ./usr/sbin/nsd-checkconf
-./usr/sbin/nsd-notify
-./usr/sbin/nsd-patch
-./usr/sbin/nsd-xfer
-./usr/sbin/nsd-zonec
-./usr/sbin/nsdc
+./usr/sbin/nsd-control
+./usr/sbin/nsd-control-setup
 ./usr/sbin/nslookup
 ./usr/sbin/nsupdate
 ./usr/sbin/ntpctl
@@ -5160,7 +5157,9 @@
 ./var/nsd
 ./var/nsd/db
 ./var/nsd/dev
+./var/nsd/etc
 ./var/nsd/run
+./var/nsd/run/xfr
 ./var/nsd/zones
 ./var/quotas
 ./var/run
