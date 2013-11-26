@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.22 2013/04/17 17:39:29 tedu Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.23 2013/11/26 13:16:18 deraadt Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -759,7 +759,7 @@ p_b_cclass(struct parse *p, cset *cs)
 	char *u;
 	char c;
 
-	while (MORE() && isalpha(PEEK()))
+	while (MORE() && isalpha((uch)PEEK()))
 		NEXT();
 	len = p->next - sp;
 	for (cp = cclasses; cp->name != NULL; cp++)
