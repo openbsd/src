@@ -1,7 +1,7 @@
 /*
  * region-allocator.c -- region based memory allocator.
  *
- * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -19,8 +19,12 @@
 #undef ALIGNMENT
 #endif
 #define ALIGN_UP(x, s)     (((x) + s - 1) & (~(s - 1)))
-#define ALIGNMENT          (sizeof(void *))
-#define CHECK_DOUBLE_FREE 0 /* set to 1 to perform expensive check for double recycle() */
+#if SIZEOF_OFF_T > SIZEOF_VOIDP
+#define ALIGNMENT	(sizeof(off_t))
+#else
+#define ALIGNMENT	(sizeof(void *))
+#endif
+/* #define CHECK_DOUBLE_FREE 0 */ /* set to 1 to perform expensive check for double recycle() */
 
 typedef struct cleanup cleanup_type;
 struct cleanup
@@ -31,6 +35,11 @@ struct cleanup
 
 struct recycle_elem {
 	struct recycle_elem* next;
+};
+
+struct large_elem {
+	struct large_elem* next;
+	struct large_elem* prev;
 };
 
 struct region
@@ -51,6 +60,7 @@ struct region
 	size_t        maximum_cleanup_count;
 	size_t        cleanup_count;
 	cleanup_type *cleanups;
+	struct large_elem* large_list;
 
 	size_t        chunk_size;
 	size_t        large_object_size;
@@ -80,6 +90,7 @@ alloc_region_base(void *(*allocator)(size_t size),
 	result->unused_space = 0;
 	result->recycle_bin = NULL;
 	result->recycle_size = 0;
+	result->large_list = NULL;
 
 	result->allocated = 0;
 	result->data = NULL;
@@ -174,6 +185,14 @@ region_destroy(region_type *region)
 	deallocator(region->initial_data);
 	if(region->recycle_bin)
 		deallocator(region->recycle_bin);
+	if(region->large_list) {
+		struct large_elem* p = region->large_list, *np;
+		while(p) {
+			np = p->next;
+			deallocator(p);
+			p = np;
+		}
+	}
 	deallocator(region);
 }
 
@@ -231,19 +250,19 @@ region_alloc(region_type *region, size_t size)
 	aligned_size = ALIGN_UP(size, ALIGNMENT);
 
 	if (aligned_size >= region->large_object_size) {
-		result = region->allocator(size);
+		result = region->allocator(size + sizeof(struct large_elem));
 		if (!result)
 			return NULL;
-
-		if (!region_add_cleanup(region, region->deallocator, result)) {
-			region->deallocator(result);
-			return NULL;
-		}
+		((struct large_elem*)result)->prev = NULL;
+		((struct large_elem*)result)->next = region->large_list;
+		if(region->large_list)
+			region->large_list->prev = (struct large_elem*)result;
+		region->large_list = (struct large_elem*)result;
 
 		region->total_allocated += size;
 		++region->large_objects;
 
-		return result;
+		return result + sizeof(struct large_elem);
 	}
 
 	if (region->recycle_bin && region->recycle_bin[aligned_size]) {
@@ -330,6 +349,17 @@ region_free_all(region_type *region)
 		region->recycle_size = 0;
 	}
 
+	if(region->large_list) {
+		struct large_elem* p = region->large_list, *np;
+		void (*deallocator)(void *) = region->deallocator;
+		while(p) {
+			np = p->next;
+			deallocator(p);
+			p = np;
+		}
+		region->large_list = NULL;
+	}
+
 	region->data = region->initial_data;
 	region->cleanup_count = 0;
 	region->allocated = 0;
@@ -352,7 +382,6 @@ void
 region_recycle(region_type *region, void *block, size_t size)
 {
 	size_t aligned_size;
-	size_t i;
 
 	if(!block || !region->recycle_bin)
 		return;
@@ -367,6 +396,7 @@ region_recycle(region_type *region, void *block, size_t size)
 		/* we rely on the fact that ALIGNMENT is void* so the next will fit */
 		assert(aligned_size >= sizeof(struct recycle_elem));
 
+#ifdef CHECK_DOUBLE_FREE
 		if(CHECK_DOUBLE_FREE) {
 			/* make sure the same ptr is not freed twice. */
 			struct recycle_elem *p = region->recycle_bin[aligned_size];
@@ -375,29 +405,27 @@ region_recycle(region_type *region, void *block, size_t size)
 				p = p->next;
 			}
 		}
+#endif
 
 		elem->next = region->recycle_bin[aligned_size];
 		region->recycle_bin[aligned_size] = elem;
 		region->recycle_size += aligned_size;
 		region->unused_space -= aligned_size - size;
 		return;
-	}
+	} else {
+		struct large_elem* l;
 
-	/* a large allocation */
-	region->total_allocated -= size;
-	--region->large_objects;
-	for(i=0; i<region->cleanup_count; i++) {
-		while(region->cleanups[i].data == block) {
-			/* perform action (deallocator) on block */
-			region->cleanups[i].action(block);
-			region->cleanups[i].data = NULL;
-			/* remove cleanup - move last entry here, check this one again */
-			--region->cleanup_count;
-			region->cleanups[i].action =
-				region->cleanups[region->cleanup_count].action;
-			region->cleanups[i].data =
-				region->cleanups[region->cleanup_count].data;
-		}
+		/* a large allocation */
+		region->total_allocated -= size;
+		--region->large_objects;
+
+		l = (struct large_elem*)(block-sizeof(struct large_elem));
+		if(l->prev)
+			l->prev->next = l->next;
+		else	region->large_list = l->next;
+		if(l->next)
+			l->next->prev = l->prev;
+		region->deallocator(l);
 	}
 }
 
@@ -432,6 +460,16 @@ region_dump_stats(region_type *region, FILE *out)
 size_t region_get_recycle_size(region_type* region)
 {
 	return region->recycle_size;
+}
+
+size_t region_get_mem(region_type* region)
+{
+	return region->total_allocated;
+}
+
+size_t region_get_mem_unused(region_type* region)
+{
+	return region->unused_space;
 }
 
 /* debug routine, includes here to keep base region-allocator independent */

@@ -4,7 +4,7 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,3.2.16,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.0.0,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 AC_AIX
@@ -34,6 +34,7 @@ configdir=$sysconfdir/nsd
 AC_ARG_WITH([configdir],
 	AC_HELP_STRING([--with-configdir=dir], [NSD configuration directory]),
 	[configdir=$withval])
+AC_DEFINE_UNQUOTED(CONFIGDIR, ["`eval echo $configdir`"], [NSD config dir])
 AC_SUBST(configdir)
 
 #
@@ -48,23 +49,12 @@ AC_SUBST(nsd_conf_file)
 AC_DEFINE_UNQUOTED(CONFIGFILE, ["`eval echo $nsd_conf_file`"], [Pathname to the NSD configuration file])
 
 #
-# Determine start and kill priorities
-start_priority=45
-AC_ARG_WITH([start_priority],
-	AC_HELP_STRING([--with-start_priority=number], [NSD startup priority]),
-	[start_priority=$withval])
-AC_SUBST(start_priority)
-
-kill_priority=74
-AC_ARG_WITH([kill_priority],
-	AC_HELP_STRING([--with-kill_priority=number], [NSD shutdown priority]),
-	[kill_priority=$withval])
-AC_SUBST(kill_priority)
-
-#
 # Default logfile
 #
 logfile=${localstatedir}/log/nsd.log
+AC_ARG_WITH([logfile],
+	AC_HELP_STRING([--with-logfile=path], [Pathname to the default log file]),
+	[logfile=$withval])
 AC_SUBST(logfile)
 
 #
@@ -113,19 +103,37 @@ AC_ARG_WITH([zonesdir],
 AC_SUBST(zonesdir)
 AC_DEFINE_UNQUOTED(ZONESDIR, ["`eval echo $zonesdir`"], [NSD default location for zone files. Empty string or NULL to disable.])
 
-# default diff file location.
-difffile=${dbdir}/ixfr.db
-AC_ARG_WITH([difffile], AC_HELP_STRING([--with-difffile=path], 
-	[Pathname to the NSD diff transfer journal file]), [difffile=$withval])
-AC_DEFINE_UNQUOTED(DIFFFILE, ["`eval echo $difffile`"], [Pathname to the NSD diff transfer journal file.])
-AC_SUBST(difffile)
-
 # default xfrd file location.
 xfrdfile=${dbdir}/xfrd.state
 AC_ARG_WITH([xfrdfile], AC_HELP_STRING([--with-xfrdfile=path], 
 	[Pathname to the NSD xfrd zone timer state file]), [xfrdfile=$withval])
 AC_DEFINE_UNQUOTED(XFRDFILE, ["`eval echo $xfrdfile`"], [Pathname to the NSD xfrd zone timer state file.])
 AC_SUBST(xfrdfile)
+
+# default zonelist file location.
+zonelistfile=${dbdir}/zone.list
+AC_ARG_WITH([zonelistfile], AC_HELP_STRING([--with-zonelistfile=path], 
+	[Pathname to the NSD zone list file]), [zonelistfile=$withval])
+AC_DEFINE_UNQUOTED(ZONELISTFILE, ["`eval echo $zonelistfile`"], [Pathname to the NSD zone list file.])
+AC_SUBST(zonelistfile)
+
+# default xfr dir location.
+xfrdir="/tmp"
+AC_ARG_WITH([xfrdir], AC_HELP_STRING([--with-xfrdir=path], 
+	[Pathname to where the NSD transfer dir is created]), [xfrdir=$withval])
+AC_DEFINE_UNQUOTED(XFRDIR, ["`eval echo $xfrdir`"], [Pathname to where the NSD transfer dir is created.])
+AC_SUBST(xfrdir)
+
+# nsd sbin location. tmpinstantiate execprefix with defaults if not yet done.
+if test "x${exec_prefix}" = "xNONE"; then
+	if test "x${prefix}" = "xNONE"; then exec_prefix="$ac_default_prefix"
+	else exec_prefix="${prefix}"; fi
+	nsd_start_path="`eval echo $sbindir`/nsd"
+	exec_prefix="NONE"
+else
+	nsd_start_path="`eval echo $sbindir`/nsd"
+fi
+AC_DEFINE_UNQUOTED(NSD_START_PATH, ["$nsd_start_path"], [Pathname to start nsd from nsd-control])
 
 #
 # Determine default chroot directory
@@ -136,6 +144,7 @@ AC_ARG_WITH([chroot],
 		chrootdir=$withval
 		AC_DEFINE_UNQUOTED(CHROOTDIR, ["`eval echo $chrootdir`"], [NSD default chroot directory])
 	])
+AC_SUBST(chrootdir)
 
 #
 # Determine the user name to drop privileges to
@@ -246,7 +255,17 @@ fi
 ])dnl
 
 # Checks for typedefs, structures, and compiler characteristics.
-CHECK_COMPILER_FLAG(O2, [], [ CFLAGS=`echo $CFLAGS | sed -e "s/-O2//g"` ])
+# if cflags not set by user, check O3, then O2, else elide O2 flag
+if test "x$ac_cv_env_CFLAGS_set" = "x"; then
+  CHECK_COMPILER_FLAG(O3, [
+    CFLAGS=`echo $CFLAGS | sed -e "s/-O2//g"`" -O3"
+    dnl remove double spaces
+    CFLAGS=`echo $CFLAGS`
+  ], [
+    CHECK_COMPILER_FLAG(O2, [], [ CFLAGS=`echo $CFLAGS | sed -e "s/-O2//g"` ])
+  ])
+fi
+ACX_CHECK_FLTO
 AC_C_CONST
 AC_C_INLINE
 AC_TYPE_UID_T
@@ -306,6 +325,69 @@ AC_DEFUN([CHECK_SSL], [
         AC_SUBST(HAVE_SSL)
     fi
 ])dnl
+
+# check for libevent
+AC_ARG_WITH(libevent, AC_HELP_STRING([--with-libevent=pathname],
+    [use libevent (will check /usr/local /opt/local /usr/lib /usr/pkg /usr/sfw /usr  or you can specify an explicit path), useful when the zone count is high.]),
+    [ ],[ withval="yes" ])
+if test x_$withval = x_yes -o x_$withval != x_no; then
+        AC_MSG_CHECKING(for libevent)
+        if test x_$withval = x_ -o x_$withval = x_yes; then
+            withval="/usr/local /opt/local /usr/lib /usr/pkg /usr/sfw /usr"
+        fi
+        for dir in $withval; do
+            thedir="$dir"
+            if test -f "$dir/include/event.h"; then
+                found_libevent="yes"
+		dnl assume /usr is in default path.
+		if test "$thedir" != "/usr"; then
+                    CPPFLAGS="$CPPFLAGS -I$thedir/include"
+		fi
+                break;
+            fi
+        done
+        if test x_$found_libevent != x_yes; then
+		if test -f "$dir/event.h" -a \( -f "$dir/libevent.la" -o -f "$dir/libev.la" \) ; then
+			# libevent source directory
+            		AC_MSG_RESULT(found in $thedir)
+                	CPPFLAGS="$CPPFLAGS -I$thedir -I$thedir/include"
+			# remove evdns from linking
+			ev_files_o=`ls $thedir/*.o | grep -v evdns\.o | grep -v bufferevent_openssl\.o`
+			cp $ev_files_o .
+			LDFLAGS="$ev_files_o $LDFLAGS -lm"
+		else
+            		AC_MSG_ERROR([Cannot find the libevent library.
+You can restart ./configure --with-libevent=no to use a builtin alternative.])
+		fi
+        else
+            AC_MSG_RESULT(found in $thedir)
+	    dnl assume /usr is in default path, do not add "".
+	    if test "$thedir" != "/usr" -a "$thedir" != ""; then
+                LDFLAGS="$LDFLAGS -L$thedir/lib"
+		ACX_RUNTIME_PATH_ADD([$thedir/lib])
+	    fi
+        fi
+	# check for library used by libevent after 1.3c
+	AC_SEARCH_LIBS([clock_gettime], [rt])
+
+	# is the event.h header libev or libevent?
+	AC_CHECK_HEADERS([event.h],,, [AC_INCLUDES_DEFAULT])
+	AC_CHECK_DECL(EV_VERSION_MAJOR, [
+		AC_SEARCH_LIBS(event_set, [ev])
+	],[
+		AC_SEARCH_LIBS(event_set, [event])
+	],[AC_INCLUDES_DEFAULT
+#include <event.h>
+	])
+	AC_CHECK_FUNCS([event_base_free]) # only in libevent 1.2 and later
+	AC_CHECK_FUNCS([event_base_once]) # only in libevent 1.4.1 and later
+	AC_CHECK_FUNCS([event_base_new]) # only in libevent 1.4.1 and later
+	AC_CHECK_FUNCS([event_base_get_method]) # only in libevent 1.4.3 and later
+	AC_CHECK_FUNCS([ev_loop]) # only in libev. (tested on 3.51)
+	AC_CHECK_FUNCS([ev_default_loop]) # only in libev. (tested on 4.00)
+else
+	AC_DEFINE(USE_MINI_EVENT, 1, [Define if you want to use internal select based events])
+fi
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -373,13 +455,13 @@ AC_DEFUN([AC_CHECK_STRPTIME_WORKS],
 [AC_REQUIRE([AC_PROG_CC])
 AC_MSG_CHECKING(whether strptime works)
 if test c${cross_compiling} = cno; then
-AC_TRY_RUN([
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #define _XOPEN_SOURCE
 #include <time.h>
 int main(void) { struct tm tm; char *res; 
 res = strptime("20070207111842", "%Y%m%d%H%M%S", &tm);
 if (!res) return 1; return 0; }
-] , [eval "ac_cv_c_strptime_works=yes"], [eval "ac_cv_c_strptime_works=no"])
+]])] , [eval "ac_cv_c_strptime_works=yes"], [eval "ac_cv_c_strptime_works=no"])
 else
 eval "ac_cv_c_strptime_works=maybe"
 fi
@@ -395,6 +477,18 @@ AC_SEARCH_LIBS(inet_pton, [nsl])
 AC_SEARCH_LIBS(socket, [socket])
 
 AC_CHECK_STRPTIME_WORKS
+ACX_CHECK_NONBLOCKING_BROKEN
+ACX_MKDIR_ONE_ARG
+
+# set -I. and -Isrcdir
+if test -n "$CPPFLAGS"; then
+	CPPFLAGS="$CPPFLAGS -I."
+else
+	CPPFLAGS="-I."
+fi
+if test "$srcdir" != "."; then
+	CPPFLAGS="$CPPFLAGS -I$srcdir"
+fi
 
 dnl LIBGTOP_CHECK_TYPE
 dnl Stolen from Gnome's anjuta
@@ -473,8 +567,51 @@ AC_FUNC_MALLOC
 AC_TYPE_SIGNAL
 AC_FUNC_FSEEKO
 AC_SYS_LARGEFILE
+AC_CHECK_SIZEOF(void*)
+AC_CHECK_SIZEOF(off_t)
 AC_CHECK_FUNCS([arc4random arc4random_uniform])
-AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime setusercontext initgroups setresuid setreuid setresgid setregid getpwnam mmap])
+AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime setusercontext initgroups setresuid setreuid setresgid setregid getpwnam mmap])
+
+AC_ARG_ENABLE(recvmmsg, AC_HELP_STRING([--disable-recvmmsg], [Disable recvmmsg and sendmmsg compilation for compatibility with more Linux kernel versions]))
+case "$enable_recvmmsg" in
+        no)
+                ;;
+        yes|*)
+		AC_CHECK_FUNC([recvmmsg], [
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <sys/socket.h>
+#include <errno.h>
+int main(void)
+{ 
+	int s = socket(AF_INET, SOCK_DGRAM, 0);
+	int r = recvmmsg(s, 0, 0, 0, 0) == -1 && errno == ENOSYS;
+	close(s);
+	return r;
+}
+]])], [
+AC_DEFINE([HAVE_RECVMMSG], [1], [Define if recvmmsg is implemented])], [
+], [
+AC_DEFINE([HAVE_RECVMMSG], [1], [Define if recvmmsg exists])]
+)])
+		AC_CHECK_FUNC([sendmmsg], [
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <sys/socket.h>
+#include <errno.h>
+int main(void)
+{ 
+	int s = socket(AF_INET, SOCK_DGRAM, 0);
+	int r = sendmmsg(s, 0, 0, 0) == -1 && errno == ENOSYS;
+	close(s);
+	return r;
+}
+]])], [
+AC_DEFINE([HAVE_SENDMMSG], [1], [Define if sendmmsg is implemented])], [
+], [
+AC_DEFINE([HAVE_SENDMMSG], [1], [Define if sendmmsg exists])]
+)])
+
+		;;
+esac
 
 # check if setreuid en setregid fail, on MacOSX10.4(darwin8).
 if echo $build_os | grep darwin8 > /dev/null; then
@@ -520,13 +657,15 @@ dnl Some random defines's
 dnl
 AC_DEFINE_UNQUOTED([IDENTITY], ["unidentified server"], [Define to the default nsd identity.])
 AC_DEFINE_UNQUOTED([VERSION], [PACKAGE_STRING], [Define to the NSD version to answer version.server query.])
-AC_DEFINE_UNQUOTED([TCP_BACKLOG], [5], [Define to the backlog to be used with listen.])
+AC_DEFINE_UNQUOTED([TCP_BACKLOG], [256], [Define to the backlog to be used with listen.])
 AC_DEFINE_UNQUOTED([TCP_PORT], ["53"], [Define to the default tcp port.])
 AC_DEFINE_UNQUOTED([TCP_MAX_MESSAGE_LEN], [65535], [Define to the default maximum message length.])
 AC_DEFINE_UNQUOTED([UDP_PORT], ["53"], [Define to the default udp port.])
 AC_DEFINE_UNQUOTED([UDP_MAX_MESSAGE_LEN], [512], [Define to the default maximum udp message length.])
 AC_DEFINE_UNQUOTED([EDNS_MAX_MESSAGE_LEN], [4096], [Define to the default maximum message length with EDNS.])
 AC_DEFINE_UNQUOTED([MAXSYSLOGMSGLEN], [512], [Define to the maximum message length to pass to syslog.])
+AC_DEFINE_UNQUOTED([NSD_CONTROL_PORT], [8952], [Define to the default nsd-control port.])
+AC_DEFINE_UNQUOTED([NSD_CONTROL_VERSION], [1], [Define to nsd-control proto version.])
 
 dnl
 dnl Determine the syslog facility to use
@@ -614,22 +753,30 @@ AC_SUBST(ratelimit)
 
 # we need SSL for TSIG (and maybe also for NSEC3).
 CHECK_SSL
+if test x$HAVE_SSL = x"yes"; then
+	ACX_LIB_SSL
+	SSL_LIBS="-lssl"
+	AC_SUBST(SSL_LIBS)
+	AC_CHECK_HEADERS([openssl/ssl.h],,, [AC_INCLUDES_DEFAULT])
+	AC_CHECK_HEADERS([openssl/err.h],,, [AC_INCLUDES_DEFAULT])
+	AC_CHECK_HEADERS([openssl/rand.h],,, [AC_INCLUDES_DEFAULT])
+else
+	AC_MSG_WARN([No SSL, therefore remote-control is disabled])
+fi
 
 AC_ARG_ENABLE(nsec3, AC_HELP_STRING([--disable-nsec3], [Disable NSEC3 support]))
 case "$enable_nsec3" in
         no)
 		;;
-        yes|*)
+        yes)
 		AC_DEFINE_UNQUOTED([NSEC3], [], [Define this to enable NSEC3 support.])
-                ;;
-esac
-
-AC_ARG_ENABLE(full-prehash, AC_HELP_STRING([--disable-full-prehash], [Disables NSEC3 full prehashing]))
-case "$enable_full_prehash" in
-        no)
 		;;
-        yes|*)
-		AC_DEFINE_UNQUOTED([FULL_PREHASH], [], [Define this to enable NSEC3 full prehashing.])
+		*)
+		if test x$HAVE_SSL = x"yes"; then
+			AC_DEFINE_UNQUOTED([NSEC3], [], [Define this to enable NSEC3 support.])
+		else
+			AC_MSG_WARN([No SSL, therefore NSEC3 is disabled])
+		fi
                 ;;
 esac
 
@@ -658,21 +805,6 @@ case "$enable_mmap" in
 		AC_LIBGTOP_CHECK_TYPE(uintptr_t, void*)
 		AC_CHECK_FUNCS([mmap munmap])
 		AC_DEFINE_UNQUOTED([USE_MMAP_ALLOC], [], [Define this to enable mmap instead of malloc. Experimental.])
-		;;
-        no|*)
-                ;;
-esac
-
-#
-# Default zonestatsfile
-#
-zonestatsfile=${localstatedir}/log/nsd.stats
-AC_SUBST(zonestatsfile)
-AC_DEFINE_UNQUOTED(ZONESTATSFILE, ["`eval echo $zonestatsfile`"], [Pathname to the NSD statistics file])
-AC_ARG_ENABLE(zone_stats, AC_HELP_STRING([--enable-zone-stats], [Maintain statistics per zone, instead of global statistics.]))
-case "$enable_zone_stats" in
-        yes)
-		AC_DEFINE_UNQUOTED([USE_ZONE_STATS], [], [Define this to enable zone statistics.])
 		;;
         no|*)
                 ;;
@@ -851,26 +983,14 @@ AH_BOTTOM([
 
 # big fat warning
 if test "$enable_checking" = "yes"; then
-        echo "*************************************************"
-        echo "* You have activated \"--enable-checking\"        *"
-        echo "*                                               *"
-        echo "* This will instruct NSD to be stricter         *"
-        echo "* when validating its input. This could lead    *"
-        echo "* to a reduced service level.                   *"
-        echo "*                                               *"
-        echo "*************************************************"
-fi
-
-if test "$enable_zone_stats" = "yes"; then
-        echo "*************************************************"
-        echo "* You have activated \"--enable-zone-stats\"      *"
-        echo "*                                               *"
-        echo "* This will make NSD maintain statistics        *"
-        echo "* on a per zone basis. This could lead to       *"
-        echo "* a reduced service level and an                *"
-        echo "* a larger memory footprint.                    *"
-        echo "*                                               *"
-        echo "*************************************************"
+        echo "************************************************"
+        echo "* You have activated \"--enable-checking\"       *"
+        echo "*                                              *"
+        echo "* This will instruct NSD to be stricter        *"
+        echo "* when validating its input. This could lead   *"
+        echo "* to a reduced service level.                  *"
+        echo "*                                              *"
+        echo "************************************************"
 fi
 
 AC_CONFIG_FILES([Makefile])

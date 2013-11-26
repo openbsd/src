@@ -1,7 +1,7 @@
 /*
  * axfr.c -- generating AXFR responses.
  *
- * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -42,32 +42,34 @@ query_axfr(struct nsd *nsd, struct query *query)
 	}
 
 	if (query->axfr_zone == NULL) {
+		domain_type* qdomain;
 		/* Start AXFR.  */
+		STATUP(nsd, raxfr);
 		exact = namedb_lookup(nsd->db,
 				      query->qname,
 				      &closest_match,
 				      &closest_encloser);
 
-		query->domain = closest_encloser;
+		qdomain = closest_encloser;
 		query->axfr_zone = domain_find_zone(closest_encloser);
 
 		if (!exact
 		    || query->axfr_zone == NULL
-		    || query->axfr_zone->apex != query->domain)
+		    || query->axfr_zone->apex != qdomain)
 		{
 			/* No SOA no transfer */
 			RCODE_SET(query->packet, RCODE_NOTAUTH);
 			return QUERY_PROCESSED;
 		}
 
-		query->axfr_current_domain = query->domain;
+		query->axfr_current_domain = qdomain;
 		query->axfr_current_rrset = NULL;
 		query->axfr_current_rr = 0;
 		if(query->tsig.status == TSIG_OK) {
 			query->tsig_sign_it = 1; /* sign first packet in stream */
 		}
 
-		query_add_compression_domain(query, query->domain, QHEADERSZ);
+		query_add_compression_domain(query, qdomain, QHEADERSZ);
 
 		assert(query->axfr_zone->soa_rrset->rr_count == 1);
 		added = packet_encode_rr(query,
@@ -120,12 +122,11 @@ query_axfr(struct nsd *nsd, struct query *query)
 		}
 		assert(query->axfr_current_domain);
 		query->axfr_current_domain
-			= (domain_type *) rbtree_next((rbnode_t *) query->axfr_current_domain);
+			= domain_next(query->axfr_current_domain);
 	}
-	while ((rbnode_t *) query->axfr_current_domain != RBTREE_NULL
-			&& dname_is_subdomain(
-				domain_dname(query->axfr_current_domain),
-				domain_dname(query->axfr_zone->apex)));
+	while (query->axfr_current_domain != NULL &&
+			domain_is_subdomain(query->axfr_current_domain,
+					    query->axfr_zone->apex));
 
 	/* Add terminating SOA RR.  */
 	assert(query->axfr_zone->soa_rrset->rr_count == 1);
@@ -165,19 +166,16 @@ answer_axfr_ixfr(struct nsd *nsd, struct query *q)
 	switch (q->qtype) {
 	case TYPE_AXFR:
 		if (q->tcp) {
-			zone_options_t* zone_opt = zone_options_find(nsd->options, q->qname);
+			zone_options_t* zone_opt;
+			zone_opt = zone_options_find(nsd->options, q->qname);
 			if(!zone_opt ||
-			   acl_check_incoming(zone_opt->provide_xfr, q, &acl)==-1)
+			   acl_check_incoming(zone_opt->pattern->provide_xfr, q, &acl)==-1)
 			{
 				if (verbosity > 0) {
-					char address[128];
-					if (addr2ip(q->addr, address, sizeof(address))) {
-						DEBUG(DEBUG_XFRD,1, (LOG_INFO,
-							"addr2ip failed"));
-						strlcpy(address, "[unknown]", sizeof(address));
-					}
+					char a[128];
+					addr2str(&q->addr, a, sizeof(a));
 					VERBOSITY(1, (LOG_INFO, "axfr for zone %s from client %s refused, %s",
-						dname_to_string(q->qname, NULL), address, acl?"blocked":"no acl matches"));
+						dname_to_string(q->qname, NULL), a, acl?"blocked":"no acl matches"));
 				}
 				DEBUG(DEBUG_XFRD,1, (LOG_INFO, "axfr refused, %s",
 					acl?"blocked":"no acl matches"));

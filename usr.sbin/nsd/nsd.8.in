@@ -1,10 +1,10 @@
-.TH "NSD" "8" "Jul 22, 2013" "NLnet Labs" "NSD 3.2.16"
-.\" Copyright (c) 2001\-2011, NLnet Labs. All rights reserved.
+.TH "NSD" "8" "Oct 29, 2013" "NLnet Labs" "NSD 4.0.0"
+.\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
 .LP
 .B nsd
-\- Name Server Daemon (NSD) version 3.2.16.
+\- Name Server Daemon (NSD) version 4.0.0.
 .SH "SYNOPSIS"
 .LP
 .B nsd
@@ -56,7 +56,7 @@ argument and put itself into background and answers queries on port
 .I port
 option. The
 .I database
-must be generated beforehand with nsd\-zonec(8). By default, 
+is created if it does not exist. By default,
 .B NSD 
 will bind to all local interfaces available. Use the 
 .B \-a
@@ -83,7 +83,7 @@ configfile.
 .P
 Normally
 .B NSD
-should be started with the `nsdc(8) start` command invoked from a
+should be started with the `nsd\-control(8) start` command invoked from a
 .I /etc/rc.d/nsd.sh
 script or similar at the operating system startup.
 .TP
@@ -112,7 +112,7 @@ Read specified
 For format description see nsd.conf(5).
 .TP
 .B \-d
-Turn on debugging mode, do not fork, stay in the foreground.
+Do not fork, stay in the foreground.
 .TP
 .B \-f\fI database
 Use the specified
@@ -160,7 +160,7 @@ only useful on machines with multiple CPUs and/or network adapters.
 The maximum
 .I number
 of concurrent TCP connection that can be handled by each server. The
-default is 10.
+default is 100.
 .TP
 .B \-P\fI pidfile
 Use the specified
@@ -219,7 +219,8 @@ SIGTERM
 Stop answering queries, shutdown, and exit normally.
 .TP 
 SIGHUP
-Reload the database.
+Reload.  Scans zone files and if changed (mtime) reads
+them in.  Also reopens the logfile (assists logrotation).
 .TP
 SIGUSR1
 Dump BIND8\-style statistics into the log. Ignored otherwise.
@@ -246,19 +247,9 @@ facility, unless the
 option is specified.
 .SH "SEE ALSO"
 .LP
-nsdc(8), nsd.conf(5), nsd\-checkconf(8), nsd\-notify(8), 
-nsd\-patch(8), nsd\-xfer(8), nsd\-zonec(8)
+\fInsd.conf\fR(5), \fInsd\-checkconf\fR(8), \fInsd\-control\fR(8)
 .SH "AUTHORS"
 .LP
 .B NSD
 was written by NLnet Labs and RIPE NCC joint team. Please see
 CREDITS file in the distribution for further details.
-.SH "BUGS"
-.LP
-.B NSD
-will answer the queries erroneously if the
-.I database
-was not properly compiled with nsd\-zonec(8). Therefore problems with 
-misconfigured master zone files or nsd\-zonec(8) bugs may not be visible 
-until the queries are actually answered with
-.BR NSD .

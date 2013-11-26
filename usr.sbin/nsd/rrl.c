@@ -6,8 +6,6 @@
  */
 #include "config.h"
 #include <errno.h>
-#include <ctype.h>
-#include "dns.h"
 #include "rrl.h"
 #include "util.h"
 #include "lookup3.h"
@@ -59,37 +57,6 @@ static uint32_t rrl_whitelist_ratelimit = RRL_WLIST_LIMIT; /* 2x qps */
 static void** rrl_maps = NULL;
 static size_t rrl_maps_num = 0;
 
-/* from NSD4 for RRL logs */
-static char* wiredname2str(const uint8_t* dname)
-{
-	static char buf[MAXDOMAINLEN*5+3];
-	char* p = buf;
-	uint8_t lablen;
-	if(*dname == 0) {
-		strlcpy(buf, ".", sizeof(buf));
-		return buf;
-	}
-	lablen = *dname++;
-	while(lablen) {
-		while(lablen--) {
-			uint8_t ch = *dname++;
-			if (isalnum(ch) || ch == '-' || ch == '_') {
-				*p++ = ch;
-			} else if (ch == '.' || ch == '\\') {
-				*p++ = '\\';
-				*p++ = ch;
-			} else {
-				snprintf(p, 5, "\\%03u", (unsigned int)ch);
-				p += 4;
-			}
-		}
-		lablen = *dname++;
-		*p++ = '.';
-	}
-	*p++ = 0;
-	return buf;
-}
-
 void rrl_mmap_init(int numch, size_t numbuck, size_t lm, size_t wlm, size_t sm,
 	size_t plf, size_t pls)
 {
@@ -131,6 +98,13 @@ void rrl_mmap_init(int numch, size_t numbuck, size_t lm, size_t wlm, size_t sm,
 	rrl_maps_num = 0;
 	rrl_maps = NULL;
 #endif
+}
+
+void rrl_set_limit(size_t lm, size_t wlm, size_t sm)
+{
+	rrl_ratelimit = lm*2;
+	rrl_whitelist_ratelimit = wlm*2;
+	rrl_slip_ratio = sm;
 }
 
 void rrl_init(size_t ch)
@@ -305,13 +279,13 @@ static void examine_query(query_type* query, uint32_t* hash, uint64_t* source,
 	uint16_t c, c2;
 	/* size with 16 bytes to spare */
 	uint8_t buf[MAXDOMAINLEN + sizeof(*source) + sizeof(c) + 16];
-	const uint8_t* dname = NULL; size_t dname_len;
+	const uint8_t* dname = NULL; size_t dname_len = 0;
 	uint32_t r = 0x267fcd16;
 
 	*source = rrl_get_source(query, &c2);
 	c = rrl_classify(query, &dname, &dname_len);
 	if(query->zone && query->zone->opts &&
-		(query->zone->opts->rrl_whitelist & c))
+		(query->zone->opts->pattern->rrl_whitelist & c))
 		*lm = rrl_whitelist_ratelimit;
 	if(*lm == 0) return;
 	c |= c2;
@@ -354,14 +328,11 @@ rrl_msg(query_type* query, const char* str)
 	uint64_t s;
 	char address[128];
 	if(verbosity < 2) return;
-	if (addr2ip(query->addr, address, sizeof(address))) {
-		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "addr2ip failed"));
-		strlcpy(address, "[unknown]", sizeof(address));
-	}
+	addr2str(&query->addr, address, sizeof(address));
 	s = rrl_get_source(query, &c2);
 	c = rrl_classify(query, &d, &d_len) | c2;
 	if(query->zone && query->zone->opts &&
-		(query->zone->opts->rrl_whitelist & c))
+		(query->zone->opts->pattern->rrl_whitelist & c))
 		wl = 1;
 	log_msg(LOG_INFO, "ratelimit %s %s type %s%s target %s query %s %s",
 		str, d?wiredname2str(d):"", rrltype2str(c),
@@ -392,10 +363,7 @@ uint32_t rrl_update(query_type* query, uint32_t hash, uint64_t source,
 		if(verbosity >=2 &&
 			used_to_block(b->rate, b->counter, rrl_ratelimit)) {
 			char address[128];
-			if (addr2ip(query->addr, address, sizeof(address))) {
-				DEBUG(DEBUG_XFRD,1, (LOG_INFO, "addr2ip failed"));
-				strlcpy(address, "[unknown]", sizeof(address));
-			}
+			addr2str(&query->addr, address, sizeof(address));
 			log_msg(LOG_INFO, "ratelimit unblock ~ type %s target %s query %s %s (%s collision)",
 				rrltype2str(b->flags),
 				rrlsource2str(b->source, b->flags),
@@ -477,7 +445,7 @@ int rrl_process_query(query_type* query)
 
 query_state_type rrl_slip(query_type* query)
 {
-	/* discard number of packets, randomly */
+	/* discard number the packets, randomly */
 #ifdef HAVE_ARC4RANDOM
 	if((rrl_slip_ratio > 0) && ((rrl_slip_ratio == 1) || ((arc4random() % rrl_slip_ratio) == 0))) {
 #else

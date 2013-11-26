@@ -1,7 +1,7 @@
 /*
  * nsd.c -- nsd(8)
  *
- * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -41,13 +41,14 @@
 #include <unistd.h>
 
 #include "nsd.h"
-#include "namedb.h"
 #include "options.h"
 #include "tsig.h"
+#include "remote.h"
 
 /* The server handler... */
 static struct nsd nsd;
 static char hostname[MAXHOSTNAMELEN];
+extern config_parser_state_t* cfg_parser;
 
 static void error(const char *format, ...) ATTR_FORMAT(printf, 1, 2);
 
@@ -67,7 +68,7 @@ usage (void)
 		"  -a ip-address[@port] Listen to the specified incoming IP address (and port)\n"
 		"                       May be specified multiple times).\n"
 		"  -c configfile        Read specified configfile instead of %s.\n"
-		"  -d                   Enable debug mode (do not fork as a daemon process).\n"
+		"  -d                   do not fork as a daemon process.\n"
 #ifndef NDEBUG
 		"  -F facilities        Specify the debug facilities.\n"
 #endif /* NDEBUG */
@@ -107,7 +108,7 @@ version(void)
 	fprintf(stderr, "%s version %s\n", PACKAGE_NAME, PACKAGE_VERSION);
 	fprintf(stderr, "Written by NLnet Labs.\n\n");
 	fprintf(stderr,
-		"Copyright (C) 2001-2011 NLnet Labs.  This is free software.\n"
+		"Copyright (C) 2001-2006 NLnet Labs.  This is free software.\n"
 		"There is NO warranty; not even for MERCHANTABILITY or FITNESS\n"
 		"FOR A PARTICULAR PURPOSE.\n");
 	exit(0);
@@ -127,18 +128,25 @@ error(const char *format, ...)
 	exit(1);
 }
 
+static void
+append_trailing_slash(const char** dirname, region_type* region)
+{
+	int l = strlen(*dirname);
+	if (l>0 && (*dirname)[l-1] != '/') {
+		char *dirname_slash = region_alloc(region, l+2);
+		memcpy(dirname_slash, *dirname, l+1);
+		strlcat(dirname_slash, "/", l+2);
+		/* old dirname is leaked, this is only used for chroot, once */
+		*dirname = dirname_slash;
+	}
+}
+
 static int
 file_inside_chroot(const char* fname, const char* chr)
 {
-#ifdef NDEBUG
-	assert(chr);
-#endif /* NDEBUG */
-	/* filename and chroot the same? */
-	if (fname && fname[0] && chr[0] && !strncmp(fname, chr, strlen(chr)))
-		return 2; /* strip chroot, file rotation ok */
-	else if (fname && fname[0] != '/')
-		return 1; /* don't strip, file rotation ok */
-	return 0; /* don't strip, don't try file rotation */
+	/* true if filename starts with chroot or is not absolute */
+	return ((fname && fname[0] && strncmp(fname, chr, strlen(chr)) == 0) ||
+		(fname && fname[0] != '/'));
 }
 
 void
@@ -291,7 +299,7 @@ sig_handler(int sig)
 		nsd.signal_hint_child = 1;
 		return;
 	case SIGHUP:
-		nsd.signal_hint_reload = 1;
+		nsd.signal_hint_reload_hup = 1;
 		return;
 	case SIGALRM:
 		nsd.signal_hint_stats = 1;
@@ -308,9 +316,6 @@ sig_handler(int sig)
 		nsd.signal_hint_statsusr = 1;
 		break;
 	case SIGINT:
-		/* Silent shutdown... */
-		nsd.signal_hint_quit = 1;
-		break;
 	case SIGTERM:
 	default:
 		nsd.signal_hint_shutdown = 1;
@@ -323,67 +328,9 @@ sig_handler(int sig)
  *
  */
 #ifdef BIND8_STATS
-
-#ifdef USE_ZONE_STATS
-static void
-fprintf_zone_stats(FILE* fd, zone_type* zone, time_t now)
-{
-	int i;
-
-	/* NSTATS */
-	fprintf(fd, "NSTATS %s %lu",
-		dname_to_string(domain_dname(zone->apex),0),
-		(unsigned long) now);
-
-	for (i = 0; i <= 255; i++) {
-		if (zone->st.qtype[i] != 0) {
-			fprintf(fd, " %s=%lu", rrtype_to_string(i),
-				zone->st.qtype[i]);
-		}
-	}
-	fprintf(fd, "\n");
-
-	/* XSTATS */
-	fprintf(fd, "XSTATS %s %lu"
-		" RR=%lu RNXD=%lu RFwdR=%lu RDupR=%lu RFail=%lu RFErr=%lu RErr=%lu RAXFR=%lu"
-		" RLame=%lu ROpts=%lu SSysQ=%lu SAns=%lu SFwdQ=%lu SDupQ=%lu SErr=%lu RQ=%lu"
-		" RIQ=%lu RFwdQ=%lu RDupQ=%lu RTCP=%lu SFwdR=%lu SFail=%lu SFErr=%lu SNaAns=%lu"
-		" SNXD=%lu RUQ=%lu RURQ=%lu RUXFR=%lu RUUpd=%lu\n",
-		dname_to_string(domain_dname(zone->apex),0),
-		(unsigned long) now,
-		zone->st.dropped,
-		(unsigned long)0, (unsigned long)0,
-		(unsigned long)0, (unsigned long)0,
-		(unsigned long)0, (unsigned long)0,
-		zone->st.raxfr,
-		(unsigned long)0, (unsigned long)0,
-		(unsigned long)0,
-		zone->st.qudp + zone->st.qudp6 - zone->st.dropped,
-		(unsigned long)0, (unsigned long)0,
-		zone->st.txerr,
-		zone->st.opcode[OPCODE_QUERY],
-		zone->st.opcode[OPCODE_IQUERY],
-		zone->st.wrongzone,
-		(unsigned long)0,
-		zone->st.ctcp + zone->st.ctcp6,
-		(unsigned long)0,
-		zone->st.rcode[RCODE_SERVFAIL],
-		zone->st.rcode[RCODE_FORMAT],
-		zone->st.nona,
-		zone->st.rcode[RCODE_NXDOMAIN],
-		(unsigned long)0, (unsigned long)0,
-		(unsigned long)0,
-		zone->st.opcode[OPCODE_UPDATE]);
-}
-#endif
-
 void
 bind8_stats (struct nsd *nsd)
 {
-#ifdef USE_ZONE_STATS
-	FILE* fd;
-	zone_type* zone;
-#endif
 	char buf[MAXSYSLOGMSGLEN];
 	char *msg, *t;
 	int i, len;
@@ -438,23 +385,6 @@ bind8_stats (struct nsd *nsd)
 			(unsigned long)0, (unsigned long)0, (unsigned long)0, nsd->st.opcode[OPCODE_UPDATE]);
 	}
 
-#ifdef USE_ZONE_STATS
-	/* ZSTATS */
-	log_msg(LOG_INFO, "ZSTATS %s", nsd->zonestatsfile);
-	if ((fd = fopen(nsd->zonestatsfile, "a")) ==  NULL ) {
-		log_msg(LOG_ERR, "cannot open zone statsfile %s: %s",
-			nsd->zonestatsfile, strerror(errno));
-		return;
-	}
-	/* Write stats per zone */
-	zone = nsd->db->zones;
-	while (zone) {
-		fprintf_zone_stats(fd, zone, now);
-		zone = zone->next;
-	}
-	fclose(fd);
-#endif
-
 }
 #endif /* BIND8_STATS */
 
@@ -469,7 +399,6 @@ main(int argc, char *argv[])
 	pid_t	oldpid;
 	size_t i;
 	struct sigaction action;
-	FILE* dbfd;
 #ifdef HAVE_GETPWNAM
 	struct passwd *pwd = NULL;
 #endif /* HAVE_GETPWNAM */
@@ -493,9 +422,6 @@ main(int argc, char *argv[])
 	nsd.dbfile	= 0;
 	nsd.pidfile	= 0;
 	nsd.server_kind = NSD_SERVER_MAIN;
-#ifdef USE_ZONE_STATS
-	nsd.zonestatsfile = 0;
-#endif
 
 	for (i = 0; i < MAX_INTERFACES; i++) {
 		memset(&hints[i], 0, sizeof(hints[i]));
@@ -665,19 +591,27 @@ main(int argc, char *argv[])
 		error("server identity too long (%u characters)",
 		      (unsigned) strlen(nsd.identity));
 	}
+	if(!tsig_init(nsd.region))
+		error("init tsig failed");
 
 	/* Read options */
-	nsd.options = nsd_options_create(region_create(xalloc, free));
-	if(!parse_options_file(nsd.options, configfile)) {
+	nsd.options = nsd_options_create(region_create_custom(xalloc, free,
+		DEFAULT_CHUNK_SIZE, DEFAULT_LARGE_OBJECT_SIZE,
+		DEFAULT_INITIAL_CLEANUP_SIZE, 1));
+	if(!parse_options_file(nsd.options, configfile, NULL, NULL)) {
 		error("could not read config: %s\n", configfile);
 	}
-	if(nsd.options->ip4_only) {
+	if(!parse_zone_list_file(nsd.options)) {
+		error("could not read zonelist file %s\n",
+			nsd.options->zonelistfile);
+	}
+	if(nsd.options->do_ip4 && !nsd.options->do_ip6) {
 		for (i = 0; i < MAX_INTERFACES; ++i) {
 			hints[i].ai_family = AF_INET;
 		}
 	}
 #ifdef INET6
-	if(nsd.options->ip6_only) {
+	if(nsd.options->do_ip6 && !nsd.options->do_ip4) {
 		for (i = 0; i < MAX_INTERFACES; ++i) {
 			hints[i].ai_family = AF_INET6;
 		}
@@ -752,11 +686,6 @@ main(int argc, char *argv[])
 	if(nsd.st.period == 0) {
 		nsd.st.period = nsd.options->statistics;
 	}
-#ifdef USE_ZONE_STATS
-	if (nsd.zonestatsfile == 0) {
-		nsd.zonestatsfile = nsd.options->zonestatsfile;
-	}
-#endif /* USE_ZONE_STATS */
 #endif /* BIND8_STATS */
 #ifdef HAVE_CHROOT
 	if(nsd.chrootdir == 0) nsd.chrootdir = nsd.options->chroot;
@@ -819,8 +748,6 @@ main(int argc, char *argv[])
 		nsd.children[i].need_to_send_QUIT = 0;
 		nsd.children[i].need_to_exit = 0;
 		nsd.children[i].has_exited = 0;
-		nsd.children[i].dirty_zones = stack_create(nsd.region,
-			nsd_options_num_zones(nsd.options));
 	}
 
 	nsd.this_child = NULL;
@@ -925,40 +852,37 @@ main(int argc, char *argv[])
 	/* endpwent(); */
 #endif /* HAVE_GETPWNAM */
 
-	if(!tsig_init(nsd.region))
-		error("init tsig failed");
 #if defined(HAVE_SSL)
 	key_options_tsig_add(nsd.options);
 #endif
 
-	/* Relativize the pathnames for chroot... */
-	if (nsd.chrootdir) {
-		int l = strlen(nsd.chrootdir);
-
+	append_trailing_slash(&nsd.options->xfrdir, nsd.options->region);
+	/* Check relativity of pathnames to chroot */
+	if (nsd.chrootdir && nsd.chrootdir[0]) {
 		/* existing chrootdir: append trailing slash for strncmp checking */
-		if (l>0 && strncmp(nsd.chrootdir + (l-1), "/", 1) != 0) {
-			char *chroot_slash = region_alloc(nsd.region, sizeof(char)*(l+2));
-			memcpy(chroot_slash, nsd.chrootdir, sizeof(char)*(l+1));
-			strlcat(chroot_slash, "/", sizeof(char)*(l+2));
-			nsd.chrootdir = chroot_slash;
-			++l;
-		}
+		append_trailing_slash(&nsd.chrootdir, nsd.region);
+		append_trailing_slash(&nsd.options->zonesdir, nsd.options->region);
 
-		if (strncmp(nsd.chrootdir, nsd.pidfile, l) != 0) {
-			error("%s is not relative to %s: chroot not possible",
-				nsd.pidfile, nsd.chrootdir);
-		} else if (strncmp(nsd.chrootdir, nsd.dbfile, l) != 0) {
-			error("%s is not relative to %s: chroot not possible",
-				nsd.dbfile, nsd.chrootdir);
-		} else if (strncmp(nsd.chrootdir, nsd.options->xfrdfile, l) != 0) {
-			error("%s is not relative to %s: chroot not possible",
-				nsd.options->xfrdfile, nsd.chrootdir);
-		} else if (strncmp(nsd.chrootdir, nsd.options->difffile, l) != 0) {
-			error("%s is not relative to %s: chroot not possible",
-				nsd.options->difffile, nsd.chrootdir);
-		} else if (strncmp(nsd.chrootdir, nsd.options->zonesdir, l) != 0) {
-			error("%s is not relative to %s: chroot not possible",
+		/* zonesdir must be absolute and within chroot,
+		 * all other pathnames may be relative to zonesdir */
+		if (strncmp(nsd.options->zonesdir, nsd.chrootdir, strlen(nsd.chrootdir)) != 0) {
+			error("zonesdir %s is not relative to %s: chroot not possible",
 				nsd.options->zonesdir, nsd.chrootdir);
+		} else if (!file_inside_chroot(nsd.pidfile, nsd.chrootdir)) {
+			error("pidfile %s is not relative to %s: chroot not possible",
+				nsd.pidfile, nsd.chrootdir);
+		} else if (!file_inside_chroot(nsd.dbfile, nsd.chrootdir)) {
+			error("database %s is not relative to %s: chroot not possible",
+				nsd.dbfile, nsd.chrootdir);
+		} else if (!file_inside_chroot(nsd.options->xfrdfile, nsd.chrootdir)) {
+			error("xfrdfile %s is not relative to %s: chroot not possible",
+				nsd.options->xfrdfile, nsd.chrootdir);
+		} else if (!file_inside_chroot(nsd.options->zonelistfile, nsd.chrootdir)) {
+			error("zonelistfile %s is not relative to %s: chroot not possible",
+				nsd.options->zonelistfile, nsd.chrootdir);
+		} else if (!file_inside_chroot(nsd.options->xfrdir, nsd.chrootdir)) {
+			error("xfrdir %s is not relative to %s: chroot not possible",
+				nsd.options->xfrdir, nsd.chrootdir);
 		}
 	}
 
@@ -1008,6 +932,7 @@ main(int argc, char *argv[])
 	nsd.mode = NSD_RUN;
 	nsd.signal_hint_child = 0;
 	nsd.signal_hint_reload = 0;
+	nsd.signal_hint_reload_hup = 0;
 	nsd.signal_hint_quit = 0;
 	nsd.signal_hint_shutdown = 0;
 	nsd.signal_hint_stats = 0;
@@ -1016,10 +941,16 @@ main(int argc, char *argv[])
 
 	/* Initialize the server... */
 	if (server_init(&nsd) != 0) {
-		log_msg(LOG_ERR, "server initialization failed, %s could "
+		error("server initialization failed, %s could "
 			"not be started", argv0);
-		exit(1);
 	}
+#if defined(HAVE_SSL)
+	if(nsd.options->control_enable) {
+		/* read ssl keys while superuser and outside chroot */
+		if(!(nsd.rc = daemon_remote_create(nsd.options)))
+			error("could not perform remote control setup");
+	}
+#endif /* HAVE_SSL */
 
 	/* Unless we're debugging, fork... */
 	if (!nsd.debug) {
@@ -1031,10 +962,7 @@ main(int argc, char *argv[])
 			/* Child */
 			break;
 		case -1:
-			log_msg(LOG_ERR, "fork() failed: %s", strerror(errno));
-			server_close_all_sockets(nsd.udp, nsd.ifs);
-			server_close_all_sockets(nsd.tcp, nsd.ifs);
-			exit(1);
+			error("fork() failed: %s", strerror(errno));
 		default:
 			/* Parent is done */
 			server_close_all_sockets(nsd.udp, nsd.ifs);
@@ -1044,8 +972,7 @@ main(int argc, char *argv[])
 
 		/* Detach ourselves... */
 		if (setsid() == -1) {
-			log_msg(LOG_ERR, "setsid() failed: %s", strerror(errno));
-			exit(1);
+			error("setsid() failed: %s", strerror(errno));
 		}
 
 		if ((fd = open("/dev/null", O_RDWR, 0)) != -1) {
@@ -1077,37 +1004,42 @@ main(int argc, char *argv[])
 
 	/* Chroot */
 #ifdef HAVE_CHROOT
-	if (nsd.chrootdir && strlen(nsd.chrootdir)) {
-		int l = strlen(nsd.chrootdir);
-		int ret = 0;
+	if (nsd.chrootdir && nsd.chrootdir[0]) {
+		int l = strlen(nsd.chrootdir)-1; /* ends in trailing slash */
 
-		while (l>0 && nsd.chrootdir[l-1] == '/')
-			--l;
-
-		/* filename after chroot */
-		ret = file_inside_chroot(nsd.log_filename, nsd.chrootdir);
-		if (ret) {
+		if (file_inside_chroot(nsd.log_filename, nsd.chrootdir))
 			nsd.file_rotation_ok = 1;
-			if (ret == 2) /* also strip chroot */
+
+		/* strip chroot from pathnames if they're absolute */
+		nsd.options->zonesdir += l;
+		if (nsd.log_filename){
+			if (nsd.log_filename[0] == '/')
 				nsd.log_filename += l;
 		}
-		nsd.dbfile += l;
-		nsd.pidfile += l;
-		nsd.options->xfrdfile += l;
-		nsd.options->difffile += l;
-		nsd.options->zonesdir += l;
+		if (nsd.pidfile[0] == '/')
+			nsd.pidfile += l;
+		if (nsd.dbfile[0] == '/')
+			nsd.dbfile += l;
+		if (nsd.options->xfrdfile[0] == '/')
+			nsd.options->xfrdfile += l;
+		if (nsd.options->zonelistfile[0] == '/')
+			nsd.options->zonelistfile += l;
+		if (nsd.options->xfrdir[0] == '/')
+			nsd.options->xfrdir += l;
+
+		/* strip chroot from pathnames of "include:" statements
+		 * on subsequent repattern commands */
+		cfg_parser->chroot = nsd.chrootdir;
 
 #ifdef HAVE_TZSET
 		/* set timezone whilst not yet in chroot */
 		tzset();
 #endif
 		if (chroot(nsd.chrootdir)) {
-			log_msg(LOG_ERR, "unable to chroot: %s", strerror(errno));
-			exit(1);
+			error("unable to chroot: %s", strerror(errno));
 		}
 		if (chdir("/")) {
-			log_msg(LOG_ERR, "unable to chdir to chroot: %s", strerror(errno));
-			exit(1);
+			error("unable to chdir to chroot: %s", strerror(errno));
 		}
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "changed root directory to %s",
 			nsd.chrootdir));
@@ -1127,13 +1059,6 @@ main(int argc, char *argv[])
 
 	DEBUG(DEBUG_IPC,1, (LOG_INFO, "file rotation on %s %sabled",
 		nsd.log_filename, nsd.file_rotation_ok?"en":"dis"));
-
-	/* Check if nsd.db exists */
-	if ((dbfd = fopen(nsd.dbfile, "r")) == NULL) {
-		log_msg(LOG_ERR, "unable to open %s for reading: %s", nsd.dbfile, strerror(errno));
-		exit(1);
-	}
-	fclose(dbfd);
 
 	/* Write pidfile */
 	if (writepid(&nsd) == -1) {
@@ -1176,11 +1101,19 @@ main(int argc, char *argv[])
 	}
 #endif /* HAVE_GETPWNAM */
 
+	if(nsd.server_kind == NSD_SERVER_MAIN) {
+		server_prepare_xfrd(&nsd);
+		/* xfrd forks this before reading database, so it does not get
+		 * the memory size of the database */
+		server_start_xfrd(&nsd, 0, 0);
+	}
 	if (server_prepare(&nsd) != 0) {
-		log_msg(LOG_ERR, "server preparation failed, %s could "
-			"not be started", argv0);
 		unlinkpid(nsd.pidfile);
-		exit(1);
+		error("server preparation failed, %s could "
+			"not be started", argv0);
+	}
+	if(nsd.server_kind == NSD_SERVER_MAIN) {
+		server_send_soa_xfrd(&nsd, 0);
 	}
 
 	/* Really take off */

@@ -6,6 +6,9 @@
 /* NSD default chroot directory */
 #undef CHROOTDIR
 
+/* NSD config dir */
+#undef CONFIGDIR
+
 /* Pathname to the NSD configuration file */
 #undef CONFIGFILE
 
@@ -16,9 +19,6 @@
 /* Pathname to the NSD database */
 #undef DBFILE
 
-/* Pathname to the NSD diff transfer journal file. */
-#undef DIFFFILE
-
 /* Define this to enable draft RRtypes. */
 #undef DRAFT_RRTYPES
 
@@ -27,9 +27,6 @@
 
 /* Define to the default facility for syslog. */
 #undef FACILITY
-
-/* Define this to enable NSEC3 full prehashing. */
-#undef FULL_PREHASH
 
 /* Define to 1 if you have the `alarm' function. */
 #undef HAVE_ALARM
@@ -73,11 +70,32 @@
 /* Define to 1 if you have the `endpwent' function. */
 #undef HAVE_ENDPWENT
 
+/* Define to 1 if you have the `event_base_free' function. */
+#undef HAVE_EVENT_BASE_FREE
+
+/* Define to 1 if you have the `event_base_get_method' function. */
+#undef HAVE_EVENT_BASE_GET_METHOD
+
+/* Define to 1 if you have the `event_base_new' function. */
+#undef HAVE_EVENT_BASE_NEW
+
+/* Define to 1 if you have the `event_base_once' function. */
+#undef HAVE_EVENT_BASE_ONCE
+
+/* Define to 1 if you have the <event.h> header file. */
+#undef HAVE_EVENT_H
+
 /* Define to 1 if you have the `EVP_sha1' function. */
 #undef HAVE_EVP_SHA1
 
 /* Define to 1 if you have the `EVP_sha256' function. */
 #undef HAVE_EVP_SHA256
+
+/* Define to 1 if you have the `ev_default_loop' function. */
+#undef HAVE_EV_DEFAULT_LOOP
+
+/* Define to 1 if you have the `ev_loop' function. */
+#undef HAVE_EV_LOOP
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
@@ -158,11 +176,29 @@
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
 
+/* Define to 1 if you have the <openssl/err.h> header file. */
+#undef HAVE_OPENSSL_ERR_H
+
+/* Define to 1 if you have the <openssl/rand.h> header file. */
+#undef HAVE_OPENSSL_RAND_H
+
+/* Define to 1 if you have the <openssl/ssl.h> header file. */
+#undef HAVE_OPENSSL_SSL_H
+
 /* Define to 1 if you have the `pselect' function. */
 #undef HAVE_PSELECT
 
 /* if sys/select.h provides pselect prototype */
 #undef HAVE_PSELECT_PROTO
+
+/* Define to 1 if you have the `pwrite' function. */
+#undef HAVE_PWRITE
+
+/* Define if recvmmsg is implemented */
+#undef HAVE_RECVMMSG
+
+/* Define if sendmmsg is implemented */
+#undef HAVE_SENDMMSG
 
 /* Define to 1 if you have the `setregid' function. */
 #undef HAVE_SETREGID
@@ -320,8 +356,24 @@
 /* Define this to enable response minimalization to reduce truncation. */
 #undef MINIMAL_RESPONSES
 
+/* Define if mkdir has one argument. */
+#undef MKDIR_HAS_ONE_ARG
+
 /* Undefine this to enable internal runtime checks. */
 #undef NDEBUG
+
+/* Define if the network stack does not fully support nonblocking io (causes
+   lower performance). */
+#undef NONBLOCKING_IS_BROKEN
+
+/* Define to the default nsd-control port. */
+#undef NSD_CONTROL_PORT
+
+/* Define to nsd-control proto version. */
+#undef NSD_CONTROL_VERSION
+
+/* Pathname to start nsd from nsd-control */
+#undef NSD_START_PATH
 
 /* Define this to enable NSEC3 support. */
 #undef NSEC3
@@ -356,6 +408,12 @@
 /* Define this to configure as a root server. */
 #undef ROOT_SERVER
 
+/* The size of `off_t', as computed by sizeof. */
+#undef SIZEOF_OFF_T
+
+/* The size of `void*', as computed by sizeof. */
+#undef SIZEOF_VOIDP
+
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
@@ -386,6 +444,9 @@
 /* the user name to drop privileges to */
 #undef USER
 
+/* Define if you want to use internal select based events */
+#undef USE_MINI_EVENT
+
 /* Define this to enable mmap instead of malloc. Experimental. */
 #undef USE_MMAP_ALLOC
 
@@ -411,24 +472,29 @@
 #endif
 
 
-/* Define this to enable zone statistics. */
-#undef USE_ZONE_STATS
-
 /* Define to the NSD version to answer version.server query. */
 #undef VERSION
 
 /* Pathname to the NSD xfrd zone timer state file. */
 #undef XFRDFILE
 
+/* Pathname to where the NSD transfer dir is created. */
+#undef XFRDIR
+
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
 #undef YYTEXT_POINTER
 
+/* Pathname to the NSD zone list file. */
+#undef ZONELISTFILE
+
 /* NSD default location for zone files. Empty string or NULL to disable. */
 #undef ZONESDIR
 
-/* Pathname to the NSD statistics file */
-#undef ZONESTATSFILE
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS

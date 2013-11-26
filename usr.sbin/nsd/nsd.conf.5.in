@@ -1,5 +1,5 @@
-.TH "nsd.conf" "5" "Jul 22, 2013" "NLnet Labs" "nsd 3.2.16"
-.\" Copyright (c) 2001\-2011, NLnet Labs. All rights reserved.
+.TH "nsd.conf" "5" "Oct 29, 2013" "NLnet Labs" "nsd 4.0.0"
+.\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
 .LP
@@ -34,6 +34,9 @@ server:
 database: "@dbfile@"
 .RE
 .RS 5
+zonelistfile: "@zonelistfile@"
+.RE
+.RS 5
 username: @user@
 .RE
 .RS 5
@@ -41,9 +44,6 @@ logfile: "@logfile@"
 .RE
 .RS 5
 pidfile: "@pidfile@"
-.RE
-.RS 5
-difffile: "@difffile@"
 .RE
 .RS 5
 xfrdfile: "@xfrdfile@"
@@ -66,17 +66,21 @@ attributes, or a value.
 .P
 At the top level only 
 .B server:
-or
-.B zone: 
-or 
+and
 .B key: 
+and 
+.B pattern:
+and
+.B zone: 
 are allowed. These are followed by their attributes or the start of 
 a new 
 .B server:
-or
-.B zone: 
 or 
 .B key: 
+or
+.B pattern:
+or
+.B zone: 
 clause. The 
 .B zone:
 attribute is followed by zone options. The 
@@ -85,13 +89,18 @@ attribute is followed by global options for the
 .B NSD 
 server. A 
 .B key: 
-attribute is used to define keys for authentication.
+attribute is used to define keys for authentication. The
+.B pattern:
+attribute is followed by the zone options for zones that use the pattern.
 .P
 Files can be included using the 
 .B include:
-directive. It can appear anywhere, and takes a single filename as 
-an argument. Processing continues as if the text from the included 
-file was copied into the config file at that point.
+directive. It can appear anywhere, and takes a single filename as an
+argument. Processing continues as if the text from the included file
+was copied into the config file at that point.  If a chroot is used
+an absolute filename is needed (with the chroot prepended), so that
+the include can be parsed before and after application of the chroot (and
+the knowledge of what that chroot is).
 .SS "Server Options"
 .LP
 The global options (if not overridden from the NSD commandline) are 
@@ -115,15 +124,11 @@ Turns on debugging mode for nsd, does not fork a daemon process.
 Default is no. Same as commandline option 
 .BR \-d.
 .TP
-.B ip4\-only:\fR <yes or no>
-If yes, NSD only listens to IPv4 connections. Same as commandline 
-option 
-.BR \-4.
+.B do\-ip4:\fR <yes or no>
+If yes, NSD listens to IPv4 connections.  Default yes.
 .TP
-.B ip6\-only:\fR <yes or no>
-If yes, NSD only listens to IPv6 connections. Same as commandline 
-option 
-.BR \-6.
+.B do\-ip6:\fR <yes or no>
+If yes, NSD listens to IPv6 connections.  Default yes.
 .TP
 .B database:\fR <filename>
 By default 
@@ -131,6 +136,14 @@ By default
 is used. The specified file is used to store the compiled 
 zone information. Same as commandline option 
 .BR \-f.
+.TP
+.B zonelistfile:\fR <filename>
+By default 
+.I @zonelistfile@
+is used. The specified file is used to store the dynamically added
+list of zones.  The list is written to by NSD to add and delete zones.
+It is a text file with a zone\-name and pattern\-name on each line.
+This file is used for the nsd\-control addzone and delzone commands.
 .TP
 .B identity:\fR <string>
 Returns the specified identity when asked for CH TXT ID.SERVER. 
@@ -155,8 +168,7 @@ option
 .TP
 .B tcp\-count:\fR <number>
 The maximum number of concurrent, active TCP connections by each server. 
-Default is 10. This option should have a value below 1000.
-Same as commandline option
+Default is 100. Same as commandline option
 .BR \-n .
 .TP
 .B tcp\-query\-count:\fR <number>
@@ -188,11 +200,13 @@ If not present no statistics are dumped. Statistics are produced
 every number seconds. Same as commandline option 
 .BR \-s .
 .TP
-.B zone\-stats\-file:\fR <filename>
-If per zone statistics is enabled, file to dump the statistics.
-.TP
 .B chroot:\fR <directory>
-NSD will chroot on startup to the specified directory. Same as 
+NSD will chroot on startup to the specified directory. Note that if
+elsewhere in the configuration you specify an absolute pathname to a file
+inside the chroot, you have to prepend the \fBchroot\fR path. That way,
+you can switch the chroot option on and off without having to modify
+anything else in the configuration. Set the value to "" (the empty string)
+to disable the chroot. By default "\fI@chrootdir@\fR" is used. Same as
 commandline option 
 .BR \-t .
 .TP
@@ -202,18 +216,17 @@ username. Can be username, id or id.gid. Same as commandline option
 .BR \-u .
 .TP
 .B zonesdir:\fR <directory>
-Change the working directory to the specified directory before 
-accessing zone files. Same as commandline option 
-.B \-d 
-for nsd\-zonec(8). Also nsd(8) will access files (pid file, database 
-file, log file) relative to this directory. Set the value to "" 
-(the empty string) to disable the change of working directory.
+Change the working directory to the specified directory before accessing
+zone files. Also, NSD will access \fBdatabase\fR, \fBzonelistfile\fR,
+\fBlogfile\fR, \fBpidfile\fR, \fBxfrdfile\fR, \fBxfrdir\fR,
+\fBserver-key-file\fR, \fBserver-cert-file\fR, \fBcontrol-key-file\fR and
+\fBcontrol-cert-file\fR
+relative to this directory. Set the value to "" (the empty string)
+to disable the change of working directory. By default "\fI@zonesdir@\fR"
+is used.
 .TP
 .B difffile:\fR <filename>
-When NSD receives IXFR updates it will store them in this file. 
-This file contains the differences between the database file and the 
-latest zone version. Default is 
-.IR @difffile@ .
+Ignored, for compatibility with NSD3 config files. 
 .TP
 .B xfrdfile:\fR <filename>
 The soa timeout and zone transfer daemon in NSD will save its state 
@@ -223,12 +236,17 @@ gone. For more details see the section on zone expiry behavior of
 NSD. Default is
 .IR @xfrdfile@ .
 .TP
+.B xfrdir:\fR <directory>
+The zone transfers are stored here before they are processed.  A directory
+is created here that is removed when NSD exits.  Default is
+.IR @xfrdir@ .
+.TP
 .B xfrd\-reload\-timeout:\fR <number>
 If this value is \-1, xfrd will not trigger a reload after a zone 
 transfer. If positive xfrd will trigger a reload after a zone 
 transfer, then it will wait for the number of seconds before it will 
 trigger a new reload. Setting this value throttles the reloads to 
-once per the number of seconds. The default is 10 seconds.
+once per the number of seconds. The default is 1 second.
 .TP
 .B verbosity:\fR <level>
 This value specifies the verbosity level for (non\-debug) logging. 
@@ -238,6 +256,12 @@ zone transfers. 2 lists soft warnings that are encountered.
 .B hide\-version:\fR <yes or no>
 Prevent NSD from replying with the version string on CHAOS class 
 queries.
+.TP
+.B zonefiles\-check\fR <yes or no>
+Make NSD check the mtime of zone files on start and sighup.  If you
+disable it it starts faster (less disk activity in case of a lot of zones).
+The default is enabled.  The nsd\-control reload command reloads zone files
+regardless of this option.
 .\" rrlstart
 .TP
 .B rrl\-size:\fR <numbuckets>
@@ -256,10 +280,10 @@ This option controls the number of packets discarded before we send back a SLIP 
 (a response with "truncated" bit set to one). 0 disables the sending of SLIP packets, 
 1 means every query will get a SLIP response.
 .TP
-.B rrl\-ipv4\-prefix:\fR <subnet>
+.B rrl\-ipv4\-prefix\-length:\fR <subnet>
 IPv4 prefix length. Addresses are grouped by netblock.
 .TP
-.B rrl\-ipv6\-prefix:\fR <subnet>
+.B rrl\-ipv6\-prefix\-length:\fR <subnet>
 IPv6 prefix length. Addresses are grouped by netblock.
 .TP
 .B rrl\-whitelist\-ratelimit:\fR <qps>
@@ -268,6 +292,83 @@ whitelisted. Default 2000 qps. With the rrl\-whitelist option you can set
 specific queries to receive this qps limit instead of the normal limit.
 With the value 0 the rate is unlimited.
 .\" rrlend
+.SS "Remote Control"
+The
+.B remote\-control:
+clause is used to set options for using the \fInsd\-control\fR(8)
+tool to give commands to the running NSD server.  It is disabled by
+default, and listens for localhost by default.  It uses TLS over TCP
+where the server and client authenticate to each other with self\-signed
+certificates.  The self\-signed certificates can be generated with the
+\fInsd\-control\-setup\fR tool.  The key files are read by NSD before
+the chroot and before dropping user permissions, so they can be outside
+the chroot and readable by the superuser only.
+.TP
+.B control\-enable:\fR <yes or no>
+Enable remote control, default is no.
+.TP
+.B control\-interface:\fR <ip4 or ip6>
+NSD will bind to the listed addresses to service control requests
+(on TCP).  Can be given multiple times to bind multiple ip\-addresses.
+Use 0.0.0.0 and ::0 to service the wildcard interface.  If none are given
+NSD listens to the localhost 127.0.0.1 and ::1 interfaces for control,
+if control is enabled with control\-enable.
+.TP
+.B control\-port:\fR <number>
+The port number for remote control service. 8952 by default.
+.TP
+.B server\-key\-file:\fR <filename>
+Path to the server private key, by default
+.IR @configdir@/nsd_server.key .
+This file is generated by the \fInsd\-control\-setup\fR utility.
+This file is used by the nsd server, but not by \fInsd\-control\fR.
+.TP
+.B server\-cert\-file:\fR <filename>
+Path to the server self signed certificate, by default
+.IR @configdir@/nsd_server.pem .
+This file is generated by the \fInsd\-control\-setup\fR utility.
+This file is used by the nsd server, and also by \fInsd\-control\fR.
+.TP
+.B control\-key\-file:\fR <filename>
+Path to the control client private key, by default
+.IR @configdir@/nsd_control.key .
+This file is generated by the \fInsd\-control\-setup\fR utility.
+This file is used by \fInsd\-control\fR.
+.TP
+.B control\-cert\-file:\fR <filename>
+Path to the control client certificate, by default
+.IR @configdir@/nsd_control.pem .
+This certificate has to be signed with the server certificate.
+This file is generated by the \fInsd\-control\-setup\fR utility.
+This file is used by \fInsd\-control\fR.
+.SS "Pattern Options"
+The
+.B pattern:
+clause is used to denote a set of options to apply to some zones.
+The same zone options as for a zone are allowed.
+.TP
+.B name:\fR <string>
+The name of the pattern.  This is a (case sensitive) string.  The pattern
+names that start with "_implicit_" are used internally for zones that
+have no pattern (they are defined in nsd.conf directly).
+.TP
+.B include\-pattern:\fR <pattern\-name>
+The options from the given pattern are included at this point in
+this pattern.  The referenced pattern must be defined above this one.
+.TP
+.B <zone option>:\fR <value>
+The zone options such as
+.BR zonefile ,
+.BR allow\-notify ,
+.BR request\-xfr ,
+.BR allow\-axfr\-fallback ,
+.BR notify ,
+.BR notify\-retry ,
+.BR provide\-xfr ,
+and
+.B outgoing\-interface 
+can be given.  They are applied to the patterns and zones that include
+this pattern.
 .SS "Zone Options"
 .LP 
 For every zone the options need to be specified in one 
@@ -275,6 +376,11 @@ For every zone the options need to be specified in one
 clause. The access control list elements can be given multiple 
 times to add multiple servers. These elements need to be added
 explicitly.
+.LP
+For zones that are configured in the \fInsd.conf\fR config file their
+settings are hardcoded (in an implicit pattern for themselves only)
+and they cannot be deleted via delzone, but remove them from the config
+file and repattern.
 .TP
 .B name:\fR <string>
 The name of the zone. This is the domain name of the apex of the 
@@ -283,14 +389,17 @@ zone. May end with a '.' (in FQDN notation). For example
 each zone.
 .TP
 .B zonefile:\fR <filename>
-The file containing the zone information. This file is used by 
-nsd\-zonec(8). This attribute must be present in each zone.
+The file containing the zone information. If this attribute is present
+it is used to read and write the zone contents. If the attribute is
+absent it prevents writing out of the zone.
 .TP
 .B allow\-notify:\fR <ip\-spec> <key\-name | NOKEY | BLOCKED>
 Access control list. The listed (primary) address is allowed to 
 send notifies to this (secondary) server. Notifies from unlisted or 
 specifically BLOCKED addresses are discarded. If NOKEY is given no 
 TSIG signature is required.
+BLOCKED supersedes other entries, other entries are scanned for a match
+in the order of the statements.
 .P
 .RS
 The ip\-spec is either a plain IP address (IPv4 or IPv6), or can be 
@@ -342,6 +451,8 @@ Access control list. The listed address (a secondary) is allowed to
 request AXFR from this server. Zone data will be provided to the 
 address. The specified key is used during AXFR. For unlisted or 
 BLOCKED addresses no data is provided, requests are discarded.
+BLOCKED supersedes other entries, other entries are scanned for a match
+in the order of the statements.
 .P
 .RS
 The ip\-spec is either a plain IP address (IPv4 or IPv6), or can be 
@@ -361,7 +472,11 @@ The ip\-address is a plain IP address (IPv4 or IPv6).
 A port number can be added using a suffix of @number, for example 
 1.2.3.4@5300.
 .RE
-\" rrlstart
+.TP
+.B include\-pattern:\fR <pattern\-name>
+The options from the given pattern are included at this point.
+The referenced pattern must be defined above this zone.
+.\" rrlstart
 .TP
 .B rrl\-whitelist:\fR <rrltype>
 This option causes queries of this rrltype to be whitelisted, for this
@@ -554,8 +669,7 @@ default
 configuration file
 .SH "SEE ALSO" 
 .LP
-nsd(8), nsdc(8), nsd\-checkconf(8), nsd\-notify(8), 
-nsd\-patch(8), nsd\-xfer(8), nsd\-zonec(8)
+\fInsd\fR(8), \fInsd\-checkconf\fR(8), \fInsd\-control\fR(8)
 .SH "AUTHORS"
 .LP
 .B NSD

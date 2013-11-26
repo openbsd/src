@@ -1,7 +1,7 @@
 /*
  * dns.h -- DNS definitions.
  *
- * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -175,6 +175,8 @@ typedef enum nsd_rc nsd_rc_type;
 #define EUI48ADDRLEN	(48/8)
 #define EUI64ADDRLEN	(64/8)
 #endif
+
+#define NSEC3_HASH_LEN 20
 
 /*
  * The different types of RDATA wireformat data.
