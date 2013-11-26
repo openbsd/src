@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.70 2013/11/26 12:01:40 henning Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.71 2013/11/26 15:52:16 henning Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -26,6 +26,7 @@
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <event.h>
 #include <imsg.h>
 #include <inttypes.h>
