@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.17 2010/10/29 05:36:25 guenther Exp $ */
+/*	$OpenBSD: stat.c,v 1.18 2013/11/26 21:08:12 deraadt Exp $ */
 /*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
@@ -384,9 +384,9 @@ output(const struct stat *st, const char *file,
 		} while (1/*CONSTCOND*/);
 
 		size = -1;
-		if (isdigit((unsigned)*statfmt)) {
+		if (isdigit((unsigned char)*statfmt)) {
 			size = 0;
-			while (isdigit((unsigned)*statfmt)) {
+			while (isdigit((unsigned char)*statfmt)) {
 				size = (size * 10) + (*statfmt - '0');
 				statfmt++;
 				if (size < 0)
@@ -399,7 +399,7 @@ output(const struct stat *st, const char *file,
 			statfmt++;
 
 			prec = 0;
-			while (isdigit((unsigned)*statfmt)) {
+			while (isdigit((unsigned char)*statfmt)) {
 				prec = (prec * 10) + (*statfmt - '0');
 				statfmt++;
 				if (prec < 0)

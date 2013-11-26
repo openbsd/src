@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.19 2009/06/07 13:29:50 ray Exp $ */
+/*	$OpenBSD: edit.c,v 1.20 2013/11/26 21:08:12 deraadt Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -88,7 +88,7 @@ eparse(const char *cmd, const char *left, const char *right)
 	char buf[BUFSIZ], *text;
 
 	/* Skip whitespace. */
-	while (isspace(*cmd))
+	while (isspace((unsigned char)*cmd))
 		++cmd;
 
 	text = NULL;

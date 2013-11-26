@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.29 2013/04/01 16:08:00 tobias Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.30 2013/11/26 21:08:12 deraadt Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -427,7 +427,7 @@ prompt(const char *s1, const char *s2)
 		const char *p;
 
 		/* Skip leading whitespace. */
-		for (p = cmd; isspace(*p); ++p)
+		for (p = cmd; isspace((unsigned char)*p); ++p)
 			;
 
 		switch (*p) {
@@ -585,7 +585,7 @@ parsecmd(FILE *diffpipe, FILE *file1, FILE *file2)
 
 	p = line;
 	/* Go to character after line number. */
-	while (isdigit(*p))
+	while (isdigit((unsigned char)*p))
 		++p;
 	c = *p;
 	*p++ = 0;
@@ -598,7 +598,7 @@ parsecmd(FILE *diffpipe, FILE *file1, FILE *file2)
 
 		q = p;
 		/* Go to character after file2end. */
-		while (isdigit(*p))
+		while (isdigit((unsigned char)*p))
 			++p;
 		c = *p;
 		*p++ = 0;
@@ -618,7 +618,7 @@ parsecmd(FILE *diffpipe, FILE *file1, FILE *file2)
 
 	q = p;
 	/* Go to character after line number. */
-	while (isdigit(*p))
+	while (isdigit((unsigned char)*p))
 		++p;
 	c = *p;
 	*p++ = 0;

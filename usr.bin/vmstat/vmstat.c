@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.126 2013/11/13 22:26:02 chl Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.127 2013/11/26 21:08:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -268,7 +268,7 @@ choosedrives(char **argv)
 #define BACKWARD_COMPATIBILITY
 	for (ndrives = 0; *argv; ++argv) {
 #ifdef	BACKWARD_COMPATIBILITY
-		if (isdigit(**argv))
+		if (isdigit((unsigned char)**argv))
 			break;
 #endif
 		for (i = 0; i < dk_ndrive; i++) {

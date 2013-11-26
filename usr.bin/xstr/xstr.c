@@ -1,4 +1,4 @@
-/*	$OpenBSD: xstr.c,v 1.17 2011/04/06 11:36:26 miod Exp $	*/
+/*	$OpenBSD: xstr.c,v 1.18 2013/11/26 21:08:09 deraadt Exp $	*/
 /*	$NetBSD: xstr.c,v 1.5 1994/12/24 16:57:59 cgd Exp $	*/
 
 /*
@@ -173,7 +173,8 @@ process(char *name)
 			break;
 		}
 		if (linebuf[0] == '#') {
-			if (linebuf[1] == ' ' && isdigit(linebuf[2]))
+			if (linebuf[1] == ' ' &&
+			    isdigit((unsigned char)linebuf[2]))
 				printf("#line%s", &linebuf[1]);
 			else
 				printf("%s", linebuf);
@@ -282,7 +283,7 @@ int
 octdigit(char c)
 {
 
-	return (isdigit(c) && c != '8' && c != '9');
+	return (isdigit((unsigned char)c) && c != '8' && c != '9');
 }
 
 void

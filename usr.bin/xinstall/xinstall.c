@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.54 2013/06/02 01:41:23 naddy Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.55 2013/11/26 21:08:10 deraadt Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -151,10 +151,10 @@ main(int argc, char *argv[])
 		safecopy = 1;
 
 	/* get group and owner id's */
-	if (group && !(gp = getgrnam(group)) && !isdigit(*group))
+	if (group && !(gp = getgrnam(group)) && !isdigit((unsigned char)*group))
 		errx(EX_NOUSER, "unknown group %s", group);
 	gid = (group) ? ((gp) ? gp->gr_gid : (gid_t)strtoul(group, NULL, 10)) : (gid_t)-1;
-	if (owner && !(pp = getpwnam(owner)) && !isdigit(*owner))
+	if (owner && !(pp = getpwnam(owner)) && !isdigit((unsigned char)*owner))
 		errx(EX_NOUSER, "unknown user %s", owner);
 	uid = (owner) ? ((pp) ? pp->pw_uid : (uid_t)strtoul(owner, NULL, 10)) : (uid_t)-1;
 
