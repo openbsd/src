@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.20 2013/11/13 20:45:19 benno Exp $	*/
+/*	$OpenBSD: control.c,v 1.21 2013/11/26 12:02:22 henning Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -252,8 +252,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			control_close(fd, cs);
 			return;
 		}
-		imsg_event_add(&c->iev);
-		return;
+		break;
 	default:
 		fatalx("unknown event");
 	}
