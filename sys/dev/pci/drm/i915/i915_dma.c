@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_dma.c,v 1.11 2013/11/19 19:14:09 kettenis Exp $	*/
+/*	$OpenBSD: i915_dma.c,v 1.12 2013/11/26 03:48:52 jsg Exp $	*/
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*
@@ -105,11 +105,7 @@ i915_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		value = intel_ring_initialized(&dev_priv->ring[BCS]);
 		break;
 	case I915_PARAM_HAS_RELAXED_FENCING:
-#ifdef notyet
 		value = 1;
-#else
-		return -EINVAL;
-#endif
 		break;
 	case I915_PARAM_HAS_COHERENT_RINGS:
 		value = 1;
