@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsrvcache.h,v 1.7 2007/10/29 11:16:49 thib Exp $	*/
+/*	$OpenBSD: nfsrvcache.h,v 1.8 2013/11/26 20:41:27 beck Exp $	*/
 /*	$NetBSD: nfsrvcache.h,v 1.10 1996/02/18 11:54:08 fvdl Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #ifndef _NFS_NFSRVCACHE_H_
 #define _NFS_NFSRVCACHE_H_
 
-#define	NFSRVCACHESIZ	64
+#define	NFSRVCACHESIZ	2048
 
 struct nfsrvcache {
 	TAILQ_ENTRY(nfsrvcache)	rc_lru;		/* LRU chain */
