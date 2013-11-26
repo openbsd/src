@@ -1,22 +1,43 @@
 #!/bin/sh
 #
-# $OpenBSD: nsd,v 1.4 2012/08/04 15:28:39 ajacoutot Exp $
+# $OpenBSD: nsd,v 1.5 2013/11/26 13:01:30 sthen Exp $
 
-daemon="/usr/sbin/nsd"
+daemon="/usr/sbin/nsd-control"
+daemon_flags="-c /var/nsd/etc/nsd.conf"
 
 . /etc/rc.d/rc.subr
 
-rc_reload=NO
+pexp="nsd${daemon_flags:+ ${daemon_flags}}"
 rc_usercheck=NO
 
-daemon_ctl="/usr/sbin/nsdc"
+rc_pre() {
+	if ! [[ -f /var/nsd/etc/nsd_server.key ||
+	    -f /var/nsd/etc/nsd_server.pem ||
+	    -f /var/nsd/etc/nsd_control.key ||
+	    -f /var/nsd/etc/nsd_control.pem ]]; then
+		/usr/sbin/nsd-control-setup >/dev/null 2>&1
+	fi
+}
 
-rc_stop() {
-	${daemon_ctl} stop
+rc_start() {
+	${rcexec} "${daemon} ${daemon_flags} start"
 }
 
 rc_check() {
-	${daemon_ctl} running
+	${daemon} status
+}
+
+rc_reload() {
+	${daemon} reconfig && ${daemon} reload
+}
+
+rc_stop() {
+	${daemon} stop
+}
+
+rc_post() {
+	sleep 1
+	rc_do rc_check || exit 0
 }
 
 rc_cmd $1
