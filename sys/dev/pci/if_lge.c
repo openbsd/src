@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.60 2013/10/01 20:06:01 sf Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.61 2013/11/26 09:50:33 mpi Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -325,7 +325,9 @@ lge_setmulti(struct lge_softc *sc)
 	/* Make sure multicast hash table is enabled. */
 	CSR_WRITE_4(sc, LGE_MODE1, LGE_MODE1_SETRST_CTL1|LGE_MODE1_RX_MCAST);
 
-allmulti:
+	if (ac->ac_multirangecnt > 0)
+		ifp->if_flags |= IFF_ALLMULTI;
+
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		CSR_WRITE_4(sc, LGE_MAR0, 0xFFFFFFFF);
 		CSR_WRITE_4(sc, LGE_MAR1, 0xFFFFFFFF);
@@ -339,10 +341,6 @@ allmulti:
 	/* now program new ones */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto allmulti;
-		}
 		h = (ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26) &
 		    0x0000003F;
 		if (h < 32)

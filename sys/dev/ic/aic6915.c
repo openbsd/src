@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.c,v 1.10 2013/08/07 01:06:27 bluhm Exp $	*/
+/*	$OpenBSD: aic6915.c,v 1.11 2013/11/26 09:50:32 mpi Exp $	*/
 /*	$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
@@ -1341,6 +1341,9 @@ sf_set_filter(struct sf_softc *sc)
 	 */
 	sf_set_filter_perfect(sc, 0, LLADDR(ifp->if_sadl));
 
+	if (ac->ac_multirangecnt > 0)
+		goto allmulti;
+
 	/*
 	 * Now set the hash bits for each multicast address in our
 	 * list.
@@ -1349,17 +1352,6 @@ sf_set_filter(struct sf_softc *sc)
 	if (enm == NULL)
 		goto done;
 	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			/*
-			 * We must listen to a range of multicast addresses.
-			 * For now, just accept all multicasts, rather than
-			 * trying to set only those filter bits needed to match
-			 * the range.  (At this time, the only use of address
-			 * ranges is for IP multicast routing, for which the
-			 * range is big enough to require all bits set.)
-			 */
-			goto allmulti;
-		}
 		sf_set_filter_hash(sc, enm->enm_addrlo);
 		ETHER_NEXT_MULTI(step, enm);
 	}

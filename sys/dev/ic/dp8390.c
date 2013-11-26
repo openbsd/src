@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.45 2013/08/07 01:06:29 bluhm Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.46 2013/11/26 09:50:33 mpi Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -923,7 +923,7 @@ dp8390_getmcaf(struct arpcom *ac, u_int8_t *af)
 	 * the word.
 	 */
 
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		for (i = 0; i < 8; i++)
 			af[i] = 0xff;
@@ -933,22 +933,6 @@ dp8390_getmcaf(struct arpcom *ac, u_int8_t *af)
 		af[i] = 0;
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    sizeof(enm->enm_addrlo)) != 0) {
-			/*
-			 * We must listen to a range of multicast addresses.
-			 * For now, just accept all multicasts, rather than
-			 * trying to set only those filter bits needed to match
-			 * the range.  (At this time, the only use of address
-			 * ranges is for IP multicast routing, for which the
-			 * range is big enough to require all bits set.)
-			 */
-			ifp->if_flags |= IFF_ALLMULTI;
-			for (i = 0; i < 8; i++)
-				af[i] = 0xff;
-			return;
-		}
-
 		/* Just want the 6 most significant bits. */
 		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
 

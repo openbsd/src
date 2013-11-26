@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.153 2013/10/01 19:33:49 kettenis Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.154 2013/11/26 09:50:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1394,6 +1394,7 @@ wi_alloc_nicmem_io(struct wi_softc *sc, int len, int *id)
 STATIC void
 wi_setmulti(struct wi_softc *sc)
 {
+	struct arpcom		*ac = &sc->sc_ic.ic_ac;
 	struct ifnet		*ifp;
 	int			i = 0;
 	struct wi_ltv_mcast	mcast;
@@ -1407,7 +1408,9 @@ wi_setmulti(struct wi_softc *sc)
 	mcast.wi_type = WI_RID_MCAST_LIST;
 	mcast.wi_len = ((ETHER_ADDR_LEN / 2) * 16) + 1;
 
-allmulti:
+	if (ac->ac_multirangecnt > 0)
+		ifp->if_flags |= IFF_ALLMULTI;
+
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		wi_write_record(sc, (struct wi_ltv_gen *)&mcast);
 		return;
@@ -1420,10 +1423,6 @@ allmulti:
 			break;
 		}
 
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto allmulti;
-		}
 		bcopy(enm->enm_addrlo, &mcast.wi_mcast[i], ETHER_ADDR_LEN);
 		i++;
 		ETHER_NEXT_MULTI(step, enm);

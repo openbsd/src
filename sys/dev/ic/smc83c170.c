@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170.c,v 1.15 2013/08/07 01:06:31 bluhm Exp $	*/
+/*	$OpenBSD: smc83c170.c,v 1.16 2013/11/26 09:50:33 mpi Exp $	*/
 /*	$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
@@ -1285,13 +1285,13 @@ epic_set_mchash(struct epic_softc *sc)
 		goto allmulti;
 	}
 
+	if (ac->ac_multirangecnt > 0)
+		goto allmulti;
+
 	mchash[0] = mchash[1] = mchash[2] = mchash[3] = 0;
 
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN))
-			goto allmulti;
-
 		hash = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
 		hash >>= 26;
 

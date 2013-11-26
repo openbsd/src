@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.27 2013/08/07 01:06:36 bluhm Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.28 2013/11/26 09:50:33 mpi Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -1843,7 +1843,8 @@ pcn_set_filter(struct pcn_softc *sc)
 	 * of the bits select the bit within the word.
 	 */
 
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC)
+	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC ||
+	    ac->ac_multirangecnt > 0)
 		goto allmulti;
 
 	sc->sc_initblock.init_ladrf[0] =
@@ -1853,18 +1854,6 @@ pcn_set_filter(struct pcn_softc *sc)
 
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			/*
-			 * We must listen to a range of multicast addresses.
-			 * For now, just accept all multicasts, rather than
-			 * trying to set only those filter bits needed to match
-			 * the range.  (At this time, the only use of address
-			 * ranges is for IP multicast routing, for which the
-			 * range is big enough to require all bits set.)
-			 */
-			goto allmulti;
-		}
-
 		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
 
 		/* Just want the 6 most significant bits. */

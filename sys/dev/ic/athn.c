@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.78 2013/11/15 01:45:44 krw Exp $	*/
+/*	$OpenBSD: athn.c,v 1.79 2013/11/26 09:50:32 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2626,6 +2626,9 @@ athn_set_multi(struct athn_softc *sc)
 	uint32_t val, lo, hi;
 	uint8_t bit;
 
+	if (ac->ac_multirangecnt > 0)
+		ifp->if_flags |= IFF_ALLMULTI;
+
 	if ((ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
 		lo = hi = 0xffffffff;
 		goto done;
@@ -2633,11 +2636,6 @@ athn_set_multi(struct athn_softc *sc)
 	lo = hi = 0;
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			lo = hi = 0xffffffff;
-			goto done;
-		}
 		addr = enm->enm_addrlo;
 		/* Calculate the XOR value of all eight 6-bit words. */
 		val = addr[0] | addr[1] << 8 | addr[2] << 16;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.77 2013/11/18 19:43:00 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.78 2013/11/26 09:50:33 mpi Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -586,7 +586,9 @@ nge_setmulti(struct nge_softc *sc)
 	u_int32_t		h = 0, i, filtsave;
 	int			bit, index;
 
-allmulti:
+	if (ac->ac_multirangecnt > 0)
+		ifp->if_flags |= IFF_ALLMULTI;
+
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		NGE_CLRBIT(sc, NGE_RXFILT_CTL,
 		    NGE_RXFILTCTL_MCHASH|NGE_RXFILTCTL_UCHASH);
@@ -620,10 +622,6 @@ allmulti:
 	 */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto allmulti;
-		}
 		h = (ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 21) &
 		    0x00000FFF;
 		index = (h >> 4) & 0x7F;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lance.c,v 1.1 2013/09/24 20:10:58 miod Exp $	*/
+/*	$OpenBSD: lance.c,v 1.2 2013/11/26 09:50:33 mpi Exp $	*/
 /*	$NetBSD: lance.c,v 1.46 2012/02/02 19:43:03 tls Exp $	*/
 
 /*-
@@ -603,24 +603,12 @@ lance_setladrf(struct arpcom *ac, uint16_t *af)
 	 * the word.
 	 */
 
-	if (ifp->if_flags & IFF_PROMISC)
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0)
 		goto allmulti;
 
 	af[0] = af[1] = af[2] = af[3] = 0x0000;
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (ETHER_CMP(enm->enm_addrlo, enm->enm_addrhi)) {
-			/*
-			 * We must listen to a range of multicast addresses.
-			 * For now, just accept all multicasts, rather than
-			 * trying to set only those filter bits needed to match
-			 * the range.  (At this time, the only use of address
-			 * ranges is for IP multicast routing, for which the
-			 * range is big enough to require all bits set.)
-			 */
-			goto allmulti;
-		}
-
 		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
 
 		/* Just want the 6 most significant bits. */

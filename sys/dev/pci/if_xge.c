@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.55 2013/08/07 01:06:39 bluhm Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.56 2013/11/26 09:50:33 mpi Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -1016,12 +1016,11 @@ xge_setmulti(struct xge_softc *sc)
 	int i, numaddr = 1; /* first slot used for card unicast address */
 	uint64_t val;
 
+	if (ac->ac_multirangecnt > 0)
+		goto allmulti;
+
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			/* Skip ranges */
-			goto allmulti;
-		}
 		if (numaddr == MAX_MCAST_ADDR)
 			goto allmulti;
 		for (val = 0, i = 0; i < ETHER_ADDR_LEN; i++) {

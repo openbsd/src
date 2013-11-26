@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.107 2013/08/07 01:06:38 bluhm Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.108 2013/11/26 09:50:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1858,7 +1858,9 @@ txp_set_filter(struct txp_softc *sc)
 		goto setit;
 	}
 
-again:
+	if (ac->ac_multirangecnt > 0)
+		ifp->if_flags |= IFF_ALLMULTI;
+
 	filter = TXP_RXFILT_DIRECT;
 
 	if (ifp->if_flags & IFF_BROADCAST)
@@ -1871,21 +1873,6 @@ again:
 
 		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-				/*
-				 * We must listen to a range of multicast
-				 * addresses.  For now, just accept all
-				 * multicasts, rather than trying to set only
-				 * those filter bits needed to match the range.
-				 * (At this time, the only use of address
-				 * ranges is for IP multicast routing, for
-				 * which the range is big enough to require
-				 * all bits set.)
-				 */
-				ifp->if_flags |= IFF_ALLMULTI;
-				goto again;
-			}
-
 			mcnt++;
 			hashbit = (u_int16_t)(ether_crc32_be(enm->enm_addrlo,
 			    ETHER_ADDR_LEN) & (64 - 1));

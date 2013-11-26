@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.59 2011/04/05 18:01:21 henning Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.60 2013/11/26 09:50:33 mpi Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -753,12 +753,14 @@ ixgb_set_multi(struct ixgb_softc *sc)
 
 	IOCTL_DEBUGOUT("ixgb_set_multi: begin");
 
+	if (ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		mcnt = MAX_NUM_MULTICAST_ADDRESSES;
+		goto setit;
+	}
+
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			mcnt = MAX_NUM_MULTICAST_ADDRESSES;
-		}
 		if (mcnt == MAX_NUM_MULTICAST_ADDRESSES)
 			break;
 		bcopy(enm->enm_addrlo, &mta[mcnt*IXGB_ETH_LENGTH_OF_ADDRESS],
@@ -767,6 +769,7 @@ ixgb_set_multi(struct ixgb_softc *sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
+setit:
 	if (mcnt >= MAX_NUM_MULTICAST_ADDRESSES) {
 		reg_rctl = IXGB_READ_REG(&sc->hw, RCTL);
 		reg_rctl |= IXGB_RCTL_MPE;

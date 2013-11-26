@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.42 2013/08/07 01:06:40 bluhm Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.43 2013/11/26 09:50:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -1273,8 +1273,11 @@ xe_set_address(sc)
 		    sc->sc_arpcom.ac_enaddr[(sc->sc_flags & XEF_MOHAWK) ?
 		    5 - i : i]);
 	}
-		
-	if (arp->ac_multicnt > 0) {
+
+	if (arp->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		sc->sc_all_mcasts=1;
+	} else if (arp->ac_multicnt > 0) {
 		if (arp->ac_multicnt > 9) {
 			PAGE(sc, 0x42);
 			bus_space_write_1(sc->sc_bst, sc->sc_bsh,
@@ -1288,18 +1291,6 @@ xe_set_address(sc)
 		pos = IA + 6;
 		for (page = 0x50, num = arp->ac_multicnt; num > 0 && enm;
 		    num--) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
-			    sizeof(enm->enm_addrlo)) != 0) {
-				/*
-				 * The multicast address is really a range;
-				 * it's easier just to accept all multicasts.
-				 * XXX should we be setting IFF_ALLMULTI here?
-				 */
-				ifp->if_flags |= IFF_ALLMULTI;
-				sc->sc_all_mcasts=1;
-				break;
-			}
-
 			for (i = 0; i < 6; i++) {
 				bus_space_write_1(bst, bsh, offset + pos,
 				    enm->enm_addrlo[

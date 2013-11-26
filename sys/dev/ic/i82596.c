@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.34 2013/08/07 01:06:29 bluhm Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.35 2013/11/26 09:50:33 mpi Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -1949,9 +1949,16 @@ void
 ie_mc_reset(sc)
 	struct ie_softc *sc;
 {
+	struct arpcom *ac = &sc->sc_arpcom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	int size;
+
+	if (ac->ac_multicnt >= IE_MAXMCAST || ac->ac_multirangecnt > 0) {
+		ac->ac_if.if_flags |= IFF_ALLMULTI;
+		i82596_ioctl(&ac->.ac_if, SIOCSIFFLAGS, (void *)0);
+		return;
+	}
 
 	/*
 	 * Step through the list of addresses.
@@ -1961,14 +1968,6 @@ ie_mc_reset(sc)
 	ETHER_FIRST_MULTI(step, &sc->sc_arpcom, enm);
 	while (enm) {
 		size += ETHER_ADDR_LEN;
-		if (sc->mcast_count >= IE_MAXMCAST ||
-		    bcmp(enm->enm_addrlo, enm->enm_addrhi,
-		        ETHER_ADDR_LEN) != 0) {
-			sc->sc_arpcom.ac_if.if_flags |= IFF_ALLMULTI;
-			i82596_ioctl(&sc->sc_arpcom.ac_if,
-				     SIOCSIFFLAGS, (void *)0);
-			return;
-		}
 		sc->mcast_count++;
 		ETHER_NEXT_MULTI(step, enm);
 	}

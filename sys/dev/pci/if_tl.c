@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.56 2013/11/18 19:43:00 brad Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.57 2013/11/26 09:50:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -815,20 +815,6 @@ tl_setmulti(struct tl_softc *sc)
 	tl_dio_write32(sc, TL_HASH2, 0);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
-#if 0
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
-			h = tl_calchash(enm->enm_addrlo);
-			hashes[h/32] |= (1 << (h % 32));
-		} else {
-			hashes[0] = hashes[1] = 0xffffffff;
-			ifp->if_flags |= IFF_ALLMULTI;
-			break;
-		}
-		ETHER_NEXT_MULTI(step, enm);
-	}
-#else
 	ETHER_FIRST_MULTI(step, ac, enm);
 	h = 0;
 	while (enm != NULL) {
@@ -840,7 +826,6 @@ tl_setmulti(struct tl_softc *sc)
 		ifp->if_flags |= IFF_ALLMULTI;
 	} else
 		hashes[0] = hashes[1] = 0x00000000;
-#endif
 
 	tl_dio_write32(sc, TL_HASH1, hashes[0]);
 	tl_dio_write32(sc, TL_HASH2, hashes[1]);

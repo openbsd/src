@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.37 2013/08/07 01:06:32 bluhm Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.38 2013/11/26 09:50:33 mpi Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -2192,19 +2192,24 @@ static void
 mc_reset(sc)
 	struct ie_softc *sc;
 {
+	struct arpcom *ac = &sc->sc_arpcom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 
+	if (ac->ac_multirangecnt > 0) {
+		ac->ac_if.if_flags |= IFF_ALLMULTI;
+		ieioctl(&ac->ac_if, SIOCSIFFLAGS, (void *)0);
+		goto setflag;
+	}
 	/*
 	 * Step through the list of addresses.
 	 */
 	sc->mcast_count = 0;
-	ETHER_FIRST_MULTI(step, &sc->sc_arpcom, enm);
+	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm) {
-		if (sc->mcast_count >= MAXMCAST ||
-		    bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
-			sc->sc_arpcom.ac_if.if_flags |= IFF_ALLMULTI;
-			ieioctl(&sc->sc_arpcom.ac_if, SIOCSIFFLAGS, (void *)0);
+		if (sc->mcast_count >= MAXMCAST) {
+			ac->ac_if.if_flags |= IFF_ALLMULTI;
+			ieioctl(&ac->ac_if, SIOCSIFFLAGS, (void *)0);
 			goto setflag;
 		}
 

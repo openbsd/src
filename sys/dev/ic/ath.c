@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.97 2013/11/21 16:16:08 mpi Exp $  */
+/*      $OpenBSD: ath.c,v 1.98 2013/11/26 09:50:32 mpi Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1147,18 +1147,20 @@ ath_mcastfilter_accum(caddr_t dl, u_int32_t (*mfilt)[2])
 void
 ath_mcastfilter_compute(struct ath_softc *sc, u_int32_t (*mfilt)[2])
 {
+	struct arpcom *ac = &sc->sc_ic.ic_ac;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	struct ether_multi *enm;
 	struct ether_multistep estep;
 
-	ETHER_FIRST_MULTI(estep, &sc->sc_ic.ic_ac, enm);
-	while (enm != NULL) {
+	if (ac->ac_multirangecnt > 0) {
 		/* XXX Punt on ranges. */
-		if (!IEEE80211_ADDR_EQ(enm->enm_addrlo, enm->enm_addrhi)) {
-			(*mfilt)[0] = (*mfilt)[1] = ~((u_int32_t)0);
-			ifp->if_flags |= IFF_ALLMULTI;
-			return;
-		}
+		(*mfilt)[0] = (*mfilt)[1] = ~((u_int32_t)0);
+		ifp->if_flags |= IFF_ALLMULTI;
+		return;
+	}
+
+	ETHER_FIRST_MULTI(estep, ac, enm);
+	while (enm != NULL) {
 		ath_mcastfilter_accum(enm->enm_addrlo, mfilt);
 		ETHER_NEXT_MULTI(estep, enm);
 	}

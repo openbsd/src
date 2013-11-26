@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.111 2013/08/07 01:06:34 bluhm Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.112 2013/11/26 09:50:33 mpi Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -2886,6 +2886,7 @@ tulip_free_txmap(tulip_softc_t *sc, bus_dmamap_t map)
 void
 tulip_addr_filter(tulip_softc_t * const sc)
 {
+    struct arpcom *ac = &sc->tulip_ac;
     struct ether_multistep step;
     struct ether_multi *enm;
 
@@ -2915,21 +2916,20 @@ tulip_addr_filter(tulip_softc_t * const sc)
 	 * hash and one perfect hardware).
 	 */
 	bzero(sc->tulip_setupdata, sizeof(sc->tulip_setupdata));
-	ETHER_FIRST_MULTI(step, &sc->tulip_ac, enm);
-	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
+	if (ac->ac_multirangecnt > 0) {
+	    sc->tulip_flags |= TULIP_ALLMULTI;
+	    sc->tulip_flags &= ~(TULIP_WANTHASHONLY|TULIP_WANTHASHPERFECT);
+	} else {
+	    ETHER_FIRST_MULTI(step, ac, enm);
+	    while (enm != NULL) {
 		    hash = tulip_mchash(enm->enm_addrlo);
 #if BYTE_ORDER == BIG_ENDIAN
 		    sp[hash >> 4] |= swap32(1 << (hash & 0xF));
 #else
 		    sp[hash >> 4] |= 1 << (hash & 0xF);
 #endif
-		} else {
-		    sc->tulip_flags |= TULIP_ALLMULTI;
-		    sc->tulip_flags &= ~(TULIP_WANTHASHONLY|TULIP_WANTHASHPERFECT);
-		    break;
-		}
 		ETHER_NEXT_MULTI(step, enm);
+	    }
 	}
 	/*
 	 * No reason to use a hash if we are going to be
@@ -2965,13 +2965,15 @@ tulip_addr_filter(tulip_softc_t * const sc)
     if ((sc->tulip_flags & (TULIP_WANTHASHPERFECT|TULIP_WANTHASHONLY)) == 0) {
 	u_int32_t *sp = sc->tulip_setupdata;
 	int idx = 0;
+	if (ac->ac_multirangecnt > 0)
+		sc->tulip_flags |= TULIP_ALLMULTI;
+
 	if ((sc->tulip_flags & TULIP_ALLMULTI) == 0) {
 	    /*
 	     * Else can get perfect filtering for 16 addresses.
 	     */
-	    ETHER_FIRST_MULTI(step, &sc->tulip_ac, enm);
+	    ETHER_FIRST_MULTI(step, ac, enm);
 	    for (; enm != NULL; idx++) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
 #if BYTE_ORDER == BIG_ENDIAN
 		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[0] << 16;
 		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[1] << 16;
@@ -2981,10 +2983,6 @@ tulip_addr_filter(tulip_softc_t * const sc)
 		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[1];
 		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[2];
 #endif
-		} else {
-		    sc->tulip_flags |= TULIP_ALLMULTI;
-		    break;
-		}
 		ETHER_NEXT_MULTI(step, enm);
 	    }
 	    /*

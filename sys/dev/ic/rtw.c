@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.82 2012/12/05 23:20:19 deraadt Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.83 2013/11/26 09:50:33 mpi Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -2278,7 +2278,7 @@ rtw_pktfilt_load(struct rtw_softc *sc)
 {
 	struct rtw_regs *regs = &sc->sc_regs;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct arpcom *ec = &ic->ic_ac;
+	struct arpcom *ac = &ic->ic_ac;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int hash;
 	u_int32_t hashes[2] = { 0, 0 };
@@ -2317,8 +2317,9 @@ rtw_pktfilt_load(struct rtw_softc *sc)
 	if ((ifp->if_flags & IFF_BROADCAST) != 0)
 		sc->sc_rcr |= RTW_RCR_AB;	/* accept all broadcast */
 
-	if (ifp->if_flags & IFF_PROMISC) {
-		sc->sc_rcr |= RTW_RCR_AB;	/* accept all broadcast */
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		if (ifp->if_flags & IFF_PROMISC)
+			sc->sc_rcr |= RTW_RCR_AB; /* accept all broadcast */
 allmulti:
 		ifp->if_flags |= IFF_ALLMULTI;
 		goto setit;
@@ -2327,13 +2328,8 @@ allmulti:
 	/*
 	 * Program the 64-bit multicast hash filter.
 	 */
-	ETHER_FIRST_MULTI(step, ec, enm);
+	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		/* XXX */
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0)
-			goto allmulti;
-
 		hash = ether_crc32_be((enm->enm_addrlo),
 		    IEEE80211_ADDR_LEN) >> 26;
 		hashes[hash >> 5] |= (1 << (hash & 0x1f));

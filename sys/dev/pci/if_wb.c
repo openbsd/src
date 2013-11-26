@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.54 2013/10/01 20:06:02 sf Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.55 2013/11/26 09:50:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -537,7 +537,9 @@ void wb_setmulti(sc)
 
 	rxfilt = CSR_READ_4(sc, WB_NETCFG);
 
-allmulti:
+	if (ac->ac_multirangecnt > 0)
+		ifp->if_flags |= IFF_ALLMULTI;
+
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		rxfilt |= WB_NETCFG_RX_MULTI;
 		CSR_WRITE_4(sc, WB_NETCFG, rxfilt);
@@ -553,10 +555,6 @@ allmulti:
 	/* now program new ones */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto allmulti;
-		}
 		h = ~(ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26);
 		if (h < 32)
 			hashes[0] |= (1 << h);

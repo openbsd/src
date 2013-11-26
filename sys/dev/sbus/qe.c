@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.24 2013/08/07 01:06:40 bluhm Exp $	*/
+/*	$OpenBSD: qe.c,v 1.25 2013/11/26 09:50:33 mpi Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -1098,6 +1098,9 @@ qe_mcreset(sc)
 		return;
 	}
 
+	if (ac->ac_multirangecnt > 0)
+		ifp->if_flags |= IFF_ALLMULTI;
+
 	if (ifp->if_flags & IFF_ALLMULTI) {
 		bus_space_write_1(t, mr, QE_MRI_IAC,
 		    QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR);
@@ -1111,26 +1114,6 @@ qe_mcreset(sc)
 
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0) {
-			/*
-			 * We must listen to a range of multicast
-			 * addresses. For now, just accept all
-			 * multicasts, rather than trying to set only
-			 * those filter bits needed to match the range.
-			 * (At this time, the only use of address
-			 * ranges is for IP multicast routing, for
-			 * which the range is big enough to require
-			 * all bits set.)
-			 */
-			bus_space_write_1(t, mr, QE_MRI_IAC,
-			    QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR);
-			bus_space_set_multi_1(t, mr, QE_MRI_LADRF, 0xff, 8);
-			bus_space_write_1(t, mr, QE_MRI_IAC, 0);
-			ifp->if_flags |= IFF_ALLMULTI;
-			break;
-		}
-
 		crc = 0xffffffff;
 
 		for (i = 0; i < ETHER_ADDR_LEN; i++) {

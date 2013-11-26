@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.77 2013/11/14 12:30:39 dlg Exp $	*/
+/*	$OpenBSD: atw.c,v 1.78 2013/11/26 09:50:32 mpi Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -2030,7 +2030,7 @@ void
 atw_filter_setup(struct atw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct arpcom *ec = &ic->ic_ac;
+	struct arpcom *ac = &ic->ic_ac;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int hash;
 	u_int32_t hashes[2];
@@ -2058,15 +2058,14 @@ atw_filter_setup(struct atw_softc *sc)
 
 	hashes[0] = hashes[1] = 0x0;
 
+	if (ac->ac_multirangecnt > 0)
+		goto allmulti;
+
 	/*
 	 * Program the 64-bit multicast hash filter.
 	 */
-	ETHER_FIRST_MULTI(step, ec, enm);
+	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0)
-			goto allmulti;
-
 		hash = atw_calchash(enm->enm_addrlo);
 		hashes[hash >> 5] |= 1 << (hash & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
