@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.25 2013/11/26 09:12:04 pelikan Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.26 2013/11/26 16:38:57 krw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -2910,10 +2910,9 @@ txt_Rresolve(sp, tiqh, tp, orig_len)
 	 * Calculate how many characters the user has entered,
 	 * plus the blanks erased by <carriage-return>/<newline>s.
 	 */
-	for (ttp = TAILQ_FIRST(tiqh), input_len = 0;;) {
+	input_len = 0;
+	TAILQ_FOREACH(ttp, tiqh, q) {
 		input_len += ttp == tp ? tp->cno : ttp->len + ttp->R_erase;
-		if (!(ttp = TAILQ_NEXT(ttp, q)))
-			break;
 	}
 
 	/*
