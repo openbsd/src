@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.17 2013/11/12 22:27:13 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.18 2013/11/26 21:47:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -745,7 +745,7 @@ parse_options(struct tftp_client *client, char *cp, size_t size,
 		}
 
 		for (option = cp; *cp; cp++)
-			*cp = tolower(*cp);
+			*cp = tolower((unsigned char)*cp);
 
 		for (i = 0; i < NOPT; i++) {
 			if (strcmp(option, opt_names[i]) == 0) {
@@ -803,7 +803,7 @@ again:
 		goto again;
 	}
 	for (cp = mode; *cp; cp++)
-		*cp = tolower(*cp);
+		*cp = tolower((unsigned char)*cp);
 
 	for (pf = formats; pf->f_mode; pf++) {
 		if (strcmp(pf->f_mode, mode) == 0)
