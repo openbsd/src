@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.341 2013/10/23 20:38:23 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.342 2013/11/26 20:35:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1761,7 +1761,7 @@ bge_chipinit(struct bge_softc *sc)
 
 #ifdef __brokenalpha__
 	/*
-	 * Must insure that we do not cross an 8K (bytes) boundary
+	 * Must ensure that we do not cross an 8K (bytes) boundary
 	 * for DMA reads.  Our highest limit is 1K bytes.  This is a
 	 * restriction on some ALPHA platforms with early revision
 	 * 21174 PCI chipsets, such as the AlphaPC 164lx
@@ -3242,7 +3242,7 @@ bge_reset(struct bge_softc *sc)
 
 	/*
 	 * The 5704 in TBI mode apparently needs some special
-	 * adjustment to insure the SERDES drive level is set
+	 * adjustment to ensure the SERDES drive level is set
 	 * to 1.2V.
 	 */
 	if (sc->bge_flags & BGE_PHY_FIBER_TBI &&
@@ -4052,7 +4052,7 @@ bge_init(void *xsc)
 
 	/*
 	 * Workaround for a bug in 5705 ASIC rev A0. Poll the NIC's
-	 * memory to insure that the chip has in fact read the first
+	 * memory to ensure that the chip has in fact read the first
 	 * entry of the ring.
 	 */
 	if (sc->bge_chipid == BGE_CHIPID_BCM5705_A0) {
