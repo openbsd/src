@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.117 2013/05/30 20:17:12 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.118 2013/11/26 13:27:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1211,7 +1211,7 @@ get_string(u_int8_t *ptr, size_t len)
 	char	*str;
 
 	for (i = 0; i < len; i++)
-		if (!(isprint((char)ptr[i]) || isspace((char)ptr[i])))
+		if (!(isprint(ptr[i]) || isspace(ptr[i])))
 			break;
 
 	if ((str = calloc(1, i + 1)) == NULL)
