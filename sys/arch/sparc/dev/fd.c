@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.88 2013/11/21 00:13:33 dlg Exp $	*/
+/*	$OpenBSD: fd.c,v 1.89 2013/11/26 15:42:43 martin Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -705,7 +705,7 @@ fdstrategy(bp)
 	if (bp->b_bcount == 0)
 		goto done;
 
-	bp->b_resid = bp->b_count;
+	bp->b_resid = bp->b_bcount;
 	sz = howmany(bp->b_bcount, DEV_BSIZE);
 
 	if (bp->b_blkno + sz > (fd->sc_type->size * DEV_BSIZE) / FD_BSIZE(fd)) {
