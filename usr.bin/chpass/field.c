@@ -1,4 +1,4 @@
-/*	$OpenBSD: field.c,v 1.12 2009/10/27 23:59:36 deraadt Exp $	*/
+/*	$OpenBSD: field.c,v 1.13 2013/11/26 13:18:55 deraadt Exp $	*/
 /*	$NetBSD: field.c,v 1.3 1995/03/26 04:55:28 glass Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ p_login(char *p, struct passwd *pw, ENTRY *ep)
 	if (strchr(p, '.'))
 		warnx("\'.\' is dangerous in a login name");
 	for (; *p; ++p)
-		if (isupper(*p)) {
+		if (isupper((unsigned char)*p)) {
 			warnx("upper-case letters are dangerous in a login name");
 			break;
 		}
@@ -122,7 +122,7 @@ p_gid(char *p, struct passwd *pw, ENTRY *ep)
 		warnx("empty gid field");
 		return (1);
 	}
-	if (!isdigit(*p)) {
+	if (!isdigit((unsigned char)*p)) {
 		if (!(gr = getgrnam(p))) {
 			warnx("unknown group %s", p);
 			return (1);

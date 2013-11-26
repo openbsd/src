@@ -1,4 +1,4 @@
-/*	$OpenBSD: leave.c,v 1.12 2009/10/27 23:59:39 deraadt Exp $	*/
+/*	$OpenBSD: leave.c,v 1.13 2013/11/26 13:19:07 deraadt Exp $	*/
 /*	$NetBSD: leave.c,v 1.4 1995/07/03 16:50:13 phil Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ main(int argc, char *argv[])
 	}
 
 	for (hours = 0; (c = *cp) && c != '\n'; ++cp) {
-		if (!isdigit(c))
+		if (!isdigit((unsigned char)c))
 			usage();
 		hours = hours * 10 + (c - '0');
 	}

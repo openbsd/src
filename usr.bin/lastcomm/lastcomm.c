@@ -1,4 +1,4 @@
-/*	$OpenBSD: lastcomm.c,v 1.17 2009/10/27 23:59:39 deraadt Exp $	*/
+/*	$OpenBSD: lastcomm.c,v 1.18 2013/11/26 13:19:05 deraadt Exp $	*/
 /*	$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ main(int argc, char *argv[])
 		} else
 			for (p = &ab.ac_comm[0];
 			    p < &ab.ac_comm[fldsiz(acct, ac_comm)] && *p; ++p)
-				if (!isprint(*p))
+				if (!isprint((unsigned char)*p))
 					*p = '?';
 		if (!*argv || requested(argv, &ab))
 		{

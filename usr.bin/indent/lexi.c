@@ -1,4 +1,4 @@
-/*	$OpenBSD: lexi.c,v 1.15 2009/10/27 23:59:39 deraadt Exp $	*/
+/*	$OpenBSD: lexi.c,v 1.16 2013/11/26 13:21:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -140,13 +140,14 @@ lexi(void)
 
     /* Scan an alphanumeric token */
     if (chartype[(int)*buf_ptr] == alphanum ||
-	(buf_ptr[0] == '.' && isdigit(buf_ptr[1]))) {
+	(buf_ptr[0] == '.' && isdigit((unsigned char)buf_ptr[1]))) {
 	/*
 	 * we have a character or number
 	 */
 	char *j;	/* used for searching thru list of
 			 * reserved words */
-	if (isdigit(*buf_ptr) || (buf_ptr[0] == '.' && isdigit(buf_ptr[1]))) {
+	if (isdigit((unsigned char)*buf_ptr) ||
+	    (buf_ptr[0] == '.' && isdigit((unsigned char)buf_ptr[1]))) {
 	    int         seendot = 0,
 	                seenexp = 0,
 			seensfx = 0;
@@ -169,7 +170,7 @@ lexi(void)
 		    }
 		    CHECK_SIZE_TOKEN;
 		    *e_token++ = *buf_ptr++;
-		    if (!isdigit(*buf_ptr) && *buf_ptr != '.') {
+		    if (!isdigit((unsigned char)*buf_ptr) && *buf_ptr != '.') {
 			if ((*buf_ptr != 'E' && *buf_ptr != 'e') || seenexp)
 			    break;
 			else {
@@ -300,7 +301,8 @@ lexi(void)
 	 * token is in fact a declaration keyword -- one that has been
 	 * typedefd
 	 */
-	if (((*buf_ptr == '*' && buf_ptr[1] != '=') || isalpha(*buf_ptr) || *buf_ptr == '_')
+	if (((*buf_ptr == '*' && buf_ptr[1] != '=') ||
+	    isalpha((unsigned char)*buf_ptr) || *buf_ptr == '_')
 		&& !ps.p_l_follow
 	        && !ps.block_init
 		&& (ps.last_token == rparen || ps.last_token == semicolon ||

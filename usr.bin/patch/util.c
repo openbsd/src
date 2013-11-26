@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.35 2010/07/24 01:10:12 ray Exp $	*/
+/*	$OpenBSD: util.c,v 1.36 2013/11/26 13:19:07 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -129,10 +129,10 @@ backup_file(const char *orig)
 	while (stat(bakname, &filestat) == 0 &&
 	    orig_device == filestat.st_dev && orig_inode == filestat.st_ino) {
 		/* Skip initial non-lowercase chars.  */
-		for (s = simplename; *s && !islower(*s); s++)
+		for (s = simplename; *s && !islower((unsigned char)*s); s++)
 			;
 		if (*s)
-			*s = toupper(*s);
+			*s = toupper((unsigned char)*s);
 		else
 			memmove(simplename, simplename + 1,
 			    strlen(simplename + 1) + 1);
@@ -333,7 +333,7 @@ fetchname(const char *at, bool *exists, int strip_leading)
 
 	if (at == NULL || *at == '\0')
 		return NULL;
-	while (isspace(*at))
+	while (isspace((unsigned char)*at))
 		at++;
 #ifdef DEBUGGING
 	if (debug & 128)
@@ -347,7 +347,7 @@ fetchname(const char *at, bool *exists, int strip_leading)
 	tab = strchr(t, '\t') != NULL;
 	/* Strip off up to `strip_leading' path components and NUL terminate. */
 	for (sleading = strip_leading; *t != '\0' && ((tab && *t != '\t') ||
-	    !isspace(*t)); t++) {
+	    !isspace((unsigned char)*t)); t++) {
 		if (t[0] == '/' && t[1] != '/' && t[1] != '\0')
 			if (--sleading >= 0)
 				name = t + 1;

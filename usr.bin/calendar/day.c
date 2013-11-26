@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.26 2013/11/12 19:35:47 deraadt Exp $	*/
+/*	$OpenBSD: day.c,v 1.27 2013/11/26 13:18:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -88,7 +88,7 @@ setnnames(void)
 	for (i = 0; i < 7; i++) {
 		tm.tm_wday = i;
 		l = strftime(buf, sizeof(buf), "%a", &tm);
-		for (; l > 0 && isspace((int)buf[l - 1]); l--)
+		for (; l > 0 && isspace((unsigned char)buf[l - 1]); l--)
 			;
 		buf[l] = '\0';
 		if (ndays[i].name != NULL)
@@ -98,7 +98,7 @@ setnnames(void)
 		ndays[i].len = strlen(buf);
 
 		l = strftime(buf, sizeof(buf), "%A", &tm);
-		for (; l > 0 && isspace((int)buf[l - 1]); l--)
+		for (; l > 0 && isspace((unsigned char)buf[l - 1]); l--)
 			;
 		buf[l] = '\0';
 		if (fndays[i].name != NULL)
@@ -111,7 +111,7 @@ setnnames(void)
 	for (i = 0; i < 12; i++) {
 		tm.tm_mon = i;
 		l = strftime(buf, sizeof(buf), "%b", &tm);
-		for (; l > 0 && isspace((int)buf[l - 1]); l--)
+		for (; l > 0 && isspace((unsigned char)buf[l - 1]); l--)
 			;
 		buf[l] = '\0';
 		if (nmonths[i].name != NULL)
@@ -121,7 +121,7 @@ setnnames(void)
 		nmonths[i].len = strlen(buf);
 
 		l = strftime(buf, sizeof(buf), "%B", &tm);
-		for (; l > 0 && isspace((int)buf[l - 1]); l--)
+		for (; l > 0 && isspace((unsigned char)buf[l - 1]); l--)
 			;
 		buf[l] = '\0';
 		if (fnmonths[i].name != NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.32 2013/08/22 04:43:40 guenther Exp $	*/
+/*	$OpenBSD: pr.c,v 1.33 2013/11/26 13:19:07 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -1808,11 +1808,11 @@ setup(int argc, char *argv[])
 	    break;
 	case 'e':
 	    ++eflag;
-	    if ((eoptarg != NULL) && !isdigit(*eoptarg))
+	    if ((eoptarg != NULL) && !isdigit((unsigned char)*eoptarg))
 		inchar = *eoptarg++;
 	    else
 		inchar = INCHAR;
-	    if ((eoptarg != NULL) && isdigit(*eoptarg)) {
+	    if ((eoptarg != NULL) && isdigit((unsigned char)*eoptarg)) {
 		ingap = strtonum(eoptarg, 0, INT_MAX, &errstr);
 		if (errstr) {
 		    ferrout("pr: -e gap is %s: %s\n", errstr, eoptarg);
@@ -1835,11 +1835,11 @@ setup(int argc, char *argv[])
 	    break;
 	case 'i':
 	    ++iflag;
-	    if ((eoptarg != NULL) && !isdigit(*eoptarg))
+	    if ((eoptarg != NULL) && !isdigit((unsigned char)*eoptarg))
 		ochar = *eoptarg++;
 	    else
 		ochar = OCHAR;
-	    if ((eoptarg != NULL) && isdigit(*eoptarg)) {
+	    if ((eoptarg != NULL) && isdigit((unsigned char)*eoptarg)) {
 		ogap = strtonum(eoptarg, 0, INT_MAX, &errstr);
 		if (errstr) {
 		    ferrout("pr: -i gap is %s: %s\n", errstr, eoptarg);
@@ -1864,11 +1864,11 @@ setup(int argc, char *argv[])
 	    ++merge;
 	    break;
 	case 'n':
-	    if ((eoptarg != NULL) && !isdigit(*eoptarg))
+	    if ((eoptarg != NULL) && !isdigit((unsigned char)*eoptarg))
 		nmchar = *eoptarg++;
 	    else
 		nmchar = NMCHAR;
-	    if ((eoptarg != NULL) && isdigit(*eoptarg)) {
+	    if ((eoptarg != NULL) && isdigit((unsigned char)*eoptarg)) {
 		nmwd = strtonum(eoptarg, 1, INT_MAX, &errstr);
 		if (errstr) {
 		    ferrout("pr: -n width is %s: %s\n", errstr, eoptarg);

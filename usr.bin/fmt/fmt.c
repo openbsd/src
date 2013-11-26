@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.29 2012/01/17 04:26:28 lum Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.30 2013/11/26 13:18:55 deraadt Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -233,7 +233,7 @@ static int output_in_paragraph = 0;		/* Any of current para written out yet? */
 static void	process_named_file(const char *);
 static void	process_stream(FILE *, const char *);
 static size_t	indent_length(const char *, size_t);
-static int	might_be_header(const unsigned char *);
+static int	might_be_header(const char *);
 static void	new_paragraph(size_t, size_t);
 static void	output_word(size_t, size_t, const char *, size_t, size_t);
 static void	output_indent(size_t);
@@ -385,7 +385,7 @@ process_stream(FILE *stream, const char *name)
 	HdrType header_type;
 
 	/* ^-- header_type of previous line; -1 at para start */
-	char *line;
+	const char *line;
 	size_t length;
 
 	if (centerP) {
@@ -486,14 +486,14 @@ indent_length(const char *line, size_t length)
  * conservative to avoid mangling ordinary civilised text.
  */
 static int
-might_be_header(const unsigned char *line)
+might_be_header(const char *line)
 {
 
-	if (!isupper(*line++))
+	if (!isupper((unsigned char)*line++))
 		return 0;
-	while (isalnum(*line) || *line == '-')
+	while (isalnum((unsigned char)*line) || *line == '-')
 		++line;
-	return (*line == ':' && isspace(line[1]));
+	return (*line == ':' && isspace((unsigned char)line[1]));
 }
 
 /* Begin a new paragraph with an indent of |indent| spaces.

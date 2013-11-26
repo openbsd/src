@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.11 2009/10/27 23:59:37 deraadt Exp $	*/
+/*	$OpenBSD: expand.c,v 1.12 2013/11/26 13:18:55 deraadt Exp $	*/
 /*	$NetBSD: expand.c,v 1.5 1995/09/02 06:19:46 jtc Exp $	*/
 
 /*
@@ -52,7 +52,8 @@ main(int argc, char *argv[])
 	int n;
 
 	/* handle obsolete syntax */
-	while (argc > 1 && argv[1][0] == '-' && isdigit(argv[1][1])) {
+	while (argc > 1 && argv[1][0] == '-' &&
+	    isdigit((unsigned char)argv[1][1])) {
 		getstops(&argv[1][1]);
 		argc--; argv++;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.12 2013/06/20 06:28:15 jsg Exp $	*/
+/*	$OpenBSD: io.c,v 1.13 2013/11/26 13:21:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
@@ -226,7 +226,7 @@ dump_line(void)
 		    cur_col = 1;
 		    ++ps.out_lines;
 		}
-		while (e_com > com_st && isspace(e_com[-1]))
+		while (e_com > com_st && isspace((unsigned char)e_com[-1]))
 		    e_com--;
 		cur_col = pad_output(cur_col, target);
 		if (!ps.box_com) {
@@ -590,9 +590,9 @@ parsefont(struct fstate *f, char *s0)
     int         sizedelta = 0;
     bzero(f, sizeof *f);
     while (*s) {
-	if (isdigit(*s))
+	if (isdigit((unsigned char)*s))
 	    f->size = f->size * 10 + *s - '0';
-	else if (isupper(*s))
+	else if (isupper((unsigned char)*s))
 	    if (f->font[0])
 		f->font[1] = *s;
 	    else

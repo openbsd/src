@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent.c,v 1.22 2013/06/21 06:49:42 jsg Exp $	*/
+/*	$OpenBSD: indent.c,v 1.23 2013/11/26 13:21:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -968,8 +968,9 @@ check_type:
 		e_code = chfont(&bodyf, &keywordf, e_code);
 		for (t_ptr = token; *t_ptr; ++t_ptr) {
 		    CHECK_SIZE_CODE;
-		    *e_code++ = keywordf.allcaps && islower(*t_ptr)
-			? toupper(*t_ptr) : *t_ptr;
+		    *e_code++ = keywordf.allcaps &&
+		      islower((unsigned char)*t_ptr) ?
+		      toupper((unsigned char)*t_ptr) : *t_ptr;
 		}
 		e_code = chfont(&keywordf, &bodyf, e_code);
 	    }

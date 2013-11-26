@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortran.c,v 1.8 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: fortran.c,v 1.9 2013/11/26 13:18:55 deraadt Exp $	*/
 /*	$NetBSD: fortran.c,v 1.3 1995/03/26 20:14:08 glass Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ PF_funcs(void)
 		lbp = lbuf;
 		if (*lbp == '%')	/* Ratfor escape to fortran */
 			++lbp;
-		for (; isspace(*lbp); ++lbp)
+		for (; isspace((unsigned char)*lbp); ++lbp)
 			continue;
 		if (!*lbp)
 			continue;
@@ -67,7 +67,7 @@ PF_funcs(void)
 			break;
 		case 'd':
 			if (cicmp("double")) {
-				for (; isspace(*lbp); ++lbp)
+				for (; isspace((unsigned char)*lbp); ++lbp)
 					continue;
 				if (!*lbp)
 					continue;
@@ -89,7 +89,7 @@ PF_funcs(void)
 				takeprec();
 			break;
 		}
-		for (; isspace(*lbp); ++lbp)
+		for (; isspace((unsigned char)*lbp); ++lbp)
 			continue;
 		if (!*lbp)
 			continue;
@@ -108,7 +108,7 @@ PF_funcs(void)
 		default:
 			continue;
 		}
-		for (; isspace(*lbp); ++lbp)
+		for (; isspace((unsigned char)*lbp); ++lbp)
 			continue;
 		if (!*lbp)
 			continue;
@@ -148,15 +148,15 @@ cicmp(char *cp)
 static void
 takeprec(void)
 {
-	for (; isspace(*lbp); ++lbp)
+	for (; isspace((unsigned char)*lbp); ++lbp)
 		continue;
 	if (*lbp == '*') {
-		for (++lbp; isspace(*lbp); ++lbp)
+		for (++lbp; isspace((unsigned char)*lbp); ++lbp)
 			continue;
-		if (!isdigit(*lbp))
+		if (!isdigit((unsigned char)*lbp))
 			--lbp;			/* force failure */
 		else
-			while (isdigit(*++lbp))
+			while (isdigit((unsigned char)*++lbp))
 				continue;
 	}
 }

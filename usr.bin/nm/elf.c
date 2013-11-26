@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.22 2013/11/13 06:37:24 deraadt Exp $	*/
+/*	$OpenBSD: elf.c,v 1.23 2013/11/26 13:19:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -411,7 +411,7 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 	if (np->n_type != N_UNDF && ELF_ST_BIND(sym->st_info) != STB_LOCAL) {
 		np->n_type |= N_EXT;
 		if (np->n_other)
-			np->n_other = toupper(np->n_other);
+			np->n_other = toupper((unsigned char)np->n_other);
 	}
 
 	return (0);

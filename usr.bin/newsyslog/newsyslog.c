@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.91 2013/04/05 01:29:07 tedu Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.92 2013/11/26 13:19:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -569,7 +569,7 @@ parse_file(int *nentries)
 
 		q = parse = missing_field(sob(++parse), errline, lineno);
 		*(parse = son(parse)) = '\0';
-		if (isdigit(*q))
+		if (isdigit((unsigned char)*q))
 			working->size = atoi(q) * 1024;
 		else
 			working->size = -1;
@@ -939,7 +939,7 @@ sob(char *p)
 {
 	if (p == NULL)
 		return(p);
-	while (isspace(*p))
+	while (isspace((unsigned char)*p))
 		p++;
 	return (p);
 }
@@ -948,7 +948,7 @@ sob(char *p)
 char *
 son(char *p)
 {
-	while (p && *p && !isspace(*p))
+	while (p && *p && !isspace((unsigned char)*p))
 		p++;
 	return (p);
 }
@@ -958,7 +958,7 @@ int
 isnumberstr(char *string)
 {
 	while (*string) {
-		if (!isdigit(*string++))
+		if (!isdigit((unsigned char)*string++))
 			return (0);
 	}
 	return (1);
@@ -1193,7 +1193,8 @@ parse8601(char *s)
 	if (*t != '\0') {
 		s = ++t;
 		l = strtol(s, &t, 10);
-		if (l < 0 || l >= INT_MAX || (*t != '\0' && !isspace(*t)))
+		if (l < 0 || l >= INT_MAX ||
+		    (*t != '\0' && !isspace((unsigned char)*t)))
 			return (-1);
 
 		switch (t - s) {
@@ -1303,7 +1304,7 @@ parseDWM(char *s)
 				return (-1);
 			WMseen++;
 			s++;
-			if (tolower(*s) == 'l') {
+			if (tolower((unsigned char)*s) == 'l') {
 				tm.tm_mday = nd;
 				s++;
 				t = s;
@@ -1325,7 +1326,7 @@ parseDWM(char *s)
 			break;
 		}
 
-		if (*t == '\0' || isspace(*t))
+		if (*t == '\0' || isspace((unsigned char)*t))
 			break;
 		else
 			s = t;

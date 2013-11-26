@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.31 2013/11/08 15:21:20 jsing Exp $	*/
+/*	$OpenBSD: quota.c,v 1.32 2013/11/26 13:19:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -684,10 +684,10 @@ alldigits(char *s)
 {
 	int c;
 
-	c = *s++;
+	c = (unsigned char)*s++;
 	do {
 		if (!isdigit(c))
 			return (0);
-	} while ((c = *s++));
+	} while ((c = (unsigned char)*s++));
 	return (1);
 }

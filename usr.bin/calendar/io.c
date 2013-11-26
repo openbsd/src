@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.35 2009/10/27 23:59:36 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.36 2013/11/26 13:18:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -222,26 +222,28 @@ getfield(char *p, char **endp, int *flags)
 	int val, var, i;
 	char *start, savech;
 
-	for (; !isdigit(*p) && !isalpha(*p) && *p != '*' && *p != '\t'; ++p)
+	for (; !isdigit((unsigned char)*p) && !isalpha((unsigned char)*p) &&
+	    *p != '*' && *p != '\t'; ++p)
 		;
 	if (*p == '*') {			/* `*' is every month */
 		*flags |= F_ISMONTH;
 		*endp = p+1;
 		return (-1);	/* means 'every month' */
 	}
-	if (isdigit(*p)) {
+	if (isdigit((unsigned char)*p)) {
 		val = strtol(p, &p, 10);	/* if 0, it's failure */
-		for (; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p)
+		for (; !isdigit((unsigned char)*p) &&
+		    !isalpha((unsigned char)*p) && *p != '*'; ++p)
 			;
 		*endp = p;
 		return (val);
 	}
-	for (start = p; isalpha(*++p);)
+	for (start = p; isalpha((unsigned char)*++p);)
 		;
 
 	/* Sunday-1 */
 	if (*p == '+' || *p == '-')
-		for(; isdigit(*++p); )
+		for(; isdigit((unsigned char)*++p); )
 			;
 
 	savech = *p;
@@ -301,7 +303,8 @@ getfield(char *p, char **endp, int *flags)
 			return (0);
 		}
 	}
-	for (*p = savech; !isdigit(*p) && !isalpha(*p) && *p != '*' && *p != '\t'; ++p)
+	for (*p = savech; !isdigit((unsigned char)*p) &&
+	    !isalpha((unsigned char)*p) && *p != '*' && *p != '\t'; ++p)
 		;
 	*endp = p;
 	return (val);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.22 2013/11/15 15:47:53 millert Exp $	*/
+/*	$OpenBSD: jot.c,v 1.23 2013/11/26 13:21:18 deraadt Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -337,7 +337,7 @@ getprec(char *s)
 	if (*p == '\0')
 		return (0);
 	for (q = ++p; *p != '\0'; p++)
-		if (!isdigit(*p))
+		if (!isdigit((unsigned char)*p))
 			break;
 	return (p - q);
 }
@@ -378,8 +378,8 @@ getformat(void)
 		 */
 		p2 = p++;
 		dot = hash = space = sign = numbers = 0;
-		while (!isalpha(*p)) {
-			if (isdigit(*p)) {
+		while (!isalpha((unsigned char)*p)) {
+			if (isdigit((unsigned char)*p)) {
 				numbers++;
 				p++;
 			} else if ((*p == '#' && !(numbers|dot|sign|space|

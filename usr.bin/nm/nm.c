@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.39 2013/11/12 19:37:39 deraadt Exp $	*/
+/*	$OpenBSD: nm.c,v 1.40 2013/11/26 13:19:07 deraadt Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ mmbr_name(struct ar_hdr *arh, char **name, int baselen, int *namelen, FILE *fp)
 	if ((arh->ar_name[0] == '#') &&
 	    (arh->ar_name[1] == '1') &&
 	    (arh->ar_name[2] == '/') &&
-	    (isdigit(arh->ar_name[3]))) {
+	    (isdigit((unsigned char)arh->ar_name[3]))) {
 		int len = atoi(&arh->ar_name[3]);
 
 		if (len > *namelen) {

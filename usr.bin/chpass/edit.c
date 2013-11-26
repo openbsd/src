@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.33 2009/10/27 23:59:36 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.34 2013/11/26 13:18:55 deraadt Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -173,8 +173,9 @@ verify(char *tempname, struct passwd *pw)
 					warnx("line %u corrupted", line);
 					goto bad;
 				}
-				while (isspace(*++p));
-				for (q = p; isprint(*q); q++) {
+				while (isspace((unsigned char)*++p))
+					;
+				for (q = p; isprint((unsigned char)*q); q++) {
 					if (ep->except && strchr(ep->except,*q))
 						break;
 				}

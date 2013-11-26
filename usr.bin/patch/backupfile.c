@@ -1,4 +1,4 @@
-/*	$OpenBSD: backupfile.c,v 1.20 2009/10/27 23:59:41 deraadt Exp $	*/
+/*	$OpenBSD: backupfile.c,v 1.21 2013/11/26 13:19:07 deraadt Exp $	*/
 
 /*
  * backupfile.c -- make Emacs style backup file names Copyright (C) 1990 Free
@@ -132,8 +132,9 @@ version_number(const char *base, const char *backup, size_t base_length)
 	const char	*p;
 
 	version = 0;
-	if (!strncmp(base, backup, base_length) && ISDIGIT(backup[base_length])) {
-		for (p = &backup[base_length]; ISDIGIT(*p); ++p)
+	if (!strncmp(base, backup, base_length) &&
+	    ISDIGIT((unsigned char)backup[base_length])) {
+		for (p = &backup[base_length]; ISDIGIT((unsigned char)*p); ++p)
 			version = version * 10 + *p - '0';
 		if (p[0] != '~' || p[1])
 			version = 0;

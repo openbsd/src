@@ -1,4 +1,4 @@
-/*	$OpenBSD: egetopt.c,v 1.8 2009/10/27 23:59:41 deraadt Exp $	*/
+/*	$OpenBSD: egetopt.c,v 1.9 2013/11/26 13:19:07 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -106,14 +106,14 @@ egetopt(int nargc, char * const *nargv, const char *ostr)
 		 */
 		if ((eoptopt == (int)'-') && !*place)
 			return (-1);
-		if (strchr(ostr, '#') && (isdigit(eoptopt) ||
+		if (strchr(ostr, '#') && (isdigit((unsigned char)eoptopt) ||
 		    (((eoptopt == (int)'-') || (eoptopt == (int)'+')) &&
-		      isdigit(*place)))) {
+		      isdigit((unsigned char)*place)))) {
 			/*
 			 * # option: +/- with a number is ok
 			 */
 			for (p = place; *p != '\0'; ++p) {
-				if (!isdigit(*p))
+				if (!isdigit((unsigned char)*p))
 					break;
 			}
 			eoptarg = place-1;

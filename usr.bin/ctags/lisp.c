@@ -1,4 +1,4 @@
-/*	$OpenBSD: lisp.c,v 1.7 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: lisp.c,v 1.8 2013/11/26 13:18:55 deraadt Exp $	*/
 /*	$NetBSD: lisp.c,v 1.3 1995/03/26 20:14:09 glass Exp $	*/
 
 /*
@@ -67,9 +67,9 @@ l_entries(void)
 			if (cicmp("wrapper") || cicmp("whopper"))
 				special = YES;
 		}
-		for (; !isspace(*lbp); ++lbp)
+		for (; !isspace((unsigned char)*lbp); ++lbp)
 			continue;
-		for (; isspace(*lbp); ++lbp)
+		for (; isspace((unsigned char)*lbp); ++lbp)
 			continue;
 		for (cp = lbp; *cp && *cp != '\n'; ++cp)
 			continue;

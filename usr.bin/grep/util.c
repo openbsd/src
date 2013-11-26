@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.46 2013/05/04 00:26:20 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.47 2013/11/26 13:21:16 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -165,7 +165,7 @@ procfile(char *fn)
  * Process an individual line in a file. Return non-zero if it matches.
  */
 
-#define isword(x) (isalnum(x) || (x) == '_')
+#define isword(x) (isalnum((unsigned char)x) || (x) == '_')
 
 static int
 procline(str_t *l, int nottext)
@@ -245,7 +245,7 @@ print:
 
 #ifndef SMALL
 void
-fgrepcomp(fastgrep_t *fg, const char *pattern)
+fgrepcomp(fastgrep_t *fg, const unsigned char *pattern)
 {
 	int i;
 

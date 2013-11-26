@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.13 2009/10/27 23:59:40 deraadt Exp $	*/
+/*	$OpenBSD: look.c,v 1.14 2013/11/26 13:19:07 deraadt Exp $	*/
 /*	$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $	*/
 
 /*-
@@ -144,9 +144,9 @@ look(char *string, char *front, char *back)
 	/* Reformat string to avoid doing it multiple times later. */
 	for (readp = writep = string; ch = *readp++;) {
 		if (fflag)
-			ch = FOLD(ch);
+			ch = FOLD((unsigned char)ch);
 		if (dflag)
-			ch = DICT(ch);
+			ch = DICT((unsigned char)ch);
 		if (ch != NO_COMPARE)
 			*(writep++) = ch;
 	}
@@ -291,9 +291,9 @@ compare(char *s1, char *s2, char *back)
 	for (; *s1 && s2 < back && *s2 != '\n'; ++s1, ++s2) {
 		ch = *s2;
 		if (fflag)
-			ch = FOLD(ch);
+			ch = FOLD((unsigned char)ch);
 		if (dflag)
-			ch = DICT(ch);
+			ch = DICT((unsigned char)ch);
 
 		if (ch == NO_COMPARE) {
 			++s2;		/* Ignore character in comparison. */

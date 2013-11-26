@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.40 2013/07/11 12:39:31 otto Exp $	*/
+/*	$OpenBSD: pch.c,v 1.41 2013/11/26 13:19:07 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -283,9 +283,9 @@ intuit_diff_type(void)
 			else
 				indent++;
 		}
-		for (t = s; isdigit(*t) || *t == ','; t++)
+		for (t = s; isdigit((unsigned char)*t) || *t == ','; t++)
 			;
-		this_is_a_command = (isdigit(*s) &&
+		this_is_a_command = (isdigit((unsigned char)*s) &&
 		    (*t == 'd' || *t == 'c' || *t == 'a'));
 		if (first_command_line < 0L && this_is_a_command) {
 			first_command_line = this_line;
@@ -306,10 +306,11 @@ intuit_diff_type(void)
 			names[INDEX_FILE].path = fetchname(s + 6,
 			    &names[INDEX_FILE].exists, strippath);
 		else if (strnEQ(s, "Prereq:", 7)) {
-			for (t = s + 7; isspace(*t); t++)
+			for (t = s + 7; isspace((unsigned char)*t); t++)
 				;
 			revision = savestr(t);
-			for (t = revision; *t && !isspace(*t); t++)
+			for (t = revision;
+			    *t && !isspace((unsigned char)*t); t++)
 				;
 			*t = '\0';
 			if (*revision == '\0') {
@@ -567,17 +568,18 @@ another_hunk(void)
 					p_end--;
 					return false;
 				}
-				for (s = buf; *s && !isdigit(*s); s++)
+				for (s = buf;
+				    *s && !isdigit((unsigned char)*s); s++)
 					;
 				if (!*s)
 					malformed();
 				if (strnEQ(s, "0,0", 3))
 					memmove(s, s + 2, strlen(s + 2) + 1);
 				p_first = (LINENUM) atol(s);
-				while (isdigit(*s))
+				while (isdigit((unsigned char)*s))
 					s++;
 				if (*s == ',') {
-					for (; *s && !isdigit(*s); s++)
+					for (; *s && !isdigit((unsigned char)*s); s++)
 						;
 					if (!*s)
 						malformed();
@@ -636,15 +638,16 @@ another_hunk(void)
 						return false;
 					}
 					p_char[p_end] = '=';
-					for (s = buf; *s && !isdigit(*s); s++)
+					for (s = buf;
+					    *s && !isdigit((unsigned char)*s); s++)
 						;
 					if (!*s)
 						malformed();
 					p_newfirst = (LINENUM) atol(s);
-					while (isdigit(*s))
+					while (isdigit((unsigned char)*s))
 						s++;
 					if (*s == ',') {
-						for (; *s && !isdigit(*s); s++)
+						for (; *s && !isdigit((unsigned char)*s); s++)
 							;
 						if (!*s)
 							malformed();
@@ -674,8 +677,8 @@ another_hunk(void)
 		change_line:
 				if (buf[1] == '\n' && canonicalize)
 					strlcpy(buf + 1, " \n", sizeof buf - 1);
-				if (!isspace(buf[1]) && buf[1] != '>' &&
-				    buf[1] != '<' &&
+				if (!isspace((unsigned char)buf[1]) &&
+				    buf[1] != '>' && buf[1] != '<' &&
 				    repl_beginning && repl_could_be_missing) {
 					repl_missing = true;
 					goto hunk_done;
@@ -721,7 +724,7 @@ another_hunk(void)
 				}
 				break;
 			case ' ':
-				if (!isspace(buf[1]) &&
+				if (!isspace((unsigned char)buf[1]) &&
 				    repl_beginning && repl_could_be_missing) {
 					repl_missing = true;
 					goto hunk_done;
@@ -849,11 +852,11 @@ hunk_done:
 		if (!*s)
 			malformed();
 		p_first = (LINENUM) atol(s);
-		while (isdigit(*s))
+		while (isdigit((unsigned char)*s))
 			s++;
 		if (*s == ',') {
 			p_ptrn_lines = (LINENUM) atol(++s);
-			while (isdigit(*s))
+			while (isdigit((unsigned char)*s))
 				s++;
 		} else
 			p_ptrn_lines = 1;
@@ -862,11 +865,11 @@ hunk_done:
 		if (*s != '+' || !*++s)
 			malformed();
 		p_newfirst = (LINENUM) atol(s);
-		while (isdigit(*s))
+		while (isdigit((unsigned char)*s))
 			s++;
 		if (*s == ',') {
 			p_repl_lines = (LINENUM) atol(++s);
-			while (isdigit(*s))
+			while (isdigit((unsigned char)*s))
 				s++;
 		} else
 			p_repl_lines = 1;
@@ -1009,16 +1012,16 @@ hunk_done:
 		p_context = 0;
 		ret = pgets(buf, sizeof buf, pfp);
 		p_input_line++;
-		if (ret == NULL || !isdigit(*buf)) {
+		if (ret == NULL || !isdigit((unsigned char)*buf)) {
 			next_intuit_at(line_beginning, p_input_line);
 			return false;
 		}
 		p_first = (LINENUM) atol(buf);
-		for (s = buf; isdigit(*s); s++)
+		for (s = buf; isdigit((unsigned char)*s); s++)
 			;
 		if (*s == ',') {
 			p_ptrn_lines = (LINENUM) atol(++s) - p_first + 1;
-			while (isdigit(*s))
+			while (isdigit((unsigned char)*s))
 				s++;
 		} else
 			p_ptrn_lines = (*s != 'a');
@@ -1026,7 +1029,7 @@ hunk_done:
 		if (hunk_type == 'a')
 			p_first++;	/* do append rather than insert */
 		min = (LINENUM) atol(++s);
-		for (; isdigit(*s); s++)
+		for (; isdigit((unsigned char)*s); s++)
 			;
 		if (*s == ',')
 			max = (LINENUM) atol(++s);
@@ -1383,11 +1386,11 @@ do_ed_script(void)
 			break;
 		}
 		p_input_line++;
-		for (t = buf; isdigit(*t) || *t == ','; t++)
+		for (t = buf; isdigit((unsigned char)*t) || *t == ','; t++)
 			;
 		/* POSIX defines allowed commands as {a,c,d,i,s} */
-		if (isdigit(*buf) && (*t == 'a' || *t == 'c' || *t == 'd' ||
-		    *t == 'i' || *t == 's')) {
+		if (isdigit((unsigned char)*buf) &&
+		    (*t == 'a' || *t == 'c' || *t == 'd' || *t == 'i' || *t == 's')) {
 			if (pipefp != NULL)
 				fputs(buf, pipefp);
 			if (*t != 'd') {
