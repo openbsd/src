@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.80 2013/07/10 09:56:02 ajacoutot Exp $
+#	$OpenBSD: changelist,v 1.81 2013/11/26 20:12:03 sthen Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -98,7 +98,6 @@
 /etc/nginx/nginx.conf
 /etc/npppd/npppd.conf
 +/etc/npppd/npppd-users
-/etc/nsd.conf
 /etc/ntpd.conf
 /etc/ospf6d.conf
 /etc/ospfd.conf
@@ -178,6 +177,7 @@
 /var/named/standard/localhost
 /var/named/standard/loopback
 /var/named/standard/loopback6.arpa
+/var/nsd/etc/nsd.conf
 /var/www/conf/access.conf
 /var/www/conf/httpd.conf
 /var/www/conf/mime.types
