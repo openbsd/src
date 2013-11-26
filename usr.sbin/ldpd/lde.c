@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.27 2013/10/15 20:36:30 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.28 2013/11/26 11:59:38 henning Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -211,7 +211,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
+		if (msgbuf_write(&ibuf->w) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
 	}
 
@@ -367,7 +367,7 @@ lde_dispatch_parent(int fd, short event, void *bula)
 			shut = 1;
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
+		if (msgbuf_write(&ibuf->w) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
 	}
 

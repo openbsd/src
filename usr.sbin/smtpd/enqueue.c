@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.69 2013/10/25 21:31:23 eric Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.70 2013/11/26 12:01:40 henning Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -705,7 +705,7 @@ open_connection(void)
 	imsg_compose(ibuf, IMSG_SMTP_ENQUEUE_FD, IMSG_VERSION, 0, -1, NULL, 0);
 
 	while (ibuf->w.queued)
-		if (msgbuf_write(&ibuf->w) < 0)
+		if (msgbuf_write(&ibuf->w) < 0 && errno != EAGAIN)
 			err(1, "write error");
 
 	while (1) {
