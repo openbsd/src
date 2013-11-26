@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.24 2009/08/25 13:46:47 jmc Exp $
+ * $OpenBSD: calendar.holiday,v 1.25 2013/11/26 15:25:56 sobrado Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -356,7 +356,7 @@
 10/01	National Liberation Day (2 days) in China
 10/01	Public Holiday in Botswana
 10/03	National Foundation Day in South Korea
-10/03	U.N. Day in Varbados
+10/03	U.N. Day in Barbados
 10/03	German Reunification Day in Germany
 10/04	Independence Day in Lesotho
 10/06	National Sports Day in Lesotho
