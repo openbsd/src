@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: krb5.h,v 1.9 2013/06/17 18:57:44 robert Exp $ */
+/* $Id: krb5.h,v 1.10 2013/11/26 19:15:49 deraadt Exp $ */
 
 #ifndef __KRB5_H__
 #define __KRB5_H__
@@ -412,7 +412,7 @@ typedef union {
 #define KDC_OPT_RENEWABLE_OK		(1 << 27)
 #define KDC_OPT_ENC_TKT_IN_SKEY		(1 << 28)
 #define KDC_OPT_RENEW			(1 << 30)
-#define KDC_OPT_VALIDATE		(1 << 31)
+#define KDC_OPT_VALIDATE		(1U << 31)
 
 typedef union {
     KDCOptions b;
