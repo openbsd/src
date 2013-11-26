@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.18 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: msg.c,v 1.19 2013/11/26 17:48:01 pelikan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -160,8 +160,10 @@ retry:		FREE_SPACE(sp, bp, blen);
 	}
 
 	/* If nothing to format, we're done. */
-	if (fmt == NULL)
+	if (fmt == NULL) {
+		len = 0;
 		goto nofmt;
+	}
 	fmt = msg_cat(sp, fmt, NULL);
 
 #ifndef NL_ARGMAX
@@ -516,7 +518,7 @@ msgq_status(sp, lno, flags)
 	ep = bp + blen;
 
 	/* Copy in the filename. */
-	for (p = bp, t = sp->frp->name; *t != '\0'; ++t) {
+	for (t = sp->frp->name; *t != '\0'; ++t) {
 		len = KEY_LEN(sp, *t);
 		memcpy(p, KEY_NAME(sp, *t), len);
 		p += len;
@@ -861,12 +863,13 @@ retry:		if (sp == NULL)
 			free(bp);
 		else
 			FREE_SPACE(sp, bp, blen);
-		needfree = 0;
+		*needfree = 0;
 	}
 	nlen += 256;
 	if (sp == NULL) {
 		if ((bp = malloc(nlen)) == NULL)
 			goto alloc_err;
+		blen = 0;
 	} else
 		GET_SPACE_GOTO(sp, bp, blen, nlen);
 	if (0) {
