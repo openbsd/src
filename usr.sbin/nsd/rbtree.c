@@ -1,7 +1,7 @@
 /*
  * rbtree.c -- generic red black tree
  *
- * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -549,41 +549,5 @@ rbtree_previous(rbnode_t *node)
 		}
 		node = parent;
 	}
-	return node;
-}
-
-
-/**
- * Given an rbtree "root" node, find the first node under that tree in
- * postorder.
- */
-rbnode_t *
-rbtree_postorder_first(rbnode_t *root)
-{
-	rbnode_t *node = root;
-	do {
-		while (node->left != RBTREE_NULL) {
-			node = node->left;
-		}
-		while ((node->left == RBTREE_NULL) &&
-		       (node->right != RBTREE_NULL)) {
-			node = node->right;
-		}
-	} while (node->left != node->right);
-	return node;
-}
-
-
-/**
- * Given any node in an rbtree, find the next node in postorder.
- */
-rbnode_t *
-rbtree_postorder_next(rbnode_t *node)
-{
-	if ((node->parent->right == RBTREE_NULL) ||
-	    (node->parent->right == node))
-		node = node->parent;
-	else
-		node = rbtree_postorder_first(node->parent->right);
 	return node;
 }

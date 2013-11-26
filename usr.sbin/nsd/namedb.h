@@ -1,7 +1,7 @@
 /*
  * namedb.h -- nsd(8) internal namespace database definitions
  *
- * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -14,13 +14,12 @@
 
 #include "dname.h"
 #include "dns.h"
+#include "radtree.h"
 #include "rbtree.h"
-#include "util.h"
 struct zone_options;
 struct nsd_options;
-
-#define	NAMEDB_MAGIC		"NSDdbV08"
-#define	NAMEDB_MAGIC_SIZE	8
+struct udb_base;
+struct udb_ptr;
 
 typedef union rdata_atom rdata_atom_type;
 typedef struct rrset rrset_type;
@@ -35,102 +34,104 @@ typedef struct zone zone_type;
 
 struct domain_table
 {
-	region_type *region;
-	rbtree_t      *names_to_domains;
-	domain_type *root;
+	region_type* region;
+	struct radtree *nametree;
+	domain_type* root;
+	/* ptr to biggest domain.number and last in list.
+	 * the root is the lowest and first in the list. */
+	domain_type *numlist_last;
+#ifdef NSEC3
+	/* the prehash list, start of the list */
+	domain_type* prehash_list;
+#endif /* NSEC3 */
 };
+
+#ifdef NSEC3
+struct nsec3_domain_data {
+	/* (if nsec3 chain complete) always the covering nsec3 record */
+	domain_type* nsec3_cover;
+	/* the nsec3 that covers the wildcard child of this domain. */
+	domain_type* nsec3_wcard_child_cover;
+	/* for the DS case we must answer on the parent side of zone cut */
+	domain_type* nsec3_ds_parent_cover;
+	/* NSEC3 domains to prehash, prev and next on the list or cleared */
+	domain_type* prehash_prev, *prehash_next;
+	/* entry in the nsec3tree (for NSEC3s in the chain in use) */
+	rbnode_t nsec3_node;
+	/* entry in the hashtree (for precompiled domains) */
+	rbnode_t hash_node;
+	/* entry in the wchashtree (the wildcard precompile) */
+	rbnode_t wchash_node;
+	/* entry in the dshashtree (the parent ds precompile) */
+	rbnode_t dshash_node;
+
+	/* nsec3 hash */
+	uint8_t nsec3_hash[NSEC3_HASH_LEN];
+	/* nsec3 hash of wildcard before this name */
+	uint8_t nsec3_wc_hash[NSEC3_HASH_LEN];
+	/* parent-side DS hash */
+	uint8_t nsec3_ds_parent_hash[NSEC3_HASH_LEN];
+	/* if the nsec3 has is available */
+	unsigned  have_nsec3_hash : 1;
+	unsigned  have_nsec3_wc_hash : 1;
+	unsigned  have_nsec3_ds_parent_hash : 1;
+	/* if the domain has an NSEC3 for it, use cover ptr to get it. */
+	unsigned     nsec3_is_exact : 1;
+	/* same but on parent side */
+	unsigned     nsec3_ds_parent_is_exact : 1;
+};
+#endif /* NSEC3 */
 
 struct domain
 {
-	rbnode_t     node;
-	domain_type *parent;
-	domain_type *nextdiff;
-	domain_type *wildcard_child_closest_match;
-	rrset_type  *rrsets;
+	struct radnode* rnode;
+	const dname_type* dname;
+	domain_type* parent;
+	domain_type* wildcard_child_closest_match;
+	rrset_type* rrsets;
 #ifdef NSEC3
-	domain_type *nsec3_cover; /* != NULL is exact cover */
-#ifdef FULL_PREHASH
-	/* (if nsec3 chain complete) nsec_cover is always the covering nsec3
-       record */
-	/* the nsec3 that covers the wildcard child of this domain. */
-	domain_type *nsec3_wcard_child_cover;
-	/* for the DS case we must answer on the parent side of zone cut */
-	domain_type *nsec3_ds_parent_cover;
-	/* the NSEC3 domain that has a hash-base32 <= than this dname. */
-	/* or NULL (no smaller one within this zone)
-	 * this variable is used to look up the NSEC3 record that matches
-	 * or covers a given b64-encoded-hash-string domain name.
-	 * The result of the lookup is stored in the *_cover variables.
-	 * The variable makes it possible to perform a rbtree lookup for
-	 * a name, then take this 'jump' to the previous element that contains
-	 * an NSEC3 record, with hopefully the correct parameters. */
-	domain_type *nsec3_lookup;
-#endif /* FULL_PREHASH */
-#endif /* NSEC3 */
-	uint32_t     number; /* Unique domain name number.  */
+	struct nsec3_domain_data* nsec3;
+#endif
+	/* double-linked list sorted by domain.number */
+	domain_type* numlist_prev, *numlist_next;
+	size_t     number; /* Unique domain name number.  */
+	size_t     usage; /* number of ptrs to this from RRs(in rdata) and
+			     from zone-apex pointers, also the root has one
+			     more to make sure it cannot be deleted. */
 
 	/*
 	 * This domain name exists (see wildcard clarification draft).
 	 */
 	unsigned     is_existing : 1;
 	unsigned     is_apex : 1;
-	unsigned     has_SOA : 1;
-#ifdef NSEC3
-#ifdef FULL_PREHASH
-	/* if the domain has an NSEC3 for it, use cover ptr to get it. */
-	unsigned     nsec3_is_exact : 1;
-	/* same but on parent side */
-	unsigned     nsec3_ds_parent_is_exact : 1;
-#endif /* FULL_PREHASH */
-#endif /* NSEC3 */
 };
 
 struct zone
 {
-	zone_type   *next;
-	domain_type *apex;
-	rrset_type  *soa_rrset;
-	rrset_type  *soa_nx_rrset; /* see bug #103 */
-	rrset_type  *ns_rrset;
+	struct radnode *node; /* this entry in zonetree */
+	domain_type* apex;
+	rrset_type*  soa_rrset;
+	rrset_type*  soa_nx_rrset; /* see bug #103 */
+	rrset_type*  ns_rrset;
 #ifdef NSEC3
-	rr_type	    *nsec3_soa_rr; /* rrset with SOA bit set */
-	domain_type *nsec3_last; /* last domain with nsec3, wraps */
-#ifndef FULL_PREHASH
-	rbtree_t    *nsec3_domains;
-#endif /* !FULL_PREHASH */
-#endif /* NSEC3 */
-
-#if defined(BIND8_STATS) && defined(USE_ZONE_STATS)
-	struct nsdst st;
-#endif /* defined(BIND8_STATS) && defined(USE_ZONE_STATS) */
-
-	struct zone_options *opts;
-	uint32_t     number;
-	uint8_t*     dirty; /* array of dirty-flags, per child */
+	rr_type* nsec3_param; /* NSEC3PARAM RR of chain in use or NULL */
+	domain_type* nsec3_last; /* last domain with nsec3, wraps */
+	/* in these trees, the root contains an elem ptr to the radtree* */
+	rbtree_t* nsec3tree; /* tree with relevant NSEC3 domains */
+	rbtree_t* hashtree; /* tree, hashed NSEC3precompiled domains */
+	rbtree_t* wchashtree; /* tree, wildcard hashed domains */
+	rbtree_t* dshashtree; /* tree, ds-parent-hash domains */
+#endif
+	struct zone_options* opts;
 	unsigned     is_secure : 1; /* zone uses DNSSEC */
-	unsigned     updated : 1; /* zone SOA was updated */
 	unsigned     is_ok : 1; /* zone has not expired. */
+	unsigned     is_changed : 1; /* zone was changed by AXFR */
 };
-
-#ifdef NSEC3
-#ifndef FULL_PREHASH
-struct nsec3_domain {
-	rbnode_t node;
-	struct domain *nsec3_domain;
-	struct domain *covers;
-};
-
-struct nsec3_mod_domain {
-	rbnode_t node;
-	struct domain *domain;
-};
-#endif /* !FULL_PREHASH */
-#endif /* NSEC3 */
 
 /* a RR in DNS */
 struct rr {
-	domain_type     *owner;
-	rdata_atom_type *rdatas;
+	domain_type*     owner;
+	rdata_atom_type* rdatas;
 	uint32_t         ttl;
 	uint16_t         type;
 	uint16_t         klass;
@@ -143,9 +144,9 @@ struct rr {
  */
 struct rrset
 {
-	rrset_type *next;
-	zone_type  *zone;
-	rr_type    *rrs;
+	rrset_type* next;
+	zone_type*  zone;
+	rr_type*    rrs;
 	uint16_t    rr_count;
 };
 
@@ -157,10 +158,10 @@ struct rrset
 union rdata_atom
 {
 	/* RDATA_WF_COMPRESSED_DNAME, RDATA_WF_UNCOMPRESSED_DNAME */
-	domain_type *domain;
+	domain_type* domain;
 
 	/* Default. */
-	uint16_t    *data;
+	uint16_t*    data;
 };
 
 /*
@@ -171,8 +172,8 @@ domain_table_type *domain_table_create(region_type *region);
 /*
  * Search the domain table for a match and the closest encloser.
  */
-int domain_table_search(domain_table_type *table,
-			const dname_type  *dname,
+int domain_table_search(domain_table_type* table,
+			const dname_type* dname,
 			domain_type      **closest_match,
 			domain_type      **closest_encloser);
 
@@ -181,17 +182,17 @@ int domain_table_search(domain_table_type *table,
  * root domain).
  */
 static inline uint32_t
-domain_table_count(domain_table_type *table)
+domain_table_count(domain_table_type* table)
 {
-	return table->names_to_domains->count;
+	return table->nametree->count;
 }
 
 /*
  * Find the specified dname in the domain_table.  NULL is returned if
  * there is no exact match.
  */
-domain_type *domain_table_find(domain_table_type *table,
-			       const dname_type  *dname);
+domain_type* domain_table_find(domain_table_type* table,
+			       const dname_type* dname);
 
 /*
  * Insert a domain name in the domain table.  If the domain name is
@@ -203,6 +204,17 @@ domain_type *domain_table_find(domain_table_type *table,
 domain_type *domain_table_insert(domain_table_type *table,
 				 const dname_type  *dname);
 
+/* put domain into nsec3 hash space tree */
+void zone_add_domain_in_hash_tree(region_type* region, rbtree_t** tree,
+	int (*cmpf)(const void*, const void*), domain_type* domain,
+	rbnode_t* node);
+void zone_del_domain_in_hash_tree(rbtree_t* tree, rbnode_t* node);
+void hash_tree_clear(rbtree_t* tree);
+void hash_tree_delete(region_type* region, rbtree_t* tree);
+void prehash_clear(domain_table_type* table);
+void prehash_add(domain_table_type* table, domain_type* domain);
+void prehash_del(domain_table_type* table, domain_type* domain);
+int domain_is_prehash(domain_table_type* table, domain_type* domain);
 
 /*
  * Iterate over all the domain names in the domain tree.
@@ -210,87 +222,80 @@ domain_type *domain_table_insert(domain_table_type *table,
 typedef int (*domain_table_iterator_type)(domain_type *node,
 					   void *user_data);
 
-int domain_table_iterate(domain_table_type *table,
+int domain_table_iterate(domain_table_type* table,
 			  domain_table_iterator_type iterator,
-			  void *user_data);
+			  void* user_data);
 
 /*
  * Add an RRset to the specified domain.  Updates the is_existing flag
  * as required.
  */
-void domain_add_rrset(domain_type *domain, rrset_type *rrset);
+void domain_add_rrset(domain_type* domain, rrset_type* rrset);
 
-rrset_type *domain_find_rrset(domain_type *domain, zone_type *zone, uint16_t type);
-rrset_type *domain_find_any_rrset(domain_type *domain, zone_type *zone);
+rrset_type* domain_find_rrset(domain_type* domain, zone_type* zone, uint16_t type);
+rrset_type* domain_find_any_rrset(domain_type* domain, zone_type* zone);
 
-zone_type *domain_find_zone(domain_type *domain);
-zone_type *domain_find_parent_zone(zone_type *zone);
+zone_type* domain_find_zone(domain_type* domain);
+zone_type* domain_find_parent_zone(zone_type* zone);
 
-#ifndef FULL_PREHASH
-domain_type *domain_find_zone_apex(domain_type *domain);
-#endif /* !FULL_PREHASH */
-domain_type *domain_find_ns_rrsets(domain_type *domain, zone_type *zone, rrset_type **ns);
+domain_type* domain_find_ns_rrsets(domain_type* domain, zone_type* zone, rrset_type **ns);
 
-int domain_is_glue(domain_type *domain, zone_type *zone);
+int domain_is_glue(domain_type* domain, zone_type* zone);
 
-rrset_type *domain_find_non_cname_rrset(domain_type *domain, zone_type *zone);
+rrset_type* domain_find_non_cname_rrset(domain_type* domain, zone_type* zone);
 
-domain_type *domain_wildcard_child(domain_type *domain);
+domain_type* domain_wildcard_child(domain_type* domain);
 
-int zone_is_secure(zone_type *zone);
+int zone_is_secure(zone_type* zone);
 
 static inline const dname_type *
-domain_dname(domain_type *domain)
+domain_dname(domain_type* domain)
 {
-	return (const dname_type *) domain->node.key;
+	return domain->dname;
 }
 
 static inline domain_type *
-domain_previous(domain_type *domain)
+domain_previous(domain_type* domain)
 {
-	rbnode_t *prev = rbtree_previous((rbnode_t *) domain);
-	return prev == RBTREE_NULL ? NULL : (domain_type *) prev;
+	struct radnode* prev = radix_prev(domain->rnode);
+	return prev == NULL ? NULL : (domain_type*)prev->elem;
 }
 
 static inline domain_type *
-domain_next(domain_type *domain)
+domain_next(domain_type* domain)
 {
-	rbnode_t *next = rbtree_next((rbnode_t *) domain);
-	return next == RBTREE_NULL ? NULL : (domain_type *) next;
+	struct radnode* next = radix_next(domain->rnode);
+	return next == NULL ? NULL : (domain_type*)next->elem;
 }
+
+/* easy comparison for subdomain, true if d1 is subdomain of d2. */
+static inline int domain_is_subdomain(domain_type* d1, domain_type* d2)
+{ return dname_is_subdomain(domain_dname(d1), domain_dname(d2)); }
+/* easy printout, to static buffer of dname_to_string, fqdn. */
+static inline const char* domain_to_string(domain_type* domain)
+{ return dname_to_string(domain_dname(domain), NULL); }
 
 /*
  * The type covered by the signature in the specified RRSIG RR.
  */
-uint16_t rr_rrsig_type_covered(rr_type *rr);
+uint16_t rr_rrsig_type_covered(rr_type* rr);
 
 typedef struct namedb namedb_type;
 struct namedb
 {
-	region_type       *region;
-#ifdef NSEC3
-#ifndef FULL_PREHASH
-	region_type       *nsec3_region;
-	region_type       *nsec3_mod_region;
-	rbtree_t          *nsec3_mod_domains;
-#endif /* !FULL_PREHASH */
-#endif /* NSEC3 */
-	domain_table_type *domains;
-	zone_type         *zones;
-	size_t	  	  zone_count;
-	char              *filename;
-	FILE              *fd;
+	region_type*       region;
+	domain_table_type* domains;
+	struct radtree*    zonetree;
+	struct udb_base*   udb;
 	/* the timestamp on the ixfr.db file */
 	struct timeval	  diff_timestamp;
-	/* the CRC on the nsd.db file and position of CRC in the db file */
-	uint32_t	  crc;
-	off_t		  crc_pos;
 	/* if diff_skip=1, diff_pos contains the nsd.diff place to continue */
 	uint8_t		  diff_skip;
 	off_t		  diff_pos;
 };
 
 static inline int rdata_atom_is_domain(uint16_t type, size_t index);
+static inline int rdata_atom_is_literal_domain(uint16_t type, size_t index);
 
 static inline domain_type *
 rdata_atom_domain(rdata_atom_type atom)
@@ -311,27 +316,48 @@ rdata_atom_data(rdata_atom_type atom)
 }
 
 
+/* Find the zone for the specified dname in DB. */
+zone_type *namedb_find_zone(namedb_type *db, const dname_type *dname);
 /*
- * Find the zone for the specified DOMAIN in DB.
+ * Delete a domain name from the domain table.  Removes dname_info node.
+ * Only deletes if usage is 0, has no rrsets and no children.  Checks parents
+ * for deletion as well.  Adjusts numberlist(domain.number), and 
+ * wcard_child closest match.
  */
-zone_type *namedb_find_zone(namedb_type *db, domain_type *domain);
-
-/* dbcreate.c */
-struct namedb *namedb_new(const char *filename);
-int namedb_save(struct namedb *db);
-void namedb_discard(struct namedb *db);
+void domain_table_deldomain(namedb_type* db, domain_type* domain);
 
 
+/** dbcreate.c */
+int udb_write_rr(struct udb_base* udb, struct udb_ptr* z, rr_type* rr);
+void udb_del_rr(struct udb_base* udb, struct udb_ptr* z, rr_type* rr);
+int write_zone_to_udb(struct udb_base* udb, zone_type* zone, time_t mtime);
+/** marshal rdata into buffer, must be MAX_RDLENGTH in size */
+size_t rr_marshal_rdata(rr_type* rr, uint8_t* rdata, size_t sz);
 /* dbaccess.c */
-int namedb_lookup (struct namedb    *db,
-		   const dname_type *dname,
+int namedb_lookup (struct namedb* db,
+		   const dname_type* dname,
 		   domain_type     **closest_match,
 		   domain_type     **closest_encloser);
 /* pass number of children (to alloc in dirty array */
-struct namedb *namedb_open(const char *filename, struct nsd_options* opt,
-	size_t num_children);
-void namedb_fd_close(struct namedb *db);
-void namedb_close(struct namedb *db);
+struct namedb *namedb_open(const char *filename, struct nsd_options* opt);
+void namedb_close_udb(struct namedb* db);
+void namedb_close(struct namedb* db);
+void namedb_check_zonefiles(struct namedb* db, struct nsd_options* opt,
+	struct udb_base* taskudb, struct udb_ptr* last_task);
+void namedb_check_zonefile(struct namedb* db, struct udb_base* taskudb,
+	struct udb_ptr* last_task, struct zone_options* zo);
+/** zone one zonefile into memory and revert on parse error, write to udb */
+void namedb_read_zonefile(struct namedb* db, struct zone* zone,
+	struct udb_base* taskudb, struct udb_ptr* last_task);
+void apex_rrset_checks(struct namedb* db, rrset_type* rrset,
+	domain_type* domain);
+zone_type* namedb_zone_create(namedb_type* db, const dname_type* dname,
+        struct zone_options* zopt);
+void namedb_zone_delete(namedb_type* db, zone_type* zone);
+void namedb_write_zonefile(namedb_type* db, struct zone_options* zopt);
+void namedb_write_zonefiles(namedb_type* db, struct nsd_options* options);
+int create_dirs(const char* path);
+void allocate_domain_nsec3(domain_table_type *table, domain_type *result);
 
 static inline int
 rdata_atom_is_domain(uint16_t type, size_t index)
@@ -341,6 +367,15 @@ rdata_atom_is_domain(uint16_t type, size_t index)
 	return (index < descriptor->maximum
 		&& (descriptor->wireformat[index] == RDATA_WF_COMPRESSED_DNAME
 		    || descriptor->wireformat[index] == RDATA_WF_UNCOMPRESSED_DNAME));
+}
+
+static inline int
+rdata_atom_is_literal_domain(uint16_t type, size_t index)
+{
+	const rrtype_descriptor_type *descriptor
+		= rrtype_descriptor_by_type(type);
+	return (index < descriptor->maximum
+		&& (descriptor->wireformat[index] == RDATA_WF_LITERAL_DNAME));
 }
 
 static inline rdata_wireformat_type
@@ -353,7 +388,7 @@ rdata_atom_wireformat_type(uint16_t type, size_t index)
 }
 
 static inline uint16_t
-rrset_rrtype(rrset_type *rrset)
+rrset_rrtype(rrset_type* rrset)
 {
 	assert(rrset);
 	assert(rrset->rr_count > 0);
@@ -361,35 +396,11 @@ rrset_rrtype(rrset_type *rrset)
 }
 
 static inline uint16_t
-rrset_rrclass(rrset_type *rrset)
+rrset_rrclass(rrset_type* rrset)
 {
 	assert(rrset);
 	assert(rrset->rr_count > 0);
 	return rrset->rrs[0].klass;
 }
-
-/**
- * Allocate and initialize a struct namedb.
- * Returns a pointer to a valid struct namedb or NULL on failure.
- */
-struct namedb * namedb_create(void);
-
-/**
- * Destroy a struct namedb created using the namedb_create function.
- * Frees all regions associated with the namedb structure.
- */
-void namedb_destroy(struct namedb *db);
-
-#ifdef NSEC3
-#ifndef FULL_PREHASH
-int zone_nsec3_domains_create(struct namedb *db, struct zone *zone);
-int zone_nsec3_domains_destroy(struct namedb *db, struct zone *zone);
-int namedb_add_nsec3_domain(struct namedb *db, struct domain *domain, struct zone *zone);
-int namedb_del_nsec3_domain(struct namedb *db, struct domain *domain, struct zone *zone);
-int namedb_nsec3_mod_domains_create(struct namedb *db);
-int namedb_nsec3_mod_domains_destroy(struct namedb *db);
-int namedb_add_nsec3_mod_domain(struct namedb *db, struct domain *domain);
-#endif /* !FULL_PREHASH */
-#endif /* NSEC3 */
 
 #endif

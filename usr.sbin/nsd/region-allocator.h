@@ -1,7 +1,7 @@
 /*
  * region-allocator.h -- region based memory allocator.
  *
- * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -129,6 +129,10 @@ void region_dump_stats(region_type *region, FILE *out);
 
 /* get size of recyclebin */
 size_t region_get_recycle_size(region_type* region);
+/* get size of region memory in use */
+size_t region_get_mem(region_type* region);
+/* get size of region memory unused */
+size_t region_get_mem_unused(region_type* region);
 
 /* Debug print REGION statistics to LOG. */
 void region_log_stats(region_type *region);

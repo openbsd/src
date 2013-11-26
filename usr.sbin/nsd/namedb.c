@@ -1,7 +1,7 @@
 /*
  * namedb.c -- common namedb operations.
  *
- * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -16,14 +16,14 @@
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
 
 #include "namedb.h"
+#include "nsec3.h"
 
 static domain_type *
-allocate_domain_info(domain_table_type *table,
-		     const dname_type *dname,
-		     domain_type *parent)
+allocate_domain_info(domain_table_type* table,
+		     const dname_type* dname,
+		     domain_type* parent)
 {
 	domain_type *result;
 
@@ -33,70 +33,312 @@ allocate_domain_info(domain_table_type *table,
 
 	result = (domain_type *) region_alloc(table->region,
 					      sizeof(domain_type));
-	result->node.key = dname_partial_copy(
+	result->dname = dname_partial_copy(
 		table->region, dname, domain_dname(parent)->label_count + 1);
 	result->parent = parent;
-	result->nextdiff = NULL;
 	result->wildcard_child_closest_match = result;
 	result->rrsets = NULL;
-	result->number = 0;
+	result->usage = 0;
 #ifdef NSEC3
-	result->nsec3_cover = NULL;
-#ifdef FULL_PREHASH
-	result->nsec3_wcard_child_cover = NULL;
-	result->nsec3_ds_parent_cover = NULL;
-	result->nsec3_lookup = NULL;
-	result->nsec3_is_exact = 0;
-	result->nsec3_ds_parent_is_exact = 0;
-#endif /* FULL_PREHASH */
-#endif /* NSEC3 */
+	result->nsec3 = NULL;
+#endif
 	result->is_existing = 0;
 	result->is_apex = 0;
-	result->has_SOA = 0;
+	assert(table->numlist_last); /* it exists because root exists */
+	/* push this domain at the end of the numlist */
+	result->number = table->numlist_last->number+1;
+	result->numlist_next = NULL;
+	result->numlist_prev = table->numlist_last;
+	table->numlist_last->numlist_next = result;
+	table->numlist_last = result;
 
 	return result;
 }
 
-domain_table_type *
-domain_table_create(region_type *region)
+#ifdef NSEC3
+void
+allocate_domain_nsec3(domain_table_type* table, domain_type* result)
 {
-	const dname_type *origin;
-	domain_table_type *result;
-	domain_type *root;
+	if(result->nsec3)
+		return;
+	result->nsec3 = (struct nsec3_domain_data*) region_alloc(table->region,
+		sizeof(struct nsec3_domain_data));
+	result->nsec3->nsec3_cover = NULL;
+	result->nsec3->nsec3_wcard_child_cover = NULL;
+	result->nsec3->nsec3_ds_parent_cover = NULL;
+	result->nsec3->nsec3_is_exact = 0;
+	result->nsec3->nsec3_ds_parent_is_exact = 0;
+	result->nsec3->have_nsec3_hash = 0;
+	result->nsec3->have_nsec3_wc_hash = 0;
+	result->nsec3->have_nsec3_ds_parent_hash = 0;
+	result->nsec3->prehash_prev = NULL;
+	result->nsec3->prehash_next = NULL;
+	result->nsec3->nsec3_node.key = NULL;
+	result->nsec3->hash_node.key = NULL;
+	result->nsec3->wchash_node.key = NULL;
+	result->nsec3->dshash_node.key = NULL;
+}
+#endif /* NSEC3 */
+
+/** make the domain last in the numlist, changes numbers of domains */
+static void
+numlist_make_last(domain_table_type* table, domain_type* domain)
+{
+	size_t sw;
+	domain_type* last = table->numlist_last;
+	if(domain == last)
+		return;
+	/* swap numbers with the last element */
+	sw = domain->number;
+	domain->number = last->number;
+	last->number = sw;
+	/* swap list position with the last element */
+	assert(domain->numlist_next);
+	assert(last->numlist_prev);
+	if(domain->numlist_next != last) {
+		/* case 1: there are nodes between domain .. last */
+		domain_type* span_start = domain->numlist_next;
+		domain_type* span_end = last->numlist_prev;
+		/* these assignments walk the new list from start to end */
+		if(domain->numlist_prev)
+			domain->numlist_prev->numlist_next = last;
+		last->numlist_prev = domain->numlist_prev;
+		last->numlist_next = span_start;
+		span_start->numlist_prev = last;
+		span_end->numlist_next = domain;
+		domain->numlist_prev = span_end;
+		domain->numlist_next = NULL;
+	} else {
+		/* case 2: domain and last are neighbors */
+		/* these assignments walk the new list from start to end */
+		if(domain->numlist_prev)
+			domain->numlist_prev->numlist_next = last;
+		last->numlist_prev = domain->numlist_prev;
+		last->numlist_next = domain;
+		domain->numlist_prev = last;
+		domain->numlist_next = NULL;
+	}
+	table->numlist_last = domain;
+}
+
+/** pop the biggest domain off the numlist */
+static domain_type*
+numlist_pop_last(domain_table_type* table)
+{
+	domain_type* d = table->numlist_last;
+	table->numlist_last = table->numlist_last->numlist_prev;
+	if(table->numlist_last)
+		table->numlist_last->numlist_next = NULL;
+	return d;
+}
+
+/** see if a domain is eligible to be deleted, and thus is not used */
+static int
+domain_can_be_deleted(domain_type* domain)
+{
+	domain_type* n;
+	/* it has data or it has usage, do not delete it */
+	if(domain->rrsets) return 0;
+	if(domain->usage) return 0;
+	n = domain_next(domain);
+	/* it has children domains, do not delete it */
+	if(n && domain_is_subdomain(n, domain))
+		return 0;
+	return 1;
+}
+
+#ifdef NSEC3
+/** see if domain is on the prehash list */
+int domain_is_prehash(domain_table_type* table, domain_type* domain)
+{
+	if(domain->nsec3
+		&& (domain->nsec3->prehash_prev || domain->nsec3->prehash_next))
+		return 1;
+	return (table->prehash_list == domain);
+}
+
+/** remove domain node from NSEC3 tree in hash space */
+void
+zone_del_domain_in_hash_tree(rbtree_t* tree, rbnode_t* node)
+{
+	if(!node->key)
+		return;
+	rbtree_delete(tree, node->key);
+	/* note that domain is no longer in the tree */
+	node->key = NULL;
+}
+
+/** clear the prehash list */
+void prehash_clear(domain_table_type* table)
+{
+	domain_type* d = table->prehash_list, *n;
+	while(d) {
+		n = d->nsec3->prehash_next;
+		d->nsec3->prehash_prev = NULL;
+		d->nsec3->prehash_next = NULL;
+		d = n;
+	}
+	table->prehash_list = NULL;
+}
+
+/** add domain to prehash list */
+void
+prehash_add(domain_table_type* table, domain_type* domain)
+{
+	if(domain_is_prehash(table, domain))
+		return;
+	allocate_domain_nsec3(table, domain);
+	domain->nsec3->prehash_next = table->prehash_list;
+	if(table->prehash_list)
+		table->prehash_list->nsec3->prehash_prev = domain;
+	table->prehash_list = domain;
+}
+
+/** remove domain from prehash list */
+void
+prehash_del(domain_table_type* table, domain_type* domain)
+{
+	if(domain->nsec3->prehash_next)
+		domain->nsec3->prehash_next->nsec3->prehash_prev =
+			domain->nsec3->prehash_prev;
+	if(domain->nsec3->prehash_prev)
+		domain->nsec3->prehash_prev->nsec3->prehash_next =
+			domain->nsec3->prehash_next;
+	else	table->prehash_list = domain->nsec3->prehash_next;
+	domain->nsec3->prehash_next = NULL;
+	domain->nsec3->prehash_prev = NULL;
+}
+#endif /* NSEC3 */
+
+/** perform domain name deletion */
+static void
+do_deldomain(namedb_type* db, domain_type* domain)
+{
+	assert(domain && domain->parent); /* exists and not root */
+	/* first adjust the number list so that domain is the last one */
+	numlist_make_last(db->domains, domain);
+	/* pop off the domain from the number list */
+	(void)numlist_pop_last(db->domains);
+
+#ifdef NSEC3
+	/* if on prehash list, remove from prehash */
+	if(domain_is_prehash(db->domains, domain))
+		prehash_del(db->domains, domain);
+
+	/* see if nsec3-nodes are used */
+	if(domain->nsec3) {
+		if(domain->nsec3->nsec3_node.key)
+			zone_del_domain_in_hash_tree(nsec3_tree_zone(db, domain)
+				->nsec3tree, &domain->nsec3->nsec3_node);
+		if(domain->nsec3->hash_node.key)
+			zone_del_domain_in_hash_tree(nsec3_tree_zone(db, domain)
+				->hashtree, &domain->nsec3->hash_node);
+		if(domain->nsec3->wchash_node.key)
+			zone_del_domain_in_hash_tree(nsec3_tree_zone(db, domain)
+				->wchashtree, &domain->nsec3->wchash_node);
+		if(domain->nsec3->dshash_node.key)
+			zone_del_domain_in_hash_tree(nsec3_tree_dszone(db, domain)
+				->dshashtree, &domain->nsec3->dshash_node);
+		region_recycle(db->domains->region, domain->nsec3,
+			sizeof(struct nsec3_domain_data));
+	}
+#endif /* NSEC3 */
+
+	/* see if this domain is someones wildcard-child-closest-match,
+	 * which can only be the parent, and then it should use the
+	 * one-smaller than this domain as closest-match. */
+	if(domain->parent->wildcard_child_closest_match == domain)
+		domain->parent->wildcard_child_closest_match =
+			domain_previous(domain);
+
+	/* actual removal */
+	radix_delete(db->domains->nametree, domain->rnode);
+	region_recycle(db->domains->region, (dname_type*)domain->dname,
+		dname_total_size(domain->dname));
+	region_recycle(db->domains->region, domain, sizeof(domain_type));
+}
+
+void
+domain_table_deldomain(namedb_type* db, domain_type* domain)
+{
+	while(domain_can_be_deleted(domain)) {
+		/* delete it */
+		do_deldomain(db, domain);
+		/* test parent */
+		domain = domain->parent;
+	}
+}
+
+/** clear hash tree */
+void
+hash_tree_clear(rbtree_t* tree)
+{
+	rbnode_t* n;
+	if(!tree) return;
+
+	/* note that elements are no longer in the tree */
+	for(n=rbtree_first(tree); n!=RBTREE_NULL; n=rbtree_next(n)) {
+		n->key = NULL;
+	}
+	tree->count = 0;
+	tree->root = RBTREE_NULL;
+}
+
+void hash_tree_delete(region_type* region, rbtree_t* tree)
+{
+	region_recycle(region, tree, sizeof(rbtree_t));
+}
+
+/** add domain nsec3 node to hashedspace tree */
+void zone_add_domain_in_hash_tree(region_type* region, rbtree_t** tree,
+	int (*cmpf)(const void*, const void*),
+	domain_type* domain, rbnode_t* node)
+{
+	if(!*tree)
+		*tree = rbtree_create(region, cmpf);
+	memset(node, 0, sizeof(rbnode_t));
+	node->key = domain;
+	rbtree_insert(*tree, node);
+}
+
+domain_table_type *
+domain_table_create(region_type* region)
+{
+	const dname_type* origin;
+	domain_table_type* result;
+	domain_type* root;
 
 	assert(region);
 
 	origin = dname_make(region, (uint8_t *) "", 0);
 
 	root = (domain_type *) region_alloc(region, sizeof(domain_type));
-	root->node.key = origin;
+	root->dname = origin;
 	root->parent = NULL;
-	root->nextdiff = NULL;
 	root->wildcard_child_closest_match = root;
 	root->rrsets = NULL;
 	root->number = 1; /* 0 is used for after header */
+	root->usage = 1; /* do not delete root, ever */
 	root->is_existing = 0;
 	root->is_apex = 0;
-	root->has_SOA = 0;
+	root->numlist_prev = NULL;
+	root->numlist_next = NULL;
 #ifdef NSEC3
-	root->nsec3_cover = NULL;
-#ifdef FULL_PREHASH
-	root->nsec3_is_exact = 0;
-	root->nsec3_ds_parent_is_exact = 0;
-	root->nsec3_wcard_child_cover = NULL;
-	root->nsec3_ds_parent_cover = NULL;
-	root->nsec3_lookup = NULL;
-#endif /* FULL_PREHASH */
-#endif /* NSEC3 */
+	root->nsec3 = NULL;
+#endif
 
 	result = (domain_table_type *) region_alloc(region,
 						    sizeof(domain_table_type));
 	result->region = region;
-	result->names_to_domains = rbtree_create(
-		region, (int (*)(const void *, const void *)) dname_compare);
-	rbtree_insert(result->names_to_domains, (rbnode_t *) root);
+	result->nametree = radix_tree_create(region);
+	root->rnode = radname_insert(result->nametree, dname_name(root->dname),
+		root->dname->name_size, root);
 
 	result->root = root;
+	result->numlist_last = root;
+#ifdef NSEC3
+	result->prehash_list = NULL;
+#endif
 
 	return result;
 }
@@ -115,7 +357,9 @@ domain_table_search(domain_table_type *table,
 	assert(closest_match);
 	assert(closest_encloser);
 
-	exact = rbtree_find_less_equal(table->names_to_domains, dname, (rbnode_t **) closest_match);
+	exact = radname_find_less_equal(table->nametree, dname_name(dname),
+		dname->name_size, (struct radnode**)closest_match);
+	*closest_match = (domain_type*)((*(struct radnode**)closest_match)->elem);
 	assert(*closest_match);
 
 	*closest_encloser = *closest_match;
@@ -135,11 +379,11 @@ domain_table_search(domain_table_type *table,
 }
 
 domain_type *
-domain_table_find(domain_table_type *table,
-		  const dname_type *dname)
+domain_table_find(domain_table_type* table,
+		  const dname_type* dname)
 {
-	domain_type *closest_match;
-	domain_type *closest_encloser;
+	domain_type* closest_match;
+	domain_type* closest_encloser;
 	int exact;
 
 	exact = domain_table_search(
@@ -149,12 +393,12 @@ domain_table_find(domain_table_type *table,
 
 
 domain_type *
-domain_table_insert(domain_table_type *table,
-		    const dname_type  *dname)
+domain_table_insert(domain_table_type* table,
+		    const dname_type* dname)
 {
-	domain_type *closest_match;
-	domain_type *closest_encloser;
-	domain_type *result;
+	domain_type* closest_match;
+	domain_type* closest_encloser;
+	domain_type* result;
 	int exact;
 
 	assert(table);
@@ -172,8 +416,9 @@ domain_table_insert(domain_table_type *table,
 			result = allocate_domain_info(table,
 						      dname,
 						      closest_encloser);
-			rbtree_insert(table->names_to_domains, (rbnode_t *) result);
-			result->number = table->names_to_domains->count;
+			result->rnode = radname_insert(table->nametree,
+				dname_name(result->dname),
+				result->dname->name_size, result);
 
 			/*
 			 * If the newly added domain name is larger
@@ -199,26 +444,21 @@ domain_table_insert(domain_table_type *table,
 }
 
 int
-domain_table_iterate(domain_table_type *table,
+domain_table_iterate(domain_table_type* table,
 		    domain_table_iterator_type iterator,
-		    void *user_data)
+		    void* user_data)
 {
-	const void *dname;
-	void *node;
 	int error = 0;
-
-	assert(table);
-
-	RBTREE_WALK(table->names_to_domains, dname, node) {
-		error += iterator((domain_type *) node, user_data);
+	struct radnode* n;
+	for(n = radix_first(table->nametree); n; n = radix_next(n)) {
+		error += iterator((domain_type*)n->elem, user_data);
 	}
-
 	return error;
 }
 
 
 void
-domain_add_rrset(domain_type *domain, rrset_type *rrset)
+domain_add_rrset(domain_type* domain, rrset_type* rrset)
 {
 #if 0 	/* fast */
 	rrset->next = domain->rrsets;
@@ -240,9 +480,9 @@ domain_add_rrset(domain_type *domain, rrset_type *rrset)
 
 
 rrset_type *
-domain_find_rrset(domain_type *domain, zone_type *zone, uint16_t type)
+domain_find_rrset(domain_type* domain, zone_type* zone, uint16_t type)
 {
-	rrset_type *result = domain->rrsets;
+	rrset_type* result = domain->rrsets;
 
 	while (result) {
 		if (result->zone == zone && rrset_rrtype(result) == type) {
@@ -254,9 +494,9 @@ domain_find_rrset(domain_type *domain, zone_type *zone, uint16_t type)
 }
 
 rrset_type *
-domain_find_any_rrset(domain_type *domain, zone_type *zone)
+domain_find_any_rrset(domain_type* domain, zone_type* zone)
 {
-	rrset_type *result = domain->rrsets;
+	rrset_type* result = domain->rrsets;
 
 	while (result) {
 		if (result->zone == zone) {
@@ -268,9 +508,9 @@ domain_find_any_rrset(domain_type *domain, zone_type *zone)
 }
 
 zone_type *
-domain_find_zone(domain_type *domain)
+domain_find_zone(domain_type* domain)
 {
-	rrset_type *rrset;
+	rrset_type* rrset;
 	while (domain) {
 		for (rrset = domain->rrsets; rrset; rrset = rrset->next) {
 			if (rrset_rrtype(rrset) == TYPE_SOA) {
@@ -282,22 +522,10 @@ domain_find_zone(domain_type *domain)
 	return NULL;
 }
 
-#ifndef FULL_PREHASH
-domain_type *
-domain_find_zone_apex(domain_type *domain) {
-	while (domain != NULL) {
-		if (domain->has_SOA != 0)
-			return domain;
-		domain = domain->parent;
-	}
-	return NULL;
-}
-#endif /* !FULL_PREHASH */
-
 zone_type *
-domain_find_parent_zone(zone_type *zone)
+domain_find_parent_zone(zone_type* zone)
 {
-	rrset_type *rrset;
+	rrset_type* rrset;
 
 	assert(zone);
 
@@ -310,7 +538,7 @@ domain_find_parent_zone(zone_type *zone)
 }
 
 domain_type *
-domain_find_ns_rrsets(domain_type *domain, zone_type *zone, rrset_type **ns)
+domain_find_ns_rrsets(domain_type* domain, zone_type* zone, rrset_type **ns)
 {
 	while (domain && domain != zone->apex) {
 		*ns = domain_find_rrset(domain, zone, TYPE_NS);
@@ -324,18 +552,18 @@ domain_find_ns_rrsets(domain_type *domain, zone_type *zone, rrset_type **ns)
 }
 
 int
-domain_is_glue(domain_type *domain, zone_type *zone)
+domain_is_glue(domain_type* domain, zone_type* zone)
 {
-	rrset_type *unused;
-	domain_type *ns_domain = domain_find_ns_rrsets(domain, zone, &unused);
+	rrset_type* unused;
+	domain_type* ns_domain = domain_find_ns_rrsets(domain, zone, &unused);
 	return (ns_domain != NULL &&
 		domain_find_rrset(ns_domain, zone, TYPE_SOA) == NULL);
 }
 
 domain_type *
-domain_wildcard_child(domain_type *domain)
+domain_wildcard_child(domain_type* domain)
 {
-	domain_type *wildcard_child;
+	domain_type* wildcard_child;
 
 	assert(domain);
 	assert(domain->wildcard_child_closest_match);
@@ -351,14 +579,14 @@ domain_wildcard_child(domain_type *domain)
 }
 
 int
-zone_is_secure(zone_type *zone)
+zone_is_secure(zone_type* zone)
 {
 	assert(zone);
 	return zone->is_secure;
 }
 
 uint16_t
-rr_rrsig_type_covered(rr_type *rr)
+rr_rrsig_type_covered(rr_type* rr)
 {
 	assert(rr->type == TYPE_RRSIG);
 	assert(rr->rdata_count > 0);
@@ -368,20 +596,16 @@ rr_rrsig_type_covered(rr_type *rr)
 }
 
 zone_type *
-namedb_find_zone(namedb_type *db, domain_type *domain)
+namedb_find_zone(namedb_type* db, const dname_type* dname)
 {
-	zone_type *zone;
-
-	for (zone = db->zones; zone; zone = zone->next) {
-		if (zone->apex == domain)
-			break;
-	}
-
-	return zone;
+	struct radnode* n = radname_search(db->zonetree, dname_name(dname),
+		dname->name_size);
+	if(n) return (zone_type*)n->elem;
+	return NULL;
 }
 
 rrset_type *
-domain_find_non_cname_rrset(domain_type *domain, zone_type *zone)
+domain_find_non_cname_rrset(domain_type* domain, zone_type* zone)
 {
 	/* find any rrset type that is not allowed next to a CNAME */
 	/* nothing is allowed next to a CNAME, except RRSIG, NSEC, NSEC3 */
@@ -402,251 +626,12 @@ domain_find_non_cname_rrset(domain_type *domain, zone_type *zone)
 	return NULL;
 }
 
-/**
- * Create namedb.
- *
- */
-struct namedb *
-namedb_create(void)
-{
-	struct namedb *db = NULL;
-	region_type *region = NULL;
-#ifdef NSEC3
-#ifndef FULL_PREHASH
-	region_type *nsec3_region = NULL;
-	region_type *nsec3_mod_region = NULL;
-#endif /* !FULL_PREHASH */
-#endif /* NSEC3 */
-
-#ifdef USE_MMAP_ALLOC
-	region = region_create_custom(mmap_alloc, mmap_free,
-		MMAP_ALLOC_CHUNK_SIZE, MMAP_ALLOC_LARGE_OBJECT_SIZE,
-		MMAP_ALLOC_INITIAL_CLEANUP_SIZE, 1);
-#else /* !USE_MMAP_ALLOC */
-	region = region_create_custom(xalloc, free,
-		DEFAULT_CHUNK_SIZE, DEFAULT_LARGE_OBJECT_SIZE,
-		DEFAULT_INITIAL_CLEANUP_SIZE, 1);
-#endif /* !USE_MMAP_ALLOC */
-	if (region == NULL)
-		return NULL;
-
-#ifdef NSEC3
-#ifndef FULL_PREHASH
-#ifdef USE_MMAP_ALLOC
-	nsec3_region = region_create_custom(mmap_alloc, mmap_free,
-		MMAP_ALLOC_CHUNK_SIZE, MMAP_ALLOC_LARGE_OBJECT_SIZE,
-		MMAP_ALLOC_INITIAL_CLEANUP_SIZE, 1);
-#else /* !USE_MMAP_ALLOC */
-	nsec3_region = region_create_custom(xalloc, free,
-		DEFAULT_CHUNK_SIZE, DEFAULT_LARGE_OBJECT_SIZE,
-		DEFAULT_INITIAL_CLEANUP_SIZE, 1);
-#endif /* !USE_MMAP_ALLOC */
-	if (nsec3_region == NULL) {
-		region_destroy(region);
-		return NULL;
-	}
-#ifdef USE_MMAP_ALLOC
-	nsec3_mod_region = region_create_custom(mmap_alloc, mmap_free,
-		MMAP_ALLOC_CHUNK_SIZE, MMAP_ALLOC_LARGE_OBJECT_SIZE,
-		MMAP_ALLOC_INITIAL_CLEANUP_SIZE, 1);
-#else /* !USE_MMAP_ALLOC */
-	nsec3_mod_region = region_create_custom(xalloc, free,
-		DEFAULT_CHUNK_SIZE, DEFAULT_LARGE_OBJECT_SIZE,
-		DEFAULT_INITIAL_CLEANUP_SIZE, 1);
-#endif /* !USE_MMAP_ALLOC */
-	if (nsec3_mod_region == NULL) {
-		region_destroy(region);
-		region_destroy(nsec3_region);
-		return NULL;
-	}
-#endif /* !FULL_PREHASH */
-#endif /* NSEC3 */
-
-	/* Make a new structure... */
-	db = (namedb_type *) region_alloc(region, sizeof(namedb_type));
-	db->region = region;
-#ifdef NSEC3
-#ifndef FULL_PREHASH
-	db->nsec3_region = nsec3_region;
-	db->nsec3_mod_region = nsec3_mod_region;
-	db->nsec3_mod_domains = NULL;
-#endif /* !FULL_PREHASH */
-#endif /* NSEC3 */
-	db->domains = domain_table_create(region);
-	db->zones = NULL;
-	db->zone_count = 0;
-	db->filename = NULL;
-	db->fd = NULL;
-	db->crc = ~0;
-	db->crc_pos = 0;
-	db->diff_skip = 0;
-	db->diff_pos = 0;
-	return db;
-}
-
-/**
- * Destroy namedb.
- *
- */
-void
-namedb_destroy(struct namedb *db)
-{
-#ifdef NSEC3
-#ifndef FULL_PREHASH
-	region_destroy(db->nsec3_mod_region);
-	db->nsec3_mod_region = NULL;
-	db->nsec3_mod_domains = NULL;
-	region_destroy(db->nsec3_region);
-	db->nsec3_region = NULL;
-#endif /* !FULL_PREHASH */
-#endif /* NSEC3 */
-	region_destroy(db->region);
-}
-
-
-#ifdef NSEC3
-#ifndef FULL_PREHASH
 int
-zone_nsec3_domains_create(struct namedb *db, struct zone *zone)
+namedb_lookup(struct namedb* db,
+	      const dname_type* dname,
+	      domain_type     **closest_match,
+	      domain_type     **closest_encloser)
 {
-	if ((db == NULL) || (zone == NULL))
-		return EINVAL;
-	if (zone->nsec3_domains != NULL)
-		return 0;
-	zone->nsec3_domains = rbtree_create(db->nsec3_region,
-					    dname_compare);
-	if (zone->nsec3_domains == NULL)
-		return ENOMEM;
-	return 0;
+	return domain_table_search(
+		db->domains, dname, closest_match, closest_encloser);
 }
-
-int
-zone_nsec3_domains_destroy(struct namedb *db, struct zone *zone)
-{
-	rbnode_t *node;
-	if ((db == NULL) || (zone == NULL))
-		return EINVAL;
-	if (zone->nsec3_domains == NULL)
-		return 0;
-
-	node = rbtree_postorder_first(zone->nsec3_domains->root);
-	while (node != RBTREE_NULL) {
-		struct nsec3_domain *nsec3_domain =
-			(struct nsec3_domain *) node;
-		node = rbtree_postorder_next(node);
-
-		if (nsec3_domain->covers != NULL) {
-			nsec3_domain->covers->nsec3_cover = NULL;
-		}
-		region_recycle(db->nsec3_region, nsec3_domain,
-			sizeof(*nsec3_domain));
-	}
-	region_recycle(db->nsec3_region, zone->nsec3_domains,
-		sizeof(*(zone->nsec3_domains)));
-	zone->nsec3_domains = NULL;
-	return 0;
-}
-
-
-int
-namedb_add_nsec3_domain(struct namedb *db, struct domain *domain,
-	struct zone *zone)
-{
-	struct nsec3_domain *nsec3_domain;
-	if (zone->nsec3_domains == NULL)
-		return 0;
-	nsec3_domain = (struct nsec3_domain *) region_alloc(db->nsec3_region,
-		sizeof(*nsec3_domain));
-	if (nsec3_domain == NULL)
-		return ENOMEM;
-	nsec3_domain->node.key = domain_dname(domain);
-	nsec3_domain->nsec3_domain = domain;
-	nsec3_domain->covers = NULL;
-	if (rbtree_insert(zone->nsec3_domains, (rbnode_t *) nsec3_domain) == NULL) {
-		region_recycle(db->nsec3_region, nsec3_domain, sizeof(*nsec3_domain));
-	}
-	return 0;
-}
-
-
-int
-namedb_del_nsec3_domain(struct namedb *db, struct domain *domain,
-	struct zone *zone)
-{
-	rbnode_t *node;
-	struct nsec3_domain *nsec3_domain;
-	int error = 0;
-
-	if (zone->nsec3_domains == NULL)
-		return 0;
-
-	node = rbtree_delete(zone->nsec3_domains, domain_dname(domain));
-	if (node == NULL)
-		return 0;
-
-	nsec3_domain = (struct nsec3_domain *) node;
-	if (nsec3_domain->covers != NULL) {
-		/*
-		 * It is possible that this NSEC3 domain was modified
-		 * due to the addition/deletion of another NSEC3 domain.
-		 * Make sure it gets added to the NSEC3 list later by
-		 * making sure it's covered domain is added to the
-		 * NSEC3 mod list. S64#3441
-		 */
-		error = namedb_add_nsec3_mod_domain(db, nsec3_domain->covers);
-		nsec3_domain->covers->nsec3_cover = NULL;
-		nsec3_domain->covers = NULL;
-	}
-	region_recycle(db->nsec3_region, nsec3_domain, sizeof(*nsec3_domain));
-	return error;
-}
-
-
-int
-namedb_nsec3_mod_domains_create(struct namedb *db)
-{
-	if (db == NULL)
-		return EINVAL;
-	namedb_nsec3_mod_domains_destroy(db);
-
-	db->nsec3_mod_domains = rbtree_create(db->nsec3_mod_region, dname_compare);
-	if (db->nsec3_mod_domains == NULL)
-		return ENOMEM;
-	return 0;
-}
-
-
-int
-namedb_nsec3_mod_domains_destroy(struct namedb *db)
-{
-	if (db == NULL)
-		return EINVAL;
-	if (db->nsec3_mod_domains == NULL)
-		return 0;
-	region_free_all(db->nsec3_mod_region);
-	db->nsec3_mod_domains = NULL;
-	return 0;
-}
-
-int
-namedb_add_nsec3_mod_domain(struct namedb *db, struct domain *domain)
-{
-	struct nsec3_mod_domain *nsec3_mod_domain;
-	nsec3_mod_domain = (struct nsec3_mod_domain *)
-		region_alloc(db->nsec3_mod_region, sizeof(*nsec3_mod_domain));
-	if (nsec3_mod_domain == NULL) {
-		log_msg(LOG_ERR,
-			"memory allocation failure on modified domain");
-		return ENOMEM;
-	}
-	nsec3_mod_domain->node.key = domain_dname(domain);
-	nsec3_mod_domain->domain = domain;
-
-	if (rbtree_insert(db->nsec3_mod_domains, (rbnode_t *) nsec3_mod_domain) == NULL) {
-		region_recycle(db->nsec3_mod_region, nsec3_mod_domain,
-			sizeof(*nsec3_mod_domain));
-	}
-	return 0;
-}
-#endif /* !FULL_PREHASH */
-#endif /* NSEC3 */

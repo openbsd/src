@@ -1,7 +1,7 @@
 /*
  * netio.c -- network I/O support.
  *
- * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -151,32 +151,7 @@ netio_dispatch(netio_type *netio, const struct timespec *timeout, const sigset_t
 				max_fd = handler->fd;
 			}
 			if (handler->event_types & NETIO_EVENT_READ) {
-				extern int slowaccept;
-				extern struct timespec slowaccept_timeout;
-
-				if ((handler->event_types & NETIO_EVENT_ACCEPT) && slowaccept) {
-					if (timespec_compare(&slowaccept_timeout, netio_current_time(netio)) < 0) {
-						slowaccept = 0;
-					}
-					if (slowaccept) {
-						/** Timeout after slowaccept timeout. */
-						struct timespec relative;
-						relative.tv_sec = slowaccept_timeout.tv_sec;
-						relative.tv_nsec = slowaccept_timeout.tv_nsec;
-						timespec_subtract(&relative, netio_current_time(netio));
-						if (!have_timeout ||
-							timespec_compare(&relative, &minimum_timeout) < 0) {
-							have_timeout = 1;
-							minimum_timeout.tv_sec = relative.tv_sec;
-							minimum_timeout.tv_nsec = relative.tv_nsec;
-						}
-					} else {
-						FD_SET(handler->fd, &readfds);
-					}
-				} else {
-					/* Not accept event or not slow accept */
-					FD_SET(handler->fd, &readfds);
-				}
+				FD_SET(handler->fd, &readfds);
 			}
 			if (handler->event_types & NETIO_EVENT_WRITE) {
 				FD_SET(handler->fd, &writefds);

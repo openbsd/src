@@ -1,7 +1,7 @@
 /*
  * configyyrename.h -- renames for config file yy values to avoid conflicts.
  *
- * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -32,6 +32,7 @@
 #define yyps    c_ps
 #define yypv    c_pv
 #define yys     c_s
+#define yyss    c_ss
 #define yy_yys  c_yys
 #define yystate c_state
 #define yytmp   c_tmp
@@ -85,5 +86,34 @@
 #define yyget_leng c_get_leng
 #define yylineno c_lineno
 #define yyget_text c_get_text
+#define yyvsp c_vsp
+#define yyvs c_vs
+#define yytext c_text
+#define yyleng c_leng
+#define yy_meta c__meta
+#define yy_start c__start
+#define yy_nxt c__nxt
+#define yy_n_chars c__n_chars
+#define yy_more_flag c__more_flag
+#define yy_more_len c__more_len
+#define yy_try_NUL_trans c__try_NUL_trans
+#define yy_last_accepting_cpos c__last_accepting_cpos
+#define yy_last_accepting_state c__last_accepting_state
+#define yy_init c__init
+#define yy_base c__base
+#define yy_accept c__accept
+#define yy_c_buf_p c__c_buf_p
+#define yy_chk c__chk
+#define yy_current_buffer c__current_buffer
+#define yy_def c__def
+#define yy_did_buffer_switch_on_eof c__did_buffer_switch_on_eof
+#define yy_ec c__ec
+#define yy_fatal_error c__fatal_error
+#define yy_flex_alloc c__flex_alloc
+#define yy_flex_free c__flex_free
+#define yy_flex_realloc c__flex_realloc
+#define yy_get_next_buffer c__get_next_buffer
+#define yy_get_previous_state c__get_previous_state
+#define yy_hold_char c__hold_char
 
 #endif /* CONFIGYYRENAME_H */

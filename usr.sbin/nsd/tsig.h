@@ -1,7 +1,7 @@
 /*
  * tsig.h -- TSIG definitions (RFC 2845).
  *
- * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -103,7 +103,7 @@ struct tsig_key
 {
 	const dname_type *name;
 	size_t            size;
-	const uint8_t    *data;
+	uint8_t		 *data;
 };
 
 struct tsig_record
@@ -144,6 +144,7 @@ int tsig_init(region_type *region);
  * Add the specified key to the TSIG key table.
  */
 void tsig_add_key(tsig_key_type *key);
+void tsig_del_key(tsig_key_type *key);
 
 /*
  * Add the specified algorithm to the TSIG algorithm table.
@@ -172,12 +173,19 @@ void tsig_create_record(tsig_record_type* tsig,
 /*
  * Like tsig_create_record, with custom region settings.
  * The size params are used to customise the rr_region and context_region.
+ * If region is NULL, no cleanup is attached to it.
  */
 void tsig_create_record_custom(tsig_record_type* tsig,
 			region_type* region,
 			size_t chunk_size,
 			size_t large_object_size,
 			size_t initial_cleanup_size);
+
+/*
+ * Destroy tsig record internals (the main ptr is user alloced).
+ * if region is nonNULL, removes cleanup.
+ */
+void tsig_delete_record(tsig_record_type* tsig, region_type* region);
 
 /*
  * Call this before starting to analyze or signing a sequence of

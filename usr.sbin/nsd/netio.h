@@ -1,7 +1,7 @@
 /*
  * netio.h -- network I/O support.
  *
- * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -50,8 +50,6 @@
 
 #include "region-allocator.h"
 
-#define NETIO_SLOW_ACCEPT_TIMEOUT 2 /* in seconds */
-
 /*
  * The type of events a handler is interested in.  These can be OR'ed
  * together to specify multiple event types.
@@ -62,7 +60,6 @@ enum netio_event_types {
 	NETIO_EVENT_WRITE   = 2,
 	NETIO_EVENT_EXCEPT  = 4,
 	NETIO_EVENT_TIMEOUT = 8,
-	NETIO_EVENT_ACCEPT  = 16
 };
 typedef enum netio_event_types netio_event_types_type;
 

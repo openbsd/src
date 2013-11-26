@@ -1,7 +1,7 @@
 /*
  * rbtree.h -- generic red-black tree
  *
- * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -60,8 +60,6 @@ rbnode_t *rbtree_first(rbtree_t *rbtree);
 rbnode_t *rbtree_last(rbtree_t *rbtree);
 rbnode_t *rbtree_next(rbnode_t *rbtree);
 rbnode_t *rbtree_previous(rbnode_t *rbtree);
-rbnode_t *rbtree_postorder_first(rbnode_t *root);
-rbnode_t *rbtree_postorder_next(rbnode_t *node);
 
 #define	RBTREE_WALK(rbtree, k, d) \
 	for((rbtree)->_node = rbtree_first(rbtree);\

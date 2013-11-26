@@ -2,7 +2,7 @@
 /*
  * zlexer.lex - lexical analyzer for (DNS) zone files
  * 
- * Copyright (c) 2001-2011, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2006, NLnet Labs. All rights reserved
  *
  * See LICENSE for the license.
  *
@@ -18,8 +18,6 @@
 #include "zonec.h"
 #include "dname.h"
 #include "zparser.h"
-
-#define YY_NO_UNPUT
 
 #if 0
 #define LEXOUT(s)  printf s /* used ONLY when debugging */
@@ -68,6 +66,23 @@ pop_parser_state(void)
 	yy_switch_to_buffer(include_stack[include_stack_ptr]);
 }
 
+static YY_BUFFER_STATE oldstate;
+/* Start string scan */
+void
+parser_push_stringbuf(char* str)
+{
+	oldstate = YY_CURRENT_BUFFER;
+	yy_switch_to_buffer(yy_scan_string(str));
+}
+
+void
+parser_pop_stringbuf(void)
+{
+	yy_delete_buffer(YY_CURRENT_BUFFER);
+	yy_switch_to_buffer(oldstate);
+	oldstate = NULL;
+}
+
 #ifndef yy_set_bol /* compat definition, for flex 2.4.6 */
 #define yy_set_bol(at_bol) \
 	{ \
@@ -77,6 +92,16 @@ pop_parser_state(void)
 	}
 #endif
 	
+%}
+%option noinput
+%option nounput
+%{
+#ifndef YY_NO_UNPUT
+#define YY_NO_UNPUT 1
+#endif
+#ifndef YY_NO_INPUT
+#define YY_NO_INPUT 1
+#endif
 %}
 
 SPACE   [ \t]
@@ -244,6 +269,8 @@ ANY     [^\"\n\\]|\\.
 <bitlabel><<EOF>>	{
 	zc_error("EOF inside bitlabel");
 	BEGIN(INITIAL);
+	yyrestart(yyin); /* this is so that lex does not give an internal err */
+	yyterminate();
 }
 <bitlabel>{BIT}*	{ yymore(); }
 <bitlabel>\n		{ ++parser->line; yymore(); }
@@ -258,6 +285,8 @@ ANY     [^\"\n\\]|\\.
 <quotedstring><<EOF>> 	{
 	zc_error("EOF inside quoted string");
 	BEGIN(INITIAL);
+	yyrestart(yyin); /* this is so that lex does not give an internal err */
+	yyterminate();
 }
 <quotedstring>{ANY}*	{ LEXOUT(("STR ")); yymore(); }
 <quotedstring>\n 	{ ++parser->line; yymore(); }
