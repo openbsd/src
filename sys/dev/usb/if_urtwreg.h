@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwreg.h,v 1.14 2013/04/15 09:23:01 mglocker Exp $	*/
+/*	$OpenBSD: if_urtwreg.h,v 1.15 2013/11/26 20:33:18 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -77,9 +77,9 @@
 #define	URTW_TX_MXDMA_1024		(6 << URTW_TX_MXDMA_SHIFT)
 #define	URTW_TX_MXDMA_2048		(7 << URTW_TX_MXDMA_SHIFT)
 #define	URTW_TX_MXDMA_SHIFT		(21)
-#define	URTW_TX_CWMIN			(1 << 31)
-#define	URTW_TX_DISCW			(1 << 20)
-#define	URTW_TX_SWPLCPLEN		(1 << 24)
+#define	URTW_TX_CWMIN			(1U << 31)
+#define	URTW_TX_DISCW			(1U << 20)
+#define	URTW_TX_SWPLCPLEN		(1U << 24)
 #define	URTW_TX_NOICV			(0x80000)
 #define	URTW_RX				0x0044		/* 4 byte */
 #define	URTW_RX_9356SEL			(1 << 6)
@@ -113,7 +113,7 @@
 #define	URTW_MAX_RX_DMA_2048		(7 << URTW_MAX_RX_DMA_SHIFT)
 #define	URTW_MAX_RX_DMA_1024		(6)
 #define	URTW_MAX_RX_DMA_SHIFT		(10)
-#define	URTW_RCR_ONLYERLPKT		(1 << 31)
+#define	URTW_RCR_ONLYERLPKT		(1U << 31)
 #define	URTW_INT_TIMEOUT		0x0048		/* 4 byte */
 #define	URTW_EPROM_CMD			0x0050		/* 1 byte */
 #define	URTW_EPROM_CMD_NORMAL		(0x0)

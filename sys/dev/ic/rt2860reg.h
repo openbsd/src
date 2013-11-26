@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.30 2010/05/10 18:17:10 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.31 2013/11/26 20:33:16 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -255,10 +255,10 @@
 #define RT2860_TX_DMA_EN		(1 << 0)
 
 /* possible flags for register DELAY_INT_CFG */
-#define RT2860_TXDLY_INT_EN		(1 << 31)
+#define RT2860_TXDLY_INT_EN		(1U << 31)
 #define RT2860_TXMAX_PINT_SHIFT		24
 #define RT2860_TXMAX_PTIME_SHIFT	16
-#define RT2860_RXDLY_INT_EN		(1 << 15)
+#define RT2860_RXDLY_INT_EN		(1U << 15)
 #define RT2860_RXMAX_PINT_SHIFT		8
 #define RT2860_RXMAX_PTIME_SHIFT	0
 
@@ -267,16 +267,16 @@
 #define RT2860_GPIO_O_SHIFT	0
 
 /* possible flags for register USB_DMA_CFG */
-#define RT2860_USB_TX_BUSY		(1 << 31)
-#define RT2860_USB_RX_BUSY		(1 << 30)
+#define RT2860_USB_TX_BUSY		(1U << 31)
+#define RT2860_USB_RX_BUSY		(1U << 30)
 #define RT2860_USB_EPOUT_VLD_SHIFT	24
-#define RT2860_USB_TX_EN		(1 << 23)
-#define RT2860_USB_RX_EN		(1 << 22)
-#define RT2860_USB_RX_AGG_EN		(1 << 21)
-#define RT2860_USB_TXOP_HALT		(1 << 20)
-#define RT2860_USB_TX_CLEAR		(1 << 19)
-#define RT2860_USB_PHY_WD_EN		(1 << 16)
-#define RT2860_USB_PHY_MAN_RST		(1 << 15)
+#define RT2860_USB_TX_EN		(1U << 23)
+#define RT2860_USB_RX_EN		(1U << 22)
+#define RT2860_USB_RX_AGG_EN		(1U << 21)
+#define RT2860_USB_TXOP_HALT		(1U << 20)
+#define RT2860_USB_TX_CLEAR		(1U << 19)
+#define RT2860_USB_PHY_WD_EN		(1U << 16)
+#define RT2860_USB_PHY_MAN_RST		(1U << 15)
 #define RT2860_USB_RX_AGG_LMT(x)	((x) << 8)	/* in unit of 1KB */
 #define RT2860_USB_RX_AGG_TO(x)		((x) & 0xff)	/* in unit of 33ns */
 
@@ -367,9 +367,9 @@
 #define RT2860_TX0Q_PCNT_MASK	0x000000ff
 
 /* possible flags for register CAP_CTRL */
-#define RT2860_CAP_ADC_FEQ		(1 << 31)
-#define RT2860_CAP_START		(1 << 30)
-#define RT2860_MAN_TRIG			(1 << 29)
+#define RT2860_CAP_ADC_FEQ		(1U << 31)
+#define RT2860_CAP_START		(1U << 30)
+#define RT2860_MAN_TRIG			(1U << 29)
 #define RT2860_TRIG_OFFSET_SHIFT	16
 #define RT2860_START_ADDR_SHIFT		0
 
@@ -378,8 +378,8 @@
 #define RT3070_RF_WRITE		(1 << 16)
 
 /* possible flags for register EFUSE_CTRL */
-#define RT3070_SEL_EFUSE	(1 << 31)
-#define RT3070_EFSROM_KICK	(1 << 30)
+#define RT3070_SEL_EFUSE	(1U << 31)
+#define RT3070_EFSROM_KICK	(1U << 30)
 #define RT3070_EFSROM_AIN_MASK	0x03ff0000
 #define RT3070_EFSROM_AIN_SHIFT	16
 #define RT3070_EFSROM_MODE_MASK	0x000000c0
@@ -417,9 +417,9 @@
 #define RT2860_BBP_DATA_SHIFT		0
 
 /* possible flags for register RF_CSR_CFG0 */
-#define RT2860_RF_REG_CTRL		(1 << 31)
-#define RT2860_RF_LE_SEL1		(1 << 30)
-#define RT2860_RF_LE_STBY		(1 << 29)
+#define RT2860_RF_REG_CTRL		(1U << 31)
+#define RT2860_RF_LE_SEL1		(1U << 30)
+#define RT2860_RF_LE_STBY		(1U << 29)
 #define RT2860_RF_REG_WIDTH_SHIFT	24
 #define RT2860_RF_REG_0_SHIFT		0
 
@@ -452,9 +452,9 @@
 #define RT2860_SLOT_TIME		0
 
 /* possible flags for register NAV_TIME_CFG */
-#define RT2860_NAV_UPD			(1 << 31)
+#define RT2860_NAV_UPD			(1U << 31)
 #define RT2860_NAV_UPD_VAL_SHIFT	16
-#define RT2860_NAV_CLR_EN		(1 << 15)
+#define RT2860_NAV_CLR_EN		(1U << 15)
 #define RT2860_NAV_TIMER_SHIFT		0
 
 /* possible flags for register CH_TIME_CFG */
@@ -506,37 +506,37 @@
 #define RT2860_WAKEUP_LEAD_TIME_SHIFT	0
 
 /* possible flags for register TX_PIN_CFG */
-#define RT3593_LNA_PE_G2_POL	(1 << 31)
-#define RT3593_LNA_PE_A2_POL	(1 << 30)
-#define RT3593_LNA_PE_G2_EN	(1 << 29)
-#define RT3593_LNA_PE_A2_EN	(1 << 28)
+#define RT3593_LNA_PE_G2_POL	(1U << 31)
+#define RT3593_LNA_PE_A2_POL	(1U << 30)
+#define RT3593_LNA_PE_G2_EN	(1U << 29)
+#define RT3593_LNA_PE_A2_EN	(1U << 28)
 #define RT3593_LNA_PE2_EN	(RT3593_LNA_PE_A2_EN | RT3593_LNA_PE_G2_EN)
-#define RT3593_PA_PE_G2_POL	(1 << 27)
-#define RT3593_PA_PE_A2_POL	(1 << 26)
-#define RT3593_PA_PE_G2_EN	(1 << 25)
-#define RT3593_PA_PE_A2_EN	(1 << 24)
-#define RT2860_TRSW_POL		(1 << 19)
-#define RT2860_TRSW_EN		(1 << 18)
-#define RT2860_RFTR_POL		(1 << 17)
-#define RT2860_RFTR_EN		(1 << 16)
-#define RT2860_LNA_PE_G1_POL	(1 << 15)
-#define RT2860_LNA_PE_A1_POL	(1 << 14)
-#define RT2860_LNA_PE_G0_POL	(1 << 13)
-#define RT2860_LNA_PE_A0_POL	(1 << 12)
-#define RT2860_LNA_PE_G1_EN	(1 << 11)
-#define RT2860_LNA_PE_A1_EN	(1 << 10)
+#define RT3593_PA_PE_G2_POL	(1U << 27)
+#define RT3593_PA_PE_A2_POL	(1U << 26)
+#define RT3593_PA_PE_G2_EN	(1U << 25)
+#define RT3593_PA_PE_A2_EN	(1U << 24)
+#define RT2860_TRSW_POL		(1U << 19)
+#define RT2860_TRSW_EN		(1U << 18)
+#define RT2860_RFTR_POL		(1U << 17)
+#define RT2860_RFTR_EN		(1U << 16)
+#define RT2860_LNA_PE_G1_POL	(1U << 15)
+#define RT2860_LNA_PE_A1_POL	(1U << 14)
+#define RT2860_LNA_PE_G0_POL	(1U << 13)
+#define RT2860_LNA_PE_A0_POL	(1U << 12)
+#define RT2860_LNA_PE_G1_EN	(1U << 11)
+#define RT2860_LNA_PE_A1_EN	(1U << 10)
 #define RT2860_LNA_PE1_EN	(RT2860_LNA_PE_A1_EN | RT2860_LNA_PE_G1_EN)
-#define RT2860_LNA_PE_G0_EN	(1 <<  9)
-#define RT2860_LNA_PE_A0_EN	(1 <<  8)
+#define RT2860_LNA_PE_G0_EN	(1U <<  9)
+#define RT2860_LNA_PE_A0_EN	(1U <<  8)
 #define RT2860_LNA_PE0_EN	(RT2860_LNA_PE_A0_EN | RT2860_LNA_PE_G0_EN)
-#define RT2860_PA_PE_G1_POL	(1 <<  7)
-#define RT2860_PA_PE_A1_POL	(1 <<  6)
-#define RT2860_PA_PE_G0_POL	(1 <<  5)
-#define RT2860_PA_PE_A0_POL	(1 <<  4)
-#define RT2860_PA_PE_G1_EN	(1 <<  3)
-#define RT2860_PA_PE_A1_EN	(1 <<  2)
-#define RT2860_PA_PE_G0_EN	(1 <<  1)
-#define RT2860_PA_PE_A0_EN	(1 <<  0)
+#define RT2860_PA_PE_G1_POL	(1U <<  7)
+#define RT2860_PA_PE_A1_POL	(1U <<  6)
+#define RT2860_PA_PE_G0_POL	(1U <<  5)
+#define RT2860_PA_PE_A0_POL	(1U <<  4)
+#define RT2860_PA_PE_G1_EN	(1U <<  3)
+#define RT2860_PA_PE_A1_EN	(1U <<  2)
+#define RT2860_PA_PE_G0_EN	(1U <<  1)
+#define RT2860_PA_PE_A0_EN	(1U <<  0)
 
 /* possible flags for register TX_BAND_CFG */
 #define RT2860_5G_BAND_SEL_N	(1 << 2)

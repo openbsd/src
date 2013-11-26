@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.36 2013/11/05 10:20:04 mpi Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.37 2013/11/26 20:33:18 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1597,7 +1597,7 @@ otus_set_multi(struct otus_softc *sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
  done:
-	hi |= 1 << 31;	/* Make sure the broadcast bit is set. */
+	hi |= 1U << 31;	/* Make sure the broadcast bit is set. */
 	otus_write(sc, AR_MAC_REG_GROUP_HASH_TBL_L, lo);
 	otus_write(sc, AR_MAC_REG_GROUP_HASH_TBL_H, hi);
 	return otus_write_barrier(sc);

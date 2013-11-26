@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
+/*	$OpenBSD: if_axenreg.h,v 1.2 2013/11/26 20:33:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>. All right reserved.
@@ -52,14 +52,14 @@
  *  0x0850: ipv6 tcp (ssh)		0000 1000 0101 0000
  */
 
-#define	AXEN_RXHDR_CRC_ERR	(1 << 31)
-#define	AXEN_RXHDR_DROP_ERR	(1 << 30)
-#define AXEN_RXHDR_MCAST	(1 << 15)
-#define AXEN_RXHDR_RX_OK	(1 << 11)
-#define	AXEN_RXHDR_L3_ERR	(1 << 9)
-#define	AXEN_RXHDR_L4_ERR	(1 << 8)
-#define AXEN_RXHDR_L3CSUM_ERR 	(1 << 1)
-#define AXEN_RXHDR_L4CSUM_ERR	(1 << 0)
+#define	AXEN_RXHDR_CRC_ERR	(1U << 31)
+#define	AXEN_RXHDR_DROP_ERR	(1U << 30)
+#define AXEN_RXHDR_MCAST	(1U << 15)
+#define AXEN_RXHDR_RX_OK	(1U << 11)
+#define	AXEN_RXHDR_L3_ERR	(1U << 9)
+#define	AXEN_RXHDR_L4_ERR	(1U << 8)
+#define AXEN_RXHDR_L3CSUM_ERR 	(1U << 1)
+#define AXEN_RXHDR_L4CSUM_ERR	(1U << 0)
 
 /* L4 packet type (3bit) */
 #define AXEN_RXHDR_L4_TYPE_MASK	0x0000001c

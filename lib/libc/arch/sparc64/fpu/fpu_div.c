@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_div.c,v 1.2 2012/12/05 23:19:59 deraadt Exp $	*/
+/*	$OpenBSD: fpu_div.c,v 1.3 2013/11/26 20:33:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -139,7 +139,7 @@ __FBSDID("$FreeBSD: src/lib/libc/sparc64/fpu/fpu_div.c,v 1.3 2002/03/22 21:52:58
  *	} while ((bit >>= 1) != 0);
  *	Q[0] = q;
  *	for (i = 1; i < 4; i++) {
- *		q = 0, bit = 1 << 31;
+ *		q = 0, bit = 1U << 31;
  *		do {
  *			D = R - Y;
  *			if (D >= 0) {
@@ -238,7 +238,7 @@ __fpu_div(fe)
 
 #define	WORD(r, i)			/* calculate r->fp_mant[i] */ \
 	q = 0; \
-	bit = 1 << 31; \
+	bit = 1U << 31; \
 	LOOP; \
 	(x)->fp_mant[i] = q
 

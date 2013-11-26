@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_div.c,v 1.3 2003/06/02 23:27:54 millert Exp $	*/
+/*	$OpenBSD: fpu_div.c,v 1.4 2013/11/26 20:33:14 deraadt Exp $	*/
 /*	$NetBSD: fpu_div.c,v 1.2 1994/11/20 20:52:38 deraadt Exp $ */
 
 /*
@@ -78,7 +78,7 @@
  *		R *= 2;
  *	for (bit = FP_NMANT; --bit >= 0; R *= 2) {
  *		if (R >= Y) {
- *			Q |= 1 << bit;
+ *			Q |= 1U << bit;
  *			R -= Y;
  *		}
  *	}
@@ -129,7 +129,7 @@
  *	} while ((bit >>= 1) != 0);
  *	Q[0] = q;
  *	for (i = 1; i < 4; i++) {
- *		q = 0, bit = 1 << 31;
+ *		q = 0, bit = 1U << 31;
  *		do {
  *			D = R - Y;
  *			if (D >= 0) {
@@ -228,7 +228,7 @@ fpu_div(fe)
 
 #define	WORD(r, i)			/* calculate r->fp_mant[i] */ \
 	q = 0; \
-	bit = 1 << 31; \
+	bit = 1U << 31; \
 	LOOP; \
 	(x)->fp_mant[i] = q
 

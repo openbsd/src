@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsxreg.h,v 1.2 2013/11/06 13:51:02 stsp Exp $	*/
+/*	$OpenBSD: rtsxreg.h,v 1.3 2013/11/26 20:33:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -23,31 +23,31 @@
 /* Host command buffer control register. */
 #define	RTSX_HCBAR		0x00
 #define	RTSX_HCBCTLR		0x04
-#define	RTSX_START_CMD		(1 << 31)
-#define	RTSX_HW_AUTO_RSP	(1 << 30)
-#define	RTSX_STOP_CMD		(1 << 28)
+#define	RTSX_START_CMD		(1U << 31)
+#define	RTSX_HW_AUTO_RSP	(1U << 30)
+#define	RTSX_STOP_CMD		(1U << 28)
 
 /* Host data buffer control register. */
 #define	RTSX_HDBAR		0x08
 #define	RTSX_HDBCTLR		0x0C
-#define	RTSX_TRIG_DMA		(1 << 31)
-#define	RTSX_DMA_READ		(1 << 29)
-#define	RTSX_STOP_DMA		(1 << 28)
-#define	RTSX_ADMA_MODE		(2 << 26)
+#define	RTSX_TRIG_DMA		(1U << 31)
+#define	RTSX_DMA_READ		(1U << 29)
+#define	RTSX_STOP_DMA		(1U << 28)
+#define	RTSX_ADMA_MODE		(2U << 26)
 
 /* Interrupt pending register. */
 #define	RTSX_BIPR		0x14
-#define	RTSX_CMD_DONE_INT	(1 << 31)
-#define	RTSX_DATA_DONE_INT	(1 << 30)
-#define	RTSX_TRANS_OK_INT	(1 << 29)
-#define	RTSX_TRANS_FAIL_INT	(1 << 28)
-#define	RTSX_XD_INT		(1 << 27)
-#define	RTSX_MS_INT		(1 << 26)
-#define	RTSX_SD_INT		(1 << 25)
-#define	RTSX_SD_WRITE_PROTECT	(1 << 19)
-#define	RTSX_XD_EXIST		(1 << 18)
-#define	RTSX_MS_EXIST		(1 << 17)
-#define	RTSX_SD_EXIST		(1 << 16)
+#define	RTSX_CMD_DONE_INT	(1U << 31)
+#define	RTSX_DATA_DONE_INT	(1U << 30)
+#define	RTSX_TRANS_OK_INT	(1U << 29)
+#define	RTSX_TRANS_FAIL_INT	(1U << 28)
+#define	RTSX_XD_INT		(1U << 27)
+#define	RTSX_MS_INT		(1U << 26)
+#define	RTSX_SD_INT		(1U << 25)
+#define	RTSX_SD_WRITE_PROTECT	(1U << 19)
+#define	RTSX_XD_EXIST		(1U << 18)
+#define	RTSX_MS_EXIST		(1U << 17)
+#define	RTSX_SD_EXIST		(1U << 16)
 #define	RTSX_CARD_EXIST		(RTSX_XD_EXIST|RTSX_MS_EXIST|RTSX_SD_EXIST)
 #define	RTSX_CARD_INT		(RTSX_XD_INT|RTSX_MS_INT|RTSX_SD_INT)
 
@@ -58,16 +58,16 @@
 
 /* Interrupt enable register. */
 #define	RTSX_BIER		0x18
-#define	RTSX_CMD_DONE_INT_EN	(1 << 31)
-#define	RTSX_DATA_DONE_INT_EN	(1 << 30)
-#define	RTSX_TRANS_OK_INT_EN	(1 << 29)
-#define	RTSX_TRANS_FAIL_INT_EN	(1 << 28)
-#define	RTSX_XD_INT_EN		(1 << 27)
-#define	RTSX_MS_INT_EN		(1 << 26)
-#define	RTSX_SD_INT_EN		(1 << 25)
-#define	RTSX_GPIO0_INT_EN	(1 << 24)
-#define	RTSX_MS_OC_INT_EN	(1 << 23)
-#define	RTSX_SD_OC_INT_EN	(1 << 22)
+#define	RTSX_CMD_DONE_INT_EN	(1U << 31)
+#define	RTSX_DATA_DONE_INT_EN	(1U << 30)
+#define	RTSX_TRANS_OK_INT_EN	(1U << 29)
+#define	RTSX_TRANS_FAIL_INT_EN	(1U << 28)
+#define	RTSX_XD_INT_EN		(1U << 27)
+#define	RTSX_MS_INT_EN		(1U << 26)
+#define	RTSX_SD_INT_EN		(1U << 25)
+#define	RTSX_GPIO0_INT_EN	(1U << 24)
+#define	RTSX_MS_OC_INT_EN	(1U << 23)
+#define	RTSX_SD_OC_INT_EN	(1U << 22)
 
 /* Power on/off. */
 #define	RTSX_FPDCTL	0xFC00

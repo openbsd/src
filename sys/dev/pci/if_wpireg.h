@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.27 2009/10/24 20:17:17 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.28 2013/11/26 20:33:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -137,12 +137,12 @@
 #define WPI_GIO_CHICKEN_L1A_NO_L0S_RX	(1 << 23)
 
 /* Possible flags for register WPI_FH_RX_CONFIG. */
-#define WPI_FH_RX_CONFIG_DMA_ENA		(1 << 31)
-#define WPI_FH_RX_CONFIG_RDRBD_ENA		(1 << 29)
-#define WPI_FH_RX_CONFIG_WRSTATUS_ENA		(1 << 27)
-#define WPI_FH_RX_CONFIG_MAXFRAG		(1 << 24)
+#define WPI_FH_RX_CONFIG_DMA_ENA		(1U << 31)
+#define WPI_FH_RX_CONFIG_RDRBD_ENA		(1U << 29)
+#define WPI_FH_RX_CONFIG_WRSTATUS_ENA		(1U << 27)
+#define WPI_FH_RX_CONFIG_MAXFRAG		(1U << 24)
 #define WPI_FH_RX_CONFIG_NRBD(x)		((x) << 20)
-#define WPI_FH_RX_CONFIG_IRQ_DST_HOST		(1 << 12)
+#define WPI_FH_RX_CONFIG_IRQ_DST_HOST		(1U << 12)
 #define WPI_FH_RX_CONFIG_IRQ_RBTH(x)		((x) << 4)
 
 /* Possible flags for register WPI_ANA_PLL. */
@@ -156,18 +156,18 @@
 #define	WPI_FH_RX_STATUS_IDLE	(1 << 24)
 
 /* Possible flags for register WPI_BSM_WR_CTRL. */
-#define WPI_BSM_WR_CTRL_START_EN	(1 << 30)
-#define WPI_BSM_WR_CTRL_START		(1 << 31)
+#define WPI_BSM_WR_CTRL_START_EN	(1U << 30)
+#define WPI_BSM_WR_CTRL_START		(1U << 31)
 
 /* Possible flags for register WPI_INT. */
-#define WPI_INT_ALIVE		(1 <<  0)
-#define WPI_INT_WAKEUP		(1 <<  1)
-#define WPI_INT_SW_RX		(1 <<  3)
-#define WPI_INT_RF_TOGGLED	(1 <<  7)
-#define WPI_INT_SW_ERR		(1 << 25)
-#define WPI_INT_FH_TX		(1 << 27)
-#define WPI_INT_HW_ERR		(1 << 29)
-#define WPI_INT_FH_RX		(1 << 31)
+#define WPI_INT_ALIVE		(1U <<  0)
+#define WPI_INT_WAKEUP		(1U <<  1)
+#define WPI_INT_SW_RX		(1U <<  3)
+#define WPI_INT_RF_TOGGLED	(1U <<  7)
+#define WPI_INT_SW_ERR		(1U << 25)
+#define WPI_INT_FH_TX		(1U << 27)
+#define WPI_INT_HW_ERR		(1U << 29)
+#define WPI_INT_FH_RX		(1U << 31)
 
 /* Shortcut. */
 #define WPI_INT_MASK							\
@@ -631,7 +631,7 @@ struct wpi_firmware_hdr {
 #define WPI_FW_DATA_MAXSZ	(32 * 1024)
 #define WPI_FW_BOOT_TEXT_MAXSZ	1024
 
-#define WPI_FW_UPDATED	(1 << 31)
+#define WPI_FW_UPDATED	(1U << 31)
 
 /*
  * Offsets into EEPROM.

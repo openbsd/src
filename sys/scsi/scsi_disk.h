@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.33 2013/05/30 18:31:34 tedu Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.34 2013/11/26 20:33:20 deraadt Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -472,7 +472,7 @@ struct scsi_vpd_disk_limits {
 	u_int8_t		optimal_unmap_granularity[4];
 
 	u_int8_t		unmap_granularity_align[4];
-#define SI_PG_DISK_LIMITS_UGAVALID	(1 << 31)
+#define SI_PG_DISK_LIMITS_UGAVALID	(1U << 31)
 
 	u_int8_t		_reserved2[28];
 };

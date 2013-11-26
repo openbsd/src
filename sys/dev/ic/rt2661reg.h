@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661reg.h,v 1.12 2012/08/23 10:34:25 stsp Exp $	*/
+/*	$OpenBSD: rt2661reg.h,v 1.13 2013/11/26 20:33:16 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -182,8 +182,8 @@
 #define RT2661_BBP_BUSY	(1 << 16)
 
 /* possible flags for register PHY_CSR4 */
-#define RT2661_RF_21BIT	(21 << 24)
-#define RT2661_RF_BUSY	(1 << 31)
+#define RT2661_RF_21BIT	(21U << 24)
+#define RT2661_RF_BUSY	(1U << 31)
 
 /* possible values for register STA_CSR4 */
 #define RT2661_TX_STAT_VALID	(1 << 0)

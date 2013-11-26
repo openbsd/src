@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.39 2011/01/02 20:41:22 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.40 2013/11/26 20:33:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -250,12 +250,12 @@ cpu_hatch(void)
 	hppa_ipi_init(ci);
 
 	/* Initialise clock. */
-	mtctl((1 << 31), CR_EIRR);
+	mtctl((1U << 31), CR_EIRR);
 	mfctl(CR_ITMR, itmr);
 	ci->ci_itmr = itmr;
 	itmr += cpu_hzticks;
 	mtctl(itmr, CR_ITMR);
-	ci->ci_mask |= (1 << 31);
+	ci->ci_mask |= (1U << 31);
 
 	/* Enable interrupts. */
 	mtctl(ci->ci_mask, CR_EIEM);

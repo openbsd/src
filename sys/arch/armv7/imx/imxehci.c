@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.3 2013/11/26 20:33:11 deraadt Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -47,7 +47,7 @@
 #define USBPHY_CTRL_ENUTMILEVEL2	(1 << 14)
 #define USBPHY_CTRL_ENUTMILEVEL3	(1 << 15)
 #define USBPHY_CTRL_CLKGATE		(1 << 30)
-#define USBPHY_CTRL_SFTRST		(1 << 31)
+#define USBPHY_CTRL_SFTRST		(1U << 31)
 
 /* ehci */
 #define EHCI_USBMODE			0x68

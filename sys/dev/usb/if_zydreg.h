@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.26 2013/04/15 09:23:01 mglocker Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.27 2013/11/26 20:33:19 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -936,23 +936,23 @@
 #define ZYD_ENC_SNIFFER	8
 
 /* flags for register ZYD_MAC_RXFILTER */
-#define ZYD_FILTER_ASS_REQ	(1 << 0)
-#define ZYD_FILTER_ASS_RSP	(1 << 1)
-#define ZYD_FILTER_REASS_REQ	(1 << 2)
-#define ZYD_FILTER_REASS_RSP	(1 << 3)
-#define ZYD_FILTER_PRB_REQ	(1 << 4)
-#define ZYD_FILTER_PRB_RSP	(1 << 5)
-#define ZYD_FILTER_BCN		(1 << 8)
-#define ZYD_FILTER_ATIM		(1 << 9)
-#define ZYD_FILTER_DEASS	(1 << 10)
-#define ZYD_FILTER_AUTH		(1 << 11)
-#define ZYD_FILTER_DEAUTH	(1 << 12)
-#define ZYD_FILTER_PS_POLL	(1 << 26)
-#define ZYD_FILTER_RTS		(1 << 27)
-#define ZYD_FILTER_CTS		(1 << 28)
-#define ZYD_FILTER_ACK		(1 << 29)
-#define ZYD_FILTER_CFE		(1 << 30)
-#define ZYD_FILTER_CFE_A	(1 << 31)
+#define ZYD_FILTER_ASS_REQ	(1U << 0)
+#define ZYD_FILTER_ASS_RSP	(1U << 1)
+#define ZYD_FILTER_REASS_REQ	(1U << 2)
+#define ZYD_FILTER_REASS_RSP	(1U << 3)
+#define ZYD_FILTER_PRB_REQ	(1U << 4)
+#define ZYD_FILTER_PRB_RSP	(1U << 5)
+#define ZYD_FILTER_BCN		(1U << 8)
+#define ZYD_FILTER_ATIM		(1U << 9)
+#define ZYD_FILTER_DEASS	(1U << 10)
+#define ZYD_FILTER_AUTH		(1U << 11)
+#define ZYD_FILTER_DEAUTH	(1U << 12)
+#define ZYD_FILTER_PS_POLL	(1U << 26)
+#define ZYD_FILTER_RTS		(1U << 27)
+#define ZYD_FILTER_CTS		(1U << 28)
+#define ZYD_FILTER_ACK		(1U << 29)
+#define ZYD_FILTER_CFE		(1U << 30)
+#define ZYD_FILTER_CFE_A	(1U << 31)
 
 /* helpers for register ZYD_MAC_RXFILTER */
 #define ZYD_FILTER_MONITOR	0x000fffff

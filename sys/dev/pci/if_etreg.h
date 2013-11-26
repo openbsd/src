@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etreg.h,v 1.4 2008/07/21 04:12:21 kevlo Exp $	*/
+/*	$OpenBSD: if_etreg.h,v 1.5 2013/11/26 20:33:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -99,14 +99,14 @@
 #define ET_INTR_MASK			0x001c
 
 #define ET_SWRST			0x0028
-#define ET_SWRST_TXDMA			(1 << 0)
-#define ET_SWRST_RXDMA			(1 << 1)
-#define ET_SWRST_TXMAC			(1 << 2)
-#define ET_SWRST_RXMAC			(1 << 3)
-#define ET_SWRST_MAC			(1 << 4)
-#define ET_SWRST_MAC_STAT		(1 << 5)
-#define ET_SWRST_MMC			(1 << 6)
-#define ET_SWRST_SELFCLR_DISABLE	(1 << 31)
+#define ET_SWRST_TXDMA			(1U << 0)
+#define ET_SWRST_RXDMA			(1U << 1)
+#define ET_SWRST_TXMAC			(1U << 2)
+#define ET_SWRST_RXMAC			(1U << 3)
+#define ET_SWRST_MAC			(1U << 4)
+#define ET_SWRST_MAC_STAT		(1U << 5)
+#define ET_SWRST_MMC			(1U << 6)
+#define ET_SWRST_SELFCLR_DISABLE	(1U << 31)
 
 #define ET_MSI_CFG			0x0030
 
@@ -222,19 +222,19 @@
 #define ET_RXMAC_MGT_CHECK_PKT		(1 << 17)
 
 #define ET_MAC_CFG1			0x5000
-#define ET_MAC_CFG1_TXEN		(1 << 0)
-#define ET_MAC_CFG1_SYNC_TXEN		(1 << 1)
-#define ET_MAC_CFG1_RXEN		(1 << 2)
-#define ET_MAC_CFG1_SYNC_RXEN		(1 << 3)
-#define ET_MAC_CFG1_TXFLOW		(1 << 4)
-#define ET_MAC_CFG1_RXFLOW		(1 << 5)
-#define ET_MAC_CFG1_LOOPBACK		(1 << 8)
-#define ET_MAC_CFG1_RST_TXFUNC		(1 << 16)
-#define ET_MAC_CFG1_RST_RXFUNC		(1 << 17)
-#define ET_MAC_CFG1_RST_TXMC		(1 << 18)
-#define ET_MAC_CFG1_RST_RXMC		(1 << 19)
-#define ET_MAC_CFG1_SIM_RST		(1 << 30)
-#define ET_MAC_CFG1_SOFT_RST		(1 << 31)
+#define ET_MAC_CFG1_TXEN		(1U << 0)
+#define ET_MAC_CFG1_SYNC_TXEN		(1U << 1)
+#define ET_MAC_CFG1_RXEN		(1U << 2)
+#define ET_MAC_CFG1_SYNC_RXEN		(1U << 3)
+#define ET_MAC_CFG1_TXFLOW		(1U << 4)
+#define ET_MAC_CFG1_RXFLOW		(1U << 5)
+#define ET_MAC_CFG1_LOOPBACK		(1U << 8)
+#define ET_MAC_CFG1_RST_TXFUNC		(1U << 16)
+#define ET_MAC_CFG1_RST_RXFUNC		(1U << 17)
+#define ET_MAC_CFG1_RST_TXMC		(1U << 18)
+#define ET_MAC_CFG1_RST_RXMC		(1U << 19)
+#define ET_MAC_CFG1_SIM_RST		(1U << 30)
+#define ET_MAC_CFG1_SOFT_RST		(1U << 31)
 
 #define ET_MAC_CFG2			0x5004
 #define ET_MAC_CFG2_FDX			(1 << 0)
@@ -265,10 +265,10 @@
 #define ET_MAX_FRMLEN			0x5010
 
 #define ET_MII_CFG			0x5020
-#define ET_MII_CFG_CLKRST		(7 << 0)
-#define ET_MII_CFG_PREAMBLE_SUP		(1 << 4)
-#define ET_MII_CFG_SCAN_AUTOINC		(1 << 5)
-#define ET_MII_CFG_RST			(1 << 31)
+#define ET_MII_CFG_CLKRST		(7U << 0)
+#define ET_MII_CFG_PREAMBLE_SUP		(1U << 4)
+#define ET_MII_CFG_SCAN_AUTOINC		(1U << 5)
+#define ET_MII_CFG_RST			(1U << 31)
 
 #define ET_MII_CMD			0x5024
 #define ET_MII_CMD_READ			(1 << 0)

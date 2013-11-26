@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.c,v 1.8 2012/10/03 11:18:23 miod Exp $	*/
+/*	$OpenBSD: cache_r5k.c,v 1.9 2013/11/26 20:33:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -81,19 +81,19 @@
 /*
  *  R5000 and RM52xx config register bits.
  */
-#define	CF_5_SE		(1 << 12)	/* Secondary cache enable */
-#define	CF_5_SC		(1 << 17)	/* Secondary cache not present */
-#define	CF_5_SS		(3 << 20)	/* Secondary cache size */
+#define	CF_5_SE		(1U << 12)	/* Secondary cache enable */
+#define	CF_5_SC		(1U << 17)	/* Secondary cache not present */
+#define	CF_5_SS		(3U << 20)	/* Secondary cache size */
 #define	CF_5_SS_AL	20		/* Shift to align */
 
 /*
  *  RM7000 config register bits.
  */
-#define	CF_7_SE		(1 << 3)	/* Secondary cache enable */
-#define	CF_7_SC		(1 << 31)	/* Secondary cache not present */
-#define	CF_7_TE		(1 << 12)	/* Tertiary cache enable */
-#define	CF_7_TC		(1 << 17)	/* Tertiary cache not present */
-#define	CF_7_TS		(3 << 20)	/* Tertiary cache size */
+#define	CF_7_SE		(1U << 3)	/* Secondary cache enable */
+#define	CF_7_SC		(1U << 31)	/* Secondary cache not present */
+#define	CF_7_TE		(1U << 12)	/* Tertiary cache enable */
+#define	CF_7_TC		(1U << 17)	/* Tertiary cache not present */
+#define	CF_7_TS		(3U << 20)	/* Tertiary cache size */
 #define	CF_7_TS_AL	20		/* Shift to align */
 
 

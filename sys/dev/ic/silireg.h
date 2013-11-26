@@ -1,4 +1,4 @@
-/*	$OpenBSD: silireg.h,v 1.21 2011/01/26 21:41:00 drahn Exp $ */
+/*	$OpenBSD: silireg.h,v 1.22 2013/11/26 20:33:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -167,7 +167,7 @@
 #define SILI_PREG_HEC		0x1048 /* Handshake Error Counter */
 #define SILI_PREG_PHYCONF	0x1050 /* Port PHY Configuration */
 #define SILI_PREG_PSS		0x1800 /* Port Slot Status */
-#define SILI_PREG_PSS_ATTENTION		(1 << 31)
+#define SILI_PREG_PSS_ATTENTION		(1U << 31)
 #define SILI_PREG_PSS_ALL_SLOTS		0x7fffffff
 #define SILI_PREG_CAR_LO(_s)	(0x1c00 + ((_s) * 0x8)) /* Cmd Activate Reg */
 #define SILI_PREG_CAR_HI(_s)	(0x1c00 + ((_s) * 0x8) + 0x4)

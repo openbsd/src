@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.27 2013/11/14 12:10:05 dlg Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.28 2013/11/26 20:33:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -111,7 +111,7 @@ struct bwi_desc32 {
 #define BWI_DESC32_C_EOR		(1 << 28)
 #define BWI_DESC32_C_INTR		(1 << 29)
 #define BWI_DESC32_C_FRAME_END		(1 << 30)
-#define BWI_DESC32_C_FRAME_START	(1 << 31)
+#define BWI_DESC32_C_FRAME_START	(1U << 31)
 
 struct bwi_desc64 {
 	/* Little endian */

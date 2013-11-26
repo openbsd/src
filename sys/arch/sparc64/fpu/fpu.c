@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.17 2011/07/11 15:40:47 guenther Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.18 2013/11/26 20:33:15 deraadt Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -499,7 +499,7 @@ fpu_insn_fabs(fs, fe, instr)
 	if ((rd = fpu_regoffset(instr.i_opf.i_rd, rtype)) < 0)
 		return (NOTFPU);
 	fpu_fcopy(fs->fs_regs + rs, fs->fs_regs + rd, rtype);
-	fs->fs_regs[rd] = fs->fs_regs[rd] & ~(1 << 31);
+	fs->fs_regs[rd] = fs->fs_regs[rd] & ~(1U << 31);
 	fs->fs_fsr = fe->fe_fsr;
 	return (0);
 }
@@ -523,7 +523,7 @@ fpu_insn_fneg(fs, fe, instr)
 	if ((rd = fpu_regoffset(instr.i_opf.i_rd, rtype)) < 0)
 		return (NOTFPU);
 	fpu_fcopy(fs->fs_regs + rs, fs->fs_regs + rd, rtype);
-	fs->fs_regs[rd] = fs->fs_regs[rd] ^ (1 << 31);
+	fs->fs_regs[rd] = fs->fs_regs[rd] ^ (1U << 31);
 	fs->fs_fsr = fe->fe_fsr;
 	return (0);
 }

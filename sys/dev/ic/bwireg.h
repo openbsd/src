@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwireg.h,v 1.7 2007/11/17 16:50:02 mglocker Exp $	*/
+/*	$OpenBSD: bwireg.h,v 1.8 2013/11/26 20:33:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -150,23 +150,23 @@
 #define BWI_TXRX_INTR_MASK(i)		(BWI_TXRX_INTR_MASK_BASE + ((i) * 8))
 
 #define BWI_MAC_STATUS			0x00000120
-#define BWI_MAC_STATUS_ENABLE		(1 << 0)
-#define BWI_MAC_STATUS_UCODE_START	(1 << 1)
-#define BWI_MAC_STATUS_UCODE_JUMP0	(1 << 2)
-#define BWI_MAC_STATUS_IHREN		(1 << 10)
-#define BWI_MAC_STATUS_GPOSEL_MASK	(3 << 14)
-#define BWI_MAC_STATUS_BSWAP		(1 << 16)
-#define BWI_MAC_STATUS_INFRA		(1 << 17)
-#define BWI_MAC_STATUS_OPMODE_HOSTAP	(1 << 18)
-#define BWI_MAC_STATUS_RFLOCK		(1 << 19)
-#define BWI_MAC_STATUS_PASS_BCN		(1 << 20)
-#define BWI_MAC_STATUS_PASS_BADPLCP	(1 << 21)
-#define BWI_MAC_STATUS_PASS_CTL		(1 << 22)
-#define BWI_MAC_STATUS_PASS_BADFCS	(1 << 23)
-#define BWI_MAC_STATUS_PROMISC		(1 << 24)
-#define BWI_MAC_STATUS_HW_PS		(1 << 25)
-#define BWI_MAC_STATUS_WAKEUP		(1 << 26)
-#define BWI_MAC_STATUS_PHYLNK		(1 << 31)
+#define BWI_MAC_STATUS_ENABLE		(1U << 0)
+#define BWI_MAC_STATUS_UCODE_START	(1U << 1)
+#define BWI_MAC_STATUS_UCODE_JUMP0	(1U << 2)
+#define BWI_MAC_STATUS_IHREN		(1U << 10)
+#define BWI_MAC_STATUS_GPOSEL_MASK	(3U << 14)
+#define BWI_MAC_STATUS_BSWAP		(1U << 16)
+#define BWI_MAC_STATUS_INFRA		(1U << 17)
+#define BWI_MAC_STATUS_OPMODE_HOSTAP	(1U << 18)
+#define BWI_MAC_STATUS_RFLOCK		(1U << 19)
+#define BWI_MAC_STATUS_PASS_BCN		(1U << 20)
+#define BWI_MAC_STATUS_PASS_BADPLCP	(1U << 21)
+#define BWI_MAC_STATUS_PASS_CTL		(1U << 22)
+#define BWI_MAC_STATUS_PASS_BADFCS	(1U << 23)
+#define BWI_MAC_STATUS_PROMISC		(1U << 24)
+#define BWI_MAC_STATUS_HW_PS		(1U << 25)
+#define BWI_MAC_STATUS_WAKEUP		(1U << 26)
+#define BWI_MAC_STATUS_PHYLNK		(1U << 31)
 
 #define BWI_MAC_INTR_STATUS		0x00000128
 #define BWI_MAC_INTR_MASK		0x0000012c

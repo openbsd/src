@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ralreg.h,v 1.12 2006/11/13 20:06:38 damien Exp $  */
+/*	$OpenBSD: if_ralreg.h,v 1.13 2013/11/26 20:33:18 deraadt Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -192,7 +192,7 @@ struct ural_rx_desc {
 } __packed;
 
 #define RAL_RF_LOBUSY	(1 << 15)
-#define RAL_RF_BUSY	(1 << 31)
+#define RAL_RF_BUSY	(1U << 31)
 #define RAL_RF_20BIT	(20 << 24)
 
 #define RAL_RF1	0

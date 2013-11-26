@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otusreg.h,v 1.8 2013/04/15 09:23:01 mglocker Exp $	*/
+/*	$OpenBSD: if_otusreg.h,v 1.9 2013/11/26 20:33:18 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -151,7 +151,7 @@ struct ar_tx_head {
 #define AR_TX_PHY_TPC_SHIFT	9
 #define AR_TX_PHY_ANTMSK(msk)	((msk) << 15)
 #define AR_TX_PHY_MCS(mcs)	((mcs) << 18)
-#define AR_TX_PHY_SHGI		(1 << 31)
+#define AR_TX_PHY_SHGI		(1U << 31)
 } __packed;
 
 /* USB Rx stream mode header. */

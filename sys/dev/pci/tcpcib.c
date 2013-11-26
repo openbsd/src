@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpcib.c,v 1.5 2013/05/30 16:15:02 deraadt Exp $	*/
+/*	$OpenBSD: tcpcib.c,v 1.6 2013/11/26 20:33:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Matt Dainty <matt@bodgit-n-scarper.com>
@@ -220,7 +220,7 @@ tcpcib_attach(struct device *parent, struct device *self, void *aux)
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, E600_LPC_WDTBA);
 	wdtbase = reg & 0xffff;
 	sc->sc_wdt_iot = pa->pa_iot;
-	if (reg & (1 << 31) && wdtbase) {
+	if (reg & (1U << 31) && wdtbase) {
 		if (PCI_MAPREG_IO_ADDR(wdtbase) == 0 ||
 		    bus_space_map(sc->sc_wdt_iot, PCI_MAPREG_IO_ADDR(wdtbase),
 		    E600_WDT_SIZE, 0, &sc->sc_wdt_ioh)) {

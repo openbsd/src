@@ -1,6 +1,6 @@
 #ifndef	_MACHINE_M8820X_H_
 #define	_MACHINE_M8820X_H_
-/*	$OpenBSD: m8820x.h,v 1.16 2011/03/23 16:54:36 pirofti Exp $ */
+/*	$OpenBSD: m8820x.h,v 1.17 2013/11/26 20:33:13 deraadt Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -63,10 +63,10 @@
  * Address masks for MVME188 CMMU configs
  */
 
-#define CMMU_SRAM		(1 << 31)
-#define CMMU_A12_MASK		(1 << 12)
-#define CMMU_A14_MASK		(1 << 14)
-#define CMMU_SRAM_MASK		((1 << 31) | (1 << 30))
+#define CMMU_SRAM		(1U << 31)
+#define CMMU_A12_MASK		(1U << 12)
+#define CMMU_A14_MASK		(1U << 14)
+#define CMMU_SRAM_MASK		((1U << 31) | (1U << 30))
 
 #include <m88k/m8820x.h>
 

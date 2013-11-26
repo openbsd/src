@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_gcsc_reg.h,v 1.1 2009/01/04 10:37:40 jsg Exp $	*/
+/*	$OpenBSD: pciide_gcsc_reg.h,v 1.2 2013/11/26 20:33:13 deraadt Exp $	*/
 /*	$NetBSD: gcscide.c,v 1.6 2007/10/06 07:21:03 xtraeme Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@
  * and data per drive, while Format 0 selects the slowest speed
  * of the two drives.
  */
-#define GCSC_ATAC_PIO_FORMAT		(1 << 31) /* PIO Mode Format 1 */
+#define GCSC_ATAC_PIO_FORMAT		(1U << 31) /* PIO Mode Format 1 */
 /*
  * DMA_SEL (bit 20): sets Ultra DMA mode (if enabled) or Multi-word
  * DMA mode (if disabled).

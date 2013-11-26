@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560reg.h,v 1.5 2006/11/13 20:06:38 damien Exp $  */
+/*	$OpenBSD: rt2560reg.h,v 1.6 2013/11/26 20:33:16 deraadt Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -260,10 +260,10 @@ struct rt2560_rx_desc {
 #define RT2560_RF1_AUTOTUNE	0x08000
 #define RT2560_RF3_AUTOTUNE	0x00040
 
-#define RT2560_BBP_BUSY		(1 << 15)
-#define RT2560_BBP_WRITE	(1 << 16)
-#define RT2560_RF_20BIT		(20 << 24)
-#define RT2560_RF_BUSY		(1 << 31)
+#define RT2560_BBP_BUSY		(1U << 15)
+#define RT2560_BBP_WRITE	(1U << 16)
+#define RT2560_RF_20BIT		(20U << 24)
+#define RT2560_RF_BUSY		(1U << 31)
 
 #define RT2560_RF_2522	0x00
 #define RT2560_RF_2523	0x01

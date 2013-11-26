@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgl_float.h,v 1.11 2006/11/29 10:40:44 mickey Exp $	*/
+/*	$OpenBSD: sgl_float.h,v 1.12 2013/11/26 20:33:12 deraadt Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -183,7 +183,7 @@
 #define Sgl_setzero_mantissa(sgl_value) Sall(sgl_value) &= 0xff800000
 #define Sgl_setzero_exponentmantissa(sgl_value)  Sall(sgl_value) &= 0x80000000
 #define Sgl_setzero(sgl_value) Sall(sgl_value) = 0
-#define Sgl_setnegativezero(sgl_value) Sall(sgl_value) = 1 << 31
+#define Sgl_setnegativezero(sgl_value) Sall(sgl_value) = 1U << 31
 
 /* Use following macro for both overflow & underflow conditions */
 #define ovfl -

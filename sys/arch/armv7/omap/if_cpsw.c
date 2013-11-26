@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.20 2013/11/15 14:31:52 fgsch Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.21 2013/11/26 20:33:11 deraadt Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -640,7 +640,7 @@ cpsw_mii_wait(struct cpsw_softc * const sc, int reg)
 	u_int tries;
 
 	for(tries = 0; tries < 1000; tries++) {
-		if ((cpsw_read_4(sc, reg) & (1 << 31)) == 0)
+		if ((cpsw_read_4(sc, reg) & (1U << 31)) == 0)
 			return 0;
 		delay(1);
 	}
@@ -656,7 +656,7 @@ cpsw_mii_readreg(struct device *dev, int phy, int reg)
 	if (cpsw_mii_wait(sc, MDIOUSERACCESS0) != 0)
 		return 0;
 
-	cpsw_write_4(sc, MDIOUSERACCESS0, (1 << 31) |
+	cpsw_write_4(sc, MDIOUSERACCESS0, (1U << 31) |
 	    ((reg & 0x1F) << 21) | ((phy & 0x1F) << 16));
 
 	if (cpsw_mii_wait(sc, MDIOUSERACCESS0) != 0)
@@ -680,7 +680,7 @@ cpsw_mii_writereg(struct device *dev, int phy, int reg, int val)
 	if (cpsw_mii_wait(sc, MDIOUSERACCESS0) != 0)
 		goto out;
 
-	cpsw_write_4(sc, MDIOUSERACCESS0, (1 << 31) | (1 << 30) |
+	cpsw_write_4(sc, MDIOUSERACCESS0, (1U << 31) | (1 << 30) |
 	    ((reg & 0x1F) << 21) | ((phy & 0x1F) << 16) | val);
 
 	if (cpsw_mii_wait(sc, MDIOUSERACCESS0) != 0)

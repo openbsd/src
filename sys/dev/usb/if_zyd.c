@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.93 2013/11/06 15:55:15 jeremy Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.94 2013/11/26 20:33:19 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1661,7 +1661,7 @@ zyd_set_multi(struct zyd_softc *sc)
 	}
 
 done:
-	hi |= 1 << 31;	/* make sure the broadcast bit is set */
+	hi |= 1U << 31;	/* make sure the broadcast bit is set */
 	zyd_write32(sc, ZYD_MAC_GHTBL, lo);
 	zyd_write32(sc, ZYD_MAC_GHTBH, hi);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_workq.c,v 1.13 2013/11/18 20:21:51 deraadt Exp $ */
+/*	$OpenBSD: kern_workq.c,v 1.14 2013/11/26 20:33:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -49,7 +49,7 @@ struct workq	workq_syswq = {
 };
 
 /* if we allocate the wqt, we need to know we free it too */ 
-#define WQT_F_POOL	(1 << 31)
+#define WQT_F_POOL	(1U << 31)
 
 void			workq_init(void); /* called in init_main.c */
 void			workq_create_thread(void *);

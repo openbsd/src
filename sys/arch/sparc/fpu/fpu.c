@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.12 2006/05/14 21:58:05 kettenis Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.13 2013/11/26 20:33:14 deraadt Exp $	*/
 /*	$NetBSD: fpu.c,v 1.6 1997/07/29 10:09:51 fair Exp $	*/
 
 /*
@@ -281,11 +281,11 @@ fpu_execute(fe, instr)
 		goto mov;
 
 	case FNEG >> 2:
-		rs1 = fs->fs_regs[rs2] ^ (1 << 31);
+		rs1 = fs->fs_regs[rs2] ^ (1U << 31);
 		goto mov;
 
 	case FABS >> 2:
-		rs1 = fs->fs_regs[rs2] & ~(1 << 31);
+		rs1 = fs->fs_regs[rs2] & ~(1U << 31);
 	mov:
 		fs->fs_regs[rd] = rs1;
 		fs->fs_fsr = fe->fe_fsr;

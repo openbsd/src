@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_sqrt.c,v 1.3 2003/06/02 23:27:54 millert Exp $	*/
+/*	$OpenBSD: fpu_sqrt.c,v 1.4 2013/11/26 20:33:14 deraadt Exp $	*/
 /*	$NetBSD: fpu_sqrt.c,v 1.2 1994/11/20 20:52:46 deraadt Exp $ */
 
 /*
@@ -254,7 +254,7 @@ fpu_sqrt(fe)
 	 * double x correctly while doing the `known q=1.0'.
 	 *
 	 * We do this one mantissa-word at a time, as noted above, to
-	 * save work.  To avoid `(1 << 31) << 1', we also do the top bit
+	 * save work.  To avoid `(1U << 31) << 1', we also do the top bit
 	 * outside of each per-word loop.
 	 *
 	 * The calculation `t = y + bit' breaks down into `t0 = y0, ...,
@@ -292,7 +292,7 @@ fpu_sqrt(fe)
 #define t1 tt
 	q = 0;
 	y1 = 0;
-	bit = 1 << 31;
+	bit = 1U << 31;
 	EVEN_DOUBLE;
 	t1 = bit;
 	FPU_SUBS(d1, x1, t1);
@@ -323,7 +323,7 @@ fpu_sqrt(fe)
 #define t2 tt
 	q = 0;
 	y2 = 0;
-	bit = 1 << 31;
+	bit = 1U << 31;
 	EVEN_DOUBLE;
 	t2 = bit;
 	FPU_SUBS(d2, x2, t2);
@@ -356,7 +356,7 @@ fpu_sqrt(fe)
 #define t3 tt
 	q = 0;
 	y3 = 0;
-	bit = 1 << 31;
+	bit = 1U << 31;
 	EVEN_DOUBLE;
 	t3 = bit;
 	FPU_SUBS(d3, x3, t3);

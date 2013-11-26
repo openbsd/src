@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.4 2013/11/06 19:03:07 syl Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.5 2013/11/26 20:33:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -38,12 +38,12 @@
 #define DPRINTF(x)
 #endif
 
-#define	CCMU_SCLK_GATING		(1 << 31)
+#define	CCMU_SCLK_GATING		(1U << 31)
 #define	CCMU_GET_CLK_DIV_RATIO_N(x)	(((x) >> 16) & 0x03)
 #define	CCMU_GET_CLK_DIV_RATIO_M(x)	((x) & 0x07)
 
 #define	CCMU_PLL6_CFG			0x28
-#define	CCMU_PLL6_EN			(1 << 31)
+#define	CCMU_PLL6_EN			(1U << 31)
 #define	CCMU_PLL6_BYPASS_EN		(1 << 30)
 #define	CCMU_PLL6_SATA_CLK_EN		(1 << 14)
 #define	CCMU_PLL6_FACTOR_N		(31 << 8)

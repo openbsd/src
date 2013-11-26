@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2reg.h,v 1.3 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: tcic2reg.h,v 1.4 2013/11/26 20:33:16 deraadt Exp $	*/
 /*	$NetBSD: tcic2reg.h,v 1.1 1999/03/23 20:04:14 bad Exp $	*/
 
 /*-
@@ -124,12 +124,12 @@
 #define	TCIC_ADDR_MASK	(ADDR_SPACE_SIZE - 1)
 
 /* The following bits are defined in diagnostic mode */
-#define	TCIC_ADDR_DIAG_NREG	((u_int32_t) 1 << 31)	/* inverted! */
-#define	TCIC_ADDR_DIAG_NCEH	((u_int32_t) 1 << 30)
-#define	TCIC_ADDR_DIAG_NCEL	((u_int32_t) 1 << 29)
-#define	TCIC_ADDR_DIAG_NCWR	((u_int32_t) 1 << 28)
-#define	TCIC_ADDR_DIAG_NCRD	((u_int32_t) 1 << 27)
-#define	TCIC_ADDR_DIAG_CRESET	((u_int32_t) 1 << 26)
+#define	TCIC_ADDR_DIAG_NREG	((u_int32_t) 1U << 31)	/* inverted! */
+#define	TCIC_ADDR_DIAG_NCEH	((u_int32_t) 1U << 30)
+#define	TCIC_ADDR_DIAG_NCEL	((u_int32_t) 1U << 29)
+#define	TCIC_ADDR_DIAG_NCWR	((u_int32_t) 1U << 28)
+#define	TCIC_ADDR_DIAG_NCRD	((u_int32_t) 1U << 27)
+#define	TCIC_ADDR_DIAG_CRESET	((u_int32_t) 1U << 26)
 
 /* Bits in socket control register */
 #define	TCIC_SCTRL_ENA		(1 << 0)	/* enable access to card */

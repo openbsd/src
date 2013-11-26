@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.31 2013/10/04 07:27:36 brad Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.32 2013/11/26 20:33:18 deraadt Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -2362,10 +2362,10 @@ dump_bt848( bktr_ptr_t bktr )
 #define BKTR_CLEAR_RISC_STATUS_BIT2 (1 << 22)
 #define BKTR_CLEAR_RISC_STATUS_BIT3 (1 << 23)
 
-#define BKTR_TEST_RISC_STATUS_BIT0 (1 << 28)
-#define BKTR_TEST_RISC_STATUS_BIT1 (1 << 29)
-#define BKTR_TEST_RISC_STATUS_BIT2 (1 << 30)
-#define BKTR_TEST_RISC_STATUS_BIT3 (1 << 31)
+#define BKTR_TEST_RISC_STATUS_BIT0 (1U << 28)
+#define BKTR_TEST_RISC_STATUS_BIT1 (1U << 29)
+#define BKTR_TEST_RISC_STATUS_BIT2 (1U << 30)
+#define BKTR_TEST_RISC_STATUS_BIT3 (1U << 31)
 
 static bool_t
 notclipped (bktr_reg_t * bktr, int x, int width) {

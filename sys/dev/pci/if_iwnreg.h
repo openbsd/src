@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.44 2013/08/29 19:06:40 syl Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.45 2013/11/26 20:33:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -179,11 +179,11 @@
 #define IWN_FW_DATA_BASE	0x00800000
 
 /* Possible flags for register IWN_RESET. */
-#define IWN_RESET_NEVO			(1 << 0)
-#define IWN_RESET_SW			(1 << 7)
-#define IWN_RESET_MASTER_DISABLED	(1 << 8)
-#define IWN_RESET_STOP_MASTER		(1 << 9)
-#define IWN_RESET_LINK_PWR_MGMT_DIS	(1 << 31)
+#define IWN_RESET_NEVO			(1U << 0)
+#define IWN_RESET_SW			(1U << 7)
+#define IWN_RESET_MASTER_DISABLED	(1U << 8)
+#define IWN_RESET_STOP_MASTER		(1U << 9)
+#define IWN_RESET_LINK_PWR_MGMT_DIS	(1U << 31)
 
 /* Possible flags for register IWN_GP_CNTRL. */
 #define IWN_GP_CNTRL_MAC_ACCESS_ENA	(1 << 0)
@@ -231,8 +231,8 @@
 #define IWN_LED_ON		0x00000078
 
 /* Possible flags for register IWN_DRAM_INT_TBL. */
-#define IWN_DRAM_INT_TBL_WRAP_CHECK	(1 << 27)
-#define IWN_DRAM_INT_TBL_ENABLE		(1 << 31)
+#define IWN_DRAM_INT_TBL_WRAP_CHECK	(1U << 27)
+#define IWN_DRAM_INT_TBL_ENABLE		(1U << 31)
 
 /* Possible values for register IWN_ANA_PLL. */
 #define IWN_ANA_PLL_INIT	0x00880300
@@ -241,21 +241,21 @@
 #define	IWN_FH_RX_STATUS_IDLE	(1 << 24)
 
 /* Possible flags for register IWN_BSM_WR_CTRL. */
-#define IWN_BSM_WR_CTRL_START_EN	(1 << 30)
-#define IWN_BSM_WR_CTRL_START		(1 << 31)
+#define IWN_BSM_WR_CTRL_START_EN	(1U << 30)
+#define IWN_BSM_WR_CTRL_START		(1U << 31)
 
 /* Possible flags for register IWN_INT. */
-#define IWN_INT_ALIVE		(1 <<  0)
-#define IWN_INT_WAKEUP		(1 <<  1)
-#define IWN_INT_SW_RX		(1 <<  3)
-#define IWN_INT_CT_REACHED	(1 <<  6)
-#define IWN_INT_RF_TOGGLED	(1 <<  7)
-#define IWN_INT_SW_ERR		(1 << 25)
-#define IWN_INT_SCHED		(1 << 26)
-#define IWN_INT_FH_TX		(1 << 27)
-#define IWN_INT_RX_PERIODIC	(1 << 28)
-#define IWN_INT_HW_ERR		(1 << 29)
-#define IWN_INT_FH_RX		(1 << 31)
+#define IWN_INT_ALIVE		(1U <<  0)
+#define IWN_INT_WAKEUP		(1U <<  1)
+#define IWN_INT_SW_RX		(1U <<  3)
+#define IWN_INT_CT_REACHED	(1U <<  6)
+#define IWN_INT_RF_TOGGLED	(1U <<  7)
+#define IWN_INT_SW_ERR		(1U << 25)
+#define IWN_INT_SCHED		(1U << 26)
+#define IWN_INT_FH_TX		(1U << 27)
+#define IWN_INT_RX_PERIODIC	(1U << 28)
+#define IWN_INT_HW_ERR		(1U << 29)
+#define IWN_INT_FH_RX		(1U << 31)
 
 /* Shortcut. */
 #define IWN_INT_MASK_DEF						\
@@ -275,8 +275,8 @@
 
 /* Possible flags/values for register IWN_FH_TX_CONFIG. */
 #define IWN_FH_TX_CONFIG_DMA_PAUSE		0
-#define IWN_FH_TX_CONFIG_DMA_ENA		(1 << 31)
-#define IWN_FH_TX_CONFIG_CIRQ_HOST_ENDTFD	(1 << 20)
+#define IWN_FH_TX_CONFIG_DMA_ENA		(1U << 31)
+#define IWN_FH_TX_CONFIG_CIRQ_HOST_ENDTFD	(1U << 20)
 
 /* Possible flags/values for register IWN_FH_TXBUF_STATUS. */
 #define IWN_FH_TXBUF_STATUS_TBNUM(x)	((x) << 20)
@@ -290,17 +290,17 @@
 #define IWN_FH_TX_STATUS_IDLE(chnl)	(1 << ((chnl) + 16))
 
 /* Possible flags for register IWN_FH_RX_CONFIG. */
-#define IWN_FH_RX_CONFIG_ENA		(1 << 31)
+#define IWN_FH_RX_CONFIG_ENA		(1U << 31)
 #define IWN_FH_RX_CONFIG_NRBD(x)	((x) << 20)
-#define IWN_FH_RX_CONFIG_RB_SIZE_8K	(1 << 16)
-#define IWN_FH_RX_CONFIG_SINGLE_FRAME	(1 << 15)
-#define IWN_FH_RX_CONFIG_IRQ_DST_HOST	(1 << 12)
+#define IWN_FH_RX_CONFIG_RB_SIZE_8K	(1U << 16)
+#define IWN_FH_RX_CONFIG_SINGLE_FRAME	(1U << 15)
+#define IWN_FH_RX_CONFIG_IRQ_DST_HOST	(1U << 12)
 #define IWN_FH_RX_CONFIG_RB_TIMEOUT(x)	((x) << 4)
-#define IWN_FH_RX_CONFIG_IGN_RXF_EMPTY	(1 <<  2)
+#define IWN_FH_RX_CONFIG_IGN_RXF_EMPTY	(1U <<  2)
 
 /* Possible flags for register IWN_FH_TX_CONFIG. */
-#define IWN_FH_TX_CONFIG_DMA_ENA	(1 << 31)
-#define IWN_FH_TX_CONFIG_DMA_CREDIT_ENA	(1 <<  3)
+#define IWN_FH_TX_CONFIG_DMA_ENA	(1U << 31)
+#define IWN_FH_TX_CONFIG_DMA_CREDIT_ENA	(1U <<  3)
 
 /* Possible flags for register IWN_EEPROM. */
 #define IWN_EEPROM_READ_VALID	(1 << 0)
@@ -347,7 +347,7 @@
 #define IWN_APMG_PCI_STT_L1A_DIS	(1 << 11)
 
 /* Possible flags for register IWN_BSM_DRAM_TEXT_SIZE. */
-#define IWN_FW_UPDATED	(1 << 31)
+#define IWN_FW_UPDATED	(1U << 31)
 
 #define IWN_SCHED_WINSZ		64
 #define IWN_SCHED_LIMIT		64
