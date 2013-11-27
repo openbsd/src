@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.112 2013/11/21 09:08:38 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.113 2013/11/27 12:25:30 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -737,8 +737,7 @@ out:
 		if (la == 0)
 			goto out;
 		rt = la->la_rt;
-		if (rt->rt_ifp->if_type == IFT_CARP &&
-		    m->m_pkthdr.rcvif->if_type != IFT_CARP)
+		if (rt->rt_ifp->if_type == IFT_CARP && ifp->if_type != IFT_CARP)
 			goto out;
 		bcopy(ea->arp_sha, ea->arp_tha, sizeof(ea->arp_sha));
 		sdl = SDL(rt->rt_gateway);
