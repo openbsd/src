@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.10 2013/11/25 23:27:11 krw Exp $	*/
+/*	$OpenBSD: line.c,v 1.11 2013/11/27 08:52:41 zhuk Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -111,8 +111,8 @@ db_get(sp, lno, flags, pp, lenp)
 	 * is there.
 	 */
 	if (F_ISSET(sp, SC_TINPUT)) {
-		l1 = ((TEXT *)TAILQ_FIRST(&sp->tiq))->lno;
-		l2 = ((TEXT *)TAILQ_LAST(&sp->tiq, _texth))->lno;
+		l1 = TAILQ_FIRST(&sp->tiq)->lno;
+		l2 = TAILQ_LAST(&sp->tiq, _texth)->lno;
 		if (l1 <= lno && l2 >= lno) {
 #if defined(DEBUG) && 0
 	TRACE(sp, "retrieve TEXT buffer line %lu\n", (u_long)lno);
@@ -464,8 +464,8 @@ db_exist(sp, lno)
 	 */
 	if (ep->c_nlines != OOBLNO)
 		return (lno <= (F_ISSET(sp, SC_TINPUT) ?
-		    ep->c_nlines + (((TEXT *)TAILQ_LAST(&sp->tiq, _texth))->lno
-		    - ((TEXT *)TAILQ_FIRST(&sp->tiq))->lno) : ep->c_nlines));
+		    ep->c_nlines + (TAILQ_LAST(&sp->tiq, _texth)->lno
+		    - TAILQ_FIRST(&sp->tiq)->lno) : ep->c_nlines));
 
 	/* Go get the line. */
 	return (!db_get(sp, lno, 0, NULL, NULL));
@@ -499,8 +499,8 @@ db_last(sp, lnop)
 	if (ep->c_nlines != OOBLNO) {
 		*lnop = ep->c_nlines;
 		if (F_ISSET(sp, SC_TINPUT))
-			*lnop += ((TEXT *)TAILQ_LAST(&sp->tiq, _texth))->lno -
-			    ((TEXT *)TAILQ_FIRST(&sp->tiq))->lno;
+			*lnop += TAILQ_LAST(&sp->tiq, _texth)->lno -
+			    TAILQ_FIRST(&sp->tiq)->lno;
 		return (0);
 	}
 
@@ -527,8 +527,8 @@ db_last(sp, lnop)
 
 	/* Return the value. */
 	*lnop = (F_ISSET(sp, SC_TINPUT) &&
-	    ((TEXT *)TAILQ_LAST(&sp->tiq, _texth))->lno > lno ?
-	    ((TEXT *)TAILQ_LAST(&sp->tiq, _texth))->lno : lno);
+	    TAILQ_LAST(&sp->tiq, _texth)->lno > lno ?
+	    TAILQ_LAST(&sp->tiq, _texth)->lno : lno);
 	return (0);
 }
 
