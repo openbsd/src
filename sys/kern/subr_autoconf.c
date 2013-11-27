@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.69 2013/11/26 11:45:48 dlg Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.70 2013/11/27 00:00:53 dlg Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -74,12 +74,6 @@ struct matchinfo {
 	int	indirect, pri;
 };
 
-struct cftable_head allcftables;
-
-static struct cftable staticcftable = {
-	cfdata
-};
-
 #ifndef AUTOCONF_VERBOSE
 #define AUTOCONF_VERBOSE 0
 #endif /* AUTOCONF_VERBOSE */
@@ -119,8 +113,6 @@ config_init(void)
 {
 	TAILQ_INIT(&deferred_config_queue);
 	TAILQ_INIT(&alldevs);
-	TAILQ_INIT(&allcftables);
-	TAILQ_INSERT_TAIL(&allcftables, &staticcftable, list);
 }
 
 /*
@@ -186,7 +178,6 @@ config_search(cfmatch_t fn, struct device *parent, void *aux)
 	struct cfdata *cf;
 	short *p;
 	struct matchinfo m;
-	struct cftable *t;
 
 	m.fn = fn;
 	m.parent = parent;
@@ -194,23 +185,23 @@ config_search(cfmatch_t fn, struct device *parent, void *aux)
 	m.aux = aux;
 	m.indirect = parent && parent->dv_cfdata->cf_driver->cd_indirect;
 	m.pri = 0;
-	TAILQ_FOREACH(t, &allcftables, list) {
-		for (cf = t->tab; cf->cf_driver; cf++) {
-			/*
-			 * Skip cf if no longer eligible, otherwise scan
-			 * through parents for one matching `parent',
-			 * and try match function.
-			 */
-			if (cf->cf_fstate == FSTATE_FOUND)
-				continue;
-			if (cf->cf_fstate == FSTATE_DNOTFOUND ||
-			    cf->cf_fstate == FSTATE_DSTAR)
-				continue;
-			for (p = cf->cf_parents; *p >= 0; p++)
-				if (parent->dv_cfdata == &(t->tab)[*p])
-					mapply(&m, cf);
-		}
+
+	for (cf = cfdata; cf->cf_driver; cf++) {
+		/*
+		 * Skip cf if no longer eligible, otherwise scan
+		 * through parents for one matching `parent',
+		 * and try match function.
+		 */
+		if (cf->cf_fstate == FSTATE_FOUND)
+			continue;
+		if (cf->cf_fstate == FSTATE_DNOTFOUND ||
+		    cf->cf_fstate == FSTATE_DSTAR)
+			continue;
+		for (p = cf->cf_parents; *p >= 0; p++)
+			if (parent->dv_cfdata == &cfdata[*p])
+				mapply(&m, cf);
 	}
+
 	if (autoconf_verbose) {
 		if (m.match) {
 			if (m.indirect)
@@ -240,29 +231,27 @@ config_scan(cfscan_t fn, struct device *parent)
 	short *p;
 	void *match;
 	int indirect;
-	struct cftable *t;
 
 	indirect = parent && parent->dv_cfdata->cf_driver->cd_indirect;
-	TAILQ_FOREACH(t, &allcftables, list) {
-		for (cf = t->tab; cf->cf_driver; cf++) {
-			/*
-			 * Skip cf if no longer eligible, otherwise scan
-			 * through parents for one matching `parent',
-			 * and try match function.
-			 */
-			if (cf->cf_fstate == FSTATE_FOUND)
-				continue;
-			if (cf->cf_fstate == FSTATE_DNOTFOUND ||
-			    cf->cf_fstate == FSTATE_DSTAR)
-				continue;
-			for (p = cf->cf_parents; *p >= 0; p++)
-				if (parent->dv_cfdata == &(t->tab)[*p]) {
-					match = indirect?
-					    config_make_softc(parent, cf) :
-					    (void *)cf;
-					(*fn)(parent, match);
-				}
-		}
+
+	for (cf = cfdata; cf->cf_driver; cf++) {
+		/*
+		 * Skip cf if no longer eligible, otherwise scan
+		 * through parents for one matching `parent',
+		 * and try match function.
+		 */
+		if (cf->cf_fstate == FSTATE_FOUND)
+			continue;
+		if (cf->cf_fstate == FSTATE_DNOTFOUND ||
+		    cf->cf_fstate == FSTATE_DSTAR)
+			continue;
+		for (p = cf->cf_parents; *p >= 0; p++)
+			if (parent->dv_cfdata == &cfdata[*p]) {
+				match = indirect?
+				    config_make_softc(parent, cf) :
+				    (void *)cf;
+				(*fn)(parent, match);
+			}
 	}
 }
 
@@ -346,7 +335,6 @@ config_attach(struct device *parent, void *match, void *aux, cfprint_t print)
 	struct device *dev;
 	struct cfdriver *cd;
 	struct cfattach *ca;
-	struct cftable *t;
 
 	mtx_enter(&autoconf_attdet_mtx);
 	while (autoconf_attdet < 0)
@@ -397,15 +385,14 @@ config_attach(struct device *parent, void *match, void *aux, cfprint_t print)
 	 * otherwise identical, or bump the unit number on all starred
 	 * cfdata for this device.
 	 */
-	TAILQ_FOREACH(t, &allcftables, list) {
-		for (cf = t->tab; cf->cf_driver; cf++)
-			if (cf->cf_driver == cd &&
-			    cf->cf_unit == dev->dv_unit) {
-				if (cf->cf_fstate == FSTATE_NOTFOUND)
-					cf->cf_fstate = FSTATE_FOUND;
-				if (cf->cf_fstate == FSTATE_STAR)
-					cf->cf_unit++;
-			}
+	for (cf = cfdata; cf->cf_driver; cf++) {
+		if (cf->cf_driver == cd &&
+		    cf->cf_unit == dev->dv_unit) {
+			if (cf->cf_fstate == FSTATE_NOTFOUND)
+				cf->cf_fstate = FSTATE_FOUND;
+			if (cf->cf_fstate == FSTATE_STAR)
+				cf->cf_unit++;
+		}
 	}
 	device_register(dev, aux);
 	(*ca->ca_attach)(parent, dev, aux);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.45 2012/10/08 21:47:51 deraadt Exp $	*/
+/*	$OpenBSD: device.h,v 1.46 2013/11/27 00:00:53 dlg Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -163,12 +163,6 @@ struct pdevinit {
 };
 
 #ifdef _KERNEL
-struct cftable {
-	struct cfdata *tab;
-	TAILQ_ENTRY(cftable) list;
-};
-TAILQ_HEAD(cftable_head, cftable);
-
 extern struct devicelist alldevs;	/* list of all devices */
 
 extern int autoconf_verbose;
