@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.250 2013/10/25 18:44:36 lteo Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.251 2013/11/27 08:37:08 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1702,6 +1702,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 	u_char loop;
 	int i;
 	struct in_addr addr;
+	struct in_ifaddr *ia;
 	struct ip_mreq *mreq;
 	struct ifnet *ifp;
 	struct ip_moptions *imo = *imop;
@@ -1753,7 +1754,9 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 		 * IP address.  Find the interface and confirm that
 		 * it supports multicasting.
 		 */
-		INADDR_TO_IFP(addr, ifp, rtableid);
+		ia = in_iawithaddr(addr, rtableid);
+		if (ia)
+			ifp = ia->ia_ifp;
 		if (ifp == NULL || (ifp->if_flags & IFF_MULTICAST) == 0) {
 			error = EADDRNOTAVAIL;
 			break;
@@ -1820,7 +1823,9 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 			ifp = ro.ro_rt->rt_ifp;
 			rtfree(ro.ro_rt);
 		} else {
-			INADDR_TO_IFP(mreq->imr_interface, ifp, rtableid);
+			ia = in_iawithaddr(mreq->imr_interface, rtableid);
+			if (ia)
+				ifp = ia->ia_ifp;
 		}
 		/*
 		 * See if we found an interface, and confirm that it
@@ -1906,11 +1911,12 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 		if (mreq->imr_interface.s_addr == INADDR_ANY)
 			ifp = NULL;
 		else {
-			INADDR_TO_IFP(mreq->imr_interface, ifp, rtableid);
-			if (ifp == NULL) {
+			ia = in_iawithaddr(mreq->imr_interface, rtableid);
+			if (ia == NULL) {
 				error = EADDRNOTAVAIL;
 				break;
 			}
+			ifp = ia->ia_ifp;
 		}
 		/*
 		 * Find the membership in the membership array.

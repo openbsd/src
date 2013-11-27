@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.28 2013/11/21 16:34:33 mikeb Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.29 2013/11/27 08:37:08 mpi Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -80,23 +80,6 @@ struct	in_aliasreq {
 #ifdef	_KERNEL
 TAILQ_HEAD(in_ifaddrhead, in_ifaddr);
 extern	struct	in_ifaddrhead in_ifaddr;
-
-/*
- * Macro for finding the interface (ifnet structure) corresponding to one
- * of our IP addresses.
- */
-#define INADDR_TO_IFP(addr, ifp, rtableid)				\
-	/* struct in_addr addr; */					\
-	/* struct ifnet *ifp; */					\
-do {									\
-	struct in_ifaddr *ia;						\
-									\
-	TAILQ_FOREACH(ia, &in_ifaddr, ia_list)				\
-		if (ia->ia_ifp->if_rdomain == rtable_l2(rtableid) &&	\
-		    ia->ia_addr.sin_addr.s_addr == (addr).s_addr)	\
-			 break;						\
-	(ifp) = (ia == NULL) ? NULL : ia->ia_ifp;			\
-} while (/* CONSTCOND */ 0)
 
 /*
  * Macro for finding the internet address structure (in_ifaddr) corresponding
