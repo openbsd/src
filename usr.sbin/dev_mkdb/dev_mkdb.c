@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_mkdb.c,v 1.11 2009/10/27 23:59:51 deraadt Exp $	*/
+/*	$OpenBSD: dev_mkdb.c,v 1.12 2013/11/27 13:32:02 okan Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -63,7 +63,7 @@ main(int argc, char *argv[])
 	char dbtmp[MAXPATHLEN], dbname[MAXPATHLEN];
 
 	while ((ch = getopt(argc, argv, "")) != -1)
-		switch((char)ch) {
+		switch(ch) {
 		case '?':
 		default:
 			usage();

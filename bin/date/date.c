@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.40 2013/11/21 15:54:44 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.41 2013/11/27 13:32:02 okan Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ main(int argc, char *argv[])
 	tz.tz_dsttime = tz.tz_minuteswest = 0;
 	rflag = 0;
 	while ((ch = getopt(argc, argv, "ad:jr:ut:z:")) != -1)
-		switch((char)ch) {
+		switch(ch) {
 		case 'd':		/* daylight saving time */
 			tz.tz_dsttime = atoi(optarg) ? 1 : 0;
 			break;

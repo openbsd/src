@@ -1,4 +1,4 @@
-/*	$OpenBSD: subs.c,v 1.18 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: subs.c,v 1.19 2013/11/27 13:32:02 okan Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -195,7 +195,7 @@ getarg(argc,argv)
 	int     ch;
 
 	while ((ch = getopt(argc, argv, "bdnrs:w")) != -1)
-		switch((char)ch) {
+		switch(ch) {
 		case 'n':	/* don't ask if rules or instructions needed */
 			if (rflag)
 				break;

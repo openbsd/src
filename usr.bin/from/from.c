@@ -1,4 +1,4 @@
-/*	$OpenBSD: from.c,v 1.15 2013/11/26 13:18:55 deraadt Exp $	*/
+/*	$OpenBSD: from.c,v 1.16 2013/11/27 13:32:02 okan Exp $	*/
 /*	$NetBSD: from.c,v 1.6 1995/09/01 01:39:10 jtc Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ main(int argc, char *argv[])
 
 	file = sender = NULL;
 	while ((ch = getopt(argc, argv, "f:s:")) != -1)
-		switch((char)ch) {
+		switch(ch) {
 		case 'f':
 			file = optarg;
 			break;

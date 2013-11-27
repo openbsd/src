@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcopy.c,v 1.11 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: tcopy.c,v 1.12 2013/11/27 13:32:02 okan Exp $	*/
 /*	$NetBSD: tcopy.c,v 1.5 1997/04/15 07:23:08 lukem Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ main(int argc, char *argv[])
 
 	guesslen = 1;
 	while ((ch = getopt(argc, argv, "cs:vx")) != -1)
-		switch((char)ch) {
+		switch(ch) {
 		case 'c':
 			op = COPYVERIFY;
 			break;

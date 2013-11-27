@@ -1,4 +1,4 @@
-/*	$OpenBSD: lastcomm.c,v 1.18 2013/11/26 13:19:05 deraadt Exp $	*/
+/*	$OpenBSD: lastcomm.c,v 1.19 2013/11/27 13:32:02 okan Exp $	*/
 /*	$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ main(int argc, char *argv[])
 
 	acctfile = _PATH_ACCT;
 	while ((ch = getopt(argc, argv, "f:")) != -1)
-		switch((char)ch) {
+		switch(ch) {
 		case 'f':
 			acctfile = optarg;
 			break;

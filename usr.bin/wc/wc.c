@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.15 2013/11/23 17:37:22 deraadt Exp $	*/
+/*	$OpenBSD: wc.c,v 1.16 2013/11/27 13:32:02 okan Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -58,7 +58,7 @@ main(int argc, char *argv[])
 	setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "lwchm")) != -1)
-		switch((char)ch) {
+		switch(ch) {
 		case 'l':
 			doline = 1;
 			break;

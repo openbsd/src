@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.14 2010/08/24 23:49:06 djm Exp $	*/
+/*	$OpenBSD: vis.c,v 1.15 2013/11/27 13:32:02 okan Exp $	*/
 /*	$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $	*/
 
 /*-
@@ -54,7 +54,7 @@ main(int argc, char *argv[])
 	int ch;
 
 	while ((ch = getopt(argc, argv, "anwctsobfF:ld")) != -1)
-		switch((char)ch) {
+		switch(ch) {
 		case 'a':
 			eflags |= VIS_ALL;
 			break;

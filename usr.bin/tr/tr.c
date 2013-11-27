@@ -1,4 +1,4 @@
-/*	$OpenBSD: tr.c,v 1.15 2009/10/27 23:59:46 deraadt Exp $	*/
+/*	$OpenBSD: tr.c,v 1.16 2013/11/27 13:32:02 okan Exp $	*/
 /*	$NetBSD: tr.c,v 1.5 1995/08/31 22:13:48 jtc Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 
 	cflag = dflag = sflag = 0;
 	while ((ch = getopt(argc, argv, "cds")) != -1)
-		switch((char)ch) {
+		switch(ch) {
 		case 'c':
 			cflag = 1;
 			break;
