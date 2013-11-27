@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.277 2013/11/19 09:00:43 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.278 2013/11/27 08:34:40 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -853,18 +853,18 @@ if_congestion_clear(void *arg)
  */
 /*ARGSUSED*/
 struct ifaddr *
-ifa_ifwithaddr(struct sockaddr *addr, u_int rdomain)
+ifa_ifwithaddr(struct sockaddr *addr, u_int rtableid)
 {
 	struct ifaddr_item *ifai, key;
 
 	bzero(&key, sizeof(key));
 	key.ifai_addr = addr;
-	key.ifai_rdomain = rtable_l2(rdomain);
+	key.ifai_rdomain = rtable_l2(rtableid);
 
 	ifai = RB_FIND(ifaddr_items, &ifaddr_items, &key);
 	if (ifai)
 		return (ifai->ifai_ifa);
-	return (NULL);	
+	return (NULL);
 }
 
 #define	equal(a1, a2)	\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.221 2013/11/17 10:07:32 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.222 2013/11/27 08:34:39 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -725,7 +725,7 @@ in_ouraddr(struct in_addr ina, struct mbuf *m)
 }
 
 struct in_ifaddr *
-in_iawithaddr(struct in_addr ina, u_int rdomain)
+in_iawithaddr(struct in_addr ina, u_int rtableid)
 {
 	struct in_ifaddr	*ia;
 	struct sockaddr_in	 sin;
@@ -734,7 +734,7 @@ in_iawithaddr(struct in_addr ina, u_int rdomain)
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr = ina;
-	ia = ifatoia(ifa_ifwithaddr(sintosa(&sin), rdomain));
+	ia = ifatoia(ifa_ifwithaddr(sintosa(&sin), rtableid));
 	if (ia == NULL || ina.s_addr == ia->ia_addr.sin_addr.s_addr)
 		return (ia);
 
