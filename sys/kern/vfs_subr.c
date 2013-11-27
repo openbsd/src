@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.208 2013/10/02 21:29:21 sf Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.209 2013/11/27 15:50:52 jsing Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -395,8 +395,8 @@ getnewvnode(enum vtagtype tag, struct mount *mp, struct vops *vops,
 		vp->v_flag = 0;
 		vp->v_socket = 0;
 	}
-	vp->v_type = VNON;
 	cache_purge(vp);
+	vp->v_type = VNON;
 	vp->v_tag = tag;
 	vp->v_op = vops;
 	insmntque(vp, mp);
