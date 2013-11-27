@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhidaction.c,v 1.16 2012/03/23 10:04:59 robert Exp $ */
+/*	$OpenBSD: usbhidaction.c,v 1.17 2013/11/27 00:13:23 deraadt Exp $ */
 /*      $NetBSD: usbhidaction.c,v 1.7 2002/01/18 14:38:59 augustss Exp $ */
 
 /*
@@ -128,7 +128,7 @@ main(int argc, char **argv)
 
 	if (dev[0] != '/') {
 		snprintf(devnamebuf, sizeof(devnamebuf), "/dev/%s%s",
-		    isdigit(dev[0]) ? "uhid" : "", dev);
+		    isdigit((unsigned char)dev[0]) ? "uhid" : "", dev);
 		dev = devnamebuf;
 	}
 
@@ -415,7 +415,7 @@ docmd(struct command *cmd, int value, const char *hid, int argc, char **argv)
 		if (*p == '$') {
 			p++;
 			len = &cmdbuf[SIZE-1] - q;
-			if (isdigit(*p)) {
+			if (isdigit((unsigned char)*p)) {
 				n = strtol(p, &p, 10) - 1;
 				if (n >= 0 && n < argc) {
 					strncpy(q, argv[n], len);

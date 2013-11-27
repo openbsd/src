@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.c,v 1.10 2010/08/02 13:57:32 miod Exp $	*/
+/*	$OpenBSD: usbhid.c,v 1.11 2013/11/27 00:13:23 deraadt Exp $	*/
 /*      $NetBSD: usbhid.c,v 1.22 2002/02/20 20:30:42 christos Exp $ */
 
 /*
@@ -933,7 +933,7 @@ main(int argc, char **argv)
 
 	if (dev[0] != '/') {
 		snprintf(devnamebuf, sizeof(devnamebuf), "/dev/%s%s",
-			 isdigit(dev[0]) ? "uhid" : "", dev);
+			 isdigit((unsigned char)dev[0]) ? "uhid" : "", dev);
 		dev = devnamebuf;
 	}
 

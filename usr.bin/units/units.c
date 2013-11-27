@@ -1,4 +1,4 @@
-/*	$OpenBSD: units.c,v 1.19 2013/11/17 20:19:36 okan Exp $	*/
+/*	$OpenBSD: units.c,v 1.20 2013/11/27 00:13:24 deraadt Exp $	*/
 /*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
 
 /*
@@ -290,7 +290,7 @@ addunit(struct unittype *theunit, char *toadd, int flip)
 	savescr = scratch = dupstr(toadd);
 	for (slash = scratch + 1; *slash; slash++)
 		if (*slash == '-' &&
-		    (tolower(*(slash - 1)) != 'e' ||
+		    (tolower((unsigned char)*(slash - 1)) != 'e' ||
 		    !strchr(".0123456789", *(slash + 1))))
 			*slash = ' ';
 	slash = strchr(scratch, '/');

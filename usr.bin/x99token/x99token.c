@@ -1,4 +1,4 @@
-/*	$OpenBSD: x99token.c,v 1.8 2010/10/15 10:18:42 jsg Exp $	*/
+/*	$OpenBSD: x99token.c,v 1.9 2013/11/27 00:13:22 deraadt Exp $	*/
 
 /*
  * X9.9 calculator
@@ -99,17 +99,17 @@ main(int argc, char **argv)
 		for (i = 0; i < 8; ++i) {
 			if (!*b)
 				fprintf(stderr, "%s: invalid key\n", buf);
-			while (isdigit(*b))
+			while (isdigit((unsigned char)*b))
 				key[i] = key[i] << 3 | (*b++ - '0');
-			while (*b && !isdigit(*b))
+			while (*b && !isdigit((unsigned char)*b))
 				++b;
 		}
 	} else {
 		for (i = 0; i < 16; ++i) {
 			int d;
 
-			if (islower(buf[i]))
-				buf[i] = toupper(buf[i]);
+			if (islower((unsigned char)buf[i]))
+				buf[i] = toupper((unsigned char)buf[i]);
 			if (buf[i] >= '0' && buf[i] <= '9')
 				d = buf[i] - '0';
 			else if (buf[i] >= 'A' && buf[i] <= 'F')
@@ -125,7 +125,7 @@ main(int argc, char **argv)
 	/* XXX - should warn on non-space or non-digit */
 	readpassphrase("Enter Pin: ", buf, sizeof(buf), 0);
 	for (i = 0, pin = 0; buf[i] && buf[i] != '\n'; ++i)
-		if (isdigit(buf[i]))
+		if (isdigit((unsigned char)buf[i]))
 			pin = pin * 16 + buf[i] - '0' + 1;
 
 	if ((pin & 0xffff0000) == 0)

@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.21 2012/03/29 22:04:28 jmc Exp $ */
+/* $OpenBSD: tsort.c,v 1.22 2013/11/27 00:13:24 deraadt Exp $ */
 /* ex:ts=8 sw=4:
  *
  * Copyright (c) 1999-2004 Marc Espie <espie@openbsd.org>
@@ -315,11 +315,13 @@ read_pairs(FILE *f, struct ohash *h, int reverse, const char *name,
 		for (;;) {
 			char *e;
 
-			while (str < sentinel && isspace(*str))
+			while (str < sentinel &&
+			    isspace((unsigned char)*str))
 				str++;
 			if (str == sentinel)
 				break;
-			for (e = str; e < sentinel && !isspace(*e); e++)
+			for (e = str;
+			    e < sentinel && !isspace((unsigned char)*e); e++)
 				continue;
 			if (toggle) {
 				a = node_lookup(h, str, e);
@@ -363,11 +365,12 @@ read_hints(FILE *f, struct ohash *h, int quiet, const char *name,
 			char *e;
 			struct node *a;
 
-			while (str < sentinel && isspace(*str))
+			while (str < sentinel && isspace((unsigned char)*str))
 				str++;
 			if (str == sentinel)
 				break;
-			for (e = str; e < sentinel && !isspace(*e); e++)
+			for (e = str;
+			    e < sentinel && !isspace((unsigned char)*e); e++)
 				continue;
 			a = node_lookup(h, str, e);
 			if (a->order != NO_ORDER) {
