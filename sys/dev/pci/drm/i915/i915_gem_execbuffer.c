@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.18 2013/11/19 19:14:09 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.19 2013/11/27 22:20:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -421,7 +421,7 @@ i915_gem_execbuffer_unreserve_object(struct drm_i915_gem_object *obj)
 {
 	struct drm_i915_gem_exec_object2 *entry;
 
-	if (obj->gtt_space == NULL)
+	if (!obj->gtt_space)
 		return;
 
 	entry = obj->exec_entry;
@@ -493,7 +493,7 @@ i915_gem_execbuffer_reserve(struct intel_ring_buffer *ring,
 			struct drm_i915_gem_exec_object2 *entry = obj->exec_entry;
 			bool need_fence, need_mappable;
 
-			if (obj->gtt_space == NULL)
+			if (!obj->gtt_space)
 				continue;
 
 			need_fence =
@@ -513,7 +513,7 @@ i915_gem_execbuffer_reserve(struct intel_ring_buffer *ring,
 
 		/* Bind fresh objects */
 		list_for_each_entry(obj, objects, exec_list) {
-			if (obj->gtt_space != NULL)
+			if (obj->gtt_space)
 				continue;
 
 			ret = i915_gem_execbuffer_reserve_object(obj, ring);
