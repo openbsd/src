@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.24 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.25 2013/11/27 21:25:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -540,17 +540,17 @@ getsecret(void)
 			memset(host, 0, len);
 			host = secret;
 		}
-		while (len > 0 && isspace(host[--len]))
+		while (len > 0 && isspace((unsigned char)host[--len]))
 			;
 		host[++len] = '\0';
-		while (isspace(*host)) {
+		while (isspace((unsigned char)*host)) {
 			++host;
 			--len;
 		}
 		if (*host == '\0')
 			continue;
 		secret = host;
-		while (*secret && !isspace(*secret))
+		while (*secret && !isspace((unsigned char)*secret))
 			++secret;
 		if (*secret)
 			*secret++ = '\0';
@@ -558,7 +558,7 @@ getsecret(void)
 			memset(host, 0, len);
 			continue;
 		}
-		while (isspace(*secret))
+		while (isspace((unsigned char)*secret))
 			++secret;
 		if (*secret)
 			break;

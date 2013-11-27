@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.64 2013/11/13 05:41:42 deraadt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.65 2013/11/27 21:25:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -143,7 +143,7 @@ _dl_origin_subst_path(elf_object_t *object, const char *origin_path,
 
 			/* skip over name */
 			name = pp;
-			while (_dl_isalnum(*pp) || *pp == '_')
+			while (_dl_isalnum((unsigned char)*pp) || *pp == '_')
 				pp++;
 
 			switch (_dl_subst_name(name, pp - name)) {

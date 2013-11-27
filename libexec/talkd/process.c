@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.19 2009/10/27 23:59:31 deraadt Exp $	*/
+/*	$OpenBSD: process.c,v 1.20 2013/11/27 21:25:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -81,7 +81,7 @@ process_request(CTL_MSG *mp, CTL_RESPONSE *rp)
 		return;
 	}
 	for (s = mp->l_name; *s; s++)
-		if (!isprint(*s)) {
+		if (!isprint((unsigned char)*s)) {
 			syslog(LOG_NOTICE, "Illegal user name. Aborting");
 			rp->answer = FAILED;
 			return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 2013/06/04 22:23:18 benno Exp $	*/
+/*	$OpenBSD: main.c,v 1.32 2013/11/27 21:25:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -446,13 +446,13 @@ putpad(char *s)
 	int pad = 0;
 	speed_t ospeed = cfgetospeed(&tmode);
 
-	if (isdigit(*s)) {
-		while (isdigit(*s)) {
+	if (isdigit((unsigned char)*s)) {
+		while (isdigit((unsigned char)*s)) {
 			pad *= 10;
 			pad += *s++ - '0';
 		}
 		pad *= 10;
-		if (*s == '.' && isdigit(s[1])) {
+		if (*s == '.' && isdigit((unsigned char)s[1])) {
 			pad += s[1] - '0';
 			s += 2;
 		}

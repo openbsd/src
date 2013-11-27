@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppasswdd_mkpw.c,v 1.30 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: yppasswdd_mkpw.c,v 1.31 2013/11/27 21:25:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -78,7 +78,7 @@ badchars(char *base)
 	for (s = base; *s; s++) {
 		if (*s == '&')
 			ampr++;
-		if (!isprint(*s))
+		if (!isprint((unsigned char)*s))
 			return 1;
 		if (strchr(":\n\t\r", *s))
 			return 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.54 2013/11/19 18:33:57 deraadt Exp $	*/
+/*	$OpenBSD: grey.c,v 1.55 2013/11/27 21:25:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -319,7 +319,7 @@ dequotetolower(const char *addr)
 		*cp = '\0';
 	cp = buf;
 	while (*cp != '\0') {
-		*cp = tolower(*cp);
+		*cp = tolower((unsigned char)*cp);
 		cp++;
 	}
 	return(buf);
@@ -341,9 +341,9 @@ readsuffixlists(void)
 	if ((fp = fopen(alloweddomains_file, "r")) != NULL) {
 		while ((buf = fgetln(fp, &len))) {
 			/* strip white space-characters */
-			while (len > 0 && isspace(buf[len-1]))
+			while (len > 0 && isspace((unsigned char)buf[len-1]))
 				len--;
-			while (len > 0 && isspace(*buf)) {
+			while (len > 0 && isspace((unsigned char)*buf)) {
 				buf++;
 				len--;
 			}

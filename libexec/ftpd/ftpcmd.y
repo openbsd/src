@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.54 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.55 2013/11/27 21:25:25 deraadt Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -1312,9 +1312,9 @@ yylex()
 				cpos++;
 				return (SP);
 			}
-			if (isdigit(cbuf[cpos])) {
+			if (isdigit((unsigned char)cbuf[cpos])) {
 				cp = &cbuf[cpos];
-				while (isdigit(cbuf[++cpos]))
+				while (isdigit((unsigned char)cbuf[++cpos]))
 					;
 				c = cbuf[cpos];
 				cbuf[cpos] = '\0';
@@ -1327,9 +1327,9 @@ yylex()
 			goto dostr1;
 
 		case ARGS:
-			if (isdigit(cbuf[cpos])) {
+			if (isdigit((unsigned char)cbuf[cpos])) {
 				cp = &cbuf[cpos];
-				while (isdigit(cbuf[++cpos]))
+				while (isdigit((unsigned char)cbuf[++cpos]))
 					;
 				c = cbuf[cpos];
 				cbuf[cpos] = '\0';
@@ -1338,7 +1338,7 @@ yylex()
 				return (NUMBER);
 			}
 			if (strncasecmp(&cbuf[cpos], "ALL", 3) == 0 &&
-			    !isalnum(cbuf[cpos + 3])) {
+			    !isalnum((unsigned char)cbuf[cpos + 3])) {
 				cpos += 3;
 				return ALL;
 			}
@@ -1420,8 +1420,8 @@ upper(s)
 	char *p;
 
 	for (p = s; *p; p++) {
-		if (islower(*p))
-			*p = (char)toupper(*p);
+		if (islower((unsigned char)*p))
+			*p = (char)toupper((unsigned char)*p);
 	}
 }
 
