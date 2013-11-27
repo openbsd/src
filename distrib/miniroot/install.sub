@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.700 2013/11/25 23:02:04 rpe Exp $
+#	$OpenBSD: install.sub,v 1.701 2013/11/27 21:48:25 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -441,9 +441,6 @@ ask_which() {
 	_key=$(echo "$_name" | sed 's/[^[:alnum:]]/_/g')
 
 	while :; do
-		# Put both lines in ask prompt, rather than use a
-		# separate 'echo' to ensure the entire question is
-		# re-ask'ed after a '!' or '!foo' shell escape.
 		eval "_dynlist=\"$_list\""
 		eval "_dyndef=\"$_def\""
 
