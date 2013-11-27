@@ -1,4 +1,4 @@
-/*	$OpenBSD: tput.c,v 1.18 2013/11/27 00:13:24 deraadt Exp $	*/
+/*	$OpenBSD: tput.c,v 1.19 2013/11/27 15:23:01 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -241,7 +241,7 @@ process(char *cap, char *str, char **argv)
 			    arg_need, cap);
 
 		/* convert ascii representation of numbers to longs */
-		if ((unsigned char)isdigit(argv[i][0])
+		if (isdigit((unsigned char)argv[i][0])
 		    && (l = strtol(argv[i], &cp, 10)) >= 0
 		    && l < LONG_MAX && *cp == '\0')
 			nargv[i] = (char *)l;
