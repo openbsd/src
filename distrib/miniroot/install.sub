@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.701 2013/11/27 21:48:25 rpe Exp $
+#	$OpenBSD: install.sub,v 1.702 2013/11/27 21:49:21 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -301,7 +301,7 @@ _autorespond() {
 		[[ -n ${_key%%#*} && -n $_val ]] || continue
 		[[ $_q == *"$_key"* ]] && resp=$_val && let _i++
 	done <$RESPONSEFILE
-	((_i == 1)) && return	
+	((_i == 1)) && return
 	if ((_i == 0)); then
 		[[ -n $_def ]] && resp=$_def && return
 		echo "\nQuestion has no answer in response file."
@@ -2149,7 +2149,7 @@ get_responsefile() {
 	_mode=$(sed -E '/filename/s/^.*auto_(install|upgrade).*$/\1/p;d' \
 	    /var/db/dhclient.leases.$_bootdev 2>/dev/null)
 	_mac=$(ifconfig $_bootdev | sed 's/.*lladdr \(.*\)/\1/p;d')
-	
+
 	for _f in $_mac-$_mode $_mode; do
 		ftp -o "/$_mode.conf" "http://$_server/$_f.conf"
 		[[ -s /$_mode.conf ]] && action=$_mode && break
