@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.40 2013/10/06 04:34:35 guenther Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.41 2013/11/27 04:28:32 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -162,10 +162,11 @@ timeout_set(struct timeout *new, void (*fn)(void *), void *arg)
 }
 
 
-void
+int
 timeout_add(struct timeout *new, int to_ticks)
 {
 	int old_time;
+	int ret = 1;
 
 #ifdef DIAGNOSTIC
 	if (!(new->to_flags & TIMEOUT_INITIALIZED))
@@ -190,14 +191,17 @@ timeout_add(struct timeout *new, int to_ticks)
 			CIRCQ_REMOVE(&new->to_list);
 			CIRCQ_INSERT(&new->to_list, &timeout_todo);
 		}
+		ret = 0;
 	} else {
 		new->to_flags |= TIMEOUT_ONQUEUE;
 		CIRCQ_INSERT(&new->to_list, &timeout_todo);
 	}
 	mtx_leave(&timeout_mutex);
+
+	return (ret);
 }
 
-void
+int
 timeout_add_tv(struct timeout *to, const struct timeval *tv)
 {
 	long long to_ticks;
@@ -206,10 +210,10 @@ timeout_add_tv(struct timeout *to, const struct timeval *tv)
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
 
-	timeout_add(to, (int)to_ticks);
+	return (timeout_add(to, (int)to_ticks));
 }
 
-void
+int
 timeout_add_ts(struct timeout *to, const struct timespec *ts)
 {
 	long long to_ticks;
@@ -218,10 +222,10 @@ timeout_add_ts(struct timeout *to, const struct timespec *ts)
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
 
-	timeout_add(to, (int)to_ticks);
+	return (timeout_add(to, (int)to_ticks));
 }
 
-void
+int
 timeout_add_bt(struct timeout *to, const struct bintime *bt)
 {
 	long long to_ticks;
@@ -231,10 +235,10 @@ timeout_add_bt(struct timeout *to, const struct bintime *bt)
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
 
-	timeout_add(to, (int)to_ticks);
+	return (timeout_add(to, (int)to_ticks));
 }
 
-void
+int
 timeout_add_sec(struct timeout *to, int secs)
 {
 	long long to_ticks;
@@ -243,10 +247,10 @@ timeout_add_sec(struct timeout *to, int secs)
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
 
-	timeout_add(to, (int)to_ticks);
+	return (timeout_add(to, (int)to_ticks));
 }
 
-void
+int
 timeout_add_msec(struct timeout *to, int msecs)
 {
 	long long to_ticks;
@@ -255,23 +259,23 @@ timeout_add_msec(struct timeout *to, int msecs)
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
 
-	timeout_add(to, (int)to_ticks);
+	return (timeout_add(to, (int)to_ticks));
 }
 
-void
+int
 timeout_add_usec(struct timeout *to, int usecs)
 {
 	int to_ticks = usecs / tick;
 
-	timeout_add(to, to_ticks);
+	return (timeout_add(to, to_ticks));
 }
 
-void
+int
 timeout_add_nsec(struct timeout *to, int nsecs)
 {
 	int to_ticks = nsecs / (tick * 1000);
 
-	timeout_add(to, to_ticks);
+	return (timeout_add(to, to_ticks));
 }
 
 int

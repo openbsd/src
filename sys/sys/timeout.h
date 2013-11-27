@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.23 2013/10/23 20:12:05 deraadt Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.24 2013/11/27 04:28:32 dlg Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -85,14 +85,14 @@ struct timeout {
 struct bintime;
 
 void timeout_set(struct timeout *, void (*)(void *), void *);
-void timeout_add(struct timeout *, int);
-void timeout_add_tv(struct timeout *, const struct timeval *);
-void timeout_add_ts(struct timeout *, const struct timespec *);
-void timeout_add_bt(struct timeout *, const struct bintime *);
-void timeout_add_sec(struct timeout *, int);
-void timeout_add_msec(struct timeout *, int);
-void timeout_add_usec(struct timeout *, int);
-void timeout_add_nsec(struct timeout *, int);
+int timeout_add(struct timeout *, int);
+int timeout_add_tv(struct timeout *, const struct timeval *);
+int timeout_add_ts(struct timeout *, const struct timespec *);
+int timeout_add_bt(struct timeout *, const struct bintime *);
+int timeout_add_sec(struct timeout *, int);
+int timeout_add_msec(struct timeout *, int);
+int timeout_add_usec(struct timeout *, int);
+int timeout_add_nsec(struct timeout *, int);
 int timeout_del(struct timeout *);
 
 void timeout_startup(void);
