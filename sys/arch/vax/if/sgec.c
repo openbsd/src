@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.20 2011/09/26 21:44:04 miod Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.21 2013/11/27 08:56:31 mpi Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -767,7 +767,8 @@ ze_setup(sc)
 	struct ether_multistep step;
 	struct ze_cdata *zc = sc->sc_zedata;
 	struct ifnet *ifp = &sc->sc_if;
-	u_int8_t *enaddr = sc->sc_ac.ac_enaddr;
+	struct arpcom *ac = &sc->sc_ac;
+	u_int8_t *enaddr = ac->ac_enaddr;
 	int j, idx, s, reg;
 
 	s = splnet();
@@ -790,12 +791,14 @@ ze_setup(sc)
 	 */
 	j = 16;
 	ifp->if_flags &= ~IFF_ALLMULTI;
-	ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
+
+	if (ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		goto setit;
+	}
+
+	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			break;
-		}
 		bcopy(enm->enm_addrlo, &zc->zc_setup[j], ETHER_ADDR_LEN);
 		j += 8;
 		ETHER_NEXT_MULTI(step, enm);
@@ -805,6 +808,7 @@ ze_setup(sc)
 		}
 	}
 
+setit:
 	/*
 	 * Fiddle with the receive logic.
 	 */

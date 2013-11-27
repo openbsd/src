@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.25 2010/09/20 06:33:47 matthew Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.26 2013/11/27 08:56:31 mpi Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -747,7 +747,8 @@ qe_setup(struct qe_softc *sc)
 	struct ether_multistep step;
 	struct qe_cdata *qc = sc->sc_qedata;
 	struct ifnet *ifp = &sc->sc_if;
-	u_int8_t *enaddr = sc->sc_ac.ac_enaddr;
+	struct arpcom *ac = &sc->sc_ac;
+	u_int8_t *enaddr = ac->ac_enaddr;
 	int i, j, k, idx, s;
 
 	s = splnet();
@@ -770,12 +771,14 @@ qe_setup(struct qe_softc *sc)
 	 */
 	j = 3; k = 0;
 	ifp->if_flags &= ~IFF_ALLMULTI;
-	ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
+
+	if (ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		goto setit;
+	}
+
+	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			break;
-		}
 		for (i = 0; i < ETHER_ADDR_LEN; i++)
 			qc->qc_setup[i * 8 + j + k] = enm->enm_addrlo[i];
 		j++;
@@ -788,6 +791,8 @@ qe_setup(struct qe_softc *sc)
 		}
 		ETHER_NEXT_MULTI(step, enm);
 	}
+
+setit:
 	idx = sc->sc_nexttx;
 	qc->qc_xmit[idx].qe_buf_len = -64;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.44 2013/09/05 20:55:58 bluhm Exp $	*/
+/*	$OpenBSD: be.c,v 1.45 2013/11/27 08:56:31 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -1158,6 +1158,9 @@ be_mcreset(sc)
 	else
 		br->rx_cfg &= ~BE_BR_RXCFG_PMISC;
 
+	if (ac->ac_multirangecnt > 0)
+		ifp->if_flags |= IFF_ALLMULTI;
+
 	if (ifp->if_flags & IFF_ALLMULTI) {
 		br->htable3 = 0xffff;
 		br->htable2 = 0xffff;
@@ -1170,25 +1173,6 @@ be_mcreset(sc)
 
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			/*
-			 * We must listen to a range of multicast
-			 * addresses.  For now, just accept all
-			 * multicasts, rather than trying to set only
-			 * those filter bits needed to match the range.
-			 * (At this time, the only use of address
-			 * ranges is for IP multicast routing, for
-			 * which the range is big enough to require
-			 * all bits set.)
-			 */
-			br->htable3 = 0xffff;
-			br->htable2 = 0xffff;
-			br->htable1 = 0xffff;
-			br->htable0 = 0xffff;
-			ifp->if_flags |= IFF_ALLMULTI;
-			return;
-		}
-
 		crc = 0xffffffff;
 
 		for (i = 0; i < ETHER_ADDR_LEN; i++) {
