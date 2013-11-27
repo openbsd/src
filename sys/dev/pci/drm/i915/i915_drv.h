@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.37 2013/11/20 02:03:52 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.38 2013/11/27 20:13:30 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -852,6 +852,24 @@ enum i915_cache_level {
 	I915_CACHE_LLC_MLC, /* gen6+ */
 };
 
+struct drm_i915_gem_object_ops {
+	/* Interface between the GEM object and its backing storage.
+	 * get_pages() is called once prior to the use of the associated set
+	 * of pages before to binding them into the GTT, and put_pages() is
+	 * called after we no longer need them. As we expect there to be
+	 * associated cost with migrating pages between the backing storage
+	 * and making them available for the GPU (e.g. clflush), we may hold
+	 * onto the pages after they are no longer referenced by the GPU
+	 * in case they may be used again shortly (for example migrating the
+	 * pages to a different memory domain within the GTT). put_pages()
+	 * will therefore most likely be called when the object itself is
+	 * being released or under memory pressure (where we attempt to
+	 * reap pages for the shrinker).
+	 */
+	int (*get_pages)(struct drm_i915_gem_object *);
+	void (*put_pages)(struct drm_i915_gem_object *);
+};
+
 struct inteldrm_file {
 	struct drm_file	file_priv;
 	struct {
@@ -895,6 +913,8 @@ struct inteldrm_file {
 /** driver private structure attached to each drm_gem_object */
 struct drm_i915_gem_object {
 	struct drm_obj				 base;
+
+	const struct drm_i915_gem_object_ops *ops;
 
 	/** Current space allocated to this object in the GTT, if any. */
 	struct drm_mm_node *gtt_space;
@@ -1126,7 +1146,6 @@ int	i915_gem_set_caching_ioctl(struct drm_device *, void *,
 
 /* GEM memory manager functions */
 int	i915_gem_init_object(struct drm_obj *);
-void	i915_gem_object_init(struct drm_i915_gem_object *);
 void	i915_gem_free_object(struct drm_obj *);
 int	i915_gem_object_pin(struct drm_i915_gem_object *, uint32_t, bool, bool);
 void	i915_gem_object_unpin(struct drm_i915_gem_object *);
@@ -1258,8 +1277,10 @@ static inline bool intel_gmbus_is_forced_bit(struct i2c_controller *i2c)
 /* i915_gem.c */
 int i915_gem_fault(struct drm_obj *, struct uvm_faultinfo *, off_t,
     vaddr_t, vm_page_t *, int, int, vm_prot_t, int );
-struct drm_i915_gem_object *
-    i915_gem_alloc_object(struct drm_device *, size_t);
+void i915_gem_object_init(struct drm_i915_gem_object *obj,
+			 const struct drm_i915_gem_object_ops *ops);
+struct drm_i915_gem_object *i915_gem_alloc_object(struct drm_device *dev,
+						  size_t size);
 int i915_gpu_idle(struct drm_device *);
 void i915_gem_object_move_to_flushing(struct drm_i915_gem_object *);
 int i915_gem_object_get_fence(struct drm_i915_gem_object *);

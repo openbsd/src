@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.46 2013/11/20 02:03:52 jsg Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.47 2013/11/27 20:13:30 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1719,9 +1719,7 @@ i915_gem_object_put_pages_gtt(struct drm_i915_gem_object *obj)
 static int
 i915_gem_object_put_pages(struct drm_i915_gem_object *obj)
 {
-#if 0
 	const struct drm_i915_gem_object_ops *ops = obj->ops;
-#endif
 
 	if (obj->pages == NULL)
 		return 0;
@@ -1736,11 +1734,7 @@ i915_gem_object_put_pages(struct drm_i915_gem_object *obj)
 	 * lists early. */
 	list_del(&obj->gtt_list);
 
-#if 0
 	ops->put_pages(obj);
-#else
-	i915_gem_object_put_pages_gtt(obj);
-#endif
 	obj->pages = NULL;
 
 	if (i915_gem_object_is_purgeable(obj))
@@ -1924,9 +1918,7 @@ int
 i915_gem_object_get_pages(struct drm_i915_gem_object *obj)
 {
 	struct drm_i915_private *dev_priv = obj->base.dev->dev_private;
-#if 0
 	const struct drm_i915_gem_object_ops *ops = obj->ops;
-#endif
 	int ret;
 
 	if (obj->pages)
@@ -1934,11 +1926,7 @@ i915_gem_object_get_pages(struct drm_i915_gem_object *obj)
 
 	BUG_ON(obj->pages_pin_count);
 
-#if 0
 	ret = ops->get_pages(obj);
-#else
-	ret = i915_gem_object_get_pages_gtt(obj);
-#endif
 	if (ret)
 		return ret;
 
@@ -3763,12 +3751,15 @@ unlock:
 	return ret;
 }
 
-void i915_gem_object_init(struct drm_i915_gem_object *obj)
+void i915_gem_object_init(struct drm_i915_gem_object *obj,
+			  const struct drm_i915_gem_object_ops *ops)
 {
 	INIT_LIST_HEAD(&obj->mm_list);
 	INIT_LIST_HEAD(&obj->gtt_list);
 	INIT_LIST_HEAD(&obj->ring_list);
 	INIT_LIST_HEAD(&obj->exec_list);
+
+	obj->ops = ops;
 
 	obj->fence_reg = I915_FENCE_REG_NONE;
 	obj->madv = I915_MADV_WILLNEED;
@@ -3777,6 +3768,11 @@ void i915_gem_object_init(struct drm_i915_gem_object *obj)
 
 	i915_gem_info_add_obj(obj->base.dev->dev_private, obj->base.size);
 }
+
+static const struct drm_i915_gem_object_ops i915_gem_object_ops = {
+	.get_pages = i915_gem_object_get_pages_gtt,
+	.put_pages = i915_gem_object_put_pages_gtt,
+};
 
 struct drm_i915_gem_object *i915_gem_alloc_object(struct drm_device *dev,
 						  size_t size)
@@ -3792,7 +3788,7 @@ struct drm_i915_gem_object *i915_gem_alloc_object(struct drm_device *dev,
 		return NULL;
 	}
 
-	i915_gem_object_init(obj);
+	i915_gem_object_init(obj, &i915_gem_object_ops);
 
 	obj->base.write_domain = I915_GEM_DOMAIN_CPU;
 	obj->base.read_domains = I915_GEM_DOMAIN_CPU;
