@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.153 2013/11/19 19:14:09 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.154 2013/11/27 20:41:19 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -638,12 +638,17 @@ struct drm_driver_info {
 	int	(*get_vblank_timestamp)(struct drm_device *, int, int *,
 		    struct timeval *, unsigned);;
 
-	/*
-	 * driver-specific constructor for gem objects to set up private data.
-	 * returns 0 on success.
+	/**
+	 * Driver-specific constructor for drm_gem_objects, to set up
+	 * obj->driver_private.
+	 *
+	 * Returns 0 on success.
 	 */
-	int	(*gem_init_object)(struct drm_obj *);
-	void	(*gem_free_object)(struct drm_obj *);
+	int (*gem_init_object) (struct drm_obj *obj);
+	void (*gem_free_object) (struct drm_obj *obj);
+	int (*gem_open_object) (struct drm_obj *, struct drm_file *);
+	void (*gem_close_object) (struct drm_obj *, struct drm_file *);
+
 	int	(*gem_fault)(struct drm_obj *, struct uvm_faultinfo *, off_t,
 		    vaddr_t, vm_page_t *, int, int, vm_prot_t, int);
 

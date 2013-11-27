@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.116 2013/11/02 22:58:10 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.117 2013/11/27 20:41:19 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -1536,7 +1536,9 @@ drm_gem_handle_create(struct drm_file *file_priv,
 		       struct drm_obj *obj,
 		       u32 *handlep)
 {
-	struct drm_handle	*han;
+	struct drm_device *dev = obj->dev;
+	struct drm_handle *han;
+	int ret;
 
 	if ((han = drm_calloc(1, sizeof(*han))) == NULL)
 		return -ENOMEM;
@@ -1556,6 +1558,14 @@ again:
 
 	drm_gem_object_handle_reference(obj);
 
+	if (dev->driver->gem_open_object) {
+		ret = dev->driver->gem_open_object(obj, file_priv);
+		if (ret) {
+			drm_gem_handle_delete(file_priv, *handlep);
+			return ret;
+		}
+	}
+
 	return 0;
 }
 
@@ -1565,6 +1575,7 @@ again:
 int
 drm_gem_handle_delete(struct drm_file *filp, u32 handle)
 {
+	struct drm_device *dev;
 	struct drm_obj *obj;
 	struct drm_handle *han, find;
 
@@ -1575,13 +1586,16 @@ drm_gem_handle_delete(struct drm_file *filp, u32 handle)
 		mtx_leave(&filp->table_lock);
 		return -EINVAL;
 	}
-
 	obj = han->obj;
+	dev = obj->dev;
+
 	SPLAY_REMOVE(drm_obj_tree, &filp->obj_tree, han);
 	mtx_leave(&filp->table_lock);
 
 	drm_free(han);
 
+	if (dev->driver->gem_close_object)
+		dev->driver->gem_close_object(obj, filp);
 	drm_gem_object_handle_unreference_unlocked(obj);
 
 	return 0;

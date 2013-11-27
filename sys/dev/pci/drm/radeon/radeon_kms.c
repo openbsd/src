@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.11 2013/11/17 13:41:26 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.12 2013/11/27 20:41:19 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -217,10 +217,8 @@ static struct drm_driver_info kms_driver = {
 	.irq_handler = radeon_driver_irq_handler_kms,
 	.gem_init_object = radeon_gem_object_init,
 	.gem_free_object = radeon_gem_object_free,
-#ifdef notyet
 	.gem_open_object = radeon_gem_object_open,
 	.gem_close_object = radeon_gem_object_close,
-#endif
 	.gem_size = sizeof(struct radeon_bo),
 	.dma_ioctl = radeon_dma_ioctl_kms,
 	.dumb_create = radeon_mode_dumb_create,
