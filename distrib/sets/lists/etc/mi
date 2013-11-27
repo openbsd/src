@@ -88,7 +88,6 @@
 ./etc/nginx/win-utf
 ./etc/npppd/npppd-users
 ./etc/npppd/npppd.conf
-./etc/nsd.conf
 ./etc/ntpd.conf
 ./etc/ospf6d.conf
 ./etc/ospfd.conf
@@ -249,6 +248,7 @@
 ./var/named/standard/localhost
 ./var/named/standard/loopback
 ./var/named/standard/loopback6.arpa
+./var/nsd/etc/nsd.conf
 ./var/run/utmp
 ./var/www/cgi-bin/printenv
 ./var/www/cgi-bin/test-cgi
