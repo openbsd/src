@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.66 2013/10/25 18:42:36 lteo Exp $
+.\"     $OpenBSD: mbuf.9,v 1.67 2013/11/27 13:28:37 mpi Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 25 2013 $
+.Dd $Mdocdate: November 27 2013 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -252,8 +252,6 @@ packet send/received as link-level multicast.
 packet was encrypted (ESP-transport).
 .It Dv M_AUTH
 packet was authenticated (AH or ESP).
-.It Dv M_AUTH_AH
-header was authenticated (AH).
 .It Dv M_ZEROIZE
 Zero the data part of the mbufs in the mbuf chain pointed to by
 .Nm m_free .
