@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.272 2013/11/21 14:44:37 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.273 2013/11/27 01:13:10 jsg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1627,12 +1627,7 @@ em_allocate_pci_resources(struct em_softc *sc)
 	}
 
 	/* for ICH8 and family we need to find the flash memory */
-	if (sc->hw.mac_type == em_ich8lan ||
-	    sc->hw.mac_type == em_ich9lan ||
-	    sc->hw.mac_type == em_ich10lan ||
-	    sc->hw.mac_type == em_pchlan ||
-	    sc->hw.mac_type == em_pch2lan ||
-	    sc->hw.mac_type == em_pch_lpt) {
+	if (IS_ICH8(sc->hw.mac_type)) {
 		val = pci_conf_read(pa->pa_pc, pa->pa_tag, EM_FLASH);
 		if (PCI_MAPREG_TYPE(val) != PCI_MAPREG_TYPE_MEM) {
 			printf(": flash is not mem space\n");

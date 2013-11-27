@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.74 2013/11/21 14:44:37 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.75 2013/11/27 01:13:10 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -982,12 +982,7 @@ em_reset_hw(struct em_hw *hw)
 		if (hw->pci_cmd_word & CMD_MEM_WRT_INVALIDATE)
 			em_pci_set_mwi(hw);
 	}
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt) {
+	if (IS_ICH8(hw->mac_type)) {
 		uint32_t kab = E1000_READ_REG(hw, KABGTXD);
 		kab |= E1000_KABGTXD_BGSQLBIAS;
 		E1000_WRITE_REG(hw, KABGTXD, kab);
@@ -1236,12 +1231,7 @@ em_init_hw(struct em_hw *hw)
 	/* Disabling VLAN filtering. */
 	DEBUGOUT("Initializing the IEEE VLAN\n");
 	/* VET hardcoded to standard value and VFTA removed in ICH8/ICH9 LAN */
-	if (hw->mac_type != em_ich8lan &&
-	    hw->mac_type != em_ich9lan &&
-	    hw->mac_type != em_ich10lan &&
-	    hw->mac_type != em_pchlan &&
-	    hw->mac_type != em_pch2lan &&
-	    hw->mac_type != em_pch_lpt) {
+	if (!IS_ICH8(hw->mac_type)) {
 		if (hw->mac_type < em_82545_rev_3)
 			E1000_WRITE_REG(hw, VET, 0);
 		if (hw->mac_type == em_i350)
@@ -1274,12 +1264,7 @@ em_init_hw(struct em_hw *hw)
 	/* Zero out the Multicast HASH table */
 	DEBUGOUT("Zeroing the MTA\n");
 	mta_size = E1000_MC_TBL_SIZE;
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt)
+	if (IS_ICH8(hw->mac_type))
 		mta_size = E1000_MC_TBL_SIZE_ICH8LAN;
 	for (i = 0; i < mta_size; i++) {
 		E1000_WRITE_REG_ARRAY(hw, MTA, i, 0);
@@ -1333,12 +1318,7 @@ em_init_hw(struct em_hw *hw)
 	}
 
 	/* More time needed for PHY to initialize */
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt)
+	if (IS_ICH8(hw->mac_type))
 		msec_delay(15);
 
         /*
@@ -1426,12 +1406,7 @@ em_init_hw(struct em_hw *hw)
 	 * ICH8 No-snoop bits are opposite polarity. Set to snoop by default
 	 * after reset.
 	 */
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt) {
+	if (IS_ICH8(hw->mac_type)) {
 		if (hw->mac_type == em_ich8lan)
 			snoop = PCI_EX_82566_SNOOP_ALL;
 		else
@@ -1627,12 +1602,7 @@ em_setup_link(struct em_hw *hw)
          * FCAL/H and FCT are hardcoded to standard values in
          * em_ich8lan / em_ich9lan / em_ich10lan.
          */
-	if (hw->mac_type != em_ich8lan &&
-	    hw->mac_type != em_ich9lan &&
-	    hw->mac_type != em_ich10lan &&
-	    hw->mac_type != em_pchlan &&
-	    hw->mac_type != em_pch2lan &&
-	    hw->mac_type != em_pch_lpt) {
+	if (!IS_ICH8(hw->mac_type)) {
 		E1000_WRITE_REG(hw, FCT, FLOW_CONTROL_TYPE);
 		E1000_WRITE_REG(hw, FCAH, FLOW_CONTROL_ADDRESS_HIGH);
 		E1000_WRITE_REG(hw, FCAL, FLOW_CONTROL_ADDRESS_LOW);
@@ -6150,12 +6120,7 @@ em_is_onboard_nvm_eeprom(struct em_hw *hw)
 	uint32_t eecd = 0;
 	DEBUGFUNC("em_is_onboard_nvm_eeprom");
 
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt)
+	if (IS_ICH8(hw->mac_type))
 		return FALSE;
 
 	if ((hw->mac_type == em_82573) || (hw->mac_type == em_82574)) {
@@ -6216,12 +6181,7 @@ em_validate_eeprom_checksum(struct em_hw *hw)
 			}
 		}
 	}
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt) {
+	if (IS_ICH8(hw->mac_type)) {
 		uint16_t word;
 		uint16_t valid_csum_mask;
 		
@@ -6817,12 +6777,7 @@ em_init_rx_addrs(struct em_hw *hw)
 	 */
 	if ((hw->mac_type == em_82571) && (hw->laa_is_present == TRUE))
 		rar_num -= 1;
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt)
+	if (IS_ICH8(hw->mac_type))
 		rar_num = E1000_RAR_ENTRIES_ICH8LAN;
 	if (hw->mac_type == em_ich8lan)
 		rar_num -= 1;
@@ -6873,12 +6828,7 @@ em_mc_addr_list_update(struct em_hw *hw, uint8_t *mc_addr_list,
 	/* Clear RAR[1-15] */
 	DEBUGOUT(" Clearing RAR[1-15]\n");
 	num_rar_entry = E1000_RAR_ENTRIES;
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt)
+	if (IS_ICH8(hw->mac_type))
 		num_rar_entry = E1000_RAR_ENTRIES_ICH8LAN;
 	if (hw->mac_type == em_ich8lan)
 		num_rar_entry -= 1;
@@ -6900,12 +6850,7 @@ em_mc_addr_list_update(struct em_hw *hw, uint8_t *mc_addr_list,
 	/* Clear the MTA */
 	DEBUGOUT(" Clearing MTA\n");
 	num_mta_entry = E1000_NUM_MTA_REGISTERS;
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt)
+	if (IS_ICH8(hw->mac_type))
 		num_mta_entry = E1000_NUM_MTA_REGISTERS_ICH8LAN;
 
 	for (i = 0; i < num_mta_entry; i++) {
@@ -6964,12 +6909,7 @@ em_hash_mc_addr(struct em_hw *hw, uint8_t *mc_addr)
 		 * MSB
 		 */
 	case 0:
-		if (hw->mac_type == em_ich8lan ||
-		    hw->mac_type == em_ich9lan ||
-		    hw->mac_type == em_ich10lan ||
-		    hw->mac_type == em_pchlan ||
-		    hw->mac_type == em_pch2lan ||
-		    hw->mac_type == em_pch_lpt) {
+		if (IS_ICH8(hw->mac_type)) {
 			/* [47:38] i.e. 0x158 for above example address */
 			hash_value = ((mc_addr[4] >> 6) | 
 			    (((uint16_t) mc_addr[5]) << 2));
@@ -6980,12 +6920,7 @@ em_hash_mc_addr(struct em_hw *hw, uint8_t *mc_addr)
 		}
 		break;
 	case 1:
-		if (hw->mac_type == em_ich8lan ||
-		    hw->mac_type == em_ich9lan ||
-		    hw->mac_type == em_ich10lan ||
-		    hw->mac_type == em_pchlan ||
-		    hw->mac_type == em_pch2lan ||
-		    hw->mac_type == em_pch_lpt) {
+		if (IS_ICH8(hw->mac_type)) {
 			/* [46:37] i.e. 0x2B1 for above example address */
 			hash_value = ((mc_addr[4] >> 5) |
 			    (((uint16_t) mc_addr[5]) << 3));
@@ -6996,12 +6931,7 @@ em_hash_mc_addr(struct em_hw *hw, uint8_t *mc_addr)
 		}
 		break;
 	case 2:
-		if (hw->mac_type == em_ich8lan ||
-		    hw->mac_type == em_ich9lan ||
-		    hw->mac_type == em_ich10lan ||
-		    hw->mac_type == em_pchlan ||
-		    hw->mac_type == em_pch2lan ||
-		    hw->mac_type == em_pch_lpt) {
+		if (IS_ICH8(hw->mac_type)) {
 			/* [45:36] i.e. 0x163 for above example address */
 			hash_value = ((mc_addr[4] >> 4) |
 			    (((uint16_t) mc_addr[5]) << 4));
@@ -7012,12 +6942,7 @@ em_hash_mc_addr(struct em_hw *hw, uint8_t *mc_addr)
 		}
 		break;
 	case 3:
-		if (hw->mac_type == em_ich8lan ||
-		    hw->mac_type == em_ich9lan ||
-		    hw->mac_type == em_ich10lan ||
-		    hw->mac_type == em_pchlan ||
-		    hw->mac_type == em_pch2lan ||
-		    hw->mac_type == em_pch_lpt) {
+		if (IS_ICH8(hw->mac_type)) {
 			/* [43:34] i.e. 0x18D for above example address */
 			hash_value = ((mc_addr[4] >> 2) |
 			    (((uint16_t) mc_addr[5]) << 6));
@@ -7030,12 +6955,7 @@ em_hash_mc_addr(struct em_hw *hw, uint8_t *mc_addr)
 	}
 
 	hash_value &= 0xFFF;
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt)
+	if (IS_ICH8(hw->mac_type))
 		hash_value &= 0x3FF;
 
 	return hash_value;
@@ -7063,12 +6983,7 @@ em_mta_set(struct em_hw *hw, uint32_t hash_value)
 	 * bits of the value.
 	 */
 	hash_reg = (hash_value >> 5) & 0x7F;
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt)
+	if (IS_ICH8(hw->mac_type))
 		hash_reg &= 0x1F;
 
 	hash_bit = hash_value & 0x1F;
@@ -7159,12 +7074,7 @@ em_clear_vfta(struct em_hw *hw)
 	uint32_t vfta_value = 0;
 	uint32_t vfta_offset = 0;
 	uint32_t vfta_bit_in_reg = 0;
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt)
+	if (IS_ICH8(hw->mac_type))
 		return;
 
 	if ((hw->mac_type == em_82573) || (hw->mac_type == em_82574)) {
@@ -7315,12 +7225,7 @@ em_clear_hw_cntrs(struct em_hw *hw)
 	temp = E1000_READ_REG(hw, XOFFTXC);
 	temp = E1000_READ_REG(hw, FCRUC);
 
-	if (hw->mac_type != em_ich8lan &&
-	    hw->mac_type != em_ich9lan &&
-	    hw->mac_type != em_ich10lan &&
-	    hw->mac_type != em_pchlan &&
-	    hw->mac_type != em_pch2lan &&
-	    hw->mac_type != em_pch_lpt) {
+	if (!IS_ICH8(hw->mac_type)) {
 		temp = E1000_READ_REG(hw, PRC64);
 		temp = E1000_READ_REG(hw, PRC127);
 		temp = E1000_READ_REG(hw, PRC255);
@@ -7348,12 +7253,7 @@ em_clear_hw_cntrs(struct em_hw *hw)
 	temp = E1000_READ_REG(hw, TPR);
 	temp = E1000_READ_REG(hw, TPT);
 
-	if (hw->mac_type != em_ich8lan &&
-	    hw->mac_type != em_ich9lan &&
-	    hw->mac_type != em_ich10lan &&
-	    hw->mac_type != em_pchlan &&
-	    hw->mac_type != em_pch2lan &&
-	    hw->mac_type != em_pch_lpt) {
+	if (!IS_ICH8(hw->mac_type)) {
 		temp = E1000_READ_REG(hw, PTC64);
 		temp = E1000_READ_REG(hw, PTC127);
 		temp = E1000_READ_REG(hw, PTC255);
@@ -8126,12 +8026,7 @@ em_set_d3_lplu_state(struct em_hw *hw, boolean_t active)
 		ret_val = em_read_phy_reg(hw, IGP01E1000_GMII_FIFO, &phy_data);
 		if (ret_val)
 			return ret_val;
-	} else if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt) {
+	} else if (IS_ICH8(hw->mac_type)) {
 		/*
 		 * MAC writes into PHY register based on the state transition
 		 * and start auto-negotiation. SW driver can overwrite the
@@ -8154,12 +8049,7 @@ em_set_d3_lplu_state(struct em_hw *hw, boolean_t active)
 			if (ret_val)
 				return ret_val;
 		} else {
-			if (hw->mac_type == em_ich8lan ||
-			    hw->mac_type == em_ich9lan ||
-			    hw->mac_type == em_ich10lan ||
-			    hw->mac_type == em_pchlan ||
-			    hw->mac_type == em_pch2lan ||
-			    hw->mac_type == em_pch_lpt) {
+			if (IS_ICH8(hw->mac_type)) {
 				phy_ctrl &= ~E1000_PHY_CTRL_NOND0A_LPLU;
 				E1000_WRITE_REG(hw, PHY_CTRL, phy_ctrl);
 			} else {
@@ -8211,12 +8101,7 @@ em_set_d3_lplu_state(struct em_hw *hw, boolean_t active)
 			if (ret_val)
 				return ret_val;
 		} else {
-			if (hw->mac_type == em_ich8lan ||
-			    hw->mac_type == em_ich9lan ||
-			    hw->mac_type == em_ich10lan ||
-			    hw->mac_type == em_pchlan ||
-			    hw->mac_type == em_pch2lan ||
-			    hw->mac_type == em_pch_lpt) {
+			if (IS_ICH8(hw->mac_type)) {
 				phy_ctrl |= E1000_PHY_CTRL_NOND0A_LPLU;
 				E1000_WRITE_REG(hw, PHY_CTRL, phy_ctrl);
 			} else {
@@ -8268,12 +8153,7 @@ em_set_d0_lplu_state(struct em_hw *hw, boolean_t active)
 	if (hw->mac_type <= em_82547_rev_2)
 		return E1000_SUCCESS;
 
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt) {
+	if (IS_ICH8(hw->mac_type)) {
 		phy_ctrl = E1000_READ_REG(hw, PHY_CTRL);
 	} else {
 		ret_val = em_read_phy_reg(hw, IGP02E1000_PHY_POWER_MGMT,
@@ -8283,12 +8163,7 @@ em_set_d0_lplu_state(struct em_hw *hw, boolean_t active)
 	}
 
 	if (!active) {
-		if (hw->mac_type == em_ich8lan ||
-		    hw->mac_type == em_ich9lan ||
-		    hw->mac_type == em_ich10lan ||
-		    hw->mac_type == em_pchlan ||
-		    hw->mac_type == em_pch2lan ||
-		    hw->mac_type == em_pch_lpt) {
+		if (IS_ICH8(hw->mac_type)) {
 			phy_ctrl &= ~E1000_PHY_CTRL_D0A_LPLU;
 			E1000_WRITE_REG(hw, PHY_CTRL, phy_ctrl);
 		} else {
@@ -8328,12 +8203,7 @@ em_set_d0_lplu_state(struct em_hw *hw, boolean_t active)
 				return ret_val;
 		}
 	} else {
-		if (hw->mac_type == em_ich8lan ||
-		    hw->mac_type == em_ich9lan ||
-		    hw->mac_type == em_ich10lan ||
-		    hw->mac_type == em_pchlan ||
-		    hw->mac_type == em_pch2lan ||
-		    hw->mac_type == em_pch_lpt) {
+		if (IS_ICH8(hw->mac_type)) {
 			phy_ctrl |= E1000_PHY_CTRL_D0A_LPLU;
 			E1000_WRITE_REG(hw, PHY_CTRL, phy_ctrl);
 		} else {
@@ -8522,12 +8392,7 @@ em_check_mng_mode(struct em_hw *hw)
 	uint32_t fwsm;
 	fwsm = E1000_READ_REG(hw, FWSM);
 
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt) {
+	if (IS_ICH8(hw->mac_type)) {
 		if ((fwsm & E1000_FWSM_MODE_MASK) ==
 		    (E1000_MNG_ICH_IAMT_MODE << E1000_FWSM_MODE_SHIFT))
 			return TRUE;
@@ -9012,12 +8877,7 @@ em_check_phy_reset_block(struct em_hw *hw)
 {
 	uint32_t manc = 0;
 	uint32_t fwsm = 0;
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt) {
+	if (IS_ICH8(hw->mac_type)) {
 		fwsm = E1000_READ_REG(hw, FWSM);
 		return (fwsm & E1000_FWSM_RSPCIPHY) ? E1000_SUCCESS :
 		    E1000_BLK_PHY_RESET;
@@ -9055,12 +8915,7 @@ em_set_pci_ex_no_snoop(struct em_hw *hw, uint32_t no_snoop)
 		gcr_reg |= no_snoop;
 		E1000_WRITE_REG(hw, GCR, gcr_reg);
 	}
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt) {
+	if (IS_ICH8(hw->mac_type)) {
 		uint32_t ctrl_ext;
 		ctrl_ext = E1000_READ_REG(hw, CTRL_EXT);
 		ctrl_ext |= E1000_CTRL_EXT_RO_DIS;
@@ -9085,12 +8940,7 @@ em_get_software_flag(struct em_hw *hw)
 	uint32_t extcnf_ctrl;
 	DEBUGFUNC("em_get_software_flag");
 
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt) {
+	if (IS_ICH8(hw->mac_type)) {
 		while (timeout) {
 			extcnf_ctrl = E1000_READ_REG(hw, EXTCNF_CTRL);
 			extcnf_ctrl |= E1000_EXTCNF_CTRL_SWFLAG;
@@ -9126,12 +8976,7 @@ em_release_software_flag(struct em_hw *hw)
 	uint32_t extcnf_ctrl;
 	DEBUGFUNC("em_release_software_flag");
 
-	if (hw->mac_type == em_ich8lan ||
-	    hw->mac_type == em_ich9lan ||
-	    hw->mac_type == em_ich10lan ||
-	    hw->mac_type == em_pchlan ||
-	    hw->mac_type == em_pch2lan ||
-	    hw->mac_type == em_pch_lpt) {
+	if (IS_ICH8(hw->mac_type)) {
 		extcnf_ctrl = E1000_READ_REG(hw, EXTCNF_CTRL);
 		extcnf_ctrl &= ~E1000_EXTCNF_CTRL_SWFLAG;
 		E1000_WRITE_REG(hw, EXTCNF_CTRL, extcnf_ctrl);

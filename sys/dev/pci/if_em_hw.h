@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.55 2013/11/21 14:44:37 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.56 2013/11/27 01:13:10 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -81,6 +81,10 @@ typedef enum {
     em_pch_lpt,
     em_num_macs
 } em_mac_type;
+
+#define IS_ICH8(t) \
+	(t == em_ich8lan || t == em_ich9lan || t == em_ich10lan || \
+	 t == em_pchlan || t == em_pch2lan || t == em_pch_lpt)
 
 typedef enum {
     em_eeprom_uninitialized = 0,
