@@ -1,4 +1,4 @@
-.\"	$OpenBSD: table.5,v 1.1 2013/11/07 09:24:17 eric Exp $
+.\"	$OpenBSD: table.5,v 1.2 2013/11/28 10:57:29 eric Exp $
 .\"
 .\" Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 7 2013 $
+.Dd $Mdocdate: November 28 2013 $
 .Dt TABLE 5
 .Os
 .Sh NAME
@@ -224,12 +224,14 @@ accept for domain example.org recipient <recipients> deliver to mbox
 .Pp
 A mailaddr entry is used to match an email address against a username,
 a domain or a full email address.
+A "*" wildcard may be used in part of the domain name.
 .Pp
 A mailaddr table looks as follow:
 .Bd -literal -offset indent
 user
 @domain
 user@domain
+user@*.domain
 .Ed
 .Ss Addrname tables
 Addrname tables are used to map IP addresses to hostnames.
