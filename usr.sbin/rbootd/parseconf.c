@@ -1,4 +1,4 @@
-/*	$OpenBSD: parseconf.c,v 1.10 2009/10/27 23:59:54 deraadt Exp $	*/
+/*	$OpenBSD: parseconf.c,v 1.11 2013/11/28 18:26:46 deraadt Exp $	*/
 /*	$NetBSD: parseconf.c,v 1.4 1995/10/06 05:12:16 thorpej Exp $	*/
 
 /*
@@ -109,10 +109,13 @@ ParseConfig(void)
 	 *  and null terminates it.  `cp' is positioned at the start
 	 *  of the next token.  spaces & commas are separators.
 	 */
-#define GETSTR	while (isspace(*cp) || *cp == ',') cp++;	\
-		bcp = cp;					\
-		while (*cp && *cp!=',' && !isspace(*cp)) cp++;	\
-		if (*cp) *cp++ = '\0'
+#define GETSTR	while (isspace((unsigned char)*cp) || *cp == ',')	\
+			cp++;						\
+		bcp = cp;						\
+		while (*cp && *cp!=',' && !isspace((unsigned char)*cp))	\
+			cp++;						\
+		if (*cp)						\
+			*cp++ = '\0'
 
 	/*
 	 *  For each line, parse it into a new CLIENT struct.
@@ -262,10 +265,11 @@ ParseAddr(char *str)
 		/*
 		 *  Convert hex character to an integer.
 		 */
-		if (isdigit(*cp))
+		if (isdigit((unsigned char)*cp))
 			i = *cp - '0';
 		else {
-			i = (isupper(*cp)? tolower(*cp): *cp) - 'a' + 10;
+			i = (isupper((unsigned char)*cp) ?
+			    tolower((unsigned char)*cp) : *cp) - 'a' + 10;
 			if (i < 10 || i > 15)		/* not a hex char */
 				return(NULL);
 		}

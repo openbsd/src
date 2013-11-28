@@ -1,4 +1,4 @@
-/*	$OpenBSD: eehandlers.c,v 1.15 2008/06/26 05:42:21 ray Exp $	*/
+/*	$OpenBSD: eehandlers.c,v 1.16 2013/11/28 18:26:47 deraadt Exp $	*/
 /*	$NetBSD: eehandlers.c,v 1.2 1996/02/28 01:13:22 thorpej Exp $	*/
 
 /*-
@@ -123,7 +123,7 @@ ee_num8(struct keytabent *ktent, char *arg)
 
 	if (arg) {
 		for (i = 0; i < (strlen(arg) - 1); ++i)
-			if (!isdigit(arg[i]))
+			if (!isdigit((unsigned char)arg[i]))
 				BARF(ktent);
 		num32 = atoi(arg);
 		if (num32 > 0xff)
@@ -147,7 +147,7 @@ ee_num16(struct keytabent *ktent, char *arg)
 
 	if (arg) {
 		for (i = 0; i < (strlen(arg) - 1); ++i)
-			if (!isdigit(arg[i]))
+			if (!isdigit((unsigned char)arg[i]))
 				BARF(ktent);
 		num32 = atoi(arg);
 		if (num32 > 0xffff)
@@ -321,7 +321,7 @@ ee_kbdtype(struct keytabent *ktent, char *arg)
 
 	if (arg) {
 		for (i = 0; i < (strlen(arg) - 1); ++i)
-			if (!isdigit(arg[i]))
+			if (!isdigit((unsigned char)arg[i]))
 				BARF(ktent);
 		kbd2 = atoi(arg);
 		if (kbd2 > 0xff)
