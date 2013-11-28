@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.21 2013/11/22 04:12:47 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.22 2013/11/28 20:21:55 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -416,7 +416,7 @@ print_hex(u_int8_t *buf, off_t offset, size_t length)
 	u_int		 i;
 	extern int	 verbose;
 
-	if (verbose < 2 || !length)
+	if (verbose < 3 || !length)
 		return;
 
 	for (i = 0; i < length; i++) {
