@@ -1,4 +1,4 @@
-$OpenBSD: ChangeLog.0,v 1.4 2003/02/28 09:45:09 jmc Exp $
+$OpenBSD: ChangeLog.0,v 1.5 2013/11/28 10:33:37 sobrado Exp $
 
 Thu Jun 15 11:02:06 NDT 1995 Michael Rendell (michael@panda.cs.mun.ca)
 
@@ -289,7 +289,7 @@ Tue Apr 25 12:20:45 NDT 1995 Michael Rendell (michael@dragon.cs.mun.ca)
 	* c_ksh.c(c_pwd): new function.
 	* sh.h(current_wd, current_wd_size): new variables.
 	* c_ksh.c(c_cd): changed to handle -L, -P.
-	* main.c(main): use set_current_wd when setting $PWD; 
+	* main.c(main): use set_current_wd when setting $PWD;
 	  instead of changing to / when can't get pwd, print warning;
 	  deleted pwd alias; don't make PWD and OLDPWD reaedonly.
 	* path.c(simplify_path): changed to handle relative paths.
@@ -315,7 +315,7 @@ Thu Apr 20 21:18:12 NDT 1995 Michael Rendell (michael@panda.cs.mun.ca)
 
 	* history.c(hist_get) if n < 0, use n + 1 to account for histbackup().
 
-	* lex.c(set_prompt): added source argument; changed all calls; 
+	* lex.c(set_prompt): added source argument; changed all calls;
 	  changed to do ! and !! substitutions when setting PS1.
 	* lex.c(pprompt): ifdef'd out code to deal with ! and !!.
 
@@ -1863,7 +1863,7 @@ Fri Aug 26 21:58:25 NDT 1994 Michael Rendell (michael@panda.cs.mun.ca)
 
 	* lex.c(getsc_): flush output after write when echoing.
 
-	* Makefile.in(dist): after creating distrubution, use pathchk -p 
+	* Makefile.in(dist): after creating distrubution, use pathchk -p
 	  to check file names.
 
 Fri Aug 26 10:28:20 NDT 1994 Michael Rendell (michael@arlene.cs.mun.ca)
@@ -2062,7 +2062,7 @@ Mon Aug 22 09:39:54 NDT 1994 Michael Rendell (michael@arlene.cs.mun.ca)
 
 	* sh.h: added TF_TTY_INTR flag.
 	* trap.c(inittrap): set TF_TTY_INTR for SIGINT.
-	* jobs.c(j_waitj): if 
+	* jobs.c(j_waitj): if
 
 	* jobs.c,sh.h: deleted SA_RESTART ifdefs; moved SIGCLD->SIGCHLD ifdefs
 	  from jobs.c to sh.h.
@@ -2179,7 +2179,7 @@ Fri Aug 19 09:59:43 NDT 1994 Michael Rendell (michael@arlene.cs.mun.ca)
 	  instead of ATEMP.
 
 	* shf.c(shf_sopen): if buf is 0 and writing and DYNMAIC, allocate
-	  a buffer; if writing, save room for a trailing null. 
+	  a buffer; if writing, save room for a trailing null.
 	* shf.c(shf_sclose): new function.
 	* shf.c(shf_snprintf),tree.c(snptreef): use shf_sclose().
 	* tree.c(snptreef): changed return type to char *; if buffer
@@ -2204,7 +2204,7 @@ Thu Aug 18 11:06:49 NDT 1994 Michael Rendell (michael@arlene.cs.mun.ca)
 
 	* c_test.c(is_op,is_binop,is_unop): new functions to test for
 	  unary/binary operators.
-	* c_test.c(oexpr,aexpr,nexpr,primary): no longer take argument - 
+	* c_test.c(oexpr,aexpr,nexpr,primary): no longer take argument -
 	  call is_unop/is_binop directly.
 	* c_test.c(ISDBRACKET,ISTEST,ISBOTH,ACCEPT_BE): new defines.
 	* c_test.c(struct t_op): changed op_type field to op_flags.
@@ -2385,7 +2385,7 @@ Tue Aug 16 10:17:47 NDT 1994 Michael Rendell (michael@panda.cs.mun.ca)
 
 	* eval.c(expand): expand tilde in place; don't do tilde expansion
 	  on results of substitution (POSIX); only do tilde expansion
-	  if login name is unquoted (POSIX); don't check for fdo&DOTILDE 
+	  if login name is unquoted (POSIX); don't check for fdo&DOTILDE
 	  when a word is completed.
 	* eval.c(tilde): changed to return home directory of a given login name
 	  (taking care of null/+/-) (old version copied string, scanning
@@ -3138,7 +3138,7 @@ Fri Jun  3 12:28:06 NDT 1994 Michael Rendell (michael@panda.cs.mun.ca)
 	* io.c(errorf): set exstat to 1.
 
 	* exec.c(search): assume mode is R_OK or X_OK (not 0/1 - 0 is F_OK, we
-	  want R_OK); changed all calls to pass R_OK/X_OK.  
+	  want R_OK); changed all calls to pass R_OK/X_OK.
 	  sh.h: define R_OK,W_OK,X_OK,F_OK if not defined.
 	  eaccess(): changed all calls to use [RWXF]_OK.
 
@@ -3210,7 +3210,7 @@ Wed Jun  1 09:17:50 NDT 1994 Michael Rendell (michael@panda.cs.mun.ca)
 Tue May 31 10:49:16 NDT 1994 Michael Rendell (michael@panda.cs.mun.ca)
 
 	* configure.in, Makefile.in: added code to set GCC_WARNFLAGS from
-	  $(srcdir)/Warn-flags if gcc is being used;  Took -Wall, etc. 
+	  $(srcdir)/Warn-flags if gcc is being used;  Took -Wall, etc.
 	  out of CFLAGS, took -Dno_RCSids out of DEFS.  Added install.sh to
 	  DISTFILES, grabbed copy of install.sh from autoconf (who grabbed
 	  it from X11R5).
@@ -3294,7 +3294,7 @@ Fri May 5 12:16:46 NDT 1994 Michael Rendell (michael@panda.cs.mun.ca)
 	      - skip IFS at start of line "echo ' a b' |(read a b; echo $a)"
 		should print a, not nothing.
 	      - changed EOF check to set all vars to null (same way \n is
-	        handled)
+		handled)
 	  - eval.c(comsub):
 	      - after compile(), return if t is NULL
 	      - use setfileno() instead of fileno(x) = .. (see sh.h changes);
@@ -3449,7 +3449,7 @@ Fri May 5 12:16:46 NDT 1994 Michael Rendell (michael@panda.cs.mun.ca)
 		thats where they are set from tty structs.
 	      - x_init(): set ed_intrc, ed_quitc for _BSD & _POSIX_TERM ifdefs
 	      - send output to shlout (instead of stdout - at&t ksh writes to
-	        stderr)
+		stderr)
 	      - made x_do_init static.
 	  - exit.c(x_getc), lex.c(yylex): restart interrupted reads in
 	    x_getc(), changed read-restart in yylex() to only effect call
@@ -3504,7 +3504,7 @@ Fri May 5 12:16:46 NDT 1994 Michael Rendell (michael@panda.cs.mun.ca)
 		      2:abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
 		      3:abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
 		      EOF
-		      $ 
+		      $
 		    the cat picks up reading at the offset where the read
 		    command left off (ie, at bcdefg... - the 1:a are skipped).
 	  - exec.c(comexec): built-in c_exec && no args: close the saved fd's

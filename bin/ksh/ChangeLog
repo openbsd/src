@@ -527,7 +527,7 @@ Wed Oct 30 11:23:17 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 	* exec.c(comexec): case CFUNC: set $0 to kshname if non-function
 	  function.
 
-$OpenBSD: ChangeLog,v 1.15 2008/05/08 16:51:30 sobrado Exp $
+$OpenBSD: ChangeLog,v 1.16 2013/11/28 10:33:37 sobrado Exp $
 
 Tue Oct 29 11:34:58 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 
@@ -646,7 +646,7 @@ Thu Sep 19 15:39:54 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
 Mon Sep 16 11:18:10 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
 
 	* edit.c(add_glob): don't append a * to a ~username.
-	 
+
 	* edit.c(x_init): set got_sigwinch before calling check_sigwinch().
 
 Wed Sep 11 14:38:38 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
@@ -709,7 +709,7 @@ Mon Aug 19 11:38:16 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
 Thu Aug 15 15:08:52 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
 
 	* jobs.c(sm_sigchld,sm_default): moved to sh.h.
-	* sh.h(Coproc_id, struct coproc): new typedef; added njobs and 
+	* sh.h(Coproc_id, struct coproc): new typedef; added njobs and
 	  id fields to struct coproc.
 	* exec.c(execute): case TCOPROC: re-did coprocess stuff to use
 	  njobs/coprocess id.
@@ -1201,7 +1201,7 @@ Sat Feb 10 15:59:28 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 
 Sat Feb 10 15:12:47 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 
-        ANSI C name space requirements:
+	ANSI C name space requirements:
 
 	* vi.c(isbad,iscmd,islong,ismove,issrch,isundoable,iswordch): changed
 	  to is_bad,is_cmd,is_long,is_move,is_srch,is_undoable,is_wordch.

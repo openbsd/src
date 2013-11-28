@@ -1,8 +1,8 @@
-$OpenBSD: PROJECTS,v 1.6 2004/12/18 20:55:52 millert Exp $
+$OpenBSD: PROJECTS,v 1.7 2013/11/28 10:33:37 sobrado Exp $
 
 Things to be done in pdksh (see also the NOTES file):
 
-    * builtin utilities: 
+    * builtin utilities:
       pdksh has most if not all POSIX/at&t ksh builtins, but they need to
       be checked that they conform to POSIX/at&t manual.  Part of the
       process is changing the builtins to use the ksh_getopt() routine.
@@ -57,7 +57,7 @@ Things to be done in pdksh (see also the NOTES file):
 
     * variables
 	* The "struct tbl" that is currently used for variables needs work since
-          more information (eg, array stuff, fields) are needed for variables
+	  more information (eg, array stuff, fields) are needed for variables
 	  but not for the other things that use "struct tbl".
 	* Arrays need to be implemented differently: currently does a linear
 	  search of a linked list to find element i; the linked list is not
@@ -65,7 +65,7 @@ Things to be done in pdksh (see also the NOTES file):
 
     * functions
       finish the differences between function x and x(): trap EXIT, traps
-      in general, treatment of OPTIND/OPTARG, 
+      in general, treatment of OPTIND/OPTARG,
 
     * history
       There are two versions of the history code, COMPLEX_HISTORY and

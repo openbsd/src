@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.46 2012/06/10 10:15:01 mpi Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.47 2013/11/28 10:33:37 sobrado Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -75,8 +75,8 @@ struct kb_list			kblist = TAILQ_HEAD_INITIALIZER(kblist);
 /*
  * The following are used for my horizontal scrolling stuff
  */
-static char   *xbuf;		/* beg input buffer */
-static char   *xend;		/* end input buffer */
+static char    *xbuf;		/* beg input buffer */
+static char    *xend;		/* end input buffer */
 static char    *xcp;		/* current position */
 static char    *xep;		/* current end */
 static char    *xbp;		/* start of visible portion of input buffer */
@@ -104,29 +104,29 @@ static	char   **x_histp;	/* history position */
 static	int	x_nextcmd;	/* for newline-and-next */
 static	char	*xmp;		/* mark pointer */
 #define	KILLSIZE	20
-static	char    *killstack[KILLSIZE];
+static	char	*killstack[KILLSIZE];
 static	int	killsp, killtp;
 static	int	x_literal_set;
 static	int	x_arg_set;
-static	char    *macro_args;
+static	char	*macro_args;
 static	int	prompt_skip;
 static	int	prompt_redraw;
 
-static int      x_ins(char *);
-static void     x_delete(int, int);
+static int	x_ins(char *);
+static void	x_delete(int, int);
 static int	x_bword(void);
 static int	x_fword(void);
-static void     x_goto(char *);
-static void     x_bs(int);
-static int      x_size_str(char *);
-static int      x_size(int);
-static void     x_zots(char *);
-static void     x_zotc(int);
-static void     x_load_hist(char **);
-static int      x_search(char *, int, int);
-static int      x_match(char *, char *);
+static void	x_goto(char *);
+static void	x_bs(int);
+static int	x_size_str(char *);
+static int	x_size(int);
+static void	x_zots(char *);
+static void	x_zotc(int);
+static void	x_load_hist(char **);
+static int	x_search(char *, int, int);
+static int	x_match(char *, char *);
 static void	x_redraw(int);
-static void     x_push(int);
+static void	x_push(int);
 static void	x_adjust(void);
 static void	x_e_ungetc(int);
 static int	x_e_getc(void);
@@ -345,7 +345,7 @@ x_emacs(char *buf, size_t len)
 		if (submatch == 1 && kmatch) {
 			if (kmatch->ftab->xf_func == x_ins_string &&
 			    kmatch->args && !macro_args) {
-			    	/* treat macro string as input */
+				/* treat macro string as input */
 				macro_args = kmatch->args;
 				ret = KSTD;
 			} else

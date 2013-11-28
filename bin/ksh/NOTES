@@ -1,4 +1,4 @@
-$OpenBSD: NOTES,v 1.11 2007/08/02 11:05:54 fgsch Exp $
+$OpenBSD: NOTES,v 1.12 2013/11/28 10:33:37 sobrado Exp $
 
 General features of at&t ksh88 that are not (yet) in pdksh:
     - exported aliases and functions (not in ksh93).
@@ -143,7 +143,7 @@ Known differences between pdksh & at&t ksh (that are not likely to change)
       not.  eg.
 	$ cat << ~michael
 	~michael
-	$ 
+	$
       works for pdksh, not for at&t ksh (POSIX seems to agree with pdksh).
     - in at&t ksh, tracked aliases have the export flag implicitly set
       and tracked aliases and normal aliases live in the same name space
@@ -232,7 +232,7 @@ Oddities in ksh (pd & at&t):
 	a=[ab]
 	$ x=typeset; $x a=[ab]; echo "$a"
 	a=a
-	$ 
+	$
     - both ignore SIGTSTP,SIGTTIN,SIGTTOU in exec'd processes when talking
       and not monitoring (at&t ksh kind of does this).  Doesn't really make
       sense.
@@ -255,19 +255,19 @@ at&t ksh bugs:
       Bus error (core dumped)
     - (only riscos, hpux)
       $ typeset x[
-      $ 
+      $
     - (only osf/1)
       $ A=B cat << EOF
       .$A.
       EOF
       Segmentation fault(coredump)
-      $ 
+      $
     - (only osf/1)
       $ read "?foo "
       foo Foo
       $ set | grep Foo
       =Foo
-      $ 
+      $
     - (all)
       $ typeset -i A
       $ typeset -L3 A
@@ -278,11 +278,11 @@ at&t ksh bugs:
       a, ,
       a, , b
       a, , c
-      $ 
+      $
     - (all)
       $ echo ${abc:-G { I } K }
       G { I K }
-      $ 
+      $
       $ abc=hi
       $ echo ${abc:-G { I } K }
       hi K }
@@ -291,7 +291,7 @@ at&t ksh bugs:
     - (all)
       $ echo ${abc:- > foo}
       syntax error: > unexpected
-      $ 
+      $
     - (all? hpux) read reads too much from pipe (when pipe isn't stdin)
 	print 'hi\nthere' | ksh 8<&0 0< /dev/tty
 	    $ read -u8 x
@@ -301,7 +301,7 @@ at&t ksh bugs:
 	    $ read -u8 y
 	    $ print $y
 	    there
-	    $ 
+	    $
     - (all)
 	$ umask 0
 	$ umask
@@ -316,8 +316,8 @@ at&t ksh bugs:
 	$ echo : "$@"		# this is ok
 	:
 	$ echo :"$@"		# this should print : too (me thinks)
- 
-	$ 
+
+	$
     - (only osf/1)
 	$ set +m
 	$ sleep 1 &		# wait for a sec or two
@@ -336,13 +336,13 @@ at&t ksh bugs:
     - (osf/1) POSIX says OPTIND shall be initialized to 1
 	$ echo $OPTIND
 	0
-	$ 
+	$
     - (osf/1 + others?)
 	$ typeset -ri r=10
 	$ let r=12
 	$ echo $r
 	12
-	$ 
+	$
     - (osf/1 + others?)
 	$ typeset -i a
 	$ typeset -L3 a
@@ -357,7 +357,7 @@ at&t ksh bugs:
 	$ x='2^I^J^M '
 	$ echo "($x)"
 	(^I^J^M)
-	$ 
+	$
     - (osf/1 + others?)
 	$ typeset +i RANDOM
 	Memory fault (core dumped)
@@ -370,7 +370,7 @@ at&t ksh bugs:
 	(DEF )
 	$ typeset | grep ' x$'
 	leftjust 4 x
-	$ 
+	$
 	$ typeset -L4 x=def
 	$ echo "($x)"
 	(def )
@@ -379,7 +379,7 @@ at&t ksh bugs:
 	(AB  )
 	$ typeset | grep ' x$'
 	uppercase x
-	$ 
+	$
 	$ typeset -i x
 	$ x='2()'
 	$ x='()'
@@ -388,7 +388,7 @@ at&t ksh bugs:
 	$ unset foo
 	$ echo "${foo:-"*"}"
 	<results of * expansion>
-	$ 
+	$
     - (osf/1, others?)
 	$ alias blah
 	blah: alias not found
@@ -419,14 +419,14 @@ at&t ksh bugs:
 	bcdef
 	$ echo ${f#abc|a|d}
 	abcdef
-	$ 
+	$
     - (osf/1, hp-ux, others?)
 	$ i() echo hi
 	$ typeset -f
 	function i
 	{
 	hi
-	$ 
+	$
     - (osf/1, others?)
 	$ function X {
 		echo start of X
@@ -453,7 +453,7 @@ at&t ksh bugs:
 		echo end of X
 		}
 	}
-	$ 
+	$
     - (osf/1, others?)
 	 $ while read x; do print -r "A $x"; done |&
 	 [1] 18212
@@ -469,12 +469,12 @@ at&t ksh bugs:
 	 ksh: p: bad file unit number
 	 $ while read x; do print -r "A $x"; done |&
 	 ksh: process already exists
-	 $ 
+	 $
     - (osf/1, others?) in restricted shells, command -p should not work.
 	$ PATH=/tmp ksh -r
-	$ print hi | command -p cat -n 
+	$ print hi | command -p cat -n
 	     1  hi
-	$ 
+	$
     - (osf/1, others?) error message wrong for autoload files that don't define
       functions
 	$ FPATH=/tmp
@@ -482,8 +482,8 @@ at&t ksh bugs:
 	$ aja
 	hi there
 	ksh: echo:  not found
-	$ 
-    - (SunOS M-12/28/93d): 
+	$
+    - (SunOS M-12/28/93d):
 	$ cat -n << X $(
 	> echo foo
 	> )
@@ -538,7 +538,7 @@ POSIX sh bugs (references are to POSIX 1003.2-1992)
 		Y'`
 		Number of args: 1
 			1: <XY>
-		$ 
+		$
 	  POSIX would indicate the backslash-newline would be preserved.
 	- does not say how "cat << ''" is to be treated (illegal, read 'til
 	  blank line, or read 'til eof).  at&t ksh reads til eof, bourne shell

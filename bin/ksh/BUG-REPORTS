@@ -1,4 +1,4 @@
-$OpenBSD: BUG-REPORTS,v 1.18 2008/05/08 16:51:30 sobrado Exp $
+$OpenBSD: BUG-REPORTS,v 1.19 2013/11/28 10:33:37 sobrado Exp $
 
 List of reported problems (problems reported and fixed before 5.0.4 not
 included).  Unresolved problems (may or may not still exist) marked by *,
@@ -15,10 +15,10 @@ problems believed to be fixed marked by x.
   job control not finding tty
   [from Mail.1:71]:
     Also, I have noticed (with 5.0.1 anyway) that if as root I su to a
-    user I get: 
+    user I get:
     root:511$ su foobar
     warning: won't have full job control
-    [1] + Stopped (tty output) stty erase ^? 
+    [1] + Stopped (tty output) stty erase ^?
     foobar:1$
 
 * pdksh 5.0.8, - (reported by Sean Hogan): attempting file name completion
@@ -260,7 +260,7 @@ x pdksh 5.0.8, - (reported by Brian Campbell): "echo a{b," prints a "Missing }"
 x pdksh 5.0.8, - (reported by Sean Hogan): ulimit output garbled; syntax error
   in c_ulimit.c; no configure check for HAVE_SETRLIMIT.
   [see Mail.2:64]
-  [fixed in 5.0.9 - use shprintf instead of shellf to print values; add 
+  [fixed in 5.0.9 - use shprintf instead of shellf to print values; add
    setrlimit() check to configure]
 
 x pdksh 5.0.7, - (reported by Jan Djarv): `echo > /foo/bar' causes a script to
@@ -1093,7 +1093,7 @@ x pdksh 5.2.9, - (reported by Will Renkel): a double backslash followed
   [see Mail.XXX]
   [fixed in 5.2.10: fixed backslash-newline processing in lex.c]
 
-x pdksh 5.2.9, - (reported by Han Holl): read x?prompt doesn't work 
+x pdksh 5.2.9, - (reported by Han Holl): read x?prompt doesn't work
   on non-interactive shells when the input is from a tty.
   [see Mail.XXX]
   [fixed in 5.2.10: changed test in c_read() from FTALKING to isatty]
@@ -1387,7 +1387,7 @@ x pdksh 5.2.13, (reported by Arthor Pool): set -u causes loss of stdout
       trap
       typeset -f ... "$(jasdsjh)" ...
       array
-      os2 interrupts + pattern 
+      os2 interrupts + pattern
       ignoreeof
       set -A --
       set -u -> comsub errors & fill_command eval
