@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.84 2013/11/28 20:21:17 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.85 2013/11/28 20:27:17 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -422,6 +422,12 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 				    "response", __func__);
 				sa_free(env, sa);
 			}
+			return;
+		} else if (msg->msg_msgid == sa->sa_msgid) {
+			/*
+			 * Response is being worked on, most likely we're
+			 * waiting for the CA process to get back to us
+			 */
 			return;
 		}
 		/*
