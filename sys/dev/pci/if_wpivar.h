@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpivar.h,v 1.24 2013/11/14 12:34:30 dlg Exp $	*/
+/*	$OpenBSD: if_wpivar.h,v 1.25 2013/11/28 20:07:32 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -166,6 +166,8 @@ struct wpi_softc {
 	struct timeout		calib_to;
 	int			calib_cnt;
 
+	struct task		init_task;
+
 	struct wpi_fw_info	fw;
 	uint32_t		errptr;
 
@@ -180,7 +182,6 @@ struct wpi_softc {
 	int8_t			maxpwr[IEEE80211_CHAN_MAX];
 
 	int			sc_tx_timer;
-	struct task		sc_resume_t;
 
 #if NBPFILTER > 0
 	caddr_t			sc_drvbpf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.115 2013/11/16 12:46:29 kettenis Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.116 2013/11/28 20:07:32 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -75,7 +75,8 @@ void		wpi_radiotap_attach(struct wpi_softc *);
 #endif
 int		wpi_detach(struct device *, int);
 int		wpi_activate(struct device *, int);
-void		wpi_resume(void *, void *);
+void		wpi_resume(struct wpi_softc *);
+void		wpi_init_task(void *, void *);
 int		wpi_nic_lock(struct wpi_softc *);
 int		wpi_read_prom_data(struct wpi_softc *, uint32_t, void *, int);
 int		wpi_dma_contig_alloc(bus_dma_tag_t, struct wpi_dma_info *,
@@ -188,8 +189,6 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
-
-	task_set(&sc->sc_resume_t, wpi_resume, sc, NULL);
 
 	/*
 	 * Get the offset of the PCI Express Capability Structure in PCI
@@ -327,6 +326,7 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	wpi_radiotap_attach(sc);
 #endif
 	timeout_set(&sc->calib_to, wpi_calib_timeout, sc);
+	task_set(&sc->init_task, wpi_init_task, sc, NULL);
 	return;
 
 	/* Free allocated memory if something failed during attachment. */
@@ -364,6 +364,7 @@ wpi_detach(struct device *self, int flags)
 	int qid;
 
 	timeout_del(&sc->calib_to);
+	task_del(systq, &sc->init_task);
 
 	/* Uninstall interrupt handler. */
 	if (sc->sc_ih != NULL)
@@ -396,7 +397,7 @@ wpi_activate(struct device *self, int act)
 			wpi_stop(ifp, 0);
 		break;
 	case DVACT_RESUME:
-		task_add(systq, &sc->sc_resume_t);
+		wpi_resume(sc);
 		break;
 	}
 
@@ -404,24 +405,31 @@ wpi_activate(struct device *self, int act)
 }
 
 void
-wpi_resume(void *arg1, void *arg2)
+wpi_resume(struct wpi_softc *sc)
 {
-	struct wpi_softc *sc = arg1;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	pcireg_t reg;
-	int s;
 
 	/* Clear device-specific "PCI retry timeout" register (41h). */
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
 	reg &= ~0xff00;
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg);
 
+	task_add(systq, &sc->init_task);
+}
+
+void
+wpi_init_task(void *arg1, void *args2)
+{
+	struct wpi_softc *sc = arg1;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	int s;
+
 	s = splnet();
 	while (sc->sc_flags & WPI_FLAG_BUSY)
 		tsleep(&sc->sc_flags, 0, "wpipwr", 0);
 	sc->sc_flags |= WPI_FLAG_BUSY;
 
-	if (ifp->if_flags & IFF_UP)
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP)
 		wpi_init(ifp);
 
 	sc->sc_flags &= ~WPI_FLAG_BUSY;
@@ -1620,8 +1628,8 @@ wpi_intr(void *arg)
 		printf("%s: fatal firmware error\n", sc->sc_dev.dv_xname);
 		/* Dump firmware error log and stop. */
 		wpi_fatal_intr(sc);
-		ifp->if_flags &= ~IFF_UP;
 		wpi_stop(ifp, 1);
+		task_add(systq, &sc->init_task);
 		return 1;
 	}
 	if ((r1 & (WPI_INT_FH_RX | WPI_INT_SW_RX)) ||
