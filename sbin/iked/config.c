@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.21 2013/10/24 02:55:50 deraadt Exp $	*/
+/*	$OpenBSD: config.c,v 1.22 2013/11/28 20:28:34 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -687,7 +687,8 @@ config_getpolicy(struct iked *env, struct imsg *imsg)
 		memcpy(flow, buf + offset, sizeof(*flow));
 		offset += sizeof(*flow);
 
-		RB_INSERT(iked_flows, &pol->pol_flows, flow);
+		if (RB_INSERT(iked_flows, &pol->pol_flows, flow))
+			free(flow);
 	}
 
 	TAILQ_INSERT_TAIL(&env->sc_policies, pol, pol_entry);
