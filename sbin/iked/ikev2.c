@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.85 2013/11/28 20:27:17 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.86 2013/11/28 20:30:41 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -3736,7 +3736,7 @@ int
 ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 {
 	struct iked_childsa	*csa;
-	struct iked_flow	*flow;
+	struct iked_flow	*flow, *oflow;
 
 	TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
 		if (csa->csa_rekey || csa->csa_loaded)
@@ -3762,6 +3762,14 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 		if (pfkey_flow_add(env->sc_pfkey, flow) != 0) {
 			log_debug("%s: failed to load flow", __func__);
 			return (-1);
+		}
+
+		if ((oflow = RB_FIND(iked_flows, &env->sc_activeflows, flow))
+		    != NULL) {
+			log_debug("%s: replaced old flow %p with %p",
+			    __func__, oflow, flow);
+			oflow->flow_loaded = 0;
+			RB_REMOVE(iked_flows, &env->sc_activeflows, oflow);
 		}
 
 		RB_INSERT(iked_flows, &env->sc_activeflows, flow);
