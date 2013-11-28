@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.9 2013/10/07 18:25:32 syl Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.10 2013/11/28 12:53:59 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -313,6 +313,7 @@ fuseioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		/* Adding fbuf in fd_fbufs_wait */
 		free(fbuf->fb_dat, M_FUSEFS);
+		fbuf->fb_dat = NULL;
 		SIMPLEQ_INSERT_TAIL(&fd->fd_fbufs_wait, fbuf, fb_next);
 		stat_fbufs_wait++;
 		break;
@@ -347,6 +348,7 @@ fuseioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (error) {
 			printf("fuse: Cannot copyin\n");
 			free(fbuf->fb_dat, M_FUSEFS);
+			fbuf->fb_dat = NULL;
 			return (error);
 		}
 
