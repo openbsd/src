@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.702 2013/11/27 21:49:21 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.703 2013/11/28 21:20:40 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -280,8 +280,7 @@ _ask() {
 # Search question in $RESPONSEFILE, return answer in $resp
 #
 # - split question and answer at leftmost =
-# - strip leading/trailing blanks from question
-# - strip leading blanks from answer
+# - strip leading/trailing blanks
 # - compare questions case insensitive
 # - ignore empty and comment lines and lines without =
 # - return default answer if provided and none is found in file
@@ -292,12 +291,12 @@ _ask() {
 #
 _autorespond() {
 	typeset -l _q=$1 _key
-	local _def=$2 _i=0 _k _val
+	local _def=$2 _i=0 _l _val
 	[[ -f $RESPONSEFILE ]] || return
-	while IFS= read -r _l; do
-		_k=${_l%%*([[:blank:]])=*} _val=${_l#*=}
-		_key=${_k##+([[:blank:]])} _val=${_val##+([[:blank:]])}
-		[[ $_k != "$_l" ]] || continue
+	while IFS=' 	' read -r _l; do
+		_key=${_l%%*([[:blank:]])=*}
+		_val=${_l##*([!=])=*([[:blank:]])}
+		((${#_key} != ${#_l})) || continue
 		[[ -n ${_key%%#*} && -n $_val ]] || continue
 		[[ $_q == *"$_key"* ]] && resp=$_val && let _i++
 	done <$RESPONSEFILE
