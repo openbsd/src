@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.44 2013/11/27 08:56:31 mpi Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.45 2013/11/28 22:18:52 deraadt Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
@@ -2017,7 +2017,7 @@ static void
 mc_reset(sc)
 	struct ie_softc *sc;
 {
-	struct arpcom *ac = sc->sc_arpcom;
+	struct arpcom *ac = &sc->sc_arpcom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 
