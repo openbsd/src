@@ -1,4 +1,4 @@
-.\" $OpenBSD: fb_setup.9,v 1.2 2013/11/28 14:54:18 syl Exp $
+.\" $OpenBSD: fb_setup.9,v 1.3 2013/11/28 21:27:41 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -18,7 +18,9 @@
 .Dt FB_SETUP 9
 .Os
 .Sh NAME
-.Nm fb_setup
+.Nm fb_setup ,
+.Nm fb_queue ,
+.Nm fb_delete
 .Nd kernel messaging mechanism for file system in userland (FUSE)
 .Sh SYNOPSIS
 .In sys/fusebuf.h
