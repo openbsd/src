@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.88 2013/10/23 13:39:35 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.89 2013/11/28 10:16:44 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -68,6 +68,7 @@
 #include <sys/socketvar.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/route.h>
 
 #include "carp.h"
@@ -258,7 +259,6 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 				ia->ia_broadaddr.sin_family = AF_INET;
 			}
 			ia->ia_ifp = ifp;
-			LIST_INIT(&ia->ia_multiaddrs);
 
 			newifaddr = 1;
 		} else
@@ -922,8 +922,7 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 {
 	struct in_multi *inm;
 	struct ifreq ifr;
-	struct in_ifaddr *ia;
-	int s = splsoftnet();
+	int s;
 
 	/*
 	 * See if address already in list.
@@ -933,50 +932,47 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		/*
 		 * Found it; just increment the reference count.
 		 */
-		++inm->inm_refcount;
+		++inm->inm_refcnt;
 	} else {
+		if (ifp->if_ioctl == NULL)
+			return (NULL);
+
 		/*
 		 * New address; allocate a new multicast record
 		 * and link it into the interface's multicast list.
 		 */
-		inm = (struct in_multi *)malloc(sizeof(*inm),
-		    M_IPMADDR, M_NOWAIT);
-		if (inm == NULL) {
-			splx(s);
+		inm = malloc(sizeof(*inm), M_IPMADDR, M_NOWAIT);
+		if (inm == NULL)
 			return (NULL);
-		}
-		inm->inm_addr = *ap;
-		inm->inm_refcount = 1;
-		IFP_TO_IA(ifp, ia);
-		if (ia == NULL) {
-			free(inm, M_IPMADDR);
-			splx(s);
-			return (NULL);
-		}
-		inm->inm_ia = ia;
-		ia->ia_ifa.ifa_refcnt++;
-		LIST_INSERT_HEAD(&ia->ia_multiaddrs, inm, inm_list);
+
+		inm->inm_sin.sin_len = sizeof(struct sockaddr_in);
+		inm->inm_sin.sin_family = AF_INET;
+		inm->inm_sin.sin_addr = *ap;
+		inm->inm_refcnt = 1;
+		inm->inm_ifp = ifp;
+		inm->inm_ifma.ifma_addr = sintosa(&inm->inm_sin);
+
 		/*
 		 * Ask the network driver to update its multicast reception
 		 * filter appropriately for the new address.
 		 */
-		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
-		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
-		satosin(&ifr.ifr_addr)->sin_addr = *ap;
-		if ((ifp->if_ioctl == NULL) ||
-		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI,(caddr_t)&ifr) != 0) {
-			LIST_REMOVE(inm, inm_list);
-			ifafree(&inm->inm_ia->ia_ifa);
+		memcpy(&ifr.ifr_addr, &inm->inm_sin, sizeof(inm->inm_sin));
+		if ((*ifp->if_ioctl)(ifp, SIOCADDMULTI,(caddr_t)&ifr) != 0) {
 			free(inm, M_IPMADDR);
-			splx(s);
 			return (NULL);
 		}
+
+		s = splsoftnet();
+		TAILQ_INSERT_HEAD(&ifp->if_maddrlist, &inm->inm_ifma,
+		    ifma_list);
+		splx(s);
+
 		/*
 		 * Let IGMP know that we have joined a new IP multicast group.
 		 */
 		igmp_joingroup(inm);
 	}
-	splx(s);
+
 	return (inm);
 }
 
@@ -988,33 +984,31 @@ in_delmulti(struct in_multi *inm)
 {
 	struct ifreq ifr;
 	struct ifnet *ifp;
-	int s = splsoftnet();
+	int s;
 
-	if (--inm->inm_refcount == 0) {
+	if (--inm->inm_refcnt == 0) {
 		/*
 		 * No remaining claims to this record; let IGMP know that
 		 * we are leaving the multicast group.
 		 */
 		igmp_leavegroup(inm);
-		/*
-		 * Unlink from list.
-		 */
-		LIST_REMOVE(inm, inm_list);
 		ifp = inm->inm_ifp;
-		ifafree(&inm->inm_ia->ia_ifa);
 
-		if (ifp) {
-			/*
-			 * Notify the network driver to update its multicast
-			 * reception filter.
-			 */
-			satosin(&ifr.ifr_addr)->sin_family = AF_INET;
-			satosin(&ifr.ifr_addr)->sin_addr = inm->inm_addr;
-			(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
-		}
+		/*
+		 * Notify the network driver to update its multicast
+		 * reception filter.
+		 */
+		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
+		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
+		satosin(&ifr.ifr_addr)->sin_addr = inm->inm_addr;
+		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
+
+		s = splsoftnet();
+		TAILQ_REMOVE(&ifp->if_maddrlist, &inm->inm_ifma, ifma_list);
+		splx(s);
+
 		free(inm, M_IPMADDR);
 	}
-	splx(s);
 }
 
 #endif
@@ -1023,11 +1017,20 @@ void
 in_ifdetach(struct ifnet *ifp)
 {
 	struct ifaddr *ifa, *next;
+	struct ifmaddr *ifma, *mnext;
 
 	/* nuke any of IPv4 addresses we have */
 	TAILQ_FOREACH_SAFE(ifa, &ifp->if_addrlist, ifa_list, next) {
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 		in_purgeaddr(ifa);
+	}
+
+	TAILQ_FOREACH_SAFE(ifma, &ifp->if_maddrlist, ifma_list, mnext) {
+		if (ifma->ifma_addr->sa_family != AF_INET)
+			continue;
+
+		ifma->ifma_refcnt = 1;
+		in_delmulti(ifmatoinm(ifma));
 	}
 }

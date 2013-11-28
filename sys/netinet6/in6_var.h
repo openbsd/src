@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.45 2013/11/22 07:59:09 mpi Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.46 2013/11/28 10:16:44 mpi Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -106,8 +106,6 @@ struct	in6_ifaddr {
 	struct	sockaddr_in6 ia_dstaddr; /* space for destination addr */
 	struct	sockaddr_in6 ia_prefixmask; /* prefix mask */
 	TAILQ_ENTRY(in6_ifaddr) ia_list;	/* list of IP6 addresses */
-	LIST_HEAD(in6_multihead, in6_multi) ia6_multiaddrs;
-					/* list of multicast addresses */
 	int	ia6_flags;
 
 	struct in6_addrlifetime ia6_lifetime;
@@ -458,24 +456,6 @@ do {								\
 } while (0)
 
 /*
- * Macro for finding the internet address structure (in6_ifaddr) corresponding
- * to a given interface (ifnet structure).
- */
-#define IFP_TO_IA6(ifp, ia)				\
-/* struct ifnet *ifp; */				\
-/* struct in6_ifaddr *ia; */				\
-do {									\
-	struct ifaddr *ifa;						\
-	TAILQ_FOREACH(ifa, &(ifp)->if_addrlist, ifa_list) {		\
-		if (!ifa->ifa_addr)					\
-			continue;					\
-		if (ifa->ifa_addr->sa_family == AF_INET6)		\
-			break;						\
-	}								\
-	(ia) = (struct in6_ifaddr *)ifa;				\
-} while (0)
-
-/*
  * Multi-cast membership entry.  One for each group/ifp that a PCB
  * belongs to.
  */
@@ -484,27 +464,23 @@ struct in6_multi_mship {
 	LIST_ENTRY(in6_multi_mship) i6mm_chain;  /* multicast options chain */
 };
 
-struct	in6_multi {
-	LIST_ENTRY(in6_multi) in6m_entry; /* list glue */
-	struct	in6_addr in6m_addr;	/* IP6 multicast address */
-	struct	ifnet *in6m_ifp;	/* back pointer to ifnet */
-	struct	in6_ifaddr *in6m_ia;	/* back pointer to in6_ifaddr */
-	u_int	in6m_refcount;		/* # membership claims by sockets */
-	u_int	in6m_state;		/* state of the membership */
-	u_int	in6m_timer;		/* MLD6 listener report timer */
+struct in6_multi {
+	struct ifmaddr		in6m_ifma;   /* Protocol-independent info */
+#define in6m_refcnt		in6m_ifma.ifma_refcnt
+#define in6m_ifp		in6m_ifma.ifma_ifp
+
+	struct sockaddr_in6	in6m_sin;   /* IPv6 multicast address */
+#define in6m_addr		in6m_sin.sin6_addr
+
+	u_int			in6m_state; /* state of membership */
+	u_int			in6m_timer; /* MLD6 membership report timer */
 };
 
-/*
- * Macro for iterating over all the in6_multi records linked to a given
- * interface.
- */
-#define IN6_FOREACH_MULTI(ia, ifp, in6m)				\
-	/* struct in6_ifaddr *ia; */					\
-	/* struct ifnet *ifp; */					\
-	/* struct in6_multi *in6m; */					\
-	IFP_TO_IA6((ifp), ia);						\
-	if (ia != NULL)							\
-		LIST_FOREACH((in6m), &ia->ia6_multiaddrs, in6m_entry)	\
+static __inline struct in6_multi *
+ifmatoin6m(struct ifmaddr *ifma)
+{
+       return ((struct in6_multi *)(ifma));
+}
 
 /*
  * Macros for looking up the in6_multi record for a given IP6 multicast
@@ -516,12 +492,16 @@ struct	in6_multi {
 	/* struct ifnet *ifp; */					\
 	/* struct in6_multi *in6m; */					\
 do {									\
-	struct in6_ifaddr *ia;						\
+	struct ifmaddr *ifma;						\
 									\
 	(in6m) = NULL;							\
-	IN6_FOREACH_MULTI(ia, ifp, in6m)				\
-		if (IN6_ARE_ADDR_EQUAL(&(in6m)->in6m_addr, &(addr)))	\
+	TAILQ_FOREACH(ifma, &(ifp)->if_maddrlist, ifma_list)		\
+		if (ifma->ifma_addr->sa_family == AF_INET6 &&		\
+		    IN6_ARE_ADDR_EQUAL(&ifmatoin6m(ifma)->in6m_addr,	\
+				       &(addr))) {			\
+			(in6m) = ifmatoin6m(ifma);			\
 			break;						\
+		}							\
 } while (/* CONSTCOND */ 0)
 
 struct	in6_multi *in6_addmulti(struct in6_addr *, struct ifnet *, int *);
@@ -533,13 +513,9 @@ int	in6_update_ifa(struct ifnet *, struct in6_aliasreq *,
 	struct in6_ifaddr *);
 void	in6_purgeaddr(struct ifaddr *);
 int	in6if_do_dad(struct ifnet *);
-void	in6_savemkludge(struct in6_ifaddr *);
 void	in6_setmaxmtu(void);
 void	*in6_domifattach(struct ifnet *);
 void	in6_domifdetach(struct ifnet *, void *);
-void	in6_restoremkludge(struct in6_ifaddr *, struct ifnet *);
-void	in6_createmkludge(struct ifnet *);
-void	in6_purgemkludge(struct ifnet *);
 struct in6_ifaddr *in6ifa_ifpforlinklocal(struct ifnet *, int);
 struct in6_ifaddr *in6ifa_ifpwithaddr(struct ifnet *, struct in6_addr *);
 int	in6_ifpprefix(const struct ifnet *, const struct in6_addr *);

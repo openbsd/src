@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.1 2013/11/21 17:32:12 mikeb Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.2 2013/11/28 10:16:44 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -123,6 +123,7 @@ struct ifnet {				/* and the entries */
 	TAILQ_ENTRY(ifnet) if_list;	/* all struct ifnets are chained */
 	TAILQ_ENTRY(ifnet) if_txlist;	/* list of ifnets ready to tx */
 	TAILQ_HEAD(, ifaddr) if_addrlist; /* linked list of addresses per if */
+	TAILQ_HEAD(, ifmaddr) if_maddrlist; /* list of multicast records */
 	TAILQ_HEAD(, ifg_list) if_groups; /* linked list of groups per if */
 	struct hook_desc_head *if_addrhooks; /* address change callbacks */
 	struct hook_desc_head *if_linkstatehooks; /* link change callbacks */
@@ -302,6 +303,16 @@ struct ifaddr_item {
 	struct ifaddr		*ifai_ifa;
 	struct ifaddr_item	*ifai_next;
 	u_int			 ifai_rdomain;
+};
+
+/*
+ * Interface multicast address.
+ */
+struct ifmaddr {
+	struct sockaddr		*ifma_addr;	/* Protocol address */
+	struct ifnet		*ifma_ifp;	/* Back pointer to ifnet */
+	unsigned int		 ifma_refcnt;	/* Count of references */
+	TAILQ_ENTRY(ifmaddr)	 ifma_list;	/* Per-interface list */
 };
 
 /*

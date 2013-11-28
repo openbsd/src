@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.29 2013/11/27 08:37:08 mpi Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.30 2013/11/28 10:16:44 mpi Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -56,7 +56,6 @@ struct in_ifaddr {
 	struct	sockaddr_in ia_dstaddr;	/* reserve space for broadcast addr */
 #define	ia_broadaddr	ia_dstaddr
 	struct	sockaddr_in ia_sockmask; /* reserve space for general netmask */
-	LIST_HEAD(, in_multi) ia_multiaddrs; /* list of multicast addresses */
 	struct  in_multi *ia_allhosts;	/* multicast address record for
 					   the allhosts multicast group */
 };
@@ -108,32 +107,29 @@ struct router_info {
 /*
  * Internet multicast address structure.  There is one of these for each IP
  * multicast group to which this host belongs on a given network interface.
- * They are kept in a linked list, rooted in the interface's in_ifaddr
- * structure.
  */
 struct in_multi {
-	struct	in_addr inm_addr;	/* IP multicast address */
-	struct	in_ifaddr *inm_ia;	/* back pointer to in_ifaddr */
-#define inm_ifp	inm_ia->ia_ifp
-	u_int	inm_refcount;		/* no. membership claims by sockets */
-	u_int	inm_timer;		/* IGMP membership report timer */
-	LIST_ENTRY(in_multi) inm_list;	/* list of multicast addresses */
-	u_int	inm_state;		/* state of membership */
-	struct	router_info *inm_rti;	/* router version info */
+	struct ifmaddr		inm_ifma;   /* Protocol-independent info */
+#define inm_refcnt		inm_ifma.ifma_refcnt
+#define inm_ifp			inm_ifma.ifma_ifp
+
+	struct sockaddr_in	inm_sin;   /* IPv4 multicast address */
+#define inm_addr		inm_sin.sin_addr
+
+	u_int			inm_state; /* state of membership */
+	u_int			inm_timer; /* IGMP membership report timer */
+
+	struct router_info	*inm_rti;  /* router version info */
 };
 
+
 #ifdef _KERNEL
-/*
- * Macro for iterating over all the in_multi records linked to a given
- * interface.
- */
-#define IN_FOREACH_MULTI(ia, ifp, inm)					\
-	/* struct in_ifaddr *ia; */					\
-	/* struct ifnet *ifp; */					\
-	/* struct in_multi *inm; */					\
-	IFP_TO_IA((ifp), ia);						\
-	if (ia != NULL)							\
-		LIST_FOREACH((inm), &ia->ia_multiaddrs, inm_list)	\
+
+static __inline struct in_multi *
+ifmatoinm(struct ifmaddr *ifma)
+{
+       return ((struct in_multi *)(ifma));
+}
 
 /*
  * Macro for looking up the in_multi record for a given IP multicast
@@ -145,12 +141,15 @@ struct in_multi {
 	/* struct ifnet *ifp; */					\
 	/* struct in_multi *inm; */					\
 do {									\
-	struct in_ifaddr *ia;						\
+	struct ifmaddr *ifma;						\
 									\
 	(inm) = NULL;							\
-	IN_FOREACH_MULTI(ia, ifp, inm)					\
-		if ((inm)->inm_addr.s_addr == (addr).s_addr)		\
+	TAILQ_FOREACH(ifma, &(ifp)->if_maddrlist, ifma_list)		\
+		if (ifma->ifma_addr->sa_family == AF_INET &&		\
+		    ifmatoinm(ifma)->inm_addr.s_addr == (addr).s_addr) {\
+			(inm) = ifmatoinm(ifma);			\
 			break;						\
+		}							\
 } while (/* CONSTCOND */ 0)
 
 int	in_ifinit(struct ifnet *,

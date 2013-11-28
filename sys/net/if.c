@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.278 2013/11/27 08:34:40 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.279 2013/11/28 10:16:44 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -437,8 +437,9 @@ if_attach(struct ifnet *ifp)
 void
 if_attach_common(struct ifnet *ifp)
 {
-
 	TAILQ_INIT(&ifp->if_addrlist);
+	TAILQ_INIT(&ifp->if_maddrlist);
+
 	ifp->if_addrhooks = malloc(sizeof(*ifp->if_addrhooks),
 	    M_TEMP, M_WAITOK);
 	TAILQ_INIT(ifp->if_addrhooks);

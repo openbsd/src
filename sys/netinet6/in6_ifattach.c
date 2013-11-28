@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.63 2013/11/19 09:00:43 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.64 2013/11/28 10:16:44 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 #include <crypto/md5.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/route.h>
@@ -594,9 +595,6 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 		return;
 	}
 
-	/* create a multicast kludge storage (if we have not had one) */
-	in6_createmkludge(ifp);
-
 	/*
 	 * quirks based on interface type
 	 */
@@ -652,6 +650,7 @@ void
 in6_ifdetach(struct ifnet *ifp)
 {
 	struct ifaddr *ifa, *next;
+	struct ifmaddr *ifma, *mnext;
 	struct rtentry *rt;
 	struct sockaddr_in6 sin6;
 
@@ -670,8 +669,14 @@ in6_ifdetach(struct ifnet *ifp)
 		in6_purgeaddr(ifa);
 	}
 
-	/* cleanup multicast address kludge table, if there is any */
-	in6_purgemkludge(ifp);
+
+	TAILQ_FOREACH_SAFE(ifma, &ifp->if_maddrlist, ifma_list, mnext) {
+		if (ifma->ifma_addr->sa_family != AF_INET6)
+			continue;
+
+		ifma->ifma_refcnt = 1;
+		in6_delmulti(ifmatoin6m(ifma));
+	}
 
 	/*
 	 * remove neighbor management table.  we call it twice just to make

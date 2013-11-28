@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.35 2013/10/18 09:04:02 mpi Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.36 2013/11/28 10:16:44 mpi Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -83,6 +83,7 @@
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -193,6 +194,7 @@ igmp_input(struct mbuf *m, ...)
 	struct igmp *igmp;
 	int igmplen;
 	int minlen;
+	struct ifmaddr *ifma;
 	struct in_multi *inm;
 	struct router_info *rti;
 	struct in_ifaddr *ia;
@@ -266,7 +268,10 @@ igmp_input(struct mbuf *m, ...)
 			 * except those that are already running and those
 			 * that belong to a "local" group (224.0.0.X).
 			 */
-			IN_FOREACH_MULTI(ia, ifp, inm) {
+			TAILQ_FOREACH(ifma, &ifp->if_maddrlist, ifma_list) {
+				if (ifma->ifma_addr->sa_family != AF_INET)
+					continue;
+				inm = ifmatoinm(ifma);
 				if (inm->inm_timer == 0 &&
 				    !IN_LOCAL_GROUP(inm->inm_addr.s_addr)) {
 					inm->inm_state = IGMP_DELAYING_MEMBER;
@@ -294,7 +299,10 @@ igmp_input(struct mbuf *m, ...)
 			 * timers already running, check if they need to be
 			 * reset.
 			 */
-			IN_FOREACH_MULTI(ia, ifp, inm) {
+			TAILQ_FOREACH(ifma, &ifp->if_maddrlist, ifma_list) {
+				if (ifma->ifma_addr->sa_family != AF_INET)
+					continue;
+				inm = ifmatoinm(ifma);
 				if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
 				    (ip->ip_dst.s_addr == INADDR_ALLHOSTS_GROUP ||
 				     ip->ip_dst.s_addr == inm->inm_addr.s_addr)) {
@@ -479,6 +487,8 @@ void
 igmp_leavegroup(struct in_multi *inm)
 {
 
+	int s = splsoftnet();
+
 	switch (inm->inm_state) {
 	case IGMP_DELAYING_MEMBER:
 	case IGMP_IDLE_MEMBER:
@@ -494,6 +504,7 @@ igmp_leavegroup(struct in_multi *inm)
 	case IGMP_SLEEPING_MEMBER:
 		break;
 	}
+	splx(s);
 }
 
 void
@@ -521,11 +532,14 @@ void
 igmp_checktimer(struct ifnet *ifp)
 {
 	struct in_multi *inm;
-	struct in_ifaddr *ia;
+	struct ifmaddr *ifma;
 
 	splsoftassert(IPL_SOFTNET);
 
-	IN_FOREACH_MULTI(ia, ifp, inm) {
+	TAILQ_FOREACH(ifma, &ifp->if_maddrlist, ifma_list) {
+		if (ifma->ifma_addr->sa_family != AF_INET)
+			continue;
+		inm = ifmatoinm(ifma);
 		if (inm->inm_timer == 0) {
 			/* do nothing */
 		} else if (--inm->inm_timer == 0) {

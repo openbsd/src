@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.33 2013/11/14 23:30:23 patrick Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.34 2013/11/28 10:16:44 mpi Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -74,6 +74,7 @@
 #include <dev/rndvar.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
@@ -146,6 +147,8 @@ mld6_start_listening(struct in6_multi *in6m)
 void
 mld6_stop_listening(struct in6_multi *in6m)
 {
+	int s = splsoftnet();
+
 	mld_all_nodes_linklocal.s6_addr16[1] =
 	    htons(in6m->in6m_ifp->if_index); /* XXX */
 	mld_all_routers_linklocal.s6_addr16[1] =
@@ -156,6 +159,7 @@ mld6_stop_listening(struct in6_multi *in6m)
 	    __IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) > __IPV6_ADDR_SCOPE_INTFACELOCAL)
 		mld6_sendpkt(in6m, MLD_LISTENER_DONE,
 		    &mld_all_routers_linklocal);
+	splx(s);
 }
 
 void
@@ -165,7 +169,7 @@ mld6_input(struct mbuf *m, int off)
 	struct mld_hdr *mldh;
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct in6_multi *in6m;
-	struct in6_ifaddr *ia;
+	struct ifmaddr *ifma;
 	int timer;		/* timer value in the MLD query header */
 
 	IP6_EXTHDR_GET(mldh, struct mld_hdr *, m, off, sizeof(*mldh));
@@ -227,9 +231,6 @@ mld6_input(struct mbuf *m, int off)
 		 * - Use the value specified in the query message as
 		 *   the maximum timeout.
 		 */
-		IFP_TO_IA6(ifp, ia);
-		if (ia == NULL)
-			break;
 
 		/*
 		 * XXX: System timer resolution is too low to handle Max
@@ -243,7 +244,10 @@ mld6_input(struct mbuf *m, int off)
 		mld_all_nodes_linklocal.s6_addr16[1] =
 			htons(ifp->if_index); /* XXX */
 
-		LIST_FOREACH(in6m, &ia->ia6_multiaddrs, in6m_entry) {
+		TAILQ_FOREACH(ifma, &ifp->if_maddrlist, ifma_list) {
+			if (ifma->ifma_addr->sa_family != AF_INET6)
+				continue;
+			in6m = ifmatoin6m(ifma);
 			if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr,
 						&mld_all_nodes_linklocal) ||
 			    __IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) <
@@ -343,11 +347,14 @@ void
 mld6_checktimer(struct ifnet *ifp)
 {
 	struct in6_multi *in6m;
-	struct in6_ifaddr *ia;
+	struct ifmaddr *ifma;
 
 	splsoftassert(IPL_SOFTNET);
 
-	IN6_FOREACH_MULTI(ia, ifp, in6m) {
+	TAILQ_FOREACH(ifma, &ifp->if_maddrlist, ifma_list) {
+		if (ifma->ifma_addr->sa_family != AF_INET6)
+			continue;
+		in6m = ifmatoin6m(ifma);
 		if (in6m->in6m_timer == 0) {
 			/* do nothing */
 		} else if (--in6m->in6m_timer == 0) {

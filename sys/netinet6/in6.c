@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.125 2013/11/22 07:59:09 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.126 2013/11/28 10:16:44 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -126,18 +126,6 @@ void in6_ifloop_request(int, struct ifaddr *);
 
 const struct sockaddr_in6 sa6_any = {
 	sizeof(sa6_any), AF_INET6, 0, 0, IN6ADDR_ANY_INIT, 0
-};
-
-/*
- * This structure is used to keep track of in6_multi chains which belong to
- * deleted interface addresses.
- */
-static LIST_HEAD(, multi6_kludge) in6_mk; /* XXX BSS initialization */
-
-struct multi6_kludge {
-	LIST_ENTRY(multi6_kludge) mk_entry;
-	struct ifnet *mk_ifp;
-	struct in6_multihead mk_head;
 };
 
 /*
@@ -1244,10 +1232,6 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 
 	TAILQ_REMOVE(&in6_ifaddr, ia, ia_list);
 
-	if (!LIST_EMPTY(&ia->ia6_multiaddrs)) {
-		in6_savemkludge(ia);
-	}
-
 	/* Release the reference to the base prefix. */
 	if (ia->ia6_ndpr == NULL) {
 		char addr[INET6_ADDRSTRLEN];
@@ -1567,128 +1551,7 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia, int newhost)
 		in6_ifaddloop(&(ia->ia_ifa));
 	}
 
-	if (ifp->if_flags & IFF_MULTICAST)
-		in6_restoremkludge(ia, ifp);
-
 	return (error);
-}
-
-/*
- * Multicast address kludge:
- * If there were any multicast addresses attached to this interface address,
- * either move them to another address on this interface, or save them until
- * such time as this interface is reconfigured for IPv6.
- */
-void
-in6_savemkludge(struct in6_ifaddr *oia)
-{
-	struct in6_ifaddr *ia;
-	struct in6_multi *in6m, *next;
-
-	IFP_TO_IA6(oia->ia_ifp, ia);
-	if (ia) {	/* there is another address */
-		for (in6m = LIST_FIRST(&oia->ia6_multiaddrs);
-		    in6m != NULL; in6m = next) {
-			next = LIST_NEXT(in6m, in6m_entry);
-			ifafree(&in6m->in6m_ia->ia_ifa);
-			ia->ia_ifa.ifa_refcnt++;
-			in6m->in6m_ia = ia;
-			LIST_INSERT_HEAD(&ia->ia6_multiaddrs, in6m, in6m_entry);
-		}
-	} else {	/* last address on this if deleted, save */
-		struct multi6_kludge *mk;
-
-		LIST_FOREACH(mk, &in6_mk, mk_entry) {
-			if (mk->mk_ifp == oia->ia_ifp)
-				break;
-		}
-		if (mk == NULL) /* this should not happen! */
-			panic("in6_savemkludge: no kludge space");
-
-		for (in6m = LIST_FIRST(&oia->ia6_multiaddrs);
-		    in6m != NULL; in6m = next) {
-			next = LIST_NEXT(in6m, in6m_entry);
-			ifafree(&in6m->in6m_ia->ia_ifa); /* release reference */
-			in6m->in6m_ia = NULL;
-			LIST_INSERT_HEAD(&mk->mk_head, in6m, in6m_entry);
-		}
-	}
-}
-
-/*
- * Continuation of multicast address hack:
- * If there was a multicast group list previously saved for this interface,
- * then we re-attach it to the first address configured on the i/f.
- */
-void
-in6_restoremkludge(struct in6_ifaddr *ia, struct ifnet *ifp)
-{
-	struct multi6_kludge *mk;
-
-	LIST_FOREACH(mk, &in6_mk, mk_entry) {
-		if (mk->mk_ifp == ifp) {
-			struct in6_multi *in6m, *next;
-
-			for (in6m = LIST_FIRST(&mk->mk_head); in6m != NULL;
-			    in6m = next) {
-				next = LIST_NEXT(in6m, in6m_entry);
-				in6m->in6m_ia = ia;
-				ia->ia_ifa.ifa_refcnt++;
-				LIST_INSERT_HEAD(&ia->ia6_multiaddrs,
-						 in6m, in6m_entry);
-			}
-			LIST_INIT(&mk->mk_head);
-			break;
-		}
-	}
-}
-
-/*
- * Allocate space for the kludge at interface initialization time.
- * Formerly, we dynamically allocated the space in in6_savemkludge() with
- * malloc(M_WAITOK).  However, it was wrong since the function could be called
- * under an interrupt context (software timer on address lifetime expiration).
- * Also, we cannot just give up allocating the strucutre, since the group
- * membership structure is very complex and we need to keep it anyway.
- * Of course, this function MUST NOT be called under an interrupt context.
- * Specifically, it is expected to be called only from in6_ifattach(), though
- * it is a global function.
- */
-void
-in6_createmkludge(struct ifnet *ifp)
-{
-	struct multi6_kludge *mk;
-
-	LIST_FOREACH(mk, &in6_mk, mk_entry) {
-		/* If we've already had one, do not allocate. */
-		if (mk->mk_ifp == ifp)
-			return;
-	}
-
-	mk = malloc(sizeof(*mk), M_IPMADDR, M_WAITOK | M_ZERO);
-
-	LIST_INIT(&mk->mk_head);
-	mk->mk_ifp = ifp;
-	LIST_INSERT_HEAD(&in6_mk, mk, mk_entry);
-}
-
-void
-in6_purgemkludge(struct ifnet *ifp)
-{
-	struct multi6_kludge *mk;
-	struct in6_multi *in6m;
-
-	LIST_FOREACH(mk, &in6_mk, mk_entry) {
-		if (mk->mk_ifp != ifp)
-			continue;
-
-		/* leave from all multicast groups joined */
-		while ((in6m = LIST_FIRST(&mk->mk_head)) != NULL)
-			in6_delmulti(in6m);
-		LIST_REMOVE(mk, mk_entry);
-		free(mk, M_IPMADDR);
-		break;
-	}
 }
 
 /*
@@ -1698,10 +1561,9 @@ in6_purgemkludge(struct ifnet *ifp)
 struct in6_multi *
 in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp, int *errorp)
 {
-	struct	in6_ifaddr *ia;
 	struct	in6_ifreq ifr;
 	struct	in6_multi *in6m;
-	int	s = splsoftnet();
+	int	s;
 
 	*errorp = 0;
 	/*
@@ -1712,60 +1574,53 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp, int *errorp)
 		/*
 		 * Found it; just increment the refrence count.
 		 */
-		in6m->in6m_refcount++;
+		in6m->in6m_refcnt++;
 	} else {
+		if (ifp->if_ioctl == NULL) {
+			*errorp = ENXIO; /* XXX: appropriate? */
+			return (NULL);
+		}
+
 		/*
 		 * New address; allocate a new multicast record
 		 * and link it into the interface's multicast list.
 		 */
-		in6m = (struct in6_multi *)
-			malloc(sizeof(*in6m), M_IPMADDR, M_NOWAIT);
+		in6m = malloc(sizeof(*in6m), M_IPMADDR, M_NOWAIT);
 		if (in6m == NULL) {
-			splx(s);
 			*errorp = ENOBUFS;
 			return (NULL);
 		}
-		in6m->in6m_addr = *maddr6;
+
+		in6m->in6m_sin.sin6_len = sizeof(struct sockaddr_in6);
+		in6m->in6m_sin.sin6_family = AF_INET6;
+		in6m->in6m_sin.sin6_addr = *maddr6;
+		in6m->in6m_refcnt = 1;
 		in6m->in6m_ifp = ifp;
-		in6m->in6m_refcount = 1;
-		IFP_TO_IA6(ifp, ia);
-		if (ia == NULL) {
-			free(in6m, M_IPMADDR);
-			splx(s);
-			*errorp = EADDRNOTAVAIL; /* appropriate? */
-			return (NULL);
-		}
-		in6m->in6m_ia = ia;
-		ia->ia_ifa.ifa_refcnt++; /* gain a reference */
-		LIST_INSERT_HEAD(&ia->ia6_multiaddrs, in6m, in6m_entry);
+		in6m->in6m_ifma.ifma_addr = sin6tosa(&in6m->in6m_sin);
 
 		/*
 		 * Ask the network driver to update its multicast reception
 		 * filter appropriately for the new address.
 		 */
-		bzero(&ifr.ifr_addr, sizeof(struct sockaddr_in6));
-		ifr.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
-		ifr.ifr_addr.sin6_family = AF_INET6;
-		ifr.ifr_addr.sin6_addr = *maddr6;
-		if (ifp->if_ioctl == NULL)
-			*errorp = ENXIO; /* XXX: appropriate? */
-		else
-			*errorp = (*ifp->if_ioctl)(ifp, SIOCADDMULTI,
-			    (caddr_t)&ifr);
+		memcpy(&ifr.ifr_addr, &in6m->in6m_sin, sizeof(in6m->in6m_sin));
+		*errorp = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
 		if (*errorp) {
-			LIST_REMOVE(in6m, in6m_entry);
 			free(in6m, M_IPMADDR);
-			ifafree(&ia->ia_ifa);
-			splx(s);
 			return (NULL);
 		}
+
+		s = splsoftnet();
+		TAILQ_INSERT_HEAD(&ifp->if_maddrlist, &in6m->in6m_ifma,
+		    ifma_list);
+		splx(s);
+
 		/*
 		 * Let MLD6 know that we have joined a new IP6 multicast
 		 * group.
 		 */
 		mld6_start_listening(in6m);
 	}
-	splx(s);
+
 	return (in6m);
 }
 
@@ -1776,22 +1631,16 @@ void
 in6_delmulti(struct in6_multi *in6m)
 {
 	struct	in6_ifreq ifr;
-	int	s = splsoftnet();
+	struct 	ifnet *ifp;
+	int	s;
 
-	if (--in6m->in6m_refcount == 0) {
+	if (--in6m->in6m_refcnt == 0) {
 		/*
 		 * No remaining claims to this record; let MLD6 know
 		 * that we are leaving the multicast group.
 		 */
 		mld6_stop_listening(in6m);
-
-		/*
-		 * Unlink from list.
-		 */
-		LIST_REMOVE(in6m, in6m_entry);
-		if (in6m->in6m_ia) {
-			ifafree(&in6m->in6m_ia->ia_ifa); /* release reference */
-		}
+		ifp = in6m->in6m_ifp;
 
 		/*
 		 * Notify the network driver to update its multicast
@@ -1801,11 +1650,14 @@ in6_delmulti(struct in6_multi *in6m)
 		ifr.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
 		ifr.ifr_addr.sin6_family = AF_INET6;
 		ifr.ifr_addr.sin6_addr = in6m->in6m_addr;
-		(*in6m->in6m_ifp->if_ioctl)(in6m->in6m_ifp,
-					    SIOCDELMULTI, (caddr_t)&ifr);
+		(*ifp->if_ioctl)(in6m->in6m_ifp, SIOCDELMULTI, (caddr_t)&ifr);
+
+		s = splsoftnet();
+		TAILQ_REMOVE(&ifp->if_maddrlist, &in6m->in6m_ifma, ifma_list);
+		splx(s);
+
 		free(in6m, M_IPMADDR);
 	}
-	splx(s);
 }
 
 struct in6_multi_mship *
