@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.206 2013/11/13 13:02:44 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.207 2013/11/28 12:50:40 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -742,6 +742,8 @@ main(int argc, char *argv[])
 	log_init(foreground);
 	log_verbose(verbose);
 
+	load_ssl_tree();
+
 	log_info("info: %s %s starting", SMTPD_NAME, SMTPD_VERSION);
 
 	if (! foreground)
@@ -763,8 +765,6 @@ main(int argc, char *argv[])
 	if (env->sc_hostname[0] == '\0')
 		errx(1, "machine does not have a hostname set");
 	env->sc_uptime = time(NULL);
-
-	load_ssl_tree();
 
 	fork_peers();
 
@@ -827,24 +827,23 @@ load_ssl_tree(void)
 	log_debug("debug: init ssl-tree");
 	iter_dict = NULL;
 	while (dict_iter(env->sc_ssl_dict, &iter_dict, &k, (void **)&ssl)) {
-		log_debug("debug: loading pki information for %s", k);
-
+		log_debug("info: loading pki information for %s", k);
 		if (ssl->ssl_cert_file == NULL)
-			errx(1, "load_ssl_tree: missing certificate file for %s", k);
+			fatalx("load_ssl_tree: missing certificate file");
 		if (ssl->ssl_key_file == NULL)
-			errx(1, "load_ssl_tree: missing key file for %s", k);
+			fatalx("load_ssl_tree: missing key file");
 
 		if (! ssl_load_certificate(ssl, ssl->ssl_cert_file))
-			errx(1, "load_ssl_tree: failed to load certificate file for %s", k);
-		if (! ssl_load_keyfile(ssl, ssl->ssl_key_file))
-			errx(1, "load_ssl_tree: failed to load certificate file for %s", k);
+			fatalx("load_ssl_tree: failed to load certificate file");
+		if (! ssl_load_keyfile(ssl, ssl->ssl_key_file, k))
+			fatalx("load_ssl_tree: failed to load key file");
 
 		if (ssl->ssl_ca_file)
 			if (! ssl_load_cafile(ssl, ssl->ssl_ca_file))
-				errx(1, "load_ssl_tree: failed to load CA file for %s", k);
+				fatalx("load_ssl_tree: failed to load CA file");
 		if (ssl->ssl_dhparams_file)
 			if (! ssl_load_dhparams(ssl, ssl->ssl_dhparams_file))
-				errx(1, "load_ssl_tree: failed to load dhparams file for %s", k);
+				fatalx("load_ssl_tree: failed to load dhparams file");
 	}
 }
 

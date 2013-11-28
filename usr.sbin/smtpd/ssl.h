@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.h,v 1.3 2013/11/06 10:01:29 eric Exp $	*/
+/*	$OpenBSD: ssl.h,v 1.4 2013/11/28 12:50:40 eric Exp $	*/
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
  *
@@ -52,13 +52,13 @@ void		ssl_set_ephemeral_key_exchange(SSL_CTX *, DH *);
 void		ssl_set_ecdh_curve(SSL_CTX *);
 extern int	ssl_ctx_load_verify_memory(SSL_CTX *, char *, off_t);
 char	       *ssl_load_file(const char *, off_t *, mode_t);
-char	       *ssl_load_key(const char *, off_t *, char *);
+char	       *ssl_load_key(const char *, off_t *, char *, mode_t, const char *);
 
 const char     *ssl_to_text(const SSL *);
 void		ssl_error(const char *);
 
 int		ssl_load_certificate(struct ssl *, const char *);
-int		ssl_load_keyfile(struct ssl *, const char *);
+int		ssl_load_keyfile(struct ssl *, const char *, const char *);
 int		ssl_load_cafile(struct ssl *, const char *);
 int		ssl_load_dhparams(struct ssl *, const char *);
 
