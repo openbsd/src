@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.703 2013/11/28 21:20:40 rpe Exp $
+#	$OpenBSD: install.sub,v 1.704 2013/11/28 22:31:07 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -396,8 +396,11 @@ user_setup() {
 # Save the user input (or the default) in $resp.
 function ask_until {
 	resp=
-	while [[ -z $resp ]] ; do
+	while true; do
 		ask "$1" "$2"
+		[[ -n $resp ]] && break
+		echo "A response is required."
+		$auto && exit 1
 	done
 }
 
