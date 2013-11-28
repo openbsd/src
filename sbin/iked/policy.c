@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.24 2013/10/24 02:55:50 deraadt Exp $	*/
+/*	$OpenBSD: policy.c,v 1.25 2013/11/28 20:23:28 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -275,6 +275,7 @@ sa_new(struct iked *env, u_int64_t ispi, u_int64_t rspi,
     u_int initiator, struct iked_policy *pol)
 {
 	struct iked_sa	*sa;
+	struct iked_sa	*old;
 	struct iked_id	*localid;
 	u_int		 diff;
 
@@ -321,7 +322,12 @@ sa_new(struct iked *env, u_int64_t ispi, u_int64_t rspi,
 		sa->sa_hdr.sh_rspi = rspi;
 
 	/* Re-insert node into the tree */
-	RB_INSERT(iked_sas, &env->sc_sas, sa);
+	old = RB_INSERT(iked_sas, &env->sc_sas, sa);
+	if (old && old != sa) {
+		log_debug("%s: duplicate ikesa", __func__);
+		sa_free(env, sa);
+		return (NULL);
+	}
 
 	return (sa);
 }
