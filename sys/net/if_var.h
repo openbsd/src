@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.2 2013/11/28 10:16:44 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.3 2013/11/28 11:05:18 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -339,14 +339,6 @@ struct ifg_list {
 };
 
 #ifdef _KERNEL
-#define	IFAFREE(ifa) \
-do { \
-	if ((ifa)->ifa_refcnt <= 0) \
-		ifafree(ifa); \
-	else \
-		(ifa)->ifa_refcnt--; \
-} while (/* CONSTCOND */0)
-
 /* XXX the IFQ_ macros are a giant mess right now. cleanup once altq gone. */
 
 #ifdef ALTQ
