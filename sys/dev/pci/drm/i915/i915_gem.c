@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.47 2013/11/27 20:13:30 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.48 2013/11/28 20:32:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1026,6 +1026,9 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 	struct drm_device *dev = ring->dev;
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	int ret = 0;
+
+	if (i915_seqno_passed(ring->get_seqno(ring, true), seqno))
+		return 0;
 
 	mtx_enter(&dev_priv->irq_lock);
 	if (!i915_seqno_passed(ring->get_seqno(ring, true), seqno)) {
