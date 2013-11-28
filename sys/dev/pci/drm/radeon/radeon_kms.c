@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.12 2013/11/27 20:41:19 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.13 2013/11/28 21:45:36 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -959,22 +959,16 @@ int radeon_info_ioctl(struct drm_device *dev, void *data, struct drm_file *filp)
 		break;
 	case RADEON_INFO_VA_START:
 		/* this is where we report if vm is supported or not */
-		return -EINVAL;
-#ifdef notyet
 		if (rdev->family < CHIP_CAYMAN)
 			return -EINVAL;
 		value = RADEON_VA_RESERVED_SIZE;
 		break;
-#endif
 	case RADEON_INFO_IB_VM_MAX_SIZE:
 		/* this is where we report if vm is supported or not */
-		return -EINVAL;
-#ifdef notyet
 		if (rdev->family < CHIP_CAYMAN)
 			return -EINVAL;
 		value = RADEON_IB_VM_MAX_SIZE;
 		break;
-#endif
 	case RADEON_INFO_MAX_PIPES:
 		if (rdev->family >= CHIP_TAHITI)
 			value = rdev->config.si.max_cu_per_sh;
