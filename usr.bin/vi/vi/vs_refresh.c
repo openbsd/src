@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_refresh.c,v 1.17 2011/04/10 21:21:50 martynas Exp $	*/
+/*	$OpenBSD: vs_refresh.c,v 1.18 2013/11/28 22:12:40 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -78,7 +78,7 @@ vs_refresh(sp, forcepaint)
 	 * that we can find, including status lines.
 	 */
 	if (F_ISSET(sp, SC_SCR_REDRAW))
-		CIRCLEQ_FOREACH(tsp, &gp->dq, q)
+		TAILQ_FOREACH(tsp, &gp->dq, q)
 			if (tsp != sp)
 				F_SET(tsp, SC_SCR_REDRAW | SC_STATUS);
 
@@ -95,7 +95,7 @@ vs_refresh(sp, forcepaint)
 	priv_paint = VIP_CUR_INVALID | VIP_N_REFRESH;
 	if (O_ISSET(sp, O_NUMBER))
 		priv_paint |= VIP_N_RENUMBER;
-	CIRCLEQ_FOREACH(tsp, &gp->dq, q)
+	TAILQ_FOREACH(tsp, &gp->dq, q)
 		if (tsp != sp && !F_ISSET(tsp, SC_EXIT | SC_EXIT_FORCE) &&
 		    (F_ISSET(tsp, pub_paint) ||
 		    F_ISSET(VIP(tsp), priv_paint))) {
@@ -131,7 +131,7 @@ vs_refresh(sp, forcepaint)
 	 * gets back to where it belongs.
 	 */
 	need_refresh = 0;
-	CIRCLEQ_FOREACH(tsp, &gp->dq, q)
+	TAILQ_FOREACH(tsp, &gp->dq, q)
 		if (F_ISSET(tsp, SC_STATUS)) {
 			need_refresh = 1;
 			vs_resolve(tsp, sp, 0);

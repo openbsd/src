@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.11 2013/11/27 08:52:41 zhuk Exp $	*/
+/*	$OpenBSD: line.c,v 1.12 2013/11/28 22:12:40 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -567,7 +567,7 @@ scr_update(sp, lno, op, current)
 
 	ep = sp->ep;
 	if (ep->refcnt != 1)
-		CIRCLEQ_FOREACH(tsp, &sp->gp->dq, q)
+		TAILQ_FOREACH(tsp, &sp->gp->dq, q)
 			if (sp != tsp && tsp->ep == ep)
 				if (vs_change(tsp, lno, op))
 					return (1);

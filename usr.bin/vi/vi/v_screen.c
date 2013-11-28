@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_screen.c,v 1.6 2009/10/27 23:59:48 deraadt Exp $	*/
+/*	$OpenBSD: v_screen.c,v 1.7 2013/11/28 22:12:40 krw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -49,13 +49,13 @@ v_screen(sp, vp)
 	 * Try for the next lower screen, or, go back to the first
 	 * screen on the stack.
 	 */
-	if (CIRCLEQ_NEXT(sp, q) != CIRCLEQ_END(&sp->gp->dq))
-		sp->nextdisp = CIRCLEQ_NEXT(sp, q);
-	else if (CIRCLEQ_FIRST(&sp->gp->dq) == sp) {
+	if (TAILQ_NEXT(sp, q))
+		sp->nextdisp = TAILQ_NEXT(sp, q);
+	else if (TAILQ_FIRST(&sp->gp->dq) == sp) {
 		msgq(sp, M_ERR, "187|No other screen to switch to");
 		return (1);
 	} else
-		sp->nextdisp = CIRCLEQ_FIRST(&sp->gp->dq);
+		sp->nextdisp = TAILQ_FIRST(&sp->gp->dq);
 
 	F_SET(sp->nextdisp, SC_STATUS);
 	F_SET(sp, SC_SSWITCH | SC_STATUS);

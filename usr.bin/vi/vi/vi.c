@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.13 2009/10/27 23:59:48 deraadt Exp $	*/
+/*	$OpenBSD: vi.c,v 1.14 2013/11/28 22:12:40 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -1007,19 +1007,21 @@ v_dtoh(sp)
 	int hidden;
 
 	/* Move all screens to the hidden queue, tossing screen maps. */
-	for (hidden = 0, gp = sp->gp;
-	    (tsp = CIRCLEQ_FIRST(&gp->dq)) != CIRCLEQ_END(&gp->dq); ++hidden) {
+	hidden = 0;
+	gp = sp->gp;
+	while ((tsp = TAILQ_FIRST(&gp->dq))) {
 		if (_HMAP(tsp) != NULL) {
 			free(_HMAP(tsp));
 			_HMAP(tsp) = NULL;
 		}
-		CIRCLEQ_REMOVE(&gp->dq, tsp, q);
-		CIRCLEQ_INSERT_TAIL(&gp->hq, tsp, q);
+		TAILQ_REMOVE(&gp->dq, tsp, q);
+		TAILQ_INSERT_TAIL(&gp->hq, tsp, q);
+		++hidden;
 	}
 
 	/* Move current screen back to the display queue. */
-	CIRCLEQ_REMOVE(&gp->hq, sp, q);
-	CIRCLEQ_INSERT_TAIL(&gp->dq, sp, q);
+	TAILQ_REMOVE(&gp->hq, sp, q);
+	TAILQ_INSERT_TAIL(&gp->dq, sp, q);
 
 	/*
 	 * XXX

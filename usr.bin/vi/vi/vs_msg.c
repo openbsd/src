@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_msg.c,v 1.11 2009/10/27 23:59:49 deraadt Exp $	*/
+/*	$OpenBSD: vs_msg.c,v 1.12 2013/11/28 22:12:40 krw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -599,7 +599,7 @@ vs_ex_resolve(sp, continuep)
 	 * If we're not the bottom of the split screen stack, the screen
 	 * image itself is wrong, so redraw everything.
 	 */
-	if (CIRCLEQ_NEXT(sp, q) != CIRCLEQ_END(&sp->gp->dq))
+	if (TAILQ_NEXT(sp, q))
 		F_SET(sp, SC_SCR_REDRAW);
 
 	/* If ex changed the underlying file, the map itself is wrong. */
@@ -780,7 +780,7 @@ vs_scroll(sp, continuep, wtype)
 		(void)gp->scr_deleteln(sp);
 
 		/* If there are screens below us, push them back into place. */
-		if (CIRCLEQ_NEXT(sp, q) != CIRCLEQ_END(&sp->gp->dq)) {
+		if (TAILQ_NEXT(sp, q)) {
 			(void)gp->scr_move(sp, LASTLINE(sp), 0);
 			(void)gp->scr_insertln(sp);
 		}

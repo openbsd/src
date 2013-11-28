@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_script.c,v 1.18 2012/12/20 20:28:12 naddy Exp $	*/
+/*	$OpenBSD: ex_script.c,v 1.19 2013/11/28 22:12:40 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -366,7 +366,7 @@ sscr_check_input(SCR *sp)
 
 	/* Allocate space for pfd. */   
 	nfds = 1;
-	CIRCLEQ_FOREACH(tsp, &gp->dq, q)
+	TAILQ_FOREACH(tsp, &gp->dq, q)
 		if (F_ISSET(sp, SC_SCRIPT))
 			nfds++;
 	pfd = calloc(nfds, sizeof(struct pollfd));
@@ -379,7 +379,7 @@ sscr_check_input(SCR *sp)
 	pfd[0].fd = STDIN_FILENO;
 	pfd[0].events = POLLIN;
 	nfds = 1;
-	CIRCLEQ_FOREACH(tsp, &gp->dq, q)
+	TAILQ_FOREACH(tsp, &gp->dq, q)
 		if (F_ISSET(sp, SC_SCRIPT)) {
 			pfd[nfds].fd = sp->script->sh_master;
 			pfd[nfds].events = POLLIN;
@@ -402,7 +402,7 @@ loop:
 	/* Only insert from the scripting windows if no command input */
 	if (!(pfd[0].revents & POLLIN)) {
 		nfds = 1;
-		CIRCLEQ_FOREACH(tsp, &gp->dq, q)
+		TAILQ_FOREACH(tsp, &gp->dq, q)
 			if (F_ISSET(sp, SC_SCRIPT)) {
 				if ((pfd[nfds].revents & POLLHUP) && sscr_end(sp))
 					goto done;
@@ -436,7 +436,7 @@ sscr_input(sp)
 
 	/* Allocate space for pfd. */
 	nfds = 0;
-	CIRCLEQ_FOREACH(sp, &gp->dq, q)
+	TAILQ_FOREACH(sp, &gp->dq, q)
 		if (F_ISSET(sp, SC_SCRIPT))
 			nfds++;
 	if (nfds == 0)
@@ -449,7 +449,7 @@ sscr_input(sp)
 
 	/* Setup events bitmasks. */
 	nfds = 0;
-	CIRCLEQ_FOREACH(sp, &gp->dq, q)
+	TAILQ_FOREACH(sp, &gp->dq, q)
 		if (F_ISSET(sp, SC_SCRIPT)) {
 			pfd[nfds].fd = sp->script->sh_master;
 			pfd[nfds].events = POLLIN;
@@ -471,7 +471,7 @@ loop:
 
 	/* Read the input. */
 	nfds = 0;
-	CIRCLEQ_FOREACH(sp, &gp->dq, q)
+	TAILQ_FOREACH(sp, &gp->dq, q)
 		if (F_ISSET(sp, SC_SCRIPT)) {
 			if ((pfd[nfds].revents & POLLHUP) && sscr_end(sp))
 				goto done;
@@ -684,7 +684,7 @@ sscr_check(sp)
 	GS *gp;
 
 	gp = sp->gp;
-	CIRCLEQ_FOREACH(sp, &gp->dq, q)
+	TAILQ_FOREACH(sp, &gp->dq, q)
 		if (F_ISSET(sp, SC_SCRIPT)) {
 			F_SET(gp, G_SCRWIN);
 			return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_split.c,v 1.10 2009/10/27 23:59:49 deraadt Exp $	*/
+/*	$OpenBSD: vs_split.c,v 1.11 2013/11/28 22:12:40 krw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -95,7 +95,7 @@ vs_split(sp, new, ccl)
 		sp->rows = half;		/* Old. */
 		sp->woff += new->rows;
 						/* Link in before old. */
-		CIRCLEQ_INSERT_BEFORE(&gp->dq, sp, new, q);
+		TAILQ_INSERT_BEFORE(sp, new, q);
 
 		/*
 		 * If the parent is the bottom half of the screen, shift
@@ -108,7 +108,7 @@ vs_split(sp, new, ccl)
 		sp->rows -= half;		/* Old. */
 		new->woff = sp->woff + sp->rows;
 						/* Link in after old. */
-		CIRCLEQ_INSERT_AFTER(&gp->dq, sp, new, q);
+		TAILQ_INSERT_AFTER(&gp->dq, sp, new, q);
 	}
 
 	/* Adjust maximum text count. */
@@ -219,11 +219,11 @@ vs_discard(sp, spp)
 	 * they're the closest to the current screen.  If that doesn't work,
 	 * there was no screen to join.
 	 */
-	if ((nsp = CIRCLEQ_PREV(sp, q)) != CIRCLEQ_END(&sp->gp->dq)) {
+	if ((nsp = TAILQ_PREV(sp, _dqh, q))) {
 		nsp->rows += sp->rows;
 		sp = nsp;
 		dir = FORWARD;
-	} else if ((nsp = CIRCLEQ_NEXT(sp, q)) != CIRCLEQ_END(&sp->gp->dq)) {
+	} else if ((nsp = TAILQ_NEXT(sp, q))) {
 		nsp->woff = sp->woff;
 		nsp->rows += sp->rows;
 		sp = nsp;
@@ -312,17 +312,17 @@ vs_fg(sp, nspp, name, newscreen)
 
 	if (newscreen) {
 		/* Remove the new screen from the background queue. */
-		CIRCLEQ_REMOVE(&gp->hq, nsp, q);
+		TAILQ_REMOVE(&gp->hq, nsp, q);
 
 		/* Split the screen; if we fail, hook the screen back in. */
 		if (vs_split(sp, nsp, 0)) {
-			CIRCLEQ_INSERT_TAIL(&gp->hq, nsp, q);
+			TAILQ_INSERT_TAIL(&gp->hq, nsp, q);
 			return (1);
 		}
 	} else {
 		/* Move the old screen to the background queue. */
-		CIRCLEQ_REMOVE(&gp->dq, sp, q);
-		CIRCLEQ_INSERT_TAIL(&gp->hq, sp, q);
+		TAILQ_REMOVE(&gp->dq, sp, q);
+		TAILQ_INSERT_TAIL(&gp->hq, sp, q);
 	}
 	return (0);
 }
@@ -352,8 +352,8 @@ vs_bg(sp)
 	}
 
 	/* Move the old screen to the background queue. */
-	CIRCLEQ_REMOVE(&gp->dq, sp, q);
-	CIRCLEQ_INSERT_TAIL(&gp->hq, sp, q);
+	TAILQ_REMOVE(&gp->dq, sp, q);
+	TAILQ_INSERT_TAIL(&gp->hq, sp, q);
 
 	/* Toss the screen map. */
 	free(_HMAP(sp));
@@ -444,8 +444,8 @@ vs_swap(sp, nspp, name)
 	 * the exit will delete the old one, if we're foregrounding, the fg
 	 * code will move the old one to the background queue.
 	 */
-	CIRCLEQ_REMOVE(&gp->hq, nsp, q);
-	CIRCLEQ_INSERT_AFTER(&gp->dq, sp, nsp, q);
+	TAILQ_REMOVE(&gp->hq, nsp, q);
+	TAILQ_INSERT_AFTER(&gp->dq, sp, nsp, q);
 
 	/*
 	 * Don't change the screen's cursor information other than to
@@ -501,15 +501,15 @@ vs_resize(sp, count, adj)
 		s = sp;
 		if (s->t_maxrows < MINIMUM_SCREEN_ROWS + count)
 			goto toosmall;
-		if ((g = CIRCLEQ_PREV(sp, q)) == CIRCLEQ_END(&gp->dq)) {
-			if ((g = CIRCLEQ_NEXT(sp, q)) == CIRCLEQ_END(&gp->dq))
+		if ((g = TAILQ_PREV(sp, _dqh, q)) == NULL) {
+			if ((g = TAILQ_NEXT(sp, q)) == NULL)
 				goto toobig;
 			g_off = -count;
 		} else
 			s_off = count;
 	} else {
 		g = sp;
-		if ((s = CIRCLEQ_NEXT(sp, q)) != CIRCLEQ_END(&gp->dq))
+		if ((s = TAILQ_NEXT(sp, q)))
 			if (s->t_maxrows < MINIMUM_SCREEN_ROWS + count)
 				s = NULL;
 			else
@@ -517,7 +517,7 @@ vs_resize(sp, count, adj)
 		else
 			s = NULL;
 		if (s == NULL) {
-			if ((s = CIRCLEQ_PREV(sp, q)) == CIRCLEQ_END(&gp->dq)) {
+			if ((s = TAILQ_PREV(sp, _dqh, q)) == NULL) {
 toobig:				msgq(sp, M_BERR, adj == A_DECREASE ?
 				    "227|The screen cannot shrink" :
 				    "228|The screen cannot grow");
@@ -577,29 +577,24 @@ vs_getbg(sp, name)
 	gp = sp->gp;
 
 	/* If name is NULL, return the first background screen on the list. */
-	if (name == NULL) {
-		nsp = CIRCLEQ_FIRST(&gp->hq);
-		return (nsp == (void *)&gp->hq ? NULL : nsp);
-	}
+	if (name == NULL)
+		return (TAILQ_FIRST(&gp->hq));
 
 	/* Search for a full match. */
-	CIRCLEQ_FOREACH(nsp, &gp->hq, q)
+	TAILQ_FOREACH(nsp, &gp->hq, q) {
 		if (!strcmp(nsp->frp->name, name))
-			break;
-	if (nsp != (void *)&gp->hq)
-		return (nsp);
+			return(nsp);
+	}
 
 	/* Search for a last-component match. */
-	CIRCLEQ_FOREACH(nsp, &gp->hq, q) {
+	TAILQ_FOREACH(nsp, &gp->hq, q) {
 		if ((p = strrchr(nsp->frp->name, '/')) == NULL)
 			p = nsp->frp->name;
 		else
 			++p;
 		if (!strcmp(p, name))
-			break;
+			return(nsp);
 	}
-	if (nsp != (void *)&gp->hq)
-		return (nsp);
 
 	return (NULL);
 }

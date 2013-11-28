@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.9 2013/11/25 23:27:11 krw Exp $	*/
+/*	$OpenBSD: screen.c,v 1.10 2013/11/28 22:12:40 krw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -131,19 +131,30 @@ screen_end(sp)
 	SCR *sp;
 {
 	int rval;
+	SCR *tsp;
 
 	/* If multiply referenced, just decrement the count and return. */
 	 if (--sp->refcnt != 0)
 		 return (0);
 
 	/*
-	 * Remove the screen from the displayed queue.
+	 * Remove the screen from the displayed and hidden queues.
 	 *
 	 * If a created screen failed during initialization, it may not
-	 * be linked into the chain.
+	 * be linked into a queue.
 	 */
-	if (CIRCLEQ_NEXT(sp, q) != NULL)
-		CIRCLEQ_REMOVE(&sp->gp->dq, sp, q);
+	TAILQ_FOREACH(tsp, &sp->gp->dq, q) {
+		if (tsp == sp) {
+			TAILQ_REMOVE(&sp->gp->dq, sp, q);
+			break;
+		}
+	}
+	TAILQ_FOREACH(tsp, &sp->gp->hq, q) {
+		if (tsp == sp) {
+			TAILQ_REMOVE(&sp->gp->hq, sp, q);
+			break;
+		}
+	}
 
 	/* The screen is no longer real. */
 	F_CLR(sp, SC_SCR_EX | SC_SCR_VI);
@@ -213,17 +224,15 @@ screen_next(sp)
 
 	/* Try the display queue, without returning the current screen. */
 	gp = sp->gp;
-	CIRCLEQ_FOREACH(next, &gp->dq, q)
+	TAILQ_FOREACH(next, &gp->dq, q)
 		if (next != sp)
-			break;
-	if (next != (void *)&gp->dq)
-		return (next);
+			return (next);
 
 	/* Try the hidden queue; if found, move screen to the display queue. */
-	if (CIRCLEQ_FIRST(&gp->hq) != CIRCLEQ_END(&gp->hq)) {
-		next = CIRCLEQ_FIRST(&gp->hq);
-		CIRCLEQ_REMOVE(&gp->hq, next, q);
-		CIRCLEQ_INSERT_HEAD(&gp->dq, next, q);
+	if (!TAILQ_EMPTY(&gp->hq)) {
+		next = TAILQ_FIRST(&gp->hq);
+		TAILQ_REMOVE(&gp->hq, next, q);
+		TAILQ_INSERT_HEAD(&gp->dq, next, q);
 		return (next);
 	}
 	return (NULL);

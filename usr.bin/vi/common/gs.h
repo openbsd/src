@@ -1,4 +1,4 @@
-/*	$OpenBSD: gs.h,v 1.9 2006/01/08 21:05:39 miod Exp $	*/
+/*	$OpenBSD: gs.h,v 1.10 2013/11/28 22:12:40 krw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -58,8 +58,8 @@ struct _gs {
 	char	*progname;		/* Programe name. */
 
 	int	 id;			/* Last allocated screen id. */
-	CIRCLEQ_HEAD(_dqh, _scr) dq;	/* Displayed screens. */
-	CIRCLEQ_HEAD(_hqh, _scr) hq;	/* Hidden screens. */
+	TAILQ_HEAD(_dqh, _scr) dq;	/* Displayed screens. */
+	TAILQ_HEAD(_hqh, _scr) hq;	/* Hidden screens. */
 
 	SCR	*ccl_sp;		/* Colon command-line screen. */
 
