@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.102 2013/11/19 10:22:42 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.103 2013/11/28 10:43:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -424,12 +424,14 @@ hostname_match(const char *hostname, const char *pattern)
 			while (*pattern == '*')
 				pattern++;
 			while (*hostname != '\0' &&
-			    tolower((int)*hostname) != tolower((int)*pattern))
+			    tolower((unsigned char)*hostname) !=
+			    tolower((unsigned char)*pattern))
 				hostname++;
 			continue;
 		}
 
-		if (tolower((int)*pattern) != tolower((int)*hostname))
+		if (tolower((unsigned char)*pattern) !=
+		    tolower((unsigned char)*hostname))
 			return 0;
 		pattern++;
 		hostname++;
@@ -445,7 +447,7 @@ valid_localpart(const char *s)
  * RFC 5322 defines theses characters as valid: !#$%&'*+-/=?^_`{|}~
  * some of them are potentially dangerous, and not so used after all.
  */
-#define IS_ATEXT(c)     (isalnum((int)(c)) || strchr("*!%+-/=_", (c)))
+#define IS_ATEXT(c) (isalnum((unsigned char)(c)) || strchr("*!%+-/=_", (c)))
 nextatom:
 	if (! IS_ATEXT(*s) || *s == '\0')
 		return 0;
@@ -495,12 +497,12 @@ valid_domainpart(const char *s)
 	}
 	
 nextsub:
-	if (!isalnum((int)*s))
+	if (!isalnum((unsigned char)*s))
 		return 0;
 	while (*(++s) != '\0') {
 		if (*s == '.')
 			break;
-		if (isalnum((int)*s) || *s == '-')
+		if (isalnum((unsigned char)*s) || *s == '-')
 			continue;
 		return 0;
 	}
@@ -604,7 +606,7 @@ lowercase(char *buf, const char *s, size_t len)
 		return 0;
 
 	while (*buf != '\0') {
-		*buf = tolower((int)*buf);
+		*buf = tolower((unsigned char)*buf);
 		buf++;
 	}
 
@@ -621,7 +623,7 @@ uppercase(char *buf, const char *s, size_t len)
 		return 0;
 
 	while (*buf != '\0') {
-		*buf = toupper((int)*buf);
+		*buf = toupper((unsigned char)*buf);
 		buf++;
 	}
 
@@ -737,7 +739,7 @@ parse_smtp_response(char *line, size_t len, char **msg, int *cont)
 
 	/* validate reply message */
 	for (i = 0; i < len; i++)
-		if (!isprint(line[i]))
+		if (!isprint((unsigned char)line[i]))
 			return "non-printable character in reply";
 
 	return NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_sqlite.c,v 1.9 2013/11/18 11:47:16 eric Exp $	*/
+/*	$OpenBSD: table_sqlite.c,v 1.10 2013/11/28 10:43:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -207,7 +207,7 @@ table_sqlite_update(void)
 		}
 
 		key = buf;
-		while (isspace((int)*key))
+		while (isspace((unsigned char)*key))
 			++key;
 		if (*key == '\0' || *key == '#')
 			continue;
@@ -215,8 +215,8 @@ table_sqlite_update(void)
 		strsep(&value, " \t:");
 		if (value) {
 			while (*value) {
-				if (!isspace(*value) &&
-				    !(*value == ':' && isspace(*(value + 1))))
+				if (!isspace((unsigned char)*value) &&
+				    !(*value == ':' && isspace((unsigned char)*(value + 1))))
 					break;
 				++value;
 			}

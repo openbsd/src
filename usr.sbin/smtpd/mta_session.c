@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.47 2013/11/18 12:24:26 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.48 2013/11/28 10:43:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1484,7 +1484,7 @@ mta_check_loop(FILE *fp)
 			buf = lbuf;
 		}
 
-		if (strchr(buf, ':') == NULL && !isspace((int)*buf))
+		if (strchr(buf, ':') == NULL && !isspace((unsigned char)*buf))
 			break;
 
 		if (strncasecmp("Received: ", buf, 10) == 0) {

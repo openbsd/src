@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.12 2013/11/06 10:01:29 eric Exp $	*/
+/*	$OpenBSD: to.c,v 1.13 2013/11/28 10:43:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -744,7 +744,7 @@ alias_is_username(struct expandnode *alias, const char *line, size_t len)
 		return 0;
 
 	while (*line) {
-		if (!isalnum((int)*line) &&
+		if (!isalnum((unsigned char)*line) &&
 		    *line != '_' && *line != '.' && *line != '-')
 			return 0;
 		++line;
@@ -780,7 +780,7 @@ alias_is_address(struct expandnode *alias, const char *line, size_t len)
 
 	while (*line) {
 		char allowedset[] = "!#$%*/?|^{}`~&'+-=_.";
-		if (!isalnum((int)*line) &&
+		if (!isalnum((unsigned char)*line) &&
 		    strchr(allowedset, *line) == NULL)
 			return 0;
 		++line;
@@ -788,7 +788,7 @@ alias_is_address(struct expandnode *alias, const char *line, size_t len)
 
 	while (*domain) {
 		char allowedset[] = "-.";
-		if (!isalnum((int)*domain) &&
+		if (!isalnum((unsigned char)*domain) &&
 		    strchr(allowedset, *domain) == NULL)
 			return 0;
 		++domain;
@@ -856,9 +856,11 @@ alias_is_error(struct expandnode *alias, const char *line, size_t len)
 		return 0;
 
 	/* [45][0-9]{2} [a-zA-Z0-9].* */
-	if (alias->u.buffer[3] != ' ' || !isalnum(alias->u.buffer[4]) ||
+	if (alias->u.buffer[3] != ' ' ||
+	    !isalnum((unsigned char)alias->u.buffer[4]) ||
 	    (alias->u.buffer[0] != '4' && alias->u.buffer[0] != '5') ||
-	    !isdigit(alias->u.buffer[1]) || !isdigit(alias->u.buffer[2]))
+	    !isdigit((unsigned char)alias->u.buffer[1]) ||
+	    !isdigit((unsigned char)alias->u.buffer[2]))
 		return 0;
 
 	alias->type = EXPAND_ERROR;

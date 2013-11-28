@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.7 2013/11/18 11:47:16 eric Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.8 2013/11/28 10:43:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -103,7 +103,7 @@ table_static_parse(struct table *t, const char *config, enum table_type type)
 		}
 
 		keyp = buf;
-		while (isspace((int)*keyp))
+		while (isspace((unsigned char)*keyp))
 			++keyp;
 		if (*keyp == '\0' || *keyp == '#')
 			continue;
@@ -111,8 +111,8 @@ table_static_parse(struct table *t, const char *config, enum table_type type)
 		strsep(&valp, " \t:");
 		if (valp) {
 			while (*valp) {
-				if (!isspace(*valp) &&
-				    !(*valp == ':' && isspace(*(valp + 1))))
+				if (!isspace((unsigned char)*valp) &&
+				    !(*valp == ':' && isspace((unsigned char)*(valp + 1))))
 					break;
 				++valp;
 			}

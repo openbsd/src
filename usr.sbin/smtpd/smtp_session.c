@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.189 2013/11/18 12:24:26 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.190 2013/11/28 10:43:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -959,7 +959,7 @@ smtp_command(struct smtp_session *s, char *line)
 
 	if (args) {
 		*args++ = '\0';
-		while (isspace((int)*args))
+		while (isspace((unsigned char)*args))
 			args++;
 	}
 

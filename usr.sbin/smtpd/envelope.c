@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.23 2013/11/18 11:47:16 eric Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.24 2013/11/28 10:43:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -86,13 +86,13 @@ envelope_buffer_to_dict(struct dict *d,  const char *ibuf, size_t buflen)
 		buflen -= (nextline - buf);
 
 		field = buf;
-		while (*buf && (isalnum(*buf) || *buf == '-'))
+		while (*buf && (isalnum((unsigned char)*buf) || *buf == '-'))
 			buf++;
 		if (! *buf)
 			goto err;
 
 		/* skip whitespaces before separator */
-		while (*buf && isspace(*buf))
+		while (*buf && isspace((unsigned char)*buf))
 			*buf++ = 0;
 
 		/* we *want* ':' */
@@ -101,7 +101,7 @@ envelope_buffer_to_dict(struct dict *d,  const char *ibuf, size_t buflen)
 		*buf++ = 0;
 
 		/* skip whitespaces after separator */
-		while (*buf && isspace(*buf))
+		while (*buf && isspace((unsigned char)*buf))
 			*buf++ = 0;
 		dict_set(d, field, buf);
 		buf = nextline;

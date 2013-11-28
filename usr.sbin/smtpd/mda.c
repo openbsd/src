@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.98 2013/11/20 09:22:42 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.99 2013/11/28 10:43:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -599,7 +599,7 @@ mda_check_loop(FILE *fp, struct mda_envelope *e)
 			buf = lbuf;
 		}
 
-		if (strchr(buf, ':') == NULL && !isspace((int)*buf))
+		if (strchr(buf, ':') == NULL && !isspace((unsigned char)*buf))
 			break;
 
 		if (strncasecmp("Delivered-To: ", buf, 14) == 0) {

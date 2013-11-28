@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.46 2013/10/29 10:50:55 eric Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.47 2013/11/28 10:43:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -283,7 +283,7 @@ parse_mapentry(char *line, size_t len, size_t lineno)
 	char	*valp;
 
 	keyp = line;
-	while (isspace((int)*keyp))
+	while (isspace((unsigned char)*keyp))
 		keyp++;
 	if (*keyp == '\0' || *keyp == '#')
 		return 1;
@@ -292,7 +292,7 @@ parse_mapentry(char *line, size_t len, size_t lineno)
 	strsep(&valp, " \t:");
 	if (valp == NULL || valp == keyp)
 		goto bad;
-	while (*valp == ':' || isspace((int)*valp))
+	while (*valp == ':' || isspace((unsigned char)*valp))
 		valp++;
 	if (*valp == '\0' || *valp == '#')
 		goto bad;
@@ -340,7 +340,7 @@ parse_setentry(char *line, size_t len, size_t lineno)
 	char	*keyp;
 
 	keyp = line;
-	while (isspace((int)*keyp))
+	while (isspace((unsigned char)*keyp))
 		keyp++;
 	if (*keyp == '\0' || *keyp == '#')
 		return 1;
@@ -391,14 +391,14 @@ make_aliases(DBT *val, char *text)
 
 	while ((subrcpt = strsep(&text, ",")) != NULL) {
 		/* subrcpt: strip initial whitespace. */
-		while (isspace((int)*subrcpt))
+		while (isspace((unsigned char)*subrcpt))
 			++subrcpt;
 		if (*subrcpt == '\0')
 			goto error;
 
 		/* subrcpt: strip trailing whitespace. */
 		endp = subrcpt + strlen(subrcpt) - 1;
-		while (subrcpt < endp && isspace((int)*endp))
+		while (subrcpt < endp && isspace((unsigned char)*endp))
 			*endp-- = '\0';
 
 		if (! text_to_expandnode(&xn, subrcpt))
