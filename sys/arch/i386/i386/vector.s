@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.17 2013/05/12 14:15:31 ratchov Exp $	*/
+/*	$OpenBSD: vector.s,v 1.18 2013/11/28 19:30:46 brad Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ _C_LABEL(Xintr_##name##num):						;\
 	jz	5f			/* no, skip it */		;\
 	addl	$1,IH_COUNT(%ebx)	/* count the intrs */		;\
 	adcl	$0,IH_COUNT+4(%ebx)					;\
-	cmp	$0,_C_LABEL(intr_shared_edge)				;\
+	cmpl	$0,_C_LABEL(intr_shared_edge)				;\
 	jne	5f			 /* if no shared edges ... */	;\
 	orl	%eax,%eax		/* ... 1 means stop trying */	;\
 	jns	8f							;\

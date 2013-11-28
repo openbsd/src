@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.42 2013/10/01 20:22:12 sf Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.43 2013/11/28 19:30:46 brad Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -346,7 +346,7 @@ pcibios_get_status(struct pcibios_softc *sc, u_int32_t *rev_maj,
 			 "pushl	%%ds\n\t"
 			 "movw	4(%%edi), %%cx\n\t"
 			 "movl	%%ecx, %%ds\n\t"
-			 "lcall	%%cs:*(%%edi)\n\t"
+			 "lcall	*%%cs:(%%edi)\n\t"
 			 "pop	%%ds\n\t"
 			 "pop	%%es\n\t"
 			 "jc	1f\n\t"
@@ -399,7 +399,7 @@ pcibios_get_intr_routing(struct pcibios_softc *sc,
 			 "pushl	%%ds\n\t"
 			 "movw	4(%%esi), %%cx\n\t"
 			 "movl	%%ecx, %%ds\n\t"
-			 "lcall	%%cs:*(%%esi)\n\t"
+			 "lcall	*%%cs:(%%esi)\n\t"
 			 "popl	%%ds\n\t"
 			 "popl	%%es\n\t"
 			 "jc	1f\n\t"

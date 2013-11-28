@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.27 2013/05/12 14:15:31 ratchov Exp $ */
+/* $OpenBSD: apicvec.s,v 1.28 2013/11/28 19:30:46 brad Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -290,7 +290,7 @@ _C_LABEL(Xintr_##name##num):						\
 	jz	4f							;\
 	addl	$1,IH_COUNT(%ebx)	/* count the intrs */		;\
 	adcl	$0,IH_COUNT+4(%ebx)					;\
-	cmp	$0,_C_LABEL(intr_shared_edge)				;\
+	cmpl	$0,_C_LABEL(intr_shared_edge)				;\
 	jne	4f			/* if no shared edges ... */	;\
 	orl	%eax,%eax		/* ... 1 means stop trying */	;\
 	js	4f							;\

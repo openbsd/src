@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmcall.S,v 1.5 2003/06/03 20:10:31 mickey Exp $	*/
+/*	$OpenBSD: apmcall.S,v 1.6 2013/11/28 19:30:46 brad Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -56,7 +56,7 @@ ENTRY(apmcall)
 
 	pushfl
 
-	cmp	$0, _C_LABEL(apm_cli)
+	cmpl	$0, _C_LABEL(apm_cli)
 	je	1f
 	cli
 1:
@@ -74,7 +74,7 @@ ENTRY(apmcall)
 	movl	8(%ebp), %eax
 
 	clc
-	lcall	%cs:*(_C_LABEL(apm_ep))
+	lcall	*%cs:(_C_LABEL(apm_ep))
 	pushl	%eax
 	setc	%al
 	movzbl	%al, %esi
