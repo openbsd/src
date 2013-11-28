@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.16 2013/04/17 17:39:29 tedu Exp $	*/
+/*	$OpenBSD: engine.c,v 1.17 2013/11/28 05:09:45 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -97,6 +97,7 @@ static states step(struct re_guts *, sopno, sopno, states, int, states);
 #define	NOTHING	(BOL+3)
 #define	BOW	(BOL+4)
 #define	EOW	(BOL+5)
+/* update nonchars[] array below when adding fake chars here */
 #define	CODEMAX	(BOL+5)		/* highest code used */
 #define	NONCHAR(c)	((c) > CHAR_MAX)
 #define	NNONCHAR	(CODEMAX-CHAR_MAX)
@@ -107,7 +108,7 @@ static void print(struct match *, char *, states, int, FILE *);
 static void at(struct match *, char *, char *, char *, sopno, sopno);
 #endif
 #ifdef REDEBUG
-static char *pchar(int);
+static const char *pchar(int);
 #endif
 
 #ifdef REDEBUG
@@ -960,8 +961,7 @@ print(struct match *m, char *caption, states st, int ch, FILE *d)
 		return;
 
 	(void)fprintf(d, "%s", caption);
-	if (ch != '\0')
-		(void)fprintf(d, " %s", pchar(ch));
+	(void)fprintf(d, " %s", pchar(ch));
 	for (i = 0; i < g->nstates; i++)
 		if (ISSET(st, i)) {
 			(void)fprintf(d, "%s%d", (first) ? "\t" : ", ", i);
@@ -987,6 +987,12 @@ at(struct match *m, char *title, char *start, char *stop, sopno startst,
 
 #ifndef PCHARDONE
 #define	PCHARDONE	/* never again */
+static const char *nonchars[] =
+    { "OUT", "BOL", "EOL", "BOLEOL", "NOTHING", "BOW", "EOW" };
+#define	PNONCHAR(c)						\
+	((c) - OUT < (sizeof(nonchars)/sizeof(nonchars[0]))	\
+	    ? nonchars[(c) - OUT] : "invalid")
+
 /*
  - pchar - make a character printable
  *
@@ -995,12 +1001,17 @@ at(struct match *m, char *title, char *start, char *stop, sopno startst,
  * a matching debug.o, and this is convenient.  It all disappears in
  * the non-debug compilation anyway, so it doesn't matter much.
  */
-static char *			/* -> representation */
+static const char *		/* -> representation */
 pchar(int ch)
 {
 	static char pbuf[10];
 
-	if (isprint(ch) || ch == ' ')
+	if (NONCHAR(ch)) {
+		if (ch - OUT < (sizeof(nonchars)/sizeof(nonchars[0])))
+			return nonchars[ch - OUT];
+		return "invalid";
+	}
+	if (isprint((unsigned char)ch) || ch == ' ')
 		(void)snprintf(pbuf, sizeof pbuf, "%c", ch);
 	else
 		(void)snprintf(pbuf, sizeof pbuf, "\\%o", ch);
