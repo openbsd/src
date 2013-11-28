@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.436 2013/11/20 09:22:42 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.437 2013/11/28 13:13:56 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -510,6 +510,8 @@ struct smtpd {
 	size_t				sc_mda_task_hiwat;
 	size_t				sc_mda_task_lowat;
 	size_t				sc_mda_task_release;
+
+	size_t				sc_mta_max_deferred;
 
 	size_t				sc_scheduler_max_inflight;
 

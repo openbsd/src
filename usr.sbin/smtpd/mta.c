@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.171 2013/11/06 10:01:29 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.172 2013/11/28 13:13:56 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -2290,6 +2290,9 @@ mta_hoststat_cache(const char *host, uint64_t evpid)
 
 	hs = dict_get(&hoststat, buf);
 	if (hs == NULL)
+		return;
+
+	if (tree_count(&hs->deferred) >= env->sc_mta_max_deferred)
 		return;
 
 	tree_set(&hs->deferred, evpid, NULL);

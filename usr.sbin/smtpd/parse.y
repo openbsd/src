@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.131 2013/11/25 19:17:07 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.132 2013/11/28 13:13:56 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -141,7 +141,7 @@ typedef struct {
 
 %}
 
-%token	AS QUEUE COMPRESSION ENCRYPTION MAXMESSAGESIZE LISTEN ON ANY PORT EXPIRE
+%token	AS QUEUE COMPRESSION ENCRYPTION MAXMESSAGESIZE MAXMTADEFERRED LISTEN ON ANY PORT EXPIRE
 %token	TABLE SECURE SMTPS CERTIFICATE DOMAIN BOUNCEWARN LIMIT INET4 INET6
 %token  RELAY BACKUP VIA DELIVER TO LMTP MAILDIR MBOX HOSTNAME HOSTNAMES
 %token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR SOURCE MTA PKI SCHEDULER
@@ -576,6 +576,9 @@ main		: BOUNCEWARN {
 		}
 		| MAXMESSAGESIZE size {
 			conf->sc_maxsize = $2;
+		}
+		| MAXMTADEFERRED NUMBER  {
+			conf->sc_mta_max_deferred = $2;
 		}
 		| LIMIT MDA limits_mda
 		| LIMIT MTA FOR DOMAIN STRING {
@@ -1144,6 +1147,7 @@ lookup(char *s)
 		{ "maildir",		MAILDIR },
 		{ "mask-source",	MASK_SOURCE },
 		{ "max-message-size",  	MAXMESSAGESIZE },
+		{ "max-mta-deferred",  	MAXMTADEFERRED },
 		{ "mbox",		MBOX },
 		{ "mda",		MDA },
 		{ "mta",		MTA },
@@ -1555,6 +1559,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	conf->sc_qexpire = SMTPD_QUEUE_EXPIRY;
 	conf->sc_opts = opts;
 
+	conf->sc_mta_max_deferred = 100;
 	conf->sc_scheduler_max_inflight = 5000;
 
 	conf->sc_mda_max_session = 50;
