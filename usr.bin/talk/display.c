@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.16 2010/08/12 23:31:29 tedu Exp $	*/
+/*	$OpenBSD: display.c,v 1.17 2013/11/28 18:24:55 deraadt Exp $	*/
 /*	$NetBSD: display.c,v 1.3 1994/12/09 02:14:13 jtc Exp $	*/
 
 /*
@@ -137,7 +137,8 @@ display(xwin_t *win, char *text, int size)
 			xscroll(win, 0);
 		}
 		if (*text != '\t' &&
-		    ((!high_print && !isprint(*text)) || iscntrl(*text))) {
+		    ((!high_print && !isprint((unsigned char)*text)) ||
+		      iscntrl((unsigned char)*text))) {
 			waddch(win->x_win, '^');
 			getyx(win->x_win, win->x_line, win->x_col);
 			if (win->x_col == COLS-1) /* check for wraparound */

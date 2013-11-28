@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.c,v 1.30 2010/01/12 23:22:14 nicm Exp $	*/
+/*	$OpenBSD: tic.c,v 1.31 2013/11/28 18:24:55 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -46,7 +46,7 @@
 #include <dump_entry.h>
 #include <transform.h>
 
-MODULE_ID("$Id: tic.c,v 1.30 2010/01/12 23:22:14 nicm Exp $")
+MODULE_ID("$Id: tic.c,v 1.31 2013/11/28 18:24:55 deraadt Exp $")
 
 const char *_nc_progname = "tic";
 
@@ -1159,7 +1159,7 @@ check_params(TERMTYPE *tp, const char *name, char *value)
 		_nc_warning("expected character after %% in %s", name);
 		break;
 	    } else if (*s == 'p') {
-		if (*++s == '\0' || !isdigit((int) *s)) {
+		if (*++s == '\0' || !isdigit(UChar(*s))) {
 		    _nc_warning("expected digit after %%p in %s", name);
 		    return;
 		} else {

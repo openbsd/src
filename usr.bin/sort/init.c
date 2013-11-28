@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.12 2009/10/27 23:59:43 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.13 2013/11/28 18:24:55 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -110,7 +110,7 @@ setcolumn(char *pos, struct field *cur_fld, int gflag)
 	if (sscanf(pos, "%d", &(col->num)) != 1)
 		errx(2, "missing field number");
 	pos++;
-	while (isdigit(*pos))
+	while (isdigit((u_char)*pos))
 		pos++;
 	if (col->num <= 0 && !(col->num == 0 && col == &(cur_fld->tcol)))
 		errx(2, "field numbers must be positive");
@@ -121,7 +121,7 @@ setcolumn(char *pos, struct field *cur_fld, int gflag)
 		if (sscanf(pos, "%d", &(col->indent)) != 1)
 			errx(2, "missing offset");
 		pos++;
-		while (isdigit(*pos))
+		while (isdigit((u_char)*pos))
 			pos++;
 		if (&cur_fld->icol == col)
 			col->indent--;
@@ -238,8 +238,8 @@ fixit(int *argc, char **argv)
 				errx(2, "bad field specification");
 			bufp += n;
 
-			if (argv[i+1] &&
-			    argv[i+1][0] == '-' && isdigit(argv[i+1][1])) {
+			if (argv[i+1] && argv[i+1][0] == '-' &&
+			    isdigit((u_char)argv[i+1][1])) {
 				p = argv[i+1] + 1;
 				w = strtol(p, &ep, 10);
 				if (ep == p || w < 0 ||
@@ -296,7 +296,7 @@ settables(int gflags)
 			Rascii[i] = 255 - i + 1;
 		else
 			Rascii[i] = 255 - i;
-		if (islower(i)) {
+		if (islower((u_char)i)) {
 			Ftable[i] = Ftable[i- ('a' -'A')];
 			RFtable[i] = RFtable[i - ('a' - 'A')];
 		} else if (REC_D>= 'A' && REC_D < 'Z' && i < 'a' && i > REC_D) {
@@ -307,10 +307,10 @@ settables(int gflags)
 			RFtable[i] = Rascii[i];
 		}
 		alltable[i] = 1;
-		if (i == '\n' || isprint(i))
+		if (i == '\n' || isprint((u_char)i))
 			itable[i] = 1;
 		else itable[i] = 0;
-		if (i == '\n' || i == '\t' || i == ' ' || isalnum(i))
+		if (i == '\n' || i == '\t' || i == ' ' || isalnum((u_char)i))
 			dtable[i] = 1;
 		else dtable[i] = 0;
 	}

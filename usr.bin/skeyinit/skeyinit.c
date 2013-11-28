@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.51 2005/07/06 22:15:11 jmc Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.52 2013/11/28 18:24:55 deraadt Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -64,11 +64,11 @@ main(int argc, char **argv)
 	if (gethostname(hostname, sizeof(hostname)) < 0)
 		err(1, "gethostname");
 	for (i = 0, p = seed; hostname[i] && i < SKEY_NAMELEN; i++) {
-		if (isalpha(hostname[i])) {
-			if (isupper(hostname[i]))
-				hostname[i] = tolower(hostname[i]);
+		if (isalpha((unsigned char)hostname[i])) {
+			if (isupper((unsigned char)hostname[i]))
+				hostname[i] = tolower((unsigned char)hostname[i]);
 			*p++ = hostname[i];
-		} else if (isdigit(hostname[i]))
+		} else if (isdigit((unsigned char)hostname[i]))
 			*p++ = hostname[i];
 	}
 	noise = arc4random();
@@ -241,10 +241,10 @@ main(int argc, char **argv)
 			 */
 			l = strlen(skey.seed);
 			for (p = skey.seed; *p; p++) {
-				if (isalpha(*p)) {
-					if (isupper(*p))
-						*p = tolower(*p);
-				} else if (!isdigit(*p)) {
+				if (isalpha((unsigned char)*p)) {
+					if (isupper((unsigned char)*p))
+						*p = tolower((unsigned char)*p);
+				} else if (!isdigit((unsigned char)*p)) {
 					memmove(p, p + 1, l - (p - skey.seed));
 					l--;
 				}
@@ -253,12 +253,14 @@ main(int argc, char **argv)
 			/* If the seed ends in 0-8 just add one.  */
 			if (l > 0) {
 				lastc = skey.seed[l - 1];
-				if (isdigit(lastc) && lastc != '9') {
+				if (isdigit((unsigned char)lastc) &&
+				    lastc != '9') {
 					(void)strlcpy(seed, skey.seed,
 					    sizeof seed);
 					seed[l - 1] = lastc + 1;
 				}
-				if (isdigit(lastc) && lastc == '9' && l < 16) {
+				if (isdigit((unsigned char)lastc) &&
+				    lastc == '9' && l < 16) {
 					(void)strlcpy(seed, skey.seed,
 					    sizeof seed);
 					seed[l - 1] = '0';
@@ -356,14 +358,14 @@ secure_mode(int *count, char *key, char *seed, size_t seedlen,
 			continue;
 		}
 		for (p = newseed; *p; p++) {
-			if (isspace(*p)) {
+			if (isspace((unsigned char)*p)) {
 				(void)fputs("ERROR: Seed must not contain "
 				    "any spaces\n", stderr);
 				break;
-			} else if (isalpha(*p)) {
-				if (isupper(*p))
-					*p = tolower(*p);
-			} else if (!isdigit(*p)) {
+			} else if (isalpha((unsigned char)*p)) {
+				if (isupper((unsigned char)*p))
+					*p = tolower((unsigned char)*p);
+			} else if (!isdigit((unsigned char)*p)) {
 				(void)fputs("ERROR: Seed must be purely "
 				    "alphanumeric\n", stderr);
 				break;
@@ -511,7 +513,7 @@ convert_db(void)
 			continue;
 		if ((cp = strtok(NULL, " \t")) == NULL)
 			continue;
-		if (isalpha(*cp)) {
+		if (isalpha((unsigned char)*cp)) {
 			hashtype = cp;
 			if ((cp = strtok(NULL, " \t")) == NULL)
 				continue;

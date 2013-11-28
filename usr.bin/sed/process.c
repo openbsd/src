@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.18 2011/09/17 15:29:19 schwarze Exp $	*/
+/*	$OpenBSD: process.c,v 1.19 2013/11/28 18:24:55 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -468,7 +468,8 @@ lputs(char *s)
 			(void)printf("\\\n");
 			count = 0;
 		}
-		if (isascii(*s) && isprint(*s) && *s != '\\') {
+		if (isascii((unsigned char)*s) && isprint((unsigned char)*s)
+		    && *s != '\\') {
 			(void)putchar(*s);
 			count++;
 		} else if (*s != '\n') {
@@ -541,7 +542,7 @@ regsub(SPACE *sp, char *string, char *src)
 	while ((c = *src++) != '\0') {
 		if (c == '&')
 			no = 0;
-		else if (c == '\\' && isdigit(*src))
+		else if (c == '\\' && isdigit((unsigned char)*src))
 			no = *src++ - '0';
 		else
 			no = -1;

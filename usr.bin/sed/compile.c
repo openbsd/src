@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.34 2010/11/15 20:26:00 millert Exp $	*/
+/*	$OpenBSD: compile.c,v 1.35 2013/11/28 18:24:55 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -134,7 +134,8 @@ compile(void)
 
 #define EATSPACE() do {							\
 	if (p)								\
-		while (isascii(*p) && isspace(*p))			\
+		while (isascii((unsigned char)*p) &&			\
+		    isspace((unsigned char)*p))				\
 			p++;						\
 	} while (0)
 
@@ -739,10 +740,10 @@ duptoeol(char *s, char *ctype, char **semi)
 	ws = 0;
 	if (semi) {
 		for (start = s; *s != '\0' && *s != '\n' && *s != ';'; ++s)
-			ws = isspace(*s);
+			ws = isspace((unsigned char)*s);
 	} else {
 		for (start = s; *s != '\0' && *s != '\n'; ++s)
-			ws = isspace(*s);
+			ws = isspace((unsigned char)*s);
 		*s = '\0';
 	}
 	if (ws)

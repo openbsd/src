@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_scan.c,v 1.16 2012/12/05 23:20:26 deraadt Exp $	*/
+/*	$OpenBSD: rpc_scan.c,v 1.17 2013/11/28 18:24:54 deraadt Exp $	*/
 /*	$NetBSD: rpc_scan.c,v 1.4 1995/06/11 21:50:02 pk Exp $	*/
 
 /*
@@ -181,8 +181,8 @@ get_token(tokp)
 				}
 			}
 			where = curline;
-		} else if (isspace(*where)) {
-			while (isspace(*where)) {
+		} else if (isspace((unsigned char)*where)) {
+			while (isspace((unsigned char)*where)) {
 				where++;	/* eat */
 			}
 		} else if (commenting) {
@@ -283,10 +283,10 @@ get_token(tokp)
 		break;
 
 	default:
-		if (!(isalpha(*where) || *where == '_')) {
+		if (!(isalpha((unsigned char)*where) || *where == '_')) {
 			char buf[100], chs[20];
 
-			if (isprint(*where)) {
+			if (isprint((unsigned char)*where)) {
 				snprintf(chs, sizeof chs, "%c", *where);
 			} else {
 				snprintf(chs, sizeof chs, "%d", *where);
@@ -375,11 +375,11 @@ findconst(str, val)
 		p++;
 		do {
 			p++;
-		} while (isxdigit(*p));
+		} while (isxdigit((unsigned char)*p));
 	} else {
 		do {
 			p++;
-		} while (isdigit(*p));
+		} while (isdigit((unsigned char)*p));
 	}
 	size = p - *str;
 	*val = alloc(size + 1);
@@ -428,7 +428,8 @@ findkind(mark, tokp)
 	for (s = symbols; s->kind != TOK_EOF; s++) {
 		len = strlen(s->str);
 		if (strncmp(str, s->str, len) == 0) {
-			if (!isalnum(str[len]) && str[len] != '_') {
+			if (!isalnum((unsigned char)str[len]) &&
+			    str[len] != '_') {
 				tokp->kind = s->kind;
 				tokp->str = s->str;
 				*mark = str + len;
@@ -437,7 +438,9 @@ findkind(mark, tokp)
 		}
 	}
 	tokp->kind = TOK_IDENT;
-	for (len = 0; isalnum(str[len]) || str[len] == '_'; len++);
+	for (len = 0; isalnum((unsigned char)str[len]) || str[len] == '_';
+	    len++)
+		;
 	tokp->str = alloc(len + 1);
 	if (tokp->str == NULL)
 		error("alloc failed");
@@ -478,14 +481,14 @@ docppline(line, lineno, fname)
 	char *p;
 
 	line++;
-	while (isspace(*line)) {
+	while (isspace((unsigned char)*line)) {
 		line++;
 	}
 	num = atoi(line);
-	while (isdigit(*line)) {
+	while (isdigit((unsigned char)*line)) {
 		line++;
 	}
-	while (isspace(*line)) {
+	while (isspace((unsigned char)*line)) {
 		line++;
 	}
 	if (*line != '"') {

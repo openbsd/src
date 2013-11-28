@@ -1,4 +1,4 @@
-/*	$OpenBSD: spellprog.c,v 1.6 2009/10/27 23:59:43 deraadt Exp $	*/
+/*	$OpenBSD: spellprog.c,v 1.7 2013/11/28 18:24:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -98,7 +98,7 @@ int	 s(char *, char *, char *, int);
 int	 strip(char *, char *, char *, int);
 int	 suffix(char *, int);
 int	 tion(char *, char *, char *, int);
-int	 vowel(int);
+int	 vowel(unsigned char);
 int	 y_to_e(char *, char *, char *, int);
 int	 CCe(char *, char *, char *, int);
 int	 VCe(char *, char *, char *, int);
@@ -321,22 +321,22 @@ main(int argc, char **argv)
 		*dp = '\0';
 		fold = 0;
 		for (cp = word; cp < ep; cp++)
-			if (islower(*cp))
+			if (islower((unsigned char)*cp))
 				goto lcase;
 		if (trypref(ep, ".", 0))
 			continue;
 		++fold;
 		for (cp = original + 1, dp = word + 1; dp < ep; dp++, cp++)
-			*dp = tolower(*cp);
+			*dp = tolower((unsigned char)*cp);
 lcase:
 		if (trypref(ep, ".", 0) || suffix(ep, 0))
 			continue;
-		if (isupper(word[0])) {
+		if (isupper((unsigned char)word[0])) {
 			for (cp = original, dp = word; (*dp = *cp++); dp++) {
 				if (fold)
-					*dp = tolower(*dp);
+					*dp = tolower((unsigned char)*dp);
 			}
-			word[0] = tolower(word[0]);
+			word[0] = tolower((unsigned char)word[0]);
 			goto lcase;
 		}
 		file = stdout;
@@ -420,7 +420,7 @@ int
 an(char *ep, char *d, char *a, int lev)
 {
 
-	if (!isupper(*word))	/* must be proper name */
+	if (!isupper((unsigned char)*word))	/* must be proper name */
 		return (0);
 	return (trypref(ep,a,lev));
 }
@@ -598,7 +598,7 @@ lookuppref(char **wp, char *ep)
 	for (sp = preftab; *sp; sp++) {
 		bp = *wp;
 		for (cp = *sp; *cp; cp++, bp++) {
-			if (tolower(*bp) != *cp)
+			if (tolower((unsigned char)*bp) != *cp)
 				goto next;
 		}
 		for (cp = bp; cp < ep; cp++) {
@@ -703,7 +703,7 @@ skipv(char *s)
 }
 
 int
-vowel(int c)
+vowel(unsigned char c)
 {
 
 	switch (tolower(c)) {

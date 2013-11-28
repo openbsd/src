@@ -1,4 +1,4 @@
-/* $OpenBSD: commands.c,v 1.30 2010/04/01 05:05:19 lum Exp $	 */
+/* $OpenBSD: commands.c,v 1.31 2013/11/28 18:24:55 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -100,9 +100,9 @@ scan_arg(char *str, int *intp, char *nptr)
 		return (-1);
 
 	while ((ch = *str++) != '\0') {
-		if (isspace(ch))
+		if (isspace((unsigned char)ch))
 			break;
-		else if (!isdigit(ch))
+		else if (!isdigit((unsigned char)ch))
 			bad_flag = 1;
 		else
 			val = val * 10 + (ch - '0');
@@ -284,7 +284,7 @@ kill_procs(char *str)
 	uid = getuid();
 
 	/* skip over leading white space */
-	while (isspace(*str))
+	while (isspace((unsigned char)*str))
 		str++;
 
 	if (*str == '-') {
@@ -294,7 +294,7 @@ kill_procs(char *str)
 		if ((nptr = next_field(str)) == NULL)
 			return (" kill: no processes specified");
 
-		if (isdigit(*str)) {
+		if (isdigit((unsigned char)*str)) {
 			(void) scan_arg(str, &signum, tmp);
 			if (signum <= 0 || signum >= NSIG)
 				return (" invalid signal number");
@@ -352,7 +352,7 @@ renice_procs(char *str)
 	uid = getuid();
 
 	/* skip over leading white space */
-	while (isspace(*str))
+	while (isspace((unsigned char)*str))
 		str++;
 
 	/* allow for negative priority values */
