@@ -1,3 +1,4 @@
+./sbin/kbd
 ./sbin/wsconsctl
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so
@@ -1617,6 +1618,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/_types.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/asm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/asm_macro.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/atomic.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/autoconf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/board.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/bus.ph
@@ -1635,7 +1637,9 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/ieeefp.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/intr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/kcore.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/lcd.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/limits.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/lock.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/m88100.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/m8820x.ph

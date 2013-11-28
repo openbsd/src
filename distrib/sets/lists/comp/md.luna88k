@@ -157,6 +157,7 @@
 ./usr/include/luna88k/_types.h
 ./usr/include/luna88k/asm.h
 ./usr/include/luna88k/asm_macro.h
+./usr/include/luna88k/atomic.h
 ./usr/include/luna88k/autoconf.h
 ./usr/include/luna88k/board.h
 ./usr/include/luna88k/bus.h
@@ -175,7 +176,9 @@
 ./usr/include/luna88k/ieeefp.h
 ./usr/include/luna88k/intr.h
 ./usr/include/luna88k/kcore.h
+./usr/include/luna88k/lcd.h
 ./usr/include/luna88k/limits.h
+./usr/include/luna88k/loadfile_machdep.h
 ./usr/include/luna88k/lock.h
 ./usr/include/luna88k/m88100.h
 ./usr/include/luna88k/m8820x.h
@@ -235,6 +238,7 @@
 ./usr/include/m88k/psl.h
 ./usr/include/m88k/ptrace.h
 ./usr/include/m88k/reg.h
+./usr/include/m88k/reloc.h
 ./usr/include/m88k/setjmp.h
 ./usr/include/m88k/signal.h
 ./usr/include/m88k/spinlock.h
