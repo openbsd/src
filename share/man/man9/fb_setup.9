@@ -1,4 +1,4 @@
-.\" $OpenBSD: fb_setup.9,v 1.1 2013/08/08 06:41:06 jmc Exp $
+.\" $OpenBSD: fb_setup.9,v 1.2 2013/11/28 14:54:18 syl Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 8 2013 $
+.Dd $Mdocdate: November 28 2013 $
 .Dt FB_SETUP 9
 .Os
 .Sh NAME
@@ -26,61 +26,57 @@
 .Fn fb_setup "size_t size" "ino_t inode" "int type" "struct proc *p"
 .Ft int
 .Fn fb_queue "dev_t dev" "struct fusebuf *fbuf"
+.Ft void
+.Fn fb_delete "struct fusebuf *fbuf"
 .Bd -literal
-#define	FUSEBUFSIZE	4096
-#define	FUSEFDSIZE	sizeof(((struct fusebuf *)0)->F_dat.FD)
-#define	FUSELEN		(FUSEBUFSIZE - sizeof(struct fb_hdr) - \\
-			sizeof(union uFD))
+#define FUSEBUFMAXSIZE	(4096*1024)
+#define	FUSEBUFSIZE	(sizeof(struct fusebuf))
 
 struct fb_hdr {
 	SIMPLEQ_ENTRY(fusebuf)	fh_next;
 	size_t			fh_len;
-	size_t			fh_resid;
-	uint32_t		fh_err;
+	int			fh_err;
 	int			fh_type;
 	ino_t			fh_ino;
 	uint64_t		fh_uuid;
 };
 
 struct fb_io {
-	uint64_t		fi_fd;
-	ino_t			fi_ino;
-	off_t			fi_off;
-	size_t			fi_len;
-	mode_t			fi_mode;
-	uint32_t		fi_flags;
+	uint64_t	fi_fd;
+	ino_t		fi_ino;
+	off_t		fi_off;
+	size_t		fi_len;
+	mode_t		fi_mode;
+	uint32_t	fi_flags;
 };
 
 struct fusebuf {
-        struct	fb_hdr fb_hdr;
-	struct {
-		union uFD {
-			struct statvfs	FD_stat;
-			struct vattr	FD_vattr;
-			struct fb_io	FD_io;
+	struct fb_hdr	fb_hdr;
+	union {
+		struct statvfs	FD_stat;
+		struct vattr	FD_vattr;
+		struct fb_io	FD_io;
 
-		} FD;
-		char	F_databuf[FUSELEN];
-	} F_dat;
+	} FD;
+	uint8_t	*F_databuf;
 };
 
 #define fb_next		fb_hdr.fh_next
 #define fb_len		fb_hdr.fh_len
-#define fb_resid	fb_hdr.fh_resid
 #define fb_err		fb_hdr.fh_err
 #define fb_type		fb_hdr.fh_type
 #define fb_ino		fb_hdr.fh_ino
 #define fb_uuid		fb_hdr.fh_uuid
 
-#define fb_stat		F_dat.FD.FD_stat
-#define fb_vattr	F_dat.FD.FD_vattr
-#define fb_io_fd	F_dat.FD.FD_io.fi_fd
-#define fb_io_ino	F_dat.FD.FD_io.fi_ino
-#define fb_io_off	F_dat.FD.FD_io.fi_off
-#define fb_io_len	F_dat.FD.FD_io.fi_len
-#define fb_io_mode	F_dat.FD.FD_io.fi_mode
-#define fb_io_flags	F_dat.FD.FD_io.fi_flags
-#define	fb_dat		F_dat.F_databuf
+#define fb_stat		FD.FD_stat
+#define fb_vattr	FD.FD_vattr
+#define fb_io_fd	FD.FD_io.fi_fd
+#define fb_io_ino	FD.FD_io.fi_ino
+#define fb_io_off	FD.FD_io.fi_off
+#define fb_io_len	FD.FD_io.fi_len
+#define fb_io_mode	FD.FD_io.fi_mode
+#define fb_io_flags	FD.FD_io.fi_flags
+#define	fb_dat		F_databuf
 .Ed
 .Sh DESCRIPTION
 These functions provide a way to manage the kernel messaging mechanism for
@@ -89,8 +85,7 @@ file systems.
 It is based on
 .Xr mbuf 9 .
 .Pp
-Each FUSE operation fits in a
-.Nm
+Each FUSE operation fits in a fusebuf
 except for read, write, and readdirs,
 which are split into several fusebufs with a changing value in
 .Fa fb_io_off
@@ -225,6 +220,10 @@ and encapsulates a struct fb_io in
 .Fa F_databuf
 with
 .Fa fbtod .
+.Pp
+Fusebufs can be deleted with the
+.Fn fb_delete
+helper.
 .Sh SEE ALSO
 .Xr errno 2 ,
 .\".Xr fuse_main 3 ,
