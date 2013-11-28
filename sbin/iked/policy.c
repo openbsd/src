@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.25 2013/11/28 20:23:28 markus Exp $	*/
+/*	$OpenBSD: policy.c,v 1.26 2013/11/28 20:24:48 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -437,6 +437,7 @@ sa_lookup(struct iked *env, u_int64_t ispi, u_int64_t rspi,
 
 		/* Validate if SPIr matches */
 		if ((sa->sa_hdr.sh_rspi != 0) &&
+		    (rspi != 0) &&
 		    (sa->sa_hdr.sh_rspi != rspi))
 			return (NULL);
 	}
