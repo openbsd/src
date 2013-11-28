@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.83 2013/06/13 09:11:51 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.84 2013/11/28 20:21:17 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -97,6 +97,8 @@ ssize_t	 ikev2_add_transform(struct ibuf *,
 	    u_int8_t, u_int8_t, u_int16_t, u_int16_t);
 ssize_t	 ikev2_add_ts(struct ibuf *, struct ikev2_payload **, ssize_t,
 	    struct iked_sa *, int);
+ssize_t	 ikev2_add_certreq(struct ibuf *, struct ikev2_payload **, ssize_t,
+	    struct ibuf *, u_int8_t);
 ssize_t	 ikev2_add_ts_payload(struct ibuf *, u_int, struct iked_sa *);
 int	 ikev2_add_data(struct ibuf *, void *, size_t);
 int	 ikev2_add_buf(struct ibuf *buf, struct ibuf *);
@@ -192,6 +194,7 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 	u_int8_t		*ptr;
 	size_t			 len;
 	struct iked_id		*id = NULL;
+	int			 ignore = 0;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CERTREQ:
@@ -206,8 +209,9 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 		env->sc_certreq = ibuf_new(ptr,
 		    IMSG_DATA_SIZE(imsg) - sizeof(type));
 
-		log_debug("%s: updated local CERTREQ signatures length %d",
-		    __func__, ibuf_length(env->sc_certreq));
+		log_debug("%s: updated local CERTREQ type %s length %d",
+		    __func__, print_map(type, ikev2_cert_map),
+		    ibuf_length(env->sc_certreq));
 
 		break;
 	case IMSG_CERTVALID:
@@ -240,6 +244,21 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 			break;
 		}
 
+		/*
+		 * Ignore the message if we already got a valid certificate.
+		 * This might happen if the peer sent multiple CERTREQs.
+		 */
+		if (sa->sa_stateflags & IKED_REQ_CERT ||
+		    type == IKEV2_CERT_NONE)
+			ignore = 1;
+
+		log_debug("%s: cert type %s length %d, %s", __func__,
+		    print_map(type, ikev2_cert_map), len,
+		    ignore ? "ignored" : "ok");
+
+		if (ignore)
+			break;
+
 		if (sh.sh_initiator)
 			id = &sa->sa_icert;
 		else
@@ -250,18 +269,12 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 		ibuf_release(id->id_buf);
 		id->id_buf = NULL;
 
-		if (type != IKEV2_CERT_NONE) {
-			if (len <= 0 ||
-			    (id->id_buf = ibuf_new(ptr, len)) == NULL) {
-				log_debug("%s: failed to get cert payload",
-				    __func__);
-				break;
-			}
+		if (len <= 0 || (id->id_buf = ibuf_new(ptr, len)) == NULL) {
+			log_debug("%s: failed to get cert payload",
+			    __func__);
+			break;
 		}
-
-		log_debug("%s: cert type %d length %d", __func__,
-		    id->id_type, ibuf_length(id->id_buf));
-
+		
 		sa_stateflags(sa, IKED_REQ_CERT);
 
 		if (ikev2_ike_auth(env, sa, NULL) != 0)
@@ -921,21 +934,15 @@ ikev2_init_ike_auth(struct iked *env, struct iked_sa *sa)
 			goto done;
 		len = ibuf_size(certid->id_buf) + sizeof(*cert);
 
-		if (env->sc_certreqtype) {
-			if (ikev2_next_payload(pld, len,
-			    IKEV2_PAYLOAD_CERTREQ) == -1)
-				goto done;
+		/* CERTREQ payload(s) */
+		if ((len = ikev2_add_certreq(e, &pld,
+		    len, env->sc_certreq, env->sc_certreqtype)) == -1)
+			goto done;
 
-			/* CERTREQ payload */
-			if ((pld = ikev2_add_payload(e)) == NULL)
-				goto done;
-			if ((cert = ibuf_advance(e, sizeof(*cert))) == NULL)
-				goto done;
-			cert->cert_type = env->sc_certreqtype;
-			if (ikev2_add_buf(e, env->sc_certreq) == -1)
-				goto done;
-			len = ibuf_size(env->sc_certreq) + sizeof(*cert);
-		}
+		if (env->sc_certreqtype != pol->pol_certreqtype &&
+		    (len = ikev2_add_certreq(e, &pld,
+		    len, NULL, pol->pol_certreqtype)) == -1)
+			goto done;
 	}
 
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_AUTH) == -1)
@@ -1257,6 +1264,41 @@ ikev2_add_ts(struct ibuf *e, struct ikev2_payload **pld, ssize_t len,
 	if ((len = ikev2_add_ts_payload(e, reverse ? IKEV2_PAYLOAD_TSi :
 	    IKEV2_PAYLOAD_TSr, sa)) == -1)
 		return (-1);
+
+	return (len);
+}
+
+
+ssize_t
+ikev2_add_certreq(struct ibuf *e, struct ikev2_payload **pld, ssize_t len,
+    struct ibuf *certreq, u_int8_t type)
+{
+	struct ikev2_cert	*cert;
+
+	if (type == IKEV2_CERT_NONE)
+		return (len);
+
+	if (ikev2_next_payload(*pld, len, IKEV2_PAYLOAD_CERTREQ) == -1)
+		return (-1);
+
+	/* CERTREQ payload */
+	if ((*pld = ikev2_add_payload(e)) == NULL)
+		return (-1);
+
+	if ((cert = ibuf_advance(e, sizeof(*cert))) == NULL)
+		return (-1);
+
+	cert->cert_type = type;
+	len = sizeof(*cert);
+
+	if (certreq != NULL && cert->cert_type == IKEV2_CERT_X509_CERT) {
+		if (ikev2_add_buf(e, certreq) == -1)
+			return (-1);
+		len += ibuf_size(certreq);
+	}
+
+	log_debug("%s: type %s length %d", __func__,
+	    print_map(type, ikev2_cert_map), len);
 
 	return (len);
 }
@@ -1737,7 +1779,6 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 	struct iked_message		 resp;
 	struct ike_header		*hdr;
 	struct ikev2_payload		*pld;
-	struct ikev2_cert		*cert;
 	struct ikev2_keyexchange	*ke;
 	struct ikev2_notify		*n;
 	struct iked_sa			*sa = msg->msg_sa;
@@ -1838,19 +1879,16 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 		len += sizeof(*n);
 	}
 
-	if (env->sc_certreqtype && (sa->sa_statevalid & IKED_REQ_CERT)) {
-		if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_CERTREQ) == -1)
+	if (sa->sa_statevalid & IKED_REQ_CERT) {
+		/* CERTREQ payload(s) */
+		if ((len = ikev2_add_certreq(buf, &pld,
+		    len, env->sc_certreq, env->sc_certreqtype)) == -1)
 			goto done;
 
-		/* CERTREQ payload */
-		if ((pld = ikev2_add_payload(buf)) == NULL)
+		if (env->sc_certreqtype != sa->sa_policy->pol_certreqtype &&
+		    (len = ikev2_add_certreq(buf, &pld,
+		    len, NULL, sa->sa_policy->pol_certreqtype)) == -1)
 			goto done;
-		if ((cert = ibuf_advance(buf, sizeof(*cert))) == NULL)
-			goto done;
-		cert->cert_type = env->sc_certreqtype;
-		if (ikev2_add_buf(buf, env->sc_certreq) == -1)
-			goto done;
-		len = ibuf_size(env->sc_certreq) + sizeof(*cert);
 	}
 
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NONE) == -1)

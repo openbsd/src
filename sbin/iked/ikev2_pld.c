@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.31 2013/03/21 04:30:14 deraadt Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.32 2013/11/28 20:21:17 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -526,7 +526,7 @@ ikev2_pld_certreq(struct iked *env, struct ikev2_payload *pld,
 	struct iked_sa			*sa = msg->msg_sa;
 	struct ikev2_cert		 cert;
 	u_int8_t			*buf;
-	size_t				 len;
+	ssize_t				 len;
 	u_int8_t			*msgbuf = ibuf_data(msg->msg_data);
 
 	memcpy(&cert, msgbuf + offset, sizeof(cert));
@@ -535,16 +535,24 @@ ikev2_pld_certreq(struct iked *env, struct ikev2_payload *pld,
 	buf = msgbuf + offset;
 	len = betoh16(pld->pld_length) - sizeof(*pld) - sizeof(cert);
 
-	log_debug("%s: type %s signatures length %d",
+	log_debug("%s: type %s length %d",
 	    __func__, print_map(cert.cert_type, ikev2_cert_map), len);
+
+	if (len < 0) {
+		log_debug("%s: invalid certificate request length", __func__);
+		return (-1);
+	}
+
 	print_hex(buf, 0, len);
 
 	if (!ikev2_msg_frompeer(msg))
 		return (0);
 
-	if (!len || (len % SHA_DIGEST_LENGTH) != 0) {
-		log_debug("%s: invalid certificate request", __func__);
-		return (-1);
+	if (cert.cert_type == IKEV2_CERT_X509_CERT) {
+		if (!len || (len % SHA_DIGEST_LENGTH) != 0) {
+			log_debug("%s: invalid certificate request", __func__);
+			return (-1);
+		}
 	}
 
 	if (msg->msg_sa == NULL)

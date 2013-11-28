@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.58 2013/11/21 17:46:17 millert Exp $	*/
+/*	$OpenBSD: iked.h,v 1.59 2013/11/28 20:21:17 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -240,6 +240,8 @@ struct iked_policy {
 #define IKED_POLICY_SKIP		 0x10
 
 	int				 pol_refcnt;
+
+	u_int8_t			 pol_certreqtype;
 
 	int				 pol_af;
 	u_int8_t			 pol_saproto;
