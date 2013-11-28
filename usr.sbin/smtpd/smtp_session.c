@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.190 2013/11/28 10:43:37 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.191 2013/11/28 12:39:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -982,7 +982,7 @@ smtp_command(struct smtp_session *s, char *line)
 		}
 
 		if (args == NULL) {
-			smtp_reply(s, "501 %s requires domain address",
+			smtp_reply(s, "501 %s requires domain name",
 			    (cmd == CMD_HELO) ? "HELO" : "EHLO");
 			break;
 		}
