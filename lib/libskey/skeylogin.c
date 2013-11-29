@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.54 2007/03/20 03:40:06 tedu Exp $
+ * $OpenBSD: skeylogin.c,v 1.55 2013/11/29 19:00:51 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -141,7 +141,7 @@ skeygetent(int fd, struct skey *mp, const char *name)
 	mp->keyfile = keyfile;
 
 	if ((nread = fread(mp->buf, 1, sizeof(mp->buf), keyfile)) == 0 ||
-	    !isspace(mp->buf[nread - 1]))
+	    !isspace((unsigned char)mp->buf[nread - 1]))
 		goto bad_keyfile;
 	mp->buf[nread - 1] = '\0';
 
@@ -275,7 +275,7 @@ skeyverify(struct skey *mp, char *response)
 	 */
 	(void)fseek(mp->keyfile, 0L, SEEK_SET);
 	if ((nread = fread(mp->buf, 1, sizeof(mp->buf), mp->keyfile)) == 0 ||
-	    !isspace(mp->buf[nread - 1]))
+	    !isspace((unsigned char)mp->buf[nread - 1]))
 		goto verify_failure;
 	if ((mp->logname = strtok_r(mp->buf, " \t\r\n", &last)) == NULL)
 		goto verify_failure;
@@ -430,9 +430,10 @@ skey_fakeprompt(char *username, char *skeyprompt)
 	if (gethostname(pbuf, sizeof(pbuf)) == -1)
 		*(p = pbuf) = '.';
 	else
-		for (p = pbuf; isalnum(*p); p++)
-			if (isalpha(*p) && isupper(*p))
-				*p = (char)tolower(*p);
+		for (p = pbuf; isalnum((unsigned char)*p); p++)
+			if (isalpha((unsigned char)*p) &&
+			    isupper((unsigned char)*p))
+				*p = (char)tolower((unsigned char)*p);
 	if (*p && pbuf - p < 4)
 		(void)strncpy(p, "asjd", 4 - (pbuf - p));
 	pbuf[4] = '\0';

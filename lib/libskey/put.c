@@ -8,7 +8,7 @@
  *
  * Dictionary lookup and extraction.
  *
- * $OpenBSD: put.c,v 1.13 2003/04/03 17:48:50 millert Exp $
+ * $OpenBSD: put.c,v 1.14 2013/11/29 19:00:51 deraadt Exp $
  */
 
 #include <stdio.h>
@@ -492,10 +492,10 @@ static void
 standard(char *word)
 {
 	while (*word) {
-		if (!isascii(*word))
+		if (!isascii((unsigned char)*word))
 			break;
-		if (islower(*word))
-			*word = toupper(*word);
+		if (islower((unsigned char)*word))
+			*word = toupper((unsigned char)*word);
 		if (*word == '1')
 			*word = 'L';
 		if (*word == '0')

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usage.c,v 1.14 2011/04/06 11:36:25 miod Exp $	*/
+/*	$OpenBSD: usage.c,v 1.15 2013/11/29 19:00:51 deraadt Exp $	*/
 /*	$NetBSD: usage.c,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ hid_start(const char *hidname)
 			break;
 		if (line[0] == '#')
 			continue;
-		for (p = line; isspace(*p); p++)
+		for (p = line; isspace((unsigned char)*p); p++)
 			;
 		if (!*p)
 			continue;
@@ -107,13 +107,13 @@ hid_start(const char *hidname)
 			goto fail;
 		}
 		for (p = name; *p; p++)
-			if (isspace(*p) || *p == '.')
+			if (isspace((unsigned char)*p) || *p == '.')
 				*p = '_';
 		n = strdup(name);
 		if (!n)
 			goto fail;
 
-		if (isspace(line[0])) {
+		if (isspace((unsigned char)line[0])) {
 			if (!curpage) {
 				warnx("file %s, line %d, syntax error",
 				    hidname, lineno);

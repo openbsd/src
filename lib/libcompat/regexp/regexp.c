@@ -1,4 +1,4 @@
-/*	$OpenBSD: regexp.c,v 1.6 2009/10/27 23:59:28 deraadt Exp $	*/
+/*	$OpenBSD: regexp.c,v 1.7 2013/11/29 19:00:50 deraadt Exp $	*/
 
 /*
  * regcomp and regexec -- regsub and regerror are elsewhere
@@ -911,16 +911,17 @@ char *prog;
 			break;
 		case WORDA:
 			/* Must be looking at a letter, digit, or _ */
-			if ((!isalnum(*reginput)) && *reginput != '_')
+			if ((!isalnum((unsigned char)*reginput)) && *reginput != '_')
 				return(0);
 			/* Prev must be BOL or nonword */
 			if (reginput > regbol &&
-			    (isalnum(reginput[-1]) || reginput[-1] == '_'))
+			    (isalnum((unsigned char)reginput[-1]) ||
+			    reginput[-1] == '_'))
 				return(0);
 			break;
 		case WORDZ:
 			/* Must be looking at non letter, digit, or _ */
-			if (isalnum(*reginput) || *reginput == '_')
+			if (isalnum((unsigned char)*reginput) || *reginput == '_')
 				return(0);
 			/* We don't care what the previous char was */
 			break;

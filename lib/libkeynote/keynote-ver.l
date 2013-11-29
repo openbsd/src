@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: keynote-ver.l,v 1.15 2011/04/06 11:36:23 miod Exp $ */
+/* $OpenBSD: keynote-ver.l,v 1.16 2013/11/29 19:00:51 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -161,7 +161,7 @@ mystrncpy(char *s1, char *s2, int len)
 
 	    if (*s2 == '\n')
 	    {
-		while (isspace((int) *(++s2)) && (len-- > 0))
+		while (isspace((unsigned char)*(++s2)) && (len-- > 0))
 		  ;
 	    }
 	    else

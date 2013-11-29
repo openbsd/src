@@ -1,4 +1,4 @@
-/* $OpenBSD: parse_assertion.c,v 1.13 2004/06/29 11:35:56 msf Exp $ */
+/* $OpenBSD: parse_assertion.c,v 1.14 2013/11/29 19:00:51 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -392,7 +392,7 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
 				       ASSERT_FLAG_SIGVER);
 
     /* Skip any leading whitespace */
-    for (i = 0, j = len; i < j && isspace((int) as->as_buf[i]); i++)
+    for (i = 0, j = len; i < j && isspace((unsigned char)as->as_buf[i]); i++)
      ;
 
     /* Keyword must start at begining of buffer or line */
@@ -467,7 +467,7 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
 
 	    /* If newline followed by non-whitespace or comment character */
 	    if ((as->as_buf[i] == '\n') && 
-		(!isspace((int) as->as_buf[i + 1])) &&
+		(!isspace((unsigned char)as->as_buf[i + 1])) &&
                 (as->as_buf[i + 1] != '#'))
 	    {
 	        te = as->as_buf + i;
@@ -598,7 +598,7 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
 
 	    /* Check whether there's something else following */
 	    for (k = 1; te + k < as->as_buf + len && *(te + k) != '\n'; k++)   
-	      if (!isspace((int) *(te + k)))
+	      if (!isspace((unsigned char)*(te + k)))
 	      {
 		  keynote_free_assertion(as);
 		  keynote_errno = ERROR_SYNTAX;
