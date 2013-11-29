@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.70 2013/11/27 00:00:53 dlg Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.71 2013/11/29 05:05:13 deraadt Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -288,7 +288,7 @@ config_rootsearch(cfmatch_t fn, char *rootname, void *aux)
 	return (m.match);
 }
 
-char *msgs[3] = { "", " not configured\n", " unsupported\n" };
+const char *msgs[3] = { "", " not configured\n", " unsupported\n" };
 
 /*
  * The given `aux' argument describes a device that has been found
