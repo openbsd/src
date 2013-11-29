@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.6 2013/10/15 22:46:51 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2013/11/29 12:35:47 aoyama Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
@@ -21,10 +21,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CBIN}.conf
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
-
-#${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-#	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
+	${MAKE} -f ${CBIN}.mk all
 
 #${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 #	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
