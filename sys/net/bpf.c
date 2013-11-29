@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.88 2013/11/17 08:58:35 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.89 2013/11/29 19:28:55 tedu Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1422,16 +1422,17 @@ bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
 		bpf_wakeup(d);
 	}
 
-	if (d->bd_fbuf && d->bd_rdStart &&
-	    (ticks - (d->bd_rtout + d->bd_rdStart) > 0)) {
+	if (d->bd_rdStart && (d->bd_rtout + d->bd_rdStart < ticks)) {
 		/*
 		 * we could be selecting on the bpf, and we
 		 * may have timeouts set.  We got here by getting
 		 * a packet, so wake up the reader.
 		 */
-		d->bd_rdStart = 0;
-		ROTATE_BUFFERS(d);
-		bpf_wakeup(d);
+		if (d->bd_fbuf) {
+			d->bd_rdStart = 0;
+			ROTATE_BUFFERS(d);
+			bpf_wakeup(d);
+		}
 	}
 }
 
