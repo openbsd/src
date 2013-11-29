@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.706 2013/11/29 02:02:47 rpe Exp $
+#	$OpenBSD: install.sub,v 1.707 2013/11/29 22:28:12 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -2109,14 +2109,17 @@ for _ifs in $(get_ifdevs dhcp); do
 	ifconfig $_ifs delete down -group dhcp 2>/dev/null
 done
 
-# Fetch a response file from the "netboot" interface.
+# Fetch a response file from a http server.
+#
+# Select a network interface for an initial dhcp request to get the IP
+# from the lease file via the next-server attribute. Kill a dhclient
+# from a previous attempt by taking down that interface first and so
+# free up the only bpf which exists at this point.
+#
 get_responsefile() {
 	local _f _ifdev _mac _mode _server
-	# Fetching the response file requires DHCP, even if the
-	# machine was booted via RARP and TFTP.
 	[[ -x /sbin/dhclient ]] || return
 
-	# Select network interface for initial dhcp request
 	_ifdev=$(get_ifdevs netboot)
 	if [[ -z $_ifdev ]]; then
 		set -- $(get_ifdevs)
@@ -2134,17 +2137,9 @@ get_responsefile() {
 	fi
 	[[ -n $_ifdev ]] || return
 
-	# Take interface down killing a dhclient from a previous attempt
-	# and so free up the only bpf which exists in this installstage.
 	ifconfig $_ifdev down
-
-	# Try to get a DHCP lease.  This whole process is done in the
-	# background, so it doesn't matter how long the timeout is.
 	dhclient $_ifdev
 
-	# Extract next-server IP and the installer mode from attributes
-	# in the dhcp lease file. Use this together with the MAC from the
-	# netboot interface to assemble the URL.
 	_server=$(sed "/next-server/s/^.* \([^ ]*\);$/\1/p;d" \
 	    /var/db/dhclient.leases.$_ifdev 2>/dev/null)
 	_mode=$(sed -E '/filename/s/^.*auto_(install|upgrade).*$/\1/p;d' \
