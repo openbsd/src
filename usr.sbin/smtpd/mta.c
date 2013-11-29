@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.172 2013/11/28 13:13:56 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.173 2013/11/29 00:47:04 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -935,8 +935,8 @@ mta_on_source(struct mta_relay *relay, struct mta_source *source)
 		mta_source_unref(source); /* from constructor */
 	}
 	else {
-		log_warnx("warn: Failed to get source address"
-			    "for %s", mta_relay_to_text(relay));
+		log_warnx("warn: Failed to get source address for %s",
+		    mta_relay_to_text(relay));
 	}
 
 	if (tree_count(&relay->connectors) == 0) {
