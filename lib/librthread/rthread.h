@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.47 2013/11/20 23:18:17 tedu Exp $ */
+/*	$OpenBSD: rthread.h,v 1.48 2013/11/29 16:27:40 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -185,11 +185,12 @@ struct pthread {
 };
 #define	THREAD_DONE		0x001
 #define	THREAD_DETACHED		0x002
-#define THREAD_CANCELED		0x004
-#define THREAD_CANCEL_ENABLE	0x008
-#define THREAD_CANCEL_DEFERRED	0x010
-#define THREAD_CANCEL_DELAY	0x020
-#define THREAD_DYING            0x040
+#define	THREAD_CANCELED		0x004
+#define	THREAD_CANCEL_ENABLE	0x008
+#define	THREAD_CANCEL_DEFERRED	0x010
+#define	THREAD_CANCEL_DELAY	0x020
+#define	THREAD_DYING		0x040
+#define	THREAD_ORIGINAL		0x080	/* first thread in process */
 
 #define	IS_CANCELED(thread) \
 	(((thread)->flags & (THREAD_CANCELED|THREAD_DYING)) == THREAD_CANCELED)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_fork.c,v 1.9 2013/06/25 22:51:46 guenther Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.10 2013/11/29 16:27:40 guenther Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -130,11 +130,11 @@ _dofork(int is_vfork)
 		me->flags_lock = _SPINLOCK_UNLOCKED_ASSIGN;
 
 		/* this thread is the initial thread for the new process */
-		_initial_thread = *me;
+		me->flags |= THREAD_ORIGINAL;
 
 		/* reinit the thread list */
 		LIST_INIT(&_thread_list);
-		LIST_INSERT_HEAD(&_thread_list, &_initial_thread, threads);
+		LIST_INSERT_HEAD(&_thread_list, me, threads);
 		_thread_lock = _SPINLOCK_UNLOCKED_ASSIGN;
 
 		/* single threaded now */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.74 2013/10/23 05:59:46 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.75 2013/11/29 16:27:40 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -171,7 +171,8 @@ _rthread_init(void)
 
 	thread->tid = getthrid();
 	thread->donesem.lock = _SPINLOCK_UNLOCKED_ASSIGN;
-	thread->flags |= THREAD_CANCEL_ENABLE|THREAD_CANCEL_DEFERRED;
+	thread->flags |= THREAD_CANCEL_ENABLE | THREAD_CANCEL_DEFERRED |
+	    THREAD_ORIGINAL;
 	thread->flags_lock = _SPINLOCK_UNLOCKED_ASSIGN;
 	strlcpy(thread->name, "Main process", sizeof(thread->name));
 	LIST_INSERT_HEAD(&_thread_list, thread, threads);
@@ -219,7 +220,7 @@ _rthread_init(void)
 static void
 _rthread_free(pthread_t thread)
 {
-	/* initial_thread.tid must remain valid */
+	/* _initial_thread is static, so don't free it */
 	if (thread != &_initial_thread) {
 		/*
 		 * thread->tid is written to by __threxit in the thread

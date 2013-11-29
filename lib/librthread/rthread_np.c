@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_np.c,v 1.9 2013/11/13 16:56:17 deraadt Exp $	*/
+/*	$OpenBSD: rthread_np.c,v 1.10 2013/11/29 16:27:40 guenther Exp $	*/
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2005 Otto Moerbeek <otto@openbsd.org>
@@ -45,7 +45,8 @@ pthread_set_name_np(pthread_t thread, const char *name)
 int
 pthread_main_np(void)
 {
-	return (!_threads_ready || pthread_self() == &_initial_thread ? 1 : 0);
+	return (!_threads_ready || (pthread_self()->flags & THREAD_ORIGINAL)
+	    ? 1 : 0);
 }
 
 
