@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.30 2013/11/28 10:16:44 mpi Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.31 2013/11/29 00:19:33 deraadt Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -104,6 +104,7 @@ struct router_info {
 	struct	router_info *rti_next;
 };
 
+#ifdef _KERNEL
 /*
  * Internet multicast address structure.  There is one of these for each IP
  * multicast group to which this host belongs on a given network interface.
@@ -121,9 +122,6 @@ struct in_multi {
 
 	struct router_info	*inm_rti;  /* router version info */
 };
-
-
-#ifdef _KERNEL
 
 static __inline struct in_multi *
 ifmatoinm(struct ifmaddr *ifma)
