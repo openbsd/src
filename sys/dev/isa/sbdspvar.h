@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdspvar.h,v 1.16 2002/03/14 03:16:05 millert Exp $	*/
+/*	$OpenBSD: sbdspvar.h,v 1.17 2013/11/29 03:39:00 brad Exp $	*/
 /*	$NetBSD: sbdspvar.h,v 1.37 1998/08/10 00:20:39 mycroft Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ struct sbdsp_softc {
 #define SBM_CT1745	4
 #define ISSBM1745(x) ((x)->sc_mixer_model >= SBM_CT1XX5)
 
-	u_int	sc_model;		/* DSP model */
+	int	sc_model;		/* DSP model */
 #define SB_UNK	-1
 #define SB_1	0			/* original SB */
 #define SB_20	1			/* SB 2 */
