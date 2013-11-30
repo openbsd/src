@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.c,v 1.10 2013/11/29 21:44:15 kettenis Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.c,v 1.11 2013/11/30 13:58:51 kettenis Exp $	*/
 /*
  * Copyright © 2008-2010 Intel Corporation
  *
@@ -548,7 +548,6 @@ static int init_render_ring(struct intel_ring_buffer *ring)
 			return ret;
 	}
 
-#ifdef notyet
 	if (IS_GEN6(dev)) {
 		/* From the Sandybridge PRM, volume 1 part 3, page 24:
 		 * "If this bit is set, STCunit will have LRA as replacement
@@ -565,7 +564,6 @@ static int init_render_ring(struct intel_ring_buffer *ring)
 		ring->itlb_before_ctx_switch =
 			!!(I915_READ(GFX_MODE) & GFX_TLB_INVALIDATE_ALWAYS);
 	}
-#endif
 
 	if (INTEL_INFO(dev)->gen >= 6)
 		I915_WRITE(INSTPM, _MASKED_BIT_ENABLE(INSTPM_FORCE_ORDERING));
