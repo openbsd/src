@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.173 2013/11/29 00:47:04 tedu Exp $	*/
+/*	$OpenBSD: mta.c,v 1.174 2013/11/30 10:21:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -54,6 +54,7 @@
 #define DELAY_ROUTE_MAX		(3600 * 4)
 
 #define RELAY_ONHOLD		0x01
+#define RELAY_HOLDQ		0x02
 
 static void mta_imsg(struct mproc *, struct imsg *);
 static void mta_shutdown(void);
@@ -205,6 +206,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			 * scheduler to hold it until further notice
 			 */
 			if (relay->state & RELAY_ONHOLD) {
+				relay->state |= RELAY_HOLDQ;
 				m_create(p_queue, IMSG_DELIVERY_HOLD, 0, 0, -1);
 				m_add_evpid(p_queue, evp.id);
 				m_add_id(p_queue, relay->id);
@@ -658,12 +660,14 @@ mta_route_next_task(struct mta_relay *relay, struct mta_route *route)
 				    mta_relay_to_text(relay));
 				relay->state &= ~RELAY_ONHOLD;
 			}
-			m_create(p_queue, IMSG_DELIVERY_RELEASE, 0, 0, -1);
-			m_add_id(p_queue, relay->id);
-			m_add_int(p_queue, relay->limits->task_release);
-			m_close(p_queue);
+			if (relay->state & RELAY_HOLDQ) {
+				m_create(p_queue, IMSG_DELIVERY_RELEASE, 0, 0, -1);
+				m_add_id(p_queue, relay->id);
+				m_add_int(p_queue, relay->limits->task_release);
+				m_close(p_queue);
+			}
 		}
-		else if (relay->ntask == 0) {
+		else if (relay->ntask == 0 && relay->state & RELAY_HOLDQ) {
 			m_create(p_queue, IMSG_DELIVERY_RELEASE, 0, 0, -1);
 			m_add_id(p_queue, relay->id);
 			m_add_int(p_queue, 0);
@@ -1320,10 +1324,12 @@ mta_flush(struct mta_relay *relay, int fail, const char *error)
 	relay->ntask = 0;
 
 	/* release all waiting envelopes for the relay */
-	m_create(p_queue, IMSG_DELIVERY_RELEASE, 0, 0, -1);
-	m_add_id(p_queue, relay->id);
-	m_add_int(p_queue, 0);
-	m_close(p_queue);
+	if (relay->state & RELAY_HOLDQ) {
+		m_create(p_queue, IMSG_DELIVERY_RELEASE, 0, 0, -1);
+		m_add_id(p_queue, relay->id);
+		m_add_int(p_queue, 0);
+		m_close(p_queue);
+	}
 }
 
 /*
@@ -1625,10 +1631,12 @@ mta_relay_unref(struct mta_relay *relay)
 		return;
 
 	/* Make sure they are no envelopes held for this relay */
-	m_create(p_queue, IMSG_DELIVERY_RELEASE, 0, 0, -1);
-	m_add_id(p_queue, relay->id);
-	m_add_int(p_queue, 0);
-	m_close(p_queue);
+	if (relay->state & RELAY_HOLDQ) {
+		m_create(p_queue, IMSG_DELIVERY_RELEASE, 0, 0, -1);
+		m_add_id(p_queue, relay->id);
+		m_add_int(p_queue, 0);
+		m_close(p_queue);
+	}
 
 	log_debug("debug: mta: freeing %s", mta_relay_to_text(relay));
 	SPLAY_REMOVE(mta_relay_tree, &relays, relay);
