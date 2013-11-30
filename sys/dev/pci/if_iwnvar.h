@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.25 2013/11/14 12:40:00 dlg Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.26 2013/11/30 19:41:21 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -251,6 +251,8 @@ struct iwn_softc {
 	int			calib_cnt;
 	struct iwn_calib_state	calib;
 
+	struct task		init_task;
+
 	struct iwn_fw_info	fw;
 	struct iwn_calib_info	calibcmd[5];
 	uint32_t		errptr;
@@ -287,7 +289,6 @@ struct iwn_softc {
 	uint8_t			chainmask;
 
 	int			sc_tx_timer;
-	struct task		sc_resume_t;
 
 #if NBPFILTER > 0
 	caddr_t			sc_drvbpf;

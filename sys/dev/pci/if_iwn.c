@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.125 2013/11/14 12:40:00 dlg Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.126 2013/11/30 19:41:21 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -105,7 +105,8 @@ void		iwn_radiotap_attach(struct iwn_softc *);
 #endif
 int		iwn_detach(struct device *, int);
 int		iwn_activate(struct device *, int);
-void		iwn_resume(void *, void *);
+void		iwn_resume(struct iwn_softc *);
+void		iwn_init_task(void *, void *);
 int		iwn_nic_lock(struct iwn_softc *);
 int		iwn_eeprom_lock(struct iwn_softc *);
 int		iwn_init_otprom(struct iwn_softc *);
@@ -308,8 +309,6 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
-
-	task_set(&sc->sc_resume_t, iwn_resume, sc, NULL);
 
 	/*
 	 * Get the offset of the PCI Express Capability Structure in PCI
@@ -524,6 +523,7 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	iwn_radiotap_attach(sc);
 #endif
 	timeout_set(&sc->calib_to, iwn_calib_timeout, sc);
+	task_set(&sc->init_task, iwn_init_task, sc, NULL);
 	return;
 
 	/* Free allocated memory if something failed during attachment. */
@@ -686,6 +686,7 @@ iwn_detach(struct device *self, int flags)
 	int qid;
 
 	timeout_del(&sc->calib_to);
+	task_del(systq, &sc->init_task);
 
 	/* Uninstall interrupt handler. */
 	if (sc->sc_ih != NULL)
@@ -721,7 +722,7 @@ iwn_activate(struct device *self, int act)
 			iwn_stop(ifp, 0);
 		break;
 	case DVACT_RESUME:
-		task_add(systq, &sc->sc_resume_t);
+		iwn_resume(sc);
 		break;
 	}
 
@@ -729,24 +730,31 @@ iwn_activate(struct device *self, int act)
 }
 
 void
-iwn_resume(void *arg1, void *arg2)
+iwn_resume(struct iwn_softc *sc)
 {
-	struct iwn_softc *sc = arg1;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	pcireg_t reg;
-	int s;
 
 	/* Clear device-specific "PCI retry timeout" register (41h). */
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
 	if (reg & 0xff00)
 		pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg & ~0xff00);
 
+	task_add(systq, &sc->init_task);
+}
+
+void
+iwn_init_task(void *arg1, void *arg2)
+{
+	struct iwn_softc *sc = arg1;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	int s;
+
 	s = splnet();
 	while (sc->sc_flags & IWN_FLAG_BUSY)
 		tsleep(&sc->sc_flags, 0, "iwnpwr", 0);
 	sc->sc_flags |= IWN_FLAG_BUSY;
 
-	if (ifp->if_flags & IFF_UP)
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP)
 		iwn_init(ifp);
 
 	sc->sc_flags &= ~IWN_FLAG_BUSY;
@@ -2593,8 +2601,8 @@ iwn_intr(void *arg)
 		printf("%s: fatal firmware error\n", sc->sc_dev.dv_xname);
 		/* Dump firmware error log and stop. */
 		iwn_fatal_intr(sc);
-		ifp->if_flags &= ~IFF_UP;
 		iwn_stop(ifp, 1);
+		task_add(systq, &sc->init_task);
 		return 1;
 	}
 	if ((r1 & (IWN_INT_FH_RX | IWN_INT_SW_RX | IWN_INT_RX_PERIODIC)) ||
