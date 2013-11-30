@@ -1,4 +1,4 @@
-.\"	$OpenBSD: table.5,v 1.2 2013/11/28 10:57:29 eric Exp $
+.\"	$OpenBSD: table.5,v 1.3 2013/11/30 09:42:52 eric Exp $
 .\"
 .\" Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 28 2013 $
+.Dd $Mdocdate: November 30 2013 $
 .Dt TABLE 5
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@ The format described here applies to tables as defined in
 .Sh TABLE TYPES
 There are two types of tables: lists and mappings.
 A list consists of a series of values,
-while a mapping consists of a seriesof keys and their associated values.
+while a mapping consists of a series of keys and their associated values.
 The following illustrates how to declare them as static tables:
 .Bd -literal -offset indent
 table mylist { value1, value2, value3 }
@@ -134,17 +134,9 @@ user1	$2a$06$hIJ4QfMcp.90nJwKqGbKM.MybArjHOTpEtoTV.DgLYAiThuoYmTSe
 user2	$2a$06$bwSmUOBGcZGamIfRuXGTvuTo3VLbPG9k5yeKNMBtULBhksV5KdGsK
 .Ed
 .Pp
-The passwords are encrypted using the
-.Xr crypt 3
-function provided by the host.
-On
-.Ox ,
-the
-.Xr encrypt 1
-utility may be used;
-on other systems the
-.Ql mkpasswd
-utility is the most common method for obtaining a proper password.
+The passwords are to be encrypted using the
+.Xr smtpctl 8
+encrypt subcommand.
 .Pp
 In a relay context, the credentials are a mapping of labels and
 username:password pairs,
