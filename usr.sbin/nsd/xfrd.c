@@ -707,7 +707,6 @@ xfrd_handle_zone(int ATTR_UNUSED(fd), short event, void* arg)
 	if((event & EV_READ)) {
 		/* busy in udp transaction */
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: zone %s event udp read", zone->apex_str));
-		xfrd_set_refresh_now(zone);
 		xfrd_udp_read(zone);
 		return;
 	}
