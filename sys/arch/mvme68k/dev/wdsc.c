@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdsc.c,v 1.18 2013/05/19 20:32:47 miod Exp $ */
+/*	$OpenBSD: wdsc.c,v 1.19 2013/11/30 20:25:47 miod Exp $ */
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -209,8 +209,6 @@ wdscattach(struct device *parent, struct device *self, void *aux)
 		bus_dmamap_destroy(ca->ca_dmat, wsc->sc_dmamap);
 		return;
 	}
-
-	printf("\n");
 
 	sc->sc_dmasetup = wdsc_dmasetup;
 	sc->sc_dmago = wdsc_dmago;
