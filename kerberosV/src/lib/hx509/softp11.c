@@ -33,6 +33,7 @@
 
 #define CRYPTOKI_EXPORTS 1
 
+#include <config.h>
 #include "hx_locl.h"
 #include "pkcs11.h"
 
@@ -304,6 +305,7 @@ static struct st_object *
 add_st_object(void)
 {
     struct st_object *o, **objs;
+    u_int32_t rnd;
     int i;
 
     o = calloc(1, sizeof(*o));
@@ -326,8 +328,14 @@ add_st_object(void)
 	soft_token.object.objs = objs;
 	soft_token.object.objs[soft_token.object.num_objs++] = o;
     }
+#ifdef HAVE_ARC4RANDOM
+    rnd = arc4random();
+#else
+    rnd = random();
+#endif
+
     soft_token.object.objs[i]->object_handle =
-	(random() & (~OBJECT_ID_MASK)) | i;
+	(rnd & (~OBJECT_ID_MASK)) | i;
 
     return o;
 }
@@ -868,7 +876,9 @@ C_Initialize(CK_VOID_PTR a)
 
     OpenSSL_add_all_algorithms();
 
+#ifndef HAVE_ARC4RANDOM
     srandom(getpid() ^ (int) time(NULL));
+#endif
 
     for (i = 0; i < MAX_NUM_SESSION; i++) {
 	soft_token.state[i].session_handle = CK_INVALID_HANDLE;
@@ -1114,6 +1124,7 @@ C_OpenSession(CK_SLOT_ID slotID,
 	      CK_SESSION_HANDLE_PTR phSession)
 {
     size_t i;
+    u_int32_t rnd;
     INIT_CONTEXT();
     st_logf("OpenSession: slot: %d\n", (int)slotID);
 
@@ -1129,10 +1140,15 @@ C_OpenSession(CK_SLOT_ID slotID,
     if (i == MAX_NUM_SESSION)
 	abort();
 
-    soft_token.open_sessions++;
+#ifdef HAVE_ARC4RANDOM
+    rnd = arc4random();
+#else
+    rnd = random();
+#endif
 
+    soft_token.open_sessions++;
     soft_token.state[i].session_handle =
-	(CK_SESSION_HANDLE)(random() & 0xfffff);
+	(CK_SESSION_HANDLE)(rnd & 0xfffff);
     *phSession = soft_token.state[i].session_handle;
 
     return CKR_OK;

@@ -86,9 +86,13 @@ add_user (krb5_context context, void *kadm_handle,
     krb5_error_code ret;
     int mask;
 
+#ifdef HAVE_ARC4RANDOM
+    r1 = arc4random();
+    r2 = arc4random();
+#else
     r1 = rand();
     r2 = rand();
-
+#endif
     snprintf (name, sizeof(name), "%s%d", words[r1 % nwords], r2 % 1000);
 
     mask = KADM5_PRINCIPAL;
@@ -169,7 +173,9 @@ main(int argc, char **argv)
 	print_version(NULL);
 	return 0;
     }
+#ifndef HAVE_ARC4RANDOM
     srand (0);
+#endif
     argc -= optidx;
     argv += optidx;
 

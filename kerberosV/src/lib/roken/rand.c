@@ -31,13 +31,14 @@
  * SUCH DAMAGE.
  */
 
+#include <config.h>
 #include "roken.h"
 
 void ROKEN_LIB_FUNCTION
 rk_random_init(void)
 {
 #if defined(HAVE_ARC4RANDOM)
-    arc4random_stir();
+    /* do nothing */
 #elif defined(HAVE_SRANDOMDEV)
     srandomdev();
 #elif defined(HAVE_RANDOM)

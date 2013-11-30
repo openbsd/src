@@ -67,7 +67,7 @@ generate_requests (const char *filename, unsigned nreq)
     krb5_context context;
     krb5_error_code ret;
     krb5_creds cred;
-    int i;
+    int i, rnd;
     char **words;
     unsigned nwords;
 
@@ -78,7 +78,12 @@ generate_requests (const char *filename, unsigned nreq)
     nwords = read_words (filename, &words);
 
     for (i = 0; i < nreq; ++i) {
-	char *name = words[rand() % nwords];
+#ifdef HAVE_ARC4RANDOM
+	rnd = arc4random();
+#else
+	rnd = rand();
+#endif
+	char *name = words[rnd % nwords];
 
 	memset(&cred, 0, sizeof(cred));
 
@@ -136,7 +141,9 @@ main(int argc, char **argv)
 
     if (argc != 2)
 	usage (1);
+#ifndef HAVE_ARC4RANDOM
     srand (0);
+#endif
     nreq = strtol (argv[1], &end, 0);
     if (argv[1] == end || *end != '\0')
 	usage (1);

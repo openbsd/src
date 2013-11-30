@@ -8,7 +8,7 @@
  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: xnlock.c,v 1.6 2013/06/17 19:11:38 robert Exp $");
+RCSID("$Id: xnlock.c,v 1.7 2013/11/30 18:11:59 deraadt Exp $");
 #endif
 
 #include <stdio.h>
@@ -377,6 +377,8 @@ walk(int dir)
 static long
 my_random (void)
 {
+#ifdef HAVE_ARC4RANDOM
+    return arc4random();
 #ifdef HAVE_RANDOM
     return random();
 #else
@@ -938,7 +940,9 @@ main (int argc, char **argv)
       strlcpy(login, pw->pw_name, sizeof(login));
     }
 
-#if defined(HAVE_SRANDOMDEV)
+#if defined(HAVE_ARC4RANDOM)
+    /* do nothing */
+#elif defined(HAVE_SRANDOMDEV)
     srandomdev();
 #elif defined(HAVE_RANDOM)
     srandom(time(NULL));

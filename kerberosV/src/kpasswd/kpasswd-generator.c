@@ -33,7 +33,7 @@
 
 #include "kpasswd_locl.h"
 
-RCSID("$Id: kpasswd-generator.c,v 1.6 2013/06/17 18:57:42 robert Exp $");
+RCSID("$Id: kpasswd-generator.c,v 1.7 2013/11/30 18:11:59 deraadt Exp $");
 
 static unsigned
 read_words (const char *filename, char ***ret_w)
@@ -78,7 +78,7 @@ generate_requests (const char *filename, unsigned nreq)
 {
     krb5_context context;
     krb5_error_code ret;
-    int i;
+    int i, rnd;
     char **words;
     unsigned nwords;
 
@@ -89,7 +89,12 @@ generate_requests (const char *filename, unsigned nreq)
     nwords = read_words (filename, &words);
 
     for (i = 0; i < nreq; ++i) {
-	char *name = words[rand() % nwords];
+#ifdef HAVE_ARC4RANDOM
+	rnd = arc4random()
+#else
+	rnd = rand();
+#endif
+	char *name = words[rnd % nwords];
 	krb5_get_init_creds_opt *opt;
 	krb5_creds cred;
 	krb5_principal principal;
@@ -198,7 +203,9 @@ main(int argc, char **argv)
 
     if (argc != 2)
 	usage (1);
+#ifndef HAVE_ARC4RANDOM
     srand (0);
+#endif
     nreq = strtol (argv[1], &end, 0);
     if (argv[1] == end || *end != '\0')
 	usage (1);
