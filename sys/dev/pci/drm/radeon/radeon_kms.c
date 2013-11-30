@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.13 2013/11/28 21:45:36 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.14 2013/11/30 12:58:39 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1037,6 +1037,7 @@ int radeon_driver_firstopen_kms(struct drm_device *dev)
  */
 void radeon_driver_lastclose_kms(struct drm_device *dev)
 {
+	drm_fb_helper_restore();
 #ifdef notyet
 	vga_switcheroo_process_delayed_switch();
 #endif
