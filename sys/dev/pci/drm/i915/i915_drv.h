@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.39 2013/11/30 20:03:32 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.40 2013/11/30 20:13:36 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1143,7 +1143,6 @@ int	i915_gem_get_caching_ioctl(struct drm_device *, void *,
 	    struct drm_file *);
 int	i915_gem_set_caching_ioctl(struct drm_device *, void *,
 	    struct drm_file *);
-int	i915_gem_wait_ioctl(struct drm_device *, void *, struct drm_file *);
 
 /* GEM memory manager functions */
 int	i915_gem_init_object(struct drm_obj *);

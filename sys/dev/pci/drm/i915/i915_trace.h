@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_trace.h,v 1.7 2013/11/30 20:03:32 kettenis Exp $	*/
+/*	$OpenBSD: i915_trace.h,v 1.8 2013/11/30 20:13:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -27,16 +27,6 @@ trace_i915_gem_request_add(struct intel_ring_buffer *ring, u32 seqno)
 
 static inline void
 trace_i915_gem_request_retire(struct intel_ring_buffer *ring, u32 seqno)
-{
-}
-
-static inline void
-trace_i915_gem_request_wait_begin(struct intel_ring_buffer *ring, u32 seqno)
-{
-}
-
-static inline void
-trace_i915_gem_request_wait_end(struct intel_ring_buffer *ring, u32 seqno)
 {
 }
 
