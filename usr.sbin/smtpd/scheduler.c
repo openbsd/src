@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.37 2013/11/20 09:22:42 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.38 2013/11/30 10:11:57 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -58,24 +58,21 @@ static void scheduler_process_mta(struct scheduler_batch *);
 static struct scheduler_backend *backend = NULL;
 static struct event		 ev;
 static size_t			 ninflight;
+static uint64_t			*evpids;
+static uint32_t			*msgids;
+static struct evpstate		*state;
 
 extern const char *backend_scheduler;
-
-#define	MSGBATCHSIZE	1024
-#define	EVPBATCHSIZE	256
-
-#define SCHEDULE_MAX	1024
 
 void
 scheduler_imsg(struct mproc *p, struct imsg *imsg)
 {
 	struct bounce_req_msg	 req;
-	struct evpstate		 state[EVPBATCHSIZE];
 	struct envelope		 evp;
 	struct scheduler_info	 si;
 	struct msg		 m;
 	uint64_t		 evpid, id, holdq;
-	uint32_t		 msgid, msgids[MSGBATCHSIZE];
+	uint32_t		 msgid;
 	uint32_t       		 inflight;
 	uint32_t       		 penalty;
 	size_t			 n, i;
@@ -270,14 +267,14 @@ scheduler_imsg(struct mproc *p, struct imsg *imsg)
 
 	case IMSG_CTL_LIST_MESSAGES:
 		msgid = *(uint32_t *)(imsg->data);
-		n = backend->messages(msgid, msgids, MSGBATCHSIZE);
+		n = backend->messages(msgid, msgids, env->sc_scheduler_max_msg_batch_size);
 		m_compose(p, IMSG_CTL_LIST_MESSAGES, imsg->hdr.peerid, 0, -1,
 		    msgids, n * sizeof (*msgids));
 		return;
 
 	case IMSG_CTL_LIST_ENVELOPES:
 		id = *(uint64_t *)(imsg->data);
-		n = backend->envelopes(id, state, EVPBATCHSIZE);
+		n = backend->envelopes(id, state, env->sc_scheduler_max_evp_batch_size);
 		for (i = 0; i < n; i++) {
 			m_create(p_queue, IMSG_CTL_LIST_ENVELOPES,
 			    imsg->hdr.peerid, 0, -1);
@@ -432,6 +429,10 @@ scheduler(void)
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("scheduler: cannot drop privileges");
 
+	evpids = xcalloc(env->sc_scheduler_max_schedule, sizeof *evpids, "scheduler: init evpids");
+	msgids = xcalloc(env->sc_scheduler_max_msg_batch_size, sizeof *msgids, "scheduler: list msg");
+	state = xcalloc(env->sc_scheduler_max_evp_batch_size, sizeof *state, "scheduler: list evp");
+
 	imsg_callback = scheduler_imsg;
 	event_init();
 
@@ -461,7 +462,6 @@ scheduler_timeout(int fd, short event, void *p)
 	struct timeval		tv;
 	struct scheduler_batch	batch;
 	int			typemask;
-	uint64_t		evpids[SCHEDULE_MAX];
 
 	log_trace(TRACE_SCHEDULER, "scheduler: getting next batch");
 
@@ -478,8 +478,7 @@ scheduler_timeout(int fd, short event, void *p)
 
 	bzero(&batch, sizeof (batch));
 	batch.evpids = evpids;
-	batch.evpcount = SCHEDULE_MAX;
-
+	batch.evpcount = env->sc_scheduler_max_schedule;
 	backend->batch(typemask, &batch);
 
 	switch (batch.type) {
@@ -526,7 +525,6 @@ scheduler_timeout(int fd, short event, void *p)
 	default:
 		fatalx("scheduler_timeout: unknown batch type");
 	}
-
 	evtimer_add(&ev, &tv);
 }
 

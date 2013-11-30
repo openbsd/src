@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.132 2013/11/28 13:13:56 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.133 2013/11/30 10:11:57 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -308,6 +308,15 @@ limits_mta	: opt_limit_mta limits_mta
 opt_limit_scheduler : STRING NUMBER {
 			if (!strcmp($1, "max-inflight")) {
 				conf->sc_scheduler_max_inflight = $2;
+			}
+			else if (!strcmp($1, "max-evp-batch-size")) {
+				conf->sc_scheduler_max_evp_batch_size = $2;
+			}
+			else if (!strcmp($1, "max-msg-batch-size")) {
+				conf->sc_scheduler_max_msg_batch_size = $2;
+			}
+			else if (!strcmp($1, "max-schedule")) {
+				conf->sc_scheduler_max_schedule = $2;
 			}
 			else {
 				yyerror("invalid scheduler limit keyword: %s", $1);
@@ -1561,6 +1570,9 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 
 	conf->sc_mta_max_deferred = 100;
 	conf->sc_scheduler_max_inflight = 5000;
+	conf->sc_scheduler_max_schedule = 10;
+	conf->sc_scheduler_max_evp_batch_size = 256;
+	conf->sc_scheduler_max_msg_batch_size = 1024;
 
 	conf->sc_mda_max_session = 50;
 	conf->sc_mda_max_user_session = 7;

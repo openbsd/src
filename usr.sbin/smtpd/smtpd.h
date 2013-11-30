@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.437 2013/11/28 13:13:56 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.438 2013/11/30 10:11:57 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -514,6 +514,9 @@ struct smtpd {
 	size_t				sc_mta_max_deferred;
 
 	size_t				sc_scheduler_max_inflight;
+	size_t				sc_scheduler_max_evp_batch_size;
+	size_t				sc_scheduler_max_msg_batch_size;
+	size_t				sc_scheduler_max_schedule;
 
 	int				sc_qexpire;
 #define MAX_BOUNCE_WARN			4
