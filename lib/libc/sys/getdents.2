@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getdents.2,v 1.1 2013/10/07 01:50:26 guenther Exp $
+.\"	$OpenBSD: getdents.2,v 1.2 2013/12/01 04:07:18 guenther Exp $
 .\"	$NetBSD: getdirentries.2,v 1.7 1995/10/12 15:40:50 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)getdirentries.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: October 7 2013 $
+.Dd $Mdocdate: December 1 2013 $
 .Dt GETDENTS 2
 .Os
 .Sh NAME
@@ -129,15 +129,13 @@ is set to point to the next block of entries.
 The pointer may not advance by the number of bytes returned by
 .Fn getdents .
 .Pp
-.Fn getdents
-writes the position of the block read into the location pointed to by
-.Fa basep .
-Alternatively, the current position pointer may be set and retrieved by
+The current position pointer may be set and retrieved by
 .Xr lseek 2 .
 The current position pointer should only be set to a value returned by
 .Xr lseek 2 ,
-a value returned in the location pointed to by
-.Fa basep ,
+the value of
+.Fa d_off
+from an entry,
 or zero.
 .Sh RETURN VALUES
 If successful, the number of bytes actually transferred is returned.
@@ -154,11 +152,9 @@ will fail if:
 .Fa fd
 is not a valid file descriptor open for reading.
 .It Bq Er EFAULT
-Either
+Part of
 .Fa buf
-or
-.Fa basep
-points outside the allocated address space.
+points outside the process's allocated address space.
 .It Bq Er EINVAL
 The file referenced by
 .Fa fd
