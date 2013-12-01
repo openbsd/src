@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex.h,v 1.6 2006/01/08 21:05:40 miod Exp $	*/
+/*	$OpenBSD: ex.h,v 1.7 2013/12/01 13:42:42 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -66,7 +66,7 @@ extern EXCMDLIST const cmds[];		/* Table of ex commands. */
 /* Range structures for global and @ commands. */
 typedef struct _range RANGE;
 struct _range {				/* Global command range. */
-	CIRCLEQ_ENTRY(_range) q;	/* Linked list of ranges. */
+	TAILQ_ENTRY(_range) q;	/* Linked list of ranges. */
 	recno_t start, stop;		/* Start/stop of the range. */
 };
 
@@ -91,7 +91,7 @@ struct _excmd {
 	EXCMDLIST const *cmd;		/* Command: entry in command table. */
 	EXCMDLIST rcmd;			/* Command: table entry/replacement. */
 
-	CIRCLEQ_HEAD(_rh, _range) rq;	/* @/global range: linked list. */
+	TAILQ_HEAD(_rh, _range) rq;	/* @/global range: linked list. */
 	recno_t   range_lno;		/* @/global range: set line number. */
 	char	 *o_cp;			/* Original @/global command. */
 	size_t	  o_clen;		/* Original @/global command length. */

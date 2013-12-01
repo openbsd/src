@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_at.c,v 1.9 2013/11/25 23:27:11 krw Exp $	*/
+/*	$OpenBSD: ex_at.c,v 1.10 2013/12/01 13:42:42 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -82,7 +82,7 @@ ex_at(sp, cmdp)
 	 * means @ buffers are still useful in a multi-screen environment.
 	 */
 	CALLOC_RET(sp, ecp, EXCMD *, 1, sizeof(EXCMD));
-	CIRCLEQ_INIT(&ecp->rq);
+	TAILQ_INIT(&ecp->rq);
 	CALLOC_RET(sp, rp, RANGE *, 1, sizeof(RANGE));
 	rp->start = cmdp->addr1.lno;
 	if (F_ISSET(cmdp, E_ADDR_DEF)) {
@@ -92,7 +92,7 @@ ex_at(sp, cmdp)
 		rp->stop = cmdp->addr2.lno;
 		FL_SET(ecp->agv_flags, AGV_AT);
 	}
-	CIRCLEQ_INSERT_HEAD(&ecp->rq, rp, q);
+	TAILQ_INSERT_HEAD(&ecp->rq, rp, q);
 
 	/*
 	 * Buffers executed in ex mode or from the colon command line in vi

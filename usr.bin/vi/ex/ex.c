@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex.c,v 1.17 2013/11/25 23:27:11 krw Exp $	*/
+/*	$OpenBSD: ex.c,v 1.18 2013/12/01 13:42:42 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -2091,15 +2091,16 @@ ex_load(sp)
 		 */
 		if (FL_ISSET(ecp->agv_flags, AGV_ALL)) {
 			/* Discard any exhausted ranges. */
-			while ((rp = CIRCLEQ_FIRST(&ecp->rq)) != (void *)&ecp->rq)
+			while ((rp = TAILQ_FIRST(&ecp->rq))) {
 				if (rp->start > rp->stop) {
-					CIRCLEQ_REMOVE(&ecp->rq, rp, q);
+					TAILQ_REMOVE(&ecp->rq, rp, q);
 					free(rp);
 				} else
 					break;
+			}
 
 			/* If there's another range, continue with it. */
-			if (rp != (void *)&ecp->rq)
+			if (rp)
 				break;
 
 			/* If it's a global/v command, fix up the last line. */
@@ -2156,8 +2157,8 @@ ex_discard(sp)
 	 */
 	for (gp = sp->gp; (ecp = LIST_FIRST(&gp->ecq)) != &gp->excmd;) {
 		if (FL_ISSET(ecp->agv_flags, AGV_ALL)) {
-			while ((rp = CIRCLEQ_FIRST(&ecp->rq)) != CIRCLEQ_END(&ecp->rq)) {
-				CIRCLEQ_REMOVE(&ecp->rq, rp, q);
+			while ((rp = TAILQ_FIRST(&ecp->rq))) {
+				TAILQ_REMOVE(&ecp->rq, rp, q);
 				free(rp);
 			}
 			free(ecp->o_cp);

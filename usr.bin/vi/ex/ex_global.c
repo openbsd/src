@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_global.c,v 1.11 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_global.c,v 1.12 2013/12/01 13:42:42 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -163,7 +163,7 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 
 	/* Get an EXCMD structure. */
 	CALLOC_RET(sp, ecp, EXCMD *, 1, sizeof(EXCMD));
-	CIRCLEQ_INIT(&ecp->rq);
+	TAILQ_INIT(&ecp->rq);
 
 	/*
 	 * Get a copy of the command string; the default command is print.
@@ -232,8 +232,7 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 		}
 
 		/* If follows the last entry, extend the last entry's range. */
-		if ((rp = CIRCLEQ_LAST(&ecp->rq)) != CIRCLEQ_END(&ecp->rq) &&
-		    rp->stop == start - 1) {
+		if ((rp = TAILQ_LAST(&ecp->rq, _rh)) && rp->stop == start - 1) {
 			++rp->stop;
 			continue;
 		}
@@ -243,7 +242,7 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 		if (rp == NULL)
 			return (1);
 		rp->start = rp->stop = start;
-		CIRCLEQ_INSERT_TAIL(&ecp->rq, rp, q);
+		TAILQ_INSERT_TAIL(&ecp->rq, rp, q);
 	}
 	search_busy(sp, BUSY_OFF);
 	return (0);
@@ -274,9 +273,8 @@ ex_g_insdel(sp, op, lno)
 	LIST_FOREACH(ecp, &sp->gp->ecq, q) {
 		if (!FL_ISSET(ecp->agv_flags, AGV_AT | AGV_GLOBAL | AGV_V))
 			continue;
-		for (rp = CIRCLEQ_FIRST(&ecp->rq); rp != CIRCLEQ_END(&ecp->rq);
-		    rp = nrp) {
-			nrp = CIRCLEQ_NEXT(rp, q);
+		for (rp = TAILQ_FIRST(&ecp->rq); rp != NULL; rp = nrp) {
+			nrp = TAILQ_NEXT(rp, q);
 
 			/* If range less than the line, ignore it. */
 			if (rp->stop < lno)
@@ -305,7 +303,7 @@ ex_g_insdel(sp, op, lno)
 			 */
 			if (op == LINE_DELETE) {
 				if (rp->start > --rp->stop) {
-					CIRCLEQ_REMOVE(&ecp->rq, rp, q);
+					TAILQ_REMOVE(&ecp->rq, rp, q);
 					free(rp);
 				}
 			} else {
@@ -313,7 +311,7 @@ ex_g_insdel(sp, op, lno)
 				nrp->start = lno + 1;
 				nrp->stop = rp->stop + 1;
 				rp->stop = lno - 1;
-				CIRCLEQ_INSERT_AFTER(&ecp->rq, rp, nrp, q);
+				TAILQ_INSERT_AFTER(&ecp->rq, rp, nrp, q);
 				rp = nrp;
 			}
 		}
