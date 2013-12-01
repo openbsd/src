@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_tag.c,v 1.16 2013/12/01 16:47:59 krw Exp $	*/
+/*	$OpenBSD: ex_tag.c,v 1.17 2013/12/01 19:26:37 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -148,11 +148,11 @@ ex_tag_push(sp, cmdp)
 	if (TAILQ_EMPTY(&exp->tq)) {
 		/* Initialize the `local context' tag queue structure. */
 		CALLOC_GOTO(sp, rtqp, TAGQ *, 1, sizeof(TAGQ));
-		CIRCLEQ_INIT(&rtqp->tagq);
+		TAILQ_INIT(&rtqp->tagq);
 
 		/* Initialize and link in its tag structure. */
 		CALLOC_GOTO(sp, rtp, TAG *, 1, sizeof(TAG));
-		CIRCLEQ_INSERT_HEAD(&rtqp->tagq, rtp, q);
+		TAILQ_INSERT_HEAD(&rtqp->tagq, rtp, q);
 		rtqp->current = rtp;
 	}
 
@@ -170,14 +170,14 @@ ex_tag_push(sp, cmdp)
 	/* Try to switch to the tag. */
 	force = FL_ISSET(cmdp->iflags, E_C_FORCE);
 	if (F_ISSET(cmdp, E_NEWSCREEN)) {
-		if (ex_tag_Nswitch(sp, CIRCLEQ_FIRST(&tqp->tagq), force))
+		if (ex_tag_Nswitch(sp, TAILQ_FIRST(&tqp->tagq), force))
 			goto err;
 
 		/* Everything else gets done in the new screen. */
 		sp = sp->nextdisp;
 		exp = EXP(sp);
 	} else
-		if (ex_tag_nswitch(sp, CIRCLEQ_FIRST(&tqp->tagq), force))
+		if (ex_tag_nswitch(sp, TAILQ_FIRST(&tqp->tagq), force))
 			goto err;
 
 	/*
@@ -246,7 +246,7 @@ ex_tag_next(sp, cmdp)
 		tag_msg(sp, TAG_EMPTY, NULL);
 		return (1);
 	}
-	if ((tp = CIRCLEQ_NEXT(tqp->current, q)) == CIRCLEQ_END(&tqp->tagq)) {
+	if ((tp = TAILQ_NEXT(tqp->current, q)) == NULL) {
 		msgq(sp, M_ERR, "282|Already at the last tag of this group");
 		return (1);
 	}
@@ -281,7 +281,7 @@ ex_tag_prev(sp, cmdp)
 		tag_msg(sp, TAG_EMPTY, NULL);
 		return (0);
 	}
-	if ((tp = CIRCLEQ_PREV(tqp->current, q)) == CIRCLEQ_END(&tqp->tagq)) {
+	if ((tp = TAILQ_PREV(tqp->current, _tagqh, q)) == NULL) {
 		msgq(sp, M_ERR, "255|Already at the first tag of this group");
 		return (1);
 	}
@@ -605,8 +605,8 @@ ex_tag_display(sp)
 		if (INTERRUPTED(sp))
 			break;
 		++cnt;
-		CIRCLEQ_FOREACH(tp, &tqp->tagq, q) {
-			if (tp == CIRCLEQ_FIRST(&tqp->tagq))
+		TAILQ_FOREACH(tp, &tqp->tagq, q) {
+			if (tp == TAILQ_FIRST(&tqp->tagq))
 				(void)ex_printf(sp, "%2d ", cnt);
 			else
 				(void)ex_printf(sp, "   ");
@@ -621,7 +621,7 @@ ex_tag_display(sp)
 			if (tqp->current == tp)
 				(void)ex_printf(sp, "*");
 
-			if (tp == CIRCLEQ_FIRST(&tqp->tagq) && tqp->tag != NULL &&
+			if (tp == TAILQ_FIRST(&tqp->tagq) && tqp->tag != NULL &&
 			    (sp->cols - L_NAME) >= L_TAG + L_SPACE) {
 				len = strlen(tqp->tag);
 				if (len > sp->cols - (L_NAME + L_SPACE))
@@ -658,13 +658,13 @@ ex_tag_copy(orig, sp)
 	TAILQ_FOREACH(aqp, &oexp->tq, q) {
 		if (tagq_copy(sp, aqp, &tqp))
 			return (1);
-		CIRCLEQ_FOREACH(ap, &aqp->tagq, q) {
+		TAILQ_FOREACH(ap, &aqp->tagq, q) {
 			if (tag_copy(sp, ap, &tp))
 				return (1);
 			/* Set the current pointer. */
 			if (aqp->current == ap)
 				tqp->current = tp;
-			CIRCLEQ_INSERT_TAIL(&tqp->tagq, tp, q);
+			TAILQ_INSERT_TAIL(&tqp->tagq, tp, q);
 		}
 		TAILQ_INSERT_TAIL(&nexp->tq, tqp, q);
 	}
@@ -727,7 +727,7 @@ tagq_copy(sp, otqp, tqpp)
 	MALLOC_RET(sp, tqp, TAGQ *, len);
 	memcpy(tqp, otqp, len);
 
-	CIRCLEQ_INIT(&tqp->tagq);
+	TAILQ_INIT(&tqp->tagq);
 	tqp->current = NULL;
 	if (otqp->tag != NULL)
 		tqp->tag = tqp->buf;
@@ -799,8 +799,8 @@ tagq_free(sp, tqp)
 	TAG *tp;
 
 	exp = EXP(sp);
-	while ((tp = CIRCLEQ_FIRST(&tqp->tagq)) != CIRCLEQ_END(&tqp->tagq)) {
-		CIRCLEQ_REMOVE(&tqp->tagq, tp, q);
+	while ((tp = TAILQ_FIRST(&tqp->tagq))) {
+		TAILQ_REMOVE(&tqp->tagq, tp, q);
 		free(tp);
 	}
 	/*
@@ -998,7 +998,7 @@ ctag_slist(sp, tag)
 	/* Allocate and initialize the tag queue structure. */
 	len = strlen(tag);
 	CALLOC_GOTO(sp, tqp, TAGQ *, 1, sizeof(TAGQ) + len + 1);
-	CIRCLEQ_INIT(&tqp->tagq);
+	TAILQ_INIT(&tqp->tagq);
 	tqp->tag = tqp->buf;
 	memcpy(tqp->tag, tag, (tqp->tlen = len) + 1);
 
@@ -1015,7 +1015,7 @@ ctag_slist(sp, tag)
 			F_CLR(tfp, TAGF_ERR | TAGF_ERR_WARN);
 
 	/* Check to see if we found anything. */
-	if (CIRCLEQ_FIRST(&tqp->tagq) == CIRCLEQ_END(&tqp->tagq)) {
+	if (TAILQ_EMPTY(&tqp->tagq)) {
 		msgq_str(sp, M_ERR, tag, "162|%s: tag not found");
 		if (echk)
 			TAILQ_FOREACH(tfp, &exp->tagfq, q)
@@ -1029,7 +1029,7 @@ ctag_slist(sp, tag)
 		return (NULL);
 	}
 
-	tqp->current = CIRCLEQ_FIRST(&tqp->tagq);
+	tqp->current = TAILQ_FIRST(&tqp->tagq);
 	return (tqp);
 
 alloc_err:
@@ -1166,7 +1166,7 @@ corrupt:		p = msg_print(sp, tname, &nf1);
 		tp->fnlen = dlen + nlen;
 		tp->search = tp->fname + tp->fnlen + 1;
 		memcpy(tp->search, search, (tp->slen = slen) + 1);
-		CIRCLEQ_INSERT_TAIL(&tqp->tagq, tp, q);
+		TAILQ_INSERT_TAIL(&tqp->tagq, tp, q);
 	}
 
 alloc_err:

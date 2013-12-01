@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.h,v 1.4 2013/12/01 16:47:59 krw Exp $	*/
+/*	$OpenBSD: tag.h,v 1.5 2013/12/01 19:26:37 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@ struct _tagf {			/* Tag files. */
  * tagtop:	discard all Q
  */
 struct _tag {			/* Tag list. */
-	CIRCLEQ_ENTRY(_tag) q;	/* Linked list of tags. */
+	TAILQ_ENTRY(_tag) q;	/* Linked list of tags. */
 
 				/* Tag pop/return information. */
 	FREF	*frp;		/* Saved file. */
@@ -95,7 +95,7 @@ struct _tag {			/* Tag list. */
 struct _tagq {			/* Tag queue. */
 	TAILQ_ENTRY(_tagq) q;	/* Linked list of tag queues. */
 				/* This queue's tag list. */
-	CIRCLEQ_HEAD(_tagqh, _tag) tagq;
+	TAILQ_HEAD(_tagqh, _tag) tagq;
 
 	TAG	*current;	/* Current TAG within the queue. */
 

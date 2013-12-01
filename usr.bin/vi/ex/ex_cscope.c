@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cscope.c,v 1.19 2013/12/01 16:47:59 krw Exp $	*/
+/*	$OpenBSD: ex_cscope.c,v 1.20 2013/12/01 19:26:37 krw Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -462,11 +462,11 @@ cscope_find(sp, cmdp, pattern)
 	if (TAILQ_EMPTY(&exp->tq)) {
 		/* Initialize the `local context' tag queue structure. */
 		CALLOC_GOTO(sp, rtqp, TAGQ *, 1, sizeof(TAGQ));
-		CIRCLEQ_INIT(&rtqp->tagq);
+		TAILQ_INIT(&rtqp->tagq);
 
 		/* Initialize and link in its tag structure. */
 		CALLOC_GOTO(sp, rtp, TAG *, 1, sizeof(TAG));
-		CIRCLEQ_INSERT_HEAD(&rtqp->tagq, rtp, q);
+		TAILQ_INSERT_HEAD(&rtqp->tagq, rtp, q);
 		rtqp->current = rtp; 
 	}
 
@@ -513,7 +513,7 @@ cscope_find(sp, cmdp, pattern)
 		return (0);
 	}
 
-	tqp->current = CIRCLEQ_FIRST(&tqp->tagq);
+	tqp->current = TAILQ_FIRST(&tqp->tagq);
 
 	/* Try to switch to the first tag. */
 	force = FL_ISSET(cmdp->iflags, E_C_FORCE);
@@ -634,7 +634,7 @@ usage:		(void)csc_help(sp, "find");
 	CALLOC(sp, tqp, TAGQ *, 1, sizeof(TAGQ) + tlen + 3);
 	if (tqp == NULL)
 		return (NULL);
-	CIRCLEQ_INIT(&tqp->tagq);
+	TAILQ_INIT(&tqp->tagq);
 	tqp->tag = tqp->buf;
 	tqp->tag[0] = pattern[0];
 	tqp->tag[1] = ' ';
@@ -751,7 +751,7 @@ parse(sp, csc, tqp, matchesp)
 			tp->search = tp->fname + tp->fnlen + 1;
 			memcpy(tp->search, search, (tp->slen = slen) + 1);
 		}
-		CIRCLEQ_INSERT_TAIL(&tqp->tagq, tp, q);
+		TAILQ_INSERT_TAIL(&tqp->tagq, tp, q);
 
 		++*matchesp;
 	}
