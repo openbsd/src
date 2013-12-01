@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.238 2013/11/26 12:54:20 sthen Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.239 2013/12/01 22:11:22 jasper Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1335,11 +1335,6 @@ zones		uname=root gname=wheel mode=0755
 
 # ./var/nsd
 ..
-
-# ./var/obj				XXX
-#obj
-# ./var/obj				XXX
-#..
 
 # ./var/quotas
 quotas            gname=operator mode=0750
