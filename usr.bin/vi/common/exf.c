@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.27 2013/04/29 00:28:23 okan Exp $	*/
+/*	$OpenBSD: exf.c,v 1.28 2013/12/01 20:22:34 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -75,14 +75,12 @@ file_add(sp, name)
 	 */
 	gp = sp->gp;
 	if (name != NULL)
-		CIRCLEQ_FOREACH(frp, &gp->frefq, q) {
+		TAILQ_FOREACH_SAFE(frp, &gp->frefq, q, tfrp) {
 			if (frp->name == NULL) {
-				tfrp = CIRCLEQ_NEXT(frp, q);
-				CIRCLEQ_REMOVE(&gp->frefq, frp, q);
+				TAILQ_REMOVE(&gp->frefq, frp, q);
 				if (frp->name != NULL)
 					free(frp->name);
 				free(frp);
-				frp = tfrp;
 				continue;
 			}
 			if (!strcmp(frp->name, name))
@@ -107,7 +105,7 @@ file_add(sp, name)
 	}
 
 	/* Append into the chain of file names. */
-	CIRCLEQ_INSERT_TAIL(&gp->frefq, frp, q);
+	TAILQ_INSERT_TAIL(&gp->frefq, frp, q);
 
 	return (frp);
 }
@@ -680,7 +678,7 @@ file_end(sp, ep, force)
 		free(frp->tname);
 		frp->tname = NULL;
 		if (F_ISSET(frp, FR_TMPFILE)) {
-			CIRCLEQ_REMOVE(&sp->gp->frefq, frp, q);
+			TAILQ_REMOVE(&sp->gp->frefq, frp, q);
 			if (frp->name != NULL)
 				free(frp->name);
 			free(frp);
