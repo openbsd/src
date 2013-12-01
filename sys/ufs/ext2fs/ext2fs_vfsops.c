@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.68 2013/06/11 16:42:18 deraadt Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.69 2013/12/01 16:40:56 krw Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ ext2fs_mountroot(void)
 		return (error);
 	}
 
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+	TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
 	bzero(fs->e2fs_fsmnt, sizeof(fs->e2fs_fsmnt));

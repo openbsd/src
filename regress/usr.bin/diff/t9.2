@@ -1,4 +1,4 @@
-/*	$OpenBSD: t9.2,v 1.1 2003/07/17 21:04:04 otto Exp $	*/
+/*	$OpenBSD: t9.2,v 1.2 2013/12/01 16:40:56 krw Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -306,7 +306,7 @@ update:
 	if (!error) {
 		vfsp->vfc_refcount++;
 		simple_lock(&mountlist_slock);
-		CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+		TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 		simple_unlock(&mountlist_slock);
 		checkdirs(vp);
 		VOP_UNLOCK(vp, 0, p);
@@ -455,7 +455,7 @@ dounmount(struct mount *mp, int flags, struct proc *p, struct vnode *olddp)
 		    &mountlist_slock, p);
 		return (error);
 	}
-	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
+	TAILQ_REMOVE(&mountlist, mp, mnt_list);
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
 		if (olddp) {
 			/* 
@@ -510,12 +510,9 @@ sys_sync(p, v, retval)
 	int asyncflag;
 
 	simple_lock(&mountlist_slock);
-	for (mp = CIRCLEQ_LAST(&mountlist); mp != CIRCLEQ_END(&mountlist);
-	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p)) {
-			nmp = CIRCLEQ_PREV(mp, mnt_list);
+	TAILQ_FOREACH_REVERSE_SAFE(mp, &mountlist, mnt_list, nmp) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p))
 			continue;
-		}
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
 			mp->mnt_flag &= ~MNT_ASYNC;
@@ -525,7 +522,6 @@ sys_sync(p, v, retval)
 				mp->mnt_flag |= MNT_ASYNC;
 		}
 		simple_lock(&mountlist_slock);
-		nmp = CIRCLEQ_PREV(mp, mnt_list);
 		vfs_unbusy(mp, p);
 	}
 	simple_unlock(&mountlist_slock);
@@ -664,7 +660,7 @@ sys_getfsstat(p, v, retval)
 		syscallarg(size_t) bufsize;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	register struct mount *mp, *nmp;
+	register struct mount *mp *nmp;
 	register struct statfs *sp;
 	struct statfs sb;
 	caddr_t sfsp;
@@ -675,12 +671,9 @@ sys_getfsstat(p, v, retval)
 	sfsp = (caddr_t)SCARG(uap, buf);
 	count = 0;
 	simple_lock(&mountlist_slock);
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
-	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p)) {
-			nmp = CIRCLEQ_NEXT(mp, mnt_list);
+	TAILQ_FOREACH_REVERSE_SAFE(mp, &mountlist, mnt_list, nmp) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p))
 			continue;
-		}
 		if (sfsp && count < maxcount) {
 			sp = &mp->mnt_stat;
 
@@ -691,7 +684,6 @@ sys_getfsstat(p, v, retval)
 			    flags == 0) &&
 			    (error = VFS_STATFS(mp, sp, p))) {
 				simple_lock(&mountlist_slock);
-				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				vfs_unbusy(mp, p);
  				continue;
 			}
@@ -715,7 +707,6 @@ sys_getfsstat(p, v, retval)
 		}
 		count++;
 		simple_lock(&mountlist_slock);
-		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp, p);
 	}
 	simple_unlock(&mountlist_slock);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.209 2013/11/27 15:50:52 jsing Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.210 2013/12/01 16:40:56 krw Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ vntblinit(void)
 	    &pool_allocator_nointr);
 	TAILQ_INIT(&vnode_hold_list);
 	TAILQ_INIT(&vnode_free_list);
-	CIRCLEQ_INIT(&mountlist);
+	TAILQ_INIT(&mountlist);
 	/*
 	 * Initialize the filesystem syncer.
 	 */
@@ -238,7 +238,7 @@ vfs_getvfs(fsid_t *fsid)
 {
 	struct mount *mp;
 
-	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
+	TAILQ_FOREACH(mp, &mountlist, mnt_list) {
 		if (mp->mnt_stat.f_fsid.val[0] == fsid->val[0] &&
 		    mp->mnt_stat.f_fsid.val[1] == fsid->val[1]) {
 			return (mp);
@@ -267,7 +267,7 @@ vfs_getnewfsid(struct mount *mp)
 		++xxxfs_mntid;
 	tfsid.val[0] = makedev(nblkdev + mtype, xxxfs_mntid);
 	tfsid.val[1] = mtype;
-	if (!CIRCLEQ_EMPTY(&mountlist)) {
+	if (!TAILQ_EMPTY(&mountlist)) {
 		while (vfs_getvfs(&tfsid)) {
 			tfsid.val[0]++;
 			xxxfs_mntid++;
@@ -1215,17 +1215,13 @@ printlockedvnodes(void)
 
 	printf("Locked vnodes\n");
 
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
-	    mp = nmp) {
-		if (vfs_busy(mp, VB_READ|VB_NOWAIT)) {
-			nmp = CIRCLEQ_NEXT(mp, mnt_list);
+	TAILQ_FOREACH_SAFE(mp, &mountlist, mnt_list, nmp) {
+		if (vfs_busy(mp, VB_READ|VB_NOWAIT))
 			continue;
-		}
 		LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 			if (VOP_ISLOCKED(vp))
 				vprint((char *)0, vp);
 		}
-		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
  	}
 
@@ -1314,16 +1310,12 @@ sysctl_vnode(char *where, size_t *sizep, struct proc *p)
 	}
 	ewhere = where + *sizep;
 
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
-	    mp = nmp) {
-		if (vfs_busy(mp, VB_READ|VB_NOWAIT)) {
-			nmp = CIRCLEQ_NEXT(mp, mnt_list);
+	TAILQ_FOREACH_SAFE(mp, &mountlist, mnt_list, nmp) {
+		if (vfs_busy(mp, VB_READ|VB_NOWAIT))
 			continue;
-		}
 		savebp = bp;
 again:
-		for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL;
-		    vp = nvp) {
+		LIST_FOREACH_SAFE(vp, &mp->mnt_vnodelist, v_mntvnodes, nvp) {
 			/*
 			 * Check that the vp is still associated with
 			 * this filesystem.  RACE: could have been
@@ -1335,7 +1327,6 @@ again:
 				bp = savebp;
 				goto again;
 			}
-			nvp = LIST_NEXT(vp, v_mntvnodes);
 			if (bp + sizeof(struct e_vnode) > ewhere) {
 				*sizep = bp - where;
 				vfs_unbusy(mp);
@@ -1353,7 +1344,6 @@ again:
 			bp += sizeof(struct e_vnode);
 		}
 
-		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
 
@@ -1612,9 +1602,7 @@ vfs_unmountall(void)
 
  retry:
 	allerror = 0;
-	for (mp = CIRCLEQ_LAST(&mountlist); mp != CIRCLEQ_END(&mountlist);
-	    mp = nmp) {
-		nmp = CIRCLEQ_PREV(mp, mnt_list);
+	TAILQ_FOREACH_REVERSE_SAFE(mp, &mountlist, mntlist, mnt_list, nmp) {
 		if ((vfs_busy(mp, VB_WRITE|VB_NOWAIT)) != 0)
 			continue;
 		if ((error = dounmount(mp, MNT_FORCE, curproc, NULL)) != 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.88 2013/11/12 22:27:11 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.89 2013/12/01 16:40:56 krw Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -831,8 +831,8 @@ kinfo_vnodes(int *avnodes)
 	evbuf = vbuf + (numvnodes + 20) *
 	    (sizeof(struct vnode *) + sizeof(struct vnode));
 	KGET(V_MOUNTLIST, kvm_mountlist);
-	for (num = 0, mp = CIRCLEQ_FIRST(&kvm_mountlist); ;
-	    mp = CIRCLEQ_NEXT(&mount, mnt_list)) {
+	num = 0;
+	TAILQ_FOREACH(mp, &kvm_mountlist, mnt_list) {
 		KGET2(mp, &mount, sizeof(mount), "mount entry");
 		for (vp = LIST_FIRST(&mount.mnt_vnodelist);
 		    vp != NULL; vp = LIST_NEXT(&vnode, v_mntvnodes)) {
@@ -847,8 +847,6 @@ kinfo_vnodes(int *avnodes)
 			bp += sizeof(struct vnode);
 			num++;
 		}
-		if (mp == CIRCLEQ_LAST(&kvm_mountlist))
-			break;
 	}
 	*avnodes = num;
 	return ((struct e_vnode *)vbuf);

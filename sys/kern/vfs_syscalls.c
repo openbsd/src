@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.199 2013/10/25 14:56:52 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.200 2013/12/01 16:40:56 krw Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -294,7 +294,7 @@ update:
 	cache_purge(vp);
 	if (!error) {
 		vfsp->vfc_refcount++;
-		CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+		TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 		checkdirs(vp);
 		VOP_UNLOCK(vp, 0, p);
  		if ((mp->mnt_flag & MNT_RDONLY) == 0)
@@ -444,7 +444,7 @@ dounmount(struct mount *mp, int flags, struct proc *p, struct vnode *olddp)
 		return (error);
 	}
 
-	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
+	TAILQ_REMOVE(&mountlist, mp, mnt_list);
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
 		coveredvp->v_mountedhere = NULL;
  		vrele(coveredvp);
@@ -476,12 +476,9 @@ sys_sync(struct proc *p, void *v, register_t *retval)
 	struct mount *mp, *nmp;
 	int asyncflag;
 
-	for (mp = CIRCLEQ_LAST(&mountlist); mp != CIRCLEQ_END(&mountlist);
-	    mp = nmp) {
-		if (vfs_busy(mp, VB_READ|VB_NOWAIT)) {
-			nmp = CIRCLEQ_PREV(mp, mnt_list);
+	TAILQ_FOREACH_REVERSE_SAFE(mp, &mountlist, mntlist, mnt_list, nmp) {
+		if (vfs_busy(mp, VB_READ|VB_NOWAIT))
 			continue;
-		}
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
 			mp->mnt_flag &= ~MNT_ASYNC;
@@ -490,7 +487,6 @@ sys_sync(struct proc *p, void *v, register_t *retval)
 			if (asyncflag)
 				mp->mnt_flag |= MNT_ASYNC;
 		}
-		nmp = CIRCLEQ_PREV(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
 
@@ -634,12 +630,9 @@ sys_getfsstat(struct proc *p, void *v, register_t *retval)
 	sfsp = SCARG(uap, buf);
 	count = 0;
 
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
-	    mp = nmp) {
-		if (vfs_busy(mp, VB_READ|VB_NOWAIT)) {
-			nmp = CIRCLEQ_NEXT(mp, mnt_list);
+	TAILQ_FOREACH_SAFE(mp, &mountlist, mnt_list, nmp) {
+		if (vfs_busy(mp, VB_READ|VB_NOWAIT))
 			continue;
-		}
 		if (sfsp && count < maxcount) {
 			sp = &mp->mnt_stat;
 
@@ -649,7 +642,6 @@ sys_getfsstat(struct proc *p, void *v, register_t *retval)
 			    (flags == MNT_WAIT ||
 			    flags == 0) &&
 			    (error = VFS_STATFS(mp, sp, p))) {
-				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				vfs_unbusy(mp);
  				continue;
 			}
@@ -667,7 +659,6 @@ sys_getfsstat(struct proc *p, void *v, register_t *retval)
 			sfsp++;
 		}
 		count++;
-		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
 

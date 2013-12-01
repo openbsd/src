@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.62 2010/11/05 15:17:50 claudio Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.63 2013/12/01 16:40:56 krw Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -350,7 +350,7 @@ db_show_all_mounts(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	if (modif[0] == 'f')
 		full = TRUE;
 
-	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list)
+	TAILQ_FOREACH(mp, &mountlist, mnt_list)
 		vfs_mount_print(mp, full, db_printf);
 }
 

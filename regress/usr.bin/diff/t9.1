@@ -245,7 +245,7 @@ update:
 	 */
 	cache_purge(vp);
 	if (!error) {
-		CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+		TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 		checkdirs(vp);
 		VOP_UNLOCK(vp);
 		vfs_unlock(mp);
@@ -384,7 +384,7 @@ dounmount(mp, flags, p)
 	if (error) {
 		vfs_unlock(mp);
 	} else {
-		CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
+		TAILQ_REMOVE(&mountlist, mp, mnt_list);
 		if (coveredvp != NULLVP) {
 			vrele(coveredvp);
 			coveredvp->v_mountedhere = (struct mount *)0;

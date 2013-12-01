@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.138 2013/06/11 16:42:18 deraadt Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.139 2013/12/01 16:40:56 krw Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ ffs_mountroot(void)
 		return (error);
 	}
 
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+	TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	(void)copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.116 2013/09/24 09:20:12 espie Exp $	*/
+/*	$OpenBSD: mount.h,v 1.117 2013/12/01 16:40:56 krw Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -364,7 +364,7 @@ struct statfs {
 LIST_HEAD(vnodelst, vnode);
 
 struct mount {
-	CIRCLEQ_ENTRY(mount) mnt_list;		/* mount list */
+	TAILQ_ENTRY(mount) mnt_list;		/* mount list */
 	const struct vfsops *mnt_op;		/* operations on fs */
 	struct vfsconf  *mnt_vfc;               /* configuration info */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
@@ -607,7 +607,7 @@ int	vfs_mountedon(struct vnode *);
 int	vfs_rootmountalloc(char *, char *, struct mount **);
 void	vfs_unbusy(struct mount *);
 void	vfs_unmountall(void);
-extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;
+extern	TAILQ_HEAD(mntlist, mount) mountlist;
 
 struct	mount *getvfs(fsid_t *);	    /* return vfs given fsid */
 					    /* process mount export info */
