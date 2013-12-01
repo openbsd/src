@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.50 2013/11/30 20:13:36 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.51 2013/12/01 11:47:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -52,6 +52,7 @@
 
 #include <sys/queue.h>
 #include <sys/task.h>
+#include <sys/time.h>
 
 static void i915_gem_object_flush_gtt_write_domain(struct drm_i915_gem_object *obj);
 static void i915_gem_object_flush_cpu_write_domain(struct drm_i915_gem_object *obj);
@@ -77,6 +78,11 @@ static long i915_gem_purge(struct drm_i915_private *dev_priv, long target);
 static void i915_gem_shrink_all(struct drm_i915_private *dev_priv);
 #endif
 static void i915_gem_object_truncate(struct drm_i915_gem_object *obj);
+
+static inline int timespec_to_jiffies(const struct timespec *);
+static inline int timespec_valid(const struct timespec *);
+static struct timespec ns_to_timespec(const int64_t);
+static inline int64_t timespec_to_ns(const struct timespec *);
 
 extern int ticks;
 
@@ -1023,31 +1029,99 @@ i915_gem_check_olr(struct intel_ring_buffer *ring, u32 seqno)
 static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 			bool interruptible, struct timespec *timeout)
 {
-	struct drm_device *dev = ring->dev;
-	drm_i915_private_t *dev_priv = dev->dev_private;
-	int ret = 0;
+	drm_i915_private_t *dev_priv = ring->dev->dev_private;
+	struct timespec before, now, wait_time={1,0};
+	struct timespec sleep_time;
+	unsigned long timeout_jiffies;
+	long end;
+	bool wait_forever = true;
+	int ret;
 
 	if (i915_seqno_passed(ring->get_seqno(ring, true), seqno))
 		return 0;
 
-	mtx_enter(&dev_priv->irq_lock);
-	if (!i915_seqno_passed(ring->get_seqno(ring, true), seqno)) {
-		ring->irq_get(ring);
-		while (ret == 0) {
-			if (i915_seqno_passed(ring->get_seqno(ring, false),
-			    seqno) || dev_priv->mm.wedged)
-				break;
-			ret = -msleep(ring, &dev_priv->irq_lock,
-			    PZERO | (interruptible ? PCATCH : 0),
-			    "gemwt", 0);
-		}
-		ring->irq_put(ring);
-	}
-	mtx_leave(&dev_priv->irq_lock);
-	if (dev_priv->mm.wedged)
-		ret = -EIO;
+	trace_i915_gem_request_wait_begin(ring, seqno);
 
-	return ret;
+	if (timeout != NULL) {
+		wait_time = *timeout;
+		wait_forever = false;
+	}
+
+	timeout_jiffies = timespec_to_jiffies(&wait_time);
+
+	if (WARN_ON(!ring->irq_get(ring)))
+		return -ENODEV;
+
+	/* Record current time in case interrupted by signal, or wedged * */
+	nanouptime(&before);
+
+#define EXIT_COND \
+	(i915_seqno_passed(ring->get_seqno(ring, false), seqno) || \
+	atomic_read(&dev_priv->mm.wedged))
+	do {
+		mtx_enter(&dev_priv->irq_lock);
+		do {
+			if (EXIT_COND) {
+				ret = 0;
+				break;
+			}
+			ret = msleep(ring, &dev_priv->irq_lock,
+			    PZERO | (interruptible ? PCATCH : 0),
+			    "gemwt", timeout_jiffies);
+			nanouptime(&now);
+			timespecsub(&now, &before, &sleep_time);
+			timeout_jiffies = timespec_to_jiffies(&wait_time);
+			timeout_jiffies -= timespec_to_jiffies(&sleep_time);
+			if (timeout_jiffies <= 0) {
+				timeout_jiffies = 0;
+				break;
+			}
+		} while (ret == 0);
+		mtx_leave(&dev_priv->irq_lock);
+		switch (ret) {
+		case 0:
+			end = timeout_jiffies;
+			break;
+		case ERESTART:
+			end = -ERESTARTSYS;
+			break;
+		case EWOULDBLOCK:
+			end = 0;
+			break;
+		default:
+			end = -ret;
+			break;
+		}
+
+		ret = i915_gem_check_wedge(dev_priv, interruptible);
+		if (ret)
+			end = ret;
+	} while (end == 0 && wait_forever);
+
+	nanouptime(&now);
+
+	ring->irq_put(ring);
+	trace_i915_gem_request_wait_end(ring, seqno);
+#undef EXIT_COND
+
+	if (timeout) {
+		timespecsub(&now, &before, &sleep_time);
+		timespecsub(timeout, &sleep_time, timeout);
+	}
+
+	switch (end) {
+	case -EIO:
+	case -EAGAIN: /* Wedged */
+	case -ERESTARTSYS: /* Signal */
+		return (int)end;
+	case 0: /* Timeout */
+		if (timeout)
+			timeout->tv_sec = timeout->tv_nsec = 0;
+		return -ETIMEDOUT;
+	default: /* Completed */
+		WARN_ON(end < 0); /* We're not aware of other errors */
+		return 0;
+	}
 }
 
 /**
@@ -2348,7 +2422,6 @@ i915_gem_object_flush_active(struct drm_i915_gem_object *obj)
 	return 0;
 }
 
-#ifdef notyet
 /**
  * i915_gem_wait_ioctl - implements DRM_IOCTL_I915_GEM_WAIT
  * @DRM_IOCTL_ARGS: standard ioctl arguments
@@ -2392,7 +2465,7 @@ i915_gem_wait_ioctl(struct drm_device *dev, void *data, struct drm_file *file)
 
 	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->bo_handle));
 	if (&obj->base == NULL) {
-		mutex_unlock(&dev->struct_mutex);
+		DRM_UNLOCK();
 		return -ENOENT;
 	}
 
@@ -2413,12 +2486,12 @@ i915_gem_wait_ioctl(struct drm_device *dev, void *data, struct drm_file *file)
 	 * on this IOCTL with a 0 timeout (like busy ioctl)
 	 */
 	if (!args->timeout_ns) {
-		ret = -ETIME;
+		ret = -ETIMEDOUT;
 		goto out;
 	}
 
 	drm_gem_object_unreference(&obj->base);
-	mutex_unlock(&dev->struct_mutex);
+	DRM_UNLOCK();
 
 	ret = __wait_seqno(ring, seqno, true, timeout);
 	if (timeout) {
@@ -2429,10 +2502,9 @@ i915_gem_wait_ioctl(struct drm_device *dev, void *data, struct drm_file *file)
 
 out:
 	drm_gem_object_unreference(&obj->base);
-	mutex_unlock(&dev->struct_mutex);
+	DRM_UNLOCK();
 	return ret;
 }
-#endif /* notyet */
 
 /**
  * i915_gem_object_sync - sync an object to a ring.
@@ -4490,3 +4562,54 @@ i915_gem_inactive_shrink(struct shrinker *shrinker, struct shrink_control *sc)
 	return cnt;
 }
 #endif /* notyet */
+
+#define NSEC_PER_SEC	1000000000L
+
+static inline int64_t
+timespec_to_ns(const struct timespec *ts)
+{
+	return ((ts->tv_sec * NSEC_PER_SEC) + ts->tv_nsec);
+}
+
+static inline int
+timespec_to_jiffies(const struct timespec *ts)
+{
+	long long to_ticks;
+
+	to_ticks = (long long)hz * ts->tv_sec + ts->tv_nsec / (tick * 1000);
+	if (to_ticks > INT_MAX)
+		to_ticks = INT_MAX;
+
+	return ((int)to_ticks);
+}
+
+static struct timespec
+ns_to_timespec(const int64_t nsec)
+{
+	struct timespec ts;
+	int32_t rem;
+
+	if (nsec == 0) {
+		ts.tv_sec = 0;
+		ts.tv_nsec = 0;
+		return (ts);
+	}
+
+	ts.tv_sec = nsec / NSEC_PER_SEC;
+	rem = nsec % NSEC_PER_SEC;
+	if (rem < 0) {
+		ts.tv_sec--;
+		rem += NSEC_PER_SEC;
+	}
+	ts.tv_nsec = rem;
+	return (ts);
+}
+
+static inline int
+timespec_valid(const struct timespec *ts)
+{
+	if (ts->tv_sec < 0 || ts->tv_sec > 100000000 ||
+	    ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000)
+		return (0);
+	return (1);
+}

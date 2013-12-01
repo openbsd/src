@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_dma.c,v 1.13 2013/11/30 20:03:32 kettenis Exp $	*/
+/*	$OpenBSD: i915_dma.c,v 1.14 2013/12/01 11:47:13 kettenis Exp $	*/
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*
@@ -122,6 +122,9 @@ i915_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		break;
 	case I915_PARAM_HAS_LLC:
 		value = HAS_LLC(dev);
+		break;
+	case I915_PARAM_HAS_WAIT_TIMEOUT:
+		value = 1;
 		break;
 	case I915_PARAM_HAS_SEMAPHORES:
 		value = i915_semaphore_is_enabled(dev);
