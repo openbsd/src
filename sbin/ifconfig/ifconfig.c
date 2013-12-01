@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.279 2013/11/22 04:12:47 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.280 2013/12/01 10:05:29 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2212,7 +2212,8 @@ ieee80211_printnode(struct ieee80211_nodereq *nr)
 {
 	int len;
 
-	if (nr->nr_flags & IEEE80211_NODEREQ_AP) {
+	if (nr->nr_flags & IEEE80211_NODEREQ_AP ||
+	    nr->nr_capinfo & IEEE80211_CAPINFO_IBSS) {
 		len = nr->nr_nwid_len;
 		if (len > IEEE80211_NWID_LEN)
 			len = IEEE80211_NWID_LEN;
@@ -2221,12 +2222,12 @@ ieee80211_printnode(struct ieee80211_nodereq *nr)
 		putchar(' ');
 
 		printf("chan %u ", nr->nr_channel);
-	}
 
-	if (nr->nr_flags & IEEE80211_NODEREQ_AP)
 		printf("bssid %s ",
 		    ether_ntoa((struct ether_addr*)nr->nr_bssid));
-	else
+	}
+
+	if ((nr->nr_flags & IEEE80211_NODEREQ_AP) == 0)
 		printf("lladdr %s ",
 		    ether_ntoa((struct ether_addr*)nr->nr_macaddr));
 
