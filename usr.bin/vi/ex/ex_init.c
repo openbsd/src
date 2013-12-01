@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_init.c,v 1.10 2013/05/03 20:43:25 kili Exp $	*/
+/*	$OpenBSD: ex_init.c,v 1.11 2013/12/01 16:47:59 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -51,7 +51,7 @@ ex_screen_copy(orig, sp)
 	sp->ex_private = nexp;
 
 	/* Initialize queues. */
-	CIRCLEQ_INIT(&nexp->tq);
+	TAILQ_INIT(&nexp->tq);
 	TAILQ_INIT(&nexp->tagfq);
 	LIST_INIT(&nexp->cscq);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_tag.c,v 1.15 2009/11/14 17:44:53 jsg Exp $	*/
+/*	$OpenBSD: ex_tag.c,v 1.16 2013/12/01 16:47:59 krw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -145,7 +145,7 @@ ex_tag_push(sp, cmdp)
 	 */
 	rtp = NULL;
 	rtqp = NULL;
-	if (CIRCLEQ_FIRST(&exp->tq) == CIRCLEQ_END(&exp->tq)) {
+	if (TAILQ_EMPTY(&exp->tq)) {
 		/* Initialize the `local context' tag queue structure. */
 		CALLOC_GOTO(sp, rtqp, TAGQ *, 1, sizeof(TAGQ));
 		CIRCLEQ_INIT(&rtqp->tagq);
@@ -185,13 +185,13 @@ ex_tag_push(sp, cmdp)
 	 * in place, so we can pop all the way back to the current mark.
 	 * Note, it doesn't point to much of anything, it's a placeholder.
 	 */
-	if (CIRCLEQ_FIRST(&exp->tq) == CIRCLEQ_END(&exp->tq)) {
-		CIRCLEQ_INSERT_HEAD(&exp->tq, rtqp, q);
+	if (TAILQ_EMPTY(&exp->tq)) {
+		TAILQ_INSERT_HEAD(&exp->tq, rtqp, q);
 	} else
-		rtqp = CIRCLEQ_FIRST(&exp->tq);
+		rtqp = TAILQ_FIRST(&exp->tq);
 
 	/* Link the new TAGQ structure into place. */
-	CIRCLEQ_INSERT_HEAD(&exp->tq, tqp, q);
+	TAILQ_INSERT_HEAD(&exp->tq, tqp, q);
 
 	(void)ctag_search(sp,
 	    tqp->current->search, tqp->current->slen, tqp->tag);
@@ -242,7 +242,7 @@ ex_tag_next(sp, cmdp)
 	TAGQ *tqp;
 
 	exp = EXP(sp);
-	if ((tqp = CIRCLEQ_FIRST(&exp->tq)) == CIRCLEQ_END(&exp->tq)) {
+	if ((tqp = TAILQ_FIRST(&exp->tq)) == NULL) {
 		tag_msg(sp, TAG_EMPTY, NULL);
 		return (1);
 	}
@@ -277,7 +277,7 @@ ex_tag_prev(sp, cmdp)
 	TAGQ *tqp;
 
 	exp = EXP(sp);
-	if ((tqp = CIRCLEQ_FIRST(&exp->tq)) == CIRCLEQ_END(&exp->tq)) {
+	if ((tqp = TAILQ_FIRST(&exp->tq)) == NULL) {
 		tag_msg(sp, TAG_EMPTY, NULL);
 		return (0);
 	}
@@ -409,7 +409,7 @@ ex_tag_pop(sp, cmdp)
 
 	/* Check for an empty stack. */
 	exp = EXP(sp);
-	if (CIRCLEQ_FIRST(&exp->tq) == CIRCLEQ_END(&exp->tq)) {
+	if (TAILQ_EMPTY(&exp->tq)) {
 		tag_msg(sp, TAG_EMPTY, NULL);
 		return (1);
 	}
@@ -417,7 +417,7 @@ ex_tag_pop(sp, cmdp)
 	/* Find the last TAG structure that we're going to DISCARD! */
 	switch (cmdp->argc) {
 	case 0:				/* Pop one tag. */
-		dtqp = CIRCLEQ_FIRST(&exp->tq);
+		dtqp = TAILQ_FIRST(&exp->tq);
 		break;
 	case 1:				/* Name or number. */
 		arg = cmdp->argv[0]->bp;
@@ -428,10 +428,11 @@ ex_tag_pop(sp, cmdp)
 		/* Number: pop that many queue entries. */
 		if (off < 1)
 			return (0);
-		for (tqp = CIRCLEQ_FIRST(&exp->tq);
-		    tqp != CIRCLEQ_END(&exp->tq) && --off > 1;
-		    tqp = CIRCLEQ_NEXT(tqp, q));
-		if (tqp == (void *)&exp->tq) {
+		TAILQ_FOREACH(tqp, &exp->tq, q) {
+			if (--off <= 1)
+				break;
+		}
+		if (tqp == NULL) {
 			msgq(sp, M_ERR,
 	"159|Less than %s entries on the tags stack; use :display t[ags]",
 			    arg);
@@ -442,11 +443,10 @@ ex_tag_pop(sp, cmdp)
 
 		/* File argument: pop to that queue entry. */
 filearg:	arglen = strlen(arg);
-		for (tqp = CIRCLEQ_FIRST(&exp->tq);
-		    tqp != CIRCLEQ_END(&exp->tq);
-		    dtqp = tqp, tqp = CIRCLEQ_NEXT(tqp, q)) {
+		for (tqp = TAILQ_FIRST(&exp->tq); tqp;
+		    dtqp = tqp, tqp = TAILQ_NEXT(tqp, q)) {
 			/* Don't pop to the current file. */
-			if (tqp == CIRCLEQ_FIRST(&exp->tq))
+			if (tqp == TAILQ_FIRST(&exp->tq))
 				continue;
 			p = tqp->current->frp->name;
 			if ((t = strrchr(p, '/')) == NULL)
@@ -456,12 +456,12 @@ filearg:	arglen = strlen(arg);
 			if (!strncmp(arg, t, arglen))
 				break;
 		}
-		if (tqp == (void *)&exp->tq) {
+		if (tqp == NULL) {
 			msgq_str(sp, M_ERR, arg,
 	"160|No file %s on the tags stack to return to; use :display t[ags]");
 			return (1);
 		}
-		if (tqp == CIRCLEQ_FIRST(&exp->tq))
+		if (tqp == TAILQ_FIRST(&exp->tq))
 			return (0);
 		break;
 	default:
@@ -488,14 +488,14 @@ ex_tag_top(sp, cmdp)
 	exp = EXP(sp);
 
 	/* Check for an empty stack. */
-	if (CIRCLEQ_FIRST(&exp->tq) == CIRCLEQ_END(&exp->tq)) {
+	if (TAILQ_EMPTY(&exp->tq)) {
 		tag_msg(sp, TAG_EMPTY, NULL);
 		return (1);
 	}
 
 	/* Return to the oldest information. */
 	return (tag_pop(sp,
-	    CIRCLEQ_PREV(CIRCLEQ_LAST(&exp->tq), q),
+	    TAILQ_PREV(TAILQ_LAST(&exp->tq, _tqh), _tqh, q),
 	    FL_ISSET(cmdp->iflags, E_C_FORCE)));
 }
 
@@ -519,7 +519,7 @@ tag_pop(sp, dtqp, force)
 	 * Update the cursor from the saved TAG information of the TAG
 	 * structure we're moving to.
 	 */
-	tp = CIRCLEQ_NEXT(dtqp, q)->current;
+	tp = TAILQ_NEXT(dtqp, q)->current;
 	if (tp->frp == sp->frp) {
 		sp->lno = tp->lno;
 		sp->cno = tp->cno;
@@ -538,7 +538,7 @@ tag_pop(sp, dtqp, force)
 
 	/* Pop entries off the queue up to and including dtqp. */
 	do {
-		tqp = CIRCLEQ_FIRST(&exp->tq);
+		tqp = TAILQ_FIRST(&exp->tq);
 		if (tagq_free(sp, tqp))
 			return (0);
 	} while (tqp != dtqp);
@@ -547,8 +547,8 @@ tag_pop(sp, dtqp, force)
 	 * If only a single tag left, we've returned to the first tag point,
 	 * and the stack is now empty.
 	 */
-	if (CIRCLEQ_NEXT(CIRCLEQ_FIRST(&exp->tq), q) == CIRCLEQ_END(&exp->tq))
-		tagq_free(sp, CIRCLEQ_FIRST(&exp->tq));
+	if (TAILQ_NEXT(TAILQ_FIRST(&exp->tq), q) == NULL)
+		tagq_free(sp, TAILQ_FIRST(&exp->tq));
 
 	return (0);
 }
@@ -571,10 +571,11 @@ ex_tag_display(sp)
 	char *p;
 
 	exp = EXP(sp);
-	if ((tqp = CIRCLEQ_FIRST(&exp->tq)) == CIRCLEQ_END(&exp->tq)) {
+	if (TAILQ_EMPTY(&exp->tq)) {
 		tag_msg(sp, TAG_EMPTY, NULL);
 		return (0);
 	}
+	tqp = TAILQ_FIRST(&exp->tq);
 
 	/*
 	 * We give the file name 20 columns and the search string the rest.
@@ -599,8 +600,11 @@ ex_tag_display(sp)
 	 * Display the list of tags for each queue entry.  The first entry
 	 * is numbered, and the current tag entry has an asterisk appended.
 	 */
-	for (cnt = 1, tqp = CIRCLEQ_FIRST(&exp->tq); !INTERRUPTED(sp) &&
-	    tqp != CIRCLEQ_END(&exp->tq); ++cnt, tqp = CIRCLEQ_NEXT(tqp, q))
+	cnt = 0;
+	TAILQ_FOREACH(tqp, &exp->tq, q) {
+		if (INTERRUPTED(sp))
+			break;
+		++cnt;
 		CIRCLEQ_FOREACH(tp, &tqp->tagq, q) {
 			if (tp == CIRCLEQ_FIRST(&tqp->tagq))
 				(void)ex_printf(sp, "%2d ", cnt);
@@ -628,6 +632,7 @@ ex_tag_display(sp)
 			}
 			(void)ex_printf(sp, "\n");
 		}
+	}
 	return (0);
 }
 
@@ -650,7 +655,7 @@ ex_tag_copy(orig, sp)
 	nexp = EXP(sp);
 
 	/* Copy tag queue and tags stack. */
-	CIRCLEQ_FOREACH(aqp, &oexp->tq, q) {
+	TAILQ_FOREACH(aqp, &oexp->tq, q) {
 		if (tagq_copy(sp, aqp, &tqp))
 			return (1);
 		CIRCLEQ_FOREACH(ap, &aqp->tagq, q) {
@@ -661,7 +666,7 @@ ex_tag_copy(orig, sp)
 				tqp->current = tp;
 			CIRCLEQ_INSERT_TAIL(&tqp->tagq, tp, q);
 		}
-		CIRCLEQ_INSERT_TAIL(&nexp->tq, tqp, q);
+		TAILQ_INSERT_TAIL(&nexp->tq, tqp, q);
 	}
 
 	/* Copy list of tag files. */
@@ -790,6 +795,7 @@ tagq_free(sp, tqp)
 	TAGQ *tqp;
 {
 	EX_PRIVATE *exp;
+	TAGQ *ttqp;
 	TAG *tp;
 
 	exp = EXP(sp);
@@ -802,8 +808,12 @@ tagq_free(sp, tqp)
 	 * If allocated and then the user failed to switch files, the TAGQ
 	 * structure was never attached to any list.
 	 */
-	if (CIRCLEQ_NEXT(tqp, q) != NULL)
-		CIRCLEQ_REMOVE(&exp->tq, tqp, q);
+	TAILQ_FOREACH(ttqp, &exp->tq, q) {
+		if (ttqp == tqp) {
+			TAILQ_REMOVE(&exp->tq, tqp, q);
+			break;
+		}
+	}
 	free(tqp);
 	return (0);
 }
@@ -896,8 +906,8 @@ ex_tag_free(sp)
 
 	/* Free up tag information. */
 	exp = EXP(sp);
-	while ((tqp = CIRCLEQ_FIRST(&exp->tq)) != CIRCLEQ_END(&exp->tq))
-		tagq_free(sp, tqp);
+	while ((tqp = TAILQ_FIRST(&exp->tq)))
+		tagq_free(sp, tqp);	/* tagq_free removes tqp from queue. */
 	while ((tfp = TAILQ_FIRST(&exp->tagfq)) != NULL)
 		tagf_free(sp, tfp);
 	if (exp->tag_last != NULL)

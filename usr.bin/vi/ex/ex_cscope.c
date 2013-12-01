@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cscope.c,v 1.18 2013/11/25 23:27:11 krw Exp $	*/
+/*	$OpenBSD: ex_cscope.c,v 1.19 2013/12/01 16:47:59 krw Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -459,7 +459,7 @@ cscope_find(sp, cmdp, pattern)
 	 */
 	rtp = NULL;
 	rtqp = NULL;
-	if (CIRCLEQ_FIRST(&exp->tq) == CIRCLEQ_END(&exp->tq)) {
+	if (TAILQ_EMPTY(&exp->tq)) {
 		/* Initialize the `local context' tag queue structure. */
 		CALLOC_GOTO(sp, rtqp, TAGQ *, 1, sizeof(TAGQ));
 		CIRCLEQ_INIT(&rtqp->tagq);
@@ -533,13 +533,13 @@ cscope_find(sp, cmdp, pattern)
 	 * in place, so we can pop all the way back to the current mark.
 	 * Note, it doesn't point to much of anything, it's a placeholder.
 	 */
-	if (CIRCLEQ_FIRST(&exp->tq) == CIRCLEQ_END(&exp->tq)) {
-		CIRCLEQ_INSERT_HEAD(&exp->tq, rtqp, q);
+	if (TAILQ_EMPTY(&exp->tq)) {
+		TAILQ_INSERT_HEAD(&exp->tq, rtqp, q);
 	} else
-		rtqp = CIRCLEQ_FIRST(&exp->tq);
+		rtqp = TAILQ_FIRST(&exp->tq);
 
 	/* Link the current TAGQ structure into place. */
-	CIRCLEQ_INSERT_HEAD(&exp->tq, tqp, q);
+	TAILQ_INSERT_HEAD(&exp->tq, tqp, q);
 
 	(void)cscope_search(sp, tqp, tqp->current);
 
