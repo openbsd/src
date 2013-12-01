@@ -1,4 +1,4 @@
-#	$OpenBSD: MVME147,v 1.26 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: MVME147,v 1.27 2013/12/01 21:56:42 miod Exp $
 
 machine		mvme68k m68k
 
@@ -21,6 +21,7 @@ clock0	at pcc0 ipl 5
 nvram0	at pcc0 offset 0x0000
 zs0	at pcc0 offset 0x3000 ipl 4
 zs1	at pcc0 offset 0x3800 ipl 4
+zstty*	at zs?
 le*	at pcc0 offset 0x1800 ipl 3
 wdsc0	at pcc0 offset 0x4000 ipl 2
 lp0	at pcc0 ipl 1

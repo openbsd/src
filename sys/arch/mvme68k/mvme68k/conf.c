@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.55 2013/06/03 17:33:58 tedu Exp $ */
+/*	$OpenBSD: conf.c,v 1.56 2013/12/01 21:56:42 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -117,6 +117,7 @@ cdev_decl(fd);
 #include "dart.h"
 #include "wl.h"
 #include "zs.h"
+#include "zstty.h"
 
 /* open, close, write, ioctl */
 #define	cdev_lp_init(c,n) { \
@@ -165,7 +166,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCD,cd),		/* 9: SCSI CD-ROM */
 	cdev_mdev_init(NNVRAM,nvram),	/* 10: /dev/nvramX */
 	cdev_mdev_init(NFLASH,flash),	/* 11: /dev/flashX */
-	cdev_tty_init(NZS,zs),		/* 12: SCC serial (tty[a-d]) */
+	cdev_tty_init(NZSTTY,zs),	/* 12: SCC serial (tty[a-d]) */
 	cdev_tty_init(NCL,cl),		/* 13: CL-CD2400 serial (tty0[0-3]) */
 	cdev_tty_init(NDART,dart),	/* 14: MC68681 serial (ttyd[0-1]) */
 	cdev_notdef(),			/* 15 */

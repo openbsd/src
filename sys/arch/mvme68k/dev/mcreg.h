@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcreg.h,v 1.10 2012/11/04 13:33:32 miod Exp $ */
+/*	$OpenBSD: mcreg.h,v 1.11 2013/12/01 21:56:42 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -114,7 +114,7 @@ extern struct mcreg *sys_mc;
  * for the console we need zs phys addr
  */
 #define ZS0_PHYS_162	(0xfff45000)
-#define ZS1_PHYS_162	(0xfff45801)
+#define ZS1_PHYS_162	(0xfff45800)
 
 /*
  * We lock off our interrupt vector at 0x50.

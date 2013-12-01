@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.37 2013/09/24 20:10:45 miod Exp $
+#	$OpenBSD: files.mvme68k,v 1.38 2013/12/01 21:56:42 miod Exp $
 
 # config file for mvme68k
 
@@ -35,9 +35,14 @@ device	clock
 attach	clock at pcc, mc, pcctwo, lrc, ofobio
 file	arch/mvme68k/dev/clock.c
 
-device	zs: tty
+device	zs {[channel = -1]}
 attach	zs at pcc, mc
-file	arch/mvme68k/dev/zs.c			zs needs-count
+file	arch/mvme68k/dev/zs.c			zs needs-flag
+file	dev/ic/z8530sc.c			zs
+
+device	zstty: tty
+attach	zstty at zs
+file	dev/ic/z8530tty.c			zstty needs-flag
 
 device	cl: tty
 attach	cl at pcctwo
