@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.236 2013/11/19 22:20:06 halex Exp $
+#	$OpenBSD: install.sh,v 1.237 2013/12/01 01:54:23 halex Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -284,20 +284,26 @@ apply
 
 if [[ -n $user ]]; then
 	_encr=$(encr_pwd "$userpass")
-	uline="${user}:${_encr}:1000:1000:staff:0:0:${username}:/home/${user}:/bin/ksh"
+	_home=/home/$user
+	uline="${user}:${_encr}:1000:1000:staff:0:0:${username}:$_home:/bin/ksh"
 	echo "$uline" >> /mnt/etc/master.passwd
 	echo "${user}:*:1000:" >> /mnt/etc/group
 	echo ${user} > /mnt/root/.forward
 
-	mkdir -p /mnt/home/$user
-	(cd /mnt/etc/skel; cp -pR . /mnt/home/$user)
+	_home=/mnt$_home
+	mkdir -p $_home
+	(cd /mnt/etc/skel; cp -pR . $_home)
 	(umask 077 &&
 		sed "s,^To: root\$,To: ${username} <${user}>," \
 		/mnt/var/mail/root > /mnt/var/mail/$user )
-	chown -R 1000:1000 /mnt/home/$user /mnt/var/mail/$user
+	chown -R 1000:1000 $_home /mnt/var/mail/$user
 	echo "1,s@wheel:.:0:root\$@wheel:\*:0:root,${user}@
 w
 q" | ed /mnt/etc/group 2>/dev/null
+
+	# Add public ssh key to authorized_keys
+	[[ -n "$userkey" ]] &&
+		print -r -- "$userkey" >> $_home/.ssh/authorized_keys
 fi
 
 if [[ -n "$_rootpass" ]]; then

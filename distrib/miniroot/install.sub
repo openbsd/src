@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.707 2013/11/29 22:28:12 rpe Exp $
+#	$OpenBSD: install.sub,v 1.708 2013/12/01 01:54:23 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -379,6 +379,10 @@ user_setup() {
 
 	askpassword $user
 	userpass=$_password
+
+	userkey=
+	_autorespond "Public ssh key for $user" none &&
+		[[ $resp != none ]] && userkey=$resp
 
 	if [[ $sshd == y ]]; then
 		ask_yn "Since you set up a user, disable sshd(8) logins to root?" yes
