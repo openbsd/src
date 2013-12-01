@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.708 2013/12/01 01:54:23 halex Exp $
+#	$OpenBSD: install.sub,v 1.709 2013/12/01 21:01:01 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -2121,7 +2121,7 @@ done
 # free up the only bpf which exists at this point.
 #
 get_responsefile() {
-	local _f _ifdev _mac _mode _server
+	local _f _ifdev _mac _mode _server _lf
 	[[ -x /sbin/dhclient ]] || return
 
 	_ifdev=$(get_ifdevs netboot)
@@ -2144,23 +2144,30 @@ get_responsefile() {
 	ifconfig $_ifdev down
 	dhclient $_ifdev
 
-	_server=$(sed "/next-server/s/^.* \([^ ]*\);$/\1/p;d" \
-	    /var/db/dhclient.leases.$_ifdev 2>/dev/null)
-	_mode=$(sed -E '/filename/s/^.*auto_(install|upgrade).*$/\1/p;d' \
-	    /var/db/dhclient.leases.$_ifdev 2>/dev/null)
+	_lf=/var/db/dhclient.leases.$_ifdev
+	_server=$(sed "/^ *next-server /!d;s///;s/;$//;q" $_lf)
+	_mode=$(sed -E '/^ *filename "auto_(install|upgrade)";$/!d;s//\1/;q' \
+		$_lf)
 	_mac=$(ifconfig $_ifdev | sed 's/.*lladdr \(.*\)/\1/p;d')
 
-	for _f in $_mac-$_mode $_mode; do
-		ftp -o "/$_mode.conf" "http://$_server/$_f.conf"
-		[[ -s /$_mode.conf ]] && action=$_mode && break
-	done
+	if [[ -z $_server ]]; then
+		echo "Could not determine next-server."
+	elif [[ -z $_mode ]]; then
+		echo "Could not determine auto mode."
+	else
+		for _f in {$_mac-,}$_mode; do
+			ftp -o "/$_mode.conf" "http://$_server/$_f.conf" &&
+				action=$_mode && return 0
+		done
+	fi
+
+	# No response file found
+	return 1
 }
 
 # Fully automatic installation?
 if $auto && [[ -z $RESPONSEFILE ]]; then
-	action=
-	get_responsefile
-	if [[ -z $action ]]; then
+	if ! get_responsefile; then
 		echo "No response file found; non-interactive mode aborted."
 		exit 1
 	fi
