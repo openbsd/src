@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.41 2013/12/01 11:47:13 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.42 2013/12/01 20:33:57 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1174,7 +1174,6 @@ int	i915_gem_object_pin_to_display_plane(struct drm_i915_gem_object *,
 	    u32, struct intel_ring_buffer *);
 int	i915_gem_object_set_to_cpu_domain(struct drm_i915_gem_object *,
 	    bool);
-int	i915_gem_object_flush_gpu_write_domain(struct drm_i915_gem_object *);
 
 int	i915_gem_init(struct drm_device *);
 int	i915_gem_mmap_gtt(struct drm_file *, struct drm_device *,
@@ -1283,7 +1282,6 @@ void i915_gem_object_init(struct drm_i915_gem_object *obj,
 struct drm_i915_gem_object *i915_gem_alloc_object(struct drm_device *dev,
 						  size_t size);
 int i915_gpu_idle(struct drm_device *);
-void i915_gem_object_move_to_flushing(struct drm_i915_gem_object *);
 int i915_gem_object_get_fence(struct drm_i915_gem_object *);
 int i915_gem_object_put_fence(struct drm_i915_gem_object *);
 void i915_gem_reset(struct drm_device *);
