@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.154 2013/11/27 20:41:19 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.155 2013/12/01 09:13:46 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -163,22 +163,31 @@ do {									\
 #define BUG_ON(x) KASSERT(!(x))
 
 #define WARN(condition, fmt...) ({ 					\
-	if (condition)							\
+	int __ret = !!(condition);					\
+	if (__ret)							\
 		printf(fmt);						\
-	(condition);							\
+	unlikely(__ret);						\
 })
 
 #define _WARN_STR(x) #x
 
 #define WARN_ON(condition) ({						\
-	if (condition)							\
+	int __ret = !!(condition);					\
+	if (__ret)							\
 		printf("WARNING %s failed at %s:%d\n",			\
 		    _WARN_STR(condition), __FILE__, __LINE__);		\
-	(condition);							\
+	unlikely(__ret);						\
 })
 
 #define WARN_ON_ONCE(condition) ({					\
-	(condition);							\
+	static int __warned;						\
+	int __ret = !!(condition);					\
+	if (__ret && !__warned) {					\
+		printf("WARNING %s failed at %s:%d\n",			\
+		    _WARN_STR(condition), __FILE__, __LINE__);		\
+		__warned = 1;						\
+	}								\
+	unlikely(__ret);						\
 })
 
 #define IS_ERR_VALUE(x) unlikely((x) >= (unsigned long)-ELAST)
