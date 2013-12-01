@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.17 2013/11/11 02:53:26 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.18 2013/12/01 14:20:02 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -9013,6 +9013,9 @@ static struct intel_quirk intel_quirks[] = {
 
 	/* Acer/Packard Bell NCL20 */
 	{ 0x2a42, 0x1025, 0x034b, quirk_invert_brightness },
+
+	/* Acer Aspire 4736Z */
+	{ 0x2a42, 0x1025, 0x0260, quirk_invert_brightness },
 };
 
 static void intel_init_quirks(struct drm_device *dev)
