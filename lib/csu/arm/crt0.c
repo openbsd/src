@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.4 2013/11/10 19:44:17 guenther Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.5 2013/12/01 17:18:30 guenther Exp $	*/
 /*	$NetBSD: crt0.c,v 1.6 2002/01/01 01:31:06 thorpej Exp $	*/
 
 /*
@@ -107,9 +107,7 @@ ___start(int argc, char **argv, char **envp, void (*cleanup)(void))
 	monstartup((u_long)&_eprol, (u_long)&_etext);
 #endif	/* MCRT0 */
 
-#ifndef SCRT0
         __init();
-#endif
 
 __asm("__callmain:");		/* Defined for the benefit of debuggers */
 	exit(main(argc, argv, envp));

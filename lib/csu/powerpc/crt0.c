@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.7 2012/12/31 10:07:51 miod Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.8 2013/12/01 17:18:31 guenther Exp $	*/
 /*	$NetBSD: crt0.c,v 1.1 1996/09/12 16:59:02 cgd Exp $	*/
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -159,9 +159,7 @@ ___start(int argc, char **argv, char **envp, void *aux, void (*cleanup)(void))
 	monstartup((u_long)&_eprol, (u_long)&_etext);
 #endif
 
-#ifndef SCRT0
 	__init();
-#endif
 
 	exit(main(argc, argv, environ));
 }
