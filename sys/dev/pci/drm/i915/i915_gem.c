@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.51 2013/12/01 11:47:13 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.52 2013/12/01 12:58:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -4553,7 +4553,7 @@ i915_gem_inactive_shrink(struct shrinker *shrinker, struct shrink_control *sc)
 	list_for_each_entry(obj, &dev_priv->mm.unbound_list, gtt_list)
 		if (obj->pages_pin_count == 0)
 			cnt += obj->base.size >> PAGE_SHIFT;
-	list_for_each_entry(obj, &dev_priv->mm.inactive_list, gtt_list)
+	list_for_each_entry(obj, &dev_priv->mm.inactive_list, mm_list)
 		if (obj->pin_count == 0 && obj->pages_pin_count == 0)
 			cnt += obj->base.size >> PAGE_SHIFT;
 
