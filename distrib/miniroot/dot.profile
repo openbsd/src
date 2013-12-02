@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.20 2013/11/28 00:09:21 rpe Exp $
+#	$OpenBSD: dot.profile,v 1.21 2013/12/02 20:55:11 halex Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -90,7 +90,7 @@ __EOT
 	fi
 
 	while :; do
-		echo -n '(A)utoinstall, (I)nstall, (U)pgrade or (S)hell? '
+		echo -n '(I)nstall, (U)pgrade, (A)utoinstall or (S)hell? '
 		read REPLY
 
 		# If the timeout has expired, begin the installation.
