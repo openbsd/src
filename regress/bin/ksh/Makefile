@@ -1,36 +1,19 @@
-# $OpenBSD: Makefile,v 1.7 2013/06/09 13:27:27 millert Exp $
+# $OpenBSD: Makefile,v 1.8 2013/12/02 20:39:44 millert Exp $
 
-REGRESS_TARGETS=shcrash.sh seterror.sh varfunction.sh eval.sh eval2.sh eval3.sh eval4.sh
+REGRESS_TARGETS=check
+KSH=/bin/ksh
+PERL=/usr/bin/perl
+CATEGORIES=pdksh,sh,ksh,posix,posix-upu
 
-shcrash.sh:
-	ulimit -c 0 && sh ${.CURDIR}/shcrash.sh
+# Avoid /tmp for test temp files if we have an obj dir
+.if ${.CURDIR} != ${.OBJDIR}
+TEMPDIR=${.OBJDIR}
+.else
+TEMPDIR=/tmp
+.endif
 
-seterror.sh:
-	sh ${.CURDIR}/seterror.sh
-
-varfunction.sh:
-	sh ${.CURDIR}/varfunction.sh
-
-eval.sh:
-	test `sh ${.CURDIR}/eval.sh | wc -l` == 4
-
-eval2.sh:
-	# this should not print
-	test `sh ${.CURDIR}/eval2.sh|wc -c` == 0
-	# and it should return an error
-	if ! sh ${.CURDIR}/eval2.sh >/dev/null; then true; else false; fi
-
-eval3.sh:
-	# this should not print
-	test `sh ${.CURDIR}/eval3.sh|wc -c` == 0
-	# and it should return an error
-	if ! sh ${.CURDIR}/eval3.sh >/dev/null; then true; else false; fi
-
-eval4.sh:
-	# this should not print
-	test `sh ${.CURDIR}/eval4.sh|wc -c` == 0
-	# and it should return an error
-	if ! sh ${.CURDIR}/eval4.sh >/dev/null; then true; else false; fi
+check test:
+	${PERL} ${.CURDIR}/th -s ${.CURDIR} -p ${KSH} -C ${CATEGORIES} -T ${TEMPDIR}
 
 .PHONY: ${REGRESS_TARGETS}
 
