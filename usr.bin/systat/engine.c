@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.16 2013/11/26 21:08:12 deraadt Exp $	 */
+/* $Id: engine.c,v 1.17 2013/12/02 02:33:41 krw Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -45,11 +45,11 @@
 #endif
 
 /* circular linked list of views */
-CIRCLEQ_HEAD(view_list, view_ent) view_head =
-				  CIRCLEQ_HEAD_INITIALIZER(view_head);
+TAILQ_HEAD(view_list, view_ent) view_head =
+				  TAILQ_HEAD_INITIALIZER(view_head);
 struct view_ent {
 	field_view *view;
-	CIRCLEQ_ENTRY(view_ent) entries;
+	TAILQ_ENTRY(view_ent) entries;
 };
 
 useconds_t udelay = 5000000;
@@ -567,7 +567,7 @@ add_view(field_view *fv)
 		return;
 
 	ent->view = fv;
-	CIRCLEQ_INSERT_TAIL(&view_head, ent, entries);
+	TAILQ_INSERT_TAIL(&view_head, ent, entries);
 
 	if (curr_view == NULL)
 		set_curr_view(ent);
@@ -583,7 +583,7 @@ set_view(const char *opt)
 	if (opt == NULL || (len = strlen(opt)) == 0)
 		return 1;
 
-	CIRCLEQ_FOREACH(ve, &view_head, entries) {
+	TAILQ_FOREACH(ve, &view_head, entries) {
 		v = ve->view;
 		if (strncasecmp(opt, v->name, len) == 0) {
 			if (vm)
@@ -605,7 +605,7 @@ foreach_view(void (*callback)(field_view *))
 {
 	struct view_ent *ve;
 
-	CIRCLEQ_FOREACH(ve, &view_head, entries) {
+	TAILQ_FOREACH(ve, &view_head, entries) {
 		callback(ve->view);
 	}
 }
@@ -617,7 +617,7 @@ set_view_hotkey(int ch)
 	field_view *v;
 	int key = tolower(ch);
 
-	CIRCLEQ_FOREACH(ve, &view_head, entries) {
+	TAILQ_FOREACH(ve, &view_head, entries) {
 		v = ve->view;
 		if (key == v->hotkey) {
 			set_curr_view(ve);
@@ -633,12 +633,12 @@ next_view(void)
 {
 	struct view_ent *ve;
 
-	if (CIRCLEQ_EMPTY(&view_head) || curr_view_ent == NULL)
+	if (TAILQ_EMPTY(&view_head) || curr_view_ent == NULL)
 		return;
 
-	ve = CIRCLEQ_NEXT(curr_view_ent, entries);
-	if (ve == CIRCLEQ_END(&view_head))
-		ve = CIRCLEQ_FIRST(&view_head);
+	ve = TAILQ_NEXT(curr_view_ent, entries);
+	if (ve == NULL)
+		ve = TAILQ_FIRST(&view_head);
 
 	set_curr_view(ve);
 }
@@ -648,12 +648,12 @@ prev_view(void)
 {
 	struct view_ent *ve;
 
-	if (CIRCLEQ_EMPTY(&view_head) || curr_view_ent == NULL)
+	if (TAILQ_EMPTY(&view_head) || curr_view_ent == NULL)
 		return;
 
-	ve = CIRCLEQ_PREV(curr_view_ent, entries);
-	if (ve == CIRCLEQ_END(&view_head))
-		ve = CIRCLEQ_LAST(&view_head);
+	ve = TAILQ_PREV(curr_view_ent, view_list, entries);
+	if (ve == NULL)
+		ve = TAILQ_LAST(&view_head, view_list);
 
 	set_curr_view(ve);
 }
