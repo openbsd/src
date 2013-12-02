@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ln.1,v 1.30 2013/03/12 06:00:05 guenther Exp $
+.\"	$OpenBSD: ln.1,v 1.31 2013/12/02 22:19:30 sobrado Exp $
 .\"	$NetBSD: ln.1,v 1.10 1995/07/25 19:37:04 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)ln.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: March 12 2013 $
+.Dd $Mdocdate: December 2 2013 $
 .Dt LN 1
 .Os
 .Sh NAME
@@ -72,9 +72,11 @@ If the target is a symlink to a directory, do not descend into it.
 When creating a hard link and the source is a symbolic link,
 link to the fully resolved target of the symbolic link.
 This is the default.
-This option cancels the
+The
+.Fl L
+option overrides any previous
 .Fl P
-option.
+options.
 .It Fl n
 An alias for
 .Fl h
@@ -82,9 +84,11 @@ for compatibility with other operating systems.
 .It Fl P
 When creating a hard link and the source is a symbolic link,
 link to the symbolic link itself.
-This option cancels the
+The
+.Fl P
+option overrides any previous
 .Fl L
-option.
+options.
 .It Fl s
 Create a symbolic link.
 .El
