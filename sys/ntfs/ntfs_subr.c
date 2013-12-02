@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.35 2013/12/02 16:19:08 jsing Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.36 2013/12/02 16:23:16 jsing Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -1389,7 +1389,7 @@ ntfs_writentvattr_plain(struct ntfsmount *ntmp, struct ntnode *ip,
     struct uio *uio)
 {
 	int             error = 0;
-	int             off;
+	off_t		off;
 	int             cnt;
 	cn_t            ccn, ccl, cn, left, cl;
 	caddr_t         data = rdata;
@@ -1491,7 +1491,7 @@ ntfs_readntvattr_plain(struct ntfsmount *ntmp, struct ntnode *ip,
     struct uio *uio)
 {
 	int             error = 0;
-	int             off;
+	off_t		off;
 
 	*initp = 0;
 	if (vap->va_flag & NTFS_AF_INRUN) {
