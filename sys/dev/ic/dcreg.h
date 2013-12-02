@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.48 2010/09/07 16:21:42 deraadt Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.49 2013/12/02 23:40:41 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -730,7 +730,6 @@ struct dc_softc {
 	int			dc_romwidth;
 	int			dc_pnic_rx_bug_save;
 	unsigned char		*dc_pnic_rx_buf;
-	int			dc_if_flags;
 	int			dc_if_media;
 	u_int32_t		dc_flags;
 	u_int32_t		dc_txthresh;
