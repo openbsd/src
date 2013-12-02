@@ -5877,7 +5877,7 @@ msdosdjgpp*)
 next*)
 	TRY_CFLAGS="$TRY_CFLAGS -DNEXT"
 	;;
-openbsd* | ekkobsd* | mirbsd*)
+ekkobsd* | mirbsd*)
 	LIBS="$LIBS -lcompat"
 	;;
 osf4*)
