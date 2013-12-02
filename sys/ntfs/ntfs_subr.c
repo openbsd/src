@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.34 2013/12/02 16:05:07 jsing Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.35 2013/12/02 16:19:08 jsing Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -579,7 +579,7 @@ ntfs_attrtontvattr(struct ntfsmount *ntmp, struct ntvattr **rvapp,
 		memcpy(vap->va_datap, (caddr_t) rap + rap->a_r.a_dataoff,
 		       rap->a_r.a_datalen);
 	}
-	DDPRINTF(", len: %u", vap->va_datalen);
+	DDPRINTF(", len: %llu", vap->va_datalen);
 
 	if (error)
 		free(vap, M_NTFSNTVATTR);
@@ -1179,7 +1179,7 @@ ntfs_ntreaddir(struct ntfsmount *ntmp, struct fnode *fp, u_int32_t num,
 			goto fail;
 		}
 		cpbl = ntfs_btocn(blsize + ntfs_cntob(1) - 1);
-		DPRINTF("ntfs_ntreaddir: indexalloc: %u, cpbl: %u\n",
+		DPRINTF("ntfs_ntreaddir: indexalloc: %llu, cpbl: %u\n",
 		    iavap->va_datalen, cpbl);
 	} else {
 		DPRINTF("ntfs_ntreadidir: w/o BitMap and IndexAllocation\n");
@@ -1677,7 +1677,7 @@ ntfs_readattr(struct ntfsmount *ntmp, struct ntnode *ip, u_int32_t attrnum,
 
 	if ((roff > vap->va_datalen) ||
 	    (roff + rsize > vap->va_datalen)) {
-		printf("ntfs_readattr: offset too big: %lld (%lld) > %u\n",
+		printf("ntfs_readattr: offset too big: %lld (%lld) > %llu\n",
 		    roff, roff + rsize, vap->va_datalen);
 		ntfs_ntvattrrele(vap);
 		return (E2BIG);
