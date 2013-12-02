@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.36 2013/11/24 16:02:30 jsing Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.37 2013/12/02 16:05:07 jsing Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -334,12 +334,12 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp,
 		else
 			ntmp->ntm_bpmftrec = (1 << (-cpr)) / ntmp->ntm_bps;
 	}
-	DPRINTF("ntfs_mountfs(): bps: %d, spc: %d, media: %x, "
-	    "mftrecsz: %d (%d sects)\n", ntmp->ntm_bps, ntmp->ntm_spc,
+	DPRINTF("ntfs_mountfs(): bps: %u, spc: %u, media: %x, "
+	    "mftrecsz: %u (%u sects)\n", ntmp->ntm_bps, ntmp->ntm_spc,
 	    ntmp->ntm_bootfile.bf_media, ntmp->ntm_mftrecsz,
 	    ntmp->ntm_bpmftrec);
-	DPRINTF("ntfs_mountfs(): mftcn: 0x%x|0x%x\n",
-	    (u_int32_t)ntmp->ntm_mftcn, (u_int32_t)ntmp->ntm_mftmirrcn);
+	DPRINTF("ntfs_mountfs(): mftcn: 0x%llx|0x%llx\n",
+	    ntmp->ntm_mftcn, ntmp->ntm_mftmirrcn);
 
 	ntmp->ntm_mountp = mp;
 	ntmp->ntm_dev = dev;
@@ -643,7 +643,7 @@ ntfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	struct ntfid *ntfhp = (struct ntfid *)fhp;
 	int error;
 
-	DDPRINTF("ntfs_fhtovp(): %s: %d\n",
+	DDPRINTF("ntfs_fhtovp(): %s: %u\n",
 	    mp->mnt_stat.f_mntonname, ntfhp->ntfid_ino);
 
 	error = ntfs_vgetex(mp, ntfhp->ntfid_ino, ntfhp->ntfid_attr, NULL,
@@ -691,9 +691,8 @@ ntfs_vgetex(struct mount *mp, ntfsino_t ino, u_int32_t attrtype, char *attrname,
 	struct vnode *vp;
 	enum vtype f_type;
 
-	DPRINTF("ntfs_vgetex: ino: %d, attr: 0x%x:%s, lkf: 0x%lx, f: 0x%lx\n",
-	    ino, attrtype, attrname ? attrname : "", (u_long)lkflags,
-	    (u_long)flags);
+	DPRINTF("ntfs_vgetex: ino: %u, attr: 0x%x:%s, lkf: 0x%lx, f: 0x%lx\n",
+	    ino, attrtype, attrname ? attrname : "", lkflags, flags);
 
 	ntmp = VFSTONTFS(mp);
 	*vpp = NULL;
@@ -771,7 +770,7 @@ ntfs_vgetex(struct mount *mp, ntfsino_t ino, u_int32_t attrtype, char *attrname,
 
 		return (error);
 	}
-	DPRINTF("ntfs_vget: vnode: %p for ntnode: %d\n", vp, ino);
+	DPRINTF("ntfs_vget: vnode: %p for ntnode: %u\n", vp, ino);
 
 	fp->f_vp = vp;
 	vp->v_data = fp;
