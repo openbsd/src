@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.389 2013/11/25 14:39:29 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.390 2013/12/02 08:32:20 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 25 2013 $
+.Dd $Mdocdate: December 2 2013 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -315,14 +315,14 @@ to
 instead.
 After stripping that extension if necessary,
 if the entry parses as
-.Sq Ar filename Ns { Ns Ar url Ns }
+.Sq Ar filename Ns { Ns Ar url Ns } Ns Ar sufx
 it will be fetched as
-.Ar url
+.Ar url Ns Ar sufx
 instead, yet still stored as
-.Ar filename .
+.Ar filename Ns Ar sufx .
 .Pp
 Transfers in progress will be stored as
-.Ar filename.part .
+.Ar filenamesufx.part .
 .Pp
 The ports framework uses
 .Pa ${DISTDIR}/${DIST_SUBDIR}
@@ -727,6 +727,11 @@ suitable for
 .It Ar show-prepare-results
 Print the list of actual installed packages found out by
 .Ar prepare .
+.It Ar show-prepare-test-results
+Print the list of actual installed packages found out by
+.Ar prepare
+and
+.Ar test-depends .
 .It Ar show-required-by
 Print the list of
 .Xr pkgpath 7
@@ -1420,13 +1425,26 @@ to
 .Sq :9
 appended to select a different
 .Ev MASTER_SITES .
+.Pp
 Each entry may optionally be of the form
-.Sq Ar filename Ns { Ns Ar url Ns }
+.Sq Ar filename Ns { Ns Ar url Ns } Ns Ar sufx
 to deal with sites that only offer archives as weird urls, doing the transfer
 of
-.Ar url
+.Ar url Ns Ar sufx
 into result file
-.Ar filename .
+.Ar filename Ns Ar sufx .
+For instance, if
+.Bd -literal
+DISTFILES = minetest-{minetest/archive/}${V}${EXTRACT_SUFX}
+.Ed
+.Pp
+then
+.Ar fetch
+will retrieve from url
+.Sq minetest/archive/${V}${EXTRACT_SUFX}
+into
+.Sq minetest-${V}${EXTRACT_SUFX} .
+.Pp
 If ${DISTFILES} varies depending on FLAVORS or architecture,
 use
 .Ev SUPDISTFILES
