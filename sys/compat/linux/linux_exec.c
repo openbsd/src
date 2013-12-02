@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.39 2013/12/02 19:47:04 deraadt Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.40 2013/12/02 19:47:28 deraadt Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*-
@@ -218,7 +218,7 @@ linux_elf_probe(struct proc *p, struct exec_package *epp, char *itp,
 	 * If this is a static binary, do not allow it to run, as it
 	 * has not been identified. We'll give non-static binaries a
 	 * chance to run, as the Linux ld.so name is usually unique
-	 * enough to clear any amibiguity.
+	 * enough to clear any ambiguity.
 	 */
 	if (itp == NULL)
 		return (EINVAL);
