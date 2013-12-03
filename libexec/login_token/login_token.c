@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_token.c,v 1.10 2013/01/13 21:21:17 fgsch Exp $	*/
+/*	$OpenBSD: login_token.c,v 1.11 2013/12/03 01:29:00 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Berkeley Software Design, Inc. All rights reserved.
@@ -41,9 +41,10 @@
 #include <err.h>
 #include <readpassphrase.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <syslog.h>
-#include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 #include <login_cap.h>

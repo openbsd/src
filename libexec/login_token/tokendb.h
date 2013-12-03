@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokendb.h,v 1.4 2002/11/21 22:11:45 millert Exp $	*/
+/*	$OpenBSD: tokendb.h,v 1.5 2013/12/03 01:29:00 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -41,7 +41,7 @@
  */
 
 typedef	struct	{
-	char	uname[L_cuserid];	/* user login name	*/
+	char	uname[LOGIN_NAME_MAX];	/* user login name	*/
 	char	secret[16];		/* token shared secret	*/
 	unsigned flags;			/* record flags		*/
 	unsigned mode;			/* token mode flags	*/

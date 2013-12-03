@@ -1,4 +1,4 @@
-/*	$OpenBSD: token.c,v 1.17 2013/11/27 21:25:25 deraadt Exp $	*/
+/*	$OpenBSD: token.c,v 1.18 2013/12/03 01:29:00 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -46,6 +46,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <syslog.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

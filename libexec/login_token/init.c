@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.4 2013/01/13 21:21:17 fgsch Exp $	*/
+/*	$OpenBSD: init.c,v 1.5 2013/12/03 01:29:00 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
@@ -35,6 +35,7 @@
  */
 
 #include <sys/types.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
