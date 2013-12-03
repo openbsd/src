@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_file.c,v 1.5 2013/10/07 18:25:32 syl Exp $ */
+/* $OpenBSD: fuse_file.c,v 1.6 2013/12/03 09:32:23 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -30,6 +30,9 @@ fusefs_file_open(struct fusefs_mnt *fmp, struct fusefs_node *ip,
 	struct fusebuf *fbuf;
 	int error = 0;
 
+	if (!fmp->sess_init)
+		return (0);
+
 	fbuf = fb_setup(0, ip->ufs_ino.i_number,
 	    ((isdir) ? FBT_OPENDIR : FBT_OPEN), p);
 	fbuf->fb_io_flags = flags;
@@ -54,19 +57,22 @@ fusefs_file_close(struct fusefs_mnt *fmp, struct fusefs_node * ip,
 	struct fusebuf *fbuf;
 	int error = 0;
 
-	fbuf = fb_setup(0, ip->ufs_ino.i_number,
-	    ((isdir) ? FBT_RELEASEDIR : FBT_RELEASE), p);
-	fbuf->fb_io_fd  = ip->fufh[fufh_type].fh_id;
-	fbuf->fb_io_flags = flags;
+	if (fmp->sess_init) {
+		fbuf = fb_setup(0, ip->ufs_ino.i_number,
+		    ((isdir) ? FBT_RELEASEDIR : FBT_RELEASE), p);
+		fbuf->fb_io_fd  = ip->fufh[fufh_type].fh_id;
+		fbuf->fb_io_flags = flags;
 
-	error = fb_queue(fmp->dev, fbuf);
-	if (error)
-		printf("fusefs: file error %d\n", error);
+		error = fb_queue(fmp->dev, fbuf);
+		if (error)
+			printf("fusefs: file error %d\n", error);
+
+		fb_delete(fbuf);
+	}
 
 	ip->fufh[fufh_type].fh_id = (uint64_t)-1;
 	ip->fufh[fufh_type].fh_type = FUFH_INVALID;
 
-	fb_delete(fbuf);
 	return (error);
 }
 

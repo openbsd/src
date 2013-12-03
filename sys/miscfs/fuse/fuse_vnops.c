@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.9 2013/10/07 18:25:32 syl Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.10 2013/12/03 09:32:23 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -893,6 +893,8 @@ fusefs_read(void *v)
 	ip = VTOI(vp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
+	if (!fmp->sess_init)
+		return (ENXIO);
 	if (uio->uio_resid == 0)
 		return (error);
 	if (uio->uio_offset < 0)
@@ -942,6 +944,8 @@ fusefs_write(void *v)
 	ip = VTOI(vp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
+	if (!fmp->sess_init)
+		return (ENXIO);
 	if (uio->uio_resid == 0)
 		return (error);
 
