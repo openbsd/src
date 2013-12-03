@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: getdate.y,v 1.7 2013/04/19 17:28:07 deraadt Exp $	*/
+/*	$OpenBSD: getdate.y,v 1.8 2013/12/03 00:21:21 deraadt Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -15,7 +15,6 @@
 /* SUPPRESS 288 on yyerrlab *//* Label unused */
 
 #include <sys/types.h>
-#include <sys/timeb.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
