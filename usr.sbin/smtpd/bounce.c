@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.59 2013/11/06 10:01:29 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.60 2013/12/03 08:32:40 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -508,11 +508,7 @@ bounce_delivery(struct bounce_message *msg, int delivery, const char *status)
 	struct bounce_envelope	*be;
 	struct envelope		 evp;
 	size_t			 n;
-
-	log_debug("debug: bounce: status %s for message %08"PRIx32": %s",
-	    imsg_to_str(delivery),
-	    msg->msgid,
-	    status);
+	const char		*f;
 
 	n = 0;
 	while ((be = TAILQ_FIRST(&msg->envelopes))) {
@@ -539,6 +535,19 @@ bounce_delivery(struct bounce_message *msg, int delivery, const char *status)
 		free(be);
 		n += 1;
 	}
+
+
+	if (delivery == IMSG_DELIVERY_TEMPFAIL)
+		f = "TempFail";
+	else if (delivery == IMSG_DELIVERY_PERMFAIL)
+		f = "PermFail";
+	else
+		f = NULL;
+
+	if (f)
+		log_warnx("warn: %s injecting failure report on message %08"PRIx32
+		    " to <%s> for %zu envelope%s: %s",
+		    f, msg->msgid, msg->to, n, n > 1 ? "s":"", status);
 
 	nmessage -= 1;
 	stat_decrement("bounce.message", 1);
