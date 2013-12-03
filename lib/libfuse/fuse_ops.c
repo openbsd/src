@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.14 2013/11/21 22:03:26 syl Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.15 2013/12/03 09:59:40 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -757,6 +757,20 @@ ifuse_ops_destroy(struct fuse *f)
 	return (0);
 }
 
+static int
+ifuse_ops_reclaim(struct fuse *f, struct fusebuf *fbuf)
+{
+	struct fuse_vnode *vn;
+
+	vn = tree_pop(&f->vnode_tree, fbuf->fb_ino);
+	if (vn) {
+		remove_vnode_from_name_tree(f, vn);
+		free(vn);
+	}
+
+	return (0);
+}
+
 int
 ifuse_exec_opcode(struct fuse *f, struct fusebuf *fbuf)
 {
@@ -831,6 +845,9 @@ ifuse_exec_opcode(struct fuse *f, struct fusebuf *fbuf)
 		break;
 	case FBT_DESTROY:
 		ret = ifuse_ops_destroy(f);
+		break;
+	case FBT_RECLAIM:
+		ret = ifuse_ops_reclaim(f, fbuf);
 		break;
 	default:
 		DPRINTF("Opcode:\t%i not supported\n", fbuf->fb_type);

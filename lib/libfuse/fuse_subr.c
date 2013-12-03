@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_subr.c,v 1.5 2013/10/07 18:41:01 syl Exp $ */
+/* $OpenBSD: fuse_subr.c,v 1.6 2013/12/03 09:59:40 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -78,6 +78,40 @@ set_vn(struct fuse *f, struct fuse_vnode *v)
 	dict_set(&f->name_tree, v->path, vn_head);
 
 	return (1);
+}
+
+void
+remove_vnode_from_name_tree(struct fuse *f, struct fuse_vnode *vn)
+{
+	struct fuse_vn_head *vn_head;
+	struct fuse_vnode *v;
+	struct fuse_vnode *lastv;
+
+	vn_head = dict_get(&f->name_tree, vn->path);
+	if (vn_head == NULL)
+		return;
+
+	lastv = NULL;
+	SIMPLEQ_FOREACH(v, vn_head, node) {
+		if (v->parent == vn->parent)
+			break;
+
+		lastv = v;
+	}
+	if (v == NULL)
+		return;
+
+	/* if we found the vnode remove it */
+	if (v == SIMPLEQ_FIRST(vn_head))
+		SIMPLEQ_REMOVE_HEAD(vn_head, node);
+	else
+		SIMPLEQ_REMOVE_AFTER(vn_head, lastv, node);
+
+	/* if the queue is empty we need to remove it from the dict */
+	if (SIMPLEQ_EMPTY(vn_head)) {
+		vn_head = dict_pop(&f->name_tree, vn->path);
+		free(vn_head);
+	}
 }
 
 struct fuse_vnode *

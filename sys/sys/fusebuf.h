@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.h,v 1.7 2013/11/13 17:53:54 stsp Exp $ */
+/* $OpenBSD: fusebuf.h,v 1.8 2013/12/03 09:59:40 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon
  * Copyright (c) 2013 Martin Pieuchot
@@ -127,6 +127,7 @@ struct fusebuf {
 #define FBT_ACCESS	24
 #define FBT_CREATE	25
 #define FBT_DESTROY	26
+#define FBT_RECLAIM	27
 
 #ifdef _KERNEL
 
