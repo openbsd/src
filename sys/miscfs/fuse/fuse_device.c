@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.10 2013/11/28 12:53:59 syl Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.11 2013/12/03 09:53:37 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -19,6 +19,7 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
+#include <sys/mount.h>
 #include <sys/poll.h>
 #include <sys/statvfs.h>
 #include <sys/vnode.h>
@@ -163,7 +164,6 @@ fuse_device_cleanup(dev_t dev, struct fusebuf *fbuf)
 	if (fd == NULL)
 		return;
 
-	fd->fd_fmp = NULL;
 	/* clear FIFO IN*/
 	while ((f = SIMPLEQ_FIRST(&fd->fd_fbufs_in))) {
 		if (fbuf == f || fbuf == NULL) {
@@ -238,6 +238,7 @@ int
 fuseclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct fuse_d *fd;
+	int error;
 
 	fd = fuse_lookup(minor(dev));
 	if (fd == NULL)
@@ -246,9 +247,15 @@ fuseclose(dev_t dev, int flags, int fmt, struct proc *p)
 	if (fd->fd_fmp) {
 		printf("fuse: device close without umount\n");
 		fd->fd_fmp->sess_init = 0;
+		if ((vfs_busy(fd->fd_fmp->mp, VB_WRITE|VB_NOWAIT)) != 0)
+			goto end;
+		if ((error = dounmount(fd->fd_fmp->mp, MNT_FORCE, curproc,
+		    NULL)) != 0)
+			printf("fuse: unmount failed with error %d\n", error);
 		fd->fd_fmp = NULL;
 	}
 
+end:
 	fuse_destroy(dev, fd);
 	stat_opened_fusedev--;
 	return (0);
