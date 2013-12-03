@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.1 2004/01/08 14:59:15 drahn Exp $ */
+/* $OpenBSD: md_init.h,v 1.2 2013/12/03 06:21:41 guenther Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -56,4 +56,25 @@
 	".section "#sect",\"ax\",@progbits	\n" \
 	"	ret				\n" \
 	"	 restore			\n" \
+	"	.previous")
+
+
+#define	MD_CRT0_START				\
+	__asm(					\
+	".text					\n" \
+	"	.align	4			\n" \
+	"	.global	__start			\n" \
+	"	.global	_start			\n" \
+	"__start:				\n" \
+	"_start:				\n" \
+	"	mov	0, %fp			\n" \
+	"	ld	[%sp + 64], %o0	! get argc\n" \
+	"	add	%sp, 68, %o1	! get argv\n" \
+	"	sll	%o0, 2,	%o2		\n" \
+	"	add	%o2, 4,	%o2	! envp = argv + (argc << 2) + 4\n" \
+	"	add	%o1, %o2, %o2		\n" \
+	"	andn	%sp, 7,	%sp	! align	\n" \
+	"	sub	%sp, 24, %sp	! expand to standard frame size\n" \
+	"	call	___start		\n" \
+	"	 mov	%g1, %o3		\n" \
 	"	.previous")

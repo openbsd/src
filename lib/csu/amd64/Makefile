@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2011/11/08 10:37:09 guenther Exp $
+#	$OpenBSD: Makefile,v 1.8 2013/12/03 06:21:40 guenther Exp $
 
 CFLAGS+=	-fno-omit-frame-pointer
 OBJS=		crt0.o gcrt0.o
@@ -13,14 +13,14 @@ CFLAGS+=	-I${ELFDIR} -I${.CURDIR}
 all: ${OBJS}
 
 crt0.o: crt0.c
-	@echo ${COMPILE.c} -DCRT0 -fpie ${.CURDIR}/crt0.c -o ${.TARGET}
-	@${COMPILE.c} -DCRT0 -fpie ${.CURDIR}/crt0.c -o ${.TARGET}.o
+	@echo ${COMPILE.c} -DCRT0 -fpie ${ELFDIR}/crt0.c -o ${.TARGET}
+	@${COMPILE.c} -DCRT0 -fpie ${ELFDIR}/crt0.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 gcrt0.o: crt0.c
-	@echo ${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}
-	@${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}.o
+	@echo ${COMPILE.c} -DMCRT0 ${ELFDIR}/crt0.c -o ${.TARGET}
+	@${COMPILE.c} -DMCRT0 ${ELFDIR}/crt0.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.3 2012/12/23 12:00:48 kettenis Exp $ */
+/* $OpenBSD: md_init.h,v 1.4 2013/12/03 06:21:41 guenther Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -61,4 +61,26 @@
 	".section "#sect",\"ax\",@progbits	\n" \
 	"	leave				\n" \
 	"	ret				\n" \
+	"	.previous")
+
+
+#define	MD_CRT0_START				\
+	__asm(					\
+	".text					\n" \
+	"	.align	4			\n" \
+	"	.globl	__start			\n" \
+	"	.globl	_start			\n" \
+	"_start:				\n" \
+	"__start:				\n" \
+	"	movl	%esp,%ebp		\n" \
+	"	andl	$~15,%esp	# align stack\n" \
+	"	pushl	%edx		# cleanup\n" \
+	"	movl	0(%ebp),%eax		\n" \
+	"	leal	8(%ebp,%eax,4),%ecx	\n" \
+	"	leal	4(%ebp),%edx		\n" \
+	"	pushl	%ecx			\n" \
+	"	pushl	%edx			\n" \
+	"	pushl	%eax			\n" \
+	"	xorl	%ebp,%ebp	# mark deepest stack frame\n" \
+	"	call	___start		\n" \
 	"	.previous")

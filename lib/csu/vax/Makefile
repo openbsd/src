@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2013/07/05 21:10:50 miod Exp $
+#	$OpenBSD: Makefile,v 1.10 2013/12/03 06:21:41 guenther Exp $
 #	from: @(#)Makefile	5.6 (Berkeley) 5/22/91
 
 OBJS=		crt0.o gcrt0.o crtbegin.o crtend.o crtbeginS.o crtendS.o
@@ -14,14 +14,14 @@ PICFLAG=
 all: ${OBJS}
 
 crt0.o: crt0.c
-	@echo ${COMPILE.c} -DCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}
-	@${COMPILE.c} -DCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}.o
+	@echo ${COMPILE.c} -DCRT0 ${ELFDIR}/crt0.c -o ${.TARGET}
+	@${COMPILE.c} -DCRT0 ${ELFDIR}/crt0.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 gcrt0.o: crt0.c
-	@echo ${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}
-	@${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}.o
+	@echo ${COMPILE.c} -DMCRT0 ${ELFDIR}/crt0.c -o ${.TARGET}
+	@${COMPILE.c} -DMCRT0 ${ELFDIR}/crt0.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 

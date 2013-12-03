@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.1 2013/02/02 13:29:14 miod Exp $ */
+/* $OpenBSD: md_init.h,v 1.2 2013/12/03 06:21:41 guenther Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -53,3 +53,19 @@
 	".section "#sect",\"ax\",@progbits	\n" \
 	"	rts				\n" \
 	"	.previous")
+
+
+#define	MD_CRT0_START					\
+	__asm(						\
+	".text						\n" \
+	"	.align	2				\n" \
+	"	.globl	__start				\n" \
+	"__start:					\n" \
+	"	movl	%sp,%a0				\n" \
+	"	movl	(%a0)+,%d0	| argc		\n" \
+	"	movl	%a1,-(%sp)	| cleanup	\n" \
+	"	pea	4(%a0,%d0.l*4)	| envp		\n" \
+	"	movl	%a0,-(%sp)	| argv		\n" \
+	"	movl	%d0,-(%sp)	| argc		\n" \
+	"	jsr	___start			\n" \
+	".previous")

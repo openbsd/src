@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.3 2011/09/19 21:05:29 kettenis Exp $ */
+/* $OpenBSD: md_init.h,v 1.4 2013/12/03 06:21:41 guenther Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -58,3 +58,41 @@
 	"	bv %r0(%rp)				\n"	\
 	"	ldo -128(%sp),%sp			\n"	\
 	"	.previous")
+
+#include <sys/exec.h>		/* for struct psstrings */
+
+/* XXX no cleanup() callback passed to __start yet? */
+#define	MD_NO_CLEANUP
+
+#define	MD_CRT0_START						\
+	__asm(							\
+	".import $global$, data					\n" \
+	"	.import ___start, code				\n" \
+	"	.text						\n" \
+	"	.align	4					\n" \
+	"	.export _start, entry				\n" \
+	"	.export __start, entry				\n" \
+	"	.type	_start,@function			\n" \
+	"	.type	__start,@function			\n" \
+	"	.label _start					\n" \
+	"	.label __start					\n" \
+	"	.proc						\n" \
+	"	.callin_fo frame=0, calls			\n" \
+	"	.entry						\n" \
+	"	ldil	L%__gp, %r27				\n" \
+	"	.call						\n" \
+	"	b	___start				\n" \
+	"	ldo	R%__gp(%r27), %r27			\n" \
+	"	.exit						\n" \
+	"	.procend")
+
+#define	MD_START_ARGS	struct ps_strings *arginfo, void (*cleanup)(void)
+#define	MD_START_SETUP				\
+	char	**argv, **envp;			\
+	int	argc;				\
+						\
+	argv = arginfo->ps_argvstr;		\
+	argc = arginfo->ps_nargvstr;		\
+	environ = envp = arginfo->ps_envstr;
+
+#define	MD_EPROL_LABEL	__asm (".export _eprol, entry\n\t.label _eprol")

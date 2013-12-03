@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.2 2004/09/09 17:45:26 pefo Exp $ */
+/* $OpenBSD: md_init.h,v 1.3 2013/12/03 06:21:41 guenther Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -87,3 +87,51 @@
 	"	jal	" #func "		\n"	\
 	".previous")
 
+
+struct kframe {
+	int	kargc;
+	char	*kargv[1];	/* size depends on kargc */
+	char	kargstr[1];	/* size varies */
+	char	kenvstr[1];	/* size varies */
+};
+
+#define	MD_START		__start
+#define	MD_START_ARGS		void
+
+/*
+ * XXX no cleanup() callback passed to __start yet.  Need to pull
+ * it from v0 in ASM? 
+ */
+#define	MD_NO_CLEANUP
+
+
+/*
+ * Do GP register setup and find the kframe struct. Differs depending
+ * on shared lib stuff or not.
+ * XXX just above the saved frame pointer?
+ *	kfp = (struct kframe *) (&param-1);
+ */
+#if defined(_NO_ABICALLS)
+#define	SETUP_KFP(kfp)					\
+	asm("	dla	$28,_gp				\n" \
+	"	daddiu	%0,$29,32" : "=r" (kfp))
+#else
+#if defined(__GNUC__) && __GNUC__ > 3
+#define	SETUP_KFP(kfp)					\
+	asm("	daddiu	%0,$29,64" : "=r" (kfp))
+#else
+#define	SETUP_KFP(kfp)					\
+	asm("	daddiu	%0,$29,80" : "=r" (kfp))
+#endif
+#endif
+
+
+#define	MD_START_SETUP				\
+	struct	kframe *kfp;			\
+	char	**argv, **envp;			\
+	int	argc;				\
+						\
+	SETUP_KFP(kfp);				\
+	argc = kfp->kargc;			\
+	argv = &kfp->kargv[0];			\
+	environ = envp = argv + argc + 1;

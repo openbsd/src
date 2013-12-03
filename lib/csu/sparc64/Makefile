@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2011/11/08 10:37:09 guenther Exp $
+#	$OpenBSD: Makefile,v 1.10 2013/12/03 06:21:41 guenther Exp $
 #	$NetBSD: Makefile,v 1.6 1996/10/18 05:27:38 thorpej Exp $
 
 CFLAGS+=	-DELFSIZE=64
@@ -14,14 +14,14 @@ CFLAGS+=	-I${ELFDIR} -I${.CURDIR}
 all: ${OBJS}
 
 crt0.o: crt0.c
-	@echo ${COMPILE.c} -DCRT0 -fPIC ${.CURDIR}/crt0.c -o ${.TARGET}
-	@${COMPILE.c} -DCRT0 -fPIC ${.CURDIR}/crt0.c -o ${.TARGET}.o
+	@echo ${COMPILE.c} -DCRT0 -fPIC ${ELFDIR}/crt0.c -o ${.TARGET}
+	@${COMPILE.c} -DCRT0 -fPIC ${ELFDIR}/crt0.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 gcrt0.o: crt0.c
-	@echo ${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}
-	@${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}.o
+	@echo ${COMPILE.c} -DMCRT0 ${ELFDIR}/crt0.c -o ${.TARGET}
+	@${COMPILE.c} -DMCRT0 ${ELFDIR}/crt0.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 

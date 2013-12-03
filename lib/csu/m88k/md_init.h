@@ -1,4 +1,4 @@
-/*	$OpenBSD: md_init.h,v 1.1 2013/01/05 11:20:55 miod Exp $	*/
+/*	$OpenBSD: md_init.h,v 1.2 2013/12/03 06:21:41 guenther Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -37,3 +37,30 @@
 	"\tjmp.n\t%r1\n"						\
 	"\taddu\t%r31, %r31, 16\n"					\
 	"\t.previous")
+
+/*
+ * When a program begins, r31 points to a structure passed by the kernel.
+ *
+ * This structure contains argc, the argv[] NULL-terminated array, and
+ * the envp[] NULL-terminated array.
+ *
+ * Our start code starts with two nops because execution may skip up to
+ * two instructions; see setregs() in the kernel for details.
+ */
+#define	MD_CRT0_START					\
+	__asm(						\
+	"	.text					\n" \
+	"	.align 3				\n" \
+	"	.globl __start				\n" \
+	"	.globl _start				\n" \
+	"__start:					\n" \
+	"_start:					\n" \
+	"	or	%r0, %r0, %r0			\n" \
+	"	or	%r0, %r0, %r0			\n" \
+	"	ld	%r2, %r31, 0	/* argc */	\n" \
+	"	addu	%r3, %r31, 4	/* argv */	\n" \
+	"	lda	%r4, %r3[%r2]			\n" \
+	"	br.n	___start			\n" \
+	"	 addu	%r4, %r4, 4			\n" \
+	"	 /* envp = argv + argc + 1 */		\n" \
+	"	.previous");

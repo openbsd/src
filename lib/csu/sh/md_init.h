@@ -1,4 +1,4 @@
-/*	$OpenBSD: md_init.h,v 1.1.1.1 2006/10/10 22:07:10 miod Exp $	*/
+/*	$OpenBSD: md_init.h,v 1.2 2013/12/03 06:21:41 guenther Exp $	*/
 /*	$NetBSD: dot_init.h,v 1.3 2005/12/24 22:02:10 perry Exp $	*/
 
 /*-
@@ -66,3 +66,23 @@ __asm(".section " #section "\n"		\
 "0:  .p2align 2		\n"		\
 "1:  .long " #func " - 0b \n"		\
 "2:  .previous");
+
+
+/* no ASM stub for __start; the C routine can be called directly */
+#define	MD_START	__start
+
+#if defined(__SH4__) && !defined(__SH4_NOFPU__)
+#include <machine/fpu.h>
+
+#define	MD_CRT0_START				\
+	void __set_fpscr(unsigned int);		\
+	unsigned int __fpscr_values[2]
+
+#define	MD_START_SETUP				\
+	__set_fpscr(0);				\
+	__fpscr_values[0] |= FPSCR_DN;		\
+	__fpscr_values[1] |= FPSCR_DN;		\
+	__asm __volatile__ ("lds %0, fpscr"	\
+	    : : "r" (__fpscr_values[1]));
+#endif /* defined(__SH4__) && !defined(__SH4_NOFPU__) */
+

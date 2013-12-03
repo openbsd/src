@@ -1,4 +1,4 @@
-/*	$OpenBSD: md_init.h,v 1.1 2013/07/05 21:10:50 miod Exp $	*/
+/*	$OpenBSD: md_init.h,v 1.2 2013/12/03 06:21:41 guenther Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -34,3 +34,40 @@
 	"\t.section\t" #section ",\"ax\",@progbits\n"			\
 	"\tret\n"							\
 	"\t.previous")
+
+/*
+ * _start has no registers to save before calling the real start.
+ * _start has two nops, just in case (c.f. m88k?).
+ */
+#define	MD_CRT0_START				\
+	__asm(					\
+	".text					\n" \
+	"	.align 2			\n" \
+	"	.globl _start			\n" \
+	"	.type _start,@function		\n" \
+	"_start:				\n" \
+	"	.word 0x0101			\n" \
+	"	pushl %sp			\n" \
+	"	calls $1,___start		\n" \
+	"	halt				\n" \
+	"	.previous")
+
+struct kframe {
+	int	kargc;
+	char	*kargv[1];	/* size depends on kargc */
+	char	kargstr[1];	/* size varies */
+	char	kenvstr[1];	/* size varies */
+};
+
+/* no cleanup() callback passed to ___start, because no ld.so */
+#define	MD_NO_CLEANUP
+
+#define	MD_START_ARGS		struct kframe *kfp
+#define	MD_START_SETUP				\
+	char	**argv, **envp;			\
+	int	argc;				\
+						\
+	argc = kfp->kargc;			\
+	argv = &kfp->kargv[0];			\
+	environ = envp = argv + argc + 1;
+

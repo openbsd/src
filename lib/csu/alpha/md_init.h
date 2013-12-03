@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.1 2004/01/08 14:59:15 drahn Exp $ */
+/* $OpenBSD: md_init.h,v 1.2 2013/12/03 06:21:40 guenther Exp $ */
 /*-
  * Copyright (c) 2001 Ross Harvey
  * All rights reserved.
@@ -61,3 +61,20 @@
 	"	lda	$30, 16($30)		\n" \
 	"	ret				\n" \
 	"	.previous")
+
+/* XXX this should not be necessary: ld should use __start */
+#define	MD_CRT0_START				\
+	__asm (					\
+	".globl _start				\n" \
+	".type _start@function			\n" \
+	"_start = __start")
+
+#define	MD_START		__start
+#define	MD_START_ARGS		char **sp, void (*cleanup)(void)
+#define	MD_START_SETUP				\
+	char **argv, **envp;			\
+	long argc;				\
+						\
+	argc = *(long *)sp;			\
+	argv = sp + 1;				\
+	environ = envp = sp + 2 + argc;	/* 2: argc + NULL ending argv */

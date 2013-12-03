@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.3 2012/08/22 17:19:34 pascal Exp $ */
+/* $OpenBSD: md_init.h,v 1.4 2013/12/03 06:21:40 guenther Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -70,3 +70,33 @@
 	".section "#sect",\"ax\",%progbits	\n" \
 	"	ldmea	fp, {fp, sp, pc}	\n" \
 	"	.previous")
+
+
+#define	MD_CRT0_START				\
+	__asm(					\
+	".text					\n" \
+	"	.align	0			\n" \
+	"	.globl	_start			\n" \
+	"	.globl	__start			\n" \
+	"_start:				\n" \
+	"__start:				\n" \
+	"	mov	r3, r0	/* cleanup */	\n" \
+	"/* Get argc/argv/envp from stack */	\n" \
+	"	ldr	r0, [sp, #0x0000]	\n" \
+	"	add	r1, sp, #0x0004		\n" \
+	"	add	r2, r1, r0, lsl #2	\n" \
+	"	add	r2, r2, #0x0004		\n" \
+	"					\n" \
+	"/*					\n" \
+	" * Ensure the stack is properly	\n" \
+	" * aligned before calling C code.	\n" \
+	" */					\n" \
+	/* #if 1 */				\
+	"	bic	sp, sp, #7" /*__STRING(STACKALIGNBYTES)*/ "	\n" \
+	/* #endif */				\
+	"	sub	sp, sp, #8		\n" \
+	"	str	r5, [sp, #4]		\n" \
+	"	str	r4, [sp, #0]		\n" \
+	"					\n" \
+	"	b	___start		\n" \
+	".previous");

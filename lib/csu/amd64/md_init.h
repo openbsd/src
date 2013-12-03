@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.2 2011/03/30 19:15:03 kettenis Exp $ */
+/* $OpenBSD: md_init.h,v 1.3 2013/12/03 06:21:40 guenther Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -59,4 +59,23 @@
 	".section "#sect",\"ax\",@progbits	\n" \
 	"	addq	$8,%rsp			\n" \
 	"	ret				\n" \
+	"	.previous")
+
+
+#define	MD_CRT0_START				\
+	__asm(					\
+	".text					\n" \
+	"	.align	8			\n" \
+	"	.globl	__start			\n" \
+	"	.globl	_start			\n" \
+	"_start:				\n" \
+	"__start:				\n" \
+	"	movq	%rdx,%rcx		\n" \
+	"	movq	(%rsp),%rdi		\n" \
+	"	leaq	16(%rsp,%rdi,8),%rdx	\n" \
+	"	leaq	8(%rsp),%rsi		\n" \
+	"	subq	$8,%rsp			\n" \
+	"	andq	$~15,%rsp		\n" \
+	"	addq	$8,%rsp			\n" \
+	"	jmp	___start		\n" \
 	"	.previous")

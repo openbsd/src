@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.9 2012/12/23 12:24:13 kettenis Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.1 2013/12/03 06:21:40 guenther Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -34,6 +34,22 @@
 #include <stdlib.h>
 #include <limits.h>
 
+#include "md_init.h"
+
+/* some defaults */
+#ifndef	MD_START_ARGS
+#define	MD_START_ARGS	\
+	int argc, char **argv, char **envp, void (*cleanup)(void)
+#endif
+#ifndef MD_START
+#define	MD_START	___start
+static void		___start(MD_START_ARGS) __used;
+#endif
+#ifndef	MD_EPROL_LABEL
+#define	MD_EPROL_LABEL	__asm("  .text\n_eprol:")
+#endif
+
+
 static char	*_strrchr(char *, char);
 
 char	**environ;
@@ -46,29 +62,19 @@ extern void	_mcleanup(void);
 extern unsigned char _etext, _eprol;
 #endif /* MCRT0 */
 
-__asm__(".text\n"
-"	.align 4\n"
-"	.global _start\n"		/* NetBSD compat */
-"	.global __start\n"
-"_start:\n"
-"__start:\n"
-"	clr	%fp\n"
-"	add	%sp, 2175, %o0\n"	/* stack */
-"	ba,pt	%icc, ___start\n"
-"	 mov	%g1, %o1");
+#ifdef MD_CRT0_START
+MD_CRT0_START;
+#endif
 
-static void ___start(char **, void (*)(void)) __used;
-
-static void
-___start(char **sp, void (*cleanup)(void))
+void
+MD_START(MD_START_ARGS)
 {
-	long argc;
-	char **argv, *namep;
-	char *s;
+	char *namep, *s;
+#ifdef MD_START_SETUP
+	MD_START_SETUP
+#endif
 
-	argc = *(long *)sp;
-	argv = sp + 1;
-	environ = sp + 2 + argc;		/* 2: argc + NULL ending argv */
+	environ = envp;
 
 	if ((namep = argv[0]) != NULL) {	/* NULL ptr if argc = 0 */
 		if ((__progname = _strrchr(namep, '/')) == NULL)
@@ -82,8 +88,10 @@ ___start(char **sp, void (*cleanup)(void))
 		__progname = __progname_storage;
 	}
 
-	if (cleanup)
+#ifndef MD_NO_CLEANUP
+	if (cleanup != NULL)
 		atexit(cleanup);
+#endif
 
 #ifdef MCRT0
 	atexit(_mcleanup);
@@ -92,27 +100,22 @@ ___start(char **sp, void (*cleanup)(void))
 
 	__init();
 
-	exit(main(argc, argv, environ));
+	exit(main(argc, argv, envp));
 }
 
-
 static char *
-_strrchr(p, ch)
-register char *p, ch;
+_strrchr(char *p, char ch)
 {
-	register char *save;
+	char *save;
 
 	for (save = NULL;; ++p) {
 		if (*p == ch)
-			save = (char *)p;
-		if (!*p)
-			return(save);
+			save = p;
+		if (*p == '\0')
+			return (save);
 	}
-/* NOTREACHED */
 }
 
 #ifdef MCRT0
-asm ("  .text");
-asm ("_eprol:");
+MD_EPROL_LABEL;
 #endif
-

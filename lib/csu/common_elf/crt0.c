@@ -1,11 +1,9 @@
-/*	$OpenBSD: crt0.c,v 1.7 2013/12/01 17:18:31 guenther Exp $	*/
-/*	$NetBSD: crt0.c,v 1.10 2004/08/26 21:16:41 thorpej Exp $ */
+/*	$OpenBSD: crt0.c,v 1.1 2013/12/03 06:21:40 guenther Exp $	*/
 
 /*
- * Copyright (c) 1998 Christos Zoulas
  * Copyright (c) 1995 Christopher G. Demetriou
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,12 +14,11 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *          This product includes software developed for the
- *          NetBSD Project.  See http://www.NetBSD.org/ for
- *          information about NetBSD.
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- * 
+ *    derived from this software without specific prior written permission
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -32,55 +29,56 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
- * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
 
-#include <sys/param.h>
-
-#include <machine/asm.h>
-#include <machine/fpu.h>
 #include <stdlib.h>
+#include <limits.h>
 
-static char     *_strrchr(const char *, char);
+#include "md_init.h"
 
-char    **environ;
-
-char * __progname = "";
-
-char __progname_storage[NAME_MAX+1];
-
-#if defined(__SH4__) && !defined(__SH4_NOFPU__)
-unsigned int __fpscr_values[2];
+/* some defaults */
+#ifndef	MD_START_ARGS
+#define	MD_START_ARGS	\
+	int argc, char **argv, char **envp, void (*cleanup)(void)
+#endif
+#ifndef MD_START
+#define	MD_START	___start
+static void		___start(MD_START_ARGS) __used;
+#endif
+#ifndef	MD_EPROL_LABEL
+#define	MD_EPROL_LABEL	__asm("  .text\n_eprol:")
 #endif
 
+
+static char	*_strrchr(char *, char);
+
+char	**environ;
+char	*__progname = "";
+char	__progname_storage[NAME_MAX+1];
+
 #ifdef MCRT0
-extern void     monstartup(u_long, u_long);
-extern void     _mcleanup(void);
+extern void	monstartup(u_long, u_long);
+extern void	_mcleanup(void);
 extern unsigned char _etext, _eprol;
 #endif /* MCRT0 */
 
-void		__start(int, char *[], char *[], void (*)(void));
-
-void
-__start(int argc, char **argv, char **envp, void (*cleanup)(void))
-{
-	char *s;
-
-#if defined(__SH4__) && !defined(__SH4_NOFPU__)
-	extern void __set_fpscr(unsigned int);
-
-	__set_fpscr(0);
-	__fpscr_values[0] |= FPSCR_DN;
-	__fpscr_values[1] |= FPSCR_DN;
-	__asm__ __volatile__ ("lds %0, fpscr" : : "r" (__fpscr_values[1]));
+#ifdef MD_CRT0_START
+MD_CRT0_START;
 #endif
 
- 	environ = envp;
+void
+MD_START(MD_START_ARGS)
+{
+	char *namep, *s;
+#ifdef MD_START_SETUP
+	MD_START_SETUP
+#endif
 
-	if ((__progname = argv[0]) != NULL) {   /* NULL ptr if argc = 0 */
-		if ((__progname = _strrchr(__progname, '/')) == NULL)
-			__progname = argv[0];
+	environ = envp;
+
+	if ((namep = argv[0]) != NULL) {	/* NULL ptr if argc = 0 */
+		if ((__progname = _strrchr(namep, '/')) == NULL)
+			__progname = namep;
 		else
 			__progname++;
 		for (s = __progname_storage; *__progname &&
@@ -90,30 +88,34 @@ __start(int argc, char **argv, char **envp, void (*cleanup)(void))
 		__progname = __progname_storage;
 	}
 
-	if (cleanup)
+#ifndef MD_NO_CLEANUP
+	if (cleanup != NULL)
 		atexit(cleanup);
+#endif
+
 #ifdef MCRT0
 	atexit(_mcleanup);
 	monstartup((u_long)&_eprol, (u_long)&_etext);
-#endif	/* MCRT0 */
+#endif
 
-        __init();
+	__init();
 
-__asm("__callmain:");		/* Defined for the benefit of debuggers */
 	exit(main(argc, argv, envp));
 }
 
 static char *
-_strrchr(const char *p, char ch)
+_strrchr(char *p, char ch)
 {
 	char *save;
 
 	for (save = NULL;; ++p) {
 		if (*p == ch)
-			save = (char *)p;
-		if (!*p)
-			return(save);
+			save = p;
+		if (*p == '\0')
+			return (save);
 	}
-	/* NOTREACHED */
 }
-asm ("  .section \".text\" \n_eprol:");
+
+#ifdef MCRT0
+MD_EPROL_LABEL;
+#endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.1 2004/01/08 14:59:15 drahn Exp $ */
+/* $OpenBSD: md_init.h,v 1.2 2013/12/03 06:21:41 guenther Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -57,3 +57,27 @@
 	"	ret				\n" \
 	"	 restore			\n" \
 	"	.previous")
+
+
+#define	MD_CRT0_START				\
+	__asm__(				\
+	".text					\n" \
+	"	.align	4			\n" \
+	"	.global	_start			\n" \
+	"	.global	__start			\n" \
+	"_start:				\n" \
+	"__start:				\n" \
+	"	clr	%fp			\n" \
+	"	add	%sp, 2175, %o0	/* stack */\n" \
+	"	ba,pt	%icc, ___start		\n" \
+	"	 mov	%g1, %o1		\n" \
+	"	.previous")
+
+#define	MD_START_ARGS		char **sp, void (*cleanup)(void)
+#define	MD_START_SETUP				\
+	char **argv, **envp;			\
+	long argc;				\
+						\
+	argc = *(long *)sp;			\
+	argv = sp + 1;				\
+	environ = envp = sp + 2 + argc;	/* 2: argc + NULL ending argv */
