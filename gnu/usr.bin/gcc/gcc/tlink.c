@@ -98,7 +98,8 @@ static symbol * symbol_pop PARAMS ((void));
 static void file_push PARAMS ((file *));
 static file * file_pop PARAMS ((void));
 static void tlink_init PARAMS ((void));
-static int tlink_execute PARAMS ((const char *, char **, const char *));
+static int tlink_execute PARAMS ((const char *, char **, const char *,
+				  const char *));
 static char * frob_extension PARAMS ((const char *, const char *));
 static char * obstack_fgets PARAMS ((FILE *, struct obstack *));
 static char * tfgets PARAMS ((FILE *));
@@ -284,12 +285,13 @@ tlink_init ()
 }
 
 static int
-tlink_execute (prog, argv, redir)
+tlink_execute (prog, argv, outname, errname)
      const char *prog;
      char **argv;
-     const char *redir;
+     const char *outname;
+     const char *errname;
 {
-  collect_execute (prog, argv, redir);
+  collect_execute (prog, argv, outname, errname);
   return collect_wait (prog);
 }
 
@@ -697,7 +699,7 @@ void
 do_tlink (ld_argv, object_lst)
      char **ld_argv, **object_lst ATTRIBUTE_UNUSED;
 {
-  int exit = tlink_execute ("ld", ld_argv, ldout);
+  int exit = tlink_execute ("ld", ld_argv, ldout, lderrout);
 
   tlink_init ();
 
@@ -711,20 +713,26 @@ do_tlink (ld_argv, object_lst)
 	while (exit && i++ < MAX_ITERATIONS)
 	  {
 	    if (tlink_verbose >= 3)
-	      dump_file (ldout);
+	      {
+	        dump_file (ldout, stdout);
+	        dump_file (lderrout, stderr);
+	      }
 	    demangle_new_symbols ();
-	    if (! scan_linker_output (ldout))
+	    if (! scan_linker_output (ldout)
+	        && ! scan_linker_output (lderrout))
 	      break;
 	    if (! recompile_files ())
 	      break;
 	    if (tlink_verbose)
 	      fprintf (stderr, _("collect: relinking\n"));
-	    exit = tlink_execute ("ld", ld_argv, ldout);
+	    exit = tlink_execute ("ld", ld_argv, ldout, lderrout);
 	  }
     }
 
-  dump_file (ldout);
+  dump_file (ldout, stdout);
+  dump_file (lderrout, stderr);
   unlink (ldout);
+  unlink (lderrout);
   if (exit)
     {
       error ("ld returned %d exit status", exit);

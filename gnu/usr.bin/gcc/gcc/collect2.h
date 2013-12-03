@@ -23,17 +23,19 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 extern void do_tlink PARAMS ((char **, char **));
 
-extern void collect_execute PARAMS ((const char *, char **, const char *));
+extern void collect_execute PARAMS ((const char *, char **, const char *,
+				     const char *));
 
 extern void collect_exit PARAMS ((int)) ATTRIBUTE_NORETURN;
 
 extern int collect_wait PARAMS ((const char *));
 
-extern void dump_file PARAMS ((const char *));
+extern void dump_file PARAMS ((const char *, FILE *));
 
 extern int file_exists PARAMS ((const char *));
 
 extern const char *ldout;
+extern const char *lderrout;
 extern const char *c_file_name;
 extern struct obstack temporary_obstack;
 extern char *temporary_firstobj;

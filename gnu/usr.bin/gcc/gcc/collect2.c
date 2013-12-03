@@ -213,7 +213,8 @@ static const char *o_file;		/* <xxx>.o for constructor/destructor list.  */
 #ifdef COLLECT_EXPORT_LIST
 static const char *export_file;	        /* <xxx>.x for AIX export list.  */
 #endif
-const char *ldout;			/* File for ld errors.  */
+const char *ldout;			/* File for ld stdout.  */
+const char *lderrout;			/* File for ld stderr.  */
 static const char *output_file;		/* Output file for ld.  */
 static const char *nm_file_name;	/* pathname of nm */
 #ifdef LDD_SUFFIX
@@ -346,8 +347,14 @@ collect_exit (status)
 
   if (ldout != 0 && ldout[0])
     {
-      dump_file (ldout);
+      dump_file (ldout, stdout);
       maybe_unlink (ldout);
+    }
+
+  if (lderrout != 0 && lderrout[0])
+    {
+      dump_file (lderrout, stderr);
+      maybe_unlink (lderrout);
     }
 
   if (status != 0 && output_file != 0 && output_file[0])
@@ -438,6 +445,9 @@ handler (signo)
   if (ldout != 0 && ldout[0])
     maybe_unlink (ldout);
 
+  if (lderrout != 0 && lderrout[0])
+    maybe_unlink (lderrout);
+
 #ifdef COLLECT_EXPORT_LIST
   if (export_file != 0 && export_file[0])
     maybe_unlink (export_file);
@@ -489,8 +499,9 @@ extract_string (pp)
 }
 
 void
-dump_file (name)
+dump_file (name, to)
      const char *name;
+     FILE *to;
 {
   FILE *stream = fopen (name, "r");
 
@@ -510,7 +521,7 @@ dump_file (name)
 	  word = obstack_finish (&temporary_obstack);
 
 	  if (*word == '.')
-	    ++word, putc ('.', stderr);
+	    ++word, putc ('.', to);
 	  p = word;
 	  if (!strncmp (p, USER_LABEL_PREFIX, strlen (USER_LABEL_PREFIX)))
 	    p += strlen (USER_LABEL_PREFIX);
@@ -523,25 +534,25 @@ dump_file (name)
 	  if (result)
 	    {
 	      int diff;
-	      fputs (result, stderr);
+	      fputs (result, to);
 
 	      diff = strlen (word) - strlen (result);
 	      while (diff > 0 && c == ' ')
-		--diff, putc (' ', stderr);
+		--diff, putc (' ', to);
 	      while (diff < 0 && c == ' ')
 		++diff, c = getc (stream);
 
 	      free (result);
 	    }
 	  else
-	    fputs (word, stderr);
+	    fputs (word, to);
 
-	  fflush (stderr);
+	  fflush (to);
 	  obstack_free (&temporary_obstack, temporary_firstobj);
 	}
       if (c == EOF)
 	break;
-      putc (c, stderr);
+      putc (c, to);
     }
   fclose (stream);
 }
@@ -1045,6 +1056,7 @@ main (argc, argv)
   export_file = make_temp_file (".x");
 #endif
   ldout = make_temp_file (".ld");
+  lderrout = make_temp_file (".le");
   *c_ptr++ = c_file_name;
   *c_ptr++ = "-x";
   *c_ptr++ = "c";
@@ -1538,14 +1550,16 @@ do_wait (prog)
 /* Execute a program, and wait for the reply.  */
 
 void
-collect_execute (prog, argv, redir)
+collect_execute (prog, argv, outname, errname)
      const char *prog;
      char **argv;
-     const char *redir;
+     const char *outname;
+     const char *errname;
 {
   char *errmsg_fmt;
   char *errmsg_arg;
-  int redir_handle = -1;
+  int out_handle = -1;
+  int err_handle = -1;
   int stdout_save = -1;
   int stderr_save = -1;
 
@@ -1574,37 +1588,54 @@ collect_execute (prog, argv, redir)
   if (argv[0] == 0)
     fatal ("cannot find `%s'", prog);
 
-  if (redir)
+  if (outname)
     {
       /* Open response file.  */
-      redir_handle = open (redir, O_WRONLY | O_TRUNC | O_CREAT, 0666);
+      out_handle = open (outname, O_WRONLY | O_TRUNC | O_CREAT, 0666);
 
-      /* Duplicate the stdout and stderr file handles
-	 so they can be restored later.  */
+      /* Duplicate the stdout file handle so it can be restored later.  */
       stdout_save = dup (STDOUT_FILENO);
       if (stdout_save == -1)
-	fatal_perror ("redirecting stdout: %s", redir);
+	fatal_perror ("redirecting stdout: %s", outname);
+
+      /* Redirect stdout to our response file.  */
+      dup2 (out_handle, STDOUT_FILENO);
+    }
+
+  if (errname)
+    {
+      /* Open response file.  */
+      err_handle = open (errname, O_WRONLY | O_TRUNC | O_CREAT, 0666);
+
+      /* Duplicate the stderr file handle so it can be restored later.  */
       stderr_save = dup (STDERR_FILENO);
       if (stderr_save == -1)
-	fatal_perror ("redirecting stdout: %s", redir);
+	fatal_perror ("redirecting stderr: %s", errname);
 
-      /* Redirect stdout & stderr to our response file.  */
-      dup2 (redir_handle, STDOUT_FILENO);
-      dup2 (redir_handle, STDERR_FILENO);
+      /* Redirect stderr to our response file.  */
+      dup2 (err_handle, STDERR_FILENO);
     }
 
   pid = pexecute (argv[0], argv, argv[0], NULL,
 		  &errmsg_fmt, &errmsg_arg,
 		  (PEXECUTE_FIRST | PEXECUTE_LAST | PEXECUTE_SEARCH));
 
-  if (redir)
+  if (outname)
     {
-      /* Restore stdout and stderr to their previous settings.  */
+      /* Restore stdout to its previous setting.  */
       dup2 (stdout_save, STDOUT_FILENO);
+
+      /* Close response file.  */
+      close (out_handle);
+    }
+
+  if (errname)
+    {
+      /* Restore stderr to its previous setting.  */
       dup2 (stderr_save, STDERR_FILENO);
 
       /* Close response file.  */
-      close (redir_handle);
+      close (err_handle);
     }
 
  if (pid == -1)
@@ -1616,7 +1647,7 @@ fork_execute (prog, argv)
      const char *prog;
      char **argv;
 {
-  collect_execute (prog, argv, NULL);
+  collect_execute (prog, argv, NULL, NULL);
   do_wait (prog);
 }
 
