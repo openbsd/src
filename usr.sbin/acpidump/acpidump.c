@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.8 2013/11/12 19:44:26 deraadt Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.9 2013/12/03 01:47:06 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -27,6 +27,11 @@
  */
 
 #include <sys/types.h>
+#include <sys/mman.h>
+#include <sys/queue.h>
+#include <sys/stat.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <assert.h>
 #include <err.h>
@@ -35,14 +40,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
-#include <sys/mman.h>
-#include <sys/queue.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/syslimits.h>
-
-#include <uvm/uvm_extern.h>
 
 #define vm_page_size sysconf(_SC_PAGESIZE)
 #define PRINTFLAG(xx)							\

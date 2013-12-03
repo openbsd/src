@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.26 2013/03/20 21:49:59 kurt Exp $	*/
+/*	$OpenBSD: sod.c,v 1.27 2013/12/03 01:47:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -32,14 +32,14 @@
  */
 
 #include <sys/types.h>
-#include <sys/syslimits.h>
+#include <sys/mman.h>
+#include <machine/exec.h>
+#include <limits.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <nlist.h>
 #include <link.h>
 #include <limits.h>
-#include <machine/exec.h>
-#include <sys/mman.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>

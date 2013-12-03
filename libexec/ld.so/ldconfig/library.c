@@ -1,4 +1,4 @@
-/* $OpenBSD: library.c,v 1.5 2013/11/13 05:41:43 deraadt Exp $ */
+/* $OpenBSD: library.c,v 1.6 2013/12/03 01:47:06 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -17,9 +17,9 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/syslimits.h>
 #include <sys/param.h>
 #include <sys/mman.h>
+#include <limits.h>
 #include <fcntl.h>
 #include <nlist.h>
 #include <elf_abi.h>
