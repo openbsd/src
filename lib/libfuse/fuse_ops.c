@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.15 2013/12/03 09:59:40 syl Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.16 2013/12/03 10:07:58 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -277,6 +277,10 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 	startsave = 0;
 
 	fbuf->fb_dat = malloc(size);
+	if (fbuf->fb_dat == NULL) {
+		fbuf->fb_err = errno;
+		return (0);
+	}
 	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
 
 	if (!vn->fd->filled) {
@@ -417,6 +421,10 @@ ifuse_ops_read(struct fuse *f, struct fusebuf *fbuf)
 	offset = fbuf->fb_io_off;
 
 	fbuf->fb_dat = malloc(size);
+	if (fbuf->fb_dat == NULL) {
+		fbuf->fb_err = errno;
+		return (0);
+	}
 
 	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
 
@@ -564,10 +572,13 @@ ifuse_ops_readlink(struct fuse *f, struct fusebuf *fbuf)
 	fbuf->fb_err = ret;
 	if (!ret) {
 		len = strnlen(name, PATH_MAX);
-		fbuf->fb_len = len + 1;
+		fbuf->fb_len = len;
 		fbuf->fb_dat = malloc(fbuf->fb_len);
+		if (fbuf->fb_dat == NULL) {
+			fbuf->fb_err = errno;
+			return (0);
+		}
 		memcpy(fbuf->fb_dat, name, len);
-		fbuf->fb_dat[len] = '\0';
 	} else
 		fbuf->fb_len = 0;
 
