@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.51 2013/05/30 16:15:02 deraadt Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.52 2013/12/03 22:49:07 brad Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -90,7 +90,6 @@ char *ahd_chip_names[] =
 	"aic7902",
 	"aic7901A"
 };
-static const u_int num_chip_names = NUM_ELEMENTS(ahd_chip_names);
 
 /*
  * Hardware error codes.
