@@ -1,4 +1,4 @@
-/*	$OpenBSD: eehandlers.c,v 1.16 2013/11/28 18:26:47 deraadt Exp $	*/
+/*	$OpenBSD: eehandlers.c,v 1.17 2013/12/03 01:48:37 millert Exp $	*/
 /*	$NetBSD: eehandlers.c,v 1.2 1996/02/28 01:13:22 thorpej Exp $	*/
 
 /*-
@@ -55,8 +55,7 @@ extern	int fix_checksum;
 extern	int cksumfail;
 extern	u_short writecount;
 
-struct	timeb;
-extern	time_t get_date(char *, struct timeb *);
+extern	time_t get_date(char *);
 
 static	char err_str[BUFSIZE];
 
@@ -98,7 +97,7 @@ ee_hwupdate(struct keytabent *ktent, char *arg)
 				return;
 			}
 		} else
-			if ((t = get_date(arg, NULL)) == (time_t)(-1))
+			if ((t = get_date(arg)) == (time_t)(-1))
 				BARF(ktent);
 
 		if (doio(ktent, (u_char *)&t, sizeof(t), IO_WRITE))
