@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.114 2013/11/14 12:39:14 dlg Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.115 2013/12/03 22:37:24 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -74,7 +74,8 @@ const struct pci_matchid iwi_devices[] = {
 int		iwi_match(struct device *, void *, void *);
 void		iwi_attach(struct device *, struct device *, void *);
 int		iwi_activate(struct device *, int);
-void		iwi_resume(void *, void *);
+void		iwi_resume(struct iwi_softc *);
+void		iwi_init_task(void *, void *);
 int		iwi_alloc_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 void		iwi_reset_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 void		iwi_free_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
@@ -173,8 +174,6 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
-
-	task_set(&sc->sc_resume_t, iwi_resume, sc, NULL);
 
 	/* clear device specific PCI configuration register 0x41 */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
@@ -326,6 +325,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(IWI_TX_RADIOTAP_PRESENT);
 #endif
 
+	task_set(&sc->init_task, iwi_init_task, sc, NULL);
 	return;
 
 fail:	while (--ac >= 0)
@@ -345,7 +345,7 @@ iwi_activate(struct device *self, int act)
 			iwi_stop(ifp, 0);
 		break;
 	case DVACT_RESUME:
-		task_add(systq, &sc->sc_resume_t);
+		iwi_resume(sc);
 		break;
 	}
 
@@ -353,24 +353,31 @@ iwi_activate(struct device *self, int act)
 }
 
 void
-iwi_resume(void *arg1, void *arg2)
+iwi_resume(struct iwi_softc *sc)
 {
-	struct iwi_softc *sc = arg1;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	pcireg_t data;
-	int s;
 
 	/* clear device specific PCI configuration register 0x41 */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
 	data &= ~0x0000ff00;
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
 
+	task_add(systq, &sc->init_task);
+}
+
+void
+iwi_init_task(void *arg1, void *arg2)
+{
+	struct iwi_softc *sc = arg1;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	int s;
+
 	s = splnet();
 	while (sc->sc_flags & IWI_FLAG_BUSY)
 		tsleep(&sc->sc_flags, 0, "iwipwr", 0);
 	sc->sc_flags |= IWI_FLAG_BUSY;
 
-	if (ifp->if_flags & IFF_UP)
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP)
 		iwi_init(ifp);
 
 	sc->sc_flags &= ~IWI_FLAG_BUSY;
@@ -1159,8 +1166,8 @@ iwi_intr(void *arg)
 
 	if (r & IWI_INTR_FATAL_ERROR) {
 		printf("%s: fatal firmware error\n", sc->sc_dev.dv_xname);
-		ifp->if_flags &= ~IFF_UP;
 		iwi_stop(ifp, 1);
+		task_add(systq, &sc->init_task);
 		return 1;
 	}
 
