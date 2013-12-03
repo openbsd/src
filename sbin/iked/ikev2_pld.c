@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.32 2013/11/28 20:21:17 markus Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.33 2013/12/03 13:55:39 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -962,11 +962,11 @@ ikev2_pld_ts(struct iked *env, struct ikev2_payload *pld,
 			s4.sin_len = sizeof(s4);
 			memcpy(&s4.sin_addr.s_addr,
 			    msgbuf + offset + sizeof(ts), 4);
-			print_host((struct sockaddr_storage *)&s4,
+			print_host((struct sockaddr *)&s4,
 			    (char *)buf[0], sizeof(buf[0]));
 			memcpy(&s4.sin_addr.s_addr,
 			    msgbuf + offset + sizeof(ts) + 4, 4);
-			print_host((struct sockaddr_storage *)&s4,
+			print_host((struct sockaddr *)&s4,
 			    (char *)buf[1], sizeof(buf[1]));
 			log_debug("%s: start %s end %s", __func__,
 			    buf[0], buf[1]);
@@ -977,11 +977,11 @@ ikev2_pld_ts(struct iked *env, struct ikev2_payload *pld,
 			s6.sin6_len = sizeof(s6);
 			memcpy(&s6.sin6_addr,
 			    msgbuf + offset + sizeof(ts), 16);
-			print_host((struct sockaddr_storage *)&s6,
+			print_host((struct sockaddr *)&s6,
 			    (char *)buf[0], sizeof(buf[0]));
 			memcpy(&s6.sin6_addr,
 			    msgbuf + offset + sizeof(ts) + 16, 16);
-			print_host((struct sockaddr_storage *)&s6,
+			print_host((struct sockaddr *)&s6,
 			    (char *)buf[1], sizeof(buf[1]));
 			log_debug("%s: start %s end %s", __func__,
 			    buf[0], buf[1]);

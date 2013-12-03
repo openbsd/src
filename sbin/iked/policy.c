@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.26 2013/11/28 20:24:48 markus Exp $	*/
+/*	$OpenBSD: policy.c,v 1.27 2013/12/03 13:55:40 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -212,8 +212,10 @@ sa_state(struct iked *env, struct iked_sa *sa, int state)
 		case IKEV2_STATE_CLOSED:
 			log_info("%s: %s -> %s from %s to %s policy '%s'",
 			    __func__, a, b,
-			    print_host(&sa->sa_peer.addr, NULL, 0),
-			    print_host(&sa->sa_local.addr, NULL, 0),
+			    print_host((struct sockaddr *)&sa->sa_peer.addr,
+			    NULL, 0),
+			    print_host((struct sockaddr *)&sa->sa_local.addr,
+			    NULL, 0),
 			    sa->sa_policy->pol_name);
 			break;
 		default:
@@ -374,7 +376,7 @@ sa_address(struct iked_sa *sa, struct iked_addr *addr,
 
 	bzero(addr, sizeof(*addr));
 	addr->addr_af = peer->ss_family;
-	addr->addr_port = htons(socket_getport(peer));
+	addr->addr_port = htons(socket_getport((struct sockaddr *)peer));
 	memcpy(&addr->addr, peer, sizeof(*peer));
 	if (socket_af((struct sockaddr *)&addr->addr, addr->addr_port) == -1) {
 		log_debug("%s: invalid address", __func__);

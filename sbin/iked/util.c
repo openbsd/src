@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.22 2013/11/28 20:21:55 markus Exp $	*/
+/*	$OpenBSD: util.c,v 1.23 2013/12/03 13:55:40 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -75,13 +75,13 @@ socket_af(struct sockaddr *sa, in_port_t port)
 }
 
 in_port_t
-socket_getport(struct sockaddr_storage *ss)
+socket_getport(struct sockaddr *sa)
 {
-	switch (ss->ss_family) {
+	switch (sa->sa_family) {
 	case AF_INET:
-		return (ntohs(((struct sockaddr_in *)ss)->sin_port));
+		return (ntohs(((struct sockaddr_in *)sa)->sin_port));
 	case AF_INET6:
-		return (ntohs(((struct sockaddr_in6 *)ss)->sin6_port));
+		return (ntohs(((struct sockaddr_in6 *)sa)->sin6_port));
 	default:
 		return (0);
 	}
@@ -579,7 +579,7 @@ prefixlen2mask6(u_int8_t prefixlen, u_int32_t *mask)
 }
 
 const char *
-print_host(struct sockaddr_storage *ss, char *buf, size_t len)
+print_host(struct sockaddr *sa, char *buf, size_t len)
 {
 	static char	sbuf[IKED_CYCLE_BUFFERS][NI_MAXHOST + 7];
 	static int	idx = 0;
@@ -593,18 +593,18 @@ print_host(struct sockaddr_storage *ss, char *buf, size_t len)
 			idx = 0;
 	}
 
-	if (ss->ss_family == AF_UNSPEC) {
+	if (sa->sa_family == AF_UNSPEC) {
 		strlcpy(buf, "any", len);
 		return (buf);
 	}
 
-	if (getnameinfo((struct sockaddr *)ss, ss->ss_len,
+	if (getnameinfo(sa, sa->sa_len,
 	    buf, len, NULL, 0, NI_NUMERICHOST) != 0) {
 		buf[0] = '\0';
 		return (NULL);
 	}
 
-	if ((port = socket_getport(ss)) != 0) {
+	if ((port = socket_getport(sa)) != 0) {
 		snprintf(pbuf, sizeof(pbuf), ":%d", port);
 		(void)strlcat(buf, pbuf, len);
 	}

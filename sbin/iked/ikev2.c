@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.86 2013/11/28 20:30:41 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.87 2013/12/03 13:55:39 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -376,8 +376,8 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	log_info("%s: %s from %s %s to %s policy '%s' id %u, %ld bytes",
 	    __func__, print_map(hdr->ike_exchange, ikev2_exchange_map),
 	    initiator ? "responder" : "initiator",
-	    print_host(&msg->msg_peer, NULL, 0),
-	    print_host(&msg->msg_local, NULL, 0),
+	    print_host((struct sockaddr *)&msg->msg_peer, NULL, 0),
+	    print_host((struct sockaddr *)&msg->msg_local, NULL, 0),
 	    msg->msg_policy->pol_name, msg->msg_msgid,
 	    ibuf_length(msg->msg_data));
 	log_debug("%s: ispi %s rspi %s", __func__,
@@ -445,8 +445,8 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	sa->sa_fd = msg->msg_fd;
 
 	log_debug("%s: updated SA to peer %s local %s", __func__,
-	    print_host(&sa->sa_peer.addr, NULL, 0),
-	    print_host(&sa->sa_local.addr, NULL, 0));
+	    print_host((struct sockaddr *)&sa->sa_peer.addr, NULL, 0),
+	    print_host((struct sockaddr *)&sa->sa_local.addr, NULL, 0));
 
 done:
 	if (initiator)
@@ -636,7 +636,8 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		 * Update address information and use the NAT-T
 		 * port and socket, if available.
 		 */
-		port = htons(socket_getport(&sock->sock_addr));
+		port = htons(socket_getport(
+		    (struct sockaddr *)&sock->sock_addr));
 		sa->sa_local.addr_port = port;
 		sa->sa_peer.addr_port = port;
 		(void)socket_af((struct sockaddr *)&sa->sa_local.addr, port);
@@ -648,8 +649,8 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 
 		log_debug("%s: NAT detected, updated SA to "
 		    "peer %s local %s", __func__,
-		    print_host(&sa->sa_peer.addr, NULL, 0),
-		    print_host(&sa->sa_local.addr, NULL, 0));
+		    print_host((struct sockaddr *)&sa->sa_peer.addr, NULL, 0),
+		    print_host((struct sockaddr *)&sa->sa_local.addr, NULL, 0));
 	}
 
 	switch (hdr->ike_exchange) {
@@ -689,7 +690,9 @@ ikev2_init_ike_sa(struct iked *env, void *arg)
 
 		if (ikev2_init_ike_sa_peer(env, pol, &pol->pol_peer))
 			log_debug("%s: failed to initiate with peer %s",
-			    __func__, print_host(&pol->pol_peer.addr, NULL, 0));
+			    __func__,
+			    print_host((struct sockaddr *)&pol->pol_peer.addr,
+			    NULL, 0));
 	}
 
 	timer_initialize(env, &env->sc_inittmr, ikev2_init_ike_sa, NULL);
@@ -739,7 +742,7 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 		goto done;
 
 	/* Inherit the port from the 1st send socket */
-	port = htons(socket_getport(&sock->sock_addr));
+	port = htons(socket_getport((struct sockaddr *)&sock->sock_addr));
 	(void)socket_af((struct sockaddr *)&req.msg_local, port);
 	(void)socket_af((struct sockaddr *)&req.msg_peer, port);
 
@@ -1341,7 +1344,7 @@ ikev2_nat_detection(struct iked *env, struct iked_message *msg,
 	struct sockaddr_in	*in4;
 	struct sockaddr_in6	*in6;
 	ssize_t			 ret = -1;
-	struct sockaddr_storage	*src, *dst, *ss;
+	struct sockaddr		*src, *dst, *ss;
 	u_int64_t		 rspi, ispi;
 	struct ibuf		*buf;
 	int			 frompeer = 0;
@@ -1357,14 +1360,14 @@ ikev2_nat_detection(struct iked *env, struct iked_message *msg,
 		ispi = hdr->ike_ispi;
 		rspi = hdr->ike_rspi;
 		frompeer = 1;
-		src = &msg->msg_peer;
-		dst = &msg->msg_local;
+		src = (struct sockaddr *)&msg->msg_peer;
+		dst = (struct sockaddr *)&msg->msg_local;
 	} else {
 		ispi = htobe64(sa->sa_hdr.sh_ispi);
 		rspi = htobe64(sa->sa_hdr.sh_rspi);
 		frompeer = 0;
-		src = &msg->msg_local;
-		dst = &msg->msg_peer;
+		src = (struct sockaddr *)&msg->msg_local;
+		dst = (struct sockaddr *)&msg->msg_peer;
 	}
 
 	EVP_MD_CTX_init(&ctx);
@@ -1394,7 +1397,7 @@ ikev2_nat_detection(struct iked *env, struct iked_message *msg,
 	EVP_DigestUpdate(&ctx, &ispi, sizeof(ispi));
 	EVP_DigestUpdate(&ctx, &rspi, sizeof(rspi));
 
-	switch (ss->ss_family) {
+	switch (ss->sa_family) {
 	case AF_INET:
 		in4 = (struct sockaddr_in *)ss;
 		EVP_DigestUpdate(&ctx, &in4->sin_addr.s_addr,
@@ -4068,7 +4071,7 @@ ikev2_print_id(struct iked_id *id, char *idstr, size_t idstrlen)
 		s4->sin_len = sizeof(*s4);
 		memcpy(&s4->sin_addr.s_addr, ptr, len);
 
-		if (print_host((struct sockaddr_storage *)s4,
+		if (print_host((struct sockaddr *)s4,
 		    idstr, idstrlen) == NULL)
 			return (-1);
 		break;
@@ -4092,7 +4095,7 @@ ikev2_print_id(struct iked_id *id, char *idstr, size_t idstrlen)
 		s6->sin6_len = sizeof(*s6);
 		memcpy(&s6->sin6_addr, ptr, len);
 
-		if (print_host((struct sockaddr_storage *)s6,
+		if (print_host((struct sockaddr *)s6,
 		    idstr, idstrlen) == NULL)
 			return (-1);
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.60 2013/11/28 20:26:04 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.61 2013/12/03 13:55:39 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -817,7 +817,7 @@ void	 proc_flush_imsg(struct iked *, enum privsep_procid);
 void	 socket_set_blockmode(int, enum blockmodes);
 int	 socket_af(struct sockaddr *, in_port_t);
 in_port_t
-	 socket_getport(struct sockaddr_storage *);
+	 socket_getport(struct sockaddr *);
 int	 socket_getaddr(int, struct sockaddr_storage *);
 int	 socket_bypass(int, struct sockaddr *);
 int	 udp_bind(struct sockaddr *, in_port_t);
@@ -840,7 +840,7 @@ struct in6_addr *
 u_int32_t
 	 prefixlen2mask(u_int8_t);
 const char *
-	 print_host(struct sockaddr_storage *, char *, size_t);
+	 print_host(struct sockaddr *, char *, size_t);
 char	*get_string(u_int8_t *, size_t);
 const char *
 	 print_proto(u_int8_t);

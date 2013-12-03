@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.33 2013/11/28 20:21:17 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.34 2013/12/03 13:55:39 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -2203,7 +2203,8 @@ print_policy(struct iked_policy *pol)
 
 	RB_FOREACH(flow, iked_flows, &pol->pol_flows) {
 		print_verbose(" from %s",
-		    print_host(&flow->flow_src.addr, NULL, 0));
+		    print_host((struct sockaddr *)&flow->flow_src.addr, NULL,
+		    0));
 		if (flow->flow_src.addr_af != AF_UNSPEC &&
 		    flow->flow_src.addr_net)
 			print_verbose("/%d", flow->flow_src.addr_mask);
@@ -2212,7 +2213,8 @@ print_policy(struct iked_policy *pol)
 			    ntohs(flow->flow_src.addr_port));
 
 		print_verbose(" to %s",
-		    print_host(&flow->flow_dst.addr, NULL, 0));
+		    print_host((struct sockaddr *)&flow->flow_dst.addr, NULL,
+		    0));
 		if (flow->flow_dst.addr_af != AF_UNSPEC &&
 		    flow->flow_dst.addr_net)
 			print_verbose("/%d", flow->flow_dst.addr_mask);
@@ -2223,13 +2225,15 @@ print_policy(struct iked_policy *pol)
 
 	if ((pol->pol_flags & IKED_POLICY_DEFAULT) == 0) {
 		print_verbose(" local %s",
-		    print_host(&pol->pol_local.addr, NULL, 0));
+		    print_host((struct sockaddr *)&pol->pol_local.addr, NULL,
+		    0));
 		if (pol->pol_local.addr.ss_family != AF_UNSPEC &&
 		    pol->pol_local.addr_net)
 			print_verbose("/%d", pol->pol_local.addr_mask);
 
 		print_verbose(" peer %s",
-		    print_host(&pol->pol_peer.addr, NULL, 0));
+		    print_host((struct sockaddr *)&pol->pol_peer.addr, NULL,
+		    0));
 		if (pol->pol_peer.addr.ss_family != AF_UNSPEC &&
 		    pol->pol_peer.addr_net)
 			print_verbose("/%d", pol->pol_peer.addr_mask);
@@ -2314,7 +2318,8 @@ print_policy(struct iked_policy *pol)
 		cfg = &pol->pol_cfg[i];
 		print_verbose(" config %s %s", print_xf(cfg->cfg_type,
 		    cfg->cfg.address.addr_af, cpxfs),
-		    print_host(&cfg->cfg.address.addr, NULL, 0));
+		    print_host((struct sockaddr *)&cfg->cfg.address.addr, NULL,
+		    0));
 	}
 
 	if (pol->pol_tag[0] != '\0')
@@ -2610,7 +2615,8 @@ create_ike(char *name, int af, u_int8_t ipproto, struct ipsec_hosts *hosts,
 		strlcpy(idstr, dstid, sizeof(idstr));
 		idtype = pol.pol_peerid.id_type;
 	} else if (!pol.pol_peer.addr_net) {
-		print_host(&pol.pol_peer.addr, idstr, sizeof(idstr));
+		print_host((struct sockaddr *)&pol.pol_peer.addr, idstr,
+		    sizeof(idstr));
 		switch (pol.pol_peer.addr.ss_family) {
 		case AF_INET:
 			idtype = IKEV2_ID_IPV4;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.25 2013/11/14 13:35:19 markus Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.26 2013/12/03 13:55:39 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1400,7 +1400,7 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 	struct sadb_address	*sa_addr;
 	struct sadb_protocol	*sa_proto;
 	struct sadb_x_policy	 sa_pol;
-	struct sockaddr_storage	*ssrc, *sdst, *smask, *dmask, *speer;
+	struct sockaddr		*ssrc, *sdst, *smask, *dmask, *speer;
 	struct iovec		 iov[IOV_CNT];
 	int			 iov_cnt, sd = env->sc_pfkey;
 	u_int8_t		*reply;
@@ -1408,6 +1408,7 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 	const char		*errmsg = NULL;
 	u_int8_t		*data = pm->pm_data;
 	ssize_t			 len = pm->pm_lenght;
+	size_t			 slen;
 
 	if (!env || !data || !len)
 		return;
@@ -1424,10 +1425,14 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 			log_debug("%s: no peer address", __func__);
 			return;
 		}
-		speer = (struct sockaddr_storage *)(sa_addr + 1);
-		peer.addr_af = speer->ss_family;
+		speer = (struct sockaddr *)(sa_addr + 1);
+		peer.addr_af = speer->sa_family;
 		peer.addr_port = htons(socket_getport(speer));
-		memcpy(&peer.addr, speer, sizeof(*speer));
+		if ((slen = speer->sa_len) > sizeof(peer.addr)) {
+			log_debug("%s: invalid peer address len", __func__);
+			return;
+		}
+		memcpy(&peer.addr, speer, slen);
 		if (socket_af((struct sockaddr *)&peer.addr,
 		    peer.addr_port) == -1) {
 			log_debug("%s: invalid address", __func__);
@@ -1472,10 +1477,14 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 			errmsg = "flow source address";
 			goto out;
 		}
-		ssrc = (struct sockaddr_storage *)(sa_addr + 1);
-		flow.flow_src.addr_af = ssrc->ss_family;
+		ssrc = (struct sockaddr *)(sa_addr + 1);
+		flow.flow_src.addr_af = ssrc->sa_family;
 		flow.flow_src.addr_port = htons(socket_getport(ssrc));
-		memcpy(&flow.flow_src.addr, ssrc, sizeof(*ssrc));
+		if ((slen = ssrc->sa_len) > sizeof(flow.flow_src.addr)) {
+			log_debug("%s: invalid src address len", __func__);
+			return;
+		}
+		memcpy(&flow.flow_src.addr, ssrc, slen);
 		if (socket_af((struct sockaddr *)&flow.flow_src.addr,
 		    flow.flow_src.addr_port) == -1) {
 			log_debug("%s: invalid address", __func__);
@@ -1487,10 +1496,14 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 			errmsg = "flow destination address";
 			goto out;
 		}
-		sdst = (struct sockaddr_storage *)(sa_addr + 1);
-		flow.flow_dst.addr_af = sdst->ss_family;
+		sdst = (struct sockaddr *)(sa_addr + 1);
+		flow.flow_dst.addr_af = sdst->sa_family;
 		flow.flow_dst.addr_port = htons(socket_getport(sdst));
-		memcpy(&flow.flow_dst.addr, sdst, sizeof(*sdst));
+		if ((slen = sdst->sa_len) > sizeof(flow.flow_dst.addr)) {
+			log_debug("%s: invalid dst address len", __func__);
+			return;
+		}
+		memcpy(&flow.flow_dst.addr, sdst, slen);
 		if (socket_af((struct sockaddr *)&flow.flow_dst.addr,
 		    flow.flow_dst.addr_port) == -1) {
 			log_debug("%s: invalid address", __func__);
@@ -1502,8 +1515,8 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 			errmsg = "flow source mask";
 			goto out;
 		}
-		smask = (struct sockaddr_storage *)(sa_addr + 1);
-		switch (smask->ss_family) {
+		smask = (struct sockaddr *)(sa_addr + 1);
+		switch (smask->sa_family) {
 		case AF_INET:
 			flow.flow_src.addr_mask =
 			    mask2prefixlen((struct sockaddr *)smask);
@@ -1527,8 +1540,8 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 			errmsg = "flow destination mask";
 			goto out;
 		}
-		dmask = (struct sockaddr_storage *)(sa_addr + 1);
-		switch (dmask->ss_family) {
+		dmask = (struct sockaddr *)(sa_addr + 1);
+		switch (dmask->sa_family) {
 		case AF_INET:
 			flow.flow_dst.addr_mask =
 			    mask2prefixlen((struct sockaddr *)dmask);
