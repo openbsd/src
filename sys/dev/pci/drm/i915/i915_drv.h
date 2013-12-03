@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.42 2013/12/01 20:33:57 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.43 2013/12/03 16:19:43 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -905,11 +905,6 @@ struct inteldrm_file {
 #define CHIP_IVYBRIDGE	0x2000000
 #define CHIP_GEN7	0x4000000
 
-/* flags we use in drm_obj's do_flags */
-#define I915_IN_EXEC		0x0020	/* being processed in execbuffer */
-#define I915_USER_PINNED	0x0040	/* BO has been pinned from userland */
-#define I915_EXEC_NEEDS_FENCE	0x0800	/* being processed but will need fence*/
-
 /** driver private structure attached to each drm_gem_object */
 struct drm_i915_gem_object {
 	struct drm_obj				 base;
@@ -1222,7 +1217,6 @@ int	i915_driver_open(struct drm_device *, struct drm_file *);
 void	i915_driver_close(struct drm_device *, struct drm_file *);
 
 /* i915_drv.c */
-void	inteldrm_purge_obj(struct drm_obj *);
 void	i915_gem_chipset_flush(struct drm_device *);
 int	intel_gpu_reset(struct drm_device *);
 int	i915_reset(struct drm_device *);
