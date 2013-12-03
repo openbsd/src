@@ -159,10 +159,6 @@
 /* Define this if your <sys/socket.h> defines select() */
 #define SYS_SOCKET_H_DEFINES_SELECT 1
 
-/* Define if you have the <sys/timeb.h> header file.  */
-#define HAVE_SYS_TIMEB_H 1
-#define HAVE_TIMEB_H 1
-
 /* Define if you have the <unistd.h> header file.  */
 #define HAVE_UNISTD_H 1
 

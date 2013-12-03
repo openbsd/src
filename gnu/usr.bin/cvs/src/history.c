@@ -508,7 +508,7 @@ history (argc, argv)
 		    char *buf = xmalloc (sizeof (f) - 2 + strlen (optarg));
 		    time_t t;
 		    sprintf (buf, f, optarg);
-		    t = get_date (buf, (struct timeb *) NULL);
+		    t = get_date (buf);
 		    free (buf);
 		    if (t == (time_t) -1)
 			error (0, 0, "%s is not a known time zone", optarg);

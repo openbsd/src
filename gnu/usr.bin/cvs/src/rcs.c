@@ -3057,7 +3057,7 @@ RCS_getrevtime (rcs, rev, date, fudge)
 		    ftm->tm_min, ftm->tm_sec);
 
     /* turn it into seconds since the epoch */
-    revdate = get_date (tdate, (struct timeb *) NULL);
+    revdate = get_date (tdate);
     if (revdate != (time_t) -1)
     {
 	revdate -= fudge;		/* remove "fudge" seconds */

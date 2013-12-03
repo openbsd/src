@@ -382,9 +382,8 @@ getcaller ()
 #ifndef __GNUC__
 /* ARGSUSED */
 time_t
-get_date (date, now)
+get_date (date)
     char *date;
-    struct timeb *now;
 {
     time_t foo = 0;
 

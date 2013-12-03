@@ -1919,7 +1919,7 @@ serve_checkin_time (arg)
 	return;
     }
 
-    checkin_time = get_date (arg, NULL);
+    checkin_time = get_date (arg);
     if (checkin_time == (time_t)-1)
     {
 	if (alloc_pending (80 + strlen (arg)))

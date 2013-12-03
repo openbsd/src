@@ -1078,7 +1078,7 @@ Make_Date (rawdate)
 {
     time_t unixtime;
 
-    unixtime = get_date (rawdate, (struct timeb *) NULL);
+    unixtime = get_date (rawdate);
     if (unixtime == (time_t) - 1)
 	error (1, 0, "Can't parse date/time: %s", rawdate);
     return date_from_time_t (unixtime);

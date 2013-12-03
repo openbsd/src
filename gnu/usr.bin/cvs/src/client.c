@@ -1578,7 +1578,7 @@ handle_mod_time (args, len)
 {
     if (stored_modtime_valid)
 	error (0, 0, "protocol error: duplicate Mod-time");
-    stored_modtime = get_date (args, NULL);
+    stored_modtime = get_date (args);
     if (stored_modtime == (time_t) -1)
 	error (0, 0, "protocol error: cannot parse date %s", args);
     else
