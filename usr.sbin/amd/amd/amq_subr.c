@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_subr.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_subr.c,v 1.12 2007/03/20 04:00:32 tedu Exp $
+ *	$Id: amq_subr.c,v 1.13 2013/12/03 02:14:57 deraadt Exp $
  */
 
 /*
@@ -202,7 +202,9 @@ struct svc_req *rqstp;
 	/*
 	 * Find end of key
 	 */
-	for (cp = (char *) s; *cp&&(!isascii(*cp)||!isspace(*cp)); cp++)
+	for (cp = (char *) s;
+	    *cp&&(!isascii((unsigned char)*cp) || !isspace((unsigned char)*cp));
+	    cp++)
 		;
 
 	if (!*cp) {
@@ -215,7 +217,7 @@ struct svc_req *rqstp;
 	/*
 	 * Find start of value
 	 */
-	while (isascii(*cp) && isspace(*cp))
+	while (isascii((unsigned char)*cp) && isspace((unsigned char)*cp))
 		cp++;
 
 	root_newmap(s, cp, (char *) 0);

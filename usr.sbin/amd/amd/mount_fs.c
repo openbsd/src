@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount_fs.c	8.1 (Berkeley) 6/6/93
- *	$Id: mount_fs.c,v 1.10 2007/03/20 04:00:32 tedu Exp $
+ *	$Id: mount_fs.c,v 1.11 2013/12/03 02:14:57 deraadt Exp $
  */
 
 #include "am.h"
@@ -217,7 +217,7 @@ nextmntopt(char **p)
 	/*
 	 * Skip past white space
 	 */
-	while (isspace(*cp))
+	while (isspace((unsigned char)*cp))
 		cp++;
 	/*
 	 * Word starts here
