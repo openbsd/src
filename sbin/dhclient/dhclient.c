@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.269 2013/12/04 16:54:28 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.270 2013/12/04 19:39:50 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -930,7 +930,7 @@ state_bound(void)
 	if (client->active->options[DHO_DHCP_SERVER_IDENTIFIER].len == 4) {
 		memcpy(&client->destination.s_addr,
 		    client->active->options[DHO_DHCP_SERVER_IDENTIFIER].data,
-		    client->active->options[DHO_DHCP_SERVER_IDENTIFIER].len);
+		    sizeof(client->destination.s_addr));
 	} else
 		client->destination.s_addr = INADDR_BROADCAST;
 
@@ -2448,6 +2448,9 @@ void add_classless_static_routes(int rdomain,
 	while (i < classless_static_routes->len) {
 		bits = classless_static_routes->data[i];
 		bytes = (bits + 7) / 8;
+		if (bytes > 4)
+			continue;
+			
 		i++;
 
 		memset(&netmask, 0, sizeof(netmask));

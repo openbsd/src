@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.56 2013/08/17 14:50:05 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.57 2013/12/04 19:39:50 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -441,7 +441,7 @@ priv_add_address(struct imsg_add_address *imsg)
 	in = (struct sockaddr_in *)&ifaliasreq.ifra_mask;
 	in->sin_family = AF_INET;
 	in->sin_len = sizeof(ifaliasreq.ifra_mask);
-	memcpy(&in->sin_addr.s_addr, &imsg->mask, sizeof(imsg->mask));
+	memcpy(&in->sin_addr.s_addr, &imsg->mask, sizeof(in->sin_addr.s_addr));
 
 	/* No need to set broadcast address. Kernel can figure it out. */
 

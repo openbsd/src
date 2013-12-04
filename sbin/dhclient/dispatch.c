@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.83 2013/11/16 19:34:43 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.84 2013/12/04 19:39:50 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -403,8 +403,10 @@ subnet_exists(struct client_lease *l)
 	int myrdomain, hisrdomain;
 
 	memset(&mymask, 0, sizeof(mymask));
-	memcpy(&mymask.s_addr, l->options[DHO_SUBNET_MASK].data,
-	    l->options[DHO_SUBNET_MASK].len);
+	if (l->options[DHO_SUBNET_MASK].len == sizeof(mymask.s_addr)) {
+		memcpy(&mymask.s_addr, l->options[DHO_SUBNET_MASK].data,
+		    sizeof(mymask.s_addr));
+	}
 	myaddr.s_addr = l->address.s_addr;
 	mynet.s_addr = mymask.s_addr & myaddr.s_addr;
 
