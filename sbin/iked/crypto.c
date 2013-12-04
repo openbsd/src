@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.10 2013/11/14 12:38:20 markus Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.11 2013/12/04 16:33:30 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -442,15 +442,8 @@ dsa_new(u_int16_t id, struct iked_hash *prf, int sign)
 
 	switch (id) {
 	case IKEV2_AUTH_RSA_SIG:
-		/*
-		 * XXX RFC4306 is not very clear about this and the
-		 * XXX informational RFC4718 says that we should use
-		 * XXX SHA1 here, but shouldn't we use the negotiated PRF
-		 * XXX alg instead?
-		 */
-		if ((dsa.dsa_priv =
-		    EVP_get_digestbyname("sha1WithRSAEncryption")) == NULL)
-			fatalx("dsa_new: cipher not available");
+		/* RFC5996 says we SHOULD use SHA1 here */
+		dsa.dsa_priv = EVP_sha1();
 		break;
 	case IKEV2_AUTH_SHARED_KEY_MIC:
 		if (prf == NULL || prf->hash_priv == NULL)
