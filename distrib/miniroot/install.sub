@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.710 2013/12/04 01:08:49 sthen Exp $
+#	$OpenBSD: install.sub,v 1.711 2013/12/04 16:19:32 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1075,7 +1075,7 @@ enable_network() {
 				else
 					alias=
 				fi
-				cmd="ifconfig $if $af $alias $name "
+				cmd="ifconfig $if $af $alias $name"
 				case "$dt" in
 				dest)	cmd="$cmd $dtaddr"
 					;;
