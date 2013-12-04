@@ -1,4 +1,4 @@
-dnl     $OpenBSD: install,v 1.1 2013/09/04 20:00:26 patrick Exp $
+dnl     $OpenBSD: install,v 1.2 2013/12/04 23:20:19 jmc Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -41,3 +41,7 @@ OpenBSDCommonInstall
 OpenBSDInstallWrapup
 
 OpenBSDCongratulations
+
+
+
+OpenBSDUnattendedInstallation

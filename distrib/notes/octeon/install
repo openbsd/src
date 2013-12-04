@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.9 2013/06/13 18:24:21 jasper Exp $
+dnl	$OpenBSD: install,v 1.10 2013/12/04 23:20:19 jmc Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
@@ -119,3 +119,7 @@ OpenBSDInstallWrapup
 dnl CAM-0100 systems final steps:
 
 OpenBSDCongratulations
+
+
+
+OpenBSDUnattendedInstallation

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.23 2013/02/25 20:34:07 miod Exp $
+dnl	$OpenBSD: install,v 1.24 2013/12/04 23:20:19 jmc Exp $
 dnl lots of texts coming from {mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -154,3 +154,7 @@ OpenBSDTAPEInstall
 OpenBSDInstallWrapup
 
 OpenBSDCongratulations
+
+
+
+OpenBSDUnattendedInstallation

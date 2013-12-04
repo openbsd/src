@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.27 2010/03/16 17:23:09 miod Exp $
+dnl	$OpenBSD: install,v 1.28 2013/12/04 23:20:19 jmc Exp $
 OpenBSDInstallPrelude
 
 OpenBSD is installed on the Zaurus by effectively converting
@@ -192,3 +192,6 @@ OpenBSDCongratulations
 		cp rc.rofilesys rc.rofilesys.ext3
 		cp ext2 rc.rofilesys
 
+
+
+OpenBSDUnattendedInstallation

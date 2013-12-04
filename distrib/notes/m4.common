@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.98 2013/08/18 04:16:13 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.99 2013/12/04 23:20:19 jmc Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -312,9 +312,12 @@ define({:-OpenBSDInstallPart3-:},
 	at this information later inside the install program.
 
 dnl dot.profile
-	After the kernel is done initialization, you will be asked whether
-	you wish to do an "(I)nstall" or an "(U)pgrade".  Enter 'I' for a
-	fresh install or 'U' to upgrade an existing installation.
+	After the kernel is done initialising, you will be asked whether
+	you wish to do an "(A)utoinstall", "(I)nstall" or an "(U)pgrade".
+	Enter 'I' for a fresh install or 'U' to upgrade an existing
+	installation.  Enter 'A' to start an unattended installation
+	where all of your answers are supplied in a response file (more
+	on that in "Preparing an unattended installation of OpenBSD").
 
 dnl install.sub set_term
 ifelse(MDX,,
@@ -798,6 +801,78 @@ tailored for your site.  We recommend you run:
 which will tell you about a bunch of the files needing to be reviewed.
 If you are unfamiliar with UN*X-like system administration, it's
 recommended that you buy a book that discusses it.-:})dnl
+dnl
+dnl
+dnl ========== Autoinstall instructions
+dnl (usually used by arch/install)
+dnl
+dnl OpenBSDUnattendedInstallation()dnl
+define({:-OpenBSDUnattendedInstallation-:},
+{:-dnl
+Preparing an unattended installation of OpenBSD:
+------------------------------------------------
+
+If the installation system detects that it booted from the network,
+and isn't interrupted within 5 seconds, it attempts a fully-automatic
+installation.  In this mode the installer runs dhclient(8) on the
+network interface the system booted from, and upon success retrieves
+a response file via HTTP.  The "next-server" DHCP option specifies the
+hostname part of the URL, as in "http://<next-server>/install.conf".
+
+You can also retrieve the response file from another source, a local
+disk for example.  If you wish to do that, enter the shell, retrieve
+the response file, store it as /install.conf, and start the automatic
+installation by leaving the shell and entering 'A' for "(A)utoinstall"
+at the prompt.
+
+The response file format is very simple.  It contains key/value pairs
+separated by an equals sign '=', where the key is a substring of the
+question or the plural of a thing in multiple-choice questions, and
+the value is what would have been entered at the interactive prompt.
+Empty lines, and lines beginning with a '#' character are ignored.
+
+Here is a minimal response file:
+
+  system hostname = openbsd
+  # generated with: encrypt -- secret
+  password for root = ${:--:}2a${:--:}06${:--:}4Q.5e2eIJYyMn2J/HTR6N.gJ4tpBsSXgYrhVnxlomfhVGHOcnu3KW
+  location of sets = http
+
+(Passwords should always be encrypted using encrypt(1), although the
+installer also accepts cleartext passwords.)
+
+The "system hostname" key above matches the following full question
+asked during an interactive installation:
+
+  System hostname? (short form, e.g. 'foo')
+
+Take "network interfaces" for an example of a multiple-choice question,
+which could be asked during an interactive installation:
+
+  Available network interfaces: re0 re1
+  Which one do you wish to configure? [re0]
+
+In a response file, this multiple-choice question is identified by
+only the ``thing'' which is available: "network interfaces" in this
+case.  To configure these two interfaces the response file might
+contain:
+
+  network interfaces = re0 re1
+  IPv4 address for re0 = dhcp
+  IPv4 address for re1 = dhcp
+
+While the installation is in progress the installer will redirect all
+output to the file /install.log, which can also be found on the freshly
+installed system after the initial reboot.  If the installation is
+successful the system will reboot automatically; otherwise, you will
+be dropped back into the shell where you can look at the /install.log
+file or try again.
+
+dnl XXX: do we want this?
+dnl A more complete example of a response file is distributed with the
+dnl OpenBSD installation sets for amd64, which is recommended to use as a
+dnl starting point and reference for writing your own.
+-:})dnl
 dnl
 dnl
 dnl ========== Upgrade instructions
