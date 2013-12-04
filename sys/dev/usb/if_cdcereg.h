@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcereg.h,v 1.5 2013/11/11 12:38:16 pirofti Exp $ */
+/*	$OpenBSD: if_cdcereg.h,v 1.6 2013/12/04 00:52:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -80,7 +80,6 @@ struct cdce_softc {
 	struct usbd_pipe	*cdce_bulkin_pipe;
 	int			 cdce_bulkout_no;
 	struct usbd_pipe	*cdce_bulkout_pipe;
-	int			 cdce_unit;
 	struct cdce_cdata	 cdce_cdata;
 	int			 cdce_rxeof_errors;
 	u_int16_t		 cdce_flags;

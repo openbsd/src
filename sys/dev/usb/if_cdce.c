@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.57 2013/11/15 10:17:39 pirofti Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.58 2013/12/04 00:52:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -324,7 +324,7 @@ found:
 		getmicrotime(&now);
 		macaddr_lo = htonl(now.tv_usec << 8);
 		bcopy(&macaddr_lo, &sc->cdce_arpcom.ac_enaddr[2], sizeof(u_int32_t));
-		sc->cdce_arpcom.ac_enaddr[5] = (u_int8_t)(sc->cdce_unit);
+		sc->cdce_arpcom.ac_enaddr[5] = (u_int8_t)(sc->cdce_dev.dv_unit);
 	} else {
 		for (i = 0; i < ETHER_ADDR_LEN * 2; i++) {
 			int c = UGETW(eaddr_str.bString[i]);

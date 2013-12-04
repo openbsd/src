@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.31 2013/11/11 10:09:40 mpi Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.32 2013/12/04 00:52:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -79,7 +79,6 @@ struct cdcef_softc {
 #define GET_IFP(sc) (&(sc)->sc_arpcom.ac_if)
 
 	int			sc_rxeof_errors;
-	int			sc_unit;
 	int			sc_listening;
 };
 
@@ -243,7 +242,7 @@ cdcef_attach(struct device *parent, struct device *self, void *aux)
 	macaddr_hi = htons(0x2acb);
 	bcopy(&macaddr_hi, &sc->sc_arpcom.ac_enaddr[0], sizeof(u_int16_t));
 	bcopy(&ticks, &sc->sc_arpcom.ac_enaddr[2], sizeof(u_int32_t));
-	sc->sc_arpcom.ac_enaddr[5] = (u_int8_t)(sc->sc_unit);
+	sc->sc_arpcom.ac_enaddr[5] = (u_int8_t)(sc->sc_dev.bdev.dv_unit);
 
 	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
