@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknetid.c,v 1.19 2013/08/18 16:32:24 guenther Exp $ */
+/*	$OpenBSD: mknetid.c,v 1.20 2013/12/04 02:18:05 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -394,9 +394,9 @@ print_hosts(FILE *pfile, char *fname, char *domain)
 
 		p = (char *)&line;
 
-		while (!isspace(*p))
+		while (!isspace((unsigned char)*p))
 			p++;			/* find first "space" */
-		while (isspace(*p))
+		while (isspace((unsigned char)*p))
 			*p++ = '\0';		/* replace space with <NUL> */
 
 		u = p;
@@ -404,7 +404,7 @@ print_hosts(FILE *pfile, char *fname, char *domain)
 			if (*p == '\0') {
 				p = NULL;
 			} else {
-				if (!isspace(*p)) {
+				if (!isspace((unsigned char)*p)) {
 					p++;
 				} else {
 					*p = '\0';
@@ -445,9 +445,9 @@ print_netid(FILE *mfile, char *fname)
 		p = (char *)&line;
 
 		k = p;				/* save start of key  */
-		while (!isspace(*p))
+		while (!isspace((unsigned char)*p))
 			p++;			/* find first "space" */
-		while (isspace(*p))
+		while (isspace((unsigned char)*p))
 			*p++ = '\0';		/* replace space with <NUL> */
 
 		u = p;
@@ -455,7 +455,7 @@ print_netid(FILE *mfile, char *fname)
 			if (*p == '\0') {
 				p = NULL;
 			} else {
-				if (!isspace(*p)) {
+				if (!isspace((unsigned char)*p)) {
 					p++;
 				} else {
 					*p = '\0';

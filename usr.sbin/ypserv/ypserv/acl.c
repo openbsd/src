@@ -1,4 +1,4 @@
-/*	$OpenBSD: acl.c,v 1.14 2009/10/27 23:59:58 deraadt Exp $ */
+/*	$OpenBSD: acl.c,v 1.15 2013/12/04 02:18:05 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -63,7 +63,8 @@ acl_read_line(FILE *fp, char *buf, int size)
 
 			c = p = buf; l = ' ';
 			while (*c != '\0') {
-				if (isspace(l) && isspace(*c)) {
+				if (isspace((unsigned char)l) &&
+				    isspace((unsigned char)*c)) {
 					c++;
 				} else {
 					l = *c++; *p = l; p++;
@@ -73,7 +74,7 @@ acl_read_line(FILE *fp, char *buf, int size)
 
 			if (p != buf) {
 				--p;
-				if (isspace(*p) != 0) {
+				if (isspace((unsigned char)*p) != 0) {
 					*p = '\0';
 				}
 			}
@@ -159,7 +160,8 @@ acl_init(char *file)
 
 		k = p;			/* save start of verb */
 		i = 0;
-		while (*p != '\0' && !isspace(*p = (char)tolower(*p))) {
+		while (*p != '\0' &&
+		    !isspace((*p = tolower(*p)))) {
 			p++;
 			i++;
 		}
@@ -187,7 +189,8 @@ acl_init(char *file)
 		    (state == ACLS_ALLOW || state == ACLS_DENY)) {
 			k = p;			/* save start of verb */
 			i = 0;
-			while (*p != '\0' && !isspace(*p = (char)tolower(*p))) {
+			while (*p != '\0' &&
+			    !isspace((*p = tolower(*p)))) {
 				p++;
 				i++;
 			}
@@ -227,7 +230,8 @@ acl_init(char *file)
 
 			k = p;			/* save start of verb */
 			i = 0;
-			while (*p != '\0' && !isspace(*p = (char)tolower(*p))) {
+			while (*p != '\0' &&
+			    !isspace((*p = tolower(*p)))) {
 				p++;
 				i++;
 			}
@@ -297,7 +301,8 @@ acl_init(char *file)
 
 			k = p;			/* save start of verb */
 			i = 0;
-			while (*p != '\0' && !isspace(*p = (char)tolower(*p))) {
+			while (*p != '\0' &&
+			    !isspace((*p = tolower(*p)))) {
 				p++;
 				i++;
 			}
@@ -319,7 +324,8 @@ acl_init(char *file)
 
 			k = p;		/* save start of verb */
 			i = 0;
-			while (*p != '\0' && !isspace(*p = (char)tolower(*p))) {
+			while (*p != '\0' &&
+			    !isspace((*p = tolower(*p)))) {
 				p++;
 				i++;
 			}
@@ -444,7 +450,8 @@ acl_securenet(char *file)
 
 		k = p;				/* save start of verb */
 		i = 0;
-		while (*p != '\0' && !isspace(*p = (char)tolower(*p))) {
+		while (*p != '\0' &&
+		    !isspace((*p = tolower(*p)))) {
 			p++;
 			i++;
 		}
@@ -473,7 +480,8 @@ acl_securenet(char *file)
 
 			k = p;				/* save start of verb */
 			i = 0;
-			while (*p != '\0' && !isspace(*p = (char)tolower(*p))) {
+			while (*p != '\0' &&
+			    !isspace((*p = tolower(*p)))) {
 				p++;
 				i++;
 			}
