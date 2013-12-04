@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.99 2013/07/10 05:23:18 ajacoutot Exp $
+#	$OpenBSD: special,v 1.100 2013/12/04 01:18:33 sthen Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -72,7 +72,6 @@ npppd		type=dir mode=0755 uname=root gname=wheel
 npppd.conf	type=file mode=0640 uname=root gname=wheel
 npppd-users	type=file mode=0600 uname=root gname=wheel
 ..	#npppd
-nsd.conf	type=file mode=0640 uname=root gname=_nsd
 ntpd.conf	type=file mode=0644 uname=root gname=wheel
 ospfd.conf	type=file mode=0600 uname=root gname=wheel
 ospf6d.conf	type=file mode=0600 uname=root gname=wheel
@@ -191,6 +190,10 @@ lastlog		type=file mode=0644 uname=root gname=wheel
 ..	#var/log
 mail		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#var/mail
+nsd		type=dir mode=0755 uname=root gname=wheel
+etc		type=dir mode=0750 uname=root gname=_nsd
+..	#var/nsd/etc
+..	#var/nsd
 run		type=dir mode=0755 uname=root gname=wheel
 utmp		type=file mode=0664 uname=root gname=utmp
 ..	#var/run
