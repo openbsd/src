@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.148 2013/10/23 13:05:38 kettenis Exp $ */
+/* $OpenBSD: mfi.c,v 1.149 2013/12/04 05:21:57 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -2200,7 +2200,7 @@ void
 mfi_refresh_sensors(void *arg)
 {
 	struct mfi_softc	*sc = arg;
-	int			i;
+	int			i, rv;
 	struct bioc_vol		bv;
 
 	if (sc->sc_bbu != NULL && mfi_bbu(sc) != 0)
@@ -2209,7 +2209,12 @@ mfi_refresh_sensors(void *arg)
 	for (i = 0; i < sc->sc_ld_cnt; i++) {
 		bzero(&bv, sizeof(bv));
 		bv.bv_volid = i;
-		if (mfi_ioctl_vol(sc, &bv))
+
+		rw_enter_write(&sc->sc_lock);
+		rv = mfi_ioctl_vol(sc, &bv);
+		rw_exit_write(&sc->sc_lock);
+
+		if (rv != 0)
 			return;
 
 		switch(bv.bv_status) {
