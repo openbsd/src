@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.271 2013/12/04 19:44:41 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.272 2013/12/04 22:14:33 matthew Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -881,6 +881,21 @@ bind_lease(void)
 			/* XXX Only use FIRST router address for now. */
 			memcpy(&gateway.s_addr, options[DHO_ROUTERS].data,
 			    sizeof(gateway.s_addr));
+
+			/*
+			 * If we were given a /32 IP assignment, then make sure
+			 * the gateway address is routable with equivalent of
+			 *
+			 *     route add -net $gw -netmask 255.255.255.255 \
+			 *         -cloning -iface $addr
+			 */
+			if (mask.s_addr == INADDR_BROADCAST) {
+				add_route(ifi->rdomain, gateway, mask,
+				    client->new->address,
+				    RTA_DST | RTA_NETMASK | RTA_GATEWAY,
+				    RTF_CLONING | RTF_STATIC);
+			}
+
 			add_default_route(ifi->rdomain, client->new->address,
 			    gateway);
 		}
