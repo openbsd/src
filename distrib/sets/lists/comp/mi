@@ -5,6 +5,7 @@
 ./usr/bin/c++
 ./usr/bin/c++filt
 ./usr/bin/cc
+./usr/bin/cpp
 ./usr/bin/flex
 ./usr/bin/flex++
 ./usr/bin/fpr
@@ -1768,6 +1769,7 @@
 ./usr/lib/liby_p.a
 ./usr/lib/libz.a
 ./usr/lib/libz_p.a
+./usr/libexec/cpp
 ./usr/sbin/kgmon
 ./usr/share/lkm/README
 ./usr/share/lkm/misc/Makefile

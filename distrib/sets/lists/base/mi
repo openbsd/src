@@ -224,7 +224,6 @@
 ./usr/bin/cpan2dist
 ./usr/bin/cpanp
 ./usr/bin/cpanp-run-perl
-./usr/bin/cpp
 ./usr/bin/crontab
 ./usr/bin/csplit
 ./usr/bin/ctags
@@ -2563,7 +2562,6 @@
 ./usr/libexec/auth/login_token
 ./usr/libexec/auth/login_yubikey
 ./usr/libexec/comsat
-./usr/libexec/cpp
 ./usr/libexec/cvs
 ./usr/libexec/cvs/contrib
 ./usr/libexec/cvs/contrib/clmerge
