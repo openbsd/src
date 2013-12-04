@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgtty.h,v 1.5 2012/12/05 23:19:57 deraadt Exp $	*/
+/*	$OpenBSD: sgtty.h,v 1.6 2013/12/04 22:58:24 deraadt Exp $	*/
 /*	$NetBSD: sgtty.h,v 1.4 1995/06/05 19:40:33 pk Exp $	*/
 
 /*
@@ -37,7 +37,4 @@
 #endif
 #include <sys/ioctl.h>
 
-__BEGIN_DECLS
-int gtty(int, struct sgttyb *);
-int stty(int, struct sgttyb *);
-__END_DECLS
+#warning "<sgtty.h> is obsolete"

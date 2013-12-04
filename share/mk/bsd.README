@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.52 2013/10/13 23:30:12 guenther Exp $
+#	$OpenBSD: bsd.README,v 1.53 2013/12/04 22:58:24 deraadt Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -306,10 +306,10 @@ CLEANFILES	Additional files to remove for the clean and cleandir targets.
 COPTS		Additional flags to the compiler when creating C objects.
 
 LDADD		Additional loader objects.  Usually used for libraries.
-		For example, to load with the compatibility and utility
+		For example, to load with the crypto and utility
 		libraries, use:
 
-			LDADD+=-lutil -lcompat
+			LDADD+=-lutil -lcrypto
 
 LDFLAGS		Additional loader flags.
 
@@ -330,17 +330,16 @@ SRCS		List of source files to build the program.  If it's not
 		defined, it's assumed to be ${PROG}.c.
 
 DPADD		Additional dependencies for the program.  Usually used for
-		libraries.  For example, to depend on the compatibility and
+		libraries.  For example, to depend on the crypto and
 		utility libraries use:
 
-			DPADD+=${LIBCOMPAT} ${LIBUTIL}
+			DPADD+=${LIBCRYPTO} ${LIBUTIL}
 
 		The following libraries are predefined for DPADD:
 
 			LIBASN1		/usr/lib/libasn1.a
 			LIBC		/usr/lib/libc.a
 			LIBCOM_ERR	/usr/lib/libcom_err.a
-			LIBCOMPAT	/usr/lib/libcompat.a
 			LIBCRYPTO	/usr/lib/libcrypto.a
 			LIBCURSES	/usr/lib/libcurses.a
 			LIBEDIT		/usr/lib/libedit.a

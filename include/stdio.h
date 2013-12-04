@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.44 2013/03/28 16:37:14 eric Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.45 2013/12/04 22:58:24 deraadt Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -307,11 +307,9 @@ __END_DECLS
  */
 #if __BSD_VISIBLE || __POSIX_VISIBLE || __XPG_VISIBLE
 #define	L_ctermid	1024	/* size for ctermid(); PATH_MAX */
-#define L_cuserid	9	/* size for cuserid(); UT_NAMESIZE + 1 */
 
 __BEGIN_DECLS
 char	*ctermid(char *);
-char	*cuserid(char *);
 FILE	*fdopen(int, const char *);
 int	 fileno(FILE *);
 
