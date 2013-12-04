@@ -1,15 +1,14 @@
 #	from: @(#)Makefile	5.7 (Berkeley) 4/1/91
-#	$OpenBSD: Makefile,v 1.53 2013/08/07 22:07:32 dlg Exp $
+#	$OpenBSD: Makefile,v 1.54 2013/12/04 20:49:28 deraadt Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	comsat fingerd ftpd getty ld.so lockspool \
-	mail.local makewhatis rpc.rquotad rpc.rstatd rpc.rusersd \
-	rpc.rwalld rpc.sprayd security spamd spamlogd spamd-setup rshd \
-	talkd tcpd uucpd
-
-SUBDIR+=login_passwd login_skey login_reject login_chpass \
-	login_lchpass login_token login_radius login_tis login_yubikey
+SUBDIR= comsat fingerd ftpd getty ld.so lockspool login_chpass \
+	login_lchpass login_passwd login_radius login_reject \
+	login_skey login_tis login_token login_yubikey mail.local \
+	makewhatis rpc.rquotad rpc.rstatd rpc.rusersd rpc.rwalld \
+	rpc.sprayd rshd security spamd spamd-setup spamlogd talkd \
+	tcpd uucpd
 
 .if (${YP:L} == "yes")
 SUBDIR+=rpc.yppasswdd
