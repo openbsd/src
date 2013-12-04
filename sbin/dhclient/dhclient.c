@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.270 2013/12/04 19:39:50 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.271 2013/12/04 19:44:41 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2449,7 +2449,7 @@ void add_classless_static_routes(int rdomain,
 		bits = classless_static_routes->data[i];
 		bytes = (bits + 7) / 8;
 		if (bytes > 4)
-			continue;
+			return;
 			
 		i++;
 
