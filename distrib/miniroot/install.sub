@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.709 2013/12/01 21:01:01 halex Exp $
+#	$OpenBSD: install.sub,v 1.710 2013/12/04 01:08:49 sthen Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -691,6 +691,7 @@ configure_ifs() {
 			# make sure it is up.
 			grep -qs "^up" /tmp/hostname.$_vd ||
 				echo "up" >>/tmp/hostname.$_vd
+			chmod 640 /tmp/hostname.$_vd
 			ifconfig $_vd up
 
 			# Make sure a hostname.$_ifs is created with this info.
