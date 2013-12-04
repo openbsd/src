@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.3 2013/12/03 06:21:41 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.4 2013/12/04 00:20:31 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -89,7 +89,7 @@
 
 
 struct kframe {
-	int	kargc;
+	long	kargc;
 	char	*kargv[1];	/* size depends on kargc */
 	char	kargstr[1];	/* size varies */
 	char	kenvstr[1];	/* size varies */
@@ -116,13 +116,8 @@ struct kframe {
 	asm("	dla	$28,_gp				\n" \
 	"	daddiu	%0,$29,32" : "=r" (kfp))
 #else
-#if defined(__GNUC__) && __GNUC__ > 3
 #define	SETUP_KFP(kfp)					\
-	asm("	daddiu	%0,$29,64" : "=r" (kfp))
-#else
-#define	SETUP_KFP(kfp)					\
-	asm("	daddiu	%0,$29,80" : "=r" (kfp))
-#endif
+	asm("	daddiu	%0,$29,48" : "=r" (kfp))
 #endif
 
 
