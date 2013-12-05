@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.111 2013/12/05 09:31:16 eric Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.112 2013/12/05 10:27:30 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -388,12 +388,12 @@ is used instead.
 .Pp
 If
 .Ic tls
-is specified, OpenSMTPD will refuse to relay unless remote host provides
+is specified, OpenSMTPD will refuse to relay unless the remote host provides
 STARTTLS.
 .Pp
 If
 .Ic verify
-is specified, OpenSMTPD will refuse to relay unless remote host provides
+is specified, OpenSMTPD will refuse to relay unless the remote host provides
 STARTTLS and the certificate it presented has been verified.
 .Pp
 Note that the
@@ -510,7 +510,7 @@ parameters are mutually exclusive.
 .Pp
 If
 .Ic verify
-is specified, OpenSMTPD will refuse to relay unless remote host provides
+is specified, OpenSMTPD will refuse to relay unless the remote host provides
 STARTTLS and the certificate it presented has been verified.
 The relay URL must specify TLS for this option to be valid.
 .Pp
@@ -607,8 +607,8 @@ before being allowed to start an SMTP transaction.
 .Pp
 If
 .Ic tls-require verify
-is specified, the client mus provide a valid certificate to be
-able to establish a SMTP session.
+is specified, the client must provide a valid certificate to be
+able to establish an SMTP session.
 .Pp
 .Ic secure
 may be specified to provide both STARTTLS and SMTPS services.
