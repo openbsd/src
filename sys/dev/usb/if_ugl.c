@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ugl.c,v 1.2 2013/12/03 21:06:59 sasano Exp $	*/
+/*	$OpenBSD: if_ugl.c,v 1.3 2013/12/05 20:53:15 sasano Exp $	*/
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2013 SASANO Takayoshi <uaa@uaa.org.uk>
@@ -152,7 +152,6 @@ struct ugl_softc {
 
 	uByte			sc_ibuf[UGL_INTR_PKTLEN];
 
-	int			sc_unit;
 	u_int			sc_rx_errs;
 	struct timeval		sc_rx_notice;
 	u_int			sc_intr_errs;
@@ -246,7 +245,6 @@ ugl_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_unit = self->dv_unit;
 	sc->sc_udev = dev;
 	sc->sc_product = uaa->product;
 	sc->sc_vendor = uaa->vendor;
@@ -292,7 +290,7 @@ ugl_attach(struct device *parent, struct device *self, void *aux)
 	macaddr_hi = htons(0x2acb);
 	bcopy(&macaddr_hi, &sc->sc_arpcom.ac_enaddr[0], sizeof(u_int16_t));
 	bcopy(&ticks, &sc->sc_arpcom.ac_enaddr[2], sizeof(u_int32_t));
-	sc->sc_arpcom.ac_enaddr[5] = (u_int8_t)(sc->sc_unit);
+	sc->sc_arpcom.ac_enaddr[5] = (u_int8_t)(sc->sc_dev.dv_unit);
 
 	printf("%s: address %s\n",
 	    sc->sc_dev.dv_xname, ether_sprintf(sc->sc_arpcom.ac_enaddr));
