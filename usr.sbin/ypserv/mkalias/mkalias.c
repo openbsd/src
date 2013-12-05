@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.25 2013/08/22 04:43:41 guenther Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.26 2013/12/05 14:18:54 jca Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -46,7 +46,7 @@ static void
 split_address(char *address, size_t len, char *user, char *host)
 {
 	char *c, *s, *r;
-	int  i = 0;
+	size_t  i = 0;
 
 	if (memchr(address, '@', len)) {
 		s = user;
