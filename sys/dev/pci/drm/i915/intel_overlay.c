@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_overlay.c,v 1.6 2013/08/13 10:23:52 jsg Exp $	*/
+/*	$OpenBSD: intel_overlay.c,v 1.7 2013/12/05 21:27:28 kettenis Exp $	*/
 /*
  * Copyright © 2009
  *
@@ -182,6 +182,8 @@ struct intel_overlay {
 	/* register access */
 	u32 flip_addr;
 	struct drm_i915_gem_object *reg_bo;
+	bus_space_handle_t reg_bsh;
+	int reg_refcount;
 	/* flip handling */
 	uint32_t last_flip_req;
 	void (*flip_tail)(struct intel_overlay *);
@@ -190,18 +192,22 @@ struct intel_overlay {
 static struct overlay_registers __iomem *
 intel_overlay_map_regs(struct intel_overlay *overlay)
 {
-//	drm_i915_private_t *dev_priv = overlay->dev->dev_private;
+	drm_i915_private_t *dev_priv = overlay->dev->dev_private;
 	struct overlay_registers *regs;
 
 	if (OVERLAY_NEEDS_PHYSICAL(overlay->dev))
 		regs = (struct overlay_registers *)overlay->reg_bo->phys_obj->handle->kva;
 	else {
-#ifdef notyet
+#ifdef __linux__
 		regs = io_mapping_map_wc(dev_priv->mm.gtt_mapping,
 					 overlay->reg_bo->gtt_offset);
 #else
-		printf("%s partial stub\n", __func__);
-		return (NULL);
+		if (overlay->reg_refcount++ == 0 &&
+		    agp_map_subregion(dev_priv->agph,
+				      overlay->reg_bo->gtt_offset,
+				      PAGE_SIZE, &overlay->reg_bsh))
+			return NULL;
+		regs = bus_space_vaddr(overlay->dev->bst, overlay->reg_bsh);
 #endif
 	}
 
@@ -211,11 +217,14 @@ intel_overlay_map_regs(struct intel_overlay *overlay)
 static void intel_overlay_unmap_regs(struct intel_overlay *overlay,
 				     struct overlay_registers __iomem *regs)
 {
+	drm_i915_private_t *dev_priv = overlay->dev->dev_private;
+
 	if (!OVERLAY_NEEDS_PHYSICAL(overlay->dev))
-#ifdef notyet
+#ifdef __linux__
 		io_mapping_unmap(regs);
 #else
-		printf("%s partial stub\n", __func__);
+		if (--overlay->reg_refcount == 0)
+			agp_unmap_subregion(dev_priv->agph, overlay->reg_bsh, PAGE_SIZE);
 #endif
 }
 
