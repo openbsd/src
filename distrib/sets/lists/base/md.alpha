@@ -2070,7 +2070,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/pthread_np.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/pwd.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ranlib.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/re_comp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/readline
 ./usr/libdata/perl5/site_perl/alpha-openbsd/readline/chardefs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/readline/history.ph
@@ -2082,7 +2081,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/readline/tilde.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/regex.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/regexp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/resolv.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/rmd160.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/rpc
@@ -2136,7 +2134,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/setjmp.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/signal.ph

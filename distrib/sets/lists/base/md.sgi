@@ -2062,7 +2062,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/pthread_np.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/pwd.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/ranlib.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/re_comp.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/readline
 ./usr/libdata/perl5/site_perl/mips64-openbsd/readline/chardefs.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/readline/history.ph
@@ -2074,7 +2073,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/readline/tilde.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/regex.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/regexp.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/resolv.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/rmd160.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/rpc
@@ -2180,7 +2178,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/varargs.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/vmparam.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/z8530var.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/signal.ph

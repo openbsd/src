@@ -1303,7 +1303,6 @@
 ./usr/include/pthread_np.h
 ./usr/include/pwd.h
 ./usr/include/ranlib.h
-./usr/include/re_comp.h
 ./usr/include/readline
 ./usr/include/readline/chardefs.h
 ./usr/include/readline/history.h
@@ -1315,7 +1314,6 @@
 ./usr/include/readline/tilde.h
 ./usr/include/readpassphrase.h
 ./usr/include/regex.h
-./usr/include/regexp.h
 ./usr/include/resolv.h
 ./usr/include/rmd160.h
 ./usr/include/rpc
@@ -1384,7 +1382,6 @@
 ./usr/include/search.h
 ./usr/include/semaphore.h
 ./usr/include/setjmp.h
-./usr/include/sgtty.h
 ./usr/include/sha1.h
 ./usr/include/sha2.h
 ./usr/include/signal.h
@@ -1665,8 +1662,6 @@
 ./usr/lib/libc_p.a
 ./usr/lib/libcom_err.a
 ./usr/lib/libcom_err_p.a
-./usr/lib/libcompat.a
-./usr/lib/libcompat_p.a
 ./usr/lib/libcrypto.a
 ./usr/lib/libcrypto_p.a
 ./usr/lib/libcurses.a
@@ -3577,7 +3572,6 @@
 ./usr/share/man/man3/curs_window.3
 ./usr/share/man/man3/curses.3
 ./usr/share/man/man3/curses_version.3
-./usr/share/man/man3/cuserid.3
 ./usr/share/man/man3/d2i_ASN1_OBJECT.3
 ./usr/share/man/man3/d2i_DHparams.3
 ./usr/share/man/man3/d2i_DSAPrivateKey.3
@@ -3953,7 +3947,6 @@
 ./usr/share/man/man3/fstatvfs.3
 ./usr/share/man/man3/ftell.3
 ./usr/share/man/man3/ftello.3
-./usr/share/man/man3/ftime.3
 ./usr/share/man/man3/ftok.3
 ./usr/share/man/man3/ftrylockfile.3
 ./usr/share/man/man3/fts.3
@@ -4147,7 +4140,6 @@
 ./usr/share/man/man3/gssapi.3
 ./usr/share/man/man3/gsskrb5_extract_authz_data_from_sec_context.3
 ./usr/share/man/man3/gsskrb5_register_acceptor_identity.3
-./usr/share/man/man3/gtty.3
 ./usr/share/man/man3/gzclearerr.3
 ./usr/share/man/man3/gzclose.3
 ./usr/share/man/man3/gzdirect.3
@@ -5433,8 +5425,6 @@
 ./usr/share/man/man3/rcmd.3
 ./usr/share/man/man3/rcmd_af.3
 ./usr/share/man/man3/rcmdsh.3
-./usr/share/man/man3/re_comp.3
-./usr/share/man/man3/re_exec.3
 ./usr/share/man/man3/readdir.3
 ./usr/share/man/man3/readdir_r.3
 ./usr/share/man/man3/readlabelfs.3
@@ -5451,7 +5441,6 @@
 ./usr/share/man/man3/regerror.3
 ./usr/share/man/man3/regex.3
 ./usr/share/man/man3/regexec.3
-./usr/share/man/man3/regexp.3
 ./usr/share/man/man3/regfree.3
 ./usr/share/man/man3/registerrpc.3
 ./usr/share/man/man3/remainder.3
@@ -5479,7 +5468,6 @@
 ./usr/share/man/man3/restartterm.3
 ./usr/share/man/man3/rewind.3
 ./usr/share/man/man3/rewinddir.3
-./usr/share/man/man3/rexec.3
 ./usr/share/man/man3/rfc1413.3
 ./usr/share/man/man3/rindex.3
 ./usr/share/man/man3/rint.3
@@ -5613,9 +5601,7 @@
 ./usr/share/man/man3/setprotoent.3
 ./usr/share/man/man3/setprotoent_r.3
 ./usr/share/man/man3/setpwent.3
-./usr/share/man/man3/setrgid.3
 ./usr/share/man/man3/setrpcent.3
-./usr/share/man/man3/setruid.3
 ./usr/share/man/man3/setscrreg.3
 ./usr/share/man/man3/setservent.3
 ./usr/share/man/man3/setservent_r.3
@@ -5789,7 +5775,6 @@
 ./usr/share/man/man3/strvis.3
 ./usr/share/man/man3/strvisx.3
 ./usr/share/man/man3/strxfrm.3
-./usr/share/man/man3/stty.3
 ./usr/share/man/man3/subpad.3
 ./usr/share/man/man3/subwin.3
 ./usr/share/man/man3/svc_destroy.3

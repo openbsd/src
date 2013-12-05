@@ -2101,7 +2101,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/pthread_np.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/pwd.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/ranlib.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/re_comp.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/readline
 ./usr/libdata/perl5/site_perl/amd64-openbsd/readline/chardefs.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/readline/history.ph
@@ -2113,7 +2112,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/readline/tilde.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/regex.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/regexp.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/resolv.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/rmd160.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/rpc
@@ -2167,7 +2165,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/setjmp.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/signal.ph

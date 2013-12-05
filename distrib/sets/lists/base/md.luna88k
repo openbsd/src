@@ -1982,7 +1982,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/pthread_np.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/pwd.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ranlib.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/re_comp.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/readline
 ./usr/libdata/perl5/site_perl/m88k-openbsd/readline/chardefs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/readline/history.ph
@@ -1994,7 +1993,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/readline/tilde.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/regex.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/regexp.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/resolv.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/rmd160.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/rpc
@@ -2048,7 +2046,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/setjmp.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/signal.ph

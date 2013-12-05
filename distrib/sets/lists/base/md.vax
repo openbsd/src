@@ -1360,7 +1360,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/pthread_np.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/pwd.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ranlib.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/re_comp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/readline
 ./usr/libdata/perl5/site_perl/vax-openbsd/readline/chardefs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/readline/history.ph
@@ -1372,7 +1371,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/readline/tilde.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/regex.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/regexp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/resolv.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/rmd160.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/rpc
@@ -1426,7 +1424,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/setjmp.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/signal.ph

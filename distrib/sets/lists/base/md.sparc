@@ -1505,7 +1505,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/pthread_np.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/pwd.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ranlib.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/re_comp.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/readline
 ./usr/libdata/perl5/site_perl/sparc-openbsd/readline/chardefs.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/readline/history.ph
@@ -1517,7 +1516,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/readline/tilde.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/regex.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/regexp.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/resolv.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/rmd160.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/rpc
@@ -1571,7 +1569,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/setjmp.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/signal.ph

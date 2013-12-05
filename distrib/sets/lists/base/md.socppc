@@ -2056,7 +2056,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/pthread_np.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/pwd.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ranlib.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/re_comp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/readline
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/readline/chardefs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/readline/history.ph
@@ -2068,7 +2067,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/readline/tilde.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/regex.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/regexp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/resolv.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/rmd160.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/rpc
@@ -2122,7 +2120,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/setjmp.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/signal.ph
