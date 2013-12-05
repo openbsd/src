@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhctoken.h,v 1.6 2009/09/01 08:42:31 reyk Exp $	*/
+/*	$OpenBSD: dhctoken.h,v 1.7 2013/12/05 22:31:35 krw Exp $	*/
 
 /* Tokens for config file lexer and parser. */
 
@@ -72,7 +72,6 @@
 #define TOK_DYNAMIC_BOOTP_LEASE_LENGTH	289
 #define TOK_BOOT_UNKNOWN_CLIENTS	290
 #define TOK_NEXT_SERVER			291
-#define TOK_TOKEN_RING			292
 #define TOK_GROUP			293
 #define TOK_GET_LEASE_HOSTNAMES		295
 #define TOK_USE_HOST_DECL_NAMES		296
@@ -87,7 +86,6 @@
 #define TOK_DOMAIN			323
 #define TOK_HOSTNAME			328
 #define TOK_CLIENT_HOSTNAME		329
-#define TOK_FDDI			331
 #define TOK_USE_LEASE_ADDR_FOR_DEFAULT_ROUTE	332
 #define TOK_AUTHORITATIVE		333
 #define TOK_TOKEN_NOT			334

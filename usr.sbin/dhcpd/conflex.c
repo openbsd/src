@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.11 2013/06/04 13:00:07 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.12 2013/12/05 22:31:35 krw Exp $	*/
 
 /* Lexical scanner for dhcpd config file... */
 
@@ -324,7 +324,6 @@ static const struct keywords {
 	{ "dynamic-bootp-lease-length",		TOK_DYNAMIC_BOOTP_LEASE_LENGTH },
 	{ "ends",				TOK_ENDS },
 	{ "ethernet",				TOK_ETHERNET },
-	{ "fddi",				TOK_FDDI },
 	{ "filename",				TOK_FILENAME },
 	{ "fixed-address",			TOK_FIXED_ADDR },
 	{ "get-lease-hostnames",		TOK_GET_LEASE_HOSTNAMES },
@@ -347,7 +346,6 @@ static const struct keywords {
 	{ "subnet",				TOK_SUBNET },
 	{ "timeout",				TOK_TIMEOUT },
 	{ "timestamp",				TOK_TIMESTAMP },
-	{ "token-ring",				TOK_TOKEN_RING },
 	{ "uid",				TOK_UID },
 	{ "unknown-clients",			TOK_UNKNOWN_CLIENTS },
 	{ "use-host-decl-names",		TOK_USE_HOST_DECL_NAMES },

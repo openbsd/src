@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.24 2013/11/12 04:59:00 deraadt Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.25 2013/12/05 22:31:35 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file. */
 
@@ -326,7 +326,6 @@ static const struct keywords {
 	{ "deny",				TOK_DENY },
 	{ "ethernet",				TOK_ETHERNET },
 	{ "expire",				TOK_EXPIRE },
-	{ "fddi",				TOK_FDDI },
 	{ "filename",				TOK_FILENAME },
 	{ "fixed-address",			TOK_FIXED_ADDR },
 	{ "hardware",				TOK_HARDWARE },
@@ -351,8 +350,7 @@ static const struct keywords {
 	{ "send",				TOK_SEND },
 	{ "server-name",			TOK_SERVER_NAME },
 	{ "supersede",				TOK_SUPERSEDE },
-	{ "timeout",				TOK_TIMEOUT },
-	{ "token-ring",				TOK_TOKEN_RING }
+	{ "timeout",				TOK_TIMEOUT }
 };
 
 int	kw_cmp(const void *k, const void *e);

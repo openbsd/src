@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.26 2013/11/20 17:22:46 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.27 2013/12/05 22:31:35 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -153,14 +153,6 @@ parse_hardware_param(FILE *cfile, struct hardware *hardware)
 	switch (token) {
 	case TOK_ETHERNET:
 		hardware->htype = HTYPE_ETHER;
-		hardware->hlen = 6;
-		break;
-	case TOK_TOKEN_RING:
-		hardware->htype = HTYPE_IEEE802;
-		hardware->hlen = 6;
-		break;
-	case TOK_FDDI:
-		hardware->htype = HTYPE_FDDI;
 		hardware->hlen = 6;
 		break;
 	default:
