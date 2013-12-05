@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.712 2013/12/04 21:21:35 halex Exp $
+#	$OpenBSD: install.sub,v 1.713 2013/12/05 00:44:49 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -441,7 +441,7 @@ ask_yn() {
 #
 # At exit $resp holds selected item, or 'done'
 ask_which() {
-	local _name=$1 _query=$2 _list=$3 _def=$4 _dynlist _dyndef _key
+	local _name=$1 _query=$2 _list=$3 _def=$4 _dynlist _dyndef _key _q
 
 	_key=$(echo "$_name" | sed 's/[^[:alnum:]]/_/g')
 
@@ -458,9 +458,9 @@ ask_which() {
 
 		: ${_dyndef:=$1}
 		echo "Available ${_name}s are: $_dynlist."
-		echo -n "Which one $_query? (or 'done') "
-		[[ -n $_dyndef ]] && echo -n "[$_dyndef] "
-		if _autorespond "${_name}s" done; then
+		_q="Which $_name $_query?"
+		echo -n "$_q (or 'done') ${_dyndef:+[$_dyndef] }"
+		if _autorespond "$_q" done; then
 			eval ": \${ask_which_resp_$_key=\"\$resp done\"}"
 			eval "set -- \$ask_which_resp_$_key"
 			resp=$1; shift
