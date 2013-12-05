@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.110 2013/11/19 10:22:42 eric Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.111 2013/12/05 09:31:16 eric Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 19 2013 $
+.Dd $Mdocdate: December 5 2013 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -411,6 +411,7 @@ as they will prevent proper relaying on the Internet.
 .Op Ic hostname Ar name
 .Op Ic hostnames Ar names
 .Op Ic pki Ar pkiname
+.Op Ic verify
 .Xc
 Mail is relayed through the specified
 .Ar host
@@ -507,6 +508,12 @@ and
 parameters are mutually exclusive.
 .El
 .Pp
+If
+.Ic verify
+is specified, OpenSMTPD will refuse to relay unless remote host provides
+STARTTLS and the certificate it presented has been verified.
+The relay URL must specify TLS for this option to be valid.
+.Pp
 Additional per-rule adjustments available:
 .Bl -tag -width Ds
 .It Ic expire Ar n Brq Ar s\*(Bam\*(Bah\*(Bad
@@ -562,9 +569,9 @@ Changing the default value might degrade performances.
 .Ic listen on Ar interface
 .Op Ar family
 .Op Ic port Ar port
-.Op Ic tls | tls-require | smtps | secure
+.Op Ic tls | tls-require | tls-require verify | smtps | secure
 .Op Ic pki Ar pkiname
-.Op Ic auth | auth-optional
+.Op Ic auth | auth-optional | auth Ar authtable | Ic auth-optional Ar authtable
 .Op Ic tag Ar tag
 .Op Ic hostname Ar hostname
 .Op Ic hostnames Ar names
@@ -597,6 +604,12 @@ by default on port 465.
 .Ic tls-require
 may be used to force clients to establish a secure connection
 before being allowed to start an SMTP transaction.
+.Pp
+If
+.Ic tls-require verify
+is specified, the client mus provide a valid certificate to be
+able to establish a SMTP session.
+.Pp
 .Ic secure
 may be specified to provide both STARTTLS and SMTPS services.
 Host certificates may be used for these connections,
@@ -624,6 +637,15 @@ This is only useful to let a listener accept incoming mail from
 untrusted senders and outgoing mail from authenticated users in
 situations where it is not possible to listen on the submission
 port.
+.Pp
+Both
+.Ic auth
+and
+.Ic auth-optional
+accept a table as parameter.
+When provided, credentials are looked up in this table.
+Credentials format is described in
+.Xr table 5 .
 .Pp
 If the
 .Ic tag
