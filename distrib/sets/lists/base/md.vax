@@ -1424,6 +1424,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/setjmp.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/signal.ph

@@ -1382,6 +1382,7 @@
 ./usr/include/search.h
 ./usr/include/semaphore.h
 ./usr/include/setjmp.h
+./usr/include/sgtty.h
 ./usr/include/sha1.h
 ./usr/include/sha2.h
 ./usr/include/signal.h
