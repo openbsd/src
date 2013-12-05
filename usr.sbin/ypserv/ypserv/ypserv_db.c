@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_db.c,v 1.27 2013/12/04 16:05:44 krw Exp $ */
+/*	$OpenBSD: ypserv_db.c,v 1.28 2013/12/05 17:36:12 jca Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -371,6 +371,7 @@ lookup_host(int nametable, int host_lookup, DBM *db, char *keystr,
 	static char val[BUFSIZ+1]; /* match libc */
 	static char hostname[MAXHOSTNAMELEN];
 	char tmpbuf[MAXHOSTNAMELEN + 20], *v, *ptr;
+	size_t len;
 	int l;
 
 	if (!host_lookup)
@@ -390,10 +391,10 @@ lookup_host(int nametable, int host_lookup, DBM *db, char *keystr,
 			addr_name = (struct in_addr *)host->h_addr_list[0];
 			snprintf(tmpbuf, sizeof(tmpbuf), "%s %s\n",
 			    inet_ntoa(*addr_name), host->h_name);
-			if (v - val + strlen(tmpbuf) + 1 > sizeof(val))
+			len = strlcat(val, tmpbuf, sizeof(val));
+			if (len >= sizeof(val))
 				break;
-			strlcpy(v, tmpbuf, sizeof(val)); /* v == val */
-			v = v + strlen(tmpbuf);
+			v = val + len;
 		}
 		result->val.valdat_val = val;
 		result->val.valdat_len = v - val;
@@ -423,11 +424,16 @@ lookup_host(int nametable, int host_lookup, DBM *db, char *keystr,
 		return(YP_NOKEY);
 	}
 
-	snprintf(val, sizeof(val), "%s %s", keystr, host->h_name);
+	len = snprintf(val, sizeof(val), "%s %s", keystr, host->h_name);
+	if (len == (size_t)-1 || len >= sizeof(val))
+		return(YP_YPERR);
+	v = val + len;
 	while ((ptr = *(host->h_aliases)) != NULL) {
 		strlcat(val, " ", sizeof(val));
-		if (strlcat(val, ptr, sizeof(val)) > sizeof(val))
+		len = strlcat(val, ptr, sizeof(val));
+		if (len >= sizeof(val))
 			break;
+		v = val + len;
 		host->h_aliases++;
 	}
 	result->val.valdat_val = val;
