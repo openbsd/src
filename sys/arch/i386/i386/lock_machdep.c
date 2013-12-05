@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.12 2013/05/21 20:05:30 tedu Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.13 2013/12/05 01:28:45 uebayasi Exp $	*/
 /* $NetBSD: lock_machdep.c,v 1.1.2.3 2000/05/03 14:40:30 sommerfeld Exp $ */
 
 /*-
@@ -81,7 +81,7 @@ __mp_lock_spin(struct __mp_lock *mpl)
 #else
 	int ticks = __mp_lock_spinout;
 
-	while (mpl->mpl_count != 0 && ticks-- > 0)
+	while (mpl->mpl_count != 0 && --ticks > 0)
 		SPINLOCK_SPIN_HOOK;
 
 	if (ticks == 0) {
