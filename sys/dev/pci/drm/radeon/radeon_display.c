@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_display.c,v 1.4 2013/11/02 22:58:10 kettenis Exp $	*/
+/*	$OpenBSD: radeon_display.c,v 1.5 2013/12/05 13:29:56 kettenis Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -357,7 +357,7 @@ static int radeon_crtc_page_flip(struct drm_crtc *crtc,
 	struct radeon_crtc *radeon_crtc = to_radeon_crtc(crtc);
 	struct radeon_framebuffer *old_radeon_fb;
 	struct radeon_framebuffer *new_radeon_fb;
-	struct drm_obj *obj;
+	struct drm_gem_object *obj;
 	struct radeon_bo *rbo;
 	struct radeon_unpin_work *work;
 	u32 tiling_flags, pitch_pixels;
@@ -1093,7 +1093,7 @@ int
 radeon_framebuffer_init(struct drm_device *dev,
 			struct radeon_framebuffer *rfb,
 			struct drm_mode_fb_cmd2 *mode_cmd,
-			struct drm_obj *obj)
+			struct drm_gem_object *obj)
 {
 	int ret;
 	rfb->obj = obj;
@@ -1111,7 +1111,7 @@ radeon_user_framebuffer_create(struct drm_device *dev,
 			       struct drm_file *file_priv,
 			       struct drm_mode_fb_cmd2 *mode_cmd)
 {
-	struct drm_obj *obj;
+	struct drm_gem_object *obj;
 	struct radeon_framebuffer *radeon_fb;
 	int ret;
 

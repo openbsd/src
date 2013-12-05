@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_cursor.c,v 1.2 2013/11/07 05:33:05 jsg Exp $	*/
+/*	$OpenBSD: radeon_cursor.c,v 1.3 2013/12/05 13:29:56 kettenis Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -121,7 +121,7 @@ static void radeon_show_cursor(struct drm_crtc *crtc)
 	}
 }
 
-static void radeon_set_cursor(struct drm_crtc *crtc, struct drm_obj *obj,
+static void radeon_set_cursor(struct drm_crtc *crtc, struct drm_gem_object *obj,
 			      uint64_t gpu_addr)
 {
 	struct radeon_crtc *radeon_crtc = to_radeon_crtc(crtc);
@@ -156,7 +156,7 @@ int radeon_crtc_cursor_set(struct drm_crtc *crtc,
 {
 	struct radeon_crtc *radeon_crtc = to_radeon_crtc(crtc);
 	struct radeon_device *rdev = crtc->dev->dev_private;
-	struct drm_obj *obj;
+	struct drm_gem_object *obj;
 	struct radeon_bo *robj;
 	uint64_t gpu_addr;
 	int ret;

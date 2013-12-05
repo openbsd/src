@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon.h,v 1.3 2013/11/04 12:19:26 kettenis Exp $	*/
+/*	$OpenBSD: radeon.h,v 1.4 2013/12/05 13:29:56 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -324,7 +324,7 @@ struct radeon_bo_va {
 };
 
 struct radeon_bo {
-	struct drm_obj			gem_base;
+	struct drm_gem_object		gem_base;
 	/* Protected by gem.rwlock */
 	struct list_head		list;
 	/* Protected by tbo.reserved */
@@ -419,7 +419,7 @@ void radeon_gem_fini(struct radeon_device *rdev);
 int radeon_gem_object_create(struct radeon_device *rdev, int size,
 				int alignment, int initial_domain,
 				bool discardable, bool kernel,
-				struct drm_obj **obj);
+				struct drm_gem_object **obj);
 
 int radeon_mode_dumb_create(struct drm_file *file_priv,
 			    struct drm_device *dev,
@@ -819,7 +819,7 @@ void cayman_dma_fini(struct radeon_device *rdev);
  * CS.
  */
 struct radeon_cs_reloc {
-	struct drm_obj			*gobj;
+	struct drm_gem_object		*gobj;
 	struct radeon_bo		*robj;
 	struct radeon_bo_list		lobj;
 	uint32_t			handle;

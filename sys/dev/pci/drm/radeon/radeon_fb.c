@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_fb.c,v 1.2 2013/11/04 12:19:26 kettenis Exp $	*/
+/*	$OpenBSD: radeon_fb.c,v 1.3 2013/12/05 13:29:56 kettenis Exp $	*/
 /*
  * Copyright © 2007 David Airlie
  *
@@ -61,7 +61,7 @@ static struct fb_ops radeonfb_ops = {
 #endif
 
 int radeonfb_create_pinned_object(struct radeon_fbdev *,
-    struct drm_mode_fb_cmd2 *, struct drm_obj **);
+    struct drm_mode_fb_cmd2 *, struct drm_gem_object **);
 
 void radeondrm_burner_cb(void *, void *);
 
@@ -89,7 +89,7 @@ int radeon_align_pitch(struct radeon_device *rdev, int width, int bpp, bool tile
 	return aligned;
 }
 
-static void radeonfb_destroy_pinned_object(struct drm_obj *gobj)
+static void radeonfb_destroy_pinned_object(struct drm_gem_object *gobj)
 {
 	struct radeon_bo *rbo = gem_to_radeon_bo(gobj);
 	int ret;
@@ -106,10 +106,10 @@ static void radeonfb_destroy_pinned_object(struct drm_obj *gobj)
 int
 radeonfb_create_pinned_object(struct radeon_fbdev *rfbdev,
 					 struct drm_mode_fb_cmd2 *mode_cmd,
-					 struct drm_obj **gobj_p)
+					 struct drm_gem_object **gobj_p)
 {
 	struct radeon_device *rdev = rfbdev->rdev;
-	struct drm_obj *gobj = NULL;
+	struct drm_gem_object *gobj = NULL;
 	struct radeon_bo *rbo = NULL;
 	bool fb_tiled = false; /* useful for testing */
 	u32 tiling_flags = 0;
@@ -201,7 +201,7 @@ static int radeonfb_create(struct radeon_fbdev *rfbdev,
 #endif
 	struct drm_framebuffer *fb = NULL;
 	struct drm_mode_fb_cmd2 mode_cmd;
-	struct drm_obj *gobj = NULL;
+	struct drm_gem_object *gobj = NULL;
 	struct radeon_bo *rbo = NULL;
 #if 0
 	struct device *device = &rdev->pdev->dev;

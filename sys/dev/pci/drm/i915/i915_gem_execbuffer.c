@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.21 2013/11/30 20:13:36 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.22 2013/12/05 13:29:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -125,7 +125,7 @@ i915_gem_execbuffer_relocate_entry(struct drm_i915_gem_object *obj,
 				   struct drm_i915_gem_relocation_entry *reloc)
 {
 	struct drm_device *dev = obj->base.dev;
-	struct drm_obj *target_obj;
+	struct drm_gem_object *target_obj;
 	struct drm_i915_gem_object *target_i915_obj;
 	uint32_t target_offset;
 	int ret = -EINVAL;

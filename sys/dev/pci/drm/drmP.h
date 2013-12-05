@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.155 2013/12/01 09:13:46 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.156 2013/12/05 13:29:56 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -573,9 +573,9 @@ struct drm_mem {
  * Subdrivers (radeon, intel, etc) may have other locking requirement, these
  * requirements will be detailed in those drivers.
  */
-struct drm_obj {
+struct drm_gem_object {
 	struct uvm_object		 uobj;
-	SPLAY_ENTRY(drm_obj)	 	 entry;
+	SPLAY_ENTRY(drm_gem_object) 	 entry;
 	struct drm_device		*dev;
 	struct uvm_object		*uao;
 	struct drm_local_map		*map;
@@ -599,7 +599,7 @@ struct drm_obj {
 
 struct drm_handle {
 	SPLAY_ENTRY(drm_handle)	 entry;
-	struct drm_obj		*obj;
+	struct drm_gem_object	*obj;
 	uint32_t		 handle;
 };
 
@@ -653,13 +653,13 @@ struct drm_driver_info {
 	 *
 	 * Returns 0 on success.
 	 */
-	int (*gem_init_object) (struct drm_obj *obj);
-	void (*gem_free_object) (struct drm_obj *obj);
-	int (*gem_open_object) (struct drm_obj *, struct drm_file *);
-	void (*gem_close_object) (struct drm_obj *, struct drm_file *);
+	int (*gem_init_object) (struct drm_gem_object *obj);
+	void (*gem_free_object) (struct drm_gem_object *obj);
+	int (*gem_open_object) (struct drm_gem_object *, struct drm_file *);
+	void (*gem_close_object) (struct drm_gem_object *, struct drm_file *);
 
-	int	(*gem_fault)(struct drm_obj *, struct uvm_faultinfo *, off_t,
-		    vaddr_t, vm_page_t *, int, int, vm_prot_t, int);
+	int	(*gem_fault)(struct drm_gem_object *, struct uvm_faultinfo *,
+		    off_t, vaddr_t, vm_page_t *, int, int, vm_prot_t, int);
 
 	int	(*dumb_create)(struct drm_file *file_priv,
 		    struct drm_device *dev, struct drm_mode_create_dumb *args);
@@ -793,7 +793,7 @@ struct drm_device {
 	atomic_t		 obj_count;
 	u_int			 obj_name;
 	atomic_t		 obj_memory;
-	SPLAY_HEAD(drm_name_tree, drm_obj)	name_tree;
+	SPLAY_HEAD(drm_name_tree, drm_gem_object) name_tree;
 	struct pool				objpl;
 	
 	/* mode stuff */
@@ -994,46 +994,53 @@ int	drm_agp_bind_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_sg_alloc_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_sg_free(struct drm_device *, void *, struct drm_file *);
 
-struct drm_obj *drm_gem_object_alloc(struct drm_device *, size_t);
-int	 drm_gem_object_init(struct drm_device *, struct drm_obj *, size_t);
-void	 drm_gem_object_release(struct drm_obj *);
+/* Graphics Execution Manager library functions (drm_gem.c) */
+void drm_gem_object_release(struct drm_gem_object *obj);
+struct drm_gem_object *drm_gem_object_alloc(struct drm_device *dev,
+					    size_t size);
+int drm_gem_object_init(struct drm_device *dev,
+			struct drm_gem_object *obj, size_t size);
+
 void	 drm_unref(struct uvm_object *);
 void	 drm_ref(struct uvm_object *);
 void	 drm_unref_locked(struct uvm_object *);
 void	 drm_ref_locked(struct uvm_object *);
-void	drm_hold_object_locked(struct drm_obj *);
-void	drm_hold_object(struct drm_obj *);
-void	drm_unhold_object_locked(struct drm_obj *);
-void	drm_unhold_object(struct drm_obj *);
-int	drm_try_hold_object(struct drm_obj *);
-void	drm_unhold_and_unref(struct drm_obj *);
+void	drm_hold_object_locked(struct drm_gem_object *);
+void	drm_hold_object(struct drm_gem_object *);
+void	drm_unhold_object_locked(struct drm_gem_object *);
+void	drm_unhold_object(struct drm_gem_object *);
+int	drm_try_hold_object(struct drm_gem_object *);
+void	drm_unhold_and_unref(struct drm_gem_object *);
 
-int	drm_gem_handle_create(struct drm_file *, struct drm_obj *, u32 *);
-int	drm_gem_handle_delete(struct drm_file *, u32);
+int drm_gem_handle_create(struct drm_file *file_priv,
+			  struct drm_gem_object *obj,
+			  u32 *handlep);
+int drm_gem_handle_delete(struct drm_file *filp, u32 handle);
 
-void drm_gem_free_mmap_offset(struct drm_obj *obj);
-int drm_gem_create_mmap_offset(struct drm_obj *obj);
+void drm_gem_free_mmap_offset(struct drm_gem_object *obj);
+int drm_gem_create_mmap_offset(struct drm_gem_object *obj);
 
-struct drm_obj *drm_gem_object_lookup(struct drm_device *,
-			    struct drm_file *, u32);
+struct drm_gem_object *drm_gem_object_lookup(struct drm_device *dev,
+					     struct drm_file *filp,
+					     u32 handle);
 int	drm_gem_close_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_gem_flink_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_gem_open_ioctl(struct drm_device *, void *, struct drm_file *);
 
 static __inline void
-drm_gem_object_reference(struct drm_obj *obj)
+drm_gem_object_reference(struct drm_gem_object *obj)
 {
 	drm_ref(&obj->uobj);
 }
 
 static __inline void
-drm_gem_object_unreference(struct drm_obj *obj)
+drm_gem_object_unreference(struct drm_gem_object *obj)
 {
 	drm_unref(&obj->uobj);
 }
 
 static __inline void
-drm_gem_object_unreference_unlocked(struct drm_obj *obj)
+drm_gem_object_unreference_unlocked(struct drm_gem_object *obj)
 {
 	struct drm_device *dev = obj->dev;
 
@@ -1043,13 +1050,13 @@ drm_gem_object_unreference_unlocked(struct drm_obj *obj)
 }
 
 static __inline void 
-drm_lock_obj(struct drm_obj *obj)
+drm_lock_obj(struct drm_gem_object *obj)
 {
 	simple_lock(&obj->uobj);
 }
 
 static __inline void 
-drm_unlock_obj(struct drm_obj *obj)
+drm_unlock_obj(struct drm_gem_object *obj)
 {
 	simple_unlock(&obj->uobj);
 }

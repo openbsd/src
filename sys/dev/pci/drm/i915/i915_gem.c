@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.53 2013/12/01 14:23:48 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.54 2013/12/05 13:29:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1339,7 +1339,7 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 		    struct drm_file *file)
 {
 	struct drm_i915_gem_mmap *args = data;
-	struct drm_obj *obj;
+	struct drm_gem_object *obj;
 	vaddr_t addr;
 	voff_t offset;
 	vsize_t end, nsize;
@@ -1387,7 +1387,7 @@ done:
 }
 
 int
-i915_gem_fault(struct drm_obj *gem_obj, struct uvm_faultinfo *ufi,
+i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
     off_t offset, vaddr_t vaddr, vm_page_t *pps, int npages, int centeridx,
     vm_prot_t access_type, int flags)
 {
@@ -3892,14 +3892,14 @@ struct drm_i915_gem_object *i915_gem_alloc_object(struct drm_device *dev,
 	return obj;
 }
 
-int i915_gem_init_object(struct drm_obj *obj)
+int i915_gem_init_object(struct drm_gem_object *obj)
 {
 	BUG();
 
 	return 0;
 }
 
-void i915_gem_free_object(struct drm_obj *gem_obj)
+void i915_gem_free_object(struct drm_gem_object *gem_obj)
 {
 	struct drm_i915_gem_object *obj = to_intel_bo(gem_obj);
 	struct drm_device *dev = obj->base.dev;

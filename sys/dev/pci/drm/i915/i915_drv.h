@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.43 2013/12/03 16:19:43 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.44 2013/12/05 13:29:56 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -907,7 +907,7 @@ struct inteldrm_file {
 
 /** driver private structure attached to each drm_gem_object */
 struct drm_i915_gem_object {
-	struct drm_obj				 base;
+	struct drm_gem_object base;
 
 	const struct drm_i915_gem_object_ops *ops;
 
@@ -916,10 +916,10 @@ struct drm_i915_gem_object {
 	struct list_head gtt_list;
 
 	/** This object's place on the active/flushing/inactive lists */
-	struct list_head			 ring_list;
-	struct list_head			 mm_list;
+	struct list_head ring_list;
+	struct list_head mm_list;
 	/** This object's place in the batchbuffer or on the eviction list */
-	struct list_head			 exec_list;
+	struct list_head exec_list;
 
 	/**
 	 * This is set if the object is on the active lists (has pending
@@ -1036,15 +1036,15 @@ struct drm_i915_gem_object {
 	struct drm_i915_gem_phys_object *phys_obj;
 
 	/**
-	 * Number of crtcs where this object is currently the fb, but   
+	 * Number of crtcs where this object is currently the fb, but
 	 * will be page flipped away on the next vblank.  When it
 	 * reaches 0, dev_priv->pending_flip_queue will be woken up.
 	 */
-	int					 pending_flip;
+	int pending_flip;
 };
 #define to_gem_object(obj) (&((struct drm_i915_gem_object *)(obj))->base)
 
-#define to_intel_bo(x) container_of(x,struct drm_i915_gem_object, base)
+#define to_intel_bo(x) container_of(x, struct drm_i915_gem_object, base)
 
 struct drm_i915_file_private {
 	struct {
@@ -1141,8 +1141,8 @@ int	i915_gem_set_caching_ioctl(struct drm_device *, void *,
 int	i915_gem_wait_ioctl(struct drm_device *, void *, struct drm_file *);
 
 /* GEM memory manager functions */
-int	i915_gem_init_object(struct drm_obj *);
-void	i915_gem_free_object(struct drm_obj *);
+int	i915_gem_init_object(struct drm_gem_object *);
+void	i915_gem_free_object(struct drm_gem_object *);
 int	i915_gem_object_pin(struct drm_i915_gem_object *, uint32_t, bool, bool);
 void	i915_gem_object_unpin(struct drm_i915_gem_object *);
 void	i915_gem_retire_requests(struct drm_device *);
@@ -1269,7 +1269,7 @@ static inline bool intel_gmbus_is_forced_bit(struct i2c_controller *i2c)
 }
 
 /* i915_gem.c */
-int i915_gem_fault(struct drm_obj *, struct uvm_faultinfo *, off_t,
+int i915_gem_fault(struct drm_gem_object *, struct uvm_faultinfo *, off_t,
     vaddr_t, vm_page_t *, int, int, vm_prot_t, int );
 void i915_gem_object_init(struct drm_i915_gem_object *obj,
 			 const struct drm_i915_gem_object_ops *ops);

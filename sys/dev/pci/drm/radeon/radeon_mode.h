@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_mode.h,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_mode.h,v 1.2 2013/12/05 13:29:56 kettenis Exp $	*/
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -302,7 +302,7 @@ struct radeon_crtc {
 	bool can_tile;
 	bool in_mode_set;
 	uint32_t crtc_offset;
-	struct drm_obj *cursor_bo;
+	struct drm_gem_object *cursor_bo;
 	uint64_t cursor_addr;
 	int cursor_width;
 	int cursor_height;
@@ -484,7 +484,7 @@ struct radeon_connector {
 
 struct radeon_framebuffer {
 	struct drm_framebuffer base;
-	struct drm_obj *obj;
+	struct drm_gem_object *obj;
 };
 
 #define ENCODER_MODE_IS_DP(em) (((em) == ATOM_ENCODER_MODE_DP) || \
@@ -683,7 +683,7 @@ extern void radeon_crtc_fb_gamma_get(struct drm_crtc *crtc, u16 *red, u16 *green
 int radeon_framebuffer_init(struct drm_device *dev,
 			     struct radeon_framebuffer *rfb,
 			     struct drm_mode_fb_cmd2 *mode_cmd,
-			     struct drm_obj *obj);
+			     struct drm_gem_object *obj);
 
 int radeonfb_remove(struct drm_device *dev, struct drm_framebuffer *fb);
 bool radeon_get_legacy_connector_info_from_bios(struct drm_device *dev);
@@ -699,7 +699,7 @@ extern bool radeon_get_atom_connector_info_from_object_table(struct drm_device *
 extern bool radeon_get_atom_connector_info_from_supported_devices_table(struct drm_device *dev);
 
 void radeon_enc_destroy(struct drm_encoder *encoder);
-void radeon_copy_fb(struct drm_device *dev, struct drm_obj *dst_obj);
+void radeon_copy_fb(struct drm_device *dev, struct drm_gem_object *dst_obj);
 void radeon_combios_asic_init(struct drm_device *dev);
 bool radeon_crtc_scaling_mode_fixup(struct drm_crtc *crtc,
 					const struct drm_display_mode *mode,

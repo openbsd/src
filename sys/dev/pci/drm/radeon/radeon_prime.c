@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_prime.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_prime.c,v 1.2 2013/12/05 13:29:56 kettenis Exp $	*/
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *
@@ -161,7 +161,7 @@ static int radeon_prime_create(struct drm_device *dev,
 }
 
 struct dma_buf *radeon_gem_prime_export(struct drm_device *dev,
-					struct drm_obj *obj,
+					struct drm_gem_object *obj,
 					int flags)
 {
 	struct radeon_bo *bo = gem_to_radeon_bo(obj);
@@ -181,7 +181,7 @@ struct dma_buf *radeon_gem_prime_export(struct drm_device *dev,
 	return dma_buf_export(bo, &radeon_dmabuf_ops, obj->size, flags);
 }
 
-struct drm_obj *radeon_gem_prime_import(struct drm_device *dev,
+struct drm_gem_object *radeon_gem_prime_import(struct drm_device *dev,
 					       struct dma_buf *dma_buf)
 {
 	struct dma_buf_attachment *attach;

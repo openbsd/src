@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_legacy_crtc.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_legacy_crtc.c,v 1.2 2013/12/05 13:29:56 kettenis Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -374,7 +374,7 @@ int radeon_crtc_do_set_base(struct drm_crtc *crtc,
 	struct radeon_crtc *radeon_crtc = to_radeon_crtc(crtc);
 	struct radeon_framebuffer *radeon_fb;
 	struct drm_framebuffer *target_fb;
-	struct drm_obj *obj;
+	struct drm_gem_object *obj;
 	struct radeon_bo *rbo;
 	uint64_t base;
 	uint32_t crtc_offset, crtc_offset_cntl, crtc_tile_x0_y0 = 0;

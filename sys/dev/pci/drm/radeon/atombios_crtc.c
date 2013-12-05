@@ -1,4 +1,4 @@
-/*	$OpenBSD: atombios_crtc.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: atombios_crtc.c,v 1.2 2013/12/05 13:29:56 kettenis Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1067,7 +1067,7 @@ static int dce4_crtc_do_set_base(struct drm_crtc *crtc,
 	struct radeon_device *rdev = dev->dev_private;
 	struct radeon_framebuffer *radeon_fb;
 	struct drm_framebuffer *target_fb;
-	struct drm_obj *obj;
+	struct drm_gem_object *obj;
 	struct radeon_bo *rbo;
 	uint64_t fb_location;
 	uint32_t fb_format, fb_pitch_pixels, tiling_flags;
@@ -1269,7 +1269,7 @@ static int avivo_crtc_do_set_base(struct drm_crtc *crtc,
 	struct drm_device *dev = crtc->dev;
 	struct radeon_device *rdev = dev->dev_private;
 	struct radeon_framebuffer *radeon_fb;
-	struct drm_obj *obj;
+	struct drm_gem_object *obj;
 	struct radeon_bo *rbo;
 	struct drm_framebuffer *target_fb;
 	uint64_t fb_location;

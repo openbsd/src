@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_gem.c,v 1.3 2013/11/02 22:58:10 kettenis Exp $	*/
+/*	$OpenBSD: radeon_gem.c,v 1.4 2013/12/05 13:29:56 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -30,20 +30,20 @@
 #include <dev/pci/drm/radeon_drm.h>
 #include "radeon.h"
 
-int	 radeon_gem_object_init(struct drm_obj *);
-void	 radeon_gem_object_free(struct drm_obj *);
-int	 radeon_gem_set_domain(struct drm_obj *, uint32_t, uint32_t);
-int	 radeon_gem_object_open(struct drm_obj *, struct drm_file *);
-void	 radeon_gem_object_close(struct drm_obj *, struct drm_file *);
+int	 radeon_gem_object_init(struct drm_gem_object *);
+void	 radeon_gem_object_free(struct drm_gem_object *);
+int	 radeon_gem_set_domain(struct drm_gem_object *, uint32_t, uint32_t);
+int	 radeon_gem_object_open(struct drm_gem_object *, struct drm_file *);
+void	 radeon_gem_object_close(struct drm_gem_object *, struct drm_file *);
 
-int radeon_gem_object_init(struct drm_obj *obj)
+int radeon_gem_object_init(struct drm_gem_object *obj)
 {
 	BUG();
 
 	return 0;
 }
 
-void radeon_gem_object_free(struct drm_obj *gobj)
+void radeon_gem_object_free(struct drm_gem_object *gobj)
 {
 	struct radeon_bo *robj = gem_to_radeon_bo(gobj);
 
@@ -59,7 +59,7 @@ void radeon_gem_object_free(struct drm_obj *gobj)
 int radeon_gem_object_create(struct radeon_device *rdev, int size,
 				int alignment, int initial_domain,
 				bool discardable, bool kernel,
-				struct drm_obj **obj)
+				struct drm_gem_object **obj)
 {
 	struct radeon_bo *robj;
 	unsigned long max_size;
@@ -101,7 +101,7 @@ retry:
 	return 0;
 }
 
-int radeon_gem_set_domain(struct drm_obj *gobj,
+int radeon_gem_set_domain(struct drm_gem_object *gobj,
 			  uint32_t rdomain, uint32_t wdomain)
 {
 	struct radeon_bo *robj;
@@ -146,7 +146,7 @@ void radeon_gem_fini(struct radeon_device *rdev)
  * Call from drm_gem_handle_create which appear in both new and open ioctl
  * case.
  */
-int radeon_gem_object_open(struct drm_obj *obj, struct drm_file *file_priv)
+int radeon_gem_object_open(struct drm_gem_object *obj, struct drm_file *file_priv)
 {
 	struct radeon_bo *rbo = gem_to_radeon_bo(obj);
 	struct radeon_device *rdev = rbo->rdev;
@@ -175,7 +175,7 @@ int radeon_gem_object_open(struct drm_obj *obj, struct drm_file *file_priv)
 	return 0;
 }
 
-void radeon_gem_object_close(struct drm_obj *obj,
+void radeon_gem_object_close(struct drm_gem_object *obj,
 			     struct drm_file *file_priv)
 {
 	struct radeon_bo *rbo = gem_to_radeon_bo(obj);
@@ -259,7 +259,7 @@ int radeon_gem_create_ioctl(struct drm_device *dev, void *data,
 {
 	struct radeon_device *rdev = dev->dev_private;
 	struct drm_radeon_gem_create *args = data;
-	struct drm_obj *gobj;
+	struct drm_gem_object *gobj;
 	uint32_t handle;
 	int r;
 
@@ -294,7 +294,7 @@ int radeon_gem_set_domain_ioctl(struct drm_device *dev, void *data,
 	 * just validate the BO into a certain domain */
 	struct radeon_device *rdev = dev->dev_private;
 	struct drm_radeon_gem_set_domain *args = data;
-	struct drm_obj *gobj;
+	struct drm_gem_object *gobj;
 	struct radeon_bo *robj;
 	int r;
 
@@ -322,7 +322,7 @@ int radeon_mode_dumb_mmap(struct drm_file *filp,
 			  struct drm_device *dev,
 			  uint32_t handle, uint64_t *offset_p)
 {
-	struct drm_obj *gobj;
+	struct drm_gem_object *gobj;
 	struct radeon_bo *robj;
 
 	gobj = drm_gem_object_lookup(dev, filp, handle);
@@ -348,7 +348,7 @@ int radeon_gem_busy_ioctl(struct drm_device *dev, void *data,
 {
 	struct radeon_device *rdev = dev->dev_private;
 	struct drm_radeon_gem_busy *args = data;
-	struct drm_obj *gobj;
+	struct drm_gem_object *gobj;
 	struct radeon_bo *robj;
 	int r;
 	uint32_t cur_placement = 0;
@@ -381,7 +381,7 @@ int radeon_gem_wait_idle_ioctl(struct drm_device *dev, void *data,
 {
 	struct radeon_device *rdev = dev->dev_private;
 	struct drm_radeon_gem_wait_idle *args = data;
-	struct drm_obj *gobj;
+	struct drm_gem_object *gobj;
 	struct radeon_bo *robj;
 	int r;
 
@@ -403,7 +403,7 @@ int radeon_gem_set_tiling_ioctl(struct drm_device *dev, void *data,
 				struct drm_file *filp)
 {
 	struct drm_radeon_gem_set_tiling *args = data;
-	struct drm_obj *gobj;
+	struct drm_gem_object *gobj;
 	struct radeon_bo *robj;
 	int r = 0;
 
@@ -421,7 +421,7 @@ int radeon_gem_get_tiling_ioctl(struct drm_device *dev, void *data,
 				struct drm_file *filp)
 {
 	struct drm_radeon_gem_get_tiling *args = data;
-	struct drm_obj *gobj;
+	struct drm_gem_object *gobj;
 	struct radeon_bo *rbo;
 	int r = 0;
 
@@ -444,7 +444,7 @@ int radeon_gem_va_ioctl(struct drm_device *dev, void *data,
 			  struct drm_file *filp)
 {
 	struct drm_radeon_gem_va *args = data;
-	struct drm_obj *gobj;
+	struct drm_gem_object *gobj;
 	struct radeon_device *rdev = dev->dev_private;
 	struct radeon_fpriv *fpriv = filp->driver_priv;
 	struct radeon_bo *rbo;
@@ -552,7 +552,7 @@ int radeon_mode_dumb_create(struct drm_file *file_priv,
 			    struct drm_mode_create_dumb *args)
 {
 	struct radeon_device *rdev = dev->dev_private;
-	struct drm_obj *gobj;
+	struct drm_gem_object *gobj;
 	uint32_t handle;
 	int r;
 
