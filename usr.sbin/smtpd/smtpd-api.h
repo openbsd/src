@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.12 2013/11/20 09:22:42 eric Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.13 2013/12/05 09:26:47 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -171,9 +171,10 @@ struct scheduler_info {
 #define SCHED_DELAY		0x01
 #define SCHED_REMOVE		0x02
 #define SCHED_EXPIRE		0x04
-#define SCHED_BOUNCE		0x08
-#define SCHED_MDA		0x10
-#define SCHED_MTA		0x20
+#define SCHED_UPDATE		0x08
+#define SCHED_BOUNCE		0x10
+#define SCHED_MDA		0x20
+#define SCHED_MTA		0x40
 
 struct scheduler_batch {
 	int		 type;

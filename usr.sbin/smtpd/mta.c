@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.175 2013/12/03 09:06:26 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.176 2013/12/05 09:26:47 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1354,7 +1354,7 @@ mta_flush(struct mta_relay *relay, int fail, const char *error)
 	if (relay->state & RELAY_HOLDQ) {
 		m_create(p_queue, IMSG_DELIVERY_RELEASE, 0, 0, -1);
 		m_add_id(p_queue, relay->id);
-		m_add_int(p_queue, 0);
+		m_add_int(p_queue, -1);
 		m_close(p_queue);
 	}
 }

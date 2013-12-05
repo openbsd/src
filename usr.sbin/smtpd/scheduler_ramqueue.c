@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.34 2013/12/03 10:38:40 eric Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.35 2013/12/05 09:26:47 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -60,8 +60,10 @@ struct rq_envelope {
 #define	RQ_ENVELOPE_EXPIRED	 0x01
 #define	RQ_ENVELOPE_REMOVED	 0x02
 #define	RQ_ENVELOPE_SUSPEND	 0x04
+#define	RQ_ENVELOPE_UPDATE	 0x08
 	uint8_t			 flags;
 
+	time_t			 ctime;
 	time_t			 sched;
 	time_t			 expire;
 
@@ -86,6 +88,7 @@ struct rq_queue {
 	struct evplist		 q_mta;
 	struct evplist		 q_mda;
 	struct evplist		 q_bounce;
+	struct evplist		 q_update;
 	struct evplist		 q_expired;
 	struct evplist		 q_removed;
 };
@@ -197,6 +200,7 @@ scheduler_ram_insert(struct scheduler_info *si)
 	envelope->evpid = si->evpid;
 	envelope->type = si->type;
 	envelope->message = message;
+	envelope->ctime = si->creation;
 	envelope->expire = si->creation + si->expire;
 	envelope->sched = scheduler_compute_schedule(si);
 	tree_xset(&message->envelopes, envelope->evpid, envelope);
@@ -381,13 +385,20 @@ scheduler_ram_release(int type, uint64_t holdq, int n)
 {
 	struct rq_holdq		*hq;
 	struct rq_envelope	*evp;
-	int			 i;
+	int			 i, update;
 
 	currtime = time(NULL);
 
 	hq = tree_get(&holdqs[type], holdq);
 	if (hq == NULL)
 		return (0);
+
+	if (n == -1) {
+		n = 0;
+		update = 1;
+	}
+	else
+		update = 0;
 
 	for (i = 0; n == 0 || i < n; i++) {
 		evp = TAILQ_FIRST(&hq->q);
@@ -402,6 +413,8 @@ scheduler_ram_release(int type, uint64_t holdq, int n)
 		 * we could just schedule them directly.
 		 */
 		evp->state = RQ_EVPSTATE_PENDING;
+		if (update)
+			evp->flags |= RQ_ENVELOPE_UPDATE;
 		sorted_insert(&ramqueue, evp);
 	}
 
@@ -420,6 +433,7 @@ scheduler_ram_batch(int typemask, struct scheduler_batch *ret)
 	struct evplist		*q;
 	struct rq_envelope	*evp;
 	size_t			 n;
+	int			 retry;
 
 	currtime = time(NULL);
 
@@ -434,6 +448,10 @@ scheduler_ram_batch(int typemask, struct scheduler_batch *ret)
 	else if (typemask & SCHED_EXPIRE && TAILQ_FIRST(&ramqueue.q_expired)) {
 		q = &ramqueue.q_expired;
 		ret->type = SCHED_EXPIRE;
+	}
+	else if (typemask & SCHED_UPDATE && TAILQ_FIRST(&ramqueue.q_update)) {
+		q = &ramqueue.q_update;
+		ret->type = SCHED_UPDATE;
 	}
 	else if (typemask & SCHED_BOUNCE && TAILQ_FIRST(&ramqueue.q_bounce)) {
 		q = &ramqueue.q_bounce;
@@ -474,6 +492,19 @@ scheduler_ram_batch(int typemask, struct scheduler_batch *ret)
 
 		if (ret->type == SCHED_REMOVE || ret->type == SCHED_EXPIRE)
 			rq_envelope_delete(&ramqueue, evp);
+		else if (ret->type == SCHED_UPDATE) {
+
+			evp->flags &= ~RQ_ENVELOPE_UPDATE;
+
+			/* XXX we can't really use scheduler_compute_schedule */
+			retry = 0;
+			while ((evp->sched = evp->ctime + 800 * retry * retry / 2) <= currtime)
+				retry += 1;
+
+			evp->state = RQ_EVPSTATE_PENDING;
+			if (!(evp->flags & RQ_ENVELOPE_SUSPEND))
+				sorted_insert(&ramqueue, evp);
+		}
 		else {
 			TAILQ_INSERT_TAIL(&ramqueue.q_inflight, evp, entry);
 			evp->state = RQ_EVPSTATE_INFLIGHT;
@@ -717,6 +748,7 @@ rq_queue_init(struct rq_queue *rq)
 	TAILQ_INIT(&rq->q_mta);
 	TAILQ_INIT(&rq->q_mda);
 	TAILQ_INIT(&rq->q_bounce);
+	TAILQ_INIT(&rq->q_update);
 	TAILQ_INIT(&rq->q_expired);
 	TAILQ_INIT(&rq->q_removed);
 	SPLAY_INIT(&rq->q_priotree);
@@ -793,6 +825,8 @@ rq_envelope_list(struct rq_queue *rq, struct rq_envelope *evp)
 			return &rq->q_expired;
 		if (evp->flags & RQ_ENVELOPE_REMOVED)
 			return &rq->q_removed;
+		if (evp->flags & RQ_ENVELOPE_UPDATE)
+			return &rq->q_update;
 		if (evp->type == D_MTA)
 			return &rq->q_mta;
 		if (evp->type == D_MDA)
@@ -829,6 +863,9 @@ rq_envelope_schedule(struct rq_queue *rq, struct rq_envelope *evp)
 		q = &rq->q_bounce;
 		break;
 	}
+
+	if (evp->flags & RQ_ENVELOPE_UPDATE)
+		q = &rq->q_update;
 
 	if (evp->state == RQ_EVPSTATE_HELD) {
 		hq = tree_xget(&holdqs[evp->type], evp->holdq);

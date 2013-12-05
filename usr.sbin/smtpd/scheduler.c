@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.38 2013/11/30 10:11:57 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.39 2013/12/05 09:26:47 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -51,6 +51,7 @@ static void scheduler_reset_events(void);
 static void scheduler_timeout(int, short, void *);
 static void scheduler_process_remove(struct scheduler_batch *);
 static void scheduler_process_expire(struct scheduler_batch *);
+static void scheduler_process_update(struct scheduler_batch *);
 static void scheduler_process_bounce(struct scheduler_batch *);
 static void scheduler_process_mda(struct scheduler_batch *);
 static void scheduler_process_mta(struct scheduler_batch *);
@@ -468,7 +469,7 @@ scheduler_timeout(int fd, short event, void *p)
 	tv.tv_sec = 0;
 	tv.tv_usec = 0;
 
-	typemask = SCHED_REMOVE | SCHED_EXPIRE | SCHED_BOUNCE;
+	typemask = SCHED_REMOVE | SCHED_EXPIRE | SCHED_UPDATE | SCHED_BOUNCE;
 	if (ninflight < env->sc_scheduler_max_inflight &&
 	    !(env->sc_flags & SMTPD_MDA_PAUSED))
 		typemask |= SCHED_MDA;
@@ -502,6 +503,12 @@ scheduler_timeout(int fd, short event, void *p)
 		log_trace(TRACE_SCHEDULER, "scheduler: SCHED_EXPIRE %zu",
 		    batch.evpcount);
 		scheduler_process_expire(&batch);
+		break;
+
+	case SCHED_UPDATE:
+		log_trace(TRACE_SCHEDULER, "scheduler: SCHED_UPDATE %zu",
+		    batch.evpcount);
+		scheduler_process_update(&batch);
 		break;
 
 	case SCHED_BOUNCE:
@@ -560,6 +567,19 @@ scheduler_process_expire(struct scheduler_batch *batch)
 
 	stat_decrement("scheduler.envelope", batch->evpcount);
 	stat_increment("scheduler.envelope.expired", batch->evpcount);
+}
+
+static void
+scheduler_process_update(struct scheduler_batch *batch)
+{
+	size_t	i;
+
+	for (i = 0; i < batch->evpcount; i++) {
+		log_debug("debug: scheduler: evp:%016" PRIx64
+		    " scheduled (update)", batch->evpids[i]);
+	}
+
+	stat_increment("scheduler.envelope.update", batch->evpcount);
 }
 
 static void
