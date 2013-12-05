@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.38 2013/11/12 22:27:13 deraadt Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.39 2013/12/05 14:22:42 jca Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -393,7 +393,7 @@ main(int argc, char *argv[])
 	struct sockaddr_in saddr;
 	socklen_t asize = sizeof(saddr);
 	extern char *optarg;
-	SVCXPRT *transp;
+	SVCXPRT *transp = NULL;
 
 	while ((ch = getopt(argc, argv, "1a:dx")) != -1)
 		switch (ch) {
