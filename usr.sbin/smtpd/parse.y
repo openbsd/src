@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.133 2013/11/30 10:11:57 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.134 2013/12/05 15:04:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -629,7 +629,6 @@ main		: BOUNCEWARN {
 				YYERROR;
 			}
 		} filter_list
-		;
 		| PKI STRING	{
 			char buf[MAXHOSTNAMELEN];
 			xlowercase(buf, $2, sizeof(buf));
