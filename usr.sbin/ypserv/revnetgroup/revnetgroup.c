@@ -1,4 +1,4 @@
-/* $OpenBSD: revnetgroup.c,v 1.10 2011/04/06 11:36:26 miod Exp $ */
+/* $OpenBSD: revnetgroup.c,v 1.11 2013/12/05 14:20:53 jca Exp $ */
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -42,6 +42,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <util.h>
 #include <errno.h>
 #include <err.h>
