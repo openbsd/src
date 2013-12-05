@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.439 2013/12/03 09:06:26 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.440 2013/12/05 10:06:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -41,8 +41,6 @@
 #define	EXPAND_BUFFER		 1024
 
 #define SMTPD_QUEUE_EXPIRY	 (4 * 24 * 60 * 60)
-#define SMTPD_USER		 "_smtpd"
-#define SMTPD_QUEUE_USER	 "_smtpq"
 #define SMTPD_SOCKET		 "/var/run/smtpd.sock"
 #ifndef SMTPD_NAME
 #define	SMTPD_NAME		 "OpenSMTPD"
@@ -54,8 +52,6 @@
 
 #define	PATH_SMTPCTL		"/usr/sbin/smtpctl"
 
-#define PATH_CHROOT             "/var/empty"
-#define PATH_SPOOL		"/var/spool/smtpd"
 #define PATH_OFFLINE		"/offline"
 #define PATH_PURGE		"/purge"
 #define PATH_TEMPORARY		"/temporary"
