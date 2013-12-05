@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.272 2013/12/04 22:14:33 matthew Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.273 2013/12/05 21:32:59 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -862,9 +862,8 @@ bind_lease(void)
 	flush_routes(ifi->name, ifi->rdomain);
 
 	memset(&mask, 0, sizeof(mask));
-	if (options[DHO_SUBNET_MASK].len == sizeof(mask.s_addr)) {
-		memcpy(&mask.s_addr, options[DHO_SUBNET_MASK].data,
-		    sizeof(mask.s_addr));
+	if (options[DHO_SUBNET_MASK].len == sizeof(mask)) {
+		memcpy(&mask, options[DHO_SUBNET_MASK].data, sizeof(mask));
 	}
 
         /*
@@ -876,11 +875,11 @@ bind_lease(void)
 		add_classless_static_routes(ifi->rdomain,
 		    &options[DHO_CLASSLESS_STATIC_ROUTES]);
 	} else {
-		if (options[DHO_ROUTERS].len >= sizeof(gateway.s_addr)) {
+		if (options[DHO_ROUTERS].len >= sizeof(gateway)) {
 			memset(&gateway, 0, sizeof(gateway));
 			/* XXX Only use FIRST router address for now. */
-			memcpy(&gateway.s_addr, options[DHO_ROUTERS].data,
-			    sizeof(gateway.s_addr));
+			memcpy(&gateway, options[DHO_ROUTERS].data,
+			    sizeof(gateway));
 
 			/*
 			 * If we were given a /32 IP assignment, then make sure
@@ -942,10 +941,11 @@ state_bound(void)
 	client->xid = arc4random();
 	make_request(client->active);
 
-	if (client->active->options[DHO_DHCP_SERVER_IDENTIFIER].len == 4) {
-		memcpy(&client->destination.s_addr,
+	if (client->active->options[DHO_DHCP_SERVER_IDENTIFIER].len == 
+	    sizeof(client->destination)) {
+		memcpy(&client->destination,
 		    client->active->options[DHO_DHCP_SERVER_IDENTIFIER].data,
-		    sizeof(client->destination.s_addr));
+		    sizeof(client->destination));
 	} else
 		client->destination.s_addr = INADDR_BROADCAST;
 
@@ -1082,12 +1082,11 @@ packet_to_lease(struct in_addr client_addr, struct option_data *options)
 		}
 	}
 
-	memcpy(&lease->address.s_addr, &client->packet.yiaddr,
-	    sizeof(in_addr_t));
+	memcpy(&lease->address, &client->packet.yiaddr, sizeof(lease->address));
 
 	/* Save the siaddr (a.k.a. next-server) info. */
-	memcpy(&lease->next_server.s_addr, &client->packet.siaddr,
-	    sizeof(in_addr_t));
+	memcpy(&lease->next_server, &client->packet.siaddr,
+	    sizeof(lease->next_server));
 
 	/* If the server name was filled out, copy it. */
 	if ((!lease->options[DHO_DHCP_OPTION_OVERLOAD].len ||
@@ -2442,10 +2441,10 @@ add_static_routes(int rdomain, struct option_data *static_routes)
 		memset(&dest, 0, sizeof(dest));
 		memset(&gateway, 0, sizeof(gateway));
 
-		memcpy(&dest.s_addr, addr, 4);
+		memcpy(&dest, addr, sizeof(dest));
 		if (dest.s_addr == INADDR_ANY)
 			continue; /* RFC 2132 says 0.0.0.0 is not allowed. */
-		memcpy(&gateway.s_addr, addr+4, 4);
+		memcpy(&gateway, addr+sizeof(dest), sizeof(gateway));
 
 		/* XXX Order implies priority but we're ignoring that. */
 		add_route(rdomain, dest, netmask, gateway,
@@ -2478,8 +2477,9 @@ void add_classless_static_routes(int rdomain,
 		i += bytes;
 
 		memset(&gateway, 0, sizeof(gateway));
-		memcpy(&gateway, &classless_static_routes->data[i], 4);
-		i += 4;
+		memcpy(&gateway, &classless_static_routes->data[i],
+		    sizeof(gateway));
+		i += sizeof(gateway);
 
 		if (gateway.s_addr == INADDR_ANY)
 			continue; /* OBSD TCP/IP doesn't support this. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.20 2013/12/05 21:03:40 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.21 2013/12/05 21:32:59 krw Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -241,7 +241,7 @@ decode_udp_ip_header(unsigned char *buf, int bufix, struct sockaddr_in *from,
 		return (-1);
 	}
 
-	memcpy(&from->sin_port, &udp->uh_sport, sizeof(from->sin_port));
+	memcpy(&from->sin_port, &udp->uh_sport, sizeof(udp->uh_sport));
 
 	return (ip_len + sizeof(*udp));
 }

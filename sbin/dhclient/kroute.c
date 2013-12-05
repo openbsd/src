@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.57 2013/12/04 19:39:50 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.58 2013/12/05 21:32:59 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -301,9 +301,8 @@ delete_addresses(char *ifname, int rdomain)
 			continue;
 
 		memset(&addr, 0, sizeof(addr));
-		memcpy(&addr,
-		    &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
-		    sizeof(in_addr_t));
+		memcpy(&addr, &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
+		    sizeof(addr));
 
 		delete_address(ifi->name, ifi->rdomain, addr);
  	}
@@ -441,7 +440,7 @@ priv_add_address(struct imsg_add_address *imsg)
 	in = (struct sockaddr_in *)&ifaliasreq.ifra_mask;
 	in->sin_family = AF_INET;
 	in->sin_len = sizeof(ifaliasreq.ifra_mask);
-	memcpy(&in->sin_addr.s_addr, &imsg->mask, sizeof(in->sin_addr.s_addr));
+	memcpy(&in->sin_addr, &imsg->mask, sizeof(in->sin_addr));
 
 	/* No need to set broadcast address. Kernel can figure it out. */
 
