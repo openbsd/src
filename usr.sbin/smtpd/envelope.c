@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.24 2013/11/28 10:43:37 eric Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.25 2013/12/05 09:44:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -518,6 +518,7 @@ envelope_ascii_load(struct envelope *ep, struct dict *d)
 	return (1);
 
 err:
+	log_warnx("envelope: invalid field \"%s\"", field);
 	return (0);
 }
 
