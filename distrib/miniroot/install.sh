@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.237 2013/12/01 01:54:23 halex Exp $
+#	$OpenBSD: install.sh,v 1.238 2013/12/06 00:42:45 rpe Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -231,7 +231,7 @@ if [[ -s $SERVERLISTALL ]]; then
 fi
 
 # Ensure an enabled console has the correct speed in /etc/ttys.
-sed -e "/^console.*on.*secure.*$/s/std\.[0-9]*/std.$(stty speed)/" \
+sed -e "/^console.*on.*secure.*$/s/std\.[0-9]*/std.$(stty speed </dev/console)/" \
 	/mnt/etc/ttys >/tmp/ttys
 mv /tmp/ttys /mnt/etc/ttys
 

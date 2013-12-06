@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.713 2013/12/05 00:44:49 halex Exp $
+#	$OpenBSD: install.sub,v 1.714 2013/12/06 00:42:45 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -2072,7 +2072,7 @@ DISPLAY=$(scan_dmesg '/^wsdisplay[0-9]* /s/ .*//p')
 
 CONSOLE=$(scan_dmesg '/^\([^ ]*\).*: console$/s//\1/p')
 CONSOLE=${CONSOLE% }
-[[ -n $CONSOLE ]] && CSPEED=$(stty speed)
+[[ -n $CONSOLE ]] && CSPEED=$(stty speed </dev/console)
 
 # Look for the serial device matching the console. If we are not installing
 # from a serial console, just find the first serial device that could be used
@@ -2095,7 +2095,7 @@ done
 SANESETS="${SANESETS:-bsd} base${VERSION}.tgz etc${VERSION}.tgz"
 
 # prepare COLUMNS sanely
-COLUMNS=$(stty -a | sed -n '/columns/{s/^.* \([0-9]*\) columns.*$/\1/;p;}')
+COLUMNS=$(stty -a </dev/console | sed -n '/columns/{s/^.* \([0-9]*\) columns.*$/\1/;p;}')
 ((COLUMNS == 0)) && COLUMNS=80
 
 # decide upon an editor
