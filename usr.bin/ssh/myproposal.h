@@ -1,4 +1,4 @@
-/* $OpenBSD: myproposal.h,v 1.34 2013/11/21 00:45:44 djm Exp $ */
+/* $OpenBSD: myproposal.h,v 1.35 2013/12/06 13:39:49 markus Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -38,6 +38,7 @@
 	"ecdsa-sha2-nistp256-cert-v01@openssh.com," \
 	"ecdsa-sha2-nistp384-cert-v01@openssh.com," \
 	"ecdsa-sha2-nistp521-cert-v01@openssh.com," \
+	"ssh-ed25519-cert-v01@openssh.com," \
 	"ssh-rsa-cert-v01@openssh.com," \
 	"ssh-dss-cert-v01@openssh.com," \
 	"ssh-rsa-cert-v00@openssh.com," \
@@ -45,6 +46,7 @@
 	"ecdsa-sha2-nistp256," \
 	"ecdsa-sha2-nistp384," \
 	"ecdsa-sha2-nistp521," \
+	"ssh-ed25519," \
 	"ssh-rsa," \
 	"ssh-dss"
 

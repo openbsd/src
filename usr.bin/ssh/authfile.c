@@ -1,4 +1,4 @@
-/* $OpenBSD: authfile.c,v 1.99 2013/12/06 13:34:54 markus Exp $ */
+/* $OpenBSD: authfile.c,v 1.100 2013/12/06 13:39:49 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -45,6 +45,8 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+
+#include "crypto_api.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -582,6 +584,9 @@ key_private_to_blob(Key *key, Buffer *blob, const char *passphrase,
 			    comment, new_format_cipher, new_format_rounds);
 		}
 		return key_private_pem_to_blob(key, blob, passphrase, comment);
+	case KEY_ED25519:
+		return key_private_to_blob2(key, blob, passphrase,
+		    comment, new_format_cipher, new_format_rounds);
 	default:
 		error("%s: cannot save key type %d", __func__, key->type);
 		return 0;
@@ -981,6 +986,9 @@ key_parse_private_type(Buffer *blob, int type, const char *passphrase,
 	case KEY_DSA:
 	case KEY_ECDSA:
 	case KEY_RSA:
+		return key_parse_private_pem(blob, type, passphrase, commentp);
+	case KEY_ED25519:
+		return key_parse_private2(blob, type, passphrase, commentp);
 	case KEY_UNSPEC:
 		if ((k = key_parse_private2(blob, type, passphrase, commentp)))
 			return k;
