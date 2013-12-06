@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.176 2013/12/05 09:26:47 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.177 2013/12/06 14:12:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -394,7 +394,21 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			SPLAY_FOREACH(route, mta_route_tree, &routes) {
 				if (u64 && route->id != u64)
 					continue;
-				mta_route_enable(route);
+
+				if (route->flags & ROUTE_DISABLED) {
+					log_info("smtp-out: Enabling route %s per admin request",
+					    mta_route_to_text(route));
+					if (!runq_cancel(runq_route, NULL, route)) {
+						log_warnx("warn: route not on runq");
+						fatalx("exiting");
+					}
+					route->flags &= ~ROUTE_DISABLED;
+					route->flags |= ROUTE_NEW;
+					route->nerror = 0;
+					route->penalty = 0;
+					mta_route_unref(route); /* from mta_route_disable */
+				}
+
 				if (u64)
 					break;
 			}

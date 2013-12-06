@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.37 2013/10/26 12:27:59 eric Exp $	*/
+/*	$OpenBSD: parser.c,v 1.38 2013/12/06 14:12:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot	<eric@openbsd.org>
@@ -159,7 +159,7 @@ cmd_check(const char *str, struct node *node, struct parameter *res)
 		return (1);
 
 	case P_ROUTEID:
-		res->u.u_int = strtonum(str, 1, LLONG_MAX, &e);
+		res->u.u_routeid = strtonum(str, 1, LLONG_MAX, &e);
 		if (e)
 			return (0);
 		return (1);

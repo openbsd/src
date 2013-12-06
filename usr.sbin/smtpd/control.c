@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.92 2013/10/30 21:37:48 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.93 2013/12/06 14:12:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -688,7 +688,6 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		if (c->euid)
 			goto badcred;
 
-		log_info("info: route resumed");
 		m_forward(p_mta, imsg);
 		m_compose(p, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 		return;
