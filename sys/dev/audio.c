@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.118 2013/11/28 00:38:50 dlg Exp $	*/
+/*	$OpenBSD: audio.c,v 1.119 2013/12/06 21:03:02 deraadt Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -486,16 +486,14 @@ audioactivate(struct device *self, int act)
 	struct audio_softc *sc = (struct audio_softc *)self;
 
 	switch (act) {
+	case DVACT_DEACTIVATE:
+		sc->sc_dying = 1;
+		break;
 	case DVACT_QUIESCE:
 		audio_quiesce(sc);
 		break;
-	case DVACT_SUSPEND:
-		break;
 	case DVACT_RESUME:
 		audio_resume(sc);
-		break;
-	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
 		break;
 	}
 	return (0);

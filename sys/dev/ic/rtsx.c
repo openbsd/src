@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx.c,v 1.5 2013/11/06 13:51:02 stsp Exp $	*/
+/*	$OpenBSD: rtsx.c,v 1.6 2013/12/06 21:03:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -315,15 +315,9 @@ rtsx_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
 		rtsx_save_regs(sc);
-		break;
-	case DVACT_POWERDOWN:
-		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
 		rtsx_restore_regs(sc);
@@ -334,6 +328,9 @@ rtsx_activate(struct device *self, int act)
 		else
 			rtsx_card_eject(sc);
 
+		rv = config_activate_children(self, act);
+		break;
+	default:
 		rv = config_activate_children(self, act);
 		break;
 	}

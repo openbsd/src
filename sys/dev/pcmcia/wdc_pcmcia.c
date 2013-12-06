@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.28 2012/10/08 21:47:50 deraadt Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.29 2013/12/06 21:03:04 deraadt Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -431,13 +431,7 @@ wdc_pcmcia_activate(self, act)
 		return (0);
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
-	case DVACT_SUSPEND:
-		rv = config_activate_children(self, act);
-		break;
-	case DVACT_POWERDOWN:
+	case DVACT_DEACTIVATE:
 		rv = config_activate_children(self, act);
 		if (sc->sc_ih)
 			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
@@ -451,12 +445,15 @@ wdc_pcmcia_activate(self, act)
 		wdcreset(&sc->wdc_channel, VERBOSE);
 		rv = config_activate_children(self, act);
 		break;
-	case DVACT_DEACTIVATE:
+	case DVACT_POWERDOWN:
 		rv = config_activate_children(self, act);
 		if (sc->sc_ih)
 			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 		sc->sc_ih = NULL;
 		pcmcia_function_disable(sc->sc_pf);
+		break;
+	default:
+		rv = config_activate_children(self, act);
 		break;
 	}
 	return (rv);

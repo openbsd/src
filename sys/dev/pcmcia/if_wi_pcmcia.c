@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.71 2013/11/14 12:33:15 dlg Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.72 2013/12/06 21:03:04 deraadt Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -49,7 +49,6 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/tree.h>
-#include <sys/task.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -77,7 +76,7 @@ int	wi_pcmcia_match(struct device *, void *, void *);
 void	wi_pcmcia_attach(struct device *, struct device *, void *);
 int	wi_pcmcia_detach(struct device *, int);
 int	wi_pcmcia_activate(struct device *, int);
-void	wi_pcmcia_resume(void *, void *);
+void	wi_pcmcia_wakeup(struct wi_softc *);
 
 struct wi_pcmcia_softc {
 	struct wi_softc sc_wi;
@@ -85,7 +84,6 @@ struct wi_pcmcia_softc {
 	struct pcmcia_io_handle	sc_pcioh;
 	int			sc_io_window;
 	struct pcmcia_function	*sc_pf;
-	struct task		sc_resume_t;
 };
 
 struct cfattach wi_pcmcia_ca = {
@@ -385,7 +383,6 @@ wi_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	int			state = 0;
 
 	psc->sc_pf = pf;
-	task_set(&psc->sc_resume_t, wi_pcmcia_resume, sc, NULL);
 
 	/* Enable the card. */
 	pcmcia_function_init(pf, cfe);
@@ -492,7 +489,9 @@ wi_pcmcia_activate(struct device *dev, int act)
 		pcmcia_function_enable(psc->sc_pf);
 		sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
 		    wi_intr, sc, sc->sc_dev.dv_xname);
-		task_add(systq, &psc->sc_resume_t);
+		break;
+	case DVACT_WAKEUP:
+		wi_pcmcia_wakeup(sc);
 		break;
 	case DVACT_DEACTIVATE:
 		if (sc->sc_ih != NULL)
@@ -505,9 +504,8 @@ wi_pcmcia_activate(struct device *dev, int act)
 }
 
 void
-wi_pcmcia_resume(void *arg1, void *arg2)
+wi_pcmcia_wakeup(struct wi_softc *sc)
 {
-	struct wi_softc *sc = (struct wi_softc *)arg1;
 	int s;
 
 	s = splnet();

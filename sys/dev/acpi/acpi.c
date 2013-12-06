@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.247 2013/11/06 10:40:36 mpi Exp $ */
+/* $OpenBSD: acpi.c,v 1.248 2013/12/06 21:03:02 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2177,6 +2177,9 @@ fail_suspend:
 
 fail_quiesce:
 	bufq_restart();
+
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_WAKEUP);
+
 #if NWSDISPLAY > 0
 	wsdisplay_resume();
 #endif /* NWSDISPLAY > 0 */

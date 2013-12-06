@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.97 2013/11/14 12:41:14 dlg Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.98 2013/12/06 21:03:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -25,7 +25,6 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
-#include <sys/task.h>
 #include <sys/workq.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
@@ -65,7 +64,7 @@
 int		ipw_match(struct device *, void *, void *);
 void		ipw_attach(struct device *, struct device *, void *);
 int		ipw_activate(struct device *, int);
-void		ipw_resume(void *, void *);
+void		ipw_wakeup(struct ipw_softc *);
 int		ipw_dma_alloc(struct ipw_softc *);
 void		ipw_release(struct ipw_softc *);
 int		ipw_media_change(struct ifnet *);
@@ -170,8 +169,6 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag,
-
-	task_set(&sc->sc_resume_t, ipw_resume, sc, NULL);
 
 	/* clear device specific PCI configuration register 0x41 */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
@@ -303,8 +300,8 @@ ipw_activate(struct device *self, int act)
 		if (ifp->if_flags & IFF_RUNNING)
 			ipw_stop(ifp, 0);
 		break;
-	case DVACT_RESUME:
-		task_add(systq, &sc->sc_resume_t);
+	case DVACT_WAKEUP:
+		ipw_wakeup(sc);
 		break;
 	}
 
@@ -312,9 +309,8 @@ ipw_activate(struct device *self, int act)
 }
 
 void
-ipw_resume(void *arg1, void *arg2)
+ipw_wakeup(struct ipw_softc *sc)
 {
-	struct ipw_softc *sc = arg1;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	pcireg_t data;
 	int s;

@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.31 2013/05/24 07:58:46 ratchov Exp $ */
+/* $OpenBSD: auixp.c,v 1.32 2013/12/06 21:03:03 deraadt Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -1253,9 +1253,6 @@ auixp_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
 	case DVACT_SUSPEND:
 		auixp_disable_interrupts(sc);
 		break;
@@ -1264,7 +1261,8 @@ auixp_activate(struct device *self, int act)
 		ac97_resume(&sc->sc_codec.host_if, sc->sc_codec.codec_if);
 		rv = config_activate_children(self, act);
 		break;
-	case DVACT_DEACTIVATE:
+	default:
+		rv = config_activate_children(self, act);
 		break;
 	}
 	return (rv);

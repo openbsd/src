@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.40 2013/11/18 20:21:51 deraadt Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.41 2013/12/06 21:03:05 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -354,6 +354,9 @@ apm_resume(struct pxa2x0_apm_softc *sc)
 	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PSSR, PSSR_OTGPH);
 
 	bufq_restart();
+
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_WAKEUP);
+
 #if NWSDISPLAY > 0
 	wsdisplay_resume();
 #endif /* NWSDISPLAY > 0 */

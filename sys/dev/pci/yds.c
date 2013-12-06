@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.44 2013/10/01 20:06:02 sf Exp $	*/
+/*	$OpenBSD: yds.c,v 1.45 2013/12/06 21:03:04 deraadt Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -1744,14 +1744,15 @@ yds_activate(struct device *self, int act)
 		if (sc->sc_resume_active)
 			yds_close(sc);
 		break;
-	case DVACT_SUSPEND:
-		break;
 	case DVACT_RESUME:
 		yds_halt(sc);
 		yds_init(sc, 1);
 		ac97_resume(&sc->sc_codec[0].host_if, sc->sc_codec[0].codec_if);
 		if (sc->sc_resume_active)
 			yds_open(sc, 0);
+		rv = config_activate_children(self, act);
+		break;
+	default:
 		rv = config_activate_children(self, act);
 		break;
 	}

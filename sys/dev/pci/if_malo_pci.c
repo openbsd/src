@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malo_pci.c,v 1.7 2013/11/14 12:21:13 dlg Exp $ */
+/*	$OpenBSD: if_malo_pci.c,v 1.8 2013/12/06 21:03:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -24,7 +24,6 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
-#include <sys/task.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -60,7 +59,7 @@ int	malo_pci_match(struct device *, void *, void *);
 void	malo_pci_attach(struct device *, struct device *, void *);
 int	malo_pci_detach(struct device *, int);
 int	malo_pci_activate(struct device *, int);
-void	malo_pci_resume(void *, void *);
+void	malo_pci_wakeup(struct malo_softc *);
 
 struct malo_pci_softc {
 	struct malo_softc	sc_malo;
@@ -102,8 +101,6 @@ malo_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 	psc->sc_pc = pa->pa_pc;
-
-	task_set(&sc->sc_resume_t, malo_pci_resume, sc, NULL);
 
 	/* map control / status registers */
 	error = pci_mapreg_map(pa, MALO_PCI_BAR1,
@@ -169,17 +166,16 @@ malo_pci_activate(struct device *self, int act)
 		if (ifp->if_flags & IFF_RUNNING)
 			malo_stop(sc);
 		break;
-	case DVACT_RESUME:
-		task_add(systq, &sc->sc_resume_t);
+	case DVACT_WAKEUP:
+		malo_pci_wakeup(sc);
 		break;
 	}
 	return (0);
 }
 
 void
-malo_pci_resume(void *arg1, void *arg2)
+malo_pci_wakeup(struct malo_softc *sc)
 {
-	struct malo_softc *sc = arg1;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	if (ifp->if_flags & IFF_UP)

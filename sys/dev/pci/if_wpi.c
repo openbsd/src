@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.116 2013/11/28 20:07:32 kettenis Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.117 2013/12/06 21:03:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -75,7 +75,7 @@ void		wpi_radiotap_attach(struct wpi_softc *);
 #endif
 int		wpi_detach(struct device *, int);
 int		wpi_activate(struct device *, int);
-void		wpi_resume(struct wpi_softc *);
+void		wpi_wakeup(struct wpi_softc *);
 void		wpi_init_task(void *, void *);
 int		wpi_nic_lock(struct wpi_softc *);
 int		wpi_read_prom_data(struct wpi_softc *, uint32_t, void *, int);
@@ -396,8 +396,8 @@ wpi_activate(struct device *self, int act)
 		if (ifp->if_flags & IFF_RUNNING)
 			wpi_stop(ifp, 0);
 		break;
-	case DVACT_RESUME:
-		wpi_resume(sc);
+	case DVACT_WAKEUP:
+		wpi_wakeup(sc);
 		break;
 	}
 
@@ -405,7 +405,7 @@ wpi_activate(struct device *self, int act)
 }
 
 void
-wpi_resume(struct wpi_softc *sc)
+wpi_wakeup(struct wpi_softc *sc)
 {
 	pcireg_t reg;
 
@@ -414,7 +414,7 @@ wpi_resume(struct wpi_softc *sc)
 	reg &= ~0xff00;
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg);
 
-	task_add(systq, &sc->init_task);
+	wpi_init_task(sc, NULL);
 }
 
 void

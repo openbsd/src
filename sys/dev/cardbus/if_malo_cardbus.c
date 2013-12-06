@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malo_cardbus.c,v 1.11 2013/11/14 12:21:13 dlg Exp $ */
+/*	$OpenBSD: if_malo_cardbus.c,v 1.12 2013/12/06 21:03:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -19,7 +19,6 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/task.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/systm.h>

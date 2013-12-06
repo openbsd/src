@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860var.h,v 1.20 2010/09/07 16:21:42 deraadt Exp $	*/
+/*	$OpenBSD: rt2860var.h,v 1.21 2013/12/06 21:03:03 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -203,5 +203,5 @@ struct rt2860_softc {
 int	rt2860_attach(void *, int);
 int	rt2860_detach(void *);
 void	rt2860_suspend(void *);
-void	rt2860_resume(void *);
+void	rt2860_wakeup(void *);
 int	rt2860_intr(void *);

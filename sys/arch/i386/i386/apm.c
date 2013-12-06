@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.101 2013/11/18 20:21:51 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.102 2013/12/06 21:03:05 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -281,6 +281,9 @@ apm_suspend(int state)
 	if (cpu_setperf != NULL)
 		cpu_setperf(perflevel);
 	bufq_restart();
+
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_WAKEUP);
+
 #if NWSDISPLAY > 0
 	wsdisplay_resume();
 #endif /* NWSDISPLAY > 0 */

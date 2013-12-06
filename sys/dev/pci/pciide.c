@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.342 2013/05/27 21:19:31 miod Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.343 2013/12/06 21:03:04 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1462,9 +1462,6 @@ pciide_activate(struct device *self, int act)
 	int i;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
 
@@ -1500,9 +1497,6 @@ pciide_activate(struct device *self, int act)
 			sc->sc_save2[2] = pci_conf_read(sc->sc_pc,
 			    sc->sc_tag, NFORCE_UDMATIM);
 		}
-		break;
-	case DVACT_POWERDOWN:
-		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
 		for (i = 0; i < nitems(sc->sc_save); i++)
@@ -1556,6 +1550,9 @@ pciide_activate(struct device *self, int act)
 			    sc->sc_pp->ide_product);
 		}
 
+		rv = config_activate_children(self, act);
+		break;
+	default:
 		rv = config_activate_children(self, act);
 		break;
 	}

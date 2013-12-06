@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipwvar.h,v 1.22 2013/11/14 12:41:14 dlg Exp $	*/
+/*	$OpenBSD: if_ipwvar.h,v 1.23 2013/12/06 21:03:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -127,8 +127,6 @@ struct ipw_softc {
 	uint32_t			txold;
 	uint32_t			rxcur;
 	int				txfree;
-
-	struct task			sc_resume_t;
 
 #if NBPFILTER > 0
 	caddr_t				sc_drvbpf;

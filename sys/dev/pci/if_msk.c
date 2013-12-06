@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.99 2013/08/07 01:06:36 bluhm Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.100 2013/12/06 21:03:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1072,9 +1072,6 @@ msk_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
 		break;
@@ -1083,6 +1080,9 @@ msk_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		if (ifp->if_flags & IFF_RUNNING)
 			msk_init(sc_if);
+		break;
+	default:
+		rv = config_activate_children(self, act);
 		break;
 	}
 	return (rv);

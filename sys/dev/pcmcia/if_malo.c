@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.75 2013/11/14 12:21:13 dlg Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.76 2013/12/06 21:03:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -29,7 +29,6 @@
 #include <sys/malloc.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/task.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -72,7 +71,7 @@ int	malo_pcmcia_match(struct device *, void *, void *);
 void	malo_pcmcia_attach(struct device *, struct device *, void *);
 int	malo_pcmcia_detach(struct device *, int);
 int	malo_pcmcia_activate(struct device *, int);
-void	malo_pcmcia_resume(void *, void *);
+void	malo_pcmcia_wakeup(struct malo_softc *);
 
 void	cmalo_attach(void *);
 int	cmalo_ioctl(struct ifnet *, u_long, caddr_t);
@@ -253,7 +252,9 @@ malo_pcmcia_activate(struct device *dev, int act)
 		pcmcia_function_enable(psc->sc_pf);
 		psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
 		    cmalo_intr, sc, sc->sc_dev.dv_xname);
-		task_add(systq, &sc->sc_resume_t);
+		break;
+	case DVACT_WAKEUP:
+		malo_pcmcia_wakeup(sc);
 		break;
 	case DVACT_DEACTIVATE:
 		if ((sc->sc_flags & MALO_DEVICE_ATTACHED) &&
@@ -269,9 +270,8 @@ malo_pcmcia_activate(struct device *dev, int act)
 }
 
 void
-malo_pcmcia_resume(void *arg1, void *arg2)
+malo_pcmcia_wakeup(struct malo_softc *sc)
 {
-	struct malo_softc *sc = arg1;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	int s;
@@ -301,8 +301,6 @@ cmalo_attach(void *arg)
 
 	/* disable interrupts */
 	cmalo_intr_mask(sc, 0);
-
-	task_set(&sc->sc_resume_t, malo_pcmcia_resume, sc, NULL);
 
 	/* load firmware */
 	if (cmalo_fw_alloc(sc) != 0)

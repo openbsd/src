@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.10 2013/03/17 19:09:03 miod Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.11 2013/12/06 21:03:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -431,9 +431,6 @@ glxpcib_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
 	case DVACT_SUSPEND:
 #ifndef SMALL_KERNEL
 		if (sc->sc_wdog) {
@@ -449,9 +446,6 @@ glxpcib_activate(struct device *self, int act)
 #endif
 
 		break;
-	case DVACT_POWERDOWN:
-		rv = config_activate_children(self, act);
-		break;
 	case DVACT_RESUME:
 #ifndef SMALL_KERNEL
 		if (sc->sc_wdog)
@@ -459,6 +453,9 @@ glxpcib_activate(struct device *self, int act)
 		for (i = 0; i < nitems(glxpcib_msrlist); i++)
 			wrmsr(glxpcib_msrlist[i], sc->sc_msrsave[i]);
 #endif
+		rv = config_activate_children(self, act);
+		break;
+	default:
 		rv = config_activate_children(self, act);
 		break;
 	}

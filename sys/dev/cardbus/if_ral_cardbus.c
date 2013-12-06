@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_cardbus.c,v 1.20 2013/11/14 12:28:48 dlg Exp $  */
+/*	$OpenBSD: if_ral_cardbus.c,v 1.21 2013/12/06 21:03:02 deraadt Exp $  */
 
 /*-
  * Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -31,7 +31,6 @@
 #include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
-#include <sys/task.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -68,21 +67,21 @@ static struct ral_opns {
 	rt2560_attach,
 	rt2560_detach,
 	rt2560_suspend,
-	rt2560_resume,
+	rt2560_wakeup,
 	rt2560_intr
 
 }, ral_rt2661_opns = {
 	rt2661_attach,
 	rt2661_detach,
 	rt2661_suspend,
-	rt2661_resume,
+	rt2661_wakeup,
 	rt2661_intr
 
 }, ral_rt2860_opns = {
 	rt2860_attach,
 	rt2860_detach,
 	rt2860_suspend,
-	rt2860_resume,
+	rt2860_wakeup,
 	rt2860_intr
 };
 
@@ -103,7 +102,6 @@ struct ral_cardbus_softc {
 	pcireg_t		sc_bar_val;
 	int			sc_intrline;
 	pci_chipset_tag_t	sc_pc;
-	struct task		sc_resume_t;
 };
 
 int	ral_cardbus_match(struct device *, void *, void *);
@@ -146,7 +144,7 @@ static const struct pci_matchid ral_cardbus_devices[] = {
 int	ral_cardbus_enable(struct rt2560_softc *);
 void	ral_cardbus_disable(struct rt2560_softc *);
 void	ral_cardbus_setup(struct ral_cardbus_softc *);
-void	ral_cardbus_resume(void *, void *);
+void	ral_cardbus_wakeup(struct ral_cardbus_softc *);
 
 int
 ral_cardbus_match(struct device *parent, void *match, void *aux)
@@ -164,8 +162,6 @@ ral_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	cardbus_devfunc_t ct = ca->ca_ct;
 	bus_addr_t base;
 	int error;
-
-	task_set(&csc->sc_resume_t, ral_cardbus_resume, csc, NULL);
 
 	if (PCI_VENDOR(ca->ca_id) == PCI_VENDOR_RALINK) {
 		switch (PCI_PRODUCT(ca->ca_id)) {
@@ -253,8 +249,8 @@ ral_cardbus_activate(struct device *self, int act)
 	case DVACT_SUSPEND:
 		(*csc->sc_opns->suspend)(sc);
 		break;
-	case DVACT_RESUME:
-		task_add(systq, &csc->sc_resume_t);
+	case DVACT_WAKEUP:
+		ral_cardbus_wakeup(csc);
 		break;
 	}
 
@@ -330,9 +326,8 @@ ral_cardbus_setup(struct ral_cardbus_softc *csc)
 }
 
 void
-ral_cardbus_resume(void *arg1, void *arg2)
+ral_cardbus_wakeup(struct ral_cardbus_softc *csc)
 {
-	struct ral_cardbus_softc *csc = arg1;
 	struct rt2560_softc *sc = &csc->sc_sc;
 	int s;
 

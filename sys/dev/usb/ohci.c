@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.116 2013/11/09 08:46:05 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.117 2013/12/06 21:03:05 deraadt Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -340,10 +340,6 @@ ohci_activate(struct device *self, int act)
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
 		sc->sc_bus.use_polling--;
 		break;
-	case DVACT_POWERDOWN:
-		rv = config_activate_children(self, act);
-		OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
-		break;
 	case DVACT_RESUME:
 		sc->sc_bus.use_polling++;
 
@@ -385,6 +381,13 @@ ohci_activate(struct device *self, int act)
 		if (sc->sc_child != NULL)
 			rv = config_deactivate(sc->sc_child);
 		sc->sc_bus.dying = 1;
+		break;
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
+		OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
+		break;
+	default:
+		rv = config_activate_children(self, act);
 		break;
 	}
 	return (rv);

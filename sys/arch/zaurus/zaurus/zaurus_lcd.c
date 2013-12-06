@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.27 2013/10/21 10:36:22 miod Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.28 2013/12/06 21:03:05 deraadt Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -408,7 +408,7 @@ lcd_activate(struct device *self, int act)
 		pxa2x0_lcd_resume(sc);
 		lcd_set_brightness(lcd_get_brightness());
 		break;
-	case DVACT_POWERDOWN:
+	default:
 		ret = config_activate_children(self, act);
 		break;
 	}

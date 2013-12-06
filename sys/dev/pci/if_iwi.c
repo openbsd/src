@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.115 2013/12/03 22:37:24 kettenis Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.116 2013/12/06 21:03:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -74,7 +74,7 @@ const struct pci_matchid iwi_devices[] = {
 int		iwi_match(struct device *, void *, void *);
 void		iwi_attach(struct device *, struct device *, void *);
 int		iwi_activate(struct device *, int);
-void		iwi_resume(struct iwi_softc *);
+void		iwi_wakeup(struct iwi_softc *);
 void		iwi_init_task(void *, void *);
 int		iwi_alloc_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 void		iwi_reset_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
@@ -344,8 +344,8 @@ iwi_activate(struct device *self, int act)
 		if (ifp->if_flags & IFF_RUNNING)
 			iwi_stop(ifp, 0);
 		break;
-	case DVACT_RESUME:
-		iwi_resume(sc);
+	case DVACT_WAKEUP:
+		iwi_wakeup(sc);
 		break;
 	}
 
@@ -353,7 +353,7 @@ iwi_activate(struct device *self, int act)
 }
 
 void
-iwi_resume(struct iwi_softc *sc)
+iwi_wakeup(struct iwi_softc *sc)
 {
 	pcireg_t data;
 
@@ -362,7 +362,7 @@ iwi_resume(struct iwi_softc *sc)
 	data &= ~0x0000ff00;
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
 
-	task_add(systq, &sc->init_task);
+	iwi_init_task(sc, NULL);
 }
 
 void

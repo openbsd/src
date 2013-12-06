@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.113 2013/11/14 12:16:01 dlg Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.114 2013/12/06 21:03:03 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/timeout.h>
-#include <sys/task.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -294,28 +293,26 @@ fxp_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			fxp_stop(sc, 1, 0);
 		rv = config_activate_children(self, act);
 		break;
-	case DVACT_RESUME:
+	case DVACT_WAKEUP:
 		rv = config_activate_children(self, act);
 		if (ifp->if_flags & IFF_UP)
-			task_add(systq, &sc->sc_resume_t);
+			fxp_wakeup(sc);
+		break;
+	default:
+		rv = config_activate_children(self, act);
 		break;
 	}
 	return (rv);
 }
 
 void
-fxp_resume(void *arg1, void *arg2)
+fxp_wakeup(struct fxp_softc *sc)
 {
-	struct fxp_softc *sc = arg1;
-
 	int s = splnet();
 
 	/* force reload of the microcode */
@@ -341,8 +338,6 @@ fxp_attach(struct fxp_softc *sc, const char *intrstr)
 	u_int16_t data;
 	u_int8_t enaddr[6];
 	int i, err;
-
-	task_set(&sc->sc_resume_t, fxp_resume, sc, NULL);
 
 	/*
 	 * Reset to a stable state.

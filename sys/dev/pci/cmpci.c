@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.35 2013/05/24 07:58:46 ratchov Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.36 2013/12/06 21:03:03 deraadt Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -526,16 +526,12 @@ cmpci_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
-	case DVACT_SUSPEND:
-		break;
 	case DVACT_RESUME:
 		cmpci_resume(sc);
 		rv = config_activate_children(self, act);
 		break;
-	case DVACT_DEACTIVATE:
+	default:
+		rv = config_activate_children(self, act);
 		break;
 	}
 	return (rv);

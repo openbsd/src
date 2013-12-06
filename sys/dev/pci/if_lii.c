@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.30 2010/09/19 00:15:41 sthen Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.31 2013/12/06 21:03:04 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -293,9 +293,6 @@ lii_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			lii_stop(ifp);
@@ -305,6 +302,9 @@ lii_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		if (ifp->if_flags & IFF_UP)
 			lii_init(ifp);
+		break;
+	default:
+		rv = config_activate_children(self, act);
 		break;
 	}
 	return (rv);

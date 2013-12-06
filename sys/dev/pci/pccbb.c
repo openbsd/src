@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.90 2013/10/30 08:47:20 mpi Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.91 2013/12/06 21:03:04 deraadt Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -2812,9 +2812,6 @@ pccbbactivate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
 
@@ -2836,10 +2833,6 @@ pccbbactivate(struct device *self, int act)
 		sc->sc_iolimit[0] = pci_conf_read(pc, tag, PCI_CB_IOLIMIT0);
 		sc->sc_iobase[1] = pci_conf_read(pc, tag, PCI_CB_IOBASE1);
 		sc->sc_iolimit[1] = pci_conf_read(pc, tag, PCI_CB_IOLIMIT1);
-		break;
-	case DVACT_POWERDOWN:
-		rv = config_activate_children(self, act);
-		pccbb_shutdown(self);
 		break;
 	case DVACT_RESUME:
 		/* Restore the registers saved above. */
@@ -2890,6 +2883,13 @@ pccbbactivate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 
 		sc->sc_pil_intr_enable = 1;
+		break;
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
+		pccbb_shutdown(self);
+		break;
+	default:
+		rv = config_activate_children(self, act);
 		break;
 	}
 	return (rv);

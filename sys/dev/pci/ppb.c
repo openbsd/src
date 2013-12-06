@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.55 2012/10/08 21:47:50 deraadt Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.56 2013/12/06 21:03:04 deraadt Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -359,9 +359,6 @@ ppbactivate(struct device *self, int act)
 	int off, rv = 0;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
 
@@ -388,19 +385,6 @@ ppbactivate(struct device *self, int act)
 				    off + PCI_MSI_MD32);
 			}
 			sc->sc_msi_mc = reg;
-		}
-		break;
-	case DVACT_POWERDOWN:
-		rv = config_activate_children(self, act);
-		
-		if (pci_dopm) {	
-			/*
-			 * Place the bridge into the lowest possible
-			 * power state.
-			 */
-			sc->sc_pmcsr_state = pci_get_powerstate(pc, tag);
-			pci_set_powerstate(pc, tag,
-			    pci_min_powerstate(pc, tag));
 		}
 		break;
 	case DVACT_RESUME:
@@ -468,6 +452,22 @@ ppbactivate(struct device *self, int act)
 		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 		    (reg & 0xffff0000) | (sc->sc_csr & 0x0000ffff));
 
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
+		
+		if (pci_dopm) {	
+			/*
+			 * Place the bridge into the lowest possible
+			 * power state.
+			 */
+			sc->sc_pmcsr_state = pci_get_powerstate(pc, tag);
+			pci_set_powerstate(pc, tag,
+			    pci_min_powerstate(pc, tag));
+		}
+		break;
+	default:
 		rv = config_activate_children(self, act);
 		break;
 	}

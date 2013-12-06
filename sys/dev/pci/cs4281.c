@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.29 2013/05/24 07:58:46 ratchov Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.30 2013/12/06 21:03:03 deraadt Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -1139,9 +1139,6 @@ cs4281_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
 	case DVACT_SUSPEND:
 		/* should I powerdown here ? */
 		cs4281_write_codec(sc, AC97_REG_POWER, CS4281_POWER_DOWN_ALL);
@@ -1149,6 +1146,9 @@ cs4281_activate(struct device *self, int act)
 	case DVACT_RESUME:
 		cs4281_init(sc);
 		ac97_resume(&sc->host_if, sc->codec_if);
+		rv = config_activate_children(self, act);
+		break;
+	default:
 		rv = config_activate_children(self, act);
 		break;
 	}

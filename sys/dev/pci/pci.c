@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.100 2013/11/06 10:41:16 mpi Exp $	*/
+/*	$OpenBSD: pci.c,v 1.101 2013/12/06 21:03:04 deraadt Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -210,19 +210,19 @@ pciactivate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
 		pci_suspend((struct pci_softc *)self);
+		break;
+	case DVACT_RESUME:
+		pci_resume((struct pci_softc *)self);
+		rv = config_activate_children(self, act);
 		break;
 	case DVACT_POWERDOWN:
 		rv = config_activate_children(self, act);
 		pci_powerdown((struct pci_softc *)self);
 		break;
-	case DVACT_RESUME:
-		pci_resume((struct pci_softc *)self);
+	default:
 		rv = config_activate_children(self, act);
 		break;
 	}

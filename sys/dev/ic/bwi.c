@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.99 2013/11/14 12:10:04 dlg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.100 2013/12/06 21:03:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -44,7 +44,6 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/task.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.70 2013/08/07 01:06:30 bluhm Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.71 2013/12/06 21:03:03 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -415,7 +415,7 @@ rt2860_suspend(void *xsc)
 }
 
 void
-rt2860_resume(void *xsc)
+rt2860_wakeup(void *xsc)
 {
 	struct rt2860_softc *sc = xsc;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;

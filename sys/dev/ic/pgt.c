@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.72 2013/11/14 12:24:18 dlg Exp $  */
+/*	$OpenBSD: pgt.c,v 1.73 2013/12/06 21:03:03 deraadt Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -58,7 +58,6 @@
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
-#include <sys/task.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
@@ -190,7 +189,7 @@ int	 pgt_dma_alloc(struct pgt_softc *);
 int	 pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq);
 void	 pgt_dma_free(struct pgt_softc *);
 void	 pgt_dma_free_queue(struct pgt_softc *sc, enum pgt_queue pq);
-void	 pgt_resume(void *, void *);
+void	 pgt_wakeup(struct pgt_softc *);
 
 void
 pgt_write_memory_barrier(struct pgt_softc *sc)
@@ -579,8 +578,6 @@ pgt_attach(void *xsc)
 	//sc->sc_debug |= SC_DEBUG_RXANNEX;
 	//sc->sc_debug |= SC_DEBUG_RXFRAG;
 	//sc->sc_debug |= SC_DEBUG_RXETHER;
-
-	task_set(&sc->sc_resume_t, pgt_resume, sc, NULL);
 
 	/* enable card if possible */
 	if (sc->sc_enable != NULL)
@@ -3298,17 +3295,16 @@ pgt_activate(struct device *self, int act)
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, act);
 		break;
-	case DVACT_RESUME:
-		task_add(systq, &sc->sc_resume_t);
+	case DVACT_WAKEUP:
+		pgt_wakeup(sc);
 		break;
 	}
 	return 0;
 }
 
 void
-pgt_resume(void *arg1, void *arg2)
+pgt_wakeup(struct pgt_softc *sc)
 {
-	struct pgt_softc *sc = arg1;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	if (sc->sc_power != NULL)

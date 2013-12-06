@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.96 2013/05/30 16:15:02 deraadt Exp $ */
+/*	$OpenBSD: arc.c,v 1.97 2013/12/06 21:03:03 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -630,24 +630,18 @@ unmap_pci:
 int
 arc_activate(struct device *self, int act)
 {
-	int ret = 0;
+	int rv = 0;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		ret = config_activate_children(self, act);
-		break;
-	case DVACT_SUSPEND:
-		ret = config_activate_children(self, act);
-		break;
 	case DVACT_POWERDOWN:
-		ret = config_activate_children(self, act);
+		rv = config_activate_children(self, act);
 		arc_detach(self, 0);
 		break;
-	case DVACT_RESUME:
-		ret = config_activate_children(self, act);
+	default:
+		rv = config_activate_children(self, act);
 		break;
 	}
-	return (ret);	
+	return (rv);	
 }
 
 int

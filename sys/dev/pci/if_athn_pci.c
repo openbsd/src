@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_pci.c,v 1.13 2013/11/23 07:09:36 dlg Exp $	*/
+/*	$OpenBSD: if_athn_pci.c,v 1.14 2013/12/06 21:03:03 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -31,7 +31,6 @@
 #include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
-#include <sys/task.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -69,14 +68,13 @@ struct athn_pci_softc {
 	bus_space_handle_t	sc_sh;
 	bus_size_t		sc_mapsize;
 	int			sc_cap_off;
-	struct task		sc_resume_t;
 };
 
 int		athn_pci_match(struct device *, void *, void *);
 void		athn_pci_attach(struct device *, struct device *, void *);
 int		athn_pci_detach(struct device *, int);
 int		athn_pci_activate(struct device *, int);
-void		athn_pci_resume(void *, void *);
+void		athn_pci_wakeup(struct athn_pci_softc *);
 uint32_t	athn_pci_read(struct athn_softc *, uint32_t);
 void		athn_pci_write(struct athn_softc *, uint32_t, uint32_t);
 void		athn_pci_write_barrier(struct athn_softc *);
@@ -129,8 +127,6 @@ athn_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->ops.read = athn_pci_read;
 	sc->ops.write = athn_pci_write;
 	sc->ops.write_barrier = athn_pci_write_barrier;
-
-	task_set(&psc->sc_resume_t, athn_pci_resume, psc, NULL);
 
 	/*
 	 * Get the offset of the PCI Express Capability Structure in PCI
@@ -220,8 +216,8 @@ athn_pci_activate(struct device *self, int act)
 	case DVACT_SUSPEND:
 		athn_suspend(sc);
 		break;
-	case DVACT_RESUME:
-		task_add(systq, &psc->sc_resume_t);
+	case DVACT_WAKEUP:
+		athn_pci_wakeup(psc);
 		break;
 	}
 
@@ -229,9 +225,8 @@ athn_pci_activate(struct device *self, int act)
 }
 
 void
-athn_pci_resume(void *arg1, void *arg2)
+athn_pci_wakeup(struct athn_pci_softc *psc)
 {
-	struct athn_pci_softc *psc = arg1;
 	struct athn_softc *sc = &psc->sc_sc;
 	pcireg_t reg;
 	int s;
@@ -241,7 +236,7 @@ athn_pci_resume(void *arg1, void *arg2)
 		pci_conf_write(psc->sc_pc, psc->sc_tag, 0x40, reg & ~0xff00);
 
 	s = splnet();
-	athn_resume(sc);
+	athn_wakeup(sc);
 	splx(s);
 }
 

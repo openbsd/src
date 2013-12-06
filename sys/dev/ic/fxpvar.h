@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.36 2013/11/14 12:16:01 dlg Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.37 2013/12/06 21:03:03 deraadt Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -142,7 +142,6 @@ struct fxp_softc {
 	u_int16_t sc_bundle_max;	/* max # frames per interrupt (ucode) */
 	u_int16_t sc_min_size_mask;	/* bit-mask describing the minimum
 					 * size of frame that will be bundled */
-	struct task		sc_resume_t;
 
 	u_int32_t		*sc_ucodebuf;
 	size_t			sc_ucodelen;
@@ -164,7 +163,7 @@ void fxp_detach(struct fxp_softc *);
 void fxp_init(void *);
 void fxp_stop(struct fxp_softc *, int, int);
 int fxp_activate(struct device *, int);
-void fxp_resume(void *, void *);
+void fxp_wakeup(struct fxp_softc *);
 
 #define	FXP_RXMAP_GET(sc)	((sc)->sc_rxmaps[(sc)->sc_rxfree++])
 #define	FXP_RXMAP_PUT(sc,map)	((sc)->sc_rxmaps[--(sc)->sc_rxfree] = (map))

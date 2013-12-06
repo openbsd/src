@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.79 2013/11/26 09:50:32 mpi Exp $	*/
+/*	$OpenBSD: athn.c,v 1.80 2013/12/06 21:03:02 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2888,7 +2888,7 @@ athn_suspend(struct athn_softc *sc)
 }
 
 void
-athn_resume(struct athn_softc *sc)
+athn_wakeup(struct athn_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 

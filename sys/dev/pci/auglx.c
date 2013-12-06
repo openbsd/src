@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.10 2013/05/24 07:58:46 ratchov Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.11 2013/12/06 21:03:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -1346,16 +1346,12 @@ auglx_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
-	case DVACT_SUSPEND:
-		break;
 	case DVACT_RESUME:
 		ac97_resume(&sc->host_if, sc->codec_if);
 		rv = config_activate_children(self, act);
 		break;
-	case DVACT_DEACTIVATE:
+	default:
+		rv = config_activate_children(self, act);
 		break;
 	}
 	return (rv);

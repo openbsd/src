@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.92 2013/05/30 16:15:02 deraadt Exp $	*/
+/*	$OpenBSD: usb.c,v 1.93 2013/12/06 21:03:05 deraadt Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -881,15 +881,11 @@ usb_activate(struct device *self, int act)
 			}
 		}
 		break;
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
-	case DVACT_SUSPEND:
-		break;
-	case DVACT_POWERDOWN:
-		break;
 	case DVACT_RESUME:
 		usb_needs_explore(sc->sc_bus->root_hub, 0);
+		break;
+	default:
+		rv = config_activate_children(self, act);
 		break;
 	}
 	return (rv);

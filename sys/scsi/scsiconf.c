@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.184 2012/10/16 10:30:52 jsg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.185 2013/12/06 21:03:02 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -241,6 +241,7 @@ scsi_activate_lun(struct scsibus_softc *sc, int target, int lun, int act)
 {
 	struct scsi_link *link;
 	struct device *dev;
+	int rv = 0;
 
 	link = scsi_get_link(sc, target, lun);
 	if (link == NULL)
@@ -248,21 +249,15 @@ scsi_activate_lun(struct scsibus_softc *sc, int target, int lun, int act)
 
 	dev = link->device_softc;
 	switch (act) {
-	case DVACT_QUIESCE:
-	case DVACT_SUSPEND:
-	case DVACT_RESUME:
-	case DVACT_POWERDOWN:
-		config_suspend(dev, act);
-		break;
 	case DVACT_DEACTIVATE:
 		atomic_setbits_int(&link->state, SDEV_S_DYING);
 		config_deactivate(dev);
 		break;
 	default:
+		rv = config_suspend(dev, act);
 		break;
 	}
-
-	return (0);
+	return (rv);
 }
 
 int

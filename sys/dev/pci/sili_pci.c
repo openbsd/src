@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili_pci.c,v 1.13 2012/10/08 21:47:50 deraadt Exp $ */
+/*	$OpenBSD: sili_pci.c,v 1.14 2013/12/06 21:03:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -206,17 +206,11 @@ sili_pci_activate(struct device *self, int act)
 	int				 rv = 0;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
-	case DVACT_SUSPEND:
-		rv = config_activate_children(self, act);
-		break;
-	case DVACT_POWERDOWN:
-		rv = config_activate_children(self, act);
-		break;
 	case DVACT_RESUME:
 		sili_resume(sc);
+		rv = config_activate_children(self, act);
+		break;
+	default:
 		rv = config_activate_children(self, act);
 		break;
 	}

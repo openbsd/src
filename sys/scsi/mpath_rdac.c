@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_rdac.c,v 1.18 2013/08/27 00:57:44 dlg Exp $ */
+/*	$OpenBSD: mpath_rdac.c,v 1.19 2013/12/06 21:03:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -250,9 +250,6 @@ rdac_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_SUSPEND:
-	case DVACT_RESUME:
-		break;
 	case DVACT_DEACTIVATE:
 		if (scsi_xsh_del(&sc->sc_xsh))
 			mpath_path_status(&sc->sc_path, MPATH_S_UNKNOWN);

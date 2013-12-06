@@ -1,4 +1,4 @@
-/* $OpenBSD: esp.c,v 1.9 2013/05/30 16:15:01 deraadt Exp $ */
+/* $OpenBSD: esp.c,v 1.10 2013/12/06 21:03:05 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -269,17 +269,18 @@ int
 esp_activate(struct device *self, int act)
 {
 	struct ncr53c9x_softc *sc = self;
-	int ret = 0;
-
-	ret = config_activate_children(self, act);
+	int rv = 0;
 
 	switch (act) {
 	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
 		NCRCMD(sc, NCRCMD_RSTSCSI);
 		break;
+	default:
+		rv = config_activate_children(self, act);
+		break;
 	}
-
-	return (ret);
+	return (rv);
 }
 
 /*

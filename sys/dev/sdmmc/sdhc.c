@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.36 2013/05/31 21:28:32 deraadt Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.37 2013/12/06 21:03:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -256,9 +256,6 @@ sdhc_activate(struct device *self, int act)
 	int n, i, rv = 0;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
 
@@ -269,10 +266,6 @@ sdhc_activate(struct device *self, int act)
 				hp->regs[i] = HREAD1(hp, i);
 		}
 		break;
-	case DVACT_POWERDOWN:
-		rv = config_activate_children(self, act);
-		sdhc_shutdown(self);
-		break;
 	case DVACT_RESUME:
 		/* Restore the host controller state. */
 		for (n = 0; n < sc->sc_nhosts; n++) {
@@ -281,6 +274,13 @@ sdhc_activate(struct device *self, int act)
 			for (i = 0; i < sizeof hp->regs; i++)
 				HWRITE1(hp, i, hp->regs[i]);
 		}
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
+		sdhc_shutdown(self);
+		break;
+	default:
 		rv = config_activate_children(self, act);
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.46 2013/11/27 00:00:53 dlg Exp $	*/
+/*	$OpenBSD: device.h,v 1.47 2013/12/06 21:03:01 deraadt Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -63,10 +63,11 @@ enum devclass {
  * Actions for ca_activate.
  */
 #define	DVACT_DEACTIVATE	1	/* deactivate the device */
-#define	DVACT_SUSPEND		2	/* suspend the device */
-#define	DVACT_RESUME		3	/* resume the device */
-#define	DVACT_QUIESCE		4	/* warn the device about suspend */
-#define	DVACT_POWERDOWN		5	/* power device down */
+#define	DVACT_QUIESCE		2	/* warn the device about suspend */
+#define	DVACT_SUSPEND		3	/* suspend the device */
+#define	DVACT_RESUME		4	/* resume the device */
+#define	DVACT_WAKEUP		5	/* tell device to recover after resume */
+#define	DVACT_POWERDOWN		6	/* power device down */
 
 struct device {
 	enum	devclass dv_class;	/* this device's classification */

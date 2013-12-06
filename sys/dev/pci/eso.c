@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.37 2013/05/24 07:58:46 ratchov Exp $	*/
+/*	$OpenBSD: eso.c,v 1.38 2013/12/06 21:03:03 deraadt Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -2139,6 +2139,9 @@ eso_activate(struct device *self, int act)
 		eso_setup(sc, 1, 1);
 		pci_conf_write(sc->sc_pa.pa_pc, sc->sc_pa.pa_tag,
 		    ESO_PCI_DDMAC, sc->sc_dmac_addr | ESO_PCI_DDMAC_DE);
+		rv = config_activate_children(self, act);
+		break;
+	default:
 		rv = config_activate_children(self, act);
 		break;
 	}

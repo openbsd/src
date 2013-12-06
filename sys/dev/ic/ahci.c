@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.4 2013/11/06 12:06:58 deraadt Exp $ */
+/*	$OpenBSD: ahci.c,v 1.5 2013/12/06 21:03:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -317,19 +317,6 @@ ahci_activate(struct device *self, int act)
 	int				 i, rv = 0;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
-	case DVACT_SUSPEND:
-		rv = config_activate_children(self, act);
-		break;
-	case DVACT_POWERDOWN:
-		rv = config_activate_children(self, act);
-		for (i = 0; i < AHCI_MAX_PORTS; i++) {
-			if (sc->sc_ports[i] != NULL)
-				ahci_port_stop(sc->sc_ports[i], 1);
-		}
-		break;
 	case DVACT_RESUME:
 		/* enable ahci (global interrupts disabled) */
 		ahci_write(sc, AHCI_REG_GHC, AHCI_REG_GHC_AE);
@@ -345,6 +332,16 @@ ahci_activate(struct device *self, int act)
 		/* Enable interrupts */
 		ahci_write(sc, AHCI_REG_GHC, AHCI_REG_GHC_AE | AHCI_REG_GHC_IE);
 
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
+		for (i = 0; i < AHCI_MAX_PORTS; i++) {
+			if (sc->sc_ports[i] != NULL)
+				ahci_port_stop(sc->sc_ports[i], 1);
+		}
+		break;
+	default:
 		rv = config_activate_children(self, act);
 		break;
 	}

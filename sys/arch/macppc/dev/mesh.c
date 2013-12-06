@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.31 2013/05/31 14:30:51 mpi Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.32 2013/12/06 21:03:05 deraadt Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -381,19 +381,20 @@ int
 mesh_activate(struct device *self, int act)
 {
 	struct mesh_softc *sc = (struct mesh_softc *)self;
-	int ret = 0;
-
-	ret = config_activate_children(self, act);
+	int rv = 0;
 
 	switch (act) {
 	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
 		/* Set to async mode. */
 		mesh_set_reg(sc, MESH_SYNC_PARAM, 2);
 		mesh_bus_reset(sc);
 		break;
+	default:
+		rv = config_activate_children(self, act);
+		break;
 	}
-
-	return (ret);
+	return (rv);
 }
 
 #define MESH_SET_XFER(sc, count) do {					\
