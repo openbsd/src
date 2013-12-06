@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.55 2013/12/06 20:13:29 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.56 2013/12/06 23:41:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -3255,7 +3255,7 @@ i915_gem_object_set_to_gtt_domain(struct drm_i915_gem_object *obj, bool write)
 	/* It should now be out of any other write domains, and we can update
 	 * the domain values for our changes.
 	 */
-	WARN_ON((obj->base.write_domain & ~I915_GEM_DOMAIN_GTT) != 0);
+	BUG_ON((obj->base.write_domain & ~I915_GEM_DOMAIN_GTT) != 0);
 	obj->base.read_domains |= I915_GEM_DOMAIN_GTT;
 	if (write) {
 		obj->base.read_domains = I915_GEM_DOMAIN_GTT;
