@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.54 2013/12/05 13:29:56 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.55 2013/12/06 20:13:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1402,7 +1402,13 @@ i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 
 	dev_priv->entries++;
 
-	KASSERT(obj->base.map);
+	if (!obj->base.map) {
+		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
+		    &obj->base.uobj, NULL);
+		dev_priv->entries--;
+		return (VM_PAGER_BAD);
+	}
+
 	offset -= obj->base.map->ext;
 
 	if (rw_enter(&dev->dev_lock, RW_NOSLEEP | RW_READ) != 0) {
