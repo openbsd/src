@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.66 2013/10/09 23:44:14 djm Exp $
+#	$OpenBSD: Makefile,v 1.67 2013/12/06 13:52:46 markus Exp $
 
 REGRESS_FAIL_EARLY= yes
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7 t8 t9
@@ -135,6 +135,13 @@ t9.out:
 t9: t9.out
 	ssh-keygen -lf t9.out > /dev/null
 	ssh-keygen -Bf t9.out > /dev/null
+
+t10.out:
+	ssh-keygen -q -t ed25519 -N '' -f $@
+
+t10: t10.out
+	ssh-keygen -lf t10.out > /dev/null
+	ssh-keygen -Bf t10.out > /dev/null
 
 modpipe: modpipe.c
 

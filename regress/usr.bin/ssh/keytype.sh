@@ -1,4 +1,4 @@
-#	$OpenBSD: keytype.sh,v 1.2 2013/05/17 00:37:40 dtucker Exp $
+#	$OpenBSD: keytype.sh,v 1.3 2013/12/06 13:52:46 markus Exp $
 #	Placed in the Public Domain.
 
 tid="login with different key types"
@@ -7,7 +7,7 @@ TIME=/usr/bin/time
 cp $OBJ/sshd_proxy $OBJ/sshd_proxy_bak
 cp $OBJ/ssh_proxy $OBJ/ssh_proxy_bak
 
-ktypes="dsa-1024 rsa-2048 ecdsa-256 rsa-3072 ecdsa-384 ecdsa-521"
+ktypes="dsa-1024 rsa-2048 ecdsa-256 rsa-3072 ecdsa-384 ecdsa-521 ed25519-512"
 
 for kt in $ktypes; do 
 	rm -f $OBJ/key.$kt
