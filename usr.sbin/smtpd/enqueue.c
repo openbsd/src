@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.72 2013/11/28 10:43:37 eric Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.73 2013/12/06 14:26:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -317,7 +317,7 @@ enqueue(int argc, char *argv[])
 	}
 	if (!msg.saw_user_agent)
 		send_line(fout, 0, "User-Agent: %s enqueuer (%s)\n",
-		    SMTPD_NAME, "Demoosh");
+		    SMTPD_NAME, "Demoostik");
 
 	/* add separating newline */
 	if (noheader)
