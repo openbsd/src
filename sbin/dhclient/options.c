@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.56 2013/07/11 01:34:00 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.57 2013/12/06 23:40:48 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -454,7 +454,7 @@ toobig:
 
 void
 do_packet(unsigned int from_port, struct in_addr from,
-    struct hardware *hfrom)
+    struct ether_addr *hfrom)
 {
 	struct dhcp_packet *packet = &client->packet;
 	struct option_data options[256];
@@ -463,14 +463,14 @@ do_packet(unsigned int from_port, struct in_addr from,
 	char *type, *info;
 	int i, rslt, options_valid = 1;
 
-	if (ifi->hw_address.hlen != packet->hlen) {
+	if (packet->hlen != ETHER_ADDR_LEN) {
 #ifdef DEBUG
 		debug("Discarding packet with hlen != %s (%u)",
 		    ifi->name, packet->hlen);
 #endif
 		return;
-	} else if (memcmp(ifi->hw_address.haddr, packet->chaddr,
-	    packet->hlen)) {
+	} else if (memcmp(&ifi->hw_address, packet->chaddr,
+	    sizeof(ifi->hw_address))) {
 #ifdef DEBUG
 		debug("Discarding packet with chaddr != %s (%s)", ifi->name,
 		    ether_ntoa((struct ether_addr *)packet->chaddr));
@@ -552,11 +552,8 @@ do_packet(unsigned int from_port, struct in_addr from,
 #endif
 	}
 
-	if (hfrom->hlen == 6)
-		rslt = asprintf(&info, "%s from %s (%s)", type, inet_ntoa(from),
-		    ether_ntoa((struct ether_addr *)hfrom->haddr));
-	else
-		rslt = asprintf(&info, "%s from %s", type, inet_ntoa(from));
+	rslt = asprintf(&info, "%s from %s (%s)", type, inet_ntoa(from),
+	    ether_ntoa(hfrom));
 	if (rslt == -1)
 		error("no memory for info string");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.85 2013/12/05 21:32:59 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.86 2013/12/06 23:40:48 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -84,21 +84,22 @@ discover_interface(void)
 			struct sockaddr_dl *foo =
 			    (struct sockaddr_dl *)ifa->ifa_addr;
 
+			if (foo->sdl_alen != ETHER_ADDR_LEN)
+				continue;
+				
 			ifi->index = foo->sdl_index;
-			ifi->hw_address.hlen = foo->sdl_alen;
-			ifi->hw_address.htype = HTYPE_ETHER; /* XXX */
-			memcpy(ifi->hw_address.haddr, LLADDR(foo),
-			    foo->sdl_alen);
+			memcpy(ifi->hw_address.ether_addr_octet, LLADDR(foo),
+			    ETHER_ADDR_LEN);
 			opt = &config->send_options[DHO_DHCP_CLIENT_IDENTIFIER];
 			if (opt->len == 0) {
 				/* Build default client identifier. */
-				data = calloc(1, foo->sdl_alen + 1);
+				data = calloc(1, ETHER_ADDR_LEN + 1);
 				if (data != NULL) {
-					data[0] = ifi->hw_address.htype;
+					data[0] = HTYPE_ETHER;
 					memcpy(&data[1], LLADDR(foo),
-					    foo->sdl_alen);
+					    ETHER_ADDR_LEN);
 					opt->data = data;
-					opt->len = foo->sdl_alen + 1;
+					opt->len = ETHER_ADDR_LEN + 1;
 				}
 			}
 		}
@@ -237,7 +238,7 @@ void
 got_one(void)
 {
 	struct sockaddr_in from;
-	struct hardware hfrom;
+	struct ether_addr hfrom;
 	struct in_addr ifrom;
 	ssize_t result;
 

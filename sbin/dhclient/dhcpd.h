@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.124 2013/11/19 15:12:23 mikeb Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.125 2013/12/06 23:40:48 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -93,12 +93,6 @@ struct reject_elem {
 	struct in_addr		 addr;
 };
 
-struct hardware {
-	u_int8_t htype;
-	u_int8_t hlen;
-	u_int8_t haddr[16];
-};
-
 struct client_lease {
 	TAILQ_ENTRY(client_lease) next;
 	time_t			 expiry, renewal, rebind;
@@ -172,7 +166,7 @@ struct client_state {
 };
 
 struct interface_info {
-	struct hardware	 hw_address;
+	struct ether_addr	hw_address;
 	struct in_addr	 primary_address;
 	char		 name[IFNAMSIZ];
 	int		 rfdesc;
@@ -216,7 +210,7 @@ extern volatile sig_atomic_t quit;
 /* options.c */
 int cons_options(struct option_data *);
 char *pretty_print_option(unsigned int, struct option_data *, int);
-void do_packet(unsigned int, struct in_addr, struct hardware *);
+void do_packet(unsigned int, struct in_addr, struct ether_addr *);
 
 /* errwarn.c */
 extern int warnings_occurred;
@@ -240,7 +234,7 @@ void skip_to_semi(FILE *);
 int parse_semi(FILE *);
 char *parse_string(FILE *);
 int parse_ip_addr(FILE *, struct in_addr *);
-void parse_hardware_param(FILE *, struct hardware *);
+void parse_hardware_param(FILE *, struct ether_addr *);
 void parse_lease_time(FILE *, time_t *);
 void convert_num(unsigned char *, char *, int, int);
 time_t parse_date(FILE *);
@@ -248,8 +242,8 @@ time_t parse_date(FILE *);
 /* bpf.c */
 void if_register_send(void);
 void if_register_receive(void);
-ssize_t send_packet(struct in_addr, struct sockaddr_in *, struct hardware *);
-ssize_t receive_packet(struct sockaddr_in *, struct hardware *);
+ssize_t send_packet(struct in_addr, struct sockaddr_in *, struct ether_addr *);
+ssize_t receive_packet(struct sockaddr_in *, struct ether_addr *);
 
 /* dispatch.c */
 void discover_interface(void);
@@ -290,10 +284,10 @@ void free_client_lease(struct client_lease *);
 void routehandler(void);
 
 /* packet.c */
-void assemble_hw_header(unsigned char *, int *, struct hardware *);
+void assemble_hw_header(unsigned char *, int *, struct ether_addr *);
 void assemble_udp_ip_header(unsigned char *, int *, u_int32_t, u_int32_t,
     unsigned int, unsigned char *, int);
-ssize_t decode_hw_header(unsigned char *, int, struct hardware *);
+ssize_t decode_hw_header(unsigned char *, int, struct ether_addr *);
 ssize_t decode_udp_ip_header(unsigned char *, int, struct sockaddr_in *,
     int);
 

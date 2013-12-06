@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.273 2013/12/05 21:32:59 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.274 2013/12/06 23:40:48 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -204,7 +204,7 @@ routehandler(void)
 	struct in_addr a, b;
 	ssize_t n;
 	int linkstat, rslt;
-	struct hardware hw;
+	struct ether_addr hw;
 	struct rt_msghdr *rtm;
 	struct if_msghdr *ifm;
 	struct ifa_msghdr *ifam;
@@ -1477,8 +1477,8 @@ make_discover(struct client_lease *lease)
 		client->bootrequest_packet_length = BOOTP_MIN_LEN;
 
 	packet->op = BOOTREQUEST;
-	packet->htype = ifi->hw_address.htype;
-	packet->hlen = ifi->hw_address.hlen;
+	packet->htype = HTYPE_ETHER ;
+	packet->hlen = ETHER_ADDR_LEN;
 	packet->hops = 0;
 	packet->xid = client->xid;
 	packet->secs = 0; /* filled in by send_discover. */
@@ -1488,7 +1488,8 @@ make_discover(struct client_lease *lease)
 	memset(&packet->yiaddr, 0, sizeof(packet->yiaddr));
 	memset(&packet->siaddr, 0, sizeof(packet->siaddr));
 	memset(&packet->giaddr, 0, sizeof(packet->giaddr));
-	memcpy(&packet->chaddr, ifi->hw_address.haddr, ifi->hw_address.hlen);
+	memcpy(&packet->chaddr, ifi->hw_address.ether_addr_octet,
+	    ETHER_ADDR_LEN);
 }
 
 void
@@ -1546,8 +1547,8 @@ make_request(struct client_lease * lease)
 		client->bootrequest_packet_length = BOOTP_MIN_LEN;
 
 	packet->op = BOOTREQUEST;
-	packet->htype = ifi->hw_address.htype;
-	packet->hlen = ifi->hw_address.hlen;
+	packet->htype = HTYPE_ETHER ;
+	packet->hlen = ETHER_ADDR_LEN;
 	packet->hops = 0;
 	packet->xid = client->xid;
 	packet->secs = 0; /* Filled in by send_request. */
@@ -1569,7 +1570,8 @@ make_request(struct client_lease * lease)
 	memset(&packet->yiaddr, 0, sizeof(packet->yiaddr));
 	memset(&packet->siaddr, 0, sizeof(packet->siaddr));
 	memset(&packet->giaddr, 0, sizeof(packet->giaddr));
-	memcpy(&packet->chaddr, ifi->hw_address.haddr, ifi->hw_address.hlen);
+	memcpy(&packet->chaddr, ifi->hw_address.ether_addr_octet,
+	    ETHER_ADDR_LEN);
 }
 
 void
@@ -1614,8 +1616,8 @@ make_decline(struct client_lease *lease)
 		client->bootrequest_packet_length = BOOTP_MIN_LEN;
 
 	packet->op = BOOTREQUEST;
-	packet->htype = ifi->hw_address.htype;
-	packet->hlen = ifi->hw_address.hlen;
+	packet->htype = HTYPE_ETHER ;
+	packet->hlen = ETHER_ADDR_LEN;
 	packet->hops = 0;
 	packet->xid = client->xid;
 	packet->secs = 0; /* Filled in by send_request. */
@@ -1626,7 +1628,8 @@ make_decline(struct client_lease *lease)
 	memset(&packet->yiaddr, 0, sizeof(packet->yiaddr));
 	memset(&packet->siaddr, 0, sizeof(packet->siaddr));
 	memset(&packet->giaddr, 0, sizeof(packet->giaddr));
-	memcpy(&packet->chaddr, ifi->hw_address.haddr, ifi->hw_address.hlen);
+	memcpy(&packet->chaddr, ifi->hw_address.ether_addr_octet,
+	    ETHER_ADDR_LEN);
 }
 
 void

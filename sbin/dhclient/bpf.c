@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.29 2013/11/11 21:00:01 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.30 2013/12/06 23:40:48 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -262,7 +262,7 @@ if_register_receive(void)
 
 ssize_t
 send_packet(struct in_addr from, struct sockaddr_in *to,
-    struct hardware *hto)
+    struct ether_addr *hto)
 {
 #define IOVCNT		2
 	unsigned char buf[256];
@@ -302,7 +302,7 @@ send_packet(struct in_addr from, struct sockaddr_in *to,
 }
 
 ssize_t
-receive_packet(struct sockaddr_in *from, struct hardware *hfrom)
+receive_packet(struct sockaddr_in *from, struct ether_addr *hfrom)
 {
 	int length = 0, offset = 0;
 	struct bpf_hdr hdr;

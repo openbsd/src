@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.21 2013/12/05 21:32:59 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.22 2013/12/06 23:40:48 krw Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -83,19 +83,18 @@ wrapsum(u_int32_t sum)
 }
 
 void
-assemble_hw_header(unsigned char *buf, int *bufix, struct hardware *to)
+assemble_hw_header(unsigned char *buf, int *bufix, struct ether_addr *to)
 {
 	struct ether_header eh;
 
-	if (to != NULL && to->hlen == 6) /* XXX */
-		memcpy(eh.ether_dhost, to->haddr, sizeof(eh.ether_dhost));
+	if (to != NULL)
+		memcpy(eh.ether_dhost, to->ether_addr_octet,
+		    sizeof(eh.ether_dhost));
 	else
 		memset(eh.ether_dhost, 0xff, sizeof(eh.ether_dhost));
-	if (ifi->hw_address.hlen == sizeof(eh.ether_shost))
-		memcpy(eh.ether_shost, ifi->hw_address.haddr,
-		    sizeof(eh.ether_shost));
-	else
-		memset(eh.ether_shost, 0x00, sizeof(eh.ether_shost));
+
+	memcpy(eh.ether_shost, ifi->hw_address.ether_addr_octet,
+	    sizeof(eh.ether_shost));
 
 	eh.ether_type = htons(ETHERTYPE_IP);
 
@@ -141,15 +140,13 @@ assemble_udp_ip_header(unsigned char *buf, int *bufix, u_int32_t from,
 }
 
 ssize_t
-decode_hw_header(unsigned char *buf, int bufix, struct hardware *from)
+decode_hw_header(unsigned char *buf, int bufix, struct ether_addr *from)
 {
 	struct ether_header eh;
 
 	memcpy(&eh, buf + bufix, ETHER_HDR_LEN);
 
-	memcpy(from->haddr, eh.ether_shost, sizeof(eh.ether_shost));
-	from->htype = ARPHRD_ETHER;
-	from->hlen = sizeof(eh.ether_shost);
+	memcpy(from->ether_addr_octet, eh.ether_shost, sizeof(eh.ether_shost));
 
 	return (sizeof(eh));
 }

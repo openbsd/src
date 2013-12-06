@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.27 2013/12/05 22:31:35 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.28 2013/12/06 23:40:48 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -145,24 +145,19 @@ parse_ip_addr(FILE *cfile, struct in_addr *addr)
  * csns :== NUMBER | csns COLON NUMBER
  */
 void
-parse_hardware_param(FILE *cfile, struct hardware *hardware)
+parse_hardware_param(FILE *cfile, struct ether_addr *hardware)
 {
 	int token;
 
 	token = next_token(NULL, cfile);
-	switch (token) {
-	case TOK_ETHERNET:
-		hardware->htype = HTYPE_ETHER;
-		hardware->hlen = 6;
-		break;
-	default:
-		parse_warn("expecting a network hardware type");
+	if (token != TOK_ETHERNET) {
+		parse_warn("expecting 'ethernet'");
 		skip_to_semi(cfile);
 		return;
 	}
 
-	if (parse_numeric_aggregate(cfile, hardware->haddr, hardware->hlen,
-	    ':', 16) == 0)
+	if (parse_numeric_aggregate(cfile, hardware->ether_addr_octet,
+	    ETHER_ADDR_LEN, ':', 16) == 0)
 		return;
 
 	token = next_token(NULL, cfile);
