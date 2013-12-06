@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.112 2013/12/05 10:27:30 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.113 2013/12/06 10:42:15 eric Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 5 2013 $
+.Dd $Mdocdate: December 6 2013 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -576,7 +576,6 @@ Changing the default value might degrade performances.
 .Op Ic hostname Ar hostname
 .Op Ic hostnames Ar names
 .Op Ic mask-source
-.Op Ic verify
 .Ek
 .Xc
 Specify an
@@ -672,12 +671,6 @@ If the
 .Ic mask-source
 parameter is used, then the listener will skip the "from" part
 when prepending the "Received" header.
-.Pp
-If the listener is configured to provide SMTPS or STARTTLS and the
-.Ic verify
-parameter is used, then clients will be required to present a
-certificate that can be verified before a SMTP session can be
-initiated.
 .It Ic max-message-size Ar n
 Specify a maximum message size of
 .Ar n
