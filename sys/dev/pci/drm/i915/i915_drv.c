@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.54 2013/12/01 13:53:52 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.55 2013/12/06 11:17:20 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -129,13 +129,6 @@ int	inteldrm_doioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
 int	inteldrm_gmch_match(struct pci_attach_args *);
 void	inteldrm_timeout(void *);
-
-/* For reset and suspend */
-int	i8xx_do_reset(struct drm_device *);
-int	i965_do_reset(struct drm_device *);
-int	i965_reset_complete(struct drm_device *);
-int	ironlake_do_reset(struct drm_device *);
-int	gen6_do_reset(struct drm_device *);
 
 void	i915_alloc_ifp(struct inteldrm_softc *, struct pci_attach_args *);
 void	i965_alloc_ifp(struct inteldrm_softc *, struct pci_attach_args *);
@@ -1360,10 +1353,9 @@ inteldrm_timeout(void *arg)
 	task_add(dev_priv->mm.retire_taskq, &dev_priv->mm.retire_task);
 }
 
-int
-i8xx_do_reset(struct drm_device *dev)
+static int i8xx_do_reset(struct drm_device *dev)
 {
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (IS_I85X(dev))
 		return -ENODEV;
@@ -1391,19 +1383,17 @@ i8xx_do_reset(struct drm_device *dev)
 	return 0;
 }
 
-int
-i965_reset_complete(struct drm_device *dev)
+static int i965_reset_complete(struct drm_device *dev)
 {
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	u8 gdrst;
 	gdrst = (pci_conf_read(dev_priv->pc, dev_priv->tag, I965_GDRST) >> 24);
 	return (gdrst & GRDOM_RESET_ENABLE) == 0;
 }
 
-int
-i965_do_reset(struct drm_device *dev)
+static int i965_do_reset(struct drm_device *dev)
 {
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	pcireg_t reg;
 	int retries;
 
@@ -1444,8 +1434,7 @@ i965_do_reset(struct drm_device *dev)
 	return (0);
 }
 
-int
-ironlake_do_reset(struct drm_device *dev)
+static int ironlake_do_reset(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 gdrst;
@@ -1481,8 +1470,7 @@ ironlake_do_reset(struct drm_device *dev)
 	return (0);
 }
 
-int
-gen6_do_reset(struct drm_device *dev)
+static int gen6_do_reset(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int ret = 0;
@@ -1525,8 +1513,7 @@ gen6_do_reset(struct drm_device *dev)
 	return ret;
 }
 
-int
-intel_gpu_reset(struct drm_device *dev)
+int intel_gpu_reset(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int ret = -ENODEV;
@@ -1576,8 +1563,7 @@ intel_gpu_reset(struct drm_device *dev)
  *   - re-init interrupt state
  *   - re-init display
  */
-int
-i915_reset(struct drm_device *dev)
+int i915_reset(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	int ret;
