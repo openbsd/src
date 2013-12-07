@@ -1213,8 +1213,7 @@ set_loginclass(pw)
 	errflags = NO_MAIL|MSG_ONLY|NO_EXIT;
 
     if (login_class && strcmp(login_class, "-") != 0) {
-	if (user_uid != 0 &&
-	    strcmp(runas_user ? runas_user : def_runas_default, "root") != 0)
+	if (user_uid != 0 && pw->pw_uid != 0)
 	    errorx(1, "only root can use -c %s", login_class);
     } else {
 	login_class = pw->pw_class;
