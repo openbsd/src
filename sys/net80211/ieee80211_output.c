@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.88 2010/07/17 16:30:01 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.89 2013/12/07 01:55:06 brad Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -306,6 +306,7 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
  * 11G		15*	1023	(*) aCWmin(1)
  * Turbo A/G	7	1023	(Atheros proprietary mode)
  */
+#if 0
 static const struct ieee80211_edca_ac_params
     ieee80211_edca_table[IEEE80211_MODE_MAX][EDCA_NUM_AC] = {
 	[IEEE80211_MODE_11B] = {
@@ -333,6 +334,7 @@ static const struct ieee80211_edca_ac_params
 		[EDCA_AC_VO] = { 2,  2, 1,  47 }
 	}
 };
+#endif
 
 #ifndef IEEE80211_STA_ONLY
 static const struct ieee80211_edca_ac_params
