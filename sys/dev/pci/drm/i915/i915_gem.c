@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.56 2013/12/06 23:41:51 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.57 2013/12/07 17:20:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1059,6 +1059,7 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 	(i915_seqno_passed(ring->get_seqno(ring, false), seqno) || \
 	atomic_read(&dev_priv->mm.wedged))
 	do {
+		end = timeout_jiffies;
 		mtx_enter(&dev_priv->irq_lock);
 		do {
 			if (EXIT_COND) {
@@ -1067,20 +1068,19 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 			}
 			ret = msleep(ring, &dev_priv->irq_lock,
 			    PZERO | (interruptible ? PCATCH : 0),
-			    "gemwt", timeout_jiffies);
+			    "gemwt", end);
 			nanouptime(&now);
 			timespecsub(&now, &before, &sleep_time);
-			timeout_jiffies = timespec_to_jiffies(&wait_time);
-			timeout_jiffies -= timespec_to_jiffies(&sleep_time);
-			if (timeout_jiffies <= 0) {
-				timeout_jiffies = 0;
+			if (timespeccmp(&sleep_time, &wait_time, >=)) {
+				end = 0;
 				break;
 			}
+			end = timeout_jiffies -
+			    timespec_to_jiffies(&sleep_time);
 		} while (ret == 0);
 		mtx_leave(&dev_priv->irq_lock);
 		switch (ret) {
 		case 0:
-			end = timeout_jiffies;
 			break;
 		case ERESTART:
 			end = -ERESTARTSYS;
