@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.32 2013/11/03 23:27:33 brad Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.33 2013/12/07 07:22:37 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1044,48 +1044,36 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 	struct jme_txdesc *txd;
 	struct jme_desc *desc;
 	struct mbuf *m;
-	int maxsegs;
 	int error, i, prod;
 	uint32_t cflags;
 
 	prod = sc->jme_cdata.jme_tx_prod;
 	txd = &sc->jme_cdata.jme_txdesc[prod];
 
-	maxsegs = (JME_TX_RING_CNT - sc->jme_cdata.jme_tx_cnt) -
-		  (JME_TXD_RSVD + 1);
-	if (maxsegs > JME_MAXTXSEGS)
-		maxsegs = JME_MAXTXSEGS;
-	if (maxsegs < (sc->jme_txd_spare - 1))
-		panic("%s: not enough segments %d", sc->sc_dev.dv_xname,
-		    maxsegs);
-
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, txd->tx_dmamap,
 				     *m_head, BUS_DMA_NOWAIT);
+	if (error != 0 && error != EFBIG)
+		goto drop;
 	if (error != 0) {
-		bus_dmamap_unload(sc->sc_dmat, txd->tx_dmamap);
-		error = EFBIG;
-	}
-	if (error == EFBIG) {
 		if (m_defrag(*m_head, M_DONTWAIT)) {
-			printf("%s: can't defrag TX mbuf\n",
-			    sc->sc_dev.dv_xname);
-			m_freem(*m_head);
-			*m_head = NULL;
-			return (ENOBUFS);
+			error = ENOBUFS;
+			goto drop;
 		}
-		error = bus_dmamap_load_mbuf(sc->sc_dmat,
-					     txd->tx_dmamap, *m_head,
-					     BUS_DMA_NOWAIT);
-		if (error != 0) {
-			printf("%s: could not load defragged TX mbuf\n",
-			    sc->sc_dev.dv_xname);
-			m_freem(*m_head);
-			*m_head = NULL;
-			return (error);
-		}
-	} else if (error) {
-		printf("%s: could not load TX mbuf\n", sc->sc_dev.dv_xname);
-		return (error);
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, txd->tx_dmamap,
+					     *m_head, BUS_DMA_NOWAIT);
+		if (error != 0)
+			goto drop;
+	}
+
+	/*
+	 * Check descriptor overrun. Leave one free descriptor.
+	 * Since we always use 64bit address mode for transmitting,
+	 * each Tx request requires one more dummy descriptor.
+	 */
+	if (sc->jme_cdata.jme_tx_cnt + txd->tx_dmamap->dm_nsegs + JME_TXD_RSVD >
+	    JME_TX_RING_CNT - JME_TXD_RSVD) {
+		bus_dmamap_unload(sc->sc_dmat, txd->tx_dmamap);
+		return (ENOBUFS);
 	}
 
 	m = *m_head;
@@ -1113,7 +1101,6 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 	desc->addr_hi = htole32(m->m_pkthdr.len);
 	desc->addr_lo = 0;
 	sc->jme_cdata.jme_tx_cnt++;
-	KASSERT(sc->jme_cdata.jme_tx_cnt < JME_TX_RING_CNT - JME_TXD_RSVD);
 	JME_DESC_INC(prod, JME_TX_RING_CNT);
 	for (i = 0; i < txd->tx_dmamap->dm_nsegs; i++) {
 		desc = &sc->jme_rdata.jme_tx_ring[prod];
@@ -1123,10 +1110,7 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 		    htole32(JME_ADDR_HI(txd->tx_dmamap->dm_segs[i].ds_addr));
 		desc->addr_lo =
 		    htole32(JME_ADDR_LO(txd->tx_dmamap->dm_segs[i].ds_addr));
-
 		sc->jme_cdata.jme_tx_cnt++;
-		KASSERT(sc->jme_cdata.jme_tx_cnt <=
-			 JME_TX_RING_CNT - JME_TXD_RSVD);
 		JME_DESC_INC(prod, JME_TX_RING_CNT);
 	}
 
@@ -1140,7 +1124,7 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 	desc->flags |= htole32(JME_TD_OWN | JME_TD_INTR);
 
 	txd->tx_m = m;
-	txd->tx_ndesc = txd->tx_dmamap->dm_nsegs + 1;
+	txd->tx_ndesc = txd->tx_dmamap->dm_nsegs + JME_TXD_RSVD;
 
 	/* Sync descriptors. */
 	bus_dmamap_sync(sc->sc_dmat, txd->tx_dmamap, 0,
@@ -1149,6 +1133,11 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 	     sc->jme_cdata.jme_tx_ring_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	return (0);
+
+  drop:
+	m_freem(*m_head);
+	*m_head = NULL;
+	return (error);
 }
 
 void
@@ -1174,7 +1163,7 @@ jme_start(struct ifnet *ifp)
 		 * Check number of available TX descs, always
 		 * leave JME_TXD_RSVD free TX descs.
 		 */
-		if (sc->jme_cdata.jme_tx_cnt + sc->jme_txd_spare >
+		if (sc->jme_cdata.jme_tx_cnt + JME_TXD_RSVD >
 		    JME_TX_RING_CNT - JME_TXD_RSVD) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
@@ -1190,13 +1179,15 @@ jme_start(struct ifnet *ifp)
 		 * for the NIC to drain the ring.
 		 */
 		if (jme_encap(sc, &m_head)) {
-			if (m_head == NULL) {
+			if (m_head == NULL)
 				ifp->if_oerrors++;
-				break;
+			else {
+				IF_PREPEND(&ifp->if_snd, m_head);
+				ifp->if_flags |= IFF_OACTIVE;
 			}
-			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+
 		enq++;
 
 #if NBPFILTER > 0
@@ -1528,7 +1519,7 @@ jme_txeof(struct jme_softc *sc)
 	if (sc->jme_cdata.jme_tx_cnt == 0)
 		ifp->if_timer = 0;
 
-	if (sc->jme_cdata.jme_tx_cnt + sc->jme_txd_spare <=
+	if (sc->jme_cdata.jme_tx_cnt + JME_TXD_RSVD <=
 	    JME_TX_RING_CNT - JME_TXD_RSVD)
 		ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -1775,14 +1766,6 @@ jme_init(struct ifnet *ifp)
 	 * Reset the chip to a known state.
 	 */
 	jme_reset(sc);
-
-	/*
-	 * Since we always use 64bit address mode for transmitting,
-	 * each Tx request requires one more dummy descriptor.
-	 */
-	sc->jme_txd_spare =
-	howmany(ifp->if_mtu + sizeof(struct ether_vlan_header), MCLBYTES) + 1;
-	KASSERT(sc->jme_txd_spare >= 2);
 
 	/* Init descriptors. */
 	error = jme_init_rx_ring(sc);
