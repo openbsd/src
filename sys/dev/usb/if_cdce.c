@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.58 2013/12/04 00:52:52 deraadt Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.59 2013/12/07 20:17:42 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -528,23 +528,24 @@ cdce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		cdce_init(sc);
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
+		if (!(ifp->if_flags & IFF_RUNNING))
+			cdce_init(sc);
+#ifdef INET
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->cdce_arpcom, ifa);
-			break;
-		}
+#endif
 		break;
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
 				cdce_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				cdce_stop(sc);
 		}
-		error = 0;
 		break;
 
 	default:
@@ -579,9 +580,6 @@ cdce_init(void *xsc)
 	struct cdce_chain	*c;
 	usbd_status		 err;
 	int			 s, i;
-
-	if (ifp->if_flags & IFF_RUNNING)
-		return;
 
 	s = splnet();
 

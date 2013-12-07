@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.32 2013/12/04 00:52:52 deraadt Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.33 2013/12/07 20:17:42 brad Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -476,23 +476,24 @@ cdcef_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch (command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		cdcef_init(sc);
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
+		if (!(ifp->if_flags & IFF_RUNNING))
+			cdcef_init(sc);
+#ifdef INET
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
-		}
+#endif
 		break;
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
 				cdcef_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				cdcef_stop(sc);
 		}
-		error = 0;
 		break;
 
 	default:
@@ -527,10 +528,9 @@ cdcef_watchdog(struct ifnet *ifp)
 void
 cdcef_init(struct cdcef_softc *sc)
 {
-	int s;
 	struct ifnet    *ifp = GET_IFP(sc);
-	if (ifp->if_flags & IFF_RUNNING)
-		return;
+	int s;
+
 	s = splnet();
 
 	ifp->if_flags |= IFF_RUNNING;
