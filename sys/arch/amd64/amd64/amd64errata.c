@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd64errata.c,v 1.5 2013/05/21 21:12:17 kettenis Exp $	*/
+/*	$OpenBSD: amd64errata.c,v 1.6 2013/12/07 01:43:50 brad Exp $	*/
 /*	$NetBSD: errata.c,v 1.6 2007/02/05 21:05:45 ad Exp $	*/
 
 /*-
@@ -100,10 +100,12 @@ static const uint8_t amd64_errata_set3[] = {
 	JH_E1, DH_E3, OINK
 };
 
+#if 0
 static const uint8_t amd64_errata_set4[] = {
 	SH_C0, SH_CG, DH_CG, CH_CG, SH_D0, DH_D0, CH_D0, JH_E1,
 	DH_E3, SH_E4, BH_E4, SH_E5, DH_E6, JH_E6, OINK
 };
+#endif
 
 static const uint8_t amd64_errata_set5[] = {
 	SH_B3, OINK
