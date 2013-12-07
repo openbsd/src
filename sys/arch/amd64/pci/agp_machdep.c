@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.7 2013/03/17 21:49:00 kettenis Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.8 2013/12/07 10:57:06 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2009 Owain G. Ainsworth <oga@openbsd.org>
@@ -75,109 +75,6 @@ void
 agp_flush_cache_range(vaddr_t va, vsize_t sz)
 {
 	pmap_flush_cache(va, sz);
-}
-
-/*
- * functions for bus_dma used by drm for GEM
- *
- * We use the sg_dma backend (also used by iommu) to provide the actual
- * implementation, so all we need provide is the magic to create the tag, and
- * the appropriate callbacks.
- *
- * We give the backend drivers a chance to honour the bus_dma flags, some of
- * these may be used, for example to provide snooped mappings (intagp).
- * For intagp at least, we honour the BUS_DMA_COHERENT flag, though it is not
- * used often, and is * technically to be used for dmamem_map, we use it for
- * dmamap_load since adding coherency involes flags to the gtt pagetables.
- * We only use it for very special circumstances since when a GTT mapping is
- * set to coherent, the cpu can't read or write through the gtt aperture.
- *
- * Currently, since the userland agp driver still needs to access the gart, we
- * only do bus_dma for a section that we've been told is ours, hence the need
- * for the init function at present.
- */
-
-int
-agp_bus_dma_init(struct agp_softc *sc, bus_addr_t start, bus_addr_t end,
-    bus_dma_tag_t *dmat)
-{
-	struct bus_dma_tag	*tag;
-	struct sg_cookie	*cookie;
-
-	/* 
-	 * XXX add agp map into the main queue that takes up our chunk of
-	 * GTT space to prevent the userland api stealing any of it.
-	 */
-	if ((tag = malloc(sizeof(*tag), M_DEVBUF,
-	    M_WAITOK | M_CANFAIL)) == NULL)
-		return (ENOMEM);
-
-	if ((cookie = sg_dmatag_init("agpgtt", sc->sc_chipc, start, end - start,
-	    sc->sc_methods->bind_page, sc->sc_methods->unbind_page,
-	    sc->sc_methods->flush_tlb)) == NULL) {
-		free(tag, M_DEVBUF);
-		return (ENOMEM);
-	}
-
-	tag->_cookie = cookie;
-	tag->_dmamap_create = sg_dmamap_create;
-	tag->_dmamap_destroy = sg_dmamap_destroy;
-	tag->_dmamap_load = sg_dmamap_load;
-	tag->_dmamap_load_mbuf = sg_dmamap_load_mbuf;
-	tag->_dmamap_load_uio = sg_dmamap_load_uio;
-	tag->_dmamap_load_raw = sg_dmamap_load_raw;
-	tag->_dmamap_unload = sg_dmamap_unload;
-	tag->_dmamem_alloc = sg_dmamem_alloc;
-	tag->_dmamem_free = _bus_dmamem_free;
-	tag->_dmamem_map = _bus_dmamem_map;
-	tag->_dmamem_unmap = _bus_dmamem_unmap;
-	tag->_dmamem_mmap = _bus_dmamem_mmap;
-
-	/* Driver may need special sync handling */
-	if (sc->sc_methods->dma_sync != NULL) {
-		tag->_dmamap_sync = sc->sc_methods->dma_sync;
-	} else {
-		tag->_dmamap_sync = _bus_dmamap_sync;
-	}
-	
-	*dmat = tag;
-	return (0);
-}
-
-void
-agp_bus_dma_destroy(struct agp_softc *sc, bus_dma_tag_t dmat)
-{
-	struct sg_cookie	*cookie = dmat->_cookie;
-	bus_addr_t		 offset;
-
-
-	/*
-	 * XXX clear up blocker queue 
-	 */
-
-	/*
-	 * some backends use a dummy page to avoid errors on prefetching, etc.
-	 * make sure that all of them are clean.
-	 */
-	for (offset = cookie->sg_ex->ex_start;
-	    offset < cookie->sg_ex->ex_end; offset += PAGE_SIZE)
-		sc->sc_methods->unbind_page(sc->sc_chipc, offset);
-
-	sg_dmatag_destroy(cookie);
-	free(dmat, M_DEVBUF);
-}
-
-void
-agp_bus_dma_set_alignment(bus_dma_tag_t tag, bus_dmamap_t dmam,
-    u_long alignment)
-{
-	sg_dmamap_set_alignment(tag, dmam, alignment);
-}
-
-void
-agp_bus_dma_rebind(bus_dma_tag_t tag, bus_dmamap_t dmam, int flags)
-{
-	sg_dmamap_reload(tag, dmam, flags);
 }
 
 struct agp_map {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.27 2013/04/14 19:04:37 kettenis Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.28 2013/12/07 10:57:06 kettenis Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -188,13 +188,6 @@ void	agp_free_dmamem(bus_dma_tag_t, size_t, bus_dmamap_t,
 	    bus_dma_segment_t *);
 int	agpdev_print(void *, const char *);
 int	agpbus_probe(struct agp_attach_args *aa);
-
-int	agp_bus_dma_init(struct agp_softc *, bus_addr_t, bus_addr_t,
-	    bus_dma_tag_t *);
-void	agp_bus_dma_destroy(struct agp_softc *, bus_dma_tag_t);
-void	agp_bus_dma_set_alignment(bus_dma_tag_t, bus_dmamap_t,
-	    u_long);
-void	agp_bus_dma_rebind(bus_dma_tag_t, bus_dmamap_t, int);
 
 void	*agp_map(struct agp_softc *, bus_addr_t, bus_size_t,
 	    bus_space_handle_t *);
