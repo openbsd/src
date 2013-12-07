@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.28 2013/11/26 09:50:33 mpi Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.29 2013/12/07 20:12:15 brad Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -1057,31 +1057,24 @@ pcn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-
-		switch (ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			pcn_init(ifp);
 #ifdef INET
-		case AF_INET:
-			pcn_init(ifp);
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
 #endif
-		default:
-			pcn_init(ifp);
-			break;
-		}
 		break;
 
 	case SIOCSIFFLAGS:
-		/*
-		 * If interface is marked up and not running, then start it.
-		 * If it is marked down and running, stop it.
-		 * XXX If it's up then re-initialize it. This is so flags
-		 * such as IFF_PROMISC are handled.
-		 */
-		if (ifp->if_flags & IFF_UP)
-			pcn_init(ifp);
-		else if (ifp->if_flags & IFF_RUNNING)
-			pcn_stop(ifp, 1);
+		if (ifp->if_flags & IFF_UP) {
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
+				pcn_init(ifp);
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				pcn_stop(ifp, 1);
+		}
 		break;
 
 	case SIOCSIFMEDIA:
@@ -1570,10 +1563,6 @@ pcn_init(struct ifnet *ifp)
 
 	/* Initialize MODE for the initialization block. */
 	sc->sc_mode = 0;
-	if (ifp->if_flags & IFF_PROMISC)
-		sc->sc_mode |= LE_C15_PROM;
-	if ((ifp->if_flags & IFF_BROADCAST) == 0)
-		sc->sc_mode |= LE_C15_DRCVBC;
 
 	/*
 	 * If we have MII, simply select MII in the MODE register,
@@ -1593,6 +1582,9 @@ pcn_init(struct ifnet *ifp)
 		    pcn_bcr_read(sc, LE_BCR32) | LE_B32_DANAS);
 	}
 
+	/* Set the multicast filter in the init block. */
+	pcn_set_filter(sc);
+
 	/*
 	 * Set the Tx and Rx descriptor ring addresses in the init
 	 * block, the TLEN and RLEN other fields of the init block
@@ -1609,9 +1601,6 @@ pcn_init(struct ifnet *ifp)
 	    (enaddr[1] << 8) | (enaddr[2] << 16) | (enaddr[3] << 24));
 	sc->sc_initblock.init_padr[1] = htole32(enaddr[4] |
 	    (enaddr[5] << 8));
-
-	/* Set the multicast filter in the init block. */
-	pcn_set_filter(sc);
 
 	/* Initialize CSR3. */
 	pcn_csr_write(sc, LE_CSR3, LE_C3_MISSM|LE_C3_IDONM|LE_C3_DXSUFLO);
@@ -1835,46 +1824,43 @@ pcn_set_filter(struct pcn_softc *sc)
 	struct ether_multistep step;
 	uint32_t crc;
 
-	/*
-	 * Set up the multicast address filter by passing all multicast
-	 * addresses through a CRC generator, and then using the high
-	 * order 6 bits as an index into the 64-bit logical address
-	 * filter.  The high order bits select the word, while the rest
-	 * of the bits select the bit within the word.
-	 */
-
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC ||
-	    ac->ac_multirangecnt > 0)
-		goto allmulti;
-
-	sc->sc_initblock.init_ladrf[0] =
-	    sc->sc_initblock.init_ladrf[1] =
-	    sc->sc_initblock.init_ladrf[2] =
-	    sc->sc_initblock.init_ladrf[3] = 0;
-
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
-
-		/* Just want the 6 most significant bits. */
-		crc >>= 26;
-
-		/* Set the corresponding bit in the filter. */
-		sc->sc_initblock.init_ladrf[crc >> 4] |=
-		    htole16(1 << (crc & 0xf));
-
-		ETHER_NEXT_MULTI(step, enm);
-	}
-
 	ifp->if_flags &= ~IFF_ALLMULTI;
-	return;
 
- allmulti:
-	ifp->if_flags |= IFF_ALLMULTI;
-	sc->sc_initblock.init_ladrf[0] =
-	    sc->sc_initblock.init_ladrf[1] =
-	    sc->sc_initblock.init_ladrf[2] =
-	    sc->sc_initblock.init_ladrf[3] = 0xffff;
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			sc->sc_mode |= LE_C15_PROM;
+		sc->sc_initblock.init_ladrf[0] =
+		    sc->sc_initblock.init_ladrf[1] =
+		    sc->sc_initblock.init_ladrf[2] =
+		    sc->sc_initblock.init_ladrf[3] = 0xffff;
+	} else {
+		sc->sc_initblock.init_ladrf[0] =
+		    sc->sc_initblock.init_ladrf[1] =
+		    sc->sc_initblock.init_ladrf[2] =
+		    sc->sc_initblock.init_ladrf[3] = 0;
+
+		/*
+		 * Set up the multicast address filter by passing all multicast
+		 * addresses through a CRC generator, and then using the high
+		 * order 6 bits as an index into the 64-bit logical address
+		 * filter.  The high order bits select the word, while the rest
+		 * of the bits select the bit within the word.
+		 */
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+
+			/* Just want the 6 most significant bits. */
+			crc >>= 26;
+
+			/* Set the corresponding bit in the filter. */
+			sc->sc_initblock.init_ladrf[crc >> 4] |=
+			    htole16(1 << (crc & 0xf));
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
+	}
 }
 
 /*
