@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.714 2013/12/06 00:42:45 rpe Exp $
+#	$OpenBSD: install.sub,v 1.715 2013/12/07 09:36:10 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -291,21 +291,19 @@ _ask() {
 #
 _autorespond() {
 	typeset -l _q=$1 _key
-	local _def=$2 _i=0 _l _val
+	local _def=$2 _l _val
 	[[ -f $RESPONSEFILE ]] || return
+	# Find a suitable response in /ai.conf and remove it if found.
+	mv /ai.conf /ai.conf.tmp
 	while IFS=' 	' read -r _l; do
 		[[ $_l == [!#=]*=?* ]] || continue
 		_key=${_l%%*([[:blank:]])=*}
 		_val=${_l##*([!=])=*([[:blank:]])}
-		[[ $_q == *"$_key"* ]] && resp=$_val && let _i++
-	done <$RESPONSEFILE
-	((_i == 1)) && return
-	if ((_i == 0)); then
-		[[ -n $_def ]] && resp=$_def && return
-		echo "\nQuestion has no answer in response file."
-		exit 1
-	fi
-	echo "\nQuestion has multiple answers in response file."
+		[[ $_q == *"$_key"* ]] && resp=$_val && cat && return
+		print -r " $_l"
+	done </ai.conf.tmp >/ai.conf
+	[[ -n $_def ]] && resp=$_def && return
+	echo "\nQuestion has no answer in response file."
 	exit 1
 }
 
@@ -460,15 +458,8 @@ ask_which() {
 		echo "Available ${_name}s are: $_dynlist."
 		_q="Which $_name $_query?"
 		echo -n "$_q (or 'done') ${_dyndef:+[$_dyndef] }"
-		if _autorespond "$_q" done; then
-			eval ": \${ask_which_resp_$_key=\"\$resp done\"}"
-			eval "set -- \$ask_which_resp_$_key"
-			resp=$1; shift
-			eval "ask_which_resp_$_key=\$*"
-			echo "$resp"
-		else
-			_ask || continue
-		fi
+		_autorespond "$_q" "${_dyndef-done}" && echo "$resp" \
+			|| _ask || continue
 		[[ -z $resp ]] && resp="$_dyndef"
 
 		# Quote $resp to prevent user from confusing isin() by
@@ -595,7 +586,6 @@ __EOT
 			isin $_f $_selected && echo "[X] $_f" || echo "[ ] $_f"
 		done | showcols | sed 's/^/    /'
 		ask "Set name(s)? (or 'abort' or 'done')" done
-		$auto && resp="$resp done"
 
 		set -o noglob
 		for resp in $resp; do
@@ -2166,8 +2156,16 @@ get_responsefile() {
 	return 1
 }
 
-# Fully automatic installation?
-if $auto && [[ -z $RESPONSEFILE ]]; then
+# Interactive or automatic installation?
+if ! $auto; then
+	cat <<__EOT
+At any prompt except password prompts you can escape to a shell by
+typing '!'. Default answers are shown in []'s and are selected by
+pressing RETURN.  You can exit this program at any time by pressing
+Control-C, but this can leave your system in an inconsistent state.
+
+__EOT
+elif [[ -z $RESPONSEFILE ]]; then
 	if ! get_responsefile; then
 		echo "No response file found; non-interactive mode aborted."
 		exit 1
@@ -2190,16 +2188,8 @@ if $auto && [[ -z $RESPONSEFILE ]]; then
 		echo "failed; check /ai.log"
 		exit 1
 	fi
-fi
-
-if ! $auto; then
-	cat <<__EOT
-At any prompt except password prompts you can escape to a shell by
-typing '!'. Default answers are shown in []'s and are selected by
-pressing RETURN.  You can exit this program at any time by pressing
-Control-C, but this can leave your system in an inconsistent state.
-
-__EOT
+else
+	cp $RESPONSEFILE /ai.conf || exit
 fi
 
 # Configure the terminal and keyboard.
