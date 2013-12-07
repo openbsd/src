@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_gtt.c,v 1.6 2013/12/01 20:19:15 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_gtt.c,v 1.7 2013/12/07 10:53:29 kettenis Exp $	*/
 /*
  * Copyright © 2010 Daniel Vetter
  *
@@ -412,7 +412,6 @@ static void i915_ggtt_clear_range(struct drm_device *dev,
 		sc->sc_methods->unbind_page(sc->sc_chipc, addr);
 		addr += PAGE_SIZE;
 	}
-	agp_flush_cache();
 }
 #endif
 
@@ -555,7 +554,6 @@ void i915_gem_gtt_bind_object(struct drm_i915_gem_object *obj,
 		}
 		addr += PAGE_SIZE;
 	}
-	agp_flush_cache();
 
 	obj->has_global_gtt_mapping = 1;
 }
