@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.23 2013/12/07 10:46:26 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.24 2013/12/07 10:48:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -132,13 +132,9 @@ eb_destroy(struct eb_objects *eb)
 
 static inline int use_cpu_reloc(struct drm_i915_gem_object *obj)
 {
-#ifdef notyet
 	return (obj->base.write_domain == I915_GEM_DOMAIN_CPU ||
 		!obj->map_and_fenceable ||
 		obj->cache_level != I915_CACHE_NONE);
-#else
-	return 0;
-#endif
 }
 
 static int
