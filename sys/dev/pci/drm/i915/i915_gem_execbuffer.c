@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.22 2013/12/05 13:29:56 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.23 2013/12/07 10:46:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -53,6 +53,28 @@
 
 #include <sys/queue.h>
 #include <sys/task.h>
+
+int pagefault_disabled;
+
+static inline void
+pagefault_disable(void)
+{
+	KASSERT(pagefault_disabled == 0);
+	pagefault_disabled = 1;
+}
+
+static inline void
+pagefault_enable(void)
+{
+	KASSERT(pagefault_disabled == 1);
+	pagefault_disabled = 0;
+}
+
+static inline int
+in_atomic(void)
+{
+	return pagefault_disabled;
+}
 
 static void *kmap_atomic(struct vm_page *);
 static void kunmap_atomic(void *);
@@ -209,10 +231,8 @@ i915_gem_execbuffer_relocate_entry(struct drm_i915_gem_object *obj,
 	}
 
 	/* We can't wait for rendering with pagefaults disabled */
-#ifdef notyet
 	if (obj->active && in_atomic())
 		return -EFAULT;
-#endif
 
 	reloc->delta += target_offset;
 	if (use_cpu_reloc(obj)) {
@@ -330,9 +350,6 @@ i915_gem_execbuffer_relocate(struct drm_device *dev,
 	struct drm_i915_gem_object *obj;
 	int ret = 0;
 
-	/* XXX fastpath not currently used on OpenBSD */
-	return -EFAULT;
-
 	/* This is the fast path and we cannot handle a pagefault whilst
 	 * holding the struct mutex lest the user pass in the relocations
 	 * contained within a mmaped bo. For in such a case we, the page
@@ -340,17 +357,13 @@ i915_gem_execbuffer_relocate(struct drm_device *dev,
 	 * acquire the struct mutex again. Obviously this is bad and so
 	 * lockdep complains vehemently.
 	 */
-#ifdef notyet
 	pagefault_disable();
-#endif
 	list_for_each_entry(obj, objects, exec_list) {
 		ret = i915_gem_execbuffer_relocate_object(obj, eb);
 		if (ret)
 			break;
 	}
-#ifdef notyet
 	pagefault_enable();
-#endif
 
 	return ret;
 }
