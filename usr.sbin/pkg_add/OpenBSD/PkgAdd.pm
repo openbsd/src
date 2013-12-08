@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.36 2013/12/08 12:04:13 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.37 2013/12/08 12:14:41 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1129,9 +1129,7 @@ sub main
 	my ($self, $state) = @_;
 
 	$state->progress->set_header('');
-	if ($state->{allow_replacing}) {
-		$self->do_quirks($state);
-	}
+	$self->do_quirks($state);
 
 	$self->process_setlist($state);
 }
