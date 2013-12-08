@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2013/12/03 23:10:17 miod Exp $
+#	$OpenBSD: Makefile,v 1.14 2013/12/08 17:21:59 miod Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -43,7 +43,7 @@ ${CDROM}:
 	vnconfig -u vnd0
 	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=1m count=`expr ${CDFSMB} + 1 + ${SGIVOLSZ} / 2048`
 	vnconfig -v -c vnd0 ${.OBJDIR}/${CDROM}
-	/usr/mdec/sgivol -i -h ${SGIVOLSZ} vnd0 > ${.OBJDIR}/volhdr
+	/usr/mdec/sgivol -i -h ${SGIVOLSZ} vnd0
 	uudecode -o ${.OBJDIR}/xfs512.bin.gz ${.CURDIR}/xfs512.bin.gz.uue
 	gzip -d ${.OBJDIR}/xfs512.bin.gz
 	cat ${DESTDIR}/usr/mdec/boot64 >> ${.OBJDIR}/xfs512.bin
@@ -56,8 +56,7 @@ ${CDROM}:
 	/usr/mdec/sgivol -w boot64 ${DESTDIR}/usr/mdec/boot64 vnd0
 	/usr/mdec/sgivol -l boot64 sash64 vnd0
 	vnconfig -u vnd0
-	dd if=${.OBJDIR}/${FFS} of=${.OBJDIR}/${CDROM} bs=512 \
-	    seek=`cat ${.OBJDIR}/volhdr | grep 'Volume Header' | awk '{print $$3}'`
+	dd if=${.OBJDIR}/${FFS} of=${.OBJDIR}/${CDROM} bs=512 seek=${SGIVOLSZ}
 
 .ifdef RELEASEDIR
 install:
@@ -70,7 +69,7 @@ unconfig:
 	-vnconfig -u vnd0
 
 clean cleandir:
-	/bin/rm -f ${CDROM} ${FFS} volhdr xfs512.bin xfs
+	/bin/rm -f ${CDROM} ${FFS} xfs512.bin xfs
 	rm -rf cd-dir
 
 .include <bsd.obj.mk>
