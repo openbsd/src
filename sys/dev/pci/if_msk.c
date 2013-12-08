@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.100 2013/12/06 21:03:04 deraadt Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.101 2013/12/08 16:39:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -788,6 +788,7 @@ mskc_reset(struct sk_softc *sc)
 		break;
 	default:
 		imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
+		break;
 	}
 
 	/* Reset status ring. */
@@ -1072,9 +1073,6 @@ msk_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_SUSPEND:
-		rv = config_activate_children(self, act);
-		break;
 	case DVACT_RESUME:
 		msk_reset(sc_if);
 		rv = config_activate_children(self, act);
@@ -1404,14 +1402,11 @@ mskc_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_QUIESCE:
-		rv = config_activate_children(self, act);
-		break;
-	case DVACT_SUSPEND:
-		rv = config_activate_children(self, act);
-		break;
 	case DVACT_RESUME:
 		mskc_reset(sc);
+		rv = config_activate_children(self, act);
+		break;
+	default:
 		rv = config_activate_children(self, act);
 		break;
 	}
