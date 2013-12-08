@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.35 2012/11/06 08:02:45 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.36 2013/12/08 12:04:13 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -995,6 +995,10 @@ sub inform_user_of_problems
 	my $state = shift;
 	my @cantupdate = $state->tracker->cant_list;
 	if (@cantupdate > 0) {
+		eval {
+			$state->quirks->filter_obsolete(\@cantupdate, $state);
+		};
+
 		$state->say("Couldn't find updates for #1", join(', ', @cantupdate));
 	}
 	if (defined $state->{issues}) {
