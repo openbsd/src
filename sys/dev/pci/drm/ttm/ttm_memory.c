@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_memory.c,v 1.2 2013/10/29 06:30:57 jsg Exp $	*/
+/*	$OpenBSD: ttm_memory.c,v 1.3 2013/12/08 07:54:06 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -47,22 +47,6 @@ struct ttm_mem_zone {
 	uint64_t used_mem;
 };
 
-void	 ttm_mem_zone_kobj_release(struct ttm_mem_zone *);
-void	 ttm_mem_global_kobj_release(struct ttm_mem_global *);
-bool	 ttm_zones_above_swap_target(struct ttm_mem_global *,
-	     bool, uint64_t);
-void	 ttm_shrink(struct ttm_mem_global *, bool, uint64_t);
-int	 ttm_mem_init_kernel_zone(struct ttm_mem_global *, uint64_t);
-int	 ttm_mem_init_dma32_zone(struct ttm_mem_global *, uint64_t);
-void	 ttm_check_swapping(struct ttm_mem_global *);
-void	 ttm_mem_global_free_zone(struct ttm_mem_global *,
-	     struct ttm_mem_zone *, uint64_t);
-int	 ttm_mem_global_reserve(struct ttm_mem_global *,
-	     struct ttm_mem_zone *, uint64_t, bool);
-int	 ttm_mem_global_alloc_zone(struct ttm_mem_global *,
-	     struct ttm_mem_zone *, uint64_t, bool, bool);
-void	 ttm_shrink_work(void *, void *);
-
 #ifdef notyet
 static struct attribute ttm_mem_sys = {
 	.name = "zone_memory",
@@ -86,8 +70,7 @@ static struct attribute ttm_mem_used = {
 };
 #endif
 
-void
-ttm_mem_zone_kobj_release(struct ttm_mem_zone *zone)
+static void ttm_mem_zone_kobj_release(struct ttm_mem_zone *zone)
 {
 
 	DRM_INFO("Zone %7s: Used memory at exit: %llu kiB\n",
@@ -96,8 +79,7 @@ ttm_mem_zone_kobj_release(struct ttm_mem_zone *zone)
 }
 
 #ifdef notyet
-ssize_t
-ttm_mem_zone_show(struct kobject *kobj,
+static ssize_t ttm_mem_zone_show(struct kobject *kobj,
 				 struct attribute *attr,
 				 char *buffer)
 {
@@ -121,11 +103,10 @@ ttm_mem_zone_show(struct kobject *kobj,
 	return snprintf(buffer, PAGE_SIZE, "%llu\n",
 			(unsigned long long) val >> 10);
 }
-#endif
 
-#ifdef notyet
-ssize_t
-ttm_mem_zone_store(struct kobject *kobj,
+static void ttm_check_swapping(struct ttm_mem_global *glob);
+
+static ssize_t ttm_mem_zone_store(struct kobject *kobj,
 				  struct attribute *attr,
 				  const char *buffer,
 				  size_t size)
@@ -186,8 +167,7 @@ static struct kobj_type ttm_mem_zone_kobj_type = {
 };
 #endif
 
-void
-ttm_mem_global_kobj_release(struct ttm_mem_global *glob)
+static void ttm_mem_global_kobj_release(struct ttm_mem_global *glob)
 {
 
 	free(glob, M_DRM);
@@ -199,8 +179,7 @@ static struct kobj_type ttm_mem_glob_kobj_type = {
 };
 #endif
 
-bool
-ttm_zones_above_swap_target(struct ttm_mem_global *glob,
+static bool ttm_zones_above_swap_target(struct ttm_mem_global *glob,
 					bool from_wq, uint64_t extra)
 {
 	unsigned int i;
@@ -232,8 +211,7 @@ ttm_zones_above_swap_target(struct ttm_mem_global *glob,
  * many threads may try to swap out at any given time.
  */
 
-void
-ttm_shrink(struct ttm_mem_global *glob, bool from_wq,
+static void ttm_shrink(struct ttm_mem_global *glob, bool from_wq,
 		       uint64_t extra)
 {
 	int ret;
@@ -256,16 +234,14 @@ out:
 	mtx_leave(&glob->lock);
 }
 
-void
-ttm_shrink_work(void *arg1, void *arg2)
+static void ttm_shrink_work(void *arg1, void *arg2)
 {
 	struct ttm_mem_global *glob = arg1;
 
 	ttm_shrink(glob, true, 0ULL);
 }
 
-int
-ttm_mem_init_kernel_zone(struct ttm_mem_global *glob,
+static int ttm_mem_init_kernel_zone(struct ttm_mem_global *glob,
     uint64_t mem)
 {
 	struct ttm_mem_zone *zone = malloc(sizeof(*zone), M_DRM, M_WAITOK | M_ZERO);
@@ -287,8 +263,7 @@ ttm_mem_init_kernel_zone(struct ttm_mem_global *glob,
 }
 
 #ifdef CONFIG_HIGHMEM
-int
-ttm_mem_init_highmem_zone(struct ttm_mem_global *glob,
+static int ttm_mem_init_highmem_zone(struct ttm_mem_global *glob,
     uint64_t mem)
 {
 	struct ttm_mem_zone *zone;
@@ -313,8 +288,7 @@ ttm_mem_init_highmem_zone(struct ttm_mem_global *glob,
 	return 0;
 }
 #else
-int
-ttm_mem_init_dma32_zone(struct ttm_mem_global *glob,
+static int ttm_mem_init_dma32_zone(struct ttm_mem_global *glob,
     uint64_t mem)
 {
 	struct ttm_mem_zone *zone = malloc(sizeof(*zone), M_DRM, M_WAITOK | M_ZERO);
@@ -352,8 +326,7 @@ ttm_mem_init_dma32_zone(struct ttm_mem_global *glob,
 }
 #endif
 
-int
-ttm_mem_global_init(struct ttm_mem_global *glob)
+int ttm_mem_global_init(struct ttm_mem_global *glob)
 {
 	uint64_t mem;
 	int ret;
@@ -399,8 +372,7 @@ out_no_zone:
 }
 EXPORT_SYMBOL(ttm_mem_global_init);
 
-void
-ttm_mem_global_release(struct ttm_mem_global *glob)
+void ttm_mem_global_release(struct ttm_mem_global *glob)
 {
 	unsigned int i;
 	struct ttm_mem_zone *zone;
@@ -421,8 +393,7 @@ ttm_mem_global_release(struct ttm_mem_global *glob)
 }
 EXPORT_SYMBOL(ttm_mem_global_release);
 
-void
-ttm_check_swapping(struct ttm_mem_global *glob)
+static void ttm_check_swapping(struct ttm_mem_global *glob)
 {
 	bool needs_swapping = false;
 	unsigned int i;
@@ -447,8 +418,7 @@ ttm_check_swapping(struct ttm_mem_global *glob)
 		task_add(glob->swap_queue, &glob->task);
 }
 
-void
-ttm_mem_global_free_zone(struct ttm_mem_global *glob,
+static void ttm_mem_global_free_zone(struct ttm_mem_global *glob,
 				     struct ttm_mem_zone *single_zone,
 				     uint64_t amount)
 {
@@ -465,16 +435,14 @@ ttm_mem_global_free_zone(struct ttm_mem_global *glob,
 	mtx_leave(&glob->lock);
 }
 
-void
-ttm_mem_global_free(struct ttm_mem_global *glob,
+void ttm_mem_global_free(struct ttm_mem_global *glob,
 			 uint64_t amount)
 {
 	return ttm_mem_global_free_zone(glob, NULL, amount);
 }
 EXPORT_SYMBOL(ttm_mem_global_free);
 
-int
-ttm_mem_global_reserve(struct ttm_mem_global *glob,
+static int ttm_mem_global_reserve(struct ttm_mem_global *glob,
 				  struct ttm_mem_zone *single_zone,
 				  uint64_t amount, bool reserve)
 {
@@ -514,8 +482,7 @@ out_unlock:
 }
 
 
-int
-ttm_mem_global_alloc_zone(struct ttm_mem_global *glob,
+static int ttm_mem_global_alloc_zone(struct ttm_mem_global *glob,
 				     struct ttm_mem_zone *single_zone,
 				     uint64_t memory,
 				     bool no_wait, bool interruptible)
@@ -536,8 +503,7 @@ ttm_mem_global_alloc_zone(struct ttm_mem_global *glob,
 	return 0;
 }
 
-int
-ttm_mem_global_alloc(struct ttm_mem_global *glob, uint64_t memory,
+int ttm_mem_global_alloc(struct ttm_mem_global *glob, uint64_t memory,
 			 bool no_wait, bool interruptible)
 {
 	/**
@@ -552,8 +518,7 @@ EXPORT_SYMBOL(ttm_mem_global_alloc);
 
 #define page_to_pfn(pp) (VM_PAGE_TO_PHYS(pp) / PAGE_SIZE)
 
-int
-ttm_mem_global_alloc_page(struct ttm_mem_global *glob,
+int ttm_mem_global_alloc_page(struct ttm_mem_global *glob,
 			      struct vm_page *page,
 			      bool no_wait, bool interruptible)
 {
@@ -576,8 +541,7 @@ ttm_mem_global_alloc_page(struct ttm_mem_global *glob,
 					 interruptible);
 }
 
-void
-ttm_mem_global_free_page(struct ttm_mem_global *glob, struct vm_page *page)
+void ttm_mem_global_free_page(struct ttm_mem_global *glob, struct vm_page *page)
 {
 	struct ttm_mem_zone *zone = NULL;
 
@@ -591,8 +555,8 @@ ttm_mem_global_free_page(struct ttm_mem_global *glob, struct vm_page *page)
 	ttm_mem_global_free_zone(glob, zone, PAGE_SIZE);
 }
 
-size_t
-ttm_round_pot(size_t size)
+
+size_t ttm_round_pot(size_t size)
 {
 	if ((size & (size - 1)) == 0)
 		return size;

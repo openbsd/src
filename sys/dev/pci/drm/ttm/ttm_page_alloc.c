@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_page_alloc.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: ttm_page_alloc.c,v 1.2 2013/12/08 07:54:06 jsg Exp $	*/
 /*
  * Copyright (c) Red Hat Inc.
 
@@ -140,27 +140,6 @@ static struct attribute *ttm_pool_attrs[] = {
 };
 #endif
 
-int	 set_pages_array_wb(struct vm_page **, int);
-struct ttm_page_pool *
-	 ttm_get_pool(int, enum ttm_caching_state);
-void	 ttm_pages_put(struct vm_page *[], unsigned);
-void	 ttm_pool_update_free_locked(struct ttm_page_pool *, unsigned);
-int	 ttm_page_pool_free(struct ttm_page_pool *, unsigned);
-int	 ttm_pool_get_num_unused_pages(void);
-void	 ttm_pool_mm_shrink_init(struct ttm_pool_manager *);
-void	 ttm_pool_mm_shrink_fini(struct ttm_pool_manager *);
-int	 ttm_set_pages_caching(struct vm_page **, enum ttm_caching_state,
-	     unsigned);
-void	 ttm_handle_caching_state_failure(struct pglist *, int,
-	     enum ttm_caching_state, struct vm_page **, unsigned);
-void	 ttm_page_pool_fill_locked(struct ttm_page_pool *,
-	     int, enum ttm_caching_state, unsigned);
-unsigned ttm_page_pool_get_pages(struct ttm_page_pool *, struct pglist *,
-	     int, enum ttm_caching_state, unsigned);
-void	 ttm_put_pages(struct vm_page **, unsigned, int, enum ttm_caching_state);
-int	 ttm_get_pages(struct vm_page **, unsigned, int, enum ttm_caching_state);
-void	 ttm_page_pool_init_locked(struct ttm_page_pool *, int, char *);
-
 struct vm_page *ttm_uvm_alloc_page(void);
 void	 ttm_uvm_free_page(struct vm_page *);
 
@@ -264,8 +243,7 @@ static struct kobj_type ttm_pool_kobj_type = {
 
 static struct ttm_pool_manager *_manager;
 
-int
-set_pages_array_wb(struct vm_page **pages, int addrinarray)
+static int set_pages_array_wb(struct vm_page **pages, int addrinarray)
 {
 #ifdef TTM_HAS_AGP
 #if defined(__amd64__) || defined(__i386__)
@@ -314,8 +292,7 @@ static int set_pages_array_uc(struct vm_page **pages, int addrinarray)
 
 /**
  * Select the right pool or requested caching state and ttm flags. */
-struct ttm_page_pool *
-ttm_get_pool(int flags,
+static struct ttm_page_pool *ttm_get_pool(int flags,
 		enum ttm_caching_state cstate)
 {
 	int pool_index;
@@ -335,8 +312,7 @@ ttm_get_pool(int flags,
 }
 
 /* set memory back to wb and free the pages. */
-void
-ttm_pages_put(struct vm_page *pages[], unsigned npages)
+static void ttm_pages_put(struct vm_page *pages[], unsigned npages)
 {
 	unsigned i;
 	if (set_pages_array_wb(pages, npages))
@@ -345,8 +321,7 @@ ttm_pages_put(struct vm_page *pages[], unsigned npages)
 		ttm_uvm_free_page(pages[i]);
 }
 
-void
-ttm_pool_update_free_locked(struct ttm_page_pool *pool,
+static void ttm_pool_update_free_locked(struct ttm_page_pool *pool,
 		unsigned freed_pages)
 {
 	pool->npages -= freed_pages;
@@ -362,8 +337,7 @@ ttm_pool_update_free_locked(struct ttm_page_pool *pool,
  * @pool: to free the pages from
  * @free_all: If set to true will free all pages in pool
  **/
-int
-ttm_page_pool_free(struct ttm_page_pool *pool, unsigned nr_free)
+static int ttm_page_pool_free(struct ttm_page_pool *pool, unsigned nr_free)
 {
 	struct vm_page *p, *p1;
 	struct vm_page **pages_to_free;
@@ -444,9 +418,9 @@ out:
 	return nr_free;
 }
 
+#ifdef notyet
 /* Get good estimation how many pages are free in pools */
-int
-ttm_pool_get_num_unused_pages(void)
+static int ttm_pool_get_num_unused_pages(void)
 {
 	unsigned i;
 	int total = 0;
@@ -455,6 +429,7 @@ ttm_pool_get_num_unused_pages(void)
 
 	return total;
 }
+#endif
 
 /**
  * Callback for mm to request pool to reduce number of page held.
@@ -483,8 +458,7 @@ static int ttm_pool_mm_shrink(struct shrinker *shrink,
 }
 #endif
 
-void
-ttm_pool_mm_shrink_init(struct ttm_pool_manager *manager)
+static void ttm_pool_mm_shrink_init(struct ttm_pool_manager *manager)
 {
 	printf("%s stub\n", __func__);
 #ifdef notyet
@@ -494,8 +468,7 @@ ttm_pool_mm_shrink_init(struct ttm_pool_manager *manager)
 #endif
 }
 
-void
-ttm_pool_mm_shrink_fini(struct ttm_pool_manager *manager)
+static void ttm_pool_mm_shrink_fini(struct ttm_pool_manager *manager)
 {
 	printf("%s stub\n", __func__);
 #ifdef notyet
@@ -503,8 +476,7 @@ ttm_pool_mm_shrink_fini(struct ttm_pool_manager *manager)
 #endif
 }
 
-int
-ttm_set_pages_caching(struct vm_page **pages,
+static int ttm_set_pages_caching(struct vm_page **pages,
 		enum ttm_caching_state cstate, unsigned cpages)
 {
 	int r = 0;
@@ -531,8 +503,7 @@ ttm_set_pages_caching(struct vm_page **pages,
  * any pages that have changed their caching state already put them to the
  * pool.
  */
-void
-ttm_handle_caching_state_failure(struct pglist *pages,
+static void ttm_handle_caching_state_failure(struct pglist *pages,
 		int ttm_flags, enum ttm_caching_state cstate,
 		struct vm_page **failed_pages, unsigned cpages)
 {
@@ -630,8 +601,7 @@ out:
  * Fill the given pool if there aren't enough pages and the requested number of
  * pages is small.
  */
-void
-ttm_page_pool_fill_locked(struct ttm_page_pool *pool,
+static void ttm_page_pool_fill_locked(struct ttm_page_pool *pool,
 		int ttm_flags, enum ttm_caching_state cstate, unsigned count)
 {
 	struct vm_page *p;
@@ -688,8 +658,7 @@ ttm_page_pool_fill_locked(struct ttm_page_pool *pool,
  *
  * @return count of pages still required to fulfill the request.
  */
-unsigned
-ttm_page_pool_get_pages(struct ttm_page_pool *pool,
+static unsigned ttm_page_pool_get_pages(struct ttm_page_pool *pool,
 					struct pglist *pages,
 					int ttm_flags,
 					enum ttm_caching_state cstate,
@@ -721,8 +690,7 @@ out:
 }
 
 /* Put all pages in pages list to correct pool to wait for reuse */
-void
-ttm_put_pages(struct vm_page **pages, unsigned npages, int flags,
+static void ttm_put_pages(struct vm_page **pages, unsigned npages, int flags,
 			  enum ttm_caching_state cstate)
 {
 	struct ttm_page_pool *pool = ttm_get_pool(flags, cstate);
@@ -765,8 +733,7 @@ ttm_put_pages(struct vm_page **pages, unsigned npages, int flags,
  * On success pages list will hold count number of correctly
  * cached pages.
  */
-int
-ttm_get_pages(struct vm_page **pages, unsigned npages, int flags,
+static int ttm_get_pages(struct vm_page **pages, unsigned npages, int flags,
 			 enum ttm_caching_state cstate)
 {
 	struct ttm_page_pool *pool = ttm_get_pool(flags, cstate);
@@ -845,8 +812,7 @@ ttm_get_pages(struct vm_page **pages, unsigned npages, int flags,
 	return 0;
 }
 
-void
-ttm_page_pool_init_locked(struct ttm_page_pool *pool, int flags,
+static void ttm_page_pool_init_locked(struct ttm_page_pool *pool, int flags,
 		char *name)
 {
 	mtx_init(&pool->lock, IPL_TTY);

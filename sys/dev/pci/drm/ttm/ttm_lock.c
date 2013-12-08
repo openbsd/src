@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_lock.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: ttm_lock.c,v 1.2 2013/12/08 07:54:06 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2007-2009 VMware, Inc., Palo Alto, CA., USA
@@ -40,12 +40,6 @@
 #define TTM_SUSPEND_LOCK          (1 << 4)
 
 void	 ttm_write_lock_downgrade(struct ttm_lock *);
-bool	 __ttm_read_lock(struct ttm_lock *);
-bool	 __ttm_read_trylock(struct ttm_lock *, bool *);
-bool	 __ttm_write_lock(struct ttm_lock *);
-void	 ttm_vt_lock_remove(struct ttm_base_object **);
-bool	 __ttm_vt_lock(struct ttm_lock *);
-bool	 __ttm_suspend_lock(struct ttm_lock *);
 
 void ttm_lock_init(struct ttm_lock *lock)
 {
@@ -69,12 +63,9 @@ void ttm_read_unlock(struct ttm_lock *lock)
 }
 EXPORT_SYMBOL(ttm_read_unlock);
 
-bool
-__ttm_read_lock(struct ttm_lock *lock)
-{
-	printf("%s stub\n", __func__);
-	return false;
 #ifdef notyet
+static bool __ttm_read_lock(struct ttm_lock *lock)
+{
 	bool locked = false;
 
 	mtx_enter(&lock->lock);
@@ -89,8 +80,8 @@ __ttm_read_lock(struct ttm_lock *lock)
 	}
 	mtx_leave(&lock->lock);
 	return locked;
-#endif
 }
+#endif
 
 int ttm_read_lock(struct ttm_lock *lock, bool interruptible)
 {
@@ -109,12 +100,9 @@ int ttm_read_lock(struct ttm_lock *lock, bool interruptible)
 }
 EXPORT_SYMBOL(ttm_read_lock);
 
-bool
-__ttm_read_trylock(struct ttm_lock *lock, bool *locked)
-{
-	printf("%s stub\n", __func__);
-	return -ENOSYS;
 #ifdef notyet
+static bool __ttm_read_trylock(struct ttm_lock *lock, bool *locked)
+{
 	bool block = true;
 
 	*locked = false;
@@ -135,8 +123,8 @@ __ttm_read_trylock(struct ttm_lock *lock, bool *locked)
 	mtx_leave(&lock->lock);
 
 	return !block;
-#endif
 }
+#endif
 
 int ttm_read_trylock(struct ttm_lock *lock, bool interruptible)
 {
@@ -170,12 +158,9 @@ void ttm_write_unlock(struct ttm_lock *lock)
 }
 EXPORT_SYMBOL(ttm_write_unlock);
 
-bool
-__ttm_write_lock(struct ttm_lock *lock)
-{
-	printf("%s stub\n", __func__);
-	return false;
 #ifdef notyet
+static bool __ttm_write_lock(struct ttm_lock *lock)
+{
 	bool locked = false;
 
 	mtx_enter(&lock->lock);
@@ -193,8 +178,8 @@ __ttm_write_lock(struct ttm_lock *lock)
 	}
 	mtx_leave(&lock->lock);
 	return locked;
-#endif
 }
+#endif
 
 int ttm_write_lock(struct ttm_lock *lock, bool interruptible)
 {
@@ -228,6 +213,7 @@ void ttm_write_lock_downgrade(struct ttm_lock *lock)
 	mtx_leave(&lock->lock);
 }
 
+#ifdef notyet
 static int __ttm_vt_unlock(struct ttm_lock *lock)
 {
 	int ret = 0;
@@ -241,9 +227,10 @@ static int __ttm_vt_unlock(struct ttm_lock *lock)
 
 	return ret;
 }
+#endif
 
-void
-ttm_vt_lock_remove(struct ttm_base_object **p_base)
+#ifdef notyet
+static void ttm_vt_lock_remove(struct ttm_base_object **p_base)
 {
 	struct ttm_base_object *base = *p_base;
 	struct ttm_lock *lock = container_of(base, struct ttm_lock, base);
@@ -253,9 +240,10 @@ ttm_vt_lock_remove(struct ttm_base_object **p_base)
 	ret = __ttm_vt_unlock(lock);
 	BUG_ON(ret != 0);
 }
+#endif
 
-bool
-__ttm_vt_lock(struct ttm_lock *lock)
+#ifdef notyet
+static bool __ttm_vt_lock(struct ttm_lock *lock)
 {
 	bool locked = false;
 
@@ -270,6 +258,7 @@ __ttm_vt_lock(struct ttm_lock *lock)
 	mtx_leave(&lock->lock);
 	return locked;
 }
+#endif
 
 int ttm_vt_lock(struct ttm_lock *lock,
 		bool interruptible,
@@ -327,8 +316,8 @@ void ttm_suspend_unlock(struct ttm_lock *lock)
 }
 EXPORT_SYMBOL(ttm_suspend_unlock);
 
-bool
-__ttm_suspend_lock(struct ttm_lock *lock)
+#ifdef notyet
+static bool __ttm_suspend_lock(struct ttm_lock *lock)
 {
 	bool locked = false;
 
@@ -343,6 +332,7 @@ __ttm_suspend_lock(struct ttm_lock *lock)
 	mtx_leave(&lock->lock);
 	return locked;
 }
+#endif
 
 void ttm_suspend_lock(struct ttm_lock *lock)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_agp_backend.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: ttm_agp_backend.c,v 1.2 2013/12/08 07:54:06 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -45,12 +45,7 @@ struct ttm_agp_backend {
 	struct drm_agp_head *agp;
 };
 
-int	 ttm_agp_bind(struct ttm_tt *, struct ttm_mem_reg *);
-int	 ttm_agp_unbind(struct ttm_tt *);
-void	 ttm_agp_destroy(struct ttm_tt *);
-
-int
-ttm_agp_bind(struct ttm_tt *ttm, struct ttm_mem_reg *bo_mem)
+static int ttm_agp_bind(struct ttm_tt *ttm, struct ttm_mem_reg *bo_mem)
 {
 	struct ttm_agp_backend	*agp_be = container_of(ttm, struct ttm_agp_backend, ttm);
 	struct drm_mm_node *node = bo_mem->mm_node;
@@ -77,8 +72,7 @@ ttm_agp_bind(struct ttm_tt *ttm, struct ttm_mem_reg *bo_mem)
 	return 0;
 }
 
-int
-ttm_agp_unbind(struct ttm_tt *ttm)
+static int ttm_agp_unbind(struct ttm_tt *ttm)
 {
 	struct ttm_agp_backend *agp_be = container_of(ttm, struct ttm_agp_backend, ttm);
 	struct agp_softc *sc = agp_be->agp->agpdev;
@@ -98,8 +92,7 @@ ttm_agp_unbind(struct ttm_tt *ttm)
 	return 0;
 }
 
-void
-ttm_agp_destroy(struct ttm_tt *ttm)
+static void ttm_agp_destroy(struct ttm_tt *ttm)
 {
 	struct ttm_agp_backend *agp_be = container_of(ttm, struct ttm_agp_backend, ttm);
 
@@ -115,8 +108,7 @@ static struct ttm_backend_func ttm_agp_func = {
 	.destroy = ttm_agp_destroy,
 };
 
-struct ttm_tt *
-ttm_agp_tt_create(struct ttm_bo_device *bdev,
+struct ttm_tt *ttm_agp_tt_create(struct ttm_bo_device *bdev,
 				 struct drm_agp_head *agp,
 				 unsigned long size, uint32_t page_flags,
 				 struct vm_page *dummy_read_page)
@@ -139,8 +131,7 @@ ttm_agp_tt_create(struct ttm_bo_device *bdev,
 }
 EXPORT_SYMBOL(ttm_agp_tt_create);
 
-int
-ttm_agp_tt_populate(struct ttm_tt *ttm)
+int ttm_agp_tt_populate(struct ttm_tt *ttm)
 {
 	if (ttm->state != tt_unpopulated)
 		return 0;
@@ -149,8 +140,7 @@ ttm_agp_tt_populate(struct ttm_tt *ttm)
 }
 EXPORT_SYMBOL(ttm_agp_tt_populate);
 
-void
-ttm_agp_tt_unpopulate(struct ttm_tt *ttm)
+void ttm_agp_tt_unpopulate(struct ttm_tt *ttm)
 {
 	ttm_pool_unpopulate(ttm);
 }

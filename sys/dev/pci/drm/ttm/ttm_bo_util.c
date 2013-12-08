@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_util.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_util.c,v 1.2 2013/12/08 07:54:06 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2007-2009 VMware, Inc., Palo Alto, CA., USA
@@ -37,8 +37,6 @@ int	 ttm_mem_reg_ioremap(struct ttm_bo_device *, struct ttm_mem_reg *,
 	     void **);
 void	 ttm_mem_reg_iounmap(struct ttm_bo_device *, struct ttm_mem_reg *,
 	     void *);
-int	 ttm_copy_io_page(void *, void *, unsigned long);
-void	 ttm_transfered_destroy(struct ttm_buffer_object *);
 
 void	*kmap(struct vm_page *);
 void	 kunmap(void *addr);
@@ -245,8 +243,7 @@ void ttm_mem_reg_iounmap(struct ttm_bo_device *bdev, struct ttm_mem_reg *mem,
 	ttm_mem_io_unlock(man);
 }
 
-int
-ttm_copy_io_page(void *dst, void *src, unsigned long page)
+static int ttm_copy_io_page(void *dst, void *src, unsigned long page)
 {
 	uint32_t *dstP =
 	    (uint32_t *) ((unsigned long)dst + (page << PAGE_SHIFT));
@@ -410,8 +407,7 @@ out:
 }
 EXPORT_SYMBOL(ttm_bo_move_memcpy);
 
-void
-ttm_transfered_destroy(struct ttm_buffer_object *bo)
+static void ttm_transfered_destroy(struct ttm_buffer_object *bo)
 {
 	free(bo, M_DRM);
 }
