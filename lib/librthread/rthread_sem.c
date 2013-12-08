@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.16 2013/11/26 11:24:43 fgsch Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.17 2013/12/08 19:04:07 fgsch Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -40,7 +40,7 @@
 #define SEM_PATH_SIZE (5 + SHA256_DIGEST_STRING_LENGTH + 4)
 
 /* long enough to be hard to guess */
-#define SEM_RANDOM_NAME_LEN	160
+#define SEM_RANDOM_NAME_LEN	10
 
 /*
  * Size of memory to be mmap()'ed by named semaphores.
