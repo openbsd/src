@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx.c,v 1.6 2013/12/06 21:03:03 deraadt Exp $	*/
+/*	$OpenBSD: rtsx.c,v 1.7 2013/12/08 18:31:03 stsp Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -175,7 +175,7 @@ rtsx_attach(struct rtsx_softc *sc, bus_space_tag_t iot,
 	if (rtsx_init(sc, 1))
 		return 1;
 
-	if (rtsx_read_cfg(sc, 0, RTSX_SDIOCFG_REG, &sdio_cfg)) {
+	if (rtsx_read_cfg(sc, 0, RTSX_SDIOCFG_REG, &sdio_cfg) == 0) {
 		if ((sdio_cfg & RTSX_SDIOCFG_SDIO_ONLY) ||
 		    (sdio_cfg & RTSX_SDIOCFG_HAVE_SDIO))
 			sc->flags |= RTSX_F_SDIO_SUPPORT;
