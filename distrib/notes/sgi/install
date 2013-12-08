@@ -1,10 +1,57 @@
-dnl	$OpenBSD: install,v 1.24 2013/12/04 23:20:19 jmc Exp $
+dnl	$OpenBSD: install,v 1.25 2013/12/08 15:33:03 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
-in terms of preliminary setup is to use the OpenBSD ramdisk kernel that
-can be booted via BOOTP. The normal way is to use the bootable CD-ROM
-mini image.
+in terms of preliminary setup is to use the bootable CD-ROM mini image.
+Alternatively, the OpenBSD ramdisk kernel can be booted from the network,
+using a bootp/tftp server.
+
+Booting from CD-ROM installation media:
+
+	NOTE: Only cd${:--:}OSrev.iso may be booted on IP27 and IP35 class systems,
+	due to PROM limitations. install${:--:}OSrev.iso will not boot, but may be
+	used to the sets without requiring network access.
+
+  From the System Maintenance Menu, select '2' (or click on the
+  appropriate icon if in graphics console) to Install System Software.
+
+  If necessary, select the proper CD-ROM drive, and press enter to
+  confirm your choice.  Insert the installation CD-ROM (if you did not
+  do so already) and press enter to boot the system.
+
+  If the boot is successful, you will get a loader version message,
+  executable sizes, and then the kernel copyright and device probe
+  messages. Boot failure modes are typically a lot of CD-ROM drive
+  activity, but no messages or complaints about magic numbers,
+  checksums or formats.
+
+  If the system does not complain about being able to read the CD-ROM,
+  but of not being able to load a particular file, you can nevertheless
+  boot manually. This is the case on IP22 systems.
+
+  To boot manually from the CD-ROM, select ``Enter Command Monitor''
+  at the menu, and invoke the bootloader and ramdisk image manually.
+  For example, on an IP22 system, automatic boot may fail with:
+
+dnl IP22
+	Cannot load scsi(1)cdrom(4)partition(8)sashARCS.
+	Text start 0x10000, size 0xa120 doesn't fit in a FreeMemory area.
+	Cannot load scsi(1)cdrom(4)partition(8)sashARCS -- not enough space.
+
+  or:
+
+dnl IP20, changed from scsi(0) to scsi(1) for consistency
+	Cannot load scsi(1)cdrom(4)partition(8)sashARCS.
+	Error 15 while loading scsi(1)cdrom(4)partition(8)sashARCS
+
+  The name of the CD-ROM drive is then ``scsi(1)cdrom(4)'', and the manual
+  boot command will be:
+
+	>> scsi(1)cdrom(4)partition(8)bootecoff
+	   scsi(1)cdrom(4)partition(0)/bsd.rd.IP22
+
+  Note that this is a single commandline, the two paths should be separated
+  with spaces.
 
 Booting over the network:
 dnl XXX provide more details!!!
@@ -62,6 +109,7 @@ dnl point might differ accross systems, argh.
 	PROM Monitor SGI Version 5.3 Rev C IP22 Oct 20, 1994 (BE)
 	- on Indy:
 	>> version
+	PROM Monitor SGI Version 5.3 Rev B7 R4X00 IP24 Feb 16, 1995 (BE)
 	PROM Monitor SGI Version 5.3 Rev B10 R4X00/R5000 IP24 Feb 12, 1996 (BE)
 
 	Note that these lists do not pretend to be complete.
@@ -108,52 +156,6 @@ dnl point might differ accross systems, argh.
   ... then it is necessary to clean up after an earlier unsuccessful (or
   aborted) boot attempt. Just leave the PROM interactive mode with `exit',
   and at the maintenance menu, choose `Enter Command Monitor' again.
-
-Booting from CD-ROM installation media:
-
-	NOTE: This method will not work on IP27 and IP35 class
-	systems, which PROM expect a very specific CD-ROM layout.
-
-  From the System Maintenance Menu, select '2' (or click on the
-  appropriate icon if in graphics console) to Install System Software.
-
-  If necessary, select the proper CD-ROM drive, and press enter to
-  confirm your choice.  Insert the installation CD-ROM (if you did not
-  do so already) and press enter to boot the system.
-
-  If the boot is successful, you will get a loader version message,
-  executable sizes, and then the kernel copyright and device probe
-  messages. Boot failure modes are typically a lot of CD-ROM drive
-  activity, but no messages or complaints about magic numbers,
-  checksums or formats.
-
-  If the system does not complain about being able to read the CD-ROM,
-  but of not being able to load a particular file, you can nevertheless
-  boot manually. This is the case on IP22 systems.
-
-  To boot manually from the CD-ROM, select ``Enter Command Monitor''
-  at the menu, and invoke the bootloader and ramdisk image manually.
-  For example, on an IP22 system, automatic boot may fail with:
-
-dnl IP22
-	Cannot load scsi(1)cdrom(4)partition(8)sashARCS.
-	Text start 0x10000, size 0xa120 doesn't fit in a FreeMemory area.
-	Cannot load scsi(1)cdrom(4)partition(8)sashARCS -- not enough space.
-
-  or:
-
-dnl IP20, changed from scsi(0) to scsi(1) for consistency
-	Cannot load scsi(1)cdrom(4)partition(8)sashARCS.
-	Error 15 while loading scsi(1)cdrom(4)partition(8)sashARCS
-
-  The name of the CD-ROM drive is then ``scsi(1)cdrom(4)'', and the manual
-  boot command will be:
-
-	>> scsi(1)cdrom(4)partition(8)bootecoff
-	   scsi(1)cdrom(4)partition(0)/bsd.rd.IP22
-
-  Note that this is a single commandline, the two paths should be separated
-  with spaces.
 
 Installing the system:
 

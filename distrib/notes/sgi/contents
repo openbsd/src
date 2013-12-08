@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.22 2013/07/26 20:07:30 miod Exp $
+dnl	$OpenBSD: contents,v 1.23 2013/12/08 15:33:03 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -50,6 +50,8 @@ dnl five flavours of OpenBSDrd
 	bsd.rd.IP32	A RAMDISK-IP32 kernel; the embedded filesystem
 			contains the installation tools.
 			Used for installation and upgrades.
+
+OpenBSDinstalliso
 
 dnl can't use OpenBSDcd because of the multiple bsd.rd
 	cd{:--:}OSrev.iso	A simple bootable filesystem image consisting of

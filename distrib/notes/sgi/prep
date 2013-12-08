@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.25 2013/07/26 20:07:30 miod Exp $
+dnl	$OpenBSD: prep,v 1.26 2013/12/08 15:33:03 miod Exp $
 Before you install your system, you should identify your system family and
 familiarize yourself with the ARCBios setup and how to run programs from
 the Command monitor prompt.
@@ -11,8 +11,8 @@ Identifying your system:
     There are currently five system families supported by OpenBSD:
 
     IP22 family:
-	Indigo (R4x00 flavour)
-	Indigo 2, Challenge M (R4x00 flavour)
+	Indigo (R4x00 flavour only)
+	Indigo 2, Challenge M
 	Indy, Challenge S
 
 dnl    IP26 family:
