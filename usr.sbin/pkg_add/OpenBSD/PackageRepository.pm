@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.95 2012/04/28 15:22:49 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.96 2013/12/08 12:53:23 jca Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -299,6 +299,7 @@ sub did_it_fork
 sub exec_gunzip
 {
 	my $self = shift;
+	$ENV{LC_ALL} = 'C';
 	exec {OpenBSD::Paths->gzip}
 	    ("gzip",
 	    "-d",
@@ -595,6 +596,7 @@ sub grab_object
 {
 	my ($self, $object) = @_;
 	my ($ftp, @extra) = split(/\s+/, OpenBSD::Paths->ftp);
+	$ENV{LC_ALL} = 'C';
 	exec {$ftp}
 	    $ftp,
 	    @extra,
