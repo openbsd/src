@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.715 2013/12/07 09:36:10 halex Exp $
+#	$OpenBSD: install.sub,v 1.716 2013/12/08 12:38:48 stsp Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1994,9 +1994,6 @@ finish_up() {
 		mv /mnt/bsd.mp /mnt/bsd
 	fi
 
-	[[ "$MODE" == upgrade ]] && \
-		echo "After rebooting, run sysmerge(8) to update your system configuration."
-
 	update_firmware
 
 	# XXX To be removed after 5.6 is released.
@@ -2014,6 +2011,8 @@ using the 'mail' command.
 __EOT
 
 	md_congrats
+	[[ "$MODE" == upgrade ]] && \
+		echo "After rebooting, run sysmerge(8) to update your system configuration."
 	$auto && >/ai.done
 }
 
