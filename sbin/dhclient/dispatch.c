@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.86 2013/12/06 23:40:48 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.87 2013/12/08 22:49:02 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -257,7 +257,7 @@ got_one(void)
 	if (result == 0)
 		return;
 
-	memcpy(&ifrom, &from.sin_addr, sizeof(ifrom));
+	ifrom.s_addr = from.sin_addr.s_addr;
 
 	do_packet(from.sin_port, ifrom, &hfrom);
 }
@@ -399,15 +399,16 @@ get_rdomain(char *name)
 int
 subnet_exists(struct client_lease *l)
 {
+	struct option_data *opt;
 	struct ifaddrs *ifap, *ifa;
 	struct in_addr mymask, myaddr, mynet, hismask, hisaddr, hisnet;
 	int myrdomain, hisrdomain;
 
-	memset(&mymask, 0, sizeof(mymask));
-	if (l->options[DHO_SUBNET_MASK].len == sizeof(mymask)) {
-		memcpy(&mymask, l->options[DHO_SUBNET_MASK].data,
-		    sizeof(mymask));
-	}
+	opt = &l->options[DHO_SUBNET_MASK];
+	if (opt->len == sizeof(mymask))
+		mymask.s_addr = ((struct in_addr *)opt->data)->s_addr;
+	else
+		mymask.s_addr = INADDR_ANY;
 	myaddr.s_addr = l->address.s_addr;
 	mynet.s_addr = mymask.s_addr & myaddr.s_addr;
 

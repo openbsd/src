@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.58 2013/12/05 21:32:59 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.59 2013/12/08 22:49:02 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -300,7 +300,6 @@ delete_addresses(char *ifname, int rdomain)
 		    (strcmp(ifi->name, ifa->ifa_name)))
 			continue;
 
-		memset(&addr, 0, sizeof(addr));
 		memcpy(&addr, &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
 		    sizeof(addr));
 
