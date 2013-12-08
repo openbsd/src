@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.83 2013/10/25 05:10:03 guenther Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.84 2013/12/08 03:30:01 brad Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -1657,7 +1657,7 @@ linux_sys_prctl(struct proc *p, void *v, register_t *retval)
 
 	switch (SCARG(uap, option)) {
 	case LINUX_PR_SET_PDEATHSIG:
-		if (SCARG(uap, arg2) < 0 || SCARG(uap, arg2) >= LINUX__NSIG)
+		if (SCARG(uap, arg2) >= LINUX__NSIG)
 			return (EINVAL);
 		ed->pdeath_signal = SCARG(uap, arg2);
 		break;
