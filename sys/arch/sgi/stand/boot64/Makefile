@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2012/10/19 11:29:56 miod Exp $
+#	$OpenBSD: Makefile,v 1.3 2013/12/08 14:42:21 miod Exp $
 
 LDFLAGS+=	${SALDFLAGS} --oformat=elf64-tradbigmips -e __start
 STRIP=		strip
@@ -19,6 +19,7 @@ ${PROG}: $(OBJS) $(LDADD)
 	$(STRIP) --strip-unneeded ${PROG}
 
 LINKS=		${BINDIR}/${PROG} ${BINDIR}/boot-IP27
+LINKS+=		${BINDIR}/${PROG} ${BINDIR}/boot-IP28
 LINKS+=		${BINDIR}/${PROG} ${BINDIR}/boot-IP30
 
 .include <bsd.prog.mk>

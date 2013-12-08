@@ -2405,6 +2405,7 @@
 ./usr/local/libdata/perl5/site_perl/mips64-openbsd
 ./usr/mdec/boot-IP22
 ./usr/mdec/boot-IP27
+./usr/mdec/boot-IP28
 ./usr/mdec/boot-IP30
 ./usr/mdec/boot-IP32
 ./usr/mdec/boot32
