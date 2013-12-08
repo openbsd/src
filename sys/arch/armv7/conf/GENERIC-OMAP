@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC-OMAP,v 1.5 2013/11/20 13:32:40 rapha Exp $
+# $OpenBSD: GENERIC-OMAP,v 1.6 2013/12/08 09:09:47 martynas Exp $
 #
 # GENERIC machine description file
 #
@@ -140,6 +140,7 @@ udsbr*		at uhub?		# D-Link DSB-R100 radio
 radio*		at udsbr?		# USB radio
 #ubt*		at uhub? disable	# USB Bluetooth
 ugen*		at uhub?		# USB Generic driver
+rum*		at uhub?		# Ralink RT2501USB/RT2601USB
 
 ukphy*	at mii?				# "unknown" PHYs
 
