@@ -1424,7 +1424,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/setjmp.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/signal.ph
@@ -1554,7 +1553,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/task.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/termios.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/time.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/sys/timeb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/timeout.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/times.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/timetc.ph

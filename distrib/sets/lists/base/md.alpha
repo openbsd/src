@@ -2134,7 +2134,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/setjmp.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/signal.ph
@@ -2264,7 +2263,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/task.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/termios.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/time.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/sys/timeb.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/timeout.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/times.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/timetc.ph

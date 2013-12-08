@@ -2031,7 +2031,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/setjmp.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/signal.ph
@@ -2161,7 +2160,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/task.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/termios.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/time.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/sys/timeb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/timeout.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/times.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/timetc.ph

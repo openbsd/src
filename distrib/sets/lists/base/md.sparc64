@@ -1629,7 +1629,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/setjmp.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sha1.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/signal.ph
@@ -1819,7 +1818,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/task.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/termios.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/time.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/timeb.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/timeout.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/times.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/timetc.ph

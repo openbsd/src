@@ -1382,7 +1382,6 @@
 ./usr/include/search.h
 ./usr/include/semaphore.h
 ./usr/include/setjmp.h
-./usr/include/sgtty.h
 ./usr/include/sha1.h
 ./usr/include/sha2.h
 ./usr/include/signal.h
@@ -1512,7 +1511,6 @@
 ./usr/include/sys/task.h
 ./usr/include/sys/termios.h
 ./usr/include/sys/time.h
-./usr/include/sys/timeb.h
 ./usr/include/sys/timeout.h
 ./usr/include/sys/times.h
 ./usr/include/sys/timetc.h
