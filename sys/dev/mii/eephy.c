@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.50 2010/11/23 06:59:27 kevlo Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.51 2013/12/08 15:53:01 deraadt Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -207,8 +207,6 @@ eephy_activate(struct device *self, int act)
 	struct mii_softc *sc = (void *)self;
 
 	switch (act) {
-	case DVACT_SUSPEND:
-		break;
 	case DVACT_RESUME:
 		eephy_init(sc);
 		break;
