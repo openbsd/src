@@ -19,7 +19,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: August 17 2012 $
+.Dd $Mdocdate: December 8 2013 $
 .Dt SUDO @mansectsu@
 .Os
 .Sh NAME
@@ -219,8 +219,9 @@ The
 .Fl c No ( Em class Ns No )
 option causes
 .Nm sudo
-to run the specified command with resources limited by the specified
-login class.
+to run the command with resource limits and scheduling priority of
+the specified login
+.Ar class .
 The
 .Em class
 argument can be either a class name as defined in
@@ -228,18 +229,18 @@ argument can be either a class name as defined in
 or a single
 .Ql \-
 character.
-Specifying a
+If
 .Ar class
-of
-.Li -
-indicates that the command should be run restricted by the default
-login capabilities for the user the command is run as.
-If the
-.Ar class
-argument specifies an existing user class, the command must be run
-as root, or the
+is
+.Li - ,
+the default login class of the target user will be used.
+Otherwise, the command must be run as the superuser (user ID 0), or
 .Nm sudo
-command must be run from a shell that is already root.
+must be run from a shell that is already running as the superuser.
+If the command is being run as a login shell, additional
+.Pa /etc/login.conf
+settings, such as the umask and environment variables, will
+be applied, if present.
 This option is only available on systems with BSD login classes.
 .It Fl E
 The
