@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.61 2013/12/03 13:55:39 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.62 2013/12/09 15:22:32 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -338,8 +338,9 @@ struct iked_sahdr {
 
 struct iked_sa {
 	struct iked_sahdr		 sa_hdr;
-	u_int32_t			 sa_msgid;	/* Last resp rcvd */
-	u_int32_t			 sa_reqid;	/* Next req sent */
+	u_int32_t			 sa_msgid;	/* Last request rcvd */
+	int				 sa_msgid_set;	/* msgid initialized */
+	u_int32_t			 sa_reqid;	/* Next request sent */
 
 	int				 sa_type;
 #define IKED_SATYPE_LOOKUP		 0		/* Used for lookup */

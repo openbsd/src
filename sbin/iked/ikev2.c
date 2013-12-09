@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.87 2013/12/03 13:55:39 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.88 2013/12/09 15:22:32 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -423,7 +423,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 				sa_free(env, sa);
 			}
 			return;
-		} else if (msg->msg_msgid == sa->sa_msgid) {
+		} else if (sa->sa_msgid_set && msg->msg_msgid == sa->sa_msgid) {
 			/*
 			 * Response is being worked on, most likely we're
 			 * waiting for the CA process to get back to us
@@ -432,9 +432,12 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		}
 		/*
 		 * If it's a new request, make sure to update the peer's
-		 * message ID and dispose of all previous responses
+		 * message ID and dispose of all previous responses.
+		 * We need to set sa_msgid_set in order to distinguish between
+		 * "last msgid was 0" and "msgid not set yet".
 		 */
 		sa->sa_msgid = msg->msg_msgid;
+		sa->sa_msgid_set = 1;
 		ikev2_msg_prevail(env, &sa->sa_responses, msg);
 	}
 
