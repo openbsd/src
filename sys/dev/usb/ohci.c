@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.117 2013/12/06 21:03:05 deraadt Exp $ */
+/*	$OpenBSD: ohci.c,v 1.118 2013/12/09 01:02:06 brad Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -189,21 +189,21 @@ void		ohci_dump_itds(struct ohci_soft_itd *);
 #define OWRITE4(sc, r, x) \
  do { OBARR(sc); bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x)); } while (0)
 
-static __inline u_int8_t
+__unused static __inline u_int8_t
 OREAD1(struct ohci_softc *sc, bus_size_t r)
 {
 	OBARR(sc);
 	return bus_space_read_1(sc->iot, sc->ioh, r);
 }
 
-static __inline u_int16_t
+__unused static __inline u_int16_t
 OREAD2(struct ohci_softc *sc, bus_size_t r)
 {
 	OBARR(sc);
 	return bus_space_read_2(sc->iot, sc->ioh, r);
 }
 
-static __inline u_int32_t
+__unused static __inline u_int32_t
 OREAD4(struct ohci_softc *sc, bus_size_t r)
 {
 	OBARR(sc);

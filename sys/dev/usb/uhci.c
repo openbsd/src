@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.104 2013/11/09 08:46:05 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.105 2013/12/09 01:02:06 brad Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -238,21 +238,21 @@ void		uhci_dump(void);
  do { UBARR(sc); bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x)); \
  } while (/*CONSTCOND*/0)
 
-static __inline u_int8_t
+__unused static __inline u_int8_t
 UREAD1(struct uhci_softc *sc, bus_size_t r)
 {
 	UBARR(sc);
 	return bus_space_read_1(sc->iot, sc->ioh, r);
 }
 
-static __inline u_int16_t
+__unused static __inline u_int16_t
 UREAD2(struct uhci_softc *sc, bus_size_t r)
 {
 	UBARR(sc);
 	return bus_space_read_2(sc->iot, sc->ioh, r);
 }
 
-static __inline u_int32_t
+__unused static __inline u_int32_t
 UREAD4(struct uhci_softc *sc, bus_size_t r)
 {
 	UBARR(sc);
