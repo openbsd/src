@@ -1,4 +1,4 @@
-.\"	$OpenBSD: task_add.9,v 1.5 2013/10/30 19:31:30 jmc Exp $
+.\"	$OpenBSD: task_add.9,v 1.6 2013/12/09 01:54:49 dlg Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 30 2013 $
+.Dd $Mdocdate: December 9 2013 $
 .Dt TASK_ADD 9
 .Os
 .Sh NAME
@@ -36,14 +36,11 @@
 .Fn "task_add" "struct taskq *tq" "struct task *t"
 .Ft int
 .Fn "task_del" "struct taskq *tq" "struct task *t"
+.Vt extern struct taskq *const systq;
 .Sh DESCRIPTION
 The
 taskq
 API provides a mechanism to defer work to a process context.
-.\" .Pp
-.\" The system taskq is serviced by a single thread and can therefore
-.\" provide predictable ordering of work.
-.\" Work can be scheduled on the system taskq from callers at or below IPL_HIGH.
 .Pp
 .Fn taskq_create
 allocates a taskq and a set of threads to be used to complete work
@@ -130,6 +127,13 @@ against a different taskq than the one given in a previous call to
 .Fn task_add
 is an error and will lead to undefined behaviour.
 If the work was actually removed from the taskq it will return 1, otherwise 0.
+.Pp
+The kernel provides a system taskq
+.Va systq
+that can be used by any subsystem for short lived tasks.
+It is serviced by a single thread and can therefore provide predictable
+ordering of work.
+Work can be scheduled on the system taskq from callers at or below IPL_HIGH.
 .Pp
 .Fn taskq_create
 and
