@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sensors.c,v 1.26 2013/11/04 00:25:14 dlg Exp $	*/
+/*	$OpenBSD: kern_sensors.c,v 1.27 2013/12/09 17:39:08 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -32,6 +32,7 @@
 #include <sys/sensors.h>
 #include "hotplug.h"
 
+struct taskq		*sensors_taskq;
 int			sensordev_count;
 SLIST_HEAD(, ksensordev) sensordev_list =
     SLIST_HEAD_INITIALIZER(sensordev_list);
@@ -192,6 +193,10 @@ sensor_task_register(void *arg, void (*func)(void *), unsigned int period)
 		panic("sensor_task_register: period is 0");
 #endif
 
+	if (sensors_taskq == NULL &&
+	    (sensors_taskq = taskq_create("sensors", 1, IPL_HIGH)) == NULL)
+		sensors_taskq = systq;
+
 	st = malloc(sizeof(struct sensor_task), M_DEVBUF, M_NOWAIT);
 	if (st == NULL)
 		return (NULL);
@@ -227,7 +232,7 @@ void
 sensor_task_tick(void *arg)
 {
 	struct sensor_task *st = arg;
-	task_add(systq, &st->task);
+	task_add(sensors_taskq, &st->task);
 }
 
 void
