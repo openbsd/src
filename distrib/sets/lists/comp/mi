@@ -6188,6 +6188,7 @@
 ./usr/share/man/man9/MH_ALIGN.9
 ./usr/share/man/man9/MUTEX_ASSERT_LOCKED.9
 ./usr/share/man/man9/MUTEX_ASSERT_UNLOCKED.9
+./usr/share/man/man9/MUTEX_INITIALIZER.9
 ./usr/share/man/man9/M_ALIGN.9
 ./usr/share/man/man9/M_LEADINGSPACE.9
 ./usr/share/man/man9/M_PREPEND.9
@@ -6195,6 +6196,7 @@
 ./usr/share/man/man9/M_TRAILINGSPACE.9
 ./usr/share/man/man9/NDINIT.9
 ./usr/share/man/man9/NDINITAT.9
+./usr/share/man/man9/RWLOCK_INITIALIZER.9
 ./usr/share/man/man9/UVM_MAPFLAG.9
 ./usr/share/man/man9/VOP_ABORTOP.9
 ./usr/share/man/man9/VOP_ACCESS.9
