@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.154 2013/02/14 22:22:48 kettenis Exp $	*/
+/*	$OpenBSD: com.c,v 1.155 2013/12/09 19:47:42 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -234,6 +234,16 @@ com_activate(struct device *self, int act)
 	int s, rv = 0;
 
 	switch (act) {
+	case DVACT_SUSPEND:
+		if (timeout_del(&sc->sc_dtr_tmo)) {
+			/* Make sure DTR gets raised upon resume. */
+			SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
+		}
+		timeout_del(&sc->sc_diag_tmo);
+		break;
+	case DVACT_RESUME:
+		com_resume(sc);
+		break;
 	case DVACT_DEACTIVATE:
 #ifdef KGDB
 		if (sc->sc_hwflags & (COM_HW_CONSOLE|COM_HW_KGDB)) {
