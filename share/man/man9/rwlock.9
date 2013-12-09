@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.11 2013/07/17 20:21:55 schwarze Exp $
+.\" $OpenBSD: rwlock.9,v 1.12 2013/12/09 04:13:40 dlg Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: December 9 2013 $
 .Dt RWLOCK 9
 .Os
 .Sh NAME
@@ -26,7 +26,8 @@
 .Nm rw_enter_read ,
 .Nm rw_enter_write ,
 .Nm rw_exit_read ,
-.Nm rw_exit_write
+.Nm rw_exit_write ,
+.Nm RWLOCK_INITIALIZER
 .Nd interface to read/write locks
 .Sh SYNOPSIS
 .In sys/rwlock.h
@@ -50,6 +51,7 @@
 .Fn rw_assert_rdlock "struct rwlock *rwl"
 .Ft void
 .Fn rw_assert_unlocked "struct rwlock *rwl"
+.Fn RWLOCK_INITIALIZER "const char *name"
 .Sh DESCRIPTION
 The
 .Nm
@@ -127,6 +129,14 @@ and
 functions check the status
 .Fa rwl ,
 panicking if it is not write-, read-, or unlocked, respectively.
+.Pp
+A lock declaration may be initialised with the
+.Fn RWLOCK_INITIALIZER
+macro.
+The
+.Fa name
+argument specifies the name of the lock, which is used as the wait message
+if the process needs to sleep.
 .Sh SEE ALSO
 .Xr lockmgr 9 ,
 .Xr mutex 9 ,
