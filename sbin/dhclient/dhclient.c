@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.275 2013/12/08 22:49:02 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.276 2013/12/09 18:05:36 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2457,32 +2457,33 @@ add_static_routes(int rdomain, struct option_data *static_routes)
 	}
 }
 
-void add_classless_static_routes(int rdomain,
-    struct option_data *classless_static_routes)
+void add_classless_static_routes(int rdomain, struct option_data *opt)
 {
 	struct in_addr	 dest, netmask, gateway;
 	int		 bits, bytes, i;
 
 	i = 0;
-	while (i < classless_static_routes->len) {
-		bits = classless_static_routes->data[i];
+	while (i < opt->len) {
+		bits = opt->data[i++];
 		bytes = (bits + 7) / 8;
-		if (bytes > 4)
-			return;
-			
-		i++;
 
-		memset(&netmask, 0, sizeof(netmask));
+		if (bytes > sizeof(netmask))
+			return;
+		else if (i + bytes > opt->len)
+			return;
+
 		if (bits)
 			netmask.s_addr = htonl(0xffffffff << (32 - bits));
+		else
+			netmask.s_addr = INADDR_ANY;
 
-		memset(&dest, 0, sizeof(dest));
-		memcpy(&dest, &classless_static_routes->data[i], bytes);
+		memcpy(&dest, &opt->data[i], bytes);
 		dest.s_addr = dest.s_addr & netmask.s_addr;
 		i += bytes;
 
-		memcpy(&gateway, &classless_static_routes->data[i],
-		    sizeof(gateway));
+		if (i + sizeof(gateway) > opt->len)
+			return;
+		memcpy(&gateway, &opt->data[i], sizeof(gateway));
 		i += sizeof(gateway);
 
 		if (gateway.s_addr == INADDR_ANY)
