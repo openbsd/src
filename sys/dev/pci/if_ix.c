@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.92 2013/08/23 19:44:14 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.93 2013/12/09 19:48:04 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -2791,7 +2791,7 @@ ixgbe_rxeof(struct ix_queue *que)
 	struct mbuf    		*mp, *sendmp;
 	uint8_t		    	 eop = 0;
 	uint16_t		 len, vtag;
-	uint32_t		 staterr, ptype;
+	uint32_t		 staterr = 0, ptype;
 	struct ixgbe_rx_buf	*rxbuf, *nxbuf;
 	union ixgbe_adv_rx_desc	*rxdesc;
 	size_t			 dsize = sizeof(union ixgbe_adv_rx_desc);
