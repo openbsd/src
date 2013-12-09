@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.28 2013/12/07 10:57:06 kettenis Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.29 2013/12/09 19:52:11 kettenis Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -110,8 +110,6 @@ struct agp_methods {
 	void	(*bind_page)(void *, bus_addr_t, paddr_t, int);
 	void	(*unbind_page)(void *, bus_addr_t);
 	void	(*flush_tlb)(void *);
-	void	(*dma_sync)(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-		    bus_size_t, int);
 	int	(*enable)(void *, u_int32_t mode);
 	struct agp_memory *
 		(*alloc_memory)(void *, int, vsize_t);

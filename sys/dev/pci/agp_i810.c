@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.79 2013/11/19 19:14:09 kettenis Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.80 2013/12/09 19:52:11 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -129,7 +129,6 @@ struct agp_methods agp_i810_methods = {
 	agp_i810_bind_page,
 	agp_i810_unbind_page,
 	agp_i810_flush_tlb,
-	intagp_dma_sync,
 	agp_i810_enable,
 	agp_i810_alloc_memory,
 	agp_i810_free_memory,
