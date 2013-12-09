@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.45 2013/12/07 20:17:42 brad Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.46 2013/12/09 15:45:29 pirofti Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -1354,6 +1354,7 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 	sc = (void *)self;
 	uaa = aux;
 
+	sc->sc_attached = 0;
 	sc->sc_udev = uaa->device;
 	id = usbd_get_interface_descriptor(uaa->iface);
 	sc->sc_ifaceno_ctl = id->bInterfaceNumber;
@@ -1438,14 +1439,11 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 
 	IFQ_SET_READY(&ifp->if_snd);
 
-	urndis_init(sc);
-
 	s = splnet();
 
 	if (urndis_ctrl_query(sc, OID_802_3_PERMANENT_ADDRESS, NULL, 0,
 	    &buf, &bufsz) != RNDIS_STATUS_SUCCESS) {
 		printf(": unable to get hardware address\n");
-		urndis_stop(sc);
 		splx(s);
 		return;
 	}
@@ -1457,7 +1455,6 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		printf(", invalid address\n");
 		free(buf, M_TEMP);
-		urndis_stop(sc);
 		splx(s);
 		return;
 	}
@@ -1469,7 +1466,6 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 	if (urndis_ctrl_set(sc, OID_GEN_CURRENT_PACKET_FILTER, &filter,
 	    sizeof(filter)) != RNDIS_STATUS_SUCCESS) {
 		printf("%s: unable to set data filters\n", DEVNAME(sc));
-		urndis_stop(sc);
 		splx(s);
 		return;
 	}
