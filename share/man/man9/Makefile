@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.190 2013/12/09 03:14:30 dlg Exp $
+#	$OpenBSD: Makefile,v 1.191 2013/12/09 12:06:13 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -297,7 +297,8 @@ MLINKS+=rwlock.9 rw_init.9 rwlock.9 rw_enter.9 rwlock.9 rw_exit.9 \
 	rwlock.9 rw_enter_read.9 rwlock.9 rw_enter_write.9 \
 	rwlock.9 rw_exit_read.9 rwlock.9 rw_exit_write.9 \
 	rwlock.9 rw_assert_wrlock.9 rwlock.9 rw_assert_rdlock.9 \
-	rwlock.9 rw_assert_unlocked.9
+	rwlock.9 rw_assert_unlocked.9 \
+	rwlock.9 RWLOCK_INITIALIZER.9
 	
 MLINKS+=sensor_attach.9 sensordev_install.9 \
 	sensor_attach.9 sensordev_deinstall.9 \
