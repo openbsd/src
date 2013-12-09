@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.117 2013/09/18 01:06:26 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.118 2013/12/09 11:44:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1051,6 +1051,7 @@ atascsi_disk_write_same_16_done(struct ata_xfer *xa)
 void
 atascsi_disk_unmap(struct scsi_xfer *xs)
 {
+	struct ata_xfer		*xa = xs->io;
 	struct scsi_unmap	*cdb;
 	struct scsi_unmap_data	*unmap;
 	u_int			len;
@@ -1089,12 +1090,12 @@ atascsi_disk_unmap(struct scsi_xfer *xs)
 	}
 
 	/* let's go */
-	if (!ISSET(xs->flags, SCSI_NOSLEEP))
+	if (ISSET(xs->flags, SCSI_NOSLEEP)) {
+		task_set(&xa->task, atascsi_disk_unmap_task, xs, NULL);
+		task_add(systq, &xa->task);
+	} else {
+		/* we can already sleep for memory */
 		atascsi_disk_unmap_task(xs, NULL);
-	else if (workq_add_task(NULL, 0, atascsi_disk_unmap_task,
-	    xs, NULL) != 0) {
-		atascsi_done(xs, XS_DRIVER_STUFFUP);
-		return;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.47 2011/07/08 07:43:05 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.48 2013/12/09 11:44:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -20,6 +20,8 @@
 
 #ifndef _DEV_ATA_ATASCSI_H_
 #define _DEV_ATA_ATASCSI_H_
+
+#include <sys/task.h>
 
 struct atascsi;
 struct scsi_link;
@@ -302,6 +304,7 @@ struct ata_xfer {
 	size_t			resid;
 
 	void			(*complete)(struct ata_xfer *);
+	struct task		task;
 	struct timeout		stimeout;
 	u_int			timeout;
 
