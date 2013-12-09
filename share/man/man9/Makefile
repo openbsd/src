@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.189 2013/11/28 14:54:18 syl Exp $
+#	$OpenBSD: Makefile,v 1.190 2013/12/09 03:14:30 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -236,7 +236,8 @@ MLINKS+=microtime.9 getmicrotime.9 microtime.9 microuptime.9 \
 	microtime.9 binuptime.9
 MLINKS+=mountroothook_establish.9 mountroothook_disestablish.9
 MLINKS+=mutex.9 mtx_init.9 mutex.9 mtx_enter.9 mutex.9 mtx_leave.9 \
-	mutex.9 MUTEX_ASSERT_LOCKED.9 mutex.9 MUTEX_ASSERT_UNLOCKED.9
+	mutex.9 MUTEX_ASSERT_LOCKED.9 mutex.9 MUTEX_ASSERT_UNLOCKED.9 \
+	mutex.9 MUTEX_INITIALIZER.9
 MLINKS+=mutex.9 mtx_enter_try.9
 MLINKS+=namei.9 vfs_lookup.9 namei.9 vfs_relookup.9 namei.9 NDINIT.9
 MLINKS+=namei.9 NDINITAT.9
