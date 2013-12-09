@@ -1,5 +1,5 @@
-#!/bin/sh
-#	$OpenBSD: cpp.sh,v 1.8 2010/05/03 18:34:01 drahn Exp $
+#!/bin/ksh
+#	$OpenBSD: cpp.sh,v 1.9 2013/12/09 02:35:09 guenther Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -43,9 +43,8 @@ PATH=/usr/bin:/bin
 TRAD=-traditional
 DGNUC="@GNUC@"
 STDINC="-I/usr/include"
-DOLLAR="@dollaropt@"
-OPTS=""
-INCS="-nostdinc"
+set -A OPTS
+set -A INCS -- "-nostdinc"
 FOUNDFILES=false
 
 CPP=/usr/libexec/cpp
@@ -72,22 +71,34 @@ do
 	-notraditional)
 		TRAD=
 		;;
+	# options that take an argument and that should be sorted before
+	# the $STDINC option
+	-I | -imacros | -include | -idirafter | -iprefix | -iwithprefix | \
+	-iwithprefixbefore | -isysroot | -imultilib | -isystem | -iquote)
+		INCS[${#INCS[@]}]=$A
+		INCS[${#INCS[@]}]=$1
+		shift
+		;;
 	-I*)
-		INCS="$INCS $A"
+		INCS[${#INCS[@]}]=$A
+		;;
+	# other options that take an argument
+	-MF | -MT | -MQ | -x | -D | -U | -o | -A)
+		OPTS[${#OPTS[@]}]=$A
+		OPTS[${#OPTS[@]}]=$1
+		shift
 		;;
 	-U__GNUC__)
 		DGNUC=
-		;;
-	-imacros|-include|-idirafter|-iprefix|-iwithprefix)
-		INCS="$INCS '$A' '$1'"
-		shift
+		OPTS[${#OPTS[@]}]=$A
 		;;
 	-*)
-		OPTS="$OPTS '$A'"
+		OPTS[${#OPTS[@]}]=$A
 		;;
 	*)
 		FOUNDFILES=true
-		eval $CPP $TRAD $DGNUC $DOLLAR $INCS $STDINC $OPTS $A || exit $?
+		$CPP $TRAD $DGNUC "${INCS[@]}" $STDINC "${OPTS[@]}" "$A" ||
+			exit
 		;;
 	esac
 done
@@ -95,7 +106,7 @@ done
 if ! $FOUNDFILES
 then
 	# read standard input
-	eval exec $CPP $TRAD $DGNUC $DOLLAR $INCS $STDINC $OPTS
+	exec $CPP $TRAD $DGNUC "${INCS[@]}" $STDINC "${OPTS[@]}"
 fi
 
 exit 0
