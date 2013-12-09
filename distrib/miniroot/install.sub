@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.716 2013/12/08 12:38:48 stsp Exp $
+#	$OpenBSD: install.sub,v 1.717 2013/12/09 23:14:34 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -299,7 +299,8 @@ _autorespond() {
 		[[ $_l == [!#=]*=?* ]] || continue
 		_key=${_l%%*([[:blank:]])=*}
 		_val=${_l##*([!=])=*([[:blank:]])}
-		[[ $_q == *"$_key"* ]] && resp=$_val && cat && return
+		[[ $_q == @(|*[[:blank:]])"$_key"@([[:blank:]]*|) ]] &&
+			resp=$_val && cat && return
 		print -r " $_l"
 	done </ai.conf.tmp >/ai.conf
 	[[ -n $_def ]] && resp=$_def && return
