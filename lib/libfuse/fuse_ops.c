@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.16 2013/12/03 10:07:58 syl Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.17 2013/12/09 14:59:08 beck Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -227,10 +227,10 @@ ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
 		dir->d_fileno = 0xffffffff;
 		dir->d_type = DT_UNKNOWN;
 	}
-	dir->d_namlen = namelen;
 	dir->d_reclen = len;
 	dir->d_off = off + len;		/* XXX */
-	memcpy(dir->d_name, name, namelen);
+	strlcpy(dir->d_name, name, sizeof(dir->d_name));
+	dir->d_namlen = strlen(dir->d_name);
 
 	fbuf->fb_len += len;
 	if (fd->isgetdir) {
@@ -276,7 +276,8 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 	size = fbuf->fb_io_len;
 	startsave = 0;
 
-	fbuf->fb_dat = malloc(size);
+	fbuf->fb_dat = calloc(1, size);
+	
 	if (fbuf->fb_dat == NULL) {
 		fbuf->fb_err = errno;
 		return (0);
