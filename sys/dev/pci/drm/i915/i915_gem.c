@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.57 2013/12/07 17:20:47 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.58 2013/12/09 20:09:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1341,47 +1341,33 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	struct drm_i915_gem_mmap *args = data;
 	struct drm_gem_object *obj;
 	vaddr_t addr;
-	voff_t offset;
-	vsize_t end, nsize;
+	vsize_t size;
 	int ret;
+
+	size = round_page(args->size);
+	if (size == 0)
+		return -EINVAL;
+
+	if (args->offset + size < args->offset)
+		return -EINVAL;
+	if (args->offset & PAGE_MASK)
+		return -EINVAL;
 
 	obj = drm_gem_object_lookup(dev, file, args->handle);
 	if (obj == NULL)
 		return -ENOENT;
 
-	/* Since we are doing purely uvm-related operations here we do
-	 * not need to hold the object, a reference alone is sufficient
-	 */
-
-	/* Check size. Also ensure that the object is not purgeable */
-	if (args->size == 0 || args->offset > obj->size || args->size >
-	    obj->size || (args->offset + args->size) > obj->size ||
-	    i915_gem_object_is_purgeable(to_intel_bo(obj))) {
-		ret = -EINVAL;
-		goto done;
-	}
-
-	end = round_page(args->offset + args->size);
-	offset = trunc_page(args->offset);
-	nsize = end - offset;
-
-	/*
-	 * We give our reference from object_lookup to the mmap, so only
-	 * must free it in the case that the map fails.
-	 */
 	addr = 0;
-	ret = uvm_map(&curproc->p_vmspace->vm_map, &addr, nsize, obj->uao,
-	    offset, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+	ret = uvm_map(&curproc->p_vmspace->vm_map, &addr, size,
+	    obj->uao, args->offset, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
 	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
 	if (ret == 0)
 		uao_reference(obj->uao);
-
-done:
 	drm_gem_object_unreference_unlocked(obj);
 	if (ret)
 		return ret;
 
-	args->addr_ptr = (uint64_t) addr + (args->offset & PAGE_MASK);
+	args->addr_ptr = (uint64_t) addr;
 
 	return 0;
 }
