@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.155 2013/12/09 19:47:42 deraadt Exp $	*/
+/*	$OpenBSD: com.c,v 1.156 2013/12/09 19:54:31 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -668,10 +668,6 @@ com_resume(struct com_softc *sc)
 		if (sc->sc_uarttype == COM_UART_TI16750)
 			bus_space_write_1(iot, ioh, com_lcr, lcr);
 	}
-
-	/* Flush any pending I/O. */
-	while (ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
-		(void) bus_space_read_1(iot, ioh, com_data);
 
 	/* You turn me on, baby! */
 	bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
