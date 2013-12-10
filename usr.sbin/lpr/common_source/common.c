@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.34 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: common.c,v 1.35 2013/12/10 16:38:04 naddy Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -66,9 +66,7 @@ long	 BR;		/* baud rate if lp is a tty */
 char	*CF;		/* name of cifplot filter (per job) */
 char	*DF;		/* name of tex filter (per job) */
 long	 DU;		/* daemon user-id */
-long	 FC;		/* flags to clear if lp is a tty */
 char	*FF;		/* form feed string */
-long	 FS;		/* flags to set if lp is a tty */
 char	*GF;		/* name of graph(1G) filter (per job) */
 long	 HL;		/* print header last */
 char	*IF;		/* name of input filter (created per job) */
@@ -99,8 +97,6 @@ char	*ST;		/* status file name */
 char	*TF;		/* name of troff filter (per job) */
 char	*TR;		/* trailer string to be output when Q empties */
 char	*VF;		/* name of vplot filter (per job) */
-long	 XC;		/* flags to clear for local mode */
-long	 XS;		/* flags to set for local mode */
 
 char	line[BUFSIZ];
 int	remote;		/* true if sending files to a remote host */

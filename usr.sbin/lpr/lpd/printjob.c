@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.48 2013/11/24 21:32:32 deraadt Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.49 2013/12/10 16:38:04 naddy Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -1302,14 +1302,6 @@ init(void)
 	RW = (cgetcap(bp, "rw", ':') != NULL);
 
 	cgetnum(bp, "br", &BR);
-	if (cgetnum(bp, "fc", &FC) < 0)
-		FC = 0;
-	if (cgetnum(bp, "fs", &FS) < 0)
-		FS = 0;
-	if (cgetnum(bp, "xc", &XC) < 0)
-		XC = 0;
-	if (cgetnum(bp, "xs", &XS) < 0)
-		XS = 0;
 	cgetstr(bp, "ms", &MS);
 
 	tof = (cgetcap(bp, "fo", ':') == NULL);
@@ -1581,23 +1573,6 @@ setty(void)
 				continue;
 			syslog(LOG_INFO, "%s: unknown stty flag: %s",
 			       printer, *argv);
-		}
-	} else {
-		if (FC) {
-			sttyclearflags(&i.t, FC);
-			i.set = 1;
-		}
-		if (FS) {
-			sttysetflags(&i.t, FS);
-			i.set = 1;
-		}
-		if (XC) {
-			sttyclearlflags(&i.t, XC);
-			i.set = 1;
-		}
-		if (XS) {
-			sttysetlflags(&i.t, XS);
-			i.set = 1;
 		}
 	}
 

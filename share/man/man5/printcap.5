@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printcap.5,v 1.23 2011/09/03 22:59:07 jmc Exp $
+.\"	$OpenBSD: printcap.5,v 1.24 2013/12/10 16:38:04 naddy Exp $
 .\"	$NetBSD: printcap.5,v 1.7 1998/02/20 12:24:50 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)printcap.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: December 10 2013 $
 .Dt PRINTCAP 5
 .Os
 .Sh NAME
@@ -76,12 +76,8 @@ for a description of the file layout.
 call)
 .It "cf" Ta "str" Ta Dv NULL Ta "cifplot data filter"
 .It "df" Ta "str" Ta Dv NULL Ta "tex data filter (DVI format)"
-.It "fc" Ta "num" Ta "0" Ta "if lp is a tty, clear flag bits"
-.Pq Aq Pa sgtty.h
 .It "ff" Ta "str" Ta So Li \ef Sc Ta "string to send for a form feed"
 .It "fo" Ta "bool" Ta "false" Ta "print a form feed when device is opened"
-.It "fs" Ta "num" Ta "0" Ta "if lp is a tty, set flag bits"
-.Pq Aq Pa sgtty.h
 .It "gf" Ta "str" Ta Dv NULL Ta "graph data filter"
 .Pf ( Xr plot 3
 format)
@@ -92,7 +88,9 @@ format)
 .It "lo" Ta "str" Ta Pa lock Ta "name of lock file"
 .It "lp" Ta "str" Ta Pa /dev/lp Ta "local printer device, or port@host for remote"
 .It "mc" Ta "num" Ta "0" Ta "maximum number of copies allowed; 0=unlimited"
-.It "ms" Ta "str" Ta Dv NULL Ta "list of terminal modes to set or clear"
+.It "ms" Ta "str" Ta Dv NULL Ta "if lp is a tty, a comma-separated,"
+.Xr stty 1 Ns -like
+list describing the tty modes
 .It "mx" Ta "num" Ta "0" Ta "max file size (in"
 .Dv BUFSIZ
 blocks); 0=unlimited
@@ -119,10 +117,6 @@ blocks); 0=unlimited
 .It "tf" Ta "str" Ta Dv NULL Ta "troff data filter (cat phototypesetter)"
 .It "tr" Ta "str" Ta Dv NULL Ta "trailer string to print when queue empties"
 .It "vf" Ta "str" Ta Dv NULL Ta "raster image filter"
-.It "xc" Ta "num" Ta "0" Ta "if lp is a tty, clear local mode bits"
-.Pq Xr tty 4
-.It "xs" Ta "num" Ta "0" Ta "if lp is a tty, set local mode bits"
-.Pq Xr tty 4
 .El
 .Pp
 If the local line printer driver supports indentation, the daemon

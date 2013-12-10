@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.7 2012/12/05 23:20:26 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.8 2013/12/10 16:38:04 naddy Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -52,7 +52,3 @@ int	   ksearch(char ***, struct info *);
 int	   msearch(char ***, struct info *);
 void       printjob(void);
 void       recvjob(void);
-void       sttyclearflags(struct termios *tp, int flags);
-void       sttysetflags(struct termios *tp, int flags);
-void       sttyclearlflags(struct termios *tp, int flags);
-void       sttysetlflags(struct termios *tp, int flags);
