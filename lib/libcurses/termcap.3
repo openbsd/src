@@ -1,4 +1,4 @@
-.\" $OpenBSD: termcap.3,v 1.8 2010/01/12 23:21:59 nicm Exp $
+.\" $OpenBSD: termcap.3,v 1.9 2013/12/10 20:33:51 naddy Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: termcap.3,v 1.8 2010/01/12 23:21:59 nicm Exp $
+.\" $Id: termcap.3,v 1.9 2013/12/10 20:33:51 naddy Exp $
 .TH termcap 3 ""
 .ds n 5
 .SH NAME
@@ -49,7 +49,7 @@
 .br
 \fBextern char * BC;\fR
 .br
-\fBextern short ospeed;\fR
+\fBextern int ospeed;\fR
 .sp
 \fBint tgetent(char *bp, const char *name);\fR
 .br

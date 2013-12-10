@@ -1,4 +1,4 @@
-/* $OpenBSD: lib_baudrate.c,v 1.5 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_baudrate.c,v 1.6 2013/12/10 20:33:51 naddy Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -52,7 +52,7 @@
  * of the indices up to B115200 fit nicely in a 'short', allowing us to retain
  * ospeed's type for compatibility.
  */
-#if (defined(__FreeBSD__) && (__FreeBSD_version < 700000)) || defined(__NetBSD__) || defined(__OpenBSD__)
+#if (defined(__FreeBSD__) && (__FreeBSD_version < 700000)) || defined(__NetBSD__)
 #undef B0
 #undef B50
 #undef B75
@@ -82,7 +82,7 @@
 #undef USE_OLD_TTY
 #endif /* USE_OLD_TTY */
 
-MODULE_ID("$Id: lib_baudrate.c,v 1.5 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_baudrate.c,v 1.6 2013/12/10 20:33:51 naddy Exp $")
 
 /*
  *	int
@@ -170,7 +170,7 @@ _nc_baudrate(int OSpeed)
 	    }
 	}
 #if !USE_REENTRANT
-	if (OSpeed == last_OSpeed) {
+	if (OSpeed != last_OSpeed) {
 	    last_OSpeed = OSpeed;
 	    last_baudrate = result;
 	}
