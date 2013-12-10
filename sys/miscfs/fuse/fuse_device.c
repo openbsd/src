@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.11 2013/12/03 09:53:37 syl Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.12 2013/12/10 13:43:05 pelikan Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -202,7 +202,7 @@ fuse_device_queue_fbuf(dev_t dev, struct fusebuf *fbuf)
 }
 
 void
-fuse_device_set_fmp(struct fusefs_mnt *fmp)
+fuse_device_set_fmp(struct fusefs_mnt *fmp, int set)
 {
 	struct fuse_d *fd;
 
@@ -210,7 +210,7 @@ fuse_device_set_fmp(struct fusefs_mnt *fmp)
 	if (fd == NULL)
 		return;
 
-	fd->fd_fmp = fmp;
+	fd->fd_fmp = set ? fmp : NULL;
 }
 
 void

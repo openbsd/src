@@ -1,4 +1,4 @@
-/* $OpenBSD: fusefs.h,v 1.4 2013/10/07 18:07:04 syl Exp $ */
+/* $OpenBSD: fusefs.h,v 1.5 2013/12/10 13:43:05 pelikan Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -82,7 +82,7 @@ int fusefs_file_close(struct fusefs_mnt *, struct fusefs_node *,
 /* device helpers. */
 void fuse_device_cleanup(dev_t, struct fusebuf *);
 void fuse_device_queue_fbuf(dev_t, struct fusebuf *);
-void fuse_device_set_fmp(struct fusefs_mnt *);
+void fuse_device_set_fmp(struct fusefs_mnt *, int);
 
 /*
  * The root inode is the root of the file system.  Inode 0 can't be used for

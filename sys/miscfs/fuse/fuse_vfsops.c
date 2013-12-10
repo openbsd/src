@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.7 2013/10/07 18:25:32 syl Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.8 2013/12/10 13:43:05 pelikan Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -108,7 +108,7 @@ fusefs_mount(struct mount *mp, const char *path, void *data,
 	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
 	bcopy("fusefs", mp->mnt_stat.f_mntfromname, sizeof("fusefs"));
 
-	fuse_device_set_fmp(fmp);
+	fuse_device_set_fmp(fmp, 1);
 	fbuf = fb_setup(0, 0, FBT_INIT, p);
 
 	/* cannot tsleep on mount */
@@ -141,12 +141,10 @@ fusefs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		error = fb_queue(fmp->dev, fbuf);
 
 		if (error)
-			printf("fusefs: error from fuse\n");
+			printf("fusefs: error %d on destroy\n", error);
 
 		fb_delete(fbuf);
 	}
-
-	fuse_device_cleanup(fmp->dev, NULL);
 
 	if (mntflags & MNT_FORCE) {
 		/* fusefs can never be rootfs so don't check for it */
@@ -159,6 +157,8 @@ fusefs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	if ((error = vflush(mp, 0, flags)))
 		return (error);
 
+	fuse_device_cleanup(fmp->dev, NULL);
+	fuse_device_set_fmp(fmp, 0);
 	free(fmp, M_FUSEFS);
 
 	return (error);
