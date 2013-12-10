@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gettytab.5,v 1.21 2011/09/03 23:40:16 jmc Exp $
+.\"	$OpenBSD: gettytab.5,v 1.22 2013/12/10 20:56:59 naddy Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)gettytab.5	8.4 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: December 10 2013 $
 .Dt GETTYTAB 5
 .Os
 .Sh NAME
@@ -93,9 +93,6 @@ after login prompt.
 .Pq Dv EOF
 character.
 .It ev Ta str Ta Dv NULL Ta "Initial environment."
-.It f0 Ta num Ta unused Ta "TTY mode flags to write messages."
-.It f1 Ta num Ta unused Ta "TTY mode flags to read login name."
-.It f2 Ta num Ta unused Ta "TTY mode flags to leave terminal as."
 .It fl Ta str Ta So Li ^O Sc Ta "Output flush character."
 .It hc Ta bool Ta false Ta "\&Do"
 .Em not
@@ -161,6 +158,9 @@ The following capabilities are no longer supported by
 .It bd Ta num Ta 0 Ta "Backspace delay."
 .It cb Ta bool Ta false Ta "Use CRT backspace mode."
 .It cd Ta num Ta 0 Ta "Carriage-return delay."
+.It f0 Ta num Ta unused Ta "TTY mode flags to write messages."
+.It f1 Ta num Ta unused Ta "TTY mode flags to read login name."
+.It f2 Ta num Ta unused Ta "TTY mode flags to leave terminal as."
 .It fd Ta num Ta 0 Ta "Form-feed (vertical motion) delay."
 .It nd Ta num Ta 0 Ta "Newline (line-feed) delay."
 .It uc Ta bool Ta false Ta "Terminal is known upper case only."
@@ -205,16 +205,6 @@ and
 .Em c_oflag
 fields, respectively.
 Each of these sets must be completely specified to be effective.
-The
-.Em \&f0 ,
-.Em \&f1 ,
-and
-.Em \&f2
-are excepted for backwards compatibility with a previous incarnation of
-the TTY subsystem.
-In these flags the bottom 16 bits of the (32 bits) value contain the sgttyb
-.Em sg_flags
-field, while the top 16 bits represent the local mode word.
 .Pp
 Should
 .Xr getty 8
