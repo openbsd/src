@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.6 2013/11/18 20:21:51 deraadt Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.7 2013/12/10 17:08:01 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -33,6 +33,7 @@ struct taskq {
 	}		tq_state;
 	unsigned int	tq_running;
 	unsigned int	tq_nthreads;
+	unsigned int	tq_unlocked;
 	const char	*tq_name;
 
 	struct mutex	tq_mtx;
@@ -43,6 +44,7 @@ struct taskq taskq_sys = {
 	TQ_S_CREATED,
 	0,
 	1,
+	0,
 	"systq",
 	MUTEX_INITIALIZER(IPL_HIGH),
 	TAILQ_HEAD_INITIALIZER(taskq_sys.tq_worklist)
@@ -74,6 +76,12 @@ taskq_create(const char *name, unsigned int nthreads, int ipl)
 	tq->tq_running = 0;
 	tq->tq_nthreads = nthreads;
 	tq->tq_name = name;
+
+	if (ipl & IPL_MPSAFE)
+		tq->tq_unlocked = 1;
+	else
+		tq->tq_unlocked = 0;
+	ipl &= IPL_MPSAFE;
 
 	mtx_init(&tq->tq_mtx, ipl);
 	TAILQ_INIT(&tq->tq_worklist);
@@ -238,12 +246,18 @@ taskq_thread(void *xtq)
 	struct task work;
 	int last;
 
+	if (tq->tq_unlocked)
+		KERNEL_UNLOCK();
+
 	while (taskq_next_work(tq, &work))
 		(*work.t_func)(work.t_arg1, work.t_arg2);
 
 	mtx_enter(&tq->tq_mtx);
 	last = (--tq->tq_running == 0);
 	mtx_leave(&tq->tq_mtx);
+
+	if (tq->tq_unlocked)
+		KERNEL_LOCK();
 
 	if (last)
 		wakeup_one(&tq->tq_running);
