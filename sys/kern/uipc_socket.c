@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.119 2013/08/27 03:32:11 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.120 2013/12/10 21:44:50 mikeb Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -489,9 +489,9 @@ restart:
 					MCLGET(m, M_NOWAIT);
 					if ((m->m_flags & M_EXT) == 0)
 						goto nopages;
-					mlen = MCLBYTES;
 					if (atomic && top == 0) {
-						len = lmin(MCLBYTES - max_hdr, resid);
+						len = lmin(MCLBYTES - max_hdr,
+						    resid);
 						m->m_data += max_hdr;
 					} else
 						len = lmin(MCLBYTES, resid);
