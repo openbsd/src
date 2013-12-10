@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.276 2013/12/09 18:05:36 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.277 2013/12/10 17:01:27 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -57,6 +57,7 @@
 #include "privsep.h"
 
 #include <sys/ioctl.h>
+#include <sys/uio.h>
 
 #include <poll.h>
 #include <pwd.h>
@@ -2338,31 +2339,33 @@ void
 write_file(char *path, int flags, mode_t mode, uid_t uid, gid_t gid,
     u_int8_t *contents, size_t sz)
 {
-	struct imsg_write_file *imsg;
+	struct iovec iov[2];
+	struct imsg_write_file imsg;
 	size_t rslt;
 
-	imsg = calloc(1, sizeof(*imsg) + sz);
-	if (imsg == NULL)
-		error("no memory for imsg_write_file");
-	imsg->rdomain = ifi->rdomain;
+	memset(&imsg, 0, sizeof(imsg));
 
-	rslt = strlcpy(imsg->path, path, MAXPATHLEN);
-	if (rslt >= MAXPATHLEN) {
-		free(imsg);
+	rslt = strlcpy(imsg.path, path, sizeof(imsg.path));
+	if (rslt >= sizeof(imsg.path)) {
 		warning("write_file: path too long (%zu)", rslt);
 		return;
 	}
-	memcpy(imsg->contents, contents, sz);
-	imsg->len = sz;
-	imsg->flags = flags;
-	imsg->mode = mode;
-	imsg->uid = uid;
-	imsg->gid = gid;
 
-	rslt = imsg_compose(unpriv_ibuf, IMSG_WRITE_FILE, 0, 0, -1, imsg,
-	    sizeof(*imsg) + sz);
+	imsg.rdomain = ifi->rdomain;
+	imsg.len = sz;
+	imsg.flags = flags;
+	imsg.mode = mode;
+	imsg.uid = uid;
+	imsg.gid = gid;
+
+	iov[0].iov_base = &imsg;
+	iov[0].iov_len = sizeof(imsg);
+	iov[1].iov_base = contents;
+	iov[1].iov_len = sz;
+
+	rslt = imsg_composev(unpriv_ibuf, IMSG_WRITE_FILE, 0, 0, -1, iov, 2);
 	if (rslt == -1)
-		warning("write_file: imsg_compose: %s", strerror(errno));
+		warning("write_file: imsg_composev: %s", strerror(errno));
 
 	/* Do flush to maximize chances of keeping file current. */
 	rslt = imsg_flush(unpriv_ibuf);
@@ -2386,7 +2389,7 @@ priv_write_file(struct imsg_write_file *imsg)
 		return;
 	}
 
-	n = write(fd, imsg->contents, imsg->len);
+	n = write(fd, imsg+1, imsg->len);
 	if (n == -1)
 		note("Couldn't write contents to '%s': %s", imsg->path,
 		    strerror(errno));
