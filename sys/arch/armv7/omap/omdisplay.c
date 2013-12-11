@@ -1,4 +1,4 @@
-/* $OpenBSD: omdisplay.c,v 1.3 2013/10/21 10:36:11 miod Exp $ */
+/* $OpenBSD: omdisplay.c,v 1.4 2013/12/11 12:51:51 naddy Exp $ */
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
  *
@@ -24,7 +24,6 @@
 #include <sys/conf.h>
 #include <sys/uio.h>
 #include <machine/bus.h>
-#include <armv7/omap/omapvar.h>
 #include <armv7/omap/omgpiovar.h>
 
 #include <dev/cons.h>
