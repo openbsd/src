@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.22 2013/12/06 23:40:48 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.23 2013/12/11 00:31:12 krw Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -146,7 +146,7 @@ decode_hw_header(unsigned char *buf, int bufix, struct ether_addr *from)
 
 	memcpy(&eh, buf + bufix, ETHER_HDR_LEN);
 
-	memcpy(from->ether_addr_octet, eh.ether_shost, sizeof(eh.ether_shost));
+	memcpy(from->ether_addr_octet, eh.ether_shost, ETHER_ADDR_LEN);
 
 	return (sizeof(eh));
 }
