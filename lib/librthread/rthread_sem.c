@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.17 2013/12/08 19:04:07 fgsch Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.18 2013/12/11 16:24:16 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -113,9 +113,7 @@ _sem_post(sem_t sem)
 int
 sem_init(sem_t *semp, int pshared, unsigned int value)
 {
-	char name[SEM_RANDOM_NAME_LEN];
-	sem_t sem, *sempshared;
-	int i;
+	sem_t sem;
 
 	if (value > SEM_VALUE_MAX) {
 		errno = EINVAL;
@@ -123,6 +121,13 @@ sem_init(sem_t *semp, int pshared, unsigned int value)
 	}
 
 	if (pshared) {
+		errno = EPERM;
+		return (-1);
+#ifdef notyet
+		char name[SEM_RANDOM_NAME_LEN];
+		sem_t *sempshared;
+		int i;
+
 		for (;;) {
 			for (i = 0; i < SEM_RANDOM_NAME_LEN - 1; i++)
 				name[i] = arc4random_uniform(255) + 1;
@@ -147,6 +152,7 @@ sem_init(sem_t *semp, int pshared, unsigned int value)
 		*semp = *sempshared;
 		free(sempshared);
 		return (0);
+#endif
 	}
 
 	sem = calloc(1, sizeof(*sem));
