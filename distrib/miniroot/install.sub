@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.717 2013/12/09 23:14:34 halex Exp $
+#	$OpenBSD: install.sub,v 1.718 2013/12/11 06:37:46 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -2140,6 +2140,9 @@ get_responsefile() {
 	_mode=$(sed -E '/^ *filename "auto_(install|upgrade)";$/!d;s//\1/;q' \
 		$_lf)
 	_mac=$(ifconfig $_ifdev | sed 's/.*lladdr \(.*\)/\1/p;d')
+
+	# Prime hostname with host-name option
+	hostname "$(sed -E '/^ *option host-name "(.*)";$/!d;s//\1/;q' $_lf)"
 
 	if [[ -z $_server ]]; then
 		echo "Could not determine next-server."
