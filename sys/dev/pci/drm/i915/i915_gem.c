@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.58 2013/12/09 20:09:55 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.59 2013/12/11 20:31:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1768,10 +1768,10 @@ i915_gem_object_put_pages_gtt(struct drm_i915_gem_object *obj)
 	}
 #else
 	for (i = 0; i < page_count; i++) {
-		struct vm_page *pg = PHYS_TO_VM_PAGE(obj->pages[i].ds_addr);
+		struct vm_page *page = obj->pages[i];
 
 		if (obj->dirty)
-			atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
+			atomic_clearbits_int(&page->pg_flags, PG_CLEAN);
 	}
 	uvm_objunwire(obj->base.uao, 0, obj->base.size);
 #endif
@@ -1877,9 +1877,9 @@ i915_gem_object_get_pages_gtt(struct drm_i915_gem_object *obj)
 	gfp_t gfp;
 #else
 	int page_count, i;
-	bus_dma_segment_t *segs;
+	struct vm_page **st;
 	struct pglist plist;
-	struct vm_page *pg;
+	struct vm_page *page;
 #endif
 
 	/* Assert that the object is not currently in any GPU domain. As it
@@ -1939,9 +1939,9 @@ i915_gem_object_get_pages_gtt(struct drm_i915_gem_object *obj)
 	obj->pages = st;
 #else
 	page_count = obj->base.size / PAGE_SIZE;
-	segs = malloc(page_count * sizeof(*segs), M_DRM,
-	    M_WAITOK | M_CANFAIL | M_ZERO);
-	if (segs == NULL)
+	st = malloc(page_count * sizeof(struct vm_page *), M_DRM,
+	    M_WAITOK | M_CANFAIL);
+	if (st == NULL)
 		return -ENOMEM;
 
 	TAILQ_INIT(&plist);
@@ -1949,12 +1949,11 @@ i915_gem_object_get_pages_gtt(struct drm_i915_gem_object *obj)
 		goto err_pages;
 
 	i = 0;
-	TAILQ_FOREACH(pg, &plist, pageq) {
-		segs[i].ds_addr = VM_PAGE_TO_PHYS(pg);
-		segs[i].ds_len = PAGE_SIZE;
+	TAILQ_FOREACH(page, &plist, pageq) {
+		st[i] = page;
 		i++;
 	}
-	obj->pages = segs;
+	obj->pages = st;
 #endif
 
 	if (i915_gem_object_needs_bit17_swizzle(obj))
@@ -1971,7 +1970,7 @@ err_pages:
 	return PTR_ERR(page);
 #else
 err_pages:
-	drm_free(segs);
+	drm_free(st);
 	return -ENOMEM;
 #endif
 }
@@ -3143,20 +3142,11 @@ i915_gem_clflush_object(struct drm_i915_gem_object *obj)
 	drm_clflush_sg(obj->pages);
 #else
 {
-	bus_dma_segment_t *segp;
 	int page_count = obj->base.size >> PAGE_SHIFT;
-	int i, n;
+	int i;
 
-	segp = &obj->pages[0];
-	n = 0;
-	for (i = 0; i < page_count; i++) {
-		pmap_flush_page(segp->ds_addr + n);
-		n += PAGE_SIZE;
-		if (n >= segp->ds_len) {
-			n = 0;
-			segp++;
-		}
-	}
+	for (i = 0; i < page_count; i++)
+		pmap_flush_page(VM_PAGE_TO_PHYS(obj->pages[i]));
 }
 #endif
 }

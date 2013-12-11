@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_gtt.c,v 1.7 2013/12/07 10:53:29 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_gtt.c,v 1.8 2013/12/11 20:31:43 kettenis Exp $	*/
 /*
  * Copyright © 2010 Daniel Vetter
  *
@@ -523,10 +523,9 @@ void i915_gem_gtt_bind_object(struct drm_i915_gem_object *obj,
 	unsigned int flags = (cache_level == I915_CACHE_NONE) ?
 		0 : BUS_DMA_COHERENT;
 	struct agp_softc *sc = dev->agp->agpdev;
-	bus_dma_segment_t *segp;
 	bus_addr_t addr = sc->sc_apaddr + obj->gtt_space->start;
 	int page_count = obj->base.size >> PAGE_SHIFT;
-	int i, n;
+	int i;
 
 	switch (cache_level) {
 	case I915_CACHE_NONE:
@@ -542,16 +541,9 @@ void i915_gem_gtt_bind_object(struct drm_i915_gem_object *obj,
 		BUG();
 	}
 
-	segp = &obj->pages[0];
-	n = 0;
 	for (i = 0; i < page_count; i++) {
 		sc->sc_methods->bind_page(sc->sc_chipc, addr,
-					  segp->ds_addr + n, flags);
-		n += PAGE_SIZE;
-		if (n >= segp->ds_len) {
-			n = 0;
-			segp++;
-		}
+		    VM_PAGE_TO_PHYS(obj->pages[i]), flags);
 		addr += PAGE_SIZE;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.44 2013/12/05 13:29:56 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.45 2013/12/11 20:31:43 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -997,7 +997,7 @@ struct drm_i915_gem_object {
 	unsigned int has_global_gtt_mapping:1;
 	unsigned int has_dma_mapping:1;
 
-	bus_dma_segment_t *pages;
+	struct vm_page **pages;
 	int pages_pin_count;
 
 	/**

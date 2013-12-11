@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_tiling.c,v 1.10 2013/11/20 21:55:23 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_tiling.c,v 1.11 2013/12/11 20:31:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -474,7 +474,7 @@ i915_gem_get_tiling(struct drm_device *dev, void *data,
  * bit 17 of its physical address and therefore being interpreted differently
  * by the GPU.
  */
-static int
+static void
 i915_gem_swizzle_page(struct vm_page *pg)
 {
 	char temp[64];
@@ -485,10 +485,8 @@ i915_gem_swizzle_page(struct vm_page *pg)
 #if defined (__HAVE_PMAP_DIRECT)
 	va = pmap_map_direct(pg);
 #else
-	va = uvm_km_valloc(kernel_map, PAGE_SIZE);
-	if (va == 0)
-		return (ENOMEM);
-	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), UVM_PROT_RW);
+	va = uvm_km_valloc_wait(kernel_map, PAGE_SIZE);
+	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 #endif
 	vaddr = (char *)va;
@@ -506,41 +504,24 @@ i915_gem_swizzle_page(struct vm_page *pg)
 	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, va, PAGE_SIZE);
 #endif
-	return (0);
 }
 
 void
 i915_gem_object_do_bit_17_swizzle(struct drm_i915_gem_object *obj)
 {
-	struct vm_page *pg;
-	bus_dma_segment_t *segp;
 	int page_count = obj->base.size >> PAGE_SHIFT;
-	int i, n, ret;
+	int i;
 
 	if (obj->bit_17 == NULL)
 		return;
 
-	segp = &obj->pages[0];
-	n = 0;
 	for (i = 0; i < page_count; i++) {
-		char new_bit_17 = (segp->ds_addr + n) >> 17;
+		struct vm_page *page = obj->pages[i];
+		char new_bit_17 = VM_PAGE_TO_PHYS(page) >> 17;
 		if ((new_bit_17 & 0x1) !=
 		    (test_bit(i, obj->bit_17) != 0)) {
-			/* XXX move this to somewhere where we already have pg */
-			pg = PHYS_TO_VM_PAGE(segp->ds_addr + n);
-			KASSERT(pg != NULL);
-			ret = i915_gem_swizzle_page(pg);
-			if (ret) {
-				printf("%s: page swizzle failed\n", __func__);
-				return;
-			}
-			atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
-		}
-
-		n += PAGE_SIZE;
-		if (n >= segp->ds_len) {
-			n = 0;
-			segp++;
+			i915_gem_swizzle_page(page);
+			atomic_clearbits_int(&page->pg_flags, PG_CLEAN);
 		}
 	}
 }
@@ -548,9 +529,8 @@ i915_gem_object_do_bit_17_swizzle(struct drm_i915_gem_object *obj)
 void
 i915_gem_object_save_bit_17_swizzle(struct drm_i915_gem_object *obj)
 {
-	bus_dma_segment_t *segp;
 	int page_count = obj->base.size >> PAGE_SHIFT;
-	int i, n;
+	int i;
 
 	if (obj->bit_17 == NULL) {
 		/* round up number of pages to a multiple of 32 so we know what
@@ -566,18 +546,11 @@ i915_gem_object_save_bit_17_swizzle(struct drm_i915_gem_object *obj)
 		}
 	}
 
-	segp = &obj->pages[0];
-	n = 0;
 	for (i = 0; i < page_count; i++) {
-		if ((segp->ds_addr + n) & (1 << 17))
+		struct vm_page *page = obj->pages[i];
+		if (VM_PAGE_TO_PHYS(page) & (1 << 17))
 			set_bit(i, obj->bit_17);
 		else
 			clear_bit(i, obj->bit_17);
-
-		n += PAGE_SIZE;
-		if (n >= segp->ds_len) {
-			n = 0;
-			segp++;
-		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.24 2013/12/07 10:48:35 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.25 2013/12/11 20:31:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1322,11 +1322,5 @@ kunmap_atomic(void *addr)
 static inline struct vm_page *
 i915_gem_object_get_page(struct drm_i915_gem_object *obj, int n)
 {
-	bus_dma_segment_t *segp;
-	struct vm_page *pg;
-
-	segp = &obj->pages[n];
-	pg = PHYS_TO_VM_PAGE(segp->ds_addr);
-
-	return (pg);
+	return (obj->pages[n]);
 }
