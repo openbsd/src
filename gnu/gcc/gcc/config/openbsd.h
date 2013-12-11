@@ -343,12 +343,6 @@ __enable_execute_stack (void *addr)					\
     perror ("mprotect of trampoline code");				\
 }
 
-/* 
- * Disable the use of unsafe builtin functions, (strcat, strcpy, stpcpy),
- * making them easier to spot in the object files.
- */
-#define NO_UNSAFE_BUILTINS
-
 /* The system headers on OpenBSD are C++-aware.  */
 #undef NO_IMPLICIT_EXTERN_C
 #define NO_IMPLICIT_EXTERN_C
