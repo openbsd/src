@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_disp.c,v 1.20 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: init_disp.c,v 1.21 2013/12/11 14:28:20 naddy Exp $	*/
 /*	$NetBSD: init_disp.c,v 1.6 1994/12/09 02:14:17 jtc Exp $	*/
 
 /*
@@ -37,7 +37,6 @@
 
 #include "talk.h"
 #include <sys/ioctl.h>
-#include <sys/ioctl_compat.h>
 #include <err.h>
 #include <stdlib.h>
 #include <termios.h>
