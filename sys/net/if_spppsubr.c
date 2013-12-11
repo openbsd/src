@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.113 2013/11/20 08:21:33 stsp Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.114 2013/12/11 18:27:23 jca Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4488,7 +4488,7 @@ sppp_keepalive(void *dummy)
 			sppp_cisco_send (sp, CISCO_KEEPALIVE_REQ, ++sp->pp_seq,
 				sp->pp_rseq);
 		else if (sp->pp_phase >= PHASE_AUTHENTICATE) {
-			unsigned long nmagic = htonl (sp->lcp.magic);
+			u_int32_t nmagic = htonl(sp->lcp.magic);
 			sp->lcp.echoid = ++sp->pp_seq;
 			sppp_cp_send (sp, PPP_LCP, ECHO_REQ,
 				sp->lcp.echoid, 4, &nmagic);
