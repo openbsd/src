@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.13 2012/10/17 22:32:01 deraadt Exp $	*/
+/*	$OpenBSD: imc.c,v 1.14 2013/12/11 19:36:12 miod Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -550,11 +550,11 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 	 * Finally, turn on interrupt writes to the CPU from the MC.
 	 */
 	reg = imc_read(IMC_CPUCTRL0);
-	reg &= ~IMC_CPUCTRL0_NCHKMEMPAR;
 	if (ip22_ecc)
 		reg &= ~(IMC_CPUCTRL0_GPR | IMC_CPUCTRL0_MPR);
 	else
 		reg |= IMC_CPUCTRL0_GPR | IMC_CPUCTRL0_MPR;
+	reg &= ~IMC_CPUCTRL0_NCHKMEMPAR;
 	reg |= IMC_CPUCTRL0_INTENA;
 	imc_write(IMC_CPUCTRL0, reg);
 
@@ -721,7 +721,8 @@ imc_bus_error(uint32_t hwpend, struct trap_frame *tf)
 		 * non-existing memory when in the kernel. We do not
 		 * want to flood the console about those.
 		 */
-		if (cpustat & IMC_CPU_ERRSTAT_ADDR)
+		if ((cpustat & IMC_CPU_ERRSTAT_ADDR) &&
+		    IS_XKPHYS((vaddr_t)tf->pc))
 			quiet = 1;
 		/* This happens. No idea why. */
 		if (cpustat == 0 && giostat == 0)
@@ -730,10 +731,23 @@ imc_bus_error(uint32_t hwpend, struct trap_frame *tf)
 	}
 
 	if (quiet == 0) {
-		printf("bus error: "
-		    "cpu_stat %08x addr %08x, gio_stat %08x addr %08x\n",
-		    cpustat, imc_read(IMC_CPU_ERRADDR),
-		    giostat, imc_read(IMC_GIO_ERRADDR));
+		printf("bus error:");
+		if (cpustat != 0) {
+			vaddr_t pc = tf->pc;
+			uint32_t insn = 0xffffffff;
+
+			if (tf->pc < 0)
+				guarded_read_4(pc, &insn);
+			else
+				copyin((void *)pc, &insn, sizeof insn);
+
+			printf(" cpu_stat %08x addr %08x pc %p insn %08x",
+			    cpustat, imc_read(IMC_CPU_ERRADDR), pc, insn);
+		}
+		if (giostat != 0)
+			printf(" gio_stat %08x addr %08x",
+			    giostat, imc_read(IMC_GIO_ERRADDR));
+		printf("\n");
 	}
 
 	if (cpustat != 0)
