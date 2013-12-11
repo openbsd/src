@@ -5933,9 +5933,11 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
       break;
 
     case BUILT_IN_STRCPY:
+#ifndef NO_UNSAFE_BUILTINS
       target = expand_builtin_strcpy (fndecl, arglist, target, mode);
       if (target)
 	return target;
+#endif
       break;
 
     case BUILT_IN_STRNCPY:
@@ -5945,15 +5947,19 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
       break;
 
     case BUILT_IN_STPCPY:
+#ifndef NO_UNSAFE_BUILTINS
       target = expand_builtin_stpcpy (exp, target, mode);
       if (target)
 	return target;
+#endif
       break;
 
     case BUILT_IN_STRCAT:
+#ifndef NO_UNSAFE_BUILTINS
       target = expand_builtin_strcat (fndecl, arglist, target, mode);
       if (target)
 	return target;
+#endif
       break;
 
     case BUILT_IN_STRNCAT:
