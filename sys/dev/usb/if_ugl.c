@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ugl.c,v 1.3 2013/12/05 20:53:15 sasano Exp $	*/
+/*	$OpenBSD: if_ugl.c,v 1.4 2013/12/11 01:12:01 brad Exp $	*/
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2013 SASANO Takayoshi <uaa@uaa.org.uk>
@@ -298,6 +298,7 @@ ugl_attach(struct device *parent, struct device *self, void *aux)
 	/* Initialize interface info.*/
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
+	ifp->if_hardmtu = UGL_MAX_MTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = ugl_ioctl;
 	ifp->if_start = ugl_start;
@@ -710,9 +711,6 @@ ugl_init(void *xsc)
 
 	DPRINTFN(10,("%s: %s: enter\n", sc->sc_dev.dv_xname,__func__));
 
-	if (ifp->if_flags & IFF_RUNNING)
-		return;
-
 	s = splnet();
 
 	/* Init TX ring. */
@@ -830,7 +828,6 @@ ugl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct ugl_softc	*sc = ifp->if_softc;
 	struct ifaddr 		*ifa = (struct ifaddr *)data;
-	struct ifreq		*ifr = (struct ifreq *)data;
 	int			s, error = 0;
 
 	if (usbd_is_dying(sc->sc_udev))
@@ -844,38 +841,33 @@ ugl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		ugl_init(sc);
-
-		switch (ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			ugl_init(sc);
 #ifdef INET
-		case AF_INET:
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
-#endif /* INET */
-		}
-		break;
-
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > UGL_MAX_MTU)
-			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
+#endif
 		break;
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
 				ugl_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				ugl_stop(sc);
 		}
-		error = 0;
 		break;
+
 	default:
-		error = ENOTTY;
+		error = ether_ioctl(ifp, &sc->sc_arpcom, command, data);
 		break;
 	}
+
+	if (error == ENETRESET)
+		error = 0;
 
 	splx(s);
 	return (error);
