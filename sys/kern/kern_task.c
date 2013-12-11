@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.7 2013/12/10 17:08:01 kettenis Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.8 2013/12/11 22:39:49 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -81,7 +81,7 @@ taskq_create(const char *name, unsigned int nthreads, int ipl)
 		tq->tq_unlocked = 1;
 	else
 		tq->tq_unlocked = 0;
-	ipl &= IPL_MPSAFE;
+	ipl &= ~IPL_MPSAFE;
 
 	mtx_init(&tq->tq_mtx, ipl);
 	TAILQ_INIT(&tq->tq_worklist);
