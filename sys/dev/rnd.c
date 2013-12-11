@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.146 2013/12/11 04:45:54 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.147 2013/12/11 16:39:30 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -76,14 +76,14 @@
  * If this estimate goes to zero, the SHA256 hash will continue to generate
  * output since there is no true risk because the SHA256 output is not
  * exported outside this subsystem.  It is next used as input to seed a
- * RC4 stream cipher.  Attempts are made to follow best practice
+ * Chacha stream cipher.  Attempts are made to follow best practice
  * regarding this stream cipher - the first chunk of output is discarded
  * and the cipher is re-seeded from time to time.  This design provides
  * very high amounts of output data from a potentially small entropy
  * base, at high enough speeds to encourage use of random numbers in
  * nearly any situation.
  *
- * The output of this single RC4 engine is then shared amongst many
+ * The output of this single Chacha engine is then shared amongst many
  * consumers in the kernel and userland via a few interfaces:
  * arc4random_buf(), arc4random(), arc4random_uniform(), randomread()
  * for the set of /dev/random nodes, and the sysctl kern.arandom.
@@ -105,8 +105,8 @@
  * RFC 1750, "Randomness Recommendations for Security", by Donald
  * Eastlake, Steve Crocker, and Jeff Schiller.
  *
- * Using a RC4 stream cipher as 2nd stage after the MD5 (now SHA256) output
- * is the result of work by David Mazieres.
+ * Using a RC4 (now ChaCha) stream cipher as 2nd stage after the MD5
+ * (now SHA256) output is the result of work by David Mazieres.
  */
 
 #include <sys/param.h>
@@ -662,7 +662,7 @@ _rs_random_u32(u_int32_t *val)
 	return;
 }
 
-/* Return one word of randomness from an RC4 generator */
+/* Return one word of random data */
 u_int32_t
 arc4random(void)
 {
@@ -675,9 +675,7 @@ arc4random(void)
 	return ret;
 }
 
-/*
- * Fill a buffer of arbitrary length with RC4-derived randomness.
- */
+/* Fill a buffer of arbitrary length with random data */
 void
 arc4random_buf(void *buf, size_t n)
 {
