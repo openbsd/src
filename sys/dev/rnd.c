@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.147 2013/12/11 16:39:30 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.148 2013/12/11 19:34:11 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -64,26 +64,26 @@
  * a small random token to the "rnd states" queue.
  *
  * When random bytes are desired, they are obtained by pulling from
- * the entropy pool and running a SHA256 hash. The SHA256 hash avoids
+ * the entropy pool and running a MD5 hash. The MD5 hash avoids
  * exposing the internal state of the entropy pool.  Even if it is
- * possible to analyze SHA256 in some clever way, as long as the amount
+ * possible to analyze MD5 in some clever way, as long as the amount
  * of data returned from the generator is less than the inherent
  * entropy in the pool, the output data is totally unpredictable.  For
  * this reason, the routine decreases its internal estimate of how many
  * bits of "true randomness" are contained in the entropy pool as it
  * outputs random numbers.
  *
- * If this estimate goes to zero, the SHA256 hash will continue to generate
- * output since there is no true risk because the SHA256 output is not
+ * If this estimate goes to zero, the MD5 hash will continue to generate
+ * output since there is no true risk because the MD5 output is not
  * exported outside this subsystem.  It is next used as input to seed a
- * Chacha stream cipher.  Attempts are made to follow best practice
+ * RC4 stream cipher.  Attempts are made to follow best practice
  * regarding this stream cipher - the first chunk of output is discarded
  * and the cipher is re-seeded from time to time.  This design provides
  * very high amounts of output data from a potentially small entropy
  * base, at high enough speeds to encourage use of random numbers in
  * nearly any situation.
  *
- * The output of this single Chacha engine is then shared amongst many
+ * The output of this single RC4 engine is then shared amongst many
  * consumers in the kernel and userland via a few interfaces:
  * arc4random_buf(), arc4random(), arc4random_uniform(), randomread()
  * for the set of /dev/random nodes, and the sysctl kern.arandom.
@@ -105,8 +105,8 @@
  * RFC 1750, "Randomness Recommendations for Security", by Donald
  * Eastlake, Steve Crocker, and Jeff Schiller.
  *
- * Using a RC4 (now ChaCha) stream cipher as 2nd stage after the MD5
- * (now SHA256) output is the result of work by David Mazieres.
+ * Using a RC4 stream cipher as 2nd stage after the MD5 output
+ * is the result of work by David Mazieres.
  */
 
 #include <sys/param.h>
@@ -124,7 +124,7 @@
 #include <sys/task.h>
 #include <sys/msgbuf.h>
 
-#include <crypto/sha2.h>
+#include <crypto/md5.h>
 
 #define KEYSTREAM_ONLY
 #include <crypto/chacha_private.h>
@@ -480,15 +480,15 @@ dequeue_randomness(void *v)
 }
 
 /*
- * Grabs a chunk from the entropy_pool[] and slams it through SHA2 when
+ * Grabs a chunk from the entropy_pool[] and slams it through MD5 when
  * requested.
  */
 void
 extract_entropy(u_int8_t *buf, int nbytes)
 {
-	static u_int8_t extract_pool[POOLBYTES];
-	u_char buffer[SHA256_DIGEST_LENGTH];
-	SHA2_CTX tmp;
+	static u_int32_t extract_pool[POOLWORDS];
+	u_char buffer[MD5_DIGEST_LENGTH];
+	MD5_CTX tmp;
 	u_int i;
 
 	add_timer_randomness(nbytes);
@@ -499,14 +499,15 @@ extract_entropy(u_int8_t *buf, int nbytes)
 		/*
 		 * INTENTIONALLY not protected by entropylock.  Races
 		 * during bcopy() result in acceptable input data; races
-		 * during SHA256Update() would create nasty data dependencies.
+		 * during MD5Update() would create nasty data dependencies.
 		 */
-		bcopy(entropy_pool, extract_pool, sizeof(extract_pool));
+		bcopy(entropy_pool, extract_pool,
+		    sizeof(extract_pool));
 
 		/* Hash the pool to get the output */
-		SHA256Init(&tmp);
-		SHA256Update(&tmp, extract_pool, sizeof(extract_pool));
-		SHA256Final(buffer, &tmp);
+		MD5Init(&tmp);
+		MD5Update(&tmp, (u_int8_t *)extract_pool, sizeof(extract_pool));
+		MD5Final(buffer, &tmp);
 
 		/* Copy data to destination buffer */
 		bcopy(buffer, buf, i);
@@ -577,7 +578,7 @@ _rs_stir(int do_lock)
 	int i;
 
 	/*
-	 * Use SHA256 PRNG data and a system timespec; early in the boot
+	 * Use MD5 PRNG data and a system timespec; early in the boot
 	 * process this is the best we can do -- some architectures do
 	 * not collect entropy very well during this time, but may have
 	 * clock information which is better than nothing.
@@ -662,7 +663,7 @@ _rs_random_u32(u_int32_t *val)
 	return;
 }
 
-/* Return one word of random data */
+/* Return one word of randomness from an RC4 generator */
 u_int32_t
 arc4random(void)
 {
@@ -675,7 +676,9 @@ arc4random(void)
 	return ret;
 }
 
-/* Fill a buffer of arbitrary length with random data */
+/*
+ * Fill a buffer of arbitrary length with RC4-derived randomness.
+ */
 void
 arc4random_buf(void *buf, size_t n)
 {
