@@ -1,4 +1,4 @@
-.\"   $OpenBSD: slowcgi.8,v 1.4 2013/08/26 08:02:03 blambert Exp $
+.\"   $OpenBSD: slowcgi.8,v 1.5 2013/12/12 10:48:52 florian Exp $
 .\"
 .\" Copyright (c) 2013 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 26 2013 $
+.Dd $Mdocdate: December 12 2013 $
 .Dt SLOWCGI 8
 .Os
 .Sh NAME
@@ -36,7 +36,9 @@ with permissions 0660.
 It then
 .Xr chroot 8
 to
-.Pa /var/www .
+.Pa /var/www
+and drops privileges to user
+.Qq www .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
