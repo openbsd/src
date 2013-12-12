@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.80 2013/11/25 00:33:21 djm Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.81 2013/12/12 21:00:09 guenther Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -477,17 +477,24 @@ int
 db_printf(const char *fmt, ...)
 {
 	va_list ap;
-	int flags, retval;
+	int retval;
 
-	flags = TODDB;
-	if (db_log)
-		flags |= TOLOG;
 	va_start(ap, fmt);
-	retval = kprintf(fmt, flags, NULL, NULL, ap);
+	retval = db_vprintf(fmt, ap);
 	va_end(ap);
 	return(retval);
 }
 
+int
+db_vprintf(const char *fmt, va_list ap)
+{
+	int flags;
+
+	flags = TODDB;
+	if (db_log)
+		flags |= TOLOG;
+	return (kprintf(fmt, flags, NULL, NULL, ap));
+}
 #endif /* DDB */
 
 

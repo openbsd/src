@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.28 2013/11/18 23:44:57 deraadt Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.29 2013/12/12 21:00:09 guenther Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -298,13 +298,10 @@ db_acpi_showval(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 void db_disprint(void *arg, const char *fmt, ...)
 {
 	va_list ap;
-	char    stre[64];
 
 	va_start(ap,fmt);
-	vsnprintf(stre, sizeof(stre), fmt, ap);
+	db_vprintf(fmt, ap);
 	va_end(ap);
-
-	db_printf("%s", stre);
 }
 
 void
