@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.33 2013/12/02 16:05:07 jsing Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.34 2013/12/12 06:51:08 guenther Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -554,6 +554,7 @@ ntfs_readdir(void *v)
 			cde->d_fileno = iep->ie_number;
 			cde->d_type = (iep->ie_fflag & NTFS_FFLAG_DIR) ? DT_DIR : DT_REG;
 			cde->d_reclen = sizeof(struct dirent);
+			cde->d_off = uio->uio_offset + sizeof(struct dirent);
 			DPRINTF("%s\n", cde->d_type == DT_DIR ? "dir" : "reg");
 
 			error = uiomove((void *)cde, sizeof(struct dirent), uio);
