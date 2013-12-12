@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.40 2012/12/08 12:04:21 mpi Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.41 2013/12/12 21:04:50 kettenis Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -673,10 +673,6 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	segs[0]._ds_boundary = boundary;
 	segs[0]._ds_align = alignment;
-	if (flags & BUS_DMA_SG) {
-		boundary = 0;
-		alignment = 0;
-	}
 
 	/*
 	 * Allocate pages from the VM system.

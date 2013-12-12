@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.29 2013/03/17 21:49:00 kettenis Exp $	*/
+/*	$OpenBSD: bus.h,v 1.30 2013/12/12 21:04:50 kettenis Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -525,14 +525,6 @@ extern const struct x86_bus_space_ops x86_bus_space_mem_ops;
 #define	BUS_DMA_WRITE		0x0400	/* mapping is memory -> device only */
 #define	BUS_DMA_NOCACHE		0x0800	/* map memory uncached */
 #define	BUS_DMA_ZERO		0x1000	/* zero memory in dmamem_alloc */
-#define	BUS_DMA_SG		0x2000	/* Internal. memory is for SG map */
-
-/* types for _dm_buftype */
-#define	BUS_BUFTYPE_INVALID	0
-#define	BUS_BUFTYPE_LINEAR	1
-#define	BUS_BUFTYPE_MBUF	2
-#define	BUS_BUFTYPE_UIO		3
-#define	BUS_BUFTYPE_RAW		4
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
@@ -695,66 +687,5 @@ int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    paddr_t low, paddr_t high);
-
-struct extent;
-
-/* Scatter gather bus_dma functions. */
-struct sg_cookie {
-	struct mutex	 sg_mtx;
-	struct extent	*sg_ex;
-	void		*sg_hdl;
-
-	void		(*bind_page)(void *, bus_addr_t, paddr_t, int);
-	void		(*unbind_page)(void *, bus_addr_t);
-	void		(*flush_tlb)(void *);
-};
-
-/* 
- * per-map DVMA page table
- */
-struct sg_page_entry {
-	SPLAY_ENTRY(sg_page_entry)	spe_node;
-	paddr_t				spe_pa;
-	bus_addr_t			spe_va;
-};
-
-/* for sg_dma this will be in the map's dm_cookie. */
-struct sg_page_map {
-	SPLAY_HEAD(sg_page_tree, sg_page_entry) spm_tree;
-
-	void			*spm_origbuf;	/* pointer to original data */
-	int			 spm_buftype;	/* type of data */
-	struct proc		*spm_proc;	/* proc that owns the mapping */
-
-	int			 spm_maxpage;	/* Size of allocated page map */
-	int			 spm_pagecnt;	/* Number of entries in use */
-	bus_addr_t		 spm_start;	/* dva when bound */
-	bus_size_t		 spm_size;	/* size of bound map */
-	struct sg_page_entry	 spm_map[1];
-};
-
-struct sg_cookie	*sg_dmatag_init(char *, void *, bus_addr_t, bus_size_t,
-			    void (*)(void *, vaddr_t, paddr_t, int),
-			    void (*)(void *, vaddr_t), void (*)(void *));
-void	sg_dmatag_destroy(struct sg_cookie *);
-int	sg_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
-	    bus_size_t, int, bus_dmamap_t *);
-void	sg_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
-void	sg_dmamap_set_alignment(bus_dma_tag_t, bus_dmamap_t, u_long);
-int	sg_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
-	    struct proc *, int);
-int	sg_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int);
-int	sg_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t, struct uio *, int);
-int	sg_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
-	    int, bus_size_t, int);
-void	sg_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
-int	sg_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
-	    struct proc *, int, int *, int);
-int	sg_dmamap_load_physarray(bus_dma_tag_t, bus_dmamap_t, paddr_t *,
-	    int, int, int *, int);
-void	sg_dmamap_reload(bus_dma_tag_t, bus_dmamap_t, int);
-int	sg_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
-	    bus_dma_segment_t *, int, int *, int);
 
 #endif /* _MACHINE_BUS_H_ */
