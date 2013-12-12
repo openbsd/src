@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.46 2013/04/15 15:32:19 jsing Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.47 2013/12/12 19:00:10 tedu Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -147,14 +147,14 @@ mfs_mount(struct mount *mp, const char *path, void *data,
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 
-	bzero(fs->fs_fsmnt, sizeof(fs->fs_fsmnt));
+	memset(fs->fs_fsmnt, 0, sizeof(fs->fs_fsmnt));
 	strlcpy(fs->fs_fsmnt, path, sizeof(fs->fs_fsmnt));
-	bcopy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
-	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
+	memcpy(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN);
+	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntfromname, fspec, MNAMELEN);
-	bzero(mp->mnt_stat.f_mntfromspec, MNAMELEN);
+	memset(mp->mnt_stat.f_mntfromspec, 0, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntfromspec, fspec, MNAMELEN);
-	bcopy(&args, &mp->mnt_stat.mount_info.mfs_args, sizeof(args));
+	memcpy(&mp->mnt_stat.mount_info.mfs_args, &args, sizeof(args));
 
 	return (0);
 }
@@ -221,8 +221,8 @@ mfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	error = ffs_statfs(mp, sbp, p);
 	strncpy(&sbp->f_fstypename[0], mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	if (sbp != &mp->mnt_stat)
-		bcopy(&mp->mnt_stat.mount_info.mfs_args,
-		    &sbp->mount_info.mfs_args, sizeof(struct mfs_args));
+		memcpy(&sbp->mount_info.mfs_args,
+		    &mp->mnt_stat.mount_info.mfs_args, sizeof(struct mfs_args));
 	return (error);
 }
 

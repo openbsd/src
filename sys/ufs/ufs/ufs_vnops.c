@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.110 2013/11/23 19:07:51 guenther Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.111 2013/12/12 19:00:10 tedu Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1166,7 +1166,7 @@ ufs_mkdir(void *v)
 	DIP_ASSIGN(ip, size, DIRBLKSIZ);
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	uvm_vnp_setsize(tvp, DIP(ip, size));
-	bcopy((caddr_t)&dirtemplate, (caddr_t)bp->b_data, sizeof dirtemplate);
+	memcpy(bp->b_data, &dirtemplate, sizeof(dirtemplate));
 	if (DOINGSOFTDEP(tvp)) {
 		/*
 		 * Ensure that the entire newly allocated block is a
@@ -1351,7 +1351,7 @@ ufs_symlink(void *v)
 	len = strlen(ap->a_target);
 	if (len < vp->v_mount->mnt_maxsymlinklen) {
 		ip = VTOI(vp);
-		bcopy(ap->a_target, (char *)SHORTLINK(ip), len);
+		memcpy(SHORTLINK(ip), ap->a_target, len);
 		DIP_ASSIGN(ip, size, len);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	} else
@@ -1451,7 +1451,7 @@ ufs_readdir(void *v)
 			u.dn.d_namlen = dp->d_namlen;
 		}
 		memcpy(u.dn.d_name, dp->d_name, u.dn.d_namlen);
-		bzero(u.dn.d_name + u.dn.d_namlen, u.dn.d_reclen
+		memset(u.dn.d_name + u.dn.d_namlen, 0, u.dn.d_reclen
 		    - u.dn.d_namlen - offsetof(struct dirent, d_name));
 
 		error = uiomove(&u.dn, u.dn.d_reclen, uio);

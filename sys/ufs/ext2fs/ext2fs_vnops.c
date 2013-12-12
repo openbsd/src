@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.62 2013/03/28 03:29:44 guenther Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.63 2013/12/12 19:00:09 tedu Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -931,7 +931,7 @@ ext2fs_mkdir(void *v)
 		goto bad;
 
 	/* Initialize directory with "." and ".." from static template. */
-	bzero(&dirtemplate, sizeof(dirtemplate));
+	memset(&dirtemplate, 0, sizeof(dirtemplate));
 	dirtemplate.dot_ino = h2fs32(ip->i_number);
 	dirtemplate.dot_reclen = h2fs16(12);
 	dirtemplate.dot_namlen = 1;
@@ -1086,7 +1086,7 @@ ext2fs_symlink(void *v)
 	len = strlen(ap->a_target);
 	if (len < vp->v_mount->mnt_maxsymlinklen) {
 		ip = VTOI(vp);
-		bcopy(ap->a_target, (char *)ip->i_e2din->e2di_shortlink, len);
+		memcpy(ip->i_e2din->e2di_shortlink, ap->a_target, len);
 		error = ext2fs_setsize(ip, len);
 		if (error)
 			goto bad;

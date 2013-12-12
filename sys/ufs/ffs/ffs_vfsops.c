@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.139 2013/12/01 16:40:56 krw Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.140 2013/12/12 19:00:10 tedu Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -148,8 +148,7 @@ ffs_mountroot(void)
 	TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
-	(void)copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1,
-	    NULL);
+	strlcpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname, sizeof(fs->fs_fsmnt));
 	(void)ffs_statfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
 	inittodr(fs->fs_time);
@@ -339,7 +338,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 		goto error_1;
 
 	if (disk_map(fspec, fname, MNAMELEN, DM_OPENBLCK) == -1)
-		bcopy(fspec, fname, sizeof(fname));
+		memcpy(fname, fspec, sizeof(fname));
 
 	NDINIT(ndp, LOOKUP, FOLLOW, UIO_SYSSPACE, fname, p);
 	if ((error = namei(ndp)) != 0)
@@ -394,9 +393,9 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 			/*
 			 * Save "mounted from" info for mount point (NULL pad)
 			 */
-			bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
+			memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
 			strlcpy(mp->mnt_stat.f_mntfromname, fname, MNAMELEN);
-			bzero(mp->mnt_stat.f_mntfromspec, MNAMELEN);
+			memset(mp->mnt_stat.f_mntfromspec, 0, MNAMELEN);
 			strlcpy(mp->mnt_stat.f_mntfromspec, fspec, MNAMELEN);
 		}
 	} else {
@@ -406,11 +405,11 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 		 * error occurs,  the mountpoint is discarded by the
 		 * upper level code.
 		 */
-		bzero(mp->mnt_stat.f_mntonname, MNAMELEN);
+		memset(mp->mnt_stat.f_mntonname, 0, MNAMELEN);
 		strlcpy(mp->mnt_stat.f_mntonname, path, MNAMELEN);
-		bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
+		memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
 		strlcpy(mp->mnt_stat.f_mntfromname, fname, MNAMELEN);
-		bzero(mp->mnt_stat.f_mntfromspec, MNAMELEN);
+		memset(mp->mnt_stat.f_mntfromspec, 0, MNAMELEN);
 		strlcpy(mp->mnt_stat.f_mntfromspec, fspec, MNAMELEN);
 
 		error = ffs_mountfs(devvp, mp, p);
@@ -425,7 +424,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	 *
 	 * This code is common to root and non-root mounts
 	 */
-	bcopy(&args, &mp->mnt_stat.mount_info.ufs_args, sizeof(args));
+	memcpy(&mp->mnt_stat.mount_info.ufs_args, &args, sizeof(args));
 	VFS_STATFS(mp, &mp->mnt_stat, p);
 
 success:
@@ -571,7 +570,7 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	newfs->fs_csp = fs->fs_csp;
 	newfs->fs_maxcluster = fs->fs_maxcluster;
 	newfs->fs_ronly = fs->fs_ronly;
-	bcopy(newfs, fs, (u_int)fs->fs_sbsize);
+	memcpy(fs, newfs, fs->fs_sbsize);
 	if (fs->fs_sbsize < SBSIZE)
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
@@ -593,7 +592,7 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 			brelse(bp);
 			return (error);
 		}
-		bcopy(bp->b_data, space, (u_int)size);
+		memcpy(space, bp->b_data, size);
 		space += size;
 		brelse(bp);
 	}
@@ -666,7 +665,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	daddr_t sbloc;
 	int error, i, blks, size, ronly;
 	int32_t *lp;
-	size_t strsize;
 	struct ucred *cred;
 	u_int64_t maxfilesize;					/* XXX */
 
@@ -787,7 +785,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		ump->um_fstype = UM_UFS2;
 #endif
 
-	bcopy(bp->b_data, ump->um_fs, (u_int)fs->fs_sbsize);
+	memcpy(ump->um_fs, bp->b_data, fs->fs_sbsize);
 	if (fs->fs_sbsize < SBSIZE)
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
@@ -814,7 +812,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 			free(fs->fs_csp, M_UFSMNT);
 			goto out;
 		}
-		bcopy(bp->b_data, space, (u_int)size);
+		memcpy(space, bp->b_data, size);
 		space += size;
 		brelse(bp);
 		bp = NULL;
@@ -856,11 +854,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	/*
 	 * Set FS local "last mounted on" information (NULL pad)
 	 */
-	copystr(mp->mnt_stat.f_mntonname,	/* mount point*/
-		fs->fs_fsmnt,			/* copy area*/
-		sizeof(fs->fs_fsmnt) - 1,	/* max size*/
-		&strsize);			/* real size*/
-	bzero(fs->fs_fsmnt + strsize, sizeof(fs->fs_fsmnt) - strsize);
+	memset(fs->fs_fsmnt, 0, sizeof(fs->fs_fsmnt));
+	strlcpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname, sizeof(fs->fs_fsmnt));
 
 #if 0
 	if( mp->mnt_flag & MNT_ROOTFS) {
@@ -1423,7 +1418,7 @@ ffs_sbupdate(struct ufsmount *mp, int waitfor)
 			size = (blks - i) * fs->fs_fsize;
 		bp = getblk(mp->um_devvp, fsbtodb(fs, fs->fs_csaddr + i),
 			    size, 0, 0);
-		bcopy(space, bp->b_data, (u_int)size);
+		memcpy(bp->b_data, space, size);
 		space += size;
 		if (waitfor != MNT_WAIT)
 			bawrite(bp);
@@ -1445,7 +1440,7 @@ ffs_sbupdate(struct ufsmount *mp, int waitfor)
 	    (int)fs->fs_sbsize, 0, 0);
 	fs->fs_fmod = 0;
 	fs->fs_time = time_second;
-	bcopy((caddr_t)fs, bp->b_data, (u_int)fs->fs_sbsize);
+	memcpy(bp->b_data, fs, fs->fs_sbsize);
 	/* Restore compatibility to old file systems.		   XXX */
 	dfs = (struct fs *)bp->b_data;				/* XXX */
 	if (fs->fs_postblformat == FS_42POSTBLFMT)		/* XXX */

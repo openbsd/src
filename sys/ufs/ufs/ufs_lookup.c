@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.42 2013/05/30 19:19:09 guenther Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.43 2013/12/12 19:00:10 tedu Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -672,7 +672,7 @@ ufs_makedirentry(struct inode *ip, struct componentname *cnp,
 #endif
 	newdirp->d_ino = ip->i_number;
 	newdirp->d_namlen = cnp->cn_namelen;
-	bcopy(cnp->cn_nameptr, newdirp->d_name, (unsigned)cnp->cn_namelen + 1);
+	memcpy(newdirp->d_name, cnp->cn_nameptr, cnp->cn_namelen + 1);
 	if (ITOV(ip)->v_mount->mnt_maxsymlinklen > 0)
 		newdirp->d_type = IFTODT(DIP(ip, mode));
   	else {
@@ -738,7 +738,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
   		dirp->d_reclen = DIRBLKSIZ;
 		blkoff = dp->i_offset &
 		    (VFSTOUFS(dvp->v_mount)->um_mountp->mnt_stat.f_iosize - 1);
-		bcopy((caddr_t)dirp, (caddr_t)bp->b_data + blkoff,newentrysize);
+		memcpy(bp->b_data + blkoff, dirp, newentrysize);
 
 #ifdef UFS_DIRHASH
 		if (dp->i_dirhash != NULL) {
@@ -836,7 +836,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 		ep->d_reclen = dsize;
 		ep = (struct direct *)((char *)ep + dsize);
 
-		/* Read nep->d_reclen now as the bcopy() may clobber it. */
+		/* Read nep->d_reclen now as the memmove() may clobber it. */
 		loc += nep->d_reclen;
 		if (nep->d_ino == 0) {
 			/*
@@ -845,7 +845,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 			 * can create them (and it doesn't fix them).
 			 *
 			 * Add up the free space, and initialise the
-			 * relocated entry since we don't bcopy it.
+			 * relocated entry since we don't memmove it.
 			 */
 			spacefree += nep->d_reclen;
 			ep->d_ino = 0;
@@ -864,7 +864,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
  			softdep_change_directoryentry_offset(dp, dirbuf,
  			    (caddr_t)nep, (caddr_t)ep, dsize); 
  		else
- 			bcopy((caddr_t)nep, (caddr_t)ep, dsize);
+ 			memmove(ep, nep, dsize);
 	}
 	/*
 	 * Here, `ep' points to a directory entry containing `dsize' in-use
@@ -892,7 +892,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	    dirp->d_reclen == spacefree))
 		ufsdirhash_add(dp, dirp, dp->i_offset + ((char *)ep - dirbuf));
 #endif
-	bcopy((caddr_t)dirp, (caddr_t)ep, (u_int)newentrysize);
+	memcpy(ep, dirp, newentrysize);
 #ifdef UFS_DIRHASH
 	if (dp->i_dirhash != NULL)
 		ufsdirhash_checkblock(dp, dirbuf -

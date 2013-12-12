@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.123 2013/12/01 16:40:56 krw Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.124 2013/12/12 19:00:10 tedu Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -1214,7 +1214,7 @@ softdep_mount(struct vnode *devvp, struct mount *mp, struct fs *fs,
 	 */
 	if ((fs->fs_flags & FS_UNCLEAN) == 0)
 		return (0);
-	bzero(&cstotal, sizeof cstotal);
+	memset(&cstotal, 0, sizeof(cstotal));
 	for (cyl = 0; cyl < fs->fs_ncg; cyl++) {
 		if ((error = bread(devvp, fsbtodb(fs, cgtod(fs, cyl)),
 		    fs->fs_cgsize, &bp)) != 0) {
@@ -1230,10 +1230,10 @@ softdep_mount(struct vnode *devvp, struct mount *mp, struct fs *fs,
 		brelse(bp);
 	}
 #ifdef DEBUG
-	if (bcmp(&cstotal, &fs->fs_cstotal, sizeof cstotal))
+	if (memcmp(&cstotal, &fs->fs_cstotal, sizeof(cstotal)))
 		printf("ffs_mountfs: superblock updated for soft updates\n");
 #endif
-	bcopy(&cstotal, &fs->fs_cstotal, sizeof cstotal);
+	memcpy(&fs->fs_cstotal, &cstotal, sizeof(cstotal));
 	return (0);
 }
 
@@ -1835,7 +1835,7 @@ setup_allocindir_phase2(struct buf *bp, struct inode *ip,
 #if 0
 		BUF_KERNPROC(newindirdep->ir_savebp);
 #endif
-		bcopy(bp->b_data, newindirdep->ir_savebp->b_data, bp->b_bcount);
+		memcpy(newindirdep->ir_savebp->b_data, bp->b_data, bp->b_bcount);
 	}
 }
 
@@ -2052,7 +2052,7 @@ deallocate_dependencies(struct buf *bp, struct inodedep *inodedep)
 				FREE_LOCK(&lk);
 				panic("deallocate_dependencies: not indir");
 			}
-			bcopy(bp->b_data, indirdep->ir_savebp->b_data,
+			memcpy(indirdep->ir_savebp->b_data, bp->b_data,
 			    bp->b_bcount);
 			WORKLIST_REMOVE(wk);
 			WORKLIST_INSERT(&indirdep->ir_savebp->b_dep, wk);
@@ -2726,7 +2726,7 @@ softdep_change_directoryentry_offset(struct inode *dp, caddr_t base,
 		}
 	}
 done:
-	bcopy(oldloc, newloc, entrysize);
+	memmove(newloc, oldloc, entrysize);
 	FREE_LOCK(&lk);
 }
 
@@ -3296,8 +3296,8 @@ softdep_disk_io_initiation(struct buf *bp)
 			ACQUIRE_LOCK(&lk);
 			indirdep->ir_state &= ~ATTACHED;
 			indirdep->ir_state |= UNDONE;
-			bcopy(bp->b_data, indirdep->ir_saveddata, bp->b_bcount);
-			bcopy(indirdep->ir_savebp->b_data, bp->b_data,
+			memcpy(indirdep->ir_saveddata, bp->b_data, bp->b_bcount);
+			memcpy(bp->b_data, indirdep->ir_savebp->b_data,
 			    bp->b_bcount);
 			continue;
 
@@ -3402,7 +3402,7 @@ initiate_write_inodeblock_ufs1(struct inodedep *inodedep, struct buf *bp)
 		    M_INODEDEP, M_WAITOK);
 		ACQUIRE_LOCK(&lk);
 		*inodedep->id_savedino1 = *dp;
-		bzero((caddr_t)dp, sizeof(struct ufs1_dinode));
+		memset(dp, 0, sizeof(struct ufs1_dinode));
 		return;
 	}
 	/*
@@ -3543,7 +3543,7 @@ initiate_write_inodeblock_ufs2(struct inodedep *inodedep, struct buf *bp)
 		inodedep->id_savedino2 = malloc(sizeof(struct ufs2_dinode),
 		    M_INODEDEP, M_WAITOK);
 		*inodedep->id_savedino2 = *dp;
-		bzero((caddr_t)dp, sizeof(struct ufs2_dinode));
+		memset(dp, 0, sizeof(struct ufs2_dinode));
 		return;
 	}
 	/*
@@ -3825,7 +3825,7 @@ softdep_disk_write_complete(struct buf *bp)
 			indirdep = WK_INDIRDEP(wk);
 			if (indirdep->ir_state & GOINGAWAY)
 				panic("disk_write_complete: indirdep gone");
-			bcopy(indirdep->ir_saveddata, bp->b_data, bp->b_bcount);
+			memcpy(bp->b_data, indirdep->ir_saveddata, bp->b_bcount);
 			free(indirdep->ir_saveddata, M_INDIRDEP);
 			indirdep->ir_saveddata = NULL;
 			indirdep->ir_state &= ~UNDONE;

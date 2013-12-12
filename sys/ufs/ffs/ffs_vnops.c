@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.72 2013/09/14 02:28:02 guenther Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.73 2013/12/12 19:00:10 tedu Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -268,8 +268,7 @@ ffs_read(void *v)
 				break;
 			xfersize = size;
 		}
-		error = uiomove((char *)bp->b_data + blkoffset, (int)xfersize,
-				uio);
+		error = uiomove(bp->b_data + blkoffset, (int)xfersize, uio);
 		if (error)
 			break;
 		brelse(bp);
@@ -374,10 +373,10 @@ ffs_write(void *v)
 			xfersize = size;
 
 		error =
-		    uiomove((char *)bp->b_data + blkoffset, xfersize, uio);
+		    uiomove(bp->b_data + blkoffset, xfersize, uio);
 
 		if (error != 0)
-			bzero((char *)bp->b_data + blkoffset, xfersize);
+			memset(bp->b_data + blkoffset, 0, xfersize);
 
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);

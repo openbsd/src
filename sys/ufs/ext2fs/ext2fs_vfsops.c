@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.69 2013/12/01 16:40:56 krw Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.70 2013/12/12 19:00:09 tedu Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -140,13 +140,12 @@ ext2fs_mountroot(void)
 	TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
-	bzero(fs->e2fs_fsmnt, sizeof(fs->e2fs_fsmnt));
-	(void)copystr(mp->mnt_stat.f_mntonname, fs->e2fs_fsmnt, 
-	    sizeof(fs->e2fs_fsmnt) - 1, NULL);
+	memset(fs->e2fs_fsmnt, 0, sizeof(fs->e2fs_fsmnt));
+	strlcpy(fs->e2fs_fsmnt, mp->mnt_stat.f_mntonname, sizeof(fs->e2fs_fsmnt));
 	if (fs->e2fs.e2fs_rev > E2FS_REV0) {
-		bzero(fs->e2fs.e2fs_fsmnt, sizeof(fs->e2fs.e2fs_fsmnt));
-		(void)copystr(mp->mnt_stat.f_mntonname, fs->e2fs.e2fs_fsmnt,
-		    sizeof(fs->e2fs.e2fs_fsmnt) - 1, NULL);
+		memset(fs->e2fs.e2fs_fsmnt, 0, sizeof(fs->e2fs.e2fs_fsmnt));
+		strlcpy(fs->e2fs.e2fs_fsmnt, mp->mnt_stat.f_mntonname,
+		    sizeof(fs->e2fs.e2fs_fsmnt));
 	}
 	(void)ext2fs_statfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
@@ -241,7 +240,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 		goto error;
 
 	if (disk_map(fspec, fname, MNAMELEN, DM_OPENBLCK) == -1)
-		bcopy(fspec, fname, sizeof(fname));
+		memcpy(fname, fspec, sizeof(fname));
 
 	NDINIT(ndp, LOOKUP, FOLLOW, UIO_SYSSPACE, fname, p);
 	if ((error = namei(ndp)) != 0)
@@ -283,17 +282,17 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
 
-	bzero(fs->e2fs_fsmnt, sizeof(fs->e2fs_fsmnt));
+	memset(fs->e2fs_fsmnt, 0, sizeof(fs->e2fs_fsmnt));
 	strlcpy(fs->e2fs_fsmnt, path, sizeof(fs->e2fs_fsmnt));
 	if (fs->e2fs.e2fs_rev > E2FS_REV0) {
-		bzero(fs->e2fs.e2fs_fsmnt, sizeof(fs->e2fs.e2fs_fsmnt));
+		memset(fs->e2fs.e2fs_fsmnt, 0, sizeof(fs->e2fs.e2fs_fsmnt));
 		strlcpy(fs->e2fs.e2fs_fsmnt, mp->mnt_stat.f_mntonname,
 		    sizeof(fs->e2fs.e2fs_fsmnt));
 	}
-	bcopy(fs->e2fs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
-	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
+	memcpy(mp->mnt_stat.f_mntonname, fs->e2fs_fsmnt, MNAMELEN);
+	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntfromname, fname, MNAMELEN);
-	bzero(mp->mnt_stat.f_mntfromspec, MNAMELEN);
+	memset(mp->mnt_stat.f_mntfromspec, 0, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntfromspec, fspec, MNAMELEN);
 
 	if (fs->e2fs_fmod != 0) {	/* XXX */
@@ -698,9 +697,9 @@ ext2fs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	sbp->f_files =  fs->e2fs.e2fs_icount;
 	sbp->f_ffree = fs->e2fs.e2fs_ficount;
 	if (sbp != &mp->mnt_stat) {
-		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
-		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
-		bcopy(mp->mnt_stat.f_mntfromspec, sbp->f_mntfromspec, MNAMELEN);
+		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
+		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
+		memcpy(sbp->f_mntfromspec, mp->mnt_stat.f_mntfromspec, MNAMELEN);
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	return (0);

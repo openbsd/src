@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.65 2013/11/02 00:08:17 krw Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.66 2013/12/12 19:00:09 tedu Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -289,8 +289,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		size = blksize(fs, oip, lbn);
 		(void) uvm_vnp_uncache(ovp);
 		if (ovp->v_type != VDIR)
-			bzero((char *)bp->b_data + offset,
-			      (u_int)(size - offset));
+			memset(bp->b_data + offset, 0, size - offset);
 		bp->b_bcount = size;
 		if (aflags & B_SYNC)
 			bwrite(bp);
@@ -534,7 +533,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 
 	if (lastbn != -1) {
 		copy = malloc(fs->fs_bsize, M_TEMP, M_WAITOK);
-		bcopy(bp->b_data, copy, (u_int) fs->fs_bsize);
+		memcpy(copy, bp->b_data, fs->fs_bsize);
 
 		for (i = last + 1; i < NINDIR(fs); i++)
 			BAP_ASSIGN(ip, i, 0);

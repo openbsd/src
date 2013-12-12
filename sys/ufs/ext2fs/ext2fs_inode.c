@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.45 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.46 2013/12/12 19:00:09 tedu Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -246,8 +246,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		if (length != 0)
 			panic("ext2fs_truncate: partial truncate of symlink");
 #endif
-		bzero((char *)&oip->i_e2din->e2di_shortlink,
-			(u_int)ext2fs_size(oip));
+		memset(&oip->i_e2din->e2di_shortlink, 0, ext2fs_size(oip));
 		(void)ext2fs_setsize(oip, 0);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (ext2fs_update(oip, NULL, NULL, 1));
@@ -311,7 +310,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		size = fs->e2fs_bsize;
 		uvm_vnp_setsize(ovp, length);
 		uvm_vnp_uncache(ovp);
-		bzero(bp->b_data + offset, (u_int)(size - offset));
+		memset(bp->b_data + offset, 0, size - offset);
 		bp->b_bcount = size;
 		if (aflags & B_SYNC)
 			bwrite(bp);
@@ -335,7 +334,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	 * will be returned to the free list.  lastiblock values are also
 	 * normalized to -1 for calls to ext2fs_indirtrunc below.
 	 */
-	memcpy((caddr_t)oldblks, (caddr_t)&oip->i_e2fs_blocks[0], sizeof oldblks);
+	memcpy(oldblks, &oip->i_e2fs_blocks[0], sizeof(oldblks));
 	for (level = TRIPLE; level >= SINGLE; level--)
 		if (lastiblock[level] < 0) {
 			oip->i_e2fs_blocks[NDADDR + level] = 0;
@@ -352,8 +351,8 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	 * Note that we save the new block configuration so we can check it
 	 * when we are done.
 	 */
-	bcopy((caddr_t)&oip->i_e2fs_blocks[0], (caddr_t)newblks, sizeof newblks);
-	bcopy((caddr_t)oldblks, (caddr_t)&oip->i_e2fs_blocks[0], sizeof oldblks);
+	memcpy(newblks, &oip->i_e2fs_blocks[0], sizeof(newblks));
+	memcpy(&oip->i_e2fs_blocks[0], oldblks, sizeof(oldblks));
 	(void)ext2fs_setsize(oip, osize);
 	vflags = ((length > 0) ? V_SAVE : 0) | V_SAVEMETA;
 	allerror = vinvalbuf(ovp, vflags, cred, curproc, 0, 0);
@@ -484,9 +483,9 @@ ext2fs_indirtrunc(struct inode *ip, int32_t lbn, int32_t dbn, int32_t lastbn, in
 	bap = (int32_t *)bp->b_data;
 	if (lastbn >= 0) {
 		copy = malloc(fs->e2fs_bsize, M_TEMP, M_WAITOK);
-		memcpy((caddr_t)copy, (caddr_t)bap, (u_int)fs->e2fs_bsize);
-		memset((caddr_t)&bap[last + 1], 0,
-			(u_int)(NINDIR(fs) - (last + 1)) * sizeof (u_int32_t));
+		memcpy(copy, bap, fs->e2fs_bsize);
+		memset(&bap[last + 1], 0,
+		    (NINDIR(fs) - (last + 1)) * sizeof(u_int32_t));
 		error = bwrite(bp);
 		if (error)
 			allerror = error;

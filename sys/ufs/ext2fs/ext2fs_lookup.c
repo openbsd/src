@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.29 2013/08/13 05:52:27 guenther Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.30 2013/12/12 19:00:09 tedu Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /* 
@@ -819,7 +819,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 		dsize = EXT2FS_DIRSIZ(nep->e2d_namlen);
 		spacefree += fs2h16(nep->e2d_reclen) - dsize;
 		loc += fs2h16(nep->e2d_reclen);
-		memcpy((caddr_t)ep, (caddr_t)nep, dsize);
+		memcpy(ep, nep, dsize);
 	}
 	/*
 	 * Update the pointer fields in the previous entry (if any),
@@ -843,7 +843,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 		ep->e2d_reclen = h2fs16(dsize);
 		ep = (struct ext2fs_direct *)((char *)ep + dsize);
 	}
-	memcpy((caddr_t)ep, (caddr_t)&newdir, (u_int)newentrysize);
+	memcpy(ep, &newdir, newentrysize);
 	error = VOP_BWRITE(bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (!error && dp->i_endoff && dp->i_endoff < ext2fs_size(dp))
