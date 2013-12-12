@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.57 2013/12/06 23:40:48 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.58 2013/12/12 01:40:35 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -361,7 +361,6 @@ pretty_print_option(unsigned int code, struct option_data *option,
 				opcount = strlcpy(op, inet_ntoa(foo), opleft);
 				if (opcount >= opleft)
 					goto toobig;
-				opleft -= opcount;
 				dp += 4;
 				break;
 			case 'l':
@@ -369,7 +368,6 @@ pretty_print_option(unsigned int code, struct option_data *option,
 				    (long)getLong(dp));
 				if (opcount >= opleft || opcount == -1)
 					goto toobig;
-				opleft -= opcount;
 				dp += 4;
 				break;
 			case 'L':
@@ -377,7 +375,6 @@ pretty_print_option(unsigned int code, struct option_data *option,
 				    (unsigned long)getULong(dp));
 				if (opcount >= opleft || opcount == -1)
 					goto toobig;
-				opleft -= opcount;
 				dp += 4;
 				break;
 			case 's':
@@ -385,7 +382,6 @@ pretty_print_option(unsigned int code, struct option_data *option,
 				    getShort(dp));
 				if (opcount >= opleft || opcount == -1)
 					goto toobig;
-				opleft -= opcount;
 				dp += 2;
 				break;
 			case 'S':
@@ -393,34 +389,33 @@ pretty_print_option(unsigned int code, struct option_data *option,
 				    getUShort(dp));
 				if (opcount >= opleft || opcount == -1)
 					goto toobig;
-				opleft -= opcount;
 				dp += 2;
 				break;
 			case 'b':
 				opcount = snprintf(op, opleft, "%d",
-				    *(char *)dp++);
+				    *(char *)dp);
 				if (opcount >= opleft || opcount == -1)
 					goto toobig;
-				opleft -= opcount;
+				dp++;
 				break;
 			case 'B':
-				opcount = snprintf(op, opleft, "%d", *dp++);
+				opcount = snprintf(op, opleft, "%d", *dp);
 				if (opcount >= opleft || opcount == -1)
 					goto toobig;
-				opleft -= opcount;
+				dp++;
 				break;
 			case 'x':
-				opcount = snprintf(op, opleft, "%x", *dp++);
+				opcount = snprintf(op, opleft, "%x", *dp);
 				if (opcount >= opleft || opcount == -1)
 					goto toobig;
-				opleft -= opcount;
+				dp++;
 				break;
 			case 'f':
 				opcount = strlcpy(op,
-				    *dp++ ? "true" : "false", opleft);
+				    *dp ? "true" : "false", opleft);
 				if (opcount >= opleft)
 					goto toobig;
-				opleft -= opcount;
+				dp++;
 				break;
 			default:
 				warning("Unexpected format code %c", fmtbuf[j]);
