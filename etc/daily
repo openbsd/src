@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.77 2013/11/03 18:28:34 deraadt Exp $
+#	$OpenBSD: daily,v 1.78 2013/12/12 22:02:43 brad Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 # For local additions, create the file /etc/daily.local.
@@ -146,7 +146,7 @@ next_part "Checking subsystem status:"
 if [ "X$VERBOSESTATUS" != X0 ]; then
 	echo ""
 	echo "disks:"
-	df -kl
+	df -ikl
 	echo ""
 	dump W
 fi
