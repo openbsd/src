@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.75 2013/11/29 16:27:40 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.76 2013/12/12 08:12:08 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -104,13 +104,34 @@ _spinunlock(volatile struct _spinlock *lock)
  * this is handled by __tfork_thread()
  */
 void _rthread_initlib(void) __attribute__((constructor));
-void _rthread_initlib(void)
+void
+_rthread_initlib(void)
 {
-	struct thread_control_block *tcb = &_initial_thread_tcb;
+	static int tcb_set;
+	struct thread_control_block *tcb;
 
-	/* use libc's errno for the main thread */
-	TCB_INIT(tcb, &_initial_thread, ___errno());
-	TCB_SET(tcb);
+	if (__predict_false(tcb_set == 0) && __get_tcb() == NULL) {
+		tcb_set = 1;
+
+		/* use libc's errno for the main thread */
+		tcb = &_initial_thread_tcb;
+		TCB_INIT(tcb, &_initial_thread, ___errno());
+		TCB_SET(tcb);
+	}
+}
+
+/*
+ * This is invoked by ___start() in crt0.  Eventually, when ld.so handles
+ * TCB setup for dynamic executables, this will only be called to handle
+ * the TCB setup for static executables and may migrate to libc.  The
+ * envp argument is so that it can (someday) use that to find the Auxinfo
+ * array and thus the ELF phdr and the PT_TLS info.
+ */
+void __init_tcb(char **_envp);
+void
+__init_tcb(__unused char **envp)
+{
+	_rthread_initlib();
 }
 
 int *
@@ -180,6 +201,8 @@ _rthread_init(void)
 
 	_thread_pagesize = (size_t)sysconf(_SC_PAGESIZE);
 	_rthread_attr_default.guard_size = _thread_pagesize;
+
+	_rthread_initlib();
 
 	_threads_ready = 1;
 
