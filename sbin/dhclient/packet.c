@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.23 2013/12/11 00:31:12 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.24 2013/12/12 00:22:06 krw Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -46,9 +46,6 @@
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 
-u_int32_t	checksum(unsigned char *, unsigned, u_int32_t);
-u_int32_t	wrapsum(u_int32_t);
-
 u_int32_t
 checksum(unsigned char *buf, unsigned nbytes, u_int32_t sum)
 {
@@ -83,60 +80,18 @@ wrapsum(u_int32_t sum)
 }
 
 void
-assemble_hw_header(unsigned char *buf, int *bufix, struct ether_addr *to)
+assemble_eh_header(struct ether_header *eh, struct ether_addr *to)
 {
-	struct ether_header eh;
-
 	if (to != NULL)
-		memcpy(eh.ether_dhost, to->ether_addr_octet,
-		    sizeof(eh.ether_dhost));
+		memcpy(eh->ether_dhost, to->ether_addr_octet,
+		    sizeof(eh->ether_dhost));
 	else
-		memset(eh.ether_dhost, 0xff, sizeof(eh.ether_dhost));
+		memset(eh->ether_dhost, 0xff, sizeof(eh->ether_dhost));
 
-	memcpy(eh.ether_shost, ifi->hw_address.ether_addr_octet,
-	    sizeof(eh.ether_shost));
+	memcpy(eh->ether_shost, ifi->hw_address.ether_addr_octet,
+	    sizeof(eh->ether_shost));
 
-	eh.ether_type = htons(ETHERTYPE_IP);
-
-	memcpy(&buf[*bufix], &eh, ETHER_HDR_LEN);
-	*bufix += ETHER_HDR_LEN;
-}
-
-void
-assemble_udp_ip_header(unsigned char *buf, int *bufix, u_int32_t from,
-    u_int32_t to, unsigned int port, unsigned char *data, int len)
-{
-	struct ip ip;
-	struct udphdr udp;
-
-	ip.ip_v = 4;
-	ip.ip_hl = 5;
-	ip.ip_tos = IPTOS_LOWDELAY;
-	ip.ip_len = htons(sizeof(ip) + sizeof(udp) + len);
-	ip.ip_id = 0;
-	ip.ip_off = 0;
-	ip.ip_ttl = 128;
-	ip.ip_p = IPPROTO_UDP;
-	ip.ip_sum = 0;
-	ip.ip_src.s_addr = from;
-	ip.ip_dst.s_addr = to;
-
-	ip.ip_sum = wrapsum(checksum((unsigned char *)&ip, sizeof(ip), 0));
-	memcpy(&buf[*bufix], &ip, sizeof(ip));
-	*bufix += sizeof(ip);
-
-	udp.uh_sport = htons(LOCAL_PORT);	/* XXX */
-	udp.uh_dport = port;			/* XXX */
-	udp.uh_ulen = htons(sizeof(udp) + len);
-	memset(&udp.uh_sum, 0, sizeof(udp.uh_sum));
-
-	udp.uh_sum = wrapsum(checksum((unsigned char *)&udp, sizeof(udp),
-	    checksum(data, len, checksum((unsigned char *)&ip.ip_src,
-	    2 * sizeof(ip.ip_src),
-	    IPPROTO_UDP + (u_int32_t)ntohs(udp.uh_ulen)))));
-
-	memcpy(&buf[*bufix], &udp, sizeof(udp));
-	*bufix += sizeof(udp);
+	eh->ether_type = htons(ETHERTYPE_IP);
 }
 
 ssize_t

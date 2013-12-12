@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.30 2013/12/06 23:40:48 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.31 2013/12/12 00:22:06 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -264,35 +264,65 @@ ssize_t
 send_packet(struct in_addr from, struct sockaddr_in *to,
     struct ether_addr *hto)
 {
-#define IOVCNT		2
-	unsigned char buf[256];
-	struct iovec iov[IOVCNT];
+	struct ether_header eh;
+	struct ip ip;
+	struct udphdr udp;
+	struct iovec iov[4];
 	struct msghdr msg;
+	unsigned char *data;
 	ssize_t result;
-	int bufp = 0;
+	int iovcnt = 0, len;
 
 	if (to->sin_addr.s_addr == INADDR_BROADCAST) {
-		assemble_hw_header(buf, &bufp, hto);
+		assemble_eh_header(&eh, hto);
+		iov[0].iov_base = &eh;
+		iov[0].iov_len = sizeof(eh);
+		iovcnt++;
 	}
 
-	assemble_udp_ip_header(buf, &bufp, from.s_addr,
-	    to->sin_addr.s_addr, to->sin_port,
-	    (unsigned char *)&client->bootrequest_packet,
-	    client->bootrequest_packet_length);
+	data = (unsigned char *)&client->bootrequest_packet;
+	len = client->bootrequest_packet_length;
 
-	iov[0].iov_base = (char *)buf;
-	iov[0].iov_len = bufp;
-	iov[1].iov_base = (char *)&client->bootrequest_packet;
-	iov[1].iov_len = client->bootrequest_packet_length;
+	ip.ip_v = 4;
+	ip.ip_hl = 5;
+	ip.ip_tos = IPTOS_LOWDELAY;
+	ip.ip_len = htons(sizeof(ip) + sizeof(udp) + len);
+	ip.ip_id = 0;
+	ip.ip_off = 0;
+	ip.ip_ttl = 128;
+	ip.ip_p = IPPROTO_UDP;
+	ip.ip_sum = 0;
+	ip.ip_src.s_addr = from.s_addr;
+	ip.ip_dst.s_addr = to->sin_addr.s_addr;
+	ip.ip_sum = wrapsum(checksum((unsigned char *)&ip, sizeof(ip), 0));
+	iov[iovcnt].iov_base = &ip;
+	iov[iovcnt].iov_len = sizeof(ip);
+	iovcnt++;
+
+	udp.uh_sport = htons(LOCAL_PORT);
+	udp.uh_dport = to->sin_port;
+	udp.uh_ulen = htons(sizeof(udp) + len);
+	udp.uh_sum = 0;
+	udp.uh_sum = wrapsum(checksum((unsigned char *)&udp, sizeof(udp),
+	    checksum(data, len, checksum((unsigned char *)&ip.ip_src,
+	    2 * sizeof(ip.ip_src),
+	    IPPROTO_UDP + (u_int32_t)ntohs(udp.uh_ulen)))));
+	iov[iovcnt].iov_base = &udp;
+	iov[iovcnt].iov_len = sizeof(udp);
+	iovcnt++;
+
+	iov[iovcnt].iov_base = data;
+	iov[iovcnt].iov_len = len;
+	iovcnt++;
 
 	if (to->sin_addr.s_addr == INADDR_BROADCAST) {
-		result = writev(ifi->wfdesc, iov, IOVCNT);
+		result = writev(ifi->wfdesc, iov, iovcnt);
 	} else {
 		memset(&msg, 0, sizeof(msg));
 		msg.msg_name = (struct sockaddr *)to;
 		msg.msg_namelen = sizeof(*to);
 		msg.msg_iov = iov;
-		msg.msg_iovlen = IOVCNT;
+		msg.msg_iovlen = iovcnt;
 		result = sendmsg(ifi->ufdesc, &msg, 0);
 	}
 

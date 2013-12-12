@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.125 2013/12/06 23:40:48 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.126 2013/12/12 00:22:06 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -284,12 +284,12 @@ void free_client_lease(struct client_lease *);
 void routehandler(void);
 
 /* packet.c */
-void assemble_hw_header(unsigned char *, int *, struct ether_addr *);
-void assemble_udp_ip_header(unsigned char *, int *, u_int32_t, u_int32_t,
-    unsigned int, unsigned char *, int);
+void assemble_eh_header(struct ether_header *, struct ether_addr *);
 ssize_t decode_hw_header(unsigned char *, int, struct ether_addr *);
 ssize_t decode_udp_ip_header(unsigned char *, int, struct sockaddr_in *,
     int);
+u_int32_t checksum(unsigned char *, unsigned, u_int32_t);
+u_int32_t wrapsum(u_int32_t);
 
 /* clparse.c */
 int read_client_conf(void);
