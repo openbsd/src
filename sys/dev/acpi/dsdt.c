@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.204 2013/11/04 22:32:31 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.205 2013/12/12 20:56:01 guenther Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -3002,11 +3002,11 @@ aml_disasm(struct aml_scope *scope, int lvl,
 		case 'N':
 			/* Create Name */
 			rv = aml_parsesimple(scope, c, NULL);
-			dbprintf(arg,aml_nodename(rv->node));
+			dbprintf(arg, "%s", aml_nodename(rv->node));
 			break;
 		case 'm':
 			/* display mnemonic */
-			dbprintf(arg,htab->mnem);
+			dbprintf(arg, "%s", htab->mnem);
 			break;
 		case 'R':
 			/* Search name */

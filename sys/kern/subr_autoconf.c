@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.72 2013/12/06 21:03:02 deraadt Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.73 2013/12/12 20:56:01 guenther Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -307,7 +307,7 @@ config_found_sm(struct device *parent, void *aux, cfprint_t print,
 	if ((match = config_search(submatch, parent, aux)) != NULL)
 		return (config_attach(parent, match, aux, print));
 	if (print)
-		printf(msgs[(*print)(aux, parent->dv_xname)]);
+		printf("%s", msgs[(*print)(aux, parent->dv_xname)]);
 	return (NULL);
 }
 

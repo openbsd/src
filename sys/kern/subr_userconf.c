@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.37 2011/06/01 04:35:22 matthew Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.38 2013/12/12 20:56:01 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -685,7 +685,7 @@ userconf_help(void)
 
 	printf("command   args                description\n");
 	while (*userconf_cmds[j] != '\0') {
-		printf(userconf_cmds[j]);
+		printf("%s", userconf_cmds[j]);
 		k = strlen(userconf_cmds[j]);
 		while (k < 10) {
 			printf(" ");
