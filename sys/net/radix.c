@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.31 2013/10/20 16:17:36 claudio Exp $	*/
+/*	$OpenBSD: radix.c,v 1.32 2013/12/12 14:43:38 millert Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -476,7 +476,7 @@ rn_addmask(void *n_arg, int search, int skip)
 static int	/* XXX: arbitrary ordering for non-contiguous masks */
 rn_lexobetter(void *m_arg, void *n_arg)
 {
-	u_char *mp = m_arg, *np = n_arg, *lim;
+	u_char *mp = m_arg, *np = n_arg;
 
 	/*
 	 * Longer masks might not really be lexicographically better,
@@ -492,8 +492,7 @@ rn_lexobetter(void *m_arg, void *n_arg)
 	 * Must return the first difference between the masks
 	 * to ensure deterministic sorting.
 	 */
-	lim = mp + *mp;
-	return (memcmp(mp, np, *lim) > 0);
+	return (memcmp(mp, np, *mp) > 0);
 }
 
 static struct radix_mask *
