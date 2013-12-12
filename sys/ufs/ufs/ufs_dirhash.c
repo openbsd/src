@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.24 2012/08/16 04:52:51 tedu Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.25 2013/12/12 19:15:32 tedu Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -412,7 +412,7 @@ restart:
 			return (EJUSTRETURN);
 		}
 		if (dp->d_namlen == namelen &&
-		    bcmp(dp->d_name, name, namelen) == 0) {
+		    memcmp(dp->d_name, name, namelen) == 0) {
 			/* Found. Get the prev offset if needed. */
 			if (prevoffp != NULL) {
 				if (offset & (DIRBLKSIZ - 1)) {
