@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.58 2013/12/12 01:40:35 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.59 2013/12/12 13:22:37 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -436,7 +436,6 @@ pretty_print_option(unsigned int code, struct option_data *option,
 		}
 		if (opleft < 1)
 			goto toobig;
-
 	}
 
 done:
