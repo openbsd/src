@@ -1,0 +1,100 @@
+.\"     $OpenBSD: autoinstall.8,v 1.1 2013/12/13 20:04:09 rpe Exp $
+.\"
+.\" Copyright (c) 2013 Robert Peichaer <rpe@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: December 13 2013 $
+.Dt AUTOINSTALL 8
+.Os
+.Sh NAME
+.Nm autoinstall
+.Nd unattended OpenBSD installation and upgrade
+.Sh DESCRIPTION
+.Nm
+allows unattended installation or upgrade of netbooted
+.Ox
+machines by automatically answering installer questions read from
+a response file.
+The information whether to install or upgrade and where to get the
+response file from is obtained via DHCP.
+The response file is downloaded from an HTTP server.
+.Pp
+The DHCP parameter
+.Ql filename
+controls the
+.Nm
+mode and has to contain either
+.Ql auto_install
+or
+.Ql auto_upgrade .
+On architectures where this parameter is used for netbooting, create
+a symbolic link from the boot program to auto_install and/or
+auto_upgrade.
+The DHCP parameter
+.Ql next-server
+contains the IP address of the HTTP server.
+Optionally, the DHCP parameter
+.Ql host-name
+is used to configure the hostname.
+.Pp
+Valid response file names are
+.Ql install.conf ,
+.Ql MAC-install.conf ,
+.Ql upgrade.conf
+and
+.Ql MAC-upgrade.conf .
+The MAC address of the netboot interface can be used to provide
+machine-specific response files, which have precedence.
+The response files are fetched from the
+.Ql DocumentRoot
+of the HTTP server.
+.Pp
+The format of a response file is:
+.Bd -literal -offset indent
+question = answer
+.Ed
+.Pp
+.Ql question
+is an installer question (up to the question mark) or a non-ambiguous
+part of it, consisting of whitespace separated words.
+.Ql answer
+is the answer to the question.
+.Pp
+If
+.Nm
+does not find an answer in the response file, the default answer as
+provided by the installer is used.
+.Sh FILES
+.Bl -tag -width "/etc/dhcpd.confXXX" -compact
+.It Pa /etc/dhcpd.conf
+dhcpd(8) configuration file
+.It Pa install.conf
+response file for unattended installation
+.It Pa upgrade.conf
+response file for unattended upgrade
+.El
+.Sh EXAMPLES
+A typical install.conf file will look something like this:
+.Bd -literal -offset indent
+System hostname = server1
+Password for root = securepassword
+Change the default console to com0 = yes
+Which speed should com0 use = 19200
+What timezone are you in = Europe/Vienna
+Location of sets = ftp
+Server = ftp5.eu.openbsd.org
+.Ed
+.Pp
+It can be also used for upgrades by creating a symbolic link to
+upgrade.conf.
