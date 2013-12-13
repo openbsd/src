@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.30 2013/11/22 07:50:36 mpi Exp $
+#	$OpenBSD: mkioctls,v 1.31 2013/12/13 19:59:03 naddy Exp $
 
 #
 # Copyright (c) 1994
@@ -81,7 +81,6 @@ BEGIN {
 	print "#include <dev/vndioctl.h>"
 	print "#include <dev/pci/drm/drm.h>"
 	print "#include <dev/usb/usb.h>"
-	print "#define COMPAT_43"
 	print "#include <sys/ioctl.h>"
 	print "#include \"kdump.h\""
 	print ""
