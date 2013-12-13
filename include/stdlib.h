@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.54 2013/11/22 21:32:49 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.55 2013/12/13 20:48:39 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -248,7 +248,7 @@ int	 posix_openpt(int);
 char	*mkdtemp(char *);
 #endif
 
-#if __XPG_VISIBLE >= 420 || __POSIX_VISIBLE >= 20080
+#if __XPG_VISIBLE >= 420 || __POSIX_VISIBLE >= 200809
 int     getsubopt(char **, char * const *, char **);
 #endif
 
