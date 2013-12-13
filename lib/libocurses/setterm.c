@@ -1,4 +1,4 @@
-/*	$OpenBSD: setterm.c,v 1.7 2005/08/14 17:15:19 espie Exp $ */
+/*	$OpenBSD: setterm.c,v 1.8 2013/12/13 22:54:08 naddy Exp $ */
 /*
  * Copyright (c) 1981, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -81,7 +81,7 @@ setterm(type)
 	static char genbuf[1024];
 	static char __ttytype[1024];
 	register int unknown;
-	struct ttysize win;
+	struct winsize win;
 	char *p;
 
 #ifdef DEBUG
@@ -100,10 +100,10 @@ setterm(type)
 #endif
 
 	/* Try TIOCGSIZE, and, if it fails, the termcap entry. */
-	if (ioctl(STDERR_FILENO, TIOCGSIZE, &win) != -1 &&
-	    win.ts_lines != 0 && win.ts_cols != 0) {
-		LINES = win.ts_lines;
-		COLS = win.ts_cols;
+	if (ioctl(STDERR_FILENO, TIOCGWINSZ, &win) != -1 &&
+	    win.ws_row != 0 && win.ws_col != 0) {
+		LINES = win.ws_row;
+		COLS = win.ws_col;
 	}  else {
 		LINES = tgetnum("li");
 		COLS = tgetnum("co");
