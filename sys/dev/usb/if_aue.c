@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.91 2013/11/17 13:57:03 jsg Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.92 2013/12/13 01:13:56 brad Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -254,7 +254,7 @@ void aue_miibus_statchg(struct device *);
 void aue_lock_mii(struct aue_softc *);
 void aue_unlock_mii(struct aue_softc *);
 
-void aue_setmulti(struct aue_softc *);
+void aue_iff(struct aue_softc *);
 u_int32_t aue_crc(caddr_t);
 void aue_reset(struct aue_softc *);
 
@@ -584,39 +584,39 @@ aue_crc(caddr_t addr)
 }
 
 void
-aue_setmulti(struct aue_softc *sc)
+aue_iff(struct aue_softc *sc)
 {
+	struct ifnet		*ifp = GET_IFP(sc);
 	struct arpcom		*ac = &sc->arpcom;
-	struct ifnet		*ifp;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
 	u_int32_t		h = 0, i;
 
 	DPRINTFN(5,("%s: %s: enter\n", sc->aue_dev.dv_xname, __func__));
 
-	ifp = GET_IFP(sc);
+	AUE_CLRBIT(sc, AUE_CTL0, (AUE_CTL0_ALLMULTI | AUE_CTL2_RX_PROMISC));
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		AUE_SETBIT(sc, AUE_CTL0, AUE_CTL0_ALLMULTI);
-		return;
+		if (ifp->if_flags & IFF_PROMISC)
+			AUE_SETBIT(sc, AUE_CTL2, AUE_CTL2_RX_PROMISC);
+	} else {
+		/* first, zot all the existing hash bits */
+		for (i = 0; i < 8; i++)
+			aue_csr_write_1(sc, AUE_MAR0 + i, 0);
+
+		/* now program new ones */
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			h = aue_crc(enm->enm_addrlo);
+
+			AUE_SETBIT(sc, AUE_MAR + (h >> 3), 1 << (h & 0x7));
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
 	}
-
-	AUE_CLRBIT(sc, AUE_CTL0, AUE_CTL0_ALLMULTI);
-
-	/* first, zot all the existing hash bits */
-	for (i = 0; i < 8; i++)
-		aue_csr_write_1(sc, AUE_MAR0 + i, 0);
-
-	/* now program new ones */
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		h = aue_crc(enm->enm_addrlo);
-		AUE_SETBIT(sc, AUE_MAR + (h >> 3), 1 << (h & 0x7));
-		ETHER_NEXT_MULTI(step, enm);
-	}
-
-	ifp->if_flags &= ~IFF_ALLMULTI;
 }
 
 void
@@ -1342,9 +1342,6 @@ aue_init(void *xsc)
 	if (usbd_is_dying(sc->aue_udev))
 		return;
 
-	if (ifp->if_flags & IFF_RUNNING)
-		return;
-
 	s = splnet();
 
 	/*
@@ -1376,8 +1373,8 @@ aue_init(void *xsc)
 		return;
 	}
 
-	/* Load the multicast filter. */
-	aue_setmulti(sc);
+	/* Program promiscuous mode and multicast filters. */
+	aue_iff(sc);
 
 	/* Enable RX and TX */
 	aue_csr_write_1(sc, AUE_CTL0, AUE_CTL0_RXSTAT_APPEND | AUE_CTL0_RX_ENB);
@@ -1496,7 +1493,6 @@ aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct aue_softc	*sc = ifp->if_softc;
 	struct ifaddr 		*ifa = (struct ifaddr *)data;
 	struct ifreq		*ifr = (struct ifreq *)data;
-	struct mii_data		*mii;
 	int			s, error = 0;
 
 	if (usbd_is_dying(sc->aue_udev))
@@ -1507,41 +1503,29 @@ aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		aue_init(sc);
-
-		switch (ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			aue_init(sc);
 #ifdef INET
-		case AF_INET:
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-			break;
-#endif /* INET */
-		}
+#endif
 		break;
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->aue_if_flags & IFF_PROMISC)) {
-				AUE_SETBIT(sc, AUE_CTL2, AUE_CTL2_RX_PROMISC);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->aue_if_flags & IFF_PROMISC) {
-				AUE_CLRBIT(sc, AUE_CTL2, AUE_CTL2_RX_PROMISC);
-			} else if (!(ifp->if_flags & IFF_RUNNING))
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
 				aue_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				aue_stop(sc);
 		}
-		sc->aue_if_flags = ifp->if_flags;
-		error = 0;
 		break;
 
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-		mii = GET_MII(sc);
-		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
+		error = ifmedia_ioctl(ifp, ifr, &sc->aue_mii.mii_media, command);
 		break;
 
 	default:
@@ -1550,7 +1534,7 @@ aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			aue_setmulti(sc);
+			aue_iff(sc);
 		error = 0;
 	}
 
