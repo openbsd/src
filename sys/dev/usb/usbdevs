@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.616 2013/12/13 12:54:40 yuo Exp $
+$OpenBSD: usbdevs,v 1.617 2013/12/13 17:38:38 yuo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2476,6 +2476,8 @@ product LOGITECH QUICKCAMPRO2	0xd001	QuickCam Pro
 /* Longcheer products */
 product LONGCHEER D21LCMASS	0x9401	Emobile D21LC Mass only mode
 product LONGCHEER D21LC		0x9404	Emobile D21LC
+product LONGCHEER 510FU		0x9801	IIJmobile 510FU
+product LONGCHEER 510FUMASS	0x98ff	IIJmobile 510FU Mass only mode
 
 /* Longshine products */
 product ABOCOM LCS8138TX	0x401a	LCS-8138TX
