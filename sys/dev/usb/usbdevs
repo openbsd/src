@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.614 2013/11/17 13:53:45 jsg Exp $
+$OpenBSD: usbdevs,v 1.615 2013/12/13 12:28:49 yuo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -409,6 +409,7 @@ vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics
 vendor SMART		0x0b8c	Smart Technologies
 vendor ASIX		0x0b95	ASIX Electronics
 vendor O2MICRO		0x0b97	O2 Micro
+vendor SACOM		0x0ba0	System SACOM Industry Co.,Ltd
 vendor USR		0x0baf	U.S. Robotics
 vendor AMBIT		0x0bb2	Ambit Microsystems
 vendor HTC		0x0bb4	HTC
@@ -3466,6 +3467,9 @@ product ROCKFIRE GAMEPAD	0x2033	Gamepad 203USB
 
 /* RT Systems */
 product	RTSYSTEMS CT57B		0x9e52	CT57B Radio Cable
+
+/* SACOM products */
+product	SACOM USB485BL		0x800d	USB-485-BL
 
 /* Sagem products */
 product SAGEM SERIAL		0x0027	Serial
