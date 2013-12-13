@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.40 2010/07/23 21:46:05 ray Exp $	*/
+/*	$OpenBSD: history.c,v 1.41 2013/12/13 15:19:41 zhuk Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -169,10 +169,10 @@ cvs_history_add(int type, struct cvs_file *cf, const char *argument)
 			cvs_log(LP_ERR, "failed to open history file");
 	} else {
 		if ((fp = fdopen(fd, "a")) != NULL) {
-			fprintf(fp, "%c%x|%s|%s|%s|%s|%s\n",
-			    historytab[type], time(NULL), getlogin(), cwd,
-			    repo, rev, (cf != NULL) ? cf->file_name :
-			    argument);
+			fprintf(fp, "%c%08llx|%s|%s|%s|%s|%s\n",
+			    historytab[type], (long long)time(NULL),
+			    getlogin(), cwd, repo, rev,
+			    (cf != NULL) ? cf->file_name : argument);
 			(void)fclose(fp);
 		} else {
 			cvs_log(LP_ERR, "failed to add entry to history file");

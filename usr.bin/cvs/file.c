@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.262 2010/10/28 15:02:41 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.263 2013/12/13 15:19:41 zhuk Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <fnmatch.h>
@@ -393,7 +394,6 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	int l, type;
 	FILE *fp;
 	int nbytes;
-	off_t base;
 	size_t bufsize;
 	struct stat st;
 	struct dirent *dp;
@@ -472,7 +472,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	RB_INIT(&fl);
 	RB_INIT(&dl);
 
-	while ((nbytes = getdirentries(cf->fd, buf, bufsize, &base)) > 0) {
+	while ((nbytes = getdents(cf->fd, buf, bufsize)) > 0) {
 		ebuf = buf + nbytes;
 		cp = buf;
 

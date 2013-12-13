@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.167 2012/07/02 21:56:25 tedu Exp $	*/
+/*	$OpenBSD: update.c,v 1.168 2013/12/13 15:19:41 zhuk Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -17,6 +17,7 @@
 
 #include <sys/stat.h>
 
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
@@ -235,7 +236,6 @@ cvs_update_enterdir(struct cvs_file *cf)
 void
 cvs_update_leavedir(struct cvs_file *cf)
 {
-	off_t base;
 	int nbytes;
 	int isempty;
 	size_t bufsize;
@@ -272,7 +272,7 @@ cvs_update_leavedir(struct cvs_file *cf)
 	if (lseek(cf->fd, 0, SEEK_SET) == -1)
 		fatal("cvs_update_leavedir: %s", strerror(errno));
 
-	while ((nbytes = getdirentries(cf->fd, buf, bufsize, &base)) > 0) {
+	while ((nbytes = getdents(cf->fd, buf, bufsize)) > 0) {
 		ebuf = buf + nbytes;
 		cp = buf;
 
