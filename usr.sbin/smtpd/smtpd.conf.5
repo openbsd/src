@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.114 2013/12/13 21:45:27 jca Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.115 2013/12/13 21:48:28 jca Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -288,7 +288,7 @@ Mail is added to a maildir.
 Its location,
 .Ar path ,
 may contain format specifiers that are expanded before use
-(see above).
+.Pq see Sx FORMAT SPECIFIERS .
 If
 .Ar path
 is not provided, then
@@ -302,7 +302,7 @@ Mail is piped to the specified
 .Ar program ,
 which is run with the privileges of the user the message is destined to.
 This parameter may use conversion specifiers that are expanded before use
-(see above).
+.Pq see Sx FORMAT SPECIFIERS .
 .It Xo
 .Ic relay
 .Op Ic backup Op Ar mx
@@ -806,7 +806,7 @@ many mappings as a list of comma separated
 .Ar key Ns = Ns Ar value
 descriptions.
 .El
-.Pp
+.Ss FORMAT SPECIFIERS
 Some configuration directives support expansion of their parameters at runtime.
 Such directives (for example
 .Ar deliver to maildir ,
