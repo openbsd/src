@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.32 2013/08/16 08:33:20 guenther Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.33 2013/12/13 18:09:27 zhuk Exp $	*/
 /*	$NetBSD: dirent.h,v 1.9 1995/03/26 20:13:37 jtc Exp $	*/
 
 /*-
@@ -85,8 +85,6 @@ void rewinddir(DIR *);
 int closedir(DIR *);
 #if __BSD_VISIBLE
 int getdents(int, void *, size_t)
-		__attribute__ ((__bounded__(__string__,2,3)));
-int getdirentries(int, char *, int, off_t *)
 		__attribute__ ((__bounded__(__string__,2,3)));
 #endif /* __BSD_VISIBLE */
 #if __XPG_VISIBLE
