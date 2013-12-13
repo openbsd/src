@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.62 2013/10/11 12:44:13 millert Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.63 2013/12/13 19:55:12 naddy Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -833,10 +833,6 @@ ptyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			ttyflush(tp, FREAD|FWRITE);
 			return (0);
 
-#ifdef COMPAT_OLDTTY
-		case TIOCSETP:
-		case TIOCSETN:
-#endif
 		case TIOCSETD:
 		case TIOCSETA:
 		case TIOCSETAW:
@@ -886,15 +882,6 @@ ptyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		case TIOCSETA:
 		case TIOCSETAW:
 		case TIOCSETAF:
-#ifdef COMPAT_OLDTTY
-		case TIOCSETP:
-		case TIOCSETN:
-		case TIOCSETC:
-		case TIOCSLTC:
-		case TIOCLBIS:
-		case TIOCLBIC:
-		case TIOCLSET:
-#endif
 			pti->pt_send |= TIOCPKT_IOCTL;
 			ptcwakeup(tp, FREAD);
 		default:

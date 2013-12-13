@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.102 2013/10/11 12:44:12 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.103 2013/12/13 19:55:12 naddy Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -183,9 +183,6 @@ ttyopen(dev_t device, struct tty *tp, struct proc *p)
 		SET(tp->t_state, TS_ISOPEN);
 		bzero(&tp->t_winsize, sizeof(tp->t_winsize));
 		tp->t_column = 0;
-#ifdef COMPAT_OLDTTY
-		tp->t_flags = 0;
-#endif
 	}
 	CLR(tp->t_state, TS_WOPEN);
 	splx(s);
@@ -740,16 +737,6 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case  TIOCSTAT:
 	case  TIOCSTI:
 	case  TIOCSWINSZ:
-#ifdef COMPAT_OLDTTY
-	case  TIOCLBIC:
-	case  TIOCLBIS:
-	case  TIOCLSET:
-	case  TIOCSETC:
-	case OTIOCSETD:
-	case  TIOCSETN:
-	case  TIOCSETP:
-	case  TIOCSLTC:
-#endif
 		while (isbackground(pr, tp) &&
 		    (pr->ps_flags & PS_PPWAIT) == 0 &&
 		    (p->p_sigacts->ps_sigignore & sigmask(SIGTTOU)) == 0 &&
@@ -1041,11 +1028,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	}
 	default:
-#ifdef COMPAT_OLDTTY
-		return (ttcompat(tp, cmd, data, flag, p));
-#else
 		return (-1);
-#endif
 	}
 	return (0);
 }

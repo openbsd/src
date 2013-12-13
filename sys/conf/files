@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.562 2013/11/11 09:15:34 mpi Exp $
+#	$OpenBSD: files,v 1.563 2013/12/13 19:55:12 naddy Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -999,7 +999,6 @@ file net/pfkeyv2_convert.c		key | ipsec | tcp_signature
 # COMPAT_* support code (base and other shared code)
 file compat/common/compat_util.c	!small_kernel
 file compat/common/compat_dir.c		!small_kernel & compat_linux
-file compat/common/tty_43.c		compat_43
 
 # libx86emu
 file dev/x86emu/x86emu.c		x86emu
