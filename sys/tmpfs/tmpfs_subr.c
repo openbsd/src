@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.4 2013/09/22 03:34:31 guenther Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.5 2013/12/14 18:01:52 espie Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -90,12 +90,18 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $")
 #include <sys/stat.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
 
 #include <uvm/uvm.h>
 
+#include <dev/rndvar.h>
+
 #include <tmpfs/tmpfs.h>
 #include <tmpfs/tmpfs_vnops.h>
+
+
+/* Local functions. */
+void	tmpfs_dir_putseq(tmpfs_node_t *, tmpfs_dirent_t *);
+int	tmpfs_dir_getdotents(tmpfs_node_t *, struct dirent *, struct uio *);
 
 /*
  * tmpfs_alloc_node: allocate a new inode of a specified type and
@@ -118,19 +124,22 @@ tmpfs_alloc_node(tmpfs_mount_t *tmp, enum vtype type, uid_t uid, gid_t gid,
 	nnode->tn_vnode = NULL;
 	nnode->tn_dirent_hint = NULL;
 
-	/*
-	 * XXX Where the pool is backed by a map larger than (4GB *
-	 * sizeof(*nnode)), this may produce duplicate inode numbers
-	 * for applications that do not understand 64-bit ino_t.
-	 */
-	nnode->tn_id = (ino_t)((uintptr_t)nnode / sizeof(*nnode));
-	nnode->tn_gen = TMPFS_NODE_GEN_MASK & random();
+	rw_enter_write(&tmp->tm_acc_lock);
+	nnode->tn_id = ++tmp->tm_highest_inode;
+	if (nnode->tn_id == 0) {
+		--tmp->tm_highest_inode;
+		rw_exit_write(&tmp->tm_acc_lock);
+		tmpfs_node_put(tmp, nnode);
+		return ENOSPC;
+	}
+	 rw_exit_write(&tmp->tm_acc_lock);
 
 	/* Generic initialization. */
 	nnode->tn_type = type;
 	nnode->tn_size = 0;
 	nnode->tn_flags = 0;
 	nnode->tn_lockf = NULL;
+	nnode->tn_gen = TMPFS_NODE_GEN_MASK & arc4random();
 
 	nanotime(&nnode->tn_atime);
 	nnode->tn_birthtime = nnode->tn_atime;
@@ -156,7 +165,7 @@ tmpfs_alloc_node(tmpfs_mount_t *tmp, enum vtype type, uid_t uid, gid_t gid,
 		/* Directory. */
 		TAILQ_INIT(&nnode->tn_spec.tn_dir.tn_dir);
 		nnode->tn_spec.tn_dir.tn_parent = NULL;
-		nnode->tn_spec.tn_dir.tn_readdir_lastn = 0;
+		nnode->tn_spec.tn_dir.tn_next_seq = TMPFS_DIRSEQ_START;
 		nnode->tn_spec.tn_dir.tn_readdir_lastp = NULL;
 
 		/* Extra link count for the virtual '.' entry. */
@@ -244,15 +253,18 @@ tmpfs_free_node(tmpfs_mount_t *tmp, tmpfs_node_t *node)
 		}
 		break;
 	case VDIR:
-		/*
-		 * KASSERT(TAILQ_EMPTY(&node->tn_spec.tn_dir.tn_dir));
-		 * KASSERT(node->tn_spec.tn_dir.tn_parent == NULL ||
-		 *     node == tmp->tm_root);
-		 */
+		KASSERT(TAILQ_EMPTY(&node->tn_spec.tn_dir.tn_dir));
+		KASSERT(node->tn_spec.tn_dir.tn_parent == NULL ||
+		    node == tmp->tm_root);
 		break;
 	default:
 		break;
 	}
+
+	rw_enter_write(&tmp->tm_acc_lock);
+	if (node->tn_id == tmp->tm_highest_inode)
+		--tmp->tm_highest_inode;
+	rw_exit_write(&tmp->tm_acc_lock);
 
 	/* mutex_destroy(&node->tn_nlock); */
 	tmpfs_node_put(tmp, node);
@@ -383,6 +395,11 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 		KASSERT(dnode->tn_links < LINK_MAX);
 	}
 
+	if (TMPFS_DIRSEQ_FULL(dnode)) {
+		error = ENOSPC;
+		goto out;
+	}
+
 	/* Allocate a node that represents the new file. */
 	error = tmpfs_alloc_node(tmp, vap->va_type, cnp->cn_cred->cr_uid,
 	    dnode->tn_gid, vap->va_mode, target, vap->va_rdev, &node);
@@ -405,24 +422,8 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 		goto out;
 	}
 
-#if 0 /* ISWHITEOUT doesn't exist in OpenBSD */
-	/* Remove whiteout before adding the new entry. */
-	if (cnp->cn_flags & ISWHITEOUT) {
-		wde = tmpfs_dir_lookup(dnode, cnp);
-		KASSERT(wde != NULL && wde->td_node == TMPFS_NODE_WHITEOUT);
-		tmpfs_dir_detach(dvp, wde);
-		tmpfs_free_dirent(tmp, wde);
-	}
-#endif
-
 	/* Associate inode and attach the entry into the directory. */
-	tmpfs_dir_attach(dvp, de, node);
-
-#if 0 /* ISWHITEOUT doesn't exist in OpenBSD */
-	/* Make node opaque if requested. */
-	if (cnp->cn_flags & ISWHITEOUT)
-		node->tn_flags |= UF_OPAQUE;
-#endif
+	tmpfs_dir_attach(dnode, de, node);
 
 out:
 	if (error == 0 && (cnp->cn_flags & SAVESTART) == 0)
@@ -452,6 +453,7 @@ tmpfs_alloc_dirent(tmpfs_mount_t *tmp, const char *name, uint16_t len,
 	}
 	nde->td_namelen = len;
 	memcpy(nde->td_name, name, len);
+	nde->td_seq = TMPFS_DIRSEQ_NONE;
 
 	*de = nde;
 	return 0;
@@ -464,7 +466,8 @@ void
 tmpfs_free_dirent(tmpfs_mount_t *tmp, tmpfs_dirent_t *de)
 {
 
-	/* KASSERT(de->td_node == NULL); */
+	KASSERT(de->td_node == NULL);
+	KASSERT(de->td_seq == TMPFS_DIRSEQ_NONE);
 	tmpfs_strname_free(tmp, de->td_name, de->td_namelen);
 	tmpfs_dirent_put(tmp, de);
 }
@@ -479,22 +482,25 @@ tmpfs_free_dirent(tmpfs_mount_t *tmp, tmpfs_dirent_t *de)
  * => Triggers kqueue events here.
  */
 void
-tmpfs_dir_attach(struct vnode *dvp, tmpfs_dirent_t *de, tmpfs_node_t *node)
+tmpfs_dir_attach(tmpfs_node_t *dnode, tmpfs_dirent_t *de, tmpfs_node_t *node)
 {
-	tmpfs_node_t *dnode = VP_TO_TMPFS_DIR(dvp);
+	struct vnode *dvp = dnode->tn_vnode;
 	int events = NOTE_WRITE;
 
+	KASSERT(dvp != NULL);
 	KASSERT(VOP_ISLOCKED(dvp));
+
+	/* Get a new sequence number. */
+	KASSERT(de->td_seq == TMPFS_DIRSEQ_NONE);
+	de->td_seq = tmpfs_dir_getseq(dnode, de);
 
 	/* Associate directory entry and the inode. */
 	de->td_node = node;
-	if (node != TMPFS_NODE_WHITEOUT) {
-		KASSERT(node->tn_links < LINK_MAX);
-		node->tn_links++;
+	KASSERT(node->tn_links < LINK_MAX);
+	node->tn_links++;
 
-		/* Save the hint (might overwrite). */
-		node->tn_dirent_hint = de;
-	}
+	/* Save the hint (might overwrite). */
+	node->tn_dirent_hint = de;
 
 	/* Insert the entry to the directory (parent of inode). */
 	TAILQ_INSERT_TAIL(&dnode->tn_spec.tn_dir.tn_dir, de, td_entries);
@@ -502,7 +508,7 @@ tmpfs_dir_attach(struct vnode *dvp, tmpfs_dirent_t *de, tmpfs_node_t *node)
 	tmpfs_update(dnode, TMPFS_NODE_STATUSALL);
 	uvm_vnp_setsize(dvp, dnode->tn_size);
 
-	if (node != TMPFS_NODE_WHITEOUT && node->tn_type == VDIR) {
+	if (node->tn_type == VDIR) {
 		/* Set parent. */
 		KASSERT(node->tn_spec.tn_dir.tn_parent == NULL);
 		node->tn_spec.tn_dir.tn_parent = dnode;
@@ -526,52 +532,49 @@ tmpfs_dir_attach(struct vnode *dvp, tmpfs_dirent_t *de, tmpfs_node_t *node)
  * => Triggers kqueue events here.
  */
 void
-tmpfs_dir_detach(struct vnode *dvp, tmpfs_dirent_t *de)
+tmpfs_dir_detach(tmpfs_node_t *dnode, tmpfs_dirent_t *de)
 {
-	tmpfs_node_t *dnode = VP_TO_TMPFS_DIR(dvp);
 	tmpfs_node_t *node = de->td_node;
+	struct vnode *vp, *dvp = dnode->tn_vnode;
 	int events = NOTE_WRITE;
 
-	KASSERT(VOP_ISLOCKED(dvp));
+	KASSERT(dvp == NULL || VOP_ISLOCKED(dvp));
 
-	if (node != TMPFS_NODE_WHITEOUT) {
-		struct vnode *vp = node->tn_vnode;
+	/* Deassociate the inode and entry. */
+	de->td_node = NULL;
+	node->tn_dirent_hint = NULL;
 
+	KASSERT(node->tn_links > 0);
+	node->tn_links--;
+	if ((vp = node->tn_vnode) != NULL) {
 		KASSERT(VOP_ISLOCKED(vp));
+		VN_KNOTE(vp, node->tn_links ?  NOTE_LINK : NOTE_DELETE);
+	}
 
-		/* Deassociate the inode and entry. */
-		de->td_node = NULL;
-		node->tn_dirent_hint = NULL;
+	/* If directory - decrease the link count of parent. */
+	if (node->tn_type == VDIR) {
+		KASSERT(node->tn_spec.tn_dir.tn_parent == dnode);
+		node->tn_spec.tn_dir.tn_parent = NULL;
 
-		KASSERT(node->tn_links > 0);
-		node->tn_links--;
-		if (vp) {
-			VN_KNOTE(vp, node->tn_links ?
-			    NOTE_LINK : NOTE_DELETE);
-		}
-
-		/* If directory - decrease the link count of parent. */
-		if (node->tn_type == VDIR) {
-			KASSERT(node->tn_spec.tn_dir.tn_parent == dnode);
-			node->tn_spec.tn_dir.tn_parent = NULL;
-
-			KASSERT(dnode->tn_links > 0);
-			dnode->tn_links--;
-			events |= NOTE_LINK;
-		}
+		KASSERT(dnode->tn_links > 0);
+		dnode->tn_links--;
+		events |= NOTE_LINK;
 	}
 
 	/* Remove the entry from the directory. */
 	if (dnode->tn_spec.tn_dir.tn_readdir_lastp == de) {
-		dnode->tn_spec.tn_dir.tn_readdir_lastn = 0;
 		dnode->tn_spec.tn_dir.tn_readdir_lastp = NULL;
 	}
 	TAILQ_REMOVE(&dnode->tn_spec.tn_dir.tn_dir, de, td_entries);
 
 	dnode->tn_size -= sizeof(tmpfs_dirent_t);
-	tmpfs_update(dnode, TMPFS_NODE_STATUSALL);
-	uvm_vnp_setsize(dvp, dnode->tn_size);
-	VN_KNOTE(dvp, events);
+	tmpfs_update(dnode, TMPFS_NODE_MODIFIED | TMPFS_NODE_CHANGED);
+	tmpfs_dir_putseq(dnode, de);
+	if (dvp) {
+		tmpfs_update(dnode, 0);
+		uvm_vnp_setsize(dvp, dnode->tn_size);
+		VN_KNOTE(dvp, events);
+	}
 }
 
 /*
@@ -605,7 +608,7 @@ tmpfs_dir_lookup(tmpfs_node_t *node, struct componentname *cnp)
 
 /*
  * tmpfs_dir_cached: get a cached directory entry if it is valid.  Used to
- * avoid unnecessary tmpds_dir_lookup().
+ * avoid unnecessary tmpfs_dir_lookup().
  *
  * => The vnode must be locked.
  */
@@ -629,106 +632,122 @@ tmpfs_dir_cached(tmpfs_node_t *node)
 }
 
 /*
- * tmpfs_dir_getdotdent: helper function for tmpfs_readdir.  Creates a
- * '.' entry for the given directory and returns it in the uio space.
+ * tmpfs_dir_getseq: get a per-directory sequence number for the entry.
  */
-int
-tmpfs_dir_getdotdent(tmpfs_node_t *node, struct uio *uio)
+uint64_t
+tmpfs_dir_getseq(tmpfs_node_t *dnode, tmpfs_dirent_t *de)
 {
-	struct dirent *dentp;
-	int error;
+	uint64_t seq = de->td_seq;
 
-	TMPFS_VALIDATE_DIR(node);
-	KASSERT(uio->uio_offset == TMPFS_DIRCOOKIE_DOT);
+	TMPFS_VALIDATE_DIR(dnode);
 
-	/* dentp = kmem_alloc(sizeof(struct dirent), KM_SLEEP); */
-	dentp = malloc(sizeof(struct dirent), M_TEMP, M_WAITOK);
-	dentp->d_fileno = node->tn_id;
-	dentp->d_off = TMPFS_DIRCOOKIE_DOTDOT;
-	dentp->d_type = DT_DIR;
-	dentp->d_namlen = 1;
-	dentp->d_name[0] = '.';
-	dentp->d_name[1] = '\0';
-	dentp->d_reclen = DIRENT_SIZE(dentp);
-
-	if (dentp->d_reclen > uio->uio_resid)
-		error = -1;
-	else {
-		error = uiomove(dentp, dentp->d_reclen, uio);
-		if (error == 0)
-			uio->uio_offset = TMPFS_DIRCOOKIE_DOTDOT;
+	if (__predict_true(seq != TMPFS_DIRSEQ_NONE)) {
+		/* Already set. */
+		KASSERT(seq >= TMPFS_DIRSEQ_START);
+		return seq;
 	}
-	tmpfs_update(node, TMPFS_NODE_ACCESSED);
-	/* kmem_free(dentp, sizeof(struct dirent)); */
-	free(dentp, M_TEMP);
-	return error;
+
+	/*
+	 * The "." and ".." and the end-of-directory have reserved numbers.
+	 * The other sequence numbers are allocated incrementally.
+	 */
+
+	seq = dnode->tn_spec.tn_dir.tn_next_seq;
+	KASSERT(seq >= TMPFS_DIRSEQ_START);
+	KASSERT(seq < TMPFS_DIRSEQ_END);
+	dnode->tn_spec.tn_dir.tn_next_seq++;
+	return seq;
+}
+
+void
+tmpfs_dir_putseq(tmpfs_node_t *dnode, tmpfs_dirent_t *de)
+{
+	uint64_t seq = de->td_seq;
+
+	TMPFS_VALIDATE_DIR(dnode);
+	KASSERT(seq == TMPFS_DIRSEQ_NONE || seq >= TMPFS_DIRSEQ_START);
+	KASSERT(seq == TMPFS_DIRSEQ_NONE || seq < TMPFS_DIRSEQ_END);
+
+	de->td_seq = TMPFS_DIRSEQ_NONE;
+
+	/* Empty?  We can reset. */
+	if (dnode->tn_size == 0) {
+		dnode->tn_spec.tn_dir.tn_next_seq = TMPFS_DIRSEQ_START;
+	} else if (seq != TMPFS_DIRSEQ_NONE &&
+		seq == dnode->tn_spec.tn_dir.tn_next_seq - 1) {
+		dnode->tn_spec.tn_dir.tn_next_seq--;
+	}
 }
 
 /*
- * tmpfs_dir_getdotdotdent: helper function for tmpfs_readdir.  Creates a
- * '..' entry for the given directory and returns it in the uio space.
- */
-int
-tmpfs_dir_getdotdotdent(tmpfs_node_t *node, struct uio *uio)
-{
-	struct dirent *dentp;
-	tmpfs_dirent_t *de;
-	off_t next;
-	int error;
-
-	TMPFS_VALIDATE_DIR(node);
-	KASSERT(uio->uio_offset == TMPFS_DIRCOOKIE_DOTDOT);
-
-	de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir);
-	if (de == NULL)
-		next = TMPFS_DIRCOOKIE_EOF;
-	else
-		next = tmpfs_dircookie(de);
-
-	/* dentp = kmem_alloc(sizeof(struct dirent), KM_SLEEP); */
-	dentp = malloc(sizeof(struct dirent), M_TEMP, M_WAITOK);
-	dentp->d_fileno = node->tn_spec.tn_dir.tn_parent->tn_id;
-	dentp->d_off = next;
-	dentp->d_type = DT_DIR;
-	dentp->d_namlen = 2;
-	dentp->d_name[0] = '.';
-	dentp->d_name[1] = '.';
-	dentp->d_name[2] = '\0';
-	dentp->d_reclen = DIRENT_SIZE(dentp);
-
-	if (dentp->d_reclen > uio->uio_resid)
-		error = -1;
-	else {
-		error = uiomove(dentp, dentp->d_reclen, uio);
-		if (error == 0)
-			uio->uio_offset = next;
-	}
-	tmpfs_update(node, TMPFS_NODE_ACCESSED);
-	/* kmem_free(dentp, sizeof(struct dirent)); */
-	free(dentp, M_TEMP);
-	return error;
-}
-
-/*
- * tmpfs_dir_lookupbycookie: lookup a directory entry by associated cookie.
+ * tmpfs_dir_lookupbyseq: lookup a directory entry by the sequence number.
  */
 tmpfs_dirent_t *
-tmpfs_dir_lookupbycookie(tmpfs_node_t *node, off_t cookie)
+tmpfs_dir_lookupbyseq(tmpfs_node_t *node, off_t seq)
+{
+	tmpfs_dirent_t *de = node->tn_spec.tn_dir.tn_readdir_lastp;
+
+	TMPFS_VALIDATE_DIR(node);
+
+	/*
+	 * First, check the cache.  If does not match - perform a lookup.
+	 */
+	if (de && de->td_seq == seq) {
+		KASSERT(de->td_seq >= TMPFS_DIRSEQ_START);
+		KASSERT(de->td_seq != TMPFS_DIRSEQ_NONE);
+		return de;
+	}
+
+	TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
+		KASSERT(de->td_seq >= TMPFS_DIRSEQ_START);
+		KASSERT(de->td_seq != TMPFS_DIRSEQ_NONE);
+		if (de->td_seq == seq)
+			return de;
+	}
+	return NULL;
+}
+
+/*
+ * tmpfs_dir_getdotents: helper function for tmpfs_readdir() to get the
+ * dot meta entries, that is, "." or "..".  Copy it to the UIO space.
+ */
+int
+tmpfs_dir_getdotents(tmpfs_node_t *node, struct dirent *dp, struct uio *uio)
 {
 	tmpfs_dirent_t *de;
+	off_t next = 0;
+	int error;
 
-	KASSERT(VOP_ISLOCKED(node->tn_vnode));
-
-	if (cookie == node->tn_spec.tn_dir.tn_readdir_lastn &&
-	    node->tn_spec.tn_dir.tn_readdir_lastp != NULL) {
-		return node->tn_spec.tn_dir.tn_readdir_lastp;
-	}
-	TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
-		if (tmpfs_dircookie(de) == cookie) {
+	switch (uio->uio_offset) {
+		case TMPFS_DIRSEQ_DOT:
+			dp->d_fileno = node->tn_id;
+			strlcpy(dp->d_name, ".", sizeof(dp->d_name));
+			next = TMPFS_DIRSEQ_DOTDOT;
 			break;
-		}
+		case TMPFS_DIRSEQ_DOTDOT:
+			dp->d_fileno = node->tn_spec.tn_dir.tn_parent->tn_id;
+			strlcpy(dp->d_name, "..", sizeof(dp->d_name));
+			de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir);
+			next = de ? tmpfs_dir_getseq(node, de) : TMPFS_DIRSEQ_EOF;
+			break;
+		default:
+			KASSERT(false);
 	}
-	return de;
+	dp->d_type = DT_DIR;
+	dp->d_namlen = strlen(dp->d_name);
+	dp->d_reclen = DIRENT_SIZE(dp);
+	dp->d_off = next;
+
+	if (dp->d_reclen > uio->uio_resid) {
+		return EJUSTRETURN;
+	}
+
+	if ((error = uiomove(dp, dp->d_reclen, uio)) != 0) {
+		return error;
+	}
+
+	uio->uio_offset = next;
+	return error;
 }
 
 /*
@@ -741,109 +760,104 @@ int
 tmpfs_dir_getdents(tmpfs_node_t *node, struct uio *uio)
 {
 	tmpfs_dirent_t *de, *next_de;
-	struct dirent *dentp;
-	off_t cookie, next_cookie;
-	int error;
+	struct dirent dent;
+	int error = 0;
 
 	KASSERT(VOP_ISLOCKED(node->tn_vnode));
 	TMPFS_VALIDATE_DIR(node);
+	memset(&dent, 0, sizeof(dent));
 
-	/*
-	 * Locate the first directory entry we have to return.  We have cached
-	 * the last readdir in the node, so use those values if appropriate.
-	 * Otherwise do a linear scan to find the requested entry.
-	 */
-	cookie = uio->uio_offset;
-	KASSERT(cookie != TMPFS_DIRCOOKIE_DOT);
-	KASSERT(cookie != TMPFS_DIRCOOKIE_DOTDOT);
-	if (cookie == TMPFS_DIRCOOKIE_EOF) {
-		return 0;
-	} else {
-		de = tmpfs_dir_lookupbycookie(node, cookie);
-	}
-	if (de == NULL) {
-		return EINVAL;
-	}
-
-	/*
-	 * Read as much entries as possible; i.e., until we reach the end
-	 * of the directory or we exhaust uio space.
-	 */
-	/* dentp = kmem_alloc(sizeof(struct dirent), KM_SLEEP); */
-	dentp = malloc(sizeof(struct dirent), M_TEMP, M_WAITOK);
-	do {
-		/*
-		 * Create a dirent structure representing the current
-		 * inode and fill it.
-		 */
-		if (de->td_node == TMPFS_NODE_WHITEOUT || 0) {
-			dentp->d_fileno = 1;
-			/* dentp->d_type = DT_WHT; */
-		} else {
-			dentp->d_fileno = de->td_node->tn_id;
-			switch (de->td_node->tn_type) {
-			case VBLK:
-				dentp->d_type = DT_BLK;
-				break;
-			case VCHR:
-				dentp->d_type = DT_CHR;
-				break;
-			case VDIR:
-				dentp->d_type = DT_DIR;
-				break;
-			case VFIFO:
-				dentp->d_type = DT_FIFO;
-				break;
-			case VLNK:
-				dentp->d_type = DT_LNK;
-				break;
-			case VREG:
-				dentp->d_type = DT_REG;
-				break;
-			case VSOCK:
-				dentp->d_type = DT_SOCK;
-				break;
-			default:
-				KASSERT(0);
-			}
+	if (uio->uio_offset == TMPFS_DIRSEQ_DOT) {
+		if ((error = tmpfs_dir_getdotents(node, &dent, uio)) != 0) {
+			goto done;
 		}
-		dentp->d_namlen = de->td_namelen;
-		KASSERT(de->td_namelen < sizeof(dentp->d_name));
-		memcpy(dentp->d_name, de->td_name, de->td_namelen);
-		dentp->d_name[de->td_namelen] = '\0';
-		dentp->d_reclen = DIRENT_SIZE(dentp);
+	}
+	if (uio->uio_offset == TMPFS_DIRSEQ_DOTDOT) {
+		if ((error = tmpfs_dir_getdotents(node, &dent, uio)) != 0) {
+			goto done;
+		}
+	}
+	/* Done if we reached the end. */
+	if (uio->uio_offset == TMPFS_DIRSEQ_EOF) {
+		goto done;
+	}
+
+	/* Locate the directory entry given by the given sequence number. */
+	de = tmpfs_dir_lookupbyseq(node, uio->uio_offset);
+	if (de == NULL) {
+		error = EINVAL;
+		goto done;
+	}
+
+	/*
+	 * Read as many entries as possible; i.e., until we reach the end
+	 * of the directory or we exhaust UIO space.
+	 */
+	do {
+		dent.d_fileno = de->td_node->tn_id;
+		switch (de->td_node->tn_type) {
+		case VBLK:
+			dent.d_type = DT_BLK;
+			break;
+		case VCHR:
+			dent.d_type = DT_CHR;
+			break;
+		case VDIR:
+			dent.d_type = DT_DIR;
+			break;
+		case VFIFO:
+			dent.d_type = DT_FIFO;
+			break;
+		case VLNK:
+			dent.d_type = DT_LNK;
+			break;
+		case VREG:
+			dent.d_type = DT_REG;
+			break;
+		case VSOCK:
+			dent.d_type = DT_SOCK;
+			break;
+		default:
+			KASSERT(0);
+		}
+		dent.d_namlen = de->td_namelen;
+		KASSERT(de->td_namelen < sizeof(dent.d_name));
+		memcpy(dent.d_name, de->td_name, de->td_namelen);
+		dent.d_name[de->td_namelen] = '\0';
+		dent.d_reclen = DIRENT_SIZE(&dent);
 
 		next_de = TAILQ_NEXT(de, td_entries);
 		if (next_de == NULL)
-			next_cookie = TMPFS_DIRCOOKIE_EOF;
+			dent.d_off = TMPFS_DIRSEQ_EOF;
 		else
-			next_cookie = tmpfs_dircookie(next_de);
-		dentp->d_off = next_cookie;
+			dent.d_off = tmpfs_dir_getseq(node, next_de);
 
-		/* Stop reading if the directory entry we are treating is
-		 * bigger than the amount of data that can be returned. */
-		if (dentp->d_reclen > uio->uio_resid) {
-			error = -1;
+		if (dent.d_reclen > uio->uio_resid) {
+			/* Exhausted UIO space. */
+			error = EJUSTRETURN;
 			break;
 		}
 
-		/*
-		 * Copy the new dirent structure into the output buffer and
-		 * advance pointers.
-		 */
-		error = uiomove(dentp, dentp->d_reclen, uio);
-		if (error == 0) {
-			de = next_de;
-			cookie = next_cookie;
+		/* Copy out the directory entry and continue. */
+		error = uiomove(&dent, dent.d_reclen, uio);
+		if (error) {
+			break;
 		}
-	} while (error == 0 && uio->uio_resid > 0 && de != NULL);
+		de = TAILQ_NEXT(de, td_entries);
 
-	/* Update the offset and cache. */
-	node->tn_spec.tn_dir.tn_readdir_lastn = uio->uio_offset = cookie;
+	} while (uio->uio_resid > 0 && de);
+
+	/* Cache the last entry or clear and mark EOF. */
+	uio->uio_offset = de ? tmpfs_dir_getseq(node, de) : TMPFS_DIRSEQ_EOF;
 	node->tn_spec.tn_dir.tn_readdir_lastp = de;
+done:
 	tmpfs_update(node, TMPFS_NODE_ACCESSED);
-	/* kmem_free(dentp, sizeof(struct dirent)); */
-	free(dentp, M_TEMP);
+
+	if (error == EJUSTRETURN) {
+		/* Exhausted UIO space - just return. */
+		error = 0;
+	}
+	KASSERT(error >= 0);
 	return error;
 }
 

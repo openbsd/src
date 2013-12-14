@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.9 2013/10/10 11:00:28 espie Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.10 2013/12/14 18:01:52 espie Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ tmpfs_lookup(void *v)
 	 * Other lookup cases: perform directory scan.
 	 */
 	de = tmpfs_dir_lookup(dnode, cnp);
-	if (de == NULL || de->td_node == TMPFS_NODE_WHITEOUT) {
+	if (de == NULL) {
 		/*
 		 * The entry was not found in the directory.  This is valid
 		 * if we are creating or renaming an entry and are working
@@ -236,10 +236,6 @@ tmpfs_lookup(void *v)
 			error = EJUSTRETURN;
 		} else {
 			error = ENOENT;
-		}
-		if (de) {
-			KASSERT(de->td_node == TMPFS_NODE_WHITEOUT);
-			/* cnp->cn_flags |= ISWHITEOUT; */
 		}
 		goto done;
 	}
@@ -721,7 +717,6 @@ tmpfs_remove(void *v)
 	/* Lookup the directory entry (check the cached hint first). */
 	de = tmpfs_dir_cached(node);
 	if (de == NULL) {
-		tmpfs_node_t *dnode = VP_TO_TMPFS_DIR(dvp);
 		de = tmpfs_dir_lookup(dnode, cnp);
 	}
 
@@ -729,15 +724,12 @@ tmpfs_remove(void *v)
 
 	/*
 	 * Remove the entry from the directory (drops the link count) and
-	 * destroy it or replace it with a whiteout.
+	 * destroy it.
 	 * Note: the inode referred by it will not be destroyed
 	 * until the vnode is reclaimed/recycled.
 	 */
-	tmpfs_dir_detach(dvp, de);
-	if (0 /* ap->a_cnp->cn_flags & DOWHITEOUT */)
-		tmpfs_dir_attach(dvp, de, TMPFS_NODE_WHITEOUT);
-	else
-		tmpfs_free_dirent(VFS_TO_TMPFS(vp->v_mount), de);
+	tmpfs_dir_detach(dnode, de);
+	tmpfs_free_dirent(VFS_TO_TMPFS(vp->v_mount), de);
 	if (node->tn_links > 0)  {
 		/* We removed a hard link. */
 		tmpfs_update(node, TMPFS_NODE_CHANGED);
@@ -806,6 +798,11 @@ tmpfs_link(void *v)
 		goto out;
 	}
 
+	if (TMPFS_DIRSEQ_FULL(dnode)) {
+		error = ENOSPC;
+		goto out;
+	}
+
 	/* Allocate a new directory entry to represent the inode. */
 	error = tmpfs_alloc_dirent(VFS_TO_TMPFS(vp->v_mount),
 	    cnp->cn_nameptr, cnp->cn_namelen, &de);
@@ -813,11 +810,11 @@ tmpfs_link(void *v)
 		goto out;
 	}
 
-	/* 
+	/*
 	 * Insert the entry into the directory.
 	 * It will increase the inode link count.
 	 */
-	tmpfs_dir_attach(dvp, de, node);
+	tmpfs_dir_attach(dnode, de, node);
 
 	/* Update the timestamps and trigger the event. */
 	if (node->tn_vnode) {
@@ -880,16 +877,14 @@ tmpfs_rmdir(void *v)
 	KASSERT(node->tn_spec.tn_dir.tn_parent == dnode);
 
 	/*
-	 * Directories with more than two non-whiteout
-	 * entries ('.' and '..') cannot be removed.
+	 * Directories with more than two entries ('.' and '..') cannot be 
+	 * removed.
 	 */
 	if (node->tn_size > 0) {
 		KASSERT(error == 0);
 		TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
-			if (de->td_node != TMPFS_NODE_WHITEOUT) {
-				error = ENOTEMPTY;
-				break;
-			}
+			error = ENOTEMPTY;
+			break;
 		}
 		if (error)
 			goto out;
@@ -913,27 +908,18 @@ tmpfs_rmdir(void *v)
 	tmpfs_update(node, TMPFS_NODE_STATUSALL);
 
 	/* Detach the directory entry from the directory. */
-	tmpfs_dir_detach(dvp, de);
+	tmpfs_dir_detach(dnode, de);
 
 	/* Purge the cache for parent. */
 	cache_purge(dvp);
 
 	/*
-	 * Destroy the directory entry or replace it with a whiteout.
+	 * Destroy the directory entry.
 	 * Note: the inode referred by it will not be destroyed
 	 * until the vnode is reclaimed.
 	 */
-	if (0 /* ap->a_cnp->cn_flags & DOWHITEOUT */)
-		tmpfs_dir_attach(dvp, de, TMPFS_NODE_WHITEOUT);
-	else
-		tmpfs_free_dirent(tmp, de);
-
-	/* Destroy the whiteout entries from the node. */
-	while ((de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir)) != NULL) {
-		KASSERT(de->td_node == TMPFS_NODE_WHITEOUT);
-		tmpfs_dir_detach(vp, de);
-		tmpfs_free_dirent(tmp, de);
-	}
+	tmpfs_free_dirent(tmp, de);
+	KASSERT(TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir) == NULL);
 
 	KASSERT(node->tn_links == 0);
 out:
@@ -993,35 +979,17 @@ tmpfs_readdir(void *v)
 		return ENOTDIR;
 	}
 	node = VP_TO_TMPFS_DIR(vp);
-	if (node->tn_links == 0) {
+	/*
+	 * Retrieve the directory entries, unless it is being destroyed.
+	 */
+	if (node->tn_links) {
+		error = tmpfs_dir_getdents(node, uio);
+	} else {
 		error = 0;
-		goto out;
 	}
 
-	if (uio->uio_offset == TMPFS_DIRCOOKIE_DOT) {
-		error = tmpfs_dir_getdotdent(node, uio);
-		if (error != 0) {
-			if (error == -1)
-				error = 0;
-			goto out;
-		}
-	}
-	if (uio->uio_offset == TMPFS_DIRCOOKIE_DOTDOT) {
-		error = tmpfs_dir_getdotdotdent(node, uio);
-		if (error != 0) {
-			if (error == -1)
-				error = 0;
-			goto out;
-		}
-	}
-	error = tmpfs_dir_getdents(node, uio);
-	if (error == -1) {
-		error = 0;
-	}
-	KASSERT(error >= 0);
-out:
 	if (eofflag != NULL) {
-		*eofflag = (!error && uio->uio_offset == TMPFS_DIRCOOKIE_EOF);
+		*eofflag = !error && uio->uio_offset == TMPFS_DIRSEQ_EOF;
 	}
 	return error;
 }
@@ -1162,161 +1130,6 @@ tmpfs_advlock(void *v)
 	return lf_advlock(&node->tn_lockf, node->tn_size, ap->a_id, ap->a_op,
 	    ap->a_fl, ap->a_flags);
 }
-
-#if 0
-int
-tmpfs_getpages(void *v)
-{
-	struct vop_getpages_args /* {
-		struct vnode *a_vp;
-		voff_t a_offset;
-		struct vm_page **a_m;
-		int *a_count;
-		int a_centeridx;
-		vm_prot_t a_access_type;
-		int a_advice;
-		int a_flags;
-	} */ * const ap = v;
-	struct vnode *vp = ap->a_vp;
-	const voff_t offset = ap->a_offset;
-	struct vm_page **pgs = ap->a_m;
-	const int centeridx = ap->a_centeridx;
-	const vm_prot_t access_type = ap->a_access_type;
-	const int advice = ap->a_advice;
-	const int flags = ap->a_flags;
-	int error, npages = *ap->a_count;
-	tmpfs_node_t *node;
-	struct uvm_object *uobj;
-
-	KASSERT(vp->v_type == VREG);
-	KASSERT(mutex_owned(vp->v_interlock));
-
-	node = VP_TO_TMPFS_NODE(vp);
-	uobj = node->tn_spec.tn_reg.tn_aobj;
-
-	/*
-	 * Currently, PGO_PASTEOF is not supported.
-	 */
-	if (vp->v_size <= offset + (centeridx << PAGE_SHIFT)) {
-		if ((flags & PGO_LOCKED) == 0)
-			mutex_exit(vp->v_interlock);
-		return EINVAL;
-	}
-
-	if (vp->v_size < offset + (npages << PAGE_SHIFT)) {
-		npages = (round_page(vp->v_size) - offset) >> PAGE_SHIFT;
-	}
-
-	if ((flags & PGO_LOCKED) != 0)
-		return EBUSY;
-
-	if ((flags & PGO_NOTIMESTAMP) == 0) {
-		if ((vp->v_mount->mnt_flag & MNT_NOATIME) == 0)
-			node->tn_status |= TMPFS_NODE_ACCESSED;
-
-		if ((access_type & VM_PROT_WRITE) != 0) {
-			node->tn_status |= TMPFS_NODE_MODIFIED;
-			if (vp->v_mount->mnt_flag & MNT_RELATIME)
-				node->tn_status |= TMPFS_NODE_ACCESSED;
-		}
-	}
-
-	/*
-	 * Invoke the pager.
-	 *
-	 * Clean the array of pages before.  XXX: PR/32166
-	 * Note that vnode lock is shared with underlying UVM object.
-	 */
-	if (pgs) {
-		memset(pgs, 0, sizeof(struct vm_pages *) * npages);
-	}
-	KASSERT(vp->v_interlock == uobj->vmobjlock);
-
-	error = (*uobj->pgops->pgo_get)(uobj, offset, pgs, &npages, centeridx,
-	    access_type, advice, flags | PGO_ALLPAGES);
-
-#if defined(DEBUG)
-	if (!error && pgs) {
-		for (int i = 0; i < npages; i++) {
-			KASSERT(pgs[i] != NULL);
-		}
-	}
-#endif
-	return error;
-}
-
-int
-tmpfs_putpages(void *v)
-{
-	struct vop_putpages_args /* {
-		struct vnode *a_vp;
-		voff_t a_offlo;
-		voff_t a_offhi;
-		int a_flags;
-	} */ * const ap = v;
-	struct vnode *vp = ap->a_vp;
-	const voff_t offlo = ap->a_offlo;
-	const voff_t offhi = ap->a_offhi;
-	const int flags = ap->a_flags;
-	tmpfs_node_t *node;
-	struct uvm_object *uobj;
-	int error;
-
-	KASSERT(mutex_owned(vp->v_interlock));
-
-	if (vp->v_type != VREG) {
-		mutex_exit(vp->v_interlock);
-		return 0;
-	}
-
-	node = VP_TO_TMPFS_NODE(vp);
-	uobj = node->tn_spec.tn_reg.tn_aobj;
-
-	KASSERT(vp->v_interlock == uobj->vmobjlock);
-	error = (*uobj->pgops->pgo_put)(uobj, offlo, offhi, flags);
-
-	/* XXX mtime */
-
-	return error;
-}
-
-int
-tmpfs_whiteout(void *v)
-{
-	struct vop_whiteout_args /* {
-		struct vnode		*a_dvp;
-		struct componentname	*a_cnp;
-		int			a_flags;
-	} */ *ap = v;
-	struct vnode *dvp = ap->a_dvp;
-	struct componentname *cnp = ap->a_cnp;
-	const int flags = ap->a_flags;
-	tmpfs_mount_t *tmp = VFS_TO_TMPFS(dvp->v_mount);
-	tmpfs_dirent_t *de;
-	int error;
-
-	switch (flags) {
-	case LOOKUP:
-		break;
-	case CREATE:
-		error = tmpfs_alloc_dirent(tmp, cnp->cn_nameptr,
-		    cnp->cn_namelen, &de);
-		if (error)
-			return error;
-		tmpfs_dir_attach(dvp, de, TMPFS_NODE_WHITEOUT);
-		break;
-	case DELETE:
-		cnp->cn_flags &= ~DOWHITEOUT; /* when in doubt, cargo cult */
-		de = tmpfs_dir_lookup(VP_TO_TMPFS_DIR(dvp), cnp);
-		if (de == NULL)
-			return ENOENT;
-		tmpfs_dir_detach(dvp, de);
-		tmpfs_free_dirent(tmp, de);
-		break;
-	}
-	return 0;
-}
-#endif
 
 int
 tmpfs_print(void *v)
@@ -2394,8 +2207,10 @@ tmpfs_rename_attachdetach(struct tmpfs_mount *tmpfs,
 	if (fdvp != tdvp) {
 		/* tmpfs_dir_detach clobbers fde->td_node, so save it.  */
 		struct tmpfs_node *fnode = fde->td_node;
-		tmpfs_dir_detach(fdvp, fde);
-		tmpfs_dir_attach(tdvp, fde, fnode);
+		tmpfs_node_t *fdnode = VP_TO_TMPFS_DIR(fdvp);
+		tmpfs_node_t *tdnode = VP_TO_TMPFS_DIR(tdvp);
+		tmpfs_dir_detach(fdnode, fde);
+		tmpfs_dir_attach(tdnode, fde, fnode);
 	} else if (tvp == NULL) {
 		/*
 		 * We are changing the directory.  tmpfs_dir_attach and
@@ -2410,6 +2225,7 @@ tmpfs_rename_attachdetach(struct tmpfs_mount *tmpfs,
 	 * If we are replacing an existing target entry, delete it.
 	 */
 	if (tde != NULL) {
+		tmpfs_node_t *tdnode = VP_TO_TMPFS_DIR(tdvp);
 		KASSERT(tvp != NULL);
 		KASSERT(tde->td_node != NULL);
 		KASSERT((fvp->v_type == VDIR) == (tvp->v_type == VDIR));
@@ -2420,7 +2236,7 @@ tmpfs_rename_attachdetach(struct tmpfs_mount *tmpfs,
 			 * the vnode will be recycled when released.  */
 			tde->td_node->tn_links--;
 		}
-		tmpfs_dir_detach(tdvp, tde);
+		tmpfs_dir_detach(tdnode, tde);
 		tmpfs_free_dirent(tmpfs, tde);
 	}
 }
@@ -2465,7 +2281,7 @@ tmpfs_do_remove(struct tmpfs_mount *tmpfs, struct vnode *dvp,
 		    cred->cr_uid != de->td_node->tn_uid)
 			return EPERM;
 
-	tmpfs_dir_detach(dvp, de);
+	tmpfs_dir_detach(dnode, de);
 	tmpfs_free_dirent(tmpfs, de);
 
 	return 0;
@@ -2584,6 +2400,9 @@ tmpfs_rename_check_permitted(struct ucred *cred,
 	error = tmpfs_check_sticky(cred, fdnode, fnode);
 	if (error)
 		return error;
+
+	if (TMPFS_DIRSEQ_FULL(tdnode))
+		return (ENOSPC);
 
 	error = tmpfs_check_sticky(cred, tdnode, tnode);
 	if (error)

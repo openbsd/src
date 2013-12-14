@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vfsops.c,v 1.2 2013/06/03 10:37:02 espie Exp $	*/
+/*	$OpenBSD: tmpfs_vfsops.c,v 1.3 2013/12/14 18:01:52 espie Exp $	*/
 /*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -94,7 +94,6 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 	tmpfs_mount_t *tmp;
 	tmpfs_node_t *root;
 	uint64_t memlimit;
-	size_t len;
 	uint64_t nodes;
 	int error;
 
@@ -155,6 +154,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 
 	tmp->tm_nodes_max = (ino_t)nodes;
 	tmp->tm_nodes_cnt = 0;
+	tmp->tm_highest_inode = 1;
 	LIST_INIT(&tmp->tm_nodes);
 
 	rw_init(&tmp->tm_lock, "tmplk");
@@ -185,10 +185,18 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 #endif
 	vfs_getnewfsid(mp);
 
-	copystr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &len);
-	bzero(mp->mnt_stat.f_mntonname + len, MNAMELEN - len);
-	len = strlcpy(mp->mnt_stat.f_mntfromname, "tmpfs", MNAMELEN - 1);
-	bzero(mp->mnt_stat.f_mntfromname + len, MNAMELEN - len);
+	mp->mnt_stat.mount_info.tmpfs_args = args;
+
+	bzero(&mp->mnt_stat.f_mntonname, sizeof(mp->mnt_stat.f_mntonname));
+	bzero(&mp->mnt_stat.f_mntfromname, sizeof(mp->mnt_stat.f_mntfromname));
+	bzero(&mp->mnt_stat.f_mntfromspec, sizeof(mp->mnt_stat.f_mntfromspec));
+
+	strlcpy(mp->mnt_stat.f_mntonname, path,
+	    sizeof(mp->mnt_stat.f_mntonname) - 1);
+	strlcpy(mp->mnt_stat.f_mntfromname, "tmpfs",
+	    sizeof(mp->mnt_stat.f_mntfromname) - 1);
+	strlcpy(mp->mnt_stat.f_mntfromspec, "tmpfs",
+	    sizeof(mp->mnt_stat.f_mntfromspec) - 1);
 
 	return error;
 }
@@ -203,8 +211,8 @@ tmpfs_start(struct mount *mp, int flags, struct proc *p)
 int
 tmpfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 {
-	tmpfs_mount_t *tmp;
-	tmpfs_node_t *node;
+	tmpfs_mount_t *tmp = VFS_TO_TMPFS(mp);
+	tmpfs_node_t *node, *cnode;
 	int error, flags = 0;
 
 	/* Handle forced unmounts. */
@@ -216,31 +224,37 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	if (error != 0)
 		return error;
 
-	tmp = VFS_TO_TMPFS(mp);
 
-	/* Destroy any existing inodes. */
-	while ((node = LIST_FIRST(&tmp->tm_nodes)) != NULL) {
-		if (node->tn_type == VDIR) {
-			tmpfs_dirent_t *de;
+	/*
+	 * First round, detach and destroy all directory entries.
+	 * Also, clear the pointers to the vnodes - they are gone.
+	 */
+	LIST_FOREACH(node, &tmp->tm_nodes, tn_entries) {
+		tmpfs_dirent_t *de;
 
-			/* Destroy any directory entries. */
-			de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir);
-			while (de != NULL) {
-				tmpfs_dirent_t *nde;
-
-				nde = TAILQ_NEXT(de, td_entries);
-				tmpfs_free_dirent(tmp, de);
-				node->tn_size -= sizeof(tmpfs_dirent_t);
-				de = nde;
-			}
+		node->tn_vnode = NULL;
+		if (node->tn_type != VDIR) {
+			continue;
 		}
-		/* Removes inode from the list. */
+		while ((de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir)) != NULL) {
+			cnode = de->td_node;
+			if (cnode) {
+				cnode->tn_vnode = NULL;
+			}
+			tmpfs_dir_detach(node, de);
+			tmpfs_free_dirent(tmp, de);
+		}
+	}
+
+	/* Second round, destroy all inodes. */
+	while ((node = LIST_FIRST(&tmp->tm_nodes)) != NULL) {
 		tmpfs_free_node(tmp, node);
 	}
 
 	/* Throw away the tmpfs_mount structure. */
 	tmpfs_mntmem_destroy(tmp);
 	/* mutex_destroy(&tmp->tm_lock); */
+	/* kmem_free(tmp, sizeof(*tmp)); */
 	free(tmp, M_MISCFSMNT);
 	mp->mnt_data = NULL;
 

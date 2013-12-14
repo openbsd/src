@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.h,v 1.3 2013/06/04 09:11:40 espie Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.h,v 1.4 2013/12/14 18:01:52 espie Exp $	*/
 /*	$NetBSD: tmpfs_vnops.h,v 1.13 2011/05/24 20:17:49 rmind Exp $	*/
 
 /*
@@ -78,8 +78,5 @@ int	tmpfs_print		(void *);
 int	tmpfs_pathconf		(void *);
 int	tmpfs_advlock		(void *);
 int	tmpfs_bwrite		(void *);
-int	tmpfs_getpages		(void *);
-int	tmpfs_putpages		(void *);
-int	tmpfs_whiteout		(void *);
 
 #endif /* _TMPFS_TMPFS_VNOPS_H_ */
