@@ -866,8 +866,8 @@ history_write (type, update_dir, revs, name, repository)
 	revs = "";
     line = xmalloc (strlen (username) + strlen (workdir) + strlen (repos)
 		    + strlen (revs) + strlen (name) + 100);
-    sprintf (line, "%c%08lx|%s|%s|%s|%s|%s\n",
-	     type, (long) time ((time_t *) NULL),
+    sprintf (line, "%c%08llx|%s|%s|%s|%s|%s\n",
+	     type, (long long) time ((time_t *) NULL),
 	     username, workdir, repos, revs, name);
 
     /* Lessen some race conditions on non-Posix-compliant hosts.  */
