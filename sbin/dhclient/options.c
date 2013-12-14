@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.59 2013/12/12 13:22:37 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.60 2013/12/14 16:06:42 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -202,6 +202,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 	unsigned char *data = option->data;
 	unsigned char *dp = data;
 	int len = option->len;
+	int opcount = 0;
 	struct in_addr foo;
 	char comma;
 
@@ -316,126 +317,111 @@ pretty_print_option(unsigned int code, struct option_data *option,
 	/* Cycle through the array (or hunk) printing the data. */
 	for (i = 0; i < numhunk; i++) {
 		for (j = 0; j < numelem; j++) {
-			int opcount;
-			size_t oplen;
 			switch (fmtbuf[j]) {
 			case 't':
 				if (emit_punct) {
-					*op++ = '"';
-					opleft--;
+					opcount = snprintf(op, opleft, "\"");
+					if (opcount >= opleft || opcount == -1)
+						goto toobig;
+					opleft -= opcount;
+					op += opcount;
 				}
 				for (; dp < data + len; dp++) {
-					if (!isascii(*dp) ||
-					    !isprint(*dp)) {
-						if (dp + 1 != data + len ||
-						    *dp != 0) {
-							size_t oplen;
-							snprintf(op, opleft,
-							    "\\%03o", *dp);
-							oplen = strlen(op);
-							op += oplen;
-							opleft -= oplen;
-						}
+					if (!isascii(*dp) || !isprint(*dp)) {
+						opcount = snprintf(op, opleft,
+						    "\\%03o", *dp);
 					} else if (*dp == '"' ||
 					    *dp == '\'' ||
 					    *dp == '$' ||
 					    *dp == '`' ||
 					    *dp == '\\') {
-						*op++ = '\\';
-						*op++ = *dp;
-						opleft -= 2;
+						opcount = snprintf(op, opleft,
+						    "\\%c", *dp);
 					} else {
-						*op++ = *dp;
-						opleft--;
+						opcount = snprintf(op, opleft,
+						    "%c", *dp);
 					}
+					if (opcount >= opleft || opcount == -1)
+						goto toobig;
+					opleft -= opcount;
+					op += opcount;
 				}
 				if (emit_punct) {
-					*op++ = '"';
-					opleft--;
+					opcount = snprintf(op, opleft, "\"");
+					if (opcount >= opleft || opcount == -1)
+						goto toobig;
+					opleft -= opcount;
+					op += opcount;
 				}
-
-				*op = 0;
+				opcount = 0; /* Already moved dp & op. */
 				break;
 			case 'I':
 				foo.s_addr = htonl(getULong(dp));
-				opcount = strlcpy(op, inet_ntoa(foo), opleft);
-				if (opcount >= opleft)
-					goto toobig;
+				opcount = snprintf(op, opleft, "%s",
+				    inet_ntoa(foo));
 				dp += 4;
 				break;
 			case 'l':
 				opcount = snprintf(op, opleft, "%ld",
 				    (long)getLong(dp));
-				if (opcount >= opleft || opcount == -1)
-					goto toobig;
 				dp += 4;
 				break;
 			case 'L':
 				opcount = snprintf(op, opleft, "%ld",
 				    (unsigned long)getULong(dp));
-				if (opcount >= opleft || opcount == -1)
-					goto toobig;
 				dp += 4;
 				break;
 			case 's':
 				opcount = snprintf(op, opleft, "%d",
 				    getShort(dp));
-				if (opcount >= opleft || opcount == -1)
-					goto toobig;
 				dp += 2;
 				break;
 			case 'S':
 				opcount = snprintf(op, opleft, "%d",
 				    getUShort(dp));
-				if (opcount >= opleft || opcount == -1)
-					goto toobig;
 				dp += 2;
 				break;
 			case 'b':
 				opcount = snprintf(op, opleft, "%d",
 				    *(char *)dp);
-				if (opcount >= opleft || opcount == -1)
-					goto toobig;
 				dp++;
 				break;
 			case 'B':
 				opcount = snprintf(op, opleft, "%d", *dp);
-				if (opcount >= opleft || opcount == -1)
-					goto toobig;
 				dp++;
 				break;
 			case 'x':
 				opcount = snprintf(op, opleft, "%x", *dp);
-				if (opcount >= opleft || opcount == -1)
-					goto toobig;
 				dp++;
 				break;
 			case 'f':
-				opcount = strlcpy(op,
-				    *dp ? "true" : "false", opleft);
-				if (opcount >= opleft)
-					goto toobig;
+				opcount = snprintf(op, opleft, "%s",
+				    *dp ? "true" : "false");
 				dp++;
 				break;
 			default:
 				warning("Unexpected format code %c", fmtbuf[j]);
-			}
-			oplen = strlen(op);
-			op += oplen;
-			opleft -= oplen;
-			if (opleft < 1)
 				goto toobig;
+			}
+			if (opcount >= opleft || opcount == -1)
+				goto toobig;
+			opleft -= opcount;
+			op += opcount;
 			if (j + 1 < numelem && comma != ':') {
-				*op++ = ' ';
-				opleft--;
+				opcount = snprintf(op, opleft, " ");
+				if (opcount >= opleft || opcount == -1)
+					goto toobig;
+				opleft -= opcount;
+				op += opcount;
 			}
 		}
 		if (i + 1 < numhunk) {
-			*op++ = comma;
-			opleft--;
+			opcount = snprintf(op, opleft, "%c", comma);
+			if (opcount >= opleft || opcount == -1)
+				goto toobig;
+			opleft -= opcount;
+			op += opcount;
 		}
-		if (opleft < 1)
-			goto toobig;
 	}
 
 done:
