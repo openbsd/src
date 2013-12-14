@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.277 2013/12/10 17:01:27 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.278 2013/12/14 05:07:09 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2251,6 +2251,8 @@ clone_lease(struct client_lease *oldlease)
 	newlease->rebind = oldlease->rebind;
 	newlease->is_static = oldlease->is_static;
 	newlease->is_bootp = oldlease->is_bootp;
+	newlease->address = oldlease->address;
+	newlease->next_server = oldlease->next_server;
 
 	if (oldlease->server_name) {
 		newlease->server_name = strdup(oldlease->server_name);
@@ -2260,6 +2262,11 @@ clone_lease(struct client_lease *oldlease)
 	if (oldlease->filename) {
 		newlease->filename = strdup(oldlease->filename);
 		if (newlease->filename == NULL)
+			goto cleanup;
+	}
+	if (oldlease->resolv_conf) {
+		newlease->resolv_conf = strdup(oldlease->resolv_conf);
+		if (newlease->resolv_conf == NULL)
 			goto cleanup;
 	}
 
