@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.53 2013/09/22 15:42:53 guenther Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.54 2013/12/14 02:57:25 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -729,6 +729,7 @@ udf_readdir(void *v)
 	ump = up->u_ump;
 	uiodir.eofflag = 1;
 	uiodir.dirent = &dir;
+	memset(&dir, 0, sizeof(dir));
 
 	/*
 	 * if asked to start at SELF_OFFSET or PARENT_OFFSET, search

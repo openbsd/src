@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.63 2013/08/13 05:52:22 guenther Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.64 2013/12/14 02:57:25 guenther Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -430,7 +430,15 @@ cd9660_readdir(void *v)
 	bmask = imp->im_bmask;
 
 	idp = malloc(sizeof(*idp), M_TEMP, M_WAITOK);
-	idp->saveent.d_namlen = idp->assocent.d_namlen = 0;
+
+	/*
+	 * These are passed to copyout(), so make sure there's no garbage
+	 * being leaked in padding or after short names.
+	 */
+	memset(&idp->saveent, 0, sizeof(idp->saveent));
+	memset(&idp->assocent, 0, sizeof(idp->assocent));
+	memset(&idp->current, 0, sizeof(idp->current));
+
 	/*
 	 * XXX
 	 * Is it worth trying to figure out the type?

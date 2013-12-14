@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.90 2013/10/01 20:22:13 sf Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.91 2013/12/14 02:57:25 guenther Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1497,7 +1497,7 @@ msdosfs_readdir(void *v)
 	/*
 	 * To be safe, initialize dirbuf
 	 */
-	bzero(dirbuf.d_name, sizeof(dirbuf.d_name));
+	bzero(&dirbuf, sizeof(dirbuf));
 
 	/*
 	 * If the user buffer is smaller than the size of one dos directory
