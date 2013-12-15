@@ -1,5 +1,0 @@
-The virtual domain support in popa3d is in development and is currently
-undocumented.
-
-Please only use it if you know what you are doing, -- it is too easy to
-misconfigure it in dangerous ways.
