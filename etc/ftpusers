@@ -1,4 +1,4 @@
-#	$OpenBSD: ftpusers,v 1.46 2013/08/19 16:31:18 ajacoutot Exp $
+#	$OpenBSD: ftpusers,v 1.47 2013/12/15 17:40:45 tedu Exp $
 #
 # list of users disallowed any ftp access.
 # read by ftpd(8).
@@ -7,7 +7,6 @@ daemon
 operator
 bin
 smmsp
-popa3d
 sshd
 uucp
 www

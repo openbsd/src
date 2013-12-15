@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.407 2013/08/09 16:24:54 ajacoutot Exp $
+#	$OpenBSD: rc,v 1.408 2013/12/15 17:40:45 tedu Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -495,7 +495,7 @@ fi
 
 start_daemon hostapd rwhod lpd sendmail smtpd httpd slowcgi nginx ftpd
 start_daemon ftpproxy tftpd tftpproxy identd inetd rarpd bootparamd
-start_daemon rbootd mopd popa3d spamd spamlogd kdc kadmind kpasswdd
+start_daemon rbootd mopd spamd spamlogd kdc kadmind kpasswdd
 start_daemon ipropd_master ipropd_slave sndiod
 echo '.'
 
