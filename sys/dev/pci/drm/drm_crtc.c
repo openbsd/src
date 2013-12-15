@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.c,v 1.3 2013/09/02 10:18:26 jsg Exp $	*/
+/*	$OpenBSD: drm_crtc.c,v 1.4 2013/12/15 22:09:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -2226,8 +2226,9 @@ int drm_mode_addfb(struct drm_device *dev,
 	/* TODO setup destructor callback */
 
 	fb = dev->mode_config.funcs->fb_create(dev, file_priv, &r);
-	if (fb == NULL) {
+	if (IS_ERR(fb)) {
 		DRM_DEBUG_KMS("could not create framebuffer\n");
+		ret = -PTR_ERR(fb);
 		goto out;
 	}
 
@@ -2411,8 +2412,9 @@ int drm_mode_addfb2(struct drm_device *dev,
 	rw_enter_write(&dev->mode_config.rwl);
 
 	fb = dev->mode_config.funcs->fb_create(dev, file_priv, r);
-	if (fb == NULL) {
+	if (IS_ERR(fb)) {
 		DRM_DEBUG_KMS("could not create framebuffer\n");
+		ret = -PTR_ERR(fb);
 		goto out;
 	}
 
