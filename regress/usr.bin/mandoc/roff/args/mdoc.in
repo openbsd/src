@@ -1,0 +1,116 @@
+.Dd December 15, 2013
+.Dt ARGS-MDOC 1
+.Os OpenBSD
+.Sh NAME
+.Nm args-mdoc
+.Nd arguments to mdoc macros
+.Sh DESCRIPTION
+standard unquoted:
+.Fl one two
+text
+.br
+escaped blanks:
+.Fl one\ one two\ two
+text
+.br
+escaped 'e' character:
+.Fl one\eone two
+text
+.br
+.\"escaped backslash before blank:
+.\"Fl one\\ two
+.\"text
+.\"br
+.\"escaped backslash before 'e' character:
+.\"Fl one\\e two
+.\"text
+.\"br
+double inter-argument space:
+.Fl one  two
+text
+.br
+triple inter-argument space:
+.Fl one   two
+text
+.br
+single eol blank:
+.Fl one two 
+text
+.br
+double eol blank:
+.Fl one two  
+text
+.br
+triple eol blank:
+.Fl one two   
+text
+.br
+standard quoted:
+.Fl "one" "two"
+text
+.br
+quoted quotes:
+.Fl "one""one" """two"""
+text
+.br
+quoted whitespace:
+.Fl "one one" "two two"
+text
+.br
+escaped 'e' characters:
+.Fl "one \e one" "\e"
+text
+.br
+.\"escaped backslash before blank:
+.\"Fl "one\\ one" "\\ "
+.\"text
+.\"br
+.\"escaped backslash before 'e' character:
+.\"Fl "one\\eone" "\\e"
+.\"text
+.\"br
+double inter-argument space:
+.Fl "one one"  "two two"
+text
+.br
+triple inter-argument space:
+.Fl "one one"   "two two"
+text
+.br
+missing inter-argument space:
+.Fl "one one"two\ two
+text
+.br
+single eol blank:
+.Fl "one one" "two two" 
+text
+.br
+double eol blank:
+.Fl "one one" "two two"  
+text
+.br
+triple eol blank:
+.Fl "one one" "two two"   
+text
+.br
+trailing blanks in arguments:
+.Fl "one " "two "
+text
+.br
+unterminated quotes:
+.Fl "one
+.Fl one "two
+text
+.br
+single trailing blank in unterminated quotes:
+.Fl "one 
+.Fl one "two 
+text
+.br
+double trailing blank in unterminated quotes:
+.Fl "one  
+.Fl one "two  
+text
+.br
+backslash at eol:
+.Fl one two\

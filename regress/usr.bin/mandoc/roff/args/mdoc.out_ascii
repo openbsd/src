@@ -1,0 +1,31 @@
+ARGS-MDOC(1)               OpenBSD Reference Manual               ARGS-MDOC(1)
+
+NNAAMMEE
+     aarrggss--mmddoocc - arguments to mdoc macros
+
+DDEESSCCRRIIPPTTIIOONN
+     standard unquoted: --oonnee --ttwwoo text
+     escaped blanks: --oonnee oonnee --ttwwoo ttwwoo text
+     escaped 'e' character: --oonnee\\oonnee --ttwwoo text
+     double inter-argument space: --oonnee --ttwwoo text
+     triple inter-argument space: --oonnee --ttwwoo text
+     single eol blank: --oonnee --ttwwoo text
+     double eol blank: --oonnee --ttwwoo text
+     triple eol blank: --oonnee --ttwwoo text
+     standard quoted: --oonnee --ttwwoo text
+     quoted quotes: --oonnee""oonnee --""ttwwoo"" text
+     quoted whitespace: --oonnee oonnee --ttwwoo ttwwoo text
+     escaped 'e' characters: --oonnee \\ oonnee --\\ text
+     double inter-argument space: --oonnee oonnee --ttwwoo ttwwoo text
+     triple inter-argument space: --oonnee oonnee --ttwwoo ttwwoo text
+     missing inter-argument space: --oonnee oonnee --ttwwoo ttwwoo text
+     single eol blank: --oonnee oonnee --ttwwoo ttwwoo text
+     double eol blank: --oonnee oonnee --ttwwoo ttwwoo text
+     triple eol blank: --oonnee oonnee --ttwwoo ttwwoo text
+     trailing blanks in arguments: --oonnee  --ttwwoo  text
+     unterminated quotes: --oonnee --oonnee --ttwwoo text
+     single trailing blank in unterminated quotes: --oonnee  --oonnee --ttwwoo  text
+     double trailing blank in unterminated quotes: --oonnee   --oonnee --ttwwoo   text
+     backslash at eol: --oonnee --ttwwoo
+
+OpenBSD                        December 15, 2013                       OpenBSD
