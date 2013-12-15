@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.278 2013/12/14 05:07:09 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.279 2013/12/15 03:15:47 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -843,6 +843,10 @@ bind_lease(void)
 	client->new->rebind += cur_time;
 	if (client->new->rebind < cur_time)
 		client->new->rebind = TIME_MAX;
+
+	lease->expiry = client->new->expiry;
+	lease->renewal = client->new->renewal;
+	lease->rebind = client->new->rebind;
 
 	/*
 	 * A duplicate lease once we are responsible & S_RENEWING means we don't
