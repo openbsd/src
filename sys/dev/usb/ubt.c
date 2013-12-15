@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubt.c,v 1.25 2013/11/06 17:04:47 pirofti Exp $	*/
+/*	$OpenBSD: ubt.c,v 1.26 2013/12/15 14:28:35 pirofti Exp $	*/
 /*	$NetBSD: ubt.c,v 1.35 2008/07/28 14:19:26 drochner Exp $	*/
 
 /*-
@@ -951,7 +951,7 @@ ubt_xmit_cmd_complete(struct usbd_xfer *xfer, void *h, usbd_status status)
 		return;
 	}
 
-	if (usbd_is_dying(sc->sc_udev))
+	if (usbd_is_dying(sc->sc_udev)) {
 		DPRINTF("dying\n");
 		return;
 	}
