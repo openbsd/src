@@ -7,4 +7,9 @@ initial contents: \nY \n(YY \n[YYY]
 .nr Y 42
 .nr YY -1
 .nr YYY 2147483647
+intermediate contents: \nY \n(YY \n[YYY]
+.br
+.nr Y -19
+.nr YY +2
+.nr YYY +1
 final contents: \nY \n(YY \n[YYY]

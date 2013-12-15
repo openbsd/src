@@ -7,7 +7,8 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
        initial contents: 0 0 0
-       final contents: 42 -1 2147483647
+       intermediate contents: 42 -1 2147483647
+       final contents: 23 1 -2147483648
 
 
 

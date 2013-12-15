@@ -1,5 +1,5 @@
-# $OpenBSD: Makefile,v 1.1 2013/10/03 22:04:07 schwarze Exp $
+# $OpenBSD: Makefile,v 1.2 2013/12/15 21:18:00 schwarze Exp $
 
-REGRESS_TARGETS = int
+REGRESS_TARGETS = int argc
 
 .include <bsd.regress.mk>

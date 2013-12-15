@@ -1,0 +1,17 @@
+NR-ARGC(1)                 OpenBSD Reference Manual                 NR-ARGC(1)
+
+NNAAMMEE
+     nnrr--aarrggcc - varying number of arguments to the .nr macro
+
+DDEESSCCRRIIPPTTIIOONN
+     one argument: 0
+
+     two arguments: 2
+
+     with suffix: 2
+
+     three arguments: 2
+
+     four arguments: 2
+
+OpenBSD                        December 15, 2013                       OpenBSD

@@ -1,0 +1,21 @@
+.Dd December 15, 2013
+.Dt NR-ARGC 1
+.Os OpenBSD
+.Sh NAME
+.Nm nr-argc
+.Nd varying number of arguments to the .nr macro
+.Sh DESCRIPTION
+.nr onearg
+one argument: \n[onearg]
+.Pp
+.nr twoargs 2
+two arguments: \n[twoargs]
+.Pp
+.nr withsuffix 2x
+with suffix: \n[withsuffix]
+.Pp
+.nr threeargs 2 3
+three arguments: \n[threeargs]
+.Pp
+.nr fourargs 2 3 4
+four arguments: \n[fourargs]

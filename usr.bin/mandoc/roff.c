@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.59 2013/10/22 20:37:54 schwarze Exp $ */
+/*	$Id: roff.c,v 1.60 2013/12/15 21:18:00 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -1356,7 +1356,7 @@ roff_ds(ROFF_ARGS)
 }
 
 void
-roff_setreg(struct roff *r, const char *name, int val)
+roff_setreg(struct roff *r, const char *name, int val, char sign)
 {
 	struct roffreg	*reg;
 
@@ -1371,11 +1371,17 @@ roff_setreg(struct roff *r, const char *name, int val)
 		reg = mandoc_malloc(sizeof(struct roffreg));
 		reg->key.p = mandoc_strdup(name);
 		reg->key.sz = strlen(name);
+		reg->val = 0;
 		reg->next = r->regtab;
 		r->regtab = reg;
 	}
 
-	reg->val = val;
+	if ('+' == sign)
+		reg->val += val;
+	else if ('-' == sign)
+		reg->val -= val;
+	else
+		reg->val = val;
 }
 
 int
@@ -1422,14 +1428,21 @@ roff_nr(ROFF_ARGS)
 {
 	const char	*key;
 	char		*val;
+	size_t		 sz;
 	int		 iv;
+	char		 sign;
 
 	val = *bufp + pos;
 	key = roff_getname(r, &val, ln, pos);
 
-	iv = mandoc_strntoi(val, strlen(val), 10);
+	sign = *val;
+	if ('+' == sign || '-' == sign)
+		val++;
 
-	roff_setreg(r, key, iv);
+	sz = strspn(val, "0123456789");
+	iv = sz ? mandoc_strntoi(val, sz, 10) : 0;
+
+	roff_setreg(r, key, iv, sign);
 
 	return(ROFF_IGN);
 }

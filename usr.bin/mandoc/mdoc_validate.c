@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.115 2013/10/21 23:32:33 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.116 2013/12/15 21:18:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -1987,10 +1987,10 @@ post_sh_head(POST_ARGS)
 	/* The SYNOPSIS gets special attention in other areas. */
 
 	if (SEC_SYNOPSIS == sec) {
-		roff_setreg(mdoc->roff, "nS", 1);
+		roff_setreg(mdoc->roff, "nS", 1, '=');
 		mdoc->flags |= MDOC_SYNOPSIS;
 	} else {
-		roff_setreg(mdoc->roff, "nS", 0);
+		roff_setreg(mdoc->roff, "nS", 0, '=');
 		mdoc->flags &= ~MDOC_SYNOPSIS;
 	}
 
