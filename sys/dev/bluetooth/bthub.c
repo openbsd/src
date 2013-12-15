@@ -1,4 +1,4 @@
-/*	$OpenBSD: bthub.c,v 1.5 2010/08/29 15:12:28 jasper Exp $	*/
+/*	$OpenBSD: bthub.c,v 1.6 2013/12/15 14:32:38 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -40,6 +40,9 @@ void	bthub_attach(struct device *, struct device *, void *);
 int	bthub_detach(struct device *, int);
 int	bthub_print(void *, const char *);
 int	bthub_devioctl(dev_t, u_long, struct btdev_attach_args *);
+int	bthubopen(dev_t, int, int, struct proc *);
+int	bthubclose(dev_t, int, int, struct proc *);
+int	bthubioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
 struct cfattach bthub_ca = {
 	sizeof(struct bthub_softc), bthub_match, bthub_attach, bthub_detach
