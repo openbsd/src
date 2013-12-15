@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_tiling.c,v 1.11 2013/12/11 20:31:43 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_tiling.c,v 1.12 2013/12/15 11:17:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -485,7 +485,7 @@ i915_gem_swizzle_page(struct vm_page *pg)
 #if defined (__HAVE_PMAP_DIRECT)
 	va = pmap_map_direct(pg);
 #else
-	va = uvm_km_valloc_wait(kernel_map, PAGE_SIZE);
+	va = uvm_km_valloc_wait(phys_map, PAGE_SIZE);
 	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 #endif
@@ -502,7 +502,7 @@ i915_gem_swizzle_page(struct vm_page *pg)
 #else
 	pmap_kremove(va, PAGE_SIZE);
 	pmap_update(pmap_kernel());
-	uvm_km_free(kernel_map, va, PAGE_SIZE);
+	uvm_km_free_wakeup(phys_map, va, PAGE_SIZE);
 #endif
 }
 
