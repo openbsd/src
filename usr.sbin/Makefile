@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.169 2013/08/07 22:07:33 dlg Exp $
+#	$OpenBSD: Makefile,v 1.170 2013/12/15 17:35:03 tedu Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ SUBDIR=	ac accton acpidump adduser amd apm apmd arp \
 	memconfig mksuncd mkuboot mopd mrinfo mrouted \
 	mtrace mtree ndp netgroup_mkdb \
 	nginx npppctl npppd nsd ntpd openssl ospfctl ospfd ospf6d ospf6ctl \
-	pcidump pkg_add popa3d portmap ppp pppd pppoe procmap pstat pwd_mkdb \
+	pcidump pkg_add portmap ppp pppd pppoe procmap pstat pwd_mkdb \
 	quot quotaon rarpd rbootd rdate relayctl relayd repquota rip6query \
 	ripctl ripd rmt route6d rpc.bootparamd rpc.lockd rpc.statd rtadvd \
 	rtsold rwhod sa sasyncd sensorsd sliplogin slowcgi slstats smtpd \
