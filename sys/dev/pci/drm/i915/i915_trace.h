@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_trace.h,v 1.9 2013/12/01 11:47:13 kettenis Exp $	*/
+/*	$OpenBSD: i915_trace.h,v 1.10 2013/12/15 11:42:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -43,6 +43,18 @@ trace_i915_gem_request_wait_end(struct intel_ring_buffer *ring, u32 seqno)
 static inline void
 trace_i915_gem_object_change_domain(struct drm_i915_gem_object *obj,
 				    u32 old_read, u32 old_write)
+{
+}
+
+static inline void
+trace_i915_gem_object_pwrite(struct drm_i915_gem_object *obj,
+			     u32 offset, u32 len)
+{
+}
+
+static inline void
+trace_i915_gem_object_pread(struct drm_i915_gem_object *obj,
+			    u32 offset, u32 len)
 {
 }
 
