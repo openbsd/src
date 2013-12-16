@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.21 2013/12/02 20:55:11 halex Exp $
+#	$OpenBSD: dot.profile,v 1.22 2013/12/16 16:58:22 halex Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -105,7 +105,7 @@ __EOT
 		fi
 
 		case $REPLY in
-		a*|A*)	/install auto && break
+		a*|A*)	/install -a && break
 			;;
 		i*|I*)	/install && break
 			;;
