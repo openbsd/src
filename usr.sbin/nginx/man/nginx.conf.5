@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nginx.conf.5,v 1.4 2013/11/03 18:22:47 schwarze Exp $
+.\"	$OpenBSD: nginx.conf.5,v 1.5 2013/12/16 10:52:53 florian Exp $
 .\"
 .\" Copyright (C) 2002-2012 Igor Sysoev
 .\" Copyright (C) 2011-2013 Nginx, Inc.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 3 2013 $
+.Dd $Mdocdate: December 16 2013 $
 .Dt NGINX.CONF 5
 .Os
 .Sh NAME
@@ -2755,6 +2755,7 @@ If the special value
 is specified (1.5.1), denies access for all UNIX-domain sockets.
 .El
 .Ss Module ngx_http_addition_module
+.Em This module is not enabled on OpenBSD.
 .Bl -tag -width Ds
 .It Ic add_before_body Ar uri
 .Bl -tag -width Ds -compact
@@ -2858,6 +2859,7 @@ attacks.
 .El
 .El
 .Ss Module ngx_http_auth_request_module
+.Em This module is not enabled on OpenBSD.
 .Bl -tag -width Ds
 .It Ic auth_request Ar uri | Cm off
 .Bl -tag -width Ds -compact
@@ -3118,6 +3120,7 @@ If this charset is different from the charset specified in the
 directive, a conversion is performed.
 .El
 .Ss Module ngx_http_dav_module
+.Em This module is not enabled on OpenBSD.
 .Bl -tag -width Ds
 .It Ic dav_access Ar users Ns : Ns Ar permissions No ...
 .Bl -tag -width Ds -compact
@@ -3217,6 +3220,7 @@ and denies the removal of
 Turns on module processing in a surrounding location.
 .El
 .Ss Module ngx_http_f4f_module
+.Em This module is only available in the commercial version of nginx.
 .Bl -tag -width Ds
 .It Ic f4f
 .Bl -tag -width Ds -compact
@@ -4073,6 +4077,7 @@ a temporary file might look like this:
 .Ed
 .El
 .Ss Module ngx_http_flv_module
+.Em This module is not enabled on OpenBSD.
 .Bl -tag -width Ds
 .It Ic flv
 .Bl -tag -width Ds -compact
@@ -4193,6 +4198,7 @@ geo $country {
 .Ed
 .El
 .Ss Module ngx_http_geoip_module
+.Em This module is not enabled on OpenBSD.
 .Bl -tag -width Ds
 .It Ic geoip_country Ar file
 .Bl -tag -width Ds -compact
@@ -4287,6 +4293,7 @@ matches one of the trusted addresses, the last non-trusted address sent in
 X-Forwarded-For will be used.
 .El
 .Ss Module ngx_http_gunzip_module
+.Em This module is not enabled on OpenBSD.
 .Bl -tag -width Ds
 .It Ic gunzip Cm on | Cm off
 .Bl -tag -width Ds -compact
@@ -4549,6 +4556,7 @@ parameter disables adding or modifying the Expires and Cache-Control response
 header fields.
 .El
 .Ss Module ngx_http_hls_module
+.Em This module is only available in the commercial version of nginx.
 .Bl -tag -width Ds
 .It Ic hls
 .Bl -tag -width Ds -compact
@@ -4603,6 +4611,7 @@ log the following message:
 .Ed
 .El
 .Ss Module ngx_http_image_filter_module
+.Em This module is not enabled on OpenBSD.
 .Bl -tag -width Ds
 .It Ic image_filter Cm off
 .It Ic image_filter Cm test
@@ -5425,6 +5434,7 @@ If a memcached server does not receive anything within this time, a connection
 is closed.
 .El
 .Ss Module ngx_http_mp4_module
+.Em This module is not enabled on OpenBSD.
 .Bl -tag -width Ds
 .It Ic mp4
 .Bl -tag -width Ds -compact
@@ -5461,6 +5471,8 @@ log the following message:
 .It context: Ic http , Ic server , Ic location
 .El
 .Pp
+.Em This directive is only available in the commercial version of nginx.
+.Pp
 Enables or disables rate limiting based on the average bitrate of the MP4 file
 served.
 To calculate the rate, the bitrate is multiplied by the specified
@@ -5474,9 +5486,12 @@ corresponds to the factor of 1.1.
 .It context: Ic http , Ic server , Ic location
 .El
 .Pp
+.Em This directive is only available in the commercial version of nginx.
+.Pp
 Limits the rate after sending the specified amount of media data.
 .El
 .Ss Module ngx_http_perl_module
+.Em This module is not enabled on OpenBSD.
 .Bl -tag -width Ds
 .It Ic perl Ar module Ns :: Ns Ar function | 'sub { ... }'
 .Bl -tag -width Ds -compact
@@ -6693,6 +6708,7 @@ a temporary file might look like this:
 .Ed
 .El
 .Ss Module ngx_http_random_index_module
+.Em This module is not enabled on OpenBSD.
 .Bl -tag -width Ds
 .It Ic random_index Cm on | Cm off
 .Bl -tag -width Ds -compact
@@ -6703,6 +6719,7 @@ a temporary file might look like this:
 Enables or disables module processing in a surrounding location.
 .El
 .Ss Module ngx_http_realip_module
+.Em This module is not enabled on OpenBSD.
 .Bl -tag -width Ds
 .It Ic set_real_ip_from Ar address | Ar CIDR | Cm unix:
 .Bl -tag -width Ds -compact
@@ -7087,6 +7104,7 @@ can contain text, variables, and their combination.
 Controls whether warnings about uninitialized variables are logged.
 .El
 .Ss Module ngx_http_secure_link_module
+.Em This module is not enabled on OpenBSD.
 .Bl -tag -width Ds
 .It Ic secure_link Ar expression
 .Bl -tag -width Ds -compact
@@ -7219,6 +7237,7 @@ echo -n 'linksecret'  | openssl md5 -hex
 .Ed
 .El
 .Ss Module ngx_http_session_log_module
+.Em This module is only available in the commercial version of nginx.
 .Bl -tag -width Ds
 .It Ic session_log_format Ar name Ar string No ...
 .Bl -tag -width Ds -compact
@@ -7285,6 +7304,7 @@ cancels all
 directives inherited from the previous configuration level.
 .El
 .Ss Module ngx_http_spdy_module
+.Em This module is not enabled on OpenBSD.
 .Bl -tag -width Ds
 .It Ic spdy_headers_comp Ar level
 .Bl -tag -width Ds -compact
@@ -7678,6 +7698,7 @@ variable.
 Sets the verification depth in the client certificates chain.
 .El
 .Ss Module ngx_http_status_module
+.Em This module is only available in the commercial version of nginx.
 .Bl -tag -width Ds
 .It Ic status
 .Bl -tag -width Ds -compact
@@ -7704,6 +7725,7 @@ If parameter is omitted, or the computed value is an empty string, then
 is used.
 .El
 .Ss Module ngx_http_sub_module
+.Em This module is not enabled on OpenBSD.
 .Bl -tag -width Ds
 .It Ic sub_filter Ar string Ar replacement
 .Bl -tag -width Ds -compact
@@ -7830,6 +7852,8 @@ during which the server will recover its weight from zero to a nominal value,
 when unhealthy server becomes healthy, or when the server becomes available
 after a period of time it was considered unavailable. Default value is zero,
 i.e. slow start is disabled.
+.Pp
+.Em This option is only available in the commercial version of nginx.
 .It Cm backup
 marks the server as a backup server.
 It will be passed requests when the primary servers are unavailable.
@@ -7839,6 +7863,8 @@ marks the server as permanently unavailable; used along with the
 directive.
 .It Cm route Ns = Ns Ar string
 sets the server route name.
+.Pp
+.Em This option is only available in the commercial version of nginx.
 .El
 .Pp
 Example:
@@ -7862,6 +7888,8 @@ parameters are ignored, and such a server will never be considered unavailable.
 .It default:
 .It context: Ic upstream
 .El
+.Pp
+.Em This directive is only available in the commercial version of nginx.
 .Pp
 Makes the group dynamically configurable.
 Defines the
@@ -8007,6 +8035,8 @@ balancing method.
 .It context: Ic location
 .El
 .Pp
+.Em This directive is only available in the commercial version of nginx.
+.Pp
 Enables periodic health checks of the servers in a
 .Ic upstream
 .Ar group
@@ -8092,6 +8122,8 @@ failure of any check will make the corresponding server be considered unhealthy.
 .It context: Ic http
 .El
 .Pp
+.Em This directive is only available in the commercial version of nginx.
+.Pp
 Defines the named test set used to verify responses to health check requests.
 The following items can be tested in a response:
 .Bl -tag -width Ds
@@ -8168,6 +8200,8 @@ match server_ok {
 .It default:
 .It context: Ic upstream
 .El
+.Pp
+.Em This directive is only available in the commercial version of nginx.
 .Pp
 Enables session affinity, which causes requests from the same client to be
 passed to the same server in a group of servers.
@@ -8264,6 +8298,8 @@ directive with a new syntax should be used instead:
 .It default:
 .It context: Ic location
 .El
+.Pp
+.Em This directive is only available in the commercial version of nginx.
 .Pp
 Turns on the HTTP interface of upstream configuration in the surrounding
 location.
@@ -8547,6 +8583,7 @@ For version 2 cookies, the default value is the number composed from the last
 four octets of the server's IP address.
 .El
 .Ss Module ngx_http_xslt_module
+.Em This module is not enabled on OpenBSD.
 .Bl -tag -width Ds
 .It Ic xml_entities Ar path
 .Bl -tag -width Ds -compact
