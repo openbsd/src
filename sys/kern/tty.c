@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.103 2013/12/13 19:55:12 naddy Exp $	*/
+/*	$OpenBSD: tty.c,v 1.104 2013/12/16 18:46:39 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -834,6 +834,11 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (!isctty(pr, tp) && suser(p, 0))
 			return (ENOTTY);
 		*(int *)data = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
+		break;
+	case TIOCGSID:			/* get sid of tty */
+		if (!isctty(pr, tp))
+			return (ENOTTY);
+		*(int *)data = tp->t_session->s_leader->ps_pid;
 		break;
 #ifdef TIOCHPCL
 	case TIOCHPCL:			/* hang up on last close */
