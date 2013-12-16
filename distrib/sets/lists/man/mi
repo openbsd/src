@@ -2914,6 +2914,7 @@
 ./usr/share/man/man8/mount_nfs.8
 ./usr/share/man/man8/mount_ntfs.8
 ./usr/share/man/man8/mount_procfs.8
+./usr/share/man/man8/mount_tmpfs.8
 ./usr/share/man/man8/mount_udf.8
 ./usr/share/man/man8/mount_vnd.8
 ./usr/share/man/man8/mountd.8
@@ -2967,7 +2968,6 @@
 ./usr/share/man/man8/ping.8
 ./usr/share/man/man8/ping6.8
 ./usr/share/man/man8/pkg_check.8
-./usr/share/man/man8/popa3d.8
 ./usr/share/man/man8/portmap.8
 ./usr/share/man/man8/ppp.8
 ./usr/share/man/man8/pppctl.8

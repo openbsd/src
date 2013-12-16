@@ -140,6 +140,7 @@
 ./sbin/mount_msdos
 ./sbin/mount_nfs
 ./sbin/mount_procfs
+./sbin/mount_tmpfs
 ./sbin/mount_udf
 ./sbin/mount_vnd
 ./sbin/mountd
@@ -2770,7 +2771,6 @@
 ./usr/sbin/pkg_delete
 ./usr/sbin/pkg_info
 ./usr/sbin/pkg_mklocatedb
-./usr/sbin/popa3d
 ./usr/sbin/portmap
 ./usr/sbin/ppp
 ./usr/sbin/pppctl

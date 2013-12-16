@@ -60,7 +60,7 @@
 ./usr/lib/libc.so.71.0
 ./usr/lib/libcom_err.so.20.0
 ./usr/lib/libcrypto.so.23.0
-./usr/lib/libcurses.so.13.0
+./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.0
 ./usr/lib/libevent.so.4.0
 ./usr/lib/libexpat.so.11.0
@@ -81,8 +81,8 @@
 ./usr/lib/libmenu.so.6.0
 ./usr/lib/libmenuw.so.6.0
 ./usr/lib/libmilter.so.3.0
-./usr/lib/libncurses.so.13.0
-./usr/lib/libncursesw.so.13.0
+./usr/lib/libncurses.so.14.0
+./usr/lib/libncursesw.so.14.0
 ./usr/lib/libobjc.so.6.0
 ./usr/lib/libocurses.so.6.0
 ./usr/lib/libossaudio.so.4.0
@@ -100,8 +100,8 @@
 ./usr/lib/libsqlite3.so.26.0
 ./usr/lib/libssl.so.20.0
 ./usr/lib/libstdc++.so.57.0
-./usr/lib/libtermcap.so.13.0
-./usr/lib/libtermlib.so.13.0
+./usr/lib/libtermcap.so.14.0
+./usr/lib/libtermlib.so.14.0
 ./usr/lib/libusbhid.so.6.0
 ./usr/lib/libutil.so.12.0
 ./usr/lib/libwind.so.1.0
@@ -2286,10 +2286,8 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/tprintf.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/tree.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/tty.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/ttychars.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/ttycom.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/ttydefaults.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/ttydev.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/types.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/ucred.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/uio.ph

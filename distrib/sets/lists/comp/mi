@@ -1517,10 +1517,8 @@
 ./usr/include/sys/tprintf.h
 ./usr/include/sys/tree.h
 ./usr/include/sys/tty.h
-./usr/include/sys/ttychars.h
 ./usr/include/sys/ttycom.h
 ./usr/include/sys/ttydefaults.h
-./usr/include/sys/ttydev.h
 ./usr/include/sys/types.h
 ./usr/include/sys/ucred.h
 ./usr/include/sys/uio.h
