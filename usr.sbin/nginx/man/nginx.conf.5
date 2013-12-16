@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nginx.conf.5,v 1.5 2013/12/16 10:52:53 florian Exp $
+.\"	$OpenBSD: nginx.conf.5,v 1.6 2013/12/16 11:19:03 florian Exp $
 .\"
 .\" Copyright (C) 2002-2012 Igor Sysoev
 .\" Copyright (C) 2011-2013 Nginx, Inc.
@@ -7723,6 +7723,16 @@ The value can contain variables.
 If parameter is omitted, or the computed value is an empty string, then
 .Sx Module ngx_status_jsonp_callback
 is used.
+.El
+.Ss Module ngx_http_stub_status_module
+.Bl -tag -width Ds
+.It Ic stub_status Cm on
+.Bl -tag -width Ds -compact
+.It default:
+.It context: Ic location
+.El
+.Pp
+The status information will be accessible from the surrounding location.
 .El
 .Ss Module ngx_http_sub_module
 .Em This module is not enabled on OpenBSD.
