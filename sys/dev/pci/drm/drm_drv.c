@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.118 2013/12/05 13:29:56 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.119 2013/12/16 19:57:09 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -766,64 +766,64 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 		 */
 			return (EBUSY);
 		case DRM_IOCTL_MODE_GETRESOURCES:
-			return drm_mode_getresources(dev, data, file_priv);
+			return -drm_mode_getresources(dev, data, file_priv);
 		case DRM_IOCTL_MODE_GETPLANERESOURCES:
-			return drm_mode_getplane_res(dev, data, file_priv);
+			return -drm_mode_getplane_res(dev, data, file_priv);
 		case DRM_IOCTL_MODE_GETCRTC:
-			return drm_mode_getcrtc(dev, data, file_priv);
+			return -drm_mode_getcrtc(dev, data, file_priv);
 		case DRM_IOCTL_MODE_SETCRTC:
-			return drm_mode_setcrtc(dev, data, file_priv);
+			return -drm_mode_setcrtc(dev, data, file_priv);
 		case DRM_IOCTL_MODE_GETPLANE:
-			return drm_mode_getplane(dev, data, file_priv);
+			return -drm_mode_getplane(dev, data, file_priv);
 		case DRM_IOCTL_MODE_SETPLANE:
-			return drm_mode_setplane(dev, data, file_priv);
+			return -drm_mode_setplane(dev, data, file_priv);
 		case DRM_IOCTL_MODE_CURSOR:
-			return drm_mode_cursor_ioctl(dev, data, file_priv);
+			return -drm_mode_cursor_ioctl(dev, data, file_priv);
 		case DRM_IOCTL_MODE_GETGAMMA:
-			return drm_mode_gamma_get_ioctl(dev, data, file_priv);
+			return -drm_mode_gamma_get_ioctl(dev, data, file_priv);
 		case DRM_IOCTL_MODE_SETGAMMA:
-			return drm_mode_gamma_set_ioctl(dev, data, file_priv);
+			return -drm_mode_gamma_set_ioctl(dev, data, file_priv);
 		case DRM_IOCTL_MODE_GETENCODER:
-			return drm_mode_getencoder(dev, data, file_priv);
+			return -drm_mode_getencoder(dev, data, file_priv);
 		case DRM_IOCTL_MODE_GETCONNECTOR:
-			return drm_mode_getconnector(dev, data, file_priv);
+			return -drm_mode_getconnector(dev, data, file_priv);
 		case DRM_IOCTL_MODE_ATTACHMODE:
-			return drm_mode_attachmode_ioctl(dev, data, file_priv);
+			return -drm_mode_attachmode_ioctl(dev, data, file_priv);
 		case DRM_IOCTL_MODE_DETACHMODE:
-			return drm_mode_detachmode_ioctl(dev, data, file_priv);
+			return -drm_mode_detachmode_ioctl(dev, data, file_priv);
 		case DRM_IOCTL_MODE_GETPROPERTY:
-			return drm_mode_getproperty_ioctl(dev, data, 
+			return -drm_mode_getproperty_ioctl(dev, data, 
 			    file_priv);
 		case DRM_IOCTL_MODE_SETPROPERTY:
-			return drm_mode_connector_property_set_ioctl(dev, 
+			return -drm_mode_connector_property_set_ioctl(dev, 
 			    data, file_priv);
 		case DRM_IOCTL_MODE_GETPROPBLOB:
-			return drm_mode_getblob_ioctl(dev, data, file_priv);
+			return -drm_mode_getblob_ioctl(dev, data, file_priv);
 		case DRM_IOCTL_MODE_GETFB:
-			return drm_mode_getfb(dev, data, file_priv);
+			return -drm_mode_getfb(dev, data, file_priv);
 		case DRM_IOCTL_MODE_ADDFB:
-			return drm_mode_addfb(dev, data, file_priv);
+			return -drm_mode_addfb(dev, data, file_priv);
 		case DRM_IOCTL_MODE_ADDFB2:
-			return drm_mode_addfb2(dev, data, file_priv);
+			return -drm_mode_addfb2(dev, data, file_priv);
 		case DRM_IOCTL_MODE_RMFB:
-			return drm_mode_rmfb(dev, data, file_priv);
+			return -drm_mode_rmfb(dev, data, file_priv);
 		case DRM_IOCTL_MODE_PAGE_FLIP:
-			return drm_mode_page_flip_ioctl(dev, data, file_priv);
+			return -drm_mode_page_flip_ioctl(dev, data, file_priv);
 		case DRM_IOCTL_MODE_DIRTYFB:
-			return drm_mode_dirtyfb_ioctl(dev, data, file_priv);
+			return -drm_mode_dirtyfb_ioctl(dev, data, file_priv);
 		case DRM_IOCTL_MODE_CREATE_DUMB:
-			return drm_mode_create_dumb_ioctl(dev, data, 
+			return -drm_mode_create_dumb_ioctl(dev, data, 
 			    file_priv);
 		case DRM_IOCTL_MODE_MAP_DUMB:
-			return drm_mode_mmap_dumb_ioctl(dev, data, file_priv);
+			return -drm_mode_mmap_dumb_ioctl(dev, data, file_priv);
 		case DRM_IOCTL_MODE_DESTROY_DUMB:
-			return drm_mode_destroy_dumb_ioctl(dev, data, 
+			return -drm_mode_destroy_dumb_ioctl(dev, data, 
 			    file_priv);
 		case DRM_IOCTL_MODE_OBJ_GETPROPERTIES:
-			return drm_mode_obj_get_properties_ioctl(dev, data,
+			return -drm_mode_obj_get_properties_ioctl(dev, data,
 			    file_priv);
 		case DRM_IOCTL_MODE_OBJ_SETPROPERTY:
-			return drm_mode_obj_set_property_ioctl(dev, data,
+			return -drm_mode_obj_set_property_ioctl(dev, data,
 			    file_priv);
 		}
 	}

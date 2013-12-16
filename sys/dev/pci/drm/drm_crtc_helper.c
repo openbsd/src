@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc_helper.c,v 1.5 2013/10/30 02:11:32 dlg Exp $	*/
+/*	$OpenBSD: drm_crtc_helper.c,v 1.6 2013/12/16 19:57:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -541,7 +541,7 @@ drm_crtc_helper_disable(struct drm_crtc *crtc)
  * ->prepare(), ->modeset() and ->commit() helper callbacks.
  *
  * RETURNS:
- * Returns 0 on success, ERRNO on failure.
+ * Returns 0 on success, -ERRNO on failure.
  */
 int drm_crtc_helper_set_config(struct drm_mode_set *set)
 {
@@ -561,13 +561,13 @@ int drm_crtc_helper_set_config(struct drm_mode_set *set)
 	DRM_DEBUG_KMS("\n");
 
 	if (!set)
-		return EINVAL;
+		return -EINVAL;
 
 	if (!set->crtc)
-		return EINVAL;
+		return -EINVAL;
 
 	if (!set->crtc->helper_private)
-		return EINVAL;
+		return -EINVAL;
 
 	crtc_funcs = set->crtc->helper_private;
 
@@ -590,13 +590,13 @@ int drm_crtc_helper_set_config(struct drm_mode_set *set)
 	save_crtcs = malloc(dev->mode_config.num_crtc *
 	    sizeof(struct drm_crtc), M_DRM, M_WAITOK|M_ZERO);
 	if (!save_crtcs)
-		return ENOMEM;
+		return -ENOMEM;
 
 	save_encoders = malloc(dev->mode_config.num_encoder *
 	    sizeof(struct drm_encoder), M_DRM, M_WAITOK|M_ZERO);
 	if (!save_encoders) {
 		free(save_crtcs, M_DRM);
-		return ENOMEM;
+		return -ENOMEM;
 	}
 
 	save_connectors = malloc(dev->mode_config.num_connector *
@@ -604,7 +604,7 @@ int drm_crtc_helper_set_config(struct drm_mode_set *set)
 	if (!save_connectors) {
 		free(save_crtcs, M_DRM);
 		free(save_encoders, M_DRM);
-		return ENOMEM;
+		return -ENOMEM;
 	}
 
 	/* Copy data. Note that driver private data is not affected.
@@ -691,7 +691,7 @@ int drm_crtc_helper_set_config(struct drm_mode_set *set)
 	}
 
 	if (fail) {
-		ret = EINVAL;
+		ret = -EINVAL;
 		goto fail;
 	}
 
@@ -713,7 +713,7 @@ int drm_crtc_helper_set_config(struct drm_mode_set *set)
 		/* Make sure the new CRTC will work with the encoder */
 		if (new_crtc &&
 		    !drm_encoder_crtc_ok(connector->encoder, new_crtc)) {
-			ret = EINVAL;
+			ret = -EINVAL;
 			goto fail;
 		}
 		if (new_crtc != connector->encoder->crtc) {
@@ -749,7 +749,7 @@ int drm_crtc_helper_set_config(struct drm_mode_set *set)
 				DRM_ERROR("failed to set mode on [CRTC:%d]\n",
 					  set->crtc->base.id);
 				set->crtc->fb = old_fb;
-				ret = EINVAL;
+				ret = -EINVAL;
 				goto fail;
 			}
 			DRM_DEBUG_KMS("Setting connector DPMS state to on\n");
