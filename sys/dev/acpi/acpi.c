@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.248 2013/12/06 21:03:02 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.249 2013/12/16 19:11:52 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -30,6 +30,7 @@
 #include <sys/workq.h>
 #include <sys/sched.h>
 #include <sys/reboot.h>
+#include <sys/sysctl.h>
 
 #ifdef HIBERNATE
 #include <sys/hibernate.h>
@@ -2084,6 +2085,7 @@ acpi_indicator(struct acpi_softc *sc, int led_state)
 int
 acpi_sleep_state(struct acpi_softc *sc, int state)
 {
+	extern int perflevel;
 	int error = ENXIO;
 	int s;
 
@@ -2183,6 +2185,10 @@ fail_quiesce:
 #if NWSDISPLAY > 0
 	wsdisplay_resume();
 #endif /* NWSDISPLAY > 0 */
+
+	/* Restore hw.setperf */
+	if (cpu_setperf != NULL)
+		cpu_setperf(perflevel);
 
 	acpi_record_event(sc, APM_NORMAL_RESUME);
 	acpi_indicator(sc, ACPI_SST_WORKING);
