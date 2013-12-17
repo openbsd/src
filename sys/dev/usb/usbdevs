@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.617 2013/12/13 17:38:38 yuo Exp $
+$OpenBSD: usbdevs,v 1.618 2013/12/17 12:51:14 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -148,6 +148,7 @@ vendor SAMSUNG2		0x04e8	Samsung Electronics
 vendor ANNABOOKS	0x04ed	Annabooks
 vendor JVC		0x04f1	JVC
 vendor CHICONY		0x04f2	Chicony Electronics
+vendor ELAN		0x04f3	Elan
 vendor BROTHER		0x04f9	Brother Industries
 vendor DALLAS		0x04fa	Dallas Semiconductor
 vendor ACER		0x0502	Acer
@@ -1569,6 +1570,9 @@ product EICON DIVA852		0x4905	Diva 852 ISDN TA
 /* EIZO products */
 product EIZO HUB		0x0000	hub
 product EIZO MONITOR		0x0001	monitor
+
+/* Elan Microelectronics products */
+product ELAN BARCODE		0x0001	Barcode Scanner
 
 /* ELCON Systemtechnik products */
 product ELCON PLAN		0x0002	Goldpfeil P-LAN
