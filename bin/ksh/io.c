@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.22 2006/03/17 16:30:13 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.23 2013/12/17 16:37:06 deraadt Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -293,7 +293,7 @@ check_fd(char *name, int mode, const char **emsgp)
 {
 	int fd, fl;
 
-	if (isdigit(name[0]) && !name[1]) {
+	if (isdigit((unsigned char)name[0]) && !name[1]) {
 		fd = name[0] - '0';
 		if ((fl = fcntl(fd = name[0] - '0', F_GETFL, 0)) < 0) {
 			if (emsgp)

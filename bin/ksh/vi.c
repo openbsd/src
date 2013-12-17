@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.26 2009/06/29 22:50:19 martynas Exp $	*/
+/*	$OpenBSD: vi.c,v 1.27 2013/12/17 16:37:06 deraadt Exp $	*/
 
 /*
  *	vi command editing
@@ -197,7 +197,7 @@ x_vi(char *buf, size_t len)
 	x_flush();
 	while (1) {
 		if (macro.p) {
-			c = *macro.p++;
+			c = (unsigned char)*macro.p++;
 			/* end of current macro? */
 			if (!c) {
 				/* more macros left to finish? */
@@ -792,8 +792,9 @@ vi_cmd(int argcnt, const char *cmd)
 					return -1;
 				if (*cmd == 'c' &&
 				    (cmd[1]=='w' || cmd[1]=='W') &&
-				    !isspace(es->cbuf[es->cursor])) {
-					while (isspace(es->cbuf[--ncursor]))
+				    !isspace((unsigned char)es->cbuf[es->cursor])) {
+					while ((unsigned char)
+					    isspace(es->cbuf[--ncursor]))
 						;
 					ncursor++;
 				}
@@ -1032,7 +1033,7 @@ vi_cmd(int argcnt, const char *cmd)
 			if (histnum(-1) < 0)
 				return -1;
 			p = *histpos();
-#define issp(c)		(isspace((c)) || (c) == '\n')
+#define issp(c)		(isspace((unsigned char)(c)) || (c) == '\n')
 			if (argcnt) {
 				while (*p && issp(*p))
 					p++;
@@ -1087,10 +1088,10 @@ vi_cmd(int argcnt, const char *cmd)
 				return -1;
 			for (i = 0; i < argcnt; i++) {
 				p = &es->cbuf[es->cursor];
-				if (islower(*p)) {
+				if (islower((unsigned char)*p)) {
 					modified = 1; hnum = hlast;
 					*p = toupper(*p);
-				} else if (isupper(*p)) {
+				} else if (isupper((unsigned char)*p)) {
 					modified = 1; hnum = hlast;
 					*p = tolower(*p);
 				}
@@ -1237,7 +1238,8 @@ domove(int argcnt, const char *cmd, int sub)
 
 	case '^':
 		ncursor = 0;
-		while (ncursor < es->linelen - 1 && isspace(es->cbuf[ncursor]))
+		while (ncursor < es->linelen - 1 &&
+		    isspace((unsigned char)es->cbuf[ncursor]))
 			ncursor++;
 		break;
 
@@ -1519,12 +1521,13 @@ forwword(int argcnt)
 			while (is_wordch(es->cbuf[ncursor]) &&
 			    ncursor < es->linelen)
 				ncursor++;
-		else if (!isspace(es->cbuf[ncursor]))
+		else if (!isspace((unsigned char)es->cbuf[ncursor]))
 			while (!is_wordch(es->cbuf[ncursor]) &&
-			    !isspace(es->cbuf[ncursor]) &&
+			    !isspace((unsigned char)es->cbuf[ncursor]) &&
 			    ncursor < es->linelen)
 				ncursor++;
-		while (isspace(es->cbuf[ncursor]) && ncursor < es->linelen)
+		while (isspace((unsigned char)es->cbuf[ncursor]) &&
+		    ncursor < es->linelen)
 			ncursor++;
 	}
 	return ncursor;
@@ -1537,7 +1540,7 @@ backword(int argcnt)
 
 	ncursor = es->cursor;
 	while (ncursor > 0 && argcnt--) {
-		while (--ncursor > 0 && isspace(es->cbuf[ncursor]))
+		while (--ncursor > 0 && isspace((unsigned char)es->cbuf[ncursor]))
 			;
 		if (ncursor > 0) {
 			if (is_wordch(es->cbuf[ncursor]))
@@ -1547,7 +1550,7 @@ backword(int argcnt)
 			else
 				while (--ncursor >= 0 &&
 				    !is_wordch(es->cbuf[ncursor]) &&
-				    !isspace(es->cbuf[ncursor]))
+				    !isspace((unsigned char)es->cbuf[ncursor]))
 					;
 			ncursor++;
 		}
@@ -1563,7 +1566,7 @@ endword(int argcnt)
 	ncursor = es->cursor;
 	while (ncursor < es->linelen && argcnt--) {
 		while (++ncursor < es->linelen - 1 &&
-		    isspace(es->cbuf[ncursor]))
+		    isspace((unsigned char)es->cbuf[ncursor]))
 			;
 		if (ncursor < es->linelen - 1) {
 			if (is_wordch(es->cbuf[ncursor]))
@@ -1573,7 +1576,7 @@ endword(int argcnt)
 			else
 				while (++ncursor < es->linelen &&
 				    !is_wordch(es->cbuf[ncursor]) &&
-				    !isspace(es->cbuf[ncursor]))
+				    !isspace((unsigned char)es->cbuf[ncursor]))
 					;
 			ncursor--;
 		}
@@ -1588,9 +1591,11 @@ Forwword(int argcnt)
 
 	ncursor = es->cursor;
 	while (ncursor < es->linelen && argcnt--) {
-		while (!isspace(es->cbuf[ncursor]) && ncursor < es->linelen)
+		while (!isspace((unsigned char)es->cbuf[ncursor]) &&
+		    ncursor < es->linelen)
 			ncursor++;
-		while (isspace(es->cbuf[ncursor]) && ncursor < es->linelen)
+		while (isspace((unsigned char)es->cbuf[ncursor]) &&
+		    ncursor < es->linelen)
 			ncursor++;
 	}
 	return ncursor;
@@ -1603,9 +1608,11 @@ Backword(int argcnt)
 
 	ncursor = es->cursor;
 	while (ncursor > 0 && argcnt--) {
-		while (--ncursor >= 0 && isspace(es->cbuf[ncursor]))
+		while (--ncursor >= 0 &&
+		    isspace((unsigned char)es->cbuf[ncursor]))
 			;
-		while (ncursor >= 0 && !isspace(es->cbuf[ncursor]))
+		while (ncursor >= 0 &&
+		    !isspace((unsigned char)es->cbuf[ncursor]))
 			ncursor--;
 		ncursor++;
 	}
@@ -1620,11 +1627,11 @@ Endword(int argcnt)
 	ncursor = es->cursor;
 	while (ncursor < es->linelen - 1 && argcnt--) {
 		while (++ncursor < es->linelen - 1 &&
-		    isspace(es->cbuf[ncursor]))
+		    isspace((unsigned char)es->cbuf[ncursor]))
 			;
 		if (ncursor < es->linelen - 1) {
 			while (++ncursor < es->linelen &&
-			    !isspace(es->cbuf[ncursor]))
+			    !isspace((unsigned char)es->cbuf[ncursor]))
 				;
 			ncursor--;
 		}
