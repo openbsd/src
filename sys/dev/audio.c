@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.119 2013/12/06 21:03:02 deraadt Exp $	*/
+/*	$OpenBSD: audio.c,v 1.120 2013/12/17 14:55:16 deraadt Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -173,8 +173,6 @@ struct audio_softc {
 	int	sc_quiesce;
 #define	AUDIO_QUIESCE_START	1
 #define	AUDIO_QUIESCE_SILENT	2
-	struct timeout sc_resume_to;
-	struct task sc_resume_task;
 	struct task sc_mixer_task;
 	u_char	sc_mute;
 
@@ -227,16 +225,14 @@ int	audio_initbufs(struct audio_softc *);
 void	audio_calcwater(struct audio_softc *);
 static __inline int audio_sleep_timo(int *, char *, int);
 static __inline int audio_sleep(int *, char *);
-static __inline void audio_wakeup(int *);
+static __inline void audio_wake(int *);
 void	audio_selwakeup(struct audio_softc *sc, int play);
 int	audio_drain(struct audio_softc *);
 void	audio_clear(struct audio_softc *);
 static __inline void audio_pint_silence(struct audio_softc *, struct audio_ringbuffer *, u_char *, int);
 
 int	audio_quiesce(struct audio_softc *);
-void	audio_resume(struct audio_softc *);
-void	audio_resume_to(void *);
-void	audio_resume_task(void *, void *);
+void	audio_wakeup(struct audio_softc *);
 
 int	audio_alloc_ring(struct audio_softc *, struct audio_ringbuffer *, int, int);
 void	audio_free_ring(struct audio_softc *, struct audio_ringbuffer *);
@@ -472,8 +468,6 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	DPRINTF(("audio_attach: inputs ports=0x%x, output ports=0x%x\n",
 		 sc->sc_inports.allports, sc->sc_outports.allports));
 
-	timeout_set(&sc->sc_resume_to, audio_resume_to, sc);
-	task_set(&sc->sc_resume_task, audio_resume_task, sc, NULL);
 #if NWSKBD > 0
 	task_set(&sc->sc_mixer_task, wskbd_set_mixervolume_callback, NULL,
 	    NULL);
@@ -492,8 +486,8 @@ audioactivate(struct device *self, int act)
 	case DVACT_QUIESCE:
 		audio_quiesce(sc);
 		break;
-	case DVACT_RESUME:
-		audio_resume(sc);
+	case DVACT_WAKEUP:
+		audio_wakeup(sc);
 		break;
 	}
 	return (0);
@@ -509,7 +503,6 @@ audiodetach(struct device *self, int flags)
 
 	sc->sc_dying = 1;
 
-	timeout_del(&sc->sc_resume_to);
 	wakeup(&sc->sc_quiesce);
 	wakeup(&sc->sc_wchan);
 	wakeup(&sc->sc_rchan);
@@ -1070,7 +1063,7 @@ audio_sleep(int *chan, char *label)
 
 /* call with audio_lock */
 static __inline void
-audio_wakeup(int *chan)
+audio_wake(int *chan)
 {
 	DPRINTFN(3, ("audio_wakeup: chan=%p, *chan=%d\n", chan, *chan));
 	if (*chan) {
@@ -1295,22 +1288,8 @@ audio_quiesce(struct audio_softc *sc)
 }
 
 void
-audio_resume(struct audio_softc *sc)
+audio_wakeup(struct audio_softc *sc)
 {
-	timeout_add_msec(&sc->sc_resume_to, 1500);
-}
-
-void
-audio_resume_to(void *v)
-{
-	struct audio_softc *sc = v;
-	task_add(systq, &sc->sc_resume_task);
-}
-
-void
-audio_resume_task(void *arg1, void *arg2)
-{
-	struct audio_softc *sc = arg1;
 	int setmode = 0;
 
 	sc->sc_pqui = sc->sc_rqui = 0;
@@ -1536,12 +1515,12 @@ audio_clear(struct audio_softc *sc)
 {
 	MUTEX_ASSERT_UNLOCKED(&audio_lock);
 	if (sc->sc_rbus) {
-		audio_wakeup(&sc->sc_rchan);
+		audio_wake(&sc->sc_rchan);
 		sc->hw_if->halt_input(sc->hw_hdl);
 		sc->sc_rbus = 0;
 	}
 	if (sc->sc_pbus) {
-		audio_wakeup(&sc->sc_wchan);
+		audio_wake(&sc->sc_wchan);
 		sc->hw_if->halt_output(sc->hw_hdl);
 		sc->sc_pbus = 0;
 	}
@@ -1989,7 +1968,7 @@ audio_selwakeup(struct audio_softc *sc, int play)
 
 	si = play? &sc->sc_wsel : &sc->sc_rsel;
 
-	audio_wakeup(play? &sc->sc_wchan : &sc->sc_rchan);
+	audio_wake(play? &sc->sc_wchan : &sc->sc_rchan);
 	selwakeup(si);
 	if (sc->sc_async_audio)
 		psignal(sc->sc_async_audio, SIGIO);
@@ -2319,7 +2298,7 @@ audio_pint(void *v)
 	 */
 	if (sc->sc_quiesce == AUDIO_QUIESCE_START && cb->outp == cb->start) {
 		sc->sc_pqui = 1;
-		audio_wakeup(&sc->sc_wchan);
+		audio_wake(&sc->sc_wchan);
 	}
 }
 
@@ -2426,7 +2405,7 @@ audio_rint(void *v)
 	 */
 	if (sc->sc_quiesce == AUDIO_QUIESCE_START && cb->inp == cb->start) {
 		sc->sc_rqui = 1;
-		audio_wakeup(&sc->sc_rchan);
+		audio_wake(&sc->sc_rchan);
 	}
 }
 
