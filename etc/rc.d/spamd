@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: spamd,v 1.3 2013/09/13 14:50:56 okan Exp $
+# $OpenBSD: spamd,v 1.4 2013/12/17 09:19:45 halex Exp $
 
 daemon="/usr/libexec/spamd"
 
@@ -13,6 +13,14 @@ rc_pre() {
 	[ X"${spamd_black}" != X"NO" ] && \
 		daemon_flags="-b ${daemon_flags}"
 	return 0
+}
+
+rc_start() {
+	${rcexec} "${daemon} ${daemon_flags} ${_bg}"
+	spamd_setup_flags="-D"
+	[ X"${spamd_black}" != X"NO" ] && \
+		spamd_setup_flags="-b ${spamd_setup_flags}"
+	rc_do rc_wait start && /usr/libexec/spamd-setup ${spamd_setup_flags}
 }
 
 rc_cmd $1

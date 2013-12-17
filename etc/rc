@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.408 2013/12/15 17:40:45 tedu Exp $
+#	$OpenBSD: rc,v 1.409 2013/12/17 09:19:45 halex Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -498,10 +498,6 @@ start_daemon ftpproxy tftpd tftpproxy identd inetd rarpd bootparamd
 start_daemon rbootd mopd spamd spamlogd kdc kadmind kpasswdd
 start_daemon ipropd_master ipropd_slave sndiod
 echo '.'
-
-if [ X"${spamd_flags}" != X"NO" ]; then
-	/usr/libexec/spamd-setup -D
-fi
 
 # If rc.firstime exists, run it just once, and make sure it is deleted
 if [ -f /etc/rc.firsttime ]; then
