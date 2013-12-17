@@ -1,4 +1,4 @@
-/*	$OpenBSD: findfp.c,v 1.14 2013/11/13 15:52:48 deraadt Exp $ */
+/*	$OpenBSD: findfp.c,v 1.15 2013/12/17 16:33:27 deraadt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -138,29 +138,6 @@ found:
 	fp->_lb._size = 0;
 	_FILEEXT_INIT(fp);
 	return (fp);
-}
-
-#define getdtablesize()	sysconf(_SC_OPEN_MAX)
-
-/*
- * XXX.  Force immediate allocation of internal memory.  Not used by stdio,
- * but documented historically for certain applications.  Bad applications.
- */
-void
-f_prealloc(void)
-{
-	struct glue *g;
-	int n;
-
-	n = getdtablesize() - FOPEN_MAX + 20;		/* 20 for slop. */
-	for (g = &__sglue; (n -= g->niobs) > 0 && g->next; g = g->next)
-		/* void */;
-	if (n > 0 && ((g = moreglue(n)) != NULL)) {
-		_THREAD_PRIVATE_MUTEX_LOCK(__sfp_mutex);
-		lastglue->next = g;
-		lastglue = g;
-		_THREAD_PRIVATE_MUTEX_UNLOCK(__sfp_mutex);
-	}
 }
 
 /*
