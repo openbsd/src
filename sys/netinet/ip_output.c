@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.252 2013/12/04 16:27:56 mikeb Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.253 2013/12/17 02:41:07 matthew Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -82,7 +82,8 @@ void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
  * The mbuf opt, if present, will not be freed.
  */
 int
-ip_output(struct mbuf *m0, ...)
+ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
+    struct ip_moptions *imo, struct inpcb *inp, ...)
 {
 	struct ip *ip;
 	struct ifnet *ifp;
@@ -92,11 +93,6 @@ ip_output(struct mbuf *m0, ...)
 	struct route iproute;
 	struct sockaddr_in *dst;
 	struct in_ifaddr *ia;
-	struct mbuf *opt;
-	struct route *ro;
-	int flags;
-	struct ip_moptions *imo;
-	va_list ap;
 	u_int8_t sproto = 0, donerouting = 0;
 	u_long mtu;
 #ifdef IPSEC
@@ -106,26 +102,23 @@ ip_output(struct mbuf *m0, ...)
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 
-	struct inpcb *inp;
 	struct tdb *tdb;
-	u_int32_t ipsecflowinfo;
+	u_int32_t ipsecflowinfo = 0;
 #if NPF > 0
 	struct ifnet *encif;
 #endif
 #endif /* IPSEC */
 
-	va_start(ap, m0);
-	opt = va_arg(ap, struct mbuf *);
-	ro = va_arg(ap, struct route *);
-	flags = va_arg(ap, int);
-	imo = va_arg(ap, struct ip_moptions *);
 #ifdef IPSEC
-	inp = va_arg(ap, struct inpcb *);
 	if (inp && (inp->inp_flags & INP_IPV6) != 0)
 		panic("ip_output: IPv6 pcb is passed");
-	ipsecflowinfo = (flags & IP_IPSECFLOW) ? va_arg(ap, u_int32_t) : 0;
+	if (flags & IP_IPSECFLOW) {
+		va_list ap;
+		va_start(ap, inp);
+		ipsecflowinfo = va_arg(ap, u_int32_t);
+		va_end(ap);
+	}
 #endif /* IPSEC */
-	va_end(ap);
 
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)

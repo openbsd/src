@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.49 2013/11/17 10:07:32 bluhm Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.50 2013/12/17 02:41:07 matthew Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -172,6 +172,7 @@ extern int la_hold_total;
 
 extern struct rttimer_queue *ip_mtudisc_timeout_q;
 extern struct pool ipqent_pool;
+struct route;
 struct inpcb;
 
 int	 ip_ctloutput(int, struct socket *, int, int, struct mbuf **);
@@ -186,7 +187,8 @@ int	 ip_getmoptions(int, struct ip_moptions *, struct mbuf **);
 void	 ip_init(void);
 int	 ip_mforward(struct mbuf *, struct ifnet *);
 int	 ip_optcopy(struct ip *, struct ip *);
-int	 ip_output(struct mbuf *, ...);
+int	 ip_output(struct mbuf *, struct mbuf *, struct route *, int,
+	    struct ip_moptions *, struct inpcb *, ...);
 int	 ip_pcbopts(struct mbuf **, struct mbuf *);
 struct mbuf *
 	 ip_reass(struct ipqent *, struct ipq *);
