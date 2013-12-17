@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoinstall.8,v 1.1 2013/12/13 20:04:09 rpe Exp $
+.\"     $OpenBSD: autoinstall.8,v 1.2 2013/12/17 23:06:20 halex Exp $
 .\"
 .\" Copyright (c) 2013 Robert Peichaer <rpe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 13 2013 $
+.Dd $Mdocdate: December 17 2013 $
 .Dt AUTOINSTALL 8
 .Os
 .Sh NAME
@@ -54,8 +54,8 @@ Valid response file names are
 .Ql upgrade.conf
 and
 .Ql MAC-upgrade.conf .
-The MAC address of the netboot interface can be used to provide
-machine-specific response files, which have precedence.
+The MAC address of the netboot interface, in lowercase hex notation, can be
+used to provide machine-specific response files, which have precedence.
 The response files are fetched from the
 .Ql DocumentRoot
 of the HTTP server.
@@ -96,5 +96,21 @@ Location of sets = ftp
 Server = ftp5.eu.openbsd.org
 .Ed
 .Pp
+And an example
+.Xr dhcpd.conf 5
+host entry:
+.Bd -literal -offset indent
+host foo {
+  hardware ethernet 00:50:60:49:8b:84;
+  fixed-address 192.168.2.180;
+  filename "auto_install";
+  option host-name "foo";
+}
+.Ed
+.Pp
 It can be also used for upgrades by creating a symbolic link to
 upgrade.conf.
+.Sh SEE ALSO
+.Xr dhcpd.conf 5 ,
+.Xr diskless 8 ,
+.Xr pxeboot 8
