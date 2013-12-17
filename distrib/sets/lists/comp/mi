@@ -5829,6 +5829,7 @@
 ./usr/share/man/man3/tcflush.3
 ./usr/share/man/man3/tcgetattr.3
 ./usr/share/man/man3/tcgetpgrp.3
+./usr/share/man/man3/tcgetsid.3
 ./usr/share/man/man3/tcsendbreak.3
 ./usr/share/man/man3/tcsetattr.3
 ./usr/share/man/man3/tcsetpgrp.3
