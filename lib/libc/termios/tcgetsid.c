@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcgetsid.c,v 1.2 2013/12/17 17:55:59 naddy Exp $ */
+/*	$OpenBSD: tcgetsid.c,v 1.3 2013/12/17 22:12:07 millert Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,6 @@
  */
 
 #include <sys/ioctl.h>
-#include <sys/types.h>
 #include <termios.h>
 
 pid_t
@@ -38,7 +37,7 @@ tcgetsid(int fd)
 	int s;
 
 	if (ioctl(fd, TIOCGSID, &s) < 0)
-		return ((pid_t)-1);
+		return (-1);
 
-	return ((pid_t)s);
+	return (s);
 }

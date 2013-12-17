@@ -1,4 +1,4 @@
-/*	$OpenBSD: termios.h,v 1.11 2009/12/26 09:46:17 jmc Exp $	*/
+/*	$OpenBSD: termios.h,v 1.12 2013/12/17 22:12:07 millert Exp $	*/
 /*	$NetBSD: termios.h,v 1.14 1996/04/09 20:55:41 cgd Exp $	*/
 
 /*
@@ -248,6 +248,14 @@ struct termios {
 #define TCION		4
 
 #include <sys/cdefs.h>
+#include <sys/_types.h>
+
+#if __XPG_VISIBLE >= 420 || __POSIX_VISIBLE >= 200809
+#ifndef _PID_T_DEFINED_
+#define _PID_T_DEFINED_
+typedef __pid_t		pid_t;
+#endif
+#endif
 
 __BEGIN_DECLS
 speed_t	cfgetispeed(const struct termios *);
@@ -260,6 +268,10 @@ int	tcdrain(int);
 int	tcflow(int, int);
 int	tcflush(int, int);
 int	tcsendbreak(int, int);
+
+#if __XPG_VISIBLE >= 420 || __POSIX_VISIBLE >= 200809
+pid_t	tcgetsid(int);
+#endif
 
 #if __BSD_VISIBLE
 void	cfmakeraw(struct termios *);
