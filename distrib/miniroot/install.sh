@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.238 2013/12/06 00:42:45 rpe Exp $
+#	$OpenBSD: install.sh,v 1.239 2013/12/18 08:04:16 halex Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -313,6 +313,13 @@ w
 q" | ed /mnt/etc/master.passwd 2>/dev/null
 fi
 /mnt/usr/sbin/pwd_mkdb -p -d /mnt/etc /etc/master.passwd
+
+# Add public ssh key to authorized_keys
+[[ -n "$rootkey" ]] && (
+	umask 077
+	mkdir /mnt/root/.ssh
+	print -r -- "$rootkey" >> /mnt/root/.ssh/authorized_keys
+)
 
 if grep -qs '^rtsol' /mnt/etc/hostname.*; then
 	sed -e "/^#\(net\.inet6\.ip6\.accept_rtadv\)/s//\1/" \

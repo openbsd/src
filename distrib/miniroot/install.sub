@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.721 2013/12/16 16:58:22 halex Exp $
+#	$OpenBSD: install.sub,v 1.722 2013/12/18 08:04:16 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -331,19 +331,20 @@ ask() {
 
 # Ask for a password twice, saving the input in $_password
 askpassword() {
+	local _q=$1
 	if $auto; then
-		echo -n "Password for $1 account? "
-		_autorespond "Password for $1 account?"
+		echo -n "$_q "
+		_autorespond "$_q"
 		echo '<provided>'
 		_password=$resp
 		return
 	fi
 
 	while :; do
-		askpass "Password for $1 account? (will not echo)"
+		askpass "$_q (will not echo)"
 		_password=$resp
 
-		askpass "Password for $1 account? (again)"
+		askpass "$_q (again)"
 		[[ $resp == "$_password" ]] && break
 
 		echo "Passwords do not match, try again."
@@ -379,7 +380,7 @@ user_setup() {
 	done
 	user=$resp
 	while :; do
-		ask "Full user name for $user?" $user
+		ask "Full name for user $user?" $user
 		case $resp in
 		*[:\&,]*)
 			echo "':', '&' or ',' are not allowed." ;;
@@ -390,11 +391,11 @@ user_setup() {
 	done
 	username=$resp
 
-	askpassword $user
+	askpassword "Password for user $user?"
 	userpass=$_password
 
 	userkey=
-	_autorespond "Public ssh key for $user" none &&
+	$auto && ask "Public ssh key for user $user" none &&
 		[[ $resp != none ]] && userkey=$resp
 
 	if [[ $sshd == y ]]; then
@@ -2225,11 +2226,15 @@ if [[ $MODE == install ]]; then
 
 	echo
 	while :; do
-		askpassword root
+		askpassword "Password for root account?"
 		_rootpass="$_password"
 		[[ -n "$_password" ]] && break
 		echo "The root password must be set."
 	done
+
+	rootkey=
+	$auto && ask "Public ssh key for root account?" none &&
+		[[ $resp != none ]] && rootkey=$resp
 
 	questions
 	user_setup
