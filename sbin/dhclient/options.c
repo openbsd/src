@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.60 2013/12/14 16:06:42 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.61 2013/12/18 00:37:59 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -41,6 +41,8 @@
  */
 
 #include "dhcpd.h"
+
+#include <vis.h>
 
 int parse_option_buffer(struct option_data *, unsigned char *, int);
 
@@ -197,7 +199,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 {
 	static char optbuf[32768]; /* XXX */
 	int hunksize = 0, numhunk = -1, numelem = 0;
-	char fmtbuf[32], *op = optbuf;
+	char fmtbuf[32], visbuf[5], *op = optbuf;
 	int i, j, k, opleft = sizeof(optbuf);
 	unsigned char *data = option->data;
 	unsigned char *dp = data;
@@ -327,19 +329,14 @@ pretty_print_option(unsigned int code, struct option_data *option,
 					op += opcount;
 				}
 				for (; dp < data + len; dp++) {
-					if (!isascii(*dp) || !isprint(*dp)) {
-						opcount = snprintf(op, opleft,
-						    "\\%03o", *dp);
-					} else if (*dp == '"' ||
-					    *dp == '\'' ||
-					    *dp == '$' ||
-					    *dp == '`' ||
-					    *dp == '\\') {
+					if (*dp && strchr("\"'$`\\", *dp))
 						opcount = snprintf(op, opleft,
 						    "\\%c", *dp);
-					} else {
+					else {
+						vis(visbuf, *dp, VIS_OCTAL,
+						    *dp+1);
 						opcount = snprintf(op, opleft,
-						    "%c", *dp);
+						   "%s", visbuf);
 					}
 					if (opcount >= opleft || opcount == -1)
 						goto toobig;

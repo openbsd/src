@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.25 2013/12/05 22:31:35 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.26 2013/12/18 00:37:59 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file. */
 
@@ -43,6 +43,8 @@
 #include "dhcpd.h"
 #include "dhctoken.h"
 
+#include <vis.h>
+
 int lexline;
 int lexchar;
 char *token_line;
@@ -60,6 +62,7 @@ static int token;
 static int ugflag;
 static char *tval;
 static char tokbuf[1500];
+static char visbuf[1500];
 
 static int get_char(FILE *);
 static int get_token(FILE *);
@@ -235,25 +238,34 @@ read_string(FILE *cfile)
 {
 	int i, c, bs;
 
+	/*
+	 * Read in characters until an un-escaped '"' is encountered. And
+	 * then unvis the data that was read.
+	 */
 	bs = i = 0;
-	do {
-		c = get_char(cfile);
+	memset(visbuf, 0, sizeof(visbuf));
+	while ((c = get_char(cfile)) != EOF) {
+		if (c == '"' && bs == 0)
+			break;
+
+		visbuf[i++] = c;
 		if (bs)
 			bs = 0;
 		else if (c == '\\')
 			bs = 1;
 
-		if (c != '"' && c != EOF && bs == 0)
-			tokbuf[i++] = c;
-
-	} while (i < (sizeof(tokbuf) - 1) && c != EOF && c != '"');
+		if (i == sizeof(visbuf) - 1)
+			break;
+	}
+	if (bs == 1)
+		visbuf[--i] = '\0';
+	i = strnunvis(tokbuf, visbuf, sizeof(tokbuf));
 
 	if (c == EOF)
 		parse_warn("eof in string constant");
-	else if (c != '"')
-		parse_warn("string constant larger than internal buffer");
+	else if (i == -1 || i >= sizeof(tokbuf))
+		parse_warn("string constant too long");
 
-	tokbuf[i] = 0;
 	tval = tokbuf;
 
 	return (TOK_STRING);
