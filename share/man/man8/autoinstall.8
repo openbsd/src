@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoinstall.8,v 1.2 2013/12/17 23:06:20 halex Exp $
+.\"     $OpenBSD: autoinstall.8,v 1.3 2013/12/18 08:11:25 halex Exp $
 .\"
 .\" Copyright (c) 2013 Robert Peichaer <rpe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 17 2013 $
+.Dd $Mdocdate: December 18 2013 $
 .Dt AUTOINSTALL 8
 .Os
 .Sh NAME
@@ -88,12 +88,15 @@ response file for unattended upgrade
 A typical install.conf file will look something like this:
 .Bd -literal -offset indent
 System hostname = server1
-Password for root = securepassword
+Password for root = $2a$14$Z4xRMg8vDpgYH...GVot3ySoj8yby
 Change the default console to com0 = yes
 Which speed should com0 use = 19200
-What timezone are you in = Europe/Vienna
-Location of sets = ftp
-Server = ftp5.eu.openbsd.org
+Setup a user = puffy
+Password for user = $2a$12$YXFAjVNUOZ9Pk...2uEW1QDTJDnW
+Public ssh key for user = ssh-rsa AAAAB3...RVtZJL puffy@ai
+What timezone are you in = Europe/Stockholm
+Location of sets = http
+Server = ftp.eu.openbsd.org
 .Ed
 .Pp
 And an example
