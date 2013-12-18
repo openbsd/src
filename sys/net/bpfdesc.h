@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.21 2013/11/12 01:12:09 dlg Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.22 2013/12/18 13:40:08 krw Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -67,8 +67,8 @@ struct bpf_d {
 	int		bd_bufsize;	/* absolute length of buffers */
 
 	struct bpf_if *	bd_bif;		/* interface descriptor */
-	int		bd_rtout;	/* Read timeout in 'ticks' */
-	int		bd_rdStart;	/* when the read started */
+	u_long		bd_rtout;	/* Read timeout in 'ticks' */
+	u_long		bd_rdStart;	/* when the read started */
 	struct bpf_insn *bd_rfilter; 	/* read filter code */
 	struct bpf_insn *bd_wfilter; 	/* write filter code */
 	u_long		bd_rcount;	/* number of packets received */
