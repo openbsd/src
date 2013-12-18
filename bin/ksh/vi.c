@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.27 2013/12/17 16:37:06 deraadt Exp $	*/
+/*	$OpenBSD: vi.c,v 1.28 2013/12/18 16:45:46 deraadt Exp $	*/
 
 /*
  *	vi command editing
@@ -793,8 +793,8 @@ vi_cmd(int argcnt, const char *cmd)
 				if (*cmd == 'c' &&
 				    (cmd[1]=='w' || cmd[1]=='W') &&
 				    !isspace((unsigned char)es->cbuf[es->cursor])) {
-					while ((unsigned char)
-					    isspace(es->cbuf[--ncursor]))
+					while (isspace(
+					    (unsigned char)es->cbuf[--ncursor]))
 						;
 					ncursor++;
 				}
