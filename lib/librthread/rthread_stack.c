@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_stack.c,v 1.10 2013/06/01 20:47:40 tedu Exp $ */
+/* $OpenBSD: rthread_stack.c,v 1.11 2013/12/18 16:42:08 deraadt Exp $ */
 /* $snafu: rthread_stack.c,v 1.12 2005/01/11 02:45:28 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -25,6 +25,7 @@ struct stack *
 _rthread_alloc_stack(pthread_t thread)
 {
 	struct stack *stack;
+	u_int32_t rnd;
 	caddr_t base;
 	caddr_t guard;
 	size_t size;
@@ -49,14 +50,23 @@ _rthread_alloc_stack(pthread_t thread)
 	if (stack == NULL)
 		return (NULL);
 
+	/* Smaller the stack, smaller the random bias */
+	if (thread->attr.stack_size > _thread_pagesize)
+		rnd = arc4random() & (_thread_pagesize - 1);
+	else if (thread->attr.stack_size == _thread_pagesize)
+		rnd = arc4random() & (_thread_pagesize / 16 - 1);
+	else
+		rnd = 0;
+	rnd &= ~_STACKALIGNBYTES;
+
 	/* If a stack address was provided, just fill in the details */
 	if (thread->attr.stack_addr != NULL) {
 		stack->base = base = thread->attr.stack_addr;
 		stack->len  = thread->attr.stack_size;
 #ifdef MACHINE_STACK_GROWS_UP
-		stack->sp = base;
+		stack->sp = base + rnd;
 #else
-		stack->sp = base + thread->attr.stack_size;
+		stack->sp = base + thread->attr.stack_size - rnd;
 #endif
 		/*
 		 * This impossible guardsize marks this stack as
@@ -90,10 +100,10 @@ _rthread_alloc_stack(pthread_t thread)
 
 #ifdef MACHINE_STACK_GROWS_UP
 	guard = base + size - guardsize;
-	stack->sp = base;
+	stack->sp = base + rnd;
 #else
 	guard = base;
-	stack->sp = base + size;
+	stack->sp = base + size - rnd;
 #endif
 
 	/* memory protect the guard region */
