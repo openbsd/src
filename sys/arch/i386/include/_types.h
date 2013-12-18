@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.19 2013/07/13 17:28:36 deraadt Exp $	*/
+/*	$OpenBSD: _types.h,v 1.20 2013/12/18 16:41:01 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -45,8 +45,9 @@
  * This does not reflect the optimal alignment, just the possibility
  * (within reasonable limits).
  */
-#define	_ALIGNBYTES	(sizeof(int) - 1)
-#define	_ALIGN(p)	(((unsigned long)(p) + _ALIGNBYTES) & ~_ALIGNBYTES)
+#define	_ALIGNBYTES		(sizeof(int) - 1)
+#define	_STACKALIGNBYTES	15
+#define	_ALIGN(p)		(((unsigned long)(p) + _ALIGNBYTES) & ~_ALIGNBYTES)
 #define	_ALIGNED_POINTER(p,t)	1
 
 #if defined(_KERNEL)

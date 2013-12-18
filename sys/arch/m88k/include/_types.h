@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.14 2013/07/13 17:28:36 deraadt Exp $	*/
+/*	$OpenBSD: _types.h,v 1.15 2013/12/18 16:41:01 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -55,8 +55,9 @@ typedef struct label_t {
  * XXX These are also used for aligning stack, which needs to be on a quad
  * word boundary for 88k.
  */
-#define	_ALIGNBYTES	15
-#define	_ALIGN(p)	(((unsigned long)(p) + _ALIGNBYTES) & ~_ALIGNBYTES)
+#define	_ALIGNBYTES		15
+#define	_STACKALIGNBYTES	_ALIGNBYTES
+#define	_ALIGN(p)		(((unsigned long)(p) + _ALIGNBYTES) & ~_ALIGNBYTES)
 #define	_ALIGNED_POINTER(p,t)	((((unsigned long)(p)) & (sizeof(t) - 1)) == 0)
 
 /* 7.18.1.1 Exact-width integer types */

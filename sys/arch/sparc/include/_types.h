@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.23 2013/07/13 17:28:36 deraadt Exp $	*/
+/*	$OpenBSD: _types.h,v 1.24 2013/12/18 16:41:01 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -52,8 +52,9 @@ typedef struct label_t {
  * This does not reflect the optimal alignment, just the possibility
  * (within reasonable limits).
  */
-#define	_ALIGNBYTES	7
-#define	_ALIGN(p)	(((unsigned long)(p) + _ALIGNBYTES) & ~_ALIGNBYTES)
+#define	_ALIGNBYTES		7
+#define	_STACKALIGNBYTES	_ALIGNBYTES
+#define	_ALIGN(p)		(((unsigned long)(p) + _ALIGNBYTES) & ~_ALIGNBYTES)
 #define	_ALIGNED_POINTER(p,t)	((((unsigned long)(p)) & (sizeof(t) - 1)) == 0)
 
 /* 7.18.1.1 Exact-width integer types */
