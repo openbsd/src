@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.53 2013/10/21 12:14:52 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.54 2013/12/19 20:11:04 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.50 1997/10/18 00:00:40 gwr Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ int zs_major = 12;
  */
 #define PCLK	(9600 * 512)	/* PCLK pin input clock rate */
 
-#define	ZS_DELAY()		((CPU_ISSUN4C || CPU_ISSUN4E) ? (0) : delay(2))
+#define	ZS_DELAY()		(CPU_ISSUN4C ? (0) : delay(2))
 
 /* The layout of this is hardware-dependent (padding, order). */
 struct zschan {
