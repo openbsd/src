@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.63 2013/06/03 05:10:59 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.64 2013/12/19 19:04:56 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -305,10 +305,10 @@ d_undelbak(int f, int n)
 	if (n < 0)
 		return (d_undel(f, -n));
 	while (n--) {
-		if (llength(curwp->w_dotp) > 0)
-			lputc(curwp->w_dotp, 0, ' ');
 		if (lback(curwp->w_dotp) != curbp->b_headp)
 			curwp->w_dotp = lback(curwp->w_dotp);
+		if (llength(curwp->w_dotp) > 0)
+			lputc(curwp->w_dotp, 0, ' ');
 	}
 	curwp->w_rflag |= WFEDIT | WFMOVE;
 	return (d_warpdot(curwp->w_dotp, &curwp->w_doto));
