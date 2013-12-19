@@ -1,4 +1,4 @@
-/* $OpenBSD: acpihpet.c,v 1.14 2012/08/16 18:41:17 tedu Exp $ */
+/* $OpenBSD: acpihpet.c,v 1.15 2013/12/19 03:27:10 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -49,6 +49,7 @@ struct acpihpet_softc {
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	u_int32_t		sc_conf;
 };
 
 struct cfattach acpihpet_ca = {
@@ -69,9 +70,13 @@ acpihpet_activate(struct device *self, int act)
 	struct acpihpet_softc *sc = (struct acpihpet_softc *) self;
 
 	switch (act) {
+	case DVACT_SUSPEND:
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    HPET_CONFIGURATION, sc->sc_conf);
+		break;
 	case DVACT_RESUME:
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-		    HPET_CONFIGURATION, 1);
+		    HPET_CONFIGURATION, sc->sc_conf | 1);
 		break;
 	}
 
@@ -138,7 +143,10 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* enable hpet */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, HPET_CONFIGURATION, 1);
+	sc->sc_conf = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+	    HPET_CONFIGURATION) & ~1;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, HPET_CONFIGURATION,
+	    sc->sc_conf | 1);
 
 	/* make sure hpet is working */
 	v1 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, HPET_MAIN_COUNTER);
@@ -147,7 +155,7 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 	if (v1 == v2) {
 		printf(": counter not incrementing\n");
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-		    HPET_CONFIGURATION, 0);
+		    HPET_CONFIGURATION, sc->sc_conf);
 		return;
 	}
 
@@ -156,7 +164,7 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 	if (period == 0) {
 		printf(": invalid period\n");
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-		    HPET_CONFIGURATION, 0);
+		    HPET_CONFIGURATION, sc->sc_conf);
 		return;
 	}
 	freq =  1000000000000000ull / period;
