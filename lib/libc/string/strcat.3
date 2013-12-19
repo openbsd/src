@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strcat.3,v 1.15 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: strcat.3,v 1.16 2013/12/19 20:52:37 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -31,91 +31,33 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: December 19 2013 $
 .Dt STRCAT 3
 .Os
 .Sh NAME
-.Nm strcat ,
-.Nm strncat
-.Nd concatenate strings
+.Nm strcat
+.Nd concatenate two strings
 .Sh SYNOPSIS
 .In string.h
 .Ft char *
 .Fn strcat "char *s" "const char *append"
-.Ft char *
-.Fn strncat "char *s" "const char *append" "size_t count"
 .Sh DESCRIPTION
 The
 .Fn strcat
-and
-.Fn strncat
-functions append a copy of the NUL-terminated string
+function appends a copy of the NUL-terminated string
 .Fa append
 to the end of the NUL-terminated string
 .Fa s ,
-then add a terminating
+then adds a terminating
 .Ql \e0 .
 The string
 .Fa s
 must have sufficient space to hold the result.
-.Pp
-The
-.Fn strncat
-function appends not more than
-.Fa count
-characters where space for the terminating
-.Ql \e0
-should not be included in
-.Fa count .
 .Sh RETURN VALUES
 The
 .Fn strcat
-and
-.Fn strncat
-functions return the pointer
+function return the pointer
 .Fa s .
-.Sh EXAMPLES
-The following appends
-.Dq Li abc
-to
-.Va chararray :
-.Bd -literal -offset indent
-char *letters = "abcdefghi";
-
-(void)strncat(chararray, letters, 3);
-.Ed
-.Pp
-The following example shows how to use
-.Fn strncat
-safely in conjunction with
-.Xr strncpy 3 .
-.Bd -literal -offset indent
-char buf[BUFSIZ];
-char *input, *suffix;
-
-(void)strncpy(buf, input, sizeof(buf) - 1);
-buf[sizeof(buf) - 1] = '\e0';
-(void)strncat(buf, suffix, sizeof(buf) - 1 - strlen(buf));
-.Ed
-.Pp
-The above will copy as many characters from
-.Va input
-to
-.Va buf
-as will fit.
-It then appends as many characters from
-.Va suffix
-as will fit (or none
-if there is no space).
-For operations like this, the
-.Xr strlcpy 3
-and
-.Xr strlcat 3
-functions are a better choice, as shown below.
-.Bd -literal -offset indent
-(void)strlcpy(buf, input, sizeof(buf));
-(void)strlcat(buf, suffix, sizeof(buf));
-.Ed
 .Sh SEE ALSO
 .Xr bcopy 3 ,
 .Xr memccpy 3 ,
@@ -123,21 +65,17 @@ functions are a better choice, as shown below.
 .Xr memmove 3 ,
 .Xr strcpy 3 ,
 .Xr strlcpy 3 ,
+.Xr strncat 3 ,
 .Xr wcscat 3 ,
 .Xr wcslcpy 3
 .Sh STANDARDS
 The
 .Fn strcat
-and
-.Fn strncat
-functions conform to
+function conforms to
 .St -ansiC .
 .Sh HISTORY
 The
 .Fn strcat
 function first appeared in the Programmer's Workbench (PWB/UNIX)
 and was ported to
-.At v7 ;
-.Fn strncat
-first appeared in
 .At v7 .

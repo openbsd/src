@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strcpy.3,v 1.20 2013/12/19 20:52:37 millert Exp $
+.\"	$OpenBSD: strncpy.3,v 1.1 2013/12/19 20:52:37 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,30 +32,41 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd $Mdocdate: December 19 2013 $
-.Dt STRCPY 3
+.Dt STRNCPY 3
 .Os
 .Sh NAME
-.Nm strcpy
-.Nd copy a string
+.Nm strncpy
+.Nd copy part of a string to another
 .Sh SYNOPSIS
 .In string.h
 .Ft char *
-.Fn strcpy "char *dst" "const char *src"
+.Fn strncpy "char *dst" "const char *src" "size_t len"
 .Sh DESCRIPTION
 The
-.Fn strcpy
-function copies the string
+.Fn strncpy
+function copies not more than
+.Fa len
+characters from the string
 .Fa src
 to
-.Fa dst
-(including the terminating
-.Ql \e0
-character).
-The string
-.Fa dst
-must be at least as large as
+.Fa dst .
+If
 .Fa src
-to hold the result.
+is less than
+.Fa len
+characters long,
+it appends
+.Ql \e0
+characters for the rest of
+.Fa len .
+If the length of
+.Fa src
+is greater than or equal to
+.Fa len ,
+.Fa dst
+will
+.Em not
+be NUL-terminated.
 .Pp
 If the
 .Fa src
@@ -64,9 +75,62 @@ and
 strings overlap, the behavior is undefined.
 .Sh RETURN VALUES
 The
-.Fn strcpy
+.Fn strncpy
 function returns
 .Fa dst .
+.Sh EXAMPLES
+The following sets
+.Va chararray
+to
+.Dq abc\e0\e0\e0 :
+.Bd -literal -offset indent
+(void)strncpy(chararray, "abc", 6);
+.Ed
+.Pp
+The following sets
+.Va chararray
+to
+.Dq abcdef
+and does
+.Em not
+NUL terminate
+.Va chararray
+because the length of the source string is greater than or equal to the
+length parameter.
+.Fn strncpy
+.Em only
+NUL terminates the destination string when the length of the source
+string is less than the length parameter.
+.Bd -literal -offset indent
+(void)strncpy(chararray, "abcdefgh", 6);
+.Ed
+.Pp
+The following copies as many characters from
+.Va input
+to
+.Va buf
+as will fit and NUL terminates the result.
+Because
+.Fn strncpy
+does
+.Em not
+guarantee to NUL terminate the string itself, it must be done by hand.
+.Bd -literal -offset indent
+char buf[BUFSIZ];
+
+(void)strncpy(buf, input, sizeof(buf) - 1);
+buf[sizeof(buf) - 1] = '\e0';
+.Ed
+.Pp
+Note that
+.Xr strlcpy 3
+is a better choice for this kind of operation.
+The equivalent using
+.Xr strlcpy 3
+is simply:
+.Bd -literal -offset indent
+(void)strlcpy(buf, input, sizeof(buf));
+.Ed
 .Sh SEE ALSO
 .Xr bcopy 3 ,
 .Xr memccpy 3 ,
@@ -74,19 +138,16 @@ function returns
 .Xr memmove 3 ,
 .Xr strcat 3 ,
 .Xr strlcpy 3 ,
-.Xr strncpy 3 ,
+.Xr strncat 3 ,
 .Xr wcscpy 3 ,
 .Xr wcslcpy 3
 .Sh STANDARDS
 The
-.Fn strcpy
-and
 .Fn strncpy
-functions conform to
+function conforms to
 .St -ansiC .
 .Sh HISTORY
 The
-.Fn strcpy
-function first appeared in the Programmer's Workbench (PWB/UNIX)
-and was ported to
+.Fn strncpy
+function first appeared in
 .At v7 .
