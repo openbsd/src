@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.37 2010/12/26 15:40:59 miod Exp $ */
+/*	$OpenBSD: mem.c,v 1.38 2013/12/19 21:30:02 deraadt Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -55,8 +55,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#include "mtrr.h"
-
 extern char *vmmap;            /* poor name! */
 caddr_t zeropage;
 
@@ -69,7 +67,7 @@ extern int allowaperture;
 #define BIOS_END  0xFFFFF
 #endif
 
-#if NMTRR > 0
+#ifdef MTRR
 struct mem_range_softc mem_range_softc;
 static int mem_ioctl(dev_t, u_long, caddr_t, int, struct proc *);
 #endif
@@ -250,7 +248,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 int
 mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
-#if NMTRR > 0
+#ifdef MTRR
 	switch (minor(dev)) {
 	case 0:
 	case 4:
@@ -260,7 +258,7 @@ mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	return (ENODEV);
 }
 
-#if NMTRR > 0
+#ifdef MTRR
 /*
  * Operations for changing memory attributes.
  *
@@ -347,5 +345,5 @@ mem_range_attr_set(struct mem_range_desc *mrd, int *arg)
 	return (mem_range_softc.mr_op->set(&mem_range_softc, mrd, arg));
 }
 
-#endif /* NMTRR > 0 */
+#endif /* MTRR */
 

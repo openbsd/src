@@ -1,4 +1,4 @@
-/* $OpenBSD: mtrr.c,v 1.3 2013/08/24 04:26:15 mlarkin Exp $ */
+/* $OpenBSD: mtrr.c,v 1.4 2013/12/19 21:30:02 deraadt Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * Copyright (c) 1999 Brian Fundakowski Feldman
@@ -35,15 +35,10 @@
 
 extern struct mem_range_ops mrops;
 
-void mtrrattach(int);
-
 void
-mtrrattach(int num)
+mem_range_attach(void)
 {
 	int family, model, step;
-
-	if (num > 1)
-		return;
 
 	family = (cpu_id >> 8) & 0xf;
 	model  = (cpu_id >> 4) & 0xf;

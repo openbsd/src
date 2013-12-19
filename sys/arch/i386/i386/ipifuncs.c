@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.21 2013/03/20 21:23:05 kettenis Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.22 2013/12/19 21:30:02 deraadt Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -36,7 +36,6 @@
  * Interprocessor interrupt handlers.
  */
 
-#include "mtrr.h"
 #include "npx.h"
 
 #include <sys/param.h>
@@ -64,7 +63,7 @@ void i386_ipi_flush_fpu(struct cpu_info *);
 #define i386_ipi_flush_fpu NULL
 #endif
 
-#if NMTRR > 0
+#ifdef MTRR
 void i386_ipi_reload_mtrr(struct cpu_info *);
 #else
 #define i386_ipi_reload_mtrr 0
@@ -126,7 +125,7 @@ i386_ipi_synch_fpu(struct cpu_info *ci)
 }
 #endif
 
-#if NMTRR > 0
+#ifdef MTRR
 void
 i386_ipi_reload_mtrr(struct cpu_info *ci)
 {

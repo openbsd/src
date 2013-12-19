@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.20 2013/10/18 15:09:22 mlarkin Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.21 2013/12/19 21:30:02 deraadt Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -36,8 +36,6 @@
  * Interprocessor interrupt handlers.
  */
 
-#include "mtrr.h"
-
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/memrange.h>
@@ -67,7 +65,7 @@ void x86_64_ipi_halt_realmode(struct cpu_info *);
 extern void hibernate_drop_to_real_mode(void);
 #endif /* HIBERNATE */
 
-#if NMTRR > 0
+#ifdef MTRR
 void x86_64_ipi_reload_mtrr(struct cpu_info *);
 #else
 #define x86_64_ipi_reload_mtrr NULL
@@ -128,7 +126,7 @@ x86_64_ipi_synch_fpu(struct cpu_info *ci)
 		fpusave_cpu(ci, 1);
 }
 
-#if NMTRR > 0
+#ifdef MTRR
 void
 x86_64_ipi_reload_mtrr(struct cpu_info *ci)
 {

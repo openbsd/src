@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.215 2013/12/12 21:04:50 kettenis Exp $
+#	$OpenBSD: files.i386,v 1.216 2013/12/19 21:30:02 deraadt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -29,6 +29,7 @@ file	arch/i386/i386/longrun.c	!small_kernel
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/i686_mem.c	mtrr
 file	arch/i386/i386/k6_mem.c		mtrr
+file 	arch/i386/i386/mtrr.c		mtrr
 file	arch/i386/i386/p4tcc.c		!small_kernel
 file	arch/i386/i386/pmap.c
 file	arch/i386/i386/powernow.c	!small_kernel
@@ -223,9 +224,6 @@ file	arch/i386/isa/ahc_isa.c		ahc_isa
 # Pentium performance counters
 pseudo-device	pctr
 file	arch/i386/i386/pctr.c		pctr needs-flag
-
-pseudo-device	mtrr
-file 	arch/i386/i386/mtrr.c		mtrr needs-flag
 
 pseudo-device	nvram
 file	arch/i386/i386/nvram.c	nvram needs-flag

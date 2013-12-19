@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.761 2013/11/15 19:42:20 sasano Exp $
+#	$OpenBSD: GENERIC,v 1.762 2013/12/19 21:30:02 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -19,6 +19,7 @@ option		USER_PCICONF	# user-space PCI configuration
 option		KVM86		# Kernel Virtual 8086 emulation
 option		USER_LDT	# user-settable LDT; see i386_set_ldt(2)
 option		APERTURE	# in-kernel aperture driver for XFree86
+option		MTRR		# CPU memory range attributes control
 
 #option		KGDB		# Remote debugger support; exclusive of DDB
 #option		"KGDB_DEVNAME=\"com\"",KGDBADDR=0x2f8,KGDBRATE=9600
@@ -778,7 +779,6 @@ owtemp* at onewire?		# Temperature
 owctr*	at onewire?		# Counter device
 
 pseudo-device	pctr		1
-pseudo-device	mtrr		1	# Memory range attributes control
 pseudo-device	nvram		1
 pseudo-device	hotplug		1	# devices hot plugging
 

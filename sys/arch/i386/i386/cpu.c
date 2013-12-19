@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.51 2013/10/09 01:48:40 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.52 2013/12/19 21:30:02 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -330,6 +330,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		printf("(uniprocessor)\n");
 		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
 		identifycpu(ci);
+		mem_range_attach();
 		cpu_init(ci);
 		break;
 
@@ -337,6 +338,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		printf("apid %d (boot processor)\n", caa->cpu_number);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
 		identifycpu(ci);
+		mem_range_attach();
 		cpu_init(ci);
 
 #if NLAPIC > 0
@@ -590,15 +592,16 @@ cpu_hatch(void *v)
 	lapic_set_lvt();
 	gdt_init_cpu(ci);
 	cpu_init_ldt(ci);
-	npxinit(ci);
 
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
+
+	npxinit(ci);
+
+	cpu_init(ci);
 
 	/* Re-initialise memory range handling on AP */
 	if (mem_range_softc.mr_op != NULL)
 		mem_range_softc.mr_op->initAP(&mem_range_softc);
-
-	cpu_init(ci);
 
 	s = splhigh();		/* XXX prevent softints from running here.. */
 	lapic_tpr = 0;
