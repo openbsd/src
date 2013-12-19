@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.52 2013/12/19 21:30:02 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.53 2013/12/19 23:44:55 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -330,7 +330,9 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		printf("(uniprocessor)\n");
 		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
 		identifycpu(ci);
+#ifdef MTRR
 		mem_range_attach();
+#endif
 		cpu_init(ci);
 		break;
 
@@ -338,7 +340,9 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		printf("apid %d (boot processor)\n", caa->cpu_number);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
 		identifycpu(ci);
+#ifdef MTRR
 		mem_range_attach();
+#endif
 		cpu_init(ci);
 
 #if NLAPIC > 0
