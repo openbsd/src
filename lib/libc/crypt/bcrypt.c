@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.25 2012/09/04 22:16:17 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.26 2013/12/19 14:31:07 deraadt Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,10 +34,10 @@
  * <dm@lcs.mit.edu> and works as follows:
  *
  * 1. state := InitState ()
- * 2. state := ExpandKey (state, salt, password) 3.
- * REPEAT rounds:
+ * 2. state := ExpandKey (state, salt, password)
+ * 3. REPEAT rounds:
+ *      state := ExpandKey (state, 0, password)
  *	state := ExpandKey (state, 0, salt)
- *      state := ExpandKey(state, 0, password)
  * 4. ctext := "OrpheanBeholderScryDoubt"
  * 5. REPEAT 64:
  * 	ctext := Encrypt_ECB (state, ctext);
