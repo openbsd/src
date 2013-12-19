@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.94 2013/03/12 09:37:16 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.95 2013/12/19 09:37:13 jasper Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -376,6 +376,7 @@ void	cp0_calibrate(struct cpu_info *);
 #define	MIPS_LOONGSON	0x42	/* STC LoongSon CPU		ISA III */
 #define	MIPS_VR5400	0x54	/* NEC Vr5400 CPU		ISA IV+ */
 #define	MIPS_LOONGSON2	0x63	/* STC LoongSon2/3 CPU		ISA III+ */
+#define MIPS_OCTEON2	0x93	/* Cavium OCTEON II		MIPS64R2 */
 
 /*
  * MIPS FPU types. Only soft, rest is the same as cpu type.
