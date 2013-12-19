@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.84 2013/06/03 05:10:59 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.85 2013/12/19 19:09:27 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: June 3 2013 $
+.Dd $Mdocdate: December 19 2013 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -929,6 +929,8 @@ It is not a ring.
 Specific key bindings are available in dired mode.
 .Pp
 .Bl -tag -width xxxxxxxxxxxx -offset indent -compact
+.It DEL
+dired-unmark-backward
 .It SPC
 dired-next-line
 .It !
@@ -1000,8 +1002,8 @@ Scroll up the dired buffer.
 .It dired-unmark
 Remove the deletion flag for the file on the current line.
 .It dired-unmark-backward
-Remove the deletion flag from the file listed on the current line
-of the dired buffer, then move up one line.
+Remove the deletion flag from the file listed on the previous line
+of the dired buffer, then move up to that line.
 .It quit-window
 Close the current dired buffer.
 .El
