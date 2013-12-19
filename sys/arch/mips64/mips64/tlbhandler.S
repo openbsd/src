@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.38 2012/10/03 11:18:23 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.39 2013/12/19 20:15:08 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -373,7 +373,7 @@ LEAF(tlb_flush, 0)
 	dmfc0	ta0, COP_0_TLB_HI	# Save the PID
 
 #ifdef CPU_OCTEON
-	mul	ta2, ta1, 2 * PAGE_SIZE
+	PTR_SLL	ta2, ta1, PAGE_SHIFT + 1
 	addu	v0, v0, ta2
 #else
 	dmtc0	v0, COP_0_TLB_HI	# Mark entry high as invalid
@@ -432,7 +432,7 @@ LEAF(tlb_flush_addr, 0)
 	bltz	v0, 1f			# index < 0 => !found
 	nop
 #ifdef CPU_OCTEON
-	mul	ta2, v0, 2 * PAGE_SIZE
+	PTR_SLL	ta2, v0, PAGE_SHIFT + 1
 	addu	ta1, ta1, ta2
 #endif
 	dmtc0	ta1, COP_0_TLB_HI	# Mark entry high as invalid
