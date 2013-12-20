@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.206 2013/11/15 19:42:20 sasano Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.207 2013/12/20 21:50:49 matthew Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -414,3 +414,4 @@ pseudo-device	bio	1		# ioctl multiplexing device
 virtio*	at pci?				# Virtio PCI device
 vioblk*	at virtio?			# Virtio block device
 vio*	at virtio?			# Virtio network device
+vioscsi*	at virtio?		# Virtio SCSI device
