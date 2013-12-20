@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1698 2013/11/22 20:55:07 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1699 2013/12/20 22:15:50 matthew Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -18486,6 +18486,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO_CONS,
 	    "Virtio Console",
+	},
+	{
+	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO_SCSI,
+	    "Virtio SCSI",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CMIC_LE,
