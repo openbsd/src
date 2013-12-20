@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_search.c,v 1.28 2013/09/24 13:29:51 jasper Exp $	*/
+/*	$OpenBSD: re_search.c,v 1.29 2013/12/20 18:44:13 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -300,11 +300,12 @@ re_doreplace(RSIZE plen, char *st)
 static int
 re_forwsrch(void)
 {
-	int	 tbo, error;
+	int	 tbo, tdotline, error;
 	struct line	*clp;
 
 	clp = curwp->w_dotp;
 	tbo = curwp->w_doto;
+	tdotline = curwp->w_dotline;
 
 	if (tbo == clp->l_used)
 		/*
@@ -313,6 +314,7 @@ re_forwsrch(void)
 		 */
 		if (clp != curbp->b_headp) {
 			clp = lforw(clp);
+			tdotline++;
 			tbo = 0;
 		}
 	/*
@@ -326,10 +328,12 @@ re_forwsrch(void)
 		    REG_STARTEND);
 		if (error != 0) {
 			clp = lforw(clp);
+			tdotline++;
 			tbo = 0;
 		} else {
 			curwp->w_doto = regex_match[0].rm_eo;
 			curwp->w_dotp = clp;
+			curwp->w_dotline = tdotline;
 			curwp->w_rflag |= WFMOVE;
 			return (TRUE);
 		}
@@ -347,17 +351,19 @@ static int
 re_backsrch(void)
 {
 	struct line		*clp;
-	int		 tbo;
+	int		 tbo, tdotline;
 	regmatch_t	 lastmatch;
 
 	clp = curwp->w_dotp;
 	tbo = curwp->w_doto;
+	tdotline = curwp->w_dotline;
 
 	/* Start search one position to the left of dot */
 	tbo = tbo - 1;
 	if (tbo < 0) {
 		/* must move up one line */
 		clp = lback(clp);
+		tdotline--;
 		tbo = llength(clp);
 	}
 
@@ -383,11 +389,13 @@ re_backsrch(void)
 		}
 		if (lastmatch.rm_so == -1) {
 			clp = lback(clp);
+			tdotline--;
 			tbo = llength(clp);
 		} else {
 			memcpy(&regex_match[0], &lastmatch, sizeof(regmatch_t));
 			curwp->w_doto = regex_match[0].rm_so;
 			curwp->w_dotp = clp;
+			curwp->w_dotline = tdotline;
 			curwp->w_rflag |= WFMOVE;
 			return (TRUE);
 		}
