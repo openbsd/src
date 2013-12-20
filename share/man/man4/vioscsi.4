@@ -1,6 +1,6 @@
-.\"     $OpenBSD: virtio.4,v 1.8 2013/12/20 22:10:19 matthew Exp $
+.\"	$OpenBSD: vioscsi.4,v 1.1 2013/12/20 22:10:19 matthew Exp $
 .\"
-.\" Copyright (c) 2012 Stefan Fritsch <sf@sfritsch.de>
+.\" Copyright (c) 2013 Google Inc.
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,50 +15,33 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: December 20 2013 $
-.Dt VIRTIO 4
+.Dt VIOSCSI 4
 .Os
 .Sh NAME
-.Nm virtio
-.Nd VirtIO support driver
+.Nm vioscsi
+.Nd VirtIO SCSI adapter
 .Sh SYNOPSIS
-.Cd "virtio* at pci?"
+.Cd "vioscsi* at virtio?"
+.Cd "scsibus* at vioscsi?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support service for paravirtualized devices using the VirtIO
-protocol.
-Such devices are provided by bhyve, KVM, QEMU, and VirtualBox.
-.Pp
-Currently there are drivers for the following
-.Nm
-devices:
-.Pp
-.Bl -tag -width "vioscsi(4)XXX" -offset indent -compact
-.It Xr vio 4
-VirtIO network device
-.It Xr vioblk 4
-VirtIO disk
-.It Xr viomb 4
-VirtIO memory ballooning driver
-.It Xr vioscsi 4
-VirtIO SCSI adapter
-.El
+driver provides support for
+.Xr virtio 4
+SCSI adapters.
 .Sh SEE ALSO
-.Xr intro 4
+.Xr intro 4 ,
+.Xr scsi 4 ,
+.Xr virtio 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
-.Ox 5.3 .
+.Ox 5.5 .
 .Sh AUTHORS
-.An -nosplit
 The
 .Nm
-driver was ported to
-.Ox
-and improved by
-.An Stefan Fritsch Aq Mt sf@sfritsch.de .
-It is based on the
-.Nx
-driver by
-.An Minoura Makoto .
+driver was written by
+.An Matthew Dempsky Aq matthew@dempsky.org .
+.Sh BUGS
+Device hotplug is not supported yet.
