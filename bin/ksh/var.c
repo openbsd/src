@@ -1,10 +1,12 @@
-/*	$OpenBSD: var.c,v 1.37 2013/12/18 13:53:12 millert Exp $	*/
+/*	$OpenBSD: var.c,v 1.38 2013/12/20 17:53:09 zhuk Exp $	*/
 
 #include "sh.h"
 #include <time.h>
 #include "ksh_limval.h"
 #include <sys/stat.h>
 #include <ctype.h>
+#include <limits.h>
+#include <stdlib.h>
 
 /*
  * Variables
@@ -158,6 +160,7 @@ global(const char *n)
 {
 	struct block *l = e->loc;
 	struct tbl *vp;
+	long	 num;
 	int c;
 	unsigned int h;
 	bool	 array;
@@ -176,11 +179,11 @@ global(const char *n)
 		vp->areap = ATEMP;
 		*vp->name = c;
 		if (digit(c)) {
-			for (c = 0; digit(*n); n++)
-				c = c*10 + *n-'0';
-			if (c <= l->argc)
+			errno = 0;
+			num = strtol(n, NULL, 10);
+			if (errno == 0 && num <= l->argc)
 				/* setstr can't fail here */
-				setstr(vp, l->argv[c], KSH_RETURN_ERROR);
+				setstr(vp, l->argv[num], KSH_RETURN_ERROR);
 			vp->flag |= RDONLY;
 			return vp;
 		}
