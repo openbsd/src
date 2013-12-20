@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.145 2013/10/23 19:57:49 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.146 2013/12/20 02:04:08 krw Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ void
 in_pcbinit(struct inpcbtable *table, int hashsize)
 {
 
-	CIRCLEQ_INIT(&table->inpt_queue);
+	TAILQ_INIT(&table->inpt_queue);
 	table->inpt_hashtbl = hashinit(hashsize, M_PCB, M_NOWAIT,
 	    &table->inpt_hash);
 	if (table->inpt_hashtbl == NULL)
@@ -191,7 +191,7 @@ in_pcballoc(struct socket *so, struct inpcbtable *table)
 	inp->inp_seclevel[SL_IPCOMP] = IPSEC_IPCOMP_LEVEL_DEFAULT;
 	inp->inp_rtableid = curproc->p_p->ps_rtableid;
 	s = splnet();
-	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);
+	TAILQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);
 	LIST_INSERT_HEAD(INPCBLHASH(table, inp->inp_lport,
 	    inp->inp_rtableid), inp, inp_lhash);
 	LIST_INSERT_HEAD(INPCBHASH(table, &inp->inp_faddr, inp->inp_fport,
@@ -501,7 +501,7 @@ in_pcbdetach(struct inpcb *inp)
 	s = splnet();
 	LIST_REMOVE(inp, inp_lhash);
 	LIST_REMOVE(inp, inp_hash);
-	CIRCLEQ_REMOVE(&inp->inp_table->inpt_queue, inp, inp_queue);
+	TAILQ_REMOVE(&inp->inp_table->inpt_queue, inp, inp_queue);
 	splx(s);
 	pool_put(&inpcb_pool, inp);
 }
@@ -555,7 +555,7 @@ void
 in_pcbnotifyall(struct inpcbtable *table, struct sockaddr *dst, u_int rdomain,
     int errno, void (*notify)(struct inpcb *, int))
 {
-	struct inpcb *inp, *oinp;
+	struct inpcb *inp, *ninp;
 	struct in_addr faddr;
 
 	splsoftassert(IPL_SOFTNET);
@@ -575,24 +575,18 @@ in_pcbnotifyall(struct inpcbtable *table, struct sockaddr *dst, u_int rdomain,
 		return;
 
 	rdomain = rtable_l2(rdomain);
-	for (inp = CIRCLEQ_FIRST(&table->inpt_queue);
-	    inp != CIRCLEQ_END(&table->inpt_queue);) {
+	TAILQ_FOREACH_SAFE(inp, &table->inpt_queue, inp_queue, ninp) {
 #ifdef INET6
-		if (inp->inp_flags & INP_IPV6) {
-			inp = CIRCLEQ_NEXT(inp, inp_queue);
+		if (inp->inp_flags & INP_IPV6)
 			continue;
-		}
 #endif
 		if (inp->inp_faddr.s_addr != faddr.s_addr ||
 		    rtable_l2(inp->inp_rtableid) != rdomain ||
 		    inp->inp_socket == 0) {
-			inp = CIRCLEQ_NEXT(inp, inp_queue);
 			continue;
 		}
-		oinp = inp;
-		inp = CIRCLEQ_NEXT(inp, inp_queue);
 		if (notify)
-			(*notify)(oinp, errno);
+			(*notify)(inp, errno);
 	}
 }
 

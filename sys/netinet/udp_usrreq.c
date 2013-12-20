@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.171 2013/11/22 07:59:09 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.172 2013/12/20 02:04:08 krw Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -438,7 +438,7 @@ udp_input(struct mbuf *m, ...)
 		 * (Algorithm copied from raw_intr().)
 		 */
 		last = NULL;
-		CIRCLEQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue) {
+		TAILQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue) {
 			if (inp->inp_socket->so_state & SS_CANTRCVMORE)
 				continue;
 #ifdef INET6

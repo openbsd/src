@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.57 2013/10/20 11:03:02 phessler Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.58 2013/12/20 02:04:09 krw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -526,10 +526,7 @@ in6_pcbnotify(struct inpcbtable *head, struct sockaddr_in6 *dst,
 	}
 	errno = inet6ctlerrmap[cmd];
 
-	for (inp = CIRCLEQ_FIRST(&head->inpt_queue);
-	     inp != CIRCLEQ_END(&head->inpt_queue); inp = ninp) {
-		ninp = CIRCLEQ_NEXT(inp, inp_queue);
-
+	TAILQ_FOREACH_SAFE(inp, &head->inpt_queue, inp_queue, ninp) {
 		if ((inp->inp_flags & INP_IPV6) == 0)
 			continue;
 

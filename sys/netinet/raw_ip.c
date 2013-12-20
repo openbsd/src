@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.66 2013/04/10 08:50:59 mpi Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.67 2013/12/20 02:04:08 krw Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ rip_input(struct mbuf *m, ...)
 	struct mbuf *opts = NULL;
 
 	ripsrc.sin_addr = ip->ip_src;
-	CIRCLEQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue) {
+	TAILQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue) {
 		if (inp->inp_socket->so_state & SS_CANTRCVMORE)
 			continue;
 #ifdef INET6

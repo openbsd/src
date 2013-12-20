@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.14 2013/11/15 16:46:15 lteo Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.15 2013/12/20 02:04:08 krw Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -221,7 +221,7 @@ divert_packet(struct mbuf *m, int dir)
 		return (0);
 	}
 
-	CIRCLEQ_FOREACH(inp, &divbtable.inpt_queue, inp_queue) {
+	TAILQ_FOREACH(inp, &divbtable.inpt_queue, inp_queue) {
 		if (inp->inp_lport != divert->port)
 			continue;
 		if (inp->inp_divertfl == 0)
@@ -254,7 +254,7 @@ divert_packet(struct mbuf *m, int dir)
 	if (dir == PF_OUT)
 		in_proto_cksum_out(m, NULL);
 
-	if (inp != CIRCLEQ_END(&divbtable.inpt_queue)) {
+	if (inp) {
 		sa = inp->inp_socket;
 		if (sbappendaddr(&sa->so_rcv, (struct sockaddr *)&addr, 
 		    m, NULL) == 0) {
