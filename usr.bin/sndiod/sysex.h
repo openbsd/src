@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysex.h,v 1.1 2012/11/23 07:03:28 ratchov Exp $	*/
+/*	$OpenBSD: sysex.h,v 1.2 2013/12/20 08:47:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -44,6 +44,11 @@
 #define   SYSEX_MMC_LOC		0x44
 #define   SYSEX_MMC_LOC_LEN	0x06
 #define   SYSEX_MMC_LOC_CMD	0x01
+
+/*
+ * sepcial "any" midi device number
+ */
+#define SYSEX_DEV_ANY		0x7f
 
 /*
  * aucat-specific messages, in the "edu" namespace
