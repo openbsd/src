@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.64 2013/12/19 19:04:56 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.65 2013/12/20 15:49:00 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -794,7 +794,7 @@ dired_(char *dname)
 	}
 	if (bclear(bp) != TRUE)
 		return (NULL);
-	bp->b_flag |= BFREADONLY;
+	bp->b_flag |= BFREADONLY | BFIGNDIRTY;
 
 	if ((d_exec(2, bp, NULL, "ls", "-al", dname, NULL)) != TRUE)
 		return (NULL);
