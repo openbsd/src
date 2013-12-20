@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.17 2013/12/09 14:59:08 beck Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.18 2013/12/20 22:03:26 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -696,6 +696,14 @@ ifuse_ops_setattr(struct fuse *f, struct fusebuf *fbuf)
 			fbuf->fb_err = f->op.utimens(realname, ts);
 		else if (f->op.utime)
 			fbuf->fb_err = f->op.utime(realname, &tbuf);
+		else
+			fbuf->fb_err = -ENOSYS;
+	}
+
+	if (!fbuf->fb_err && (io->fi_flags & FUSE_FATTR_SIZE)) {
+		if (f->op.truncate)
+			fbuf->fb_err = f->op.truncate(realname,
+			    fbuf->fb_vattr.va_size);
 		else
 			fbuf->fb_err = -ENOSYS;
 	}

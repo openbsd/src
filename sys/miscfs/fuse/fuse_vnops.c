@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.11 2013/12/03 09:59:40 syl Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.12 2013/12/20 22:03:26 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -430,11 +430,13 @@ fusefs_setattr(void *v)
 				error = EROFS;
 				goto out;
 			}
+			break;
 		default:
 			break;
 		}
 
-		/*XXX to finish*/
+		fbuf->fb_vattr.va_size = vap->va_size;
+		io->fi_flags |= FUSE_FATTR_SIZE;
 	}
 
 	if (vap->va_atime.tv_sec != VNOVAL) {
