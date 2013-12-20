@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.9 2013/11/13 22:38:22 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.10 2013/12/20 08:51:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -550,7 +550,7 @@ sio_sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 			aui.record.encoding = enc;
 			aui.record.channels = par->rchan;
 		}
-		DPRINTF("sio_sun_setpar: %i: trying pars = %u/%u/%u\n",
+		DPRINTFN(2, "sio_sun_setpar: %i: trying pars = %u/%u/%u\n",
 		    i, rate, prec, enc);
 		if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0 && errno != EINVAL) {
 			DPERROR("sio_sun_setpar: setinfo(pars)");
@@ -638,7 +638,7 @@ sio_sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 	obpf = (hdl->sio.mode & SIO_PLAY) ?
 	    aui.play.channels * aui.play.bps : 1;
 
-	DPRINTF("sio_sun_setpar: bpf = (%u, %u)\n", ibpf, obpf);
+	DPRINTFN(2, "sio_sun_setpar: bpf = (%u, %u)\n", ibpf, obpf);
 
 	/*
 	 * try to set parameters until the device accepts
@@ -664,14 +664,14 @@ sio_sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 		}
 		infr = aui.record.block_size / ibpf;
 		onfr = aui.play.block_size / obpf;
-		DPRINTF("sio_sun_setpar: %i: trying round = %u -> (%u, %u)\n",
+		DPRINTFN(2, "sio_sun_setpar: %i: trying round = %u -> (%u, %u)\n",
 		    i, round, infr, onfr);
 
 		/*
 		 * if half-duplex or both block sizes match, we're done
 		 */
 		if (hdl->sio.mode != (SIO_REC | SIO_PLAY) || infr == onfr) {
-			DPRINTF("sio_sun_setpar: blocksize ok\n");
+			DPRINTFN(2, "sio_sun_setpar: blocksize ok\n");
 			return 1;
 		}
 
@@ -684,7 +684,7 @@ sio_sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 		else
 			round = infr < onfr ? onfr : infr;
 	}
-	DPRINTF("sio_sun_setpar: couldn't find a working blocksize\n");
+	DPRINTFN(2, "sio_sun_setpar: couldn't find a working blocksize\n");
 	hdl->sio.eof = 1;
 	return 0;
 #undef NRETRIES
@@ -863,7 +863,7 @@ sio_sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 		if (!(hdl->sio.mode & SIO_REC))
 			dierr = doerr;
 		if (doerr > 0)
-			DPRINTF("play xrun %d\n", doerr);
+			DPRINTFN(2, "play xrun %d\n", doerr);
 	}
 	if (hdl->sio.mode & SIO_REC) {
 		if (ioctl(hdl->fd, AUDIO_RERROR, &xrun) < 0) {
@@ -876,19 +876,19 @@ sio_sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 		if (!(hdl->sio.mode & SIO_PLAY))
 			doerr = dierr;
 		if (dierr > 0)
-			DPRINTF("rec xrun %d\n", dierr);
+			DPRINTFN(2, "rec xrun %d\n", dierr);
 	}
 	offset = doerr - dierr;
 	if (offset > 0) {
 		hdl->sio.rdrop += offset * hdl->ibpf;
 		hdl->idelta -= doerr;
 		hdl->odelta -= doerr;
-		DPRINTF("will drop %d and pause %d\n", offset, doerr);
+		DPRINTFN(2, "will drop %d and pause %d\n", offset, doerr);
 	} else if (offset < 0) {
 		hdl->sio.wsil += -offset * hdl->obpf;
 		hdl->idelta -= dierr;
 		hdl->odelta -= dierr;
-		DPRINTF("will insert %d and pause %d\n", -offset, dierr);
+		DPRINTFN(2, "will insert %d and pause %d\n", -offset, dierr);
 	}
 
 	delta = (hdl->idelta > hdl->odelta) ? hdl->idelta : hdl->odelta;

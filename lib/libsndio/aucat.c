@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.60 2013/11/18 17:37:45 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.61 2013/12/20 08:51:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -361,7 +361,7 @@ aucat_connect_un(struct aucat *hdl, unsigned int unit)
 		break;
 	}
 	hdl->fd = s;
-	DPRINTF("%s: connected\n", ca.sun_path);
+	DPRINTFN(2, "%s: connected\n", ca.sun_path);
 	return 1;
 }
 
@@ -446,7 +446,7 @@ _aucat_open(struct aucat *hdl, const char *str, unsigned int mode,
 		return 0;
 	}
 	devnum += type * 16; /* XXX */
-	DPRINTF("_aucat_open: host=%s unit=%u devnum=%u opt=%s\n",
+	DPRINTFN(2, "_aucat_open: host=%s unit=%u devnum=%u opt=%s\n",
 	    host, unit, devnum, opt);
 	if (host[0] != '\0') {
 		if (!aucat_connect_tcp(hdl, host, unit))

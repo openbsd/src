@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.15 2013/11/13 22:38:22 ratchov Exp $	*/
+/*	$OpenBSD: sio.c,v 1.16 2013/12/20 08:51:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -140,7 +140,7 @@ sio_stop(struct sio_hdl *hdl)
 	if (!hdl->ops->stop(hdl))
 		return 0;
 #ifdef DEBUG
-	DPRINTF("libsndio: polls: %llu, written = %llu, read: %llu\n",
+	DPRINTFN(2, "libsndio: polls: %llu, written = %llu, read: %llu\n",
 	    hdl->pollcnt, hdl->wcnt, hdl->rcnt);
 #endif
 	hdl->started = 0;
@@ -478,7 +478,7 @@ _sio_onmove_cb(struct sio_hdl *hdl, int delta)
 {
 #ifdef DEBUG
 	hdl->cpos += delta;
-	if (_sndio_debug >= 2)
+	if (_sndio_debug >= 3)
 		_sio_printpos(hdl);
 #endif
 	if (hdl->move_cb)
