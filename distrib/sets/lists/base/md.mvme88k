@@ -1177,6 +1177,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/ubsecvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/vga_pcivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/vioblkreg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/vioscsireg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/virtioreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/virtiovar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/ydsreg.ph

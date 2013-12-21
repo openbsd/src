@@ -653,6 +653,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/ubsecvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/vga_pcivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/vioblkreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/vioscsireg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/virtioreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/virtiovar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/ydsreg.ph
