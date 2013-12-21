@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: sigret.c,v 1.5 2003/07/31 21:48:04 deraadt Exp $
+ * $OpenBSD: sigret.c,v 1.6 2013/12/21 05:17:29 guenther Exp $
  *
  * Public Domain
  *
@@ -33,8 +33,7 @@
 #include <unistd.h>
 
 /*
- * sigalarm occurs 50 times/second.  Stop running after 10 seconds
- * (100 interrupts).
+ * sigalarm occurs 100 times/second.  Stop running after 5 seconds
  */
 #define MAX_INTERRUPTS	500
 
