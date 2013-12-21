@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.97 2013/11/19 15:12:13 krw Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.98 2013/12/21 20:46:20 guenther Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -1175,9 +1175,8 @@ sr_crypto_rw(struct sr_workunit *wu)
 			return (1);
 		crwu->cr_crp->crp_callback = sr_crypto_write;
 		s = splvm();
-		if (crypto_invoke(crwu->cr_crp))
-			rv = 1;
-		else
+		rv = crypto_invoke(crwu->cr_crp);
+		if (rv == 0)
 			rv = crwu->cr_crp->crp_etype;
 		splx(s);
 	} else
