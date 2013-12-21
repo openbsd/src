@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.61 2013/12/18 00:37:59 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.62 2013/12/21 18:23:10 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -191,6 +191,61 @@ cons_options(struct option_data *options)
 }
 
 /*
+ * Use vis() to encode characters of src and append encoded characters onto
+ * dst. Also encode ", ', $, ` and \, to ensure resulting strings can be
+ * represented as '"' delimited strings and safely passed to scripts. Surround
+ * result with double quotes if emit_punct is true.
+ */
+int
+pretty_print_string(unsigned char *dst, size_t dstlen, unsigned char *src,
+    size_t srclen, int emit_punct)
+{
+	char visbuf[5];
+	unsigned char *origsrc = src;
+	int opcount = 0, total = 0;
+
+	if (emit_punct) {
+		opcount = snprintf(dst, dstlen, "\"");
+		if (opcount == -1)
+			return (-1);
+		total += opcount;
+		if (opcount >= dstlen)
+			goto done;
+		dstlen -= opcount;
+		dst += opcount;
+	}
+
+	for (; src < origsrc + srclen; src++) {
+		if (*src && strchr("\"'$`\\", *src))
+			opcount = snprintf(dst, dstlen, "\\%c", *src);
+		else {
+			vis(visbuf, *src, VIS_OCTAL, *src+1);
+			opcount = snprintf(dst, dstlen, "%s", visbuf);
+		}
+		if (opcount == -1)
+			return (-1);
+		total += opcount;
+		if (opcount >= dstlen)
+			goto done;
+		dstlen -= opcount;
+		dst += opcount;
+	}
+
+	if (emit_punct) {
+		opcount = snprintf(dst, dstlen, "\"");
+		if (opcount == -1)
+			return (-1);
+		total += opcount;
+		if (opcount >= dstlen)
+			goto done;
+		dstlen -= opcount;
+		dst += opcount;
+	}
+done:
+	return (total);
+}
+
+/*
  * Format the specified option so that a human can easily read it.
  */
 char *
@@ -199,7 +254,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 {
 	static char optbuf[32768]; /* XXX */
 	int hunksize = 0, numhunk = -1, numelem = 0;
-	char fmtbuf[32], visbuf[5], *op = optbuf;
+	char fmtbuf[32], *op = optbuf;
 	int i, j, k, opleft = sizeof(optbuf);
 	unsigned char *data = option->data;
 	unsigned char *dp = data;
@@ -321,36 +376,8 @@ pretty_print_option(unsigned int code, struct option_data *option,
 		for (j = 0; j < numelem; j++) {
 			switch (fmtbuf[j]) {
 			case 't':
-				if (emit_punct) {
-					opcount = snprintf(op, opleft, "\"");
-					if (opcount >= opleft || opcount == -1)
-						goto toobig;
-					opleft -= opcount;
-					op += opcount;
-				}
-				for (; dp < data + len; dp++) {
-					if (*dp && strchr("\"'$`\\", *dp))
-						opcount = snprintf(op, opleft,
-						    "\\%c", *dp);
-					else {
-						vis(visbuf, *dp, VIS_OCTAL,
-						    *dp+1);
-						opcount = snprintf(op, opleft,
-						   "%s", visbuf);
-					}
-					if (opcount >= opleft || opcount == -1)
-						goto toobig;
-					opleft -= opcount;
-					op += opcount;
-				}
-				if (emit_punct) {
-					opcount = snprintf(op, opleft, "\"");
-					if (opcount >= opleft || opcount == -1)
-						goto toobig;
-					opleft -= opcount;
-					op += opcount;
-				}
-				opcount = 0; /* Already moved dp & op. */
+				opcount = pretty_print_string(op, opleft,
+				    dp, len, emit_punct);
 				break;
 			case 'I':
 				foo.s_addr = htonl(getULong(dp));

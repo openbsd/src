@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.279 2013/12/15 03:15:47 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.280 2013/12/21 18:23:10 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1761,15 +1761,36 @@ lease_as_string(char *type, struct client_lease *lease)
 	sz -= rslt;
 
 	if (lease->filename) {
-		rslt = snprintf(p, sz, "  filename \"%s\";\n", lease->filename);
+		rslt = snprintf(p, sz, "  filename ");
+		if (rslt == -1 || rslt >= sz)
+			return (NULL);
+		p += rslt;
+		sz -= rslt;
+		rslt = pretty_print_string(p, sz, lease->filename,
+		    strlen(lease->filename), 1);
+		if (rslt == -1 || rslt >= sz)
+			return (NULL);
+		p += rslt;
+		sz -= rslt;
+		rslt = snprintf(p, sz, ";\n");
 		if (rslt == -1 || rslt >= sz)
 			return (NULL);
 		p += rslt;
 		sz -= rslt;
 	}
 	if (lease->server_name) {
-		rslt = snprintf(p, sz, "  server-name \"%s\";\n",
-		    lease->server_name);
+		rslt = snprintf(p, sz, "  server-name ");
+		if (rslt == -1 || rslt >= sz)
+			return (NULL);
+		p += rslt;
+		sz -= rslt;
+		rslt = pretty_print_string(p, sz, lease->server_name,
+		    strlen(lease->server_name), 1);
+		if (rslt == -1 || rslt >= sz)
+			return (NULL);
+		p += rslt;
+		sz -= rslt;
+		rslt = snprintf(p, sz, ";\n");
 		if (rslt == -1 || rslt >= sz)
 			return (NULL);
 		p += rslt;
