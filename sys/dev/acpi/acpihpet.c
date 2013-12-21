@@ -1,4 +1,4 @@
-/* $OpenBSD: acpihpet.c,v 1.15 2013/12/19 03:27:10 deraadt Exp $ */
+/* $OpenBSD: acpihpet.c,v 1.16 2013/12/21 16:41:01 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -35,6 +35,11 @@ int acpihpet_activate(struct device *, int);
 
 u_int acpihpet_gettime(struct timecounter *tc);
 
+u_int64_t	acpihpet_r(bus_space_tag_t _iot, bus_space_handle_t _ioh,
+		    bus_size_t _ioa);
+void		acpihpet_w(bus_space_tag_t _iot, bus_space_handle_t _ioh,
+		    bus_size_t _ioa, u_int64_t _val);
+
 static struct timecounter hpet_timecounter = {
 	acpihpet_gettime,	/* get_timecount */
 	0,			/* no poll_pps */
@@ -44,12 +49,27 @@ static struct timecounter hpet_timecounter = {
 	1000			/* quality */
 };
 
+#define HPET_TIMERS	3
+struct hpet_regs {
+	u_int64_t	capability;
+	u_int64_t	configuration;
+	u_int64_t	interrupt_status;
+	u_int64_t	main_counter;
+	struct {	/* timers */
+		u_int64_t config;
+		u_int64_t compare;
+		u_int64_t interrupt;
+	} timers[HPET_TIMERS];
+};
+
 struct acpihpet_softc {
 	struct device		sc_dev;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
 	u_int32_t		sc_conf;
+	struct hpet_regs	sc_save;
 };
 
 struct cfattach acpihpet_ca = {
@@ -64,6 +84,25 @@ struct cfdriver acpihpet_cd = {
 	NULL, "acpihpet", DV_DULL
 };
 
+u_int64_t
+acpihpet_r(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t ioa)
+{
+	u_int64_t val;
+
+	val = bus_space_read_4(iot, ioh, ioa + 4);
+	val = val << 32;
+	val |= bus_space_read_4(iot, ioh, ioa);
+	return (val);
+}
+
+void
+acpihpet_w(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t ioa,
+    u_int64_t val)
+{
+	bus_space_write_4(iot, ioh, ioa + 4, val >> 32);
+	bus_space_write_4(iot, ioh, ioa, val & 0xffffffff);
+}
+
 int
 acpihpet_activate(struct device *self, int act)
 {
@@ -71,10 +110,68 @@ acpihpet_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_SUSPEND:
+		/* stop, then save */
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		    HPET_CONFIGURATION, sc->sc_conf);
+
+		sc->sc_save.capability = acpihpet_r(sc->sc_iot,
+		    sc->sc_ioh, HPET_CAPABILITIES);
+		sc->sc_save.configuration = acpihpet_r(sc->sc_iot,
+		    sc->sc_ioh, HPET_CONFIGURATION);
+		sc->sc_save.interrupt_status = acpihpet_r(sc->sc_iot,
+		    sc->sc_ioh, HPET_INTERRUPT_STATUS);
+		sc->sc_save.main_counter = acpihpet_r(sc->sc_iot,
+		    sc->sc_ioh, HPET_MAIN_COUNTER);
+		sc->sc_save.timers[0].config = acpihpet_r(sc->sc_iot,
+		    sc->sc_ioh, HPET_TIMER0_CONFIG);
+		sc->sc_save.timers[0].interrupt = acpihpet_r(sc->sc_iot,
+		    sc->sc_ioh, HPET_TIMER0_INTERRUPT);
+		sc->sc_save.timers[0].compare = acpihpet_r(sc->sc_iot,
+		    sc->sc_ioh, HPET_TIMER0_COMPARE);
+		sc->sc_save.timers[1].config = acpihpet_r(sc->sc_iot,
+		    sc->sc_ioh, HPET_TIMER1_CONFIG);
+		sc->sc_save.timers[1].interrupt = acpihpet_r(sc->sc_iot,
+		    sc->sc_ioh, HPET_TIMER1_INTERRUPT);
+		sc->sc_save.timers[1].compare = acpihpet_r(sc->sc_iot,
+		    sc->sc_ioh, HPET_TIMER1_COMPARE);
+		sc->sc_save.timers[2].config = acpihpet_r(sc->sc_iot,
+		    sc->sc_ioh, HPET_TIMER2_CONFIG);
+		sc->sc_save.timers[2].interrupt = acpihpet_r(sc->sc_iot,
+		    sc->sc_ioh, HPET_TIMER2_INTERRUPT);
+		sc->sc_save.timers[2].compare = acpihpet_r(sc->sc_iot,
+		    sc->sc_ioh, HPET_TIMER2_COMPARE);
 		break;
 	case DVACT_RESUME:
+		/* stop, restore, then restart */
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    HPET_CONFIGURATION, sc->sc_conf);
+
+		acpihpet_w(sc->sc_iot, sc->sc_ioh,
+		    HPET_CAPABILITIES, sc->sc_save.capability);
+		acpihpet_w(sc->sc_iot, sc->sc_ioh,
+		    HPET_CONFIGURATION, sc->sc_save.configuration);
+		acpihpet_w(sc->sc_iot, sc->sc_ioh,
+		    HPET_INTERRUPT_STATUS, sc->sc_save.interrupt_status);
+		acpihpet_w(sc->sc_iot, sc->sc_ioh,
+		    HPET_MAIN_COUNTER, sc->sc_save.main_counter);
+		acpihpet_w(sc->sc_iot, sc->sc_ioh,
+		    HPET_TIMER0_CONFIG, sc->sc_save.timers[0].config);
+		acpihpet_w(sc->sc_iot, sc->sc_ioh,
+		    HPET_TIMER0_INTERRUPT, sc->sc_save.timers[0].interrupt);
+		acpihpet_w(sc->sc_iot, sc->sc_ioh,
+		    HPET_TIMER0_COMPARE, sc->sc_save.timers[0].compare);
+		acpihpet_w(sc->sc_iot, sc->sc_ioh,
+		    HPET_TIMER1_CONFIG, sc->sc_save.timers[1].config);
+		acpihpet_w(sc->sc_iot, sc->sc_ioh,
+		    HPET_TIMER1_INTERRUPT, sc->sc_save.timers[1].interrupt);
+		acpihpet_w(sc->sc_iot, sc->sc_ioh,
+		    HPET_TIMER1_COMPARE, sc->sc_save.timers[1].compare);
+		acpihpet_w(sc->sc_iot, sc->sc_ioh,
+		    HPET_TIMER2_CONFIG, sc->sc_save.timers[2].config);
+		acpihpet_w(sc->sc_iot, sc->sc_ioh,
+		    HPET_TIMER2_INTERRUPT, sc->sc_save.timers[2].interrupt);
+		acpihpet_w(sc->sc_iot, sc->sc_ioh,
+		    HPET_TIMER2_COMPARE, sc->sc_save.timers[2].compare);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		    HPET_CONFIGURATION, sc->sc_conf | 1);
 		break;
