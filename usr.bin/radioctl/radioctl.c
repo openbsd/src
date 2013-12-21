@@ -1,4 +1,4 @@
-/* $OpenBSD: radioctl.c,v 1.18 2013/11/26 19:25:38 deraadt Exp $ */
+/* $OpenBSD: radioctl.c,v 1.19 2013/12/21 06:54:53 guenther Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
 /*
@@ -402,7 +402,7 @@ str_to_int(char *str, int optval)
  */
 int
 parse_opt(char *s, struct opt_t *o) {
-	const char *badvalue = "bad value `%s'";
+	static const char badvalue[] = "bad value `%s'";
 	char *topt = NULL;
 	int slen, optlen;
 	
@@ -516,13 +516,13 @@ print_value(int optval, int show_choices)
 		printf("%umkV", ri.lock);
 		break;
 	case OPTION_MUTE:
-		printf(ri.mute ? onchar : offchar);
+		printf("%s", ri.mute ? onchar : offchar);
 		break;
 	case OPTION_MONO:
-		printf(ri.stereo ? offchar : onchar);
+		printf("%s", ri.stereo ? offchar : onchar);
 		break;
 	case OPTION_STEREO:
-		printf(ri.stereo ? onchar : offchar);
+		printf("%s", ri.stereo ? onchar : offchar);
 		break;
 	case OPTION_CHANNEL:
 		printf("%u", ri.chan);
