@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.119 2013/12/16 19:57:09 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.120 2013/12/21 19:36:42 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -1089,6 +1089,9 @@ drm_getcap(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		break;
 	case DRM_CAP_DUMB_PREFER_SHADOW:
 		req->value = dev->mode_config.prefer_shadow;
+		break;
+	case DRM_CAP_TIMESTAMP_MONOTONIC:
+		req->value = drm_timestamp_monotonic;
 		break;
 	default:
 		return EINVAL;

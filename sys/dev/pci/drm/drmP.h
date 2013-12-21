@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.157 2013/12/15 22:09:36 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.158 2013/12/21 19:36:41 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -948,6 +948,8 @@ bool	drm_mode_parse_command_line_for_connector(const char *,
 struct drm_display_mode *
 	 drm_mode_create_from_cmdline_mode(struct drm_device *,
 	     struct drm_cmdline_mode *);
+
+extern unsigned int drm_timestamp_monotonic;
 
 /* AGP/PCI Express/GART support (drm_agpsupport.c) */
 struct drm_agp_head *drm_agp_init(void);
