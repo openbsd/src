@@ -668,6 +668,7 @@
 ./usr/include/dev/pci/ubsecvar.h
 ./usr/include/dev/pci/vga_pcivar.h
 ./usr/include/dev/pci/vioblkreg.h
+./usr/include/dev/pci/vioscsireg.h
 ./usr/include/dev/pci/virtioreg.h
 ./usr/include/dev/pci/virtiovar.h
 ./usr/include/dev/pci/ydsreg.h
