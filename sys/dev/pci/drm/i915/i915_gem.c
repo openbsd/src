@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.60 2013/12/15 11:42:10 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.61 2013/12/21 12:21:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -599,7 +599,7 @@ i915_gem_shmem_pread(struct drm_device *dev,
 			goto next_page;
 
 		hit_slowpath = 1;
-		DRM_READUNLOCK();
+		DRM_UNLOCK();
 
 #ifdef __linux__
 		if (!prefaulted) {
@@ -617,7 +617,7 @@ i915_gem_shmem_pread(struct drm_device *dev,
 				       user_data, page_do_bit17_swizzling,
 				       needs_clflush);
 
-		DRM_READLOCK();
+		DRM_LOCK();
 
 next_page:
 #ifdef __linux__
@@ -660,11 +660,15 @@ i915_gem_pread_ioctl(struct drm_device *dev, void *data,
 	if (args->size == 0)
 		return 0;
 
+	ret = i915_mutex_lock_interruptible(dev);
+	if (ret)
+		return ret;
+
 	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
-	if (obj == NULL)
-		return -ENOENT;
-	DRM_READLOCK();
-	drm_hold_object(&obj->base);
+	if (&obj->base == NULL) {
+		ret = -ENOENT;
+		goto unlock;
+	}
 
 	/* Bounds check source.  */
 	if (args->offset > obj->base.size ||
@@ -678,9 +682,9 @@ i915_gem_pread_ioctl(struct drm_device *dev, void *data,
 	ret = i915_gem_shmem_pread(dev, obj, args, file);
 
 out:
-	drm_unhold_and_unref(&obj->base);
-	DRM_READUNLOCK();
-
+	drm_gem_object_unreference(&obj->base);
+unlock:
+	DRM_UNLOCK();
 	return ret;
 }
 
@@ -923,13 +927,13 @@ i915_gem_shmem_pwrite(struct drm_device *dev,
 			goto next_page;
 
 		hit_slowpath = 1;
-		DRM_READUNLOCK();
+		DRM_UNLOCK();
 		ret = shmem_pwrite_slow(page, shmem_page_offset, page_length,
 					user_data, page_do_bit17_swizzling,
 					partial_cacheline_write,
 					needs_clflush_after);
 
-		DRM_READLOCK();
+		DRM_LOCK();
 
 next_page:
 #ifdef __linux__
@@ -984,11 +988,15 @@ i915_gem_pwrite_ioctl(struct drm_device *dev, void *data,
 	if (args->size == 0)
 		return 0;
 
+	ret = i915_mutex_lock_interruptible(dev);
+	if (ret)
+		return ret;
+
 	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
-	if (obj == NULL)
-		return -ENOENT;
-	DRM_READLOCK();
-	drm_hold_object(&obj->base);
+	if (&obj->base == NULL) {
+		ret = -ENOENT;
+		goto unlock;
+	}
 
 	/* Bounds check destination. */
 	if (args->offset > obj->base.size ||
@@ -1024,9 +1032,9 @@ i915_gem_pwrite_ioctl(struct drm_device *dev, void *data,
 		ret = i915_gem_shmem_pwrite(dev, obj, args, file);
 
 out:
-	drm_unhold_and_unref(&obj->base);
-	DRM_READUNLOCK();
-
+	drm_gem_object_unreference(&obj->base);
+unlock:
+	DRM_UNLOCK();
 	return ret;
 }
 
@@ -1447,7 +1455,12 @@ i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 
 	dev_priv->entries++;
 
-	if (!obj->base.map) {
+	/*
+	 * If we already own the lock, we must be doing a copyin or
+	 * copyout in one of the fast paths.  Return failure such that
+	 * we fall back on the slow path.
+	 */
+	if (!obj->base.map || RWLOCK_OWNER(&dev->dev_lock) == curproc) {
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
 		    &obj->base.uobj, NULL);
 		dev_priv->entries--;
@@ -1456,9 +1469,9 @@ i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 
 	offset -= obj->base.map->ext;
 
-	if (rw_enter(&dev->dev_lock, RW_NOSLEEP | RW_READ) != 0) {
+	if (rw_enter(&dev->dev_lock, RW_NOSLEEP | RW_WRITE) != 0) {
 		uvmfault_unlockall(ufi, NULL, &obj->base.uobj, NULL);
-		DRM_READLOCK();
+		DRM_LOCK();
 		locked = uvmfault_relock(ufi);
 		if (locked)
 			drm_lock_obj(&obj->base);
@@ -1516,7 +1529,7 @@ i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 			drm_unhold_object(&obj->base);
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
 			    NULL, NULL);
-			DRM_READUNLOCK();
+			DRM_UNLOCK();
 			dev_priv->entries--;
 			uvm_wait("intelflt");
 			return (VM_PAGER_REFAULT);
@@ -1527,7 +1540,7 @@ unpin:
 unlock:
 	drm_unhold_object(&obj->base);
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL, NULL);
-	DRM_READUNLOCK();
+	DRM_UNLOCK();
 	dev_priv->entries--;
 	pmap_update(ufi->orig_map->pmap);
 	if (ret == -EIO) {
