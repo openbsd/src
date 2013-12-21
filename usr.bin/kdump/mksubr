@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.17 2013/07/03 23:04:34 guenther Exp $
+# $OpenBSD: mksubr,v 1.18 2013/12/21 07:32:35 guenther Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -255,6 +255,8 @@ cat <<_EOF_
 #include <sys/ptrace.h>
 #include <sys/resource.h>
 #include <sys/reboot.h>
+#include <sys/uio.h>
+#include <sys/ktrace.h>
 #include <sched.h>
 #if 0
 #include <sys/linker.h>
@@ -330,6 +332,8 @@ auto_if_type "sockipprotoname" "IPPROTO_[[:alnum:]]+[[:space:]]+" "netinet/in.h"
 auto_switch_type "sockoptname" "SO_[A-Z]+[[:space:]]+0x[0-9]+" "sys/socket.h"
 auto_switch_type "socktypename" "SOCK_[A-Z]+[[:space:]]+[1-9]+[0-9]*" "sys/socket.h"
 #auto_switch_type "ptraceopname" "PT_[[:alnum:]_]+[[:space:]]+[0-9]+" "sys/ptrace.h"
+auto_orz_type "ktracefacname" "KTRFAC_[^M][[:alnum:]_]+" "sys/ktrace.h"
+auto_switch_type "itimername" "ITIMER_[[:alnum:]_]+" "sys/time.h"
 
 cat <<_EOF_
 /*
