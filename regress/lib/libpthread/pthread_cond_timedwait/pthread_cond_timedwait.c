@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_cond_timedwait.c,v 1.6 2013/10/29 02:56:15 jsg Exp $	*/
+/*	$OpenBSD: pthread_cond_timedwait.c,v 1.7 2013/12/21 05:39:21 guenther Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -49,7 +49,7 @@
 #include "test.h"
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+pthread_cond_t cond;
 
 static void *
 thread_1(void * new_buf)
@@ -74,17 +74,22 @@ int
 main(int argc, char *argv[])
 {
 	struct timespec abstime;
-	struct timeval begtime;
-	struct timeval endtime;
+	struct timespec begtime;
+	struct timespec endtime;
 	pthread_t thread;
+	pthread_condattr_t condattr;
 	int ret;
 	int ix;
 
 	printf("pthread_cond_timedwait START\n");
 
+	CHECKr(pthread_condattr_init(&condattr));
+	CHECKr(pthread_condattr_setclock(&condattr, CLOCK_MONOTONIC));
+	CHECKr(pthread_cond_init(&cond, &condattr));
+
 	CHECKr(pthread_mutex_lock(&mutex));
-	CHECKe(gettimeofday(&begtime, NULL));
-	TIMEVAL_TO_TIMESPEC(&begtime, &abstime);
+	CHECKe(clock_gettime(CLOCK_MONOTONIC, &begtime));
+	abstime = begtime;
 
 	for (ix = 0; ix < 2; ix++) {
 		abstime.tv_sec += 5; 
@@ -96,10 +101,10 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		case ETIMEDOUT:
 			/* expected behaviour */
-			CHECKe(gettimeofday(&endtime, NULL));
-			timersub(&endtime, &begtime, &endtime);
-			printf("Got timeout %d in %lld.%06ld seconds\n", ix,
-			       (long long)endtime.tv_sec, endtime.tv_usec);
+			CHECKe(clock_gettime(CLOCK_MONOTONIC, &endtime));
+			timespecsub(&endtime, &begtime, &endtime);
+			printf("Got timeout %d in %lld.%09ld seconds\n", ix,
+			       (long long)endtime.tv_sec, endtime.tv_nsec);
 			break;
 		default:
 			DIE(ret, "pthread_cond_timedwait");
