@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.18 2009/10/27 23:59:42 deraadt Exp $	*/
+/*	$OpenBSD: message.c,v 1.19 2013/12/21 06:29:17 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -78,8 +78,8 @@ static MSGTYPE *getmsgtype(char *);
 static char *setmsgtypes(MSGFACILITY *, char *);
 static void _message(int, char *);
 static void _debugmsg(int, char *);
-static void _error(char *);
-static void _fatalerr(char *);
+static void _error(const char *);
+static void _fatalerr(const char *);
 
 /*
  * Print message logging usage message
@@ -581,7 +581,7 @@ message(va_alist)
  * Stdarg front-end to _message()
  */
 void
-message(int lvl, char *fmt, ...)
+message(int lvl, const char *fmt, ...)
 {
 	static char buf[MSGBUFSIZ];
 	va_list args;
@@ -633,7 +633,7 @@ debugmsg(va_alist)
  * Stdarg front-end to _debugmsg()
  */
 void
-debugmsg(int lvl, char *fmt, ...)
+debugmsg(int lvl, const char *fmt, ...)
 {
 	static char buf[MSGBUFSIZ];
 	va_list args;
@@ -650,7 +650,7 @@ debugmsg(int lvl, char *fmt, ...)
  * Print an error message
  */
 static void
-_error(char *msg)
+_error(const char *msg)
 {
 	static char buf[MSGBUFSIZ];
 
@@ -697,7 +697,7 @@ error(va_alist)
  * Stdarg frontend to _error()
  */
 void
-error(char *fmt, ...)
+error(const char *fmt, ...)
 {
 	static char buf[MSGBUFSIZ];
 	va_list args;
@@ -716,7 +716,7 @@ error(char *fmt, ...)
  * Display a fatal message
  */
 static void
-_fatalerr(char *msg)
+_fatalerr(const char *msg)
 {
 	static char buf[MSGBUFSIZ];
 
@@ -758,7 +758,7 @@ fatalerr(va_alist)
  * Stdarg front-end to _fatalerr()
  */
 void
-fatalerr(char *fmt, ...)
+fatalerr(const char *fmt, ...)
 {
 	static char buf[MSGBUFSIZ];
 	va_list args;

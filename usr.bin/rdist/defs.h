@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.18 2012/11/12 01:14:41 guenther Exp $	*/
+/*	$OpenBSD: defs.h,v 1.19 2013/12/21 06:29:17 guenther Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -449,10 +449,10 @@ void msgprusage(void);
 void msgprconfig(void);
 char *msgparseopts(char *, int);
 void checkhostname(void);
-void message(int, char *, ...) __attribute__((__format__ (printf, 2, 3)));
-void debugmsg(int, char *, ...) __attribute__((__format__ (printf, 2, 3)));
-void error(char *, ...) __attribute__((__format__ (printf, 1, 2)));
-void fatalerr(char *, ...) __attribute__((__format__ (printf, 1, 2)));
+void message(int, const char *, ...) __attribute__((format (printf, 2, 3)));
+void debugmsg(int, const char *, ...) __attribute__((format (printf, 2, 3)));
+void error(const char *, ...) __attribute__((format (printf, 1, 2)));
+void fatalerr(const char *, ...) __attribute__((format (printf, 1, 2)));
 char *getnotifyfile(void);
 
 /* rdist.c */
