@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.40 2013/11/11 00:35:51 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.41 2013/12/22 13:24:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -426,6 +426,15 @@ in_line_eoln(MACRO_PROT_ARGS)
 		if ( ! man_word_alloc(man, line, la, p))
 			return(0);
 	}
+
+	/*
+	 * Append MAN_EOS in case the last snipped argument
+	 * ends with a dot, e.g. `.IR syslog (3).'
+	 */
+
+	if (n != man->last &&
+	    mandoc_eos(man->last->string, strlen(man->last->string), 0))
+		man->last->flags |= MAN_EOS;
 
 	/*
 	 * If no arguments are specified and this is MAN_SCOPED (i.e.,

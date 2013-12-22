@@ -1,0 +1,22 @@
+.TH SPACE-EOS-MAN 1 "December 22, 2013" OpenBSD
+.SH NAME
+SPACE-EOS-MAN \- end-of-sentence spacing in man(7) documents
+.SH DESCRIPTION
+This is a sentence.
+There is a double space before the next one.
+.PP
+Here is a full stop
+.B at the end of a macro.
+It causes a double space, too.
+.PP
+She said: "Here is another sentence."
+And it was detected even with quotation marks.
+(Really.)
+And within parantheses.
+.PP
+A dot in parantheses (.) is not a full stop.
+.PP
+A dot in the middle of an input line . is not a full stop.
+.PP
+At the end of an input line, even an escaped dot \&.
+is regarded as a full stop.
