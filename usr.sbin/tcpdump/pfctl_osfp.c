@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.7 2010/10/18 15:55:28 deraadt Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.8 2013/12/22 16:50:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -71,12 +71,12 @@ int fingerprint_count;
 void			 add_fingerprint(int, int, struct pf_osfp_ioctl *);
 struct name_entry	*fingerprint_name_entry(struct name_list *, char *);
 void			 pfctl_flush_my_fingerprints(struct name_list *);
-char			*get_field(char **, size_t *, int *);
-int			 get_int(char **, size_t *, int *, int *, const char *,
+char			*get_field(u_char **, size_t *, int *);
+int			 get_int(u_char **, size_t *, int *, int *, const char *,
 			     int, int, const char *, int);
-int			 get_str(char **, size_t *, char **, const char *, int,
+int			 get_str(u_char **, size_t *, char **, const char *, int,
 			     const char *, int);
-int			 get_tcpopts(const char *, int, const char *,
+int			 get_tcpopts(const char *, int, const u_char *,
 			    pf_tcpopts_t *, int *, int *, int *, int *, int *,
 			    int *);
 void			 import_fingerprint(struct pf_osfp_ioctl *);
@@ -92,8 +92,8 @@ struct name_entry	*lookup_name_list(struct name_list *, const char *);
 int
 pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 {
-	char buf[MAX_FP_LINE];
-	char *line;
+	u_char buf[MAX_FP_LINE];
+	u_char *line;
 	size_t len;
 	int i, lineno = 0;
 	int window, w_mod, ttl, df, psize, p_mod, mss, mss_mod, wscale,
@@ -451,7 +451,7 @@ pfctl_lookup_fingerprint(pf_osfp_t fp, char *buf, size_t len)
 	struct name_list *list;
 	struct name_entry *nm;
 
-	char *class_name, *version_name, *subtype_name;
+	u_char *class_name, *version_name, *subtype_name;
 	class_name = version_name = subtype_name = NULL;
 
 	if (fp == PF_OSFP_UNKNOWN) {
@@ -768,11 +768,11 @@ sort_name_list(int opts, struct name_list *nml)
 
 /* parse the next integer in a formatted config file line */
 int
-get_int(char **line, size_t *len, int *var, int *mod,
+get_int(u_char **line, size_t *len, int *var, int *mod,
     const char *name, int flags, int max, const char *filename, int lineno)
 {
 	int fieldlen, i;
-	char *field;
+	u_char *field;
 	long val = 0;
 
 	if (mod)
@@ -857,7 +857,7 @@ get_int(char **line, size_t *len, int *var, int *mod,
 
 /* parse the next string in a formatted config file line */
 int
-get_str(char **line, size_t *len, char **v, const char *name, int minlen,
+get_str(u_char **line, size_t *len, char **v, const char *name, int minlen,
     const char *filename, int lineno)
 {
 	int fieldlen;
@@ -882,7 +882,7 @@ get_str(char **line, size_t *len, char **v, const char *name, int minlen,
 
 /* Parse out the TCP opts */
 int
-get_tcpopts(const char *filename, int lineno, const char *tcpopts,
+get_tcpopts(const char *filename, int lineno, const u_char *tcpopts,
     pf_tcpopts_t *packed, int *optcnt, int *mss, int *mss_mod, int *wscale,
     int *wscale_mod, int *ts0)
 {
@@ -970,13 +970,13 @@ get_tcpopts(const char *filename, int lineno, const char *tcpopts,
 
 /* rip the next field ouf of a formatted config file line */
 char *
-get_field(char **line, size_t *len, int *fieldlen)
+get_field(u_char **line, size_t *len, int *fieldlen)
 {
 	char *ret, *ptr = *line;
 	size_t plen = *len;
 
 
-	while (plen && isspace(*ptr)) {
+	while (plen && isspace((unsigned char)*ptr)) {
 		plen--;
 		ptr++;
 	}
@@ -991,7 +991,7 @@ get_field(char **line, size_t *len, int *fieldlen)
 	} else {
 		*len = 0;
 	}
-	while (*fieldlen && isspace(ret[*fieldlen - 1]))
+	while (*fieldlen && isspace((unsigned char)ret[*fieldlen - 1]))
 		(*fieldlen)--;
 	return (ret);
 }
