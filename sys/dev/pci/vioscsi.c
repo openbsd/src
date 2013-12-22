@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.1 2013/12/20 21:50:49 matthew Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.2 2013/12/22 10:49:40 sf Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -304,7 +304,7 @@ vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 	xs->status = vr->vr_res.status;
 	xs->resid = vr->vr_res.residual;
 
-	DPRINTF("vioscsi_req_done: done %d, %d, %d\n", 
+	DPRINTF("vioscsi_req_done: done %d, %d, %zd\n", 
 	    xs->error, xs->status, xs->resid);
 
 done:
@@ -422,7 +422,7 @@ vioscsi_alloc_reqs(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 	r = bus_dmamem_alloc(vsc->sc_dmat, allocsize, 0, 0,
 	    &sc->sc_reqs_segs[0], 1, &rsegs, BUS_DMA_NOWAIT);
 	if (r != 0) {
-		printf("bus_dmamem_alloc, size %d, error %d\n",
+		printf("bus_dmamem_alloc, size %zd, error %d\n",
 		    allocsize, r);
 		return 1;
 	}
