@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.37 2013/07/04 21:49:10 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.38 2013/12/22 01:13:31 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 4 2013 $
+.Dd $Mdocdate: December 22 2013 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Nm sio_setvol ,
 .Nm sio_onvol ,
 .Nm sio_initpar
-.Nd interface to bidirectional audio streams
+.Nd interface to audio devices
 .Sh SYNOPSIS
 .In sndio.h
 .Ft "struct sio_hdl *"
@@ -87,10 +87,10 @@ used with the
 .Xr sndiod 1
 server it supports resampling and format
 conversions on the fly.
-.Ss Opening and closing an audio stream
+.Ss Opening and closing an audio device
 First the application must call the
 .Fn sio_open
-function to obtain a handle representing the newly created stream;
+function to obtain a handle to the device;
 later it will be passed as the
 .Ar hdl
 argument of most other functions.
@@ -103,19 +103,16 @@ the user to select it using the
 .Ev AUDIODEVICE
 environment variable.
 .Pp
-The
+The following values of the
 .Ar mode
-parameter gives the direction of the stream.
-The following are supported:
+parameter are supported:
 .Bl -tag -width "SIO_PLAY | SIO_REC"
 .It SIO_PLAY
-The stream is play-only; data written to the stream will be played
-by the hardware.
+Play-only mode: data written will be played by the device.
 .It SIO_REC
-The stream is record-only; recorded samples by the hardware
-must be read from the stream.
+Record-only mode: samples are recorded by the device and must be read.
 .It SIO_PLAY | SIO_REC
-The stream plays and records synchronously; this means that
+The device plays and records synchronously; this means that
 the n-th recorded sample was physically sampled exactly when
 the n-th played sample was actually played.
 .El
@@ -130,20 +127,17 @@ functions (see below) will be non-blocking.
 .Pp
 The
 .Fn sio_close
-function closes the stream and frees all allocated resources
-associated with the
-.Nm libsndio
-handle.
-If the stream is not stopped it will be stopped first as if
+function closes the device and frees the handle.
+If the device is not stopped it will be stopped first as if
 .Fn sio_stop
 is called.
 .Ss Negotiating audio parameters
-Audio streams always use linear interleaved encoding.
-A frame consists of one sample for each channel in the stream.
-For example, a 16-bit stereo stream has two samples per frame
-and, typically, two bytes per sample (thus 4 bytes per frame).
+Audio samples are interleaved.
+A frame consists of one sample for each channel.
+For example, a 16-bit stereo encoding has two samples per frame
+and, two bytes per sample (thus 4 bytes per frame).
 .Pp
-The set of parameters of the stream that can be controlled
+The set of parameters of the device that can be controlled
 is given by the following structure:
 .Bd -literal
 struct sio_par {
@@ -231,7 +225,7 @@ or
 constants.
 .El
 .Pp
-The following approach is recommended to negotiate parameters of the stream:
+The following approach is recommended to negotiate device parameters:
 .Bl -bullet
 .It
 Initialize a
@@ -244,19 +238,18 @@ If the application supports any value for a given parameter,
 then the corresponding parameter should be left unset.
 Then call
 .Fn sio_setpar
-to request the stream to use them.
+to request the device to use them.
 .It
 Call
 .Fn sio_getpar
-to retrieve the actual parameters of the stream
+to retrieve the actual parameters of the device
 and check that they are usable.
 If they are not, then fail or set up a conversion layer.
 Sometimes the rate set can be slightly different to what was requested.
 A difference of about 0.5% is not audible and should be ignored.
 .El
 .Pp
-Parameters cannot be changed while the stream is in a waiting state;
-if
+Parameters cannot be changed after
 .Fn sio_start
 has been called,
 .Fn sio_stop
@@ -286,9 +279,9 @@ Can be used to set the
 .Va le
 parameter when native byte order is required.
 .El
-.Ss Getting stream capabilities
+.Ss Getting device capabilities
 There's no way to get an exhaustive list of all parameter
-combinations the stream supports.
+combinations the device supports.
 Applications that need to have a set of working
 parameter combinations in advance can use the
 .Fn sio_getcap
@@ -377,11 +370,11 @@ array of the
 .Va sio_cap
 structure is valid for this configuration.
 .El
-.Ss Starting and stopping the stream
+.Ss Starting and stopping the device
 The
 .Fn sio_start
-function puts the stream in a waiting state:
-the stream will wait for playback data to be provided
+function puts the device in a waiting state:
+the device will wait for playback data to be provided
 (using the
 .Fn sio_write
 function).
@@ -403,7 +396,7 @@ be played after
 .Fn sio_stop
 returns.
 If samples to play are queued but playback hasn't started yet
-then playback is forced immediately; the stream will actually stop
+then playback is forced immediately; the device will actually stop
 once the buffer is drained.
 .Ss Playing and recording
 When record mode is selected, the
@@ -440,17 +433,10 @@ and
 functions will never block; if no data is available, they will
 return zero immediately.
 .Pp
-Note that non-blocking mode must be used on bidirectional streams.
-For instance, if recording is blocked in
-.Fn sio_read
-then, even if samples can be played,
-.Fn sio_write
-cannot be called and the play buffers may underrun.
-.Pp
-To avoid busy loops when non-blocking mode is used, the
+The
 .Xr poll 2
 system call can be used to check if data can be
-read from or written to the stream.
+read from or written to the device.
 The
 .Fn sio_pollfd
 function fills the array
@@ -483,14 +469,14 @@ array of
 structures.
 If
 .Va POLLIN
-is set,
-.Fn sio_read
-can be called without blocking.
+is set, recorded samples are available in the device buffer
+and can be read with
+.Fn sio_read .
 If
 .Va POLLOUT
-is set,
-.Fn sio_write
-can be called without blocking.
+is set, space is available in the device buffer and new samples
+to play can be submitted with
+.Fn sio_write .
 POLLHUP may be set if an error occurs, even if
 it is not selected with
 .Fn sio_pollfd .
@@ -503,8 +489,8 @@ structures the caller must preallocate in order to be sure
 that
 .Fn sio_pollfd
 will never overrun.
-.Ss Synchronizing non-audio events to the stream in real-time
-In order to perform actions at precise positions of the stream,
+.Ss Synchronizing non-audio events to the audio stream in real-time
+In order to perform actions at precise positions of the audio stream,
 such as displaying video in sync with the audio stream,
 the application must be notified in real-time of the exact
 position in the stream the hardware is processing.
@@ -513,16 +499,18 @@ The
 .Fn sio_onmove
 function can be used to register the
 .Va cb
-callback function that will be called by the
-.Nm sndio
-library at regular time intervals to notify the application
-the position in the stream changed.
+callback function called at regular time intervals.
 The
 .Va delta
-argument contains the number of frames the hardware moved in the stream
+argument contains the number of frames the hardware played and/or recorded
 since the last call of
 .Va cb .
-When the stream starts, the callback is invoked with a zero
+It is called by
+.Fn sio_read , sio_write ,
+and
+.Fn sio_revents .
+When the first sample is played and/or recorded, right after the device starts,
+the callback is invoked with a zero
 .Va delta
 argument.
 The value of the
@@ -556,17 +544,14 @@ During this phase talking about latency is meaningless.
 In any cases, at most
 .Va bufsz
 frames are buffered.
-This value takes into account all buffers,
-including device, kernel and socket buffers.
+This value takes into account all buffers.
 The number of frames stored is equal to the number of frames
 written minus the current position.
 .Pp
 The recording latency is obtained similarly, by subtracting
 the number of frames read from the current position.
 .Pp
-It is strongly discouraged to use the latency and/or the buffer
-usage for anything but monitoring.
-Especially, note that
+Note that
 .Fn sio_write
 might block even if there is buffer space left;
 using the buffer usage to guess if
@@ -589,11 +574,11 @@ parameter of the
 structure, the audio subsystem will behave as follows:
 .Bl -tag -width "SIO_IGNORE"
 .It SIO_IGNORE
-The stream is paused during overruns and underruns,
+The devices pauses during overruns and underruns,
 thus the current position (obtained through
 .Va sio_onmove )
 stops being incremented.
-Once the overrun and/or underrun condition is gone, the stream is unpaused;
+Once the overrun and/or underrun condition is gone, the device resumes;
 play and record are always kept in sync.
 With this mode, the application cannot notice
 underruns and/or overruns and shouldn't care about them.
@@ -623,14 +608,12 @@ where time is important and where underruns or overruns are
 short and rare.
 .It SIO_ERROR
 With this mode, on the first play buffer underrun or
-record buffer overrun, the stream is terminated and
+record buffer overrun, playback and/or recording is terminated and
 no other function than
 .Fn sio_close
 will succeed.
 .Pp
-This mode is mostly useful for testing; portable
-applications shouldn't depend on it, since it's not available
-on other systems.
+This mode is mostly useful for testing.
 .El
 .Ss Controlling the volume
 The
@@ -733,7 +716,7 @@ may be a value between 0 and 2.
 .Sh BUGS
 The
 .Xr audio 4
-driver cannot drain playback buffers in the background, thus if
+driver doesn't drain playback buffers, thus if
 .Nm libsndio
 is used to directly access an
 .Xr audio 4
@@ -742,12 +725,11 @@ the
 .Fn sio_stop
 function will stop playback immediately.
 .Pp
-The
-.Xr sndiod 1
-server doesn't implement flow control (for performance reasons).
 If the application doesn't consume recorded data fast enough then
 .Dq "control messages"
-are delayed and consequently
+from the
+.Xr sndiod 1
+server are delayed and consequently
 .Va sio_onmove
 callback or volume changes may be delayed.
 .Pp
