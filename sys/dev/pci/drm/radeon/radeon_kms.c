@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.15 2013/12/05 13:29:56 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.16 2013/12/22 19:49:23 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -295,9 +295,6 @@ void radeondrm_free_screen(void *, void *);
 int radeondrm_show_screen(void *, void *, int,
     void (*)(void *, int, int), void *);
 void radeondrm_doswitch(void *, void *);
-int radeondrm_load_font(void *, void *, struct wsdisplay_font *);
-int radeondrm_list_font(void *, struct wsdisplay_font *);
-int radeondrm_getchar(void *, int, int, struct wsdisplay_charcell *);
 
 struct wsscreen_descr radeondrm_stdscreen = {
 	"std",
@@ -322,9 +319,9 @@ struct wsdisplay_accessops radeondrm_accessops = {
 	.alloc_screen = radeondrm_alloc_screen,
 	.free_screen = radeondrm_free_screen,
 	.show_screen = radeondrm_show_screen,
-	.getchar = radeondrm_getchar,
-	.load_font = radeondrm_load_font,
-	.list_font = radeondrm_list_font,
+	.getchar = rasops_getchar,
+	.load_font = rasops_load_font,
+	.list_font = rasops_list_font,
 	.burn_screen = radeondrm_burner
 };
 
@@ -350,27 +347,21 @@ int
 radeondrm_alloc_screen(void *v, const struct wsscreen_descr *type,
     void **cookiep, int *curxp, int *curyp, long *attrp)
 {
-	struct radeon_device *rdev = v;
-	struct rasops_info *ri = &rdev->ro;
-
-	return rasops_alloc_screen(ri, cookiep, curxp, curyp, attrp);
+	return rasops_alloc_screen(v, cookiep, curxp, curyp, attrp);
 }
 
 void
 radeondrm_free_screen(void *v, void *cookie)
 {
-	struct radeon_device *rdev = v;
-	struct rasops_info *ri = &rdev->ro;
-
-	return rasops_free_screen(ri, cookie);
+	return rasops_free_screen(v, cookie);
 }
 
 int
 radeondrm_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
-	struct radeon_device *rdev = v;
-	struct rasops_info *ri = &rdev->ro;
+	struct rasops_info *ri = v;
+	struct radeon_device *rdev = ri->ri_hw;
 
 	if (cookie == ri->ri_active)
 		return (0);
@@ -391,8 +382,8 @@ radeondrm_show_screen(void *v, void *cookie, int waitok,
 void
 radeondrm_doswitch(void *v, void *cookie)
 {
-	struct radeon_device *rdev = v;
-	struct rasops_info *ri = &rdev->ro;
+	struct rasops_info *ri = v;
+	struct radeon_device *rdev = ri->ri_hw;
 	struct radeon_crtc *radeon_crtc;
 	int i, crtc;
 
@@ -409,33 +400,6 @@ radeondrm_doswitch(void *v, void *cookie)
 
 	if (rdev->switchcb)
 		(rdev->switchcb)(rdev->switchcbarg, 0, 0);
-}
-
-int
-radeondrm_load_font(void *v, void *cookie, struct wsdisplay_font *font)
-{
-	struct radeon_device *rdev = v;
-	struct rasops_info *ri = &rdev->ro;
-
-	return rasops_load_font(ri, cookie, font);
-}
-
-int
-radeondrm_list_font(void *v, struct wsdisplay_font *font)
-{
-	struct radeon_device *rdev = v;
-	struct rasops_info *ri = &rdev->ro;
-
-	return rasops_list_font(ri, font);
-}
-
-int
-radeondrm_getchar(void *v, int row, int col, struct wsdisplay_charcell *cell)
-{
-	struct radeon_device *rdev = v;
-	struct rasops_info *ri = &rdev->ro;
-
-	return rasops_getchar(ri, row, col, cell);
 }
 
 #ifdef __sparc64__
@@ -705,7 +669,7 @@ radeondrm_attachhook(void *xsc)
 	aa.console = rdev->console;
 	aa.scrdata = &radeondrm_screenlist;
 	aa.accessops = &radeondrm_accessops;
-	aa.accesscookie = rdev;
+	aa.accesscookie = ri;
 	aa.defaultscreens = 0;
 
 	if (rdev->console) {
