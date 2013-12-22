@@ -1,6 +1,7 @@
-/*	$Id: term.h,v 1.38 2013/08/21 21:19:47 schwarze Exp $ */
+/*	$Id: term.h,v 1.39 2013/12/22 23:33:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -63,6 +64,7 @@ struct	termp {
 	size_t		  tabwidth;	/* Distance of tab positions. */
 	size_t		  col;		/* Bytes in buf. */
 	size_t		  viscol;	/* Chars on current line. */
+	size_t		  trailspace;	/* See termp_flushln(). */
 	int		  overstep;	/* See termp_flushln(). */
 	int		  skipvsp;	/* Vertical space to skip. */
 	int		  flags;
@@ -73,7 +75,6 @@ struct	termp {
 #define	TERMP_NONOSPACE	 (1 << 7)	/* No space (no autounset). */
 #define	TERMP_DANGLE	 (1 << 8)	/* See term_flushln(). */
 #define	TERMP_HANG	 (1 << 9)	/* See term_flushln(). */
-#define	TERMP_TWOSPACE	 (1 << 10)	/* See term_flushln(). */
 #define	TERMP_NOSPLIT	 (1 << 11)	/* See termp_an_pre/post(). */
 #define	TERMP_SPLIT	 (1 << 12)	/* See termp_an_pre/post(). */
 #define	TERMP_ANPREC	 (1 << 13)	/* See termp_an_pre(). */
