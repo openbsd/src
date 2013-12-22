@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.148 2013/12/11 19:34:11 guenther Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.149 2013/12/22 16:06:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -612,7 +612,7 @@ static inline void
 _rs_rekey(u_char *dat, size_t datlen)
 {
 #ifndef KEYSTREAM_ONLY
-	memset(rs_buf, 0,RSBUFSZ);
+	memset(rs_buf, 0, RSBUFSZ);
 #endif
 	/* fill rs_buf with the keystream */
 	chacha_encrypt_bytes(&rs, rs_buf, rs_buf, RSBUFSZ);
