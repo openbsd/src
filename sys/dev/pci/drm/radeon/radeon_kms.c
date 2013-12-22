@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.16 2013/12/22 19:49:23 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.17 2013/12/22 21:03:45 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -295,6 +295,9 @@ void radeondrm_free_screen(void *, void *);
 int radeondrm_show_screen(void *, void *, int,
     void (*)(void *, int, int), void *);
 void radeondrm_doswitch(void *, void *);
+#ifdef __sparc64__
+void radeondrm_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
+#endif
 
 struct wsscreen_descr radeondrm_stdscreen = {
 	"std",
@@ -396,6 +399,9 @@ radeondrm_doswitch(void *v, void *cookie)
 			radeon_crtc->lut_b[i] = rasops_cmap[(3 * i) + 2] << 2;
 		}
 	}
+#ifdef __sparc64__
+	fbwscons_setcolormap(&rdev->sf, radeondrm_setcolor);
+#endif
 	drm_fb_helper_restore();
 
 	if (rdev->switchcb)
@@ -403,8 +409,6 @@ radeondrm_doswitch(void *v, void *cookie)
 }
 
 #ifdef __sparc64__
-void	radeondrm_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
-
 void
 radeondrm_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 {
@@ -563,7 +567,7 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 	 * an offset from the start of video memory.
 	 */
 	rdev->fb_offset =
-	    bus_space_read_4(rdev->memt,  rdev->rmmio, RADEON_CRTC_OFFSET);
+	    bus_space_read_4(rdev->memt, rdev->rmmio, RADEON_CRTC_OFFSET);
 	if (bus_space_map(rdev->memt, rdev->fb_aper_offset + rdev->fb_offset,
 	    rdev->sf.sf_fbsize, BUS_SPACE_MAP_LINEAR, &rdev->memh)) {
 		printf("%s: can't map video memory\n", rdev->dev.dv_xname);
@@ -573,6 +577,7 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 	ri = &rdev->sf.sf_ro;
 	ri->ri_bits = bus_space_vaddr(rdev->memt, rdev->memh);
 	ri->ri_hw = rdev;
+	ri->ri_updatecursor = NULL;
 
 	fbwscons_init(&rdev->sf, RI_VCONS | RI_WRONLY | RI_BSWAP, console);
 	if (console)
@@ -651,13 +656,14 @@ radeondrm_attachhook(void *xsc)
 #endif
 	drm_fb_helper_restore();
 
+#ifndef __sparc64__
 	ri->ri_flg = RI_CENTER | RI_VCONS | RI_WRONLY;
-#ifdef __sparc64__
-	ri->ri_flg |= RI_BSWAP;
-#endif
 	rasops_init(ri, 160, 160);
 
 	ri->ri_hw = rdev;
+#else
+	ri = &rdev->sf.sf_ro;
+#endif
 
 	radeondrm_stdscreen.capabilities = ri->ri_caps;
 	radeondrm_stdscreen.nrows = ri->ri_rows;
@@ -1001,6 +1007,11 @@ int radeon_driver_firstopen_kms(struct drm_device *dev)
  */
 void radeon_driver_lastclose_kms(struct drm_device *dev)
 {
+#ifdef __sparc64__
+	struct radeon_device *rdev = dev->dev_private;
+
+	fbwscons_setcolormap(&rdev->sf, radeondrm_setcolor);
+#endif
 	drm_fb_helper_restore();
 #ifdef notyet
 	vga_switcheroo_process_delayed_switch();
