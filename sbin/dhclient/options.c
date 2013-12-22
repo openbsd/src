@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.63 2013/12/22 03:20:05 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.64 2013/12/22 04:47:57 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -315,7 +315,6 @@ pretty_print_option(unsigned int code, struct option_data *option,
 			fmtbuf[i + 1] = 0;
 			break;
 		case 't':
-			fmtbuf[i] = 't';
 			fmtbuf[i + 1] = 0;
 			numhunk = -2;
 			break;
