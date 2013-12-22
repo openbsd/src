@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.109 2013/11/03 13:52:44 pirofti Exp $	*/
+/*	$OpenBSD: trap.c,v 1.110 2013/12/22 11:00:13 sf Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -677,7 +677,7 @@ syscall(struct trapframe *frame)
 #ifdef DIAGNOSTIC
 	if (lapic_tpr != ocpl) {
 		printf("WARNING: SPL (0x%x) NOT LOWERED ON "
-		    "syscall(0x%x, 0x%x, 0x%x, 0x%x...) EXIT, PID %d\n",
+		    "syscall(0x%lx, 0x%lx, 0x%lx, 0x%lx...) EXIT, PID %d\n",
 		    lapic_tpr, code, args[0], args[1], args[2], p->p_pid);
 		lapic_tpr = ocpl;
 	}
