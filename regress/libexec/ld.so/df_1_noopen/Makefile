@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2013/08/06 19:11:53 miod Exp $
+# $OpenBSD: Makefile,v 1.5 2013/12/22 12:29:25 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,6 @@ REGRESS_TARGETS = test
 
 .include <bsd.regress.mk>
 
-.if ${COMPILER_VERSION} == "gcc3"
 EMPTYFILE=	emptyfile
 CLEANFILES+=	${EMPTYFILE}
 LIB_DEPENDS=	${EMPTYFILE}
@@ -15,10 +14,6 @@ LIB_DEPENDS=	${EMPTYFILE}
 # is not at least four bytes long!
 ${EMPTYFILE}:
 	printf "\n\n\n\n" > $@
-.else
-EMPTYFILE=	/dev/null
-LIB_DEPENDS=
-.endif
 
 CLEANFILES+=lib1.so lib2.so lib3.so dlopen dlopen1 dlopen2 dlopen3
 
