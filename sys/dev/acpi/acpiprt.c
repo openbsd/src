@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiprt.c,v 1.43 2010/08/03 22:54:12 kettenis Exp $ */
+/* $OpenBSD: acpiprt.c,v 1.44 2013/12/22 18:55:25 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -107,6 +107,11 @@ acpiprt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bus = acpiprt_getpcibus(sc, sc->sc_devnode);
 	printf(": bus %d (%s)", sc->sc_bus, sc->sc_devnode->parent->name);
 
+	if (sc->sc_bus == -1) {
+		printf("\n");
+		return;
+	}
+
 	if (aml_evalnode(sc->sc_acpi, sc->sc_devnode, 0, NULL, &res)) {
 		printf(": no PCI interrupt routing table\n");
 		return;
@@ -119,9 +124,6 @@ acpiprt_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
-
-	if (sc->sc_bus == -1)
-		return;
 
 	for (i = 0; i < res.length; i++)
 		acpiprt_prt_add(sc, res.v_package[i]);
