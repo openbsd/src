@@ -1,4 +1,4 @@
-/* $OpenBSD: bcrypt_pbkdf.c,v 1.4 2013/07/29 00:55:53 tedu Exp $ */
+/* $OpenBSD: bcrypt_pbkdf.c,v 1.5 2013/12/22 03:29:07 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -41,8 +41,8 @@
  *
  * One modification from official pbkdf2. Instead of outputting key material
  * linearly, we mix it. pbkdf2 has a known weakness where if one uses it to
- * generate (i.e.) 512 bits of key material for use as two 256 bit keys, an
- * attacker can merely run once through the outer loop below, but the user
+ * generate (e.g.) 512 bits of key material for use as two 256 bit keys, an
+ * attacker can merely run once through the outer loop, but the user
  * always runs it twice. Shuffling output bytes requires computing the
  * entirety of the key material to assemble any subkey. This is something a
  * wise caller could do; we just do it for you.
