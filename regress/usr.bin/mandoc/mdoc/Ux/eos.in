@@ -1,0 +1,22 @@
+.Dd December 22, 2013
+.Dt UX-EOS 1
+.Os OpenBSD
+.Sh NAME
+.Nm Ux-eos
+.Nd end of sentence spacing after Unix macros
+.Sh DESCRIPTION
+In the beginning Ken and Dennis wrote
+.Ux .
+The CSRG rewrote it to become
+.Bx .
+When it dissolved, people started
+.Bsx .
+And
+.Nx .
+And
+.Fx .
+And
+.Ox .
+And
+.Dx .
+By now, it's free for everyone.
