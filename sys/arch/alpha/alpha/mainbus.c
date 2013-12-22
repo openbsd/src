@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.13 2005/10/17 18:34:22 miod Exp $ */
+/* $OpenBSD: mainbus.c,v 1.14 2013/12/22 18:52:34 miod Exp $ */
 /* $NetBSD: mainbus.c,v 1.27 1998/06/24 01:10:35 ross Exp $ */
 
 /*
@@ -75,8 +75,7 @@ mbattach(parent, self, aux)
 {
 	struct mainbus_attach_args ma;
 	struct pcs *pcsp;
-	int i, cpuattachcnt;
-	extern int alpha_cpus;
+	int i;
 
 	mainbus_found = 1;
 
@@ -85,7 +84,6 @@ mbattach(parent, self, aux)
 	/*
 	 * Try to find and attach all of the CPUs in the machine.
 	 */
-	cpuattachcnt = 0;
 	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
 		pcsp = LOCATE_PCS(hwrpb, i);
 		if ((pcsp->pcs_flags & PCS_PP) == 0)
@@ -93,12 +91,8 @@ mbattach(parent, self, aux)
 
 		ma.ma_name = "cpu";
 		ma.ma_slot = i;
-		if (config_found(self, &ma, mbprint) != NULL)
-			cpuattachcnt++;
+		config_found(self, &ma, mbprint);
 	}
-	if (alpha_cpus != cpuattachcnt)
-		printf("WARNING: %d cpus in machine, %d attached\n",
-			alpha_cpus, cpuattachcnt);
 
 	if (platform.iobus != NULL) {
 		ma.ma_name = platform.iobus;
