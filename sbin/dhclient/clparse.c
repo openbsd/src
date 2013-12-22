@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.62 2013/11/11 21:00:01 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.63 2013/12/22 02:37:25 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -171,33 +171,30 @@ parse_client_statement(FILE *cfile)
 	switch (next_token(NULL, cfile)) {
 	case TOK_SEND:
 		parse_option_decl(cfile, &config->send_options[0]);
-		return;
+		break;
 	case TOK_DEFAULT:
 		code = parse_option_decl(cfile, &config->defaults[0]);
 		if (code != -1)
 			config->default_actions[code] = ACTION_DEFAULT;
-		return;
+		break;
 	case TOK_SUPERSEDE:
 		code = parse_option_decl(cfile, &config->defaults[0]);
 		if (code != -1)
 			config->default_actions[code] = ACTION_SUPERSEDE;
-		return;
+		break;
 	case TOK_APPEND:
 		code = parse_option_decl(cfile, &config->defaults[0]);
 		if (code != -1)
 			config->default_actions[code] = ACTION_APPEND;
-		return;
+		break;
 	case TOK_PREPEND:
 		code = parse_option_decl(cfile, &config->defaults[0]);
 		if (code != -1)
 			config->default_actions[code] = ACTION_PREPEND;
-		return;
-	case TOK_MEDIA:
-		skip_to_semi(cfile);
-		return;
+		break;
 	case TOK_HARDWARE:
 		parse_hardware_param(cfile, &ifi->hw_address);
-		return;
+		break;
 	case TOK_REQUEST:
 		count = parse_option_list(cfile, optlist, sizeof(optlist));
 		if (count != -1) {
@@ -205,7 +202,7 @@ parse_client_statement(FILE *cfile)
 			memcpy(config->requested_options, optlist,
 			    sizeof(config->requested_options));
 		}
-		return;
+		break;
 	case TOK_REQUIRE:
 		count = parse_option_list(cfile, optlist, sizeof(optlist));
 		if (count != -1) {
@@ -213,7 +210,7 @@ parse_client_statement(FILE *cfile)
 			memcpy(config->required_options, optlist,
 			    sizeof(config->required_options));
 		}
-		return;
+		break;
 	case TOK_IGNORE:
 		count = parse_option_list(cfile, optlist, sizeof(optlist));
 		if (count != -1) {
@@ -221,49 +218,46 @@ parse_client_statement(FILE *cfile)
 			memcpy(config->ignored_options, optlist,
 			    sizeof(config->ignored_options));
 		}
-		return;
+		break;
 	case TOK_LINK_TIMEOUT:
 		parse_lease_time(cfile, &config->link_timeout);
-		return;
+		break;
 	case TOK_TIMEOUT:
 		parse_lease_time(cfile, &config->timeout);
-		return;
+		break;
 	case TOK_RETRY:
 		parse_lease_time(cfile, &config->retry_interval);
-		return;
+		break;
 	case TOK_SELECT_TIMEOUT:
 		parse_lease_time(cfile, &config->select_interval);
-		return;
+		break;
 	case TOK_REBOOT:
 		parse_lease_time(cfile, &config->reboot_timeout);
-		return;
+		break;
 	case TOK_BACKOFF_CUTOFF:
 		parse_lease_time(cfile, &config->backoff_cutoff);
-		return;
+		break;
 	case TOK_INITIAL_INTERVAL:
 		parse_lease_time(cfile, &config->initial_interval);
-		return;
+		break;
 	case TOK_INTERFACE:
 		parse_interface_declaration(cfile);
-		return;
+		break;
 	case TOK_LEASE:
 		parse_client_lease_statement(cfile, 1);
-		return;
+		break;
 	case TOK_ALIAS:
+	case TOK_MEDIA:
+		/* Deprecated and ignored. */
 		skip_to_semi(cfile);
-		return;
+		break;
 	case TOK_REJECT:
 		parse_reject_statement(cfile);
-		return;
+		break;
 	default:
 		parse_warn("expecting a statement.");
 		skip_to_semi(cfile);
 		break;
-	}
-	token = next_token(NULL, cfile);
-	if (token != ';') {
-		parse_warn("semicolon expected.");
-		skip_to_semi(cfile);
 	}
 }
 
