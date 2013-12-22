@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.392 2013/11/19 17:30:08 mikeb Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.393 2013/12/22 16:49:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -435,9 +435,9 @@ struct pf_osfp_entry {
 #define PF_OSFP_GENERIC		0x002		/* generic signature */
 #define PF_OSFP_NODETAIL	0x004		/* no p0f details */
 #define PF_OSFP_LEN	32
-	char			fp_class_nm[PF_OSFP_LEN];
-	char			fp_version_nm[PF_OSFP_LEN];
-	char			fp_subtype_nm[PF_OSFP_LEN];
+	u_char			fp_class_nm[PF_OSFP_LEN];
+	u_char			fp_version_nm[PF_OSFP_LEN];
+	u_char			fp_subtype_nm[PF_OSFP_LEN];
 };
 #define PF_OSFP_ENTRY_EQ(a, b) \
     ((a)->fp_os == (b)->fp_os && \
