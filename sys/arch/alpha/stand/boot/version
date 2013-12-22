@@ -1,4 +1,4 @@
-$OpenBSD: version,v 1.8 2011/06/05 21:49:36 miod Exp $
+$OpenBSD: version,v 1.9 2013/12/22 18:31:29 miod Exp $
 $NetBSD: version,v 1.9 1997/01/23 23:10:38 cgd Exp $
 
 1.1:	Initial version
@@ -24,3 +24,4 @@ $NetBSD: version,v 1.9 1997/01/23 23:10:38 cgd Exp $
 (OpenBSD 1.6/1.7)
 
 1.8:	Use MI loadfile, warn if kernel image would overlap SRM
+1.9:	Better PALcode switching sequence

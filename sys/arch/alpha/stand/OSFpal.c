@@ -1,5 +1,5 @@
-/*	$OpenBSD: OSFpal.c,v 1.7 2004/12/01 20:55:07 deraadt Exp $	*/
-/*	$NetBSD: OSFpal.c,v 1.4 1996/10/13 03:00:24 christos Exp $	*/
+/* $OpenBSD: OSFpal.c,v 1.8 2013/12/22 18:31:29 miod Exp $ */
+/* $NetBSD: OSFpal.c,v 1.8 2001/07/22 15:17:30 wiz Exp $ */
 
 /*
  * Copyright (c) 1994, 1996 Carnegie-Mellon University.
@@ -29,26 +29,41 @@
  */
 
 #include <sys/types.h>
+#include <lib/libsa/stand.h>
 
-#include <machine/rpb.h>
 #include <machine/prom.h>
+#include <machine/rpb.h>
+#include <machine/alpha_cpu.h>
+
+paddr_t ptbr_save;
 
 void
 OSFpal()
 {
 	struct rpb *r;
-	struct ctb *t;
 	struct pcs *p;
-	long result;
-	int offset;
 
 	r = (struct rpb *)HWRPB_ADDR;
-	offset = r->rpb_pcs_size * cpu_number();
-	p = (struct pcs *)((u_int8_t *)r + r->rpb_pcs_off + offset);
+	/*
+	 * Note, cpu_number() is a VMS op, can't necessarily call it.
+	 * Real fun: PAL_VMS_mfpr_whami == PAL_OSF1_rti...
+	 * We might not be rpb_primary_cpu_id, but it is supposed to go
+	 * first so the answer should apply to everyone.
+	 */
+	p = LOCATE_PCS(r, r->rpb_primary_cpu_id);
 
-	printf("VMS PAL rev: 0x%lx, OSF PAL rev: 0x%lx\n",
-	    p->pcs_palrevisions[PALvar_OpenVMS],
-	    p->pcs_palrevisions[PALvar_OSF1]);
-	(void)switch_palcode();
+	printf("VMS PAL rev: 0x%lx\n", p->pcs_palrevisions[PALvar_OpenVMS]);
+	printf("OSF PAL rev: 0x%lx\n", p->pcs_palrevisions[PALvar_OSF1]);
+
+	if(p->pcs_pal_type==PAL_TYPE_OSF1) {
+		printf("OSF PAL code already running.\n");
+		ptbr_save = ((struct alpha_pcb *)p)->apcb_ptbr;
+		printf("PTBR is:          0x%lx\n", ptbr_save);
+		return;
+	}
+	switch_palcode();
+	memcpy(&p->pcs_pal_rev, &p->pcs_palrevisions[PALvar_OSF1],
+	    sizeof(p->pcs_pal_rev));
+	printf("Switch to OSF PAL code succeeded.\n");
 }
 
