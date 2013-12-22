@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.29 2012/07/09 09:07:25 deraadt Exp $ */
+/* $OpenBSD: cpu.c,v 1.30 2013/12/22 18:53:14 miod Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -205,8 +205,11 @@ cpumatch(parent, cfdata, aux)
 	if (strcmp(ma->ma_name, cpu_cd.cd_name) != 0)
 		return (0);
 
-	/* XXX CHECK SLOT? */
-	/* XXX CHECK PRIMARY? */
+#ifndef MULTIPROCESSOR
+	/* Only attach the boot processor. */
+	if (ma->ma_slot != hwrpb->rpb_primary_cpu_id)
+		return (0);
+#endif
 
 	return (1);
 }

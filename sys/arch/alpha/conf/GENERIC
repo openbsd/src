@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.235 2013/11/15 19:42:19 sasano Exp $
+#	$OpenBSD: GENERIC,v 1.236 2013/12/22 18:53:14 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -48,7 +48,7 @@ option		USER_PCICONF		# user-space PCI configuration
 config		bsd	swap generic
 
 mainbus0 at	root
-cpu*	at	mainbus0
+cpu0	at	mainbus0
 
 # PCI USB Controllers
 ehci*	at pci?				# Enhanced Host Controller
