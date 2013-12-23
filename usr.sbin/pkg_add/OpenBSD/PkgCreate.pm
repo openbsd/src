@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.70 2013/10/15 20:23:51 schwarze Exp $
+# $OpenBSD: PkgCreate.pm,v 1.71 2013/12/23 16:34:51 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -85,6 +85,14 @@ sub handle_options
 		    sub {
 			    push(@{$state->{contents}}, shift);
 		    },
+	    'o' =>
+		    sub {
+			    $state->{output_dir} = shift;
+		    },
+	    'S' =>
+		    sub {
+			    $state->{source} = shift;
+		    },
 	    'p' => 
 		    sub {
 			    $state->{prefix} = shift;
@@ -102,11 +110,13 @@ sub handle_options
 		    },
 	};
 	$state->{no_exports} = 1;
-	$state->SUPER::handle_options('p:f:d:M:U:s:A:B:P:W:qQ',
+	$state->SUPER::handle_options('p:f:d:M:U:s:A:B:P:W:qQo:S:',
 	    '[-nQqvx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
-	    '[-s x509 -s cert -s priv] [-U undisplayfile] [-W wantedlib]',
-	    '-d desc -D COMMENT=value -f packinglist -p prefix pkg-name');
+	    '[-s x509 -s cert -s priv] [-o dir] [-S source]',
+	    '[-U undisplayfile] [-W wantedlib]',
+	    '[-d desc -D COMMENT=value -f packinglist -p prefix]',
+	    'pkg-name...');
 
 	my $base = '/';
 	if (defined $state->opt('B')) {
@@ -354,7 +364,7 @@ sub prepare_for_archival
 
 sub copy_over
 {
-	my ($self, $wrarc, $rdarc) = @_;
+	my ($self, $state, $wrarc, $rdarc) = @_;
 	$wrarc->destdir($rdarc->info);
 	my $e = $wrarc->prepare($self->{name});
 	$e->write;
@@ -436,12 +446,9 @@ sub verify_checksum
 
 sub copy_over
 {
-	my ($self, $wrarc, $rdarc) = @_;
+	my ($self, $state, $wrarc, $rdarc) = @_;
 	my $e = $rdarc->next;
-	if (!$e->check_name($self)) {
-		die "Names don't match: ", $e->{name}, " ", $self->{name};
-	}
-	$e->copy_long($wrarc);
+	$e->copy($wrarc);
 }
 
 sub find_every_library
@@ -1039,24 +1046,45 @@ sub create_archive
 
 sub sign_existing_package
 {
-	my ($self, $state, $pkgname, $cert, $privkey) = @_;
-
-
-	my $true_package = $state->repo->find($pkgname);
-	$state->fatal("No such package #1", $pkgname) unless $true_package;
-	my $dir = $true_package->info;
+	my ($self, $state, $pkg, $cert, $privkey) = @_;
+	$state->set_status("Signing ".$pkg->name);
+	my $output = $state->{output_dir} // ".";
+	my $dir = $pkg->info;
 	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
 	$plist->set_infodir($dir);
 	$self->add_signature($plist, $cert, $privkey);
 	$plist->save;
-	my $tmp = OpenBSD::Temp::permanent_file(".", "pkg");
+	my $tmp = OpenBSD::Temp::permanent_file($output, "pkg");
 	my $wrarc = $self->create_archive($state, $tmp, ".");
-	$plist->copy_over($wrarc, $true_package);
+	$state->progress->visit_with_size($plist, 'copy_over', $state, 
+	    $wrarc, $pkg);
 	$wrarc->close;
-	$true_package->wipe_info;
-	unlink($plist->pkgname.".tgz");
-	rename($tmp, $plist->pkgname.".tgz") or
+	$pkg->wipe_info;
+	unlink($plist->pkgname.".tgz") if $state->{output};
+	rename($tmp, $output.'/'.$plist->pkgname.".tgz") or
 	    $state->fatal("Can't create final signed package: #1", $!);
+    	$state->end_status;
+}
+
+sub sign_existing_pkgname
+{
+	my ($self, $state, $pkgname, $cert, $privkey) = @_;
+
+	my $true_package = $state->repo->find($pkgname);
+	$state->fatal("No such package #1", $pkgname) unless $true_package;
+
+	$self->sign_existing_package($state, $true_package, $cert, $privkey);
+}
+
+sub sign_existing_repository
+{
+	my ($self, $state, $source, $cert, $privkey) = @_;
+	require OpenBSD::PackageRepository;
+	my $repo = OpenBSD::PackageRepository->new($source, $state);
+	for my $name (@{$repo->list}) {
+		my $pkg = $repo->find($name);
+		$self->sign_existing_package($state, $pkg, $cert, $privkey);
+	}
 }
 
 sub add_extra_info
@@ -1294,7 +1322,7 @@ sub parse_and_run
 	my $state = OpenBSD::PkgCreate::State->new($cmd);
 	$state->handle_options;
 
-	if (@ARGV == 0) {
+	if (@ARGV == 0 && !defined $state->{source}) {
 		$regen_package = 1;
 	} elsif (@ARGV != 1) {
 		if (defined $state->{contents} || 
@@ -1312,7 +1340,6 @@ sub parse_and_run
 		$cert = $p[1];
 		$privkey = $p[2];
 	}
-
 	if (defined $state->opt('Q')) {
 		$state->{opt}{q} = 1;
 	}
@@ -1336,8 +1363,13 @@ sub parse_and_run
 		if ($state->not) {
 			$state->fatal("can't pretend to sign existing packages");
 		}
+		if (defined $state->{source}) {
+			$self->sign_existing_repository($state, 
+			    $state->{source}, $cert, $privkey);
+		}
 		for my $pkgname (@ARGV) {
-			$self->sign_existing($state, $pkgname, $cert, $privkey);
+			$self->sign_existing_pkgname($state, 
+			    $pkgname, $cert, $privkey);
 		}
 		return 0;
 	} else {
