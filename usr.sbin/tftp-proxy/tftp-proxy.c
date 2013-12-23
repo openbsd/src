@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.7 2013/12/23 11:45:39 benno Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.8 2013/12/23 13:06:53 florian Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -141,7 +141,7 @@ __dead void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-46dv] [-l address] [-p port]"
+	fprintf(stderr, "usage: %s [-46dv] [-a address] [-l address] [-p port]"
 	    " [-w transwait]\n", __progname);
 	exit(1);
 }
@@ -179,6 +179,15 @@ struct proxy_child {
 struct proxy_child *child = NULL;
 TAILQ_HEAD(, proxy_listener) proxy_listeners;
 
+struct src_addr {
+	TAILQ_ENTRY(src_addr)	entry;
+	struct sockaddr_storage	addr;
+	socklen_t		addrlen;
+};
+TAILQ_HEAD(, src_addr) src_addrs;
+
+void	source_addresses(const char*, int);
+
 int
 main(int argc, char *argv[])
 {
@@ -190,18 +199,24 @@ main(int argc, char *argv[])
 	struct passwd *pw;
 
 	char *addr = "localhost";
+	char *saddr = NULL;
 	char *port = "6969";
 	int family = AF_UNSPEC;
 
 	int pair[2];
 
-	while ((c = getopt(argc, argv, "46dvl:p:w:")) != -1) {
+	TAILQ_INIT(&src_addrs);
+
+	while ((c = getopt(argc, argv, "46a:dvl:p:w:")) != -1) {
 		switch (c) {
 		case '4':
 			family = AF_INET;
 			break;
 		case '6':
 			family = AF_INET6;
+			break;
+		case 'a':
+			saddr = optarg;
 			break;
 		case 'd':
 			verbose = debug = 1;
@@ -238,6 +253,9 @@ main(int argc, char *argv[])
 	pw = getpwnam(NOPRIV_USER);
 	if (pw == NULL)
 		lerrx(1, "no %s user", NOPRIV_USER);
+
+	if (saddr != NULL)
+		source_addresses(saddr, family);
 
 	switch (fork()) {
 	case -1:
@@ -312,6 +330,29 @@ main(int argc, char *argv[])
 	return(0);
 }
 
+void
+source_addresses(const char* name, int family)
+{
+	struct addrinfo hints, *res, *res0;
+	struct src_addr *saddr;
+	int error;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = family;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_flags = AI_PASSIVE;
+	error = getaddrinfo(name, NULL, &hints, &res0);
+	if (error)
+		lerrx(1, "%s: %s", name, gai_strerror(error));
+	for (res = res0; res != NULL; res = res->ai_next) {
+		if ((saddr = calloc(1, sizeof(struct src_addr))) == NULL)
+			lerrx(1, "calloc");
+		memcpy(&(saddr->addr), res->ai_addr, res->ai_addrlen);
+		saddr->addrlen = res->ai_addrlen;
+		TAILQ_INSERT_TAIL(&src_addrs, saddr, entry);
+	}
+	freeaddrinfo(res0);
+}
 
 void
 proxy_privproc(int s, struct passwd *pw)
@@ -360,6 +401,7 @@ privproc_pop(int fd, short events, void *arg)
 	struct addr_pair req;
 	struct privproc *p = arg;
 	struct fd_reply *rep;
+	struct src_addr *saddr;
 	int add = 0;
 
 	switch (evbuffer_read(p->buf, fd, sizeof(req))) {
@@ -407,9 +449,23 @@ privproc_pop(int fd, short events, void *arg)
 		    &on, sizeof(on)) == -1)
 			lerr(1, "privproc setsockopt(REUSEPORT)");
 
-		if (bind(rep->fd, (struct sockaddr *)&req.src,
-		    req.src.ss_len) == -1)
-			lerr(1, "privproc bind");
+		if (TAILQ_EMPTY(&src_addrs)) {
+			if (bind(rep->fd, (struct sockaddr *)&req.src,
+			    req.src.ss_len) == -1)
+				lerr(1, "privproc bind");
+		} else {
+			TAILQ_FOREACH(saddr, &src_addrs, entry)
+				if (saddr->addr.ss_family ==
+				    req.src.ss_family) {
+					if (bind(rep->fd, (struct sockaddr*)
+					    &saddr->addr, saddr->addrlen) == -1)
+						lerr(1, "privproc bind");
+					break;
+				}
+
+			if (saddr == NULL)
+				lerr(1, "no source address found");
+		}
 
 		if (TAILQ_EMPTY(&p->replies))
 			add = 1;
@@ -732,8 +788,12 @@ unprivproc_pop(int fd, short events, void *arg)
 	} cmsgbuf;
 	struct cmsghdr *cmsg;
 	struct iovec iov;
+	struct sockaddr_storage saddr;
+	socklen_t len;
 	int result;
 	int s;
+
+	len = sizeof(saddr);
 
 	do {
 		memset(&msg, 0, sizeof(msg));
@@ -792,11 +852,23 @@ unprivproc_pop(int fd, short events, void *arg)
 		if (prepare_commit(r->id) == -1)
 			lerr(1, "%s: prepare_commit", __func__);
 
-		if (add_filter(r->id, PF_IN, (struct sockaddr *)&r->addrs.dst,
-		    (struct sockaddr *)&r->addrs.src,
-		    ntohs(((struct sockaddr_in *)&r->addrs.src)->sin_port),
-		    IPPROTO_UDP) == -1)
-			lerr(1, "%s: couldn't add pass in", __func__);
+		if (TAILQ_EMPTY(&src_addrs)) {
+			if (add_filter(r->id, PF_IN, (struct sockaddr *)
+			    &r->addrs.dst, (struct sockaddr *)&r->addrs.src,
+			    ntohs(((struct sockaddr_in *)&r->addrs.src)
+			    ->sin_port), IPPROTO_UDP) == -1)
+				lerr(1, "%s: couldn't add pass in", __func__);
+		} else {
+			if (getsockname(s, (struct sockaddr*)&saddr, &len) == -1)
+				lerr(1, "%s: getsockname", __func__);
+			if (add_rdr(r->id, (struct sockaddr *)&r->addrs.dst,
+			    (struct sockaddr*)&saddr,
+			    ntohs(((struct sockaddr_in *)&saddr)->sin_port),
+			    (struct sockaddr *)&r->addrs.src,
+			    ntohs(((struct sockaddr_in *)&r->addrs.src)->
+			    sin_port), IPPROTO_UDP ) == -1)
+				lerr(1, "%s: couldn't add rdr rule", __func__);
+		}
 
 		if (add_filter(r->id, PF_OUT, (struct sockaddr *)&r->addrs.dst,
 		    (struct sockaddr *)&r->addrs.src,
