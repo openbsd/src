@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.11 2013/08/13 05:52:19 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.12 2013/12/23 13:57:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -79,7 +79,8 @@ ENTRY(_dl_start,32)
 	ldo	4(r3), arg3			/* dl_data */
 
 	ldw	HPPA_FRAME_ARG(0)(r3), arg0	/* ps_strings */
-	copy	r0, arg1			/* cleanup */
+	ADDR(_hppa_dl_dtors_plabel, arg1)
+	ldw	0(arg1), arg1			/* cleanup */
 
 	ldo	HPPA_FRAME_SIZE(r3), sp
 	copy	r0, rp
@@ -96,31 +97,16 @@ ENTRY(_hppa_dl_dtors,0)
 	nop
 EXIT(_hppa_dl_dtors)
 
+	.section .data
+	.align 4
+_hppa_dl_dtors_plabel:
+	.word P%_hppa_dl_dtors
+	.previous
+
 LEAF_ENTRY(_hppa_dl_set_dp)
 	bv	r0(rp)
 	copy	arg0, r27
 EXIT(_hppa_dl_set_dp)
-
-/*
- * void hppa_call(void (*arg)(void), void *r19, Elf_Addr func);
- */
-ENTRY(hppa_call,0)
-	copy	r3, r1
-	copy	sp, r3
-	stwm	r1, HPPA_FRAME_SIZE(sp)
-	stw	r19, HPPA_FRAME_SL(r3)
-	stw	rp, HPPA_FRAME_CRP(r3)
-	copy	arg1, r19
-	.call
-	blr	r0, rp
-	bv,n	(arg2)
-	nop
-	ldw	HPPA_FRAME_CRP(r3), rp
-	ldw	HPPA_FRAME_SL(r3), r19
-	ldo	HPPA_FRAME_SIZE(r3), sp
-	bv	r0(rp)
-	ldwm	-HPPA_FRAME_SIZE(sp), r3
-EXIT(hppa_call)
 
 /*
  * This is a magic branch instruction that is used by GCC's

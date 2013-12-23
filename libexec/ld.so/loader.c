@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.134 2013/12/23 10:39:10 kettenis Exp $ */
+/*	$OpenBSD: loader.c,v 1.135 2013/12/23 13:57:44 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -604,7 +604,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 		_dl_call_init(_dl_objects);
 	}
 
-#if !defined(__i386__)
+#if !defined(__hppa__) && !defined(__i386__)
 	/*
 	 * Schedule a routine to be run at shutdown, by using atexit.
 	 * Cannot call atexit directly from ld.so?
@@ -622,12 +622,8 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 		if (sym == NULL)
 			_dl_printf("cannot find atexit, destructors will not be run!\n");
 		else
-#ifdef MD_ATEXIT
-			MD_ATEXIT(sobj, sym, (Elf_Addr)&_dl_dtors);
-#else
 			(*(void (*)(Elf_Addr))(sym->st_value + ooff))
 			    ((Elf_Addr)_dl_dtors);
-#endif
 	}
 #endif
 
