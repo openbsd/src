@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.22 2013/11/10 19:23:14 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.23 2013/12/23 21:18:57 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -103,7 +103,7 @@ L2:	ldiq	s3, L2		/* get where the linker thought we were */
 	mov	s2, a3		/* dl_data */
 	CALL(_dl_boot)
 	mov	s0, a0		/* stack */
-	mov	zero, a1	/* cleanup */
+	lda	a1, _dl_dtors	/* cleanup */
 	mov	v0, pv
 	jsr	ra, (pv)
 END(_dl_start)
