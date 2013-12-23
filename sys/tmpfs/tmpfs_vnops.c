@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.10 2013/12/14 18:01:52 espie Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.11 2013/12/23 17:23:51 kettenis Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -765,7 +765,6 @@ tmpfs_link(void *v)
 	tmpfs_dirent_t *de;
 	int error;
 
-	KASSERT(dvp != vp);
 	KASSERT(VOP_ISLOCKED(dvp));
 
 	if (vp->v_type == VDIR) {
@@ -773,6 +772,8 @@ tmpfs_link(void *v)
 		vput(dvp);
 		return EPERM;
 	}
+
+	KASSERT(dvp != vp);
 
 	if (dvp->v_mount != vp->v_mount) {
 		VOP_ABORTOP(dvp, cnp);
