@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.51 2013/06/01 10:17:01 lum Exp $	*/
+/*	$OpenBSD: line.c,v 1.52 2013/12/23 21:47:32 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -326,8 +326,8 @@ int
 lnewline_at(struct line *lp1, int doto)
 {
 	struct line	*lp2;
-	int	 nlen;
 	struct mgwin	*wp;
+	int	 	 nlen, tcurwpdotline;
 
 	lchange(WFFULL);
 
@@ -337,7 +337,8 @@ lnewline_at(struct line *lp1, int doto)
 	   (curwp->w_dotline == curwp->w_markline &&
 	    curwp->w_marko >= doto))
 		curwp->w_markline++;
-	curwp->w_dotline++;
+
+	tcurwpdotline = curwp->w_dotline;
 
 	/* If start of line, allocate a new line instead of copying */
 	if (doto == 0) {
@@ -348,9 +349,12 @@ lnewline_at(struct line *lp1, int doto)
 		lp1->l_bp->l_fp = lp2;
 		lp2->l_fp = lp1;
 		lp1->l_bp = lp2;
-		for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
+		for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
 			if (wp->w_linep == lp1)
 				wp->w_linep = lp2;
+			if (wp->w_dotline >= tcurwpdotline)
+				wp->w_dotline++;
+		}
 		undo_add_boundary(FFRAND, 1);
 		undo_add_insert(lp2, 0, 1);
 		undo_add_boundary(FFRAND, 1);
@@ -375,7 +379,9 @@ lnewline_at(struct line *lp1, int doto)
 		if (wp->w_dotp == lp1 && wp->w_doto >= doto) {
 			wp->w_dotp = lp2;
 			wp->w_doto -= doto;
-		}
+			wp->w_dotline++;
+		} else if (wp->w_dotline > tcurwpdotline)
+			wp->w_dotline++;
 		if (wp->w_markp == lp1 && wp->w_marko >= doto) {
 			wp->w_markp = lp2;
 			wp->w_marko -= doto;
