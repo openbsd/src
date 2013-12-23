@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.17 2011/01/09 13:32:18 espie Exp $
+# $OpenBSD: Term.pm,v 1.18 2013/12/23 14:03:58 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -20,7 +20,7 @@ use warnings;
 package OpenBSD::PackingElement;
 sub size_and
 {
-	my ($self, $progress, $donesize, $totsize, $method, @r) = @_;
+	my ($self, $progress, $donesize, $totsize, $method, $state, @r) = @_;
 	if (defined $self->{size}) {
 		$$donesize += $self->{size};
 		$progress->show($$donesize, $totsize);
