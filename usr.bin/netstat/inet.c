@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.126 2013/12/20 02:04:09 krw Exp $	*/
+/*	$OpenBSD: inet.c,v 1.127 2013/12/23 22:39:50 tedu Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ void
 protopr(u_long off, char *name, int af, u_int tableid, u_long pcbaddr)
 {
 	struct inpcbtable table;
-	struct inpcb *head, *next, *prev;
+	struct inpcb *prev, *next;
 	struct inpcb inpcb;
 	int istcp, israw, isany;
 	int addrlen = 22;
@@ -124,11 +124,9 @@ protopr(u_long off, char *name, int af, u_int tableid, u_long pcbaddr)
 	istcp = strcmp(name, "tcp") == 0;
 	israw = strncmp(name, "ip", 2) == 0;
 	kread(off, &table, sizeof table);
-	prev = head =
-	    (struct inpcb *)&TAILQ_FIRST(&((struct inpcbtable *)off)->inpt_queue);
-	next = TAILQ_FIRST(&table.inpt_queue);
+	prev = next = TAILQ_FIRST(&table.inpt_queue);
 
-	while (next != head) {
+	while (next != NULL) {
 		kread((u_long)next, &inpcb, sizeof inpcb);
 		if (TAILQ_PREV(&inpcb, inpthead, inp_queue) != prev) {
 			printf("???\n");
