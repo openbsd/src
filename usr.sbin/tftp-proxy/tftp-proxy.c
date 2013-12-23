@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.8 2013/12/23 13:06:53 florian Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.9 2013/12/23 13:07:47 florian Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -196,10 +196,10 @@ main(int argc, char *argv[])
 	int c;
 	const char *errstr;
 
+	struct src_addr *saddr, *saddr2;
 	struct passwd *pw;
 
 	char *addr = "localhost";
-	char *saddr = NULL;
 	char *port = "6969";
 	int family = AF_UNSPEC;
 
@@ -216,7 +216,7 @@ main(int argc, char *argv[])
 			family = AF_INET6;
 			break;
 		case 'a':
-			saddr = optarg;
+			source_addresses(optarg, family);
 			break;
 		case 'd':
 			verbose = debug = 1;
@@ -254,8 +254,13 @@ main(int argc, char *argv[])
 	if (pw == NULL)
 		lerrx(1, "no %s user", NOPRIV_USER);
 
-	if (saddr != NULL)
-		source_addresses(saddr, family);
+	/* Family option may have been specified late. */
+	if (family != AF_UNSPEC)
+		TAILQ_FOREACH_SAFE(saddr, &src_addrs, entry, saddr2)
+			if (saddr->addr.ss_family != family) {
+				TAILQ_REMOVE(&src_addrs, saddr, entry);
+				free(saddr);
+			}
 
 	switch (fork()) {
 	case -1:

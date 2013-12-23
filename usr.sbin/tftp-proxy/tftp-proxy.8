@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tftp-proxy.8,v 1.4 2013/12/23 13:06:53 florian Exp $
+.\"	$OpenBSD: tftp-proxy.8,v 1.5 2013/12/23 13:07:47 florian Exp $
 .\"
 .\" Copyright (c) 2005 joshua stein <jcs@openbsd.org>
 .\"
@@ -87,6 +87,9 @@ Instead of a
 rule an
 .Dq rdr
 rule will be generated.
+It is possible to have two
+.Fl a
+options to specify both an IPv4 and an IPv6 address.
 .It Fl d
 Do not daemonize.
 If this option is specified,
