@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.152 2013/12/22 23:33:52 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.153 2013/12/23 02:19:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -1534,6 +1534,7 @@ termp_ft_pre(DECL_ARGS)
 static int
 termp_fn_pre(DECL_ARGS)
 {
+	size_t		 width, rmargin = 0;
 	int		 pretty;
 
 	pretty = MDOC_SYNPRETTY & n->flags;
@@ -1543,10 +1544,24 @@ termp_fn_pre(DECL_ARGS)
 	if (NULL == (n = n->child))
 		return(0);
 
+	if (pretty) {
+		width = term_len(p, 4);
+		rmargin = p->rmargin;
+		p->rmargin = p->offset + width;
+		p->flags |= TERMP_NOBREAK | TERMP_HANG;
+	}
+
 	assert(MDOC_TEXT == n->type);
 	term_fontpush(p, TERMFONT_BOLD);
 	term_word(p, n->string);
 	term_fontpop(p);
+
+	if (pretty) {
+		term_flushln(p);
+		p->flags &= ~(TERMP_NOBREAK | TERMP_HANG);
+		p->offset = p->rmargin;
+		p->rmargin = rmargin;
+	}
 
 	p->flags |= TERMP_NOSPACE;
 	term_word(p, "(");
@@ -1570,6 +1585,7 @@ termp_fn_pre(DECL_ARGS)
 	if (pretty) {
 		p->flags |= TERMP_NOSPACE;
 		term_word(p, ";");
+		term_flushln(p);
 	}
 
 	return(0);
