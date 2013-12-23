@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.32 2013/08/13 05:52:21 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.33 2013/12/23 17:29:15 kettenis Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -129,8 +129,13 @@ _ENTRY(_dl_start)
 
 	add	%sp, 48 + DL_DATA_SIZE, %sp	! restore stack
 
+	sethi	%hi(_GLOBAL_OFFSET_TABLE_ - 4), %l7
+	rd	%pc, %g1
+	or	%l7, %lo(_GLOBAL_OFFSET_TABLE_ + 4), %l7
+	add	%l7, %g1, %l7
+
 	jmp	%o0
-	 clr	%g1			! XXX don't register with atexit
+	 ldx	[%l7 + _dl_dtors], %g1	! %g1 = cleanup
 
 	/*
 	 * We have two separate entry points to the runtime linker.
