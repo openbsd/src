@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.57 2013/11/21 15:54:45 deraadt Exp $	*/
+/*	$OpenBSD: md5.c,v 1.58 2013/12/23 23:00:38 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -52,10 +52,7 @@
 
 enum program_mode {
 	MODE_MD5,
-	MODE_SHA1,
-	MODE_RMD160,
 	MODE_CKSUM,
-	MODE_SUM
 } pmode;
 
 union ANY_CTX {
@@ -227,11 +224,8 @@ main(int argc, char **argv)
 	int fl, error, base64;
 	int bflag, cflag, pflag, rflag, tflag, xflag;
 
-	static const char *optstr[5] = {
+	static const char *optstr[2] = {
 		"bcpqrs:tx",
-		"bcpqrs:tx",
-		"bcpqrs:tx",
-		"a:bco:pqrs:tx",
 		"a:bco:pqrs:tx"
 	};
 
@@ -240,16 +234,8 @@ main(int argc, char **argv)
 	error = bflag = cflag = pflag = qflag = rflag = tflag = xflag = 0;
 
 	pmode = MODE_MD5;
-	if (strcmp(__progname, "md5") == 0)
-		pmode = MODE_MD5;
-	else if (strcmp(__progname, "sha1") == 0)
-		pmode = MODE_SHA1;
-	else if (strcmp(__progname, "rmd160") == 0)
-		pmode = MODE_RMD160;
-	else if (strcmp(__progname, "cksum") == 0)
+	if (strcmp(__progname, "cksum") == 0 || strcmp(__progname, "sum") == 0)
 		pmode = MODE_CKSUM;
-	else if (strcmp(__progname, "sum") == 0)
-		pmode = MODE_SUM;
 
 	/* Check for -b option early since it changes behavior. */
 	while ((fl = getopt(argc, argv, optstr[pmode])) != -1) {
@@ -802,13 +788,10 @@ usage(void)
 {
 	switch (pmode) {
 	case MODE_MD5:
-	case MODE_SHA1:
-	case MODE_RMD160:
 		fprintf(stderr, "usage: %s [-bpqrtx] [-c [checklist ...]] "
 		    "[-s string] [file ...]\n", __progname);
 		break;
 	case MODE_CKSUM:
-	case MODE_SUM:
 		fprintf(stderr, "usage: %s [-bpqrtx] [-a algorithms] "
 		    "[-c [checklist ...]] [-o 1 | 2]\n"
 		    "       %*s [-s string] [file ...]\n",
