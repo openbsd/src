@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.19 2013/01/26 06:10:22 djm Exp $
+# $OpenBSD: Makefile,v 1.20 2013/12/23 00:09:22 jca Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -81,6 +81,8 @@ MAN=	\
 	ERR_set_mark.3 \
 	EVP_BytesToKey.3 \
 	EVP_DigestInit.3 \
+	EVP_DigestSignInit.3 \
+	EVP_DigestVerifyInit.3 \
 	EVP_EncryptInit.3 \
 	EVP_OpenInit.3 \
 	EVP_PKEY_new.3 \
@@ -147,6 +149,7 @@ MAN=	\
 	SSL_CTX_set_mode.3 \
 	SSL_CTX_set_msg_callback.3 \
 	SSL_CTX_set_options.3 \
+	SSL_CTX_set_psk_client_callback.3 \
 	SSL_CTX_set_quiet_shutdown.3 \
 	SSL_CTX_set_session_cache_mode.3 \
 	SSL_CTX_set_session_id_context.3 \
@@ -156,6 +159,7 @@ MAN=	\
 	SSL_CTX_set_tmp_rsa_callback.3 \
 	SSL_CTX_set_verify.3 \
 	SSL_CTX_use_certificate.3 \
+	SSL_CTX_use_psk_identity_hint.3 \
 	SSL_SESSION_free.3 \
 	SSL_SESSION_get_ex_new_index.3 \
 	SSL_SESSION_get_time.3 \
@@ -176,6 +180,7 @@ MAN=	\
 	SSL_get_fd.3 \
 	SSL_get_peer_cert_chain.3 \
 	SSL_get_peer_certificate.3 \
+	SSL_get_psk_identity.3 \
 	SSL_get_rbio.3 \
 	SSL_get_session.3 \
 	SSL_get_verify_result.3 \
@@ -202,6 +207,13 @@ MAN=	\
 	X509_NAME_get_index_by_NID.3 \
 	X509_NAME_print_ex.3 \
 	X509_new.3 \
+	X509_STORE_CTX_get_error.3 \
+	X509_STORE_CTX_get_ex_new_index.3 \
+	X509_STORE_CTX_new.3 \
+	X509_STORE_CTX_set_verify_cb.3 \
+	X509_STORE_set_verify_cb_func.3 \
+	X509_VERIFY_PARAM_set_flags.3 \
+	X509_verify_cert.3 \
 	bn.3 \
 	bn_internal.3 \
 	crypto.3 \
@@ -568,6 +580,10 @@ MLINKS+=\
 	EVP_DigestInit.3 EVP_sha1.3 \
 	EVP_DigestInit.3 OBJ_nid2sn.3 \
 	EVP_DigestInit.3 OBJ_obj2nid.3 \
+	EVP_DigestSignInit.3 EVP_DigestSignUpdate.3 \
+	EVP_DigestSignInit.3 EVP_DigestSignFinal.3 \
+	EVP_DigestVerifyInit.3 EVP_DigestVerifyUpdate.3 \
+	EVP_DigestVerifyInit.3 EVP_DigestVerifyFinal.3 \
 	EVP_EncryptInit.3 EVP_CIPHER_CTX_block_size.3 \
 	EVP_EncryptInit.3 EVP_CIPHER_CTX_cipher.3 \
 	EVP_EncryptInit.3 EVP_CIPHER_CTX_cleanup.3 \
@@ -823,6 +839,7 @@ MLINKS+=\
 	SSL_CTX_set_options.3 SSL_CTX_get_options.3 \
 	SSL_CTX_set_options.3 SSL_get_options.3 \
 	SSL_CTX_set_options.3 SSL_set_options.3 \
+	SSL_CTX_set_psk_client_callback.3 SSL_set_psk_client_callback.3 \
 	SSL_CTX_set_quiet_shutdown.3 SSL_CTX_get_quiet_shutdown.3 \
 	SSL_CTX_set_quiet_shutdown.3 SSL_get_quiet_shutdown.3 \
 	SSL_CTX_set_quiet_shutdown.3 SSL_set_quiet_shutdown.3 \
@@ -862,6 +879,9 @@ MLINKS+=\
 	SSL_CTX_use_certificate.3 SSL_use_certificate.3 \
 	SSL_CTX_use_certificate.3 SSL_use_certificate_ASN1.3 \
 	SSL_CTX_use_certificate.3 SSL_use_certificate_file.3 \
+	SSL_CTX_use_psk_identity_hint.3 SSL_use_psk_identity_hint.3 \
+	SSL_CTX_use_psk_identity_hint.3 SSL_CTX_set_psk_server_callback.3 \
+	SSL_CTX_use_psk_identity_hint.3 SSL_set_psk_server_callback.3 \
 	SSL_SESSION_get_ex_new_index.3 SSL_SESSION_get_ex_data.3 \
 	SSL_SESSION_get_ex_new_index.3 SSL_SESSION_set_ex_data.3 \
 	SSL_SESSION_get_time.3 SSL_SESSION_get_timeout.3 \
@@ -884,6 +904,7 @@ MLINKS+=\
 	SSL_get_ex_new_index.3 SSL_set_ex_data.3 \
 	SSL_get_fd.3 SSL_get_rfd.3 \
 	SSL_get_fd.3 SSL_get_wfd.3 \
+	SSL_get_psk_identity.3 SSL_get_psk_identity_hint.3 \
 	SSL_get_rbio.3 SSL_get_wbio.3 \
 	SSL_get_session.3 SSL_get0_session.3 \
 	SSL_get_session.3 SSL_get1_session.3 \
@@ -910,6 +931,33 @@ MLINKS+=\
 	X509_NAME_add_entry_by_txt.3 X509_NAME_add_entry_by_OBJ.3 \
 	X509_NAME_add_entry_by_txt.3 X509_NAME_delete_entry.3 \
 	X509_new.3 X509_free.3 \
+	X509_STORE_CTX_get_error.3 X509_STORE_CTX_get1_chain.3 \
+	X509_STORE_CTX_get_error.3 X509_STORE_CTX_get_current_cert.3 \
+	X509_STORE_CTX_get_error.3 X509_STORE_CTX_get_error_depth.3 \
+	X509_STORE_CTX_get_error.3 X509_STORE_CTX_set_error.3 \
+	X509_STORE_CTX_get_error.3 X509_verify_cert_error_string.3 \
+	X509_STORE_CTX_get_ex_new_index.3 X509_STORE_CTX_get_ex_data.3 \
+	X509_STORE_CTX_get_ex_new_index.3 X509_STORE_CTX_set_ex_data.3 \
+	X509_STORE_CTX_new.3 X509_STORE_CTX_cleanup.3 \
+	X509_STORE_CTX_new.3 X509_STORE_CTX_free.3 \
+	X509_STORE_CTX_new.3 X509_STORE_CTX_get0_param.3 \
+	X509_STORE_CTX_new.3 X509_STORE_CTX_init.3 \
+	X509_STORE_CTX_new.3 X509_STORE_CTX_set0_crls.3 \
+	X509_STORE_CTX_new.3 X509_STORE_CTX_set0_param.3 \
+	X509_STORE_CTX_new.3 X509_STORE_CTX_set_cert.3 \
+	X509_STORE_CTX_new.3 X509_STORE_CTX_set_chain.3 \
+	X509_STORE_CTX_new.3 X509_STORE_CTX_set_default.3 \
+	X509_STORE_CTX_new.3 X509_STORE_CTX_trusted_stack.3 \
+	X509_STORE_set_verify_cb_func.3 X509_STORE_set_verify_cb.3 \
+	X509_VERIFY_PARAM_set_flags.3 X509_VERIFY_PARAM_add0_policy.3 \
+	X509_VERIFY_PARAM_set_flags.3 X509_VERIFY_PARAM_clear_flags.3 \
+	X509_VERIFY_PARAM_set_flags.3 X509_VERIFY_PARAM_get_depth.3 \
+	X509_VERIFY_PARAM_set_flags.3 X509_VERIFY_PARAM_get_flags.3 \
+	X509_VERIFY_PARAM_set_flags.3 X509_VERIFY_PARAM_set1_policies.3 \
+	X509_VERIFY_PARAM_set_flags.3 X509_VERIFY_PARAM_set_depth.3 \
+	X509_VERIFY_PARAM_set_flags.3 X509_VERIFY_PARAM_set_purpose.3 \
+	X509_VERIFY_PARAM_set_flags.3 X509_VERIFY_PARAM_set_time.3 \
+	X509_VERIFY_PARAM_set_flags.3 X509_VERIFY_PARAM_set_trust.3 \
 	bn_internal.3 bn_add_words.3 \
 	bn_internal.3 bn_check_top.3 \
 	bn_internal.3 bn_cmp_words.3 \
