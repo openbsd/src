@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.96 2013/12/08 12:53:23 jca Exp $
+# $OpenBSD: PackageRepository.pm,v 1.97 2013/12/23 16:55:00 jca Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -700,6 +700,7 @@ sub parse_problems
 
 		if (defined $hint && $hint == 0) {
 			next if m/^ftp: -: short write/o;
+			next if m/^ftp: local: -: Broken pipe/o;
 			next if m/^ftp: Writing -: Broken pipe/o;
 			next if m/^421\s+/o;
 		}
