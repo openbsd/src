@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.6 2013/12/19 11:23:29 florian Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.7 2013/12/23 11:45:39 benno Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -540,6 +540,9 @@ proxy_listen(const char *addr, const char *port, int family)
 			if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVPKTINFO,
 			    &on, sizeof(on)) == -1)
 				errx(1, "setsockopt(IPV6_RECVPKTINFO)");
+			if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVDSTPORT,
+			    &on, sizeof(on)) == -1)
+				errx(1, "setsockopt(IPV6_RECVDSTPORT)");
 			break;
 		}
 		l->s = s;
@@ -606,8 +609,10 @@ proxy_dst6(struct cmsghdr *cmsg, struct sockaddr_storage *ss)
 		    sin6->sin6_scope_id = ipi->ipi6_ifindex;
 #endif
 		break;
-
-	/* XXX PORT */
+	case IPV6_RECVDSTPORT:
+		memcpy(&sin6->sin6_port, CMSG_DATA(cmsg),
+		    sizeof(sin6->sin6_port));
+		break;
 	}
 
 	return (0);
