@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.38 2013/12/22 01:13:31 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.39 2013/12/23 14:14:31 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 22 2013 $
+.Dd $Mdocdate: December 23 2013 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -82,11 +82,6 @@ library allows user processes to access
 hardware and the
 .Xr sndiod 1
 audio server in a uniform way.
-It supports full-duplex operation, and when
-used with the
-.Xr sndiod 1
-server it supports resampling and format
-conversions on the fly.
 .Ss Opening and closing an audio device
 First the application must call the
 .Fn sio_open
@@ -127,10 +122,12 @@ functions (see below) will be non-blocking.
 .Pp
 The
 .Fn sio_close
-function closes the device and frees the handle.
-If the device is not stopped it will be stopped first as if
+function stops the device as if
 .Fn sio_stop
-is called.
+is called and frees the handle.
+Thus, no samples submitted with
+.Fn sio_write
+are discarded.
 .Ss Negotiating audio parameters
 Audio samples are interleaved.
 A frame consists of one sample for each channel.
@@ -234,11 +231,12 @@ structure using
 .Fn sio_initpar
 and fill it with
 the desired parameters.
-If the application supports any value for a given parameter,
-then the corresponding parameter should be left unset.
 Then call
 .Fn sio_setpar
 to request the device to use them.
+Parameters left unset in the
+.Va sio_par
+structure will be set to device-specific defaults.
 .It
 Call
 .Fn sio_getpar
@@ -255,13 +253,12 @@ has been called,
 .Fn sio_stop
 must be called before parameters can be changed.
 .Pp
-If
-.Nm libsndio
-is used to connect to the
+If the device is exposed by the
 .Xr sndiod 1
-server, a transparent emulation layer will
-automatically be set up, and in this case any
-parameters are supported.
+server, which is the default configuration,
+a transparent emulation layer will
+automatically be set up, and in this case any combination of
+rate, encoding and numbers of channels is supported.
 .Pp
 To ease filling the
 .Va sio_par
@@ -387,17 +384,15 @@ synchronously as soon as enough data to play is available.
 .Pp
 The
 .Fn sio_stop
-function stops playback and recording and puts the audio subsystem
-in the same state as after
-.Fn sio_open
+function puts the audio subsystem
+in the same state as before
+.Fn sio_start
 is called.
-Samples in the play buffers are not discarded, and will continue to
-be played after
-.Fn sio_stop
-returns.
+It stops recording, drains the play buffer and then stops playback.
 If samples to play are queued but playback hasn't started yet
-then playback is forced immediately; the device will actually stop
+then playback is forced immediately; playback will actually stop
 once the buffer is drained.
+In no case are samples in the play buffer discarded.
 .Ss Playing and recording
 When record mode is selected, the
 .Fn sio_read
