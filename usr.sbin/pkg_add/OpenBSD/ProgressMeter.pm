@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.38 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.39 2013/12/23 13:29:41 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -84,7 +84,7 @@ sub ntogo
 
 sub visit_with_size
 {
-	my ($progress, $plist, $method, @r) = @_;
+	my ($progress, $plist, $method, $state, @r) = @_;
 	$plist->$method(@r);
 }
 
