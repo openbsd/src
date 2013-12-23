@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.59 2013/12/12 21:04:50 kettenis Exp $	*/
+/*	$OpenBSD: bus.h,v 1.60 2013/12/23 20:32:31 kettenis Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -432,8 +432,10 @@ void	bus_space_copy_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
  * Note: the i386 does not currently require barriers, but we must
  * provide the flags to MI code.
  */
-#define	bus_space_barrier(t, h, o, l, f)	\
-	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
+#define	bus_space_barrier(t, h, o, l, f) do {				\
+	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)));\
+	__asm __volatile("" : : : "memory");				\
+} while (0)
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
 
