@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.18 2013/12/23 14:03:58 espie Exp $
+# $OpenBSD: Term.pm,v 1.19 2013/12/23 15:04:37 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -20,7 +20,7 @@ use warnings;
 package OpenBSD::PackingElement;
 sub size_and
 {
-	my ($self, $progress, $donesize, $totsize, $method, $state, @r) = @_;
+	my ($self, $progress, $donesize, $totsize, $method, @r) = @_;
 	if (defined $self->{size}) {
 		$$donesize += $self->{size};
 		$progress->show($$donesize, $totsize);
@@ -95,12 +95,12 @@ sub visit_with_size
 
 sub visit_with_count
 {
-	my ($progress, $plist, $method, $state, @r) = @_;
+	my ($progress, $plist, $method, @r) = @_;
 	$plist->{total} //= compute_count($plist);
 	my $count = 0;
 	$progress->show($count, $plist->{total});
 	$plist->count_and($progress, \$count, $plist->{total},
-	    $method, $state, @r);
+	    $method, @r);
 }
 
 package OpenBSD::ProgressMeter::Term;
