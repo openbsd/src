@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.14 2012/12/31 10:07:51 miod Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.15 2013/12/23 21:49:27 kettenis Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -39,10 +39,10 @@ ENTRY(_dl_start)
 	stw	27, 4(19)	/* save in normal location */
 
 	# squirrel away the arguments for main
-	mr 20, 3	#argc
-	mr 21, 4	#argv
-	mr 22, 5	#envp
-	mr 23, 6	# ???
+	mr	20, 3	#argc
+	mr	21, 4	#argv
+	mr	22, 5	#envp
+	mr	23, 6	# ???
 
 	bl	1f
 	# this instruction never gets executed but can be used
@@ -55,7 +55,7 @@ ENTRY(_dl_start)
 				# it contains an offset to the location
 				# of the GOT.
 
-	rlwinm 18,18,0,8,30	# mask off the offset portion of the instr.
+	rlwinm	18,18,0,8,30	# mask off the offset portion of the instr.
 
 	/*
 	 * these adds effectively calculate the value the
@@ -109,17 +109,17 @@ ENTRY(_dl_start)
 
 	bl	_dl_boot@local
 
-	mtctr 3			# put return value into ctr to execute
+	mtctr	3		# put return value into ctr to execute
 
 	# get back the squirreled away the arguments for main
-	mr 3, 20
-	mr 4, 21
-	mr 5, 22
-	mr 6, 23
-	li 7, 0
+	mr	3, 20
+	mr	4, 21
+	mr	5, 22
+	mr	6, 23
+	li	7, 0
 
 
-	mtlr 27
+	mtlr	27
 	lwz	1, 0(1)		# Restore stack pointer.
 	bctr			# Go execute the 'real' program.
 
