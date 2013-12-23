@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.9 2013/12/23 13:07:47 florian Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.10 2013/12/23 13:08:25 florian Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -454,22 +454,17 @@ privproc_pop(int fd, short events, void *arg)
 		    &on, sizeof(on)) == -1)
 			lerr(1, "privproc setsockopt(REUSEPORT)");
 
-		if (TAILQ_EMPTY(&src_addrs)) {
+		TAILQ_FOREACH(saddr, &src_addrs, entry)
+			if (saddr->addr.ss_family == req.src.ss_family)
+				break;
+		if (saddr == NULL) {
 			if (bind(rep->fd, (struct sockaddr *)&req.src,
 			    req.src.ss_len) == -1)
 				lerr(1, "privproc bind");
 		} else {
-			TAILQ_FOREACH(saddr, &src_addrs, entry)
-				if (saddr->addr.ss_family ==
-				    req.src.ss_family) {
-					if (bind(rep->fd, (struct sockaddr*)
-					    &saddr->addr, saddr->addrlen) == -1)
-						lerr(1, "privproc bind");
-					break;
-				}
-
-			if (saddr == NULL)
-				lerr(1, "no source address found");
+			if (bind(rep->fd, (struct sockaddr*)&saddr->addr,
+			    saddr->addrlen) == -1)
+				lerr(1, "privproc bind");
 		}
 
 		if (TAILQ_EMPTY(&p->replies))
@@ -793,6 +788,7 @@ unprivproc_pop(int fd, short events, void *arg)
 	} cmsgbuf;
 	struct cmsghdr *cmsg;
 	struct iovec iov;
+	struct src_addr *src_addr;
 	struct sockaddr_storage saddr;
 	socklen_t len;
 	int result;
@@ -857,7 +853,10 @@ unprivproc_pop(int fd, short events, void *arg)
 		if (prepare_commit(r->id) == -1)
 			lerr(1, "%s: prepare_commit", __func__);
 
-		if (TAILQ_EMPTY(&src_addrs)) {
+		TAILQ_FOREACH(src_addr, &src_addrs, entry)
+			if (src_addr->addr.ss_family == r->addrs.dst.ss_family)
+				break;
+		if (src_addr == NULL) {
 			if (add_filter(r->id, PF_IN, (struct sockaddr *)
 			    &r->addrs.dst, (struct sockaddr *)&r->addrs.src,
 			    ntohs(((struct sockaddr_in *)&r->addrs.src)
