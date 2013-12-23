@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.33 2013/12/23 17:29:15 kettenis Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.34 2013/12/23 22:24:37 kettenis Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -129,10 +129,10 @@ _ENTRY(_dl_start)
 
 	add	%sp, 48 + DL_DATA_SIZE, %sp	! restore stack
 
-	sethi	%hi(_GLOBAL_OFFSET_TABLE_ - 4), %l7
-	rd	%pc, %g1
-	or	%l7, %lo(_GLOBAL_OFFSET_TABLE_ + 4), %l7
-	add	%l7, %g1, %l7
+1:	call	2f
+	 sethi	%hi(_GLOBAL_OFFSET_TABLE_+(.-1b)), %l7
+2:	or	%l7, %lo(_GLOBAL_OFFSET_TABLE_+(.-1b)), %l7
+	add	%l7, %o7, %l7
 
 	jmp	%o0
 	 ldx	[%l7 + _dl_dtors], %g1	! %g1 = cleanup
