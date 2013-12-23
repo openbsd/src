@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.89 2013/10/22 09:54:16 florian Exp $	*/
+/*	$OpenBSD: file.c,v 1.90 2013/12/23 14:58:16 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -168,33 +168,6 @@ poptofile(int f, int n)
 		return (status);
 	}
 	return (TRUE);
-}
-
-/*
- * Given a file name, either find the buffer it uses, or create a new
- * empty buffer to put it in.
- */
-struct buffer *
-findbuffer(char *fn)
-{
-	struct buffer	*bp;
-	char		bname[NBUFN], fname[NBUFN];
-
-	if (strlcpy(fname, fn, sizeof(fname)) >= sizeof(fname)) {
-		ewprintf("filename too long");
-		return (NULL);
-	}
-
-	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
-		if (strcmp(bp->b_fname, fname) == 0)
-			return (bp);
-	}
-	/* Not found. Create a new one, adjusting name first */
-	if (augbname(bname, fname, sizeof(bname)) == FALSE)
-		return (NULL);
-
-	bp = bfind(bname, TRUE);
-	return (bp);
 }
 
 /*
