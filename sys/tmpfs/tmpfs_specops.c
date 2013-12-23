@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_specops.c,v 1.3 2013/10/10 11:00:28 espie Exp $	*/
+/*	$OpenBSD: tmpfs_specops.c,v 1.4 2013/12/23 20:35:19 tedu Exp $	*/
 /*	$NetBSD: tmpfs_specops.c,v 1.10 2011/05/24 20:17:49 rmind Exp $	*/
 
 /*
@@ -57,21 +57,29 @@ int	tmpfs_spec_write	(void *);
  */
 
 struct vops tmpfs_specvops = {
-	.vop_lookup	= vop_generic_lookup,
-	.vop_create	= spec_badop,
-	.vop_mknod	= spec_badop,
-	.vop_open	= spec_badop,
 	.vop_close	= spec_close,
 	.vop_access	= tmpfs_access,
 	.vop_getattr	= tmpfs_getattr,
 	.vop_setattr	= tmpfs_setattr,
 	.vop_read	= tmpfs_spec_read,
 	.vop_write	= tmpfs_spec_write,
+	.vop_fsync	= spec_fsync,
+	.vop_inactive	= tmpfs_inactive,
+	.vop_reclaim	= tmpfs_reclaim,
+	.vop_lock	= tmpfs_lock,
+	.vop_unlock	= tmpfs_unlock,
+	.vop_print	= tmpfs_print,
+	.vop_islocked	= tmpfs_islocked,
+
+	/* keep in sync with spec_vops */
+	.vop_lookup	= vop_generic_lookup,
+	.vop_create	= spec_badop,
+	.vop_mknod	= spec_badop,
+	.vop_open	= spec_open,
 	.vop_ioctl	= spec_ioctl,
 	.vop_poll	= spec_poll,
 	.vop_kqfilter	= spec_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
-	.vop_fsync	= spec_fsync,
 	.vop_remove	= spec_badop,
 	.vop_link	= spec_badop,
 	.vop_rename	= spec_badop,
@@ -81,14 +89,8 @@ struct vops tmpfs_specvops = {
 	.vop_readdir	= spec_badop,
 	.vop_readlink	= spec_badop,
 	.vop_abortop	= spec_badop,
-	.vop_inactive	= tmpfs_inactive,
-	.vop_reclaim	= tmpfs_reclaim,
-	.vop_lock	= tmpfs_lock,
-	.vop_unlock	= tmpfs_unlock,
 	.vop_bmap	= vop_generic_bmap,
 	.vop_strategy	= spec_strategy,
-	.vop_print	= tmpfs_print,
-	.vop_islocked	= tmpfs_islocked,
 	.vop_pathconf	= spec_pathconf,
 	.vop_advlock	= spec_advlock,
 	.vop_bwrite	= vop_generic_bwrite,
