@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.722 2013/12/18 08:04:16 halex Exp $
+#	$OpenBSD: install.sub,v 1.723 2013/12/23 13:57:05 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -588,6 +588,7 @@ addhostent() {
 # Set $resp to list of selected sets.
 select_sets() {
 	local _avail=$1 _selected=$2 _f _action _col=$COLUMNS
+	local _comp=comp${VERSION}.tgz _xbase=xbase${VERSION}.tgz
 	# account for 4 spaces added to the sets list
 	let COLUMNS=_col-8
 
@@ -617,6 +618,12 @@ __EOT
 			for _f in $_avail; do
 				[[ $_f = $resp ]] && _selected=$($_action $_f $_selected)
 			done
+			if isin $_xbase $_selected && isin $_comp $_avail ; then
+				if ! isin $_comp $_selected ; then
+					_selected=$(addel $_comp $_selected)
+					echo "The xbase set requires the comp set, so adding it back in."
+				fi
+			fi
 		done
 	done
 
