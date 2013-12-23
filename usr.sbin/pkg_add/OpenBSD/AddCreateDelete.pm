@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.16 2012/05/01 10:18:13 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.17 2013/12/23 16:50:29 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -88,6 +88,22 @@ sub check_dir
 	unless (-d $dir) {
 		$self->fatal("#1: #2 is not a directory", $0, $dir);
 	}
+}
+
+sub ntogo
+{
+	my ($self, $offset) = @_;
+
+	return $self->{wantntogo} ?
+	    $self->progress->ntogo($self, $offset) :
+	    $self->f("ok");
+}
+
+sub ntogo_string
+{
+	my ($self, $offset) = @_;
+
+	return $self->todo($offset // 0);
 }
 
 package OpenBSD::AddCreateDelete;

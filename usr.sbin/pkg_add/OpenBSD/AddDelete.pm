@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.55 2013/12/08 12:14:41 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.56 2013/12/23 16:50:29 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -217,26 +217,10 @@ sub syslog
 	Sys::Syslog::syslog('info', $self->f(@_));
 }
 
-sub ntogo
-{
-	my ($self, $offset) = @_;
-
-	return $self->{wantntogo} ?
-	    $self->progress->ntogo($self, $offset) :
-	    $self->f("ok");
-}
-
 sub todo
 {
 	my ($state, $offset) = @_;
 	return $state->tracker->sets_todo($offset);
-}
-
-sub ntogo_string
-{
-	my ($self, $offset) = @_;
-
-	return $self->todo($offset // 0);
 }
 
 # one-level dependencies tree, for nicer printouts

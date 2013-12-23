@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.71 2013/12/23 16:34:51 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.72 2013/12/23 16:50:29 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -63,6 +63,12 @@ sub set_status
 			$self->{simple_status} = 1;
 		}
 	}
+}
+
+sub todo
+{
+	my ($self, $offset) = @_;
+	return sprintf("%u/%u", $self->{done}-$offset, $self->{total});
 }
 
 sub end_status
@@ -1063,7 +1069,8 @@ sub sign_existing_package
 	unlink($plist->pkgname.".tgz") if $state->{output};
 	rename($tmp, $output.'/'.$plist->pkgname.".tgz") or
 	    $state->fatal("Can't create final signed package: #1", $!);
-    	$state->end_status;
+	$state->{done}++;
+	$state->progress->next($state->ntogo);
 }
 
 sub sign_existing_pkgname
@@ -1081,7 +1088,10 @@ sub sign_existing_repository
 	my ($self, $state, $source, $cert, $privkey) = @_;
 	require OpenBSD::PackageRepository;
 	my $repo = OpenBSD::PackageRepository->new($source, $state);
-	for my $name (@{$repo->list}) {
+	my @list = @{$repo->list};
+	$state->{total} = scalar @list;
+	$state->{done} = 0;
+	for my $name (@list) {
 		my $pkg = $repo->find($name);
 		$self->sign_existing_package($state, $pkg, $cert, $privkey);
 	}
@@ -1363,10 +1373,13 @@ sub parse_and_run
 		if ($state->not) {
 			$state->fatal("can't pretend to sign existing packages");
 		}
+		$state->{wantntogo} = $state->config->istrue("ntogo");
 		if (defined $state->{source}) {
 			$self->sign_existing_repository($state, 
 			    $state->{source}, $cert, $privkey);
 		}
+		$state->{total} = scalar @ARGV;
+		$state->{done} = 0;
 		for my $pkgname (@ARGV) {
 			$self->sign_existing_pkgname($state, 
 			    $pkgname, $cert, $privkey);
