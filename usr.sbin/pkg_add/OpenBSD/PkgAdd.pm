@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.37 2013/12/08 12:14:41 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.38 2013/12/23 15:40:24 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -658,6 +658,7 @@ sub iterate
 sub check_x509_signature
 {
 	my ($set, $state) = @_;
+	$state->{check_digest} //= 0;
 	for my $handle ($set->newer) {
 		$state->set_name_from_handle($handle, '+');
 		my $plist = $handle->plist;
@@ -665,7 +666,6 @@ sub check_x509_signature
 			if ($state->defines('nosig')) {
 				$state->errsay("NOT CHECKING DIGITAL SIGNATURE FOR #1",
 				    $plist->pkgname);
-				$state->{check_digest} = 0;
 			} else {
 				require OpenBSD::x509;
 
@@ -679,7 +679,6 @@ sub check_x509_signature
 			}
 		} else {
 			$state->{packages_without_sig}{$plist->pkgname} = 1;
-			$state->{check_digest} = 0;
 		}
 	}
 }
