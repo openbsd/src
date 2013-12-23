@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.139 2013/12/23 22:03:52 kettenis Exp $ */
+/*	$OpenBSD: loader.c,v 1.140 2013/12/23 22:13:03 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -604,8 +604,8 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 		_dl_call_init(_dl_objects);
 	}
 
-#if !defined(__alpha__) && !defined(__hppa__) && !defined(__i386__) && \
-    !defined(__powerpc__) && !defined(__sparc64__)
+#if !defined(__alpha__) && !defined(__amd64__) && !defined(__hppa__) && \
+    !defined(__i386__) && !defined(__powerpc__) && !defined(__sparc64__)
 	/*
 	 * Schedule a routine to be run at shutdown, by using atexit.
 	 * Cannot call atexit directly from ld.so?
