@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.60 2009/02/16 23:58:05 sthen Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.61 2013/12/23 23:32:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -29,13 +29,8 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 
-#ifdef REGRESS
-#include <sys/stat.h>
-#include <errno.h>
-#else
 #include <libsa.h>
 #include <lib/libkern/funcs.h>
-#endif
 
 #include "cmd.h"
 
@@ -221,12 +216,7 @@ docmd(void)
 	}
 	cmd.argv[cmd.argc] = NULL;
 
-#ifdef REGRESS
-	printf("%s %s\n", cmd.argv[0],
-	    (cmd.argv[1] == NULL) ? "(null)" : cmd.argv[1]);
-#else
 	return (*cmd.cmd->cmd_exec)();
-#endif
 }
 
 static char *
