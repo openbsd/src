@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.127 2013/12/23 22:39:50 tedu Exp $	*/
+/*	$OpenBSD: inet.c,v 1.128 2013/12/24 22:26:19 tedu Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -124,14 +124,11 @@ protopr(u_long off, char *name, int af, u_int tableid, u_long pcbaddr)
 	istcp = strcmp(name, "tcp") == 0;
 	israw = strncmp(name, "ip", 2) == 0;
 	kread(off, &table, sizeof table);
-	prev = next = TAILQ_FIRST(&table.inpt_queue);
+	prev = NULL;
+	next = TAILQ_FIRST(&table.inpt_queue);
 
 	while (next != NULL) {
 		kread((u_long)next, &inpcb, sizeof inpcb);
-		if (TAILQ_PREV(&inpcb, inpthead, inp_queue) != prev) {
-			printf("???\n");
-			break;
-		}
 		prev = next;
 		next = TAILQ_NEXT(&inpcb, inp_queue);
 

@@ -290,7 +290,7 @@ static u_long
 kfind_tcb(int sock)
 {
 	struct inpcbtable tcbtab;
-	struct inpcb *head, *next, *prev;
+	struct inpcb *next, *prev;
 	struct inpcb inpcb;
 	struct tcpcb tcpcb;
 
@@ -322,24 +322,15 @@ kfind_tcb(int sock)
 		fprintf(stderr, "Using PCB table at %lu\n", ptb->ktcbtab);
 retry:
 	kget(ptb->ktcbtab, &tcbtab, sizeof(tcbtab));
-	prev = head = (struct inpcb *)&TAILQ_FIRST(
-	    &((struct inpcbtable *)ptb->ktcbtab)->inpt_queue);
+	prev = NULL;
 	next = TAILQ_FIRST(&tcbtab.inpt_queue);
 
 	if (ptb->vflag >= 2)
-		fprintf(stderr, "PCB head at %p\n", head);
-	while (next != head) {
+		fprintf(stderr, "PCB start at %p\n", next);
+	while (next != NULL) {
 		if (ptb->vflag >= 2)
 			fprintf(stderr, "Checking PCB %p\n", next);
 		kget((u_long)next, &inpcb, sizeof(inpcb));
-		if (TAILQ_PREV(&inpcb, inpthead, inp_queue) != prev) {
-			if (nretry--) {
-				warnx("pcb prev pointer insane");
-				goto retry;
-			} else
-				errx(1, "pcb prev pointer insane,"
-				     " all attempts exausted");
-		}
 		prev = next;
 		next = TAILQ_NEXT(&inpcb, inp_queue);
 
