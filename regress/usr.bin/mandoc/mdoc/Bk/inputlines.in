@@ -1,0 +1,76 @@
+.Dd December 24, 2010
+.Dt BK-INPUTLINES 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bk-inputlines
+.Nd effect of input lines breaks on word keeps
+.Sh SYNOPSIS
+.Nm
+.Ar x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.Bk -words
+.Oo Oo No a Oc Oo No b Oc Oc Pq one line
+.Ek
+.Pp
+.Nm
+.Ar x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.Bk -words
+.Oo
+.Oo No a Oc Oo No b Oc Oc Pq "break after first Oo"
+.Ek
+.Pp
+.\" XXX does not work yet
+.ig
+.Nm
+.Ar x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.Bk -words
+.Oo Oo
+.No a Oc Oo b Oc Oc Pq "break after second Oo"
+.Ek
+.Pp
+.Nm
+.Ar x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.Bk -words
+.Oo Oo No a
+.Oc Oo No b Oc Oc Pq "break before first Oc"
+.Ek
+.Pp
+..
+.Nm
+.Ar x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.Bk -words
+.Oo Oo No a Oc
+.Oo No b Oc Oc Pq "break after first Oc"
+.Ek
+.Pp
+.Nm
+.Ar x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.Bk -words
+.Oo Oo No a Oc Oo
+.No b Oc Oc Pq "break after third Oo"
+.Ek
+.Pp
+.Nm
+.Ar x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.Bk -words
+.Oo a No b Oc
+.Ek
+.Pp
+.Nm
+.Ar x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.Bk -words
+.Oo a
+.No b Oc
+.Ek
+.Pp
+.Nm
+.Ar x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.Bk -words
+.Oo a Oc No b
+.Ek
+.Pp
+.Nm
+.Ar x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.Bk -words
+.Oo a Oc
+.No b
+.Ek

@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.4 2012/11/19 02:14:39 schwarze Exp $
+# $OpenBSD: Makefile,v 1.5 2013/12/24 16:01:15 schwarze Exp $
 
-REGRESS_TARGETS = break synopsis badarg
+REGRESS_TARGETS = break inputlines synopsis badarg lines
 
 SKIP_TMAN ?= badarg
 

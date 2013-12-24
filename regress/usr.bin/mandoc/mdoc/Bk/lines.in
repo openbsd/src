@@ -1,0 +1,88 @@
+.Dd April 12, 2010
+.Dt BK-LINES 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bk-lines
+.Nd handling of line keeps
+.Sh DESCRIPTION
+.Bd -literal
+1
+2
+3
+4
+5
+6
+7
+8
+9
+11
+12
+13
+14
+15
+16
+17
+18
+19
+21
+22
+23
+24
+25
+26
+27
+28
+29
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+.Ed
+.Ss with keep
+.Bk -lines
+.Bd -literal
+1
+2
+3
+4
+5
+6
+7
+8
+9
+11
+12
+13
+14
+15
+16
+17
+18
+19
+21
+22
+23
+24
+25
+26
+27
+28
+29
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+.Ed
+.Ek
