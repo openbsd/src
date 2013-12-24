@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.7 2013/11/13 02:33:24 guenther Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.8 2013/12/24 10:53:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -89,16 +89,9 @@ RELOC_RELA(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v,
 
 #define RELOC_GOT(obj, offs)
 
-#define	MD_CALL(sobj, func, arg) \
-    hppa_call((arg), (sobj)->dyn.pltgot, (func))
-
-#define	MD_ATEXIT(sobj, sym, func) \
-    MD_CALL((sobj), (void (*)(void))((sobj)->obj_base + (sym)->st_value), &_hppa_dl_dtors)
-
 #define GOT_PERMS PROT_READ
 
 void _hppa_dl_dtors(void);
-void hppa_call(void *, Elf_Addr *, void (*)(void));
 Elf_Addr _dl_md_plabel(Elf_Addr, Elf_Addr *);
 
 #endif /* _HPPA_ARCHDEP_H_ */
