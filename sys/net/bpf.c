@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.89 2013/11/29 19:28:55 tedu Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.90 2013/12/24 23:29:38 tedu Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -434,16 +434,15 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 			ROTATE_BUFFERS(d);
 			break;
 		}
-		if ((d->bd_rtout != -1) ||
-		    (d->bd_rdStart + d->bd_rtout) < ticks) {
-			error = tsleep((caddr_t)d, PRINET|PCATCH, "bpf",
-			    d->bd_rtout);
+		if (d->bd_rtout == -1) {
+			/* User requested non-blocking I/O */
+			error = EWOULDBLOCK;
 		} else {
-			if (d->bd_rtout == -1) {
-				/* User requested non-blocking I/O */
-				error = EWOULDBLOCK;
+			if ((d->bd_rdStart + d->bd_rtout) < ticks) {
+				error = tsleep((caddr_t)d, PRINET|PCATCH, "bpf",
+				    d->bd_rtout);
 			} else
-				error = 0;
+				error = EWOULDBLOCK;
 		}
 		if (error == EINTR || error == ERESTART) {
 			D_PUT(d);
