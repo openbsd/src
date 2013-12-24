@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.88 2013/04/28 18:03:40 lteo Exp $
+.\" 	$OpenBSD: ftp.1,v 1.89 2013/12/24 13:00:59 jca Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: April 28 2013 $
+.Dd $Mdocdate: December 24 2013 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -59,6 +59,7 @@
 .Op Fl C
 .Op Fl c Ar cookie
 .Op Fl o Ar output
+.Op Fl S Ar ssl_options
 .Op Fl s Ar srcaddr
 .Sm off
 .No http[s]:// Oo Ar user : password No @
@@ -216,6 +217,43 @@ if the server does not support passive connections.
 .It Fl r Ar seconds
 Retry to connect if failed, pausing for number of
 .Ar seconds .
+.It Fl S Ar ssl_options
+SSL/TLS options to use with HTTPS transfers.
+The following settings are available:
+.Bl -tag -width Ds
+.It Cm cafile Ns = Ns Ar /path/to/cert.pem
+PEM encoded file containing CA certificates used for certificate
+validation.
+.It Cm capath Ns = Ns Ar /path/to/certs/
+Directory containing PEM encoded CA certificates used for certificate
+validation.
+Such a directory can be prepared using the c_rehash OpenSSL utility.
+.It Cm ciphers Ns = Ns Ar cipher_list
+Specify the list of ciphers that will be used by
+.Nm .
+See the
+.Xr openssl 1
+.Cm ciphers
+subcommand.
+.It Cm depth Ns = Ns Ar max_depth
+Maximum depth of the certificate chain allowed when performing
+validation.
+.It Cm do
+Perform server certificate validation.
+.It Cm dont
+Don't perform server certificate validation.
+.El
+.Pp
+By default, server certificate validation is performed, and if it fails
+.Nm
+will abort.
+If no
+.Cm cafile
+or
+.Cm capath
+setting is provided,
+.Pa /etc/ssl/cert.pem
+will be used.
 .It Fl s Ar srcaddr
 Use
 .Ar srcaddr

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.85 2012/08/26 02:16:02 lteo Exp $	*/
+/*	$OpenBSD: main.c,v 1.86 2013/12/24 13:00:59 jca Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -67,6 +67,7 @@
 
 #include <ctype.h>
 #include <err.h>
+#include <limits.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -77,6 +78,29 @@
 
 #include "ftp_var.h"
 #include "cmds.h"
+
+#ifndef SMALL
+char * const ssl_verify_opts[] = {
+#define SSL_CAFILE	0
+	"cafile",
+#define SSL_CAPATH	1
+	"capath",
+#define SSL_CIPHERS	2
+	"ciphers",
+#define SSL_DONTVERIFY	3
+	"dont",
+#define SSL_DOVERIFY	4
+	"do",
+#define SSL_VERIFYDEPTH	5
+	"depth",
+	NULL
+};
+char	*ssl_ciphers;
+int	 ssl_verify = 1;
+int	 ssl_verify_depth = -1;
+char	*ssl_ca_file;
+char	*ssl_ca_path;
+#endif /* !SMALL */
 
 int family = PF_UNSPEC;
 int pipeout;
@@ -175,7 +199,8 @@ main(volatile int argc, char *argv[])
 	cookiefile = getenv("http_cookies");
 #endif /* !SMALL */
 
-	while ((ch = getopt(argc, argv, "46AaCc:dEegik:mno:pP:r:s:tvV")) != -1) {
+	while ((ch = getopt(argc, argv,
+		    "46AaCc:dEegik:mno:pP:r:S:s:tvV")) != -1) {
 		switch (ch) {
 		case '4':
 			family = PF_INET;
@@ -274,6 +299,53 @@ main(volatile int argc, char *argv[])
 					optarg);
 				usage();
 			}
+			break;
+
+		case 'S':
+#ifndef SMALL
+			cp = optarg;
+			while (*cp) {
+				char	*str;
+				switch (getsubopt(&cp, ssl_verify_opts, &str)) {
+				case SSL_CAFILE:
+					if (str == NULL)
+						errx(1, "missing CA file");
+					ssl_ca_file = str;
+					break;
+				case SSL_CAPATH:
+					if (str == NULL)
+						errx(1, "missing CA directory"
+						    " path");
+					ssl_ca_path = str;
+					break;
+				case SSL_CIPHERS:
+					if (str == NULL)
+						errx(1, "missing cipher list");
+					ssl_ciphers = str;
+					break;
+				case SSL_DONTVERIFY:
+					ssl_verify = 0;
+					break;
+				case SSL_DOVERIFY:
+					ssl_verify = 1;
+					break;
+				case SSL_VERIFYDEPTH:
+					if (str == NULL)
+						errx(1, "missing depth");
+					ssl_verify_depth = strtonum(str, 0,
+					    INT_MAX, &errstr);
+					if (errstr)
+						errx(1, "certificate "
+						    "validation depth is %s",
+						    errstr);
+					break;
+				default:
+					errx(1, "unknown -S suboption `%s'",
+					    suboptarg ? suboptarg : "");
+					/* NOTREACHED */
+				}
+			}
+#endif
 			break;
 
 		case 's':
@@ -775,6 +847,7 @@ usage(void)
 #endif /* !SMALL */
 	    "[-o output] "
 #ifndef SMALL
+	    "[-S ssl_options] "
 	    "[-s srcaddr]\n"
 	    "           "
 #endif /* !SMALL */

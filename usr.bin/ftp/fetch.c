@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.111 2013/11/13 20:41:10 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.112 2013/12/24 13:00:59 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -606,8 +606,27 @@ again:
 		SSL_load_error_strings();
 		SSLeay_add_ssl_algorithms();
 		ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+		if (ssl_ctx == NULL) {
+			ERR_print_errors_fp(ttyout);
+			goto cleanup_url_get;
+		}
+		if (ssl_verify) {
+			if (ssl_ca_file == NULL && ssl_ca_path == NULL)
+				ssl_ca_file = _PATH_SSL_CAFILE;
+			if (SSL_CTX_load_verify_locations(ssl_ctx,
+			    ssl_ca_file, ssl_ca_path) != 1) {
+				ERR_print_errors_fp(ttyout);
+				goto cleanup_url_get;
+			}
+			SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, NULL);
+			if (ssl_verify_depth != -1)
+				SSL_CTX_set_verify_depth(ssl_ctx,
+				    ssl_verify_depth);
+		}
+		if (ssl_ciphers != NULL)
+			SSL_CTX_set_cipher_list(ssl_ctx, ssl_ciphers);
 		ssl = SSL_new(ssl_ctx);
-		if (ssl == NULL || ssl_ctx == NULL) {
+		if (ssl == NULL) {
 			ERR_print_errors_fp(ttyout);
 			goto cleanup_url_get;
 		}
