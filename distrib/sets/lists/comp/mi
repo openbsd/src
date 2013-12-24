@@ -6245,6 +6245,7 @@
 ./usr/share/man/man9/NDINIT.9
 ./usr/share/man/man9/NDINITAT.9
 ./usr/share/man/man9/RWLOCK_INITIALIZER.9
+./usr/share/man/man9/TASK_INITIALIZER.9
 ./usr/share/man/man9/UVM_MAPFLAG.9
 ./usr/share/man/man9/VOP_ABORTOP.9
 ./usr/share/man/man9/VOP_ACCESS.9
