@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.5 2011/04/04 12:42:39 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.6 2013/12/24 05:31:13 deraadt Exp $	*/
 /*	$NetBSD: SYS.h,v 1.8 2003/08/07 16:42:02 agc Exp $	*/
 
 /*-
@@ -61,14 +61,9 @@
 			swi SWI_OS_NETBSD | SYS_/**/x
 #endif
 
-#ifdef __ELF__
 #define	CERROR		_C_LABEL(__cerror)
 #define	_CERROR		_C_LABEL(___cerror)
 #define	CURBRK		_C_LABEL(__curbrk)
-#else
-#define	CERROR		_ASM_LABEL(cerror)
-#define	CURBRK		_ASM_LABEL(curbrk)
-#endif
 
 #define _SYSCALL_NOERROR(x,y)						\
 	SYSENTRY(x);							\
