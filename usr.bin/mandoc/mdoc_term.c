@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.155 2013/12/24 20:45:21 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.156 2013/12/24 23:04:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -96,7 +96,6 @@ static	int	  termp_fl_pre(DECL_ARGS);
 static	int	  termp_fn_pre(DECL_ARGS);
 static	int	  termp_fo_pre(DECL_ARGS);
 static	int	  termp_ft_pre(DECL_ARGS);
-static	int	  termp_igndelim_pre(DECL_ARGS);
 static	int	  termp_in_pre(DECL_ARGS);
 static	int	  termp_it_pre(DECL_ARGS);
 static	int	  termp_li_pre(DECL_ARGS);
@@ -190,12 +189,12 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_quote_pre, termp_quote_post }, /* Eo */
 	{ termp_xx_pre, NULL }, /* Fx */
 	{ termp_bold_pre, NULL }, /* Ms */
-	{ termp_igndelim_pre, NULL }, /* No */
+	{ NULL, NULL }, /* No */
 	{ termp_ns_pre, NULL }, /* Ns */
 	{ termp_xx_pre, NULL }, /* Nx */
 	{ termp_xx_pre, NULL }, /* Ox */
 	{ NULL, NULL }, /* Pc */
-	{ termp_igndelim_pre, termp_pf_post }, /* Pf */
+	{ NULL, termp_pf_post }, /* Pf */
 	{ termp_quote_pre, termp_quote_post }, /* Po */
 	{ termp_quote_pre, termp_quote_post }, /* Pq */
 	{ NULL, NULL }, /* Qc */
@@ -1780,16 +1779,6 @@ termp_xx_pre(DECL_ARGS)
 		p->flags = flags;
 	}
 	return(0);
-}
-
-
-/* ARGSUSED */
-static int
-termp_igndelim_pre(DECL_ARGS)
-{
-
-	p->flags |= TERMP_IGNDELIM;
-	return(1);
 }
 
 

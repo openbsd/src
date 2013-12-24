@@ -1,4 +1,4 @@
-/*	$Id: term.h,v 1.39 2013/12/22 23:33:52 schwarze Exp $ */
+/*	$Id: term.h,v 1.40 2013/12/24 23:04:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -70,17 +70,16 @@ struct	termp {
 	int		  flags;
 #define	TERMP_SENTENCE	 (1 << 1)	/* Space before a sentence. */
 #define	TERMP_NOSPACE	 (1 << 2)	/* No space before words. */
-#define	TERMP_NOBREAK	 (1 << 4)	/* See term_flushln(). */
-#define	TERMP_IGNDELIM	 (1 << 6)	/* Delims like regulars. */
-#define	TERMP_NONOSPACE	 (1 << 7)	/* No space (no autounset). */
-#define	TERMP_DANGLE	 (1 << 8)	/* See term_flushln(). */
-#define	TERMP_HANG	 (1 << 9)	/* See term_flushln(). */
+#define	TERMP_NONOSPACE	 (1 << 3)	/* No space (no autounset). */
+#define	TERMP_KEEP	 (1 << 5)	/* Keep words together. */
+#define	TERMP_PREKEEP	 (1 << 6)	/* ...starting with the next one. */
+#define	TERMP_SKIPCHAR	 (1 << 7)	/* Skip the next character. */
+#define	TERMP_NOBREAK	 (1 << 8)	/* See term_flushln(). */
+#define	TERMP_DANGLE	 (1 << 9)	/* See term_flushln(). */
+#define	TERMP_HANG	 (1 << 10)	/* See term_flushln(). */
 #define	TERMP_NOSPLIT	 (1 << 11)	/* See termp_an_pre/post(). */
 #define	TERMP_SPLIT	 (1 << 12)	/* See termp_an_pre/post(). */
 #define	TERMP_ANPREC	 (1 << 13)	/* See termp_an_pre(). */
-#define	TERMP_KEEP	 (1 << 14)	/* Keep words together. */
-#define	TERMP_PREKEEP	 (1 << 15)	/* ...starting with the next one. */
-#define	TERMP_SKIPCHAR	 (1 << 16)	/* Skip the next character. */
 	int		 *buf;		/* Output buffer. */
 	enum termenc	  enc;		/* Type of encoding. */
 	struct mchars	 *symtab;	/* Encoded-symbol table. */
