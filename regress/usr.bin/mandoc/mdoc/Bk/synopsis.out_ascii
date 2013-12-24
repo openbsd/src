@@ -4,6 +4,8 @@ NNAAMMEE
      BBkk--ssyynnooppssiiss - automatic keeps in the synopsis
 
 SSYYNNOOPPSSIISS
+     In the synopsis, almost all macros do not show the word keep effect they
+     would get in a Bk block.
      kksshh [--++aabbCCeeffhhiikkllmmnnpprruuvvXXxx] [--++oo _o_p_t_i_o_n]
          [--cc _s_t_r_i_n_g | --ss | _f_i_l_e [_a_r_g_u_m_e_n_t _._._.]]
      kksshh [--++aabbCCeeffhhiikkllmmnnpprruuvvXXxx] [--++oo _o_p_t_i_o_n]
