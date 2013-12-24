@@ -18,8 +18,6 @@
 .Oo No a Oc Oo No b Oc Oc Pq "break after first Oo"
 .Ek
 .Pp
-.\" XXX does not work yet
-.ig
 .Nm
 .Ar x x x x x x x x x x x x x x x x x x x x x x x x x x x
 .Bk -words
@@ -34,7 +32,6 @@
 .Oc Oo No b Oc Oc Pq "break before first Oc"
 .Ek
 .Pp
-..
 .Nm
 .Ar x x x x x x x x x x x x x x x x x x x x x x x x x x x
 .Bk -words

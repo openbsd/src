@@ -10,6 +10,12 @@ SSYYNNOOPPSSIISS
      BBkk--iinnppuuttlliinneess _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x
                    [[a] [b]] (break after first Oo)
 
+     BBkk--iinnppuuttlliinneess _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x
+                   [[a] [b]] (break after second Oo)
+
+     BBkk--iinnppuuttlliinneess _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x
+                   [[a] [b]] (break before first Oc)
+
      BBkk--iinnppuuttlliinneess _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x [[a]
                    [b]] (break after first Oc)
 
