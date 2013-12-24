@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.45 2013/11/27 08:56:31 mpi Exp $	*/
+/*	$OpenBSD: be.c,v 1.46 2013/12/24 01:11:04 dlg Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -323,8 +323,7 @@ bestop(sc)
 	int tries;
 
 	sc->sc_arpcom.ac_if.if_timer = 0;
-	if (timeout_pending(&sc->sc_tick))
-		timeout_del(&sc->sc_tick);
+	timeout_del(&sc->sc_tick);
 
 	tries = 32;
 	sc->sc_br->tx_cfg = 0;

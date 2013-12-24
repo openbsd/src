@@ -1,4 +1,4 @@
-/*	$OpenBSD: kb3310.c,v 1.18 2012/10/03 21:44:51 miod Exp $	*/
+/*	$OpenBSD: kb3310.c,v 1.19 2013/12/24 01:11:04 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
@@ -520,8 +520,7 @@ ykbec_bell(void *arg, u_int pitch, u_int period, u_int volume, int poll)
 
 	s = spltty();
 	bctrl = ykbec_read(sc, REG_BEEP_CONTROL);
-	if (volume == 0 || timeout_pending(&sc->sc_bell_tmo)) {
-		timeout_del(&sc->sc_bell_tmo);
+	if (timeout_del(&sc->sc_bell_tmo) || volume == 0) {
 		/* inline ykbec_bell_stop(arg); */
 		ykbec_write(sc, REG_BEEP_CONTROL, bctrl & ~BEEP_ENABLE);
 	}
