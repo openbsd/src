@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.83 2013/10/08 03:50:07 guenther Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.84 2013/12/24 01:11:00 tedu Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -213,7 +213,7 @@ int
 hzto(const struct timeval *tv)
 {
 	struct timeval now;
-	unsigned long ticks;
+	unsigned long nticks;
 	long sec, usec;
 
 	/*
@@ -244,18 +244,18 @@ hzto(const struct timeval *tv)
 		usec += 1000000;
 	}
 	if (sec < 0 || (sec == 0 && usec <= 0)) {
-		ticks = 0;
+		nticks = 0;
 	} else if (sec <= LONG_MAX / 1000000)
-		ticks = (sec * 1000000 + (unsigned long)usec + (tick - 1))
+		nticks = (sec * 1000000 + (unsigned long)usec + (tick - 1))
 		    / tick + 1;
 	else if (sec <= LONG_MAX / hz)
-		ticks = sec * hz
+		nticks = sec * hz
 		    + ((unsigned long)usec + (tick - 1)) / tick + 1;
 	else
-		ticks = LONG_MAX;
-	if (ticks > INT_MAX)
-		ticks = INT_MAX;
-	return ((int)ticks);
+		nticks = LONG_MAX;
+	if (nticks > INT_MAX)
+		nticks = INT_MAX;
+	return ((int)nticks);
 }
 
 /*
@@ -264,7 +264,7 @@ hzto(const struct timeval *tv)
 int
 tvtohz(const struct timeval *tv)
 {
-	unsigned long ticks;
+	unsigned long nticks;
 	time_t sec;
 	long usec;
 
@@ -291,18 +291,18 @@ tvtohz(const struct timeval *tv)
 	sec = tv->tv_sec;
 	usec = tv->tv_usec;
 	if (sec < 0 || (sec == 0 && usec <= 0))
-		ticks = 0;
+		nticks = 0;
 	else if (sec <= LONG_MAX / 1000000)
-		ticks = (sec * 1000000 + (unsigned long)usec + (tick - 1))
+		nticks = (sec * 1000000 + (unsigned long)usec + (tick - 1))
 		    / tick + 1;
 	else if (sec <= LONG_MAX / hz)
-		ticks = sec * hz
+		nticks = sec * hz
 		    + ((unsigned long)usec + (tick - 1)) / tick + 1;
 	else
-		ticks = LONG_MAX;
-	if (ticks > INT_MAX)
-		ticks = INT_MAX;
-	return ((int)ticks);
+		nticks = LONG_MAX;
+	if (nticks > INT_MAX)
+		nticks = INT_MAX;
+	return ((int)nticks);
 }
 
 int
