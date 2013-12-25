@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.60 2013/12/15 21:18:00 schwarze Exp $ */
+/*	$Id: roff.c,v 1.61 2013/12/25 00:50:03 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -1729,7 +1729,7 @@ roff_userdef(ROFF_ARGS)
 
 	/*
 	 * Collect pointers to macro argument strings
-	 * and null-terminate them.
+	 * and NUL-terminate them.
 	 */
 	cp = *bufp + pos;
 	for (i = 0; i < 9; i++)
