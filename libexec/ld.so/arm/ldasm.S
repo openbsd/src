@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.11 2013/08/13 05:52:18 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.12 2013/12/25 15:01:39 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -56,8 +56,16 @@ ENTRY(_dl_start)
 	mov	lr, r6
 
 	mov	r1, r0
-	mov	r0, #0
+	ldr	r2, .L_GOT
+1:
+	add	r2, pc, r2
+	ldr	r0, .L_dl_dtors
+	add	r0, r0, r2 
 	mov	pc, r1
+.L_GOT:
+	.long	_GLOBAL_OFFSET_TABLE_-(1b+8)
+.L_dl_dtors:
+	.long	_dl_dtors(GOTOFF)
 
 
 ENTRY(_dl_bind_start)
