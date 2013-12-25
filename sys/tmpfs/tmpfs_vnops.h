@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.h,v 1.4 2013/12/14 18:01:52 espie Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.h,v 1.5 2013/12/25 14:04:50 espie Exp $	*/
 /*	$NetBSD: tmpfs_vnops.h,v 1.13 2011/05/24 20:17:49 rmind Exp $	*/
 
 /*
@@ -54,12 +54,9 @@ int	tmpfs_getattr		(void *);
 int	tmpfs_setattr		(void *);
 int	tmpfs_read		(void *);
 int	tmpfs_write		(void *);
-#define	tmpfs_fcntl		genfs_fcntl
 int	tmpfs_ioctl		(void *);
 int	tmpfs_poll		(void *);
-#define	tmpfs_mmap		genfs_mmap
 int	tmpfs_fsync		(void *);
-#define	tmpfs_seek		genfs_seek
 int	tmpfs_remove		(void *);
 int	tmpfs_link		(void *);
 int	tmpfs_rename		(void *);
