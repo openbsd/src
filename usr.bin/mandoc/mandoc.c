@@ -1,4 +1,4 @@
-/*	$Id: mandoc.c,v 1.40 2013/12/25 00:50:03 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.41 2013/12/25 22:45:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -96,6 +96,14 @@ mandoc_escape(const char const **end, const char const **start, int *sz)
 			gly = ESCAPE_SPECIAL;
 		term = '\'';
 		break;
+
+	/*
+	 * Escapes taking no arguments at all.
+	 */
+	case ('d'):
+		/* FALLTHROUGH */
+	case ('u'):
+		return(ESCAPE_IGNORE);
 
 	/*
 	 * The \z escape is supposed to output the following
