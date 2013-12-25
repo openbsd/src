@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.56 2013/12/23 16:50:29 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.57 2013/12/25 14:20:48 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -267,6 +267,34 @@ sub log
 	}
 }
 
+sub run_quirks
+{
+	my ($state, $sub) = @_;
+
+	if (!exists $state->{quirks}) {
+		eval {
+			require OpenBSD::Quirks;
+			# interface version number.
+			$state->{quirks} = OpenBSD::Quirks->new(1);
+		};
+		if ($@) {
+			$state->errsay("Can't load quirk: #1", $@)
+			    if $state->verbose >= 2;
+			# cache that this didn't work
+			$state->{quirks} = undef;
+		}
+	}
+
+	if (defined $state->{quirks}) {
+		eval {
+			&$sub($state->{quirks});
+		};
+		if ($@) {
+			$state->errsay("Bad quirk: #1", $@);
+		}
+	}
+}
+
 sub vsystem
 {
 	my $self = shift;
@@ -304,10 +332,11 @@ sub choose_location
 	if (@$list == 0) {
 		if (!$is_quirks) {
 			$state->errsay("Can't find #1", $name);
-			eval {
-				my $r = [$name];
-				$state->quirks->filter_obsolete($r, $state);
-			}
+			$state->run_quirks(
+			    sub {
+				my $quirks = shift;
+				$quirks->filter_obsolete([$name], $state);
+			    });
 		}
 		return undef;
 	} elsif (@$list == 1) {

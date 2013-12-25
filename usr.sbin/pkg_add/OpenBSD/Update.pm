@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.153 2012/10/13 10:28:22 jeremy Exp $
+# $OpenBSD: Update.pm,v 1.154 2013/12/25 14:20:48 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -89,9 +89,11 @@ sub process_handle
 	}
 
 	my $base = 0;
-	eval {
-		$base = $state->quirks->is_base_system($h, $state);
-	};
+	$state->run_quirks(
+	    sub {
+	    	my $quirks = shift;
+		$base = $quirks->is_base_system($h, $state);
+	    });
 	if ($base) {
 		$h->{update_found} = OpenBSD::Handle->system;
 		$set->{updates}++;
@@ -122,9 +124,11 @@ sub process_handle
 	}
 	push(@search, OpenBSD::Search::Stem->split($sname));
 
-	eval {
-		$state->quirks->tweak_search(\@search, $h, $state);
-	};
+	$state->run_quirks(
+	    sub {
+	    	my $quirks = shift;
+		$quirks->tweak_search(\@search, $h, $state);
+	    });
 	my $oldfound = 0;
 	my @skipped_locs = ();
 

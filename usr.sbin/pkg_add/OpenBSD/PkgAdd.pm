@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.38 2013/12/23 15:40:24 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.39 2013/12/25 14:20:48 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -201,13 +201,6 @@ OpenBSD::Auto::cache(tracker,
 	require OpenBSD::Tracker;
 	return OpenBSD::Tracker->new;
     });
-
-sub quirks
-{
-	my $state = shift;
-
-	return $state->{quirks};
-}
 
 package OpenBSD::ConflictCache;
 our @ISA = (qw(OpenBSD::Cloner));
@@ -994,9 +987,11 @@ sub inform_user_of_problems
 	my $state = shift;
 	my @cantupdate = $state->tracker->cant_list;
 	if (@cantupdate > 0) {
-		eval {
-			$state->quirks->filter_obsolete(\@cantupdate, $state);
-		};
+		$state->run_quirks(
+		    sub {
+		    	my $quirks = shift;
+			$quirks->filter_obsolete(\@cantupdate, $state);
+		    });
 
 		$state->say("Couldn't find updates for #1", join(', ', @cantupdate));
 	}
@@ -1026,13 +1021,8 @@ sub quirk_set
 sub do_quirks
 {
 	my ($self, $state) = @_;
-
-	$self->process_set(quirk_set($state), $state);
-	eval {
-		require OpenBSD::Quirks;
-		# interface version number.
-		$state->{quirks} = OpenBSD::Quirks->new(1);
-	};
+	my $set = quirk_set($state);
+	$self->process_set($set, $state);
 }
 
 
@@ -1118,9 +1108,11 @@ sub tweak_list
 {
 	my ($self, $state) = @_;
 
-	eval {
-		$state->quirks->tweak_list($state->{setlist}, $state);
-	}
+	$state->run_quirks(
+	    sub {
+	    	my $quirks = shift;
+		$quirks->tweak_list($state->{setlist}, $state);
+	    });
 }
 
 sub main
