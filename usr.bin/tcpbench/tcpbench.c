@@ -291,7 +291,7 @@ kfind_tcb(int sock)
 {
 	struct inpcbtable tcbtab;
 	struct inpcb *next, *prev;
-	struct inpcb inpcb;
+	struct inpcb inpcb, prevpcb;
 	struct tcpcb tcpcb;
 
 	struct sockaddr_storage me, them;
@@ -331,6 +331,17 @@ retry:
 		if (ptb->vflag >= 2)
 			fprintf(stderr, "Checking PCB %p\n", next);
 		kget((u_long)next, &inpcb, sizeof(inpcb));
+		if (prev != NULL) {
+			kget((u_long)prev, &prevpcb, sizeof(prevpcb));
+			if (TAILQ_NEXT(&prevpcb, inp_queue) != next) {
+				if (nretry--) {
+					warnx("PCB prev pointer insane");
+					goto retry;
+				} else
+					errx(1, "PCB prev pointer insane,"
+					    " all attempts exhaused");
+			}
+		}
 		prev = next;
 		next = TAILQ_NEXT(&inpcb, inp_queue);
 

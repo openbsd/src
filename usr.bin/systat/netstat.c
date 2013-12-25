@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.38 2013/12/24 22:26:20 tedu Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.39 2013/12/25 01:46:00 tedu Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -232,8 +232,8 @@ int
 read_ns(void)
 {
 	struct inpcbtable pcbtable;
-	struct inpcb *next;
-	struct inpcb inpcb;
+	struct inpcb *next, *prev;
+	struct inpcb inpcb, prevpcb;
 	struct socket sockb;
 	struct tcpcb tcpcb;
 	void *off;
@@ -262,10 +262,19 @@ read_ns(void)
 again:
 	KREAD(off, &pcbtable, sizeof (struct inpcbtable));
 
+	prev = NULL;
 	next = TAILQ_FIRST(&pcbtable.inpt_queue);
 
 	while (next != NULL) {
 		KREAD(next, &inpcb, sizeof (inpcb));
+		if (prev != NULL) {
+			KREAD(prev, &prevpcb, sizeof (prevpcb));
+			if (TAILQ_NEXT(&prevpcb, inp_queue) != next) {
+				error("Kernel state in transition");
+				return 0;
+			}
+		}
+		prev = next;
 		next = TAILQ_NEXT(&inpcb, inp_queue);
 
 		if (!aflag) {

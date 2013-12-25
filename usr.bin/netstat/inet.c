@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.128 2013/12/24 22:26:19 tedu Exp $	*/
+/*	$OpenBSD: inet.c,v 1.129 2013/12/25 01:46:00 tedu Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ protopr(u_long off, char *name, int af, u_int tableid, u_long pcbaddr)
 {
 	struct inpcbtable table;
 	struct inpcb *prev, *next;
-	struct inpcb inpcb;
+	struct inpcb inpcb, prevpcb;
 	int istcp, israw, isany;
 	int addrlen = 22;
 	int first = 1;
@@ -129,6 +129,13 @@ protopr(u_long off, char *name, int af, u_int tableid, u_long pcbaddr)
 
 	while (next != NULL) {
 		kread((u_long)next, &inpcb, sizeof inpcb);
+		if (prev != NULL) {
+			kread((u_long)prev, &prevpcb, sizeof prevpcb);
+			if (TAILQ_NEXT(&prevpcb, inp_queue) != next) {
+				printf("PCB list changed\n");
+				break;
+			}
+		}
 		prev = next;
 		next = TAILQ_NEXT(&inpcb, inp_queue);
 
