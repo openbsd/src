@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.120 2013/09/24 21:00:57 espie Exp $
+# $OpenBSD: Delete.pm,v 1.121 2013/12/25 14:38:15 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -106,8 +106,7 @@ sub delete_package
 	}
 	if ($plist->is_signed) {
 		if (!$state->{quick}) {
-			require OpenBSD::x509;
-			if (!OpenBSD::x509::check_signature($plist, $state)) {
+			if (!$plist->check_signature($state)) {
 				$state->fatal("package #1 was corrupted: signature check failed", $pkgname);
 			}
 		}

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: x509.pm,v 1.11 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: x509.pm,v 1.12 2013/12/25 14:38:15 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -81,10 +81,6 @@ sub check_signature
 {
 	my ($plist, $state) = @_;
 	my $sig = $plist->get('digital-signature');
-	if ($sig->{key} ne 'x509') {
-		$state->log("Error: unknown signature style");
-		return 0;
-	}
 	my ($fh, $fname) = mkstemp("/tmp/pkgcontent.XXXXXXXXX");
 	my ($fh2, $fname2) = mkstemp("/tmp/pkgsig.XXXXXXXXX");
 	$plist->write_no_sig($fh);

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.39 2013/12/25 14:20:48 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.40 2013/12/25 14:38:15 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -660,12 +660,9 @@ sub check_x509_signature
 				$state->errsay("NOT CHECKING DIGITAL SIGNATURE FOR #1",
 				    $plist->pkgname);
 			} else {
-				require OpenBSD::x509;
-
-				if (!OpenBSD::x509::check_signature($plist,
-				    $state)) {
+				if (!$plist->check_signature($state)) {
 					$state->fatal("#1 is corrupted",
-					    $set->print);
+					    $plist->pkgname);
 				}
 				$state->{check_digest} = 1;
 				$state->{packages_with_sig}++;
