@@ -1,5 +1,6 @@
-/*	$OpenBSD: iockbc.c,v 1.8 2012/08/10 17:49:31 shadchin Exp $	*/
+/*	$OpenBSD: iockbc.c,v 1.9 2013/12/25 21:01:01 miod Exp $	*/
 /*
+ * Copyright (c) 2013, Miodrag Vallat
  * Copyright (c) 2006, 2007, 2009 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -70,7 +71,11 @@
 #include <sgi/pci/iofreg.h>
 #include <sgi/pci/iofvar.h>
 
+#include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
+#include <dev/pckbc/pckbdreg.h>
+#define KBC_DEVCMD_ACK		KBR_ACK
+#define KBC_DEVCMD_RESEND	KBR_RESEND
 #include <dev/pckbc/pckbdvar.h>
 
 #include <dev/pci/pcireg.h>
@@ -82,9 +87,6 @@
 #include "iockbc.h"
 
 const char *iockbc_slot_names[] = { "kbd", "mouse" };
-
-#define KBC_DEVCMD_ACK 0xfa
-#define KBC_DEVCMD_RESEND 0xfe
 
 /* #define IOCKBC_DEBUG */
 #ifdef IOCKBC_DEBUG
@@ -153,11 +155,15 @@ struct pckbc_slotdata {
 
 #define CMD_IN_QUEUE(q) (TAILQ_FIRST(&(q)->cmdqueue) != NULL)
 
-struct pckbc_internal iockbc_consdata;
+enum iockbc_slottype { EMPTY, KBD, MOUSE };
+
+static struct pckbc_internal iockbc_consdata;
+static struct pckbc_slotdata iockbc_cons_slotdata;
 
 int	iockbc_is_ioc_console(struct ioc_attach_args *);
 int	iockbc_is_iof_console(struct iof_attach_args *);
-void	iockbc_attach_common(struct iockbc_softc *, bus_addr_t, int);
+void	iockbc_attach_common(struct iockbc_softc *, bus_addr_t, int,
+	    const struct iockbc_reginfo *, const struct iockbc_reginfo *);
 void	iockbc_start(struct pckbc_internal *, pckbc_slot_t);
 int	iockbc_attach_slot(struct iockbc_softc *, pckbc_slot_t);
 void	iockbc_init_slotdata(struct pckbc_slotdata *,
@@ -174,6 +180,8 @@ int	iockbc_poll_read(struct pckbc_internal *, pckbc_slot_t);
 int	iockbc_poll_write(struct pckbc_internal *, pckbc_slot_t, int);
 void	iockbc_process_input(struct pckbc_softc *, struct pckbc_internal *,
 	    int, uint);
+enum iockbc_slottype
+	iockbc_probe_slot(struct pckbc_internal *, pckbc_slot_t);
 
 int
 iockbc_match(struct device *parent, void *cf, void *aux)
@@ -189,7 +197,7 @@ iockbc_match(struct device *parent, void *cf, void *aux)
  * Register assignments
  */
 
-const struct iockbc_reginfo iockbc_ioc_normal[PCKBC_NSLOTS] = {
+const struct iockbc_reginfo iockbc_ioc[PCKBC_NSLOTS] = {
 	[PCKBC_KBD_SLOT] = {
 		.rx = IOC3_KBC_KBD_RX,
 		.tx = IOC3_KBC_KBD_TX,
@@ -225,16 +233,6 @@ iockbc_ioc_attach(struct device *parent, struct device *self, void *aux)
 	struct iockbc_softc *isc = (void*)self;
 	struct ioc_attach_args *iaa = aux;
 
-	/*
-	 * For some reason keyboard and mouse ports are inverted on Fuel.
-	 */
-
-	if (ISSET(iaa->iaa_flags, IOC_FLAGS_OBIO) &&
-	    sys_config.system_type == SGI_IP35)
-		isc->reginfo = iockbc_ioc_inverted;
-	else
-		isc->reginfo = iockbc_ioc_normal;
-
 	/* Setup bus space mapping. */
 	isc->iot = iaa->iaa_memt;
 	isc->ioh = iaa->iaa_memh;
@@ -246,7 +244,8 @@ iockbc_ioc_attach(struct device *parent, struct device *self, void *aux)
 	else
 		printf(": unable to establish interrupt\n");
 
-	iockbc_attach_common(isc, iaa->iaa_base, iockbc_is_ioc_console(iaa));
+	iockbc_attach_common(isc, iaa->iaa_base, iockbc_is_ioc_console(iaa),
+	    iockbc_ioc, iockbc_ioc_inverted);
 }
 #endif
 
@@ -270,13 +269,26 @@ const struct iockbc_reginfo iockbc_iof[PCKBC_NSLOTS] = {
 	}
 };
 
+const struct iockbc_reginfo iockbc_iof_inverted[PCKBC_NSLOTS] = {
+	[PCKBC_KBD_SLOT] = {
+		.rx = IOC4_KBC_AUX_RX,
+		.tx = IOC4_KBC_AUX_TX,
+		.cs = IOC4_KBC_CTRL_STATUS,
+		.busy = IOC3_KBC_STATUS_AUX_WRITE_PENDING
+	},
+	[PCKBC_AUX_SLOT] = {
+		.rx = IOC4_KBC_KBD_RX,
+		.tx = IOC4_KBC_KBD_TX,
+		.cs = IOC4_KBC_CTRL_STATUS,
+		.busy = IOC3_KBC_STATUS_KBD_WRITE_PENDING
+	}
+};
+
 void
 iockbc_iof_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct iockbc_softc *isc = (void*)self;
 	struct iof_attach_args *iaa = aux;
-
-	isc->reginfo = iockbc_iof;
 
 	/* Setup bus space mapping. */
 	isc->iot = iaa->iaa_memt;
@@ -289,7 +301,8 @@ iockbc_iof_attach(struct device *parent, struct device *self, void *aux)
 	else
 		printf(": unable to establish interrupt\n");
 
-	iockbc_attach_common(isc, iaa->iaa_base, iockbc_is_iof_console(iaa));
+	iockbc_attach_common(isc, iaa->iaa_base, iockbc_is_iof_console(iaa),
+	    iockbc_iof, iockbc_iof_inverted);
 }
 #endif
 
@@ -331,7 +344,123 @@ iockbc_submatch(struct device *parent, void *match, void *aux)
 	    cf->cf_loc[PCKBCCF_SLOT] != pa->pa_slot)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return ((*cf->cf_attach->ca_match)(parent, cf, pa));
+}
+
+/*
+ * Figure out what kind of device is connected to the given slot, if any.
+ */
+enum iockbc_slottype
+iockbc_probe_slot(struct pckbc_internal *t, pckbc_slot_t slot)
+{
+	int rc, i, tries;
+
+	/* reset device */
+	pckbc_flush(t, slot);
+	for (tries = 0; tries < 5; tries++) {
+		rc = iockbc_poll_write(t, slot, KBC_RESET);
+		if (rc < 0) {
+			DPRINTF(("%s: slot %d write failed\n", __func__, slot));
+			return EMPTY;
+		}
+		for (i = 10; i != 0; i--) {
+			rc = iockbc_poll_read(t, slot);
+			if (rc >= 0)
+				break;
+		}
+		if (rc < 0) {
+			DPRINTF(("%s: slot %d no answer to reset\n",
+			    __func__, slot));
+			return EMPTY;
+		}
+		if (rc == KBC_DEVCMD_ACK)
+			break;
+		if (rc == KBC_DEVCMD_RESEND)
+			continue;
+		DPRINTF(("%s: slot %d bogus reset ack %02x\n",
+		    __func__, slot, rc));
+		return EMPTY;
+	}
+
+	/* get answer byte */
+	for (i = 10; i != 0; i--) {
+		rc = iockbc_poll_read(t, slot);
+		if (rc >= 0)
+			break;
+	}
+	if (rc < 0) {
+		DPRINTF(("%s: slot %d no answer to reset after ack\n",
+		    __func__, slot));
+		return EMPTY;
+	}
+	if (rc != KBR_RSTDONE) {
+		DPRINTF(("%s: slot %d bogus reset answer %02x\n",
+		    __func__, slot, rc));
+		return EMPTY;
+	}
+	/* mice send an extra byte */
+	(void)iockbc_poll_read(t, slot);
+
+	/* ask for device id */
+	for (tries = 0; tries < 5; tries++) {
+		rc = iockbc_poll_write(t, slot, KBC_READID);
+		if (rc == -1) {
+			DPRINTF(("%s: slot %d write failed\n", __func__, slot));
+			return EMPTY;
+		}
+		for (i = 10; i != 0; i--) {
+			rc = iockbc_poll_read(t, slot);
+			if (rc >= 0)
+				break;
+		}
+		if (rc < 0) {
+			DPRINTF(("%s: slot %d no answer to command\n",
+			    __func__, slot));
+			return EMPTY;
+		}
+		if (rc == KBC_DEVCMD_ACK)
+			break;
+		if (rc == KBC_DEVCMD_RESEND)
+			continue;
+		DPRINTF(("%s: slot %d bogus command ack %02x\n",
+		    __func__, slot, rc));
+		return EMPTY;
+	}
+
+	/* get first answer byte */
+	for (i = 10; i != 0; i--) {
+		rc = iockbc_poll_read(t, slot);
+		if (rc >= 0)
+			break;
+	}
+	if (rc < 0) {
+		DPRINTF(("%s: slot %d no answer to command after ack\n",
+		    __func__, slot));
+		return EMPTY;
+	}
+
+	switch (rc) {
+	case KCID_KBD1:		/* keyboard */
+		/* get second answer byte */
+		rc = iockbc_poll_read(t, slot);
+		if (rc < 0) {
+			DPRINTF(("%s: slot %d truncated keyboard answer\n",
+			    __func__, slot));
+			return EMPTY;
+		}
+		if (rc != KCID_KBD2) {
+			DPRINTF(("%s: slot %d unexpected keyboard answer"
+			    " 0x%02x 0x%02x\n", __func__, slot, KCID_KBD1, rc));
+			/* return EMPTY; */
+		}
+		return KBD;
+	case KCID_MOUSE:	/* mouse */
+		return MOUSE;
+	default:
+		DPRINTF(("%s: slot %d unknown device answer 0x%02x\n",
+		    __func__, slot, rc));
+		return EMPTY;
+	}
 }
 
 int
@@ -342,19 +471,11 @@ iockbc_attach_slot(struct iockbc_softc *isc, pckbc_slot_t slot)
 	struct pckbc_attach_args pa;
 	int found;
 
-	if (!t->t_slotdata[slot]) {
-		t->t_slotdata[slot] = malloc(sizeof(struct pckbc_slotdata),
-		    M_DEVBUF, M_NOWAIT);
-
-		if (t->t_slotdata[slot] == NULL) {
-			printf("Failed to allocate slot data!\n");
-			return 0;
-		}
-		iockbc_init_slotdata(t->t_slotdata[slot], &isc->reginfo[slot]);
-	}
+	iockbc_init_slotdata(t->t_slotdata[slot], &isc->reginfo[slot]);
 
 	pa.pa_tag = t;
 	pa.pa_slot = slot;
+
 	found = (config_found_sm((struct device *)sc, &pa,
 	    iockbcprint, iockbc_submatch) != NULL);
 
@@ -362,23 +483,30 @@ iockbc_attach_slot(struct iockbc_softc *isc, pckbc_slot_t slot)
 }
 
 void
-iockbc_attach_common(struct iockbc_softc *isc, bus_addr_t addr, int console)
+iockbc_attach_common(struct iockbc_softc *isc, bus_addr_t addr, int console,
+    const struct iockbc_reginfo *reginfo,
+    const struct iockbc_reginfo *reginfo_inverted)
 {
 	struct pckbc_softc *sc = &isc->sc_pckbc;
 	struct pckbc_internal *t;
 	bus_addr_t cs;
 	uint32_t csr;
+	pckbc_slot_t slot;
 
 	if (console) {
 		iockbc_consdata.t_sc = sc;
-		sc->id = &iockbc_consdata;
+		sc->id = t = &iockbc_consdata;
 		isc->console = 1;
+		if (&reginfo[PCKBC_KBD_SLOT] == iockbc_cons_slotdata.reginfo)
+			isc->reginfo = reginfo;
+		else
+			isc->reginfo = reginfo_inverted;
 	} else {
 		/*
 		 * Setup up controller: do not force pull clock and data lines
 		 * low, clamp clocks after three bytes received.
 		 */
-		cs = isc->reginfo[0].cs;
+		cs = reginfo[PCKBC_KBD_SLOT].cs;
 		csr = bus_space_read_4(isc->iot, isc->ioh, cs);
 		csr &= ~(IOC3_KBC_CTRL_KBD_PULL_DATA_LOW |
 		    IOC3_KBC_CTRL_KBD_PULL_CLOCK_LOW |
@@ -400,6 +528,62 @@ iockbc_attach_common(struct iockbc_softc *isc, bus_addr_t addr, int console)
 
 		timeout_set(&t->t_cleanup, iockbc_cleanup, t);
 		timeout_set(&t->t_poll, iockbc_poll, t);
+
+		isc->reginfo = reginfo;
+	}
+
+	for (slot = 0; slot < PCKBC_NSLOTS; slot++) {
+		if (t->t_slotdata[slot] == NULL) {
+			t->t_slotdata[slot] =
+			    malloc(sizeof(struct pckbc_slotdata),
+			      M_DEVBUF, M_WAITOK);
+		}
+	}
+
+	if (!console) {
+		enum iockbc_slottype slottype;
+		int mouse_on_main = 0;
+
+		/*
+		 * Probe for a keyboard. If none is found at the regular
+		 * keyboard port, but one is found at the mouse port, then
+		 * it is likely that this particular system has both ports
+		 * inverted (or incorrect labels on the chassis), unless
+		 * this is a human error. In any case, try to get the
+		 * keyboard to attach to the `keyboard' port and the
+		 * pointing device to the `mouse' port.
+		 */
+
+		for (slot = 0; slot < PCKBC_NSLOTS; slot++) {
+			iockbc_init_slotdata(t->t_slotdata[slot],
+			    &isc->reginfo[slot]);
+			slottype = iockbc_probe_slot(t, slot);
+			if (slottype == KBD)
+				break;
+			if (slottype == MOUSE)
+				mouse_on_main = slot == PCKBC_KBD_SLOT;
+		}
+		if (slot == PCKBC_NSLOTS) {
+			/*
+			 * We could not identify a keyboard. Let's assume
+			 * none is connected; if a mouse has been found on
+			 * the keyboard port and none on the aux port, the
+			 * ports are likely to be inverted.
+			 */
+			if (mouse_on_main)
+				slot = PCKBC_AUX_SLOT;
+			else
+				slot = PCKBC_KBD_SLOT;
+		}
+		if (slot == PCKBC_AUX_SLOT) {
+			/*
+			 * Either human error or inverted wiring; use
+			 * the inverted port settings.
+			 * iockbc_attach_slot() below will call
+			 * iockbc_init_slotdata() again.
+			 */
+			isc->reginfo = reginfo_inverted;
+		}
 	}
 
 	/*
@@ -969,7 +1153,6 @@ pckbc_set_poll(pckbc_tag_t self, pckbc_slot_t slot, int on)
  * Console support.
  */
 
-static struct pckbc_slotdata iockbc_cons_slotdata;
 static int iockbc_console;
 
 int
@@ -978,7 +1161,9 @@ iockbc_cnattach()
 	bus_space_tag_t iot = &sys_config.console_io;
 	bus_space_handle_t ioh = (bus_space_handle_t)iot->bus_base;
 	struct pckbc_internal *t = &iockbc_consdata;
-	const struct iockbc_reginfo *reginfo = NULL;
+	const struct iockbc_reginfo *reginfo = NULL, *reginfo_inverted;
+	enum iockbc_slottype slottype;
+	pckbc_slot_t slot;
 	uint32_t csr;
 	int is_ioc;
 	int rc;
@@ -987,14 +1172,13 @@ iockbc_cnattach()
 	    PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3);
 	if (is_ioc) {
 #if NIOCKBC_IOC > 0
-		if (sys_config.system_type == SGI_IP35)
-			reginfo = &iockbc_ioc_inverted[PCKBC_KBD_SLOT];
-		else
-			reginfo = &iockbc_ioc_normal[PCKBC_KBD_SLOT];
+		reginfo = iockbc_ioc;
+		reginfo_inverted = iockbc_ioc_inverted;
 #endif
 	} else {
 #if NIOCKBC_IOF > 0
-		reginfo = &iockbc_iof[PCKBC_KBD_SLOT];
+		reginfo = iockbc_iof;
+		reginfo_inverted = iockbc_iof_inverted;
 #endif
 	}
 	if (reginfo == NULL)
@@ -1021,7 +1205,47 @@ iockbc_cnattach()
 	timeout_set(&t->t_cleanup, iockbc_cleanup, t);
 	timeout_set(&t->t_poll, iockbc_poll, t);
 
-	iockbc_init_slotdata(&iockbc_cons_slotdata, reginfo);
+	/*
+	 * Probe for a keyboard. There must be one connected, for the PROM
+	 * would not have advertized glass console if none had been
+	 * detected.
+	 */
+
+	for (slot = 0; slot < PCKBC_NSLOTS; slot++) {
+		iockbc_init_slotdata(&iockbc_cons_slotdata, &reginfo[slot]);
+		t->t_slotdata[slot] = &iockbc_cons_slotdata;
+		slottype = iockbc_probe_slot(t, slot);
+		t->t_slotdata[slot] = NULL;
+		if (slottype == KBD)
+			break;
+	}
+	if (slot == PCKBC_NSLOTS) {
+		/*
+		 * We could not identify a keyboard, but the PROM did;
+		 * let's assume it's a fluke and assume it exists and
+		 * is connected to the first connector.
+		 */
+		slot = PCKBC_KBD_SLOT;
+		/*
+		 * For some reason keyboard and mouse ports are inverted on
+		 * Fuel. They also are inverted on some IO9 boards, but
+		 * we can't tell both IO9 flavour apart, yet.
+		 */
+		if (is_ioc && sys_config.system_type == SGI_IP35)
+			slot = PCKBC_AUX_SLOT;
+	}
+
+	if (slot == PCKBC_AUX_SLOT) {
+		/*
+		 * Either human error when plugging the keyboard, or the
+		 * physical connectors on the chassis are inverted.
+		 * Compensate by switching in software (pckbd relies upon
+		 * being at PCKBC_KBD_SLOT).
+		 */
+		reginfo = reginfo_inverted;
+	}
+
+	iockbc_init_slotdata(&iockbc_cons_slotdata, &reginfo[PCKBC_KBD_SLOT]);
 	t->t_slotdata[PCKBC_KBD_SLOT] = &iockbc_cons_slotdata;
 
 	rc = pckbd_cnattach(t);

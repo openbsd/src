@@ -1,4 +1,4 @@
-/*	$OpenBSD: i8042reg.h,v 1.7 2013/05/23 18:29:51 tobias Exp $	*/
+/*	$OpenBSD: i8042reg.h,v 1.8 2013/12/25 21:01:01 miod Exp $	*/
 /*	$NetBSD: i8042reg.h,v 1.7 1998/01/18 14:41:37 drochner Exp $	*/
 
 #define	KBSTATP		4	/* kbd controller status port (I) */
@@ -25,6 +25,7 @@
 #define	 KBC_KBDTEST	0xab	/* test keyboard port */
 #define	 KBC_KBDDISABLE	0xad	/* disable keyboard port */
 #define	 KBC_KBDENABLE	0xae	/* enable keyboard port */
+#define	 KBC_READID	0xf2	/* read device id */
 #define	 KBC_PULSE0	0xfe	/* pulse output bit 0 */
 #define	 KBC_PULSE1	0xfd	/* pulse output bit 1 */
 #define	 KBC_PULSE2	0xfb	/* pulse output bit 2 */
@@ -44,3 +45,7 @@
 #define	KC8_MENABLE	0x02	/* enable mouse interrupt */
 #define	KC8_KENABLE	0x01	/* enable keyboard interrupt */
 #define	CMDBYTE		(KC8_TRANS|KC8_CPU|KC8_MENABLE|KC8_KENABLE)
+
+#define	KCID_KBD1	0xAB
+#define	KCID_KBD2	0x83
+#define	KCID_MOUSE	0x00
