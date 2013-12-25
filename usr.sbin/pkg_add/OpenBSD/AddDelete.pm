@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.57 2013/12/25 14:20:48 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.58 2013/12/25 15:59:51 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -278,8 +278,12 @@ sub run_quirks
 			$state->{quirks} = OpenBSD::Quirks->new(1);
 		};
 		if ($@) {
-			$state->errsay("Can't load quirk: #1", $@)
-			    if $state->verbose >= 2;
+			my $show = $state->verbose >= 2;
+			if (!$show) {
+				my $l = $state->repo->installed->match_locations(OpenBSD::Search::Stem->new('quirks'));
+				$show = @$l > 0;
+			}
+			$state->errsay("Can't load quirk: #1", $@) if $show;
 			# cache that this didn't work
 			$state->{quirks} = undef;
 		}
