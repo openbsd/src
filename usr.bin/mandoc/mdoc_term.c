@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.159 2013/12/25 15:12:39 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.160 2013/12/25 21:24:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -1597,8 +1597,7 @@ termp_fa_pre(DECL_ARGS)
 
 	for (nn = n->child; nn; nn = nn->next) {
 		term_fontpush(p, TERMFONT_UNDER);
-		if (MDOC_SYNPRETTY & n->flags)
-			p->flags |= TERMP_NBRWORD;
+		p->flags |= TERMP_NBRWORD;
 		term_word(p, nn->string);
 		term_fontpop(p);
 
