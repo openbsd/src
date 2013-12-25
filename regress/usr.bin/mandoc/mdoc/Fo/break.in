@@ -1,11 +1,38 @@
-.Dd December 25, 2013
+.Dd $Mdocdate: December 25 2013 $
 .Dt FO-BREAK 1
 .Os OpenBSD
 .Sh NAME
 .Nm Fo-break
 .Nd line breaks in function blocks
 .Sh SYNOPSIS
+.Fd using \&Fn:
 .Ft my_long_return_type *
 .Fn my_long_function "my_long_type first_argument" "my_long_type second_argument"
+.Fd using \&Fo and single-argument \&Fa:
+.Ft my_long_return_type *
+.Fo my_long_function
+.Fa "my_long_type first_argument"
+.Fa "my_long_type second_argument"
+.Fc
+.Fd using \&Fo and multi-argument \&Fa:
+.Ft my_long_return_type *
+.Fo my_long_function
+.Fa "my_long_type first_argument" "my_long_type second_argument"
+.Fc
 .Sh DESCRIPTION
+using Fn:
+.br
 .Fn my_long_function "my_long_type first_argument" "my_long_type second_argument"
+.Pp
+using Fo and single-argument Fa:
+.br
+.Fo my_long_function
+.Fa "my_long_type first_argument"
+.Fa "my_long_type second_argument"
+.Fc
+.Pp
+using Fo and multi-argument Fa:
+.br
+.Fo my_long_function
+.Fa "my_long_type first_argument" "my_long_type second_argument"
+.Fc

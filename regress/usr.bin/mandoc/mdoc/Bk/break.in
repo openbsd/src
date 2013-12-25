@@ -1,4 +1,4 @@
-.Dd $Mdocdate: May 29 2013 $
+.Dd $Mdocdate: December 25 2013 $
 .Dt BK-BREAK 1
 .Os OpenBSD
 .Sh NAME
@@ -46,4 +46,8 @@ with the text following it:
 .Pp
 .Bk -words
 .Fn xxxxxxxxxxxxxxxxxxxx "xxxxxxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxx" xxxxxxxxxxxxxxxxxxxx
+.Pp
+.Fo xxxxxxxxxxxxxxxxxxxx
+.Fa "xxxxxxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxx" xxxxxxxxxxxxxxxxxxxx
+.Fc
 .Ek
