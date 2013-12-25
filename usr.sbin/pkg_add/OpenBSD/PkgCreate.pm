@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.72 2013/12/23 16:50:29 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.73 2013/12/25 14:38:56 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -22,6 +22,30 @@ use warnings;
 use OpenBSD::AddCreateDelete;
 use OpenBSD::Dependencies;
 use OpenBSD::SharedLibs;
+
+package Signer::X509;
+sub new
+{
+	my ($class, $state, @p) = @_;
+
+	if (@p != 3 || !-f $p[1] || !-f $p[2]) {
+		$state->usage("x509 signature wants -s cert -s privkey");
+	}
+	bless {cert => $p[1], privkey => $p[2]}, $class;
+}
+
+sub new_sig
+{
+	require OpenBSD::x509;
+	return OpenBSD::PackingElement::DigitalSignature->new_x509;
+}
+
+sub compute_signature
+{
+	my ($self, $state, $plist) = @_;
+	return OpenBSD::x509::compute_signature($plist, $self->{cert}, 
+	    $self->{privkey});
+}
 
 package OpenBSD::PkgCreate::State;
 our @ISA = qw(OpenBSD::AddCreateDelete::State);
@@ -94,6 +118,9 @@ sub handle_options
 	    'o' =>
 		    sub {
 			    $state->{output_dir} = shift;
+			    if (!-d $state->{output_dir}) {
+				    $state->usage("no such dir");
+			    }
 		    },
 	    'S' =>
 		    sub {
@@ -119,7 +146,7 @@ sub handle_options
 	$state->SUPER::handle_options('p:f:d:M:U:s:A:B:P:W:qQo:S:',
 	    '[-nQqvx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
-	    '[-s x509 -s cert -s priv] [-o dir] [-S source]',
+	    '[-s [x509|sos] -s cert -s priv] [-o dir] [-S source]',
 	    '[-U undisplayfile] [-W wantedlib]',
 	    '[-d desc -D COMMENT=value -f packinglist -p prefix]',
 	    'pkg-name...');
@@ -1033,14 +1060,19 @@ sub add_description
 
 sub add_signature
 {
-	my ($self, $plist, $cert, $privkey) = @_;
+	my ($self, $plist, $state) = @_;
 
-	require OpenBSD::x509;
 
-	my $sig = OpenBSD::PackingElement::DigitalSignature->new_x509;
+	if ($plist->has('digital-signature')) {
+		if ($state->defines('resign')) {
+			$state->errsay("Resigning #1", $plist->pkgname);
+			delete $plist->{'digital-signature'};
+		}
+	}
+
+	my $sig = $state->{signer}->new_sig;
 	$sig->add_object($plist);
-	$sig->{b64sig} = OpenBSD::x509::compute_signature($plist,
-	    $cert, $privkey);
+	$sig->{b64sig} = $state->{signer}->compute_signature($state, $plist);
 }
 
 sub create_archive
@@ -1052,13 +1084,13 @@ sub create_archive
 
 sub sign_existing_package
 {
-	my ($self, $state, $pkg, $cert, $privkey) = @_;
+	my ($self, $state, $pkg) = @_;
 	$state->set_status("Signing ".$pkg->name);
 	my $output = $state->{output_dir} // ".";
 	my $dir = $pkg->info;
 	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
 	$plist->set_infodir($dir);
-	$self->add_signature($plist, $cert, $privkey);
+	$self->add_signature($plist, $state);
 	$plist->save;
 	my $tmp = OpenBSD::Temp::permanent_file($output, "pkg");
 	my $wrarc = $self->create_archive($state, $tmp, ".");
@@ -1075,25 +1107,25 @@ sub sign_existing_package
 
 sub sign_existing_pkgname
 {
-	my ($self, $state, $pkgname, $cert, $privkey) = @_;
+	my ($self, $state, $pkgname) = @_;
 
 	my $true_package = $state->repo->find($pkgname);
 	$state->fatal("No such package #1", $pkgname) unless $true_package;
 
-	$self->sign_existing_package($state, $true_package, $cert, $privkey);
+	$self->sign_existing_package($state, $true_package);
 }
 
 sub sign_existing_repository
 {
-	my ($self, $state, $source, $cert, $privkey) = @_;
+	my ($self, $state, $source) = @_;
 	require OpenBSD::PackageRepository;
 	my $repo = OpenBSD::PackageRepository->new($source, $state);
-	my @list = @{$repo->list};
+	my @list = sort @{$repo->list};
 	$state->{total} = scalar @list;
 	$state->{done} = 0;
 	for my $name (@list) {
 		my $pkg = $repo->find($name);
-		$self->sign_existing_package($state, $pkg, $cert, $privkey);
+		$self->sign_existing_package($state, $pkg);
 	}
 }
 
@@ -1325,7 +1357,6 @@ sub parse_and_run
 {
 	my ($self, $cmd) = @_;
 
-	my ($cert, $privkey);
 	my $regen_package = 0;
 	my $sign_only = 0;
 
@@ -1344,18 +1375,18 @@ sub parse_and_run
 	try {
 	if (defined $state->{signature_params}) {
 		my @p = @{$state->{signature_params}};
-		if (@p != 3 || $p[0] ne 'x509' || !-f $p[1] || !-f $p[2]) {
-			$state->usage("Signature only works as -s x509 -s cert -s privkey");
+		if ($p[0] eq 'x509') {
+			$state->{signer} = Signer::X509->new($state, @p);
+		} else  {
+			$state->usage("Unknown signature scheme $p[0]");
 		}
-		$cert = $p[1];
-		$privkey = $p[2];
 	}
 	if (defined $state->opt('Q')) {
 		$state->{opt}{q} = 1;
 	}
 
 	if (!defined $state->{contents}) {
-		if (defined $cert) {
+		if (defined $state->{signer}) {
 			$sign_only = 1;
 		} else {
 			$state->usage("Packing-list required");
@@ -1376,13 +1407,12 @@ sub parse_and_run
 		$state->{wantntogo} = $state->config->istrue("ntogo");
 		if (defined $state->{source}) {
 			$self->sign_existing_repository($state, 
-			    $state->{source}, $cert, $privkey);
+			    $state->{source});
 		}
 		$state->{total} = scalar @ARGV;
 		$state->{done} = 0;
 		for my $pkgname (@ARGV) {
-			$self->sign_existing_pkgname($state, 
-			    $pkgname, $cert, $privkey);
+			$self->sign_existing_pkgname($state, $pkgname);
 		}
 		return 0;
 	} else {
@@ -1433,8 +1463,8 @@ sub parse_and_run
 	}
 	$state->{bad} = 0;
 
-	if (defined $cert) {
-		$self->add_signature($plist, $cert, $privkey);
+	if (defined $state->{signer}) {
+		$self->add_signature($plist);
 		$plist->save if $regen_package;
 	}
 
