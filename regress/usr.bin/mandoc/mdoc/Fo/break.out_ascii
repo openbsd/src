@@ -1,0 +1,15 @@
+FO-BREAK(1)                OpenBSD Reference Manual                FO-BREAK(1)
+
+NNAAMMEE
+     FFoo--bbrreeaakk - line breaks in function blocks
+
+SSYYNNOOPPSSIISS
+     _m_y___l_o_n_g___r_e_t_u_r_n___t_y_p_e _*
+     mmyy__lloonngg__ffuunnccttiioonn(_m_y___l_o_n_g___t_y_p_e _f_i_r_s_t___a_r_g_u_m_e_n_t,
+         _m_y___l_o_n_g___t_y_p_e _s_e_c_o_n_d___a_r_g_u_m_e_n_t);
+
+DDEESSCCRRIIPPTTIIOONN
+     mmyy__lloonngg__ffuunnccttiioonn(_m_y___l_o_n_g___t_y_p_e _f_i_r_s_t___a_r_g_u_m_e_n_t, _m_y___l_o_n_g___t_y_p_e
+     _s_e_c_o_n_d___a_r_g_u_m_e_n_t)
+
+OpenBSD                        December 25, 2013                       OpenBSD

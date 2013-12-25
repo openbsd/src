@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.54 2013/12/24 22:08:23 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.55 2013/12/25 00:39:13 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -252,6 +252,7 @@ static	int		outflags;
 #define	MMAN_An_split	(1 << 9)  /* author mode is "split" */
 #define	MMAN_An_nosplit	(1 << 10) /* author mode is "nosplit" */
 #define	MMAN_PD		(1 << 11) /* inter-paragraph spacing disabled */
+#define	MMAN_nbrword	(1 << 12) /* do not break the next word */
 
 #define	BL_STACK_MAX	32
 
@@ -360,6 +361,12 @@ print_word(const char *s)
 		case (ASCII_HYPH):
 			putchar('-');
 			break;
+		case (' '):
+			if (MMAN_nbrword & outflags) {
+				printf("\\ ");
+				break;
+			}
+			/* FALLTHROUGH */
 		default:
 			putchar((unsigned char)*s);
 			break;
@@ -367,6 +374,7 @@ print_word(const char *s)
 		if (TPremain)
 			TPremain--;
 	}
+	outflags &= ~MMAN_nbrword;
 }
 
 static void
@@ -1024,6 +1032,8 @@ pre_fa(DECL_ARGS)
 
 	while (NULL != n) {
 		font_push('I');
+		if (MDOC_SYNPRETTY & n->flags)
+			outflags |= MMAN_nbrword;
 		print_node(meta, n);
 		font_pop();
 		if (NULL != (n = n->next))

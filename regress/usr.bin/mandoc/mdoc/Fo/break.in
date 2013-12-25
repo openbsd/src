@@ -1,0 +1,11 @@
+.Dd December 25, 2013
+.Dt FO-BREAK 1
+.Os OpenBSD
+.Sh NAME
+.Nm Fo-break
+.Nd line breaks in function blocks
+.Sh SYNOPSIS
+.Ft my_long_return_type *
+.Fn my_long_function "my_long_type first_argument" "my_long_type second_argument"
+.Sh DESCRIPTION
+.Fn my_long_function "my_long_type first_argument" "my_long_type second_argument"

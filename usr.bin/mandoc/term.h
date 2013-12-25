@@ -1,4 +1,4 @@
-/*	$Id: term.h,v 1.40 2013/12/24 23:04:29 schwarze Exp $ */
+/*	$Id: term.h,v 1.41 2013/12/25 00:39:13 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -71,6 +71,7 @@ struct	termp {
 #define	TERMP_SENTENCE	 (1 << 1)	/* Space before a sentence. */
 #define	TERMP_NOSPACE	 (1 << 2)	/* No space before words. */
 #define	TERMP_NONOSPACE	 (1 << 3)	/* No space (no autounset). */
+#define	TERMP_NBRWORD	 (1 << 4)	/* Make next word nonbreaking. */
 #define	TERMP_KEEP	 (1 << 5)	/* Keep words together. */
 #define	TERMP_PREKEEP	 (1 << 6)	/* ...starting with the next one. */
 #define	TERMP_SKIPCHAR	 (1 << 7)	/* Skip the next character. */

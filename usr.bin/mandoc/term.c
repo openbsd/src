@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.74 2013/12/24 23:04:29 schwarze Exp $ */
+/*	$Id: term.c,v 1.75 2013/12/25 00:39:13 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -403,6 +403,7 @@ term_fontpop(struct termp *p)
 void
 term_word(struct termp *p, const char *word)
 {
+	const char	 nbrsp[2] = { ASCII_NBRSP, 0 };
 	const char	*seq, *cp;
 	char		 c;
 	int		 sz, uc;
@@ -434,7 +435,15 @@ term_word(struct termp *p, const char *word)
 				word++;
 				continue;
 			}
-			ssz = strcspn(word, "\\");
+			if (TERMP_NBRWORD & p->flags) {
+				if (' ' == *word) {
+					encode(p, nbrsp, 1);
+					word++;
+					continue;
+				}
+				ssz = strcspn(word, "\\ ");
+			} else
+				ssz = strcspn(word, "\\");
 			encode(p, word, ssz);
 			word += (int)ssz;
 			continue;
@@ -509,6 +518,7 @@ term_word(struct termp *p, const char *word)
 			break;
 		}
 	}
+	p->flags &= ~TERMP_NBRWORD;
 }
 
 static void
