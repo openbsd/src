@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.12 2013/08/13 05:52:20 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.13 2013/12/25 15:14:59 miod Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn
@@ -85,8 +85,14 @@ ENTRY(_dl_start)
 	add	#1, r6
 	shll2	r6
 	add	r5, r6			// calc envp
-	jmp	@r0
-	 mov	#0, r7
+
+	mov	r0, r12
+	mova	.L_GOT, r0
+	mov.l	.L_GOT, r7
+	add	r7, r0			// GOT
+	mov.l	.L_dl_dtors, r7
+	jmp	@r12
+	 mov.l	@(r0,r7), r7		// cleanup
 
 	.align 2
 .L_boot_bind:
@@ -99,6 +105,10 @@ ENTRY(_dl_start)
 	.long _DYNAMIC-.L_offbase
 .L_loff:
 	.long 7*4
+.L_GOT:
+	.long _GLOBAL_OFFSET_TABLE_
+.L_dl_dtors:
+	.long _dl_dtors@GOT
 	.size _dl_start, .-dl_start
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.143 2013/12/25 15:01:39 miod Exp $ */
+/*	$OpenBSD: loader.c,v 1.144 2013/12/25 15:14:59 miod Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -604,7 +604,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 		_dl_call_init(_dl_objects);
 	}
 
-#if defined(__mips64__) || defined(__sh__)	/* XXX */
+#if defined(__mips64__)	/* XXX */
 	/*
 	 * Schedule a routine to be run at shutdown, by using atexit.
 	 * Cannot call atexit directly from ld.so?
