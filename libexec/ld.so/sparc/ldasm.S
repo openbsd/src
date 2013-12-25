@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.21 2013/08/13 05:52:21 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.22 2013/12/25 11:10:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -113,8 +113,13 @@ _dl_start:
 
 	add	%sp, 32 + DL_DATA_SIZE, %sp	! restore stack
 
+1:	call	2f
+	 sethi	%hi(_GLOBAL_OFFSET_TABLE_+(.-1b)), %l7
+2:	or	%l7, %lo(_GLOBAL_OFFSET_TABLE_+(.-1b)), %l7
+	add	%l7, %o7, %l7
+
 	jmp	%o0
-	 clr	%g1			! XXX don't register with atexit
+	 ld	[%l7 + _dl_dtors], %g1	! %g1 = cleanup
 
 
 	.section	".text"
