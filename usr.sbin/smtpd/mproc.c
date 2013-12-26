@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.6 2013/11/21 08:35:54 eric Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.7 2013/12/26 17:25:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -222,8 +222,8 @@ msgbuf_write2(struct msgbuf *msgbuf)
 		char		buf[CMSG_SPACE(sizeof(int))];
 	} cmsgbuf;
 
-	bzero(&iov, sizeof(iov));
-	bzero(&msg, sizeof(msg));
+	memset(&iov, 0, sizeof(iov));
+	memset(&msg, 0, sizeof(msg));
 	TAILQ_FOREACH(buf, &msgbuf->bufs, entry) {
 		if (i >= IOV_MAX)
 			break;

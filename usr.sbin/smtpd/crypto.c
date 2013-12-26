@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.3 2013/07/22 13:20:49 eric Exp $	 */
+/* $OpenBSD: crypto.c,v 1.4 2013/12/26 17:25:32 eric Exp $	 */
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@openbsd.org>
@@ -52,7 +52,7 @@ crypto_setup(const char *key, size_t len)
 	if (len != KEY_SIZE)
 		return 0;
 
-	bzero(&cp, sizeof cp);
+	memset(&cp, 0, sizeof cp);
 	cp.cipher = EVP_aes_256_gcm();
 
 	/* openssl rand -hex 16 */

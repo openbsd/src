@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.13 2013/11/28 10:43:37 eric Exp $	*/
+/*	$OpenBSD: to.c,v 1.14 2013/12/26 17:25:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -75,7 +75,7 @@ in6addr_to_text(const struct in6_addr *addr)
 	struct sockaddr_in6	sa_in6;
 	uint16_t		tmp16;
 
-	bzero(&sa_in6, sizeof(sa_in6));
+	memset(&sa_in6, 0, sizeof(sa_in6));
 	sa_in6.sin6_len = sizeof(sa_in6);
 	sa_in6.sin6_family = AF_INET6;
 	memcpy(&sa_in6.sin6_addr, addr, sizeof(sa_in6.sin6_addr));
@@ -102,7 +102,7 @@ text_to_mailaddr(struct mailaddr *maddr, const char *email)
 	if (strlcpy(buffer, email, sizeof buffer) >= sizeof buffer)
 		return 0;
 
-	bzero(maddr, sizeof *maddr);
+	memset(maddr, 0, sizeof *maddr);
 
 	username = buffer;
 	hostname = strrchr(username, '@');
@@ -267,8 +267,8 @@ text_to_netaddr(struct netaddr *netaddr, const char *s)
 	struct sockaddr_in6	ssin6;
 	int			bits;
 
-	bzero(&ssin, sizeof(struct sockaddr_in));
-	bzero(&ssin6, sizeof(struct sockaddr_in6));
+	memset(&ssin, 0, sizeof(struct sockaddr_in));
+	memset(&ssin6, 0, sizeof(struct sockaddr_in6));
 
 	if (strncasecmp("IPv6:", s, 5) == 0)
 		s += 5;
@@ -345,7 +345,7 @@ text_to_relayhost(struct relayhost *relay, const char *s)
 	size_t		i;
 	int		len;
 
-	bzero(buffer, sizeof buffer);
+	memset(buffer, 0, sizeof buffer);
 	if (strlcpy(buffer, s, sizeof buffer) >= sizeof buffer)
 		return 0;
 
@@ -415,7 +415,7 @@ relayhost_to_text(const struct relayhost *relay)
 	static char	buf[4096];
 	char		port[4096];
 
-	bzero(buf, sizeof buf);
+	memset(buf, 0, sizeof buf);
 	switch (relay->flags) {
 	case F_SMTPS|F_STARTTLS|F_AUTH:
 		strlcat(buf, "secure+auth://", sizeof buf);
@@ -508,7 +508,7 @@ rule_to_text(struct rule *r)
 {
 	static char buf[4096];
 
-	bzero(buf, sizeof buf);
+	memset(buf, 0, sizeof buf);
 	strlcpy(buf, r->r_decision == R_ACCEPT  ? "accept" : "reject", sizeof buf);
 	if (r->r_tag[0]) {
 		strlcat(buf, " tagged ", sizeof buf);
@@ -595,7 +595,7 @@ text_to_userinfo(struct userinfo *userinfo, const char *s)
 	char	       *p;
 	const char     *errstr;
 
-	bzero(buf, sizeof buf);
+	memset(buf, 0, sizeof buf);
 	p = buf;
 	while (*s && *s != ':')
 		*p++ = *s++;
@@ -606,7 +606,7 @@ text_to_userinfo(struct userinfo *userinfo, const char *s)
 		sizeof userinfo->username) >= sizeof userinfo->username)
 		goto error;
 
-	bzero(buf, sizeof buf);
+	memset(buf, 0, sizeof buf);
 	p = buf;
 	while (*s && *s != ':')
 		*p++ = *s++;
@@ -616,7 +616,7 @@ text_to_userinfo(struct userinfo *userinfo, const char *s)
 	if (errstr)
 		goto error;
 
-	bzero(buf, sizeof buf);
+	memset(buf, 0, sizeof buf);
 	p = buf;
 	while (*s && *s != ':')
 		*p++ = *s++;
@@ -654,7 +654,7 @@ text_to_credentials(struct credentials *creds, const char *s)
 
 	offset = p - s;
 
-	bzero(buffer, sizeof buffer);
+	memset(buffer, 0, sizeof buffer);
 	if (strlcpy(buffer, s, sizeof buffer) >= sizeof buffer)
 		return 0;
 	p = buffer + offset;
@@ -737,7 +737,7 @@ alias_is_filter(struct expandnode *alias, const char *line, size_t len)
 static int
 alias_is_username(struct expandnode *alias, const char *line, size_t len)
 {
-	bzero(alias, sizeof *alias);
+	memset(alias, 0, sizeof *alias);
 
 	if (strlcpy(alias->u.user, line,
 	    sizeof(alias->u.user)) >= sizeof(alias->u.user))
@@ -759,7 +759,7 @@ alias_is_address(struct expandnode *alias, const char *line, size_t len)
 {
 	char *domain;
 
-	bzero(alias, sizeof *alias);
+	memset(alias, 0, sizeof *alias);
 
 	if (len < 3)	/* x@y */
 		return 0;
@@ -801,7 +801,7 @@ alias_is_address(struct expandnode *alias, const char *line, size_t len)
 static int
 alias_is_filename(struct expandnode *alias, const char *line, size_t len)
 {
-	bzero(alias, sizeof *alias);
+	memset(alias, 0, sizeof *alias);
 
 	if (*line != '/')
 		return 0;
@@ -818,7 +818,7 @@ alias_is_include(struct expandnode *alias, const char *line, size_t len)
 {
 	size_t skip;
 
-	bzero(alias, sizeof *alias);
+	memset(alias, 0, sizeof *alias);
 
 	if (strncasecmp(":include:", line, 9) == 0)
 		skip = 9;
@@ -839,7 +839,7 @@ alias_is_error(struct expandnode *alias, const char *line, size_t len)
 {
 	size_t	skip;
 
-	bzero(alias, sizeof *alias);
+	memset(alias, 0, sizeof *alias);
 
 	if (strncasecmp(":error:", line, 7) == 0)
 		skip = 7;

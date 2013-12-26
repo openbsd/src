@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.177 2013/12/06 14:12:34 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.178 2013/12/26 17:25:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1588,7 +1588,7 @@ mta_relay(struct envelope *e)
 {
 	struct mta_relay	 key, *r;
 
-	bzero(&key, sizeof key);
+	memset(&key, 0, sizeof key);
 
 	if (e->agent.mta.relay.flags & RELAY_BACKUP) {
 		key.domain = mta_domain(e->dest.domain, 0);

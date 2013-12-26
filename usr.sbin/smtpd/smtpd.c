@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.207 2013/11/28 12:50:40 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.208 2013/12/26 17:25:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -793,7 +793,7 @@ main(int argc, char *argv[])
 	config_done();
 
 	evtimer_set(&config_ev, parent_send_config, NULL);
-	bzero(&tv, sizeof(tv));
+	memset(&tv, 0, sizeof(tv));
 	evtimer_add(&config_ev, &tv);
 
 	/* defer offline scanning for a second */
@@ -1151,7 +1151,7 @@ offline_enqueue(char *name)
 		size_t	 len;
 		arglist	 args;
 
-		bzero(&args, sizeof(args));
+		memset(&args, 0, sizeof(args));
 
 		if (lstat(path, &sb) == -1) {
 			log_warn("warn: smtpd: lstat: %s", path);

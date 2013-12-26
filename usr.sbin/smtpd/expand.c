@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.24 2013/10/24 20:39:23 eric Exp $	*/
+/*	$OpenBSD: expand.c,v 1.25 2013/12/26 17:25:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -195,7 +195,7 @@ expand_line_split(char **line, char **ret)
 	int		esc, i, dq, sq;
 	char	       *s;
 
-	bzero(buffer, sizeof buffer);
+	memset(buffer, 0, sizeof buffer);
 	esc = dq = sq = i = 0;
 	for (s = *line; (*s) && (i < (int)sizeof(buffer)); ++s) {
 		if (esc) {
@@ -238,7 +238,7 @@ expand_line(struct expand *expand, const char *s, int do_includes)
 	char		       *p, *subrcpt;
 	int			ret;
 
-	bzero(buffer, sizeof buffer);
+	memset(buffer, 0, sizeof buffer);
 	if (strlcpy(buffer, s, sizeof buffer) >= sizeof buffer)
 		return 0;
 

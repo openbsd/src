@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.69 2013/11/18 11:55:41 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.70 2013/12/26 17:25:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -123,7 +123,7 @@ domainname_is_addr(const char *s, struct sockaddr *sa, socklen_t *sl)
 		return (0);
 
 	buf[l - 1] = '\0';
-	bzero(&hints, sizeof(hints));
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_flags = AI_NUMERICHOST;
 	hints.ai_socktype = SOCK_STREAM;
 	if (i6)

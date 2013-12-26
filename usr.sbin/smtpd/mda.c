@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.99 2013/11/28 10:43:37 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.100 2013/12/26 17:25:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -253,7 +253,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 
 			/* request parent to fork a helper process */
 			userinfo = &s->user->userinfo;
-			bzero(&deliver, sizeof deliver);
+			memset(&deliver, 0, sizeof deliver);
 			switch (e->method) {
 			case A_MDA:
 				deliver.mode = A_MDA;
@@ -628,7 +628,7 @@ mda_getlastline(int fd, char *dst, size_t dstsz)
 	char	*ln, buf[SMTPD_MAXLINESIZE];
 	size_t	 len;
 
-	bzero(buf, sizeof buf);
+	memset(buf, 0, sizeof buf);
 	if (lseek(fd, 0, SEEK_SET) < 0) {
 		log_warn("warn: mda: lseek");
 		close(fd);

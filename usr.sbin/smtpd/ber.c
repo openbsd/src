@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.3 2013/01/26 09:37:23 gilles Exp $ */
+/*	$OpenBSD: ber.c,v 1.4 2013/12/26 17:25:32 eric Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -276,7 +276,7 @@ ber_add_nstring(struct ber_element *prev, const char *string0, size_t len)
 		return NULL;
 	}
 
-	bcopy(string0, string, len);
+	memmove(string, string0, len);
 	elm->be_val = string;
 	elm->be_len = len;
 	elm->be_free = 1;		/* free string on cleanup */
@@ -320,7 +320,7 @@ ber_add_bitstring(struct ber_element *prev, const void *v0, size_t len)
 		return NULL;
 	}
 
-	bcopy(v0, v, len);
+	memmove(v, v0, len);
 	elm->be_val = v;
 	elm->be_len = len;
 	elm->be_free = 1;		/* free string on cleanup */
@@ -420,7 +420,7 @@ ber_string2oid(const char *oidstr, struct ber_oid *o)
 
 	if (strlcpy(str, oidstr, sizeof(str)) >= sizeof(str))
 		return (-1);
-	bzero(o, sizeof(*o));
+	memset(o, 0, sizeof(*o));
 
 	/* Parse OID strings in the common forms n.n.n, n_n_n_n, or n-n-n */
 	for (p = sp = str; p != NULL; sp = p) {
@@ -474,7 +474,7 @@ ber_add_noid(struct ber_element *prev, struct ber_oid *o, int n)
 	if (n > BER_MAX_OID_LEN)
 		return (NULL);
 	no.bo_n = n;
-	bcopy(&o->bo_id, &no.bo_id, sizeof(no.bo_id));
+	memmove(&no.bo_id, &o->bo_id, sizeof(no.bo_id));
 
 	return (ber_add_oid(prev, &no));
 }
@@ -505,7 +505,7 @@ ber_get_oid(struct ber_element *elm, struct ber_oid *o)
 	if (!buf[i])
 		return (-1);
 
-	bzero(o, sizeof(*o));
+	memset(o, 0, sizeof(*o));
 	o->bo_id[j++] = buf[i] / 40;
 	o->bo_id[j++] = buf[i++] % 40;
 	for (; i < len && j < BER_MAX_OID_LEN; i++) {
@@ -621,7 +621,7 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 	struct ber_oid		*o;
 	struct ber_element	*parent[_MAX_SEQ], **e;
 
-	bzero(parent, sizeof(struct ber_element *) * _MAX_SEQ);
+	memset(parent, 0, sizeof(struct ber_element *) * _MAX_SEQ);
 
 	va_start(ap, fmt);
 	while (*fmt) {
@@ -958,7 +958,8 @@ static void
 ber_write(struct ber *ber, void *buf, size_t len)
 {
 	if (ber->br_wptr + len <= ber->br_wend)
-		bcopy(buf, ber->br_wptr, len);
+		memmove(ber->br_wptr, buf, len);
+
 	ber->br_wptr += len;
 }
 
@@ -1169,7 +1170,7 @@ ber_readbuf(struct ber *b, void *buf, size_t nbytes)
 		return (-1);	/* end of buffer and parser wants more data */
 	}
 
-	bcopy(b->br_rptr, buf, len);
+	memmove(buf, b->br_rptr, len);
 	b->br_rptr += len;
 
 	return (len);

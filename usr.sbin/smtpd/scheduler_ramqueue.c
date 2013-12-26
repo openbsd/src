@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.35 2013/12/05 09:26:47 eric Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.36 2013/12/26 17:25:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -741,7 +741,7 @@ sorted_insert(struct rq_queue *rq, struct rq_envelope *evp)
 static void
 rq_queue_init(struct rq_queue *rq)
 {
-	bzero(rq, sizeof *rq);
+	memset(rq, 0, sizeof *rq);
 	tree_init(&rq->messages);
 	TAILQ_INIT(&rq->q_pending);
 	TAILQ_INIT(&rq->q_inflight);

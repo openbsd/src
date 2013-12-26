@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.12 2013/11/28 10:57:29 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.13 2013/12/26 17:25:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -449,7 +449,7 @@ table_inet6_match(struct sockaddr_in6 *ss, struct netaddr *ssmask)
 	struct in6_addr	 mask;
 	int		 i;
 
-	bzero(&mask, sizeof(mask));
+	memset(&mask, 0, sizeof(mask));
 	for (i = 0; i < ssmask->bits / 8; i++)
 		mask.s6_addr[i] = 0xff;
 	i = ssmask->bits % 8;

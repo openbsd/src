@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.113 2013/11/13 09:15:41 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.114 2013/12/26 17:25:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -109,7 +109,7 @@ srv_connect(void)
 	if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "socket");
 
-	bzero(&sun, sizeof(sun));
+	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	strlcpy(sun.sun_path, SMTPD_SOCKET, sizeof(sun.sun_path));
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
@@ -411,7 +411,7 @@ do_monitor(int argc, struct parameter *argv)
 	struct stat_digest	last, digest;
 	size_t			count;
 
-	bzero(&last, sizeof(last));
+	memset(&last, 0, sizeof(last));
 	count = 0;
 
 	while (1) {
@@ -709,7 +709,7 @@ do_show_stats(int argc, struct parameter *argv)
 	struct stat_kv	kv;
 	time_t		duration;
 
-	bzero(&kv, sizeof kv);
+	memset(&kv, 0, sizeof kv);
 
 	while (1) {
 		srv_send(IMSG_STATS_GET, &kv, sizeof kv);

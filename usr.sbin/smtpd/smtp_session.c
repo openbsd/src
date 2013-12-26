@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.191 2013/11/28 12:39:23 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.192 2013/12/26 17:25:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -585,8 +585,8 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		io_set_read(&s->io);
 		io_start_tls(&s->io, ssl);
 
-		bzero(resp_ca_cert->cert, resp_ca_cert->cert_len);
-		bzero(resp_ca_cert->key, resp_ca_cert->key_len);
+		memset(resp_ca_cert->cert, 0, resp_ca_cert->cert_len);
+		memset(resp_ca_cert->key, 0, resp_ca_cert->key_len);
 		free(resp_ca_cert->cert);
 		free(resp_ca_cert->key);
 		free(resp_ca_cert);
@@ -1275,7 +1275,7 @@ smtp_rfc4954_auth_login(struct smtp_session *s, char *arg)
 		return;
 
 	case STATE_AUTH_USERNAME:
-		bzero(s->username, sizeof(s->username));
+		memset(s->username, 0, sizeof(s->username));
 		if (__b64_pton(arg, (unsigned char *)s->username,
 		    sizeof(s->username) - 1) == -1)
 			goto abort;
@@ -1285,7 +1285,7 @@ smtp_rfc4954_auth_login(struct smtp_session *s, char *arg)
 		return;
 
 	case STATE_AUTH_PASSWORD:
-		bzero(buf, sizeof(buf));
+		memset(buf, 0, sizeof(buf));
 		if (__b64_pton(arg, (unsigned char *)buf, sizeof(buf)-1) == -1)
 			goto abort;
 
@@ -1467,7 +1467,7 @@ smtp_message_reset(struct smtp_session *s, int prepare)
 		free(rcpt);
 	}
 
-	bzero(&s->evp, sizeof s->evp);
+	memset(&s->evp, 0, sizeof s->evp);
 	s->msgflags = 0;
 	s->destcount = 0;
 	s->rcptcount = 0;
@@ -1652,7 +1652,7 @@ smtp_verify_certificate(struct smtp_session *s)
 	tree_xset(&wait_ssl_verify, s->id, s);
 
 	/* Send the client certificate */
-	bzero(&req_ca_vrfy, sizeof req_ca_vrfy);
+	memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
 	if (strlcpy(req_ca_vrfy.pkiname, s->listener->ssl_cert_name, sizeof req_ca_vrfy.pkiname)
 	    >= sizeof req_ca_vrfy.pkiname)
 		return 0;
@@ -1673,7 +1673,7 @@ smtp_verify_certificate(struct smtp_session *s)
 	if (xchain) {		
 		/* Send the chain, one cert at a time */
 		for (i = 0; i < sk_X509_num(xchain); ++i) {
-			bzero(&req_ca_vrfy, sizeof req_ca_vrfy);
+			memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
 			req_ca_vrfy.reqid = s->id;
 			x = sk_X509_value(xchain, i);
 			req_ca_vrfy.cert_len = i2d_X509(x, &req_ca_vrfy.cert);
@@ -1688,7 +1688,7 @@ smtp_verify_certificate(struct smtp_session *s)
 	}
 
 	/* Tell lookup process that it can start verifying, we're done */
-	bzero(&req_ca_vrfy, sizeof req_ca_vrfy);
+	memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
 	req_ca_vrfy.reqid = s->id;
 	m_compose(p_lka, IMSG_LKA_SSL_VERIFY, 0, 0, -1,
 	    &req_ca_vrfy, sizeof req_ca_vrfy);

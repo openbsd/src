@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fs.c,v 1.3 2013/11/06 10:07:29 eric Exp $	*/
+/*	$OpenBSD: queue_fs.c,v 1.4 2013/12/26 17:25:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -354,7 +354,7 @@ queue_fs_envelope_walk(uint64_t *evpid, char *buf, size_t len)
 		hdl = fsqueue_qwalk_new();
 
 	if (fsqueue_qwalk(hdl, evpid)) {
-		bzero(buf, len);
+		memset(buf, 0, len);
 		r = queue_fs_envelope_load(*evpid, buf, len);
 		if (r) {
 			msgid = evpid_to_msgid(*evpid);

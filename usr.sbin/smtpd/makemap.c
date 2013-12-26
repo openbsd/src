@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.47 2013/11/28 10:43:37 eric Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.48 2013/12/26 17:25:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -77,7 +77,7 @@ enum output_type {
 void
 purge_config(uint8_t what)
 {
-	bzero(env, sizeof(struct smtpd));
+	memset(env, 0, sizeof(struct smtpd));
 }
 
 int

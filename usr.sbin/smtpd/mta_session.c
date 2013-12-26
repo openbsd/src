@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.49 2013/12/03 09:06:26 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.50 2013/12/26 17:25:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -348,8 +348,8 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			fatal("mta: ssl_mta_init");
 		io_start_tls(&s->io, ssl);
 
-		bzero(resp_ca_cert->cert, resp_ca_cert->cert_len);
-		bzero(resp_ca_cert->key, resp_ca_cert->key_len);
+		memset(resp_ca_cert->cert, 0, resp_ca_cert->cert_len);
+		memset(resp_ca_cert->key, 0, resp_ca_cert->key_len);
 		free(resp_ca_cert->cert);
 		free(resp_ca_cert->key);
 		free(resp_ca_cert);
@@ -676,23 +676,23 @@ mta_enter_state(struct mta_session *s, int newstate)
 		break;
 
 	case MTA_AUTH_LOGIN_USER:
-		bzero(ibuf, sizeof ibuf);
+		memset(ibuf, 0, sizeof ibuf);
 		if (__b64_pton(s->relay->secret, (unsigned char *)ibuf, sizeof(ibuf)-1) == -1) {
 			log_debug("debug: mta: %p: credentials too large on session", s);
 			mta_error(s, "Credentials too large");
 			break;
 		}
 
-		bzero(obuf, sizeof obuf);
+		memset(obuf, 0, sizeof obuf);
 		__b64_ntop((unsigned char *)ibuf + 1, strlen(ibuf + 1), obuf, sizeof obuf);
 		mta_send(s, "%s", obuf);
 
-		bzero(ibuf, sizeof ibuf);
-		bzero(obuf, sizeof obuf);
+		memset(ibuf, 0, sizeof ibuf);
+		memset(obuf, 0, sizeof obuf);
 		break;
 
 	case MTA_AUTH_LOGIN_PASS:
-		bzero(ibuf, sizeof ibuf);
+		memset(ibuf, 0, sizeof ibuf);
 		if (__b64_pton(s->relay->secret, (unsigned char *)ibuf, sizeof(ibuf)-1) == -1) {
 			log_debug("debug: mta: %p: credentials too large on session", s);
 			mta_error(s, "Credentials too large");
@@ -700,12 +700,12 @@ mta_enter_state(struct mta_session *s, int newstate)
 		}
 
 		offset = strlen(ibuf+1)+2;
-		bzero(obuf, sizeof obuf);
+		memset(obuf, 0, sizeof obuf);
 		__b64_ntop((unsigned char *)ibuf + offset, strlen(ibuf + offset), obuf, sizeof obuf);
 		mta_send(s, "%s", obuf);
 
-		bzero(ibuf, sizeof ibuf);
-		bzero(obuf, sizeof obuf);
+		memset(ibuf, 0, sizeof ibuf);
+		memset(obuf, 0, sizeof obuf);
 		break;
 
 	case MTA_READY:
@@ -1537,7 +1537,7 @@ mta_verify_certificate(struct mta_session *s)
 	s->flags |= MTA_WAIT;
 
 	/* Send the client certificate */
-	bzero(&req_ca_vrfy, sizeof req_ca_vrfy);
+	memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
 	if (s->relay->cert)
 		pkiname = s->relay->cert;
 	else
@@ -1562,7 +1562,7 @@ mta_verify_certificate(struct mta_session *s)
 	if (xchain) {		
 		/* Send the chain, one cert at a time */
 		for (i = 0; i < sk_X509_num(xchain); ++i) {
-			bzero(&req_ca_vrfy, sizeof req_ca_vrfy);
+			memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
 			req_ca_vrfy.reqid = s->id;
 			x = sk_X509_value(xchain, i);
 			req_ca_vrfy.cert_len = i2d_X509(x, &req_ca_vrfy.cert);
@@ -1577,7 +1577,7 @@ mta_verify_certificate(struct mta_session *s)
 	}
 
 	/* Tell lookup process that it can start verifying, we're done */
-	bzero(&req_ca_vrfy, sizeof req_ca_vrfy);
+	memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
 	req_ca_vrfy.reqid = s->id;
 	m_compose(p_lka, IMSG_LKA_SSL_VERIFY, 0, 0, -1,
 	    &req_ca_vrfy, sizeof req_ca_vrfy);

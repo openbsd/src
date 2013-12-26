@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.61 2013/11/19 10:22:42 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.62 2013/12/26 17:25:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -113,7 +113,7 @@ lka_session(uint64_t id, struct envelope *envelope)
 	lks->envelope = *envelope;
 
 	TAILQ_INIT(&lks->nodes);
-	bzero(&xn, sizeof xn);
+	memset(&xn, 0, sizeof xn);
 	xn.type = EXPAND_ADDRESS;
 	xn.u.mailaddr = lks->envelope.rcpt;
 	lks->expand.rule = NULL;
@@ -344,7 +344,7 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 			lks->expand.rule = rule;
 			lks->expand.parent = xn;
 			lks->expand.alias = 1;
-			bzero(&node, sizeof node);
+			memset(&node, 0, sizeof node);
 			node.type = EXPAND_USERNAME;
 			mailaddr_to_username(&xn->u.mailaddr, node.u.user,
 				sizeof node.u.user);
@@ -408,7 +408,7 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		lks->rule = rule;
 		lks->node = xn;
 
-		bzero(&fwreq, sizeof(fwreq));
+		memset(&fwreq, 0, sizeof(fwreq));
 		fwreq.id = lks->id;
 		(void)strlcpy(fwreq.user, lk.userinfo.username, sizeof(fwreq.user));
 		(void)strlcpy(fwreq.directory, lk.userinfo.directory, sizeof(fwreq.directory));
@@ -549,7 +549,7 @@ lka_submit(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 			strlcpy(ep->agent.mda.buffer, rule->r_value.buffer,
 			    sizeof ep->agent.mda.buffer);
 
-			bzero(tag, sizeof tag);
+			memset(tag, 0, sizeof tag);
 			if (! mailaddr_tag(&ep->dest, tag, sizeof tag)) {
 				lks->error = LKA_PERMFAIL;
 				free(ep);
@@ -766,7 +766,7 @@ lka_expand_format(char *buf, size_t len, const struct envelope *ep,
 	if (len < sizeof tmpbuf)
 		fatalx("lka_expand_format: tmp buffer < rule buffer");
 
-	bzero(tmpbuf, sizeof tmpbuf);
+	memset(tmpbuf, 0, sizeof tmpbuf);
 	pbuf = buf;
 	ptmp = tmpbuf;
 	ret = tmpret = 0;

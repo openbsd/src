@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.73 2013/12/06 14:26:25 eric Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.74 2013/12/26 17:25:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -172,7 +172,7 @@ enqueue(int argc, char *argv[])
 	int			 save_argc;
 	char			**save_argv;
 
-	bzero(&msg, sizeof(msg));
+	memset(&msg, 0, sizeof(msg));
 	time(&timestamp);
 
 	save_argc = argc;
@@ -484,7 +484,7 @@ parse_message(FILE *fin, int get_from, int tflag, FILE *fout)
 	uint	 i, cur = HDR_NONE;
 	uint	 header_seen = 0, header_done = 0;
 
-	bzero(&pstate, sizeof(pstate));
+	memset(&pstate, 0, sizeof(pstate));
 	for (;;) {
 		buf = fgetln(fin, &len);
 		if (buf == NULL && ferror(fin))

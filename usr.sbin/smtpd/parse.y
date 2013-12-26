@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.134 2013/12/05 15:04:09 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.135 2013/12/26 17:25:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -529,7 +529,7 @@ relay_via	: opt_relay_common relay_via
 		;
 
 main		: BOUNCEWARN {
-			bzero(conf->sc_bounce_warn, sizeof conf->sc_bounce_warn);
+			memset(conf->sc_bounce_warn, 0, sizeof conf->sc_bounce_warn);
 		} bouncedelays
 		| QUEUE COMPRESSION {
 			conf->sc_queue_flags |= QUEUE_COMPRESSION;
@@ -543,7 +543,7 @@ main		: BOUNCEWARN {
 				YYERROR;
 			}
 			conf->sc_queue_key = strdup(password);
-			bzero(password, strlen(password));
+			memset(password, 0, strlen(password));
 			if (conf->sc_queue_key == NULL) {
 				yyerror("memory exhausted");
 				YYERROR;
@@ -607,8 +607,8 @@ main		: BOUNCEWARN {
 		} limits_mta
 		| LIMIT SCHEDULER limits_scheduler
 		| LISTEN {
-			bzero(&l, sizeof l);
-			bzero(&listen_opts, sizeof listen_opts);
+			memset(&l, 0, sizeof l);
+			memset(&listen_opts, 0, sizeof listen_opts);
 			listen_opts.family = AF_UNSPEC;
 		} ON STRING listen {
 			listen_opts.ifx = $4;
@@ -1517,7 +1517,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 		return (-1);
 
 	conf = x_conf;
-	bzero(conf, sizeof(*conf));
+	memset(conf, 0, sizeof(*conf));
 
 	strlcpy(conf->sc_hostname, hostname, sizeof(conf->sc_hostname));
 
@@ -1809,7 +1809,7 @@ host_v4(const char *s, in_port_t port)
 	struct sockaddr_in	*sain;
 	struct listener		*h;
 
-	bzero(&ina, sizeof(ina));
+	memset(&ina, 0, sizeof(ina));
 	if (inet_pton(AF_INET, s, &ina) != 1)
 		return (NULL);
 
@@ -1830,7 +1830,7 @@ host_v6(const char *s, in_port_t port)
 	struct sockaddr_in6	*sin6;
 	struct listener		*h;
 
-	bzero(&ina6, sizeof(ina6));
+	memset(&ina6, 0, sizeof(ina6));
 	if (inet_pton(AF_INET6, s, &ina6) != 1)
 		return (NULL);
 
@@ -1853,7 +1853,7 @@ host_dns(struct listenerlist *al, struct listen_opts *lo)
 	struct sockaddr_in6	*sin6;
 	struct listener		*h;
 
-	bzero(&hints, sizeof(hints));
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM; /* DUMMY */
 	error = getaddrinfo(lo->ifx, NULL, &hints, &res0);
