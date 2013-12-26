@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.21 2013/11/02 00:42:16 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.22 2013/12/26 18:52:09 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -458,7 +458,7 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_3b)
 
 	ljmp	$0x0400, $hib_hlt_real
 
-_ACPI_TRMP_LABEL(hib_hlt_real)
+_ACPI_TRMP_OFFSET(hib_hlt_real)
 	hlt
 	ljmp 	$0x0400, $hib_hlt_real
 
