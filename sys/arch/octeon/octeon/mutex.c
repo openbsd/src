@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.5 2011/04/21 04:34:12 miod Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.6 2013/12/26 21:02:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -39,12 +39,15 @@ try_lock(struct mutex *mtx)
 
         asm volatile (
 		".set noreorder\n"
-		"ll	%0, %2\n"
-		"bnez	%0, 1f\n"
-		"nop\n"
-		"li	%1, 1\n"
-		"sc	%1, %2\n"
 		"1:\n"
+		"ll	%0, %2\n"		/* tmp = mtx->mtx_lock */
+		"bnez	%0, 2f\n"
+		" li	%1, 0\n"		/* ret = 0 */
+		"li	%1, 1\n"		/* ret = 1 */
+		"sc	%1, %2\n"		/* mtx->mtx_lock = 1 */
+		"beqz	%1, 1b\n"		/* update failed */
+		" nop\n"
+		"2:\n"
 		".set reorder\n"
 		: "+r"(tmp), "+r"(ret)
 		: "m"(mtx->mtx_lock));
