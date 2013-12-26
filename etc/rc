@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.409 2013/12/17 09:19:45 halex Exp $
+#	$OpenBSD: rc,v 1.410 2013/12/26 18:05:31 espie Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -511,7 +511,11 @@ rm -f /etc/rc.firsttime.run
 if [ -n "${pkg_scripts}" ]; then
 	echo -n 'starting package daemons:'
 	for _r in $pkg_scripts; do
-		[ -x /etc/rc.d/${_r} ] && start_daemon ${_r}
+		if [ -x /etc/rc.d/${_r} ]; then
+			start_daemon ${_r}
+		else
+			echo -n " ${_r}(absent)"
+		fi
 	done
 	echo '.'
 fi
