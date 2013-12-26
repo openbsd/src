@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.148 2013/10/17 16:27:47 bluhm Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.149 2013/12/26 07:17:15 espie Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1684,10 +1684,7 @@ nfs_link(void *v)
 
 	if (dvp->v_mount != vp->v_mount) {
 		pool_put(&namei_pool, cnp->cn_pnbuf);
-		if (vp == dvp)
-			vrele(dvp);
-		else
-			vput(dvp);
+		vput(dvp);
 		return (EXDEV);
 	}
 
