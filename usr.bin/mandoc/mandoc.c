@@ -1,4 +1,4 @@
-/*	$Id: mandoc.c,v 1.41 2013/12/25 22:45:16 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.42 2013/12/26 02:55:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -161,11 +161,15 @@ mandoc_escape(const char const **end, const char const **start, int *sz)
 		/* FALLTHROUGH */
 	case ('b'):
 		/* FALLTHROUGH */
+	case ('B'):
+		/* FALLTHROUGH */
 	case ('D'):
 		/* FALLTHROUGH */
 	case ('o'):
 		/* FALLTHROUGH */
 	case ('R'):
+		/* FALLTHROUGH */
+	case ('w'):
 		/* FALLTHROUGH */
 	case ('X'):
 		/* FALLTHROUGH */
@@ -181,8 +185,6 @@ mandoc_escape(const char const **end, const char const **start, int *sz)
 	 * These escapes are of the form \X'N', where 'X' is the trigger
 	 * and 'N' resolves to a numerical expression.
 	 */
-	case ('B'):
-		/* FALLTHROUGH */
 	case ('h'):
 		/* FALLTHROUGH */
 	case ('H'):
@@ -190,19 +192,15 @@ mandoc_escape(const char const **end, const char const **start, int *sz)
 	case ('L'):
 		/* FALLTHROUGH */
 	case ('l'):
-		gly = ESCAPE_NUMBERED;
 		/* FALLTHROUGH */
 	case ('S'):
 		/* FALLTHROUGH */
 	case ('v'):
 		/* FALLTHROUGH */
-	case ('w'):
-		/* FALLTHROUGH */
 	case ('x'):
 		if ('\'' != **start)
 			return(ESCAPE_ERROR);
-		if (ESCAPE_ERROR == gly)
-			gly = ESCAPE_IGNORE;
+		gly = ESCAPE_IGNORE;
 		*start = ++*end;
 		term = '\'';
 		break;
