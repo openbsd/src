@@ -1,0 +1,5 @@
+# $OpenBSD: mk34,v 1.1 2013/12/26 10:25:07 espie Exp $
+# should produce similar error message with -j and without -j
+
+thing.o: ${.PREFIX}.vis
+	@echo trythis
