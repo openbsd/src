@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_nlist.c,v 1.1 2013/12/27 14:12:56 jsing Exp $	*/
+/*	$OpenBSD: i386_nlist.c,v 1.2 2013/12/27 15:02:49 jsing Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,242 +28,27 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#define ELFSIZE 32
+
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
-#include <errno.h>
+#include <elf_abi.h>
 #include <fcntl.h>
-#include <stdio.h>
+#include <nlist.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <a.out.h>		/* pulls in nlist.h */
 
-#ifdef _NLIST_DO_ELF
-#include <elf_abi.h>
-#endif
+static int	__elf_fdnlist(int, struct nlist *);
+static int	__elf_is_okay__(Elf_Ehdr *ehdr);
 
-#ifdef _NLIST_DO_ECOFF
-#include <sys/exec_ecoff.h>
-#endif
+int	nlist_elf32(const char *, struct nlist *);
 
-int	__fdnlist(int, struct nlist *);
-int	__aout_fdnlist(int, struct nlist *);
-int	__ecoff_fdnlist(int, struct nlist *);
-int	__elf_fdnlist(int, struct nlist *);
-#ifdef _NLIST_DO_ELF
-int	__elf_is_okay__(Elf_Ehdr *ehdr);
-#endif
+#define	ISLAST(p)	(p->n_name == 0 || p->n_name[0] == 0)
 
-#define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
-
-#ifdef _NLIST_DO_AOUT
-int
-__aout_fdnlist(int fd, struct nlist *list)
-{
-	struct nlist *p, *s;
-	char *strtab;
-	off_t symoff, stroff;
-	u_long symsize;
-	int nent, cc;
-	int strsize, usemalloc = 0;
-	struct nlist nbuf[1024];
-	struct exec exec;
-
-	if (pread(fd, &exec, sizeof(exec), (off_t)0) != sizeof(exec) ||
-	    N_BADMAG(exec) || exec.a_syms == 0)
-		return (-1);
-
-	stroff = N_STROFF(exec);
-	symoff = N_SYMOFF(exec);
-	symsize = exec.a_syms;
-
-	/* Read in the size of the string table. */
-	if (pread(fd, (void *)&strsize, sizeof(strsize), stroff) !=
-	    sizeof(strsize))
-		return (-1);
-	else
-		stroff += sizeof(strsize);
-
-	/*
-	 * Read in the string table.  We try mmap, but that will fail
-	 * for /dev/ksyms so fall back on malloc.  Since OpenBSD's malloc(3)
-	 * returns memory to the system on free this does not cause bloat.
-	 */
-	strsize -= sizeof(strsize);
-	strtab = mmap(NULL, (size_t)strsize, PROT_READ, MAP_SHARED|MAP_FILE,
-	    fd, stroff);
-	if (strtab == MAP_FAILED) {
-		usemalloc = 1;
-		if ((strtab = (char *)malloc(strsize)) == NULL)
-			return (-1);
-		errno = EIO;
-		if (pread(fd, strtab, strsize, stroff) != strsize) {
-			nent = -1;
-			goto aout_done;
-		}
-	}
-
-	/*
-	 * clean out any left-over information for all valid entries.
-	 * Type and value defined to be 0 if not found; historical
-	 * versions cleared other and desc as well.  Also figure out
-	 * the largest string length so don't read any more of the
-	 * string table than we have to.
-	 *
-	 * XXX clearing anything other than n_type and n_value violates
-	 * the semantics given in the man page.
-	 */
-	nent = 0;
-	for (p = list; !ISLAST(p); ++p) {
-		p->n_type = 0;
-		p->n_other = 0;
-		p->n_desc = 0;
-		p->n_value = 0;
-		++nent;
-	}
-
-	while (symsize > 0) {
-		cc = MIN(symsize, sizeof(nbuf));
-		if (pread(fd, nbuf, cc, symoff) != cc)
-			break;
-		symsize -= cc;
-		symoff += cc;
-		for (s = nbuf; cc > 0; ++s, cc -= sizeof(*s)) {
-			char *sname = strtab + s->n_un.n_strx - sizeof(int);
-
-			if (s->n_un.n_strx == 0 || (s->n_type & N_STAB) != 0)
-				continue;
-			for (p = list; !ISLAST(p); p++) {
-				char *pname = p->n_un.n_name;
-
-				if (*sname != '_' && *pname == '_')
-					pname++;
-				if (!strcmp(sname, pname)) {
-					p->n_value = s->n_value;
-					p->n_type = s->n_type;
-					p->n_desc = s->n_desc;
-					p->n_other = s->n_other;
-					if (--nent <= 0)
-						break;
-				}
-			}
-		}
-	}
-aout_done:
-	if (usemalloc)
-		free(strtab);
-	else
-		munmap(strtab, strsize);
-	return (nent);
-}
-#endif /* _NLIST_DO_AOUT */
-
-#ifdef _NLIST_DO_ECOFF
-#define check(off, size)	((off < 0) || (off + size > mappedsize))
-#define	BAD			do { rv = -1; goto out; } while (0)
-#define	BADUNMAP		do { rv = -1; goto unmap; } while (0)
-
-int
-__ecoff_fdnlist(int fd, struct nlist *list)
-{
-	struct nlist *p;
-	struct ecoff_exechdr *exechdrp;
-	struct ecoff_symhdr *symhdrp;
-	struct ecoff_extsym *esyms;
-	struct stat st;
-	char *mappedfile;
-	size_t mappedsize;
-	u_long symhdroff, extstroff;
-	u_int symhdrsize;
-	int rv, nent;
-	long i, nesyms;
-
-	rv = -3;
-
-	if (fstat(fd, &st) < 0)
-		BAD;
-	if (st.st_size > SIZE_T_MAX) {
-		errno = EFBIG;
-		BAD;
-	}
-	mappedsize = st.st_size;
-	mappedfile = mmap(NULL, mappedsize, PROT_READ, MAP_SHARED|MAP_FILE,
-	    fd, 0);
-	if (mappedfile == MAP_FAILED)
-		BAD;
-
-	if (check(0, sizeof *exechdrp))
-		BADUNMAP;
-	exechdrp = (struct ecoff_exechdr *)&mappedfile[0];
-
-	if (ECOFF_BADMAG(exechdrp))
-		BADUNMAP;
-
-	symhdroff = exechdrp->f.f_symptr;
-	symhdrsize = exechdrp->f.f_nsyms;
-
-	if (check(symhdroff, sizeof *symhdrp) ||
-	    sizeof *symhdrp != symhdrsize)
-		BADUNMAP;
-	symhdrp = (struct ecoff_symhdr *)&mappedfile[symhdroff];
-
-	nesyms = symhdrp->esymMax;
-	if (check(symhdrp->cbExtOffset, nesyms * sizeof *esyms))
-		BADUNMAP;
-	esyms = (struct ecoff_extsym *)&mappedfile[symhdrp->cbExtOffset];
-	extstroff = symhdrp->cbSsExtOffset;
-
-	/*
-	 * clean out any left-over information for all valid entries.
-	 * Type and value defined to be 0 if not found; historical
-	 * versions cleared other and desc as well.
-	 *
-	 * XXX clearing anything other than n_type and n_value violates
-	 * the semantics given in the man page.
-	 */
-	nent = 0;
-	for (p = list; !ISLAST(p); ++p) {
-		p->n_type = 0;
-		p->n_other = 0;
-		p->n_desc = 0;
-		p->n_value = 0;
-		++nent;
-	}
-
-	for (i = 0; i < nesyms; i++) {
-		for (p = list; !ISLAST(p); p++) {
-			char *nlistname;
-			char *symtabname;
-
-			nlistname = p->n_un.n_name;
-			if (*nlistname == '_')
-				nlistname++;
-			symtabname =
-			    &mappedfile[extstroff + esyms[i].es_strindex];
-
-			if (!strcmp(symtabname, nlistname)) {
-				p->n_value = esyms[i].es_value;
-				p->n_type = N_EXT;		/* XXX */
-				p->n_desc = 0;			/* XXX */
-				p->n_other = 0;			/* XXX */
-				if (--nent <= 0)
-					break;
-			}
-		}
-	}
-	rv = nent;
-
-unmap:
-	munmap(mappedfile, mappedsize);
-out:
-	return (rv);
-}
-#endif /* _NLIST_DO_ECOFF */
-
-#ifdef _NLIST_DO_ELF
 /*
  * __elf_is_okay__ - Determine if ehdr really
  * is ELF and valid for the target platform.
@@ -271,7 +56,7 @@ out:
  * WARNING:  This is NOT a ELF ABI function and
  * as such its use should be restricted.
  */
-int
+static int
 __elf_is_okay__(Elf_Ehdr *ehdr)
 {
 	int retval = 0;
@@ -302,7 +87,7 @@ __elf_is_okay__(Elf_Ehdr *ehdr)
 	return retval;
 }
 
-int
+static int
 __elf_fdnlist(int fd, struct nlist *list)
 {
 	struct nlist *p;
@@ -334,7 +119,8 @@ __elf_fdnlist(int fd, struct nlist *list)
 		if ((shdr = malloc(shdr_size)) == NULL)
 			return (-1);
 
-		if (pread(fd, shdr, shdr_size, (off_t)ehdr.e_shoff) != shdr_size) {
+		if (pread(fd, shdr, shdr_size, (off_t)ehdr.e_shoff) !=
+		    shdr_size) {
 			free(shdr);
 			return (-1);
 		}
@@ -371,7 +157,8 @@ __elf_fdnlist(int fd, struct nlist *list)
 	if (usemalloc) {
 		if ((strtab = malloc(symstrsize)) == NULL)
 			return (-1);
-		if (pread(fd, strtab, symstrsize, (off_t)symstroff) != symstrsize) {
+		if (pread(fd, strtab, symstrsize, (off_t)symstroff) !=
+		    symstrsize) {
 			free(strtab);
 			return (-1);
 		}
@@ -429,7 +216,7 @@ __elf_fdnlist(int fd, struct nlist *list)
 				 *       for both 'foo' and '_foo' in the
 				 *	 table and 'foo' is first?
 				 */
-				sym = p->n_un.n_name;
+				sym = p->n_name;
 				if (strcmp(&strtab[soff], sym) != 0 &&
 				    (sym[0] != '_' ||
 				     strcmp(&strtab[soff], sym + 1) != 0))
@@ -483,46 +270,17 @@ elf_done:
 		munmap(strtab, symstrsize);
 	return (nent);
 }
-#endif /* _NLIST_DO_ELF */
-
-
-static struct nlist_handlers {
-	int	(*fn)(int fd, struct nlist *list);
-} nlist_fn[] = {
-#ifdef _NLIST_DO_AOUT
-	{ __aout_fdnlist },
-#endif
-#ifdef _NLIST_DO_ELF
-	{ __elf_fdnlist },
-#endif
-#ifdef _NLIST_DO_ECOFF
-	{ __ecoff_fdnlist },
-#endif
-};
 
 int
-__fdnlist(int fd, struct nlist *list)
-{
-	int n = -1, i;
-
-	for (i = 0; i < (int)(sizeof(nlist_fn)/sizeof(nlist_fn[0])); i++) {
-		n = (nlist_fn[i].fn)(fd, list);
-		if (n != -1)
-			break;
-	}
-	return (n);
-}
-
-
-int
-nlist(const char *name, struct nlist *list)
+nlist_elf32(const char *name, struct nlist *list)
 {
 	int fd, n;
 
 	fd = open(name, O_RDONLY, 0);
 	if (fd < 0)
 		return (-1);
-	n = __fdnlist(fd, list);
-	(void)close(fd);
+	n = __elf_fdnlist(fd, list);
+	close(fd);
+
 	return (n);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.3 2013/12/27 14:12:56 jsing Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.4 2013/12/27 15:02:49 jsing Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -40,7 +40,6 @@
 #include <sys/param.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
-#include <sys/exec_elf.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <sys/reboot.h>
@@ -57,7 +56,7 @@
 #include <machine/cpu.h>
 #include <machine/biosvar.h>
 
-#include <a.out.h>
+#include <elf_abi.h>
 #include <err.h>
 #include <fcntl.h>
 #include <nlist.h>
@@ -69,10 +68,6 @@
 
 #include "installboot.h"
 #include "i386_installboot.h"
-
-#ifdef NLIST
-#include "i386_nlist.c"
-#endif
 
 char	*blkstore;
 size_t	blksize;
@@ -530,9 +525,9 @@ pbr_set_symbols(char *fname, char *proto, struct sym_data *sym_list)
 		if (nl == NULL)
 			err(1, NULL);
 
-		nl->n_un.n_name = sym->sym_name;
+		nl->n_name = sym->sym_name;
 
-		if (nlist(fname, nl) != 0)
+		if (nlist_elf32(fname, nl) != 0)
 			errx(1, "%s: symbol %s not found",
 			    fname, sym->sym_name);
 

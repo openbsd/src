@@ -49,6 +49,9 @@ struct  sym_data {
 
 extern struct sym_data pbr_symbols[];
 
+struct nlist;
+
+int	nlist_elf32(const char *, struct nlist *);
 void	pbr_set_symbols(char *, char *, struct sym_data *);
 void	sym_set_value(struct sym_data *, char *, u_int32_t);
 void	write_bootblocks(int, char *, struct disklabel *);
