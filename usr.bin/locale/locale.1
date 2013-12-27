@@ -1,4 +1,4 @@
-.\" $OpenBSD: locale.1,v 1.2 2013/06/03 17:06:29 jmc Exp $
+.\" $OpenBSD: locale.1,v 1.3 2013/12/27 00:48:18 schwarze Exp $
 .\"
 .\" Copyright 2013 Stefan Sperling <stsp@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2013 $
+.Dd $Mdocdate: December 27 2013 $
 .Dt LOCALE 1
 .Os
 .Sh NAME
@@ -61,5 +61,20 @@ The
 .Nm
 utility implements a subset of the specification given in
 .St -p1003.1-2008 .
+.Sh HISTORY
+The
+.Nm
+utility was first standardized in the
+.St -xpg4 .
+.Pp
+It was rewritten from scratch for
+.Ox 5.4
+during the 2013 Toronto hackathon.
+.Sh AUTHORS
+.An Stefan Sperling Aq Mt stsp@openbsd.org
+with contributions from
+.An Philip Guenther Aq Mt guenther@openbsd.org
+and
+.An Jeremie Courreges-Anglas Aq Mt jca@openbsd.org .
 .Sh BUGS
 The list of supported locales is perpetually incomplete.
