@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.1 2013/12/27 13:52:40 jsing Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.2 2013/12/27 14:03:00 jsing Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -346,13 +346,13 @@ static int
 getbootparams(char *boot, int devfd, struct disklabel *dl)
 {
 	int		fd;
-	struct stat	statbuf, sb;
-	struct statfs	statfsbuf;
+	struct stat	dsb, fsb;
+	struct statfs	fssb;
 	struct partition *pp;
 	struct fs	*fs;
 	char		*buf;
 	u_int		blk, *ap;
-	struct ufs1_dinode	*ip;
+	struct ufs1_dinode *ip;
 	int		ndb;
 	int		mib[3];
 	size_t		size;
@@ -372,11 +372,11 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	if ((fd = open(boot, O_RDONLY)) < 0)
 		err(1, "open: %s", boot);
 
-	if (fstatfs(fd, &statfsbuf) != 0)
+	if (fstatfs(fd, &fssb) != 0)
 		err(1, "statfs: %s", boot);
 
-	if (strncmp(statfsbuf.f_fstypename, "ffs", MFSNAMELEN) &&
-	    strncmp(statfsbuf.f_fstypename, "ufs", MFSNAMELEN) )
+	if (strncmp(fssb.f_fstypename, "ffs", MFSNAMELEN) &&
+	    strncmp(fssb.f_fstypename, "ufs", MFSNAMELEN) )
 		errx(1, "%s: not on an FFS filesystem", boot);
 
 #if 0
@@ -394,23 +394,23 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	if (fsync(fd) != 0)
 		err(1, "fsync: %s", boot);
 
-	if (fstat(fd, &statbuf) != 0)
+	if (fstat(fd, &fsb) != 0)
 		err(1, "fstat: %s", boot);
 
-	if (fstat(devfd, &sb) != 0)
+	if (fstat(devfd, &dsb) != 0)
 		err(1, "fstat: %d", devfd);
 
 	/* Check devices. */
 	mib[0] = CTL_MACHDEP;
 	mib[1] = CPU_CHR2BLK;
-	mib[2] = sb.st_rdev;
+	mib[2] = dsb.st_rdev;
 	size = sizeof(dev);
 	if (sysctl(mib, 3, &dev, &size, NULL, 0) >= 0) {
-		if (statbuf.st_dev / MAXPARTITIONS != dev / MAXPARTITIONS)
+		if (fsb.st_dev / MAXPARTITIONS != dev / MAXPARTITIONS)
 			errx(1, "cross-device install");
 	}
 
-	pp = &dl->d_partitions[DISKPART(statbuf.st_dev)];
+	pp = &dl->d_partitions[DISKPART(fsb.st_dev)];
 	close(fd);
 
 	/* Read superblock. */
@@ -428,11 +428,11 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	if ((buf = malloc(fs->fs_bsize)) == NULL)
 		err(1, NULL);
 
-	blk = fsbtodb(fs, ino_to_fsba(fs, statbuf.st_ino));
+	blk = fsbtodb(fs, ino_to_fsba(fs, fsb.st_ino));
 
 	devread(devfd, buf, DL_SECTOBLK(dl, pp->p_offset) + blk,
 	    fs->fs_bsize, "inode");
-	ip = (struct ufs1_dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
+	ip = (struct ufs1_dinode *)(buf) + ino_to_fsbo(fs, fsb.st_ino);
 
 	/*
 	 * Have the inode.  Figure out how many filesystem blocks (not disk
@@ -464,7 +464,7 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 
 	sym_set_value(pbr_symbols, "_p_offset", pp->p_offset);
 	sym_set_value(pbr_symbols, "_inodeblk",
-	    ino_to_fsba(fs, statbuf.st_ino));
+	    ino_to_fsba(fs, fsb.st_ino));
 	ap = ip->di_db;
 	sym_set_value(pbr_symbols, "_inodedbl",
 	    ((((char *)ap) - buf) + INODEOFF));
@@ -477,7 +477,7 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 		    "inode block %lld, offset %u\n",
 		    ffs(fs->fs_fsize / dl->d_secsize) - 1,
 		    pp->p_offset,
-		    ino_to_fsba(fs, statbuf.st_ino),
+		    ino_to_fsba(fs, fsb.st_ino),
 		    (unsigned int)((((char *)ap) - buf) + INODEOFF));
 	}
 
