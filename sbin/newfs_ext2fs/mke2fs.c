@@ -1,4 +1,4 @@
-/* $OpenBSD: mke2fs.c,v 1.5 2013/04/17 03:33:13 deraadt Exp $ */
+/* $OpenBSD: mke2fs.c,v 1.6 2013/12/27 19:17:28 deraadt Exp $ */
 /*	$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $	*/
 
 /*-
@@ -1262,8 +1262,10 @@ alloc(uint32_t size, uint16_t mode)
 #endif
 
 	loc = skpc(~0U, len, bbp);
-	if (loc == 0)
+	if (loc == 0) {
+		free(bbp);
 		return 0;
+	}
 	loc = len - loc;
 	map = bbp[loc];
 	bno = loc * NBBY;
@@ -1271,6 +1273,7 @@ alloc(uint32_t size, uint16_t mode)
 		if ((map & (1 << i)) == 0)
 			goto gotit;
 	}
+	free(bbp);
 	return 0;
 	
  gotit:
