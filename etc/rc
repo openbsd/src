@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.413 2013/12/27 22:15:40 deraadt Exp $
+#	$OpenBSD: rc,v 1.414 2013/12/27 22:33:27 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -101,16 +101,13 @@ wsconsctl_conf()
 
 random_seed()
 {
-	if [ -f /var/db/host.random ]; then
-		dd if=/var/db/host.random of=/dev/random bs=65536 count=1 \
-		    > /dev/null 2>&1
-		chmod 600 /var/db/host.random >/dev/null 2>&1
-
-		# reset seed file, so that if a shutdown-less reboot occurs,
-		# the next seed is not a repeat
-		dd if=/dev/random of=/var/db/host.random bs=65536 count=1 \
-		    > /dev/null 2>&1
-	fi
+	{
+		# push the old seed into the kernel
+		dd if=/var/db/host.random of=/dev/random bs=65536 count=1
+		chmod 600 /var/db/host.random
+		# ... and create a future seed
+		dd if=/dev/random of=/var/db/host.random bs=65536 count=1
+	} > /dev/null 2>&1
 }
 
 fill_baddynamic()
