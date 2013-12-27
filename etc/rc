@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.416 2013/12/27 23:40:29 rpe Exp $
+#	$OpenBSD: rc,v 1.417 2013/12/27 23:43:39 rpe Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -232,8 +232,9 @@ fi
 if [ X"$1" = X"shutdown" ]; then
 	random_seed
 
-	_c=$?
-	if [ ${_c} -eq 0 ]; then
+	chmod 600 /etc/random.seed >/dev/null 2>&1
+	_notsingle=$?   # root is writeable, so we are not single user??
+	if [ ${_notsingle} -eq 0 ]; then
 		if [ -n "${pkg_scripts}" ]; then
 			echo -n 'stopping package daemons:'
 			while [ -n "${pkg_scripts}" ]; do
