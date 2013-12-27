@@ -175,7 +175,6 @@
 ./sbin/tunefs
 ./sbin/umount
 ./sbin/vnconfig
-./stand
 ./tmp
 ./usr
 ./usr/bin
