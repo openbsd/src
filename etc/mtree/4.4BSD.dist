@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.239 2013/12/01 22:11:22 jasper Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.240 2013/12/27 17:41:30 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -266,11 +266,6 @@ root		mode=0700
 # ./sbin
 sbin
 # ./sbin
-..
-
-# ./stand
-stand
-# ./stand
 ..
 
 # ./tmp
