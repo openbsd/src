@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.410 2013/12/26 18:05:31 espie Exp $
+#	$OpenBSD: rc,v 1.411 2013/12/27 04:21:03 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -102,13 +102,13 @@ wsconsctl_conf()
 random_seed()
 {
 	if [ -f /var/db/host.random ]; then
-		dd if=/var/db/host.random of=/dev/arandom bs=65536 count=1 \
+		dd if=/var/db/host.random of=/dev/random bs=65536 count=1 \
 		    > /dev/null 2>&1
 		chmod 600 /var/db/host.random >/dev/null 2>&1
 
 		# reset seed file, so that if a shutdown-less reboot occurs,
 		# the next seed is not a repeat
-		dd if=/dev/arandom of=/var/db/host.random bs=65536 count=1 \
+		dd if=/dev/random of=/var/db/host.random bs=65536 count=1 \
 		    > /dev/null 2>&1
 	fi
 }
@@ -230,7 +230,7 @@ fi
 . /etc/rc.conf
 
 if [ X"$1" = X"shutdown" ]; then
-	dd if=/dev/arandom of=/var/db/host.random bs=65536 count=1 >/dev/null 2>&1
+	dd if=/dev/random of=/var/db/host.random bs=65536 count=1 >/dev/null 2>&1
 	chmod 600 /var/db/host.random >/dev/null 2>&1
 	_c=$?
 	if [ ${_c} -eq 0 -a -n "${pkg_scripts}" ]; then
@@ -358,7 +358,7 @@ if [ -f /etc/resolv.conf.save ]; then
 	touch /etc/resolv.conf
 fi
 . /etc/netstart
-echo rekey > /dev/arandom	# any write triggers an RC4 rekey
+echo rekey > /dev/random	# any write triggers an RC4 rekey
 
 if [ X"${pf}" != X"NO" ]; then
 	if [ -f ${pf_rules} ]; then
