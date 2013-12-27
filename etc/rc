@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.415 2013/12/27 22:34:40 deraadt Exp $
+#	$OpenBSD: rc,v 1.416 2013/12/27 23:40:29 rpe Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -230,8 +230,8 @@ fi
 . /etc/rc.conf
 
 if [ X"$1" = X"shutdown" ]; then
-	dd if=/dev/random of=/var/db/host.random bs=65536 count=1 >/dev/null 2>&1
-	chmod 600 /var/db/host.random >/dev/null 2>&1
+	random_seed
+
 	_c=$?
 	if [ ${_c} -eq 0 ]; then
 		if [ -n "${pkg_scripts}" ]; then
