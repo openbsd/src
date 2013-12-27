@@ -1,0 +1,125 @@
+/*
+ * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include <sys/param.h>
+#include <sys/disklabel.h>
+#include <sys/dkio.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "installboot.h"
+
+int
+bootstrap(int devfd, char *dev, char *bootfile)
+{
+	struct disklabel dl;
+	struct disklabel *lp;
+	struct partition *pp;
+	char *boot, *p, part;
+	u_int64_t bootend;
+	struct stat sb;
+	int bootsize;
+	int bf, i;
+
+	/*
+	 * Install bootstrap code onto the given disk, preserving the
+	 * existing disklabel.
+	 */
+
+	/* Read disklabel from disk. */
+	if (ioctl(devfd, DIOCGDINFO, &dl) == -1)
+		err(1, "disklabel");
+	if (dl.d_secsize == 0) {
+		warnx("disklabel has sector size of 0, assuming %d", DEV_BSIZE);
+		dl.d_secsize = DEV_BSIZE;
+	}
+
+	/* Read bootstrap file. */
+	if (verbose)
+		fprintf(stderr, "reading bootstrap from %s\n", bootfile);
+	bf = open(bootfile, O_RDONLY);
+	if (bf < 0)
+		err(1, "open %s", bootfile);
+	if (fstat(bf, &sb) != 0)
+		err(1, "fstat %s", bootfile);
+	bootsize = sb.st_size;
+	bootend = howmany((u_int64_t)bootsize, dl.d_secsize);
+	boot = malloc(bootsize);
+	if (boot == NULL)
+		err(1, "malloc");
+	if (read(bf, boot, bootsize) != bootsize)
+		err(1, "read");
+	if (verbose)
+		fprintf(stderr, "bootstrap is %lld bytes (%llu sectors)\n",
+		    bootsize, bootend);
+	close(bf);
+
+	/*
+	 * Check that the bootstrap will fit - partitions must not overlap,
+	 * or if they do, the partition type must be either FS_BOOT or
+	 * FS_UNUSED. The 'c' partition will always overlap and is ignored.
+	 */
+	if (verbose)
+		fprintf(stderr, "ensuring used partitions do not overlap "
+		    "with bootstrap sectors 0-%lld\n", bootend);
+	for (i = 0; i < dl.d_npartitions; i++) {
+		part = 'a' + i;
+		pp = &dl.d_partitions[i];
+		if (i == RAW_PART)
+			continue;
+		if (DL_GETPSIZE(pp) == 0)
+			continue;
+		if (bootend <= DL_GETPOFFSET(pp))
+			continue;
+		switch (pp->p_fstype) {
+		case FS_BOOT:
+			break;
+		case FS_UNUSED:
+			warnx("bootstrap overlaps with unused partition %c",
+			    part);
+			break;
+		default:
+			errx(1, "bootstrap overlaps with partition %c", part);
+		}
+	}
+
+	/* Make sure the bootstrap has left space for the disklabel. */
+        lp = (struct disklabel *)(boot + (LABELSECTOR * dl.d_secsize) +
+	    LABELOFFSET);
+	for (i = 0, p = (char *)lp; i < sizeof(*lp); i++)
+		if (p[i] != 0)
+			errx(1, "bootstrap has data in disklabel area");
+
+	/* Patch the disklabel into the bootstrap code. */
+	memcpy(lp, &dl, sizeof(dl));
+
+	/* Write the bootstrap out to the disk. */
+	if (lseek(devfd, 0, SEEK_SET) != 0)
+		err(1, "lseek");
+	if (verbose)
+		fprintf(stderr, "%s bootstrap to disk\n",
+		    (nowrite ? "would write" : "writing"));
+	if (nowrite)
+		return;
+	if (write(devfd, boot, bootsize) != bootsize)
+		err(1, "write");
+}
