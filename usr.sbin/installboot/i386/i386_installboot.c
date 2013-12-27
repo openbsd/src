@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.2 2013/12/27 14:03:00 jsing Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.3 2013/12/27 14:12:56 jsing Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -35,6 +35,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define ELFSIZE 32
+
 #include <sys/param.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
@@ -67,6 +69,10 @@
 
 #include "installboot.h"
 #include "i386_installboot.h"
+
+#ifdef NLIST
+#include "i386_nlist.c"
+#endif
 
 char	*blkstore;
 size_t	blksize;

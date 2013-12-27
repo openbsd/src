@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1 2013/12/27 13:52:40 jsing Exp $
+#	$OpenBSD: Makefile,v 1.2 2013/12/27 14:12:56 jsing Exp $
 
 NOMAN=
 
-.if (${MACHINE} == "i386")
+.if (${MACHINE} == "amd64" || ${MACHINE} == "i386")
 
 PROG=		installboot
 
