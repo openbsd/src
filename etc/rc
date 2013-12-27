@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.414 2013/12/27 22:33:27 deraadt Exp $
+#	$OpenBSD: rc,v 1.415 2013/12/27 22:34:40 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -107,6 +107,9 @@ random_seed()
 		chmod 600 /var/db/host.random
 		# ... and create a future seed
 		dd if=/dev/random of=/var/db/host.random bs=65536 count=1
+		# and create a seed file for the boot-loader
+		dd if=/dev/random of=/etc/random.seed bs=512 count=1
+		chmod 600 /etc/random.seed
 	} > /dev/null 2>&1
 }
 
