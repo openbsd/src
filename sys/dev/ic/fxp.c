@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.114 2013/12/06 21:03:03 deraadt Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.115 2013/12/28 03:34:59 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -299,7 +299,6 @@ fxp_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_WAKEUP:
-		rv = config_activate_children(self, act);
 		if (ifp->if_flags & IFF_UP)
 			fxp_wakeup(sc);
 		break;

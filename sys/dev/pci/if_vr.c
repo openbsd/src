@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.131 2013/12/06 21:03:04 deraadt Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.132 2013/12/28 03:34:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -705,7 +705,6 @@ vr_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
-		rv = config_activate_children(self, act);
 		if (ifp->if_flags & IFF_UP)
 			vr_init(sc);
 		break;

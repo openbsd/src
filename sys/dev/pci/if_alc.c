@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.25 2013/12/06 21:03:03 deraadt Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.26 2013/12/28 03:34:53 deraadt Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -939,7 +939,6 @@ alc_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
-		rv = config_activate_children(self, act);
 		if (ifp->if_flags & IFF_UP)
 			alc_init(ifp);
 		break;

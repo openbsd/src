@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.344 2013/12/22 20:39:23 kettenis Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.345 2013/12/28 03:34:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3051,7 +3051,6 @@ bge_activate(struct device *self, int act)
 	case DVACT_RESUME:
 		if (ifp->if_flags & IFF_UP)
 			bge_init(sc);
-		rv = config_activate_children(self, act);
 		break;
 	default:
 		rv = config_activate_children(self, act);
