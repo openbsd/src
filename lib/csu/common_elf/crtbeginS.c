@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbeginS.c,v 1.13 2012/09/08 20:08:33 matthew Exp $	*/
+/*	$OpenBSD: crtbeginS.c,v 1.14 2013/12/28 18:38:42 kettenis Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -72,7 +72,15 @@ __asm(".hidden  __dso_handle");
 
 long __guard_local __dso_hidden __attribute__((section(".openbsd.randomdata")));
 
+extern int __cxa_atexit(void (*)(void *), void *, void *) __attribute__((weak));
 extern void __cxa_finalize(void *) __attribute__((weak));
+
+int
+atexit(void (*fn)(void))
+{
+	return (__cxa_atexit((void (*)(void *))fn, NULL, &__dso_handle));
+}
+asm(".hidden atexit");
 #endif
 
 static init_f __CTOR_LIST__[1]
