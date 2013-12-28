@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.55 2013/12/13 20:48:39 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.56 2013/12/28 01:51:53 martynas Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -188,7 +188,8 @@ long	 random(void);
 char	*setstate(char *);
 void	 srandom(unsigned int);
 
-char	*realpath(const char *, char *);
+char	*realpath(const char *, char *)
+		__attribute__((__bounded__ (__minbytes__,2,1024)));
 
 int	 setkey(const char *);
 

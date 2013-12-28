@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.82 2013/12/04 22:58:24 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.83 2013/12/28 01:51:53 martynas Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -436,8 +436,10 @@ pid_t	 getsid(pid_t);
 #endif
 
 #if __XPG_VISIBLE >= 500
-ssize_t  pread(int, void *, size_t, off_t);
-ssize_t  pwrite(int, const void *, size_t, off_t);
+ssize_t  pread(int, void *, size_t, off_t)
+		__attribute__((__bounded__(__buffer__,2,3)));
+ssize_t  pwrite(int, const void *, size_t, off_t)
+		__attribute__((__bounded__(__buffer__,2,3)));
 int	 ttyname_r(int, char *, size_t)
 	    __attribute__((__bounded__(__string__,2,3)));
 #endif
@@ -468,7 +470,8 @@ int	 seteuid(uid_t);
 int	faccessat(int, const char *, int, int);
 int	fchownat(int, const char *, uid_t, gid_t, int);
 int	linkat(int, const char *, int, const char *, int);
-ssize_t	readlinkat(int, const char *, char *, size_t);
+ssize_t	readlinkat(int, const char *, char *, size_t)
+		__attribute__ ((__bounded__(__string__,3,4)));
 int	symlinkat(const char *, int, const char *);
 int	unlinkat(int, const char *, int);
 #endif
