@@ -2234,7 +2234,9 @@ ccp_fold_builtin (tree stmt, tree fn)
       arg_mask = 1;
       type = 0;
       break;
+#ifndef NO_UNSAFE_BUILTINS
     case BUILT_IN_STRCPY:
+#endif
     case BUILT_IN_STRNCPY:
       arg_mask = 2;
       type = 0;
