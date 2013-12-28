@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlphy.c,v 1.3 2013/05/28 09:46:06 mikeb Exp $	*/
+/*	$OpenBSD: mlphy.c,v 1.4 2013/12/28 03:30:41 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999
@@ -130,8 +130,7 @@ int	mlphy_probe(struct device *, void *, void *);
 void	mlphy_attach(struct device *, struct device *, void *);
 
 struct cfattach mlphy_ca = {
-	sizeof(struct mii_softc), mlphy_probe, mlphy_attach, mii_phy_detach,
-	mii_phy_activate
+	sizeof(struct mii_softc), mlphy_probe, mlphy_attach, mii_phy_detach
 };
 
 struct cfdriver mlphy_cd = {
@@ -185,7 +184,7 @@ mlphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_flags = ma->mii_flags;
 	msc->ml_dev = parent; 
 
-	mii_phy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 #define ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)

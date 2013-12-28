@@ -1,4 +1,4 @@
-/*	$OpenBSD: jmphy.c,v 1.3 2012/10/22 11:01:59 brad Exp $	*/
+/*	$OpenBSD: jmphy.c,v 1.4 2013/12/28 03:30:41 deraadt Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -61,7 +61,7 @@ const struct mii_phy_funcs jmphy_funcs = {
 
 struct cfattach jmphy_ca = {
 	sizeof (struct mii_softc), jmphy_match, jmphy_attach,
-	mii_phy_detach, mii_phy_activate
+	mii_phy_detach
 };
 
 struct cfdriver jmphy_cd = {
@@ -108,7 +108,7 @@ jmphy_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_flags |= MIIF_NOISOLATE | MIIF_NOLOOP;
 
-	jmphy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)

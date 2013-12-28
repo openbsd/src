@@ -1,4 +1,4 @@
-/*	$OpenBSD: sqphy.c,v 1.18 2010/07/23 07:47:13 jsg Exp $	*/
+/*	$OpenBSD: sqphy.c,v 1.19 2013/12/28 03:30:41 deraadt Exp $	*/
 /*	$NetBSD: sqphy.c,v 1.17 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -79,8 +79,7 @@ int	sqphymatch(struct device *, void *, void *);
 void	sqphyattach(struct device *, struct device *, void *);
 
 struct cfattach sqphy_ca = {
-	sizeof(struct mii_softc), sqphymatch, sqphyattach, mii_phy_detach,
-	    mii_phy_activate
+	sizeof(struct mii_softc), sqphymatch, sqphyattach, mii_phy_detach
 };
 
 struct cfdriver sqphy_cd = {

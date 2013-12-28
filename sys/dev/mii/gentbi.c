@@ -1,4 +1,4 @@
-/*	$OpenBSD: gentbi.c,v 1.8 2010/07/23 07:47:13 jsg Exp $	*/
+/*	$OpenBSD: gentbi.c,v 1.9 2013/12/28 03:30:41 deraadt Exp $	*/
 /*	$NetBSD: gentbi.c,v 1.12 2004/04/11 15:40:56 thorpej Exp $	*/
 
 /*-
@@ -81,7 +81,7 @@ void	gentbiattach(struct device *, struct device *, void *);
 
 struct cfattach gentbi_ca = {
 	sizeof(struct mii_softc), gentbimatch, gentbiattach,
-	    mii_phy_detach, mii_phy_activate
+	mii_phy_detach
 };
 
 struct cfdriver gentbi_cd = {

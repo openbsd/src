@@ -1,4 +1,4 @@
-/*	$OpenBSD: iophy.c,v 1.17 2010/07/23 07:47:13 jsg Exp $	*/
+/*	$OpenBSD: iophy.c,v 1.18 2013/12/28 03:30:41 deraadt Exp $	*/
 /*	$NetBSD: iophy.c,v 1.8 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*
@@ -78,8 +78,7 @@ int	iophymatch(struct device *, void *, void *);
 void	iophyattach(struct device *, struct device *, void *);
 
 struct cfattach iophy_ca = {
-	sizeof(struct mii_softc), iophymatch, iophyattach, mii_phy_detach,
-	    mii_phy_activate
+	sizeof(struct mii_softc), iophymatch, iophyattach, mii_phy_detach
 };
 
 struct cfdriver iophy_cd = {

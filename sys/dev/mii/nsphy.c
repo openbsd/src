@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphy.c,v 1.25 2010/07/23 07:47:13 jsg Exp $	*/
+/*	$OpenBSD: nsphy.c,v 1.26 2013/12/28 03:30:41 deraadt Exp $	*/
 /*	$NetBSD: nsphy.c,v 1.25 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -80,8 +80,7 @@ int	nsphymatch(struct device *, void *, void *);
 void	nsphyattach(struct device *, struct device *, void *);
 
 struct cfattach nsphy_ca = {
-	sizeof(struct mii_softc), nsphymatch, nsphyattach, mii_phy_detach,
-	    mii_phy_activate
+	sizeof(struct mii_softc), nsphymatch, nsphyattach, mii_phy_detach
 };
 
 struct cfdriver nsphy_cd = {

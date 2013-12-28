@@ -1,4 +1,4 @@
-/*	$OpenBSD: bmtphy.c,v 1.17 2009/07/25 09:56:24 sthen Exp $	*/
+/*	$OpenBSD: bmtphy.c,v 1.18 2013/12/28 03:30:40 deraadt Exp $	*/
 /*	$NetBSD: bmtphy.c,v 1.17 2005/01/17 13:17:45 scw Exp $	*/
 
 /*-
@@ -52,8 +52,7 @@ int	bmtphymatch(struct device *, void *, void *);
 void	bmtphyattach(struct device *, struct device *, void *);
 
 struct cfattach bmtphy_ca = {
-	sizeof(struct mii_softc), bmtphymatch, bmtphyattach, mii_phy_detach,
-	    mii_phy_activate
+	sizeof(struct mii_softc), bmtphymatch, bmtphyattach, mii_phy_detach
 };
 
 struct cfdriver bmtphy_cd = {

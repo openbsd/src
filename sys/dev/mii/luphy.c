@@ -1,4 +1,4 @@
-/*	$OpenBSD: luphy.c,v 1.3 2005/04/15 00:44:39 brad Exp $	*/
+/*	$OpenBSD: luphy.c,v 1.4 2013/12/28 03:30:41 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004 Marius Strobl
@@ -58,8 +58,7 @@ int	luphymatch(struct device *, void *, void *);
 void	luphyattach(struct device *, struct device *, void *);
 
 struct cfattach luphy_ca = {
-	sizeof(struct mii_softc), luphymatch, luphyattach, mii_phy_detach,
-	    mii_phy_activate
+	sizeof(struct mii_softc), luphymatch, luphyattach, mii_phy_detach
 };
 
 struct cfdriver luphy_cd = {

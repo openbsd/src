@@ -1,4 +1,4 @@
-/*	$OpenBSD: etphy.c,v 1.4 2008/04/02 20:12:58 brad Exp $	*/
+/*	$OpenBSD: etphy.c,v 1.5 2013/12/28 03:30:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -92,7 +92,7 @@ static const struct mii_phydesc etphys[] = {
 
 struct cfattach etphy_ca = {
 	sizeof (struct mii_softc), etphy_match, etphy_attach,
-	mii_phy_detach, mii_phy_activate
+	mii_phy_detach
 };
 
 struct cfdriver etphy_cd = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipgphy.c,v 1.15 2013/03/14 17:02:15 brad Exp $	*/
+/*	$OpenBSD: ipgphy.c,v 1.16 2013/12/28 03:30:41 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -59,8 +59,7 @@ int ipgphy_probe(struct device *, void *, void *);
 void ipgphy_attach(struct device *, struct device *, void *);
 
 struct cfattach ipgphy_ca = {
-	sizeof(struct mii_softc), ipgphy_probe, ipgphy_attach, mii_phy_detach,
-	    mii_phy_activate
+	sizeof(struct mii_softc), ipgphy_probe, ipgphy_attach, mii_phy_detach
 };
 
 struct cfdriver ipgphy_cd = {
@@ -118,13 +117,14 @@ ipgphy_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_flags |= MIIF_NOISOLATE;
 
+	PHY_RESET(sc);
+
 	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
  
 	mii_phy_add_media(sc);
 
-	PHY_RESET(sc);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: urlphy.c,v 1.14 2013/05/28 09:46:06 mikeb Exp $ */
+/*	$OpenBSD: urlphy.c,v 1.15 2013/12/28 03:30:41 deraadt Exp $ */
 /*	$NetBSD: urlphy.c,v 1.1 2002/03/28 21:07:53 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -62,8 +62,7 @@ int urlphy_match(struct device *, void *, void *);
 void urlphy_attach(struct device *, struct device *, void *);
 
 struct cfattach urlphy_ca = {
-	sizeof(struct mii_softc), urlphy_match, urlphy_attach, mii_phy_detach,
-	mii_phy_activate
+	sizeof(struct mii_softc), urlphy_match, urlphy_attach, mii_phy_detach
 };
 
 struct cfdriver urlphy_cd = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tqphy.c,v 1.15 2010/07/23 07:47:13 jsg Exp $	*/
+/*	$OpenBSD: tqphy.c,v 1.16 2013/12/28 03:30:41 deraadt Exp $	*/
 /*	$NetBSD: tqphy.c,v 1.9 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*
@@ -81,8 +81,7 @@ void	tqphyattach(struct device *, struct device *, void *);
 int	tqphydetach(struct device *, int);
 
 struct cfattach tqphy_ca = {
-	sizeof(struct mii_softc), tqphymatch, tqphyattach, mii_phy_detach,
-	    mii_phy_activate
+	sizeof(struct mii_softc), tqphymatch, tqphyattach, mii_phy_detach
 };
 
 struct cfdriver tqphy_cd = {

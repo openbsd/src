@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.31 2013/06/15 20:31:05 kettenis Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.32 2013/12/28 03:30:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -57,8 +57,7 @@ int	rlphymatch(struct device *, void *, void *);
 void	rlphyattach(struct device *, struct device *, void *);
 
 struct cfattach rlphy_ca = {
-	sizeof(struct mii_softc), rlphymatch, rlphyattach, mii_phy_detach,
-	    mii_phy_activate
+	sizeof(struct mii_softc), rlphymatch, rlphyattach, mii_phy_detach
 };
 
 struct cfdriver rlphy_cd = {

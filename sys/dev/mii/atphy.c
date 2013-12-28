@@ -1,4 +1,4 @@
-/*	$OpenBSD: atphy.c,v 1.6 2011/06/17 09:59:52 kevlo Exp $	*/
+/*	$OpenBSD: atphy.c,v 1.7 2013/12/28 03:30:40 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -94,7 +94,7 @@ static const struct mii_phydesc atphys[] = {
 
 struct cfattach atphy_ca = {
 	sizeof (struct mii_softc), atphy_match, atphy_attach,
-	mii_phy_detach, mii_phy_activate
+	mii_phy_detach
 };
 
 struct cfdriver atphy_cd = {

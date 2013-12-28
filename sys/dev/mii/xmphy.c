@@ -1,4 +1,4 @@
-/*	$OpenBSD: xmphy.c,v 1.19 2013/05/28 09:46:06 mikeb Exp $	*/
+/*	$OpenBSD: xmphy.c,v 1.20 2013/12/28 03:30:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -60,8 +60,7 @@ int xmphy_probe(struct device *, void *, void *);
 void xmphy_attach(struct device *, struct device *, void *);
 
 struct cfattach xmphy_ca = {
-	sizeof(struct mii_softc), xmphy_probe, xmphy_attach, mii_phy_detach,
-	    mii_phy_activate
+	sizeof(struct mii_softc), xmphy_probe, xmphy_attach, mii_phy_detach
 };
 
 struct cfdriver xmphy_cd = {

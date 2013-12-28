@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.31 2010/04/20 20:42:16 deraadt Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.32 2013/12/28 03:30:41 deraadt Exp $	*/
 /*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
@@ -242,7 +242,6 @@ void	mii_pollstat(struct mii_data *);
 void	mii_down(struct mii_data *);
 int	mii_anar(int);
 
-int	mii_phy_activate(struct device *, int);
 int	mii_phy_detach(struct device *, int);
 
 const struct mii_phydesc *mii_phy_match(const struct mii_attach_args *,

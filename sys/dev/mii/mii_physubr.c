@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.41 2013/06/25 02:27:44 brad Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.42 2013/12/28 03:30:41 deraadt Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -479,20 +479,6 @@ mii_phy_delete_media(struct mii_softc *sc)
 	struct mii_data *mii = sc->mii_pdata;
 
 	ifmedia_delete_instance(&mii->mii_media, sc->mii_inst);
-}
-
-int
-mii_phy_activate(struct device *self, int act)
-{
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		/* Nothing special to do. */
-		break;
-	}
-
-	return (rv);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlphy.c,v 1.20 2010/07/23 07:47:13 jsg Exp $	*/
+/*	$OpenBSD: tlphy.c,v 1.21 2013/12/28 03:30:41 deraadt Exp $	*/
 /*	$NetBSD: tlphy.c,v 1.26 2000/07/04 03:29:00 thorpej Exp $	*/
 
 /*-
@@ -98,8 +98,7 @@ int	tlphymatch(struct device *, void *, void *);
 void	tlphyattach(struct device *, struct device *, void *);
 
 struct cfattach tlphy_ca = {
-	sizeof(struct tlphy_softc), tlphymatch, tlphyattach, mii_phy_detach,
-	    mii_phy_activate
+	sizeof(struct tlphy_softc), tlphymatch, tlphyattach, mii_phy_detach
 };
 
 int	tlphy_service(struct mii_softc *, struct mii_data *, int);
