@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf64_exec.c,v 1.3 2013/03/21 21:51:01 deraadt Exp $	*/
+/*	$OpenBSD: elf64_exec.c,v 1.4 2013/12/28 21:00:21 kettenis Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -78,6 +78,18 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 			printf("read phdr: %s\n", strerror(errno));
 			return (1);
 		}
+
+		if (phdr.p_type == PT_OPENBSD_RANDOMIZE) {
+			int m, pos;
+
+			/* Fill segment. */
+			for (pos = 0; pos < phdr.p_filesz; pos += m) {
+				m = MIN(phdr.p_filesz - pos, sizeof(rnddata));
+				bcopy(rnddata, (void *)(long)phdr.p_paddr + pos, m);
+			}
+			continue;
+		}
+
 		if (phdr.p_type != PT_LOAD ||
 		    (phdr.p_flags & (PF_W|PF_X)) == 0)
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.19 2013/03/21 21:51:01 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.20 2013/12/28 21:00:21 kettenis Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -81,6 +81,8 @@ char bootdev[128];
 char bootfile[128];
 int boothowto;
 int debug;
+
+char rnddata[BOOTRANDOM_MAX];
 
 int	elf64_exec(int, Elf64_Ehdr *, u_int64_t *, void **, void **);
 
@@ -261,6 +263,30 @@ loadfile(int fd, char *args)
 }
 
 int
+loadrandom(char *path, char *buf, size_t buflen)
+{
+	struct stat sb;
+	int fd, i;
+
+#define O_RDONLY	0
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return -1;
+	if (fstat(fd, &sb) == -1 ||
+	    sb.st_uid != 0 ||
+	    (sb.st_mode & (S_IWOTH|S_IROTH)))
+		goto fail;
+	if (read(fd, buf, buflen) != buflen)
+		goto fail;
+	close(fd);
+ 	return 0;
+fail:
+	close(fd);
+	return (-1);
+}
+
+int
 main()
 {
 	extern char version[];
@@ -327,6 +353,8 @@ main()
 				_rtt();
 			}
 		}
+		if (loadrandom(BOOTRANDOM, rnddata, sizeof(rnddata)))
+			printf("open %s: %s\n", opened_name, strerror(errno));
 		if ((fd = open(bootline, 0)) < 0) {
 			printf("open %s: %s\n", opened_name, strerror(errno));
 			continue;
