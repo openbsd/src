@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_installboot.c,v 1.2 2013/12/28 15:03:47 jsing Exp $	*/
+/*	$OpenBSD: sparc64_installboot.c,v 1.3 2013/12/28 15:05:34 jsing Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -31,7 +31,9 @@
 #include "installboot.h"
 
 char	*blkstore;
+char	*ldrstore;
 size_t	blksize;
+size_t	ldrsize;
 
 void
 md_init(void)
@@ -48,11 +50,11 @@ md_loadboot(void)
 	size_t blocks;
 	int fd;
 
+	/* Load first-stage boot block. */
 	if ((fd = open(stage1, O_RDONLY)) < 0)
 		err(1, "open");
 	if (fstat(fd, &sb) == -1)
 		err(1, "fstat");
-
 	blocks = howmany((size_t)sb.st_size, DEV_BSIZE);
 	blksize = blocks * DEV_BSIZE;
 	if (verbose)
@@ -62,15 +64,26 @@ md_loadboot(void)
 	if (blksize > SBSIZE - DEV_BSIZE)
 		errx(1, "boot blocks too big (%zu > %d)",
 		    blksize, SBSIZE - DEV_BSIZE);
-
 	blkstore = malloc(blksize);
 	if (blkstore == NULL)
 		err(1, "malloc");
 	memset(blkstore, 0, blksize);
 	if (read(fd, blkstore, sb.st_size) != (ssize_t)sb.st_size)
 		err(1, "read");
-
 	close(fd);
+
+	/* Load second-stage boot loader. */
+        if ((fd = open(stage2, O_RDONLY)) < 0)
+                err(1, "open");
+        if (fstat(fd, &sb) == -1)
+                err(1, "stat");
+        ldrsize = sb.st_size;
+        ldrstore = malloc(ldrsize);
+        if (ldrstore == NULL)
+                err(1, "malloc");
+        if (read(fd, ldrstore, ldrsize) != (ssize_t)sb.st_size)
+                err(1, "read");
+        close(fd);
 }
 
 void

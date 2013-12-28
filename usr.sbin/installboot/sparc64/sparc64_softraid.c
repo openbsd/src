@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_softraid.c,v 1.1 2013/12/28 14:45:57 jsing Exp $	*/
+/*	$OpenBSD: sparc64_softraid.c,v 1.2 2013/12/28 15:05:34 jsing Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -86,10 +86,10 @@ sr_install_bootldr(int devfd, char *dev)
 	 * Install boot loader into softraid boot loader storage area.
 	 */
 	memset(&bb, 0, sizeof(bb));
-	bb.bb_bootldr = "XXX";
-	bb.bb_bootldr_size = sizeof("XXX");
 	bb.bb_bootblk = blkstore;
 	bb.bb_bootblk_size = blksize;
+	bb.bb_bootldr = ldrstore;
+	bb.bb_bootldr_size = ldrsize;
 	strncpy(bb.bb_dev, dev, sizeof(bb.bb_dev));
 	if (!nowrite) {
 		if (verbose)
