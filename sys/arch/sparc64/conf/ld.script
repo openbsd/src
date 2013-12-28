@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.1 2013/08/16 19:52:08 kettenis Exp $	*/
+/*	$OpenBSD: ld.script,v 1.2 2013/12/28 17:57:14 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Mark Kettenis <kettenis@openbsd.org>
@@ -24,6 +24,7 @@ PHDRS
 {
 	text PT_LOAD;
 	data PT_LOAD;
+	openbsd_randomize 0x65a3dbe6; /* PT_OPENBSD_RANDOMIZE */
 }
 
 SECTIONS

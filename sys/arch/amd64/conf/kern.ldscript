@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern.ldscript,v 1.2 2013/03/21 15:50:28 deraadt Exp $	*/
+/*	$OpenBSD: kern.ldscript,v 1.3 2013/12/28 17:57:14 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Tobias Weingartner <weingart@tepid.org>
@@ -26,6 +26,7 @@ PHDRS
 	rodata PT_LOAD;
 	data PT_LOAD;
 	bss PT_LOAD;
+	openbsd_randomize 0x65a3dbe6; /* PT_OPENBSD_RANDOMIZE */
 }
 
 /*
