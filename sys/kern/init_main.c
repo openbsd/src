@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.193 2013/12/28 03:04:20 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.194 2013/12/28 03:12:56 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -192,7 +192,6 @@ main(void *framep)
 	struct proc *p;
 	struct process *pr;
 	struct pdevinit *pdev;
-	struct timeval rtv;
 	quad_t lim;
 	int s, i;
 	extern struct pdevinit pdevinit[];
@@ -346,8 +345,6 @@ main(void *framep)
 	/* Initialize work queues */
 	workq_init();
 	taskq_init();
-
-	random_start();
 
 	/* Initialize the interface/address trees */
 	ifinit();
@@ -534,9 +531,6 @@ main(void *framep)
 	/* Create the aiodone daemon kernel thread. */ 
 	if (kthread_create(uvm_aiodone_daemon, NULL, NULL, "aiodoned"))
 		panic("fork aiodoned");
-
-	microtime(&rtv);
-	srandom((u_int32_t)(rtv.tv_sec ^ rtv.tv_usec) ^ arc4random());
 
 #if defined(MULTIPROCESSOR)
 	/* Boot the secondary processors. */
