@@ -1,4 +1,4 @@
-/*	$OpenBSD: hppa_installboot.c,v 1.2 2013/12/28 13:58:15 jsing Exp $	*/
+/*	$OpenBSD: hp300_installboot.c,v 1.1 2013/12/28 13:58:15 jsing Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -22,7 +22,7 @@ void
 md_init(void)
 {
 	stages = 1;
-	stage1 = "/usr/mdec/boot.lif";
+	stage1 = "/usr/mdec/uboot.lif";
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hppa_installboot.c,v 1.2 2013/12/28 13:58:15 jsing Exp $	*/
+/*	$OpenBSD: hppa64_installboot.c,v 1.1 2013/12/28 13:58:15 jsing Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
