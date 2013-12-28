@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.149 2013/12/22 16:06:12 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.150 2013/12/28 02:58:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -224,7 +224,7 @@ struct rand_event *rnd_event_tail = rnd_event_space;
 struct timeout rnd_timeout;
 struct rndstats rndstats;
 
-u_int32_t entropy_pool[POOLWORDS];
+u_int32_t entropy_pool[POOLWORDS] __attribute__((section(".openbsd.randomdata")));
 u_int	entropy_add_ptr;
 u_char	entropy_input_rotate;
 
@@ -559,6 +559,9 @@ _rs_seed(u_char *buf, size_t n)
 {
 	if (!rs_initialized) {
 		rs_initialized = 1;
+		rnd_states[RND_SRC_TIMER].dont_count_entropy = 1;
+		rnd_states[RND_SRC_TRUE].dont_count_entropy = 1;
+		rnd_states[RND_SRC_TRUE].max_entropy = 1;
 		_rs_init(buf, n);
 	} else
 		_rs_rekey(buf, n);
@@ -747,14 +750,11 @@ random_init(void)
 {
 	int off;
 
-	rnd_states[RND_SRC_TIMER].dont_count_entropy = 1;
-	rnd_states[RND_SRC_TRUE].dont_count_entropy = 1;
-	rnd_states[RND_SRC_TRUE].max_entropy = 1;
-
 	/*
-	 * Load some code as input data until we are more alive.
-	 * NOTE: We assume there are at 8192 bytes mapped after version,
-	 * because we want to pull some "code" in as well.
+	 * MI code did not initialize us with a seed, so we are
+	 * hitting the fall-back from kernel main().   Do the best
+	 * we can... We assume there are at 8192 bytes mapped after
+	 * version, because we want to pull some "code" in as well.
 	 */
 	for (off = 0; off < 8192 - KEYSZ - IVSZ; off += KEYSZ + IVSZ)
 		_rs_seed((u_int8_t *)version + off, KEYSZ + IVSZ);
