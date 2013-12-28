@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.h,v 1.1 2013/12/27 13:52:40 jsing Exp $	*/
+/*	$OpenBSD: installboot.h,v 1.2 2013/12/28 11:26:57 jsing Exp $	*/
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
  *
@@ -21,6 +21,10 @@ extern int verbose;
 
 extern char *stage1;
 extern char *stage2;
+
+#ifdef BOOTSTRAP
+void	bootstrap(int, char *, char *);
+#endif
 
 void	md_init(void);
 void	md_loadboot(void);

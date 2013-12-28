@@ -20,6 +20,7 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 
+#include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,17 +29,17 @@
 
 #include "installboot.h"
 
-int
+void
 bootstrap(int devfd, char *dev, char *bootfile)
 {
 	struct disklabel dl;
 	struct disklabel *lp;
 	struct partition *pp;
 	char *boot, *p, part;
-	u_int64_t bootend;
+	size_t bootsize;
+	size_t bootend;
 	struct stat sb;
-	int bootsize;
-	int bf, i;
+	int fd, i;
 
 	/*
 	 * Install bootstrap code onto the given disk, preserving the
@@ -56,22 +57,22 @@ bootstrap(int devfd, char *dev, char *bootfile)
 	/* Read bootstrap file. */
 	if (verbose)
 		fprintf(stderr, "reading bootstrap from %s\n", bootfile);
-	bf = open(bootfile, O_RDONLY);
-	if (bf < 0)
+	fd = open(bootfile, O_RDONLY);
+	if (fd < 0)
 		err(1, "open %s", bootfile);
-	if (fstat(bf, &sb) != 0)
+	if (fstat(fd, &sb) != 0)
 		err(1, "fstat %s", bootfile);
 	bootsize = sb.st_size;
-	bootend = howmany((u_int64_t)bootsize, dl.d_secsize);
+	bootend = howmany(bootsize, dl.d_secsize);
 	boot = malloc(bootsize);
 	if (boot == NULL)
 		err(1, "malloc");
-	if (read(bf, boot, bootsize) != bootsize)
+	if (read(fd, boot, bootsize) != (ssize_t)bootsize)
 		err(1, "read");
 	if (verbose)
-		fprintf(stderr, "bootstrap is %lld bytes (%llu sectors)\n",
+		fprintf(stderr, "bootstrap is %zu bytes (%zu sectors)\n",
 		    bootsize, bootend);
-	close(bf);
+	close(fd);
 
 	/*
 	 * Check that the bootstrap will fit - partitions must not overlap,
@@ -80,7 +81,7 @@ bootstrap(int devfd, char *dev, char *bootfile)
 	 */
 	if (verbose)
 		fprintf(stderr, "ensuring used partitions do not overlap "
-		    "with bootstrap sectors 0-%lld\n", bootend);
+		    "with bootstrap sectors 0-%zu\n", bootend);
 	for (i = 0; i < dl.d_npartitions; i++) {
 		part = 'a' + i;
 		pp = &dl.d_partitions[i];
@@ -88,7 +89,7 @@ bootstrap(int devfd, char *dev, char *bootfile)
 			continue;
 		if (DL_GETPSIZE(pp) == 0)
 			continue;
-		if (bootend <= DL_GETPOFFSET(pp))
+		if ((u_int64_t)bootend <= DL_GETPOFFSET(pp))
 			continue;
 		switch (pp->p_fstype) {
 		case FS_BOOT:
@@ -105,7 +106,7 @@ bootstrap(int devfd, char *dev, char *bootfile)
 	/* Make sure the bootstrap has left space for the disklabel. */
         lp = (struct disklabel *)(boot + (LABELSECTOR * dl.d_secsize) +
 	    LABELOFFSET);
-	for (i = 0, p = (char *)lp; i < sizeof(*lp); i++)
+	for (i = 0, p = (char *)lp; i < (int)sizeof(*lp); i++)
 		if (p[i] != 0)
 			errx(1, "bootstrap has data in disklabel area");
 
@@ -120,6 +121,6 @@ bootstrap(int devfd, char *dev, char *bootfile)
 		    (nowrite ? "would write" : "writing"));
 	if (nowrite)
 		return;
-	if (write(devfd, boot, bootsize) != bootsize)
+	if (write(devfd, boot, bootsize) != (ssize_t)bootsize)
 		err(1, "write");
 }

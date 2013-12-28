@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_softraid.c,v 1.1 2013/12/27 13:52:40 jsing Exp $	*/
+/*	$OpenBSD: i386_softraid.c,v 1.2 2013/12/28 11:26:57 jsing Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -49,14 +49,12 @@ sr_install_bootblk(int devfd, int vol, int disk)
 	char *dev;
 	char part;
 	int diskfd;
-	int rv;
 
 	/* Get device name for this disk/chunk. */
 	memset(&bd, 0, sizeof(bd));
 	bd.bd_volid = vol;
 	bd.bd_diskid = disk;
-	rv = ioctl(devfd, BIOCDISK, &bd);
-	if (rv == -1)
+	if (ioctl(devfd, BIOCDISK, &bd) == -1)
 		err(1, "BIOCDISK");
 
 	/* Check disk status. */
@@ -116,7 +114,7 @@ sr_install_bootldr(int devfd, char *dev)
 	uint16_t bsize = SR_FS_BLOCKSIZE;
 	uint16_t nblocks;
 	uint8_t bshift = 5;		/* fragsize == blocksize */
-	int fd, i, rv;
+	int fd, i;
 	u_char *p;
 
 	/*
@@ -162,6 +160,7 @@ sr_install_bootldr(int devfd, char *dev)
 	inodedbl = ((u_char*)&ino_p->di_db[0] -
 	    &p[bootsize - SR_FS_BLOCKSIZE]) + INODEOFF;
 
+	memset(&bb, 0, sizeof(bb));
 	bb.bb_bootldr = p;
 	bb.bb_bootldr_size = bootsize;
 	bb.bb_bootblk = "XXX";
@@ -171,8 +170,7 @@ sr_install_bootldr(int devfd, char *dev)
 		if (verbose)
 			fprintf(stderr, "%s: installing boot loader on "
 			    "softraid volume\n", dev);
-		rv = ioctl(devfd, BIOCINSTALLBOOT, &bb);
-		if (rv != 0)
+		if (ioctl(devfd, BIOCINSTALLBOOT, &bb) == -1)
 			errx(1, "softraid installboot failed");
 	}
 

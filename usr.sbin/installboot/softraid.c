@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.1 2013/12/27 13:52:40 jsing Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.2 2013/12/28 11:26:57 jsing Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -53,7 +53,7 @@ sr_volume(int devfd, char *dev, int *vol, int *disks)
 {
 	struct	bioc_inq bi;
 	struct	bioc_vol bv;
-	int	rv, i;
+	int	i;
 
 	/*
 	 * Determine if the given device is a softraid volume.
@@ -61,8 +61,7 @@ sr_volume(int devfd, char *dev, int *vol, int *disks)
 
 	/* Get volume information. */
 	memset(&bi, 0, sizeof(bi));
-	rv = ioctl(devfd, BIOCINQ, &bi);
-	if (rv == -1)
+	if (ioctl(devfd, BIOCINQ, &bi) == -1)
 		return 0;
 
 	/* XXX - softraid volumes will always have a "softraid0" controller. */
@@ -78,8 +77,7 @@ sr_volume(int devfd, char *dev, int *vol, int *disks)
 	for (i = 0; i < bi.bi_novol; i++) {
 		memset(&bv, 0, sizeof(bv));
 		bv.bv_volid = i;
-		rv = ioctl(devfd, BIOCVOL, &bv);
-		if (rv == -1)
+		if (ioctl(devfd, BIOCVOL, &bv) == -1)
 			err(1, "BIOCVOL");
 
 		if (strncmp(dev, bv.bv_dev, sizeof(bv.bv_dev)) == 0) {
