@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2013/12/28 02:51:06 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.26 2013/12/28 15:16:28 jsing Exp $
 
 COPTS?=
 MAN?=	boot.8
@@ -21,6 +21,9 @@ SIZE?=	size
 LDFLAGS+=-nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -nopie
 LDFLAGS+=-melf_i386 -L/usr/libdata 
 
+.PATH:	${S}/stand/boot
+SRCS+=	boot.c bootarg.c cmd.c vars.c
+
 .PATH:	${SADIR}/libsa
 SRCS+=	alloca.S gidt.S random_i386.S
 SRCS+=	cmd_i386.c dev_i386.c exec_i386.c gateA20.c machdep.c
@@ -29,23 +32,20 @@ SRCS+=	bioscons.c biosdev.c diskprobe.c memprobe.c time.c
 SRCS+=	softraid.c
 .endif
 
-.PATH:	${S}/stand/boot
-SRCS+=	boot.c bootarg.c cmd.c vars.c
-
 .PATH:	${S}/lib/libsa
-SRCS+=	alloc.c ctime.c exit.c getfile.c gets.c globals.c memcmp.c memcpy.c \
-	memset.c printf.c snprintf.c strcmp.c strerror.c strlcat.c strlcpy.c \
-	strlen.c strncmp.c strncpy.c strtol.c strtoll.c
+SRCS+=	alloc.c ctime.c exit.c memcmp.c memcpy.c memset.c printf.c snprintf.c \
+	strcmp.c strerror.c strlen.c strncmp.c strncpy.c strtol.c strtoll.c
 SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
-	ioctl.c lseek.c open.c read.c readdir.c stat.c write.c
+	lseek.c open.c read.c readdir.c stat.c
 SRCS+=	elf32.c elf64.c loadfile.c
 SRCS+=	ufs.c
 .if ${SOFTRAID:L} == "yes"
 SRCS+=	aes_xts.c explicit_bzero.c hmac_sha1.c pbkdf2.c rijndael.c sha1.c
 .endif
 
-.PATH:	${S}/lib/libkern/arch/amd64 ${S}/lib/libkern
+.PATH:	${S}/lib/libkern
 SRCS+=	divdi3.c moddi3.c qdivrem.c
+SRCS+=	strlcpy.c
 
 .PATH:	${S}/lib/libz
 SRCS+=	adler32.c crc32.c inflate.c inftrees.c

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.53 2013/12/28 02:51:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.54 2013/12/28 15:16:28 jsing Exp $
 
 COPTS?=
 MAN?=	boot.8
@@ -21,31 +21,31 @@ LDFLAGS+=-nostdlib -Bstatic -nopie
 
 .if defined(DEBUGFLAGS) && !empty(DEBUGFLAGS:M-D_TEST)
 CLEANFILES+=	srt0.o
-SRCS=	crt0.c
+SRCS=	crt0.c conf.c
 .else
-LDFLAGS+=-Ttext $(LINKADDR) -N -x
 CLEANFILES+=	crt0.o
-SRCS=	srt0.S
+SRCS=	srt0.S conf.c
+LDFLAGS+=-Ttext $(LINKADDR) -N -x
 .endif
 
 .PATH:	${S}/stand/boot
-SRCS+=	boot.c cmd.c vars.c bootarg.c conf.c
+SRCS+=	boot.c bootarg.c cmd.c vars.c
 
 .PATH:	${SADIR}/libsa
-SRCS+=	alloca.S debug_i386.S gidt.S random_i386.S
-SRCS+=	apmprobe.c bioscons.c biosdev.c cmd_i386.c debug.c dev_i386.c \
-	diskprobe.c exec_i386.c gateA20.c machdep.c memprobe.c pciprobe.c \
-	ps2probe.c time.c
+SRCS+=	debug_i386.S
+SRCS+=	alloca.S gidt.S random_i386.S
+SRCS+=	apmprobe.c debug.c pciprobe.c ps2probe.c
+SRCS+=	cmd_i386.c dev_i386.c exec_i386.c gateA20.c machdep.c
+SRCS+=	bioscons.c biosdev.c diskprobe.c memprobe.c time.c
 .if ${SOFTRAID:L} == "yes"
 SRCS+=	softraid.c
 .endif
 
 .PATH:	${S}/lib/libsa
-SRCS+=	alloc.c cread.c ctime.c exit.c memcmp.c memcpy.c memset.c printf.c \
-	snprintf.c strcmp.c strerror.c strlen.c strncmp.c strncpy.c strtol.c \
-	strtoll.c
-SRCS+=	close.c closeall.c cons.c dev.c disklabel.c dkcksum.c fstat.c lseek.c \
-	open.c read.c readdir.c stat.c
+SRCS+=	alloc.c ctime.c exit.c memcmp.c memcpy.c memset.c printf.c snprintf.c \
+	strcmp.c strerror.c strlen.c strncmp.c strncpy.c strtol.c strtoll.c
+SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
+	lseek.c open.c read.c readdir.c stat.c
 SRCS+=	elf32.c elf64.c loadfile.c
 SRCS+=	ufs.c
 .if ${SOFTRAID:L} == "yes"
@@ -53,10 +53,8 @@ SRCS+=	aes_xts.c explicit_bzero.c hmac_sha1.c pbkdf2.c rijndael.c sha1.c
 .endif
 
 .PATH:	${S}/lib/libkern
-SRCS+=	strlcpy.c
-
-.PATH:	${S}/lib/libkern/arch/i386
 SRCS+=	divdi3.c moddi3.c qdivrem.c
+SRCS+=	strlcpy.c
 
 .PATH:	${S}/lib/libz
 SRCS+=	adler32.c crc32.c inflate.c inftrees.c
