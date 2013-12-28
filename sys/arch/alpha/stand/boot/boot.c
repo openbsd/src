@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.20 2011/06/05 21:49:36 miod Exp $	*/
+/*	$OpenBSD: boot.c,v 1.21 2013/12/28 02:51:06 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.10 1997/01/18 01:58:33 cgd Exp $	*/
 
 /*
@@ -56,6 +56,8 @@ struct bootinfo_v1 bootinfo_v1;
 paddr_t ptbr_save;
 
 int debug;
+
+char   rnddata[BOOTRANDOM_MAX];		/* XXX dummy */
 
 int
 main()

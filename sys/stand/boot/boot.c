@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.37 2011/04/17 09:49:48 kettenis Exp $	*/
+/*	$OpenBSD: boot.c,v 1.38 2013/12/28 02:51:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -35,6 +35,8 @@
 #include <lib/libsa/loadfile.h>
 #include <lib/libkern/funcs.h>
 
+#include <stand/boot/bootarg.h>
+
 #include "cmd.h"
 
 #ifndef KERNEL
@@ -51,6 +53,8 @@ struct cmd_state cmd;
 int bootprompt = 1;
 char *kernelfile = KERNEL;		/* can be changed by MD code */
 int boottimeout = 5;			/* can be changed by MD code */
+
+char	rnddata[BOOTRANDOM_MAX];
 
 void
 boot(dev_t bootdev)
@@ -79,12 +83,20 @@ boot(dev_t bootdev)
 
 	while (1) {
 		/* no boot.conf, or no boot cmd in there */
-		if (bootprompt && st <= 0)
+		if (bootprompt && st <= 0) {
 			do {
 				printf("boot> ");
 			} while(!getcmd());
+		}
 		st = 0;
 		bootprompt = 1;	/* allow reselect should we fail */
+
+		st = loadrandom(BOOTRANDOM, rnddata, sizeof(rnddata));
+		if (st != 0)
+			printf("loadrandom: error %d\n", st);
+#ifdef MDRANDOM
+		mdrandom(rnddata, sizeof(rnddata));
+#endif
 
 		printf("booting %s: ", cmd.path);
 		marks[MARK_START] = (u_long)cmd.addr;
@@ -112,11 +124,44 @@ boot(dev_t bootdev)
 	run_loadfile(marks, cmd.boothowto);
 }
 
-#ifdef _TEST
 int
-main()
+loadrandom(char *name, char *buf, size_t buflen)
 {
-	boot(0);
-	return 0;
+	char path[MAXPATHLEN];
+	struct stat sb;
+	int fd, i;
+
+#define O_RDONLY	0
+
+	/* Extract the device name from the kernel we are loading. */
+	for (i = 0; i < sizeof(cmd.path); i++) {
+		if (cmd.path[i] == ':') {
+			strlcpy(path, cmd.path, i + 1);
+			snprintf(path + i, sizeof(path) - i, ":%s", name);
+			break;
+		} else if (cmd.path[i] == '\0') {
+			snprintf(path, sizeof path, "%s:%s",
+			    cmd.bootdev, name);
+			break;
+		}
+	}
+
+	printf("loadrandom: %s\n", path);
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1) {
+		printf("cannot open %s\n", path);
+		return -1;
+	}
+	if (fstat(fd, &sb) == -1 ||
+	    sb.st_uid != 0 ||
+	    (sb.st_mode & (S_IWOTH|S_IROTH)))
+		goto fail;
+	if (read(fd, buf, buflen) != buflen)
+		goto fail;
+	close(fd);
+ 	return 0;
+fail:
+	close(fd);
+	return (-1);
 }
-#endif

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2013/04/23 16:41:13 jsing Exp $
+#	$OpenBSD: Makefile,v 1.18 2013/12/28 02:51:07 deraadt Exp $
 
 MAN=	pxeboot.8
 
@@ -17,7 +17,7 @@ INSTALL_STRIP=
 .PATH:	${SADIR}/libsa
 # i386 stuff (so, it will possibly load in the same 64k)
 SRCS+=	machdep.c exec_i386.c cmd_i386.c
-SRCS+=	gidt.S alloca.S biosdev.c bioscons.c gateA20.c \
+SRCS+=	gidt.S random_i386.S alloca.S biosdev.c bioscons.c gateA20.c \
 	memprobe.c diskprobe.c time.c ## biosprobe.c
 SRCS+=	pxe.c pxe_call.S pxe_net.c
 SRCS+=	softraid.c

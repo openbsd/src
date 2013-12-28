@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2013/06/02 21:01:48 guenther Exp $
+#	$OpenBSD: Makefile,v 1.22 2013/12/28 02:51:06 deraadt Exp $
 
 MAN=	cdboot.8
 
@@ -16,7 +16,7 @@ INSTALL_STRIP=
 
 .PATH:	${SADIR}/libsa
 SRCS+=	machdep.c dev_i386.c exec_i386.c cmd_i386.c
-SRCS+=	gidt.S alloca.S biosdev.c bioscons.c gateA20.c \
+SRCS+=	gidt.S random_i386.S alloca.S biosdev.c bioscons.c gateA20.c \
 	memprobe.c diskprobe.c time.c
 SRCS+=	softraid.c
 

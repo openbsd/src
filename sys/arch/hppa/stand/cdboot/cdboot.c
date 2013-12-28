@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdboot.c,v 1.12 2012/06/26 16:18:45 deraadt Exp $	*/
+/*	$OpenBSD: cdboot.c,v 1.13 2013/12/28 02:51:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -62,6 +62,8 @@ struct consdev *cn_tab;
 
 typedef void (*startfuncp)(int, int, int, int, int, int, caddr_t)
     __attribute__ ((noreturn));
+
+char   rnddata[BOOTRANDOM_MAX];		/* XXX dummy */
 
 void
 boot(dev_t dev)
