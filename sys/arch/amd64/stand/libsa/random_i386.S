@@ -17,8 +17,9 @@
 #include <machine/param.h>
 #include <machine/asm.h>
 #include <machine/psl.h>
+#include <machine/specialreg.h>
 
-ENTRY(md_random)
+ENTRY(mdrandom)
 	// See if we have CPU identification.
 	pushfl
 	popl	%eax
@@ -55,7 +56,7 @@ ENTRY(md_random)
 	shll	$2, %edx
 	xorl	%edi, %edi
 
-	andl	$0x40000000, %ecx	// See if we have rdrand.
+	andl	$CPUIDECX_RDRAND, %ecx	// See if we have rdrand.
 	jnz	userand
 
 	movl	%edx, %ecx
