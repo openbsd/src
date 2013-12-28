@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.20 2013/03/23 16:08:27 deraadt Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.21 2013/12/28 02:40:41 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -524,7 +524,8 @@ biosopen(struct open_file *f, ...)
 		}
 
 		if (bv->sbv_level == 'C' && bv->sbv_keys == NULL)
-			sr_crypto_decrypt_keys(bv);
+			if (sr_crypto_decrypt_keys(bv) != 0)
+				return EPERM;
 
 		if (bv->sbv_diskinfo == NULL) {
 			dip = alloc(sizeof(struct diskinfo));

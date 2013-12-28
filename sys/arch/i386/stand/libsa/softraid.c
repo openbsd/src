@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.5 2013/10/20 13:25:21 stsp Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.6 2013/12/28 02:40:41 jsing Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -333,7 +333,7 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 
 	/* We only support read-only softraid. */
 	if (rw != F_READ)
-		return EPERM;
+		return ENOTSUP;
 
 	/* Partition offset within softraid volume. */
 	sr_dip = (struct diskinfo *)bv->sbv_diskinfo;
