@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2013/12/27 14:23:49 jsing Exp $
+#	$OpenBSD: Makefile,v 1.4 2013/12/28 11:00:33 jsing Exp $
 
 NOMAN=
 
@@ -15,6 +15,14 @@ LDSTATIC=	-static
 SRCS += installboot.c
 
 .include "${.CURDIR}/${MACHINE}/Makefile.inc"
+
+.if !empty(CFLAGS:M-DBOOTSTRAP)
+SRCS += bootstrap.c
+.endif
+
+.if !empty(CFLAGS:M-DSOFTRAID)
+SRCS += softraid.c
+.endif
 
 .else
 NOPROG=

@@ -1,9 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2013/12/27 15:02:49 jsing Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2013/12/28 11:00:33 jsing Exp $
 
 CPPFLAGS += -I${.CURDIR}/i386
 CFLAGS += -DSOFTRAID
-
-SRCS += softraid.c
 
 .PATH:  ${.CURDIR}/i386
 SRCS += i386_installboot.c
