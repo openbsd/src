@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2013/08/06 19:11:53 miod Exp $
+# $OpenBSD: Makefile,v 1.14 2013/12/28 03:19:02 martynas Exp $
 
 C_MODULES?=	strlcpy strlcat getcwd memcpy fread memcpy declare \
 		sscanf vararray md builtins
@@ -28,7 +28,7 @@ REGRESS_TARGETS= ${C_TARGETS} ${CPP_TARGETS}
 .  for j in ${C_${i:U}}
 C_TARGETS+= c-${i}-${j} 
 c-${i}-${j}:
-	${TCC} ${TCFLAGS} -o /dev/null ${i}-${j}.c 2>&1 | diff -u - ${.CURDIR}/${i}-${j}.c${EXP}
+	${TCC} ${TCFLAGS} -o /dev/null ${i}-${j}.c 2>&1 | sed '/^\/tmp\//d' | diff -u - ${.CURDIR}/${i}-${j}.c${EXP}
 .  endfor
 .endfor
 
@@ -36,16 +36,16 @@ c-${i}-${j}:
 .  for j in ${CPP_${i:U}}
 CPP_TARGETS+= cpp-${i}-${j}
 cpp-${i}-${j}:
-	${TCXX} ${TCXXFLAGS} -o /dev/null ${i}-${j}.cpp 2>&1 | grep -v 'misused' | diff -u - ${.CURDIR}/${i}-${j}.cpp${EXP}
+	${TCXX} ${TCXXFLAGS} -o /dev/null ${i}-${j}.cpp 2>&1 | grep -v 'misused' | sed '/^\/tmp\//d' | diff -u - ${.CURDIR}/${i}-${j}.cpp${EXP}
 .  endfor
 .endfor
 
 generate:
 .for i in ${C_TARGETS}
-	-${TCC} ${TCFLAGS} -o /dev/null ${i:C/^c-//g}.c >${i:C/^c-//g}.c${EXP} 2>&1
+	-${TCC} ${TCFLAGS} -o /dev/null ${i:C/^c-//g}.c 2>&1 | sed '/^\/tmp\//d' >${i:C/^c-//g}.c${EXP}
 .endfor
 .for i in ${CPP_TARGETS}
-	-${TCXX} ${TCXXFLAGS} -o /dev/null ${i:C/^cpp-//g}.cpp >${i:C/^cpp-//g}.cpp${EXP} 2>&1
+	-${TCXX} ${TCXXFLAGS} -o /dev/null ${i:C/^cpp-//g}.cpp 2>&1 | sed '/^\/tmp\//d' >${i:C/^cpp-//g}.cpp${EXP}
 .endfor
 
 .PHONY:	${REGRESS_TARGETS} generate regress

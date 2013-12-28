@@ -1,11 +1,6 @@
-# $OpenBSD: Makefile,v 1.7 2013/12/28 02:14:32 martynas Exp $
+# $OpenBSD: Makefile,v 1.8 2013/12/28 03:19:02 martynas Exp $
 
-SUBDIR+= gcc libiberty
-
-.if defined(REGRESS_FULL)
-SUBDIR += gcc-bounds
-SUBDIR += gcc-builtins
-.endif
+SUBDIR+= gcc gcc-bounds gcc-builtins libiberty
 
 install:
 

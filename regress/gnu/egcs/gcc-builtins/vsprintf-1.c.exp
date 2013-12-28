@@ -1,2 +1,1 @@
- In function `test_vsprintf':
- warning: vsprintf() is often misused, please use vsnprintf()
+: warning: vsprintf() is often misused, please use vsnprintf()

@@ -1,2 +1,1 @@
- In function `main':
- warning: stpcpy() is dangerous GNU crap; don't use it
+: warning: stpcpy() is dangerous GNU crap; don't use it
