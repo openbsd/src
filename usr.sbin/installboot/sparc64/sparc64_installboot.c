@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_installboot.c,v 1.1 2013/12/28 14:45:57 jsing Exp $	*/
+/*	$OpenBSD: sparc64_installboot.c,v 1.2 2013/12/28 15:03:47 jsing Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -38,7 +38,7 @@ md_init(void)
 {
 	stages = 2;
 	stage1 = "/usr/mdec/bootblk";
-	stage2 = "/boot";
+	stage2 = "/ofwboot";
 }
 
 void
