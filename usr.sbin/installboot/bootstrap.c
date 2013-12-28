@@ -37,7 +37,7 @@ bootstrap(int devfd, char *dev, char *bootfile)
 	struct partition *pp;
 	char *boot, *p, part;
 	size_t bootsize;
-	size_t bootend;
+	size_t bootsec;
 	struct stat sb;
 	int fd, i;
 
@@ -62,16 +62,18 @@ bootstrap(int devfd, char *dev, char *bootfile)
 		err(1, "open %s", bootfile);
 	if (fstat(fd, &sb) != 0)
 		err(1, "fstat %s", bootfile);
-	bootsize = sb.st_size;
-	bootend = howmany(bootsize, dl.d_secsize);
+	bootsec = howmany((ssize_t)sb.st_size, dl.d_secsize);
+	bootsize = bootsec * dl.d_secsize;
+	if (verbose)
+		fprintf(stderr, "bootstrap is %zu bytes "
+		    "(%zu sectors @ %u bytes = %zu bytes)\n",
+		    (ssize_t)sb.st_size, bootsec, dl.d_secsize, bootsize);
 	boot = malloc(bootsize);
 	if (boot == NULL)
 		err(1, "malloc");
-	if (read(fd, boot, bootsize) != (ssize_t)bootsize)
+	memset(boot, 0, bootsize);
+	if (read(fd, boot, bootsize) != (ssize_t)sb.st_size)
 		err(1, "read");
-	if (verbose)
-		fprintf(stderr, "bootstrap is %zu bytes (%zu sectors)\n",
-		    bootsize, bootend);
 	close(fd);
 
 	/*
@@ -81,7 +83,7 @@ bootstrap(int devfd, char *dev, char *bootfile)
 	 */
 	if (verbose)
 		fprintf(stderr, "ensuring used partitions do not overlap "
-		    "with bootstrap sectors 0-%zu\n", bootend);
+		    "with bootstrap sectors 0-%zu\n", bootsec);
 	for (i = 0; i < dl.d_npartitions; i++) {
 		part = 'a' + i;
 		pp = &dl.d_partitions[i];
@@ -89,7 +91,7 @@ bootstrap(int devfd, char *dev, char *bootfile)
 			continue;
 		if (DL_GETPSIZE(pp) == 0)
 			continue;
-		if ((u_int64_t)bootend <= DL_GETPOFFSET(pp))
+		if ((u_int64_t)bootsec <= DL_GETPOFFSET(pp))
 			continue;
 		switch (pp->p_fstype) {
 		case FS_BOOT:
