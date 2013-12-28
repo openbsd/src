@@ -1,4 +1,4 @@
-/*	$OpenBSD: version,v 1.4 2012/10/18 16:54:35 miod Exp $	*/
+/*	$OpenBSD: version,v 1.5 2013/12/28 02:53:04 deraadt Exp $	*/
 /* Public domain. Come on, it can hardly be considered as code. */
 
 #if 0
@@ -27,4 +27,4 @@ No version strings up to 2012
 
 #endif
 
-static const char version[] = "1.4";
+static const char version[] = "1.5";

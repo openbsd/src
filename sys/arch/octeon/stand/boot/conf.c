@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 2013/06/05 01:02:29 jasper Exp $	*/
+/*	$OpenBSD: conf.c,v 1.2 2013/12/28 02:53:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -23,7 +23,7 @@
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/cd9660.h>
 
-const char version[] = "0.1";
+const char version[] = "0.2";
 
 /*
  * Device configuration

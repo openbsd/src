@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 2010/12/06 22:51:46 jasper Exp $	*/
+/*	$OpenBSD: conf.c,v 1.8 2013/12/28 02:53:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -42,7 +42,7 @@
 #include "unixdev.h"
 #include <dev/cons.h>
 
-const char version[] = "2.08";
+const char version[] = "2.09";
 int	debug = 1;
 
 void (*zaurus_probe1[])(void) = {
