@@ -1,0 +1,2 @@
+ In function `main':
+ warning: sprintf() is often misused, please use snprintf()

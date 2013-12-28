@@ -1,0 +1,2 @@
+ In function `main':
+ warning: strcpy() is almost always misused, please use strlcpy()
