@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack_protector.c,v 1.14 2013/12/27 18:32:19 deraadt Exp $	*/
+/*	$OpenBSD: stack_protector.c,v 1.15 2013/12/28 18:42:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Hiroaki Etoh, Federico G. Schwindt, and Miodrag Vallat.
@@ -32,8 +32,6 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
-
-long __guard[8] __attribute__((section(".openbsd.randomdata")));
 
 void __stack_smash_handler(char func[], int damaged __attribute__((unused)));
 
