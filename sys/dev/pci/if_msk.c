@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.101 2013/12/08 16:39:38 deraadt Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.102 2013/12/28 03:35:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1075,7 +1075,6 @@ msk_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_RESUME:
 		msk_reset(sc_if);
-		rv = config_activate_children(self, act);
 		if (ifp->if_flags & IFF_RUNNING)
 			msk_init(sc_if);
 		break;
