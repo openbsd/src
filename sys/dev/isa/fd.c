@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.97 2013/11/21 00:13:33 dlg Exp $	*/
+/*	$OpenBSD: fd.c,v 1.98 2013/12/28 03:39:16 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -312,9 +312,20 @@ fdattach(struct device *parent, struct device *self, void *aux)
 int
 fdactivate(struct device *self, int act)
 {
+	struct fd_softc *fd = (void *)self;
+	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
 	int rv = 0;
 
 	switch (act) {
+	case DVACT_SUSPEND:
+		if (fdc->sc_state != DEVIDLE) {
+			timeout_del(&fd->fd_motor_on_to);
+			timeout_del(&fd->fd_motor_off_to);
+			timeout_del(&fd->fdtimeout_to);
+			fdc->sc_state = IOTIMEDOUT;
+			fdc->sc_errors = 4;
+		}
+		break;
 	case DVACT_POWERDOWN:
 		fd_motor_off(self);
 		break;
