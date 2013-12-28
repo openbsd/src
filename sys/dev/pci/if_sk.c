@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.166 2013/08/21 05:21:44 dlg Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.167 2013/12/28 03:36:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -133,9 +133,11 @@
 int skc_probe(struct device *, void *, void *);
 void skc_attach(struct device *, struct device *self, void *aux);
 int skc_detach(struct device *, int);
+int skc_activate(struct device *, int);
 int sk_probe(struct device *, void *, void *);
 void sk_attach(struct device *, struct device *self, void *aux);
 int sk_detach(struct device *, int);
+int sk_activate(struct device *, int);
 int skcprint(void *, const char *);
 int sk_intr(void *);
 void sk_intr_bcom(struct sk_if_softc *);
@@ -154,11 +156,12 @@ void sk_stop(struct sk_if_softc *, int softonly);
 void sk_watchdog(struct ifnet *);
 int sk_ifmedia_upd(struct ifnet *);
 void sk_ifmedia_sts(struct ifnet *, struct ifmediareq *);
-void sk_reset(struct sk_softc *);
+void skc_reset(struct sk_softc *);
 int sk_newbuf(struct sk_if_softc *, int, struct mbuf *, bus_dmamap_t);
 int sk_alloc_jumbo_mem(struct sk_if_softc *);
 void *sk_jalloc(struct sk_if_softc *);
 void sk_jfree(caddr_t, u_int, void *);
+int sk_reset(struct sk_if_softc *);
 int sk_init_rx_ring(struct sk_if_softc *);
 int sk_init_tx_ring(struct sk_if_softc *);
 
@@ -914,11 +917,11 @@ skc_probe(struct device *parent, void *match, void *aux)
  * Force the GEnesis into reset, then bring it out of reset.
  */
 void
-sk_reset(struct sk_softc *sc)
+skc_reset(struct sk_softc *sc)
 {
 	u_int32_t imtimer_ticks;
 
-	DPRINTFN(2, ("sk_reset\n"));
+	DPRINTFN(2, ("skc_reset\n"));
 
 	CSR_WRITE_2(sc, SK_CSR, SK_CSR_SW_RESET);
 	CSR_WRITE_2(sc, SK_CSR, SK_CSR_MASTER_RESET);
@@ -963,6 +966,7 @@ sk_reset(struct sk_softc *sc)
 		break;
 	default:
 		imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
+		break;
 	}
 	sk_win_write_4(sc, SK_IMTIMERINIT, SK_IM_USECS(100));
 	sk_win_write_4(sc, SK_IMMR, SK_ISR_TX1_S_EOF|SK_ISR_TX2_S_EOF|
@@ -1074,16 +1078,16 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	/* Set PHY address */
 	if (SK_IS_GENESIS(sc)) {
 		switch (sc_if->sk_phytype) {
-			case SK_PHYTYPE_XMAC:
-				sc_if->sk_phyaddr = SK_PHYADDR_XMAC;
-				break;
-			case SK_PHYTYPE_BCOM:
-				sc_if->sk_phyaddr = SK_PHYADDR_BCOM;
-				break;
-			default:
-				printf("%s: unsupported PHY type: %d\n",
-				    sc->sk_dev.dv_xname, sc_if->sk_phytype);
-				return;
+		case SK_PHYTYPE_XMAC:
+			sc_if->sk_phyaddr = SK_PHYADDR_XMAC;
+			break;
+		case SK_PHYTYPE_BCOM:
+			sc_if->sk_phyaddr = SK_PHYADDR_BCOM;
+			break;
+		default:
+			printf("%s: unsupported PHY type: %d\n",
+			    sc->sk_dev.dv_xname, sc_if->sk_phytype);
+			return;
 		}
 	}
 
@@ -1147,20 +1151,8 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
-	/*
-	 * Do miibus setup.
-	 */
-	switch (sc->sk_type) {
-	case SK_GENESIS:
-		sk_init_xmac(sc_if);
-		break;
-	case SK_YUKON:
-	case SK_YUKON_LITE:
-	case SK_YUKON_LP:
-		sk_init_yukon(sc_if);
-		break;
-	default:
-		printf(": unknown device type %d\n", sc->sk_type);
+	if (sk_reset(sc_if) == -1) {
+		printf(": unknown device type %d\n", sc_if->sk_softc->sk_type);
 		/* dealloc jumbo on error */
 		goto fail_3;
 	}
@@ -1221,6 +1213,27 @@ fail:
 }
 
 int
+sk_reset(struct sk_if_softc *sc_if)
+{
+	/*
+	 * Do miibus setup.
+	 */
+	switch (sc_if->sk_softc->sk_type) {
+	case SK_GENESIS:
+		sk_init_xmac(sc_if);
+		break;
+	case SK_YUKON:
+	case SK_YUKON_LITE:
+	case SK_YUKON_LP:
+		sk_init_yukon(sc_if);
+		break;
+	default:
+		return (-1);
+	}
+	return (0);
+}
+
+int
 sk_detach(struct device *self, int flags)
 {
 	struct sk_if_softc *sc_if = (struct sk_if_softc *)self;
@@ -1250,6 +1263,26 @@ sk_detach(struct device *self, int flags)
 	sc->sk_if[sc_if->sk_port] = NULL;
 
 	return (0);
+}
+
+int
+sk_activate(struct device *self, int act)
+{
+	struct sk_if_softc *sc_if = (void *)self;
+	struct ifnet *ifp = &sc_if->arpcom.ac_if;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_RESUME:
+		sk_reset(sc_if);
+		if (ifp->if_flags & IFF_RUNNING)
+			sk_init(sc_if);
+		break;
+	default:
+		rv = config_activate_children(self, act);
+		break;
+	}
+	return (rv);
 }
 
 int
@@ -1327,7 +1360,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Reset the adapter. */
-	sk_reset(sc);
+	skc_reset(sc);
 
 	skrs = sk_win_read_1(sc, SK_EPROM0);
 	if (SK_IS_GENESIS(sc)) {
@@ -1478,6 +1511,24 @@ skc_detach(struct device *self, int flags)
 		bus_space_unmap(sc->sk_btag, sc->sk_bhandle, sc->sk_bsize);
 
 	return(0);
+}
+
+int
+skc_activate(struct device *self, int act)
+{
+	struct sk_softc *sc = (void *)self;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_RESUME:
+		skc_reset(sc);
+		rv = config_activate_children(self, act);
+		break;
+	default:
+		rv = config_activate_children(self, act);
+		break;
+	}
+	return (rv);
 }
 
 int
@@ -2734,7 +2785,8 @@ sk_stop(struct sk_if_softc *sc_if, int softonly)
 }
 
 struct cfattach skc_ca = {
-	sizeof(struct sk_softc), skc_probe, skc_attach, skc_detach
+	sizeof(struct sk_softc), skc_probe, skc_attach, skc_detach,
+	skc_activate
 };
 
 struct cfdriver skc_cd = {
@@ -2742,7 +2794,8 @@ struct cfdriver skc_cd = {
 };
 
 struct cfattach sk_ca = {
-	sizeof(struct sk_if_softc), sk_probe, sk_attach, sk_detach
+	sizeof(struct sk_if_softc), sk_probe, sk_attach, sk_detach,
+	sk_activate
 };
 
 struct cfdriver sk_cd = {
