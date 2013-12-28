@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.194 2013/12/28 03:12:56 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.195 2013/12/28 03:22:52 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -132,10 +132,7 @@ int	ncpusfound = 1;			/* number of cpus we find */
 __volatile int start_init_exec;		/* semaphore for start_init() */
 
 #if !defined(NO_PROPOLICE)
-#ifdef __ELF__
-long	__guard_local __dso_hidden;
-#endif
-long	__guard[8];
+long	__guard_local __attribute__((section(".openbsd.randomdata")));
 #endif
 
 /* XXX return int so gcc -Werror won't complain */
@@ -415,16 +412,11 @@ main(void *framep)
 #endif
 
 #if !defined(NO_PROPOLICE)
-	{
-		volatile long newguard[8];
+	if (__guard_local == 0) {
+		volatile long newguard;
 
-		arc4random_buf((long *)newguard, sizeof(newguard));
-
-#ifdef __ELF__
-		__guard_local = newguard[0];
-#endif
-		for (i = nitems(__guard) - 1; i; i--)
-			__guard[i] = newguard[i];
+		newguard = arc4random();
+		__guard_local = newguard;
 	}
 #endif
 
