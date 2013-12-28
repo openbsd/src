@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.51 2013/12/08 15:53:01 deraadt Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.52 2013/12/28 03:28:45 deraadt Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -58,18 +58,15 @@
 
 int	eephy_match(struct device *, void *, void *);
 void	eephy_attach(struct device *, struct device *, void *);
-int	eephy_activate(struct device *, int);
 
 struct cfattach eephy_ca = {
-	sizeof (struct mii_softc), eephy_match, eephy_attach,
-	mii_phy_detach, eephy_activate
+	sizeof (struct mii_softc), eephy_match, eephy_attach, mii_phy_detach
 };
 
 struct cfdriver eephy_cd = {
 	NULL, "eephy", DV_DULL
 };
 
-void	eephy_init(struct mii_softc *);
 int	eephy_service(struct mii_softc *, struct mii_data *, int);
 void	eephy_status(struct mii_softc *);
 void	eephy_reset(struct mii_softc *);
@@ -198,32 +195,27 @@ eephy_attach(struct device *parent, struct device *self, void *aux)
 
 	mii_phy_add_media(sc);
 
-	eephy_init(sc);
-}
-
-int
-eephy_activate(struct device *self, int act)
-{
-	struct mii_softc *sc = (void *)self;
-
-	switch (act) {
-	case DVACT_RESUME:
-		eephy_init(sc);
-		break;
-	}
-
-	return (0);
 }
 
 void
-eephy_init(struct mii_softc *sc)
+eephy_reset(struct mii_softc *sc)
 {
-	int reg;
+	int reg, i;
+
+	reg = PHY_READ(sc, E1000_CR);
+	reg |= E1000_CR_RESET;
+	PHY_WRITE(sc, E1000_CR, reg);
+	
+	for (i = 0; i < 500; i++) {
+		DELAY(1);
+		reg = PHY_READ(sc, E1000_CR);
+		if (!(reg & E1000_CR_RESET))
+			break;
+	}
 
 	/*
 	 * Initialize PHY Specific Control Register.
 	 */
-
 	reg = PHY_READ(sc, E1000_SCR);
 
 	/* Assert CRS on transmit. */
@@ -290,23 +282,6 @@ eephy_init(struct mii_softc *sc)
 	reg = PHY_READ(sc, E1000_CR);
 	reg &= ~E1000_CR_AUTO_NEG_ENABLE;
 	PHY_WRITE(sc, E1000_CR, reg | E1000_CR_RESET);
-}
-
-void
-eephy_reset(struct mii_softc *sc)
-{
-	int reg, i;
-
-	reg = PHY_READ(sc, E1000_CR);
-	reg |= E1000_CR_RESET;
-	PHY_WRITE(sc, E1000_CR, reg);
-	
-	for (i = 0; i < 500; i++) {
-		DELAY(1);
-		reg = PHY_READ(sc, E1000_CR);
-		if (!(reg & E1000_CR_RESET))
-			break;
-	}
 }
 
 int
