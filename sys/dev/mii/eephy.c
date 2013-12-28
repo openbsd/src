@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.52 2013/12/28 03:28:45 deraadt Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.53 2013/12/28 20:32:16 brad Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -170,8 +170,6 @@ eephy_attach(struct device *parent, struct device *self, void *aux)
 		if ((reg & E1000_ESSR_HWCFG_MODE) == E1000_ESSR_RGMII_COPPER) {
 			reg |= E1000_ESSR_DIS_FC;
 			PHY_WRITE(sc, E1000_ESSR, reg);
-
-			PHY_RESET(sc);
 		}
 	}
 
@@ -185,9 +183,9 @@ eephy_attach(struct device *parent, struct device *self, void *aux)
 		reg |= E1000_SCR_MODE_1000BX;
 		PHY_WRITE(sc, E1000_SCR, reg);
 		PHY_WRITE(sc, E1000_EADR, page);
-
-		PHY_RESET(sc);
 	}
+
+	PHY_RESET(sc);
 
 	sc->mii_capabilities = PHY_READ(sc, E1000_SR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
