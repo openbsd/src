@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.24 2013/04/15 15:54:17 millert Exp $
+.\"	$OpenBSD: cksum.1,v 1.25 2013/12/29 21:19:11 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)cksum.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: April 15 2013 $
+.Dd $Mdocdate: December 29 2013 $
 .Dt CKSUM 1
 .Os
 .Sh NAME
@@ -269,7 +269,8 @@ The
 .Nm cksum
 and
 .Nm sum
-utilities exit 0 on success or \*(Gt0 if an error occurred.
+utilities exit 0 on success,
+and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr md5 1 ,
 .Xr sha1 1 ,

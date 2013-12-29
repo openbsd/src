@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha256.1,v 1.6 2013/12/23 23:00:38 tedu Exp $
+.\"	$OpenBSD: sha256.1,v 1.7 2013/12/29 21:19:11 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -18,12 +18,13 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: December 23 2013 $
+.Dd $Mdocdate: December 29 2013 $
 .Dt SHA256 1
 .Os
 .Sh NAME
-.Nm sha256
-.Nd calculate a message-digest fingerprint (checksum) for a file
+.Nm sha256 ,
+.Nm sha512
+.Nd calculate a message digest (checksum) for a file
 .Sh SYNOPSIS
 .Nm sha256
 .Op Fl bpqrtx
@@ -38,33 +39,25 @@
 .Sh DESCRIPTION
 .Nm
 takes as input a message of arbitrary length and produces
-as output a 256-bit "fingerprint" or "message digest" of the input.
+as output a 256-bit message digest (checksum) of the input.
 It is conjectured that it is computationally infeasible to produce
-two messages having the same message digest, or to produce any
-message having a given prespecified target message digest.
-.Pp
-The
-.Em SHA-256
-algorithm is intended for digital signature applications, where a
-large file must be "compressed" in a secure manner before being
-encrypted with a private (secret) key under a public-key cryptosystem
-such as
-.Em RSA .
+two messages having the same message digest (a collision),
+or to produce any message having a given prespecified target message digest.
 .Pp
 When invoked as
 .Nm sha512 ,
-the
-.Em SHA-512
-algorithm is used instead, generating a 512-bit digest.
+the SHA-512 algorithm is used instead, generating a 512-bit digest.
+.Pp
+These algorithms are intended for digital signature applications,
+where a large file must be compressed in a secure manner before
+being encrypted with a private (secret) key under a public-key
+cryptosystem, such as RSA.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl b
 Output checksums in base64 notation, not hexadecimal.
-.It Xo
-.Fl c
-.Op Ar checklist ...
-.Xc
+.It Fl c Op Ar checklist ...
 Compares all checksums contained in the file
 .Ar checklist
 with newly computed checksums for the corresponding files.
@@ -75,8 +68,7 @@ This will validate any of the supported checksums (see
 If no file is given, stdin is used.
 .It Fl p
 Echoes stdin to stdout and appends the
-.Em SHA-256
-sum to stdout.
+checksum to stdout.
 .It Fl q
 Only print the checksum (quiet mode).
 .It Fl r
@@ -96,18 +88,22 @@ by 10 for each additional flag.
 Runs a built-in test script.
 .El
 .Pp
-The SHA-256
-sum of each file listed on the command line is printed after the options
-are processed.
+The checksum of each file listed on the command line is printed
+after the options are processed.
 .Pp
 The
 .Nm
-command is shorthand for
+command is shorthand for:
 .Bd -literal -offset indent
-cksum -a sha256
+$ cksum -a sha256
 .Ed
 .Sh EXIT STATUS
-.Ex -std sha256
+The
+.Nm sha256
+and
+.Nm sha512
+utilities exit 0 on success,
+and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr cksum 1 ,
 .Xr md5 1 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: md5.1,v 1.33 2012/09/22 20:09:43 jmc Exp $
+.\"	$OpenBSD: md5.1,v 1.34 2013/12/29 21:19:11 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -18,12 +18,12 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: September 22 2012 $
+.Dd $Mdocdate: December 29 2013 $
 .Dt MD5 1
 .Os
 .Sh NAME
 .Nm md5
-.Nd calculate a message-digest fingerprint (checksum) for a file
+.Nd calculate a message digest (checksum) for a file
 .Sh SYNOPSIS
 .Nm md5
 .Op Fl bpqrtx
@@ -33,32 +33,25 @@
 .Sh DESCRIPTION
 .Nm
 takes as input a message of arbitrary length and produces
-as output a 128-bit "fingerprint" or "message digest" of the input.
-It was conjectured that it would be computationally infeasible to produce
-two messages having the same message digest (a collision), or to produce any
-message having a given prespecified target message digest.
-However, collisions have now been produced for
-.Em MD5 ,
+as output a 128-bit message digest (checksum) of the input.
+It is conjectured that it is computationally infeasible to produce
+two messages having the same message digest (a collision),
+or to produce any message having a given prespecified target message digest.
+However, collisions have now been produced for MD5,
 so the use of other message digest functions, such as
 .Xr sha256 1 ,
 is now preferred.
 .Pp
-The
-.Em MD5
-algorithm is intended for digital signature applications, where a
-large file must be "compressed" in a secure manner before being
-encrypted with a private (secret) key under a public-key cryptosystem
-such as
-.Em RSA .
+The MD5 algorithm is intended for digital signature applications,
+where a large file must be compressed in a secure manner before
+being encrypted with a private (secret) key under a public-key
+cryptosystem, such as RSA.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl b
 Output checksums in base64 notation, not hexadecimal.
-.It Xo
-.Fl c
-.Op Ar checklist ...
-.Xc
+.It Fl c Op Ar checklist ...
 Compares all checksums contained in the file
 .Ar checklist
 with newly computed checksums for the corresponding files.
@@ -69,8 +62,7 @@ This will validate any of the supported checksums (see
 If no file is given, stdin is used.
 .It Fl p
 Echoes stdin to stdout and appends the
-.Em MD5
-sum to stdout.
+checksum to stdout.
 .It Fl q
 Only print the checksum (quiet mode).
 .It Fl r
@@ -90,8 +82,15 @@ by 10 for each additional flag.
 Runs a built-in test script.
 .El
 .Pp
-The MD5 sum of each file listed on the command line is printed after the
-options are processed.
+The checksum of each file listed on the command line is printed
+after the options are processed.
+.Pp
+The
+.Nm
+command is shorthand for:
+.Bd -literal -offset indent
+$ cksum -a md5
+.Ed
 .Sh EXIT STATUS
 .Ex -std md5
 .Sh SEE ALSO
