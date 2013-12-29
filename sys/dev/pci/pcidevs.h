@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1700 2013/12/23 12:18:37 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1701 2013/12/29 00:55:06 miod Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3212,6 +3212,7 @@
 #define	PCI_PRODUCT_INTEL_HM76_LPC	0x1e59		/* HM76 LPC */
 #define	PCI_PRODUCT_INTEL_HM75_LPC	0x1e5d		/* HM75 LPC */
 #define	PCI_PRODUCT_INTEL_HM70_LPC	0x1e5e		/* HM70 LPC */
+#define	PCI_PRODUCT_INTEL_NM70_LPC	0x1e5f		/* NM70 LPC */
 #define	PCI_PRODUCT_INTEL_I354_BP_1GBPS	0x1f40		/* I354 */
 #define	PCI_PRODUCT_INTEL_I354_SGMII	0x1f41		/* I354 SGMII */
 #define	PCI_PRODUCT_INTEL_I354_BP_2_5GBPS	0x1f45		/* I354 */
