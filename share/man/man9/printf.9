@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.9,v 1.19 2013/06/04 19:27:11 schwarze Exp $
+.\"	$OpenBSD: printf.9,v 1.20 2013/12/29 03:15:03 guenther Exp $
 .\"     $NetBSD: kprintf.9,v 1.6 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: December 29 2013 $
 .Dt PRINTF 9
 .Os
 .Sh NAME
@@ -38,7 +38,8 @@
 .Nm vsnprintf ,
 .Nm uprintf ,
 .Nm ttyprintf ,
-.Nm db_printf
+.Nm db_printf ,
+.Nm db_vprintf
 .Nd kernel formatted output conversion
 .Sh SYNOPSIS
 .In sys/types.h
@@ -78,8 +79,11 @@
 .Fa "const char *format"
 .Fa "..."
 .Fc
+.In ddb/db_output.h
 .Ft void
 .Fn db_printf "const char *format" ...
+.Ft void
+.Fn db_vprintf "const char *format" "va_list ap"
 .Sh DESCRIPTION
 The
 .Fn printf ,
@@ -88,8 +92,9 @@ The
 .Fn vsnprintf ,
 .Fn uprintf ,
 .Fn ttyprintf ,
+.Fn db_printf ,
 and
-.Fn db_printf
+.Fn db_vprintf
 functions allow the kernel to send formatted messages to various output
 devices.
 The functions
@@ -104,9 +109,11 @@ and
 send formatted strings to the current process's controlling tty and a specific
 tty,
 respectively.
-The function
+The functions
 .Fn db_printf
-sends formatted strings to the ddb console, and is only used to implement
+and
+.Fn db_vprintf
+sends formatted strings to the ddb console, and are only used to implement
 .Xr ddb 4 .
 .Pp
 Since each of these kernel functions is a variant of its user space
