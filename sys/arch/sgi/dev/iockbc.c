@@ -1,4 +1,4 @@
-/*	$OpenBSD: iockbc.c,v 1.9 2013/12/25 21:01:01 miod Exp $	*/
+/*	$OpenBSD: iockbc.c,v 1.10 2013/12/29 18:31:50 miod Exp $	*/
 /*
  * Copyright (c) 2013, Miodrag Vallat
  * Copyright (c) 2006, 2007, 2009 Joel Sing <jsing@openbsd.org>
@@ -504,7 +504,7 @@ iockbc_attach_common(struct iockbc_softc *isc, bus_addr_t addr, int console,
 	} else {
 		/*
 		 * Setup up controller: do not force pull clock and data lines
-		 * low, clamp clocks after three bytes received.
+		 * low, clamp clocks after one byte received.
 		 */
 		cs = reginfo[PCKBC_KBD_SLOT].cs;
 		csr = bus_space_read_4(isc->iot, isc->ioh, cs);
@@ -512,8 +512,8 @@ iockbc_attach_common(struct iockbc_softc *isc, bus_addr_t addr, int console,
 		    IOC3_KBC_CTRL_KBD_PULL_CLOCK_LOW |
 		    IOC3_KBC_CTRL_AUX_PULL_DATA_LOW |
 		    IOC3_KBC_CTRL_AUX_PULL_CLOCK_LOW |
-		    IOC3_KBC_CTRL_KBD_CLAMP_1 | IOC3_KBC_CTRL_AUX_CLAMP_1);
-		csr |= IOC3_KBC_CTRL_KBD_CLAMP_3 | IOC3_KBC_CTRL_AUX_CLAMP_3;
+		    IOC3_KBC_CTRL_KBD_CLAMP_3 | IOC3_KBC_CTRL_AUX_CLAMP_3);
+		csr |= IOC3_KBC_CTRL_KBD_CLAMP_1 | IOC3_KBC_CTRL_AUX_CLAMP_1;
 		bus_space_write_4(isc->iot, isc->ioh, cs, csr);
 
 		/* Setup pckbc_internal structure. */
@@ -1186,15 +1186,15 @@ iockbc_cnattach()
 
 	/*
 	 * Setup up controller: do not force pull clock and data lines
-	 * low, clamp clocks after three bytes received.
+	 * low, clamp clocks after one byte received.
 	 */
 	csr = bus_space_read_4(iot, ioh, reginfo->cs);
 	csr &= ~(IOC3_KBC_CTRL_KBD_PULL_DATA_LOW |
 	    IOC3_KBC_CTRL_KBD_PULL_CLOCK_LOW |
 	    IOC3_KBC_CTRL_AUX_PULL_DATA_LOW |
 	    IOC3_KBC_CTRL_AUX_PULL_CLOCK_LOW |
-	    IOC3_KBC_CTRL_KBD_CLAMP_1 | IOC3_KBC_CTRL_AUX_CLAMP_1);
-	csr |= IOC3_KBC_CTRL_KBD_CLAMP_3 | IOC3_KBC_CTRL_AUX_CLAMP_3;
+	    IOC3_KBC_CTRL_KBD_CLAMP_3 | IOC3_KBC_CTRL_AUX_CLAMP_3);
+	csr |= IOC3_KBC_CTRL_KBD_CLAMP_1 | IOC3_KBC_CTRL_AUX_CLAMP_1;
 	bus_space_write_4(iot, ioh, reginfo->cs, csr);
 
 	/* Setup pckbc_internal structure. */
