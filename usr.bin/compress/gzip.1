@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gzip.1,v 1.9 2012/09/26 16:12:13 jmc Exp $
+.\"	$OpenBSD: gzip.1,v 1.10 2013/12/29 21:38:29 jmc Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)compress.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: September 26 2012 $
+.Dd $Mdocdate: December 29 2013 $
 .Dt GZIP 1
 .Os
 .Sh NAME
@@ -305,14 +305,6 @@ Compression is generally much better than that achieved by Huffman
 coding (as used in the historical command pack), or adaptive Huffman
 coding (as used in the historical command compact), and takes less
 time to compute.
-.Pp
-The
-.Nm gzip ,
-.Nm gunzip ,
-and
-.Nm gzcat
-utilities exit with 0 on success; 1 if an error occurred;
-or 2 if a warning occurred.
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It Ev GZIP
@@ -323,6 +315,14 @@ and
 .Nm gzcat
 automatically.
 .El
+.Sh EXIT STATUS
+The
+.Nm gzip ,
+.Nm gunzip ,
+and
+.Nm gzcat
+utilities exit with 0 on success; 1 if an error occurred;
+or 2 if a warning occurred.
 .Sh SEE ALSO
 .Xr compress 1 ,
 .Xr gzexe 1 ,
