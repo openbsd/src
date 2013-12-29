@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.54 2013/04/12 17:25:58 jmc Exp $
+ * $OpenBSD: calendar.birthday,v 1.55 2013/12/29 18:44:43 jmc Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -339,7 +339,6 @@
 12/19	Jean Genet born in Paris, 1910
 12/20	Carl Sagan died, 1996
 12/21	Benjamin Disraeli born, 1804
-12/22	Giacomo Puccini born, 1858
 12/22	Joseph Vissarionnovich Djugashvili (Stalin) born, 1879
 12/22	Samuel Beckett dies in Paris, 1989
 12/23	Joseph Smith born, 1805
