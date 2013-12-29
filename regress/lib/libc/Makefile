@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.37 2013/08/01 21:26:30 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.38 2013/12/29 01:39:44 martynas Exp $
 
 SUBDIR+= _setjmp alloca atexit basename cephes cxa-atexit db dirname env
 SUBDIR+= fmemopen fnmatch fpclassify getcap getopt_long glob
@@ -10,6 +10,7 @@ SUBDIR+= telldir time vis
 
 .if defined(REGRESS_FULL)
 SUBDIR+= getaddrinfo
+SUBDIR+= setjmp-fpu
 .endif
 
 .if (${MACHINE_ARCH} != "vax")
