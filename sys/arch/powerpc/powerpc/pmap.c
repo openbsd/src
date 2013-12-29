@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.121 2013/08/19 08:39:30 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.122 2013/12/29 19:09:21 brad Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -1020,9 +1020,9 @@ pmap_fill_pte64(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 	pte64->pte_lo = (pa & PTE_RPGN_64);
 
 
-	if ((cache == PMAP_CACHE_WB))
+	if (cache == PMAP_CACHE_WB)
 		pte64->pte_lo |= PTE_M_64;
-	else if ((cache == PMAP_CACHE_WT))
+	else if (cache == PMAP_CACHE_WT)
 		pte64->pte_lo |= (PTE_W_64 | PTE_M_64);
 	else
 		pte64->pte_lo |= (PTE_M_64 | PTE_I_64 | PTE_G_64);
@@ -1058,9 +1058,9 @@ pmap_fill_pte32(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 	    ((va >> ADDR_API_SHIFT_32) & PTE_API_32) | PTE_VALID_32;
 	pte32->pte_lo = (pa & PTE_RPGN_32);
 
-	if ((cache == PMAP_CACHE_WB))
+	if (cache == PMAP_CACHE_WB)
 		pte32->pte_lo |= PTE_M_32;
-	else if ((cache == PMAP_CACHE_WT))
+	else if (cache == PMAP_CACHE_WT)
 		pte32->pte_lo |= (PTE_W_32 | PTE_M_32);
 	else
 		pte32->pte_lo |= (PTE_M_32 | PTE_I_32 | PTE_G_32);
