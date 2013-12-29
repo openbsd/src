@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.192 2013/12/23 04:25:42 dlg Exp $
+#	$OpenBSD: Makefile,v 1.193 2013/12/29 03:16:42 guenther Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -264,7 +264,8 @@ MLINKS+=pool.9 pool_init.9 pool.9 pool_destroy.9 \
 MLINKS+=dma_alloc.9 dma_free.9
 MLINKS+=powerhook_establish.9 powerhook_disestablish.9
 MLINKS+=printf.9 snprintf.9 printf.9 vsnprintf.9 printf.9 vprintf.9 \
-	printf.9 uprintf.9 printf.9 ttyprintf.9 printf.9 db_printf.9
+	printf.9 uprintf.9 printf.9 ttyprintf.9 printf.9 db_printf.9 \
+	printf.9 db_vprintf.9
 MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
 MLINKS+=arc4random.9 add_true_randomness.9 \
 	arc4random.9 add_timer_randomness.9 \
