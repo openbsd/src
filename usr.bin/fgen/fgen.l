@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: fgen.l,v 1.9 2009/12/10 17:31:49 deraadt Exp $	*/
+/*	$OpenBSD: fgen.l,v 1.10 2013/12/30 21:52:21 deraadt Exp $	*/
 /*	$NetBSD: fgen.l,v 1.12 2001/06/13 10:46:05 wiz Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
@@ -1232,6 +1232,7 @@ tokenize(input)
 			
 			token = yylex();
 			if (token == NULL) {
+				free(alias->name);
 				free(alias);
 				(void)printf( "EOF in alias definition\n");
 				return;
