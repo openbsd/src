@@ -8,7 +8,8 @@ DDEESSCCRRIIPPTTIIOONN
 
      Here is a full stop (quite lonely).  It causes a double space, too.
 
-     A dot in parantheses (.) is not a full stop.
+     A dot in parantheses (.) is not a full stop.  Not even (Like in this
+     case.) when preceded by a letter.
 
      A lonely dot in an enclosure (.) is not a full stop.
 
@@ -17,4 +18,4 @@ DDEESSCCRRIIPPTTIIOONN
      At the end of an input line, even an escaped dot .  is regarded as a full
      stop.
 
-OpenBSD                         April 23, 2010                         OpenBSD
+OpenBSD                        December 30, 2013                       OpenBSD

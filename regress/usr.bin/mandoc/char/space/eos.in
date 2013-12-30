@@ -1,4 +1,4 @@
-.Dd April 23, 2010
+.Dd December 30, 2013
 .Dt SPACE-EOS 1
 .Os OpenBSD
 .Sh NAME
@@ -13,6 +13,9 @@ Here is a full stop
 It causes a double space, too.
 .Pp
 A dot in parantheses (.) is not a full stop.
+Not even
+.Pq Like in this case.
+when preceded by a letter.
 .Pp
 A lonely dot in an enclosure
 .Pq \&.
