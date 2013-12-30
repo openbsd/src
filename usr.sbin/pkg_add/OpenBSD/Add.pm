@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.133 2013/02/18 20:24:11 okan Exp $
+# $OpenBSD: Add.pm,v 1.134 2013/12/30 09:02:37 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -646,14 +646,14 @@ package OpenBSD::PackingElement::ExecAdd;
 sub should_run
 {
 	my ($self, $state) = @_;
-	return !$state->{replacing};
+	return !$state->replacing;
 }
 
 package OpenBSD::PackingElement::ExecUpdate;
 sub should_run
 {
 	my ($self, $state) = @_;
-	return $state->{replacing};
+	return $state->replacing;
 }
 
 package OpenBSD::PackingElement::Lib;

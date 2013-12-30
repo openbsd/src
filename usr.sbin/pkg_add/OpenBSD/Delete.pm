@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.121 2013/12/25 14:38:15 espie Exp $
+# $OpenBSD: Delete.pm,v 1.122 2013/12/30 09:02:37 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -357,14 +357,14 @@ package OpenBSD::PackingElement::UnexecDelete;
 sub should_run
 {
 	my ($self, $state) = @_;
-	return !$state->{replacing};
+	return !$state->replacing;
 }
 
 package OpenBSD::PackingElement::UnexecUpdate;
 sub should_run
 {
 	my ($self, $state) = @_;
-	return $state->{replacing};
+	return $state->replacing;
 }
 
 package OpenBSD::PackingElement::FileBase;
@@ -453,7 +453,7 @@ sub copy_old_stuff
 
 	if (defined $self->{stillaround}) {
 		delete $self->{stillaround};
-		if ($state->{replacing}) {
+		if ($state->replacing) {
 			$self->rename_file_to_temp($state);
 		}
 		$self->add_object($plist);
@@ -521,7 +521,7 @@ sub delete
 	if (!defined $orig) {
 		$state->fatal("\@sample element does not reference a valid file");
 	}
-	my $action = $state->{replacing} ? "check" : "remove";
+	my $action = $state->replacing ? "check" : "remove";
 	my $origname = $orig->realname($state);
 	if (! -e $realname) {
 		$state->log("File #1 does not exist", $realname);
@@ -619,7 +619,7 @@ sub delete
 	}
 	return if $state->{not};
 	return unless -e $realname or -l $realname;
-	if ($state->{replacing}) {
+	if ($state->replacing) {
 		$state->log("Remember to update #1", $realname);
 		$self->mark_dir($state);
 	} elsif ($state->{extra}) {
@@ -638,7 +638,7 @@ sub delete
 	my ($self, $state) = @_;
 	return unless $state->{extra};
 	my $realname = $self->realname($state);
-	return if $state->{replacing};
+	return if $state->replacing;
 	if ($state->{extra}) {
 		$self->SUPER::delete($state);
 	} else {
