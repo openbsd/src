@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.58 2013/12/25 15:59:51 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.59 2013/12/30 09:01:30 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -182,6 +182,15 @@ sub handle_options
 		$state->{interactive} = -t STDIN;
 	}
 	$state->{localbase} = $state->opt('L') // OpenBSD::Paths->localbase;
+	$ENV{PATH} = join(':',
+	    '/bin',
+	    '/sbin',
+	    '/usr/bin',
+	    '/usr/sbin',
+	    '/usr/X11R6/bin',
+	    "$state->{localbase}/bin",
+	    "$state->{localbase}/sbin");
+
 	$state->{size_only} = $state->opt('s');
 	$state->{quick} = $state->opt('q') || $state->config->istrue("nochecksum");
 	$state->{extra} = $state->opt('c');
@@ -384,6 +393,12 @@ sub status
 	my $self = shift;
 
 	return $self->{status};
+}
+
+sub replacing
+{
+	my $self = shift;
+	return $self->{replacing};
 }
 
 OpenBSD::Auto::cache(ldconfig,
