@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.82 2013/12/24 20:45:21 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.83 2013/12/30 00:20:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -1343,25 +1343,6 @@ blk_part_imp(MACRO_PROT_ARGS)
 		if ( ! mdoc_body_alloc(mdoc, line, ppos, tok))
 			return(0);
 		body = mdoc->last;
-	}
-
-	for (n = body->child; n && n->next; n = n->next)
-		/* Do nothing. */ ;
-	
-	/* 
-	 * End of sentence spacing: if the last node is a text node and
-	 * has a trailing period, then mark it as being end-of-sentence.
-	 */
-
-	if (n && MDOC_TEXT == n->type && n->string)
-		if (mandoc_eos(n->string, strlen(n->string), 1))
-			n->flags |= MDOC_EOS;
-
-	/* Up-propagate the end-of-space flag. */
-
-	if (n && (MDOC_EOS & n->flags)) {
-		body->flags |= MDOC_EOS;
-		body->parent->flags |= MDOC_EOS;
 	}
 
 	/*
