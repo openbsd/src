@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.31 2013/11/13 05:41:42 deraadt Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.32 2013/12/30 21:58:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -322,7 +322,7 @@ hinthash(char *cp, int vmajor, int vminor)
 int
 buildhints(void)
 {
-	int strtab_sz = 0, nhints = 0, fd, i, ret = -1, str_index = 0;
+	int strtab_sz = 0, nhints = 0, fd = -1, i, ret = -1, str_index = 0;
 	struct hints_bucket *blist;
 	struct hints_header hdr;
 	struct shlib_list *shp;
@@ -427,10 +427,6 @@ buildhints(void)
 		warn("%s", _PATH_LD_HINTS);
 		goto out;
 	}
-	if (close(fd) != 0) {
-		warn("%s", _PATH_LD_HINTS);
-		goto out;
-	}
 
 	if (rename(tmpfilenam, _PATH_LD_HINTS) != 0) {
 		warn("%s", _PATH_LD_HINTS);
@@ -439,6 +435,8 @@ buildhints(void)
 
 	ret = 0;
 out:
+	if (fd != -1)
+		close(fd);
 	free(blist);
 	free(strtab);
 	return (ret);
