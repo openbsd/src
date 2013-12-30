@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.17 2013/10/21 10:36:15 miod Exp $ */
+/* $OpenBSD: lunafb.c,v 1.18 2013/12/30 07:33:40 aoyama Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -464,13 +464,16 @@ omfb_getdevconfig(paddr, dc)
 	} else if (hwplanebits == 8) {
 		struct bt458 *ndac = (struct bt458 *)OMFB_RAMDAC;
 
-#if 0		/* This doesn't work.  Don't touch ROM setting for now. */
+		/* Initialize the Bt458 */
 		ndac->bt_addr = 0x04;
 		ndac->bt_ctrl = 0xff; /* all planes will be read */
+		ndac->bt_addr = 0x05;
 		ndac->bt_ctrl = 0x00; /* all planes have non-blink */
-		ndac->bt_ctrl = 0x43; /* pallete enabled, ovly plane */
+		ndac->bt_addr = 0x06;
+		ndac->bt_ctrl = 0x40; /* palette enabled, ovly plane disabled */
+		ndac->bt_addr = 0x07;
 		ndac->bt_ctrl = 0x00; /* no test mode */
-#endif
+
 		ndac->bt_addr = 0;
 		ndac->bt_cmap = 0;
 		ndac->bt_cmap = 0;
