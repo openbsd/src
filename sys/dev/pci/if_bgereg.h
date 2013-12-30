@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.117 2013/06/28 11:59:42 mikeb Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.118 2013/12/30 18:47:45 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1921,6 +1921,7 @@
 #define	BGE_MSIMODE_PCI_MSTR_ABRT_ATTN	0x00000008
 #define	BGE_MSIMODE_PCI_PERR_ATTN	0x00000010
 #define	BGE_MSIMODE_ONE_SHOT_DISABLE	0x00000020
+#define	BGE_MSIMODE_MULTIVEC_ENABLE	0x00000080
 
 /* MSI status register */
 #define	BGE_MSISTAT_PCI_TGT_ABRT_ATTN	0x00000004
@@ -2808,6 +2809,7 @@ struct bge_softc {
 	struct mii_data		bge_mii;
 	struct ifmedia		bge_ifmedia;	/* media info */
 	u_int32_t		bge_expcap;
+	u_int32_t		bge_msicap;
 	u_int32_t		bge_mps;
 	u_int32_t		bge_expmrq;
 	u_int32_t		bge_lasttag;
@@ -2843,6 +2845,7 @@ struct bge_softc {
 #define	BGE_APE			0x10000000
 #define	BGE_CPMU_PRESENT	0x20000000
 #define	BGE_TAGGED_STATUS	0x40000000
+#define	BGE_MSI			0x80000000
 
 	bus_dma_tag_t		bge_dmatag;
 	u_int32_t		bge_mfw_flags;  /* Management F/W flags */

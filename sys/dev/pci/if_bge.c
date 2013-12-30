@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.345 2013/12/28 03:34:54 deraadt Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.346 2013/12/30 18:47:45 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -124,6 +124,7 @@
 #define ETHER_MIN_NOPAD		(ETHER_MIN_LEN - ETHER_CRC_LEN) /* i.e., 60 */
 
 const struct bge_revision * bge_lookup_rev(u_int32_t);
+int bge_can_use_msi(struct bge_softc *);
 int bge_probe(struct device *, void *, void *);
 void bge_attach(struct device *, struct device *, void *);
 int bge_activate(struct device *, int);
@@ -2435,6 +2436,32 @@ bge_lookup_rev(u_int32_t chipid)
 	return (NULL);
 }
 
+int
+bge_can_use_msi(struct bge_softc *sc)
+{
+	int can_use_msi = 0;
+
+	switch (BGE_ASICREV(sc->bge_chipid)) {
+	case BGE_ASICREV_BCM5714_A0:
+	case BGE_ASICREV_BCM5714:
+		/*
+		 * Apparently, MSI doesn't work when these chips are
+		 * configured in single-port mode.
+		 */
+		break;
+	case BGE_ASICREV_BCM5750:
+		if (BGE_CHIPREV(sc->bge_chipid) != BGE_CHIPREV_5750_AX &&
+		    BGE_CHIPREV(sc->bge_chipid) != BGE_CHIPREV_5750_BX)
+			can_use_msi = 1;
+		break;
+	default:
+		if (BGE_IS_575X_PLUS(sc))
+			can_use_msi = 1;
+	}
+
+	return (can_use_msi);
+}
+
 /*
  * Probe for a Broadcom chip. Check the PCI vendor and device IDs
  * against our list and return its name if we find a match. Note
@@ -2744,13 +2771,27 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
 		sc->bge_flags |= BGE_CPMU_PRESENT;
 
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSI,
+	    &sc->bge_msicap, NULL)) {
+		if (bge_can_use_msi(sc) == 0)
+			pa->pa_flags &= ~PCI_FLAGS_MSI_ENABLED;
+	}
+
 	DPRINTFN(5, ("pci_intr_map\n"));
-	if (BGE_IS_5717_PLUS(sc) && pci_intr_map_msi(pa, &ih) == 0)
-		sc->bge_flags |= BGE_TAGGED_STATUS;
+	if (pci_intr_map_msi(pa, &ih) == 0)
+		sc->bge_flags |= BGE_MSI;
 	else if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		goto fail_1;
 	}
+
+	/*
+	 * All controllers except BCM5700 supports tagged status but
+	 * we use tagged status only for MSI case on BCM5717. Otherwise
+	 * MSI on BCM5717 does not work.
+	 */
+	if (BGE_IS_5717_PLUS(sc) && sc->bge_flags & BGE_MSI)
+		sc->bge_flags |= BGE_TAGGED_STATUS;
 
 	DPRINTFN(5, ("pci_intr_string\n"));
 	intrstr = pci_intr_string(pc, ih);
@@ -2945,12 +2986,9 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Take advantage of single-shot MSI. */
-	if ((BGE_IS_5717_PLUS(sc) && sc->bge_flags & BGE_TAGGED_STATUS)) {
-		reg = CSR_READ_4(sc, BGE_MSI_MODE);
-		reg &= ~BGE_MSIMODE_ONE_SHOT_DISABLE;
-		reg |= BGE_MSIMODE_ENABLE;
-		CSR_WRITE_4(sc, BGE_MSI_MODE, reg);
-	}
+	if (BGE_IS_5755_PLUS(sc) && sc->bge_flags & BGE_MSI)
+		CSR_WRITE_4(sc, BGE_MSI_MODE, CSR_READ_4(sc, BGE_MSI_MODE) &
+		    ~BGE_MSIMODE_ONE_SHOT_DISABLE);
 
 	/* Hookup IRQ last. */
 	DPRINTFN(5, ("pci_intr_establish\n"));
@@ -3192,8 +3230,19 @@ bge_reset(struct bge_softc *sc)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_CACHESZ, cachesize);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_CMD, command);
 
-	/* Enable memory arbiter. */
+	/* Re-enable MSI, if necessary, and enable memory arbiter. */
 	if (BGE_IS_5714_FAMILY(sc)) {
+		/* This chip disables MSI on reset. */
+		if (sc->bge_flags & BGE_MSI) {
+			val = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    sc->bge_msicap + PCI_MSI_MC);
+			pci_conf_write(pa->pa_pc, pa->pa_tag,
+			    sc->bge_msicap + PCI_MSI_MC,
+			    val | PCI_MSI_MC_MSIE);
+			val = CSR_READ_4(sc, BGE_MSI_MODE);
+			CSR_WRITE_4(sc, BGE_MSI_MODE,
+			    val | BGE_MSIMODE_ENABLE);
+		}
 		val = CSR_READ_4(sc, BGE_MARB_MODE);
 		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | val);
 	} else
