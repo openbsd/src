@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.213 2013/10/15 20:23:51 schwarze Exp $
+# $OpenBSD: PackingElement.pm,v 1.214 2013/12/30 09:14:49 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1751,6 +1751,12 @@ sub check
 	}
 	return;
 }
+
+package OpenBSD::PackingElement::Vendor;
+our @ISA=qw(OpenBSD::PackingElement::Unique);
+sub keyword() { 'vendor' }
+__PACKAGE__->register_with_factory;
+sub category() { "vendor" }
 
 package OpenBSD::PackingElement::DigitalSignature;
 our @ISA=qw(OpenBSD::PackingElement::Unique);

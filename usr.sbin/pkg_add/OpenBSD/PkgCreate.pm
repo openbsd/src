@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.74 2013/12/29 13:40:54 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.75 2013/12/30 09:14:49 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1082,6 +1082,16 @@ sub create_archive
 	return  OpenBSD::Ustar->new($fh, $state, $dir);
 }
 
+sub setup_vendor
+{
+	my ($self, $plist, $state) = @_;
+	my $vendor = $state->{subst}->value('VENDOR');
+	if (!defined $vendor) {
+		return;
+	}
+	OpenBSD::PackingElement::Vendor->add($plist, $vendor);
+}
+
 sub sign_existing_package
 {
 	my ($self, $state, $pkg) = @_;
@@ -1091,6 +1101,7 @@ sub sign_existing_package
 	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
 	$plist->set_infodir($dir);
 	$self->add_signature($plist, $state);
+	$self->setup_vendor($plist, $state);
 	$plist->save;
 	my $tmp = OpenBSD::Temp::permanent_file($output, "pkg");
 	my $wrarc = $self->create_archive($state, $tmp, ".");
@@ -1134,6 +1145,7 @@ sub add_extra_info
 	my ($self, $plist, $state) = @_;
 
 	my $subst = $state->{subst};
+	$self->setup_vendor($plist, $state);
 	my $fullpkgpath = $subst->value('FULLPKGPATH');
 	my $cdrom = $subst->value('PERMIT_PACKAGE_CDROM') ||
 	    $subst->value('CDROM');;
