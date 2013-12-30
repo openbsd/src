@@ -1,4 +1,4 @@
-/*	$OpenBSD: iofreg.h,v 1.4 2009/11/18 19:03:27 miod Exp $	*/
+/*	$OpenBSD: iofreg.h,v 1.5 2013/12/30 05:27:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -20,15 +20,15 @@
  * Register definitions for SGI IOC4 ASIC.
  */
 
-#define IOC4_NDEVS		8
+#define IOC4_NDEVS		7
 
 #define IOC4DEV_SERIAL_A	0
 #define IOC4DEV_SERIAL_B	1
-#define IOC4DEV_SERIAL_C	3
-#define IOC4DEV_SERIAL_D	4
-#define IOC4DEV_KBC		5
-#define IOC4DEV_ATAPI		6
-#define IOC4DEV_RTC		7
+#define IOC4DEV_SERIAL_C	2
+#define IOC4DEV_SERIAL_D	3
+#define IOC4DEV_KBC		4
+#define IOC4DEV_ATAPI		5
+#define IOC4DEV_RTC		6
 
 /* Interrupt control registers */
 #define IOC4_SIO_IR		0x00000008
