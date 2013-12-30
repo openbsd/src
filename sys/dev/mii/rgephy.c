@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.32 2013/12/30 22:25:25 brad Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.33 2013/12/30 22:35:29 brad Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -87,6 +87,8 @@ static const struct mii_phydesc rgephys[] = {
 	  MII_STR_xxREALTEK_RTL8169S },
 	{ MII_OUI_xxREALTEK,		MII_MODEL_xxREALTEK_RTL8169S,
 	  MII_STR_xxREALTEK_RTL8169S },
+	{ MII_OUI_xxREALTEK,		MII_MODEL_xxREALTEK_RTL8251,
+	  MII_STR_xxREALTEK_RTL8251 },
 
 	{ 0,			0,
 	  NULL },
@@ -396,7 +398,8 @@ rgephy_loop(struct mii_softc *sc)
 	u_int32_t bmsr;
 	int i;
 
-	if (sc->mii_rev < 2) {
+	if (sc->mii_model != MII_MODEL_xxREALTEK_RTL8251 &&
+	    sc->mii_rev < 2) {
 		PHY_WRITE(sc, RGEPHY_MII_BMCR, RGEPHY_BMCR_PDOWN);
 		DELAY(1000);
 	}
@@ -426,7 +429,8 @@ rgephy_load_dspcode(struct mii_softc *sc)
 {
 	int val;
 
-	if (sc->mii_rev > 1)
+	if (sc->mii_model == MII_MODEL_xxREALTEK_RTL8251 ||
+	    sc->mii_rev > 1)
 		return;
 
 	PHY_WRITE(sc, 31, 0x0001);
