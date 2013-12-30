@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.64 2013/12/22 04:47:57 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.65 2013/12/30 03:36:17 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -488,7 +488,7 @@ do_packet(unsigned int from_port, struct in_addr from,
 		return;
 	}
 
-	for (ap = config->reject_list; ap; ap = ap->next)
+	TAILQ_FOREACH(ap, &config->reject_list, next)
 		if (from.s_addr == ap->addr.s_addr) {
 #ifdef DEBUG
 			debug("Discarding packet from address on reject list "

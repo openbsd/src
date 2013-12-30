@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.280 2013/12/21 18:23:10 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.281 2013/12/30 03:36:17 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -456,6 +456,7 @@ main(int argc, char *argv[])
 	config = calloc(1, sizeof(*config));
 	if (config == NULL)
 		error("config calloc");
+	TAILQ_INIT(&config->reject_list);
 
 	get_ifname(argv[0]);
 	if (path_dhclient_db == NULL && asprintf(&path_dhclient_db, "%s.%s",

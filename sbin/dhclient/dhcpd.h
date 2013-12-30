@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.127 2013/12/21 18:23:10 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.128 2013/12/30 03:36:17 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -89,7 +89,7 @@ struct option_data {
 };
 
 struct reject_elem {
-	struct reject_elem	*next;
+	TAILQ_ENTRY(reject_elem) next;
 	struct in_addr		 addr;
 };
 
@@ -142,7 +142,7 @@ struct client_config {
 	time_t			 backoff_cutoff;
 	enum { IGNORE, ACCEPT, PREFER }
 				 bootp_policy;
-	struct reject_elem	*reject_list;
+	TAILQ_HEAD(, reject_elem) reject_list;
 	char			*resolv_tail;
 };
 

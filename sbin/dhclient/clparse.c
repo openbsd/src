@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.64 2013/12/28 21:48:04 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.65 2013/12/30 03:36:17 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -748,7 +748,7 @@ bad_flag:
 void
 parse_reject_statement(FILE *cfile)
 {
-	struct reject_elem *list;
+	struct reject_elem *elem;
 	struct in_addr addr;
 	int token;
 
@@ -759,13 +759,12 @@ parse_reject_statement(FILE *cfile)
 			return;
 		}
 
-		list = malloc(sizeof(struct reject_elem));
-		if (!list)
-			error("no memory for reject list!");
+		elem = malloc(sizeof(struct reject_elem));
+		if (!elem)
+			error("no memory for reject address!");
 
-		list->addr = addr;
-		list->next = config->reject_list;
-		config->reject_list = list;
+		elem->addr = addr;
+		TAILQ_INSERT_TAIL(&config->reject_list, elem, next);
 
 		token = next_token(NULL, cfile);
 	} while (token == ',');
