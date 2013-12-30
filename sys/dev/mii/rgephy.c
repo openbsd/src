@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.31 2013/12/28 03:30:41 deraadt Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.32 2013/12/30 22:25:25 brad Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -141,6 +141,9 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int anar, reg, speed, gig = 0;
+	char *devname;
+
+	devname = sc->mii_dev.dv_parent->dv_cfdata->cf_driver->cd_name;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -245,7 +248,7 @@ setit:
 		 * need to restart the autonegotiation process.  Read
 		 * the BMSR twice in case it's latched.
 		 */
-		if (sc->mii_rev < 2) {
+		if (strcmp(devname, "re") == 0) {
 			reg = PHY_READ(sc, RL_GMEDIASTAT);
 			if (reg & RL_GMEDIASTAT_LINK) {
 				sc->mii_ticks = 0;
@@ -294,13 +297,15 @@ rgephy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	int bmsr, bmcr, gtsr;
+	char *devname;
+
+	devname = sc->mii_dev.dv_parent->dv_cfdata->cf_driver->cd_name;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	if (sc->mii_rev < 2) {
+	if (strcmp(devname, "re") == 0) {
 		bmsr = PHY_READ(sc, RL_GMEDIASTAT);
-
 		if (bmsr & RL_GMEDIASTAT_LINK)
 			mii->mii_media_status |= IFM_ACTIVE;
 	} else {
@@ -324,7 +329,7 @@ rgephy_status(struct mii_softc *sc)
 		}
 	}
 
-	if (sc->mii_rev < 2) {
+	if (strcmp(devname, "re") == 0) {
 		bmsr = PHY_READ(sc, RL_GMEDIASTAT);
 		if (bmsr & RL_GMEDIASTAT_1000MBPS)
 			mii->mii_media_active |= IFM_1000_T;
