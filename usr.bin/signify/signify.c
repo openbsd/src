@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.3 2013/12/31 03:23:41 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.4 2013/12/31 03:54:05 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -350,7 +350,7 @@ main(int argc, char **argv)
 		}
 	}
 	argc -= optind;
-	if (argc != 0)
+	if (argc != 0 || verb == NULL)
 		usage();
 
 	if (inputfile && !sigfile) {
