@@ -1,6 +1,7 @@
-/*	$Id: apropos.c,v 1.18 2013/12/31 00:40:19 schwarze Exp $ */
+/*	$Id: apropos.c,v 1.19 2013/12/31 03:41:09 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -38,6 +39,7 @@ apropos(int argc, char *argv[])
 	char		*defpaths, *auxpaths;
 	char		*conf_file;
 	char		*progname;
+	char		*outkey;
 	extern char	*optarg;
 	extern int	 optind;
 
@@ -54,8 +56,9 @@ apropos(int argc, char *argv[])
 
 	auxpaths = defpaths = NULL;
 	conf_file = NULL;
+	outkey = NULL;
 
-	while (-1 != (ch = getopt(argc, argv, "C:M:m:S:s:")))
+	while (-1 != (ch = getopt(argc, argv, "C:M:m:O:S:s:")))
 		switch (ch) {
 		case ('C'):
 			conf_file = optarg;
@@ -65,6 +68,9 @@ apropos(int argc, char *argv[])
 			break;
 		case ('m'):
 			auxpaths = optarg;
+			break;
+		case ('O'):
+			outkey = optarg;
 			break;
 		case ('S'):
 			search.arch = optarg;
@@ -86,23 +92,27 @@ apropos(int argc, char *argv[])
 	search.flags = whatis ? MANSEARCH_WHATIS : 0;
 
 	manpath_parse(&paths, conf_file, defpaths, auxpaths);
-	ch = mansearch(&search, &paths, argc, argv, &res, &sz);
+	ch = mansearch(&search, &paths, argc, argv, outkey, &res, &sz);
 	manpath_free(&paths);
 
 	if (0 == ch)
 		goto usage;
 
 	for (i = 0; i < sz; i++) {
-		printf("%s - %s\n", res[i].names, res[i].desc);
+		printf("%s - %s\n", res[i].names,
+		    NULL == outkey ? res[i].desc :
+		    NULL == res[i].output ? "" : res[i].output);
 		free(res[i].file);
 		free(res[i].names);
 		free(res[i].desc);
+		free(res[i].output);
 	}
 
 	free(res);
 	return(sz ? EXIT_SUCCESS : EXIT_FAILURE);
 usage:
 	fprintf(stderr, "usage: %s [-C file] [-M path] [-m path] "
+			"[-O outkey] "
 			"[-S arch] [-s section]%s ...\n", progname,
 			whatis ? " name" : "\n               expression");
 	return(EXIT_FAILURE);

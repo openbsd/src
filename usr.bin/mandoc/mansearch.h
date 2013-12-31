@@ -1,6 +1,7 @@
-/*	$Id: mansearch.h,v 1.1 2013/12/31 00:40:19 schwarze Exp $ */
+/*	$Id: mansearch.h,v 1.2 2013/12/31 03:41:09 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -64,6 +65,7 @@ struct	manpage {
 	char		*file; /* to be prefixed by manpath */
 	char		*names; /* a list of names with sections */
 	char		*desc; /* description of manpage */
+	char		*output; /* user-defined additional output */
 	int		 form; /* 0 == catpage */
 };
 
@@ -79,6 +81,7 @@ int	mansearch(const struct mansearch *cfg, /* options */
 		const struct manpaths *paths, /* manpaths */
 		int argc, /* size of argv */
 		char *argv[],  /* search terms */
+		const char *outkey, /* name of additional output key */
 		struct manpage **res, /* results */
 		size_t *ressz); /* results returned */
 

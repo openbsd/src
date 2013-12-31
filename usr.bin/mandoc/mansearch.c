@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.2 2013/12/31 02:42:20 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.3 2013/12/31 03:41:09 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -114,6 +114,8 @@ static	const struct type types[] = {
 };
 
 static	char		*buildnames(sqlite3 *, sqlite3_stmt *, uint64_t);
+static	char		*buildoutput(sqlite3 *, sqlite3_stmt *,
+				 uint64_t, uint64_t);
 static	void		*hash_alloc(size_t, void *);
 static	void		 hash_free(void *, size_t, void *);
 static	void		*hash_halloc(size_t, void *);
@@ -130,18 +132,20 @@ static	char		*sql_statement(const struct expr *,
 
 int
 mansearch(const struct mansearch *search,
-		const struct manpaths *paths, 
-		int argc, char *argv[], 
+		const struct manpaths *paths,
+		int argc, char *argv[],
+		const char *outkey,
 		struct manpage **res, size_t *sz)
 {
-	int		 fd, rc, c;
+	int		 fd, rc, c, ibit;
 	int64_t		 id;
+	uint64_t	 outbit;
 	char		 buf[PATH_MAX];
 	char		*sql;
 	struct manpage	*mpage;
 	struct expr	*e, *ep;
 	sqlite3		*db;
-	sqlite3_stmt	*s;
+	sqlite3_stmt	*s, *s2;
 	struct match	*mp;
 	struct ohash_info info;
 	struct ohash	 htab;
@@ -166,6 +170,16 @@ mansearch(const struct mansearch *search,
 		goto out;
 	if (NULL == (e = exprcomp(search, argc, argv)))
 		goto out;
+
+	outbit = 0;
+	if (NULL != outkey) {
+		for (ibit = 0; types[ibit].bits; ibit++) {
+			if (0 == strcasecmp(types[ibit].name, outkey)) {
+				outbit = types[ibit].bits;
+				break;
+			}
+		}
+	}
 
 	/*
 	 * Save a descriptor to the current working directory.
@@ -283,6 +297,12 @@ mansearch(const struct mansearch *search,
 		if (SQLITE_OK != c)
 			fprintf(stderr, "%s\n", sqlite3_errmsg(db));
 
+		c = sqlite3_prepare_v2(db,
+		    "SELECT * FROM keys WHERE pageid=? AND bits & ?",
+		    -1, &s2, NULL);
+		if (SQLITE_OK != c)
+			fprintf(stderr, "%s\n", sqlite3_errmsg(db));
+
 		for (mp = ohash_first(&htab, &idx);
 				NULL != mp;
 				mp = ohash_next(&htab, &idx)) {
@@ -300,6 +320,8 @@ mansearch(const struct mansearch *search,
 			mpage->desc = mp->desc;
 			mpage->form = mp->form;
 			mpage->names = buildnames(db, s, mp->id);
+			mpage->output = outbit ?
+			    buildoutput(db, s2, mp->id, outbit) : NULL;
 
 			free(mp->file);
 			free(mp);
@@ -307,6 +329,7 @@ mansearch(const struct mansearch *search,
 		}
 
 		sqlite3_finalize(s);
+		sqlite3_finalize(s2);
 		sqlite3_close(db);
 		ohash_delete(&htab);
 	}
@@ -355,6 +378,41 @@ buildnames(sqlite3 *db, sqlite3_stmt *s, uint64_t id)
 		fprintf(stderr, "%s\n", sqlite3_errmsg(db));
 	sqlite3_reset(s);
 	return(names);
+}
+
+static char *
+buildoutput(sqlite3 *db, sqlite3_stmt *s, uint64_t id, uint64_t outbit)
+{
+	char		*output, *newoutput;
+	const char	*oldoutput, *sep1, *data;
+	size_t		 i;
+	int		 c;
+
+	output = NULL;
+	i = 1;
+	SQL_BIND_INT64(db, s, i, id);
+	SQL_BIND_INT64(db, s, i, outbit);
+	while (SQLITE_ROW == (c = sqlite3_step(s))) {
+		if (NULL == output) {
+			oldoutput = "";
+			sep1 = "";
+		} else {
+			oldoutput = output;
+			sep1 = " # ";
+		}
+		data = sqlite3_column_text(s, 1);
+		if (-1 == asprintf(&newoutput, "%s%s%s",
+		    oldoutput, sep1, data)) {
+			perror(0);
+			exit((int)MANDOCLEVEL_SYSERR);
+		}
+		free(output);
+		output = newoutput;
+	}
+	if (SQLITE_DONE != c)
+		fprintf(stderr, "%s\n", sqlite3_errmsg(db));
+	sqlite3_reset(s);
+	return(output);
 }
 
 /*
