@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.7 2013/11/18 17:37:45 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.8 2013/12/31 12:24:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -767,7 +767,7 @@ sock_setpar(struct sock *f)
 		max = 1 + rate / d->round;
 		min *= s->round;
 		max *= s->round;
-		appbufsz += s->round - 1;
+		appbufsz += s->round / 2;
 		appbufsz -= appbufsz % s->round;
 		if (appbufsz < min)
 			appbufsz = min;
