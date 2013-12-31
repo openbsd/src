@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.45 2013/07/05 21:29:51 miod Exp $
+#	$OpenBSD: Makefile,v 1.46 2013/12/31 04:07:34 guenther Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -34,8 +34,17 @@ INSTALL_STRIP=
 
 ELF_LDFLAGS+=--shared -Bsymbolic --no-undefined
 
-$(PROG):
-	$(LD) -x -e _dl_start $(ELF_LDFLAGS) -o $(PROG) $(OBJS) $(LDADD)
+test_prog=	test-$(PROG)
+candidate=	$(PROG).test
+
+$(test_prog):
+	printf '#include <stdio.h>\nint main(int argc, char **argv){ printf("%%s\\n", argv[1]); }\n' | \
+	$(CC) -x c - -Wl,-dynamic-linker,${.OBJDIR}/$(candidate) -o $@
+
+$(PROG): $(test_prog)
+	$(LD) -x -e _dl_start $(ELF_LDFLAGS) -o $(candidate) $(OBJS) $(LDADD)
+	ulimit -c 0; [ "`${.OBJDIR}/$(test_prog) ok`" = ok ]
+	cp $(candidate) $@
 .endif
 
 .include <bsd.prog.mk>
