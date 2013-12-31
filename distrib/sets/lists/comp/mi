@@ -6442,6 +6442,7 @@
 ./usr/share/man/man9/crypto_unregister.9
 ./usr/share/man/man9/ctlname.9
 ./usr/share/man/man9/db_printf.9
+./usr/share/man/man9/db_vprintf.9
 ./usr/share/man/man9/delay.9
 ./usr/share/man/man9/disk.9
 ./usr/share/man/man9/disk_attach.9
