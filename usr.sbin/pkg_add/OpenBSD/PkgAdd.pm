@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.40 2013/12/25 14:38:15 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.41 2013/12/31 11:24:55 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -648,7 +648,7 @@ sub iterate
 	}
 }
 
-sub check_x509_signature
+sub check_digital_signature
 {
 	my ($set, $state) = @_;
 	$state->{check_digest} //= 0;
@@ -709,7 +709,7 @@ sub really_add
 
 	my $errors = 0;
 
-	check_x509_signature($set, $state);
+	check_digital_signature($set, $state);
 
 	if ($state->{not}) {
 		$state->status->what("Pretending to add");
