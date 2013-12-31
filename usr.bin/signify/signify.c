@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.1 2013/12/31 03:03:32 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.2 2013/12/31 03:08:48 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -65,7 +65,7 @@ static void
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-P] [-i input] [-p pubkey] [-s seckey] "
-	    "generate|sign|verify", __progname);
+	    "generate|sign|verify\n", __progname);
 	exit(1);
 }
 
@@ -324,7 +324,7 @@ main(int argc, char **argv)
 
 	rounds = 42;
 
-	while ((ch = getopt(argc, argv, "I:NO:P:S:")) != -1) {
+	while ((ch = getopt(argc, argv, "I:NO:P:S:V:")) != -1) {
 		switch (ch) {
 		case 'I':
 			inputfile = optarg;
@@ -349,12 +349,13 @@ main(int argc, char **argv)
 			break;
 		}
 	}
+	argc -= optind;
 	if (argc != 0)
 		usage();
 
 	if (inputfile && !sigfile) {
 		if (snprintf(sigfilebuf, sizeof(sigfilebuf), "%s.sig",
-		    inputfile) >= sizeof(sigfile))
+		    inputfile) >= sizeof(sigfilebuf))
 			errx(1, "path too long");
 		sigfile = sigfilebuf;
 	}
