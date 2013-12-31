@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.1 2013/12/31 00:40:19 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.2 2013/12/31 02:42:20 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -113,6 +113,7 @@ static	const struct type types[] = {
 	{ 0ULL, NULL }
 };
 
+static	char		*buildnames(sqlite3 *, sqlite3_stmt *, uint64_t);
 static	void		*hash_alloc(size_t, void *);
 static	void		 hash_free(void *, size_t, void *);
 static	void		*hash_halloc(size_t, void *);
@@ -136,8 +137,7 @@ mansearch(const struct mansearch *search,
 	int		 fd, rc, c;
 	int64_t		 id;
 	char		 buf[PATH_MAX];
-	char		*sql, *newnames;
-	const char	*oldnames, *sep1, *name, *sec, *sep2, *arch;
+	char		*sql;
 	struct manpage	*mpage;
 	struct expr	*e, *ep;
 	sqlite3		*db;
@@ -297,36 +297,9 @@ mansearch(const struct mansearch *search,
 				perror(0);
 				exit((int)MANDOCLEVEL_SYSERR);
 			}
-			mpage->names = NULL;
 			mpage->desc = mp->desc;
 			mpage->form = mp->form;
-
-			j = 1;
-			SQL_BIND_INT64(db, s, j, mp->id);
-			while (SQLITE_ROW == (c = sqlite3_step(s))) {
-				if (NULL == mpage->names) {
-					oldnames = "";
-					sep1 = "";
-				} else {
-					oldnames = mpage->names;
-					sep1 = ", ";
-				}
-				sec = sqlite3_column_text(s, 1);
-				arch = sqlite3_column_text(s, 2);
-				name = sqlite3_column_text(s, 3);
-				sep2 = '\0' == *arch ? "" : "/";
-				if (-1 == asprintf(&newnames,
-				    "%s%s%s(%s%s%s)", oldnames, sep1,
-				    name, sec, sep2, arch)) {
-					perror(0);
-					exit((int)MANDOCLEVEL_SYSERR);
-				}
-				free(mpage->names);
-				mpage->names = newnames;
-			}
-			if (SQLITE_DONE != c)
-				fprintf(stderr, "%s\n", sqlite3_errmsg(db));
-			sqlite3_reset(s);
+			mpage->names = buildnames(db, s, mp->id);
 
 			free(mp->file);
 			free(mp);
@@ -345,6 +318,43 @@ out:
 	free(sql);
 	*sz = cur;
 	return(rc);
+}
+
+static char *
+buildnames(sqlite3 *db, sqlite3_stmt *s, uint64_t id)
+{
+	char		*names, *newnames;
+	const char	*oldnames, *sep1, *name, *sec, *sep2, *arch;
+	size_t		 i;
+	int		 c;
+
+	names = NULL;
+	i = 1;
+	SQL_BIND_INT64(db, s, i, id);
+	while (SQLITE_ROW == (c = sqlite3_step(s))) {
+		if (NULL == names) {
+			oldnames = "";
+			sep1 = "";
+		} else {
+			oldnames = names;
+			sep1 = ", ";
+		}
+		sec = sqlite3_column_text(s, 1);
+		arch = sqlite3_column_text(s, 2);
+		name = sqlite3_column_text(s, 3);
+		sep2 = '\0' == *arch ? "" : "/";
+		if (-1 == asprintf(&newnames, "%s%s%s(%s%s%s)",
+		    oldnames, sep1, name, sec, sep2, arch)) {
+			perror(0);
+			exit((int)MANDOCLEVEL_SYSERR);
+		}
+		free(names);
+		names = newnames;
+	}
+	if (SQLITE_DONE != c)
+		fprintf(stderr, "%s\n", sqlite3_errmsg(db));
+	sqlite3_reset(s);
+	return(names);
 }
 
 /*
