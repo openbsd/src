@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.1 2013/12/31 03:03:32 tedu Exp $
+.\" $OpenBSD: signify.1,v 1.2 2013/12/31 04:03:23 tedu Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -63,7 +63,7 @@ Secret (private) key produced by
 and used by
 .Ar sign
 to sign a message.
-.It Fl V generate|sign|verify
+.It Fl V Ar generate|sign|verify
 Select the desired operation.
 .El
 .Sh EXIT STATUS
@@ -87,6 +87,13 @@ Sign a file, specifying signature name:
 .Dl "$ signify -S key.sec -I message.txt -O msg.sig -V sign"
 Verify a signature, using the default signature name:
 .Dl "$ signify -P key.pub -I generalsorders.txt -V verify"
+.Sh FILES
+The key and signature files created by
+.Nm
+have the same format.
+The first line of the file is a free form text comment that may be edited,
+so long as it does not exceed a single line.
+The second line of the file is the actual key or signature base64 encoded.
 .Sh SEE ALSO
 .Xr cmp 1 ,
 .Xr sha256 1 ,
