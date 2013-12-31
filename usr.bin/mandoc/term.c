@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.75 2013/12/25 00:39:13 schwarze Exp $ */
+/*	$Id: term.c,v 1.76 2013/12/31 18:07:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -655,7 +655,6 @@ term_strlen(const struct termp *p, const char *cp)
 		for (i = 0; i < rsz; i++)
 			sz += cond_width(p, *cp++, &skip);
 
-		c = 0;
 		switch (*cp) {
 		case ('\\'):
 			cp++;
