@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.48 2013/12/31 18:07:06 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.49 2013/12/31 19:39:09 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -146,11 +146,9 @@ static	int	 parse_mdoc_body(struct mpage *, const struct mdoc_node *);
 static	int	 parse_mdoc_head(struct mpage *, const struct mdoc_node *);
 static	int	 parse_mdoc_Fd(struct mpage *, const struct mdoc_node *);
 static	int	 parse_mdoc_Fn(struct mpage *, const struct mdoc_node *);
-static	int	 parse_mdoc_In(struct mpage *, const struct mdoc_node *);
 static	int	 parse_mdoc_Nd(struct mpage *, const struct mdoc_node *);
 static	int	 parse_mdoc_Nm(struct mpage *, const struct mdoc_node *);
 static	int	 parse_mdoc_Sh(struct mpage *, const struct mdoc_node *);
-static	int	 parse_mdoc_St(struct mpage *, const struct mdoc_node *);
 static	int	 parse_mdoc_Xr(struct mpage *, const struct mdoc_node *);
 static	void	 putkey(const struct mpage *,
 			const char *, uint64_t);
@@ -208,7 +206,7 @@ static	const struct mdoc_handler mdocs[MDOC_MAX] = {
 	{ parse_mdoc_Fn, 0 },  /* Fn */
 	{ NULL, TYPE_Ft },  /* Ft */
 	{ NULL, TYPE_Ic },  /* Ic */
-	{ parse_mdoc_In, TYPE_In },  /* In */
+	{ NULL, TYPE_In },  /* In */
 	{ NULL, TYPE_Li },  /* Li */
 	{ parse_mdoc_Nd, TYPE_Nd },  /* Nd */
 	{ parse_mdoc_Nm, TYPE_Nm },  /* Nm */
@@ -216,7 +214,7 @@ static	const struct mdoc_handler mdocs[MDOC_MAX] = {
 	{ NULL, 0 },  /* Ot */
 	{ NULL, TYPE_Pa },  /* Pa */
 	{ NULL, 0 },  /* Rv */
-	{ parse_mdoc_St, 0 },  /* St */
+	{ NULL, TYPE_St },  /* St */
 	{ NULL, TYPE_Va },  /* Va */
 	{ parse_mdoc_body, TYPE_Va },  /* Vt */
 	{ parse_mdoc_Xr, 0 },  /* Xr */
@@ -1433,18 +1431,7 @@ parse_mdoc_Fd(struct mpage *mpage, const struct mdoc_node *n)
 
 	if (end > start)
 		putkeys(mpage, start, end - start + 1, TYPE_In);
-	return(1);
-}
-
-static int
-parse_mdoc_In(struct mpage *mpage, const struct mdoc_node *n)
-{
-
-	if (NULL != n->child && MDOC_TEXT == n->child->type)
-		return(0);
-
-	putkey(mpage, n->child->string, TYPE_In);
-	return(1);
+	return(0);
 }
 
 static int
@@ -1478,17 +1465,6 @@ parse_mdoc_Fn(struct mpage *mpage, const struct mdoc_node *n)
 			putkey(mpage, n->string, TYPE_Fa);
 
 	return(0);
-}
-
-static int
-parse_mdoc_St(struct mpage *mpage, const struct mdoc_node *n)
-{
-
-	if (NULL == n->child || MDOC_TEXT != n->child->type)
-		return(0);
-
-	putkey(mpage, n->child->string, TYPE_St);
-	return(1);
 }
 
 static int
@@ -1548,12 +1524,8 @@ static int
 parse_mdoc_Nm(struct mpage *mpage, const struct mdoc_node *n)
 {
 
-	if (SEC_NAME == n->sec)
-		return(1);
-	else if (SEC_SYNOPSIS != n->sec || MDOC_HEAD != n->type)
-		return(0);
-
-	return(1);
+	return(SEC_NAME == n->sec ||
+	    (SEC_SYNOPSIS == n->sec && MDOC_HEAD == n->type));
 }
 
 static int
