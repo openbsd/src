@@ -1,0 +1,98 @@
+.\" $OpenBSD: signify.1,v 1.1 2013/12/31 03:03:32 tedu Exp $
+.\"
+.\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
+.\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
+.\"
+.\"Permission to use, copy, modify, and distribute this software for any
+.\"purpose with or without fee is hereby granted, provided that the above
+.\"copyright notice and this permission notice appear in all copies.
+.\"
+.\"THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\"WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\"MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\"ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.Dd $Mdocdate: December 31 2013 $
+.Dt SIGNIFY 1
+.Os
+.Sh NAME
+.Nm signify
+.Nd cryptographically sign and verify files
+.Sh SYNOPSIS
+.Nm signify
+.Op Fl I Ar input
+.Op Fl N
+.Op Fl O Ar output
+.Op Fl P Ar pubkey
+.Op Fl S Ar seckey
+.Op Fl V Ar generate|sign|verify
+.Sh DESCRIPTION
+The
+.Nm
+utility creates and verifies cryptographic signatures.
+The mode of operation is selected by the verb passed to the
+.Ar V
+option.
+Options are as follows
+.Bl -tag -width iPPpubkey
+.It Fl I Ar input
+Input file to
+.Ar sign
+or
+.Ar verify .
+.It Fl N
+Do not ask for a passphrase during key generation.
+Otherwise,
+.Nm
+will prompt the user for a passphrase on the tty.
+.It Fl O Ar output
+The signature file to create or verify.
+The default is
+.Ar input .sig .
+.It Fl P Ar pubkey
+Public key produced by
+.Ar generate ,
+and used by
+.Ar verify
+to check a signature.
+.It Fl S Ar seckey
+Secret (private) key produced by
+.Ar generate ,
+and used by
+.Ar sign
+to sign a message.
+.It Fl V generate|sign|verify
+Select the desired operation.
+.El
+.Sh EXIT STATUS
+The
+.Nm
+utility may fail for the following reasons:
+.Bl -bullet -compact
+.It 
+Some necessary files do not exist.
+.It
+Entered passphrase is incorrect.
+.It
+The message file was corrupted and its signature does not match.
+.It
+The message file is too large.
+.El
+.Sh EXAMPLES
+Create a new keypair:
+.Dl "$ signify -P newkey.pub -S newkey.sec -V generate"
+Sign a file, specifying signature name:
+.Dl "$ signify -S key.sec -I message.txt -O msg.sig -V sign"
+Verify a signature, using the default signature name:
+.Dl "$ signify -P key.pub -I generalsorders.txt -V verify"
+.Sh SEE ALSO
+.Xr cmp 1 ,
+.Xr sha256 1 ,
+.Xr ssh 1
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Ox 5.5
