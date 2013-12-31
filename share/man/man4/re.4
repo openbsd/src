@@ -1,4 +1,4 @@
-.\" $OpenBSD: re.4,v 1.50 2013/07/16 16:05:49 schwarze Exp $
+.\" $OpenBSD: re.4,v 1.51 2013/12/31 21:09:34 brad Exp $
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/re.4,v 1.4 2004/03/04 06:42:46 sanpei Exp $
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: December 31 2013 $
 .Dt RE 4
 .Os
 .Sh NAME
@@ -221,8 +221,7 @@ The result is that the 8169 chip is tricked into performing 64-bit DMA
 transfers even though a 64-bit data path between the NIC and the bus does
 not actually exist.
 .Pp
-Unfortunately, it is not possible to correct this problem in software,
-however it is possible to detect it.
+Unfortunately, it is not possible to correct this problem in software.
 The user should ensure the NIC is installed in a 32-bit PCI slot to avoid
 this problem.
 .Pp
