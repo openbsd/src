@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.3 2013/12/31 11:03:53 espie Exp $
+.\" $OpenBSD: signify.1,v 1.4 2013/12/31 17:33:17 jmc Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -22,31 +22,29 @@
 .Nd cryptographically sign and verify files
 .Sh SYNOPSIS
 .Nm signify
-.Op Fl I Ar input
 .Op Fl N
+.Op Fl I Ar input
 .Op Fl O Ar output
 .Op Fl P Ar pubkey
 .Op Fl S Ar seckey
-.Op Fl V Ar generate|sign|verify
+.Fl V Ar generate | sign | verify
 .Sh DESCRIPTION
 The
 .Nm
 utility creates and verifies cryptographic signatures.
-The mode of operation is selected by the verb passed to the
-.Fl Ar V
+The mode of operation is selected by the
+.Fl V
 option.
-Options are as follows
-.Bl -tag -width iPPpubkey
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
 .It Fl I Ar input
-Input file to
-.Ar sign
-or
-.Ar verify .
+Input file to sign or verify.
 .It Fl N
 Do not ask for a passphrase during key generation.
 Otherwise,
 .Nm
-will prompt the user for a passphrase on the tty.
+will prompt the user for a passphrase on the terminal.
 .It Fl O Ar output
 The signature file to create or verify.
 The default is
@@ -63,15 +61,22 @@ Secret (private) key produced by
 and used by
 .Ar sign
 to sign a message.
-.It Fl V Ar generate|sign|verify
+.It Fl V Ar generate | sign | verify
 Select the desired operation.
 .El
-.Sh EXIT STATUS
-The
+.Pp
+The key and signature files created by
 .Nm
-utility may fail for the following reasons:
+have the same format.
+The first line of the file is a free form text comment that may be edited,
+so long as it does not exceed a single line.
+The second line of the file is the actual key or signature base64 encoded.
+.Sh EXIT STATUS
+.Ex -std signify
+It may fail because of one of the following reasons:
+.Pp
 .Bl -bullet -compact
-.It 
+.It
 Some necessary files do not exist.
 .It
 Entered passphrase is incorrect.
@@ -82,18 +87,13 @@ The message file is too large.
 .El
 .Sh EXAMPLES
 Create a new keypair:
-.Dl "$ signify -P newkey.pub -S newkey.sec -V generate"
-Sign a file, specifying signature name:
-.Dl "$ signify -S key.sec -I message.txt -O msg.sig -V sign"
+.Dl $ signify -P newkey.pub -S newkey.sec -V generate
+.Pp
+Sign a file, specifying a signature name:
+.Dl $ signify -S key.sec -I message.txt -O msg.sig -V sign
+.Pp
 Verify a signature, using the default signature name:
-.Dl "$ signify -P key.pub -I generalsorders.txt -V verify"
-.Sh FILES
-The key and signature files created by
-.Nm
-have the same format.
-The first line of the file is a free form text comment that may be edited,
-so long as it does not exceed a single line.
-The second line of the file is the actual key or signature base64 encoded.
+.Dl $ signify -P key.pub -I generalsorders.txt -V verify
 .Sh SEE ALSO
 .Xr cmp 1 ,
 .Xr sha256 1 ,
