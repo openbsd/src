@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.2 2013/12/31 03:08:48 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.3 2013/12/31 03:23:41 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -64,8 +64,8 @@ extern char *__progname;
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-P] [-i input] [-p pubkey] [-s seckey] "
-	    "generate|sign|verify\n", __progname);
+	fprintf(stderr, "usage: %s [-N] [-I input] [-P pubkey] [-S seckey] "
+	    "-V generate|sign|verify\n", __progname);
 	exit(1);
 }
 
