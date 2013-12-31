@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.63 2013/11/06 17:08:57 deraadt Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.64 2013/12/31 03:24:44 tedu Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -513,7 +513,7 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 		if (M_LEADINGSPACE(m) < off)
 			panic("etherip_output: no space for align fixup");
 		m->m_data -= off;
-		bcopy(mtod(m, caddr_t) + off, mtod(m, caddr_t), m->m_len);
+		memmove(mtod(m, caddr_t), mtod(m, caddr_t) + off, m->m_len);
 	}
 
 	/* Statistics */

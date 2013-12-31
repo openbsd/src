@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.89 2013/11/28 10:16:44 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.90 2013/12/31 03:24:44 tedu Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -494,15 +494,15 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 
 		/* copy args to in_aliasreq, perform ioctl(SIOCAIFADDR). */
 		bzero(&ifra, sizeof(ifra));
-		bcopy(iflr->iflr_name, ifra.ifra_name,
-			sizeof(ifra.ifra_name));
+		memcpy(ifra.ifra_name, iflr->iflr_name,
+		    sizeof(ifra.ifra_name));
 
-		bcopy(&iflr->addr, &ifra.ifra_addr,
-			((struct sockaddr *)&iflr->addr)->sa_len);
+		memcpy(&ifra.ifra_addr, &iflr->addr, 
+		    ((struct sockaddr *)&iflr->addr)->sa_len);
 
 		if (((struct sockaddr *)&iflr->dstaddr)->sa_family) {	/*XXX*/
-			bcopy(&iflr->dstaddr, &ifra.ifra_dstaddr,
-				((struct sockaddr *)&iflr->dstaddr)->sa_len);
+			memcpy(&ifra.ifra_dstaddr, &iflr->dstaddr,
+			    ((struct sockaddr *)&iflr->dstaddr)->sa_len);
 		}
 
 		ifra.ifra_mask.sin_family = AF_INET;
@@ -563,11 +563,11 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 
 		if (cmd == SIOCGLIFADDR) {
 			/* fill in the if_laddrreq structure */
-			bcopy(&ia->ia_addr, &iflr->addr, ia->ia_addr.sin_len);
+			memcpy(&iflr->addr, &ia->ia_addr, ia->ia_addr.sin_len);
 
 			if ((ifp->if_flags & IFF_POINTOPOINT) != 0) {
-				bcopy(&ia->ia_dstaddr, &iflr->dstaddr,
-					ia->ia_dstaddr.sin_len);
+				memcpy(&iflr->dstaddr, &ia->ia_dstaddr,
+				    ia->ia_dstaddr.sin_len);
 			} else
 				bzero(&iflr->dstaddr, sizeof(iflr->dstaddr));
 
@@ -582,17 +582,17 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 
 			/* fill in_aliasreq and do ioctl(SIOCDIFADDR) */
 			bzero(&ifra, sizeof(ifra));
-			bcopy(iflr->iflr_name, ifra.ifra_name,
-				sizeof(ifra.ifra_name));
+			memcpy(ifra.ifra_name, iflr->iflr_name,
+			    sizeof(ifra.ifra_name));
 
-			bcopy(&ia->ia_addr, &ifra.ifra_addr,
-				ia->ia_addr.sin_len);
+			memcpy(&ifra.ifra_addr, &ia->ia_addr,
+			    ia->ia_addr.sin_len);
 			if ((ifp->if_flags & IFF_POINTOPOINT) != 0) {
-				bcopy(&ia->ia_dstaddr, &ifra.ifra_dstaddr,
-					ia->ia_dstaddr.sin_len);
+				memcpy(&ifra.ifra_dstaddr, &ia->ia_dstaddr,
+				    ia->ia_dstaddr.sin_len);
 			}
-			bcopy(&ia->ia_sockmask, &ifra.ifra_dstaddr,
-				ia->ia_sockmask.sin_len);
+			memcpy(&ifra.ifra_dstaddr, &ia->ia_sockmask,
+			    ia->ia_sockmask.sin_len);
 
 			return in_control(so, SIOCDIFADDR, (caddr_t)&ifra, ifp);
 		}

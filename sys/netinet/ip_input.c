@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.222 2013/11/27 08:34:39 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.223 2013/12/31 03:24:44 tedu Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1090,7 +1090,7 @@ ip_dooptions(struct mbuf *m)
 			/*
 			 * locate outgoing interface
 			 */
-			bcopy((caddr_t)(cp + off), (caddr_t)&ipaddr.sin_addr,
+			memcpy(&ipaddr.sin_addr, cp + off,
 			    sizeof(ipaddr.sin_addr));
 			if (opt == IPOPT_SSRR) {
 			    if ((ia = ifatoia(ifa_ifwithdstaddr(sintosa(&ipaddr),
@@ -1107,8 +1107,8 @@ ip_dooptions(struct mbuf *m)
 				goto bad;
 			}
 			ip->ip_dst = ipaddr.sin_addr;
-			bcopy((caddr_t)&ia->ia_addr.sin_addr,
-			    (caddr_t)(cp + off), sizeof(struct in_addr));
+			memcpy(cp + off, &ia->ia_addr.sin_addr,
+			    sizeof(struct in_addr));
 			cp[IPOPT_OFFSET] += sizeof(struct in_addr);
 			/*
 			 * Let ip_intr's mcast routing check handle mcast pkts
@@ -1132,7 +1132,7 @@ ip_dooptions(struct mbuf *m)
 			off--;			/* 0 origin */
 			if ((off + sizeof(struct in_addr)) > optlen)
 				break;
-			bcopy((caddr_t)(&ip->ip_dst), (caddr_t)&ipaddr.sin_addr,
+			memcpy(&ipaddr.sin_addr, &ip->ip_dst,
 			    sizeof(ipaddr.sin_addr));
 			/*
 			 * locate outgoing interface; if we're the destination,
@@ -1147,8 +1147,8 @@ ip_dooptions(struct mbuf *m)
 				code = ICMP_UNREACH_HOST;
 				goto bad;
 			}
-			bcopy((caddr_t)&ia->ia_addr.sin_addr,
-			    (caddr_t)(cp + off), sizeof(struct in_addr));
+			memcpy(cp + off, &ia->ia_addr.sin_addr,
+			    sizeof(struct in_addr));
 			cp[IPOPT_OFFSET] += sizeof(struct in_addr);
 			break;
 
@@ -1156,7 +1156,7 @@ ip_dooptions(struct mbuf *m)
 			code = cp - (u_char *)ip;
 			if (optlen < sizeof(struct ip_timestamp))
 				goto bad;
-			bcopy(cp, &ipt, sizeof(struct ip_timestamp));
+			memcpy(&ipt, cp, sizeof(struct ip_timestamp));
 			if (ipt.ipt_ptr < 5 || ipt.ipt_len < 5)
 				goto bad;
 			if (ipt.ipt_ptr - 1 + sizeof(n_time) > ipt.ipt_len) {
@@ -1164,7 +1164,7 @@ ip_dooptions(struct mbuf *m)
 					goto bad;
 				break;
 			}
-			bcopy(cp + ipt.ipt_ptr - 1, &sin, sizeof sin);
+			memcpy(&sin, cp + ipt.ipt_ptr - 1, sizeof sin);
 			switch (ipt.ipt_flg) {
 
 			case IPOPT_TS_TSONLY:
@@ -1179,8 +1179,8 @@ ip_dooptions(struct mbuf *m)
 				    m->m_pkthdr.rcvif));
 				if (ia == 0)
 					continue;
-				bcopy((caddr_t)&ia->ia_addr.sin_addr,
-				    (caddr_t)&sin, sizeof(struct in_addr));
+				memcpy(&sin, &ia->ia_addr.sin_addr,
+				    sizeof(struct in_addr));
 				ipt.ipt_ptr += sizeof(struct in_addr);
 				break;
 
@@ -1188,7 +1188,7 @@ ip_dooptions(struct mbuf *m)
 				if (ipt.ipt_ptr - 1 + sizeof(n_time) +
 				    sizeof(struct in_addr) > ipt.ipt_len)
 					goto bad;
-				bcopy((caddr_t)&sin, (caddr_t)&ipaddr.sin_addr,
+				memcpy(&ipaddr.sin_addr, &sin,
 				    sizeof(struct in_addr));
 				if (ifa_ifwithaddr(sintosa(&ipaddr),
 				    m->m_pkthdr.rdomain) == 0)
@@ -1203,8 +1203,7 @@ ip_dooptions(struct mbuf *m)
 				goto bad;
 			}
 			ntime = iptime();
-			bcopy((caddr_t)&ntime, (caddr_t)cp + ipt.ipt_ptr - 1,
-			    sizeof(n_time));
+			memcpy(cp + ipt.ipt_ptr - 1, &ntime, sizeof(n_time));
 			ipt.ipt_ptr += sizeof(n_time);
 		}
 	}
@@ -1267,7 +1266,7 @@ save_rte(struct mbuf *m, u_char *option, struct in_addr dst)
 		return;
 	isr = (struct ip_srcrt *)(mtag + 1);
 
-	bcopy(option, isr->isr_hdr, olen);
+	memcpy(isr->isr_hdr, option, olen);
 	isr->isr_nhops = (olen - IPOPT_OFFSET - 1) / sizeof(struct in_addr);
 	isr->isr_dst = dst;
 	m_tag_prepend(m, mtag);
@@ -1316,7 +1315,8 @@ ip_srcroute(struct mbuf *m0)
 	 */
 	isr->isr_nop = IPOPT_NOP;
 	isr->isr_hdr[IPOPT_OFFSET] = IPOPT_MINOFF;
-	bcopy(&isr->isr_nop, mtod(m, caddr_t) + sizeof(struct in_addr), OPTSIZ);
+	memcpy(mtod(m, caddr_t) + sizeof(struct in_addr), &isr->isr_nop,
+	    OPTSIZ);
 	q = (struct in_addr *)(mtod(m, caddr_t) +
 	    sizeof(struct in_addr) + OPTSIZ);
 #undef OPTSIZ
@@ -1349,7 +1349,7 @@ ip_stripoptions(struct mbuf *m)
 	olen = (ip->ip_hl<<2) - sizeof (struct ip);
 	opts = (caddr_t)(ip + 1);
 	i = m->m_len - (sizeof (struct ip) + olen);
-	bcopy(opts  + olen, opts, (unsigned)i);
+	memmove(opts, opts  + olen, i);
 	m->m_len -= olen;
 	if (m->m_flags & M_PKTHDR)
 		m->m_pkthdr.len -= olen;

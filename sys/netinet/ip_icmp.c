@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.111 2013/11/26 11:27:41 henning Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.112 2013/12/31 03:24:44 tedu Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -609,9 +609,9 @@ reflect:
 		bzero(&ssrc, sizeof(ssrc));
 		sdst.sin_family = sgw.sin_family = ssrc.sin_family = AF_INET;
 		sdst.sin_len = sgw.sin_len = ssrc.sin_len = sizeof(sdst);
-		bcopy(&icp->icmp_ip.ip_dst, &sdst.sin_addr, sizeof(sdst));
-		bcopy(&icp->icmp_gwaddr, &sgw.sin_addr, sizeof(sgw));
-		bcopy(&ip->ip_src, &ssrc.sin_addr, sizeof(ssrc));
+		memcpy(&sdst.sin_addr, &icp->icmp_ip.ip_dst, sizeof(sdst));
+		memcpy(&sgw.sin_addr, &icp->icmp_gwaddr, sizeof(sgw));
+		memcpy(&ssrc.sin_addr, &ip->ip_src, sizeof(ssrc));
 
 #ifdef	ICMPPRINTFS
 		if (icmpprintfs) {
@@ -789,9 +789,8 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 				 */
 				if (opt == IPOPT_RR || opt == IPOPT_TS ||
 				    opt == IPOPT_SECURITY) {
-					bcopy((caddr_t)cp,
-					    mtod(opts, caddr_t) + opts->m_len,
-					    len);
+					memcpy(mtod(opts, caddr_t) +
+					    opts->m_len, cp, len);
 					opts->m_len += len;
 				}
 			}
