@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.3 2012/08/22 17:19:35 pascal Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.4 2013/12/31 23:31:13 kettenis Exp $	*/
 /*	$NetBSD: cerror.S,v 1.10 2006/01/06 05:14:39 uwe Exp $	*/
 
 /*-
@@ -40,26 +40,6 @@
 WEAK_ALIAS(CERROR, _CERROR)
 
 ASENTRY(_CERROR)
-#ifdef _REENTRANT
-	mov.l	.L___errno, r1
-	PIC_PROLOGUE(.L_got)
-	sts.l   pr, @-sp
-1:	CALL	r1
-	 mov.l	r4, @-sp	! save error code
-	mov.l	@sp+, r4
-	lds.l   @sp+, pr
-	PIC_EPILOGUE
-	mov.l	r4, @r0
-	mov	#-1, r1
-	rts
-	 mov	#-1, r0
-
-	.align	2
-.L_got:		PIC_GOT_DATUM
-.L___errno:	CALL_DATUM(_C_LABEL(__errno), 1b)
-	SET_ASENTRY_SIZE(_CERROR)
-
-#else /* !_REENTRANT */
 #ifdef __PIC__
 	mova	L_GOT, r0
 	mov.l	L_GOT, r1
@@ -82,4 +62,3 @@ L_errno:	.long	_C_LABEL(errno)@GOT
 #else
 L_errno:	.long	_C_LABEL(errno)
 #endif
-#endif /* !_REENTRANT */
