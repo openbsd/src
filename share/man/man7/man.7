@@ -1,7 +1,7 @@
-.\"	$OpenBSD: man.7,v 1.32 2013/08/14 08:39:29 jmc Exp $
+.\"	$OpenBSD: man.7,v 1.33 2013/12/31 15:13:25 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: December 31 2013 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -656,6 +656,19 @@ Sets the volume for the footer for compatibility with man pages from
 .Bx
 releases.
 The optional first argument specifies which release it is from.
+.Ss \&UE
+End a uniform resource identifier block.
+This is a non-standard GNU extension, included only for compatibility.
+See
+.Sx \&UE .
+.Ss \&UR
+Begin a uniform resource identifier block.
+This is a non-standard GNU extension, included only for compatibility.
+It has the following syntax:
+.Bd -literal -offset indent
+.Pf \. Sx \&UR Ar uri
+link description to be shown
+.Pf \. Sx UE
 .Ss \&br
 Breaks the current line.
 Consecutive invocations have no further effect.
@@ -745,10 +758,13 @@ The syntax is as follows:
 .It Sx \&BI  Ta    n         Ta    current   Ta    \&
 .It Sx \&BR  Ta    n         Ta    current   Ta    \&
 .It Sx \&DT  Ta    0         Ta    current   Ta    \&
+.It Sx \&EE  Ta    0         Ta    current   Ta    compat
+.It Sx \&EX  Ta    0         Ta    current   Ta    compat
 .It Sx \&I   Ta    n         Ta    next-line Ta    \&
 .It Sx \&IB  Ta    n         Ta    current   Ta    \&
 .It Sx \&IR  Ta    n         Ta    current   Ta    \&
 .It Sx \&OP  Ta    0, 1      Ta    current   Ta    compat
+.It Sx \&PD  Ta    1         Ta    current   Ta    \&
 .It Sx \&R   Ta    n         Ta    next-line Ta    \&
 .It Sx \&RB  Ta    n         Ta    current   Ta    \&
 .It Sx \&RI  Ta    n         Ta    current   Ta    \&
@@ -817,6 +833,8 @@ implicitly closed, is syntactically incorrect.
 .It Sx \&SH  Ta    >0        Ta    next-line  Ta    section     Ta    \&
 .It Sx \&SS  Ta    >0        Ta    next-line  Ta    sub-section Ta    \&
 .It Sx \&TP  Ta    n         Ta    next-line  Ta    paragraph   Ta    \&
+.It Sx \&UE  Ta    0         Ta    current    Ta    none        Ta    compat
+.It Sx \&UR  Ta    1         Ta    current    Ta    part        Ta    compat
 .El
 .Pp
 Macros marked
