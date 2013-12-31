@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.75 2013/12/30 09:14:49 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.76 2013/12/31 11:21:10 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -23,13 +23,33 @@ use OpenBSD::AddCreateDelete;
 use OpenBSD::Dependencies;
 use OpenBSD::SharedLibs;
 
+package Signer;
+
+my $h = {
+	x509 => 'Signer::X509',
+	signify => 'Signer::SIGNIFY',
+};
+
+sub factory
+{
+	my ($class, $state) = @_;
+
+	my @p = @{$state->{signature_params}};
+
+	if (defined $h->{$p[0]}) {
+		return $h->{$p[0]}->new($state, @p);
+	} else {
+		$state->usage("Unknown signature scheme $p[0]");
+	}
+}
+
 package Signer::X509;
 sub new
 {
 	my ($class, $state, @p) = @_;
 
 	if (@p != 3 || !-f $p[1] || !-f $p[2]) {
-		$state->usage("x509 signature wants -s cert -s privkey");
+		$state->usage("$p[0] signature wants -s cert -s privkey");
 	}
 	bless {cert => $p[1], privkey => $p[2]}, $class;
 }
@@ -37,13 +57,37 @@ sub new
 sub new_sig
 {
 	require OpenBSD::x509;
-	return OpenBSD::PackingElement::DigitalSignature->new_x509;
+	return OpenBSD::PackingElement::DigitalSignature->blank('x509');
 }
 
 sub compute_signature
 {
 	my ($self, $state, $plist) = @_;
 	return OpenBSD::x509::compute_signature($plist, $self->{cert}, 
+	    $self->{privkey});
+}
+
+package Signer::SIGNIFY;
+sub new
+{
+	my ($class, $state, @p) = @_;
+	if (@p != 2 || !-f $p[1]) {
+		$state->usage("$p[0] signature wants -s privkey");
+	}
+
+	bless {privkey => $p[1]}, $class;
+}
+
+sub new_sig
+{
+	require OpenBSD::signify;
+	return OpenBSD::PackingElement::DigitalSignature->blank('signify');
+}
+
+sub compute_signature
+{
+	my ($self, $state, $plist) = @_;
+	return OpenBSD::signify::compute_signature($plist, $state, 
 	    $self->{privkey});
 }
 
@@ -146,7 +190,7 @@ sub handle_options
 	$state->SUPER::handle_options('p:f:d:M:U:s:A:B:P:W:qQo:S:',
 	    '[-nQqvx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
-	    '[-s [x509|sos] -s cert -s priv] [-o dir] [-S source]',
+	    '[-s [x509 -s cert|signify] -s priv] [-o dir] [-S source]',
 	    '[-U undisplayfile] [-W wantedlib]',
 	    '[-d desc -D COMMENT=value -f packinglist -p prefix]',
 	    'pkg-name...');
@@ -219,6 +263,15 @@ sub verify_checksum
 {
 }
 
+sub register_forbidden
+{
+	my ($self, $state) = @_;
+	if ($self->is_forbidden) {
+		push(@{$state->{forbidden}}, $self);
+	}
+}
+
+sub is_forbidden() { 0 }
 sub resolve_link
 {
 	my ($filename, $base, $level) = @_;
@@ -412,7 +465,6 @@ sub makesum_plist
 sub verify_checksum
 {
 }
-
 
 package OpenBSD::PackingElement::Cwd;
 sub archive
@@ -654,6 +706,12 @@ sub find_every_library
 	push(@{$h->{$l[0]}{dynamic}}, $self);
 }
 
+package OpenBSD::PackingElement::DigitalSignature;
+sub is_forbidden() { 1 }
+
+package OpenBSD::PackingElement::Url;
+sub is_forbidden() { 1 }
+
 package OpenBSD::PackingElement::Fragment;
 our @ISA=qw(OpenBSD::PackingElement);
 
@@ -670,7 +728,6 @@ sub stringize
 {
 	return '!%%'.shift->{name}.'%%';
 }
-
 
 # put together file and filename, in order to handle fragments simply
 package MyFile;
@@ -1062,7 +1119,6 @@ sub add_signature
 {
 	my ($self, $plist, $state) = @_;
 
-
 	if ($plist->has('digital-signature')) {
 		if ($state->defines('resign')) {
 			$state->errsay("Resigning #1", $plist->pkgname);
@@ -1222,18 +1278,25 @@ sub create_plist
 		$pkgname = $1;
 		$pkgname =~ s/\.tgz$//o;
 	}
-	$plist->set_pkgname($pkgname);
 	$state->say("Creating package #1", $pkgname)
 	    if !(defined $state->opt('q')) && $state->opt('v');
 	if (!$state->opt('q')) {
 		$plist->set_infodir(OpenBSD::Temp->dir);
 	}
 
-	$self->add_elements($plist, $state);
 	unless (defined $state->opt('q') && defined $state->opt('n')) {
 		$state->set_status("reading plist");
 	}
+	$plist->set_pkgname($pkgname);
+	$self->add_elements($plist, $state);
 	$self->read_all_fragments($state, $plist);
+	$plist->register_forbidden($state);
+	if (defined $state->{forbidden}) {
+		for my $e (@{$state->{forbidden}}) {
+			$state->errsay("Error: #1 can't be set explicitly", "\@".$e->keyword." ".$e->stringize);
+		}
+		$state->fatal("Can't continue");
+	}
 	return $plist;
 }
 
@@ -1386,12 +1449,7 @@ sub parse_and_run
 
 	try {
 	if (defined $state->{signature_params}) {
-		my @p = @{$state->{signature_params}};
-		if ($p[0] eq 'x509') {
-			$state->{signer} = Signer::X509->new($state, @p);
-		} else  {
-			$state->usage("Unknown signature scheme $p[0]");
-		}
+		$state->{signer} = Signer->factory($state);
 	}
 	if (defined $state->opt('Q')) {
 		$state->{opt}{q} = 1;

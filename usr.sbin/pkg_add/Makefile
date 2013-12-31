@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.76 2012/08/06 00:00:28 fgsch Exp $
+# $OpenBSD: Makefile,v 1.77 2013/12/31 11:21:10 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -66,6 +66,7 @@ PACKAGES= \
     OpenBSD/Ustar.pm \
     OpenBSD/Vstat.pm \
     OpenBSD/md5.pm \
+    OpenBSD/signify.pm \
     OpenBSD/x509.pm
 
 PACKAGEDIRS=OpenBSD  OpenBSD/PackageRepository OpenBSD/ProgressMeter \

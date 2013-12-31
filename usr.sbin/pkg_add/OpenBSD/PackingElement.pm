@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.214 2013/12/30 09:14:49 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.215 2013/12/31 11:21:10 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1805,12 +1805,11 @@ sub new
 		$class;
 }
 
-sub new_x509
+sub blank
 {
-	my ($class) = @_;
-	bless { key => 'x509', timestamp => time, b64sig => '' }, $class;
+	my ($class, $type) = @_;
+	bless { key => $type, timestamp => time, b64sig => '' }, $class;
 }
-
 
 sub stringize
 {
