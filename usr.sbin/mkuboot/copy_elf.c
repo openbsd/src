@@ -1,4 +1,4 @@
-/*      $OpenBSD: copy_elf.c,v 1.4 2013/12/31 07:15:57 mcbride Exp $       */
+/*      $OpenBSD: copy_elf.c,v 1.5 2014/01/01 09:24:54 mcbride Exp $       */
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -137,11 +137,30 @@ ELFNAME(copy_elf)(int ifd, const char *iname, int ofd, const char *oname,
 			err(1, "%s", iname);
 
 #ifdef DEBUG
-		fprintf(stderr, "vaddr %p offset %p filesz %p memsz %p\n",
-		    elfoff2h(phdr.p_vaddr), elfoff2h(phdr.p_offset),
-		    elfoff2h(phdr.p_filesz), elfoff2h(phdr.p_memsz));
+		fprintf(stderr,
+		    "vaddr %p type %#x offset %p filesz %p memsz %p\n",
+		    elfoff2h(phdr.p_vaddr), letoh32(phdr.p_type),
+	            elfoff2h(phdr.p_offset), elfoff2h(phdr.p_filesz),
+                    elfoff2h(phdr.p_memsz));
 #endif
-		if (i == 0)
+
+		switch (letoh32(phdr.p_type)) {
+		case PT_LOAD:
+			break;
+		case PT_NULL:
+		case PT_NOTE:
+		case PT_OPENBSD_RANDOMIZE:
+#ifdef DEBUG
+			fprintf(stderr, "skipping segment type %#x\n",
+			    letoh32(phdr.p_type));
+#endif
+			continue;
+		default:
+			errx(1, "unexpected segment type %#x",
+			    letoh32(phdr.p_type));
+		}
+
+		if (i == 0) 
 			vaddr = elfoff2h(phdr.p_vaddr);
 		else if (vaddr != elfoff2h(phdr.p_vaddr)) {
 #ifdef DEBUG
