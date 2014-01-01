@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.1 2014/01/01 07:54:15 miod Exp $	*/
+/*	$OpenBSD: ld.script,v 1.2 2014/01/01 08:02:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Mark Kettenis <kettenis@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-OUTPUT_FORMAT("elf32-big")
+OUTPUT_FORMAT("elf32-sparc")
 OUTPUT_ARCH(sparc)
 ENTRY(start)
 
