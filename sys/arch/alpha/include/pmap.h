@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.28 2013/03/31 17:07:03 deraadt Exp $ */
+/* $OpenBSD: pmap.h,v 1.29 2014/01/01 22:13:52 miod Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -117,22 +117,11 @@ extern struct pmap	kernel_pmap_store;
  * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
  */
 typedef struct pv_entry {
-	LIST_ENTRY(pv_entry) pv_list;	/* pv_entry list */
+	struct pv_entry *pv_next;	/* next pv_entry on list */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
 	vaddr_t		pv_va;		/* virtual address for mapping */
 	pt_entry_t	*pv_pte;	/* PTE that maps the VA */
 } *pv_entry_t;
-
-/*
- * The head of the list of pv_entry_t's, also contains page attributes.
- */
-struct pv_head {
-	LIST_HEAD(, pv_entry) pvh_list;		/* pv_entry list */
-	struct simplelock pvh_slock;		/* lock on this head */
-	int pvh_attrs;				/* page attributes */
-	int pvh_usage;				/* page usage */
-	int pvh_refcnt;				/* special use ref count */
-};
 
 /* pvh_attrs */
 #define	PGA_MODIFIED		0x01		/* modified */
