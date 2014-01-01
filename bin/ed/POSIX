@@ -1,4 +1,4 @@
-$OpenBSD: POSIX,v 1.5 2013/11/28 10:04:26 sobrado Exp $
+$OpenBSD: POSIX,v 1.6 2014/01/01 16:17:55 tobias Exp $
 $NetBSD: POSIX,v 1.9 1995/03/21 09:04:32 cgd Exp $
 
 This version of ed(1) is not strictly POSIX compliant, as described in
@@ -15,8 +15,8 @@ OMISSIONS
 
 3) To support the BSD `s' command (see extension [1] below),
    substitution patterns cannot be delimited by numbers or the characters
-   `r', `g' and `p'.  In contrast, POSIX specifies any character expect
-   space or newline can used as a delimiter.
+   `r', `g' and `p'.  In contrast, POSIX specifies any character except
+   space or newline can be used as a delimiter.
 
 EXTENSIONS
 ----------
@@ -26,11 +26,11 @@ EXTENSIONS
 	ii) `W' for appending text to an existing file,
 	iii) `wq' for exiting after a write,
 	iv) `z' for scrolling through the buffer, and
-	v) BSD line addressing syntax (i.e., `^' and `%')  is recognized.
+	v) BSD line addressing syntax (i.e., `^' and `%') is recognized.
 
 2) If crypt(3) is available, files can be read and written using DES
    encryption.  The `x' command prompts the user to enter a key used for
-   encrypting/ decrypting subsequent reads and writes.  If only a newline
+   encrypting/decrypting subsequent reads and writes.  If only a newline
    is entered as the key, then encryption is disabled.  Otherwise, a key
    is read in the same manner as a password entry.  The key remains in
    effect until encryption is disabled.  For more information on the
