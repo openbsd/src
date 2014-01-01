@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.4 2013/11/01 23:00:02 pelikan Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.5 2014/01/01 17:46:43 pelikan Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -151,9 +151,13 @@ hfsc_attach(struct ifnet *ifp)
 int
 hfsc_detach(struct ifnet *ifp)
 {
-	timeout_del(&ifp->if_snd.ifq_hfsc->hif_defer);
-	free(ifp->if_snd.ifq_hfsc, M_DEVBUF);
+	struct hfsc_if *hif = ifp->if_snd.ifq_hfsc;
+
+	timeout_del(&hif->hif_defer);
 	ifp->if_snd.ifq_hfsc = NULL;
+
+	hfsc_ellist_destroy(hif->hif_eligible);
+	free(hif, M_DEVBUF);
 
 	return (0);
 }
