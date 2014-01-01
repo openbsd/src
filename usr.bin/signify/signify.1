@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.5 2013/12/31 18:18:36 jmc Exp $
+.\" $OpenBSD: signify.1,v 1.6 2014/01/01 17:50:33 tedu Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -14,7 +14,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: December 31 2013 $
+.Dd $Mdocdate: January 1 2014 $
 .Dt SIGNIFY 1
 .Os
 .Sh NAME
@@ -22,47 +22,54 @@
 .Nd cryptographically sign and verify files
 .Sh SYNOPSIS
 .Nm signify
-.Op Fl N
-.Op Fl I Ar input
-.Op Fl O Ar output
-.Op Fl P Ar pubkey
-.Op Fl S Ar seckey
-.Fl V Ar generate | sign | verify
+.Op Fl n
+.Op Fl i Ar input
+.Op Fl o Ar output
+.Op Fl p Ar pubkey
+.Op Fl s Ar seckey
+.Fl G | S | V
 .Sh DESCRIPTION
 The
 .Nm
 utility creates and verifies cryptographic signatures.
 The mode of operation is selected by the
+.Fl G ,
+.Fl S ,
+or
 .Fl V
-option.
+options.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl I Ar input
+.It Fl G
+Generate a new keypair.
+.It Fl i Ar input
 Input file to sign or verify.
-.It Fl N
+.It Fl n
 Do not ask for a passphrase during key generation.
 Otherwise,
 .Nm
 will prompt the user for a passphrase on the terminal.
-.It Fl O Ar output
+.It Fl o Ar output
 The signature file to create or verify.
 The default is
 .Ar input Ns .sig .
-.It Fl P Ar pubkey
+.It Fl p Ar pubkey
 Public key produced by
-.Ar generate ,
+.Ar G ,
 and used by
-.Ar verify
+.Ar V
 to check a signature.
-.It Fl S Ar seckey
+.It Fl S
+Sign the input file.
+.It Fl s Ar seckey
 Secret (private) key produced by
-.Ar generate ,
+.Ar G ,
 and used by
-.Ar sign
+.Ar S
 to sign a message.
-.It Fl V Ar generate | sign | verify
-Select the desired operation.
+.It Fl V
+Verify the input file and signature match.
 .El
 .Pp
 The key and signature files created by
@@ -87,13 +94,13 @@ The message file is too large.
 .El
 .Sh EXAMPLES
 Create a new keypair:
-.Dl $ signify -P newkey.pub -S newkey.sec -V generate
+.Dl $ signify -p newkey.pub -s newkey.sec -G
 .Pp
 Sign a file, specifying a signature name:
-.Dl $ signify -S key.sec -I message.txt -O msg.sig -V sign
+.Dl $ signify -s key.sec -i message.txt -o msg.sig -S
 .Pp
 Verify a signature, using the default signature name:
-.Dl $ signify -P key.pub -I generalsorders.txt -V verify
+.Dl $ signify -p key.pub -i generalsorders.txt -V
 .Sh SEE ALSO
 .Xr cmp 1 ,
 .Xr sha256 1 ,

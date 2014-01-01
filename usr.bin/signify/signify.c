@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.5 2013/12/31 17:33:17 jmc Exp $ */
+/* $OpenBSD: signify.c,v 1.6 2014/01/01 17:50:33 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -64,8 +64,8 @@ extern char *__progname;
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-N] [-I input] [-O output] [-P pubkey] [-S seckey] "
-	    "-V generate | sign | verify\n", __progname);
+	fprintf(stderr, "usage: %s [-n] [-i input] [-o output] [-p pubkey] [-s seckey] "
+	    "-G | -S | -V\n", __progname);
 	exit(1);
 }
 
@@ -316,33 +316,51 @@ verify(const char *pubkeyfile, const char *inputfile, const char *sigfile)
 int
 main(int argc, char **argv)
 {
-	const char *verb = NULL;
 	const char *pubkeyfile = NULL, *seckeyfile = NULL, *inputfile = NULL,
 	    *sigfile = NULL;
 	char sigfilebuf[1024];
 	int ch, rounds;
+	enum {
+		NONE,
+		GENERATE,
+		SIGN,
+		VERIFY
+	} verb = NONE;
+
 
 	rounds = 42;
 
-	while ((ch = getopt(argc, argv, "I:NO:P:S:V:")) != -1) {
+	while ((ch = getopt(argc, argv, "GSVi:no:p:s:")) != -1) {
 		switch (ch) {
-		case 'I':
-			inputfile = optarg;
-			break;
-		case 'N':
-			rounds = 0;
-			break;
-		case 'O':
-			sigfile = optarg;
-			break;
-		case 'P':
-			pubkeyfile = optarg;
+		case 'G':
+			if (verb)
+				usage();
+			verb = GENERATE;
 			break;
 		case 'S':
-			seckeyfile = optarg;
+			if (verb)
+				usage();
+			verb = SIGN;
 			break;
 		case 'V':
-			verb = optarg;
+			if (verb)
+				usage();
+			verb = VERIFY;
+			break;
+		case 'i':
+			inputfile = optarg;
+			break;
+		case 'n':
+			rounds = 0;
+			break;
+		case 'o':
+			sigfile = optarg;
+			break;
+		case 'p':
+			pubkeyfile = optarg;
+			break;
+		case 's':
+			seckeyfile = optarg;
 			break;
 		default:
 			usage();
@@ -350,7 +368,7 @@ main(int argc, char **argv)
 		}
 	}
 	argc -= optind;
-	if (argc != 0 || verb == NULL)
+	if (argc != 0)
 		usage();
 
 	if (inputfile && !sigfile) {
@@ -360,15 +378,15 @@ main(int argc, char **argv)
 		sigfile = sigfilebuf;
 	}
 
-	if (streq(verb, "generate")) {
+	if (verb == GENERATE) {
 		if (!pubkeyfile || !seckeyfile)
 			usage();
 		generate(pubkeyfile, seckeyfile, rounds);
-	} else if (streq(verb, "sign")) {
+	} else if (verb == SIGN) {
 		if (!seckeyfile || !inputfile)
 			usage();
 		sign(seckeyfile, inputfile, sigfile);
-	} else if (streq(verb, "verify")) {
+	} else if (verb == VERIFY) {
 		if (!pubkeyfile || !inputfile)
 			usage();
 		verify(pubkeyfile, inputfile, sigfile);
