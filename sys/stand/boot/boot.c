@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.38 2013/12/28 02:51:07 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.39 2014/01/02 00:03:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -88,15 +88,16 @@ boot(dev_t bootdev)
 				printf("boot> ");
 			} while(!getcmd());
 		}
-		st = 0;
-		bootprompt = 1;	/* allow reselect should we fail */
 
 		st = loadrandom(BOOTRANDOM, rnddata, sizeof(rnddata));
-		if (st != 0)
+		if (st)
 			printf("loadrandom: error %d\n", st);
 #ifdef MDRANDOM
 		mdrandom(rnddata, sizeof(rnddata));
 #endif
+
+		st = 0;
+		bootprompt = 1;	/* allow reselect should we fail */
 
 		printf("booting %s: ", cmd.path);
 		marks[MARK_START] = (u_long)cmd.addr;
