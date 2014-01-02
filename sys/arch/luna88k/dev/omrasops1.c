@@ -1,4 +1,4 @@
-/*	$OpenBSD: omrasops1.c,v 1.1 2013/11/16 22:45:37 aoyama Exp $	*/
+/*	$OpenBSD: omrasops1.c,v 1.2 2014/01/02 15:30:34 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -67,8 +67,8 @@
  */
 
 /*
- * Graphics routines for OMRON LUNA 1bpp frame buffer.  On LUNA's frame
- * buffer, pixels are not byte-addressed.
+ * Graphics routines for OMRON LUNA 1bpp and 4bpp frame buffer.
+ * On LUNA's frame buffer, pixels are not byte-addressed.
  *
  * Based on src/sys/arch/hp300/dev/diofb_mono.c
  */
@@ -82,14 +82,21 @@
 #include <dev/rasops/rasops_masks.h>
 
 #include <luna88k/dev/maskbits.h>
+#include <luna88k/dev/omrasops.h>
 
-/* Prototypes */
-int om_windowmove1(struct rasops_info *, u_int16_t, u_int16_t,
+/* prototypes */
+int om1_windowmove(struct rasops_info *, u_int16_t, u_int16_t,
+	u_int16_t, u_int16_t, u_int16_t, u_int16_t, int16_t,
+	int16_t /* ignored */);
+int om4_windowmove(struct rasops_info *, u_int16_t, u_int16_t,
 	u_int16_t, u_int16_t, u_int16_t, u_int16_t, int16_t,
 	int16_t /* ignored */);
 
+/*
+ * Block-move function - 1bpp version
+ */
 int
-om_windowmove1(struct rasops_info *ri, u_int16_t sx, u_int16_t sy,
+om1_windowmove(struct rasops_info *ri, u_int16_t sx, u_int16_t sy,
 	u_int16_t dx, u_int16_t dy, u_int16_t cx, u_int16_t cy, int16_t rop,
 	int16_t planemask /* ignored */)
 {
@@ -137,7 +144,7 @@ om_windowmove1(struct rasops_info *ri, u_int16_t sx, u_int16_t sy,
 		dstBit = dx & 0x1f;
 
 		while (cy--) {
-			getandputrop(psrc, srcBit, dstBit, cx, pdst, rop);
+			getandputrop(R(psrc), srcBit, dstBit, cx, W(pdst), rop);
 			pdst += width;
 			psrc += width;
 		}
@@ -164,8 +171,8 @@ om_windowmove1(struct rasops_info *ri, u_int16_t sx, u_int16_t sy,
 				pdst = pdstLine;
 
 				if (startmask) {
-					getandputrop(psrc, (sx & 0x1f),
-					    (dx & 0x1f), nstart, pdst, rop);
+					getandputrop(R(psrc), (sx & 0x1f),
+					    (dx & 0x1f), nstart, W(pdst), rop);
 					pdst++;
 					if (srcStartOver)
 						psrc++;
@@ -188,16 +195,16 @@ om_windowmove1(struct rasops_info *ri, u_int16_t sx, u_int16_t sy,
 						if (rop == RR_CLEAR)
 							W(pdst) = 0;
 						else
-							getunalignedword(psrc,
-							    xoffSrc, *pdst);
+							getunalignedword(R(psrc),
+							    xoffSrc, *W(pdst));
 						pdst++;
 						psrc++;
 					}
 				}
 
 				if (endmask) {
-					getandputrop(psrc, xoffSrc, 0, nend,
-					    pdst, rop);
+					getandputrop(R(psrc), xoffSrc, 0, nend,
+					    W(pdst), rop);
 				}
 
 				pdstLine += width;
@@ -218,8 +225,8 @@ om_windowmove1(struct rasops_info *ri, u_int16_t sx, u_int16_t sy,
 				pdst = pdstLine;
 
 				if (endmask) {
-					getandputrop(psrc, xoffSrc, 0, nend,
-					    pdst, rop);
+					getandputrop(R(psrc), xoffSrc, 0, nend,
+					    W(pdst), rop);
 				}
 
 				nl = nlMiddle + 1;
@@ -229,16 +236,235 @@ om_windowmove1(struct rasops_info *ri, u_int16_t sx, u_int16_t sy,
 					if (rop == RR_CLEAR)
 						W(pdst) = 0;
 					else
-						getunalignedword(psrc, xoffSrc,
-						    *pdst);
+						getunalignedword(R(psrc), xoffSrc,
+						    *W(pdst));
 				}
 
 				if (startmask) {
 					if (srcStartOver)
 						--psrc;
 					--pdst;
-					getandputrop(psrc, (sx & 0x1f),
-					    (dx & 0x1f), nstart, pdst, rop);
+					getandputrop(R(psrc), (sx & 0x1f),
+					    (dx & 0x1f), nstart, W(pdst), rop);
+				}
+
+				pdstLine += width;
+				psrcLine += width;
+			}
+		}
+	}
+
+	return (0);
+}
+
+/*
+ * Block-move function - 4bpp version
+ */
+int
+om4_windowmove(struct rasops_info *ri, u_int16_t sx, u_int16_t sy,
+	u_int16_t dx, u_int16_t dy, u_int16_t cx, u_int16_t cy, int16_t rop,
+	int16_t planemask /* ignored */)
+{
+	int width;		/* add to get to same position in next line */
+
+	u_int32_t *psrcLine, *pdstLine;
+				/* pointers to line with current src and dst */
+	u_int32_t *psrc;	/* pointer to current src longword */
+	u_int32_t *pdst;	/* pointer to current dst longword */
+
+				/* following used for looping through a line */
+	u_int32_t startmask, endmask;  /* masks for writing ends of dst */
+	int nlMiddle;		/* whole longwords in dst */
+	int nl;			/* temp copy of nlMiddle */
+	int xoffSrc;		/* offset (>= 0, < 32) from which to
+				   fetch whole longwords fetched in src */
+	int nstart;		/* number of ragged bits at start of dst */
+	int nend;		/* number of ragged bits at end of dst */
+	int srcStartOver;	/* pulling nstart bits from src
+				   overflows into the next word? */
+
+	width = ri->ri_stride / 4;	/* convert to number in longword */
+
+	if (sy < dy) {	/* start at last scanline of rectangle */
+		psrcLine = ((u_int32_t *)OMFB_FB_WADDR)
+				 + ((sy + cy - 1) * width);
+		pdstLine = ((u_int32_t *)OMFB_FB_WADDR)
+				 + ((dy + cy - 1) * width);
+		width = -width;
+	} else {	/* start at first scanline */
+		psrcLine = ((u_int32_t *)OMFB_FB_WADDR) + (sy * width);
+		pdstLine = ((u_int32_t *)OMFB_FB_WADDR) + (dy * width);
+	}
+
+	/* x direction doesn't matter for < 1 longword */
+	if (cx <= 32) {
+		int srcBit, dstBit;	/* bit offset of src and dst */
+
+		pdstLine += (dx >> 5);
+		psrcLine += (sx >> 5);
+		psrc = psrcLine;
+		pdst = pdstLine;
+
+		srcBit = sx & 0x1f;
+		dstBit = dx & 0x1f;
+
+		while (cy--) {
+			getandputrop(P0(psrc), srcBit, dstBit, cx, P0(pdst), rop);
+			getandputrop(P1(psrc), srcBit, dstBit, cx, P1(pdst), rop);
+			getandputrop(P2(psrc), srcBit, dstBit, cx, P2(pdst), rop);
+			getandputrop(P3(psrc), srcBit, dstBit, cx, P3(pdst), rop);
+			pdst += width;
+			psrc += width;
+		}
+	} else {
+		maskbits(dx, cx, startmask, endmask, nlMiddle);
+		if (startmask)
+			nstart = 32 - (dx & 0x1f);
+		else
+			nstart = 0;
+		if (endmask)
+			nend = (dx + cx) & 0x1f;
+		else
+			nend = 0;
+
+		xoffSrc = ((sx & 0x1f) + nstart) & 0x1f;
+		srcStartOver = ((sx & 0x1f) + nstart) > 31;
+
+		if (sx >= dx) {	/* move left to right */
+			pdstLine += (dx >> 5);
+			psrcLine += (sx >> 5);
+
+			while (cy--) {
+				psrc = psrcLine;
+				pdst = pdstLine;
+
+				if (startmask) {
+					getandputrop(P0(psrc), (sx & 0x1f),
+					    (dx & 0x1f), nstart, P0(pdst), rop);
+					getandputrop(P1(psrc), (sx & 0x1f),
+					    (dx & 0x1f), nstart, P1(pdst), rop);
+					getandputrop(P2(psrc), (sx & 0x1f),
+					    (dx & 0x1f), nstart, P2(pdst), rop);
+					getandputrop(P3(psrc), (sx & 0x1f),
+					    (dx & 0x1f), nstart, P3(pdst), rop);
+					pdst++;
+					if (srcStartOver)
+						psrc++;
+				}
+
+				/* special case for aligned operations */
+				if (xoffSrc == 0) {
+					nl = nlMiddle;
+					while (nl--) {
+						if (rop == RR_CLEAR) {
+							*P0(pdst) = 0;
+							*P1(pdst) = 0;
+							*P2(pdst) = 0;
+							*P3(pdst) = 0;
+						} else {
+							*P0(pdst) = *P0(psrc);
+							*P1(pdst) = *P1(psrc);
+							*P2(pdst) = *P2(psrc);
+							*P3(pdst) = *P3(psrc);
+						}
+						psrc++;
+						pdst++;
+					}
+				} else {
+					nl = nlMiddle + 1;
+					while (--nl) {
+						if (rop == RR_CLEAR) {
+							*P0(pdst) = 0;
+							*P1(pdst) = 0;
+							*P2(pdst) = 0;
+							*P3(pdst) = 0;
+						} else {
+							getunalignedword(P0(psrc),
+							    xoffSrc, *P0(pdst));
+							getunalignedword(P1(psrc),
+							    xoffSrc, *P1(pdst));
+							getunalignedword(P2(psrc),
+							    xoffSrc, *P2(pdst));
+							getunalignedword(P3(psrc),
+							    xoffSrc, *P3(pdst));
+						}
+						pdst++;
+						psrc++;
+					}
+				}
+
+				if (endmask) {
+					getandputrop(P0(psrc), xoffSrc, 0, nend,
+					    P0(pdst), rop);
+					getandputrop(P1(psrc), xoffSrc, 0, nend,
+					    P1(pdst), rop);
+					getandputrop(P2(psrc), xoffSrc, 0, nend,
+					    P2(pdst), rop);
+					getandputrop(P3(psrc), xoffSrc, 0, nend,
+					    P3(pdst), rop);
+				}
+
+				pdstLine += width;
+				psrcLine += width;
+			}
+		} else {	/* move right to left */
+			pdstLine += ((dx + cx) >> 5);
+			psrcLine += ((sx + cx) >> 5);
+			/*
+			 * If fetch of last partial bits from source crosses
+			 * a longword boundary, start at the previous longword
+			 */
+			if (xoffSrc + nend >= 32)
+				--psrcLine;
+
+			while (cy--) {
+				psrc = psrcLine;
+				pdst = pdstLine;
+
+				if (endmask) {
+					getandputrop(P0(psrc), xoffSrc, 0, nend,
+					    P0(pdst), rop);
+					getandputrop(P1(psrc), xoffSrc, 0, nend,
+					    P1(pdst), rop);
+					getandputrop(P2(psrc), xoffSrc, 0, nend,
+					    P2(pdst), rop);
+					getandputrop(P3(psrc), xoffSrc, 0, nend,
+					    P3(pdst), rop);
+				}
+
+				nl = nlMiddle + 1;
+				while (--nl) {
+					--psrc;
+					--pdst;
+					if (rop == RR_CLEAR) {
+						*P0(pdst) = 0;
+						*P1(pdst) = 0;
+						*P2(pdst) = 0;
+						*P3(pdst) = 0;
+					} else {
+						getunalignedword(P0(psrc),
+						    xoffSrc, *P0(pdst));
+						getunalignedword(P1(psrc),
+						    xoffSrc, *P1(pdst));
+						getunalignedword(P2(psrc),
+						    xoffSrc, *P2(pdst));
+						getunalignedword(P3(psrc),
+						    xoffSrc, *P3(pdst));
+					}
+				}
+
+				if (startmask) {
+					if (srcStartOver)
+						--psrc;
+					--pdst;
+					getandputrop(P0(psrc), (sx & 0x1f),
+					    (dx & 0x1f), nstart, P0(pdst), rop);
+					getandputrop(P1(psrc), (sx & 0x1f),
+					    (dx & 0x1f), nstart, P1(pdst), rop);
+					getandputrop(P2(psrc), (sx & 0x1f),
+					    (dx & 0x1f), nstart, P2(pdst), rop);
+					getandputrop(P3(psrc), (sx & 0x1f),
+					    (dx & 0x1f), nstart, P3(pdst), rop);
 				}
 
 				pdstLine += width;

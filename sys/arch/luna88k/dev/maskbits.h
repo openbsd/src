@@ -1,4 +1,4 @@
-/*	$OpenBSD: maskbits.h,v 1.1 2013/11/16 22:45:37 aoyama Exp $	*/
+/*	$OpenBSD: maskbits.h,v 1.2 2014/01/02 15:30:34 aoyama Exp $	*/
 /*	$NetBSD: maskbits.h,v 1.3 1997/03/31 07:37:28 scottr Exp $	*/
 
 /*-
@@ -85,9 +85,9 @@ do {									\
 /* Get a number of bits ( <= 32 ) from *sp and store in dw */
 #define OMFB_GETBITS(sp, x, w, dw)					\
 do {									\
-	dw = OMFB_MBL(R(sp), (x));					\
+	dw = OMFB_MBL(*(sp), (x));					\
 	if (((x) + (w)) > 32)						\
-		dw |= (OMFB_MBR(R(sp + 1), 32 - (x)));	 		\
+		dw |= (OMFB_MBR(*(sp + 1), 32 - (x)));	 		\
 } while(0);
 
 /* Put a number of bits ( <= 32 ) from sw to *dp */
@@ -97,12 +97,12 @@ do {									\
 									\
 	if (n <= 0) {							\
 		n = rasops_pmask[x & 31][w & 31];			\
-		W(dp) = ((R(dp) & ~n) | (OMFB_MBR(sw, x) & n));		\
+		*(dp) = (*(dp) & ~n) | (OMFB_MBR(sw, x) & n);		\
 	} else {							\
-		W(dp) = ((R(dp) & rasops_rmask[x])			\
-			| (OMFB_MBR(sw, x)));				\
-		W(dp + 1) = ((R(dp + 1) & rasops_lmask[n])		\
-			| (OMFB_MBL(sw, 32-(x)) & rasops_rmask[n]));	\
+		*(dp) = (*(dp) & rasops_rmask[x])			\
+			| (OMFB_MBR(sw, x));				\
+		*(dp + 1) = (*(dp + 1) & rasops_lmask[n])		\
+			| (OMFB_MBL(sw, 32-(x)) & rasops_rmask[n]);	\
 	}								\
 } while(0);
 
