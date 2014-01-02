@@ -55,7 +55,6 @@ ENTRY(mdrandom)
 	movl	36(%esp), %ebx
 	movl	40(%esp), %edx
 	shrl	$2, %edx
-	shll	$2, %edx
 	xorl	%edi, %edi
 
 	andl	$CPUIDECX_RDRAND, %ecx	// See if we have rdrand.
@@ -66,8 +65,8 @@ ENTRY(mdrandom)
 
 userand:
 	rdrand	%eax
-	xorl	%eax, 0(%edi,%ebx)
-	addl	$4, %edi
+	xorl	%eax, (%ebx,%edi,4)
+	incl	%edi
 	cmpl	%edi, %edx
 	jne	userand
 	jmp	done
@@ -75,8 +74,8 @@ userand:
 usetsc:
 	rdtsc				// Populates edx:eax.
 	mull	%edx
-	xorl	%eax, 0(%edi,%ebx)
-	addl	$4, %edi
+	xorl	%eax, (%ebx,%edi,4)
+	incl	%edi
 	cmpl	%edi, %ecx
 	jne	usetsc
 	jmp	done
