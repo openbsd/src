@@ -1,7 +1,7 @@
-/*	$Id: mandocdb.c,v 1.51 2014/01/02 20:24:35 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.52 2014/01/02 22:19:38 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -168,6 +168,7 @@ static	int	 	 use_all; /* use all found files */
 static	int		 nodb; /* no database changes */
 static	int	  	 verb; /* print what we're doing */
 static	int	  	 warnings; /* warn about crap */
+static	int		 write_utf8; /* write UTF-8 output; else ASCII */
 static	int		 exitcode; /* to be returned by main */
 static	enum op	  	 op; /* operational mode */
 static	char		 basedir[PATH_MAX]; /* current base directory */
@@ -343,7 +344,7 @@ mandocdb(int argc, char *argv[])
 	path_arg = NULL;
 	op = OP_DEFAULT;
 
-	while (-1 != (ch = getopt(argc, argv, "aC:d:ntu:vW")))
+	while (-1 != (ch = getopt(argc, argv, "aC:d:nT:tu:vW")))
 		switch (ch) {
 		case ('a'):
 			use_all = 1;
@@ -360,6 +361,14 @@ mandocdb(int argc, char *argv[])
 			break;
 		case ('n'):
 			nodb = 1;
+			break;
+		case ('T'):
+			if (strcmp(optarg, "utf8")) {
+				fprintf(stderr, "-T%s: Unsupported "
+				    "output format\n", optarg);
+				goto usage;
+			}
+			write_utf8 = 1;
 			break;
 		case ('t'):
 			CHECKOP(op, ch);
@@ -482,9 +491,9 @@ out:
 	ohash_delete(&mlinks);
 	return(exitcode);
 usage:
-	fprintf(stderr, "usage: %s [-anvW] [-C file]\n"
-			"       %s [-anvW] dir ...\n"
-			"       %s [-nvW] -d dir [file ...]\n"
+	fprintf(stderr, "usage: %s [-anvW] [-C file] [-Tutf8]\n"
+			"       %s [-anvW] [-Tutf8] dir ...\n"
+			"       %s [-nvW] [-Tutf8] -d dir [file ...]\n"
 			"       %s [-nvW] -u dir [file ...]\n"
 			"       %s -t file ...\n",
 		       progname, progname, progname, 
@@ -1714,31 +1723,40 @@ utf8key(struct mchars *mc, struct str *key)
 		 * Parse the escape sequence and see if it's a
 		 * predefined character or special character.
 		 */
+
 		esc = mandoc_escape
 			((const char **)&val, &seq, &len);
 		if (ESCAPE_ERROR == esc)
 			break;
-
 		if (ESCAPE_SPECIAL != esc)
-			continue;
-		if (0 == (u = mchars_spec2cp(mc, seq, len)))
 			continue;
 
 		/*
-		 * If we have a Unicode codepoint, try to convert that
-		 * to a UTF-8 byte string.
+		 * Render the special character
+		 * as either UTF-8 or ASCII.
 		 */
-		cpp = utfbuf;
-		if (0 == (sz = utf8(u, utfbuf)))
-			continue;
+
+		if (write_utf8) {
+			if (0 == (u = mchars_spec2cp(mc, seq, len)))
+				continue;
+			cpp = utfbuf;
+			if (0 == (sz = utf8(u, utfbuf)))
+				continue;
+			sz = strlen(cpp);
+		} else {
+			cpp = mchars_spec2str(mc, seq, len, &sz);
+			if (NULL == cpp)
+				continue;
+			if (ASCII_NBRSP == *cpp) {
+				cpp = " ";
+				sz = 1;
+			}
+		}
 
 		/* Copy the rendered glyph into the stream. */
 
-		sz = strlen(cpp);
 		bsz += sz;
-
 		buf = mandoc_realloc(buf, bsz);
-
 		memcpy(&buf[pos], cpp, sz);
 		pos += sz;
 	}
