@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci_pci.c,v 1.2 2013/02/19 15:29:27 brad Exp $ */
+/*	$OpenBSD: ahci_pci.c,v 1.3 2014/01/02 08:00:35 gilles Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -77,6 +77,8 @@ int			ahci_amd_hudson2_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
 int			ahci_intel_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
+int			ahci_samsung_attach(struct ahci_softc *,
+			    struct pci_attach_args *);
 
 static const struct ahci_device ahci_devices[] = {
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_HUDSON2_SATA_1,
@@ -143,6 +145,9 @@ static const struct ahci_device ahci_devices[] = {
 	    NULL,		ahci_intel_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_EP80579_AHCI,
 	    NULL,		ahci_intel_attach },
+
+	{ PCI_VENDOR_SAMSUNG2,	PCI_PRODUCT_SAMSUNG2_XP941,
+	    NULL,		ahci_samsung_attach },
 
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8251_SATA,
 	  ahci_no_match,	ahci_vt8251_attach }
@@ -286,6 +291,13 @@ ahci_intel_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 }
 
 int
+ahci_samsung_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
+{
+	sc->sc_flags |= AHCI_F_NO_MSI;
+	return (0);
+}
+
+int
 ahci_pci_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args		*pa = aux;
@@ -316,6 +328,7 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args		*pa = aux;
 	const struct ahci_device	*ad;
 	pci_intr_handle_t		ih;
+	int				mapped = 0;
 
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_tag = pa->pa_tag;
@@ -329,7 +342,10 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
+	if (!(sc->sc_flags & AHCI_F_NO_MSI))
+		mapped = pci_intr_map_msi(pa, &ih) != 0 ? 0 : 1;
+	
+	if (!mapped && pci_intr_map(pa, &ih) != 0) {
 		printf(": unable to map interrupt\n");
 		return;
 	}
