@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.6 2014/01/01 17:50:33 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.7 2014/01/02 16:34:02 espie Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -92,10 +92,14 @@ xmalloc(size_t len)
 }
 
 static void
-readall(int fd, void *buf, size_t len)
+readall(int fd, void *buf, size_t len, const char *filename)
 {
-	if (read(fd, buf, len) != len)
-		err(1, "read");
+	ssize_t x = read(fd, buf, len);
+	if (x == -1) {
+		err(1, "read from %s", filename);
+	} else if (x != len) {
+		errx(1, "short read from %s", filename);
+	}
 }
 
 static void
@@ -108,7 +112,7 @@ readb64file(const char *filename, void *buf, size_t len)
 	memset(b64, 0, sizeof(b64));
 	rv = read(fd, b64, sizeof(b64) - 1);
 	if (rv == -1)
-		err(1, "read in %s", filename);
+		err(1, "read from %s", filename);
 	for (i = 0; i < rv; i++)
 		if (b64[i] == '\n')
 			break;
@@ -137,7 +141,7 @@ readmsg(const char *filename, unsigned long long *msglenp)
 	if (msglen > (1UL << 30))
 		errx(1, "msg too large in %s", filename);
 	msg = xmalloc(msglen);
-	readall(fd, msg, msglen);
+	readall(fd, msg, msglen, filename);
 	close(fd);
 
 	*msglenp = msglen;
@@ -145,10 +149,14 @@ readmsg(const char *filename, unsigned long long *msglenp)
 }
 
 static void
-writeall(int fd, const void *buf, size_t len)
+writeall(int fd, const void *buf, size_t len, const char *filename)
 {
-	if (write(fd, buf, len) != len)
-		err(1, "write");
+	ssize_t x = write(fd, buf, len);
+	if (x == -1) {
+		err(1, "write to %s", filename);
+	} else if (x != len) {
+		errx(1, "short write to %s", filename);
+	}
 }
 
 static void
@@ -161,10 +169,10 @@ writeb64file(const char *filename, const char *comment, const void *buf,
 
 	fd = xopen(filename, O_CREAT|O_EXCL|O_NOFOLLOW|O_RDWR, mode);
 	snprintf(header, sizeof(header), "signify -- %s\n", comment);
-	writeall(fd, header, strlen(header));
+	writeall(fd, header, strlen(header), filename);
 	if ((rv = b64_ntop(buf, len, b64, sizeof(b64))) == -1)
 		errx(1, "b64 encode failed");
-	writeall(fd, b64, rv);
+	writeall(fd, b64, rv, filename);
 	memset(b64, 0, sizeof(b64));
 	close(fd);
 }
