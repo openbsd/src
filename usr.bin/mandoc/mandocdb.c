@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.50 2014/01/02 18:51:51 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.51 2014/01/02 20:24:35 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -514,8 +514,8 @@ treescan(void)
 	FTSENT		*ff;
 	struct mlink	*mlink;
 	int		 dform;
-	char		*fsec;
-	const char	*dsec, *arch, *cp, *path;
+	char		*dsec, *arch, *fsec, *cp;
+	const char	*path;
 	const char	*argv[2];
 
 	argv[0] = ".";
@@ -580,16 +580,14 @@ treescan(void)
 				continue;
 			} else
 				fsec[-1] = '\0';
+
 			mlink = mandoc_calloc(1, sizeof(struct mlink));
 			strlcpy(mlink->file, path, sizeof(mlink->file));
 			mlink->dform = dform;
-			if (NULL != dsec)
-				mlink->dsec = mandoc_strdup(dsec);
-			if (NULL != arch)
-				mlink->arch = mandoc_strdup(arch);
-			mlink->name = mandoc_strdup(ff->fts_name);
-			if (NULL != fsec)
-				mlink->fsec = mandoc_strdup(fsec);
+			mlink->dsec = dsec;
+			mlink->arch = arch;
+			mlink->name = ff->fts_name;
+			mlink->fsec = fsec;
 			mlink_add(mlink, ff->fts_statp);
 			continue;
 		} else if (FTS_D != ff->fts_info &&
@@ -609,8 +607,6 @@ treescan(void)
 			 * Try to infer this from the name.
 			 * If we're not in use_all, enforce it.
 			 */
-			dsec = NULL;
-			dform = FORM_NONE;
 			cp = ff->fts_name;
 			if (FTS_DP == ff->fts_info)
 				break;
@@ -621,6 +617,9 @@ treescan(void)
 			} else if (0 == strncmp(cp, "cat", 3)) {
 				dform = FORM_CAT;
 				dsec = cp + 3;
+			} else {
+				dform = FORM_NONE;
+				dsec = NULL;
 			}
 
 			if (NULL != dsec || use_all) 
@@ -635,9 +634,10 @@ treescan(void)
 			 * Possibly our architecture.
 			 * If we're descending, keep tabs on it.
 			 */
-			arch = NULL;
 			if (FTS_DP != ff->fts_info && NULL != dsec)
 				arch = ff->fts_name;
+			else
+				arch = NULL;
 			break;
 		default:
 			if (FTS_DP == ff->fts_info || use_all)
@@ -711,16 +711,16 @@ filescan(const char *file)
 		*p++ = '\0';
 		if (0 == strncmp(start, "man", 3)) {
 			mlink->dform = FORM_SRC;
-			mlink->dsec = mandoc_strdup(start + 3);
+			mlink->dsec = start + 3;
 		} else if (0 == strncmp(start, "cat", 3)) {
 			mlink->dform = FORM_CAT;
-			mlink->dsec = mandoc_strdup(start + 3);
+			mlink->dsec = start + 3;
 		}
 
 		start = p;
 		if (NULL != mlink->dsec && NULL != (p = strchr(start, '/'))) {
 			*p++ = '\0';
-			mlink->arch = mandoc_strdup(start);
+			mlink->arch = start;
 			start = p;
 		}
 	}
@@ -735,7 +735,7 @@ filescan(const char *file)
 
 	if ('.' == *p) {
 		*p++ = '\0';
-		mlink->fsec = mandoc_strdup(p);
+		mlink->fsec = p;
 	}
 
 	/*
@@ -747,8 +747,6 @@ filescan(const char *file)
 		mlink->name = p + 1;
 		*p = '\0';
 	}
-	mlink->name = mandoc_strdup(mlink->name);
-
 	mlink_add(mlink, &st);
 }
 
@@ -761,14 +759,10 @@ mlink_add(struct mlink *mlink, const struct stat *st)
 
 	assert(NULL != mlink->file);
 
-	if (NULL == mlink->dsec)
-		mlink->dsec = mandoc_strdup("");
-	if (NULL == mlink->arch)
-		mlink->arch = mandoc_strdup("");
-	if (NULL == mlink->name)
-		mlink->name = mandoc_strdup("");
-	if (NULL == mlink->fsec)
-		mlink->fsec = mandoc_strdup("");
+	mlink->dsec = mandoc_strdup(mlink->dsec ? mlink->dsec : "");
+	mlink->arch = mandoc_strdup(mlink->arch ? mlink->arch : "");
+	mlink->name = mandoc_strdup(mlink->name ? mlink->name : "");
+	mlink->fsec = mandoc_strdup(mlink->fsec ? mlink->fsec : "");
 
 	if ('0' == *mlink->fsec) {
 		free(mlink->fsec);
