@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.18 2013/12/20 22:03:26 syl Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.19 2014/01/02 15:39:12 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -84,9 +84,19 @@ update_vattr(struct fuse *f, struct vattr *attr, const char *realname,
 }
 
 static int
-ifuse_ops_init(void)
+ifuse_ops_init(struct fuse *f)
 {
+	struct fuse_conn_info fci;
+
 	DPRINTF("Opcode:\tinit\n");
+
+	if (f->op.init) {
+		bzero(&fci, sizeof fci);
+		fci.proto_minor = FUSE_MINOR_VERSION;
+		fci.proto_major = FUSE_MAJOR_VERSION;
+
+		f->op.init(&fci);
+	}
 	return (0);
 }
 
@@ -770,7 +780,15 @@ ifuse_ops_rename(struct fuse *f, struct fusebuf *fbuf)
 static int
 ifuse_ops_destroy(struct fuse *f)
 {
+	struct fuse_context *ctx;
+
 	DPRINTF("Opcode:\tdestroy\n");
+
+	if (f->op.destroy) {
+		ctx = fuse_get_context();
+
+		f->op.destroy((ctx)?ctx->private_data:NULL);
+	}
 
 	f->fc->dead = 1;
 
@@ -840,7 +858,7 @@ ifuse_exec_opcode(struct fuse *f, struct fusebuf *fbuf)
 		ret = ifuse_ops_release(f, fbuf);
 		break;
 	case FBT_INIT:
-		ret = ifuse_ops_init();
+		ret = ifuse_ops_init(f);
 		break;
 	case FBT_OPENDIR:
 		ret = ifuse_ops_opendir(f, fbuf);
