@@ -1,7 +1,7 @@
-/*	$Id: mandoc.h,v 1.56 2013/12/30 18:27:15 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.57 2014/01/02 16:29:46 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -152,6 +152,7 @@ enum	mandocerr {
 
 	MANDOCERR_FATAL, /* ===== start of fatal errors ===== */
 
+	MANDOCERR_TOOLARGE, /* input too large */
 	MANDOCERR_NOTMANUAL, /* manual isn't really a manual */
 	MANDOCERR_COLUMNS, /* column syntax is inconsistent */
 	MANDOCERR_BADDISP, /* NOT IMPLEMENTED: .Bd -file */
@@ -162,6 +163,13 @@ enum	mandocerr {
 	MANDOCERR_NODOCBODY, /* no document body */
 	MANDOCERR_NODOCPROLOG, /* no document prologue */
 	MANDOCERR_MEM, /* static buffer exhausted */
+
+	/* ===== system errors ===== */
+
+	MANDOCERR_SYSOPEN, /* cannot open file */
+	MANDOCERR_SYSSTAT, /* cannot stat file */
+	MANDOCERR_SYSREAD, /* cannot read file */
+
 	MANDOCERR_MAX
 };
 

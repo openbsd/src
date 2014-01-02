@@ -1,7 +1,7 @@
-/*	$Id: read.c,v 1.17 2013/09/16 00:25:06 schwarze Exp $ */
+/*	$Id: read.c,v 1.18 2014/01/02 16:29:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -60,7 +61,8 @@ struct	mparse {
 static	void	  resize_buf(struct buf *, size_t);
 static	void	  mparse_buf_r(struct mparse *, struct buf, int);
 static	void	  pset(const char *, int, struct mparse *);
-static	int	  read_whole_file(const char *, int, struct buf *, int *);
+static	int	  read_whole_file(struct mparse *, const char *, int,
+				struct buf *, int *);
 static	void	  mparse_end(struct mparse *);
 static	void	  mparse_parse_buffer(struct mparse *, struct buf,
 			const char *);
@@ -184,6 +186,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 
 	"generic fatal error",
 
+	"input too large",
 	"not a manual",
 	"column syntax is inconsistent",
 	"NOT IMPLEMENTED: .Bd -file",
@@ -194,6 +197,11 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"no document body",
 	"no document prologue",
 	"static buffer exhausted",
+
+	/* system errors */
+	"cannot open file",
+	"cannot stat file",
+	"cannot read file",
 };
 
 static	const char * const	mandoclevels[MANDOCLEVEL_MAX] = {
@@ -560,14 +568,18 @@ rerun:
 }
 
 static int
-read_whole_file(const char *file, int fd, struct buf *fb, int *with_mmap)
+read_whole_file(struct mparse *curp, const char *file, int fd,
+		struct buf *fb, int *with_mmap)
 {
 	struct stat	 st;
 	size_t		 off;
 	ssize_t		 ssz;
 
 	if (-1 == fstat(fd, &st)) {
-		perror(file);
+		curp->file_status = MANDOCLEVEL_SYSERR;
+		if (curp->mmsg)
+			(*curp->mmsg)(MANDOCERR_SYSSTAT, curp->file_status,
+			    file, 0, 0, strerror(errno));
 		return(0);
 	}
 
@@ -580,7 +592,10 @@ read_whole_file(const char *file, int fd, struct buf *fb, int *with_mmap)
 
 	if (S_ISREG(st.st_mode)) {
 		if (st.st_size >= (1U << 31)) {
-			fprintf(stderr, "%s: input too large\n", file);
+			curp->file_status = MANDOCLEVEL_FATAL;
+			if (curp->mmsg)
+				(*curp->mmsg)(MANDOCERR_TOOLARGE,
+				    curp->file_status, file, 0, 0, NULL);
 			return(0);
 		}
 		*with_mmap = 1;
@@ -602,7 +617,11 @@ read_whole_file(const char *file, int fd, struct buf *fb, int *with_mmap)
 	for (;;) {
 		if (off == fb->sz) {
 			if (fb->sz == (1U << 31)) {
-				fprintf(stderr, "%s: input too large\n", file);
+				curp->file_status = MANDOCLEVEL_FATAL;
+				if (curp->mmsg)
+					(*curp->mmsg)(MANDOCERR_TOOLARGE,
+					    curp->file_status,
+					    file, 0, 0, NULL);
 				break;
 			}
 			resize_buf(fb, 65536);
@@ -613,7 +632,11 @@ read_whole_file(const char *file, int fd, struct buf *fb, int *with_mmap)
 			return(1);
 		}
 		if (ssz == -1) {
-			perror(file);
+			curp->file_status = MANDOCLEVEL_SYSERR;
+			if (curp->mmsg)
+				(*curp->mmsg)(MANDOCERR_SYSREAD,
+				    curp->file_status, file, 0, 0,
+				    strerror(errno));
 			break;
 		}
 		off += (size_t)ssz;
@@ -681,12 +704,15 @@ mparse_readfd(struct mparse *curp, int fd, const char *file)
 	struct buf	 blk;
 	int		 with_mmap;
 
-	if (-1 == fd)
-		if (-1 == (fd = open(file, O_RDONLY, 0))) {
-			perror(file);
-			curp->file_status = MANDOCLEVEL_SYSERR;
-			goto out;
-		}
+	if (-1 == fd && -1 == (fd = open(file, O_RDONLY, 0))) {
+		curp->file_status = MANDOCLEVEL_SYSERR;
+		if (curp->mmsg)
+			(*curp->mmsg)(MANDOCERR_SYSOPEN,
+			    curp->file_status,
+			    file, 0, 0, strerror(errno));
+		goto out;
+	}
+
 	/*
 	 * Run for each opened file; may be called more than once for
 	 * each full parse sequence if the opened file is nested (i.e.,
@@ -694,10 +720,8 @@ mparse_readfd(struct mparse *curp, int fd, const char *file)
 	 * the parse phase for the file.
 	 */
 
-	if ( ! read_whole_file(file, fd, &blk, &with_mmap)) {
-		curp->file_status = MANDOCLEVEL_SYSERR;
+	if ( ! read_whole_file(curp, file, fd, &blk, &with_mmap))
 		goto out;
-	}
 
 	mparse_parse_buffer(curp, blk, file);
 
