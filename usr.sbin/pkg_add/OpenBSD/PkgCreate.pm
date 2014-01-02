@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.77 2014/01/02 16:05:42 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.78 2014/01/02 16:27:10 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1089,28 +1089,29 @@ sub add_description
 	if (!defined $opt_d) {
 		$state->usage("Description required");
 	}
-	if (defined $o->fullname) {
-	    open(my $fh, '>', $o->fullname) or die "Can't write to DESC: $!";
-	    if (defined $comment) {
-	    	print $fh $subst->do($comment), "\n";
-	    }
-	    if ($opt_d =~ /^\-(.*)$/o) {
+	return if $state->opt('q');
+
+	open(my $fh, '>', $o->fullname) or die "Can't write to DESC: $!";
+	if (defined $comment) {
+		print $fh $subst->do($comment), "\n";
+	}
+	if ($opt_d =~ /^\-(.*)$/o) {
 		print $fh $1, "\n";
-	    } else {
+	} else {
 		$subst->copy_fh($opt_d, $fh);
-	    }
-	    if (defined $comment) {
+	}
+	if (defined $comment) {
 		if ($subst->empty('MAINTAINER')) {
 			$state->errsay("no MAINTAINER");
 		} else {
-			print $fh "\n", $subst->do('Maintainer: ${MAINTAINER}'), "\n";
+			print $fh "\n", 
+			    $subst->do('Maintainer: ${MAINTAINER}'), "\n";
 		}
 		if (!$subst->empty('HOMEPAGE')) {
 			print $fh "\n", $subst->do('WWW: ${HOMEPAGE}'), "\n";
 		}
-	    }
-	    close($fh);
 	}
+	close($fh);
 }
 
 sub add_signature
