@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: signify.pm,v 1.1 2013/12/31 11:21:10 espie Exp $
+# $OpenBSD: signify.pm,v 1.2 2014/01/02 13:45:14 espie Exp $
 #
 # Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 #
@@ -26,7 +26,6 @@ use File::Temp qw/mkstemp/;
 
 my $header = "signify -- signature\n";
 my $cmd = OpenBSD::Paths->signify;
-my $defaultpubkey = OpenBSD::Paths->signifykey;
 my $suffix = ".sig";
 
 sub compute_signature
@@ -39,7 +38,7 @@ sub compute_signature
 	open my $fh, ">", $contents;
 	$plist->write_no_sig($fh);
 	close $fh;
-	$state->system($cmd, '-I', $contents, '-S', $key, '-V', 'sign')
+	$state->system($cmd, '-i', $contents, '-s', $key, '-S')
 	    == 0 or die "probleme generating signature";
 	open(my $sighandle, '<', $sigfile)
 		or die "problem reading signature";
@@ -61,7 +60,13 @@ sub check_signature
 	print $fh2 $header, $sig->{b64sig}, "\n";
 	close $fh;
 	close $fh2;
-	my $pubkey = $defaultpubkey;
+	my $pubkey;
+	
+	if ($state->defines('FW_UPDATE')) {
+		$pubkey = OpenBSD::Paths->signifyfwkey;
+	} else {
+		$pubkey = OpenBSD::Paths->signifykey;
+	}
 	if ($plist->has('vendor')) {
 		my $vendor = $plist->get('vendor')->name;
 		$pubkey = "/etc/signify/$vendor.pubkey";
@@ -72,7 +77,7 @@ sub check_signature
 	}
 	if ($state->system(sub { open STDERR, ">", "/dev/null";
 	    open STDOUT, ">", "/dev/null";},
-	    $cmd, '-I', $fname, '-P', $pubkey, '-V', 'verify') != 0) {
+	    $cmd, '-i', $fname, '-p', $pubkey, '-V') != 0) {
 	    	$state->log("Bad signature");
 		return 0;
 	}
