@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1702 2013/12/30 02:10:58 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1703 2013/12/31 20:37:38 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -253,6 +253,7 @@
 #define	PCI_VENDOR_EDIMAX	0x1432		/* Edimax */
 #define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack */
 #define	PCI_VENDOR_WORKBIT	0x1145		/* Workbit */
+#define	PCI_VENDOR_SAMSUNG2	0x144d		/* Samsung */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia */
 #define	PCI_VENDOR_MSI	0x1462		/* MSI */
@@ -5724,6 +5725,7 @@
 
 /* Samsung products */
 #define	PCI_PRODUCT_SAMSUNG_SWL2210P	0xa000		/* MagicLAN SWL-2210P */
+#define	PCI_PRODUCT_SAMSUNG2_XP941	0xa800		/* XP941 */
 
 /* Sangoma products */
 #define	PCI_PRODUCT_SANGOMA_A10X	0x0300		/* A10x */
