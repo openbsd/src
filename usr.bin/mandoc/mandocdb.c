@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.49 2013/12/31 19:39:09 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.50 2014/01/02 18:51:51 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -135,6 +135,7 @@ static	void	*hash_alloc(size_t, void *);
 static	void	 hash_free(void *, size_t, void *);
 static	void	*hash_halloc(size_t, void *);
 static	void	 mlink_add(struct mlink *, const struct stat *);
+static	int	 mlink_check(struct mpage *, struct mlink *);
 static	void	 mlink_free(struct mlink *);
 static	void	 mlinks_undupe(struct mpage *);
 static	void	 mpages_free(void);
@@ -877,6 +878,54 @@ nextlink:
 	}
 }
 
+static int
+mlink_check(struct mpage *mpage, struct mlink *mlink)
+{
+	int	 match;
+
+	match = 1;
+
+	/*
+	 * Check whether the manual section given in a file
+	 * agrees with the directory where the file is located.
+	 * Some manuals have suffixes like (3p) on their
+	 * section number either inside the file or in the
+	 * directory name, some are linked into more than one
+	 * section, like encrypt(1) = makekey(8).
+	 */
+
+	if (FORM_SRC == mpage->form &&
+	    strcasecmp(mpage->sec, mlink->dsec)) {
+		match = 0;
+		say(mlink->file, "Section \"%s\" manual in %s directory",
+		    mpage->sec, mlink->dsec);
+	}
+
+	/*
+	 * Manual page directories exist for each kernel
+	 * architecture as returned by machine(1).
+	 * However, many manuals only depend on the
+	 * application architecture as returned by arch(1).
+	 * For example, some (2/ARM) manuals are shared
+	 * across the "armish" and "zaurus" kernel
+	 * architectures.
+	 * A few manuals are even shared across completely
+	 * different architectures, for example fdformat(1)
+	 * on amd64, i386, sparc, and sparc64.
+	 */
+
+	if (strcasecmp(mpage->arch, mlink->arch)) {
+		match = 0;
+		say(mlink->file, "Architecture \"%s\" manual in "
+		    "\"%s\" directory", mpage->arch, mlink->arch);
+	}
+
+	if (strcasecmp(mpage->title, mlink->name))
+		match = 0;
+
+	return(match);
+}
+
 /*
  * Run through the files in the global vector "mpages"
  * and add them to the database specified in "basedir".
@@ -890,6 +939,7 @@ mpages_merge(struct mchars *mc, struct mparse *mp, int check_reachable)
 	struct ohash		 title_table;
 	struct ohash_info	 title_info, str_info;
 	struct mpage		*mpage;
+	struct mlink		*mlink;
 	struct mdoc		*mdoc;
 	struct man		*man;
 	struct title		*title_entry;
@@ -924,7 +974,6 @@ mpages_merge(struct mchars *mc, struct mparse *mp, int check_reachable)
 		mparse_reset(mp);
 		mdoc = NULL;
 		man = NULL;
-		match = 1;
 
 		/*
 		 * Try interpreting the file as mdoc(7) or man(7)
@@ -965,49 +1014,17 @@ mpages_merge(struct mchars *mc, struct mparse *mp, int check_reachable)
 			    mandoc_strdup(mpage->mlinks->name);
 		}
 
-		/*
-		 * Check whether the manual section given in a file
-		 * agrees with the directory where the file is located.
-		 * Some manuals have suffixes like (3p) on their
-		 * section number either inside the file or in the
-		 * directory name, some are linked into more than one
-		 * section, like encrypt(1) = makekey(8).  Do not skip
-		 * manuals for such reasons.
-		 */
-		if (warnings && !use_all && FORM_SRC == mpage->form &&
-		    strcasecmp(mpage->sec, mpage->mlinks->dsec)) {
-			match = 0;
-			say(mpage->mlinks->file, "Section \"%s\" "
-				"manual in %s directory",
-				mpage->sec, mpage->mlinks->dsec);
-		}
+		for (mlink = mpage->mlinks; mlink; mlink = mlink->next)
+			putkey(mpage, mlink->name, TYPE_Nm);
 
-		/*
-		 * Manual page directories exist for each kernel
-		 * architecture as returned by machine(1).
-		 * However, many manuals only depend on the
-		 * application architecture as returned by arch(1).
-		 * For example, some (2/ARM) manuals are shared
-		 * across the "armish" and "zaurus" kernel
-		 * architectures.
-		 * A few manuals are even shared across completely
-		 * different architectures, for example fdformat(1)
-		 * on amd64, i386, sparc, and sparc64.
-		 * Thus, warn about architecture mismatches,
-		 * but don't skip manuals for this reason.
-		 */
-		if (warnings && !use_all &&
-		    strcasecmp(mpage->arch, mpage->mlinks->arch)) {
+		if (warnings && !use_all) {
 			match = 0;
-			say(mpage->mlinks->file, "Architecture \"%s\" "
-				"manual in \"%s\" directory",
-				mpage->arch, mpage->mlinks->arch);
-		}
-		if (warnings && !use_all &&
-		    strcasecmp(mpage->title, mpage->mlinks->name))
-			match = 0;
-
-		putkey(mpage, mpage->mlinks->name, TYPE_Nm);
+			for (mlink = mpage->mlinks; mlink;
+			     mlink = mlink->next)
+				if (mlink_check(mpage, mlink))
+					match = 1;
+		} else
+			match = 1;
 
 		if (NULL != mdoc) {
 			if (NULL != (cp = mdoc_meta(mdoc)->name))
