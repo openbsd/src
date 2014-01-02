@@ -20,6 +20,8 @@
 #include <machine/specialreg.h>
 
 ENTRY(mdrandom)
+	pushal
+
 	// See if we have CPU identification.
 	pushfl
 	popl	%eax
@@ -50,8 +52,8 @@ ENTRY(mdrandom)
 	movl	$0, %ecx
 	cpuid
 
-	movl	4(%esp), %ebx
-	movl	8(%esp), %edx
+	movl	36(%esp), %ebx
+	movl	40(%esp), %edx
 	shrl	$2, %edx
 	shll	$2, %edx
 	xorl	%edi, %edi
@@ -68,7 +70,7 @@ userand:
 	addl	$4, %edi
 	cmpl	%edi, %edx
 	jne	userand
-	ret
+	jmp	done
 
 usetsc:
 	rdtsc				// Populates edx:eax.
@@ -77,7 +79,8 @@ usetsc:
 	addl	$4, %edi
 	cmpl	%edi, %ecx
 	jne	usetsc
-	ret
+	jmp	done
 
 done:
+	popal
 	ret
