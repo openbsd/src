@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.122 2013/12/30 09:02:37 espie Exp $
+# $OpenBSD: Delete.pm,v 1.123 2014/01/02 16:05:42 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -147,7 +147,6 @@ sub delete_plist
 
 	my $pkgname = $plist->pkgname;
 	$state->{pkgname} = $pkgname;
-	$ENV{'PKG_PREFIX'} = $plist->localbase;
 	if (!$state->{size_only}) {
 		$plist->register_manpage($state);
 		manpages_unindex($state);

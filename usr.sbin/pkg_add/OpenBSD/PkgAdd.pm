@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.41 2013/12/31 11:24:55 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.42 2014/01/02 16:05:42 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -134,15 +134,11 @@ sub handle_options
 		$state->{do_faked} = 1;
 	} elsif (defined $state->opt('B')) {
 		$state->{destdir} = $state->opt('B');
-	} elsif (defined $ENV{'PKG_PREFIX'}) {
-		$state->{destdir} = $ENV{'PKG_PREFIX'};
 	}
 	if (defined $state->{destdir}) {
 		$state->{destdir}.='/';
-		$ENV{'PKG_DESTDIR'} = $state->{destdir};
 	} else {
 		$state->{destdir} = '';
-		delete $ENV{'PKG_DESTDIR'};
 	}
 
 
@@ -729,8 +725,6 @@ sub really_add
 #		$replacing = 1;
 #	}
 	$state->{replacing} = $replacing;
-
-	$ENV{'PKG_PREFIX'} = $state->{localbase};
 
 	my $handler = sub {
 		$state->{interrupted} = shift;

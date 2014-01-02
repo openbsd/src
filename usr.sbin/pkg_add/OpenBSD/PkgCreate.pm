@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.76 2013/12/31 11:21:10 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.77 2014/01/02 16:05:42 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -198,9 +198,7 @@ sub handle_options
 	my $base = '/';
 	if (defined $state->opt('B')) {
 		$base = $state->opt('B');
-	} elsif (defined $ENV{'PKG_PREFIX'}) {
-		$base = $ENV{'PKG_PREFIX'};
-	}
+	} 
 
 	$state->{base} = $base;
 
