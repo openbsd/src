@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.215 2013/12/31 11:21:10 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.216 2014/01/02 20:13:43 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1634,27 +1634,32 @@ sub stringize
 	return $self->category;
 }
 
-sub add
-{
-	my ($class, $plist, @args) = @_;
-
-	$class->SUPER::add($plist, $class->category);
-}
-
 sub fullname
 {
 	my $self = shift;
 	my $d = $self->infodir;
 	if (defined $d) {
-		return $d.$self->category;
+		return $d.$self->name;
 	} else {
 		return undef;
 	}
 }
 
+sub category
+{
+	my $self = shift;
+
+	return $self->name;
+}
+
+sub new
+{
+	&OpenBSD::PackingElement::UniqueOption::new;
+}
+
 package OpenBSD::PackingElement::FCONTENTS;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
-sub category() { OpenBSD::PackageInfo::CONTENTS }
+sub name() { OpenBSD::PackageInfo::CONTENTS }
 # XXX we don't write `self'
 sub write
 {}
@@ -1669,11 +1674,18 @@ sub copy_deep_if
 
 package OpenBSD::PackingElement::FCOMMENT;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
-sub category() { OpenBSD::PackageInfo::COMMENT }
+sub name() { OpenBSD::PackageInfo::COMMENT }
+
+sub new
+{
+	my ($self, @r) = @_;
+	print STDERR "Warning: obsolete special file: +COMMENT\n";
+	$self->SUPER::new(@r);
+}
 
 package OpenBSD::PackingElement::FDESC;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
-sub category() { OpenBSD::PackageInfo::DESC }
+sub name() { OpenBSD::PackageInfo::DESC }
 
 package OpenBSD::PackingElement::DisplayFile;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
@@ -1697,11 +1709,11 @@ sub prepare
 
 package OpenBSD::PackingElement::FDISPLAY;
 our @ISA=qw(OpenBSD::PackingElement::DisplayFile);
-sub category() { OpenBSD::PackageInfo::DISPLAY }
+sub name() { OpenBSD::PackageInfo::DISPLAY }
 
 package OpenBSD::PackingElement::FUNDISPLAY;
 our @ISA=qw(OpenBSD::PackingElement::DisplayFile);
-sub category() { OpenBSD::PackageInfo::UNDISPLAY }
+sub name() { OpenBSD::PackageInfo::UNDISPLAY }
 
 package OpenBSD::PackingElement::Arch;
 our @ISA=qw(OpenBSD::PackingElement::Unique);

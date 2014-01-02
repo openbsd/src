@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.79 2014/01/02 18:19:46 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.80 2014/01/02 20:13:43 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -417,9 +417,9 @@ sub pretend_to_archive
 
 sub may_add
 {
-	my ($class, $subst, $plist, $name, $opt) = @_;
+	my ($class, $subst, $plist, $opt) = @_;
 	if (defined $opt) {
-		my $o = $class->add($plist, $name);
+		my $o = $class->add($plist);
 		$subst->copy($opt, $o->fullname) if defined $o->fullname;
 	}
 }
@@ -1226,9 +1226,9 @@ sub add_elements
 
 	my $subst = $state->{subst};
 	add_description($state, $plist, DESC, $state->opt('d'));
-	OpenBSD::PackingElement::FDISPLAY->may_add($subst, $plist, DISPLAY,
+	OpenBSD::PackingElement::FDISPLAY->may_add($subst, $plist,
 	    $state->opt('M'));
-	OpenBSD::PackingElement::FUNDISPLAY->may_add($subst, $plist, UNDISPLAY,
+	OpenBSD::PackingElement::FUNDISPLAY->may_add($subst, $plist,
 	    $state->opt('U'));
 	for my $d (sort keys %{$state->{dependencies}}) {
 		OpenBSD::PackingElement::Dependency->add($plist, $d);
