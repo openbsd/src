@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.78 2014/01/02 16:27:10 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.79 2014/01/02 18:19:46 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -413,6 +413,15 @@ sub archive
 sub pretend_to_archive
 {
 	&OpenBSD::PackingElement::FileBase::pretend_to_archive;
+}
+
+sub may_add
+{
+	my ($class, $subst, $plist, $name, $opt) = @_;
+	if (defined $opt) {
+		my $o = $class->add($plist, $name);
+		$subst->copy($opt, $o->fullname) if defined $o->fullname;
+	}
 }
 
 sub comment_create_package
@@ -1063,15 +1072,6 @@ sub annotate
 {
 }
 
-sub add_special_file
-{
-	my ($subst, $plist, $name, $opt) = @_;
-	if (defined $opt) {
-	    my $o = OpenBSD::PackingElement::File->add($plist, $name);
-	    $subst->copy($opt, $o->fullname) if defined $o->fullname;
-	}
-}
-
 sub add_description
 {
 	my ($state, $plist, $name, $opt_d) = @_;
@@ -1226,8 +1226,10 @@ sub add_elements
 
 	my $subst = $state->{subst};
 	add_description($state, $plist, DESC, $state->opt('d'));
-	add_special_file($subst, $plist, DISPLAY, $state->opt('M'));
-	add_special_file($subst, $plist, UNDISPLAY, $state->opt('U'));
+	OpenBSD::PackingElement::FDISPLAY->may_add($subst, $plist, DISPLAY,
+	    $state->opt('M'));
+	OpenBSD::PackingElement::FUNDISPLAY->may_add($subst, $plist, UNDISPLAY,
+	    $state->opt('U'));
 	for my $d (sort keys %{$state->{dependencies}}) {
 		OpenBSD::PackingElement::Dependency->add($plist, $d);
 	}
@@ -1265,6 +1267,14 @@ sub read_all_fragments
 		$self->read_fragments($state, $plist, $contentsfile) or
 		    $self->cant_read_fragment($state, $contentsfile);
 	}
+
+	$plist->register_forbidden($state);
+	if (defined $state->{forbidden}) {
+		for my $e (@{$state->{forbidden}}) {
+			$state->errsay("Error: #1 can't be set explicitly", "\@".$e->keyword." ".$e->stringize);
+		}
+		$state->fatal("Can't continue");
+	}
 }
 
 sub create_plist
@@ -1286,16 +1296,10 @@ sub create_plist
 	unless (defined $state->opt('q') && defined $state->opt('n')) {
 		$state->set_status("reading plist");
 	}
+	$self->read_all_fragments($state, $plist);
+
 	$plist->set_pkgname($pkgname);
 	$self->add_elements($plist, $state);
-	$self->read_all_fragments($state, $plist);
-	$plist->register_forbidden($state);
-	if (defined $state->{forbidden}) {
-		for my $e (@{$state->{forbidden}}) {
-			$state->errsay("Error: #1 can't be set explicitly", "\@".$e->keyword." ".$e->stringize);
-		}
-		$state->fatal("Can't continue");
-	}
 	return $plist;
 }
 
