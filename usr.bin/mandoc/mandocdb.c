@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.52 2014/01/02 22:19:38 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.53 2014/01/02 22:44:07 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -74,10 +74,10 @@ enum	form {
 };
 
 struct	str {
-	char		*utf8; /* key in UTF-8 form */
+	char		*rendered; /* key in UTF-8 or ASCII form */
 	const struct mpage *mpage; /* if set, the owning parse */
 	uint64_t	 mask; /* bitmask in sequence */
-	char		 key[]; /* the string itself */
+	char		 key[]; /* may contain escape sequences */
 };
 
 struct	inodev {
@@ -157,11 +157,11 @@ static	void	 putkeys(const struct mpage *,
 			const char *, size_t, uint64_t);
 static	void	 putmdockey(const struct mpage *,
 			const struct mdoc_node *, uint64_t);
+static	void	 render_key(struct mchars *, struct str *);
 static	void	 say(const char *, const char *, ...);
 static	int	 set_basedir(const char *);
 static	int	 treescan(void);
 static	size_t	 utf8(unsigned int, char [7]);
-static	void	 utf8key(struct mchars *, struct str *);
 
 static	char		*progname;
 static	int	 	 use_all; /* use all found files */
@@ -1654,11 +1654,11 @@ utf8(unsigned int cp, char out[7])
 }
 
 /*
- * Store the UTF-8 version of a key, or alias the pointer if the key has
- * no UTF-8 transcription marks in it.
+ * Store the rendered version of a key, or alias the pointer
+ * if the key contains no escape sequences.
  */
 static void
-utf8key(struct mchars *mc, struct str *key)
+render_key(struct mchars *mc, struct str *key)
 {
 	size_t		 sz, bsz, pos;
 	char		 utfbuf[7], res[5];
@@ -1667,7 +1667,7 @@ utf8key(struct mchars *mc, struct str *key)
 	int		 len, u;
 	enum mandoc_esc	 esc;
 
-	assert(NULL == key->utf8);
+	assert(NULL == key->rendered);
 
 	res[0] = '\\';
 	res[1] = '\t';
@@ -1683,7 +1683,7 @@ utf8key(struct mchars *mc, struct str *key)
 	 * pointer as ourselvse and get out of here.
 	 */
 	if (strcspn(val, res) == bsz) {
-		key->utf8 = key->key;
+		key->rendered = key->key;
 		return;
 	} 
 
@@ -1762,14 +1762,14 @@ utf8key(struct mchars *mc, struct str *key)
 	}
 
 	buf[pos] = '\0';
-	key->utf8 = buf;
+	key->rendered = buf;
 }
 
 /*
  * Flush the current page's terms (and their bits) into the database.
  * Wrap the entire set of additions in a transaction to make sqlite be a
  * little faster.
- * Also, UTF-8-encode the description at the last possible moment.
+ * Also, handle escape sequences at the last possible moment.
  */
 static void
 dbindex(const struct mpage *mpage, struct mchars *mc)
@@ -1792,9 +1792,9 @@ dbindex(const struct mpage *mpage, struct mchars *mc)
 		key = ohash_find(&strings,
 			ohash_qlookup(&strings, mpage->desc));
 		assert(NULL != key);
-		if (NULL == key->utf8)
-			utf8key(mc, key);
-		desc = key->utf8;
+		if (NULL == key->rendered)
+			render_key(mc, key);
+		desc = key->rendered;
 	}
 
 	SQL_EXEC("BEGIN TRANSACTION");
@@ -1828,16 +1828,16 @@ dbindex(const struct mpage *mpage, struct mchars *mc)
 	for (key = ohash_first(&strings, &slot); NULL != key;
 	     key = ohash_next(&strings, &slot)) {
 		assert(key->mpage == mpage);
-		if (NULL == key->utf8)
-			utf8key(mc, key);
+		if (NULL == key->rendered)
+			render_key(mc, key);
 		i = 1;
 		SQL_BIND_INT64(stmts[STMT_INSERT_KEY], i, key->mask);
-		SQL_BIND_TEXT(stmts[STMT_INSERT_KEY], i, key->utf8);
+		SQL_BIND_TEXT(stmts[STMT_INSERT_KEY], i, key->rendered);
 		SQL_BIND_INT64(stmts[STMT_INSERT_KEY], i, recno);
 		SQL_STEP(stmts[STMT_INSERT_KEY]);
 		sqlite3_reset(stmts[STMT_INSERT_KEY]);
-		if (key->utf8 != key->key)
-			free(key->utf8);
+		if (key->rendered != key->key)
+			free(key->rendered);
 		free(key);
 	}
 
