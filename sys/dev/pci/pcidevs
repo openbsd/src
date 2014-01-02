@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1703 2013/12/31 20:37:38 brad Exp $
+$OpenBSD: pcidevs,v 1.1704 2014/01/02 07:42:33 gilles Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -248,6 +248,7 @@ vendor	CHELSIO		0x1425	Chelsio
 vendor	EDIMAX		0x1432	Edimax
 vendor	TAMARACK	0x143d	Tamarack
 vendor	WORKBIT		0x1145	Workbit
+vendor	SAMSUNG2	0x144d	Samsung
 vendor	ASKEY		0x144f	Askey
 vendor	AVERMEDIA	0x1461	Avermedia
 vendor	MSI		0x1462	MSI
@@ -5719,6 +5720,7 @@ product SAFENET SAFEXCEL	0x1141	SafeXcel
 
 /* Samsung products */
 product SAMSUNG SWL2210P	0xa000	MagicLAN SWL-2210P
+product SAMSUNG2 XP941		0xa800	XP941
 
 /* Sangoma products */
 product SANGOMA A10X		0x0300	A10x
