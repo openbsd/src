@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.265 2013/11/13 18:25:57 deraadt Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.266 2014/01/03 12:43:09 pelikan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -100,10 +100,8 @@ int			 pf_disable_altq(struct pf_altq *);
 #endif /* ALTQ */
 int			 pf_begin_rules(u_int32_t *, const char *);
 int			 pf_rollback_rules(u_int32_t, char *);
-int			 pf_free_queues(char *);
-int			 pf_remove_queues(void);
 int			 pf_create_queues(void);
-int			 pf_commit_queues(char *);
+int			 pf_commit_queues(void);
 int			 pf_setup_pfsync_matching(struct pf_ruleset *);
 void			 pf_hash_rule(MD5_CTX *, struct pf_rule *);
 void			 pf_hash_rule_addr(MD5_CTX *, struct pf_rule_addr *);
@@ -716,20 +714,22 @@ pf_rollback_rules(u_int32_t ticket, char *anchor)
 		rs->rules.inactive.rcount--;
 	}
 	rs->rules.inactive.open = 0;
-	return (pf_free_queues(anchor));
-}
-
-int
-pf_free_queues(char *anchor)
-{
-	struct pf_queuespec	*q;
 
 	/* queue defs only in the main ruleset */
 	if (anchor[0])
 		return (0);
+	return (pf_free_queues(pf_queues_inactive, NULL));
+}
 
-	while ((q = TAILQ_FIRST(pf_queues_inactive)) != NULL) {
-		TAILQ_REMOVE(pf_queues_inactive, q, entries);
+int
+pf_free_queues(struct pf_queuehead *where, struct ifnet *ifp)
+{
+	struct pf_queuespec	*q, *qtmp;
+
+	TAILQ_FOREACH_SAFE(q, where, entries, qtmp) {
+		if (ifp && q->kif->pfik_ifp != ifp)
+			continue;
+		TAILQ_REMOVE(where, q, entries);
 		pfi_kif_unref(q->kif, PFI_KIF_REF_RULE);
 		pool_put(&pf_queue_pl, q);
 	}
@@ -737,21 +737,27 @@ pf_free_queues(char *anchor)
 }
 
 int
-pf_remove_queues(void)
+pf_remove_queues(struct ifnet *ifp)
 {
 	struct pf_queuespec	*q;
 	int			 error = 0;
 
 	/* remove queues */
-	TAILQ_FOREACH_REVERSE(q, pf_queues_active, pf_queuehead, entries)
+	TAILQ_FOREACH_REVERSE(q, pf_queues_active, pf_queuehead, entries) {
+		if (ifp && q->kif->pfik_ifp != ifp)
+			continue;
 		if ((error = hfsc_delqueue(q)) != 0)
 			return (error);
+	}
 
 	/* put back interfaces in normal queueing mode */	
-	TAILQ_FOREACH(q, pf_queues_active, entries)
+	TAILQ_FOREACH(q, pf_queues_active, entries) {
+		if (ifp && q->kif->pfik_ifp != ifp)
+			continue;
 		if (q->parent_qid == 0)
 			if ((error = hfsc_detach(q->kif->pfik_ifp)) != 0)
 				return (error);
+	}
 
 	return (0);
 }
@@ -777,23 +783,19 @@ pf_create_queues(void)
 }
 
 int
-pf_commit_queues(char *anchor)
+pf_commit_queues(void)
 {
 	struct pf_queuehead	*qswap;
 	int error;
 
-	/* queue defs only in the main ruleset */
-	if (anchor[0])
-		return (0);
-
-	if ((error = pf_remove_queues()) != 0)
+	if ((error = pf_remove_queues(NULL)) != 0)
 		return (error);
 
 	/* swap */
 	qswap = pf_queues_active;
 	pf_queues_active = pf_queues_inactive;
 	pf_queues_inactive = qswap;
-	pf_free_queues(anchor);
+	pf_free_queues(pf_queues_inactive, NULL);
 
 	return (pf_create_queues());
 }
@@ -929,7 +931,11 @@ pf_commit_rules(u_int32_t ticket, char *anchor)
 	rs->rules.inactive.open = 0;
 	pf_remove_if_empty_ruleset(rs);
 	splx(s);
-	return (pf_commit_queues(anchor));
+
+	/* queue defs only in the main ruleset */
+	if (anchor[0])
+		return (0);
+	return (pf_commit_queues());
 }
 
 int
@@ -1134,7 +1140,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		else {
 			pf_status.running = 0;
 			pf_status.since = time_second;
-			pf_remove_queues();
+			pf_remove_queues(NULL);
 			DPFPRINTF(LOG_NOTICE, "pf: stopped");
 		}
 		break;
