@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.8 2014/01/03 15:42:22 espie Exp $ */
+/* $OpenBSD: signify.c,v 1.9 2014/01/03 17:10:27 espie Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -64,8 +64,11 @@ extern char *__progname;
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-n] [-i input] [-o output] [-p pubkey] [-s seckey] "
-	    "-G | -S | -V\n", __progname);
+	fprintf(stderr, "usage:"
+	    "\t%s [-n] -p pubkey -s seckey -G\n"
+	    "\t%s [-o output] -s seckey -S input\n"
+	    "\t%s [-o output] -p pubkey -V input\n",
+	    __progname, __progname, __progname);
 	exit(1);
 }
 
@@ -339,7 +342,7 @@ main(int argc, char **argv)
 
 	rounds = 42;
 
-	while ((ch = getopt(argc, argv, "GSVi:no:p:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "GSVno:p:s:")) != -1) {
 		switch (ch) {
 		case 'G':
 			if (verb)
@@ -355,9 +358,6 @@ main(int argc, char **argv)
 			if (verb)
 				usage();
 			verb = VERIFY;
-			break;
-		case 'i':
-			inputfile = optarg;
 			break;
 		case 'n':
 			rounds = 0;
@@ -377,30 +377,38 @@ main(int argc, char **argv)
 		}
 	}
 	argc -= optind;
-	if (argc != 0)
-		usage();
+	argv += optind;
 
-	if (inputfile && !sigfile) {
-		if (snprintf(sigfilebuf, sizeof(sigfilebuf), "%s.sig",
-		    inputfile) >= sizeof(sigfilebuf))
-			errx(1, "path too long");
-		sigfile = sigfilebuf;
-	}
+	if (verb == NONE)
+		usage();
 
 	if (verb == GENERATE) {
-		if (!pubkeyfile || !seckeyfile)
+		if (!pubkeyfile || !seckeyfile || argc != 0)
 			usage();
 		generate(pubkeyfile, seckeyfile, rounds);
-	} else if (verb == SIGN) {
-		if (!seckeyfile || !inputfile)
-			usage();
-		sign(seckeyfile, inputfile, sigfile);
-	} else if (verb == VERIFY) {
-		if (!pubkeyfile || !inputfile)
-			usage();
-		verify(pubkeyfile, inputfile, sigfile);
 	} else {
-		usage();
+		if (argc != 1)
+			usage();
+
+		inputfile = argv[0];
+
+		if (!sigfile) {
+			if (snprintf(sigfilebuf, sizeof(sigfilebuf), "%s.sig",
+			    inputfile) >= sizeof(sigfilebuf))
+				errx(1, "path too long");
+			sigfile = sigfilebuf;
+		}
+
+		if (verb == SIGN) {
+			if (!seckeyfile)
+				usage();
+			sign(seckeyfile, inputfile, sigfile);
+		} else if (verb == VERIFY) {
+			if (!pubkeyfile)
+				usage();
+			verify(pubkeyfile, inputfile, sigfile);
+		}
 	}
+
 	return 0;
 }

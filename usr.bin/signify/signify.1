@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.6 2014/01/01 17:50:33 tedu Exp $
+.\" $OpenBSD: signify.1,v 1.7 2014/01/03 17:10:27 espie Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -14,7 +14,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: January 1 2014 $
+.Dd $Mdocdate: January 3 2014 $
 .Dt SIGNIFY 1
 .Os
 .Sh NAME
@@ -23,15 +23,25 @@
 .Sh SYNOPSIS
 .Nm signify
 .Op Fl n
-.Op Fl i Ar input
+.Fl p Ar pubkey
+.Fl s Ar seckey
+.Fl G
+.Nm signify
 .Op Fl o Ar output
-.Op Fl p Ar pubkey
-.Op Fl s Ar seckey
-.Fl G | S | V
+.Fl s Ar seckey
+.Fl S
+.Ar input
+.Nm signify
+.Op Fl o Ar output
+.Fl p Ar pubkey
+.Fl V
+.Ar input
 .Sh DESCRIPTION
 The
 .Nm
-utility creates and verifies cryptographic signatures.
+utility creates and verifies cryptographic signatures for
+an input file
+.Ar input .
 The mode of operation is selected by the
 .Fl G ,
 .Fl S ,
@@ -40,11 +50,9 @@ or
 options.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width Dssoutput
 .It Fl G
 Generate a new keypair.
-.It Fl i Ar input
-Input file to sign or verify.
 .It Fl n
 Do not ask for a passphrase during key generation.
 Otherwise,
@@ -56,17 +64,17 @@ The default is
 .Ar input Ns .sig .
 .It Fl p Ar pubkey
 Public key produced by
-.Ar G ,
+.Fl G ,
 and used by
-.Ar V
+.Fl V
 to check a signature.
 .It Fl S
 Sign the input file.
 .It Fl s Ar seckey
 Secret (private) key produced by
-.Ar G ,
+.Fl G ,
 and used by
-.Ar S
+.Fl S
 to sign a message.
 .It Fl V
 Verify the input file and signature match.
@@ -94,13 +102,13 @@ The message file is too large.
 .El
 .Sh EXAMPLES
 Create a new keypair:
-.Dl $ signify -p newkey.pub -s newkey.sec -G
+.Dl $ signify -G -p newkey.pub -s newkey.sec
 .Pp
 Sign a file, specifying a signature name:
-.Dl $ signify -s key.sec -i message.txt -o msg.sig -S
+.Dl $ signify -S -s key.sec -o msg.sig message.txt
 .Pp
 Verify a signature, using the default signature name:
-.Dl $ signify -p key.pub -i generalsorders.txt -V
+.Dl $ signify -V -p key.pub generalsorders.txt
 .Sh SEE ALSO
 .Xr cmp 1 ,
 .Xr sha256 1 ,
@@ -109,4 +117,4 @@ Verify a signature, using the default signature name:
 The
 .Nm
 command first appeared in
-.Ox 5.5
+.Ox 5.5 .
