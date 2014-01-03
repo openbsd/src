@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.45 2013/11/25 18:06:32 deraadt Exp $   */
+/*      $OpenBSD: whois.c,v 1.46 2014/01/03 15:25:18 millert Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -149,7 +149,7 @@ main(int argc, char *argv[])
 int
 whois(const char *query, const char *server, const char *port, int flags)
 {
-	FILE *sfi, *sfo;
+	FILE *fp;
 	char *buf, *p, *nhost, *nbuf = NULL;
 	size_t len;
 	int i, s, error;
@@ -204,14 +204,13 @@ whois(const char *query, const char *server, const char *port, int flags)
 	else
 		fmt = "%s\r\n";
 
-	sfi = fdopen(s, "r");
-	sfo = fdopen(s, "w");
-	if (sfi == NULL || sfo == NULL)
+	fp = fdopen(s, "r+");
+	if (fp == NULL)
 		err(1, "fdopen");
-	fprintf(sfo, fmt, query);
-	fflush(sfo);
+	fprintf(fp, fmt, query);
+	fflush(fp);
 	nhost = NULL;
-	while ((buf = fgetln(sfi, &len)) != NULL) {
+	while ((buf = fgetln(fp, &len)) != NULL) {
 		p = buf + len - 1;
 		if (isspace((unsigned char)*p)) {
 			do
@@ -252,6 +251,7 @@ whois(const char *query, const char *server, const char *port, int flags)
 			}
 		}
 	}
+	fclose(fp);
 	if (nbuf != NULL)
 		free(nbuf);
 
