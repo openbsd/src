@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.13 2014/01/03 12:54:59 espie Exp $
+.\"	$OpenBSD: package.5,v 1.14 2014/01/03 13:10:04 espie Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -91,6 +91,7 @@ This corresponds to
 .Fl A Ar arches
 of
 .Xr pkg_create 1
+.Pp
 .It Cm @comment pkgpath=path cdrom=yes/no ftp=yes/no
 Historical accident.
 This specific comment encodes the actual
@@ -114,6 +115,76 @@ Record a dependency declared using the option
 of
 .Xr pkg_create 1 .
 .Pp
+.It Xo
+.Cm @digital-signature
+.Sm off
+.Ar style :
+.Ar date :
+.Ar b64sig
+.Sm on
+.Xc
+Record a digital signature of the packing-list, corresponding
+to
+.Xr pkg_create 1 Ns 's
+.Fl s
+option.
+.Pp
+.It Cm @link Ar name
+Added after a file entry by
+.Nm
+to record that the entry is actually a hard link.
+.Pp
+.It Cm @localbase Ar base
+Used internally to record the settings of
+.Fl L
+option.
+.Pp
+.It Cm @name Ar pkgname
+Set the name of the package.
+This name is potentially different than the name of
+the file it came in, and is used when keeping track of the package
+for later deinstallation.
+.Xr pkg_create 1
+will derive this field from the package file name.
+.Pp
+.It Cm @option Ar name
+Some options are automatically inserted by the package tools:
+.Bl -tag -width indent
+.It Ar manual-installation
+Record that a package has been explicitly installed by the user,
+and not as a result of a dependency look-up.
+Refer to
+.Xr pkg_add 1 Ns 's
+.Fl a
+option for details.
+.El
+.Pp
+.It Cm @sha
+Added after a file entry by
+.Xr pkg_create 1
+to record the files's cryptographic checksum,
+as a sha256 digest encoded in base64.
+.Pp
+.It Cm @size
+Added after a file entry by
+.Xr pkg_create 1
+to record a file size.
+.Pp
+.It Cm @symlink Ar name
+Added after a file entry by
+.Xr pkg_create 1
+to record that the entry is actually a symbolic link.
+.Pp
+.It Cm @url
+Original location of the package, automatically recorded in installed packages
+by
+.Xr pkg_add 1 .
+.Pp
+.It Cm @vendor
+Internal annotation corresponding to
+.Xr pkg_create 1 Ns 's
+.Fl D Ar VENDOR
+option.
 .Pp
 .It Cm @wantlib Ar libspec
 Record a library requirement declared using the option

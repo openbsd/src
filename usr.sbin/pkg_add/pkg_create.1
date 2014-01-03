@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.85 2014/01/03 12:54:59 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.86 2014/01/03 13:10:04 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -535,10 +535,6 @@ Set default group ownership for all subsequently extracted files to
 Use without an arg to set back to default (extraction)
 group ownership.
 .Pp
-.It Cm @ignore
-Was used internally to tell extraction to ignore the next file.
-No longer needed.
-.Pp
 .It Cm @info Ar filename
 Specialized version of
 .Cm @file ,
@@ -561,16 +557,6 @@ See
 .Sq VARIABLE SUBSTITUTION AND FRAGMENT INCLUSION
 for some details.
 .Pp
-.It Cm @link Ar name
-Added after a file entry by
-.Nm
-to record that the entry is actually a hard link.
-.Pp
-.It Cm @localbase Ar base
-Used internally to record the settings of
-.Fl L
-option.
-.Pp
 .It Cm @man Ar filename
 Specialized version of
 .Cm @file ,
@@ -586,15 +572,6 @@ remove
 .Xr apropos 1
 database when needed.
 .Pp
-.It Cm @md5
-Added after a file entry by
-.Nm
-to record the files's cryptographic checksum.
-Replaced by
-.Cm @sha
-since
-.Ox 4.5 .
-.Pp
 .It Cm @mode Ar mode
 Set default permission for all subsequently extracted files to
 .Ar mode .
@@ -602,16 +579,6 @@ Format is the same as that used by the
 .Xr chmod 1
 command.
 Use without an arg to set back to default (extraction) permissions.
-.Pp
-.It Cm @name Ar pkgname
-Set the name of the package.
-This name is potentially different than the name of
-the file it came in, and is used when keeping track of the package
-for later deinstallation.
-Note that
-.Nm
-will derive this field from the package name and add it automatically
-if none is given.
 .Pp
 .It Cm @newgroup Ar name : Ns Ar gid
 During
@@ -664,7 +631,7 @@ other installed packages don't list the same user.
 .It Cm @option Ar name
 Effects vary depending on
 .Ar name .
-Some options are not documented yet.
+These are the user settable options
 .Bl -tag -width indent
 .It Ar always-update
 By default,
@@ -802,28 +769,12 @@ If
 ends with a slash,
 it refers to a configuration directory instead.
 .Pp
-.It Cm @sha
-Added after a file entry by
-.Nm
-to record the files's cryptographic checksum,
-as a sha256 digest encoded in base64.
-.Pp
 .It Cm @shell Ar filename
 Specialized version of
 .Cm @file ,
 to handle shells.
 See
 .Xr shells 5 .
-.Pp
-.It Cm @size
-Added after a file entry by
-.Nm
-to record a file size.
-.Pp
-.It Cm @symlink Ar name
-Added after a file entry by
-.Nm
-to record that the entry is actually a symbolic link.
 .Pp
 .It Cm @sysctl Ar var Ns = Ns Ar val
 .It Cm @sysctl Ar var Ns \*(Ge Ns Ar val
@@ -871,12 +822,8 @@ Similar to
 .Cm @unexec ,
 except it only gets executed while removing an old package during updates,
 and not during true deletions.
-.Pp
-.It Cm @url
-Original location of the package, automatically recorded in installed packages
-by
-.Xr pkg_add 1 .
 .El
+.Pp
 See
 .Xr package 5
 for other internal annotations that are automatically added by the
