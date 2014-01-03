@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.87 2014/01/03 15:23:16 jmc Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.88 2014/01/03 16:56:22 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -432,6 +432,19 @@ Some special elements, such as new users and new groups, are always
 created first, so that
 .Cm @exec
 can rely on them.
+.Pp
+.Xr pkg_add 1
+and
+.Xr pkg_delete 1
+set the
+.Ev PATH
+to a predictable value:
+.Bd -literal -offset indent
+/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R6/bin:${LOCALBASE}/bin:${LOCALBASE}/sbin
+.Ed
+.Pp
+during execution.
+.Pp
 If
 .Ar command
 contains any of the following sequences somewhere in it, they will
@@ -792,9 +805,10 @@ Execute
 .Ar command
 during
 .Xr pkg_delete 1 .
-Expansion of special
+.Ev PATH
+and expansion of special
 .Cm \&%
-sequences is the same as for
+sequences are the same as for
 .Cm @exec .
 Note that
 .Cm @unexec
