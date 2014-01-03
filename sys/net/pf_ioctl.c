@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.266 2014/01/03 12:43:09 pelikan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.267 2014/01/03 12:48:58 pelikan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -179,6 +179,12 @@ pfattach(int num)
 	    &pool_allocator_nointr);
 	pool_init(&pf_queue_pl, sizeof(struct pf_queuespec), 0, 0, 0, 
 	    "pfqueuepl", NULL);
+	pool_init(&hfsc_class_pl, sizeof(struct hfsc_class), 0, 0, PR_WAITOK,
+	    "hfscclass", NULL);
+	pool_init(&hfsc_classq_pl, sizeof(struct hfsc_classq), 0, 0, PR_WAITOK,
+	    "hfscclassq", NULL);
+	pool_init(&hfsc_internal_sc_pl, sizeof(struct hfsc_internal_sc), 0, 0,
+	    PR_WAITOK, "hfscintsc", NULL);
 	pfr_initialize();
 	pfi_initialize();
 	pf_osfp_initialize();

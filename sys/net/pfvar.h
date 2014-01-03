@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.394 2014/01/03 12:43:09 pelikan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.395 2014/01/03 12:48:58 pelikan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1804,6 +1804,8 @@ extern struct pool		 pf_src_tree_pl, pf_sn_item_pl, pf_rule_pl;
 extern struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl,
 				    pf_altq_pl, pf_rule_item_pl, pf_queue_pl;
 extern struct pool		 pf_state_scrub_pl;
+extern struct pool		 hfsc_class_pl, hfsc_classq_pl,
+				    hfsc_internal_sc_pl;
 extern void			 pf_purge_thread(void *);
 extern void			 pf_purge_expired_src_nodes(int);
 extern void			 pf_purge_expired_states(u_int32_t);
