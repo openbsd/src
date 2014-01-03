@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.14 2014/01/03 13:10:04 espie Exp $
+.\"	$OpenBSD: package.5,v 1.15 2014/01/03 15:23:16 jmc Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -98,7 +98,7 @@ This specific comment encodes the actual
 .Fl D Ar FULLPKGPATH ,
 .Fl D Ar CDROM ,
 and
-.Fl D Ar FTP 
+.Fl D Ar FTP
 arguments to
 .Xr pkg_create 1 .
 .Pp
@@ -203,7 +203,7 @@ Packing-lists can be signed.
 If a signature is found, then it will be checked
 during installation, and failure to verify will prevent the package from
 installing correctly.
-Currently, 
+Currently,
 .Xr signify 1
 and X.509-style signatures are supported.
 X.509 signatures rely on a certificate authority file being present as
