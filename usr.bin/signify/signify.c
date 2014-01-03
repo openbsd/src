@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.10 2014/01/03 17:13:42 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.11 2014/01/03 17:14:47 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -97,7 +97,9 @@ xmalloc(size_t len)
 static void
 readall(int fd, void *buf, size_t len, const char *filename)
 {
-	ssize_t x = read(fd, buf, len);
+	ssize_t x;
+	
+	x = read(fd, buf, len);
 	if (x == -1) {
 		err(1, "read from %s", filename);
 	} else if (x != len) {
@@ -153,7 +155,9 @@ readmsg(const char *filename, unsigned long long *msglenp)
 static void
 writeall(int fd, const void *buf, size_t len, const char *filename)
 {
-	ssize_t x = write(fd, buf, len);
+	ssize_t x;
+	
+	x = write(fd, buf, len);
 	if (x == -1) {
 		err(1, "write to %s", filename);
 	} else if (x != len) {
