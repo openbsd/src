@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_mutex_init.3,v 1.13 2014/01/03 15:35:23 tedu Exp $
+.\" $OpenBSD: pthread_mutex_init.3,v 1.14 2014/01/03 16:24:06 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Brian Cully <shmit@kublai.com>
 .\" All rights reserved.
@@ -73,10 +73,10 @@ is invalid.
 The process cannot allocate enough memory to create another mutex.
 .El
 .Sh SEE ALSO
-.Xr pthread_mutexattr_init 3 ,
 .Xr pthread_mutex_destroy 3 ,
 .Xr pthread_mutex_lock 3 ,
-.Xr pthread_mutex_unlock 3
+.Xr pthread_mutex_unlock 3 ,
+.Xr pthread_mutexattr_init 3
 .Sh STANDARDS
 .Fn pthread_mutex_init
 conforms to
