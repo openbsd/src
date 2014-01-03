@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: signify.pm,v 1.2 2014/01/02 13:45:14 espie Exp $
+# $OpenBSD: signify.pm,v 1.3 2014/01/03 17:10:57 espie Exp $
 #
 # Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 #
@@ -38,7 +38,7 @@ sub compute_signature
 	open my $fh, ">", $contents;
 	$plist->write_no_sig($fh);
 	close $fh;
-	$state->system($cmd, '-i', $contents, '-s', $key, '-S')
+	$state->system($cmd, '-s', $key, '-S', '--', $contents)
 	    == 0 or die "probleme generating signature";
 	open(my $sighandle, '<', $sigfile)
 		or die "problem reading signature";
@@ -75,9 +75,9 @@ sub check_signature
 			return 0;
 		}
 	}
-	if ($state->system(sub { open STDERR, ">", "/dev/null";
+	if ($state->system(sub {
 	    open STDOUT, ">", "/dev/null";},
-	    $cmd, '-i', $fname, '-p', $pubkey, '-V') != 0) {
+	    $cmd, '-p', $pubkey, '-V', '--', $fname) != 0) {
 	    	$state->log("Bad signature");
 		return 0;
 	}
