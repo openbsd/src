@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.418 2013/12/28 01:00:18 deraadt Exp $
+#	$OpenBSD: rc,v 1.419 2014/01/03 23:24:19 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -232,11 +232,8 @@ fi
 if [ X"$1" = X"shutdown" ]; then
 	random_seed
 
-	# XXX If root is writeable, assume we are not single user
-	chmod 600 /etc/random.seed >/dev/null 2>&1
-	_notsingle=$?
-
-	if [ ${_notsingle} -eq 0 ]; then
+	# If we are in secure level 0, assume single user mode.
+	if [ `sysctl -n kern.securelevel` -ne 0 ]; then
 		if [ -n "${pkg_scripts}" ]; then
 			echo -n 'stopping package daemons:'
 			while [ -n "${pkg_scripts}" ]; do
