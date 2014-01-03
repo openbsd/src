@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.7 2014/01/02 16:34:02 espie Exp $ */
+/* $OpenBSD: signify.c,v 1.8 2014/01/03 15:42:22 espie Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -170,8 +170,9 @@ writeb64file(const char *filename, const char *comment, const void *buf,
 	fd = xopen(filename, O_CREAT|O_EXCL|O_NOFOLLOW|O_RDWR, mode);
 	snprintf(header, sizeof(header), "signify -- %s\n", comment);
 	writeall(fd, header, strlen(header), filename);
-	if ((rv = b64_ntop(buf, len, b64, sizeof(b64))) == -1)
+	if ((rv = b64_ntop(buf, len, b64, sizeof(b64)-1)) == -1)
 		errx(1, "b64 encode failed");
+	b64[rv++] = '\n';
 	writeall(fd, b64, rv, filename);
 	memset(b64, 0, sizeof(b64));
 	close(fd);
