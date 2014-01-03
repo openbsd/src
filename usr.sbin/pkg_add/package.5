@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.12 2011/09/29 17:57:09 jmc Exp $
+.\"	$OpenBSD: package.5,v 1.13 2014/01/03 12:54:59 espie Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +12,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: September 29 2011 $
+.Dd $Mdocdate: January 3 2014 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
@@ -78,6 +78,49 @@ and long link names with
 .Pa LongLink#n .
 The packing-list will hold the real file names, and the package tools
 will reconstitute the correct names behind the scenes.
+.Sh PACKING LIST ANNOTATIONS
+User annotations are described in
+.Xr pkg_create 1 .
+The following annotations are automatically inserted during package creation
+and installations:
+.Pp
+.Bl -tag -width Ds -compact
+.It Cm @arch Ar arches
+List of architectures for which this package is intended.
+This corresponds to
+.Fl A Ar arches
+of
+.Xr pkg_create 1
+.It Cm @comment pkgpath=path cdrom=yes/no ftp=yes/no
+Historical accident.
+This specific comment encodes the actual
+.Fl D Ar FULLPKGPATH ,
+.Fl D Ar CDROM ,
+and
+.Fl D Ar FTP 
+arguments to
+.Xr pkg_create 1 .
+.Pp
+.It Xo
+.Cm @depend
+.Sm off
+.Ar pkgpath :
+.Ar pkgspec :
+.Ar default
+.Sm on
+.Xc
+Record a dependency declared using the option
+.Fl P
+of
+.Xr pkg_create 1 .
+.Pp
+.Pp
+.It Cm @wantlib Ar libspec
+Record a library requirement declared using the option
+.Fl W
+of
+.Xr pkg_create 1 .
+.El
 .Sh PACKAGE SIGNATURES
 All information within a package is checksummed, using SHA256 since
 .Ox 4.4 .
@@ -89,8 +132,10 @@ Packing-lists can be signed.
 If a signature is found, then it will be checked
 during installation, and failure to verify will prevent the package from
 installing correctly.
-Currently, only X.509-style signatures are supported.
-They rely on a certificate authority file being present as
+Currently, 
+.Xr signify 1
+and X.509-style signatures are supported.
+X.509 signatures rely on a certificate authority file being present as
 .Pa /etc/ssl/pkgca.pem
 and all signatures will be checked against it.
 Once the packing-list signature is checked, all individual packing elements

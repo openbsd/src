@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.47 2011/11/25 09:30:08 espie Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.48 2014/01/03 12:54:59 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: November 25 2011 $
+.Dd $Mdocdate: January 3 2014 $
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -114,6 +114,11 @@ will match any package that was compiled according to
 .Pa ${PORTSDIR}/x11/kde/base3 .
 .It Fl f
 Show the packing-list instructions for each package.
+See
+.Xr pkg_create 1
+and
+.Xr package 5
+for the various annotations.
 .It Fl I
 Show the index entry for each package.
 .It Fl K

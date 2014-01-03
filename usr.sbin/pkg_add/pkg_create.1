@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.84 2014/01/02 17:02:48 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.85 2014/01/03 12:54:59 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: January 2 2014 $
+.Dd $Mdocdate: January 3 2014 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -36,10 +36,10 @@
 .Op Fl D Ar name Ns Op = Ns Ar value
 .Op Fl L Ar localbase
 .Op Fl M Ar displayfile
-.Op Fl P Ar pkg-dependency
+.Op Fl P Ar pkgpath Ns : Ns Ar pkgspec Ns : Ns Ar default
 .Op Fl s Ar signature-parameter
 .Op Fl U Ar undisplayfile
-.Op Fl W Ar wantedlib
+.Op Fl W Ar libspec
 .Fl d Ar desc
 .Fl D Ar COMMENT Ns = Ns Ar value
 .Fl D Ar PORTSDIR Ns = Ns Ar value
@@ -95,14 +95,10 @@ records extra information in the packing-list, such as the existence
 of symlinks and hard links, computes and stores file checksums, and
 verifies that all special objects are properly annotated in the packing-list.
 .Pp
-It will also check all
-.Cm @wantlib
-for reachability, by looking into all installed
-.Cm @depend .
+It will also check all required shared libraries
+for reachability, by looking into all installed dependencies.
 It may also ask the ports tree for extra dependencies,
-provided some other
-.Cm @depend
-refers to the same
+provided some other dependency refers to the same
 .Ev BASE_PKGPATH
 .Po
 see
@@ -110,9 +106,7 @@ see
 .Pc .
 The rationale is that those libraries must already be present for
 the package to build correctly, and thus be reachable through the
-subset of
-.Cm @depend
-that are not pure
+subset of dependencies that are not pure
 .Ev RUN_DEPENDS .
 .Pp
 The options are as follows:
@@ -180,9 +174,11 @@ concatenated together.
 .It Fl L Ar localbase
 Record
 .Ar localbase
-as the localbase used in the package.
+as the localbase used in the package
+.Po
 By default,
-.Pa /usr/local .
+.Pa /usr/local
+.Pc .
 Packages built with another localbase can only be installed by using
 the same localbase in
 .Xr pkg_add 1 ,
@@ -202,10 +198,23 @@ Don't actually create a package.
 .It Fl o Ar dir
 Specify output directory for signing packages after the fact.
 Otherwise, unsigned packages will be replaced with signed packages.
-.It Fl P Ar pkg-dependency
-Specify a
-.Cm @depend
-dependency on the command line.
+.It Fl P Ar pkgpath Ns : Ns Ar pkgspec Ns : Ns Ar default
+Declare a dependency on a package matching
+.Ar pkgspec
+.Pq see Xr packages-specs 7 .
+An appropriate package must be installed before this package may be
+installed, and that package must be deinstalled before this package
+is deinstalled.
+The dependency also contains a
+.Ar pkgpath
+.Po
+see
+.Xr pkgpath 7
+.Pc
+and a
+.Ar default
+package name, in case there is no listing of available packages.
+.Pp
 .It Fl p Ar prefix
 Set
 .Ar prefix
@@ -271,10 +280,26 @@ when deinstalling the package.
 Useful for reminders about stuff to clean up.
 .It Fl v
 Turn on verbose output.
-.It Fl W Ar wantedlib
-Specify a
-.Cm @wantlib
-requirement on the command line.
+.It Fl W Ar libspec
+Package needs a shared library to work.
+.Ar libspec
+is
+.Sq name.major.minor
+or
+.Sq path/name.major.minor .
+The package won't be installed unless a library with the same name,
+the exact same major number and at least the same minor number can
+be located.
+A library without path is searched through dependent packages under the
+same
+.Ar localbase ,
+then in the system libraries under
+.Pa /usr/lib
+and
+.Pa /usr/X11R6/lib .
+A library with a path is only searched through dependent packages,
+that path being relative to
+.Ar localbase .
 .It Fl x
 Disable progress meter.
 .El
@@ -303,10 +328,10 @@ next section.
 .Pp
 Directory names are denoted by a trailing slash.
 .Pp
-There are a few annotations that can be inserted for better control.
+There are some annotations that can be inserted for better control.
 All these commands start with an
 .Sq @ .
-Here is a list:
+The following annotations can be inserted manually:
 .Pp
 .Bl -tag -width Ds -compact
 .It Cm @ask-update Ar pkgspec Ar message
@@ -331,9 +356,6 @@ Classical use case for postgresql:
 .Pp
 Use very sparingly.
 Most cases that seem to require manual updates just require a bit more thought.
-.Pp
-.It Cm @arch Ar arches
-List of architectures for which this package is intended.
 .Pp
 .It Cm @bin Ar filename
 Describe the file as an
@@ -373,30 +395,6 @@ Set the package current directory.
 All subsequent filenames will be assumed relative to
 .Ar pathname .
 .Pp
-.It Xo
-.Cm @depend
-.Sm off
-.Ar pkgpath :
-.Ar pkgspec :
-.Ar default
-.Sm on
-.Xc
-Declare a dependency on a package matching
-.Ar pkgspec
-.Pq see Xr packages-specs 7 .
-An appropriate package must be installed before this package may be
-installed, and that package must be deinstalled before this package
-is deinstalled.
-The dependency also contains a
-.Ar pkgpath
-.Po
-see
-.Xr pkgpath 7
-.Pc
-and a
-.Ar default
-package name, in case there is no listing of available packages.
-.Pp
 .It Cm @dir Ar directoryname
 Create directory
 .Pa directoryname
@@ -414,13 +412,6 @@ If
 .Ar name
 does not begin with an @, same as
 .Dl name/
-.Pp
-.It Cm @display Ar name
-Declare
-.Pa name
-as the file to be displayed at install time (see
-.Fl M
-above).
 .Pp
 .It Cm @endfake
 Mark end of packing-list for
@@ -885,28 +876,11 @@ and not during true deletions.
 Original location of the package, automatically recorded in installed packages
 by
 .Xr pkg_add 1 .
-.Pp
-.It Cm @wantlib Ar libspec
-Package needs a shared library to work.
-.Ar libspec
-is
-.Sq name.major.minor
-or
-.Sq path/name.major.minor .
-The package won't be installed unless a library with the same name,
-the exact same major number and at least the same minor number can
-be located.
-A library without path is searched through dependent packages under the
-same
-.Ar localbase ,
-then in the system libraries under
-.Pa /usr/lib
-and
-.Pa /usr/X11R6/lib .
-A library with a path is only searched through dependent packages,
-that path being relative to
-.Ar localbase .
 .El
+See
+.Xr package 5
+for other internal annotations that are automatically added by the
+package tools.
 .Sh VARIABLE SUBSTITUTION AND FRAGMENT INCLUSION
 In packing-lists, installation, deinstallation and requirement scripts,
 description and message files,
