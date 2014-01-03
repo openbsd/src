@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.9 2014/01/03 17:10:27 espie Exp $ */
+/* $OpenBSD: signify.c,v 1.10 2014/01/03 17:13:42 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -109,19 +109,18 @@ static void
 readb64file(const char *filename, void *buf, size_t len)
 {
 	char b64[2048];
-	int i, rv, fd;
+	int rv, fd;
+	char *commentend;
 
 	fd = xopen(filename, O_RDONLY | O_NOFOLLOW, 0);
 	memset(b64, 0, sizeof(b64));
 	rv = read(fd, b64, sizeof(b64) - 1);
 	if (rv == -1)
 		err(1, "read from %s", filename);
-	for (i = 0; i < rv; i++)
-		if (b64[i] == '\n')
-			break;
-	if (i == rv)
+	commentend = strchr(b64, '\n');
+	if (!commentend)
 		errx(1, "no newline in %s", filename);
-	rv = b64_pton(b64 + i, buf, len);
+	rv = b64_pton(commentend + 1, buf, len);
 	if (rv != len)
 		errx(1, "invalid b64 encoding in %s", filename);
 	memset(b64, 0, sizeof(b64));
