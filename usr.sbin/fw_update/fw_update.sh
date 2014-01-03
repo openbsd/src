@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $OpenBSD: fw_update.sh,v 1.17 2013/10/18 23:25:02 halex Exp $
+# $OpenBSD: fw_update.sh,v 1.18 2014/01/03 14:58:54 espie Exp $
 # Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -19,7 +19,7 @@
 DRIVERS="acx athn bwi ipw iwi iwn malo otus pgt radeondrm rsu uath
 	upgt urtwn uvideo wpi"
 
-PKG_ADD="pkg_add -I -D repair"
+PKG_ADD="pkg_add -I -D repair -DFW_UPDATE"
 
 usage() {
 	echo "usage: ${0##*/} [-anv] [driver ...]" >&2
