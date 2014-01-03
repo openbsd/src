@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.19 2014/01/02 15:30:34 aoyama Exp $ */
+/* $OpenBSD: lunafb.c,v 1.20 2014/01/03 13:48:25 aoyama Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -181,16 +181,14 @@ struct cfdriver fb_cd = {
         NULL, "fb", DV_DULL
 };
 
-/* hardware plane bits; retrieved at boot, will be updated in omfbmatch() */
+/* hardware plane bits; retrieved at boot, will be updated */
 extern int hwplanebits;
 
 int omfb_console;
 int omfb_cnattach(void);
 
 int
-omfbmatch(parent, cf, aux)
-	struct device *parent;
-	void *cf, *aux;
+omfbmatch(struct device *parent, void *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -207,9 +205,7 @@ omfbmatch(parent, cf, aux)
 }
 
 void
-omfbattach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+omfbattach(struct device *parent, struct device *self, void *args)
 {
 	struct omfb_softc *sc = (struct omfb_softc *)self;
 	struct wsemuldisplaydev_attach_args waa;
@@ -224,7 +220,7 @@ omfbattach(parent, self, args)
 		omfb_getdevconfig(OMFB_FB_WADDR, sc->sc_dc);
 	}
 	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
-		hwplanebits);
+	    hwplanebits);
 
 	waa.console = omfb_console;
 	waa.scrdata = &omfb_screenlist;
@@ -236,7 +232,7 @@ omfbattach(parent, self, args)
 }
 
 /* EXPORT */ int
-omfb_cnattach()
+omfb_cnattach(void)
 {
 	struct om_hwdevconfig *dc = &omfb_console_dc;
 	struct rasops_info *ri = &dc->dc_ri;
@@ -250,12 +246,7 @@ omfb_cnattach()
 }
 
 int
-omfbioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+omfbioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct omfb_softc *sc = v;
 	struct om_hwdevconfig *dc = sc->sc_dc;
@@ -310,10 +301,7 @@ omfbioctl(v, cmd, data, flag, p)
  */
 
 paddr_t
-omfbmmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+omfbmmap(void *v, off_t offset, int prot)
 {
 	struct omfb_softc *sc = v;
 	struct om_hwdevconfig *dc = sc->sc_dc;
@@ -333,9 +321,7 @@ omfbmmap(v, offset, prot)
 }
 
 int
-omgetcmap(sc, p)
-	struct omfb_softc *sc;
-	struct wsdisplay_cmap *p;
+omgetcmap(struct omfb_softc *sc, struct wsdisplay_cmap *p)
 {
 	u_int index = p->index, count = p->count;
         unsigned int cmsize;
@@ -364,9 +350,7 @@ omgetcmap(sc, p)
 }
 
 int
-omsetcmap(sc, p)
-	struct omfb_softc *sc;
-	struct wsdisplay_cmap *p;
+omsetcmap(struct omfb_softc *sc, struct wsdisplay_cmap *p)
 {
 	struct hwcmap cmap;
 	u_int index = p->index, count = p->count;
@@ -418,9 +402,7 @@ omsetcmap(sc, p)
 }
 
 void
-omfb_getdevconfig(paddr, dc)
-	paddr_t paddr;
-	struct om_hwdevconfig *dc;
+omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 {
 	int bpp, i;
 	struct rasops_info *ri;
@@ -440,7 +422,7 @@ omfb_getdevconfig(paddr, dc)
 
 		for (i = 0; i < 8; i++) {
 			max = (u_int32_t *)trunc_page(OMFB_FB_RADDR
-				+ OMFB_FB_PLANESIZE * i);
+			    + OMFB_FB_PLANESIZE * i);
 			save = *max;
 			*(volatile uint32_t *)max = 0x5a5a5a5a;
 			if (*max != 0x5a5a5a5a)
@@ -452,14 +434,14 @@ omfb_getdevconfig(paddr, dc)
 		dc->dc_depth_checked = 1;
 	}
 
-#if 1	/* Workaround for making Xorg mono server work */
+#if 1 /* XXX: Xorg mono server works only bpp == 1 for now */
 	switch (hwplanebits) {
 	case 8:
-		bpp = 8;	/* XXX check monochrome bit in DIPSW */
+		bpp = 8;
 		break;
 	default:
 	case 4:
-		bpp = 4;	/* XXX check monochrome bit in DIPSW */
+		bpp = 4;
 		break;
 	case 1:
 		bpp = 1;
@@ -476,7 +458,6 @@ omfb_getdevconfig(paddr, dc)
 	dc->dc_videobase = paddr;
 
 	/* WHITE on BLACK */
-
 	if ((hwplanebits == 1) || (hwplanebits == 4)) {
 		struct bt454 *odac = (struct bt454 *)OMFB_RAMDAC;
 
@@ -559,12 +540,8 @@ omfb_getdevconfig(paddr, dc)
 }
 
 int
-omfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+omfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
+    int *curxp, int *curyp, long *attrp)
 {
 	struct omfb_softc *sc = v;
 	struct rasops_info *ri = &sc->sc_dc->dc_ri;
@@ -581,9 +558,7 @@ omfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 }
 
 void
-omfb_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+omfb_free_screen(void *v, void *cookie)
 {
 	struct omfb_softc *sc = v;
 
@@ -591,12 +566,8 @@ omfb_free_screen(v, cookie)
 }
 
 int
-omfb_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
+omfb_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
 {
 	return 0;
 }
