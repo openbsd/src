@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.52 2013/05/08 20:55:14 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.53 2014/01/03 03:00:39 guenther Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -183,7 +183,7 @@ typedef struct {
  * or EM_PPC are ABI compliant
  */
 #define EM_MIPS_RS4_BE	10		/* MIPS R4000 Big-Endian */
-#define EM_SPARC64	11		/* SPARC v9 64-bit unoffical */
+#define EM_SPARC64	11		/* SPARC v9 64-bit unofficial */
 #define EM_PARISC	15		/* HPPA */
 #define EM_SPARC32PLUS	18		/* Enhanced instruction set SPARC */
 #define EM_PPC		20		/* PowerPC */
@@ -275,7 +275,7 @@ typedef struct {
 #define ELF_REL_DATA    ".rel.data"	/* relocation data */
 #define ELF_REL_FINI    ".rel.fini"	/* relocation termination code */
 #define ELF_REL_INIT    ".rel.init"	/* relocation initialization code */
-#define ELF_REL_DYN     ".rel.dyn"	/* relocaltion dynamic link info */
+#define ELF_REL_DYN     ".rel.dyn"	/* relocation dynamic link info */
 #define ELF_REL_RODATA  ".rel.rodata"	/* relocation read-only data */
 #define ELF_REL_TEXT    ".rel.text"	/* relocation code */
 #define ELF_RODATA      ".rodata"	/* read-only data */
