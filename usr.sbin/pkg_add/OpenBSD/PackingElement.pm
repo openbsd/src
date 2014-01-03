@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.216 2014/01/02 20:13:43 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.217 2014/01/03 13:12:35 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1770,8 +1770,12 @@ sub keyword() { 'vendor' }
 __PACKAGE__->register_with_factory;
 sub category() { "vendor" }
 
+# XXX digital-signatures have to be unique, since they are a part
+# of the unsigned packing-list, with only the b64sig part removed
+# (likewise for vendor)
 package OpenBSD::PackingElement::DigitalSignature;
 our @ISA=qw(OpenBSD::PackingElement::Unique);
+
 sub keyword() { 'digital-signature' }
 __PACKAGE__->register_with_factory;
 sub category() { "digital-signature" }
