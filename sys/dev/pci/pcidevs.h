@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1703 2013/12/31 20:37:38 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1706 2014/01/03 05:50:23 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2815,13 +2815,26 @@
 #define	PCI_PRODUCT_INTEL_GDT_RAID2	0x061f		/* GDT RAID */
 #define	PCI_PRODUCT_INTEL_WL_6235_1	0x088e		/* Centrino Advanced-N 6235 */
 #define	PCI_PRODUCT_INTEL_WL_6235_2	0x088f		/* Centrino Advanced-N 6235 */
-#define	PCI_PRODUCT_INTEL_WL_6150_1	0x0885		/* WiFi Link 6150 */
-#define	PCI_PRODUCT_INTEL_WL_6150_2	0x0886		/* WiFi Link 6150 */
-#define	PCI_PRODUCT_INTEL_WL_130_1	0x0896		/* WiFi Link 130 */
-#define	PCI_PRODUCT_INTEL_WL_130_2	0x0897		/* WiFi Link 130 */
-#define	PCI_PRODUCT_INTEL_WL_100_1	0x08ae		/* WiFi Link 100 */
-#define	PCI_PRODUCT_INTEL_WL_100_2	0x08af		/* WiFi Link 100 */
-#define	PCI_PRODUCT_INTEL_WL_7260	0x08b1		/* Dual Band Wireless AC 7260 */
+#define	PCI_PRODUCT_INTEL_WL_6150_1	0x0885		/* Centrino Wireless-N 6150 */
+#define	PCI_PRODUCT_INTEL_WL_6150_2	0x0886		/* Centrino Wireless-N 6150 */
+#define	PCI_PRODUCT_INTEL_WL_2030_1	0x0887		/* Centrino Wireless-N 2030 */
+#define	PCI_PRODUCT_INTEL_WL_2030_2	0x0888		/* Centrino Wireless-N 2030 */
+#define	PCI_PRODUCT_INTEL_WL_2000_1	0x0890		/* Centrino Wireless-N 2000 */
+#define	PCI_PRODUCT_INTEL_WL_2000_2	0x0891		/* Centrino Wireless-N 2000 */
+#define	PCI_PRODUCT_INTEL_WL_135_1	0x0892		/* Centrino Wireless-N 135 */
+#define	PCI_PRODUCT_INTEL_WL_135_2	0x0893		/* Centrino Wireless-N 135 */
+#define	PCI_PRODUCT_INTEL_WL_105_1	0x0894		/* Centrino Wireless-N 105 */
+#define	PCI_PRODUCT_INTEL_WL_105_2	0x0895		/* Centrino Wireless-N 105 */
+#define	PCI_PRODUCT_INTEL_WL_130_1	0x0896		/* Centrino Wireless-N 130 */
+#define	PCI_PRODUCT_INTEL_WL_130_2	0x0897		/* Centrino Wireless-N 130 */
+#define	PCI_PRODUCT_INTEL_WL_100_1	0x08ae		/* Centrino Wireless-N 100 */
+#define	PCI_PRODUCT_INTEL_WL_100_2	0x08af		/* Centrino Wireless-N 100 */
+#define	PCI_PRODUCT_INTEL_WL_7260_1	0x08b1		/* Dual Band Wireless AC 7260 */
+#define	PCI_PRODUCT_INTEL_WL_7260_2	0x08b2		/* Dual Band Wireless AC 7260 */
+#define	PCI_PRODUCT_INTEL_WL_3160_1	0x08b3		/* Dual Band Wireless AC 3160 */
+#define	PCI_PRODUCT_INTEL_WL_3160_2	0x08b4		/* Dual Band Wirelsss AC 3160 */
+#define	PCI_PRODUCT_INTEL_WL_7265_1	0x095a		/* Dual Band Wireless AC 7265 */
+#define	PCI_PRODUCT_INTEL_WL_7265_2_0x095b	Dual		/* Band Wireless AC 7265 */
 #define	PCI_PRODUCT_INTEL_80960RP	0x0960		/* i960 RP */
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN */

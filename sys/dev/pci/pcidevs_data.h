@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1703 2013/12/31 20:37:38 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1706 2014/01/03 05:50:23 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8825,31 +8825,83 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_6150_1,
-	    "WiFi Link 6150",
+	    "Centrino Wireless-N 6150",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_6150_2,
-	    "WiFi Link 6150",
+	    "Centrino Wireless-N 6150",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2030_1,
+	    "Centrino Wireless-N 2030",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2030_2,
+	    "Centrino Wireless-N 2030",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2000_1,
+	    "Centrino Wireless-N 2000",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2000_2,
+	    "Centrino Wireless-N 2000",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_135_1,
+	    "Centrino Wireless-N 135",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_135_2,
+	    "Centrino Wireless-N 135",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_105_1,
+	    "Centrino Wireless-N 105",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_105_2,
+	    "Centrino Wireless-N 105",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_130_1,
-	    "WiFi Link 130",
+	    "Centrino Wireless-N 130",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_130_2,
-	    "WiFi Link 130",
+	    "Centrino Wireless-N 130",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_100_1,
-	    "WiFi Link 100",
+	    "Centrino Wireless-N 100",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_100_2,
-	    "WiFi Link 100",
+	    "Centrino Wireless-N 100",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7260,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7260_1,
 	    "Dual Band Wireless AC 7260",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7260_2,
+	    "Dual Band Wireless AC 7260",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3160_1,
+	    "Dual Band Wireless AC 3160",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3160_2,
+	    "Dual Band Wirelsss AC 3160",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7265_1,
+	    "Dual Band Wireless AC 7265",
+	},
+	{
+	    PCI_VENDOR_INTEL_WL_7265_2, PCI_PRODUCT_INTEL_WL_7265_2_0x095b,
+	    "Band Wireless AC 7265",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RP,
