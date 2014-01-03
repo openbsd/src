@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1704 2014/01/02 07:42:33 gilles Exp $
+$OpenBSD: pcidevs,v 1.1705 2014/01/03 05:05:38 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2816,7 +2816,8 @@ product INTEL WL_130_1		0x0896	WiFi Link 130
 product INTEL WL_130_2		0x0897	WiFi Link 130
 product INTEL WL_100_1		0x08ae	WiFi Link 100
 product INTEL WL_100_2		0x08af	WiFi Link 100
-product INTEL WL_7260		0x08b1	Dual Band Wireless AC 7260
+product INTEL WL_7260_1		0x08b1	Dual Band Wireless AC 7260
+product INTEL WL_7260_2		0x08b2	Dual Band Wireless AC 7260
 product INTEL 80960RP		0x0960	i960 RP
 product INTEL 80960RM		0x0962	i960 RM
 product INTEL 80960RN		0x0964	i960 RN
