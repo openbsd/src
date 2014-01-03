@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.80 2014/01/02 20:13:43 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.81 2014/01/03 13:26:24 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -463,6 +463,8 @@ sub copy_over
 	$e->write;
 }
 
+sub forbidden() { 1 }
+
 # override for CONTENTS: we cannot checksum this.
 package OpenBSD::PackingElement::FCONTENTS;
 sub makesum_plist
@@ -635,6 +637,8 @@ sub avert_duplicates_and_other_checks
 	$self->SUPER::avert_duplicates_and_other_checks($state);
 }
 
+sub forbidden() { 1 }
+
 package OpenBSD::PackingElement::Conflict;
 sub avert_duplicates_and_other_checks
 {
@@ -683,6 +687,8 @@ sub avert_duplicates_and_other_checks
 	$self->SUPER::avert_duplicates_and_other_checks($state);
 }
 
+sub forbidden() { 1 }
+
 package OpenBSD::PackingElement::NoDefaultConflict;
 sub avert_duplicates_and_other_checks
 {
@@ -716,7 +722,19 @@ sub find_every_library
 package OpenBSD::PackingElement::DigitalSignature;
 sub is_forbidden() { 1 }
 
+package OpenBSD::PackingElement::ExtraInfo;
+sub is_forbidden() { 1 }
+
+package OpenBSD::PackingElement::ManualInstallation;
+sub is_forbidden() { 1 }
+
 package OpenBSD::PackingElement::Url;
+sub is_forbidden() { 1 }
+
+package OpenBSD::PackingElement::Arch;
+sub is_forbidden() { 1 }
+
+package OpenBSD::PackingElement::LocalBase;
 sub is_forbidden() { 1 }
 
 package OpenBSD::PackingElement::Fragment;
