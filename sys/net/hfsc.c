@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.6 2014/01/03 12:48:58 pelikan Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.7 2014/01/03 19:58:54 pelikan Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -677,7 +677,7 @@ hfsc_purgeq(struct hfsc_class *cl)
 {
 	struct mbuf *m;
 
-	if (cl->cl_q->qlen > 0)
+	if (cl->cl_q->qlen == 0)
 		return;
 
 	while ((m = hfsc_getq(cl)) != NULL) {
