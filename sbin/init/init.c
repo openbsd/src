@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.48 2013/02/11 15:52:42 millert Exp $	*/
+/*	$OpenBSD: init.c,v 1.49 2014/01/03 22:29:00 millert Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -1165,16 +1165,18 @@ multi_user(void)
 	pid_t pid;
 	session_t *sp;
 
-	requested_transition = 0;
-
 	/*
 	 * If the administrator has not set the security level to -1
 	 * to indicate that the kernel should not run multiuser in secure
 	 * mode, and the run script has not set a higher level of security
 	 * than level 1, then put the kernel into secure mode.
 	 */
-	if (getsecuritylevel() == 0)
-		setsecuritylevel(1);
+	if (requested_transition != catatonia) {
+		if (getsecuritylevel() == 0)
+			setsecuritylevel(1);
+	}
+
+	requested_transition = 0;
 
 	for (sp = sessions; sp; sp = sp->se_next) {
 		if (sp->se_process)
