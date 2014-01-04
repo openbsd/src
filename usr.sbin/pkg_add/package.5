@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.15 2014/01/03 15:23:16 jmc Exp $
+.\"	$OpenBSD: package.5,v 1.16 2014/01/04 00:14:08 espie Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +12,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: January 3 2014 $
+.Dd $Mdocdate: January 4 2014 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
@@ -180,10 +180,10 @@ Original location of the package, automatically recorded in installed packages
 by
 .Xr pkg_add 1 .
 .Pp
-.It Cm @vendor
+.It Cm @signer
 Internal annotation corresponding to
 .Xr pkg_create 1 Ns 's
-.Fl D Ar VENDOR
+.Fl D Ar SIGNER
 option.
 .Pp
 .It Cm @wantlib Ar libspec

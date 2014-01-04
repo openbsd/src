@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: signify.pm,v 1.3 2014/01/03 17:10:57 espie Exp $
+# $OpenBSD: signify.pm,v 1.4 2014/01/04 00:14:08 espie Exp $
 #
 # Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 #
@@ -67,11 +67,11 @@ sub check_signature
 	} else {
 		$pubkey = OpenBSD::Paths->signifykey;
 	}
-	if ($plist->has('vendor')) {
-		my $vendor = $plist->get('vendor')->name;
-		$pubkey = "/etc/signify/$vendor.pubkey";
+	if ($plist->has('signer')) {
+		my $signer = $plist->get('signer')->name;
+		$pubkey = "/etc/signify/$signer.pub";
 		if (!-f $pubkey) {
-			$state->say("Unknown vendor #1", $vendor);
+			$state->say("Unknown signer #1", $signer);
 			return 0;
 		}
 	}

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.88 2014/01/03 16:56:22 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.89 2014/01/04 00:14:08 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: January 3 2014 $
+.Dd $Mdocdate: January 4 2014 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -49,11 +49,11 @@
 .Ek
 .Nm pkg_create
 .Op Fl s Ar signature-parameter
-.Op Fl D Ar VENDOR Ns = Ns Ar value
+.Op Fl D Ar SIGNER Ns = Ns Ar value
 .Fl f Ar packinglist
 .Nm pkg_create
 .Fl s Ar signature-parameter ...
-.Op Fl D Ar VENDOR Ns = Ns Ar value
+.Op Fl D Ar SIGNER Ns = Ns Ar value
 .Op Fl o Ar dir
 .Op Fl S Ar source
 .Op Ar pkgfile ...
@@ -155,8 +155,8 @@ If defined, appended to the description.
 .It Ar USE_GROFF
 Set to 1 to have groff format manpages behind the scenes during
 package creation.
-.It Ar VENDOR
-Specify a vendor-name, mostly used for signing packages.
+.It Ar SIGNER
+Specify a signer name, used for signing packages.
 .El
 .It Fl d No [-] Ns Ar desc
 Fetch long description for package from file
@@ -236,7 +236,7 @@ This can be any url admissible for a
 .Ev PKG_PATH ,
 so that it is possible to sign packages during a transfer, e.g.,
 .Bd -literal -offset indent
-pkg_create -s signify -s mykey -DVENDOR=me \\
+pkg_create -s signify -s mykey -DSIGNER=me \e
 	-o output -S scp://build-machine/packages/
 .Ed
 .It Xo
@@ -267,11 +267,11 @@ file.
 For
 .Xr signify 1
 private usage, a
-.Ar VENDOR
+.Ar SIGNER
 must be specified, so that
 .Xr pkg_add 1
 will be able to retrieve the correct public key from
-.Pa /etc/signify/<vendor>.pubkey .
+.Pa /etc/signify/<signer>.pubkey .
 .It Fl U Ar undisplayfile
 Display the file (using
 .Xr more 1 )

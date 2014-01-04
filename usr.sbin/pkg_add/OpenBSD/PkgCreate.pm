@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.81 2014/01/03 13:26:24 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.82 2014/01/04 00:14:08 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1155,14 +1155,14 @@ sub create_archive
 	return  OpenBSD::Ustar->new($fh, $state, $dir);
 }
 
-sub setup_vendor
+sub setup_signer
 {
 	my ($self, $plist, $state) = @_;
-	my $vendor = $state->{subst}->value('VENDOR');
-	if (!defined $vendor) {
+	my $signer = $state->{subst}->value('SIGNER');
+	if (!defined $signer) {
 		return;
 	}
-	OpenBSD::PackingElement::Vendor->add($plist, $vendor);
+	OpenBSD::PackingElement::Signer->add($plist, $signer);
 }
 
 sub sign_existing_package
@@ -1174,7 +1174,7 @@ sub sign_existing_package
 	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
 	$plist->set_infodir($dir);
 	$self->add_signature($plist, $state);
-	$self->setup_vendor($plist, $state);
+	$self->setup_signer($plist, $state);
 	$plist->save;
 	my $tmp = OpenBSD::Temp::permanent_file($output, "pkg");
 	my $wrarc = $self->create_archive($state, $tmp, ".");
@@ -1218,7 +1218,7 @@ sub add_extra_info
 	my ($self, $plist, $state) = @_;
 
 	my $subst = $state->{subst};
-	$self->setup_vendor($plist, $state);
+	$self->setup_signer($plist, $state);
 	my $fullpkgpath = $subst->value('FULLPKGPATH');
 	my $cdrom = $subst->value('PERMIT_PACKAGE_CDROM') ||
 	    $subst->value('CDROM');;
