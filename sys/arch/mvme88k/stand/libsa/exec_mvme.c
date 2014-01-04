@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_mvme.c,v 1.14 2008/03/31 22:14:43 miod Exp $	*/
+/*	$OpenBSD: exec_mvme.c,v 1.15 2014/01/04 10:49:21 miod Exp $	*/
 
 
 /*-
@@ -40,6 +40,8 @@
 #include "libsa.h"
 
 #include <lib/libsa/loadfile.h>
+
+char   rnddata[BOOTRANDOM_MAX];		/* XXX dummy */
 
 /*ARGSUSED*/
 void

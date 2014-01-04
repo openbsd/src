@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.23 2013/08/15 13:00:48 otto Exp $ */
+/*	$OpenBSD: boot.c,v 1.24 2014/01/04 10:49:21 miod Exp $ */
 /*	$NetBSD: boot.c,v 1.18 2002/05/31 15:58:26 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -52,6 +52,8 @@
 char line[100];
 int	bootdev, debug;
 extern	unsigned opendev;
+
+char   rnddata[BOOTRANDOM_MAX];		/* XXX dummy */
 
 void	usage(char *), boot(char *), halt(char *);
 void	Xmain(void);
