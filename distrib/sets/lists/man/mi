@@ -705,6 +705,7 @@
 ./usr/share/man/man1/sha256.1
 ./usr/share/man/man1/sha512.1
 ./usr/share/man/man1/shar.1
+./usr/share/man/man1/signify.1
 ./usr/share/man/man1/size.1
 ./usr/share/man/man1/skey.1
 ./usr/share/man/man1/skeyaudit.1

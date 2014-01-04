@@ -420,6 +420,7 @@
 ./usr/bin/sftp
 ./usr/bin/shar
 ./usr/bin/showmount
+./usr/bin/signify
 ./usr/bin/size
 ./usr/bin/skey
 ./usr/bin/skeyaudit
@@ -1080,6 +1081,7 @@
 ./usr/libdata/perl5/OpenBSD/Ustar.pm
 ./usr/libdata/perl5/OpenBSD/Vstat.pm
 ./usr/libdata/perl5/OpenBSD/md5.pm
+./usr/libdata/perl5/OpenBSD/signify.pm
 ./usr/libdata/perl5/OpenBSD/x509.pm
 ./usr/libdata/perl5/Package
 ./usr/libdata/perl5/Package/Constants.pm
