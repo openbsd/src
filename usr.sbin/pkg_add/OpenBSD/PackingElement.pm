@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.218 2014/01/04 00:14:08 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.219 2014/01/04 01:42:46 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1879,7 +1879,7 @@ sub register_old_keyword
 }
 
 for my $k (qw(src display mtree ignore_inst dirrm pkgcfl pkgdep newdepend
-    libdepend ignore)) {
+    libdepend ignore vendor)) {
 	__PACKAGE__->register_old_keyword($k);
 }
 
