@@ -1,7 +1,7 @@
-/*	$Id: mansearch.c,v 1.3 2013/12/31 03:41:09 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.4 2014/01/04 23:42:32 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -54,6 +54,9 @@ struct	expr {
 	uint64_t 	 bits;    /* type-mask */
 	const char	*substr;  /* to search for, if applicable */
 	regex_t		 regexp;  /* compiled regexp, if applicable */
+	int		 open;    /* opening parentheses before */
+	int		 and;	  /* logical AND before */
+	int		 close;   /* closing parentheses after */
 	struct expr	*next;    /* next in sequence */
 };
 
@@ -123,6 +126,8 @@ static	struct expr	*exprcomp(const struct mansearch *,
 				int, char *[]);
 static	void		 exprfree(struct expr *);
 static	struct expr	*exprterm(const struct mansearch *, char *, int);
+static	void		 sql_append(char **sql, size_t *sz,
+				const char *newstr, int count);
 static	void		 sql_match(sqlite3_context *context,
 				int argc, sqlite3_value **argv);
 static	void		 sql_regexp(sqlite3_context *context,
@@ -268,7 +273,7 @@ mansearch(const struct mansearch *search,
 		 * distribution of buckets in the table.
 		 */
 		while (SQLITE_ROW == (c = sqlite3_step(s))) {
-			id = sqlite3_column_int64(s, 0);
+			id = sqlite3_column_int64(s, 5);
 			idx = ohash_lookup_memory
 				(&htab, (char *)&id, 
 				 sizeof(uint64_t), (uint32_t)id);
@@ -279,10 +284,10 @@ mansearch(const struct mansearch *search,
 			mp = mandoc_calloc(1, sizeof(struct match));
 			mp->id = id;
 			mp->file = mandoc_strdup
-				((char *)sqlite3_column_text(s, 3));
+				((char *)sqlite3_column_text(s, 0));
 			mp->desc = mandoc_strdup
-				((char *)sqlite3_column_text(s, 4));
-			mp->form = sqlite3_column_int(s, 5);
+				((char *)sqlite3_column_text(s, 3));
+			mp->form = sqlite3_column_int(s, 4);
 			ohash_insert(&htab, idx, mp);
 		}
 
@@ -446,55 +451,57 @@ sql_regexp(sqlite3_context *context, int argc, sqlite3_value **argv)
 	    0, NULL, 0));
 }
 
+static void
+sql_append(char **sql, size_t *sz, const char *newstr, int count)
+{
+	size_t		 newsz;
+
+	newsz = 1 < count ? (size_t)count : strlen(newstr);
+	*sql = mandoc_realloc(*sql, *sz + newsz + 1);
+	if (1 < count)
+		memset(*sql + *sz, *newstr, (size_t)count);
+	else
+		memcpy(*sql + *sz, newstr, newsz);
+	*sz += newsz;
+	(*sql)[*sz] = '\0';
+}
+
 /*
  * Prepare the search SQL statement.
- * We search for any of the words specified in our match expression.
- * We filter the per-doc AND expressions when collecting results.
  */
 static char *
 sql_statement(const struct expr *e, const char *arch, const char *sec)
 {
 	char		*sql;
-	const char	*substr = "(key MATCH ? AND bits & ?)";
-	const char	*regexp = "(key REGEXP ? AND bits & ?)";
-	const char	*andarch = "arch = ? AND ";
-	const char	*andsec = "sec = ? AND ";
-	size_t	 	 substrsz;
-	size_t	 	 regexpsz;
 	size_t		 sz;
+	int		 needop;
 
-	sql = mandoc_strdup
-		("SELECT pageid,bits,key,file,desc,form,sec,arch "
-		 "FROM keys "
-		 "INNER JOIN mpages ON mpages.id=keys.pageid "
-		 "WHERE ");
+	sql = mandoc_strdup("SELECT * FROM mpages WHERE ");
 	sz = strlen(sql);
-	substrsz = strlen(substr);
-	regexpsz = strlen(regexp);
 
-	if (NULL != arch) {
-		sz += strlen(andarch) + 1;
-		sql = mandoc_realloc(sql, sz);
-		strlcat(sql, andarch, sz);
+	if (NULL != arch)
+		sql_append(&sql, &sz, "arch = ? AND ", 1);
+	if (NULL != sec)
+		sql_append(&sql, &sz, "sec = ? AND ", 1);
+	sql_append(&sql, &sz, "(", 1);
+
+	for (needop = 0; NULL != e; e = e->next) {
+		if (e->and)
+			sql_append(&sql, &sz, " AND ", 1);
+		else if (needop)
+			sql_append(&sql, &sz, " OR ", 1);
+		if (e->open)
+			sql_append(&sql, &sz, "(", e->open);
+		sql_append(&sql, &sz, NULL == e->substr ?
+		    "id IN (SELECT pageid FROM keys "
+		    "WHERE key REGEXP ? AND bits & ?)" :
+		    "id IN (SELECT pageid FROM keys "
+		    "WHERE key MATCH ? AND bits & ?)", 1);
+		if (e->close)
+			sql_append(&sql, &sz, ")", e->close);
+		needop = 1;
 	}
-
-	if (NULL != sec) {
-		sz += strlen(andsec) + 1;
-		sql = mandoc_realloc(sql, sz);
-		strlcat(sql, andsec, sz);
-	}
-
-	sz += 2;
-	sql = mandoc_realloc(sql, sz);
-	strlcat(sql, "(", sz);
-
-	for ( ; NULL != e; e = e->next) {
-		sz += (NULL == e->substr ? regexpsz : substrsz) + 
-			(NULL == e->next ? 3 : 5);
-		sql = mandoc_realloc(sql, sz);
-		strlcat(sql, NULL == e->substr ? regexp : substr, sz);
-		strlcat(sql, NULL == e->next ? ");" : " OR ", sz);
-	}
+	sql_append(&sql, &sz, ")", 1);
 
 	return(sql);
 }
@@ -507,31 +514,60 @@ sql_statement(const struct expr *e, const char *arch, const char *sec)
 static struct expr *
 exprcomp(const struct mansearch *search, int argc, char *argv[])
 {
-	int		 i, cs;
+	int		 i, toopen, logic, igncase, toclose;
 	struct expr	*first, *next, *cur;
 
 	first = cur = NULL;
+	toopen = logic = igncase = toclose = 0;
 
 	for (i = 0; i < argc; i++) {
-		if (0 == strcmp("-i", argv[i])) {
-			if (++i >= argc)
-				return(NULL);
-			cs = 0;
-		} else
-			cs = 1;
-		next = exprterm(search, argv[i], cs);
-		if (NULL == next) {
-			exprfree(first);
-			return(NULL);
+		if (0 == strcmp("(", argv[i])) {
+			if (igncase)
+				goto fail;
+			toopen++;
+			toclose++;
+			continue;
+		} else if (0 == strcmp(")", argv[i])) {
+			if (toopen || logic || igncase || NULL == cur)
+				goto fail;
+			cur->close++;
+			if (0 > --toclose)
+				goto fail;
+			continue;
+		} else if (0 == strcmp("-a", argv[i])) {
+			if (toopen || logic || igncase || NULL == cur)
+				goto fail;
+			logic = 1;
+			continue;
+		} else if (0 == strcmp("-o", argv[i])) {
+			if (toopen || logic || igncase || NULL == cur)
+				goto fail;
+			logic = 2;
+			continue;
+		} else if (0 == strcmp("-i", argv[i])) {
+			if (igncase)
+				goto fail;
+			igncase = 1;
+			continue;
 		}
+		next = exprterm(search, argv[i], !igncase);
+		if (NULL == next)
+			goto fail;
+		next->open = toopen;
+		next->and = (1 == logic);
 		if (NULL != first) {
 			cur->next = next;
 			cur = next;
 		} else
 			cur = first = next;
+		toopen = logic = igncase = 0;
 	}
-
-	return(first);
+	if ( ! (toopen || logic || igncase || toclose))
+		return(first);
+fail:
+	if (NULL != first)
+		exprfree(first);
+	return(NULL);
 }
 
 static struct expr *
