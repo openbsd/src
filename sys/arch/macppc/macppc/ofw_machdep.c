@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.43 2013/08/28 20:47:10 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.44 2014/01/04 20:28:24 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -502,7 +502,7 @@ of_setbrightness(int brightness)
 	/* XXX this routine should also save the brightness settings in the nvram */
 }
 
-uint8_t of_cmap[256];
+uint8_t of_cmap[256 * 3];
 
 void
 of_setcolors(const uint8_t *cmap, unsigned int index, unsigned int count)
