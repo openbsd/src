@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.39 2013/09/30 18:27:17 jmc Exp $
+# $OpenBSD: mdoclint,v 1.40 2014/01/04 18:27:03 jmc Exp $
 # $NetBSD: mdoclint,v 1.43 2013/09/30 09:36:45 wiz Exp $
 #
 # Copyright (c) 2001-2013 Thomas Klausner
@@ -219,8 +219,8 @@ my $valid_date_re;
 		$esections_re = qr{(?:3p|[0-9])}o;
 	}
 	if (NETBSD) {
-		$sections_re = qr{[1-9]}o;
-		$esections_re = qr{[0-9]}o;
+		$sections_re = qr{[1-9](?:lua)?}o;
+		$esections_re = qr{[0-9](?:lua)?}o;
 	}
 	if (OPENBSD) {
 		$valid_date_re = qr{\$Mdocdate\b};
