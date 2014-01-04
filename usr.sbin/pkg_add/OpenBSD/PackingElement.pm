@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.219 2014/01/04 01:42:46 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.220 2014/01/04 14:14:55 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -851,6 +851,8 @@ sub new
 		return OpenBSD::PackingElement::NoDefaultConflict->new;
 	} elsif ($args eq 'manual-installation') {
 		return OpenBSD::PackingElement::ManualInstallation->new;
+	} elsif ($args eq 'firmware') {
+		return OpenBSD::PackingElement::Firmware->new;
 	} elsif ($args eq 'system-package') {
 		return OpenBSD::PackingElement::SystemPackage->new;
 	} elsif ($args eq 'always-update') {
@@ -891,6 +893,10 @@ sub category() { 'manual-installation' }
 sub write_no_sig()
 {
 }
+
+package OpenBSD::PackingElement::Firmware;
+our @ISA=qw(OpenBSD::PackingElement::ManualInstallation);
+sub category() { 'firmware' }
 
 package OpenBSD::PackingElement::SystemPackage;
 our @ISA=qw(OpenBSD::PackingElement::UniqueOption);
