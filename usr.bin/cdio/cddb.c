@@ -1,4 +1,4 @@
-/* $OpenBSD: cddb.c,v 1.17 2013/03/07 16:54:28 espie Exp $ */
+/* $OpenBSD: cddb.c,v 1.18 2014/01/04 15:39:17 tobias Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -345,7 +345,7 @@ cddb(const char *host_port, int n, struct cd_toc_entry *e, char *arg)
 	if (!line)
 		goto end2;
 	for (;;) {
-		long k;
+		int k;
 		char *end;
 
 		line = get_line(cin);
@@ -356,10 +356,12 @@ cddb(const char *host_port, int n, struct cd_toc_entry *e, char *arg)
 		if (strncmp(line, "TTITLE", 6) != 0)
 			continue;
 		line += 6;
-		k = strtol(line, &end, 10);
-		if (*end++ != '=')
+		end = strchr(line, '=');
+		if (end == NULL)
 			continue;
-		if (k >= n)
+		*end++ = '\0';
+		k = strtonum(line, 0, n - 1, &errstr);
+		if (errstr != NULL)
 			continue;
 		safe_copy(&result[k], end);
 	}
