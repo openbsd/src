@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.82 2014/01/04 00:14:08 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.83 2014/01/04 14:13:39 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -722,10 +722,16 @@ sub find_every_library
 package OpenBSD::PackingElement::DigitalSignature;
 sub is_forbidden() { 1 }
 
+package OpenBSD::PackingElement::Signer;
+sub is_forbidden() { 1 }
+
 package OpenBSD::PackingElement::ExtraInfo;
 sub is_forbidden() { 1 }
 
 package OpenBSD::PackingElement::ManualInstallation;
+sub is_forbidden() { 1 }
+
+package OpenBSD::PackingElement::Firmware;
 sub is_forbidden() { 1 }
 
 package OpenBSD::PackingElement::Url;
