@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.4 2014/01/04 23:42:32 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.5 2014/01/05 00:29:49 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -112,6 +112,8 @@ static	const struct type types[] = {
 	{ TYPE_Va,  "Va" },
 	{ TYPE_Va,  "Vt" },
 	{ TYPE_Xr,  "Xr" },
+	{ TYPE_sec, "sec" },
+	{ TYPE_arch,"arch" },
 	{ ~0ULL,    "any" },
 	{ 0ULL, NULL }
 };

@@ -1,4 +1,4 @@
-/*	$Id: mansearch.h,v 1.2 2013/12/31 03:41:09 schwarze Exp $ */
+/*	$Id: mansearch.h,v 1.3 2014/01/05 00:29:49 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -58,6 +58,8 @@
 #define	TYPE_Va		 0x0000000800000000ULL
 #define	TYPE_Vt		 0x0000001000000000ULL
 #define	TYPE_Xr		 0x0000002000000000ULL
+#define	TYPE_sec	 0x0000004000000000ULL
+#define	TYPE_arch	 0x0000008000000000ULL
 
 __BEGIN_DECLS
 
