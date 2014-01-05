@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.41 2013/11/27 13:32:02 okan Exp $	*/
+/*	$OpenBSD: date.c,v 1.42 2014/01/05 05:27:44 schwarze Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 extern	char *__progname;
 
 time_t tval;
-int retval, jflag;
+int jflag;
 int slidetime;
 
 static void setthetime(char *);
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 
 	(void)strftime(buf, sizeof(buf), format, localtime(&tval));
 	(void)printf("%s\n", buf);
-	exit(retval);
+	exit(0);
 }
 
 #define	ATOI2(ar)	((ar) += 2, ((ar)[-2] - '0') * 10 + ((ar)[-1] - '0'))
