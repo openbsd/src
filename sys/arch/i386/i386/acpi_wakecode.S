@@ -70,7 +70,7 @@
  *
  * We wakeup in real mode, at some phys addr based on the ACPI
  * specification (cs = phys>>8, ip = phys & 0xF). For example,
- * if our phys addr is 0x4000, we'd have cs=0x0400,ip=0
+ * if our phys addr is 0x11000, we'd have cs=0x1100,ip=0
  *
  * The wakeup code needs to do the following:
  *     1. Reenable the video display
@@ -356,7 +356,7 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_3)
 	movl	%eax, %cr3
 
 	/* Set up real mode segment selectors */
-	movw	$0x0400, %ax
+	movw	$0x1100, %ax
 	movw	%ax, %ds
 	movw	%ax, %es
 	movw	%ax, %fs
@@ -365,7 +365,7 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_3)
 	lidtl	clean_idt
 
 	/* Jump to the S3 resume vector */
-	ljmp	$0x0400, $acpi_s3_vector_real
+	ljmp	$0x1100, $acpi_s3_vector_real
 
 	.code32
 	/* Switch to hibernate resume pagetable */

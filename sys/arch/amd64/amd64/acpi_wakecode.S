@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.22 2013/12/26 18:52:09 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.23 2014/01/05 20:23:56 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -67,7 +67,7 @@
  *
  * We wakeup in real mode, at some phys addr based on the ACPI
  * specification (cs = phys>>8, ip = phys & 0xF). For example,
- * if our phys addr is 0x4000, we'd have cs=0x0400,ip=0
+ * if our phys addr is 0x11000, we'd have cs=0x1100,ip=0
  *
  * The wakeup code needs to do the following:
  *     1. Reenable the video display
@@ -410,7 +410,7 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_3)
 	movl	%eax, %cr0
 
 	/* Set up real mode segment selectors */
-	movw	$0x0400, %ax
+	movw	$0x1100, %ax
 	movw	%ax, %ds
 	movw	%ax, %es
 	movw	%ax, %fs
@@ -419,7 +419,7 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_3)
 	lidtl	clean_idt
 
 	/* Jump to the S3 resume vector */
-	ljmp	$0x0400, $acpi_s3_vector_real
+	ljmp	$0x1100, $acpi_s3_vector_real
 
 NENTRY(hibernate_drop_to_real_mode)
 	.code64
@@ -448,7 +448,7 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_3b)
 	movl	%eax, %cr0
 
 	/* Set up real mode segment selectors */
-	movw	$0x0400, %ax
+	movw	$0x1100, %ax
 	movw	%ax, %ds
 	movw	%ax, %es
 	movw	%ax, %fs
@@ -456,11 +456,11 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_3b)
 	movl	$0x0FFE, %esp
 	lidtl	clean_idt
 
-	ljmp	$0x0400, $hib_hlt_real
+	ljmp	$0x1100, $hib_hlt_real
 
 _ACPI_TRMP_OFFSET(hib_hlt_real)
 	hlt
-	ljmp 	$0x0400, $hib_hlt_real
+	ljmp 	$0x1100, $hib_hlt_real
 
 	.code64
 	/* Switch to hibernate resume pagetable */

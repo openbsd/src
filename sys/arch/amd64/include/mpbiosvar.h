@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbiosvar.h,v 1.4 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: mpbiosvar.h,v 1.5 2014/01/05 20:23:57 mlarkin Exp $	*/
 /* $NetBSD: mpbiosvar.h,v 1.2 2003/04/02 07:53:57 thorpej Exp $ */
 
 /*-
@@ -36,7 +36,7 @@
 #ifndef _MACHINE_MPBIOSVAR_H_
 #define _MACHINE_MPBIOSVAR_H_
 
-#define MP_TRAMPOLINE  (2 * PAGE_SIZE)
+#define MP_TRAMPOLINE  (16 * PAGE_SIZE)
 
 #if !defined(_LOCORE)
 

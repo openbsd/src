@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.s,v 1.13 2010/04/01 19:48:50 kettenis Exp $	*/
+/*	$OpenBSD: mptramp.s,v 1.14 2014/01/05 20:23:57 mlarkin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@
 #define RELOC(x)	_RELOC(_C_LABEL(x))
 
 #define _TRMP_LABEL(a)  a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
+#define _TRMP_OFFSET(a)  a = . - _C_LABEL(cpu_spinup_trampoline)
 
 /*
  * Debug code to stop aux. processors in various stages based on the
@@ -122,7 +123,7 @@
 	.code16
 _C_LABEL(cpu_spinup_trampoline):
 	cli
-	xorw	%ax, %ax
+	movw	%cs, %ax
 	movw	%ax, %ds
 	movw	%ax, %es
 	movw	%ax, %ss
@@ -130,7 +131,7 @@ _C_LABEL(cpu_spinup_trampoline):
 	movl	%cr0, %eax	# get cr0
 	orl	$0x1, %eax	# enable protected mode
 	movl	%eax, %cr0	# doit
-	ljmp	$0x8, $mp_startup
+	ljmpl	$0x8, $mp_startup
 
 _TRMP_LABEL(mp_startup)
 	.code32
@@ -213,7 +214,7 @@ _TRMP_LABEL(gdt_table)
 	.word	0x0,0x0,0x0,0x0			# null GDTE
 	 GDTE(0x9f,0xcf)			# Kernel text
 	 GDTE(0x93,0xcf)			# Kernel data
-_TRMP_LABEL(gdt_desc)
+_TRMP_OFFSET(gdt_desc)
 	.word	0x17				# limit 3 entries
 	.long	gdt_table			# where is gdt
 

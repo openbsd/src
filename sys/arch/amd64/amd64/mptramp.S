@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.S,v 1.7 2010/11/13 04:16:42 guenther Exp $	*/
+/*	$OpenBSD: mptramp.S,v 1.8 2014/01/05 20:23:56 mlarkin Exp $	*/
 /*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -88,6 +88,7 @@
 #define RELOC(x)        _RELOC(_C_LABEL(x))
 
 #define _TRMP_LABEL(a)  a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
+#define _TRMP_OFFSET(a)  a = . - _C_LABEL(cpu_spinup_trampoline)
 
 	.globl	_C_LABEL(mpidle)
 	.global _C_LABEL(cpu_spinup_trampoline)
@@ -105,7 +106,7 @@
 	.code16
 _C_LABEL(cpu_spinup_trampoline):
 	cli
-	xorw    %ax,%ax
+	movw	%cs, %ax
 	movw    %ax, %ds
 	movw    %ax, %es
 	movw    %ax, %ss
@@ -182,7 +183,7 @@ _TRMP_LABEL(mptramp_gdt32)
 	.quad 0x0000000000000000
 	.quad 0x00cf9f000000ffff
 	.quad 0x00cf93000000ffff
-_TRMP_LABEL(mptramp_gdt32_desc)
+_TRMP_OFFSET(mptramp_gdt32_desc)
 	.word 0x17
 	.long mptramp_gdt32
 
