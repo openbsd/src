@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.239 2013/12/18 08:04:16 halex Exp $
+#	$OpenBSD: install.sh,v 1.240 2014/01/05 01:56:52 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -192,6 +192,8 @@ done >>/tmp/fstab
 munge_fstab
 mount_fs "-o async"
 
+feed_random
+
 install_sets
 
 # If we did not succeed at setting TZ yet, we try again
@@ -269,16 +271,6 @@ _f=dhclient.conf
 (cd /tmp; for _f in fstab hostname* kbdtype my* ttys *.conf *.tail; do
 	[[ -f $_f && -s $_f ]] && mv $_f /mnt/etc/.
 done)
-
-# Feed the random pool some junk before we read from it
-(dmesg; cat $SERVERLISTALL /*.conf; sysctl; route -n show; df;
-    ifconfig -A; hostname) >/mnt/dev/arandom 2>&1
-
-echo -n "done.\nGenerating initial host.random file..."
-dd if=/mnt/dev/arandom of=/mnt/var/db/host.random \
-	bs=65536 count=1 >/dev/null 2>&1
-chmod 600 /mnt/var/db/host.random >/dev/null 2>&1
-echo "done."
 
 apply
 
