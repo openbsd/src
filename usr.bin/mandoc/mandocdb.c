@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.55 2014/01/05 03:06:36 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.56 2014/01/05 03:25:51 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1811,13 +1811,11 @@ dbindex(const struct mpage *mpage, struct mchars *mc)
 
 	i = 1;
 	/*
-	 * XXX The following three lines are obsolete
+	 * XXX The following line is obsolete
 	 * and only kept for backward compatibility
 	 * until apropos(1) and friends have caught up.
 	 */
 	SQL_BIND_TEXT(stmts[STMT_INSERT_PAGE], i, mpage->mlinks->file);
-	SQL_BIND_TEXT(stmts[STMT_INSERT_PAGE], i, mpage->mlinks->dsec);
-	SQL_BIND_TEXT(stmts[STMT_INSERT_PAGE], i, mpage->mlinks->arch);
 	SQL_BIND_TEXT(stmts[STMT_INSERT_PAGE], i, desc);
 	SQL_BIND_INT(stmts[STMT_INSERT_PAGE], i, FORM_SRC == mpage->form);
 	SQL_STEP(stmts[STMT_INSERT_PAGE]);
@@ -1955,14 +1953,12 @@ dbopen(int real)
 	}
 
 	/*
-	 * XXX The first three columns in table mpages are obsolete
+	 * XXX The first column in table mpages is obsolete
 	 * and only kept for backward compatibility
 	 * until apropos(1) and friends have caught up.
 	 */
 	sql = "CREATE TABLE \"mpages\" (\n"
 	      " \"file\" TEXT NOT NULL,\n"
-	      " \"sec\" TEXT NOT NULL,\n"
-	      " \"arch\" TEXT NOT NULL,\n"
 	      " \"desc\" TEXT NOT NULL,\n"
 	      " \"form\" INTEGER NOT NULL,\n"
 	      " \"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL\n"
@@ -1999,7 +1995,7 @@ prepare_statements:
 	sql = "DELETE FROM mpages where file=?";
 	sqlite3_prepare_v2(db, sql, -1, &stmts[STMT_DELETE_PAGE], NULL);
 	sql = "INSERT INTO mpages "
-		"(file,sec,arch,desc,form) VALUES (?,?,?,?,?)";
+		"(file,desc,form) VALUES (?,?,?)";
 	sqlite3_prepare_v2(db, sql, -1, &stmts[STMT_INSERT_PAGE], NULL);
 	sql = "INSERT INTO mlinks "
 		"(file,sec,arch,name,pageid) VALUES (?,?,?,?,?)";

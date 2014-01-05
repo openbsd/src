@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.6 2014/01/05 03:06:36 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.7 2014/01/05 03:25:51 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -271,7 +271,7 @@ mansearch(const struct mansearch *search,
 		 * distribution of buckets in the table.
 		 */
 		while (SQLITE_ROW == (c = sqlite3_step(s))) {
-			id = sqlite3_column_int64(s, 5);
+			id = sqlite3_column_int64(s, 3);
 			idx = ohash_lookup_memory
 				(&htab, (char *)&id, 
 				 sizeof(uint64_t), (uint32_t)id);
@@ -284,8 +284,8 @@ mansearch(const struct mansearch *search,
 			mp->file = mandoc_strdup
 				((char *)sqlite3_column_text(s, 0));
 			mp->desc = mandoc_strdup
-				((char *)sqlite3_column_text(s, 3));
-			mp->form = sqlite3_column_int(s, 4);
+				((char *)sqlite3_column_text(s, 1));
+			mp->form = sqlite3_column_int(s, 2);
 			ohash_insert(&htab, idx, mp);
 		}
 
