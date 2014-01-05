@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.7 2014/01/05 03:25:51 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.8 2014/01/05 04:13:46 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -62,7 +62,6 @@ struct	expr {
 
 struct	match {
 	uint64_t	 id; /* identifier in database */
-	char		*file; /* relative filepath of manpage */
 	char		*desc; /* description of manpage */
 	int		 form; /* 0 == catpage */
 };
@@ -118,7 +117,8 @@ static	const struct type types[] = {
 	{ 0ULL, NULL }
 };
 
-static	char		*buildnames(sqlite3 *, sqlite3_stmt *, uint64_t);
+static	void		 buildnames(struct manpage *, sqlite3 *,
+				sqlite3_stmt *, uint64_t, const char *);
 static	char		*buildoutput(sqlite3 *, sqlite3_stmt *,
 				 uint64_t, uint64_t);
 static	void		*hash_alloc(size_t, void *);
@@ -271,7 +271,7 @@ mansearch(const struct mansearch *search,
 		 * distribution of buckets in the table.
 		 */
 		while (SQLITE_ROW == (c = sqlite3_step(s))) {
-			id = sqlite3_column_int64(s, 3);
+			id = sqlite3_column_int64(s, 2);
 			idx = ohash_lookup_memory
 				(&htab, (char *)&id, 
 				 sizeof(uint64_t), (uint32_t)id);
@@ -281,11 +281,9 @@ mansearch(const struct mansearch *search,
 
 			mp = mandoc_calloc(1, sizeof(struct match));
 			mp->id = id;
-			mp->file = mandoc_strdup
-				((char *)sqlite3_column_text(s, 0));
 			mp->desc = mandoc_strdup
-				((char *)sqlite3_column_text(s, 1));
-			mp->form = sqlite3_column_int(s, 2);
+				((char *)sqlite3_column_text(s, 0));
+			mp->form = sqlite3_column_int(s, 1);
 			ohash_insert(&htab, idx, mp);
 		}
 
@@ -315,18 +313,12 @@ mansearch(const struct mansearch *search,
 					(*res, maxres * sizeof(struct manpage));
 			}
 			mpage = *res + cur;
-			if (-1 == asprintf(&mpage->file, "%s/%s",
-			    paths->paths[i], mp->file)) {
-				perror(0);
-				exit((int)MANDOCLEVEL_SYSERR);
-			}
 			mpage->desc = mp->desc;
 			mpage->form = mp->form;
-			mpage->names = buildnames(db, s, mp->id);
+			buildnames(mpage, db, s, mp->id, paths->paths[i]);
 			mpage->output = outbit ?
 			    buildoutput(db, s2, mp->id, outbit) : NULL;
 
-			free(mp->file);
 			free(mp);
 			cur++;
 		}
@@ -346,23 +338,27 @@ out:
 	return(rc);
 }
 
-static char *
-buildnames(sqlite3 *db, sqlite3_stmt *s, uint64_t id)
+static void
+buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
+		uint64_t id, const char *path)
 {
-	char		*names, *newnames;
+	char		*newnames;
 	const char	*oldnames, *sep1, *name, *sec, *sep2, *arch;
 	size_t		 i;
 	int		 c;
 
-	names = NULL;
+	mpage->names = NULL;
 	i = 1;
 	SQL_BIND_INT64(db, s, i, id);
 	while (SQLITE_ROW == (c = sqlite3_step(s))) {
-		if (NULL == names) {
+
+		/* Assemble the list of names. */
+
+		if (NULL == mpage->names) {
 			oldnames = "";
 			sep1 = "";
 		} else {
-			oldnames = names;
+			oldnames = mpage->names;
 			sep1 = ", ";
 		}
 		sec = sqlite3_column_text(s, 1);
@@ -374,13 +370,23 @@ buildnames(sqlite3 *db, sqlite3_stmt *s, uint64_t id)
 			perror(0);
 			exit((int)MANDOCLEVEL_SYSERR);
 		}
-		free(names);
-		names = newnames;
+		free(mpage->names);
+		mpage->names = newnames;
+
+		/* Also save the first file name encountered. */
+
+		if (NULL != mpage->file)
+			continue;
+
+		name = sqlite3_column_text(s, 0);
+		if (-1 == asprintf(&mpage->file, "%s/%s", path, name)) {
+			perror(0);
+			exit((int)MANDOCLEVEL_SYSERR);
+		}
 	}
 	if (SQLITE_DONE != c)
 		fprintf(stderr, "%s\n", sqlite3_errmsg(db));
 	sqlite3_reset(s);
-	return(names);
 }
 
 static char *
