@@ -1,4 +1,4 @@
-/*	$Id: html.c,v 1.31 2013/08/08 20:07:24 schwarze Exp $ */
+/*	$Id: html.c,v 1.32 2014/01/05 21:21:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -718,7 +718,7 @@ buffmt_man(struct html *h,
 			bufcat(h, sec ? sec : "1");
 			break;
 		case('N'):
-			bufcat_fmt(h, name);
+			bufcat_fmt(h, "%s", name);
 			break;
 		default:
 			bufncat(h, p, 2);

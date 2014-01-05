@@ -1,4 +1,4 @@
-/*	$Id: term_ps.c,v 1.19 2011/10/16 12:18:32 schwarze Exp $ */
+/*	$Id: term_ps.c,v 1.20 2014/01/05 21:21:08 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -824,7 +824,7 @@ ps_begin(struct termp *p)
 			ps_printf(p, "<<\n");
 			ps_printf(p, "/Type /Font\n");
 			ps_printf(p, "/Subtype /Type1\n");
-			ps_printf(p, "/Name /F%zu\n", i);
+			ps_printf(p, "/Name /F%d\n", i);
 			ps_printf(p, "/BaseFont /%s\n", fonts[i].name);
 			ps_printf(p, ">>\n");
 		}
