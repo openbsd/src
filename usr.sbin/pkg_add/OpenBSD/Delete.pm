@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.123 2014/01/02 16:05:42 espie Exp $
+# $OpenBSD: Delete.pm,v 1.124 2014/01/05 10:24:30 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -108,6 +108,14 @@ sub delete_package
 		if (!$state->{quick}) {
 			if (!$plist->check_signature($state)) {
 				$state->fatal("package #1 was corrupted: signature check failed", $pkgname);
+			}
+		}
+	}
+	if ($plist->has('firmware')) {
+		if ($state->{interactive}) {
+			if (!$state->confirm("\nDelete firmware $pkgname", 0)) {
+				$state->errsay("NOT deleting #1", $pkgname);
+				return;
 			}
 		}
 	}

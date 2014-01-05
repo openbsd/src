@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.155 2013/12/25 15:59:51 espie Exp $
+# $OpenBSD: Update.pm,v 1.156 2014/01/05 10:24:30 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -108,7 +108,8 @@ sub process_handle
 		$state->fatal("can't locate #1", $pkgname);
 	}
 
-	if ($plist->has('explicit-update') && $state->{allupdates}) {
+	if ($plist->has('explicit-update') && $state->{allupdates} ||
+	    $plist->has('firmware') && !$state->defines('FW_UPDATE')) {
 		$h->{update_found} = $h;
 		$set->move_kept($h);
 		return 0;
