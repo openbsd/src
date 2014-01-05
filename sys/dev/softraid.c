@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.314 2013/11/19 15:12:13 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.315 2014/01/05 15:03:57 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2120,6 +2120,7 @@ sr_wu_alloc(struct sr_discipline *sd)
 
 	sd->sd_wu = malloc(sizeof(struct sr_workunit) * no_wu,
 	    M_DEVBUF, M_WAITOK | M_ZERO);
+	mtx_init(&sd->sd_wu_mtx, IPL_BIO);
 	TAILQ_INIT(&sd->sd_wu_freeq);
 	TAILQ_INIT(&sd->sd_wu_pendq);
 	TAILQ_INIT(&sd->sd_wu_defq);
@@ -3466,7 +3467,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 		}
 
 		/* Setup SCSI iopool. */
-		mtx_init(&sd->sd_wu_mtx, IPL_BIO);
 		scsi_iopool_init(&sd->sd_iopool, sd, sr_wu_get, sr_wu_put);
 
 		/*
