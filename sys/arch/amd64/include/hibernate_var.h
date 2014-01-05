@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_var.h,v 1.7 2014/01/05 20:23:57 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_var.h,v 1.8 2014/01/05 23:06:54 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -54,14 +54,12 @@
 #define HIBERNATE_PT_LOW2	(PAGE_SIZE * 25)
 #define HIBERNATE_PT_HI		(PAGE_SIZE * 26)
 
-#define HIBERNATE_SELTABLE	(PAGE_SIZE * 27)
-
 /* 3 pages for stack */
-#define HIBERNATE_STACK_PAGE	(PAGE_SIZE * 30)
+#define HIBERNATE_STACK_PAGE	(PAGE_SIZE * 29)
 
-#define HIBERNATE_INFLATE_PAGE	(PAGE_SIZE * 31)
+#define HIBERNATE_INFLATE_PAGE	(PAGE_SIZE * 30)
 /* HIBERNATE_HIBALLOC_PAGE must be the last stolen page (see machdep.c) */
-#define HIBERNATE_HIBALLOC_PAGE (PAGE_SIZE * 32)
+#define HIBERNATE_HIBALLOC_PAGE (PAGE_SIZE * 31)
 
 /* Use 4MB hibernation chunks */
 #define HIBERNATE_CHUNK_SIZE		0x400000

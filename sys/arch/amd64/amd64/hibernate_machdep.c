@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.17 2013/10/20 20:03:03 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.18 2014/01/05 23:06:54 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -243,7 +243,6 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 	pmap_kenter_pa(HIBERNATE_PT_LOW, HIBERNATE_PT_LOW, VM_PROT_ALL);
 	pmap_kenter_pa(HIBERNATE_PT_LOW2, HIBERNATE_PT_LOW2, VM_PROT_ALL);
 	pmap_kenter_pa(HIBERNATE_PT_HI, HIBERNATE_PT_HI, VM_PROT_ALL);
-	pmap_kenter_pa(HIBERNATE_SELTABLE, HIBERNATE_SELTABLE, VM_PROT_ALL);
 
 	/* Identity map 3 pages for stack */
 	pmap_kenter_pa(HIBERNATE_STACK_PAGE, HIBERNATE_STACK_PAGE, VM_PROT_ALL);
@@ -262,7 +261,6 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 	bzero((caddr_t)HIBERNATE_PT_LOW, PAGE_SIZE);
 	bzero((caddr_t)HIBERNATE_PT_LOW2, PAGE_SIZE);
 	bzero((caddr_t)HIBERNATE_PT_HI, PAGE_SIZE);
-	bzero((caddr_t)HIBERNATE_SELTABLE, PAGE_SIZE);
 	bzero((caddr_t)(HIBERNATE_STACK_PAGE - 3*PAGE_SIZE) , 3*PAGE_SIZE);
 
 	/* First 512GB PML4E */
