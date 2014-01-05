@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2013/12/28 14:45:57 jsing Exp $
-
-NOMAN=
+#	$OpenBSD: Makefile,v 1.8 2014/01/05 16:02:40 jsing Exp $
 
 .if (${MACHINE} == "amd64" || ${MACHINE} == "hp300" || \
      ${MACHINE} == "hppa" || ${MACHINE} == "hppa64" || \
@@ -8,14 +6,14 @@ NOMAN=
      ${MACHINE} == "sparc64" || ${MACHINE} == "vax")
 
 PROG=		installboot
+SRCS=		installboot.c
+MAN=		installboot.8
 
 CPPFLAGS=	-I${.CURDIR}
 LDADD=		-lutil
 DPADD=		${LIBUTIL}
 
 LDSTATIC=	-static
-
-SRCS += installboot.c
 
 .include "${.CURDIR}/${MACHINE}/Makefile.inc"
 
@@ -29,6 +27,7 @@ SRCS += softraid.c
 
 .else
 NOPROG=
+NOMAN=
 .endif
 
 .include <bsd.prog.mk>
