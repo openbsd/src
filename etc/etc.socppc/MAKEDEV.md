@@ -1,6 +1,6 @@
 define(MACHINE,socppc)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.21 2013/11/05 16:05:30 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.22 2014/01/05 01:16:52 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -103,3 +103,4 @@ dnl target(all, gpio, 0, 1, 2)dnl
 dnl target(all, bio)dnl
 target(all, bthub, 0, 1, 2)dnl
 target(ramd, diskmap)dnl
+target(ramd, random)dnl

@@ -1,6 +1,6 @@
 define(MACHINE,hp300)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.46 2013/06/03 16:06:42 tedu Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.47 2014/01/05 01:16:52 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -100,8 +100,8 @@ dnl
 ramdisk)
 	_recurse std ct0 ct1 st0 st1 hd0 hd1 hd2 hd3 hd4
 	_recurse sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 pty0
-	_recurse apci0 dca0 dcm0 dcm1 bio diskmap
-	_recurse bpf0 bpf1 tun0 tun1 lkm
+	_recurse apci0 dca0 dcm0 dcm1 bio diskmap random
+	_recurse bpf0 bpf1 tun0 tun1
 	;;
 
 _std(1, 2, 36, 6)

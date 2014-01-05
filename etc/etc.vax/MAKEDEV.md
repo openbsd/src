@@ -1,6 +1,6 @@
 define(MACHINE,vax)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.50 2013/06/03 16:06:42 tedu Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.51 2014/01/05 01:16:52 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -136,7 +136,7 @@ divert(__mddivert)dnl
 dnl
 ramdisk)
 	_recurse std bpf0 bio diskmap
-	_recurse fd0 sd0 sd1 rd0
+	_recurse fd0 sd0 sd1 rd0 random
 	;;
 
 _std(2, 3, 50, 33)
