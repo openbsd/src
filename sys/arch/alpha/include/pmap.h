@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.29 2014/01/01 22:13:52 miod Exp $ */
+/* $OpenBSD: pmap.h,v 1.30 2014/01/05 14:37:08 miod Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -135,15 +135,6 @@ typedef struct pv_entry {
 #define	PGU_L3PT		4		/* level 3 page table */
 
 #define	PGU_ISPTPAGE(pgu)	((pgu) >= PGU_L1PT)
-
-#define	PGU_STRINGS							\
-{									\
-	"normal",							\
-	"pvent",							\
-	"l1pt",								\
-	"l2pt",								\
-	"l3pt",								\
-}
 
 #ifndef _LKM
 #if defined(NEW_SCC_DRIVER)

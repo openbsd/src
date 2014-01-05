@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.66 2014/01/01 22:13:52 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.67 2014/01/05 14:37:08 miod Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -251,13 +251,6 @@ struct pool pmap_asngen_pool;
 struct pool pmap_pv_pool;
 
 /*
- * Canonical names for PGU_* constants.
- */
-#ifdef DIAGNOSTIC
-const char *pmap_pgu_strings[] = PGU_STRINGS;
-#endif
-
-/*
  * Address Space Numbers.
  *
  * On many implementations of the Alpha architecture, the TLB entries and
@@ -428,9 +421,8 @@ void	pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t, cpuid_t);
 int	pmap_lev1map_create(pmap_t, cpuid_t);
 void	pmap_lev1map_destroy(pmap_t, cpuid_t);
 int	pmap_ptpage_alloc(pmap_t, pt_entry_t *, int);
-void	pmap_ptpage_free(pmap_t, pt_entry_t *, pt_entry_t **);
-void	pmap_l3pt_delref(pmap_t, vaddr_t, pt_entry_t *, cpuid_t,
-	    pt_entry_t **);
+void	pmap_ptpage_free(pmap_t, pt_entry_t *);
+void	pmap_l3pt_delref(pmap_t, vaddr_t, pt_entry_t *, cpuid_t);
 void	pmap_l2pt_delref(pmap_t, pt_entry_t *, pt_entry_t *, cpuid_t);
 void	pmap_l1pt_delref(pmap_t, pt_entry_t *, cpuid_t);
 
@@ -449,8 +441,6 @@ void	pmap_l1pt_ctor(pt_entry_t *);
 int	pmap_pv_enter(pmap_t, struct vm_page *, vaddr_t, pt_entry_t *,
 	    boolean_t);
 void	pmap_pv_remove(pmap_t, struct vm_page *, vaddr_t, boolean_t);
-struct	pv_entry *pmap_pv_alloc(void);
-void	pmap_pv_free(struct pv_entry *);
 void	*pmap_pv_page_alloc(struct pool *, int, int *);
 void	pmap_pv_page_free(struct pool *, void *);
 struct pool_allocator pmap_pv_allocator = {
@@ -459,6 +449,9 @@ struct pool_allocator pmap_pv_allocator = {
 #ifdef DEBUG
 void	pmap_pv_dump(paddr_t);
 #endif
+
+#define	pmap_pv_alloc()		pool_get(&pmap_pv_pool, PR_NOWAIT)
+#define	pmap_pv_free(pv)	pool_put(&pmap_pv_pool, (pv))
 
 /*
  * ASN management functions.
@@ -1365,7 +1358,7 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, boolean_t dowired)
 					 * may free the L3 table.
 					 */
 					pmap_l3pt_delref(pmap, vptva,
-					    saved_l3pte, cpu_id, NULL);
+					    saved_l3pte, cpu_id);
 				}
 			}
 
@@ -1777,7 +1770,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (pg != NULL) {
 		error = pmap_pv_enter(pmap, pg, va, pte, TRUE);
 		if (error) {
-			pmap_l3pt_delref(pmap, va, pte, cpu_id, NULL);
+			pmap_l3pt_delref(pmap, va, pte, cpu_id);
 			if (flags & PMAP_CANFAIL)
 				goto out;
 			panic("pmap_enter: unable to enter mapping in PV "
@@ -2180,14 +2173,6 @@ pmap_activate(struct proc *p)
 	 */
 	atomic_setbits_ulong(&pmap->pm_cpus, (1UL << cpu_id));
 
-	/*
-	 * Move the pmap to the end of the LRU list.
-	 */
-	simple_lock(&pmap_all_pmaps_slock);
-	TAILQ_REMOVE(&pmap_all_pmaps, pmap, pm_list);
-	TAILQ_INSERT_TAIL(&pmap_all_pmaps, pmap, pm_list);
-	simple_unlock(&pmap_all_pmaps_slock);
-
 	PMAP_LOCK(pmap);
 
 	/*
@@ -2489,17 +2474,12 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
 	boolean_t hadasm;
 	boolean_t isactive;
 	boolean_t needisync = FALSE;
-	struct pv_entry **pvp;
-	pt_entry_t **ptp;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
-		printf("pmap_remove_mapping(%p, %lx, %p, %d, %ld, %p)\n",
-		       pmap, va, pte, dolock, cpu_id, pvp);
+		printf("pmap_remove_mapping(%p, %lx, %p, %d, %ld)\n",
+		       pmap, va, pte, dolock, cpu_id);
 #endif
-
-	pvp = NULL;
-	ptp = NULL;
 
 	/*
 	 * PTE not provided, compute it from pmap and va.
@@ -2559,19 +2539,14 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
 		 * delete references on the level 2 and 1 tables as
 		 * appropriate.
 		 */
-		pmap_l3pt_delref(pmap, va, pte, cpu_id, ptp);
+		pmap_l3pt_delref(pmap, va, pte, cpu_id);
 	}
 
 	/*
 	 * If the mapping wasn't entered on the PV list, we're all done.
 	 */
-	if (onpv == FALSE) {
-#ifdef DIAGNOSTIC
-		if (pvp != NULL)
-			panic("pmap_removing_mapping: onpv / pvp inconsistent");
-#endif
+	if (onpv == FALSE)
 		return (needisync);
-	}
 
 	/*
 	 * Remove it from the PV table.
@@ -2917,28 +2892,6 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, boolean_t dolock)
 	*pvp = pv->pv_next;
 
 	pmap_pv_free(pv);
-}
-
-/*
- * pmap_pv_alloc:
- *
- *	Allocate a pv_entry.
- */
-struct pv_entry *
-pmap_pv_alloc(void)
-{
-	return pool_get(&pmap_pv_pool, PR_NOWAIT);
-}
-
-/*
- * pmap_pv_free:
- *
- *	Free a pv_entry.
- */
-void
-pmap_pv_free(struct pv_entry *pv)
-{
-	pool_put(&pmap_pv_pool, pv);
 }
 
 /*
@@ -3377,7 +3330,7 @@ pmap_ptpage_alloc(pmap_t pmap, pt_entry_t *pte, int usage)
  *	Note: the pmap must already be locked.
  */
 void
-pmap_ptpage_free(pmap_t pmap, pt_entry_t *pte, pt_entry_t **ptp)
+pmap_ptpage_free(pmap_t pmap, pt_entry_t *pte)
 {
 	paddr_t ptpa;
 
@@ -3388,19 +3341,10 @@ pmap_ptpage_free(pmap_t pmap, pt_entry_t *pte, pt_entry_t **ptp)
 	ptpa = pmap_pte_pa(pte);
 	PMAP_SET_PTE(pte, PG_NV);
 
-	/*
-	 * Check to see if we're stealing the PT page.  If we are,
-	 * zero it, and return the KSEG address of the page.
-	 */
-	if (ptp != NULL) {
-		pmap_zero_page(PHYS_TO_VM_PAGE(ptpa));
-		*ptp = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(ptpa);
-	} else {
 #ifdef DEBUG
-		pmap_zero_page(PHYS_TO_VM_PAGE(ptpa));
+	pmap_zero_page(PHYS_TO_VM_PAGE(ptpa));
 #endif
-		pmap_physpage_free(ptpa);
-	}
+	pmap_physpage_free(ptpa);
 }
 
 /*
@@ -3412,8 +3356,7 @@ pmap_ptpage_free(pmap_t pmap, pt_entry_t *pte, pt_entry_t **ptp)
  *	Note: the pmap must already be locked.
  */
 void
-pmap_l3pt_delref(pmap_t pmap, vaddr_t va, pt_entry_t *l3pte, cpuid_t cpu_id,
-    pt_entry_t **ptp)
+pmap_l3pt_delref(pmap_t pmap, vaddr_t va, pt_entry_t *l3pte, cpuid_t cpu_id)
 {
 	pt_entry_t *l1pte, *l2pte;
 
@@ -3434,7 +3377,7 @@ pmap_l3pt_delref(pmap_t pmap, vaddr_t va, pt_entry_t *l3pte, cpuid_t cpu_id,
 			printf("pmap_l3pt_delref: freeing level 3 table at "
 			    "0x%lx\n", pmap_pte_pa(l2pte));
 #endif
-		pmap_ptpage_free(pmap, l2pte, ptp);
+		pmap_ptpage_free(pmap, l2pte);
 		pmap->pm_nlev3--;
 
 		/*
@@ -3487,7 +3430,7 @@ pmap_l2pt_delref(pmap_t pmap, pt_entry_t *l1pte, pt_entry_t *l2pte,
 			printf("pmap_l2pt_delref: freeing level 2 table at "
 			    "0x%lx\n", pmap_pte_pa(l1pte));
 #endif
-		pmap_ptpage_free(pmap, l1pte, NULL);
+		pmap_ptpage_free(pmap, l1pte);
 		pmap->pm_nlev2--;
 
 		/*
