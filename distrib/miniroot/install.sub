@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.723 2013/12/23 13:57:05 rpe Exp $
+#	$OpenBSD: install.sub,v 1.724 2014/01/05 01:52:17 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1964,6 +1964,23 @@ upgrade_to64time_t() {
 	>/mnt/var/run/utmp
 }
 
+# Feed the random pool some entropy before we read from it
+feed_random() {
+	{
+	    (dmesg; cat $SERVERLISTALL /*.conf; sysctl; route -n show; df;
+	    ifconfig -A; hostname) >/dev/random 2>&1
+	    dd if=/mnt/var/db/host.random of=/dev/random bs=65536 count=1
+	} >/dev/null 2>&1
+}
+
+store_random() {
+	{
+	    dd if=/dev/random of=/mnt/var/db/host.random bs=65536 count=1
+	    dd if=/dev/random of=/mnt/etc/random.seed bs=512 count=1
+	    chmod 600 /mnt/var/db/host.random /mnt/etc/random.seed
+	} >/dev/null 2>&1
+}
+
 finish_up() {
 	local _dev _mp _fstype _rest
 
@@ -2021,6 +2038,8 @@ finish_up() {
 
 	# XXX To be removed after 5.6 is released.
 	upgrade_to64time_t
+
+	store_random
 
 	# Pat on the back.
 	cat <<__EOT
