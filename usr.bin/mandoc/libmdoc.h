@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.52 2013/10/21 23:32:32 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.53 2014/01/05 20:26:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -26,6 +26,7 @@ enum	mdoc_next {
 struct	mdoc {
 	struct mparse	 *parse; /* parse pointer */
 	char		 *defos; /* default argument for .Os */
+	int		  quick; /* abort parse early */
 	int		  flags; /* parse flags */
 #define	MDOC_HALT	 (1 << 0) /* error in parse: halt */
 #define	MDOC_LITERAL	 (1 << 1) /* in a literal scope */

@@ -1,4 +1,4 @@
-/*	$Id: libman.h,v 1.32 2012/11/17 00:25:20 schwarze Exp $ */
+/*	$Id: libman.h,v 1.33 2014/01/05 20:26:27 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -24,6 +24,7 @@ enum	man_next {
 
 struct	man {
 	struct mparse	*parse; /* parse pointer */
+	int		 quick; /* abort parse early */
 	int		 flags; /* parse flags */
 #define	MAN_HALT	(1 << 0) /* badness happened: die */
 #define	MAN_ELINE	(1 << 1) /* Next-line element scope. */
