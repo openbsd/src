@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.72 2012/04/21 10:17:26 henning Exp $
+#	$OpenBSD: upgrade.sh,v 1.73 2014/01/05 01:53:35 deraadt Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -83,6 +83,8 @@ check_fs
 # Mount filesystems in /etc/fstab.
 umount /mnt || { echo "Can't umount $ROOTDEV!" ; exit ; }
 mount_fs
+
+feed_random
 
 # Install sets.
 install_sets
