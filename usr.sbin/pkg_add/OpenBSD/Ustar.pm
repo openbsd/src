@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.72 2012/04/28 12:00:10 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.73 2014/01/05 23:11:24 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -159,7 +159,10 @@ sub next
 	$gid = oct($gid);
 	$uid = $uidcache->lookup($uname, $uid);
 	$gid = $gidcache->lookup($gname, $gid);
+	{
+	no warnings;
 	$mtime = oct($mtime);
+	}
 	unless ($prefix =~ m/^\0/o) {
 		$prefix =~ s/\0*$//o;
 		$name = "$prefix/$name";
