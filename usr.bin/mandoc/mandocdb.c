@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.54 2014/01/05 00:29:49 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.55 2014/01/05 03:06:36 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1017,14 +1017,16 @@ mpages_merge(struct mchars *mc, struct mparse *mp, int check_reachable)
 			    mandoc_strdup(mpage->mlinks->name);
 		}
 		putkey(mpage, mpage->sec, TYPE_sec);
-		putkey(mpage, mpage->arch, TYPE_arch);
+		putkey(mpage, '\0' == *mpage->arch ?
+		    "any" : mpage->arch, TYPE_arch);
 
 		for (mlink = mpage->mlinks; mlink; mlink = mlink->next) {
 			if ('\0' != *mlink->dsec)
 				putkey(mpage, mlink->dsec, TYPE_sec);
 			if ('\0' != *mlink->fsec)
 				putkey(mpage, mlink->fsec, TYPE_sec);
-			putkey(mpage, mlink->arch, TYPE_arch);
+			putkey(mpage, '\0' == *mlink->arch ?
+			    "any" : mlink->arch, TYPE_arch);
 			putkey(mpage, mlink->name, TYPE_Nm);
 		}
 

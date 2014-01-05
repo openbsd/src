@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.5 2014/01/05 00:29:49 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.6 2014/01/05 03:06:36 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -127,6 +127,8 @@ static	void		*hash_halloc(size_t, void *);
 static	struct expr	*exprcomp(const struct mansearch *, 
 				int, char *[]);
 static	void		 exprfree(struct expr *);
+static	struct expr	*exprspec(struct expr *, uint64_t,
+				 const char *, const char *);
 static	struct expr	*exprterm(const struct mansearch *, char *, int);
 static	void		 sql_append(char **sql, size_t *sz,
 				const char *newstr, int count);
@@ -134,8 +136,7 @@ static	void		 sql_match(sqlite3_context *context,
 				int argc, sqlite3_value **argv);
 static	void		 sql_regexp(sqlite3_context *context,
 				int argc, sqlite3_value **argv);
-static	char		*sql_statement(const struct expr *,
-				const char *, const char *);
+static	char		*sql_statement(const struct expr *);
 
 int
 mansearch(const struct mansearch *search,
@@ -203,7 +204,7 @@ mansearch(const struct mansearch *search,
 		goto out;
 	}
 
-	sql = sql_statement(e, search->arch, search->sec);
+	sql = sql_statement(e);
 
 	/*
 	 * Loop over the directories (containing databases) for us to
@@ -249,11 +250,6 @@ mansearch(const struct mansearch *search,
 		c = sqlite3_prepare_v2(db, sql, -1, &s, NULL);
 		if (SQLITE_OK != c)
 			fprintf(stderr, "%s\n", sqlite3_errmsg(db));
-
-		if (NULL != search->arch)
-			SQL_BIND_TEXT(db, s, j, search->arch);
-		if (NULL != search->sec)
-			SQL_BIND_TEXT(db, s, j, search->sec);
 
 		for (ep = e; NULL != ep; ep = ep->next) {
 			if (NULL == ep->substr) {
@@ -472,7 +468,7 @@ sql_append(char **sql, size_t *sz, const char *newstr, int count)
  * Prepare the search SQL statement.
  */
 static char *
-sql_statement(const struct expr *e, const char *arch, const char *sec)
+sql_statement(const struct expr *e)
 {
 	char		*sql;
 	size_t		 sz;
@@ -480,12 +476,6 @@ sql_statement(const struct expr *e, const char *arch, const char *sec)
 
 	sql = mandoc_strdup("SELECT * FROM mpages WHERE ");
 	sz = strlen(sql);
-
-	if (NULL != arch)
-		sql_append(&sql, &sz, "arch = ? AND ", 1);
-	if (NULL != sec)
-		sql_append(&sql, &sz, "sec = ? AND ", 1);
-	sql_append(&sql, &sz, "(", 1);
 
 	for (needop = 0; NULL != e; e = e->next) {
 		if (e->and)
@@ -503,7 +493,6 @@ sql_statement(const struct expr *e, const char *arch, const char *sec)
 			sql_append(&sql, &sz, ")", e->close);
 		needop = 1;
 	}
-	sql_append(&sql, &sz, ")", 1);
 
 	return(sql);
 }
@@ -520,7 +509,8 @@ exprcomp(const struct mansearch *search, int argc, char *argv[])
 	struct expr	*first, *next, *cur;
 
 	first = cur = NULL;
-	toopen = logic = igncase = toclose = 0;
+	logic = igncase = toclose = 0;
+	toopen = 1;
 
 	for (i = 0; i < argc; i++) {
 		if (0 == strcmp("(", argv[i])) {
@@ -564,8 +554,15 @@ exprcomp(const struct mansearch *search, int argc, char *argv[])
 			cur = first = next;
 		toopen = logic = igncase = 0;
 	}
-	if ( ! (toopen || logic || igncase || toclose))
-		return(first);
+	if (toopen || logic || igncase || toclose)
+		goto fail;
+
+	cur->close++;
+	cur = exprspec(cur, TYPE_arch, search->arch, "^(%s|any)$");
+	exprspec(cur, TYPE_sec, search->sec, "^%s$");
+
+	return(first);
+
 fail:
 	if (NULL != first)
 		exprfree(first);
@@ -573,11 +570,42 @@ fail:
 }
 
 static struct expr *
+exprspec(struct expr *cur, uint64_t key, const char *value,
+		const char *format)
+{
+	char	 errbuf[BUFSIZ];
+	char	*cp;
+	int	 irc;
+
+	if (NULL == value)
+		return(cur);
+
+	if (-1 == asprintf(&cp, format, value)) {
+		perror(0);
+		exit((int)MANDOCLEVEL_SYSERR);
+	}
+	cur->next = mandoc_calloc(1, sizeof(struct expr));
+	cur = cur->next;
+	cur->and = 1;
+	cur->bits = key;
+	if (0 != (irc = regcomp(&cur->regexp, cp,
+	    REG_EXTENDED | REG_NOSUB | REG_ICASE))) {
+		regerror(irc, &cur->regexp, errbuf, sizeof(errbuf));
+		fprintf(stderr, "regcomp: %s\n", errbuf);
+		cur->substr = value;
+	}
+	free(cp);
+	return(cur);
+}
+
+static struct expr *
 exprterm(const struct mansearch *search, char *buf, int cs)
 {
+	char		 errbuf[BUFSIZ];
 	struct expr	*e;
 	char		*key, *v;
 	size_t		 i;
+	int		 irc;
 
 	if ('\0' == *buf)
 		return(NULL);
@@ -606,8 +634,10 @@ exprterm(const struct mansearch *search, char *buf, int cs)
 		e->bits = search->deftype;
 
 	if ('~' == *v++) {
-		if (regcomp(&e->regexp, v,
-		    REG_EXTENDED | REG_NOSUB | (cs ? 0 : REG_ICASE))) {
+		if (0 != (irc = regcomp(&e->regexp, v,
+		    REG_EXTENDED | REG_NOSUB | (cs ? 0 : REG_ICASE)))) {
+			regerror(irc, &e->regexp, errbuf, sizeof(errbuf));
+			fprintf(stderr, "regcomp: %s\n", errbuf);
 			free(e);
 			return(NULL);
 		}
