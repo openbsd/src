@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.46 2013/06/03 16:06:42 tedu Exp 
+#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.47 2014/01/05 01:16:52 deraadt Exp 
 #	OpenBSD: MAKEDEV.common,v 1.73 2013/11/21 11:04:44 kettenis Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -201,8 +201,8 @@ case $i in
 ramdisk)
 	R std ct0 ct1 st0 st1 hd0 hd1 hd2 hd3 hd4
 	R sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 pty0
-	R apci0 dca0 dcm0 dcm1 bio diskmap
-	R bpf0 bpf1 tun0 tun1 lkm
+	R apci0 dca0 dcm0 dcm1 bio diskmap random
+	R bpf0 bpf1 tun0 tun1
 	;;
 
 std)
