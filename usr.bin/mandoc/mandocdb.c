@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.62 2014/01/06 13:54:11 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.63 2014/01/06 15:32:44 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -692,11 +692,19 @@ filescan(const char *file)
 		exitcode = (int)MANDOCLEVEL_BADARG;
 		say(file, NULL);
 		return;
-	} else if (OP_TEST != op && strstr(buf, basedir) != buf) {
+	}
+
+	if (strstr(buf, basedir) == buf)
+		start = buf + strlen(basedir) + 1;
+	else if (OP_TEST == op)
+		start = buf;
+	else {
 		exitcode = (int)MANDOCLEVEL_BADARG;
 		say("", "%s: outside base directory", buf);
 		return;
-	} else if (-1 == stat(buf, &st)) {
+	}
+
+	if (-1 == stat(buf, &st)) {
 		exitcode = (int)MANDOCLEVEL_BADARG;
 		say(file, NULL);
 		return;
@@ -705,7 +713,7 @@ filescan(const char *file)
 		say(file, "Not a regular file");
 		return;
 	}
-	start = buf + strlen(basedir);
+
 	mlink = mandoc_calloc(1, sizeof(struct mlink));
 	strlcpy(mlink->file, start, sizeof(mlink->file));
 
@@ -1783,20 +1791,31 @@ dbprune(void)
 	size_t		 i;
 	unsigned int	 slot;
 
-	if (nodb)
-		return;
+	if (0 == nodb)
+		SQL_EXEC("BEGIN TRANSACTION");
 
-	mpage = ohash_first(&mpages, &slot);
-	while (NULL != mpage) {
+	for (mpage = ohash_first(&mpages, &slot); NULL != mpage;
+	     mpage = ohash_next(&mpages, &slot)) {
 		mlink = mpage->mlinks;
-		i = 1;
-		SQL_BIND_TEXT(stmts[STMT_DELETE_PAGE], i, mlink->file);
-		SQL_STEP(stmts[STMT_DELETE_PAGE]);
-		sqlite3_reset(stmts[STMT_DELETE_PAGE]);
 		if (verb)
-			say(mlink->file, "Deleted from database");
-		mpage = ohash_next(&mpages, &slot);
+			say(mlink->file, "Deleting from database");
+		if (nodb)
+			continue;
+		for ( ; NULL != mlink; mlink = mlink->next) {
+			i = 1;
+			SQL_BIND_TEXT(stmts[STMT_DELETE_PAGE],
+			    i, mlink->dsec);
+			SQL_BIND_TEXT(stmts[STMT_DELETE_PAGE],
+			    i, mlink->arch);
+			SQL_BIND_TEXT(stmts[STMT_DELETE_PAGE],
+			    i, mlink->name);
+			SQL_STEP(stmts[STMT_DELETE_PAGE]);
+			sqlite3_reset(stmts[STMT_DELETE_PAGE]);
+		}
 	}
+
+	if (0 == nodb)
+		SQL_EXEC("END TRANSACTION");
 }
 
 /*
@@ -1907,7 +1926,9 @@ dbopen(int real)
 
 prepare_statements:
 	SQL_EXEC("PRAGMA foreign_keys = ON");
-	sql = "DELETE FROM mpages where file=?";
+	sql = "DELETE FROM mpages WHERE id IN "
+		"(SELECT pageid FROM mlinks WHERE "
+		"sec=? AND arch=? AND name=?)";
 	sqlite3_prepare_v2(db, sql, -1, &stmts[STMT_DELETE_PAGE], NULL);
 	sql = "INSERT INTO mpages "
 		"(form) VALUES (?)";
