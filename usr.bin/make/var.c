@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.95 2014/01/06 12:08:18 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.96 2014/01/06 12:15:40 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -995,9 +995,19 @@ Var_Parse(const char *str,	/* The string to parse */
 	}
 	if (val == NULL) {
 		val = err ? var_Error : varNoError;
-		/* Dynamic source */
+		/* If it comes from a dynamic source, and it doesn't have
+		 * a context, copy the spec instead.
+		 * Specifically, this make allows constructs like:
+		 * 	target.o: $*.c
+		 * Absence of a context means "parsing". But these can't
+		 * be expanded during parsing, to be consistent with the
+		 * way .SUFFIXES work.
+		 * .SUFFIXES may be added/reset/removed during parsing,
+		 * but in the end, the final list is what's considered for
+		 * handling targets.  So those dynamic variables must be
+		 * handled lazily too.
+		 */
 		if (idx != GLOBAL_INDEX) {
-			/* can't be expanded for now: copy the spec instead. */
 			if (ctxt == NULL) {
 				*freePtr = true;
 				val = Str_dupi(str, tstr);
