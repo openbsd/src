@@ -2711,6 +2711,7 @@
 ./usr/sbin/ifstated
 ./usr/sbin/ikectl
 ./usr/sbin/inetd
+./usr/sbin/installboot
 ./usr/sbin/iostat
 ./usr/sbin/iprop-log
 ./usr/sbin/iscsictl

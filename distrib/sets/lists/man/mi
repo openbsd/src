@@ -2815,6 +2815,7 @@
 ./usr/share/man/man8/iked.8
 ./usr/share/man/man8/inetd.8
 ./usr/share/man/man8/init.8
+./usr/share/man/man8/installboot.8
 ./usr/share/man/man8/intro.8
 ./usr/share/man/man8/iostat.8
 ./usr/share/man/man8/iprop-log.8
