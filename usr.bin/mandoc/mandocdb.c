@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.63 2014/01/06 15:32:44 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.64 2014/01/06 20:53:36 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -961,6 +961,9 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 	str_info.hfree = hash_free;
 	str_info.key_offset = offsetof(struct str, key);
 
+	if (0 == nodb)
+		SQL_EXEC("BEGIN TRANSACTION");
+
 	mpage = ohash_first(&mpages, &pslot);
 	while (NULL != mpage) {
 		mlinks_undupe(mpage);
@@ -1051,6 +1054,9 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 		ohash_delete(&strings);
 		mpage = ohash_next(&mpages, &pslot);
 	}
+
+	if (0 == nodb)
+		SQL_EXEC("END TRANSACTION");
 }
 
 static void
@@ -1746,8 +1752,6 @@ dbadd(const struct mpage *mpage, struct mchars *mc)
 	if (nodb)
 		return;
 
-	SQL_EXEC("BEGIN TRANSACTION");
-
 	i = 1;
 	SQL_BIND_INT(stmts[STMT_INSERT_PAGE], i, FORM_SRC == mpage->form);
 	SQL_STEP(stmts[STMT_INSERT_PAGE]);
@@ -1779,8 +1783,6 @@ dbadd(const struct mpage *mpage, struct mchars *mc)
 			free(key->rendered);
 		free(key);
 	}
-
-	SQL_EXEC("END TRANSACTION");
 }
 
 static void
