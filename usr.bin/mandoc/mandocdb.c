@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.59 2014/01/05 20:26:27 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.60 2014/01/06 03:02:40 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1728,7 +1728,6 @@ dbindex(const struct mpage *mpage, struct mchars *mc)
 {
 	struct mlink	*mlink;
 	struct str	*key;
-	const char	*desc;
 	int64_t		 recno;
 	size_t		 i;
 	unsigned int	 slot;
@@ -1739,20 +1738,9 @@ dbindex(const struct mpage *mpage, struct mchars *mc)
 	if (nodb)
 		return;
 
-	desc = "";
-	if (NULL != mpage->desc && '\0' != *mpage->desc) {
-		key = ohash_find(&strings,
-			ohash_qlookup(&strings, mpage->desc));
-		assert(NULL != key);
-		if (NULL == key->rendered)
-			render_key(mc, key);
-		desc = key->rendered;
-	}
-
 	SQL_EXEC("BEGIN TRANSACTION");
 
 	i = 1;
-	SQL_BIND_TEXT(stmts[STMT_INSERT_PAGE], i, desc);
 	SQL_BIND_INT(stmts[STMT_INSERT_PAGE], i, FORM_SRC == mpage->form);
 	SQL_STEP(stmts[STMT_INSERT_PAGE]);
 	recno = sqlite3_last_insert_rowid(db);
@@ -1889,7 +1877,6 @@ dbopen(int real)
 	}
 
 	sql = "CREATE TABLE \"mpages\" (\n"
-	      " \"desc\" TEXT NOT NULL,\n"
 	      " \"form\" INTEGER NOT NULL,\n"
 	      " \"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL\n"
 	      ");\n"
@@ -1925,7 +1912,7 @@ prepare_statements:
 	sql = "DELETE FROM mpages where file=?";
 	sqlite3_prepare_v2(db, sql, -1, &stmts[STMT_DELETE_PAGE], NULL);
 	sql = "INSERT INTO mpages "
-		"(desc,form) VALUES (?,?)";
+		"(form) VALUES (?)";
 	sqlite3_prepare_v2(db, sql, -1, &stmts[STMT_INSERT_PAGE], NULL);
 	sql = "INSERT INTO mlinks "
 		"(file,sec,arch,name,pageid) VALUES (?,?,?,?,?)";

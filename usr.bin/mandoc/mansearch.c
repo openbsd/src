@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.8 2014/01/05 04:13:46 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.9 2014/01/06 03:02:40 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -62,7 +62,6 @@ struct	expr {
 
 struct	match {
 	uint64_t	 id; /* identifier in database */
-	char		*desc; /* description of manpage */
 	int		 form; /* 0 == catpage */
 };
 
@@ -271,7 +270,7 @@ mansearch(const struct mansearch *search,
 		 * distribution of buckets in the table.
 		 */
 		while (SQLITE_ROW == (c = sqlite3_step(s))) {
-			id = sqlite3_column_int64(s, 2);
+			id = sqlite3_column_int64(s, 1);
 			idx = ohash_lookup_memory
 				(&htab, (char *)&id, 
 				 sizeof(uint64_t), (uint32_t)id);
@@ -281,9 +280,7 @@ mansearch(const struct mansearch *search,
 
 			mp = mandoc_calloc(1, sizeof(struct match));
 			mp->id = id;
-			mp->desc = mandoc_strdup
-				((char *)sqlite3_column_text(s, 0));
-			mp->form = sqlite3_column_int(s, 1);
+			mp->form = sqlite3_column_int(s, 0);
 			ohash_insert(&htab, idx, mp);
 		}
 
@@ -313,7 +310,6 @@ mansearch(const struct mansearch *search,
 					(*res, maxres * sizeof(struct manpage));
 			}
 			mpage = *res + cur;
-			mpage->desc = mp->desc;
 			mpage->form = mp->form;
 			buildnames(mpage, db, s, mp->id, paths->paths[i]);
 			mpage->output = outbit ?

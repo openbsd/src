@@ -1,4 +1,4 @@
-/*	$Id: apropos.c,v 1.19 2013/12/31 03:41:09 schwarze Exp $ */
+/*	$Id: apropos.c,v 1.20 2014/01/06 03:02:39 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -39,7 +39,7 @@ apropos(int argc, char *argv[])
 	char		*defpaths, *auxpaths;
 	char		*conf_file;
 	char		*progname;
-	char		*outkey;
+	const char	*outkey;
 	extern char	*optarg;
 	extern int	 optind;
 
@@ -56,7 +56,7 @@ apropos(int argc, char *argv[])
 
 	auxpaths = defpaths = NULL;
 	conf_file = NULL;
-	outkey = NULL;
+	outkey = "Nd";
 
 	while (-1 != (ch = getopt(argc, argv, "C:M:m:O:S:s:")))
 		switch (ch) {
@@ -100,11 +100,9 @@ apropos(int argc, char *argv[])
 
 	for (i = 0; i < sz; i++) {
 		printf("%s - %s\n", res[i].names,
-		    NULL == outkey ? res[i].desc :
 		    NULL == res[i].output ? "" : res[i].output);
 		free(res[i].file);
 		free(res[i].names);
-		free(res[i].desc);
 		free(res[i].output);
 	}
 
