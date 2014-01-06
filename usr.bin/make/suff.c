@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.86 2013/11/22 15:47:35 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.87 2014/01/06 12:08:18 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -1668,10 +1668,12 @@ SuffFindDeps(GNode *gn, Lst slst)
 	if (DEBUG(SUFF))
 		printf("SuffFindDeps (%s)\n", gn->name);
 
+	current_node = gn;
 	if (gn->type & OP_ARCHV)
 		SuffFindArchiveDeps(gn, slst);
 	else
 		SuffFindNormalDeps(gn, slst);
+	current_node = NULL;
 }
 
 /*-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.94 2013/04/23 14:32:53 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.95 2014/01/06 12:08:18 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -93,6 +93,7 @@
  */
 char	var_Error[] = "";
 
+GNode *current_node = NULL;
 /*
  * Similar to var_Error, but returned when the 'err' flag for Var_Parse is
  * set false. Why not just use a constant? Well, gcc likes to condense
@@ -927,6 +928,39 @@ get_expanded_value(const char *name, const char *ename, int idx, uint32_t k,
 	return val;
 }
 
+#define ERRMSG1 "Using $< in a non-suffix rule context is a GNUmake idiom "
+#define ERRMSG2  "Using undefined dynamic variable $%s "
+static void
+bad_dynamic_variable(int idx)
+{
+	Location origin;
+
+	Parse_FillLocation(&origin);
+	if (idx >= LOCAL_SIZE)
+		idx = EXTENDED2SIMPLE(idx);
+	switch(idx) {
+	case IMPSRC_INDEX:
+		if (origin.fname)
+			Fatal(ERRMSG1  "(%s:%lu)", 
+			    origin.lineno, origin.fname);
+		else if (current_node)
+			Fatal(ERRMSG1 "(prereq of %s)", current_node->name);
+		else
+			Fatal(ERRMSG1 "(?)");
+		break;
+	default:
+		if (origin.fname)
+			Error(ERRMSG2 "(%s:%lu)", varnames[idx], 
+			    origin.lineno, origin.fname);
+		else if (current_node)
+			Error(ERRMSG2 "(prereq of %s)", varnames[idx], 
+			    current_node->name);
+		else 
+			Error(ERRMSG2 "(?)", varnames[idx]);
+		break;
+    	}
+}
+
 char *
 Var_Parse(const char *str,	/* The string to parse */
     SymTable *ctxt,		/* The context for the variable */
@@ -968,24 +1002,7 @@ Var_Parse(const char *str,	/* The string to parse */
 				*freePtr = true;
 				val = Str_dupi(str, tstr);
 			} else {
-				Location origin;
-
-				Parse_FillLocation(&origin);
-				if (idx >= LOCAL_SIZE)
-					idx = EXTENDED2SIMPLE(idx);
-				switch(idx) {
-				case IMPSRC_INDEX:
-					Fatal(
-"Using $< in a non-suffix rule context is a GNUmake idiom (line %lu of %s)",
-					    origin.lineno, origin.fname);
-					break;
-				default:
-					Error(
-"Using undefined dynamic variable $%s (line %lu of %s)",
-					    varnames[idx], origin.lineno, 
-					    origin.fname);
-					break;
-				}
+				bad_dynamic_variable(idx);
 			}
 		}
 	}

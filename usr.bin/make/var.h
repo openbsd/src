@@ -1,6 +1,6 @@
 #ifndef VAR_H
 #define VAR_H
-/* $OpenBSD: var.h,v 1.16 2012/10/09 19:39:59 espie Exp $ */
+/* $OpenBSD: var.h,v 1.17 2014/01/06 12:08:18 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -26,6 +26,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+extern GNode *current_node;
 extern void Var_Init(void);
 extern void Var_setCheckEnvFirst(bool);
 
