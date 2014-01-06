@@ -1,0 +1,1 @@
+Using $< in a non-suffix rule context is a GNUmake idiom (prereq of thing.o)
