@@ -19,6 +19,9 @@
 #include <machine/psl.h>
 #include <machine/specialreg.h>
 
+/*
+ * Buffer size must be multiple of 4
+ */
 ENTRY(mdrandom)
 	pushal
 
