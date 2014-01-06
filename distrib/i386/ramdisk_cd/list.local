@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.30 2011/10/06 15:29:45 deraadt Exp $
+# $OpenBSD: list.local,v 1.31 2014/01/06 22:22:31 deraadt Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					bin/sha256
@@ -6,8 +6,6 @@ LINK	instbin					sbin/mount_ext2fs
 LINK	instbin					sbin/mount_msdos
 LINK	instbin					sbin/ping6
 LINK	instbin					sbin/rtsol
-LINK	instbin					sbin/apm sbin/zzz
-LINK	instbin					sbin/apmd
 LINK	instbin					sbin/mount_udf
 LINK	instbin					sbin/bioctl
 
