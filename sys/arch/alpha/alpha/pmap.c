@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.67 2014/01/05 14:37:08 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.68 2014/01/06 20:21:32 miod Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -2578,7 +2578,6 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, cpuid_t cpu_id)
 	pt_entry_t *pte, npte;
 	vaddr_t va;
 	boolean_t hadasm, isactive;
-	boolean_t needisync, needkisync = FALSE;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_BITS)
@@ -2599,28 +2598,7 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, cpuid_t cpu_id)
 		if (*pte != npte) {
 			hadasm = (pmap_pte_asm(pte) != 0);
 			isactive = PMAP_ISACTIVE(pv->pv_pmap, cpu_id);
-			/*
-			 * Determine what we need to do about the I-stream.
-			 * If PG_EXEC was set, we mark a user pmap as needing
-			 * an I-sync on the way out to userspace.  We always
-			 * need an immediate I-sync for the kernel pmap.
-			 */
-			needisync = FALSE;
-			if (pmap_pte_exec(pte)) {
-				if (pv->pv_pmap == pmap_kernel())
-					needkisync = TRUE;
-				else {
-					PMAP_SET_NEEDISYNC(pv->pv_pmap);
-					if (pv->pv_pmap->pm_cpus != 0)
-						needisync = TRUE;
-				}
-			} else {
-				/* Never clear FOE on non-exec mappings. */
-				npte |= PG_FOE;
-			}
 			PMAP_SET_PTE(pte, npte);
-			if (needisync)
-				PMAP_SYNC_ISTREAM_USER(pv->pv_pmap);
 			PMAP_INVALIDATE_TLB(pv->pv_pmap, va, hadasm, isactive,
 			    cpu_id);
 			PMAP_TLB_SHOOTDOWN(pv->pv_pmap, va,
@@ -2628,9 +2606,6 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, cpuid_t cpu_id)
 		}
 		PMAP_UNLOCK(pv->pv_pmap);
 	}
-
-	if (needkisync)
-		PMAP_SYNC_ISTREAM_KERNEL();
 }
 
 /*
