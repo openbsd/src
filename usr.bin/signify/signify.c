@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.11 2014/01/03 17:14:47 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.12 2014/01/06 01:50:54 espie Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -30,8 +30,6 @@
 #include <sha2.h>
 
 #include "crypto_api.h"
-
-#define streq(a, b) (strcmp(a, b) == 0)
 
 #define SIGBYTES crypto_sign_ed25519_BYTES
 #define SECRETBYTES crypto_sign_ed25519_SECRETKEYBYTES
