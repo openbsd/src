@@ -1,7 +1,7 @@
-/*	$Id: man_validate.c,v 1.59 2013/12/31 18:07:06 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.60 2014/01/06 22:39:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -207,8 +207,8 @@ check_root(CHKARGS)
 
 	        man->meta.title = mandoc_strdup("unknown");
 		man->meta.msec = mandoc_strdup("1");
-		man->meta.date = mandoc_normdate
-			(man->parse, NULL, n->line, n->pos);
+		man->meta.date = man->quick ? mandoc_strdup("") :
+		    mandoc_normdate(man->parse, NULL, n->line, n->pos);
 	}
 
 	return(1);
@@ -431,8 +431,10 @@ post_TH(CHKARGS)
 	if (n)
 		n = n->next;
 	if (n && n->string && '\0' != n->string[0]) {
-		man->meta.date = mandoc_normdate
-		    (man->parse, n->string, n->line, n->pos);
+		man->meta.date = man->quick ?
+		    mandoc_strdup(n->string) :
+		    mandoc_normdate(man->parse, n->string,
+			n->line, n->pos);
 	} else
 		man->meta.date = mandoc_strdup("");
 
