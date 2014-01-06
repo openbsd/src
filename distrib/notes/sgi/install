@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.25 2013/12/08 15:33:03 miod Exp $
+dnl	$OpenBSD: install,v 1.26 2014/01/06 21:05:32 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -7,10 +7,6 @@ Alternatively, the OpenBSD ramdisk kernel can be booted from the network,
 using a bootp/tftp server.
 
 Booting from CD-ROM installation media:
-
-	NOTE: Only cd${:--:}OSrev.iso may be booted on IP27 and IP35 class systems,
-	due to PROM limitations. install${:--:}OSrev.iso will not boot, but may be
-	used to the sets without requiring network access.
 
   From the System Maintenance Menu, select '2' (or click on the
   appropriate icon if in graphics console) to Install System Software.
