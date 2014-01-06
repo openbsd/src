@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.60 2014/01/06 03:02:40 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.61 2014/01/06 03:52:05 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1748,7 +1748,6 @@ dbindex(const struct mpage *mpage, struct mchars *mc)
 
 	for (mlink = mpage->mlinks; mlink; mlink = mlink->next) {
 		i = 1;
-		SQL_BIND_TEXT(stmts[STMT_INSERT_LINK], i, mlink->file);
 		SQL_BIND_TEXT(stmts[STMT_INSERT_LINK], i, mlink->dsec);
 		SQL_BIND_TEXT(stmts[STMT_INSERT_LINK], i, mlink->arch);
 		SQL_BIND_TEXT(stmts[STMT_INSERT_LINK], i, mlink->name);
@@ -1882,7 +1881,6 @@ dbopen(int real)
 	      ");\n"
 	      "\n"
 	      "CREATE TABLE \"mlinks\" (\n"
-	      " \"file\" TEXT NOT NULL,\n"
 	      " \"sec\" TEXT NOT NULL,\n"
 	      " \"arch\" TEXT NOT NULL,\n"
 	      " \"name\" TEXT NOT NULL,\n"
@@ -1915,7 +1913,7 @@ prepare_statements:
 		"(form) VALUES (?)";
 	sqlite3_prepare_v2(db, sql, -1, &stmts[STMT_INSERT_PAGE], NULL);
 	sql = "INSERT INTO mlinks "
-		"(file,sec,arch,name,pageid) VALUES (?,?,?,?,?)";
+		"(sec,arch,name,pageid) VALUES (?,?,?,?)";
 	sqlite3_prepare_v2(db, sql, -1, &stmts[STMT_INSERT_LINK], NULL);
 	sql = "INSERT INTO keys "
 		"(bits,key,pageid) VALUES (?,?,?)";

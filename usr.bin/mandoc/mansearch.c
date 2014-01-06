@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.9 2014/01/06 03:02:40 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.10 2014/01/06 03:52:05 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -117,7 +117,8 @@ static	const struct type types[] = {
 };
 
 static	void		 buildnames(struct manpage *, sqlite3 *,
-				sqlite3_stmt *, uint64_t, const char *);
+				sqlite3_stmt *, uint64_t,
+				const char *, int form);
 static	char		*buildoutput(sqlite3 *, sqlite3_stmt *,
 				 uint64_t, uint64_t);
 static	void		*hash_alloc(size_t, void *);
@@ -311,7 +312,8 @@ mansearch(const struct mansearch *search,
 			}
 			mpage = *res + cur;
 			mpage->form = mp->form;
-			buildnames(mpage, db, s, mp->id, paths->paths[i]);
+			buildnames(mpage, db, s, mp->id,
+			    paths->paths[i], mp->form);
 			mpage->output = outbit ?
 			    buildoutput(db, s2, mp->id, outbit) : NULL;
 
@@ -336,10 +338,10 @@ out:
 
 static void
 buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
-		uint64_t id, const char *path)
+		uint64_t id, const char *path, int form)
 {
 	char		*newnames;
-	const char	*oldnames, *sep1, *name, *sec, *sep2, *arch;
+	const char	*oldnames, *sep1, *name, *sec, *sep2, *arch, *fsec;
 	size_t		 i;
 	int		 c;
 
@@ -357,9 +359,9 @@ buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 			oldnames = mpage->names;
 			sep1 = ", ";
 		}
-		sec = sqlite3_column_text(s, 1);
-		arch = sqlite3_column_text(s, 2);
-		name = sqlite3_column_text(s, 3);
+		sec = sqlite3_column_text(s, 0);
+		arch = sqlite3_column_text(s, 1);
+		name = sqlite3_column_text(s, 2);
 		sep2 = '\0' == *arch ? "" : "/";
 		if (-1 == asprintf(&newnames, "%s%s%s(%s%s%s)",
 		    oldnames, sep1, name, sec, sep2, arch)) {
@@ -374,8 +376,15 @@ buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 		if (NULL != mpage->file)
 			continue;
 
-		name = sqlite3_column_text(s, 0);
-		if (-1 == asprintf(&mpage->file, "%s/%s", path, name)) {
+		if (form) {
+			sep1 = "man";
+			fsec = sec;
+		} else {
+			sep1 = "cat";
+			fsec = "0";
+		}
+		if (-1 == asprintf(&mpage->file, "%s/%s%s%s%s/%s.%s",
+		    path, sep1, sec, sep2, arch, name, fsec)) {
 			perror(0);
 			exit((int)MANDOCLEVEL_SYSERR);
 		}
