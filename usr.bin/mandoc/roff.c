@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.63 2014/01/06 21:33:00 schwarze Exp $ */
+/*	$Id: roff.c,v 1.64 2014/01/06 23:46:01 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -444,14 +444,9 @@ roff_free1(struct roff *r)
 void
 roff_reset(struct roff *r)
 {
-	int		 i;
 
 	roff_free1(r);
-
 	r->control = 0;
-
-	for (i = 0; i < PREDEFS_MAX; i++) 
-		roff_setstr(r, predefs[i].name, predefs[i].str, 0);
 }
 
 
@@ -468,7 +463,6 @@ struct roff *
 roff_alloc(enum mparset type, struct mparse *parse, int quick)
 {
 	struct roff	*r;
-	int		 i;
 
 	r = mandoc_calloc(1, sizeof(struct roff));
 	r->parsetype = type;
@@ -477,9 +471,6 @@ roff_alloc(enum mparset type, struct mparse *parse, int quick)
 	r->rstackpos = -1;
 	
 	roffhash_init();
-
-	for (i = 0; i < PREDEFS_MAX; i++) 
-		roff_setstr(r, predefs[i].name, predefs[i].str, 0);
 
 	return(r);
 }
@@ -1899,11 +1890,17 @@ static const char *
 roff_getstrn(const struct roff *r, const char *name, size_t len)
 {
 	const struct roffkv *n;
+	int i;
 
 	for (n = r->strtab; n; n = n->next)
 		if (0 == strncmp(name, n->key.p, len) && 
 				'\0' == n->key.p[(int)len])
 			return(n->val.p);
+
+	for (i = 0; i < PREDEFS_MAX; i++)
+		if (0 == strncmp(name, predefs[i].name, len) &&
+				'\0' == predefs[i].name[(int)len])
+			return(predefs[i].str);
 
 	return(NULL);
 }
