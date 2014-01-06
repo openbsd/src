@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2012/05/25 17:32:38 miod Exp $
+#	$OpenBSD: Makefile,v 1.19 2014/01/06 21:03:13 miod Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -24,25 +24,55 @@ XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xetc${OSrev}.tgz \
 
 all: ${CDROM}
 
-# Note regarding sgivol -h value:
-# boot32 currently (2012/05/25) needs 22 2048 byte sectors, boot64 needs 50,
-# bootecoff needs 20, and we need to keep some room for growth.
-# IF THIS VALUE IS EVER CHANGED, make sure it is consistent with the `cdroot'
-# layout in /etc/disktab!
+# Note regarding volume header size:
+# boot32 currently (2013/12/29) needs 81 512 byte sectors, boot64 needs 190,
+# bootecoff needs 73, the XFS partition needs 32768, and we need to keep some
+# room for growth.
+
+# The following values need to be consistent with the `cdroot' layout in
+# /etc/disktab
+SGIVOLSZ=8320	# oa, pp (size of volume header in 2048 byte sectors)
+FFSSZ=153472	# pa     (size of the ffs partition in 2048 byte sectors)
+CDROMSZ=316	# nt     (size of the iso image in megabytes)
+
+# Creating an IP27 bootable CD-ROM image with a usable FFS filesystem on it
+# is extremely tricky. We are facing the following challenges:
+# - the IP27 XFS filesystem will only get recognized correctly if the volume
+#   header uses 512 byte sectors.
+# - the OpenBSD disklabel will reuse the sector size from the volume header,
+#   yet we need to build a label with 2048 byte sectors.
+# This can be overcome by building a 512 byte sector volume header, then
+# filling the 2048 byte sector filesystem.
+
 ${CDROM}:
 	-rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/
 
-	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=2048b count=300
-	vnconfig -v -c -t cdroot vnd0 ${.OBJDIR}/${CDROM}
+	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=2048b count=${CDROMSZ}
 
-	/usr/mdec/sgivol -i -h 128 vnd0
-	/usr/mdec/sgivol -w bootecoff ${DESTDIR}/usr/mdec/bootecoff vnd0
-	/usr/mdec/sgivol -l bootecoff sash vnd0
-	/usr/mdec/sgivol -w boot32 ${DESTDIR}/usr/mdec/boot32 vnd0
-	/usr/mdec/sgivol -l boot32 sashARCS vnd0
-	/usr/mdec/sgivol -w boot64 ${DESTDIR}/usr/mdec/boot64 vnd0
-	/usr/mdec/sgivol -l boot64 sash64 vnd0
+	# Create the 512 byte sector volume header
+
+	vnconfig -v -c vnd0 ${.OBJDIR}/${CDROM}
+
+	/usr/mdec/sgivol -qi -h `expr ${SGIVOLSZ} \* 4` vnd0
+	uudecode -o ${.OBJDIR}/xfs512.bin.gz \
+	    ${.CURDIR}/../cdfs/xfs512.bin.gz.uue
+	gzip -d ${.OBJDIR}/xfs512.bin.gz
+	cat ${DESTDIR}/usr/mdec/boot64 >> ${.OBJDIR}/xfs512.bin
+	dd if=${.OBJDIR}/xfs512.bin of=${.OBJDIR}/xfs obs=16m conv=osync
+	/usr/mdec/sgivol -qw xfsboot ${.OBJDIR}/xfs vnd0
+	/usr/mdec/sgivol -qw bootecof ${DESTDIR}/usr/mdec/bootecoff vnd0
+	/usr/mdec/sgivol -ql bootecof sash vnd0
+	/usr/mdec/sgivol -qw boot32 ${DESTDIR}/usr/mdec/boot32 vnd0
+	/usr/mdec/sgivol -ql boot32 sashARCS vnd0
+	/usr/mdec/sgivol -qw boot64 ${DESTDIR}/usr/mdec/boot64 vnd0
+	/usr/mdec/sgivol -ql boot64 sash64 vnd0
+
+	vnconfig -u vnd0
+
+	# Create the 2048 byte sector media with the FFS partition
+
+	vnconfig -v -c -t cdroot vnd0 ${.OBJDIR}/${CDROM}
 
 	disklabel -w vnd0 cdroot "OpenBSD/sgi     "
 	newfs /dev/rvnd0a
@@ -68,6 +98,11 @@ ${CDROM}:
 	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
 	umount ${.OBJDIR}/cd-dir
+
+	# Summary
+	disklabel vnd0
+	/usr/mdec/sgivol vnd0
+
 	vnconfig -u vnd0
 
 install:
@@ -84,7 +119,7 @@ unconfig:
 	-vnconfig -u vnd0
 
 clean cleandir:
-	/bin/rm -f ${CDROM}
+	/bin/rm -f ${CDROM} xfs512.bin xfs
 	rm -rf cd-dir
 
 .include <bsd.obj.mk>

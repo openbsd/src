@@ -1,4 +1,4 @@
-# $OpenBSD: disktab,v 1.12 2012/05/25 17:32:38 miod Exp $
+# $OpenBSD: disktab,v 1.13 2014/01/06 21:03:13 miod Exp $
 
 rdroot|ramdiskroot|RAM-disk root FS image:\
 	:ty=simulated:se#512:nc#20:nt#4:ns#128:\
@@ -11,7 +11,6 @@ minicdroot|minicdramdiskroot|Boot CD-ROM image:\
 	:ob#0:pb#0:oc#0:pc#24576:
 
 cdroot|cdramdiskroot|Installation CD-ROM image:\
-	:ty=simulated:se#2048:nc#16:nt#300:ns#32:\
-	:ta=4.2BSD:oa#128:pa#153472:fa#2048:ba#16384:\
-	:ob#0:pb#0:oc#0:pc#153600:op#0:pp#128:
-
+	:ty=simulated:se#2048:nc#16:nt#316:ns#32:\
+	:ta=4.2BSD:oa#8320:pa#153472:fa#2048:ba#16384:\
+	:ob#0:pb#0:oc#0:pc#161792:op#0:pp#8320:
