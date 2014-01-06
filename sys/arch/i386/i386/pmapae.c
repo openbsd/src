@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.22 2013/02/09 20:37:41 miod Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.23 2014/01/06 14:29:25 sf Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -516,10 +516,10 @@ typedef u_int64_t pd_entry_t;	/* PDE */
 typedef u_int64_t pt_entry_t;	/* PTE */
 
 /*
- * Number of PTE's per cache line. 8 byte pte, 32-byte cache line
+ * Number of PTE's per cache line. 8 byte pte, 64-byte cache line
  * Used to avoid false sharing of cache lines.
  */
-#define	NPTECL		4
+#define	NPTECL		8
 
 /*
  * other data structures

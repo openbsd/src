@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.62 2013/03/31 17:07:03 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.63 2014/01/06 14:29:25 sf Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -229,12 +229,6 @@
 #define PG_W		PG_AVAIL1	/* "wired" mapping */
 #define PG_PVLIST	PG_AVAIL2	/* mapping has entry on pvlist */
 #define	PG_X		PG_AVAIL3	/* executable mapping */
-
-/*
- * Number of PTE's per cache line.  4 byte pte, 32-byte cache line
- * Used to avoid false sharing of cache lines.
- */
-#define NPTECL			8
 
 #ifdef _KERNEL
 /*

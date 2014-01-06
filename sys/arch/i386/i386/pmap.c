@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.158 2013/02/13 20:45:41 kurt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.159 2014/01/06 14:29:25 sf Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -287,6 +287,12 @@ struct pmap_head pmaps;
  */
 
 struct pool pmap_pmap_pool;
+
+/*
+ * Number of PTE's per cache line.  4 byte pte, 64-byte cache line
+ * Used to avoid false sharing of cache lines.
+ */
+#define NPTECL			16
 
 /*
  * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
@@ -858,7 +864,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	/*
 	 * Waste some VA space to avoid false sharing of cache lines
 	 * for page table pages: Give each possible CPU a cache line
-	 * of PTE's (8) to play with, though we only need 4.  We could
+	 * of PTE's (16) to play with, though we only need 4.  We could
 	 * recycle some of this waste by putting the idle stacks here
 	 * as well; we could waste less space if we knew the largest
 	 * CPU ID beforehand.
