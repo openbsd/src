@@ -1,3 +1,8 @@
+./etc/firmware/rum-license
+./etc/firmware/rum-rt2573
+./etc/firmware/run-license
+./etc/firmware/run-rt2870
+./etc/firmware/run-rt3071
 ./sbin/kbd
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so
@@ -619,7 +624,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7/ieee.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7/ieeefp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7/intr.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/armv7/irqhandler.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7/isa_machdep.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7/limits.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armv7/loadfile_machdep.ph
@@ -2340,5 +2344,6 @@
 ./usr/libexec/ld.so
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/arm-openbsd
+./usr/sbin/gpioctl
 ./usr/sbin/hotplugd
 ./usr/sbin/mkuboot

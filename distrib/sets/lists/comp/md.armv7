@@ -74,7 +74,6 @@
 ./usr/include/armv7/ieee.h
 ./usr/include/armv7/ieeefp.h
 ./usr/include/armv7/intr.h
-./usr/include/armv7/irqhandler.h
 ./usr/include/armv7/isa_machdep.h
 ./usr/include/armv7/limits.h
 ./usr/include/armv7/loadfile_machdep.h
