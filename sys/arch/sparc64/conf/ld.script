@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.5 2013/12/28 19:27:35 kettenis Exp $	*/
+/*	$OpenBSD: ld.script,v 1.6 2014/01/06 21:16:31 tobiasu Exp $	*/
 
 /*
  * Copyright (c) 2013 Mark Kettenis <kettenis@openbsd.org>
@@ -33,6 +33,7 @@ SECTIONS
 	.text :
 	{
 		*(.text)
+		PROVIDE(etext = .);
 	} :text
 	.rodata :
 	{
