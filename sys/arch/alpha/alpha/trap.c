@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.64 2012/12/31 06:46:13 guenther Exp $ */
+/* $OpenBSD: trap.c,v 1.65 2014/01/06 20:27:44 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -365,8 +365,7 @@ trap(a0, a1, a2, entry, framep)
 		case ALPHA_MMCSR_FOE:
 		case ALPHA_MMCSR_FOW:
 			if (pmap_emulate_reference(p, a0, user, a1)) {
-				/* XXX - stupid API right now. */
-				ftype = VM_PROT_EXECUTE|VM_PROT_READ;
+				ftype = VM_PROT_EXECUTE;
 				goto do_fault;
 			}
 			goto out;
@@ -382,7 +381,7 @@ trap(a0, a1, a2, entry, framep)
 
 			switch (a2) {
 			case -1:		/* instruction fetch fault */
-				ftype = VM_PROT_EXECUTE|VM_PROT_READ;
+				ftype = VM_PROT_EXECUTE;
 				break;
 			case 0:			/* load instruction */
 				ftype = VM_PROT_READ;

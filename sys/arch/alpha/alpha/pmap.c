@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.68 2014/01/06 20:21:32 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.69 2014/01/06 20:27:44 miod Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -1408,6 +1408,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	case VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE:
 	case VM_PROT_READ|VM_PROT_WRITE:
 		return;
+
 	/* copy_on_write */
 	case VM_PROT_READ|VM_PROT_EXECUTE:
 	case VM_PROT_READ:
@@ -1415,6 +1416,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 /* XXX */	pmap_changebit(pg, 0, ~(PG_KWE | PG_UWE), cpu_id);
 		PMAP_HEAD_TO_MAP_UNLOCK();
 		return;
+
 	/* remove_all */
 	default:
 		break;
@@ -1494,8 +1496,6 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	PMAP_LOCK(pmap);
 
 	bits = pte_prot(pmap, prot);
-	if (!pmap_pte_exec(&bits))
-		bits |= PG_FOE;
 	isactive = PMAP_ISACTIVE(pmap, cpu_id);
 
 	l1pte = pmap_l1pte(pmap, sva);
@@ -1810,10 +1810,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			npte |= PG_FOR | PG_FOW | PG_FOE;
 		else if ((attrs & PGA_MODIFIED) == 0)
 			npte |= PG_FOW;
-
-		/* Always force FOE on non-exec mappings. */
-		if (!pmap_pte_exec(pte))
-			npte |= PG_FOE;
 
 		/*
 		 * Mapping was entered on PV list.
@@ -2410,39 +2406,23 @@ alpha_protection_init(void)
 	up = protection_codes[1];
 
 	for (prot = 0; prot < 8; prot++) {
-		kp[prot] = 0; up[prot] = 0;
-		switch (prot) {
-		case VM_PROT_NONE | VM_PROT_NONE | VM_PROT_NONE:
-			kp[prot] |= PG_ASM;
-			up[prot] |= 0;
-			break;
+		kp[prot] = PG_ASM;
+		up[prot] = 0;
 
-		case VM_PROT_READ | VM_PROT_NONE | VM_PROT_EXECUTE:
-		case VM_PROT_NONE | VM_PROT_NONE | VM_PROT_EXECUTE:
-			kp[prot] |= PG_EXEC;		/* software */
-			up[prot] |= PG_EXEC;		/* software */
-			/* FALLTHROUGH */
-
-		case VM_PROT_READ | VM_PROT_NONE | VM_PROT_NONE:
-			kp[prot] |= PG_ASM | PG_KRE;
-			up[prot] |= PG_URE | PG_KRE;
-			break;
-
-		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_NONE:
-			kp[prot] |= PG_ASM | PG_KWE;
-			up[prot] |= PG_UWE | PG_KWE;
-			break;
-
-		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_EXECUTE:
-		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE:
-			kp[prot] |= PG_EXEC;		/* software */
-			up[prot] |= PG_EXEC;		/* software */
-			/* FALLTHROUGH */
-
-		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_NONE:
-			kp[prot] |= PG_ASM | PG_KWE | PG_KRE;
-			up[prot] |= PG_UWE | PG_URE | PG_KWE | PG_KRE;
-			break;
+		if (prot & VM_PROT_READ) {
+			kp[prot] |= PG_KRE;
+			up[prot] |= PG_KRE | PG_URE;
+		}
+		if (prot & VM_PROT_WRITE) {
+			kp[prot] |= PG_KWE;
+			up[prot] |= PG_KWE | PG_UWE;
+		}
+		if (prot & VM_PROT_EXECUTE) {
+			kp[prot] |= PG_EXEC | PG_KRE;
+			up[prot] |= PG_EXEC | PG_KRE | PG_URE;
+		} else {
+			kp[prot] |= PG_FOE;
+			up[prot] |= PG_FOE;
 		}
 	}
 }
@@ -2567,9 +2547,6 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
  *	Note: we assume that the pv_head is already locked, and that
  *	the caller has acquired a PV->pmap mutex so that we can lock
  *	the pmaps as we encounter them.
- *
- *	XXX This routine could stand to have some I-stream
- *	XXX optimization done.
  */
 void
 pmap_changebit(struct vm_page *pg, u_long set, u_long mask, cpuid_t cpu_id)
@@ -2612,17 +2589,18 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, cpuid_t cpu_id)
  * pmap_emulate_reference:
  *
  *	Emulate reference and/or modified bit hits.
- *
- *	return non-zero if this was a FOE fault and the pte is not
- *	executable.
+ *	Return non-zero if this was an execute fault on a non-exec mapping,
+ *	otherwise return 0.
  */
 int
 pmap_emulate_reference(struct proc *p, vaddr_t v, int user, int type)
 {
+	struct pmap *pmap;
 	pt_entry_t faultoff, *pte;
 	struct vm_page *pg;
 	paddr_t pa;
 	boolean_t didlock = FALSE;
+	boolean_t exec = FALSE;
 	cpuid_t cpu_id = cpu_number();
 
 #ifdef DEBUG
@@ -2648,16 +2626,18 @@ pmap_emulate_reference(struct proc *p, vaddr_t v, int user, int type)
 		if (p->p_vmspace == NULL)
 			panic("pmap_emulate_reference: bad p_vmspace");
 #endif
-		PMAP_LOCK(p->p_vmspace->vm_map.pmap);
+		pmap = p->p_vmspace->vm_map.pmap;
+		PMAP_LOCK(pmap);
 		didlock = TRUE;
-		pte = pmap_l3pte(p->p_vmspace->vm_map.pmap, v, NULL);
+		pte = pmap_l3pte(pmap, v, NULL);
 		/*
 		 * We'll unlock below where we're done with the PTE.
 		 */
 	}
-	if (!pmap_pte_exec(pte) && type == ALPHA_MMCSR_FOE) {
+	exec = pmap_pte_exec(pte);
+	if (!exec && type == ALPHA_MMCSR_FOE) {
 		if (didlock)
-			PMAP_UNLOCK(p->p_vmspace->vm_map.pmap);
+			PMAP_UNLOCK(pmap);
 		return (1);
 	}
 #ifdef DEBUG
@@ -2695,7 +2675,7 @@ pmap_emulate_reference(struct proc *p, vaddr_t v, int user, int type)
 	 * it now.
 	 */
 	if (didlock)
-		PMAP_UNLOCK(p->p_vmspace->vm_map.pmap);
+		PMAP_UNLOCK(pmap);
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2722,16 +2702,14 @@ pmap_emulate_reference(struct proc *p, vaddr_t v, int user, int type)
 
 	if (type == ALPHA_MMCSR_FOW) {
 		pg->mdpage.pvh_attrs |= (PGA_REFERENCED|PGA_MODIFIED);
-		faultoff = PG_FOR | PG_FOW | PG_FOE;
+		faultoff = PG_FOR | PG_FOW;
 	} else {
 		pg->mdpage.pvh_attrs |= PGA_REFERENCED;
-		faultoff = PG_FOR | PG_FOE;
+		faultoff = PG_FOR;
+		if (exec) {
+			faultoff |= PG_FOE;
+		}
 	}
-	/*
-	 * If the page is not PG_EXEC, pmap_changebit will automagically
-	 * set PG_FOE (gross, but necessary if I don't want to change the
-	 * whole API).
-	 */
 	pmap_changebit(pg, 0, ~faultoff, cpu_id);
 
 	PMAP_HEAD_TO_MAP_UNLOCK();
