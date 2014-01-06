@@ -1,4 +1,4 @@
-/* $OpenBSD: tsp_dma.c,v 1.8 2009/10/02 18:01:47 miod Exp $ */
+/* $OpenBSD: tsp_dma.c,v 1.9 2014/01/06 20:11:40 miod Exp $ */
 /* $NetBSD: tsp_dma.c,v 1.1 1999/06/29 06:46:47 ross Exp $ */
 
 /*-
@@ -105,37 +105,50 @@ tsp_dma_init(struct device *tsp, struct tsp_config *pcp)
 	bus_dma_tag_t t;
 	struct ts_pchip *pccsr = pcp->pc_csr;
 	bus_addr_t dwbase, dwlen, sgwbase, sgwlen, tbase;
-	static struct map_expected {
-		u_int32_t base, mask, enables;
+	static const struct map_expected {
+		u_int32_t base, mask, physbase, enables;
 	} premap[4] = {
-		{ 0x00800000, 0x00700000, WSBA_ENA | WSBA_SG },
-		{ 0x80000000, 0x3ff00000, WSBA_ENA           },
-		{ 0, 0, 0 },
+		/* 0-8MB at 8MB with S/G DMA (isa space) */
+		{ 0x00800000, 0x00700000, 0x00000000, WSBA_ENA | WSBA_SG },
+		/* 0-1GB at 2GB direct */
+		{ 0x80000000, 0x3ff00000, 0x00000000, WSBA_ENA           },
+		/* 1-2GB at 3GB direct */
+		{ 0xC0000000, 0x3ff00000, 0x40000000, WSBA_ENA           },
 		{ 0, 0, 0 }
 	};
 
 	alpha_mb();
 	for(i = 0; i < 4; ++i) {
+#ifdef DEBUG
 		if (EDIFF(pccsr->tsp_wsba[i].tsg_r, premap[i].base) ||
-		    EDIFF(pccsr->tsp_wsm[i].tsg_r, premap[i].mask))
+		    EDIFF(pccsr->tsp_wsm[i].tsg_r, premap[i].mask) ||
+		    ((premap[i].enables & WSBA_SG) == 0 &&
+		      pccsr->tsp_tba[i].tsg_r != premap[i].physbase))
 			printf("%s: window %d: %lx/base %lx/mask %lx"
 			    " reinitialized\n",
 			    tsp->dv_xname, i,
 			    pccsr->tsp_wsba[i].tsg_r,
 			    pccsr->tsp_wsm[i].tsg_r,
 			    pccsr->tsp_tba[i].tsg_r);
+#endif
 		pccsr->tsp_wsba[i].tsg_r = premap[i].base | premap[i].enables;
 		pccsr->tsp_wsm[i].tsg_r = premap[i].mask;
+		if ((premap[i].enables & WSBA_SG) == 0)
+			pccsr->tsp_tba[i].tsg_r = premap[i].physbase;
 	}
 	alpha_mb();
 
 	/*
-	 * Initialize the DMA tag used for direct-mapped DMA.
+	 * Initialize the DMA tags used for direct-mapped DMA.
 	 */
 	t = &pcp->pc_dmat_direct;
 	t->_cookie = pcp;
 	t->_wbase = dwbase = WSBA_ADDR(pccsr->tsp_wsba[1].tsg_r);
-	t->_wsize = dwlen = WSM_LEN(pccsr->tsp_wsm[1].tsg_r);
+	t->_wsize = dwlen = WSM_LEN(pccsr->tsp_wsm[1].tsg_r) +
+	    WSM_LEN(pccsr->tsp_wsm[2].tsg_r);
+	KDASSERT(WSBA_ADDR(pccsr->tsp_wsba[2].tsg_r) ==
+	    WSBA_ADDR(pccsr->tsp_wsba[1].tsg_r) +
+	    WSM_LEN(pccsr->tsp_wsm[1].tsg_r));
 	t->_next_window = &pcp->pc_dmat_sgmap;
 	t->_boundary = 0;
 	t->_sgmap = NULL;
@@ -187,21 +200,6 @@ tsp_dma_init(struct device *tsp, struct tsp_config *pcp)
 	 */
 	alpha_sgmap_init(t, &pcp->pc_sgmap, "tsp_sgmap",
 	    sgwbase, 0, sgwlen, sizeof(u_int64_t), NULL, (32*1024));
-
-	/*
-	 * Enable window 0 and enable SG PTE mapping.
-	 */
-	alpha_mb();
-	pccsr->tsp_wsba[0].tsg_r |= WSBA_SG | WSBA_ENA;
-	alpha_mb();
-
-	/*
-	 * Enable window 1 in direct mode.
-	 */
-	alpha_mb();
-	pccsr->tsp_wsba[1].tsg_r =
-	    (pccsr->tsp_wsba[1].tsg_r & ~WSBA_SG) | WSBA_ENA;
-	alpha_mb();
 
 	/*
 	 * Check windows for sanity, especially if we later decide to
