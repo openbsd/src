@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.61 2014/01/06 03:52:05 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.62 2014/01/06 13:54:11 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -122,7 +122,7 @@ struct	mdoc_handler {
 };
 
 static	void	 dbclose(int);
-static	void	 dbindex(const struct mpage *, struct mchars *);
+static	void	 dbadd(const struct mpage *, struct mchars *);
 static	int	 dbopen(int);
 static	void	 dbprune(void);
 static	void	 filescan(const char *);
@@ -1039,7 +1039,7 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 		else
 			parse_cat(mpage);
 
-		dbindex(mpage, mc);
+		dbadd(mpage, mc);
 		ohash_delete(&strings);
 		mpage = ohash_next(&mpages, &pslot);
 	}
@@ -1724,7 +1724,7 @@ render_key(struct mchars *mc, struct str *key)
  * Also, handle escape sequences at the last possible moment.
  */
 static void
-dbindex(const struct mpage *mpage, struct mchars *mc)
+dbadd(const struct mpage *mpage, struct mchars *mc)
 {
 	struct mlink	*mlink;
 	struct str	*key;
@@ -1733,7 +1733,7 @@ dbindex(const struct mpage *mpage, struct mchars *mc)
 	unsigned int	 slot;
 
 	if (verb)
-		say(mpage->mlinks->file, "Adding to index");
+		say(mpage->mlinks->file, "Adding to database");
 
 	if (nodb)
 		return;
@@ -1794,7 +1794,7 @@ dbprune(void)
 		SQL_STEP(stmts[STMT_DELETE_PAGE]);
 		sqlite3_reset(stmts[STMT_DELETE_PAGE]);
 		if (verb)
-			say(mlink->file, "Deleted from index");
+			say(mlink->file, "Deleted from database");
 		mpage = ohash_next(&mpages, &slot);
 	}
 }
