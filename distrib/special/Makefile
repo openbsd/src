@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.25 2012/08/21 08:12:47 pascal Exp $
+#	$OpenBSD: Makefile,v 1.26 2014/01/06 22:28:45 deraadt Exp $
 
 SUBDIR=	libstubs \
-	date dd dhclient dmesg ed ftp grep gzip ifconfig init \
+	arch date dd dhclient dmesg ed ftp grep gzip ifconfig init \
 	kbd less more mt newfs ping restore sed sha256 sysctl 
 
 install:
