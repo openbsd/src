@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.142 2013/11/18 08:20:22 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.143 2014/01/06 16:17:33 uebayasi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -804,8 +804,18 @@ boot(int howto)
 {
 	static int syncing;
 
+	if (cold) {
+		/*
+		 * If the system is cold, just halt, unless the user
+		 * explicitly asked for reboot.
+		 */
+		if ((howto & RB_USERREQ) == 0)
+			howto |= RB_HALT;
+		goto haltsys;
+	}
+
 	boothowto = howto;
-	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
+	if (!(howto & RB_NOSYNC) && !syncing) {
 		syncing = 1;
 		vfs_shutdown();		/* sync */
 
@@ -825,8 +835,10 @@ boot(int howto)
 	uvm_shutdown();
 	splhigh();
 
-	if (!cold && (howto & RB_DUMP))
+	if (howto & RB_DUMP)
 		dumpsys();
+
+haltsys:
 	doshutdownhooks();
 	if (!TAILQ_EMPTY(&alldevs))
 		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
