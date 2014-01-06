@@ -1716,6 +1716,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/trap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/varargs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/vmparam.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/z8530var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net
