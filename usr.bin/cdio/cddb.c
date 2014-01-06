@@ -1,4 +1,4 @@
-/* $OpenBSD: cddb.c,v 1.18 2014/01/04 15:39:17 tobias Exp $ */
+/* $OpenBSD: cddb.c,v 1.19 2014/01/06 12:38:10 espie Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -212,6 +212,8 @@ get_line(FILE *cin)
 		line[--len] = 0;
 	if (len != 0 && line[len-1] == '\r')
 		line[--len] = 0;
+	if (line[len] != 0)
+		return NULL;
 	return line;
 }
 
