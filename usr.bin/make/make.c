@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.67 2013/05/22 12:14:08 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.68 2014/01/06 12:21:45 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -326,7 +326,6 @@ try_to_make_node(GNode *gn)
 	}
 
 	/* SIB: this is where there should be a siblings loop */
-	Suff_FindDeps(gn);
 	if (gn->unmade != 0) {
 		if (DEBUG(MAKE))
 			printf(" Requeuing (after deps: %d)\n", gn->unmade);
@@ -519,6 +518,7 @@ add_targets_to_make(Lst todo)
 		 * commands has commands ...
 		 */
 		Lst_ForEach(&gn->children, MakeHandleUse, gn);
+		Suff_FindDeps(gn);
 		expand_all_children(gn);
 
 		if (gn->unmade != 0) {
