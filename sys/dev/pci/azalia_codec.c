@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.158 2014/01/02 04:23:35 jsg Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.159 2014/01/06 06:54:15 brad Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -99,6 +99,9 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x10ec0282:
 		this->name = "Realtek ALC282";
 		this->qrks |= AZ_QRK_WID_CDIN_1C | AZ_QRK_WID_BEEP_1D;
+		break;
+	case 0x10ec0292:
+		this->name = "Realtek ALC292";
 		break;
 	case 0x10ec0660:
 		this->name = "Realtek ALC660";
