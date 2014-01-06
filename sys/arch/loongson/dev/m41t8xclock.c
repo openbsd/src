@@ -1,4 +1,4 @@
-/*	$OpenBSD: m41t8xclock.c,v 1.2 2010/02/24 22:14:19 miod Exp $	*/
+/*	$OpenBSD: m41t8xclock.c,v 1.3 2014/01/06 21:38:46 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -77,19 +77,6 @@ m41t8xclock_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 }
 
-static inline int bcd2bin(int);
-static inline int
-bcd2bin(int datum)
-{
-	return (datum >> 4) * 10 + (datum & 0x0f);
-}
-static inline int bin2bcd(int);
-static inline int
-bin2bcd(int datum)
-{
-	return ((datum / 10) << 4) + (datum % 10);
-}
-
 void
 m41t8xclock_get(void *cookie, time_t unused, struct tod_time *tt)
 {
@@ -107,13 +94,13 @@ m41t8xclock_get(void *cookie, time_t unused, struct tod_time *tt)
 	splx(s);
 	iic_release_bus(sc->sc_tag, 0);
 
-	tt->sec = bcd2bin(data[M41T8X_SEC] & ~M41T8X_STOP);
-	tt->min = bcd2bin(data[M41T8X_MIN]);
-	tt->hour = bcd2bin(data[M41T8X_HR] & ~(M41T8X_CEB | M41T8X_CB));
+	tt->sec = FROMBCD(data[M41T8X_SEC] & ~M41T8X_STOP);
+	tt->min = FROMBCD(data[M41T8X_MIN]);
+	tt->hour = FROMBCD(data[M41T8X_HR] & ~(M41T8X_CEB | M41T8X_CB));
 	tt->dow = data[M41T8X_DOW];
-	tt->day = bcd2bin(data[M41T8X_DAY]);
-	tt->mon = bcd2bin(data[M41T8X_MON]);
-	tt->year = bcd2bin(data[M41T8X_YEAR]) + 100;
+	tt->day = FROMBCD(data[M41T8X_DAY]);
+	tt->mon = FROMBCD(data[M41T8X_MON]);
+	tt->year = FROMBCD(data[M41T8X_YEAR]) + 100;
 	if (data[M41T8X_HR] & M41T8X_CB)
 		tt->year += 100;
 }
@@ -135,18 +122,18 @@ m41t8xclock_set(void *cookie, struct tod_time *tt)
 		    sizeof data[0], 0);
 	/* compute new state */
 	data[M41T8X_HSEC] = 0;
-	data[M41T8X_SEC] = bin2bcd(tt->sec);
-	data[M41T8X_MIN] = bin2bcd(tt->min);
+	data[M41T8X_SEC] = TOBCD(tt->sec);
+	data[M41T8X_MIN] = TOBCD(tt->min);
 	data[M41T8X_HR] &= M41T8X_CEB;
 	if (tt->year >= 200)
 		data[M41T8X_HR] |= M41T8X_CB;
-	data[M41T8X_HR] |= bin2bcd(tt->hour);
-	data[M41T8X_DAY] = bin2bcd(tt->day);
-	data[M41T8X_MON] = bin2bcd(tt->mon);
+	data[M41T8X_HR] |= TOBCD(tt->hour);
+	data[M41T8X_DAY] = TOBCD(tt->day);
+	data[M41T8X_MON] = TOBCD(tt->mon);
 	if (tt->year >= 200)
-		data[M41T8X_YEAR] = bin2bcd(tt->year - 200);
+		data[M41T8X_YEAR] = TOBCD(tt->year - 200);
 	else
-		data[M41T8X_YEAR] = bin2bcd(tt->year - 100);
+		data[M41T8X_YEAR] = TOBCD(tt->year - 100);
 	/* write new state */
 	for (regno = M41T8X_TOD_START;
 	    regno < M41T8X_TOD_START + M41T8X_TOD_LENGTH; regno++)
