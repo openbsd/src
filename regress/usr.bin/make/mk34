@@ -1,5 +1,10 @@
-# $OpenBSD: mk34,v 1.1 2013/12/26 10:25:07 espie Exp $
+# $OpenBSD: mk34,v 1.2 2014/01/06 12:31:56 espie Exp $
 # should produce similar error message with -j and without -j
 
-thing.o: ${.PREFIX}.vis
-	@echo trythis
+t38.a: ${.PREFIX}.b
+	@echo okay
+
+t38.b:
+	@touch $@
+
+.SUFFIXES: .a .b
