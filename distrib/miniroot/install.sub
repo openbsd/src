@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.724 2014/01/05 01:52:17 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.725 2014/01/07 23:58:44 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1769,16 +1769,17 @@ getdevname() {
 #
 # Exit if any fsck's fail (but do them all before exiting!).
 check_fs() {
-	local _dev _mp _fstype _rest _fail _f _passno
+	local _dev _dn _mp _fstype _rest _fail _f _passno
 
 	ask_yn "Force checking of clean non-root filesystems?"
 	[[ $resp == y ]] && _f=f
 
 	while read _dev _mp _fstype _rest _rest _passno _rest; do
-		[ "$_dev" != /dev/"$ROOTDEV" ] || continue
+		_dn=$(getdevname "$_dev")
+		[[ $ROOTDEV == @(${_dev#/dev/}|$_dn${_dev##*.}) ]] && continue
 		[ -f "/sbin/fsck_$_fstype" ] || continue
 		# Make sure device exists before fsck'ing it.
-		makedev "$(getdevname "$_dev")" || continue
+		makedev "$_dn" || continue
 		((_passno > 0)) || continue
 		echo -n "fsck -${_f}p $_dev..."
 		if ! fsck -${_f}p $_dev >/dev/null 2>&1; then
