@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.55 2013/11/15 10:17:39 pirofti Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.56 2014/01/07 09:54:18 mpi Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -130,8 +130,6 @@ struct upl_softc {
 
 	struct usbd_device	*sc_udev;
 	struct usbd_interface	*sc_iface;
-	u_int16_t		sc_vendor;
-	u_int16_t		sc_product;
 	int			sc_ed[UPL_ENDPT_MAX];
 	struct usbd_pipe	*sc_ep[UPL_ENDPT_MAX];
 	struct upl_cdata	sc_cdata;
@@ -233,8 +231,6 @@ upl_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_udev = dev;
-	sc->sc_product = uaa->product;
-	sc->sc_vendor = uaa->vendor;
 
 	err = usbd_device2interface_handle(dev, UPL_IFACE_IDX, &iface);
 	if (err) {

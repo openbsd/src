@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ugl.c,v 1.4 2013/12/11 01:12:01 brad Exp $	*/
+/*	$OpenBSD: if_ugl.c,v 1.5 2014/01/07 09:54:18 mpi Exp $	*/
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2013 SASANO Takayoshi <uaa@uaa.org.uk>
@@ -144,8 +144,6 @@ struct ugl_softc {
 
 	struct usbd_device	*sc_udev;
 	struct usbd_interface	*sc_iface;
-	u_int16_t		sc_vendor;
-	u_int16_t		sc_product;
 	int			sc_ed[UGL_ENDPT_MAX];
 	struct usbd_pipe	*sc_ep[UGL_ENDPT_MAX];
 	struct ugl_cdata	sc_cdata;
@@ -246,8 +244,6 @@ ugl_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_udev = dev;
-	sc->sc_product = uaa->product;
-	sc->sc_vendor = uaa->vendor;
 
 	err = usbd_device2interface_handle(dev, UGL_IFACE_IDX, &iface);
 	if (err) {
