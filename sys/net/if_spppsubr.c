@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.114 2013/12/11 18:27:23 jca Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.115 2014/01/07 16:34:05 stsp Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -67,6 +67,10 @@
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <netinet/if_ether.h>
+#endif
+
+#ifdef INET6
+#include <netinet6/in6_ifattach.h>
 #endif
 
 #include <net/if_sppp.h>
@@ -3222,7 +3226,10 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 		addlog("\n");
 
 	/* pass 2: parse option values */
-	sppp_get_ip6_addrs(sp, &myaddr, NULL, NULL);
+	if (sp->ipv6cp.flags & IPV6CP_MYIFID_DYN)
+		myaddr = sp->ipv6cp.req_ifid.ifra_addr.sin6_addr;
+	else
+		sppp_get_ip6_addrs(sp, &myaddr, NULL, NULL);
 	if (debug)
 		log(LOG_DEBUG, "%s: ipv6cp parse opt values: ",
 		       SPP_ARGS(ifp));
@@ -3455,7 +3462,10 @@ sppp_ipv6cp_scr(struct sppp *sp)
 	int i = 0;
 
 	if (sp->ipv6cp.opts & (1 << IPV6CP_OPT_IFID)) {
-		sppp_get_ip6_addrs(sp, &ouraddr, NULL, NULL);
+		if (sp->ipv6cp.flags & IPV6CP_MYIFID_DYN)
+			ouraddr = sp->ipv6cp.req_ifid.ifra_addr.sin6_addr;
+		else
+			sppp_get_ip6_addrs(sp, &ouraddr, NULL, NULL);
 		opt[i++] = IPV6CP_OPT_IFID;
 		opt[i++] = 10;
 		bcopy(&ouraddr.s6_addr[8], &opt[i], 8);
@@ -4768,6 +4778,25 @@ sppp_update_ip6_addr(void *arg1, void *arg2)
 		return;
 	}
 
+	/* 
+	 * Changing the link-local address requires purging all
+	 * existing addresses and routes for the interface first.
+	 */
+	if (sp->ipv6cp.flags & IPV6CP_MYIFID_DYN) {
+		in6_ifdetach(ifp);
+		error = in6_ifattach_linklocal(ifp, &ifra->ifra_addr.sin6_addr);
+		if (error)
+			log(LOG_ERR, SPP_FMT
+			    "could not update IPv6 address (error %d)\n",
+			    SPP_ARGS(ifp), error);
+		splx(s);
+		return;
+	}
+
+	/* 
+	 * Code below changes address parameters only, not the address itself.
+	 */
+
 	/* Destination address can only be set for /128. */
 	if (!in6_are_prefix_equal(&ia->ia_prefixmask.sin6_addr, &mask, 128)) {
 		ifra->ifra_dstaddr.sin6_len = 0;
@@ -4843,6 +4872,7 @@ sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest)
 		myaddr.s6_addr[14] ^= (random & 0xff);
 		myaddr.s6_addr[15] ^= ((random & 0xff00) >> 8);
 	}
+	myaddr.s6_addr16[1] = 0; /* KAME hack: clear ifindex */
 	bcopy(&myaddr, suggest, sizeof(myaddr));
 }
 #endif /*INET6*/
