@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.73 2014/01/05 23:11:24 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.74 2014/01/07 00:48:24 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -127,7 +127,7 @@ sub next
 	# get rid of the current object
 	$self->skip;
 	my $header;
-	my $n = read $self->{fh}, $header, 512;
+	my $n = read($self->{fh}, $header, 512);
 	return if (defined $n) and $n == 0;
 	$self->fatal("Error while reading header")
 	    unless defined $n and $n == 512;
@@ -160,8 +160,8 @@ sub next
 	$uid = $uidcache->lookup($uname, $uid);
 	$gid = $gidcache->lookup($gname, $gid);
 	{
-	no warnings;
-	$mtime = oct($mtime);
+		no warnings; # XXX perl warns if oct converts >= 2^32 values
+		$mtime = oct($mtime);
 	}
 	unless ($prefix =~ m/^\0/o) {
 		$prefix =~ s/\0*$//o;
@@ -319,8 +319,8 @@ sub prepare
 	};
 	my $k = $entry->{key};
 	my $class = "OpenBSD::Ustar::File"; # default
-	if (defined $self->{key}->{$k}) {
-		$entry->{linkname} = $self->{key}->{$k};
+	if (defined $self->{key}{$k}) {
+		$entry->{linkname} = $self->{key}{$k};
 		$class = "OpenBSD::Ustar::HardLink";
 	} elsif (-l $realname) {
 		$entry->{linkname} = readlink($realname);
@@ -389,7 +389,7 @@ sub system
 sub errsay
 {
 	my ($self, @args) = @_;
-	$self->{archive}->{state}->errsay(@args);
+	$self->{archive}{state}->errsay(@args);
 }
 sub todo
 {
@@ -451,8 +451,8 @@ sub write
 	print $out $header or $self->fatal("Error writing to archive: #1", $!);
 	$self->write_contents($arc);
 	my $k = $self->{key};
-	if (!defined $arc->{key}->{$k}) {
-		$arc->{key}->{$k} = $self->name;
+	if (!defined $arc->{key}{$k}) {
+		$arc->{key}{$k} = $self->name;
 	}
 }
 
@@ -460,9 +460,9 @@ sub alias
 {
 	my ($self, $arc, $alias) = @_;
 
-	my $k = $self->{archive}.":".$self->{archive}->{cachename};
-	if (!defined $arc->{key}->{$k}) {
-		$arc->{key}->{$k} = $alias;
+	my $k = $self->{archive}.":".$self->{archive}{cachename};
+	if (!defined $arc->{key}{$k}) {
+		$arc->{key}{$k} = $alias;
 	}
 }
 
@@ -536,8 +536,8 @@ sub resolve_links
 	my ($self, $arc) = @_;
 
 	my $k = $self->{archive}.":".$self->{linkname};
-	if (defined $arc->{key}->{$k}) {
-		$self->{linkname} = $arc->{key}->{$k};
+	if (defined $arc->{key}{$k}) {
+		$self->{linkname} = $arc->{key}{$k};
 	} else {
 		print join("\n", keys(%{$arc->{key}})), "\n";
 		$self->fatal("Can't copy link over: original for #1 NOT available", $k);
@@ -703,14 +703,14 @@ sub create
 	while ($toread > 0) {
 		my $maxread = $buffsize;
 		$maxread = $toread if $maxread > $toread;
-		my $actual = read($self->{archive}->{fh}, $buffer, $maxread);
+		my $actual = read($self->{archive}{fh}, $buffer, $maxread);
 		if (!defined $actual) {
 			$self->fatal("Error reading from archive: #1", $!);
 		}
 		if ($actual == 0) {
 			$self->fatal("Premature end of archive");
 		}
-		$self->{archive}->{swallow} -= $actual;
+		$self->{archive}{swallow} -= $actual;
 		unless ($out->write($buffer)) {
 			$self->fatal("Error writing to #1#2: #3",
 			    $self->{destdir}, $self->name, $!);
@@ -742,14 +742,14 @@ sub contents
 			last if (defined $buffer) and &$lookfor($buffer);
 			$sz = 1024 if $sz > 1024;
 		}
-		my $actual = read($self->{archive}->{fh}, $buffer, $sz, $offset);
+		my $actual = read($self->{archive}{fh}, $buffer, $sz, $offset);
 		if (!defined $actual) {
 			$self->fatal("Error reading from archive: #1", $!);
 		}
 		if ($actual != $sz) {
 			$self->fatal("Error: short read from archive");
 		}
-		$self->{archive}->{swallow} -= $actual;
+		$self->{archive}{swallow} -= $actual;
 		$toread -= $actual;
 		$offset += $actual;
 	}
@@ -802,14 +802,14 @@ sub copy_contents
 	while ($toread > 0) {
 		my $maxread = $buffsize;
 		$maxread = $toread if $maxread > $toread;
-		my $actual = read($self->{archive}->{fh}, $buffer, $maxread);
+		my $actual = read($self->{archive}{fh}, $buffer, $maxread);
 		if (!defined $actual) {
 			$self->fatal("Error reading from archive: #1", $!);
 		}
 		if ($actual == 0) {
 			$self->fatal("Premature end of archive");
 		}
-		$self->{archive}->{swallow} -= $actual;
+		$self->{archive}{swallow} -= $actual;
 		unless (print $out $buffer) {
 			$self->fatal("Error writing to archive #1", $!);
 		}
