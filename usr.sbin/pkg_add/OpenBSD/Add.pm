@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.135 2014/01/05 10:24:30 espie Exp $
+# $OpenBSD: Add.pm,v 1.136 2014/01/07 10:22:05 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -198,12 +198,7 @@ sub set_modes
 			$uidcache = OpenBSD::UidCache->new;
 			$gidcache = OpenBSD::GidCache->new;
 		}
-		my ($uid, $gid);
-		if (-l $name) {
-			($uid, $gid) = (lstat $name)[4,5];
-		} else {
-			($uid, $gid) = (stat $name)[4,5];
-		}
+		my ($uid, $gid) = (-1, -1);
 		if (defined $self->{owner}) {
 			$uid = $uidcache->lookup($self->{owner}, $uid);
 		}
@@ -217,7 +212,8 @@ sub set_modes
 		if ($v =~ m/^\d+$/o) {
 			chmod oct($v), $name;
 		} else {
-			$state->system(OpenBSD::Paths->chmod, $self->{mode}, $name);
+			$state->system(OpenBSD::Paths->chmod, 
+			    $self->{mode}, $name);
 		}
 	}
 }
