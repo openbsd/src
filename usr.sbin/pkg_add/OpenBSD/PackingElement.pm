@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.223 2014/01/07 13:37:23 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.224 2014/01/07 13:52:43 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1698,16 +1698,6 @@ sub copy_deep_if
 # CONTENTS doesn't have a checksum
 sub may_verify_digest
 {
-}
-package OpenBSD::PackingElement::FCOMMENT;
-our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
-sub name() { OpenBSD::PackageInfo::COMMENT }
-
-sub new
-{
-	my ($self, @r) = @_;
-	print STDERR "Warning: obsolete special file: +COMMENT\n";
-	$self->SUPER::new(@r);
 }
 
 package OpenBSD::PackingElement::FDESC;

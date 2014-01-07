@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.27 2013/01/18 21:19:36 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.28 2014/01/07 13:52:43 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -123,7 +123,7 @@ sub print_description
 	my $_;
 
 	open my $fh, '<', $dir.DESC or return;
-	$_ = <$fh> unless -f $dir.COMMENT;
+	$_ = <$fh>; # zap COMMENT
 	while(<$fh>) {
 		chomp;
 		$state->say("#1", $_);
@@ -239,7 +239,7 @@ sub get_line
 sub get_comment
 {
 	my $d = shift;
-	return get_line(-f $d.COMMENT? $d.COMMENT : $d.DESC);
+	return get_line($d.DESC);
 }
 
 sub find_by_spec
