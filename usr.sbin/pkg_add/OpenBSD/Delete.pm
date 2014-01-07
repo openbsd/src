@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.124 2014/01/05 10:24:30 espie Exp $
+# $OpenBSD: Delete.pm,v 1.125 2014/01/07 13:31:36 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -483,9 +483,6 @@ sub prepare_for_deletion
 	return unless defined $s;
 	if ($s->ro) {
 		$s->report_ro($state, $fname);
-	}
-	if ($s->noexec && $self->exec_on_delete) {
-		$s->report_noexec($state, $fname);
 	}
 }
 

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.221 2014/01/07 13:26:18 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.222 2014/01/07 13:31:36 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1595,9 +1595,6 @@ sub destate
 
 package OpenBSD::PackingElement::SpecialFile;
 our @ISA=qw(OpenBSD::PackingElement::Unique);
-
-sub exec_on_add { 0 }
-sub exec_on_delete { 0 }
 
 sub add_digest
 {

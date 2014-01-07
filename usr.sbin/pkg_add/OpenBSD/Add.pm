@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.137 2014/01/07 13:26:17 espie Exp $
+# $OpenBSD: Add.pm,v 1.138 2014/01/07 13:31:35 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -680,19 +680,10 @@ sub prepare_for_addition
 	if (!defined $size) {
 		$size = (stat $cname)[7];
 	}
-	if ($self->exec_on_add) {
-		my $s2 = $state->vstat->stat($cname);
-		if (defined $s2 && $s2->noexec) {
-			$s2->report_noexec($state, $cname);
-		}
-	}
 	my $s = $state->vstat->add($fname, $self->{size}, $pkgname);
 	return unless defined $s;
 	if ($s->ro) {
 		$s->report_ro($state, $fname);
-	}
-	if ($s->noexec && $self->exec_on_delete) {
-		$s->report_noexec($state, $fname);
 	}
 	if ($s->avail < 0) {
 		$s->report_overflow($state, $fname);
