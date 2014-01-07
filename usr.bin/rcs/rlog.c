@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.66 2013/06/03 17:04:35 jcs Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.67 2014/01/07 14:08:16 deraadt Exp $	*/
 /*
  * Copyright (c) 2005, 2009 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -232,7 +232,7 @@ rlog_select_daterev(RCSFILE *rcsfile, char *date)
 			delim = '\0';
 			last = "\0";
 		} else {
-			while (*last && isspace(*last))
+			while (*last && isspace((unsigned char)*last))
 				last++;
 		}
 

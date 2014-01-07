@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.13 2011/05/20 19:21:10 nicm Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.14 2014/01/07 14:08:16 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -247,7 +247,7 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 	nump->rn_id[0] = 0;
 
 	for (sp = str;; sp++) {
-		if (!isdigit(*sp) && (*sp != '.'))
+		if (!isdigit((unsigned char)*sp) && (*sp != '.'))
 			break;
 
 		if (*sp == '.') {

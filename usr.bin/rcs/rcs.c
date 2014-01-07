@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.79 2012/03/03 08:34:27 nicm Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.80 2014/01/07 14:08:16 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -633,7 +633,7 @@ int
 rcs_sym_check(const char *sym)
 {
 	int ret;
-	const char *cp;
+	const unsigned char *cp;
 
 	ret = 1;
 	cp = sym;
@@ -1795,7 +1795,7 @@ int
 rcs_state_check(const char *state)
 {
 	int ret;
-	const char *cp;
+	const unsigned char *cp;
 
 	ret = 0;
 	cp = state;
