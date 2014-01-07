@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.89 2014/01/04 00:14:08 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.90 2014/01/07 10:44:07 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: January 4 2014 $
+.Dd $Mdocdate: January 7 2014 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -53,6 +53,7 @@
 .Fl f Ar packinglist
 .Nm pkg_create
 .Fl s Ar signature-parameter ...
+.Op Fl j Ar maxjobs
 .Op Fl D Ar SIGNER Ns = Ns Ar value
 .Op Fl o Ar dir
 .Op Fl S Ar source
@@ -143,6 +144,9 @@ Set to the port's Makefile
 Set package
 .Dq one line description
 (mandatory).
+.It Ar HISTORY_DIR
+Record checksums of files in permanent location 
+.Pa ${HISTORY_DIR}/${FULLPKGPATH:S,/,./g} .
 .It Ar FTP
 Set to the port's Makefile
 .Ar PERMIT_PACKAGE_FTP .
@@ -171,6 +175,8 @@ for package from the file
 .Ar packinglist .
 Several packing-lists can be mentioned, in which case they will be
 concatenated together.
+.It Fl j Ar maxjobs
+Sign existing packages in parallel.
 .It Fl L Ar localbase
 Record
 .Ar localbase
