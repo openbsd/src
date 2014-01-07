@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.269 2013/10/20 11:03:01 phessler Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.270 2014/01/07 17:07:45 mikeb Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -148,7 +148,8 @@ struct timeval tcp_ackdrop_ppslim_last;
 do { \
 	if (tp && tp->t_inpcb && (tp->t_inpcb->inp_flags & INP_IPV6) && \
 	    tp->t_inpcb->inp_route6.ro_rt) { \
-		nd6_nud_hint(tp->t_inpcb->inp_route6.ro_rt, NULL, 0); \
+		nd6_nud_hint(tp->t_inpcb->inp_route6.ro_rt, NULL, 0, \
+		    tp->t_inpcb->inp_rtableid); \
 	} \
 } while (0)
 #else

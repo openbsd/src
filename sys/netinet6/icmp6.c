@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.137 2013/12/20 02:04:08 krw Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.138 2014/01/07 17:07:46 mikeb Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2503,7 +2503,7 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 		struct nd_opt_hdr *nd_opt;
 		char *lladdr;
 
-		rt_nexthop = nd6_lookup(nexthop, 0, ifp);
+		rt_nexthop = nd6_lookup(nexthop, 0, ifp, ifp->if_rdomain);
 		if (!rt_nexthop)
 			goto nolladdropt;
 		len = sizeof(*nd_opt) + ifp->if_addrlen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.35 2013/10/25 02:54:42 deraadt Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.36 2014/01/07 17:07:46 mikeb Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -259,12 +259,12 @@ int nd6_is_addr_neighbor(struct sockaddr_in6 *, struct ifnet *);
 void nd6_option_init(void *, int, union nd_opts *);
 struct nd_opt_hdr *nd6_option(union nd_opts *);
 int nd6_options(union nd_opts *);
-struct	rtentry *nd6_lookup(struct in6_addr *, int, struct ifnet *);
+struct	rtentry *nd6_lookup(struct in6_addr *, int, struct ifnet *, u_int);
 void nd6_setmtu(struct ifnet *);
 void nd6_llinfo_settimer(struct llinfo_nd6 *, long);
 void nd6_timer(void *);
 void nd6_purge(struct ifnet *);
-void nd6_nud_hint(struct rtentry *, struct in6_addr *, int);
+void nd6_nud_hint(struct rtentry *, struct in6_addr *, int, u_int);
 int nd6_resolve(struct ifnet *, struct rtentry *,
 	struct mbuf *, struct sockaddr *, u_char *);
 void nd6_rtrequest(int, struct rtentry *);

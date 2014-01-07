@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.74 2013/11/11 09:15:35 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.75 2014/01/07 17:07:46 mikeb Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -669,7 +669,8 @@ defrouter_select(void)
 	 */
 	TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
 		if (!selected_dr &&
-		    (rt = nd6_lookup(&dr->rtaddr, 0, dr->ifp)) &&
+		    (rt = nd6_lookup(&dr->rtaddr, 0, dr->ifp,
+		     dr->ifp->if_rdomain)) &&
 		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) &&
 		    ND6_IS_LLINFO_PROBREACH(ln)) {
 			selected_dr = dr;
@@ -697,7 +698,8 @@ defrouter_select(void)
 		else
 			selected_dr = TAILQ_NEXT(installed_dr, dr_entry);
 	} else if (installed_dr &&
-	    (rt = nd6_lookup(&installed_dr->rtaddr, 0, installed_dr->ifp)) &&
+	    (rt = nd6_lookup(&installed_dr->rtaddr, 0, installed_dr->ifp,
+	     installed_dr->ifp->if_rdomain)) &&
 	    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) &&
 	    ND6_IS_LLINFO_PROBREACH(ln) &&
 	    rtpref(selected_dr) <= rtpref(installed_dr)) {
@@ -1398,7 +1400,7 @@ find_pfxlist_reachable_router(struct nd_prefix *pr)
 
 	LIST_FOREACH(pfxrtr, &pr->ndpr_advrtrs, pfr_entry) {
 		if ((rt = nd6_lookup(&pfxrtr->router->rtaddr, 0,
-		    pfxrtr->router->ifp)) &&
+		    pfxrtr->router->ifp, pfxrtr->router->ifp->if_rdomain)) &&
 		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) &&
 		    ND6_IS_LLINFO_PROBREACH(ln))
 			break;	/* found */
