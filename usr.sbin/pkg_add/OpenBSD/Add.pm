@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.138 2014/01/07 13:31:35 espie Exp $
+# $OpenBSD: Add.pm,v 1.139 2014/01/07 17:33:53 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -403,7 +403,6 @@ sub install
 		}
 	} else {
 		my $file = $self->prepare_to_extract($state);
-
 		$state->say("extracting #1", $destdir.$fullname)
 		    if $state->verbose >= 5;
 		if ($state->{not}) {
@@ -449,6 +448,9 @@ sub prepare_to_extract
 			$state->fatal("archive hardlink does not match #1 != #2",
 			    $file->{linkname}, $self->{link});
 		}
+	} elsif (!$file->isFile) {
+		$state->fatal("archive content for #1 should be file", 
+		    $self->name);
 	}
 	if (!$file->verify_modes($self)) {
 		$state->fatal("can't continue");
