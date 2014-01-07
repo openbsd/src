@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.224 2014/01/07 13:52:43 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.225 2014/01/07 18:35:23 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1790,6 +1790,15 @@ our @ISA=qw(OpenBSD::PackingElement::Unique);
 sub keyword() { 'signer' }
 __PACKAGE__->register_with_factory;
 sub category() { "signer" }
+
+sub new
+{
+	my ($class, $args) = @_;
+	unless ($args =~ m/^[\w\d\.\-\+\@]+$/) {
+		die "Invalid characters in signer $args\n";
+	}
+	$class->SUPER::new($args);
+}
 
 # XXX digital-signatures have to be unique, since they are a part
 # of the unsigned packing-list, with only the b64sig part removed
