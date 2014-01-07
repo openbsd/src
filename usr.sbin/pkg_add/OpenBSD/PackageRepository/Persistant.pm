@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Persistant.pm,v 1.1 2011/07/06 13:05:52 espie Exp $
+# $OpenBSD: Persistant.pm,v 1.2 2014/01/07 01:29:17 espie Exp $
 #
 # Copyright (c) 2003-2011 Marc Espie <espie@openbsd.org>
 #
@@ -132,6 +132,12 @@ sub cleanup
 		CORE::close($getfh);
 		waitpid($self->{controller}, 0);
 	}
+}
+
+sub reinitialize
+{
+	my $self = shift;
+	$self->initiate;
 }
 
 1;
