@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.619 2014/01/07 14:00:51 deraadt Exp $
+$OpenBSD: usbdevs,v 1.620 2014/01/07 14:06:48 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -585,6 +585,7 @@ vendor TML		0x1b91	The Mobility Lab
 vendor TCTMOBILE	0x1bbb  TCT Mobile
 vendor MDS		0x1bc8	MDS
 vendor ALTI2		0x1bc9	Alti-2
+vendor SUNPLUS		0x1bcf	Sunplus
 vendor WAGO		0x1be3	WAGO Kontakttechnik
 vendor LONGCHEER	0x1c9e	Longcheer Technology
 vendor DRESDENELEC	0x1cf1	Dresden Elektronic
@@ -1463,6 +1464,7 @@ product DLINK RT2570		0x3c00	RT2570
 product DLINK DUBE100B1		0x3c05	DUB-E100 rev B1
 product DLINK RT2870		0x3c09	RT2870
 product DLINK RT3072		0x3c0a	RT3072
+product DLINK DWA140B3		0x3c15	DWA-140 rev B3
 product DLINK DWA127		0x3c1b	DWA-127
 product DLINK DSB650C		0x4000	10Mbps Ethernet
 product DLINK DSB650TX1		0x4001	10/100 Ethernet
@@ -3391,6 +3393,7 @@ product RALINK RT3071		0x3071	RT3071
 product RALINK RT3072		0x3072	RT3072
 product RALINK RT3370		0x3370	RT3370
 product RALINK RT3572		0x3572	RT3572
+product RALINK RT5370		0x5370	RT5370
 product RALINK RT8070		0x8070	RT8070
 product RALINK RT2570_3		0x9020	RT2570
 product RALINK RT2573_2		0x9021	RT2573
