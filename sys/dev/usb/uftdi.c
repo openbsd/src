@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.68 2013/12/13 12:32:24 yuo Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.69 2014/01/07 14:00:50 deraadt Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -247,6 +247,7 @@ static const struct usb_devno uftdi_devs[] = {
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_FT232_5 },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_FT232_6 },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_FT4232H },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_FTX },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_GAMMASCOUT },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_GUDE_1 },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_GUDE_2 },
