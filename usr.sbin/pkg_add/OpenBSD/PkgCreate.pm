@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.85 2014/01/07 10:38:12 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.86 2014/01/07 11:51:15 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1150,11 +1150,17 @@ sub add_signature
 {
 	my ($self, $plist, $state) = @_;
 
-	if ($plist->has('digital-signature')) {
+	if ($plist->has('digital-signature') || $plist->has('signer')) {
 		if ($state->defines('resign')) {
 			$state->errsay("Resigning #1", $plist->pkgname);
 			delete $plist->{'digital-signature'};
+			delete $plist->{signer};
 		}
+	}
+
+	my $signer = $state->{subst}->value('SIGNER');
+	if (defined $signer) {
+		OpenBSD::PackingElement::Signer->add($plist, $signer);
 	}
 
 	my $sig = $state->{signer}->new_sig;
@@ -1169,15 +1175,6 @@ sub create_archive
 	return  OpenBSD::Ustar->new($fh, $state, $dir);
 }
 
-sub setup_signer
-{
-	my ($self, $plist, $state) = @_;
-	my $signer = $state->{subst}->value('SIGNER');
-	if (!defined $signer) {
-		return;
-	}
-	OpenBSD::PackingElement::Signer->add($plist, $signer);
-}
 
 sub sign_existing_package
 {
@@ -1187,7 +1184,6 @@ sub sign_existing_package
 	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
 	$plist->set_infodir($dir);
 	$self->add_signature($plist, $state);
-	$self->setup_signer($plist, $state);
 	$plist->save;
 	my $tmp = OpenBSD::Temp::permanent_file($output, "pkg");
 	my $wrarc = $self->create_archive($state, $tmp, ".");
@@ -1273,7 +1269,6 @@ sub add_extra_info
 	my ($self, $plist, $state) = @_;
 
 	my $subst = $state->{subst};
-	$self->setup_signer($plist, $state);
 	my $fullpkgpath = $subst->value('FULLPKGPATH');
 	my $cdrom = $subst->value('PERMIT_PACKAGE_CDROM') ||
 	    $subst->value('CDROM');;
