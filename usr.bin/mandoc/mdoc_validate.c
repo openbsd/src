@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.118 2014/01/06 22:39:19 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.119 2014/01/07 09:10:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -2344,12 +2344,13 @@ post_bx(POST_ARGS)
 static int
 post_os(POST_ARGS)
 {
-	struct mdoc_node *n;
 	char		  buf[BUFSIZ];
-	int		  c;
 #ifndef OSNAME
 	struct utsname	  utsname;
+	static char	 *defbuf;
 #endif
+	struct mdoc_node *n;
+	int		  c;
 
 	n = mdoc->last;
 
@@ -2372,39 +2373,31 @@ post_os(POST_ARGS)
 
 	assert(c);
 
-	if ('\0' == buf[0]) {
-		if (mdoc->defos) {
-			mdoc->meta.os = mandoc_strdup(mdoc->defos);
-			return(1);
-		}
-#ifdef OSNAME
-		if (strlcat(buf, OSNAME, BUFSIZ) >= BUFSIZ) {
-			mdoc_nmsg(mdoc, n, MANDOCERR_MEM);
-			return(0);
-		}
-#else /*!OSNAME */
-		if (-1 == uname(&utsname)) {
-			mdoc_nmsg(mdoc, n, MANDOCERR_UNAME);
-                        mdoc->meta.os = mandoc_strdup("UNKNOWN");
-                        return(post_prol(mdoc));
-                }
-
-		if (strlcat(buf, utsname.sysname, BUFSIZ) >= BUFSIZ) {
-			mdoc_nmsg(mdoc, n, MANDOCERR_MEM);
-			return(0);
-		}
-		if (strlcat(buf, " ", BUFSIZ) >= BUFSIZ) {
-			mdoc_nmsg(mdoc, n, MANDOCERR_MEM);
-			return(0);
-		}
-		if (strlcat(buf, utsname.release, BUFSIZ) >= BUFSIZ) {
-			mdoc_nmsg(mdoc, n, MANDOCERR_MEM);
-			return(0);
-		}
-#endif /*!OSNAME*/
+	if ('\0' != *buf) {
+		mdoc->meta.os = mandoc_strdup(buf);
+		return(1);
 	}
 
-	mdoc->meta.os = mandoc_strdup(buf);
+	if (mdoc->defos) {
+		mdoc->meta.os = mandoc_strdup(mdoc->defos);
+		return(1);
+	}
+
+#ifdef OSNAME
+	mdoc->meta.os = mandoc_strdup(OSNAME);
+#else /*!OSNAME */
+	if (NULL == defbuf) {
+		if (-1 == uname(&utsname)) {
+			mdoc_nmsg(mdoc, n, MANDOCERR_UNAME);
+                        defbuf = mandoc_strdup("UNKNOWN");
+                } else if (-1 == asprintf(&defbuf, "%s %s",
+		    utsname.sysname, utsname.release)) {
+			perror(NULL);
+			exit((int)MANDOCLEVEL_SYSERR);
+		}
+	}
+	mdoc->meta.os = mandoc_strdup(defbuf);
+#endif /*!OSNAME*/
 	return(1);
 }
 
