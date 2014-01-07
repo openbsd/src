@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1708 2014/01/05 23:55:25 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1709 2014/01/07 14:06:10 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -5653,11 +5653,19 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L2F,
-	    "L2F",
+	    "AR8162",
 	},
 	{
 	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L1F,
-	    "L1F",
+	    "AR8161",
+	},
+	{
+	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L2F_1,
+	    "AR8172",
+	},
+	{
+	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L1F_1,
+	    "AR8171",
 	},
 	{
 	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L2,
@@ -10369,6 +10377,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_SATA_3,
+	    "7 Series SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_SATA_4,
 	    "7 Series SATA",
 	},
 	{
@@ -19290,6 +19302,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3092,
 	    "RT3092",
+	},
+	{
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3290,
+	    "RT3290",
+	},
+	{
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3298,
+	    "Bluetooth",
 	},
 	{
 	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3562,
