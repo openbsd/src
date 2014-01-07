@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.126 2014/01/04 14:14:55 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.127 2014/01/07 01:38:58 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -141,6 +141,8 @@ sub zap_wrong_annotations
 	my $pkgname = $self->pkgname;
 	if (defined $pkgname && $pkgname =~ m/^(?:\.libs\d*|partial)\-/) {
 		delete $self->{'manual-installation'};
+		delete $self->{'firmware'};
+		delete $self->{'digital-signature'};
 	}
 }
 
