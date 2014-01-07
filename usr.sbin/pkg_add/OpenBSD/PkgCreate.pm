@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.84 2014/01/07 01:30:28 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.85 2014/01/07 10:38:12 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -234,6 +234,7 @@ sub pretend_to_archive
 	$self->comment_create_package;
 }
 
+sub record_digest {}
 sub archive {}
 sub comment_create_package {}
 sub grab_manpages {}
@@ -497,6 +498,13 @@ sub comment_create_package
 
 package OpenBSD::PackingElement::FileBase;
 
+sub record_digest
+{
+	my ($self, $list) = @_;
+	if (defined $self->{d}) {
+		push(@$list, $self->{d}->stringize);
+	}
+}
 sub archive
 {
 	my ($self, $state) = @_;
@@ -1496,6 +1504,56 @@ sub tweak_libraries
 	}
 }
 
+sub save_history
+{
+	my ($self, $plist, $dir) = @_;
+
+	unless (-d $dir) {
+		require File::Path;
+
+		File::Path::make_path($dir);
+	}
+
+	my $name = $plist->fullpkgpath;
+	$name =~ s,/,.,g;
+	my $fname = "$dir/$name";
+
+	# grab the old stuff:
+	# - order
+	# - and presence
+	my @old;
+	my (%known, %found);
+	if (open(my $f, '<', $fname)) {
+		while (<$f>) {
+			chomp;
+			push(@old, $_);
+			$known{$_} = 1;
+		}
+		close($f);
+	}
+	my @new;
+	$plist->record_digest(\@new);
+	open(my $f, ">", "$fname.new") or return;
+	
+	# split list
+	# - first, unknown stuff
+	for my $i (@new) {
+		if ($known{$i}) {
+			$found{$i} = 1;
+		} else {
+			print $f "$i\n";
+		}
+	}
+	# - then known stuff, preserve the order
+	for my $i (@old) {
+		if ($found{$i}) {
+			print $f "$i\n";
+		}
+	}
+	close($f);
+	rename("$fname.new", $fname);
+}
+
 sub parse_and_run
 {
 	my ($self, $cmd) = @_;
@@ -1565,6 +1623,10 @@ sub parse_and_run
 			$state->progress->visit_with_count($plist, 'verify_checksum', $state);
 		} else {
 			$plist = $self->make_plist_with_sum($state, $plist);
+		}
+		if ($state->defines('HISTORY_DIR')) {
+			$self->save_history($plist, 
+			    $state->defines('HISTORY_DIR'));
 		}
 		$self->show_bad_symlinks($state);
 		$state->end_status;
