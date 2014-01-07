@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.16 2013/06/01 01:30:54 brad Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.17 2014/01/07 14:58:40 gsoares Exp $	*/
 /*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ struct	rainfo {
 	int	ifindex;
 	int	advlinkopt;	/* bool: whether include link-layer addr opt */
 	struct sockaddr_dl *sdl;
-	char	ifname[16];
+	char	ifname[IF_NAMESIZE];
 	int	phymtu;		/* mtu of the physical interface */
 
 	/* Router configuration variables */
