@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.83 2014/01/04 14:13:39 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.84 2014/01/07 01:30:28 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -187,7 +187,7 @@ sub handle_options
 		    },
 	};
 	$state->{no_exports} = 1;
-	$state->SUPER::handle_options('p:f:d:M:U:s:A:B:P:W:qQo:S:',
+	$state->SUPER::handle_options('p:f:d:j:M:U:s:A:B:P:W:qQo:S:',
 	    '[-nQqvx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
 	    '[-s [x509 -s cert|signify] -s priv] [-o dir] [-S source]',
@@ -1174,7 +1174,6 @@ sub setup_signer
 sub sign_existing_package
 {
 	my ($self, $state, $pkg) = @_;
-	$state->set_status("Signing ".$pkg->name);
 	my $output = $state->{output_dir} // ".";
 	my $dir = $pkg->info;
 	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
@@ -1184,25 +1183,72 @@ sub sign_existing_package
 	$plist->save;
 	my $tmp = OpenBSD::Temp::permanent_file($output, "pkg");
 	my $wrarc = $self->create_archive($state, $tmp, ".");
-	$state->progress->visit_with_size($plist, 'copy_over', $state, 
-	    $wrarc, $pkg);
+	$plist->copy_over($state, $wrarc, $pkg);
 	$wrarc->close;
 	$pkg->wipe_info;
 	unlink($plist->pkgname.".tgz") if $state->{output};
 	rename($tmp, $output.'/'.$plist->pkgname.".tgz") or
 	    $state->fatal("Can't create final signed package: #1", $!);
-	$state->{done}++;
-	$state->progress->next($state->ntogo);
 }
 
-sub sign_existing_pkgname
+sub sign_list
 {
-	my ($self, $state, $pkgname) = @_;
-
-	my $true_package = $state->repo->find($pkgname);
-	$state->fatal("No such package #1", $pkgname) unless $true_package;
-
-	$self->sign_existing_package($state, $true_package);
+	my ($self, $l, $repo, $maxjobs, $state) = @_;
+	$state->{total} = scalar @$l;
+	$maxjobs //= 1;
+	my $code = sub {
+		my $pkg = $repo->find(shift);
+		$self->sign_existing_package($state, $pkg);
+	    };
+	my $display = $state->verbose ?
+	    sub {
+		$state->progress->set_header("Signed ".shift);
+		$state->{done}++;
+		$state->progress->next($state->ntogo);
+	    } :
+	    sub {
+	    };
+	if ($maxjobs > 1) {
+		my $jobs = {};
+		my $n = 0;
+		my $reap_job = sub {
+			my $pid = wait;
+			if (!defined $jobs->{$pid}) {
+				$state->fatal("Wait returned #1: unknown process", $pid);
+			}
+			if ($? != 0) {
+				$state->fatal("Signature of #1 failed\n", 
+				    $jobs->{$pid});
+			}
+			$n--;
+			&$display($jobs->{$pid});
+			delete $jobs->{$pid};
+		};
+			
+		while (@$l > 0) {
+			my $name = shift @$l;
+			my $pid = fork();
+			if ($pid == 0) {
+				$repo->reinitialize;
+				&$code($name);
+				exit(0);
+			} else {
+				$jobs->{$pid} = $name;
+				$n++;
+			}
+			if ($n >= $maxjobs) {
+				&$reap_job;
+			}
+		}
+		while ($n != 0) {
+			&$reap_job;
+		}
+	} else {
+		for my $name (@$l) {
+			&$code($name);
+			&$display($name);
+		}
+	}
 }
 
 sub sign_existing_repository
@@ -1211,12 +1257,7 @@ sub sign_existing_repository
 	require OpenBSD::PackageRepository;
 	my $repo = OpenBSD::PackageRepository->new($source, $state);
 	my @list = sort @{$repo->list};
-	$state->{total} = scalar @list;
-	$state->{done} = 0;
-	for my $name (@list) {
-		my $pkg = $repo->find($name);
-		$self->sign_existing_package($state, $pkg);
-	}
+	$self->sign_list(\@list, $repo, $state->opt('j'), $state);
 }
 
 sub add_extra_info
@@ -1506,11 +1547,8 @@ sub parse_and_run
 			$self->sign_existing_repository($state, 
 			    $state->{source});
 		}
-		$state->{total} = scalar @ARGV;
-		$state->{done} = 0;
-		for my $pkgname (@ARGV) {
-			$self->sign_existing_pkgname($state, $pkgname);
-		}
+		$self->sign_list(\@ARGV, $state->repo, $state->opt('j'), 
+		    $state);
 		return 0;
 	} else {
 		$plist = $self->create_plist($state, $ARGV[0]);
