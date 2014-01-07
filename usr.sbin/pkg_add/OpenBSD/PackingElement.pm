@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.220 2014/01/04 14:14:55 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.221 2014/01/07 13:26:18 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1663,6 +1663,26 @@ sub new
 	&OpenBSD::PackingElement::UniqueOption::new;
 }
 
+sub may_verify_digest
+{
+	my ($self, $state) = @_;
+	if (!$state->{check_digest}) {
+		return;
+	}
+	if (!defined $self->{d}) {
+		$state->log->fatal($state->f("#1 does not have a signature",
+		    $self->fullname));
+	}
+	my $d = $self->compute_digest($self->fullname);
+	if (!$d->equals($self->{d})) {
+		$state->log->fatal($state->f("checksum for #1 does not match",
+		    $self->fullname));
+	}
+	if ($state->verbose >= 3) {
+		$state->say("Checksum match for #1", $self->fullname);
+	}
+}
+
 package OpenBSD::PackingElement::FCONTENTS;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
 sub name() { OpenBSD::PackageInfo::CONTENTS }
@@ -1678,6 +1698,10 @@ sub copy_deep_if
 {
 }
 
+# CONTENTS doesn't have a checksum
+sub may_verify_digest
+{
+}
 package OpenBSD::PackingElement::FCOMMENT;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
 sub name() { OpenBSD::PackageInfo::COMMENT }

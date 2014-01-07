@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.84 2012/04/28 12:00:10 espie Exp $
+# $OpenBSD: Replace.pm,v 1.85 2014/01/07 13:26:18 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -127,6 +127,13 @@ sub extract
 package OpenBSD::PackingElement::Sampledir;
 sub extract
 {
+}
+
+package OpenBSD::PackingElement::SpecialFile;
+sub extract
+{
+	my ($self, $state) = @_;
+	$self->may_verify_digest($state);
 }
 
 package OpenBSD::PackingElement::Exec;
