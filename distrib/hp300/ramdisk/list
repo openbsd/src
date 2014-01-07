@@ -1,7 +1,7 @@
-#	$OpenBSD: list,v 1.58 2012/10/30 18:39:44 krw Exp $
+#	$OpenBSD: list,v 1.59 2014/01/07 02:27:55 deraadt Exp $
 
 SRCDIRS distrib/special
-SRCDIRS bin sbin usr.bin usr.sbin
+SRCDIRS bin sbin
 
 COPY	${OBJDIR}/instbin			instbin
 LINK	instbin					bin/arch

@@ -1,8 +1,8 @@
-#	$OpenBSD: list,v 1.40 2012/10/30 18:39:44 krw Exp $
+#	$OpenBSD: list,v 1.41 2014/01/07 02:27:56 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
-SRCDIRS bin sbin usr.bin usr.sbin
+SRCDIRS bin sbin
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin			instbin
