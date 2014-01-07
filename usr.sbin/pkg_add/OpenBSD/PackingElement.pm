@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.222 2014/01/07 13:31:36 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.223 2014/01/07 13:37:23 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1713,6 +1713,10 @@ sub new
 package OpenBSD::PackingElement::FDESC;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
 sub name() { OpenBSD::PackageInfo::DESC }
+
+package OpenBSD::PackingElement::FMETA;
+our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
+sub name() { OpenBSD::PackageInfo::META }
 
 package OpenBSD::PackingElement::DisplayFile;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
