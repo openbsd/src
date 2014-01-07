@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.11 2013/12/23 17:23:51 kettenis Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.12 2014/01/07 04:44:56 guenther Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -1302,8 +1302,6 @@ tmpfs_rename(void *v)
 	KASSERT(fcnp->cn_nameptr != NULL);
 	/* KASSERT(VOP_ISLOCKED(fdvp) != LK_EXCLUSIVE); */
 	/* KASSERT(VOP_ISLOCKED(fvp) != LK_EXCLUSIVE); */
-	KASSERT(VOP_ISLOCKED(tdvp) == LK_EXCLUSIVE);
-	KASSERT((tvp == NULL) || (VOP_ISLOCKED(tvp) == LK_EXCLUSIVE));
 	KASSERT(fdvp->v_type == VDIR);
 	KASSERT(tdvp->v_type == VDIR);
 	KASSERT(fcnp->cn_flags & HASBUF);
@@ -1320,6 +1318,13 @@ tmpfs_rename(void *v)
 	    	tmpfs_rename_abort(v);
 		return EXDEV;
 	}
+
+	/*
+	 * Can't check the locks on these until we know they're on
+	 * the same FS, as not all FS do locking the same way.
+	 */
+	KASSERT(VOP_ISLOCKED(tdvp) == LK_EXCLUSIVE);
+	KASSERT((tvp == NULL) || (VOP_ISLOCKED(tvp) == LK_EXCLUSIVE));
 
 	/*
 	 * Reject renaming '.' and '..'.
