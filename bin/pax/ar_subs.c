@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.34 2012/12/04 02:24:45 deraadt Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.35 2014/01/08 04:43:48 guenther Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -751,8 +751,8 @@ copy(void)
 	int res;
 	int fddest;
 	char *dest_pt;
-	int dlen;
-	int drem;
+	size_t dlen;
+	size_t drem;
 	int fdsrc = -1;
 	struct stat sb;
 	ARCHD archd;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.27 2012/12/04 02:24:45 deraadt Exp $	*/
+/*	$OpenBSD: tables.c,v 1.28 2014/01/08 04:43:48 guenther Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@ static DEVT **dtab = NULL;	/* device/inode mapping tables */
 static ATDIR **atab = NULL;	/* file tree directory time reset table */
 static DIRDATA *dirp = NULL;	/* storage for setting created dir time/mode */
 static size_t dirsize;		/* size of dirp table */
-static long dircnt = 0;		/* entries in dir time/mode storage */
+static size_t dircnt = 0;	/* entries in dir time/mode storage */
 static int ffd = -1;		/* tmp file for file time table name storage */
 
 static DEVT *chk_dev(dev_t, int);
@@ -1163,7 +1163,7 @@ void
 proc_dir(void)
 {
 	DIRDATA *dblk;
-	long cnt;
+	size_t cnt;
 
 	if (dirp == NULL)
 		return;
@@ -1171,7 +1171,7 @@ proc_dir(void)
 	 * read backwards through the file and process each directory
 	 */
 	cnt = dircnt;
-	while (--cnt >= 0) {
+	while (cnt-- > 0) {
 		/*
 		 * frc_mode set, make sure we set the file modes even if
 		 * the user didn't ask for it (see file_subs.c for more info)
