@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.104 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.105 2014/01/08 15:30:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -733,8 +733,8 @@ parse_smtp_response(char *line, size_t len, char **msg, int *cont)
 		return "line too short";
 
 	/* validate reply code */
-	if (line[0] < '2' || line[0] > '5' || !isdigit(line[1]) ||
-	    !isdigit(line[2]))
+	if (line[0] < '2' || line[0] > '5' || !isdigit((unsigned char)line[1]) ||
+	    !isdigit((unsigned char)line[2]))
 		return "reply code out of range";
 
 	/* validate reply message */
