@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.77 2013/03/27 17:14:10 zhuk Exp $	*/
+/*	$OpenBSD: options.c,v 1.78 2014/01/08 04:58:36 guenther Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -1457,13 +1457,8 @@ str_offt(char *val)
 	char *expr;
 	off_t num, t;
 
-#	ifdef LONG_OFF_T
-	num = strtol(val, &expr, 0);
-	if ((num == LONG_MAX) || (num <= 0) || (expr == val))
-#	else
 	num = strtoq(val, &expr, 0);
 	if ((num == QUAD_MAX) || (num <= 0) || (expr == val))
-#	endif
 		return(0);
 
 	switch (*expr) {

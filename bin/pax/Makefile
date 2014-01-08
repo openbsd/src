@@ -1,15 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2001/05/26 00:32:20 millert Exp $
-
-# To install on versions prior to BSD 4.4 the following may have to be
-# defined with CFLAGS +=
-#
-# -DLONG_OFF_T	Define this if the base type of an off_t is a long (and is
-#		NOT a quad).  (This is often defined in the file
-#		/usr/include/sys/types.h).
-# 		This define is important, as if you do have a quad_t
-# 		off_t and define LONG_OFF_T, pax will compile but will
-# 		NOT RUN PROPERLY.
-#
+#	$OpenBSD: Makefile,v 1.11 2014/01/08 04:58:36 guenther Exp $
 
 PROG=   pax
 SRCS=	ar_io.c ar_subs.c buf_subs.c cache.c cpio.c file_subs.c ftree.c\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.41 2014/01/08 04:42:24 guenther Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.42 2014/01/08 04:58:36 guenther Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -379,11 +379,7 @@ ar_close(void)
 	 * could have written anything yet.
 	 */
 	if (frmt == NULL) {
-#	ifdef LONG_OFF_T
-		(void)fprintf(listf, "%s: unknown format, %lu bytes skipped.\n",
-#	else
 		(void)fprintf(listf, "%s: unknown format, %qu bytes skipped.\n",
-#	endif
 		    argv0, rdcnt);
 		(void)fflush(listf);
 		flcnt = 0;
@@ -394,11 +390,7 @@ ar_close(void)
 		(void)fprintf(listf, "%qu blocks\n", (rdcnt ? rdcnt : wrcnt) / 5120);
 	else if (strcmp(NM_TAR, argv0) != 0)
 		(void)fprintf(listf,
-#	ifdef LONG_OFF_T
-		    "%s: %s vol %d, %lu files, %lu bytes read, %lu bytes written.\n",
-#	else
 		    "%s: %s vol %d, %lu files, %qu bytes read, %qu bytes written.\n",
-#	endif
 		    argv0, frmt->name, arvol-1, flcnt, rdcnt, wrcnt);
 	(void)fflush(listf);
 	flcnt = 0;
