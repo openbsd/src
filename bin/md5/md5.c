@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.62 2014/01/08 16:13:11 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.63 2014/01/08 16:16:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -307,6 +307,11 @@ main(int argc, char **argv)
 		case 'c':
 			cflag = 1;
 			break;
+		case 'h':
+			ofile = fopen(optarg, "w");
+			if (ofile == NULL)
+				err(1, "%s", optarg);
+			break;
 #if !defined(SMALL)
 		case 'o':
 			if (strcmp(optarg, "1") == 0)
@@ -326,11 +331,6 @@ main(int argc, char **argv)
 				hash_insert(&hl, hf, 0);
 			break;
 #endif /* !defined(SMALL) */
-		case 'h':
-			ofile = fopen(optarg, "w");
-			if (ofile == NULL)
-				errx(1, "%s", optarg);
-			break;
 		case 'p':
 			pflag = 1;
 			break;
