@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.49 2013/11/21 15:54:45 deraadt Exp $	*/
+/*	$OpenBSD: tar.c,v 1.50 2014/01/08 04:41:41 guenther Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -1241,8 +1241,8 @@ rd_xheader(ARCHD *arcn, char *buf, off_t size, char typeflag)
 			return (-1);
 		}
 		if (len > size) {
-			paxwarn(1, "Extended header record length %j is "
-			    "out of range", len);
+			paxwarn(1, "Extended header record length %lld is "
+			    "out of range", (long long)len);
 			return (-1);
 		}
 		nextp = p + len;

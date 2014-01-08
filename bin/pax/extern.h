@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.36 2013/07/03 04:08:29 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.37 2014/01/08 04:41:40 guenther Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -299,7 +299,10 @@ int ustar_wr(ARCHD *);
  * tty_subs.c
  */
 int tty_init(void);
-void tty_prnt(const char *, ...);
+void tty_prnt(const char *, ...)
+    __attribute__((nonnull(1), format(printf, 1, 2)));
 int tty_read(char *, int);
-void paxwarn(int, const char *, ...);
-void syswarn(int, int, const char *, ...);
+void paxwarn(int, const char *, ...)
+    __attribute__((nonnull(2), format(printf, 2, 3)));
+void syswarn(int, int, const char *, ...)
+    __attribute__((nonnull(3), format(printf, 3, 4)));
