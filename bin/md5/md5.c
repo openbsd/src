@@ -1,7 +1,8 @@
-/*	$OpenBSD: md5.c,v 1.60 2014/01/08 14:19:25 deraadt Exp $	*/
+/*	$OpenBSD: md5.c,v 1.61 2014/01/08 15:54:09 millert Exp $	*/
 
 /*
- * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -50,15 +51,10 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
-enum program_mode {
-	MODE_MD5,
-#if !defined(SMALL)
-	MODE_CKSUM,
-#endif
-} pmode;
-
 union ANY_CTX {
 #if !defined(SMALL)
+	SUM_CTX sum;
+	SYSVSUM_CTX sysvsum;
 	CKSUM_CTX cksum;
 	MD4_CTX md4;
 	MD5_CTX md5;
@@ -66,10 +62,6 @@ union ANY_CTX {
 	SHA1_CTX sha1;
 #endif /* !defined(SMALL) */
 	SHA2_CTX sha2;
-#if !defined(SMALL)
-	SUM_CTX sum;
-	SYSVSUM_CTX sysvsum;
-#endif /* !defined(SMALL) */
 };
 
 /* Default print style for hash and chksum functions. */
@@ -246,28 +238,23 @@ main(int argc, char **argv)
 	struct hash_list hl;
 	size_t len;
 	char *cp, *input_string;
+	const char *optstr;
 	int fl, error, base64;
 	int bflag, cflag, pflag, rflag, tflag, xflag;
-
-	static const char *optstr[2] = {
-		"bch:pqrs:tx",
-#if !defined(SMALL)
-		"a:bch:o:pqrs:tx"
-#endif /* !defined(SMALL) */
-	};
 
 	TAILQ_INIT(&hl);
 	input_string = NULL;
 	error = bflag = cflag = pflag = qflag = rflag = tflag = xflag = 0;
 
-	pmode = MODE_MD5;
 #if !defined(SMALL)
 	if (strcmp(__progname, "cksum") == 0 || strcmp(__progname, "sum") == 0)
-		pmode = MODE_CKSUM;
+		optstr = "a:bch:o:pqrs:tx";
+	else
 #endif /* !defined(SMALL) */
+		optstr = "bch:pqrs:tx";
 
 	/* Check for -b option early since it changes behavior. */
-	while ((fl = getopt(argc, argv, optstr[pmode])) != -1) {
+	while ((fl = getopt(argc, argv, optstr)) != -1) {
 		switch (fl) {
 		case 'b':
 			bflag = 1;
@@ -278,7 +265,7 @@ main(int argc, char **argv)
 	}
 	optind = 1;
 	optreset = 1;
-	while ((fl = getopt(argc, argv, optstr[pmode])) != -1) {
+	while ((fl = getopt(argc, argv, optstr)) != -1) {
 		switch (fl) {
 		case 'a':
 			while ((cp = strsep(&optarg, " \t,")) != NULL) {
@@ -347,7 +334,7 @@ main(int argc, char **argv)
 			break;
 #endif /* !defined(SMALL) */
 		case 'h':
-			ofile = fopen(optarg, "w+");
+			ofile = fopen(optarg, "w");
 			if (ofile == NULL)
 				errx(1, "%s", optarg);
 			break;
@@ -534,17 +521,17 @@ digest_file(const char *file, struct hash_list *hl, int echo)
 		return(1);
 	}
 
-	if (echo)
-		fflush(stdout);
-
 	TAILQ_FOREACH(hf, hl, tailq) {
 		if ((hf->ctx = malloc(sizeof(union ANY_CTX))) == NULL)
 			err(1, NULL);
 		hf->init(hf->ctx);
 	}
 	while ((nread = fread(data, 1UL, sizeof(data), fp)) != 0) {
-		if (echo)
-			write(STDOUT_FILENO, data, (size_t)nread);
+		if (echo) {
+			(void)fwrite(data, nread, 1UL, stdout);
+			if (fflush(stdout) != 0)
+				err(1, "stdout: write error");
+		}
 		TAILQ_FOREACH(hf, hl, tailq)
 			hf->update(hf->ctx, data, (unsigned int)nread);
 	}
@@ -834,20 +821,16 @@ digest_test(struct hash_list *hl)
 void
 usage(void)
 {
-	switch (pmode) {
-	case MODE_MD5:
-		fprintf(stderr, "usage: %s [-bpqrtx] [-c [checklist ...]] "
-		    "[-h hashfile] [-s string] [file ...]\n", __progname);
-		break;
 #if !defined(SMALL)
-	case MODE_CKSUM:
+	if (strcmp(__progname, "cksum") == 0 || strcmp(__progname, "sum") == 0)
 		fprintf(stderr, "usage: %s [-bpqrtx] [-a algorithms] "
 		    "[-c [checklist ...]] [-h hashfile] [-o 1 | 2]\n"
 		    "       %*s [-s string] [file ...]\n",
 		    __progname, (int)strlen(__progname), "");
-		break;
+	else
 #endif /* !defined(SMALL) */
-	}
+		fprintf(stderr, "usage: %s [-bpqrtx] [-c [checklist ...]] "
+		    "[-h hashfile] [-s string] [file ...]\n", __progname);
 
 	exit(EXIT_FAILURE);
 }
