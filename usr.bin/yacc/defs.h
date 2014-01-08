@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.13 2014/01/08 21:40:25 millert Exp $	*/
+/*	$OpenBSD: defs.h,v 1.14 2014/01/08 22:30:32 millert Exp $	*/
 /*	$NetBSD: defs.h,v 1.6 1996/03/19 03:21:30 jtc Exp $	*/
 
 /*
@@ -137,8 +137,8 @@
 
 /*  storage allocation macros  */
 
-#define	NEW(t)		((t*)allocate(sizeof(t)))
-#define	NEW2(n,t)	((t*)allocate((unsigned)((n)*sizeof(t))))
+#define	NEW(t)		(allocate(sizeof(t)))
+#define	NEW2(n,t)	(allocate((n)*sizeof(t)))
 
 
 /*  the structure of a symbol table entry  */
@@ -305,9 +305,9 @@ extern short final_state;
 
 /* global functions */
 
-extern char *allocate();
-extern bucket *lookup();
-extern bucket *make_bucket();
+extern void *allocate(size_t);
+extern bucket *lookup(char *);
+extern bucket *make_bucket(char *);
 extern void set_first_derives(void);
 extern void closure(short *, int);
 extern void finalize_closure(void);

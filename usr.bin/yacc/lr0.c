@@ -1,4 +1,4 @@
-/*	$OpenBSD: lr0.c,v 1.13 2014/01/08 21:40:25 millert Exp $	*/
+/*	$OpenBSD: lr0.c,v 1.14 2014/01/08 22:30:32 millert Exp $	*/
 /*	$NetBSD: lr0.c,v 1.4 1996/03/19 03:21:35 jtc Exp $	*/
 
 /*
@@ -343,7 +343,7 @@ new_state(int symbol)
     iend = kernel_end[symbol];
     n = iend - isp1;
 
-    p = (core *) allocate((unsigned) (sizeof(core) + (n - 1) * sizeof(short)));
+    p = allocate(sizeof(core) + (n - 1) * sizeof(short));
     p->accessing_symbol = symbol;
     p->number = nstates;
     p->nitems = n;
@@ -369,8 +369,7 @@ save_shifts(void)
     short *sp2;
     short *send;
 
-    p = (shifts *) allocate((unsigned) (sizeof(shifts) +
-			(nshifts - 1) * sizeof(short)));
+    p = allocate(sizeof(shifts) + (nshifts - 1) * sizeof(short));
 
     p->number = this_state->number;
     p->nshifts = nshifts;
@@ -418,8 +417,7 @@ save_reductions(void)
 
     if (count)
     {
-	p = (reductions *) allocate((unsigned) (sizeof(reductions) +
-					(count - 1) * sizeof(short)));
+	p = allocate(sizeof(reductions) + (count - 1) * sizeof(short));
 
 	p->number = this_state->number;
 	p->nreds = count;

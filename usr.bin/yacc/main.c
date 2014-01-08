@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2014/01/08 21:40:25 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2014/01/08 22:30:32 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
 
 /*
@@ -213,18 +213,18 @@ getargs(int argc, char *argv[])
 }
 
 
-char *
-allocate(unsigned int n)
+void *
+allocate(size_t n)
 {
-    char *p;
+    void *v;
 
-    p = NULL;
+    v = NULL;
     if (n)
     {
-	p = calloc(1, n);
-	if (!p) no_space();
+	v = calloc(1, n);
+	if (!v) no_space();
     }
-    return (p);
+    return (v);
 }
 
 #define TEMPNAME(s, c, d, l)	\
