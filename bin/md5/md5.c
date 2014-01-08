@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.58 2013/12/23 23:00:38 tedu Exp $	*/
+/*	$OpenBSD: md5.c,v 1.59 2014/01/08 14:15:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -213,6 +213,7 @@ void usage(void) __attribute__((__noreturn__));
 
 extern char *__progname;
 int qflag = 0;
+FILE *ofile = NULL;
 
 int
 main(int argc, char **argv)
@@ -225,8 +226,8 @@ main(int argc, char **argv)
 	int bflag, cflag, pflag, rflag, tflag, xflag;
 
 	static const char *optstr[2] = {
-		"bcpqrs:tx",
-		"a:bco:pqrs:tx"
+		"bch:pqrs:tx",
+		"a:bch:o:pqrs:tx"
 	};
 
 	TAILQ_INIT(&hl);
@@ -315,6 +316,11 @@ main(int argc, char **argv)
 			if (hftmp == TAILQ_END(&hl))
 				hash_insert(&hl, hf, 0);
 			break;
+		case 'h':
+			ofile = fopen(optarg, "w+");
+			if (ofile == NULL)
+				errx(1, "%s", optarg);
+			break;
 		case 'p':
 			pflag = 1;
 			break;
@@ -339,6 +345,9 @@ main(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (ofile == NULL)
+		ofile = stdout;
 
 	/* Most arguments are mutually exclusive */
 	fl = pflag + (tflag ? 1 : 0) + xflag + cflag + (input_string != NULL);
@@ -444,13 +453,13 @@ digest_print(const struct hash_function *hf, const char *what,
 {
 	switch (*hf->style) {
 	case STYLE_NORMAL:
-		(void)printf("%s (%s) = %s\n", hf->name, what, digest);
+		(void)fprintf(ofile, "%s (%s) = %s\n", hf->name, what, digest);
 		break;
 	case STYLE_REVERSE:
-		(void)printf("%s %s\n", digest, what);
+		(void)fprintf(ofile, "%s %s\n", digest, what);
 		break;
 	case STYLE_TERSE:
-		(void)printf("%s\n", digest);
+		(void)fprintf(ofile,"%s\n", digest);
 		break;
 	}
 }
@@ -461,13 +470,13 @@ digest_printstr(const struct hash_function *hf, const char *what,
 {
 	switch (*hf->style) {
 	case STYLE_NORMAL:
-		(void)printf("%s (\"%s\") = %s\n", hf->name, what, digest);
+		(void)fprintf(ofile, "%s (\"%s\") = %s\n", hf->name, what, digest);
 		break;
 	case STYLE_REVERSE:
-		(void)printf("%s %s\n", digest, what);
+		(void)fprintf(ofile, "%s %s\n", digest, what);
 		break;
 	case STYLE_TERSE:
-		(void)printf("%s\n", digest);
+		(void)fprintf(ofile, "%s\n", digest);
 		break;
 	}
 }
@@ -515,7 +524,7 @@ digest_file(const char *file, struct hash_list *hl, int echo)
 		free(hf->ctx);
 		hf->ctx = NULL;
 		if (fp == stdin)
-			(void)puts(digest);
+			fprintf(ofile, "%s\n", digest);
 		else
 			digest_print(hf, file, digest);
 	}
@@ -789,11 +798,11 @@ usage(void)
 	switch (pmode) {
 	case MODE_MD5:
 		fprintf(stderr, "usage: %s [-bpqrtx] [-c [checklist ...]] "
-		    "[-s string] [file ...]\n", __progname);
+		    "[-h hashfile] [-s string] [file ...]\n", __progname);
 		break;
 	case MODE_CKSUM:
 		fprintf(stderr, "usage: %s [-bpqrtx] [-a algorithms] "
-		    "[-c [checklist ...]] [-o 1 | 2]\n"
+		    "[-c [checklist ...]] [-h hashfile] [-o 1 | 2]\n"
 		    "       %*s [-s string] [file ...]\n",
 		    __progname, (int)strlen(__progname), "");
 		break;

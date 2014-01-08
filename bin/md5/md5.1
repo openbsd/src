@@ -1,4 +1,4 @@
-.\"	$OpenBSD: md5.1,v 1.34 2013/12/29 21:19:11 jmc Exp $
+.\"	$OpenBSD: md5.1,v 1.35 2014/01/08 14:15:54 deraadt Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: December 29 2013 $
+.Dd $Mdocdate: January 8 2014 $
 .Dt MD5 1
 .Os
 .Sh NAME
@@ -28,6 +28,7 @@
 .Nm md5
 .Op Fl bpqrtx
 .Op Fl c Op Ar checklist ...
+.Op Fl h Ar hashfile
 .Op Fl s Ar string
 .Op Ar
 .Sh DESCRIPTION
@@ -69,6 +70,10 @@ Only print the checksum (quiet mode).
 Reverse the format of the hash algorithm output, making
 it match the output format used by
 .Xr cksum 1 .
+.It Fl h Ar hashfile
+Place the checksum into
+.Ar hashfile
+instead of stdout.
 .It Fl s Ar string
 Prints a checksum of the given
 .Ar string .
