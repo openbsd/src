@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.61 2014/01/08 15:54:09 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.62 2014/01/08 16:13:11 millert Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -42,8 +42,8 @@
 #include <sha2.h>
 #include <crc.h>
 
-#define STYLE_NORMAL	0
-#define STYLE_REVERSE	1
+#define STYLE_MD5	0
+#define STYLE_CKSUM	1
 #define STYLE_TERSE	2
 
 #define MAX_DIGEST_LEN	128
@@ -64,17 +64,10 @@ union ANY_CTX {
 	SHA2_CTX sha2;
 };
 
-/* Default print style for hash and chksum functions. */
-int style_hash = STYLE_NORMAL;
-#if !defined(SMALL)
-int style_cksum = STYLE_REVERSE;
-#endif /* !defined(SMALL) */
-
-#define NHASHES	11
 struct hash_function {
 	const char *name;
 	size_t digestlen;
-	int *style;
+	int style;
 	int base64;
 	void *ctx;	/* XXX - only used by digest_file() */
 	void (*init)(void *);
@@ -82,12 +75,12 @@ struct hash_function {
 	void (*final)(unsigned char *, void *);
 	char * (*end)(void *, char *);
 	TAILQ_ENTRY(hash_function) tailq;
-} functions[NHASHES + 1] = {
+} functions[] = {
 #if !defined(SMALL)
 	{
 		"CKSUM",
 		CKSUM_DIGEST_LENGTH,
-		&style_cksum,
+		STYLE_CKSUM,
 		-1,
 		NULL,
 		(void (*)(void *))CKSUM_Init,
@@ -98,7 +91,7 @@ struct hash_function {
 	{
 		"SUM",
 		SUM_DIGEST_LENGTH,
-		&style_cksum,
+		STYLE_CKSUM,
 		-1,
 		NULL,
 		(void (*)(void *))SUM_Init,
@@ -109,7 +102,7 @@ struct hash_function {
 	{
 		"SYSVSUM",
 		SYSVSUM_DIGEST_LENGTH,
-		&style_cksum,
+		STYLE_CKSUM,
 		-1,
 		NULL,
 		(void (*)(void *))SYSVSUM_Init,
@@ -120,7 +113,7 @@ struct hash_function {
 	{
 		"MD4",
 		MD4_DIGEST_LENGTH,
-		&style_hash,
+		STYLE_MD5,
 		0,
 		NULL,
 		(void (*)(void *))MD4Init,
@@ -130,7 +123,7 @@ struct hash_function {
 	}, {
 		"MD5",
 		MD5_DIGEST_LENGTH,
-		&style_hash,
+		STYLE_MD5,
 		0,
 		NULL,
 		(void (*)(void *))MD5Init,
@@ -141,7 +134,7 @@ struct hash_function {
 	{
 		"RMD160",
 		RMD160_DIGEST_LENGTH,
-		&style_hash,
+		STYLE_MD5,
 		0,
 		NULL,
 		(void (*)(void *))RMD160Init,
@@ -152,7 +145,7 @@ struct hash_function {
 	{
 		"SHA1",
 		SHA1_DIGEST_LENGTH,
-		&style_hash,
+		STYLE_MD5,
 		0,
 		NULL,
 		(void (*)(void *))SHA1Init,
@@ -163,7 +156,7 @@ struct hash_function {
 	{
 		"SHA224",
 		SHA224_DIGEST_LENGTH,
-		&style_hash,
+		STYLE_MD5,
 		0,
 		NULL,
 		(void (*)(void *))SHA224Init,
@@ -175,7 +168,7 @@ struct hash_function {
 	{
 		"SHA256",
 		SHA256_DIGEST_LENGTH,
-		&style_hash,
+		STYLE_MD5,
 		0,
 		NULL,
 		(void (*)(void *))SHA256Init,
@@ -187,7 +180,7 @@ struct hash_function {
 	{
 		"SHA384",
 		SHA384_DIGEST_LENGTH,
-		&style_hash,
+		STYLE_MD5,
 		0,
 		NULL,
 		(void (*)(void *))SHA384Init,
@@ -199,7 +192,7 @@ struct hash_function {
 	{
 		"SHA512",
 		SHA512_DIGEST_LENGTH,
-		&style_hash,
+		STYLE_MD5,
 		0,
 		NULL,
 		(void (*)(void *))SHA512Init,
@@ -387,13 +380,11 @@ main(int argc, char **argv)
 		hash_insert(&hl, hf, bflag);
 	}
 
-	if (rflag)
-		style_hash = STYLE_REVERSE;
-	if (qflag) {
-		style_hash = STYLE_TERSE;
-#if !defined(SMALL)
-		style_cksum = STYLE_TERSE;
-#endif /* !defined(SMALL) */
+	if (rflag || qflag) {
+		const int new_style = rflag ? STYLE_CKSUM : STYLE_TERSE;
+		TAILQ_FOREACH(hf, &hl, tailq) {
+			hf->style = new_style;
+		}
 	}
 
 #if !defined(SMALL)
@@ -475,11 +466,11 @@ void
 digest_print(const struct hash_function *hf, const char *what,
     const char *digest)
 {
-	switch (*hf->style) {
-	case STYLE_NORMAL:
+	switch (hf->style) {
+	case STYLE_MD5:
 		(void)fprintf(ofile, "%s (%s) = %s\n", hf->name, what, digest);
 		break;
-	case STYLE_REVERSE:
+	case STYLE_CKSUM:
 		(void)fprintf(ofile, "%s %s\n", digest, what);
 		break;
 	case STYLE_TERSE:
@@ -492,11 +483,11 @@ void
 digest_printstr(const struct hash_function *hf, const char *what,
     const char *digest)
 {
-	switch (*hf->style) {
-	case STYLE_NORMAL:
+	switch (hf->style) {
+	case STYLE_MD5:
 		(void)fprintf(ofile, "%s (\"%s\") = %s\n", hf->name, what, digest);
 		break;
-	case STYLE_REVERSE:
+	case STYLE_CKSUM:
 		(void)fprintf(ofile, "%s %s\n", digest, what);
 		break;
 	case STYLE_TERSE:
@@ -673,7 +664,7 @@ digest_filelist(const char *file, struct hash_function *defhash)
 			checksum = buf;
 			if ((p = strchr(checksum, ' ')) == NULL)
 				continue;
-			if (*hf->style & STYLE_REVERSE) {
+			if (hf->style == STYLE_CKSUM) {
 				if ((p = strchr(p + 1, ' ')) == NULL)
 					continue;
 			}
