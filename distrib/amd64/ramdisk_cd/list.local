@@ -1,8 +1,6 @@
-# $OpenBSD: list.local,v 1.22 2012/10/30 18:39:43 krw Exp $
+# $OpenBSD: list.local,v 1.23 2014/01/08 21:53:35 deraadt Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
-LINK	instbin					bin/sha256
-
 LINK	instbin					sbin/ping6
 LINK	instbin					sbin/rtsol
 

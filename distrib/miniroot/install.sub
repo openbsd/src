@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.725 2014/01/07 23:58:44 rpe Exp $
+#	$OpenBSD: install.sub,v 1.726 2014/01/08 21:53:35 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1195,19 +1195,16 @@ install_files() {
 
 	[[ $resp = n ]] && return
 
-	shacmd="cat"
-	[[ -x /bin/sha256 ]] && shacmd="sha256 /tmp/h"
-
 	for _f in $THESETS ; do
 		isin $_f $_get_sets || continue
 		echo -n "Getting $_f ..."
 		rm -f /tmp/h
 		case $_f in
 		*.tgz)	ftp -Vmo - "$_src/$_f" |
-				$shacmd | tar zxphf - -C /mnt
+				sha256 -p -h /tmp/h | tar zxphf - -C /mnt
 			;;
 		*)	ftp -Vmo - "$_src/$_f" |
-				$shacmd > "/mnt/$_f"
+				sha256 -p -h /tmp/h > "/mnt/$_f"
 			;;
 		esac
 		if (($? != 0)); then

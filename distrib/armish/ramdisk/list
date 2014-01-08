@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.16 2014/01/07 02:27:55 deraadt Exp $
+#	$OpenBSD: list,v 1.17 2014/01/08 21:53:35 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin
@@ -19,12 +19,12 @@ LINK	instbin					bin/ksh bin/sh
 ARGVLINK ksh					-sh
 LINK	instbin					bin/ln
 LINK	instbin					bin/ls
+LINK	instbin					bin/md5 bin/sha256 bin/sha512
 LINK	instbin					bin/mkdir
 LINK	instbin					bin/mt bin/eject
 LINK	instbin					bin/mv
 LINK	instbin					bin/pax bin/tar bin/cpio
 LINK	instbin					bin/rm
-LINK	instbin					bin/sha256
 LINK	instbin					bin/sleep
 LINK	instbin					bin/stty
 LINK	instbin					bin/sync
@@ -58,6 +58,7 @@ LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/less usr/bin/more
 LINK	instbin					usr/bin/sed
 LINK	instbin					sbin/sysctl
+LINK	instbin					usr/bin/signify
 LINK	instbin					sbin/bioctl
 
 # copy the MAKEDEV script and make some devices

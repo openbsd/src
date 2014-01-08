@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.48 2014/01/07 02:27:55 deraadt Exp $
+#	$OpenBSD: list,v 1.49 2014/01/08 21:53:35 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -20,12 +20,12 @@ LINK	instbin					bin/ksh bin/sh
 ARGVLINK ksh					-sh
 LINK	instbin					bin/ln
 LINK	instbin					bin/ls
+LINK	instbin					bin/md5 bin/sha256 bin/sha512
 LINK	instbin					bin/mkdir
 LINK	instbin					bin/mt bin/eject
 LINK	instbin					bin/mv
 LINK	instbin					bin/pax bin/tar bin/cpio
 LINK	instbin					bin/rm
-LINK	instbin					bin/sha256
 LINK	instbin					bin/sleep
 LINK	instbin					bin/stty
 LINK	instbin					bin/sync
@@ -51,6 +51,7 @@ LINK	instbin					usr/bin/ftp
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/sed
 LINK	instbin					sbin/sysctl
+LINK	instbin					usr/bin/signify
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group			etc/group
