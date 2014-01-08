@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axenreg.h,v 1.2 2013/11/26 20:33:18 deraadt Exp $	*/
+/*	$OpenBSD: if_axenreg.h,v 1.3 2014/01/08 22:24:35 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>. All right reserved.
@@ -20,7 +20,7 @@
 #define AXEN_REV_UA2		1
 
 
-/* recieve header */
+/* receive header */
 /* 
  *                     +-multicast/broadcast
  *                     |    +-rx_ok

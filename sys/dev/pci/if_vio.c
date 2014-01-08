@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.13 2013/05/12 17:10:57 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.14 2014/01/08 22:24:35 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -368,9 +368,9 @@ vio_free_dmamem(struct vio_softc *sc)
  */
 /*
  * dynamically allocated memory is used for:
- *   sc_rx_dmamaps[slot]:	bus_dmamap_t array for recieved payload
+ *   sc_rx_dmamaps[slot]:	bus_dmamap_t array for received payload
  *   sc_tx_dmamaps[slot]:	bus_dmamap_t array for sent payload
- *   sc_rx_mbufs[slot]:		mbuf pointer array for recieved frames
+ *   sc_rx_mbufs[slot]:		mbuf pointer array for received frames
  *   sc_tx_mbufs[slot]:		mbuf pointer array for sent frames
  */
 int
@@ -860,7 +860,7 @@ vio_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 /*
  * Recieve implementation
  */
-/* allocate and initialize a mbuf for recieve */
+/* allocate and initialize a mbuf for receive */
 int
 vio_add_rx_mbuf(struct vio_softc *sc, int i)
 {
@@ -883,7 +883,7 @@ vio_add_rx_mbuf(struct vio_softc *sc, int i)
 	return 0;
 }
 
-/* free a mbuf for recieve */
+/* free a mbuf for receive */
 void
 vio_free_rx_mbuf(struct vio_softc *sc, int i)
 {
@@ -892,7 +892,7 @@ vio_free_rx_mbuf(struct vio_softc *sc, int i)
 	sc->sc_rx_mbufs[i] = NULL;
 }
 
-/* add mbufs for all the empty recieve slots */
+/* add mbufs for all the empty receive slots */
 void
 vio_populate_rx_mbufs(struct vio_softc *sc)
 {
@@ -943,7 +943,7 @@ vio_populate_rx_mbufs(struct vio_softc *sc)
 		virtio_notify(vsc, vq);
 }
 
-/* dequeue recieved packets */
+/* dequeue received packets */
 int
 vio_rxeof(struct vio_softc *sc)
 {
