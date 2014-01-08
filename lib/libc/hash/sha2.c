@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.16 2014/01/08 04:35:34 deraadt Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.17 2014/01/08 06:14:57 tedu Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -302,19 +302,16 @@ SHA224Final(u_int8_t digest[SHA224_DIGEST_LENGTH], SHA2_CTX *context)
 {
 	SHA224Pad(context);
 
-	/* If no digest buffer is passed, we don't bother doing this: */
-	if (digest != NULL) {
 #if BYTE_ORDER == LITTLE_ENDIAN
-		int	i;
+	int	i;
 
-		/* Convert TO host byte order */
-		for (i = 0; i < 7; i++)
-			BE_32_TO_8(digest + i * 4, context->state.st32[i]);
+	/* Convert TO host byte order */
+	for (i = 0; i < 7; i++)
+		BE_32_TO_8(digest + i * 4, context->state.st32[i]);
 #else
-		memcpy(digest, context->state.st32, SHA224_DIGEST_LENGTH);
+	memcpy(digest, context->state.st32, SHA224_DIGEST_LENGTH);
 #endif
-		memset(context, 0, sizeof(*context));
-	}
+	memset(context, 0, sizeof(*context));
 }
 #endif /* !defined(SHA2_SMALL) */
 
@@ -580,19 +577,16 @@ SHA256Final(u_int8_t digest[SHA256_DIGEST_LENGTH], SHA2_CTX *context)
 {
 	SHA256Pad(context);
 
-	/* If no digest buffer is passed, we don't bother doing this: */
-	if (digest != NULL) {
 #if BYTE_ORDER == LITTLE_ENDIAN
-		int	i;
+	int	i;
 
-		/* Convert TO host byte order */
-		for (i = 0; i < 8; i++)
-			BE_32_TO_8(digest + i * 4, context->state.st32[i]);
+	/* Convert TO host byte order */
+	for (i = 0; i < 8; i++)
+		BE_32_TO_8(digest + i * 4, context->state.st32[i]);
 #else
-		memcpy(digest, context->state.st32, SHA256_DIGEST_LENGTH);
+	memcpy(digest, context->state.st32, SHA256_DIGEST_LENGTH);
 #endif
-		memset(context, 0, sizeof(*context));
-	}
+	memset(context, 0, sizeof(*context));
 }
 
 
@@ -859,19 +853,16 @@ SHA512Final(u_int8_t digest[SHA512_DIGEST_LENGTH], SHA2_CTX *context)
 {
 	SHA512Pad(context);
 
-	/* If no digest buffer is passed, we don't bother doing this: */
-	if (digest != NULL) {
 #if BYTE_ORDER == LITTLE_ENDIAN
-		int	i;
+	int	i;
 
-		/* Convert TO host byte order */
-		for (i = 0; i < 8; i++)
-			BE_64_TO_8(digest + i * 8, context->state.st64[i]);
+	/* Convert TO host byte order */
+	for (i = 0; i < 8; i++)
+		BE_64_TO_8(digest + i * 8, context->state.st64[i]);
 #else
-		memcpy(digest, context->state.st64, SHA512_DIGEST_LENGTH);
+	memcpy(digest, context->state.st64, SHA512_DIGEST_LENGTH);
 #endif
-		memset(context, 0, sizeof(*context));
-	}
+	memset(context, 0, sizeof(*context));
 }
 
 #if !defined(SHA2_SMALL)
@@ -895,19 +886,15 @@ SHA384Final(u_int8_t digest[SHA384_DIGEST_LENGTH], SHA2_CTX *context)
 {
 	SHA384Pad(context);
 
-	/* If no digest buffer is passed, we don't bother doing this: */
-	if (digest != NULL) {
 #if BYTE_ORDER == LITTLE_ENDIAN
-		int	i;
+	int	i;
 
-		/* Convert TO host byte order */
-		for (i = 0; i < 6; i++)
-			BE_64_TO_8(digest + i * 8, context->state.st64[i]);
+	/* Convert TO host byte order */
+	for (i = 0; i < 6; i++)
+		BE_64_TO_8(digest + i * 8, context->state.st64[i]);
 #else
-		memcpy(digest, context->state.st64, SHA384_DIGEST_LENGTH);
+	memcpy(digest, context->state.st64, SHA384_DIGEST_LENGTH);
 #endif
-	}
-
 	/* Zero out state data */
 	memset(context, 0, sizeof(*context));
 }

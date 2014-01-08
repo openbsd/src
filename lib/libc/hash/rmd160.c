@@ -151,11 +151,9 @@ RMD160Final(u_int8_t digest[RMD160_DIGEST_LENGTH], RMD160_CTX *ctx)
 	int i;
 
 	RMD160Pad(ctx);
-	if (digest != NULL) {
-		for (i = 0; i < 5; i++)
-			PUT_32BIT_LE(digest + i*4, ctx->state[i]);
-		memset(ctx, 0, sizeof (*ctx));
-	}
+	for (i = 0; i < 5; i++)
+		PUT_32BIT_LE(digest + i*4, ctx->state[i]);
+	memset(ctx, 0, sizeof (*ctx));
 }
 
 void

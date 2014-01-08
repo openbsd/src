@@ -1,4 +1,4 @@
-/*	$OpenBSD: md4.c,v 1.7 2005/08/08 08:05:35 espie Exp $	*/
+/*	$OpenBSD: md4.c,v 1.8 2014/01/08 06:14:56 tedu Exp $	*/
 
 /*
  * This code implements the MD4 message-digest algorithm.
@@ -127,11 +127,9 @@ MD4Final(unsigned char digest[MD4_DIGEST_LENGTH], MD4_CTX *ctx)
 	int i;
 
 	MD4Pad(ctx);
-	if (digest != NULL) {
-		for (i = 0; i < 4; i++)
-			PUT_32BIT_LE(digest + i * 4, ctx->state[i]);
-		memset(ctx, 0, sizeof(*ctx));
-	}
+	for (i = 0; i < 4; i++)
+		PUT_32BIT_LE(digest + i * 4, ctx->state[i]);
+	memset(ctx, 0, sizeof(*ctx));
 }
 
 

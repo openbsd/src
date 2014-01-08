@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.8 2005/08/08 08:05:35 espie Exp $	*/
+/*	$OpenBSD: md5.c,v 1.9 2014/01/08 06:14:57 tedu Exp $	*/
 
 /*
  * This code implements the MD5 message-digest algorithm.
@@ -126,11 +126,9 @@ MD5Final(unsigned char digest[MD5_DIGEST_LENGTH], MD5_CTX *ctx)
 	int i;
 
 	MD5Pad(ctx);
-	if (digest != NULL) {
-		for (i = 0; i < 4; i++)
-			PUT_32BIT_LE(digest + i * 4, ctx->state[i]);
-		memset(ctx, 0, sizeof(*ctx));
-	}
+	for (i = 0; i < 4; i++)
+		PUT_32BIT_LE(digest + i * 4, ctx->state[i]);
+	memset(ctx, 0, sizeof(*ctx));
 }
 
 
