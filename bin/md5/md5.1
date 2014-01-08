@@ -1,4 +1,4 @@
-.\"	$OpenBSD: md5.1,v 1.35 2014/01/08 14:15:54 deraadt Exp $
+.\"	$OpenBSD: md5.1,v 1.36 2014/01/08 16:12:44 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -61,6 +61,10 @@ and an OK or FAILED for the result of the comparison.
 This will validate any of the supported checksums (see
 .Xr cksum 1 ) .
 If no file is given, stdin is used.
+.It Fl h Ar hashfile
+Place the checksum into
+.Ar hashfile
+instead of stdout.
 .It Fl p
 Echoes stdin to stdout and appends the
 checksum to stdout.
@@ -70,10 +74,6 @@ Only print the checksum (quiet mode).
 Reverse the format of the hash algorithm output, making
 it match the output format used by
 .Xr cksum 1 .
-.It Fl h Ar hashfile
-Place the checksum into
-.Ar hashfile
-instead of stdout.
 .It Fl s Ar string
 Prints a checksum of the given
 .Ar string .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.26 2014/01/08 14:15:54 deraadt Exp $
+.\"	$OpenBSD: cksum.1,v 1.27 2014/01/08 16:12:44 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,8 +45,8 @@
 .Op Fl bpqrtx
 .Op Fl a Ar algorithms
 .Op Fl c Op Ar checklist ...
-.Op Fl o Ar 1 | 2
 .Op Fl h Ar hashfile
+.Op Fl o Ar 1 | 2
 .Op Fl s Ar string
 .Op Ar
 .Ek
@@ -54,8 +54,8 @@
 .Op Fl bpqrtx
 .Op Fl a Ar algorithms
 .Op Fl c Op Ar checklist ...
-.Op Fl o Ar 1 | 2
 .Op Fl h Ar hashfile
+.Op Fl o Ar 1 | 2
 .Op Fl s Ar string
 .Op Ar
 .Sh DESCRIPTION
@@ -165,6 +165,10 @@ The
 option may not be used in conjunction with more than a single
 .Fl a
 option.
+.It Fl h Ar hashfile
+Place the checksum into
+.Ar hashfile
+instead of stdout.
 .It Fl o Ar 1 | 2
 Use historic algorithms instead of the (superior) default one
 (see below).
@@ -178,10 +182,6 @@ flag, only print the failed cases.
 .It Fl r
 Reverse the format of the hash algorithm output, making
 it match the checksum output format.
-.It Fl h Ar hashfile
-Place the checksum into
-.Ar hashfile
-instead of stdout.
 .It Fl s Ar string
 Prints a checksum of the given
 .Ar string .
