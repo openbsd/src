@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: signify.pm,v 1.4 2014/01/04 00:14:08 espie Exp $
+# $OpenBSD: signify.pm,v 1.5 2014/01/08 06:40:56 espie Exp $
 #
 # Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 #
@@ -24,7 +24,7 @@ use OpenBSD::PackageInfo;
 use OpenBSD::Paths;
 use File::Temp qw/mkstemp/;
 
-my $header = "signify -- signature\n";
+my $header = "untrusted comment: signify -- signature\n";
 my $cmd = OpenBSD::Paths->signify;
 my $suffix = ".sig";
 
