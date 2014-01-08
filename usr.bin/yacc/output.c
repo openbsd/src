@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.17 2014/01/08 21:40:25 millert Exp $	*/
+/*	$OpenBSD: output.c,v 1.18 2014/01/08 22:36:37 millert Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -996,12 +996,9 @@ output_debug(void)
     ++outline;
     fprintf(code_file, "#define YYMAXTOKEN %d\n", max);
 
-    symnam = (char **) malloc((max+1)*sizeof(char *));
+    symnam = (char **) calloc(max+1, sizeof(char *));
     if (symnam == 0) no_space();
 
-    /* Note that it is  not necessary to initialize the element		*/
-    /* symnam[max].							*/
-    memset(symnam, 0, max * sizeof(char *));
     for (i = ntokens - 1; i >= 2; --i)
 	symnam[symbol_value[i]] = symbol_name[i];
     symnam[0] = "end-of-file";

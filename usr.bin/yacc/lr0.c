@@ -1,4 +1,4 @@
-/*	$OpenBSD: lr0.c,v 1.14 2014/01/08 22:30:32 millert Exp $	*/
+/*	$OpenBSD: lr0.c,v 1.15 2014/01/08 22:36:37 millert Exp $	*/
 /*	$NetBSD: lr0.c,v 1.4 1996/03/19 03:21:35 jtc Exp $	*/
 
 /*
@@ -510,10 +510,8 @@ set_nullable(void)
     int empty;
     int done;
 
-    nullable = malloc(nsyms);
+    nullable = calloc(1, nsyms);
     if (nullable == 0) no_space();
-
-    memset(nullable, 0, nsyms);
 
     done = 0;
     while (!done)
