@@ -1,4 +1,4 @@
-/*	$OpenBSD: utmp.h,v 1.5 2003/06/02 19:34:12 millert Exp $	*/
+/*	$OpenBSD: utmp.h,v 1.6 2014/01/08 06:50:57 guenther Exp $	*/
 /*	$NetBSD: utmp.h,v 1.6 1994/10/26 00:56:40 cgd Exp $	*/
 
 /*
@@ -63,22 +63,6 @@ struct utmp {
 	char	ut_line[UT_LINESIZE];
 	char	ut_name[UT_NAMESIZE];
 	char	ut_host[UT_HOSTSIZE];
-	time_t	ut_time;
-};
-
-/*
- * These should not be used for writing out new data, for reference only.
- */
-struct old_lastlog {
-	time_t	ll_time;
-	char	ll_line[8];
-	char	ll_host[16];
-};
-
-struct old_utmp {
-	char	ut_line[8];
-	char	ut_name[8];
-	char	ut_host[16];
 	time_t	ut_time;
 };
 
