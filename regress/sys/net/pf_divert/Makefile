@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2013/11/03 14:03:35 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.8 2014/01/08 23:42:23 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -116,12 +116,8 @@ run-regress-${inet}-reuse-${proto}:
 	${SUDO} tcpdrop ${LOCAL_${addr}} `cat client.port` ${FAKE_${addr}} `cat server.port`
 .endif
 	time ${SUDO} SUDO=${SUDO} perl ${PERLINC} ${PERLPATH}remote.pl ${inet} ${LOCAL_${addr}} ${FAKE_${addr}} ${REMOTE_SSH} `cat client.port` `cat server.port` ${PERLPATH}args-${proto}-to.pl
-.if "rip" == ${proto}
-	if ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | \
-	    grep 'all 254 ${FAKE_${addr}} .. ${LOCAL_${addr}} '; \
-		then false; \
-	fi
-.else
+.if "tcp" == ${proto}
+	ssh ${REMOTE_SSH} ${SUDO} tcpdrop ${FAKE_${addr}} `cat server.port` ${LOCAL_${addr}} `cat client.port`
 .if "inet" == ${inet}
 	if ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | \
 	    grep 'all ${proto} ${FAKE_${addr}}:'`cat server.port`' .. ${LOCAL_${addr}}:'`cat client.port`' '; \
@@ -138,10 +134,9 @@ run-regress-${inet}-reuse-${proto}:
 
 .endfor
 
-# make perl syntax check for all args files
-
 .PHONY: syntax check-setup
 
+# make perl syntax check for all args files
 syntax: stamp-syntax
 
 stamp-syntax: ${ARGS}
@@ -156,10 +151,10 @@ check-setup:
 	ping -n -c 1 ${REMOTE_ADDR}
 	ping6 -n -c 1 ${LOCAL_ADDR6}
 	ping6 -n -c 1 ${REMOTE_ADDR6}
-	route get -inet ${FAKE_ADDR} | grep 'if address: ${LOCAL_ADDR}$$'
-	route get -inet ${FAKE_ADDR} | grep 'gateway: ${REMOTE_ADDR}$$'
-	route get -inet6 ${FAKE_ADDR6} | grep 'if address: ${LOCAL_ADDR6}$$'
-	route get -inet6 ${FAKE_ADDR6} | grep 'gateway: ${REMOTE_ADDR6}$$'
+	route -n get -inet ${FAKE_ADDR} | grep 'if address: ${LOCAL_ADDR}$$'
+	route -n get -inet ${FAKE_ADDR} | grep 'gateway: ${REMOTE_ADDR}$$'
+	route -n get -inet6 ${FAKE_ADDR6} | grep 'if address: ${LOCAL_ADDR6}$$'
+	route -n get -inet6 ${FAKE_ADDR6} | grep 'gateway: ${REMOTE_ADDR6}$$'
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -si | grep '^Status: Enabled '
 	ssh ${REMOTE_SSH} perl -MIO::Socket::INET6 -MIO::Socket::INET6 -e 1
