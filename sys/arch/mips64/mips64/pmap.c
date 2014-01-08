@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.66 2012/10/03 22:46:07 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.67 2014/01/08 17:12:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1172,7 +1172,10 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 			rv = FALSE;
 		else {
 			pte += uvtopte(va);
-			pa = pfn_to_pad(*pte) | (va & PAGE_MASK);
+			if (*pte & PG_V)
+				pa = pfn_to_pad(*pte) | (va & PAGE_MASK);
+			else
+				rv = FALSE;
 		}
 	}
 	if (rv != FALSE)
