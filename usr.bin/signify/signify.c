@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.13 2014/01/08 03:57:57 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.14 2014/01/08 05:00:01 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -159,6 +159,7 @@ readmsg(const char *filename, unsigned long long *msglenp)
 	return msg;
 }
 
+#ifndef VERIFYONLY
 static void
 writeall(int fd, const void *buf, size_t len, const char *filename)
 {
@@ -302,6 +303,7 @@ sign(const char *seckeyfile, const char *inputfile, const char *sigfile)
 
 	free(msg);
 }
+#endif
 
 static void
 verifymsg(uint8_t *pubkey, uint8_t *msg, unsigned long long msglen,
@@ -364,6 +366,7 @@ main(int argc, char **argv)
 
 	while ((ch = getopt(argc, argv, "GSVno:p:s:")) != -1) {
 		switch (ch) {
+#ifndef VERIFYONLY
 		case 'G':
 			if (verb)
 				usage();
@@ -374,6 +377,7 @@ main(int argc, char **argv)
 				usage();
 			verb = SIGN;
 			break;
+#endif
 		case 'V':
 			if (verb)
 				usage();
@@ -402,11 +406,14 @@ main(int argc, char **argv)
 	if (verb == NONE)
 		usage();
 
+#ifndef VERIFYONLY
 	if (verb == GENERATE) {
 		if (!pubkeyfile || !seckeyfile || argc != 0)
 			usage();
 		generate(pubkeyfile, seckeyfile, rounds);
-	} else {
+	} else
+#endif
+	{
 		if (argc != 1)
 			usage();
 
@@ -418,12 +425,14 @@ main(int argc, char **argv)
 				errx(1, "path too long");
 			sigfile = sigfilebuf;
 		}
-
+#ifndef VERIFYONLY
 		if (verb == SIGN) {
 			if (!seckeyfile)
 				usage();
 			sign(seckeyfile, inputfile, sigfile);
-		} else if (verb == VERIFY) {
+		} else
+#endif
+		if (verb == VERIFY) {
 			if (!pubkeyfile)
 				usage();
 			verify(pubkeyfile, inputfile, sigfile);
