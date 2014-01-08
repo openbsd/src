@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.32 2012/12/04 02:24:45 deraadt Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.33 2014/01/08 04:42:24 guenther Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -208,7 +208,7 @@ rep_add(char *str)
  */
 
 int
-pat_add(char *str, char *chdname)
+pat_add(char *str, char *chdirname)
 {
 	PATTERN *pt;
 
@@ -235,7 +235,7 @@ pat_add(char *str, char *chdname)
 	pt->plen = strlen(str);
 	pt->fow = NULL;
 	pt->flgs = 0;
-	pt->chdname = chdname;
+	pt->chdname = chdirname;
 
 	if (pathead == NULL) {
 		pattail = pathead = pt;
