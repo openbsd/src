@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.620 2014/01/07 14:06:48 deraadt Exp $
+$OpenBSD: usbdevs,v 1.621 2014/01/08 21:15:29 jcs Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -913,6 +913,42 @@ product APPLE FOUNTAIN_ANSI	0x020e	Keyboard/Trackpad
 product APPLE FOUNTAIN_ISO	0x020f	Keyboard/Trackpad
 product APPLE GEYSER_ANSI	0x0214	Keyboard/Trackpad
 product APPLE GEYSER_ISO	0x0215	Keyboard/Trackpad
+product APPLE WELLSPRING_ANSI	0x0223	Keyboard/Trackpad
+product APPLE WELLSPRING_ISO	0x0224	Keyboard/Trackpad
+product APPLE WELLSPRING_JIS	0x0225	Keyboard/Trackpad
+product APPLE WELLSPRING2_ANSI	0x0230	Keyboard/Trackpad
+product APPLE WELLSPRING2_ISO	0x0231	Keyboard/Trackpad
+product APPLE WELLSPRING2_JIS	0x0232	Keyboard/Trackpad
+product APPLE WELLSPRING3_ANSI	0x0236	Keyboard/Trackpad
+product APPLE WELLSPRING3_ISO	0x0237	Keyboard/Trackpad
+product APPLE WELLSPRING3_JIS	0x0238	Keyboard/Trackpad
+product APPLE WELLSPRING4_ANSI	0x023f	Keyboard/Trackpad
+product APPLE WELLSPRING4_ISO	0x0240	Keyboard/Trackpad
+product APPLE WELLSPRING4_JIS	0x0241	Keyboard/Trackpad
+product APPLE WELLSPRING4A_ANSI	0x0242	Keyboard/Trackpad
+product APPLE WELLSPRING4A_ISO	0x0243	Keyboard/Trackpad
+product APPLE WELLSPRING4A_JIS	0x0244	Keyboard/Trackpad
+product APPLE WELLSPRING5_ANSI	0x0245	Keyboard/Trackpad
+product APPLE WELLSPRING5_ISO	0x0246	Keyboard/Trackpad
+product APPLE WELLSPRING5_JIS	0x0247	Keyboard/Trackpad
+product APPLE WELLSPRING6A_ANSI	0x0249	Keyboard/Trackpad
+product APPLE WELLSPRING6A_ISO	0x024a	Keyboard/Trackpad
+product APPLE WELLSPRING6A_JIS	0x024b	Keyboard/Trackpad
+product APPLE WELLSPRING6_ANSI	0x024c	Keyboard/Trackpad
+product APPLE WELLSPRING6_ISO	0x024d	Keyboard/Trackpad
+product APPLE WELLSPRING6_JIS	0x024e	Keyboard/Trackpad
+product APPLE WELLSPRING5A_ANSI	0x0252	Keyboard/Trackpad
+product APPLE WELLSPRING5A_ISO	0x0253	Keyboard/Trackpad
+product APPLE WELLSPRING5A_JIS	0x0254	Keyboard/Trackpad
+product APPLE WELLSPRING7_ANSI	0x0262	Keyboard/Trackpad
+product APPLE WELLSPRING7_ISO	0x0263	Keyboard/Trackpad
+product APPLE WELLSPRING7_JIS	0x0264	Keyboard/Trackpad
+product APPLE WELLSPRING7A_ANSI	0x0259	Keyboard/Trackpad
+product APPLE WELLSPRING7A_ISO	0x025a	Keyboard/Trackpad
+product APPLE WELLSPRING7A_JIS	0x025b	Keyboard/Trackpad
+product APPLE WELLSPRING8_ANSI	0x0290	Keyboard/Trackpad
+product APPLE WELLSPRING8_ISO	0x0291	Keyboard/Trackpad
+product APPLE WELLSPRING8_JIS	0x0292	Keyboard/Trackpad
 product APPLE OPTMOUSE		0x0302	Optical mouse
 product APPLE BLUETOOTH_HCI	0x1000	HID-proxy
 product APPLE SPEAKERS		0x1101	Speakers
