@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.32 2014/01/08 21:53:35 deraadt Exp $
+# $OpenBSD: list.local,v 1.33 2014/01/08 22:17:54 deraadt Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					sbin/mount_ext2fs
@@ -6,6 +6,7 @@ LINK	instbin					sbin/mount_msdos
 LINK	instbin					sbin/ping6
 LINK	instbin					sbin/rtsol
 LINK	instbin					sbin/mount_udf
+LINK	instbin					sbin/restore
 LINK	instbin					sbin/bioctl
 
 # firmware we might need
