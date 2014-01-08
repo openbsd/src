@@ -1,4 +1,4 @@
-/* $OpenBSD: mod_ge25519.c,v 1.1 2014/01/08 05:00:01 tedu Exp $ */
+/* $OpenBSD: mod_ge25519.c,v 1.2 2014/01/08 05:51:35 deraadt Exp $ */
 
 /*
  * Public Domain, Authors: Daniel J. Bernstein, Niels Duif, Tanja Lange,
@@ -80,6 +80,7 @@ static void p1p1_to_p3(ge25519_p3 *r, const ge25519_p1p1 *p)
   fe25519_mul(&r->t, &p->x, &p->y);
 }
 
+#ifndef VERIFYONLY
 static void ge25519_mixadd2(ge25519_p3 *r, const ge25519_aff *q)
 {
   fe25519 a,b,t1,t2,c,d,e,f,g,h,qt;
@@ -102,6 +103,7 @@ static void ge25519_mixadd2(ge25519_p3 *r, const ge25519_aff *q)
   fe25519_mul(&r->z, &g, &f);
   fe25519_mul(&r->t, &e, &h);
 }
+#endif
 
 static void add_p1p1(ge25519_p1p1 *r, const ge25519_p3 *p, const ge25519_p3 *q)
 {
@@ -142,6 +144,7 @@ static void dbl_p1p1(ge25519_p1p1 *r, const ge25519_p2 *p)
   fe25519_sub(&r->y, &d, &b);
 }
 
+#ifndef VERIFYONLY
 /* Constant-time version of: if(b) r = p */
 static void cmov_aff(ge25519_aff *r, const ge25519_aff *p, unsigned char b)
 {
@@ -167,7 +170,6 @@ static unsigned char negative(signed char b)
   return x;
 }
 
-#ifndef VERIFYONLY
 static void choose_t(ge25519_aff *t, unsigned long long pos, signed char b)
 {
   /* constant time */
