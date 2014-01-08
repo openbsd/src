@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2013/01/08 21:42:19 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2014/01/08 23:32:17 bluhm Exp $
 
 PROG ?=		relay
 CFLAGS +=	-Wall -Werror
@@ -20,6 +20,8 @@ copy splice: ${PROG}
 .for r in copy splice
 
 run-regress-$p-$r: $r
+	@echo
+	@echo $@
 .if empty (REMOTE_SSH)
 	./$r ${p:S/tcp//:S/udp/-u/} 12345 localhost 12346 & \
 	rpid=$$! ; \

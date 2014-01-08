@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.1 2013/01/08 21:42:19 bluhm Exp $ */
+/*	$OpenBSD: relay.c,v 1.2 2014/01/08 23:32:17 bluhm Exp $ */
 /*
  * Copyright (c) 2013 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -142,6 +142,10 @@ socket_listen(int *ls, struct addrinfo *hints, const char *listenaddr,
 			cause = "listen socket";
 			continue;
 		}
+		optval = 100000;
+		if (setsockopt(ls[nls], SOL_SOCKET, SO_RCVBUF,
+		    &optval, sizeof(optval)) == -1)
+			err(1, "setsockopt rcvbuf");
 		optval = 1;
 		if (setsockopt(ls[nls], SOL_SOCKET, SO_REUSEADDR,
 		    &optval, sizeof(optval)) == -1)
@@ -229,7 +233,7 @@ socket_connect(struct addrinfo *hints, const char *hostname, const char *port)
 	socklen_t salen;
 	struct addrinfo *res, *res0;
 	const char *cause = NULL;
-	int error, save_errno, cs;
+	int optval, error, save_errno, cs;
 
 	hints->ai_flags = 0;
 	error = getaddrinfo(hostname, port, hints, &res0);
@@ -244,6 +248,10 @@ socket_connect(struct addrinfo *hints, const char *hostname, const char *port)
 			cause = "connect socket";
 			continue;
 		}
+		optval = 100000;
+		if (setsockopt(cs, SOL_SOCKET, SO_SNDBUF,
+		    &optval, sizeof(optval)) == -1)
+			err(1, "setsockopt sndbuf");
 		if (connect(cs, res->ai_addr, res->ai_addrlen) == -1) {
 			cause = "connect";
 			save_errno = errno;
