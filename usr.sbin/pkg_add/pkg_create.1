@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.90 2014/01/07 10:44:07 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.91 2014/01/08 16:15:45 jmc Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: January 7 2014 $
+.Dd $Mdocdate: January 8 2014 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -145,7 +145,7 @@ Set package
 .Dq one line description
 (mandatory).
 .It Ar HISTORY_DIR
-Record checksums of files in permanent location 
+Record checksums of files in permanent location
 .Pa ${HISTORY_DIR}/${FULLPKGPATH:S,/,./g} .
 .It Ar FTP
 Set to the port's Makefile
