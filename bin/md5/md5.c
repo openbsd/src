@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.63 2014/01/08 16:16:44 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.64 2014/01/08 16:23:21 millert Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -815,8 +815,8 @@ usage(void)
 #if !defined(SMALL)
 	if (strcmp(__progname, "cksum") == 0 || strcmp(__progname, "sum") == 0)
 		fprintf(stderr, "usage: %s [-bpqrtx] [-a algorithms] "
-		    "[-c [checklist ...]] [-h hashfile] [-o 1 | 2]\n"
-		    "       %*s [-s string] [file ...]\n",
+		    "[-c [checklist ...]] [-h hashfile]\n"
+		    "       %*s [-o 1 | 2] [-s string] [file ...]\n",
 		    __progname, (int)strlen(__progname), "");
 	else
 #endif /* !defined(SMALL) */
