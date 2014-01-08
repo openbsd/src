@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.131 2013/08/21 05:21:46 dlg Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.132 2014/01/08 02:39:02 deraadt Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -860,7 +860,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	union sockaddr_union *sunionp;
 
-	struct tdb sa, *sa2 = NULL;
+	struct tdb *sa1 = NULL, *sa2 = NULL;
 
 	struct sadb_msg *smsg;
 	struct sadb_spirange *sprng;
@@ -933,24 +933,28 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	smsg = (struct sadb_msg *) headers[0];
 	switch (smsg->sadb_msg_type) {
 	case SADB_GETSPI:  /* Reserve an SPI */
-		bzero(&sa, sizeof(struct tdb));
+		sa1 = malloc(sizeof (*sa1), M_PFKEY, M_NOWAIT | M_ZERO);
+		if (sa1 == NULL) {
+			rval = ENOMEM;
+			goto ret;
+		}
 
-		sa.tdb_satype = smsg->sadb_msg_satype;
-		if ((rval = pfkeyv2_get_proto_alg(sa.tdb_satype,
-		    &sa.tdb_sproto, 0)))
+		sa1->tdb_satype = smsg->sadb_msg_satype;
+		if ((rval = pfkeyv2_get_proto_alg(sa1->tdb_satype,
+		    &sa1->tdb_sproto, 0)))
 			goto ret;
 
-		import_address((struct sockaddr *) &sa.tdb_src,
+		import_address((struct sockaddr *) &sa1->tdb_src,
 		    headers[SADB_EXT_ADDRESS_SRC]);
-		import_address((struct sockaddr *) &sa.tdb_dst,
+		import_address((struct sockaddr *) &sa1->tdb_dst,
 		    headers[SADB_EXT_ADDRESS_DST]);
 
 		/* Find an unused SA identifier */
 		sprng = (struct sadb_spirange *) headers[SADB_EXT_SPIRANGE];
-		sa.tdb_spi = reserve_spi(rdomain,
+		sa1->tdb_spi = reserve_spi(rdomain,
 		    sprng->sadb_spirange_min, sprng->sadb_spirange_max,
-		    &sa.tdb_src, &sa.tdb_dst, sa.tdb_sproto, &rval);
-		if (sa.tdb_spi == 0)
+		    &sa1->tdb_src, &sa1->tdb_dst, sa1->tdb_sproto, &rval);
+		if (sa1->tdb_spi == 0)
 			goto ret;
 
 		/* Send a message back telling what the SA (the SPI really) is */
@@ -965,7 +969,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		bckptr = freeme;
 
 		/* We really only care about the SPI, but we'll export the SA */
-		export_sa((void **) &bckptr, &sa);
+		export_sa((void **) &bckptr, sa1);
 		break;
 
 	case SADB_UPDATE:
@@ -1872,6 +1876,9 @@ realret:
 
 	explicit_bzero(message, len);
 	free(message, M_PFKEY);
+
+	if (sa1)
+		free(sa1, M_PFKEY);
 
 	return (rval);
 
