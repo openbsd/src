@@ -1,4 +1,4 @@
-/*	$OpenBSD: lalr.c,v 1.11 2012/03/03 19:15:00 nicm Exp $	*/
+/*	$OpenBSD: lalr.c,v 1.12 2014/01/08 21:40:25 millert Exp $	*/
 /*	$NetBSD: lalr.c,v 1.4 1996/03/19 03:21:33 jtc Exp $	*/
 
 /*
@@ -276,7 +276,7 @@ set_goto_map(void)
 	}
     }
 
-  FREE(temp_map + ntokens);
+  free(temp_map + ntokens);
 }
 
 
@@ -378,11 +378,11 @@ initialize_F(void)
   for (i = 0; i < ngotos; i++)
     {
       if (reads[i])
-	FREE(reads[i]);
+	free(reads[i]);
     }
 
-  FREE(reads);
-  FREE(edge);
+  free(reads);
+  free(edge);
 }
 
 
@@ -468,14 +468,14 @@ build_relations(void)
 
   for (i = 0; i < ngotos; i++)
     if (includes[i])
-      FREE(includes[i]);
+      free(includes[i]);
 
-  FREE(includes);
+  free(includes);
 
   includes = new_includes;
 
-  FREE(edge);
-  FREE(states);
+  free(edge);
+  free(states);
 }
 
 void
@@ -542,7 +542,7 @@ transpose(short **R, int n)
 	}
     }
 
-  FREE(nedges);
+  free(nedges);
 
   for (i = 0; i < n; i++)
     {
@@ -554,7 +554,7 @@ transpose(short **R, int n)
 	}
     }
 
-  FREE(temp_R);
+  free(temp_R);
 
   return (new_R);
 }
@@ -593,11 +593,11 @@ compute_lookaheads(void)
     for (sp = lookback[i]; sp; sp = next)
       {
         next = sp->next;
-        FREE(sp);
+        free(sp);
       }
 
-  FREE(lookback);
-  FREE(F);
+  free(lookback);
+  free(F);
 }
 
 void
@@ -616,8 +616,8 @@ digraph(short **relation)
       if (R[i])
           traverse(i);
 
-  FREE(INDEX);
-  FREE(VERTICES);
+  free(INDEX);
+  free(VERTICES);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lr0.c,v 1.12 2012/03/03 19:15:00 nicm Exp $	*/
+/*	$OpenBSD: lr0.c,v 1.13 2014/01/08 21:40:25 millert Exp $	*/
 /*	$NetBSD: lr0.c,v 1.4 1996/03/19 03:21:35 jtc Exp $	*/
 
 /*
@@ -159,13 +159,13 @@ append_states(void)
 void
 free_storage(void)
 {
-    FREE(shift_symbol);
-    FREE(redset);
-    FREE(shiftset);
-    FREE(kernel_base);
-    FREE(kernel_end);
-    FREE(kernel_items);
-    FREE(state_set);
+    free(shift_symbol);
+    free(redset);
+    free(shiftset);
+    free(kernel_base);
+    free(kernel_end);
+    free(kernel_items);
+    free(state_set);
 }
 
 
@@ -271,7 +271,7 @@ initialize_states(void)
     for (i = 0; start_derives[i] >= 0; ++i)
 	continue;
 
-    p = (core *) MALLOC(sizeof(core) + i*sizeof(short));
+    p = (core *) malloc(sizeof(core) + i*sizeof(short));
     if (p == 0) no_space();
 
     p->next = 0;
@@ -478,8 +478,8 @@ set_derives(void)
 void
 free_derives(void)
 {
-    FREE(derives[start_symbol]);
-    FREE(derives);
+    free(derives[start_symbol]);
+    free(derives);
 }
 
 #ifdef	DEBUG
@@ -512,7 +512,7 @@ set_nullable(void)
     int empty;
     int done;
 
-    nullable = MALLOC(nsyms);
+    nullable = malloc(nsyms);
     if (nullable == 0) no_space();
 
     memset(nullable, 0, nsyms);
@@ -556,7 +556,7 @@ set_nullable(void)
 void
 free_nullable(void)
 {
-    FREE(nullable);
+    free(nullable);
 }
 
 void

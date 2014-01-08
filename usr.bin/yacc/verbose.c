@@ -1,4 +1,4 @@
-/*	$OpenBSD: verbose.c,v 1.10 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: verbose.c,v 1.11 2014/01/08 21:40:25 millert Exp $	*/
 /*	$NetBSD: verbose.c,v 1.4 1996/03/19 03:21:50 jtc Exp $	*/
 
 /*
@@ -55,12 +55,12 @@ verbose(void)
 
     if (!vflag) return;
 
-    null_rules = (short *) MALLOC(nrules*sizeof(short));
+    null_rules = (short *) malloc(nrules*sizeof(short));
     if (null_rules == 0) no_space();
     fprintf(verbose_file, "\f\n");
     for (i = 0; i < nstates; i++)
 	print_state(i);
-    FREE(null_rules);
+    free(null_rules);
 
     if (nunused)
 	log_unused();

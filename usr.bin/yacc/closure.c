@@ -1,4 +1,4 @@
-/*	$OpenBSD: closure.c,v 1.10 2012/05/30 13:12:39 nicm Exp $	*/
+/*	$OpenBSD: closure.c,v 1.11 2014/01/08 21:40:25 millert Exp $	*/
 /*	$NetBSD: closure.c,v 1.4 1996/03/19 03:21:29 jtc Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ set_first_derives(void)
     print_first_derives();
 #endif
 
-    FREE(EFF);
+    free(EFF);
 }
 
 
@@ -206,9 +206,9 @@ closure(short *nucleus, int n)
 void
 finalize_closure(void)
 {
-  FREE(itemset);
-  FREE(ruleset);
-  FREE(first_derives + ntokens * WORDSIZE(nrules));
+  free(itemset);
+  free(ruleset);
+  free(first_derives + ntokens * WORDSIZE(nrules));
 }
 
 

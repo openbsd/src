@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2014/01/08 21:40:25 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
 
 /*
@@ -221,7 +221,7 @@ allocate(unsigned int n)
     p = NULL;
     if (n)
     {
-	p = CALLOC(1, n);
+	p = calloc(1, n);
 	if (!p) no_space();
     }
     return (p);

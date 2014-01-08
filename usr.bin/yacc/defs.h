@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.12 2011/04/01 21:21:39 nicm Exp $	*/
+/*	$OpenBSD: defs.h,v 1.13 2014/01/08 21:40:25 millert Exp $	*/
 /*	$NetBSD: defs.h,v 1.6 1996/03/19 03:21:30 jtc Exp $	*/
 
 /*
@@ -137,12 +137,8 @@
 
 /*  storage allocation macros  */
 
-#define CALLOC(k,n)	(calloc((unsigned)(k),(unsigned)(n)))
-#define	FREE(x)		(free((char*)(x)))
-#define MALLOC(n)	(malloc((unsigned)(n)))
 #define	NEW(t)		((t*)allocate(sizeof(t)))
 #define	NEW2(n,t)	((t*)allocate((unsigned)((n)*sizeof(t))))
-#define REALLOC(p,n)	(realloc((char*)(p),(unsigned)(n)))
 
 
 /*  the structure of a symbol table entry  */
