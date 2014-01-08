@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.12 2014/01/06 01:50:54 espie Exp $ */
+/* $OpenBSD: signify.c,v 1.13 2014/01/08 03:57:57 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -37,6 +37,10 @@
 
 #define PKALG "Ed"
 #define KDFALG "BK"
+#define FPLEN 8
+
+#define COMMENTHDR "untrusted comment:"
+#define COMMENTHDRLEN 18
 
 struct enckey {
 	uint8_t pkalg[2];
@@ -44,16 +48,19 @@ struct enckey {
 	uint32_t kdfrounds;
 	uint8_t salt[16];
 	uint8_t checksum[8];
+	uint8_t fingerprint[FPLEN];
 	uint8_t seckey[SECRETBYTES];
 };
 
 struct pubkey {
 	uint8_t pkalg[2];
+	uint8_t fingerprint[FPLEN];
 	uint8_t pubkey[PUBLICBYTES];
 };
 
 struct sig {
 	uint8_t pkalg[2];
+	uint8_t fingerprint[FPLEN];
 	uint8_t sig[SIGBYTES];
 };
 
@@ -118,8 +125,10 @@ readb64file(const char *filename, void *buf, size_t len)
 	if (rv == -1)
 		err(1, "read from %s", filename);
 	commentend = strchr(b64, '\n');
-	if (!commentend)
-		errx(1, "no newline in %s", filename);
+	if (!commentend || commentend - b64 <= COMMENTHDRLEN ||
+	    memcmp(b64, COMMENTHDR, COMMENTHDRLEN))
+		errx(1, "invalid comment in %s; must start with '%s'",
+		    filename, COMMENTHDR);
 	rv = b64_pton(commentend + 1, buf, len);
 	if (rv != len)
 		errx(1, "invalid b64 encoding in %s", filename);
@@ -172,7 +181,8 @@ writeb64file(const char *filename, const char *comment, const void *buf,
 	int fd, rv;
 
 	fd = xopen(filename, O_CREAT|O_EXCL|O_NOFOLLOW|O_RDWR, mode);
-	snprintf(header, sizeof(header), "signify -- %s\n", comment);
+	snprintf(header, sizeof(header), "%s signify %s\n", COMMENTHDR,
+	    comment);
 	writeall(fd, header, strlen(header), filename);
 	if ((rv = b64_ntop(buf, len, b64, sizeof(b64)-1)) == -1)
 		errx(1, "b64 encode failed");
@@ -214,35 +224,18 @@ signmsg(uint8_t *seckey, uint8_t *msg, unsigned long long msglen,
 }
 
 static void
-verifymsg(uint8_t *pubkey, uint8_t *msg, unsigned long long msglen,
-    uint8_t *sig)
-{
-	uint8_t *sigbuf, *dummybuf;
-	unsigned long long siglen, dummylen;
-
-	siglen = SIGBYTES + msglen;
-	sigbuf = xmalloc(siglen);
-	dummybuf = xmalloc(siglen);
-	memcpy(sigbuf, sig, SIGBYTES);
-	memcpy(sigbuf + SIGBYTES, msg, msglen);
-	if (crypto_sign_ed25519_open(dummybuf, &dummylen, sigbuf, siglen,
-	    pubkey) == -1)
-		errx(1, "signature failed");
-	free(sigbuf);
-	free(dummybuf);
-}
-
-static void
 generate(const char *pubkeyfile, const char *seckeyfile, int rounds)
 {
 	uint8_t digest[SHA512_DIGEST_LENGTH];
 	struct pubkey pubkey;
 	struct enckey enckey;
 	uint8_t xorkey[sizeof(enckey.seckey)];
+	uint8_t fingerprint[FPLEN];
 	SHA2_CTX ctx;
 	int i;
 
 	crypto_sign_ed25519_keypair(pubkey.pubkey, enckey.seckey);
+	arc4random_buf(fingerprint, sizeof(fingerprint));
 
 	SHA512Init(&ctx);
 	SHA512Update(&ctx, enckey.seckey, sizeof(enckey.seckey));
@@ -251,6 +244,7 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds)
 	memcpy(enckey.pkalg, PKALG, 2);
 	memcpy(enckey.kdfalg, KDFALG, 2);
 	enckey.kdfrounds = htonl(rounds);
+	memcpy(enckey.fingerprint, fingerprint, FPLEN);
 	arc4random_buf(enckey.salt, sizeof(enckey.salt));
 	kdf(enckey.salt, sizeof(enckey.salt), rounds, xorkey, sizeof(xorkey));
 	memcpy(enckey.checksum, digest, sizeof(enckey.checksum));
@@ -264,6 +258,7 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds)
 	memset(&enckey, 0, sizeof(enckey));
 
 	memcpy(pubkey.pkalg, PKALG, 2);
+	memcpy(pubkey.fingerprint, fingerprint, FPLEN);
 	writeb64file(pubkeyfile, "public key", &pubkey,
 	    sizeof(pubkey), 0666);
 }
@@ -299,6 +294,7 @@ sign(const char *seckeyfile, const char *inputfile, const char *sigfile)
 	msg = readmsg(inputfile, &msglen);
 
 	signmsg(enckey.seckey, msg, msglen, sig.sig);
+	memcpy(sig.fingerprint, enckey.fingerprint, FPLEN);
 	memset(&enckey, 0, sizeof(enckey));
 
 	memcpy(sig.pkalg, PKALG, 2);
@@ -306,6 +302,26 @@ sign(const char *seckeyfile, const char *inputfile, const char *sigfile)
 
 	free(msg);
 }
+
+static void
+verifymsg(uint8_t *pubkey, uint8_t *msg, unsigned long long msglen,
+    uint8_t *sig)
+{
+	uint8_t *sigbuf, *dummybuf;
+	unsigned long long siglen, dummylen;
+
+	siglen = SIGBYTES + msglen;
+	sigbuf = xmalloc(siglen);
+	dummybuf = xmalloc(siglen);
+	memcpy(sigbuf, sig, SIGBYTES);
+	memcpy(sigbuf + SIGBYTES, msg, msglen);
+	if (crypto_sign_ed25519_open(dummybuf, &dummylen, sigbuf, siglen,
+	    pubkey) == -1)
+		errx(1, "signature verification failed");
+	free(sigbuf);
+	free(dummybuf);
+}
+
 
 static void
 verify(const char *pubkeyfile, const char *inputfile, const char *sigfile)
@@ -317,6 +333,9 @@ verify(const char *pubkeyfile, const char *inputfile, const char *sigfile)
 
 	readb64file(pubkeyfile, &pubkey, sizeof(pubkey));
 	readb64file(sigfile, &sig, sizeof(sig));
+
+	if (memcmp(pubkey.fingerprint, sig.fingerprint, FPLEN))
+		errx(1, "verification failed: checked against wrong key");
 
 	msg = readmsg(inputfile, &msglen);
 
