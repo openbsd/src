@@ -88,6 +88,7 @@
 ./etc/ppp/ppp.linkup.sample
 ./etc/ppp/ppp.secret.sample
 ./etc/rc.d
+./etc/signify
 ./etc/skel
 ./etc/skel/.ssh
 ./etc/sliphome
