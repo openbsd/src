@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.69 2014/01/03 12:43:09 pelikan Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.70 2014/01/08 22:38:29 bluhm Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -474,16 +474,16 @@ pfi_table_update(struct pfr_ktable *kt, struct pfi_kif *kif, int net, int flags)
 void
 pfi_instance_add(struct ifnet *ifp, int net, int flags)
 {
-	struct ifaddr	*ia;
+	struct ifaddr	*ifa;
 	int		 got4 = 0, got6 = 0;
 	int		 net2, af;
 
 	if (ifp == NULL)
 		return;
-	TAILQ_FOREACH(ia, &ifp->if_addrlist, ifa_list) {
-		if (ia->ifa_addr == NULL)
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr == NULL)
 			continue;
-		af = ia->ifa_addr->sa_family;
+		af = ifa->ifa_addr->sa_family;
 		if (af != AF_INET && af != AF_INET6)
 			continue;
 		if ((flags & PFI_AFLAG_BROADCAST) && af == AF_INET6)
@@ -496,7 +496,7 @@ pfi_instance_add(struct ifnet *ifp, int net, int flags)
 			continue;
 		if ((flags & PFI_AFLAG_NETWORK) && af == AF_INET6 &&
 		    IN6_IS_ADDR_LINKLOCAL(
-		    &((struct sockaddr_in6 *)ia->ifa_addr)->sin6_addr))
+		    &((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr))
 			continue;
 		if (flags & PFI_AFLAG_NOALIAS) {
 			if (af == AF_INET && got4)
@@ -512,19 +512,19 @@ pfi_instance_add(struct ifnet *ifp, int net, int flags)
 		if (net2 == 128 && (flags & PFI_AFLAG_NETWORK)) {
 			if (af == AF_INET)
 				net2 = pfi_unmask(&((struct sockaddr_in *)
-				    ia->ifa_netmask)->sin_addr);
+				    ifa->ifa_netmask)->sin_addr);
 			else if (af == AF_INET6)
 				net2 = pfi_unmask(&((struct sockaddr_in6 *)
-				    ia->ifa_netmask)->sin6_addr);
+				    ifa->ifa_netmask)->sin6_addr);
 		}
 		if (af == AF_INET && net2 > 32)
 			net2 = 32;
 		if (flags & PFI_AFLAG_BROADCAST)
-			pfi_address_add(ia->ifa_broadaddr, af, net2);
+			pfi_address_add(ifa->ifa_broadaddr, af, net2);
 		else if (flags & PFI_AFLAG_PEER)
-			pfi_address_add(ia->ifa_dstaddr, af, net2);
+			pfi_address_add(ifa->ifa_dstaddr, af, net2);
 		else
-			pfi_address_add(ia->ifa_addr, af, net2);
+			pfi_address_add(ifa->ifa_addr, af, net2);
 	}
 }
 

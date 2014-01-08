@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.58 2013/12/20 02:04:09 krw Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.59 2014/01/08 22:38:29 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -218,7 +218,7 @@ in6_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 			if (so->so_options & SO_REUSEADDR)
 				reuseport = SO_REUSEADDR | SO_REUSEPORT;
 		} else if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
-			struct ifaddr *ia = NULL;
+			struct ifaddr *ifa = NULL;
 
 			sin6->sin6_port = 0;  /*
 					       * Yechhhh, because of upcoming
@@ -228,7 +228,7 @@ in6_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 					       */
 			sin6->sin6_flowinfo = 0;
 			if (!(so->so_options & SO_BINDANY) &&
-			    (ia = ifa_ifwithaddr(sin6tosa(sin6),
+			    (ifa = ifa_ifwithaddr(sin6tosa(sin6),
 			    inp->inp_rtableid)) == NULL)
 				return EADDRNOTAVAIL;
 
@@ -245,8 +245,8 @@ in6_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 			 * flag to control the bind(2) behavior against
 			 * deprecated addresses (default: forbid bind(2)).
 			 */
-			if (ia &&
-			    ifatoia6(ia)->ia6_flags &
+			if (ifa &&
+			    ifatoia6(ifa)->ia6_flags &
 			    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|IN6_IFF_DETACHED))
 				return (EADDRNOTAVAIL);
 		}

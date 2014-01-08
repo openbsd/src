@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.63 2013/12/20 02:04:09 krw Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.64 2014/01/08 22:38:29 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -661,7 +661,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	case PRU_BIND:
 	    {
 		struct sockaddr_in6 *addr = mtod(nam, struct sockaddr_in6 *);
-		struct ifaddr *ia = NULL;
+		struct ifaddr *ifa = NULL;
 
 		if (nam->m_len != sizeof(*addr)) {
 			error = EINVAL;
@@ -688,12 +688,12 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 */
 		if (!IN6_IS_ADDR_UNSPECIFIED(&addr->sin6_addr) &&
 		    !(so->so_options & SO_BINDANY) &&
-		    (ia = ifa_ifwithaddr(sin6tosa(addr),
+		    (ifa = ifa_ifwithaddr(sin6tosa(addr),
 		    in6p->inp_rtableid)) == 0) {
 			error = EADDRNOTAVAIL;
 			break;
 		}
-		if (ia && ifatoia6(ia)->ia6_flags &
+		if (ifa && ifatoia6(ifa)->ia6_flags &
 		    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|
 		     IN6_IFF_DETACHED|IN6_IFF_DEPRECATED)) {
 			error = EADDRNOTAVAIL;
