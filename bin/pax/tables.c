@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.29 2014/01/08 06:41:49 guenther Exp $	*/
+/*	$OpenBSD: tables.c,v 1.30 2014/01/08 06:43:34 deraadt Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -103,7 +103,7 @@ lnk_start(void)
 {
 	if (ltab != NULL)
 		return(0);
- 	if ((ltab = (HRDLNK **)calloc(L_TAB_SZ, sizeof(HRDLNK *))) == NULL) {
+	if ((ltab = (HRDLNK **)calloc(L_TAB_SZ, sizeof(HRDLNK *))) == NULL) {
 		paxwarn(1, "Cannot allocate memory for hard link table");
 		return(-1);
 	}
@@ -331,7 +331,7 @@ ftime_start(void)
 
 	if (ftab != NULL)
 		return(0);
- 	if ((ftab = (FTM **)calloc(F_TAB_SZ, sizeof(FTM *))) == NULL) {
+	if ((ftab = (FTM **)calloc(F_TAB_SZ, sizeof(FTM *))) == NULL) {
 		paxwarn(1, "Cannot allocate memory for file time table");
 		return(-1);
 	}
@@ -487,7 +487,7 @@ name_start(void)
 {
 	if (ntab != NULL)
 		return(0);
- 	if ((ntab = (NAMT **)calloc(N_TAB_SZ, sizeof(NAMT *))) == NULL) {
+	if ((ntab = (NAMT **)calloc(N_TAB_SZ, sizeof(NAMT *))) == NULL) {
 		paxwarn(1, "Cannot allocate memory for interactive rename table");
 		return(-1);
 	}
@@ -661,7 +661,7 @@ dev_start(void)
 {
 	if (dtab != NULL)
 		return(0);
- 	if ((dtab = (DEVT **)calloc(D_TAB_SZ, sizeof(DEVT *))) == NULL) {
+	if ((dtab = (DEVT **)calloc(D_TAB_SZ, sizeof(DEVT *))) == NULL) {
 		paxwarn(1, "Cannot allocate memory for device mapping table");
 		return(-1);
 	}
@@ -904,7 +904,7 @@ atdir_start(void)
 {
 	if (atab != NULL)
 		return(0);
- 	if ((atab = (ATDIR **)calloc(A_TAB_SZ, sizeof(ATDIR *))) == NULL) {
+	if ((atab = (ATDIR **)calloc(A_TAB_SZ, sizeof(ATDIR *))) == NULL) {
 		paxwarn(1,"Cannot allocate space for directory access time table");
 		return(-1);
 	}

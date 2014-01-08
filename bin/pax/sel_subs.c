@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.22 2013/11/21 15:54:45 deraadt Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.23 2014/01/08 06:43:34 deraadt Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -109,7 +109,7 @@ usr_add(char *str)
 	if ((str == NULL) || (*str == '\0'))
 		return(-1);
 	if ((usrtb == NULL) &&
- 	    ((usrtb = (USRT **)calloc(USR_TB_SZ, sizeof(USRT *))) == NULL)) {
+	    ((usrtb = (USRT **)calloc(USR_TB_SZ, sizeof(USRT *))) == NULL)) {
 		paxwarn(1, "Unable to allocate memory for user selection table");
 		return(-1);
 	}
@@ -206,7 +206,7 @@ grp_add(char *str)
 	if ((str == NULL) || (*str == '\0'))
 		return(-1);
 	if ((grptb == NULL) &&
- 	    ((grptb = (GRPT **)calloc(GRP_TB_SZ, sizeof(GRPT *))) == NULL)) {
+	    ((grptb = (GRPT **)calloc(GRP_TB_SZ, sizeof(GRPT *))) == NULL)) {
 		paxwarn(1, "Unable to allocate memory fo group selection table");
 		return(-1);
 	}
