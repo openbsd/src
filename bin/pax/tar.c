@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.51 2014/01/08 04:58:36 guenther Exp $	*/
+/*	$OpenBSD: tar.c,v 1.52 2014/01/08 06:41:49 guenther Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -784,7 +784,7 @@ ustar_rd(ARCHD *arcn, char *buf)
 		}
 	}
 
-	if (!arcn->ln_nlen && 
+	if (!arcn->ln_nlen &&
 	    hd->typeflag != LONGLINKTYPE && hd->typeflag != LONGNAMETYPE) {
 		arcn->ln_nlen = expandname(arcn->ln_name, sizeof(arcn->ln_name),
 		    &gnu_link_string, hd->linkname, sizeof(hd->linkname));
