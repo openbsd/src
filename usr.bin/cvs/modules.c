@@ -1,4 +1,4 @@
-/*	$OpenBSD: modules.c,v 1.16 2009/03/29 19:17:26 joris Exp $	*/
+/*	$OpenBSD: modules.c,v 1.17 2014/01/08 13:23:55 okan Exp $	*/
 /*
  * Copyright (c) 2008 Joris Vink <joris@openbsd.org>
  *
@@ -62,7 +62,7 @@ modules_parse_line(char *line, int lineno)
 
 	flags = 0;
 	p = val = line;
-	while (!isspace(*p) && *p != '\0')
+	while (!isspace((unsigned char)*p) && *p != '\0')
 		p++;
 
 	if (*p == '\0')
@@ -71,19 +71,19 @@ modules_parse_line(char *line, int lineno)
 	*(p++) = '\0';
 	module = val;
 
-	while (isspace(*p))
+	while (isspace((unsigned char)*p))
 		p++;
 
 	if (*p == '\0')
 		goto bad;
 
 	val = p;
-	while (!isspace(*p) && *p != '\0')
+	while (!isspace((unsigned char)*p) && *p != '\0')
 		p++;
 
 	while (val[0] == '-') {
 		p = val;
-		while (!isspace(*p) && *p != '\0')
+		while (!isspace((unsigned char)*p) && *p != '\0')
 			p++;
 
 		if (*p == '\0')
@@ -117,7 +117,7 @@ modules_parse_line(char *line, int lineno)
 			}
 
 			val = p;
-			while (!isspace(*val) && *val != '\0')
+			while (!isspace((unsigned char)*val) && *val != '\0')
 				val++;
 			if (*val == '\0')
 				goto bad;
@@ -164,7 +164,7 @@ modules_parse_line(char *line, int lineno)
 
 	for (sp = val; *sp != '\0'; sp = dp) {
 		dp = sp;
-		while (!isspace(*dp) && *dp != '\0')
+		while (!isspace((unsigned char)*dp) && *dp != '\0')
 			dp++;
 		if (*dp != '\0')
 			*(dp++) = '\0';

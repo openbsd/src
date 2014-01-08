@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.20 2011/05/20 19:22:47 nicm Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.21 2014/01/08 13:23:55 okan Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -255,7 +255,8 @@ parse_cmd(int type, char *cmd, const char *repo,
 	}
 
 	/* before doing any stuff, check if the command starts with % */
-	for (p = cmd; *p != '%' && !isspace(*p) && *p != '\0'; p++)
+	for (p = cmd;
+	     *p != '%' && !isspace((unsigned char)*p) && *p != '\0'; p++)
 		;
 	if (*p == '%')
 		return (NULL);
@@ -416,13 +417,13 @@ cvs_trigger_getlines(char * file, char * repo)
 
 		lineno++;
 
-		for (p = currentline; isspace(*p); p++)
+		for (p = currentline; isspace((unsigned char)*p); p++)
 			;
 
 		if (*p == '\0' || *p == '#')
 			continue;
 
-		for (q = p; !isspace(*q) && *q != '\0'; q++)
+		for (q = p; !isspace((unsigned char)*q) && *q != '\0'; q++)
 			;
 
 		if (*q == '\0')
@@ -431,7 +432,7 @@ cvs_trigger_getlines(char * file, char * repo)
 		*q++ = '\0';
 		regex = p;
 
-		for (; isspace(*q); q++)
+		for (; isspace((unsigned char)*q); q++)
 			;
 
 		if (*q == '\0')
