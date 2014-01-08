@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.42 2014/01/08 04:58:36 guenther Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.43 2014/01/08 05:52:47 guenther Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -379,7 +379,7 @@ ar_close(void)
 	 * could have written anything yet.
 	 */
 	if (frmt == NULL) {
-		(void)fprintf(listf, "%s: unknown format, %qu bytes skipped.\n",
+		(void)fprintf(listf, "%s: unknown format, %llu bytes skipped.\n",
 		    argv0, rdcnt);
 		(void)fflush(listf);
 		flcnt = 0;
@@ -387,10 +387,10 @@ ar_close(void)
 	}
 
 	if (strcmp(NM_CPIO, argv0) == 0)
-		(void)fprintf(listf, "%qu blocks\n", (rdcnt ? rdcnt : wrcnt) / 5120);
+		(void)fprintf(listf, "%llu blocks\n", (rdcnt ? rdcnt : wrcnt) / 5120);
 	else if (strcmp(NM_TAR, argv0) != 0)
 		(void)fprintf(listf,
-		    "%s: %s vol %d, %lu files, %qu bytes read, %qu bytes written.\n",
+		    "%s: %s vol %d, %lu files, %llu bytes read, %llu bytes written.\n",
 		    argv0, frmt->name, arvol-1, flcnt, rdcnt, wrcnt);
 	(void)fflush(listf);
 	flcnt = 0;
@@ -659,7 +659,7 @@ ar_write(char *buf, int bsz)
 	/*
 	 * Better tell the user the bad news...
 	 * if this is a block aligned archive format, we may have a bad archive
-	 * if the format wants the header to start at a BLKMULT boundary.. While
+	 * if the format wants the header to start at a BLKMULT boundary. While
 	 * we can deal with the mis-aligned data, it violates spec and other
 	 * archive readers will likely fail. if the format is not block
 	 * aligned, the user may be lucky (and the archive is ok).

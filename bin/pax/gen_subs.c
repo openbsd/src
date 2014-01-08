@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.23 2014/01/08 04:58:36 guenther Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.24 2014/01/08 05:52:47 guenther Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -121,10 +121,11 @@ ls_list(ARCHD *arcn, time_t now, FILE *fp)
 	 * print device id's for devices, or sizes for other nodes
 	 */
 	if ((arcn->type == PAX_CHR) || (arcn->type == PAX_BLK))
-		(void)fprintf(fp, "%4lu,%4lu ", (unsigned long)MAJOR(sbp->st_rdev),
+		(void)fprintf(fp, "%4lu,%4lu ",
+		    (unsigned long)MAJOR(sbp->st_rdev),
 		    (unsigned long)MINOR(sbp->st_rdev));
 	else {
-		(void)fprintf(fp, "%9qu ", sbp->st_size);
+		(void)fprintf(fp, "%9llu ", sbp->st_size);
 	}
 
 	/*

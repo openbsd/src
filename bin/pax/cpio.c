@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.23 2014/01/08 04:58:36 guenther Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.24 2014/01/08 05:52:47 guenther Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -211,7 +211,7 @@ rd_ln_nm(ARCHD *arcn)
 	 */
 	if ((arcn->sb.st_size == 0) ||
 	    (arcn->sb.st_size >= sizeof(arcn->ln_name))) {
-		paxwarn(1, "Cpio link name length is invalid: %qu",
+		paxwarn(1, "Cpio link name length is invalid: %llu",
 		    arcn->sb.st_size);
 		return(-1);
 	}

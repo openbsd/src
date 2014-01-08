@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.78 2014/01/08 04:58:36 guenther Exp $	*/
+/*	$OpenBSD: options.c,v 1.79 2014/01/08 05:52:47 guenther Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -1457,8 +1457,8 @@ str_offt(char *val)
 	char *expr;
 	off_t num, t;
 
-	num = strtoq(val, &expr, 0);
-	if ((num == QUAD_MAX) || (num <= 0) || (expr == val))
+	num = strtoll(val, &expr, 0);
+	if ((num == LLONG_MAX) || (num <= 0) || (expr == val))
 		return(0);
 
 	switch (*expr) {
@@ -1530,7 +1530,7 @@ get_line(FILE *f)
 	temp[len-1] = 0;
 	return(temp);
 }
-			
+
 /*
  * no_op()
  *	for those option functions where the archive format has nothing to do.
