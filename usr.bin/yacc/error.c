@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.12 2011/09/22 16:21:23 nicm Exp $	*/
+/*	$OpenBSD: error.c,v 1.13 2014/01/08 22:55:59 millert Exp $	*/
 /*	$NetBSD: error.c,v 1.4 1996/03/19 03:21:32 jtc Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ print_pos(char *st_line, char *st_cptr)
     if (st_line == 0) return;
     for (s = st_line; *s != '\n'; ++s)
     {
-	if (isprint(*s) || *s == '\t')
+	if (isprint((unsigned char)*s) || *s == '\t')
 	    putc(*s, stderr);
 	else
 	    putc('?', stderr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.24 2014/01/08 21:40:25 millert Exp $	*/
+/*	$OpenBSD: reader.c,v 1.25 2014/01/08 22:55:59 millert Exp $	*/
 /*	$NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	*/
 
 /*
@@ -273,7 +273,7 @@ nextc(void)
 
 	default:
 	    cptr = s;
-	    return (*s);
+	    return ((unsigned char)*s);
 	}
     }
 }
@@ -285,7 +285,7 @@ keyword(void)
     int c;
     char *t_cptr = cptr;
 
-    c = *++cptr;
+    c = (unsigned char)*++cptr;
     if (isalpha(c))
     {
 	cinc = 0;
@@ -300,7 +300,7 @@ keyword(void)
 		cachec(c);
 	    else
 		break;
-	    c = *++cptr;
+	    c = (unsigned char)*++cptr;
 	}
 	cachec(NUL);
 
@@ -358,7 +358,7 @@ copy_ident(void)
     fprintf(f, "#ident \"");
     for (;;)
     {
-	c = *++cptr;
+	c = (unsigned char)*++cptr;
 	if (c == '\n')
 	{
 	    fprintf(f, "\"\n");
@@ -395,7 +395,7 @@ copy_text(void)
     if (!lflag) fprintf(f, line_format, lineno, input_file_name);
 
 loop:
-    c = *cptr++;
+    c = (unsigned char)*cptr++;
     switch (c)
     {
     case '\n':
@@ -417,7 +417,7 @@ loop:
 	    putc(c, f);
 	    for (;;)
 	    {
-		c = *cptr++;
+		c = (unsigned char)*cptr++;
 		putc(c, f);
 		if (c == quote)
 		{
@@ -429,7 +429,7 @@ loop:
 		    unterminated_string(s_lineno, s_line, s_cptr);
 		if (c == '\\')
 		{
-		    c = *cptr++;
+		    c = (unsigned char)*cptr++;
 		    putc(c, f);
 		    if (c == '\n')
 		    {
@@ -444,11 +444,11 @@ loop:
     case '/':
 	putc(c, f);
 	need_newline = 1;
-	c = *cptr;
+	c = (unsigned char)*cptr;
 	if (c == '/')
 	{
 	    putc('*', f);
-	    while ((c = *++cptr) != '\n')
+	    while ((c = (unsigned char)*++cptr) != '\n')
 	    {
 		if (c == '*' && cptr[1] == '/')
 		    fprintf(f, "* ");
@@ -468,7 +468,7 @@ loop:
 	    ++cptr;
 	    for (;;)
 	    {
-		c = *cptr++;
+		c = (unsigned char)*cptr++;
 		putc(c, f);
 		if (c == '*' && *cptr == '/')
 		{
@@ -532,7 +532,7 @@ copy_union(void)
 
     depth = 0;
 loop:
-    c = *cptr++;
+    c = (unsigned char)*cptr++;
     putc(c, text_file);
     if (dflag) putc(c, union_file);
     switch (c)
@@ -567,7 +567,7 @@ loop:
 	    quote = c;
 	    for (;;)
 	    {
-		c = *cptr++;
+		c = (unsigned char)*cptr++;
 		putc(c, text_file);
 		if (dflag) putc(c, union_file);
 		if (c == quote)
@@ -579,7 +579,7 @@ loop:
 		    unterminated_string(s_lineno, s_line, s_cptr);
 		if (c == '\\')
 		{
-		    c = *cptr++;
+		    c = (unsigned char)*cptr++;
 		    putc(c, text_file);
 		    if (dflag) putc(c, union_file);
 		    if (c == '\n')
@@ -593,12 +593,12 @@ loop:
 	}
 
     case '/':
-	c = *cptr;
+	c = (unsigned char)*cptr;
 	if (c == '/')
 	{
 	    putc('*', text_file);
 	    if (dflag) putc('*', union_file);
-	    while ((c = *++cptr) != '\n')
+	    while ((c = (unsigned char)*++cptr) != '\n')
 	    {
 		if (c == '*' && cptr[1] == '/')
 		{
@@ -626,7 +626,7 @@ loop:
 	    ++cptr;
 	    for (;;)
 	    {
-		c = *cptr++;
+		c = (unsigned char)*cptr++;
 		putc(c, text_file);
 		if (dflag) putc(c, union_file);
 		if (c == '*' && *cptr == '/')
@@ -678,18 +678,18 @@ get_literal(void)
     char *s_line = dup_line();
     char *s_cptr = s_line + (cptr - line);
 
-    quote = *cptr++;
+    quote = (unsigned char)*cptr++;
     cinc = 0;
     for (;;)
     {
-	c = *cptr++;
+	c = (unsigned char)*cptr++;
 	if (c == quote) break;
 	if (c == '\n') unterminated_string(s_lineno, s_line, s_cptr);
 	if (c == '\\')
 	{
 	    char *c_cptr = cptr - 1;
 
-	    c = *cptr++;
+	    c = (unsigned char)*cptr++;
 	    switch (c)
 	    {
 	    case '\n':
@@ -700,11 +700,11 @@ get_literal(void)
 	    case '0': case '1': case '2': case '3':
 	    case '4': case '5': case '6': case '7':
 		n = c - '0';
-		c = *cptr;
+		c = (unsigned char)*cptr;
 		if (IS_OCTAL(c))
 		{
 		    n = (n << 3) + (c - '0');
-		    c = *++cptr;
+		    c = (unsigned char)*++cptr;
 		    if (IS_OCTAL(c))
 		    {
 			n = (n << 3) + (c - '0');
@@ -716,13 +716,13 @@ get_literal(void)
 	    	break;
 
 	    case 'x':
-		c = *cptr++;
+		c = (unsigned char)*cptr++;
 		n = hexval(c);
 		if (n < 0 || n >= 16)
 		    illegal_character(c_cptr);
 		for (;;)
 		{
-		    c = *cptr;
+		    c = (unsigned char)*cptr;
 		    i = hexval(c);
 		    if (i < 0 || i >= 16) break;
 		    ++cptr;
@@ -814,10 +814,10 @@ is_reserved(char *name)
 	    strcmp(name, "$end") == 0)
 	return (1);
 
-    if (name[0] == '$' && name[1] == '$' && isdigit(name[2]))
+    if (name[0] == '$' && name[1] == '$' && isdigit((unsigned char)name[2]))
     {
 	s = name + 3;
-	while (isdigit(*s)) ++s;
+	while (isdigit((unsigned char)*s)) ++s;
 	if (*s == NUL) return (1);
     }
 
@@ -831,7 +831,7 @@ get_name(void)
     int c;
 
     cinc = 0;
-    for (c = *cptr; IS_IDENT(c); c = *++cptr)
+    for (c = (unsigned char)*cptr; IS_IDENT(c); c = (unsigned char)*++cptr)
 	cachec(c);
     cachec(NUL);
 
@@ -848,7 +848,7 @@ get_number(void)
     int n;
 
     n = 0;
-    for (c = *cptr; isdigit(c); c = *++cptr)
+    for (c = (unsigned char)*cptr; isdigit(c); c = (unsigned char)*++cptr)
 	n = 10*n + (c - '0');
 
     return (n);
@@ -872,7 +872,7 @@ get_tag(void)
 	illegal_tag(t_lineno, t_line, t_cptr);
 
     cinc = 0;
-    do { cachec(c); c = *++cptr; } while (IS_IDENT(c));
+    do { cachec(c); c = (unsigned char)*++cptr; } while (IS_IDENT(c));
     cachec(NUL);
 
     c = nextc();
@@ -984,7 +984,7 @@ declare_expect(int assoc)
      * Stay away from nextc - doesn't
      * detect EOL and will read to EOF.
      */
-    c = *++cptr;
+    c = (unsigned char)*++cptr;
     if (c == EOF) unexpected_EOF();
 
     for (;;)
@@ -1005,7 +1005,7 @@ declare_expect(int assoc)
         }
         else
         {
-            c = *++cptr;
+            c = (unsigned char)*++cptr;
             if (c == EOF) unexpected_EOF();
         }
     }
@@ -1289,7 +1289,7 @@ add_symbol(void)
     bucket *bp;
     int s_lineno = lineno;
 
-    c = *cptr;
+    c = (unsigned char)*cptr;
     if (c == '\'' || c == '"')
 	bp = get_literal();
     else
@@ -1341,7 +1341,7 @@ copy_action(void)
 
     depth = 0;
 loop:
-    c = *cptr;
+    c = (unsigned char)*cptr;
     if (c == '$')
     {
 	if (cptr[1] == '<')
@@ -1352,7 +1352,7 @@ loop:
 
 	    ++cptr;
 	    tag = get_tag();
-	    c = *cptr;
+	    c = (unsigned char)*cptr;
 	    if (c == '$')
 	    {
 		fprintf(f, "yyval.%s", tag);
@@ -1368,7 +1368,7 @@ loop:
 		free(d_line);
 		goto loop;
 	    }
-	    else if (c == '-' && isdigit(cptr[1]))
+	    else if (c == '-' && isdigit((unsigned char)cptr[1]))
 	    {
 		++cptr;
 		i = -get_number() - n;
@@ -1392,7 +1392,7 @@ loop:
 	    cptr += 2;
 	    goto loop;
 	}
-	else if (isdigit(cptr[1]))
+	else if (isdigit((unsigned char)cptr[1]))
 	{
 	    ++cptr;
 	    i = get_number();
@@ -1427,7 +1427,7 @@ loop:
 	do
 	{
 	    putc(c, f);
-	    c = *++cptr;
+	    c = (unsigned char)*++cptr;
 	} while (isalnum(c) || c == '_' || c == '$');
 	goto loop;
     }
@@ -1467,7 +1467,7 @@ loop:
 	    quote = c;
 	    for (;;)
 	    {
-		c = *cptr++;
+		c = (unsigned char)*cptr++;
 		putc(c, f);
 		if (c == quote)
 		{
@@ -1478,7 +1478,7 @@ loop:
 		    unterminated_string(s_lineno, s_line, s_cptr);
 		if (c == '\\')
 		{
-		    c = *cptr++;
+		    c = (unsigned char)*cptr++;
 		    putc(c, f);
 		    if (c == '\n')
 		    {
@@ -1491,11 +1491,11 @@ loop:
 	}
 
     case '/':
-	c = *cptr;
+	c = (unsigned char)*cptr;
 	if (c == '/')
 	{
 	    putc('*', f);
-	    while ((c = *++cptr) != '\n')
+	    while ((c = (unsigned char)*++cptr) != '\n')
 	    {
 		if (c == '*' && cptr[1] == '/')
 		    fprintf(f, "* ");
@@ -1515,7 +1515,7 @@ loop:
 	    ++cptr;
 	    for (;;)
 	    {
-		c = *cptr++;
+		c = (unsigned char)*cptr++;
 		putc(c, f);
 		if (c == '*' && *cptr == '/')
 		{
@@ -1546,7 +1546,7 @@ mark_symbol(void)
     int c;
     bucket *bp = NULL;
 
-    c = cptr[1];
+    c = (unsigned char)cptr[1];
     if (c == '%' || c == '\\')
     {
 	cptr += 2;
@@ -1559,7 +1559,7 @@ mark_symbol(void)
 	     ((c = cptr[2]) == 'r' || c == 'R') &&
 	     ((c = cptr[3]) == 'e' || c == 'E') &&
 	     ((c = cptr[4]) == 'c' || c == 'C') &&
-	     ((c = cptr[5], !IS_IDENT(c))))
+	     ((c = (unsigned char)cptr[5], !IS_IDENT(c))))
 	cptr += 5;
     else
 	syntax_error(lineno, line, cptr);

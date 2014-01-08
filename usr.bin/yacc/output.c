@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.18 2014/01/08 22:36:37 millert Exp $	*/
+/*	$OpenBSD: output.c,v 1.19 2014/01/08 22:55:59 millert Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -866,13 +866,13 @@ is_C_identifier(char *name)
     int c;
 
     s = name;
-    c = *s;
+    c = (unsigned char)*s;
     if (c == '"')
     {
-	c = *++s;
+	c = (unsigned char)*++s;
 	if (!isalpha(c) && c != '_' && c != '$')
 	    return (0);
-	while ((c = *++s) != '"')
+	while ((c = (unsigned char)*++s) != '"')
 	{
 	    if (!isalnum(c) && c != '_' && c != '$')
 		return (0);
@@ -882,7 +882,7 @@ is_C_identifier(char *name)
 
     if (!isalpha(c) && c != '_' && c != '$')
 	return (0);
-    while ((c = *++s))
+    while ((c = (unsigned char)*++s))
     {
 	if (!isalnum(c) && c != '_' && c != '$')
 	    return (0);
@@ -904,10 +904,10 @@ output_defines(void)
 	{
 	    fprintf(code_file, "#define ");
 	    if (dflag) fprintf(defines_file, "#define ");
-	    c = *s;
+	    c = (unsigned char)*s;
 	    if (c == '"')
 	    {
-		while ((c = *++s) != '"')
+		while ((c = (unsigned char)*++s) != '"')
 		{
 		    putc(c, code_file);
 		    if (dflag) putc(c, defines_file);
@@ -920,7 +920,7 @@ output_defines(void)
 		    putc(c, code_file);
 		    if (dflag) putc(c, defines_file);
 		}
-		while ((c = *++s));
+		while ((c = (unsigned char)*++s));
 	    }
 	    ++outline;
 	    fprintf(code_file, " %d\n", symbol_value[i]);
@@ -1220,7 +1220,7 @@ output_trailing_text(void)
 
     in = input_file;
     out = code_file;
-    c = *cptr;
+    c = (unsigned char)*cptr;
     if (c == '\n')
     {
 	++lineno;
@@ -1243,7 +1243,7 @@ output_trailing_text(void)
 	    ++outline;
 	    fprintf(out, line_format, lineno, input_file_name);
 	}
-	do { putc(c, out); } while ((c = *++cptr) != '\n');
+	do { putc(c, out); } while ((c = (unsigned char)*++cptr) != '\n');
 	++outline;
 	putc('\n', out);
 	last = '\n';
