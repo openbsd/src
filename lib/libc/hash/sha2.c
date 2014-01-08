@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.15 2013/12/22 22:55:51 tedu Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.16 2014/01/08 04:35:34 deraadt Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -214,7 +214,6 @@ const static u_int32_t sha256_initial_hash_value[8] = {
 	0x5be0cd19UL
 };
 
-#ifndef SHA256_ONLY
 /* Hash constant words K for SHA-384 and SHA-512: */
 const static u_int64_t K512[80] = {
 	0x428a2f98d728ae22ULL, 0x7137449123ef65cdULL,
@@ -259,18 +258,6 @@ const static u_int64_t K512[80] = {
 	0x5fcb6fab3ad6faecULL, 0x6c44198c4a475817ULL
 };
 
-/* Initial hash value H for SHA-384 */
-const static u_int64_t sha384_initial_hash_value[8] = {
-	0xcbbb9d5dc1059ed8ULL,
-	0x629a292a367cd507ULL,
-	0x9159015a3070dd17ULL,
-	0x152fecd8f70e5939ULL,
-	0x67332667ffc00b31ULL,
-	0x8eb44a8768581511ULL,
-	0xdb0c2e0d64f98fa7ULL,
-	0x47b5481dbefa4fa4ULL
-};
-
 /* Initial hash value H for SHA-512 */
 const static u_int64_t sha512_initial_hash_value[8] = {
 	0x6a09e667f3bcc908ULL,
@@ -281,6 +268,19 @@ const static u_int64_t sha512_initial_hash_value[8] = {
 	0x9b05688c2b3e6c1fULL,
 	0x1f83d9abfb41bd6bULL,
 	0x5be0cd19137e2179ULL
+};
+
+#if !defined(SHA2_SMALL)
+/* Initial hash value H for SHA-384 */
+const static u_int64_t sha384_initial_hash_value[8] = {
+	0xcbbb9d5dc1059ed8ULL,
+	0x629a292a367cd507ULL,
+	0x9159015a3070dd17ULL,
+	0x152fecd8f70e5939ULL,
+	0x67332667ffc00b31ULL,
+	0x8eb44a8768581511ULL,
+	0xdb0c2e0d64f98fa7ULL,
+	0x47b5481dbefa4fa4ULL
 };
 
 /*** SHA-224: *********************************************************/
@@ -316,7 +316,7 @@ SHA224Final(u_int8_t digest[SHA224_DIGEST_LENGTH], SHA2_CTX *context)
 		memset(context, 0, sizeof(*context));
 	}
 }
-#endif /* SHA256_ONLY */
+#endif /* !defined(SHA2_SMALL) */
 
 /*** SHA-256: *********************************************************/
 void
@@ -596,7 +596,6 @@ SHA256Final(u_int8_t digest[SHA256_DIGEST_LENGTH], SHA2_CTX *context)
 }
 
 
-#ifndef SHA256_ONLY
 /*** SHA-512: *********************************************************/
 void
 SHA512Init(SHA2_CTX *context)
@@ -875,6 +874,7 @@ SHA512Final(u_int8_t digest[SHA512_DIGEST_LENGTH], SHA2_CTX *context)
 	}
 }
 
+#if !defined(SHA2_SMALL)
 
 /*** SHA-384: *********************************************************/
 void
@@ -911,4 +911,4 @@ SHA384Final(u_int8_t digest[SHA384_DIGEST_LENGTH], SHA2_CTX *context)
 	/* Zero out state data */
 	memset(context, 0, sizeof(*context));
 }
-#endif /* SHA256_ONLY */
+#endif /* !defined(SHA2_SMALL) */

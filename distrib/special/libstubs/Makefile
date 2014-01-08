@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2013/11/04 02:14:56 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 2014/01/08 04:35:34 deraadt Exp $
 
 .include <bsd.own.mk>
 LIB=    stubs
@@ -30,7 +30,7 @@ NOPIC=	Yes
 NOPROFILE=Yes
 NOMAN=	1
 
-CFLAGS+=-D__DBINTERFACE_PRIVATE -DSHA256_ONLY -UYP -I${LIBCSRCDIR}/include \
+CFLAGS+=-D__DBINTERFACE_PRIVATE -DSHA2_SMALL -UYP -I${LIBCSRCDIR}/include \
 	-DNO_LOG_BAD_DNS_RESPONSES -I${LIBCSRCDIR}/locale \
 	-I${LIBCSRCDIR}/gdtoa -I${LIBCSRCDIR}/arch/${MACHINE_CPU}/gdtoa \
 	-I${LIBCSRCDIR}/stdio -DFLOATING_POINT
