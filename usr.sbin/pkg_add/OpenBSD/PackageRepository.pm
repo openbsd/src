@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.98 2014/01/09 10:43:13 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.99 2014/01/09 17:41:41 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -512,20 +512,12 @@ sub open_pipe
 	$object->{cache_dir} = $ENV{'PKG_CACHE'};
 	$object->{parent} = $$;
 
-	my ($rdfh, $wrfh);
-	pipe($rdfh, $wrfh);
-
-	my $pid2 = fork();
-
+	my $pid2 = open(my $rdfh, "-|");
 	$self->did_it_fork($pid2);
 	if ($pid2) {
 		$object->{pid2} = $pid2;
 	} else {
 		open STDERR, '>', $object->{errors};
-		open(STDOUT, '>&', $wrfh) or
-		    $self->{state}->fatal("Bad dup: #1", $!);
-		close($rdfh);
-		close($wrfh);
 		if (defined $object->{cache_dir}) {
 			my $pid3 = open(my $in, "-|");
 			$self->did_it_fork($pid3);
@@ -539,7 +531,6 @@ sub open_pipe
 		}
 		exit(0);
 	}
-	close($wrfh);
 	return $self->uncompress($rdfh);
 }
 
