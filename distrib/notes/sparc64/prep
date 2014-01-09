@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.23 2008/07/29 22:24:25 kettenis Exp $
+dnl	$OpenBSD: prep,v 1.24 2014/01/09 19:44:49 miod Exp $
 If your UltraSPARC machine is somewhat old, it might need a firmware update
 before it can be used under OpenBSD. You are advised to try to install
 OpenBSD first; if it can't boot or fails mysteriously, you might need to
@@ -46,8 +46,8 @@ understand the extended disk labels with 16 partitions.  You can use Solaris
 bootblocks, but remember that OpenBSD bootblocks must be installed with
 OpenBSD installboot and Solaris bootblocks with Solaris installboot.
 
-Most of the new Ultras shipped by Sun with a preinstalled Solaris have an
-initial specific factory setup of the boot ROM, in order to start up
+Most of the new Ultras shipped by Sun (or Oracle) with a preinstalled Solaris
+have an initial specific factory setup of the boot ROM, in order to start up
 Solaris WebStart at the first boot; the boot-device variable is set to
 disk:f.  Make sure you reset the boot device to its default value:
 
@@ -81,8 +81,11 @@ please don't do this.
 You will need to have a working operating system installed on your machine,
 in order to perform the update.  If this is not the case, you might be able
 to boot the flash updater software via network, but this has not been tested
-and is not supported by Sun.
+and is not supported by Oracle.
 
+ifdef({:-living in the good old times-:},{:-dnl
+dnl This section is commented out, for historical reference, until a
+dnl reliable mirror of historical SunSolve patches can be found.
 The firmware update is delivered as a specific patch, depending on your
 machine:
 
@@ -111,6 +114,10 @@ dnl XXX uncomment machine entries as they become supported
 You can use SunSolve to get the patches by entering the
 correct Patch-ID# to the corresponding field at
     http://sunsolve.sun.com/pub-cgi/show.pl?target=patchpage
+-:},{:-dnl
+Firmware update information can be found at
+  http://www.oracle.com/technetwork/systems/patches/firmware/release-history-jsp-138416.html
+-:})dnl
 
 Follow the patch installation notes very carefully. You will need to open
 your machine in order to apply this patch.
