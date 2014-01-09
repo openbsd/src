@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.60 2014/01/08 21:53:35 deraadt Exp $
+#	$OpenBSD: list,v 1.61 2014/01/09 19:02:04 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin
@@ -69,10 +69,11 @@ LINK	usr/mdec/uboot.lif			usr/mdec/sdboot
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group			etc/group
-COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
-COPY	${CURDIR}/../../miniroot/services	etc/services
 COPY	${CURDIR}/../../miniroot/master.passwd	etc/master.passwd
 SPECIAL	pwd_mkdb -p -d etc master.passwd; rm etc/master.passwd
+COPY	${DESTDIR}/etc/signify/${REV}base.pub	etc/signify/${REV}base.pub
+COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
+COPY	${CURDIR}/../../miniroot/services	etc/services
 SYMLINK	/tmp/fstab.shadow			etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf
 SYMLINK	/tmp/hosts				etc/hosts
