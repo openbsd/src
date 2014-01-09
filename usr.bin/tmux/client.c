@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.76 2013/11/13 20:43:36 benno Exp $ */
+/* $OpenBSD: client.c,v 1.77 2014/01/09 14:05:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -232,7 +232,8 @@ client_main(int argc, char **argv, int flags)
 	/* Initialise the client socket and start the server. */
 	fd = client_connect(socket_path, cmdflags & CMD_STARTSERVER);
 	if (fd == -1) {
-		fprintf(stderr, "failed to connect to server\n");
+		fprintf(stderr, "failed to connect to server: %s\n",
+		    strerror(errno));
 		return (1);
 	}
 

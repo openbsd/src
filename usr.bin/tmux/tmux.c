@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.126 2013/10/10 12:29:35 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.127 2014/01/09 14:05:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -361,7 +361,11 @@ main(int argc, char **argv)
 		}
 	}
 	free(label);
-	strlcpy(socket_path, path, sizeof socket_path);
+
+	if (strlcpy(socket_path, path, sizeof socket_path) >= sizeof socket_path) {
+		fprintf(stderr, "socket path too long: %s\n", path);
+		exit(1);
+	}
 	free(path);
 
 	/* Set process title. */

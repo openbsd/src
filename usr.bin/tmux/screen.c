@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.26 2013/05/15 15:39:51 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.27 2014/01/09 14:05:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -110,12 +110,8 @@ screen_set_cursor_colour(struct screen *s, const char *colour_string)
 void
 screen_set_title(struct screen *s, const char *title)
 {
-	char	tmp[BUFSIZ];
-
-	strlcpy(tmp, title, sizeof tmp);
-
 	free(s->title);
-	s->title = xstrdup(tmp);
+	s->title = xstrdup(title);
 }
 
 /* Resize screen. */
