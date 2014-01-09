@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.28 2013/10/10 12:28:08 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.29 2014/01/09 14:20:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -47,6 +47,9 @@ cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
 {
 	struct session		*s;
 	struct client		*c;
+	struct winlink		*wl = NULL;
+	struct window		*w = NULL;
+	struct window_pane	*wp = NULL;
 	const char		*update;
 	char			*cause;
 	u_int			 i;
@@ -59,11 +62,30 @@ cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
 		return (CMD_RETURN_ERROR);
 	}
 
-	if ((s = cmd_find_session(cmdq, tflag, 1)) == NULL)
-		return (CMD_RETURN_ERROR);
+	if (tflag == NULL) {
+		if ((s = cmd_find_session(cmdq, tflag, 1)) == NULL)
+			return (CMD_RETURN_ERROR);
+	} else if (tflag[strcspn(tflag, ":.")] != '\0') {
+		if ((wl = cmd_find_pane(cmdq, tflag, &s, &wp)) == NULL)
+			return (CMD_RETURN_ERROR);
+	} else {
+		if ((s = cmd_find_session(cmdq, tflag, 1)) == NULL)
+			return (CMD_RETURN_ERROR);
+		w = cmd_lookup_windowid(tflag);
+		if (w == NULL && (wp = cmd_lookup_paneid(tflag)) != NULL)
+			w = wp->window;
+		if (w != NULL)
+			wl = winlink_find_by_window(&s->windows, w);
+	}
 
 	if (cmdq->client == NULL)
 		return (CMD_RETURN_NORMAL);
+
+	if (wl != NULL) {
+		if (wp != NULL)
+			window_set_active_pane(wp->window, wp);
+		session_set_current(s, wl);
+	}
 
 	if (cmdq->client->session != NULL) {
 		if (dflag) {

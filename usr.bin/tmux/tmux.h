@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.432 2013/10/23 11:31:03 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.433 2014/01/09 14:20:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1739,6 +1739,8 @@ int		 cmd_find_index(struct cmd_q *, const char *,
 struct winlink	*cmd_find_pane(struct cmd_q *, const char *, struct session **,
 		     struct window_pane **);
 char		*cmd_template_replace(const char *, const char *, int);
+struct window	*cmd_lookup_windowid(const char *);
+struct window_pane *cmd_lookup_paneid(const char *);
 extern const struct cmd_entry *cmd_table[];
 extern const struct cmd_entry cmd_attach_session_entry;
 extern const struct cmd_entry cmd_bind_key_entry;
