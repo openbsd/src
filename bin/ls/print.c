@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.30 2013/05/30 16:34:32 guenther Exp $	*/
+/*	$OpenBSD: print.c,v 1.31 2014/01/09 03:07:52 guenther Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -60,6 +60,9 @@ static int	printtype(u_int);
 static int	compute_columns(DISPLAY *, int *);
 
 #define	IS_NOPRINT(p)	((p)->fts_number == NO_PRINT)
+
+#define	DATELEN		64
+#define	SIXMONTHS	((DAYSPERNYEAR / 2) * SECSPERDAY)
 
 void
 printscol(DISPLAY *dp)
@@ -235,32 +238,24 @@ printaname(FTSENT *p, u_long inodefield, u_long sizefield)
 static void
 printtime(time_t ftime)
 {
-	int i;
-	char *longstring;
-	static time_t six_months_ago;
-	static int sma_set = 0;
+	char f_date[DATELEN];
+	static time_t now;
+	static int now_set = 0;
 
-#define	SIXMONTHS	((DAYSPERNYEAR / 2) * SECSPERDAY)
-	if (! sma_set) {
-		six_months_ago = time(NULL) - SIXMONTHS;
-		sma_set = 1;
+	if (! now_set) {
+		now = time(NULL);
+		now_set = 1;
 	}
-	longstring = ctime(&ftime);
-	for (i = 4; i < 11; ++i)
-		(void)putchar(longstring[i]);
 
-	if (f_sectime)
-		for (i = 11; i < 24; i++)
-			(void)putchar(longstring[i]);
-	else if (ftime > six_months_ago)
-		for (i = 11; i < 16; ++i)
-			(void)putchar(longstring[i]);
-	else {
-		(void)putchar(' ');
-		for (i = 20; i < 24; ++i)
-			(void)putchar(longstring[i]);
-	}
-	(void)putchar(' ');
+	/*
+	 * convert time to string, and print
+	 */
+	if (strftime(f_date, sizeof(f_date), f_sectime ? "%b %e %H:%M:%S %Y" :
+	    (ftime <= now - SIXMONTHS || ftime > now) ? "%b %e  %Y" :
+	    "%b %e %H:%M", localtime(&ftime)) == 0)
+		f_date[0] = '\0';
+
+	printf("%s ", f_date);
 }
 
 void
