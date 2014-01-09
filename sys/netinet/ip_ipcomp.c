@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.32 2013/05/14 14:29:08 mpi Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.33 2014/01/09 06:29:06 tedu Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -119,7 +119,7 @@ ipcomp_init(tdbp, xsp, ii)
 	tdbp->tdb_xform = xsp;
 
 	/* Initialize crypto session */
-	bzero(&cric, sizeof(cric));
+	memset(&cric, 0, sizeof(cric));
 	cric.cri_alg = tdbp->tdb_compalgxform->type;
 
 	return crypto_newsession(&tdbp->tdb_cryptoid, &cric, 0);
@@ -396,7 +396,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 		if (encif->if_bpf) {
 			struct enchdr hdr;
 
-			bzero (&hdr, sizeof(hdr));
+			memset(&hdr, 0, sizeof(hdr));
 
 			hdr.af = tdb->tdb_dst.sa.sa_family;
 			hdr.spi = tdb->tdb_spi;
@@ -632,7 +632,7 @@ ipcomp_output_cb(cp)
 
 	/* Initialize the IPCOMP header */
 	ipcomp = mtod(mo, struct ipcomp *);
-	bzero(ipcomp, sizeof(struct ipcomp));
+	memset(ipcomp, 0, sizeof(struct ipcomp));
 	cpi = (u_int16_t) ntohl(tdb->tdb_spi);
 	ipcomp->ipcomp_cpi = htons(cpi);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.118 2013/11/11 09:15:35 mpi Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.119 2014/01/09 06:29:06 tedu Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -201,7 +201,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	 * IP packet ready to go through input processing.
 	 */
 
-	bzero(&dst_address, sizeof(dst_address));
+	memset(&dst_address, 0, sizeof(dst_address));
 	dst_address.sa.sa_family = af;
 
 	switch (af) {
@@ -997,7 +997,7 @@ ipsec_common_ctlinput(u_int rdomain, int cmd, struct sockaddr *sa,
 		if (mtu < 296)
 			return (NULL);
 
-		bzero(&dst, sizeof(struct sockaddr_in));
+		memset(&dst, 0, sizeof(struct sockaddr_in));
 		dst.sin_family = AF_INET;
 		dst.sin_len = sizeof(struct sockaddr_in);
 		dst.sin_addr.s_addr = ip->ip_dst.s_addr;
@@ -1060,12 +1060,12 @@ udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 	if (mtu < 296)
 		return (NULL);
 
-	bzero(&dst, sizeof(dst));
+	memset(&dst, 0, sizeof(dst));
 	dst.sin_family = AF_INET;
 	dst.sin_len = sizeof(struct sockaddr_in);
 	dst.sin_addr.s_addr = ip->ip_dst.s_addr;
 	su_dst = (union sockaddr_union *)&dst;
-	bzero(&src, sizeof(src));
+	memset(&src, 0, sizeof(src));
 	src.sin_family = AF_INET;
 	src.sin_len = sizeof(struct sockaddr_in);
 	src.sin_addr.s_addr = ip->ip_src.s_addr;
@@ -1076,10 +1076,10 @@ udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 
 	for (; tdbp != NULL; tdbp = tdbp->tdb_snext) {
 		if (tdbp->tdb_sproto == IPPROTO_ESP &&
-		    ((tdbp->tdb_flags & (TDBF_INVALID|TDBF_UDPENCAP))
-		    == TDBF_UDPENCAP) &&
-		    !bcmp(&tdbp->tdb_dst, &dst, SA_LEN(&su_dst->sa)) &&
-		    !bcmp(&tdbp->tdb_src, &src, SA_LEN(&su_src->sa))) {
+		    ((tdbp->tdb_flags & (TDBF_INVALID|TDBF_UDPENCAP)) ==
+		    TDBF_UDPENCAP) &&
+		    !memcmp(&tdbp->tdb_dst, &dst, SA_LEN(&su_dst->sa)) &&
+		    !memcmp(&tdbp->tdb_src, &src, SA_LEN(&su_src->sa))) {
 			if ((adjust = ipsec_hdrsz(tdbp)) != -1) {
 				/* Store adjusted MTU in tdb */
 				tdbp->tdb_mtu = mtu - adjust;

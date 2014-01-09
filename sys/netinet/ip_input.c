@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.223 2013/12/31 03:24:44 tedu Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.224 2014/01/09 06:29:06 tedu Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ ip_init(void)
 		    rt_timer_queue_create(ip_mtudisc_timeout);
 
 	/* Fill in list of ports not to allocate dynamically. */
-	bzero((void *)&baddynamicports, sizeof(baddynamicports));
+	memset(&baddynamicports, 0, sizeof(baddynamicports));
 	for (i = 0; defbaddynamicports_tcp[i] != 0; i++)
 		DP_SET(baddynamicports.tcp, defbaddynamicports_tcp[i]);
 	for (i = 0; defbaddynamicports_udp[i] != 0; i++)
@@ -669,7 +669,7 @@ in_ouraddr(struct in_addr ina, struct mbuf *m)
 	}
 #endif
 
-	bzero(&sin, sizeof(sin));
+	memset(&sin, 0, sizeof(sin));
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr = ina;
@@ -730,7 +730,7 @@ in_iawithaddr(struct in_addr ina, u_int rtableid)
 	struct in_ifaddr	*ia;
 	struct sockaddr_in	 sin;
 
-	bzero(&sin, sizeof(sin));
+	memset(&sin, 0, sizeof(sin));
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr = ina;
@@ -1432,7 +1432,7 @@ ip_forward(struct mbuf *m, int srcrt)
 	 * acts as a temporary storage not intended to be
 	 * passed down the IP stack or to the mfree.
 	 */
-	bzero(&mfake.m_hdr, sizeof(mfake.m_hdr));
+	memset(&mfake.m_hdr, 0, sizeof(mfake.m_hdr));
 	mfake.m_type = m->m_type;
 	if (m_dup_pkthdr(&mfake, m, M_DONTWAIT) == 0) {
 		mfake.m_data = mfake.m_pktdat;
@@ -1690,7 +1690,7 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 
 		if ((ifp = m->m_pkthdr.rcvif) == NULL ||
 		    ifp->if_sadl == NULL) {
-			bzero(&sdl, sizeof(sdl));
+			memset(&sdl, 0, sizeof(sdl));
 			sdl.sdl_len = offsetof(struct sockaddr_dl, sdl_data[0]);
 			sdl.sdl_family = AF_LINK;
 			sdl.sdl_index = ifp != NULL ? ifp->if_index : 0;

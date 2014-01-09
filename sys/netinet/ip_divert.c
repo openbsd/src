@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.15 2013/12/20 02:04:08 krw Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.16 2014/01/09 06:29:06 tedu Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -233,7 +233,7 @@ divert_packet(struct mbuf *m, int dir)
 		break;
 	}
 
-	bzero(&addr, sizeof(addr));
+	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_len = sizeof(addr);
 

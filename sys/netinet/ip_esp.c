@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.122 2013/04/11 12:06:25 mpi Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.123 2014/01/09 06:29:06 tedu Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -255,7 +255,7 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 		    M_WAITOK);
 		bcopy(ii->ii_enckey, tdbp->tdb_emxkey, tdbp->tdb_emxkeylen);
 
-		bzero(&crie, sizeof(crie));
+		memset(&crie, 0, sizeof(crie));
 
 		crie.cri_alg = tdbp->tdb_encalgxform->type;
 
@@ -276,12 +276,12 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 		    M_WAITOK);
 		bcopy(ii->ii_authkey, tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
 
-		bzero(&cria, sizeof(cria));
+		memset(&cria, 0, sizeof(cria));
 
 		cria.cri_alg = tdbp->tdb_authalgxform->type;
 
 		if ((tdbp->tdb_wnd > 0) && (tdbp->tdb_flags & TDBF_ESN)) {
-			bzero(&crin, sizeof(crin));
+			memset(&crin, 0, sizeof(crin));
 			crin.cri_alg = CRYPTO_ESN;
 			cria.cri_next = &crin;
 		}
@@ -429,7 +429,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
 		tdbi = (struct tdb_ident *) (mtag + 1);
 		if (tdbi->proto == tdb->tdb_sproto && tdbi->spi == tdb->tdb_spi &&
-		    tdbi->rdomain == tdb->tdb_rdomain && !bcmp(&tdbi->dst,
+		    tdbi->rdomain == tdb->tdb_rdomain && !memcmp(&tdbi->dst,
 		    &tdb->tdb_dst, sizeof(union sockaddr_union)))
 			break;
 	}
@@ -793,7 +793,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		if (encif->if_bpf) {
 			struct enchdr hdr;
 
-			bzero (&hdr, sizeof(hdr));
+			memset(&hdr, 0, sizeof(hdr));
 
 			hdr.af = tdb->tdb_dst.sa.sa_family;
 			hdr.spi = tdb->tdb_spi;
@@ -1161,7 +1161,7 @@ checkreplaywindow(struct tdb *tdb, u_int32_t seq, u_int32_t *seqhigh,
 		if (seq > tl) {
 			if (commit) {
 				if (seq - tl > window)
-					bzero(tdb->tdb_seen,
+					memset(tdb->tdb_seen, 0,
 					    sizeof(tdb->tdb_seen));
 				else {
 					int i = (tl % TDB_REPLAYMAX) / 32;
@@ -1213,7 +1213,7 @@ checkreplaywindow(struct tdb *tdb, u_int32_t seq, u_int32_t *seqhigh,
 		return (1);
 	if (commit) {
 		if (seq - tl > window)
-			bzero(tdb->tdb_seen, sizeof(tdb->tdb_seen));
+			memset(tdb->tdb_seen, 0, sizeof(tdb->tdb_seen));
 		else {
 			int i = (tl % TDB_REPLAYMAX) / 32;
 

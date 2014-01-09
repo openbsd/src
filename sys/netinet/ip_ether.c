@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.64 2013/12/31 03:24:44 tedu Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.65 2014/01/09 06:29:06 tedu Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -252,8 +252,8 @@ etherip_decap(struct mbuf *m, int iphlen)
 	/* Reset the flags based on the inner packet */
 	m->m_flags &= ~(M_BCAST|M_MCAST|M_AUTH|M_CONF);
 	if (eh.ether_dhost[0] & 1) {
-		if (bcmp((caddr_t) etherbroadcastaddr,
-		    (caddr_t)eh.ether_dhost, sizeof(etherbroadcastaddr)) == 0)
+		if (memcmp(etherbroadcastaddr, eh.ether_dhost,
+		    sizeof(etherbroadcastaddr)) == 0)
 			m->m_flags |= M_BCAST;
 		else
 			m->m_flags |= M_MCAST;
@@ -374,8 +374,8 @@ etherip_getgif(struct mbuf *m)
 	u_int8_t v;
 
 	/* Copy the addresses for use later. */
-	bzero(&ssrc, sizeof(ssrc));
-	bzero(&sdst, sizeof(sdst));
+	memset(&ssrc, 0, sizeof(ssrc));
+	memset(&sdst, 0, sizeof(sdst));
 
 	v = *mtod(m, u_int8_t *);
 	switch (v >> 4) {
@@ -417,8 +417,8 @@ etherip_getgif(struct mbuf *m)
 		    !(sc->gif_if.if_flags & (IFF_UP|IFF_RUNNING)))
 			continue;
 
-		if (!bcmp(sc->gif_psrc, &sdst, sc->gif_psrc->sa_len) &&
-		    !bcmp(sc->gif_pdst, &ssrc, sc->gif_pdst->sa_len))
+		if (!memcmp(sc->gif_psrc, &sdst, sc->gif_psrc->sa_len) &&
+		    !memcmp(sc->gif_pdst, &ssrc, sc->gif_pdst->sa_len))
 			break;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.69 2013/10/24 11:31:43 mpi Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.70 2014/01/09 06:29:06 tedu Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -117,9 +117,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		return NULL;
 	}
 
-	bzero((caddr_t) re, sizeof(struct route_enc));
-	bzero((caddr_t) &sdst, sizeof(union sockaddr_union));
-	bzero((caddr_t) &ssrc, sizeof(union sockaddr_union));
+	memset(re, 0, sizeof(struct route_enc));
+	memset(&sdst, 0, sizeof(union sockaddr_union));
+	memset(&ssrc, 0, sizeof(union sockaddr_union));
 	ddst = (struct sockaddr_encap *) &re->re_dst;
 	ddst->sen_family = PF_KEY;
 	ddst->sen_len = SENT_LEN;
@@ -309,8 +309,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 #ifdef INET6
 	case AF_INET6:
 		if ((IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_dst.sin6.sin6_addr)) ||
-		    (bcmp(&ipo->ipo_dst.sin6.sin6_addr, &in6mask128,
-			sizeof(in6mask128)) == 0))
+		    (memcmp(&ipo->ipo_dst.sin6.sin6_addr, &in6mask128,
+		    sizeof(in6mask128)) == 0))
 			dignore = 1;
 		break;
 #endif /* INET6 */
@@ -365,7 +365,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		    (inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS)) {
 			/* Direct match. */
 			if (dignore ||
-			    !bcmp(&sdst, &ipo->ipo_dst, sdst.sa.sa_len)) {
+			    !memcmp(&sdst, &ipo->ipo_dst, sdst.sa.sa_len)) {
 				*error = 0;
 				return NULL;
 			}
@@ -375,9 +375,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		if (ipo->ipo_tdb) {
 			if ((ipo->ipo_last_searched <= ipsec_last_added) ||
 			    (ipo->ipo_sproto != ipo->ipo_tdb->tdb_sproto) ||
-			    bcmp(dignore ? &sdst : &ipo->ipo_dst,
-				&ipo->ipo_tdb->tdb_dst,
-				ipo->ipo_tdb->tdb_dst.sa.sa_len))
+			    memcmp(dignore ? &sdst : &ipo->ipo_dst,
+			    &ipo->ipo_tdb->tdb_dst,
+			    ipo->ipo_tdb->tdb_dst.sa.sa_len))
 				goto nomatchout;
 
 			if (!ipsp_aux_match(ipo->ipo_tdb,
@@ -468,7 +468,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 				    direction, tdbp, inp, ipo);
 			}
 
-			if (bcmp(dignore ? &ssrc : &ipo->ipo_dst,
+			if (memcmp(dignore ? &ssrc : &ipo->ipo_dst,
 			    &tdbp->tdb_src, tdbp->tdb_src.sa.sa_len) ||
 			    (ipo->ipo_sproto != tdbp->tdb_sproto))
 				goto nomatchin;
@@ -514,9 +514,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			 * policy.
 			 */
 			if (ipo->ipo_sproto == ipo->ipo_tdb->tdb_sproto &&
-			    !bcmp(&ipo->ipo_tdb->tdb_src,
-				dignore ? &ssrc : &ipo->ipo_dst,
-				ipo->ipo_tdb->tdb_src.sa.sa_len))
+			    !memcmp(&ipo->ipo_tdb->tdb_src,
+			    dignore ? &ssrc : &ipo->ipo_dst,
+			    ipo->ipo_tdb->tdb_src.sa.sa_len))
 				goto skipinputsearch;
 
 			/* Not applicable, unlink. */
@@ -603,7 +603,7 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
 
 	/* Delete from SPD. */
 	if (!(ipo->ipo_flags & IPSP_POLICY_SOCKET)) {
-		bzero(&info, sizeof(info));
+		memset(&info, 0, sizeof(info));
 		info.rti_info[RTAX_DST] = (struct sockaddr *)&ipo->ipo_addr;
 		info.rti_info[RTAX_NETMASK] = (struct sockaddr *)&ipo->ipo_mask;
 
@@ -764,7 +764,7 @@ ipsp_pending_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw)
 	struct ipsec_acquire *ipa;
 
 	TAILQ_FOREACH (ipa, &ipo->ipo_acquires, ipa_ipo_next) {
-		if (!bcmp(gw, &ipa->ipa_addr, gw->sa.sa_len))
+		if (!memcmp(gw, &ipa->ipa_addr, gw->sa.sa_len))
 			return ipa;
 	}
 
@@ -986,14 +986,11 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
 			 * accept the packet; otherwise, discard.
 			 */
 			if (tdbp->tdb_sproto == inp->inp_ipo->ipo_sproto &&
-			    !bcmp(&tdbp->tdb_src, &inp->inp_ipo->ipo_dst,
-				SA_LEN(&tdbp->tdb_src.sa)) &&
-			    ipsp_aux_match(tdbp,
-				inp->inp_ipo->ipo_srcid, 
-				inp->inp_ipo->ipo_dstid,
-				NULL, NULL,
-				&inp->inp_ipo->ipo_addr,
-				&inp->inp_ipo->ipo_mask))
+			    !memcmp(&tdbp->tdb_src, &inp->inp_ipo->ipo_dst,
+			    SA_LEN(&tdbp->tdb_src.sa)) &&
+			    ipsp_aux_match(tdbp, inp->inp_ipo->ipo_srcid, 
+			    inp->inp_ipo->ipo_dstid, NULL, NULL,
+			    &inp->inp_ipo->ipo_addr, &inp->inp_ipo->ipo_mask))
 				goto justreturn;
 			else {
 				*error = -EINVAL;
@@ -1011,14 +1008,11 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
 			 */
 			if (tdbp != NULL &&
 			    tdbp->tdb_sproto == inp->inp_ipo->ipo_sproto &&
-			    !bcmp(&tdbp->tdb_src, &inp->inp_ipo->ipo_dst,
-				SA_LEN(&tdbp->tdb_src.sa)) &&
-			    ipsp_aux_match(tdbp,
-				inp->inp_ipo->ipo_srcid,
-				inp->inp_ipo->ipo_dstid,
-				NULL, NULL,
-				&inp->inp_ipo->ipo_addr,
-				&inp->inp_ipo->ipo_mask))
+			    !memcmp(&tdbp->tdb_src, &inp->inp_ipo->ipo_dst,
+			    SA_LEN(&tdbp->tdb_src.sa)) &&
+			    ipsp_aux_match(tdbp, inp->inp_ipo->ipo_srcid,
+			    inp->inp_ipo->ipo_dstid, NULL, NULL,
+			    &inp->inp_ipo->ipo_addr, &inp->inp_ipo->ipo_mask))
 				goto justreturn;
 
 			/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.63 2013/10/27 20:57:39 deraadt Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.64 2014/01/09 06:29:06 tedu Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -543,7 +543,7 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 	ip_mrouter = so;
 
 	mfchashtbl = hashinit(MFCTBLSIZ, M_MRTABLE, M_WAITOK, &mfchash);
-	bzero((caddr_t)nexpire, sizeof(nexpire));
+	memset(nexpire, 0, sizeof(nexpire));
 
 	pim_assert = 0;
 
@@ -603,12 +603,12 @@ ip_mrouter_done()
 		}
 	}
 
-	bzero((caddr_t)nexpire, sizeof(nexpire));
+	memset(nexpire, 0, sizeof(nexpire));
 	free(mfchashtbl, M_MRTABLE);
 	mfchashtbl = NULL;
 
 	bw_upcalls_n = 0;
-	bzero(bw_meter_timers, sizeof(bw_meter_timers));
+	memset(bw_meter_timers, 0, sizeof(bw_meter_timers));
 
 	/* Reset de-encapsulation cache. */
 	have_encap_tunnel = 0;
@@ -821,11 +821,11 @@ add_vif(struct mbuf *m)
 			log(LOG_DEBUG, "Adding a register vif, ifp: %p\n",
 			    (void *)ifp);
 		if (reg_vif_num == VIFI_INVALID) {
-			bzero(ifp, sizeof(*ifp));
+			memset(ifp, 0, sizeof(*ifp));
 			snprintf(ifp->if_xname, sizeof ifp->if_xname,
 				 "register_vif");
 			ifp->if_flags = IFF_LOOPBACK;
-			bzero(&vifp->v_route, sizeof(vifp->v_route));
+			memset(&vifp->v_route, 0, sizeof(vifp->v_route));
 			reg_vif_num = vifcp->vifc_vifi;
 		}
 #endif
@@ -898,7 +898,7 @@ reset_vif(struct vif *vifp)
 		ifp = vifp->v_ifp;
 		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
 	}
-	bzero((caddr_t)vifp, sizeof(*vifp));
+	memset(vifp, 0, sizeof(*vifp));
 }
 
 /*
@@ -952,7 +952,7 @@ vif_delete(struct ifnet *ifp)
 	for (i = 0; i < numvifs; i++) {
 		vifp = &viftable[i];
 		if (vifp->v_ifp == ifp)
-			bzero((caddr_t)vifp, sizeof *vifp);
+			memset(vifp, 0, sizeof(*vifp));
 	}
 
 	for (i = numvifs; i > 0; i--)
@@ -1058,7 +1058,7 @@ add_mfc(struct mbuf *m)
 	} else {
 		struct mfcctl *mp = mtod(m, struct mfcctl *);
 		bcopy(mp, (caddr_t)&mfcctl2, sizeof(*mp));
-		bzero((caddr_t)&mfcctl2 + sizeof(struct mfcctl),
+		memset((caddr_t)&mfcctl2 + sizeof(struct mfcctl), 0,
 		    sizeof(mfcctl2) - sizeof(struct mfcctl));
 	}
 	mfccp = &mfcctl2;
@@ -1190,7 +1190,7 @@ del_mfc(struct mbuf *m)
 		return (EINVAL);
 
 	bcopy(mp, (caddr_t)&mfcctl2, sizeof(*mp));
-	bzero((caddr_t)&mfcctl2 + sizeof(struct mfcctl),
+	memset((caddr_t)&mfcctl2 + sizeof(struct mfcctl), 0,
 	    sizeof(mfcctl2) - sizeof(struct mfcctl));
 
 	mfccp = &mfcctl2;

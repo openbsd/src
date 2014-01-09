@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.192 2013/11/11 09:15:34 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.193 2014/01/09 06:29:06 tedu Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -299,7 +299,7 @@ gettdb(u_int rdomain, u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
 	for (tdbp = tdbh[hashval]; tdbp != NULL; tdbp = tdbp->tdb_hnext)
 		if ((tdbp->tdb_spi == spi) && (tdbp->tdb_sproto == proto) &&
 		    (tdbp->tdb_rdomain == rdomain) &&
-		    !bcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa)))
+		    !memcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa)))
 			break;
 
 	return tdbp;
@@ -329,14 +329,14 @@ gettdbbysrcdst(u_int rdomain, u_int32_t spi, union sockaddr_union *src,
 		    (tdbp->tdb_rdomain == rdomain) &&
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
 		    (tdbp->tdb_dst.sa.sa_family == AF_UNSPEC ||
-		    !bcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa))) &&
-		    !bcmp(&tdbp->tdb_src, src, SA_LEN(&src->sa)))
+		    !memcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa))) &&
+		    !memcmp(&tdbp->tdb_src, src, SA_LEN(&src->sa)))
 			break;
 
 	if (tdbp != NULL)
 		return (tdbp);
 
-	bzero(&su_null, sizeof(su_null));
+	memset(&su_null, 0, sizeof(su_null));
 	su_null.sa.sa_len = sizeof(struct sockaddr);
 	hashval = tdb_hash(rdomain, 0, &su_null, proto);
 
@@ -346,7 +346,7 @@ gettdbbysrcdst(u_int rdomain, u_int32_t spi, union sockaddr_union *src,
 		    (tdbp->tdb_rdomain == rdomain) &&
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
 		    (tdbp->tdb_dst.sa.sa_family == AF_UNSPEC ||
-		    !bcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa))) &&
+		    !memcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa))) &&
 		    tdbp->tdb_src.sa.sa_family == AF_UNSPEC)
 			break;
 
@@ -397,9 +397,9 @@ ipsp_aux_match(struct tdb *tdb,
 		 * most problems (all this will do is make every
 		 * policy get its own SAs).
 		 */
-		if (bcmp(&tdb->tdb_filter, pfilter,
+		if (memcmp(&tdb->tdb_filter, pfilter,
 		    sizeof(struct sockaddr_encap)) ||
-		    bcmp(&tdb->tdb_filtermask, pfiltermask,
+		    memcmp(&tdb->tdb_filtermask, pfiltermask,
 		    sizeof(struct sockaddr_encap)))
 			return 0;
 	}
@@ -429,7 +429,7 @@ gettdbbyaddr(u_int rdomain, union sockaddr_union *dst, u_int8_t sproto,
 		if ((tdbp->tdb_sproto == sproto) &&
 		    (tdbp->tdb_rdomain == rdomain) &&
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
-		    (!bcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa)))) {
+		    (!memcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa)))) {
 			/* Do IDs and local credentials match ? */
 			if (!ipsp_aux_match(tdbp, srcid, dstid,
 			    local_cred, NULL, filter, filtermask))
@@ -462,7 +462,7 @@ gettdbbysrc(u_int rdomain, union sockaddr_union *src, u_int8_t sproto,
 		if ((tdbp->tdb_sproto == sproto) &&
 		    (tdbp->tdb_rdomain == rdomain) &&
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
-		    (!bcmp(&tdbp->tdb_src, src, SA_LEN(&src->sa)))) {
+		    (!memcmp(&tdbp->tdb_src, src, SA_LEN(&src->sa)))) {
 			/* Check whether IDs match */
 			if (!ipsp_aux_match(tdbp, dstid, srcid, NULL, NULL,
 			    filter, filtermask))
@@ -487,7 +487,7 @@ tdb_hashstats(void)
 		return;
 	}
 
-	bzero (buckets, sizeof(buckets));
+	memset(buckets, 0, sizeof(buckets));
 	for (i = 0; i <= tdb_hashmask; i++) {
 		cnt = 0;
 		for (tdbp = tdbh[i]; cnt < NBUCKETS - 1 && tdbp != NULL;
@@ -1088,7 +1088,7 @@ ipsp_ref_match(struct ipsec_ref *ref1, struct ipsec_ref *ref2)
 {
 	if (ref1->ref_type != ref2->ref_type ||
 	    ref1->ref_len != ref2->ref_len ||
-	    bcmp(ref1 + 1, ref2 + 1, ref1->ref_len))
+	    memcmp(ref1 + 1, ref2 + 1, ref1->ref_len))
 		return 0;
 
 	return 1;
@@ -1170,7 +1170,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 						return SLIST_FIRST(&tags);
 
 					tdbi = (struct tdb_ident *) (mtag + 1);
-					bzero(tdbi, sizeof(struct tdb_ident));
+					memset(tdbi, 0, sizeof(struct tdb_ident));
 
 					m_copydata(m, off + sizeof(u_int32_t),
 					    sizeof(u_int32_t),
@@ -1205,7 +1205,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 			u_int32_t spi;
 
 			m_copydata(m, off, sizeof(u_int32_t), (caddr_t) &spi);
-			bzero(&su, sizeof(union sockaddr_union));
+			memset(&su, 0, sizeof(union sockaddr_union));
 
 			s = splsoftnet();
 
@@ -1264,7 +1264,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 				return SLIST_FIRST(&tags);
 
 			tdbi = (struct tdb_ident *) (mtag + 1);
-			bzero(tdbi, sizeof(struct tdb_ident));
+			memset(tdbi, 0, sizeof(struct tdb_ident));
 
 			/* Get SPI off the relevant header. */
 			if (proto == IPPROTO_AH)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.52 2013/11/21 16:34:33 mikeb Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.53 2014/01/09 06:29:05 tedu Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -245,9 +245,9 @@ struct ether_multistep {
 	/* struct ether_multi *enm; */					\
 do {									\
 	for ((enm) = LIST_FIRST(&(ac)->ac_multiaddrs);			\
-	    (enm) != NULL &&			\
-	    (bcmp((enm)->enm_addrlo, (addrlo), ETHER_ADDR_LEN) != 0 ||	\
-	     bcmp((enm)->enm_addrhi, (addrhi), ETHER_ADDR_LEN) != 0);	\
+	    (enm) != NULL &&						\
+	    (memcmp((enm)->enm_addrlo, (addrlo), ETHER_ADDR_LEN) != 0 ||\
+	     memcmp((enm)->enm_addrhi, (addrhi), ETHER_ADDR_LEN) != 0);	\
 		(enm) = LIST_NEXT((enm), enm_list));			\
 } while (/* CONSTCOND */ 0)
 

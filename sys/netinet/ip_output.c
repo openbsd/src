@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.253 2013/12/17 02:41:07 matthew Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.254 2014/01/09 06:29:06 tedu Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 
 		if (ro == 0) {
 			ro = &iproute;
-			bzero((caddr_t)ro, sizeof (*ro));
+			memset(ro, 0, sizeof(*ro));
 		}
 
 		dst = satosin(&ro->ro_dst);
@@ -300,7 +300,7 @@ reroute:
 			if (tdbi->spi == tdb->tdb_spi &&
 			    tdbi->proto == tdb->tdb_sproto &&
 			    tdbi->rdomain == tdb->tdb_rdomain &&
-			    !bcmp(&tdbi->dst, &tdb->tdb_dst,
+			    !memcmp(&tdbi->dst, &tdb->tdb_dst,
 			    sizeof(union sockaddr_union))) {
 				sproto = 0; /* mark as no-IPsec-needed */
 				goto done_spd;
@@ -336,7 +336,7 @@ reroute:
 	} else if (donerouting == 0) {
 		if (ro == 0) {
 			ro = &iproute;
-			bzero((caddr_t)ro, sizeof (*ro));
+			memset(ro, 0, sizeof(*ro));
 		}
 
 		dst = satosin(&ro->ro_dst);
@@ -1622,7 +1622,7 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 	m->m_len += sizeof(struct in_addr);
 	cp = mtod(m, u_char *) + sizeof(struct in_addr);
 	memmove((caddr_t)cp, mtod(m, caddr_t), (unsigned)cnt);
-	bzero(mtod(m, caddr_t), sizeof(struct in_addr));
+	memset(mtod(m, caddr_t), 0, sizeof(struct in_addr));
 
 	for (; cnt > 0; cnt -= optlen, cp += optlen) {
 		opt = cp[IPOPT_OPTVAL];

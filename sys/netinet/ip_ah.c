@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.107 2013/06/11 18:15:53 deraadt Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.108 2014/01/09 06:29:05 tedu Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -167,13 +167,13 @@ ah_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 	bcopy(ii->ii_authkey, tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
 
 	/* Initialize crypto session. */
-	bzero(&cria, sizeof(cria));
+	memset(&cria, 0, sizeof(cria));
 	cria.cri_alg = tdbp->tdb_authalgxform->type;
 	cria.cri_klen = ii->ii_authkeylen * 8;
 	cria.cri_key = ii->ii_authkey;
 
 	if ((tdbp->tdb_wnd > 0) && (tdbp->tdb_flags & TDBF_ESN)) {
-		bzero(&crin, sizeof(crin));
+		memset(&crin, 0, sizeof(crin));
 		crin.cri_alg = CRYPTO_ESN;
 		cria.cri_next = &crin;
 	}
@@ -678,7 +678,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		if (tdbi->proto == tdb->tdb_sproto &&
 		    tdbi->spi == tdb->tdb_spi &&
 		    tdbi->rdomain == tdb->tdb_rdomain &&
-		    !bcmp(&tdbi->dst, &tdb->tdb_dst,
+		    !memcmp(&tdbi->dst, &tdb->tdb_dst,
 			sizeof(union sockaddr_union)))
 			break;
 	}
@@ -1009,7 +1009,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		if (encif->if_bpf) {
 			struct enchdr hdr;
 
-			bzero (&hdr, sizeof(hdr));
+			memset(&hdr, 0, sizeof(hdr));
 
 			hdr.af = tdb->tdb_dst.sa.sa_family;
 			hdr.spi = tdb->tdb_spi;

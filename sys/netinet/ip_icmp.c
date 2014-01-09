@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.112 2013/12/31 03:24:44 tedu Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.113 2014/01/09 06:29:06 tedu Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -473,7 +473,7 @@ icmp_input(struct mbuf *m, ...)
 		if (icmpprintfs)
 			printf("deliver to protocol %d\n", icp->icmp_ip.ip_p);
 #endif
-		bzero(&sin, sizeof(sin));
+		memset(&sin, 0, sizeof(sin));
 		sin.sin_family = AF_INET;
 		sin.sin_len = sizeof(struct sockaddr_in);
 		sin.sin_addr = icp->icmp_ip.ip_dst;
@@ -535,7 +535,7 @@ icmp_input(struct mbuf *m, ...)
 		 * We are not able to respond with all ones broadcast
 		 * unless we receive it over a point-to-point interface.
 		 */
-		bzero(&sin, sizeof(sin));
+		memset(&sin, 0, sizeof(sin));
 		sin.sin_family = AF_INET;
 		sin.sin_len = sizeof(struct sockaddr_in);
 		if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
@@ -604,9 +604,9 @@ reflect:
 		 * listening on a raw socket (e.g. the routing
 		 * daemon for use in updating its tables).
 		 */
-		bzero(&sdst, sizeof(sdst));
-		bzero(&sgw, sizeof(sgw));
-		bzero(&ssrc, sizeof(ssrc));
+		memset(&sdst, 0, sizeof(sdst));
+		memset(&sgw, 0, sizeof(sgw));
+		memset(&ssrc, 0, sizeof(ssrc));
 		sdst.sin_family = sgw.sin_family = ssrc.sin_family = AF_INET;
 		sdst.sin_len = sgw.sin_len = ssrc.sin_len = sizeof(sdst);
 		memcpy(&sdst.sin_addr, &icp->icmp_ip.ip_dst, sizeof(sdst));
@@ -723,7 +723,7 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 		struct sockaddr_in *dst;
 		struct route ro;
 
-		bzero((caddr_t) &ro, sizeof(ro));
+		memset(&ro, 0, sizeof(ro));
 		ro.ro_tableid = m->m_pkthdr.rdomain;
 		dst = satosin(&ro.ro_dst);
 		dst->sin_family = AF_INET;
@@ -915,7 +915,7 @@ icmp_mtudisc_clone(struct in_addr dst, u_int rtableid)
 	struct rtentry *rt;
 	int error;
 
-	bzero(&ro, sizeof(ro));
+	memset(&ro, 0, sizeof(ro));
 	ro.ro_tableid = rtableid;
 	sin = satosin(&ro.ro_dst);
 	sin->sin_family = AF_INET;
@@ -937,7 +937,7 @@ icmp_mtudisc_clone(struct in_addr dst, u_int rtableid)
 		struct rtentry *nrt;
 		struct rt_addrinfo info;
 
-		bzero(&info, sizeof(info));
+		memset(&info, 0, sizeof(info));
 		info.rti_info[RTAX_DST] = sintosa(sin);
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_flags = RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC;
@@ -1032,7 +1032,7 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 		struct sockaddr_in sa;
 		struct rt_addrinfo info;
 
-		bzero(&info, sizeof(info));
+		memset(&info, 0, sizeof(info));
 		info.rti_info[RTAX_DST] = rt_key(rt);
 		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
@@ -1079,7 +1079,7 @@ icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		struct rt_addrinfo info;
 
-		bzero(&info, sizeof(info));
+		memset(&info, 0, sizeof(info));
 		info.rti_info[RTAX_DST] = rt_key(rt);
 		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
@@ -1123,7 +1123,7 @@ icmp_do_exthdr(struct mbuf *m, u_int16_t class, u_int8_t ctype, void *buf,
 	off = max(off, ICMP_EXT_OFFSET);
 	icp->icmp_length = off / sizeof(u_int32_t);
 
-	bzero(&hdr, sizeof(hdr));
+	memset(&hdr, 0, sizeof(hdr));
 	hdr.ieh.ieh_version = ICMP_EXT_HDR_VERSION;
 	hdr.ieo.ieo_length = htons(sizeof(struct icmp_ext_obj_hdr) + len);
 	hdr.ieo.ieo_cnum = class;
