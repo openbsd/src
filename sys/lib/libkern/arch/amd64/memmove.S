@@ -40,11 +40,6 @@
 	 *  ws@tools.de     (Wolfgang Solfrank, TooLs GmbH) +49-228-985800
 	 */
 
-ENTRY(memcpy)
-	movq	%rdi,%r11	/* save dest */
-	movq	%rdx,%rcx
-	jmp	2f		/* jump to forward copy code path */
-
 ENTRY(bcopy)
 	xchgq	%rdi,%rsi
 	/* fall into memmove */
@@ -56,7 +51,13 @@ ENTRY(memmove)
 	subq	%rsi,%rax
 	cmpq	%rcx,%rax	/* overlapping? */
 	jb	1f
-2:	cld			/* nope, copy forwards. */
+	jmp	2f		/* nope */
+
+ENTRY(memcpy)
+	movq	%rdi,%r11	/* save dest */
+	movq	%rdx,%rcx
+2:
+	cld			/* copy forwards. */
 	shrq	$3,%rcx		/* copy by words */
 	rep
 	movsq

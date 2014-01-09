@@ -1,4 +1,4 @@
-/*	$OpenBSD: memmove.S,v 1.5 2013/06/15 19:45:26 miod Exp $	*/
+/*	$OpenBSD: memmove.S,v 1.6 2014/01/09 05:39:41 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -37,19 +37,34 @@
 #include <machine/asm.h>
 
 /*
- * Emulate memmove() by swapping the first two arguments, and jumping
- * into bcopy(), which handles overlapping regions.
+ * Emulate bcopy() by swapping the first two arguments, and jumping
+ * into memmove(), which handles overlapping regions.
+ */
+ENTRY(bcopy)
+	pushl	%esi
+	pushl	%edi
+	movl	12(%esp),%esi
+	movl	16(%esp),%edi
+	jmp	docopy
+
+/*
+ * memmove(caddr_t dst, caddr_t src, size_t len);
+ * Copy len bytes, coping with overlapping space.
  */
 ENTRY(memmove)
 	pushl	%esi
 	pushl	%edi
 	movl	12(%esp),%edi
 	movl	16(%esp),%esi
-	jmp	docopy
-
+docopy:
+	movl	20(%esp),%ecx
+	movl	%edi,%eax
+	subl	%esi,%eax
+	cmpl	%ecx,%eax		# overlapping?
+	jb	1f
+	jmp	docopyf			# nope
 /*
- * Emulate memcpy() by loading the first two arguments in reverse order
- * and jumping into bcopy()'s forward copy code.
+ * memcpy() doesn't worry about overlap and always copies forward
  */
 ENTRY(memcpy)
 	pushl	%esi
@@ -57,26 +72,9 @@ ENTRY(memcpy)
 	movl	12(%esp),%edi
 	movl	16(%esp),%esi
 	movl	20(%esp),%ecx
-	jmp	docopyf
-
-/*
- * bcopy(caddr_t from, caddr_t to, size_t len);
- * Copy len bytes, copying with overlapping space.
- */
-ENTRY(bcopy)
-	pushl	%esi
-	pushl	%edi
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-docopy:
-	movl	20(%esp),%ecx
-	movl	%edi,%eax
-	subl	%esi,%eax
-	cmpl	%ecx,%eax		# overlapping?
-	jb	1f
 docopyf:
 	movl	%edi,%eax		# setup return value for memcpy/memmove
-	cld				# nope, copy forward
+	cld				# copy forward
 	shrl	$2,%ecx			# copy by 32-bit words
 	rep
 	movsl
@@ -89,7 +87,7 @@ docopyf:
 	ret
 
 	_ALIGN_TEXT
-1:	movl	%edi,%eax		# setup return value for memcpy/memmove
+1:	movl	%edi,%eax		# setup return value for memmove
 	addl	%ecx,%edi		# copy backward
 	addl	%ecx,%esi
 	std
