@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.14 2013/10/10 12:26:35 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.15 2014/01/09 13:46:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -69,9 +69,7 @@ cmdq_print(struct cmd_q *cmdq, const char *fmt, ...)
 	if (c == NULL)
 		/* nothing */;
 	else if (c->session == NULL || (c->flags & CLIENT_CONTROL)) {
-		va_start(ap, fmt);
 		evbuffer_add_vprintf(c->stdout_data, fmt, ap);
-		va_end(ap);
 
 		evbuffer_add(c->stdout_data, "\n", 1);
 		server_push_stdout(c);
@@ -104,9 +102,7 @@ cmdq_info(struct cmd_q *cmdq, const char *fmt, ...)
 	if (c == NULL)
 		/* nothing */;
 	else if (c->session == NULL || (c->flags & CLIENT_CONTROL)) {
-		va_start(ap, fmt);
 		evbuffer_add_vprintf(c->stdout_data, fmt, ap);
-		va_end(ap);
 
 		evbuffer_add(c->stdout_data, "\n", 1);
 		server_push_stdout(c);
