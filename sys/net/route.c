@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.147 2013/10/20 13:21:57 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.148 2014/01/09 21:57:52 tedu Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -843,7 +843,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			rt_maskedcopy(info->rti_info[RTAX_DST], ndst,
 			    info->rti_info[RTAX_NETMASK]);
 		} else
-			Bcopy(info->rti_info[RTAX_DST], ndst,
+			memcpy(ndst, info->rti_info[RTAX_DST],
 			    info->rti_info[RTAX_DST]->sa_len);
 #ifndef SMALL_KERNEL
 		if (rn_mpath_capable(rnh)) {
@@ -1014,9 +1014,10 @@ rt_setgate(struct rtentry *rt, struct sockaddr *dst, struct sockaddr *gate,
 		new = rt->rt_nodes->rn_key;
 		old = NULL;
 	}
-	Bcopy(gate, (rt->rt_gateway = (struct sockaddr *)(new + dlen)), glen);
+	rt->rt_gateway = (struct sockaddr *)(new + dlen);
+	memmove(rt->rt_gateway, gate, glen);
 	if (old) {
-		Bcopy(dst, new, dlen);
+		memmove(new, dst, dlen);
 		Free(old);
 	}
 	if (rt->rt_gwroute != NULL) {

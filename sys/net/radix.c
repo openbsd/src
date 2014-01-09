@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.32 2013/12/12 14:43:38 millert Exp $	*/
+/*	$OpenBSD: radix.c,v 1.33 2014/01/09 21:57:51 tedu Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -419,9 +419,9 @@ rn_addmask(void *n_arg, int search, int skip)
 	if (mlen <= skip)
 		return (mask_rnhead->rnh_nodes);
 	if (skip > 1)
-		Bcopy(rn_ones + 1, addmask_key + 1, skip - 1);
+		memmove(addmask_key + 1, rn_ones + 1, skip - 1);
 	if ((m0 = mlen) > skip)
-		Bcopy(netmask + skip, addmask_key + skip, mlen - skip);
+		memmove(addmask_key + skip, netmask + skip, mlen - skip);
 	/*
 	 * Trim trailing zeroes.
 	 */
@@ -446,7 +446,7 @@ rn_addmask(void *n_arg, int search, int skip)
 		return (0);
 	Bzero(x, max_keylen + 2 * sizeof (*x));
 	netmask = cp = (caddr_t)(x + 2);
-	Bcopy(addmask_key, cp, mlen);
+	memmove(cp, addmask_key, mlen);
 	x = rn_insert(cp, mask_rnhead, &maskduplicated, x);
 	if (maskduplicated) {
 		log(LOG_ERR, "rn_addmask: mask impossibly already in tree\n");

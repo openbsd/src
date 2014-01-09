@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.115 2014/01/09 06:29:05 tedu Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.116 2014/01/09 21:57:52 tedu Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -253,9 +253,10 @@ arp_rtrequest(int req, struct rtentry *rt)
 			 * interface.
 			 */
 			rt->rt_expire = 0;
-			Bcopy(((struct arpcom *)rt->rt_ifp)->ac_enaddr,
-			    LLADDR(SDL(gate)),
-			    SDL(gate)->sdl_alen = ETHER_ADDR_LEN);
+			SDL(gate)->sdl_alen = ETHER_ADDR_LEN;
+			memcpy(LLADDR(SDL(gate)),
+			    ((struct arpcom *)rt->rt_ifp)->ac_enaddr,
+			    ETHER_ADDR_LEN);
 			if (useloopback)
 				rt->rt_ifp = lo0ifp;
 			/*
