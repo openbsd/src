@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.97 2013/12/23 16:55:00 jca Exp $
+# $OpenBSD: PackageRepository.pm,v 1.98 2014/01/09 10:43:13 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -296,17 +296,11 @@ sub did_it_fork
 	}
 }
 
-sub exec_gunzip
+sub uncompress
 {
 	my $self = shift;
-	$ENV{LC_ALL} = 'C';
-	exec {OpenBSD::Paths->gzip}
-	    ("gzip",
-	    "-d",
-	    "-c",
-	    "-q",
-	    @_)
-	or $self->{state}->fatal("Can't run gzip: #1", $!);
+	require IO::Uncompress::Gunzip;
+	return IO::Uncompress::Gunzip->new(@_, MultiStream => 1);
 }
 
 package OpenBSD::PackageRepository::Local;
@@ -369,14 +363,7 @@ sub open_pipe
 	if (defined $ENV{'PKG_CACHE'}) {
 		$self->may_copy($object, $ENV{'PKG_CACHE'});
 	}
-	my $pid = open(my $fh, "-|");
-	$self->did_it_fork($pid);
-	if ($pid) {
-		return $fh;
-	} else {
-		open STDERR, ">/dev/null";
-		$self->exec_gunzip("-f", $self->relative_url($object->{name}));
-	}
+	return $self->uncompress($self->relative_url($object->{name}));
 }
 
 sub may_exist
@@ -426,14 +413,7 @@ sub new
 sub open_pipe
 {
 	my ($self, $object) = @_;
-	my $pid = open(my $fh, "-|");
-	$self->did_it_fork($pid);
-	if ($pid) {
-		return $fh;
-	} else {
-		open STDERR, ">/dev/null";
-		$self->exec_gunzip("-f", "-");
-	}
+	return $self->uncompress(\*STDIN);
 }
 
 package OpenBSD::PackageRepository::Distant;
@@ -535,17 +515,6 @@ sub open_pipe
 	my ($rdfh, $wrfh);
 	pipe($rdfh, $wrfh);
 
-	my $pid = open(my $fh, "-|");
-	$self->did_it_fork($pid);
-	if ($pid) {
-		$object->{pid} = $pid;
-	} else {
-		open(STDIN, '<&', $rdfh) or
-		    $self->{state}->fatal("Bad dup: #1", $!);
-		close($rdfh);
-		close($wrfh);
-		$self->exec_gunzip("-f", "-");
-	}
 	my $pid2 = fork();
 
 	$self->did_it_fork($pid2);
@@ -557,7 +526,6 @@ sub open_pipe
 		    $self->{state}->fatal("Bad dup: #1", $!);
 		close($rdfh);
 		close($wrfh);
-		close($fh);
 		if (defined $object->{cache_dir}) {
 			my $pid3 = open(my $in, "-|");
 			$self->did_it_fork($pid3);
@@ -571,9 +539,8 @@ sub open_pipe
 		}
 		exit(0);
 	}
-	close($rdfh);
 	close($wrfh);
-	return $fh;
+	return $self->uncompress($rdfh);
 }
 
 sub finish_and_close

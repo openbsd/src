@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.87 2014/01/09 10:36:52 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.88 2014/01/09 10:43:13 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1172,10 +1172,10 @@ sub add_signature
 sub create_archive
 {
 	my ($self, $state, $filename, $dir) = @_;
-	open(my $fh, "|-", OpenBSD::Paths->gzip, "-f", "-o", $filename);
-	return  OpenBSD::Ustar->new($fh, $state, $dir);
+	require IO::Compress::Gzip;
+	my $fh = IO::Compress::Gzip->new($filename);
+	return OpenBSD::Ustar->new($fh, $state, $dir);
 }
-
 
 sub sign_existing_package
 {
