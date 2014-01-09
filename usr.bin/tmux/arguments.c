@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.6 2013/11/17 20:19:36 okan Exp $ */
+/* $OpenBSD: arguments.c,v 1.7 2014/01/09 13:51:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -205,19 +205,15 @@ args_set(struct args *args, u_char ch, const char *value)
 	/* Replace existing argument. */
 	if ((entry = args_find(args, ch)) != NULL) {
 		free(entry->value);
-		if (value != NULL)
-			entry->value = xstrdup(value);
-		else
-			entry->value = NULL;
-		return;
+		entry->value = NULL;
+	} else {
+		entry = xcalloc(1, sizeof *entry);
+		entry->flag = ch;
+		RB_INSERT(args_tree, &args->tree, entry);
 	}
 
-	entry = xcalloc(1, sizeof *entry);
-	entry->flag = ch;
 	if (value != NULL)
 		entry->value = xstrdup(value);
-
-	RB_INSERT(args_tree, &args->tree, entry);
 }
 
 /* Get argument value. Will be NULL if it isn't present. */
