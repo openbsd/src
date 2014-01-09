@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.7 2014/01/03 17:10:27 espie Exp $
+.\" $OpenBSD: signify.1,v 1.8 2014/01/09 15:36:40 tedu Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -14,7 +14,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: January 3 2014 $
+.Dd $Mdocdate: January 9 2014 $
 .Dt SIGNIFY 1
 .Os
 .Sh NAME
@@ -27,21 +27,23 @@
 .Fl s Ar seckey
 .Fl G
 .Nm signify
+.Op Fl e
 .Op Fl o Ar output
 .Fl s Ar seckey
 .Fl S
-.Ar input
+.Ar message
 .Nm signify
+.Op Fl e
 .Op Fl o Ar output
 .Fl p Ar pubkey
 .Fl V
-.Ar input
+.Ar message
 .Sh DESCRIPTION
 The
 .Nm
 utility creates and verifies cryptographic signatures for
 an input file
-.Ar input .
+.Ar message .
 The mode of operation is selected by the
 .Fl G ,
 .Fl S ,
@@ -51,6 +53,9 @@ options.
 .Pp
 The options are as follows:
 .Bl -tag -width Dssoutput
+.It Fl e
+Embed the message after the signature when signing.
+For verification, extract the message from the signature.
 .It Fl G
 Generate a new keypair.
 .It Fl n
@@ -58,7 +63,7 @@ Do not ask for a passphrase during key generation.
 Otherwise,
 .Nm
 will prompt the user for a passphrase on the terminal.
-.It Fl o Ar output
+.It Fl o Ar sigfile
 The signature file to create or verify.
 The default is
 .Ar input Ns .sig .
