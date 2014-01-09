@@ -374,9 +374,9 @@ timer(void)
 		for (i = 0; i < utmpent; i++)
 			if (utmp[i].ut_name[0]) {
 				memcpy(we->we_utmp.out_line, utmp[i].ut_line,
-				   sizeof(utmp[i].ut_line));
+				   sizeof(we->we_utmp.out_line));
 				memcpy(we->we_utmp.out_name, utmp[i].ut_name,
-				   sizeof(utmp[i].ut_name));
+				   sizeof(we->we_utmp.out_line));
 				we->we_utmp.out_time = htonl(utmp[i].ut_time);
 				if (we >= wlast)
 					break;
