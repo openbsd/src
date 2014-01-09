@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.18 2014/01/09 18:59:35 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.19 2014/01/09 19:05:21 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -214,7 +214,7 @@ writeb64file(const char *filename, const char *comment, const void *buf,
 	char b64[1024];
 	int fd, rv;
 
-	fd = xopen(filename, O_CREAT|O_EXCL|O_NOFOLLOW|O_RDWR, mode);
+	fd = xopen(filename, O_CREAT|O_TRUNC|O_NOFOLLOW|O_RDWR, mode);
 	snprintf(header, sizeof(header), "%ssignify %s\n", COMMENTHDR,
 	    comment);
 	writeall(fd, header, strlen(header), filename);
@@ -389,7 +389,7 @@ verify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 
 	verifymsg(pubkey.pubkey, msg, msglen, sig.sig);
 	if (embedded) {
-		fd = xopen(msgfile, O_CREAT|O_EXCL|O_NOFOLLOW|O_RDWR, 0666);
+		fd = xopen(msgfile, O_CREAT|O_TRUNC|O_NOFOLLOW|O_RDWR, 0666);
 		writeall(fd, msg, msglen, msgfile);
 		close(fd);
 	}
