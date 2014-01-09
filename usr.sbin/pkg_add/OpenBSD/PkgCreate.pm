@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.89 2014/01/09 13:21:03 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.90 2014/01/09 13:30:46 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -87,6 +87,10 @@ sub new_sig
 sub compute_signature
 {
 	my ($self, $state, $plist) = @_;
+
+	my $list = $state->signer_list;
+	OpenBSD::PackingElement::Signer->add($plist, $list->[0]);
+
 	return OpenBSD::signify::compute_signature($plist, $state, 
 	    $self->{privkey});
 }
@@ -1157,9 +1161,6 @@ sub add_signature
 			delete $plist->{signer};
 		}
 	}
-
-	my $list = $state->signer_list;
-	OpenBSD::PackingElement::Signer->add($plist, $list->[0]);
 
 	my $sig = $state->{signer}->new_sig;
 	$sig->add_object($plist);
