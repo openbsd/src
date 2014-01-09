@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.18 2014/01/09 10:36:52 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.19 2014/01/09 20:20:01 espie Exp $
 #
-# Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
