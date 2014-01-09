@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.16 2014/01/09 15:36:40 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.17 2014/01/09 17:13:36 deraadt Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -177,7 +177,6 @@ readmsg(const char *filename, unsigned long long *msglenp)
 	return msg;
 }
 
-#ifndef VERIFYONLY
 static void
 writeall(int fd, const void *buf, size_t len, const char *filename)
 {
@@ -191,6 +190,7 @@ writeall(int fd, const void *buf, size_t len, const char *filename)
 	}
 }
 
+#ifndef VERIFYONLY
 static void
 appendall(const char *filename, const void *buf, size_t len)
 {
