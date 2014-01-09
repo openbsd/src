@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.81 2013/10/12 20:45:22 deraadt Exp $
+#	$OpenBSD: services,v 1.82 2014/01/09 20:54:10 brad Exp $
 #
 # Network services, Internet style
 #
@@ -180,6 +180,8 @@ conference	531/tcp		chat
 netnews		532/tcp		readnews
 netwall		533/udp				# -for emergency broadcasts
 uucp		540/tcp		uucpd		# uucp daemon
+dhcpv6-client	546/udp				# DHCPv6 client
+dhcpv6-server	547/udp				# DHCPv6 server
 remotefs	556/tcp		rfs_server rfs	# Brunhoff remote filesystem
 silc		706/tcp				# Secure Live Internet Conferencing
 silc		706/udp
