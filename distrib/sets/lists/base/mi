@@ -90,6 +90,8 @@
 ./etc/rc.d
 ./etc/signify
 ./etc/signify/54base.pub
+./etc/signify/54fw.pub
+./etc/signify/54pkg.pub
 ./etc/skel
 ./etc/skel/.ssh
 ./etc/sliphome
