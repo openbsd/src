@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.38 2014/01/08 04:48:29 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.39 2014/01/09 03:12:25 guenther Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -235,7 +235,6 @@ extern int rmleadslash;
 extern int exit_val;
 extern int docrc;
 extern char *dirptr;
-extern char *ltmfrmt;
 extern char *argv0;
 extern FILE *listf;
 extern char *tempfile;

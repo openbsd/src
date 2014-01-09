@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.24 2014/01/08 05:52:47 guenther Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.25 2014/01/09 03:12:25 guenther Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -60,6 +60,8 @@
 #define CURFRMT		"%b %e %H:%M"
 #define OLDFRMT		"%b %e  %Y"
 #define NAME_WIDTH	8
+#define	TIMEFMT(t, now) \
+	(((t) + SIXMONTHS <= (now) || (t) > (now)) ? OLDFRMT : CURFRMT)
 
 /*
  * ls_list()
@@ -72,7 +74,6 @@ ls_list(ARCHD *arcn, time_t now, FILE *fp)
 	struct stat *sbp;
 	char f_mode[MODELEN];
 	char f_date[DATELEN];
-	const char *timefrmt;
 	int term;
 
 	term = zeroflag ? '\0' : '\n';	/* path termination character */
@@ -96,22 +97,11 @@ ls_list(ARCHD *arcn, time_t now, FILE *fp)
 	sbp = &(arcn->sb);
 	strmode(sbp->st_mode, f_mode);
 
-	if (ltmfrmt == NULL) {
-		/*
-		 * no locale specified format. time format based on age
-		 * compared to the time pax was started.
-		 */
-		if ((sbp->st_mtime + SIXMONTHS) <= now)
-			timefrmt = OLDFRMT;
-		else
-			timefrmt = CURFRMT;
-	} else
-		timefrmt = ltmfrmt;
-
 	/*
 	 * print file mode, link count, uid, gid and time
 	 */
-	if (strftime(f_date,DATELEN,timefrmt,localtime(&(sbp->st_mtime))) == 0)
+	if (strftime(f_date, sizeof(f_date), TIMEFMT(sbp->st_mtime, now),
+	    localtime(&(sbp->st_mtime))) == 0)
 		f_date[0] = '\0';
 	(void)fprintf(fp, "%s%2u %-*.*s %-*.*s ", f_mode, sbp->st_nlink,
 		NAME_WIDTH, UT_NAMESIZE, name_uid(sbp->st_uid, 1),
@@ -121,7 +111,7 @@ ls_list(ARCHD *arcn, time_t now, FILE *fp)
 	 * print device id's for devices, or sizes for other nodes
 	 */
 	if ((arcn->type == PAX_CHR) || (arcn->type == PAX_BLK))
-		(void)fprintf(fp, "%4lu,%4lu ",
+		(void)fprintf(fp, "%4lu, %4lu ",
 		    (unsigned long)MAJOR(sbp->st_rdev),
 		    (unsigned long)MINOR(sbp->st_rdev));
 	else {
@@ -156,23 +146,12 @@ ls_tty(ARCHD *arcn)
 {
 	char f_date[DATELEN];
 	char f_mode[MODELEN];
-	const char *timefrmt;
-
-	if (ltmfrmt == NULL) {
-		/*
-		 * no locale specified format
-		 */
-		if ((arcn->sb.st_mtime + SIXMONTHS) <= time(NULL))
-			timefrmt = OLDFRMT;
-		else
-			timefrmt = CURFRMT;
-	} else
-		timefrmt = ltmfrmt;
+	time_t now = time(NULL);
 
 	/*
 	 * convert time to string, and print
 	 */
-	if (strftime(f_date, DATELEN, timefrmt,
+	if (strftime(f_date, DATELEN, TIMEFMT(arcn->sb.st_mtime, now),
 	    localtime(&(arcn->sb.st_mtime))) == 0)
 		f_date[0] = '\0';
 	strmode(arcn->sb.st_mode, f_mode);

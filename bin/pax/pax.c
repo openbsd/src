@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.34 2012/12/04 02:24:45 deraadt Exp $	*/
+/*	$OpenBSD: pax.c,v 1.35 2014/01/09 03:12:25 guenther Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -89,7 +89,6 @@ int	rmleadslash = 0;	/* remove leading '/' from pathnames */
 int	exit_val;		/* exit value */
 int	docrc;			/* check/create file crc */
 char	*dirptr;		/* destination dir in a copy */
-char	*ltmfrmt;		/* -v locale time format (if any) */
 char	*argv0;			/* root of argv[0] */
 sigset_t s_mask;		/* signal mask for cleanup critical sect */
 FILE	*listf = stderr;	/* file pointer to print file list to */
@@ -365,13 +364,6 @@ gen_init(void)
 		reslimit.rlim_cur = reslimit.rlim_max;
 		(void)setrlimit(RLIMIT_RSS , &reslimit);
 	}
-
-	/*
-	 * Handle posix locale
-	 *
-	 * set user defines time printing format for -v option
-	 */
-	ltmfrmt = getenv("LC_TIME");
 
 	/*
 	 * signal handling to reset stored directory times and modes. Since
