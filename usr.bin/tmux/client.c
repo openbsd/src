@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.77 2014/01/09 14:05:55 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.78 2014/01/09 21:20:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -118,10 +118,15 @@ retry:
 		close(fd);
 
 		xasprintf(&lockfile, "%s.lock", path);
-		if ((lockfd = client_get_lock(lockfile)) == -1)
+		if ((lockfd = client_get_lock(lockfile)) == -1) {
+			free(lockfile);
 			goto retry;
-		if (unlink(path) != 0 && errno != ENOENT)
+		}
+		if (unlink(path) != 0 && errno != ENOENT) {
+			free(lockfile);
+			close(lockfd);
 			return (-1);
+		}
 		fd = server_start(lockfd, lockfile);
 		free(lockfile);
 		close(lockfd);
