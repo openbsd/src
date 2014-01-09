@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.17 2014/01/09 17:13:36 deraadt Exp $ */
+/* $OpenBSD: signify.c,v 1.18 2014/01/09 18:59:35 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -39,8 +39,9 @@
 #define KDFALG "BK"
 #define FPLEN 8
 
-#define COMMENTHDR "untrusted comment:"
-#define COMMENTHDRLEN 18
+#define COMMENTHDR "untrusted comment: "
+#define COMMENTHDRLEN 19
+#define COMMENTMAXLEN 1024
 
 struct enckey {
 	uint8_t pkalg[2];
@@ -118,7 +119,8 @@ readall(int fd, void *buf, size_t len, const char *filename)
 }
 
 static size_t
-parseb64file(const char *filename, char *b64, void *buf, size_t len)
+parseb64file(const char *filename, char *b64, void *buf, size_t len,
+    char *comment)
 {
 	int rv;
 	char *commentend, *b64end;
@@ -128,6 +130,9 @@ parseb64file(const char *filename, char *b64, void *buf, size_t len)
 	    memcmp(b64, COMMENTHDR, COMMENTHDRLEN))
 		errx(1, "invalid comment in %s; must start with '%s'",
 		    filename, COMMENTHDR);
+	*commentend = 0;
+	if (comment)
+		strlcpy(comment, b64 + COMMENTHDRLEN, COMMENTMAXLEN);
 	b64end = strchr(commentend + 1, '\n');
 	if (!b64end)
 		errx(1, "missing new line after b64 in %s", filename);
@@ -141,7 +146,7 @@ parseb64file(const char *filename, char *b64, void *buf, size_t len)
 }
 
 static void
-readb64file(const char *filename, void *buf, size_t len)
+readb64file(const char *filename, void *buf, size_t len, char *comment)
 {
 	char b64[2048];
 	int rv, fd;
@@ -151,7 +156,7 @@ readb64file(const char *filename, void *buf, size_t len)
 	rv = read(fd, b64, sizeof(b64) - 1);
 	if (rv == -1)
 		err(1, "read from %s", filename);
-	parseb64file(filename, b64, buf, len);
+	parseb64file(filename, b64, buf, len, comment);
 	memset(b64, 0, sizeof(b64));
 	close(fd);
 }
@@ -210,7 +215,7 @@ writeb64file(const char *filename, const char *comment, const void *buf,
 	int fd, rv;
 
 	fd = xopen(filename, O_CREAT|O_EXCL|O_NOFOLLOW|O_RDWR, mode);
-	snprintf(header, sizeof(header), "%s signify %s\n", COMMENTHDR,
+	snprintf(header, sizeof(header), "%ssignify %s\n", COMMENTHDR,
 	    comment);
 	writeall(fd, header, strlen(header), filename);
 	if ((rv = b64_ntop(buf, len, b64, sizeof(b64)-1)) == -1)
@@ -301,11 +306,12 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 	struct enckey enckey;
 	uint8_t xorkey[sizeof(enckey.seckey)];
 	uint8_t *msg;
+	char comment[COMMENTMAXLEN], sigcomment[1024];
 	unsigned long long msglen;
 	int i, rounds;
 	SHA2_CTX ctx;
 
-	readb64file(seckeyfile, &enckey, sizeof(enckey));
+	readb64file(seckeyfile, &enckey, sizeof(enckey), comment);
 
 	if (memcmp(enckey.kdfalg, KDFALG, 2))
 		errx(1, "unsupported KDF");
@@ -328,7 +334,8 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 	memset(&enckey, 0, sizeof(enckey));
 
 	memcpy(sig.pkalg, PKALG, 2);
-	writeb64file(sigfile, "signature", &sig, sizeof(sig), 0666);
+	snprintf(sigcomment, sizeof(sigcomment), "signature from %s", comment);
+	writeb64file(sigfile, sigcomment, &sig, sizeof(sig), 0666);
 	if (embedded)
 		appendall(sigfile, msg, msglen);
 
@@ -368,13 +375,13 @@ verify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 
 	msg = readmsg(embedded ? sigfile : msgfile, &msglen);
 
-	readb64file(pubkeyfile, &pubkey, sizeof(pubkey));
+	readb64file(pubkeyfile, &pubkey, sizeof(pubkey), NULL);
 	if (embedded) {
-		siglen = parseb64file(sigfile, msg, &sig, sizeof(sig));
+		siglen = parseb64file(sigfile, msg, &sig, sizeof(sig), NULL);
 		msg += siglen;
 		msglen -= siglen;
 	} else {
-		readb64file(sigfile, &sig, sizeof(sig));
+		readb64file(sigfile, &sig, sizeof(sig), NULL);
 	}
 
 	if (memcmp(pubkey.fingerprint, sig.fingerprint, FPLEN))
