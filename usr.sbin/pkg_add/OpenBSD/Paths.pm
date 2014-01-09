@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.24 2014/01/04 00:14:08 espie Exp $
+# $OpenBSD: Paths.pm,v 1.25 2014/01/09 10:36:52 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -33,8 +33,7 @@ sub sysctl() { '/sbin/sysctl' }
 sub openssl() { '/usr/sbin/openssl' }
 sub pkgca() { '/etc/ssl/pkgca.pem' }
 sub signify() { '/usr/bin/signify' }
-sub signifykey() { '/etc/signify/openbsd.pub' }
-sub signifyfwkey() { '/etc/signify/openbsd-fw.pub' }
+sub signifykey { my $s = $_[1]; "/etc/signify/$s.pub" }
 sub pkg_add() { '/usr/sbin/pkg_add' }
 sub chmod() { '/bin/chmod' }	# external command is used for symbolic modes.
 sub gzip() { '/usr/bin/gzip' }

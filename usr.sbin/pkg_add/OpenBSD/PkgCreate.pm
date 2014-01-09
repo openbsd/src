@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.86 2014/01/07 11:51:15 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.87 2014/01/09 10:36:52 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1158,10 +1158,11 @@ sub add_signature
 		}
 	}
 
-	my $signer = $state->{subst}->value('SIGNER');
-	if (defined $signer) {
-		OpenBSD::PackingElement::Signer->add($plist, $signer);
+	my $list = $state->signer_list;
+	if (@$list != 1) {
+		$state->fatal("Ambiguous: single SIGNER identity required");
 	}
+	OpenBSD::PackingElement::Signer->add($plist, $list->[0]);
 
 	my $sig = $state->{signer}->new_sig;
 	$sig->add_object($plist);

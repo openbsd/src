@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: signify.pm,v 1.5 2014/01/08 06:40:56 espie Exp $
+# $OpenBSD: signify.pm,v 1.6 2014/01/09 10:36:52 espie Exp $
 #
 # Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 #
@@ -60,20 +60,23 @@ sub check_signature
 	print $fh2 $header, $sig->{b64sig}, "\n";
 	close $fh;
 	close $fh2;
-	my $pubkey;
 	
-	if ($state->defines('FW_UPDATE')) {
-		$pubkey = OpenBSD::Paths->signifyfwkey;
-	} else {
-		$pubkey = OpenBSD::Paths->signifykey;
+	if (!$plist->has('signer')) {
+		$state->errsay("Invalid signed plist: no \@signer");
+		return 0;
 	}
-	if ($plist->has('signer')) {
-		my $signer = $plist->get('signer')->name;
-		$pubkey = "/etc/signify/$signer.pub";
+	my $pubkey;
+	my $signer = $plist->get('signer')->name;
+	if (grep {$_ eq $signer} @{$state->signer_list}) {
+		$pubkey = OpenBSD::Paths->signifykey($signer);
 		if (!-f $pubkey) {
-			$state->say("Unknown signer #1", $signer);
+			$state->errsay("Can't find key #1 for signer #1", 
+			    $pubkey, $signer);
 			return 0;
 		}
+	} else {
+		$state->errsay("Package signed by untrusted party #1", $signer);
+		return 0;
 	}
 	if ($state->system(sub {
 	    open STDOUT, ">", "/dev/null";},
