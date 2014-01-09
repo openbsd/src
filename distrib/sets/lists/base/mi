@@ -89,6 +89,7 @@
 ./etc/ppp/ppp.secret.sample
 ./etc/rc.d
 ./etc/signify
+./etc/signify/54base.pub
 ./etc/skel
 ./etc/skel/.ssh
 ./etc/sliphome
