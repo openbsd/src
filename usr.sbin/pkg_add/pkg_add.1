@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.117 2014/01/05 10:29:16 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.118 2014/01/09 10:51:51 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: January 5 2014 $
+.Dd $Mdocdate: January 9 2014 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -294,6 +294,14 @@ very safe update: don't run any @exec/@unexec.
 attempt to repair installed packages with missing registration data.
 .It Ar scripts
 external scripts may fail.
+.It Ar SIGNER
+list of trusted signers, separated by commas.
+Corresponds to list of public keys under
+.Pa /etc/signify
+we can trust.
+Defaults to offical packages or firmwares matched to the current
+version as reported by
+.Xr uname 1 .
 .It Ar updatedepends
 force update even if forward dependencies no longer match.
 .El
