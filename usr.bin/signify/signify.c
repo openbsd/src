@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.19 2014/01/09 19:05:21 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.20 2014/01/09 20:37:25 espie Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -208,13 +208,13 @@ appendall(const char *filename, const void *buf, size_t len)
 
 static void
 writeb64file(const char *filename, const char *comment, const void *buf,
-    size_t len, mode_t mode)
+    size_t len, int flags, mode_t mode)
 {
 	char header[1024];
 	char b64[1024];
 	int fd, rv;
 
-	fd = xopen(filename, O_CREAT|O_TRUNC|O_NOFOLLOW|O_RDWR, mode);
+	fd = xopen(filename, O_CREAT|flags|O_NOFOLLOW|O_RDWR, mode);
 	snprintf(header, sizeof(header), "%ssignify %s\n", COMMENTHDR,
 	    comment);
 	writeall(fd, header, strlen(header), filename);
@@ -288,13 +288,13 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds)
 	memset(xorkey, 0, sizeof(xorkey));
 
 	writeb64file(seckeyfile, "secret key", &enckey,
-	    sizeof(enckey), 0600);
+	    sizeof(enckey), O_EXCL, 0600);
 	memset(&enckey, 0, sizeof(enckey));
 
 	memcpy(pubkey.pkalg, PKALG, 2);
 	memcpy(pubkey.fingerprint, fingerprint, FPLEN);
 	writeb64file(pubkeyfile, "public key", &pubkey,
-	    sizeof(pubkey), 0666);
+	    sizeof(pubkey), O_EXCL, 0666);
 }
 
 static void
@@ -335,7 +335,7 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 
 	memcpy(sig.pkalg, PKALG, 2);
 	snprintf(sigcomment, sizeof(sigcomment), "signature from %s", comment);
-	writeb64file(sigfile, sigcomment, &sig, sizeof(sig), 0666);
+	writeb64file(sigfile, sigcomment, &sig, sizeof(sig), O_TRUNC, 0666);
 	if (embedded)
 		appendall(sigfile, msg, msglen);
 
