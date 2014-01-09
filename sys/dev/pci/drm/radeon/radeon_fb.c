@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_fb.c,v 1.3 2013/12/05 13:29:56 kettenis Exp $	*/
+/*	$OpenBSD: radeon_fb.c,v 1.4 2014/01/09 13:42:57 mpi Exp $	*/
 /*
  * Copyright © 2007 David Airlie
  *
@@ -494,7 +494,8 @@ bool radeon_fbdev_robj_is_fb(struct radeon_device *rdev, struct radeon_bo *robj)
 void
 radeondrm_burner(void *v, u_int on, u_int flags)
 {
-	struct radeon_device *rdev = v;
+	struct rasops_info *ri = v;
+	struct radeon_device *rdev = ri->ri_hw;
 
 	task_del(systq, &rdev->burner_task);
 
