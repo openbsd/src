@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.90 2014/01/09 13:30:46 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.91 2014/01/09 17:51:56 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1156,6 +1156,15 @@ sub add_signature
 
 	if ($plist->has('digital-signature') || $plist->has('signer')) {
 		if ($state->defines('resign')) {
+			if ($state->defines('nosig')) {
+				$state->errsay("NOT CHECKING DIGITAL SIGNATURE FOR #1",
+				    $plist->pkgname);
+			} else {
+				if (!$plist->check_signature($state)) {
+					$state->fatal("#1 is corrupted",
+					    $plist->pkgname);
+				}
+			}
 			$state->errsay("Resigning #1", $plist->pkgname);
 			delete $plist->{'digital-signature'};
 			delete $plist->{signer};
