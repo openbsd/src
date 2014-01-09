@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.28 2014/01/07 13:52:43 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.29 2014/01/09 13:40:05 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -424,10 +424,15 @@ sub print_info
 		if ($state->opt('C')) {
 			$state->header($handle);
 			if ($plist->is_signed) {
-
-				require OpenBSD::x509;
-				$state->banner("Certificate info:");
-				OpenBSD::x509::print_certificate_info($plist);
+				my $sig = $plist->get('digital-signature');
+				if ($sig->{key} eq 'x509') {
+					require OpenBSD::x509;
+					$state->banner("Certificate info:");
+					OpenBSD::x509::print_certificate_info($plist);
+				} elsif ($sig->{key} eq 'signify') {
+					$state->say("reportedly signed by #1", 
+					    $plist->get('signer')->name);
+				}
 			} else {
 				$state->banner("No digital signature");
 			}
