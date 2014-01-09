@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.339 2013/12/15 17:40:45 tedu Exp $
+#	$OpenBSD: Makefile,v 1.340 2014/01/09 18:51:30 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -193,6 +193,9 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/etc/ppp; \
 		${INSTALL} -c -o root -g wheel -m 644 ppp.secret.sample \
 		    ${DESTDIR}/etc/ppp
+	cd signify; \
+		${INSTALL} -c -o root -g wheel -m 644 *.pub \
+		    ${DESTDIR}/etc/signify
 	cd systrace; \
 		${INSTALL} -c -o root -g wheel -m 600 usr_sbin_lpd \
 		    ${DESTDIR}/etc/systrace; \
