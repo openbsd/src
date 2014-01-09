@@ -1,4 +1,4 @@
-/*	$OpenBSD: lalr.c,v 1.12 2014/01/08 21:40:25 millert Exp $	*/
+/*	$OpenBSD: lalr.c,v 1.13 2014/01/09 23:07:50 millert Exp $	*/
 /*	$NetBSD: lalr.c,v 1.4 1996/03/19 03:21:33 jtc Exp $	*/
 
 /*
@@ -629,12 +629,10 @@ traverse(int i)
   unsigned *fp3;
   int j;
   short *rp;
-
-  int height;
   unsigned *base;
 
   VERTICES[++top] = i;
-  INDEX[i] = height = top;
+  INDEX[i] = top;
 
   base = F + i * tokensetsize;
   fp3 = base + tokensetsize;
@@ -658,7 +656,7 @@ traverse(int i)
 	}
     }
 
-  if (INDEX[i] == height)
+  if (INDEX[i] == top)
     {
       for (;;)
 	{
