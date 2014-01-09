@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.70 2013/12/06 13:39:49 markus Exp $
+#	$OpenBSD: Makefile,v 1.71 2014/01/09 23:20:01 djm Exp $
 
 .PATH:		${.CURDIR}/..
 .include "${.CURDIR}/../Makefile.inc"
@@ -14,7 +14,7 @@ SRCS=	authfd.c authfile.c bufaux.c bufec.c bufbn.c buffer.c canohost.c \
 	kexdhc.c kexgexc.c kexecdhc.c msg.c progressmeter.c dns.c \
 	monitor_fdpass.c umac.c addrmatch.c schnorr.c jpake.c ssh-pkcs11.c \
 	krl.c smult_curve25519_ref.c kexc25519.c kexc25519c.c \
-	chacha.c poly1305.c cipher-chachapoly.c ssh-ed25519.c
+	chacha.c poly1305.c cipher-chachapoly.c ssh-ed25519.c digest.c
 
 # ed25519, from supercop
 SRCS+=	sc25519.c ge25519.c fe25519.c ed25519.c verify.c hash.c blocks.c
