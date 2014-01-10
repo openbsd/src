@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.98 2013/11/20 21:34:25 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.99 2014/01/10 04:54:35 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -58,39 +58,35 @@ struct nlist nl[] = {
 	{ "_tcbtable" },
 #define N_UDBTABLE	1
 	{ "_udbtable" },
-#define N_DDPCB		2
-	{ "_ddpcb"},
-#define N_UNIXSW	3
-	{ "_unixsw" },
 
-#define N_MFCHASHTBL	4
+#define N_MFCHASHTBL	2
 	{ "_mfchashtbl" },
-#define N_MFCHASH	5
+#define N_MFCHASH	3
 	{ "_mfchash" },
-#define N_VIFTABLE	6
+#define N_VIFTABLE	4
 	{ "_viftable" },
 
-#define N_MF6CTABLE	7
+#define N_MF6CTABLE	5
 	{ "_mf6ctable" },
-#define N_MIF6TABLE	8
+#define N_MIF6TABLE	6
 	{ "_mif6table" },
 
-#define N_RTREE		9
+#define N_RTREE		7
 	{ "_rt_tables"},
-#define N_RTMASK	10
+#define N_RTMASK	8
 	{ "_mask_rnhead" },
-#define N_AF2RTAFIDX	11
+#define N_AF2RTAFIDX	9
 	{ "_af2rtafidx" },
-#define N_RTBLIDMAX	12
+#define N_RTBLIDMAX	10
 	{ "_rtbl_id_max" },
 
-#define N_RAWIPTABLE	13
+#define N_RAWIPTABLE	11
 	{ "_rawcbtable" },
-#define N_RAWIP6TABLE	14
+#define N_RAWIP6TABLE	12
 	{ "_rawin6pcbtable" },
-#define N_DIVBTABLE	15
+#define N_DIVBTABLE	13
 	{ "_divbtable" },
-#define N_DIVB6TABLE	16
+#define N_DIVB6TABLE	14
 	{ "_divb6table" },
 
 	{ "" }
