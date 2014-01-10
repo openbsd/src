@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.169 2013/11/15 16:15:42 bluhm Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.170 2014/01/10 00:47:17 bluhm Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -102,6 +102,12 @@ struct pkthdr_pf {
 #define	PF_TAG_REFRAGMENTED		0x40	/* refragmented ipv6 packet */
 #define	PF_TAG_PROCESSED		0x80	/* packet was checked by pf */
 
+#ifdef _KERNEL
+#define MPF_BITS \
+    ("\20\1GENERATED\3TRANSLATE_LOCALHOST\4DIVERTED\5DIVERTED_PACKET" \
+    "\6REROUTE\7REFRAGMENTED\10PROCESSED")
+#endif
+
 /* record/packet header in first mbuf of chain; valid if M_PKTHDR set */
 struct	pkthdr {
 	struct ifnet		*rcvif;		/* rcv interface */
@@ -180,6 +186,13 @@ struct mbuf {
 #define M_COMP		0x4000  /* header was decompressed */
 #define M_LINK0		0x8000	/* link layer specific flag */
 
+#ifdef _KERNEL
+#define M_BITS \
+    ("\20\1M_EXT\2M_PKTHDR\3M_EOR\4M_CLUSTER\5M_PROTO1\6M_VLANTAG\7M_LOOP" \
+    "\10M_FILDROP\11M_BCAST\12M_MCAST\13M_CONF\14M_AUTH\15M_TUNNEL" \
+    "\16M_ZEROIZE\17M_COMP\20M_LINK0")
+#endif
+
 /* flags copied when copying m_pkthdr */
 #define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_PROTO1|M_BCAST|M_MCAST|M_CONF|M_COMP|\
 			 M_AUTH|M_LOOP|M_TUNNEL|M_LINK0|M_VLANTAG|M_FILDROP|\
@@ -198,6 +211,13 @@ struct mbuf {
 #define	M_ICMP_CSUM_OUT		0x0200	/* ICMP checksum needed */
 #define	M_ICMP_CSUM_IN_OK	0x0400	/* ICMP checksum verified */
 #define	M_ICMP_CSUM_IN_BAD	0x0800	/* ICMP checksum bad */
+
+#ifdef _KERNEL
+#define MCS_BITS \
+    ("\20\1IPV4_CSUM_OUT\2TCP_CSUM_OUT\3UDP_CSUM_OUT\4IPV4_CSUM_IN_OK" \
+    "\5IPV4_CSUM_IN_BAD\6TCP_CSUM_IN_OK\7TCP_CSUM_IN_BAD\10UDP_CSUM_IN_OK" \
+    "\11UDP_CSUM_IN_BAD\12ICMP_CSUM_OUT\13ICMP_CSUM_IN_OK\14ICMP_CSUM_IN_BAD")
+#endif
 
 /* mbuf types */
 #define	MT_FREE		0	/* should be on free list */
@@ -456,6 +476,11 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_PF_REASSEMBLED	0x0800 /* pf reassembled ipv6 packet */
 #define PACKET_TAG_SRCROUTE		0x1000 /* IPv4 source routing options */
 #define PACKET_TAG_TUNNEL		0x2000	/* Tunnel endpoint address */
+
+#define MTAG_BITS \
+    ("\20\1IPSEC_IN_DONE\2IPSEC_OUT_DONE\3IPSEC_IN_CRYPTO_DONE" \
+    "\4IPSEC_OUT_CRYPTO_NEEDED\5IPSEC_PENDING_TDB\6BRIDGE\7GIF\10GRE\11DLT" \
+    "\12PF_DIVERT\13PIPEX\14PF_REASSEMBLED\15SRCROUTE\16TUNNEL")
 
 /*
  * Maximum tag payload length (that is excluding the m_tag structure).

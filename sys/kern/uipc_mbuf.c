@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.176 2013/11/09 06:38:42 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.177 2014/01/10 00:47:17 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1346,32 +1346,30 @@ m_print(void *v,
 	struct mbuf *m = v;
 
 	(*pr)("mbuf %p\n", m);
-	(*pr)("m_type: %hi\tm_flags: %b\n", m->m_type, m->m_flags,
-	    "\20\1M_EXT\2M_PKTHDR\3M_EOR\4M_CLUSTER\5M_PROTO1\6M_VLANTAG"
-	    "\7M_LOOP\10M_FILDROP\11M_BCAST\12M_MCAST\13M_CONF\14M_AUTH"
-	    "\15M_TUNNEL\16M_ZEROIZE\17M_LINK0");
+	(*pr)("m_type: %hi\tm_flags: %hb\n", m->m_type, m->m_flags, M_BITS);
 	(*pr)("m_next: %p\tm_nextpkt: %p\n", m->m_next, m->m_nextpkt);
 	(*pr)("m_data: %p\tm_len: %u\n", m->m_data, m->m_len);
-	(*pr)("m_dat: %p m_pktdat: %p\n", m->m_dat, m->m_pktdat);
+	(*pr)("m_dat: %p\tm_pktdat: %p\n", m->m_dat, m->m_pktdat);
 	if (m->m_flags & M_PKTHDR) {
-		(*pr)("m_pkthdr.len: %i\tm_ptkhdr.rcvif: %p\t"
-		    "m_ptkhdr.rdomain: %u\n", m->m_pkthdr.len,
-		    m->m_pkthdr.rcvif, m->m_pkthdr.rdomain);
-		(*pr)("m_ptkhdr.tags: %p\tm_pkthdr.tagsset: %hx\n",
-		    SLIST_FIRST(&m->m_pkthdr.tags), m->m_pkthdr.tagsset);
-		(*pr)("m_pkthdr.csum_flags: %hx\tm_pkthdr.ether_vtag: %hu\n",
-		    m->m_pkthdr.csum_flags, m->m_pkthdr.ether_vtag);
-		(*pr)("m_pkthdr.pf.flags: %b\n",
-		    m->m_pkthdr.pf.flags, "\20\1GENERATED\2FRAGCACHE"
-		    "\3TRANSLATE_LOCALHOST\4DIVERTED\5DIVERTED_PACKET"
-		    "\6PF_TAG_REROUTE");
-		(*pr)("m_pkthdr.pf.hdr: %p\tm_pkthdr.pf.statekey: %p\n",
-		    m->m_pkthdr.pf.hdr, m->m_pkthdr.pf.statekey);
-		(*pr)("m_pkthdr.pf.qid:\t%u m_pkthdr.pf.tag: %hu\n",
+		(*pr)("m_ptkhdr.rcvif: %p\tm_pkthdr.len: %i\n",
+		    m->m_pkthdr.rcvif, m->m_pkthdr.len);
+		(*pr)("m_ptkhdr.tags: %p\tm_pkthdr.tagsset: %hb\n",
+		    SLIST_FIRST(&m->m_pkthdr.tags),
+		    m->m_pkthdr.tagsset, MTAG_BITS);
+		(*pr)("m_pkthdr.csum_flags: %hb\n",
+		    m->m_pkthdr.csum_flags, MCS_BITS);
+		(*pr)("m_pkthdr.ether_vtag: %hu\tm_ptkhdr.rdomain: %u\n",
+		    m->m_pkthdr.ether_vtag, m->m_pkthdr.rdomain);
+		(*pr)("m_pkthdr.pf.hdr: %p\n",
+		    m->m_pkthdr.pf.hdr);
+		(*pr)("m_pkthdr.pf.statekey: %p\tm_pkthdr.pf.inp %p\n",
+		    m->m_pkthdr.pf.statekey, m->m_pkthdr.pf.inp);
+		(*pr)("m_pkthdr.pf.qid: %u\tm_pkthdr.pf.tag: %hu\n",
 		    m->m_pkthdr.pf.qid, m->m_pkthdr.pf.tag);
-		(*pr)("m_pkthdr.pf.prio:\t%u m_pkthdr.pf.tag: %hu\n",
-		    m->m_pkthdr.pf.prio, m->m_pkthdr.pf.tag);
-		(*pr)("m_pkthdr.pf.routed: %hx\n", m->m_pkthdr.pf.routed);
+		(*pr)("m_pkthdr.pf.flags: %hhb\n",
+		    m->m_pkthdr.pf.flags, MPF_BITS);
+		(*pr)("m_pkthdr.pf.routed: %hhu\tm_pkthdr.pf.prio: %hhu\n",
+		    m->m_pkthdr.pf.routed, m->m_pkthdr.pf.prio);
 	}
 	if (m->m_flags & M_EXT) {
 		(*pr)("m_ext.ext_buf: %p\tm_ext.ext_size: %u\n",
