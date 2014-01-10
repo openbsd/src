@@ -1174,19 +1174,17 @@ test14(int fd, int argc, const char **argv)
 		 * Child - do some work and exit.
 		 */
 		id = id_base + i;
-		srandom(getpid());
-
 		for (j = 0; j < 50; j++) {
 			int start, end, len;
 			int set, wrlock;
 
 			do {
-				start = random() & 127;
-				end = random() & 127;
+				start = arc4random_uniform(128);
+				end = arc4random_uniform(128);
 			} while (end <= start);
 
-			set = random() & 1;
-			wrlock = random() & 1;
+			set = arc4random_uniform(2);
+			wrlock = arc4random_uniform(2);
 
 			len = end - start;
 			fl.l_start = start;
