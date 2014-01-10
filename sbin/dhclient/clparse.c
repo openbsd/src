@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.65 2013/12/30 03:36:17 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.66 2014/01/10 01:07:58 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -273,7 +273,8 @@ parse_X(FILE *cfile, u_int8_t *buf, int max)
 		len = 0;
 		do {
 			token = next_token(&val, cfile);
-			if (token != TOK_NUMBER && token != TOK_NUMBER_OR_NAME) {
+			if (token != TOK_NUMBER && token !=
+			    TOK_NUMBER_OR_NAME) {
 				parse_warn("expecting hexadecimal constant.");
 				skip_to_semi(cfile);
 				return (0);
