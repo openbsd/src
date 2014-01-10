@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.65 2014/01/10 05:34:46 tedu Exp $	*/
+/*	$OpenBSD: md5.c,v 1.66 2014/01/10 18:51:05 lteo Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -34,6 +34,7 @@
 #include <limits.h>
 #include <time.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <md4.h>
 #include <md5.h>
@@ -682,7 +683,8 @@ digest_filelist(const char *file, struct hash_function *defhash)
 
 		if ((fp = fopen(filename, "r")) == NULL) {
 			warn("cannot open %s", filename);
-			(void)printf("(%s) %s: FAILED\n", algorithm, filename);
+			(void)printf("(%s) %s: %s\n", algorithm, filename,
+			    (errno == ENOENT ? "MISSING" : "FAILED"));
 			error = 1;
 			continue;
 		}
