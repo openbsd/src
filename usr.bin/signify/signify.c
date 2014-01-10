@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.21 2014/01/09 21:19:38 jmc Exp $ */
+/* $OpenBSD: signify.c,v 1.22 2014/01/10 04:15:38 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -73,11 +73,12 @@ usage(void)
 	fprintf(stderr, "usage:"
 #ifndef VERIFYONLY
 	    "\t%s [-n] -p pubkey -s seckey -G\n"
+	    "\t%s [-o sig] [-p pubkey] [-s seckey] -I\n"
 	    "\t%s [-e] [-o output] -s seckey -S message\n"
 #endif
 	    "\t%s [-e] [-o output] -p pubkey -V message\n",
 #ifndef VERIFYONLY
-	    __progname, __progname, 
+	    __progname, __progname, __progname,
 #endif
 	    __progname);
 	exit(1);
@@ -341,6 +342,31 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 
 	free(msg);
 }
+
+static void
+inspect(const char *seckeyfile, const char *pubkeyfile, const char *sigfile)
+{
+	struct sig sig;
+	struct enckey enckey;
+	struct pubkey pubkey;
+	char fp[(FPLEN + 2) / 3 * 4 + 1];
+
+	if (seckeyfile) {
+		readb64file(seckeyfile, &enckey, sizeof(enckey), NULL);
+		b64_ntop(enckey.fingerprint, FPLEN, fp, sizeof(fp));
+		printf("sec fp: %s\n", fp);
+	}
+	if (pubkeyfile) {
+		readb64file(pubkeyfile, &pubkey, sizeof(pubkey), NULL);
+		b64_ntop(pubkey.fingerprint, FPLEN, fp, sizeof(fp));
+		printf("pub fp: %s\n", fp);
+	}
+	if (sigfile) {
+		readb64file(sigfile, &sig, sizeof(sig), NULL);
+		b64_ntop(sig.fingerprint, FPLEN, fp, sizeof(fp));
+		printf("sig fp: %s\n", fp);
+	}
+}
 #endif
 
 static void
@@ -384,8 +410,12 @@ verify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 		readb64file(sigfile, &sig, sizeof(sig), NULL);
 	}
 
-	if (memcmp(pubkey.fingerprint, sig.fingerprint, FPLEN))
+	if (memcmp(pubkey.fingerprint, sig.fingerprint, FPLEN)) {
+#ifndef VERIFYONLY
+		inspect(NULL, pubkeyfile, sigfile);
+#endif
 		errx(1, "verification failed: checked against wrong key");
+	}
 
 	verifymsg(pubkey.pubkey, msg, msglen, sig.sig);
 	if (embedded) {
@@ -410,6 +440,7 @@ main(int argc, char **argv)
 	enum {
 		NONE,
 		GENERATE,
+		INSPECT,
 		SIGN,
 		VERIFY
 	} verb = NONE;
@@ -417,13 +448,18 @@ main(int argc, char **argv)
 
 	rounds = 42;
 
-	while ((ch = getopt(argc, argv, "GSVeno:p:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "GISVeno:p:s:")) != -1) {
 		switch (ch) {
 #ifndef VERIFYONLY
 		case 'G':
 			if (verb)
 				usage();
 			verb = GENERATE;
+			break;
+		case 'I':
+			if (verb)
+				usage();
+			verb = INSPECT;
 			break;
 		case 'S':
 			if (verb)
@@ -471,6 +507,10 @@ main(int argc, char **argv)
 		if (!pubkeyfile || !seckeyfile || argc != 0)
 			usage();
 		generate(pubkeyfile, seckeyfile, rounds);
+	} else if (verb == INSPECT) {
+		if (argc != 0)
+			usage();
+		inspect(seckeyfile, pubkeyfile, sigfile);
 	} else
 #endif
 	{
