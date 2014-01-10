@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.25 2014/01/08 22:55:59 millert Exp $	*/
+/*	$OpenBSD: reader.c,v 1.26 2014/01/10 23:01:29 millert Exp $	*/
 /*	$NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	*/
 
 /*
@@ -75,7 +75,6 @@ int keyword(void);
 void copy_ident(void);
 void copy_text(void);
 void copy_union(void);
-int hexval(int);
 bucket * get_literal(void);
 int is_reserved(char *);
 bucket * get_name(void);
@@ -653,19 +652,6 @@ loop:
 }
 
 
-int
-hexval(int c)
-{
-    if (c >= '0' && c <= '9')
-	return (c - '0');
-    if (c >= 'A' && c <= 'F')
-	return (c - 'A' + 10);
-    if (c >= 'a' && c <= 'f')
-	return (c - 'a' + 10);
-    return (-1);
-}
-
-
 bucket *
 get_literal(void)
 {
@@ -688,6 +674,7 @@ get_literal(void)
 	if (c == '\\')
 	{
 	    char *c_cptr = cptr - 1;
+	    unsigned long ulval;
 
 	    c = (unsigned char)*cptr++;
 	    switch (c)
@@ -699,38 +686,18 @@ get_literal(void)
 
 	    case '0': case '1': case '2': case '3':
 	    case '4': case '5': case '6': case '7':
-		n = c - '0';
-		c = (unsigned char)*cptr;
-		if (IS_OCTAL(c))
-		{
-		    n = (n << 3) + (c - '0');
-		    c = (unsigned char)*++cptr;
-		    if (IS_OCTAL(c))
-		    {
-			n = (n << 3) + (c - '0');
-			++cptr;
-		    }
-		}
-		if (n > MAXCHAR) illegal_character(c_cptr);
-		c = n;
+		ulval = strtoul(cptr - 1, &s, 8);
+		if (s == cptr - 1 || ulval > MAXCHAR) illegal_character(c_cptr);
+		c = (int)ulval;
+		cptr = s;
 	    	break;
 
 	    case 'x':
-		c = (unsigned char)*cptr++;
-		n = hexval(c);
-		if (n < 0 || n >= 16)
-		    illegal_character(c_cptr);
-		for (;;)
-		{
-		    c = (unsigned char)*cptr;
-		    i = hexval(c);
-		    if (i < 0 || i >= 16) break;
-		    ++cptr;
-		    n = (n << 4) + i;
-		    if (n > MAXCHAR) illegal_character(c_cptr);
-		}
-		c = n;
-		break;
+		ulval = strtoul(cptr, &s, 16);
+		if (s == cptr || ulval > MAXCHAR) illegal_character(c_cptr);
+		c = (int)ulval;
+		cptr = s;
+	    	break;
 
 	    case 'a': c = 7; break;
 	    case 'b': c = '\b'; break;
