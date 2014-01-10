@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1710 2014/01/08 22:52:05 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1711 2014/01/10 22:34:17 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2841,6 +2841,7 @@
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN */
 #define	PCI_PRODUCT_INTEL_CORE4G_D_ULT_GT1	0x0a02		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_HB_1	0x0a04		/* Core 4G Host */
 #define	PCI_PRODUCT_INTEL_CORE4G_M_ULT_GT1	0x0a06		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_S_ULT_GT1	0x0a0a		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT1_1	0x0a0b		/* HD Graphics */
@@ -2858,7 +2859,7 @@
 #define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT3_2	0x0a2e		/* Iris Graphics 5100 */
 #define	PCI_PRODUCT_INTEL_D2000_IGD	0x0be1		/* Atom D2000/N2000 Video */
 #define	PCI_PRODUCT_INTEL_D2000_HB	0x0bf5		/* Atom D2000/N2000 Host */
-#define	PCI_PRODUCT_INTEL_CORE4G_HB	0x0c00		/* Core 4G Host */
+#define	PCI_PRODUCT_INTEL_CORE4G_HB_2	0x0c00		/* Core 4G Host */
 #define	PCI_PRODUCT_INTEL_CORE4G_PCIE_1	0x0c01		/* Core 4G PCIE */
 #define	PCI_PRODUCT_INTEL_CORE4G_D_SDV_GT1	0x0c02		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_PCIE_2	0x0c05		/* Core 4G PCIE */

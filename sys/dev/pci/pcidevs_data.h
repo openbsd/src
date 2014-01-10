@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1710 2014/01/08 22:52:05 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1711 2014/01/10 22:34:17 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8928,6 +8928,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HD Graphics",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_HB_1,
+	    "Core 4G Host",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_M_ULT_GT1,
 	    "HD Graphics",
 	},
@@ -8996,7 +9000,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Atom D2000/N2000 Host",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_HB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_HB_2,
 	    "Core 4G Host",
 	},
 	{
