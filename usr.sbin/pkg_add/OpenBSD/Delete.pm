@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.126 2014/01/09 20:20:01 espie Exp $
+# $OpenBSD: Delete.pm,v 1.127 2014/01/10 16:05:31 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -103,13 +103,6 @@ sub delete_package
 	if ($plist->pkgname ne $pkgname) {
 		$state->fatal("Package real name #1 does not match #2",
 			$plist->pkgname, $pkgname);
-	}
-	if ($plist->is_signed) {
-		if (!$state->{quick}) {
-			if (!$plist->check_signature($state)) {
-				$state->fatal("package #1 was corrupted: signature check failed", $pkgname);
-			}
-		}
 	}
 	if ($plist->has('firmware')) {
 		if ($state->{interactive}) {
