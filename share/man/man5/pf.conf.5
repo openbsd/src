@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.532 2013/12/21 20:57:01 camield Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.533 2014/01/10 12:07:19 sobrado Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 21 2013 $
+.Dd $Mdocdate: January 10 2014 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -2221,7 +2221,7 @@ blind attacker would have to guess the timestamp as well.
 .Pp
 For example:
 .Pp
-.Dl match in all scrub (no-df max-mss 1440)
+.Dl match in all scrub (no-df random-id max-mss 1440)
 .Ss Fragment Handling
 The size of IP datagrams (packets) can be significantly larger than the
 maximum transmission unit (MTU) of the network.
