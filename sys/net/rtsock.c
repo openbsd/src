@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.132 2014/01/09 21:57:52 tedu Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.133 2014/01/10 14:29:08 tedu Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -514,8 +514,8 @@ route_output(struct mbuf *m, ...)
 			error = EMSGSIZE;
 			goto fail;
 		}
-		R_Malloc(rtm, struct rt_msghdr *, len);
-		if (rtm == 0) {
+		rtm = malloc(len, M_RTABLE, M_NOWAIT);
+		if (rtm == NULL) {
 			error = ENOBUFS;
 			goto fail;
 		}
@@ -598,7 +598,7 @@ route_output(struct mbuf *m, ...)
 		t = rn_addmask(genmask, 0, 1);
 		if (t && genmask->sa_len >=
 		    ((struct sockaddr *)t->rn_key)->sa_len &&
-		    Bcmp((caddr_t *)genmask + 1, (caddr_t *)t->rn_key + 1,
+		    memcmp((caddr_t *)genmask + 1, (caddr_t *)t->rn_key + 1,
 		    ((struct sockaddr *)t->rn_key)->sa_len) - 1)
 			genmask = (struct sockaddr *)(t->rn_key);
 		else {
@@ -762,13 +762,14 @@ report:
 			    NULL);
 			if (len > rtm->rtm_msglen) {
 				struct rt_msghdr	*new_rtm;
-				R_Malloc(new_rtm, struct rt_msghdr *, len);
-				if (new_rtm == 0) {
+				new_rtm = malloc(len, M_RTABLE, M_NOWAIT);
+				if (new_rtm == NULL) {
 					error = ENOBUFS;
 					goto flush;
 				}
 				memcpy(new_rtm, rtm, rtm->rtm_msglen);
-				Free(rtm); rtm = new_rtm;
+				free(rtm, M_RTABLE);
+				rtm = new_rtm;
 			}
 			rt_msg2(rtm->rtm_type, RTM_VERSION, &info, (caddr_t)rtm,
 			    NULL);
@@ -831,7 +832,7 @@ report:
 				    info.rti_info[RTAX_SRC];
 
 				if (rt->rt_llinfo == NULL) {
-					rt->rt_llinfo = (caddr_t)
+					rt->rt_llinfo =
 					    malloc(sizeof(struct rt_mpls),
 					    M_TEMP, M_NOWAIT|M_ZERO);
 				}
@@ -916,8 +917,7 @@ flush:
 	if (!(so->so_options & SO_USELOOPBACK)) {
 		if (route_cb.any_count <= 1) {
 fail:
-			if (rtm)
-				Free(rtm);
+			free(rtm, M_RTABLE);
 			m_freem(m);
 			return (error);
 		}
@@ -944,7 +944,7 @@ fail:
 			m = NULL;
 		} else if (m->m_pkthdr.len > rtm->rtm_msglen)
 			m_adj(m, rtm->rtm_msglen - m->m_pkthdr.len);
-		Free(rtm);
+		free(rtm, M_RTABLE);
 	}
 	if (m)
 		route_input(m, &route_proto, &route_src, &route_dst);
@@ -1114,8 +1114,7 @@ again:
 		rw->w_needed += len;
 		if (rw->w_needed <= 0 && rw->w_where) {
 			if (rw->w_tmemsize < len) {
-				if (rw->w_tmem)
-					free(rw->w_tmem, M_RTABLE);
+				free(rw->w_tmem, M_RTABLE);
 				rw->w_tmem = malloc(len, M_RTABLE, M_NOWAIT);
 				if (rw->w_tmem)
 					rw->w_tmemsize = len;
@@ -1558,8 +1557,7 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 		return (error);
 	}
 	splx(s);
-	if (w.w_tmem)
-		free(w.w_tmem, M_RTABLE);
+	free(w.w_tmem, M_RTABLE);
 	w.w_needed += w.w_given;
 	if (where) {
 		*given = w.w_where - (caddr_t)where;
@@ -1579,7 +1577,7 @@ rtmsg_4to5(struct mbuf *m, int *len)
 	struct rt_omsghdr ortm;
 
 	*len += sizeof(struct rt_msghdr) - sizeof(struct rt_omsghdr);
-	R_Malloc(rtm, struct rt_msghdr *, *len);
+	rtm = malloc(*len, M_RTABLE, M_NOWAIT);
 	if (rtm == NULL)
 		return (NULL);
 	bzero(rtm, sizeof(struct rt_msghdr));
@@ -1622,7 +1620,7 @@ rtmsg_5to4(struct rt_msghdr *rtm)
 
 	len = rtm->rtm_msglen + sizeof(struct rt_omsghdr) -
 	    sizeof(struct rt_msghdr);
-	R_Malloc(ortm, struct rt_omsghdr *, len);
+	ortm = malloc(len, M_RTABLE, M_NOWAIT);
 	if (ortm == NULL)
 		return (NULL);
 	bzero(ortm, sizeof(struct rt_omsghdr));

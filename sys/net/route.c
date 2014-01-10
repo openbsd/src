@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.148 2014/01/09 21:57:52 tedu Exp $	*/
+/*	$OpenBSD: route.c,v 1.149 2014/01/10 14:29:08 tedu Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -406,7 +406,7 @@ rtfree(struct rtentry *rt)
 		if (rt->rt_flags & RTF_MPLS)
 			free(rt->rt_llinfo, M_TEMP);
 #endif
-		Free(rt_key(rt));
+		free(rt_key(rt), M_RTABLE);
 		pool_put(&rtentry_pool, rt);
 	}
 }
@@ -853,7 +853,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			    info->rti_flags & RTF_MPATH)) {
 				if (rt->rt_gwroute)
 					rtfree(rt->rt_gwroute);
-				Free(rt_key(rt));
+				free(rt_key(rt), M_RTABLE);
 				pool_put(&rtentry_pool, rt);
 				senderr(EEXIST);
 			}
@@ -884,13 +884,13 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			sa_mpls = (struct sockaddr_mpls *)
 			    info->rti_info[RTAX_SRC];
 
-			rt->rt_llinfo = (caddr_t)malloc(sizeof(struct rt_mpls),
+			rt->rt_llinfo = malloc(sizeof(struct rt_mpls),
 			    M_TEMP, M_NOWAIT|M_ZERO);
 
 			if (rt->rt_llinfo == NULL) {
 				if (rt->rt_gwroute)
 					rtfree(rt->rt_gwroute);
-				Free(rt_key(rt));
+				free(rt_key(rt), M_RTABLE);
 				pool_put(&rtentry_pool, rt);
 				senderr(ENOMEM);
 			}
@@ -960,7 +960,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 				rtfree(rt->rt_parent);
 			if (rt->rt_gwroute)
 				rtfree(rt->rt_gwroute);
-			Free(rt_key(rt));
+			free(rt_key(rt), M_RTABLE);
 			pool_put(&rtentry_pool, rt);
 			senderr(EEXIST);
 		}
@@ -1006,7 +1006,7 @@ rt_setgate(struct rtentry *rt, struct sockaddr *dst, struct sockaddr *gate,
 
 	if (rt->rt_gateway == NULL || glen > ROUNDUP(rt->rt_gateway->sa_len)) {
 		old = (caddr_t)rt_key(rt);
-		R_Malloc(new, caddr_t, dlen + glen);
+		new = malloc(dlen + glen, M_RTABLE, M_NOWAIT);
 		if (new == NULL)
 			return 1;
 		rt->rt_nodes->rn_key = new;
@@ -1018,7 +1018,7 @@ rt_setgate(struct rtentry *rt, struct sockaddr *dst, struct sockaddr *gate,
 	memmove(rt->rt_gateway, gate, glen);
 	if (old) {
 		memmove(new, dst, dlen);
-		Free(old);
+		free(old, M_RTABLE);
 	}
 	if (rt->rt_gwroute != NULL) {
 		RTFREE(rt->rt_gwroute);

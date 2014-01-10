@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.116 2014/01/09 21:57:52 tedu Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.117 2014/01/10 14:29:08 tedu Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -216,14 +216,14 @@ arp_rtrequest(int req, struct rtentry *rt)
 		 * Case 2:  This route may come from cloning, or a manual route
 		 * add with a LL address.
 		 */
-		R_Malloc(la, struct llinfo_arp *, sizeof(*la));
+		la = malloc(sizeof(*la), M_RTABLE, M_NOWAIT | M_ZERO);
 		rt->rt_llinfo = (caddr_t)la;
-		if (la == 0) {
+		if (la == NULL) {
 			log(LOG_DEBUG, "arp_rtrequest: malloc failed\n");
 			break;
 		}
-		arp_inuse++, arp_allocated++;
-		Bzero(la, sizeof(*la));
+		arp_inuse++;
+		arp_allocated++;
 		la->la_rt = rt;
 		rt->rt_flags |= RTF_LLINFO;
 		LIST_INSERT_HEAD(&llinfo_arp, la, la_list);
@@ -284,7 +284,7 @@ arp_rtrequest(int req, struct rtentry *rt)
 			la_hold_total--;
 			m_freem(m);
 		}
-		Free((caddr_t)la);
+		free(la, M_RTABLE);
 	}
 }
 
@@ -772,7 +772,7 @@ arptfree(struct llinfo_arp *la)
 	struct rt_addrinfo info;
 	u_int tid = 0;
 
-	if (rt == 0)
+	if (rt == NULL)
 		panic("arptfree");
 	if (rt->rt_refcnt > 0 && (sdl = SDL(rt->rt_gateway)) &&
 	    sdl->sdl_family == AF_LINK) {

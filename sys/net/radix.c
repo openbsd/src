@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.33 2014/01/09 21:57:51 tedu Exp $	*/
+/*	$OpenBSD: radix.c,v 1.34 2014/01/10 14:29:08 tedu Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -64,8 +64,6 @@ static char normal_chars[] = {0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, -1};
 static char *rn_zeros, *rn_ones;
 
 #define rn_masktop (mask_rnhead->rnh_treetop)
-#undef Bcmp
-#define Bcmp(a, b, l) (l == 0 ? 0 : bcmp((caddr_t)(a), (caddr_t)(b), (u_long)l))
 
 static int rn_satisfies_leaf(char *, struct radix_node *, int);
 static int rn_lexobetter(void *, void *);
@@ -77,6 +75,20 @@ struct radix_node *rn_insert(void *, struct radix_node_head *, int *,
 struct radix_node *rn_newpair(void *, int, struct radix_node[2]);
 struct radix_node *rn_search(void *, struct radix_node *);
 struct radix_node *rn_search_m(void *, struct radix_node *, void *);
+
+#define MKGet(m) do {                                                   \
+	if (rn_mkfreelist) {                                            \
+		m = rn_mkfreelist;                                      \
+		rn_mkfreelist = (m)->rm_mklist;                         \
+	} else                                                          \
+		m = malloc(sizeof (*(m)), M_RTABLE, M_NOWAIT);          \
+} while (0)
+
+#define MKFree(m) do {                                                  \
+	(m)->rm_mklist = rn_mkfreelist;                                 \
+	rn_mkfreelist = (m);                                            \
+} while (0)
+
 
 /*
  * The data structure for the keys is a radix tree with one way
@@ -176,7 +188,8 @@ rn_lookup(void *v_arg, void *m_arg, struct radix_node_head *head)
 	caddr_t netmask = 0;
 
 	if (m_arg) {
-		if ((x = rn_addmask(m_arg, 1, head->rnh_treetop->rn_off)) == 0)
+		x = rn_addmask(m_arg, 1, head->rnh_treetop->rn_off);
+		if (x == NULL)
 			return (0);
 		netmask = x->rn_key;
 	}
@@ -195,7 +208,7 @@ rn_satisfies_leaf(char *trial, struct radix_node *leaf, int skip)
 	char *cplim;
 	int length = min(*(u_char *)cp, *(u_char *)cp2);
 
-	if (cp3 == 0)
+	if (cp3 == NULL)
 		cp3 = rn_ones;
 	else
 		length = min(length, *(u_char *)cp3);
@@ -261,7 +274,8 @@ on1:
 	/*
 	 * If there is a host route in a duped-key chain, it will be first.
 	 */
-	if ((saved_t = t)->rn_mask == 0)
+	saved_t = t;
+	if (t->rn_mask == NULL)
 		t = t->rn_dupedkey;
 	for (; t; t = t->rn_dupedkey)
 		/*
@@ -434,23 +448,22 @@ rn_addmask(void *n_arg, int search, int skip)
 		return (mask_rnhead->rnh_nodes);
 	}
 	if (m0 < last_zeroed)
-		Bzero(addmask_key + m0, last_zeroed - m0);
+		memset(addmask_key + m0, 0, last_zeroed - m0);
 	*addmask_key = last_zeroed = mlen;
 	x = rn_search(addmask_key, rn_masktop);
-	if (Bcmp(addmask_key, x->rn_key, mlen) != 0)
+	if (memcmp(addmask_key, x->rn_key, mlen) != 0)
 		x = 0;
 	if (x || search)
 		return (x);
-	R_Malloc(x, struct radix_node *, max_keylen + 2 * sizeof (*x));
-	if ((saved_x = x) == 0)
+	x = malloc(max_keylen + 2 * sizeof (*x), M_RTABLE, M_NOWAIT | M_ZERO);
+	if ((saved_x = x) == NULL)
 		return (0);
-	Bzero(x, max_keylen + 2 * sizeof (*x));
 	netmask = cp = (caddr_t)(x + 2);
-	memmove(cp, addmask_key, mlen);
+	memcpy(cp, addmask_key, mlen);
 	x = rn_insert(cp, mask_rnhead, &maskduplicated, x);
 	if (maskduplicated) {
 		log(LOG_ERR, "rn_addmask: mask impossibly already in tree\n");
-		Free(saved_x);
+		free(saved_x, M_RTABLE);
 		return (x);
 	}
 	/*
@@ -501,11 +514,11 @@ rn_new_radix_mask(struct radix_node *tt, struct radix_mask *next)
 	struct radix_mask *m;
 
 	MKGet(m);
-	if (m == 0) {
+	if (m == NULL) {
 		log(LOG_ERR, "Mask for route not entered\n");
 		return (0);
 	}
-	Bzero(m, sizeof *m);
+	memset(m, 0, sizeof *m);
 	m->rm_b = tt->rn_b;
 	m->rm_flags = tt->rn_flags;
 	if (tt->rn_flags & RNF_NORMAL)
@@ -770,28 +783,28 @@ rn_delete(void *v_arg, void *netmask_arg, struct radix_node_head *head,
 	vlen =  *(u_char *)v;
 	saved_tt = tt;
 	top = x;
-	if (tt == 0 ||
-	    Bcmp(v + head_off, tt->rn_key + head_off, vlen - head_off))
+	if (tt == NULL ||
+	    memcmp(v + head_off, tt->rn_key + head_off, vlen - head_off))
 		return (0);
 	/*
 	 * Delete our route from mask lists.
 	 */
 	if (netmask) {
-		if ((x = rn_addmask(netmask, 1, head_off)) == 0)
+		if ((x = rn_addmask(netmask, 1, head_off)) == NULL)
 			return (0);
 		netmask = x->rn_key;
 		while (tt->rn_mask != netmask)
-			if ((tt = tt->rn_dupedkey) == 0)
+			if ((tt = tt->rn_dupedkey) == NULL)
 				return (0);
 	}
 #ifndef SMALL_KERNEL
 	if (rn) {
 		while (tt != rn)
-			if ((tt = tt->rn_dupedkey) == 0)
+			if ((tt = tt->rn_dupedkey) == NULL)
 				return (0);
 	}
 #endif
-	if (tt->rn_mask == 0 || (saved_m = m = tt->rn_mklist) == 0)
+	if (tt->rn_mask == NULL || (saved_m = m = tt->rn_mklist) == NULL)
 		goto on1;
 	if (tt->rn_flags & RNF_NORMAL) {
 		if (m->rm_leaf != tt && m->rm_refs == 0) {
@@ -838,7 +851,7 @@ rn_delete(void *v_arg, void *netmask_arg, struct radix_node_head *head,
 			MKFree(m);
 			break;
 		}
-	if (m == 0) {
+	if (m == NULL) {
 		log(LOG_ERR, "rn_delete: couldn't find our annotation\n");
 		if (tt->rn_flags & RNF_NORMAL)
 			return (0); /* Dangling ref to us */
@@ -1008,8 +1021,8 @@ rn_inithead(void **head, int off)
 
 	if (*head)
 		return (1);
-	R_Malloc(rnh, struct radix_node_head *, sizeof (*rnh));
-	if (rnh == 0)
+	rnh = malloc(sizeof(*rnh), M_RTABLE, M_NOWAIT);
+	if (rnh == NULL)
 		return (0);
 	*head = rnh;
 	return rn_inithead0(rnh, off);
@@ -1020,7 +1033,7 @@ rn_inithead0(struct radix_node_head *rnh, int off)
 {
 	struct radix_node *t, *tt, *ttt;
 
-	Bzero(rnh, sizeof (*rnh));
+	memset(rnh, 0, sizeof(*rnh));
 	t = rn_newpair(rn_zeros, off, rnh->rnh_nodes);
 	ttt = rnh->rnh_nodes + 2;
 	t->rn_r = ttt;
@@ -1055,10 +1068,9 @@ rn_init()
 		    "rn_init: radix functions require max_keylen be set\n");
 		return;
 	}
-	R_Malloc(rn_zeros, char *, 3 * max_keylen);
+	rn_zeros = malloc(3 * max_keylen, M_RTABLE, M_NOWAIT | M_ZERO);
 	if (rn_zeros == NULL)
 		panic("rn_init");
-	Bzero(rn_zeros, 3 * max_keylen);
 	rn_ones = cp = rn_zeros + max_keylen;
 	addmask_key = cplim = rn_ones + max_keylen;
 	while (cp < cplim)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.107 2014/01/09 21:57:52 tedu Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.108 2014/01/10 14:29:08 tedu Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1080,7 +1080,7 @@ nd6_rtrequest(int req, struct rtentry *rt)
 		 * Case 2: This route may come from cloning, or a manual route
 		 * add with a LL address.
 		 */
-		R_Malloc(ln, struct llinfo_nd6 *, sizeof(*ln));
+		ln = malloc(sizeof(*ln), M_RTABLE, M_NOWAIT | M_ZERO);
 		rt->rt_llinfo = (caddr_t)ln;
 		if (!ln) {
 			log(LOG_DEBUG, "nd6_rtrequest: malloc failed\n");
@@ -1088,7 +1088,6 @@ nd6_rtrequest(int req, struct rtentry *rt)
 		}
 		nd6_inuse++;
 		nd6_allocated++;
-		Bzero(ln, sizeof(*ln));
 		ln->ln_rt = rt;
 		timeout_set(&ln->ln_timer_ch, nd6_llinfo_timer, ln);
 		/* this is required for "ndp" command. - shin */
@@ -1232,7 +1231,7 @@ nd6_rtrequest(int req, struct rtentry *rt)
 		rt->rt_flags &= ~RTF_LLINFO;
 		if (ln->ln_hold)
 			m_freem(ln->ln_hold);
-		Free((caddr_t)ln);
+		free(ln, M_RTABLE);
 	}
 }
 

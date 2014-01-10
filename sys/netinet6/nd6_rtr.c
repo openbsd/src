@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.75 2014/01/07 17:07:46 mikeb Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.76 2014/01/10 14:29:08 tedu Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -242,7 +242,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	struct nd_defrouter dr0;
 	u_int32_t advreachable = nd_ra->nd_ra_reachable;
 
-	Bzero(&dr0, sizeof(dr0));
+	memset(&dr0, 0, sizeof(dr0));
 	dr0.rtaddr = saddr6;
 	dr0.flags  = nd_ra->nd_ra_flags_reserved;
 	dr0.rtlifetime = ntohs(nd_ra->nd_ra_router_lifetime);
@@ -455,10 +455,10 @@ defrouter_addreq(struct nd_defrouter *new)
 	int s;
 	int error;
 
-	Bzero(&def, sizeof(def));
-	Bzero(&mask, sizeof(mask));
-	Bzero(&gate, sizeof(gate)); /* for safety */
-	Bzero(&info, sizeof(info));
+	memset(&def, 0, sizeof(def));
+	memset(&mask, 0, sizeof(mask));
+	memset(&gate, 0, sizeof(gate)); /* for safety */
+	memset(&info, 0, sizeof(info));
 
 	def.sin6_len = mask.sin6_len = gate.sin6_len =
 	    sizeof(struct sockaddr_in6);
@@ -560,10 +560,10 @@ defrouter_delreq(struct nd_defrouter *dr)
 		panic("dr == NULL in defrouter_delreq");
 #endif
 
-	Bzero(&info, sizeof(info));
-	Bzero(&def, sizeof(def));
-	Bzero(&mask, sizeof(mask));
-	Bzero(&gw, sizeof(gw));	/* for safety */
+	memset(&info, 0, sizeof(info));
+	memset(&def, 0, sizeof(def));
+	memset(&mask, 0, sizeof(mask));
+	memset(&gw, 0, sizeof(gw));	/* for safety */
 
 	def.sin6_len = mask.sin6_len = gw.sin6_len =
 	    sizeof(struct sockaddr_in6);
