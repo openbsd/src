@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.33 2013/12/07 07:22:37 brad Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.34 2014/01/10 22:01:30 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -79,6 +79,7 @@
 #undef	JME_SHOW_ERRORS
 
 int	jme_match(struct device *, void *, void *);
+void	jme_map_intr_vector(struct jme_softc *);
 void	jme_attach(struct device *, struct device *, void *);
 int	jme_detach(struct device *, int);
 
@@ -469,6 +470,76 @@ jme_reg_macaddr(struct jme_softc *sc, uint8_t eaddr[])
 }
 
 void
+jme_map_intr_vector(struct jme_softc *sc)
+{
+	uint32_t map[MSINUM_NUM_INTR_SOURCE / JME_MSI_MESSAGES];
+
+	bzero(map, sizeof(map));
+
+	/* Map Tx interrupts source to MSI/MSIX vector 2. */
+	map[MSINUM_REG_INDEX(N_INTR_TXQ0_COMP)] =
+	    MSINUM_INTR_SOURCE(2, N_INTR_TXQ0_COMP);
+	map[MSINUM_REG_INDEX(N_INTR_TXQ1_COMP)] |=
+	    MSINUM_INTR_SOURCE(2, N_INTR_TXQ1_COMP);
+	map[MSINUM_REG_INDEX(N_INTR_TXQ2_COMP)] |=
+	    MSINUM_INTR_SOURCE(2, N_INTR_TXQ2_COMP);
+	map[MSINUM_REG_INDEX(N_INTR_TXQ3_COMP)] |=
+	    MSINUM_INTR_SOURCE(2, N_INTR_TXQ3_COMP);
+	map[MSINUM_REG_INDEX(N_INTR_TXQ4_COMP)] |=
+	    MSINUM_INTR_SOURCE(2, N_INTR_TXQ4_COMP);
+	map[MSINUM_REG_INDEX(N_INTR_TXQ4_COMP)] |=
+	    MSINUM_INTR_SOURCE(2, N_INTR_TXQ5_COMP);
+	map[MSINUM_REG_INDEX(N_INTR_TXQ6_COMP)] |=
+	    MSINUM_INTR_SOURCE(2, N_INTR_TXQ6_COMP);
+	map[MSINUM_REG_INDEX(N_INTR_TXQ7_COMP)] |=
+	    MSINUM_INTR_SOURCE(2, N_INTR_TXQ7_COMP);
+	map[MSINUM_REG_INDEX(N_INTR_TXQ_COAL)] |=
+	    MSINUM_INTR_SOURCE(2, N_INTR_TXQ_COAL);
+	map[MSINUM_REG_INDEX(N_INTR_TXQ_COAL_TO)] |=
+	    MSINUM_INTR_SOURCE(2, N_INTR_TXQ_COAL_TO);
+
+	/* Map Rx interrupts source to MSI/MSIX vector 1. */
+	map[MSINUM_REG_INDEX(N_INTR_RXQ0_COMP)] =
+	    MSINUM_INTR_SOURCE(1, N_INTR_RXQ0_COMP);
+	map[MSINUM_REG_INDEX(N_INTR_RXQ1_COMP)] =
+	    MSINUM_INTR_SOURCE(1, N_INTR_RXQ1_COMP);
+	map[MSINUM_REG_INDEX(N_INTR_RXQ2_COMP)] =
+	    MSINUM_INTR_SOURCE(1, N_INTR_RXQ2_COMP);
+	map[MSINUM_REG_INDEX(N_INTR_RXQ3_COMP)] =
+	    MSINUM_INTR_SOURCE(1, N_INTR_RXQ3_COMP);
+	map[MSINUM_REG_INDEX(N_INTR_RXQ0_DESC_EMPTY)] =
+	    MSINUM_INTR_SOURCE(1, N_INTR_RXQ0_DESC_EMPTY);
+	map[MSINUM_REG_INDEX(N_INTR_RXQ1_DESC_EMPTY)] =
+	    MSINUM_INTR_SOURCE(1, N_INTR_RXQ1_DESC_EMPTY);
+	map[MSINUM_REG_INDEX(N_INTR_RXQ2_DESC_EMPTY)] =
+	    MSINUM_INTR_SOURCE(1, N_INTR_RXQ2_DESC_EMPTY);
+	map[MSINUM_REG_INDEX(N_INTR_RXQ3_DESC_EMPTY)] =
+	    MSINUM_INTR_SOURCE(1, N_INTR_RXQ3_DESC_EMPTY);
+	map[MSINUM_REG_INDEX(N_INTR_RXQ0_COAL)] =
+	    MSINUM_INTR_SOURCE(1, N_INTR_RXQ0_COAL);
+	map[MSINUM_REG_INDEX(N_INTR_RXQ1_COAL)] =
+	    MSINUM_INTR_SOURCE(1, N_INTR_RXQ1_COAL);
+	map[MSINUM_REG_INDEX(N_INTR_RXQ2_COAL)] =
+	    MSINUM_INTR_SOURCE(1, N_INTR_RXQ2_COAL);
+	map[MSINUM_REG_INDEX(N_INTR_RXQ3_COAL)] =
+	    MSINUM_INTR_SOURCE(1, N_INTR_RXQ3_COAL);
+	map[MSINUM_REG_INDEX(N_INTR_RXQ0_COAL_TO)] =
+	    MSINUM_INTR_SOURCE(1, N_INTR_RXQ0_COAL_TO);
+	map[MSINUM_REG_INDEX(N_INTR_RXQ1_COAL_TO)] =
+	    MSINUM_INTR_SOURCE(1, N_INTR_RXQ1_COAL_TO);
+	map[MSINUM_REG_INDEX(N_INTR_RXQ2_COAL_TO)] =
+	    MSINUM_INTR_SOURCE(1, N_INTR_RXQ2_COAL_TO);
+	map[MSINUM_REG_INDEX(N_INTR_RXQ3_COAL_TO)] =
+	    MSINUM_INTR_SOURCE(1, N_INTR_RXQ3_COAL_TO);
+
+	/* Map all other interrupts source to MSI/MSIX vector 0. */
+	CSR_WRITE_4(sc, JME_MSINUM_BASE + sizeof(uint32_t) * 0, map[0]);
+	CSR_WRITE_4(sc, JME_MSINUM_BASE + sizeof(uint32_t) * 1, map[1]);
+	CSR_WRITE_4(sc, JME_MSINUM_BASE + sizeof(uint32_t) * 2, map[2]);
+	CSR_WRITE_4(sc, JME_MSINUM_BASE + sizeof(uint32_t) * 3, map[3]);
+}
+
+void
 jme_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct jme_softc *sc = (struct jme_softc *)self;
@@ -499,7 +570,9 @@ jme_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (pci_intr_map(pa, &ih) != 0) {
+	if (pci_intr_map_msi(pa, &ih) == 0)
+		jme_map_intr_vector(sc);
+	else if (pci_intr_map(pa, &ih) != 0) {
 		printf(": can't map interrupt\n");
 		return;
 	}
