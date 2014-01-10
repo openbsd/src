@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.14 2013/04/23 18:08:40 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.15 2014/01/10 04:53:35 guenther Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -52,6 +52,8 @@ static void printlink(char *);
 static void printtime(time_t);
 
 #define NAME_WIDTH	8
+#define	DATELEN		64
+#define	SIXMONTHS	((DAYSPERNYEAR / 2) * SECSPERDAY)
 
 void
 printlong(char *name, char *accpath, struct stat *sb)
@@ -80,23 +82,24 @@ printlong(char *name, char *accpath, struct stat *sb)
 static void
 printtime(time_t ftime)
 {
-	int i;
-	char *longstring;
+	char f_date[DATELEN];
+	static time_t now;
+	static int now_set = 0;
 
-	longstring = ctime(&ftime);
-	for (i = 4; i < 11; ++i)
-		(void)putchar(longstring[i]);
-
-#define	SIXMONTHS	((DAYSPERNYEAR / 2) * SECSPERDAY)
-	if (ftime + SIXMONTHS > time(NULL))
-		for (i = 11; i < 16; ++i)
-			(void)putchar(longstring[i]);
-	else {
-		(void)putchar(' ');
-		for (i = 20; i < 24; ++i)
-			(void)putchar(longstring[i]);
+	if (! now_set) {
+		now = time(NULL);
+		now_set = 1;
 	}
-	(void)putchar(' ');
+
+	/*
+	 * convert time to string, and print
+	 */
+	if (strftime(f_date, sizeof(f_date),
+	    (ftime + SIXMONTHS <= now || ftime > now) ? "%b %e  %Y" :
+	    "%b %e %H:%M", localtime(&ftime)) == 0)
+		f_date[0] = '\0';
+
+	printf("%s ", f_date);
 }
 
 static void
