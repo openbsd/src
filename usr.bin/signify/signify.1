@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.10 2014/01/10 04:23:37 deraadt Exp $
+.\" $OpenBSD: signify.1,v 1.11 2014/01/10 04:24:18 deraadt Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -118,10 +118,14 @@ Sign a file, specifying a signature name:
 .Pp
 Verify a signature, using the default signature name:
 .Dl $ signify -V -p key.pub generalsorders.txt
+.Pp
+Verify a release directory:
+.Dl $ signify -p /etc/signify/55base.pub -V SHA256 && sha256 -c SHA256
+.Pp
 .Sh SEE ALSO
-.Xr cmp 1 ,
-.Xr sha256 1 ,
-.Xr ssh 1
+.Xr fw_update 1 ,
+.Xr pkg_add 1 ,
+.Xr sha256 1
 .Sh HISTORY
 The
 .Nm
