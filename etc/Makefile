@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.341 2014/01/09 20:15:55 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.342 2014/01/10 03:53:44 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -305,7 +305,7 @@ release:
 .else
 
 release-sets:
-	cd ${RELEASEDIR}; rm SHA256
+	cd ${RELEASEDIR}; rm -f SHA256
 	cd ../distrib/sets && exec ${SUDO} sh maketars ${OSrev}
 
 sha:
