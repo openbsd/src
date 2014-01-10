@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.25 2014/01/10 04:36:58 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.26 2014/01/10 04:49:35 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -420,8 +420,6 @@ verify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 		writeall(fd, msg, msglen, msgfile);
 		close(fd);
 	}
-
-	printf("verified\n");
 
 	free(msg - siglen);
 }
