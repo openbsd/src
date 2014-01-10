@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.50 2014/01/09 19:02:04 deraadt Exp $
+#	$OpenBSD: list,v 1.51 2014/01/10 07:57:28 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -21,6 +21,7 @@ ARGVLINK ksh					-sh
 LINK	instbin					bin/ln
 LINK	instbin					bin/ls
 LINK	instbin					bin/md5 bin/sha256 bin/sha512
+SPECIAL	rm bin/md5
 LINK	instbin					bin/mkdir
 LINK	instbin					bin/mt bin/eject
 LINK	instbin					bin/mv
