@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.13 2014/01/10 07:53:04 jmc Exp $
+.\" $OpenBSD: signify.1,v 1.14 2014/01/10 17:38:24 tedu Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -24,6 +24,7 @@
 .Nm signify
 .Fl G
 .Op Fl n
+.Op Fl c Ar comment
 .Fl p Ar pubkey
 .Fl s Ar seckey
 .Nm signify
@@ -63,6 +64,8 @@ Verify the input file and signature match.
 .Pp
 The other options are as follows:
 .Bl -tag -width Dsssignature
+.It Fl c Ar comment
+Specify the comment to be added during key generation.
 .It Fl e
 Embed the message after the signature when signing.
 For verification, extract the message from the signature.

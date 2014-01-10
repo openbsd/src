@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.26 2014/01/10 04:49:35 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.27 2014/01/10 17:38:24 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -72,7 +72,7 @@ usage(void)
 {
 	fprintf(stderr, "usage:"
 #ifndef VERIFYONLY
-	    "\t%1$s -G [-n] -p pubkey -s seckey\n"
+	    "\t%1$s -G [-n] [-c comment] -p pubkey -s seckey\n"
 	    "\t%1$s -I [-o sigfile] [-p pubkey] [-s seckey]\n"
 	    "\t%1$s -S [-e] [-o sigfile] -s seckey message\n"
 #endif
@@ -213,7 +213,7 @@ writeb64file(const char *filename, const char *comment, const void *buf,
 	int fd, rv;
 
 	fd = xopen(filename, O_CREAT|flags|O_NOFOLLOW|O_RDWR, mode);
-	snprintf(header, sizeof(header), "%ssignify %s\n", COMMENTHDR,
+	snprintf(header, sizeof(header), "%s%s\n", COMMENTHDR,
 	    comment);
 	writeall(fd, header, strlen(header), filename);
 	if ((rv = b64_ntop(buf, len, b64, sizeof(b64)-1)) == -1)
@@ -256,13 +256,15 @@ signmsg(uint8_t *seckey, uint8_t *msg, unsigned long long msglen,
 }
 
 static void
-generate(const char *pubkeyfile, const char *seckeyfile, int rounds)
+generate(const char *pubkeyfile, const char *seckeyfile, int rounds,
+    const char *comment)
 {
 	uint8_t digest[SHA512_DIGEST_LENGTH];
 	struct pubkey pubkey;
 	struct enckey enckey;
 	uint8_t xorkey[sizeof(enckey.seckey)];
 	uint8_t fingerprint[FPLEN];
+	char commentbuf[COMMENTMAXLEN];
 	SHA2_CTX ctx;
 	int i;
 
@@ -285,13 +287,15 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds)
 	memset(digest, 0, sizeof(digest));
 	memset(xorkey, 0, sizeof(xorkey));
 
-	writeb64file(seckeyfile, "secret key", &enckey,
+	snprintf(commentbuf, sizeof(commentbuf), "%s secret key", comment);
+	writeb64file(seckeyfile, commentbuf, &enckey,
 	    sizeof(enckey), O_EXCL, 0600);
 	memset(&enckey, 0, sizeof(enckey));
 
 	memcpy(pubkey.pkalg, PKALG, 2);
 	memcpy(pubkey.fingerprint, fingerprint, FPLEN);
-	writeb64file(pubkeyfile, "public key", &pubkey,
+	snprintf(commentbuf, sizeof(commentbuf), "%s public key", comment);
+	writeb64file(pubkeyfile, commentbuf, &pubkey,
 	    sizeof(pubkey), O_EXCL, 0666);
 }
 
@@ -430,6 +434,7 @@ main(int argc, char **argv)
 	const char *pubkeyfile = NULL, *seckeyfile = NULL, *msgfile = NULL,
 	    *sigfile = NULL;
 	char sigfilebuf[1024];
+	const char *comment = "signify";
 	int ch, rounds;
 	int embedded = 0;
 	enum {
@@ -443,7 +448,7 @@ main(int argc, char **argv)
 
 	rounds = 42;
 
-	while ((ch = getopt(argc, argv, "GISVeno:p:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "GISVc:eno:p:s:")) != -1) {
 		switch (ch) {
 #ifndef VERIFYONLY
 		case 'G':
@@ -466,6 +471,9 @@ main(int argc, char **argv)
 			if (verb)
 				usage();
 			verb = VERIFY;
+			break;
+		case 'c':
+			comment = optarg;
 			break;
 		case 'e':
 			embedded = 1;
@@ -501,7 +509,7 @@ main(int argc, char **argv)
 	if (verb == GENERATE) {
 		if (!pubkeyfile || !seckeyfile || argc != 0)
 			usage();
-		generate(pubkeyfile, seckeyfile, rounds);
+		generate(pubkeyfile, seckeyfile, rounds, comment);
 	} else if (verb == INSPECT) {
 		if (argc != 0)
 			usage();
