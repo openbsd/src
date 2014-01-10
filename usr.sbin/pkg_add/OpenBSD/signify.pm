@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: signify.pm,v 1.7 2014/01/09 20:20:01 espie Exp $
+# $OpenBSD: signify.pm,v 1.8 2014/01/10 14:34:02 espie Exp $
 #
 # Copyright (c) 2013-2014 Marc Espie <espie@openbsd.org>
 #
@@ -78,9 +78,7 @@ sub check_signature
 		$state->errsay("Package signed by untrusted party #1", $signer);
 		return 0;
 	}
-	if ($state->system(sub {
-	    open STDOUT, ">", "/dev/null";},
-	    $cmd, '-p', $pubkey, '-V', '--', $fname) != 0) {
+	if ($state->system($cmd, '-p', $pubkey, '-V', '--', $fname) != 0) {
 	    	$state->log("Bad signature");
 		return 0;
 	}
