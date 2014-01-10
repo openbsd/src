@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.11 2014/01/10 04:24:18 deraadt Exp $
+.\" $OpenBSD: signify.1,v 1.12 2014/01/10 04:34:24 tedu Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -28,19 +28,19 @@
 .Fl s Ar seckey
 .Nm signify
 .Fl I
-.Op Fl o Ar signature
+.Op Fl o Ar sigfile
 .Op Fl p Ar pubkey
 .Op Fl s Ar seckey
 .Nm signify
 .Fl S
 .Op Fl e
-.Op Fl o Ar output
+.Op Fl o Ar sigfile
 .Fl s Ar seckey
 .Ar message
 .Nm signify
 .Fl V
 .Op Fl e
-.Op Fl o Ar output
+.Op Fl o Ar sigfile
 .Fl p Ar pubkey
 .Ar message
 .Sh DESCRIPTION
@@ -50,7 +50,7 @@ utility creates and verifies cryptographic signatures for
 an input file
 .Ar message .
 The mode of operation is selected with the following options:
-.Bl -tag -width Dssoutput
+.Bl -tag -width Dsssigfile
 .It Fl G
 Generate a new keypair.
 .It Fl I
@@ -62,7 +62,7 @@ Verify the input file and signature match.
 .El
 .Pp
 The other options are as follows:
-.Bl -tag -width Dssoutput
+.Bl -tag -width Dsssignature
 .It Fl e
 Embed the message after the signature when signing.
 For verification, extract the message from the signature.
@@ -74,7 +74,7 @@ will prompt the user for a passphrase on the terminal.
 .It Fl o Ar sigfile
 The signature file to create or verify.
 The default is
-.Ar input Ns .sig .
+.Ar message Ns .sig .
 .It Fl p Ar pubkey
 Public key produced by
 .Fl G ,
