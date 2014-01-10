@@ -1,4 +1,4 @@
-/*	$OpenBSD: noexec.c,v 1.13 2013/07/30 15:46:32 kettenis Exp $	*/
+/*	$OpenBSD: noexec.c,v 1.14 2014/01/10 13:45:00 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -279,5 +279,3 @@ main(int argc, char *argv[])
 
 	exit((*func)(p, size));
 }
-
-__asm (".space 8192; .globl  testfly; .type   testfly, @function; testfly: ret; nop; .space 8192");
