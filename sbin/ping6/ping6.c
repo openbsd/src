@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.87 2014/01/10 06:18:40 brad Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.88 2014/01/10 21:57:44 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -271,7 +271,15 @@ main(int argc, char *argv[])
 	size_t rthlen;
 	int mflag = 0;
 	uid_t uid;
-	int rtableid = -1;
+	u_int rtableid;
+
+	if ((s = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
+		err(1, "socket");
+
+	/* revoke root privilege */
+	uid = getuid();
+	if (setresuid(uid, uid, uid) == -1)
+		err(1, "setresuid");
 
 	/* just to be sure */
 	memset(&smsghdr, 0, sizeof(smsghdr));
@@ -479,6 +487,9 @@ main(int argc, char *argv[])
 			if (errstr)
 				errx(1, "rtable value is %s: %s",
 				    errstr, optarg);
+			if (setsockopt(s, SOL_SOCKET, SO_RTABLE, &rtableid,
+			    sizeof(rtableid)) == -1)
+				err(1, "setsockopt SO_RTABLE");
 			break;
 		case 'w':
 			options &= ~F_NOUSERDATA;
@@ -540,14 +551,6 @@ main(int argc, char *argv[])
 
 	memcpy(&dst, res->ai_addr, res->ai_addrlen);
 
-	if ((s = socket(res->ai_family, res->ai_socktype,
-	    res->ai_protocol)) < 0)
-		err(1, "socket");
-
-	if (rtableid >= 0 && (setsockopt(s, SOL_SOCKET, SO_RTABLE, &rtableid,
-	    sizeof(rtableid)) == -1))
-		err(1, "setsockopt SO_RTABLE");
-
 	/* set the source address if specified. */
 	if ((options & F_SRCADDR) &&
 	    bind(s, (struct sockaddr *)&src, srclen) != 0) {
@@ -594,11 +597,6 @@ main(int argc, char *argv[])
 		    (socklen_t)sizeof(opton)))
 			err(1, "setsockopt(IPV6_RECVDSTOPTS)");
 	}
-
-	/* revoke root privilege */
-	uid = getuid();
-	if (setresuid(uid, uid, uid) == -1)
-		err(1, "setresuid");
 
 	if ((options & F_FLOOD) && (options & F_INTERVAL))
 		errx(1, "-f and -i incompatible options");
