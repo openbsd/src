@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.23 2014/01/05 20:23:56 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.24 2014/01/10 22:34:41 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -394,12 +394,12 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_2)
 	/* Get out of 64 bit CS */
 	lgdtq	tmp_gdt6416
 
-	rex64	ljmp	*(hibernate_indirect_16)
+	rex64	ljmpq	*(hibernate_indirect_16)
 _ACPI_TRMP_LABEL(hibernate_indirect_16)
 	.quad	hibernate_resume_vector_3
 	.word	0x18
 
-_ACPI_TRMP_LABEL(hibernate_resume_vector_3)
+_ACPI_TRMP_OFFSET(hibernate_resume_vector_3)
 	.code16
 
 	movl	%cr0, %eax
@@ -432,12 +432,12 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_2b)
 	/* Get out of 64 bit CS */
 	lgdtq	tmp_gdt6416
 
-	rex64	ljmp	*(hibernate_indirect_16b)
+	rex64	ljmpq	*(hibernate_indirect_16b)
 _ACPI_TRMP_LABEL(hibernate_indirect_16b)
 	.quad	hibernate_resume_vector_3b
 	.word	0x18
 
-_ACPI_TRMP_LABEL(hibernate_resume_vector_3b)
+_ACPI_TRMP_OFFSET(hibernate_resume_vector_3b)
 	.code16
 
 	movl	%cr0, %eax
@@ -622,7 +622,7 @@ _ACPI_TRMP_LABEL(tmp_gdtable6416)
 	.quad	0x0000000000000000
 	.quad	0x00af9a000000ffff
 	.quad	0x00cf92000000ffff
-	.quad   0x00009a000000ffff
+	.quad   0x00009a0110000fff
 _ACPI_TRMP_LABEL(tmp_gdt6416_end)
 
 	.align 4

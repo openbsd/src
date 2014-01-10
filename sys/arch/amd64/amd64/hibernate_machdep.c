@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.18 2014/01/05 23:06:54 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.19 2014/01/10 22:34:41 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -398,7 +398,11 @@ hibernate_quiesce_cpus(void)
 	/* Start the hatched (but idling) APs */
 	cpu_boot_secondary_processors();
 
-	/* Now shut them down */
-	acpi_sleep_mp();	
+	/* Demote the APs to real mode */
+        x86_broadcast_ipi(X86_IPI_HALT_REALMODE);
+
+	/* Wait a bit for the APs to park themselves */
+	delay(1000000);
+
 }
 #endif /* MULTIPROCESSOR */
