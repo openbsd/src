@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.64 2014/01/08 16:23:21 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.65 2014/01/10 05:34:46 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -820,8 +820,10 @@ usage(void)
 		    __progname, (int)strlen(__progname), "");
 	else
 #endif /* !defined(SMALL) */
-		fprintf(stderr, "usage: %s [-bpqrtx] [-c [checklist ...]] "
-		    "[-h hashfile] [-s string] [file ...]\n", __progname);
+		fprintf(stderr, "usage:"
+		    "\t%s [-bprtx] [-h hashfile] [-s string] [file ...]\n"
+		    "\t%s [-q] -c [checklist ...]\n",
+		    __progname, __progname);
 
 	exit(EXIT_FAILURE);
 }
