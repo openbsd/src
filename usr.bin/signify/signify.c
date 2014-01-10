@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.22 2014/01/10 04:15:38 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.23 2014/01/10 04:23:37 deraadt Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -72,11 +72,11 @@ usage(void)
 {
 	fprintf(stderr, "usage:"
 #ifndef VERIFYONLY
-	    "\t%s [-n] -p pubkey -s seckey -G\n"
-	    "\t%s [-o sig] [-p pubkey] [-s seckey] -I\n"
-	    "\t%s [-e] [-o output] -s seckey -S message\n"
+	    "\t%s -G [-n] -p pubkey -s seckey\n"
+	    "\t%s -I [-o sig] [-p pubkey] [-s seckey]\n"
+	    "\t%s -S [-e] [-o output] -s seckey message\n"
 #endif
-	    "\t%s [-e] [-o output] -p pubkey -V message\n",
+	    "\t%s -V [-e] [-o output] -p pubkey message\n",
 #ifndef VERIFYONLY
 	    __progname, __progname, __progname,
 #endif

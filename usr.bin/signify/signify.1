@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.9 2014/01/10 04:15:38 tedu Exp $
+.\" $OpenBSD: signify.1,v 1.10 2014/01/10 04:23:37 deraadt Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -22,26 +22,26 @@
 .Nd cryptographically sign and verify files
 .Sh SYNOPSIS
 .Nm signify
+.Fl G
 .Op Fl n
 .Fl p Ar pubkey
 .Fl s Ar seckey
-.Fl G
 .Nm signify
+.Fl I
 .Op Fl o Ar signature
 .Op Fl p Ar pubkey
 .Op Fl s Ar seckey
-.Fl I
 .Nm signify
+.Fl S
 .Op Fl e
 .Op Fl o Ar output
 .Fl s Ar seckey
-.Fl S
 .Ar message
 .Nm signify
+.Fl V
 .Op Fl e
 .Op Fl o Ar output
 .Fl p Ar pubkey
-.Fl V
 .Ar message
 .Sh DESCRIPTION
 The
@@ -49,22 +49,23 @@ The
 utility creates and verifies cryptographic signatures for
 an input file
 .Ar message .
-The mode of operation is selected by the
-.Fl G ,
-.Fl S ,
-or
-.Fl V
-options.
-.Pp
-The options are as follows:
+The mode of operation is selected with the following options:
 .Bl -tag -width Dssoutput
-.It Fl e
-Embed the message after the signature when signing.
-For verification, extract the message from the signature.
 .It Fl G
 Generate a new keypair.
 .It Fl I
 Inspect the specified keys or signature and print their fingerprint.
+.It Fl S
+Sign the input file.
+.It Fl V
+Verify the input file and signature match.
+.El
+.Pp
+The other options are as follows:
+.Bl -tag -width Dssoutput
+.It Fl e
+Embed the message after the signature when signing.
+For verification, extract the message from the signature.
 .It Fl n
 Do not ask for a passphrase during key generation.
 Otherwise,
@@ -80,16 +81,12 @@ Public key produced by
 and used by
 .Fl V
 to check a signature.
-.It Fl S
-Sign the input file.
 .It Fl s Ar seckey
 Secret (private) key produced by
 .Fl G ,
 and used by
 .Fl S
 to sign a message.
-.It Fl V
-Verify the input file and signature match.
 .El
 .Pp
 The key and signature files created by
