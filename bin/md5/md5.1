@@ -1,4 +1,4 @@
-.\"	$OpenBSD: md5.1,v 1.39 2014/01/10 18:52:22 lteo Exp $
+.\"	$OpenBSD: md5.1,v 1.40 2014/01/10 20:14:08 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -26,22 +26,22 @@
 .Nd calculate a message digest (checksum) for a file
 .Sh SYNOPSIS
 .Nm md5
-.Op Fl bcprtx
+.Op Fl bcpqrtx
 .Op Fl h Ar hashfile
 .Op Fl s Ar string
 .Op Ar
 .Nm sha1
-.Op Fl bcprtx
+.Op Fl bcpqrtx
 .Op Fl h Ar hashfile
 .Op Fl s Ar string
 .Op Ar
 .Nm sha256
-.Op Fl bcprtx
+.Op Fl bcpqrtx
 .Op Fl h Ar hashfile
 .Op Fl s Ar string
 .Op Ar
 .Nm sha512
-.Op Fl bcprtx
+.Op Fl bcpqrtx
 .Op Fl h Ar hashfile
 .Op Fl s Ar string
 .Op Ar
@@ -97,18 +97,9 @@ by 10 for each additional flag.
 .It Fl x
 Runs a built-in test script.
 .El
-.Pp
-The checksum of each file listed on the command line is printed
-after the options are processed.
-.Pp
-The
-.Nm
-command is shorthand for:
-.Bd -literal -offset indent
-$ cksum -a md5
-.Ed
 .Sh EXIT STATUS
-.Ex -std md5
+These utilities exit 0 on success,
+and \*(Gt0 if an error occurs.
 .Sh SEE ALSO
 .Xr cksum 1
 .Sh STANDARDS
@@ -136,8 +127,7 @@ $ cksum -a md5
 .%O FIPS PUB 180-2
 .Re
 .Sh CAVEATS
-Since collisions have been found for
-.Em MD5 ,
+Since collisions have been found for MD5,
 the use of
-.Xr sha256 1
+.Nm sha256
 is recommended instead.

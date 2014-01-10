@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.27 2014/01/08 16:12:44 jmc Exp $
+.\"	$OpenBSD: cksum.1,v 1.28 2014/01/10 20:14:08 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)cksum.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: January 8 2014 $
+.Dd $Mdocdate: January 10 2014 $
 .Dt CKSUM 1
 .Os
 .Sh NAME
@@ -42,18 +42,16 @@
 .Sh SYNOPSIS
 .Nm cksum
 .Bk -words
-.Op Fl bpqrtx
+.Op Fl bcpqrtx
 .Op Fl a Ar algorithms
-.Op Fl c Op Ar checklist ...
 .Op Fl h Ar hashfile
 .Op Fl o Ar 1 | 2
 .Op Fl s Ar string
 .Op Ar
 .Ek
 .Nm sum
-.Op Fl bpqrtx
+.Op Fl bcpqrtx
 .Op Fl a Ar algorithms
-.Op Fl c Op Ar checklist ...
 .Op Fl h Ar hashfile
 .Op Fl o Ar 1 | 2
 .Op Fl s Ar string
@@ -152,10 +150,12 @@ This option is ignored for the
 and
 .Ar sysvsum
 algorithms, which do not use hexadecimal output.
-.It Fl c Op Ar checklist ...
-Compares all checksums contained in the file
-.Ar checklist
-with newly computed checksums for the corresponding files.
+.It Fl c
+If this option is specified, the
+.Ar file
+options become checklists.
+Each checklist should contain hash results in the normal format,
+which will be verified against the specified paths.
 Output consists of the digest used, the file name,
 and an OK or FAILED for the result of the comparison.
 This will validate any of the supported checksums.
@@ -278,9 +278,7 @@ and
 utilities exit 0 on success,
 and >0 if an error occurs.
 .Sh SEE ALSO
-.Xr md5 1 ,
-.Xr sha1 1 ,
-.Xr sha256 1
+.Xr md5 1
 .Pp
 The default calculation is identical to that given in pseudo-code
 in the following ACM article:
