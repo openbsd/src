@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.c,v 1.5 2009/03/14 16:54:26 miod Exp $	*/
+/*	$OpenBSD: ptrace.c,v 1.6 2014/01/10 14:16:42 jsing Exp $	*/
 /*
  * Copyright (c) 2004, Mark Kettenis.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -72,8 +72,8 @@ main(void)
 #elif defined(__m68k__)
 		regs.r_pc |= 0x03;
 #elif defined(__hppa__)
-		regs.r_pc |= 0x03;
-		regs.r_npc |= 0x03;
+		regs.r_pcoqh |= 0x03;
+		regs.r_pcoqt |= 0x03;
 #elif defined(__i386__)
 		regs.r_eip |= 0x03;
 #elif defined(__mips64__)
