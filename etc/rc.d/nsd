@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: nsd,v 1.5 2013/11/26 13:01:30 sthen Exp $
+# $OpenBSD: nsd,v 1.6 2014/01/10 17:41:39 sthen Exp $
 
 daemon="/usr/sbin/nsd-control"
 daemon_flags="-c /var/nsd/etc/nsd.conf"
@@ -33,11 +33,6 @@ rc_reload() {
 
 rc_stop() {
 	${daemon} stop
-}
-
-rc_post() {
-	sleep 1
-	rc_do rc_check || exit 0
 }
 
 rc_cmd $1
