@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.86 2013/11/22 04:12:48 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.87 2014/01/10 06:18:40 brad Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -271,7 +271,7 @@ main(int argc, char *argv[])
 	size_t rthlen;
 	int mflag = 0;
 	uid_t uid;
-	u_int rtableid;
+	int rtableid = -1;
 
 	/* just to be sure */
 	memset(&smsghdr, 0, sizeof(smsghdr));
@@ -544,8 +544,8 @@ main(int argc, char *argv[])
 	    res->ai_protocol)) < 0)
 		err(1, "socket");
 
-	if (setsockopt(s, SOL_SOCKET, SO_RTABLE, &rtableid,
-	    sizeof(rtableid)) == -1)
+	if (rtableid >= 0 && (setsockopt(s, SOL_SOCKET, SO_RTABLE, &rtableid,
+	    sizeof(rtableid)) == -1))
 		err(1, "setsockopt SO_RTABLE");
 
 	/* set the source address if specified. */
