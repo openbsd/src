@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.28 2013/12/06 23:40:48 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.29 2014/01/10 01:38:15 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -210,7 +210,8 @@ parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int max, int separator,
 
 		token = next_token(&val, cfile);
 
-		if (token == TOK_NUMBER || (base == 16 && token == TOK_NUMBER_OR_NAME))
+		if (token == TOK_NUMBER || (base == 16 && token ==
+			TOK_NUMBER_OR_NAME))
 			/* XXX Need to check if conversion was successful. */
 			convert_num(buf, val, base, 8);
 		else
