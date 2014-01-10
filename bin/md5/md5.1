@@ -1,4 +1,4 @@
-.\"	$OpenBSD: md5.1,v 1.37 2014/01/10 05:34:46 tedu Exp $
+.\"	$OpenBSD: md5.1,v 1.38 2014/01/10 17:47:44 deraadt Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -26,38 +26,47 @@
 .Nd calculate a message digest (checksum) for a file
 .Sh SYNOPSIS
 .Nm md5
-.Op Fl bprtx
+.Op Fl bcprtx
 .Op Fl h Ar hashfile
 .Op Fl s Ar string
 .Op Ar
-.Nm md5
-.Op Fl q
-.Fl c Op Ar checklist ...
+.Nm sha1
+.Op Fl bcprtx
+.Op Fl h Ar hashfile
+.Op Fl s Ar string
+.Op Ar
+.Nm sha256
+.Op Fl bcprtx
+.Op Fl h Ar hashfile
+.Op Fl s Ar string
+.Op Ar
+.Nm sha512
+.Op Fl bcprtx
+.Op Fl h Ar hashfile
+.Op Fl s Ar string
+.Op Ar
 .Sh DESCRIPTION
-.Nm
-takes as input a message of arbitrary length and produces
-as output a 128-bit message digest (checksum) of the input.
+These utilities take as input a message of arbitrary length and produces
+as output a message digest (checksum) of the input.
 It is conjectured that it is computationally infeasible to produce
 two messages having the same message digest (a collision),
 or to produce any message having a given prespecified target message digest.
-However, collisions have now been produced for MD5,
-so the use of other message digest functions, such as
-.Xr sha256 1 ,
-is now preferred.
+The algorithm (MD5, SHA-1, SHA-256, SHA-512) is determined by the
+name used to invoke the utility.
 .Pp
-The MD5 algorithm is intended for digital signature applications,
-where a large file must be compressed in a secure manner before
-being encrypted with a private (secret) key under a public-key
-cryptosystem, such as RSA.
+Collisions have now been produced for MD5, and are theorized for SHA-1,
+so their use is deprecated.
 .Pp
-The options are as follows:
+The options for use with each command are as follows:
 .Bl -tag -width Ds
 .It Fl b
 Output checksums in base64 notation, not hexadecimal.
-.It Fl c Op Ar checklist ...
-Compares all checksums contained in the file
-.Ar checklist
-with newly computed checksums for the corresponding files.
+.It Fl c
+If this option is specified, the
+.Ar file
+options become checklists.
+Each checklist should contain hash results in the normal format,
+which will be verified against the specified paths.
 Output consists of the digest used, the file name,
 and an OK or FAILED for the result of the comparison.
 This will validate any of the supported checksums (see
@@ -101,15 +110,30 @@ $ cksum -a md5
 .Sh EXIT STATUS
 .Ex -std md5
 .Sh SEE ALSO
-.Xr cksum 1 ,
-.Xr sha1 1 ,
-.Xr sha256 1
+.Xr cksum 1
 .Sh STANDARDS
 .Rs
 .%A R. Rivest
 .%D April 1992
 .%R RFC 1321
 .%T The MD5 Message-Digest Algorithm
+.Re
+.Rs
+.%A J. Burrows
+.%O FIPS PUB 180-1
+.%T The Secure Hash Standard
+.Re
+.Pp
+.Rs
+.%A D. Eastlake
+.%A P. Jones
+.%D September 2001
+.%R RFC 3174
+.%T US Secure Hash Algorithm 1 (SHA1)
+.Re
+.Rs
+.%T Secure Hash Standard
+.%O FIPS PUB 180-2
 .Re
 .Sh CAVEATS
 Since collisions have been found for
