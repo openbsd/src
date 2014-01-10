@@ -1,4 +1,4 @@
-.\"	$OpenBSD: md5.1,v 1.38 2014/01/10 17:47:44 deraadt Exp $
+.\"	$OpenBSD: md5.1,v 1.39 2014/01/10 18:52:22 lteo Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -68,7 +68,7 @@ options become checklists.
 Each checklist should contain hash results in the normal format,
 which will be verified against the specified paths.
 Output consists of the digest used, the file name,
-and an OK or FAILED for the result of the comparison.
+and an OK, FAILED, or MISSING for the result of the comparison.
 This will validate any of the supported checksums (see
 .Xr cksum 1 ) .
 If no file is given, stdin is used.
