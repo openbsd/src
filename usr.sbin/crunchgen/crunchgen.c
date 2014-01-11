@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.12 2013/11/23 22:51:41 deraadt Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.13 2014/01/11 04:44:15 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -42,7 +42,7 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 
-#define CRUNCH_VERSION	"0.3"
+#define CRUNCH_VERSION	"1.3"
 
 #define MAXLINELEN	16384
 #define MAXFIELDS 	 2048
@@ -99,7 +99,6 @@ extern char	*__progname;
 int             verbose = 1, readcache = 1, elf_names, elf_mangle; /* options */
 int             reading_cache;
 
-void            status(char *str);
 void            out_of_memory(void);
 void            add_string(strlst_t ** listp, char *str);
 int             is_dir(char *pathname);
@@ -257,8 +256,6 @@ parse_one_file(char *filename)
 	void            (*f) (int c, char **v);
 	FILE           *cf;
 
-	snprintf(line, sizeof(line), "reading %s", filename);
-	status(line);
 	strlcpy(curfilename, filename, sizeof curfilename);
 
 	if ((cf = fopen(curfilename, "r")) == NULL) {
@@ -579,10 +576,6 @@ gen_outputs(void)
 	gen_specials_cache();
 	gen_output_cfile();
 	gen_output_makefile();
-	status("");
-	fprintf(stderr,
-	    "Run \"make -f %s objs exe\" to build crunched binary.\n",
-	    outmkname);
 }
 
 void 
@@ -592,9 +585,6 @@ fillin_program(prog_t * p)
 	char           *srcparent;
 	strlst_t       *s;
 	int             i;
-
-	snprintf(line, sizeof(line), "filling in parms for %s", p->name);
-	status(line);
 
 	if (!p->ident)
 		p->ident = genident(p->name);
@@ -747,9 +737,6 @@ gen_specials_cache(void)
 	FILE           *cachef;
 	prog_t         *p;
 
-	snprintf(line, sizeof(line), "generating %s", cachename);
-	status(line);
-
 	if ((cachef = fopen(cachename, "w")) == NULL) {
 		perror(cachename);
 		goterror = 1;
@@ -782,9 +769,6 @@ gen_output_makefile(void)
 	prog_t         *p;
 	FILE           *outmk;
 
-	snprintf(line, sizeof(line), "generating %s", outmkname);
-	status(line);
-
 	if ((outmk = fopen(outmkname, "w")) == NULL) {
 		perror(outmkname);
 		goterror = 1;
@@ -810,9 +794,6 @@ gen_output_cfile(void)
 	FILE           *outcf;
 	prog_t         *p;
 	strlst_t       *s;
-
-	snprintf(line, sizeof(line), "generating %s", outcfname);
-	status(line);
 
 	if ((outcf = fopen(outcfname, "w")) == NULL) {
 		perror(outcfname);
@@ -967,9 +948,9 @@ prog_makefile_rules(FILE * outmk, prog_t * p)
 	output_strlst(outmk, p->objpaths);
 
 	fprintf(outmk, "%s_stub.c:\n", p->name);
-	fprintf(outmk, "\techo \""
+	fprintf(outmk, "\t@echo \""
 	    "int _crunched_%s_stub(int argc, char **argv, char **envp)"
-	    "{return main(argc,argv,envp);}\" >$@\n",
+	    " { return main(argc, argv, envp); }\" >$@\n",
 	    p->ident);
 	fprintf(outmk, "%s.lo: %s_stub.o $(%s_OBJPATHS)\n",
 	    p->name, p->name, p->ident);
@@ -986,25 +967,6 @@ output_strlst(FILE * outf, strlst_t * lst)
 	for (; lst != NULL; lst = lst->next)
 		fprintf(outf, " %s", lst->str);
 	fprintf(outf, "\n");
-}
-
-void 
-status(char *str)
-{
-	static int      lastlen = 0;
-	int             len, spaces;
-
-	if (!verbose)
-		return;
-
-	len = strlen(str);
-	spaces = lastlen - len;
-	if (spaces < 1)
-		spaces = 1;
-
-	fprintf(stderr, " [%s]%*.*s\r", str, spaces, spaces, " ");
-	fflush(stderr);
-	lastlen = len;
 }
 
 void 
