@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.726 2014/01/08 21:53:35 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.727 2014/01/11 23:28:02 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -618,13 +618,12 @@ __EOT
 			for _f in $_avail; do
 				[[ $_f = $resp ]] && _selected=$($_action $_f $_selected)
 			done
-			if isin $_xbase $_selected && isin $_comp $_avail ; then
-				if ! isin $_comp $_selected ; then
-					_selected=$(addel $_comp $_selected)
-					echo "The xbase set requires the comp set, so adding it back in."
-				fi
-			fi
 		done
+		if isin $_xbase $_selected && ! isin $_comp $_selected &&
+			isin $_comp $_avail; then
+			_selected=$(addel $_comp $_selected)
+			echo "The xbase set requires the comp set, so adding it back in."
+		fi
 	done
 
 	set +o noglob
