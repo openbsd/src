@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.119 2014/01/11 13:50:56 sthen Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.120 2014/01/11 18:34:20 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -263,7 +263,7 @@ architecture recorded in package may not match.
 .It Ar dontmerge
 by default, if dependencies are too strict,
 .Nm
-will merge updates together to make sure everything stays in synch.
+will merge updates together to make sure everything stays in sync.
 .Fl D Ar dontmerge
 disables that behavior.
 .It Ar donttie
@@ -299,7 +299,7 @@ list of trusted signers, separated by commas.
 Corresponds to list of public keys under
 .Pa /etc/signify
 we can trust.
-Defaults to offical packages or firmwares matched to the current
+Defaults to official packages or firmwares matched to the current
 version as reported by
 .Xr uname 1 .
 .It Ar updatedepends
