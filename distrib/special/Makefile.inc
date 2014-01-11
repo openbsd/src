@@ -4,3 +4,4 @@ COPTS+=-Os -fno-stack-protector
 MAN=
 LDSTATIC=-static
 NOPIE=
+NOMAN=1
