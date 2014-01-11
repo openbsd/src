@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.86 2014/01/09 20:20:01 espie Exp $
+# $OpenBSD: Replace.pm,v 1.87 2014/01/11 11:54:43 espie Exp $
 #
 # Copyright (c) 2004-2014 Marc Espie <espie@openbsd.org>
 #
@@ -33,109 +33,6 @@ sub can_update
 
 sub update_issue { undef }
 
-sub extract
-{
-	my ($self, $state) = @_;
-	$state->{partial}->{$self} = 1;
-	if ($state->{interrupted}) {
-		die "Interrupted";
-	}
-}
-
-package OpenBSD::PackingElement::FileBase;
-use OpenBSD::Temp;
-
-sub extract
-{
-	my ($self, $state) = @_;
-
-	my $file = $self->prepare_to_extract($state);
-
-	if (defined $self->{link} || defined $self->{symlink}) {
-		$state->{archive}->skip;
-		return;
-	}
-
-	$self->SUPER::extract($state);
-
-	# figure out a safe directory where to put the temp file
-	my $d = dirname($file->{destdir}.$file->name);
-	# we go back up until we find an existing directory.
-	# hopefully this will be on the same file system.
-	while (!-d $d && -e _ || defined $state->{noshadow}->{$d}) {
-		$d = dirname($d);
-	}
-	if ($state->{not}) {
-		$state->say("extracting tempfile under #1", $d)
-		    if $state->verbose >= 3;
-		$state->{archive}->skip;
-	} else {
-		if (!-e _) {
-			File::Path::mkpath($d);
-		}
-		my ($fh, $tempname) = OpenBSD::Temp::permanent_file($d, "pkg");
-		$self->{tempname} = $tempname;
-
-		# XXX don't apply destdir twice
-		$file->{destdir} = '';
-		$file->set_name($tempname);
-
-		if ($self->{tieto}) {
-			my $src = $self->{tieto}->realname($state);
-			unlink($tempname);
-			$state->say("linking #1 to #2", $src, $tempname)
-			    if $state->verbose >= 3;
-			if (link($src, $tempname) ||
-			    $state->copy_file($src, $tempname)) {
-				# we still need to adjust properties
-				$file->set_modes;
-				$state->{archive}->skip;
-				return;
-			}
-			# okay, it didn't work. recreate tempname.
-			open $fh, ">", $tempname;
-		}
-
-		$state->say("extracting #1", $tempname) if $state->verbose >= 3;
-
-		$file->create;
-		$self->may_check_digest($file, $state);
-	}
-}
-
-package OpenBSD::PackingElement::Dir;
-sub extract
-{
-	my ($self, $state) = @_;
-	my $fullname = $self->fullname;
-	my $destdir = $state->{destdir};
-
-	return if -e $destdir.$fullname;
-	$self->SUPER::extract($state);
-	$state->say("new directory #1", $destdir.$fullname)
-	    if $state->verbose >= 3;
-	return if $state->{not};
-	File::Path::mkpath($destdir.$fullname);
-}
-
-
-package OpenBSD::PackingElement::Sample;
-sub extract
-{
-}
-
-package OpenBSD::PackingElement::Sampledir;
-sub extract
-{
-}
-
-package OpenBSD::PackingElement::SpecialFile;
-sub extract
-{
-	my ($self, $state) = @_;
-	$self->may_verify_digest($state);
-}
-
 package OpenBSD::PackingElement::Exec;
 sub update_issue
 {
@@ -161,16 +58,6 @@ package OpenBSD::PackingElement::UnexecDelete;
 sub update_issue { undef }
 
 package OpenBSD::Replace;
-
-sub perform_extraction
-{
-	my ($handle, $state) = @_;
-
-	$handle->{partial} = {};
-	$state->{partial} = $handle->{partial};
-	$state->{archive} = $handle->{location};
-	$state->progress->visit_with_size($handle->{plist}, 'extract', $state);
-}
 
 sub check_plist_exec
 {

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.44 2014/01/09 20:20:01 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.45 2014/01/11 11:54:43 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -740,42 +740,39 @@ sub really_add
 		OpenBSD::OldLibs->save($set, $state);
 	}
 
-	if ($replacing && !$state->{delete_first}) {
-		$state->{extracted_first} = 1;
-		for my $handle ($set->newer) {
-			next if $state->{size_only};
-			$set->setup_header($state, $handle, "extracting");
-
-			try {
-				OpenBSD::Replace::perform_extraction($handle,
-				    $state);
-			} catchall {
-				unless ($state->{interrupted}) {
-					$state->errsay($_);
-					$errors++;
-				}
-			};
-			if ($state->{interrupted} || $errors) {
-				$state->fatal(partial_install("Installation of ".
-				    $handle->pkgname." failed", $set, $state));
-			}
-		}
-	} else {
-		$state->{extracted_first} = 0;
+	if ($state->{delete_first}) {
+		delete_old_packages($set, $state);
 	}
 
-	if ($replacing) {
+	for my $handle ($set->newer) {
+		next if $state->{size_only};
+		$set->setup_header($state, $handle, "extracting");
+
+		try {
+			OpenBSD::Add::perform_extraction($handle,
+			    $state);
+		} catchall {
+			unless ($state->{interrupted}) {
+				$state->errsay($_);
+				$errors++;
+			}
+		};
+		if ($state->{interrupted} || $errors) {
+			$state->fatal(partial_install("Installation of ".
+			    $handle->pkgname." failed", $set, $state));
+		}
+	}
+	if (!$state->{delete_first}) {
 		delete_old_packages($set, $state);
 	}
 
 	iterate($set->newer, sub {
 		return if $state->{size_only};
 		my $handle = shift;
-
 		my $pkgname = $handle->pkgname;
 		my $plist = $handle->plist;
-		$set->setup_header($state, $handle,
-		    $replacing ? "installing" : undef);
+
+		$set->setup_header($state, $handle, "installing");
 		$state->set_name_from_handle($handle, '+');
 
 		try {
