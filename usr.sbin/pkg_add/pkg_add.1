@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.118 2014/01/09 10:51:51 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.119 2014/01/11 13:50:56 sthen Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: January 9 2014 $
+.Dd $Mdocdate: January 11 2014 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -275,7 +275,7 @@ and tie the entries together to avoid extracting files needlessly.
 disables that behavior.
 .It Ar downgrade
 don't filter out package versions older than what's currently installed.
-.It D Ar FW_UPDATE
+.It Ar FW_UPDATE
 set by
 .Xr fw_update 1
 to separate firmwares from normal packages.
