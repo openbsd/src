@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.119 2014/01/07 09:10:58 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.120 2014/01/11 22:16:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1890,7 +1890,7 @@ post_hyph(POST_ARGS)
 		if (MDOC_TEXT != nch->type)
 			continue;
 		cp = nch->string;
-		if (3 > strnlen(cp, 3))
+		if ('\0' == *cp)
 			continue;
 		while ('\0' != *(++cp))
 			if ('-' == *cp &&
