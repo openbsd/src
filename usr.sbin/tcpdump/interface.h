@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.61 2010/04/06 16:01:57 jsg Exp $	*/
+/*	$OpenBSD: interface.h,v 1.62 2014/01/11 04:35:52 lteo Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Id: interface.h,v 1.61 2010/04/06 16:01:57 jsg Exp $ (LBL)
+ * @(#) $Id: interface.h,v 1.62 2014/01/11 04:35:52 lteo Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -210,7 +210,7 @@ extern void fddi_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
 extern void ppp_ether_if_print(u_char *, const struct pcap_pkthdr *,
 	const u_char *);
 extern void gre_print(const u_char *, u_int);
-extern void icmp_print(const u_char *, const u_char *);
+extern void icmp_print(const u_char *, u_int, const u_char *);
 extern void ieee802_11_if_print(u_char *, const struct pcap_pkthdr *,
     const u_char *);
 extern void ieee802_11_radio_if_print(u_char *, const struct pcap_pkthdr *,

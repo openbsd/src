@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.36 2010/01/12 06:10:33 naddy Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.37 2014/01/11 04:35:52 lteo Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -427,7 +427,7 @@ ip_print(register const u_char *bp, register u_int length)
 			break;
 
 		case IPPROTO_ICMP:
-			icmp_print(cp, (const u_char *)ip);
+			icmp_print(cp, len, (const u_char *)ip);
 			break;
 
 #ifndef IPPROTO_IGRP

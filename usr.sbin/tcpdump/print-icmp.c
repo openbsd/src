@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp.c,v 1.20 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-icmp.c,v 1.21 2014/01/11 04:35:52 lteo Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -165,7 +165,7 @@ struct id_rdiscovery {
 };
 
 void
-icmp_print(const u_char *bp, const u_char *bp2)
+icmp_print(const u_char *bp, u_int length, const u_char *bp2)
 {
 	const struct icmp *dp;
 	const struct ip *ip;

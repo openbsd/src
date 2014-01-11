@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.17 2012/05/03 10:17:23 mikeb Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.18 2014/01/11 04:35:52 lteo Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -187,7 +187,7 @@ esp_decrypt (const u_char *bp, u_int len, const u_char *bp2)
 		ip_print(data, len);
 		break;
 	case IPPROTO_ICMP:
-		icmp_print(data, bp2);
+		icmp_print(data, len, bp2);
 		break;
 	case IPPROTO_ICMPV6:
 		icmp6_print(data, len, bp2);
@@ -298,7 +298,8 @@ ah_print (register const u_char *bp, register u_int len,
 			break;
 
 	        case IPPROTO_ICMP: /* From here and down; Transport mode */
-		        icmp_print(bp + pl_len, (const u_char *) ip);
+		        icmp_print(bp + pl_len, len - pl_len,
+				  (const u_char *) ip);
 			break;
 
 	        case IPPROTO_ICMPV6:
