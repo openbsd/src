@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp.c,v 1.21 2014/01/11 04:35:52 lteo Exp $	*/
+/*	$OpenBSD: print-icmp.c,v 1.22 2014/01/11 04:40:45 lteo Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -373,7 +373,17 @@ icmp_print(const u_char *bp, u_int length, const u_char *bp2)
 		str = tok2str(icmp2str, "type-#%u", dp->icmp_type);
 		break;
 	}
-        (void)printf("icmp: %s", str);
+	(void)printf("icmp: %s", str);
+	if (vflag) {
+		u_int16_t sum;
+		if (TTEST2(dp->icmp_type, length)) {
+			sum = in_cksum((const u_short *)dp, length, 0);
+			if (sum != 0)
+				(void)printf(" [bad icmp cksum %x!]", sum);
+			else
+				(void)printf(" [icmp cksum ok]");
+		}
+    }
 	if (vflag > 1 && !ICMP_INFOTYPE(dp->icmp_type) &&
 	    TTEST(dp->icmp_ip)) {
 		(void)printf(" for ");
