@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.28 2014/01/10 17:52:50 deraadt Exp $ */
+/* $OpenBSD: signify.c,v 1.29 2014/01/11 04:29:07 lteo Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -168,7 +168,8 @@ readmsg(const char *filename, unsigned long long *msglenp)
 	int fd;
 
 	fd = xopen(filename, O_RDONLY | O_NOFOLLOW, 0);
-	fstat(fd, &sb);
+	if (fstat(fd, &sb) == -1)
+		err(1, "fstat on %s", filename);
 	msglen = sb.st_size;
 	if (msglen > (1UL << 30))
 		errx(1, "msg too large in %s", filename);
