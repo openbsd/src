@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.226 2014/01/09 20:20:01 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.227 2014/01/11 11:51:01 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -853,12 +853,8 @@ sub new
 		return OpenBSD::PackingElement::ManualInstallation->new;
 	} elsif ($args eq 'firmware') {
 		return OpenBSD::PackingElement::Firmware->new;
-	} elsif ($args eq 'system-package') {
-		return OpenBSD::PackingElement::SystemPackage->new;
 	} elsif ($args eq 'always-update') {
 		return OpenBSD::PackingElement::AlwaysUpdate->new;
-	} elsif ($args eq 'explicit-update') {
-		return OpenBSD::PackingElement::ExplicitUpdate->new;
 	} else {
 		die "Unknown option: $args";
 	}
@@ -898,11 +894,6 @@ package OpenBSD::PackingElement::Firmware;
 our @ISA=qw(OpenBSD::PackingElement::ManualInstallation);
 sub category() { 'firmware' }
 
-package OpenBSD::PackingElement::SystemPackage;
-our @ISA=qw(OpenBSD::PackingElement::UniqueOption);
-
-sub category() { 'system-package' }
-
 package OpenBSD::PackingElement::AlwaysUpdate;
 our @ISA=qw(OpenBSD::PackingElement::UniqueOption);
 
@@ -911,13 +902,6 @@ sub category()
 	'always-update';
 }
 
-package OpenBSD::PackingElement::ExplicitUpdate;
-our @ISA=qw(OpenBSD::PackingElement::UniqueOption);
-
-sub category()
-{
-	'explicit-update';
-}
 # The special elements that don't end in the right place
 package OpenBSD::PackingElement::ExtraInfo;
 our @ISA=qw(OpenBSD::PackingElement::Unique OpenBSD::PackingElement::Comment);
@@ -1043,26 +1027,6 @@ sub category() { "wantlib" }
 sub keyword() { "wantlib" }
 __PACKAGE__->register_with_factory;
 
-sub destate
-{
-	my ($self, $state) = @_;
-	$state->{lastchecksummable} = $self;
-}
-
-sub write
-{
-	my ($self, $fh) = @_;
-	$self->SUPER::write($fh);
-	if (defined $self->{d}) {
-		$self->{d}->write($fh);
-	}
-}
-
-sub add_digest
-{
-	&OpenBSD::PackingElement::FileBase::add_digest;
-}
-
 OpenBSD::Auto::cache(spec,
     sub {
     	my $self = shift;
@@ -1088,13 +1052,6 @@ sub subdir
 {
 	return shift->{name};
 }
-
-package OpenBSD::PackingElement::Incompatibility;
-our @ISA=qw(OpenBSD::PackingElement::Meta);
-
-sub keyword() { "incompatibility" }
-__PACKAGE__->register_with_factory;
-sub category() { "incompatibility" }
 
 package OpenBSD::PackingElement::AskUpdate;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
@@ -1124,13 +1081,6 @@ OpenBSD::Auto::cache(spec,
 	my $self = shift;
 	return OpenBSD::PkgSpec->new($self->{pattern})
     });
-
-package OpenBSD::PackingElement::UpdateSet;
-our @ISA=qw(OpenBSD::PackingElement::Meta);
-
-sub keyword() { "updateset" }
-__PACKAGE__->register_with_factory;
-sub category() { "updateset" }
 
 package OpenBSD::PackingElement::NewAuth;
 our @ISA=qw(OpenBSD::PackingElement::Action);
@@ -1239,21 +1189,6 @@ sub destate
 	my ($self, $state) = @_;
 	$state->set_cwd($self->name);
 }
-
-package OpenBSD::PackingElement::EndFake;
-our @ISA=qw(OpenBSD::PackingElement::State);
-
-
-sub keyword() { 'endfake' }
-__PACKAGE__->register_with_factory;
-
-sub new
-{
-	my ($class, @args) = @_;
-	bless {}, $class;
-}
-
-sub stringize() { '' }
 
 package OpenBSD::PackingElement::Owner;
 our @ISA=qw(OpenBSD::PackingElement::State);
@@ -1704,10 +1639,6 @@ package OpenBSD::PackingElement::FDESC;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
 sub name() { OpenBSD::PackageInfo::DESC }
 
-package OpenBSD::PackingElement::FMETA;
-our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
-sub name() { OpenBSD::PackageInfo::META }
-
 package OpenBSD::PackingElement::DisplayFile;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
 use OpenBSD::Error;
@@ -1790,7 +1721,6 @@ our @ISA=qw(OpenBSD::PackingElement::Unique);
 sub keyword() { 'signer' }
 __PACKAGE__->register_with_factory;
 sub category() { "signer" }
-
 sub new
 {
 	my ($class, $args) = @_;
@@ -1909,7 +1839,7 @@ sub register_old_keyword
 }
 
 for my $k (qw(src display mtree ignore_inst dirrm pkgcfl pkgdep newdepend
-    libdepend ignore vendor)) {
+    libdepend endfake ignore vendor incompatibility)) {
 	__PACKAGE__->register_old_keyword($k);
 }
 

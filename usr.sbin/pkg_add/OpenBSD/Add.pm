@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.140 2014/01/09 20:20:01 espie Exp $
+# $OpenBSD: Add.pm,v 1.141 2014/01/11 11:51:01 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -103,7 +103,6 @@ sub perform_installation
 	my ($handle, $state) = @_;
 
 	$state->{archive} = $handle->{location};
-	$state->{end_faked} = 0;
 	$handle->{partial} //= {};
 	$state->{partial} = $handle->{partial};
 	$state->progress->visit_with_size($handle->{plist}, 'install', $state);
@@ -471,15 +470,6 @@ sub install
 	my ($self, $state) = @_;
 	$state->{add_rcscripts}{$self->fullname} = 1;
 	$self->SUPER::install($state);
-}
-
-package OpenBSD::PackingElement::EndFake;
-sub install
-{
-	my ($self, $state) = @_;
-
-	$self->SUPER::install($state);
-	$state->{end_faked} = 1;
 }
 
 package OpenBSD::PackingElement::Sample;

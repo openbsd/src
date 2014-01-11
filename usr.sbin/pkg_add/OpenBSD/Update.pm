@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.157 2014/01/09 20:20:01 espie Exp $
+# $OpenBSD: Update.pm,v 1.158 2014/01/11 11:51:01 espie Exp $
 #
 # Copyright (c) 2004-2014 Marc Espie <espie@openbsd.org>
 #
@@ -108,8 +108,7 @@ sub process_handle
 		$state->fatal("can't locate #1", $pkgname);
 	}
 
-	if ($plist->has('explicit-update') && $state->{allupdates} ||
-	    $plist->has('firmware') && !$state->defines('FW_UPDATE')) {
+	if ($plist->has('firmware') && !$state->defines('FW_UPDATE')) {
 		$h->{update_found} = $h;
 		$set->move_kept($h);
 		return 0;
@@ -176,11 +175,6 @@ sub process_handle
 		    if (!$plist->match_pkgpath($p2)) {
 			push(@skipped_locs, $loc);
 			next
-		    }
-		    if ($p2->has('explicit-update') && $state->{allupdates}) {
-			$oldfound = 1;
-			$loc->forget;
-			next;
 		    }
 		    my $r = $plist->signature->compare($p2->signature);
 		    if (defined $r && $r > 0 && !$state->defines('downgrade')) {
