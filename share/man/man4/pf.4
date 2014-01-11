@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.80 2013/10/20 04:27:23 lteo Exp $
+.\"	$OpenBSD: pf.4,v 1.81 2014/01/11 14:37:51 florian Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 20 2013 $
+.Dd $Mdocdate: January 11 2014 $
 .Dt PF 4
 .Os
 .Sh NAME
@@ -872,9 +872,9 @@ struct pf_osfp_entry {
 #define PF_OSFP_GENERIC		0x002		/* generic signature */
 #define PF_OSFP_NODETAIL	0x004		/* no p0f details */
 #define PF_OSFP_LEN	32
-	char			fp_class_nm[PF_OSFP_LEN];
-	char			fp_version_nm[PF_OSFP_LEN];
-	char			fp_subtype_nm[PF_OSFP_LEN];
+	u_char			fp_class_nm[PF_OSFP_LEN];
+	u_char			fp_version_nm[PF_OSFP_LEN];
+	u_char			fp_subtype_nm[PF_OSFP_LEN];
 };
 .Ed
 .Pp
