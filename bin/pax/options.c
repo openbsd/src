@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.80 2014/01/08 06:43:34 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.81 2014/01/11 05:36:26 deraadt Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -91,6 +91,16 @@ static int getline_error;
  */
 
 FSUB fsub[] = {
+#ifdef NOCPIO
+/* 0: OLD BINARY CPIO */
+	{ },
+/* 1: OLD OCTAL CHARACTER CPIO */
+	{ },
+/* 2: SVR4 HEX CPIO */
+	{ },
+/* 3: SVR4 HEX CPIO WITH CRC */
+	{ },
+#else
 /* 0: OLD BINARY CPIO */
 	{"bcpio", 5120, sizeof(HD_BCPIO), 1, 0, 0, 1, bcpio_id, cpio_strd,
 	bcpio_rd, bcpio_endrd, cpio_stwr, bcpio_wr, cpio_endwr, cpio_trail,
@@ -110,7 +120,7 @@ FSUB fsub[] = {
 	{"sv4crc", 5120, sizeof(HD_VCPIO), 1, 0, 0, 1, crc_id, crc_strd,
 	vcpio_rd, vcpio_endrd, crc_stwr, vcpio_wr, cpio_endwr, cpio_trail,
 	rd_wrfile, wr_rdfile, bad_opt},
-
+#endif
 /* 4: OLD TAR */
 	{"tar", 10240, BLKMULT, 0, 1, BLKMULT, 0, tar_id, no_op,
 	tar_rd, tar_endrd, no_op, tar_wr, tar_endwr, tar_trail,
@@ -161,10 +171,13 @@ options(int argc, char **argv)
 	if (strcmp(NM_TAR, argv0) == 0) {
 		tar_options(argc, argv);
 		return;
-	} else if (strcmp(NM_CPIO, argv0) == 0) {
+	}
+#ifndef NOCPIO
+	else if (strcmp(NM_CPIO, argv0) == 0) {
 		cpio_options(argc, argv);
 		return;
 	}
+#endif /* !NOCPIO */
 	/*
 	 * assume pax as the default
 	 */
@@ -1030,6 +1043,8 @@ mkpath(path)
 
 	return (0);
 }
+
+#ifndef NOCPIO
 /*
  * cpio_options()
  *	look at the user specified flags. set globals as required and check if
@@ -1296,6 +1311,7 @@ cpio_options(int argc, char **argv)
 			break;
 	}
 }
+#endif /* !NOCPIO */
 
 /*
  * printflg()
@@ -1584,6 +1600,7 @@ tar_usage(void)
 	exit(1);
 }
 
+#ifndef NOCPIO
 /*
  * cpio_usage()
  *	print the usage summary to the user
@@ -1601,3 +1618,4 @@ cpio_usage(void)
 	    stderr);
 	exit(1);
 }
+#endif /* !NOCPIO */
