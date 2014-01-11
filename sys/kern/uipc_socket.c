@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.120 2013/12/10 21:44:50 mikeb Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.121 2014/01/11 14:33:48 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1405,7 +1405,7 @@ somove(struct socket *so, int wait)
 	so->so_splicelen += len;
 
 	/* Move several packets if possible. */
-	if (!maxreached && so->so_rcv.sb_mb)
+	if (!maxreached && nextrecord)
 		goto nextpkt;
 
  release:
