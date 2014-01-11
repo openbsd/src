@@ -1,4 +1,4 @@
-/* $OpenBSD: crunched_main.c,v 1.3 2012/05/30 21:03:03 deraadt Exp $	 */
+/* $OpenBSD: crunched_main.c,v 1.4 2014/01/11 04:43:00 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -27,7 +27,7 @@
  */
 /*
  * crunched_main.c - main program for crunched binaries, it branches to a
- * 	particular subprogram based on the value of argv[0].  Also included
+ *	particular subprogram based on the value of argv[0].  Also included
  *	is a little program invoked when the crunched binary is called via
  *	its EXECNAME.  This one prints out the list of compiled-in binaries,
  *	or calls one of them based on argv[1].   This allows the testing of
@@ -44,7 +44,7 @@ struct stub {
 
 extern struct stub entry_points[];
 
-int 
+int
 main(int argc, char *argv[], char **envp)
 {
 	char		*slash, *basename;
@@ -62,13 +62,11 @@ main(int argc, char *argv[], char **envp)
 
 	if (ep->name)
 		return ep->f(argc, argv, envp);
-	else {
-		fprintf(stderr, "%s: %s not compiled in\n", EXECNAME, basename);
-		crunched_usage();
-	}
+	fprintf(stderr, "%s: %s not compiled in\n", EXECNAME, basename);
+	crunched_usage();
 }
 
-int 
+int
 crunched_main(int argc, char **argv, char **envp)
 {
 	struct stub	*ep;
@@ -80,16 +78,15 @@ crunched_main(int argc, char **argv, char **envp)
 	return main(--argc, ++argv, envp);
 }
 
-int 
+int
 crunched_usage(void)
 {
-	int		columns, len;
+	int		columns = 0, len;
 	struct stub	*ep;
 
 	fprintf(stderr,
 	    "Usage: %s <prog> <args> ..., where <prog> is one of:\n",
 	    EXECNAME);
-	columns = 0;
 	for (ep = entry_points; ep->name != NULL; ep++) {
 		len = strlen(ep->name) + 1;
 		if (columns + len < 80)
