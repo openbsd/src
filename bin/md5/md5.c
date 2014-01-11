@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.67 2014/01/10 20:14:08 jmc Exp $	*/
+/*	$OpenBSD: md5.c,v 1.68 2014/01/11 04:01:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -53,7 +53,7 @@
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 union ANY_CTX {
-#if !defined(SMALL)
+#if !defined(SHA2_ONLY)
 	SUM_CTX sum;
 	SYSVSUM_CTX sysvsum;
 	CKSUM_CTX cksum;
@@ -61,7 +61,7 @@ union ANY_CTX {
 	MD5_CTX md5;
 	RMD160_CTX rmd160;
 	SHA1_CTX sha1;
-#endif /* !defined(SMALL) */
+#endif /* !defined(SHA2_ONLY) */
 	SHA2_CTX sha2;
 };
 
@@ -77,7 +77,7 @@ struct hash_function {
 	char * (*end)(void *, char *);
 	TAILQ_ENTRY(hash_function) tailq;
 } functions[] = {
-#if !defined(SMALL)
+#if !defined(SHA2_ONLY)
 	{
 		"CKSUM",
 		CKSUM_DIGEST_LENGTH,
@@ -165,7 +165,7 @@ struct hash_function {
 		(void (*)(unsigned char *, void *))SHA224Final,
 		(char *(*)(void *, char *))SHA224End
 	},
-#endif /* !defined(SMALL) */
+#endif /* !defined(SHA2_ONLY) */
 	{
 		"SHA256",
 		SHA256_DIGEST_LENGTH,
@@ -177,7 +177,7 @@ struct hash_function {
 		(void (*)(unsigned char *, void *))SHA256Final,
 		(char *(*)(void *, char *))SHA256End
 	},
-#if !defined(SMALL)
+#if !defined(SHA2_ONLY)
 	{
 		"SHA384",
 		SHA384_DIGEST_LENGTH,
@@ -189,7 +189,7 @@ struct hash_function {
 		(void (*)(unsigned char *, void *))SHA384Final,
 		(char *(*)(void *, char *))SHA384End
 	},
-#endif /* !defined(SMALL) */
+#endif /* !defined(SHA2_ONLY) */
 	{
 		"SHA512",
 		SHA512_DIGEST_LENGTH,
@@ -212,12 +212,12 @@ void digest_end(const struct hash_function *, void *, char *, size_t, int);
 int  digest_file(const char *, struct hash_list *, int);
 int  digest_filelist(const char *, struct hash_function *);
 void digest_print(const struct hash_function *, const char *, const char *);
-#if !defined(SMALL)
+#if !defined(SHA2_ONLY)
 void digest_printstr(const struct hash_function *, const char *, const char *);
 void digest_string(char *, struct hash_list *);
 void digest_test(struct hash_list *);
 void digest_time(struct hash_list *, int);
-#endif /* !defined(SMALL) */
+#endif /* !defined(SHA2_ONLY) */
 void hash_insert(struct hash_list *, struct hash_function *, int);
 void usage(void) __attribute__((__noreturn__));
 
@@ -240,11 +240,11 @@ main(int argc, char **argv)
 	input_string = NULL;
 	error = bflag = cflag = pflag = qflag = rflag = tflag = xflag = 0;
 
-#if !defined(SMALL)
+#if !defined(SHA2_ONLY)
 	if (strcmp(__progname, "cksum") == 0 || strcmp(__progname, "sum") == 0)
 		optstr = "a:bch:o:pqrs:tx";
 	else
-#endif /* !defined(SMALL) */
+#endif /* !defined(SHA2_ONLY) */
 		optstr = "bch:pqrs:tx";
 
 	/* Check for -b option early since it changes behavior. */
@@ -313,7 +313,7 @@ main(int argc, char **argv)
 			if (ofile == NULL)
 				err(1, "%s", optarg);
 			break;
-#if !defined(SMALL)
+#if !defined(SHA2_ONLY)
 		case 'o':
 			if (strcmp(optarg, "1") == 0)
 				hf = &functions[1];
@@ -331,7 +331,7 @@ main(int argc, char **argv)
 			if (hftmp == TAILQ_END(&hl))
 				hash_insert(&hl, hf, 0);
 			break;
-#endif /* !defined(SMALL) */
+#endif /* !defined(SHA2_ONLY) */
 		case 'p':
 			pflag = 1;
 			break;
@@ -388,7 +388,7 @@ main(int argc, char **argv)
 		}
 	}
 
-#if !defined(SMALL)
+#if !defined(SHA2_ONLY)
 	if (tflag)
 		digest_time(&hl, tflag);
 	else if (xflag)
@@ -403,7 +403,7 @@ main(int argc, char **argv)
 				error += digest_filelist(*argv++,
 				    TAILQ_FIRST(&hl));
 	} else
-#endif /* !defined(SMALL) */
+#endif /* !defined(SHA2_ONLY) */
 	if (pflag || argc == 0)
 		error = digest_file("-", &hl, pflag);
 	else
@@ -445,7 +445,7 @@ digest_end(const struct hash_function *hf, void *ctx, char *buf, size_t bsize,
 	}
 }
 
-#if !defined(SMALL)
+#if !defined(SHA2_ONLY)
 void
 digest_string(char *string, struct hash_list *hl)
 {
@@ -461,7 +461,7 @@ digest_string(char *string, struct hash_list *hl)
 		digest_printstr(hf, string, digest);
 	}
 }
-#endif /* !defined(SMALL) */
+#endif /* !defined(SHA2_ONLY) */
 
 void
 digest_print(const struct hash_function *hf, const char *what,
@@ -547,7 +547,7 @@ digest_file(const char *file, struct hash_list *hl, int echo)
 	return(0);
 }
 
-#if !defined(SMALL)
+#if !defined(SHA2_ONLY)
 /*
  * Parse through the input file looking for valid lines.
  * If one is found, use this checksum and file as a reference and
@@ -809,19 +809,19 @@ digest_test(struct hash_list *hl)
 		    digest);
 	}
 }
-#endif /* !defined(SMALL) */
+#endif /* !defined(SHA2_ONLY) */
 
 void
 usage(void)
 {
-#if !defined(SMALL)
+#if !defined(SHA2_ONLY)
 	if (strcmp(__progname, "cksum") == 0 || strcmp(__progname, "sum") == 0)
 		fprintf(stderr, "usage: %s [-bcpqrtx] [-a algorithms] "
 		    "[-h hashfile] [-o 1 | 2] [-s string]\n"
 		    "	[file ...]\n",
 		    __progname);
 	else
-#endif /* !defined(SMALL) */
+#endif /* !defined(SHA2_ONLY) */
 		fprintf(stderr, "usage:"
 		    "\t%s [-bcpqrtx] [-h hashfile] [-s string] [file ...]\n",
 		    __progname);

@@ -1,7 +1,7 @@
-#      $OpenBSD: Makefile,v 1.1 2014/01/08 14:20:11 deraadt Exp $
+#      $OpenBSD: Makefile,v 1.2 2014/01/11 04:01:13 deraadt Exp $
 
 PROG=	md5
-COPTS+=	-DSMALL -I${.CURDIR}/../../../bin/md5
+COPTS+=	-DSHA2_ONLY -I${.CURDIR}/../../../bin/md5
 .PATH:	${.CURDIR}/../../../bin/md5
 
 .include <bsd.prog.mk>
