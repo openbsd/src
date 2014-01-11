@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp6.c,v 1.11 2013/10/24 09:33:22 deraadt Exp $	*/
+/*	$OpenBSD: print-icmp6.c,v 1.12 2014/01/11 04:41:08 lteo Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -45,6 +45,7 @@
 #include <arpa/inet.h>
 
 #include <stdio.h>
+#include <string.h>
 
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
@@ -91,6 +92,36 @@ static struct tok mldv2report2str[] = {
 
 #define MLDV2_QQIC_FLOAT		(1 << 7)
 #define MLDV2_QQI(mant, exp)	((mant | 0x10) << (exp + 3))
+
+static int
+icmp6_cksum(const struct ip6_hdr *ip6, const struct icmp6_hdr *icmp6,
+    u_int len)
+{
+	union {
+		struct {
+			struct in6_addr ph_src;
+			struct in6_addr ph_dst;
+			u_int32_t       ph_len;
+			u_int8_t        ph_zero[3];
+			u_int8_t        ph_nxt;
+		} ph;
+		u_int16_t pa[20];
+	} phu;
+	size_t i;
+	u_int32_t sum = 0;
+
+	/* pseudo-header */
+	memset(&phu, 0, sizeof(phu));
+	phu.ph.ph_src = ip6->ip6_src;
+	phu.ph.ph_dst = ip6->ip6_dst;
+	phu.ph.ph_len = htonl(len);
+	phu.ph.ph_nxt = IPPROTO_ICMPV6;
+
+	for (i = 0; i < sizeof(phu.pa) / sizeof(phu.pa[0]); i++)
+		sum += phu.pa[i];
+
+	return in_cksum((u_short *)icmp6, len, sum);
+}
 
 void
 icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
@@ -452,6 +483,16 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 	default:
 		printf("icmp6: type-#%d", dp->icmp6_type);
 		break;
+	}
+	if (vflag) {
+		u_int16_t sum;
+		if (TTEST2(dp->icmp6_type, length)) {
+			sum = icmp6_cksum(ip, dp, length);
+			if (sum != 0)
+				printf(" [bad icmp6 cksum %x!]", sum);
+			else
+				printf(" [icmp6 cksum ok]");
+		}
 	}
 	return;
 trunc:
