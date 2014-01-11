@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1711 2014/01/10 22:34:17 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1712 2014/01/11 05:43:33 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -19370,6 +19370,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTS5229,
 	    "RTS5229 Card Reader",
+	},
+	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTS5249,
+	    "RTS5249 Card Reader",
+	},
+	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8411B,
+	    "RTL8411B Card Reader",
+	},
+	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8411,
+	    "RTL8411 Card Reader",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029,
