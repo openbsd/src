@@ -92,6 +92,9 @@
 ./etc/signify/54base.pub
 ./etc/signify/54fw.pub
 ./etc/signify/54pkg.pub
+./etc/signify/55base.pub
+./etc/signify/55fw.pub
+./etc/signify/55pkg.pub
 ./etc/skel
 ./etc/skel/.ssh
 ./etc/sliphome
