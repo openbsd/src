@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.100 2014/01/09 20:20:01 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.101 2014/01/12 20:23:29 phessler Exp $
 #
-# Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -296,11 +296,17 @@ sub did_it_fork
 	}
 }
 
-sub uncompress
+sub exec_gunzip
 {
 	my $self = shift;
-	require IO::Uncompress::Gunzip;
-	return IO::Uncompress::Gunzip->new(@_, MultiStream => 1);
+	$ENV{LC_ALL} = 'C';
+	exec {OpenBSD::Paths->gzip}
+	    ("gzip",
+	    "-d",
+	    "-c",
+	    "-q",
+	    @_)
+	or $self->{state}->fatal("Can't run gzip: #1", $!);
 }
 
 package OpenBSD::PackageRepository::Local;
@@ -363,7 +369,14 @@ sub open_pipe
 	if (defined $ENV{'PKG_CACHE'}) {
 		$self->may_copy($object, $ENV{'PKG_CACHE'});
 	}
-	return $self->uncompress($self->relative_url($object->{name}));
+	my $pid = open(my $fh, "-|");
+	$self->did_it_fork($pid);
+	if ($pid) {
+		return $fh;
+	} else {
+		open STDERR, ">/dev/null";
+		$self->exec_gunzip("-f", $self->relative_url($object->{name}));
+	}
 }
 
 sub may_exist
@@ -413,7 +426,14 @@ sub new
 sub open_pipe
 {
 	my ($self, $object) = @_;
-	return $self->uncompress(\*STDIN);
+	my $pid = open(my $fh, "-|");
+	$self->did_it_fork($pid);
+	if ($pid) {
+		return $fh;
+	} else {
+		open STDERR, ">/dev/null";
+		$self->exec_gunzip("-f", "-");
+	}
 }
 
 package OpenBSD::PackageRepository::Distant;
@@ -512,12 +532,32 @@ sub open_pipe
 	$object->{cache_dir} = $ENV{'PKG_CACHE'};
 	$object->{parent} = $$;
 
-	my $pid2 = open(my $rdfh, "-|");
+	my ($rdfh, $wrfh);
+	pipe($rdfh, $wrfh);
+
+	my $pid = open(my $fh, "-|");
+	$self->did_it_fork($pid);
+	if ($pid) {
+		$object->{pid} = $pid;
+	} else {
+		open(STDIN, '<&', $rdfh) or
+		    $self->{state}->fatal("Bad dup: #1", $!);
+		close($rdfh);
+		close($wrfh);
+		$self->exec_gunzip("-f", "-");
+	}
+	my $pid2 = fork();
+
 	$self->did_it_fork($pid2);
 	if ($pid2) {
 		$object->{pid2} = $pid2;
 	} else {
 		open STDERR, '>', $object->{errors};
+		open(STDOUT, '>&', $wrfh) or
+		    $self->{state}->fatal("Bad dup: #1", $!);
+		close($rdfh);
+		close($wrfh);
+		close($fh);
 		if (defined $object->{cache_dir}) {
 			my $pid3 = open(my $in, "-|");
 			$self->did_it_fork($pid3);
@@ -531,7 +571,9 @@ sub open_pipe
 		}
 		exit(0);
 	}
-	return $self->uncompress($rdfh);
+	close($rdfh);
+	close($wrfh);
+	return $fh;
 }
 
 sub finish_and_close
