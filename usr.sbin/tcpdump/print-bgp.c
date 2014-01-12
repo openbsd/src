@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.15 2012/02/19 17:24:05 claudio Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.16 2014/01/12 11:26:48 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -358,7 +358,7 @@ decode_prefix4(const u_char *pd, char *buf, u_int buflen)
 		((u_char *)&addr)[(plen + 7) / 8 - 1] &=
 			((0xff00 >> (plen % 8)) & 0xff);
 	}
-	n = snprintf(buf, buflen, "%s/%d", getname((u_char *)&addr), plen);
+	n = snprintf(buf, buflen, "%s/%u", getname((u_char *)&addr), plen);
 	if (n == -1 || n >= buflen)
 		return -1;
 
@@ -389,7 +389,7 @@ decode_prefix6(const u_char *pd, char *buf, u_int buflen)
 			((0xff00 >> (plen % 8)) & 0xff);
 	}
 
-	n = snprintf(buf, buflen, "%s/%d", getname6((u_char *)&addr), plen);
+	n = snprintf(buf, buflen, "%s/%u", getname6((u_char *)&addr), plen);
 	if (n == -1 || n >= buflen)
 		return -1;
 
