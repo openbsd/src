@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.128 2013/12/30 03:36:17 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.129 2014/01/12 04:17:36 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -293,7 +293,7 @@ u_int32_t checksum(unsigned char *, unsigned, u_int32_t);
 u_int32_t wrapsum(u_int32_t);
 
 /* clparse.c */
-int read_client_conf(void);
+void read_client_conf(void);
 void read_client_leases(void);
 
 /* kroute.c */

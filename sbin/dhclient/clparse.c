@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.67 2014/01/10 01:25:03 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.68 2014/01/12 04:17:36 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -58,7 +58,7 @@ void parse_reject_statement(FILE *);
  *			 | client-declaration
  *			 | client-declarations client-declaration
  */
-int
+void
 read_client_conf(void)
 {
 	FILE *cfile;
@@ -103,8 +103,6 @@ read_client_conf(void)
 		token = next_token(NULL, cfile); /* Clear the peek buffer */
 		fclose(cfile);
 	}
-
-	return (!warnings_occurred);
 }
 
 /*
