@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.15 2014/01/10 17:52:50 deraadt Exp $
+.\" $OpenBSD: signify.1,v 1.16 2014/01/12 05:46:50 deraadt Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -14,7 +14,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: January 10 2014 $
+.Dd $Mdocdate: January 12 2014 $
 .Dt SIGNIFY 1
 .Os
 .Sh NAME
@@ -123,7 +123,7 @@ Verify a signature, using the default signature name:
 .Dl $ signify -V -p key.pub generalsorders.txt
 .Pp
 Verify a release directory:
-.Dl $ signify -p /etc/signify/55base.pub -V SHA256 && sha256 -c SHA256
+.Dl $ signify -Vp /etc/signify/55base.pub SHA256 && sha256 -c SHA256
 .Sh SEE ALSO
 .Xr fw_update 1 ,
 .Xr pkg_add 1 ,
