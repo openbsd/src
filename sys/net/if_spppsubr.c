@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.115 2014/01/07 16:34:05 stsp Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.116 2014/01/12 15:38:06 stsp Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -36,8 +36,6 @@
  */
 
 #include <sys/param.h>
-
-#define HIDE
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -244,130 +242,130 @@ static struct timeout keepalive_ch;
 	struct ifnet *ifp = &sp->pp_if;				\
 	int debug = ifp->if_flags & IFF_DEBUG
 
-HIDE int sppp_output(struct ifnet *ifp, struct mbuf *m,
+int sppp_output(struct ifnet *ifp, struct mbuf *m,
 		       struct sockaddr *dst, struct rtentry *rt);
 
-HIDE void sppp_cisco_send(struct sppp *sp, u_int32_t type, u_int32_t par1, u_int32_t par2);
-HIDE void sppp_cisco_input(struct sppp *sp, struct mbuf *m);
+void sppp_cisco_send(struct sppp *sp, u_int32_t type, u_int32_t par1, u_int32_t par2);
+void sppp_cisco_input(struct sppp *sp, struct mbuf *m);
 
-HIDE void sppp_cp_input(const struct cp *cp, struct sppp *sp,
+void sppp_cp_input(const struct cp *cp, struct sppp *sp,
 			  struct mbuf *m);
-HIDE void sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
+void sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 			 u_char ident, u_short len, void *data);
 #ifdef notyet
-HIDE void sppp_cp_timeout(void *arg);
+void sppp_cp_timeout(void *arg);
 #endif
-HIDE void sppp_cp_change_state(const struct cp *cp, struct sppp *sp,
+void sppp_cp_change_state(const struct cp *cp, struct sppp *sp,
 				 int newstate);
-HIDE void sppp_auth_send(const struct cp *cp,
+void sppp_auth_send(const struct cp *cp,
 			   struct sppp *sp, unsigned int type, u_int id,
 			   ...);
 
-HIDE void sppp_up_event(const struct cp *cp, struct sppp *sp);
-HIDE void sppp_down_event(const struct cp *cp, struct sppp *sp);
-HIDE void sppp_open_event(const struct cp *cp, struct sppp *sp);
-HIDE void sppp_close_event(const struct cp *cp, struct sppp *sp);
-HIDE void sppp_increasing_timeout(const struct cp *cp, struct sppp *sp);
-HIDE void sppp_to_event(const struct cp *cp, struct sppp *sp);
+void sppp_up_event(const struct cp *cp, struct sppp *sp);
+void sppp_down_event(const struct cp *cp, struct sppp *sp);
+void sppp_open_event(const struct cp *cp, struct sppp *sp);
+void sppp_close_event(const struct cp *cp, struct sppp *sp);
+void sppp_increasing_timeout(const struct cp *cp, struct sppp *sp);
+void sppp_to_event(const struct cp *cp, struct sppp *sp);
 
-HIDE void sppp_null(struct sppp *sp);
+void sppp_null(struct sppp *sp);
 
-HIDE void sppp_lcp_init(struct sppp *sp);
-HIDE void sppp_lcp_up(struct sppp *sp);
-HIDE void sppp_lcp_down(struct sppp *sp);
-HIDE void sppp_lcp_open(struct sppp *sp);
-HIDE void sppp_lcp_close(struct sppp *sp);
-HIDE void sppp_lcp_TO(void *sp);
-HIDE int sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len);
-HIDE void sppp_lcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len);
-HIDE void sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len);
-HIDE void sppp_lcp_tlu(struct sppp *sp);
-HIDE void sppp_lcp_tld(struct sppp *sp);
-HIDE void sppp_lcp_tls(struct sppp *sp);
-HIDE void sppp_lcp_tlf(struct sppp *sp);
-HIDE void sppp_lcp_scr(struct sppp *sp);
-HIDE void sppp_lcp_check_and_close(struct sppp *sp);
-HIDE int sppp_ncp_check(struct sppp *sp);
+void sppp_lcp_init(struct sppp *sp);
+void sppp_lcp_up(struct sppp *sp);
+void sppp_lcp_down(struct sppp *sp);
+void sppp_lcp_open(struct sppp *sp);
+void sppp_lcp_close(struct sppp *sp);
+void sppp_lcp_TO(void *sp);
+int sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len);
+void sppp_lcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len);
+void sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len);
+void sppp_lcp_tlu(struct sppp *sp);
+void sppp_lcp_tld(struct sppp *sp);
+void sppp_lcp_tls(struct sppp *sp);
+void sppp_lcp_tlf(struct sppp *sp);
+void sppp_lcp_scr(struct sppp *sp);
+void sppp_lcp_check_and_close(struct sppp *sp);
+int sppp_ncp_check(struct sppp *sp);
 
-HIDE void sppp_ipcp_init(struct sppp *sp);
-HIDE void sppp_ipcp_destroy(struct sppp *sp);
-HIDE void sppp_ipcp_up(struct sppp *sp);
-HIDE void sppp_ipcp_down(struct sppp *sp);
-HIDE void sppp_ipcp_open(struct sppp *sp);
-HIDE void sppp_ipcp_close(struct sppp *sp);
-HIDE void sppp_ipcp_TO(void *sp);
-HIDE int sppp_ipcp_RCR(struct sppp *sp, struct lcp_header *h, int len);
-HIDE void sppp_ipcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len);
-HIDE void sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len);
-HIDE void sppp_ipcp_tlu(struct sppp *sp);
-HIDE void sppp_ipcp_tld(struct sppp *sp);
-HIDE void sppp_ipcp_tls(struct sppp *sp);
-HIDE void sppp_ipcp_tlf(struct sppp *sp);
-HIDE void sppp_ipcp_scr(struct sppp *sp);
+void sppp_ipcp_init(struct sppp *sp);
+void sppp_ipcp_destroy(struct sppp *sp);
+void sppp_ipcp_up(struct sppp *sp);
+void sppp_ipcp_down(struct sppp *sp);
+void sppp_ipcp_open(struct sppp *sp);
+void sppp_ipcp_close(struct sppp *sp);
+void sppp_ipcp_TO(void *sp);
+int sppp_ipcp_RCR(struct sppp *sp, struct lcp_header *h, int len);
+void sppp_ipcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len);
+void sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len);
+void sppp_ipcp_tlu(struct sppp *sp);
+void sppp_ipcp_tld(struct sppp *sp);
+void sppp_ipcp_tls(struct sppp *sp);
+void sppp_ipcp_tlf(struct sppp *sp);
+void sppp_ipcp_scr(struct sppp *sp);
 
-HIDE void sppp_ipv6cp_init(struct sppp *sp);
-HIDE void sppp_ipv6cp_destroy(struct sppp *sp);
-HIDE void sppp_ipv6cp_up(struct sppp *sp);
-HIDE void sppp_ipv6cp_down(struct sppp *sp);
-HIDE void sppp_ipv6cp_open(struct sppp *sp);
-HIDE void sppp_ipv6cp_close(struct sppp *sp);
-HIDE void sppp_ipv6cp_TO(void *sp);
-HIDE int sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len);
-HIDE void sppp_ipv6cp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len);
-HIDE void sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len);
-HIDE void sppp_ipv6cp_tlu(struct sppp *sp);
-HIDE void sppp_ipv6cp_tld(struct sppp *sp);
-HIDE void sppp_ipv6cp_tls(struct sppp *sp);
-HIDE void sppp_ipv6cp_tlf(struct sppp *sp);
-HIDE void sppp_ipv6cp_scr(struct sppp *sp);
-HIDE const char *sppp_ipv6cp_opt_name(u_char opt);
-HIDE void sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src,
+void sppp_ipv6cp_init(struct sppp *sp);
+void sppp_ipv6cp_destroy(struct sppp *sp);
+void sppp_ipv6cp_up(struct sppp *sp);
+void sppp_ipv6cp_down(struct sppp *sp);
+void sppp_ipv6cp_open(struct sppp *sp);
+void sppp_ipv6cp_close(struct sppp *sp);
+void sppp_ipv6cp_TO(void *sp);
+int sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len);
+void sppp_ipv6cp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len);
+void sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len);
+void sppp_ipv6cp_tlu(struct sppp *sp);
+void sppp_ipv6cp_tld(struct sppp *sp);
+void sppp_ipv6cp_tls(struct sppp *sp);
+void sppp_ipv6cp_tlf(struct sppp *sp);
+void sppp_ipv6cp_scr(struct sppp *sp);
+const char *sppp_ipv6cp_opt_name(u_char opt);
+void sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src,
 			       struct in6_addr *dst, struct in6_addr *srcmask);
-HIDE void sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src, const struct in6_addr *dst);
-HIDE void sppp_update_ip6_addr(void *arg1, void *arg2);
-HIDE void sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest);
+void sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src, const struct in6_addr *dst);
+void sppp_update_ip6_addr(void *arg1, void *arg2);
+void sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest);
 
-HIDE void sppp_pap_input(struct sppp *sp, struct mbuf *m);
-HIDE void sppp_pap_init(struct sppp *sp);
-HIDE void sppp_pap_open(struct sppp *sp);
-HIDE void sppp_pap_close(struct sppp *sp);
-HIDE void sppp_pap_TO(void *sp);
-HIDE void sppp_pap_my_TO(void *sp);
-HIDE void sppp_pap_tlu(struct sppp *sp);
-HIDE void sppp_pap_tld(struct sppp *sp);
-HIDE void sppp_pap_scr(struct sppp *sp);
+void sppp_pap_input(struct sppp *sp, struct mbuf *m);
+void sppp_pap_init(struct sppp *sp);
+void sppp_pap_open(struct sppp *sp);
+void sppp_pap_close(struct sppp *sp);
+void sppp_pap_TO(void *sp);
+void sppp_pap_my_TO(void *sp);
+void sppp_pap_tlu(struct sppp *sp);
+void sppp_pap_tld(struct sppp *sp);
+void sppp_pap_scr(struct sppp *sp);
 
-HIDE void sppp_chap_input(struct sppp *sp, struct mbuf *m);
-HIDE void sppp_chap_init(struct sppp *sp);
-HIDE void sppp_chap_open(struct sppp *sp);
-HIDE void sppp_chap_close(struct sppp *sp);
-HIDE void sppp_chap_TO(void *sp);
-HIDE void sppp_chap_tlu(struct sppp *sp);
-HIDE void sppp_chap_tld(struct sppp *sp);
-HIDE void sppp_chap_scr(struct sppp *sp);
+void sppp_chap_input(struct sppp *sp, struct mbuf *m);
+void sppp_chap_init(struct sppp *sp);
+void sppp_chap_open(struct sppp *sp);
+void sppp_chap_close(struct sppp *sp);
+void sppp_chap_TO(void *sp);
+void sppp_chap_tlu(struct sppp *sp);
+void sppp_chap_tld(struct sppp *sp);
+void sppp_chap_scr(struct sppp *sp);
 
-HIDE const char *sppp_auth_type_name(u_short proto, u_char type);
-HIDE const char *sppp_cp_type_name(u_char type);
-HIDE const char *sppp_dotted_quad(u_int32_t addr);
-HIDE const char *sppp_ipcp_opt_name(u_char opt);
-HIDE const char *sppp_lcp_opt_name(u_char opt);
-HIDE const char *sppp_phase_name(enum ppp_phase phase);
-HIDE const char *sppp_proto_name(u_short proto);
-HIDE const char *sppp_state_name(int state);
-HIDE int sppp_get_params(struct sppp *sp, struct ifreq *data);
-HIDE int sppp_set_params(struct sppp *sp, struct ifreq *data);
-HIDE void sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst,
+const char *sppp_auth_type_name(u_short proto, u_char type);
+const char *sppp_cp_type_name(u_char type);
+const char *sppp_dotted_quad(u_int32_t addr);
+const char *sppp_ipcp_opt_name(u_char opt);
+const char *sppp_lcp_opt_name(u_char opt);
+const char *sppp_phase_name(enum ppp_phase phase);
+const char *sppp_proto_name(u_short proto);
+const char *sppp_state_name(int state);
+int sppp_get_params(struct sppp *sp, struct ifreq *data);
+int sppp_set_params(struct sppp *sp, struct ifreq *data);
+void sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst,
 			      u_int32_t *srcmask);
-HIDE void sppp_keepalive(void *dummy);
-HIDE void sppp_phase_network(struct sppp *sp);
-HIDE void sppp_print_bytes(const u_char *p, u_short len);
-HIDE void sppp_print_string(const char *p, u_short len);
-HIDE void sppp_qflush(struct ifqueue *ifq);
+void sppp_keepalive(void *dummy);
+void sppp_phase_network(struct sppp *sp);
+void sppp_print_bytes(const u_char *p, u_short len);
+void sppp_print_string(const char *p, u_short len);
+void sppp_qflush(struct ifqueue *ifq);
 int sppp_update_gw_walker(struct radix_node *rn, void *arg, u_int);
 void sppp_update_gw(struct ifnet *ifp);
-HIDE void sppp_set_ip_addrs(void *, void *);
-HIDE void sppp_clear_ip_addrs(void *, void *);
-HIDE void sppp_set_phase(struct sppp *sp);
+void sppp_set_ip_addrs(void *, void *);
+void sppp_clear_ip_addrs(void *, void *);
+void sppp_set_phase(struct sppp *sp);
 
 /* our control protocol descriptors */
 static const struct cp lcp = {
@@ -641,7 +639,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 /*
  * Enqueue transmit packet.
  */
-HIDE int
+int
 sppp_output(struct ifnet *ifp, struct mbuf *m,
 	    struct sockaddr *dst, struct rtentry *rt)
 {
@@ -1119,7 +1117,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 /*
  * Handle incoming Cisco keepalive protocol packets.
  */
-HIDE void
+void
 sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 {
 	STDDCL;
@@ -1190,7 +1188,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 /*
  * Send Cisco keepalive packet.
  */
-HIDE void
+void
 sppp_cisco_send(struct sppp *sp, u_int32_t type, u_int32_t par1, u_int32_t par2)
 {
 	STDDCL;
@@ -1246,7 +1244,7 @@ sppp_cisco_send(struct sppp *sp, u_int32_t type, u_int32_t par1, u_int32_t par2)
 /*
  * Send PPP control protocol packet.
  */
-HIDE void
+void
 sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 	     u_char ident, u_short len, void *data)
 {
@@ -1308,7 +1306,7 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 /*
  * Handle incoming PPP control protocol packets.
  */
-HIDE void
+void
 sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 {
 	STDDCL;
@@ -1707,7 +1705,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
  * The generic part of all Up/Down/Open/Close/TO event handlers.
  * Basically, the state transition handling in the automaton.
  */
-HIDE void
+void
 sppp_up_event(const struct cp *cp, struct sppp *sp)
 {
 	STDDCL;
@@ -1734,7 +1732,7 @@ sppp_up_event(const struct cp *cp, struct sppp *sp)
 	}
 }
 
-HIDE void
+void
 sppp_down_event(const struct cp *cp, struct sppp *sp)
 {
 	STDDCL;
@@ -1772,7 +1770,7 @@ sppp_down_event(const struct cp *cp, struct sppp *sp)
 }
 
 
-HIDE void
+void
 sppp_open_event(const struct cp *cp, struct sppp *sp)
 {
 	STDDCL;
@@ -1808,7 +1806,7 @@ sppp_open_event(const struct cp *cp, struct sppp *sp)
 }
 
 
-HIDE void
+void
 sppp_close_event(const struct cp *cp, struct sppp *sp)
 {
 	STDDCL;
@@ -1849,7 +1847,7 @@ sppp_close_event(const struct cp *cp, struct sppp *sp)
 	}
 }
 
-HIDE void
+void
 sppp_increasing_timeout (const struct cp *cp, struct sppp *sp)
 {
 	int timo;
@@ -1860,7 +1858,7 @@ sppp_increasing_timeout (const struct cp *cp, struct sppp *sp)
 	timeout_add(&sp->ch[cp->protoidx], timo * sp->lcp.timeout);
 }
 
-HIDE void
+void
 sppp_to_event(const struct cp *cp, struct sppp *sp)
 {
 	STDDCL;
@@ -1956,7 +1954,7 @@ sppp_cp_change_state(const struct cp *cp, struct sppp *sp, int newstate)
  *                                                                          *
  *--------------------------------------------------------------------------*
  */
-HIDE void
+void
 sppp_lcp_init(struct sppp *sp)
 {
 	sp->lcp.opts = (1 << LCP_OPT_MAGIC);
@@ -1980,7 +1978,7 @@ sppp_lcp_init(struct sppp *sp)
 	sp->lcp.max_failure = 10;
 }
 
-HIDE void
+void
 sppp_lcp_up(struct sppp *sp)
 {
 	STDDCL;
@@ -2034,7 +2032,7 @@ sppp_lcp_up(struct sppp *sp)
 	sppp_up_event(&lcp, sp);
 }
 
-HIDE void
+void
 sppp_lcp_down(struct sppp *sp)
 {
 	STDDCL;
@@ -2075,7 +2073,7 @@ sppp_lcp_down(struct sppp *sp)
 	sppp_flush(ifp);
 }
 
-HIDE void
+void
 sppp_lcp_open(struct sppp *sp)
 {
 	/*
@@ -2089,13 +2087,13 @@ sppp_lcp_open(struct sppp *sp)
 	sppp_open_event(&lcp, sp);
 }
 
-HIDE void
+void
 sppp_lcp_close(struct sppp *sp)
 {
 	sppp_close_event(&lcp, sp);
 }
 
-HIDE void
+void
 sppp_lcp_TO(void *cookie)
 {
 	sppp_to_event(&lcp, (struct sppp *)cookie);
@@ -2107,7 +2105,7 @@ sppp_lcp_TO(void *cookie)
  * caused action scn.  (The return value is used to make the state
  * transition decision in the state automaton.)
  */
-HIDE int
+int
 sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 {
 	STDDCL;
@@ -2315,7 +2313,7 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
  * Analyze the LCP Configure-Reject option list, and adjust our
  * negotiation.
  */
-HIDE void
+void
 sppp_lcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 {
 	STDDCL;
@@ -2375,7 +2373,7 @@ sppp_lcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
  * Analyze the LCP Configure-NAK option list, and adjust our
  * negotiation.
  */
-HIDE void
+void
 sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 {
 	STDDCL;
@@ -2450,7 +2448,7 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 		addlog("\n");
 }
 
-HIDE void
+void
 sppp_lcp_tlu(struct sppp *sp)
 {
 	struct ifnet *ifp = &sp->pp_if;
@@ -2510,7 +2508,7 @@ sppp_lcp_tlu(struct sppp *sp)
 		sppp_lcp_check_and_close(sp);
 }
 
-HIDE void
+void
 sppp_lcp_tld(struct sppp *sp)
 {
 	int i;
@@ -2533,7 +2531,7 @@ sppp_lcp_tld(struct sppp *sp)
 		}
 }
 
-HIDE void
+void
 sppp_lcp_tls(struct sppp *sp)
 {
 	sp->pp_phase = PHASE_ESTABLISH;
@@ -2545,7 +2543,7 @@ sppp_lcp_tls(struct sppp *sp)
 		(sp->pp_tls)(sp);
 }
 
-HIDE void
+void
 sppp_lcp_tlf(struct sppp *sp)
 {
 	sp->pp_phase = PHASE_DEAD;
@@ -2556,7 +2554,7 @@ sppp_lcp_tlf(struct sppp *sp)
 		(sp->pp_tlf)(sp);
 }
 
-HIDE void
+void
 sppp_lcp_scr(struct sppp *sp)
 {
 	char opt[6 /* magicnum */ + 4 /* mru */ + 5 /* chap */];
@@ -2598,7 +2596,7 @@ sppp_lcp_scr(struct sppp *sp)
 /*
  * Check the open NCPs, return true if at least one NCP is open.
  */
-HIDE int
+int
 sppp_ncp_check(struct sppp *sp)
 {
 	int i, mask;
@@ -2613,7 +2611,7 @@ sppp_ncp_check(struct sppp *sp)
  * Re-check the open NCPs and see if we should terminate the link.
  * Called by the NCPs during their tlf action handling.
  */
-HIDE void
+void
 sppp_lcp_check_and_close(struct sppp *sp)
 {
 
@@ -2634,7 +2632,7 @@ sppp_lcp_check_and_close(struct sppp *sp)
  *--------------------------------------------------------------------------*
  */
 
-HIDE void
+void
 sppp_ipcp_init(struct sppp *sp)
 {
 	sp->ipcp.opts = 0;
@@ -2645,38 +2643,38 @@ sppp_ipcp_init(struct sppp *sp)
 	task_set(&sp->ipcp.clear_addr_task, sppp_clear_ip_addrs, sp, NULL);
 }
 
-HIDE void
+void
 sppp_ipcp_destroy(struct sppp *sp)
 {
 	task_del(systq, &sp->ipcp.set_addr_task);
 	task_del(systq, &sp->ipcp.clear_addr_task);
 }
 
-HIDE void
+void
 sppp_ipcp_up(struct sppp *sp)
 {
 	sppp_up_event(&ipcp, sp);
 }
 
-HIDE void
+void
 sppp_ipcp_down(struct sppp *sp)
 {
 	sppp_down_event(&ipcp, sp);
 }
 
-HIDE void
+void
 sppp_ipcp_open(struct sppp *sp)
 {
 	sppp_open_event(&ipcp, sp);
 }
 
-HIDE void
+void
 sppp_ipcp_close(struct sppp *sp)
 {
 	sppp_close_event(&ipcp, sp);
 }
 
-HIDE void
+void
 sppp_ipcp_TO(void *cookie)
 {
 	sppp_to_event(&ipcp, (struct sppp *)cookie);
@@ -2688,7 +2686,7 @@ sppp_ipcp_TO(void *cookie)
  * caused action scn.  (The return value is used to make the state
  * transition decision in the state automaton.)
  */
-HIDE int
+int
 sppp_ipcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 {
 	u_char *buf, *r, *p;
@@ -2865,7 +2863,7 @@ sppp_ipcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
  * Analyze the IPCP Configure-Reject option list, and adjust our
  * negotiation.
  */
-HIDE void
+void
 sppp_ipcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 {
 	u_char *p;
@@ -2907,7 +2905,7 @@ sppp_ipcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
  * Analyze the IPCP Configure-NAK option list, and adjust our
  * negotiation.
  */
-HIDE void
+void
 sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 {
 	u_char *p;
@@ -2968,19 +2966,19 @@ sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 		addlog("\n");
 }
 
-HIDE void
+void
 sppp_ipcp_tlu(struct sppp *sp)
 {
 	if (sp->ipcp.req_myaddr != 0 || sp->ipcp.req_hisaddr != 0)
 		task_add(systq, &sp->ipcp.set_addr_task);
 }
 
-HIDE void
+void
 sppp_ipcp_tld(struct sppp *sp)
 {
 }
 
-HIDE void
+void
 sppp_ipcp_tls(struct sppp *sp)
 {
 	STDDCL;
@@ -3026,7 +3024,7 @@ sppp_ipcp_tls(struct sppp *sp)
 	sp->lcp.protos |= (1 << IDX_IPCP);
 }
 
-HIDE void
+void
 sppp_ipcp_tlf(struct sppp *sp)
 {
 	if (sp->ipcp.flags & (IPCP_MYADDR_DYN|IPCP_HISADDR_DYN))
@@ -3038,7 +3036,7 @@ sppp_ipcp_tlf(struct sppp *sp)
 	sppp_lcp_check_and_close(sp);
 }
 
-HIDE void
+void
 sppp_ipcp_scr(struct sppp *sp)
 {
 	char opt[6 /* compression */ + 6 /* address */];
@@ -3083,7 +3081,7 @@ sppp_ipcp_scr(struct sppp *sp)
  */
 
 #ifdef INET6
-HIDE void
+void
 sppp_ipv6cp_init(struct sppp *sp)
 {
 	sp->ipv6cp.opts = 0;
@@ -3094,25 +3092,25 @@ sppp_ipv6cp_init(struct sppp *sp)
 	    &sp->ipv6cp.req_ifid);
 }
 
-HIDE void
+void
 sppp_ipv6cp_destroy(struct sppp *sp)
 {
 	task_del(systq, &sp->ipv6cp.set_addr_task);
 }
 
-HIDE void
+void
 sppp_ipv6cp_up(struct sppp *sp)
 {
 	sppp_up_event(&ipv6cp, sp);
 }
 
-HIDE void
+void
 sppp_ipv6cp_down(struct sppp *sp)
 {
 	sppp_down_event(&ipv6cp, sp);
 }
 
-HIDE void
+void
 sppp_ipv6cp_open(struct sppp *sp)
 {
 	STDDCL;
@@ -3138,19 +3136,19 @@ sppp_ipv6cp_open(struct sppp *sp)
 	sppp_open_event(&ipv6cp, sp);
 }
 
-HIDE void
+void
 sppp_ipv6cp_close(struct sppp *sp)
 {
 	sppp_close_event(&ipv6cp, sp);
 }
 
-HIDE void
+void
 sppp_ipv6cp_TO(void *cookie)
 {
 	sppp_to_event(&ipv6cp, (struct sppp *)cookie);
 }
 
-HIDE int
+int
 sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 {
 	u_char *buf, *r, *p;
@@ -3319,7 +3317,7 @@ end:
 	return (rlen == 0);
 }
 
-HIDE void
+void
 sppp_ipv6cp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 {
 	u_char *p;
@@ -3358,7 +3356,7 @@ sppp_ipv6cp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 	return;
 }
 
-HIDE void
+void
 sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 {
 	u_char *p;
@@ -3429,24 +3427,24 @@ sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 		addlog("\n");
 }
 
-HIDE void
+void
 sppp_ipv6cp_tlu(struct sppp *sp)
 {
 }
 
-HIDE void
+void
 sppp_ipv6cp_tld(struct sppp *sp)
 {
 }
 
-HIDE void
+void
 sppp_ipv6cp_tls(struct sppp *sp)
 {
 	/* indicate to LCP that it must stay alive */
 	sp->lcp.protos |= (1 << IDX_IPV6CP);
 }
 
-HIDE void
+void
 sppp_ipv6cp_tlf(struct sppp *sp)
 {
 	/* we no longer need LCP */
@@ -3454,7 +3452,7 @@ sppp_ipv6cp_tlf(struct sppp *sp)
 	sppp_lcp_check_and_close(sp);
 }
 
-HIDE void
+void
 sppp_ipv6cp_scr(struct sppp *sp)
 {
 	char opt[10 /* ifid */ + 4 /* compression, minimum */];
@@ -3486,81 +3484,81 @@ p		opt[i++] = 0;   /* TBD */
 	sppp_cp_send(sp, PPP_IPV6CP, CONF_REQ, sp->confid[IDX_IPV6CP], i, opt);
 }
 #else /*INET6*/
-HIDE void
+void
 sppp_ipv6cp_init(struct sppp *sp)
 {
 }
 
-HIDE void
+void
 sppp_ipv6cp_destroy(struct sppp *sp)
 {
 }
 
-HIDE void
+void
 sppp_ipv6cp_up(struct sppp *sp)
 {
 }
 
-HIDE void
+void
 sppp_ipv6cp_down(struct sppp *sp)
 {
 }
 
-HIDE void
+void
 sppp_ipv6cp_open(struct sppp *sp)
 {
 }
 
-HIDE void
+void
 sppp_ipv6cp_close(struct sppp *sp)
 {
 }
 
-HIDE void
+void
 sppp_ipv6cp_TO(void *sp)
 {
 }
 
-HIDE int
+int
 sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h,
 		int len)
 {
 	return 0;
 }
 
-HIDE void
+void
 sppp_ipv6cp_RCN_rej(struct sppp *sp, struct lcp_header *h,
 		    int len)
 {
 }
 
-HIDE void
+void
 sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h,
 		    int len)
 {
 }
 
-HIDE void
+void
 sppp_ipv6cp_tlu(struct sppp *sp)
 {
 }
 
-HIDE void
+void
 sppp_ipv6cp_tld(struct sppp *sp)
 {
 }
 
-HIDE void
+void
 sppp_ipv6cp_tls(struct sppp *sp)
 {
 }
 
-HIDE void
+void
 sppp_ipv6cp_tlf(struct sppp *sp)
 {
 }
 
-HIDE void
+void
 sppp_ipv6cp_scr(struct sppp *sp)
 {
 }
@@ -3876,7 +3874,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 	}
 }
 
-HIDE void
+void
 sppp_chap_init(struct sppp *sp)
 {
 	/* Chap doesn't have STATE_INITIAL at all. */
@@ -3884,7 +3882,7 @@ sppp_chap_init(struct sppp *sp)
 	sp->fail_counter[IDX_CHAP] = 0;
 }
 
-HIDE void
+void
 sppp_chap_open(struct sppp *sp)
 {
 	if (sp->myauth.proto == PPP_CHAP &&
@@ -3897,14 +3895,14 @@ sppp_chap_open(struct sppp *sp)
 	/* nothing to be done if we are peer, await a challenge */
 }
 
-HIDE void
+void
 sppp_chap_close(struct sppp *sp)
 {
 	if (sp->state[IDX_CHAP] != STATE_CLOSED)
 		sppp_cp_change_state(&chap, sp, STATE_CLOSED);
 }
 
-HIDE void
+void
 sppp_chap_TO(void *cookie)
 {
 	struct sppp *sp = (struct sppp *)cookie;
@@ -3943,7 +3941,7 @@ sppp_chap_TO(void *cookie)
 	splx(s);
 }
 
-HIDE void
+void
 sppp_chap_tlu(struct sppp *sp)
 {
 	STDDCL;
@@ -4002,7 +4000,7 @@ sppp_chap_tlu(struct sppp *sp)
 		sppp_phase_network(sp);
 }
 
-HIDE void
+void
 sppp_chap_tld(struct sppp *sp)
 {
 	STDDCL;
@@ -4015,7 +4013,7 @@ sppp_chap_tld(struct sppp *sp)
 	lcp.Close(sp);
 }
 
-HIDE void
+void
 sppp_chap_scr(struct sppp *sp)
 {
 	u_char clen;
@@ -4049,7 +4047,7 @@ sppp_chap_scr(struct sppp *sp)
 
 /*
  * Handle incoming PAP packets.  */
-HIDE void
+void
 sppp_pap_input(struct sppp *sp, struct mbuf *m)
 {
 	STDDCL;
@@ -4192,7 +4190,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 	}
 }
 
-HIDE void
+void
 sppp_pap_init(struct sppp *sp)
 {
 	/* PAP doesn't have STATE_INITIAL at all. */
@@ -4200,7 +4198,7 @@ sppp_pap_init(struct sppp *sp)
 	sp->fail_counter[IDX_PAP] = 0;
 }
 
-HIDE void
+void
 sppp_pap_open(struct sppp *sp)
 {
 	if (sp->hisauth.proto == PPP_PAP &&
@@ -4216,7 +4214,7 @@ sppp_pap_open(struct sppp *sp)
 	}
 }
 
-HIDE void
+void
 sppp_pap_close(struct sppp *sp)
 {
 	if (sp->state[IDX_PAP] != STATE_CLOSED)
@@ -4227,7 +4225,7 @@ sppp_pap_close(struct sppp *sp)
  * That's the timeout routine if we are authenticator.  Since the
  * authenticator is basically passive in PAP, we can't do much here.
  */
-HIDE void
+void
 sppp_pap_TO(void *cookie)
 {
 	struct sppp *sp = (struct sppp *)cookie;
@@ -4266,7 +4264,7 @@ sppp_pap_TO(void *cookie)
  * we need to retransmit our PAP request since it is apparently lost.
  * XXX We should impose a max counter.
  */
-HIDE void
+void
 sppp_pap_my_TO(void *cookie)
 {
 	struct sppp *sp = (struct sppp *)cookie;
@@ -4279,7 +4277,7 @@ sppp_pap_my_TO(void *cookie)
 	pap.scr(sp);
 }
 
-HIDE void
+void
 sppp_pap_tlu(struct sppp *sp)
 {
 	STDDCL;
@@ -4308,7 +4306,7 @@ sppp_pap_tlu(struct sppp *sp)
 	sppp_phase_network(sp);
 }
 
-HIDE void
+void
 sppp_pap_tld(struct sppp *sp)
 {
 	STDDCL;
@@ -4322,7 +4320,7 @@ sppp_pap_tld(struct sppp *sp)
 	lcp.Close(sp);
 }
 
-HIDE void
+void
 sppp_pap_scr(struct sppp *sp)
 {
 	u_char idlen, pwdlen;
@@ -4350,7 +4348,7 @@ sppp_pap_scr(struct sppp *sp)
  * mlen == 0.
  */
 
-HIDE void
+void
 sppp_auth_send(const struct cp *cp, struct sppp *sp,
 		unsigned int type, u_int id, ...)
 {
@@ -4432,7 +4430,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 /*
  * Flush interface queue.
  */
-HIDE void
+void
 sppp_qflush(struct ifqueue *ifq)
 {
 	IF_PURGE(ifq);
@@ -4441,7 +4439,7 @@ sppp_qflush(struct ifqueue *ifq)
 /*
  * Send keepalive packets, every 10 seconds.
  */
-HIDE void
+void
 sppp_keepalive(void *dummy)
 {
 	struct sppp *sp;
@@ -4511,7 +4509,7 @@ sppp_keepalive(void *dummy)
 /*
  * Get both IP addresses.
  */
-HIDE void
+void
 sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst,
     u_int32_t *srcmask)
 {
@@ -4589,7 +4587,7 @@ sppp_update_gw(struct ifnet *ifp)
  * Task adding addresses from process context.
  * If an address is 0, leave it the way it is.
  */
-HIDE void
+void
 sppp_set_ip_addrs(void *arg1, void *arg2)
 {
 	struct sppp *sp = arg1;
@@ -4662,7 +4660,7 @@ sppp_set_ip_addrs(void *arg1, void *arg2)
  * Task clearing addresses from process context.
  * Clear IP addresses.
  */
-HIDE void
+void
 sppp_clear_ip_addrs(void *arg1, void *arg2)
 {
 	struct sppp *sp = (struct sppp *)arg1;
@@ -4724,7 +4722,7 @@ sppp_clear_ip_addrs(void *arg1, void *arg2)
 /*
  * Get both IPv6 addresses.
  */
-HIDE void
+void
 sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
 		   struct in6_addr *srcmask)
 {
@@ -4759,7 +4757,7 @@ sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
 }
 
 /* Task to update my IPv6 address from process context. */
-HIDE void
+void
 sppp_update_ip6_addr(void *arg1, void *arg2)
 {
 	struct sppp *sp = arg1;
@@ -4817,7 +4815,7 @@ sppp_update_ip6_addr(void *arg1, void *arg2)
 /*
  * Configure my link-local address.
  */
-HIDE void
+void
 sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src,
 	const struct in6_addr *dst)
 {
@@ -4854,7 +4852,7 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src,
 /*
  * Generate an address that differs from our existing address.
  */
-HIDE void
+void
 sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest)
 {
 	struct in6_addr myaddr;
@@ -4877,7 +4875,7 @@ sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest)
 }
 #endif /*INET6*/
 
-HIDE int
+int
 sppp_get_params(struct sppp *sp, struct ifreq *ifr)
 {
 	int cmd;
@@ -4932,7 +4930,7 @@ sppp_get_params(struct sppp *sp, struct ifreq *ifr)
 }
 
 
-HIDE int
+int
 sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 {
 	int cmd;
@@ -5052,7 +5050,7 @@ sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 	return 0;
 }
 
-HIDE void
+void
 sppp_phase_network(struct sppp *sp)
 {
 	int i;
@@ -5077,7 +5075,7 @@ sppp_phase_network(struct sppp *sp)
 }
 
 
-HIDE const char *
+const char *
 sppp_cp_type_name(u_char type)
 {
 	static char buf[12];
@@ -5098,7 +5096,7 @@ sppp_cp_type_name(u_char type)
 	return buf;
 }
 
-HIDE const char *
+const char *
 sppp_auth_type_name(u_short proto, u_char type)
 {
 	static char buf[12];
@@ -5121,7 +5119,7 @@ sppp_auth_type_name(u_short proto, u_char type)
 	return buf;
 }
 
-HIDE const char *
+const char *
 sppp_lcp_opt_name(u_char opt)
 {
 	static char buf[12];
@@ -5138,7 +5136,7 @@ sppp_lcp_opt_name(u_char opt)
 	return buf;
 }
 
-HIDE const char *
+const char *
 sppp_ipcp_opt_name(u_char opt)
 {
 	static char buf[12];
@@ -5152,7 +5150,7 @@ sppp_ipcp_opt_name(u_char opt)
 }
 
 #ifdef INET6
-HIDE const char *
+const char *
 sppp_ipv6cp_opt_name(u_char opt)
 {
 	static char buf[12];
@@ -5165,7 +5163,7 @@ sppp_ipv6cp_opt_name(u_char opt)
 }
 #endif
 
-HIDE const char *
+const char *
 sppp_state_name(int state)
 {
 	switch (state) {
@@ -5183,7 +5181,7 @@ sppp_state_name(int state)
 	return "illegal";
 }
 
-HIDE const char *
+const char *
 sppp_phase_name(enum ppp_phase phase)
 {
 	switch (phase) {
@@ -5196,7 +5194,7 @@ sppp_phase_name(enum ppp_phase phase)
 	return "illegal";
 }
 
-HIDE const char *
+const char *
 sppp_proto_name(u_short proto)
 {
 	static char buf[12];
@@ -5210,7 +5208,7 @@ sppp_proto_name(u_short proto)
 	return buf;
 }
 
-HIDE void
+void
 sppp_print_bytes(const u_char *p, u_short len)
 {
 	addlog(" %02x", *p++);
@@ -5218,7 +5216,7 @@ sppp_print_bytes(const u_char *p, u_short len)
 		addlog("-%02x", *p++);
 }
 
-HIDE void
+void
 sppp_print_string(const char *p, u_short len)
 {
 	u_char c;
@@ -5235,7 +5233,7 @@ sppp_print_string(const char *p, u_short len)
 	}
 }
 
-HIDE const char *
+const char *
 sppp_dotted_quad(u_int32_t addr)
 {
 	static char s[16];
@@ -5248,7 +5246,7 @@ sppp_dotted_quad(u_int32_t addr)
 }
 
 /* a dummy, used to drop uninteresting events */
-HIDE void
+void
 sppp_null(struct sppp *unused)
 {
 	/* do just nothing */
@@ -5261,7 +5259,7 @@ sppp_null(struct sppp *unused)
  * End:
  */
 
-HIDE void
+void
 sppp_set_phase(struct sppp *sp)
 {
 	STDDCL;
