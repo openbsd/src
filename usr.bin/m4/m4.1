@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.60 2013/07/16 00:07:52 schwarze Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.61 2014/01/12 09:33:32 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: January 12 2014 $
 .Dt M4 1
 .Os
 .Sh NAME
@@ -259,15 +259,17 @@ Prints the first argument on the standard error output stream.
 Passes its first argument to a shell and returns the shell's standard output.
 Note that the shell shares its standard input and standard error with
 .Nm .
-.It Fn eval expr
+.It Fn eval expr[,radix[,minimum]]
 Computes the first argument as an arithmetic expression using 32-bit
 arithmetic.
 Operators are the standard C ternary, arithmetic, logical,
 shift, relational, bitwise, and parentheses operators.
 You can specify
 octal, decimal, and hexadecimal numbers as in C.
-The second argument (if any)
-specifies the radix for the result and the third argument (if any)
+The optional second argument
+.Fa radix
+specifies the radix for the result and the optional third argument
+.Fa minimum
 specifies the minimum number of digits in the result.
 .It Fn expr expr
 This is an alias for
