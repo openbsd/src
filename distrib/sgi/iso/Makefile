@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2014/01/06 21:03:13 miod Exp $
+#	$OpenBSD: Makefile,v 1.20 2014/01/12 21:58:00 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -96,6 +96,9 @@ ${CDROM}:
 .endfor
 
 	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+
+	cat ${RELDIR}/SHA256 ${RELXDIR}/SHA256 > \
+		${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/SHA256
 
 	umount ${.OBJDIR}/cd-dir
 
