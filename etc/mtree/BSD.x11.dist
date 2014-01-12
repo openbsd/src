@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.31 2013/10/20 11:50:57 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.32 2014/01/12 15:07:47 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -74,9 +74,7 @@
                 fontconfig
                 ..
                 freetype2
-                    freetype
-                        config
-                        ..
+                    config
                     ..
                 ..
                 pixman-1
