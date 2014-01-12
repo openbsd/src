@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.29 2014/01/11 04:29:07 lteo Exp $ */
+/* $OpenBSD: signify.c,v 1.30 2014/01/12 21:18:52 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -170,6 +170,8 @@ readmsg(const char *filename, unsigned long long *msglenp)
 	fd = xopen(filename, O_RDONLY | O_NOFOLLOW, 0);
 	if (fstat(fd, &sb) == -1)
 		err(1, "fstat on %s", filename);
+	if (!S_ISREG(sb.st_mode))
+		errx(1, "%s must be a regular file", filename);
 	msglen = sb.st_size;
 	if (msglen > (1UL << 30))
 		errx(1, "msg too large in %s", filename);
@@ -200,7 +202,7 @@ appendall(const char *filename, const void *buf, size_t len)
 {
 	int fd;
 
-	fd = xopen(filename, O_NOFOLLOW | O_RDWR | O_APPEND, 0);
+	fd = xopen(filename, O_NOFOLLOW | O_WRONLY | O_APPEND, 0);
 	writeall(fd, buf, len, filename);
 	close(fd);
 }
@@ -213,7 +215,7 @@ writeb64file(const char *filename, const char *comment, const void *buf,
 	char b64[1024];
 	int fd, rv;
 
-	fd = xopen(filename, O_CREAT|flags|O_NOFOLLOW|O_RDWR, mode);
+	fd = xopen(filename, O_CREAT|flags|O_NOFOLLOW|O_WRONLY, mode);
 	snprintf(header, sizeof(header), "%s%s\n", COMMENTHDR,
 	    comment);
 	writeall(fd, header, strlen(header), filename);
@@ -421,7 +423,7 @@ verify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 
 	verifymsg(pubkey.pubkey, msg, msglen, sig.sig);
 	if (embedded) {
-		fd = xopen(msgfile, O_CREAT|O_TRUNC|O_NOFOLLOW|O_RDWR, 0666);
+		fd = xopen(msgfile, O_CREAT|O_TRUNC|O_NOFOLLOW|O_WRONLY, 0666);
 		writeall(fd, msg, msglen, msgfile);
 		close(fd);
 	}
