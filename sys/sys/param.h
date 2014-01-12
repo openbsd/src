@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.104 2013/07/07 18:11:49 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.105 2014/01/12 11:26:09 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,8 +41,8 @@
 #define BSD4_3	1
 #define BSD4_4	1
 
-#define OpenBSD	201311		/* OpenBSD version (year & month). */
-#define OpenBSD5_4 1		/* OpenBSD 5.4 */
+#define OpenBSD	201405		/* OpenBSD version (year & month). */
+#define OpenBSD5_5 1		/* OpenBSD 5.5 */
 
 #ifndef NULL
 #ifdef 	__GNUG__
