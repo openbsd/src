@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.68 2014/01/11 04:01:13 deraadt Exp $	*/
+/*	$OpenBSD: md5.c,v 1.69 2014/01/12 04:37:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -305,15 +305,15 @@ main(int argc, char **argv)
 		case 'b':
 			/* has already been parsed */
 			break;
-		case 'c':
-			cflag = 1;
-			break;
 		case 'h':
 			ofile = fopen(optarg, "w");
 			if (ofile == NULL)
 				err(1, "%s", optarg);
 			break;
 #if !defined(SHA2_ONLY)
+		case 'c':
+			cflag = 1;
+			break;
 		case 'o':
 			if (strcmp(optarg, "1") == 0)
 				hf = &functions[1];
