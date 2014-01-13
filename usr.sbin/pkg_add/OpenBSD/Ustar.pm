@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.75 2014/01/09 20:20:01 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.76 2014/01/13 18:42:34 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -559,6 +559,8 @@ sub create
 	symlink $self->{linkname}, $self->{destdir}.$self->name or
 	    $self->fatal("Can't symlink #1 to #2#3: #4",
 	    	$self->{linkname}, $self->{destdir}, $self->name, $!);
+	require POSIX;
+	POSIX::lchown($self->{uid}, $self->{gid}, $self->{destdir}.$self->name);
 }
 
 sub isLink() { 1 }
