@@ -335,7 +335,7 @@ int warn_format_security;
 
 /* Warn about buffer size mismatches.  */
 
-int warn_bounded;
+int warn_bounded = 1;
 
 /* C/ObjC language option variables.  */
 
