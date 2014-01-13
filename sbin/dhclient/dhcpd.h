@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.129 2014/01/12 04:17:36 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.130 2014/01/13 02:38:52 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -216,12 +216,12 @@ void do_packet(unsigned int, struct in_addr, struct ether_addr *);
 /* errwarn.c */
 extern int warnings_occurred;
 void error(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
-int warning(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
-int note(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
+void warning(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
+void note(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 #ifdef DEBUG
-int debug(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
+void debug(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 #endif
-int parse_warn(char *);
+void parse_warn(char *);
 
 /* conflex.c */
 extern int lexline, lexchar;

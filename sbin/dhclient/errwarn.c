@@ -1,4 +1,4 @@
-/*	$OpenBSD: errwarn.c,v 1.20 2013/05/02 16:35:27 krw Exp $	*/
+/*	$OpenBSD: errwarn.c,v 1.21 2014/01/13 02:38:52 krw Exp $	*/
 
 /* Errors and warnings. */
 
@@ -80,7 +80,7 @@ error(char *fmt, ...)
 /*
  * Log a warning message.
  */
-int
+void
 warning(char *fmt, ...)
 {
 	va_list list;
@@ -97,14 +97,12 @@ warning(char *fmt, ...)
 		write(STDERR_FILENO, mbuf, strlen(mbuf));
 		write(STDERR_FILENO, "\n", 1);
 	}
-
-	return (0);
 }
 
 /*
  * Log a note.
  */
-int
+void
 note(char *fmt, ...)
 {
 	va_list list;
@@ -121,15 +119,13 @@ note(char *fmt, ...)
 		write(STDERR_FILENO, mbuf, strlen(mbuf));
 		write(STDERR_FILENO, "\n", 1);
 	}
-
-	return (0);
 }
 
 #ifdef DEBUG
 /*
  * Log a debug message.
  */
-int
+void
 debug(char *fmt, ...)
 {
 	va_list list;
@@ -144,12 +140,10 @@ debug(char *fmt, ...)
 		write(STDERR_FILENO, mbuf, strlen(mbuf));
 		write(STDERR_FILENO, "\n", 1);
 	}
-
-	return (0);
 }
 #endif
 
-int
+void
 parse_warn(char *msg)
 {
 	static char spaces[] =
@@ -187,5 +181,4 @@ parse_warn(char *msg)
 		writev(STDERR_FILENO, iov, iovcnt);
 	}
 	warnings_occurred = 1;
-	return (0);
 }
