@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.29 2014/01/10 01:38:15 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.30 2014/01/13 20:56:24 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -70,9 +70,10 @@ skip_to_semi(FILE *cfile)
 		token = peek_token(NULL, cfile);
 		if (token == '}') {
 			if (brace_count) {
-				token = next_token(NULL, cfile);
-				if (!--brace_count)
+				if (!--brace_count) {
+					token = next_token(NULL, cfile);
 					return;
+				}
 			} else
 				return;
 		} else if (token == '{') {
