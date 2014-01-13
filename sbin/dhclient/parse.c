@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.30 2014/01/13 20:56:24 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.31 2014/01/13 23:42:18 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -161,11 +161,7 @@ parse_hardware_param(FILE *cfile, struct ether_addr *hardware)
 	    ETHER_ADDR_LEN, ':', 16) == 0)
 		return;
 
-	token = next_token(NULL, cfile);
-	if (token != ';') {
-		parse_warn("expecting semicolon.");
-		skip_to_semi(cfile);
-	}
+	parse_semi(cfile);
 }
 
 /*

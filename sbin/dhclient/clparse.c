@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.70 2014/01/13 21:36:46 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.71 2014/01/13 23:42:18 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -347,13 +347,13 @@ parse_option_list(FILE *cfile, u_int8_t *list, size_t sz)
 			;
 		if (j == ix)
 			list[ix++] = i;
-		token = next_token(&val, cfile);
+		token = peek_token(NULL, cfile);
+		if (token == ',')
+			token = next_token(NULL, cfile);
 	} while (token == ',');
-	if (token != ';') {
-		parse_warn("expecting semicolon.");
-		goto syntaxerror;
-	}
-	return (ix);
+
+	if (parse_semi(cfile))
+		return (ix);
 
 syntaxerror:
 	skip_to_semi(cfile);
@@ -578,11 +578,8 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease)
 		skip_to_semi(cfile);
 		return;
 	}
-	token = next_token(&val, cfile);
-	if (token != ';') {
-		parse_warn("expecting semicolon.");
-		skip_to_semi(cfile);
-	}
+
+	parse_semi(cfile);
 }
 
 int
@@ -724,14 +721,13 @@ bad_flag:
 				return (-1);
 			}
 		}
-		token = next_token(&val, cfile);
+		token = peek_token(NULL, cfile);
+		if (*fmt == 'A' && token == ',')
+			token = next_token(NULL, cfile);
 	} while (*fmt == 'A' && token == ',');
 
-	if (token != ';') {
-		parse_warn("semicolon expected.");
-		skip_to_semi(cfile);
+	if (!parse_semi(cfile))
 		return (-1);
-	}
 
 	options[code].data = malloc(hunkix + nul_term);
 	if (!options[code].data)
@@ -762,11 +758,10 @@ parse_reject_statement(FILE *cfile)
 		elem->addr = addr;
 		TAILQ_INSERT_TAIL(&config->reject_list, elem, next);
 
-		token = next_token(NULL, cfile);
+		token = peek_token(NULL, cfile);
+		if (token == ',')
+			token = next_token(NULL, cfile);
 	} while (token == ',');
 
-	if (token != ';') {
-		parse_warn("expecting semicolon.");
-		skip_to_semi(cfile);
-	}
+	parse_semi(cfile);
 }
