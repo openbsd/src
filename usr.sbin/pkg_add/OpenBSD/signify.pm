@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: signify.pm,v 1.8 2014/01/10 14:34:02 espie Exp $
+# $OpenBSD: signify.pm,v 1.9 2014/01/13 01:41:34 tedu Exp $
 #
 # Copyright (c) 2013-2014 Marc Espie <espie@openbsd.org>
 #
@@ -38,7 +38,7 @@ sub compute_signature
 	open my $fh, ">", $contents;
 	$plist->write_no_sig($fh);
 	close $fh;
-	$state->system($cmd, '-s', $key, '-S', '--', $contents)
+	$state->system($cmd, '-s', $key, '-S', '-m', $contents)
 	    == 0 or die "probleme generating signature";
 	open(my $sighandle, '<', $sigfile)
 		or die "problem reading signature";
@@ -78,7 +78,7 @@ sub check_signature
 		$state->errsay("Package signed by untrusted party #1", $signer);
 		return 0;
 	}
-	if ($state->system($cmd, '-p', $pubkey, '-V', '--', $fname) != 0) {
+	if ($state->system($cmd, '-p', $pubkey, '-V', '-m', $fname) != 0) {
 	    	$state->log("Bad signature");
 		return 0;
 	}
