@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.19 2013/11/25 18:02:50 deraadt Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.20 2014/01/13 23:18:57 millert Exp $	*/
 
 /*
  * parsetime.c - parse time for at(1)
@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *  at [NOW] PLUS NUMBER MINUTES|HOURS|DAYS|WEEKS
+ *  at [NOW] PLUS NUMBER MINUTES|HOURS|DAYS|WEEKS|MONTHS|YEARS
  *     /NUMBER [DOT NUMBER] [AM|PM]\ /[MONTH NUMBER [NUMBER]]             \
  *     |NOON                       | |[TOMORROW]                          |
  *     |MIDNIGHT                   | |[DAY OF WEEK]                       |
  *     \TEATIME                    / |NUMBER [SLASH NUMBER [SLASH NUMBER]]|
- *                                   \PLUS NUMBER MINUTES|HOURS|DAYS|WEEKS/
+ *                                   \PLUS NUMBER MINUTES|HOURS|DAYS|WEEKS|MONTHS|YEARS/
  */
 
 #include <sys/types.h>
@@ -53,8 +53,8 @@
 enum {	/* symbols */
 	MIDNIGHT, NOON, TEATIME,
 	PM, AM, TOMORROW, TODAY, NOW,
-	MINUTES, HOURS, DAYS, WEEKS,
-	NUMBER, PLUS, DOT, SLASH, ID, JUNK,
+	MINUTES, HOURS, DAYS, WEEKS, MONTHS, YEARS,
+	NUMBER, NEXT, PLUS, DOT, SLASH, ID, JUNK,
 	JAN, FEB, MAR, APR, MAY, JUN,
 	JUL, AUG, SEP, OCT, NOV, DEC,
 	SUN, MON, TUE, WED, THU, FRI, SAT
@@ -76,6 +76,7 @@ struct {
 	{ "tomorrow", TOMORROW, 0 },	/* execute 24 hours from time */
 	{ "today", TODAY, 0 },		/* execute today - don't advance time */
 	{ "now", NOW, 0 },		/* opt prefix for PLUS */
+	{ "next", NEXT, 0 },		/* opt prefix for + 1 */
 
 	{ "minute", MINUTES, 0 },	/* minutes multiplier */
 	{ "min", MINUTES, 0 },
@@ -91,6 +92,13 @@ struct {
 	{ "week", WEEKS, 0 },		/* week ... */
 	{ "w", WEEKS, 0 },
 	{ "weeks", WEEKS, 1 },		/* (pluralized) */
+	{ "month", MONTHS, 0 },		/* month ... */
+	{ "mo", MONTHS, 0 },
+	{ "mth", MONTHS, 0 },
+	{ "months", MONTHS, 1 },	/* (pluralized) */
+	{ "year", YEARS, 0 },		/* year ... */
+	{ "y", YEARS, 0 },
+	{ "years", YEARS, 1 },		/* (pluralized) */
 	{ "jan", JAN, 0 },
 	{ "feb", FEB, 0 },
 	{ "mar", MAR, 0 },
@@ -319,36 +327,50 @@ dateadd(int minutes, struct tm *tm)
 /*
  * plus() parses a now + time
  *
- *  at [NOW] PLUS NUMBER [MINUTES|HOURS|DAYS|WEEKS]
+ *  at [NOW] PLUS NUMBER [MINUTES|HOURS|DAYS|WEEKS|MONTHS|YEARS]
  *
  */
 static int
 plus(struct tm *tm)
 {
-	int delay;
+	int increment;
 	int expectplur;
 
-	if (expect(NUMBER) != 0)
-		return (-1);
-
-	delay = atoi(sc_token);
-	expectplur = (delay != 1) ? 1 : 0;
+	if (sc_tokid == NEXT) {
+		increment = 1;
+		expectplur = 0;
+	} else {
+		if (expect(NUMBER) != 0)
+			return (-1);
+		increment = atoi(sc_token);
+		expectplur = (increment != 1) ? 1 : 0;
+	}
 
 	switch (token()) {
+	case YEARS:
+		tm->tm_year += increment;
+		return (0);
+	case MONTHS:
+		tm->tm_mon += increment;
+		while (tm->tm_mon >= 12) {
+		    tm->tm_year++;
+		    tm->tm_mon -= 12;
+		}
+		return (0);
 	case WEEKS:
-		delay *= 7;
+		increment *= 7;
 		/* FALLTHROUGH */
 	case DAYS:
-		delay *= 24;
+		increment *= 24;
 		/* FALLTHROUGH */
 	case HOURS:
-		delay *= 60;
+		increment *= 60;
 		/* FALLTHROUGH */
 	case MINUTES:
 		if (expectplur != sc_tokplur)
 			fprintf(stderr, "%s: pluralization is wrong\n",
 			    ProgramName);
-		dateadd(delay, tm);
+		dateadd(increment, tm);
 		return (0);
 	}
 
@@ -411,7 +433,8 @@ tod(struct tm *tm)
 	 * if we've gone past that time - but if we're specifying a time plus
 	 * a relative offset, it's okay to bump things
 	 */
-	if ((sc_tokid == EOF || sc_tokid == PLUS) && tm->tm_hour > hour) {
+	if ((sc_tokid == EOF || sc_tokid == PLUS || sc_tokid == NEXT) &&
+	    tm->tm_hour > hour) {
 		tm->tm_mday++;
 		tm->tm_wday++;
 	}
@@ -473,7 +496,7 @@ assign_date(struct tm *tm, int mday, int mon, int year)
  *  |[TOMORROW]                          |
  *  |[DAY OF WEEK]                       |
  *  |NUMBER [SLASH NUMBER [SLASH NUMBER]]|
- *  \PLUS NUMBER MINUTES|HOURS|DAYS|WEEKS/
+ *  \PLUS NUMBER MINUTES|HOURS|DAYS|WEEKS|MONTHS|YEARS/
  */
 static int
 month(struct tm *tm)
@@ -483,6 +506,7 @@ month(struct tm *tm)
 	size_t tlen;
 
 	switch (sc_tokid) {
+	case NEXT:
 	case PLUS:
 		if (plus(tm) != 0)
 			return (-1);
@@ -621,8 +645,9 @@ parsetime(int argc, char **argv)
 			runtime = nowtime;
 			break;
 		}
-		else if (sc_tokid != PLUS)
+		else if (sc_tokid != PLUS && sc_tokid != NEXT)
 			plonk(sc_tokid);
+	case NEXT:
 	case PLUS:
 		if (plus(&runtime) != 0)
 			return (-1);
