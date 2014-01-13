@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.92 2014/01/09 20:20:01 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.93 2014/01/13 10:07:32 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1199,6 +1199,7 @@ sub sign_existing_package
 	$wrarc->close;
 	$pkg->wipe_info;
 	unlink($plist->pkgname.".tgz") if $state->{output};
+	chmod((0666 & ~umask), $tmp);
 	rename($tmp, $output.'/'.$plist->pkgname.".tgz") or
 	    $state->fatal("Can't create final signed package: #1", $!);
 }
@@ -1269,6 +1270,9 @@ sub sign_existing_repository
 	require OpenBSD::PackageRepository;
 	my $repo = OpenBSD::PackageRepository->new($source, $state);
 	my @list = sort @{$repo->list};
+	if (@list == 0) {
+		$state->errsay('Source repository "#1" is empty', $source);
+    	}
 	$self->sign_list(\@list, $repo, $state->opt('j'), $state);
 }
 
