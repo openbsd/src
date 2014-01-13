@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.18 2014/01/12 17:17:12 rpe Exp $
+.\" $OpenBSD: signify.1,v 1.19 2014/01/13 01:40:43 tedu Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -14,7 +14,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: January 12 2014 $
+.Dd $Mdocdate: January 13 2014 $
 .Dt SIGNIFY 1
 .Os
 .Sh NAME
@@ -29,26 +29,26 @@
 .Fl s Ar seckey
 .Nm signify
 .Fl I
-.Op Fl o Ar sigfile
 .Op Fl p Ar pubkey
 .Op Fl s Ar seckey
+.Op Fl x Ar sigfile
 .Nm signify
 .Fl S
 .Op Fl e
-.Op Fl o Ar sigfile
+.Op Fl x Ar sigfile
 .Fl s Ar seckey
-.Ar message
+.Fl m Ar message
 .Nm signify
 .Fl V
 .Op Fl e
-.Op Fl o Ar sigfile
+.Op Fl x Ar sigfile
 .Fl p Ar pubkey
-.Ar message
+.Fl m Ar message
 .Sh DESCRIPTION
 The
 .Nm
-utility creates and verifies cryptographic signatures for
-an input file
+utility creates and verifies cryptographic signatures.
+A signature verifies the integrity of a
 .Ar message .
 The mode of operation is selected with the following options:
 .Bl -tag -width Dsssigfile
@@ -57,9 +57,9 @@ Generate a new keypair.
 .It Fl I
 Inspect the specified keys or signature and print their fingerprint.
 .It Fl S
-Sign the input file.
+Sign the specified message file and create a signature.
 .It Fl V
-Verify the input file and signature match.
+Verify the message and signature match.
 .El
 .Pp
 The other options are as follows:
@@ -67,17 +67,22 @@ The other options are as follows:
 .It Fl c Ar comment
 Specify the comment to be added during key generation.
 .It Fl e
-Embed the message after the signature when signing.
-For verification, extract the message from the signature.
+When signing, embed the message after the signature.
+When verifying, extract the message from the signature.
+(This requires that the signature was created using
+.Fl e
+and creates a new message file as output.)
+.It Fl m Ar message
+When signing, the file containing the message to sign.
+When verifying, the file containing the message to verify.
+When verifying with
+.Fl e ,
+the file to create.
 .It Fl n
 Do not ask for a passphrase during key generation.
 Otherwise,
 .Nm
-will prompt the user for a passphrase on the terminal.
-.It Fl o Ar sigfile
-The signature file to create or verify.
-The default is
-.Ar message Ns .sig .
+will prompt the user for a passphrase to protect the secret key.
 .It Fl p Ar pubkey
 Public key produced by
 .Fl G ,
@@ -90,6 +95,10 @@ Secret (private) key produced by
 and used by
 .Fl S
 to sign a message.
+.It Fl x Ar sigfile
+The signature file to create or verify.
+The default is
+.Ar message Ns .sig .
 .El
 .Pp
 The key and signature files created by
@@ -117,16 +126,15 @@ Create a new keypair:
 .Dl $ signify -G -p newkey.pub -s newkey.sec
 .Pp
 Sign a file, specifying a signature name:
-.Dl $ signify -S -s key.sec -o msg.sig message.txt
+.Dl $ signify -S -s key.sec -m message.txt -x msg.sig
 .Pp
 Verify a signature, using the default signature name:
-.Dl $ signify -V -p key.pub generalsorders.txt
+.Dl $ signify -V -p key.pub -m generalsorders.txt
 .Pp
 Verify a release directory containing
-.Pa SHA256.sig ,
-.Pa SHA256 ,
+.Pa SHA256.sig
 and a full set of release files:
-.Dl $ signify -V -p /etc/signify/55base.pub SHA256 && sha256 -c SHA256
+.Dl $ signify -V -e -p /etc/signify/55base.pub -x SHA256.sig -m - && sha256 -c -
 .Sh SEE ALSO
 .Xr fw_update 1 ,
 .Xr pkg_add 1 ,

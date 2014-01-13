@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.30 2014/01/12 21:18:52 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.31 2014/01/13 01:40:43 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -68,15 +68,17 @@ struct sig {
 extern char *__progname;
 
 static void
-usage(void)
+usage(const char *error)
 {
+	if (error)
+		fprintf(stderr, "%s\n", error);
 	fprintf(stderr, "usage:"
 #ifndef VERIFYONLY
-	    "\t%1$s -G [-c comment] [-n] -p pubkey -s seckey\n"
-	    "\t%1$s -I [-o sigfile] [-p pubkey] [-s seckey]\n"
-	    "\t%1$s -S [-e] [-o sigfile] -s seckey message\n"
+	    "\t%1$s -G [-n] [-c comment] -p pubkey -s seckey\n"
+	    "\t%1$s -I [-p pubkey] [-s seckey] [-x sigfile]\n"
+	    "\t%1$s -S [-e] [-x sigfile] -s seckey -m message\n"
 #endif
-	    "\t%1$s -V [-e] [-o sigfile] -p pubkey message\n",
+	    "\t%1$s -V [-e] [-x sigfile] -p pubkey -m message\n",
 	    __progname);
 	exit(1);
 }
@@ -86,9 +88,19 @@ xopen(const char *fname, int flags, mode_t mode)
 {
 	int fd;
 
-	fd = open(fname, flags, mode);
-	if (fd == -1)
-		err(1, "open %s", fname);
+	if (strcmp(fname, "-") == 0) {
+		if ((flags & O_WRONLY))
+			fd = dup(STDOUT_FILENO);
+		else
+			fd = dup(STDIN_FILENO);
+		if (fd == -1)
+			err(1, "dup failed");
+	} else {
+		fd = open(fname, flags, mode);
+		if (fd == -1)
+			err(1, "can't open %s for %s", fname,
+			    (flags & O_WRONLY) ? "writing" : "reading");
+	}
 	return fd;
 }
 
@@ -216,8 +228,7 @@ writeb64file(const char *filename, const char *comment, const void *buf,
 	int fd, rv;
 
 	fd = xopen(filename, O_CREAT|flags|O_NOFOLLOW|O_WRONLY, mode);
-	snprintf(header, sizeof(header), "%s%s\n", COMMENTHDR,
-	    comment);
+	snprintf(header, sizeof(header), "%s%s\n", COMMENTHDR, comment);
 	writeall(fd, header, strlen(header), filename);
 	if ((rv = b64_ntop(buf, len, b64, sizeof(b64)-1)) == -1)
 		errx(1, "b64 encode failed");
@@ -451,28 +462,28 @@ main(int argc, char **argv)
 
 	rounds = 42;
 
-	while ((ch = getopt(argc, argv, "GISVc:eno:p:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "GISVc:em:n:p:s:x:")) != -1) {
 		switch (ch) {
 #ifndef VERIFYONLY
 		case 'G':
 			if (verb)
-				usage();
+				usage(NULL);
 			verb = GENERATE;
 			break;
 		case 'I':
 			if (verb)
-				usage();
+				usage(NULL);
 			verb = INSPECT;
 			break;
 		case 'S':
 			if (verb)
-				usage();
+				usage(NULL);
 			verb = SIGN;
 			break;
 #endif
 		case 'V':
 			if (verb)
-				usage();
+				usage(NULL);
 			verb = VERIFY;
 			break;
 		case 'c':
@@ -481,11 +492,11 @@ main(int argc, char **argv)
 		case 'e':
 			embedded = 1;
 			break;
+		case 'm':
+			msgfile = optarg;
+			break;
 		case 'n':
 			rounds = 0;
-			break;
-		case 'o':
-			sigfile = optarg;
 			break;
 		case 'p':
 			pubkeyfile = optarg;
@@ -493,39 +504,39 @@ main(int argc, char **argv)
 		case 's':
 			seckeyfile = optarg;
 			break;
+		case 'x':
+			sigfile = optarg;
+			break;
 		default:
-			usage();
+			usage(NULL);
 			break;
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
-#ifdef VERIFYONLY
-	if (verb != VERIFY)
-#else
+	if (argc != 0)
+		usage(NULL);
+
 	if (verb == NONE)
-#endif
-		usage();
+		usage(NULL);
 
 #ifndef VERIFYONLY
 	if (verb == GENERATE) {
-		if (!pubkeyfile || !seckeyfile || argc != 0)
-			usage();
+		if (!pubkeyfile || !seckeyfile)
+			usage("need pubkey and seckey");
 		generate(pubkeyfile, seckeyfile, rounds, comment);
 	} else if (verb == INSPECT) {
-		if (argc != 0)
-			usage();
 		inspect(seckeyfile, pubkeyfile, sigfile);
 	} else
 #endif
 	{
-		if (argc != 1)
-			usage();
-
-		msgfile = argv[0];
+		if (!msgfile)
+			usage("need message");
 
 		if (!sigfile) {
+			if (strcmp(msgfile, "-") == 0)
+				errx(1, "must specify sigfile with - message");
 			if (snprintf(sigfilebuf, sizeof(sigfilebuf), "%s.sig",
 			    msgfile) >= sizeof(sigfilebuf))
 				errx(1, "path too long");
@@ -534,13 +545,13 @@ main(int argc, char **argv)
 #ifndef VERIFYONLY
 		if (verb == SIGN) {
 			if (!seckeyfile)
-				usage();
+				usage("need seckey");
 			sign(seckeyfile, msgfile, sigfile, embedded);
 		} else
 #endif
 		if (verb == VERIFY) {
 			if (!pubkeyfile)
-				usage();
+				usage("need pubkey");
 			verify(pubkeyfile, msgfile, sigfile, embedded);
 		}
 	}
