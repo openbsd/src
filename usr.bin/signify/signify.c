@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.32 2014/01/13 09:41:16 espie Exp $ */
+/* $OpenBSD: signify.c,v 1.33 2014/01/13 09:42:53 espie Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -119,15 +119,12 @@ static void
 readall(int fd, void *buf, size_t len, const char *filename)
 {
 	ssize_t x;
-
-	while (len != 0) {
-		x = read(fd, buf, len);
-		if (x == -1)
-			err(1, "read from %s", filename);
-		else {
-			len -= x;
-			buf += x;
-		}
+	
+	x = read(fd, buf, len);
+	if (x == -1) {
+		err(1, "read from %s", filename);
+	} else if (x != len) {
+		errx(1, "short read from %s", filename);
 	}
 }
 
@@ -202,15 +199,12 @@ static void
 writeall(int fd, const void *buf, size_t len, const char *filename)
 {
 	ssize_t x;
-
-	while (len != 0) {
-		x = write(fd, buf, len);
-		if (x == -1)
-			err(1, "write to %s", filename);
-		else {
-			len -= x;
-			buf += x;
-		}
+	
+	x = write(fd, buf, len);
+	if (x == -1) {
+		err(1, "write to %s", filename);
+	} else if (x != len) {
+		errx(1, "short write to %s", filename);
 	}
 }
 
