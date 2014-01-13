@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.218 2014/01/09 06:29:06 tedu Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.219 2014/01/13 23:03:52 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2094,7 +2094,7 @@ int
 carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 {
 	struct ifnet *ifp = sc->sc_carpdev;
-	struct in6_ifaddr *ia;
+	struct in6_ifaddr *ia6;
 	int error = 0;
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
@@ -2107,31 +2107,31 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 	}
 
 	/* we have to do this by hand to ensure we don't match on ourselves */
-	TAILQ_FOREACH(ia, &in6_ifaddr, ia_list) {
+	TAILQ_FOREACH(ia6, &in6_ifaddr, ia_list) {
 		int i;
 
 		for (i = 0; i < 4; i++) {
 			if ((sin6->sin6_addr.s6_addr32[i] &
-			    ia->ia_prefixmask.sin6_addr.s6_addr32[i]) !=
-			    (ia->ia_addr.sin6_addr.s6_addr32[i] &
-			    ia->ia_prefixmask.sin6_addr.s6_addr32[i]))
+			    ia6->ia_prefixmask.sin6_addr.s6_addr32[i]) !=
+			    (ia6->ia_addr.sin6_addr.s6_addr32[i] &
+			    ia6->ia_prefixmask.sin6_addr.s6_addr32[i]))
 				break;
 		}
 		/* and, yeah, we need a multicast-capable iface too */
-		if (ia->ia_ifp != &sc->sc_if &&
-		    ia->ia_ifp->if_type != IFT_CARP &&
-		    (ia->ia_ifp->if_flags & IFF_MULTICAST) &&
-		    ia->ia_ifp->if_rdomain == sc->sc_if.if_rdomain &&
+		if (ia6->ia_ifp != &sc->sc_if &&
+		    ia6->ia_ifp->if_type != IFT_CARP &&
+		    (ia6->ia_ifp->if_flags & IFF_MULTICAST) &&
+		    ia6->ia_ifp->if_rdomain == sc->sc_if.if_rdomain &&
 		    (i == 4))
 			break;
 	}
 
-	if (ia) {
+	if (ia6) {
 		if (sc->sc_carpdev) {
-			if (sc->sc_carpdev != ia->ia_ifp)
+			if (sc->sc_carpdev != ia6->ia_ifp)
 				return (EADDRNOTAVAIL);
 		} else {
-			ifp = ia->ia_ifp;
+			ifp = ia6->ia_ifp;
 		}
 	}
 

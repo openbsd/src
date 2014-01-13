@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.34 2013/11/28 10:16:44 mpi Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.35 2014/01/13 23:03:52 bluhm Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -373,7 +373,7 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 	struct mld_hdr *mldh;
 	struct ip6_hdr *ip6;
 	struct ip6_moptions im6o;
-	struct in6_ifaddr *ia;
+	struct in6_ifaddr *ia6;
 	struct ifnet *ifp = in6m->in6m_ifp;
 	int ignflags;
 
@@ -384,10 +384,10 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 	 * the case where we first join a link-local address.
 	 */
 	ignflags = (IN6_IFF_NOTREADY|IN6_IFF_ANYCAST) & ~IN6_IFF_TENTATIVE;
-	if ((ia = in6ifa_ifpforlinklocal(ifp, ignflags)) == NULL)
+	if ((ia6 = in6ifa_ifpforlinklocal(ifp, ignflags)) == NULL)
 		return;
-	if ((ia->ia6_flags & IN6_IFF_TENTATIVE))
-		ia = NULL;
+	if ((ia6->ia6_flags & IN6_IFF_TENTATIVE))
+		ia6 = NULL;
 
 	/*
 	 * Allocate mbufs to store ip6 header and MLD header.
@@ -418,7 +418,7 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 	/* ip6_plen will be set later */
 	ip6->ip6_nxt = IPPROTO_ICMPV6;
 	/* ip6_hlim will be set by im6o.im6o_multicast_hlim */
-	ip6->ip6_src = ia ? ia->ia_addr.sin6_addr : in6addr_any;
+	ip6->ip6_src = ia6 ? ia6->ia_addr.sin6_addr : in6addr_any;
 	ip6->ip6_dst = dst ? *dst : in6m->in6m_addr;
 
 	/* fill in the MLD header */
@@ -464,6 +464,6 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 		break;
 	}
 
-	ip6_output(mh, &ip6_opts, NULL, ia ? 0 : IPV6_UNSPECSRC, &im6o, NULL,
+	ip6_output(mh, &ip6_opts, NULL, ia6 ? 0 : IPV6_UNSPECSRC, &im6o, NULL,
 	    NULL);
 }

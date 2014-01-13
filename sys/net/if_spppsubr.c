@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.116 2014/01/12 15:38:06 stsp Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.117 2014/01/13 23:03:52 bluhm Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4727,7 +4727,7 @@ sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
 		   struct in6_addr *srcmask)
 {
 	struct ifnet *ifp = &sp->pp_if;
-	struct in6_ifaddr *ia;
+	struct in6_ifaddr *ia6;
 	struct in6_addr ssrc, ddst;
 
 	bzero(&ssrc, sizeof(ssrc));
@@ -4736,18 +4736,18 @@ sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
 	 * Pick the first link-local AF_INET6 address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
-	ia = in6ifa_ifpforlinklocal(ifp, 0);
-	if (ia) {
-		if (!IN6_IS_ADDR_UNSPECIFIED(&ia->ia_addr.sin6_addr)) {
-			bcopy(&ia->ia_addr.sin6_addr, &ssrc, sizeof(ssrc));
+	ia6 = in6ifa_ifpforlinklocal(ifp, 0);
+	if (ia6) {
+		if (!IN6_IS_ADDR_UNSPECIFIED(&ia6->ia_addr.sin6_addr)) {
+			bcopy(&ia6->ia_addr.sin6_addr, &ssrc, sizeof(ssrc));
 			if (srcmask) {
-				bcopy(&ia->ia_prefixmask.sin6_addr, srcmask,
+				bcopy(&ia6->ia_prefixmask.sin6_addr, srcmask,
 				    sizeof(*srcmask));
 			}
 		}
 
-		if (!IN6_IS_ADDR_UNSPECIFIED(&ia->ia_dstaddr.sin6_addr))
-			bcopy(&ia->ia_dstaddr.sin6_addr, &ddst, sizeof(ddst));
+		if (!IN6_IS_ADDR_UNSPECIFIED(&ia6->ia_dstaddr.sin6_addr))
+			bcopy(&ia6->ia_dstaddr.sin6_addr, &ddst, sizeof(ddst));
 	}
 
 	if (dst)
@@ -4764,13 +4764,13 @@ sppp_update_ip6_addr(void *arg1, void *arg2)
 	struct ifnet *ifp = &sp->pp_if;
 	struct in6_aliasreq *ifra = arg2;
 	struct in6_addr mask = in6mask128;
-	struct in6_ifaddr *ia;
+	struct in6_ifaddr *ia6;
 	int s, error;
 
 	s = splnet();
 
-	ia = in6ifa_ifpforlinklocal(ifp, 0);
-	if (ia == NULL) {
+	ia6 = in6ifa_ifpforlinklocal(ifp, 0);
+	if (ia6 == NULL) {
 		/* IPv6 disabled? */
 		splx(s);
 		return;
@@ -4796,14 +4796,14 @@ sppp_update_ip6_addr(void *arg1, void *arg2)
 	 */
 
 	/* Destination address can only be set for /128. */
-	if (!in6_are_prefix_equal(&ia->ia_prefixmask.sin6_addr, &mask, 128)) {
+	if (!in6_are_prefix_equal(&ia6->ia_prefixmask.sin6_addr, &mask, 128)) {
 		ifra->ifra_dstaddr.sin6_len = 0;
 		ifra->ifra_dstaddr.sin6_family = AF_UNSPEC;
 	}
 
-	ifra->ifra_lifetime = ia->ia6_lifetime;
+	ifra->ifra_lifetime = ia6->ia6_lifetime;
 
-	error = in6_update_ifa(ifp, ifra, ia);
+	error = in6_update_ifa(ifp, ifra, ia6);
 	if (error) {
 		log(LOG_ERR, SPP_FMT
 		    "could not update IPv6 address (error %d)\n",

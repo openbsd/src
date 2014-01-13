@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.66 2014/01/07 16:34:05 stsp Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.67 2014/01/13 23:03:52 bluhm Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -315,7 +315,7 @@ success:
 int
 in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 {
-	struct in6_ifaddr *ia;
+	struct in6_ifaddr *ia6;
 	struct in6_aliasreq ifra;
 	struct nd_prefix pr0;
 	int i, s, error;
@@ -398,17 +398,17 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 	 * XXX: Some P2P interfaces seem not to send packets just after
 	 * becoming up, so we skip p2p interfaces for safety.
 	 */
-	ia = in6ifa_ifpforlinklocal(ifp, 0); /* ia must not be NULL */
+	ia6 = in6ifa_ifpforlinklocal(ifp, 0); /* ia6 must not be NULL */
 #ifdef DIAGNOSTIC
-	if (!ia) {
-		panic("ia == NULL in in6_ifattach_linklocal");
+	if (!ia6) {
+		panic("ia6 == NULL in in6_ifattach_linklocal");
 		/* NOTREACHED */
 	}
 #endif
 	if (in6if_do_dad(ifp) && ((ifp->if_flags & IFF_POINTOPOINT) ||
 	    (ifp->if_type == IFT_CARP)) == 0) {
-		ia->ia6_flags &= ~IN6_IFF_NODAD;
-		ia->ia6_flags |= IN6_IFF_TENTATIVE;
+		ia6->ia6_flags &= ~IN6_IFF_NODAD;
+		ia6->ia6_flags |= IN6_IFF_TENTATIVE;
 	}
 
 	/*
@@ -567,7 +567,7 @@ in6_nigroup(struct ifnet *ifp, const char *name, int namelen,
 void
 in6_ifattach(struct ifnet *ifp)
 {
-	struct in6_ifaddr *ia;
+	struct in6_ifaddr *ia6;
 	struct in6_addr in6;
 
 	/* some of the interfaces are inherently not IPv6 capable */
@@ -628,8 +628,8 @@ in6_ifattach(struct ifnet *ifp)
 	 * assign a link-local address, if there's none.
 	 */
 	if (ip6_auto_linklocal) {
-		ia = in6ifa_ifpforlinklocal(ifp, 0);
-		if (ia == NULL) {
+		ia6 = in6ifa_ifpforlinklocal(ifp, 0);
+		if (ia6 == NULL) {
 			if (in6_ifattach_linklocal(ifp, NULL) == 0) {
 				/* linklocal address assigned */
 			} else {

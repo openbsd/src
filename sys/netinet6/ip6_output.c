@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.148 2013/10/23 19:57:50 deraadt Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.149 2014/01/13 23:03:52 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 	struct rtentry *rt = NULL;
 	struct sockaddr_in6 *dst, dstsock;
 	int error = 0;
-	struct in6_ifaddr *ia = NULL;
+	struct in6_ifaddr *ia6 = NULL;
 	u_long mtu;
 	int alwaysfrag, dontfrag;
 	u_int32_t optlen = 0, plen = 0, unfragpartlen = 0;
@@ -567,7 +567,7 @@ reroute:
 	 * then rt (for unicast) and ifp must be non-NULL valid values.
 	 */
 	if (rt) {
-		ia = ifatoia6(rt->rt_ifa);
+		ia6 = ifatoia6(rt->rt_ifa);
 		rt->rt_use++;
 	}
 
@@ -581,8 +581,8 @@ reroute:
 	 * destination addresses.  We should use ia_ifp to support the
 	 * case of sending packets to an address of our own.
 	 */
-	if (ia != NULL && ia->ia_ifp)
-		origifp = ia->ia_ifp;
+	if (ia6 != NULL && ia6->ia_ifp)
+		origifp = ia6->ia_ifp;
 	else
 		origifp = ifp;
 

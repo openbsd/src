@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.73 2014/01/07 17:07:46 mikeb Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.74 2014/01/13 23:03:52 bluhm Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1123,7 +1123,7 @@ nd6_dad_stoptimer(struct dadq *dp)
 void
 nd6_dad_start(struct ifaddr *ifa, int *tick)
 {
-	struct in6_ifaddr *ia = ifatoia6(ifa);
+	struct in6_ifaddr *ia6 = ifatoia6(ifa);
 	struct dadq *dp;
 	char addr[INET6_ADDRSTRLEN];
 
@@ -1138,21 +1138,21 @@ nd6_dad_start(struct ifaddr *ifa, int *tick)
 	 * - DAD is disabled (ip6_dad_count == 0)
 	 * - the interface address is anycast
 	 */
-	if (!(ia->ia6_flags & IN6_IFF_TENTATIVE)) {
+	if (!(ia6->ia6_flags & IN6_IFF_TENTATIVE)) {
 		log(LOG_DEBUG,
 			"nd6_dad_start: called with non-tentative address "
 			"%s(%s)\n",
-			inet_ntop(AF_INET6, &ia->ia_addr.sin6_addr,
+			inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
 			    addr, sizeof(addr)),
 			ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
 		return;
 	}
-	if (ia->ia6_flags & IN6_IFF_ANYCAST) {
-		ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
+	if (ia6->ia6_flags & IN6_IFF_ANYCAST) {
+		ia6->ia6_flags &= ~IN6_IFF_TENTATIVE;
 		return;
 	}
 	if (!ip6_dad_count) {
-		ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
+		ia6->ia6_flags &= ~IN6_IFF_TENTATIVE;
 		return;
 	}
 	if (!ifa->ifa_ifp)
@@ -1168,7 +1168,7 @@ nd6_dad_start(struct ifaddr *ifa, int *tick)
 	if (dp == NULL) {
 		log(LOG_ERR, "nd6_dad_start: memory allocation failed for "
 			"%s(%s)\n",
-			inet_ntop(AF_INET6, &ia->ia_addr.sin6_addr,
+			inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
 			    addr, sizeof(addr)),
 			ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
 		return;
@@ -1178,7 +1178,7 @@ nd6_dad_start(struct ifaddr *ifa, int *tick)
 	ip6_dad_pending++;
 
 	nd6log((LOG_DEBUG, "%s: starting DAD for %s\n", ifa->ifa_ifp->if_xname,
-	    inet_ntop(AF_INET6, &ia->ia_addr.sin6_addr, addr, sizeof(addr))));
+	    inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr, addr, sizeof(addr))));
 
 	/*
 	 * Send NS packet for DAD, ip6_dad_count times.
@@ -1237,14 +1237,14 @@ void
 nd6_dad_timer(struct ifaddr *ifa)
 {
 	int s;
-	struct in6_ifaddr *ia = ifatoia6(ifa);
+	struct in6_ifaddr *ia6 = ifatoia6(ifa);
 	struct dadq *dp;
 	char addr[INET6_ADDRSTRLEN];
 
 	s = splsoftnet();		/* XXX */
 
 	/* Sanity check */
-	if (ia == NULL) {
+	if (ia6 == NULL) {
 		log(LOG_ERR, "nd6_dad_timer: called with null parameter\n");
 		goto done;
 	}
@@ -1253,18 +1253,18 @@ nd6_dad_timer(struct ifaddr *ifa)
 		log(LOG_ERR, "nd6_dad_timer: DAD structure not found\n");
 		goto done;
 	}
-	if (ia->ia6_flags & IN6_IFF_DUPLICATED) {
+	if (ia6->ia6_flags & IN6_IFF_DUPLICATED) {
 		log(LOG_ERR, "nd6_dad_timer: called with duplicated address "
 			"%s(%s)\n",
-			inet_ntop(AF_INET6, &ia->ia_addr.sin6_addr,
+			inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
 			    addr, sizeof(addr)),
 			ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
 		goto done;
 	}
-	if ((ia->ia6_flags & IN6_IFF_TENTATIVE) == 0) {
+	if ((ia6->ia6_flags & IN6_IFF_TENTATIVE) == 0) {
 		log(LOG_ERR, "nd6_dad_timer: called with non-tentative address "
 			"%s(%s)\n",
-			inet_ntop(AF_INET6, &ia->ia_addr.sin6_addr,
+			inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
 			    addr, sizeof(addr)),
 			ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
 		goto done;
@@ -1322,12 +1322,12 @@ nd6_dad_timer(struct ifaddr *ifa)
 			 * We are done with DAD.  No NA came, no NS came.
 			 * duplicated address found.
 			 */
-			ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
+			ia6->ia6_flags &= ~IN6_IFF_TENTATIVE;
 
 			nd6log((LOG_DEBUG,
 			    "%s: DAD complete for %s - no duplicates found\n",
 			    ifa->ifa_ifp->if_xname,
-			    inet_ntop(AF_INET6, &ia->ia_addr.sin6_addr,
+			    inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
 				addr, sizeof(addr))));
 
 			TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
@@ -1345,7 +1345,7 @@ done:
 void
 nd6_dad_duplicated(struct ifaddr *ifa)
 {
-	struct in6_ifaddr *ia = ifatoia6(ifa);
+	struct in6_ifaddr *ia6 = ifatoia6(ifa);
 	struct dadq *dp;
 	char addr[INET6_ADDRSTRLEN];
 
@@ -1358,18 +1358,18 @@ nd6_dad_duplicated(struct ifaddr *ifa)
 	log(LOG_ERR, "%s: DAD detected duplicate IPv6 address %s: "
 	    "NS in/out=%d/%d, NA in=%d\n",
 	    ifa->ifa_ifp->if_xname,
-	    inet_ntop(AF_INET6, &ia->ia_addr.sin6_addr, addr, sizeof(addr)),
+	    inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr, addr, sizeof(addr)),
 	    dp->dad_ns_icount, dp->dad_ns_ocount, dp->dad_na_icount);
 
-	ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
-	ia->ia6_flags |= IN6_IFF_DUPLICATED;
+	ia6->ia6_flags &= ~IN6_IFF_TENTATIVE;
+	ia6->ia6_flags |= IN6_IFF_DUPLICATED;
 
 	/* We are done with DAD, with duplicated address found. (failure) */
 	nd6_dad_stoptimer(dp);
 
 	log(LOG_ERR, "%s: DAD complete for %s - duplicate found\n",
 	    ifa->ifa_ifp->if_xname,
-	    inet_ntop(AF_INET6, &ia->ia_addr.sin6_addr, addr, sizeof(addr)));
+	    inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr, addr, sizeof(addr)));
 	log(LOG_ERR, "%s: manual intervention required\n",
 	    ifa->ifa_ifp->if_xname);
 
@@ -1383,7 +1383,7 @@ nd6_dad_duplicated(struct ifaddr *ifa)
 void
 nd6_dad_ns_output(struct dadq *dp, struct ifaddr *ifa)
 {
-	struct in6_ifaddr *ia = ifatoia6(ifa);
+	struct in6_ifaddr *ia6 = ifatoia6(ifa);
 	struct ifnet *ifp = ifa->ifa_ifp;
 
 	dp->dad_ns_tcount++;
@@ -1401,13 +1401,13 @@ nd6_dad_ns_output(struct dadq *dp, struct ifaddr *ifa)
 	}
 
 	dp->dad_ns_ocount++;
-	nd6_ns_output(ifp, NULL, &ia->ia_addr.sin6_addr, NULL, 1);
+	nd6_ns_output(ifp, NULL, &ia6->ia_addr.sin6_addr, NULL, 1);
 }
 
 void
 nd6_dad_ns_input(struct ifaddr *ifa)
 {
-	struct in6_ifaddr *ia;
+	struct in6_ifaddr *ia6;
 	struct in6_addr *taddr6;
 	struct dadq *dp;
 	int duplicate;
@@ -1415,8 +1415,8 @@ nd6_dad_ns_input(struct ifaddr *ifa)
 	if (!ifa)
 		panic("ifa == NULL in nd6_dad_ns_input");
 
-	ia = ifatoia6(ifa);
-	taddr6 = &ia->ia_addr.sin6_addr;
+	ia6 = ifatoia6(ifa);
+	taddr6 = &ia6->ia_addr.sin6_addr;
 	duplicate = 0;
 	dp = nd6_dad_find(ifa);
 

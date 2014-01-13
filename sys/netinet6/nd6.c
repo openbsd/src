@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.108 2014/01/10 14:29:08 tedu Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.109 2014/01/13 23:03:52 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1264,18 +1264,18 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		s = splsoftnet();
 		/* First purge the addresses referenced by a prefix. */
 		LIST_FOREACH_SAFE(pr, &nd_prefix, ndpr_entry, npr) {
-			struct in6_ifaddr *ia, *ia_next;
+			struct in6_ifaddr *ia6, *ia6_next;
 
 			if (IN6_IS_ADDR_LINKLOCAL(&pr->ndpr_prefix.sin6_addr))
 				continue; /* XXX */
 
 			/* do we really have to remove addresses as well? */
-			TAILQ_FOREACH_SAFE(ia, &in6_ifaddr, ia_list, ia_next) {
-				if ((ia->ia6_flags & IN6_IFF_AUTOCONF) == 0)
+			TAILQ_FOREACH_SAFE(ia6, &in6_ifaddr, ia_list, ia6_next) {
+				if ((ia6->ia6_flags & IN6_IFF_AUTOCONF) == 0)
 					continue;
 
-				if (ia->ia6_ndpr == pr)
-					in6_purgeaddr(&ia->ia_ifa);
+				if (ia6->ia6_ndpr == pr)
+					in6_purgeaddr(&ia6->ia_ifa);
 			}
 		}
 		/*
