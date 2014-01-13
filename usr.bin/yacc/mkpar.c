@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkpar.c,v 1.16 2014/01/08 21:40:25 millert Exp $	*/
+/*	$OpenBSD: mkpar.c,v 1.17 2014/01/13 23:14:18 millert Exp $	*/
 /*	$NetBSD: mkpar.c,v 1.4 1996/03/19 03:21:39 jtc Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ extern action *get_shifts();
 extern action *add_reductions();
 extern action *add_reduce();
 
-int sole_reduction(int);
+short sole_reduction(int);
 void free_action_row(action *);
 
 void find_final_state(void);
@@ -338,10 +338,11 @@ total_conflicts(void)
 }
 
 
-int
+short
 sole_reduction(int stateno)
 {
-    int count, ruleno;
+    int count;
+    short ruleno;
     action *p;
 
     count = 0;

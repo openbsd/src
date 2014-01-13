@@ -1,4 +1,4 @@
-/*	$OpenBSD: lr0.c,v 1.15 2014/01/08 22:36:37 millert Exp $	*/
+/*	$OpenBSD: lr0.c,v 1.16 2014/01/13 23:14:17 millert Exp $	*/
 /*	$NetBSD: lr0.c,v 1.4 1996/03/19 03:21:35 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ core *first_state;
 shifts *first_shift;
 reductions *first_reduction;
 
-int get_state(int);
+short get_state(int);
 core *new_state(int);
 
 void allocate_itemsets(void);
@@ -197,7 +197,7 @@ generate_states(void)
 
 
 
-int
+short
 get_state(int symbol)
 {
     int key;
