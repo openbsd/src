@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.2 2014/01/10 22:52:50 tobiasu Exp $
+#	$OpenBSD: Makefile,v 1.3 2014/01/13 22:29:32 tedu Exp $
 
-CLEANFILES += test.sig
+CLEANFILES += test.sig confirmorders confirmorders.sig
 REGRESS_TARGETS = t1
 
 t1:

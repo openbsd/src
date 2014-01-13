@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: signify.sh,v 1.3 2014/01/09 18:59:56 tedu Exp $
+# $OpenBSD: signify.sh,v 1.4 2014/01/13 22:29:32 tedu Exp $
 
 srcdir=$1
 
@@ -11,12 +11,15 @@ forgery="$srcdir/forgery.txt"
 
 set -e
 
-signify -s $seckey -o test.sig -S $orders 
-diff -u test.sig "$orders.sig"
-rm test.sig
+signify -S -s $seckey -x test.sig -m $orders 
+diff -u "$orders.sig" test.sig
 
-signify -p $pubkey -V $orders > /dev/null
+signify -V -p $pubkey -m $orders
 
-signify -p $pubkey -V $forgery 2> /dev/null && exit 1
+signify -V -p $pubkey -m $forgery 2> /dev/null && exit 1
+
+signify -S -s $seckey -x confirmorders.sig -e -m $orders 
+signify -V -p $pubkey -e -m confirmorders
+diff -u $orders confirmorders
 
 true
