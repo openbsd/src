@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.69 2014/01/13 21:04:19 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.70 2014/01/13 21:36:46 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -536,12 +536,12 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease)
 		if (token != TOK_STRING) {
 			parse_warn("expecting interface name (in quotes).");
 			skip_to_semi(cfile);
-			break;
+			return;
 		}
 		if (strcmp(ifi->name, val) != 0) {
 			parse_warn("wrong interface name.");
 			skip_to_semi(cfile);
-			break;
+			return;
 		}
 		break;
 	case TOK_FIXED_ADDR:
@@ -576,7 +576,7 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease)
 	default:
 		parse_warn("expecting lease declaration.");
 		skip_to_semi(cfile);
-		break;
+		return;
 	}
 	token = next_token(&val, cfile);
 	if (token != ';') {
