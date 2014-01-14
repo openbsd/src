@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.35 2014/01/14 17:25:06 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.36 2014/01/14 21:33:10 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -519,42 +519,39 @@ main(int argc, char **argv)
 	if (argc != 0)
 		usage(NULL);
 
-	if (verb == NONE)
-		usage(NULL);
+	if (!sigfile && msgfile) {
+		if (strcmp(msgfile, "-") == 0)
+			errx(1, "must specify sigfile with - message");
+		if (snprintf(sigfilebuf, sizeof(sigfilebuf), "%s.sig",
+		    msgfile) >= sizeof(sigfilebuf))
+			errx(1, "path too long");
+		sigfile = sigfilebuf;
+	}
 
+	switch (verb) {
 #ifndef VERIFYONLY
-	if (verb == GENERATE) {
+	case GENERATE:
 		if (!pubkeyfile || !seckeyfile)
 			usage("need pubkey and seckey");
 		generate(pubkeyfile, seckeyfile, rounds, comment);
-	} else if (verb == INSPECT) {
+		break;
+	case INSPECT:
 		inspect(seckeyfile, pubkeyfile, sigfile);
-	} else
+		break;
+	case SIGN:
+		if (!msgfile || !seckeyfile)
+			usage("need message and seckey");
+		sign(seckeyfile, msgfile, sigfile, embedded);
+		break;
 #endif
-	{
-		if (!msgfile)
-			usage("need message");
-
-		if (!sigfile) {
-			if (strcmp(msgfile, "-") == 0)
-				errx(1, "must specify sigfile with - message");
-			if (snprintf(sigfilebuf, sizeof(sigfilebuf), "%s.sig",
-			    msgfile) >= sizeof(sigfilebuf))
-				errx(1, "path too long");
-			sigfile = sigfilebuf;
-		}
-#ifndef VERIFYONLY
-		if (verb == SIGN) {
-			if (!seckeyfile)
-				usage("need seckey");
-			sign(seckeyfile, msgfile, sigfile, embedded);
-		} else
-#endif
-		if (verb == VERIFY) {
-			if (!pubkeyfile)
-				usage("need pubkey");
-			verify(pubkeyfile, msgfile, sigfile, embedded);
-		}
+	case VERIFY:
+		if (!msgfile || !pubkeyfile)
+			usage("need message and pubkey");
+		verify(pubkeyfile, msgfile, sigfile, embedded);
+		break;
+	default:
+		usage(NULL);
+		break;
 	}
 
 	return 0;
