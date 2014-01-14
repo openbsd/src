@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.20 2014/01/12 11:18:57 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.21 2014/01/14 10:05:58 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -118,11 +118,10 @@ OpenBSD::Auto::cache(signer_list,
 			my $value = `$cmd`;
 			$value =~ s/\.//;
 			chomp $value;
-			my $previous = $value - 1;
 			if ($self->defines('FW_UPDATE')) {
-				return [$value."fw", $previous."fw"];
+				return [$value."fw", qr{^\d+fw$}];
 			} else {
-				return [$value."pkg", $previous."pkg"];
+				return [$value."pkg", qr{^\d+pkg$}];
 			}
 		}
 	});

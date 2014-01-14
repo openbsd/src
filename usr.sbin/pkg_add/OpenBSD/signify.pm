@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: signify.pm,v 1.9 2014/01/13 01:41:34 tedu Exp $
+# $OpenBSD: signify.pm,v 1.10 2014/01/14 10:05:58 espie Exp $
 #
 # Copyright (c) 2013-2014 Marc Espie <espie@openbsd.org>
 #
@@ -53,6 +53,19 @@ sub compute_signature
 sub check_signature
 {
 	my ($plist, $state) = @_;
+	
+	if (!$plist->has('signer')) {
+		$state->errsay("Invalid signed plist: no \@signer");
+		return 0;
+	}
+	my $signer = $plist->get('signer')->name;
+	my $pubkey = OpenBSD::Paths->signifykey($signer);
+	if (!-f $pubkey) {
+		$state->errsay("Can't find key #1 for signer #1", $pubkey, 
+		    $signer);
+		return 0;
+	}
+
 	my $sig = $plist->get('digital-signature');
 	my ($fh, $fname) = mkstemp("/tmp/pkgcontent.XXXXXXXXX");
 	$plist->write_no_sig($fh);
@@ -60,30 +73,20 @@ sub check_signature
 	print $fh2 $header, $sig->{b64sig}, "\n";
 	close $fh;
 	close $fh2;
-	
-	if (!$plist->has('signer')) {
-		$state->errsay("Invalid signed plist: no \@signer");
-		return 0;
-	}
-	my $pubkey;
-	my $signer = $plist->get('signer')->name;
-	if (grep {$_ eq $signer} @{$state->signer_list}) {
-		$pubkey = OpenBSD::Paths->signifykey($signer);
-		if (!-f $pubkey) {
-			$state->errsay("Can't find key #1 for signer #1", 
-			    $pubkey, $signer);
-			return 0;
-		}
-	} else {
-		$state->errsay("Package signed by untrusted party #1", $signer);
-		return 0;
-	}
-	if ($state->system($cmd, '-p', $pubkey, '-V', '-m', $fname) != 0) {
+	my $rc = $state->system($cmd, '-p', $pubkey, '-V', '-m', $fname);
+	unlink $fname;
+	unlink $fname.$suffix;
+
+	if ($rc != 0) {
 	    	$state->log("Bad signature");
 		return 0;
 	}
-	unlink $fname;
-	unlink $fname.$suffix;
+	if (!grep 
+	    {ref($_) eq 'Regexp' ? $signer =~ $_ : $_ eq $signer} 
+	    @{$state->signer_list}) {
+		$state->errsay("Package signed by untrusted party #1", $signer);
+		return 0;
+	}
 	return 1;
 }
 
