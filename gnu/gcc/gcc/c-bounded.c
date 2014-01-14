@@ -34,7 +34,7 @@
 /* Bounded attribute types */
 enum bounded_type { buffer_bound_type, string_bound_type,
                     minbytes_bound_type, size_bound_type,
-                    bounded_type_error };
+                    bounded_type_error, wcstring_bound_type };
 
 typedef struct bound_check_info
 {
@@ -101,7 +101,8 @@ handle_bounded_attribute (node, name, args, flags, no_add_attrs)
 
       if (info.bounded_type == size_bound_type
           || info.bounded_type == string_bound_type
-          || info.bounded_type == buffer_bound_type)
+          || info.bounded_type == buffer_bound_type
+          || info.bounded_type == wcstring_bound_type)
         {
           arg_iterate = argument;
           for (arg_num = 1; ; ++arg_num)
@@ -213,6 +214,12 @@ decode_bounded_attr (args, info, validated_p)
           return false;
         }
       break;
+    case wcstring_bound_type:
+      if (bounded_size_expr)
+        warning (
+            OPT_Wbounded, "`wcstring' bound type only takes 2 parameters");
+      bounded_size_expr = size_int (0);
+      break;
     }
 
   /* Strip any conversions from the buffer parameters and verify they
@@ -291,6 +298,8 @@ decode_bounded_type (s)
     return minbytes_bound_type;
   else if (!strcmp (s, "size") || !strcmp (s, "__size__"))
     return size_bound_type;
+  else if (!strcmp (s, "wcstring") || !strcmp (s, "__wcstring__"))
+    return wcstring_bound_type;
   else
     return bounded_type_error;
 }
@@ -484,6 +493,16 @@ check_bounded_info (status, info, params)
           if (array_size < (length * elem_size))
             status_warning(status, "array size (%d) smaller than required length (%d * %d)",
                 array_size, length, elem_size);
+          break;
+        case wcstring_bound_type:
+          /* warn about illegal bounds value */
+          if (length < 0)
+            status_warning (
+                status, "non-positive bounds length (%d) detected", length);
+          /* check if the static buffer is smaller than bound length */
+          if (array_size / type_size < length)
+            status_warning(status, "array size (%d) smaller than bound length"
+                " (%d) * sizeof(type)", array_size, length);
           break;
         }
     }
