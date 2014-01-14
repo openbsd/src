@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.20 2014/01/14 13:59:45 naddy Exp $
+.\" $OpenBSD: signify.1,v 1.21 2014/01/14 17:49:24 jmc Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -134,7 +134,10 @@ Verify a signature, using the default signature name:
 Verify a release directory containing
 .Pa SHA256.sig
 and a full set of release files:
-.Dl $ signify -V -e -p /etc/signify/55base.pub -x SHA256.sig -m - | sha256 -c -
+.Bd -literal -offset indent -compact
+$ signify -V -e -p /etc/signify/55base.pub -x SHA256.sig -m - | \e
+	sha256 -c -
+.Ed
 .Sh SEE ALSO
 .Xr fw_update 1 ,
 .Xr pkg_add 1 ,
