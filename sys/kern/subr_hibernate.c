@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.81 2013/11/21 00:13:33 dlg Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.82 2014/01/14 09:57:51 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1610,7 +1610,7 @@ hibernate_read_image(union hibernate_info *hib)
 
 	disk_size = compressed_size;
 
-	printf("unhibernating @ block %lld length %lu blocks\n",
+	printf("unhibernating @ block %lld length %lu bytes\n",
 	    hib->sig_offset - chunktable_size,
 	    compressed_size);
 
