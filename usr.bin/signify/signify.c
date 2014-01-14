@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.36 2014/01/14 21:33:10 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.37 2014/01/14 21:34:30 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -251,6 +251,8 @@ kdf(uint8_t *salt, size_t saltlen, int rounds, uint8_t *key, size_t keylen)
 
 	if (!readpassphrase("passphrase: ", pass, sizeof(pass), 0))
 		errx(1, "readpassphrase");
+	if (strlen(pass) == 0)
+		errx(1, "please provide a password");
 	if (bcrypt_pbkdf(pass, strlen(pass), salt, saltlen, key,
 	    keylen, rounds) == -1)
 		errx(1, "bcrypt pbkdf");
