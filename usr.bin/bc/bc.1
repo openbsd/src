@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.29 2011/08/30 12:25:09 jmc Exp $
+.\"	$OpenBSD: bc.1,v 1.30 2014/01/14 07:42:42 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)bc.1	6.8 (Berkeley) 8/8/91
 .\"
-.Dd $Mdocdate: August 30 2011 $
+.Dd $Mdocdate: January 14 2014 $
 .Dt BC 1
 .Os
 .Sh NAME
@@ -154,7 +154,7 @@ Note the following:
 .It
 The relational operators may appear in any expression.
 The
-.St -p1003.2
+.St -p1003.1-2008
 standard only allows them in the conditional expression of an
 .Sq if ,
 .Sq while
@@ -369,7 +369,8 @@ utility is compliant with the
 specification.
 .Pp
 The flags
-.Op Fl ce
+.Op Fl ce ,
+as well as the parts noted above,
 are extensions to that specification.
 .Sh HISTORY
 The
