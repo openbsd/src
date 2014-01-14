@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.33 2014/01/13 09:42:53 espie Exp $ */
+/* $OpenBSD: signify.c,v 1.34 2014/01/14 17:15:12 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -23,6 +23,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <err.h>
 #include <unistd.h>
 #include <readpassphrase.h>
