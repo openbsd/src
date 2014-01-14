@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.92 2014/01/11 11:51:01 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.93 2014/01/14 13:57:20 naddy Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: January 11 2014 $
+.Dd $Mdocdate: January 14 2014 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -277,7 +277,7 @@ private usage, a
 must be specified, so that
 .Xr pkg_add 1
 will be able to retrieve the correct public key from
-.Pa /etc/signify/<signer>.pubkey .
+.Pa /etc/signify/<signer>.pub .
 .It Fl U Ar undisplayfile
 Display the file (using
 .Xr more 1 )
