@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.34 2013/10/08 03:10:36 guenther Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.35 2014/01/14 02:55:09 guenther Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -448,17 +448,9 @@ badlink:
 	 * we were able to create the node. set uid/gid, modes and times
 	 */
 	if (pids)
-		res = ((arcn->type == PAX_SLK) ?
-		    set_lids(nm, arcn->sb.st_uid, arcn->sb.st_gid) :
-		    set_ids(nm, arcn->sb.st_uid, arcn->sb.st_gid));
+		res = set_ids(nm, arcn->sb.st_uid, arcn->sb.st_gid);
 	else
 		res = 0;
-
-	/*
-	 * symlinks are done now.
-	 */
-	if (arcn->type == PAX_SLK)
-		return(0);
 
 	/*
 	 * IMPORTANT SECURITY NOTE:
@@ -666,7 +658,7 @@ set_ftime(char *fnm, time_t mtime, time_t atime, int frc)
 	tv[0].tv_nsec = 0L;
 	tv[1].tv_sec = mtime;
 	tv[1].tv_nsec = 0L;
-	if (!frc && (!patime || !pmtime)) {
+	if (!frc) {
 		/*
 		 * if we are not forcing, only set those times the user wants
 		 * set.
@@ -680,7 +672,7 @@ set_ftime(char *fnm, time_t mtime, time_t atime, int frc)
 	/*
 	 * set the times
 	 */
-	if (utimensat(AT_FDCWD, fnm, tv, 0) < 0)
+	if (utimensat(AT_FDCWD, fnm, tv, AT_SYMLINK_NOFOLLOW) < 0)
 		syswarn(1, errno, "Access/modification time set failed on: %s",
 		    fnm);
 	return;
@@ -695,7 +687,7 @@ fset_ftime(char *fnm, int fd, time_t mtime, time_t atime, int frc)
 	tv[0].tv_nsec = 0L;
 	tv[1].tv_sec = mtime;
 	tv[1].tv_nsec = 0L;
-	if (!frc && (!patime || !pmtime)) {
+	if (!frc) {
 		/*
 		 * if we are not forcing, only set those times the user wants
 		 * set.
@@ -724,7 +716,7 @@ fset_ftime(char *fnm, int fd, time_t mtime, time_t atime, int frc)
 int
 set_ids(char *fnm, uid_t uid, gid_t gid)
 {
-	if (chown(fnm, uid, gid) < 0) {
+	if (fchownat(AT_FDCWD, fnm, uid, gid, AT_SYMLINK_NOFOLLOW) < 0) {
 		/*
 		 * ignore EPERM unless in verbose mode or being run by root.
 		 * if running as pax, POSIX requires a warning.
@@ -756,30 +748,6 @@ fset_ids(char *fnm, int fd, uid_t uid, gid_t gid)
 }
 
 /*
- * set_lids()
- *	set the uid and gid of a file system node
- * Return:
- *	0 when set, -1 on failure
- */
-
-int
-set_lids(char *fnm, uid_t uid, gid_t gid)
-{
-	if (lchown(fnm, uid, gid) < 0) {
-		/*
-		 * ignore EPERM unless in verbose mode or being run by root.
-		 * if running as pax, POSIX requires a warning.
-		 */
-		if (strcmp(NM_PAX, argv0) == 0 || errno != EPERM || vflag ||
-		    geteuid() == 0)
-			syswarn(1, errno, "Unable to set file uid/gid of %s",
-			    fnm);
-		return(-1);
-	}
-	return(0);
-}
-
-/*
  * set_pmode()
  *	Set file access mode
  */
@@ -788,7 +756,7 @@ void
 set_pmode(char *fnm, mode_t mode)
 {
 	mode &= ABITS;
-	if (chmod(fnm, mode) < 0)
+	if (fchmodat(AT_FDCWD, fnm, mode, AT_SYMLINK_NOFOLLOW) < 0)
 		syswarn(1, errno, "Could not set permissions on %s", fnm);
 	return;
 }
