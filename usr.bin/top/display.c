@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.46 2013/11/28 18:24:55 deraadt Exp $	 */
+/* $OpenBSD: display.c,v 1.47 2014/01/14 02:44:57 guenther Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -641,9 +641,12 @@ readline(char *buffer, int size)
 	/* allow room for null terminator */
 	size -= 1;
 
-	if (smart_terminal)
-		getnstr(buffer, size);
-	else
+	if (smart_terminal) {
+		int y, x;
+		getyx(stdscr, y, x);
+		while (getnstr(buffer, size) == KEY_RESIZE)
+			move(y, x);
+	} else
 		return readlinedumb(buffer, size);
 
 	cnt = strlen(buffer);
