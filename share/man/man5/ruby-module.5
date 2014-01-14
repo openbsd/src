@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ruby-module.5,v 1.11 2014/01/14 01:02:46 jeremy Exp $
+.\"	$OpenBSD: ruby-module.5,v 1.12 2014/01/14 07:40:29 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie, Jeremy Evans
 .\"
@@ -248,7 +248,7 @@ so that the PLISTs will work on multiple ruby versions.
 For ruby gem ports that can work on multiple ruby versions or implementations,
 any binary file entries in the PLIST should be appended with
 .Ev GEM_BIN_SUFFIX .
-This is because the the gem binaries for multiple ruby versions are all
+This is because the gem binaries for multiple ruby versions are all
 installed to
 .Pa ${LOCALBASE}/bin ,
 and ruby 1.9+ installs the binaries with a suffix.
@@ -261,7 +261,7 @@ before the extension so the different
 .Ev FLAVOR Ns s
 do not conflict.
 .Pp
-make update-plist may remove 
+make update-plist may remove
 .Ev GEM_BIN_SUFFIX
 and
 .Ev GEM_MAN_SUFFIX
@@ -272,9 +272,9 @@ files used by the specific
 .Ev FLAVOR
 you are using (such as files under the extension source directory), which may
 not exist for other
-.Ev FLAVOR Ns s,
+.Ev FLAVOR Ns s ,
 so always manually check the result of make update-plist and manually test that
-you can build the other 
+you can build the other
 .Ev FLAVOR Ns s
 before committing.
 .Sh SEE ALSO
