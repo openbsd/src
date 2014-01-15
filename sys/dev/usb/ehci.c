@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.139 2013/12/06 21:03:04 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.140 2014/01/15 11:10:40 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -3052,7 +3052,6 @@ ehci_device_request(struct usbd_xfer *xfer)
 	usb_device_request_t *req = &xfer->request;
 	struct usbd_device *dev = epipe->pipe.device;
 	struct ehci_softc *sc = (struct ehci_softc *)dev->bus;
-	int addr = dev->address;
 	struct ehci_soft_qtd *setup, *stat, *next;
 	struct ehci_soft_qh *sqh;
 	int isread;
@@ -3066,7 +3065,7 @@ ehci_device_request(struct usbd_xfer *xfer)
 	DPRINTFN(3,("ehci_device_request: type=0x%02x, request=0x%02x, "
 	    "wValue=0x%04x, wIndex=0x%04x len=%u, addr=%d, endpt=%d\n",
 	    req->bmRequestType, req->bRequest, UGETW(req->wValue),
-	    UGETW(req->wIndex), len, addr,
+	    UGETW(req->wIndex), len, dev->address,
 	    epipe->pipe.endpoint->edesc->bEndpointAddress));
 
 	setup = ehci_alloc_sqtd(sc);
@@ -3082,17 +3081,6 @@ ehci_device_request(struct usbd_xfer *xfer)
 
 	sqh = epipe->sqh;
 	epipe->u.ctl.length = len;
-
-	/* Update device address and length since they may have changed
-	   during the setup of the control pipe in usbd_new_device(). */
-	/* XXX This only needs to be done once, but it's too early in open. */
-	/* XXXX Should not touch ED here! */
-	sqh->qh.qh_endp =
-	    (sqh->qh.qh_endp & htole32(~(EHCI_QH_ADDRMASK | EHCI_QH_MPLMASK))) |
-	    htole32(
-	     EHCI_QH_SET_ADDR(addr) |
-	     EHCI_QH_SET_MPL(UGETW(epipe->pipe.endpoint->edesc->wMaxPacketSize))
-	    );
 
 	/* Set up data transaction */
 	if (len != 0) {

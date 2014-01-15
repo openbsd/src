@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.95 2013/11/19 14:04:07 pirofti Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.96 2014/01/15 11:10:40 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1164,6 +1164,15 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 
 	USETW(dev->def_ep_desc.wMaxPacketSize, dd->bMaxPacketSize);
 
+	/* Re-establish the default pipe with the new max packet size. */
+	usbd_abort_pipe(dev->default_pipe);
+	err = usbd_setup_pipe(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
+	    &dev->default_pipe);
+	if (err) {
+		usb_free_device(dev, up);
+		return (err);
+	}
+
 	err = usbd_reload_device_desc(dev);
 	if (err) {
 		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting full desc "
@@ -1187,9 +1196,17 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	dev->address = addr;	/* New device address now */
 	bus->devices[addr] = dev;
 
+	/* Re-establish the default pipe with the new address. */
+	usbd_abort_pipe(dev->default_pipe);
+	err = usbd_setup_pipe(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
+	    &dev->default_pipe);
+	if (err) {
+		usb_free_device(dev, up);
+		return (err);
+	}
+
 	/* send disown request to handover 2.0 to 1.1. */
 	if (dev->quirks->uq_flags & UQ_EHCI_NEEDTO_DISOWN) {
-		
 		/* only effective when the target device is on ehci */
 		if (dev->bus->usbrev == USBREV_2_0) {
 			DPRINTF(("%s: disown request issues to dev:%p on usb2.0 bus\n",

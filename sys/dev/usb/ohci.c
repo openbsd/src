@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.118 2013/12/09 01:02:06 brad Exp $ */
+/*	$OpenBSD: ohci.c,v 1.119 2014/01/15 11:10:40 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1607,7 +1607,6 @@ ohci_device_request(struct usbd_xfer *xfer)
 	usb_device_request_t *req = &xfer->request;
 	struct usbd_device *dev = opipe->pipe.device;
 	struct ohci_softc *sc = (struct ohci_softc *)dev->bus;
-	int addr = dev->address;
 	struct ohci_soft_td *setup, *stat, *next, *tail;
 	struct ohci_soft_ed *sed;
 	int isread;
@@ -1621,7 +1620,7 @@ ohci_device_request(struct usbd_xfer *xfer)
 	DPRINTFN(3,("ohci_device_control type=0x%02x, request=0x%02x, "
 		    "wValue=0x%04x, wIndex=0x%04x len=%u, addr=%d, endpt=%d\n",
 		    req->bmRequestType, req->bRequest, UGETW(req->wValue),
-		    UGETW(req->wIndex), len, addr,
+		    UGETW(req->wIndex), len, dev->address,
 		    opipe->pipe.endpoint->edesc->bEndpointAddress));
 
 	setup = opipe->tail.td;
@@ -1639,15 +1638,6 @@ ohci_device_request(struct usbd_xfer *xfer)
 
 	sed = opipe->sed;
 	opipe->u.ctl.length = len;
-
-	/* Update device address and length since they may have changed
-	   during the setup of the control pipe in usbd_new_device(). */
-	/* XXX This only needs to be done once, but it's too early in open. */
-	/* XXXX Should not touch ED here! */
-	sed->ed.ed_flags = htole32(
-	 (letoh32(sed->ed.ed_flags) & ~(OHCI_ED_ADDRMASK | OHCI_ED_MAXPMASK)) |
-	 OHCI_ED_SET_FA(addr) |
-	 OHCI_ED_SET_MAXP(UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize)));
 
 	next = stat;
 
