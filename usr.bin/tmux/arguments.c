@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.7 2014/01/09 13:51:57 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.8 2014/01/15 11:44:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -78,7 +78,6 @@ struct args *
 args_parse(const char *template, int argc, char **argv)
 {
 	struct args	*args;
-	char		*ptr;
 	int		 opt;
 
 	args = xcalloc(1, sizeof *args);
@@ -89,7 +88,7 @@ args_parse(const char *template, int argc, char **argv)
 	while ((opt = getopt(argc, argv, template)) != -1) {
 		if (opt < 0)
 			continue;
-		if (opt == '?' || (ptr = strchr(template, opt)) == NULL) {
+		if (opt == '?' || strchr(template, opt) == NULL) {
 			args_free(args);
 			return (NULL);
 		}

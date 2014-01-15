@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.32 2014/01/09 13:58:06 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.33 2014/01/15 11:44:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -124,7 +124,7 @@ grid_compare(struct grid *ga, struct grid *gb)
 	struct grid_cell	*gca, *gcb;
 	u_int			 xx, yy;
 
-	if (ga->sx != gb->sx || ga->sy != ga->sy)
+	if (ga->sx != gb->sx || ga->sy != gb->sy)
 		return (1);
 
 	for (yy = 0; yy < ga->sy; yy++) {
