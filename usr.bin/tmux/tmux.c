@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.127 2014/01/09 14:05:55 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.128 2014/01/15 11:46:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -202,8 +202,9 @@ int
 main(int argc, char **argv)
 {
 	struct passwd	*pw;
-	char		*s, *path, *label, *home, **var, tmp[MAXPATHLEN];
+	char		*s, *path, *label, **var, tmp[MAXPATHLEN];
 	char		 in[256];
+	const char	*home;
 	long long	 pid;
 	int	 	 opt, flags, quiet, keys, session;
 
@@ -325,11 +326,15 @@ main(int argc, char **argv)
 			pw = getpwuid(getuid());
 			if (pw != NULL)
 				home = pw->pw_dir;
+			else
+				home = NULL;
 		}
-		xasprintf(&cfg_file, "%s/.tmux.conf", home);
-		if (access(cfg_file, R_OK) != 0 && errno == ENOENT) {
-			free(cfg_file);
-			cfg_file = NULL;
+		if (home != NULL) {
+			xasprintf(&cfg_file, "%s/.tmux.conf", home);
+			if (access(cfg_file, R_OK) != 0 && errno == ENOENT) {
+				free(cfg_file);
+				cfg_file = NULL;
+			}
 		}
 	}
 
