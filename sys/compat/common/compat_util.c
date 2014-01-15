@@ -1,4 +1,4 @@
-/* 	$OpenBSD: compat_util.c,v 1.10 2004/08/01 06:22:28 mickey Exp $	*/
+/* 	$OpenBSD: compat_util.c,v 1.11 2014/01/15 05:31:51 deraadt Exp $	*/
 /* 	$NetBSD: compat_util.c,v 1.4 1996/03/14 19:31:45 christos Exp $	*/
 
 /*
@@ -53,13 +53,8 @@
  * be in exists.
  */
 int
-emul_find(p, sgp, prefix, path, pbuf, cflag)
-	struct proc	 *p;
-	caddr_t		 *sgp;		/* Pointer to stackgap memory */
-	const char	 *prefix;
-	char		 *path;
-	char		**pbuf;
-	int		  cflag;
+emul_find(struct proc *p, caddr_t *sgp, const char *prefix,
+    char *path, char **pbuf, int cflag)
 {
 	struct nameidata	 nd;
 	struct nameidata	 ndroot;
@@ -113,8 +108,7 @@ emul_find(p, sgp, prefix, path, pbuf, cflag)
 			goto bad;
 
 		*cp = '/';
-	}
-	else {
+	} else {
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, buf, p);
 
 		if ((error = namei(&nd)) != 0)
@@ -177,41 +171,14 @@ bad:
 	return error;
 }
 
-/*
- * Translate one set of flags to another, based on the entries in
- * the given table.  If 'leftover' is specified, it is filled in
- * with any flags which could not be translated.
- */
-unsigned long
-emul_flags_translate(tab, in, leftover)
-	const struct emul_flags_xtab *tab;
-	unsigned long in;
-	unsigned long *leftover;
-{
-        unsigned long out;
-                 
-        for (out = 0; tab->omask != 0; tab++) {
-                if ((in & tab->omask) == tab->oval) {
-                        in &= ~tab->omask;
-                        out |= tab->nval;
-                }
-        }               
-        if (leftover != NULL)
-                *leftover = in;
-        return (out);
-}
-
 caddr_t  
-stackgap_init(e) 
-        struct emul *e;
+stackgap_init(struct emul *e)
 {
         return STACKGAPBASE;
 }
  
 void *          
-stackgap_alloc(sgp, sz)
-        caddr_t *sgp;
-        size_t sz;
+stackgap_alloc(caddr_t *sgp, size_t sz)
 {
 	void *n = (void *) *sgp;
 	caddr_t nsgp;
