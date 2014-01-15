@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.16 2013/11/04 14:07:16 deraadt Exp $
+#	$OpenBSD: files.octeon,v 1.17 2014/01/15 10:36:10 pirofti Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -47,6 +47,11 @@ attach	cpu at mainbus
 
 device	clock
 attach	clock at mainbus
+
+# TOD clock
+device	octrtc
+attach	octrtc at mainbus
+file	arch/octeon/dev/octrtc.c			octrtc
 
 define	iobus {[base = -1]}
 device	iobus
