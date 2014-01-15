@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.727 2014/01/11 23:28:02 halex Exp $
+#	$OpenBSD: install.sub,v 1.728 2014/01/15 00:55:21 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -2212,7 +2212,7 @@ elif [[ -z $respfile ]]; then
 		exit 1
 	fi
 	rm -f /ai.done
-	echo -n "Performing non-interactive $action..."
+	echo "Performing non-interactive $action..."
 	/$action -af /$action.conf 2>&1 </dev/null | sed 'w/ai.log'
 	if [[ -f /ai.done ]]; then
 		# Generate unique filename and let rc.firsttime feed it to
