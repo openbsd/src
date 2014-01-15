@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.128 2014/01/13 23:03:52 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.129 2014/01/15 09:25:38 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -136,16 +136,13 @@ void
 in6_ifloop_request(int cmd, struct ifaddr *ifa)
 {
 	struct rt_addrinfo info;
-	struct sockaddr_in6 lo_sa;
 	struct sockaddr_in6 all1_sa;
 	struct rtentry *nrt = NULL;
 	int e;
 
-	bzero(&lo_sa, sizeof(lo_sa));
 	bzero(&all1_sa, sizeof(all1_sa));
-	lo_sa.sin6_family = all1_sa.sin6_family = AF_INET6;
-	lo_sa.sin6_len = all1_sa.sin6_len = sizeof(struct sockaddr_in6);
-	lo_sa.sin6_addr = in6addr_loopback;
+	all1_sa.sin6_family = AF_INET6;
+	all1_sa.sin6_len = sizeof(struct sockaddr_in6);
 	all1_sa.sin6_addr = in6mask128;
 
 	/*
