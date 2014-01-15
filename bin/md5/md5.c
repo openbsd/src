@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.69 2014/01/12 04:37:51 deraadt Exp $	*/
+/*	$OpenBSD: md5.c,v 1.70 2014/01/15 04:43:36 lteo Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -210,7 +210,7 @@ TAILQ_HEAD(hash_list, hash_function);
 
 void digest_end(const struct hash_function *, void *, char *, size_t, int);
 int  digest_file(const char *, struct hash_list *, int);
-int  digest_filelist(const char *, struct hash_function *);
+int  digest_filelist(const char *, struct hash_function *, char **);
 void digest_print(const struct hash_function *, const char *, const char *);
 #if !defined(SHA2_ONLY)
 void digest_printstr(const struct hash_function *, const char *, const char *);
@@ -231,21 +231,22 @@ main(int argc, char **argv)
 	struct hash_function *hf, *hftmp;
 	struct hash_list hl;
 	size_t len;
-	char *cp, *input_string;
+	char *cp, *input_string, *selective_checklist;
 	const char *optstr;
 	int fl, error, base64;
 	int bflag, cflag, pflag, rflag, tflag, xflag;
 
 	TAILQ_INIT(&hl);
 	input_string = NULL;
+	selective_checklist = NULL;
 	error = bflag = cflag = pflag = qflag = rflag = tflag = xflag = 0;
 
 #if !defined(SHA2_ONLY)
 	if (strcmp(__progname, "cksum") == 0 || strcmp(__progname, "sum") == 0)
-		optstr = "a:bch:o:pqrs:tx";
+		optstr = "a:bC:ch:o:pqrs:tx";
 	else
 #endif /* !defined(SHA2_ONLY) */
-		optstr = "bch:pqrs:tx";
+		optstr = "bC:ch:pqrs:tx";
 
 	/* Check for -b option early since it changes behavior. */
 	while ((fl = getopt(argc, argv, optstr)) != -1) {
@@ -311,6 +312,9 @@ main(int argc, char **argv)
 				err(1, "%s", optarg);
 			break;
 #if !defined(SHA2_ONLY)
+		case 'C':
+			selective_checklist = optarg;
+			break;
 		case 'c':
 			cflag = 1;
 			break;
@@ -362,12 +366,13 @@ main(int argc, char **argv)
 
 	/* Most arguments are mutually exclusive */
 	fl = pflag + (tflag ? 1 : 0) + xflag + cflag + (input_string != NULL);
-	if (fl > 1 || (fl && argc && cflag == 0) || (rflag && qflag))
+	if (fl > 1 || (fl && argc && cflag == 0) || (rflag && qflag) ||
+	    (selective_checklist != NULL && argc == 0))
 		usage();
-	if (cflag != 0) {
+	if (selective_checklist || cflag) {
 		if (TAILQ_FIRST(&hl) != TAILQ_LAST(&hl, hash_list))
 			errx(1, "only a single algorithm may be specified "
-			    "in -c mode");
+			    "in -C or -c mode");
 	}
 
 	/* No algorithm specified, check the name we were called as. */
@@ -395,13 +400,15 @@ main(int argc, char **argv)
 		digest_test(&hl);
 	else if (input_string)
 		digest_string(input_string, &hl);
+	else if (selective_checklist)
+		error = digest_filelist(selective_checklist, TAILQ_FIRST(&hl), argv);
 	else if (cflag) {
 		if (argc == 0)
-			error = digest_filelist("-", TAILQ_FIRST(&hl));
+			error = digest_filelist("-", TAILQ_FIRST(&hl), NULL);
 		else
 			while (argc--)
 				error += digest_filelist(*argv++,
-				    TAILQ_FIRST(&hl));
+				    TAILQ_FIRST(&hl), NULL);
 	} else
 #endif /* !defined(SHA2_ONLY) */
 	if (pflag || argc == 0)
@@ -555,12 +562,12 @@ digest_file(const char *file, struct hash_list *hl, int echo)
  * Print out the result of each comparison.
  */
 int
-digest_filelist(const char *file, struct hash_function *defhash)
+digest_filelist(const char *file, struct hash_function *defhash, char **sel)
 {
 	int found, base64, error, cmp;
 	size_t algorithm_max, algorithm_min;
 	const char *algorithm;
-	char *filename, *checksum, *buf, *p;
+	char *filename, *checksum, *buf, *p, **sp;
 	char digest[MAX_DIGEST_LEN + 1];
 	char *lbuf = NULL;
 	FILE *listfp, *fp;
@@ -680,6 +687,19 @@ digest_filelist(const char *file, struct hash_function *defhash)
 				*p = '\0';
 		}
 		found = 1;
+
+		/*
+		 * If only a selection of files is wanted, proceed only
+		 * if the filename matches one of those in the selection.
+		 */
+		if (sel) {
+			for (sp = sel; *sp; sp++) {
+				if (strcmp(*sp, filename) == 0)
+					break;
+			}
+			if (*sp == NULL)
+				continue;
+		}
 
 		if ((fp = fopen(filename, "r")) == NULL) {
 			warn("cannot open %s", filename);
@@ -816,14 +836,15 @@ usage(void)
 {
 #if !defined(SHA2_ONLY)
 	if (strcmp(__progname, "cksum") == 0 || strcmp(__progname, "sum") == 0)
-		fprintf(stderr, "usage: %s [-bcpqrtx] [-a algorithms] "
+		fprintf(stderr, "usage: %s [-bcpqrtx] [-C checklist] [-a algorithms] "
 		    "[-h hashfile] [-o 1 | 2] [-s string]\n"
 		    "	[file ...]\n",
 		    __progname);
 	else
 #endif /* !defined(SHA2_ONLY) */
 		fprintf(stderr, "usage:"
-		    "\t%s [-bcpqrtx] [-h hashfile] [-s string] [file ...]\n",
+		    "\t%s [-bcpqrtx] [-C checklist] [-h hashfile] [-s string] "
+		    "[file ...]\n",
 		    __progname);
 
 	exit(EXIT_FAILURE);

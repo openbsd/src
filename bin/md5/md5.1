@@ -1,4 +1,4 @@
-.\"	$OpenBSD: md5.1,v 1.41 2014/01/10 21:45:04 deraadt Exp $
+.\"	$OpenBSD: md5.1,v 1.42 2014/01/15 04:43:36 lteo Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: January 10 2014 $
+.Dd $Mdocdate: January 15 2014 $
 .Dt MD5 1
 .Os
 .Sh NAME
@@ -27,21 +27,25 @@
 .Sh SYNOPSIS
 .Nm md5
 .Op Fl bcpqrtx
+.Op Fl C Ar checklist
 .Op Fl h Ar hashfile
 .Op Fl s Ar string
 .Op Ar
 .Nm sha1
 .Op Fl bcpqrtx
+.Op Fl C Ar checklist
 .Op Fl h Ar hashfile
 .Op Fl s Ar string
 .Op Ar
 .Nm sha256
 .Op Fl bcpqrtx
+.Op Fl C Ar checklist
 .Op Fl h Ar hashfile
 .Op Fl s Ar string
 .Op Ar
 .Nm sha512
 .Op Fl bcpqrtx
+.Op Fl C Ar checklist
 .Op Fl h Ar hashfile
 .Op Fl s Ar string
 .Op Ar
@@ -61,6 +65,16 @@ The options for use with each command are as follows:
 .Bl -tag -width Ds
 .It Fl b
 Output checksums in base64 notation, not hexadecimal.
+.It Fl C Ar checklist
+Compare the checksum of each
+.Ar file
+against the checksums in the
+.Ar checklist .
+Any specified
+.Ar file
+that is not listed in the
+.Ar checklist
+is ignored.
 .It Fl c
 If this option is specified, the
 .Ar file
