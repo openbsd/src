@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.281 2013/12/30 03:36:17 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.282 2014/01/16 21:41:22 tobias Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -59,6 +59,7 @@
 #include <sys/ioctl.h>
 #include <sys/uio.h>
 
+#include <limits.h>
 #include <poll.h>
 #include <pwd.h>
 #include <resolv.h>
@@ -494,7 +495,7 @@ main(int argc, char *argv[])
 		error("Cannot stat /etc/resolv.conf.tail: %s",
 		    strerror(errno));
 	} else {
-		if (sb.st_size > 0) {
+		if (sb.st_size > 0 && sb.st_size < SIZE_MAX) {
 			config->resolv_tail = calloc(1, sb.st_size + 1);
 			if (config->resolv_tail == NULL) {
 				error("no memory for resolv.conf.tail "
