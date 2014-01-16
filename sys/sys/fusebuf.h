@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.h,v 1.8 2013/12/03 09:59:40 syl Exp $ */
+/* $OpenBSD: fusebuf.h,v 1.9 2014/01/16 09:31:44 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon
  * Copyright (c) 2013 Martin Pieuchot
@@ -43,6 +43,7 @@ struct fb_io {
 	size_t		fi_len;		/* Length of data */
 	mode_t		fi_mode;	/* mode for fd */
 	uint32_t	fi_flags;	/* flags on transfer */
+	dev_t		fi_rdev;	/* dev for mknod */
 };
 
 /*
@@ -82,6 +83,7 @@ struct fusebuf {
 #define fb_io_len	FD.FD_io.fi_len
 #define fb_io_mode	FD.FD_io.fi_mode
 #define fb_io_flags	FD.FD_io.fi_flags
+#define fb_io_rdev	FD.FD_io.fi_rdev
 #define	fb_dat		F_databuf
 
 /*

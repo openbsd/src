@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.12 2013/12/20 22:03:26 syl Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.13 2014/01/16 09:31:44 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -885,10 +885,72 @@ int
 fusefs_mknod(void *v)
 {
 	struct vop_mknod_args *ap = v;
+	struct componentname *cnp = ap->a_cnp;
+	struct vnode **vpp = ap->a_vpp;
+	struct vnode *dvp = ap->a_dvp;
+	struct vattr *vap = ap->a_vap;
+	struct proc *p = cnp->cn_proc;
+	struct vnode *tdp = NULL;
+	struct fusefs_mnt *fmp;
+	struct fusefs_node *ip;
+	struct fusebuf *fbuf;
+	int error = 0;
 
+	ip = VTOI(dvp);
+	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+
+	if (!fmp->sess_init || (fmp->undef_op & UNDEF_MKNOD)) {
+		error = ENOSYS;
+		goto out;
+	}
+
+	fbuf = fb_setup(cnp->cn_namelen + 1, ip->ufs_ino.i_number,
+	    FBT_MKNOD, p);
+
+	fbuf->fb_io_mode = MAKEIMODE(vap->va_type, vap->va_mode);
+	if (vap->va_rdev != VNOVAL)
+		fbuf->fb_io_rdev = vap->va_rdev;
+
+	memcpy(fbuf->fb_dat, cnp->cn_nameptr, cnp->cn_namelen);
+	fbuf->fb_dat[cnp->cn_namelen] = '\0';
+
+	error = fb_queue(fmp->dev, fbuf);
+	if (error) {
+		if (error == ENOSYS)
+			fmp->undef_op |= UNDEF_MKNOD;
+
+		fb_delete(fbuf);
+		goto out;
+	}
+
+	if ((error = VFS_VGET(fmp->mp, fbuf->fb_ino, &tdp))) {
+		fb_delete(fbuf);
+		goto out;
+	}
+
+	tdp->v_type = IFTOVT(fbuf->fb_io_mode);
+	VTOI(tdp)->vtype = tdp->v_type;
+
+	if (dvp != NULL && dvp->v_type == VDIR)
+		VTOI(tdp)->parent = ip->ufs_ino.i_number;
+
+	*vpp = tdp;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
+	fb_delete(fbuf);
 	vput(ap->a_dvp);
-	return (EINVAL);
+
+	/* Remove inode so that it will be reloaded by VFS_VGET and
+	 * checked to see if it is an alias of an existing entry in
+	 * the inode cache.
+	 */
+	vput(*vpp);
+	(*vpp)->v_type = VNON;
+	vgone(*vpp);
+	*vpp = NULL;
+	return (0);
+out:
+	vput(ap->a_dvp);
+	return (error);
 }
 
 int
