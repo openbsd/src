@@ -1,4 +1,4 @@
-/*	$OpenBSD: apprentice.c,v 1.29 2009/11/11 16:21:51 jsg Exp $ */
+/*	$OpenBSD: apprentice.c,v 1.30 2014/01/16 21:45:33 tobias Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -41,6 +41,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <limits.h>
 #include <string.h>
 #include <assert.h>
 #include <ctype.h>
@@ -1897,8 +1898,9 @@ apprentice_map(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp,
 		file_error(ms, errno, "cannot stat `%s'", dbname);
 		goto error1;
 	}
-	if (st.st_size < 8) {
-		file_error(ms, 0, "file `%s' is too small", dbname);
+	if (st.st_size < 8 || st.st_size > SIZE_MAX) {
+		file_error(ms, 0, "file `%s' is too %s", dbname,
+		    st.st_size > SIZE_MAX ? "large" : "small");
 		goto error1;
 	}
 
