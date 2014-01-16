@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.24 2014/01/10 22:34:41 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.25 2014/01/16 19:32:26 brad Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -131,7 +131,7 @@ _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	 * laptops), we might not restore the proper VGA mode
 	 * on resume. Caveat emptor.
 	 */
-	cmp	$0, do_real_mode_post_off
+	cmpl	$0, do_real_mode_post_off
 	jz	nobiosreset
 	lcall	$0xc000,$3
 
