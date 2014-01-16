@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.12 2013/12/10 13:43:05 pelikan Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.13 2014/01/16 10:36:33 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -158,32 +158,51 @@ void
 fuse_device_cleanup(dev_t dev, struct fusebuf *fbuf)
 {
 	struct fuse_d *fd;
-	struct fusebuf *f;
+	struct fusebuf *f, *ftmp, *lprev;
 
 	fd = fuse_lookup(minor(dev));
 	if (fd == NULL)
 		return;
 
 	/* clear FIFO IN*/
-	while ((f = SIMPLEQ_FIRST(&fd->fd_fbufs_in))) {
+	lprev = NULL;
+	SIMPLEQ_FOREACH_SAFE(f, &fd->fd_fbufs_in, fb_next, ftmp) {
 		if (fbuf == f || fbuf == NULL) {
 			DPRINTF("cleanup unprocessed msg in sc_fbufs_in\n");
-			SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_in, fb_next);
+			if (lprev == NULL)
+				SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_in, fb_next);
+			else
+				SIMPLEQ_REMOVE_AFTER(&fd->fd_fbufs_in, lprev,
+				    fb_next);
+
 			stat_fbufs_in--;
 			if (fbuf == NULL)
 				fb_delete(f);
+			else
+				break;
 		}
+		lprev = f;
 	}
 
 	/* clear FIFO WAIT*/
-	while ((f = SIMPLEQ_FIRST(&fd->fd_fbufs_wait))) {
+	lprev = NULL;
+	SIMPLEQ_FOREACH_SAFE(f, &fd->fd_fbufs_wait, fb_next, ftmp) {
 		if (fbuf == f || fbuf == NULL) {
 			DPRINTF("umount unprocessed msg in sc_fbufs_wait\n");
-			SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_wait, fb_next);
+			if (lprev == NULL)
+				SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_wait,
+				    fb_next);
+			else
+				SIMPLEQ_REMOVE_AFTER(&fd->fd_fbufs_wait, lprev,
+				    fb_next);
+
 			stat_fbufs_wait--;
 			if (fbuf == NULL)
 				fb_delete(f);
+			else
+				break;
 		}
+		lprev = f;
 	}
 }
 
