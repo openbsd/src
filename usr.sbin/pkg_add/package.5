@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.17 2014/01/05 10:29:16 espie Exp $
+.\"	$OpenBSD: package.5,v 1.18 2014/01/17 11:09:36 espie Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +12,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: January 5 2014 $
+.Dd $Mdocdate: January 17 2014 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
@@ -186,10 +186,9 @@ by
 .Xr pkg_add 1 .
 .Pp
 .It Cm @signer
-Internal annotation corresponding to
-.Xr pkg_create 1 Ns 's
-.Fl D Ar SIGNER
-option.
+Internal annotation necessary to identify packages signed with
+.Xr signify 1
+keys, as those keys don't carry any identity.
 .Pp
 .It Cm @wantlib Ar libspec
 Record a library requirement declared using the option

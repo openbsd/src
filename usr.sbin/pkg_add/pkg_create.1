@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.93 2014/01/14 13:57:20 naddy Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.94 2014/01/17 11:09:36 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: January 14 2014 $
+.Dd $Mdocdate: January 17 2014 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -49,12 +49,10 @@
 .Ek
 .Nm pkg_create
 .Op Fl s Ar signature-parameter
-.Op Fl D Ar SIGNER Ns = Ns Ar value
 .Fl f Ar packinglist
 .Nm pkg_create
 .Fl s Ar signature-parameter ...
 .Op Fl j Ar maxjobs
-.Op Fl D Ar SIGNER Ns = Ns Ar value
 .Op Fl o Ar dir
 .Op Fl S Ar source
 .Op Ar pkgfile ...
@@ -156,11 +154,18 @@ Strongly recommended, otherwise updates won't work.
 If defined, appended to the description.
 .It Ar MAINTAINER
 If defined, appended to the description.
+.It Ar resign
+Allows signing over already signed packages.
+Obviously, this checks the existing signature first,
+so the
+.Fl D Ar SIGNER
+and
+.Fl D Ar nosig
+apply with the same semantics as
+.Xr pkg_add 1 .
 .It Ar USE_GROFF
 Set to 1 to have groff format manpages behind the scenes during
 package creation.
-.It Ar SIGNER
-Specify a signer name, used for signing packages.
 .El
 .It Fl d No [-] Ns Ar desc
 Fetch long description for package from file
@@ -242,7 +247,7 @@ This can be any url admissible for a
 .Ev PKG_PATH ,
 so that it is possible to sign packages during a transfer, e.g.,
 .Bd -literal -offset indent
-pkg_create -s signify -s mykey -DSIGNER=me \e
+pkg_create -s signify -s mykey-pkg.sec \e
 	-o output -S scp://build-machine/packages/
 .Ed
 .It Xo
@@ -261,6 +266,13 @@ or X.509-style signatures.
 the path to the signer's certificate (X.509 only)
 .It Ar privkey
 the path to the signer's private key.
+For
+.Xr signify ,
+the private key name is used to set the
+.Cm \@signer
+annotation.
+If a corresponding public key is found, the first signatures will be
+checked for key mismatches.
 .El
 .Pp
 For X.509, the signer's certificate and the signer's private key
