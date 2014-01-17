@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.76 2014/01/13 18:42:34 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.77 2014/01/17 15:39:53 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -37,7 +37,12 @@ use constant {
 	MAXLINKNAME => 100,
 	MAXPREFIX => 155,
 	MAXUSERNAME => 32,
-	MAXGROUPNAME => 32
+	MAXGROUPNAME => 32,
+	# XXX those are NOT supported, just recognized
+	XHDR => 'x',
+	GHDR => 'g',
+	LONGLINK => 'K',
+	LONGNAME => 'L',
 };
 
 use File::Basename ();
@@ -121,6 +126,13 @@ my $types = {
 	BLOCKDEVICE , 'OpenBSD::Ustar::BlockDevice',
 };
 
+my $unsupported = {
+	XHDR => 'Extended header',
+	GHDR => 'GNU header',
+	LONGLINK => 'Long symlink',
+	LONGNAME => 'Long file',
+};
+	
 sub next
 {
 	my $self = shift;
@@ -187,7 +199,8 @@ sub next
 	if (defined $types->{$type}) {
 		$self->new_object($result, $types->{$type});
 	} else {
-		$self->fatal("Unsupported type #1", $type);
+		$self->fatal("Unsupported type #1 (#2)", $type,
+		    $unsupported->{$type} // "unknown");
 	}
 	if (!$result->isFile && $result->{size} != 0) {
 		$self->fatal("Bad archive: non null size for #1 (#2)",
