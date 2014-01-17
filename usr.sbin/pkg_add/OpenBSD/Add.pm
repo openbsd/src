@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.142 2014/01/11 11:54:43 espie Exp $
+# $OpenBSD: Add.pm,v 1.143 2014/01/17 15:54:06 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -113,6 +113,7 @@ sub perform_extraction
 	$handle->{partial} = {};
 	$state->{partial} = $handle->{partial};
 	$state->{archive} = $handle->{location};
+	$state->{check_digest} = $handle->{plist}{check_digest};
 	$state->progress->visit_with_size($handle->{plist}, 'extract', $state);
 }
 

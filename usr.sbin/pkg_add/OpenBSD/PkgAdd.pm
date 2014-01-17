@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.45 2014/01/11 11:54:43 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.46 2014/01/17 15:54:06 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -647,7 +647,6 @@ sub iterate
 sub check_digital_signature
 {
 	my ($set, $state) = @_;
-	$state->{check_digest} //= 0;
 	for my $handle ($set->newer) {
 		$state->set_name_from_handle($handle, '+');
 		my $plist = $handle->plist;
@@ -660,7 +659,7 @@ sub check_digital_signature
 					$state->fatal("#1 is corrupted",
 					    $plist->pkgname);
 				}
-				$state->{check_digest} = 1;
+				$plist->{check_digest} = 1;
 				$state->{packages_with_sig}++;
 			}
 		} else {
@@ -1071,16 +1070,10 @@ sub finish_display
 	my ($self, $state) = @_;
 	OpenBSD::Add::manpages_index($state);
 
-
 	# and display delayed thingies.
-	if ($state->{packages_with_sig}) {
-		$state->print("Packages with signatures: #1",
-		    $state->{packages_with_sig});
-		if ($state->{packages_without_sig}) {
-			print ". UNSIGNED PACKAGES: ",
-			    join(', ', keys %{$state->{packages_without_sig}});
-		}
-		print "\n";
+	if ($state->{packages_without_sig}) {
+		print "UNSIGNED PACKAGES: ",
+		    join(', ', keys %{$state->{packages_without_sig}}), "\n";
 	}
 	if (defined $state->{updatedepends} && %{$state->{updatedepends}}) {
 		print "Forced updates, bogus dependencies for ",
