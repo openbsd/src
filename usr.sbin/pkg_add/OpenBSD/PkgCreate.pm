@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.93 2014/01/13 10:07:32 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.94 2014/01/17 10:54:14 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -74,8 +74,21 @@ sub new
 	if (@p != 2 || !-f $p[1]) {
 		$state->usage("$p[0] signature wants -s privkey");
 	}
-
-	bless {privkey => $p[1]}, $class;
+	my $o = bless {privkey => $p[1]}, $class;
+	my $signer = $o->{privkey};
+	$signer =~ s/\.sec$//;
+	my $pubkey = "$signer.pub";
+	$signer =~ s,.*/,,;
+	$o->{signer} = $signer;
+	if (!-f $pubkey) {
+		$pubkey =~ s,.*/,/etc/signify/,;
+		if (!-f $pubkey) {
+			$state->errsay("warning: public key not found");
+			return $o;
+		}
+	}
+	$o->{pubkey} = $pubkey;
+	return $o;
 }
 
 sub new_sig
@@ -88,11 +101,10 @@ sub compute_signature
 {
 	my ($self, $state, $plist) = @_;
 
-	my $list = $state->signer_list;
-	OpenBSD::PackingElement::Signer->add($plist, $list->[0]);
+	OpenBSD::PackingElement::Signer->add($plist, $self->{signer});
 
 	return OpenBSD::signify::compute_signature($plist, $state, 
-	    $self->{privkey});
+	    $self->{privkey}, $self->{pubkey});
 }
 
 package OpenBSD::PkgCreate::State;
@@ -1198,10 +1210,14 @@ sub sign_existing_package
 	$plist->copy_over($state, $wrarc, $pkg);
 	$wrarc->close;
 	$pkg->wipe_info;
-	unlink($plist->pkgname.".tgz") if $state->{output};
 	chmod((0666 & ~umask), $tmp);
 	rename($tmp, $output.'/'.$plist->pkgname.".tgz") or
 	    $state->fatal("Can't create final signed package: #1", $!);
+	$state->system(sub {
+	    chdir($output);
+	    open(STDOUT, '>>', 'SHA256');
+	    },
+	    OpenBSD::Paths->sha256, $plist->pkgname.".tgz");
 }
 
 sub sign_list
@@ -1235,6 +1251,7 @@ sub sign_list
 			}
 			$n--;
 			&$display($jobs->{$pid});
+			delete $state->{signer}{pubkey};
 			delete $jobs->{$pid};
 		};
 			
@@ -1260,8 +1277,12 @@ sub sign_list
 		for my $name (@$l) {
 			&$code($name);
 			&$display($name);
+			delete $state->{signer}{pubkey};
 		}
 	}
+	$state->system(sub {
+	    chdir($state->{output_dir}) if $state->{output_dir};
+	    }, 'sort', 'SHA256');
 }
 
 sub sign_existing_repository

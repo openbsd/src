@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.26 2014/01/09 20:20:01 espie Exp $
+# $OpenBSD: Paths.pm,v 1.27 2014/01/17 10:54:14 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -54,6 +54,7 @@ sub hostname() { '/bin/hostname' }
 sub sudo() { '/usr/bin/sudo' }
 sub du() { '/usr/bin/du' }
 sub diff() { '/usr/bin/diff' }
+sub sha256() { '/bin/sha256' }
 
 # Various paths
 sub shells() { '/etc/shells' }
