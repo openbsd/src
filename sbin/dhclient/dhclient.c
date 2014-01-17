@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.282 2014/01/16 21:41:22 tobias Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.283 2014/01/17 23:11:42 tobias Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -563,7 +563,8 @@ main(int argc, char *argv[])
 		error("no memory for unpriv_ibuf");
 	imsg_init(unpriv_ibuf, socket_fd[1]);
 
-	if ((fd = open(path_dhclient_db, O_RDONLY|O_EXLOCK|O_CREAT, 0)) == -1)
+	if ((fd = open(path_dhclient_db,
+	    O_RDONLY|O_EXLOCK|O_CREAT|O_NOFOLLOW, 0)) == -1)
 		error("can't open and lock %s: %s", path_dhclient_db,
 		    strerror(errno));
 	read_client_leases();
@@ -1729,7 +1730,7 @@ rewrite_option_db(struct client_lease *offered, struct client_lease *effective)
 		warning("cannot make effective lease into string");
 
 	write_file(path_option_db,
-	    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
+	    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK | O_NOFOLLOW,
 	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0, db, strlen(db));
 }
 
