@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.18 2009/10/27 23:59:40 deraadt Exp $	*/
+/*	$OpenBSD: list.c,v 1.19 2014/01/17 18:42:30 okan Exp $	*/
 /*	$NetBSD: list.c,v 1.7 1997/07/09 05:23:36 mikel Exp $	*/
 
 /*
@@ -509,13 +509,13 @@ scan(char **sp)
 	}
 	cp = *sp;
 	cp2 = lexstring;
-	c = *cp++;
+	c = (unsigned char)*cp++;
 
 	/*
 	 * strip away leading white space.
 	 */
 	while (c == ' ' || c == '\t')
-		c = *cp++;
+		c = (unsigned char)*cp++;
 
 	/*
 	 * If no characters remain, we are at end of line,
@@ -537,7 +537,7 @@ scan(char **sp)
 			lexnumber = lexnumber*10 + c - '0';
 			if (cp2 - lexstring < STRINGLEN - 1)
 				*cp2++ = c;
-			c = *cp++;
+			c = (unsigned char)*cp++;
 		}
 		*cp2 = '\0';
 		*sp = --cp;
@@ -566,7 +566,7 @@ scan(char **sp)
 	quotec = 0;
 	if (c == '\'' || c == '"') {
 		quotec = c;
-		c = *cp++;
+		c = (unsigned char)*cp++;
 	}
 	while (c != '\0') {
 		if (c == quotec) {
@@ -577,7 +577,7 @@ scan(char **sp)
 			break;
 		if (cp2 - lexstring < STRINGLEN-1)
 			*cp2++ = c;
-		c = *cp++;
+		c = (unsigned char)*cp++;
 	}
 	if (quotec && c == 0) {
 		fprintf(stderr, "Missing %c\n", quotec);

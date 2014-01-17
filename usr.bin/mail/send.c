@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.22 2009/10/27 23:59:40 deraadt Exp $	*/
+/*	$OpenBSD: send.c,v 1.23 2014/01/17 18:42:30 okan Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -130,10 +130,11 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 			/*
 			 * Pick up the header field if we have one.
 			 */
-			for (cp = line; (c = *cp++) && c != ':' && !isspace(c);)
+			for (cp = line;
+			    (c = (unsigned char)*cp++) && c != ':' && !isspace(c); )
 				;
 			cp2 = --cp;
-			while (isspace(*cp++))
+			while (isspace((unsigned char)*cp++))
 				;
 			if (cp[-1] != ':') {
 				/*

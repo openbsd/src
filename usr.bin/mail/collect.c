@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.33 2011/04/06 11:36:26 miod Exp $	*/
+/*	$OpenBSD: collect.c,v 1.34 2014/01/17 18:42:30 okan Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ cont:
 				goto err;
 			continue;
 		}
-		c = linebuf[1];
+		c = (unsigned char)linebuf[1];
 		switch (c) {
 		default:
 			/*
@@ -221,7 +221,7 @@ cont:
 			 * Set the Subject list.
 			 */
 			cp = &linebuf[2];
-			while (isspace(*cp))
+			while (isspace((unsigned char)*cp))
 				cp++;
 			hp->h_subject = savestr(cp);
 			break;
@@ -249,7 +249,7 @@ cont:
 			 * then open it and copy the contents to collf.
 			 */
 			cp = &linebuf[2];
-			while (isspace(*cp))
+			while (isspace((unsigned char)*cp))
 				cp++;
 			if (*cp == '\0') {
 				puts("Interpolate what file?");

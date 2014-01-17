@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.25 2009/10/27 23:59:40 deraadt Exp $	*/
+/*	$OpenBSD: aux.c,v 1.26 2014/01/17 18:42:30 okan Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -160,8 +160,9 @@ gethfield(FILE *f, char *linebuf, int rem, char **colon)
 			return(-1);
 		if ((c = readline(f, linebuf, LINESIZE, NULL)) <= 0)
 			return(-1);
-		for (cp = linebuf; isprint(*cp) && *cp != ' ' && *cp != ':';
-		     cp++)
+		for (cp = linebuf;
+		    isprint((unsigned char)*cp) && *cp != ' ' && *cp != ':';
+		    cp++)
 			;
 		if (*cp != ':' || cp == linebuf)
 			continue;
@@ -233,7 +234,7 @@ istrlcpy(char *dst, const char *src, size_t dsize)
 	/* Copy as many bytes as will fit */
 	if (n != 0 && --n != 0) {
 		do {
-			if ((*d++ = tolower(*s++)) == 0)
+			if ((*d++ = tolower((unsigned char)*s++)) == 0)
 				break;
 		} while (--n != 0);
 	}
@@ -427,7 +428,7 @@ skin(char *name)
 	gotlt = 0;
 	lastsp = 0;
 	bufend = nbuf;
-	for (cp = name, cp2 = bufend; (c = *cp++) != '\0'; ) {
+	for (cp = name, cp2 = bufend; (c = (unsigned char)*cp++) != '\0'; ) {
 		switch (c) {
 		case '(':
 			cp = skip_comment(cp);
@@ -439,13 +440,13 @@ skin(char *name)
 			 * Start of a "quoted-string".
 			 * Copy it in its entirety.
 			 */
-			while ((c = *cp) != '\0') {
+			while ((c = (unsigned char)*cp) != '\0') {
 				cp++;
 				if (c == '"')
 					break;
 				if (c != '\\')
 					*cp2++ = c;
-				else if ((c = *cp) != '\0') {
+				else if ((c = (unsigned char)*cp) != '\0') {
 					*cp2++ = c;
 					cp++;
 				}
@@ -472,12 +473,12 @@ skin(char *name)
 		case '>':
 			if (gotlt) {
 				gotlt = 0;
-				while ((c = *cp) && c != ',') {
+				while ((c = (unsigned char)*cp) && c != ',') {
 					cp++;
 					if (c == '(')
 						cp = skip_comment(cp);
 					else if (c == '"')
-						while ((c = *cp) != '\0') {
+						while ((c = (unsigned char)*cp) != '\0') {
 							cp++;
 							if (c == '"')
 								break;

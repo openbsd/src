@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd2.c,v 1.19 2012/11/14 13:22:37 gsoares Exp $	*/
+/*	$OpenBSD: cmd2.c,v 1.20 2014/01/17 18:42:30 okan Exp $	*/
 /*	$NetBSD: cmd2.c,v 1.7 1997/05/17 19:55:10 pk Exp $	*/
 
 /*
@@ -224,20 +224,20 @@ snarf(char *linebuf, int *flag)
 	/*
 	 * Strip away trailing blanks.
 	 */
-	while (cp > linebuf && isspace(*cp))
+	while (cp > linebuf && isspace((unsigned char)*cp))
 		cp--;
 	*++cp = 0;
 
 	/*
 	 * Now search for the beginning of the file name.
 	 */
-	while (cp > linebuf && !isspace(*cp))
+	while (cp > linebuf && !isspace((unsigned char)*cp))
 		cp--;
 	if (*cp == '\0') {
 		puts("No file specified.");
 		return(NULL);
 	}
-	if (isspace(*cp))
+	if (isspace((unsigned char)*cp))
 		*cp++ = 0;
 	else
 		*flag = 0;

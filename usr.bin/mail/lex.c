@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.35 2013/04/29 00:28:23 okan Exp $	*/
+/*	$OpenBSD: lex.c,v 1.36 2014/01/17 18:42:30 okan Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -302,7 +302,7 @@ execute(char *linebuf, int contxt)
 	 * Handle ! escapes differently to get the correct
 	 * lexical conventions.
 	 */
-	for (cp = linebuf; isspace(*cp); cp++)
+	for (cp = linebuf; isspace((unsigned char)*cp); cp++)
 		;
 	if (*cp == '!') {
 		if (sourcing) {
@@ -313,7 +313,8 @@ execute(char *linebuf, int contxt)
 		return(0);
 	}
 	cp2 = word;
-	while (*cp && strchr(" \t0123456789$^.:/-+*'\"", *cp) == NULL)
+	while (*cp &&
+	        strchr(" \t0123456789$^.:/-+*'\"", (unsigned char)*cp) == NULL)
 		*cp2++ = *cp++;
 	*cp2 = '\0';
 
@@ -378,17 +379,17 @@ execute(char *linebuf, int contxt)
 		/*
 		 * remove leading blanks.
 		 */
-		while (isspace(*cp))
+		while (isspace((unsigned char)*cp))
 			cp++;
 
-		if (isdigit(*cp) || *cp == ':') {
+		if (isdigit((unsigned char)*cp) || *cp == ':') {
 			if ((c = getmsglist(cp, msgvec, com->c_msgflag)) < 0)
 				break;
 			/* position to next space - past the message list */
-			while (!isspace(*cp))
+			while (!isspace((unsigned char)*cp))
 				cp++;
 			/* position to next non-space */
-			while (isspace(*cp))
+			while (isspace((unsigned char)*cp))
 				cp++;
 		} else {
 			c = 0; /* no message list */
@@ -407,7 +408,7 @@ execute(char *linebuf, int contxt)
 		 * Just the straight string, with
 		 * leading blanks removed.
 		 */
-		while (isspace(*cp))
+		while (isspace((unsigned char)*cp))
 			cp++;
 
 		e = (*com->c_func2)(msgvec, cp);
@@ -455,7 +456,7 @@ execute(char *linebuf, int contxt)
 		 * Just the straight string, with
 		 * leading blanks removed.
 		 */
-		while (isspace(*cp))
+		while (isspace((unsigned char)*cp))
 			cp++;
 		e = (*com->c_func)(cp);
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.32 2009/10/27 23:59:40 deraadt Exp $	*/
+/*	$OpenBSD: fio.c,v 1.33 2014/01/17 18:42:30 okan Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -140,12 +140,12 @@ setptr(FILE *ibuf, off_t offset)
 			inhead = 0;
 		} else if (inhead) {
 			for (cp = linebuf, cp2 = "status";; cp++) {
-				if ((c = *cp2++) == 0) {
+				if ((c = (unsigned char)*cp2++) == 0) {
 					while (isspace(*cp++))
 						;
 					if (cp[-1] != ':')
 						break;
-					while ((c = *cp++) != '\0')
+					while ((c = (unsigned char)*cp++) != '\0')
 						if (c == 'R')
 							this.m_flag |= MREAD;
 						else if (c == 'O')
