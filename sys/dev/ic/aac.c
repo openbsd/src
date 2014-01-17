@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.61 2014/01/17 22:51:10 dlg Exp $	*/
+/*	$OpenBSD: aac.c,v 1.62 2014/01/17 22:52:32 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -2603,7 +2603,7 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 			{
 				printf("%s: command timed out\n",
 				       sc->aac_dev.dv_xname);
-				xs->error = XS_NO_CCB;
+				xs->error = XS_DRIVER_STUFFUP;
 				scsi_done(xs);
 				splx(s);
 				return;
