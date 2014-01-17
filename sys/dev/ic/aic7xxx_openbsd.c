@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.51 2011/07/17 22:46:48 matthew Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.52 2014/01/17 23:25:07 dlg Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -199,8 +199,6 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 	case CAM_REQ_CMP:
 		switch (xs->status) {
 		case SCSI_TASKSET_FULL:
-			xs->error = XS_NO_CCB;
-			break;
 		case SCSI_BUSY:
 			xs->error = XS_BUSY;
 			break;
@@ -217,6 +215,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 			break;
 		}
 		break;
+	case CAM_REQUEUE_REQ:
 	case CAM_BUSY:
 		xs->error = XS_BUSY;
 		break;
@@ -226,9 +225,6 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 	case CAM_BDR_SENT:
 	case CAM_SCSI_BUS_RESET:
 		xs->error = XS_RESET;
-		break;
-	case CAM_REQUEUE_REQ:
-		xs->error = XS_NO_CCB;
 		break;
 	case CAM_SEL_TIMEOUT:
 		xs->error = XS_SELTIMEOUT;

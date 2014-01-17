@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.40 2013/05/30 16:15:02 deraadt Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.41 2014/01/17 23:23:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -185,8 +185,6 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 	case CAM_REQ_CMP:
 		switch (xs->status) {
 		case SCSI_TASKSET_FULL:
-			xs->error = XS_NO_CCB;
-			break;
 		case SCSI_BUSY:
 			xs->error = XS_BUSY;
 			break;
@@ -204,6 +202,7 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 		}
 		break;
 	case CAM_BUSY:
+	case CAM_REQUEUE_REQ:
 		xs->error = XS_BUSY;
 		break;
 	case CAM_CMD_TIMEOUT:
@@ -212,9 +211,6 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 	case CAM_BDR_SENT:
 	case CAM_SCSI_BUS_RESET:
 		xs->error = XS_RESET;
-		break;
-	case CAM_REQUEUE_REQ:
-		xs->error = XS_NO_CCB;
 		break;
 	case CAM_SEL_TIMEOUT:
 		xs->error = XS_SELTIMEOUT;
@@ -548,7 +544,7 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 #endif
 			ahd_lock(ahd, &s);
 			ahd_free_scb(ahd, scb);
-			xs->error = XS_NO_CCB;
+			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
 			ahd_unlock(ahd, &s);
 			return;
