@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.64 2014/01/06 20:53:36 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.65 2014/01/17 19:07:12 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1916,9 +1916,7 @@ dbopen(int real)
 	      " \"pageid\" INTEGER NOT NULL REFERENCES mpages(id) "
 		"ON DELETE CASCADE,\n"
 	      " \"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL\n"
-	      ");\n"
-	      "\n"
-	      "CREATE INDEX \"key_index\" ON keys (key);\n";
+	      ");\n";
 
 	if (SQLITE_OK != sqlite3_exec(db, sql, NULL, NULL, NULL)) {
 		exitcode = (int)MANDOCLEVEL_SYSERR;
