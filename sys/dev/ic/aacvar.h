@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacvar.h,v 1.9 2013/01/06 22:06:54 martynas Exp $	*/
+/*	$OpenBSD: aacvar.h,v 1.10 2014/01/17 22:18:27 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -425,17 +425,6 @@ struct aac_softc
 	int			aac_max_fibs;
 	void			*aac_sdh;
 };
-
-/*
- * Public functions
- */
-extern int	aac_wait_command(struct aac_command *, int);
-extern int	aac_alloc_command(struct aac_softc *, struct aac_command **);
-extern void	aac_release_command(struct aac_command *);
-extern int	aac_alloc_sync_fib(struct aac_softc *, struct aac_fib **, int);
-extern void	aac_release_sync_fib(struct aac_softc *);
-extern int	aac_sync_fib(struct aac_softc *, u_int32_t, u_int32_t, 
-			     struct aac_fib *, u_int16_t);
 
 void	aacminphys(struct buf *, struct scsi_link *);
 int	aac_attach(struct aac_softc *);

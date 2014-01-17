@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.58 2013/11/18 20:21:51 deraadt Exp $	*/
+/*	$OpenBSD: aac.c,v 1.59 2014/01/17 22:18:27 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -110,6 +110,13 @@ void	aac_map_command_sg(void *, bus_dma_segment_t *, int, int);
 int	aac_alloc_commands(struct aac_softc *);
 void	aac_free_commands(struct aac_softc *);
 void	aac_unmap_command(struct aac_command *);
+int	aac_wait_command(struct aac_command *, int);
+int	aac_alloc_command(struct aac_softc *, struct aac_command **);
+void	aac_release_command(struct aac_command *);
+int	aac_alloc_sync_fib(struct aac_softc *, struct aac_fib **, int);
+void	aac_release_sync_fib(struct aac_softc *);
+int	aac_sync_fib(struct aac_softc *, u_int32_t, u_int32_t, 
+	    struct aac_fib *, u_int16_t);
 
 void	aac_scsi_cmd(struct scsi_xfer *);
 void	aac_startio(struct aac_softc *);
