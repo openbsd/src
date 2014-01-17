@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.60 2014/01/17 22:20:32 dlg Exp $	*/
+/*	$OpenBSD: aac.c,v 1.61 2014/01/17 22:51:10 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -111,8 +111,9 @@ int	aac_alloc_commands(struct aac_softc *);
 void	aac_free_commands(struct aac_softc *);
 void	aac_unmap_command(struct aac_command *);
 int	aac_wait_command(struct aac_command *, int);
-int	aac_alloc_command(struct aac_softc *, struct aac_command **);
-void	aac_release_command(struct aac_command *);
+void *	aac_alloc_command(void *);
+void	aac_scrub_command(struct aac_command *);
+void	aac_release_command(void *, void *);
 int	aac_alloc_sync_fib(struct aac_softc *, struct aac_fib **, int);
 void	aac_release_sync_fib(struct aac_softc *);
 int	aac_sync_fib(struct aac_softc *, u_int32_t, u_int32_t, 
@@ -232,6 +233,7 @@ aac_attach(struct aac_softc *sc)
 	/*
 	 * Initialise per-controller queues.
 	 */
+	mtx_init(&sc->aac_free_mtx, IPL_BIO);
 	aac_initq_free(sc);
 	aac_initq_ready(sc);
 	aac_initq_busy(sc);
@@ -276,6 +278,7 @@ aac_attach(struct aac_softc *sc)
 	    (sc->aac_container_count ? sc->aac_container_count : 1);
 	sc->aac_link.adapter_buswidth = AAC_MAX_CONTAINERS;
 	sc->aac_link.adapter_target = AAC_MAX_CONTAINERS;
+	sc->aac_link.pool = &sc->aac_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->aac_link;
@@ -1094,11 +1097,9 @@ aac_bio_complete(struct aac_command *cm)
 		status = bwr->Status;
 	}
 
-	s = splbio();
-	aac_release_command(cm);
-
 	xs->error = status == ST_OK? XS_NOERROR : XS_DRIVER_STUFFUP;
 	xs->resid = 0;
+	s = splbio();
 	scsi_done(xs);
 	splx(s);
 }
@@ -1145,30 +1146,23 @@ aac_wait_command(struct aac_command *cm, int timeout)
 /*
  * Allocate a command.
  */
-int
-aac_alloc_command(struct aac_softc *sc, struct aac_command **cmp)
+void *
+aac_alloc_command(void *xsc)
 {
+	struct aac_softc *sc = xsc;
 	struct aac_command *cm;
 
 	AAC_DPRINTF(AAC_D_CMD, (": allocate command"));
-	if ((cm = aac_dequeue_free(sc)) == NULL) {
-		AAC_DPRINTF(AAC_D_CMD, (" failed"));
-		return (EBUSY);
-	}
+	mtx_enter(&sc->aac_free_mtx);
+	cm = aac_dequeue_free(sc);
+	mtx_leave(&sc->aac_free_mtx);
 
-	*cmp = cm;
-	return(0);
+	return (cm);
 }
 
-/*
- * Release a command back to the freelist.
- */
 void
-aac_release_command(struct aac_command *cm)
+aac_scrub_command(struct aac_command *cm)
 {
-	AAC_DPRINTF(AAC_D_CMD, (": release command"));
-
-	/* (re)initialise the command/FIB */
 	cm->cm_sgtable = NULL;
 	cm->cm_flags = 0;
 	cm->cm_complete = NULL;
@@ -1177,16 +1171,21 @@ aac_release_command(struct aac_command *cm)
 	cm->cm_fib->Header.StructType = AAC_FIBTYPE_TFIB;
 	cm->cm_fib->Header.Flags = 0;
 	cm->cm_fib->Header.SenderSize = sizeof(struct aac_fib);
+}
 
-	/* 
-	 * These are duplicated in aac_start to cover the case where an
-	 * intermediate stage may have destroyed them.  They're left
-	 * initialised here for debugging purposes only.
-	 */
-	cm->cm_fib->Header.ReceiverFibAddress = (u_int32_t)cm->cm_fibphys;
-	cm->cm_fib->Header.SenderData = 0;
+/*
+ * Release a command back to the freelist.
+ */
+void
+aac_release_command(void *xsc, void *xcm)
+{
+	struct aac_softc *sc = xsc;
+	struct aac_command *cm = xcm;
+	AAC_DPRINTF(AAC_D_CMD, (": release command"));
 
+	mtx_enter(&sc->aac_free_mtx);
 	aac_enqueue_free(cm);
+	mtx_leave(&sc->aac_free_mtx);
 }
 
 /*
@@ -1250,7 +1249,7 @@ aac_alloc_commands(struct aac_softc *sc)
 		    MAXBSIZE, 0, BUS_DMA_NOWAIT, &cm->cm_datamap)) {
 			break;
 		}
-		aac_release_command(cm);
+		aac_release_command(sc, cm);
 		sc->total_fibs++;
 	}
 
@@ -1559,6 +1558,9 @@ aac_init(struct aac_softc *sc)
 	}
 	if (sc->total_fibs == 0)
 		goto out;
+
+	scsi_iopool_init(&sc->aac_iopool, sc,
+	    aac_alloc_command, aac_release_command);
 	
 	/*
 	 * Fill in the init structure.  This tells the adapter about the
@@ -2578,18 +2580,8 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 			goto ready;
 		}
 
-		if (aac_alloc_command(sc, &cm)) {
-			AAC_DPRINTF(AAC_D_CMD,
-				    (": out of commands, try later\n"));
-			/*
-			 * We are out of commands, try again
-			 * in a little while.
-			 */
-			xs->error = XS_NO_CCB;
-			scsi_done(xs);
-			splx(s);
-			return;
-		}
+		cm = xs->io;
+		aac_scrub_command(cm);
 
 		/* fill out the command */
 		cm->cm_data = (void *)xs->data;

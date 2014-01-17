@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacvar.h,v 1.11 2014/01/17 22:20:32 dlg Exp $	*/
+/*	$OpenBSD: aacvar.h,v 1.12 2014/01/17 22:51:10 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -348,8 +348,10 @@ struct aac_softc
 	TAILQ_HEAD(,aac_fibmap)	aac_fibmap_tqh;
 	u_int			total_fibs;
 	struct aac_command	*aac_commands;
+	struct scsi_iopool	aac_iopool;
 
 	/* command management */
+	struct mutex		 aac_free_mtx;
 	TAILQ_HEAD(,aac_command) aac_free;	/* command structures 
 						 * available for reuse */
 	TAILQ_HEAD(,aac_command) aac_ready;	/* commands on hold for
