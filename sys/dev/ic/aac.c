@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.59 2014/01/17 22:18:27 dlg Exp $	*/
+/*	$OpenBSD: aac.c,v 1.60 2014/01/17 22:20:32 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -131,7 +131,11 @@ struct cfdriver aac_cd = {
 };
 
 struct scsi_adapter aac_switch = {
-	aac_scsi_cmd, aacminphys, 0, 0,
+	aac_scsi_cmd,
+	scsi_minphys,
+	NULL,		/* probe */
+	NULL,		/* free */
+	NULL		/* ioctl */
 };
 
 /* Falcon/PPC interface */
@@ -2466,19 +2470,6 @@ aac_internal_cache_cmd(struct scsi_xfer *xs)
 	}
 
 	xs->error = XS_NOERROR;
-}
-
-void
-aacminphys(struct buf *bp, struct scsi_link *sl)
-{
-	AAC_DPRINTF(AAC_D_MISC, ("aacminphys(0x%x)\n", bp));
-
-#if 0	/* As this is way more than MAXPHYS it's really not necessary. */
-	if (bp->b_bcount > ((AAC_MAXOFFSETS - 1) * PAGE_SIZE))
-		bp->b_bcount = ((AAC_MAXOFFSETS - 1) * PAGE_SIZE);
-#endif
-
-	minphys(bp);
 }
 
 void

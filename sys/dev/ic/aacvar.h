@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacvar.h,v 1.10 2014/01/17 22:18:27 dlg Exp $	*/
+/*	$OpenBSD: aacvar.h,v 1.11 2014/01/17 22:20:32 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -426,7 +426,6 @@ struct aac_softc
 	void			*aac_sdh;
 };
 
-void	aacminphys(struct buf *, struct scsi_link *);
 int	aac_attach(struct aac_softc *);
 int	aac_intr(void *);
 
