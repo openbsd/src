@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.728 2014/01/15 00:55:21 rpe Exp $
+#	$OpenBSD: install.sub,v 1.729 2014/01/17 01:15:27 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -134,6 +134,15 @@ quote() (
 	done | sed '1s/ //'
 	echo
 )
+
+# Create a temporary directory based on the supplied directory name prefix.
+tmpdir() {
+	local _i=1 _dir
+	until _dir="${1?}.$_i.$RANDOM" && mkdir -- "$_dir" 2>/dev/null; do
+		((++_i < 10000)) || return 1
+	done
+	echo "$_dir"
+}
 
 scan_dmesg() {
 	bsort $(sed -ne "$1" /var/run/dmesg.boot)
@@ -1148,7 +1157,8 @@ enable_network() {
 # named in $1. Display an error message for failed installs so the
 # user will know to try again.
 install_files() {
-	local _src=$1 _files=$2 _f _sets _get_sets _n _col=$COLUMNS
+	local _src=$1 _files=$2 _f _sets _get_sets _n _col=$COLUMNS \
+		_tmpsrc _cfile _fsrc _unver
 
 	# Initialize _sets to the list of sets found in _src, and initialize
 	# _get_sets to the intersection of _sets and DEFAULTSETS.
@@ -1192,35 +1202,77 @@ install_files() {
 	[[ -n $resp ]] || return
 	_get_sets=$resp
 
-	[[ $resp = n ]] && return
+	# Reorder $_get_sets
+	_get_sets=$(for s in $THESETS; do isin $s $_get_sets && echo $s; done)
 
-	for _f in $THESETS ; do
-		isin $_f $_get_sets || continue
-		echo -n "Getting $_f ..."
-		rm -f /tmp/h
-		case $_f in
-		*.tgz)	ftp -Vmo - "$_src/$_f" |
-				sha256 -p -h /tmp/h | tar zxphf - -C /mnt
-			;;
-		*)	ftp -Vmo - "$_src/$_f" |
-				sha256 -p -h /tmp/h > "/mnt/$_f"
-			;;
-		esac
-		if (($? != 0)); then
-			echo "'$_f' did not install correctly."
-		elif [ -f /tmp/h -a -f "/var/hash/$_f" ]; then
-			if [ "$(</tmp/h)" != "$(</var/hash/$_f)" ]; then
-				echo "The SHA256 hash $(cat /tmp/h)"
-				echo "for $_f did not match what this bsd.rd expected."
-				# XXX should mark failure somehow
+	# Note which sets didn't verify ok
+	_unver=$_get_sets
+
+	# Try to prefetch and control checksum files
+	if df | grep -q ' /mnt/home$' && isin SHA256.sig $_files ||
+		( [[ $_src == file://* ]] && isin SHA256 $_files ) &&
+		_tmpsrc=$(tmpdir /mnt/home/sets); then
+
+		# Fetch signed checksum file and check signature
+		echo "Fetching checksum file."
+		_cfile=$_tmpsrc/SHA256
+		if isin SHA256.sig $_files; then
+			ftp -Vo "$_cfile.sig" "$_src/SHA256.sig" >/dev/null &&
+			signify -Vep /etc/signify/${VERSION}base.pub \
+ 				-x "$_cfile.sig" -m "$_cfile"
+		else
+			ftp -Vo "$_cfile" "$_src/SHA256"
+		fi &&
+		echo "Prefetching and verifying sets." &&
+		for _f in $_get_sets; do
+			if [[ $_src == file://* ]]; then
+				ln -s "${_src#file://}/$_f" "$_tmpsrc/$_f"
+			else
+				ftp -Vmo "$_tmpsrc/$_f" "$_src/$_f"
+			fi || {
+				echo "Fetching of $_f failed."
+				rm -f "$_tmpsrc/$_f"
+				$auto && rm -rf "$_tmpsrc" && exit 1
+				continue
+			}
+			if sha256 "$_tmpsrc/$_f" | sed 's,/.*/,,' |
+				fgrep -qxf /dev/stdin "$_cfile"; then
+				_unver=$(rmel $_f $_unver)
+			else
+				echo "Checksum for $_f failed!"
+				#rm -rf "$_tmpsrc/$_f"
+				#return
 			fi
-			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
-			GOTSETS="$GOTSETS $_f"
+		done
+	fi
+
+	resp=y
+	[[ -n $_unver ]] && echo "Unverified sets:" ${_unver% }. && \
+		ask_yn "Install sets anyway?" no
+	[[ $resp == y ]] &&
+	echo "Installing sets." &&
+	for _f in $_get_sets; do
+		_fsrc="$_src/$_f"
+		[[ -f $_tmpsrc/$_f ]] && _fsrc="file://$_tmpsrc/$_f"
+		case $_fsrc in
+		file://*.tgz)	tar -zxphf "${_fsrc##file://}" -C /mnt;;
+		file://*)	cp "${_fsrc##file://}" /mnt;;
+		*.tgz)		ftp -Vmo - "$_fsrc" | tar -zxphf - -C /mnt;;
+		*)		ftp -Vmo "/mnt/$_f" "$_fsrc";;
+		esac
+		if (($?)); then
+			echo "'$_f' did not install correctly."
+			if $auto; then
+				[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
+				exit 1
+			fi
 		else
 			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
 			GOTSETS="$GOTSETS $_f"
 		fi
+		rm -f "$_tmpsrc/$_f"
 	done
+	[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
 }
 
 # Encode $1 as specified for usercodes and passwords in RFC 1738
