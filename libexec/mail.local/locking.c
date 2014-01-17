@@ -1,4 +1,4 @@
-/*	$OpenBSD: locking.c,v 1.10 2011/01/10 21:00:50 millert Exp $	*/
+/*	$OpenBSD: locking.c,v 1.11 2014/01/17 21:42:47 tobias Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -112,6 +112,7 @@ again:
 						seteuid(pw->pw_uid);
 					}
 				}
+				close(lfd);
 			}
 			sleep(1U << tries);
 			tries++;
