@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.71 2014/01/13 23:42:18 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.72 2014/01/17 22:48:10 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -272,13 +272,13 @@ parse_X(FILE *cfile, u_int8_t *buf, int max)
 			    TOK_NUMBER_OR_NAME) {
 				parse_warn("expecting hexadecimal constant.");
 				skip_to_semi(cfile);
-				return (0);
+				return (-1);
 			}
 			convert_num(&buf[len], val, 16, 8);
 			if (len++ > max) {
 				parse_warn("hexadecimal constant too long.");
 				skip_to_semi(cfile);
-				return (0);
+				return (-1);
 			}
 			token = peek_token(&val, cfile);
 			if (token == ':')
@@ -291,13 +291,13 @@ parse_X(FILE *cfile, u_int8_t *buf, int max)
 		if (len + 1 > max) {
 			parse_warn("string constant too long.");
 			skip_to_semi(cfile);
-			return (0);
+			return (-1);
 		}
 		memcpy(buf, val, len + 1);
 	} else {
 		parse_warn("expecting string or hexadecimal data");
 		skip_to_semi(cfile);
-		return (0);
+		return (-1);
 	}
 	return (len);
 }
@@ -625,6 +625,8 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 			case 'X':
 				len = parse_X(cfile, &hunkbuf[hunkix],
 				    sizeof(hunkbuf) - hunkix);
+				if (len == -1)
+					return (-1);
 				hunkix += len;
 				break;
 			case 't': /* Text string. */
