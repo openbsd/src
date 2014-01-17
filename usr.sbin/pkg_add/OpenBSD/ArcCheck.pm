@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.22 2013/12/23 16:34:51 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.23 2014/01/17 15:46:16 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -98,6 +98,7 @@ sub verify_modes
 }
 
 package OpenBSD::Ustar;
+use POSIX;
 
 # prepare item and introduce long names where needed.
 sub prepare_long
@@ -116,6 +117,20 @@ sub prepare_long
 	if (!defined $entry->{gname}) {
 		$self->fatal("No group name for #1 (uid #2)",
 		    $item->name, $entry->{gid});
+	}
+	# if we're going to set the group or owner, sguid bits won't
+	# survive the extraction
+	if (defined $item->{group} || defined $item->{owner}) {
+		$entry->{mode} &= ~(S_ISUID|S_ISGID);
+	}
+	# likewise, we skip links on extractions, so hey, don't even care
+	# about modes and stuff.
+	if ($entry->isSymLink) {
+		$entry->{mode} = 0777;
+		$entry->{uid} = 0;
+		$entry->{gid} = 0;
+		$entry->{uname} = 'root';
+		$entry->{gname} = 'wheel';
 	}
 
 	$entry->set_name($item->name);
