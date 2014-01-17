@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ipcp.c,v 1.44 2005/09/21 16:58:34 brad Exp $
+ * $OpenBSD: ipcp.c,v 1.45 2014/01/17 23:13:49 tobias Exp $
  */
 
 #include <sys/param.h>
@@ -192,7 +192,10 @@ ipcp_LoadDNS(struct ipcp *ipcp)
     if (fstat(fd, &st) == 0) {
       ssize_t got;
 
-      if ((ipcp->ns.resolv_nons = (char *)malloc(st.st_size + 1)) == NULL)
+      if (st.st_size >= SIZE_MAX)
+        log_Printf(LogERROR, "%s is too large: %llu\n",
+                   _PATH_RESCONF, (unsigned long long)st.st_size);
+      else if ((ipcp->ns.resolv_nons = (char *)malloc(st.st_size + 1)) == NULL)
         log_Printf(LogERROR, "Failed to malloc %lu for %s: %s\n",
                    (unsigned long)st.st_size, _PATH_RESCONF, strerror(errno));
       else if ((ipcp->ns.resolv = (char *)malloc(st.st_size + 1)) == NULL) {
