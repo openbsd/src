@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.30 2011/08/26 08:46:09 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.31 2014/01/17 13:15:43 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -85,9 +85,9 @@ sub _opened
 	$archive->set_description($self->{repository}->url($self->{name}));
 	$self->{_archive} = $archive;
 
-	if (defined $self->{_current}) {
+	if (defined $self->{_current_name}) {
 		while (my $e = $self->{_archive}->next) {
-			if ($e->{name} eq $self->{_current}->{name}) {
+			if ($e->{name} eq $self->{_current_name}) {
 				$self->{_current} = $e;
 				return $self;
 			}
@@ -263,6 +263,7 @@ sub deref
 	$self->{pid} = undef;
 	$self->{pid2} = undef;
 	$self->{_archive} = undef;
+	$self->{_current} = undef;
 }
 
 # proxy for archive operations
@@ -285,6 +286,7 @@ sub _next
 	}
 	if (!$self->{_unput}) {
 		$self->{_current} = $self->getNext;
+		$self->{_current_name} = $self->{_current}{name};
 	} else {
 		$self->{_unput} = 0;
 	}
