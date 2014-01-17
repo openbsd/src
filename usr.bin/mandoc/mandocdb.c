@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.65 2014/01/17 19:07:12 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.66 2014/01/17 19:16:42 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1906,16 +1906,14 @@ dbopen(int real)
 	      " \"arch\" TEXT NOT NULL,\n"
 	      " \"name\" TEXT NOT NULL,\n"
 	      " \"pageid\" INTEGER NOT NULL REFERENCES mpages(id) "
-		"ON DELETE CASCADE,\n"
-	      " \"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL\n"
+		"ON DELETE CASCADE\n"
 	      ");\n"
 	      "\n"
 	      "CREATE TABLE \"keys\" (\n"
 	      " \"bits\" INTEGER NOT NULL,\n"
 	      " \"key\" TEXT NOT NULL,\n"
 	      " \"pageid\" INTEGER NOT NULL REFERENCES mpages(id) "
-		"ON DELETE CASCADE,\n"
-	      " \"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL\n"
+		"ON DELETE CASCADE\n"
 	      ");\n";
 
 	if (SQLITE_OK != sqlite3_exec(db, sql, NULL, NULL, NULL)) {
