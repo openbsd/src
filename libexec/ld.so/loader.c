@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.144 2013/12/25 15:14:59 miod Exp $ */
+/*	$OpenBSD: loader.c,v 1.145 2014/01/18 09:08:42 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -603,29 +603,6 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 		_dl_objects->status |= STAT_INIT_DONE;
 		_dl_call_init(_dl_objects);
 	}
-
-#if defined(__mips64__)	/* XXX */
-	/*
-	 * Schedule a routine to be run at shutdown, by using atexit.
-	 * Cannot call atexit directly from ld.so?
-	 * Do not schedule destructors if run from ldd.
-	 */
-	{
-		const elf_object_t *sobj;
-		const Elf_Sym *sym;
-		Elf_Addr ooff;
-
-		sym = NULL;
-		ooff = _dl_find_symbol("__cxa_atexit", &sym,
-		    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT,
-		    NULL, dyn_obj, &sobj);
-		if (sym == NULL)
-			_dl_printf("cannot find __cxa_atexit, destructors will not be run!\n");
-		else
-			(*(void (*)(void (*)(void), void *, void *))
-			    (sym->st_value + ooff))(_dl_dtors, NULL, NULL);
-	}
-#endif
 
 	DL_DEB(("entry point: 0x%lx\n", dl_data[AUX_entry]));
 
