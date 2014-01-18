@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.149 2013/12/26 07:17:15 espie Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.150 2014/01/18 07:10:26 deraadt Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1356,8 +1356,7 @@ again:
 		if (fmode & O_EXCL) {
 			*tl = txdr_unsigned(NFSV3CREATE_EXCLUSIVE);
 			tl = nfsm_build(&info.nmi_mb, NFSX_V3CREATEVERF);
-			*tl++ = arc4random();
-			*tl = arc4random();
+			arc4random_buf(tl, sizeof(*tl) * 2);
 		} else {
 			*tl = txdr_unsigned(NFSV3CREATE_UNCHECKED);
 			nfsm_v3attrbuild(&info.nmi_mb, vap, 0);
@@ -2518,8 +2517,11 @@ nfs_sillyrename(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	/* Try lookitups until we get one that isn't there */
 	while (1) {
 		/* Fudge together a funny name */
+		u_int32_t rnd[2];
+
+		arc4random_buf(&rnd, sizeof rnd);
 		sp->s_namlen = snprintf(sp->s_name, sizeof sp->s_name,
-		    ".nfs%08X%08X", arc4random(), arc4random());
+		    ".nfs%08X%08X", rnd[0], rnd[1]);
 		if (sp->s_namlen > sizeof sp->s_name)
 			sp->s_namlen = strlen(sp->s_name);
 
