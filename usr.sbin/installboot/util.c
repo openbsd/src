@@ -1,6 +1,7 @@
-/*	$OpenBSD: installboot.h,v 1.3 2014/01/18 02:47:27 jsing Exp $	*/
+/*	$OpenBSD: util.c,v 1.1 2014/01/18 02:47:27 jsing Exp $	*/
+
 /*
- * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,26 +16,28 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-extern int nowrite;
-extern int stages;
-extern int verbose;
+#include <sys/param.h>
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-extern char *root;
-extern char *stage1;
-extern char *stage2;
+#include "installboot.h"
 
-#ifdef BOOTSTRAP
-void	bootstrap(int, char *, char *);
-#endif
+char *
+fileprefix(const char *base, const char *path)
+{
+	char *r, *s;
+	int n;
 
-char	*fileprefix(const char *, const char *);
+	if ((s = malloc(PATH_MAX)) == NULL)
+		err(1, "malloc");
+	n = snprintf(s, PATH_MAX, "%s/%s", base, path);
+	if (n < 1 || n >= PATH_MAX)
+		err(1, "snprintf");
+	if ((r = realpath(s, NULL)) == NULL)
+		err(1, "realpath");
+	free(s);
 
-void	md_init(void);
-void	md_loadboot(void);
-void	md_installboot(int, char *);
-
-#ifdef SOFTRAID
-void	sr_installboot(int, char *);
-void	sr_install_bootblk(int, int, int);
-void	sr_install_bootldr(int, char *);
-#endif
+	return r;
+}

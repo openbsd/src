@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.1 2014/01/05 16:02:40 jsing Exp $
+.\"	$OpenBSD: installboot.8,v 1.2 2014/01/18 02:47:27 jsing Exp $
 .\"
 .\" Copyright (c) 2013, 2014 Joel Sing
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 5 2014 $
+.Dd $Mdocdate: January 18 2014 $
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Sh SYNOPSIS
 .Nm installboot
 .Op Fl nv
+.Op Fl r Ar root
 .Ar disk
 .Op Ar stage1 Op Ar stage2
 .Sh DESCRIPTION
@@ -40,6 +41,11 @@ The options are as follows:
 Perform a dry run - do not actually write any bootstrap to the disk.
 .It Fl v
 Increase verbosity during operation.
+.It Fl r Ar root
+Specify the mount point of the
+.Ar root
+filesystem to operate on, defaulting to
+.Ar / .
 .It Ar disk
 Specify the
 .Ar disk

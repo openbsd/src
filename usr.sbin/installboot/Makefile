@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.9 2014/01/18 02:45:38 jsing Exp $
+#	$OpenBSD: Makefile,v 1.10 2014/01/18 02:47:27 jsing Exp $
 
 PROG=		installboot
-SRCS=		installboot.c
+SRCS=		installboot.c util.c
 MAN=		installboot.8
 
 CPPFLAGS=	-I${.CURDIR}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.1 2013/12/27 13:52:40 jsing Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.2 2014/01/18 02:47:27 jsing Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -29,6 +30,7 @@ int	nowrite;
 int	stages;
 int	verbose;
 
+char	*root = "/";
 char	*stage1;
 char	*stage2;
 
@@ -37,7 +39,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-nv] disk [stage1%s]\n",
+	fprintf(stderr, "usage: %s [-nv] [-r root] disk [stage1%s]\n",
 	    __progname, (stages >= 2) ? " [stage2]" : "");
 
 	exit(1);
@@ -52,10 +54,15 @@ main(int argc, char **argv)
 
 	md_init();
 
-	while ((opt = getopt(argc, argv, "nv")) != -1) {
+	while ((opt = getopt(argc, argv, "nr:v")) != -1) {
 		switch (opt) {
 		case 'n':
 			nowrite = 1;
+			break;
+		case 'r':
+			root = strdup(optarg);
+			if (root == NULL)
+				err(1, "strdup");
 			break;
 		case 'v':
 			verbose = 1;
@@ -76,6 +83,14 @@ main(int argc, char **argv)
 		stage1 = argv[1];
 	if (argc > 2)
 		stage2 = argv[2];
+
+	/* Prefix stages with root. */
+	if (verbose)
+		fprintf(stderr, "Using %s as root\n", root);
+	if (stage1 != NULL)
+		stage1 = fileprefix(root, stage1);
+	if (stage2 != NULL)
+		stage2 = fileprefix(root, stage2);
 
 	if ((devfd = opendev(dev, (nowrite ? O_RDONLY : O_RDWR), OPENDEV_PART,
 	    &realdev)) < 0)
