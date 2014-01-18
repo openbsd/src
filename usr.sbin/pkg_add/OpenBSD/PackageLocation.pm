@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.31 2014/01/17 13:15:43 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.32 2014/01/18 01:02:25 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -286,7 +286,11 @@ sub _next
 	}
 	if (!$self->{_unput}) {
 		$self->{_current} = $self->getNext;
-		$self->{_current_name} = $self->{_current}{name};
+		if (defined $self->{_current}) {
+			$self->{_current_name} = $self->{_current}{name};
+		} else {
+			delete $self->{_current_name};
+		}
 	} else {
 		$self->{_unput} = 0;
 	}
