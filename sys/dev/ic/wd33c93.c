@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93.c,v 1.4 2012/07/02 18:17:43 miod Exp $	*/
+/*	$OpenBSD: wd33c93.c,v 1.5 2014/01/18 20:43:20 dlg Exp $	*/
 /*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
@@ -142,7 +142,11 @@ u_char	wd33c93_stp2syn(struct wd33c93_softc *, struct wd33c93_tinfo *);
 void	wd33c93_setsync(struct wd33c93_softc *, struct wd33c93_tinfo *);
 
 struct pool wd33c93_pool;		/* Adapter Control Blocks */
+struct scsi_iopool wd33c93_iopool;
 int wd33c93_pool_initialized = 0;
+
+void *	wd33c93_io_get(void *);
+void	wd33c93_io_put(void *, void *);
 
 /*
  * Timeouts
@@ -204,6 +208,7 @@ wd33c93_attach(struct wd33c93_softc *sc, struct scsi_adapter *adapter)
 	sc->sc_link.adapter = adapter;
 	sc->sc_link.openings = 2;
 	sc->sc_link.luns = SBIC_NLUN;
+	sc->sc_link.pool = &wd33c93_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
@@ -226,6 +231,9 @@ wd33c93_init(struct wd33c93_softc *sc)
 		/* All instances share the same pool */
 		pool_init(&wd33c93_pool, sizeof(struct wd33c93_acb), 0, 0, 0,
 		    "wd33c93_acb", NULL);
+		pool_setipl(&wd33c93_pool, IPL_BIO);
+		scsi_iopool_init(&wd33c93_iopool, NULL,
+		    wd33c93_io_get, wd33c93_io_put);
 		++wd33c93_pool_initialized;
 	}
 
@@ -574,17 +582,8 @@ wd33c93_scsi_cmd(struct scsi_xfer *xs)
 	if (sc->sc_nexus && (flags & SCSI_POLL))
 		panic("wd33c93_scsicmd: busy");
 
-	s = splbio();
-	acb = (struct wd33c93_acb *)pool_get(&wd33c93_pool,
-	    PR_NOWAIT | PR_ZERO);
-	splx(s);
-
-	if (acb == NULL) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		return;
-	}
-
+	acb = xs->io;
+	memset(acb, 0, sizeof(*acb));
 	acb->flags = ACB_ACTIVE;
 	acb->xs    = xs;
 	acb->timeout = xs->timeout;
@@ -770,7 +769,6 @@ wd33c93_scsidone(struct wd33c93_softc *sc, struct wd33c93_acb *acb, int status)
 	struct scsi_link	*sc_link = xs->sc_link;
 	struct wd33c93_tinfo	*ti;
 	struct wd33c93_linfo	*li;
-	int			s;
 
 #ifdef DIAGNOSTIC
 	KASSERT(sc->target == sc_link->target);
@@ -821,14 +819,6 @@ wd33c93_scsidone(struct wd33c93_softc *sc, struct wd33c93_acb *acb, int status)
 
 		if (!TAILQ_EMPTY(&sc->ready_list))
 			wd33c93_sched(sc);
-	}
-
-	/* place control block back on free list. */
-	if ((xs->flags & SCSI_POLL) == 0) {
-		s = splbio();
-		acb->flags = ACB_FREE;
-		pool_put(&wd33c93_pool, acb);
-		splx(s);
 	}
 
 	scsi_done(xs);
@@ -1436,11 +1426,6 @@ wd33c93_poll(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 		}
 
 		if ((xs->flags & ITSDONE) != 0) {
-			s = splbio();
-			acb->flags = ACB_FREE;
-			pool_put(&wd33c93_pool, acb);
-			splx(s);
-
 			return (0);
 		}
 
@@ -2298,6 +2283,17 @@ wd33c93_watchdog(void *arg)
 	timeout_add_sec(&sc->sc_watchdog, 60);
 }
 
+void *
+wd33c93_io_get(void *null)
+{
+	return (pool_get(&wd33c93_pool, PR_NOWAIT));
+}
+
+void
+wd33c93_io_put(void *null, void *io)
+{
+	pool_put(&wd33c93_pool, io);
+}
 
 #ifdef SBICDEBUG
 void
