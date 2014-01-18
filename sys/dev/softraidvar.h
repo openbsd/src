@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.140 2013/11/04 21:02:57 deraadt Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.141 2014/01/18 08:49:20 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -38,7 +38,10 @@
 #define SR_CRYPTO_CHECKBYTES	64	/* size of generic key chksum struct */
 #define SR_CRYPTO_KEY_BLKSHIFT	30	/* 0.5TB per key */
 
-/* this is a generic hint for KDF done in userland, not interpreted by the kernel. */
+/*
+ * sr_crypto_genkdf is a generic hint for the KDF performed in userland and
+ * is not interpreted by the kernel.
+ */
 struct sr_crypto_genkdf {
 	u_int32_t	len;
 	u_int32_t	type;
@@ -47,7 +50,10 @@ struct sr_crypto_genkdf {
 #define SR_CRYPTOKDFT_KEYDISK	2
 };
 
-/* this is a hint for KDF using PKCS#5.  Not interpreted by the kernel */
+/*
+ * sr_crypto_genkdf_pbkdf2 is a hint for the PKCS#5 KDF performed in userland
+ * and is not interpreted by the kernel.
+ */
 struct sr_crypto_kdf_pbkdf2 {
 	u_int32_t	len;
 	u_int32_t	type;
@@ -56,8 +62,8 @@ struct sr_crypto_kdf_pbkdf2 {
 };
 
 /*
- * this structure is used to copy masking keys and KDF hints from/to userland.
- * the embedded hint structures are not interpreted by the kernel.
+ * sr_crypto_kdfinfo is used to copy masking keys and KDF hints from/to
+ * userland. The embedded hint structures are not interpreted by the kernel.
  */
 struct sr_crypto_kdfinfo {
 	u_int32_t	len;
