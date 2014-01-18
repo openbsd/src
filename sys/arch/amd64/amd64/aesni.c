@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.25 2013/03/26 15:47:01 jsing Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.26 2014/01/18 23:17:24 mikeb Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -143,7 +143,7 @@ aesni_setup(void)
 	algs[CRYPTO_AES_GCM_16] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_XTS] = CRYPTO_ALG_FLAG_SUPPORTED;
 
-	/* Authentication algorithms. */
+	/* Authenticated encryption algorithms. */
 	algs[CRYPTO_AES_GMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_128_GMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_192_GMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
@@ -157,6 +157,7 @@ aesni_setup(void)
 	algs[CRYPTO_SHA2_384_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_SHA2_512_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 
+	/* IPsec Extended Sequence Numbers. */
 	algs[CRYPTO_ESN] = CRYPTO_ALG_FLAG_SUPPORTED;
 
 	aesni_sc->sc_cid = crypto_get_driverid(0);
