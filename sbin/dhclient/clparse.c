@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.74 2014/01/18 01:03:56 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.75 2014/01/18 01:19:01 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -288,7 +288,6 @@ parse_X(FILE *cfile, u_int8_t *buf, int max)
 			if (token == ':')
 				token = next_token(&val, cfile);
 		} while (token == ':');
-		val = (char *)buf;
 	} else if (token == TOK_STRING) {
 		token = next_token(&val, cfile);
 		len = strlen(val);
