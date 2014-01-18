@@ -1,4 +1,4 @@
-#       $OpenBSD: Makefile,v 1.1 2008/06/12 19:42:48 djm Exp $
+#       $OpenBSD: Makefile,v 1.2 2014/01/18 05:54:52 martynas Exp $
 
 PROG=   aestest
 
@@ -10,7 +10,6 @@ CDIAGFLAGS+=	-Wstrict-prototypes
 CDIAGFLAGS+=	-Wmissing-prototypes
 CDIAGFLAGS+=	-Wunused
 CDIAGFLAGS+=	-Wsign-compare
-CDIAGFLAGS+=	-Wbounded
 CDIAGFLAGS+=	-Wshadow
 
 REGRESS_ROOT_TARGETS=	run-regress-${PROG}
