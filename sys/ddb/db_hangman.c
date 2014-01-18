@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.28 2008/04/18 06:42:20 djm Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.29 2014/01/18 01:58:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -67,14 +67,6 @@ static const char hangpic[]=
 	"9  ";
 static const char substchar[]="\\/|\\/O|/-|";
 
-static size_t
-db_random(size_t mod)
-{
-	if (cold)
-		return (random() % mod);
-	return (arc4random_uniform(mod));
-}
-
 struct db_hang_forall_arg {
 	int cnt;
 	db_sym_t sym;
@@ -111,7 +103,7 @@ db_randomsym(size_t *lenp)
 	if (nsymtabs == 0)
 		return (NULL);
 
-	stab = &db_symtabs[db_random(nsymtabs)];
+	stab = &db_symtabs[arc4random_uniform(nsymtabs)];
 
 	dfa.cnt = 0;
 	X_db_forall(stab, db_hang_forall, &dfa);
@@ -120,7 +112,7 @@ db_randomsym(size_t *lenp)
 	if (nsyms == 0)
 		return (NULL);
 
-	dfa.cnt = db_random(nsyms);
+	dfa.cnt = arc4random_uniform(nsyms);
 	X_db_forall(stab, db_hang_forall, &dfa);
 
 	q = db_qualify(dfa.sym, stab->name);
