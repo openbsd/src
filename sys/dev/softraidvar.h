@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.143 2014/01/18 09:23:26 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.144 2014/01/18 09:33:53 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -682,6 +682,8 @@ void			sr_meta_getdevname(struct sr_softc *, dev_t, char *,
 			    int);
 void			sr_meta_opt_load(struct sr_softc *,
 			    struct sr_metadata *, struct sr_meta_opt_head *);
+void			*sr_block_get(struct sr_discipline *, int);
+void			sr_block_put(struct sr_discipline *, void *, int);
 void			sr_checksum(struct sr_softc *, void *, void *,
 			    u_int32_t);
 int			sr_validate_io(struct sr_workunit *, daddr_t *,

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.317 2014/01/18 09:23:26 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.318 2014/01/18 09:33:53 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -4380,6 +4380,18 @@ die:
 	}
 
 	sd->sd_vol_status = new_state;
+}
+
+void *
+sr_block_get(struct sr_discipline *sd, int length)
+{
+	return dma_alloc(length, PR_NOWAIT | PR_ZERO);
+}
+
+void
+sr_block_put(struct sr_discipline *sd, void *ptr, int length)
+{
+	dma_free(ptr, length);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.1 2014/01/18 09:23:26 jsing Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.2 2014/01/18 09:33:53 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -63,9 +63,6 @@ int	sr_raid5_addio(struct sr_workunit *wu, int, daddr_t, daddr_t,
 	    void *, int, int, void *);
 void	sr_dump(void *, int);
 void	sr_raid5_scrub(struct sr_discipline *);
-
-void	*sr_get_block(struct sr_discipline *, int);
-void	sr_put_block(struct sr_discipline *, void *, int);
 
 /* discipline initialisation. */
 void
@@ -439,7 +436,7 @@ sr_raid5_rw(struct sr_workunit *wu)
 			 * parity in the intr routine. The result in xorbuf
 			 * is the new parity data.
 			 */
-			xorbuf = sr_get_block(sd, length);
+			xorbuf = sr_block_get(sd, length);
 			if (xorbuf == NULL)
 				goto bad;
 			memcpy(xorbuf, data, length);
@@ -520,7 +517,7 @@ sr_raid5_intr(struct buf *bp)
 
 	/* Free allocated data buffer. */
 	if (ccb->ccb_flags & SR_CCBF_FREEBUF) {
-		sr_put_block(sd, ccb->ccb_buf.b_data, ccb->ccb_buf.b_bcount);
+		sr_block_put(sd, ccb->ccb_buf.b_data, ccb->ccb_buf.b_bcount);
 		ccb->ccb_buf.b_data = NULL;
 	}
 
@@ -575,7 +572,7 @@ sr_raid5_addio(struct sr_workunit *wu, int chunk, daddr_t blkno,
 
 	/* Allocate temporary buffer. */
 	if (data == NULL) {
-		data = sr_get_block(sd, len);
+		data = sr_block_get(sd, len);
 		if (data == NULL)
 			return (-1);
 		ccbflags |= SR_CCBF_FREEBUF;
@@ -584,7 +581,7 @@ sr_raid5_addio(struct sr_workunit *wu, int chunk, daddr_t blkno,
 	ccb = sr_ccb_rw(sd, chunk, blkno, len, data, xsflags, ccbflags);
 	if (ccb == NULL) {
 		if (ccbflags & SR_CCBF_FREEBUF)
-			sr_put_block(sd, data, len);
+			sr_block_put(sd, data, len);
 		return (-1);
 	}
 	ccb->ccb_opaque = xorbuf;
@@ -644,7 +641,7 @@ sr_raid5_scrub(struct sr_discipline *sd)
 	for (strip_no = 0; strip_no < max_strip; strip_no++) {
 		parity = no_chunk - ((strip_no / no_chunk) % (no_chunk + 1));
 
-		xorbuf = sr_get_block(sd, strip_size);
+		xorbuf = sr_block_get(sd, strip_size);
 		for (i = 0; i <= no_chunk; i++) {
 			if (i != parity)
 				sr_raid5_addio(wu_r, i, 0xBADCAFE, strip_size,
@@ -679,16 +676,3 @@ done:
 	return;
 }
 #endif
-
-void *
-sr_get_block(struct sr_discipline *sd, int length)
-{
-	return dma_alloc(length, PR_NOWAIT | PR_ZERO);
-}
-
-void
-sr_put_block(struct sr_discipline *sd, void *ptr, int length)
-{
-	dma_free(ptr, length);
-}
-

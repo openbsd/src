@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.57 2013/11/21 17:06:45 krw Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.58 2014/01/18 09:33:53 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -68,9 +68,6 @@ int	sr_raid6_addio(struct sr_workunit *wu, int, daddr_t, daddr_t,
 void	sr_dump(void *, int);
 void	sr_raid6_scrub(struct sr_discipline *);
 int	sr_failio(struct sr_workunit *);
-
-void	*sr_get_block(struct sr_discipline *, int);
-void	sr_put_block(struct sr_discipline *, void *, int);
 
 void	gf_init(void);
 uint8_t gf_inv(uint8_t);
@@ -569,11 +566,11 @@ sr_raid6_rw(struct sr_workunit *wu)
 			 * parity in the intr routine. The result in pbuf
 			 * is the new parity data.
 			 */
-			qbuf = sr_get_block(sd, length);
+			qbuf = sr_block_get(sd, length);
 			if (qbuf == NULL)
 				goto bad;
 
-			pbuf = sr_get_block(sd, length);
+			pbuf = sr_block_get(sd, length);
 			if (pbuf == NULL)
 				goto bad;
 
@@ -693,7 +690,7 @@ sr_raid6_intr(struct buf *bp)
 
 	/* Free allocated data buffer. */
 	if (ccb->ccb_flags & SR_CCBF_FREEBUF) {
-		sr_put_block(sd, ccb->ccb_buf.b_data, ccb->ccb_buf.b_bcount);
+		sr_block_put(sd, ccb->ccb_buf.b_data, ccb->ccb_buf.b_bcount);
 		ccb->ccb_buf.b_data = NULL;
 	}
 
@@ -751,7 +748,7 @@ sr_raid6_addio(struct sr_workunit *wu, int chunk, daddr_t blkno,
 
 	/* Allocate temporary buffer. */
 	if (data == NULL) {
-		data = sr_get_block(sd, len);
+		data = sr_block_get(sd, len);
 		if (data == NULL)
 			return (-1);
 		ccbflags |= SR_CCBF_FREEBUF;
@@ -760,7 +757,7 @@ sr_raid6_addio(struct sr_workunit *wu, int chunk, daddr_t blkno,
 	ccb = sr_ccb_rw(sd, chunk, blkno, len, data, xsflags, ccbflags);
 	if (ccb == NULL) {
 		if (ccbflags & SR_CCBF_FREEBUF)
-			sr_put_block(sd, data, len);
+			sr_block_put(sd, data, len);
 		return (-1);
 	}
 	if (pbuf || qbuf) {
