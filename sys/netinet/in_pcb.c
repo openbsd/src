@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.146 2013/12/20 02:04:08 krw Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.147 2014/01/18 21:14:46 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -495,8 +495,21 @@ in_pcbdetach(struct inpcb *inp)
 		ipsec_delete_policy(inp->inp_ipo);
 #endif
 #if NPF > 0
-	if (inp->inp_pf_sk)
-		inp->inp_pf_sk->inp = NULL;
+	if (inp->inp_pf_sk) {
+		struct pf_state_key	*sk;
+		struct pf_state_item	*si;
+
+		sk = inp->inp_pf_sk;
+		TAILQ_FOREACH(si, &sk->states, entry)
+			if (sk == si->s->key[PF_SK_STACK] && si->s->rule.ptr &&
+			    si->s->rule.ptr->divert.port) {
+				pf_unlink_state(si->s);
+				break;
+			}
+		/* pf_unlink_state() may have detached the state */
+		if (inp->inp_pf_sk)
+			inp->inp_pf_sk->inp = NULL;
+	}
 #endif
 	s = splnet();
 	LIST_REMOVE(inp, inp_lhash);
