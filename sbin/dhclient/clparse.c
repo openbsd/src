@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.72 2014/01/17 22:48:10 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.73 2014/01/18 00:51:55 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -161,9 +161,11 @@ void
 parse_client_statement(FILE *cfile)
 {
 	u_int8_t optlist[256];
-	int code, count;
+	int code, count, token;
 
-	switch (next_token(NULL, cfile)) {
+	token = next_token(NULL, cfile);
+	
+	switch (token) {
 	case TOK_SEND:
 		parse_option_decl(cfile, &config->send_options[0]);
 		break;
@@ -251,7 +253,8 @@ parse_client_statement(FILE *cfile)
 		break;
 	default:
 		parse_warn("expecting a statement.");
-		skip_to_semi(cfile);
+		if (token != ';')
+			skip_to_semi(cfile);
 		break;
 	}
 }
@@ -271,7 +274,8 @@ parse_X(FILE *cfile, u_int8_t *buf, int max)
 			if (token != TOK_NUMBER && token !=
 			    TOK_NUMBER_OR_NAME) {
 				parse_warn("expecting hexadecimal constant.");
-				skip_to_semi(cfile);
+				if (token != ';')
+					skip_to_semi(cfile);
 				return (-1);
 			}
 			convert_num(&buf[len], val, 16, 8);
@@ -296,7 +300,8 @@ parse_X(FILE *cfile, u_int8_t *buf, int max)
 		memcpy(buf, val, len + 1);
 	} else {
 		parse_warn("expecting string or hexadecimal data");
-		skip_to_semi(cfile);
+		if (token != ';')
+			skip_to_semi(cfile);
 		return (-1);
 	}
 	return (len);
@@ -356,7 +361,8 @@ parse_option_list(FILE *cfile, u_int8_t *list, size_t sz)
 		return (ix);
 
 syntaxerror:
-	skip_to_semi(cfile);
+	if (token != ';')
+		skip_to_semi(cfile);
 	return (-1);
 }
 
@@ -373,7 +379,8 @@ parse_interface_declaration(FILE *cfile)
 	token = next_token(&val, cfile);
 	if (token != TOK_STRING) {
 		parse_warn("expecting interface name (in quotes).");
-		skip_to_semi(cfile);
+		if (token != ';')
+			skip_to_semi(cfile);
 		return;
 	}
 
@@ -385,7 +392,8 @@ parse_interface_declaration(FILE *cfile)
 	token = next_token(&val, cfile);
 	if (token != '{') {
 		parse_warn("expecting left brace.");
-		skip_to_semi(cfile);
+		if (token != ';')
+			skip_to_semi(cfile);
 		return;
 	}
 
@@ -421,7 +429,8 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	token = next_token(NULL, cfile);
 	if (token != '{') {
 		parse_warn("expecting left brace.");
-		skip_to_semi(cfile);
+		if (token != ';')
+			skip_to_semi(cfile);
 		return;
 	}
 
@@ -527,7 +536,9 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease)
 	char *val;
 	int token;
 
-	switch (next_token(&val, cfile)) {
+	token = next_token(&val, cfile);
+
+	switch (token) {
 	case TOK_BOOTP:
 		lease->is_bootp = 1;
 		break;
@@ -535,7 +546,8 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease)
 		token = next_token(&val, cfile);
 		if (token != TOK_STRING) {
 			parse_warn("expecting interface name (in quotes).");
-			skip_to_semi(cfile);
+			if (token != ';')
+				skip_to_semi(cfile);
 			return;
 		}
 		if (strcmp(ifi->name, val) != 0) {
@@ -575,7 +587,8 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease)
 		return;
 	default:
 		parse_warn("expecting lease declaration.");
-		skip_to_semi(cfile);
+		if (token != ';')
+			skip_to_semi(cfile);
 		return;
 	}
 
@@ -633,7 +646,8 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				token = next_token(&val, cfile);
 				if (token != TOK_STRING) {
 					parse_warn("expecting string.");
-					skip_to_semi(cfile);
+					if (token != ';')
+						skip_to_semi(cfile);
 					return (-1);
 				}
 				len = strlen(val);
