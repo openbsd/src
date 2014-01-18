@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.3 2014/01/18 03:07:05 jsing Exp $
+.\"	$OpenBSD: installboot.8,v 1.4 2014/01/18 18:14:21 jmc Exp $
 .\"
 .\" Copyright (c) 2013, 2014 Joel Sing
 .\"
@@ -39,13 +39,13 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl n
 Perform a dry run - do not actually write any bootstrap to the disk.
-.It Fl v
-Increase verbosity during operation.
 .It Fl r Ar root
 Specify the mount point of the
 .Ar root
 filesystem to operate on, defaulting to
 .Ar / .
+.It Fl v
+Increase verbosity during operation.
 .It Ar disk
 Specify the
 .Ar disk
