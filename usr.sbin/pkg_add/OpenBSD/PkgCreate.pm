@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.95 2014/01/18 01:09:30 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.96 2014/01/18 01:10:36 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1192,14 +1192,7 @@ sub create_archive
 {
 	my ($self, $state, $filename, $dir) = @_;
 	require IO::Compress::Gzip;
-	require Compress::Raw::Zlib;
-	my $level = $state->{subst}->value('COMPRESSION_LEVEL');
-	if (defined $state->{signer}) {
-		$level //= 6;
-	} else {
-		$level //= 1;
-	}
-	my $fh = IO::Compress::Gzip->new($filename, -Level => $level);
+	my $fh = IO::Compress::Gzip->new($filename);
 	return OpenBSD::Ustar->new($fh, $state, $dir);
 }
 
