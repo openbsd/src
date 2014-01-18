@@ -1,4 +1,4 @@
-/* $OpenBSD: drm.h,v 1.13 2013/11/17 14:23:22 kettenis Exp $ */
+/* $OpenBSD: drm.h,v 1.14 2014/01/18 08:25:06 jsg Exp $ */
 /**
  * \file drm.h
  * Header for the Direct Rendering Manager
@@ -671,6 +671,7 @@ struct drm_event_vblank {
 #define DRM_CAP_DUMB_PREFER_SHADOW 0x4
 #define DRM_CAP_PRIME 0x5
 #define DRM_CAP_TIMESTAMP_MONOTONIC 0x6
+#define DRM_CAP_ASYNC_PAGE_FLIP 0x7
 
 #define DRM_PRIME_CAP_IMPORT 0x1
 #define DRM_PRIME_CAP_EXPORT 0x2
