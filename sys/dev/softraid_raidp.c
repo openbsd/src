@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.55 2013/11/21 17:06:45 krw Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.56 2014/01/18 09:01:01 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -73,10 +73,7 @@ sr_raidp_discipline_init(struct sr_discipline *sd, u_int8_t type)
 {
 	/* Fill out discipline members. */
 	sd->sd_type = type;
-	if (sd->sd_type == SR_MD_RAID4)
-		strlcpy(sd->sd_name, "RAID 4", sizeof(sd->sd_name));
-	else
-		strlcpy(sd->sd_name, "RAID 5", sizeof(sd->sd_name));
+	strlcpy(sd->sd_name, "RAID 5", sizeof(sd->sd_name));
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE |
 	    SR_CAP_REDUNDANT;
 	sd->sd_max_ccb_per_wu = 4; /* only if stripsize <= MAXPHYS */
@@ -380,15 +377,11 @@ sr_raidp_rw(struct sr_workunit *wu)
 
 		/* map disk offset to parity/data drive */
 		chunk = strip_no % no_chunk;
-		if (sd->sd_type == SR_MD_RAID4)
-			parity = no_chunk; /* RAID4: Parity is always drive N */
-		else {
-			/* RAID5: left asymmetric algorithm */
-			parity = no_chunk - ((strip_no / no_chunk) %
-			    (no_chunk + 1));
-			if (chunk >= parity)
-				chunk++;
-		}
+
+		/* RAID5 - left asymmetric algorithm */
+		parity = no_chunk - ((strip_no / no_chunk) % (no_chunk + 1));
+		if (chunk >= parity)
+			chunk++;
 
 		lba = phys_offs >> DEV_BSHIFT;
 
@@ -649,11 +642,7 @@ sr_raidp_scrub(struct sr_discipline *sd)
 	max_strip = sd->sd_meta->ssdi.ssd_size >> strip_bits;
 
 	for (strip_no = 0; strip_no < max_strip; strip_no++) {
-		if (sd->sd_type == SR_MD_RAID4)
-			parity = no_chunk;
-		else
-			parity = no_chunk - ((strip_no / no_chunk) %
-			    (no_chunk + 1));
+		parity = no_chunk - ((strip_no / no_chunk) % (no_chunk + 1));
 
 		xorbuf = sr_get_block(sd, strip_size);
 		for (i = 0; i <= no_chunk; i++) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.315 2014/01/05 15:03:57 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.316 2014/01/18 09:01:01 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3937,9 +3937,6 @@ sr_discipline_init(struct sr_discipline *sd, int level)
 		break;
 	case 1:
 		sr_raid1_discipline_init(sd);
-		break;
-	case 4:
-		sr_raidp_discipline_init(sd, SR_MD_RAID4);
 		break;
 	case 5:
 		sr_raidp_discipline_init(sd, SR_MD_RAID5);

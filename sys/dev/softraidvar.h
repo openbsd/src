@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.141 2014/01/18 08:49:20 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.142 2014/01/18 09:01:01 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -509,7 +509,7 @@ struct sr_discipline {
 #define	SR_MD_CRYPTO		4
 #define	SR_MD_AOE_INIT		5
 #define	SR_MD_AOE_TARG		6
-#define	SR_MD_RAID4		7
+	/* SR_MD_RAID4 was 7. */
 #define	SR_MD_RAID6		8
 #define	SR_MD_CONCAT		9
 	char			sd_name[10];	/* human readable dis name */
