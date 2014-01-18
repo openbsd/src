@@ -1,4 +1,4 @@
-/* $OpenBSD: asc_tc.c,v 1.11 2010/11/11 17:54:54 miod Exp $ */
+/* $OpenBSD: asc_tc.c,v 1.12 2014/01/18 22:33:59 dlg Exp $ */
 /* $NetBSD: asc_tc.c,v 1.19 2001/11/15 09:48:19 lukem Exp $ */
 
 /*-
@@ -60,8 +60,6 @@ void asc_tc_attach(struct device *, struct device *, void *);
 struct cfattach asc_tc_ca = {
 	sizeof(struct asc_tc_softc), asc_tc_match, asc_tc_attach
 };
-
-extern struct scsi_adapter asc_switch;
 
 int	asc_dma_isintr(struct ncr53c9x_softc *);
 void	asc_tc_reset(struct ncr53c9x_softc *);
@@ -179,7 +177,7 @@ asc_tc_attach(parent, self, aux)
 	sc->sc_freq /= 1000;
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, &asc_switch);
+	ncr53c9x_attach(sc);
 }
 
 void

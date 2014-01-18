@@ -1,4 +1,4 @@
-/* $OpenBSD: asc_tcds.c,v 1.7 2010/06/28 18:31:02 krw Exp $ */
+/* $OpenBSD: asc_tcds.c,v 1.8 2014/01/18 22:33:59 dlg Exp $ */
 /* $NetBSD: asc_tcds.c,v 1.5 2001/11/15 09:48:19 lukem Exp $ */
 
 /*-
@@ -113,8 +113,6 @@ struct ncr53c9x_glue asc_tcds_glue = {
 	tcds_clear_latched_intr,
 };
 
-extern struct scsi_adapter asc_switch;
-
 int
 asc_tcds_match(parent, cf, aux)
 	struct device *parent;
@@ -210,7 +208,7 @@ asc_tcds_attach(parent, self, aux)
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, &asc_switch);
+	ncr53c9x_attach(sc);
 }
 
 void

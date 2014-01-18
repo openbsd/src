@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_pcmcia.c,v 1.10 2011/03/31 13:05:27 jasper Exp $	*/
+/*	$OpenBSD: esp_pcmcia.c,v 1.11 2014/01/18 22:33:59 dlg Exp $	*/
 /*	$NetBSD: esp_pcmcia.c,v 1.8 2000/06/05 15:36:45 tsutsui Exp $	*/
 
 /*-
@@ -77,13 +77,6 @@ void	esp_pcmcia_attach(struct device *, struct device *, void *);
 void	esp_pcmcia_init(struct esp_pcmcia_softc *);
 int	esp_pcmcia_detach(struct device *, int);
 int	esp_pcmcia_enable(void *, int);
-
-struct scsi_adapter esp_pcmcia_adapter = {
-	ncr53c9x_scsi_cmd,	/* cmd */
-	scsi_minphys,		/* scsi_minphys */
-	0,			/* open */
-	0,			/* close */
-};
 
 struct cfattach esp_pcmcia_ca = {
 	sizeof(struct esp_pcmcia_softc), esp_pcmcia_match, esp_pcmcia_attach
@@ -208,7 +201,7 @@ esp_pcmcia_attach(parent, self, aux)
 	 *  Initialize nca board itself.
 	 */
 	esc->sc_flags |= ESP_PCMCIA_ATTACHING;
-	ncr53c9x_attach(sc, &esp_pcmcia_adapter);
+	ncr53c9x_attach(sc);
 	esc->sc_flags &= ~ESP_PCMCIA_ATTACHING;
 	esc->sc_flags |= ESP_PCMCIA_ATTACHED;
 	return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.23 2010/06/28 18:31:02 krw Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.24 2014/01/18 22:33:59 dlg Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -53,13 +53,6 @@
 #include <dev/ic/ncr53c9xvar.h>
 
 #include <dev/sbus/sbusvar.h>
-
-struct scsi_adapter esp_switch = {
-	ncr53c9x_scsi_cmd,
-	scsi_minphys,		/* no max at this level; handled by DMA code */
-	NULL,
-	NULL,
-};
 
 /* #define ESP_SBUS_DEBUG */
 
@@ -507,7 +500,7 @@ espattach(struct esp_softc *esc, struct ncr53c9x_glue *gluep)
 		sc->sc_features |= NCR_F_DMASELECT;
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, &esp_switch);
+	ncr53c9x_attach(sc);
 }
 
 /*

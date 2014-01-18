@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcscp.c,v 1.18 2011/04/07 15:30:16 miod Exp $	*/
+/*	$OpenBSD: pcscp.c,v 1.19 2014/01/18 22:33:59 dlg Exp $	*/
 /*	$NetBSD: pcscp.c,v 1.26 2003/10/19 10:25:42 tsutsui Exp $	*/
 
 /*-
@@ -118,13 +118,6 @@ int	pcscp_dma_setup(struct ncr53c9x_softc *, caddr_t *,
 void	pcscp_dma_go(struct ncr53c9x_softc *);
 void	pcscp_dma_stop(struct ncr53c9x_softc *);
 int	pcscp_dma_isactive(struct ncr53c9x_softc *);
-
-struct scsi_adapter pcscp_adapter = {
-	ncr53c9x_scsi_cmd,	/* cmd */
-	scsi_minphys,		/* scsi_minphys */
-	0,			/* open */
-	0,			/* close */
-};
 
 struct ncr53c9x_glue pcscp_glue = {
 	pcscp_read_reg,
@@ -298,7 +291,7 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 	/* Do the common parts of attachment. */
 	printf("%s", sc->sc_dev.dv_xname);
 
-	ncr53c9x_attach(sc, &pcscp_adapter);
+	ncr53c9x_attach(sc);
 
 	/* Turn on target selection using the `dma' method */
 	sc->sc_features |= NCR_F_DMASELECT;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.52 2011/11/08 18:18:41 krw Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.53 2014/01/18 22:33:59 dlg Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -149,6 +149,14 @@ struct cfdriver esp_cd = {
 	NULL, "esp", DV_DULL
 };
 
+struct scsi_adapter ncr53c9x_adapter = {
+	ncr53c9x_scsi_cmd,	/* cmd */
+	scsi_minphys,		/* minphys */
+	NULL,			/* lun probe */
+	NULL,			/* lun free */
+	NULL			/* ioctl */
+};
+
 /*
  * Names for the NCR53c9x variants, corresponding to the variant tags
  * in ncr53c9xvar.h.
@@ -185,9 +193,8 @@ ncr53c9x_lunsearch(ti, lun)
  * Attach this instance, and then all the sub-devices
  */
 void
-ncr53c9x_attach(sc, adapter)
+ncr53c9x_attach(sc)
 	struct ncr53c9x_softc *sc;
-	struct scsi_adapter *adapter;
 {
 	struct scsibus_attach_args saa;
 
@@ -263,7 +270,7 @@ ncr53c9x_attach(sc, adapter)
 	 */
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_id;
-	sc->sc_link.adapter = adapter;
+	sc->sc_link.adapter = &ncr53c9x_adapter;
 	sc->sc_link.openings = 2;
 	sc->sc_link.adapter_buswidth = sc->sc_ntarg;
 

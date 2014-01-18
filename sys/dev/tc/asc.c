@@ -1,4 +1,4 @@
-/* $OpenBSD: asc.c,v 1.25 2010/06/28 18:31:02 krw Exp $ */
+/* $OpenBSD: asc.c,v 1.26 2014/01/18 22:33:59 dlg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,13 +68,6 @@
 
 struct cfdriver asc_cd = {
 	NULL, "asc", DV_DULL,
-};
-
-struct scsi_adapter asc_switch = {
-	ncr53c9x_scsi_cmd,
-	scsi_minphys,		/* no max at this level; handled by DMA code */
-	NULL,
-	NULL,
 };
 
 /*
