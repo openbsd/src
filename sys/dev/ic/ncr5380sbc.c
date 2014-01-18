@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.30 2011/07/17 22:46:48 matthew Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.31 2014/01/18 07:36:35 dlg Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -87,6 +87,9 @@
 
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
+
+static void *	ncr5380_io_get(void *);
+static void	ncr5380_io_put(void *, void *);
 
 static void	ncr5380_sched(struct ncr5380_softc *);
 static void	ncr5380_done(struct ncr5380_softc *);
@@ -362,14 +365,17 @@ ncr5380_init(sc)
 
 	for (i = 0; i < SCI_OPENINGS; i++) {
 		sr = &sc->sc_ring[i];
-		sr->sr_xs = NULL;
+		sr->sr_flags = SR_FREE;
 		timeout_set(&sr->sr_timeout, ncr5380_cmd_timeout, sr);
 	}
 	for (i = 0; i < 8; i++)
 		for (j = 0; j < 8; j++)
 			sc->sc_matrix[i][j] = NULL;
 
+	scsi_iopool_init(&sc->sc_iopool, sc, ncr5380_io_get, ncr5380_io_put);
+
 	sc->sc_link.openings = 2;	/* XXX - Not SCI_OPENINGS */
+	sc->sc_link.pool = &sc->sc_iopool;
 	sc->sc_prevphase = PHASE_INVALID;
 	sc->sc_state = NCR_IDLE;
 
@@ -585,6 +591,43 @@ out:
  *****************************************************************/
 
 
+void *
+ncr5380_io_get(void *xsc)
+{
+	struct ncr5380_softc *sc = xsc;
+	struct sci_req *sr = NULL;
+	int s, i;
+
+	/*
+	 * Find lowest empty slot in ring buffer.
+	 * XXX: What about "fairness" and cmd order?
+	 */
+
+	s = splbio();
+	for (i = 0; i < SCI_OPENINGS; i++) {
+		if (sc->sc_ring[i].sr_flags == SR_FREE) {
+			sr = &sc->sc_ring[i];
+			sr->sr_flags = 0;
+			sc->sc_ncmds++;
+			break;
+		}
+	}
+	splx(s);
+
+	return (sr);
+}
+
+void
+ncr5380_io_put(void *xsc, void *xsr)
+{
+	struct sci_req *sr = xsr;
+	int s;
+
+	s = splbio();
+	sr->sr_flags = SR_FREE;
+	splx(s);
+}
+
 /*
  * Enter a new SCSI command into the "issue" queue, and
  * if there is work to do, start it going.
@@ -622,22 +665,8 @@ ncr5380_scsi_cmd(xs)
 		}
 	}
 
-	/*
-	 * Find lowest empty slot in ring buffer.
-	 * XXX: What about "fairness" and cmd order?
-	 */
-	for (i = 0; i < SCI_OPENINGS; i++)
-		if (sc->sc_ring[i].sr_xs == NULL)
-			goto new;
-
-	xs->error = XS_NO_CCB;
-	scsi_done(xs);
-	NCR_TRACE("scsi_cmd: no openings\n", 0);
-	goto out;
-
-new:
 	/* Create queue entry */
-	sr = &sc->sc_ring[i];
+	sr = xs->io;
 	sr->sr_xs = xs;
 	sr->sr_target = xs->sc_link->target;
 	sr->sr_lun = xs->sc_link->lun;
@@ -674,7 +703,6 @@ new:
 #endif
 	}
 
-out:
 	splx(s);
 }
 

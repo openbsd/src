@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380var.h,v 1.12 2010/03/25 13:18:03 otto Exp $	*/
+/*	$OpenBSD: ncr5380var.h,v 1.13 2014/01/18 07:36:35 dlg Exp $	*/
 /*	$NetBSD: ncr5380var.h,v 1.6 1996/05/10 18:04:06 gwr Exp $	*/
 
 /*
@@ -71,6 +71,7 @@ struct sci_req {
 #define	SR_SENSE			2	/* We are getting sense */
 #define	SR_OVERDUE			4	/* Timeout while not current */
 #define	SR_ERROR			8	/* Error occurred */
+#define SR_FREE				16	/* We are free */
 	int		sr_status;		/* Status code from last cmd */
 
 	struct timeout	sr_timeout;
@@ -144,6 +145,8 @@ struct ncr5380_softc {
 	/* Ring buffer of pending/active requests */
 	struct		sci_req sc_ring[SCI_OPENINGS];
 	int		sc_rr;		/* Round-robin scan pointer */
+
+	struct scsi_iopool sc_iopool;
 
 	/* Active requests, by target/LUN */
 	struct		sci_req *sc_matrix[8][8];
