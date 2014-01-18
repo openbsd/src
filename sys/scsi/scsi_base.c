@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.208 2013/10/07 17:54:23 miod Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.209 2014/01/18 02:42:30 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -79,7 +79,6 @@ struct scsi_xfer *	scsi_xs_io(struct scsi_link *, void *, int);
 
 int			scsi_ioh_pending(struct scsi_iopool *);
 struct scsi_iohandler *	scsi_ioh_deq(struct scsi_iopool *);
-void			scsi_ioh_runqueue(struct scsi_iopool *);
 
 void			scsi_xsh_runqueue(struct scsi_link *);
 void			scsi_xsh_ioh(void *, void *);
@@ -334,7 +333,7 @@ scsi_ioh_add(struct scsi_iohandler *ioh)
 	mtx_leave(&iopl->mtx);
 
 	/* lets get some io up in the air */
-	scsi_ioh_runqueue(iopl);
+	scsi_iopool_run(iopl);
 
 	return (rv);
 }
@@ -397,7 +396,7 @@ scsi_ioh_pending(struct scsi_iopool *iopl)
 }
 
 void
-scsi_ioh_runqueue(struct scsi_iopool *iopl)
+scsi_iopool_run(struct scsi_iopool *iopl)
 {
 	struct scsi_iohandler *ioh;
 	void *io;
@@ -482,7 +481,7 @@ void
 scsi_io_put(struct scsi_iopool *iopl, void *io)
 {
 	iopl->io_put(iopl->iocookie, io);
-	scsi_ioh_runqueue(iopl);
+	scsi_iopool_run(iopl);
 }
 
 /*
@@ -581,7 +580,7 @@ scsi_xsh_runqueue(struct scsi_link *link)
 		mtx_leave(&link->pool->mtx);
 
 		if (runq)
-			scsi_ioh_runqueue(link->pool);
+			scsi_iopool_run(link->pool);
 	} while (!scsi_pending_finish(&link->pool->mtx, &link->running));
 }
 
