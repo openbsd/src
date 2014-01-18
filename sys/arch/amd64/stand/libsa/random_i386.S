@@ -20,7 +20,8 @@
 #include <machine/specialreg.h>
 
 /*
- * Buffer size must be multiple of 4
+ * Random data is xored into the buffer in 4 byte blocks. If the buffer size
+ * is not a multiple of 4, the remaining bytes will be left untouched.
  */
 ENTRY(mdrandom)
 	pushal
