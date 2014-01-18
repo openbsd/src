@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.22 2013/11/15 10:17:39 pirofti Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.23 2014/01/18 15:18:01 stsp Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -558,6 +558,13 @@ mos_iff(struct mos_softc *sc)
 
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		/* 
+		 * The datasheet claims broadcast frames were always accepted
+		 * regardless of filter settings. But the hardware seems to
+		 * filter broadcast frames, so pass them explicitly.
+		 */
+		h = ether_crc32_be(etherbroadcastaddr, ETHER_ADDR_LEN) >> 26;
+		hashtbl[h / 8] |= 1 << (h % 8);
 	}
 
 	mos_write_mcast(sc, (void *)&hashtbl);
