@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.73 2014/01/18 00:51:55 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.74 2014/01/18 01:03:56 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -327,7 +327,7 @@ parse_option_list(FILE *cfile, u_int8_t *list, size_t sz)
 			return (0);
 		}
 		if (!is_identifier(token)) {
-			parse_warn("expected option name.");
+			parse_warn("expecting option name.");
 			goto syntaxerror;
 		}
 		/*
@@ -340,7 +340,7 @@ parse_option_list(FILE *cfile, u_int8_t *list, size_t sz)
 				break;
 
 		if (i == DHO_END) {
-			parse_warn("unexpected option name.");
+			parse_warn("expecting option name.");
 			goto syntaxerror;
 		}
 		if (ix == sz) {

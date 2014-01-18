@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.32 2014/01/18 00:51:55 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.33 2014/01/18 01:03:56 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -102,7 +102,7 @@ parse_semi(FILE *cfile)
 
 	token = next_token(NULL, cfile);
 	if (token != ';') {
-		parse_warn("semicolon expected.");
+		parse_warn("expecting semicolon.");
 		skip_to_semi(cfile);
 		return (0);
 	}
@@ -153,7 +153,7 @@ parse_hardware_param(FILE *cfile, struct ether_addr *hardware)
 
 	token = next_token(NULL, cfile);
 	if (token != TOK_ETHERNET) {
-		parse_warn("expecting 'ethernet'");
+		parse_warn("expecting 'ethernet'.");
 		if (token != ';')
 			skip_to_semi(cfile);
 		return;
@@ -178,7 +178,7 @@ parse_lease_time(FILE *cfile, time_t *timep)
 
 	token = next_token(&val, cfile);
 	if (token != TOK_NUMBER) {
-		parse_warn("Expecting numeric lease time");
+		parse_warn("expecting numeric lease time.");
 		if (token != ';')
 			skip_to_semi(cfile);
 		return;
