@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.563 2013/12/13 19:55:12 naddy Exp $
+#	$OpenBSD: files,v 1.564 2014/01/18 09:23:26 jsing Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -499,13 +499,13 @@ file	scsi/mpath.c			mpath	needs-flag
 device	softraid: scsi
 attach	softraid at root
 file	dev/softraid.c			softraid	needs-flag
+file	dev/softraid_aoe.c		softraid & ether & aoe
+file	dev/softraid_concat.c		softraid
+file	dev/softraid_crypto.c		softraid & crypto
 file	dev/softraid_raid0.c		softraid
 file	dev/softraid_raid1.c		softraid
-file	dev/softraid_raidp.c		softraid
-file	dev/softraid_crypto.c		softraid & crypto
-file	dev/softraid_aoe.c		softraid & ether & aoe
+file	dev/softraid_raid5.c		softraid
 file	dev/softraid_raid6.c		softraid
-file	dev/softraid_concat.c		softraid
 
 # SPD Memory EEPROM
 device	spdmem

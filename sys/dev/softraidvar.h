@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.142 2014/01/18 09:01:01 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.143 2014/01/18 09:23:26 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -426,10 +426,10 @@ struct sr_raid1 {
 	u_int32_t		sr1_counter;
 };
 
-/* RAID 4 */
-#define SR_RAIDP_NOWU		16
-struct sr_raidp {
-	int32_t			srp_strip_bits;
+/* RAID 5 */
+#define SR_RAID5_NOWU		16
+struct sr_raid5 {
+	int32_t			sr5_strip_bits;
 };
 
 /* RAID 6 */
@@ -525,7 +525,7 @@ struct sr_discipline {
 	union {
 	    struct sr_raid0	mdd_raid0;
 	    struct sr_raid1	mdd_raid1;
-	    struct sr_raidp	mdd_raidp;
+	    struct sr_raid5	mdd_raid5;
 	    struct sr_raid6	mdd_raid6;
 	    struct sr_concat	mdd_concat;
 #ifdef CRYPTO
@@ -708,8 +708,7 @@ void			sr_raid_recreate_wu(struct sr_workunit *);
 /* Discipline specific initialisation. */
 void			sr_raid0_discipline_init(struct sr_discipline *);
 void			sr_raid1_discipline_init(struct sr_discipline *);
-void			sr_raidp_discipline_init(struct sr_discipline *,
-			    u_int8_t);
+void			sr_raid5_discipline_init(struct sr_discipline *);
 void			sr_raid6_discipline_init(struct sr_discipline *);
 void			sr_crypto_discipline_init(struct sr_discipline *);
 void			sr_concat_discipline_init(struct sr_discipline *);
