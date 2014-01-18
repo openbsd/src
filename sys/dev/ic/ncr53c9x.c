@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.54 2014/01/18 22:56:11 dlg Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.55 2014/01/18 23:07:28 dlg Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -114,9 +114,8 @@ int ncr53c9x_notag = 0;
 
 void ncr53c9x_sense(struct ncr53c9x_softc *,
 					    struct ncr53c9x_ecb *);
-void ncr53c9x_free_ecb(struct ncr53c9x_softc *,
-					    struct ncr53c9x_ecb *, int);
-struct ncr53c9x_ecb *ncr53c9x_get_ecb(struct ncr53c9x_softc *, int);
+void ncr53c9x_free_ecb(void *, void *);
+void *ncr53c9x_get_ecb(void *);
 
 static inline int ncr53c9x_stp2cpb(struct ncr53c9x_softc *, int);
 static inline void ncr53c9x_setsync(struct ncr53c9x_softc *,
@@ -142,6 +141,7 @@ static int ncr53c9x_rdfifo(struct ncr53c9x_softc *, int);
 } while (0)
 
 static int ecb_pool_initialized = 0;
+static struct scsi_iopool ecb_iopool;
 static struct pool ecb_pool;
 
 struct cfdriver esp_cd = {
@@ -394,6 +394,9 @@ ncr53c9x_init(sc, doreset)
 		/* All instances share this pool */
 		pool_init(&ecb_pool, sizeof(struct ncr53c9x_ecb), 0, 0, 0,
 		    "ncr53c9x_ecb", NULL);
+		pool_setipl(&ecb_pool, IPL_BIO);
+		scsi_iopool_init(&ecb_iopool, NULL,
+		    ncr53c9x_get_ecb, ncr53c9x_free_ecb);
 		ecb_pool_initialized = 1;
 	}
 
@@ -748,45 +751,30 @@ ncr53c9x_select(sc, ecb)
 		NCRCMD(sc, NCRCMD_SELATN);
 }
 
-void
-ncr53c9x_free_ecb(sc, ecb, flags)
-	struct ncr53c9x_softc *sc;
-	struct ncr53c9x_ecb *ecb;
-	int flags;
-{
-	int s;
-
-	s = splbio();
-	ecb->flags = 0;
-	pool_put(&ecb_pool, (void *)ecb);
-	splx(s);
-}
-
-struct ncr53c9x_ecb *
-ncr53c9x_get_ecb(sc, flags)
-	struct ncr53c9x_softc *sc;
-	int flags;
-{
-	struct ncr53c9x_ecb *ecb;
-	int s, wait = PR_NOWAIT;
-
-	if ((curproc != NULL) && ((flags & SCSI_NOSLEEP) == 0))
-		wait = PR_WAITOK;
-
-	s = splbio();
-	ecb = (struct ncr53c9x_ecb *)pool_get(&ecb_pool, wait);
-	splx(s);
-	if (ecb == NULL)
-		return (NULL);
-	bzero(ecb, sizeof(*ecb));
-	timeout_set(&ecb->to, ncr53c9x_timeout, ecb);
-	ecb->flags |= ECB_ALLOC;
-	return (ecb);
-}
-
 /*
  * DRIVER FUNCTIONS CALLABLE FROM HIGHER LEVEL DRIVERS
  */
+
+void *
+ncr53c9x_get_ecb(void *null)
+{
+	struct ncr53c9x_ecb *ecb;
+
+	ecb = pool_get(&ecb_pool, M_NOWAIT|M_ZERO);
+	if (ecb == NULL)
+		return (NULL);
+
+	timeout_set(&ecb->to, ncr53c9x_timeout, ecb);
+	ecb->flags |= ECB_ALLOC;
+
+	return (ecb);
+}
+
+void
+ncr53c9x_free_ecb(void *null, void *ecb)
+{
+	pool_put(&ecb_pool, ecb);
+}
 
 int
 ncr53c9x_scsi_probe(struct scsi_link *sc_link)
@@ -875,13 +863,8 @@ ncr53c9x_scsi_cmd(xs)
 	ti = &sc->sc_tinfo[sc_link->target];
 	li = TINFO_LUN(ti, lun);
 
-	if ((ecb = ncr53c9x_get_ecb(sc, flags)) == NULL) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		return;
-	}
-
 	/* Initialize ecb */
+	ecb = xs->io;
 	ecb->xs = xs;
 	ecb->timeout = xs->timeout;
 
@@ -1209,7 +1192,6 @@ ncr53c9x_done(sc, ecb)
 		}
 	}
 
-	ncr53c9x_free_ecb(sc, ecb, xs->flags);
 	ti->cmds++;
 	scsi_done(xs);
 }
