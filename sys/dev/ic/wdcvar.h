@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.52 2011/07/15 16:44:17 deraadt Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.53 2014/01/18 20:50:24 dlg Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -266,6 +266,7 @@ void  wdc_exec_xfer(struct channel_softc *, struct wdc_xfer *);
 struct wdc_xfer *wdc_get_xfer(int); /* int = WDC_NOSLEEP/CANSLEEP */
 #define WDC_CANSLEEP	0x00
 #define WDC_NOSLEEP	0x01
+void   wdc_scrub_xfer(struct wdc_xfer *);
 void   wdc_free_xfer(struct channel_softc *, struct wdc_xfer *);
 void  wdcstart(struct channel_softc *);
 int   wdcreset(struct channel_softc *, int);

@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.100 2012/08/08 02:32:11 matthew Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.101 2014/01/18 20:50:24 dlg Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -213,6 +213,8 @@ atapiscsi_attach(struct device *parent, struct device *self, void *aux)
 	struct ataparams *id = &drvp->id;
 	struct device *child;
 
+	extern struct scsi_iopool wdc_xfer_iopool;
+
 	printf("\n");
 
 	/* Initialize shared data. */
@@ -232,6 +234,7 @@ atapiscsi_attach(struct device *parent, struct device *self, void *aux)
 	as->sc_adapterlink.luns = 1;
 	as->sc_adapterlink.openings = 1;
 	as->sc_adapterlink.flags = SDEV_ATAPI;
+	as->sc_adapterlink.pool = &wdc_xfer_iopool;
 
 	strlcpy(drvp->drive_name, as->sc_dev.dv_xname,
 	    sizeof(drvp->drive_name));
@@ -340,13 +343,7 @@ wdc_atapi_send_cmd(struct scsi_xfer *sc_xfer)
 		return;
 	}
 
-	xfer = wdc_get_xfer(sc_xfer->flags & SCSI_NOSLEEP
-	    ? WDC_NOSLEEP : WDC_CANSLEEP);
-	if (xfer == NULL) {
-		sc_xfer->error = XS_NO_CCB;
-		scsi_done(sc_xfer);
-		return;
-	}
+	xfer = sc_xfer->io;
 	if (sc_xfer->flags & SCSI_POLL)
 		xfer->c_flags |= C_POLL;
 	xfer->drive = as->drive;
