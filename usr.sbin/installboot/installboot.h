@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.h,v 1.3 2014/01/18 02:47:27 jsing Exp $	*/
+/*	$OpenBSD: installboot.h,v 1.4 2014/01/18 03:07:05 jsing Exp $	*/
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
  *
@@ -27,6 +27,7 @@ extern char *stage2;
 void	bootstrap(int, char *, char *);
 #endif
 
+void	filecopy(const char *, const char *);
 char	*fileprefix(const char *, const char *);
 
 void	md_init(void);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.2 2014/01/18 02:47:27 jsing Exp $
+.\"	$OpenBSD: installboot.8,v 1.3 2014/01/18 03:07:05 jsing Exp $
 .\"
 .\" Copyright (c) 2013, 2014 Joel Sing
 .\"
@@ -72,11 +72,10 @@ To install bootstrap on an
 amd64 machine, using
 .Ar /usr/mdec/biosboot
 as the primary bootstrap and
-.Ar /boot
+.Ar /usr/mdec/boot
 as the secondary bootstrap:
 .Bd -literal -offset 3n
-# cp /usr/mdec/boot /boot
-# installboot -v wd0 /usr/mdec/biosboot /boot
+# installboot -v wd0 /usr/mdec/biosboot /usr/mdec/boot
 .Ed
 .Sh SEE ALSO
 .Xr disklabel 8

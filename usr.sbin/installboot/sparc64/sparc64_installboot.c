@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_installboot.c,v 1.3 2013/12/28 15:05:34 jsing Exp $	*/
+/*	$OpenBSD: sparc64_installboot.c,v 1.4 2014/01/18 03:07:05 jsing Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -30,6 +30,8 @@
 
 #include "installboot.h"
 
+char	*bootldr;
+
 char	*blkstore;
 char	*ldrstore;
 size_t	blksize;
@@ -40,7 +42,9 @@ md_init(void)
 {
 	stages = 2;
 	stage1 = "/usr/mdec/bootblk";
-	stage2 = "/ofwboot";
+	stage2 = "/usr/mdec/ofwboot";
+
+	bootldr = "/ofwboot";
 }
 
 void
@@ -91,6 +95,10 @@ md_installboot(int devfd, char *dev)
 {
 	/* XXX - is this necessary? */
 	sync();
+
+	bootldr = fileprefix(root, bootldr);
+	if (!nowrite)
+		filecopy(stage2, bootldr);
 
 	/* Write bootblock into the superblock. */
 	if (lseek(devfd, DEV_BSIZE, SEEK_SET) != DEV_BSIZE)

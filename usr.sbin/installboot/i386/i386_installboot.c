@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.4 2013/12/27 15:02:49 jsing Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.5 2014/01/18 03:07:05 jsing Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -69,6 +69,8 @@
 #include "installboot.h"
 #include "i386_installboot.h"
 
+char	*bootldr;
+
 char	*blkstore;
 size_t	blksize;
 
@@ -99,7 +101,9 @@ md_init(void)
 {
 	stages = 2;
 	stage1 = "/usr/mdec/biosboot";
-	stage2 = "/boot";
+	stage2 = "/usr/mdec/boot";
+
+	bootldr = "/boot";
 }
 
 void
@@ -132,8 +136,12 @@ md_installboot(int devfd, char *dev)
 	if (dl.d_type == 0)
 		warnx("disklabel type unknown");
 
+	bootldr = fileprefix(root, bootldr);
+	if (!nowrite)
+		filecopy(stage2, bootldr);
+
 	/* Get bootstrap parameters to patch into proto. */
-	if (getbootparams(stage2, devfd, &dl) != 0)
+	if (getbootparams(bootldr, devfd, &dl) != 0)
 		exit(1);
 
 	/* Write boot blocks to device. */

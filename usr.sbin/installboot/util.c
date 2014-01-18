@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.1 2014/01/18 02:47:27 jsing Exp $	*/
+/*	$OpenBSD: util.c,v 1.2 2014/01/18 03:07:05 jsing Exp $	*/
 
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -17,12 +17,68 @@
  */
 
 #include <sys/param.h>
+#include <sys/stat.h>
 #include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "installboot.h"
+
+#define BUFSIZE 2048
+
+void
+filecopy(const char *srcfile, const char *dstfile)
+{
+	char *buf, tempfile[MAXPATHLEN];
+	struct stat sb;
+	ssize_t sz, n;
+	int sfd, dfd;
+
+	if ((buf = malloc(BUFSIZE)) == NULL)
+		err(1, "malloc");
+
+	sfd = open(srcfile, O_RDONLY);
+	if (sfd == -1)
+		err(1, "open");
+	if (fstat(sfd, &sb) == -1)
+		err(1, "fstat");
+	sz = sb.st_size;
+
+	snprintf(tempfile, sizeof(tempfile), "%s.XXXXXXXX", dstfile);
+	dfd = mkstemp(tempfile);
+	if (dfd == -1)
+		err(1, "mkstemp");
+
+	if (chown(tempfile, 0, 0) == -1)
+		err(1, "chown");
+	if (chmod(tempfile, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) == -1)
+		err(1, "chmod");
+
+	if (verbose)
+		fprintf(stderr, "Copying %s to %s\n", srcfile, tempfile);
+
+	while (sz > 0) {
+		n = MIN(sz, BUFSIZE);
+		if ((n = read(sfd, buf, n)) == -1)
+			err(1, "read");
+		sz -= n;
+		if (write(dfd, buf, n) != n)
+			err(1, "write");
+	}
+
+	close(dfd);
+	close(sfd);
+	free(buf);
+
+	if (verbose)
+		fprintf(stderr, "Renaming %s to %s\n", tempfile, dstfile);
+
+	if (rename(tempfile, dstfile) == -1)
+		err(1, "rename");
+}
 
 char *
 fileprefix(const char *base, const char *path)
