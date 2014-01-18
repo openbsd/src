@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.119 2011/06/10 01:38:46 deraadt Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.120 2014/01/18 04:24:11 dlg Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -709,7 +709,8 @@ wdc_alloc_queue(void)
 	if (inited == 0) {
 		/* Initialize the wdc_xfer pool. */
 		pool_init(&wdc_xfer_pool, sizeof(struct wdc_xfer), 0,
-		    0, 0, "wdcspl", NULL);
+		    0, 0, "wdcxfer", NULL);
+		pool_setipl(&wdc_xfer_pool, IPL_BIO);
 		inited = 1;
 	}
 
@@ -1916,16 +1917,8 @@ wdc_exec_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
 struct wdc_xfer *
 wdc_get_xfer(int flags)
 {
-	struct wdc_xfer *xfer;
-	int s;
-
-	s = splbio();
-	xfer = pool_get(&wdc_xfer_pool,
-	    ((flags & WDC_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
-	splx(s);
-	if (xfer != NULL)
-		memset(xfer, 0, sizeof(struct wdc_xfer));
-	return xfer;
+	return (pool_get(&wdc_xfer_pool, PR_ZERO |
+	    ((flags & WDC_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK)));
 }
 
 void
@@ -1942,8 +1935,9 @@ wdc_free_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
 	s = splbio();
 	chp->ch_flags &= ~WDCF_ACTIVE;
 	TAILQ_REMOVE(&chp->ch_queue->sc_xfer, xfer, c_xferchain);
-	pool_put(&wdc_xfer_pool, xfer);
 	splx(s);
+
+	pool_put(&wdc_xfer_pool, xfer);
 }
 
 
