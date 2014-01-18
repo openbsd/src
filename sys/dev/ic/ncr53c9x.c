@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.55 2014/01/18 23:07:28 dlg Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.56 2014/01/18 23:09:04 dlg Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -148,6 +148,7 @@ struct cfdriver esp_cd = {
 	NULL, "esp", DV_DULL
 };
 
+void	ncr53c9x_scsi_cmd(struct scsi_xfer *);
 int	ncr53c9x_scsi_probe(struct scsi_link *);
 void	ncr53c9x_scsi_free(struct scsi_link *);
 
