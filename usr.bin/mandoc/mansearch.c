@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.10 2014/01/06 03:52:05 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.11 2014/01/19 01:18:30 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -34,6 +34,9 @@
 #include "manpath.h"
 #include "mansearch.h"
 
+extern int mansearch_keymax;
+extern const char *const mansearch_keynames[];
+
 #define	SQL_BIND_TEXT(_db, _s, _i, _v) \
 	do { if (SQLITE_OK != sqlite3_bind_text \
 		((_s), (_i)++, (_v), -1, SQLITE_STATIC)) \
@@ -65,57 +68,6 @@ struct	match {
 	int		 form; /* 0 == catpage */
 };
 
-struct	type {
-	uint64_t	 bits;
-	const char	*name;
-};
-
-static	const struct type types[] = {
-	{ TYPE_An,  "An" },
-	{ TYPE_Ar,  "Ar" },
-	{ TYPE_At,  "At" },
-	{ TYPE_Bsx, "Bsx" },
-	{ TYPE_Bx,  "Bx" },
-	{ TYPE_Cd,  "Cd" },
-	{ TYPE_Cm,  "Cm" },
-	{ TYPE_Dv,  "Dv" },
-	{ TYPE_Dx,  "Dx" },
-	{ TYPE_Em,  "Em" },
-	{ TYPE_Er,  "Er" },
-	{ TYPE_Ev,  "Ev" },
-	{ TYPE_Fa,  "Fa" },
-	{ TYPE_Fl,  "Fl" },
-	{ TYPE_Fn,  "Fn" },
-	{ TYPE_Fn,  "Fo" },
-	{ TYPE_Ft,  "Ft" },
-	{ TYPE_Fx,  "Fx" },
-	{ TYPE_Ic,  "Ic" },
-	{ TYPE_In,  "In" },
-	{ TYPE_Lb,  "Lb" },
-	{ TYPE_Li,  "Li" },
-	{ TYPE_Lk,  "Lk" },
-	{ TYPE_Ms,  "Ms" },
-	{ TYPE_Mt,  "Mt" },
-	{ TYPE_Nd,  "Nd" },
-	{ TYPE_Nm,  "Nm" },
-	{ TYPE_Nx,  "Nx" },
-	{ TYPE_Ox,  "Ox" },
-	{ TYPE_Pa,  "Pa" },
-	{ TYPE_Rs,  "Rs" },
-	{ TYPE_Sh,  "Sh" },
-	{ TYPE_Ss,  "Ss" },
-	{ TYPE_St,  "St" },
-	{ TYPE_Sy,  "Sy" },
-	{ TYPE_Tn,  "Tn" },
-	{ TYPE_Va,  "Va" },
-	{ TYPE_Va,  "Vt" },
-	{ TYPE_Xr,  "Xr" },
-	{ TYPE_sec, "sec" },
-	{ TYPE_arch,"arch" },
-	{ ~0ULL,    "any" },
-	{ 0ULL, NULL }
-};
-
 static	void		 buildnames(struct manpage *, sqlite3 *,
 				sqlite3_stmt *, uint64_t,
 				const char *, int form);
@@ -145,9 +97,9 @@ mansearch(const struct mansearch *search,
 		const char *outkey,
 		struct manpage **res, size_t *sz)
 {
-	int		 fd, rc, c, ibit;
+	int		 fd, rc, c, indexbit;
 	int64_t		 id;
-	uint64_t	 outbit;
+	uint64_t	 outbit, iterbit;
 	char		 buf[PATH_MAX];
 	char		*sql;
 	struct manpage	*mpage;
@@ -181,9 +133,12 @@ mansearch(const struct mansearch *search,
 
 	outbit = 0;
 	if (NULL != outkey) {
-		for (ibit = 0; types[ibit].bits; ibit++) {
-			if (0 == strcasecmp(types[ibit].name, outkey)) {
-				outbit = types[ibit].bits;
+		for (indexbit = 0, iterbit = 1;
+		     indexbit < mansearch_keymax;
+		     indexbit++, iterbit <<= 1) {
+			if (0 == strcasecmp(outkey,
+			    mansearch_keynames[indexbit])) {
+				outbit = iterbit;
 				break;
 			}
 		}
@@ -615,8 +570,8 @@ exprterm(const struct mansearch *search, char *buf, int cs)
 	char		 errbuf[BUFSIZ];
 	struct expr	*e;
 	char		*key, *v;
-	size_t		 i;
-	int		 irc;
+	uint64_t	 iterbit;
+	int		 i, irc;
 
 	if ('\0' == *buf)
 		return(NULL);
@@ -664,15 +619,22 @@ exprterm(const struct mansearch *search, char *buf, int cs)
 	while (NULL != (key = strsep(&buf, ","))) {
 		if ('\0' == *key)
 			continue;
-		i = 0;
-		while (types[i].bits && 
-			strcasecmp(types[i].name, key))
-			i++;
-		if (0 == types[i].bits) {
-			free(e);
-			return(NULL);
+		for (i = 0, iterbit = 1;
+		     i < mansearch_keymax;
+		     i++, iterbit <<= 1) {
+			if (0 == strcasecmp(key,
+			    mansearch_keynames[i])) {
+				e->bits |= iterbit;
+				break;
+			}
 		}
-		e->bits |= types[i].bits;
+		if (i == mansearch_keymax) {
+			if (strcasecmp(key, "any")) {
+				free(e);
+				return(NULL);
+			}
+			e->bits |= ~0ULL;
+		}
 	}
 
 	return(e);
