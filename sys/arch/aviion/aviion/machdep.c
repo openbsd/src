@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.59 2013/11/02 23:10:29 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.60 2014/01/19 12:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -79,6 +79,7 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/device.h>
+#include <dev/rndvar.h>
 
 #include <machine/asm.h>
 #include <machine/asm_macro.h>
@@ -577,7 +578,7 @@ secondary_main()
 	sched_init_cpu(ci);
 	nanouptime(&ci->ci_schedstate.spc_runtime);
 	ci->ci_curproc = NULL;
-	ci->ci_randseed = random();
+	ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 
 	/*
 	 * Release cpu_hatch_mutex to let other secondary processors

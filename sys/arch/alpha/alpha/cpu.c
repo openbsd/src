@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.30 2013/12/22 18:53:14 miod Exp $ */
+/* $OpenBSD: cpu.c,v 1.31 2014/01/19 12:45:35 deraadt Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -64,6 +64,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <dev/rndvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -399,7 +400,7 @@ cpu_boot_secondary_processors()
 			continue;
 		if (ci->ci_flags & CPUF_PRIMARY)
 			continue;
-		ci->ci_randseed = random();
+		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 
 		/* This processor is all set up; boot it! */
 		cpu_boot_secondary(ci);

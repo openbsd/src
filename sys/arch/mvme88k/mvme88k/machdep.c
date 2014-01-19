@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.258 2013/11/02 23:10:29 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.259 2014/01/19 12:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -63,6 +63,7 @@
 #include <sys/extent.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <dev/rndvar.h>
 
 #include <uvm/uvm.h>
 
@@ -623,7 +624,7 @@ secondary_main()
 	sched_init_cpu(ci);
 	nanouptime(&ci->ci_schedstate.spc_runtime);
 	ci->ci_curproc = NULL;
-	ci->ci_randseed = random();
+	ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 
 	__cpu_simple_unlock(&cpu_hatch_mutex);
 

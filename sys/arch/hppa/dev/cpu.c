@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.40 2013/11/26 20:33:12 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.41 2014/01/19 12:45:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -31,6 +31,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <dev/rndvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -200,7 +201,7 @@ cpu_boot_secondary_processors(void)
 		if (ci->ci_cpuid == 0)
 			continue;
 
-		ci->ci_randseed = random();
+		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 
 		sched_init_cpu(ci);
 

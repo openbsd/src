@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.58 2013/12/19 21:30:02 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.59 2014/01/19 12:45:35 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -73,6 +73,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/memrange.h>
+#include <dev/rndvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -101,7 +102,6 @@
 #include <dev/ic/mc146818reg.h>
 #include <amd64/isa/nvram.h>
 #include <dev/isa/isareg.h>
-#include <dev/rndvar.h>
 
 int     cpu_match(struct device *, void *, void *);
 void    cpu_attach(struct device *, struct device *, void *);
@@ -591,7 +591,7 @@ cpu_boot_secondary_processors(void)
 			continue;
 		if (ci->ci_flags & (CPUF_BSP|CPUF_SP|CPUF_PRIMARY))
 			continue;
-		ci->ci_randseed = random();
+		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 		cpu_boot_secondary(ci);
 	}
 }

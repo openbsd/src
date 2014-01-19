@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.60 2013/06/03 16:55:22 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.61 2014/01/19 12:45:36 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -57,6 +57,7 @@
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <dev/rndvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -700,7 +701,7 @@ cpu_boot_secondary_processors(void)
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		if (ci->ci_upaid == cpu_myid())
 			continue;
-		ci->ci_randseed = random();
+		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 
 		if (CPU_ISSUN4V)
 			cpuid = ci->ci_upaid;

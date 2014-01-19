@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.8 2008/10/15 23:23:51 deraadt Exp $	*/
+/*	$OpenBSD: random.c,v 1.9 2014/01/19 12:45:36 deraadt Exp $	*/
 /*	$NetBSD: random.c,v 1.2 1994/10/26 06:42:42 cgd Exp $	*/
 
 /*-
@@ -38,21 +38,9 @@
 #include <lib/libkern/libkern.h>
 
 /*
- * Pseudo-random number generator for randomizing the profiling clock,
- * and whatever else we might use it for.  The result is uniform on
- * [0, 2^31 - 1].
+ * Pseudo-random number generator for randomizing the profiling clock.
+ * The result is uniform on [0, 2^31 - 1].
  */
-
-void
-srandom(u_int32_t seed)
-{
-	struct cpu_info *ci = curcpu();
-
-	seed &= 0x7fffffff;
-	if (seed == 0)
-		seed = 1;
-	ci->ci_randseed = seed;
-}
 
 u_int32_t
 random(void)

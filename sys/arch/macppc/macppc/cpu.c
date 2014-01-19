@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.74 2013/10/31 08:26:12 mpi Exp $ */
+/*	$OpenBSD: cpu.c,v 1.75 2014/01/19 12:45:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -38,6 +38,7 @@
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/device.h>
+#include <dev/rndvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -240,7 +241,6 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	ci = &cpu_info[reg[0]];
 	ci->ci_cpuid = reg[0];
 	ci->ci_intrdepth = -1;
-	ci->ci_randseed = 1;
 	ci->ci_dev = dev;
 
 	pvr = ppc_mfpvr();
@@ -692,7 +692,7 @@ cpu_boot_secondary_processors(void)
 		ci = &cpu_info[i];
 		if (ci->ci_cpuid == 0)
 			continue;
-		ci->ci_randseed = random();
+		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 
 		sched_init_cpu(ci);
 
