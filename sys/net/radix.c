@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.35 2014/01/19 04:04:36 claudio Exp $	*/
+/*	$OpenBSD: radix.c,v 1.36 2014/01/19 09:52:25 claudio Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 #include <sys/malloc.h>
 #include <sys/domain.h>
 #include <sys/syslog.h>
+#include <sys/pool.h>
 #include <net/radix.h>
 
 #ifndef SMALL_KERNEL
@@ -50,11 +51,12 @@
 #endif
 
 int	max_keylen;
-struct radix_mask *rn_mkfreelist;
 struct radix_node_head *mask_rnhead;
 static char *addmask_key;
 static char normal_chars[] = {0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, -1};
 static char *rn_zeros, *rn_ones;
+
+struct pool rtmask_pool;	/* pool for radix_mask structures */
 
 #define rn_masktop (mask_rnhead->rnh_treetop)
 
@@ -68,20 +70,6 @@ struct radix_node *rn_insert(void *, struct radix_node_head *, int *,
 struct radix_node *rn_newpair(void *, int, struct radix_node[2]);
 struct radix_node *rn_search(void *, struct radix_node *);
 struct radix_node *rn_search_m(void *, struct radix_node *, void *);
-
-#define MKGet(m) do {                                                   \
-	if (rn_mkfreelist) {                                            \
-		m = rn_mkfreelist;                                      \
-		rn_mkfreelist = (m)->rm_mklist;                         \
-	} else                                                          \
-		m = malloc(sizeof (*(m)), M_RTABLE, M_NOWAIT);          \
-} while (0)
-
-#define MKFree(m) do {                                                  \
-	(m)->rm_mklist = rn_mkfreelist;                                 \
-	rn_mkfreelist = (m);                                            \
-} while (0)
-
 
 /*
  * The data structure for the keys is a radix tree with one way
@@ -506,7 +494,7 @@ rn_new_radix_mask(struct radix_node *tt, struct radix_mask *next)
 {
 	struct radix_mask *m;
 
-	MKGet(m);
+	m = pool_get(&rtmask_pool, PR_NOWAIT | PR_ZERO);
 	if (m == NULL) {
 		log(LOG_ERR, "Mask for route not entered\n");
 		return (0);
@@ -841,7 +829,7 @@ rn_delete(void *v_arg, void *netmask_arg, struct radix_node_head *head,
 	for (mp = &x->rn_mklist; (m = *mp); mp = &m->rm_mklist)
 		if (m == saved_m) {
 			*mp = m->rm_mklist;
-			MKFree(m);
+			pool_put(&rtmask_pool, m);
 			break;
 		}
 	if (m == NULL) {
@@ -928,7 +916,7 @@ on1:
 					struct radix_mask *mm = m->rm_mklist;
 					x->rn_mklist = 0;
 					if (--(m->rm_refs) < 0)
-						MKFree(m);
+						pool_put(&rtmask_pool, m);
 					else if (m->rm_flags & RNF_NORMAL)
 						/*
 						 * don't progress because this
@@ -1046,11 +1034,13 @@ rn_inithead0(struct radix_node_head *rnh, int off)
 }
 
 void
-rn_init()
+rn_init(void)
 {
 	char *cp, *cplim;
 	struct domain *dom;
 
+	pool_init(&rtmask_pool, sizeof(struct radix_mask), 0, 0, 0, "rtmask",
+	    NULL);
 	for (dom = domains; dom; dom = dom->dom_next)
 		if (dom->dom_maxrtkey > max_keylen)
 			max_keylen = dom->dom_maxrtkey;
