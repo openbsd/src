@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.44 2014/01/19 03:03:50 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.45 2014/01/19 03:05:46 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -381,14 +381,14 @@ myx_loadfirmware(struct myx_softc *sc, const char *filename)
 		goto err;
 	}
 
-	bcopy(fw + MYX_HEADER_POS, &offset, sizeof(offset));
+	memcpy(&offset, fw + MYX_HEADER_POS, sizeof(offset));
 	offset = betoh32(offset);
 	if ((offset + sizeof(hdr)) > fwlen) {
 		printf("%s: invalid firmware %s\n", DEVNAME(sc), filename);
 		goto err;
 	}
 
-	bcopy(fw + offset, &hdr, sizeof(hdr));
+	memcpy(&hdr, fw + offset, sizeof(hdr));
 	DPRINTF(MYXDBG_INIT, "%s: "
 	    "fw hdr off %u, length %u, type 0x%x, version %s\n",
 	    DEVNAME(sc), offset, betoh32(hdr.fw_hdrlength),
