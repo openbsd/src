@@ -1,21 +1,23 @@
-.\"	$OpenBSD: getopt.1,v 1.17 2012/11/14 09:55:28 sobrado Exp $
+.\"	$OpenBSD: getopt.1,v 1.18 2014/01/19 09:15:08 schwarze Exp $
 .\"
 .\" This material, written by Henry Spencer, was released by him
 .\" into the public domain and is thus not subject to any copyright.
 .\"
-.Dd $Mdocdate: November 14 2012 $
+.Dd $Mdocdate: January 19 2014 $
 .Dt GETOPT 1
 .Os
 .Sh NAME
 .Nm getopt
 .Nd parse command options
 .Sh SYNOPSIS
-.Nm args=`getopt optstring $*`; set -- $args
+.Nm
+.Ar optstring
+.Va $*
 .Sh DESCRIPTION
 .Nm
 is used to break up options in command lines for easy parsing by
 shell procedures, and to check for legal options.
-.Op optstring
+.Ar optstring
 is a string of recognized option letters (see
 .Xr getopt 3 ) ;
 if a letter is followed by a colon, the option
@@ -39,15 +41,6 @@ preceded by a
 .Sq -
 and in its own shell argument;
 each option argument is also in its own shell argument.
-.Pp
-Note that the construction
-.Cm set -- `getopt optstring $*`
-is not recommended,
-as the exit value from
-.Dq set
-will prevent the exit value from
-.Nm
-from being determined.
 .Sh EXAMPLES
 The following code fragment shows how one might process the arguments
 for a command that can take the options
@@ -90,13 +83,21 @@ cmd -a -oarg -- file file
 .Nm
 prints an error message on the standard error output when it
 encounters an option letter not included in
-.Op optstring .
+.Ar optstring .
 .Sh SEE ALSO
 .Xr sh 1 ,
 .Xr getopt 3
 .Sh HISTORY
 Written by Henry Spencer, working from a Bell Labs manual page.
 Behavior believed identical to the Bell version.
+.Sh CAVEATS
+Note that the construction
+.Sy set -- `getopt optstring $*`
+is not recommended, as the exit value from
+.Sy set
+will prevent the exit value from
+.Nm
+from being determined.
 .Sh BUGS
 Whatever
 .Xr getopt 3
@@ -114,6 +115,6 @@ of
 this again is hard to fix.
 .Pp
 The precise best way to use the
-.Nm set
+.Sy set
 command to set the arguments without disrupting the value(s) of
 shell options varies from one shell version to another.
