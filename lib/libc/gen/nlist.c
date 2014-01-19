@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.56 2013/10/17 08:02:20 deraadt Exp $ */
+/*	$OpenBSD: nlist.c,v 1.57 2014/01/19 20:48:57 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,6 @@
 #endif
 
 int	__fdnlist(int, struct nlist *);
-int	__elf_fdnlist(int, struct nlist *);
 #ifdef _NLIST_DO_ELF
 int	__elf_is_okay__(Elf_Ehdr *ehdr);
 #endif
@@ -86,7 +85,7 @@ __elf_is_okay__(Elf_Ehdr *ehdr)
 }
 
 int
-__elf_fdnlist(int fd, struct nlist *list)
+__fdnlist(int fd, struct nlist *list)
 {
 	struct nlist *p;
 	caddr_t strtab;
@@ -279,29 +278,6 @@ elf_done:
 	return (nent);
 }
 #endif /* _NLIST_DO_ELF */
-
-
-static struct nlist_handlers {
-	int	(*fn)(int fd, struct nlist *list);
-} nlist_fn[] = {
-#ifdef _NLIST_DO_ELF
-	{ __elf_fdnlist },
-#endif
-};
-
-int
-__fdnlist(int fd, struct nlist *list)
-{
-	int n = -1, i;
-
-	for (i = 0; i < sizeof(nlist_fn)/sizeof(nlist_fn[0]); i++) {
-		n = (nlist_fn[i].fn)(fd, list);
-		if (n != -1)
-			break;
-	}
-	return (n);
-}
-
 
 int
 nlist(const char *name, struct nlist *list)
