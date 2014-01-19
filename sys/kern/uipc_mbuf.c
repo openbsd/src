@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.177 2014/01/10 00:47:17 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.178 2014/01/19 03:04:54 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -118,7 +118,6 @@ int	m_clpool(u_int);
 int max_linkhdr;		/* largest link-level header */
 int max_protohdr;		/* largest protocol header */
 int max_hdr;			/* largest link+protocol header */
-int max_datalen;		/* MHLEN - max_hdr */
 
 struct timeout m_cltick_tmo;
 int	m_clticks;
