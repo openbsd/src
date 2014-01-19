@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.73 2014/01/02 17:05:02 miod Exp $
+#	$OpenBSD: Makefile,v 1.74 2014/01/19 00:09:33 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ SRCS+=	main.c mdoc_term.c chars.c term.c tree.c man_term.c eqn_term.c
 SRCS+=	mdoc_man.c
 SRCS+=	html.c mdoc_html.c man_html.c out.c eqn_html.c
 SRCS+=	term_ps.c term_ascii.c tbl_term.c tbl_html.c
-SRCS+=	manpath.c mandocdb.c mansearch.c apropos.c
+SRCS+=	manpath.c mandocdb.c mansearch_const.c mansearch.c apropos.c
 
 PROG=	mandoc
 

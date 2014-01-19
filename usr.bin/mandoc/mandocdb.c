@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.67 2014/01/18 08:54:20 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.68 2014/01/19 00:09:33 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -39,6 +39,9 @@
 #include "mandoc.h"
 #include "manpath.h"
 #include "mansearch.h"
+
+extern int mansearch_keymax;
+extern const char *const mansearch_keynames[];
 
 #define	SQL_EXEC(_v) \
 	if (SQLITE_OK != sqlite3_exec(db, (_v), NULL, NULL, NULL)) \
@@ -1554,11 +1557,23 @@ putkeys(const struct mpage *mpage,
 	const char *cp, size_t sz, uint64_t v)
 {
 	struct str	*s;
-	unsigned int	 slot;
 	const char	*end;
+	uint64_t	 mask;
+	unsigned int	 slot;
+	int		 i;
 
 	if (0 == sz)
 		return;
+
+	if (verb > 1) {
+		for (i = 0, mask = 1;
+		     i < mansearch_keymax;
+		     i++, mask <<= 1)
+			if (mask & v)
+				break;
+		say(mpage->mlinks->file, "Adding key %s=%*s",
+		    mansearch_keynames[i], sz, cp);
+	}
 
 	end = cp + sz;
 	slot = ohash_qlookupi(&strings, cp, &end);
