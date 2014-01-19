@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.318 2014/01/18 09:33:53 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.319 2014/01/19 22:21:39 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -4159,6 +4159,8 @@ sr_schedule_wu(struct sr_workunit *wu)
 
 	DNPRINTF(SR_D_WU, "sr_schedule_wu: schedule wu %p state %i "
 	    "flags 0x%x\n", wu, wu->swu_state, wu->swu_flags);
+
+	KASSERT(wu->swu_io_count > 0);
 
 	s = splbio();
 
