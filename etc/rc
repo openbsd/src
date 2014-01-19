@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.419 2014/01/03 23:24:19 millert Exp $
+#	$OpenBSD: rc,v 1.420 2014/01/19 09:39:04 claudio Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -325,11 +325,15 @@ if [ X"${pf}" != X"NO" ]; then
 	RULES="$RULES\npass in proto tcp from any to any port 22 keep state"
 	RULES="$RULES\npass out proto { tcp, udp } from any to any port 53 keep state"
 	RULES="$RULES\npass out inet proto icmp all icmp-type echoreq keep state"
+	RULES="$RULES\npass out inet proto udp from any port bootpc to any port bootps"
+	RULES="$RULES\npass in inet proto udp from any port bootps to any port bootpc"
 	if ifconfig lo0 inet6 >/dev/null 2>&1; then
 		RULES="$RULES\npass out inet6 proto icmp6 all icmp6-type neighbrsol"
 		RULES="$RULES\npass in inet6 proto icmp6 all icmp6-type neighbradv"
 		RULES="$RULES\npass out inet6 proto icmp6 all icmp6-type routersol"
 		RULES="$RULES\npass in inet6 proto icmp6 all icmp6-type routeradv"
+		RULES="$RULES\npass out inet6 proto udp from any port dhcpv6-client to any port dhcpv6-server"
+		RULES="$RULES\npass in inet6 proto udp from any port dhcpv6-server to any port dhcpv6-client"
 	fi
 	RULES="$RULES\npass proto carp keep state (no-sync)"
 	case `sysctl vfs.mounts.nfs 2>/dev/null` in
