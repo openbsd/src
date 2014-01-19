@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.34 2014/01/10 14:29:08 tedu Exp $	*/
+/*	$OpenBSD: radix.c,v 1.35 2014/01/19 04:04:36 claudio Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -36,19 +36,12 @@
  * Routines to build and maintain radix trees for routing lookups.
  */
 
-#ifndef _NET_RADIX_H_
 #include <sys/param.h>
-#ifdef _KERNEL
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#define	M_DONTWAIT M_NOWAIT
 #include <sys/domain.h>
-#else
-#include <stdlib.h>
-#endif
 #include <sys/syslog.h>
 #include <net/radix.h>
-#endif
 
 #ifndef SMALL_KERNEL
 #include <sys/socket.h>
@@ -1056,13 +1049,11 @@ void
 rn_init()
 {
 	char *cp, *cplim;
-#ifdef _KERNEL
 	struct domain *dom;
 
 	for (dom = domains; dom; dom = dom->dom_next)
 		if (dom->dom_maxrtkey > max_keylen)
 			max_keylen = dom->dom_maxrtkey;
-#endif
 	if (max_keylen == 0) {
 		log(LOG_ERR,
 		    "rn_init: radix functions require max_keylen be set\n");
