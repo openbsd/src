@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.1 2014/01/19 06:04:03 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.2 2014/01/19 10:30:13 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -51,7 +51,7 @@ void		qla_scsi_cmd(struct scsi_xfer *);
 struct qla_ccb *qla_scsi_cmd_poll(struct qla_softc *);
 int		qla_scsi_probe(struct scsi_link *);
 
-int		qla_handle_intr(struct qla_softc *, u_int16_t, u_int16_t);
+void		qla_handle_intr(struct qla_softc *, u_int16_t, u_int16_t);
 
 u_int16_t	qla_read(struct qla_softc *, int);
 void		qla_write(struct qla_softc *, int, u_int16_t);
@@ -882,16 +882,16 @@ qla_handle_resp(struct qla_softc *sc, u_int16_t id)
 	return (ccb);
 }
 
-int
+void
 qla_handle_intr(struct qla_softc *sc, u_int16_t isr, u_int16_t info)
 {
-	int rv, i;
+	int i;
 	u_int16_t rspin;
 	struct qla_ccb *ccb;
 
 	switch (isr) {
 	case QLA_INT_ASYNC:
-		rv = qla_async(sc, info);
+		qla_async(sc, info);
 		break;
 
 	case QLA_INT_RSPQ:
@@ -917,7 +917,6 @@ qla_handle_intr(struct qla_softc *sc, u_int16_t isr, u_int16_t info)
 			qla_write_queue_ptr(sc, QLA_RESP_QUEUE_OUT,
 			    sc->sc_last_resp_id);
 		}
-		rv = 1;
 		break;
 
 	case QLA_INT_MBOX:
@@ -938,20 +937,14 @@ qla_handle_intr(struct qla_softc *sc, u_int16_t isr, u_int16_t info)
 			printf("%s: unexpected mbox interrupt: %x\n",
 			    DEVNAME(sc), info);
 		}
-		rv = 1;
-		break;
-
-	case 0:
-		rv = 0;
 		break;
 
 	default:
 		/* maybe log something? */
-		rv = 1;
+		break;
 	}
 
 	qla_clear_isr(sc);
-	return (rv);
 }
 
 int
@@ -964,7 +957,8 @@ qla_intr(void *xsc)
 	if (qla_read_isr(sc, &isr, &info) == 0)
 		return (0);
 
-	return (qla_handle_intr(sc, isr, info));
+	qla_handle_intr(sc, isr, info);
+	return (1);
 }
 
 int
