@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.39 2014/01/09 03:12:25 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.40 2014/01/19 10:22:57 guenther Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -145,7 +145,6 @@ void set_ftime(char *fnm, time_t mtime, time_t atime, int frc);
 void fset_ftime(char *fnm, int, time_t mtime, time_t atime, int frc);
 int set_ids(char *, uid_t, gid_t);
 int fset_ids(char *, int, uid_t, gid_t);
-int set_lids(char *, uid_t, gid_t);
 void set_pmode(char *, mode_t);
 void fset_pmode(char *, int, mode_t);
 int file_write(int, char *, int, int *, int *, int, char *);
