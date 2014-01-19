@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.2 2014/01/18 09:33:53 jsing Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.3 2014/01/19 11:24:37 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -58,9 +58,12 @@ int	sr_raid5_wu_done(struct sr_workunit *);
 void	sr_raid5_set_chunk_state(struct sr_discipline *, int, int);
 void	sr_raid5_set_vol_state(struct sr_discipline *);
 
-void	sr_raid5_xor(void *, void *, int);
 int	sr_raid5_addio(struct sr_workunit *wu, int, daddr_t, daddr_t,
 	    void *, int, int, void *);
+int	sr_raid5_regenerate(struct sr_workunit *, int, daddr_t, daddr_t,
+	    void *);
+void	sr_raid5_xor(void *, void *, int);
+
 void	sr_dump(void *, int);
 void	sr_raid5_scrub(struct sr_discipline *);
 
@@ -324,6 +327,18 @@ die:
 	sd->sd_vol_status = new_state;
 }
 
+static inline int
+sr_raid5_chunk_online(struct sr_discipline *sd, int chunk)
+{
+	switch (sd->sd_vol.sv_chunks[chunk]->src_meta.scm_status) {
+	case BIOC_SDONLINE:
+	case BIOC_SDSCRUB:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
 int
 sr_raid5_rw(struct sr_workunit *wu)
 {
@@ -331,13 +346,13 @@ sr_raid5_rw(struct sr_workunit *wu)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_chunk		*scp;
-	int			s, i;
 	daddr_t			blk, lba;
 	int64_t			chunk_offs, lbaoffs, phys_offs, strip_offs;
 	int64_t			strip_bits, strip_no, strip_size;
 	int64_t			chunk, no_chunk;
 	int64_t			length, parity, datalen, row_size;
 	void			*xorbuf, *data;
+	int			s;
 
 	/* blk and scsi error will be handled by sr_validate_io */
 	if (sr_validate_io(wu, &blk, "sr_raid5_rw"))
@@ -400,25 +415,9 @@ sr_raid5_rw(struct sr_workunit *wu)
 			case BIOC_SDOFFLINE:
 			case BIOC_SDREBUILD:
 			case BIOC_SDHOTSPARE:
-				/*
-				 * XXX only works if this LBA has already
-				 * been scrubbed
-				 */
-				printf("Disk %llx offline, "
-				    "regenerating buffer\n", chunk);
-				memset(data, 0, length);
-				for (i = 0; i <= no_chunk; i++) {
-					/*
-					 * read all other drives: xor result
-					 * into databuffer.
-					 */
-					if (i != chunk) {
-						if (sr_raid5_addio(wu, i, lba,
-						    length, NULL, SCSI_DATA_IN,
-						    0, data))
-							goto bad;
-					}
-				}
+				if (sr_raid5_regenerate(wu, chunk, lba,
+				    length, data))
+					goto bad;
 				break;
 			default:
 				printf("%s: is offline, can't read\n",
@@ -494,6 +493,39 @@ bad:
 	return (1);
 }
 
+int
+sr_raid5_regenerate(struct sr_workunit *wu, int chunk, daddr_t blkno,
+    daddr_t len, void *data)
+{
+	struct sr_discipline	*sd = wu->swu_dis;
+	int			i;
+
+	/*
+	 * Regenerate a block on a RAID 5 volume by xoring the data and parity
+	 * from all of the remaining online chunks. This requires the parity
+	 * to already be correct.
+ 	 */
+
+	DNPRINTF(SR_D_DIS, "%s: %s sr_raid5_regenerate chunk %d offline, "
+	    "regenerating block %llu\n",
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, chunk, blkno);
+
+	memset(data, 0, len);
+	for (i = 0; i < sd->sd_meta->ssdi.ssd_chunk_no; i++) {
+		if (i == chunk)
+			continue;
+		if (!sr_raid5_chunk_online(sd, i))
+			goto bad;
+		if (sr_raid5_addio(wu, i, blkno, len, NULL, SCSI_DATA_IN,
+		    0, data))
+			goto bad;
+	}
+	return (0);
+
+bad:
+	return (1);
+}
+
 void
 sr_raid5_intr(struct buf *bp)
 {
@@ -535,7 +567,7 @@ sr_raid5_wu_done(struct sr_workunit *wu)
 	if (wu->swu_flags & SR_WUF_DISCIPLINE)
 		return SR_WU_OK;
 
-	/* XXX - This is insufficient for RAID 4/5. */
+	/* XXX - This is insufficient for RAID 5. */
 	if (wu->swu_ios_succeeded > 0) {
 		xs->error = XS_NOERROR;
 		return SR_WU_OK;
@@ -566,9 +598,9 @@ sr_raid5_addio(struct sr_workunit *wu, int chunk, daddr_t blkno,
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct sr_ccb		*ccb;
 
-	DNPRINTF(SR_D_DIS, "sr_raid5_addio: %s %d.%llx %llx %s\n",
-	    (xsflags & SCSI_DATA_IN) ? "read" : "write", chunk, 
-	    (long long)blkno, (long long)len, xorbuf ? "X0R" : "-");
+	DNPRINTF(SR_D_DIS, "sr_raid5_addio: %s chunk %d block %lld "
+	    "length %lld %s\n", (xsflags & SCSI_DATA_IN) ? "read" : "write",
+	    chunk, (long long)blkno, (long long)len, xorbuf ? "X0R" : "-");
 
 	/* Allocate temporary buffer. */
 	if (data == NULL) {
