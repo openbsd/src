@@ -1,4 +1,4 @@
-/*	$OpenBSD: landisk_installboot.c,v 1.1 2013/12/28 13:58:15 jsing Exp $	*/
+/*	$OpenBSD: hp300_installboot.c,v 1.1 2014/01/19 02:58:50 jsing Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -21,9 +21,8 @@
 void
 md_init(void)
 {
-	stages = 2;
-	stage1 = "/usr/mdec/xxboot";
-	stage2 = "/boot";
+	stages = 1;
+	stage1 = "/usr/mdec/uboot.lif";
 }
 
 void

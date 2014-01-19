@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_installboot.h,v 1.1 2013/12/28 14:45:57 jsing Exp $	*/
+/*	$OpenBSD: vax_installboot.c,v 1.1 2014/01/19 02:58:50 jsing Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -16,7 +16,23 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-extern char	*blkstore;
-extern char	*ldrstore;
-extern size_t	blksize;
-extern size_t	ldrsize;
+#include "installboot.h"
+
+void
+md_init(void)
+{
+	stages = 2;
+	stage1 = "/usr/mdec/xxboot";
+	stage2 = "/boot";
+}
+
+void
+md_loadboot(void)
+{
+}
+
+void
+md_installboot(int devfd, char *dev)
+{
+	bootstrap(devfd, dev, stage1);
+}

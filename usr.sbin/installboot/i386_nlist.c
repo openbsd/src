@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_nlist.c,v 1.2 2013/12/27 15:02:49 jsing Exp $	*/
+/*	$OpenBSD: i386_nlist.c,v 1.1 2014/01/19 02:58:50 jsing Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
