@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.14 2014/01/08 22:24:35 bluhm Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.15 2014/01/19 20:49:02 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -219,7 +219,7 @@ struct vio_softc {
 
 	enum vio_ctrl_state	sc_ctrl_inuse;
 
-	struct timeout		sc_tick;
+	struct timeout		sc_txtick, sc_rxtick;
 };
 
 #define VIO_DMAMEM_OFFSET(sc, p) ((caddr_t)(p) - (sc)->sc_dma_kva)
@@ -260,6 +260,7 @@ void	vio_populate_rx_mbufs(struct vio_softc *);
 int	vio_rxeof(struct vio_softc *);
 int	vio_rx_intr(struct virtqueue *);
 void	vio_rx_drain(struct vio_softc *);
+void	vio_rxtick(void *);
 
 /* tx */
 int	vio_tx_intr(struct virtqueue *);
@@ -588,7 +589,8 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 	vsc->sc_config_change = vio_config_change;
 	m_clsetwms(ifp, MCLBYTES, 4, sc->sc_vq[VQRX].vq_num);
-	timeout_set(&sc->sc_tick, vio_txtick, &sc->sc_vq[VQTX]);
+	timeout_set(&sc->sc_txtick, vio_txtick, &sc->sc_vq[VQTX]);
+	timeout_set(&sc->sc_rxtick, vio_rxtick, &sc->sc_vq[VQRX]);
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -672,7 +674,8 @@ vio_stop(struct ifnet *ifp, int disable)
 	struct vio_softc *sc = ifp->if_softc;
 	struct virtio_softc *vsc = sc->sc_virtio;
 
-	timeout_del(&sc->sc_tick);
+	timeout_del(&sc->sc_txtick);
+	timeout_del(&sc->sc_rxtick);
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	/* only way to stop I/O and DMA is resetting... */
 	virtio_reset(vsc);
@@ -781,7 +784,7 @@ again:
 
 	if (queued > 0) {
 		virtio_notify(vsc, vq);
-		timeout_add_sec(&sc->sc_tick, 1);
+		timeout_add_sec(&sc->sc_txtick, 1);
 	}
 }
 
@@ -795,7 +798,8 @@ vio_dump(struct vio_softc *sc)
 	printf("%s status dump:\n", ifp->if_xname);
 	printf("TX virtqueue:\n");
 	virtio_vq_dump(&vsc->sc_vqs[VQTX]);
-	printf("tx tick active: %d\n", !timeout_triggered(&sc->sc_tick));
+	printf("tx tick active: %d\n", !timeout_triggered(&sc->sc_txtick));
+	printf("rx tick active: %d\n", !timeout_triggered(&sc->sc_rxtick));
 	printf("RX virtqueue:\n");
 	virtio_vq_dump(&vsc->sc_vqs[VQRX]);
 	if (vsc->sc_nvqs == 3) {
@@ -941,6 +945,10 @@ vio_populate_rx_mbufs(struct vio_softc *sc)
 	}
 	if (ndone > 0)
 		virtio_notify(vsc, vq);
+	if (vq->vq_used_idx != vq->vq_avail_idx)
+		timeout_del(&sc->sc_rxtick);
+	else
+		timeout_add_sec(&sc->sc_rxtick, 1);
 }
 
 /* dequeue received packets */
@@ -1025,6 +1033,19 @@ again:
 	return sum;
 }
 
+void
+vio_rxtick(void *arg)
+{
+	struct virtqueue *vq = arg;
+	struct virtio_softc *vsc = vq->vq_owner;
+	struct vio_softc *sc = (struct vio_softc *)vsc->sc_child;
+	int s;
+
+	s = splnet();
+	vio_populate_rx_mbufs(sc);
+	splx(s);
+}
+
 /* free all the mbufs; called from if_stop(disable) */
 void
 vio_rx_drain(struct vio_softc *sc)
@@ -1103,9 +1124,9 @@ vio_txeof(struct virtqueue *vq)
 		virtio_stop_vq_intr(vsc, &sc->sc_vq[VQTX]);
 	}
 	if (vq->vq_used_idx == vq->vq_avail_idx)
-		timeout_del(&sc->sc_tick);
+		timeout_del(&sc->sc_txtick);
 	else if (r)
-		timeout_add_sec(&sc->sc_tick, 1);
+		timeout_add_sec(&sc->sc_txtick, 1);
 	return r;
 }
 
