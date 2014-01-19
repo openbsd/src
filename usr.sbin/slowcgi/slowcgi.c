@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.26 2013/10/31 21:53:16 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.27 2014/01/19 00:01:05 djm Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -503,7 +503,7 @@ slowcgi_sig_handler(int sig, short event, void *arg)
 
 	switch (sig) {
 	case SIGCHLD:
-		while((pid = waitpid(WAIT_ANY, &status, WNOHANG)) != -1) {
+		while((pid = waitpid(WAIT_ANY, &status, WNOHANG)) > 0) {
 			c = NULL;
 			SLIST_FOREACH(ncs, &p->requests, entry)
 				if (ncs->request->script_pid == pid) {
@@ -526,6 +526,8 @@ slowcgi_sig_handler(int sig, short event, void *arg)
 
 			ldebug("wait: %s", c->script_name);
 		}
+		if (pid == -1 && errno != ECHILD)
+			lwarn("waitpid");
 		break;
 	case SIGPIPE:
 		/* ignore */
@@ -893,6 +895,7 @@ exec_cgi(struct request *c)
 			env[i++] = env_entry->val;
 		env[i++] = NULL;
 		execve(c->script_name, argv, env);
+		lwarn("execve %s", c->script_name);
 		_exit(1);
 
 	}
