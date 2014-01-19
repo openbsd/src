@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp_var.h,v 1.13 2007/12/13 20:00:53 reyk Exp $	*/
+/*	$OpenBSD: icmp_var.h,v 1.14 2014/01/19 05:01:50 claudio Exp $	*/
 /*	$NetBSD: icmp_var.h,v 1.8 1995/03/26 20:32:19 jtc Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 struct	icmpstat {
 /* statistics related to icmp packets generated */
 	u_long	icps_error;		/* # of calls to icmp_error */
+	u_long	icps_toofreq;		/* no error because rate limiter */
 	u_long	icps_oldshort;		/* no error because old ip too short */
 	u_long	icps_oldicmp;		/* no error because old was icmp */
 	u_long	icps_outhist[ICMP_MAXTYPE + 1];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.113 2014/01/09 06:29:06 tedu Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.114 2014/01/19 05:01:50 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -178,8 +178,10 @@ icmp_do_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	/*
 	 * First, do a rate limitation check.
 	 */
-	if (icmp_ratelimit(&oip->ip_src, type, code))
-		goto freeit;	/* XXX stat */
+	if (icmp_ratelimit(&oip->ip_src, type, code)) {
+		icmpstat.icps_toofreq++;
+		goto freeit;
+	}
 
 	/*
 	 * Now, formulate icmp message
