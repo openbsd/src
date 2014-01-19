@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.27 2014/01/10 07:57:29 deraadt Exp $
+#	$OpenBSD: list,v 1.28 2014/01/19 00:33:40 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin
@@ -77,5 +77,4 @@ TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
 COPY	${DESTDIR}/bsd				.
 COPY	${DESTDIR}/boot				.
 
-HASH	var/hash
 TZ

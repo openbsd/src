@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.39 2014/01/11 05:40:16 deraadt Exp $
+#	$OpenBSD: list,v 1.40 2014/01/19 00:33:40 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin
@@ -93,5 +93,4 @@ SCRIPT	${CURDIR}/../../miniroot/install.sh	install
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
 SPECIAL	chmod 755 install upgrade
 
-HASH	var/hash	bsd.IP22 bsd.IP27 bsd.IP28 bsd.IP30 bsd.mp.IP30 bsd.IP32
 TZ

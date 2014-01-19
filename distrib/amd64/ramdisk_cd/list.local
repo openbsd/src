@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.23 2014/01/08 21:53:35 deraadt Exp $
+# $OpenBSD: list.local,v 1.24 2014/01/19 00:33:40 deraadt Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					sbin/ping6
@@ -30,5 +30,4 @@ COPY	${DESTDIR}/etc/firmware/run-rt3071	etc/firmware/run-rt3071
 COPY	${DESTDIR}/etc/firmware/zd1211		etc/firmware/zd1211
 COPY	${DESTDIR}/etc/firmware/zd1211b		etc/firmware/zd1211b
 
-HASH	var/hash
 TZ

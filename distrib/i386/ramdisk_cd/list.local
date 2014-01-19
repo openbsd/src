@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.33 2014/01/08 22:17:54 deraadt Exp $
+# $OpenBSD: list.local,v 1.34 2014/01/19 00:33:40 deraadt Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					sbin/mount_ext2fs
@@ -49,5 +49,4 @@ COPY	${DESTDIR}/etc/firmware/zd1211b		etc/firmware/zd1211b
 #COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-ext etc/firmware/atu-rfmd2958smc-ext
 #COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-int etc/firmware/atu-rfmd2958smc-int
 
-HASH	var/hash
 TZ

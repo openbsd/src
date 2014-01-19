@@ -9,5 +9,4 @@ LINK	instbin					sbin/bioctl
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
 COPY	${DESTDIR}/etc/firmware/3c990		etc/firmware/3c990
 
-HASH	var/hash
 TZ
