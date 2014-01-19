@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.4 2014/01/19 11:43:05 jsing Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.5 2014/01/19 11:48:42 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -387,10 +387,11 @@ sr_raid5_rw(struct sr_workunit *wu)
 		/* get size remaining in this stripe */
 		length = MIN(strip_size - strip_offs, datalen);
 
-		/* map disk offset to parity/data drive */
+		/*
+		 * Map disk offset to data and parity chunks, using a left
+		 * asymmetric algorithm for the parity assignment.
+		 */
 		chunk = strip_no % no_chunk;
-
-		/* RAID5 - left asymmetric algorithm */
 		parity = no_chunk - ((strip_no / no_chunk) % (no_chunk + 1));
 		if (chunk >= parity)
 			chunk++;
@@ -400,14 +401,18 @@ sr_raid5_rw(struct sr_workunit *wu)
 		/* XXX big hammer.. exclude I/O from entire stripe */
 		if (wu->swu_blk_start == 0)
 			wu->swu_blk_start = (strip_no / no_chunk) * row_size;
-		wu->swu_blk_end = (strip_no / no_chunk) * row_size + (row_size - 1);
+		wu->swu_blk_end = (strip_no / no_chunk) * row_size +
+		    (row_size - 1);
 
 		scp = sd->sd_vol.sv_chunks[chunk];
 		if (xs->flags & SCSI_DATA_IN) {
 			switch (scp->src_meta.scm_status) {
 			case BIOC_SDONLINE:
 			case BIOC_SDSCRUB:
-				/* drive is good. issue single read request */
+				/*
+				 * Chunk is online, issue a single read
+				 * request.
+				 */
 				if (sr_raid5_addio(wu, chunk, lba, length,
 				    data, xs->flags, 0, NULL))
 					goto bad;
