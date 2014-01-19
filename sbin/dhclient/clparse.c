@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.75 2014/01/18 01:19:01 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.76 2014/01/19 04:36:04 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -190,7 +190,7 @@ parse_client_statement(FILE *cfile)
 			config->default_actions[code] = ACTION_PREPEND;
 		break;
 	case TOK_HARDWARE:
-		parse_hardware_param(cfile, &ifi->hw_address);
+		parse_ethernet(cfile, &ifi->hw_address);
 		break;
 	case TOK_REQUEST:
 		count = parse_option_list(cfile, optlist, sizeof(optlist));
