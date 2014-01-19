@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfsstat.1,v 1.14 2014/01/19 10:39:00 schwarze Exp $
+.\"	$OpenBSD: nfsstat.1,v 1.15 2014/01/19 18:36:43 jmc Exp $
 .\"	$NetBSD: nfsstat.1,v 1.8 1996/03/03 17:21:28 thorpej Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -49,10 +49,10 @@ If neither
 .Fl M
 nor
 .Fl N
-option was specified statics will be obtained from the running system
+option was specified statistics will be obtained from the running system
 by calling
-.Xr sysctl 3
-routine. Otherwise specified core and system will be used to fetch
+.Xr sysctl 3 .
+Otherwise the specified core and system will be used to fetch
 data by means of
 .Xr kvm 3 .
 .Pp
