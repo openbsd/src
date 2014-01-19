@@ -1,4 +1,4 @@
-/*	$OpenBSD: a2coff.c,v 1.9 2013/11/09 20:17:55 miod Exp $	*/
+/*	$OpenBSD: a2coff.c,v 1.10 2014/01/19 15:39:51 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2013, Miodrag Vallat
  *
@@ -205,28 +205,38 @@ convert_elf(const char *infile, int infd, int outfd, Elf_Ehdr *ehdr)
 {
 	struct ecoff_exechdr ehead;
 	struct ecoff_scnhdr escn[2];
-	Elf_Phdr phdr[3];
+	Elf_Phdr *phdr;
 	off_t outpos;
-	uint delta;
+	uint delta, ptload;
 	Elf_Addr minaddr, maxaddr;
-	int n;
+	int n, last;
 
-	if (ehdr->e_phnum > 3)
-		errx(1, "%s: too many program headers", infile);
+	phdr = (Elf_Phdr *)malloc(ehdr->e_phnum * sizeof(Elf_Phdr));
+	if (phdr == NULL)
+		err(1, "malloc");
 
 	memset(phdr, 0, sizeof phdr);
 	for (n = 0; n < ehdr->e_phnum; n++) {
 		if (lseek(infd, ehdr->e_phoff + n * ehdr->e_phentsize,
 		    SEEK_SET) == (off_t) -1)
 			err(1, "seek");
-		if (read(infd, phdr + n, sizeof phdr[0]) != sizeof(phdr[0]))
+		if (read(infd, phdr + n, sizeof *phdr) != sizeof(*phdr))
 			err(1, "read");
 	}
+
+	ptload = 0;
+	for (n = 0; n < ehdr->e_phnum; n++)
+		if (phdr[n].p_type == PT_LOAD)
+			ptload++;
+	if (ptload > 3)
+		errx(1, "%s: too many PT_LOAD program headers", infile);
 
 	maxaddr = 0;
 	minaddr = (Elf_Addr)-1;
 
 	for (n = 0; n < ehdr->e_phnum; n++) {
+		if (phdr[n].p_type != PT_LOAD)
+			continue;
 		if (phdr[n].p_paddr < minaddr)
 			minaddr = phdr[n].p_paddr;
 		if (phdr[n].p_paddr + phdr[n].p_memsz > maxaddr)
@@ -284,16 +294,18 @@ convert_elf(const char *infile, int infd, int outfd, Elf_Ehdr *ehdr)
 		err(1, "write");
 
 	/*
-	 * Copy ``text'' section (all program headers).
+	 * Copy ``text'' section (all PT_LOAD program headers).
 	 */
 
 	outpos = escn[0].s_scnptr;
 	if (lseek(outfd, outpos, SEEK_SET) == (off_t) -1)
 		err(1, "seek");
-	for (n = 0; n < ehdr->e_phnum; n++) {
-		if (n != 0) {
-			delta = (phdr[n].p_paddr - phdr[n - 1].p_paddr) -
-			    phdr[n - 1].p_memsz;
+	for (n = 0, last = -1; n < ehdr->e_phnum; n++) {
+		if (phdr[n].p_type != PT_LOAD)
+			continue;
+		if (last >= 0) {
+			delta = (phdr[n].p_paddr - phdr[last].p_paddr) -
+			    phdr[last].p_memsz;
 			if (delta != 0) {
 				zerobits(outfd, delta);
 				outpos += delta;
@@ -310,7 +322,10 @@ convert_elf(const char *infile, int infd, int outfd, Elf_Ehdr *ehdr)
 		if (delta != 0)
 			zerobits(outfd, delta);
 		outpos += phdr[n].p_memsz;
+		last = n;
 	}
+
+	free(phdr);
 
 	/*
 	 * Fill ``data'' section.
