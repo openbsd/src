@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.21 2014/01/19 05:19:27 deraadt Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.22 2014/01/19 13:47:03 pelikan Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -308,10 +308,13 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 			nwords++;
 
 		if (ifmr->ifm_count != 0) {
-			size_t minwords = nwords > (size_t)ifmr->ifm_count 
-			    ? (size_t)ifmr->ifm_count : nwords;
-			int *kptr = (int *)malloc(nwords * sizeof(int),
-			    M_TEMP, M_WAITOK | M_ZERO);
+			size_t minwords;
+			int *kptr;
+
+			minwords = nwords > (size_t)ifmr->ifm_count ?
+			    (size_t)ifmr->ifm_count : nwords;
+			kptr = malloc(nwords * sizeof(int), M_TEMP,
+			    M_WAITOK | M_ZERO);
 			/*
 			 * Get the media words from the interface's list.
 			 */
@@ -348,8 +351,7 @@ ifmedia_match(struct ifmedia *ifm, u_int target, u_int mask)
 	match = NULL;
 	mask = ~mask;
 
-	for (next = TAILQ_FIRST(&ifm->ifm_list); next != NULL;
-	     next = TAILQ_NEXT(next, ifm_list)) {
+	TAILQ_FOREACH(next, &ifm->ifm_list, ifm_list) {
 		if ((next->ifm_media & mask) == (target & mask)) {
 			if (match) {
 #if defined(IFMEDIA_DEBUG) || defined(DIAGNOSTIC)
@@ -374,9 +376,7 @@ ifmedia_delete_instance(struct ifmedia *ifm, u_int inst)
 {
 	struct ifmedia_entry *ife, *nife;
 
-	for (ife = TAILQ_FIRST(&ifm->ifm_list); ife != NULL;
-	     ife = nife) {
-		nife = TAILQ_NEXT(ife, ifm_list);
+	TAILQ_FOREACH_SAFE(ife, &ifm->ifm_list, ifm_list, nife) {
 		if (inst == IFM_INST_ANY ||
 		    inst == IFM_INST(ife->ifm_media)) {
 			TAILQ_REMOVE(&ifm->ifm_list, ife, ifm_list);
