@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.2 2014/01/18 02:47:27 jsing Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.3 2014/01/19 03:49:31 jsing Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -87,9 +87,9 @@ main(int argc, char **argv)
 	/* Prefix stages with root. */
 	if (verbose)
 		fprintf(stderr, "Using %s as root\n", root);
-	if (stage1 != NULL)
+	if (argc <= 1 && stage1 != NULL)
 		stage1 = fileprefix(root, stage1);
-	if (stage2 != NULL)
+	if (argc <= 2 && stage2 != NULL)
 		stage2 = fileprefix(root, stage2);
 
 	if ((devfd = opendev(dev, (nowrite ? O_RDONLY : O_RDWR), OPENDEV_PART,
