@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.199 2014/01/19 00:39:40 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.200 2014/01/19 13:12:07 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -337,7 +337,7 @@ main(void *framep)
 	sched_init_runqueues();
 	sleep_queue_init();
 	sched_init_cpu(curcpu());
-	srandom(arc4random());
+	p->p_curcpu->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 
 	/* Initialize work queues */
 	workq_init();
