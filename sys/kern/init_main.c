@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.197 2014/01/01 07:08:10 fgsch Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.198 2014/01/19 00:22:58 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -225,6 +225,8 @@ main(void *framep)
 	tty_init();		/* initialise tty's */
 	cpu_startup();
 
+	random_start();		/* Start the flow */
+
 	/*
 	 * Initialize mbuf's.  Do this now because we might attempt to
 	 * allocate mbufs or mbuf clusters during autoconfiguration.
@@ -335,8 +337,6 @@ main(void *framep)
 	sched_init_runqueues();
 	sleep_queue_init();
 	sched_init_cpu(curcpu());
-
-	random_start();
 	srandom(arc4random());
 
 	/* Initialize work queues */
