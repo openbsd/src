@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.47 2014/01/19 03:53:46 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.48 2014/01/19 09:04:37 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -86,7 +86,12 @@ struct myx_buf {
 	bus_dmamap_t		 mb_map;
 	struct mbuf		*mb_m;
 };
-SIMPLEQ_HEAD(myx_buf_list, myx_buf);
+
+struct myx_buf_list {
+	SIMPLEQ_HEAD(, myx_buf)	mbl_q;
+	struct mutex		mbl_mtx;
+};
+
 struct pool *myx_buf_pool;
 
 struct myx_softc {
@@ -193,6 +198,8 @@ void	 myx_txeof(struct myx_softc *, u_int32_t);
 struct myx_buf *	myx_buf_alloc(struct myx_softc *, bus_size_t, int,
 			    bus_size_t, bus_size_t);
 void			myx_buf_free(struct myx_softc *, struct myx_buf *);
+void			myx_bufs_init(struct myx_buf_list *);
+int			myx_bufs_empty(struct myx_buf_list *);
 struct myx_buf *	myx_buf_get(struct myx_buf_list *);
 void			myx_buf_put(struct myx_buf_list *, struct myx_buf *);
 struct myx_buf *	myx_buf_fill(struct myx_softc *, int);
@@ -232,13 +239,13 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_function = pa->pa_function;
 
-	SIMPLEQ_INIT(&sc->sc_rx_buf_free[MYX_RXSMALL]);
-	SIMPLEQ_INIT(&sc->sc_rx_buf_list[MYX_RXSMALL]);
-	SIMPLEQ_INIT(&sc->sc_rx_buf_free[MYX_RXBIG]);
-	SIMPLEQ_INIT(&sc->sc_rx_buf_list[MYX_RXBIG]);
+	myx_bufs_init(&sc->sc_rx_buf_free[MYX_RXSMALL]);
+	myx_bufs_init(&sc->sc_rx_buf_list[MYX_RXSMALL]);
+	myx_bufs_init(&sc->sc_rx_buf_free[MYX_RXBIG]);
+	myx_bufs_init(&sc->sc_rx_buf_list[MYX_RXBIG]);
 
-	SIMPLEQ_INIT(&sc->sc_tx_buf_free);
-	SIMPLEQ_INIT(&sc->sc_tx_buf_list);
+	myx_bufs_init(&sc->sc_tx_buf_free);
+	myx_bufs_init(&sc->sc_tx_buf_list);
 
 	timeout_set(&sc->sc_refill, myx_refill, sc);
 
@@ -1410,7 +1417,7 @@ void
 myx_start(struct ifnet *ifp)
 {
 	struct myx_tx_desc		txd;
-	struct myx_buf_list		list = SIMPLEQ_HEAD_INITIALIZER(list);
+	SIMPLEQ_HEAD(, myx_buf)		list = SIMPLEQ_HEAD_INITIALIZER(list);
 	struct myx_softc		*sc = ifp->if_softc;
 	bus_dmamap_t			map;
 	struct myx_buf			*mb, *firstmb;
@@ -1459,16 +1466,18 @@ myx_start(struct ifnet *ifp)
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
-		myx_buf_put(&list, mb);
+		SIMPLEQ_INSERT_TAIL(&list, mb, mb_entry);
 
 		sc->sc_tx_free -= map->dm_nsegs +
 		    (map->dm_mapsize < 60 ? 1 : 0);
 	}
 
 	/* post the first descriptor last */
-	firstmb = myx_buf_get(&list);
+	firstmb = SIMPLEQ_FIRST(&list);
 	if (firstmb == NULL)
 		return;
+	
+	SIMPLEQ_REMOVE_HEAD(&list, mb_entry);
 	myx_buf_put(&sc->sc_tx_buf_list, firstmb);
 
 	idx = firstidx = sc->sc_tx_ring_idx;
@@ -1476,7 +1485,8 @@ myx_start(struct ifnet *ifp)
 	    (firstmb->mb_map->dm_mapsize < 60 ? 1 : 0);
 	idx %= sc->sc_tx_ring_count;
 
-	while ((mb = myx_buf_get(&list)) != NULL) {
+	while ((mb = SIMPLEQ_FIRST(&list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&list, mb_entry);
 		myx_buf_put(&sc->sc_tx_buf_list, mb);
 
 		map = mb->mb_map;
@@ -1632,7 +1642,7 @@ myx_intr(void *arg)
 	for (i = 0; i < 2; i++) {
 		if (ISSET(refill, 1 << i)) {
 			myx_rx_fill(sc, i);
-			if (SIMPLEQ_EMPTY(&sc->sc_rx_buf_list[i]))
+			if (myx_bufs_empty(&sc->sc_rx_buf_list[i]))
 				timeout_add(&sc->sc_refill, 0);
 		}
 	}
@@ -1650,7 +1660,7 @@ myx_refill(void *xsc)
 	s = splnet();
 	for (i = 0; i < 2; i++) {
 		myx_rx_fill(sc, i);
-		if (SIMPLEQ_EMPTY(&sc->sc_rx_buf_list[i]))
+		if (myx_bufs_empty(&sc->sc_rx_buf_list[i]))
 			timeout_add(&sc->sc_refill, 1);
 	}
 	splx(s);
@@ -1872,17 +1882,38 @@ myx_buf_get(struct myx_buf_list *mbl)
 {
 	struct myx_buf *mb;
 
-	mb = SIMPLEQ_FIRST(mbl);
-	if (mb == NULL)
-		return (NULL);
-
-	SIMPLEQ_REMOVE_HEAD(mbl, mb_entry);
+	mtx_enter(&mbl->mbl_mtx);
+	mb = SIMPLEQ_FIRST(&mbl->mbl_q);
+	if (mb != NULL)
+		SIMPLEQ_REMOVE_HEAD(&mbl->mbl_q, mb_entry);
+	mtx_leave(&mbl->mbl_mtx);
 
 	return (mb);
+}
+
+int
+myx_bufs_empty(struct myx_buf_list *mbl)
+{
+	int rv;
+
+	mtx_enter(&mbl->mbl_mtx);
+	rv = SIMPLEQ_EMPTY(&mbl->mbl_q);
+	mtx_leave(&mbl->mbl_mtx);
+
+	return (rv);
 }
 
 void
 myx_buf_put(struct myx_buf_list *mbl, struct myx_buf *mb)
 {
-	SIMPLEQ_INSERT_TAIL(mbl, mb, mb_entry);
+	mtx_enter(&mbl->mbl_mtx);
+	SIMPLEQ_INSERT_TAIL(&mbl->mbl_q, mb, mb_entry);
+	mtx_leave(&mbl->mbl_mtx);
+}
+
+void
+myx_bufs_init(struct myx_buf_list *mbl)
+{
+	SIMPLEQ_INIT(&mbl->mbl_q);
+	mtx_init(&mbl->mbl_mtx, IPL_NET);
 }
