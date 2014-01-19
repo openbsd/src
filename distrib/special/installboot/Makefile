@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2014/01/19 03:04:17 jsing Exp $
+#	$OpenBSD: Makefile,v 1.2 2014/01/19 05:26:22 deraadt Exp $
 
 .PATH: ${.CURDIR}/../../../usr.sbin/installboot
 
@@ -8,8 +8,6 @@ SRCS=		installboot.c util.c
 CPPFLAGS=	-I${.CURDIR}/../../../usr.sbin/installboot
 LDADD=		-lutil
 DPADD=		${LIBUTIL}
-
-LDSTATIC=	-static
 
 .if ${MACHINE} == "alpha"
 SRCS += stubs.c
