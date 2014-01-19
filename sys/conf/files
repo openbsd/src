@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.564 2014/01/18 09:23:26 jsing Exp $
+#	$OpenBSD: files,v 1.565 2014/01/19 06:04:03 jmatthew Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -194,6 +194,10 @@ device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_openbsd.c		isp
 file	dev/ic/isp_library.c		isp
+
+# QLogic ISP23xx FC Controllers
+device  qla: scsi
+file    dev/ic/qla.c                    qla
 
 # Advanced Host Controller Interface for Serial ATA
 device	ahci: scsi, atascsi
