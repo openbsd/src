@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.198 2014/01/19 00:22:58 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.199 2014/01/19 00:39:40 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -353,8 +353,6 @@ main(void *framep)
 
 	/* Configure the devices */
 	cpu_configure();
-
-	random_hostseed();
 
 	/* Configure virtual memory system, set vm rlimits. */
 	uvm_init_limits(p);

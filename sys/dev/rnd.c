@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.151 2014/01/19 00:24:01 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.152 2014/01/19 00:39:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -781,16 +781,6 @@ random_start(void)
 	timeout_set(&arc4_timeout, arc4_reinit, NULL);
 	arc4_reinit(NULL);
 	timeout_set(&rnd_timeout, dequeue_randomness, NULL);
-}
-
-void
-random_hostseed(void)
-{
-	if (msgbufp == NULL || msgbufp->msg_magic != MSG_MAGIC)
-		return;
-	add_entropy_words((u_int32_t *)msgbufp->msg_bufc,
-	    msgbufp->msg_bufs / sizeof(u_int32_t));
-	arc4_init(NULL, NULL);
 }
 
 int
