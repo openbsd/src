@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.69 2014/01/19 22:40:42 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.70 2014/01/19 22:48:00 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -948,6 +948,7 @@ mlink_check(struct mpage *mpage, struct mlink *mlink)
 static void
 mpages_merge(struct mchars *mc, struct mparse *mp)
 {
+	char			 any[] = "any";
 	struct ohash_info	 str_info;
 	struct mpage		*mpage;
 	struct mlink		*mlink;
@@ -1019,7 +1020,7 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 		}
 		putkey(mpage, mpage->sec, TYPE_sec);
 		putkey(mpage, '\0' == *mpage->arch ?
-		    "any" : mpage->arch, TYPE_arch);
+		    any : mpage->arch, TYPE_arch);
 
 		for (mlink = mpage->mlinks; mlink; mlink = mlink->next) {
 			if ('\0' != *mlink->dsec)
@@ -1027,7 +1028,7 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 			if ('\0' != *mlink->fsec)
 				putkey(mpage, mlink->fsec, TYPE_sec);
 			putkey(mpage, '\0' == *mlink->arch ?
-			    "any" : mlink->arch, TYPE_arch);
+			    any : mlink->arch, TYPE_arch);
 			putkey(mpage, mlink->name, TYPE_Nm);
 		}
 
