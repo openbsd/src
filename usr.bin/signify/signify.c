@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.39 2014/01/19 18:39:34 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.40 2014/01/19 23:20:30 deraadt Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -145,8 +145,11 @@ parseb64file(const char *filename, char *b64, void *buf, size_t len,
 		errx(1, "invalid comment in %s; must start with '%s'",
 		    filename, COMMENTHDR);
 	*commentend = 0;
-	if (comment)
-		strlcpy(comment, b64 + COMMENTHDRLEN, COMMENTMAXLEN);
+	if (comment) {
+		if (strlcpy(comment, b64 + COMMENTHDRLEN,
+		    COMMENTMAXLEN) >= COMMENTMAXLEN)
+			err(1, "comment too long");
+	}
 	b64end = strchr(commentend + 1, '\n');
 	if (!b64end)
 		errx(1, "missing new line after b64 in %s", filename);
@@ -235,7 +238,9 @@ writeb64file(const char *filename, const char *comment, const void *buf,
 	int fd, rv;
 
 	fd = xopen(filename, O_CREAT|flags|O_NOFOLLOW|O_WRONLY, mode);
-	snprintf(header, sizeof(header), "%s%s\n", COMMENTHDR, comment);
+	if (snprintf(header, sizeof(header), "%s%s\n",
+	    COMMENTHDR, comment) >= sizeof(header))
+		err(1, "comment too long");
 	writeall(fd, header, strlen(header), filename);
 	if ((rv = b64_ntop(buf, len, b64, sizeof(b64)-1)) == -1)
 		errx(1, "b64 encode failed");
@@ -310,14 +315,18 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds,
 	memset(digest, 0, sizeof(digest));
 	memset(xorkey, 0, sizeof(xorkey));
 
-	snprintf(commentbuf, sizeof(commentbuf), "%s secret key", comment);
+	if (snprintf(commentbuf, sizeof(commentbuf), "%s secret key",
+	    comment) >= sizeof(commentbuf))
+		err(1, "comment too long");
 	writeb64file(seckeyfile, commentbuf, &enckey,
 	    sizeof(enckey), O_EXCL, 0600);
 	memset(&enckey, 0, sizeof(enckey));
 
 	memcpy(pubkey.pkalg, PKALG, 2);
 	memcpy(pubkey.fingerprint, fingerprint, FPLEN);
-	snprintf(commentbuf, sizeof(commentbuf), "%s public key", comment);
+	if (snprintf(commentbuf, sizeof(commentbuf), "%s public key",
+	    comment) >= sizeof(commentbuf))
+		err(1, "comment too long");
 	writeb64file(pubkeyfile, commentbuf, &pubkey,
 	    sizeof(pubkey), O_EXCL, 0666);
 }
@@ -359,7 +368,9 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 	memset(&enckey, 0, sizeof(enckey));
 
 	memcpy(sig.pkalg, PKALG, 2);
-	snprintf(sigcomment, sizeof(sigcomment), "signature from %s", comment);
+	if (snprintf(sigcomment, sizeof(sigcomment), "signature from %s",
+	    comment) >= sizeof(sigcomment))
+		err(1, "comment too long");
 	writeb64file(sigfile, sigcomment, &sig, sizeof(sig), O_TRUNC, 0666);
 	if (embedded)
 		appendall(sigfile, msg, msglen);
