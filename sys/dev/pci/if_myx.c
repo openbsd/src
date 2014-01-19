@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.48 2014/01/19 09:04:37 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.49 2014/01/19 21:43:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -511,7 +511,7 @@ myx_probe_firmware(struct myx_softc *sc)
 		width = (csr >> 20) & 0x3f;
 
 		if (width <= 4) {
-                        /*
+			/*
 			 * if the link width is 4 or less we can use the
 			 * aligned firmware.
 			 */
