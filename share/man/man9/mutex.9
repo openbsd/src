@@ -1,4 +1,4 @@
-.\" $OpenBSD: mutex.9,v 1.18 2013/12/09 03:16:29 dlg Exp $
+.\" $OpenBSD: mutex.9,v 1.19 2014/01/19 10:01:35 dlg Exp $
 .\"
 .\" Copyright (c) 2005 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 9 2013 $
+.Dd $Mdocdate: January 19 2014 $
 .Dt MUTEX 9
 .Os
 .Sh NAME
@@ -88,6 +88,7 @@ to
 if necessary.
 .Sh SEE ALSO
 .Xr lockmgr 9 ,
+.Xr msleep 9 ,
 .Xr rwlock 9 ,
 .Xr spl 9
 .Sh HISTORY
