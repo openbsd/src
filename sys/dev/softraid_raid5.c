@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.3 2014/01/19 11:24:37 jsing Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.4 2014/01/19 11:43:05 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -469,15 +469,19 @@ sr_raid5_rw(struct sr_workunit *wu)
 
 	s = splbio();
 	if (wu_r) {
-		/* collide write request with reads */
-		wu_r->swu_blk_start = wu->swu_blk_start;
-		wu_r->swu_blk_end = wu->swu_blk_end;
+		if (wu_r->swu_io_count > 0) {
+			/* collide write request with reads */
+			wu_r->swu_blk_start = wu->swu_blk_start;
+			wu_r->swu_blk_end = wu->swu_blk_end;
 
-		wu->swu_state = SR_WU_DEFERRED;
-		wu_r->swu_collider = wu;
-		TAILQ_INSERT_TAIL(&sd->sd_wu_defq, wu, swu_link);
+			wu->swu_state = SR_WU_DEFERRED;
+			wu_r->swu_collider = wu;
+			TAILQ_INSERT_TAIL(&sd->sd_wu_defq, wu, swu_link);
 
-		wu = wu_r;
+			wu = wu_r;
+		} else {
+			sr_scsi_wu_put(sd, wu_r);
+		}
 	}
 	splx(s);
 
