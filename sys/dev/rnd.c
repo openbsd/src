@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.150 2013/12/28 02:58:17 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.151 2014/01/19 00:24:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -760,16 +760,18 @@ random_init(void)
 		_rs_seed((u_int8_t *)version + off, KEYSZ + IVSZ);
 }
 
+/*
+ * Start periodic services inside the random subsystem, which pull
+ * entropy forward, hash it, and re-seed the random stream as needed.
+ */
 void
 random_start(void)
 {
 	/*
-	 * On a cold start the message buffer does not contain any
-	 * unique information yet, just the copyright message and the
-	 * kernel version string.  Unique information like MAC adresses
-	 * will be added during autoconf.
+	 * At this point, the message buffer is mapped, and may contain
+	 * some historical information still.
 	 */
-	if (msgbufp && msgbufp->msg_magic == MSG_MAGIC)
+	if (msgbufp->msg_magic == MSG_MAGIC)
 		add_entropy_words((u_int32_t *)msgbufp->msg_bufc,
 		    msgbufp->msg_bufs / sizeof(u_int32_t));
 
