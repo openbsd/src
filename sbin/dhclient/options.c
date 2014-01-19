@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.65 2013/12/30 03:36:17 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.66 2014/01/19 21:10:04 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -323,11 +323,9 @@ pretty_print_option(unsigned int code, struct option_data *option,
 		case 'L':
 			hunksize += 4;
 			break;
-		case 's':
 		case 'S':
 			hunksize += 2;
 			break;
-		case 'b':
 		case 'B':
 		case 'f':
 			hunksize++;
@@ -389,27 +387,17 @@ pretty_print_option(unsigned int code, struct option_data *option,
 				dp += 4;
 				break;
 			case 'L':
-				opcount = snprintf(op, opleft, "%ld",
+				opcount = snprintf(op, opleft, "%lu",
 				    (unsigned long)getULong(dp));
 				dp += 4;
 				break;
-			case 's':
-				opcount = snprintf(op, opleft, "%d",
-				    getShort(dp));
-				dp += 2;
-				break;
 			case 'S':
-				opcount = snprintf(op, opleft, "%d",
+				opcount = snprintf(op, opleft, "%u",
 				    getUShort(dp));
 				dp += 2;
 				break;
-			case 'b':
-				opcount = snprintf(op, opleft, "%d",
-				    *(char *)dp);
-				dp++;
-				break;
 			case 'B':
-				opcount = snprintf(op, opleft, "%d", *dp);
+				opcount = snprintf(op, opleft, "%u", *dp);
 				dp++;
 				break;
 			case 'X':

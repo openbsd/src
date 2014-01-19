@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.77 2014/01/19 08:25:54 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.78 2014/01/19 21:10:04 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -695,16 +695,6 @@ alloc:
 				len = 4;
 				dp = buf;
 				goto alloc;
-			case 's':	/* Signed 16-bit integer. */
-				if (!parse_decimal(cfile, buf, *fmt)) {
-					parse_warn("expecting signed 16-bit "
-					    "integer.");
-					skip_to_semi(cfile);
-					return (-1);
-				}
-				len = 2;
-				dp = buf;
-				goto alloc;
 			case 'S':	/* Unsigned 16-bit integer. */
 				if (!parse_decimal(cfile, buf, *fmt)) {
 					parse_warn("expecting unsigned 16-bit "
@@ -713,16 +703,6 @@ alloc:
 					return (-1);
 				}
 				len = 2;
-				dp = buf;
-				goto alloc;
-			case 'b':	/* Signed 8-bit integer. */
-				if (!parse_decimal(cfile, buf, *fmt)) {
-					parse_warn("expecting signed 8-bit "
-					    "integer.");
-					skip_to_semi(cfile);
-					return (-1);
-				}
-				len = 1;
 				dp = buf;
 				goto alloc;
 			case 'B':	/* Unsigned 8-bit integer. */

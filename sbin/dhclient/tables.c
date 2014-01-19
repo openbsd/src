@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.16 2013/06/09 16:21:50 krw Exp $	*/
+/*	$OpenBSD: tables.c,v 1.17 2014/01/19 21:10:04 krw Exp $	*/
 
 /* Tables of information. */
 
@@ -51,9 +51,7 @@
  * I - IP address
  * l - 32-bit signed integer
  * L - 32-bit unsigned integer
- * s - 16-bit signed integer
  * S - 16-bit unsigned integer
- * b - 8-bit signed integer
  * B - 8-bit unsigned integer
  * t - ASCII text
  * f - flag (true or false)
