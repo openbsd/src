@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.42 2013/01/29 07:17:45 brad Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.43 2014/01/19 02:55:43 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -159,7 +159,7 @@ int	 myx_probe_firmware(struct myx_softc *);
 void	 myx_read(struct myx_softc *, bus_size_t, void *, bus_size_t);
 void	 myx_write(struct myx_softc *, bus_size_t, void *, bus_size_t);
 
-#if 0 && defined(__LP64__)
+#if defined(__LP64__)
 #define myx_bus_space_write bus_space_write_raw_region_8
 typedef u_int64_t myx_bus_t;
 #else
