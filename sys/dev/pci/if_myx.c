@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.46 2014/01/19 03:08:56 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.47 2014/01/19 03:53:46 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -143,8 +143,6 @@ struct myx_softc {
 	u_int8_t		 sc_lladdr[ETHER_ADDR_LEN];
 	struct ifmedia		 sc_media;
 
-	u_int			 sc_hwflags;
-#define  MYXFLAG_FLOW_CONTROL	 (1<<0)		/* Rx/Tx pause is enabled */
 	volatile u_int8_t	 sc_linkdown;
 };
 
