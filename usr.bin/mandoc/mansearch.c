@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.11 2014/01/19 01:18:30 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.12 2014/01/19 23:09:13 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -600,6 +600,8 @@ exprterm(const struct mansearch *search, char *buf, int cs)
 		e->bits = search->deftype;
 
 	if ('~' == *v++) {
+		if (NULL != strstr(buf, "arch"))
+			cs = 0;
 		if (0 != (irc = regcomp(&e->regexp, v,
 		    REG_EXTENDED | REG_NOSUB | (cs ? 0 : REG_ICASE)))) {
 			regerror(irc, &e->regexp, errbuf, sizeof(errbuf));
