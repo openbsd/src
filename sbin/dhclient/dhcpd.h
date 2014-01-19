@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.132 2014/01/19 08:25:54 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.133 2014/01/19 10:06:09 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -267,9 +267,6 @@ int32_t getLong(unsigned char *);
 u_int16_t getUShort(unsigned char *);
 int16_t getShort(unsigned char *);
 void putULong(unsigned char *, u_int32_t);
-void putLong(unsigned char *, int32_t);
-void putUShort(unsigned char *, unsigned int);
-void putShort(unsigned char *, int);
 
 /* dhclient.c */
 extern char *path_dhclient_conf;
