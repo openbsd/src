@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.152 2014/01/19 00:39:40 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.153 2014/01/19 23:52:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -540,7 +540,8 @@ void arc4_init(void *, void *);		/* actually do the reinit */
 #define RSBUFSZ	(16*BLOCKSZ)
 static int rs_initialized;
 static chacha_ctx rs;		/* chacha context for random keystream */
-static u_char rs_buf[RSBUFSZ];	/* keystream blocks */
+/* keystream blocks (also chacha seed from boot) */
+static u_char rs_buf[RSBUFSZ] __attribute__((section(".openbsd.randomdata")));
 static size_t rs_have;		/* valid bytes at end of rs_buf */
 static size_t rs_count;		/* bytes till reseed */
 
@@ -557,14 +558,7 @@ _rs_init(u_char *buf, size_t n)
 static void
 _rs_seed(u_char *buf, size_t n)
 {
-	if (!rs_initialized) {
-		rs_initialized = 1;
-		rnd_states[RND_SRC_TIMER].dont_count_entropy = 1;
-		rnd_states[RND_SRC_TRUE].dont_count_entropy = 1;
-		rnd_states[RND_SRC_TRUE].max_entropy = 1;
-		_rs_init(buf, n);
-	} else
-		_rs_rekey(buf, n);
+	_rs_rekey(buf, n);
 
 	/* invalidate rs_buf */
 	rs_have = 0;
@@ -605,7 +599,11 @@ _rs_stir(int do_lock)
 static inline void
 _rs_stir_if_needed(size_t len)
 {
-	if (rs_count <= len || !rs_initialized)
+	if (!rs_initialized) {
+		_rs_init(rs_buf, KEYSZ + IVSZ);
+		rs_count = 1024 * 1024 * 1024;	/* until main() runs */
+		rs_initialized = 1;
+	} else if (rs_count <= len)
 		_rs_stir(0);
 	else
 		rs_count -= len;
@@ -745,21 +743,6 @@ arc4_reinit(void *v)
 	timeout_add_sec(&arc4_timeout, 10 * 60);
 }
 
-void
-random_init(void)
-{
-	int off;
-
-	/*
-	 * MI code did not initialize us with a seed, so we are
-	 * hitting the fall-back from kernel main().   Do the best
-	 * we can... We assume there are at 8192 bytes mapped after
-	 * version, because we want to pull some "code" in as well.
-	 */
-	for (off = 0; off < 8192 - KEYSZ - IVSZ; off += KEYSZ + IVSZ)
-		_rs_seed((u_int8_t *)version + off, KEYSZ + IVSZ);
-}
-
 /*
  * Start periodic services inside the random subsystem, which pull
  * entropy forward, hash it, and re-seed the random stream as needed.
@@ -767,14 +750,24 @@ random_init(void)
 void
 random_start(void)
 {
-	/*
-	 * At this point, the message buffer is mapped, and may contain
-	 * some historical information still.
-	 */
+	rnd_states[RND_SRC_TIMER].dont_count_entropy = 1;
+	rnd_states[RND_SRC_TRUE].dont_count_entropy = 1;
+	rnd_states[RND_SRC_TRUE].max_entropy = 1;
+
+	/* Provide some data from this kernel */
+	add_entropy_words((u_int32_t *)version,
+	    strlen(version) / sizeof(u_int32_t));
+
+	/* Provide some data from this kernel */
+	add_entropy_words((u_int32_t *)cfdata,
+	    8192 / sizeof(u_int32_t));
+
+	/* Message buffer may contain data from previous boot */
 	if (msgbufp->msg_magic == MSG_MAGIC)
 		add_entropy_words((u_int32_t *)msgbufp->msg_bufc,
 		    msgbufp->msg_bufs / sizeof(u_int32_t));
 
+	rs_initialized = 1;
 	dequeue_randomness(NULL);
 	arc4_init(NULL, NULL);
 	task_set(&arc4_task, arc4_init, NULL, NULL);

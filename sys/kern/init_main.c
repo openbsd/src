@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.201 2014/01/19 13:26:42 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.202 2014/01/19 23:52:54 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -217,8 +217,6 @@ main(void *framep)
 
 	KERNEL_LOCK_INIT();
 	SCHED_LOCK_INIT();
-
-	random_init();
 
 	uvm_init();
 	disk_init();		/* must come before autoconfiguration */
