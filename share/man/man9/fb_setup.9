@@ -1,4 +1,4 @@
-.\" $OpenBSD: fb_setup.9,v 1.3 2013/11/28 21:27:41 jmc Exp $
+.\" $OpenBSD: fb_setup.9,v 1.4 2014/01/19 08:21:19 schwarze Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 28 2013 $
+.Dd $Mdocdate: January 19 2014 $
 .Dt FB_SETUP 9
 .Os
 .Sh NAME
@@ -105,7 +105,7 @@ The header contains the following elements:
 A
 .Xr SIMPLEQ_ENTRY 3
 needed to store the different fusebufs stored with
-.Fa fb_queue .
+.Fn fb_queue .
 .It Fa fh_len
 Indicates the amount of data in
 .Fa F_dat .
