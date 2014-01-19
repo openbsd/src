@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.16 2011/07/07 05:40:42 okan Exp $	*/
+/*	$OpenBSD: history.c,v 1.17 2014/01/19 11:48:54 tobias Exp $	*/
 /*	$NetBSD: history.c,v 1.37 2010/01/03 18:27:10 christos Exp $	*/
 
 /*-
@@ -724,7 +724,7 @@ private int
 history_load(TYPE(History) *h, const char *fname)
 {
 	FILE *fp;
-	char *line;
+	char *line, *lbuf;
 	size_t sz, max_size;
 	char *ptr;
 	int i = -1;
@@ -733,6 +733,7 @@ history_load(TYPE(History) *h, const char *fname)
 	static ct_buffer_t conv;
 #endif
 
+	lbuf = NULL;
 	if ((fp = fopen(fname, "r")) == NULL)
 		return (i);
 
@@ -746,14 +747,19 @@ history_load(TYPE(History) *h, const char *fname)
 	if (ptr == NULL)
 		goto done;
 	for (i = 0; (line = fgetln(fp, &sz)) != NULL; i++) {
-		char c = line[sz];
-
-		if (sz != 0 && line[sz - 1] == '\n')
-			line[--sz] = '\0';
-		else
-			line[sz] = '\0';
-
-		if (max_size < sz) {
+		if (line[sz - 1] == '\n')
+			line[sz - 1] = '\0';
+		else {
+			lbuf = malloc(sz + 1);
+			if (lbuf == NULL) {
+				i = -1;
+				goto oomem;
+			}
+			memcpy(lbuf, line, sz);
+			lbuf[sz++] = '\0';
+			line = lbuf;
+		}
+		if (sz > max_size) {
 			char *nptr;
 			max_size = (sz + 1024) & ~1023;
 			nptr = h_realloc(ptr, max_size);
@@ -764,7 +770,6 @@ history_load(TYPE(History) *h, const char *fname)
 			ptr = nptr;
 		}
 		(void) strunvis(ptr, line);
-		line[sz] = c;
 		if (HENTER(h, &ev, ct_decode_string(ptr, &conv)) == -1) {
 			i = -1;
 			goto oomem;
@@ -773,6 +778,7 @@ history_load(TYPE(History) *h, const char *fname)
 oomem:
 	h_free((ptr_t)ptr);
 done:
+	h_free(lbuf);
 	(void) fclose(fp);
 	return (i);
 }
@@ -806,8 +812,8 @@ history_save(TYPE(History) *h, const char *fname)
 	for (i = 0, retval = HLAST(h, &ev);
 	    retval != -1;
 	    retval = HPREV(h, &ev), i++) {
-		len = Strlen(ev.str) * 4;
-		if (len >= max_size) {
+		len = Strlen(ev.str) * 4 + 1;
+		if (len > max_size) {
 			char *nptr;
 			max_size = (len + 1024) & ~1023;
 			nptr = h_realloc(ptr, max_size);
