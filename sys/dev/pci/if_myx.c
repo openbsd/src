@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.45 2014/01/19 03:05:46 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.46 2014/01/19 03:08:56 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -345,11 +345,11 @@ myx_query(struct myx_softc *sc, char *part, size_t partlen)
 		maxlen = len - i;
 		if (strings[i] == '\0')
 			break;
-		if (maxlen > 4 && bcmp("MAC=", &strings[i], 4) == 0) {
+		if (maxlen > 4 && memcmp("MAC=", &strings[i], 4) == 0) {
 			i += 4;
 			i += myx_ether_aton(&strings[i],
 			    sc->sc_ac.ac_enaddr, maxlen);
-		} else if (maxlen > 3 && bcmp("PC=", &strings[i], 3) == 0) {
+		} else if (maxlen > 3 && memcmp("PC=", &strings[i], 3) == 0) {
 			i += 3;
 			i += strlcpy(part, &strings[i], min(maxlen, partlen));
 		}
@@ -395,7 +395,7 @@ myx_loadfirmware(struct myx_softc *sc, const char *filename)
 	    betoh32(hdr.fw_type), hdr.fw_version);
 
 	if (betoh32(hdr.fw_type) != MYXFW_TYPE_ETH ||
-	    bcmp(MYXFW_VER, hdr.fw_version, strlen(MYXFW_VER)) != 0) {
+	    memcmp(MYXFW_VER, hdr.fw_version, strlen(MYXFW_VER)) != 0) {
 		printf("%s: invalid firmware type 0x%x version %s\n",
 		    DEVNAME(sc), betoh32(hdr.fw_type), hdr.fw_version);
 		goto err;
