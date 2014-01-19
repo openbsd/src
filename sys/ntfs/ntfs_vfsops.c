@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.37 2013/12/02 16:05:07 jsing Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.38 2014/01/19 18:35:45 tedu Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -113,8 +113,6 @@ ntfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 int
 ntfs_init(struct vfsconf *vcp)
 {
-	ntfs_nthashinit();
-	ntfs_toupper_init();
 	return 0;
 }
 
@@ -128,6 +126,8 @@ ntfs_mount(struct mount *mp, const char *path, void *data,
 	char fname[MNAMELEN];
 	char fspec[MNAMELEN];
 	mode_t amode;
+
+	ntfs_nthashinit();
 
 	/*
 	 ***

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.36 2013/12/02 16:23:16 jsing Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.37 2014/01/19 18:35:45 tedu Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -1875,17 +1875,6 @@ ntfs_runtocn(cn_t *cn, struct ntfsmount *ntmp, u_int8_t *run, u_long len,
 	return (0);
 }
 #endif
-
-/*
- * this initializes toupper table & dependant variables to be ready for
- * later work
- */
-void
-ntfs_toupper_init(void)
-{
-	ntfs_toupper_tab = (wchar *) NULL;
-	ntfs_toupper_usecount = 0;
-}
 
 /*
  * if the ntfs_toupper_tab[] is filled already, just raise use count;
