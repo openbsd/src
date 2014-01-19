@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.20 2008/06/26 05:42:20 ray Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.21 2014/01/19 05:19:27 deraadt Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -290,7 +290,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		struct ifmedia_entry *ep;
 		size_t nwords;
 
-		if(ifmr->ifm_count < 0)
+		if (ifmr->ifm_count < 0)
 			return (EINVAL);
 
 		ifmr->ifm_active = ifmr->ifm_current = ifm->ifm_cur ?
@@ -308,23 +308,22 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 			nwords++;
 
 		if (ifmr->ifm_count != 0) {
-			size_t count;
 			size_t minwords = nwords > (size_t)ifmr->ifm_count 
 			    ? (size_t)ifmr->ifm_count : nwords;
-			int *kptr = (int *)malloc(minwords * sizeof(int),
- 			    M_TEMP, M_WAITOK);
+			int *kptr = (int *)malloc(nwords * sizeof(int),
+			    M_TEMP, M_WAITOK | M_ZERO);
 			/*
 			 * Get the media words from the interface's list.
 			 */
 			ep = TAILQ_FIRST(&ifm->ifm_list);
-			for (count = 0; ep != NULL && count < minwords;
-			    ep = TAILQ_NEXT(ep, ifm_list), count++)
-				kptr[count] = ep->ifm_media;
-
-			error = copyout(kptr, ifmr->ifm_ulist,
-			    minwords * sizeof(int));
-			if (error == 0 && ep != NULL)
-				error = E2BIG;	/* oops! */
+			for (nwords = 0; ep != NULL && nwords < minwords;
+			    ep = TAILQ_NEXT(ep, ifm_list))
+				kptr[nwords++] = ep->ifm_media;
+			if (ep == NULL)
+				error = copyout(kptr, ifmr->ifm_ulist,
+				    nwords * sizeof(int));
+			else
+				error = E2BIG;
 			free(kptr, M_TEMP);
 		}
 		ifmr->ifm_count = nwords;
