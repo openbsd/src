@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.43 2014/01/19 02:55:43 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.44 2014/01/19 03:03:50 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -253,7 +253,7 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Get board details (mac/part) */
-	bzero(part, sizeof(part));
+	memset(part, 0, sizeof(part));
 	if (myx_query(sc, part, sizeof(part)) != 0)
 		goto unmap;
 
@@ -302,7 +302,7 @@ myx_ether_aton(char *mac, u_int8_t *lladdr, u_int maxlen)
 	u_int		i, j;
 	u_int8_t	digit;
 
-	bzero(lladdr, ETHER_ADDR_LEN);
+	memset(lladdr, 0, ETHER_ADDR_LEN);
 	for (i = j = 0; mac[i] != '\0' && i < maxlen; i++) {
 		if (mac[i] >= '0' && mac[i] <= '9')
 			digit = mac[i] - '0';
@@ -438,7 +438,7 @@ myx_attachhook(void *arg)
 		goto freecmd;
 	}
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 
 	if (myx_cmd(sc, MYXCMD_RESET, &mc, NULL) != 0) {
 		printf("%s: failed to reset the device\n", DEVNAME(sc));
@@ -521,7 +521,7 @@ myx_probe_firmware(struct myx_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	mc.mc_data0 = htobe32(MYX_ADDRLOW(map->dm_segs[0].ds_addr));
 	mc.mc_data1 = htobe32(MYX_ADDRHIGH(map->dm_segs[0].ds_addr));
 	mc.mc_data2 = htobe32(4096 * 0x10000);
@@ -530,7 +530,7 @@ myx_probe_firmware(struct myx_softc *sc)
 		goto fail;
 	}
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	mc.mc_data0 = htobe32(MYX_ADDRLOW(map->dm_segs[0].ds_addr));
 	mc.mc_data1 = htobe32(MYX_ADDRHIGH(map->dm_segs[0].ds_addr));
 	mc.mc_data2 = htobe32(4096 * 0x1);
@@ -539,7 +539,7 @@ myx_probe_firmware(struct myx_softc *sc)
 		goto fail;
 	}
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	mc.mc_data0 = htobe32(MYX_ADDRLOW(map->dm_segs[0].ds_addr));
 	mc.mc_data1 = htobe32(MYX_ADDRHIGH(map->dm_segs[0].ds_addr));
 	mc.mc_data2 = htobe32(4096 * 0x10001);
@@ -718,7 +718,7 @@ myx_boot(struct myx_softc *sc, u_int32_t length)
 	u_int32_t		*status;
 	u_int			 i, ret = 1;
 
-	bzero(&bc, sizeof(bc));
+	memset(&bc, 0, sizeof(bc));
 	bc.bc_addr_high = htobe32(MYX_ADDRHIGH(map->dm_segs[0].ds_addr));
 	bc.bc_addr_low = htobe32(MYX_ADDRLOW(map->dm_segs[0].ds_addr));
 	bc.bc_result = 0xffffffff;
@@ -919,7 +919,7 @@ myx_up(struct myx_softc *sc)
 	u_int32_t		r;
 	int			i;
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	if (myx_cmd(sc, MYXCMD_RESET, &mc, NULL) != 0) {
 		printf("%s: failed to reset the device\n", DEVNAME(sc));
 		return;
@@ -931,7 +931,7 @@ myx_up(struct myx_softc *sc)
 		    DEVNAME(sc));
 		return;
 	}
-	bzero(sc->sc_zerodma.mxm_kva, 64);
+	memset(sc->sc_zerodma.mxm_kva, 0, 64);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_zerodma.mxm_map, 0,
 	    sc->sc_zerodma.mxm_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
@@ -959,7 +959,7 @@ myx_up(struct myx_softc *sc)
 	m_clsetwms(ifp, MCLBYTES, 2, sc->sc_rx_ring_count - 2);
 	m_clsetwms(ifp, 12 * 1024, 2, sc->sc_rx_ring_count - 2);
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	if (myx_cmd(sc, MYXCMD_GET_TXRINGSZ, &mc, &r) != 0) {
 		printf("%s: unable to get tx ring size\n", DEVNAME(sc));
 		goto free_pad;
@@ -984,18 +984,18 @@ myx_up(struct myx_softc *sc)
 	}
 	sc->sc_intrq = (struct myx_intrq_desc *)sc->sc_intrq_dma.mxm_kva;
 	map = sc->sc_intrq_dma.mxm_map;
-	bzero(sc->sc_intrq, size);
+	memset(sc->sc_intrq, 0, size);
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	mc.mc_data0 = htobe32(size);
 	if (myx_cmd(sc, MYXCMD_SET_INTRQSZ, &mc, NULL) != 0) {
 		printf("%s: failed to set intrq size\n", DEVNAME(sc));
 		goto free_intrq;
 	}
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	mc.mc_data0 = htobe32(MYX_ADDRLOW(map->dm_segs[0].ds_addr));
 	mc.mc_data1 = htobe32(MYX_ADDRHIGH(map->dm_segs[0].ds_addr));
 	if (myx_cmd(sc, MYXCMD_SET_INTRQDMA, &mc, NULL) != 0) {
@@ -1007,21 +1007,21 @@ myx_up(struct myx_softc *sc)
 	 * get interrupt offsets
 	 */
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	if (myx_cmd(sc, MYXCMD_GET_INTRACKOFF, &mc,
 	    &sc->sc_irqclaimoff) != 0) {
 		printf("%s: failed to get IRQ ack offset\n", DEVNAME(sc));
 		goto free_intrq;
 	}
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	if (myx_cmd(sc, MYXCMD_GET_INTRDEASSERTOFF, &mc,
 	    &sc->sc_irqdeassertoff) != 0) {
 		printf("%s: failed to get IRQ deassert offset\n", DEVNAME(sc));
 		goto free_intrq;
 	}
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	if (myx_cmd(sc, MYXCMD_GET_INTRCOALDELAYOFF, &mc,
 	    &sc->sc_irqcoaloff) != 0) {
 		printf("%s: failed to get IRQ coal offset\n", DEVNAME(sc));
@@ -1037,33 +1037,33 @@ myx_up(struct myx_softc *sc)
 		goto free_intrq;
 	}
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	if (myx_cmd(sc, MYXCMD_UNSET_PROMISC, &mc, NULL) != 0) {
 		printf("%s: failed to disable promisc mode\n", DEVNAME(sc));
 		goto free_intrq;
 	}
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	if (myx_cmd(sc, MYXCMD_FC_DEFAULT, &mc, NULL) != 0) {
 		printf("%s: failed to configure flow control\n", DEVNAME(sc));
 		goto free_intrq;
 	}
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	if (myx_cmd(sc, MYXCMD_GET_TXRINGOFF, &mc,
 	    &sc->sc_tx_ring_offset) != 0) {
 		printf("%s: unable to get tx ring offset\n", DEVNAME(sc));
 		goto free_intrq;
 	}
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	if (myx_cmd(sc, MYXCMD_GET_RXSMALLRINGOFF, &mc,
 	    &sc->sc_rx_ring_offset[MYX_RXSMALL]) != 0) {
 		printf("%s: unable to get small rx ring offset\n", DEVNAME(sc));
 		goto free_intrq;
 	}
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	if (myx_cmd(sc, MYXCMD_GET_RXBIGRINGOFF, &mc,
 	    &sc->sc_rx_ring_offset[MYX_RXBIG]) != 0) {
 		printf("%s: unable to get big rx ring offset\n", DEVNAME(sc));
@@ -1082,7 +1082,7 @@ myx_up(struct myx_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	mc.mc_data0 = htobe32(MYX_ADDRLOW(map->dm_segs[0].ds_addr));
 	mc.mc_data1 = htobe32(MYX_ADDRHIGH(map->dm_segs[0].ds_addr));
 	mc.mc_data2 = htobe32(sizeof(struct myx_status));
@@ -1093,7 +1093,7 @@ myx_up(struct myx_softc *sc)
 
 	maxpkt = ifp->if_hardmtu + ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	mc.mc_data0 = htobe32(maxpkt);
 	if (myx_cmd(sc, MYXCMD_SET_MTU, &mc, NULL) != 0) {
 		printf("%s: failed to set MTU size %d\n", DEVNAME(sc), maxpkt);
@@ -1137,14 +1137,14 @@ myx_up(struct myx_softc *sc)
 		goto free_rxsmall;
 	}
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	mc.mc_data0 = htobe32(MCLBYTES - ETHER_ALIGN);
 	if (myx_cmd(sc, MYXCMD_SET_SMALLBUFSZ, &mc, NULL) != 0) {
 		printf("%s: failed to set small buf size\n", DEVNAME(sc));
 		goto free_rxbig;
 	}
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	mc.mc_data0 = htobe32(16384);
 	if (myx_cmd(sc, MYXCMD_SET_BIGBUFSZ, &mc, NULL) != 0) {
 		printf("%s: failed to set big buf size\n", DEVNAME(sc));
@@ -1202,7 +1202,7 @@ free_pad:
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	myx_dmamem_free(sc, &sc->sc_paddma);
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	if (myx_cmd(sc, MYXCMD_RESET, &mc, NULL) != 0) {
 		printf("%s: failed to reset the device\n", DEVNAME(sc));
 	}
@@ -1217,7 +1217,7 @@ myx_setlladdr(struct myx_softc *sc, u_int32_t cmd, u_int8_t *addr)
 {
 	struct myx_cmd		 mc;
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	mc.mc_data0 = htobe32(addr[0] << 24 | addr[1] << 16 | addr[2] << 8 | addr[3]);
 	mc.mc_data1 = htobe32(addr[4] << 8 | addr[5]);
 
@@ -1270,7 +1270,7 @@ myx_iff(struct myx_softc *sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	if (myx_cmd(sc, MYXCMD_UNSET_ALLMULTI, &mc, NULL) != 0) {
 		printf("%s: failed to disable ALLMULTI\n", DEVNAME(sc));
 		return;
@@ -1293,7 +1293,7 @@ myx_down(struct myx_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	(void)myx_cmd(sc, MYXCMD_SET_IFDOWN, &mc, NULL);
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
@@ -1319,7 +1319,7 @@ myx_down(struct myx_softc *sc)
 	}
 	splx(s);
 
-	bzero(&mc, sizeof(mc));
+	memset(&mc, 0, sizeof(mc));
 	if (myx_cmd(sc, MYXCMD_RESET, &mc, NULL) != 0) {
 		printf("%s: failed to reset the device\n", DEVNAME(sc));
 	}
@@ -1385,7 +1385,7 @@ myx_write_txd_tail(struct myx_softc *sc, struct myx_buf *mb, u_int8_t flags,
 	int				i;
 
 	for (i = 1; i < map->dm_nsegs; i++) {
-		bzero(&txd, sizeof(txd));
+		memset(&txd, 0, sizeof(txd));
 		txd.tx_addr = htobe64(map->dm_segs[i].ds_addr);
 		txd.tx_length = htobe16(map->dm_segs[i].ds_len);
 		txd.tx_flags = flags;
@@ -1397,7 +1397,7 @@ myx_write_txd_tail(struct myx_softc *sc, struct myx_buf *mb, u_int8_t flags,
 
 	/* pad runt frames */
 	if (map->dm_mapsize < 60) {
-		bzero(&txd, sizeof(txd));
+		memset(&txd, 0, sizeof(txd));
 		txd.tx_addr = htobe64(zmap->dm_segs[0].ds_addr);
 		txd.tx_length = htobe16(60 - map->dm_mapsize);
 		txd.tx_flags = flags;
@@ -1487,7 +1487,7 @@ myx_start(struct ifnet *ifp)
 		if (map->dm_mapsize < 1520)
 			flags |= MYXTXD_FLAGS_SMALL;
 
-		bzero(&txd, sizeof(txd));
+		memset(&txd, 0, sizeof(txd));
 		txd.tx_addr = htobe64(map->dm_segs[0].ds_addr);
 		txd.tx_length = htobe16(map->dm_segs[0].ds_len);
 		txd.tx_nsegs = map->dm_nsegs + (map->dm_mapsize < 60 ? 1 : 0);
