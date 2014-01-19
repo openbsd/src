@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.129 2013/12/25 01:46:00 tedu Exp $	*/
+/*	$OpenBSD: inet.c,v 1.130 2014/01/19 05:03:29 claudio Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -583,6 +583,9 @@ icmp_stats(char *name)
 	p(icps_error, "\t%lu call%s to icmp_error\n");
 	p(icps_oldicmp,
 	    "\t%lu error%s not generated because old message was icmp\n");
+	p(icps_toofreq,
+	    "\t%llu error%s not generated because of rate limitation\n");
+
 	for (first = 1, i = 0; i < ICMP_MAXTYPE + 1; i++)
 		if (icmpstat.icps_outhist[i] != 0) {
 			if (first) {
