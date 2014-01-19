@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.76 2014/01/19 04:36:04 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.77 2014/01/19 08:25:54 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -269,25 +269,24 @@ parse_X(FILE *cfile, u_int8_t *buf, int max)
 	token = peek_token(&val, cfile);
 	if (token == TOK_NUMBER_OR_NAME || token == TOK_NUMBER) {
 		len = 0;
-		do {
-			token = next_token(&val, cfile);
-			if (token != TOK_NUMBER && token !=
-			    TOK_NUMBER_OR_NAME) {
-				parse_warn("expecting hexadecimal constant.");
-				if (token != ';')
-					skip_to_semi(cfile);
-				return (-1);
-			}
-			convert_num(&buf[len], val, 16, 8);
-			if (len++ > max) {
-				parse_warn("hexadecimal constant too long.");
-				skip_to_semi(cfile);
-				return (-1);
-			}
-			token = peek_token(&val, cfile);
-			if (token == ':')
-				token = next_token(&val, cfile);
-		} while (token == ':');
+		for (token = ':'; token == ':';
+		     token = next_token(NULL, cfile)) {
+			if (!parse_hex(cfile, &buf[len]))
+				break;
+			if (++len == max)
+				break;
+			if (peek_token(NULL, cfile) == ';')
+				return (len);
+		}
+		if (token != ':') {
+			parse_warn("expecting ':'.");
+			skip_to_semi(cfile);
+			return (-1);
+		} else {
+			parse_warn("expecting hex octet.");
+			skip_to_semi(cfile);
+			return (-1);
+		}
 	} else if (token == TOK_STRING) {
 		token = next_token(&val, cfile);
 		len = strlen(val);
@@ -298,6 +297,7 @@ parse_X(FILE *cfile, u_int8_t *buf, int max)
 		}
 		memcpy(buf, val, len + 1);
 	} else {
+		token = next_token(NULL, cfile);
 		parse_warn("expecting string or hexadecimal data");
 		if (token != ';')
 			skip_to_semi(cfile);
@@ -675,35 +675,63 @@ alloc:
 				memcpy(&hunkbuf[hunkix], dp, len);
 				hunkix += len;
 				break;
-			case 'L':	/* Unsigned 32-bit integer. */
-			case 'l':	/* Signed 32-bit integer. */
-				token = next_token(&val, cfile);
-				if (token != TOK_NUMBER) {
-need_number:
-					parse_warn("expecting number.");
-					if (token != ';')
-						skip_to_semi(cfile);
+ 			case 'l':	/* Signed 32-bit integer. */
+				if (!parse_decimal(cfile, buf, *fmt)) {
+					parse_warn("expecting signed 32-bit "
+					    "integer.");
+					skip_to_semi(cfile);
 					return (-1);
 				}
-				convert_num(buf, val, 0, 32);
+				len = 4;
+				dp = buf;
+				goto alloc;
+			case 'L':	/* Unsigned 32-bit integer. */
+				if (!parse_decimal(cfile, buf, *fmt)) {
+					parse_warn("expecting unsigned 32-bit "
+					    "integer.");
+					skip_to_semi(cfile);
+					return (-1);
+				}
 				len = 4;
 				dp = buf;
 				goto alloc;
 			case 's':	/* Signed 16-bit integer. */
+				if (!parse_decimal(cfile, buf, *fmt)) {
+					parse_warn("expecting signed 16-bit "
+					    "integer.");
+					skip_to_semi(cfile);
+					return (-1);
+				}
+				len = 2;
+				dp = buf;
+				goto alloc;
 			case 'S':	/* Unsigned 16-bit integer. */
-				token = next_token(&val, cfile);
-				if (token != TOK_NUMBER)
-					goto need_number;
-				convert_num(buf, val, 0, 16);
+				if (!parse_decimal(cfile, buf, *fmt)) {
+					parse_warn("expecting unsigned 16-bit "
+					    "integer.");
+					skip_to_semi(cfile);
+					return (-1);
+				}
 				len = 2;
 				dp = buf;
 				goto alloc;
 			case 'b':	/* Signed 8-bit integer. */
+				if (!parse_decimal(cfile, buf, *fmt)) {
+					parse_warn("expecting signed 8-bit "
+					    "integer.");
+					skip_to_semi(cfile);
+					return (-1);
+				}
+				len = 1;
+				dp = buf;
+				goto alloc;
 			case 'B':	/* Unsigned 8-bit integer. */
-				token = next_token(&val, cfile);
-				if (token != TOK_NUMBER)
-					goto need_number;
-				convert_num(buf, val, 0, 8);
+				if (!parse_decimal(cfile, buf, *fmt)) {
+					parse_warn("expecting unsigned 8-bit "
+					    "integer.");
+					skip_to_semi(cfile);
+					return (-1);
+				}
 				len = 1;
 				dp = buf;
 				goto alloc;
@@ -761,7 +789,6 @@ parse_reject_statement(FILE *cfile)
 
 	do {
 		if (!parse_ip_addr(cfile, &addr)) {
-			parse_warn("expecting IP address.");
 			skip_to_semi(cfile);
 			return;
 		}
