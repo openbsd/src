@@ -453,6 +453,8 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/pgtreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/pgtvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/pt2254a.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/qlareg.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/qlavar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/revar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/rf3000reg.ph

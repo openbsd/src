@@ -958,6 +958,8 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/pgtreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/pgtvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/pt2254a.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/qlareg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/qlavar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/revar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/rf3000reg.ph
