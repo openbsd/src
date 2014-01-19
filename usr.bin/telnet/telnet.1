@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.45 2013/01/17 21:29:15 jmc Exp $
+.\"	$OpenBSD: telnet.1,v 1.46 2014/01/19 10:39:00 schwarze Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -30,14 +30,12 @@
 .\"
 .\"	from: @(#)telnet.1	8.4 (Berkeley) 2/3/94
 .\"
-.Dd $Mdocdate: January 17 2013 $
+.Dd $Mdocdate: January 19 2014 $
 .Dt TELNET 1
 .Os
 .Sh NAME
 .Nm telnet
-.Nd user interface to the
-.Tn TELNET
-protocol
+.Nd user interface to the TELNET protocol
 .Sh SYNOPSIS
 .Nm telnet
 .Bk -words
@@ -58,9 +56,7 @@ protocol
 The
 .Nm
 command
-is used to communicate with another host using the
-.Tn TELNET
-protocol.
+is used to communicate with another host using the TELNET protocol.
 If
 .Nm
 is invoked without the
@@ -260,8 +256,7 @@ the user's
 .Ic intr ,
 and
 .Ic flush
-characters are trapped locally, and sent as
-.Tn TELNET
+characters are trapped locally, and sent as TELNET
 protocol sequences to the remote side.
 If
 .Dv LINEMODE
@@ -269,10 +264,7 @@ has ever been enabled, then the user's
 .Ic susp
 and
 .Ic eof
-are also sent as
-.Tn TELNET
-protocol sequences,
-and
+are also sent as TELNET protocol sequences, and
 .Ic quit
 is sent as a
 .Dv TELNET ABORT
@@ -286,8 +278,7 @@ and
 .Ic autosynch
 below)
 which cause this action to flush subsequent output to the terminal
-(until the remote host acknowledges the
-.Tn TELNET
+(until the remote host acknowledges the TELNET
 sequence) and flush previous terminal input
 (in the case of
 .Ic quit
@@ -354,9 +345,7 @@ Lists the current status of the various types of
 authentication.
 .El
 .It Ic close
-Close a
-.Tn TELNET
-session and return to command mode.
+Close a TELNET session and return to command mode.
 .It Ic display Ar argument ...
 Displays all, or some, of the
 .Ic set
@@ -511,8 +500,7 @@ command; however, if the remote side does not support the
 option, nothing happens.
 If, however, the remote side does support the
 .Dv LOGOUT
-option, this command should cause the remote side to close the
-.Tn TELNET
+option, this command should cause the remote side to close the TELNET
 connection.
 If the remote side also supports the concept of
 suspending a user's session for later reattachment,
@@ -520,8 +508,7 @@ the logout argument indicates that you
 should terminate the session immediately.
 .It Ic mode Ar type
 .Ar type
-is one of several options, depending on the state of the
-.Tn TELNET
+is one of several options, depending on the state of the TELNET
 session.
 The remote host is asked for permission to go into the requested mode.
 If the remote host is capable of entering that mode, the requested
@@ -590,9 +577,7 @@ Open a connection to the named host.
 If no port number
 is specified,
 .Nm
-will attempt to contact a
-.Tn TELNET
-server at the default port.
+will attempt to contact a TELNET server at the default port.
 The host specification may be either a host name (see
 .Xr hosts 5 )
 or an Internet address specified in the ``dot notation'' (see
@@ -605,9 +590,7 @@ to be passed to the remote system via the
 option.
 When connecting to a non-standard port,
 .Nm
-omits any automatic initiation of
-.Tn TELNET
-options.
+omits any automatic initiation of TELNET options.
 When the port number is preceded by a minus sign,
 the initial option negotiation is done.
 After establishing a connection, the file
@@ -629,9 +612,7 @@ in manually to the
 .Nm
 command prompt.
 .It Ic quit
-Close any open
-.Tn TELNET
-session and exit
+Close any open TELNET session and exit
 .Nm telnet .
 An end-of-file (in command mode) will also close a session and exit.
 .It Ic send Ar argument ...
@@ -723,9 +704,7 @@ Sends the
 sequence.
 This sequence causes the remote system to discard all previously typed
 (but not yet read) input.
-This sequence is sent as
-.Tn TCP
-urgent
+This sequence is sent as TCP urgent
 data (and may not work if the remote system is a
 .Bx 4.2
 system -- if
@@ -737,9 +716,7 @@ Sends the
 sequence.
 .Ar cmd
 can be either a decimal number between 0 and 255,
-or a symbolic name for a specific
-.Dv TELNET
-command.
+or a symbolic name for a specific TELNET command.
 .Ar cmd
 can also be either
 .Ic help
@@ -754,9 +731,7 @@ Sends the
 sequence.
 .Ar cmd
 can be either a decimal number between 0 and 255,
-or a symbolic name for a specific
-.Dv TELNET
-command.
+or a symbolic name for a specific TELNET command.
 .Ar cmd
 can also be either
 .Ic help
@@ -771,9 +746,7 @@ Sends the
 sequence.
 .Ar cmd
 can be either a decimal number between 0 and 255,
-or a symbolic name for a specific
-.Dv TELNET
-command.
+or a symbolic name for a specific TELNET command.
 .Ar cmd
 can also be either
 .Ic help
@@ -788,9 +761,7 @@ Sends the
 sequence.
 .Ar cmd
 can be either a decimal number between 0 and 255,
-or a symbolic name for a specific
-.Dv TELNET
-command.
+or a symbolic name for a specific TELNET command.
 .Ar cmd
 can also be either
 .Ic help
@@ -837,9 +808,7 @@ and
 commands.
 .Bl -tag -width escape
 .It Ic ayt
-If
-.Tn TELNET
-is in
+If TELNET is in
 .Ic localchars
 mode, or
 .Dv LINEMODE
@@ -927,9 +896,7 @@ the terminal's
 character.
 .It Ic forw1
 .It Ic forw2
-If
-.Tn TELNET
-is operating in
+If TELNET is operating in
 .Dv LINEMODE ,
 these are the
 characters that, when typed, cause partial lines to be
@@ -1042,8 +1009,7 @@ the terminal's
 character.
 .It Ic rlogin
 This is the rlogin escape character.
-If set, the normal
-.Tn TELNET
+If set, the normal TELNET
 escape character is ignored unless it is
 preceded by this character at the beginning of a line.
 This character, at the beginning of a line, followed by
@@ -1153,8 +1119,7 @@ characters when the
 .Dv TELNET LINEMODE
 option has
 been enabled.
-Special characters are characters that get mapped to
-.Tn TELNET
+Special characters are characters that get mapped to TELNET
 commands sequences (like
 .Ic ip
 or
@@ -1179,9 +1144,7 @@ was started.
 .It Ic import
 Switch to the remote defaults for the special characters.
 The remote default characters are those of the remote system
-at the time when the
-.Tn TELNET
-connection was established.
+at the time when the TELNET connection was established.
 .It Ic \&?
 Prints out help information for the
 .Ic slc
@@ -1228,9 +1191,7 @@ then when the
 .Ic ao
 or
 .Ic quit
-characters are recognized (and transformed into
-.Tn TELNET
-sequences; see
+characters are recognized (and transformed into TELNET sequences; see
 .Ic set
 above for details),
 .Nm
@@ -1238,9 +1199,7 @@ refuses to display any data on the user's terminal
 until the remote system acknowledges (via a
 .Dv TELNET TIMING MARK
 option)
-that it has processed those
-.Tn TELNET
-sequences.
+that it has processed those TELNET sequences.
 The initial value for this toggle is
 .Dv TRUE
 if the terminal user had not
@@ -1263,9 +1222,7 @@ possible.
 .It Ic autologin
 If the remote side supports the
 .Dv TELNET AUTHENTICATION
-option
-.Tn TELNET
-attempts to use it to perform automatic authentication.
+option TELNET attempts to use it to perform automatic authentication.
 If the
 .Dv AUTHENTICATION
 option is not supported, the user's login
@@ -1294,16 +1251,13 @@ above for descriptions of the
 .Ic intr
 and
 .Ic quit
-characters), the resulting
-.Tn TELNET
-sequence sent is followed by the
+characters), the resulting TELNET sequence sent is followed by the
 .Dv TELNET SYNCH
 sequence.
 This procedure
 .Em should
 cause the remote system to begin throwing away all previously
-typed input until both of the
-.Tn TELNET
+typed input until both of the TELNET
 sequences have been read and acted upon.
 The initial value of this toggle is
 .Dv FALSE .
@@ -1360,8 +1314,7 @@ and
 characters (see
 .Ic set
 above) are recognized locally, and transformed into (hopefully) appropriate
-.Tn TELNET
-control sequences
+TELNET control sequences
 (respectively
 .Ic ao ,
 .Ic ip ,
@@ -1408,9 +1361,7 @@ The initial value for this toggle is
 .It Ic options
 Toggles the display of some internal
 .Nm
-protocol processing (having to do with
-.Tn TELNET
-options).
+protocol processing (having to do with TELNET options).
 The initial value for this toggle is
 .Dv FALSE .
 .It Ic prettydump
@@ -1422,14 +1373,12 @@ is enabled the output from the
 .Ic netdata
 command will be formatted in a more user readable format.
 Spaces are put between each character in the output, and the
-beginning of any
-.Tn TELNET
+beginning of any TELNET
 escape sequence is preceded by a '*' to aid in locating them.
 .It Ic skiprc
 When the skiprc toggle is
 .Dv TRUE ,
-.Tn TELNET
-skips the reading of the
+TELNET skips the reading of the
 .Pa \&.telnetrc
 file in the user's home
 directory when connections are opened.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfsstat.1,v 1.13 2007/05/31 19:20:14 jmc Exp $
+.\"	$OpenBSD: nfsstat.1,v 1.14 2014/01/19 10:39:00 schwarze Exp $
 .\"	$NetBSD: nfsstat.1,v 1.8 1996/03/03 17:21:28 thorpej Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,14 +30,12 @@
 .\"
 .\"     from: @(#)nfsstat.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 19 2014 $
 .Dt NFSSTAT 1
 .Os
 .Sh NAME
 .Nm nfsstat
-.Nd display
-.Tn NFS
-statistics
+.Nd display NFS statistics
 .Sh SYNOPSIS
 .Nm nfsstat
 .Op Fl cs
@@ -46,9 +44,7 @@ statistics
 .Op Fl w Ar wait
 .Sh DESCRIPTION
 .Nm
-displays statistics kept about
-.Tn NFS
-client and server activity.
+displays statistics kept about NFS client and server activity.
 If neither
 .Fl M
 nor
@@ -74,8 +70,7 @@ Extract the name list from the specified system instead of the default
 .It Fl s
 Display server statistics only.
 .It Fl w Ar wait
-Display a shorter summary of
-.Tn NFS
+Display a shorter summary of NFS
 activity for both the client and server at
 .Ar wait
 second intervals.

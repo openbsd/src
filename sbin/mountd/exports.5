@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exports.5,v 1.16 2010/03/26 19:30:40 jmc Exp $
+.\"	$OpenBSD: exports.5,v 1.17 2014/01/19 10:39:00 schwarze Exp $
 .\"	$NetBSD: exports.5,v 1.9 1996/02/18 11:57:50 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,24 +30,19 @@
 .\"
 .\"     @(#)exports.5	8.3 (Berkeley) 3/29/95
 .\"
-.Dd $Mdocdate: March 26 2010 $
+.Dd $Mdocdate: January 19 2014 $
 .Dt EXPORTS 5
 .Os
 .Sh NAME
 .Nm exports
-.Nd define remote mount points for
-.Tn NFS
-mount requests
+.Nd define remote mount points for NFS mount requests
 .Sh SYNOPSIS
 .Nm exports
 .Sh DESCRIPTION
 The
 .Nm
-file specifies remote mount points for the
-.Tn NFS
-mount protocol per the
-.Tn NFS
-server specification; see
+file specifies remote mount points for the NFS
+mount protocol per the NFS server specification; see
 .%T "Network File System Protocol Specification RFC 1094, Appendix A"
 and
 .%T "NFS: Network File System Version 3 Specification, Appendix I" .
