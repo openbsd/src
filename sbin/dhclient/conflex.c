@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.27 2014/01/18 01:41:28 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.28 2014/01/19 03:54:25 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file. */
 
@@ -130,11 +130,14 @@ get_token(FILE *cfile)
 {
 	int		c, ttok;
 	static char	tb[2];
-	int		l, p;
+	int		l, p, u;
 
+	u = ugflag;
+	
 	do {
 		l = line;
-		p = lpos - ugflag;
+		p = lpos - u;
+		u = 0;
 
 		c = get_char(cfile);
 
