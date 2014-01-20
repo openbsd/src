@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.50 2014/01/20 19:51:46 tobias Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.51 2014/01/20 19:52:45 tobias Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ again:
 		fdev = (dev_t)-1;
 		fino = (ino_t)-1;
 
-		(void)lseek(lfd, pidoff, 0);
+		(void)lseek(lfd, pidoff, SEEK_SET);
 		if ((i = snprintf(line, sizeof(line), "%s\n", q->q_name)) >=
 		    sizeof(line) || i == -1)
 			i = sizeof(line) - 1;	/* can't happen */
