@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.61 2013/09/14 02:28:01 guenther Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.62 2014/01/20 21:19:28 guenther Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -403,7 +403,6 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 		syscallarg(pid_t) pid;
 	} */ *uap = v;
 	struct vnode *vp = NULL;
-	struct proc *p = NULL;
 	struct process *pr = NULL;
 	struct ucred *cred = NULL;
 	struct pgrp *pg;
@@ -437,10 +436,10 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 	 * Clear all uses of the tracefile
 	 */
 	if (ops == KTROP_CLEARFILE) {
-		LIST_FOREACH(p, &allproc, p_list) {
-			if (p->p_p->ps_tracevp == vp) {
-				if (ktrcanset(curp, p->p_p))
-					ktrcleartrace(p->p_p);
+		LIST_FOREACH(pr, &allprocess, ps_list) {
+			if (pr->ps_tracevp == vp) {
+				if (ktrcanset(curp, pr))
+					ktrcleartrace(pr);
 				else
 					error = EPERM;
 			}
@@ -587,6 +586,7 @@ ktrwriteraw(struct proc *p, struct vnode *vp, struct ucred *cred,
 {
 	struct uio auio;
 	struct iovec aiov[2];
+	struct process *pr;
 	int error;
 
 	auio.uio_iov = &aiov[0];
@@ -615,9 +615,9 @@ ktrwriteraw(struct proc *p, struct vnode *vp, struct ucred *cred,
 	 */
 	log(LOG_NOTICE, "ktrace write failed, errno %d, tracing stopped\n",
 	    error);
-	LIST_FOREACH(p, &allproc, p_list)
-		if (p->p_p->ps_tracevp == vp && p->p_p->ps_tracecred == cred)
-			ktrcleartrace(p->p_p);
+	LIST_FOREACH(pr, &allprocess, ps_list)
+		if (pr->ps_tracevp == vp && pr->ps_tracecred == cred)
+			ktrcleartrace(pr);
 
 	vput(vp);
 	return (error);

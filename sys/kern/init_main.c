@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.202 2014/01/19 23:52:54 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.203 2014/01/20 21:19:27 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -266,6 +266,7 @@ main(void *framep)
 	TAILQ_INSERT_TAIL(&process0.ps_threads, p, p_thr_link);
 	process0.ps_refcnt = 1;
 	p->p_p = pr = &process0;
+	LIST_INSERT_HEAD(&allprocess, pr, ps_list);
 
 	/* Set the default routing table/domain. */
 	process0.ps_rtableid = 0;
@@ -492,10 +493,12 @@ main(void *framep)
 	 * munched in mi_switch() after the time got set.
 	 */
 	nanotime(&boottime);
-	LIST_FOREACH(p, &allproc, p_list) {
-		p->p_p->ps_start = boottime;
-		nanouptime(&p->p_cpu->ci_schedstate.spc_runtime);
-		timespecclear(&p->p_rtime);
+	LIST_FOREACH(pr, &allprocess, ps_list) {
+		pr->ps_start = boottime;
+		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
+			nanouptime(&p->p_cpu->ci_schedstate.spc_runtime);
+			timespecclear(&p->p_rtime);
+		}
 	}
 
 	uvm_swap_init();

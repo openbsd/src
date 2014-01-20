@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.57 2014/01/20 03:23:42 guenther Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.58 2014/01/20 21:19:28 guenther Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -845,9 +845,9 @@ procfs_readdir(void *v)
 	/*
 	 * this is for the root of the procfs filesystem
 	 * what is needed is a special entry for "curproc"
-	 * followed by an entry for each process on allproc
+	 * followed by an entry for each process on allprocess
 #ifdef PROCFS_ZOMBIE
-	 * and zombproc.
+	 * and zombprocess.
 #endif
 	 */
 
@@ -856,16 +856,14 @@ procfs_readdir(void *v)
 		int doingzomb = 0;
 #endif
 		int pcnt = i;
-		volatile struct proc *p = LIST_FIRST(&allproc);
+		volatile struct process *pr = LIST_FIRST(&allprocess);
 
 		if (pcnt > 3)
 			pcnt = 3;
 #ifdef PROCFS_ZOMBIE
 	again:
 #endif
-		while (p && (p->p_flag & P_THREAD))
-			p = LIST_NEXT(p, p_list);
-		for (; p && uio->uio_resid >= UIO_MX; i++, pcnt++) {
+		for (; pr && uio->uio_resid >= UIO_MX; i++, pcnt++) {
 			switch (i) {
 			case 0:		/* `.' */
 			case 1:		/* `..' */
@@ -913,21 +911,12 @@ procfs_readdir(void *v)
 				/* fall through */
 
 			default:
-				while (pcnt < i) {
+				while (pcnt < i)
 					pcnt++;
-					do {
-						p = LIST_NEXT(p, p_list);
-					} while (p && (p->p_flag & P_THREAD));
-					if (!p)
-						goto done;
-				}
-				d.d_fileno = PROCFS_FILENO(p->p_pid, Pproc);
+				d.d_fileno = PROCFS_FILENO(pr->ps_pid, Pproc);
 				d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
-				    "%ld", (long)p->p_pid);
+				    "%ld", (long)pr->ps_pid);
 				d.d_type = DT_REG;
-				do {
-					p = LIST_NEXT(p, p_list);
-				} while (p && (p->p_flag & P_THREAD));
 				break;
 			}
 
@@ -937,9 +926,9 @@ procfs_readdir(void *v)
 	done:
 
 #ifdef PROCFS_ZOMBIE
-		if (p == 0 && doingzomb == 0) {
+		if (pr == NULL && doingzomb == 0) {
 			doingzomb = 1;
-			p = LIST_FIRST(&zombproc);
+			pr = LIST_FIRST(&zombprocess);
 			goto again;
 		}
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.46 2013/10/25 04:42:48 guenther Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.47 2014/01/20 21:19:28 guenther Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -73,7 +73,6 @@ sys_getpriority(struct proc *curp, void *v, register_t *retval)
 		syscallarg(id_t) who;
 	} */ *uap = v;
 	struct process *pr;
-	struct proc *p;
 	int low = NZERO + PRIO_MAX + 1;
 
 	switch (SCARG(uap, which)) {
@@ -105,11 +104,10 @@ sys_getpriority(struct proc *curp, void *v, register_t *retval)
 	case PRIO_USER:
 		if (SCARG(uap, who) == 0)
 			SCARG(uap, who) = curp->p_ucred->cr_uid;
-		LIST_FOREACH(p, &allproc, p_list)
-			if ((p->p_flag & P_THREAD) == 0 &&
-			    p->p_ucred->cr_uid == SCARG(uap, who) &&
-			    p->p_p->ps_nice < low)
-				low = p->p_p->ps_nice;
+		LIST_FOREACH(pr, &allprocess, ps_list)
+			if (pr->ps_cred->pc_ucred->cr_uid == SCARG(uap, who) &&
+			    pr->ps_nice < low)
+				low = pr->ps_nice;
 		break;
 
 	default:
@@ -160,18 +158,15 @@ sys_setpriority(struct proc *curp, void *v, register_t *retval)
 		break;
 	}
 
-	case PRIO_USER: {
-		struct proc *p;
+	case PRIO_USER:
 		if (SCARG(uap, who) == 0)
 			SCARG(uap, who) = curp->p_ucred->cr_uid;
-		LIST_FOREACH(p, &allproc, p_list)
-			if ((p->p_flag & P_THREAD) == 0 &&
-			    p->p_ucred->cr_uid == SCARG(uap, who)) {
-				error = donice(curp, p->p_p, SCARG(uap, prio));
+		LIST_FOREACH(pr, &allprocess, ps_list)
+			if (pr->ps_cred->pc_ucred->cr_uid == SCARG(uap, who)) {
+				error = donice(curp, pr, SCARG(uap, prio));
 				found++;
 			}
 		break;
-	}
 
 	default:
 		return (EINVAL);

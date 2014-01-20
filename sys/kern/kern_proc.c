@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.54 2013/10/02 21:17:32 sf Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.55 2014/01/20 21:19:28 guenther Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -60,8 +60,9 @@ struct pidhashhead *pidhashtbl;
 u_long pidhash;
 struct pgrphashhead *pgrphashtbl;
 u_long pgrphash;
+struct processlist allprocess;
+struct processlist zombprocess;
 struct proclist allproc;
-struct proclist zombproc;
 
 struct pool proc_pool;
 struct pool process_pool;
@@ -82,8 +83,9 @@ void pgrpdump(void);
 void
 procinit(void)
 {
+	LIST_INIT(&allprocess);
+	LIST_INIT(&zombprocess);
 	LIST_INIT(&allproc);
-	LIST_INIT(&zombproc);
 
 
 	pidhashtbl = hashinit(maxthread / 4, M_PROC, M_NOWAIT, &pidhash);
@@ -437,7 +439,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		return;
 	}
 	
-	p = LIST_FIRST(&allproc);
+	pr = LIST_FIRST(&allprocess);
 
 	switch (*mode) {
 
@@ -455,45 +457,46 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		break;
 	}
 
-	while (p != 0) {
-		pr = p->p_p;
+	while (pr != NULL) {
 		ppr = pr->ps_pptr;
-		if (p->p_stat) {
 
-			db_printf("%c%5d  ", p == curproc ? '*' : ' ',
-				p->p_pid);
+		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
+			if (p->p_stat) {
+				db_printf("%c%5d  ", p == curproc ? '*' : ' ',
+					p->p_pid);
 
-			switch (*mode) {
+				switch (*mode) {
 
-			case 'a':
-				db_printf("%-10.10s  %18p  %18p  %18p\n",
-				    p->p_comm, p, p->p_addr, p->p_vmspace);
-				break;
+				case 'a':
+					db_printf("%-10.10s  %18p  %18p  %18p\n",
+					    p->p_comm, p, p->p_addr, p->p_vmspace);
+					break;
 
-			case 'n':
-				db_printf("%5d  %5d  %5d  %d  %#10x  "
-				    "%-12.12s  %-16s\n",
-				    ppr ? ppr->ps_pid : -1,
-				    pr->ps_pgrp ? pr->ps_pgrp->pg_id : -1,
-				    pr->ps_cred->p_ruid, p->p_stat,
-				    p->p_flag | p->p_p->ps_flags,
-				    (p->p_wchan && p->p_wmesg) ?
-					p->p_wmesg : "", p->p_comm);
-				break;
+				case 'n':
+					db_printf("%5d  %5d  %5d  %d  %#10x  "
+					    "%-12.12s  %-16s\n",
+					    ppr ? ppr->ps_pid : -1,
+					    pr->ps_pgrp ? pr->ps_pgrp->pg_id : -1,
+					    pr->ps_cred->p_ruid, p->p_stat,
+					    p->p_flag | pr->ps_flags,
+					    (p->p_wchan && p->p_wmesg) ?
+						p->p_wmesg : "", p->p_comm);
+					break;
 
-			case 'w':
-				db_printf("%-16s  %-8s  %18p  %s\n", p->p_comm,
-				    p->p_emul->e_name, p->p_wchan,
-				    (p->p_wchan && p->p_wmesg) ? 
-					p->p_wmesg : "");
-				break;
+				case 'w':
+					db_printf("%-16s  %-8s  %18p  %s\n", p->p_comm,
+					    p->p_emul->e_name, p->p_wchan,
+					    (p->p_wchan && p->p_wmesg) ? 
+						p->p_wmesg : "");
+					break;
 
+				}
 			}
 		}
-		p = LIST_NEXT(p, p_list);
-		if (p == 0 && doingzomb == 0) {
+		pr = LIST_NEXT(pr, ps_list);
+		if (pr == NULL && doingzomb == 0) {
 			doingzomb = 1;
-			p = LIST_FIRST(&zombproc);
+			pr = LIST_FIRST(&zombprocess);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.17 2013/11/12 14:49:41 guenther Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.18 2014/01/20 21:19:28 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -103,14 +103,14 @@
  * at most maxcnt procs.
  */
 static int
-kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
+kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
     char *bp, int maxcnt, size_t esize)
 {
 	struct kinfo_proc kp;
 	struct session sess;
 	struct pcred pcred;
 	struct ucred ucred;
-	struct proc proc, proc2;
+	struct proc proc, proc2, *p;
 	struct process process, process2;
 	struct pgrp pgrp;
 	struct tty tty;
@@ -124,33 +124,30 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 	dothreads = op & KERN_PROC_SHOW_THREADS;
 	op &= ~KERN_PROC_SHOW_THREADS;
 
-	for (; cnt < maxcnt && p != NULL; p = LIST_NEXT(&proc, p_list)) {
-		if (KREAD(kd, (u_long)p, &proc)) {
-			_kvm_err(kd, kd->program, "can't read proc at %lx",
-			    (u_long)p);
-			return (-1);
-		}
-		if (KREAD(kd, (u_long)proc.p_p, &process)) {
+	/*
+	 * Modelled on sysctl_doproc() in sys/kern/kern_sysctl.c
+	 */
+	for (; cnt < maxcnt && pr != NULL; pr = LIST_NEXT(&process, ps_list)) {
+		if (KREAD(kd, (u_long)pr, &process)) {
 			_kvm_err(kd, kd->program, "can't read process at %lx",
-			    (u_long)proc.p_p);
+			    (u_long)pr);
 			return (-1);
 		}
+		if (process.ps_pgrp == NULL)
+			continue;
+		if (KREAD(kd, (u_long)process.ps_mainproc, &proc)) {
+			_kvm_err(kd, kd->program, "can't read proc at %lx",
+			    (u_long)process.ps_mainproc);
+			return (-1);
+		}
+		if (proc.p_stat == SIDL)
+			continue;
 		if (KREAD(kd, (u_long)process.ps_cred, &pcred)) {
 			_kvm_err(kd, kd->program, "can't read pcred at %lx",
 			    (u_long)process.ps_cred);
 			return (-1);
 		}
-		if ((proc.p_flag & P_THREAD) == 0)
-			process_pid = proc.p_pid;
-		else {
-			if (KREAD(kd, (u_long)process.ps_mainproc, &proc2)) {
-				_kvm_err(kd, kd->program,
-				    "can't read proc at %lx",
-				    (u_long)process.ps_mainproc);
-				return (-1);
-			}
-			process_pid = proc2.p_pid;
-		}
+		process_pid = proc.p_pid;
 		if (KREAD(kd, (u_long)pcred.pc_ucred, &ucred)) {
 			_kvm_err(kd, kd->program, "can't read ucred at %lx",
 			    (u_long)pcred.pc_ucred);
@@ -277,24 +274,80 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 		}
 
 		/* set up stuff that might not always be there */
-		vmp = &vm;
-		if (proc.p_stat == SIDL ||
-		    P_ZOMBIE(&proc) ||
-		    KREAD(kd, (u_long)proc.p_vmspace, &vm))
-			vmp = NULL;
-
 		limp = &limits;
 		if (!process.ps_limit ||
 		    KREAD(kd, (u_long)process.ps_limit, &limits))
 			limp = NULL;
 
+		vmp = NULL;
+
+		if (proc.p_stat != SIDL && !P_ZOMBIE(&proc) &&
+		    !KREAD(kd, (u_long)proc.p_vmspace, &vm))
+			vmp = &vm;
+
 #define do_copy_str(_d, _s, _l)	kvm_read(kd, (u_long)(_s), (_d), (_l)-1)
-		if ((proc.p_flag & P_THREAD) == 0) {
+		FILL_KPROC(&kp, do_copy_str, &proc, &process, &pcred,
+		    &ucred, &pgrp, p, proc.p_p, &sess, vmp, limp, sap,
+		    0, 1);
+
+		/* stuff that's too painful to generalize */
+		kp.p_pid = process_pid;
+		kp.p_ppid = parent_pid;
+		kp.p_sid = leader_pid;
+		if ((process.ps_flags & PS_CONTROLT) && sess.s_ttyp != NULL) {
+			kp.p_tdev = tty.t_dev;
+			if (tty.t_pgrp != NULL &&
+			    tty.t_pgrp != process.ps_pgrp &&
+			    KREAD(kd, (u_long)tty.t_pgrp, &pgrp)) {
+				_kvm_err(kd, kd->program,
+				    "can't read tpgrp at %lx",
+				    (u_long)tty.t_pgrp);
+				return (-1);
+			}
+			kp.p_tpgid = tty.t_pgrp ? pgrp.pg_id : -1;
+			kp.p_tsess = PTRTOINT64(tty.t_session);
+		} else {
+			kp.p_tpgid = -1;
+			kp.p_tdev = NODEV;
+		}
+
+		/* update %cpu for all threads */
+		if (!dothreads) {
+			for (p = TAILQ_FIRST(&process.ps_threads); p != NULL; 
+			    p = TAILQ_NEXT(&proc, p_thr_link)) {
+				if (KREAD(kd, (u_long)p, &proc)) {
+					_kvm_err(kd, kd->program,
+					    "can't read proc at %lx",
+					    (u_long)p);
+					return (-1);
+				}
+				if (p == process.ps_mainproc)
+					continue;
+				kp.p_pctcpu += proc.p_pctcpu;
+			}
+		}
+
+		memcpy(bp, &kp, esize);
+		bp += esize;
+		++cnt;
+
+		/* Skip per-thread entries if not required by op */
+		if (!dothreads)
+			continue;
+
+		for (p = TAILQ_FIRST(&process.ps_threads); p != NULL; 
+		    p = TAILQ_NEXT(&proc, p_thr_link)) {
+			if (KREAD(kd, (u_long)p, &proc)) {
+				_kvm_err(kd, kd->program,
+				    "can't read proc at %lx",
+				    (u_long)p);
+				return (-1);
+			}
 			FILL_KPROC(&kp, do_copy_str, &proc, &process, &pcred,
 			    &ucred, &pgrp, p, proc.p_p, &sess, vmp, limp, sap,
-			    0, 1);
+			    1, 1);
 
-			/* stuff that's too painful to generalize */
+			/* see above */
 			kp.p_pid = process_pid;
 			kp.p_ppid = parent_pid;
 			kp.p_sid = leader_pid;
@@ -315,37 +368,6 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 				kp.p_tpgid = -1;
 				kp.p_tdev = NODEV;
 			}
-
-			memcpy(bp, &kp, esize);
-			bp += esize;
-			++cnt;
-		}
-
-		if (!dothreads)
-			continue;
-
-		FILL_KPROC(&kp, do_copy_str, &proc, &process, &pcred, &ucred,
-		    &pgrp, p, proc.p_p, &sess, vmp, limp, sap, 1, 1);
-
-		/* stuff that's too painful to generalize into the macros */
-		kp.p_pid = process_pid;
-		kp.p_ppid = parent_pid;
-		kp.p_sid = leader_pid;
-		if ((process.ps_flags & PS_CONTROLT) && sess.s_ttyp != NULL) {
-			kp.p_tdev = tty.t_dev;
-			if (tty.t_pgrp != NULL &&
-			    tty.t_pgrp != process.ps_pgrp &&
-			    KREAD(kd, (u_long)tty.t_pgrp, &pgrp)) {
-				_kvm_err(kd, kd->program,
-				    "can't read tpgrp at %lx",
-				    (u_long)tty.t_pgrp);
-				return (-1);
-			}
-			kp.p_tpgid = tty.t_pgrp ? pgrp.pg_id : -1;
-			kp.p_tsess = PTRTOINT64(tty.t_session);
-		} else {
-			kp.p_tpgid = -1;
-			kp.p_tdev = NODEV;
 		}
 
 		memcpy(bp, &kp, esize);
@@ -399,9 +421,9 @@ kvm_getprocs(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		}
 		nthreads = size / esize;
 	} else {
-		struct nlist nl[4];
-		int i, maxthread;
-		struct proc *p;
+		struct nlist nl[5];
+		int i, maxthread, maxprocess;
+		struct process *pr;
 		char *bp;
 
 		if (esize > sizeof(struct kinfo_proc)) {
@@ -412,9 +434,10 @@ kvm_getprocs(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 
 		memset(nl, 0, sizeof(nl));
 		nl[0].n_name = "_nthreads";
-		nl[1].n_name = "_allproc";
-		nl[2].n_name = "_zombproc";
-		nl[3].n_name = NULL;
+		nl[1].n_name = "_nprocesses";
+		nl[2].n_name = "_allprocess";
+		nl[3].n_name = "_zombprocess";
+		nl[4].n_name = NULL;
 
 		if (kvm_nlist(kd, nl) != 0) {
 			for (i = 0; nl[i].n_type != 0; ++i)
@@ -427,27 +450,32 @@ kvm_getprocs(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			_kvm_err(kd, kd->program, "can't read nthreads");
 			return (NULL);
 		}
+		if (KREAD(kd, nl[1].n_value, &maxprocess)) {
+			_kvm_err(kd, kd->program, "can't read nprocesses");
+			return (NULL);
+		}
+		maxthread += maxprocess;
 
 		kd->procbase = _kvm_malloc(kd, maxthread * esize);
 		if (kd->procbase == 0)
 			return (NULL);
 		bp = (char *)kd->procbase;
 
-		/* allproc */
-		if (KREAD(kd, nl[1].n_value, &p)) {
-			_kvm_err(kd, kd->program, "cannot read allproc");
+		/* allprocess */
+		if (KREAD(kd, nl[2].n_value, &pr)) {
+			_kvm_err(kd, kd->program, "cannot read allprocess");
 			return (NULL);
 		}
-		nthreads = kvm_proclist(kd, op, arg, p, bp, maxthread, esize);
+		nthreads = kvm_proclist(kd, op, arg, pr, bp, maxthread, esize);
 		if (nthreads < 0)
 			return (NULL);
 
-		/* zombproc */
-		if (KREAD(kd, nl[2].n_value, &p)) {
-			_kvm_err(kd, kd->program, "cannot read zombproc");
+		/* zombprocess */
+		if (KREAD(kd, nl[3].n_value, &pr)) {
+			_kvm_err(kd, kd->program, "cannot read zombprocess");
 			return (NULL);
 		}
-		i = kvm_proclist(kd, op, arg, p, bp + (esize * nthreads),
+		i = kvm_proclist(kd, op, arg, pr, bp + (esize * nthreads),
 		    maxthread - nthreads, esize);
 		if (i > 0)
 			nthreads += i;

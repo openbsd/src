@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.155 2013/10/08 03:50:07 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.156 2014/01/20 21:19:28 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -616,8 +616,9 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 		/* 
 		 * broadcast
 		 */
-		LIST_FOREACH(p, &allproc, p_list) {
-			if (p->p_pid <= 1 || p->p_flag & (P_SYSTEM|P_THREAD) ||
+		LIST_FOREACH(pr, &allprocess, ps_list) {
+			p = pr->ps_mainproc;
+			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM ||
 			    p == cp || !cansignal(cp, pc, p, signum))
 				continue;
 			nfound++;
@@ -1222,6 +1223,7 @@ keep:
 void
 proc_stop(struct proc *p, int sw)
 {
+	struct process *pr = p->p_p;
 	extern void *softclock_si;
 
 #ifdef MULTIPROCESSOR
@@ -1229,8 +1231,9 @@ proc_stop(struct proc *p, int sw)
 #endif
 
 	p->p_stat = SSTOP;
-	atomic_clearbits_int(&p->p_p->ps_flags, PS_WAITED);
-	atomic_setbits_int(&p->p_flag, P_STOPPED|P_SUSPSIG);
+	atomic_clearbits_int(&pr->ps_flags, PS_WAITED);
+	atomic_setbits_int(&pr->ps_flags, PS_STOPPED);
+	atomic_setbits_int(&p->p_flag, P_SUSPSIG);
 	if (!timeout_pending(&proc_stop_to)) {
 		timeout_add(&proc_stop_to, 0);
 		/*
@@ -1251,17 +1254,17 @@ proc_stop(struct proc *p, int sw)
 void
 proc_stop_sweep(void *v)
 {
-	struct proc *p;
+	struct process *pr;
 
-	LIST_FOREACH(p, &allproc, p_list) {
-		if ((p->p_flag & P_STOPPED) == 0)
+	LIST_FOREACH(pr, &allprocess, ps_list) {
+		if ((pr->ps_flags & PS_STOPPED) == 0)
 			continue;
-		atomic_clearbits_int(&p->p_flag, P_STOPPED);
+		atomic_clearbits_int(&pr->ps_flags, PS_STOPPED);
 
-		if ((p->p_p->ps_pptr->ps_mainproc->p_sigacts->ps_flags &
+		if ((pr->ps_pptr->ps_mainproc->p_sigacts->ps_flags &
 		    SAS_NOCLDSTOP) == 0)
-			prsignal(p->p_p->ps_pptr, SIGCHLD);
-		wakeup(p->p_p->ps_pptr);
+			prsignal(pr->ps_pptr, SIGCHLD);
+		wakeup(pr->ps_pptr);
 	}
 }
 

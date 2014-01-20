@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.32 2014/01/20 04:27:32 guenther Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.33 2014/01/20 21:19:28 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -124,7 +124,7 @@ static int fill_file(kvm_t *, struct kinfo_file *, struct file *, u_long,
     struct vnode *, struct proc *, int, pid_t);
 static int filestat(kvm_t *, struct kinfo_file *, struct vnode *);
 
-LIST_HEAD(proclist, proc);
+LIST_HEAD(processlist, process);
 
 struct kinfo_file *
 kvm_getfiles(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
@@ -268,9 +268,9 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 	struct filelist filehead;
 	struct filedesc0 filed0;
 #define filed	filed0.fd_fd
-	struct proclist allproc;
-	struct proc *p, proc, proc2;
-	struct process process;
+	struct processlist allprocess;
+	struct proc proc, proc2;
+	struct process *pr, process;
 	struct pcred pcred;
 	struct ucred ucred;
 	char *filebuf = NULL;
@@ -279,7 +279,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 
 	nl[0].n_name = "_filehead";
 	nl[1].n_name = "_nfiles";
-	nl[2].n_name = "_allproc";
+	nl[2].n_name = "_allprocess";
 	nl[3].n_name = 0;
 
 	if (kvm_nlist(kd, nl) != 0) {
@@ -297,8 +297,8 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		_kvm_err(kd, kd->program, "can't read nfiles");
 		return (NULL);
 	}
-	if (KREAD(kd, nl[2].n_value, &allproc)) {
-		_kvm_err(kd, kd->program, "can't read allproc");
+	if (KREAD(kd, nl[2].n_value, &allprocess)) {
+		_kvm_err(kd, kd->program, "can't read allprocess");
 		return (NULL);
 	}
 	/* this may be more room than we need but counting is expensive */
@@ -308,52 +308,32 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 	if (kd->filebase == NULL)
 		return (NULL);
 
-	for (p = LIST_FIRST(&allproc);
-	    p != NULL;
-	    p = LIST_NEXT(&proc, p_list)) {
-		if (KREAD(kd, (u_long)p, &proc)) {
-			_kvm_err(kd, kd->program, "can't read proc at %lx",
-			    (u_long)p);
+	for (pr = LIST_FIRST(&allprocess);
+	    pr != NULL;
+	    pr = LIST_NEXT(&process, ps_list)) {
+		if (KREAD(kd, (u_long)pr, &process)) {
+			_kvm_err(kd, kd->program, "can't read process at %lx",
+			    (u_long)pr);
 			goto cleanup;
 		}
 
-		/* skip system, embryonic and undead processes */
-		if ((proc.p_flag & P_SYSTEM) || (proc.p_flag & P_THREAD) ||
+		if (process.ps_mainproc == NULL)
+			continue;
+		if (KREAD(kd, (u_long)process.ps_mainproc, &proc)) {
+			_kvm_err(kd, kd->program, "can't read proc at %lx",
+			    (u_long)process.ps_mainproc);
+			goto cleanup;
+		}
+
+		/* skip system, exiting, embryonic and undead processes */
+		if (proc.p_flag & P_SYSTEM || process.ps_flags & PS_EXITING ||
 		    proc.p_stat == SIDL || proc.p_stat == SZOMB)
 			continue;
-		if (op == KERN_FILE_BYPID) {
-			if (arg > 0 && proc.p_pid != (pid_t)arg) {
+
+		if (op == KERN_FILE_BYPID && arg > 0 &&
+		    proc.p_pid != (pid_t)arg) {
 				/* not the pid we are looking for */
 				continue;
-			}
-		} else /* if (op == KERN_FILE_BYUID) */ {
-			if (arg >= 0 && proc.p_ucred->cr_uid != (uid_t)arg) {
-				/* not the uid we are looking for */
-				continue;
-			}
-		}
-
-		if (proc.p_fd == NULL || proc.p_p == NULL)
-			continue;
-
-		if (KREAD(kd, (u_long)proc.p_p, &process)) {
-			_kvm_err(kd, kd->program, "can't read process at %lx",
-			    (u_long)proc.p_p);
-			goto cleanup;
-		}
-		if (process.ps_flags & PS_EXITING)
-			continue;
-		proc.p_p = &process;
-		if ((proc.p_flag & P_THREAD) == 0)
-			pid = proc.p_pid;
-		else {
-			if (KREAD(kd, (u_long)process.ps_mainproc, &proc2)) {
-				_kvm_err(kd, kd->program,
-				    "can't read proc at %lx",
-				    (u_long)process.ps_mainproc);
-				goto cleanup;
-			}
-			pid = proc2.p_pid;
 		}
 
 		if (KREAD(kd, (u_long)process.ps_cred, &pcred)) {
@@ -366,8 +346,16 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			    (u_long)pcred.pc_ucred);
 			goto cleanup;
 		}
+		process.ps_mainproc = &proc;
+		proc.p_p = &process;
 		process.ps_cred = &pcred;
 		pcred.pc_ucred = &ucred;
+
+		if (op == KERN_FILE_BYUID && arg >= 0 &&
+		    proc.p_ucred->cr_uid != (uid_t)arg) {
+			/* not the uid we are looking for */
+			continue;
+		}
 
 		if (KREAD(kd, (u_long)proc.p_fd, &filed0)) {
 			_kvm_err(kd, kd->program, "can't read filedesc at %lx",

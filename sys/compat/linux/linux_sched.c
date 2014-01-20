@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sched.c,v 1.14 2012/05/25 04:39:40 guenther Exp $	*/
+/*	$OpenBSD: linux_sched.c,v 1.15 2014/01/20 21:19:28 guenther Exp $	*/
 /*	$NetBSD: linux_sched.c,v 1.6 2000/05/28 05:49:05 thorpej Exp $	*/
 
 /*-
@@ -110,13 +110,7 @@ linux_sys_clone(struct proc *p, void *v, register_t *retval)
 	LINUX_CLONE_VFORK
 		if ((cflags & (REQUIRED | BANNED)) != REQUIRED)
 			return (EINVAL);
-		/*
-		 * Linux says that CLONE_THREAD means no signal
-		 * will be sent on exit (even if a non-standard
-		 * signal is requested via CLONE_CSIGNAL), so pass
-		 * FORK_NOZOMBIE too.
-		 */
-		flags |= FORK_THREAD | FORK_NOZOMBIE;
+		flags |= FORK_THREAD;
 	} else {
 		/*
 		 * These are only supported with CLONE_THREAD.  Arguably,

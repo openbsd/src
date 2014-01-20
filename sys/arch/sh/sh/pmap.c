@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.20 2013/03/02 22:44:47 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.21 2014/01/20 21:19:28 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -1066,6 +1066,7 @@ __pmap_pte_load(pmap_t pmap, vaddr_t va, int flags)
 int
 __pmap_asid_alloc()
 {
+	struct process *pr;
 	struct proc *p;
 	int i, j, k, n, map, asid;
 
@@ -1085,7 +1086,18 @@ __pmap_asid_alloc()
 	}
 
 	/* Steal ASID */
-	LIST_FOREACH(p, &allproc, p_list) {
+	/*
+	 * XXX this always steals the ASID of the *newest* proc with one,
+	 * so it's far from LRU but rather almost pessimal once you have
+	 * too many processes.
+	 */
+	LIST_FOREACH(pr, &allprocess, ps_list) {
+		/* find a thread that still has the process vmspace attached */
+		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link)
+			if (p->p_vmspace != NULL)
+				break;
+		if (p == NULL)
+			continue;
 		if ((asid = p->p_vmspace->vm_map.pmap->pm_asid) > 0) {
 			pmap_t pmap = p->p_vmspace->vm_map.pmap;
 			pmap->pm_asid = -1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.173 2014/01/20 03:23:42 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.174 2014/01/20 21:19:27 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -156,6 +156,7 @@ struct process {
 	struct	proc *ps_mainproc;
 	struct	pcred *ps_cred;		/* Process owner's identity. */
 
+	LIST_ENTRY(process) ps_list;	/* List of all processes. */
 	TAILQ_HEAD(,proc) ps_threads;	/* Threads in this process. */
 
 	LIST_ENTRY(process) ps_pglist;	/* List of processes in pgrp. */
@@ -238,16 +239,19 @@ struct process {
 #define	PS_COREDUMP	0x00000800	/* Busy coredumping */
 #define	PS_SINGLEEXIT	0x00001000	/* Other threads must die. */
 #define	PS_SINGLEUNWIND	0x00002000	/* Other threads must unwind. */
+#define	PS_NOZOMBIE	0x00004000	/* Pid 1 waits for me instead of dad */
+#define	PS_STOPPED	0x00008000	/* Just stopped, need sig to parent. */
 
 #define	PS_BITS \
     ("\20\01CONTROLT\02EXEC\03INEXEC\04EXITING\05SUGID" \
      "\06SUGIDEXEC\07PPWAIT\010ISPWAIT\011PROFIL\012TRACED" \
-     "\013WAITED\014COREDUMP\015SINGLEEXIT\016SINGLEUNWIND")
+     "\013WAITED\014COREDUMP\015SINGLEEXIT\016SINGLEUNWIND" \
+     "\017NOZOMBIE\018STOPPED")
 
 
 struct proc {
 	TAILQ_ENTRY(proc) p_runq;
-	LIST_ENTRY(proc) p_list;	/* List of all processes. */
+	LIST_ENTRY(proc) p_list;	/* List of all threads. */
 
 	struct	process *p_p;		/* The process of this thread. */
 	TAILQ_ENTRY(proc) p_thr_link;/* Threads in a process linkage. */
@@ -370,21 +374,19 @@ struct proc {
 #define	P_WEXIT		0x002000	/* Working on exiting. */
 #define	P_OWEUPC	0x008000	/* Owe proc an addupc() at next ast. */
 #define	P_SUSPSINGLE	0x080000	/* Need to stop for single threading. */
-#define	P_NOZOMBIE	0x100000	/* Pid 1 waits for me instead of dad */
 #define P_SYSTRACE	0x400000	/* Process system call tracing active*/
 #define P_CONTINUED	0x800000	/* Proc has continued from a stopped state. */
 #define	P_THREAD	0x4000000	/* Only a thread, not a real process */
 #define	P_SUSPSIG	0x8000000	/* Stopped from signal. */
 #define	P_SOFTDEP	0x10000000	/* Stuck processing softdep worklist */
-#define P_STOPPED	0x20000000	/* Just stopped, need sig to parent. */
 #define P_CPUPEG	0x40000000	/* Do not move to another cpu. */
 
 #define	P_BITS \
     ("\20\01INKTR\02PROFPEND\03ALRMPEND\04SIGSUSPEND\07SELECT" \
      "\010SINTR\012SYSTEM" \
      "\013TIMEOUT\016WEXIT\020OWEUPC\024SUSPSINGLE" \
-     "\025NOZOMBIE\027SYSTRACE\030CONTINUED\033THREAD" \
-     "\034SUSPSIG\035SOFTDEP\036STOPPED\037CPUPEG")
+     "\027SYSTRACE\030CONTINUED\033THREAD" \
+     "\034SUSPSIG\035SOFTDEP\037CPUPEG")
 
 /* Macro to compute the exit signal to be delivered. */
 #define P_EXITSIG(p) \
@@ -467,8 +469,10 @@ extern int nthreads, maxthread;		/* Cur and max number of threads. */
 extern int randompid;			/* fork() should create random pid's */
 
 LIST_HEAD(proclist, proc);
-extern struct proclist allproc;		/* List of all processes. */
-extern struct proclist zombproc;	/* List of zombie processes. */
+LIST_HEAD(processlist, process);
+extern struct processlist allprocess;	/* List of all processes. */
+extern struct processlist zombprocess;	/* List of zombie processes. */
+extern struct proclist allproc;		/* List of all threads. */
 
 extern struct proc *initproc;		/* Process slot for init. */
 extern struct proc *reaperproc;		/* Process slot for reaper. */
@@ -527,7 +531,8 @@ void	child_return(void *);
 
 int	proc_cansugid(struct proc *);
 void	proc_finish_wait(struct proc *, struct proc *);
-void	proc_zap(struct proc *);
+void	process_zap(struct process *);
+void	proc_free(struct proc *);
 
 struct sleep_state {
 	int sls_s;

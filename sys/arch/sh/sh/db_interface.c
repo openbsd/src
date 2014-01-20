@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.3 2010/04/21 03:03:26 deraadt Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.4 2014/01/20 21:19:28 guenther Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.37 2006/09/06 00:11:49 uwe Exp $	*/
 
 /*-
@@ -368,10 +368,15 @@ char *
 __db_procname_by_asid(int asid)
 {
 	static char notfound[] = "---";
+	struct process *pr;
 	struct proc *p;
 
-	LIST_FOREACH(p, &allproc, p_list) {
-		if (p->p_vmspace->vm_map.pmap->pm_asid == asid)
+	LIST_FOREACH(pr, &allprocess, ps_list) {
+		/* find a thread that still has the process vmspace attached */
+		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link)
+			if (p->p_vmspace != NULL)
+				break;
+		if (p != NULL && p->p_vmspace->vm_map.pmap->pm_asid == asid)
 			return (p->p_comm);
 	}
 
