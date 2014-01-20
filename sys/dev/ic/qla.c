@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.2 2014/01/19 10:30:13 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.3 2014/01/20 21:20:46 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -657,6 +657,7 @@ qla_attach(struct qla_softc *sc)
 
 		while (!TAILQ_EMPTY(&found)) {
 			int loopid;
+			int mboxin;
 
 			mtx_enter(&sc->sc_port_mtx);
 			loopid = qla_get_loop_id(sc);
@@ -670,16 +671,18 @@ qla_attach(struct qla_softc *sc)
 			fport = TAILQ_FIRST(&found);
 			TAILQ_REMOVE(&found, fport, update);
 
+			mboxin = 0x000f;
 			sc->sc_mbox[0] = QLA_MBOX_FABRIC_PLOGI;
 			sc->sc_mbox[2] = (fport->portid >> 16) & 0xff;
 			sc->sc_mbox[3] = fport->portid & 0xffff;
 			if (sc->sc_2k_logins) {
 				sc->sc_mbox[1] = loopid;
 				sc->sc_mbox[10] = 0;
+				mboxin |= (1 << 10);
 			} else {
 				sc->sc_mbox[1] = loopid << 8;
 			}
-			if (qla_mbox(sc, 0x000f, 0x00c7)) {
+			if (qla_mbox(sc, mboxin, 0x00c7)) {
 				printf("%s: port %x login failed: %x %x %x %x\n",
 				    DEVNAME(sc), fport->portid, sc->sc_mbox[0],
 				    sc->sc_mbox[1], sc->sc_mbox[2],
