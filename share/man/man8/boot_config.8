@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_config.8,v 1.27 2013/07/15 22:59:12 schwarze Exp $
+.\"	$OpenBSD: boot_config.8,v 1.28 2014/01/20 00:55:35 schwarze Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 15 2013 $
+.Dd $Mdocdate: January 20 2014 $
 .Dt BOOT_CONFIG 8
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@ Changes made can be saved for the next reboot, by using
 .Bl -tag -width "disable devno | dev"
 .It Ic add Ar dev
 Add a device through copying another.
-.It Ic base Ar 8 | 10 | 16
+.It Ic base Cm 8 | 10 | 16
 Change the base of numbers displayed and entered,
 e.g. I/O addresses in a VAXen are octal.
 .It Ic change Ar devno | dev
