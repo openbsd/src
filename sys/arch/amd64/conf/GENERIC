@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.355 2013/12/20 21:50:49 matthew Exp $
+#	$OpenBSD: GENERIC,v 1.356 2014/01/20 18:27:46 jcs Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -204,6 +204,8 @@ umidi*	at uhub?		# USB MIDI
 midi*	at umidi?
 ulpt*	at uhub?		# USB Printers
 umass*	at uhub?		# USB Mass Storage devices
+ubcmtp*	at uhub?		# Broadcom USB touchpad
+wsmouse* at ubcmtp? mux 0
 uhidev*	at uhub?		# Human Interface Devices
 ums*	at uhidev?		# USB mouse
 wsmouse* at ums? mux 0
