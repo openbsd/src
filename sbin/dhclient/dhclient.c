@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.283 2014/01/17 23:11:42 tobias Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.284 2014/01/20 02:54:07 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -479,7 +479,7 @@ main(int argc, char *argv[])
 	/* Put us into the correct rdomain */
 	ifi->rdomain = get_rdomain(ifi->name);
 	if (setrtable(ifi->rdomain) == -1)
-		error("setting routing table to %d: '%s'", ifi->rdomain,
+		error("setting routing table to %u: '%s'", ifi->rdomain,
 		    strerror(errno));
 
 	read_client_conf();
@@ -1225,7 +1225,7 @@ send_discover(void)
 		client->bootrequest_packet.secs = htons(65535);
 	client->secs = client->bootrequest_packet.secs;
 
-	note("DHCPDISCOVER on %s to %s port %d interval %lld",
+	note("DHCPDISCOVER on %s to %s port %u interval %lld",
 	    ifi->name, inet_ntoa(sockaddr_broadcast.sin_addr),
 	    ntohs(sockaddr_broadcast.sin_port),
 	    (long long)client->interval);
@@ -1422,7 +1422,7 @@ send_request(void)
 			client->bootrequest_packet.secs = htons(65535);
 	}
 
-	note("DHCPREQUEST on %s to %s port %d", ifi->name,
+	note("DHCPREQUEST on %s to %s port %u", ifi->name,
 	    inet_ntoa(destination.sin_addr), ntohs(destination.sin_port));
 
 	send_packet(from, &destination, NULL);
@@ -1433,7 +1433,7 @@ send_request(void)
 void
 send_decline(void)
 {
-	note("DHCPDECLINE on %s to %s port %d", ifi->name,
+	note("DHCPDECLINE on %s to %s port %u", ifi->name,
 	    inet_ntoa(sockaddr_broadcast.sin_addr),
 	    ntohs(sockaddr_broadcast.sin_port));
 

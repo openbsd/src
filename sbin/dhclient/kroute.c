@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.59 2013/12/08 22:49:02 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.60 2014/01/20 02:54:07 deraadt Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -679,7 +679,7 @@ void
 delete_route(int s, int rdomain, struct rt_msghdr *rtm)
 {
 	static int seqno;
-	int rlen;
+	ssize_t rlen;
 
 	rtm->rtm_type = RTM_DELETE;
 	rtm->rtm_tableid = rdomain;
@@ -690,5 +690,5 @@ delete_route(int s, int rdomain, struct rt_msghdr *rtm)
 		if (errno != ESRCH)
 			error("RTM_DELETE write: %s", strerror(errno));
 	} else if (rlen < (int)rtm->rtm_msglen)
-		error("short RTM_DELETE write (%d)\n", rlen);
+		error("short RTM_DELETE write (%zd)\n", rlen);
 }
