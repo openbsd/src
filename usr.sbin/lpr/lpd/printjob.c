@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.49 2013/12/10 16:38:04 naddy Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.50 2014/01/20 19:51:46 tobias Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -226,6 +226,9 @@ again:
 			continue;
 		errcnt = 0;
 	restart:
+		fdev = (dev_t)-1;
+		fino = (ino_t)-1;
+
 		(void)lseek(lfd, pidoff, 0);
 		if ((i = snprintf(line, sizeof(line), "%s\n", q->q_name)) >=
 		    sizeof(line) || i == -1)
@@ -538,20 +541,30 @@ print(int format, char *file)
 	int fd, status, serrno;
 	int n, fi, fo, p[2], stopped = 0, nofile;
 
-	PRIV_START;
-	if (lstat(file, &stb) < 0 || (fi = safe_open(file, O_RDONLY, 0)) < 0) {
+	if (fdev != (dev_t)-1 && fino != (ino_t)-1) {
+		/* symbolic link */
+		PRIV_START;
+		fi = safe_open(file, O_RDONLY, 0);
 		PRIV_END;
-		return(ERROR);
+		if (fi != -1) {
+			/*
+			 * The symbolic link should still point to the same file
+			 * or someone is trying to print something he shouldn't.
+			 */
+			if (fstat(fi, &stb) == -1 ||
+			    stb.st_dev != fdev || stb.st_ino != fino) {
+				close(fi);
+				return(ACCESS);
+			}
+		}
+	} else {
+		/* regular file */
+		PRIV_START;
+		fi = safe_open(file, O_RDONLY|O_NOFOLLOW, 0);
+		PRIV_END;
 	}
-	PRIV_END;
-	/*
-	 * Check to see if data file is a symbolic link. If so, it should
-	 * still point to the same file or someone is trying to print
-	 * something he shouldn't.
-	 */
-	if (S_ISLNK(stb.st_mode) && fstat(fi, &stb) == 0 &&
-	    (stb.st_dev != fdev || stb.st_ino != fino))
-		return(ACCESS);
+	if (fi == -1)
+		return(ERROR);
 	if (!SF && !tof) {		/* start on a fresh page */
 		(void)write(ofd, FF, strlen(FF));
 		tof = 1;
@@ -875,20 +888,30 @@ sendfile(int type, char *file)
 	char buf[BUFSIZ];
 	int sizerr, resp;
 
-	PRIV_START;
-	if (lstat(file, &stb) < 0 || (f = safe_open(file, O_RDONLY, 0)) < 0) {
+	if (fdev != (dev_t)-1 && fino != (ino_t)-1) {
+		/* symbolic link */
+		PRIV_START;
+		f = safe_open(file, O_RDONLY, 0);
 		PRIV_END;
-		return(ERROR);
+		if (f != -1) {
+			/*
+			 * The symbolic link should still point to the same file
+			 * or someone is trying to print something he shouldn't.
+			 */
+			if (fstat(f, &stb) == -1 ||
+			    stb.st_dev != fdev || stb.st_ino != fino) {
+				close(f);
+				return(ACCESS);
+			}
+		}
+	} else {
+		/* regular file */
+		PRIV_START;
+		f = safe_open(file, O_RDONLY|O_NOFOLLOW, 0);
+		PRIV_END;
 	}
-	PRIV_END;
-	/*
-	 * Check to see if data file is a symbolic link. If so, it should
-	 * still point to the same file or someone is trying to print something
-	 * he shouldn't.
-	 */
-	if (S_ISLNK(stb.st_mode) && fstat(f, &stb) == 0 &&
-	    (stb.st_dev != fdev || stb.st_ino != fino))
-		return(ACCESS);
+	if (f == -1)
+		return(ERROR);
 	if ((amt = snprintf(buf, sizeof(buf), "%c%lld %s\n", type,
 	    (long long)stb.st_size, file)) >= sizeof(buf) || amt == -1)
 		return (ACCESS);		/* XXX hack */
