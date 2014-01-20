@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.1 2014/01/20 18:27:46 jcs Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.2 2014/01/20 18:55:14 jcs Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -490,6 +490,7 @@ ubcmtp_activate(struct device *self, int act)
 		ret = 0;
 		if (sc->sc_wsmousedev != NULL)
 			ret = config_deactivate(sc->sc_wsmousedev);
+		usbd_deactivate(sc->sc_udev);
 		return (ret);
 	}
 	return (EOPNOTSUPP);
@@ -502,6 +503,9 @@ ubcmtp_enable(void *v)
 
 	if (sc->sc_status & UBCMTP_ENABLED)
 		return (EBUSY);
+
+	if (usbd_is_dying(sc->sc_udev))
+		return (EIO);
 
 	if (ubcmtp_raw_mode(sc, 1) != 0) {
 		printf("%s: failed to enter raw mode\n", sc->sc_dev.dv_xname);
@@ -520,7 +524,7 @@ ubcmtp_disable(void *v)
 {
 	struct ubcmtp_softc *sc = v;
 
-	if (!(sc->sc_status & UBCMTP_ENABLED))
+	if (usbd_is_dying(sc->sc_udev) || !(sc->sc_status & UBCMTP_ENABLED))
 		return;
 
 	sc->sc_status &= ~UBCMTP_ENABLED;
@@ -728,7 +732,7 @@ ubcmtp_tp_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	u_int32_t pktlen;
 	int i, diff = 0, finger = 0, fingers = 0, s, t;
 
-	if (!(sc->sc_status & UBCMTP_ENABLED))
+	if (usbd_is_dying(sc->sc_udev) || !(sc->sc_status & UBCMTP_ENABLED))
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
@@ -835,7 +839,7 @@ ubcmtp_bt_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct ubcmtp_button *pkt;
 	u_int32_t len;
 
-	if (!(sc->sc_status & UBCMTP_ENABLED))
+	if (usbd_is_dying(sc->sc_udev) || !(sc->sc_status & UBCMTP_ENABLED))
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
