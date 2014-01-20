@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.59 2013/08/14 08:39:32 jmc Exp $
+.\"	$OpenBSD: config.8,v 1.60 2014/01/20 01:11:49 schwarze Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     from: @(#)config.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: January 20 2014 $
 .Dt CONFIG 8
 .Os
 .Sh NAME
@@ -172,21 +172,21 @@ directive at the beginning of the system configuration file.
 The configuration files consists of various statements which
 include the following:
 .Bl -tag -offset indent -width indent
-.It machine Ar var
+.It Ic machine Ar var
 Required.
 Specifies the machine architecture.
-.It include Ar file
+.It Ic include Ar file
 Include another configuration file.
-.It option Ar name
+.It Ic option Ar name
 Set a kernel option.
 Kernel options may take either the form
 .Ar NAME
 or the form
-.Ar NAME=value .
+.Ar NAME Ns = Ns Ar value .
 These options are passed to the compiler with the
 .Fl D
 flag.
-.It rmoption Ar name
+.It Ic rmoption Ar name
 Delete a previously set option.
 This is useful when including another kernel configuration file.
 A typical use is to include the
@@ -194,7 +194,7 @@ A typical use is to include the
 kernel provided with each release and remove options that are
 unwanted, thus allowing for automatic inclusion of new device
 drivers.
-.It maxusers Ar number
+.It Ic maxusers Ar number
 Required.
 Used to size various system tables and maximum operating conditions
 in an approximate fashion.
@@ -204,10 +204,13 @@ warnings will be printed for each duplicate value.
 This is convenient when used with the
 .Va include
 directive.
-.It config Ar bsd root on "dev [swap on dev [and dev ...]] [dumps on dev [and dev ...]]"
+.It Xo Ic config Cm bsd root on Ar dev
+.Op Cm swap on Ar dev Op Cm and Ar dev ...
+.Op Cm dumps on Ar dev Op Cm and Ar dev ...
+.Xc
 Required.
 Specifies the swap and dump devices which the system should use.
-.It config Ar bsd swap generic
+.It Ic config Cm bsd swap generic
 Otherwise, if generic is specified, the system follows generic routines to
 decide what should happen.
 .El
@@ -277,7 +280,7 @@ The commands are as follows:
 .Bl -tag -width "disable attr val | devno | dev"
 .It Ic add Ar dev
 Add a device through copying another.
-.It Ic base Ar 8 | 10 | 16
+.It Ic base Cm 8 | 10 | 16
 Change the base of numbers displayed and entered,
 e.g. I/O addresses in a VAXen are octal.
 .It Ic bufcachepercent Op Ar number
