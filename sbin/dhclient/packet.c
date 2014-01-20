@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.24 2013/12/12 00:22:06 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.25 2014/01/20 09:16:36 deraadt Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -141,7 +141,7 @@ decode_udp_ip_header(unsigned char *buf, int bufix, struct sockaddr_in *from,
 
 #ifdef DEBUG
 	if (ntohs(ip->ip_len) != buflen)
-		debug("ip length %d disagrees with bytes received %d.",
+		debug("ip length %hu disagrees with bytes received %d.",
 		    ntohs(ip->ip_len), buflen);
 #endif
 
