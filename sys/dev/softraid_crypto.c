@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.99 2014/01/20 04:12:51 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.100 2014/01/20 04:16:29 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -338,7 +338,6 @@ unwind:
 void
 sr_crypto_wu_put(struct sr_crypto_wu *crwu)
 {
-	struct cryptop		*crp = crwu->cr_crp;
 	struct sr_workunit	*wu = crwu->cr_wu;
 	struct sr_discipline	*sd = wu->swu_dis;
 
