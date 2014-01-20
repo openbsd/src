@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.172 2013/10/25 04:42:48 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.173 2014/01/20 03:23:42 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -163,6 +163,8 @@ struct process {
 	LIST_ENTRY(process) ps_sibling;	/* List of sibling processes. */
 	LIST_HEAD(, process) ps_children;/* Pointer to list of children. */
 
+	struct	vnode *ps_textvp;	/* Vnode of executable. */
+
 /* The following fields are all zeroed upon creation in process_new. */
 #define	ps_startzero	ps_klist
 	struct	klist ps_klist;		/* knotes attached to this process */
@@ -297,8 +299,6 @@ struct proc {
 	void	*p_systrace;		/* Back pointer to systrace */
 
 	int	p_siglist;		/* Signals arrived but not delivered. */
-
-	struct	vnode *p_textvp;	/* Vnode of executable. */
 
 	void	*p_emuldata;		/* Per-process emulation data, or */
 					/* NULL. Malloc type M_EMULDATA */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.129 2013/10/25 04:42:48 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.130 2014/01/20 03:23:42 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -616,15 +616,15 @@ proc_zap(struct proc *p)
 		 * Decrement the count of procs running with this uid.
 		 */
 		(void)chgproccnt(p->p_cred->p_ruid, -1);
-	}
 
-	/*
-	 * Release reference to text vnode
-	 */
-	otvp = p->p_textvp;
-	p->p_textvp = NULL;
-	if (otvp)
-		vrele(otvp);
+		/*
+		 * Release reference to text vnode
+		 */
+		otvp = pr->ps_textvp;
+		pr->ps_textvp = NULL;
+		if (otvp)
+			vrele(otvp);
+	}
 
 	/*
 	 * Remove us from our process list, possibly killing the process

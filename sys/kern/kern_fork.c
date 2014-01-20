@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.154 2013/10/08 03:50:07 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.155 2014/01/20 03:23:42 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -182,6 +182,11 @@ process_new(struct proc *p, struct process *parent)
 	crhold(parent->ps_cred->pc_ucred);
 	pr->ps_limit->p_refcnt++;
 
+	/* bump references to the text vnode (for procfs) */
+	pr->ps_textvp = parent->ps_textvp;
+	if (pr->ps_textvp)
+		vref(pr->ps_textvp);
+
 	timeout_set(&pr->ps_realit_to, realitexpire, pr);
 
 	pr->ps_flags = parent->ps_flags & (PS_SUGID | PS_SUGIDEXEC);
@@ -326,11 +331,6 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 		if ((flags & FORK_PTRACE) && (curpr->ps_flags & PS_TRACED))
 			atomic_setbits_int(&pr->ps_flags, PS_TRACED);
 	}
-
-	/* bump references to the text vnode (for procfs) */
-	p->p_textvp = curp->p_textvp;
-	if (p->p_textvp)
-		vref(p->p_textvp);
 
 	if (flags & FORK_SHAREFILES)
 		p->p_fd = fdshare(curp);

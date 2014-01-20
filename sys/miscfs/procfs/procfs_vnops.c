@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.56 2013/03/28 02:08:39 guenther Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.57 2014/01/20 03:23:42 guenther Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -730,7 +730,7 @@ procfs_lookup(void *v)
 
 	found:
 		if (pt->pt_pfstype == Pfile) {
-			fvp = p->p_textvp;
+			fvp = p->p_p->ps_textvp;
 			/* We already checked that it exists. */
 			vref(fvp);
 			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY, curp);
@@ -761,7 +761,7 @@ int
 procfs_validfile(struct proc *p, struct mount *mp)
 {
 
-	return (p->p_textvp != NULLVP);
+	return (p->p_p->ps_textvp != NULLVP);
 }
 
 int

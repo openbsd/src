@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.135 2013/06/17 19:11:54 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.136 2014/01/20 03:23:42 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -478,9 +478,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	pr->ps_acflag &= ~AFORK;
 
 	/* record proc's vnode, for use by procfs and others */
-	otvp = p->p_textvp;
+	otvp = pr->ps_textvp;
 	vref(pack.ep_vp);
-	p->p_textvp = pack.ep_vp;
+	pr->ps_textvp = pack.ep_vp;
 	if (otvp)
 		vrele(otvp);
 
