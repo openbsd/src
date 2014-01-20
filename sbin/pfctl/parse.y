@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.628 2013/11/25 12:52:45 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.629 2014/01/20 02:59:13 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2484,12 +2484,13 @@ filter_opt	: USER uids {
 			if ($3.key != NULL)
 				filter_opts.route.key = $3.key;
 		}
-		| RECEIVEDON if_item {
+		| not RECEIVEDON if_item {
 			if (filter_opts.rcv) {
 				yyerror("cannot respecify received-on");
 				YYERROR;
 			}
-			filter_opts.rcv = $2;
+			filter_opts.rcv = $3;
+			filter_opts.rcv->not = $1;
 		}
 		| ONCE {
 			filter_opts.marker |= FOM_ONCE;
@@ -5179,6 +5180,7 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 		if (rcv) {
 			strlcpy(r->rcv_ifname, rcv->ifname,
 			    sizeof(r->rcv_ifname));
+			r->rcvifnot = rcv->not;
 		}
 		r->type = icmp_type->type;
 		r->code = icmp_type->code;

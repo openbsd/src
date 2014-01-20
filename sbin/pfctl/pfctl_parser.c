@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.297 2013/11/22 04:12:48 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.298 2014/01/20 02:59:13 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -804,7 +804,8 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 	print_fromto(&r->src, r->os_fingerprint, &r->dst, r->af, r->proto,
 	    opts);
 	if (r->rcv_ifname[0])
-		printf(" received-on %s", r->rcv_ifname);
+		printf(" %sreceived-on %s", r->rcvifnot ? "!" : "",
+		    r->rcv_ifname);
 	if (r->uid.op)
 		print_ugid(r->uid.op, r->uid.uid[0], r->uid.uid[1], "user",
 		    UID_MAX);
