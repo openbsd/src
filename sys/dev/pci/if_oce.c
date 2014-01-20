@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.72 2014/01/20 17:14:56 chris Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.73 2014/01/20 17:17:08 chris Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -3186,7 +3186,7 @@ oce_macaddr_set(struct oce_softc *sc)
 	uint32_t old_pmac_id = sc->sc_pmac_id;
 	int status = 0;
 
-	if (!bcmp(sc->sc_macaddr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN))
+	if (!memcmp(sc->sc_macaddr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN))
 		return;
 
 	status = oce_macaddr_add(sc, sc->sc_ac.ac_enaddr, &sc->sc_pmac_id);
