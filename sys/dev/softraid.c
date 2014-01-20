@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.319 2014/01/19 22:21:39 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.320 2014/01/20 00:11:50 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -721,7 +721,7 @@ restart:
 	/* not all disciplines have sync */
 	if (sd->sd_scsi_sync) {
 		bzero(&wu, sizeof(wu));
-		wu.swu_fake = 1;
+		wu.swu_flags |= SR_WUF_FAKE;
 		wu.swu_dis = sd;
 		sd->sd_scsi_sync(&wu);
 	}
@@ -4110,7 +4110,7 @@ sr_raid_sync(struct sr_workunit *wu)
 	DNPRINTF(SR_D_DIS, "%s: sr_raid_sync\n", DEVNAME(sd->sd_sc));
 
 	/* when doing a fake sync don't count the wu */
-	ios = wu->swu_fake ? 0 : 1;
+	ios = (wu->swu_flags & SR_WUF_FAKE) ? 0 : 1;
 
 	s = splbio();
 	sd->sd_sync = 1;
