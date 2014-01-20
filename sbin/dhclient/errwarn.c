@@ -1,4 +1,4 @@
-/*	$OpenBSD: errwarn.c,v 1.21 2014/01/13 02:38:52 krw Exp $	*/
+/*	$OpenBSD: errwarn.c,v 1.22 2014/01/20 10:17:20 krw Exp $	*/
 
 /* Errors and warnings. */
 
@@ -146,11 +146,10 @@ debug(char *fmt, ...)
 void
 parse_warn(char *msg)
 {
-	static char spaces[] =
-	    "                                        "
-	    "                                        "; /* 80 spaces */
+	static char spaces[81];
 	struct iovec iov[6];
 	size_t iovcnt;
+	int i;
 
 	snprintf(mbuf, sizeof(mbuf), "%s line %d: %s", tlname, lexline, msg);
 
@@ -172,6 +171,12 @@ parse_warn(char *msg)
 		iov[3].iov_len = 1;
 		iovcnt = 4;
 		if (lexchar < 81) {
+			for (i = 0; i < lexchar; i++) {
+				if (token_line[i] == '\t')
+					spaces[i] = '\t';
+				else
+					spaces[i] = ' ';
+			}
 			iov[4].iov_base = spaces;
 			iov[4].iov_len = lexchar - 1;
 			iov[5].iov_base = "^\n";
