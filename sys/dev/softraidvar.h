@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.146 2014/01/20 04:38:59 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.147 2014/01/20 04:47:31 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -299,6 +299,7 @@ SLIST_HEAD(sr_boot_volume_head, sr_boot_volume);
 #include <sys/buf.h>
 #include <sys/queue.h>
 #include <sys/rwlock.h>
+#include <sys/task.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
@@ -405,8 +406,7 @@ struct sr_workunit {
 	struct sr_ccb_list	swu_ccb;
 
 	/* task memory */
-	struct workq_task	swu_wqt;
-	struct workq_task	swu_intr;
+	struct task		swu_task;
 	int			swu_cb_active;	/* in callback */
 
 	TAILQ_ENTRY(sr_workunit) swu_link;
@@ -540,7 +540,7 @@ struct sr_discipline {
 	}			sd_dis_specific;/* dis specific members */
 #define mds			sd_dis_specific
 
-	struct workq		*sd_workq;
+	struct taskq		*sd_taskq;
 
 	/* discipline metadata */
 	struct sr_metadata	*sd_meta;	/* in memory copy of metadata */

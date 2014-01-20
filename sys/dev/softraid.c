@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.320 2014/01/20 00:11:50 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.321 2014/01/20 04:47:31 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -39,6 +39,7 @@
 #include <sys/stat.h>
 #include <sys/conf.h>
 #include <sys/uio.h>
+#include <sys/task.h>
 #include <sys/workq.h>
 #include <sys/kthread.h>
 #include <sys/dkio.h>
@@ -2202,6 +2203,7 @@ sr_wu_init(struct sr_discipline *sd, struct sr_workunit *wu)
 
 	bzero(wu, sizeof(*wu));
 	TAILQ_INIT(&wu->swu_ccb);
+	task_set(&wu->swu_task, sr_wu_done_callback, sd, wu);
 	wu->swu_dis = sd;
 }
 
@@ -2250,8 +2252,7 @@ sr_wu_done(struct sr_workunit *wu)
 	if (wu->swu_ios_complete < wu->swu_io_count)
 		return;
 
-	workq_queue_task(sd->sd_workq, &wu->swu_wqt, 0,
-	    sr_wu_done_callback, sd, wu);
+	task_add(sd->sd_taskq, &wu->swu_task);
 }
 
 void
@@ -3307,9 +3308,9 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 	sd = malloc(sizeof(struct sr_discipline), M_DEVBUF, M_WAITOK | M_ZERO);
 	sd->sd_sc = sc;
 	SLIST_INIT(&sd->sd_meta_opt);
-	sd->sd_workq = workq_create("srdis", 1, IPL_BIO);
-	if (sd->sd_workq == NULL) {
-		sr_error(sc, "could not create discipline workq");
+	sd->sd_taskq = taskq_create("srdis", 1, IPL_BIO);
+	if (sd->sd_taskq == NULL) {
+		sr_error(sc, "could not create discipline taskq");
 		goto unwind;
 	}
 	if (sr_discipline_init(sd, bc->bc_level)) {
@@ -3896,8 +3897,8 @@ sr_discipline_shutdown(struct sr_discipline *sd, int meta_save)
 
 	sr_chunks_unwind(sc, &sd->sd_vol.sv_chunk_list);
 
-	if (sd->sd_workq)
-		workq_destroy(sd->sd_workq);
+	if (sd->sd_taskq)
+		taskq_destroy(sd->sd_taskq);
 
 	sr_discipline_free(sd);
 
