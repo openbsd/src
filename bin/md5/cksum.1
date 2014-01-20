@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.30 2014/01/20 21:10:05 schwarze Exp $
+.\"	$OpenBSD: cksum.1,v 1.31 2014/01/20 21:27:39 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,7 +63,7 @@ The
 .Nm cksum
 utility writes to the standard output a single line for each input file.
 The format of this line varies with the algorithm being used as follows:
-.Bl -tag -width Ds
+.Bl -tag -width sysvsum
 .It cksum
 The output line consists of three whitespace separated fields:
 a CRC checksum, the number of octets in the input,
@@ -102,19 +102,8 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a Ar algorithms
 Use the specified algorithm(s) instead of the default (cksum).
-Supported algorithms include
-.Ar cksum ,
-.Ar md4 ,
-.Ar md5 ,
-.Ar rmd160 ,
-.Ar sha1 ,
-.Ar sha224 ,
-.Ar sha256 ,
-.Ar sha384 ,
-.Ar sha512 ,
-.Ar sum ,
-and
-.Ar sysvsum .
+Supported algorithms include cksum, md4, md5, rmd160, sha1,
+sha224, sha256, sha384, sha512, sum, and sysvsum.
 Multiple algorithms may be specified, separated by a comma or whitespace.
 Additionally, multiple
 .Fl a
@@ -132,12 +121,7 @@ suffix, the checksum will be output in hex format.
 If an algorithm with the same output format is repeated,
 only the first instance is used.
 Note that output format suffixes are not supported
-for the
-.Ar cksum ,
-.Ar sum
-and
-.Ar sysvsum
-algorithms.
+for the cksum, sum and sysvsum algorithms.
 .It Fl b
 Output checksums in base64 notation, not hexadecimal by
 default.
@@ -146,11 +130,7 @@ A
 or
 .Sq x
 suffix on the algorithm will override this default.
-This option is ignored for the
-.Ar cksum ,
-.Ar sum
-and
-.Ar sysvsum
+This option is ignored for the cksum, sum and sysvsum
 algorithms, which do not use hexadecimal output.
 .It Fl C Ar checklist
 Compare the checksum of each
@@ -207,8 +187,7 @@ by 10 for each additional flag.
 Runs a built-in test script.
 .El
 .Pp
-Algorithm 1 (aka
-.Ar sum )
+Algorithm 1 (aka sum)
 is the algorithm used by historic
 .Bx
 systems as the
@@ -223,9 +202,7 @@ option.
 This is a 16-bit checksum, with a right rotation before each addition;
 overflow is discarded.
 .Pp
-Algorithm 2 (aka
-.Ar sysvsum )
-is the algorithm used by historic
+Algorithm 2 (aka sysvsum) is the algorithm used by historic
 .At V
 systems as the
 default
@@ -318,13 +295,7 @@ The
 utility appeared in
 .Bx 4.4 .
 .Sh CAVEATS
-Do not use the
-.Ar cksum ,
-.Ar md4 ,
-.Ar md5 ,
-.Ar sum ,
-or
-.Ar sysvsum
+Do not use the cksum, md4, md5, sum, or sysvsum
 algorithms to verify file integrity.
 An attacker can trivially produce modified payload that
 has the same checksum as the original version.
