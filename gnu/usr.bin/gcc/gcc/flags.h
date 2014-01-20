@@ -715,6 +715,7 @@ extern const char *flag_random_seed;
 
 extern int flag_propolice_protection;
 extern int flag_stack_protection;
+extern int flag_strong_protection;
 
 /* Warn when not issuing stack smashing protection for some reason */
 

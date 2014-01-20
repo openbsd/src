@@ -928,9 +928,11 @@ int force_align_functions_log;
 /* Nonzero means use propolice as a stack protection method */
 int flag_propolice_protection = 1;
 int flag_stack_protection = 0;
+int flag_strong_protection = 0;
 #else
 int flag_propolice_protection = 0;
 int flag_stack_protection = 0;
+int flag_strong_protection = 0;
 #endif
 
 int flag_trampolines = 0;
@@ -1226,7 +1228,9 @@ static const lang_independent_options f_options[] =
   {"stack-protector", &flag_propolice_protection, 1,
    N_("Enables stack protection") },
   {"stack-protector-all", &flag_stack_protection, 1,
-   N_("Enables stack protection of every function") } ,
+   N_("Enables stack protection of every function") },
+  {"stack-protector-strong", &flag_strong_protection, 1,
+   N_("Enables smart stack protection of certain functions") },
   {"trampolines", &flag_trampolines, 1,
    N_("Allows trampolines") },
 };
@@ -5311,7 +5315,10 @@ process_options ()
     /* This combination makes optimized frame addressings and causes
        a internal compilation error at prepare_stack_protection.
        so don't allow it.  */
-    if (flag_stack_protection && !flag_propolice_protection)
+    if (flag_strong_protection && flag_stack_protection)
+      flag_strong_protection = FALSE;
+    if ((flag_stack_protection || flag_strong_protection)
+	&& !flag_propolice_protection)
       flag_propolice_protection = TRUE;
 }
 

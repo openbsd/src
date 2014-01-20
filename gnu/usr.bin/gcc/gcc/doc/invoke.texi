@@ -221,7 +221,7 @@ in the following sections.
 -Wno-import  -Wnonnull  -Wpacked  -Wpadded @gol
 -Wparentheses  -Wpointer-arith  -Wredundant-decls @gol
 -Wreturn-type  -Wsequence-point  -Wshadow @gol
--Wsign-compare  -Wstrict-aliasing @gol
+-Wsign-compare  -Wstack-protector  -Wstrict-aliasing @gol
 -Wswitch  -Wswitch-default  -Wswitch-enum @gol
 -Wsystem-headers  -Wtrigraphs  -Wundef  -Wuninitialized @gol
 -Wunknown-pragmas  -Wunreachable-code @gol
@@ -279,6 +279,7 @@ in the following sections.
 -fno-sched-interblock  -fno-sched-spec  -fsched-spec-load @gol
 -fsched-spec-load-dangerous  -fsignaling-nans @gol
 -fsingle-precision-constant  -fssa  -fssa-ccp  -fssa-dce @gol
+-fstack-protector  -fstack-protector-all  -fstack-protector-strong @gol
 -fstrength-reduce  -fstrict-aliasing  -ftracer  -fthread-jumps @gol
 -funroll-all-loops  -funroll-loops  @gol
 --param @var{name}=@var{value} @gol
@@ -2765,6 +2766,11 @@ itself is likely to take inordinate amounts of time.
 @item -Werror
 @opindex Werror
 Make all warnings into errors.
+
+@item -Wstack-protector
+@opindex Wstack-protector
+This option is only active when @option{-fstack-protector} is active.  It
+warns about functions that will not be protected against stack smashing.
 @end table
 
 @node Debugging Options
@@ -4256,6 +4262,21 @@ Perform Sparse Conditional Constant Propagation in SSA form.  Requires
 Perform aggressive dead-code elimination in SSA form.  Requires @option{-fssa}.
 Like @option{-fssa}, this is an experimental feature.
 
+@item -fstack-protector
+Emit extra code to check for buffer overflows, such as stack smashing
+attacks.  This is done by adding a guard variable to functions with
+vulnerable objects.  This includes functions with buffers larger
+than 8 bytes.  The guards are initialized when a function is entered
+and then checked when the function exits.  If a guard check fails,
+an error message is printed and the program exits.
+
+@item -fstack-protector-all
+Like @option{-fstack-protector} except that all functions are protected.
+
+@item -fstack-protector-strong
+Like @option{-fstack-protector} but includes additional functions to
+be protected --- those that have local array definitions, or have
+references to local frame addresses.
 
 @item --param @var{name}=@var{value}
 @opindex param

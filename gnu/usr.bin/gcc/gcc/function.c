@@ -656,7 +656,7 @@ assign_stack_temp_for_type (mode, size, keep, type)
   struct temp_slot *p, *best_p = 0;
   rtx slot;
   int char_array = (flag_propolice_protection
-		    && keep == 1 && search_string_def (type));
+		    && keep == 1 && search_string_def (type, TRUE));
 
   /* If SIZE is -1 it means that somebody tried to allocate a temporary
      of a variable size.  */
