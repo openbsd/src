@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.533 2014/01/10 12:07:19 sobrado Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.534 2014/01/20 02:59:55 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 10 2014 $
+.Dd $Mdocdate: January 20 2014 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -2643,7 +2643,7 @@ filteropt      = user | group | flags | icmp-type | icmp6-type |
 		 "nat-to" ( redirhost | "{" redirhost-list "}" )
 		 [ portspec ] [ pooltype ] [ "static-port" ] |
 		 [ route ] | [ "set tos" tos ] |
-		 [ "received-on" ( interface-name | interface-group ) ]
+		 [ [ "!" ] "received-on" ( interface-name | interface-group ) ]
 
 scrubopts      = scrubopt [ [ "," ] scrubopts ]
 scrubopt       = "no-df" | "min-ttl" number | "max-mss" number |
