@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.100 2014/01/20 04:16:29 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.101 2014/01/20 04:38:58 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -311,18 +311,8 @@ sr_crypto_wu_get(struct sr_workunit *wu, int encrypt)
 		crd->crd_len = DEV_BSIZE;
 		crd->crd_inject = 0;
 		crd->crd_flags = flags;
-		crd->crd_alg = CRYPTO_AES_XTS;
-
-		switch (sd->mds.mdd_crypto.scr_meta->scm_alg) {
-		case SR_CRYPTOA_AES_XTS_128:
-			crd->crd_klen = 256;
-			break;
-		case SR_CRYPTOA_AES_XTS_256:
-			crd->crd_klen = 512;
-			break;
-		default:
-			goto unwind;
-		}
+		crd->crd_alg = sd->mds.mdd_crypto.scr_alg;
+		crd->crd_klen = sd->mds.mdd_crypto.scr_klen;
 		crd->crd_key = sd->mds.mdd_crypto.scr_key[0];
 		bcopy(&blk, crd->crd_iv, sizeof(blk));
 	}
@@ -950,6 +940,18 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_alloc_resources\n",
 	    DEVNAME(sd->sd_sc));
 
+	sd->mds.mdd_crypto.scr_alg = CRYPTO_AES_XTS;
+	switch (sd->mds.mdd_crypto.scr_meta->scm_alg) {
+	case SR_CRYPTOA_AES_XTS_128:
+		sd->mds.mdd_crypto.scr_klen = 256;
+		break;
+	case SR_CRYPTOA_AES_XTS_256:
+		sd->mds.mdd_crypto.scr_klen = 512;
+		break;
+	default:
+		return (EINVAL);
+	}
+
 	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++)
 		sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
 
@@ -992,18 +994,9 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 		crwu->cr_descs = crwu->cr_crp->crp_desc;
 	}
 
-	bzero(&cri, sizeof(cri));
-	cri.cri_alg = CRYPTO_AES_XTS;
-	switch (sd->mds.mdd_crypto.scr_meta->scm_alg) {
-	case SR_CRYPTOA_AES_XTS_128:
-		cri.cri_klen = 256;
-		break;
-	case SR_CRYPTOA_AES_XTS_256:
-		cri.cri_klen = 512;
-		break;
-	default:
-		return (EINVAL);
-	}
+	memset(&cri, 0, sizeof(cri));
+	cri.cri_alg = sd->mds.mdd_crypto.scr_alg;
+	cri.cri_klen = sd->mds.mdd_crypto.scr_klen;
 
 	/* Allocate a session for every 2^SR_CRYPTO_KEY_BLKSHIFT blocks */
 	num_keys = sd->sd_meta->ssdi.ssd_size >> SR_CRYPTO_KEY_BLKSHIFT;

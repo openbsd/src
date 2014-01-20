@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.145 2014/01/20 00:11:50 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.146 2014/01/20 04:38:59 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -447,6 +447,9 @@ struct sr_crypto {
 	struct sr_crypto_wu_head scr_wus;
 	struct sr_meta_crypto	*scr_meta;
 	struct sr_chunk		*key_disk;
+
+	int			scr_alg;
+	int			scr_klen;
 
 	/* XXX only keep scr_sid over time */
 	u_int8_t		scr_key[SR_CRYPTO_MAXKEYS][SR_CRYPTO_KEYBYTES];
