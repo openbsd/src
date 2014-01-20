@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.87 2013/12/27 00:00:49 guenther Exp $
+.\"	$OpenBSD: ps.1,v 1.88 2014/01/20 21:20:10 guenther Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ps.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: December 27 2013 $
+.Dd $Mdocdate: January 20 2014 $
 .Dt PS 1
 .Os
 .Sh NAME
@@ -236,13 +236,11 @@ P_TIMEOUT       0x400 timing out during sleep
 P_WEXIT        0x2000 working on exiting
 P_OWEUPC       0x8000 profiling sample needs recording
 P_SUSPSINGLE  0x80000 need to suspend for single threading
-P_NOZOMBIE   0x100000 pid 1 waits for me instead of dad
 P_SYSTRACE   0x400000 systrace(4) policy is active
 P_CONTINUED  0x800000 thread has continued after a stop
 P_THREAD    0x4000000 not the original thread
 P_SUSPSIG   0x8000000 stopped because of a signal
 P_SOFTDEP  0x10000000 stuck processing softdep worklist
-P_STOPPED  0x20000000 just stopped, need to send SIGCHLD
 P_CPUPEG   0x40000000 do not move to another cpu
 .Ed
 .It Cm gid
@@ -338,6 +336,8 @@ PS_WAITED        0x400 debugging process has waited for
 PS_COREDUMP      0x800 busy coredumping
 PS_SINGLEEXIT   0x1000 other threads must die
 PS_SINGLEUNWIND 0x2000 other threads must unwind
+PS_NOZOMBIE     0x4000 pid 1 waits for me instead of dad
+PS_STOPPED      0x8000 just stopped, need to send SIGCHLD
 .Ed
 .It Cm re
 Core residency time (in seconds; 127 = infinity).
