@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.17 2013/12/22 21:03:45 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.18 2014/01/20 09:36:46 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -712,6 +712,8 @@ radeondrm_activate_kms(struct device *arg, int act)
 	case DVACT_SUSPEND:
 		break;
 	case DVACT_RESUME:
+		break;
+	case DVACT_WAKEUP:
 		radeon_resume_kms(rdev->ddev);
 		break;
 	}
