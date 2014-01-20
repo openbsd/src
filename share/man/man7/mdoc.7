@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.105 2013/12/30 09:47:43 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.106 2014/01/20 00:51:07 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 30 2013 $
+.Dd $Mdocdate: January 20 2014 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1305,70 +1305,70 @@ It should be capitalised.
 .It Ar section
 The manual section.
 This may be one of
-.Ar 1
+.Cm 1
 .Pq utilities ,
-.Ar 2
+.Cm 2
 .Pq system calls ,
-.Ar 3
+.Cm 3
 .Pq libraries ,
-.Ar 3p
+.Cm 3p
 .Pq Perl libraries ,
-.Ar 4
+.Cm 4
 .Pq devices ,
-.Ar 5
+.Cm 5
 .Pq file formats ,
-.Ar 6
+.Cm 6
 .Pq games ,
-.Ar 7
+.Cm 7
 .Pq miscellaneous ,
-.Ar 8
+.Cm 8
 .Pq system utilities ,
-.Ar 9
+.Cm 9
 .Pq kernel functions ,
-.Ar X11
+.Cm X11
 .Pq X Window System ,
-.Ar X11R6
+.Cm X11R6
 .Pq X Window System ,
-.Ar unass
+.Cm unass
 .Pq unassociated ,
-.Ar local
+.Cm local
 .Pq local system ,
-.Ar draft
+.Cm draft
 .Pq draft manual ,
 or
-.Ar paper
+.Cm paper
 .Pq paper .
 It should correspond to the manual's filename suffix and defaults to
-.Dq 1
+.Cm 1
 if unspecified.
 .It Ar volume
 This overrides the volume inferred from
 .Ar section .
 This field is optional, and if specified, must be one of
-.Ar USD
+.Cm USD
 .Pq users' supplementary documents ,
-.Ar PS1
+.Cm PS1
 .Pq programmers' supplementary documents ,
-.Ar AMD
+.Cm AMD
 .Pq administrators' supplementary documents ,
-.Ar SMM
+.Cm SMM
 .Pq system managers' manuals ,
-.Ar URM
+.Cm URM
 .Pq users' reference manuals ,
-.Ar PRM
+.Cm PRM
 .Pq programmers' reference manuals ,
-.Ar KM
+.Cm KM
 .Pq kernel manuals ,
-.Ar IND
+.Cm IND
 .Pq master index ,
-.Ar MMI
+.Cm MMI
 .Pq master index ,
-.Ar LOCAL
+.Cm LOCAL
 .Pq local manuals ,
-.Ar LOC
+.Cm LOC
 .Pq local manuals ,
 or
-.Ar CON
+.Cm CON
 .Pq contributed manuals .
 .It Ar arch
 This specifies the machine architecture a manual page applies to,
@@ -3163,9 +3163,9 @@ The following features are unimplemented in mandoc:
 .Fl file Ar file .
 .It
 .Sx \&Bd
-.Fl offset Ar center
+.Fl offset Cm center
 and
-.Fl offset Ar right .
+.Fl offset Cm right .
 Groff does not implement centred and flush-right rendering either,
 but produces large indentations.
 .It
