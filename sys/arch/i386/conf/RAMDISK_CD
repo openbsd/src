@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.207 2013/12/20 21:50:49 matthew Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.208 2014/01/20 21:57:03 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -256,6 +256,11 @@ wdc*	at isapnp?
 # IDE hard drives
 wd*	at wdc? flags 0x0000
 wd*	at pciide? flags 0x0000
+
+sdhc*   at pci?                 # SD Host Controller
+sdmmc*  at sdhc?                # SD/MMC bus
+rtsx*   at pci?                 # Realtek SD Card Reader
+sdmmc*  at rtsx?                # SD/MMC bus
 
 # ATAPI<->SCSI
 atapiscsi* at wdc?
