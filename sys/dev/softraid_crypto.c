@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.98 2013/12/21 20:46:20 guenther Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.99 2014/01/20 04:12:51 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -332,9 +332,6 @@ sr_crypto_wu_get(struct sr_workunit *wu, int encrypt)
 	return (crwu);
 
 unwind:
-	/* steal the descriptors back from the cryptop */
-	crwu->cr_crp->crp_desc = NULL;
-
 	return (NULL);
 }
 
@@ -347,9 +344,6 @@ sr_crypto_wu_put(struct sr_crypto_wu *crwu)
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_wu_put crwu: %p\n",
 	    DEVNAME(wu->swu_dis->sd_sc), crwu);
-
-	/* steal the descriptors back from the cryptop */
-	crp->crp_desc = NULL;
 
 	mtx_enter(&sd->mds.mdd_crypto.scr_mutex);
 	TAILQ_INSERT_TAIL(&sd->mds.mdd_crypto.scr_wus, crwu, cr_link);
@@ -996,9 +990,7 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 		crwu->cr_crp = crypto_getreq(MAXPHYS >> DEV_BSHIFT);
 		if (crwu->cr_crp == NULL)
 			return (ENOMEM);
-		/* steal the list of cryptodescs */
 		crwu->cr_descs = crwu->cr_crp->crp_desc;
-		crwu->cr_crp->crp_desc = NULL;
 	}
 
 	bzero(&cri, sizeof(cri));
@@ -1067,7 +1059,6 @@ sr_crypto_free_resources(struct sr_discipline *sd)
 		if (crwu->cr_dmabuf != NULL)
 			dma_free(crwu->cr_dmabuf, MAXPHYS);
 		if (crwu->cr_crp) {
-			/* twiddle cryptoreq back */
 			crwu->cr_crp->crp_desc = crwu->cr_descs;
 			crypto_freereq(crwu->cr_crp);
 		}
