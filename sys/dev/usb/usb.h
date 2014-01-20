@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.44 2013/04/17 11:53:10 mglocker Exp $ */
+/*	$OpenBSD: usb.h,v 1.45 2014/01/20 17:23:17 jcs Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -418,6 +418,7 @@ typedef struct {
 #define UICLASS_HID		0x03
 #define  UISUBCLASS_BOOT	1
 #define  UIPROTO_BOOT_KEYBOARD	1
+#define  UIPROTO_BOOT_MOUSE	2
 
 #define UICLASS_PHYSICAL	0x05
 
