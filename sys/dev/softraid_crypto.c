@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.101 2014/01/20 04:38:58 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.102 2014/01/20 10:54:54 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -949,6 +949,7 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 		sd->mds.mdd_crypto.scr_klen = 512;
 		break;
 	default:
+		sr_error(sd->sd_sc, "unknown crypto algorithm");
 		return (EINVAL);
 	}
 
