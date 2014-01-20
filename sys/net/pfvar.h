@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.395 2014/01/03 12:48:58 pelikan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.396 2014/01/20 02:57:50 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -650,6 +650,8 @@ struct pf_rule {
 	u_int8_t		 flush;
 	u_int8_t		 set_prio[2];
 	sa_family_t		 naf;
+	u_int8_t		 rcvifnot;
+	u_int8_t		 pad[3];
 
 	struct {
 		struct pf_addr		addr;

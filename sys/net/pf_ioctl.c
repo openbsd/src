@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.267 2014/01/03 12:48:58 pelikan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.268 2014/01/20 02:57:50 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -877,6 +877,7 @@ pf_hash_rule(MD5_CTX *ctx, struct pf_rule *rule)
 	PF_MD5_UPD(rule, af);
 	PF_MD5_UPD(rule, quick);
 	PF_MD5_UPD(rule, ifnot);
+	PF_MD5_UPD(rule, rcvifnot);
 	PF_MD5_UPD(rule, match_tag_not);
 	PF_MD5_UPD(rule, keep_state);
 	PF_MD5_UPD(rule, proto);
@@ -2855,6 +2856,7 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to,
 #endif
 	to->quick = from->quick;
 	to->ifnot = from->ifnot;
+	to->rcvifnot = from->rcvifnot;
 	to->match_tag_not = from->match_tag_not;
 	to->keep_state = from->keep_state;
 	to->af = from->af;
