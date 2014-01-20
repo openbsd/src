@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.134 2014/01/19 11:20:46 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.135 2014/01/20 22:11:42 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -101,11 +101,6 @@ struct mbuf	*rt_msg1(int, struct rt_addrinfo *);
 int		 rt_msg2(int, int, struct rt_addrinfo *, caddr_t,
 		     struct walkarg *);
 void		 rt_xaddrs(caddr_t, caddr_t, struct rt_addrinfo *);
-#ifdef RTM_OVERSION
-struct rt_msghdr *rtmsg_4to5(struct mbuf *, int *);
-struct rt_omsghdr *rtmsg_5to4(struct rt_msghdr *);
-void rt_ogetmetrics(struct rt_kmetrics *in, struct rt_ometrics *out);
-#endif /* RTM_OVERSION */
 
 /* Sleazy use of local variables throughout file, warning!!!! */
 #define dst	info.rti_info[RTAX_DST]
@@ -488,23 +483,6 @@ route_output(struct mbuf *m, ...)
 	}
 	vers = mtod(m, struct rt_msghdr *)->rtm_version;
 	switch (vers) {
-#ifdef RTM_OVERSION
-	case RTM_OVERSION:
-		if (len < sizeof(struct rt_omsghdr)) {
-			error = EINVAL;
-			goto fail;
-		}
-		if (len > RTM_MAXSIZE) {
-			error = EMSGSIZE;
-			goto fail;
-		}
-		rtm = rtmsg_4to5(m, &len);
-		if (rtm == 0) {
-			error = ENOBUFS;
-			goto fail;
-		}
-		break;
-#endif /* RTM_OVERSION */
 	case RTM_VERSION:
 		if (len < sizeof(struct rt_msghdr)) {
 			error = EINVAL;
@@ -927,18 +905,6 @@ fail:
 	if (rp)
 		rp->rcb_proto.sp_family = 0; /* Avoid us */
 	if (rtm) {
-#ifdef RTM_OVERSION
-		if (vers == RTM_OVERSION) {
-			struct rt_omsghdr *ortm;
-
-			if ((ortm = rtmsg_5to4(rtm)) == NULL ||
-			    m_copyback(m, 0, ortm->rtm_msglen, ortm, M_NOWAIT)){
-				m_freem(m);
-				m = NULL;
-			} else if (m->m_pkthdr.len > ortm->rtm_msglen)
-				m_adj(m, ortm->rtm_msglen - m->m_pkthdr.len);
-		} else
-#endif /* RTM_OVERSION */
 		if (m_copyback(m, 0, rtm->rtm_msglen, rtm, M_NOWAIT)) {
 			m_freem(m);
 			m = NULL;
@@ -973,18 +939,6 @@ rt_getmetrics(struct rt_kmetrics *in, struct rt_metrics *out)
 	out->rmx_expire = in->rmx_expire;
 	out->rmx_pksent = in->rmx_pksent;
 }
-
-#ifdef RTM_OVERSION
-void
-rt_ogetmetrics(struct rt_kmetrics *in, struct rt_ometrics *out)
-{
-	bzero(out, sizeof(*out));
-	out->rmx_locks = in->rmx_locks;
-	out->rmx_mtu = in->rmx_mtu;
-	out->rmx_expire = (u_int)in->rmx_expire;
-	out->rmx_pksent = in->rmx_pksent;
-}
-#endif /* RTM_OVERSION */
 
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -1082,11 +1036,6 @@ again:
 		len = sizeof(struct if_msghdr);
 		break;
 	default:
-#ifdef RTM_OVERSION
-		if (vers == RTM_OVERSION)
-			len = sizeof(struct rt_omsghdr);
-		else
-#endif /* RTM_OVERSION */
 		len = sizeof(struct rt_msghdr);
 		break;
 	}
@@ -1130,16 +1079,6 @@ again:
 	if (cp && w)		/* clear the message header */
 		bzero(cp0, hlen);
 
-#ifdef RTM_OVERSION
-	if (cp && vers == RTM_OVERSION) {
-		struct rt_omsghdr *rtm = (struct rt_omsghdr *)cp0;
-
-		rtm->rtm_version = RTM_OVERSION;
-		rtm->rtm_type = type;
-		rtm->rtm_msglen = len;
-		rtm->rtm_hdrlen = hlen;
-	} else
-#endif /* RTM_OVERSION */
 	if (cp) {
 		struct rt_msghdr *rtm = (struct rt_msghdr *)cp0;
 
@@ -1376,27 +1315,6 @@ sysctl_dumpentry(struct radix_node *rn, void *v, u_int id)
 		else
 			w->w_where += size;
 	}
-#ifdef RTM_OVERSION
-	size = rt_msg2(RTM_GET, RTM_OVERSION, &info, NULL, w);
-	if (w->w_where && w->w_tmem && w->w_needed <= 0) {
-		struct rt_omsghdr *rtm = (struct rt_omsghdr *)w->w_tmem;
-
-		rtm->rtm_flags = rt->rt_flags;
-		rtm->rtm_priority = rt->rt_priority & RTP_MASK;
-		rt_ogetmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
-		rtm->rtm_rmx.rmx_refcnt = rt->rt_refcnt;
-		rtm->rtm_index = rt->rt_ifp->if_index;
-		rtm->rtm_addrs = info.rti_addrs;
-		rtm->rtm_tableid = id;
-#ifdef MPLS
-		rtm->rtm_mpls = info.rti_mpls;
-#endif
-		if ((error = copyout(rtm, w->w_where, size)) != 0)
-			w->w_where = NULL;
-		else
-			w->w_where += size;
-	}
-#endif
 	return (error);
 }
 
@@ -1431,23 +1349,6 @@ sysctl_iflist(int af, struct walkarg *w)
 				return (error);
 			w->w_where += len;
 		}
-#ifdef RTM_OVERSION
-		len = rt_msg2(RTM_IFINFO, RTM_OVERSION, &info, 0, w);
-		if (w->w_where && w->w_tmem && w->w_needed <= 0) {
-			struct if_msghdr *ifm;
-
-			ifm = (struct if_msghdr *)w->w_tmem;
-			ifm->ifm_index = ifp->if_index;
-			ifm->ifm_tableid = ifp->if_rdomain;
-			ifm->ifm_flags = ifp->if_flags;
-			ifm->ifm_data = ifp->if_data;
-			ifm->ifm_addrs = info.rti_addrs;
-			error = copyout(ifm, w->w_where, len);
-			if (error)
-				return (error);
-			w->w_where += len;
-		}
-#endif /* RTM_OVERSION */
 		ifpaddr = 0;
 		while ((ifa = TAILQ_NEXT(ifa, ifa_list)) != NULL) {
 			if (af && af != ifa->ifa_addr->sa_family)
@@ -1469,22 +1370,6 @@ sysctl_iflist(int af, struct walkarg *w)
 					return (error);
 				w->w_where += len;
 			}
-#ifdef RTM_OVERSION
-			len = rt_msg2(RTM_NEWADDR, RTM_OVERSION, &info, 0, w);
-			if (w->w_where && w->w_tmem && w->w_needed <= 0) {
-				struct ifa_msghdr *ifam;
-
-				ifam = (struct ifa_msghdr *)w->w_tmem;
-				ifam->ifam_index = ifa->ifa_ifp->if_index;
-				ifam->ifam_flags = ifa->ifa_flags;
-				ifam->ifam_metric = ifa->ifa_metric;
-				ifam->ifam_addrs = info.rti_addrs;
-				error = copyout(w->w_tmem, w->w_where, len);
-				if (error)
-					return (error);
-				w->w_where += len;
-			}
-#endif /* RTM_OVERSION */
 		}
 		ifaaddr = netmask = brdaddr = 0;
 	}
@@ -1568,92 +1453,6 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 
 	return (error);
 }
-
-#ifdef RTM_OVERSION
-struct rt_msghdr *
-rtmsg_4to5(struct mbuf *m, int *len)
-{
-	struct rt_msghdr *rtm;
-	struct rt_omsghdr ortm;
-
-	*len += sizeof(struct rt_msghdr) - sizeof(struct rt_omsghdr);
-	rtm = malloc(*len, M_RTABLE, M_NOWAIT);
-	if (rtm == NULL)
-		return (NULL);
-	bzero(rtm, sizeof(struct rt_msghdr));
-	m_copydata(m, 0, sizeof(struct rt_omsghdr), (caddr_t)&ortm);
-	rtm->rtm_msglen = *len;
-	rtm->rtm_version = RTM_VERSION;
-	rtm->rtm_type = ortm.rtm_type;
-	rtm->rtm_hdrlen = sizeof(struct rt_msghdr);
-
-	rtm->rtm_index = ortm.rtm_index;
-	rtm->rtm_tableid = ortm.rtm_tableid;
-	rtm->rtm_priority = ortm.rtm_priority;
-	rtm->rtm_mpls = ortm.rtm_mpls;
-	rtm->rtm_addrs = ortm.rtm_addrs;
-	rtm->rtm_flags = ortm.rtm_flags;
-	rtm->rtm_fmask = ortm.rtm_fmask;
-	rtm->rtm_pid = ortm.rtm_pid;
-	rtm->rtm_seq = ortm.rtm_seq;
-	rtm->rtm_errno = ortm.rtm_errno;
-	rtm->rtm_inits = ortm.rtm_inits;
-
-	/* copy just the interesting stuff ignore the rest */
-	rtm->rtm_rmx.rmx_pksent = ortm.rtm_rmx.rmx_pksent;
-	rtm->rtm_rmx.rmx_expire = (int64_t)ortm.rtm_rmx.rmx_expire;
-	rtm->rtm_rmx.rmx_locks = ortm.rtm_rmx.rmx_locks;
-	rtm->rtm_rmx.rmx_mtu = ortm.rtm_rmx.rmx_mtu;
-
-	m_copydata(m, sizeof(struct rt_omsghdr),
-	    *len - sizeof(struct rt_msghdr),
-	    (caddr_t)rtm + sizeof(struct rt_msghdr));
-
-	return (rtm);
-}
-
-struct rt_omsghdr *
-rtmsg_5to4(struct rt_msghdr *rtm)
-{
-	struct rt_omsghdr *ortm;
-	int len;
-
-	len = rtm->rtm_msglen + sizeof(struct rt_omsghdr) -
-	    sizeof(struct rt_msghdr);
-	ortm = malloc(len, M_RTABLE, M_NOWAIT);
-	if (ortm == NULL)
-		return (NULL);
-	bzero(ortm, sizeof(struct rt_omsghdr));
-	ortm->rtm_msglen = len;
-	ortm->rtm_version = RTM_OVERSION;
-	ortm->rtm_type = rtm->rtm_type;
-	ortm->rtm_hdrlen = sizeof(struct rt_omsghdr);
-
-	ortm->rtm_index = rtm->rtm_index;
-	ortm->rtm_tableid = rtm->rtm_tableid;
-	ortm->rtm_priority = rtm->rtm_priority;
-	ortm->rtm_mpls = rtm->rtm_mpls;
-	ortm->rtm_addrs = rtm->rtm_addrs;
-	ortm->rtm_flags = rtm->rtm_flags;
-	ortm->rtm_fmask = rtm->rtm_fmask;
-	ortm->rtm_pid = rtm->rtm_pid;
-	ortm->rtm_seq = rtm->rtm_seq;
-	ortm->rtm_errno = rtm->rtm_errno;
-	ortm->rtm_inits = rtm->rtm_inits;
-
-	/* copy just the interesting stuff ignore the rest */
-	ortm->rtm_rmx.rmx_pksent = rtm->rtm_rmx.rmx_pksent;
-	ortm->rtm_rmx.rmx_expire = (u_int)rtm->rtm_rmx.rmx_expire;
-	ortm->rtm_rmx.rmx_locks = rtm->rtm_rmx.rmx_locks;
-	ortm->rtm_rmx.rmx_mtu = rtm->rtm_rmx.rmx_mtu;
-
-	memcpy((caddr_t)ortm + sizeof(struct rt_omsghdr),
-	    (caddr_t)rtm + sizeof(struct rt_msghdr),
-	    len - sizeof(struct rt_omsghdr));
-
-	return (ortm);
-}
-#endif /* RTM_OVERSION */
 
 /*
  * Definitions of protocols supported in the ROUTE domain.
