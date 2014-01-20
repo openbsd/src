@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.96 2014/01/18 01:10:36 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.97 2014/01/20 21:10:55 naddy Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1217,7 +1217,7 @@ sub sign_existing_package
 	    chdir($output);
 	    open(STDOUT, '>>', 'SHA256');
 	    },
-	    OpenBSD::Paths->sha256, $plist->pkgname.".tgz");
+	    OpenBSD::Paths->sha256, '-b', $plist->pkgname.".tgz");
 }
 
 sub sign_list
