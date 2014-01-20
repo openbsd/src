@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.183 2013/01/18 05:49:52 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.184 2014/01/20 02:20:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -797,7 +797,7 @@ mpi_inq(struct mpi_softc *sc, u_int16_t target, int physdisk)
 	io->direction = MPI_SCSIIO_DIR_READ;
 	io->tagging = MPI_SCSIIO_ATTR_NO_DISCONNECT;
 
-	bcopy(&inq, io->cdb, sizeof(inq));
+	memcpy(io->cdb, &inq, sizeof(inq));
 
 	io->data_length = htole32(sizeof(struct scsi_inquiry_data));
 
@@ -1354,7 +1354,7 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	else 
 		io->tagging = MPI_SCSIIO_ATTR_SIMPLE_Q;
 
-	bcopy(xs->cmd, io->cdb, xs->cmdlen);
+	memcpy(io->cdb, xs->cmd, xs->cmdlen);
 
 	io->data_length = htole32(xs->datalen);
 
@@ -1488,13 +1488,15 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 	}
 
 	if (sie->scsi_state & MPI_SCSIIO_ERR_STATE_AUTOSENSE_VALID)
-		bcopy(&mcb->mcb_sense, &xs->sense, sizeof(xs->sense));
+		memcpy(&xs->sense, &mcb->mcb_sense, sizeof(xs->sense));
 
 	DNPRINTF(MPI_D_CMD, "%s:  xs err: 0x%02x status: %d\n", DEVNAME(sc),
 	    xs->error, xs->status);
 
 	mpi_push_reply(sc, ccb->ccb_rcb);
+	KERNEL_LOCK();
 	scsi_done(xs);
+	KERNEL_UNLOCK();
 }
 
 void
@@ -2898,7 +2900,7 @@ mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int flags,
 	kva = ccb->ccb_cmd;
 	kva += sizeof(struct mpi_msg_config_request);
 	if (!read)
-		bcopy(page, kva, len);
+		memcpy(kva, page, len);
 
 	ccb->ccb_done = mpi_empty_done;
 	if (ISSET(flags, MPI_PG_POLL)) {
@@ -2938,7 +2940,7 @@ mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int flags,
 	if (letoh16(cp->ioc_status) != MPI_IOCSTATUS_SUCCESS)
 		rv = 1;
 	else if (read)
-		bcopy(kva, page, len);
+		memcpy(page, kva, len);
 
 	mpi_push_reply(sc, ccb->ccb_rcb);
 	scsi_io_put(&sc->sc_iopool, ccb);
