@@ -1,4 +1,4 @@
-.\"   $OpenBSD: slowcgi.8,v 1.6 2014/01/19 12:47:21 deraadt Exp $
+.\"   $OpenBSD: slowcgi.8,v 1.7 2014/01/20 13:00:31 florian Exp $
 .\"
 .\" Copyright (c) 2013 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 19 2014 $
+.Dd $Mdocdate: January 20 2014 $
 .Dt SLOWCGI 8
 .Os
 .Sh NAME
@@ -27,6 +27,24 @@
 .Sh DESCRIPTION
 .Nm
 is a server which implements the FastCGI Protocol to execute CGI scripts.
+FastCGI was designed to overcome the CGI protocol's scalability
+and resource sharing limitations.
+While CGI scripts need to be forked for every request, FastCGI scripts
+can be kept running and handle many HTTP requests.
+.Pp
+.Xr nginx 8
+intentionally does not implement the CGI protocol.
+.Nm
+is a simple server that translates FastCGI requests coming from
+.Xr nginx 8
+to the CGI protocol.
+It executes the requested CGI script and translates its output back to the
+FastCGI protocol.
+.Pp
+Modern web frameworks and web applications usually come with the
+capability to run as FastCGI servers.
+.Nm
+is not intended for these applications.
 .Pp
 .Nm
 opens a socket at
@@ -65,3 +83,8 @@ Create and bind to alternative local socket at
 .%R RFC 3875
 .%T The Common Gateway Interface (CGI) Version 1.1
 .Re
+.Sh BUGS
+.Nm
+only implements the parts of the FastCGI standard needed to execute
+CGI scripts.
+This is intentional.
