@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.31 2013/11/16 00:37:11 guenther Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.32 2014/01/20 04:27:32 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -399,11 +399,11 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		}
 		proc.p_fd = &filed;
 
-		if (proc.p_textvp) {
+		if (process.ps_textvp) {
 			if (buflen < esize)
 				goto done;
-			if (fill_file(kd, &kf, NULL, 0, proc.p_textvp, &proc,
-			    KERN_FILE_TEXT, pid) == -1)
+			if (fill_file(kd, &kf, NULL, 0, process.ps_textvp,
+			    &proc, KERN_FILE_TEXT, pid) == -1)
 				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
