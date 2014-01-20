@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.73 2014/01/20 17:17:08 chris Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.74 2014/01/20 17:21:22 chris Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -586,7 +586,7 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 		printf(": failed to fetch MAC address\n");
 		goto fail_2;
 	}
-	bcopy(sc->sc_macaddr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
+	memcpy(sc->sc_ac.ac_enaddr, sc->sc_macaddr, ETHER_ADDR_LEN);
 
 	if (oce_pkt_pool == NULL) {
 		oce_pkt_pool = malloc(sizeof(struct pool), M_DEVBUF, M_NOWAIT);
@@ -931,7 +931,7 @@ oce_iff(struct oce_softc *sc)
 	} else {
 		ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
 		while (enm != NULL) {
-			bcopy(enm->enm_addrlo, multi[naddr++], ETHER_ADDR_LEN);
+			memcpy(multi[naddr++], enm->enm_addrlo, ETHER_ADDR_LEN);
 			ETHER_NEXT_MULTI(step, enm);
 		}
 		oce_update_mcast(sc, multi, naddr);
@@ -2819,13 +2819,13 @@ oce_cmd(struct oce_softc *sc, int subsys, int opcode, int version,
 	if (epayload) {
 		mbx->flags = OCE_MBX_F_SGE;
 		oce_dma_sync(&sc->sc_pld, BUS_DMASYNC_PREREAD);
-		bcopy(payload, epayload, length);
+		memcpy(epayload, payload, length);
 		mbx->pld.sgl[0].addr = OCE_MEM_DVA(&sc->sc_pld);
 		mbx->pld.sgl[0].length = length;
 		hdr = (struct mbx_hdr *)epayload;
 	} else {
 		mbx->flags = OCE_MBX_F_EMBED;
-		bcopy(payload, mbx->pld.data, length);
+		memcpy(mbx->pld.data, payload, length);
 		hdr = (struct mbx_hdr *)&mbx->pld.data;
 	}
 
@@ -2845,9 +2845,9 @@ oce_cmd(struct oce_softc *sc, int subsys, int opcode, int version,
 	if (err == 0) {
 		if (epayload) {
 			oce_dma_sync(&sc->sc_pld, BUS_DMASYNC_POSTWRITE);
-			bcopy(epayload, payload, length);
+			memcpy(payload, epayload, length);
 		} else
-			bcopy(&mbx->pld.data, payload, length);
+			memcpy(payload, &mbx->pld.data, length);
 	} else
 		printf("%s: mailbox timeout, subsys %d op %d ver %d "
 		    "%spayload lenght %d\n", sc->sc_dev.dv_xname, subsys,
@@ -2968,7 +2968,7 @@ oce_create_iface(struct oce_softc *sc, uint8_t *macaddr)
 	cmd.params.req.cap_flags = htole32(caps);
 	cmd.params.req.enable_flags = htole32(caps_en);
 	if (macaddr != NULL) {
-		bcopy(macaddr, &cmd.params.req.mac_addr[0], ETHER_ADDR_LEN);
+		memcpy(&cmd.params.req.mac_addr[0], macaddr, ETHER_ADDR_LEN);
 		cmd.params.req.mac_invalid = 0;
 	} else
 		cmd.params.req.mac_invalid = 1;
@@ -3009,7 +3009,7 @@ oce_config_vlan(struct oce_softc *sc, struct normal_vlan *vtags, int nvtags,
 	cmd.params.req.num_vlans = nvtags;
 
 	if (!promisc)
-		bcopy(vtags, cmd.params.req.tags.normal_vlans,
+		memcpy(cmd.params.req.tags.normal_vlans, vtags,
 			nvtags * sizeof(struct normal_vlan));
 
 	return (oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_CONFIG_IFACE_VLAN,
@@ -3114,7 +3114,7 @@ oce_update_mcast(struct oce_softc *sc,
 
 	memset(&cmd, 0, sizeof(cmd));
 
-	bcopy(&multi[0], &cmd.params.req.mac[0], naddr * ETHER_ADDR_LEN);
+	memcpy(&cmd.params.req.mac[0], &multi[0], naddr * ETHER_ADDR_LEN);
 	cmd.params.req.num_mac = htole16(naddr);
 	cmd.params.req.if_id = sc->sc_if_id;
 
@@ -3210,7 +3210,7 @@ oce_macaddr_get(struct oce_softc *sc, uint8_t *macaddr)
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_QUERY_IFACE_MAC,
 	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
 	if (err == 0)
-		bcopy(&cmd.params.rsp.mac.mac_addr[0], macaddr,
+		memcpy(macaddr, &cmd.params.rsp.mac.mac_addr[0],
 		    ETHER_ADDR_LEN);
 	return (err);
 }
@@ -3224,7 +3224,7 @@ oce_macaddr_add(struct oce_softc *sc, uint8_t *enaddr, uint32_t *pmac)
 	memset(&cmd, 0, sizeof(cmd));
 
 	cmd.params.req.if_id = htole16(sc->sc_if_id);
-	bcopy(enaddr, cmd.params.req.mac_address, ETHER_ADDR_LEN);
+	memcpy(cmd.params.req.mac_address, enaddr, ETHER_ADDR_LEN);
 
 	err = oce_cmd(sc, SUBSYS_COMMON, OPCODE_COMMON_ADD_IFACE_MAC,
 	    OCE_MBX_VER_V0, &cmd, sizeof(cmd));
