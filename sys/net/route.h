@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.84 2014/01/20 22:11:42 bluhm Exp $	*/
+/*	$OpenBSD: route.h,v 1.85 2014/01/20 22:44:41 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -92,10 +92,9 @@ struct rt_metrics {
  * gateways are marked so that the output routines know to address the
  * gateway rather than the ultimate destination.
  */
-#ifndef RNF_NORMAL
 #include <net/radix.h>
 #include <net/radix_mpath.h>
-#endif
+
 struct rtentry {
 	struct	radix_node rt_nodes[2];	/* tree glue, and other values */
 #define	rt_key(r)	((struct sockaddr *)((r)->rt_nodes->rn_key))
