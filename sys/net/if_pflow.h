@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.h,v 1.9 2013/08/13 08:44:05 florian Exp $	*/
+/*	$OpenBSD: if_pflow.h,v 1.10 2014/01/20 10:46:53 benno Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -247,8 +247,6 @@ struct pflow_ipfix_flow6 {
 } __packed;
 
 #ifdef _KERNEL
-
-extern int pflow_ok;
 
 struct pflow_softc {
 	struct ifnet		 sc_if;
