@@ -1,8 +1,8 @@
-.\" $OpenBSD: rpcgen.1,v 1.15 2013/01/17 21:29:15 jmc Exp $
+.\" $OpenBSD: rpcgen.1,v 1.16 2014/01/20 05:07:48 schwarze Exp $
 .\" $NetBSD: rpcgen.1,v 1.5.2.1 1995/12/05 02:51:02 jtc Exp $
 .\" from: @(#)rpcgen.new.1	1.1 90/11/09 TIRPC 1.0; from 40.10 of 10/10/89
 .\" Copyright (c) 1988,1990 Sun Microsystems, Inc. - All Rights Reserved.
-.Dd $Mdocdate: January 17 2013 $
+.Dd $Mdocdate: January 20 2014 $
 .Dt RPCGEN 1
 .Os
 .Sh NAME
@@ -246,8 +246,8 @@ To create a server that never exits, the appropriate argument is
 .Pp
 When monitoring for a server,
 some port monitors, like the
-.Tn SVR4
-.Xr listen
+.At V
+.Sy listen
 utility,
 .Em always
 spawn a new process in response to a service request.

@@ -26,10 +26,10 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.23 2013/07/20 18:11:57 kili Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.24 2014/01/20 05:07:48 schwarze Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
-.Dd $Mdocdate: July 20 2013 $
+.Dd $Mdocdate: January 20 2014 $
 .Dt SYSLOG.CONF 5
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@ field which specifies the types of messages and priorities to which the
 line applies, and an
 .Em action
 field which specifies the action to be taken if a message
-.Xr syslogd
+.Xr syslogd 8
 receives matches the selection criteria.
 The
 .Em selector
@@ -97,7 +97,7 @@ These keywords correspond to the
 similar
 .Pq Dv LOG_
 values specified to the
-.Xr syslog
+.Xr syslog 3
 library routine.
 .Pp
 Each block of lines is separated from the previous block by a tag.
@@ -215,7 +215,7 @@ A hostname (preceded by an at
 .Pq Ql @
 sign).
 Selected messages are forwarded to the
-.Xr syslogd
+.Xr syslogd 8
 program on the named host.
 A port number may be optionally specified using the
 .Ar host:port

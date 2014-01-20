@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.86 2013/03/14 20:30:41 halex Exp $
+.\"	$OpenBSD: find.1,v 1.87 2014/01/20 05:07:48 schwarze Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 14 2013 $
+.Dd $Mdocdate: January 20 2014 $
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -113,8 +113,7 @@ Permit
 .Nm
 to be safely used in conjunction with
 .Xr xargs 1 .
-If a file name contains any of the delimiting characters used by
-.Xr xargs ,
+If a file name contains any of the delimiting characters used by xargs,
 a diagnostic message is displayed on standard error, and the file
 is skipped.
 The delimiting characters include single

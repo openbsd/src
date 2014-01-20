@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.113 2014/01/14 17:52:15 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.114 2014/01/20 05:07:49 schwarze Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: January 14 2014 $
+.Dd $Mdocdate: January 20 2014 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -461,9 +461,7 @@ Additional i386 console fonts.
 .Pp
 .It mk/
 Templates for
-.Xr make
-(see
-.Xr make 1 ) .
+.Xr make 1 .
 .It nls/
 National Language Support (NLS) catalogs.
 .It sendmail/
@@ -637,10 +635,10 @@ Timestamps for
 .El
 .Pp
 .It rwho/
-.Xr rwho
-data files (see
-.Xr rwhod 8 ,
-.Xr rwho 1 ,
+Data files for
+.Xr rwho 1
+(also see
+.Xr rwhod 8
 and
 .Xr ruptime 1 ) .
 .It spool/
@@ -656,9 +654,8 @@ Commonly ~ftp; the anonymous ftp root directory.
 .It lock/
 Lock files for utilities such as
 .Xr cu 1 ,
-.Xr tip 1
-and
-.Xr uucp .
+.Xr tip 1 ,
+and uucp.
 .It mqueue/
 Undelivered mail queue (see
 .Xr sendmail 8 ) .
@@ -668,8 +665,7 @@ Line printer spooling directories.
 Mail spool for
 .Xr smtpd 8 .
 .It uucp/
-.Xr uucp
-spool directory.
+uucp spool directory.
 .It uucppublic/
 Commonly ~uucp; public uucp temporary directory.
 .El
