@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.251 2013/12/24 13:23:21 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.252 2014/01/20 00:47:21 claudio Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1564,7 +1564,7 @@ acpi_reset(void)
 	 * RESET_REG_SUP is not properly set in some implementations,
 	 * but not testing against it breaks more machines than it fixes
 	 */
-	if (sc->sc_revision <= 1 ||
+	if (fadt->hdr_revision <= 1 ||
 	    !(fadt->flags & FADT_RESET_REG_SUP) || fadt->reset_reg.address == 0)
 		return;
 
