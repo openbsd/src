@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.184 2014/01/20 02:20:27 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.185 2014/01/20 02:22:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -357,7 +357,7 @@ mpi_attach(struct mpi_softc *sc)
 	sc->sc_link.openings = MAX(sc->sc_maxcmds / sc->sc_buswidth, 16);
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
+	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	/* config_found() returns the scsibus attached to us */
@@ -761,7 +761,7 @@ mpi_inq(struct mpi_softc *sc, u_int16_t target, int physdisk)
 
 	DNPRINTF(MPI_D_PPR, "%s: mpi_inq\n", DEVNAME(sc));
 
-	bzero(&inq, sizeof(inq));
+	memset(&inq, 0, sizeof(inq));
 	inq.opcode = INQUIRY;
 	_lto2b(sizeof(struct scsi_inquiry_data), inq.length);
 
@@ -1056,7 +1056,7 @@ mpi_alloc_ccbs(struct mpi_softc *sc)
 		goto free_ccbs;
 	}
 	cmd = MPI_DMA_KVA(sc->sc_requests);
-	bzero(cmd, MPI_REQUEST_SIZE * sc->sc_maxcmds);
+	memset(cmd, 0, MPI_REQUEST_SIZE * sc->sc_maxcmds);
 
 	for (i = 0; i < sc->sc_maxcmds; i++) {
 		ccb = &sc->sc_ccbs[i];
@@ -1137,7 +1137,7 @@ mpi_put_ccb(void *xsc, void *io)
 	ccb->ccb_state = MPI_CCB_FREE;
 	ccb->ccb_cookie = NULL;
 	ccb->ccb_done = NULL;
-	bzero(ccb->ccb_cmd, MPI_REQUEST_SIZE);
+	memset(ccb->ccb_cmd, 0, MPI_REQUEST_SIZE);
 	mtx_enter(&sc->sc_ccb_mtx);
 	SLIST_INSERT_HEAD(&sc->sc_ccb_free, ccb, ccb_link);
 	mtx_leave(&sc->sc_ccb_mtx);
@@ -1301,7 +1301,7 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	if (xs->cmdlen > MPI_CDB_LEN) {
 		DNPRINTF(MPI_D_CMD, "%s: CBD too big %d\n",
 		    DEVNAME(sc), xs->cmdlen);
-		bzero(&xs->sense, sizeof(xs->sense));
+		memset(&xs->sense, 0, sizeof(xs->sense));
 		xs->sense.error_code = SSD_ERRCODE_VALID | SSD_ERRCODE_CURRENT;
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20;
@@ -1972,8 +1972,8 @@ mpi_iocfacts(struct mpi_softc *sc)
 
 	DNPRINTF(MPI_D_MISC, "%s: mpi_iocfacts\n", DEVNAME(sc));
 
-	bzero(&ifq, sizeof(ifq));
-	bzero(&ifp, sizeof(ifp));
+	memset(&ifq, 0, sizeof(ifq));
+	memset(&ifp, 0, sizeof(ifp));
 
 	ifq.function = MPI_FUNCTION_IOC_FACTS;
 	ifq.chain_offset = 0;
@@ -2088,8 +2088,8 @@ mpi_iocinit(struct mpi_softc *sc)
 
 	DNPRINTF(MPI_D_MISC, "%s: mpi_iocinit\n", DEVNAME(sc));
 
-	bzero(&iiq, sizeof(iiq));
-	bzero(&iip, sizeof(iip));
+	memset(&iiq, 0, sizeof(iiq));
+	memset(&iip, 0, sizeof(iip));
 
 	iiq.function = MPI_FUNCTION_IOC_INIT;
 	iiq.whoinit = MPI_WHOINIT_HOST_DRIVER;
@@ -2495,7 +2495,7 @@ mpi_fc_rescan(void *xsc, void *xarg)
 	sc->sc_evt_rescan_sem = 0;
 	mtx_leave(&sc->sc_evt_rescan_mtx);
 
-	bzero(devmap, sizeof(devmap));
+	memset(devmap, 0, sizeof(devmap));
 
 	do {
 		if (mpi_req_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_FC_DEV, 0,
@@ -2505,7 +2505,7 @@ mpi_fc_rescan(void *xsc, void *xarg)
 			return;
 		}
 
-		bzero(&pg, sizeof(pg));
+		memset(&pg, 0, sizeof(pg));
 		if (mpi_req_cfg_page(sc, id, 0, &hdr, 1, &pg, sizeof(pg)) != 0)
 			break;
 
@@ -2825,7 +2825,7 @@ mpi_req_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 	if (letoh16(cp->ioc_status) != MPI_IOCSTATUS_SUCCESS)
 		rv = 1;
 	else if (ISSET(flags, MPI_PG_EXTENDED)) {
-		bzero(ehdr, sizeof(*ehdr));
+		memset(ehdr, 0, sizeof(*ehdr));
 		ehdr->page_version = cp->config_header.page_version;
 		ehdr->page_number = cp->config_header.page_number;
 		ehdr->page_type = cp->config_header.page_type;
