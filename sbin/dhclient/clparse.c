@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.79 2014/01/20 00:36:52 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.80 2014/01/20 01:12:17 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -768,10 +768,8 @@ parse_reject_statement(FILE *cfile)
 	int token;
 
 	do {
-		if (!parse_ip_addr(cfile, &addr)) {
-			skip_to_semi(cfile);
+		if (!parse_ip_addr(cfile, &addr))
 			return;
-		}
 
 		elem = malloc(sizeof(struct reject_elem));
 		if (!elem)
