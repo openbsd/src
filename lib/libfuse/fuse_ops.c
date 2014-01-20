@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.20 2014/01/16 09:31:44 syl Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.21 2014/01/20 11:52:55 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -496,7 +496,8 @@ ifuse_ops_create(struct fuse *f, struct fusebuf *fbuf)
 
 	char *realname;
 
-	CHECK_OPT(create);
+	DPRINTF("Opcode:\tcreate\n");
+	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
 
 	bzero(&ffi, sizeof(ffi));
 	ffi.flags = fbuf->fb_io_flags;
@@ -505,7 +506,12 @@ ifuse_ops_create(struct fuse *f, struct fusebuf *fbuf)
 
 	free(fbuf->fb_dat);
 	realname = build_realname(f, vn->ino);
-	fbuf->fb_err = f->op.create(realname, mode,  &ffi);
+	if (f->op.create)
+		fbuf->fb_err = f->op.create(realname, mode,  &ffi);
+	else if (f->op.mknod)
+		fbuf->fb_err = f->op.mknod(realname, S_IFREG | mode, 0);
+	else
+		fbuf->fb_err = -ENOSYS;
 
 	if (!fbuf->fb_err) {
 		fbuf->fb_err = update_vattr(f, &fbuf->fb_vattr, realname, vn);
