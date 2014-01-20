@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.120 2013/12/21 19:36:42 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.121 2014/01/20 09:20:49 deraadt Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -63,7 +63,6 @@ int	 drm_lastclose(struct drm_device *);
 void	 drm_attach(struct device *, struct device *, void *);
 int	 drm_probe(struct device *, void *, void *);
 int	 drm_detach(struct device *, int);
-int	 drm_activate(struct device *, int);
 int	 drmprint(void *, const char *);
 int	 drmsubmatch(struct device *, void *, void *);
 int	 drm_dequeue_event(struct drm_device *, struct drm_file *, size_t,
@@ -288,20 +287,9 @@ drm_detach(struct device *self, int flags)
 	return 0;
 }
 
-int
-drm_activate(struct device *self, int act)
-{
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		/* FIXME */
-		break;
-	}
-	return (0);
-}
-
 struct cfattach drm_ca = {
 	sizeof(struct drm_device), drm_probe, drm_attach,
-	drm_detach, drm_activate
+	drm_detach
 };
 
 struct cfdriver drm_cd = {
