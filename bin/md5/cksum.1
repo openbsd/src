@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.29 2014/01/15 16:07:27 jmc Exp $
+.\"	$OpenBSD: cksum.1,v 1.30 2014/01/20 21:10:05 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)cksum.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: January 15 2014 $
+.Dd $Mdocdate: January 20 2014 $
 .Dt CKSUM 1
 .Os
 .Sh NAME
@@ -46,7 +46,7 @@
 .Op Fl a Ar algorithms
 .Op Fl C Ar checklist
 .Op Fl h Ar hashfile
-.Op Fl o Ar 1 | 2
+.Op Fl o Cm 1 | 2
 .Op Fl s Ar string
 .Op Ar
 .Ek
@@ -55,7 +55,7 @@
 .Op Fl a Ar algorithms
 .Op Fl C Ar checklist
 .Op Fl h Ar hashfile
-.Op Fl o Ar 1 | 2
+.Op Fl o Cm 1 | 2
 .Op Fl s Ar string
 .Op Ar
 .Sh DESCRIPTION
@@ -181,7 +181,7 @@ option.
 Place the checksum into
 .Ar hashfile
 instead of stdout.
-.It Fl o Ar 1 | 2
+.It Fl o Cm 1 | 2
 Use historic algorithms instead of the (superior) default one
 (see below).
 .It Fl p
