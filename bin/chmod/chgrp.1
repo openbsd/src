@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chgrp.1,v 1.14 2011/03/09 11:30:38 okan Exp $
+.\"	$OpenBSD: chgrp.1,v 1.15 2014/01/21 15:17:25 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     from: @(#)chgrp.1	8.3 (Berkeley) 3/31/94
 .\"
-.Dd $Mdocdate: March 9 2011 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt CHGRP 1
 .Os
 .Sh NAME
@@ -57,7 +57,7 @@ The options are as follows:
 If the
 .Fl R
 option is specified, symbolic links on the command line are followed.
-(Symbolic links encountered in the tree traversal are not followed.)
+Symbolic links encountered in the tree traversal are not followed.
 .It Fl h
 Change the group ID of the specified symbolic link.
 The
@@ -74,8 +74,12 @@ If the
 .Fl R
 option is specified, no symbolic links are followed.
 .It Fl R
-Change the group ID for the file hierarchies rooted
-in the files instead of just the files themselves.
+Recurse.
+Where
+.Ar file
+is a directory,
+change the group ID of the directory and all the files and directories
+in the file hierarchy below it.
 .El
 .Pp
 The
@@ -85,7 +89,9 @@ and
 .Fl P
 options are ignored unless the
 .Fl R
-option is specified.
+option is specified;
+if none of them are given,
+the default is to not follow symbolic links.
 In addition, these options override each other and the
 command's actions are determined by the last one specified.
 .Pp

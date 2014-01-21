@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.1,v 1.36 2011/07/13 08:12:10 sobrado Exp $
+.\"	$OpenBSD: chmod.1,v 1.37 2014/01/21 15:17:25 jmc Exp $
 .\"	$NetBSD: chmod.1,v 1.8 1995/03/21 09:02:07 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)chmod.1	8.4 (Berkeley) 3/31/94
 .\"
-.Dd $Mdocdate: July 13 2011 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt CHMOD 1
 .Os
 .Sh NAME
@@ -62,7 +62,7 @@ The options are as follows:
 If the
 .Fl R
 option is also specified, symbolic links on the command line are followed.
-(Symbolic links encountered in the tree traversal are not followed.)
+Symbolic links encountered in the tree traversal are not followed.
 .It Fl L
 If the
 .Fl R
@@ -72,9 +72,12 @@ If the
 .Fl R
 option is also specified, no symbolic links are followed.
 .It Fl R
-Recursively descend through any specified directory arguments.
-Change the modes of the file hierarchies rooted in the files
-instead of just the files themselves.
+Recurse.
+Where
+.Ar file
+is a directory,
+change the mode of the directory and all the files and directories
+in the file hierarchy below it.
 .El
 .Pp
 Symbolic links do not have modes, so unless the
@@ -91,7 +94,9 @@ and
 .Fl P
 options are ignored unless the
 .Fl R
-option is specified.
+option is specified;
+if none of them are given,
+the default is to not follow symbolic links.
 In addition, these options override each other and the
 command's actions are determined by the last one specified.
 .Pp
