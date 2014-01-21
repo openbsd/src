@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.19 2014/01/21 03:07:51 krw Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.20 2014/01/21 07:52:14 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -168,6 +168,14 @@ Some DHCP clients will support it, and others actually require it.
 This option specifies the broadcast address in use on the client's subnet.
 Legal values for broadcast addresses are specified in section 3.2.1.3 of
 RFC 1122.
+.It Ic option classless-static-routes Ar ip/prefix ip Oo , Ar ip/prefix ip ... Oc ;
+This option specifies a list of static routes in CDIR notation, which
+should be sent to the client.
+.It Ic option classless-ms-static-routes Ar ip/prefix ip Oo , Ar ip/prefix ip ... Oc ;
+This option does the same as
+.Ic classless-static-routes ,
+but uses option code 249 instead of 121,
+since Windows XP and Windows Server 2003 ignore option 121.
 .It Ic option cookie-servers Ar ip-address Oo , Ar ip-address ... Oc ;
 The
 .Ic cookie-servers
@@ -606,12 +614,6 @@ option specifies a list of WWW servers available to the client.
 This option specifies a list of systems that are running the X Window
 System Display Manager and are available to the client.
 Addresses should be listed in order of preference.
-.It Ic option classless-static-routes Ar ip/prefix ip Oo , Ar ip/prefix ip ... Oc ;
-This option specifies a list of static routes in CDIR notation, which
-should be sent to the client.
-.It Ic option classless-ms-static-routes Ar ip/prefix ip Oo , Ar ip/prefix ip ... Oc ;
-This option does the same as classless-static-routes, but uses option code 249
-instead of 121, since Windows XP and Windows Server 2003 ignore option 121.
 .El
 .Sh SEE ALSO
 .Xr dhclient.conf 5 ,
