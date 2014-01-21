@@ -1,8 +1,8 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.106 2014/01/21 07:39:14 rpe Exp $
+# $OpenBSD: sysmerge.sh,v 1.107 2014/01/21 07:58:08 ajacoutot Exp $
 #
-# Copyright (c) 2008-2013 Antoine Jacoutot <ajacoutot@openbsd.org>
+# Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -107,7 +107,7 @@ extract_set() {
 # stores local path to tgz in TGZ or XTGZ
 get_set() {
 	local _tgz=${WRKDIR}/${1##*/} _url=$1 _set=$2
-	[ -f "${_url}" ] && _url="file://$_url"
+	[ -f "${_url}" ] && _url="file://${_url}"
 	if [[ ${_url} == @(file|ftp|http|https)://*/*[!/] ]]; then 
 		${FETCH_CMD} -o ${_tgz} "${_url}" || \
 			error_rm_wrkdir "could not retrieve ${_url}"
@@ -125,8 +125,8 @@ get_sig() {
 	local _cfile=${WRKDIR}/SHA256 _src=${SETSRC:-$SM_PATH}
 	local _key="/etc/signify/$(uname -r | tr -d '.')base.pub"
 	[ -d "${_src}" ] && _src="file://${_src}"
-	${FETCH_CMD} -o "$_cfile.sig" "$_src/SHA256.sig" >/dev/null 2>&1 && \
-		signify -Vep ${_key} -x "$_cfile.sig" -m "$_cfile" || \
+	${FETCH_CMD} -o "${_cfile}.sig" "${_src}/SHA256.sig" >/dev/null 2>&1 && \
+		signify -Vep ${_key} -x "${_cfile}.sig" -m "${_cfile}" || \
 			error_rm_wrkdir "Signature check failed"
 }
 
