@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_context.c,v 1.5 2013/11/19 19:14:09 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_context.c,v 1.6 2014/01/21 08:43:56 kettenis Exp $	*/
 /*
  * Copyright © 2011-2012 Intel Corporation
  *
@@ -228,7 +228,7 @@ static int create_default_context(struct drm_i915_private *dev_priv)
 
 	ctx = create_hw_context(dev, NULL);
 	if (IS_ERR(ctx))
-		return (long)(ctx);
+		return PTR_ERR(ctx);
 
 	/* We may need to do things with the shrinker which require us to
 	 * immediately switch back to the default context. This can cause a
@@ -523,7 +523,7 @@ int i915_gem_context_create_ioctl(struct drm_device *dev, void *data,
 	ctx = create_hw_context(dev, file_priv);
 	DRM_UNLOCK();
 	if (IS_ERR(ctx))
-		return (long)(ctx);
+		return PTR_ERR(ctx);
 
 	args->ctx_id = ctx->id;
 	DRM_DEBUG_DRIVER("HW context %d created\n", args->ctx_id);
