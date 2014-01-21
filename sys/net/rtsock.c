@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.135 2014/01/20 22:11:42 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.136 2014/01/21 10:08:02 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -101,15 +101,6 @@ struct mbuf	*rt_msg1(int, struct rt_addrinfo *);
 int		 rt_msg2(int, int, struct rt_addrinfo *, caddr_t,
 		     struct walkarg *);
 void		 rt_xaddrs(caddr_t, caddr_t, struct rt_addrinfo *);
-
-/* Sleazy use of local variables throughout file, warning!!!! */
-#define dst	info.rti_info[RTAX_DST]
-#define gate	info.rti_info[RTAX_GATEWAY]
-#define netmask	info.rti_info[RTAX_NETMASK]
-#define genmask	info.rti_info[RTAX_GENMASK]
-#define ifpaddr	info.rti_info[RTAX_IFP]
-#define ifaaddr	info.rti_info[RTAX_IFA]
-#define brdaddr	info.rti_info[RTAX_BRD]
 
 struct routecb {
 	struct rawcb	rcb;
@@ -469,7 +460,7 @@ route_output(struct mbuf *m, ...)
 	so = va_arg(ap, struct socket *);
 	va_end(ap);
 
-	dst = NULL;	/* for error handling (goto flush) */
+	info.rti_info[RTAX_DST] = NULL;	/* for error handling (goto flush) */
 	if (m == 0 || ((m->m_len < sizeof(int32_t)) &&
 	    (m = m_pullup(m, sizeof(int32_t))) == 0))
 		return (ENOBUFS);
@@ -566,19 +557,23 @@ route_output(struct mbuf *m, ...)
 	info.rti_addrs = rtm->rtm_addrs;
 	rt_xaddrs(rtm->rtm_hdrlen + (caddr_t)rtm, len + (caddr_t)rtm, &info);
 	info.rti_flags = rtm->rtm_flags;
-	if (dst == 0 || dst->sa_family >= AF_MAX ||
-	    (gate != 0 && gate->sa_family >= AF_MAX)) {
+	if (info.rti_info[RTAX_DST] == NULL ||
+	    info.rti_info[RTAX_DST]->sa_family >= AF_MAX ||
+	    (info.rti_info[RTAX_GATEWAY] != NULL &&
+	     info.rti_info[RTAX_GATEWAY]->sa_family >= AF_MAX)) {
 		error = EINVAL;
 		goto flush;
 	}
-	if (genmask) {
+	if (info.rti_info[RTAX_GENMASK] != NULL) {
 		struct radix_node	*t;
-		t = rn_addmask(genmask, 0, 1);
-		if (t && genmask->sa_len >=
+		t = rn_addmask(info.rti_info[RTAX_GENMASK], 0, 1);
+		if (t && info.rti_info[RTAX_GENMASK]->sa_len >=
 		    ((struct sockaddr *)t->rn_key)->sa_len &&
-		    memcmp((caddr_t *)genmask + 1, (caddr_t *)t->rn_key + 1,
+		    memcmp((caddr_t *)info.rti_info[RTAX_GENMASK] + 1,
+		    (caddr_t *)t->rn_key + 1,
 		    ((struct sockaddr *)t->rn_key)->sa_len) - 1)
-			genmask = (struct sockaddr *)(t->rn_key);
+			info.rti_info[RTAX_GENMASK] =
+			    (struct sockaddr *)(t->rn_key);
 		else {
 			error = ENOBUFS;
 			goto flush;
@@ -590,7 +585,7 @@ route_output(struct mbuf *m, ...)
 
 	switch (rtm->rtm_type) {
 	case RTM_ADD:
-		if (gate == 0) {
+		if (info.rti_info[RTAX_GATEWAY] == NULL) {
 			error = EINVAL;
 			goto flush;
 		}
@@ -600,7 +595,7 @@ route_output(struct mbuf *m, ...)
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &saved_nrt->rt_rmx);
 			saved_nrt->rt_refcnt--;
-			saved_nrt->rt_genmask = genmask;
+			saved_nrt->rt_genmask = info.rti_info[RTAX_GENMASK];
 			/* write back the priority the kernel used */
 			rtm->rtm_priority = saved_nrt->rt_priority & RTP_MASK;
 			rtm->rtm_index = saved_nrt->rt_ifp->if_index;
@@ -618,11 +613,13 @@ route_output(struct mbuf *m, ...)
 	case RTM_GET:
 	case RTM_CHANGE:
 	case RTM_LOCK:
-		if ((rnh = rt_gettable(dst->sa_family, tableid)) == NULL) {
+		rnh = rt_gettable(info.rti_info[RTAX_DST]->sa_family, tableid);
+		if (rnh == NULL) {
 			error = EAFNOSUPPORT;
 			goto flush;
 		}
-		rt = rt_lookup(dst, netmask, tableid);
+		rt = rt_lookup(info.rti_info[RTAX_DST],
+		    info.rti_info[RTAX_NETMASK], tableid);
 		rn = (struct radix_node *)rt;
 		if (rn == NULL || (rn->rn_flags & RNF_ROOT) != 0) {
 			error = ESRCH;
@@ -634,9 +631,10 @@ route_output(struct mbuf *m, ...)
 		 * for RTM_CHANGE/LOCK, if we got multipath routes,
 		 * we require users to specify a matching RTAX_GATEWAY.
 		 *
-		 * for RTM_GET, gate is optional even with multipath.
-		 * if gate == NULL the first match is returned.
-		 * (no need to call rt_mpath_matchgate if gate == NULL)
+		 * for RTM_GET, info.rti_info[RTAX_GATEWAY] is optional
+		 * even with multipath.
+		 * if it is NULL the first match is returned (no need to
+		 * call rt_mpath_matchgate).
 		 */
 		if (rn_mpath_capable(rnh)) {
 			/* first find correct priority bucket */
@@ -651,22 +649,27 @@ route_output(struct mbuf *m, ...)
 
 			/* if multipath routes */
 			if (rt_mpath_next(rt)) { /* XXX ignores down routes */
-				if (gate)
-					rt = rt_mpath_matchgate(rt, gate, prio);
-				else if (rtm->rtm_type != RTM_GET)
+				if (info.rti_info[RTAX_GATEWAY] != NULL) {
+					rt = rt_mpath_matchgate(rt,
+					    info.rti_info[RTAX_GATEWAY], prio);
+				} else if (rtm->rtm_type != RTM_GET) {
 					/*
-					 * only RTM_GET may use an empty gate
-					 * on multipath ...
+					 * only RTM_GET may use an empty
+					 * gateway  on multipath ...
 					 */
 					rt = NULL;
-			} else if (gate && (rtm->rtm_type == RTM_GET ||
-			    rtm->rtm_type == RTM_LOCK))
+				}
+			} else if ((info.rti_info[RTAX_GATEWAY] != NULL) &&
+			    (rtm->rtm_type == RTM_GET ||
+			     rtm->rtm_type == RTM_LOCK)) {
 				/*
-				 * ... but if a gate is specified RTM_GET
-				 * and RTM_LOCK must match the gate no matter
+				 * ... but if a gateway is specified RTM_GET
+				 * and RTM_LOCK must match the gateway no matter
 				 * what.
 				 */
-				rt = rt_mpath_matchgate(rt, gate, prio);
+				rt = rt_mpath_matchgate(rt,
+				    info.rti_info[RTAX_GATEWAY], prio);
+			}
 
 			if (!rt) {
 				error = ESRCH;
@@ -686,7 +689,8 @@ route_output(struct mbuf *m, ...)
 		 * if none of them have a netmask both are host routes which is
 		 * also a perfect match.
 		 */
-		if (rtm->rtm_type != RTM_GET && !rt_mask(rt) != !netmask) {
+		if (rtm->rtm_type != RTM_GET &&
+		    !rt_mask(rt) != !info.rti_info[RTAX_NETMASK]) {
 			error = ESRCH;
 			goto flush;
 		}
@@ -694,10 +698,10 @@ route_output(struct mbuf *m, ...)
 		switch (rtm->rtm_type) {
 		case RTM_GET:
 report:
-			dst = rt_key(rt);
-			gate = rt->rt_gateway;
-			netmask = rt_mask(rt);
-			genmask = rt->rt_genmask;
+			info.rti_info[RTAX_DST] = rt_key(rt);
+			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+			info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+			info.rti_info[RTAX_GENMASK] = rt->rt_genmask;
 
 			if (rt->rt_labelid) {
 				bzero(&sa_rt, sizeof(sa_rt));
@@ -723,17 +727,18 @@ report:
 				rtm->rtm_mpls = info.rti_mpls;
 			}
 #endif
-			ifpaddr = 0;
-			ifaaddr = 0;
+			info.rti_info[RTAX_IFP] = NULL;
+			info.rti_info[RTAX_IFA] = NULL;
 			if (rtm->rtm_addrs & (RTA_IFP | RTA_IFA) &&
 			    (ifp = rt->rt_ifp) != NULL) {
-				ifpaddr =
+				info.rti_info[RTAX_IFP] =
 				    TAILQ_FIRST(&ifp->if_addrlist)->ifa_addr;
-				ifaaddr = rt->rt_ifa->ifa_addr;
+				info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 				if (ifp->if_flags & IFF_POINTOPOINT)
-					brdaddr = rt->rt_ifa->ifa_dstaddr;
+					info.rti_info[RTAX_BRD] =
+					    rt->rt_ifa->ifa_dstaddr;
 				else
-					brdaddr = 0;
+					info.rti_info[RTAX_BRD] = NULL;
 				rtm->rtm_index = ifp->if_index;
 			}
 			len = rt_msg2(rtm->rtm_type, RTM_VERSION, &info, NULL,
@@ -767,23 +772,31 @@ report:
 			if ((error = rt_getifa(&info, tableid)) != 0)
 				goto flush;
 			newgate = 0;
-			if (gate)
+			if (info.rti_info[RTAX_GATEWAY] != NULL)
 				if (rt->rt_gateway == NULL ||
-				    bcmp(rt->rt_gateway, gate, gate->sa_len))
+				    bcmp(rt->rt_gateway,
+				    info.rti_info[RTAX_GATEWAY],
+				    info.rti_info[RTAX_GATEWAY]->sa_len)) {
 					newgate = 1;
-			if (gate && rt_setgate(rt, rt_key(rt), gate, tableid)) {
+				}
+			if (info.rti_info[RTAX_GATEWAY] != NULL &&
+			    rt_setgate(rt, rt_key(rt),
+			    info.rti_info[RTAX_GATEWAY], tableid)) {
 				error = EDQUOT;
 				goto flush;
 			}
-			if (ifpaddr &&
-			    (ifa = ifa_ifwithnet(ifpaddr, tableid)) &&
-			    (ifp = ifa->ifa_ifp) && (ifaaddr || gate))
-				ifa = ifaof_ifpforaddr(ifaaddr ? ifaaddr : gate,
-				    ifp);
-			else if ((ifaaddr &&
-			    (ifa = ifa_ifwithaddr(ifaaddr, tableid))) ||
-			    (gate && (ifa = ifa_ifwithroute(rt->rt_flags,
-			    rt_key(rt), gate, tableid))))
+			if (info.rti_info[RTAX_IFP] != NULL && (ifa =
+			    ifa_ifwithnet(info.rti_info[RTAX_IFP], tableid)) &&
+			    (ifp = ifa->ifa_ifp) && (info.rti_info[RTAX_IFA] ||
+			    info.rti_info[RTAX_GATEWAY]))
+				ifa = ifaof_ifpforaddr(info.rti_info[RTAX_IFA] ?
+				    info.rti_info[RTAX_IFA] :
+				    info.rti_info[RTAX_GATEWAY], ifp);
+			else if ((info.rti_info[RTAX_IFA] != NULL && (ifa =
+			    ifa_ifwithaddr(info.rti_info[RTAX_IFA], tableid)))||
+			    (info.rti_info[RTAX_GATEWAY] != NULL && (ifa =
+			    ifa_ifwithroute(rt->rt_flags, rt_key(rt),
+				    info.rti_info[RTAX_GATEWAY], tableid))))
 				ifp = ifa->ifa_ifp;
 			if (ifa) {
 				struct ifaddr *oifa = rt->rt_ifa;
@@ -855,8 +868,8 @@ report:
 			rtm->rtm_flags = rt->rt_flags;
 			if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
 				rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt);
-			if (genmask)
-				rt->rt_genmask = genmask;
+			if (info.rti_info[RTAX_GENMASK])
+				rt->rt_genmask = info.rti_info[RTAX_GENMASK];
 			if (info.rti_info[RTAX_LABEL] != NULL) {
 				char *rtlabel = ((struct sockaddr_rtlabel *)
 				    info.rti_info[RTAX_LABEL])->sr_label;
@@ -864,7 +877,8 @@ report:
 				rt->rt_labelid =
 				    rtlabel_name2id(rtlabel);
 			}
-			if_group_routechange(dst, netmask);
+			if_group_routechange(info.rti_info[RTAX_DST],
+			    info.rti_info[RTAX_NETMASK]);
 			/* FALLTHROUGH */
 		case RTM_LOCK:
 			rt->rt_rmx.rmx_locks &= ~(rtm->rtm_inits);
@@ -884,8 +898,8 @@ flush:
 			rtm->rtm_flags |= RTF_DONE;
 		}
 	}
-	if (dst)
-		route_proto.sp_protocol = dst->sa_family;
+	if (info.rti_info[RTAX_DST])
+		route_proto.sp_protocol = info.rti_info[RTAX_DST]->sa_family;
 	if (rt)
 		rtfree(rt);
 
@@ -1180,10 +1194,11 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 			else
 				ncmd = RTM_DELADDR;
 
-			ifaaddr = sa = ifa->ifa_addr;
-			ifpaddr = TAILQ_FIRST(&ifp->if_addrlist)->ifa_addr;
-			netmask = ifa->ifa_netmask;
-			brdaddr = ifa->ifa_dstaddr;
+			info.rti_info[RTAX_IFA] = sa = ifa->ifa_addr;
+			info.rti_info[RTAX_IFP] =
+			    TAILQ_FIRST(&ifp->if_addrlist)->ifa_addr;
+			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
+			info.rti_info[RTAX_BRD] = ifa->ifa_dstaddr;
 			if ((m = rt_msg1(ncmd, &info)) == NULL)
 				continue;
 			ifam = mtod(m, struct ifa_msghdr *);
@@ -1199,9 +1214,9 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 			
 			if (rt == 0)
 				continue;
-			netmask = rt_mask(rt);
-			dst = sa = rt_key(rt);
-			gate = rt->rt_gateway;
+			info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+			info.rti_info[RTAX_DST] = sa = rt_key(rt);
+			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 			if ((m = rt_msg1(cmd, &info)) == NULL)
 				continue;
 			rtm = mtod(m, struct rt_msghdr *);
@@ -1262,15 +1277,16 @@ sysctl_dumpentry(struct radix_node *rn, void *v, u_int id)
 	if (w->w_op == NET_RT_FLAGS && !(rt->rt_flags & w->w_arg))
 		return 0;
 	bzero(&info, sizeof(info));
-	dst = rt_key(rt);
-	gate = rt->rt_gateway;
-	netmask = rt_mask(rt);
-	genmask = rt->rt_genmask;
+	info.rti_info[RTAX_DST] = rt_key(rt);
+	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+	info.rti_info[RTAX_GENMASK] = rt->rt_genmask;
 	if (rt->rt_ifp) {
-		ifpaddr = TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;
-		ifaaddr = rt->rt_ifa->ifa_addr;
+		info.rti_info[RTAX_IFP] =
+		    TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;
+		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 		if (rt->rt_ifp->if_flags & IFF_POINTOPOINT)
-			brdaddr = rt->rt_ifa->ifa_dstaddr;
+			info.rti_info[RTAX_BRD] = rt->rt_ifa->ifa_dstaddr;
 	}
 	if (rt->rt_labelid) {
 		bzero(&sa_rt, sizeof(sa_rt));
@@ -1333,7 +1349,7 @@ sysctl_iflist(int af, struct walkarg *w)
 		ifa = TAILQ_FIRST(&ifp->if_addrlist);
 		if (!ifa)
 			continue;
-		ifpaddr = ifa->ifa_addr;
+		info.rti_info[RTAX_IFP] = ifa->ifa_addr;
 		len = rt_msg2(RTM_IFINFO, RTM_VERSION, &info, 0, w);
 		if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 			struct if_msghdr *ifm;
@@ -1349,13 +1365,13 @@ sysctl_iflist(int af, struct walkarg *w)
 				return (error);
 			w->w_where += len;
 		}
-		ifpaddr = 0;
+		info.rti_info[RTAX_IFP] = NULL;
 		while ((ifa = TAILQ_NEXT(ifa, ifa_list)) != NULL) {
 			if (af && af != ifa->ifa_addr->sa_family)
 				continue;
-			ifaaddr = ifa->ifa_addr;
-			netmask = ifa->ifa_netmask;
-			brdaddr = ifa->ifa_dstaddr;
+			info.rti_info[RTAX_IFA] = ifa->ifa_addr;
+			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
+			info.rti_info[RTAX_BRD] = ifa->ifa_dstaddr;
 			len = rt_msg2(RTM_NEWADDR, RTM_VERSION, &info, 0, w);
 			if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 				struct ifa_msghdr *ifam;
@@ -1371,7 +1387,8 @@ sysctl_iflist(int af, struct walkarg *w)
 				w->w_where += len;
 			}
 		}
-		ifaaddr = netmask = brdaddr = 0;
+		info.rti_info[RTAX_IFA] = info.rti_info[RTAX_NETMASK] =
+		    info.rti_info[RTAX_BRD] = NULL;
 	}
 	return (0);
 }
