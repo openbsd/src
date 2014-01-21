@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.105 2014/01/21 05:11:12 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.106 2014/01/21 05:22:21 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -96,7 +96,6 @@ int		sr_crypto_rw(struct sr_workunit *);
 int		sr_crypto_dev_rw(struct sr_workunit *, struct sr_crypto_wu *);
 void		sr_crypto_done(struct sr_workunit *);
 int		sr_crypto_read(struct cryptop *);
-void		sr_crypto_finish_io(struct sr_workunit *);
 void		sr_crypto_calculate_check_hmac_sha1(u_int8_t *, int,
 		   u_int8_t *, int, u_char *);
 void		sr_crypto_hotplug(struct sr_discipline *, struct disk *, int);
@@ -1146,7 +1145,7 @@ sr_crypto_write(struct cryptop *crp)
 		/* fail io */
 		wu->swu_xs->error = XS_DRIVER_STUFFUP;
 		s = splbio();
-		sr_crypto_finish_io(wu);
+		sr_scsi_done(wu->swu_dis, wu->swu_xs);
 		splx(s);
 	}
 
@@ -1209,25 +1208,8 @@ sr_crypto_done(struct sr_workunit *wu)
 	}
 
 	s = splbio();
-	sr_crypto_finish_io(wu);
+	sr_scsi_done(wu->swu_dis, wu->swu_xs);
 	splx(s);
-}
-
-void
-sr_crypto_finish_io(struct sr_workunit *wu)
-{
-	struct sr_discipline	*sd = wu->swu_dis;
-	struct scsi_xfer	*xs = wu->swu_xs;
-#ifdef SR_DEBUG
-	struct sr_softc		*sc = sd->sd_sc;
-#endif /* SR_DEBUG */
-
-	splassert(IPL_BIO);
-
-	DNPRINTF(SR_D_INTR, "%s: sr_crypto_finish_io: wu %x xs: %x\n",
-	    DEVNAME(sc), wu, xs);
-
-	sr_scsi_done(sd, xs);
 }
 
 int
@@ -1244,7 +1226,7 @@ sr_crypto_read(struct cryptop *crp)
 		wu->swu_xs->error = XS_DRIVER_STUFFUP;
 
 	s = splbio();
-	sr_crypto_finish_io(wu);
+	sr_scsi_done(wu->swu_dis, wu->swu_xs);
 	splx(s);
 
 	return (0);
