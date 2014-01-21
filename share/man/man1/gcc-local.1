@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.40 2014/01/21 02:44:14 martynas Exp $
+.\" $OpenBSD: gcc-local.1,v 1.41 2014/01/21 07:47:59 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -130,7 +130,7 @@ comes with the
 .Dq ProPolice
 stack protection extension, which is enabled by default.
 This extension reorders local variable declarations and adds stack consistency
-checks at run time, in order to detect stack overflows, and will attempt to
+checks at runtime, in order to detect stack overflows, and will attempt to
 report the problem in the system logs by calling
 .Xr syslog 3
 with a
@@ -143,21 +143,22 @@ It can be turned off using the
 commandline option.
 Note that the stack protector relies on some support code in libc.
 Stand-alone programs not linked against libc must either provide their own
-support bits, or use the
+support bits or use the
 .Fl fno-stack-protector
 option.
-There is also a
+.Pp
+There is a
 .Fl fstack-protector-all
-option, that turns stack protection code on for all functions,
+option that turns stack protection code on for all functions
 and disables any heuristic that flags some functions as safe.
-This extended checking has a moderate runtime cost, though.
-There is also a
+This extended checking has a moderate runtime cost though.
+There is a
 .Fl fstack-protector-strong
-option, that is like
-.Fl fstack-protector
-but includes additional functions to be protected --- those that
-have local array definitions, or have references to local frame
-addresses.
+option, similar to
+.Fl fstack-protector ,
+which includes additional functions to be protected \(em those that
+have local array definitions
+or have references to local frame addresses.
 .It
 On the alpha, amd64, hppa, i386, mips64, sh and sparc64 architectures,
 .Nm gcc
@@ -321,7 +322,7 @@ but operates on element counts rather than buffer sizes, use
 .Va count
 .Li )))
 .Pp
-An example of such string function with this check is
+An example of a string function with this check is
 .Xr wcslcpy 3 .
 .Pp
 Some functions specify the length as two arguments:
