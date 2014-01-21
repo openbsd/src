@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.3 2014/01/20 21:20:46 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.4 2014/01/21 02:03:33 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -893,11 +893,11 @@ qla_handle_intr(struct qla_softc *sc, u_int16_t isr, u_int16_t info)
 	struct qla_ccb *ccb;
 
 	switch (isr) {
-	case QLA_INT_ASYNC:
+	case QLA_INT_TYPE_ASYNC:
 		qla_async(sc, info);
 		break;
 
-	case QLA_INT_RSPQ:
+	case QLA_INT_TYPE_IO:
 		/* apparently can't read the out ptr with <2300 chips,
 		 * and apparently also need to debounce the in ptr reads
 		 */
@@ -922,10 +922,7 @@ qla_handle_intr(struct qla_softc *sc, u_int16_t isr, u_int16_t info)
 		}
 		break;
 
-	case QLA_INT_MBOX:
-	case QLA_INT_ROM_MBOX:
-	case QLA_INT_MBOX_FAIL:
-	case QLA_INT_ROM_MBOX_FAIL:
+	case QLA_INT_TYPE_MBOX:
 		if (sc->sc_mbox_pending) {
 			if (info == QLA_MBOX_COMPLETE) {
 				for (i = 1; i < nitems(sc->sc_mbox); i++) {
@@ -1088,7 +1085,7 @@ qla_scsi_cmd_poll(struct qla_softc *sc)
 			continue;
 		}
 
-		if (isr != QLA_INT_RSPQ) {
+		if (isr != QLA_INT_TYPE_IO) {
 			qla_handle_intr(sc, isr, info);
 			continue;
 		}
@@ -1176,10 +1173,7 @@ qla_mbox(struct qla_softc *sc, int maskin, int maskout)
 				continue;
 
 			switch (isr) {
-			case QLA_INT_MBOX:
-			case QLA_INT_ROM_MBOX:
-			case QLA_INT_MBOX_FAIL:
-			case QLA_INT_ROM_MBOX_FAIL:
+			case QLA_INT_TYPE_MBOX:
 				result = info;
 				break;
 
@@ -1274,9 +1268,26 @@ qla_read_isr(struct qla_softc *sc, u_int16_t *isr, u_int16_t *info)
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, QLA_RISC_STATUS_LOW, 4,
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 
-	*isr = (v & QLA_INT_STATUS_MASK);
-	if (*isr == 0)
-		return (0);
+	switch (v & QLA_INT_STATUS_MASK) {
+	case QLA_23XX_INT_ROM_MBOX:
+	case QLA_23XX_INT_ROM_MBOX_FAIL:
+	case QLA_23XX_INT_MBOX:
+	case QLA_23XX_INT_MBOX_FAIL:
+		*isr = QLA_INT_TYPE_MBOX;
+		break;
+
+	case QLA_23XX_INT_ASYNC:
+		*isr = QLA_INT_TYPE_ASYNC;
+		break;
+
+	case QLA_23XX_INT_RSPQ:
+		*isr = QLA_INT_TYPE_IO;
+		break;
+
+	default:
+		*isr = QLA_INT_TYPE_OTHER;
+		break;
+	}
 
 	*info = (v >> QLA_INT_INFO_SHIFT);
 	return (1);

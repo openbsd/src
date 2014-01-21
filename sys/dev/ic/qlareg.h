@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlareg.h,v 1.1 2014/01/19 06:04:03 jmatthew Exp $ */
+/*	$OpenBSD: qlareg.h,v 1.2 2014/01/21 02:03:33 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -25,15 +25,21 @@
 #define QLA_FW_ATTR_2K_LOGINS		0x0100
 
 /* interrupt types */
-#define QLA_INT_ROM_MBOX		0x01
-#define QLA_INT_ROM_MBOX_FAIL		0x02
-#define QLA_INT_MBOX			0x10
-#define QLA_INT_MBOX_FAIL		0x11
-#define QLA_INT_ASYNC			0x12
-#define QLA_INT_RSPQ			0x13
-#define QLA_INT_FP16			0x15
-#define QLA_INT_FP_SCSI			0x16
-#define QLA_INT_FP_CTIO			0x17
+#define QLA_INT_TYPE_MBOX		1
+#define QLA_INT_TYPE_ASYNC		2
+#define QLA_INT_TYPE_IO			3
+#define QLA_INT_TYPE_OTHER		4
+
+/* 23xx interrupt status codes */
+#define QLA_23XX_INT_ROM_MBOX		0x01
+#define QLA_23XX_INT_ROM_MBOX_FAIL	0x02
+#define QLA_23XX_INT_MBOX		0x10
+#define QLA_23XX_INT_MBOX_FAIL		0x11
+#define QLA_23XX_INT_ASYNC		0x12
+#define QLA_23XX_INT_RSPQ		0x13
+#define QLA_23XX_INT_FP16		0x15
+#define QLA_23XX_INT_FP_SCSI		0x16
+#define QLA_23XX_INT_FP_CTIO		0x17
 
 /* ISP registers */
 #define QLA_FLASH_BIOS_ADDR		0x00
