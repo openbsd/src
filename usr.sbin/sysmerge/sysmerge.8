@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.40 2013/09/10 08:44:38 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.41 2014/01/21 19:03:44 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 10 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl bd
+.Op Fl bdS
 .Op Fl s Op Ar src \*(Ba etcXX.tgz
 .Op Fl x Ar xetcXX.tgz
 .Ek
@@ -78,7 +78,11 @@ when upgrading from source;
 .Pa etcXX.tgz
 and
 .Pa xetcXX.tgz
-when upgrading from binary sets.
+when upgrading from tgz sets.
+When using sets,
+.Nm
+will cryptographically verify their integrity,
+stopping immediately should signatures not match.
 .Pp
 .Nm
 will work through the fileset,
@@ -134,6 +138,8 @@ Diff mode.
 In this mode,
 .Nm
 will not take any automatic action, allowing for a full diff comparison.
+.It Fl S
+Do not verify signatures for tgz sets.
 .It Fl s Op Ar src \*(Ba etcXX.tgz
 Specify a path to an
 .Ox
@@ -153,6 +159,7 @@ by listing them in the file
 each entry separated by white space or a new line.
 The following files will always be skipped from comparison:
 .Pa /etc/*.db ,
+.Pa /etc/localtime ,
 .Pa /etc/mail/*.db ,
 .Pa /etc/passwd ,
 .Pa /etc/motd ,
@@ -256,6 +263,7 @@ Files and directories to ignore from comparison.
 .Xr mktemp 1 ,
 .Xr more 1 ,
 .Xr sdiff 1 ,
+.Xr signify 1 ,
 .Xr groupadd 8 ,
 .Xr MAKEDEV 8 ,
 .Xr makemap 8 ,
