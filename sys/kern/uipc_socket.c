@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.121 2014/01/11 14:33:48 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.122 2014/01/21 23:57:56 guenther Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1702,6 +1702,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 			    so->so_snd.sb_timeo : so->so_rcv.sb_timeo);
 
 			m->m_len = sizeof(struct timeval);
+			memset(&tv, 0, sizeof(tv));
 			tv.tv_sec = val / hz;
 			tv.tv_usec = (val % hz) * tick;
 			memcpy(mtod(m, struct timeval *), &tv, sizeof tv);
