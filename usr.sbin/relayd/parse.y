@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.173 2013/11/25 13:00:07 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.174 2014/01/21 21:38:40 benno Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -2809,6 +2809,12 @@ relay_inherit(struct relay *ra, struct relay *rb)
 	rb->rl_conf.port = rc.port;
 	rb->rl_conf.flags =
 	    (ra->rl_conf.flags & ~F_SSL) | (rc.flags & F_SSL);
+	if (!(rb->rl_conf.flags & F_SSL)) {
+		rb->rl_ssl_cert = NULL;
+		rb->rl_conf.ssl_cert_len = 0;
+		rb->rl_ssl_key = NULL;
+		rb->rl_conf.ssl_key_len = 0;
+	}
 	TAILQ_INIT(&rb->rl_tables);
 
 	rb->rl_conf.id = ++last_relay_id;
