@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.54 2013/11/01 17:36:19 krw Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.55 2014/01/21 10:25:25 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -261,12 +261,11 @@ sr_raid1_set_vol_state(struct sr_discipline *sd)
 		/* XXX this might be a little too much */
 		goto die;
 
-	case BIOC_SVSCRUB:
+	case BIOC_SVDEGRADED:
 		switch (new_state) {
-		case BIOC_SVONLINE:
 		case BIOC_SVOFFLINE:
-		case BIOC_SVDEGRADED:
-		case BIOC_SVSCRUB: /* can go to same state */
+		case BIOC_SVREBUILD:
+		case BIOC_SVDEGRADED: /* can go to the same state */
 			break;
 		default:
 			goto die;
@@ -284,23 +283,24 @@ sr_raid1_set_vol_state(struct sr_discipline *sd)
 		}
 		break;
 
-	case BIOC_SVREBUILD:
+	case BIOC_SVSCRUB:
 		switch (new_state) {
 		case BIOC_SVONLINE:
 		case BIOC_SVOFFLINE:
 		case BIOC_SVDEGRADED:
-		case BIOC_SVREBUILD: /* can go to the same state */
+		case BIOC_SVSCRUB: /* can go to same state */
 			break;
 		default:
 			goto die;
 		}
 		break;
 
-	case BIOC_SVDEGRADED:
+	case BIOC_SVREBUILD:
 		switch (new_state) {
+		case BIOC_SVONLINE:
 		case BIOC_SVOFFLINE:
-		case BIOC_SVREBUILD:
-		case BIOC_SVDEGRADED: /* can go to the same state */
+		case BIOC_SVDEGRADED:
+		case BIOC_SVREBUILD: /* can go to the same state */
 			break;
 		default:
 			goto die;
