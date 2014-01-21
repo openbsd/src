@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.147 2014/01/20 04:47:31 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.148 2014/01/21 03:50:44 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -391,13 +391,13 @@ struct sr_workunit {
 	daddr_t			swu_blk_start;
 	daddr_t			swu_blk_end;
 
+	/* number of ios that makes up the whole work unit */
+	u_int32_t		swu_io_count;
+
 	/* in flight totals */
 	u_int32_t		swu_ios_complete;
 	u_int32_t		swu_ios_failed;
 	u_int32_t		swu_ios_succeeded;
-
-	/* number of ios that makes up the whole work unit */
-	u_int32_t		swu_io_count;
 
 	/* colliding wu */
 	struct sr_workunit	*swu_collider;
@@ -409,7 +409,8 @@ struct sr_workunit {
 	struct task		swu_task;
 	int			swu_cb_active;	/* in callback */
 
-	TAILQ_ENTRY(sr_workunit) swu_link;
+	TAILQ_ENTRY(sr_workunit) swu_link;	/* Link in processing queue. */
+	TAILQ_ENTRY(sr_workunit) swu_next;	/* Next work unit in chain. */
 };
 
 TAILQ_HEAD(sr_wu_list, sr_workunit);
@@ -564,7 +565,7 @@ struct sr_discipline {
 	struct sr_ccb_list	sd_ccb_freeq;
 	u_int32_t		sd_max_ccb_per_wu;
 
-	struct sr_workunit	*sd_wu;		/* all workunits */
+	struct sr_wu_list	sd_wu;		/* all workunits */
 	u_int32_t		sd_max_wu;
 	int			sd_reb_active;	/* rebuild in progress */
 	int			sd_reb_abort;	/* abort rebuild */

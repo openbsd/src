@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.322 2014/01/21 03:27:38 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.323 2014/01/21 03:50:44 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2107,26 +2107,22 @@ sr_wu_alloc(struct sr_discipline *sd)
 	struct sr_workunit	*wu;
 	int			i, no_wu;
 
-	if (!sd)
-		return (1);
-
 	DNPRINTF(SR_D_WU, "%s: sr_wu_alloc %p %d\n", DEVNAME(sd->sd_sc),
 	    sd, sd->sd_max_wu);
-
-	if (sd->sd_wu)
-		return (1);
 
 	no_wu = sd->sd_max_wu;
 	sd->sd_wu_pending = no_wu;
 
-	sd->sd_wu = malloc(sizeof(struct sr_workunit) * no_wu,
-	    M_DEVBUF, M_WAITOK | M_ZERO);
 	mtx_init(&sd->sd_wu_mtx, IPL_BIO);
+	TAILQ_INIT(&sd->sd_wu);
 	TAILQ_INIT(&sd->sd_wu_freeq);
 	TAILQ_INIT(&sd->sd_wu_pendq);
 	TAILQ_INIT(&sd->sd_wu_defq);
+
 	for (i = 0; i < no_wu; i++) {
-		wu = &sd->sd_wu[i];
+		wu = malloc(sizeof(struct sr_workunit),
+		    M_DEVBUF, M_WAITOK | M_ZERO);
+		TAILQ_INSERT_TAIL(&sd->sd_wu, wu, swu_next);
 		TAILQ_INIT(&wu->swu_ccb);
 		task_set(&wu->swu_task, sr_wu_done_callback, sd, wu);
 		wu->swu_dis = sd;
@@ -2141,9 +2137,6 @@ sr_wu_free(struct sr_discipline *sd)
 {
 	struct sr_workunit	*wu;
 
-	if (!sd)
-		return;
-
 	DNPRINTF(SR_D_WU, "%s: sr_wu_free %p\n", DEVNAME(sd->sd_sc), sd);
 
 	while ((wu = TAILQ_FIRST(&sd->sd_wu_freeq)) != NULL)
@@ -2153,8 +2146,10 @@ sr_wu_free(struct sr_discipline *sd)
 	while ((wu = TAILQ_FIRST(&sd->sd_wu_defq)) != NULL)
 		TAILQ_REMOVE(&sd->sd_wu_defq, wu, swu_link);
 
-	if (sd->sd_wu)
-		free(sd->sd_wu, M_DEVBUF);
+	while ((wu = TAILQ_FIRST(&sd->sd_wu)) != NULL) {
+		TAILQ_REMOVE(&sd->sd_wu, wu, swu_link);
+		free(wu, M_DEVBUF);
+	}
 }
 
 void *
