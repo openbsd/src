@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.33 2010/07/10 19:32:24 miod Exp $	*/
+/*	$OpenBSD: esp.c,v 1.34 2014/01/21 03:42:21 dlg Exp $	*/
 /*	$NetBSD: esp.c,v 1.69 1997/08/27 11:24:18 bouyer Exp $	*/
 
 /*
@@ -131,13 +131,6 @@ int	espmatch(struct device *, void *, void *);
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
 	sizeof(struct esp_softc), espmatch, espattach
-};
-
-struct scsi_adapter esp_switch = {
-	ncr53c9x_scsi_cmd,
-	scsi_minphys,		/* no max at this level; handled by DMA code */
-	NULL,
-	NULL,
 };
 
 /*
@@ -508,7 +501,7 @@ espattach(parent, self, aux)
 		sc->sc_features |= NCR_F_DMASELECT;
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, &esp_switch);
+	ncr53c9x_attach(sc);
 
 	bootpath_store(1, NULL);
 }

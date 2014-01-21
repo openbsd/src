@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc_vsbus.c,v 1.15 2012/12/05 23:20:15 deraadt Exp $	*/
+/*	$OpenBSD: asc_vsbus.c,v 1.16 2014/01/21 03:42:21 dlg Exp $	*/
 /*	$NetBSD: asc_vsbus.c,v 1.22 2001/02/04 20:36:32 ragge Exp $	*/
 
 /*-
@@ -100,13 +100,6 @@ struct cfattach asc_vsbus_ca = {
 
 struct cfdriver asc_cd = {
 	NULL, "asc", DV_DULL
-};
-
-struct scsi_adapter	asc_vsbus_ops = {
-	ncr53c9x_scsi_cmd,	
-	scsi_minphys,
-	NULL,
-	NULL
 };
 
 /*
@@ -300,7 +293,7 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, &asc_vsbus_ops);
+	ncr53c9x_attach(sc);
 }
 
 /*
