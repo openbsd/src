@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.6 2014/01/21 03:15:55 jsing Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.7 2014/01/21 10:21:05 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -271,6 +271,7 @@ sr_raid5_set_vol_state(struct sr_discipline *sd)
 	case BIOC_SVONLINE:
 		switch (new_state) {
 		case BIOC_SVONLINE: /* can go to same state */
+		case BIOC_SVOFFLINE:
 		case BIOC_SVDEGRADED:
 		case BIOC_SVREBUILD: /* happens on boot */
 			break;
@@ -282,6 +283,17 @@ sr_raid5_set_vol_state(struct sr_discipline *sd)
 	case BIOC_SVOFFLINE:
 		/* XXX this might be a little too much */
 		goto die;
+
+	case BIOC_SVBUILDING:
+		switch (new_state) {
+		case BIOC_SVONLINE:
+		case BIOC_SVOFFLINE:
+		case BIOC_SVBUILDING: /* can go to the same state */
+			break;
+		default:
+			goto die;
+		}
+		break;
 
 	case BIOC_SVSCRUB:
 		switch (new_state) {
