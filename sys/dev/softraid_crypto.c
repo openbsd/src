@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.102 2014/01/20 10:54:54 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.103 2014/01/21 03:21:38 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -294,13 +294,15 @@ sr_crypto_wu_get(struct sr_workunit *wu, int encrypt)
 	flags = (encrypt ? CRD_F_ENCRYPT : 0) |
 	    CRD_F_IV_PRESENT | CRD_F_IV_EXPLICIT;
 
-	/* Select crypto session based on block number */
+	/*
+	 * Select crypto session based on block number.
+	 *
+	 * XXX - this does not handle the case where the read/write spans
+	 * across a different key blocks (e.g. 0.5TB boundary). Currently
+	 * this is already broken by the use of scr_key[0] below.
+	 */
 	keyndx = blk >> SR_CRYPTO_KEY_BLKSHIFT;
-	if (keyndx >= SR_CRYPTO_MAXKEYS)
-		goto unwind;
 	crwu->cr_crp->crp_sid = sd->mds.mdd_crypto.scr_sid[keyndx];
-	if (crwu->cr_crp->crp_sid == (u_int64_t)-1)
-		goto unwind;
 
 	crwu->cr_crp->crp_ilen = xs->datalen;
 	crwu->cr_crp->crp_alloctype = M_DEVBUF;
@@ -320,9 +322,6 @@ sr_crypto_wu_get(struct sr_workunit *wu, int encrypt)
 	crwu->cr_crp->crp_opaque = crwu;
 
 	return (crwu);
-
-unwind:
-	return (NULL);
 }
 
 void
