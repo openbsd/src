@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.321 2014/01/20 04:47:31 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.322 2014/01/21 03:27:38 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2128,6 +2128,8 @@ sr_wu_alloc(struct sr_discipline *sd)
 	for (i = 0; i < no_wu; i++) {
 		wu = &sd->sd_wu[i];
 		TAILQ_INIT(&wu->swu_ccb);
+		task_set(&wu->swu_task, sr_wu_done_callback, sd, wu);
+		wu->swu_dis = sd;
 		sr_wu_put(sd, wu);
 	}
 
@@ -2201,10 +2203,12 @@ sr_wu_init(struct sr_discipline *sd, struct sr_workunit *wu)
 		panic("%s: sr_wu_init got active wu", DEVNAME(sd->sd_sc));
 	splx(s);
 
-	bzero(wu, sizeof(*wu));
-	TAILQ_INIT(&wu->swu_ccb);
-	task_set(&wu->swu_task, sr_wu_done_callback, sd, wu);
-	wu->swu_dis = sd;
+	wu->swu_xs = NULL;
+	wu->swu_state = SR_WU_FREE;
+	wu->swu_flags = 0;
+	wu->swu_blk_start = 0;
+	wu->swu_blk_end = 0;
+	wu->swu_collider = NULL;
 }
 
 void
