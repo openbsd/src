@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.17 2014/01/19 21:10:04 krw Exp $	*/
+/*	$OpenBSD: tables.c,v 1.18 2014/01/21 03:07:50 krw Exp $	*/
 
 /* Tables of information. */
 
@@ -56,6 +56,7 @@
  * t - ASCII text
  * f - flag (true or false)
  * A - array of whatever precedes (e.g., IA means array of IP addresses)
+ * C - CIDR description
  */
 
 const struct option dhcp_options[256] = {
@@ -180,7 +181,7 @@ const struct option dhcp_options[256] = {
 	/* 118 */ { "option-118", "X" },
 	/* 119 */ { "option-119", "X" },
 	/* 120 */ { "option-120", "X" },
-	/* 121 */ { "classless-static-routes", "X" },
+	/* 121 */ { "classless-static-routes", "CIA" },
 	/* 122 */ { "option-122", "X" },
 	/* 123 */ { "option-123", "X" },
 	/* 124 */ { "option-124", "X" },
@@ -308,7 +309,7 @@ const struct option dhcp_options[256] = {
 	/* 246 */ { "option-246", "X" },
 	/* 247 */ { "option-247", "X" },
 	/* 248 */ { "option-248", "X" },
-	/* 249 */ { "option-249", "X" },
+	/* 249 */ { "classless-ms-static-routes", "CIA" },
 	/* 250 */ { "option-250", "X" },
 	/* 251 */ { "option-251", "X" },
 	/* 252 */ { "autoproxy-script", "t" },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.66 2014/01/19 21:10:04 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.67 2014/01/21 03:07:50 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -332,6 +332,9 @@ pretty_print_option(unsigned int code, struct option_data *option,
 			break;
 		case 'e':
 			break;
+		case 'C':
+			hunksize += 5;
+			break;
 		default:
 			warning("%s: garbage in format string: %s",
 			    dhcp_options[code].name,
@@ -409,6 +412,15 @@ pretty_print_option(unsigned int code, struct option_data *option,
 				    *dp ? "true" : "false");
 				dp++;
 				break;
+			case 'C':
+				memset(&foo, 0, sizeof(foo));
+				memcpy(&foo.s_addr, dp+1, (*dp + 7) / 8); 
+				opcount = snprintf(op, opleft, "%s/%u",
+				    inet_ntoa(foo), *dp); 
+				if (opcount >= opleft || opcount == -1)
+					goto toobig;
+				dp += 1 + (*dp + 7) / 8;
+ 				break;
 			default:
 				warning("Unexpected format code %c", fmtbuf[j]);
 				goto toobig;

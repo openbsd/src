@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.36 2014/01/19 21:10:04 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.37 2014/01/21 03:07:50 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -134,6 +134,45 @@ parse_string(FILE *cfile)
 		return (NULL);
 	}
 	return (s);
+}
+
+/* cidr :== ip-address "/" bit-count
+ * ip-address :== NUMBER [ DOT NUMBER [ DOT NUMBER [ DOT NUMBER ] ] ]
+ * bit-count :== 0..32
+ */
+int
+parse_cidr(FILE *cfile, unsigned char *cidr)  
+{
+	struct in_addr addr;
+	int token;
+	int len;
+
+	token = '.';
+	len = 0;
+	for (token = '.'; token == '.'; token = next_token(NULL, cfile)) {
+		if (!parse_decimal(cfile, cidr + 1 + len, 'B'))
+			break;
+		if (++len == sizeof(addr)) {
+			token = next_token(NULL, cfile);
+			break;
+		}
+	}
+
+	if (!len) {
+		parse_warn("expecting CIDR subnet.");
+		skip_to_semi(cfile);
+		return (0);
+	} else if (token != '/') {
+		parse_warn("expecting '/'.");
+		skip_to_semi(cfile);
+		return (0);
+	} else if (!parse_decimal(cfile, cidr, 'B') || *cidr > 32) {
+		parse_warn("Expecting CIDR prefix length.");
+		skip_to_semi(cfile);
+		return (0);
+	}
+
+	return (1);
 }
 
 int

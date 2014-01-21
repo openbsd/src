@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.21 2013/10/21 12:02:25 krw Exp $ */
+/*	$OpenBSD: confpars.c,v 1.22 2014/01/21 03:07:51 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -818,6 +818,48 @@ void parse_group_declaration(cfile, group)
 	} while (1);
 }
 
+/* cidr :== ip-address "/" bit-count
+ * ip-address :== NUMBER [ DOT NUMBER [ DOT NUMBER [ DOT NUMBER ] ] ]
+ * bit-count :== 0..32
+ */
+int
+parse_cidr(FILE *cfile, unsigned char *addr, unsigned char *prefix)  
+{
+	char *val;
+	int token;
+	int len = 4;
+
+	token = peek_token(&val, cfile);
+
+	if (!parse_numeric_aggregate(cfile, addr, &len, '.', 10, 8)) {
+		parse_warn("Expecting CIDR subnet");
+		goto nocidr;
+	}
+	
+	token = next_token(&val, cfile);
+	if (token != '/') {
+		parse_warn("Expecting '/'");
+		goto nocidr;
+	}
+
+	*prefix = 0;
+	token = next_token(&val, cfile);
+	if (token == TOK_NUMBER)
+		convert_num(prefix, val, 10, 8);
+
+	if (token != TOK_NUMBER || *prefix < 1 || *prefix > 32) {
+		parse_warn("Expecting CIDR prefix length, got '%s'", val);
+		goto nocidr;
+	}
+
+	return 1;
+
+nocidr:
+	if (token != ';')
+		skip_to_semi(cfile);
+	return 0;
+}
+
 /* ip-addr-or-hostname :== ip-address | hostname
    ip-address :== NUMBER DOT NUMBER DOT NUMBER DOT NUMBER
 
@@ -911,6 +953,7 @@ void parse_option_param(cfile, group)
 	char *val;
 	int token;
 	unsigned char buf[4];
+	unsigned char cprefix;
 	char *vendor;
 	char *fmt;
 	struct universe *universe;
@@ -1107,6 +1150,14 @@ void parse_option_param(cfile, group)
 					return;
 				}
 				tree = tree_concat(tree, tree_const(buf, 1));
+				break;
+			case 'C':
+				if (!parse_cidr(cfile, buf, &cprefix))
+					return;
+				tree = tree_concat(tree, tree_const(&cprefix,
+				    sizeof(cprefix)));
+				tree = tree_concat(tree, tree_const(buf,
+				    sizeof(buf)));
 				break;
 			default:
 				warning("Bad format %c in parse_option_param.",

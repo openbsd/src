@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.285 2014/01/20 09:16:36 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.286 2014/01/21 03:07:50 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -883,6 +883,9 @@ bind_lease(void)
 	if (options[DHO_CLASSLESS_STATIC_ROUTES].len) {
 		add_classless_static_routes(ifi->rdomain,
 		    &options[DHO_CLASSLESS_STATIC_ROUTES]);
+	} else if (options[DHO_CLASSLESS_MS_STATIC_ROUTES].len) {
+		add_classless_static_routes(ifi->rdomain,
+		    &options[DHO_CLASSLESS_MS_STATIC_ROUTES]);
 	} else {
 		opt = &options[DHO_ROUTERS];
 		if (opt->len >= sizeof(gateway)) {

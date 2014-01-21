@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.9 2009/09/01 08:42:31 reyk Exp $	*/
+/*	$OpenBSD: tables.c,v 1.10 2014/01/21 03:07:51 krw Exp $	*/
 
 /* Tables of information... */
 
@@ -183,7 +183,7 @@ struct option dhcp_options[256] = {
 	{ "option-118", "X",				&dhcp_universe, 118 },
 	{ "option-119", "X",				&dhcp_universe, 119 },
 	{ "option-120", "X",				&dhcp_universe, 120 },
-	{ "option-121", "X",				&dhcp_universe, 121 },
+	{ "classless-static-routes", "CIA",		&dhcp_universe, 121 },
 	{ "option-122", "X",				&dhcp_universe, 122 },
 	{ "option-123", "X",				&dhcp_universe, 123 },
 	{ "option-124", "X",				&dhcp_universe, 124 },
@@ -311,7 +311,7 @@ struct option dhcp_options[256] = {
 	{ "option-246", "X",				&dhcp_universe, 246 },
 	{ "option-247", "X",				&dhcp_universe, 247 },
 	{ "option-248", "X",				&dhcp_universe, 248 },
-	{ "option-249", "X",				&dhcp_universe, 249 },
+	{ "classless-ms-static-routes", "CIA",		&dhcp_universe, 249 },
 	{ "option-250", "X",				&dhcp_universe, 250 },
 	{ "option-251", "X",				&dhcp_universe, 251 },
 	{ "autoproxy-script", "t",			&dhcp_universe, 252 },

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.18 2014/01/03 16:21:58 jmc Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.19 2014/01/21 03:07:51 krw Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: January 3 2014 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt DHCP-OPTIONS 5
 .Os
 .Sh NAME
@@ -606,6 +606,12 @@ option specifies a list of WWW servers available to the client.
 This option specifies a list of systems that are running the X Window
 System Display Manager and are available to the client.
 Addresses should be listed in order of preference.
+.It Ic option classless-static-routes Ar ip/prefix ip Oo , Ar ip/prefix ip ... Oc ;
+This option specifies a list of static routes in CDIR notation, which
+should be sent to the client.
+.It Ic option classless-ms-static-routes Ar ip/prefix ip Oo , Ar ip/prefix ip ... Oc ;
+This option does the same as classless-static-routes, but uses option code 249
+instead of 121, since Windows XP and Windows Server 2003 ignore option 121.
 .El
 .Sh SEE ALSO
 .Xr dhclient.conf 5 ,

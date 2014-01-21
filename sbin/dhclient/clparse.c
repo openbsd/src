@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.80 2014/01/20 01:12:17 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.81 2014/01/21 03:07:50 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -600,6 +600,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 	char		*val;
 	int		 token;
 	u_int8_t	 buf[4];
+	u_int8_t	 cidr[5];
 	u_int8_t	 hunkbuf[1024];
 	int		 hunkix = 0;
 	char		*fmt;
@@ -736,6 +737,12 @@ bad_flag:
 				}
 				len = 1;
 				dp = buf;
+				goto alloc;
+			case 'C':
+				if (!parse_cidr(cfile, cidr))
+					return (-1);
+				len = 1 + (cidr[0] + 7) / 8;
+				dp = cidr;
 				goto alloc;
 			default:
 				warning("Bad format %c in parse_option_param.",
