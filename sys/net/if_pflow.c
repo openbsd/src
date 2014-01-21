@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.38 2013/11/01 14:34:27 florian Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.39 2014/01/21 21:27:14 benno Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -426,7 +426,6 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((ifp->if_flags & IFF_UP) &&
 		    sc->sc_receiver_ip.s_addr != INADDR_ANY &&
 		    sc->sc_receiver_port != 0 &&
-		    sc->sc_sender_ip.s_addr != INADDR_ANY &&
 		    sc->sc_sender_port != 0) {
 			ifp->if_flags |= IFF_RUNNING;
 			sc->sc_gcounter=pflowstats.pflow_flows;
@@ -506,7 +505,6 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((ifp->if_flags & IFF_UP) &&
 		    sc->sc_receiver_ip.s_addr != INADDR_ANY &&
 		    sc->sc_receiver_port != 0 &&
-		    sc->sc_sender_ip.s_addr != INADDR_ANY &&
 		    sc->sc_sender_port != 0) {
 			ifp->if_flags |= IFF_RUNNING;
 			sc->sc_gcounter=pflowstats.pflow_flows;
