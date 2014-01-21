@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.33 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: bpf.4,v 1.34 2014/01/21 11:03:32 schwarze Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -96,12 +96,13 @@ The
 command codes below are defined in
 .In net/bpf.h .
 All commands require these includes:
-.Bd -unfilled -offset indent
-.Cd #include <sys/types.h>
-.Cd #include <sys/time.h>
-.Cd #include <sys/ioctl.h>
-.Cd #include <net/bpf.h>
-.Ed
+.Pp
+.nr nS 1
+.In sys/types.h
+.In sys/time.h
+.In sys/ioctl.h
+.In net/bpf.h
+.nr nS 0
 .Pp
 Additionally,
 .Dv BIOCGETIF
