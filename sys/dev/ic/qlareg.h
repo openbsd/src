@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlareg.h,v 1.2 2014/01/21 02:03:33 jmatthew Exp $ */
+/*	$OpenBSD: qlareg.h,v 1.3 2014/01/21 02:40:02 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 /* firmware loading */
+#define QLA_2200_CODE_ORG		0x1000
 #define QLA_2300_CODE_ORG		0x0800
 
 /* firmware attributes */
@@ -119,6 +120,7 @@
 #define QLA_FPM_RESET			0x0100
 
 /* QLA_MBOX_BASE (reg 0) read */
+#define QLA_MBOX_HAS_STATUS		0x4000
 #define QLA_MBOX_COMPLETE		0x4000
 #define QLA_MBOX_INVALID		0x4001
 #define QLA_MBOX_INTF_ERROR		0x4002
@@ -154,6 +156,7 @@
 #define QLA_MBOX_NOP			0x0000
 #define QLA_MBOX_LOAD_RAM		0x0001
 #define QLA_MBOX_EXEC_FIRMWARE		0x0002
+#define QLA_MBOX_WRITE_RAM_WORD		0x0004
 #define QLA_MBOX_REGISTER_TEST		0x0006
 #define QLA_MBOX_VERIFY_CSUM		0x0007
 #define QLA_MBOX_ABOUT_FIRMWARE		0x0008
