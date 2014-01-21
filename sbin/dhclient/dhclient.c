@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.286 2014/01/21 03:07:50 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.287 2014/01/21 05:17:45 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2177,6 +2177,21 @@ apply_defaults(struct client_lease *lease)
 	newlease = clone_lease(lease);
 	if (newlease == NULL)
 		error("Unable to clone lease");
+
+	if (config->filename) {
+		if (lease->filename)
+			free(lease->filename);
+		lease->filename = strdup(config->filename);
+	}
+	if (config->server_name) {
+		if (lease->server_name)
+			free(lease->server_name);
+		lease->server_name = strdup(config->server_name);
+	}
+	if (config->address.s_addr != INADDR_ANY)
+		lease->address.s_addr = config->address.s_addr;
+	if (config->next_server.s_addr != INADDR_ANY)
+		lease->next_server.s_addr = config->next_server.s_addr;
 
 	for (i = 0; i < 256; i++) {
 		for (j = 0; j < config->ignored_option_count; j++) {

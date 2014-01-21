@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.134 2014/01/21 03:07:50 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.135 2014/01/21 05:17:45 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -126,6 +126,8 @@ struct client_config {
 		ACTION_APPEND
 	} default_actions[256];
 
+	struct in_addr		 address;
+	struct in_addr		 next_server;
 	struct option_data	 send_options[256];
 	u_int8_t		 required_options[256];
 	u_int8_t		 requested_options[256];
@@ -144,6 +146,8 @@ struct client_config {
 				 bootp_policy;
 	TAILQ_HEAD(, reject_elem) reject_list;
 	char			*resolv_tail;
+	char			*filename;
+	char			*server_name;
 };
 
 struct client_state {
