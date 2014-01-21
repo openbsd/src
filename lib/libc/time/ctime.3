@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctime.3,v 1.41 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: ctime.3,v 1.42 2014/01/21 11:51:02 otto Exp $
 .\"
 .\"
 .Dd $Mdocdate: January 21 2014 $
@@ -257,6 +257,17 @@ is non-zero if summer time is in effect.
 is the offset (in seconds) of the time represented
 from UTC, with positive values indicating east
 of the Prime Meridian.
+.Sh RETURN VALUES
+The functions
+.Fn localtime ,
+.Fn localtime_r ,
+.Fn gmtime
+and
+.Fn gmtime_r
+return NULL on error.
+The function
+.Fn mktime
+returns \-1 on error.
 .Sh FILES
 .Bl -tag -width "/usr/share/zoneinfo/posixrules" -compact
 .It Pa /usr/share/zoneinfo
