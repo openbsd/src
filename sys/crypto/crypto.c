@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.61 2013/10/31 10:32:38 mikeb Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.62 2014/01/21 05:38:49 mikeb Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -416,7 +416,7 @@ crypto_dispatch(struct cryptop *crp)
 		crypto_drivers[hid].cc_queued++;
 	splx(s);
 
-	if (crypto_taskq) {
+	if (crypto_taskq && !(crp->crp_flags & CRYPTO_F_NOQUEUE)) {
 		task_set(&crp->crp_task, (void (*))crypto_invoke, crp, NULL);
 		task_add(crypto_taskq, &crp->crp_task);
 	} else {
