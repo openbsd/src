@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.36 2014/01/18 04:11:07 dlg Exp $ */
+/*	$OpenBSD: vs.c,v 1.37 2014/01/21 23:47:41 jsg Exp $ */
 
 /*
  * Copyright (c) 2004, 2009, Miodrag Vallat.
@@ -596,7 +596,7 @@ vs_chksense(struct vs_cb *cb, struct scsi_xfer *xs)
 	int s;
 
 #ifdef VS_DEBUG
-	printf("%s: target %d\n", slp->target);
+	printf("%s: target %d\n", __func__, slp->target);
 #endif
 	/* ack and clear the error */
 	if (CRSW & M_CRSW_ER)
