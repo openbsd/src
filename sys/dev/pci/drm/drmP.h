@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.158 2013/12/21 19:36:41 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.159 2014/01/21 08:55:24 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -224,6 +224,36 @@ IS_ERR_OR_NULL(const void *ptr)
 #define __DECONST(type, var)    ((type)(__uintptr_t)(const void *)(var))
 #endif
 
+#define GFP_ATOMIC	M_NOWAIT
+#define GFP_KERNEL	(M_WAITOK | M_CANFAIL)
+#define __GFP_NOWARN	0
+#define __GFP_NORETRY	0
+
+static inline void *
+kmalloc(size_t size, int flags)
+{
+	return malloc(size, M_DRM, flags);
+}
+
+static inline void *
+kcalloc(size_t n, size_t size, int flags)
+{
+	if (n == 0 || SIZE_MAX / n < size)
+		return NULL;
+	return malloc(n * size, M_DRM, flags | M_ZERO);
+}
+
+static inline void *
+kzalloc(size_t size, int flags)
+{
+	return malloc(size, M_DRM, flags | M_ZERO);
+}
+
+static inline void
+kfree(void *objp)
+{
+	free(objp, M_DRM);
+}
 
 /* DRM_READMEMORYBARRIER() prevents reordering of reads.
  * DRM_WRITEMEMORYBARRIER() prevents reordering of writes.
