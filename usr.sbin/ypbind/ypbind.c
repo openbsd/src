@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.61 2013/12/20 00:31:12 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.62 2014/01/21 23:05:09 jsg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <ctype.h>
 #include <netdb.h>
 #include <string.h>
 #include <dirent.h>
