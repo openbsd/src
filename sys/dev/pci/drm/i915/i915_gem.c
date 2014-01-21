@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.64 2014/01/21 08:25:33 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.65 2014/01/21 08:29:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -2033,7 +2033,7 @@ i915_gem_object_get_pages_gtt(struct drm_i915_gem_object *obj)
 
 	return 0;
 
-#if 0
+#ifdef __linux__
 err_pages:
 	for_each_sg(st->sgl, sg, i, page_count)
 		page_cache_release(sg_page(sg));
