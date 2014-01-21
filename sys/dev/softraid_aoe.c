@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.35 2013/11/21 16:34:50 krw Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.36 2014/01/21 04:23:14 jsing Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -248,7 +248,7 @@ sr_aoe_alloc_resources(struct sr_discipline *sd)
 	DNPRINTF(SR_D_DIS, "%s: sr_aoe_alloc_resources\n",
 	    DEVNAME(sd->sd_sc));
 
-	sr_wu_alloc(sd);
+	sr_wu_alloc(sd, sizeof(struct sr_workunit));
 	sr_ccb_alloc(sd);
 
 	return 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.323 2014/01/21 03:50:44 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.324 2014/01/21 04:23:14 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2102,7 +2102,7 @@ sr_ccb_done(struct sr_ccb *ccb)
 }
 
 int
-sr_wu_alloc(struct sr_discipline *sd)
+sr_wu_alloc(struct sr_discipline *sd, int wu_size)
 {
 	struct sr_workunit	*wu;
 	int			i, no_wu;
@@ -2120,8 +2120,7 @@ sr_wu_alloc(struct sr_discipline *sd)
 	TAILQ_INIT(&sd->sd_wu_defq);
 
 	for (i = 0; i < no_wu; i++) {
-		wu = malloc(sizeof(struct sr_workunit),
-		    M_DEVBUF, M_WAITOK | M_ZERO);
+		wu = malloc(wu_size, M_DEVBUF, M_WAITOK | M_ZERO);
 		TAILQ_INSERT_TAIL(&sd->sd_wu, wu, swu_next);
 		TAILQ_INIT(&wu->swu_ccb);
 		task_set(&wu->swu_task, sr_wu_done_callback, sd, wu);
@@ -4259,7 +4258,7 @@ sr_raid_recreate_wu(struct sr_workunit *wu)
 int
 sr_alloc_resources(struct sr_discipline *sd)
 {
-	if (sr_wu_alloc(sd)) {
+	if (sr_wu_alloc(sd, sizeof(struct sr_workunit))) {
 		sr_error(sd->sd_sc, "unable to allocate work units");
 		return (ENOMEM);
 	}
