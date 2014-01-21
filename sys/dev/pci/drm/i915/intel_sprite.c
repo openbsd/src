@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_sprite.c,v 1.3 2013/08/13 10:23:52 jsg Exp $	*/
+/*	$OpenBSD: intel_sprite.c,v 1.4 2014/01/21 08:57:22 kettenis Exp $	*/
 /*
  * Copyright © 2011 Intel Corporation
  *
@@ -575,7 +575,7 @@ static void intel_destroy_plane(struct drm_plane *plane)
 	struct intel_plane *intel_plane = to_intel_plane(plane);
 	intel_disable_plane(plane);
 	drm_plane_cleanup(plane);
-	free(intel_plane, M_DRM);
+	kfree(intel_plane);
 }
 
 int intel_sprite_set_colorkey(struct drm_device *dev, void *data,
@@ -675,8 +675,7 @@ intel_plane_init(struct drm_device *dev, enum pipe pipe)
 	if (INTEL_INFO(dev)->gen < 5)
 		return -ENODEV;
 
-	intel_plane = malloc(sizeof(struct intel_plane), M_DRM,
-	    M_WAITOK | M_ZERO);
+	intel_plane = kzalloc(sizeof(struct intel_plane), GFP_KERNEL);
 	if (!intel_plane)
 		return -ENOMEM;
 
@@ -715,7 +714,7 @@ intel_plane_init(struct drm_device *dev, enum pipe pipe)
 		break;
 
 	default:
-		free(intel_plane, M_DRM);
+		kfree(intel_plane);
 		return -ENODEV;
 	}
 
@@ -726,7 +725,7 @@ intel_plane_init(struct drm_device *dev, enum pipe pipe)
 			     plane_formats, num_plane_formats,
 			     false);
 	if (ret)
-		free(intel_plane, M_DRM);
+		kfree(intel_plane);
 
 	return ret;
 }

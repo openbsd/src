@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.c,v 1.14 2013/12/01 11:47:13 kettenis Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.c,v 1.15 2014/01/21 08:57:22 kettenis Exp $	*/
 /*
  * Copyright © 2008-2010 Intel Corporation
  *
@@ -454,7 +454,7 @@ init_pipe_control(struct intel_ring_buffer *ring)
 	if (ring->private)
 		return 0;
 
-	pc = malloc(sizeof(*pc), M_DRM, M_WAITOK);
+	pc = kmalloc(sizeof(*pc), GFP_KERNEL);
 	if (!pc)
 		return -ENOMEM;
 
@@ -492,7 +492,7 @@ err_unpin:
 err_unref:
 	drm_gem_object_unreference(&obj->base);
 err:
-	free(pc, M_DRM);
+	kfree(pc);
 	return ret;
 }
 
@@ -512,7 +512,7 @@ cleanup_pipe_control(struct intel_ring_buffer *ring)
 	i915_gem_object_unpin(obj);
 	drm_gem_object_unreference(&obj->base);
 
-	free(pc, M_DRM);
+	kfree(pc);
 	ring->private = NULL;
 }
 

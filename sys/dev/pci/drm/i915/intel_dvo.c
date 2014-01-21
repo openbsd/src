@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_dvo.c,v 1.4 2013/08/13 10:23:51 jsg Exp $	*/
+/*	$OpenBSD: intel_dvo.c,v 1.5 2014/01/21 08:57:22 kettenis Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2007 Intel Corporation
@@ -340,7 +340,7 @@ static void intel_dvo_destroy(struct drm_connector *connector)
 	drm_sysfs_connector_remove(connector);
 #endif
 	drm_connector_cleanup(connector);
-	free(connector, M_DRM);
+	kfree(connector);
 }
 
 static const struct drm_encoder_helper_funcs intel_dvo_helper_funcs = {
@@ -369,7 +369,7 @@ static void intel_dvo_enc_destroy(struct drm_encoder *encoder)
 	if (intel_dvo->dev.dev_ops->destroy)
 		intel_dvo->dev.dev_ops->destroy(&intel_dvo->dev);
 
-	free(intel_dvo->panel_fixed_mode, M_DRM);
+	kfree(intel_dvo->panel_fixed_mode);
 
 	intel_encoder_destroy(encoder);
 }
@@ -425,14 +425,13 @@ void intel_dvo_init(struct drm_device *dev)
 	int i;
 	int encoder_type = DRM_MODE_ENCODER_NONE;
 
-	intel_dvo = malloc(sizeof(struct intel_dvo), M_DRM, M_WAITOK | M_ZERO);
+	intel_dvo = kzalloc(sizeof(struct intel_dvo), GFP_KERNEL);
 	if (!intel_dvo)
 		return;
 
-	intel_connector = malloc(sizeof(struct intel_connector), M_DRM,
-	    M_WAITOK | M_ZERO);
+	intel_connector = kzalloc(sizeof(struct intel_connector), GFP_KERNEL);
 	if (!intel_connector) {
-		free(intel_dvo, M_DRM);
+		kfree(intel_dvo);
 		return;
 	}
 
@@ -533,6 +532,6 @@ void intel_dvo_init(struct drm_device *dev)
 	}
 
 	drm_encoder_cleanup(&intel_encoder->base);
-	free(intel_dvo, M_DRM);
-	free(intel_connector, M_DRM);
+	kfree(intel_dvo);
+	kfree(intel_connector);
 }

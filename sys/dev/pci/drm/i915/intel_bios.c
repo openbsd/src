@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_bios.c,v 1.6 2014/01/21 04:47:38 kettenis Exp $	*/
+/*	$OpenBSD: intel_bios.c,v 1.7 2014/01/21 08:57:22 kettenis Exp $	*/
 /*
  * Copyright © 2006 Intel Corporation
  *
@@ -234,8 +234,7 @@ parse_lfp_panel_data(struct drm_i915_private *dev_priv,
 					       lvds_lfp_data_ptrs,
 					       lvds_options->panel_type);
 
-	panel_fixed_mode = malloc(sizeof(*panel_fixed_mode), M_DRM,
-	    M_WAITOK | M_ZERO);
+	panel_fixed_mode = kzalloc(sizeof(*panel_fixed_mode), GFP_KERNEL);
 	if (!panel_fixed_mode)
 		return;
 
@@ -313,8 +312,7 @@ parse_sdvo_panel_data(struct drm_i915_private *dev_priv,
 	if (!dvo_timing)
 		return;
 
-	panel_fixed_mode = malloc(sizeof(*panel_fixed_mode), M_DRM,
-	    M_WAITOK | M_ZERO);
+	panel_fixed_mode = kzalloc(sizeof(*panel_fixed_mode), GFP_KERNEL);
 	if (!panel_fixed_mode)
 		return;
 
@@ -616,8 +614,7 @@ parse_device_mapping(struct drm_i915_private *dev_priv,
 		DRM_DEBUG_KMS("no child dev is parsed from VBT\n");
 		return;
 	}
-	dev_priv->child_dev = malloc(sizeof(*p_child) * count, M_DRM,
-	    M_WAITOK | M_ZERO);
+	dev_priv->child_dev = kcalloc(count, sizeof(*p_child), GFP_KERNEL);
 	if (!dev_priv->child_dev) {
 		DRM_DEBUG_KMS("No memory space for child device\n");
 		return;

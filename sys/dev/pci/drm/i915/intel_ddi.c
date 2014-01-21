@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ddi.c,v 1.5 2013/08/13 10:23:50 jsg Exp $	*/
+/*	$OpenBSD: intel_ddi.c,v 1.6 2014/01/21 08:57:22 kettenis Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -1480,24 +1480,22 @@ void intel_ddi_init(struct drm_device *dev, enum port port)
 	struct intel_connector *hdmi_connector = NULL;
 	struct intel_connector *dp_connector = NULL;
 
-	intel_dig_port = malloc(sizeof(struct intel_digital_port), M_DRM,
-	    M_WAITOK | M_ZERO);
+	intel_dig_port = kzalloc(sizeof(struct intel_digital_port), GFP_KERNEL);
 	if (!intel_dig_port)
 		return;
 
-	dp_connector = malloc(sizeof(struct intel_connector), M_DRM,
-	    M_WAITOK | M_ZERO);
+	dp_connector = kzalloc(sizeof(struct intel_connector), GFP_KERNEL);
 	if (!dp_connector) {
-		free(intel_dig_port, M_DRM);
+		kfree(intel_dig_port);
 		return;
 	}
 
 	if (port != PORT_A) {
-		hdmi_connector = malloc(sizeof(struct intel_connector),
-		    M_DRM, M_WAITOK | M_ZERO);
+		hdmi_connector = kzalloc(sizeof(struct intel_connector),
+					 GFP_KERNEL);
 		if (!hdmi_connector) {
-			free(dp_connector, M_DRM);
-			free(intel_dig_port, M_DRM);
+			kfree(dp_connector);
+			kfree(intel_dig_port);
 			return;
 		}
 	}

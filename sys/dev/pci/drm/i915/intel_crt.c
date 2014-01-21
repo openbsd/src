@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_crt.c,v 1.5 2013/08/13 10:23:50 jsg Exp $	*/
+/*	$OpenBSD: intel_crt.c,v 1.6 2014/01/21 08:57:22 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -121,7 +121,7 @@ static void intel_disable_crt(struct intel_encoder *encoder)
 static void intel_enable_crt(struct intel_encoder *encoder)
 {
 	struct intel_crt *crt = intel_encoder_to_crt(encoder);
-	
+
 	intel_crt_set_dpms(encoder, crt->connector->base.dpms);
 }
 
@@ -427,7 +427,7 @@ static int intel_crt_ddc_get_modes(struct drm_connector *connector,
 		return 0;
 
 	ret = intel_connector_update_modes(connector, edid);
-	free(edid, M_DRM);
+	kfree(edid);
 
 	return ret;
 }
@@ -446,7 +446,6 @@ static bool intel_crt_detect_ddc(struct drm_connector *connector)
 
 	if (edid) {
 		bool is_digital = edid->input & DRM_EDID_INPUT_DIGITAL;
-		free(edid, M_DRM);
 
 		/*
 		 * This may be a DVI-I connector with a shared DDC
@@ -462,6 +461,8 @@ static bool intel_crt_detect_ddc(struct drm_connector *connector)
 	} else {
 		DRM_DEBUG_KMS("CRT not detected via DDC:0x50 [no valid EDID found]\n");
 	}
+
+	kfree(edid);
 
 	return false;
 }
@@ -638,7 +639,7 @@ static void intel_crt_destroy(struct drm_connector *connector)
 	drm_sysfs_connector_remove(connector);
 #endif
 	drm_connector_cleanup(connector);
-	free(connector, M_DRM);
+	kfree(connector);
 }
 
 static int intel_crt_get_modes(struct drm_connector *connector)
@@ -744,14 +745,13 @@ void intel_crt_init(struct drm_device *dev)
 	if (dmi_check_system(intel_no_crt))
 		return;
 
-	crt = malloc(sizeof(struct intel_crt), M_DRM, M_WAITOK | M_ZERO);
+	crt = kzalloc(sizeof(struct intel_crt), GFP_KERNEL);
 	if (!crt)
 		return;
 
-	intel_connector = malloc(sizeof(struct intel_connector), M_DRM,
-	    M_WAITOK | M_ZERO);
+	intel_connector = kzalloc(sizeof(struct intel_connector), GFP_KERNEL);
 	if (!intel_connector) {
-		free(crt, M_DRM);
+		kfree(crt);
 		return;
 	}
 

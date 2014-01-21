@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.18 2013/12/01 14:20:02 kettenis Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.19 2014/01/21 08:57:22 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -3950,7 +3950,7 @@ void intel_encoder_destroy(struct drm_encoder *encoder)
 	struct intel_encoder *intel_encoder = to_intel_encoder(encoder);
 
 	drm_encoder_cleanup(encoder);
-	free(intel_encoder, M_DRM);
+	kfree(intel_encoder);
 }
 
 /* Simple dpms helper for encodres with just one connector, no cloning and only
@@ -6723,7 +6723,7 @@ intel_framebuffer_create(struct drm_device *dev,
 	struct intel_framebuffer *intel_fb;
 	int ret;
 
-	intel_fb = malloc(sizeof(*intel_fb), M_DRM, M_WAITOK | M_ZERO);
+	intel_fb = kzalloc(sizeof(*intel_fb), GFP_KERNEL);
 	if (!intel_fb) {
 		drm_gem_object_unreference_unlocked(&obj->base);
 		return ERR_PTR(-ENOMEM);
@@ -6732,7 +6732,7 @@ intel_framebuffer_create(struct drm_device *dev,
 	ret = intel_framebuffer_init(dev, intel_fb, mode_cmd, obj);
 	if (ret) {
 		drm_gem_object_unreference_unlocked(&obj->base);
-		free(intel_fb, M_DRM);
+		kfree(intel_fb);
 		return ERR_PTR(ret);
 	}
 
@@ -7033,7 +7033,7 @@ struct drm_display_mode *intel_crtc_mode_get(struct drm_device *dev,
 	int vtot = I915_READ(VTOTAL(cpu_transcoder));
 	int vsync = I915_READ(VSYNC(cpu_transcoder));
 
-	mode = malloc(sizeof(*mode), M_DRM, M_WAITOK | M_ZERO);
+	mode = kzalloc(sizeof(*mode), GFP_KERNEL);
 	if (!mode)
 		return NULL;
 
@@ -7169,12 +7169,12 @@ static void intel_crtc_destroy(struct drm_crtc *crtc)
 
 	if (work) {
 		task_del(systq, &work->task);
-		free(work, M_DRM);
+		kfree(work);
 	}
 
 	drm_crtc_cleanup(crtc);
 
-	free(intel_crtc, M_DRM);
+	kfree(intel_crtc);
 }
 
 static void intel_unpin_work_fn(void *arg1, void *arg2)
@@ -7193,7 +7193,7 @@ static void intel_unpin_work_fn(void *arg1, void *arg2)
 	BUG_ON(atomic_read(&to_intel_crtc(work->crtc)->unpin_work_count) == 0);
 	atomic_dec(&to_intel_crtc(work->crtc)->unpin_work_count);
 
-	free(work, M_DRM);
+	kfree(work);
 }
 
 static void do_intel_finish_page_flip(struct drm_device *dev,
@@ -7550,7 +7550,7 @@ static int intel_crtc_page_flip(struct drm_crtc *crtc,
 	     fb->pitches[0] != crtc->fb->pitches[0]))
 		return -EINVAL;
 
-	work = malloc(sizeof *work, M_DRM, M_WAITOK | M_ZERO);
+	work = kzalloc(sizeof *work, GFP_KERNEL);
 	if (work == NULL)
 		return -ENOMEM;
 
@@ -7567,7 +7567,7 @@ static int intel_crtc_page_flip(struct drm_crtc *crtc,
 	mtx_enter(&dev->event_lock);
 	if (intel_crtc->unpin_work) {
 		mtx_leave(&dev->event_lock);
-		free(work, M_DRM);
+		kfree(work);
 		drm_vblank_put(dev, intel_crtc->pipe);
 
 		DRM_DEBUG_DRIVER("flip queue: crtc already busy\n");
@@ -7628,7 +7628,7 @@ cleanup:
 
 	drm_vblank_put(dev, intel_crtc->pipe);
 free_work:
-	free(work, M_DRM);
+	kfree(work);
 
 	return ret;
 }
@@ -8129,9 +8129,9 @@ static void intel_set_config_free(struct intel_set_config *config)
 	if (!config)
 		return;
 
-	free(config->save_connector_encoders, M_DRM);
-	free(config->save_encoder_crtcs, M_DRM);
-	free(config, M_DRM);
+	kfree(config->save_connector_encoders);
+	kfree(config->save_encoder_crtcs);
+	kfree(config);
 }
 
 static int intel_set_config_save_state(struct drm_device *dev,
@@ -8142,14 +8142,14 @@ static int intel_set_config_save_state(struct drm_device *dev,
 	int count;
 
 	config->save_encoder_crtcs =
-		malloc(dev->mode_config.num_encoder *
-		    sizeof(struct drm_crtc *), M_DRM, M_WAITOK | M_ZERO);
+		kcalloc(dev->mode_config.num_encoder,
+			sizeof(struct drm_crtc *), GFP_KERNEL);
 	if (!config->save_encoder_crtcs)
 		return -ENOMEM;
 
 	config->save_connector_encoders =
-		malloc(dev->mode_config.num_connector *
-		    sizeof(struct drm_encoder *),M_DRM, M_WAITOK | M_ZERO);
+		kcalloc(dev->mode_config.num_connector,
+			sizeof(struct drm_encoder *), GFP_KERNEL);
 	if (!config->save_connector_encoders)
 		return -ENOMEM;
 
@@ -8356,7 +8356,7 @@ static int intel_crtc_set_config(struct drm_mode_set *set)
 	dev = set->crtc->dev;
 
 	ret = -ENOMEM;
-	config = malloc(sizeof(*config), M_DRM, M_WAITOK | M_ZERO);
+	config = kzalloc(sizeof(*config), GFP_KERNEL);
 	if (!config)
 		goto out_config;
 
@@ -8455,9 +8455,7 @@ static void intel_crtc_init(struct drm_device *dev, int pipe)
 	struct intel_crtc *intel_crtc;
 	int i;
 
-	intel_crtc = malloc(sizeof(struct intel_crtc) +
-	    (INTELFB_CONN_LIMIT * sizeof(struct drm_connector *)),
-	    M_DRM, M_WAITOK | M_ZERO);
+	intel_crtc = kzalloc(sizeof(struct intel_crtc) + (INTELFB_CONN_LIMIT * sizeof(struct drm_connector *)), GFP_KERNEL);
 	if (intel_crtc == NULL)
 		return;
 
@@ -8700,7 +8698,7 @@ static void intel_user_framebuffer_destroy(struct drm_framebuffer *fb)
 	drm_framebuffer_cleanup(fb);
 	drm_gem_object_unreference_unlocked(&intel_fb->obj->base);
 
-	free(intel_fb, M_DRM);
+	kfree(intel_fb);
 }
 
 static int intel_user_framebuffer_create_handle(struct drm_framebuffer *fb,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_context.c,v 1.6 2014/01/21 08:43:56 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_context.c,v 1.7 2014/01/21 08:57:22 kettenis Exp $	*/
 /*
  * Copyright © 2011-2012 Intel Corporation
  *
@@ -143,7 +143,7 @@ static void do_destroy(struct i915_hw_context *ctx)
 		BUG_ON(ctx != dev_priv->ring[RCS].default_context);
 
 	drm_gem_object_unreference(&ctx->obj->base);
-	free(ctx, M_DRM);
+	kfree(ctx);
 }
 
 static struct i915_hw_context *
@@ -155,13 +155,13 @@ create_hw_context(struct drm_device *dev,
 	struct i915_ctx_handle *han;
 	int ret;
 
-	ctx = malloc(sizeof(*ctx), M_DRM, M_WAITOK | M_ZERO);
+	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
 	if (ctx == NULL)
 		return ERR_PTR(-ENOMEM);
 
 	ctx->obj = i915_gem_alloc_object(dev, dev_priv->hw_context_size);
 	if (ctx->obj == NULL) {
-		free(ctx, M_DRM);
+		kfree(ctx);
 		DRM_DEBUG_DRIVER("Context object allocated failed\n");
 		return ERR_PTR(-ENOMEM);
 	}
@@ -185,7 +185,8 @@ create_hw_context(struct drm_device *dev,
 
 	ctx->file_priv = file_priv;
 
-	if ((han = drm_calloc(1, sizeof(*han))) == NULL) {
+	han = malloc(sizeof(*han), M_DRM, M_WAITOK | M_CANFAIL | M_ZERO);
+	if (han == NULL) {
 		ret = -ENOMEM;
 		DRM_DEBUG_DRIVER("idr allocation failed\n");
 		goto err_out;
@@ -326,7 +327,7 @@ void i915_gem_context_close(struct drm_device *dev, struct drm_file *file)
 		nxt = SPLAY_NEXT(i915_ctx_tree, &file_priv->ctx_tree, han);
 		context_idr_cleanup(han->handle, han->ctx, NULL);
 		SPLAY_REMOVE(i915_ctx_tree, &file_priv->ctx_tree, han);
-		drm_free(han);
+		free(han, M_DRM);
 	}
 	DRM_UNLOCK();
 }

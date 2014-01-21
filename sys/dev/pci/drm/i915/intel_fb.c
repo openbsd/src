@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_fb.c,v 1.7 2013/11/19 19:14:09 kettenis Exp $	*/
+/*	$OpenBSD: intel_fb.c,v 1.8 2014/01/21 08:57:22 kettenis Exp $	*/
 /*
  * Copyright © 2007 David Airlie
  *
@@ -248,8 +248,9 @@ int intel_fbdev_init(struct drm_device *dev)
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	int ret;
 
-	ifbdev = malloc(sizeof(struct intel_fbdev), M_DRM,
-	    M_WAITOK | M_ZERO);
+	ifbdev = kzalloc(sizeof(struct intel_fbdev), GFP_KERNEL);
+	if (!ifbdev)
+		return -ENOMEM;
 
 	dev_priv->fbdev = ifbdev;
 	ifbdev->helper.funcs = &intel_fb_helper_funcs;
@@ -258,7 +259,7 @@ int intel_fbdev_init(struct drm_device *dev)
 				 dev_priv->num_pipe,
 				 INTELFB_CONN_LIMIT);
 	if (ret) {
-		free(ifbdev, M_DRM);
+		kfree(ifbdev);
 		return ret;
 	}
 
@@ -274,7 +275,7 @@ void intel_fbdev_fini(struct drm_device *dev)
 		return;
 
 	intel_fbdev_destroy(dev, dev_priv->fbdev);
-	free(dev_priv->fbdev, M_DRM);
+	kfree(dev_priv->fbdev);
 	dev_priv->fbdev = NULL;
 }
 

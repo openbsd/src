@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_sdvo.c,v 1.11 2013/08/13 10:23:52 jsg Exp $	*/
+/*	$OpenBSD: intel_sdvo.c,v 1.12 2014/01/21 08:57:22 kettenis Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2007 Intel Corporation
@@ -457,15 +457,13 @@ static bool intel_sdvo_write_cmd(struct intel_sdvo *intel_sdvo, u8 cmd,
 	int i, ret = true, x;
 
         /* Would be simpler to allocate both in one go ? */        
-	buf = (u8 *)malloc(args_len * 2 + 2, M_DRM,
-	    M_WAITOK | M_ZERO);
+	buf = (u8 *)kzalloc(args_len * 2 + 2, GFP_KERNEL);
 	if (!buf)
 		return false;
 
-	msgs = malloc((args_len + 3) * sizeof(*msgs), M_DRM,
-	    M_WAITOK | M_ZERO);
+	msgs = kcalloc(args_len + 3, sizeof(*msgs), GFP_KERNEL);
 	if (!msgs) {
-	        free(buf, M_DRM);
+	        kfree(buf);
 		return false;
         }
 
@@ -513,8 +511,8 @@ static bool intel_sdvo_write_cmd(struct intel_sdvo *intel_sdvo, u8 cmd,
 out:
 	iic_release_bus(intel_sdvo->i2c, 0);
 
-	free(msgs, M_DRM);
-	free(buf, M_DRM);
+	kfree(msgs);
+	kfree(buf);
 	return ret;
 }
 
@@ -1544,7 +1542,7 @@ intel_sdvo_tmds_sink_detect(struct drm_connector *connector)
 			}
 		} else
 			status = connector_status_disconnected;
-		free(edid, M_DRM);
+		kfree(edid);
 	}
 
 	if (status == connector_status_connected) {
@@ -1611,7 +1609,7 @@ intel_sdvo_detect(struct drm_connector *connector, bool force)
 			else
 				ret = connector_status_disconnected;
 
-			free(edid, M_DRM);
+			kfree(edid);
 		} else
 			ret = connector_status_connected;
 	}
@@ -1656,7 +1654,7 @@ static void intel_sdvo_get_ddc_modes(struct drm_connector *connector)
 			drm_add_edid_modes(connector, edid);
 		}
 
-		free(edid, M_DRM);
+		kfree(edid);
 	}
 }
 
@@ -1871,7 +1869,7 @@ static void intel_sdvo_destroy(struct drm_connector *connector)
 	drm_sysfs_connector_remove(connector);
 #endif
 	drm_connector_cleanup(connector);
-	free(intel_sdvo_connector, M_DRM);
+	kfree(intel_sdvo_connector);
 }
 
 static bool intel_sdvo_detect_hdmi_audio(struct drm_connector *connector)
@@ -1886,7 +1884,7 @@ static bool intel_sdvo_detect_hdmi_audio(struct drm_connector *connector)
 	edid = intel_sdvo_get_edid(connector);
 	if (edid != NULL && edid->input & DRM_EDID_INPUT_DIGITAL)
 		has_audio = drm_detect_monitor_audio(edid);
-	free(edid, M_DRM);
+	kfree(edid);
 
 	return has_audio;
 }
@@ -2254,8 +2252,7 @@ intel_sdvo_dvi_init(struct intel_sdvo *intel_sdvo, int device)
 	struct intel_connector *intel_connector;
 	struct intel_sdvo_connector *intel_sdvo_connector;
 
-	intel_sdvo_connector = malloc(sizeof(struct intel_sdvo_connector),
-	    M_DRM, M_WAITOK | M_ZERO);
+	intel_sdvo_connector = kzalloc(sizeof(struct intel_sdvo_connector), GFP_KERNEL);
 	if (!intel_sdvo_connector)
 		return false;
 
@@ -2304,8 +2301,7 @@ intel_sdvo_tv_init(struct intel_sdvo *intel_sdvo, int type)
 	struct intel_connector *intel_connector;
 	struct intel_sdvo_connector *intel_sdvo_connector;
 
-	intel_sdvo_connector = malloc(sizeof(struct intel_sdvo_connector),
-	    M_DRM, M_WAITOK | M_ZERO);
+	intel_sdvo_connector = kzalloc(sizeof(struct intel_sdvo_connector), GFP_KERNEL);
 	if (!intel_sdvo_connector)
 		return false;
 
@@ -2343,8 +2339,7 @@ intel_sdvo_analog_init(struct intel_sdvo *intel_sdvo, int device)
 	struct intel_connector *intel_connector;
 	struct intel_sdvo_connector *intel_sdvo_connector;
 
-	intel_sdvo_connector = malloc(sizeof(struct intel_sdvo_connector),
-	    M_DRM, M_WAITOK | M_ZERO);
+	intel_sdvo_connector = kzalloc(sizeof(struct intel_sdvo_connector), GFP_KERNEL);
 	if (!intel_sdvo_connector)
 		return false;
 
@@ -2375,8 +2370,7 @@ intel_sdvo_lvds_init(struct intel_sdvo *intel_sdvo, int device)
 	struct intel_connector *intel_connector;
 	struct intel_sdvo_connector *intel_sdvo_connector;
 
-	intel_sdvo_connector = malloc(sizeof(struct intel_sdvo_connector),
-	    M_DRM, M_WAITOK | M_ZERO);
+	intel_sdvo_connector = kzalloc(sizeof(struct intel_sdvo_connector), GFP_KERNEL);
 	if (!intel_sdvo_connector)
 		return false;
 
@@ -2765,8 +2759,7 @@ bool intel_sdvo_init(struct drm_device *dev, uint32_t sdvo_reg, bool is_sdvob)
 	struct intel_sdvo *intel_sdvo;
 	u32 hotplug_mask;
 	int i;
-	intel_sdvo = malloc(sizeof(struct intel_sdvo), M_DRM,
-	    M_WAITOK | M_ZERO);
+	intel_sdvo = kzalloc(sizeof(struct intel_sdvo), GFP_KERNEL);
 	if (!intel_sdvo)
 		return false;
 
@@ -2878,7 +2871,7 @@ err:
 #endif
 err_i2c_bus:
 	intel_sdvo_unselect_i2c_bus(intel_sdvo);
-	free(intel_sdvo, M_DRM);
+	kfree(intel_sdvo);
 
 	return false;
 }

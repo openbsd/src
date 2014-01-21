@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.13 2013/11/11 02:59:01 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.14 2014/01/21 08:57:22 kettenis Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -299,7 +299,7 @@ static void intel_fbc_work_fn(void *arg1, void *arg2)
 	}
 	DRM_UNLOCK();
 
-	free(work, M_DRM);
+	kfree(work);
 }
 
 static void
@@ -324,7 +324,7 @@ static void intel_cancel_fbc_work(struct drm_i915_private *dev_priv)
 	timeout_del(&dev_priv->fbc_work->to);
 	if (task_del(systq, &dev_priv->fbc_work->task))
 		/* tasklet was killed before being run, clean up */
-		free(dev_priv->fbc_work, M_DRM);
+		kfree(dev_priv->fbc_work);
 
 	/* Mark the work as no longer wanted so that if it does
 	 * wake-up (because the work was already running and waiting
@@ -345,7 +345,7 @@ void intel_enable_fbc(struct drm_crtc *crtc, unsigned long interval)
 
 	intel_cancel_fbc_work(dev_priv);
 
-	work = malloc(sizeof *work, M_DRM, M_WAITOK | M_ZERO);
+	work = kzalloc(sizeof *work, GFP_KERNEL);
 	if (work == NULL) {
 		dev_priv->display.enable_fbc(crtc, interval);
 		return;

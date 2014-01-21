@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_tiling.c,v 1.12 2013/12/15 11:17:36 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_tiling.c,v 1.13 2014/01/21 08:57:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -538,7 +538,7 @@ i915_gem_object_save_bit_17_swizzle(struct drm_i915_gem_object *obj)
 		 * and a better way should be done
 		 */
 		size_t nb17 = ((page_count + 31) & ~31)/32;
-		obj->bit_17 = drm_alloc(nb17 * sizeof(u_int32_t));
+		obj->bit_17 = kmalloc(nb17 * sizeof(u_int32_t), GFP_KERNEL);
 		if (obj->bit_17 == NULL) {
 			DRM_ERROR("Failed to allocate memory for bit 17 "
 				  "record\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_tfp410.c,v 1.3 2013/08/13 10:23:49 jsg Exp $	*/
+/*	$OpenBSD: dvo_tfp410.c,v 1.4 2014/01/21 08:57:22 kettenis Exp $	*/
 /*
  * Copyright © 2007 Dave Mueller
  *
@@ -168,7 +168,7 @@ static bool tfp410_init(struct intel_dvo_device *dvo,
 	struct tfp410_priv *tfp;
 	int id;
 
-	tfp = malloc(sizeof(struct tfp410_priv), M_DRM, M_WAITOK | M_ZERO);
+	tfp = kzalloc(sizeof(struct tfp410_priv), GFP_KERNEL);
 	if (tfp == NULL)
 		return false;
 
@@ -192,7 +192,7 @@ static bool tfp410_init(struct intel_dvo_device *dvo,
 	tfp->quiet = false;
 	return true;
 out:
-	free(tfp, M_DRM);
+	kfree(tfp);
 	return false;
 }
 
@@ -297,7 +297,7 @@ static void tfp410_destroy(struct intel_dvo_device *dvo)
 	struct tfp410_priv *tfp = dvo->dev_priv;
 
 	if (tfp) {
-		free(tfp, M_DRM);
+		kfree(tfp);
 		dvo->dev_priv = NULL;
 	}
 }

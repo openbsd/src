@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_dma.c,v 1.14 2013/12/01 11:47:13 kettenis Exp $	*/
+/*	$OpenBSD: i915_dma.c,v 1.15 2014/01/21 08:57:22 kettenis Exp $	*/
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*
@@ -388,7 +388,7 @@ i915_driver_open(struct drm_device *dev, struct drm_file *file)
 {
 	struct drm_i915_file_private *file_priv;
 
-	file_priv = malloc(sizeof(*file_priv), M_DRM, M_WAITOK);
+	file_priv = kmalloc(sizeof(*file_priv), GFP_KERNEL);
 	if (!file_priv)
 		return ENOMEM;
 
@@ -409,5 +409,5 @@ i915_driver_close(struct drm_device *dev, struct drm_file *file)
 
 	i915_gem_context_close(dev, file);
 	i915_gem_release(dev, file);
-	free(file_priv, M_DRM);
+	kfree(file_priv);
 }

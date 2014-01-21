@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_dp.c,v 1.10 2013/10/30 02:11:33 dlg Exp $	*/
+/*	$OpenBSD: intel_dp.c,v 1.11 2014/01/21 08:57:22 kettenis Exp $	*/
 /*
  * Copyright © 2008 Intel Corporation
  *
@@ -2293,7 +2293,7 @@ intel_dp_get_edid(struct drm_connector *connector, struct i2c_controller *adapte
 			return NULL;
 
 		size = (intel_connector->edid->extensions + 1) * EDID_LENGTH;
-		edid = malloc(size, M_DRM, M_WAITOK);
+		edid = kmalloc(size, GFP_KERNEL);
 		if (!edid)
 			return NULL;
 
@@ -2366,7 +2366,7 @@ intel_dp_detect(struct drm_connector *connector, bool force)
 		edid = intel_dp_get_edid(connector, &intel_dp->adapter);
 		if (edid) {
 			intel_dp->has_audio = drm_detect_monitor_audio(edid);
-			free(edid, M_DRM);
+			kfree(edid);
 		}
 	}
 
@@ -2412,7 +2412,7 @@ intel_dp_detect_audio(struct drm_connector *connector)
 	edid = intel_dp_get_edid(connector, &intel_dp->adapter);
 	if (edid) {
 		has_audio = drm_detect_monitor_audio(edid);
-		free(edid, M_DRM);
+		kfree(edid);
 	}
 
 	return has_audio;
@@ -2497,7 +2497,7 @@ intel_dp_destroy(struct drm_connector *connector)
 	struct intel_connector *intel_connector = to_intel_connector(connector);
 
 	if (!IS_ERR_OR_NULL(intel_connector->edid))
-		free(intel_connector->edid, M_DRM);
+		kfree(intel_connector->edid);
 
 	if (is_edp(intel_dp))
 		intel_panel_fini(&intel_connector->panel);
@@ -2506,7 +2506,7 @@ intel_dp_destroy(struct drm_connector *connector)
 	drm_sysfs_connector_remove(connector);
 #endif
 	drm_connector_cleanup(connector);
-	free(connector, M_DRM);
+	kfree(connector);
 }
 
 void intel_dp_encoder_destroy(struct drm_encoder *encoder)
@@ -2523,7 +2523,7 @@ void intel_dp_encoder_destroy(struct drm_encoder *encoder)
 		task_del(systq, &intel_dp->panel_vdd_task);
 		ironlake_panel_vdd_off_sync(intel_dp);
 	}
-	free(intel_dig_port, M_DRM);
+	kfree(intel_dig_port);
 }
 
 static const struct drm_encoder_helper_funcs intel_dp_helper_funcs = {
@@ -2863,7 +2863,7 @@ intel_dp_init_connector(struct intel_digital_port *intel_dig_port,
 				drm_mode_connector_update_edid_property(connector, edid);
 				drm_edid_to_eld(connector, edid);
 			} else {
-				free(edid, M_DRM);
+				kfree(edid);
 				edid = ERR_PTR(-EINVAL);
 			}
 		} else {
@@ -2914,15 +2914,13 @@ intel_dp_init(struct drm_device *dev, int output_reg, enum port port)
 	struct drm_encoder *encoder;
 	struct intel_connector *intel_connector;
 
-	intel_dig_port = malloc(sizeof(struct intel_digital_port), M_DRM,
-	    M_WAITOK | M_ZERO);
+	intel_dig_port = kzalloc(sizeof(struct intel_digital_port), GFP_KERNEL);
 	if (!intel_dig_port)
 		return;
 
-	intel_connector = malloc(sizeof(struct intel_connector), M_DRM,
-	    M_WAITOK | M_ZERO);
+	intel_connector = kzalloc(sizeof(struct intel_connector), GFP_KERNEL);
 	if (!intel_connector) {
-		free(intel_dig_port, M_DRM);
+		kfree(intel_dig_port);
 		return;
 	}
 

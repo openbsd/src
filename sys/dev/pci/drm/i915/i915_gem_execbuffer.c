@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.25 2013/12/11 20:31:43 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.26 2014/01/21 08:57:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1252,8 +1252,8 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 		return -EINVAL;
 	}
 
-	exec2_list = malloc(sizeof(*exec2_list)*args->buffer_count,
-			    M_DRM,  M_WAITOK);
+	exec2_list = kmalloc(sizeof(*exec2_list)*args->buffer_count,
+			     GFP_KERNEL | __GFP_NOWARN | __GFP_NORETRY);
 	if (exec2_list == NULL) {
 		DRM_DEBUG("Failed to allocate exec list for %d buffers\n",
 			  args->buffer_count);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_ch7017.c,v 1.3 2013/08/13 10:23:48 jsg Exp $	*/
+/*	$OpenBSD: dvo_ch7017.c,v 1.4 2014/01/21 08:57:22 kettenis Exp $	*/
 /*
  * Copyright © 2006 Intel Corporation
  *
@@ -205,7 +205,7 @@ static bool ch7017_init(struct intel_dvo_device *dvo,
 	const char *str;
 	u8 val;
 
-	priv = malloc(sizeof(struct ch7017_priv), M_DRM, M_WAITOK | M_ZERO);
+	priv = kzalloc(sizeof(struct ch7017_priv), GFP_KERNEL);
 	if (priv == NULL)
 		return false;
 
@@ -237,7 +237,7 @@ static bool ch7017_init(struct intel_dvo_device *dvo,
 	return true;
 
 fail:
-	free(priv, M_DRM);
+	kfree(priv);
 	return false;
 }
 
@@ -398,7 +398,7 @@ static void ch7017_destroy(struct intel_dvo_device *dvo)
 	struct ch7017_priv *priv = dvo->dev_priv;
 
 	if (priv) {
-		free(priv, M_DRM);
+		kfree(priv);
 		dvo->dev_priv = NULL;
 	}
 }

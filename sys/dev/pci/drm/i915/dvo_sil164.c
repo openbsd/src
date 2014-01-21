@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_sil164.c,v 1.3 2013/08/13 10:23:49 jsg Exp $	*/
+/*	$OpenBSD: dvo_sil164.c,v 1.4 2014/01/21 08:57:22 kettenis Exp $	*/
 /**************************************************************************
 
 Copyright © 2006 Dave Airlie
@@ -132,7 +132,7 @@ static bool sil164_init(struct intel_dvo_device *dvo,
 	struct sil164_priv *sil;
 	unsigned char ch;
 
-	sil = malloc(sizeof(struct sil164_priv), M_DRM, M_WAITOK | M_ZERO);
+	sil = kzalloc(sizeof(struct sil164_priv), GFP_KERNEL);
 	if (sil == NULL)
 		return false;
 
@@ -163,7 +163,7 @@ static bool sil164_init(struct intel_dvo_device *dvo,
 	return true;
 
 out:
-	free(sil, M_DRM);
+	kfree(sil);
 	return false;
 }
 
@@ -258,7 +258,7 @@ static void sil164_destroy(struct intel_dvo_device *dvo)
 	struct sil164_priv *sil = dvo->dev_priv;
 
 	if (sil) {
-		free(sil, M_DRM);
+		kfree(sil);
 		dvo->dev_priv = NULL;
 	}
 }

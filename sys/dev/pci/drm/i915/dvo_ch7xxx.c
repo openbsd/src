@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_ch7xxx.c,v 1.3 2013/08/13 10:23:48 jsg Exp $	*/
+/*	$OpenBSD: dvo_ch7xxx.c,v 1.4 2014/01/21 08:57:22 kettenis Exp $	*/
 /**************************************************************************
 
 Copyright © 2006 Dave Airlie
@@ -177,7 +177,7 @@ static bool ch7xxx_init(struct intel_dvo_device *dvo,
 	uint8_t vendor, device;
 	char *name;
 
-	ch7xxx = malloc(sizeof(struct ch7xxx_priv), M_DRM, M_WAITOK | M_ZERO);
+	ch7xxx = kzalloc(sizeof(struct ch7xxx_priv), GFP_KERNEL);
 	if (ch7xxx == NULL)
 		return false;
 
@@ -212,7 +212,7 @@ static bool ch7xxx_init(struct intel_dvo_device *dvo,
 		  name, vendor, device);
 	return true;
 out:
-	free(ch7xxx, M_DRM);
+	kfree(ch7xxx);
 	return false;
 }
 
@@ -323,7 +323,7 @@ static void ch7xxx_destroy(struct intel_dvo_device *dvo)
 	struct ch7xxx_priv *ch7xxx = dvo->dev_priv;
 
 	if (ch7xxx) {
-		free(ch7xxx, M_DRM);
+		kfree(ch7xxx);
 		dvo->dev_priv = NULL;
 	}
 }
