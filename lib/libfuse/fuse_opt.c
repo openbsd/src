@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.7 2013/11/04 19:54:18 syl Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.8 2014/01/21 22:26:11 jca Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
@@ -218,8 +218,8 @@ fuse_opt_add_arg(struct fuse_args *args, const char *name)
 }
 
 static int
-parse_opt(struct fuse_opt *o, const char *val, void *data, fuse_opt_proc_t f,
-    struct fuse_args *arg)
+parse_opt(const struct fuse_opt *o, const char *val, void *data,
+    fuse_opt_proc_t f, struct fuse_args *arg)
 {
 	int ret;
 	int found = 0;
@@ -256,8 +256,8 @@ parse_opt(struct fuse_opt *o, const char *val, void *data, fuse_opt_proc_t f,
  * when f() returns 0 we need to discard the arg
  */
 int
-fuse_opt_parse(struct fuse_args *args, void *data, struct fuse_opt *opt,
-    fuse_opt_proc_t f)
+fuse_opt_parse(struct fuse_args *args, void *data,
+    const struct fuse_opt *opt, fuse_opt_proc_t f)
 {
 	struct fuse_args outargs = FUSE_ARGS_INIT(args->argc, args->argv);
 	const char *arg;
