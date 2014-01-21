@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.131 2014/01/20 21:19:27 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.132 2014/01/21 06:22:37 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -358,7 +358,6 @@ exit1(struct proc *p, int rv, int flags)
 		/* scheduler_wait_hook(pr->ps_mainproc, p); XXX */
 		--pr->ps_refcnt;
 		KASSERT(pr->ps_refcnt > 0);
-		p->p_p = NULL;
 	}
 
 	/*
