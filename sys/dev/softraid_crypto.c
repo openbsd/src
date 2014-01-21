@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.106 2014/01/21 05:22:21 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.107 2014/01/21 05:52:25 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -1120,11 +1120,9 @@ sr_crypto_rw(struct sr_workunit *wu)
 	if (wu->swu_xs->flags & SCSI_DATA_OUT) {
 		crwu = sr_crypto_prepare(wu, 1);
 		crwu->cr_crp->crp_callback = sr_crypto_write;
-		s = splvm();
 		rv = crypto_invoke(crwu->cr_crp);
 		if (rv == 0)
 			rv = crwu->cr_crp->crp_etype;
-		splx(s);
 	} else
 		rv = sr_crypto_dev_rw(wu, NULL);
 
@@ -1199,11 +1197,9 @@ sr_crypto_done(struct sr_workunit *wu)
 	if (ISSET(xs->flags, SCSI_DATA_IN) && xs->error == XS_NOERROR) {
 		crwu = sr_crypto_prepare(wu, 0);
 		crwu->cr_crp->crp_callback = sr_crypto_read;
-		DNPRINTF(SR_D_INTR, "%s: sr_crypto_intr: crypto_invoke %p\n",
+		DNPRINTF(SR_D_INTR, "%s: sr_crypto_done: crypto_invoke %p\n",
 		    DEVNAME(wu->swu_dis->sd_sc), crwu->cr_crp);
-		s = splvm();
 		crypto_invoke(crwu->cr_crp);
-		splx(s);
 		return;
 	}
 
