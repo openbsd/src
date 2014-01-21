@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.14 2013/09/29 16:24:21 deraadt Exp $	*/
+/*	$OpenBSD: chap.c,v 1.15 2014/01/21 22:56:31 jsg Exp $	*/
 
 /*
  * chap.c - Challenge Handshake Authentication Protocol.
@@ -56,6 +56,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/time.h>
