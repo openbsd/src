@@ -1,4 +1,4 @@
-.\"	$OpenBSD: extent.9,v 1.16 2013/07/17 20:21:52 schwarze Exp $
+.\"	$OpenBSD: extent.9,v 1.17 2014/01/21 21:46:54 kettenis Exp $
 .\"	$NetBSD: extent.9,v 1.15 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt EXTENT 9
 .Os
 .Sh NAME
@@ -36,6 +36,7 @@
 .Nm extent_destroy ,
 .Nm extent_alloc ,
 .Nm extent_alloc_subregion ,
+.Nm extent_alloc_subregion_with_descr ,
 .Nm extent_alloc_region ,
 .Nm extent_free ,
 .Nm extent_print
@@ -60,6 +61,20 @@
 .Fa "u_long skew"
 .Fa "u_long boundary"
 .Fa "int flags"
+.Fa "u_long *result"
+.Fc
+.Ft int
+.\" way too many arguments for a single .Fn
+.Fo extent_alloc_subregion_with_descr
+.Fa "struct extent *ex"
+.Fa "u_long substart"
+.Fa "u_long subend"
+.Fa "u_long size"
+.Fa "u_long alignment"
+.Fa "u_long skew"
+.Fa "u_long boundary"
+.Fa "int flags"
+.Fa "struct extent_region *rp"
 .Fa "u_long *result"
 .Fc
 .Ft int
@@ -237,6 +252,15 @@ fall within the subregion from
 to
 .Fa subend
 inclusive.
+.Pp
+.Fn extent_alloc_subregion_with_descr
+is similar to
+.Fn extent_alloc_subregion
+but allows the caller to provide a pre-allocated region descriptor instead
+of having the function allocate one.
+This function can only be used with extents that have the
+.Dv EX_NOCOALESCE
+property.
 .Pp
 .Fn extent_alloc_region
 allocates the specific region in the extent map

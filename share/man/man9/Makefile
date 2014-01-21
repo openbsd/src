@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.193 2013/12/29 03:16:42 guenther Exp $
+#	$OpenBSD: Makefile,v 1.194 2014/01/21 21:46:54 kettenis Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -132,6 +132,7 @@ MLINKS+=disklabel.9 readdisklabel.9 disklabel.9 writedisklabel.9 \
 MLINKS+=evcount.9 evcount_attach.9 evcount.9 evcount_detach.9
 MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_alloc.9 extent.9 extent_alloc_subregion.9 \
+	extent.9 extent_alloc_subregion_with_descr.9 \
 	extent.9 extent_alloc_region.9 extent.9 extent_free.9 \
 	extent.9 extent_print.9
 MLINKS+=fb_setup.9 fb_queue.9 fb_setup.9 fb_delete.9
@@ -300,7 +301,6 @@ MLINKS+=rwlock.9 rw_init.9 rwlock.9 rw_enter.9 rwlock.9 rw_exit.9 \
 	rwlock.9 rw_assert_wrlock.9 rwlock.9 rw_assert_rdlock.9 \
 	rwlock.9 rw_assert_unlocked.9 \
 	rwlock.9 RWLOCK_INITIALIZER.9
-	
 MLINKS+=sensor_attach.9 sensordev_install.9 \
 	sensor_attach.9 sensordev_deinstall.9 \
 	sensor_attach.9 sensordev_get.9 \
