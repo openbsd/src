@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.6 2014/01/21 02:40:02 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.7 2014/01/21 06:10:14 jsg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -1492,7 +1492,7 @@ qla_async(struct qla_softc *sc, u_int16_t info)
 		id = qla_read_mbox(sc, 1);
 		exp = qla_read_mbox(sc, 2);
 		printf("%s: login reject from %x (reason %d, explanation %x)",
-		    id >> 8, id & 0xff, exp);
+		    DEVNAME(sc), id >> 8, id & 0xff, exp);
 		break;
 
 	case QLA_ASYNC_SCSI_CMD_COMPLETE:
