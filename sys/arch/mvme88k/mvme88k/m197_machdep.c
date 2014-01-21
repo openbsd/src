@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.48 2013/05/17 22:46:28 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.49 2014/01/21 23:54:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -545,7 +545,7 @@ m197_send_complex_ipi(int ipi, cpuid_t cpu, u_int32_t arg1, u_int32_t arg2)
 #ifdef DEBUG
 	if (ci->ci_ipi != 0)
 		printf("%s: cpu %d ipi %x did not clear during wait\n",
-		    ci->ci_cpuid, ci->ci_ipi);
+		    __func__, ci->ci_cpuid, ci->ci_ipi);
 #endif
 
 	/*
@@ -583,7 +583,7 @@ m197_send_complex_ipi(int ipi, cpuid_t cpu, u_int32_t arg1, u_int32_t arg2)
 	 */
 	if (ci->ci_ipi != 0) {
 		printf("%s: cpu %d ipi %x did not clear after completion\n",
-		    ci->ci_cpuid, ci->ci_ipi);
+		    __func__, ci->ci_cpuid, ci->ci_ipi);
 		*(volatile u_int8_t *)(BS_BASE + BS_CPINT) |= BS_CPI_SCPI;
 	}
 #endif
