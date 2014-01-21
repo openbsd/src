@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.62 2014/01/21 05:38:49 mikeb Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.63 2014/01/21 05:40:32 mikeb Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -402,20 +402,6 @@ crypto_unregister(u_int32_t driverid, int alg)
 int
 crypto_dispatch(struct cryptop *crp)
 {
-	int s;
-	u_int32_t hid;
-
-	s = splvm();
-	/*
-	 * Keep track of ops per driver, for coallescing purposes. If
-	 * we have been given an invalid hid, we'll deal with in the
-	 * crypto_invoke(), through session migration.
-	 */
-	hid = (crp->crp_sid >> 32) & 0xffffffff;
-	if (hid < crypto_drivers_num)
-		crypto_drivers[hid].cc_queued++;
-	splx(s);
-
 	if (crypto_taskq && !(crp->crp_flags & CRYPTO_F_NOQUEUE)) {
 		task_set(&crp->crp_task, (void (*))crypto_invoke, crp, NULL);
 		task_add(crypto_taskq, &crp->crp_task);
@@ -514,8 +500,6 @@ crypto_invoke(struct cryptop *crp)
 	hid = (crp->crp_sid >> 32) & 0xffffffff;
 	if (hid >= crypto_drivers_num)
 		goto migrate;
-
-	crypto_drivers[hid].cc_queued--;
 
 	if (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP) {
 		crypto_freesession(crp->crp_sid);
