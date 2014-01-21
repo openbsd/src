@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.35 2014/01/13 23:03:52 bluhm Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.36 2014/01/21 10:18:26 mpi Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -127,8 +127,7 @@ mld6_start_listening(struct in6_multi *in6m)
 	 * MLD messages are never sent for multicast addresses whose scope is 0
 	 * (reserved) or 1 (node-local).
 	 */
-	mld_all_nodes_linklocal.s6_addr16[1] =
-	    htons(in6m->in6m_ifp->if_index); /* XXX */
+	mld_all_nodes_linklocal.s6_addr16[1] = htons(in6m->in6m_ifidx);/* XXX */
 	if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr, &mld_all_nodes_linklocal) ||
 	    __IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) < __IPV6_ADDR_SCOPE_LINKLOCAL) {
 		in6m->in6m_timer = 0;
@@ -149,10 +148,9 @@ mld6_stop_listening(struct in6_multi *in6m)
 {
 	int s = splsoftnet();
 
-	mld_all_nodes_linklocal.s6_addr16[1] =
-	    htons(in6m->in6m_ifp->if_index); /* XXX */
+	mld_all_nodes_linklocal.s6_addr16[1] = htons(in6m->in6m_ifidx);/* XXX */
 	mld_all_routers_linklocal.s6_addr16[1] =
-	    htons(in6m->in6m_ifp->if_index); /* XXX: necessary when mrouting */
+	    htons(in6m->in6m_ifidx); /* XXX: necessary when mrouting */
 
 	if (in6m->in6m_state == MLD_IREPORTEDLAST &&
 	    (!IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr, &mld_all_nodes_linklocal)) &&
@@ -374,8 +372,12 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 	struct ip6_hdr *ip6;
 	struct ip6_moptions im6o;
 	struct in6_ifaddr *ia6;
-	struct ifnet *ifp = in6m->in6m_ifp;
+	struct ifnet *ifp;
 	int ignflags;
+
+	ifp = if_get(in6m->in6m_ifidx);
+	if (ifp == NULL)
+		return;
 
 	/*
 	 * At first, find a link local address on the outgoing interface

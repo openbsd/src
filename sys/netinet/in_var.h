@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.32 2014/01/13 09:48:12 mpi Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.33 2014/01/21 10:18:26 mpi Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ struct router_info {
 struct in_multi {
 	struct ifmaddr		inm_ifma;   /* Protocol-independent info */
 #define inm_refcnt		inm_ifma.ifma_refcnt
-#define inm_ifp			inm_ifma.ifma_ifp
+#define inm_ifidx		inm_ifma.ifma_ifidx
 
 	struct sockaddr_in	inm_sin;   /* IPv4 multicast address */
 #define inm_addr		inm_sin.sin_addr

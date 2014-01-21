@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.3 2013/11/28 11:05:18 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.4 2014/01/21 10:18:26 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -310,7 +310,7 @@ struct ifaddr_item {
  */
 struct ifmaddr {
 	struct sockaddr		*ifma_addr;	/* Protocol address */
-	struct ifnet		*ifma_ifp;	/* Back pointer to ifnet */
+	unsigned short		 ifma_ifidx;	/* Index of the interface */
 	unsigned int		 ifma_refcnt;	/* Count of references */
 	TAILQ_ENTRY(ifmaddr)	 ifma_list;	/* Per-interface list */
 };

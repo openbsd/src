@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.254 2014/01/09 06:29:06 tedu Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.255 2014/01/21 10:18:26 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1833,7 +1833,8 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 		 * membership slots are full.
 		 */
 		for (i = 0; i < imo->imo_num_memberships; ++i) {
-			if (imo->imo_membership[i]->inm_ifp == ifp &&
+			if (imo->imo_membership[i]->inm_ifidx
+						== ifp->if_index &&
 			    imo->imo_membership[i]->inm_addr.s_addr
 						== mreq->imr_multiaddr.s_addr)
 				break;
@@ -1916,7 +1917,8 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 		 */
 		for (i = 0; i < imo->imo_num_memberships; ++i) {
 			if ((ifp == NULL ||
-			     imo->imo_membership[i]->inm_ifp == ifp) &&
+			    imo->imo_membership[i]->inm_ifidx ==
+			        ifp->if_index) &&
 			     imo->imo_membership[i]->inm_addr.s_addr ==
 			     mreq->imr_multiaddr.s_addr)
 				break;

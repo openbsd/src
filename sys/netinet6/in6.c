@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.129 2014/01/15 09:25:38 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.130 2014/01/21 10:18:26 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1592,7 +1592,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp, int *errorp)
 		in6m->in6m_sin.sin6_family = AF_INET6;
 		in6m->in6m_sin.sin6_addr = *maddr6;
 		in6m->in6m_refcnt = 1;
-		in6m->in6m_ifp = ifp;
+		in6m->in6m_ifidx = ifp->if_index;
 		in6m->in6m_ifma.ifma_addr = sin6tosa(&in6m->in6m_sin);
 
 		/*
@@ -1637,21 +1637,24 @@ in6_delmulti(struct in6_multi *in6m)
 		 * that we are leaving the multicast group.
 		 */
 		mld6_stop_listening(in6m);
-		ifp = in6m->in6m_ifp;
+		ifp = if_get(in6m->in6m_ifidx);
 
 		/*
 		 * Notify the network driver to update its multicast
 		 * reception filter.
 		 */
-		bzero(&ifr.ifr_addr, sizeof(struct sockaddr_in6));
-		ifr.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
-		ifr.ifr_addr.sin6_family = AF_INET6;
-		ifr.ifr_addr.sin6_addr = in6m->in6m_addr;
-		(*ifp->if_ioctl)(in6m->in6m_ifp, SIOCDELMULTI, (caddr_t)&ifr);
+		if (ifp != NULL) {
+			bzero(&ifr.ifr_addr, sizeof(struct sockaddr_in6));
+			ifr.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
+			ifr.ifr_addr.sin6_family = AF_INET6;
+			ifr.ifr_addr.sin6_addr = in6m->in6m_addr;
+			(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
 
-		s = splsoftnet();
-		TAILQ_REMOVE(&ifp->if_maddrlist, &in6m->in6m_ifma, ifma_list);
-		splx(s);
+			s = splsoftnet();
+			TAILQ_REMOVE(&ifp->if_maddrlist, &in6m->in6m_ifma,
+			    ifma_list);
+			splx(s);
+		}
 
 		free(in6m, M_IPMADDR);
 	}

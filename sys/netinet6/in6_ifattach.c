@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.67 2014/01/13 23:03:52 bluhm Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.68 2014/01/21 10:18:26 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -646,7 +646,6 @@ void
 in6_ifdetach(struct ifnet *ifp)
 {
 	struct ifaddr *ifa, *next;
-	struct ifmaddr *ifma, *mnext;
 	struct rtentry *rt;
 	struct sockaddr_in6 sin6;
 
@@ -663,15 +662,6 @@ in6_ifdetach(struct ifnet *ifp)
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		in6_purgeaddr(ifa);
-	}
-
-
-	TAILQ_FOREACH_SAFE(ifma, &ifp->if_maddrlist, ifma_list, mnext) {
-		if (ifma->ifma_addr->sa_family != AF_INET6)
-			continue;
-
-		ifma->ifma_refcnt = 1;
-		in6_delmulti(ifmatoin6m(ifma));
 	}
 
 	/*

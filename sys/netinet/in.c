@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.90 2013/12/31 03:24:44 tedu Exp $	*/
+/*	$OpenBSD: in.c,v 1.91 2014/01/21 10:18:26 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -949,7 +949,7 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		inm->inm_sin.sin_family = AF_INET;
 		inm->inm_sin.sin_addr = *ap;
 		inm->inm_refcnt = 1;
-		inm->inm_ifp = ifp;
+		inm->inm_ifidx = ifp->if_index;
 		inm->inm_ifma.ifma_addr = sintosa(&inm->inm_sin);
 
 		/*
@@ -992,20 +992,24 @@ in_delmulti(struct in_multi *inm)
 		 * we are leaving the multicast group.
 		 */
 		igmp_leavegroup(inm);
-		ifp = inm->inm_ifp;
+		ifp = if_get(inm->inm_ifidx);
 
 		/*
 		 * Notify the network driver to update its multicast
 		 * reception filter.
 		 */
-		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
-		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
-		satosin(&ifr.ifr_addr)->sin_addr = inm->inm_addr;
-		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
+		if (ifp != NULL) {
+			satosin(&ifr.ifr_addr)->sin_len =
+			    sizeof(struct sockaddr_in);
+			satosin(&ifr.ifr_addr)->sin_family = AF_INET;
+			satosin(&ifr.ifr_addr)->sin_addr = inm->inm_addr;
+			(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
 
-		s = splsoftnet();
-		TAILQ_REMOVE(&ifp->if_maddrlist, &inm->inm_ifma, ifma_list);
-		splx(s);
+			s = splsoftnet();
+			TAILQ_REMOVE(&ifp->if_maddrlist, &inm->inm_ifma,
+			    ifma_list);
+			splx(s);
+		}
 
 		free(inm, M_IPMADDR);
 	}
@@ -1017,20 +1021,11 @@ void
 in_ifdetach(struct ifnet *ifp)
 {
 	struct ifaddr *ifa, *next;
-	struct ifmaddr *ifma, *mnext;
 
 	/* nuke any of IPv4 addresses we have */
 	TAILQ_FOREACH_SAFE(ifa, &ifp->if_addrlist, ifa_list, next) {
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 		in_purgeaddr(ifa);
-	}
-
-	TAILQ_FOREACH_SAFE(ifma, &ifp->if_maddrlist, ifma_list, mnext) {
-		if (ifma->ifma_addr->sa_family != AF_INET)
-			continue;
-
-		ifma->ifma_refcnt = 1;
-		in_delmulti(ifmatoinm(ifma));
 	}
 }

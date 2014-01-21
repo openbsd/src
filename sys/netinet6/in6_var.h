@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.46 2013/11/28 10:16:44 mpi Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.47 2014/01/21 10:18:26 mpi Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -467,7 +467,7 @@ struct in6_multi_mship {
 struct in6_multi {
 	struct ifmaddr		in6m_ifma;   /* Protocol-independent info */
 #define in6m_refcnt		in6m_ifma.ifma_refcnt
-#define in6m_ifp		in6m_ifma.ifma_ifp
+#define in6m_ifidx		in6m_ifma.ifma_ifidx
 
 	struct sockaddr_in6	in6m_sin;   /* IPv6 multicast address */
 #define in6m_addr		in6m_sin.sin6_addr

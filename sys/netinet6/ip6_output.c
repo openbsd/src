@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.149 2014/01/13 23:03:52 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.150 2014/01/21 10:18:26 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2514,7 +2514,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 		 * See if the membership already exists.
 		 */
 		LIST_FOREACH(imm, &im6o->im6o_memberships, i6mm_chain)
-			if (imm->i6mm_maddr->in6m_ifp == ifp &&
+			if (imm->i6mm_maddr->in6m_ifidx == ifp->if_index &&
 			    IN6_ARE_ADDR_EQUAL(&imm->i6mm_maddr->in6m_addr,
 			    &mreq->ipv6mr_multiaddr))
 				break;
@@ -2578,7 +2578,8 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 		 * Find the membership in the membership list.
 		 */
 		LIST_FOREACH(imm, &im6o->im6o_memberships, i6mm_chain) {
-			if ((ifp == NULL || imm->i6mm_maddr->in6m_ifp == ifp) &&
+			if ((ifp == NULL ||
+			    imm->i6mm_maddr->in6m_ifidx == ifp->if_index) &&
 			    IN6_ARE_ADDR_EQUAL(&imm->i6mm_maddr->in6m_addr,
 			    &mreq->ipv6mr_multiaddr))
 				break;
