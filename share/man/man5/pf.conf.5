@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.534 2014/01/20 02:59:55 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.535 2014/01/21 01:52:18 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 20 2014 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -276,6 +276,8 @@ see the
 .Ic group
 keyword in
 .Xr ifconfig 8 .
+.Ar any
+will match any existing interface except loopback ones.
 .It Ar on Ar rdomain Aq Ar number
 This rule applies only to packets coming in on, or going out through, this
 particular routing domain.
@@ -627,6 +629,8 @@ For example, the following rule will drop 20% of incoming ICMP packets:
 Only match packets which were received on the specified
 .Ar interface
 (or interface group).
+.Ar any
+will match any existing interface except loopback ones.
 .Pp
 .It Ar rtable Aq Ar number
 Used to select an alternate routing table for the routing lookup.
