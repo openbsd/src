@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_signal.c,v 1.15 2012/06/19 11:35:29 pirofti Exp $	*/
+/*	$OpenBSD: linux_signal.c,v 1.16 2014/01/21 01:49:13 tedu Exp $	*/
 /*	$NetBSD: linux_signal.c,v 1.10 1996/04/04 23:51:36 christos Exp $	*/
 
 /*
@@ -53,13 +53,13 @@
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
 
-#define	sigemptyset(s)		bzero((s), sizeof(*(s)))
+#define	sigemptyset(s)		memset((s), 0, sizeof(*(s)))
 #define	sigismember(s, n)	(*(s) & sigmask(n))
 #define	sigaddset(s, n)		(*(s) |= sigmask(n))
  
 /* Locally used defines (in bsd<->linux conversion functions): */
 #define	linux_sigmask(n)	(1 << ((n) - 1))
-#define	linux_sigemptyset(s)	bzero((s), sizeof(*(s)))
+#define	linux_sigemptyset(s)	memset((s), 0, sizeof(*(s)))
 #define	linux_sigismember(s, n)	((s)->sig[((n) - 1) / LINUX__NSIG_BPW]	\
 					& (1 << ((n) - 1) % LINUX__NSIG_BPW))
 #define	linux_sigaddset(s, n)	((s)->sig[((n) - 1) / LINUX__NSIG_BPW]	\
@@ -333,7 +333,7 @@ bsd_to_linux_sigaction(bsa, lsa)
 {
 
 	/* Clear sa_flags and sa_restorer (if it exists) */
-	bzero(lsa, sizeof(struct linux_sigaction));
+	memset(lsa, 0, sizeof(struct linux_sigaction));
 
 	/* ...and fill in the mask and flags */
 	bsd_to_linux_sigset(&bsa->sa_mask, &lsa->sa_mask);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.210 2013/12/01 16:40:56 krw Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.211 2014/01/21 01:48:45 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -525,7 +525,7 @@ loop:
 		nvp->v_specnext = *vpp;
 		nvp->v_specmountpoint = NULL;
 		nvp->v_speclockf = NULL;
-		bzero(nvp->v_specbitmap, sizeof(nvp->v_specbitmap));
+		memset(nvp->v_specbitmap, 0, sizeof(nvp->v_specbitmap));
 		*vpp = nvp;
 		if (vp != NULLVP) {
 			nvp->v_flag |= VALIASED;

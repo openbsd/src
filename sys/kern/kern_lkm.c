@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.46 2010/01/14 23:12:11 schwarze Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.47 2014/01/21 01:48:44 tedu Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -443,7 +443,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		case LKMS_LOADING_SYMS:
 			if ((curp->size - curp->offset) > 0)
 			    /* The remainder must be bss, so we clear it */
-			    bzero((caddr_t)curp->area + curp->offset,
+			    memset((caddr_t)curp->area + curp->offset, 0,
 				  curp->size - curp->offset);
 			break;
 		default:

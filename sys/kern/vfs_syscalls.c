@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.201 2014/01/20 03:33:29 guenther Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.202 2014/01/21 01:48:45 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -958,7 +958,7 @@ sys_getfh(struct proc *p, void *v, register_t *retval)
 	if (error)
 		return (error);
 	vp = nd.ni_vp;
-	bzero(&fh, sizeof(fh));
+	memset(&fh, 0, sizeof(fh));
 	fh.fh_fsid = vp->v_mount->mnt_stat.f_fsid;
 	error = VFS_VPTOFH(vp, &fh.fh_fid);
 	vput(vp);

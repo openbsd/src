@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.48 2013/08/08 23:25:06 syl Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.49 2014/01/21 01:48:44 tedu Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -188,7 +188,7 @@ extent_create(char *name, u_long start, u_long end, int mtype, caddr_t storage,
 	if (fixed_extent) {
 		struct extent_fixed *fex;
 
-		bzero(storage, storagesize);
+		memset(storage, 0, storagesize);
 
 		/*
 		 * Align all descriptors on "long" boundaries.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.156 2014/01/20 21:19:28 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.157 2014/01/21 01:48:44 tedu Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1674,7 +1674,7 @@ sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 	} else {
 		siginfo_t si;
 
-		bzero(&si, sizeof si);
+		memset(&si, 0, sizeof(si));
 		si.si_signo = p->p_sigwait;
 		error = copyout(&si, SCARG(uap, info), sizeof(si));
 	}
@@ -1684,7 +1684,7 @@ sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 void
 initsiginfo(siginfo_t *si, int sig, u_long trapno, int code, union sigval val)
 {
-	bzero(si, sizeof *si);
+	memset(si, 0, sizeof(*si));
 
 	si->si_signo = sig;
 	si->si_code = code;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.63 2012/05/06 09:45:26 mikeb Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.64 2014/01/21 01:48:45 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -207,7 +207,7 @@ pipe_create(struct pipe *cpipe)
 	 * protect so pipeclose() doesn't follow a junk pointer
 	 * if pipespace() fails.
 	 */
-	bzero(&cpipe->pipe_sel, sizeof cpipe->pipe_sel);
+	memset(&cpipe->pipe_sel, 0, sizeof(cpipe->pipe_sel));
 	cpipe->pipe_state = 0;
 	cpipe->pipe_peer = NULL;
 	cpipe->pipe_busy = 0;
@@ -683,7 +683,7 @@ pipe_stat(struct file *fp, struct stat *ub, struct proc *p)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 
-	bzero(ub, sizeof(*ub));
+	memset(ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFIFO;
 	ub->st_blksize = pipe->pipe_buffer.size;
 	ub->st_size = pipe->pipe_buffer.cnt;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.93 2013/07/04 17:37:05 tedu Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.94 2014/01/21 01:48:44 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -891,7 +891,7 @@ ELFNAME(os_pt_note)(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
 		    np->descsz != desc_size)
 			goto out3;
 
-		if (bcmp((np + 1), os_name, name_size))
+		if (memcmp((np + 1), os_name, name_size))
 			goto out3;
 
 		/* XXX: We could check for the specific emulation here */
@@ -1149,7 +1149,7 @@ ELFNAMEEND(coredump_notes)(struct proc *p, void *iocookie, size_t *sizep)
 	notesize = sizeof(nhdr) + elfround(sizeof("OpenBSD")) +
 	    elfround(sizeof(cpi));
 	if (iocookie) {
-		bzero(&cpi, sizeof(cpi));
+		memset(&cpi, 0, sizeof(cpi));
 
 		cpi.cpi_version = ELFCORE_PROCINFO_VERSION;
 		cpi.cpi_cpisize = sizeof(cpi);

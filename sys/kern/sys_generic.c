@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.84 2013/09/14 02:28:02 guenther Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.85 2014/01/21 01:48:45 tedu Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -448,7 +448,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 		 * Zero the buffer so the user always
 		 * gets back something deterministic.
 		 */
-		bzero(data, size);
+		memset(data, 0, size);
 	else if (com&IOC_VOID)
 		*(caddr_t *)data = SCARG(uap, data);
 
@@ -624,7 +624,7 @@ dopselect(struct proc *p, int nd, fd_set *in, fd_set *ou, fd_set *ex,
 		pobits[1] = (fd_set *)&mbits[ni * 4];
 		pobits[2] = (fd_set *)&mbits[ni * 5];
 	} else {
-		bzero(bits, sizeof(bits));
+		memset(bits, 0, sizeof(bits));
 		pibits[0] = (fd_set *)&bits[0];
 		pibits[1] = (fd_set *)&bits[1];
 		pibits[2] = (fd_set *)&bits[2];

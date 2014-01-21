@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.47 2014/01/20 21:19:28 guenther Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.48 2014/01/21 01:48:44 tedu Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -446,7 +446,7 @@ dogetrusage(struct proc *p, int who, struct rusage *rup)
 		if (pr->ps_ru != NULL)
 			*rup = *pr->ps_ru;
 		else
-			bzero(rup, sizeof(*rup));
+			memset(rup, 0, sizeof(*rup));
 
 		/* add on all living threads */
 		TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {

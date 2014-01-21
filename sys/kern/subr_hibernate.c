@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.82 2014/01/14 09:57:51 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.83 2014/01/21 01:48:44 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -680,7 +680,7 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 	chunktable_size = HIBERNATE_CHUNK_TABLE_SIZE / DEV_BSIZE;
 
 	/* Stash kernel version information */
-	bzero(&hib->kernel_version, 128);
+	memset(&hib->kernel_version, 0, 128);
 	bcopy(version, &hib->kernel_version,
 	    min(strlen(version), sizeof(hib->kernel_version)-1));
 
@@ -942,7 +942,7 @@ hibernate_clear_signature(void)
 	union hibernate_info hib;
 
 	/* Zero out a blank hiber_info */
-	bzero(&blank_hiber_info, sizeof(union hibernate_info));
+	memset(&blank_hiber_info, 0, sizeof(union hibernate_info));
 
 	/* Get the signature block location */
 	if (get_hibernate_info(&hib, 0))
@@ -1099,7 +1099,7 @@ hibernate_resume(void)
 	int s;
 
 	/* Get current running machine's hibernate info */
-	bzero(&hib, sizeof(hib));
+	memset(&hib, 0, sizeof(hib));
 	if (get_hibernate_info(&hib, 0)) {
 		DPRINTF("couldn't retrieve machine's hibernate info\n");
 		return;
@@ -1536,8 +1536,8 @@ hibernate_zlib_reset(union hibernate_info *hib, int deflate)
 	hibernate_zlib_start = (vaddr_t)(pva + (28 * PAGE_SIZE));
 	hibernate_zlib_size = 80 * PAGE_SIZE;
 
-	bzero((caddr_t)hibernate_zlib_start, hibernate_zlib_size);
-	bzero((caddr_t)hibernate_state, PAGE_SIZE);
+	memset((void *)hibernate_zlib_start, 0, hibernate_zlib_size);
+	memset(hibernate_state, 0, PAGE_SIZE);
 
 	/* Set up stream structure */
 	hibernate_state->hib_stream.zalloc = (alloc_func)hibernate_zlib_alloc;

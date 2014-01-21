@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.243 2014/01/20 21:19:28 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.244 2014/01/21 01:48:44 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -466,7 +466,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		struct cpu_info *ci;
 		int i;
 
-		bzero(cp_time, sizeof(cp_time));
+		memset(cp_time, 0, sizeof(cp_time));
 
 		CPU_INFO_FOREACH(cii, ci) {
 			for (i = 0; i < CPUSTATES; i++)
@@ -1858,8 +1858,8 @@ sysctl_diskinit(int update, struct proc *p)
 		for (dk = TAILQ_FIRST(&disklist), i = 0, l = 0; dk;
 		    dk = TAILQ_NEXT(dk, dk_link), i++) {
 			dl = dk->dk_label;
-			bzero(duid, sizeof(duid));
-			if (dl && bcmp(dl->d_uid, &uid, sizeof(dl->d_uid))) {
+			memset(duid, 0, sizeof(duid));
+			if (dl && memcmp(dl->d_uid, &uid, sizeof(dl->d_uid))) {
 				snprintf(duid, sizeof(duid), 
 				    "%02hx%02hx%02hx%02hx"
 				    "%02hx%02hx%02hx%02hx",
@@ -2007,7 +2007,7 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 					bcopy(sema[i], &semsi->semids[i],
 					    dssize);
 				else
-					bzero(&semsi->semids[i], dssize);
+					memset(&semsi->semids[i], 0, dssize);
 				break;
 #endif
 #ifdef SYSVSHM
@@ -2016,7 +2016,7 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 					bcopy(shmsegs[i], &shmsi->shmids[i],
 					    dssize);
 				else
-					bzero(&shmsi->shmids[i], dssize);
+					memset(&shmsi->shmids[i], 0, dssize);
 				break;
 #endif
 			}

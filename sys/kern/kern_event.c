@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.53 2013/11/14 18:09:39 chl Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.54 2014/01/21 01:48:44 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -867,7 +867,7 @@ kqueue_stat(struct file *fp, struct stat *st, struct proc *p)
 {
 	struct kqueue *kq = (struct kqueue *)fp->f_data;
 
-	bzero((void *)st, sizeof(*st));
+	memset(st, 0, sizeof(*st));
 	st->st_size = kq->kq_count;
 	st->st_blksize = sizeof(struct kevent);
 	st->st_mode = S_IFIFO;
@@ -1023,8 +1023,8 @@ knote_attach(struct knote *kn, struct filedesc *fdp)
 		list = malloc(size * sizeof(struct klist), M_TEMP, M_WAITOK);
 		bcopy((caddr_t)fdp->fd_knlist, (caddr_t)list,
 		    fdp->fd_knlistsize * sizeof(struct klist));
-		bzero((caddr_t)list +
-		    fdp->fd_knlistsize * sizeof(struct klist),
+		memset((caddr_t)list +
+		    fdp->fd_knlistsize * sizeof(struct klist), 0,
 		    (size - fdp->fd_knlistsize) * sizeof(struct klist));
 		if (fdp->fd_knlist != NULL)
 			free(fdp->fd_knlist, M_TEMP);

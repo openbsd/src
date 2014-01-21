@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.103 2013/08/08 23:25:06 syl Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.104 2014/01/21 01:48:44 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -586,7 +586,7 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		/* Initialize the first time */
 		if (buckstring_init == 0) {
 			buckstring_init = 1;
-			bzero(buckstring, sizeof(buckstring));
+			memset(buckstring, 0, sizeof(buckstring));
 			for (siz = 0, i = MINBUCKET; i < MINBUCKET + 16; i++) {
 				snprintf(buckstring + siz,
 				    sizeof buckstring - siz,
@@ -601,7 +601,7 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	case KERN_MALLOC_BUCKET:
 		bcopy(&bucket[BUCKETINDX(name[1])], &kb, sizeof(kb));
-		bzero(&kb.kb_freelist, sizeof(kb.kb_freelist));
+		memset(&kb.kb_freelist, 0, sizeof(kb.kb_freelist));
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &kb, sizeof(kb)));
 	case KERN_MALLOC_KMEMSTATS:
 #ifdef KMEMSTATS

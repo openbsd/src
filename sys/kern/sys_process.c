@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.57 2012/04/13 19:20:31 kettenis Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.58 2014/01/21 01:48:45 tedu Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -341,7 +341,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		if (tr->ps_ptstat == NULL)
 			tr->ps_ptstat = malloc(sizeof(*tr->ps_ptstat),
 			    M_SUBPROC, M_WAITOK);
-		bzero(tr->ps_ptstat, sizeof(*tr->ps_ptstat));
+		memset(tr->ps_ptstat, 0, sizeof(*tr->ps_ptstat));
 		return (0);
 
 	case  PT_WRITE_I:		/* XXX no separate I and D spaces */
@@ -500,7 +500,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		atomic_clearbits_int(&tr->ps_flags, PS_TRACED|PS_WAITED);
 
 	sendsig:
-		bzero(tr->ps_ptstat, sizeof(*tr->ps_ptstat));
+		memset(tr->ps_ptstat, 0, sizeof(*tr->ps_ptstat));
 
 		/* Finally, deliver the requested signal (or none). */
 		if (t->p_stat == SSTOP) {
@@ -549,7 +549,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 	case  PT_GET_EVENT_MASK:
 		if (SCARG(uap, data) != sizeof(pe))
 			return (EINVAL);
-		bzero(&pe, sizeof(pe));
+		memset(&pe, 0, sizeof(pe));
 		pe.pe_set_event = tr->ps_ptmask;
 		return (copyout(&pe, SCARG(uap, addr), sizeof(pe)));
 	case  PT_SET_EVENT_MASK:

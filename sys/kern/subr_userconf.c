@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.38 2013/12/12 20:56:01 guenther Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.39 2014/01/21 01:48:44 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -507,7 +507,7 @@ userconf_change(int devno)
 			userconf_hist_int(cd->cf_flags);
 
 			if (share) {
-				if (bcmp(cd->cf_loc, lk, sizeof(int) * i))
+				if (memcmp(cd->cf_loc, lk, sizeof(int) * i))
 					cd->cf_loc = lk;
 				else
 					free(lk, M_TEMP);
@@ -1040,7 +1040,7 @@ userconf_add(char *dev, int len, short unit, short state)
 	struct cfdata new;
 	int  val, max_unit, star_unit, orig;
 
-	bzero(&new, sizeof(struct cfdata));
+	memset(&new, 0, sizeof(struct cfdata));
 
 	if (userconf_maxdev == userconf_totdev) {
 		printf("No more space for new devices.\n");

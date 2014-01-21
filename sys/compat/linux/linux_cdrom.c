@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: linux_cdrom.c,v 1.9 2012/04/22 05:43:14 guenther Exp $	*/
+/*	$OpenBSD: linux_cdrom.c,v 1.10 2014/01/21 01:49:13 tedu Exp $	*/
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -137,7 +137,7 @@ linux_ioctl_cdrom(p, v, retval)
 
 		sg = stackgap_init(p->p_emul);
 		
-		bzero(&tmpb.tes, sizeof tmpb.tes);
+		memset(&tmpb.tes, 0, sizeof tmpb.tes);
 		tmpb.tes.starting_track = tmpl.te.cdte_track;
 		tmpb.tes.address_format = (tmpl.te.cdte_format == LINUX_CDROM_MSF)
 		    ? CD_MSF_FORMAT : CD_LBA_FORMAT;
@@ -166,7 +166,7 @@ linux_ioctl_cdrom(p, v, retval)
 
 		sg = stackgap_init(p->p_emul);
 		
-		bzero(&tmpb.sc, sizeof tmpb.sc);
+		memset(&tmpb.sc, 0, sizeof tmpb.sc);
 		tmpb.sc.data_format = CD_CURRENT_POSITION;
 		tmpb.sc.address_format = (tmpl.sc.cdsc_format == LINUX_CDROM_MSF)
 		    ? CD_MSF_FORMAT : CD_LBA_FORMAT;
