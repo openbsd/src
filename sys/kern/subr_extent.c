@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.49 2014/01/21 01:48:44 tedu Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.50 2014/01/21 21:45:58 kettenis Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -78,6 +78,8 @@ static	void extent_insert_and_optimize(struct extent *, u_long, u_long,
 static	struct extent_region *extent_alloc_region_descriptor(struct extent *, int);
 static	void extent_free_region_descriptor(struct extent *,
 	    struct extent_region *);
+int	extent_do_alloc(struct extent *, u_long, u_long, u_long, u_long,
+	    u_long, u_long, int, struct extent_region *, u_long *);
 
 /*
  * Shortcut to align to an arbitrary power-of-two boundary.
@@ -580,11 +582,11 @@ extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
  * a power of 2.
  */
 int
-extent_alloc_subregion(struct extent *ex, u_long substart, u_long subend,
+extent_do_alloc(struct extent *ex, u_long substart, u_long subend,
     u_long size, u_long alignment, u_long skew, u_long boundary, int flags,
-    u_long *result)
+    struct extent_region *myrp, u_long *result)
 {
-	struct extent_region *rp, *myrp, *last, *bestlast;
+	struct extent_region *rp, *last, *bestlast;
 	u_long newstart, newend, exend, beststart, bestovh, ovh;
 	u_long dontcross;
 	int error;
@@ -593,6 +595,8 @@ extent_alloc_subregion(struct extent *ex, u_long substart, u_long subend,
 	/* Check arguments. */
 	if (ex == NULL)
 		panic("%s: NULL extent", __func__);
+	if (myrp == NULL)
+		panic("%s: NULL region descriptor", __func__);
 	if (result == NULL)
 		panic("%s: NULL result pointer", __func__);
 	if ((substart < ex->ex_start) || (substart > ex->ex_end) ||
@@ -616,18 +620,6 @@ extent_alloc_subregion(struct extent *ex, u_long substart, u_long subend,
 		panic("%s: bad boundary", __func__);
 	}
 #endif
-
-	/*
-	 * Allocate the region descriptor.  It will be freed later
-	 * if we can coalesce with another region.
-	 */
-	myrp = extent_alloc_region_descriptor(ex, flags);
-	if (myrp == NULL) {
-#ifdef DIAGNOSTIC
-		printf("%s: can't allocate region descriptor\n", __func__);
-#endif
-		return (ENOMEM);
-	}
 
  alloc_start:
 	/*
@@ -927,6 +919,44 @@ skip:
 }
 
 int
+extent_alloc_subregion(struct extent *ex, u_long substart, u_long subend,
+    u_long size, u_long alignment, u_long skew, u_long boundary, int flags,
+    u_long *result)
+{
+	struct extent_region *rp;
+
+	/*
+	 * Allocate the region descriptor.  It will be freed later
+	 * if we can coalesce with another region.
+	 */
+	rp = extent_alloc_region_descriptor(ex, flags);
+	if (rp == NULL) {
+#ifdef DIAGNOSTIC
+		printf("%s: can't allocate region descriptor\n", __func__);
+#endif
+		return (ENOMEM);
+	}
+
+	return extent_do_alloc(ex, substart, subend, size, alignment, skew,
+	    boundary, flags, rp, result);
+}
+
+int
+extent_alloc_subregion_with_descr(struct extent *ex, u_long substart,
+    u_long subend, u_long size, u_long alignment, u_long skew,
+    u_long boundary, int flags, struct extent_region *rp, u_long *result)
+{
+#ifdef DIAGNOSTIC
+	if ((ex->ex_flags & EXF_NOCOALESCE) == 0)
+		panic("%s: EX_NOCOALESCE not set", __func__);
+#endif
+
+	rp->er_flags = ER_DISCARD;
+	return extent_do_alloc(ex, substart, subend, size, alignment, skew,
+	    boundary, flags, rp, result);
+}
+
+int
 extent_free(struct extent *ex, u_long start, u_long size, int flags)
 {
 	struct extent_region *rp, *nrp = NULL;
@@ -1111,6 +1141,9 @@ extent_alloc_region_descriptor(struct extent *ex, int flags)
 static void
 extent_free_region_descriptor(struct extent *ex, struct extent_region *rp)
 {
+	if (rp->er_flags & ER_DISCARD)
+		return;
+
 	if (ex->ex_flags & EXF_FIXED) {
 		struct extent_fixed *fex = (struct extent_fixed *)ex;
 
@@ -1149,7 +1182,7 @@ extent_free_region_descriptor(struct extent *ex, struct extent_region *rp)
 	pool_put(&ex_region_pl, rp);
 }
 
-	
+
 #if defined(DIAGNOSTIC) || defined(DDB) || !defined(_KERNEL)
 
 void
