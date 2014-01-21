@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.149 2014/01/21 04:23:14 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.150 2014/01/21 05:11:12 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -444,8 +444,6 @@ TAILQ_HEAD(sr_crypto_wu_head, sr_crypto_wu);
 #define SR_CRYPTO_NOWU		16
 
 struct sr_crypto {
-	struct mutex		 scr_mutex;
-	struct sr_crypto_wu_head scr_wus;
 	struct sr_meta_crypto	*scr_meta;
 	struct sr_chunk		*key_disk;
 
