@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.58 2014/01/20 21:19:28 guenther Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.59 2014/01/21 01:48:22 tedu Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -923,8 +923,6 @@ procfs_readdir(void *v)
 			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 		}
-	done:
-
 #ifdef PROCFS_ZOMBIE
 		if (pr == NULL && doingzomb == 0) {
 			doingzomb = 1;
