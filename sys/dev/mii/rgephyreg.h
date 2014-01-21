@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephyreg.h,v 1.4 2008/08/26 07:43:03 brad Exp $	*/
+/*	$OpenBSD: rgephyreg.h,v 1.5 2014/01/21 05:55:25 brad Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -139,14 +139,29 @@
 #define RGEPHY_EXTSTS_T_HD_CAP	0x1000	/* 1000base-T HD capable */
 
 /* RTL8211B(L)/RTL8211C(L) */
+#define RGEPHY_CR		0x10	/* PHY Specific Control */
+#define RGEPHY_CR_ASSERT_CRS	0x0800
+#define RGEPHY_CR_FORCE_LINK	0x0400
+#define RGEPHY_CR_MDI_MASK	0x0060
+#define RGEPHY_CR_MDIX_AUTO	0x0040
+#define RGEPHY_CR_MDIX_MANUAL	0x0020
+#define RGEPHY_CR_MDI_MANUAL	0x0000
+#define RGEPHY_CR_CLK125_DIS	0x0010
+#define RGEPHY_CR_ALDPS		0x0004	/* RTL8251 only */
+#define RGEPHY_CR_JABBER_DIS	0x0001
+
 #define RGEPHY_SR		0x11	/* PHY Specific Status */
-#define RGEPHY_SR_CROSSOVER		(1 <<  6)
-#define RGEPHY_SR_LINK			(1 << 10)
-#define RGEPHY_SR_FDX			(1 << 13)
-#define RGEPHY_SR_SPEED_MASK		(3 << 14)
-#define RGEPHY_SR_SPEED_1000MBPS	(2 << 14)
-#define RGEPHY_SR_SPEED_100MBPS		(1 << 14)
-#define RGEPHY_SR_SPEED_10MBPS		(0 << 14)
+#define RGEPHY_SR_SPEED_1000MBPS	0x8000
+#define RGEPHY_SR_SPEED_100MBPS		0x4000
+#define RGEPHY_SR_SPEED_10MBPS		0x0000
+#define RGEPHY_SR_SPEED_MASK		0xc000
+#define RGEPHY_SR_FDX			0x2000	/* full duplex */
+#define RGEPHY_SR_PAGE_RECEIVED		0x1000	/* new page received */
+#define RGEPHY_SR_SPD_DPLX_RESOLVED	0x0800	/* speed/duplex resolved */
+#define RGEPHY_SR_LINK			0x0400	/* link up */
+#define RGEPHY_SR_MDI_XOVER		0x0040	/* MDI crossover */
+#define RGEPHY_SR_ALDPS			0x0008	/* RTL8211C(L) only */
+#define RGEPHY_SR_JABBER		0x0001	/* Jabber */
 #define RGEPHY_SR_SPEED(X)		((X) & RGEPHY_SR_SPEED_MASK)
 
 #endif /* _DEV_RGEPHY_MIIREG_H_ */
