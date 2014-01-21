@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.107 2014/01/21 05:52:25 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.108 2014/01/21 06:38:11 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -1109,7 +1109,7 @@ sr_crypto_rw(struct sr_workunit *wu)
 {
 	struct sr_crypto_wu	*crwu;
 	daddr_t			blk;
-	int			s, rv = 0;
+	int			rv = 0;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_rw wu %p\n",
 	    DEVNAME(wu->swu_dis->sd_sc), wu);
