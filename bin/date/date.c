@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.42 2014/01/05 05:27:44 schwarze Exp $	*/
+/*	$OpenBSD: date.c,v 1.43 2014/01/21 09:09:15 otto Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ int
 main(int argc, char *argv[])
 {
 	struct timezone tz;
+	struct tm *tp;
 	int ch, rflag;
 	char *format, buf[1024], *outzone = NULL;
 
@@ -139,7 +140,10 @@ main(int argc, char *argv[])
 	if (outzone)
 		setenv("TZ", outzone, 1);
 
-	(void)strftime(buf, sizeof(buf), format, localtime(&tval));
+	tp = localtime(&tval);
+	if (tp == NULL)
+		errx(1, "conversion error");
+	(void)strftime(buf, sizeof(buf), format, tp);
 	(void)printf("%s\n", buf);
 	exit(0);
 }
