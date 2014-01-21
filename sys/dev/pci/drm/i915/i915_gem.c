@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.62 2013/12/21 15:09:23 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.63 2014/01/21 04:47:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -2155,7 +2155,7 @@ i915_gem_handle_seqno_wrap(struct drm_device *dev)
 	 */
 	ret = 0;
 	for_each_ring(ring, dev_priv, i) {
-		for (j = 0; j < nitems(ring->sync_seqno); j++)
+		for (j = 0; j < ARRAY_SIZE(ring->sync_seqno); j++)
 			ret |= ring->sync_seqno[j] != 0;
 	}
 	if (ret == 0)
@@ -2167,7 +2167,7 @@ i915_gem_handle_seqno_wrap(struct drm_device *dev)
 
 	i915_gem_retire_requests(dev);
 	for_each_ring(ring, dev_priv, i) {
-		for (j = 0; j < nitems(ring->sync_seqno); j++)
+		for (j = 0; j < ARRAY_SIZE(ring->sync_seqno); j++)
 			ring->sync_seqno[j] = 0;
 	}
 

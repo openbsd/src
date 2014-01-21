@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_modes.c,v 1.3 2013/08/13 10:23:51 jsg Exp $	*/
+/*	$OpenBSD: intel_modes.c,v 1.4 2014/01/21 04:47:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
  * Copyright (c) 2007, 2010 Intel Corporation
@@ -91,7 +91,7 @@ intel_attach_force_audio_property(struct drm_connector *connector)
 		prop = drm_property_create_enum(dev, 0,
 					   "audio",
 					   force_audio_names,
-					   nitems(force_audio_names));
+					   ARRAY_SIZE(force_audio_names));
 		if (prop == NULL)
 			return;
 
@@ -115,9 +115,9 @@ intel_attach_broadcast_rgb_property(struct drm_connector *connector)
 	prop = dev_priv->broadcast_rgb_property;
 	if (prop == NULL) {
 		prop = drm_property_create_enum(dev, DRM_MODE_PROP_ENUM,
-		    "Broadcast RGB",
-		    broadcast_rgb_names,
-		    nitems(broadcast_rgb_names));
+					   "Broadcast RGB",
+					   broadcast_rgb_names,
+					   ARRAY_SIZE(broadcast_rgb_names));
 		if (prop == NULL)
 			return;
 

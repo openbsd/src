@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_bios.c,v 1.5 2013/08/13 10:23:50 jsg Exp $	*/
+/*	$OpenBSD: intel_bios.c,v 1.6 2014/01/21 04:47:38 kettenis Exp $	*/
 /*
  * Copyright © 2006 Intel Corporation
  *
@@ -188,7 +188,7 @@ get_lvds_fp_timing(const struct bdb_header *bdb,
 	u16 data_size = ((const u16 *)data)[-1]; /* stored in header */
 	size_t ofs;
 
-	if (index >= nitems(ptrs->ptr))
+	if (index >= ARRAY_SIZE(ptrs->ptr))
 		return NULL;
 	ofs = ptrs->ptr[index].fp_timing_offset;
 	if (ofs < data_ofs ||
