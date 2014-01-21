@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.105 2013/09/10 08:44:38 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.106 2014/01/21 07:39:14 rpe Exp $
 #
 # Copyright (c) 2008-2013 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -21,7 +21,8 @@
 umask 0022
 
 unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE ETCSUM NEED_NEWALIASES
-unset NEWGRP NEWUSR NEED_REBOOT SRCDIR SRCSUM TGZ XETCSUM XTGZ
+unset NEWGRP NEWUSR NEED_REBOOT NOSIGCHECK SETSRC SRCDIR SRCSUM TGZ
+unset XETCSUM XTGZ
 
 WRKDIR=$(mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXXXXXXX) || exit 1
 SWIDTH=$(stty size | awk '{w=$2} END {if (w==0) {w=80} print w}')
@@ -53,7 +54,7 @@ restore_bak() {
 }
 
 usage() {
-	echo "usage: ${0##*/} [-bd] [-s [src | etcXX.tgz]] [-x xetcXX.tgz]" >&2
+	echo "usage: ${0##*/} [-bdS] [-s [src | etcXX.tgz]] [-x xetcXX.tgz]" >&2
 }
 
 warn() {
@@ -83,12 +84,16 @@ if (($(id -u) != 0)); then
 	error_rm_wrkdir
 fi
 
-# extract (x)etcXX.tgz and create cksum file
+# extract, verify (x)etcXX.tgz and create cksum file
 # takes file- and setname ('etc' or 'xetc') as arguments
 # stores sumfilename in ETCSUM or XETCSUM (see eval)
 extract_set() {
 	[[ -z $1 ]] && return
 	local _tgz=$(readlink -f "$1") _set=$2 _f
+	if [ -z "$NOSIGCHECK" -a -f "${WRKDIR}/SHA256" ]; then
+		(cd ${WRKDIR} && sha256 -C SHA256 "${_tgz##*/}" >/dev/null 2>&1) || \
+			error_rm_wrkdir "${_tgz##*/} checksum could not be verified against SHA256.sig"
+	fi
 	typeset -u _SETSUM=${_set}sum
 	eval ${_SETSUM}=${_set}sum
 	(cd ${TEMPROOT} && tar -xzphf "${_tgz}" && \
@@ -101,15 +106,28 @@ extract_set() {
 # takes url or filename and setname ('etc' or 'xetc') as arguments
 # stores local path to tgz in TGZ or XTGZ
 get_set() {
-	local _tgz=$1 _url=$1 _set=$2
+	local _tgz=${WRKDIR}/${1##*/} _url=$1 _set=$2
+	[ -f "${_url}" ] && _url="file://$_url"
 	if [[ ${_url} == @(file|ftp|http|https)://*/*[!/] ]]; then 
-		_tgz=${WRKDIR}/${_set}.tgz
 		${FETCH_CMD} -o ${_tgz} "${_url}" || \
 			error_rm_wrkdir "could not retrieve ${_url}"
 	fi
 	[[ ${_set} == etc ]] && TGZ=${_tgz} || XTGZ=${_tgz}
 	tar -tzf "${_tgz}" ./var/db/sysmerge/${_set}sum >/dev/null 2>&1 || \
 		error_rm_wrkdir "${_tgz} is not a valid ${_set}XX.tgz set"
+}
+
+# fetch, verify SHA256.sig and write ${WRKDIR}/SHA256 abort on failure
+# unless NOSIGCHECK is set in which case try to fetch SHA256 at least
+# takes a directory path, either where etcXX.tgz was fetched from or SM_PATH
+get_sig() {
+	[ -n "${NOSIGCHECK}" ] && return
+	local _cfile=${WRKDIR}/SHA256 _src=${SETSRC:-$SM_PATH}
+	local _key="/etc/signify/$(uname -r | tr -d '.')base.pub"
+	[ -d "${_src}" ] && _src="file://${_src}"
+	${FETCH_CMD} -o "$_cfile.sig" "$_src/SHA256.sig" >/dev/null 2>&1 && \
+		signify -Vep ${_key} -x "$_cfile.sig" -m "$_cfile" || \
+			error_rm_wrkdir "Signature check failed"
 }
 
 # prepare TEMPROOT content from a src dir and create cksum file 
@@ -640,7 +658,7 @@ sm_post() {
 }
 
 
-while getopts bds:x: arg; do
+while getopts bds:Sx: arg; do
 	case ${arg} in
 	b)
 		BATCHMODE=1
@@ -656,6 +674,10 @@ while getopts bds:x: arg; do
 			continue
 		fi
 		get_set "${OPTARG}" etc
+		SETSRC=${OPTARG%/*}
+		;;
+	S)	
+		NOSIGCHECK=1
 		;;
 	x)
 		get_set "${OPTARG}" xetc
@@ -692,6 +714,7 @@ fi
 TEMPROOT="${WRKDIR}/temproot"
 BKPDIR="${WRKDIR}/backups"
 
+get_sig
 sm_populate
 sm_compare
 sm_post
