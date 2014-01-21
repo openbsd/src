@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.49 2014/01/19 21:43:36 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.50 2014/01/21 23:26:50 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -94,6 +94,11 @@ struct myx_buf_list {
 
 struct pool *myx_buf_pool;
 
+struct myx_ring_lock {
+	struct mutex		mrl_mtx;
+	u_int			mrl_running;
+};
+
 struct myx_softc {
 	struct device		 sc_dev;
 	struct arpcom		 sc_ac;
@@ -114,6 +119,7 @@ struct myx_softc {
 
 	struct myx_dmamem	 sc_sts_dma;
 	volatile struct myx_status	*sc_sts;
+	struct mutex		 sc_sts_mtx;
 
 	int			 sc_intx;
 	void			*sc_irqh;
@@ -127,6 +133,7 @@ struct myx_softc {
 	u_int			 sc_intrq_idx;
 
 	u_int			 sc_rx_ring_count;
+	struct myx_ring_lock	 sc_rx_ring_lock[2];
 	u_int32_t		 sc_rx_ring_offset[2];
 	struct myx_buf_list	 sc_rx_buf_free[2];
 	struct myx_buf_list	 sc_rx_buf_list[2];
@@ -137,6 +144,7 @@ struct myx_softc {
 
 	bus_size_t		 sc_tx_boundary;
 	u_int			 sc_tx_ring_count;
+	struct myx_ring_lock	 sc_tx_ring_lock;
 	u_int32_t		 sc_tx_ring_offset;
 	u_int			 sc_tx_nsegs;
 	u_int32_t		 sc_tx_count; /* shadows ms_txdonecnt */
@@ -179,7 +187,7 @@ int	 myx_dmamem_alloc(struct myx_softc *, struct myx_dmamem *,
 void	 myx_dmamem_free(struct myx_softc *, struct myx_dmamem *);
 int	 myx_media_change(struct ifnet *);
 void	 myx_media_status(struct ifnet *, struct ifmediareq *);
-void	 myx_link_state(struct myx_softc *);
+void	 myx_link_state(struct myx_softc *, u_int32_t);
 void	 myx_watchdog(struct ifnet *);
 int	 myx_ioctl(struct ifnet *, u_long, caddr_t);
 void	 myx_up(struct myx_softc *);
@@ -207,6 +215,10 @@ struct myx_buf *	myx_buf_fill(struct myx_softc *, int);
 void			myx_rx_zero(struct myx_softc *, int);
 int			myx_rx_fill(struct myx_softc *, int);
 void			myx_refill(void *);
+
+void			myx_ring_lock_init(struct myx_ring_lock *);
+int			myx_ring_enter(struct myx_ring_lock *);
+int			myx_ring_leave(struct myx_ring_lock *);
 
 struct cfdriver myx_cd = {
 	NULL, "myx", DV_IFNET
@@ -239,15 +251,21 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_function = pa->pa_function;
 
+	myx_ring_lock_init(&sc->sc_rx_ring_lock[MYX_RXSMALL]);
 	myx_bufs_init(&sc->sc_rx_buf_free[MYX_RXSMALL]);
 	myx_bufs_init(&sc->sc_rx_buf_list[MYX_RXSMALL]);
+	myx_ring_lock_init(&sc->sc_rx_ring_lock[MYX_RXBIG]);
 	myx_bufs_init(&sc->sc_rx_buf_free[MYX_RXBIG]);
 	myx_bufs_init(&sc->sc_rx_buf_list[MYX_RXBIG]);
 
+	myx_ring_lock_init(&sc->sc_tx_ring_lock);
 	myx_bufs_init(&sc->sc_tx_buf_free);
 	myx_bufs_init(&sc->sc_tx_buf_list);
 
 	timeout_set(&sc->sc_refill, myx_refill, sc);
+
+	mtx_init(&sc->sc_sts_mtx, IPL_NET);
+
 
 	/* Map the PCI memory space */
 	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, MYXBAR0);
@@ -457,8 +475,8 @@ myx_attachhook(void *arg)
 		goto freecmd;
 	}
 
-	sc->sc_irqh = pci_intr_establish(sc->sc_pc, sc->sc_ih, IPL_NET,
-	    myx_intr, sc, DEVNAME(sc));
+	sc->sc_irqh = pci_intr_establish(sc->sc_pc, sc->sc_ih,
+	    IPL_NET | IPL_MPSAFE, myx_intr, sc, DEVNAME(sc));
 	if (sc->sc_irqh == NULL) {
 		printf("%s: unable to establish interrupt\n", DEVNAME(sc));
 		goto freecmd;
@@ -821,6 +839,8 @@ void
 myx_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
 	struct myx_softc	*sc = (struct myx_softc *)ifp->if_softc;
+	bus_dmamap_t		 map = sc->sc_sts_dma.mxm_map;
+	u_int32_t		 sts;
 
 	imr->ifm_active = IFM_ETHER | IFM_AUTO;
 	if (!ISSET(ifp->if_flags, IFF_RUNNING)) {
@@ -828,7 +848,15 @@ myx_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 		return;
 	}
 
-	myx_link_state(sc);
+	mtx_enter(&sc->sc_sts_mtx);
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD);
+	sts = sc->sc_sts->ms_linkstate;
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD);
+	mtx_leave(&sc->sc_sts_mtx);
+
+	myx_link_state(sc, sts);
 
 	imr->ifm_status = IFM_AVALID;
 	if (!LINK_STATE_IS_UP(ifp->if_link_state))
@@ -840,12 +868,12 @@ myx_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 }
 
 void
-myx_link_state(struct myx_softc *sc)
+myx_link_state(struct myx_softc *sc, u_int32_t sts)
 {
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
 	int			 link_state = LINK_STATE_DOWN;
 
-	if (betoh32(sc->sc_sts->ms_linkstate) == MYXSTS_LINKUP)
+	if (betoh32(sts) == MYXSTS_LINKUP)
 		link_state = LINK_STATE_FULL_DUPLEX;
 	if (ifp->if_link_state != link_state) {
 		ifp->if_link_state = link_state;
@@ -1291,30 +1319,34 @@ myx_down(struct myx_softc *sc)
 	struct myx_cmd		 mc;
 	int			 s;
 
-	s = splnet();
+	mtx_enter(&sc->sc_sts_mtx);
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
 	sc->sc_linkdown = sc->sc_sts->ms_linkdown;
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
+	mtx_leave(&sc->sc_sts_mtx);
 
 	memset(&mc, 0, sizeof(mc));
 	(void)myx_cmd(sc, MYXCMD_SET_IFDOWN, &mc, NULL);
 
+	mtx_enter(&sc->sc_sts_mtx);
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
 	while (sc->sc_linkdown == sc->sc_sts->ms_linkdown) {
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_PREREAD);
 
-		tsleep(sc->sc_sts, 0, "myxdown", 0);
+		msleep(sc->sc_sts, &sc->sc_sts_mtx, 0, "myxdown", 0);
 
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
 	}
+	mtx_leave(&sc->sc_sts_mtx);
 
 	timeout_del(&sc->sc_refill);
 
+	s = splnet();
 	CLR(ifp->if_flags, IFF_RUNNING);
 
 	if (ifp->if_link_state != LINK_STATE_UNKNOWN) {
@@ -1573,14 +1605,20 @@ myx_intr(void *arg)
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
 	volatile struct myx_status *sts = sc->sc_sts;
 	bus_dmamap_t		 map = sc->sc_sts_dma.mxm_map;
-	u_int32_t		 data;
+	u_int32_t		 data, link;
 	int			 refill = 0;
 	u_int8_t		 valid = 0;
+	u_int			 if_flags;
 	int			 i;
 
-	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+	KERNEL_LOCK();	
+	if_flags = ifp->if_flags;
+	KERNEL_UNLOCK();
+
+	if (!ISSET(if_flags, IFF_RUNNING))
 		return (0);
 
+	mtx_enter(&sc->sc_sts_mtx);
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
 
@@ -1588,6 +1626,7 @@ myx_intr(void *arg)
 	if (valid == 0x0) {
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_PREREAD);
+		mtx_leave(&sc->sc_sts_mtx);
 		return (0);
 	}
 	sts->ms_isvalid = 0;
@@ -1598,31 +1637,39 @@ myx_intr(void *arg)
 		    sc->sc_irqdeassertoff, &data, sizeof(data));
 	}
 
-	if (!ISSET(ifp->if_flags, IFF_UP) &&
+	if (!ISSET(if_flags, IFF_UP) &&
 	    sc->sc_linkdown != sts->ms_linkdown) {
 		/* myx_down is waiting for us */
 		wakeup_one(sc->sc_sts);
 	}
 
-	if (sts->ms_statusupdated)
-		myx_link_state(sc);
+	link = sts->ms_statusupdated ? sts->ms_linkstate : 0xffffffff;
 
 	do {
 		data = betoh32(sts->ms_txdonecnt);
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_PREREAD);
+		mtx_leave(&sc->sc_sts_mtx);
 
 		if (data != sc->sc_tx_count)
 			myx_txeof(sc, data);
 
 		refill |= myx_rxeof(sc);
 
+		mtx_enter(&sc->sc_sts_mtx);
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
 	} while (sts->ms_isvalid);
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
+	mtx_leave(&sc->sc_sts_mtx);
+
+	if (link != 0xffffffff) {
+		KERNEL_LOCK();
+		myx_link_state(sc, link);
+		KERNEL_UNLOCK();
+	}
 
 	data = htobe32(3);
 	if (valid & 0x1) {
@@ -1634,15 +1681,17 @@ myx_intr(void *arg)
 	bus_space_barrier(sc->sc_memt, sc->sc_memh,
 	    sc->sc_irqclaimoff, sizeof(data) * 2, BUS_SPACE_BARRIER_WRITE);
 
-	if (ISSET(ifp->if_flags, IFF_OACTIVE)) {
+	if (ISSET(if_flags, IFF_OACTIVE)) {
+		KERNEL_LOCK();
 		CLR(ifp->if_flags, IFF_OACTIVE);
 		myx_start(ifp);
+		KERNEL_UNLOCK();
 	}
 
 	for (i = 0; i < 2; i++) {
 		if (ISSET(refill, 1 << i)) {
-			myx_rx_fill(sc, i);
-			if (myx_bufs_empty(&sc->sc_rx_buf_list[i]))
+			if (myx_rx_fill(sc, i) >= 0 &&
+			    myx_bufs_empty(&sc->sc_rx_buf_list[i]))
 				timeout_add(&sc->sc_refill, 0);
 		}
 	}
@@ -1655,15 +1704,12 @@ myx_refill(void *xsc)
 {
 	struct myx_softc *sc = xsc;
 	int i;
-	int s;
 
-	s = splnet();
 	for (i = 0; i < 2; i++) {
-		myx_rx_fill(sc, i);
-		if (myx_bufs_empty(&sc->sc_rx_buf_list[i]))
+		if (myx_rx_fill(sc, i) >= 0 &&
+		    myx_bufs_empty(&sc->sc_rx_buf_list[i]))
 			timeout_add(&sc->sc_refill, 1);
 	}
-	splx(s);
 }
 
 void
@@ -1690,12 +1736,14 @@ myx_txeof(struct myx_softc *sc, u_int32_t done_count)
 
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+
+		KERNEL_LOCK();
 		bus_dmamap_unload(sc->sc_dmat, map);
 		m_freem(m);
+		ifp->if_opackets++;
+		KERNEL_UNLOCK();
 
 		myx_buf_put(&sc->sc_tx_buf_free, mb);
-
-		ifp->if_opackets++;
 	} while (++sc->sc_tx_count != done_count);
 }
 
@@ -1730,24 +1778,26 @@ myx_rxeof(struct myx_softc *sc)
 
 		bus_dmamap_sync(sc->sc_dmat, mb->mb_map, 0,
 		    mb->mb_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->sc_dmat, mb->mb_map);
 
 		m = mb->mb_m;
 		m->m_data += ETHER_ALIGN;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
+		KERNEL_LOCK();
+		bus_dmamap_unload(sc->sc_dmat, mb->mb_map);
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 		ether_input_mbuf(ifp, m);
+		ifp->if_ipackets++;
+		KERNEL_UNLOCK();
 
 		myx_buf_put(&sc->sc_rx_buf_free[ring], mb);
 
 		SET(rings, 1 << ring);
-		ifp->if_ipackets++;
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_intrq_dma.mxm_map, 0,
@@ -1779,42 +1829,49 @@ myx_rx_fill(struct myx_softc *sc, int ring)
 	struct myx_buf *mb, *firstmb;
 	u_int32_t offset = sc->sc_rx_ring_offset[ring];
 	u_int idx, firstidx;
+	int rv = 1;
 
-	firstmb = myx_buf_fill(sc, ring);
-	if (firstmb == NULL)
-		return (1);
+	if (!myx_ring_enter(&sc->sc_rx_ring_lock[ring]))
+		return (-1);
 
-	myx_buf_put(&sc->sc_rx_buf_list[ring], firstmb);
+	do {
+		firstmb = myx_buf_fill(sc, ring);
+		if (firstmb == NULL)
+			continue;
 
-	firstidx = sc->sc_rx_ring_idx[ring];
-	idx = firstidx + 1;
-	idx %= sc->sc_rx_ring_count;
+		rv = 0;
+		myx_buf_put(&sc->sc_rx_buf_list[ring], firstmb);
 
-	while ((mb = myx_buf_fill(sc, ring)) != NULL) {
-		myx_buf_put(&sc->sc_rx_buf_list[ring], mb);
-
-		rxd.rx_addr = htobe64(mb->mb_map->dm_segs[0].ds_addr);
-		myx_bus_space_write(sc->sc_memt, sc->sc_memh,
-		    offset + idx * sizeof(rxd), &rxd, sizeof(rxd));
-
-		idx++;
+		firstidx = sc->sc_rx_ring_idx[ring];
+		idx = firstidx + 1;
 		idx %= sc->sc_rx_ring_count;
-	}
 
-	/* make sure the first descriptor is seen after the others */
-	if (idx != firstidx + 1) {
-		bus_space_barrier(sc->sc_memt, sc->sc_memh,
-		    offset, sizeof(rxd) * sc->sc_rx_ring_count,
-		    BUS_SPACE_BARRIER_WRITE);
-	}
+		while ((mb = myx_buf_fill(sc, ring)) != NULL) {
+			myx_buf_put(&sc->sc_rx_buf_list[ring], mb);
 
-	rxd.rx_addr = htobe64(firstmb->mb_map->dm_segs[0].ds_addr);
-	myx_write(sc, offset + firstidx * sizeof(rxd),
-	    &rxd, sizeof(rxd));
+			rxd.rx_addr = htobe64(mb->mb_map->dm_segs[0].ds_addr);
+			myx_bus_space_write(sc->sc_memt, sc->sc_memh,
+			    offset + idx * sizeof(rxd), &rxd, sizeof(rxd));
 
-	sc->sc_rx_ring_idx[ring] = idx;
+			idx++;
+			idx %= sc->sc_rx_ring_count;
+		}
 
-	return (0);
+		/* make sure the first descriptor is seen after the others */
+		if (idx != firstidx + 1) {
+			bus_space_barrier(sc->sc_memt, sc->sc_memh,
+			    offset, sizeof(rxd) * sc->sc_rx_ring_count,
+			    BUS_SPACE_BARRIER_WRITE);
+		}
+
+		rxd.rx_addr = htobe64(firstmb->mb_map->dm_segs[0].ds_addr);
+		myx_write(sc, offset + firstidx * sizeof(rxd),
+		    &rxd, sizeof(rxd));
+
+		sc->sc_rx_ring_idx[ring] = idx;
+	} while (!myx_ring_leave(&sc->sc_rx_ring_lock[ring]));
+
+	return (rv);
 }
 
 struct myx_buf *
@@ -1823,8 +1880,11 @@ myx_buf_fill(struct myx_softc *sc, int ring)
 	static size_t sizes[2] = { MCLBYTES, 12 * 1024 };
 	struct myx_buf *mb;
 	struct mbuf *m;
+	int rv;
 
+	KERNEL_LOCK();
 	m = MCLGETI(NULL, M_DONTWAIT, &sc->sc_ac.ac_if, sizes[ring]);
+	KERNEL_UNLOCK();
 	if (m == NULL)
 		return (NULL);
 	m->m_len = m->m_pkthdr.len = sizes[ring];
@@ -1833,8 +1893,10 @@ myx_buf_fill(struct myx_softc *sc, int ring)
 	if (mb == NULL)
 		goto mfree;
 
-	if (bus_dmamap_load_mbuf(sc->sc_dmat, mb->mb_map, m,
-	    BUS_DMA_NOWAIT) != 0)
+	KERNEL_LOCK();
+	rv = bus_dmamap_load_mbuf(sc->sc_dmat, mb->mb_map, m, BUS_DMA_NOWAIT);
+	KERNEL_UNLOCK();
+	if (rv != 0)
 		goto put;
 
 	mb->mb_m = m;
@@ -1846,7 +1908,9 @@ myx_buf_fill(struct myx_softc *sc, int ring)
 put:
 	myx_buf_put(&sc->sc_rx_buf_free[ring], mb);
 mfree:
+	KERNEL_LOCK();
 	m_freem(m);
+	KERNEL_UNLOCK();
 
 	return (NULL);
 }
@@ -1916,4 +1980,39 @@ myx_bufs_init(struct myx_buf_list *mbl)
 {
 	SIMPLEQ_INIT(&mbl->mbl_q);
 	mtx_init(&mbl->mbl_mtx, IPL_NET);
+}
+
+void
+myx_ring_lock_init(struct myx_ring_lock *mrl)
+{
+	mtx_init(&mrl->mrl_mtx, IPL_NET);
+	mrl->mrl_running = 0;
+}
+
+int
+myx_ring_enter(struct myx_ring_lock *mrl)
+{
+	int rv = 1;
+
+	mtx_enter(&mrl->mrl_mtx);
+	if (++mrl->mrl_running > 1)
+		rv = 0;
+	mtx_leave(&mrl->mrl_mtx);
+
+	return (rv);
+}
+
+int
+myx_ring_leave(struct myx_ring_lock *mrl)
+{
+	int rv = 1;
+
+	mtx_enter(&mrl->mrl_mtx);
+	if (--mrl->mrl_running > 0) {
+		mrl->mrl_running = 1;
+		rv = 0;
+	}
+	mtx_leave(&mrl->mrl_mtx);
+
+	return (rv);
 }
