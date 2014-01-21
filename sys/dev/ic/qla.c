@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.4 2014/01/21 02:03:33 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.5 2014/01/21 02:14:14 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -64,7 +64,7 @@ u_int16_t	qla_read_mbox(struct qla_softc *, int);
 void		qla_write_mbox(struct qla_softc *, int, u_int16_t);
 void		qla_set_ints(struct qla_softc *, int);
 int		qla_read_isr(struct qla_softc *, u_int16_t *, u_int16_t *);
-void		qla_clear_isr(struct qla_softc *);
+void		qla_clear_isr(struct qla_softc *, u_int16_t);
 int		qla_queue_reg(struct qla_softc *, enum qla_qptr);
 u_int16_t	qla_read_queue_ptr(struct qla_softc *, enum qla_qptr);
 void		qla_write_queue_ptr(struct qla_softc *, enum qla_qptr,
@@ -944,7 +944,7 @@ qla_handle_intr(struct qla_softc *sc, u_int16_t isr, u_int16_t info)
 		break;
 	}
 
-	qla_clear_isr(sc);
+	qla_clear_isr(sc, isr);
 }
 
 int
@@ -1104,7 +1104,7 @@ qla_scsi_cmd_poll(struct qla_softc *sc)
 			delay(1000);
 		}
 
-		qla_clear_isr(sc);
+		qla_clear_isr(sc, isr);
 	}
 
 	return (ccb);
@@ -1210,7 +1210,7 @@ qla_mbox(struct qla_softc *sc, int maskin, int maskout)
 		break;
 	}
 
-	qla_clear_isr(sc);
+	qla_clear_isr(sc, QLA_INT_TYPE_MBOX);
 	return (rv);
 }
 
@@ -1294,10 +1294,17 @@ qla_read_isr(struct qla_softc *sc, u_int16_t *isr, u_int16_t *info)
 }
 
 void
-qla_clear_isr(struct qla_softc *sc)
+qla_clear_isr(struct qla_softc *sc, u_int16_t isr)
 {
 	qla_host_cmd(sc, QLA_HOST_CMD_CLR_RISC_INT);
-	qla_write(sc, QLA_SEMA, 0);	/* necessary? */
+	switch (isr) {
+	case QLA_INT_TYPE_MBOX:
+	case QLA_INT_TYPE_ASYNC:
+		qla_write(sc, QLA_SEMA, 0);
+		break;
+	default:
+		break;
+	}
 }
 
 int
