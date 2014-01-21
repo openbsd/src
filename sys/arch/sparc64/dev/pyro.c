@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.25 2013/05/13 19:27:16 kettenis Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.26 2014/01/21 10:59:30 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -632,6 +632,9 @@ pyro_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 		pbm->pp_msi[msinum] = ih;
 		ih->ih_number = msinum;
 
+		if (flags & BUS_INTR_ESTABLISH_MPSAFE)
+			ih->ih_mpsafe = 1;
+
 		pci_msi_enable(pc, tag, pbm->pp_msiaddr, msinum);
 
 		/* Map MSI to the right EQ and mark it as valid. */
@@ -676,6 +679,9 @@ pyro_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	    intrclrptr, what);
 	if (ih == NULL)
 		return (NULL);
+
+	if (flags & BUS_INTR_ESTABLISH_MPSAFE)
+		ih->ih_mpsafe = 1;
 
 	intr_establish(ih->ih_pil, ih);
 
