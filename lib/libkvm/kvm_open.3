@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_open.3,v 1.16 2013/08/14 08:39:25 jmc Exp $
+.\"	$OpenBSD: kvm_open.3,v 1.17 2014/01/21 03:15:45 schwarze Exp $
 .\"	$NetBSD: kvm_open.3,v 1.2 1996/03/18 22:33:52 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm_open.3	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt KVM_OPEN 3
 .Os
 .Sh NAME
@@ -74,7 +74,7 @@ if it exists, otherwise
 .Dv _PATH_UNIX
 is used.
 Both are defined in
-.Aq Pa paths.h .
+.In paths.h .
 .Pp
 .Fa corefile
 is the kernel memory device file.
@@ -89,7 +89,7 @@ is
 the default indicated by
 .Dv _PATH_MEM
 from
-.Aq Pa paths.h
+.In paths.h
 is used.
 .Pp
 .Fa swapfile
@@ -168,7 +168,7 @@ argument.
 This buffer should be
 .Dv _POSIX2_LINE_MAX
 characters large (from
-.Aq Pa limits.h ) .
+.In limits.h ) .
 .Sh RETURN VALUES
 The
 .Fn kvm_open

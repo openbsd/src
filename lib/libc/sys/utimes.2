@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utimes.2,v 1.19 2013/11/02 17:25:34 espie Exp $
+.\"	$OpenBSD: utimes.2,v 1.20 2014/01/21 03:15:45 schwarze Exp $
 .\"	$NetBSD: utimes.2,v 1.9 1996/04/23 10:34:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)utimes.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: November 2 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt UTIMES 2
 .Os
 .Sh NAME
@@ -160,7 +160,7 @@ and the effective user ID of the process does not
 match the owner of the file, and is not the superuser, and write
 access is denied.
 .It Bq Er EFAULT
-.Pa File
+.Fa file
 or
 .Fa times
 points outside the process's allocated address space.

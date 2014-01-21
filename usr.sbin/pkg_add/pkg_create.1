@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.94 2014/01/17 11:09:36 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.95 2014/01/21 03:15:46 schwarze Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: January 17 2014 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -414,7 +414,7 @@ All subsequent filenames will be assumed relative to
 .Pp
 .It Cm @dir Ar directoryname
 Create directory
-.Pa directoryname
+.Ar directoryname
 at
 .Xr pkg_add 1
 time, taking
@@ -518,7 +518,7 @@ and not during new installations.
 .Pp
 .It Cm @extra Ar filename
 Declare extra file
-.Pa filename
+.Ar filename
 to be deleted at deinstall time, if user sets the
 .Fl c
 option.
@@ -526,7 +526,7 @@ Those files are extra configuration files that are normally not deleted.
 .Ar filename
 can be an absolute path.
 If
-.Pa filename
+.Ar filename
 ends with a slash, it is a directory.
 .Pp
 .It Cm @extraunexec Ar command
@@ -570,7 +570,7 @@ Specialized version of
 .Cm @file ,
 to handle GNU info files.
 Automatically grab
-.Pa filename-*
+.Ar filename Ns -*
 chapter files, run
 .Xr install-info 1
 as needed.

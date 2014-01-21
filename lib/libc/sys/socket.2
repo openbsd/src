@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socket.2,v 1.35 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: socket.2,v 1.36 2014/01/21 03:15:45 schwarze Exp $
 .\"	$NetBSD: socket.2,v 1.5 1995/02/27 12:37:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socket.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt SOCKET 2
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@ parameter specifies a communications domain within which
 communication will take place; this selects the protocol family
 which should be used.
 These families are defined in the include file
-.Ao Pa sys/socket.h Ac .
+.In sys/socket.h .
 The currently understood formats are:
 .Pp
 .Bl -tag -width "AF_IMPLINKXXX" -offset indent -compact
@@ -196,7 +196,7 @@ of I/O events via
 The operation of sockets is controlled by socket level
 .Em options .
 These options are defined in the file
-.Ao Pa sys/socket.h Ac .
+.In sys/socket.h .
 .Xr setsockopt 2
 and
 .Xr getsockopt 2

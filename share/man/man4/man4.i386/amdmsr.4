@@ -1,4 +1,4 @@
-.\"	$OpenBSD: amdmsr.4,v 1.5 2010/01/02 19:55:35 schwarze Exp $
+.\"	$OpenBSD: amdmsr.4,v 1.6 2014/01/21 03:15:46 schwarze Exp $
 .\"
 .\" MSR access driver for AMD Geode LX CPUs with graphics processor.
 .\" Copyright 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 2 2010 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt AMDMSR 4 i386
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@ MSRs can be read or written via
 calls performed on
 .Pa /dev/amdmsr .
 Declarations and data types are to be found in
-.Aq Pa machine/amdmsr.h .
+.In machine/amdmsr.h .
 .Pp
 Read or write requests are performed using:
 .Bd -literal -offset xxxx

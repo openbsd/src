@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.28 2013/08/14 10:06:02 guenther Exp $
+.\"	$OpenBSD: kqueue.2,v 1.29 2014/01/21 03:15:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -84,7 +84,7 @@ events to the user.
 is a pointer to an array of
 .Va kevent
 structures, as defined in
-.Aq Pa sys/event.h .
+.In sys/event.h .
 All changes contained in the
 .Fa changelist
 are applied before any pending events are read from the queue.

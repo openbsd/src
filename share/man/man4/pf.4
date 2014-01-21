@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.82 2014/01/21 03:13:10 lteo Exp $
+.\"	$OpenBSD: pf.4,v 1.83 2014/01/21 03:15:46 schwarze Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -82,7 +82,7 @@ will be returned.
 supports the following
 .Xr ioctl 2
 commands, available through
-.Aq Pa net/pfvar.h :
+.In net/pfvar.h :
 .Bl -tag -width xxxxxx
 .It Dv DIOCSTART
 Start the packet filter.
@@ -446,7 +446,7 @@ For possible values of
 consult the
 .Dv PFTM_*
 values in
-.Aq Pa net/pfvar.h .
+.In net/pfvar.h .
 .It Dv DIOCGETTIMEOUT Fa "struct pfioc_tm *pt"
 Get the state timeout of
 .Va timeout .
@@ -903,7 +903,7 @@ TCP SYN packet, respectively.
 The
 .Va fp_flags
 member is filled according to the
-.Aq Pa net/pfvar.h
+.In net/pfvar.h
 include file
 .Dv PF_OSFP_*
 defines.

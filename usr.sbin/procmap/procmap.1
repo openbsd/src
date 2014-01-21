@@ -1,4 +1,4 @@
-.\"	$OpenBSD: procmap.1,v 1.15 2013/07/16 11:13:34 schwarze Exp $
+.\"	$OpenBSD: procmap.1,v 1.16 2014/01/21 03:15:46 schwarze Exp $
 .\"	$NetBSD: pmap.1,v 1.6 2003/01/19 21:25:43 atatat Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt PROCMAP 1
 .Os
 .Sh NAME
@@ -220,7 +220,7 @@ MAP 0xcf7cac84: [0x0-\*(Gt0xbfbfe000]
 .Pp
 The value of the flags field (in hexadecimal) is taken from
 the include file
-.Aq Pa uvm/uvm_map.h :
+.In uvm/uvm_map.h :
 .Bd -literal -offset indent
 VM_MAP_PAGEABLE		0x01	ro: entries are pageable
 VM_MAP_INTRSAFE		0x02	ro: interrupt safe map
@@ -241,7 +241,7 @@ The
 (or protection) field, along with
 .Dq max
 (maximum protection allowed) are made up of the following flags from
-.Aq Pa uvm/uvm_extern.h :
+.In uvm/uvm_extern.h :
 .\" this column width specifically chosen so that all the header file
 .\" excerpts appear to line up cleanly
 .Bd -literal -offset indent

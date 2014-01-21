@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.32 2013/08/14 08:39:29 jmc Exp $
+.\"	$OpenBSD: bpf.4,v 1.33 2014/01/21 03:15:45 schwarze Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -94,7 +94,7 @@ can be prevented using the
 The
 .Xr ioctl 2
 command codes below are defined in
-.Aq Pa net/bpf.h .
+.In net/bpf.h .
 All commands require these includes:
 .Bd -unfilled -offset indent
 .Cd #include <sys/types.h>
@@ -108,9 +108,9 @@ Additionally,
 and
 .Dv BIOCSETIF
 require
-.Aq Pa sys/socket.h
+.In sys/socket.h
 and
-.Aq Pa net/if.h .
+.In net/if.h .
 .Pp
 The (third) argument to the
 .Xr ioctl 2
@@ -141,7 +141,7 @@ is returned if no interface has been specified.
 The device types, prefixed with
 .Dq DLT_ ,
 are defined in
-.Aq Pa net/bpf.h .
+.In net/bpf.h .
 .Pp
 .It Dv BIOCGDLTLIST Fa "struct bpf_dltlist *"
 Returns an array of the available types of the data link layer
@@ -374,7 +374,7 @@ The current version numbers are given by
 and
 .Dv BPF_MINOR_VERSION
 from
-.Aq Pa net/bpf.h .
+.In net/bpf.h .
 An incompatible filter may result in undefined behavior (most likely, an
 error returned by
 .Xr ioctl 2
@@ -520,7 +520,7 @@ to packet.
 The macro
 .Dv BPF_WORDALIGN
 is defined in
-.Aq Pa net/bpf.h
+.In net/bpf.h
 to facilitate this process.
 It rounds up its argument to the nearest word aligned value (where a word is
 .Dv BPF_ALIGNMENT
@@ -577,7 +577,7 @@ and
 Various other mode and operator bits are logically OR'd into the class to
 give the actual instructions.
 The classes and modes are defined in
-.Aq Pa net/bpf.h .
+.In net/bpf.h .
 Below are the semantics for each defined
 .Nm
 instruction.

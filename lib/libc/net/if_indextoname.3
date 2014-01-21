@@ -1,4 +1,4 @@
-.\"	$OpenBSD: if_indextoname.3,v 1.14 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: if_indextoname.3,v 1.15 2014/01/21 03:15:45 schwarze Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     From: @(#)rcmd.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt IF_NAMETOINDEX 3
 .Os
 .Sh NAME
@@ -73,7 +73,7 @@ bytes into which the interface name corresponding to the specified index is
 returned.
 .Pf ( Dv IF_NAMESIZE
 is also defined in
-.Aq Pa net/if.h
+.In net/if.h
 and its value includes a terminating NUL byte at the end of the
 interface name.)
 This pointer is also the return value of the function.
@@ -87,7 +87,7 @@ returns an array of
 structures.
 .Vt if_nameindex
 is also defined in
-.Aq Pa net/if.h ,
+.In net/if.h ,
 and is as follows:
 .Bd -literal -offset indent
 struct if_nameindex {

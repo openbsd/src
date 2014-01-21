@@ -1,4 +1,4 @@
-.\"	$OpenBSD: workq_add_task.9,v 1.16 2013/07/17 20:21:56 schwarze Exp $
+.\"	$OpenBSD: workq_add_task.9,v 1.17 2014/01/21 03:15:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt WORKQ_ADD_TASK 9
 .Os
 .Sh NAME
@@ -41,28 +41,28 @@ it is impossible to run such a task in the current context.
 .Pp
 .Fn workq_add_task
 adds a task to the workq specified by the
-.Pa wq
+.Fa wq
 argument.
 If
-.Pa wq
+.Fa wq
 is
 .Dv NULL
 the task will be run by the kernel's generic work queue.
 Tasks in the kernel's generic work queue should not run for long periods of
 time, they should use their own workq for task processing.
 A task is specified by the
-.Pa func
+.Fa func
 argument, and will be called with
-.Pa arg1
+.Fa arg1
 and
-.Pa arg2 .
+.Fa arg2 .
 Two arguments are allowed to provide additional flexibility to the called
 function.
 In many cases, one may wish to perform an action on a target.
 Two arguments allow both target and action to be passed without
 the need for a wrapper struct to contain them in a single argument.
 The
-.Pa flags
+.Fa flags
 argument specifies creation and runtime characteristics of the task.
 The possible flags are:
 .Pp
@@ -77,16 +77,16 @@ will return
 .Pp
 .Fn workq_queue_task
 adds a task to the workq specified by the
-.Pa wq
+.Fa wq
 argument, using the memory provided by the
-.Pa wqt
+.Fa wqt
 argument to store that task's entry on the workq.
 The
-.Pa flags ,
-.Pa func ,
-.Pa arg1 ,
+.Fa flags ,
+.Fa func ,
+.Fa arg1 ,
 and
-.Pa arg2
+.Fa arg2
 arguments are the same as those in the
 .Fn workq_add_task
 function.
@@ -99,12 +99,12 @@ is guaranteed to succeed.
 creates a workq to be used when tasks would unnecessarily block the kernel
 workq.
 The
-.Pa name
+.Fa name
 argument specifies the name of the kernel threads that run the tasks.
-.Pa maxthreads
+.Fa maxthreads
 specifies the maximum number of worker threads that will service the work
 queue.
-.Pa ipl
+.Fa ipl
 specifies the interrupt protection level at which the workq can be safely used.
 See
 .Xr spl 9

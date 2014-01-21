@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.53 2013/06/05 03:39:22 tedu Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.54 2014/01/21 03:15:45 schwarze Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt GETADDRINFO 3
 .Os
 .Sh NAME
@@ -70,7 +70,7 @@ must be non-null.
 is an optional pointer to a
 .Li struct addrinfo ,
 as defined by
-.Aq Pa netdb.h :
+.In netdb.h :
 .Bd -literal
 struct addrinfo {
 	int ai_flags;		/* input flags */

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: core.5,v 1.15 2013/10/19 09:00:19 deraadt Exp $
+.\"	$OpenBSD: core.5,v 1.16 2014/01/21 03:15:46 schwarze Exp $
 .\"	$NetBSD: core.5,v 1.4 1994/11/30 19:31:11 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)core.5	8.3 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: October 19 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt CORE 5
 .Os
 .Sh NAME
@@ -63,12 +63,12 @@ The
 file consists of the u-area, whose size (in pages) is defined by the
 .Dv UPAGES
 manifest in the
-.Aq Pa machine/param.h
+.In machine/param.h
 file.
 The u-area starts with a
 .Fa user
 structure as given in
-.Aq Pa sys/user.h .
+.In sys/user.h .
 The remainder of the
 .Pa programname.core
 file consists of the data pages followed by the stack pages of the
@@ -86,7 +86,7 @@ The size of a
 is given by the constant
 .Dv PAGE_SIZE ,
 defined in
-.Aq Pa machine/param.h .
+.In machine/param.h .
 The
 .Fa user
 structure is defined as:
@@ -107,7 +107,7 @@ struct	user {
 .Pp
 .Fa md_coredump
 is defined in the header file
-.Aq Pa machine/pcb.h .
+.In machine/pcb.h .
 .Pp
 The on-disk core file consists of a header followed by a number of segments.
 Each segment is preceded by a

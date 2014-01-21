@@ -1,4 +1,4 @@
-.\" $OpenBSD: pflow.4,v 1.16 2013/09/14 14:54:30 jmc Exp $
+.\" $OpenBSD: pflow.4,v 1.17 2014/01/21 03:15:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2008 Joerg Goltermann <jg@osn.de>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt PFLOW 4
 .Os
 .Sh NAME
@@ -69,7 +69,7 @@ The header indicates the version of the protocol, number of
 flows in the packet, a unique sequence number, system time, and an engine
 ID and type.
 Header and flow structs are defined in
-.Aq Pa net/if_pflow.h .
+.In net/if_pflow.h .
 .Pp
 There is a one-to-one correspondence between packets seen by
 .Xr bpf 4

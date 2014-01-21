@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aml_evalnode.9,v 1.9 2013/07/17 20:21:52 schwarze Exp $
+.\"	$OpenBSD: aml_evalnode.9,v 1.10 2014/01/21 03:15:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 Michael Knudsen <mk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\"  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt AML_EVALNODE 9
 .Os
 .Sh NAME
@@ -75,7 +75,7 @@ parameter unless it is
 .Fa res
 is cleared before storing the result.
 If
-.Pa node
+.Fa node
 does not exist,
 .Fn aml_evalnode
 returns
@@ -86,9 +86,9 @@ otherwise it returns 0.
 is similar to
 .Fn aml_evalnode
 but differs in that it searches for a subnode of
-.Pa parent
+.Fa parent
 with the name
-.Pa name .
+.Fa name .
 If such a node is found, it is evaluated using
 .Fn aml_evalnode ,
 passing whatever parameters were passed to itself.
@@ -98,16 +98,16 @@ returns the return value of
 .Pp
 .Fn aml_find_node
 is used to find all subnodes of
-.Pa parent
+.Fa parent
 with a name of
-.Pa name  .
+.Fa name  .
 For each node found, the function specified as the
-.Pa cbproc
+.Fa cbproc
 parameter is called with the node and
-.Pa arg
+.Fa arg
 as the first and second parameters, respectively.
 The function specified as the
-.Pa cbproc
+.Fa cbproc
 parameter returns a value that specifies if the tree walk
 should be terminated (!0) or continued (0) with the children.
 .Fn aml_find_node
@@ -118,7 +118,7 @@ is used to free up the result returned from
 .Fn aml_evalnode
 or the other AML evaluation functions.
 Note that no attempt is made to free the
-.Pa "struct aml_value"
+.Vt struct aml_value
 itself so it is safe to allocate this on the stack.
 Also, calling
 .Fn aml_freevalue
@@ -128,12 +128,12 @@ is not an error.
 .Pp
 .Fn aml_val2int
 is used to convert the
-.Pa struct aml_value
+.Vt struct aml_value
 pointed to by the
-.Pa rval
+.Fa rval
 parameter to a signed 64-bit integer value.
 Multiple types exist for
-.Pa struct aml_value ,
+.Vt struct aml_value ,
 and the conversion value depends on the type
 of the value object as follows.
 For objects of type
@@ -151,7 +151,7 @@ or, if prefixed by
 .Dq 0x ,
 in base 16.
 If
-.Pa rval
+.Fa rval
 is
 .Dv NULL
 or not of one of the types mentioned above,
@@ -163,21 +163,21 @@ Using
 to invoke the
 .Dq _STA
 method on a node
-.Pa n
+.Fa node
 should be done like the following:
 .Bd -literal -offset indent
 struct acpi_softc	*sc
-struct aml_node		*n;
+struct aml_node		*node;
 struct aml_value	res;
 
-if (aml_evalname(sc->sc_acpi, n, "_STA", 0, NULL, &res) != 0) {
+if (aml_evalname(sc->sc_acpi, node, "_STA", 0, NULL, &res) != 0) {
 	dnprintf(10, "%s: no _STA\en", DEVNAME(sc));
 	return;
 }
 .Ed
 .Pp
 Using the
-.Pa struct aml_value
+.Vt struct aml_value
 obtained from the
 .Dq _STA
 call to determine if the device is a battery is done as follows:
@@ -188,7 +188,7 @@ if ((aml_val2int(&res) & STA_BATTERY) == 0) {
 .Ed
 .Pp
 Finally, when the result stored in
-.Pa res
+.Fa res
 is no longer needed, free it using
 .Fn aml_freevalue :
 .Bd -literal -offset indent

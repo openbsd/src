@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.50 2013/07/20 06:25:33 jmc Exp $
+.\"	$OpenBSD: uvm.9,v 1.51 2014/01/21 03:15:46 schwarze Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: July 20 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -397,7 +397,7 @@ freeing the data structures if there are no other references.
 The
 .Fn uvmspace_share
 function causes process
-.Pa p2
+.Fa p2
 to share the address space of
 .Fa p1 .
 .Sh PAGE FAULT HANDLING

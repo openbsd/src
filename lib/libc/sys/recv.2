@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.37 2011/07/19 18:24:40 mikeb Exp $
+.\"	$OpenBSD: recv.2,v 1.38 2014/01/21 03:15:45 schwarze Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd $Mdocdate: July 19 2011 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt RECV 2
 .Os
 .Sh NAME
@@ -163,7 +163,7 @@ call uses a
 .Fa msghdr
 structure to minimize the number of directly supplied parameters.
 This structure has the following form, as defined in
-.Aq Pa sys/socket.h :
+.In sys/socket.h :
 .Bd -literal
 struct msghdr {
 	void		*msg_name;	/* optional address */

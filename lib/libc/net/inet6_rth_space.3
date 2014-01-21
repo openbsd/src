@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_rth_space.3,v 1.5 2012/09/27 11:31:58 jmc Exp $
+.\"	$OpenBSD: inet6_rth_space.3,v 1.6 2014/01/21 03:15:45 schwarze Exp $
 .\"	$KAME: inet6_rth_space.3,v 1.7 2005/01/05 03:00:44 itojun Exp $
 .\"
 .\" Copyright (C) 2004 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 27 2012 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt INET6_RTH_SPACE 3
 .Os
 .\"
@@ -64,10 +64,10 @@ The RFC uses the word
 .Dq segments
 to describe addresses and that is the term used here as well.
 All of the functions are defined in the header file
-.Aq Pa netinet/in.h .
+.In netinet/in.h .
 The functions described in this manual page all operate
 on routing header structures which are defined in
-.Aq Pa netinet/ip6.h
+.In netinet/ip6.h
 but which should not need to be modified outside the use of this API.
 The size and shape of the route header structures may change, so using
 the APIs is a more portable, long term, solution.

@@ -24,10 +24,10 @@
 .\" DEALINGS IN THE SOFTWARE.
 .\"
 .\" $FreeBSD: src/share/man/man4/multicast.4,v 1.4 2004/07/09 09:22:36 ru Exp $
-.\" $OpenBSD: multicast.4,v 1.8 2013/08/14 08:46:07 jmc Exp $
+.\" $OpenBSD: multicast.4,v 1.9 2014/01/21 03:15:46 schwarze Exp $
 .\" $NetBSD: multicast.4,v 1.3 2004/09/12 13:12:26 wiz Exp $
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt MULTICAST 4
 .Os
 .\"
@@ -184,7 +184,7 @@ The
 contains the
 .Dv VIFF_*
 flags as defined in
-.Aq Pa netinet/ip_mroute.h .
+.In netinet/ip_mroute.h .
 The
 .Va min_ttl_threshold
 contains the minimum TTL a multicast data packet must have to be
@@ -221,7 +221,7 @@ The
 contains the
 .Dv MIFF_*
 flags as defined in
-.Aq Pa netinet6/ip6_mroute.h .
+.In netinet6/ip6_mroute.h .
 The
 .Va pif_index
 is the physical interface index of the corresponding local interface.
@@ -251,7 +251,7 @@ or
 The IPv4 upcalls have a
 .Vt "struct igmpmsg"
 header (see
-.Aq Pa netinet/ip_mroute.h )
+.In netinet/ip_mroute.h )
 with the
 .Va im_mbz
 field set to zero.
@@ -263,7 +263,7 @@ set to zero.
 The IPv6 upcalls have a
 .Vt "struct mrt6msg"
 header (see
-.Aq Pa netinet6/ip6_mroute.h )
+.In netinet6/ip6_mroute.h )
 with the
 .Va im6_mbz
 field set to zero.
@@ -433,9 +433,9 @@ in the future there will be IPv6 support as well.
 Below is a summary of the expandable API solution.
 Note that all new options and structures are defined
 in
-.Aq Pa netinet/ip_mroute.h
+.In netinet/ip_mroute.h
 and
-.Aq Pa netinet6/ip6_mroute.h ,
+.In netinet6/ip6_mroute.h ,
 unless stated otherwise.
 .Pp
 The user-level process uses new

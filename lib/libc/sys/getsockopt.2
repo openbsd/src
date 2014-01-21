@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.40 2013/06/02 01:07:47 benno Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.41 2014/01/21 03:15:45 schwarze Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: June 2 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -98,7 +98,7 @@ may be
 and any specified options are passed uninterpreted to the appropriate
 protocol module for interpretation.
 The include file
-.Aq Pa sys/socket.h
+.In sys/socket.h
 contains definitions for socket level options, described below.
 Options at other protocol levels vary in format and name;
 consult the appropriate entries in section 4 of the manual.
@@ -115,7 +115,7 @@ or zero if the option is to be disabled.
 uses a
 .Li struct linger
 parameter, defined in
-.Aq Pa sys/socket.h ,
+.In sys/socket.h ,
 which specifies the desired state of the option and the
 linger interval (see below).
 .Dv SO_SNDTIMEO
@@ -124,7 +124,7 @@ and
 use a
 .Li struct timeval
 parameter, defined in
-.Aq Pa sys/time.h .
+.In sys/time.h .
 .Pp
 The following options are recognized at the socket level.
 Except as noted, each may be examined with

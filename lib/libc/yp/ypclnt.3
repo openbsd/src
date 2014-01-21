@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypclnt.3,v 1.23 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: ypclnt.3,v 1.24 2014/01/21 03:15:45 schwarze Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt YPCLNT 3
 .Os
 .Sh NAME
@@ -81,9 +81,9 @@ For a general description of the YP subsystem, see
 .Xr yp 8 .
 .Pp
 For all functions, input values begin with
-.Pa in
+.Sq in
 and output values begin with
-.Pa out .
+.Sq out .
 Any output values of type
 .Em char **
 should be the addresses of uninitialized character pointers.
@@ -93,22 +93,22 @@ using
 This memory can later be freed by the user if there is no additional need for
 the data stored there.
 For
-.Pa outkey
+.Fa outkey
 and
-.Pa outval ,
+.Fa outval ,
 two extra bytes of memory are allocated for a
 .Ql \en
 and
 .Ql \e0 ,
 which are not
 reflected in the values of
-.Pa outkeylen
+.Fa outkeylen
 or
-.Pa outvallen .
+.Fa outvallen .
 All occurrences of
-.Pa indomain
+.Fa indomain
 and
-.Pa inmap
+.Fa inmap
 must be non-null, NUL-terminated strings.
 All input strings which also have
 a corresponding length parameter cannot be null unless the corresponding
@@ -127,9 +127,9 @@ The default domain name may be obtained by calling
 .Fn yp_get_default_domain ,
 and should thus be used before all other YP calls in a client program.
 The value it places
-.Pa outdomain
+.Fa outdomain
 is suitable for use as the
-.Pa indomain
+.Fa indomain
 parameter to all subsequent YP calls.
 .Pp
 In order for YP lookup calls to succeed, the client process must be bound
@@ -167,17 +167,17 @@ Provides the first key-value pair from the given map in the named domain.
 .It Fn yp_next
 Provides the next key-value pair in the given map.
 To obtain the second pair, the
-.Pa inkey
+.Fa inkey
 value should be the
-.Pa outkey
+.Fa outkey
 value provided by the initial call to
 .Fn yp_first .
 In the general case, the next key-value pair may be obtained by using the
-.Pa outkey
+.Fa outkey
 value from the previous call to
 .Fn yp_next
 as the value for
-.Pa inkey .
+.Fa inkey .
 .Pp
 Of course, the notions of
 .Dq first
@@ -217,7 +217,7 @@ The third argument to this function provides a way to supply the name
 of a function to process each key-value pair in the map.
 .Fn yp_all
 returns after the entire transaction is complete, or the
-.Pa foreach
+.Fn foreach
 function decides that it does not want any more key-value pairs.
 The third argument to
 .Fn yp_all
@@ -230,10 +230,10 @@ struct ypall_callback *incallback {
 .Ed
 .Pp
 The
-.Em char *data
+.Vt char * Ns Va data
 argument is an opaque pointer for use by the callback function.
 The
-.Pa foreach
+.Fn foreach
 function should return non-zero when it no longer wishes to process
 key-value pairs, at which time
 .Fn yp_all
@@ -253,13 +253,13 @@ Where:
 .Bl -tag -width "inkey, inval"
 .It Fa instatus
 Holds one of the return status values described in
-.Aq Pa rpcsvc/yp_prot.h :
+.In rpcsvc/yp_prot.h :
 see
 .Fn ypprot_err
 below for a function that will translate YP protocol errors into a
 .Nm ypclnt
 layer error code as described in
-.Aq Pa rpcsvc/ypclnt.h .
+.In rpcsvc/ypclnt.h .
 .It Fa inkey, inval
 The key and value arguments are somewhat different here than described
 above.
@@ -270,7 +270,7 @@ and
 is private to
 .Fn yp_all ,
 and is overwritten with each subsequent key-value pair; therefore, the
-.Pa foreach
+.Fn foreach
 function should do something useful with the contents of that memory during
 each iteration.
 If the key-value pairs are not terminated with either
@@ -278,14 +278,14 @@ If the key-value pairs are not terminated with either
 or
 .Ql \e0
 in the map, then they will not be terminated as such when given to the
-.Pa foreach
+.Fn foreach
 function, either.
 .It Fa indata
 This is the contents of the
-.Pa incallback->data
+.Fa incallback Ns -> Ns Va data
 element of the callback structure.
 It is provided as a means to share state between the
-.Pa foreach
+.Fn foreach
 function and the user code.
 Its use is completely optional: cast it to something useful or simply
 ignore it.

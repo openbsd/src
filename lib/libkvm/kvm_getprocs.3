@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getprocs.3,v 1.19 2013/06/05 03:40:26 tedu Exp $
+.\"	$OpenBSD: kvm_getprocs.3,v 1.20 2014/01/21 03:15:45 schwarze Exp $
 .\"	$NetBSD: kvm_getprocs.3,v 1.13 2003/08/07 16:44:37 agc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm_getprocs.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt KVM_GETPROCS 3
 .Os
 .Sh NAME
@@ -107,7 +107,7 @@ The number of processes found is returned in the reference parameter
 The processes are returned as a contiguous array of
 .Vt kinfo_proc
 structures, the definition for which is available in
-.Aq Pa sys/sysctl.h .
+.In sys/sysctl.h .
 This memory is locally allocated, and subsequent calls to
 .Fn kvm_getprocs
 and

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: execve.2,v 1.39 2013/10/20 07:40:39 jmc Exp $
+.\"	$OpenBSD: execve.2,v 1.40 2014/01/21 03:15:45 schwarze Exp $
 .\"	$NetBSD: execve.2,v 1.9 1995/02/27 12:32:25 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)execve.2	8.3 (Berkeley) 1/24/94
 .\"
-.Dd $Mdocdate: October 20 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt EXECVE 2
 .Os
 .Sh NAME
@@ -268,7 +268,7 @@ The new process file is on a filesystem mounted with execution
 disabled
 .Pf ( Dv MNT_NOEXEC
 in
-.Ao Pa sys/mount.h Ac ) .
+.In sys/mount.h ) .
 .It Bq Er ENOEXEC
 The new process file has the appropriate access
 permission, but has an invalid magic number in its header.
@@ -285,7 +285,7 @@ is larger than the system-imposed limit.
 The limit in the system as released is 262144 bytes
 .Pf ( Dv NCARGS
 in
-.Ao Pa sys/param.h Ac ) .
+.In sys/param.h ) .
 .It Bq Er EFAULT
 The new process file is not as long as indicated by
 the size values in its header.

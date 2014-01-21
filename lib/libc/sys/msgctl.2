@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgctl.2,v 1.13 2007/05/31 19:19:33 jmc Exp $
+.\"	$OpenBSD: msgctl.2,v 1.14 2014/01/21 03:15:45 schwarze Exp $
 .\"	$NetBSD: msgctl.2,v 1.2 1997/03/27 08:20:35 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"/
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt MSGCTL 2
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ may be altered by
 and parts of which determine the actions of
 .Fn msgctl .
 The data structure is defined in
-.Aq Pa sys/msg.h
+.In sys/msg.h
 and contains (amongst others) the following members:
 .Bd -literal
 struct msqid_ds {
@@ -76,7 +76,7 @@ The
 structure used inside the
 .Fa msqid_ds
 structure is defined in
-.Aq Pa sys/ipc.h
+.In sys/ipc.h
 and looks like this:
 .Bd -literal
 struct ipc_perm {
@@ -126,9 +126,8 @@ Values for
 that exceed the system limit
 .Pf ( Dv MSGMNB
 from
-.Aq Pa sys/msg.h )
+.In sys/msg.h )
 are silently truncated to that limit.
-.Pp
 .It Dv IPC_RMID
 Remove the message queue specified by
 .Fa msqid

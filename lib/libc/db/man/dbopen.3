@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dbopen.3,v 1.26 2013/06/05 03:39:22 tedu Exp $
+.\"	$OpenBSD: dbopen.3,v 1.27 2014/01/21 03:15:44 schwarze Exp $
 .\"	$NetBSD: dbopen.3,v 1.6 1995/02/27 13:23:25 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)dbopen.3	8.5 (Berkeley) 1/2/94
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt DBOPEN 3
 .Os
 .Sh NAME
@@ -117,7 +117,7 @@ The
 argument is of type
 .Fa DBTYPE
 (as defined in the
-.Aq Pa db.h
+.In db.h
 include file) and may be set to
 .Dv DB_BTREE ,
 .Dv DB_HASH ,
@@ -140,7 +140,7 @@ returns a pointer to a DB structure on success and
 .Dv NULL
 on error.
 The DB structure is defined in the
-.Aq Pa db.h
+.In db.h
 include file, and contains at least the following fields:
 .Bd -literal -offset indent
 typedef struct {

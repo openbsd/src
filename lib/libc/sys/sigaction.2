@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.53 2013/08/14 08:46:07 jmc Exp $
+.\"	$OpenBSD: sigaction.2,v 1.54 2014/01/21 03:15:45 schwarze Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sigaction.2	8.2 (Berkeley) 4/3/94
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt SIGACTION 2
 .Os
 .Sh NAME
@@ -247,7 +247,7 @@ If this bit is set, the 2nd argument of the handler is set to
 be a pointer to a
 .Em siginfo_t
 structure as described in
-.Aq Pa sys/siginfo.h .
+.In sys/siginfo.h .
 The
 .Em siginfo_t
 structure is a part of
@@ -301,7 +301,7 @@ signals that restart pending system calls continue to do so.
 .Pp
 The following is a list of all signals
 with names as in the include file
-.Aq Pa signal.h :
+.In signal.h :
 .Bl -column "SIGVTALARM" "create core image" "Description"
 .It Sy "Name" Ta Sy "Default Action" Ta Sy "Description"
 .It Dv SIGHUP Ta "terminate process" Ta "terminal line hangup"
@@ -372,7 +372,7 @@ option is set,
 is a pointer to a
 .Dv siginfo_t
 as described in
-.Aq Pa sys/siginfo.h .
+.In sys/siginfo.h .
 If
 .Dv SA_SIGINFO
 is not set, this pointer will be
@@ -387,7 +387,7 @@ will be called instead of the function specified by
 is a pointer to the
 .Fa sigcontext
 structure (defined in
-.Aq Pa signal.h ) ,
+.In signal.h ) ,
 used to restore the context from before the signal.
 .Sh ERRORS
 .Fn sigaction

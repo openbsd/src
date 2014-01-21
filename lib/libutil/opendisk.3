@@ -1,4 +1,4 @@
-.\"	$OpenBSD: opendisk.3,v 1.7 2013/06/05 03:40:26 tedu Exp $
+.\"	$OpenBSD: opendisk.3,v 1.8 2014/01/21 03:15:45 schwarze Exp $
 .\"	$NetBSD: opendisk.3,v 1.4 1999/07/02 15:49:12 simonb Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt OPENDISK 3
 .Os
 .Sh NAME
@@ -77,9 +77,9 @@ attempts to open the following variations of
 .Fa path ,
 in order:
 .Bl -tag -width "/dev/rpathX"
-.It Pa path
+.It Fa path
 The pathname as given.
-.It Pa path Ns Em X
+.It Fa path Ns Em X
 .Fa path
 with a suffix of
 .Sq Em X ,
@@ -95,11 +95,11 @@ If
 .Fa iscooked
 is zero, then the following two variations are attempted:
 .Bl -tag -width "/dev/rpathX"
-.It Pa /dev/rpath
+.It Pa /dev/r Ns Fa path
 .Fa path
 with a prefix of
 .Dq Pa /dev/r .
-.It Pa /dev/rpath Ns Em X
+.It Pa /dev/r Ns Fa path Ns Em X
 .Fa path
 with a prefix of
 .Dq Pa /dev/r
@@ -112,11 +112,11 @@ Otherwise (i.e.,
 .Fa iscooked
 is non-zero), the following variations are attempted:
 .Bl -tag -width "/dev/rpathX"
-.It Pa /dev/path
+.It Pa /dev/ Ns Fa path
 .Fa path
 with a prefix of
 .Dq Pa /dev/ .
-.It Pa /dev/path Ns Em X
+.It Pa /dev/ Ns Fa path Ns Em X
 .Fa path
 with a prefix of
 .Dq Pa /dev/

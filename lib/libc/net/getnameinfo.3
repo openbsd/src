@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.45 2013/07/10 07:07:12 jmc Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.46 2014/01/21 03:15:45 schwarze Exp $
 .\"	$KAME: getnameinfo.3,v 1.37 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 10 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt GETNAMEINFO 3
 .Os
 .Sh NAME
@@ -75,7 +75,7 @@ the maximum value for
 is
 .Dv NI_MAXSERV ,
 as defined by
-.Aq Pa netdb.h .
+.In netdb.h .
 If a length parameter is zero, no string will be stored.
 Otherwise, enough space must be provided to store the
 host name or service string plus a byte for the NUL terminator.

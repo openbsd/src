@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensor_attach.9,v 1.11 2013/07/17 20:21:55 schwarze Exp $
+.\"	$OpenBSD: sensor_attach.9,v 1.12 2014/01/21 03:15:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2006 Michael Knudsen <mk@openbsd.org>
 .\" Copyright (c) 2006 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt SENSOR_ATTACH 9
 .Os
 .Sh NAME
@@ -68,9 +68,9 @@ tree.
 .Pp
 .Fn sensor_attach
 adds the sensor specified by the
-.Pa sens
+.Fa sens
 argument to the sensor device specified by the
-.Pa sensdev
+.Fa sensdev
 argument.
 .Fn sensor_detach
 can be used to remove sensors previously added by
@@ -78,7 +78,7 @@ can be used to remove sensors previously added by
 .Pp
 .Fn sensordev_install
 registers the sensor device specified by the
-.Pa sensdev
+.Fa sensdev
 argument so that all sensors that are attached to the device become
 accessible via the sysctl interface.
 .Fn sensordev_deinstall
@@ -87,7 +87,7 @@ can be used to remove sensor devices previously registered by
 .Pp
 .Fn sensordev_get
 takes ordinal number
-.Pa devnum
+.Fa devnum
 specifying a sensor device and
 returns a pointer to the corresponding
 .Vt struct ksensordev ,
@@ -97,11 +97,11 @@ if no such sensor device exists.
 .Pp
 .Fn sensor_find
 takes ordinal number
-.Pa devnum
+.Fa devnum
 specifying a sensor device, sensor type
-.Pa stype
+.Fa stype
 and ordinal number of sensor of such type
-.Pa numt ,
+.Fa numt ,
 and returns a pointer to the corresponding
 .Vt struct ksensor ,
 or

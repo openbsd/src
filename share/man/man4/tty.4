@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.39 2013/07/16 16:05:49 schwarze Exp $
+.\"	$OpenBSD: tty.4,v 1.40 2014/01/21 03:15:46 schwarze Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tty.4	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt TTY 4
 .Os
 .Sh NAME
@@ -200,7 +200,7 @@ file descriptor zero by the following code fragment:
 Change to the new line discipline pointed to by
 .Fa ldisc .
 The available line disciplines are listed in
-.Aq Pa sys/ttycom.h
+.In sys/ttycom.h
 and currently are:
 .Pp
 .Bl -tag -width TIOCGWINSZ -compact
@@ -346,7 +346,7 @@ If the value of the int pointed to by
 contains the
 .Dv FREAD
 bit as defined in
-.Aq Pa sys/fcntl.h ,
+.In sys/fcntl.h ,
 then all characters in the input queue are cleared.
 If it contains the
 .Dv FWRITE
@@ -368,7 +368,7 @@ oriented programs determine the screen size.
 The
 .Va winsize
 structure is defined in
-.Aq Pa sys/ioctl.h .
+.In sys/ioctl.h .
 .It Dv TIOCSWINSZ Fa struct winsize *ws
 Set the window size associated with the terminal to be the value in
 the

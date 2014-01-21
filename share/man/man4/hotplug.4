@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hotplug.4,v 1.4 2013/07/16 16:05:49 schwarze Exp $
+.\"	$OpenBSD: hotplug.4,v 1.5 2014/01/21 03:15:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt HOTPLUG 4
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@ Once an event has been read, it's deleted from the queue.
 The event queue has a limited size and if it's full all new events will be
 dropped.
 Each event is described with the following structure declared in the
-.Aq Pa sys/hotplug.h
+.In sys/hotplug.h
 header file:
 .Bd -literal -offset indent
 struct hotplug_event {
@@ -62,7 +62,7 @@ The
 .Va he_devclass
 field describes the device class.
 All device classes can be found in the
-.Aq Pa sys/device.h
+.In sys/device.h
 header file:
 .Bd -literal -offset indent
 enum devclass {

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: task_add.9,v 1.7 2013/12/23 04:24:43 dlg Exp $
+.\"	$OpenBSD: task_add.9,v 1.8 2014/01/21 03:15:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 23 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt TASK_ADD 9
 .Os
 .Sh NAME
@@ -48,12 +48,12 @@ API provides a mechanism to defer work to a process context.
 allocates a taskq and a set of threads to be used to complete work
 that would be inappropriate for the shared system taskq.
 The
-.Pa name
+.Fa name
 argument specifies the name of the kernel threads that are created
 to service the work on the taskq.
-.Pa nthreads
+.Fa nthreads
 specifies the number of threads that will be created to handle the work.
-.Pa ipl
+.Fa ipl
 specifies the highest interrupt protection level at which
 .Fn task_add
 and

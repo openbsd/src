@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcsetattr.3,v 1.16 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: tcsetattr.3,v 1.17 2014/01/21 03:15:45 schwarze Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt TCSETATTR 3
 .Os
 .Sh NAME
@@ -98,7 +98,7 @@ structure.
 The unsigned integer
 .Li speed_t
 is typedef'd in the include file
-.Aq Pa termios.h .
+.In termios.h .
 On
 .Ox ,
 the value of the integer corresponds directly to the baud rate being
@@ -243,7 +243,7 @@ The
 field is created by
 .Tn OR Ns 'ing
 the following values, as specified in the include file
-.Aq Pa termios.h .
+.In termios.h .
 .Bl -tag -width "TCSADRAIN"
 .It Dv TCSANOW
 The change occurs immediately.

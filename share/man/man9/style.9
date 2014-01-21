@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.56 2013/08/14 08:39:28 jmc Exp $
+.\"	$OpenBSD: style.9,v 1.57 2014/01/21 03:15:46 schwarze Exp $
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -59,15 +59,15 @@ current style guidelines.
 .Ed
 .Pp
 Kernel include files (i.e.,
-.Aq Pa sys/*.h )
+.In sys/*.h )
 come first; normally, you'll need
-.Aq Pa sys/types.h
+.In sys/types.h
 OR
-.Aq Pa sys/param.h ,
+.In sys/param.h ,
 but not both!
-.Aq Pa sys/types.h
+.In sys/types.h
 includes
-.Aq Pa sys/cdefs.h ,
+.In sys/cdefs.h ,
 and it's okay to depend on that.
 .Bd -literal -offset indent
 #include <sys/types.h>	/* Non-local includes in brackets. */
@@ -150,7 +150,7 @@ There should be no space between the function name and the argument list.
 Use
 .Li __dead
 from
-.Aq Pa sys/cdefs.h
+.In sys/cdefs.h
 for functions that don't return, i.e.,
 .Bd -literal -offset indent
 __dead void	abort(void);

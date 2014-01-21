@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getifaddrs.3,v 1.17 2013/08/14 12:38:15 jmc Exp $
+.\"	$OpenBSD: getifaddrs.3,v 1.18 2014/01/21 03:15:45 schwarze Exp $
 .\"	BSDI	getifaddrs.3,v 2.5 2000/02/23 14:51:59 dab Exp
 .\"
 .\" Copyright (c) 1995, 1999
@@ -21,7 +21,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt GETIFADDRS 3
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@ on the local machine in the memory referenced by
 The list consists of
 .Nm ifaddrs
 structures, as defined in the include file
-.Aq Pa ifaddrs.h .
+.In ifaddrs.h .
 The
 .Nm ifaddrs
 structure contains at least the following entries:
@@ -103,7 +103,7 @@ For
 addresses it contains a pointer to the
 .Li struct if_data
 (as defined in include file
-.Aq Pa net/if.h )
+.In net/if.h )
 which contains various interface attributes and statistics.
 For all other address families,
 .Fa ifa_data
@@ -149,11 +149,11 @@ since
 .Ox 2.7 .
 .Sh BUGS
 If both
-.Aq Pa net/if.h
+.In net/if.h
 and
-.Aq Pa ifaddrs.h
+.In ifaddrs.h
 are being included,
-.Aq Pa net/if.h
+.In net/if.h
 .Em must
 be included before
-.Aq Pa ifaddrs.h .
+.In ifaddrs.h .

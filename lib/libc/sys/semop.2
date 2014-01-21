@@ -1,4 +1,4 @@
-.\"	$OpenBSD: semop.2,v 1.15 2007/09/03 14:37:52 millert Exp $
+.\"	$OpenBSD: semop.2,v 1.16 2014/01/21 03:15:45 schwarze Exp $
 .\"	$NetBSD: semop.2,v 1.1 1995/10/16 23:49:28 jtc Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"/
-.Dd $Mdocdate: September 3 2007 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt SEMOP 2
 .Os
 .Sh NAME
@@ -137,7 +137,7 @@ The value of
 .Fa nsops
 is too big.
 The maximum is specified in MAX_SOPS in
-.Aq Pa sys/sem.h .
+.In sys/sem.h .
 .It Bq Er EFBIG
 .Va sem_num
 in one of the sem_buf structures is less than 0, or greater than the actual

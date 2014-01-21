@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtrr.4,v 1.6 2013/08/24 04:38:52 mlarkin Exp $
+.\"	$OpenBSD: mtrr.4,v 1.7 2014/01/21 03:15:46 schwarze Exp $
 .\"
 .\" MTRR driver for OpenBSD.
 .\" Copyright 1999 Matthieu Herrb <matthieu@openbsd.org>
@@ -7,7 +7,7 @@
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
 .\"
-.Dd $Mdocdate: August 24 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt MTRR 4 amd64
 .Os
 .Sh NAME
@@ -30,7 +30,7 @@ calls performed on
 or
 .Pa /dev/xf86 .
 Declarations and data types are to be found in
-.Aq Pa sys/memrange.h .
+.In sys/memrange.h .
 .Pp
 The specific attributes, and number of programmable ranges may vary between
 architectures.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getitimer.2,v 1.24 2013/11/02 02:32:51 tedu Exp $
+.\"	$OpenBSD: getitimer.2,v 1.25 2014/01/21 03:15:45 schwarze Exp $
 .\"	$NetBSD: getitimer.2,v 1.6 1995/10/12 15:40:54 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getitimer.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: November 2 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt GETITIMER 2
 .Os
 .Sh NAME
@@ -60,7 +60,7 @@
 .Sh DESCRIPTION
 The system provides each process with three interval timers,
 defined in
-.Ao Pa sys/time.h Ac .
+.In sys/time.h .
 The
 .Fn getitimer
 call returns the current value for the timer specified in
@@ -139,7 +139,7 @@ restart interrupted system calls.
 .Pp
 The remaining five functions are in fact macros for manipulating time
 values, defined in
-.Ao Pa sys/time.h Ac .
+.In sys/time.h .
 .Pp
 .Fn timerclear "a"
 sets the time value in

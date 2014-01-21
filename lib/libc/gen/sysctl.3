@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.227 2013/10/28 21:02:35 deraadt Exp $
+.\"	$OpenBSD: sysctl.3,v 1.228 2014/01/21 03:15:45 schwarze Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 28 2013 $
+.Dd $Mdocdate: January 21 2014 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -115,7 +115,7 @@ set to 0.
 The top level names are defined with a
 .Dv CTL_
 prefix in
-.Aq Pa sys/sysctl.h ,
+.In sys/sysctl.h ,
 and are as follows.
 The next and subsequent levels down are found in the include files
 listed here, and described in separate sections below.
@@ -364,7 +364,7 @@ and
 .Sy sensor_type
 enumeration
 are defined in
-.Aq Pa sys/sensors.h .
+.In sys/sensors.h .
 .It Dv HW_SERIALNO
 The serial number of the machine.
 .It Dv HW_SETPERF
@@ -932,19 +932,19 @@ Return information on the System V style message facility.
 The
 .Sy msg_sysctl_info
 structure is defined in
-.Aq Pa sys/msg.h .
+.In sys/msg.h .
 .It Dv KERN_SYSVIPC_SEM_INFO
 Return information on the System V style semaphore facility.
 The
 .Sy sem_sysctl_info
 structure is defined in
-.Aq Pa sys/sem.h .
+.In sys/sem.h .
 .It Dv KERN_SYSVIPC_SHM_INFO
 Return information on the System V style shared memory facility.
 The
 .Sy shm_sysctl_info
 structure is defined in
-.Aq Pa sys/shm.h .
+.In sys/shm.h .
 .El
 .It Dv KERN_SYSVMSG
 Returns 1 if System V style message queue functionality is available on this
@@ -2181,51 +2181,51 @@ is unsuccessful, \-1 is returned and
 is set appropriately.
 .Sh FILES
 .Bl -tag -width "uvm/uvmXswapXencrypt.h  " -compact
-.It Aq Pa sys/sysctl.h
+.It In sys/sysctl.h
 definitions for top level identifiers, second level kernel and hardware
 identifiers, and user level identifiers
-.It Aq Pa sys/socket.h
+.It In sys/socket.h
 definitions for second level network identifiers
-.It Aq Pa sys/gmon.h
+.It In sys/gmon.h
 definitions for third level profiling identifiers
-.It Aq Pa ufs/ffs/ffs_extern.h
+.It In ufs/ffs/ffs_extern.h
 definitions for third level virtual file system identifiers
 .Pq ffs
-.It Aq Pa nfs/nfs.h
+.It In nfs/nfs.h
 definitions for third level virtual file system identifiers
 .Pq nfs
-.It Aq Pa uvm/uvm_param.h
+.It In uvm/uvm_param.h
 definitions for second level virtual memory identifiers
-.It Aq Pa uvm/uvm_swap_encrypt.h
+.It In uvm/uvm_swap_encrypt.h
 definitions for third level virtual memory identifiers
-.It Aq Pa net/if.h
+.It In net/if.h
 definitions for packet input/output queue identifiers
-.It Aq Pa net/pipex.h
+.It In net/pipex.h
 definitions for third level PIPEX identifiers
-.It Aq Pa netinet/in.h
+.It In netinet/in.h
 definitions for third level IPv4/v6 identifiers and
 fourth level
 .Tn IP
 and
 .Tn IPv6
 identifiers
-.It Aq Pa netinet/icmp_var.h
+.It In netinet/icmp_var.h
 definitions for fourth level
 .Tn ICMP
 identifiers
-.It Aq Pa netinet/icmp6.h
+.It In netinet/icmp6.h
 definitions for fourth level
 .Tn ICMPv6
 identifiers
-.It Aq Pa netinet/tcp_var.h
+.It In netinet/tcp_var.h
 definitions for fourth level
 .Tn TCP
 identifiers
-.It Aq Pa netinet/udp_var.h
+.It In netinet/udp_var.h
 definitions for fourth level
 .Tn UDP
 identifiers
-.It Aq Pa machine/cpu.h
+.It In machine/cpu.h
 definitions for second level CPU identifiers
 .El
 .Sh ERRORS
