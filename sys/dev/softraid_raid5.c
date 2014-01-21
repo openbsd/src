@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.5 2014/01/19 11:48:42 jsing Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.6 2014/01/21 03:15:55 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -62,6 +62,8 @@ int	sr_raid5_addio(struct sr_workunit *wu, int, daddr_t, daddr_t,
 	    void *, int, int, void *);
 int	sr_raid5_regenerate(struct sr_workunit *, int, daddr_t, daddr_t,
 	    void *);
+int	sr_raid5_write(struct sr_workunit *, struct sr_workunit *, int, int,
+	    daddr_t, daddr_t, void *, int, int);
 void	sr_raid5_xor(void *, void *, int);
 
 void	sr_dump(void *, int);
@@ -351,12 +353,17 @@ sr_raid5_rw(struct sr_workunit *wu)
 	int64_t			strip_bits, strip_no, strip_size;
 	int64_t			chunk, no_chunk;
 	int64_t			length, parity, datalen, row_size;
-	void			*xorbuf, *data;
+	void			*data;
 	int			s;
 
 	/* blk and scsi error will be handled by sr_validate_io */
 	if (sr_validate_io(wu, &blk, "sr_raid5_rw"))
 		goto bad;
+
+	DNPRINTF(SR_D_DIS, "%s: %s sr_raid5_rw %s: lba %lld size %d\n",
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
+	    (xs->flags & SCSI_DATA_IN) ? "read" : "write",
+	    (long long)blk, xs->datalen);
 
 	strip_size = sd->sd_meta->ssdi.ssd_strip_size;
 	strip_bits = sd->mds.mdd_raid5.sr5_strip_bits;
@@ -430,39 +437,8 @@ sr_raid5_rw(struct sr_workunit *wu)
 				goto bad;
 			}
 		} else {
-			/* XXX handle writes to failed/offline disk? */
-			if (scp->src_meta.scm_status == BIOC_SDOFFLINE)
-				goto bad;
-
-			/*
-			 * initialize XORBUF with contents of new data to be
-			 * written. This will be XORed with old data and old
-			 * parity in the intr routine. The result in xorbuf
-			 * is the new parity data.
-			 */
-			xorbuf = sr_block_get(sd, length);
-			if (xorbuf == NULL)
-				goto bad;
-			memcpy(xorbuf, data, length);
-
-			/* xor old data */
-			if (sr_raid5_addio(wu_r, chunk, lba, length, NULL,
-			    SCSI_DATA_IN, 0, xorbuf))
-				goto bad;
-
-			/* xor old parity */
-			if (sr_raid5_addio(wu_r, parity, lba, length, NULL,
-			    SCSI_DATA_IN, 0, xorbuf))
-				goto bad;
-
-			/* write new data */
-			if (sr_raid5_addio(wu, chunk, lba, length, data,
-			    xs->flags, 0, NULL))
-				goto bad;
-
-			/* write new parity */
-			if (sr_raid5_addio(wu, parity, lba, length, xorbuf,
-			    xs->flags, SR_CCBF_FREEBUF, NULL))
+			if (sr_raid5_write(wu, wu_r, chunk, parity, lba,
+			    length, data, xs->flags, 0))
 				goto bad;
 		}
 
@@ -495,7 +471,6 @@ sr_raid5_rw(struct sr_workunit *wu)
 	return (0);
 
 bad:
-	/* XXX - can leak xorbuf on error. */
 	/* wu is unwound by sr_wu_put */
 	if (wu_r)
 		sr_scsi_wu_put(sd, wu_r);
@@ -529,6 +504,114 @@ sr_raid5_regenerate(struct sr_workunit *wu, int chunk, daddr_t blkno,
 		    0, data))
 			goto bad;
 	}
+	return (0);
+
+bad:
+	return (1);
+}
+
+int
+sr_raid5_write(struct sr_workunit *wu, struct sr_workunit *wu_r, int chunk,
+    int parity, daddr_t blkno, daddr_t len, void *data, int xsflags,
+    int ccbflags)
+{
+	struct sr_discipline	*sd = wu->swu_dis;
+	struct scsi_xfer	*xs = wu->swu_xs;
+	void			*xorbuf;
+	int			chunk_online, parity_online, other_offline = 0;
+	int			i;
+
+	/*
+	 * Perform a write to a RAID 5 volume. This write routine does not
+	 * require the parity to already be correct and will operate on a
+	 * uninitialised volume.
+	 *
+	 * There are four possible cases:
+	 *
+	 * 1) All data chunks and parity are online. In this case we read the
+	 *    data from all data chunks, except the one we are writing to, in
+	 *    order to calculate and write the new parity.
+	 *
+	 * 2) The parity chunk is offline. In this case we only need to write
+	 *    to the data chunk. No parity calculation is required.
+	 *
+	 * 3) The data chunk is offline. In this case we read the data from all
+	 *    online chunks in order to calculate and write the new parity.
+	 *    This is the same as (1) except we do not write the data chunk.
+	 *
+	 * 4) A different data chunk is offline. The new parity is calculated
+	 *    by taking the existing parity, xoring the original data and
+	 *    xoring in the new data. This requires that the parity already be
+	 *    correct, which it will be if any of the data chunks has
+	 *    previously been written.
+	 */
+
+	DNPRINTF(SR_D_DIS, "%s: %s sr_raid5_write chunk %i parity %i "
+	    "blk %llu\n", DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
+	    chunk, parity, (unsigned long long)blkno);
+
+	chunk_online = sr_raid5_chunk_online(sd, chunk);
+	parity_online = sr_raid5_chunk_online(sd, parity);
+
+	for (i = 0; i < sd->sd_meta->ssdi.ssd_chunk_no; i++) {
+		if (i == chunk || i == parity)
+			continue;
+		if (!sr_raid5_chunk_online(sd, i))
+			other_offline = 1;
+	}
+
+	DNPRINTF(SR_D_DIS, "%s: %s chunk online %d, parity online %d, "
+	    "other offline %d\n", DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
+	    chunk_online, parity_online, other_offline);
+
+	if (!parity_online)
+		goto data_write;
+
+	xorbuf = sr_block_get(sd, len);
+	if (xorbuf == NULL)
+		goto bad;
+	memcpy(xorbuf, data, len);
+
+	if (other_offline) {
+
+		/*
+		 * XXX - If we can guarantee that this LBA has been scrubbed
+		 * then we can also take this faster path.
+		 */
+
+		/* Read in existing data and existing parity. */
+		if (sr_raid5_addio(wu_r, chunk, blkno, len, NULL,
+		    SCSI_DATA_IN, 0, xorbuf))
+			goto bad;
+		if (sr_raid5_addio(wu_r, parity, blkno, len, NULL,
+		    SCSI_DATA_IN, 0, xorbuf))
+			goto bad;
+
+	} else {
+
+		/* Read in existing data from all other chunks. */
+		for (i = 0; i < sd->sd_meta->ssdi.ssd_chunk_no; i++) {
+			if (i == chunk || i == parity)
+				continue;
+			if (sr_raid5_addio(wu_r, i, blkno, len, NULL,
+			    SCSI_DATA_IN, 0, xorbuf))
+				goto bad;
+		}
+
+	}
+
+	/* Write new parity. */
+	if (sr_raid5_addio(wu, parity, blkno, len, xorbuf, xs->flags,
+	    SR_CCBF_FREEBUF, NULL))
+		goto bad;
+
+data_write:
+	/* Write new data. */
+	if (chunk_online)
+		if (sr_raid5_addio(wu, chunk, blkno, len, data, xs->flags,
+		    0, NULL))
+			goto bad;
+
 	return (0);
 
 bad:
