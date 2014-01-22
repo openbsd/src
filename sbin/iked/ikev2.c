@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.88 2013/12/09 15:22:32 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.89 2014/01/22 09:25:41 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -76,6 +76,7 @@ int	 ikev2_send_create_child_sa(struct iked *, struct iked_sa *,
 int	 ikev2_init_create_child_sa(struct iked *, struct iked_message *);
 int	 ikev2_resp_create_child_sa(struct iked *, struct iked_message *);
 void	 ikev2_ike_sa_timeout(struct iked *env, void *);
+void	 ikev2_ike_sa_alive(struct iked *, void *);
 
 int	 ikev2_sa_initiator(struct iked *, struct iked_sa *,
 	    struct iked_message *);
@@ -1017,8 +1018,11 @@ ikev2_init_done(struct iked *env, struct iked_sa *sa)
 	ret = ikev2_childsa_negotiate(env, sa, sa->sa_hdr.sh_initiator);
 	if (ret == 0)
 		ret = ikev2_childsa_enable(env, sa);
-	if (ret == 0)
+	if (ret == 0) {
 		sa_state(env, sa, IKEV2_STATE_ESTABLISHED);
+		timer_initialize(env, &sa->sa_timer, ikev2_ike_sa_alive, sa);
+		timer_register(env, &sa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
+	}
 
 	if (ret)
 		ikev2_childsa_delete(env, sa, 0, 0, NULL, 1);
@@ -1780,6 +1784,14 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 	case IKEV2_EXCHANGE_CREATE_CHILD_SA:
 		(void)ikev2_resp_create_child_sa(env, msg);
 		break;
+	case IKEV2_EXCHANGE_INFORMATIONAL:
+		if (!msg->msg_responded && !msg->msg_error) {
+			(void)ikev2_send_ike_e(env, sa, NULL,
+			    IKEV2_PAYLOAD_NONE, IKEV2_EXCHANGE_INFORMATIONAL,
+			    1);
+			msg->msg_responded = 1;
+		}
+		break;
 	default:
 		break;
 	}
@@ -2056,8 +2068,11 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 	    IKEV2_EXCHANGE_IKE_AUTH, firstpayload, 1);
 	if (ret == 0)
 		ret = ikev2_childsa_enable(env, sa);
-	if (ret == 0)
+	if (ret == 0) {
 		sa_state(env, sa, IKEV2_STATE_ESTABLISHED);
+		timer_initialize(env, &sa->sa_timer, ikev2_ike_sa_alive, sa);
+		timer_register(env, &sa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
+	}
 
  done:
 	if (ret)
@@ -2164,11 +2179,15 @@ ikev2_send_ike_e(struct iked *env, struct iked_sa *sa, struct ibuf *buf,
 
 	if ((pld = ikev2_add_payload(e)) == NULL)
 		goto done;
-	if (ibuf_cat(e, buf) != 0)
-		goto done;
 
-	if (ikev2_next_payload(pld, ibuf_size(buf), IKEV2_PAYLOAD_NONE) == -1)
-		goto done;
+	if (buf) {
+		if (ibuf_cat(e, buf) != 0)
+			goto done;
+
+		if (ikev2_next_payload(pld, ibuf_size(buf),
+		    IKEV2_PAYLOAD_NONE) == -1)
+			goto done;
+	}
 
 	ret = ikev2_msg_send_encrypt(env, sa, &e, exchange, firstpayload,
 	    response);
@@ -2606,8 +2625,13 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 
 		log_debug("%s: activating new IKE SA", __func__);
 		sa_state(env, nsa, IKEV2_STATE_ESTABLISHED);
+		timer_initialize(env, &nsa->sa_timer, ikev2_ike_sa_alive, nsa);
+		timer_register(env, &nsa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
 		nsa->sa_stateflags = sa->sa_statevalid; /* XXX */
 
+		/* unregister DPD keep alive timer first */
+		if (sa->sa_state == IKEV2_STATE_ESTABLISHED)
+			timer_deregister(env, &sa->sa_timer);
 		timer_initialize(env, &sa->sa_timer, ikev2_ike_sa_timeout, sa);
 		timer_register(env, &sa->sa_timer, IKED_IKE_SA_REKEY_TIMEOUT);
 	} else
@@ -2627,6 +2651,47 @@ ikev2_ike_sa_timeout(struct iked *env, void *arg)
 
 	log_debug("%s: closing SA", __func__);
 	sa_free(env, sa);
+}
+
+void
+ikev2_ike_sa_alive(struct iked *env, void *arg)
+{
+	struct iked_sa			*sa = arg;
+	struct iked_childsa		*csa = NULL;
+	struct timeval			 tv;
+	u_int64_t			 last_used, diff;
+	int				 foundin = 0, foundout = 0;
+
+	/* check for incoming traffic on any child SA */
+	TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
+		if (pfkey_sa_last_used(env->sc_pfkey, csa, &last_used) != 0)
+			continue;
+		gettimeofday(&tv, NULL);
+		diff = (u_int32_t)(tv.tv_sec - last_used);
+		log_debug("%s: %s CHILD SA spi %s last used %u second(s) ago",
+		    __func__,
+		    csa->csa_dir == IPSP_DIRECTION_IN ? "incoming" : "outgoing",
+		    print_spi(csa->csa_spi.spi, csa->csa_spi.spi_size), diff);
+		if (diff < IKED_IKE_SA_ALIVE_TIMEOUT) {
+			if (csa->csa_dir == IPSP_DIRECTION_IN) {
+				foundin = 1;
+				break;
+			} else {
+				foundout = 1;
+			}
+		}
+	}
+
+	/* send probe if any outging SA has been used, but no incoming SA */
+	if (!foundin && foundout) {
+		log_debug("%s: sending alive check", __func__);
+		ikev2_send_ike_e(env, sa, NULL, IKEV2_PAYLOAD_NONE,
+		    IKEV2_EXCHANGE_INFORMATIONAL, 0);
+		sa->sa_stateflags |= IKED_REQ_INF;
+	}
+
+	/* re-register */
+	timer_register(env, &sa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
 }
 
 int

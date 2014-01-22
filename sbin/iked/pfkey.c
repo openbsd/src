@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.26 2013/12/03 13:55:39 markus Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.27 2014/01/22 09:25:41 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -707,6 +707,118 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 	}
 
 	return (pfkey_write(sd, &smsg, iov, iov_cnt, NULL, NULL));
+}
+
+int
+pfkey_sa_last_used(int sd, struct iked_childsa *sa, u_int64_t *last_used)
+{
+	struct sadb_msg		*msg, smsg;
+	struct sadb_address	 sa_src, sa_dst;
+	struct sadb_sa		 sadb;
+	struct sadb_lifetime	*sa_life;
+	struct sockaddr_storage	 ssrc, sdst;
+	struct iovec		 iov[IOV_CNT];
+	u_int8_t		*data;
+	ssize_t			 n;
+	int			 iov_cnt, ret = -1;
+	u_int8_t		 satype;
+
+	*last_used = 0;
+
+	if (pfkey_map(pfkey_satype, sa->csa_saproto, &satype) == -1)
+		return (-1);
+
+	bzero(&ssrc, sizeof(ssrc));
+	memcpy(&ssrc, &sa->csa_local->addr, sizeof(ssrc));
+	if (socket_af((struct sockaddr *)&ssrc, 0) == -1) {
+		log_warn("%s: invalid address", __func__);
+		return (-1);
+	}
+
+	bzero(&sdst, sizeof(sdst));
+	memcpy(&sdst, &sa->csa_peer->addr, sizeof(sdst));
+	if (socket_af((struct sockaddr *)&sdst, 0) == -1) {
+		log_warn("%s: invalid address", __func__);
+		return (-1);
+	}
+
+	bzero(&smsg, sizeof(smsg));
+	smsg.sadb_msg_version = PF_KEY_V2;
+	smsg.sadb_msg_seq = ++sadb_msg_seq;
+	smsg.sadb_msg_pid = getpid();
+	smsg.sadb_msg_len = sizeof(smsg) / 8;
+	smsg.sadb_msg_type = SADB_GET;
+	smsg.sadb_msg_satype = satype;
+
+	bzero(&sadb, sizeof(sadb));
+	sadb.sadb_sa_len = sizeof(sadb) / 8;
+	sadb.sadb_sa_exttype = SADB_EXT_SA;
+	sadb.sadb_sa_spi = htonl(sa->csa_spi.spi);
+	sadb.sadb_sa_state = SADB_SASTATE_MATURE;
+	sadb.sadb_sa_replay = 64;
+
+	bzero(&sa_src, sizeof(sa_src));
+	sa_src.sadb_address_len = (sizeof(sa_src) + ROUNDUP(ssrc.ss_len)) / 8;
+	sa_src.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
+
+	bzero(&sa_dst, sizeof(sa_dst));
+	sa_dst.sadb_address_len = (sizeof(sa_dst) + ROUNDUP(sdst.ss_len)) / 8;
+	sa_dst.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
+
+	iov_cnt = 0;
+
+	/* header */
+	iov[iov_cnt].iov_base = &smsg;
+	iov[iov_cnt].iov_len = sizeof(smsg);
+	iov_cnt++;
+
+	/* sa */
+	iov[iov_cnt].iov_base = &sadb;
+	iov[iov_cnt].iov_len = sizeof(sadb);
+	smsg.sadb_msg_len += sadb.sadb_sa_len;
+	iov_cnt++;
+
+	/* src addr */
+	iov[iov_cnt].iov_base = &sa_src;
+	iov[iov_cnt].iov_len = sizeof(sa_src);
+	iov_cnt++;
+	iov[iov_cnt].iov_base = &ssrc;
+	iov[iov_cnt].iov_len = ROUNDUP(ssrc.ss_len);
+	smsg.sadb_msg_len += sa_src.sadb_address_len;
+	iov_cnt++;
+
+	/* dst addr */
+	iov[iov_cnt].iov_base = &sa_dst;
+	iov[iov_cnt].iov_len = sizeof(sa_dst);
+	iov_cnt++;
+	iov[iov_cnt].iov_base = &sdst;
+	iov[iov_cnt].iov_len = ROUNDUP(sdst.ss_len);
+	smsg.sadb_msg_len += sa_dst.sadb_address_len;
+	iov_cnt++;
+
+	if ((ret = pfkey_write(sd, &smsg, iov, iov_cnt, &data, &n)) != 0)
+		return (-1);
+
+	msg = (struct sadb_msg *)data;
+	if (msg->sadb_msg_errno != 0) {
+		errno = msg->sadb_msg_errno;
+		ret = -1;
+		log_warn("%s: message", __func__);
+		goto done;
+	}
+	if ((sa_life = pfkey_find_ext(data, n, SADB_X_EXT_LIFETIME_LASTUSE))
+	    == NULL) {
+		log_debug("%s: erronous reply", __func__);
+		ret = -1;
+		goto done;
+	}
+	*last_used = sa_life->sadb_lifetime_usetime;
+	log_debug("%s: last_used %llu", __func__, *last_used);
+
+done:
+	bzero(data, n);
+	free(data);
+	return (ret);
 }
 
 int

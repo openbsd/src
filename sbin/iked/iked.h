@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.62 2013/12/09 15:22:32 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.63 2014/01/22 09:25:41 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -406,6 +406,7 @@ struct iked_sa {
 
 	struct iked_timer		 sa_timer;	/* SA timeouts */
 #define IKED_IKE_SA_REKEY_TIMEOUT	 300		/* 5 minutes */
+#define IKED_IKE_SA_ALIVE_TIMEOUT	 60		/* 1 minute */
 
 	struct iked_msgqueue		 sa_requests;	/* request queue */
 #define IKED_RETRANSMIT_TIMEOUT		 2		/* 2 seconds */
@@ -432,6 +433,7 @@ struct iked_message {
 
 	int			 msg_fd;
 	int			 msg_response;
+	int			 msg_responded;
 	int			 msg_natt;
 	int			 msg_error;
 	int			 msg_e;
@@ -769,6 +771,7 @@ int	 pfkey_block(int, int, u_int);
 int	 pfkey_sa_init(int, struct iked_childsa *, u_int32_t *);
 int	 pfkey_sa_add(int, struct iked_childsa *, struct iked_childsa *);
 int	 pfkey_sa_delete(int, struct iked_childsa *);
+int	 pfkey_sa_last_used(int, struct iked_childsa *, u_int64_t *);
 int	 pfkey_flush(int);
 int	 pfkey_socket(void);
 void	 pfkey_init(struct iked *, int fd);
