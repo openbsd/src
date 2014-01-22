@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.85 2013/10/25 04:42:48 guenther Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.86 2014/01/22 00:48:36 guenther Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -160,6 +160,7 @@ sys_clock_gettime(struct proc *p, void *v, register_t *retval)
 	struct timespec ats;
 	int error;
 
+	memset(&ats, 0, sizeof(ats));
 	if ((error = clock_gettime(p, SCARG(uap, clock_id), &ats)) != 0)
 		return (error);
 
@@ -217,6 +218,7 @@ sys_clock_getres(struct proc *p, void *v, register_t *retval)
 	struct proc *q;
 	int error = 0;
 
+	memset(&ts, 0, sizeof(ts));
 	clock_id = SCARG(uap, clock_id);
 	switch (clock_id) {
 	case CLOCK_REALTIME:
@@ -297,6 +299,7 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 	if (rmtp) {
 		getnanouptime(&ets);
 
+		memset(&rmt, 0, sizeof(rmt));
 		timespecsub(&ets, &sts, &sts);
 		timespecsub(&rqt, &sts, &rmt);
 
@@ -335,6 +338,7 @@ sys_gettimeofday(struct proc *p, void *v, register_t *retval)
 	tzp = SCARG(uap, tzp);
 
 	if (tp) {
+		memset(&atv, 0, sizeof(atv));
 		microtime(&atv);
 		if ((error = copyout(&atv, tp, sizeof (atv))))
 			return (error);
@@ -424,6 +428,7 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 		syscallarg(const struct timeval *) delta;
 		syscallarg(struct timeval *) olddelta;
 	} */ *uap = v;
+	struct timeval newdelta;
 	const struct timeval *delta = SCARG(uap, delta);
 	struct timeval *olddelta = SCARG(uap, olddelta);
 	int error;
@@ -437,19 +442,22 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 		if ((error = suser(p, 0)))
 			return (error);
 
-		if ((error = copyin(delta, &adjtimedelta,
+		if ((error = copyin(delta, &newdelta,
 		    sizeof(struct timeval))))
 			return (error);
-	}
 
-	/* Normalize the correction. */
-	while (adjtimedelta.tv_usec >= 1000000) {
-		adjtimedelta.tv_usec -= 1000000;
-		adjtimedelta.tv_sec += 1;
-	}
-	while (adjtimedelta.tv_usec < 0) {
-		adjtimedelta.tv_usec += 1000000;
-		adjtimedelta.tv_sec -= 1;
+		/* Normalize the correction. */
+		while (newdelta.tv_usec >= 1000000) {
+			newdelta.tv_usec -= 1000000;
+			newdelta.tv_sec += 1;
+		}
+		while (newdelta.tv_usec < 0) {
+			newdelta.tv_usec += 1000000;
+			newdelta.tv_sec -= 1;
+		}
+
+		adjtimedelta.tv_sec  = newdelta.tv_sec;
+		adjtimedelta.tv_usec = newdelta.tv_usec;
 	}
 	return (0);
 }
@@ -490,8 +498,12 @@ sys_getitimer(struct proc *p, void *v, register_t *retval)
 
 	if (which < ITIMER_REAL || which > ITIMER_PROF)
 		return (EINVAL);
+	memset(&aitv, 0, sizeof(aitv));
 	s = splclock();
-	aitv = p->p_p->ps_timer[which];
+	aitv.it_interval.tv_sec  = p->p_p->ps_timer[which].it_interval.tv_sec;
+	aitv.it_interval.tv_usec = p->p_p->ps_timer[which].it_interval.tv_usec;
+	aitv.it_value.tv_sec     = p->p_p->ps_timer[which].it_value.tv_sec;
+	aitv.it_value.tv_usec    = p->p_p->ps_timer[which].it_value.tv_usec;
 
 	if (which == ITIMER_REAL) {
 		struct timeval now;
