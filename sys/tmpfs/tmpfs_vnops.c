@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.12 2014/01/07 04:44:56 guenther Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.13 2014/01/22 18:28:16 tedu Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -53,12 +53,15 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland E
 #include <sys/vnode.h>
 #include <sys/lockf.h>
 #include <sys/poll.h>
+#include <sys/file.h>
 
 #include <uvm/uvm.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <tmpfs/tmpfs_vnops.h>
 #include <tmpfs/tmpfs.h>
+
+int tmpfs_kqfilter(void *v);
 
 /*
  * vnode operations vector used for files stored in a tmpfs file system.
@@ -76,7 +79,7 @@ struct vops tmpfs_vops = {
 	.vop_write	= tmpfs_write,
 	.vop_ioctl	= tmpfs_ioctl,
 	.vop_poll	= tmpfs_poll,
-	.vop_kqfilter	= vop_generic_kqfilter,
+	.vop_kqfilter	= tmpfs_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_fsync	= tmpfs_fsync,
 	.vop_remove	= tmpfs_remove,
@@ -2567,4 +2570,104 @@ tmpfs_rename_abort(void *v)
 	VOP_ABORTOP(fdvp, fcnp);
 	vrele(fdvp);
 	vrele(fvp);
+}
+
+void filt_tmpfsdetach(struct knote *kn);
+int filt_tmpfsread(struct knote *kn, long hint);
+int filt_tmpfswrite(struct knote *kn, long hint);
+int filt_tmpfsvnode(struct knote *kn, long hint);
+
+struct filterops tmpfsread_filtops = 
+	{ 1, NULL, filt_tmpfsdetach, filt_tmpfsread };
+struct filterops tmpfswrite_filtops = 
+	{ 1, NULL, filt_tmpfsdetach, filt_tmpfswrite };
+struct filterops tmpfsvnode_filtops = 
+	{ 1, NULL, filt_tmpfsdetach, filt_tmpfsvnode };
+
+int
+tmpfs_kqfilter(void *v)
+{
+	struct vop_kqfilter_args *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct knote *kn = ap->a_kn;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		kn->kn_fop = &tmpfsread_filtops;
+		break;
+	case EVFILT_WRITE:
+		kn->kn_fop = &tmpfswrite_filtops;
+		break;
+	case EVFILT_VNODE:
+		kn->kn_fop = &tmpfsvnode_filtops;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	kn->kn_hook = (caddr_t)vp;
+
+	SLIST_INSERT_HEAD(&vp->v_selectinfo.si_note, kn, kn_selnext);
+
+	return (0);
+}
+
+void
+filt_tmpfsdetach(struct knote *kn)
+{
+	struct vnode *vp = (struct vnode *)kn->kn_hook;
+
+	SLIST_REMOVE(&vp->v_selectinfo.si_note, kn, knote, kn_selnext);
+}
+
+int
+filt_tmpfsread(struct knote *kn, long hint)
+{
+	struct vnode *vp = (struct vnode *)kn->kn_hook;
+	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
+
+	/*
+	 * filesystem is gone, so set the EOF flag and schedule 
+	 * the knote for deletion.
+	 */
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		return (1);
+	}
+
+        kn->kn_data = node->tn_size - kn->kn_fp->f_offset;
+	if (kn->kn_data == 0 && kn->kn_sfflags & NOTE_EOF) {
+		kn->kn_fflags |= NOTE_EOF;
+		return (1);
+	}
+
+        return (kn->kn_data != 0);
+}
+
+int
+filt_tmpfswrite(struct knote *kn, long hint)
+{
+	/*
+	 * filesystem is gone, so set the EOF flag and schedule 
+	 * the knote for deletion.
+	 */
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		return (1);
+	}
+
+        kn->kn_data = 0;
+        return (1);
+}
+
+int
+filt_tmpfsvnode(struct knote *kn, long hint)
+{
+	if (kn->kn_sfflags & hint)
+		kn->kn_fflags |= hint;
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= EV_EOF;
+		return (1);
+	}
+	return (kn->kn_fflags != 0);
 }
