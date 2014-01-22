@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.330 2014/01/22 09:42:13 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.331 2014/01/22 23:32:42 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -4586,6 +4586,9 @@ sr_rebuild_start(void *arg)
 	struct sr_discipline	*sd = arg;
 	struct sr_softc		*sc = sd->sd_sc;
 
+	DNPRINTF(SR_D_REBUILD, "%s: %s starting rebuild thread\n",
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname);
+
 	if (kthread_create(sr_rebuild_thread, sd, &sd->sd_background_proc,
 	    DEVNAME(sc)) != 0)
 		printf("%s: unable to start background operation\n",
@@ -4596,6 +4599,9 @@ void
 sr_rebuild_thread(void *arg)
 {
 	struct sr_discipline	*sd = arg;
+
+	DNPRINTF(SR_D_REBUILD, "%s: %s rebuild thread started\n",
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname);
 
 	sd->sd_reb_active = 1;
 	sd->sd_rebuild(sd);
@@ -4660,6 +4666,9 @@ sr_rebuild(struct sr_discipline *sd)
 		wu_r = sr_scsi_wu_get(sd, 0);
 		wu_w = sr_scsi_wu_get(sd, 0);
 
+		DNPRINTF(SR_D_REBUILD, "%s: %s rebuild wu_r %p, wu_w %p\n",
+		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, wu_r, wu_w);
+
 		/* setup read io */
 		bzero(&xs_r, sizeof xs_r);
 		xs_r.error = XS_NOERROR;
@@ -4712,10 +4721,13 @@ sr_rebuild(struct sr_discipline *sd)
 		TAILQ_INSERT_TAIL(&sd->sd_wu_defq, wu_w, swu_link);
 		splx(s);
 
+		DNPRINTF(SR_D_REBUILD, "%s: %s rebuild scheduling wu_r %p\n",
+		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, wu_r);
+
 		wu_r->swu_state = SR_WU_INPROGRESS;
 		sr_schedule_wu(wu_r);
 
-		/* wait for read completion */
+		/* wait for write completion */
 		slept = 0;
 		while ((wu_w->swu_flags & SR_WUF_REBUILDIOCOMP) == 0) {
 			tsleep(wu_w, PRIBIO, "sr_rebuild", 0);
@@ -4751,12 +4763,13 @@ sr_rebuild(struct sr_discipline *sd)
 
 	/* all done */
 	sd->sd_meta->ssd_rebuild = 0;
-	for (c = 0; c < sd->sd_meta->ssdi.ssd_chunk_no; c++)
+	for (c = 0; c < sd->sd_meta->ssdi.ssd_chunk_no; c++) {
 		if (sd->sd_vol.sv_chunks[c]->src_meta.scm_status ==
 		    BIOC_SDREBUILD) {
 			sd->sd_set_chunk_state(sd, c, BIOC_SDONLINE);
 			break;
 		}
+	}
 
 abort:
 	if (sr_meta_save(sd, SR_META_DIRTY))
