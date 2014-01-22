@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_lvds.c,v 1.9 2014/01/22 22:21:52 jsg Exp $	*/
+/*	$OpenBSD: intel_lvds.c,v 1.10 2014/01/22 22:28:31 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -817,6 +817,14 @@ static const struct dmi_system_id intel_no_lvds[] = {
 		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Intel"),
 			DMI_EXACT_MATCH(DMI_BOARD_NAME, "D510MO"),
+		},
+	},
+	{
+		.callback = intel_no_lvds_dmi_callback,
+		.ident = "Intel D525MW",
+		.matches = {
+			DMI_MATCH(DMI_BOARD_VENDOR, "Intel"),
+			DMI_EXACT_MATCH(DMI_BOARD_NAME, "D525MW"),
 		},
 	},
 
