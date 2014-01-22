@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.33 2013/05/12 19:33:01 krw Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.34 2014/01/22 21:35:58 dlg Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -158,6 +158,7 @@ struct vdsk_softc {
 	struct vdsk_dring *sc_vd;
 	struct vdsk_soft_desc *sc_vsd;
 
+	struct scsi_iopool sc_iopool;
 	struct scsi_adapter sc_switch;
 	struct scsi_link sc_link;
 
@@ -197,6 +198,9 @@ void	vdsk_send_ver_info(struct vdsk_softc *, uint16_t, uint16_t);
 void	vdsk_send_attr_info(struct vdsk_softc *);
 void	vdsk_send_dring_reg(struct vdsk_softc *);
 void	vdsk_send_rdx(struct vdsk_softc *);
+
+void *	vdsk_io_get(void *);
+void	vdsk_io_put(void *, void *);
 
 void	vdsk_scsi_cmd(struct scsi_xfer *);
 int	vdsk_dev_probe(struct scsi_link *);
@@ -340,6 +344,8 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_vio_state != VIO_ESTABLISHED)
 		return;
 
+	scsi_iopool_init(&sc->sc_iopool, sc, vdsk_io_get, vdsk_io_put);
+
 	sc->sc_switch.scsi_cmd = vdsk_scsi_cmd;
 	sc->sc_switch.scsi_minphys = scsi_minphys;
 	sc->sc_switch.dev_probe = vdsk_dev_probe;
@@ -351,6 +357,7 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.luns = 1; /* XXX slices should be presented as luns? */
 	sc->sc_link.adapter_target = 2;
 	sc->sc_link.openings = sc->sc_vd->vd_nentries - 1;
+	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
@@ -656,6 +663,9 @@ vdsk_rx_vio_rdx(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 		DPRINTF(("CTRL/0x%02x/RDX (VIO)\n", tag->stype));
 		break;
 	}
+
+	if (sc->sc_vio_state == VIO_ESTABLISHED)
+		scsi_iopool_run(&sc->sc_iopool);
 }
 
 void
@@ -718,7 +728,6 @@ vdsk_rx_vio_dring_data(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 
 			sc->sc_vd->vd_desc[cons++].hdr.dstate = VIO_DESC_FREE;
 			cons &= (sc->sc_vd->vd_nentries - 1);
-			sc->sc_tx_cnt--;
 		}
 		sc->sc_tx_cons = cons;
 		break;
@@ -917,6 +926,40 @@ vdsk_dring_free(bus_dma_tag_t t, struct vdsk_dring *vd)
 	free(vd, M_DEVBUF);
 }
 
+void *
+vdsk_io_get(void *xsc)
+{
+	struct vdsk_softc *sc = xsc;
+	void *rv = sc; /* just has to be !NULL */
+	int s;
+
+	s = splbio();
+	if (sc->sc_vio_state != VIO_ESTABLISHED &&
+	    sc->sc_tx_cnt >= sc->sc_vd->vd_nentries)
+		rv = NULL;
+	else
+		sc->sc_tx_cnt++;
+	splx(s);
+
+	return (rv);
+}
+
+void
+vdsk_io_put(void *xsc, void *io)
+{
+	struct vdsk_softc *sc = xsc;
+	int s;
+
+#ifdef DIAGNOSTIC
+	if (sc != io)
+		panic("vsdk_io_put: unexpected io");
+#endif
+
+	s = splbio();
+	sc->sc_tx_cnt--;
+	splx(s);
+}
+
 void
 vdsk_scsi_cmd(struct scsi_xfer *xs)
 {
@@ -1005,14 +1048,6 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 	int timeout;
 
 	s = splbio();
-	if (sc->sc_vio_state != VIO_ESTABLISHED ||
-	    sc->sc_tx_cnt >= sc->sc_vd->vd_nentries) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		splx(s);
-		return;
-	}
-
 	desc = sc->sc_tx_prod;
 
 	ncookies = 0;
@@ -1055,7 +1090,6 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 
 	sc->sc_tx_prod++;
 	sc->sc_tx_prod &= (sc->sc_vd->vd_nentries - 1);
-	sc->sc_tx_cnt++;
 
 	bzero(&dm, sizeof(dm));
 	dm.tag.type = VIO_TYPE_DATA;
