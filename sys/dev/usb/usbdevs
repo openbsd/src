@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.621 2014/01/08 21:15:29 jcs Exp $
+$OpenBSD: usbdevs,v 1.622 2014/01/22 01:25:41 sasano Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -4137,6 +4137,7 @@ product UNKNOWN3 ZD1211B	0x1233 ZD1211B
 
 /* Unknown vendor 4 */
 product UNKNOWN4 DM9601		0x8101 DM9601
+product UNKNOWN4 RD9700		0x9700 RD9700
 
 /* Unknown vendor 5 */
 product UNKNOWN5 NF_RIC		0x0001	NF RIC
