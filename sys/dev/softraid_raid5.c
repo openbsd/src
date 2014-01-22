@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.12 2014/01/22 09:37:11 jsing Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.13 2014/01/22 12:31:09 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -693,7 +693,7 @@ sr_raid5_wu_done(struct sr_workunit *wu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 
 	/* XXX - we have no way of propagating errors... */
-	if (wu->swu_flags & SR_WUF_DISCIPLINE)
+	if (wu->swu_flags & (SR_WUF_DISCIPLINE | SR_WUF_REBUILD))
 		return SR_WU_OK;
 
 	/* XXX - This is insufficient for RAID 5. */
@@ -710,6 +710,7 @@ sr_raid5_wu_done(struct sr_workunit *wu)
 		if (sd->sd_scsi_rw(wu) == 0)
 			return SR_WU_RESTART;
 	} else {
+		/* XXX - retry write if we just went from online to degraded. */
 		printf("%s: permanently fail write on block %lld\n",
 		    sd->sd_meta->ssd_devname, (long long)wu->swu_blk_start);
 	}
