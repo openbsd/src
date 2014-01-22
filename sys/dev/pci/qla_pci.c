@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla_pci.c,v 1.2 2014/01/21 02:40:02 jmatthew Exp $ */
+/*	$OpenBSD: qla_pci.c,v 1.3 2014/01/22 02:31:44 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -124,7 +124,7 @@ qla_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->psc_ih = pci_intr_establish(psc->psc_pc, ih, IPL_BIO,
 	    qla_intr, sc, sc->sc_dev.dv_xname);
 	if (psc->psc_ih == NULL) {
-		printf("%s: unable to establish interrupt\n");
+		printf("%s: unable to establish interrupt\n", DEVNAME(sc));
 		goto deintr;
 	}
 
