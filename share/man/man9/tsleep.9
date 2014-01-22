@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tsleep.9,v 1.8 2014/01/22 00:09:02 tedu Exp $
+.\"	$OpenBSD: tsleep.9,v 1.9 2014/01/22 07:32:47 jmc Exp $
 .\"	$NetBSD: sleep.9,v 1.11 1999/03/24 06:15:12 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,9 @@
 .Sh NAME
 .Nm tsleep ,
 .Nm msleep ,
-.Nm wakeup
+.Nm wakeup ,
+.Nm wakeup_n ,
+.Nm wakeup_one
 .Nd process context sleep and wakeup
 .Sh SYNOPSIS
 .In sys/param.h
@@ -68,10 +70,13 @@ The current process wants access to data structures which are locked by
 other processes.
 .El
 .Pp
-The function
-.Fn wakeup
-is used to notify sleeping processes of possible changes to the condition
-that caused them to go to sleep.
+The
+.Fn wakeup ,
+.Fn wakeup_n ,
+and
+.Fn wakeup_one
+functions are used to notify sleeping processes of possible changes to the
+condition that caused them to go to sleep.
 Typically, an awakened process will -- after it has acquired a context
 again -- retry the action that blocked its operation to see if the
 .Dq blocking
@@ -164,7 +169,7 @@ and
 .Fn wakeup_one
 functions behave similarly to
 .Fn wakeup
-except that only 
+except that only
 .Fa count
 or one process, respectively, is marked runnable.
 .Sh RETURN VALUES
