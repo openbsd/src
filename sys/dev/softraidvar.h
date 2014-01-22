@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.152 2014/01/22 05:11:36 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.153 2014/01/22 09:03:19 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -596,6 +596,7 @@ struct sr_discipline {
 	int			(*sd_openings)(struct sr_discipline *);
 	int			(*sd_meta_opt_handler)(struct sr_discipline *,
 				    struct sr_meta_opt_hdr *);
+	void			(*sd_rebuild)(struct sr_discipline *);
 
 	/* SCSI emulation */
 	struct scsi_sense_data	sd_scsi_sense;

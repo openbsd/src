@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.328 2014/01/22 05:42:39 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.329 2014/01/22 09:03:19 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -137,6 +137,7 @@ void			sr_hotspare_rebuild(struct sr_discipline *);
 int			sr_rebuild_init(struct sr_discipline *, dev_t, int);
 void			sr_rebuild_start(void *);
 void			sr_rebuild_thread(void *);
+void			sr_rebuild(struct sr_discipline *);
 void			sr_roam_chunks(struct sr_discipline *);
 int			sr_chunk_in_use(struct sr_softc *, dev_t);
 int			sr_rw(struct sr_softc *, dev_t, char *, size_t,
@@ -3915,6 +3916,7 @@ sr_discipline_init(struct sr_discipline *sd, int level)
 	sd->sd_ioctl_handler = NULL;
 	sd->sd_openings = NULL;
 	sd->sd_meta_opt_handler = NULL;
+	sd->sd_rebuild = sr_rebuild;
 	sd->sd_scsi_inquiry = sr_raid_inquiry;
 	sd->sd_scsi_read_cap = sr_raid_read_cap;
 	sd->sd_scsi_tur = sr_raid_tur;
@@ -4593,6 +4595,17 @@ void
 sr_rebuild_thread(void *arg)
 {
 	struct sr_discipline	*sd = arg;
+
+	sd->sd_reb_active = 1;
+	sd->sd_rebuild(sd);
+	sd->sd_reb_active = 0;
+
+	kthread_exit(0);
+}
+
+void
+sr_rebuild(struct sr_discipline *sd)
+{
 	struct sr_softc		*sc = sd->sd_sc;
 	daddr_t			whole_blk, partial_blk, blk, sz, lba;
 	daddr_t			psz, rb, restart;
@@ -4630,8 +4643,6 @@ sr_rebuild_thread(void *arg)
 		printf("%s: resuming rebuild on %s at %d%%\n",
 		    DEVNAME(sc), sd->sd_meta->ssd_devname, percent);
 	}
-
-	sd->sd_reb_active = 1;
 
 	/* currently this is 64k therefore we can use dma_alloc */
 	buf = dma_alloc(SR_REBUILD_IO_SIZE << DEV_BSHIFT, PR_WAITOK);
@@ -4752,8 +4763,6 @@ abort:
 		    DEVNAME(sc), sd->sd_meta->ssd_devname);
 fail:
 	dma_free(buf, SR_REBUILD_IO_SIZE << DEV_BSHIFT);
-	sd->sd_reb_active = 0;
-	kthread_exit(0);
 }
 
 #ifndef SMALL_KERNEL
