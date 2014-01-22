@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.325 2014/01/21 06:42:52 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.326 2014/01/22 04:24:29 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -40,7 +40,6 @@
 #include <sys/conf.h>
 #include <sys/uio.h>
 #include <sys/task.h>
-#include <sys/workq.h>
 #include <sys/kthread.h>
 #include <sys/dkio.h>
 
@@ -3930,6 +3929,8 @@ sr_discipline_init(struct sr_discipline *sd, int level)
 	sd->sd_set_vol_state = sr_set_vol_state;
 	sd->sd_start_discipline = NULL;
 
+	task_set(&sd->sd_meta_save_task, sr_meta_save_callback, sd, NULL);
+
 	switch (level) {
 	case 0:
 		sr_raid0_discipline_init(sd);
@@ -4320,7 +4321,7 @@ die:
 	sd->sd_set_vol_state(sd);
 
 	sd->sd_must_flush = 1;
-	workq_add_task(NULL, 0, sr_meta_save_callback, sd, NULL);
+	task_add(systq, &sd->sd_meta_save_task);
 done:
 	splx(s);
 }

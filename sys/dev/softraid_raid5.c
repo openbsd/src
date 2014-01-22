@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.8 2014/01/21 10:25:25 jsing Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.9 2014/01/22 04:24:29 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -34,6 +34,7 @@
 #include <sys/mount.h>
 #include <sys/sensors.h>
 #include <sys/stat.h>
+#include <sys/task.h>
 #include <sys/pool.h>
 #include <sys/conf.h>
 #include <sys/uio.h>
@@ -211,7 +212,7 @@ die:
 	sd->sd_set_vol_state(sd);
 
 	sd->sd_must_flush = 1;
-	workq_add_task(NULL, 0, sr_meta_save_callback, sd, NULL);
+	task_add(systq, &sd->sd_meta_save_task);
 done:
 	splx(s);
 }
@@ -644,7 +645,7 @@ sr_raid5_intr(struct buf *bp)
 	s = splbio();
 	sr_ccb_done(ccb);
 
-	/* XXX - Should this be done via the workq? */
+	/* XXX - Should this be done via the taskq? */
 
 	/* XOR data to result. */
 	if (ccb->ccb_state == SR_CCB_OK && ccb->ccb_opaque)

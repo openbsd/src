@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.55 2014/01/21 10:25:25 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.56 2014/01/22 04:24:29 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -33,6 +33,8 @@
 #include <sys/mount.h>
 #include <sys/sensors.h>
 #include <sys/stat.h>
+#include <sys/task.h>
+#include <sys/workq.h>
 #include <sys/conf.h>
 #include <sys/uio.h>
 
@@ -187,7 +189,7 @@ die:
 	sd->sd_set_vol_state(sd);
 
 	sd->sd_must_flush = 1;
-	workq_add_task(NULL, 0, sr_meta_save_callback, sd, NULL);
+	task_add(systq, &sd->sd_meta_save_task);
 done:
 	splx(s);
 }
