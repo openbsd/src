@@ -2314,6 +2314,7 @@
 ./usr/share/man/man4/uark.4
 ./usr/share/man/man4/uath.4
 ./usr/share/man/man4/uaudio.4
+./usr/share/man/man4/ubcmtp.4
 ./usr/share/man/man4/uberry.4
 ./usr/share/man/man4/ubsa.4
 ./usr/share/man/man4/ubsec.4
