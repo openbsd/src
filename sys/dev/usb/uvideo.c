@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.173 2013/11/07 11:14:26 pirofti Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.174 2014/01/22 03:21:23 jsg Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2733,7 +2733,7 @@ uvideo_debug_file_write_frame(void *arg)
 	int error;
 
 	if (sc->sc_vp == NULL) {
-		printf("%s: %s: no file open!\n", DEVNAME(sc));
+		printf("%s: %s: no file open!\n", DEVNAME(sc), __func__);
 		return;
 	}
 
