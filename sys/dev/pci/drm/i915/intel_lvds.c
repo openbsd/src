@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_lvds.c,v 1.10 2014/01/22 22:28:31 jsg Exp $	*/
+/*	$OpenBSD: intel_lvds.c,v 1.11 2014/01/22 22:33:24 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -809,6 +809,22 @@ static const struct dmi_system_id intel_no_lvds[] = {
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "FUJITSU"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "ESPRIMO Q900"),
+		},
+	},
+	{
+		.callback = intel_no_lvds_dmi_callback,
+		.ident = "Intel D410PT",
+		.matches = {
+			DMI_MATCH(DMI_BOARD_VENDOR, "Intel"),
+			DMI_MATCH(DMI_BOARD_NAME, "D410PT"),
+		},
+	},
+	{
+		.callback = intel_no_lvds_dmi_callback,
+		.ident = "Intel D425KT",
+		.matches = {
+			DMI_MATCH(DMI_BOARD_VENDOR, "Intel"),
+			DMI_EXACT_MATCH(DMI_BOARD_NAME, "D425KT"),
 		},
 	},
 	{
