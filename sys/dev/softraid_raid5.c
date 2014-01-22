@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.11 2014/01/22 05:11:36 jsing Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.12 2014/01/22 09:37:11 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -79,7 +79,7 @@ sr_raid5_discipline_init(struct sr_discipline *sd)
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE |
 	    SR_CAP_REDUNDANT;
 	sd->sd_max_ccb_per_wu = 4; /* only if stripsize <= MAXPHYS */
-	sd->sd_max_wu = SR_RAID5_NOWU;
+	sd->sd_max_wu = SR_RAID5_NOWU + 2;	/* Two for scrub/rebuild. */
 
 	/* Setup discipline specific function pointers. */
 	sd->sd_assemble = sr_raid5_assemble;
@@ -138,7 +138,8 @@ sr_raid5_init(struct sr_discipline *sd)
 int
 sr_raid5_openings(struct sr_discipline *sd)
 {
-	return (sd->sd_max_wu >> 1); /* 2 wu's per IO */
+	/* Two work units per I/O, two for rebuild/scrub. */
+	return ((sd->sd_max_wu - 2) >> 1);
 }
 
 void
@@ -399,7 +400,8 @@ sr_raid5_rw(struct sr_workunit *wu)
 
 	if (xs->flags & SCSI_DATA_OUT) {
 		if ((wu_r = sr_scsi_wu_get(sd, SCSI_NOSLEEP)) == NULL){
-			printf("%s: can't get wu_r", DEVNAME(sd->sd_sc));
+			printf("%s: %s failed to get read work unit",
+			    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname);
 			goto bad;
 		}
 		wu_r->swu_state = SR_WU_INPROGRESS;
