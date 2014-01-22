@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprm.c,v 1.19 2013/11/24 21:32:32 deraadt Exp $	*/
+/*	$OpenBSD: lprm.c,v 1.20 2014/01/22 19:31:00 tobias Exp $	*/
 /*	$$NetBSD: lprm.c,v 1.9 1999/08/16 03:12:32 simonb Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ main(int argc, char **argv)
 		case 'w':
 			l = strtol(optarg, &cp, 10);
 			if (*cp != '\0' || l < 0 || l >= INT_MAX)
-				errx(1, "wait time must be postive integer: %s",
+				errx(1, "wait time must be positive integer: %s",
 				    optarg);
 			wait_time = (u_int)l;
 			if (wait_time < 30)
