@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.40 2014/01/19 23:20:30 deraadt Exp $ */
+/* $OpenBSD: signify.c,v 1.41 2014/01/22 21:11:03 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -174,7 +174,7 @@ readb64file(const char *filename, void *buf, size_t len, char *comment)
 	if (rv == -1)
 		err(1, "read from %s", filename);
 	parseb64file(filename, b64, buf, len, comment);
-	memset(b64, 0, sizeof(b64));
+	explicit_bzero(b64, sizeof(b64));
 	close(fd);
 }
 
@@ -246,7 +246,7 @@ writeb64file(const char *filename, const char *comment, const void *buf,
 		errx(1, "b64 encode failed");
 	b64[rv++] = '\n';
 	writeall(fd, b64, rv, filename);
-	memset(b64, 0, sizeof(b64));
+	explicit_bzero(b64, sizeof(b64));
 	close(fd);
 }
 
@@ -267,7 +267,7 @@ kdf(uint8_t *salt, size_t saltlen, int rounds, uint8_t *key, size_t keylen)
 	if (bcrypt_pbkdf(pass, strlen(pass), salt, saltlen, key,
 	    keylen, rounds) == -1)
 		errx(1, "bcrypt pbkdf");
-	memset(pass, 0, sizeof(pass));
+	explicit_bzero(pass, sizeof(pass));
 }
 
 static void
@@ -312,15 +312,15 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds,
 	memcpy(enckey.checksum, digest, sizeof(enckey.checksum));
 	for (i = 0; i < sizeof(enckey.seckey); i++)
 		enckey.seckey[i] ^= xorkey[i];
-	memset(digest, 0, sizeof(digest));
-	memset(xorkey, 0, sizeof(xorkey));
+	explicit_bzero(digest, sizeof(digest));
+	explicit_bzero(xorkey, sizeof(xorkey));
 
 	if (snprintf(commentbuf, sizeof(commentbuf), "%s secret key",
 	    comment) >= sizeof(commentbuf))
 		err(1, "comment too long");
 	writeb64file(seckeyfile, commentbuf, &enckey,
 	    sizeof(enckey), O_EXCL, 0600);
-	memset(&enckey, 0, sizeof(enckey));
+	explicit_bzero(&enckey, sizeof(enckey));
 
 	memcpy(pubkey.pkalg, PKALG, 2);
 	memcpy(pubkey.fingerprint, fingerprint, FPLEN);
@@ -353,19 +353,19 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 	kdf(enckey.salt, sizeof(enckey.salt), rounds, xorkey, sizeof(xorkey));
 	for (i = 0; i < sizeof(enckey.seckey); i++)
 		enckey.seckey[i] ^= xorkey[i];
-	memset(xorkey, 0, sizeof(xorkey));
+	explicit_bzero(xorkey, sizeof(xorkey));
 	SHA512Init(&ctx);
 	SHA512Update(&ctx, enckey.seckey, sizeof(enckey.seckey));
 	SHA512Final(digest, &ctx);
 	if (memcmp(enckey.checksum, digest, sizeof(enckey.checksum)))
 	    errx(1, "incorrect passphrase");
-	memset(digest, 0, sizeof(digest));
+	explicit_bzero(digest, sizeof(digest));
 
 	msg = readmsg(msgfile, &msglen);
 
 	signmsg(enckey.seckey, msg, msglen, sig.sig);
 	memcpy(sig.fingerprint, enckey.fingerprint, FPLEN);
-	memset(&enckey, 0, sizeof(enckey));
+	explicit_bzero(&enckey, sizeof(enckey));
 
 	memcpy(sig.pkalg, PKALG, 2);
 	if (snprintf(sigcomment, sizeof(sigcomment), "signature from %s",
