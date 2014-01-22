@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.39 2013/12/23 14:14:31 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.40 2014/01/22 10:13:20 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 23 2013 $
+.Dd $Mdocdate: January 22 2014 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -87,33 +87,34 @@ First the application must call the
 .Fn sio_open
 function to obtain a handle to the device;
 later it will be passed as the
-.Ar hdl
+.Fa hdl
 argument of most other functions.
 The
-.Ar name
+.Fa name
 parameter gives the device string discussed in
 .Xr sndio 7 .
-In most cases it should be set to SIO_DEVANY to allow
-the user to select it using the
+In most cases it should be set to
+.Dv SIO_DEVANY
+to allow the user to select it using the
 .Ev AUDIODEVICE
 environment variable.
 .Pp
 The following values of the
-.Ar mode
+.Fa mode
 parameter are supported:
 .Bl -tag -width "SIO_PLAY | SIO_REC"
-.It SIO_PLAY
+.It Dv SIO_PLAY
 Play-only mode: data written will be played by the device.
-.It SIO_REC
+.It Dv SIO_REC
 Record-only mode: samples are recorded by the device and must be read.
-.It SIO_PLAY | SIO_REC
+.It Dv SIO_PLAY | SIO_REC
 The device plays and records synchronously; this means that
 the n-th recorded sample was physically sampled exactly when
 the n-th played sample was actually played.
 .El
 .Pp
 If the
-.Ar nbio_flag
+.Fa nbio_flag
 argument is true (i.e. non-zero), then the
 .Fn sio_read
 and
@@ -185,11 +186,11 @@ it's meaningful only if
 * 8.
 .It Va rchan
 The number of recorded channels; meaningful only if
-.Va SIO_REC
+.Dv SIO_REC
 mode was selected.
 .It Va pchan
 The number of played channels; meaningful only if
-.Va SIO_PLAY
+.Dv SIO_PLAY
 mode was selected.
 .It Va rate
 The sampling frequency in Hz.
@@ -215,10 +216,10 @@ Applications can use this parameter to round their block size.
 The action when the client doesn't accept
 recorded data or doesn't provide data to play fast enough;
 it can be set to one of the
-.Va SIO_IGNORE ,
-.Va SIO_SYNC
+.Dv SIO_IGNORE ,
+.Dv SIO_SYNC ,
 or
-.Va SIO_ERROR
+.Dv SIO_ERROR
 constants.
 .El
 .Pp
@@ -226,7 +227,7 @@ The following approach is recommended to negotiate device parameters:
 .Bl -bullet
 .It
 Initialize a
-.Va sio_par
+.Vt sio_par
 structure using
 .Fn sio_initpar
 and fill it with
@@ -235,7 +236,7 @@ Then call
 .Fn sio_setpar
 to request the device to use them.
 Parameters left unset in the
-.Va sio_par
+.Vt sio_par
 structure will be set to device-specific defaults.
 .It
 Call
@@ -261,17 +262,17 @@ automatically be set up, and in this case any combination of
 rate, encoding and numbers of channels is supported.
 .Pp
 To ease filling the
-.Va sio_par
+.Vt sio_par
 structure, the
 following macros can be used:
 .Bl -tag -width "SIO_BPS(bits)"
-.It "SIO_BPS(bits)"
+.It Dv SIO_BPS Ns Pq Fa bits
 Return the smallest value for
 .Va bps
 that is a power of two and that is large enough to
 hold
-.Va bits .
-.It "SIO_LE_NATIVE"
+.Fa bits .
+.It Dv SIO_LE_NATIVE
 Can be used to set the
 .Va le
 parameter when native byte order is required.
@@ -285,7 +286,7 @@ parameter combinations in advance can use the
 function.
 .Pp
 The
-.Va sio_cap
+.Vt sio_cap
 structure contains the list of parameter configurations.
 Each configuration contains multiple parameter sets.
 The application must examine all configurations, and
@@ -319,40 +320,40 @@ struct sio_cap {
 .Pp
 The parameters are as follows:
 .Bl -tag -width "rchan[SIO_NCHAN]"
-.It Va enc[SIO_NENC]
+.It Va enc Ns Bq Dv SIO_NENC
 Array of supported encodings.
 The tuple of
 .Va bits ,
 .Va bps ,
 .Va sig ,
-.Va le
+.Va le ,
 and
 .Va msb
 parameters are usable in the corresponding parameters
 of the
-.Va sio_par
+.Vt sio_par
 structure.
-.It Va rchan[SIO_NCHAN]
+.It Va rchan Ns Bq Dv SIO_NCHAN
 Array of supported channel numbers for recording usable
 in the
-.Va sio_par
+.Vt sio_par
 structure.
-.It Va pchan[SIO_NCHAN]
+.It Va pchan Ns Bq Dv SIO_NCHAN
 Array of supported channel numbers for playback usable
 in the
-.Va sio_par
+.Vt sio_par
 structure.
-.It Va rate[SIO_NRATE]
+.It Va rate Ns Bq Dv SIO_NRATE
 Array of supported sample rates usable
 in the
-.Va sio_par
+.Vt sio_par
 structure.
 .It Va nconf
 Number of different configurations available, i.e. number
 of filled elements of the
 .Va confs[]
 array.
-.It Va confs[SIO_NCONF]
+.It Va confs Ns Bq Dv SIO_NCONF
 Array of available configurations.
 Each configuration contains bitmasks indicating which
 elements of the above parameter arrays are valid for the
@@ -360,11 +361,11 @@ given configuration.
 For instance, if the second bit of
 .Va rate
 is set, in the
-.Va sio_conf
+.Vt sio_conf
 structure, then the second element of the
-.Va rate[SIO_NRATE]
+.Va rate Ns Bq Dv SIO_NRATE
 array of the
-.Va sio_cap
+.Vt sio_cap
 structure is valid for this configuration.
 .El
 .Ss Starting and stopping the device
@@ -399,12 +400,12 @@ When record mode is selected, the
 function must be called to retrieve recorded data; it must be called
 often enough to ensure that internal buffers will not overrun.
 It will store at most
-.Ar nbytes
+.Fa nbytes
 bytes at the
-.Ar addr
+.Fa addr
 location and return the number of bytes stored.
 Unless the
-.Ar nbio_flag
+.Fa nbio_flag
 flag is set, it will block until data becomes available and
 will return zero only on error.
 .Pp
@@ -412,13 +413,13 @@ Similarly, when play mode is selected, the
 .Fn sio_write
 function must be called to provide data to play.
 Unless the
-.Ar nbio_flag
+.Fa nbio_flag
 is set,
 .Fn sio_write
 will block until the requested amount of data is written.
 .Ss Non-blocking mode operation
 If the
-.Ar nbio_flag
+.Fa nbio_flag
 is set on
 .Fn sio_open ,
 then the
@@ -435,51 +436,52 @@ read from or written to the device.
 The
 .Fn sio_pollfd
 function fills the array
-.Ar pfd
+.Fa pfd
 of
-.Va pollfd
+.Vt pollfd
 structures, used by
 .Xr poll 2 ,
 with
-.Ar events ;
+.Fa events ;
 the latter is a bit-mask of
-.Va POLLIN
+.Dv POLLIN
 and
-.Va POLLOUT
+.Dv POLLOUT
 constants; refer to
 .Xr poll 2
 for more details.
 .Fn sio_pollfd
 returns the number of
-.Va pollfd
+.Vt pollfd
 structures filled.
 The
 .Fn sio_revents
 function returns the bit-mask set by
 .Xr poll 2
 in the
-.Va pfd
+.Fa pfd
 array of
-.Va pollfd
+.Vt pollfd
 structures.
 If
-.Va POLLIN
+.Dv POLLIN
 is set, recorded samples are available in the device buffer
 and can be read with
 .Fn sio_read .
 If
-.Va POLLOUT
+.Dv POLLOUT
 is set, space is available in the device buffer and new samples
 to play can be submitted with
 .Fn sio_write .
-POLLHUP may be set if an error occurs, even if
+.Dv POLLHUP
+may be set if an error occurs, even if
 it is not selected with
 .Fn sio_pollfd .
 .Pp
 The
 .Fn sio_nfds
 function returns the number of
-.Va pollfd
+.Vt pollfd
 structures the caller must preallocate in order to be sure
 that
 .Fn sio_pollfd
@@ -493,30 +495,31 @@ position in the stream the hardware is processing.
 The
 .Fn sio_onmove
 function can be used to register the
-.Va cb
+.Fn cb
 callback function called at regular time intervals.
 The
-.Va delta
+.Fa delta
 argument contains the number of frames the hardware played and/or recorded
 since the last call of
-.Va cb .
+.Fn cb .
 It is called by
-.Fn sio_read , sio_write ,
+.Fn sio_read ,
+.Fn sio_write ,
 and
 .Fn sio_revents .
 When the first sample is played and/or recorded, right after the device starts,
 the callback is invoked with a zero
-.Va delta
+.Fa delta
 argument.
 The value of the
-.Va arg
+.Fa arg
 pointer is passed to the callback and can contain anything.
 .Pp
 If desired, the application can maintain the current position by
 starting from zero (when
 .Fn sio_start
 is called) and adding to the current position
-.Va delta
+.Fa delta
 every time
 .Fn cb
 is called.
@@ -565,13 +568,13 @@ instead.
 Depending on the
 .Va xrun
 parameter of the
-.Va sio_par
+.Vt sio_par
 structure, the audio subsystem will behave as follows:
 .Bl -tag -width "SIO_IGNORE"
-.It SIO_IGNORE
+.It Dv SIO_IGNORE
 The devices pauses during overruns and underruns,
 thus the current position (obtained through
-.Va sio_onmove )
+.Fn sio_onmove )
 stops being incremented.
 Once the overrun and/or underrun condition is gone, the device resumes;
 play and record are always kept in sync.
@@ -582,7 +585,7 @@ This mode is the default.
 It's suitable for applications,
 like audio players and telephony, where time
 is not important and overruns or underruns are not short.
-.It SIO_SYNC
+.It Dv SIO_SYNC
 If the play buffer underruns, then silence is played,
 but in order to reach the right position in time,
 the same amount of written samples will be
@@ -591,7 +594,7 @@ Similarly, if the record buffer overruns, then
 samples are discarded, but the same amount of silence will be
 returned later.
 The current position (obtained through
-.Va sio_onmove )
+.Fn sio_onmove )
 is still incremented.
 When the play buffer underruns the play latency might become negative;
 when the record buffer overruns, the record latency might become
@@ -601,7 +604,7 @@ larger than
 This mode is suitable for applications, like music production,
 where time is important and where underruns or overruns are
 short and rare.
-.It SIO_ERROR
+.It Dv SIO_ERROR
 With this mode, on the first play buffer underrun or
 record buffer overrun, playback and/or recording is terminated and
 no other function than
@@ -615,7 +618,7 @@ The
 .Fn sio_setvol
 function can be used to set playback attenuation.
 The
-.Va vol
+.Fa vol
 parameter takes a value between 0 (maximum attenuation)
 and
 .Dv SIO_MAXVOL
@@ -659,7 +662,7 @@ programming errors (e.g. call to
 .Fn sio_read
 on a play-only stream) are considered fatal.
 Once an error occurs, all functions taking a
-.Va sio_hdl
+.Fa sio_hdl
 argument, except
 .Fn sio_close
 and
@@ -682,7 +685,7 @@ The
 .Fn sio_getcap ,
 .Fn sio_start ,
 .Fn sio_stop ,
-.Fn sio_pollfd
+.Fn sio_pollfd ,
 and
 .Fn sio_setvol
 functions return 1 on success and 0 on failure.
@@ -696,8 +699,10 @@ functions return the number of bytes transferred.
 .It Ev AUDIODEVICE
 Device to use if
 .Fn sio_open
-is called with SIO_DEVANY
-.Va name
+is called with
+.Dv SIO_DEVANY
+as the
+.Fa name
 argument.
 .It Ev SNDIO_DEBUG
 The debug level:
@@ -712,7 +717,7 @@ may be a value between 0 and 2.
 The
 .Xr audio 4
 driver doesn't drain playback buffers, thus if
-.Nm libsndio
+.Lb libsndio
 is used to directly access an
 .Xr audio 4
 device,
@@ -725,7 +730,7 @@ If the application doesn't consume recorded data fast enough then
 from the
 .Xr sndiod 1
 server are delayed and consequently
-.Va sio_onmove
+.Fn sio_onmove
 callback or volume changes may be delayed.
 .Pp
 The
@@ -733,7 +738,7 @@ The
 .Fn sio_setpar ,
 .Fn sio_getpar ,
 .Fn sio_getcap ,
-.Fn sio_start
+.Fn sio_start ,
 and
 .Fn sio_stop
 functions may block for a very short period of time, thus they should
