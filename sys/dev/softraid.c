@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.327 2014/01/22 05:11:36 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.328 2014/01/22 05:42:39 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -135,7 +135,7 @@ int			sr_already_assembled(struct sr_discipline *);
 int			sr_hotspare(struct sr_softc *, dev_t);
 void			sr_hotspare_rebuild(struct sr_discipline *);
 int			sr_rebuild_init(struct sr_discipline *, dev_t, int);
-void			sr_rebuild(void *);
+void			sr_rebuild_start(void *);
 void			sr_rebuild_thread(void *);
 void			sr_roam_chunks(struct sr_discipline *);
 int			sr_chunk_in_use(struct sr_softc *, dev_t);
@@ -3232,7 +3232,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	    sd->sd_meta->ssd_devname, devname);
 
 	sd->sd_reb_abort = 0;
-	kthread_create_deferred(sr_rebuild, sd);
+	kthread_create_deferred(sr_rebuild_start, sd);
 
 	rv = 0;
 done:
@@ -3550,7 +3550,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 	rv = sr_meta_save(sd, SR_META_DIRTY);
 
 	if (sd->sd_vol_status == BIOC_SVREBUILD)
-		kthread_create_deferred(sr_rebuild, sd);
+		kthread_create_deferred(sr_rebuild_start, sd);
 
 	sd->sd_ready = 1;
 
@@ -4578,7 +4578,7 @@ bad:
 }
 
 void
-sr_rebuild(void *arg)
+sr_rebuild_start(void *arg)
 {
 	struct sr_discipline	*sd = arg;
 	struct sr_softc		*sc = sd->sd_sc;
