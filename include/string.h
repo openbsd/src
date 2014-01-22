@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.26 2013/05/13 10:37:02 ajacoutot Exp $	*/
+/*	$OpenBSD: string.h,v 1.27 2014/01/22 21:06:45 tedu Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -126,6 +126,8 @@ char	*strsignal(int);
 #endif
 
 #if __BSD_VISIBLE
+void	 explicit_bzero(void *, size_t)
+		__attribute__ ((__bounded__(__buffer__,1,2)));
 void	*memmem(const void *, size_t, const void *, size_t);
 void	*memrchr(const void *, int, size_t);
 char	*strcasestr(const char *, const char *);
