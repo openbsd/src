@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.16 2013/11/26 13:18:55 deraadt Exp $	*/
+/*	$OpenBSD: column.c,v 1.17 2014/01/22 09:39:38 jsg Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -241,6 +241,8 @@ maketbl(void)
 			(void)printf("%s\n", t->list[coloff]);
 		}
 	}
+	free(lens);
+	free(cols);
 }
 
 #define	DEFNUM		1000
