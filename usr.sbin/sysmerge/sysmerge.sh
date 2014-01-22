@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.108 2014/01/22 08:25:16 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.109 2014/01/22 08:34:57 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -139,7 +139,7 @@ check_sig() {
 	echo "===> Verying ${_set} SHA256 signature"
 	/usr/bin/signify -V -e -p ${_key} -x "${_sigfile}.sig" -m "${_sigfile}" 2>/dev/null || \
 		error_rm_wrkdir "signature check for ${_sigfile}"
-	rm "${_sigfile}" "${_sigfile}.sig"
+	rm "${_sigfile}.sig"
 }
 
 # prepare TEMPROOT content from a src dir and create cksum file 
