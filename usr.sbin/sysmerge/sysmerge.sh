@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.107 2014/01/21 07:58:08 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.108 2014/01/22 08:25:16 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -21,8 +21,8 @@
 umask 0022
 
 unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE ETCSUM NEED_NEWALIASES
-unset NEWGRP NEWUSR NEED_REBOOT NOSIGCHECK SETSRC SRCDIR SRCSUM TGZ
-unset XETCSUM XTGZ
+unset NEWGRP NEWUSR NEED_REBOOT NOSIGCHECK SRCDIR SRCSUM TGZ XETCSUM
+unset XTGZ
 
 WRKDIR=$(mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXXXXXXX) || exit 1
 SWIDTH=$(stty size | awk '{w=$2} END {if (w==0) {w=80} print w}')
@@ -39,9 +39,9 @@ clean_src() {
 		cd ${SRCDIR}/gnu/usr.sbin/sendmail/cf/cf && make cleandir >/dev/null
 }
 
-# restore files from backups or remove the newly generated sum files if
+# restore sum files from backups or remove the newly generated ones if
 # they did not exist
-restore_bak() {
+restore_sum() {
 	local i _i
 	for i in ${DESTDIR}/${DBDIR}/.{${SRCSUM},${ETCSUM},${XETCSUM}}.bak; do
 		_i=$(basename ${i} .bak)
@@ -72,11 +72,15 @@ report() {
 # remove newly created work directory and exit with status 1
 error_rm_wrkdir() {
 	(($#)) && error "$@"
+	# do not remove the entire WRKDIR in case sysmerge stopped half
+	# way since it contains our backup files
+	rm -f ${WRKDIR}/*SHA256*
+	rm -f ${WRKDIR}/*.tgz
 	rmdir ${WRKDIR} 2>/dev/null
 	exit 1
 }
 
-trap "restore_bak; clean_src; rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
+trap "restore_sum; clean_src; rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
 
 if (($(id -u) != 0)); then
 	error "need root privileges to run this script"
@@ -84,15 +88,17 @@ if (($(id -u) != 0)); then
 	error_rm_wrkdir
 fi
 
-# extract, verify (x)etcXX.tgz and create cksum file
-# takes file- and setname ('etc' or 'xetc') as arguments
-# stores sumfilename in ETCSUM or XETCSUM (see eval)
+# extract and verify (x)etcXX.tgz and create cksum file;
+# stores sum filename in ETCSUM or XETCSUM (see eval);
+# takes file and setname ('etc' or 'xetc') as arguments
 extract_set() {
 	[[ -z $1 ]] && return
 	local _tgz=$(readlink -f "$1") _set=$2 _f
-	if [ -z "$NOSIGCHECK" -a -f "${WRKDIR}/SHA256" ]; then
-		(cd ${WRKDIR} && sha256 -C SHA256 "${_tgz##*/}" >/dev/null 2>&1) || \
-			error_rm_wrkdir "${_tgz##*/} checksum could not be verified against SHA256.sig"
+	local _sha256=${_set}-SHA256
+	if [ -z "${NOSIGCHECK}" ]; then
+		(cd ${WRKDIR} && sha256 -C ${_sha256} "${_tgz##*/}" >/dev/null 2>&1) || \
+			error_rm_wrkdir "${_tgz##*/} checksum could not be verified against ${_sha256}.sig"
+		rm "${WRKDIR}/${_sha256}"
 	fi
 	typeset -u _SETSUM=${_set}sum
 	eval ${_SETSUM}=${_set}sum
@@ -100,34 +106,40 @@ extract_set() {
 		tar -tzf "${_tgz}" | while read _f; do
 			[ ! -h ${_f} ] && cksum ${_f} >> ${WRKDIR}/${_set}sum; done) || \
 				error_rm_wrkdir "extract/cksum of ${_tgz} failed"
+	rm "${_tgz}"
 }
 
-# optionally fetch and check if file is a valid (x)etcXX.tgz
+# fetch and check if file is a valid (x)etcXX.tgz;
+# fetch and signature file;
+# stores local path to tgz in TGZ or XTGZ;
 # takes url or filename and setname ('etc' or 'xetc') as arguments
-# stores local path to tgz in TGZ or XTGZ
 get_set() {
 	local _tgz=${WRKDIR}/${1##*/} _url=$1 _set=$2
+	local _sigfile=${_set}-SHA256
 	[ -f "${_url}" ] && _url="file://${_url}"
 	if [[ ${_url} == @(file|ftp|http|https)://*/*[!/] ]]; then 
-		${FETCH_CMD} -o ${_tgz} "${_url}" || \
+		${FETCH_CMD} -o ${_tgz} "${_url}" >/dev/null || \
 			error_rm_wrkdir "could not retrieve ${_url}"
 	fi
 	[[ ${_set} == etc ]] && TGZ=${_tgz} || XTGZ=${_tgz}
 	tar -tzf "${_tgz}" ./var/db/sysmerge/${_set}sum >/dev/null 2>&1 || \
 		error_rm_wrkdir "${_tgz} is not a valid ${_set}XX.tgz set"
+	if [ -z "${NOSIGCHECK}" ]; then
+		${FETCH_CMD} -o "${WRKDIR}/${_sigfile}.sig" "${_url%/*}/SHA256.sig" >/dev/null 2>&1 || \
+			error_rm_wrkdir "could not retrieve ${_url%/*}/SHA256.sig"
+		check_sig "${_sigfile}"
+	fi
 }
 
-# fetch, verify SHA256.sig and write ${WRKDIR}/SHA256 abort on failure
-# unless NOSIGCHECK is set in which case try to fetch SHA256 at least
-# takes a directory path, either where etcXX.tgz was fetched from or SM_PATH
-get_sig() {
-	[ -n "${NOSIGCHECK}" ] && return
-	local _cfile=${WRKDIR}/SHA256 _src=${SETSRC:-$SM_PATH}
+# verify SHA256.sig and write ${WRKDIR}/(x)etc-SHA256, abort on failure;
+# takes a file path as argument
+check_sig() {
+	local _sigfile=${WRKDIR}/$1 _src
 	local _key="/etc/signify/$(uname -r | tr -d '.')base.pub"
-	[ -d "${_src}" ] && _src="file://${_src}"
-	${FETCH_CMD} -o "${_cfile}.sig" "${_src}/SHA256.sig" >/dev/null 2>&1 && \
-		signify -Vep ${_key} -x "${_cfile}.sig" -m "${_cfile}" || \
-			error_rm_wrkdir "Signature check failed"
+	echo "===> Verying ${_set} SHA256 signature"
+	/usr/bin/signify -V -e -p ${_key} -x "${_sigfile}.sig" -m "${_sigfile}" 2>/dev/null || \
+		error_rm_wrkdir "signature check for ${_sigfile}"
+	rm "${_sigfile}" "${_sigfile}.sig"
 }
 
 # prepare TEMPROOT content from a src dir and create cksum file 
@@ -145,7 +157,7 @@ sm_populate() {
 	mkdir -p ${DESTDIR}/${DBDIR} || error_rm_wrkdir
 	echo "===> Populating temporary root under ${TEMPROOT}"
 	mkdir -p ${TEMPROOT}
-	
+
 	prepare_src
 	extract_set "${TGZ}" etc
 	extract_set "${XTGZ}" xetc
@@ -183,6 +195,7 @@ sm_populate() {
 
 	# files we don't want/need to deal with
 	IGNORE_FILES="/etc/*.db
+		      /etc/localtime
 		      /etc/mail/*.db
 		      /etc/passwd
 		      /etc/motd
@@ -367,9 +380,7 @@ diff_loop() {
 		HANDLE_COMPFILE=v
 	fi
 
-	unset NO_INSTALLED
-	unset CAN_INSTALL
-	unset FORCE_UPG
+	unset NO_INSTALLED CAN_INSTALL FORCE_UPG
 
 	while [[ ${HANDLE_COMPFILE} == @(v|todo) ]]; do
 		if [ -f "${DESTDIR}${COMPFILE#.}" -a -f "${COMPFILE}" -a -z "${IS_LINK}" ]; then
@@ -551,18 +562,31 @@ sm_compare() {
 
 	cd ${TEMPROOT} || error_rm_wrkdir
 
-	# use -size +0 to avoid comparing empty log files and device nodes;
-	# however, we want to keep the symlinks; group and master.passwd
-	# need to be handled first in case install_file needs a new user/group;
+	# group and master.passwd need to be handled first in case
+	# install_file needs a new user/group;
 	# aliases(5) needs to be handled last in case smtpd.conf(5) syntax changes
 	_c1="./etc/group ./etc/master.passwd"
-	_c2=$(find . -type f -size +0 -or -type l | grep -vE '^./etc/(group|master.passwd|mail/aliases)$')
+	_c2=$(find . -type f -or -type l | grep -vE '^./etc/(group|master.passwd|mail/aliases)$')
 	_c3=$(find . -type f -name aliases)
 	for COMPFILE in ${_c1} ${_c2} ${_c3}; do
-		unset IS_BINFILE
-		unset IS_LINK
+		unset IS_BINFILE IS_LINK
+		# treat empty files the same as IS_BINFILE to avoid comparing them
+		[ ! -s "${COMPFILE}" -a -n "${DIFFMODE}" ] && IS_BINFILE=1
+
 		# links need to be treated in a different way
 		[ -h "${COMPFILE}" ] && IS_LINK=1
+		if [ -n "${IS_LINK}" -a -h "${DESTDIR}${COMPFILE#.}" ]; then
+			IS_LINK=1
+			# if links target are the same, remove from temproot
+			if [ "$(readlink ${COMPFILE})" = "$(readlink ${DESTDIR}${COMPFILE#.})" ]; then
+				rm "${COMPFILE}"
+			else
+				diff_loop
+			fi
+			continue
+		fi
+
+		# file not present on the system
 		if [ ! -e "${DESTDIR}${COMPFILE#.}" ]; then
 			diff_loop
 			continue
@@ -593,8 +617,6 @@ sm_compare() {
 			fi
 		fi
 	done
-
-	echo "===> Comparison complete"
 }
 
 sm_post() {
@@ -637,6 +659,8 @@ sm_post() {
 
 	if [ -e "${REPORT}" ]; then
 		echo "===> Output log available at ${REPORT}"
+		find ${TEMPROOT} -type f -empty 2>/dev/null | xargs -r rm
+		find ${TEMPROOT} -type d | sort -r | xargs -r rmdir 2>/dev/null
 	else
 		echo "===> Removing ${WRKDIR}"
 		rm -rf "${WRKDIR}"
@@ -674,7 +698,6 @@ while getopts bds:Sx: arg; do
 			continue
 		fi
 		get_set "${OPTARG}" etc
-		SETSRC=${OPTARG%/*}
 		;;
 	S)	
 		NOSIGCHECK=1
@@ -714,7 +737,6 @@ fi
 TEMPROOT="${WRKDIR}/temproot"
 BKPDIR="${WRKDIR}/backups"
 
-get_sig
 sm_populate
 sm_compare
 sm_post
