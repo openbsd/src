@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.121 2014/01/18 20:50:24 dlg Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.122 2014/01/22 06:05:21 dlg Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1933,7 +1933,7 @@ void
 wdc_scrub_xfer(struct wdc_xfer *xfer)
 {
 	memset(xfer, 0, sizeof(*xfer));
-	xfer->c_flags = C_PRIVATEXFER;
+	xfer->c_flags = C_SCSIXFER;
 }
 
 void
@@ -1965,7 +1965,8 @@ wdc_free_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
 	TAILQ_REMOVE(&chp->ch_queue->sc_xfer, xfer, c_xferchain);
 	splx(s);
 
-	scsi_io_put(&wdc_xfer_iopool, xfer);
+	if (!ISSET(xfer->c_flags, C_SCSIXFER))
+		scsi_io_put(&wdc_xfer_iopool, xfer);
 }
 
 

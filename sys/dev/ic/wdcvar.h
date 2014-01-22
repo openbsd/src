@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.53 2014/01/18 20:50:24 dlg Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.54 2014/01/22 06:05:21 dlg Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -223,6 +223,7 @@ struct wdc_xfer {
 #define C_MEDIA_ACCESS	0x0100 /* is a media access command */
 #define C_POLL_MACHINE	0x0200 /* machine has a poll handler */
 #define C_PRIVATEXFER	0x0400 /* privately managed xfer */
+#define C_SCSIXFER	0x0800 /* SCSI managed xfer */
 
 	/* Informations about our location */
 	struct channel_softc *chp;
