@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.108 2014/01/21 06:38:11 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.109 2014/01/22 01:46:08 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -1020,7 +1020,6 @@ sr_crypto_free_resources(struct sr_discipline *sd)
 			crwu->cr_crp->crp_desc = crwu->cr_descs;
 			crypto_freereq(crwu->cr_crp);
 		}
-		free(crwu, M_DEVBUF);
 	}
 
 	sr_wu_free(sd);
