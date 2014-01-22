@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.26 2013/12/06 21:03:04 deraadt Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.27 2014/01/22 02:58:35 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -283,7 +283,7 @@ cfxga_match(struct device *parent, void *match, void *aux)
 		return (0);
 
 	if (pcmcia_function_enable(pf) != 0) {
-		DPRINTF(("%s: function enable failed\n"));
+		DPRINTF(("%s: function enable failed\n", __func__));
 		return (0);
 	}
 
