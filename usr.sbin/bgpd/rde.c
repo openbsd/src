@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.326 2013/11/13 20:41:01 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.327 2014/01/22 04:08:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3282,6 +3282,7 @@ peer_stale(u_int32_t id, u_int8_t aid)
 		return;
 	}
 
+	/* flush the now even staler routes out */
 	if (peer->staletime[aid])
 		peer_flush(peer, aid);
 	peer->staletime[aid] = now = time(NULL);
@@ -3317,7 +3318,14 @@ peer_recv_eor(struct rde_peer *peer, u_int8_t aid)
 {
 	peer->prefix_rcvd_eor++;
 
-	/* First notify SE to remove possible race with the timeout. */
+	/*
+	 * First notify SE to avert a possible race with the restart timeout.
+	 * If the timeout fires before this imsg is processed by the SE it will
+	 * result in the same operation since the timeout issues a FLUSH which
+	 * does the same as the RESTARTED action (flushing stale routes).
+	 * The logic in the SE is so that only one of FLUSH or RESTARTED will
+	 * be sent back to the RDE and so peer_flush is only called once.
+	 */
 	if (imsg_compose(ibuf_se, IMSG_SESSION_RESTARTED, peer->conf.id,
 	    0, -1, &aid, sizeof(aid)) == -1)
 		fatal("imsg_compose error");

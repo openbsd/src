@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.333 2013/11/13 20:41:01 benno Exp $ */
+/*	$OpenBSD: session.c,v 1.334 2014/01/22 04:08:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1729,12 +1729,11 @@ session_graceful_stop(struct peer *p)
 
 	for (i = 0; i < AID_MAX; i++) {
 		/*
-		 * Only flush if the peer is restarting and the peer indicated
-		 * it hold the forwarding state. In all other cases the
-		 * session was already flushed when the session came up.
+		 * Only flush if the peer is restarting and the timeout fired.
+		 * In all other cases the session was already flushed when the
+		 * session went down or when the new open message was parsed.
 		 */
-		if (p->capa.neg.grestart.flags[i] & CAPA_GR_RESTARTING &&
-		    p->capa.neg.grestart.flags[i] & CAPA_GR_FORWARD) {
+		if (p->capa.neg.grestart.flags[i] & CAPA_GR_RESTARTING) {
 			log_peer_warnx(&p->conf, "graceful restart of %s, "
 			    "time-out, flushing", aid2str(i));
 			if (imsg_compose(ibuf_rde, IMSG_SESSION_FLUSH,
@@ -2520,12 +2519,16 @@ capa_neg_calc(struct peer *p)
 	 */
 
 	for (i = 0; i < AID_MAX; i++) {
+		int8_t	negflags;
+
 		/* disable GR if the AFI/SAFI is not present */
 		if (p->capa.peer.grestart.flags[i] & CAPA_GR_PRESENT &&
 		    p->capa.neg.mp[i] == 0)
 			p->capa.peer.grestart.flags[i] = 0;	/* disable */
 		/* look at current GR state and decide what to do */
-		if (p->capa.neg.grestart.flags[i] & CAPA_GR_RESTARTING) {
+		negflags = p->capa.neg.grestart.flags[i];
+		p->capa.neg.grestart.flags[i] = p->capa.peer.grestart.flags[i];
+		if (negflags & CAPA_GR_RESTARTING) {
 			if (!(p->capa.peer.grestart.flags[i] &
 			    CAPA_GR_FORWARD)) {
 				if (imsg_compose(ibuf_rde, IMSG_SESSION_FLUSH,
@@ -2533,12 +2536,10 @@ capa_neg_calc(struct peer *p)
 					return (-1);
 				log_peer_warnx(&p->conf, "graceful restart of "
 				    "%s, not restarted, flushing", aid2str(i));
-			}
-			p->capa.neg.grestart.flags[i] =
-			    p->capa.peer.grestart.flags[i] | CAPA_GR_RESTARTING;
-		} else
-			p->capa.neg.grestart.flags[i] =
-			    p->capa.peer.grestart.flags[i];
+			} else
+				p->capa.neg.grestart.flags[i] |=
+				    CAPA_GR_RESTARTING;
+		}
 	}
 	p->capa.neg.grestart.timeout = p->capa.peer.grestart.timeout;
 	p->capa.neg.grestart.restart = p->capa.peer.grestart.restart;
@@ -2911,9 +2912,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			if (aid >= AID_MAX)
 				fatalx("IMSG_SESSION_RESTARTED: bad AID");
 			if (p->capa.neg.grestart.flags[aid] &
-			    CAPA_GR_RESTARTING &&
-			    p->capa.neg.grestart.flags[aid] &
-			    CAPA_GR_FORWARD) {
+			    CAPA_GR_RESTARTING) {
 				log_peer_warnx(&p->conf,
 				    "graceful restart of %s finished",
 				    aid2str(aid));
