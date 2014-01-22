@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_cksum.c,v 1.15 2008/06/11 19:00:50 mcbride Exp $	*/
+/*	$OpenBSD: in6_cksum.c,v 1.16 2014/01/22 14:27:20 naddy Exp $	*/
 /*	$KAME: in6_cksum.c,v 1.10 2000/12/03 00:53:59 itojun Exp $	*/
 
 /*
@@ -115,6 +115,10 @@ in6_cksum(struct mbuf *m, u_int8_t nxt, u_int32_t off, u_int32_t len)
 			m->m_pkthdr.len, off, len);
 	}
 
+	/* Skip pseudo-header if nxt == 0. */
+	if (nxt == 0)
+		 goto skip_phdr;
+
 	bzero(&uph, sizeof(uph));
 
 	/*
@@ -141,6 +145,7 @@ in6_cksum(struct mbuf *m, u_int8_t nxt, u_int32_t off, u_int32_t len)
 	sum += uph.phs[0];  sum += uph.phs[1];
 	sum += uph.phs[2];  sum += uph.phs[3];
 
+skip_phdr:
 	/*
 	 * Secondly calculate a summary of the first mbuf excluding offset.
 	 */

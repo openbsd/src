@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.69 2013/10/28 21:02:35 deraadt Exp $	*/
+/*	$OpenBSD: in6.h,v 1.70 2014/01/22 14:27:20 naddy Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -416,6 +416,54 @@ typedef	__socklen_t	socklen_t;	/* length type for network syscalls */
 #endif /* __BSD_VISIBLE */
 
 #ifdef _KERNEL
+/*
+ * in6_cksum_phdr:
+ *
+ *	Compute significant parts of the IPv6 checksum pseudo-header
+ *	for use in a delayed TCP/UDP checksum calculation.
+ *
+ *	Args:
+ *
+ *		src		Source IPv6 address
+ *		dst		Destination IPv6 address
+ *		len		htonl(proto-hdr-len)
+ *		nxt		htonl(next-proto-number)
+ *
+ *	NOTE: We expect the src and dst addresses to be 16-bit
+ *	aligned!
+ */
+static __inline u_int16_t __attribute__((__unused__))
+in6_cksum_phdr(const struct in6_addr *src, const struct in6_addr *dst,
+    u_int32_t len, u_int32_t nxt)
+{
+	u_int32_t sum = 0;
+	const u_int16_t *w;
+
+	w = (const u_int16_t *) src;
+	sum += w[0];
+	if (!IN6_IS_SCOPE_EMBED(src))
+		sum += w[1];
+	sum += w[2]; sum += w[3]; sum += w[4]; sum += w[5];
+	sum += w[6]; sum += w[7];
+
+	w = (const u_int16_t *) dst;
+	sum += w[0];
+	if (!IN6_IS_SCOPE_EMBED(dst))
+		sum += w[1];
+	sum += w[2]; sum += w[3]; sum += w[4]; sum += w[5];
+	sum += w[6]; sum += w[7];
+
+	sum += (u_int16_t)(len >> 16) + (u_int16_t)(len /*& 0xffff*/);
+
+	sum += (u_int16_t)(nxt >> 16) + (u_int16_t)(nxt /*& 0xffff*/);
+
+	sum = (u_int16_t)(sum >> 16) + (u_int16_t)(sum /*& 0xffff*/);
+
+	if (sum > 0xffff)
+		sum -= 0xffff;
+
+	return (sum);
+}
 
 extern	u_char inet6ctlerrmap[];
 extern	struct ifqueue ip6intrq;	/* IP6 packet input queue */
