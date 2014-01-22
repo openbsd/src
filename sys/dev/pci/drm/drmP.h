@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.160 2014/01/22 04:04:53 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.161 2014/01/22 05:16:55 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -1032,6 +1032,17 @@ int	drm_agp_bind_ioctl(struct drm_device *, void *, struct drm_file *);
 /* Scatter Gather Support (drm_scatter.c) */
 int	drm_sg_alloc_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_sg_free(struct drm_device *, void *, struct drm_file *);
+
+static inline int
+drm_sysfs_connector_add(struct drm_connector *connector)
+{
+	return 0;
+}
+
+static inline void
+drm_sysfs_connector_remove(struct drm_connector *connector)
+{
+}
 
 /* Graphics Execution Manager library functions (drm_gem.c) */
 void drm_gem_object_release(struct drm_gem_object *obj);

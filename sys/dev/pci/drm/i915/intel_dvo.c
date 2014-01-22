@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_dvo.c,v 1.5 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: intel_dvo.c,v 1.6 2014/01/22 05:16:55 kettenis Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2007 Intel Corporation
@@ -336,9 +336,7 @@ static int intel_dvo_get_modes(struct drm_connector *connector)
 
 static void intel_dvo_destroy(struct drm_connector *connector)
 {
-#if 0
 	drm_sysfs_connector_remove(connector);
-#endif
 	drm_connector_cleanup(connector);
 	kfree(connector);
 }
@@ -525,9 +523,7 @@ void intel_dvo_init(struct drm_device *dev)
 			intel_dvo->panel_wants_dither = true;
 		}
 
-#if 0
 		drm_sysfs_connector_add(connector);
-#endif
 		return;
 	}
 

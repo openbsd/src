@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_hdmi.c,v 1.5 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: intel_hdmi.c,v 1.6 2014/01/22 05:16:55 kettenis Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2009 Intel Corporation
@@ -921,9 +921,7 @@ done:
 
 static void intel_hdmi_destroy(struct drm_connector *connector)
 {
-#if 0
 	drm_sysfs_connector_remove(connector);
-#endif
 	drm_connector_cleanup(connector);
 	free(connector, M_DRM);
 }
@@ -1021,9 +1019,7 @@ void intel_hdmi_init_connector(struct intel_digital_port *intel_dig_port,
 	intel_hdmi_add_properties(intel_hdmi, connector);
 
 	intel_connector_attach_encoder(intel_connector, intel_encoder);
-#if 0
 	drm_sysfs_connector_add(connector);
-#endif
 
 	/* For G4X desktop chip, PEG_BAND_GAP_DATA 3:0 must first be written
 	 * 0xd.  Failure to do so will result in spurious interrupts being

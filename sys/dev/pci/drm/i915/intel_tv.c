@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_tv.c,v 1.4 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: intel_tv.c,v 1.5 2014/01/22 05:16:55 kettenis Exp $	*/
 /*
  * Copyright © 2006-2008 Intel Corporation
  *   Jesse Barnes <jesse.barnes@intel.com>
@@ -1427,9 +1427,7 @@ intel_tv_get_modes(struct drm_connector *connector)
 static void
 intel_tv_destroy(struct drm_connector *connector)
 {
-#if 0
 	drm_sysfs_connector_remove(connector);
-#endif
 	drm_connector_cleanup(connector);
 	kfree(connector);
 }
@@ -1671,7 +1669,5 @@ intel_tv_init(struct drm_device *dev)
 	drm_object_attach_property(&connector->base,
 				   dev->mode_config.tv_bottom_margin_property,
 				   intel_tv->margin[TV_MARGIN_BOTTOM]);
-#if 0
 	drm_sysfs_connector_add(connector);
-#endif
 }

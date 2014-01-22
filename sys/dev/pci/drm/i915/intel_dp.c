@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_dp.c,v 1.12 2014/01/22 04:04:53 kettenis Exp $	*/
+/*	$OpenBSD: intel_dp.c,v 1.13 2014/01/22 05:16:55 kettenis Exp $	*/
 /*
  * Copyright © 2008 Intel Corporation
  *
@@ -2502,9 +2502,7 @@ intel_dp_destroy(struct drm_connector *connector)
 	if (is_edp(intel_dp))
 		intel_panel_fini(&intel_connector->panel);
 
-#ifdef notyet
 	drm_sysfs_connector_remove(connector);
-#endif
 	drm_connector_cleanup(connector);
 	kfree(connector);
 }
@@ -2792,9 +2790,7 @@ intel_dp_init_connector(struct intel_digital_port *intel_dig_port,
 	timeout_set(&intel_dp->panel_vdd_to, ironlake_panel_vdd_tick, intel_dp);
 
 	intel_connector_attach_encoder(intel_connector, intel_encoder);
-#ifdef notyet
 	drm_sysfs_connector_add(connector);
-#endif
 
 	if (IS_HASWELL(dev))
 		intel_connector->get_hw_state = intel_ddi_connector_get_hw_state;

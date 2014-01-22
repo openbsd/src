@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_crt.c,v 1.6 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: intel_crt.c,v 1.7 2014/01/22 05:16:55 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -635,9 +635,7 @@ intel_crt_detect(struct drm_connector *connector, bool force)
 
 static void intel_crt_destroy(struct drm_connector *connector)
 {
-#if 0
 	drm_sysfs_connector_remove(connector);
-#endif
 	drm_connector_cleanup(connector);
 	kfree(connector);
 }
@@ -796,9 +794,7 @@ void intel_crt_init(struct drm_device *dev)
 	drm_encoder_helper_add(&crt->base.base, &crt_encoder_funcs);
 	drm_connector_helper_add(connector, &intel_crt_connector_helper_funcs);
 
-#if 0
 	drm_sysfs_connector_add(connector);
-#endif
 
 	if (I915_HAS_HOTPLUG(dev))
 		connector->polled = DRM_CONNECTOR_POLL_HPD;

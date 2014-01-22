@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_lvds.c,v 1.7 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: intel_lvds.c,v 1.8 2014/01/22 05:16:55 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -572,9 +572,7 @@ static void intel_lvds_destroy(struct drm_connector *connector)
 
 	intel_panel_fini(&lvds_connector->base.panel);
 
-#if 0
 	drm_sysfs_connector_remove(connector);
-#endif
 	drm_connector_cleanup(connector);
 	kfree(connector);
 }
@@ -1141,8 +1139,8 @@ out:
 		DRM_DEBUG_KMS("lid notifier registration failed\n");
 		lvds_connector->lid_notifier.notifier_call = NULL;
 	}
-	drm_sysfs_connector_add(connector);
 #endif
+	drm_sysfs_connector_add(connector);
 
 	intel_panel_init(&intel_connector->panel, fixed_mode);
 	intel_panel_setup_backlight(connector);

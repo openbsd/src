@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_sdvo.c,v 1.12 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: intel_sdvo.c,v 1.13 2014/01/22 05:16:55 kettenis Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2007 Intel Corporation
@@ -1865,9 +1865,7 @@ static void intel_sdvo_destroy(struct drm_connector *connector)
 				     intel_sdvo_connector->tv_format);
 
 	intel_sdvo_destroy_enhance_property(connector);
-#if 0
 	drm_sysfs_connector_remove(connector);
-#endif
 	drm_connector_cleanup(connector);
 	kfree(intel_sdvo_connector);
 }
@@ -2228,9 +2226,7 @@ intel_sdvo_connector_init(struct intel_sdvo_connector *connector,
 	connector->base.get_hw_state = intel_sdvo_connector_get_hw_state;
 
 	intel_connector_attach_encoder(&connector->base, &encoder->base);
-#if 0
 	drm_sysfs_connector_add(&connector->base.base);
-#endif
 }
 
 static void
