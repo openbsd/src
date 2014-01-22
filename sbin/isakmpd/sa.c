@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.118 2013/11/21 22:25:01 yasuoka Exp $	 */
+/* $OpenBSD: sa.c,v 1.119 2014/01/22 03:09:31 deraadt Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -40,8 +40,6 @@
 
 #include <regex.h>
 #include <keynote.h>
-
-#include "sysdep.h"
 
 #include "attribute.h"
 #include "conf.h"

@@ -1,4 +1,4 @@
-/* $OpenBSD: connection.c,v 1.36 2013/04/02 03:06:18 guenther Exp $	 */
+/* $OpenBSD: connection.c,v 1.37 2014/01/22 03:09:31 deraadt Exp $	 */
 /* $EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	 */
 
 /*
@@ -35,8 +35,6 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "sysdep.h"
 
 #include "conf.h"
 #include "connection.h"

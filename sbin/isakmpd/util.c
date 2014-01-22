@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.66 2013/04/24 13:46:09 deraadt Exp $	 */
+/* $OpenBSD: util.c,v 1.67 2014/01/22 03:09:31 deraadt Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -48,7 +48,6 @@
 #include "log.h"
 #include "message.h"
 #include "monitor.h"
-#include "sysdep.h"
 #include "transport.h"
 #include "util.h"
 
@@ -115,17 +114,7 @@ rand_32(void)
 u_int8_t *
 getrandom(u_int8_t *buf, size_t len)
 {
-	u_int32_t	tmp = 0;
-	size_t		i;
-
-	for (i = 0; i < len; i++) {
-		if (i % sizeof tmp == 0)
-			tmp = rand_32();
-
-		buf[i] = tmp & 0xff;
-		tmp >>= 8;
-	}
-
+	arc4random_buf(buf, len);
 	return buf;
 }
 
@@ -595,18 +584,6 @@ get_timeout(struct timeval *timeout)
 
 	return result.tv_sec;
 }
-
-
-/* Special for compiling with Boehms GC. See Makefile and sysdep.h  */
-#if defined (USE_BOEHM_GC)
-char *
-gc_strdup(const char *x)
-{
-	char *strcpy(char *,const char *);
-	char *y = malloc(strlen(x) + 1);
-	return strcpy(y,x);
-}
-#endif
 
 int
 expand_string(char *label, size_t len, const char *srch, const char *repl)

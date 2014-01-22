@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.83 2012/12/21 08:50:27 espie Exp $
+#	$OpenBSD: Makefile,v 1.84 2014/01/22 03:09:31 deraadt Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -61,13 +61,6 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
 # (/usr/ports/devel/ElectricFence)
 #LDADD+=		-L/usr/local/lib -lefence
 #DPADD+=		/usr/local/lib/libefence.a
-
-# If you like to use Boehm's garbage collector (/usr/ports/devel/boehm-gc).
-#LDADD+=		-L/usr/local/lib -lgc
-#DPADD+=		/usr/local/lib/libgc.a
-#CFLAGS+=		-DUSE_BOEHM_GC -DGC_DEBUG
-# You can also use Boehm's garbage collector as a means to find leaks.
-#  # setenv GC_FIND_LEAK
 
 # Enable for DNSSEC use
 #CFLAGS+=	USE_DNSSEC
