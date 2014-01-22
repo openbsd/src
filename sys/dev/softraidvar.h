@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.153 2014/01/22 09:03:19 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.154 2014/01/22 09:42:13 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -321,6 +321,7 @@ extern u_int32_t		sr_debug;
 #define	SR_D_META		0x0040
 #define	SR_D_DIS		0x0080
 #define	SR_D_STATE		0x0100
+#define	SR_D_REBUILD		0x0200
 #else
 #define DPRINTF(x...)
 #define DNPRINTF(n,x...)

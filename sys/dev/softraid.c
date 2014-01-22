@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.329 2014/01/22 09:03:19 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.330 2014/01/22 09:42:13 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -71,6 +71,7 @@ uint32_t	sr_debug = 0
 		    /* | SR_D_META */
 		    /* | SR_D_DIS */
 		    /* | SR_D_STATE */
+		    /* | SR_D_REBUILD */
 		;
 #endif
 
