@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readpassphrase.3,v 1.18 2013/06/05 03:39:22 tedu Exp $
+.\"	$OpenBSD: readpassphrase.3,v 1.19 2014/01/22 22:54:14 guenther Exp $
 .\"
 .\" Copyright (c) 2000, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: January 22 2014 $
 .Dt READPASSPHRASE 3
 .Os
 .Sh NAME
@@ -49,9 +49,11 @@ Up to
 Any additional
 characters and the terminating newline (or return) character are discarded.
 .Pp
-.Fn readpassphrase
-takes the following optional
-.Fa flags :
+The
+.Fa flags
+argument is the bitwise
+.Tn OR
+of zero or more of the following values:
 .Bd -literal -offset indent
 RPP_ECHO_OFF		turn off echo (default behavior)
 RPP_ECHO_ON		leave echo on

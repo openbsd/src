@@ -1,4 +1,4 @@
-.\"	$OpenBSD: regex.3,v 1.24 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: regex.3,v 1.25 2014/01/22 22:54:14 guenther Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)regex.3	8.4 (Berkeley) 3/20/94
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: January 22 2014 $
 .Dt REGEX 3
 .Os
 .Sh NAME
@@ -100,10 +100,11 @@ and places the results in the
 .Li regex_t
 structure pointed to by
 .Fa preg .
+The
 .Fa cflags
-is the bitwise
+argument is the bitwise
 .Tn OR
-of zero or more of the following flags:
+of zero or more of the following values:
 .Bl -tag -width XREG_EXTENDEDX
 .It Dv REG_EXTENDED
 Compile modern
@@ -221,7 +222,7 @@ The
 .Fa eflags
 argument is the bitwise
 .Tn OR
-of zero or more of the following flags:
+of zero or more of the following values:
 .Bl -tag -width XREG_STARTENDX
 .It Dv REG_NOTBOL
 The first character of
