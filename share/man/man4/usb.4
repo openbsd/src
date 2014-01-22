@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.147 2013/11/17 21:32:08 jmc Exp $
+.\"	$OpenBSD: usb.4,v 1.148 2014/01/22 14:31:40 jcs Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 17 2013 $
+.Dd $Mdocdate: January 22 2014 $
 .Dt USB 4
 .Os
 .Sh NAME
@@ -240,6 +240,8 @@ D-Link DSB-R100 USB radio device
 .El
 .Ss Human Interface Devices
 .Bl -tag -width 12n -offset ind -compact
+.It Xr ubcmtp 4
+Broadcom trackpad mouse
 .It Xr uhid 4
 Generic driver for Human Interface Devices
 .It Xr uhidev 4
