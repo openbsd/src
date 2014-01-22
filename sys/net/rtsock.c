@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.136 2014/01/21 10:08:02 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.137 2014/01/22 06:28:09 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -560,24 +560,10 @@ route_output(struct mbuf *m, ...)
 	if (info.rti_info[RTAX_DST] == NULL ||
 	    info.rti_info[RTAX_DST]->sa_family >= AF_MAX ||
 	    (info.rti_info[RTAX_GATEWAY] != NULL &&
-	     info.rti_info[RTAX_GATEWAY]->sa_family >= AF_MAX)) {
+	    info.rti_info[RTAX_GATEWAY]->sa_family >= AF_MAX) ||
+	    info.rti_info[RTAX_GENMASK] != NULL) {
 		error = EINVAL;
 		goto flush;
-	}
-	if (info.rti_info[RTAX_GENMASK] != NULL) {
-		struct radix_node	*t;
-		t = rn_addmask(info.rti_info[RTAX_GENMASK], 0, 1);
-		if (t && info.rti_info[RTAX_GENMASK]->sa_len >=
-		    ((struct sockaddr *)t->rn_key)->sa_len &&
-		    memcmp((caddr_t *)info.rti_info[RTAX_GENMASK] + 1,
-		    (caddr_t *)t->rn_key + 1,
-		    ((struct sockaddr *)t->rn_key)->sa_len) - 1)
-			info.rti_info[RTAX_GENMASK] =
-			    (struct sockaddr *)(t->rn_key);
-		else {
-			error = ENOBUFS;
-			goto flush;
-		}
 	}
 #ifdef MPLS
 	info.rti_mpls = rtm->rtm_mpls;
@@ -595,7 +581,6 @@ route_output(struct mbuf *m, ...)
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &saved_nrt->rt_rmx);
 			saved_nrt->rt_refcnt--;
-			saved_nrt->rt_genmask = info.rti_info[RTAX_GENMASK];
 			/* write back the priority the kernel used */
 			rtm->rtm_priority = saved_nrt->rt_priority & RTP_MASK;
 			rtm->rtm_index = saved_nrt->rt_ifp->if_index;
@@ -701,7 +686,6 @@ report:
 			info.rti_info[RTAX_DST] = rt_key(rt);
 			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 			info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-			info.rti_info[RTAX_GENMASK] = rt->rt_genmask;
 
 			if (rt->rt_labelid) {
 				bzero(&sa_rt, sizeof(sa_rt));
@@ -868,8 +852,6 @@ report:
 			rtm->rtm_flags = rt->rt_flags;
 			if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
 				rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt);
-			if (info.rti_info[RTAX_GENMASK])
-				rt->rt_genmask = info.rti_info[RTAX_GENMASK];
 			if (info.rti_info[RTAX_LABEL] != NULL) {
 				char *rtlabel = ((struct sockaddr_rtlabel *)
 				    info.rti_info[RTAX_LABEL])->sr_label;
@@ -1059,7 +1041,7 @@ again:
 	for (i = 0; i < RTAX_MAX; i++) {
 		struct sockaddr *sa;
 
-		if ((sa = rtinfo->rti_info[i]) == 0)
+		if ((sa = rtinfo->rti_info[i]) == NULL)
 			continue;
 		rtinfo->rti_addrs |= (1 << i);
 		dlen = ROUNDUP(sa->sa_len);
@@ -1280,7 +1262,6 @@ sysctl_dumpentry(struct radix_node *rn, void *v, u_int id)
 	info.rti_info[RTAX_DST] = rt_key(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-	info.rti_info[RTAX_GENMASK] = rt->rt_genmask;
 	if (rt->rt_ifp) {
 		info.rti_info[RTAX_IFP] =
 		    TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;

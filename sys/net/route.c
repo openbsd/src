@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.149 2014/01/10 14:29:08 tedu Exp $	*/
+/*	$OpenBSD: route.c,v 1.150 2014/01/22 06:28:09 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -813,8 +813,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		info->rti_flags = rt->rt_flags & ~(RTF_CLONING | RTF_STATIC);
 		info->rti_flags |= RTF_CLONED;
 		info->rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-		if ((info->rti_info[RTAX_NETMASK] = rt->rt_genmask) == NULL)
-			info->rti_flags |= RTF_HOST;
+		info->rti_flags |= RTF_HOST;
 		info->rti_info[RTAX_LABEL] =
 		    rtlabel_id2sa(rt->rt_labelid, &sa_rl2);
 		/* FALLTHROUGH */

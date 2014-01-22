@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.117 2014/01/10 14:29:08 tedu Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.118 2014/01/22 06:28:09 claudio Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -1120,8 +1120,6 @@ db_show_radix_node(struct radix_node *rn, void *w, u_int id)
 
 	db_printf(" ifa=%p\n", rt->rt_ifa);
 	db_print_ifa(rt->rt_ifa);
-
-	db_printf(" genmask="); db_print_sa(rt->rt_genmask);
 
 	db_printf(" gwroute=%p llinfo=%p\n", rt->rt_gwroute, rt->rt_llinfo);
 	db_print_llinfo(rt->rt_llinfo);
