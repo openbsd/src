@@ -1,4 +1,4 @@
-/*	$OpenBSD: viommu.c,v 1.13 2013/01/15 03:14:01 kettenis Exp $	*/
+/*	$OpenBSD: viommu.c,v 1.14 2014/01/22 10:52:35 kettenis Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ viommu_init(char *name, struct iommu_state *is, int tsbsize,
 	printf("dvma map %x-%x", is->is_dvmabase, is->is_dvmaend);
 	is->is_dvmamap = extent_create(name,
 	    is->is_dvmabase, (u_long)is->is_dvmaend + 1,
-	    M_DEVBUF, 0, 0, EX_NOWAIT);
+	    M_DEVBUF, NULL, 0, EX_NOCOALESCE);
 	mtx_init(&is->is_mtx, IPL_HIGH);
 
 	printf("\n");
@@ -356,9 +356,9 @@ viommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 	 * If our segment size is larger than the boundary we need to 
 	 * split the transfer up into little pieces ourselves.
 	 */
-	err = extent_alloc_subregion(is->is_dvmamap, sgstart, sgend,
+	err = extent_alloc_subregion_with_descr(is->is_dvmamap, sgstart, sgend,
 	    sgsize, align, 0, (sgsize > boundary) ? 0 : boundary, 
-	    EX_NOWAIT | EX_BOUNDZERO, (u_long *)&dvmaddr);
+	    EX_NOWAIT | EX_BOUNDZERO, &ims->ims_er, (u_long *)&dvmaddr);
 	mtx_leave(&is->is_mtx);
 
 #ifdef DEBUG
@@ -539,9 +539,9 @@ viommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 	 * If our segment size is larger than the boundary we need to 
 	 * split the transfer up into little pieces ourselves.
 	 */
-	err = extent_alloc_subregion(is->is_dvmamap, sgstart, sgend,
+	err = extent_alloc_subregion_with_descr(is->is_dvmamap, sgstart, sgend,
 	    sgsize, align, 0, (sgsize > boundary) ? 0 : boundary, 
-	    EX_NOWAIT | EX_BOUNDZERO, (u_long *)&dvmaddr);
+	    EX_NOWAIT | EX_BOUNDZERO, &ims->ims_er, (u_long *)&dvmaddr);
 	mtx_leave(&is->is_mtx);
 
 	if (err != 0) {

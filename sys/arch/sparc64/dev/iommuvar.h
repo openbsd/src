@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommuvar.h,v 1.15 2009/05/04 16:48:37 oga Exp $	*/
+/*	$OpenBSD: iommuvar.h,v 1.16 2014/01/22 10:52:35 kettenis Exp $	*/
 /*	$NetBSD: iommuvar.h,v 1.9 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 #include <sys/tree.h>
 #endif
 
+#include <sys/extent.h>
 #include <sys/mutex.h>
 
 /*
@@ -94,6 +95,7 @@ struct iommu_map_state {
 	struct strbuf_ctl *ims_sb;	/* Link to parent */
 	struct iommu_state *ims_iommu;
 	int ims_flags;
+	struct extent_region ims_er;
 	struct iommu_page_map ims_map;	/* map must be last (array at end) */
 };
 #define IOMMU_MAP_STREAM	1
