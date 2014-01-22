@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termcap.5,v 1.27 2013/08/08 14:36:34 millert Exp $
+.\"	$OpenBSD: termcap.5,v 1.28 2014/01/22 19:37:47 schwarze Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)termcap.5	6.11 (Berkeley) 3/6/93
 .\"
-.Dd $Mdocdate: August 8 2013 $
+.Dd $Mdocdate: January 22 2014 $
 .Dt TERMCAP 5
 .Os
 .Sh NAME
@@ -105,7 +105,7 @@ o	Indicates capability is obsolete.
 .Pp
 .Dq Obsolete
 capabilities have no
-.Em terminfo
+.Xr terminfo 5
 equivalents, since they were considered useless,
 or are subsumed by other capabilities.
 New software should not rely on them at all.
@@ -190,8 +190,7 @@ characters.
 .It hu Ta str Ta "" Ta "Half-line up (reverse 1/2 linefeed)."
 .It hz Ta bool Ta "" Ta "Cannot print ``~'' (Hazeltine)."
 .It i1-i3 Ta str Ta "" Ta "Terminal initialization strings"
-.Pf ( Xr terminfo
-only)
+.Pq Xr terminfo 5 No only
 .It IC Ta str Ta (NP*) Ta "Insert"
 .Ar n
 blank characters.
@@ -200,8 +199,7 @@ blank characters.
 .It im Ta str Ta "" Ta "Enter insert mode."
 .It in Ta bool Ta "" Ta "Insert mode distinguishes nulls."
 .It iP Ta str Ta "" Ta "Pathname of program for initialization"
-.Pf ( Xr terminfo
-only).
+.Pq Xr terminfo 5 No only
 .It ip Ta str Ta (P*) Ta "Insert pad after character inserted."
 .It is Ta str Ta "" Ta "Terminal initialization string"
 .Pf ( Nm termcap
@@ -302,14 +300,12 @@ followed by
 .Em n
 to type string
 .Em s
-.Pf ( Xr terminfo
-only).
+.Pq Xr terminfo 5 No only
 .It pl Ta str Ta "" Ta "Program function key"
 .Em n
 to execute string
 .Em s
-.Pf ( Xr terminfo
-only).
+.Pq Xr terminfo 5 No only
 .It pO Ta str Ta (N) Ta "Turn on the printer for"
 .Em n
 bytes.
@@ -321,11 +317,9 @@ bytes.
 .Em n
 to transmit string
 .Em s
-.Pf ( Xr terminfo
-only).
+.Pq Xr terminfo 5 No only
 .It r1-r3 Ta str Ta "" Ta "Reset terminal completely to sane modes"
-.Pf ( Xr terminfo
-only).
+.Pq Xr terminfo 5 No only
 .It rc Ta str Ta (P) Ta "Restore cursor to position of last"
 .Sy \&sc .
 .It rf Ta str Ta "" Ta "Name of file containing reset codes."
@@ -1529,7 +1523,7 @@ from the status line can be given as
 .Sy \&ts
 and
 .Sy \&fs .
-.Pf ( Xr \&fs
+.Pf ( Sy \&fs
 must leave the cursor position in the same place that it was before
 .Sy \&ts .
 If necessary, the
