@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_dp.c,v 1.11 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: intel_dp.c,v 1.12 2014/01/22 04:04:53 kettenis Exp $	*/
 /*
  * Copyright © 2008 Intel Corporation
  *
@@ -388,7 +388,7 @@ intel_dp_aux_ch(struct intel_dp *intel_dp,
 		else
 			aux_clock_divider = 225; /* eDP input clock at 450Mhz */
 	} else if (HAS_PCH_SPLIT(dev))
-		aux_clock_divider = howmany(intel_pch_rawclk(dev), 2);
+		aux_clock_divider = DIV_ROUND_UP(intel_pch_rawclk(dev), 2);
 	else
 		aux_clock_divider = intel_hrawclk(dev) / 2;
 
@@ -2681,7 +2681,7 @@ intel_dp_init_panel_power_sequencer(struct drm_device *dev,
 	assign_final(t11_t12);
 #undef assign_final
 
-#define get_delay(field)	(howmany(final.field, 10))
+#define get_delay(field)	(DIV_ROUND_UP(final.field, 10))
 	intel_dp->panel_power_up_delay = get_delay(t1_t3);
 	intel_dp->backlight_on_delay = get_delay(t8);
 	intel_dp->backlight_off_delay = get_delay(t9);
@@ -2717,7 +2717,7 @@ intel_dp_init_panel_power_sequencer_registers(struct drm_device *dev,
 	 * formula. */
 	pp_div = ((100 * intel_pch_rawclk(dev))/2 - 1)
 			<< PP_REFERENCE_DIVIDER_SHIFT;
-	pp_div |= (howmany(seq->t11_t12, 1000)
+	pp_div |= (DIV_ROUND_UP(seq->t11_t12, 1000)
 			<< PANEL_POWER_CYCLE_DELAY_SHIFT);
 
 	/* Haswell doesn't have any port selection bits for the panel

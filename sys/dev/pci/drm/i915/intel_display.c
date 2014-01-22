@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.19 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.20 2014/01/22 04:04:53 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -6742,7 +6742,7 @@ intel_framebuffer_create(struct drm_device *dev,
 static u32
 intel_framebuffer_pitch_for_width(int width, int bpp)
 {
-	u32 pitch = howmany(width * bpp, 8);
+	u32 pitch = DIV_ROUND_UP(width * bpp, 8);
 	return roundup2(pitch, 64);
 }
 

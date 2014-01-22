@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.c,v 1.15 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.c,v 1.16 2014/01/22 04:04:53 kettenis Exp $	*/
 /*
  * Copyright © 2008-2010 Intel Corporation
  *
@@ -1032,7 +1032,7 @@ i830_dispatch_execbuffer(struct intel_ring_buffer *ring,
 				XY_SRC_COPY_BLT_WRITE_RGB);
 		intel_ring_emit(ring, BLT_DEPTH_32 | BLT_ROP_GXCOPY | 4096);
 		intel_ring_emit(ring, 0);
-		intel_ring_emit(ring, (howmany(len, 4096) << 16) | 1024);
+		intel_ring_emit(ring, (DIV_ROUND_UP(len, 4096) << 16) | 1024);
 		intel_ring_emit(ring, cs_offset);
 		intel_ring_emit(ring, 0);
 		intel_ring_emit(ring, 4096);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.14 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.15 2014/01/22 04:04:53 kettenis Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -1000,7 +1000,7 @@ static unsigned long intel_calculate_wm(unsigned long clock_in_khz,
 	 */
 	entries_required = ((clock_in_khz / 1000) * pixel_size * latency_ns) /
 		1000;
-	entries_required = howmany(entries_required, wm->cacheline_size);
+	entries_required = DIV_ROUND_UP(entries_required, wm->cacheline_size);
 
 	DRM_DEBUG_KMS("FIFO entries required for mode: %ld\n", entries_required);
 
@@ -1131,7 +1131,7 @@ static bool g4x_compute_wm0(struct drm_device *dev,
 	tlb_miss = display->fifo_size*display->cacheline_size - hdisplay * 8;
 	if (tlb_miss > 0)
 		entries += tlb_miss;
-	entries = howmany(entries, display->cacheline_size);
+	entries = DIV_ROUND_UP(entries, display->cacheline_size);
 	*plane_wm = entries + display->guard_size;
 	if (*plane_wm > (int)display->max_wm)
 		*plane_wm = display->max_wm;
@@ -1143,7 +1143,7 @@ static bool g4x_compute_wm0(struct drm_device *dev,
 	tlb_miss = cursor->fifo_size*cursor->cacheline_size - hdisplay * 8;
 	if (tlb_miss > 0)
 		entries += tlb_miss;
-	entries = howmany(entries, cursor->cacheline_size);
+	entries = DIV_ROUND_UP(entries, cursor->cacheline_size);
 	*cursor_wm = entries + cursor->guard_size;
 	if (*cursor_wm > (int)cursor->max_wm)
 		*cursor_wm = (int)cursor->max_wm;
@@ -1219,12 +1219,12 @@ static bool g4x_compute_srwm(struct drm_device *dev,
 	small = ((clock * pixel_size / 1000) * latency_ns) / 1000;
 	large = line_count * line_size;
 
-	entries = howmany(min(small, large), display->cacheline_size);
+	entries = DIV_ROUND_UP(min(small, large), display->cacheline_size);
 	*display_wm = entries + display->guard_size;
 
 	/* calculate the self-refresh watermark for display cursor */
 	entries = line_count * pixel_size * 64;
-	entries = howmany(entries, cursor->cacheline_size);
+	entries = DIV_ROUND_UP(entries, cursor->cacheline_size);
 	*cursor_wm = entries + cursor->guard_size;
 
 	return g4x_check_srwm(dev,
@@ -1444,7 +1444,7 @@ static void i965_update_wm(struct drm_device *dev)
 		/* Use ns/us then divide to preserve precision */
 		entries = (((sr_latency_ns / line_time_us) + 1000) / 1000) *
 			pixel_size * hdisplay;
-		entries = howmany(entries, I915_FIFO_LINE_SIZE);
+		entries = DIV_ROUND_UP(entries, I915_FIFO_LINE_SIZE);
 		srwm = I965_FIFO_SIZE - entries;
 		if (srwm < 0)
 			srwm = 1;
@@ -1454,7 +1454,7 @@ static void i965_update_wm(struct drm_device *dev)
 
 		entries = (((sr_latency_ns / line_time_us) + 1000) / 1000) *
 			pixel_size * 64;
-		entries = howmany(entries,
+		entries = DIV_ROUND_UP(entries,
 					  i965_cursor_wm_info.cacheline_size);
 		cursor_sr = i965_cursor_wm_info.fifo_size -
 			(entries + i965_cursor_wm_info.guard_size);
@@ -1563,7 +1563,7 @@ static void i9xx_update_wm(struct drm_device *dev)
 		/* Use ns/us then divide to preserve precision */
 		entries = (((sr_latency_ns / line_time_us) + 1000) / 1000) *
 			pixel_size * hdisplay;
-		entries = howmany(entries, wm_info->cacheline_size);
+		entries = DIV_ROUND_UP(entries, wm_info->cacheline_size);
 		DRM_DEBUG_KMS("self-refresh entries: %d\n", entries);
 		srwm = wm_info->fifo_size - entries;
 		if (srwm < 0)
@@ -1709,18 +1709,18 @@ static bool ironlake_compute_srwm(struct drm_device *dev, int level, int plane,
 	small = ((clock * pixel_size / 1000) * latency_ns) / 1000;
 	large = line_count * line_size;
 
-	entries = howmany(min(small, large), display->cacheline_size);
+	entries = DIV_ROUND_UP(min(small, large), display->cacheline_size);
 	*display_wm = entries + display->guard_size;
 
 	/*
 	 * Spec says:
 	 * FBC WM = ((Final Primary WM * 64) / number of bytes per line) + 2
 	 */
-	*fbc_wm = howmany(*display_wm * 64, line_size) + 2;
+	*fbc_wm = DIV_ROUND_UP(*display_wm * 64, line_size) + 2;
 
 	/* calculate the self-refresh watermark for display cursor */
 	entries = line_count * pixel_size * 64;
-	entries = howmany(entries, cursor->cacheline_size);
+	entries = DIV_ROUND_UP(entries, cursor->cacheline_size);
 	*cursor_wm = entries + cursor->guard_size;
 
 	return ironlake_check_srwm(dev, level,
@@ -2086,7 +2086,7 @@ sandybridge_compute_sprite_wm(struct drm_device *dev, int plane,
 		sprite_width * 8;
 	if (tlb_miss > 0)
 		entries += tlb_miss;
-	entries = howmany(entries, display->cacheline_size);
+	entries = DIV_ROUND_UP(entries, display->cacheline_size);
 	*sprite_wm = entries + display->guard_size;
 	if (*sprite_wm > (int)display->max_wm)
 		*sprite_wm = display->max_wm;
@@ -2132,7 +2132,7 @@ sandybridge_compute_sprite_srwm(struct drm_device *dev, int plane,
 	small = ((clock * pixel_size / 1000) * latency_ns) / 1000;
 	large = line_count * line_size;
 
-	entries = howmany(min(small, large), display->cacheline_size);
+	entries = DIV_ROUND_UP(min(small, large), display->cacheline_size);
 	*sprite_wm = entries + display->guard_size;
 
 	return *sprite_wm > 0x3ff ? false : true;
