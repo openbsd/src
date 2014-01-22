@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.70 2014/01/19 22:48:00 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.71 2014/01/22 20:58:35 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1656,7 +1656,7 @@ static void
 render_key(struct mchars *mc, struct str *key)
 {
 	size_t		 sz, bsz, pos;
-	char		 utfbuf[7], res[5];
+	char		 utfbuf[7], res[6];
 	char		*buf;
 	const char	*seq, *cpp, *val;
 	int		 len, u;
@@ -1668,7 +1668,8 @@ render_key(struct mchars *mc, struct str *key)
 	res[1] = '\t';
 	res[2] = ASCII_NBRSP;
 	res[3] = ASCII_HYPH;
-	res[4] = '\0';
+	res[4] = ASCII_BREAK;
+	res[5] = '\0';
 
 	val = key->key;
 	bsz = strlen(val);
@@ -1699,15 +1700,23 @@ render_key(struct mchars *mc, struct str *key)
 			val += sz;
 		}
 
-		if (ASCII_HYPH == *val) {
+		switch (*val) {
+		case (ASCII_HYPH):
 			buf[pos++] = '-';
 			val++;
 			continue;
-		} else if ('\t' == *val || ASCII_NBRSP == *val) {
+		case ('\t'):
+			/* FALLTHROUGH */
+		case (ASCII_NBRSP):
 			buf[pos++] = ' ';
 			val++;
+			/* FALLTHROUGH */
+		case (ASCII_BREAK):
 			continue;
-		} else if ('\\' != *val)
+		default:
+			break;
+		}
+		if ('\\' != *val)
 			break;
 
 		/* Read past the slash. */

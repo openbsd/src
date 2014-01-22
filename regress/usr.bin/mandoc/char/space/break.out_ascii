@@ -1,0 +1,12 @@
+CHAR-BREAK(1)              OpenBSD Reference Manual              CHAR-BREAK(1)
+
+NNAAMMEE
+     cchhaarr--bbrreeaakk - optional line-break
+
+DDEESSCCRRIIPPTTIIOONN
+           cons25,linux,rxvt,rxvt-unicode,sun,vt100,vt220,wsvt25,xterm,
+           xterm-color
+
+     end of text
+
+OpenBSD                         January 8, 2014                        OpenBSD

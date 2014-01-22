@@ -1,0 +1,11 @@
+.Dd January 8, 2014
+.Dt CHAR-BREAK 1
+.Os OpenBSD
+.Sh NAME
+.Nm char-break
+.Nd optional line-break
+.Sh DESCRIPTION
+.Dl cons25,linux,rxvt,rxvt-unicode,\:sun,\:vt100,\:vt220,\:\
+wsvt25,\:xterm,\:xterm-color
+.Pp
+end of text

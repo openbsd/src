@@ -1,7 +1,7 @@
-/*	$Id: term.c,v 1.76 2013/12/31 18:07:06 schwarze Exp $ */
+/*	$Id: term.c,v 1.77 2014/01/22 20:58:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -175,7 +175,8 @@ term_flushln(struct termp *p)
 			/* Regular word. */
 			/* Break at the hyphen point if we overrun. */
 			if (vend > vis && vend < bp && 
-					ASCII_HYPH == p->buf[j])
+			    (ASCII_HYPH == p->buf[j] ||
+			     ASCII_BREAK == p->buf[j]))
 				jhy = j;
 
 			vend += (*p->width)(p, p->buf[j]);
@@ -229,6 +230,8 @@ term_flushln(struct termp *p)
 				vbl += (*p->width)(p, ' ');
 				continue;
 			}
+			if (ASCII_BREAK == p->buf[i])
+				continue;
 
 			/*
 			 * Now we definitely know there will be
@@ -640,7 +643,8 @@ term_strlen(const struct termp *p, const char *cp)
 	int		 ssz, skip, c;
 	const char	*seq, *rhs;
 	enum mandoc_esc	 esc;
-	static const char rej[] = { '\\', ASCII_HYPH, ASCII_NBRSP, '\0' };
+	static const char rej[] = { '\\', ASCII_NBRSP, ASCII_HYPH,
+			ASCII_BREAK, '\0' };
 
 	/*
 	 * Account for escaped sequences within string length
@@ -728,6 +732,8 @@ term_strlen(const struct termp *p, const char *cp)
 		case (ASCII_HYPH):
 			sz += cond_width(p, '-', &skip);
 			cp++;
+			/* FALLTHROUGH */
+		case (ASCII_BREAK):
 			break;
 		default:
 			break;

@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.58 2014/01/05 20:26:27 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.59 2014/01/22 20:58:35 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -20,6 +20,7 @@
 
 #define ASCII_NBRSP	 31  /* non-breaking space */
 #define	ASCII_HYPH	 30  /* breakable hyphen */
+#define	ASCII_BREAK	 29  /* breakable zero-width space */
 
 /*
  * Status level.  This refers to both internal status (i.e., whilst
