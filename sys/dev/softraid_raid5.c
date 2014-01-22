@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.9 2014/01/22 04:24:29 jsing Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.10 2014/01/22 04:47:15 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -354,6 +354,17 @@ sr_raid5_chunk_online(struct sr_discipline *sd, int chunk)
 	}
 }
 
+static inline int
+sr_raid5_chunk_rebuild(struct sr_discipline *sd, int chunk)
+{
+	switch (sd->sd_vol.sv_chunks[chunk]->src_meta.scm_status) {
+	case BIOC_SDREBUILD:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
 int
 sr_raid5_rw(struct sr_workunit *wu)
 {
@@ -531,7 +542,9 @@ sr_raid5_write(struct sr_workunit *wu, struct sr_workunit *wu_r, int chunk,
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	void			*xorbuf;
-	int			chunk_online, parity_online, other_offline = 0;
+	int			chunk_online, chunk_rebuild;
+	int			parity_online, parity_rebuild;
+	int			other_offline = 0, other_rebuild = 0;
 	int			i;
 
 	/*
@@ -557,6 +570,12 @@ sr_raid5_write(struct sr_workunit *wu, struct sr_workunit *wu_r, int chunk,
 	 *    xoring in the new data. This requires that the parity already be
 	 *    correct, which it will be if any of the data chunks has
 	 *    previously been written.
+	 *
+	 * There is an additional complication introduced by a chunk that is
+	 * being rebuilt. If this is the data or parity chunk, then we want
+	 * to write to it as per normal. If it is another data chunk then we
+	 * need to presume that it has not yet been regenerated and use the
+	 * same method as detailed in (4) above.
 	 */
 
 	DNPRINTF(SR_D_DIS, "%s: %s sr_raid5_write chunk %i parity %i "
@@ -564,12 +583,16 @@ sr_raid5_write(struct sr_workunit *wu, struct sr_workunit *wu_r, int chunk,
 	    chunk, parity, (unsigned long long)blkno);
 
 	chunk_online = sr_raid5_chunk_online(sd, chunk);
+	chunk_rebuild = sr_raid5_chunk_rebuild(sd, chunk);
 	parity_online = sr_raid5_chunk_online(sd, parity);
+	parity_rebuild = sr_raid5_chunk_rebuild(sd, parity);
 
 	for (i = 0; i < sd->sd_meta->ssdi.ssd_chunk_no; i++) {
 		if (i == chunk || i == parity)
 			continue;
-		if (!sr_raid5_chunk_online(sd, i))
+		if (sr_raid5_chunk_rebuild(sd, i))
+			other_rebuild = 1;
+		else if (!sr_raid5_chunk_online(sd, i))
 			other_offline = 1;
 	}
 
@@ -577,7 +600,7 @@ sr_raid5_write(struct sr_workunit *wu, struct sr_workunit *wu_r, int chunk,
 	    "other offline %d\n", DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
 	    chunk_online, parity_online, other_offline);
 
-	if (!parity_online)
+	if (!parity_online && !parity_rebuild)
 		goto data_write;
 
 	xorbuf = sr_block_get(sd, len);
@@ -585,7 +608,7 @@ sr_raid5_write(struct sr_workunit *wu, struct sr_workunit *wu_r, int chunk,
 		goto bad;
 	memcpy(xorbuf, data, len);
 
-	if (other_offline) {
+	if (other_offline || other_rebuild) {
 
 		/*
 		 * XXX - If we can guarantee that this LBA has been scrubbed
@@ -620,7 +643,7 @@ sr_raid5_write(struct sr_workunit *wu, struct sr_workunit *wu_r, int chunk,
 
 data_write:
 	/* Write new data. */
-	if (chunk_online)
+	if (chunk_online || chunk_rebuild)
 		if (sr_raid5_addio(wu, chunk, blkno, len, data, xs->flags,
 		    0, NULL))
 			goto bad;
