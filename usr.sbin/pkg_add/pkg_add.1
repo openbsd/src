@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.121 2014/01/17 11:09:36 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.122 2014/01/22 01:29:33 juanfra Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: January 17 2014 $
+.Dd $Mdocdate: January 22 2014 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -138,9 +138,17 @@ The following examples are valid:
 .Pp
 If the given package names are not found in the current working directory,
 .Nm
-will search for them in each directory named by the
+will search for them in each directory (local or remote) named by the
 .Ev PKG_PATH
 environment variable.
+If
+.Ev PKG_PATH
+is not defined,
+.Nm
+will use the path named by
+.Ar installpath
+within
+.Xr pkg.conf 5 .
 Specifying
 .Ql -
 as a package name causes
