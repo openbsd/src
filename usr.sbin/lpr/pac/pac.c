@@ -1,4 +1,4 @@
-/*	$OpenBSD: pac.c,v 1.20 2013/11/24 21:32:32 deraadt Exp $ */
+/*	$OpenBSD: pac.c,v 1.21 2014/01/22 09:50:51 jsg Exp $ */
 /*	$NetBSD: pac.c,v 1.14 2000/04/27 13:40:18 msaitoh Exp $	*/
 
 /*
@@ -297,6 +297,8 @@ dumpit(void)
 		printf("%-24s %7.2f %4d   $%6.2f\n", "total", feet, 
 		    runs, feet * price);
 	}
+
+	free(base);
 }
 
 /*
