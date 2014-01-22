@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.3 2013/10/17 08:02:15 deraadt Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.4 2014/01/22 09:26:55 jsing Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -32,18 +32,18 @@
  */
 
 #include <sys/param.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <time.h>
-#ifdef __OpenBSD__
-#include <err.h>
-#endif
-
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+
+#include <ctype.h>
+#include <err.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #ifndef hppa
 /* hack for cross compile XXX */
@@ -51,9 +51,6 @@
 #else
 #include <sys/disklabel.h>
 #endif
-
-#include <stdio.h>
-#include <ctype.h>
 
 int putfile(char *, int);
 void __dead usage(void);
@@ -64,9 +61,6 @@ int cksum(int, int *, int);
 char *to_file;
 int loadpoint, verbose;
 u_long entry;
-#ifndef __OpenBSD__
-char *__progname = "mkboot";
-#endif
 
 /*
  * Old Format:
@@ -178,13 +172,11 @@ main(int argc, char **argv)
 	if (close(to) < 0)
 		err(1, "%s", to_file);
 
-	return(0);
+	return (0);
 }
 
 int
-putfile(from_file, to)
-	char *from_file;
-	int to;
+putfile(char *from_file, int to)
 {
 	struct exec ex;
 	register int n, total;
@@ -315,10 +307,7 @@ putfile(from_file, to)
 }
 
 int
-cksum(ck, p, size)
-	int ck;
-	int *p;
-	int size;
+cksum(int ck, int *p, int size)
 {
 	/* we assume size is int-aligned */
 	for (size = (size + sizeof(int) - 1) / sizeof(int); size--; p++ )
@@ -328,7 +317,7 @@ cksum(ck, p, size)
 }
 
 void __dead
-usage()
+usage(void)
 {
 	extern char *__progname;
 	fprintf(stderr,
@@ -338,8 +327,7 @@ usage()
 }
 
 char *
-lifname(str)
-	char *str;
+lifname(char *str)
 {
 	static char lname[10] = "XXXXXXXXXX";
 	register int i;
@@ -360,26 +348,10 @@ lifname(str)
 
 
 void
-bcddate(file, toc)
-	char *file;
-	char *toc;
+bcddate(char *file, char *toc)
 {
 	struct stat statb;
-#ifndef __OpenBSD__
-	struct tm {
-		int tm_sec;    /* second (0-61, allows for leap seconds) */
-		int tm_min;    /* minute (0-59) */
-		int tm_hour;   /* hour (0-23) */
-		int tm_mday;   /* day of the month (1-31) */
-		int tm_mon;    /* month (0-11) */
-		int tm_year;   /* years since 1900 */
-		int tm_wday;   /* day of the week (0-6) */
-		int tm_yday;   /* day of the year (0-365) */
-		int tm_isdst;  /* non-0 if daylight saving time is in effect */
-	} *tm;
-#else
 	struct tm *tm;
-#endif
 
 	stat(file, &statb);
 	tm = localtime(&statb.st_ctime);
@@ -396,23 +368,3 @@ bcddate(file, toc)
 	*toc = (tm->tm_sec / 10) << 4;
 	*toc |= tm->tm_sec % 10;
 }
-
-#ifndef __OpenBSD__
-int
-err(ex, str)
-	int ex;
-	char *str;
-{
-	perror(str);
-	exit(ex);
-}
-
-int
-errx(ex, str)
-	int ex;
-	char *str;
-{
-	perror(str);
-	exit(ex);
-}
-#endif
