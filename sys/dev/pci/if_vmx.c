@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.15 2013/11/11 07:19:53 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -270,10 +270,11 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = vmxnet3_start;
 	ifp->if_watchdog = vmxnet3_watchdog;
 	ifp->if_hardmtu = VMXNET3_MAX_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 	if (sc->sc_ds->upt_features & UPT1_F_CSUM)
 		ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 	if (sc->sc_ds->upt_features & UPT1_F_VLAN)
-		ifp->if_capabilities |= IFCAP_VLAN_MTU | IFCAP_VLAN_HWTAGGING;
+		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 
 	IFQ_SET_MAXLEN(&ifp->if_snd, NTXDESC);
 	IFQ_SET_READY(&ifp->if_snd);
@@ -791,30 +792,36 @@ vmxnet3_iff(struct vmxnet3_softc *sc)
 	u_int mode;
 	u_int8_t *p;
 
-	mode = VMXNET3_RXMODE_UCAST;
-	if (ISSET(ifp->if_flags, IFF_BROADCAST))
-		SET(mode, VMXNET3_RXMODE_BCAST);
-	if (ISSET(ifp->if_flags, IFF_PROMISC))
-		SET(mode, VMXNET3_RXMODE_PROMISC);
-
+	ds->mcast_tablelen = 0;
 	CLR(ifp->if_flags, IFF_ALLMULTI);
+
+	/*
+	 * Always accept broadcast frames.
+	 * Always accept frames destined to our station address.
+	 */
+	mode = VMXNET3_RXMODE_BCAST | VMXNET3_RXMODE_UCAST;
+
 	if (ISSET(ifp->if_flags, IFF_PROMISC) || ac->ac_multirangecnt > 0 ||
 	    ac->ac_multicnt > 682) {
 		SET(ifp->if_flags, IFF_ALLMULTI);
-		SET(mode, VMXNET3_RXMODE_MCAST | VMXNET3_RXMODE_ALLMULTI);
-		ds->mcast_tablelen = 0;
-	} else if (ISSET(ifp->if_flags, IFF_MULTICAST) &&
-	    ac->ac_multicnt > 0) {
+		SET(mode, (VMXNET3_RXMODE_ALLMULTI | VMXNET3_RXMODE_MCAST));
+		if (ifp->if_flags & IFF_PROMISC)
+			SET(mode, VMXNET3_RXMODE_PROMISC);
+	} else {
 		p = sc->sc_mcast;
 		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
 			bcopy(enm->enm_addrlo, p, ETHER_ADDR_LEN);
+
 			p += ETHER_ADDR_LEN;
+
 			ETHER_NEXT_MULTI(step, enm);
 		}
-		ds->mcast_tablelen = p - sc->sc_mcast;
 
-		SET(mode, VMXNET3_RXMODE_MCAST);
+		if (ac->ac_multicnt > 0) {
+			SET(mode, VMXNET3_RXMODE_MCAST);
+			ds->mcast_tablelen = p - sc->sc_mcast;
+		}
 	}
 
 	WRITE_CMD(sc, VMXNET3_CMD_SET_FILTER);
@@ -829,24 +836,17 @@ vmxnet3_rx_csum(struct vmxnet3_rxcompdesc *rxcd, struct mbuf *m)
 	if (letoh32(rxcd->rxc_word0 & VMXNET3_RXC_NOCSUM))
 		return;
 
-	if ((rxcd->rxc_word3 & (VMXNET3_RXC_IPV4|VMXNET3_RXC_IPSUM_OK)) ==
-	    (VMXNET3_RXC_IPV4|VMXNET3_RXC_IPSUM_OK))
+	if ((rxcd->rxc_word3 & (VMXNET3_RXC_IPV4 | VMXNET3_RXC_IPSUM_OK)) ==
+	    (VMXNET3_RXC_IPV4 | VMXNET3_RXC_IPSUM_OK))
 		m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
 
 	if (rxcd->rxc_word3 & VMXNET3_RXC_FRAGMENT)
 		return;
 
-	if (rxcd->rxc_word3 & VMXNET3_RXC_TCP) {
+	if (rxcd->rxc_word3 & (VMXNET3_RXC_TCP | VMXNET3_RXC_UDP)) {
 		if (rxcd->rxc_word3 & VMXNET3_RXC_CSUM_OK)
-			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
-		else
-			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_BAD;
-	}
-	if (rxcd->rxc_word3 & VMXNET3_RXC_UDP) {
-		if (rxcd->rxc_word3 & VMXNET3_RXC_CSUM_OK)
-			m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
-		else
-			m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_BAD;
+			m->m_pkthdr.csum_flags |=
+			    M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 	}
 }
 
