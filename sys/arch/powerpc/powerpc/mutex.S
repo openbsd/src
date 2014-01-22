@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.14 2011/08/29 20:21:44 drahn Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.15 2014/01/22 11:01:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn
@@ -24,7 +24,7 @@
 /* XXX */
 #define GET_CPUINFO(r)	mfsprg r,0
 
-ENTRY(mtx_init)
+ENTRY(__mtx_init)
 	li	%r5,0
 	stw	%r4,MTX_WANTIPL(%r3)
 	stw	%r5,MTX_OLDCPL(%r3)

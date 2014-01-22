@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.2 2007/05/05 12:06:19 miod Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.3 2014/01/22 11:01:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -33,8 +33,26 @@ struct mutex {
 	__volatile void *mtx_owner;
 };
 
-#define MUTEX_INITIALIZER(ipl) { (ipl), 0, NULL }
+/*
+ * To prevent lock ordering problems with the kernel lock, we need to
+ * make sure we block all interrupts that can grab the kernel lock.
+ * The simplest way to achieve this is to make sure mutexes always
+ * raise the interrupt priority level to the highest level that has
+ * interrupts that grab the kernel lock.
+ */
+#ifdef MULTIPROCESSOR
+#define __MUTEX_IPL(ipl) \
+    (((ipl) > IPL_NONE && (ipl) < IPL_TTY) ? IPL_TTY : (ipl))
+#else
+#define __MUTEX_IPL(ipl) (ipl)
+#endif
 
+#define MUTEX_INITIALIZER(ipl) { __MUTEX_IPL((ipl)), 0, NULL }
+
+void __mtx_init(struct mutex *, int);
+#define mtx_init(mtx, ipl) __mtx_init((mtx), __MUTEX_IPL((ipl)))
+
+#ifdef DIAGNOSTIC
 #define MUTEX_ASSERT_LOCKED(mtx) do {					\
 	if ((mtx)->mtx_owner != curcpu())				\
 		panic("mutex %p not held in %s", (mtx), __func__);	\
@@ -44,6 +62,10 @@ struct mutex {
 	if ((mtx)->mtx_owner == curcpu())				\
 		panic("mutex %p held in %s", (mtx), __func__);		\
 } while (0)
+#else
+#define MUTEX_ASSERT_LOCKED(mtx) do { } while (0)
+#define MUTEX_ASSERT_UNLOCKED(mtx) do { } while (0)
+#endif
 
 #define MUTEX_OLDIPL(mtx)	(mtx)->mtx_oldcpl
 
