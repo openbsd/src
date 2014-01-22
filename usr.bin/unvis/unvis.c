@@ -1,4 +1,4 @@
-/*	$OpenBSD: unvis.c,v 1.11 2013/11/27 13:32:02 okan Exp $	*/
+/*	$OpenBSD: unvis.c,v 1.12 2014/01/22 09:45:21 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -55,9 +55,10 @@ main(int argc, char *argv[])
 
 	if (*argv)
 		while (*argv) {
-			if ((fp=fopen(*argv, "r")) != NULL)
+			if ((fp=fopen(*argv, "r")) != NULL) {
 				process(fp, *argv);
-			else
+				fclose(fp);
+			} else
 				warn("%s", *argv);
 			argv++;
 		}
