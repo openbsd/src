@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.2 2014/01/20 18:55:14 jcs Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.3 2014/01/22 03:19:04 jsg Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -737,7 +737,7 @@ ubcmtp_tp_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		DPRINTF("%s: %s with status 0x%x\n", sc->sc_dev.dv_xname,
-		    __func__);
+		    __func__, status);
 
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
