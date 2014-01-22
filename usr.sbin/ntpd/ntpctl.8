@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpctl.8,v 1.5 2014/01/10 22:54:12 deraadt Exp $
+.\" $OpenBSD: ntpctl.8,v 1.6 2014/01/22 02:55:15 benno Exp $
 .\"
 .\" Copyright (c) 2012 Mike Miller <mmiller@mgm51.com>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 10 2014 $
+.Dd $Mdocdate: January 22 2014 $
 .Dt NTPCTL 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd control the Network Time Protocol daemon
 .Sh SYNOPSIS
 .Nm ntpctl
-.Op Fl s Cm all | peers | sensors | status
+.Op Fl s Cm all | peers | Sensors | status
 .Sh DESCRIPTION
 The
 .Nm
@@ -30,7 +30,7 @@ program displays information about the running
 .Xr ntpd 8
 daemon.
 .Pp
-The options are as follows:
+The options (which may be abbreviated) are as follows:
 .Bl -tag -width "-s modifierX"
 .It Fl s Cm all
 Show all data.
@@ -40,7 +40,7 @@ stratum, number of seconds until the next poll, polling interval
 in seconds, and offset, network delay and network jitter in milliseconds.
 When the system clock is synced to a peer, an asterisk
 is displayed to the left of the weight column for that peer.
-.It Fl s Cm sensors
+.It Fl s Cm Sensors
 Show the following information about each sensor: weight, sensor "good"
 status, stratum, and offset and the configured correction in
 milliseconds.

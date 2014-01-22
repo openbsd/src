@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.108 2013/10/04 14:28:16 phessler Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.109 2014/01/22 02:55:15 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -263,7 +263,6 @@ enum imsg_type {
 };
 
 enum ctl_actions {
-	CTL_SHOW,
 	CTL_SHOW_STATUS,
 	CTL_SHOW_PEERS,
 	CTL_SHOW_SENSORS,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.76 2014/01/10 22:54:12 deraadt Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.77 2014/01/22 02:55:15 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -47,6 +47,7 @@ void		ntpd_settime(double);
 void		readfreq(void);
 int		writefreq(double);
 void		ctl_main(int, char*[]);
+const char     *ctl_lookup_option(char *, const char **);
 void		show_status_msg(struct imsg *);
 void		show_peer_msg(struct imsg *, int);
 void		show_sensor_msg(struct imsg *, int);
@@ -57,6 +58,12 @@ volatile sig_atomic_t	 sigchld = 0;
 struct imsgbuf		*ibuf;
 int			 debugsyslog = 0;
 int			 timeout = INFTIM;
+
+const char		*showopt;
+
+static const char *ctl_showopt_list[] = {
+	"peers", "Sensors", "status", "all", NULL
+};
 
 void
 sighdlr(int sig)
@@ -81,7 +88,7 @@ usage(void)
 	extern char *__progname;
 
 	if (strcmp(__progname, "ntpctl") == 0)
-		fprintf(stderr, "usage: ntpctl [-s all | peers | sensors | status]\n");
+		fprintf(stderr, "usage: ntpctl [-s all | peers | Sensors | status]\n");
 	else
 		fprintf(stderr, "usage: %s [-dnSsv] [-f file]\n",
 		    __progname);
@@ -518,9 +525,8 @@ ctl_main(int argc, char *argv[])
 	struct sockaddr_un	 sun;
 	struct imsg		 imsg;
 	struct imsgbuf		*ibuf_ctl;
-	int			 fd, n, done, ch;
-	int			 do_what, action;
-	char			*sockname, *show_what;
+	int			 fd, n, done, ch, action;
+	char			*sockname;
 
 	sockname = CTLSOCKET;
 
@@ -529,11 +535,14 @@ ctl_main(int argc, char *argv[])
 		/* NOTREACHED */
 	}
 
-	do_what = -1;
 	while ((ch = getopt(argc, argv, "s:")) != -1) {
 		switch (ch) {
 		case 's':
-			do_what = CTL_SHOW;
+			showopt = ctl_lookup_option(optarg, ctl_showopt_list);
+			if (showopt == NULL) {
+				warnx("Unknown show modifier '%s'", optarg);
+				usage();
+			}
 			break;
 		default:
 			usage();
@@ -542,17 +551,21 @@ ctl_main(int argc, char *argv[])
 	}
 
 	action = -1;
-	if (do_what == CTL_SHOW) {
-		show_what = argv[argc - 1];
-		if (strcmp(show_what, "peers") == 0)
+	if (showopt != NULL) {
+		switch (*showopt) {
+		case 'p':
 			action = CTL_SHOW_PEERS;
-		else if (strcmp(show_what, "sensors") == 0)
-			action = CTL_SHOW_SENSORS;
-		else if (strcmp(show_what, "status") == 0)
+			break;
+		case 's':
 			action = CTL_SHOW_STATUS;
-		else if (strcmp(show_what, "all") == 0)
+			break;
+		case 'S':
+			action = CTL_SHOW_SENSORS;
+			break;
+		case 'a':
 			action = CTL_SHOW_ALL;
-		else {
+			break;
+		default:
 			usage();
 			/* NOTREACHED */
 		}
@@ -662,6 +675,21 @@ ctl_main(int argc, char *argv[])
 	close(fd);
 	free(ibuf_ctl);
 	exit (0);
+}
+
+const char *
+ctl_lookup_option(char *cmd, const char **list)
+{
+	const char *item = NULL;
+	if (cmd != NULL && *cmd)
+		for (; *list; list++)
+			if (!strncmp(cmd, *list, strlen(cmd))) {
+				if (item == NULL)
+					item = *list;
+				else
+					errx(1, "%s is ambigious", cmd);
+			}
+	return (item);
 }
 
 void
