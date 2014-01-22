@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.10 2014/01/22 04:47:15 jsing Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.11 2014/01/22 05:11:36 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -67,7 +67,6 @@ int	sr_raid5_write(struct sr_workunit *, struct sr_workunit *, int, int,
 	    daddr_t, daddr_t, void *, int, int);
 void	sr_raid5_xor(void *, void *, int);
 
-void	sr_dump(void *, int);
 void	sr_raid5_scrub(struct sr_discipline *);
 
 /* discipline initialisation. */
@@ -748,26 +747,6 @@ sr_raid5_addio(struct sr_workunit *wu, int chunk, daddr_t blkno,
 	sr_wu_enqueue_ccb(wu, ccb);
 
 	return (0);
-}
-
-void
-sr_dump(void *blk, int len)
-{
-	uint8_t			*b = blk;
-	int			i, j, c;
-
-	for (i = 0; i < len; i += 16) {
-		for (j = 0; j < 16; j++)
-			printf("%.2x ", b[i + j]);
-		printf("  ");
-		for (j = 0; j < 16; j++) {
-			c = b[i + j];
-			if (c < ' ' || c > 'z' || i + j > len)
-				c = '.';
-			printf("%c", c);
-		}
-		printf("\n");
-	}
 }
 
 void

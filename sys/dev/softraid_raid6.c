@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.60 2014/01/22 04:24:29 jsing Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.61 2014/01/22 05:11:36 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -66,7 +66,6 @@ void	sr_raid6_xorp(void *, void *, int);
 void	sr_raid6_xorq(void *, void *, int, int);
 int	sr_raid6_addio(struct sr_workunit *wu, int, daddr_t, daddr_t,
 	    void *, int, int, void *, void *, int);
-void	sr_dump(void *, int);
 void	sr_raid6_scrub(struct sr_discipline *);
 int	sr_failio(struct sr_workunit *);
 

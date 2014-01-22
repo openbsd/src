@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.326 2014/01/22 04:24:29 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.327 2014/01/22 05:11:36 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -4912,6 +4912,26 @@ sr_meta_print(struct sr_metadata *m)
 		printf("\n");
 		omh = (struct sr_meta_opt_hdr *)((void *)omh +
 		    omh->som_length);
+	}
+}
+
+void
+sr_dump_block(void *blk, int len)
+{
+	uint8_t			*b = blk;
+	int			i, j, c;
+
+	for (i = 0; i < len; i += 16) {
+		for (j = 0; j < 16; j++)
+			printf("%.2x ", b[i + j]);
+		printf("  ");
+		for (j = 0; j < 16; j++) {
+			c = b[i + j];
+			if (c < ' ' || c > 'z' || i + j > len)
+				c = '.';
+			printf("%c", c);
+		}
+		printf("\n");
 	}
 }
 

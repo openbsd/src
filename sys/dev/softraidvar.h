@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.151 2014/01/22 04:24:29 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.152 2014/01/22 05:11:36 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -730,6 +730,7 @@ struct sr_chunk *	sr_crypto_create_key_disk(struct sr_discipline *, dev_t);
 struct sr_chunk *	sr_crypto_read_key_disk(struct sr_discipline *, dev_t);
 
 #ifdef SR_DEBUG
+void			sr_dump_block(void *, int);
 void			sr_dump_mem(u_int8_t *, int);
 #endif
 
