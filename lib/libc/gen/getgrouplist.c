@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrouplist.c,v 1.22 2013/04/17 17:40:35 tedu Exp $ */
+/*	$OpenBSD: getgrouplist.c,v 1.23 2014/01/22 09:58:28 jsg Exp $ */
 /*
  * Copyright (c) 2008 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 1991, 1993
@@ -215,6 +215,7 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 			ret = -1;
 			/* FALLTHROUGH */
 		case 1:
+			free(key);
 			goto out;
 		default:
 			break;
