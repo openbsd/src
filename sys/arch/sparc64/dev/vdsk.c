@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.35 2014/01/22 22:24:12 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.36 2014/01/22 23:57:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -120,6 +120,7 @@ void	vdsk_dring_free(bus_dma_tag_t, struct vdsk_dring *);
 struct vdsk_soft_desc {
 	int		vsd_map_idx[MAXPHYS / PAGE_SIZE];
 	struct scsi_xfer *vsd_xs;
+	int		vsd_ncookies;
 };
 
 struct vdsk_softc {
@@ -703,19 +704,16 @@ vdsk_rx_vio_dring_data(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 		struct ldc_map *map = sc->sc_lm;
 		int cons, error;
 		int cookie, idx;
-		int len;
 
 		cons = sc->sc_tx_cons;
 		while (sc->sc_vd->vd_desc[cons].hdr.dstate == VIO_DESC_DONE) {
 			xs = sc->sc_vsd[cons].vsd_xs;
 
 			cookie = 0;
-			len = xs->datalen;
-			while (len > 0) {
+			while (cookie < sc->sc_vsd[cons].vsd_ncookies) {
 				idx = sc->sc_vsd[cons].vsd_map_idx[cookie++];
 				map->lm_slot[idx].entry = 0;
 				map->lm_count--;
-				len -= PAGE_SIZE;
 			}
 
 			error = XS_NOERROR;
@@ -1042,6 +1040,7 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 	struct vio_dring_msg dm;
 	vaddr_t va;
 	paddr_t pa;
+	psize_t nbytes;
 	int len, ncookies;
 	int desc, s;
 	int timeout;
@@ -1053,6 +1052,7 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 	len = xs->datalen;
 	va = (vaddr_t)xs->data;
 	while (len > 0) {
+		KASSERT(ncookies < MAXPHYS / PAGE_SIZE);
 		pmap_extract(pmap_kernel(), va, &pa);
 		while (map->lm_slot[map->lm_next].entry != 0) {
 			map->lm_next++;
@@ -1064,14 +1064,15 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 		map->lm_slot[map->lm_next].entry |= LDC_MTE_R | LDC_MTE_W;
 		map->lm_count++;
 
+		nbytes = MIN(len, PAGE_SIZE - (pa & PAGE_MASK));
+
 		sc->sc_vd->vd_desc[desc].cookie[ncookies].addr =
 		    map->lm_next << PAGE_SHIFT | (pa & PAGE_MASK);
-		sc->sc_vd->vd_desc[desc].cookie[ncookies].size =
-		    min(len, PAGE_SIZE);
+		sc->sc_vd->vd_desc[desc].cookie[ncookies].size = nbytes;
 
 		sc->sc_vsd[desc].vsd_map_idx[ncookies] = map->lm_next;
-		va += PAGE_SIZE;
-		len -= PAGE_SIZE;
+		va += nbytes;
+		len -= nbytes;
 		ncookies++;
 	}
 
@@ -1086,6 +1087,7 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 	sc->sc_vd->vd_desc[desc].hdr.dstate = VIO_DESC_READY;
 
 	sc->sc_vsd[desc].vsd_xs = xs;
+	sc->sc_vsd[desc].vsd_ncookies = ncookies;
 
 	sc->sc_tx_prod++;
 	sc->sc_tx_prod &= (sc->sc_vd->vd_nentries - 1);
