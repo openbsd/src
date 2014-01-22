@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.c,v 1.2 2005/07/20 16:16:04 art Exp $	*/
+/*	$OpenBSD: ptrace.c,v 1.3 2014/01/22 00:36:31 guenther Exp $	*/
 /*
  * Copyright (c) 2005 Artur Grabowski <art@openbsd.org>
  *
@@ -21,6 +21,7 @@
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
