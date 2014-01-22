@@ -1,4 +1,4 @@
-.\"     $OpenBSD: route.9,v 1.7 2014/01/20 05:07:49 schwarze Exp $
+.\"     $OpenBSD: route.9,v 1.8 2014/01/22 06:25:52 claudio Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 20 2014 $
+.Dd $Mdocdate: January 22 2014 $
 .Dt ROUTE 9
 .Os
 .Sh NAME
@@ -92,7 +92,6 @@ struct rt_addrinfo {
 #define RTAX_DST	0	/* destination sockaddr present */
 #define RTAX_GATEWAY	1	/* gateway sockaddr present */
 #define RTAX_NETMASK	2	/* netmask sockaddr present */
-#define RTAX_GENMASK	3	/* cloning mask sockaddr present */
 #define RTAX_IFP	4	/* interface name sockaddr present */
 #define RTAX_IFA	5	/* interface addr sockaddr present */
 #define RTAX_AUTHOR	6	/* sockaddr for author of redirect */

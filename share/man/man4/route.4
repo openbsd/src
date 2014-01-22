@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.35 2013/11/17 00:40:50 bluhm Exp $
+.\"	$OpenBSD: route.4,v 1.36 2014/01/22 06:25:52 claudio Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)route.4	8.6 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: November 17 2013 $
+.Dd $Mdocdate: January 22 2014 $
 .Dt ROUTE 4
 .Os
 .Sh NAME
@@ -397,7 +397,6 @@ Specifiers for which addresses are present in the messages are:
 #define RTA_DST		0x1	/* destination sockaddr present */
 #define RTA_GATEWAY	0x2	/* gateway sockaddr present */
 #define RTA_NETMASK	0x4	/* netmask sockaddr present */
-#define RTA_GENMASK	0x8	/* cloning mask sockaddr present */
 #define RTA_IFP		0x10	/* interface name sockaddr present */
 #define RTA_IFA		0x20	/* interface addr sockaddr present */
 #define RTA_AUTHOR	0x40	/* sockaddr for author of redirect */
