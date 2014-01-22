@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.60 2014/01/07 19:23:13 deraadt Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.61 2014/01/22 06:24:23 claudio Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -2487,13 +2487,13 @@ void
 rt_entry(struct rt_msghdr *rtm, int again)
 {
 	struct	sockaddr_in6 *sin6_dst, *sin6_gw, *sin6_mask;
-	struct	sockaddr_in6 *sin6_genmask, *sin6_ifp;
+	struct	sockaddr_in6 *sin6_ifp;
 	char	*rtmp, *ifname = NULL;
 	struct	riprt *rrt, *orrt;
 	struct	netinfo6 *np;
 	int	s;
 
-	sin6_dst = sin6_gw = sin6_mask = sin6_genmask = sin6_ifp = 0;
+	sin6_dst = sin6_gw = sin6_mask = sin6_ifp = 0;
 	if ((rtm->rtm_flags & RTF_UP) == 0 || rtm->rtm_flags &
 		(RTF_CLONING|RTF_XRESOLVE|RTF_LLINFO|RTF_BLACKHOLE)) {
 		return;		/* not interested in the link route */
@@ -2526,10 +2526,6 @@ rt_entry(struct rt_msghdr *rtm, int again)
 	if (rtm->rtm_addrs & RTA_NETMASK) {
 		sin6_mask = (struct sockaddr_in6 *)rtmp;
 		rtmp += ROUNDUP(sin6_mask->sin6_len);
-	}
-	if (rtm->rtm_addrs & RTA_GENMASK) {
-		sin6_genmask = (struct sockaddr_in6 *)rtmp;
-		rtmp += ROUNDUP(sin6_genmask->sin6_len);
 	}
 	if (rtm->rtm_addrs & RTA_IFP) {
 		sin6_ifp = (struct sockaddr_in6 *)rtmp;
