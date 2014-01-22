@@ -35,7 +35,8 @@ void	*netisr_intr;
 void
 netintr(void *unused) /* ARGSUSED */
 {
-	int n;
+	int n, t = 0;
+
 	while ((n = netisr) != 0) {
 		atomic_clearbits_int(&netisr, n);
 
@@ -71,13 +72,16 @@ netintr(void *unused) /* ARGSUSED */
 		if (n & (1 << NETISR_BT))
 			btintr();
 #endif
-#if NPFSYNC > 0
-		if (n & (1 << NETISR_PFSYNC))
-			pfsyncintr();
-#endif
-		if (n & (1 << NETISR_TX))
-			nettxintr();
+
+		t |= n;
 	}
+
+#if NPFSYNC > 0
+	if (t & (1 << NETISR_PFSYNC))
+		pfsyncintr();
+#endif
+	if (t & (1 << NETISR_TX))
+		nettxintr();
 }
 
 void
