@@ -1,9 +1,11 @@
-/*	$OpenBSD: if_udav.c,v 1.64 2013/11/15 10:17:39 pirofti Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.65 2014/01/22 04:13:22 sasano Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
+ * Copyright (c) 2014
+ *     Takayoshi SASANO <uaa@uaa.org.uk> (RD9700 support)
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -155,6 +157,7 @@ static const struct udav_type {
 	struct usb_devno udav_dev;
 	u_int16_t udav_flags;
 #define UDAV_EXT_PHY	0x0001
+#define UDAV_RD9700	0x0002
 } udav_devs [] = {
 	{{ USB_VENDOR_COREGA, USB_PRODUCT_COREGA_FETHER_USB_TXC }, 0 },
 	{{ USB_VENDOR_DAVICOM, USB_PRODUCT_DAVICOM_DM9601 }, 0 },
@@ -164,7 +167,8 @@ static const struct udav_type {
 	{{ USB_VENDOR_SHANTOU, USB_PRODUCT_SHANTOU_ZT6688 }, 0 },
 	{{ USB_VENDOR_SHANTOU, USB_PRODUCT_SHANTOU_ADM8515 }, 0 },
 	{{ USB_VENDOR_UNKNOWN4, USB_PRODUCT_UNKNOWN4_DM9601 }, 0 },
-	{{ USB_VENDOR_UNKNOWN6, USB_PRODUCT_UNKNOWN6_DM9601 }, 0 }
+	{{ USB_VENDOR_UNKNOWN6, USB_PRODUCT_UNKNOWN6_DM9601 }, 0 },
+	{{ USB_VENDOR_UNKNOWN4, USB_PRODUCT_UNKNOWN4_RD9700 }, UDAV_RD9700 },
 };
 #define udav_lookup(v, p) ((struct udav_type *)usb_lookup(udav_devs, v, p))
 
@@ -294,12 +298,20 @@ udav_attach(struct device *parent, struct device *self, void *aux)
 	mii->mii_flags = MIIF_AUTOTSLEEP;
 	ifmedia_init(&mii->mii_media, 0,
 		     udav_ifmedia_change, udav_ifmedia_status);
-	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
-	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+	if (sc->sc_flags & UDAV_RD9700) {
+		/* no MII-PHY */
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
-	} else
-		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
+	} else {
+		mii_attach(self, mii, 0xffffffff, 
+			   MII_PHY_ANY, MII_OFFSET_ANY, 0);
+		if (LIST_FIRST(&mii->mii_phys) == NULL) {
+			ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE,
+				    0, NULL);
+			ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
+		} else
+			ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
+	}
 
 	/* attach the interface */
 	if_attach(ifp);
@@ -342,7 +354,8 @@ udav_detach(struct device *self, int flags)
 	if (ifp->if_flags & IFF_RUNNING)
 		udav_stop(GET_IFP(sc), 1);
 
-	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+	if (!(sc->sc_flags & UDAV_RD9700))
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 	if (ifp->if_softc != NULL) {
 		ether_ifdetach(ifp);
@@ -650,7 +663,8 @@ udav_init(struct ifnet *ifp)
 	UDAV_SETBIT(sc, UDAV_GPCR, UDAV_GPCR_GEP_CNTL0);
 	UDAV_CLRBIT(sc, UDAV_GPR, UDAV_GPR_GEPIO0);
 
-	mii_mediachg(mii);
+	if (!(sc->sc_flags & UDAV_RD9700))
+		mii_mediachg(mii);
 
 	if (sc->sc_pipe_tx == NULL || sc->sc_pipe_rx == NULL) {
 		if (udav_openpipes(sc)) {
@@ -1345,6 +1359,10 @@ udav_ifmedia_change(struct ifnet *ifp)
 		return (0);
 
 	sc->sc_link = 0;
+
+	if (sc->sc_flags & UDAV_RD9700)
+		return (0);
+
 	if (mii->mii_instance) {
 		struct mii_softc *miisc;
 		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
@@ -1370,6 +1388,13 @@ udav_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
 		ifmr->ifm_status = 0;
+		return;
+	}
+
+	if (sc->sc_flags & UDAV_RD9700) {
+		ifmr->ifm_active = IFM_ETHER | IFM_10_T;
+		ifmr->ifm_status = IFM_AVALID;
+		if (sc->sc_link) ifmr->ifm_status |= IFM_ACTIVE;
 		return;
 	}
 
@@ -1399,7 +1424,7 @@ udav_tick_task(void *xsc)
 	struct udav_softc *sc = xsc;
 	struct ifnet *ifp;
 	struct mii_data *mii;
-	int s;
+	int s, sts;
 
 	if (sc == NULL)
 		return;
@@ -1418,9 +1443,17 @@ udav_tick_task(void *xsc)
 
 	s = splnet();
 
-	mii_tick(mii);
-	if (!sc->sc_link && mii->mii_media_status & IFM_ACTIVE &&
-	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
+	if (sc->sc_flags & UDAV_RD9700) {
+		sts = udav_csr_read1(sc, UDAV_NSR) & UDAV_NSR_LINKST;
+		if (!sts)
+			sc->sc_link = 0;
+	} else {
+		mii_tick(mii);
+		sts = (mii->mii_media_status & IFM_ACTIVE &&
+		       IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) ? 1 : 0;
+	}
+
+	if (!sc->sc_link && sts) {
 		DPRINTF(("%s: %s: got link\n",
 			 sc->sc_dev.dv_xname, __func__));
 		sc->sc_link++;

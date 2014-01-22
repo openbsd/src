@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udavreg.h,v 1.13 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: if_udavreg.h,v 1.14 2014/01/22 04:13:22 sasano Exp $ */
 /*	$NetBSD: if_udavreg.h,v 1.2 2003/09/04 15:17:39 tsutsui Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
@@ -59,6 +59,16 @@
 #define	 UDAV_NCR_LBK1		(1<<2) /* Lookback Mode */
 #define	 UDAV_NCR_LBK0		(1<<1) /* Lookback Mode */
 #define	 UDAV_NCR_RST		(1<<0) /* Software reset */
+
+#define	UDAV_NSR		0x01 /* Network Status Register */
+#define	 UDAV_NSR_SPEED		(1<<7) /* Media Speed (Int. PHY) */
+#define	 UDAV_NSR_LINKST	(1<<6) /* Link Status (Int. PHY) */
+#define	 UDAV_NSR_WAKEST	(1<<5) /* Wakeup Status */ 
+#define	 UDAV_NSR_TXFULL	(1<<4) /* TX FIFO Full */
+#define	 UDAV_NSR_TX2END	(1<<3) /* TX Packet 2 Complete Status */
+#define	 UDAV_NSR_TX1END	(1<<2) /* TX Packet 1 Complete Status */
+#define	 UDAV_NSR_RXOV		(1<<1) /* RX FIFO Overflow */
+#define	 UDAV_NSR_RXRDY		(1<<0) /* RX Packet Ready */
 
 #define	UDAV_RCR		0x05 /* RX Control Register */
 #define	 UDAV_RCR_WTDIS		(1<<6) /* Watchdog Timer Disable */
