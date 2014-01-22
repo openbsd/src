@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.54 2014/01/21 01:48:44 tedu Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.55 2014/01/22 02:31:30 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -452,7 +452,7 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
 	fp->f_ops = &kqueueops;
 	kq = pool_get(&kqueue_pool, PR_WAITOK|PR_ZERO);
 	TAILQ_INIT(&kq->kq_head);
-	fp->f_data = (caddr_t)kq;
+	fp->f_data = kq;
 	KQREF(kq);
 	*retval = fd;
 	if (fdp->fd_knlistsize < 0)
@@ -515,8 +515,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 				if (SCARG(uap, nevents) != 0) {
 					kevp->flags = EV_ERROR;
 					kevp->data = error;
-					(void) copyout((caddr_t)kevp,
-					    (caddr_t)SCARG(uap, eventlist),
+					copyout(kevp, SCARG(uap, eventlist),
 					    sizeof(*kevp));
 					SCARG(uap, eventlist)++;
 					SCARG(uap, nevents)--;
@@ -795,7 +794,7 @@ start:
 		count--;
 		if (nkev == KQ_NEVENTS) {
 			splx(s);
-			error = copyout((caddr_t)&kq->kq_kev, (caddr_t)ulistp,
+			error = copyout(&kq->kq_kev, ulistp,
 			    sizeof(struct kevent) * nkev);
 			ulistp += nkev;
 			nkev = 0;
@@ -809,7 +808,7 @@ start:
 	splx(s);
 done:
 	if (nkev != 0)
-		error = copyout((caddr_t)&kq->kq_kev, (caddr_t)ulistp,
+		error = copyout(&kq->kq_kev, ulistp,
 		    sizeof(struct kevent) * nkev);
 	*retval = maxevents - count;
 	return (error);
@@ -1021,10 +1020,9 @@ knote_attach(struct knote *kn, struct filedesc *fdp)
 		while (size <= kn->kn_id)
 			size += KQEXTENT;
 		list = malloc(size * sizeof(struct klist), M_TEMP, M_WAITOK);
-		bcopy((caddr_t)fdp->fd_knlist, (caddr_t)list,
+		memcpy(list, fdp->fd_knlist,
 		    fdp->fd_knlistsize * sizeof(struct klist));
-		memset((caddr_t)list +
-		    fdp->fd_knlistsize * sizeof(struct klist), 0,
+		memset(&list[fdp->fd_knlistsize], 0,
 		    (size - fdp->fd_knlistsize) * sizeof(struct klist));
 		if (fdp->fd_knlist != NULL)
 			free(fdp->fd_knlist, M_TEMP);
