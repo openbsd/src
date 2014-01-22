@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.864 2014/01/20 02:57:49 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.865 2014/01/22 04:33:34 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1118,7 +1118,7 @@ pf_state_export(struct pfsync_state *sp, struct pf_state *st)
 
 	/* copy from state */
 	strlcpy(sp->ifname, st->kif->pfik_name, sizeof(sp->ifname));
-	bcopy(&st->rt_addr, &sp->rt_addr, sizeof(sp->rt_addr));
+	memcpy(&sp->rt_addr, &st->rt_addr, sizeof(sp->rt_addr));
 	sp->creation = htonl(time_uptime - st->creation);
 	expire = pf_state_expires(st);
 	if (expire <= time_uptime)
@@ -2419,7 +2419,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 		opt[0] = TCPOPT_MAXSEG;
 		opt[1] = 4;
 		HTONS(mss);
-		bcopy((caddr_t)&mss, (caddr_t)(opt + 2), 2);
+		memcpy((opt + 2), &mss, 2);
 	}
 
 	switch (af) {
@@ -2452,8 +2452,8 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 			ro.ro_rt = &rt;
 			ro.ro_dst.sa_len = sizeof(ro.ro_dst);
 			ro.ro_dst.sa_family = pseudo_AF_HDRCMPLT;
-			bcopy(eh->ether_dhost, e->ether_shost, ETHER_ADDR_LEN);
-			bcopy(eh->ether_shost, e->ether_dhost, ETHER_ADDR_LEN);
+			memcpy(e->ether_shost, eh->ether_dhost, ETHER_ADDR_LEN);
+			memcpy(e->ether_dhost, eh->ether_shost, ETHER_ADDR_LEN);
 			e->ether_type = eh->ether_type;
 			ip_output(m, (void *)NULL, &ro, IP_ROUTETOETHER,
 			    (void *)NULL, (void *)NULL);
@@ -2958,7 +2958,7 @@ pf_get_mss(struct pf_pdesc *pd)
 			--hlen;
 			break;
 		case TCPOPT_MAXSEG:
-			bcopy((caddr_t)(opt + 2), (caddr_t)&mss, 2);
+			memcpy(&mss, (opt + 2), 2);
 			NTOHS(mss);
 			/* FALLTHROUGH */
 		default:
@@ -3516,7 +3516,7 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	s->rule.ptr = r;
 	s->anchor.ptr = a;
 	s->natrule.ptr = nr;
-	bcopy(rules, &s->match_rules, sizeof(s->match_rules));
+	memcpy(&s->match_rules, rules, sizeof(s->match_rules));
 	STATE_INC_COUNTERS(s);
 	if (r->allow_opts)
 		s->state_flags |= PFSTATE_ALLOWOPTS;

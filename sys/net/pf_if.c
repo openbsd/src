@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.71 2014/01/21 01:50:07 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.72 2014/01/22 04:33:34 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -661,7 +661,7 @@ pfi_update_status(const char *name, struct pf_status *pfs)
 		return;
 	}
 	if (p->pfik_group != NULL) {
-		bcopy(&p->pfik_group->ifg_members, &ifg_members,
+		memcpy(&ifg_members, &p->pfik_group->ifg_members,
 		    sizeof(ifg_members));
 	} else {
 		/* build a temporary list for p only */
