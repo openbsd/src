@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_edid.c,v 1.6 2013/09/02 06:25:27 jsg Exp $	*/
+/*	$OpenBSD: drm_edid.c,v 1.7 2014/01/22 22:07:51 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Luc Verhaegen (quirks list)
  * Copyright (c) 2007-2008 Intel Corporation
@@ -124,6 +124,9 @@ static struct edid_quirk {
 
 	/* ViewSonic VA2026w */
 	{ "VSC", 5020, EDID_QUIRK_FORCE_REDUCED_BLANKING },
+
+	/* Medion MD 30217 PG */
+	{ "MED", 0x7b8, EDID_QUIRK_PREFER_LARGE_75 },
 };
 
 /*** DDC fetch and block validation ***/
