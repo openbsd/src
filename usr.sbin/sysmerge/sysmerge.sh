@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.109 2014/01/22 08:34:57 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.110 2014/01/22 10:40:07 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -571,7 +571,14 @@ sm_compare() {
 	for COMPFILE in ${_c1} ${_c2} ${_c3}; do
 		unset IS_BINFILE IS_LINK
 		# treat empty files the same as IS_BINFILE to avoid comparing them
-		[ ! -s "${COMPFILE}" -a -n "${DIFFMODE}" ] && IS_BINFILE=1
+		# only process them (i.e. install) if they don't exist on the target system
+		if [ ! -s "${COMPFILE}" ]; then
+			if [ -f "${DESTDIR}${COMPFILE#.}" ]; then
+				rm "${COMPFILE}"
+			else
+				IS_BINFILE=1
+			fi
+		fi
 
 		# links need to be treated in a different way
 		[ -h "${COMPFILE}" ] && IS_LINK=1
