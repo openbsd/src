@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.55 2013/12/06 11:17:20 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.56 2014/01/22 04:50:57 deraadt Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1126,7 +1126,7 @@ inteldrm_activate(struct device *arg, int act)
 		break;
 	case DVACT_SUSPEND:
 		break;
-	case DVACT_RESUME:
+	case DVACT_WAKEUP:
 		i915_drm_thaw(dev);
 		intel_fb_restore_mode(dev);
 		break;
