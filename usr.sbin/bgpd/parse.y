@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.270 2013/11/25 12:53:27 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.271 2014/01/22 00:21:16 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2505,8 +2505,8 @@ check_file_secrecy(int fd, const char *fname)
 		log_warnx("%s: owner not root or current user", fname);
 		return (-1);
 	}
-	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
-		log_warnx("%s: group/world readable/writeable", fname);
+	if (st.st_mode & (S_IWGRP | S_IXGRP | S_IRWXO)) {
+		log_warnx("%s: group writable or world read/writeable", fname);
 		return (-1);
 	}
 	return (0);
