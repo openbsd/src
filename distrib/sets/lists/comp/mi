@@ -6467,6 +6467,7 @@
 ./usr/share/man/man9/extent_alloc.9
 ./usr/share/man/man9/extent_alloc_region.9
 ./usr/share/man/man9/extent_alloc_subregion.9
+./usr/share/man/man9/extent_alloc_subregion_with_descr.9
 ./usr/share/man/man9/extent_create.9
 ./usr/share/man/man9/extent_destroy.9
 ./usr/share/man/man9/extent_free.9
@@ -6956,6 +6957,8 @@
 ./usr/share/man/man9/vwaitforio.9
 ./usr/share/man/man9/vwakeup.9
 ./usr/share/man/man9/wakeup.9
+./usr/share/man/man9/wakeup_one.9
+./usr/share/man/man9/wakeup_n.9
 ./usr/share/man/man9/wdog_register.9
 ./usr/share/man/man9/workq_add_task.9
 ./usr/share/man/man9/workq_create.9
