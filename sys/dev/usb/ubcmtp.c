@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.3 2014/01/22 03:19:04 jsg Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.4 2014/01/22 06:00:22 jcs Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -370,21 +370,16 @@ ubcmtp_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
-	usb_device_descriptor_t *udd;
 	int i;
-	uint16_t vendor, product;
 
-	if (uaa->iface == NULL ||
-	   (udd = usbd_get_device_descriptor(uaa->device)) == NULL)
+	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
 
-	vendor = UGETW(udd->idVendor);
-	product = UGETW(udd->idProduct);
 	for (i = 0; i < nitems(ubcmtp_devices); i++) {
-		if (ubcmtp_devices[i].vendor == vendor && (
-		    ubcmtp_devices[i].ansi == product ||
-		    ubcmtp_devices[i].iso == product ||
-		    ubcmtp_devices[i].jis == product)) {
+		if (uaa->vendor == ubcmtp_devices[i].vendor && (
+		    uaa->product == ubcmtp_devices[i].ansi ||
+		    uaa->product == ubcmtp_devices[i].iso ||
+		    uaa->product == ubcmtp_devices[i].jis)) {
 			/*
 			 * The USB keyboard/mouse device will have one keyboard
 			 * HID and two mouse HIDs, though only one will have a
