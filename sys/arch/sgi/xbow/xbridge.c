@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.86 2012/09/29 18:54:39 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.87 2014/01/22 00:03:06 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -2824,7 +2824,7 @@ xbridge_device_setup(struct xbpci_softc *xb, int dev, int nfuncs,
 		    M_DEVBUF, NULL, 0, EX_NOWAIT);
 #ifdef DEBUG
 		if (ioex == NULL)
-			printf("%s: ioex extent_create failed\n");
+			printf("%s: ioex extent_create failed\n", __func__);
 #endif
 	}
 	if (xb->xb_memex != NULL)
@@ -2835,7 +2835,7 @@ xbridge_device_setup(struct xbpci_softc *xb, int dev, int nfuncs,
 		    M_DEVBUF, NULL, 0, EX_NOWAIT);
 #ifdef DEBUG
 		if (memex == NULL)
-			printf("%s: memex extent_create failed\n");
+			printf("%s: memex extent_create failed\n", __func__);
 #endif
 	}
 
