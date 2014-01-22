@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.7 2014/01/21 06:10:14 jsg Exp $ */
+/*	$OpenBSD: qla.c,v 1.8 2014/01/22 21:42:18 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -620,7 +620,7 @@ qla_attach(struct qla_softc *sc)
 		rft->subcmd = htole16(QLA_SNS_RFT_ID);
 		rft->max_word = htole16(sizeof(struct qla_sns_req_hdr) / 4);
 		rft->port_id = htole32(sc->sc_port_id);
-		rft->fc4_types[0] = (1 << QLA_FC4_SCSI);
+		rft->fc4_types[0] = htole16(1 << QLA_FC4_SCSI);
 		if (qla_sns_req(sc, sc->sc_scratch, sizeof(*rft))) {
 			printf("%s: RFT_ID failed\n", DEVNAME(sc));
 			/* we might be able to continue after this fails */
