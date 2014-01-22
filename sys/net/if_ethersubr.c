@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.160 2014/01/16 10:26:21 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.161 2014/01/22 09:35:20 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -566,9 +566,7 @@ ether_input(struct ifnet *ifp0, struct ether_header *eh, struct mbuf *m)
 
 #if NCARP > 0
 	if (ifp->if_carp) {
-		if (ifp->if_type != IFT_CARP &&
-		    (carp_input(m, (u_int8_t *)&eh->ether_shost,
-		    (u_int8_t *)&eh->ether_dhost, eh->ether_type) == 0))
+		if (ifp->if_type != IFT_CARP && (carp_input(ifp, eh, m) == 0))
 			return;
 		/* clear mcast if received on a carp IP balanced address */
 		else if (ifp->if_type == IFT_CARP &&

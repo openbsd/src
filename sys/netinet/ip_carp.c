@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.219 2014/01/13 23:03:52 bluhm Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.220 2014/01/22 09:35:20 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1560,17 +1560,15 @@ carp_our_mcastaddr(struct ifnet *ifp, u_int8_t *d_enaddr)
 
 
 int
-carp_input(struct mbuf *m, u_int8_t *shost, u_int8_t *dhost, u_int16_t etype)
+carp_input(struct ifnet *ifp0, struct ether_header *eh0, struct mbuf *m)
 {
 	struct ether_header eh;
-	struct carp_if *cif = (struct carp_if *)m->m_pkthdr.rcvif->if_carp;
+	struct carp_if *cif = (struct carp_if *)ifp0->if_carp;
 	struct ifnet *ifp;
 
-	bcopy(shost, &eh.ether_shost, sizeof(eh.ether_shost));
-	bcopy(dhost, &eh.ether_dhost, sizeof(eh.ether_dhost));
-	eh.ether_type = etype;
+	memcpy(&eh, eh0, sizeof(eh));
 
-	if ((ifp = carp_ourether(cif, dhost)))
+	if ((ifp = carp_ourether(cif, eh0->ether_dhost)))
 		;
 	else if (m->m_flags & (M_BCAST|M_MCAST)) {
 		struct carp_softc *vh;
