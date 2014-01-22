@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.38 2014/01/21 23:42:44 claudio Exp $	*/
+/*	$OpenBSD: radix.c,v 1.39 2014/01/22 10:17:59 claudio Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -303,13 +303,6 @@ on1:
 	return NULL;
 }
 
-#ifdef RN_DEBUG
-int	rn_nodenum;
-struct	radix_node *rn_clist;
-int	rn_saveinfo;
-int	rn_debug =  1;
-#endif
-
 struct radix_node *
 rn_newpair(void *v, int b, struct radix_node nodes[2])
 {
@@ -322,13 +315,6 @@ rn_newpair(void *v, int b, struct radix_node nodes[2])
 	tt->rn_key = v;
 	tt->rn_p = t;
 	tt->rn_flags = t->rn_flags = RNF_ACTIVE;
-#ifdef RN_DEBUG
-	tt->rn_info = rn_nodenum++;
-	t->rn_info = rn_nodenum++;
-	tt->rn_twin = t;
-	tt->rn_ybro = rn_clist;
-	rn_clist = tt;
-#endif
 	return t;
 }
 
@@ -376,10 +362,6 @@ on1:
 		else
 			x = x->rn_l;
 	} while (b > (unsigned int) x->rn_b); /* x->rn_b < b && x->rn_b >= 0 */
-#ifdef RN_DEBUG
-	if (rn_debug)
-		log(LOG_DEBUG, "rn_insert: Going In:\n"), traverse(p);
-#endif
 	t = rn_newpair(v_arg, b, nodes);
 	tt = t->rn_l;
 	if ((cp[p->rn_off] & p->rn_bmask) == 0)
@@ -394,10 +376,6 @@ on1:
 		t->rn_r = tt;
 		t->rn_l = x;
 	}
-#ifdef RN_DEBUG
-	if (rn_debug)
-		log(LOG_DEBUG, "rn_insert: Coming Out:\n"), traverse(p);
-#endif
     }
 	return (tt);
 }
@@ -640,14 +618,6 @@ rn_addroute(void *v_arg, void *n_arg, struct radix_node_head *head,
 			if (tt->rn_dupedkey)
 				tt->rn_dupedkey->rn_p = tt;
 		}
-#ifdef RN_DEBUG
-		t=tt+1;
-		tt->rn_info = rn_nodenum++;
-		t->rn_info = rn_nodenum++;
-		tt->rn_twin = t;
-		tt->rn_ybro = rn_clist;
-		rn_clist = tt;
-#endif
 		tt->rn_key = (caddr_t) v;
 		tt->rn_b = -1;
 		tt->rn_flags = RNF_ACTIVE;
@@ -851,12 +821,6 @@ on1:
 	 */
 	if (tt->rn_flags & RNF_ROOT)
 		return (0);
-#ifdef RN_DEBUG
-	/* Get us out of the creation list */
-	for (t = rn_clist; t && t->rn_ybro != tt; t = t->rn_ybro)
-		;
-	if (t) t->rn_ybro = tt->rn_ybro;
-#endif
 	t = tt->rn_p;
 	dupedkey = saved_tt->rn_dupedkey;
 	if (dupedkey) {
@@ -879,15 +843,8 @@ on1:
 		}
 		t = tt + 1;
 		if  (t->rn_flags & RNF_ACTIVE) {
-#ifndef RN_DEBUG
 			*++x = *t;
 			p = t->rn_p;
-#else
-			b = t->rn_info;
-			*++x = *t;
-			t->rn_info = b;
-			p = t->rn_p;
-#endif
 			if (p->rn_l == t)
 				p->rn_l = x;
 			else
@@ -944,13 +901,7 @@ on1:
 	 */
 	x = tt + 1;
 	if (t != x) {
-#ifndef RN_DEBUG
 		*t = *x;
-#else
-		b = t->rn_info;
-		*t = *x;
-		t->rn_info = b;
-#endif
 		t->rn_l->rn_p = t;
 		t->rn_r->rn_p = t;
 		p = x->rn_p;

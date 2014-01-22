@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.21 2013/10/20 16:17:36 claudio Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.22 2014/01/22 10:17:59 claudio Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -60,9 +60,6 @@ u_int32_t rn_mpath_hash(struct route *, u_int32_t *);
  * give some jitter to hash, to avoid synchronization between routers
  */
 static u_int32_t hashjitter;
-#ifdef RN_DEBUG
-extern struct radix_node	*rn_clist;
-#endif
 
 int
 rn_mpath_capable(struct radix_node_head *rnh)
@@ -208,16 +205,6 @@ rn_mpath_reprio(struct radix_node *rn, int newprio)
 		if (rn->rn_dupedkey)
 			rn->rn_dupedkey->rn_p = rn;
 	}
-
-#ifdef RN_DEBUG
-	/* readd at head of creation list */
-	for (t = rn_clist; t && t->rn_ybro != rn; t = t->rn_ybro)
-		;
-	if (t)
-		t->rn_ybro = rn->rn_ybro;
-	rn->rn_ybro = rn_clist;
-	rn_clist = rn;
-#endif
 
 	if (rn->rn_mklist && rn->rn_flags & RNF_NORMAL) {
 		/* the rn_mklist needs to be fixed if the best route changed */
