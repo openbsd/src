@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.34 2014/01/22 21:35:58 dlg Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.35 2014/01/22 22:24:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -656,6 +656,8 @@ vdsk_rx_vio_rdx(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 		sc->sc_lm->lm_count = 1;
 		while (sc->sc_tx_prod != prod)
 			vdsk_scsi_cmd(sc->sc_vsd[sc->sc_tx_prod].vsd_xs);
+
+		scsi_iopool_run(&sc->sc_iopool);
 		break;
 	}
 
@@ -663,9 +665,6 @@ vdsk_rx_vio_rdx(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 		DPRINTF(("CTRL/0x%02x/RDX (VIO)\n", tag->stype));
 		break;
 	}
-
-	if (sc->sc_vio_state == VIO_ESTABLISHED)
-		scsi_iopool_run(&sc->sc_iopool);
 }
 
 void
