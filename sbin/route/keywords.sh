@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: keywords.sh,v 1.25 2010/09/04 08:06:09 blambert Exp $
+# $OpenBSD: keywords.sh,v 1.26 2014/01/22 06:23:37 claudio Exp $
 # $NetBSD: keywords.sh,v 1.2 1996/11/15 18:57:21 gwr Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
@@ -21,7 +21,6 @@ exec
 expire
 flush
 gateway
-genmask
 get
 host
 hopcount

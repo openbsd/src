@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.165 2013/10/28 15:05:35 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.166 2014/01/22 06:23:37 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
 const struct if_status_description
 			if_status_descriptions[] = LINK_STATE_DESCRIPTIONS;
 
-union sockunion so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp, so_label, so_src;
+union sockunion so_dst, so_gate, so_mask, so_ifa, so_ifp, so_label, so_src;
 
 typedef union sockunion *sup;
 pid_t	pid;
@@ -532,11 +532,6 @@ newroute(int argc, char **argv)
 					usage(1+*argv);
 				getaddr(RTA_IFP, *++argv, NULL);
 				break;
-			case K_GENMASK:
-				if (!--argc)
-					usage(1+*argv);
-				getaddr(RTA_GENMASK, *++argv, NULL);
-				break;
 			case K_GATEWAY:
 				if (!--argc)
 					usage(1+*argv);
@@ -828,9 +823,6 @@ getaddr(int which, char *s, struct hostent **hpp)
 	case RTA_NETMASK:
 		su = &so_mask;
 		break;
-	case RTA_GENMASK:
-		su = &so_genmask;
-		break;
 	case RTA_IFP:
 		su = &so_ifp;
 		afamily = AF_LINK;
@@ -852,7 +844,6 @@ getaddr(int which, char *s, struct hostent **hpp)
 			getaddr(RTA_NETMASK, s, NULL);
 			break;
 		case RTA_NETMASK:
-		case RTA_GENMASK:
 			su->sa.sa_len = 0;
 		}
 		return (0);
@@ -1172,7 +1163,6 @@ rtmsg(int cmd, int flags, int fmask, u_char prio)
 	NEXTADDR(RTA_DST, so_dst);
 	NEXTADDR(RTA_GATEWAY, so_gate);
 	NEXTADDR(RTA_NETMASK, so_mask);
-	NEXTADDR(RTA_GENMASK, so_genmask);
 	NEXTADDR(RTA_IFP, so_ifp);
 	NEXTADDR(RTA_IFA, so_ifa);
 	NEXTADDR(RTA_LABEL, so_label);
@@ -1532,7 +1522,6 @@ pmsg_addrs(char *cp, int addrs)
 				if (family != AF_UNSPEC)
 					switch (i) {
 					case RTA_NETMASK:
-					case RTA_GENMASK:
 						sa->sa_family = family;
 					}
 				printf(" %s", routename(sa));
