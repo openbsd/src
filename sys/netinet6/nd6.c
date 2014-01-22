@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.109 2014/01/13 23:03:52 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.110 2014/01/22 13:19:12 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -92,7 +92,6 @@ struct nd_drhead nd_defrouter;
 struct nd_prhead nd_prefix = { 0 };
 
 int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
-static struct sockaddr_in6 all1_sa;
 
 void nd6_setmtu0(struct ifnet *, struct nd_ifinfo *);
 void nd6_slowtimo(void *);
@@ -120,17 +119,11 @@ void
 nd6_init(void)
 {
 	static int nd6_init_done = 0;
-	int i;
 
 	if (nd6_init_done) {
 		log(LOG_NOTICE, "nd6_init called more than once(ignored)\n");
 		return;
 	}
-
-	all1_sa.sin6_family = AF_INET6;
-	all1_sa.sin6_len = sizeof(struct sockaddr_in6);
-	for (i = 0; i < sizeof(all1_sa.sin6_addr); i++)
-		all1_sa.sin6_addr.s6_addr[i] = 0xff;
 
 	/* initialization of the default router list */
 	TAILQ_INIT(&nd_defrouter);
@@ -689,7 +682,6 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 			    RTF_LLINFO) & ~RTF_CLONING;
 			info.rti_info[RTAX_DST] = sin6tosa(&sin6);
 			info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
-			info.rti_info[RTAX_NETMASK] = sin6tosa(&all1_sa);
 			if ((e = rtrequest1(RTM_ADD, &info, RTP_CONNECTED,
 			    &rt, rtableid)) != 0) {
 #if 0

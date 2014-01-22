@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.130 2014/01/21 10:18:26 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.131 2014/01/22 13:19:12 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -136,14 +136,8 @@ void
 in6_ifloop_request(int cmd, struct ifaddr *ifa)
 {
 	struct rt_addrinfo info;
-	struct sockaddr_in6 all1_sa;
 	struct rtentry *nrt = NULL;
 	int e;
-
-	bzero(&all1_sa, sizeof(all1_sa));
-	all1_sa.sin6_family = AF_INET6;
-	all1_sa.sin6_len = sizeof(struct sockaddr_in6);
-	all1_sa.sin6_addr = in6mask128;
 
 	/*
 	 * We specify the address itself as the gateway, and set the
@@ -159,7 +153,6 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 	info.rti_info[RTAX_DST] = ifa->ifa_addr;
 	if (cmd != RTM_DELETE)
 		info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
-	info.rti_info[RTAX_NETMASK] = sin6tosa(&all1_sa);
 	e = rtrequest1(cmd, &info, RTP_CONNECTED, &nrt,
 	    ifa->ifa_ifp->if_rdomain);
 	if (e != 0) {
