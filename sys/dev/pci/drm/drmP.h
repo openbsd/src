@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.161 2014/01/22 05:16:55 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.162 2014/01/22 22:17:34 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -888,6 +888,7 @@ struct dmi_system_id {
         struct dmi_strmatch matches[4];
 };
 #define	DMI_MATCH(a, b) {(a), (b)}
+#define	DMI_EXACT_MATCH(a, b) {(a), (b)}
 int dmi_check_system(const struct dmi_system_id *);
 
 
