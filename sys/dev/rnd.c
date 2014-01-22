@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.153 2014/01/19 23:52:54 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.154 2014/01/22 03:24:42 jsing Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -750,6 +750,13 @@ arc4_reinit(void *v)
 void
 random_start(void)
 {
+#if !defined(NO_PROPOLICE)
+	extern long __guard_local;
+
+	if (__guard_local == 0)
+		printf("warning: no entropy supplied by boot loader\n");
+#endif
+
 	rnd_states[RND_SRC_TIMER].dont_count_entropy = 1;
 	rnd_states[RND_SRC_TRUE].dont_count_entropy = 1;
 	rnd_states[RND_SRC_TRUE].max_entropy = 1;
