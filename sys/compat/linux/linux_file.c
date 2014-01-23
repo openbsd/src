@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.28 2013/05/10 10:31:16 pirofti Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.29 2014/01/23 23:46:42 pirofti Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/vnode.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/stdint.h>
 
 #include <sys/syscallargs.h>
 
@@ -330,7 +331,8 @@ linux_sys_fcntl(p, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
 	} */ *uap = v;
-	int fd, cmd, error, val;
+	int fd, cmd, error;
+	intptr_t val;
 	caddr_t arg, sg;
 	struct linux_flock lfl;
 	struct flock *bfp, bfl;
@@ -366,7 +368,7 @@ linux_sys_fcntl(p, v, retval)
 		retval[0] = bsd_to_linux_ioflags(retval[0]);
 		return 0;
 	case LINUX_F_SETFL:
-		val = linux_to_bsd_ioflags((int)SCARG(uap, arg));
+		val = linux_to_bsd_ioflags((intptr_t)SCARG(uap, arg));
 		SCARG(&fca, fd) = fd;
 		SCARG(&fca, cmd) = F_SETFL;
 		SCARG(&fca, arg) = (caddr_t) val;
