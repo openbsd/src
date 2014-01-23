@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.730 2014/01/23 01:04:41 rpe Exp $
+#	$OpenBSD: install.sub,v 1.731 2014/01/23 21:56:42 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1158,7 +1158,7 @@ enable_network() {
 # user will know to try again.
 install_files() {
 	local _src=$1 _files=$2 _f _sets _get_sets _n _col=$COLUMNS \
-		_tmpsrc _cfile _fsrc _unver
+		_tmpsrc _cfile _fsrc _unver _t
 
 	# Initialize _sets to the list of sets found in _src, and initialize
 	# _get_sets to the intersection of _sets and DEFAULTSETS.
@@ -1216,30 +1216,33 @@ install_files() {
 		# Fetch signed checksum file and check signature
 		_cfile=$_tmpsrc/SHA256
 		if isin SHA256.sig $_files; then
-			ftp -D 'Get/Verify' -Vmo "$_cfile.sig" "$_src/SHA256.sig" &&
+			[[ $_src == file://* ]] && _t=Verifying || _t='Get/Verify'
+			ftp -D $_t -Vmo "$_cfile.sig" "$_src/SHA256.sig" &&
 			signify -Vep /etc/signify/${VERSION}base.pub \
  				-x "$_cfile.sig" -m "$_cfile"
 		else
 			ftp -D Fetching -Vmo "$_cfile" "$_src/SHA256"
 		fi &&
 		for _f in $_get_sets; do
+			rm -f $_tmpsrc/h
 			if [[ $_src == file://* ]]; then
-				ln -s "${_src#file://}/$_f" "$_tmpsrc/$_f"
+				ln -s "${_src#file://}/$_f" "$_tmpsrc/$_f" &&
+				ftp -D Verifying -Vmo - "$_src/$_f" |
+					sha256 -ph $_tmpsrc/h >/dev/null
 			else
-				ftp -D 'Get/Verify' -Vmo "$_tmpsrc/$_f" "$_src/$_f"
+				ftp -D 'Get/Verify' -Vmo - "$_src/$_f" |
+					sha256 -ph $_tmpsrc/h >"$_tmpsrc/$_f"
 			fi || {
 				echo "Fetching of $_f failed."
 				rm -f "$_tmpsrc/$_f"
 				$auto && rm -rf "$_tmpsrc" && exit 1
 				continue
 			}
-			if sha256 "$_tmpsrc/$_f" | sed 's,/.*/,,' |
-				fgrep -qxf /dev/stdin "$_cfile"; then
+			_h=$(sed -En '/\('$_f'\)/s/^.*= (.*)$/\1/p' $_cfile)
+			if [[ -s $_tmpsrc/h && $(<$_tmpsrc/h) == "$_h" ]] ; then
 				_unver=$(rmel $_f $_unver)
 			else
 				echo "Checksum for $_f failed!"
-				#rm -rf "$_tmpsrc/$_f"
-				#return
 			fi
 		done
 	fi
