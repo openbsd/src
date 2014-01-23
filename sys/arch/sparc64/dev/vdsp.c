@@ -1,6 +1,6 @@
-/*	$OpenBSD: vdsp.c,v 1.22 2014/01/23 04:09:44 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.23 2014/01/23 23:53:33 kettenis Exp $	*/
 /*
- * Copyright (c) 2009, 2011 Mark Kettenis
+ * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,7 +27,6 @@
 #include <sys/systm.h>
 #include <sys/task.h>
 #include <sys/vnode.h>
-#include <sys/workq.h>
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
@@ -236,12 +235,14 @@ struct vdsp_softc {
 	struct task	sc_alloc_task;
 	struct task	sc_close_task;
 
+	struct vdsk_desc_msg *sc_desc_msg[VDSK_RX_ENTRIES];
+	int		sc_desc_head;
+	int		sc_desc_tail;
+
+	struct task	sc_read_task;
+
 	caddr_t		sc_vd;
 	struct task	*sc_vd_task;
-
-	int		sc_tx_cnt;
-	int		sc_tx_prod;
-	int		sc_tx_cons;
 
 	uint32_t	sc_vdisk_block_size;
 	uint64_t	sc_vdisk_size;
@@ -292,6 +293,7 @@ void	vdsp_readlabel(struct vdsp_softc *);
 int	vdsp_writelabel(struct vdsp_softc *);
 int	vdsp_is_iso(struct vdsp_softc *);
 void	vdsp_read(void *, void *);
+void	vdsp_read_desc(struct vdsp_softc *, struct vdsk_desc_msg *);
 void	vdsp_read_dring(void *, void *);
 void	vdsp_write_dring(void *, void *);
 void	vdsp_flush_dring(void *, void *);
@@ -369,6 +371,7 @@ vdsp_attach(struct device *parent, struct device *self, void *aux)
 	task_set(&sc->sc_open_task, vdsp_open, sc, NULL);
 	task_set(&sc->sc_alloc_task, vdsp_alloc, sc, NULL);
 	task_set(&sc->sc_close_task, vdsp_close, sc, NULL);
+	task_set(&sc->sc_read_task, vdsp_read, sc, NULL);
 
 	printf("\n");
 
@@ -809,7 +812,10 @@ vdsp_rx_vio_desc_data(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 
 		switch (dm->operation) {
 		case VD_OP_BREAD:
-			workq_add_task(NULL, 0, vdsp_read, sc, dm);
+			sc->sc_desc_msg[sc->sc_desc_head++] = dm;
+			sc->sc_desc_head &= (VDSK_RX_ENTRIES - 1);
+			KASSERT(sc->sc_desc_head != sc->sc_desc_tail);
+			task_add(systq, &sc->sc_read_task);
 			break;
 		default:
 			printf("%s: unsupported operation 0x%02x\n",
@@ -836,6 +842,8 @@ void
 vdsp_ldc_reset(struct ldc_conn *lc)
 {
 	struct vdsp_softc *sc = lc->lc_sc;
+
+	sc->sc_desc_head = sc->sc_desc_tail = 0;
 
 	sc->sc_vio_state = 0;
 	sc->sc_seq_no = 0;
@@ -1070,8 +1078,17 @@ void
 vdsp_read(void *arg1, void *arg2)
 {
 	struct vdsp_softc *sc = arg1;
+
+	while (sc->sc_desc_tail != sc->sc_desc_head) {
+		vdsp_read_desc(sc, sc->sc_desc_msg[sc->sc_desc_tail++]);
+		sc->sc_desc_tail &= (VDSK_RX_ENTRIES - 1);
+	}
+}
+
+void
+vdsp_read_desc(struct vdsp_softc *sc, struct vdsk_desc_msg *dm)
+{
 	struct ldc_conn *lc = &sc->sc_lc;
-	struct vdsk_desc_msg *dm = arg2;
 	struct proc *p = curproc;
 	struct iovec iov;
 	struct uio uio;
