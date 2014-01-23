@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_linux.8,v 1.43 2014/01/23 04:36:05 tedu Exp $
+.\"	$OpenBSD: compat_linux.8,v 1.44 2014/01/23 04:39:41 tedu Exp $
 .\"	$NetBSD: compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -99,18 +99,16 @@ Basically, there are 2 possibilities.
 system to perform the necessary installation steps).
 .Bl -enum
 .It
-Access to the
-.Ox
-.Xr ports 7
-system:
-Install the port named
-.Nm fedora/base
-in the
+Run
+.Xr pkg_add 1
+to install the
+.Nm fedora_base
+package from the
 .Nm emulators
 category.
 The
-.Nm fedora/base
-port contains the shared libraries, binaries, and other related files
+.Nm fedora_base
+package contains the shared libraries, binaries, and other related files
 necessary to run Linux applications.
 Access to a Linux system is not needed.
 .It
