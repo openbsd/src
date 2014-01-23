@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSign.pm,v 1.1 2014/01/23 11:45:22 espie Exp $
+# $OpenBSD: PkgSign.pm,v 1.2 2014/01/23 12:28:48 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -33,9 +33,6 @@ sub handle_options
 	    'o' =>
 		    sub {
 			    $state->{output_dir} = shift;
-			    if (!-d $state->{output_dir}) {
-				    $state->usage("no such dir");
-			    }
 		    },
 	    'S' =>
 		    sub {
@@ -46,7 +43,14 @@ sub handle_options
 	    '[-v] [-D name[=value]]',
 	    '[-s [x509 -s cert|signify] -s priv] [-o dir]',
 	    '[-S source|pkg-name...]');
-
+    	if (!defined $state->{signer}) {
+		$state->usage("Can't invoke command without valid signing parameters");
+	}
+	if (!-d $state->{output_dir}) {
+		require File::Path;
+		File::Path::make_path($state->{output_dir})
+		    or $state->usage("can't create dir");
+	}
 }
 
 package OpenBSD::PackingElement;
@@ -187,6 +191,9 @@ sub parse_and_run
 	my $state = OpenBSD::PkgSign::State->new($cmd);
 	$state->handle_options;
 	$state->{wantntogo} = $state->config->istrue("ntogo");
+	if (!defined $state->{source} && @ARGV == 0) {
+		$state->usage("Nothing to sign");
+	}
 	if (defined $state->{source}) {
 		$self->sign_existing_repository($state, 
 		    $state->{source});
