@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.481 2012/08/06 00:00:28 fgsch Exp $
+# $OpenBSD: pkg_add,v 1.482 2014/01/23 11:45:22 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -29,7 +29,7 @@ sub run
 	}
 	exit($module->parse_and_run($name));
 }
-my @l = qw(add check create delete info);
+my @l = qw(add check create delete info sign);
 
 for my $i (@l) {
 	if ($0 =~ m/\/?pkg_$i$/) {

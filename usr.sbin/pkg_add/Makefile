@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.77 2013/12/31 11:21:10 espie Exp $
+# $OpenBSD: Makefile,v 1.78 2014/01/23 11:45:22 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -48,6 +48,7 @@ PACKAGES= \
     OpenBSD/PkgCreate.pm \
     OpenBSD/PkgDelete.pm \
     OpenBSD/PkgInfo.pm \
+    OpenBSD/PkgSign.pm \
     OpenBSD/PkgSpec.pm \
     OpenBSD/ProgressMeter/Term.pm \
     OpenBSD/ProgressMeter.pm \
@@ -55,6 +56,7 @@ PACKAGES= \
     OpenBSD/RequiredBy.pm \
     OpenBSD/Search.pm \
     OpenBSD/Signature.pm \
+    OpenBSD/Signer.pm \
     OpenBSD/SharedItems.pm \
     OpenBSD/SharedLibs.pm \
     OpenBSD/State.pm \
@@ -79,7 +81,8 @@ SCRIPTS_LNK = \
     pkg_add pkg_check \
     pkg_add pkg_create \
     pkg_add pkg_delete \
-    pkg_add pkg_info
+    pkg_add pkg_info \
+    pkg_add pkg_sign
 
 LIBBASE=/usr/libdata/perl5
 
