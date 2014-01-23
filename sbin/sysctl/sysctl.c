@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.198 2013/11/22 04:12:48 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.199 2014/01/23 03:00:04 guenther Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -424,6 +424,12 @@ parse(char *string, int flags)
 			if (len < 0)
 				return;
 			break;
+		case KERN_INTRCNT:
+			if (flags == 0)
+				return;
+			warnx("use vmstat or systat to view %s information",
+			    string);
+			return;
 		case KERN_WATCHDOG:
 			len = sysctl_watchdog(string, &bufp, mib, flags,
 			    &type);
