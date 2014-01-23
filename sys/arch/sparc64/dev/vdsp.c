@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.21 2014/01/23 01:37:18 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.22 2014/01/23 04:09:44 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -25,6 +25,7 @@
 #include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/systm.h>
+#include <sys/task.h>
 #include <sys/vnode.h>
 #include <sys/workq.h>
 
@@ -231,7 +232,12 @@ struct vdsp_softc {
 	uint32_t	sc_descriptor_size;
 	struct ldc_cookie sc_dring_cookie;
 
+	struct task	sc_open_task;
+	struct task	sc_alloc_task;
+	struct task	sc_close_task;
+
 	caddr_t		sc_vd;
+	struct task	*sc_vd_task;
 
 	int		sc_tx_cnt;
 	int		sc_tx_prod;
@@ -359,6 +365,10 @@ vdsp_attach(struct device *parent, struct device *self, void *aux)
 		printf(", can't allocate rx queue\n");
 		goto free_txqueue;
 	}
+
+	task_set(&sc->sc_open_task, vdsp_open, sc, NULL);
+	task_set(&sc->sc_alloc_task, vdsp_alloc, sc, NULL);
+	task_set(&sc->sc_close_task, vdsp_close, sc, NULL);
 
 	printf("\n");
 
@@ -593,7 +603,7 @@ vdsp_rx_vio_attr_info(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 		sc->sc_xfer_mode = ai->xfer_mode;
 		sc->sc_vio_state |= VIO_RCV_ATTR_INFO;
 
-		workq_add_task(NULL, 0, vdsp_open, sc, NULL);
+		task_add(systq, &sc->sc_open_task);
 		break;
 
 	case VIO_SUBTYPE_ACK:
@@ -627,7 +637,7 @@ vdsp_rx_vio_dring_reg(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 		sc->sc_dring_cookie = dr->cookie[0];
 		sc->sc_vio_state |= VIO_RCV_DRING_REG;
 
-		workq_add_task(NULL, 0, vdsp_alloc, sc, NULL);
+		task_add(systq, &sc->sc_alloc_task);
 		break;
 
 	case VIO_SUBTYPE_ACK:
@@ -694,6 +704,7 @@ vdsp_rx_vio_dring_data(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 {
 	struct vio_dring_msg *dm = (struct vio_dring_msg *)tag;
 	struct vd_desc *vd;
+	struct task *task;
 	vaddr_t va;
 	paddr_t pa;
 	uint64_t size, off;
@@ -729,28 +740,29 @@ vdsp_rx_vio_dring_data(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 			size -= nbytes;
 			off += nbytes;
 		}
+		task = &sc->sc_vd_task[dm->start_idx];
 
 		DPRINTF(("%s: start_idx %d, end_idx %d, operation %x\n",
 		    sc->sc_dv.dv_xname, dm->start_idx, dm->end_idx,
 		    vd->operation));
 		switch (vd->operation) {
 		case VD_OP_BREAD:
-			workq_add_task(NULL, 0, vdsp_read_dring, sc, vd);
+			task_set(task, vdsp_read_dring, sc, vd);
 			break;
 		case VD_OP_BWRITE:
-			workq_add_task(NULL, 0, vdsp_write_dring, sc, vd);
+			task_set(task, vdsp_write_dring, sc, vd);
 			break;
 		case VD_OP_FLUSH:
-			workq_add_task(NULL, 0, vdsp_flush_dring, sc, vd);
+			task_set(task, vdsp_flush_dring, sc, vd);
 			break;
 		case VD_OP_GET_VTOC:
-			workq_add_task(NULL, 0, vdsp_get_vtoc, sc, vd);
+			task_set(task, vdsp_get_vtoc, sc, vd);
 			break;
 		case VD_OP_SET_VTOC:
-			workq_add_task(NULL, 0, vdsp_set_vtoc, sc, vd);
+			task_set(task, vdsp_set_vtoc, sc, vd);
 			break;
 		case VD_OP_GET_DISKGEOM:
-			workq_add_task(NULL, 0, vdsp_get_diskgeom, sc, vd);
+			task_set(task, vdsp_get_diskgeom, sc, vd);
 			break;
 		case VD_OP_GET_WCE:
 		case VD_OP_SET_WCE:
@@ -761,14 +773,15 @@ vdsp_rx_vio_dring_data(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 			 * to be able to handle failure just fine, so
 			 * we silently ignore it.
 			 */
-			workq_add_task(NULL, 0, vdsp_unimp, sc, vd);
+			task_set(task, vdsp_unimp, sc, vd);
 			break;
 		default:
 			printf("%s: unsupported operation 0x%02x\n",
 			    sc->sc_dv.dv_xname, vd->operation);
-			workq_add_task(NULL, 0, vdsp_unimp, sc, vd);
+			task_set(task, vdsp_unimp, sc, vd);
 			break;
 		}
+		task_add(systq, task);
 		break;
 
 	case VIO_SUBTYPE_ACK:
@@ -830,12 +843,16 @@ vdsp_ldc_reset(struct ldc_conn *lc)
 		free(sc->sc_vd, M_DEVBUF);
 		sc->sc_vd = NULL;
 	}
+	if (sc->sc_vd_task) {
+		free(sc->sc_vd_task, M_DEVBUF);
+		sc->sc_vd_task = NULL;
+	}
 	if (sc->sc_label) {
 		free(sc->sc_label, M_DEVBUF);
 		sc->sc_label = NULL;
 	}
 
-	workq_add_task(NULL, 0, vdsp_close, sc, NULL);
+	task_add(systq, &sc->sc_close_task);
 }
 
 void
@@ -1036,6 +1053,8 @@ vdsp_alloc(void *arg1, void *arg2)
 	KASSERT(sc->sc_num_descriptors <= VDSK_MAX_DESCRIPTORS);
 	KASSERT(sc->sc_descriptor_size <= VDSK_MAX_DESCRIPTOR_SIZE);
 	sc->sc_vd = malloc(sc->sc_num_descriptors * sc->sc_descriptor_size,
+	    M_DEVBUF, M_WAITOK);
+	sc->sc_vd_task = malloc(sc->sc_num_descriptors * sizeof(struct task),
 	    M_DEVBUF, M_WAITOK);
 
 	bzero(&dr, sizeof(dr));
