@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.99 2014/01/23 12:32:40 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.100 2014/01/23 22:57:06 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -374,6 +374,13 @@ sub makesum_plist
 
 sub verify_checksum
 {
+}
+
+sub archive
+{
+	my ($self, $state) = @_;
+	$self->SUPER::archive($state);
+	$state->new_gstream;
 }
 
 package OpenBSD::PackingElement::Cwd;

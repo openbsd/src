@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSign.pm,v 1.4 2014/01/23 21:05:26 espie Exp $
+# $OpenBSD: PkgSign.pm,v 1.5 2014/01/23 22:57:06 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -39,8 +39,8 @@ sub handle_options
 			    $state->{source} = shift;
 		    },
 	};
-	$state->SUPER::handle_options('j:o:S:',
-	    '[-v] [-D name[=value]] -s x509|signify [-s cert] -s priv',
+	$state->SUPER::handle_options('Cj:o:S:',
+	    '[-Cv] [-D name[=value]] -s x509|signify [-s cert] -s priv',
 	    '[-o dir] [-S source] [pkg-name...]');
     	if (!defined $state->{signer}) {
 		$state->usage("Can't invoke command without valid signing parameters");
@@ -83,7 +83,7 @@ use OpenBSD::PackageInfo;
 sub sign_existing_package
 {
 	my ($self, $state, $pkg) = @_;
-	my $output = $state->{output_dir} // ".";
+	my $output = $state->{output_dir};
 	my $dir = $pkg->info;
 	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
 	$plist->set_infodir($dir);
@@ -91,17 +91,47 @@ sub sign_existing_package
 	$plist->save;
 	my $tmp = OpenBSD::Temp::permanent_file($output, "pkg");
 	my $wrarc = $state->create_archive($tmp, ".");
-	$plist->copy_over($state, $wrarc, $pkg);
-	$wrarc->close;
+
+	my $fh;
+	my $url = $pkg->url;
+	my $buffer;
+
+	if (defined $pkg->{length} and 
+	    $url =~ s/^file:// and open($fh, "<", $url) and
+	    $fh->seek($pkg->{length}, 0) and $fh->read($buffer, 2)
+	    and $buffer eq "\x1f\x8b") {
+	    	#$state->say("FAST #1", $plist->pkgname);
+		$wrarc->destdir($pkg->info);
+		my $e = $wrarc->prepare('+CONTENTS');
+		$e->write;
+		close($wrarc->{fh});
+		delete $wrarc->{fh};
+
+		open(my $fh2, ">>", $tmp) or 
+		    $state->fatal("Can't append to #1", $tmp);
+		print $fh2 "\x1f\x8b";
+		require File::Copy;
+		File::Copy::copy($fh, $fh2) or 
+		    $state->fatal("Error in copy #1", $!);
+		close($fh2);
+	} else {
+	    	#$state->say("SLOW #1", $plist->pkgname);
+		$plist->copy_over($state, $wrarc, $pkg);
+		$wrarc->close;
+	}
+	close($fh) if defined $fh;
+
 	$pkg->wipe_info;
 	chmod((0666 & ~umask), $tmp);
 	rename($tmp, $output.'/'.$plist->pkgname.".tgz") or
 	    $state->fatal("Can't create final signed package: #1", $!);
-	$state->system(sub {
-	    chdir($output);
-	    open(STDOUT, '>>', 'SHA256');
-	    },
-	    OpenBSD::Paths->sha256, '-b', $plist->pkgname.".tgz");
+	if ($state->opt('C')) {
+		$state->system(sub {
+		    chdir($output);
+		    open(STDOUT, '>>', 'SHA256');
+		    },
+		    OpenBSD::Paths->sha256, '-b', $plist->pkgname.".tgz");
+    	}
 }
 
 sub sign_list
@@ -164,12 +194,14 @@ sub sign_list
 			delete $state->{signer}{pubkey};
 		}
 	}
-	$state->system(sub {
-	    chdir($state->{output_dir}) if $state->{output_dir};
-	    open(STDOUT, '>', 'SHA256.new');
-	    }, 'sort', 'SHA256');
-	rename($state->{output_dir}.'/SHA256.new', 
-	    $state->{output_dir}.'/SHA256');
+	if ($state->opt('C')) {
+		$state->system(sub {
+		    chdir($state->{output_dir});
+		    open(STDOUT, '>', 'SHA256.new');
+		    }, 'sort', 'SHA256');
+		rename($state->{output_dir}.'/SHA256.new', 
+		    $state->{output_dir}.'/SHA256');
+	}
 }
 
 sub sign_existing_repository

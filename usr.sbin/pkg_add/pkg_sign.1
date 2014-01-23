@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_sign.1,v 1.2 2014/01/23 12:41:55 espie Exp $
+.\"	$OpenBSD: pkg_sign.1,v 1.3 2014/01/23 22:57:06 espie Exp $
 .\" Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -22,7 +22,7 @@
 .Sh SYNOPSIS
 .Nm pkg_sign
 .Bk -words
-.Op Fl v
+.Op Fl Cv
 .Op Fl D Ar name Ns Op = Ns Ar value
 .Op Fl j Ar maxjobs
 .Op Fl o Ar dir
@@ -39,11 +39,17 @@ command is used to sign existing collections of binary packages
 created by
 .Xr pkg_create 1 .
 .Pp
-It will sign the packages and additionally, produce a
+It will sign the packages and optionally, produce a
 .Pa SHA256
 manifest file in the output directory.
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl C
+Append
+.Xr sha256 1
+checksums to
+.Pa SHA256
+in the output directory, then sort it.
 .It Fl D Ar resign
 Allows signing over already signed packages.
 Obviously, this checks the existing signature first,
