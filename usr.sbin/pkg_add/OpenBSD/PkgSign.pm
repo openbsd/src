@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSign.pm,v 1.3 2014/01/23 12:32:40 espie Exp $
+# $OpenBSD: PkgSign.pm,v 1.4 2014/01/23 21:05:26 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -45,6 +45,7 @@ sub handle_options
     	if (!defined $state->{signer}) {
 		$state->usage("Can't invoke command without valid signing parameters");
 	}
+	$state->{output_dir} //= ".";
 	if (!-d $state->{output_dir}) {
 		require File::Path;
 		File::Path::make_path($state->{output_dir})
