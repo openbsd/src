@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.51 2013/03/25 19:33:11 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.52 2014/01/23 22:06:29 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.15 1994/10/27 04:16:34 cgd Exp $	*/
 
 /*-
@@ -117,7 +117,6 @@
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define	VM_PHYSSEG_NOADD	/* can't add RAM after vm_mem_init */
 
-#define __HAVE_VM_PAGE_MD
 struct pv_entry;
 struct vm_page_md {
 	struct pv_entry *pv_list;

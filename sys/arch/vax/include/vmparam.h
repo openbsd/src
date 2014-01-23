@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.34 2013/11/24 22:09:58 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.35 2014/01/23 22:06:30 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.32 2000/03/07 00:05:59 matt Exp $	*/
 
 /*-
@@ -106,7 +106,6 @@
  * This should be in <machine/pmap.h>, but needs to be in this file
  * due to include ordering issues.
  */
-#define	__HAVE_VM_PAGE_MD
 
 struct vm_page_md {
 	struct pv_entry *pv_head;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.163 2013/09/21 10:01:27 miod Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.164 2014/01/23 22:06:30 miod Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2855,11 +2855,7 @@ uvm_page_printit(pg, full, pr)
 #else
 	(*pr)("  [page ownership tracking disabled]");
 #endif
-#ifdef __HAVE_VM_PAGE_MD
 	(*pr)("\tvm_page_md %p\n", &pg->mdpage);
-#else
-	(*pr)("\n");
-#endif
 
 	if (!full)
 		return;

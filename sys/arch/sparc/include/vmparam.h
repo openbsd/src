@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.39 2012/07/01 15:31:35 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.40 2014/01/23 22:06:29 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -118,7 +118,6 @@ struct pvlist {
 	int		pv_flags;		/* flags (below) */
 };
 
-#define __HAVE_VM_PAGE_MD
 struct vm_page_md {
 	struct pvlist pv_head;
 };

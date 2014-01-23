@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.39 2011/11/10 22:48:13 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.40 2014/01/23 22:06:29 miod Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -96,7 +96,6 @@
 
 #include <sys/lock.h>
 
-#define __HAVE_VM_PAGE_MD
 struct pv_entry;
 struct vm_page_md {
 	struct simplelock pvh_lock;	/* locks every pv on this list */
