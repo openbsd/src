@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.21 2014/01/20 11:52:55 syl Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.22 2014/01/23 12:29:38 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -214,13 +214,12 @@ ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
 	namelen = strnlen(name, MAXNAMLEN);
 	len = GENERIC_DIRSIZ(namelen);
 
-	if ((fd->full || (fbuf->fb_len + len > fd->size)) ||
-	    (!fd->isgetdir && fd->off != off)) {
+	if (fd->full || (fbuf->fb_len + len > fd->size)) {
 		fd->full = 1;
 		return (0);
 	}
 
-	if (fd->isgetdir && fd->start != 0 &&  fd->idx < fd->start) {
+	if (fd->start != 0 &&  fd->idx < fd->start) {
 		fd->idx += len;
 		return (0);
 	}
@@ -243,10 +242,9 @@ ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
 	dir->d_namlen = strlen(dir->d_name);
 
 	fbuf->fb_len += len;
-	if (fd->isgetdir) {
-		fd->start += len;
-		fd->idx += len;
-	}
+	fd->start += len;
+	fd->idx += len;
+
 	return (0);
 }
 
@@ -287,7 +285,7 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 	startsave = 0;
 
 	fbuf->fb_dat = calloc(1, size);
-	
+
 	if (fbuf->fb_dat == NULL) {
 		fbuf->fb_err = errno;
 		return (0);
@@ -299,26 +297,24 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 		vn->fd->buf = fbuf;
 		vn->fd->filled = 0;
 		vn->fd->full = 0;
-		vn->fd->isgetdir = 0;
 		vn->fd->size = size;
 		vn->fd->off = offset;
+		vn->fd->idx = 0;
+		startsave = vn->fd->start;
 
 		realname = build_realname(f, vn->ino);
 		if (f->op.readdir)
 			fbuf->fb_err = f->op.readdir(realname, vn->fd,
 			    ifuse_fill_readdir, offset, &ffi);
-		else if (f->op.getdir) {
-			vn->fd->isgetdir = 1;
-			vn->fd->idx = 0;
-			startsave = vn->fd->start;
+		else if (f->op.getdir)
 			fbuf->fb_err = f->op.getdir(realname, vn->fd,
 			    ifuse_fill_getdir);
-		} else
+		else
 			fbuf->fb_err = -ENOSYS;
 		free(realname);
 	}
 
-	if (!vn->fd->full && vn->fd->isgetdir && vn->fd->start == startsave)
+	if (!vn->fd->full && vn->fd->start == startsave)
 		vn->fd->filled = 1;
 
 	if (fbuf->fb_err) {
