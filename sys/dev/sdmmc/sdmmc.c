@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.31 2013/12/21 17:10:08 deraadt Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.32 2014/01/23 01:41:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -552,7 +552,7 @@ sdmmc_delay(u_int usecs)
 {
 	int ticks = usecs / (1000000 / hz);
 
-	if (ticks > 0)
+	if (!cold && ticks > 0)
 		tsleep(&sdmmc_delay, PWAIT, "mmcdly", ticks);
 	else
 		delay(usecs);
