@@ -2438,7 +2438,6 @@
 ./usr/share/man/man4/vr.4
 ./usr/share/man/man4/vscsi.4
 ./usr/share/man/man4/vte.4
-./usr/share/man/man4/viornd.4
 ./usr/share/man/man4/vxlan.4
 ./usr/share/man/man4/watchdog.4
 ./usr/share/man/man4/wb.4

@@ -3843,6 +3843,7 @@
 ./usr/share/man/man3/exp2l.3
 ./usr/share/man/man3/expf.3
 ./usr/share/man/man3/expl.3
+./usr/share/man/man3/explicit_bzero.3
 ./usr/share/man/man3/expm1.3
 ./usr/share/man/man3/expm1f.3
 ./usr/share/man/man3/expm1l.3
@@ -6957,8 +6958,8 @@
 ./usr/share/man/man9/vwaitforio.9
 ./usr/share/man/man9/vwakeup.9
 ./usr/share/man/man9/wakeup.9
-./usr/share/man/man9/wakeup_one.9
 ./usr/share/man/man9/wakeup_n.9
+./usr/share/man/man9/wakeup_one.9
 ./usr/share/man/man9/wdog_register.9
 ./usr/share/man/man9/workq_add_task.9
 ./usr/share/man/man9/workq_create.9
