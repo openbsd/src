@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.77 2014/01/13 23:03:52 bluhm Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.78 2014/01/23 10:16:30 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -70,7 +70,6 @@ void pfxrtr_add(struct nd_prefix *, struct nd_defrouter *);
 void pfxrtr_del(struct nd_pfxrouter *);
 struct nd_pfxrouter *find_pfxlist_reachable_router(struct nd_prefix *);
 void defrouter_delreq(struct nd_defrouter *);
-void nd6_rtmsg(int, struct rtentry *);
 void purge_detached(struct ifnet *);
 
 void in6_init_address_ltimes(struct nd_prefix *, struct in6_addrlifetime *);
@@ -425,27 +424,6 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 /*
  * default router list processing sub routines
  */
-
-/* tell the change to user processes watching the routing socket. */
-void
-nd6_rtmsg(int cmd, struct rtentry *rt)
-{
-	struct rt_addrinfo info;
-
-	bzero((caddr_t)&info, sizeof(info));
-	info.rti_info[RTAX_DST] = rt_key(rt);
-	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-	if (rt->rt_ifp) {
-		info.rti_info[RTAX_IFP] =
-		    TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;
-		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
-	}
-
-	rt_missmsg(cmd, &info, rt->rt_flags, rt->rt_ifp, 0,
-	    rt->rt_ifp->if_rdomain);
-}
-
 void
 defrouter_addreq(struct nd_defrouter *new)
 {
@@ -475,7 +453,7 @@ defrouter_addreq(struct nd_defrouter *new)
 	error = rtrequest1(RTM_ADD, &info, RTP_DEFAULT, &newrt,
 	    new->ifp->if_rdomain);
 	if (newrt) {
-		nd6_rtmsg(RTM_ADD, newrt); /* tell user process */
+		rt_sendmsg(newrt, RTM_ADD, new->ifp->if_rdomain);
 		newrt->rt_refcnt--;
 	}
 	if (error == 0)
@@ -579,7 +557,7 @@ defrouter_delreq(struct nd_defrouter *dr)
 	rtrequest1(RTM_DELETE, &info, RTP_DEFAULT, &oldrt,
 	    dr->ifp->if_rdomain);
 	if (oldrt) {
-		nd6_rtmsg(RTM_DELETE, oldrt);
+		rt_sendmsg(oldrt, RTM_DELETE, dr->ifp->if_rdomain);
 		if (oldrt->rt_refcnt <= 0) {
 			/*
 			 * XXX: borrowed from the RTM_DELETE case of
@@ -1672,7 +1650,7 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, &rt, ifp->if_rdomain);
 	if (error == 0) {
 		if (rt != NULL) /* this should be non NULL, though */
-			nd6_rtmsg(RTM_ADD, rt);
+			rt_sendmsg(rt, RTM_ADD, ifp->if_rdomain);
 		pr->ndpr_stateflags |= NDPRF_ONLINK;
 	} else {
 		char gw[INET6_ADDRSTRLEN], mask[INET6_ADDRSTRLEN];
@@ -1734,7 +1712,7 @@ nd6_prefix_offlink(struct nd_prefix *pr)
 
 		/* report the route deletion to the routing socket. */
 		if (rt != NULL)
-			nd6_rtmsg(RTM_DELETE, rt);
+			rt_sendmsg(rt, RTM_DELETE, ifp->if_rdomain);
 
 		/*
 		 * There might be the same prefix on another interface,
