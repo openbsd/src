@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.110 2014/01/22 10:40:07 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.111 2014/01/23 07:24:00 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -94,12 +94,6 @@ fi
 extract_set() {
 	[[ -z $1 ]] && return
 	local _tgz=$(readlink -f "$1") _set=$2 _f
-	local _sha256=${_set}-SHA256
-	if [ -z "${NOSIGCHECK}" ]; then
-		(cd ${WRKDIR} && sha256 -C ${_sha256} "${_tgz##*/}" >/dev/null 2>&1) || \
-			error_rm_wrkdir "${_tgz##*/} checksum could not be verified against ${_sha256}.sig"
-		rm "${WRKDIR}/${_sha256}"
-	fi
 	typeset -u _SETSUM=${_set}sum
 	eval ${_SETSUM}=${_set}sum
 	(cd ${TEMPROOT} && tar -xzphf "${_tgz}" && \
@@ -115,31 +109,36 @@ extract_set() {
 # takes url or filename and setname ('etc' or 'xetc') as arguments
 get_set() {
 	local _tgz=${WRKDIR}/${1##*/} _url=$1 _set=$2
-	local _sigfile=${_set}-SHA256
-	[ -f "${_url}" ] && _url="file://${_url}"
-	if [[ ${_url} == @(file|ftp|http|https)://*/*[!/] ]]; then 
-		${FETCH_CMD} -o ${_tgz} "${_url}" >/dev/null || \
+	local _sigfile=${WRKDIR}/${_set}-SHA256
+	[ -f "${_url}" ] && _url="file://$(readlink -f ${_url})"
+	if [[ ${_url} == @(file|ftp|http|https)://*/*[!/] ]]; then
+		echo "===> Fetching ${_url}"
+		${FETCH_CMD} -o ${_tgz} "${_url}" >/dev/null 2>&1 || \
 			error_rm_wrkdir "could not retrieve ${_url}"
 	fi
 	[[ ${_set} == etc ]] && TGZ=${_tgz} || XTGZ=${_tgz}
 	tar -tzf "${_tgz}" ./var/db/sysmerge/${_set}sum >/dev/null 2>&1 || \
 		error_rm_wrkdir "${_tgz} is not a valid ${_set}XX.tgz set"
 	if [ -z "${NOSIGCHECK}" ]; then
-		${FETCH_CMD} -o "${WRKDIR}/${_sigfile}.sig" "${_url%/*}/SHA256.sig" >/dev/null 2>&1 || \
+		echo "===> Fetching ${_url%/*}/SHA256.sig"
+		${FETCH_CMD} -o "${_sigfile}.sig" "${_url%/*}/SHA256.sig" >/dev/null 2>&1 || \
 			error_rm_wrkdir "could not retrieve ${_url%/*}/SHA256.sig"
-		check_sig "${_sigfile}"
+		check_sig "${_sigfile}" "${_tgz}"
 	fi
 }
 
 # verify SHA256.sig and write ${WRKDIR}/(x)etc-SHA256, abort on failure;
-# takes a file path as argument
+# takes the signature file and set as arguments
 check_sig() {
-	local _sigfile=${WRKDIR}/$1 _src
+	local _sigfile=${1##*/} _tgz=${2##*/}
 	local _key="/etc/signify/$(uname -r | tr -d '.')base.pub"
-	echo "===> Verying ${_set} SHA256 signature"
-	/usr/bin/signify -V -e -p ${_key} -x "${_sigfile}.sig" -m "${_sigfile}" 2>/dev/null || \
-		error_rm_wrkdir "signature check for ${_sigfile}"
-	rm "${_sigfile}.sig"
+	echo "===> Verifying \"${_set}\" set SHA256 signature and checksum"
+	(cd ${WRKDIR} && \
+		signify -V -e -p ${_key} -x "${_sigfile}.sig" -m ${_sigfile} >/dev/null 2>&1) || \
+		error_rm_wrkdir "signature check failed for ${_sigfile}.sig"
+	(cd ${WRKDIR} && \
+		sha256 -C "${_sigfile}" "${_tgz}" >/dev/null 2>&1) || \
+		error_rm_wrkdir "bad checksum for ${_tgz}"
 }
 
 # prepare TEMPROOT content from a src dir and create cksum file 
