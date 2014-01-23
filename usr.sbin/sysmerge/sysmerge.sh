@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.112 2014/01/23 08:23:45 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.113 2014/01/23 22:05:59 rpe Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -129,7 +129,7 @@ check_sig() {
 	local _key="/etc/signify/$(uname -r | tr -d '.')base.pub"
 	echo "===> Verifying ${_tgz} signature and checksum"
 	(cd ${WRKDIR} && \
-		signify -V -e -p ${_key} -x "${_sigfile}.sig" -m ${_sigfile} >/dev/null 2>&1) || \
+		signify -V -e -p ${_key} -x "${_sigfile}.sig" -m ${_sigfile} >/dev/null) || \
 		error_rm_wrkdir "signature check failed for ${_sigfile}.sig"
 	(cd ${WRKDIR} && \
 		sha256 -C "${_sigfile}" "${_tgz}" >/dev/null 2>&1) || \
