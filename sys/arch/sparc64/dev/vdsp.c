@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.20 2014/01/23 00:19:09 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.21 2014/01/23 01:37:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -1093,8 +1093,11 @@ vdsp_read(void *arg1, void *arg2)
 			nbytes = MIN(nbytes, PAGE_SIZE - (off & PAGE_MASK));
 			err = hv_ldc_copy(lc->lc_id, LDC_COPY_OUT,
 			    dm->cookie[i].addr + off, pa, nbytes, &nbytes);
-			if (err != H_EOK)
+			if (err != H_EOK) {
 				printf("%s: hv_ldc_copy: %d\n", __func__, err);
+				free(buf, M_DEVBUF);
+				return;
+			}
 			va += nbytes;
 			size -= nbytes;
 			off += nbytes;
@@ -1160,8 +1163,11 @@ vdsp_read_dring(void *arg1, void *arg2)
 			nbytes = MIN(nbytes, PAGE_SIZE - (off & PAGE_MASK));
 			err = hv_ldc_copy(lc->lc_id, LDC_COPY_OUT,
 			    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
-			if (err != H_EOK)
+			if (err != H_EOK) {
 				printf("%s: hv_ldc_copy: %d\n", __func__, err);
+				free(buf, M_DEVBUF);
+				return;
+			}
 			va += nbytes;
 			size -= nbytes;
 			off += nbytes;
@@ -1210,8 +1216,11 @@ vdsp_write_dring(void *arg1, void *arg2)
 		nbytes = MIN(nbytes, PAGE_SIZE - (off & PAGE_MASK));
 		err = hv_ldc_copy(lc->lc_id, LDC_COPY_IN,
 		    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
-		if (err != H_EOK)
+		if (err != H_EOK) {
 			printf("%s: hv_ldc_copy: %d\n", __func__, err);
+			free(buf, M_DEVBUF);
+			return;
+		}
 		va += nbytes;
 		size -= nbytes;
 		off += nbytes;
@@ -1331,8 +1340,11 @@ vdsp_get_vtoc(void *arg1, void *arg2)
 		nbytes = MIN(nbytes, PAGE_SIZE - (off & PAGE_MASK));
 		err = hv_ldc_copy(lc->lc_id, LDC_COPY_OUT,
 		    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
-		if (err != H_EOK)
+		if (err != H_EOK) {
 			printf("%s: hv_ldc_copy: %d\n", __func__, err);
+			free(vt, M_DEVBUF);
+			return;
+		}
 		va += nbytes;
 		size -= nbytes;
 		off += nbytes;
@@ -1377,8 +1389,11 @@ vdsp_set_vtoc(void *arg1, void *arg2)
 		nbytes = MIN(nbytes, PAGE_SIZE - (off & PAGE_MASK));
 		err = hv_ldc_copy(lc->lc_id, LDC_COPY_IN,
 		    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
-		if (err != H_EOK)
+		if (err != H_EOK) {
 			printf("%s: hv_ldc_copy: %d\n", __func__, err);
+			free(vt, M_DEVBUF);
+			return;
+		}
 		va += nbytes;
 		size -= nbytes;
 		off += nbytes;
@@ -1508,8 +1523,11 @@ vdsp_get_diskgeom(void *arg1, void *arg2)
 		nbytes = MIN(nbytes, PAGE_SIZE - (off & PAGE_MASK));
 		err = hv_ldc_copy(lc->lc_id, LDC_COPY_OUT,
 		    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
-		if (err != H_EOK)
+		if (err != H_EOK) {
 			printf("%s: hv_ldc_copy: %d\n", __func__, err);
+			free(vg, M_DEVBUF);
+			return;
+		}
 		va += nbytes;
 		size -= nbytes;
 		off += nbytes;
@@ -1518,6 +1536,8 @@ vdsp_get_diskgeom(void *arg1, void *arg2)
 			i++;
 		}
 	}
+
+	free(vg, M_DEVBUF);
 
 	/* ACK the descriptor. */
 	vd->status = 0;
