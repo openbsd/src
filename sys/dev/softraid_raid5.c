@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.14 2014/01/22 23:50:52 jsing Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.15 2014/01/23 00:22:35 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
@@ -68,6 +68,7 @@ int	sr_raid5_write(struct sr_workunit *, struct sr_workunit *, int, int,
 	    daddr_t, daddr_t, void *, int, int);
 void	sr_raid5_xor(void *, void *, int);
 
+void	sr_raid5_rebuild(struct sr_discipline *);
 void	sr_raid5_scrub(struct sr_discipline *);
 
 /* discipline initialisation. */
@@ -78,7 +79,7 @@ sr_raid5_discipline_init(struct sr_discipline *sd)
 	sd->sd_type = SR_MD_RAID5;
 	strlcpy(sd->sd_name, "RAID 5", sizeof(sd->sd_name));
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE |
-	    SR_CAP_REDUNDANT;
+	    SR_CAP_REBUILD | SR_CAP_REDUNDANT;
 	sd->sd_max_ccb_per_wu = 4; /* only if stripsize <= MAXPHYS */
 	sd->sd_max_wu = SR_RAID5_NOWU + 2;	/* Two for scrub/rebuild. */
 
@@ -86,6 +87,7 @@ sr_raid5_discipline_init(struct sr_discipline *sd)
 	sd->sd_assemble = sr_raid5_assemble;
 	sd->sd_create = sr_raid5_create;
 	sd->sd_openings = sr_raid5_openings;
+	sd->sd_rebuild = sr_raid5_rebuild;
 	sd->sd_scsi_rw = sr_raid5_rw;
 	sd->sd_scsi_intr = sr_raid5_intr;
 	sd->sd_scsi_wu_done = sr_raid5_wu_done;
@@ -761,6 +763,138 @@ sr_raid5_xor(void *a, void *b, int len)
 	len >>= 2;
 	while (len--)
 		*xa++ ^= *xb++;
+}
+
+void
+sr_raid5_rebuild(struct sr_discipline *sd)
+{
+	int64_t strip_no, strip_size, strip_bits, i, psz, rb;
+	int64_t chunk_count, chunk_strips, chunk_lba, chunk_size, row_size;
+	struct sr_workunit *wu_r, *wu_w;
+	int s, slept, percent = 0, old_percent = -1;
+	int rebuild_chunk = -1;
+	void *xorbuf;
+
+	/* Find the rebuild chunk. */
+	for (i = 0; i < sd->sd_meta->ssdi.ssd_chunk_no; i++) {
+		if (sr_raid5_chunk_rebuild(sd, i)) {
+			rebuild_chunk = i;
+			break;
+		}
+	}
+	if (rebuild_chunk == -1)
+		goto bad;
+
+	strip_size = sd->sd_meta->ssdi.ssd_strip_size;
+	strip_bits = sd->mds.mdd_raid5.sr5_strip_bits;
+	chunk_count = sd->sd_meta->ssdi.ssd_chunk_no - 1;
+	chunk_size = sd->sd_meta->ssdi.ssd_size / chunk_count;
+	chunk_strips = (chunk_size << DEV_BSHIFT) >> strip_bits;
+	row_size = (chunk_count << strip_bits) >> DEV_BSHIFT;
+
+	/* XXX - handle restarts. */
+	DNPRINTF(SR_D_REBUILD, "%s: %s sr_raid5_rebuild volume size = %lld, "
+	    "chunk count = %lld, chunk size = %lld, chunk strips = %lld, "
+	    "row size = %lld\n", DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
+	    sd->sd_meta->ssdi.ssd_size, chunk_count, chunk_size, chunk_strips,
+	    row_size);
+
+	for (strip_no = 0; strip_no < chunk_strips; strip_no++) {
+		chunk_lba = (strip_size >> DEV_BSHIFT) * strip_no +
+		    sd->sd_meta->ssd_data_offset;
+
+		DNPRINTF(SR_D_REBUILD, "%s: %s rebuild strip %lld, "
+		    "chunk lba = %lld\n", DEVNAME(sd->sd_sc),
+		    sd->sd_meta->ssd_devname, strip_no, chunk_lba);
+
+		wu_w = sr_scsi_wu_get(sd, 0);
+		wu_r = sr_scsi_wu_get(sd, 0);
+
+		xorbuf = sr_block_get(sd, strip_size);
+		if (sr_raid5_regenerate(wu_r, rebuild_chunk, chunk_lba,
+		    strip_size, xorbuf))
+			goto bad;
+		if (sr_raid5_addio(wu_w, rebuild_chunk, chunk_lba, strip_size,
+		    xorbuf, SCSI_DATA_OUT, SR_CCBF_FREEBUF, NULL))
+			goto bad;
+
+		/* Collide write work unit with read work unit. */
+		wu_r->swu_state = SR_WU_INPROGRESS;
+		wu_r->swu_flags |= SR_WUF_REBUILD;
+		wu_w->swu_state = SR_WU_DEFERRED;
+		wu_w->swu_flags |= SR_WUF_REBUILD | SR_WUF_WAKEUP;
+		wu_r->swu_collider = wu_w;
+
+		/* Block I/O to this strip while we rebuild it. */
+		wu_r->swu_blk_start = (strip_no / chunk_count) * row_size;
+		wu_r->swu_blk_end = wu_r->swu_blk_start + row_size - 1;
+		wu_w->swu_blk_start = wu_r->swu_blk_start;
+		wu_w->swu_blk_end = wu_r->swu_blk_end;
+
+		DNPRINTF(SR_D_REBUILD, "%s: %s rebuild swu_blk_start = %lld, "
+		    "swu_blk_end = %lld\n", DEVNAME(sd->sd_sc),
+		    sd->sd_meta->ssd_devname,
+		    wu_r->swu_blk_start, wu_r->swu_blk_end);
+
+		s = splbio();
+		TAILQ_INSERT_TAIL(&sd->sd_wu_defq, wu_w, swu_link);
+		splx(s);
+
+		sr_schedule_wu(wu_r);
+
+		slept = 0;
+		while ((wu_w->swu_flags & SR_WUF_REBUILDIOCOMP) == 0) {
+			tsleep(wu_w, PRIBIO, "sr_rebuild", 0);
+			slept = 1;
+		}
+		if (!slept)
+			tsleep(sd->sd_sc, PWAIT, "sr_yield", 1);
+
+		sr_scsi_wu_put(sd, wu_r);
+		sr_scsi_wu_put(sd, wu_w);
+
+		sd->sd_meta->ssd_rebuild =
+		    (chunk_lba - sd->sd_meta->ssd_data_offset) * chunk_count;
+
+		psz = sd->sd_meta->ssdi.ssd_size;
+		rb = sd->sd_meta->ssd_rebuild;
+		if (rb > 0)
+			percent = 100 - ((psz * 100 - rb * 100) / psz) - 1;
+		else
+			percent = 0;
+		if (percent != old_percent && strip_no != chunk_strips - 1) {
+			if (sr_meta_save(sd, SR_META_DIRTY))
+				printf("%s: could not save metadata to %s\n",
+				    DEVNAME(sd->sd_sc),
+				    sd->sd_meta->ssd_devname);
+			old_percent = percent;
+		}
+
+		if (sd->sd_reb_abort)
+			goto abort;
+	}
+
+	DNPRINTF(SR_D_REBUILD, "%s: %s rebuild complete\n", DEVNAME(sd->sd_sc),
+	    sd->sd_meta->ssd_devname);
+
+	/* all done */
+	sd->sd_meta->ssd_rebuild = 0;
+	for (i = 0; i < sd->sd_meta->ssdi.ssd_chunk_no; i++) {
+		if (sd->sd_vol.sv_chunks[i]->src_meta.scm_status ==
+		    BIOC_SDREBUILD) {
+			sd->sd_set_chunk_state(sd, i, BIOC_SDONLINE);
+			break;
+		}
+	}
+
+	return;
+
+abort:
+	if (sr_meta_save(sd, SR_META_DIRTY))
+		printf("%s: could not save metadata to %s\n",
+		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname);
+bad:
+	return;
 }
 
 #if 0
