@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_linux.8,v 1.45 2014/01/23 05:03:33 tedu Exp $
+.\"	$OpenBSD: compat_linux.8,v 1.46 2014/01/23 08:13:12 jmc Exp $
 .\"	$NetBSD: compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -84,15 +84,9 @@ Shared libraries should also be installed in the shadow tree.
 .Ss Setting up shared libraries
 Run
 .Xr pkg_add 1
-to install the
-.Nm fedora_base
-package from the
-.Nm emulators
-category.
-The
-.Nm fedora_base
-package contains the shared libraries, binaries, and other related files
-necessary to run Linux applications.
+to install the fedora_base package from the emulators category.
+The fedora_base package contains the shared libraries, binaries,
+and other related files necessary to run Linux applications.
 .Ss Programs using SVGAlib
 SVGAlib binaries require some extra care.
 The pcvt virtual console driver has to be in the kernel for them to work,
