@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.51 2014/01/23 01:51:53 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.52 2014/01/23 01:54:02 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1620,10 +1620,7 @@ myx_intr(void *arg)
 	u_int			 if_flags;
 	int			 i;
 
-	KERNEL_LOCK();	
 	if_flags = ifp->if_flags;
-	KERNEL_UNLOCK();
-
 	if (!ISSET(if_flags, IFF_RUNNING))
 		return (0);
 
