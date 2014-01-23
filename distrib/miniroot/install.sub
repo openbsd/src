@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.729 2014/01/17 01:15:27 halex Exp $
+#	$OpenBSD: install.sub,v 1.730 2014/01/23 01:04:41 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1214,21 +1214,19 @@ install_files() {
 		_tmpsrc=$(tmpdir /mnt/home/sets); then
 
 		# Fetch signed checksum file and check signature
-		echo "Fetching checksum file."
 		_cfile=$_tmpsrc/SHA256
 		if isin SHA256.sig $_files; then
-			ftp -Vo "$_cfile.sig" "$_src/SHA256.sig" >/dev/null &&
+			ftp -D 'Get/Verify' -Vmo "$_cfile.sig" "$_src/SHA256.sig" &&
 			signify -Vep /etc/signify/${VERSION}base.pub \
  				-x "$_cfile.sig" -m "$_cfile"
 		else
-			ftp -Vo "$_cfile" "$_src/SHA256"
+			ftp -D Fetching -Vmo "$_cfile" "$_src/SHA256"
 		fi &&
-		echo "Prefetching and verifying sets." &&
 		for _f in $_get_sets; do
 			if [[ $_src == file://* ]]; then
 				ln -s "${_src#file://}/$_f" "$_tmpsrc/$_f"
 			else
-				ftp -Vmo "$_tmpsrc/$_f" "$_src/$_f"
+				ftp -D 'Get/Verify' -Vmo "$_tmpsrc/$_f" "$_src/$_f"
 			fi || {
 				echo "Fetching of $_f failed."
 				rm -f "$_tmpsrc/$_f"
@@ -1250,15 +1248,12 @@ install_files() {
 	[[ -n $_unver ]] && echo "Unverified sets:" ${_unver% }. && \
 		ask_yn "Install sets anyway?" no
 	[[ $resp == y ]] &&
-	echo "Installing sets." &&
 	for _f in $_get_sets; do
 		_fsrc="$_src/$_f"
 		[[ -f $_tmpsrc/$_f ]] && _fsrc="file://$_tmpsrc/$_f"
 		case $_fsrc in
-		file://*.tgz)	tar -zxphf "${_fsrc##file://}" -C /mnt;;
-		file://*)	cp "${_fsrc##file://}" /mnt;;
-		*.tgz)		ftp -Vmo - "$_fsrc" | tar -zxphf - -C /mnt;;
-		*)		ftp -Vmo "/mnt/$_f" "$_fsrc";;
+		*.tgz)	ftp -D Installing -Vmo - "$_fsrc" | tar -zxphf - -C /mnt;;
+		*)	ftp -D Installing -Vmo "/mnt/$_f" "$_fsrc";;
 		esac
 		if (($?)); then
 			echo "'$_f' did not install correctly."
