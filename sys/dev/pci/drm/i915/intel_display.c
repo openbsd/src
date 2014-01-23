@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.20 2014/01/22 04:04:53 kettenis Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.21 2014/01/23 10:42:57 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -8428,7 +8428,7 @@ static const struct drm_crtc_funcs intel_crtc_funcs = {
 
 static void intel_cpu_pll_init(struct drm_device *dev)
 {
-	if (IS_HASWELL(dev))
+	if (HAS_DDI(dev))
 		intel_ddi_pll_init(dev);
 }
 
@@ -8564,11 +8564,10 @@ static void intel_setup_outputs(struct drm_device *dev)
 		I915_WRITE(PFIT_CONTROL, 0);
 	}
 
-	if (!(IS_HASWELL(dev) &&
-	      (I915_READ(DDI_BUF_CTL(PORT_A)) & DDI_A_4_LANES)))
+	if (!(HAS_DDI(dev) && (I915_READ(DDI_BUF_CTL(PORT_A)) & DDI_A_4_LANES)))
 		intel_crt_init(dev);
 
-	if (IS_HASWELL(dev)) {
+	if (HAS_DDI(dev)) {
 		int found;
 
 		/* Haswell uses DDI functions to detect digital outputs */
@@ -8828,7 +8827,7 @@ static void intel_init_display(struct drm_device *dev)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	/* We always want a DPMS function */
-	if (IS_HASWELL(dev)) {
+	if (HAS_DDI(dev)) {
 		dev_priv->display.crtc_mode_set = haswell_crtc_mode_set;
 		dev_priv->display.crtc_enable = haswell_crtc_enable;
 		dev_priv->display.crtc_disable = haswell_crtc_disable;
@@ -9338,7 +9337,7 @@ void intel_modeset_setup_hw_state(struct drm_device *dev,
 	struct intel_encoder *encoder;
 	struct intel_connector *connector;
 
-	if (IS_HASWELL(dev)) {
+	if (HAS_DDI(dev)) {
 		tmp = I915_READ(TRANS_DDI_FUNC_CTL(TRANSCODER_EDP));
 
 		if (tmp & TRANS_DDI_FUNC_ENABLE) {
@@ -9379,7 +9378,7 @@ void intel_modeset_setup_hw_state(struct drm_device *dev,
 			      crtc->active ? "enabled" : "disabled");
 	}
 
-	if (IS_HASWELL(dev))
+	if (HAS_DDI(dev))
 		intel_ddi_setup_hw_pll_state(dev);
 
 	list_for_each_entry(encoder, &dev->mode_config.encoder_list,

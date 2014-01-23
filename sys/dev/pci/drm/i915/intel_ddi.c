@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ddi.c,v 1.9 2014/01/23 03:49:53 jsg Exp $	*/
+/*	$OpenBSD: intel_ddi.c,v 1.10 2014/01/23 10:42:57 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -116,7 +116,7 @@ void intel_prepare_ddi(struct drm_device *dev)
 {
 	int port;
 
-	if (IS_HASWELL(dev)) {
+	if (HAS_DDI(dev)) {
 		for (port = PORT_A; port < PORT_E; port++)
 			intel_prepare_ddi_buffers(dev, port, false);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_crt.c,v 1.7 2014/01/22 05:16:55 kettenis Exp $	*/
+/*	$OpenBSD: intel_crt.c,v 1.8 2014/01/23 10:42:57 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -785,7 +785,7 @@ void intel_crt_init(struct drm_device *dev)
 
 	crt->base.disable = intel_disable_crt;
 	crt->base.enable = intel_enable_crt;
-	if (IS_HASWELL(dev))
+	if (HAS_DDI(dev))
 		crt->base.get_hw_state = intel_ddi_get_hw_state;
 	else
 		crt->base.get_hw_state = intel_crt_get_hw_state;
