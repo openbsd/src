@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.112 2013/12/24 01:11:04 dlg Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.113 2014/01/23 00:33:36 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -108,6 +108,10 @@ tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
 	int error, error1;
 
 	KASSERT((priority & ~(PRIMASK | PCATCH)) == 0);
+
+#ifdef MULTIPROCESSOR
+	KASSERT(timo || __mp_lock_held(&kernel_lock));
+#endif
 
 	if (cold || panicstr) {
 		int s;
