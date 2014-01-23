@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.46 2014/01/17 15:54:06 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.47 2014/01/23 15:46:39 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1071,7 +1071,14 @@ sub finish_display
 	OpenBSD::Add::manpages_index($state);
 
 	# and display delayed thingies.
-	if ($state->{packages_without_sig}) {
+	my $warn = 1;
+	if ($state->defines("unsigned")) {
+		$warn = 0;
+	}
+	if ($state->{packages_with_sig}) {
+		$warn = 1;
+	}
+	if ($warn && $state->{packages_without_sig}) {
 		print "UNSIGNED PACKAGES: ",
 		    join(', ', keys %{$state->{packages_without_sig}}), "\n";
 	}
