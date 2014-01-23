@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.21 2014/01/23 10:42:57 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.22 2014/01/23 11:18:34 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -8564,7 +8564,7 @@ static void intel_setup_outputs(struct drm_device *dev)
 		I915_WRITE(PFIT_CONTROL, 0);
 	}
 
-	if (!(HAS_DDI(dev) && (I915_READ(DDI_BUF_CTL(PORT_A)) & DDI_A_4_LANES)))
+	if (!IS_ULT(dev))
 		intel_crt_init(dev);
 
 	if (HAS_DDI(dev)) {
