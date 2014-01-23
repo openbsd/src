@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.h,v 1.9 2011/09/18 20:34:29 henning Exp $	*/
+/*	$OpenBSD: altq_hfsc.h,v 1.10 2014/01/23 00:46:56 pelikan Exp $	*/
 /*	$KAME: altq_hfsc.h,v 1.8 2002/11/29 04:36:23 kjc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ struct service_curve {
 
 /* special class handles */
 #define	HFSC_NULLCLASS_HANDLE	0
-#define	HFSC_MAX_CLASSES	64
+#define	ALTQ_HFSC_MAX_CLASSES	64
 
 /* hfsc class flags */
 #define	HFCF_RED		0x0001	/* use RED */
@@ -227,7 +227,7 @@ struct altq_hfsc_if {
 	struct ifaltq		*hif_ifq;	/* backpointer to ifaltq */
 	struct altq_hfsc_class	*hif_rootclass;		/* root class */
 	struct altq_hfsc_class	*hif_defaultclass;	/* default class */
-	struct altq_hfsc_class	*hif_class_tbl[HFSC_MAX_CLASSES];
+	struct altq_hfsc_class	*hif_class_tbl[ALTQ_HFSC_MAX_CLASSES];
 	struct altq_hfsc_class	*hif_pollcache;	/* cache for poll operation */
 
 	u_int	hif_classes;			/* # of classes in the tree */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.c,v 1.29 2011/09/18 20:34:29 henning Exp $	*/
+/*	$OpenBSD: altq_hfsc.c,v 1.30 2014/01/23 00:46:56 pelikan Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.17 2002/11/29 07:48:33 kjc Exp $	*/
 
 /*
@@ -330,7 +330,7 @@ altq_hfsc_class_create(struct altq_hfsc_if *hif, struct service_curve *rsc,
 	struct altq_hfsc_class *cl, *p;
 	int i, s;
 
-	if (hif->hif_classes >= HFSC_MAX_CLASSES)
+	if (hif->hif_classes >= ALTQ_HFSC_MAX_CLASSES)
 		return (NULL);
 
 #ifndef ALTQ_RED
@@ -418,16 +418,16 @@ altq_hfsc_class_create(struct altq_hfsc_if *hif, struct service_curve *rsc,
 	 * the lower bits of qid is free, use this slot.  otherwise,
 	 * use the first free slot.
 	 */
-	i = qid % HFSC_MAX_CLASSES;
+	i = qid % ALTQ_HFSC_MAX_CLASSES;
 	if (hif->hif_class_tbl[i] == NULL)
 		hif->hif_class_tbl[i] = cl;
 	else {
-		for (i = 0; i < HFSC_MAX_CLASSES; i++)
+		for (i = 0; i < ALTQ_HFSC_MAX_CLASSES; i++)
 			if (hif->hif_class_tbl[i] == NULL) {
 				hif->hif_class_tbl[i] = cl;
 				break;
 			}
-		if (i == HFSC_MAX_CLASSES) {
+		if (i == ALTQ_HFSC_MAX_CLASSES) {
 			splx(s);
 			goto err_ret;
 		}
@@ -506,7 +506,7 @@ altq_hfsc_class_destroy(struct altq_hfsc_class *cl)
 		ASSERT(p != NULL);
 	}
 
-	for (i = 0; i < HFSC_MAX_CLASSES; i++)
+	for (i = 0; i < ALTQ_HFSC_MAX_CLASSES; i++)
 		if (cl->cl_hif->hif_class_tbl[i] == cl) {
 			cl->cl_hif->hif_class_tbl[i] = NULL;
 			break;
@@ -1570,10 +1570,10 @@ clh_to_clp(struct altq_hfsc_if *hif, u_int32_t chandle)
 	 * first, try the slot corresponding to the lower bits of the handle.
 	 * if it does not match, do the linear table search.
 	 */
-	i = chandle % HFSC_MAX_CLASSES;
+	i = chandle % ALTQ_HFSC_MAX_CLASSES;
 	if ((cl = hif->hif_class_tbl[i]) != NULL && cl->cl_handle == chandle)
 		return (cl);
-	for (i = 0; i < HFSC_MAX_CLASSES; i++)
+	for (i = 0; i < ALTQ_HFSC_MAX_CLASSES; i++)
 		if ((cl = hif->hif_class_tbl[i]) != NULL &&
 		    cl->cl_handle == chandle)
 			return (cl);
