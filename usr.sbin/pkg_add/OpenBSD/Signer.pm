@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: Signer.pm,v 1.1 2014/01/23 11:45:22 espie Exp $
+# $OpenBSD: Signer.pm,v 1.2 2014/01/23 11:52:57 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -128,12 +128,7 @@ sub create_archive
 {
 	my ($state, $filename, $dir) = @_;
 	require IO::Compress::Gzip;
-	my $level = $state->{subst}->value('COMPRESSION_LEVEL');
-	if (defined $state->{signer}) {
-		$level //= 6;
-	} else {
-		$level //= 1;
-	}
+	my $level = $state->{subst}->value('COMPRESSION_LEVEL') // 6;
 	my $fh = IO::Compress::Gzip->new($filename, -Level => $level);
 	return OpenBSD::Ustar->new($fh, $state, $dir);
 }
