@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.19 2013/07/12 18:51:03 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.20 2014/01/23 00:19:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -717,7 +717,7 @@ vdsp_rx_vio_dring_data(struct vdsp_softc *sc, struct vio_msg_tag *tag)
 		size = sc->sc_descriptor_size;
 		while (size > 0) {
 			pmap_extract(pmap_kernel(), va, &pa);
-			nbytes = min(size, PAGE_SIZE - (off & PAGE_MASK));
+			nbytes = MIN(size, PAGE_SIZE - (off & PAGE_MASK));
 			err = hv_ldc_copy(sc->sc_lc.lc_id, LDC_COPY_IN,
 			    sc->sc_dring_cookie.addr + off, pa,
 			    nbytes, &nbytes);
@@ -1089,8 +1089,8 @@ vdsp_read(void *arg1, void *arg2)
 		off = 0;
 		while (size > 0 && i < dm->ncookies) {
 			pmap_extract(pmap_kernel(), va, &pa);
-			nbytes = min(size, dm->cookie[i].size - off);
-			nbytes = min(nbytes, PAGE_SIZE - (off & PAGE_MASK));
+			nbytes = MIN(size, dm->cookie[i].size - off);
+			nbytes = MIN(nbytes, PAGE_SIZE - (off & PAGE_MASK));
 			err = hv_ldc_copy(lc->lc_id, LDC_COPY_OUT,
 			    dm->cookie[i].addr + off, pa, nbytes, &nbytes);
 			if (err != H_EOK)
@@ -1156,8 +1156,8 @@ vdsp_read_dring(void *arg1, void *arg2)
 		off = 0;
 		while (size > 0 && i < vd->ncookies) {
 			pmap_extract(pmap_kernel(), va, &pa);
-			nbytes = min(size, vd->cookie[i].size - off);
-			nbytes = min(nbytes, PAGE_SIZE - (off & PAGE_MASK));
+			nbytes = MIN(size, vd->cookie[i].size - off);
+			nbytes = MIN(nbytes, PAGE_SIZE - (off & PAGE_MASK));
 			err = hv_ldc_copy(lc->lc_id, LDC_COPY_OUT,
 			    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
 			if (err != H_EOK)
@@ -1206,8 +1206,8 @@ vdsp_write_dring(void *arg1, void *arg2)
 	off = 0;
 	while (size > 0 && i < vd->ncookies) {
 		pmap_extract(pmap_kernel(), va, &pa);
-		nbytes = min(size, vd->cookie[i].size - off);
-		nbytes = min(nbytes, PAGE_SIZE - (off & PAGE_MASK));
+		nbytes = MIN(size, vd->cookie[i].size - off);
+		nbytes = MIN(nbytes, PAGE_SIZE - (off & PAGE_MASK));
 		err = hv_ldc_copy(lc->lc_id, LDC_COPY_IN,
 		    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
 		if (err != H_EOK)
@@ -1327,8 +1327,8 @@ vdsp_get_vtoc(void *arg1, void *arg2)
 	off = 0;
 	while (size > 0 && i < vd->ncookies) {
 		pmap_extract(pmap_kernel(), va, &pa);
-		nbytes = min(size, vd->cookie[i].size - off);
-		nbytes = min(nbytes, PAGE_SIZE - (off & PAGE_MASK));
+		nbytes = MIN(size, vd->cookie[i].size - off);
+		nbytes = MIN(nbytes, PAGE_SIZE - (off & PAGE_MASK));
 		err = hv_ldc_copy(lc->lc_id, LDC_COPY_OUT,
 		    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
 		if (err != H_EOK)
@@ -1373,8 +1373,8 @@ vdsp_set_vtoc(void *arg1, void *arg2)
 	off = 0;
 	while (size > 0 && i < vd->ncookies) {
 		pmap_extract(pmap_kernel(), va, &pa);
-		nbytes = min(size, vd->cookie[i].size - off);
-		nbytes = min(nbytes, PAGE_SIZE - (off & PAGE_MASK));
+		nbytes = MIN(size, vd->cookie[i].size - off);
+		nbytes = MIN(nbytes, PAGE_SIZE - (off & PAGE_MASK));
 		err = hv_ldc_copy(lc->lc_id, LDC_COPY_IN,
 		    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
 		if (err != H_EOK)
@@ -1504,8 +1504,8 @@ vdsp_get_diskgeom(void *arg1, void *arg2)
 	off = 0;
 	while (size > 0 && i < vd->ncookies) {
 		pmap_extract(pmap_kernel(), va, &pa);
-		nbytes = min(size, vd->cookie[i].size - off);
-		nbytes = min(nbytes, PAGE_SIZE - (off & PAGE_MASK));
+		nbytes = MIN(size, vd->cookie[i].size - off);
+		nbytes = MIN(nbytes, PAGE_SIZE - (off & PAGE_MASK));
 		err = hv_ldc_copy(lc->lc_id, LDC_COPY_OUT,
 		    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
 		if (err != H_EOK)
@@ -1552,7 +1552,7 @@ vdsp_ack_desc(struct vdsp_softc *sc, struct vd_desc *vd)
 	size = sc->sc_descriptor_size;
 	while (size > 0) {
 		pmap_extract(pmap_kernel(), va, &pa);
-		nbytes = min(size, PAGE_SIZE - (off & PAGE_MASK));
+		nbytes = MIN(size, PAGE_SIZE - (off & PAGE_MASK));
 		err = hv_ldc_copy(sc->sc_lc.lc_id, LDC_COPY_OUT,
 		    sc->sc_dring_cookie.addr + off, pa, nbytes, &nbytes);
 		if (err != H_EOK) {
