@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.731 2014/01/23 21:56:42 rpe Exp $
+#	$OpenBSD: install.sub,v 1.732 2014/01/23 22:17:57 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1219,7 +1219,7 @@ install_files() {
 			[[ $_src == file://* ]] && _t=Verifying || _t='Get/Verify'
 			ftp -D $_t -Vmo "$_cfile.sig" "$_src/SHA256.sig" &&
 			signify -Vep /etc/signify/${VERSION}base.pub \
- 				-x "$_cfile.sig" -m "$_cfile"
+				-x "$_cfile.sig" -m "$_cfile"
 		else
 			ftp -D Fetching -Vmo "$_cfile" "$_src/SHA256"
 		fi &&
