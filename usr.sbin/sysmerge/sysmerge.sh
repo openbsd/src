@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.111 2014/01/23 07:24:00 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.112 2014/01/23 08:23:45 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -58,11 +58,7 @@ usage() {
 }
 
 warn() {
-	echo "\t*** WARNING: $@"
-}
-
-error() {
-	echo "\t*** ERROR: $@"
+	echo "**** WARNING: $@"
 }
 
 report() {
@@ -71,7 +67,7 @@ report() {
 
 # remove newly created work directory and exit with status 1
 error_rm_wrkdir() {
-	(($#)) && error "$@"
+	(($#)) && echo "**** ERROR: $@"
 	# do not remove the entire WRKDIR in case sysmerge stopped half
 	# way since it contains our backup files
 	rm -f ${WRKDIR}/*SHA256*
@@ -83,9 +79,8 @@ error_rm_wrkdir() {
 trap "restore_sum; clean_src; rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
 
 if (($(id -u) != 0)); then
-	error "need root privileges to run this script"
 	usage
-	error_rm_wrkdir
+	error_rm_wrkdir "need root privileges to run this script"
 fi
 
 # extract and verify (x)etcXX.tgz and create cksum file;
@@ -132,7 +127,7 @@ get_set() {
 check_sig() {
 	local _sigfile=${1##*/} _tgz=${2##*/}
 	local _key="/etc/signify/$(uname -r | tr -d '.')base.pub"
-	echo "===> Verifying \"${_set}\" set SHA256 signature and checksum"
+	echo "===> Verifying ${_tgz} signature and checksum"
 	(cd ${WRKDIR} && \
 		signify -V -e -p ${_key} -x "${_sigfile}.sig" -m ${_sigfile} >/dev/null 2>&1) || \
 		error_rm_wrkdir "signature check failed for ${_sigfile}.sig"
@@ -627,10 +622,9 @@ sm_compare() {
 
 sm_post() {
 	local FILES_IN_TEMPROOT FILES_IN_BKPDIR
-	echo "===> Checking directory hierarchy permissions (running mtree(8))"
-	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U >/dev/null
-	[ -n "${XTGZ}" ] && \
-		mtree -qdef ${DESTDIR}/etc/mtree/BSD.x11.dist -p ${DESTDIR:=/} -U >/dev/null
+
+	FILES_IN_TEMPROOT=$(find ${TEMPROOT} -type f ! -name \*.merged -size +0 2>/dev/null)
+	FILES_IN_BKPDIR=$(find ${BKPDIR} -type f -size +0 2>/dev/null)
 
 	if [ -n "${NEED_NEWALIASES}" ]; then
 		report "===> A new ${DESTDIR}/etc/mail/aliases file was installed."
@@ -638,8 +632,6 @@ sm_post() {
 		report "you will need to rebuild your aliases database manually.\n"
 	fi
 
-	FILES_IN_TEMPROOT=$(find ${TEMPROOT} -type f ! -name \*.merged -size +0 2>/dev/null)
-	FILES_IN_BKPDIR=$(find ${BKPDIR} -type f -size +0 2>/dev/null)
 	if [ -n "${AUTO_INSTALLED_FILES}" ]; then
 		report "===> Automatically installed file(s)"
 		report "${AUTO_INSTALLED_FILES}"
@@ -663,15 +655,6 @@ sm_post() {
 		report "${FILES_IN_TEMPROOT}"
 	fi
 
-	if [ -e "${REPORT}" ]; then
-		echo "===> Output log available at ${REPORT}"
-		find ${TEMPROOT} -type f -empty 2>/dev/null | xargs -r rm
-		find ${TEMPROOT} -type d | sort -r | xargs -r rmdir 2>/dev/null
-	else
-		echo "===> Removing ${WRKDIR}"
-		rm -rf "${WRKDIR}"
-	fi
-
 	[ -n "${FILES_IN_TEMPROOT}" ] && \
 		warn "some files are still left for comparison"
 
@@ -680,6 +663,20 @@ sm_post() {
 
 	[ -n "${NEED_REBOOT}" ] && \
 		warn "some new/updated file(s) may require a reboot"
+
+	echo "===> Checking directory hierarchy permissions (running mtree(8))"
+	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U >/dev/null
+	[ -n "${XTGZ}" ] && \
+		mtree -qdef ${DESTDIR}/etc/mtree/BSD.x11.dist -p ${DESTDIR:=/} -U >/dev/null
+
+	if [ -e "${REPORT}" ]; then
+		echo "===> Output log available at ${REPORT}"
+		find ${TEMPROOT} -type f -empty 2>/dev/null | xargs -r rm
+		find ${TEMPROOT} -type d | sort -r | xargs -r rmdir 2>/dev/null
+	else
+		echo "===> Removing ${WRKDIR}"
+		rm -rf "${WRKDIR}"
+	fi
 
 	unset NEED_NEWALIASES NEED_REBOOT
 
@@ -734,9 +731,8 @@ if [ -z "${SRCDIR}" -a -z "${TGZ}" -a -z "${XTGZ}" ]; then
 	elif [ -f "/usr/src/etc/Makefile" ]; then
 		SRCDIR=/usr/src
 	else
-		error "please specify a valid path to src or (x)etcXX.tgz"
 		usage
-		error_rm_wrkdir
+		error_rm_wrkdir "please specify a valid path to src or (x)etcXX.tgz"
 	fi
 fi
 
