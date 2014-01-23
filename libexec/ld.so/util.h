@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.24 2013/11/27 21:25:04 deraadt Exp $	*/
+/*	$OpenBSD: util.h,v 1.25 2014/01/23 01:07:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -44,7 +44,7 @@ void _dl_vprintf(const char *fmt, va_list ap);
 void _dl_fdprintf(int, const char *fmt, ...);
 void _dl_show_objects(void);
 void _dl_randombuf(void *, size_t);
-unsigned int _dl_random(void);
+u_int32_t _dl_random(void);
 ssize_t _dl_write(int fd, const char* buf, size_t len);
 char * _dl_dirname(const char *path);
 char *_dl_realpath(const char *path, char *resolved);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.28 2013/12/28 18:41:48 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.29 2014/01/23 01:07:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -135,10 +135,10 @@ _dl_randombuf(void *buf, size_t buflen)
 	_dl_sysctl(mib, 2, buf, &buflen, NULL, 0);
 }
 
-unsigned int
+u_int32_t
 _dl_random(void)
 {
-	unsigned int rnd;
+	u_int32_t rnd;
 	_dl_randombuf(&rnd, sizeof(rnd));
 	return (rnd);
 }
