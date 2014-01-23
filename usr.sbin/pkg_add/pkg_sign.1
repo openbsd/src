@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_sign.1,v 1.1 2014/01/23 12:21:44 espie Exp $
+.\"	$OpenBSD: pkg_sign.1,v 1.2 2014/01/23 12:41:55 espie Exp $
 .\" Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -39,6 +39,9 @@ command is used to sign existing collections of binary packages
 created by
 .Xr pkg_create 1 .
 .Pp
+It will sign the packages and additionally, produce a
+.Pa SHA256
+manifest file in the output directory.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl D Ar resign
@@ -103,12 +106,34 @@ after each package is signed.
 .El
 .Pp
 .Sh SIGNATURE DETAILS
-To be done.
+The packing-list is extracted from the source package:
+it already contains a complete manifest of files within the package,
+checksummed with
+.Xr sha256 1
+and annotated with proper
+.Cm \@mode ,
+.Cm \@user ,
+.Cm \@group
+annotations, so that
+.Xr pkg_add 1
+will refuse to give special rights to any file which isn't properly annotated,
+and so that it will abort on installation of a file whose checksum does not
+match.
+.Pp
+That packing list is a text file that is signed using the provided method, 
+adding a
+.Cm \@digital-signature
+annotation.
+The signed package is then created, by putting the signed packing-list at
+the start of the new package, and then blindly copying the rest of the source
+package: there is no need to re-checksum any of the files; 
+If someone tampers with them later, their checksum will not match.
 .Sh SEE ALSO
 .Xr openssl 1 ,
 .Xr pkg_add 1 ,
 .Xr pkg_create 1 ,
 .Xr signify 1 ,
+.Xr sha256 1 ,
 .Xr tar 1 ,
 .Xr package 5 ,
 .Sh HISTORY
