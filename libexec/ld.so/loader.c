@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.145 2014/01/18 09:08:42 kettenis Exp $ */
+/*	$OpenBSD: loader.c,v 1.146 2014/01/23 00:31:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -69,7 +69,6 @@ char *_dl_bindnow;
 char *_dl_traceld;
 char *_dl_debug;
 char *_dl_showmap;
-char *_dl_norandom;
 char *_dl_noprebind;
 char *_dl_prebind_validate;
 char *_dl_tracefmt1, *_dl_tracefmt2, *_dl_traceprog;
@@ -222,7 +221,6 @@ _dl_setup_env(char **envp)
 	_dl_tracefmt1 = _dl_getenv("LD_TRACE_LOADED_OBJECTS_FMT1", envp);
 	_dl_tracefmt2 = _dl_getenv("LD_TRACE_LOADED_OBJECTS_FMT2", envp);
 	_dl_traceprog = _dl_getenv("LD_TRACE_LOADED_OBJECTS_PROGNAME", envp);
-	_dl_norandom = _dl_getenv("LD_NORANDOM", envp);
 	_dl_noprebind = _dl_getenv("LD_NOPREBIND", envp);
 	_dl_prebind_validate = _dl_getenv("LD_PREBINDVALIDATE", envp);
 
@@ -248,10 +246,6 @@ _dl_setup_env(char **envp)
 		if (_dl_debug) {
 			_dl_debug = NULL;
 			_dl_unsetenv("LD_DEBUG", envp);
-		}
-		if (_dl_norandom) {
-			_dl_norandom = NULL;
-			_dl_unsetenv("LD_NORANDOM", envp);
 		}
 	}
 	_dl_so_envp = envp;
@@ -304,16 +298,15 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 			for (loop = 0; loop < libcount; loop++)
 				randomlist[loop] = loop;
 
-			if (!_dl_norandom)
-				for (loop = 1; loop < libcount; loop++) {
-					unsigned int rnd;
-					int cur;
-					rnd = _dl_random();
-					rnd = rnd % (loop+1);
-					cur = randomlist[rnd];
-					randomlist[rnd] = randomlist[loop];
-					randomlist[loop] = cur;
-				}
+			for (loop = 1; loop < libcount; loop++) {
+				unsigned int rnd;
+				int cur;
+				rnd = _dl_random();
+				rnd = rnd % (loop+1);
+				cur = randomlist[rnd];
+				randomlist[rnd] = randomlist[loop];
+				randomlist[loop] = cur;
+			}
 
 			for (loop = 0; loop < libcount; loop++) {
 				elf_object_t *depobj;
