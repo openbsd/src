@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_hdmi.c,v 1.6 2014/01/22 05:16:55 kettenis Exp $	*/
+/*	$OpenBSD: intel_hdmi.c,v 1.7 2014/01/23 03:08:05 jsg Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2009 Intel Corporation
@@ -767,27 +767,6 @@ bool intel_hdmi_mode_fixup(struct drm_encoder *encoder,
 	return true;
 }
 
-static bool g4x_hdmi_connected(struct intel_hdmi *intel_hdmi)
-{
-	struct drm_device *dev = intel_hdmi_to_dev(intel_hdmi);
-	struct drm_i915_private *dev_priv = dev->dev_private;
-	uint32_t bit;
-
-	switch (intel_hdmi->sdvox_reg) {
-	case SDVOB:
-		bit = HDMIB_HOTPLUG_LIVE_STATUS;
-		break;
-	case SDVOC:
-		bit = HDMIC_HOTPLUG_LIVE_STATUS;
-		break;
-	default:
-		bit = 0;
-		break;
-	}
-
-	return I915_READ(PORT_HOTPLUG_STAT) & bit;
-}
-
 static enum drm_connector_status
 intel_hdmi_detect(struct drm_connector *connector, bool force)
 {
@@ -798,9 +777,6 @@ intel_hdmi_detect(struct drm_connector *connector, bool force)
 	struct drm_i915_private *dev_priv = connector->dev->dev_private;
 	struct edid *edid;
 	enum drm_connector_status status = connector_status_disconnected;
-
-	if (IS_G4X(connector->dev) && !g4x_hdmi_connected(intel_hdmi))
-		return status;
 
 	intel_hdmi->has_hdmi_sink = false;
 	intel_hdmi->has_audio = false;
