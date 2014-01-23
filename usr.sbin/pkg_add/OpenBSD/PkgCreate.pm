@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.97 2014/01/20 21:10:55 naddy Exp $
+# $OpenBSD: PkgCreate.pm,v 1.98 2014/01/23 11:52:34 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -22,93 +22,10 @@ use warnings;
 use OpenBSD::AddCreateDelete;
 use OpenBSD::Dependencies;
 use OpenBSD::SharedLibs;
-
-package Signer;
-
-my $h = {
-	x509 => 'Signer::X509',
-	signify => 'Signer::SIGNIFY',
-};
-
-sub factory
-{
-	my ($class, $state) = @_;
-
-	my @p = @{$state->{signature_params}};
-
-	if (defined $h->{$p[0]}) {
-		return $h->{$p[0]}->new($state, @p);
-	} else {
-		$state->usage("Unknown signature scheme $p[0]");
-	}
-}
-
-package Signer::X509;
-sub new
-{
-	my ($class, $state, @p) = @_;
-
-	if (@p != 3 || !-f $p[1] || !-f $p[2]) {
-		$state->usage("$p[0] signature wants -s cert -s privkey");
-	}
-	bless {cert => $p[1], privkey => $p[2]}, $class;
-}
-
-sub new_sig
-{
-	require OpenBSD::x509;
-	return OpenBSD::PackingElement::DigitalSignature->blank('x509');
-}
-
-sub compute_signature
-{
-	my ($self, $state, $plist) = @_;
-	return OpenBSD::x509::compute_signature($plist, $self->{cert}, 
-	    $self->{privkey});
-}
-
-package Signer::SIGNIFY;
-sub new
-{
-	my ($class, $state, @p) = @_;
-	if (@p != 2 || !-f $p[1]) {
-		$state->usage("$p[0] signature wants -s privkey");
-	}
-	my $o = bless {privkey => $p[1]}, $class;
-	my $signer = $o->{privkey};
-	$signer =~ s/\.sec$//;
-	my $pubkey = "$signer.pub";
-	$signer =~ s,.*/,,;
-	$o->{signer} = $signer;
-	if (!-f $pubkey) {
-		$pubkey =~ s,.*/,/etc/signify/,;
-		if (!-f $pubkey) {
-			$state->errsay("warning: public key not found");
-			return $o;
-		}
-	}
-	$o->{pubkey} = $pubkey;
-	return $o;
-}
-
-sub new_sig
-{
-	require OpenBSD::signify;
-	return OpenBSD::PackingElement::DigitalSignature->blank('signify');
-}
-
-sub compute_signature
-{
-	my ($self, $state, $plist) = @_;
-
-	OpenBSD::PackingElement::Signer->add($plist, $self->{signer});
-
-	return OpenBSD::signify::compute_signature($plist, $state, 
-	    $self->{privkey}, $self->{pubkey});
-}
+use OpenBSD::Signer;
 
 package OpenBSD::PkgCreate::State;
-our @ISA = qw(OpenBSD::AddCreateDelete::State);
+our @ISA = qw(OpenBSD::CreateSign::State);
 
 sub init
 {
@@ -149,12 +66,6 @@ sub set_status
 	}
 }
 
-sub todo
-{
-	my ($self, $offset) = @_;
-	return sprintf("%u/%u", $self->{done}-$offset, $self->{total});
-}
-
 sub end_status
 {
 	my $self = shift;
@@ -175,17 +86,6 @@ sub handle_options
 		    sub {
 			    push(@{$state->{contents}}, shift);
 		    },
-	    'o' =>
-		    sub {
-			    $state->{output_dir} = shift;
-			    if (!-d $state->{output_dir}) {
-				    $state->usage("no such dir");
-			    }
-		    },
-	    'S' =>
-		    sub {
-			    $state->{source} = shift;
-		    },
 	    'p' => 
 		    sub {
 			    $state->{prefix} = shift;
@@ -198,15 +98,11 @@ sub handle_options
 			    my $w = shift;
 			    $state->{wantlib}{$w} = 1;
 		    },
-	    's' => sub {
-			    push(@{$state->{signature_params}}, shift);
-		    },
 	};
 	$state->{no_exports} = 1;
-	$state->SUPER::handle_options('p:f:d:j:M:U:s:A:B:P:W:qQo:S:',
+	$state->SUPER::handle_options('p:f:d:M:U:A:B:P:W:qQ',
 	    '[-nQqvx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
-	    '[-s [x509 -s cert|signify] -s priv] [-o dir] [-S source]',
 	    '[-U undisplayfile] [-W wantedlib]',
 	    '[-d desc -D COMMENT=value -f packinglist -p prefix]',
 	    'pkg-name...');
@@ -395,10 +291,6 @@ sub prepare_for_archival
 	return $o;
 }
 
-sub copy_over
-{
-}
-
 sub discover_directories
 {
 }
@@ -470,14 +362,6 @@ sub prepare_for_archival
 	$o->{gid} = 0;
 	$o->{mode} &= 0555; # zap all write and suid modes
 	return $o;
-}
-
-sub copy_over
-{
-	my ($self, $state, $wrarc, $rdarc) = @_;
-	$wrarc->destdir($rdarc->info);
-	my $e = $wrarc->prepare($self->{name});
-	$e->write;
 }
 
 sub forbidden() { 1 }
@@ -560,13 +444,6 @@ sub verify_checksum
 {
 	my ($self, $state) = @_;
 	$self->verify_checksum_with_base($state, $state->{base});
-}
-
-sub copy_over
-{
-	my ($self, $state, $wrarc, $rdarc) = @_;
-	my $e = $rdarc->next;
-	$e->copy($wrarc);
 }
 
 sub find_every_library
@@ -1162,144 +1039,6 @@ sub add_description
 	close($fh);
 }
 
-sub add_signature
-{
-	my ($self, $plist, $state) = @_;
-
-	if ($plist->has('digital-signature') || $plist->has('signer')) {
-		if ($state->defines('resign')) {
-			if ($state->defines('nosig')) {
-				$state->errsay("NOT CHECKING DIGITAL SIGNATURE FOR #1",
-				    $plist->pkgname);
-			} else {
-				if (!$plist->check_signature($state)) {
-					$state->fatal("#1 is corrupted",
-					    $plist->pkgname);
-				}
-			}
-			$state->errsay("Resigning #1", $plist->pkgname);
-			delete $plist->{'digital-signature'};
-			delete $plist->{signer};
-		}
-	}
-
-	my $sig = $state->{signer}->new_sig;
-	$sig->add_object($plist);
-	$sig->{b64sig} = $state->{signer}->compute_signature($state, $plist);
-}
-
-sub create_archive
-{
-	my ($self, $state, $filename, $dir) = @_;
-	require IO::Compress::Gzip;
-	my $fh = IO::Compress::Gzip->new($filename);
-	return OpenBSD::Ustar->new($fh, $state, $dir);
-}
-
-sub sign_existing_package
-{
-	my ($self, $state, $pkg) = @_;
-	my $output = $state->{output_dir} // ".";
-	my $dir = $pkg->info;
-	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
-	$plist->set_infodir($dir);
-	$self->add_signature($plist, $state);
-	$plist->save;
-	my $tmp = OpenBSD::Temp::permanent_file($output, "pkg");
-	my $wrarc = $self->create_archive($state, $tmp, ".");
-	$plist->copy_over($state, $wrarc, $pkg);
-	$wrarc->close;
-	$pkg->wipe_info;
-	chmod((0666 & ~umask), $tmp);
-	rename($tmp, $output.'/'.$plist->pkgname.".tgz") or
-	    $state->fatal("Can't create final signed package: #1", $!);
-	$state->system(sub {
-	    chdir($output);
-	    open(STDOUT, '>>', 'SHA256');
-	    },
-	    OpenBSD::Paths->sha256, '-b', $plist->pkgname.".tgz");
-}
-
-sub sign_list
-{
-	my ($self, $l, $repo, $maxjobs, $state) = @_;
-	$state->{total} = scalar @$l;
-	$maxjobs //= 1;
-	my $code = sub {
-		my $pkg = $repo->find(shift);
-		$self->sign_existing_package($state, $pkg);
-	    };
-	my $display = $state->verbose ?
-	    sub {
-		$state->progress->set_header("Signed ".shift);
-		$state->{done}++;
-		$state->progress->next($state->ntogo);
-	    } :
-	    sub {
-	    };
-	if ($maxjobs > 1) {
-		my $jobs = {};
-		my $n = 0;
-		my $reap_job = sub {
-			my $pid = wait;
-			if (!defined $jobs->{$pid}) {
-				$state->fatal("Wait returned #1: unknown process", $pid);
-			}
-			if ($? != 0) {
-				$state->fatal("Signature of #1 failed\n", 
-				    $jobs->{$pid});
-			}
-			$n--;
-			&$display($jobs->{$pid});
-			delete $state->{signer}{pubkey};
-			delete $jobs->{$pid};
-		};
-			
-		while (@$l > 0) {
-			my $name = shift @$l;
-			my $pid = fork();
-			if ($pid == 0) {
-				$repo->reinitialize;
-				&$code($name);
-				exit(0);
-			} else {
-				$jobs->{$pid} = $name;
-				$n++;
-			}
-			if ($n >= $maxjobs) {
-				&$reap_job;
-			}
-		}
-		while ($n != 0) {
-			&$reap_job;
-		}
-	} else {
-		for my $name (@$l) {
-			&$code($name);
-			&$display($name);
-			delete $state->{signer}{pubkey};
-		}
-	}
-	$state->system(sub {
-	    chdir($state->{output_dir}) if $state->{output_dir};
-	    open(STDOUT, '>', 'SHA256.new');
-	    }, 'sort', 'SHA256');
-	rename($state->{output_dir}.'/SHA256.new', 
-	    $state->{output_dir}.'/SHA256');
-}
-
-sub sign_existing_repository
-{
-	my ($self, $state, $source) = @_;
-	require OpenBSD::PackageRepository;
-	my $repo = OpenBSD::PackageRepository->new($source, $state);
-	my @list = sort @{$repo->list};
-	if (@list == 0) {
-		$state->errsay('Source repository "#1" is empty', $source);
-    	}
-	$self->sign_list(\@list, $repo, $state->opt('j'), $state);
-}
-
 sub add_extra_info
 {
 	my ($self, $plist, $state) = @_;
@@ -1450,8 +1189,7 @@ sub create_package
 	local $SIG{'HUP'} = $h;
 	local $SIG{'KILL'} = $h;
 	local $SIG{'TERM'} = $h;
-	$state->{archive} = $self->create_archive($state, $wname,
-	    $plist->infodir);
+	$state->{archive} = $state->create_archive($wname, $plist->infodir);
 	$state->set_status("archiving");
 	$state->progress->visit_with_size($plist, 'create_package', $state);
 	$state->end_status;
@@ -1595,7 +1333,7 @@ sub parse_and_run
 	my $state = OpenBSD::PkgCreate::State->new($cmd);
 	$state->handle_options;
 
-	if (@ARGV == 0 && !defined $state->{source}) {
+	if (@ARGV == 0) {
 		$regen_package = 1;
 	} elsif (@ARGV != 1) {
 		if (defined $state->{contents} || 
@@ -1605,19 +1343,12 @@ sub parse_and_run
 	}
 
 	try {
-	if (defined $state->{signature_params}) {
-		$state->{signer} = Signer->factory($state);
-	}
 	if (defined $state->opt('Q')) {
 		$state->{opt}{q} = 1;
 	}
 
 	if (!defined $state->{contents}) {
-		if (defined $state->{signer}) {
-			$sign_only = 1;
-		} else {
-			$state->usage("Packing-list required");
-		}
+		$state->usage("Packing-list required");
 	}
 
 	my $plist;
@@ -1627,18 +1358,6 @@ sub parse_and_run
 		}
 		$plist = $self->read_existing_plist($state, 
 		    $state->{contents}[0]);
-	} elsif ($sign_only) {
-		if ($state->not) {
-			$state->fatal("can't pretend to sign existing packages");
-		}
-		$state->{wantntogo} = $state->config->istrue("ntogo");
-		if (defined $state->{source}) {
-			$self->sign_existing_repository($state, 
-			    $state->{source});
-		}
-		$self->sign_list(\@ARGV, $state->repo, $state->opt('j'), 
-		    $state);
-		return 0;
 	} else {
 		$plist = $self->create_plist($state, $ARGV[0]);
 	}
@@ -1692,7 +1411,7 @@ sub parse_and_run
 	$state->{bad} = 0;
 
 	if (defined $state->{signer}) {
-		$self->add_signature($plist, $state);
+		$state->add_signature($plist);
 		$plist->save if $regen_package;
 	}
 
