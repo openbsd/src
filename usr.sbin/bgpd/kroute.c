@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.196 2013/11/13 09:14:48 florian Exp $ */
+/*	$OpenBSD: kroute.c,v 1.197 2014/01/23 23:26:56 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -487,16 +487,15 @@ kr4_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 	    fib_prio)) != NULL)
 		action = RTM_CHANGE;
 
+	/* for blackhole and reject routes nexthop needs to be 127.0.0.1 */
+	if (kl->flags & (F_BLACKHOLE|F_REJECT))
+		kl->nexthop.v4.s_addr = htonl(INADDR_LOOPBACK);
 	/* nexthop within 127/8 -> ignore silently */
-	if ((kl->nexthop.v4.s_addr & htonl(IN_CLASSA_NET)) ==
+	else if ((kl->nexthop.v4.s_addr & htonl(IN_CLASSA_NET)) ==
 	    htonl(INADDR_LOOPBACK & IN_CLASSA_NET))
 		return (0);
 
 	labelid = rtlabel_name2id(kl->label);
-
-	/* for blackhole and reject routes nexthop needs to be 127.0.0.1 */
-	if (kl->flags & (F_BLACKHOLE|F_REJECT))
-		kl->nexthop.v4.s_addr = htonl(INADDR_LOOPBACK);
 
 	if (action == RTM_ADD) {
 		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
@@ -546,15 +545,14 @@ kr6_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 	    NULL)
 		action = RTM_CHANGE;
 
-	/* nexthop to loopback -> ignore silently */
-	if (IN6_IS_ADDR_LOOPBACK(&kl->nexthop.v6))
-		return (0);
-
-	labelid = rtlabel_name2id(kl->label);
-
 	/* for blackhole and reject routes nexthop needs to be ::1 */
 	if (kl->flags & (F_BLACKHOLE|F_REJECT))
 		bcopy(&lo6, &kl->nexthop.v6, sizeof(kl->nexthop.v6));
+	/* nexthop to loopback -> ignore silently */
+	else if (IN6_IS_ADDR_LOOPBACK(&kl->nexthop.v6))
+		return (0);
+
+	labelid = rtlabel_name2id(kl->label);
 
 	if (action == RTM_ADD) {
 		if ((kr6 = calloc(1, sizeof(struct kroute6_node))) == NULL) {
