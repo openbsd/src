@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.151 2014/01/22 14:27:20 naddy Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.152 2014/01/23 01:10:42 naddy Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -128,7 +128,6 @@ int ip6_getpmtu(struct route_in6 *, struct route_in6 *,
 	struct ifnet *, struct in6_addr *, u_long *, int *);
 int copypktopts(struct ip6_pktopts *, struct ip6_pktopts *, int);
 void in6_delayed_cksum(struct mbuf *, u_int8_t);
-void in6_proto_cksum_out(struct mbuf *, struct ifnet *);
 
 /* Context for non-repeating IDs */
 struct idgen32_ctx ip6_id_ctx;

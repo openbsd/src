@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.255 2014/01/21 10:18:26 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.256 2014/01/23 01:10:42 naddy Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -74,6 +74,7 @@
 
 struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
 void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
+void in_delayed_cksum(struct mbuf *);
 
 /*
  * IP output.  The packet in mbuf chain m contains a skeletal IP
