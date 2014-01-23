@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSign.pm,v 1.2 2014/01/23 12:28:48 espie Exp $
+# $OpenBSD: PkgSign.pm,v 1.3 2014/01/23 12:32:40 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -40,9 +40,8 @@ sub handle_options
 		    },
 	};
 	$state->SUPER::handle_options('j:o:S:',
-	    '[-v] [-D name[=value]]',
-	    '[-s [x509 -s cert|signify] -s priv] [-o dir]',
-	    '[-S source|pkg-name...]');
+	    '[-v] [-D name[=value]] -s x509|signify [-s cert] -s priv',
+	    '[-o dir] [-S source] [pkg-name...]');
     	if (!defined $state->{signer}) {
 		$state->usage("Can't invoke command without valid signing parameters");
 	}
