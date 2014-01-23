@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arc4random.9,v 1.8 2014/01/19 08:05:02 schwarze Exp $
+.\"	$OpenBSD: arc4random.9,v 1.9 2014/01/23 05:21:49 tedu Exp $
 .\"
 .\" Copyright (c) 1996,2000 Michael Shalayeff
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 19 2014 $
+.Dd $Mdocdate: January 23 2014 $
 .Dt ARC4RANDOM 9
 .Os
 .Sh NAME
@@ -54,8 +54,8 @@
 .Sh DESCRIPTION
 The
 .Fn add_random
-functions below insert random input into a confusing mesh of
-hash functions to create a pool to be used by the
+functions below mix input into the system entropy pool, which is then used
+create a key for the ChaCha stream cipher used in the
 .Fn arc4random
 series of functions.
 .Pp
