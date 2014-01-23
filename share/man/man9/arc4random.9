@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arc4random.9,v 1.9 2014/01/23 05:21:49 tedu Exp $
+.\"	$OpenBSD: arc4random.9,v 1.10 2014/01/23 08:15:04 jmc Exp $
 .\"
 .\" Copyright (c) 1996,2000 Michael Shalayeff
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 The
 .Fn add_random
 functions below mix input into the system entropy pool, which is then used
-create a key for the ChaCha stream cipher used in the
+to create a key for the ChaCha stream cipher used in the
 .Fn arc4random
 series of functions.
 .Pp
