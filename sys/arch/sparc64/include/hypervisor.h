@@ -1,4 +1,4 @@
-/*	$OpenBSD: hypervisor.h,v 1.14 2011/06/26 17:23:46 kettenis Exp $	*/
+/*	$OpenBSD: hypervisor.h,v 1.15 2014/01/23 23:56:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -40,8 +40,10 @@ int64_t hv_mach_desc(paddr_t buffer, psize_t *length);
 void	hv_cpu_yield(void);
 int64_t	hv_cpu_qconf(uint64_t queue, uint64_t base, uint64_t nentries);
 
-#define CPU_MONDO_QUEUE		0x3c
-#define DEVICE_MONDO_QUEUE	0x3d
+#define CPU_MONDO_QUEUE			0x3c
+#define DEVICE_MONDO_QUEUE		0x3d
+#define RESUMABLE_ERROR_QUEUE		0x3e
+#define NONRESUMABLE_ERROR_QUEUE	0x3f
 
 int64_t	hv_cpu_mondo_send(uint64_t ncpus, paddr_t cpulist, paddr_t data);
 int64_t	hv_cpu_myid(uint64_t *cpuid);
