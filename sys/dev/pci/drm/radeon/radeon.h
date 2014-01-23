@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon.h,v 1.4 2013/12/05 13:29:56 kettenis Exp $	*/
+/*	$OpenBSD: radeon.h,v 1.5 2014/01/23 03:15:09 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -616,6 +616,7 @@ void radeon_irq_kms_enable_afmt(struct radeon_device *rdev, int block);
 void radeon_irq_kms_disable_afmt(struct radeon_device *rdev, int block);
 void radeon_irq_kms_enable_hpd(struct radeon_device *rdev, unsigned hpd_mask);
 void radeon_irq_kms_disable_hpd(struct radeon_device *rdev, unsigned hpd_mask);
+bool radeon_msi_ok(struct radeon_device *rdev);
 
 /*
  * CP & rings.

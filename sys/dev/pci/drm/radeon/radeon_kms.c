@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.18 2014/01/20 09:36:46 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.19 2014/01/23 03:15:09 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -515,11 +515,6 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (pci_intr_map(pa, &rdev->intrh) != 0) {
-		printf(": couldn't map interrupt\n");
-		return;
-	}
-	printf(": %s\n", pci_intr_string(pa->pa_pc, rdev->intrh));
 #ifdef notyet
 	mtx_init(&rdev->swi_lock, IPL_TTY);
 #endif
@@ -541,8 +536,24 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 	is_agp = pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
 	    NULL, NULL);
 
+	printf("\n");
+
 	dev = (struct drm_device *)drm_attach_pci(&kms_driver, pa, is_agp, self);
 	rdev->ddev = dev;
+
+	rdev->family = rdev->flags & RADEON_FAMILY_MASK;
+	if (!radeon_msi_ok(rdev))
+		pa->pa_flags &= ~PCI_FLAGS_MSI_ENABLED;
+
+	rdev->msi_enabled = 0;
+	if (pci_intr_map_msi(pa, &rdev->intrh) == 0)
+		rdev->msi_enabled = 1;
+	else if (pci_intr_map(pa, &rdev->intrh) != 0) {
+		printf(": couldn't map interrupt\n");
+		return;
+	}
+	printf("%s: %s\n", rdev->dev.dv_xname,
+	    pci_intr_string(pa->pa_pc, rdev->intrh));
 
 	rdev->irqh = pci_intr_establish(pa->pa_pc, rdev->intrh, IPL_TTY,
 	    radeon_driver_irq_handler_kms, rdev->ddev, rdev->dev.dv_xname);

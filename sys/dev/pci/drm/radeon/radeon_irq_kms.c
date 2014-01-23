@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_irq_kms.c,v 1.2 2013/10/29 06:30:57 jsg Exp $	*/
+/*	$OpenBSD: radeon_irq_kms.c,v 1.3 2014/01/23 03:15:09 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -39,7 +39,6 @@ int	 radeon_driver_irq_handler_kms(void *);
 void	 radeon_driver_irq_preinstall_kms(struct drm_device *);
 int	 radeon_driver_irq_postinstall_kms(struct drm_device *);
 void	 radeon_driver_irq_uninstall_kms(struct drm_device *);
-bool	 radeon_msi_ok(struct radeon_device *);
 
 /**
  * radeon_driver_irq_handler_kms - irq handler for KMS
@@ -259,10 +258,10 @@ int radeon_irq_kms_init(struct radeon_device *rdev)
 	if (r) {
 		return r;
 	}
+#ifdef notyet
 	/* enable msi */
 	rdev->msi_enabled = 0;
 
-#ifdef notyet
 	if (radeon_msi_ok(rdev)) {
 		int ret = pci_enable_msi(rdev->pdev);
 		if (!ret) {
