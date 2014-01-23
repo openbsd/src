@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_var.h,v 1.22 2013/06/01 16:22:05 bluhm Exp $	*/
+/*	$OpenBSD: udp_var.h,v 1.23 2014/01/23 23:51:29 henning Exp $	*/
 /*	$NetBSD: udp_var.h,v 1.12 1996/02/13 23:44:41 christos Exp $	*/
 
 /*
@@ -64,10 +64,10 @@ struct	udpstat {
 	u_long	udps_nosec;		/* dropped for lack of ipsec */
 	u_long	udps_fullsock;		/* not delivered, input socket full */
 	u_long	udps_pcbhashmiss;	/* input packets missing pcb hash */
-	u_long	udps_inhwcsum;		/* input hardware-csummed packets */
+	u_long	udps_inswcsum;		/* input software-csummed packets */
 				/* output statistics: */
 	u_long	udps_opackets;		/* total output packets */
-	u_long	udps_outhwcsum;		/* output hardware-csummed packets */
+	u_long	udps_outswcsum;		/* output software-csummed packets */
 };
 
 /*

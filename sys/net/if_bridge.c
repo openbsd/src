@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.219 2013/10/28 12:39:42 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.220 2014/01/23 23:51:29 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2481,19 +2481,18 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 
 		if ((m->m_pkthdr.csum_flags & M_IPV4_CSUM_IN_OK) == 0) {
 			if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_IN_BAD) {
-				ipstat.ips_inhwcsum++;
 				ipstat.ips_badsum++;
 				goto dropit;
 			}
 
+			ipstat.ips_inswcsum++;
 			if (in_cksum(m, hlen) != 0) {
 				ipstat.ips_badsum++;
 				goto dropit;
 			}
-		} else {
+		} else
+			/* XXXHB20140123 */
 			m->m_pkthdr.csum_flags &= ~M_IPV4_CSUM_IN_OK;
-			ipstat.ips_inhwcsum++;
-		}
 
 		if (ntohs(ip->ip_len) < hlen)
 			goto dropit;
@@ -2530,11 +2529,12 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 		in_proto_cksum_out(m, ifp);
 		ip = mtod(m, struct ip *);
 		ip->ip_sum = 0;
-		if (0 && (ifp->if_capabilities & IFCAP_CSUM_IPv4)) {
+		if (0 && (ifp->if_capabilities & IFCAP_CSUM_IPv4))
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
-			ipstat.ips_outhwcsum++;
-		} else
+		else {
+			ipstat.ips_outswcsum++;
 			ip->ip_sum = in_cksum(m, hlen);
+		}
 
 		break;
 

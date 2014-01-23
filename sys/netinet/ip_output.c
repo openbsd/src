@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.256 2014/01/23 01:10:42 naddy Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.257 2014/01/23 23:51:29 henning Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -695,16 +695,13 @@ sendit:
 	if (ntohs(ip->ip_len) <= mtu) {
 		ip->ip_sum = 0;
 		if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
-		    (ifp->if_bridgeport == NULL)) {
+		    (ifp->if_bridgeport == NULL))
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
-			ipstat.ips_outhwcsum++;
-		} else
+		else {
+			ipstat.ips_outswcsum++;
 			ip->ip_sum = in_cksum(m, hlen);
-		/* Update relevant hardware checksum stats for TCP/UDP */
-		if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
-			tcpstat.tcps_outhwcsum++;
-		else if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
-			udpstat.udps_outhwcsum++;
+		}
+
 		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
 		goto done;
 	}
@@ -842,11 +839,12 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		mhip->ip_sum = 0;
 		if ((ifp != NULL) &&
 		    (ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
-		    (ifp->if_bridgeport == NULL)) {
+		    (ifp->if_bridgeport == NULL))
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
-			ipstat.ips_outhwcsum++;
-		} else
+		else {
+			ipstat.ips_outswcsum++;
 			mhip->ip_sum = in_cksum(m, mhlen);
+		}
 		ipstat.ips_ofragments++;
 		fragments++;
 	}
@@ -862,11 +860,12 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	ip->ip_sum = 0;
 	if ((ifp != NULL) &&
 	    (ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
-	    (ifp->if_bridgeport == NULL)) {
+	    (ifp->if_bridgeport == NULL))
 		m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
-		ipstat.ips_outhwcsum++;
-	} else
+	else {
+		ipstat.ips_outswcsum++;
 		ip->ip_sum = in_cksum(m, hlen);
+	}
 sendorfree:
 	if (error) {
 		for (m = m0; m; m = m0) {
@@ -2111,12 +2110,14 @@ in_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 	if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_TCPv4) ||
 		    ifp->if_bridgeport != NULL) {
+			tcpstat.tcps_outswcsum++;
 			in_delayed_cksum(m);
 			m->m_pkthdr.csum_flags &= ~M_TCP_CSUM_OUT; /* Clear */
 		}
 	} else if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_UDPv4) ||
 		    ifp->if_bridgeport != NULL) {
+			udpstat.udps_outswcsum++;
 			in_delayed_cksum(m);
 			m->m_pkthdr.csum_flags &= ~M_UDP_CSUM_OUT; /* Clear */
 		}

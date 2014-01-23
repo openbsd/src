@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.865 2014/01/22 04:33:34 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.866 2014/01/23 23:51:29 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5653,16 +5653,12 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 
 	if (ntohs(ip->ip_len) <= ifp->if_mtu) {
 		ip->ip_sum = 0;
-		if (ifp->if_capabilities & IFCAP_CSUM_IPv4) {
+		if (ifp->if_capabilities & IFCAP_CSUM_IPv4)
 			m0->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
-			ipstat.ips_outhwcsum++;
-		} else
+		else {
+			ipstat.ips_outswcsum++;
 			ip->ip_sum = in_cksum(m0, ip->ip_hl << 2);
-		/* Update relevant hardware checksum stats for TCP/UDP */
-		if (m0->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
-			tcpstat.tcps_outhwcsum++;
-		else if (m0->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
-			udpstat.udps_outhwcsum++;
+		}
 		error = (*ifp->if_output)(ifp, m0, sintosa(dst), NULL);
 		goto done;
 	}

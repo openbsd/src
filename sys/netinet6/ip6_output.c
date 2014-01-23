@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.152 2014/01/23 01:10:42 naddy Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.153 2014/01/23 23:51:29 henning Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -83,6 +83,11 @@
 #include <netinet/in_pcb.h>
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
+
+#include <netinet/ip_var.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
+#include <netinet/udp_var.h>
 
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
@@ -3263,12 +3268,14 @@ in6_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 	if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_TCPv6) ||
 		    ifp->if_bridgeport != NULL) {
+			tcpstat.tcps_outswcsum++;
 			in6_delayed_cksum(m, IPPROTO_TCP);
 			m->m_pkthdr.csum_flags &= ~M_TCP_CSUM_OUT; /* Clear */
 		}
 	} else if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_UDPv6) ||
 		    ifp->if_bridgeport != NULL) {
+			udpstat.udps_outswcsum++;
 			in6_delayed_cksum(m, IPPROTO_UDP);
 			m->m_pkthdr.csum_flags &= ~M_UDP_CSUM_OUT; /* Clear */
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.104 2013/10/23 19:49:11 deraadt Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.105 2014/01/23 23:51:29 henning Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -409,8 +409,8 @@ struct	tcpstat {
 
 	u_int32_t tcps_rcvbadsig;	/* rcvd bad/missing TCP signatures */
 	u_int64_t tcps_rcvgoodsig;	/* rcvd good TCP signatures */
-	u_int32_t tcps_inhwcsum;	/* input hardware-checksummed packets */
-	u_int32_t tcps_outhwcsum;	/* output hardware-checksummed packets */
+	u_int32_t tcps_inswcsum;	/* input software-checksummed packets */
+	u_int32_t tcps_outswcsum;	/* output software-checksummed packets */
 
 	/* ECN stats */
 	u_int32_t tcps_ecn_accepts;	/* ecn connections accepted */

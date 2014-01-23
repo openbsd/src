@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.270 2014/01/07 17:07:45 mikeb Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.271 2014/01/23 23:51:29 henning Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -514,10 +514,10 @@ tcp_input(struct mbuf *m, ...)
 		int sum;
 
 		if (m->m_pkthdr.csum_flags & M_TCP_CSUM_IN_BAD) {
-			tcpstat.tcps_inhwcsum++;
 			tcpstat.tcps_rcvbadsum++;
 			goto drop;
 		}
+		tcpstat.tcps_inswcsum++;
 		switch (af) {
 		case AF_INET:
 			sum = in4_cksum(m, IPPROTO_TCP, iphlen, tlen);
@@ -533,10 +533,9 @@ tcp_input(struct mbuf *m, ...)
 			tcpstat.tcps_rcvbadsum++;
 			goto drop;
 		}
-	} else {
+	} else
+		/* XXXHB20140123 */
 		m->m_pkthdr.csum_flags &= ~M_TCP_CSUM_IN_OK;
-		tcpstat.tcps_inhwcsum++;
-	}
 
 	/*
 	 * Check that TCP offset makes sense,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.50 2013/12/17 02:41:07 matthew Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.51 2014/01/23 23:51:29 henning Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -84,8 +84,8 @@ struct	ipstat {
 	u_long	ips_toolong;		/* ip length > max ip packet size */
 	u_long	ips_nogif;		/* no match gif found */
 	u_long	ips_badaddr;		/* invalid address on header */
-	u_long	ips_inhwcsum;		/* hardware checksummed on input */
-	u_long	ips_outhwcsum;		/* hardware checksummed on output */
+	u_long	ips_inswcsum;		/* software checksummed on input */
+	u_long	ips_outswcsum;		/* software checksummed on output */
 	u_long	ips_notmember;		/* multicasts for unregistered groups */
 };
 
