@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_linux.8,v 1.42 2013/09/23 12:14:20 ajacoutot Exp $
+.\"	$OpenBSD: compat_linux.8,v 1.43 2014/01/23 04:36:05 tedu Exp $
 .\"	$NetBSD: compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 23 2013 $
+.Dd $Mdocdate: January 23 2014 $
 .Dt COMPAT_LINUX 8
 .Os
 .Sh NAME
@@ -93,7 +93,7 @@ any extra work.
 .Ss Setting up shared libraries
 How to get to know which shared libraries Linux binaries need, and where
 to get them?
-Basically, there are 3 possibilities.
+Basically, there are 2 possibilities.
 (When following these instructions, root privileges are required on the
 .Ox
 system to perform the necessary installation steps).
@@ -195,171 +195,7 @@ tree):
 /etc/ld.so.cache
 /etc/ld.so.config
 .Ed
-.It
-No access to a Linux system:
-In that case, get the extra files from various ftp sites.
-Information on where to look for the various files is appended
-below.
-.Pp
-Retrieve the following files (from _one_ ftp site to avoid
-any version mismatches), and install them under
-.Pa /emul/linux
-(i.e.\&
-.Pa /foo/bar
-is installed as
-.Pa /emul/linux/foo/bar ) :
-.Bd -unfilled -offset indent
-/sbin/ldconfig
-/usr/bin/ldd
-/lib/libc.so.x.y.z
-/lib/ld.so
-.Ed
-.Pp
-ldconfig and ldd don't necessarily need to be under
-.Pa /emul/linux ,
-they can be installed elsewhere in the system too.
-Just make sure they don't conflict with their
-.Ox
-counterparts.
-A good idea would be to install them in
-.Pa /usr/local/bin
-as ldconfig-linux and ldd-linux.
-.Pp
-Create the file
-.Pa /emul/linux/etc/ld.so.conf ,
-containing the directories in which the Linux runtime linker should look
-for shared libs.
-It is a plain text file, containing a directory
-name on each line.
-.Pa /lib
-and
-.Pa /usr/lib
-are standard; the following could be added:
-.Bd -unfilled -offset indent
-/usr/X11/lib
-/usr/local/lib
-.Ed
-.Pp
-Note that these are mapped to
-.Pa /emul/linux/XXXX
-by the
-.Ox
-compat code, and should exist as such on the
-.Ox
-system.
-.Pp
-Run the Linux ldconfig program.
-It should be statically linked, so it doesn't need any shared libraries
-by itself.
-It will create the file
-.Pa /emul/linux/etc/ld.so.cache .
-The Linux version of the ldconfig program should be rerun
-each time a new shared library is added.
-.Pp
-The
-.Ox
-system should now be set up for Linux binaries which only need
-a shared libc.
-Test this by running the Linux ldd on itself.
-Suppose that it is installed as ldd-linux, it should produce
-something like:
-.Pp
-.Dl % ldd-linux `which ldd-linux`
-.Pp
-.D1 libc.so.4 (DLL Jump 4.5pl26) => /lib/libc.so.4.6.29
-.Pp
-This being done, new Linux binaries can now be installed.
-Whenever a new Linux program is installed, it should be determined
-if it needs shared libraries, and if so, whether they are
-installed in the
-.Pa /emul/linux
-tree.
-To do this, run the Linux version ldd on the new program, and
-watch its output.
-ldd (see also the manual page for
-.Xr ldd 1 )
-will print a list of shared libraries that the program depends on, in the
-form  <majorname> (<jumpversion>) => <fullname>.
-.Pp
-If it prints "not found" instead of <fullname> it means that
-an extra library is needed.
-Which library this is, is shown
-in <majorname>, which will be of the form libXXXX.so.<N>.
-Find a libXXXX.so.<N>.<mm> on a Linux ftp site,
-and install it on the
-.Ox
-system.
-The XXXX (name) and <N> (major revision number) should match;
-the minor number(s) <mm> are less important, though it is
-advised to take the most recent version.
 .El
-.Ss Finding the necessary files
-.Sy Note :
-the information below is valid as of Feb 2003, but certain details
-such as names of ftp sites, directories and distribution names
-may have changed since then.
-It is much easier to use the
-.Ox
-.Xr ports 7
-system (possibility 1, above).
-.Pp
-Linux is distributed by several groups that make their own set
-of binaries that they distribute.
-Each distribution has its own name, like "Slackware" or "Yggdrasil".
-The distributions are available on a lot of ftp sites.
-Sometimes the files are unpacked, and individual files can be retrieved,
-but mostly they are stored in distribution sets,
-usually consisting of subdirectories with gzipped tar files in them.
-The primary ftp sites for the distributions are:
-.Bd -unfilled -offset indent
-.Pa ftp.ibiblio.org:/pub/Linux/distributions
-.Pa distro.ibiblio.org:/pub/Linux/distributions
-.\" .Pa tsx-11.mit.edu:/pub/linux/distributions
-.Ed
-.Pp
-Some European mirrors:
-.Bd -unfilled -offset indent
-.\" .Pa ftp.luth.se:/pub/linux/distributions
-.\" .Pa ftp.demon.co.uk:/pub/linux/distributions
-.Pa ftp.sunet.se:/pub/Linux/distributions
-.Pa src.doc.ic.ac.uk:/packages/linux
-.Ed
-.Pp
-For simplicity, let's concentrate on Slackware here.
-This distribution consists of a number of subdirectories, containing
-separate packages.
-Normally, they're controlled by an install program, but the files can be
-retrieved "by hand" too.
-The fastest way to find something is to
-.Xr grep 1
-the file FILELIST.TXT for
-the files needed.
-Here is an example of a list of files that might be needed, and
-in which package it can be found:
-.Bd -unfilled -offset indent
-Needed                  Package
-
-ld-2.2.5.so             glibc
-ldconfig                glibc
-ldd                     glibc
-libc.so.6               glibc
-libX11.so.6             xfree
-libXt.so.6              xfree
-.Ed
-.Pp
-So, in this case, the packages glibc and xfree will be needed.
-FILELIST.TXT also gives the location of the packages.
-Retrieve the packages needed from the following files
-(relative to the root of the Slackware distribution tree):
-.Bd -unfilled -offset indent
-slackware/l/glibc-2.2.5-i386.2.tgz
-slackware/x/xfree-4.2.0-i386.5.tgz
-.Ed
-.Pp
-Extract the files from these gzipped tarfiles in the
-.Pa /emul/linux
-directory
-(possibly omitting or afterwards removing unnecessary files).
 .Ss Programs using SVGAlib
 SVGAlib binaries require some extra care.
 The pcvt virtual console driver has to be in the kernel for them to work,
@@ -392,7 +228,5 @@ Some binaries will require it to be mounted using the
 .Fl o Ar linux
 option.
 .Sh BUGS
-The information about Linux distributions may become outdated.
-.Pp
 .Nm
-is currently only supported on the i386.
+is incomplete and currently only supported on the i386.
