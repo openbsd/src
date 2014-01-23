@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.130 2014/01/19 05:03:29 claudio Exp $	*/
+/*	$OpenBSD: inet.c,v 1.131 2014/01/23 23:51:53 henning Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -288,7 +288,7 @@ tcp_stats(char *name)
 	p(tcps_sndprobe, "\t\t%u window probe packet%s\n");
 	p(tcps_sndwinup, "\t\t%u window update packet%s\n");
 	p(tcps_sndctrl, "\t\t%u control packet%s\n");
-	p(tcps_outhwcsum, "\t\t%u packet%s hardware-checksummed\n");
+	p(tcps_outswcsum, "\t\t%u packet%s software-checksummed\n");
 	p(tcps_rcvtotal, "\t%u packet%s received\n");
 	p2(tcps_rcvackpack, tcps_rcvackbyte, "\t\t%u ack%s (for %qd byte%s)\n");
 	p(tcps_rcvdupack, "\t\t%u duplicate ack%s\n");
@@ -313,7 +313,7 @@ tcp_stats(char *name)
 	p1(tcps_rcvshort, "\t\t%u discarded because packet too short\n");
 	p1(tcps_rcvnosec, "\t\t%u discarded for missing IPsec protection\n");
 	p1(tcps_rcvmemdrop, "\t\t%u discarded due to memory shortage\n");
-	p(tcps_inhwcsum, "\t\t%u packet%s hardware-checksummed\n");
+	p(tcps_inswcsum, "\t\t%u packet%s software-checksummed\n");
 	p(tcps_rcvbadsig, "\t\t%u bad/missing md5 checksum%s\n");
 	p(tcps_rcvgoodsig, "\t\t%qd good md5 checksum%s\n");
 	p(tcps_connattempt, "\t%u connection request%s\n");
@@ -406,8 +406,8 @@ udp_stats(char *name)
 	p1(udps_badlen, "\t%lu with bad data length field\n");
 	p1(udps_badsum, "\t%lu with bad checksum\n");
 	p1(udps_nosum, "\t%lu with no checksum\n");
-	p(udps_inhwcsum, "\t%lu input packet%s hardware-checksummed\n");
-	p(udps_outhwcsum, "\t%lu output packet%s hardware-checksummed\n");
+	p(udps_inswcsum, "\t%lu input packet%s software-checksummed\n");
+	p(udps_outswcsum, "\t%lu output packet%s software-checksummed\n");
 	p1(udps_noport, "\t%lu dropped due to no socket\n");
 	p(udps_noportbcast, "\t%lu broadcast/multicast datagram%s dropped due to no socket\n");
 	p1(udps_nosec, "\t%lu dropped due to missing IPsec protection\n");
@@ -476,8 +476,8 @@ ip_stats(char *name)
 	p(ips_toolong, "\t%lu packet%s with ip length > max ip packet size\n");
 	p(ips_nogif, "\t%lu tunneling packet%s that can't find gif\n");
 	p(ips_badaddr, "\t%lu datagram%s with bad address in header\n");
-	p(ips_inhwcsum, "\t%lu input datagram%s checksum-processed by hardware\n");
-	p(ips_outhwcsum, "\t%lu output datagram%s checksum-processed by hardware\n");
+	p(ips_inswcsum, "\t%lu input datagram%s software-checksummed\n");
+	p(ips_outswcsum, "\t%lu output datagram%s software-checksummed\n");
 	p(ips_notmember, "\t%lu multicast packet%s which we don't join\n");
 #undef p
 #undef p1
