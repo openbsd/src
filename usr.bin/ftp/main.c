@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.86 2013/12/24 13:00:59 jca Exp $	*/
+/*	$OpenBSD: main.c,v 1.87 2014/01/23 00:39:15 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ main(volatile int argc, char *argv[])
 #endif /* !SMALL */
 
 	while ((ch = getopt(argc, argv,
-		    "46AaCc:dEegik:mno:pP:r:S:s:tvV")) != -1) {
+		    "46AaCc:dD:Eegik:mno:pP:r:S:s:tvV")) != -1) {
 		switch (ch) {
 		case '4':
 			family = PF_INET;
@@ -229,6 +229,9 @@ main(volatile int argc, char *argv[])
 #endif /* !SMALL */
 			break;
 
+		case 'D':
+			action = optarg;
+			break;
 		case 'd':
 #ifndef SMALL
 			options |= SO_DEBUG;
@@ -830,9 +833,9 @@ usage(void)
 {
 	(void)fprintf(stderr, "usage: %s "
 #ifndef SMALL
-	    "[-46AadEegimnptVv] [-k seconds] [-P port] "
-	    "[-r seconds] [-s srcaddr]\n"
-	    "           [host [port]]\n"
+	    "[-46AadEegimnptVv] [-D title] [-k seconds] [-P port] "
+	    "[-r seconds]\n"
+	    "           [-s srcaddr] [host [port]]\n"
 	    "       %s [-C] "
 #endif /* !SMALL */
 	    "[-o output] "

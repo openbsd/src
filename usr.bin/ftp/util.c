@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.64 2009/11/11 17:10:25 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.65 2014/01/23 00:39:15 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -753,6 +753,8 @@ updateprogressmeter(int signo)
  */
 static struct timeval start;
 
+char *action;
+
 void
 progressmeter(int flag, const char *filename)
 {
@@ -792,6 +794,25 @@ progressmeter(int flag, const char *filename)
 		if (filename != NULL)
 			title = strdup(filename);
 	}
+
+	buf[0] = 0;
+	if (!verbose && action != NULL) {
+		int l = strlen(action);
+		char *dotdot = "";
+
+		if (l < 7)
+			l = 7;
+		else if (l > 12) {
+			l = 12;
+			dotdot = "...";
+			overhead += 3;
+		}
+		snprintf(buf, sizeof(buf), "\r%-*.*s%s ", l, l, action,
+		    dotdot);
+		overhead += l + 1;
+	} else
+		snprintf(buf, sizeof(buf), "");
+
 	if (!verbose && title != NULL) {
 		int l = strlen(title);
 		char *dotdot = "";
@@ -803,7 +824,8 @@ progressmeter(int flag, const char *filename)
 			dotdot = "...";
 			overhead += 3;
 		}
-		snprintf(buf, sizeof(buf), "\r%-*.*s%s %3d%% ", l, l, title,
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		    "%-*.*s%s %3d%% ", l, l, title,
 		    dotdot, ratio);
 		overhead += l + 1;
 	} else
