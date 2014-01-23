@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.46 2012/06/26 10:18:08 pirofti Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.47 2014/01/23 04:11:46 tedu Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -73,7 +73,7 @@
 
 /*
  * All the calls in this file are entered via one common system
- * call in Linux, represented here by linux_socketcall()
+ * call in Linux, represented here by linux_socketcall().
  * Arguments for the various calls are on the user stack. A pointer
  * to them is the only thing that is passed. It is up to the various
  * calls to copy them in themselves. To make it look better, they
@@ -178,7 +178,7 @@ static const int bsd_to_linux_domain_[AF_MAX] = {
 };
 
 /*
- * Convert between Linux and BSD socket domain values
+ * Convert from Linux to BSD socket domain values
  */
 static int
 linux_to_bsd_domain(ldom)
@@ -191,7 +191,7 @@ linux_to_bsd_domain(ldom)
 }
 
 /*
- * Convert between BSD and Linux socket domain values
+ * Convert from BSD to Linux socket domain values
  */
 static int
 bsd_to_linux_domain(bdom)
@@ -204,7 +204,7 @@ bsd_to_linux_domain(bdom)
 }
 
 /*
- * Convert between Linux and BSD MSG_XXX flags
+ * Convert from Linux to BSD MSG_XXX flags
  */
 static int
 linux_to_bsd_msg_flags(int lflags)
@@ -941,7 +941,7 @@ linux_to_bsd_so_sockopt(lopt)
 		 * of a host:port pair through SO_REUSEADDR even if the
 		 * address is not a multicast-address.  Effectively, this
 		 * means that we should use SO_REUSEPORT to allow Linux
-		 * applications to not exit with EADDRINUSE.
+		 * applications to not receive EADDRINUSE.
 		 */
 		return SO_REUSEPORT;
 	case LINUX_SO_TYPE:
@@ -1286,7 +1286,7 @@ done:
 /*
  * Copy the osockaddr structure pointed to by osa to kernel, adjust
  * family and convert to sockaddr, allocate stackgap and put the
- * the converted structure there, address on stackgap returned in sap.
+ * the converted structure there.  Address on stackgap returned in sap.
  */
 int
 linux_sa_get(p, sgp, sap, osa, osalen)
@@ -1506,7 +1506,7 @@ linux_ioctl_socket(p, v, retval)
 
 	/*
 	 * Don't try to interpret socket ioctl calls that are done
-	 * on a device filedescriptor, just pass them through, to
+	 * on a device file descriptor, just pass them through, to
 	 * emulate Linux behaviour. Use PTIOCLINUX so that the
 	 * device will only handle these if it's prepared to do
 	 * so, to avoid unexpected things from happening.

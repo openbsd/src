@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.84 2013/12/08 03:30:01 brad Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.85 2014/01/23 04:11:46 tedu Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -1223,7 +1223,7 @@ getdents_common(p, v, retval, is64bit)
 
 /*
  * Not sure why the arguments to this older version of select() were put
- * into a structure, because there are 5, and that can all be handled
+ * into a structure, because there are 5, and that can be handled all
  * in registers on the i386 like Linux wants to.
  */
 int
@@ -1676,7 +1676,8 @@ linux_sys_prctl(struct proc *p, void *v, register_t *retval)
 		*retval = 0;
 		break;
 	case LINUX_PR_SET_KEEPCAPS:
-		 /* Ignore requests to keep the effective and permitted
+		 /*
+		  * Ignore requests to keep the effective and permitted
 		  * capability sets when the user id becomes non-zero.
 		  */
 		break;
