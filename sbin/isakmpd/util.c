@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.67 2014/01/22 03:09:31 deraadt Exp $	 */
+/* $OpenBSD: util.c,v 1.68 2014/01/23 01:04:28 deraadt Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -97,25 +97,6 @@ zero_test(const u_int8_t *p, size_t sz)
 		if (*p++ != 0)
 			return 0;
 	return 1;
-}
-
-/*
- * Generate 32 bits of random data.
- */
-u_int32_t
-rand_32(void)
-{
-	return arc4random();
-}
-
-/*
- * Generate a random data, len bytes long.
- */
-u_int8_t *
-getrandom(u_int8_t *buf, size_t len)
-{
-	arc4random_buf(buf, len);
-	return buf;
 }
 
 static __inline int

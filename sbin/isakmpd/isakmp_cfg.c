@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmp_cfg.c,v 1.38 2007/04/16 13:01:39 moritz Exp $	 */
+/* $OpenBSD: isakmp_cfg.c,v 1.39 2014/01/23 01:04:28 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -254,7 +254,7 @@ cfg_initiator_send_ATTR(struct message *msg)
 		goto fail;
 	}
 	SET_ISAKMP_ATTRIBUTE_TYPE(attrp, ie->cfg_type);
-	getrandom((u_int8_t *) & ie->cfg_id, sizeof ie->cfg_id);
+	arc4random_buf((u_int8_t *) & ie->cfg_id, sizeof ie->cfg_id);
 	SET_ISAKMP_ATTRIBUTE_ID(attrp, ie->cfg_id);
 
 	off = ISAKMP_ATTRIBUTE_SZ;

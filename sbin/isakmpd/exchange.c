@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.134 2011/04/23 03:17:04 lum Exp $	 */
+/* $OpenBSD: exchange.c,v 1.135 2014/01/23 01:04:28 deraadt Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -908,7 +908,7 @@ exchange_establish_p2(struct sa *isakmp_sa, u_int8_t type, char *name,
 	exchange->finalize_arg = arg;
 	exchange->seq = seq;
 	memcpy(exchange->cookies, isakmp_sa->cookies, ISAKMP_HDR_COOKIES_LEN);
-	getrandom(exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
+	arc4random_buf(exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
 	exchange->flags |= EXCHANGE_FLAG_ENCRYPT;
 	if (isakmp_sa->flags & SA_FLAG_NAT_T_ENABLE)
 		exchange->flags |= EXCHANGE_FLAG_NAT_T_ENABLE;
@@ -1520,7 +1520,7 @@ exchange_gen_nonce(struct message *msg, size_t nonce_sz)
 		    ISAKMP_NONCE_SZ + (unsigned long)nonce_sz);
 		return -1;
 	}
-	getrandom(buf + ISAKMP_NONCE_DATA_OFF, nonce_sz);
+	arc4random_buf(buf + ISAKMP_NONCE_DATA_OFF, nonce_sz);
 	if (message_add_payload(msg, ISAKMP_PAYLOAD_NONCE, buf,
 	    ISAKMP_NONCE_SZ + nonce_sz, 1)) {
 		free(buf);

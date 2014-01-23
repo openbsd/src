@@ -1,4 +1,4 @@
-/* $OpenBSD: cookie.c,v 1.15 2005/04/08 23:15:25 hshoexer Exp $	 */
+/* $OpenBSD: cookie.c,v 1.16 2014/01/23 01:04:28 deraadt Exp $	 */
 /* $EOM: cookie.c,v 1.21 1999/08/05 15:00:04 niklas Exp $	 */
 
 /*
@@ -65,7 +65,7 @@ cookie_gen(struct transport *t, struct exchange *exchange, u_int8_t *buf,
 	if (exchange->initiator == 0)
 		hash->Update(hash->ctx, exchange->cookies +
 		    ISAKMP_HDR_ICOOKIE_OFF, ISAKMP_HDR_ICOOKIE_LEN);
-	getrandom(tmpsecret, COOKIE_SECRET_SIZE);
+	arc4random_buf(tmpsecret, COOKIE_SECRET_SIZE);
 	hash->Update(hash->ctx, tmpsecret, COOKIE_SECRET_SIZE);
 	hash->Final(hash->digest, hash->ctx);
 	memcpy(buf, hash->digest, len);

@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.119 2014/01/22 03:09:31 deraadt Exp $	 */
+/* $OpenBSD: sa.c,v 1.120 2014/01/23 01:04:28 deraadt Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -1373,7 +1373,7 @@ sa_setup_expirations(struct sa *sa)
 		 * XXX This should probably be configuration controlled
 		 * somehow.
 		 */
-		seconds = sa->seconds * (850 + rand_32() % 100) / 1000;
+		seconds = sa->seconds * (850 + arc4random_uniform(100)) / 1000;
 		LOG_DBG((LOG_TIMER, 95,
 		    "sa_setup_expirations: SA %p soft timeout in %llu seconds",
 		    sa, seconds));
