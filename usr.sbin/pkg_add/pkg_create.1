@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.95 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.96 2014/01/23 12:21:44 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: January 23 2014 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -50,12 +50,6 @@
 .Nm pkg_create
 .Op Fl s Ar signature-parameter
 .Fl f Ar packinglist
-.Nm pkg_create
-.Fl s Ar signature-parameter ...
-.Op Fl j Ar maxjobs
-.Op Fl o Ar dir
-.Op Fl S Ar source
-.Op Ar pkgfile ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -80,8 +74,8 @@ infrastructure instead of manual
 .Nm
 invocation is strongly recommended.
 .Pp
-It can also be used to recreate a binary package from an existing installation
-(second synopsis) or to sign a collection of built packages (third synopsis).
+.Nm
+can also be used to recreate a binary package from an existing installation.
 .Pp
 During package creation,
 .Nm
@@ -154,15 +148,6 @@ Strongly recommended, otherwise updates won't work.
 If defined, appended to the description.
 .It Ar MAINTAINER
 If defined, appended to the description.
-.It Ar resign
-Allows signing over already signed packages.
-Obviously, this checks the existing signature first,
-so the
-.Fl D Ar SIGNER
-and
-.Fl D Ar nosig
-apply with the same semantics as
-.Xr pkg_add 1 .
 .It Ar USE_GROFF
 Set to 1 to have groff format manpages behind the scenes during
 package creation.
@@ -180,8 +165,6 @@ for package from the file
 .Ar packinglist .
 Several packing-lists can be mentioned, in which case they will be
 concatenated together.
-.It Fl j Ar maxjobs
-Sign existing packages in parallel.
 .It Fl L Ar localbase
 Record
 .Ar localbase
@@ -206,9 +189,6 @@ Causes
 to always display the progress meter in cases it would not do so by default.
 .It Fl n
 Don't actually create a package.
-.It Fl o Ar dir
-Specify output directory for signing packages after the fact.
-Otherwise, unsigned packages will be replaced with signed packages.
 .It Fl P Ar pkgpath Ns : Ns Ar pkgspec Ns : Ns Ar default
 Declare a dependency on a package matching
 .Ar pkgspec
@@ -241,55 +221,12 @@ Print out the actual packing-list of the package being generated
 (query mode).
 Most often used in combination with
 .Fl n .
-.It Fl S Ar source
-Source repository for packages to be signed.
-This can be any url admissible for a
-.Ev PKG_PATH ,
-so that it is possible to sign packages during a transfer, e.g.,
-.Bd -literal -offset indent
-pkg_create -s signify -s mykey-pkg.sec \e
-	-o output -S scp://build-machine/packages/
-.Ed
-.It Xo
-.Fl s Ar signify|x509
-.Op Fl s Ar cert
-.Fl s Ar privkey
-.Xc
-Specify signature parameters for signed packages.
-Option parameters are as follows:
-.Bl -tag -width ArsignifyDx509 -compact
-.It Ar signify|x509
-choose
-.Xr signify 1
-or X.509-style signatures.
-.It Ar cert
-the path to the signer's certificate (X.509 only)
-.It Ar privkey
-the path to the signer's private key.
-For
-.Xr signify ,
-the private key name is used to set the
-.Cm \@signer
-annotation.
-If a corresponding public key is found, the first signatures will be
-checked for key mismatches.
-.El
-.Pp
-For X.509, the signer's certificate and the signer's private key
-should be generated using standard openssl x509 commands.
-This assumes the existence of a certificate authority (or several), whose
-public information is recorded as a
-.Pa /etc/ssl/pkgca.pem
-file.
-.Pp
-For
-.Xr signify 1
-private usage, a
-.Ar SIGNER
-must be specified, so that
-.Xr pkg_add 1
-will be able to retrieve the correct public key from
-.Pa /etc/signify/<signer>.pub .
+.It Fl s Ar signature-parameter
+Specify signature parameters for signing packages on-the-fly during
+building.
+Refer to
+.Xr pkg_sign 1
+for the meaning of the parameters and the signing process.
 .It Fl U Ar undisplayfile
 Display the file (using
 .Xr more 1 )
@@ -966,11 +903,10 @@ if no
 option is specified.
 .El
 .Sh SEE ALSO
-.Xr openssl 1 ,
 .Xr pkg_add 1 ,
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
-.Xr signify 1 ,
+.Xr pkg_sign 1 ,
 .Xr tar 1 ,
 .Xr bsd.port.mk 5 ,
 .Xr package 5 ,
