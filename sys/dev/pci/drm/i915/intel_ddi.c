@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ddi.c,v 1.6 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: intel_ddi.c,v 1.7 2014/01/23 03:23:47 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -1517,9 +1517,7 @@ void intel_ddi_init(struct drm_device *dev, enum port port)
 	intel_dig_port->port_reversal = I915_READ(DDI_BUF_CTL(port)) &
 					DDI_BUF_PORT_REVERSAL;
 	if (hdmi_connector)
-		intel_dig_port->hdmi.sdvox_reg = DDI_BUF_CTL(port);
-	else
-		intel_dig_port->hdmi.sdvox_reg = 0;
+		intel_dig_port->hdmi.hdmi_reg = DDI_BUF_CTL(port);
 	intel_dig_port->dp.output_reg = DDI_BUF_CTL(port);
 
 	intel_encoder->type = INTEL_OUTPUT_UNKNOWN;
