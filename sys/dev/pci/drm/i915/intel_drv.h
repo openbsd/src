@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_drv.h,v 1.4 2014/01/23 03:23:48 jsg Exp $	*/
+/*	$OpenBSD: intel_drv.h,v 1.5 2014/01/23 03:49:53 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
  * Copyright (c) 2007-2008 Intel Corporation
@@ -346,7 +346,7 @@ struct intel_dp {
 struct intel_digital_port {
 	struct intel_encoder base;
 	enum port port;
-	u32 port_reversal;
+	u32 saved_port_bits;
 	struct intel_dp dp;
 	struct intel_hdmi hdmi;
 };
