@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.90 2014/01/23 00:39:15 deraadt Exp $
+.\" 	$OpenBSD: ftp.1,v 1.91 2014/01/23 08:09:08 jmc Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm ftp
 .Op Fl 46AadEegimnptVv
-.Op Fl D Ar action
+.Op Fl D Ar title
 .Op Fl k Ar seconds
 .Op Fl P Ar port
 .Op Fl r Ar seconds
@@ -147,10 +147,12 @@ If both the
 environment variable is set and the
 .Fl c
 argument is given, the latter takes precedence.
+.It Fl D Ar title
+Specify a short
+.Ar title
+for the start of the progress bar.
 .It Fl d
 Enables debugging.
-.It Fl D
-Specify a short title for the start of the progress bar.
 .It Fl E
 Disables EPSV/EPRT command on IPv4 connections.
 .It Fl e
