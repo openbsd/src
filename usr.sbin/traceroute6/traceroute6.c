@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.57 2014/01/24 15:26:32 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.58 2014/01/24 15:28:03 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -338,7 +338,7 @@ int
 main(int argc, char *argv[])
 {
 	int mib[4] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_DEFHLIM };
-	int incflag = 1;
+	int incflag = 1, sump = 0;
 	char hbuf[NI_MAXHOST], src0[NI_MAXHOST], *ep;
 	int ch, i, on = 1, seq, probe, rcvcmsglen, error, minlen;
 	struct addrinfo hints, *res;
@@ -380,7 +380,7 @@ main(int argc, char *argv[])
 
 	seq = 0;
 
-	while ((ch = getopt(argc, argv, "AcDdf:g:Ilm:np:q:rs:w:vV:")) != -1)
+	while ((ch = getopt(argc, argv, "AcDdf:g:Ilm:np:q:rSs:w:vV:")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag++;
@@ -476,6 +476,9 @@ main(int argc, char *argv[])
 			 * probe (e.g., on a multi-homed host).
 			 */
 			source = optarg;
+			break;
+		case 'S':
+			sump = 1;
 			break;
 		case 'v':
 			verbose++;
@@ -737,12 +740,11 @@ main(int argc, char *argv[])
 	 */
 	for (hops = first_hop; hops <= max_hops; ++hops) {
 		struct in6_addr lastaddr;
-		int got_there = 0;
-		int unreachable = 0;
+		int got_there = 0, unreachable = 0, loss;
 
 		printf("%2u ", hops);
 		bzero(&lastaddr, sizeof(lastaddr));
-		for (probe = 0; probe < nprobes; ++probe) {
+		for (probe = 0, loss = 0; probe < nprobes; ++probe) {
 			int cc;
 			struct timeval t1, t2;
 
@@ -785,10 +787,14 @@ main(int argc, char *argv[])
 					break;
 				}
 			}
-			if (cc == 0)
+			if (cc == 0) {
 				printf(" *");
+				loss++;
+			}
 			(void) fflush(stdout);
 		}
+		if (sump)
+			printf(" (%d%% loss)", (loss * 100) / nprobes);
 		putchar('\n');
 		if (got_there ||
 		    (unreachable > 0 && unreachable >= ((nprobes + 1) / 2))) {
@@ -1227,7 +1233,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-"usage: traceroute6 [-AcDdIlnrv] [-f firsthop] [-g gateway] [-m hoplimit]\n"
+"usage: traceroute6 [-AcDdIlnrSv] [-f firsthop] [-g gateway] [-m hoplimit]\n"
 "       [-p port] [-q probes] [-s src] [-V rtableid] [-w waittime]\n"
 "       host [datalen]\n");
 	exit(1);
