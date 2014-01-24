@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.63 2014/01/22 09:25:41 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.64 2014/01/24 05:58:52 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -790,11 +790,10 @@ char	*ca_asn1_name(u_int8_t *, size_t);
 char	*ca_x509_name(void *);
 
 /* timer.c */
-void	 timer_initialize(struct iked *, struct iked_timer *,
+void	 timer_set(struct iked *, struct iked_timer *,
 	    void (*)(struct iked *, void *), void *);
-int	 timer_initialized(struct iked *, struct iked_timer *);
-void	 timer_register(struct iked *, struct iked_timer *, int);
-void	 timer_deregister(struct iked *, struct iked_timer *);
+void	 timer_add(struct iked *, struct iked_timer *, int);
+void	 timer_del(struct iked *, struct iked_timer *);
 
 /* proc.c */
 void	 proc_init(struct privsep *, struct privsep_proc *, u_int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.10 2013/01/08 10:38:19 reyk Exp $	*/
+/*	$OpenBSD: timer.c,v 1.11 2014/01/24 05:58:52 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -35,7 +35,7 @@
 void	 timer_callback(int, short, void *);
 
 void
-timer_initialize(struct iked *env, struct iked_timer *tmr,
+timer_set(struct iked *env, struct iked_timer *tmr,
     void (*cb)(struct iked *, void *), void *arg)
 {
 	tmr->tmr_env = env;
@@ -44,17 +44,8 @@ timer_initialize(struct iked *env, struct iked_timer *tmr,
 	evtimer_set(&tmr->tmr_ev, timer_callback, tmr);
 }
 
-int
-timer_initialized(struct iked *env, struct iked_timer *tmr)
-{
-	if (tmr && tmr->tmr_env == env && tmr->tmr_cb &&
-	    evtimer_initialized(&tmr->tmr_ev))
-		return (1);
-	return (0);
-}
-
 void
-timer_register(struct iked *env, struct iked_timer *tmr, int timeout)
+timer_add(struct iked *env, struct iked_timer *tmr, int timeout)
 {
 	struct timeval		 tv = { timeout };
 
@@ -66,9 +57,11 @@ timer_register(struct iked *env, struct iked_timer *tmr, int timeout)
 }
 
 void
-timer_deregister(struct iked *env, struct iked_timer *tmr)
+timer_del(struct iked *env, struct iked_timer *tmr)
 {
-	evtimer_del(&tmr->tmr_ev);
+	if (tmr->tmr_env == env && tmr->tmr_cb &&
+	    evtimer_initialized(&tmr->tmr_ev))
+		evtimer_del(&tmr->tmr_ev);
 }
 
 void

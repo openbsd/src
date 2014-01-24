@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.23 2013/12/03 13:55:39 markus Exp $	*/
+/*	$OpenBSD: config.c,v 1.24 2014/01/24 05:58:52 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -80,7 +80,7 @@ config_free_sa(struct iked *env, struct iked_sa *sa)
 {
 	(void)RB_REMOVE(iked_sas, &env->sc_sas, sa);
 
-	timer_deregister(env, &sa->sa_timer);
+	timer_del(env, &sa->sa_timer);
 
 	config_free_proposals(&sa->sa_proposals, 0);
 	config_free_childsas(env, &sa->sa_childsas, NULL, NULL);

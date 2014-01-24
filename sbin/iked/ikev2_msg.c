@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.27 2013/12/03 13:55:39 markus Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.28 2014/01/24 05:58:52 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -300,14 +300,12 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 
 	if (flags & IKEV2_FLAG_RESPONSE) {
 		TAILQ_INSERT_TAIL(&sa->sa_responses, m, msg_entry);
-		timer_initialize(env, &m->msg_timer,
-		    ikev2_msg_response_timeout, m);
-		timer_register(env, &m->msg_timer, IKED_RESPONSE_TIMEOUT);
+		timer_set(env, &m->msg_timer, ikev2_msg_response_timeout, m);
+		timer_add(env, &m->msg_timer, IKED_RESPONSE_TIMEOUT);
 	} else {
 		TAILQ_INSERT_TAIL(&sa->sa_requests, m, msg_entry);
-		timer_initialize(env, &m->msg_timer,
-		    ikev2_msg_retransmit_timeout, m);
-		timer_register(env, &m->msg_timer, IKED_RETRANSMIT_TIMEOUT);
+		timer_set(env, &m->msg_timer, ikev2_msg_retransmit_timeout, m);
+		timer_add(env, &m->msg_timer, IKED_RETRANSMIT_TIMEOUT);
 	}
 
 	return (0);
@@ -907,7 +905,7 @@ ikev2_msg_dispose(struct iked *env, struct iked_msgqueue *queue,
     struct iked_message *msg)
 {
 	TAILQ_REMOVE(queue, msg, msg_entry);
-	timer_deregister(env, &msg->msg_timer);
+	timer_del(env, &msg->msg_timer);
 	ikev2_msg_cleanup(env, msg);
 	free(msg);
 }
@@ -948,7 +946,7 @@ ikev2_msg_retransmit_response(struct iked *env, struct iked_sa *sa,
 		return (-1);
 	}
 
-	timer_register(env, &msg->msg_timer, IKED_RESPONSE_TIMEOUT);
+	timer_add(env, &msg->msg_timer, IKED_RESPONSE_TIMEOUT);
 	return (0);
 }
 
@@ -977,7 +975,7 @@ ikev2_msg_retransmit_timeout(struct iked *env, void *arg)
 			return;
 		}
 		/* Exponential timeout */
-		timer_register(env, &msg->msg_timer,
+		timer_add(env, &msg->msg_timer,
 		    IKED_RETRANSMIT_TIMEOUT * (2 << (msg->msg_tries++)));
 	} else {
 		log_debug("%s: retransmit limit reached", __func__);
