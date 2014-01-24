@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.84 2013/11/12 04:59:02 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.85 2014/01/24 22:29:21 miod Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
  */
 
 #include <sys/param.h>
-#include <machine/vmparam.h>
 #include <sys/time.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
