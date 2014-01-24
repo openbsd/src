@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.83 2013/11/12 19:36:29 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.84 2014/01/24 15:06:59 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -268,7 +268,7 @@ char *pr_type(u_int8_t);
 int map_tos(char *, int *);
 void usage(void);
 
-int s;				/* receive (icmp) socket file descriptor */
+int rcvsock;			/* receive (icmp) socket file descriptor */
 int sndsock;			/* send (udp) socket file descriptor */
 
 int datalen;			/* How much data */
@@ -314,7 +314,7 @@ main(int argc, char *argv[])
 	uid_t uid;
 	u_int rtableid;
 
-	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
+	if ((rcvsock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(5, "icmp socket");
 	if ((sndsock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
 		err(5, "raw socket");
@@ -462,7 +462,7 @@ main(int argc, char *argv[])
 			if (setsockopt(sndsock, SOL_SOCKET, SO_RTABLE,
 			    &rtableid, sizeof(rtableid)) == -1)
 				err(1, "setsockopt SO_RTABLE");
-			if (setsockopt(s, SOL_SOCKET, SO_RTABLE,
+			if (setsockopt(rcvsock, SOL_SOCKET, SO_RTABLE,
 			    &rtableid, sizeof(rtableid)) == -1)
 				err(1, "setsockopt SO_RTABLE");
 			break;
@@ -567,7 +567,7 @@ main(int argc, char *argv[])
 	usec_perturb = arc4random();
 
 	if (options & SO_DEBUG)
-		(void) setsockopt(s, SOL_SOCKET, SO_DEBUG,
+		(void) setsockopt(rcvsock, SOL_SOCKET, SO_DEBUG,
 		    (char *)&on, sizeof(on));
 #ifdef SO_SNDBUF
 	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
@@ -625,7 +625,7 @@ main(int argc, char *argv[])
 
 			(void) gettimeofday(&t1, NULL);
 			send_probe(++seq, ttl, incflag, &to);
-			while ((cc = wait_for_reply(s, &from, &t1))) {
+			while ((cc = wait_for_reply(rcvsock, &from, &t1))) {
 				(void) gettimeofday(&t2, NULL);
 				if (t2.tv_sec - t1.tv_sec > waittime) {
 					cc = 0;
@@ -890,7 +890,7 @@ wait_for_reply(int sock, struct sockaddr_in *from, struct timeval *sent)
 		timerclear(&wait);
 
 	if (select(sock+1, fdsp, (fd_set *)0, (fd_set *)0, &wait) > 0)
-		cc = recvfrom(s, (char *)packet, sizeof(packet), 0,
+		cc = recvfrom(rcvsock, (char *)packet, sizeof(packet), 0,
 		    (struct sockaddr *)from, &fromlen);
 
 	free(fdsp);
