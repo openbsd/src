@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.86 2014/01/24 15:19:51 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.87 2014/01/24 15:24:06 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -330,19 +330,8 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "AcDdf:g:Ilm:nP:p:q:rSs:t:V:vw:x"))
 			!= -1)
 		switch (ch) {
-		case 'S':
-			sump = 1;
-			break;
 		case 'A':
 			Aflag++;
-			break;
-		case 'f':
-			errno = 0;
-			ep = NULL;
-			l = strtol(optarg, &ep, 10);
-			if (errno || !*optarg || *ep || l < 1 || l > max_ttl)
-				errx(1, "min ttl must be 1 to %u.", max_ttl);
-			first_ttl = (u_int8_t)l;
 			break;
 		case 'c':
 			incflag = 0;
@@ -352,6 +341,14 @@ main(int argc, char *argv[])
 			break;
 		case 'D':
 			dump = 1;
+			break;
+		case 'f':
+			errno = 0;
+			ep = NULL;
+			l = strtol(optarg, &ep, 10);
+			if (errno || !*optarg || *ep || l < 1 || l > max_ttl)
+				errx(1, "min ttl must be 1 to %u.", max_ttl);
+			first_ttl = (u_int8_t)l;
 			break;
 		case 'g':
 			if (lsrr >= MAX_LSRR)
@@ -432,6 +429,9 @@ main(int argc, char *argv[])
 			 * probe (e.g., on a multi-homed host).
 			 */
 			source = optarg;
+			break;
+		case 'S':
+			sump = 1;
 			break;
 		case 't':
 			if (!map_tos(optarg, &tos)) {
