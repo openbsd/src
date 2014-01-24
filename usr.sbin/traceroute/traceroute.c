@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.85 2014/01/24 15:17:33 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.86 2014/01/24 15:19:51 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -483,7 +483,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 1)
+	if (argc < 1 || argc > 2)
 		usage();
 
 	setlinebuf (stdout);
