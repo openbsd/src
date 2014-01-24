@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.84 2014/01/24 15:06:59 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.85 2014/01/24 15:17:33 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -281,7 +281,7 @@ int nprobes = 3;
 u_int8_t max_ttl = IPDEFTTL;
 u_int8_t first_ttl = 1;
 u_short ident;
-u_short port = 32768+666;	/* start udp dest port # for probe packets */
+u_int16_t port = 32768+666;	/* start udp dest port # for probe packets */
 u_char	proto = IPPROTO_UDP;
 u_int8_t  icmp_type = ICMP_ECHO; /* default ICMP code/type */
 u_char  icmp_code = 0;
@@ -394,7 +394,7 @@ main(int argc, char *argv[])
 			l = strtol(optarg, &ep, 10);
 			if (errno || !*optarg || *ep || l <= 0 || l >= 65536)
 				errx(1, "port must be >0, <65536.");
-			port = (int)l;
+			port = (u_int16_t)l;
 			break;
 		case 'P':
 			if (protoset)
