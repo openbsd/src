@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.28 2014/01/24 07:30:48 markus Exp $	*/
+/*	$OpenBSD: policy.c,v 1.29 2014/01/24 07:35:55 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -58,6 +58,8 @@ int
 policy_lookup(struct iked *env, struct iked_message *msg)
 {
 	struct iked_policy	 pol;
+	char			*s, idstr[IKED_ID_SIZE];
+
 
 	if (msg->msg_sa != NULL && msg->msg_sa->sa_policy != NULL) {
 		/* Existing SA with policy */
@@ -69,6 +71,15 @@ policy_lookup(struct iked *env, struct iked_message *msg)
 	pol.pol_af = msg->msg_peer.ss_family;
 	memcpy(&pol.pol_peer.addr, &msg->msg_peer, sizeof(msg->msg_peer));
 	memcpy(&pol.pol_local.addr, &msg->msg_local, sizeof(msg->msg_local));
+	if (msg->msg_id.id_type &&
+	    ikev2_print_id(&msg->msg_id, idstr, IKED_ID_SIZE) == 0 &&
+	    (s = strchr(idstr, '/')) != NULL) {
+		pol.pol_peerid.id_type = msg->msg_id.id_type;
+		pol.pol_peerid.id_length = strlen(s+1);
+		strlcpy(pol.pol_peerid.id_data, s+1,
+		    sizeof(pol.pol_peerid.id_data));
+		log_debug("%s: peerid '%s'", __func__, s+1);
+	}
 
 	/* Try to find a matching policy for this message */
 	if ((msg->msg_policy = policy_test(env, &pol)) != NULL)
@@ -122,6 +133,15 @@ policy_test(struct iked *env, struct iked_policy *key)
 			    &key->pol_flows)) != NULL &&
 			    (flow = RB_FIND(iked_flows, &p->pol_flows,
 			    flowkey)) == NULL) {
+				p = TAILQ_NEXT(p, pol_entry);
+				continue;
+			}
+			/* make sure the peer ID matches */
+			if (key->pol_peerid.id_type &&
+			    (key->pol_peerid.id_type != p->pol_peerid.id_type ||
+			    memcmp(key->pol_peerid.id_data,
+			    p->pol_peerid.id_data,
+			    sizeof(key->pol_peerid.id_data)) != 0)) {
 				p = TAILQ_NEXT(p, pol_entry);
 				continue;
 			}

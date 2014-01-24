@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.90 2014/01/24 05:58:52 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.91 2014/01/24 07:35:55 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -483,6 +483,34 @@ ikev2_ike_auth(struct iked *env, struct iked_sa *sa,
 	} else {
 		id = &sa->sa_iid;
 		certid = &sa->sa_icert;
+	}
+	/* try to relookup the policy based on the peerid */
+	if (msg->msg_id.id_type && !sa->sa_hdr.sh_initiator) {
+		struct iked_policy	*old = sa->sa_policy;
+
+		sa->sa_policy = NULL;
+		if (policy_lookup(env, msg) == 0 && msg->msg_policy &&
+		    msg->msg_policy != old) {
+			log_debug("%s: policy switch %p/%s to %p/%s",
+			    __func__, old, old->pol_name,
+			    msg->msg_policy, msg->msg_policy->pol_name);
+			RB_REMOVE(iked_sapeers, &old->pol_sapeers, sa);
+			if (RB_INSERT(iked_sapeers,
+			    &msg->msg_policy->pol_sapeers, sa)) {
+				/* failed, restore */
+				log_debug("%s: conflicting sa", __func__);
+				RB_INSERT(iked_sapeers, &old->pol_sapeers, sa);
+				msg->msg_policy = old;
+			}
+			policy = sa->sa_policy = msg->msg_policy;
+			if (policy != old) {
+				policy_unref(env, old);
+				policy_ref(env, policy);
+			}
+		} else {
+			/* restore */
+			msg->msg_policy = sa->sa_policy = old;
+		}
 	}
 
 	if (msg->msg_id.id_type) {
