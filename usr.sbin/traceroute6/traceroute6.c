@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.55 2014/01/24 15:16:13 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.56 2014/01/24 15:22:10 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -288,12 +288,12 @@ struct opacket	*outpacket;	/* last output (udp) packet */
 
 int	main(int, char *[]);
 int	wait_for_reply(int, struct msghdr *);
-void	send_probe(int, u_int8_t);
+void	send_probe(int, u_int8_t, int);
 struct udphdr *get_udphdr(struct ip6_hdr *, u_char *);
 int	get_hoplim(struct msghdr *);
 double	deltaT(struct timeval *, struct timeval *);
 char	*pr_type(int);
-int	packet_ok(struct msghdr *, int, int);
+int	packet_ok(struct msghdr *, int, int, int);
 void	print(struct msghdr *, int);
 const char *inetname(struct sockaddr *);
 void	print_asn(struct sockaddr *);
@@ -336,6 +336,7 @@ int
 main(int argc, char *argv[])
 {
 	int mib[4] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_DEFHLIM };
+	int incflag = 1;
 	char hbuf[NI_MAXHOST], src0[NI_MAXHOST], *ep;
 	int ch, i, on = 1, seq, probe, rcvcmsglen, error, minlen;
 	struct addrinfo hints, *res;
@@ -377,10 +378,13 @@ main(int argc, char *argv[])
 
 	seq = 0;
 
-	while ((ch = getopt(argc, argv, "Adf:g:Ilm:np:q:rs:w:vV:")) != -1)
+	while ((ch = getopt(argc, argv, "Acdf:g:Ilm:np:q:rs:w:vV:")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag++;
+			break;
+		case 'c':
+			incflag = 0;
 			break;
 		case 'd':
 			options |= SO_DEBUG;
@@ -738,10 +742,11 @@ main(int argc, char *argv[])
 			struct timeval t1, t2;
 
 			(void) gettimeofday(&t1, NULL);
-			send_probe(++seq, hops);
+			send_probe(++seq, hops, incflag);
 			while ((cc = wait_for_reply(rcvsock, &rcvmhdr))) {
 				(void) gettimeofday(&t2, NULL);
-				if ((i = packet_ok(&rcvmhdr, cc, seq))) {
+				if ((i = packet_ok(&rcvmhdr, cc, seq,
+				    incflag))) {
 					if (!IN6_ARE_ADDR_EQUAL(&Rcv.sin6_addr,
 					    &lastaddr)) {
 						print(&rcvmhdr, cc);
@@ -807,7 +812,7 @@ wait_for_reply(int sock, struct msghdr *mhdr)
 
 
 void
-send_probe(int seq, u_int8_t hops)
+send_probe(int seq, u_int8_t hops, int iflag)
 {
 	struct timeval tv;
 	struct tv32 tv32;
@@ -819,7 +824,10 @@ send_probe(int seq, u_int8_t hops)
 		perror("setsockopt IPV6_UNICAST_HOPS");
 	}
 
-	Dst.sin6_port = htons(port + seq);
+	if (iflag)
+		Dst.sin6_port = htons(port + seq);
+	else
+		Dst.sin6_port = htons(port);
 	(void) gettimeofday(&tv, NULL);
 	tv32.tv32_sec = htonl(tv.tv_sec);
 	tv32.tv32_usec = htonl(tv.tv_usec);
@@ -938,7 +946,7 @@ pr_type(int t0)
 }
 
 int
-packet_ok(struct msghdr *mhdr, int cc, int seq)
+packet_ok(struct msghdr *mhdr, int cc, int seq, int iflag)
 {
 	struct icmp6_hdr *icp;
 	struct sockaddr_in6 *from = (struct sockaddr_in6 *)mhdr->msg_name;
@@ -1004,7 +1012,8 @@ packet_ok(struct msghdr *mhdr, int cc, int seq)
 			return (type == ICMP6_TIME_EXCEEDED ? -1 : code + 1);
 		else if (!useicmp &&
 		    up->uh_sport == htons(srcport) &&
-		    up->uh_dport == htons(port + seq))
+		    ((iflag && up->uh_dport == htons(port + seq)) ||
+		    (!iflag && up->uh_dport == htons(port))))
 			return (type == ICMP6_TIME_EXCEEDED ? -1 : code + 1);
 	} else if (useicmp && type == ICMP6_ECHO_REPLY) {
 		if (icp->icmp6_id == ident &&
@@ -1196,7 +1205,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-"usage: traceroute6 [-AdIlnrv] [-f firsthop] [-g gateway] [-m hoplimit]\n"
+"usage: traceroute6 [-AcdIlnrv] [-f firsthop] [-g gateway] [-m hoplimit]\n"
 "       [-p port] [-q probes] [-s src] [-V rtableid] [-w waittime]\n"
 "       host [datalen]\n");
 	exit(1);
