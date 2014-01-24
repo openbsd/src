@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_ttm.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_ttm.c,v 1.2 2014/01/24 05:43:46 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -816,7 +816,7 @@ int radeon_ttm_init(struct radeon_device *rdev)
 	}
 #ifdef DRMDEBUG
 	DRM_INFO("radeon: %uM of VRAM memory ready\n",
-		 (unsigned)rdev->mc.real_vram_size / (1024 * 1024));
+		 (unsigned) (rdev->mc.real_vram_size / (1024 * 1024)));
 #endif
 	r = ttm_bo_init_mm(&rdev->mman.bdev, TTM_PL_TT,
 				rdev->mc.gtt_size >> PAGE_SHIFT);
