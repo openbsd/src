@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_var.h,v 1.23 2014/01/23 23:51:29 henning Exp $	*/
+/*	$OpenBSD: udp_var.h,v 1.24 2014/01/24 06:18:33 henning Exp $	*/
 /*	$NetBSD: udp_var.h,v 1.12 1996/02/13 23:44:41 christos Exp $	*/
 
 /*
@@ -54,20 +54,20 @@ struct	udpiphdr {
 
 struct	udpstat {
 				/* input statistics: */
-	u_long	udps_ipackets;		/* total input packets */
-	u_long	udps_hdrops;		/* packet shorter than header */
-	u_long	udps_badsum;		/* checksum error */
-	u_long	udps_nosum;		/* no checksum */
-	u_long	udps_badlen;		/* data length larger than packet */
-	u_long	udps_noport;		/* no socket on port */
-	u_long	udps_noportbcast;	/* of above, arrived as broadcast */
-	u_long	udps_nosec;		/* dropped for lack of ipsec */
-	u_long	udps_fullsock;		/* not delivered, input socket full */
-	u_long	udps_pcbhashmiss;	/* input packets missing pcb hash */
-	u_long	udps_inswcsum;		/* input software-csummed packets */
+	u_int32_t	udps_ipackets;	/* total input packets */
+	u_int32_t	udps_hdrops;	/* packet shorter than header */
+	u_int32_t	udps_badsum;	/* checksum error */
+	u_int32_t	udps_nosum;	/* no checksum */
+	u_int32_t	udps_badlen;	/* data length larger than packet */
+	u_int32_t	udps_noport;	/* no socket on port */
+	u_int32_t	udps_noportbcast; /* of above, arrived as broadcast */
+	u_int32_t	udps_nosec;	/* dropped for lack of ipsec */
+	u_int32_t	udps_fullsock;	/* not delivered, input socket full */
+	u_int32_t	udps_pcbhashmiss; /* input packets missing pcb hash */
+	u_int32_t	udps_inswcsum;	/* input software-csummed packets */
 				/* output statistics: */
-	u_long	udps_opackets;		/* total output packets */
-	u_long	udps_outswcsum;		/* output software-csummed packets */
+	u_int32_t	udps_opackets;	/* total output packets */
+	u_int32_t	udps_outswcsum;	/* output software-csummed packets */
 };
 
 /*
