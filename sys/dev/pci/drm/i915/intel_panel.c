@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_panel.c,v 1.4 2013/08/13 10:23:52 jsg Exp $	*/
+/*	$OpenBSD: intel_panel.c,v 1.5 2014/01/24 03:21:17 jsg Exp $	*/
 /*
  * Copyright © 2006-2010 Intel Corporation
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -353,7 +353,8 @@ void intel_panel_enable_backlight(struct drm_device *dev,
 		POSTING_READ(reg);
 		I915_WRITE(reg, tmp | BLM_PWM_ENABLE);
 
-		if (HAS_PCH_SPLIT(dev)) {
+		if (HAS_PCH_SPLIT(dev) &&
+		    !(dev_priv->quirks & QUIRK_NO_PCH_PWM_ENABLE)) {
 			tmp = I915_READ(BLC_PWM_PCH_CTL1);
 			tmp |= BLM_PCH_PWM_ENABLE;
 			tmp &= ~BLM_PCH_OVERRIDE_ENABLE;

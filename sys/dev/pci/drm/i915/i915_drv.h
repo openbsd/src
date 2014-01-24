@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.46 2014/01/23 10:42:57 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.47 2014/01/24 03:21:17 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -281,6 +281,7 @@ enum intel_sbi_destination {
 #define QUIRK_PIPEA_FORCE	(1<<0)
 #define QUIRK_LVDS_SSC_DISABLE	(1<<1)
 #define QUIRK_INVERT_BRIGHTNESS	(1<<2)
+#define QUIRK_NO_PCH_PWM_ENABLE	(1<<3)
 
 struct intel_fbdev;
 
