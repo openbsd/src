@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.271 2014/01/23 23:51:29 henning Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.272 2014/01/24 18:54:58 henning Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -533,9 +533,7 @@ tcp_input(struct mbuf *m, ...)
 			tcpstat.tcps_rcvbadsum++;
 			goto drop;
 		}
-	} else
-		/* XXXHB20140123 */
-		m->m_pkthdr.csum_flags &= ~M_TCP_CSUM_IN_OK;
+	}
 
 	/*
 	 * Check that TCP offset makes sense,

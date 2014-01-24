@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.225 2014/01/23 23:51:29 henning Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.226 2014/01/24 18:54:58 henning Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -283,9 +283,7 @@ ipv4_input(struct mbuf *m)
 			ipstat.ips_badsum++;
 			goto bad;
 		}
-	} else
-		/* XXXHB20140123 */
-		m->m_pkthdr.csum_flags &= ~M_IPV4_CSUM_IN_OK;
+	}
 
 	/* Retrieve the packet length. */
 	len = ntohs(ip->ip_len);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.220 2014/01/23 23:51:29 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.221 2014/01/24 18:54:58 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2490,9 +2490,7 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 				ipstat.ips_badsum++;
 				goto dropit;
 			}
-		} else
-			/* XXXHB20140123 */
-			m->m_pkthdr.csum_flags &= ~M_IPV4_CSUM_IN_OK;
+		}
 
 		if (ntohs(ip->ip_len) < hlen)
 			goto dropit;

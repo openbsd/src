@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.173 2014/01/23 23:51:29 henning Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.174 2014/01/24 18:54:58 henning Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -308,9 +308,7 @@ udp_input(struct mbuf *m, ...)
 				udpstat.udps_badsum++;
 				goto bad;
 			}
-		} else
-			/* XXXHB20140123 */
-			m->m_pkthdr.csum_flags &= ~M_UDP_CSUM_IN_OK;
+		}
 	}
 
 #ifdef IPSEC
