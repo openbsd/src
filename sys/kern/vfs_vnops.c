@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.74 2013/09/14 02:28:01 guenther Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.75 2014/01/24 06:00:01 guenther Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -405,6 +405,7 @@ vn_stat(struct vnode *vp, struct stat *sb, struct proc *p)
 	/*
 	 * Copy from vattr table
 	 */
+	memset(sb, 0, sizeof(*sb));
 	sb->st_dev = va.va_fsid;
 	sb->st_ino = va.va_fileid;
 	mode = va.va_mode;
@@ -439,9 +440,12 @@ vn_stat(struct vnode *vp, struct stat *sb, struct proc *p)
 	sb->st_gid = va.va_gid;
 	sb->st_rdev = va.va_rdev;
 	sb->st_size = va.va_size;
-	sb->st_atim = va.va_atime;
-	sb->st_mtim = va.va_mtime;
-	sb->st_ctim = va.va_ctime;
+	sb->st_atim.tv_sec  = va.va_atime.tv_sec;
+	sb->st_atim.tv_nsec = va.va_atime.tv_nsec;
+	sb->st_mtim.tv_sec  = va.va_mtime.tv_sec;
+	sb->st_mtim.tv_nsec = va.va_mtime.tv_nsec;
+	sb->st_ctim.tv_sec  = va.va_ctime.tv_sec;
+	sb->st_ctim.tv_nsec = va.va_ctime.tv_nsec;
 	sb->st_blksize = va.va_blocksize;
 	sb->st_flags = va.va_flags;
 	sb->st_gen = va.va_gen;

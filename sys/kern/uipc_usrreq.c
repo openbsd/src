@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.71 2013/04/05 08:25:30 tedu Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.72 2014/01/24 06:00:01 guenther Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -261,28 +261,33 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		unp_drop(unp, ECONNABORTED);
 		break;
 
-	case PRU_SENSE:
-		((struct stat *) m)->st_blksize = so->so_snd.sb_hiwat;
+	case PRU_SENSE: {
+		struct stat *sb = (struct stat *)m;
+
+		sb->st_blksize = so->so_snd.sb_hiwat;
 		switch (so->so_type) {
 		case SOCK_STREAM:
 		case SOCK_SEQPACKET:
 			if (unp->unp_conn != NULL) {
 				so2 = unp->unp_conn->unp_socket;
-				((struct stat *) m)->st_blksize +=
-				    so2->so_rcv.sb_cc;
+				sb->st_blksize += so2->so_rcv.sb_cc;
 			}
 			break;
 		default:
 			break;
 		}
-		((struct stat *) m)->st_dev = NODEV;
+		sb->st_dev = NODEV;
 		if (unp->unp_ino == 0)
 			unp->unp_ino = unp_ino++;
-		((struct stat *) m)->st_atim =
-		    ((struct stat *) m)->st_mtim =
-		    ((struct stat *) m)->st_ctim = unp->unp_ctime;
-		((struct stat *) m)->st_ino = unp->unp_ino;
+		sb->st_atim.tv_sec =
+		    sb->st_mtim.tv_sec =
+		    sb->st_ctim.tv_sec = unp->unp_ctime.tv_sec;
+		sb->st_atim.tv_nsec =
+		    sb->st_mtim.tv_nsec =
+		    sb->st_ctim.tv_nsec = unp->unp_ctime.tv_nsec;
+		sb->st_ino = unp->unp_ino;
 		return (0);
+	}
 
 	case PRU_RCVOOB:
 		return (EOPNOTSUPP);

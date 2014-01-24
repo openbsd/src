@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.64 2014/01/21 01:48:45 tedu Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.65 2014/01/24 06:00:01 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -688,9 +688,12 @@ pipe_stat(struct file *fp, struct stat *ub, struct proc *p)
 	ub->st_blksize = pipe->pipe_buffer.size;
 	ub->st_size = pipe->pipe_buffer.cnt;
 	ub->st_blocks = (ub->st_size + ub->st_blksize - 1) / ub->st_blksize;
-	ub->st_atim = pipe->pipe_atime;
-	ub->st_mtim = pipe->pipe_mtime;
-	ub->st_ctim = pipe->pipe_ctime;
+	ub->st_atim.tv_sec  = pipe->pipe_atime.tv_sec;
+	ub->st_atim.tv_nsec = pipe->pipe_atime.tv_nsec;
+	ub->st_mtim.tv_sec  = pipe->pipe_mtime.tv_sec;
+	ub->st_mtim.tv_nsec = pipe->pipe_mtime.tv_nsec;
+	ub->st_ctim.tv_sec  = pipe->pipe_ctime.tv_sec;
+	ub->st_ctim.tv_nsec = pipe->pipe_ctime.tv_nsec;
 	ub->st_uid = fp->f_cred->cr_uid;
 	ub->st_gid = fp->f_cred->cr_gid;
 	/*
