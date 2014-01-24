@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.87 2014/01/24 15:24:06 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.88 2014/01/24 15:26:32 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -256,6 +256,7 @@ int32_t usec_perturb;
 u_char packet[512], *outpacket;	/* last inbound (icmp) packet */
 
 int wait_for_reply(int, struct sockaddr_in *, struct timeval *);
+void dump_packet(void);
 void send_probe(int, u_int8_t, int, struct sockaddr_in *);
 int packet_ok(u_char *, int, struct sockaddr_in *, int, int);
 void dump_packet(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.56 2014/01/24 15:22:10 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.57 2014/01/24 15:26:32 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -288,6 +288,7 @@ struct opacket	*outpacket;	/* last output (udp) packet */
 
 int	main(int, char *[]);
 int	wait_for_reply(int, struct msghdr *);
+void	dump_packet(void);
 void	send_probe(int, u_int8_t, int);
 struct udphdr *get_udphdr(struct ip6_hdr *, u_char *);
 int	get_hoplim(struct msghdr *);
@@ -328,6 +329,7 @@ int options;			/* socket options */
 int verbose;
 int waittime = 5;		/* time to wait for response (in seconds) */
 int nflag;			/* print addresses numerically */
+int dump;
 int useicmp;
 int lflag;			/* print both numerical address & hostname */
 int Aflag;			/* lookup ASN */
@@ -378,7 +380,7 @@ main(int argc, char *argv[])
 
 	seq = 0;
 
-	while ((ch = getopt(argc, argv, "Acdf:g:Ilm:np:q:rs:w:vV:")) != -1)
+	while ((ch = getopt(argc, argv, "AcDdf:g:Ilm:np:q:rs:w:vV:")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag++;
@@ -388,6 +390,9 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			options |= SO_DEBUG;
+			break;
+		case 'D':
+			dump = 1;
 			break;
 		case 'f':
 			errno = 0;
@@ -810,6 +815,20 @@ wait_for_reply(int sock, struct msghdr *mhdr)
 	return(cc);
 }
 
+void
+dump_packet(void)
+{
+	u_char *p;
+	int i;
+
+	fprintf(stderr, "packet data:");
+	for (p = (u_char*)outpacket, i = 0; i < datalen; i++) {
+		if ((i % 24) == 0)
+			fprintf(stderr, "\n ");
+		fprintf(stderr, " %02x", *p++);
+	}
+	fprintf(stderr, "\n");
+}
 
 void
 send_probe(int seq, u_int8_t hops, int iflag)
@@ -848,6 +867,9 @@ send_probe(int seq, u_int8_t hops, int iflag)
 		op->hops = hops;
 		bcopy(&tv32, &op->tv, sizeof tv32);
 	}
+
+	if (dump)
+		dump_packet();
 
 	i = sendto(sndsock, (char *)outpacket, datalen, 0,
 	    (struct sockaddr *)&Dst, Dst.sin6_len);
@@ -1205,7 +1227,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-"usage: traceroute6 [-AcdIlnrv] [-f firsthop] [-g gateway] [-m hoplimit]\n"
+"usage: traceroute6 [-AcDdIlnrv] [-f firsthop] [-g gateway] [-m hoplimit]\n"
 "       [-p port] [-q probes] [-s src] [-V rtableid] [-w waittime]\n"
 "       host [datalen]\n");
 	exit(1);
