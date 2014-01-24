@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootarg.h,v 1.12 2013/12/28 02:51:07 deraadt Exp $	*/
+/*	$OpenBSD: bootarg.h,v 1.13 2014/01/24 05:24:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -49,7 +49,7 @@ extern int bootargc;
 extern bootarg_t *bootargp;
 #endif
 
-int	loadrandom(char *name, char *buf, size_t buflen);
+void	loadrandom(char *name, char *buf, size_t buflen);
 int	mdrandom(char *buf, size_t buflen);
 
 #ifdef _STANDALONE
