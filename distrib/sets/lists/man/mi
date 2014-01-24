@@ -649,6 +649,7 @@
 ./usr/share/man/man1/pkg_delete.1
 ./usr/share/man/man1/pkg_info.1
 ./usr/share/man/man1/pkg_mklocatedb.1
+./usr/share/man/man1/pkg_sign.1
 ./usr/share/man/man1/pkill.1
 ./usr/share/man/man1/pl2pm.1
 ./usr/share/man/man1/pod2html.1

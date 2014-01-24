@@ -1069,6 +1069,7 @@
 ./usr/libdata/perl5/OpenBSD/PkgCreate.pm
 ./usr/libdata/perl5/OpenBSD/PkgDelete.pm
 ./usr/libdata/perl5/OpenBSD/PkgInfo.pm
+./usr/libdata/perl5/OpenBSD/PkgSign.pm
 ./usr/libdata/perl5/OpenBSD/PkgSpec.pm
 ./usr/libdata/perl5/OpenBSD/ProgressMeter
 ./usr/libdata/perl5/OpenBSD/ProgressMeter.pm
@@ -1079,6 +1080,7 @@
 ./usr/libdata/perl5/OpenBSD/SharedItems.pm
 ./usr/libdata/perl5/OpenBSD/SharedLibs.pm
 ./usr/libdata/perl5/OpenBSD/Signature.pm
+./usr/libdata/perl5/OpenBSD/Signer.pm
 ./usr/libdata/perl5/OpenBSD/State.pm
 ./usr/libdata/perl5/OpenBSD/Subst.pm
 ./usr/libdata/perl5/OpenBSD/Temp.pm
@@ -2781,6 +2783,7 @@
 ./usr/sbin/pkg_delete
 ./usr/sbin/pkg_info
 ./usr/sbin/pkg_mklocatedb
+./usr/sbin/pkg_sign
 ./usr/sbin/portmap
 ./usr/sbin/ppp
 ./usr/sbin/pppctl
