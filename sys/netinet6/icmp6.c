@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.139 2014/01/13 23:03:52 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.140 2014/01/24 12:20:22 naddy Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2100,8 +2100,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 		ip6->ip6_hlim = ip6_defhlim;
 
 	icmp6->icmp6_cksum = 0;
-	icmp6->icmp6_cksum = in6_cksum(m, IPPROTO_ICMPV6,
-					sizeof(struct ip6_hdr), plen);
+	m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 
 	/*
 	 * XXX option handling
@@ -2611,8 +2610,7 @@ noredhdropt:
 	ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
 
 	nd_rd->nd_rd_cksum = 0;
-	nd_rd->nd_rd_cksum
-		= in6_cksum(m, IPPROTO_ICMPV6, sizeof(*ip6), ntohs(ip6->ip6_plen));
+	m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 
 	/* send the packet to outside... */
 	if (ip6_output(m, NULL, NULL, 0, NULL, NULL, NULL) != 0)

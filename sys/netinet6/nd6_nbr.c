@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.74 2014/01/13 23:03:52 bluhm Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.75 2014/01/24 12:20:22 naddy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -520,8 +520,7 @@ nd6_ns_output(struct ifnet *ifp, struct in6_addr *daddr6,
 
 	ip6->ip6_plen = htons((u_short)icmp6len);
 	nd_ns->nd_ns_cksum = 0;
-	nd_ns->nd_ns_cksum =
-	    in6_cksum(m, IPPROTO_ICMPV6, sizeof(*ip6), icmp6len);
+	m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 
 	ip6_output(m, NULL, &ro, dad ? IPV6_UNSPECSRC : 0, &im6o, NULL, NULL);
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
@@ -1034,8 +1033,7 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	ip6->ip6_plen = htons((u_short)icmp6len);
 	nd_na->nd_na_flags_reserved = flags;
 	nd_na->nd_na_cksum = 0;
-	nd_na->nd_na_cksum =
-	    in6_cksum(m, IPPROTO_ICMPV6, sizeof(struct ip6_hdr), icmp6len);
+	m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 
 	ip6_output(m, NULL, &ro, 0, &im6o, NULL, NULL);
 

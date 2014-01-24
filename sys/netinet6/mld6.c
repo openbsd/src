@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.36 2014/01/21 10:18:26 mpi Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.37 2014/01/24 12:20:22 naddy Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -435,8 +435,7 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 	mldh->mld_addr = in6m->in6m_addr;
 	if (IN6_IS_ADDR_MC_LINKLOCAL(&mldh->mld_addr))
 		mldh->mld_addr.s6_addr16[1] = 0; /* XXX */
-	mldh->mld_cksum = in6_cksum(mh, IPPROTO_ICMPV6, sizeof(struct ip6_hdr),
-	    sizeof(struct mld_hdr));
+	mh->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 
 	/* construct multicast option */
 	bzero(&im6o, sizeof(im6o));
