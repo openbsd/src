@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.162 2014/01/23 00:32:57 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.163 2014/01/24 10:25:56 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -523,7 +523,10 @@ notfat:
 	if (biowait(bp))
 		return (bp->b_error);
 
-	error = checkdisklabel(bp->b_data + offset, lp, dospartoff, dospartend);
+	
+	error = checkdisklabel(bp->b_data + offset, lp,
+	    DL_GETBSTART((struct disklabel*)(bp->b_data+offset)),
+	    DL_GETBEND((struct disklabel *)(bp->b_data+offset)));
 	/* XXX Remove after 5.5. It's meant for a short sharp transition! */
 	if (error == ENOENT && lp->d_secsize != DEV_BSIZE) {
 		/*
