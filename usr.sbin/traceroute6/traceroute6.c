@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.54 2014/01/24 15:14:31 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.55 2014/01/24 15:16:13 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -340,7 +340,6 @@ main(int argc, char *argv[])
 	int ch, i, on = 1, seq, probe, rcvcmsglen, error, minlen;
 	struct addrinfo hints, *res;
 	static u_char *rcvcmsgbuf;
-	u_long lport;
 	struct hostent *hp;
 	size_t size;
 	u_int8_t hops;
@@ -444,19 +443,12 @@ main(int argc, char *argv[])
 			nflag++;
 			break;
 		case 'p':
-			ep = NULL;
 			errno = 0;
-			lport = strtoul(optarg, &ep, 0);
-			if (errno || !*optarg || *ep) {
-				fprintf(stderr, "traceroute6: invalid port.\n");
-				exit(1);
-			}
-			if (lport == 0 || lport != (lport & 0xffff)) {
-				fprintf(stderr,
-				    "traceroute6: port out of range.\n");
-				exit(1);
-			}
-			port = lport & 0xffff;
+			ep = NULL;
+			l = strtol(optarg, &ep, 10);
+			if (errno || !*optarg || *ep || l <= 0 || l >= 65536)
+				errx(1, "port must be >0, <65536.");
+			port = (u_int16_t)l;
 			break;
 		case 'q':
 			errno = 0;
