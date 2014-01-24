@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.53 2014/01/24 15:12:29 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.54 2014/01/24 15:14:31 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -318,7 +318,7 @@ struct cmsghdr *cmsg;
 char *source = 0;
 char *hostname;
 
-u_long nprobes = 3;
+int nprobes = 3;
 u_int8_t max_hops = IPV6_DEFHLIM;
 u_int8_t first_hop = 1;
 u_int16_t srcport;
@@ -337,10 +337,10 @@ main(int argc, char *argv[])
 {
 	int mib[4] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_DEFHLIM };
 	char hbuf[NI_MAXHOST], src0[NI_MAXHOST], *ep;
-	int ch, i, on = 1, seq, rcvcmsglen, error, minlen;
+	int ch, i, on = 1, seq, probe, rcvcmsglen, error, minlen;
 	struct addrinfo hints, *res;
 	static u_char *rcvcmsgbuf;
-	u_long probe, lport;
+	u_long lport;
 	struct hostent *hp;
 	size_t size;
 	u_int8_t hops;
@@ -459,19 +459,12 @@ main(int argc, char *argv[])
 			port = lport & 0xffff;
 			break;
 		case 'q':
-			ep = NULL;
 			errno = 0;
-			nprobes = strtoul(optarg, &ep, 0);
-			if (errno || !*optarg || *ep) {
-				fprintf(stderr,
-				    "traceroute6: invalid nprobes.\n");
-				exit(1);
-			}
-			if (nprobes < 1) {
-				fprintf(stderr,
-				    "traceroute6: nprobes must be >0.\n");
-				exit(1);
-			}
+			ep = NULL;
+			l = strtol(optarg, &ep, 10);
+			if (errno || !*optarg || *ep || l < 1 || l > INT_MAX)
+				errx(1, "nprobes must be >0.");
+			nprobes = (int)l;
 			break;
 		case 'r':
 			options |= SO_DONTROUTE;
