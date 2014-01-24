@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.98 2014/01/23 23:47:37 chris Exp $ */
+/*	$OpenBSD: arc.c,v 1.99 2014/01/24 02:47:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -2920,7 +2920,7 @@ arc_alloc_ccbs(struct arc_softc *sc)
 				ARC_RA_POST_QUEUE_ADDR_SHIFT;
 		arc_put_ccb(sc, ccb);
 	}
-	sc->sc_ccb_phys_hi = ARC_DMA_DVA(sc->sc_requests) >> 32;
+	sc->sc_ccb_phys_hi = (u_int64_t)ARC_DMA_DVA(sc->sc_requests) >> 32;
 	if(sc->sc_adp_type == ARC_HBA_TYPE_D) {
 		sc->postQ_buffer = ARC_DMA_DVA(sc->sc_requests) +
 		    (ARCMSR_MAX_CCB_COUNT * len);
