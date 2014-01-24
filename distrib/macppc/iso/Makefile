@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2014/01/12 21:58:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 2014/01/24 00:34:22 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -25,13 +25,13 @@ ${CDROM}: ${BASE} ${XBASE}
 
 	cp -p ${BASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+	cp -p ${RELDIR}/.i-SHA256 ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/SHA256
+	cp -p ${RELDIR}/.i-SHA256.sig ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/SHA256.sig
 
 	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/stand/tbxidata/bsd.tbxi \
 	    ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${RELDIR}/ofwboot ${.OBJDIR}/cd-dir/
 
-	cat ${RELDIR}/SHA256 ${RELXDIR}/SHA256 > \
-		${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/SHA256
 
 	mkhybrid -v -v -r -part -hfs \
 	    -hfs-bless ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE} \
@@ -44,11 +44,6 @@ ${CDROM}: ${BASE} ${XBASE}
 
 install:
 	cp ${CDROM} ${RELDIR}/
-	# update the SHA256 file
-	grep -v ${CDROM} ${RELDIR}/SHA256 > ${RELDIR}/SHA256.new
-	sum -a sha256 ${CDROM} >> ${RELDIR}/SHA256.new
-	sort ${RELDIR}/SHA256.new > ${RELDIR}/SHA256
-	rm ${RELDIR}/SHA256.new
 
 clean cleandir:
 	/bin/rm -f ${CDROM}

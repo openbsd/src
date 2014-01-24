@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2014/01/12 21:58:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.11 2014/01/24 00:34:22 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -41,10 +41,12 @@ ${CDROM}: ${BASE} ${XBASE} ${BOOT} ${BOOTXX}
 	cp ${BOOT} ${MOUNT_POINT}/
 	cp ${RELDIR}/bsd.rd ${MOUNT_POINT}/bsd
 	mkdir -p ${MOUNT_POINT}/${OSREV}/${MACHINE}
+
 	cp -p ${BASE} ${MOUNT_POINT}/${OSREV}/${MACHINE}
 	cp -p ${XBASE} ${MOUNT_POINT}/${OSREV}/${MACHINE}
-	cat ${RELDIR}/SHA256 ${RELXDIR}/SHA256 > \
-		${MOUNT_POINT}/${OSREV}/${MACHINE}/SHA256
+	cp -p ${RELDIR}/.i-SHA256 ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/SHA256
+	cp -p ${RELDIR}/.i-SHA256.sig ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/SHA256.sig
+
 	disklabel -B -b ${BOOTXX} ${VND}
 	@echo ""
 	@df -i ${MOUNT_POINT}
@@ -55,11 +57,6 @@ ${CDROM}: ${BASE} ${XBASE} ${BOOT} ${BOOTXX}
 
 install:
 	cp ${CDROM} ${RELDIR}/
-	# update the SHA256 file
-	grep -v ${CDROM} ${RELDIR}/SHA256 > ${RELDIR}/SHA256.new
-	sum -a sha256 ${CDROM} >> ${RELDIR}/SHA256.new
-	sort ${RELDIR}/SHA256.new > ${RELDIR}/SHA256
-	rm ${RELDIR}/SHA256.new
 
 clean cleandir:
 	/bin/rm -f ${CDROM} ${.OBJDIR}/image.*
