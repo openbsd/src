@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.22 2014/01/23 11:18:34 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.23 2014/01/24 01:07:00 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -1154,8 +1154,8 @@ static void assert_fdi_tx(struct drm_i915_private *dev_priv,
 	enum transcoder cpu_transcoder = intel_pipe_to_cpu_transcoder(dev_priv,
 								      pipe);
 
-	if (IS_HASWELL(dev)) {
-		/* On Haswell, DDI is used instead of FDI_TX_CTL */
+	if (HAS_DDI(dev)) {
+		/* DDI does not have a specific FDI_TX register */
 		reg = TRANS_DDI_FUNC_CTL(cpu_transcoder);
 		val = I915_READ(reg);
 		cur_state = !!(val & TRANS_DDI_FUNC_ENABLE);
@@ -1200,7 +1200,7 @@ static void assert_fdi_tx_pll_enabled(struct drm_i915_private *dev_priv,
 		return;
 
 	/* On Haswell, DDI ports are responsible for the FDI PLL setup */
-	if (IS_HASWELL(dev))
+	if (HAS_DDI(dev))
 		return;
 
 	reg = FDI_TX_CTL(pipe);
