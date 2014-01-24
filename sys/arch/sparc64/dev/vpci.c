@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.12 2012/10/29 23:25:48 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.13 2014/01/24 05:42:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -509,6 +509,9 @@ vpci_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	    NULL, NULL, what);
 	if (ih == NULL)
 		return (NULL);
+
+	if (flags & BUS_INTR_ESTABLISH_MPSAFE)
+		ih->ih_mpsafe = 1;
 
 	if (ihandle & PCI_INTR_MSI) {
 		pci_chipset_tag_t pc = pbm->vp_pc;
