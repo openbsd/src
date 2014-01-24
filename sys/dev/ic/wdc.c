@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.122 2014/01/22 06:05:21 dlg Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.123 2014/01/24 06:21:59 dlg Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1937,9 +1937,21 @@ wdc_scrub_xfer(struct wdc_xfer *xfer)
 }
 
 void
-wdc_xfer_put(void *null, void *xfer)
+wdc_xfer_put(void *null, void *xxfer)
 {
-	pool_put(&wdc_xfer_pool, xfer);
+	struct wdc_xfer *xfer = xxfer;
+	int put = 0;
+	int s;
+
+	s = splbio();
+	if (ISSET(xfer->c_flags, C_SCSIXFER))
+		CLR(xfer->c_flags, C_SCSIXFER);
+	else
+		put = 1;
+	splx(s);
+
+	if (put)
+		pool_put(&wdc_xfer_pool, xfer);
 }
 
 struct wdc_xfer *
@@ -1952,6 +1964,7 @@ wdc_get_xfer(int flags)
 void
 wdc_free_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
 {
+	int put = 0;
 	int s;
 
 	if (xfer->c_flags & C_PRIVATEXFER) {
@@ -1963,9 +1976,10 @@ wdc_free_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
 	s = splbio();
 	chp->ch_flags &= ~WDCF_ACTIVE;
 	TAILQ_REMOVE(&chp->ch_queue->sc_xfer, xfer, c_xferchain);
+	put = !ISSET(xfer->c_flags, C_SCSIXFER);
 	splx(s);
 
-	if (!ISSET(xfer->c_flags, C_SCSIXFER))
+	if (put)
 		scsi_io_put(&wdc_xfer_iopool, xfer);
 }
 
