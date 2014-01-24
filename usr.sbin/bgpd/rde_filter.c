@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.70 2013/10/19 15:04:25 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.71 2014/01/24 06:07:13 phessler Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -331,8 +331,9 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 		/* test prefixlen stuff too */
 		switch (f->match.prefix.op) {
 		case OP_NONE: /* perfect match */
-		case OP_EQ:
 			return (plen == f->match.prefix.len);
+		case OP_EQ:
+			return (plen == f->match.prefix.len_min);
 		case OP_NE:
 			return (plen != f->match.prefix.len_min);
 		case OP_RANGE:
