@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.31 2014/01/20 21:27:39 schwarze Exp $
+.\"	$OpenBSD: cksum.1,v 1.32 2014/01/24 23:18:34 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)cksum.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: January 20 2014 $
+.Dd $Mdocdate: January 24 2014 $
 .Dt CKSUM 1
 .Os
 .Sh NAME
@@ -224,7 +224,7 @@ Partial blocks are rounded up.
 .Pp
 The default CRC used is based on the polynomial used for CRC error checking
 in the networking standard
-.St -iso8802-3 .
+ISO/IEC 8802-3:1996.
 The CRC checksum encoding is defined by the generating polynomial:
 .Bd -unfilled -offset indent
 G(x) = x^32 + x^26 + x^23 + x^22 + x^16 + x^12 +
