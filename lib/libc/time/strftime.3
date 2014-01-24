@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3    5.12 (Berkeley) 6/29/91
-.\"	$OpenBSD: strftime.3,v 1.31 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: strftime.3,v 1.32 2014/01/24 09:39:59 schwarze Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: January 24 2014 $
 .Dt STRFTIME 3
 .Os
 .Sh NAME
@@ -211,11 +211,14 @@ The
 .Fn strftime
 function
 conforms to
-.St -ansiC .
+.St -isoC-99 ,
+except that the
+.Ql E
+and
+.Ql O
+conversion modifiers are ignored by this implementation.
 .Pp
 The
-.Ql \&%G ,
-.Ql \&%g ,
 .Ql \&%k ,
 .Ql \&%l ,
 .Ql \&%s ,
@@ -238,6 +241,22 @@ year even if it contains days from the new year.
 A week starts with Monday (day 1) and ends with Sunday (day 7).
 For example, the first week of the year 1997 lasts from
 1996-12-30 to 1997-01-05.
+.Sh HISTORY
+A predecessor to
+.Fn strftime ,
+.Fn ptime ,
+first appeared in
+.At v1 .
+The
+.Fn strftime
+function has been available since
+.Bx 4.3 Reno .
+.Sh AUTHORS
+Keith Bostic implemented the
+.Bx
+version of
+.Fn strftime
+in 1989.
 .Sh BUGS
 There is no conversion specification for the phase of the moon.
 .Pp
