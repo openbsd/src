@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.732 2014/01/23 22:17:57 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.733 2014/01/24 01:12:10 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1209,20 +1209,15 @@ install_files() {
 	_unver=$_get_sets
 
 	# Try to prefetch and control checksum files
-	if df | grep -q ' /mnt/home$' && isin SHA256.sig $_files ||
-		( [[ $_src == file://* ]] && isin SHA256 $_files ) &&
+	if df | grep -q ' /mnt/home$' && isin SHA256.sig $_files &&
 		_tmpsrc=$(tmpdir /mnt/home/sets); then
 
 		# Fetch signed checksum file and check signature
 		_cfile=$_tmpsrc/SHA256
-		if isin SHA256.sig $_files; then
-			[[ $_src == file://* ]] && _t=Verifying || _t='Get/Verify'
-			ftp -D $_t -Vmo "$_cfile.sig" "$_src/SHA256.sig" &&
-			signify -Vep /etc/signify/${VERSION}base.pub \
-				-x "$_cfile.sig" -m "$_cfile"
-		else
-			ftp -D Fetching -Vmo "$_cfile" "$_src/SHA256"
-		fi &&
+		[[ $_src == file://* ]] && _t=Verifying || _t='Get/Verify'
+		ftp -D $_t -Vmo "$_cfile.sig" "$_src/SHA256.sig" &&
+		signify -Vep /etc/signify/${VERSION}base.pub \
+			-x "$_cfile.sig" -m "$_cfile" &&
 		for _f in $_get_sets; do
 			rm -f $_tmpsrc/h
 			if [[ $_src == file://* ]]; then
