@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.39 2014/01/21 21:27:14 benno Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.40 2014/01/24 09:48:37 henning Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -1544,10 +1544,8 @@ pflow_sendout_mbuf(struct pflow_softc *sc, struct mbuf *m)
 	ip->ip_len = htons(sizeof(struct udpiphdr) + len);
 
 #if NBPFILTER > 0
-	if (ifp->if_bpf) {
-		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
-	}
 #endif
 
 	sc->sc_if.if_opackets++;
