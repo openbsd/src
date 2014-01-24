@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.64 2014/01/24 05:58:52 mikeb Exp $	*/
+/*	$OpenBSD: iked.h,v 1.65 2014/01/24 07:31:25 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -875,12 +875,12 @@ void	 ibuf_zero(struct ibuf *);
 /* log.c */
 void	 log_init(int);
 void	 log_verbose(int);
-void	 log_warn(const char *, ...);
-void	 log_warnx(const char *, ...);
-void	 log_info(const char *, ...);
-void	 log_debug(const char *, ...);
-void	 print_debug(const char *, ...);
-void	 print_verbose(const char *, ...);
+void	 log_warn(const char *, ...) __attribute__((format(printf, 1, 2)));
+void	 log_warnx(const char *, ...) __attribute__((format(printf, 1, 2)));
+void	 log_info(const char *, ...) __attribute__((format(printf, 1, 2)));
+void	 log_debug(const char *, ...) __attribute__((format(printf, 1, 2)));
+void	 print_debug(const char *, ...) __attribute__((format(printf, 1, 2)));
+void	 print_verbose(const char *, ...) __attribute__((format(printf, 1, 2)));
 __dead void fatal(const char *);
 __dead void fatalx(const char *);
 
