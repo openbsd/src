@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.866 2014/01/23 23:51:29 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.867 2014/01/24 12:07:50 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5875,6 +5875,13 @@ pf_check_proto_cksum(struct pf_pdesc *pd, int off, int len, u_int8_t p,
 		pd->csum_status = PF_CSUM_BAD;
 		return (1);
 	}
+
+	/* need to do it in software */
+	if (p == IPPROTO_TCP)
+		tcpstat.tcps_inswcsum++;
+	else if (p == IPPROTO_UDP)
+		udpstat.udps_inswcsum++;
+	
 	switch (af) {
 #ifdef INET
 	case AF_INET:
