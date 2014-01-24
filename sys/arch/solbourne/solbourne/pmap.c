@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.5 2011/05/30 22:25:22 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.6 2014/01/24 05:33:32 jsg Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *
@@ -752,7 +752,7 @@ pmap_collect(struct pmap *pmap)
 
 	s = splvm();
 
-	DPRINTF(PDB_COLLECT, ("pmap_collect(%p)\n"));
+	DPRINTF(PDB_COLLECT, ("pmap_collect(%p)\n", pmap));
 
 	/*
 	 * Free all empty page tables.
