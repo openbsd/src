@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.158 2014/01/11 11:51:01 espie Exp $
+# $OpenBSD: Update.pm,v 1.159 2014/01/24 11:41:23 espie Exp $
 #
 # Copyright (c) 2004-2014 Marc Espie <espie@openbsd.org>
 #
@@ -274,7 +274,13 @@ sub process_hint
 	if (@$l == 0) {
 		my $t = $hint_name;
 		$t =~ s/\-\d([^-]*)\-?/--/;
-		$l = $set->match_locations(OpenBSD::Search::Stem->new($t), $k);
+		my @search = (OpenBSD::Search::Stem->new($t));
+		$state->run_quirks(
+		    sub {
+			my $quirks = shift;
+			$quirks->tweak_search(\@search, $hint, $state);
+		    });
+		$l = $set->match_locations(@search, $k);
 	}
 	if (@$l > 1) {
 		my $r = find_nearest($hint_name, $l);
