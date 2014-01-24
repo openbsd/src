@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.39 2014/01/02 00:03:04 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.40 2014/01/24 04:52:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -147,11 +147,11 @@ loadrandom(char *name, char *buf, size_t buflen)
 		}
 	}
 
-	printf("loadrandom: %s\n", path);
-
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {
-		printf("cannot open %s\n", path);
+		if (errno == ENXIO || errno == ENOENT)
+			return -1;
+		printf("cannot open %s: %s\n", path, strerror(errno));
 		return -1;
 	}
 	if (fstat(fd, &sb) == -1 ||
