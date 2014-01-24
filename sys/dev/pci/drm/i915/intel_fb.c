@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_fb.c,v 1.8 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: intel_fb.c,v 1.9 2014/01/24 04:05:06 jsg Exp $	*/
 /*
  * Copyright © 2007 David Airlie
  *
@@ -256,7 +256,7 @@ int intel_fbdev_init(struct drm_device *dev)
 	ifbdev->helper.funcs = &intel_fb_helper_funcs;
 
 	ret = drm_fb_helper_init(dev, &ifbdev->helper,
-				 dev_priv->num_pipe,
+				 INTEL_INFO(dev)->num_pipes,
 				 INTELFB_CONN_LIMIT);
 	if (ret) {
 		kfree(ifbdev);

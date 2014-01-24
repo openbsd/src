@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.9 2013/10/30 02:11:32 dlg Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.10 2014/01/24 04:05:06 jsg Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -247,10 +247,9 @@ static int i915_get_vblank_timestamp(struct drm_device *dev, int pipe,
 			      struct timeval *vblank_time,
 			      unsigned flags)
 {
-	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc;
 
-	if (pipe < 0 || pipe >= dev_priv->num_pipe) {
+	if (pipe < 0 || pipe >= INTEL_INFO(dev)->num_pipes) {
 		DRM_ERROR("Invalid crtc %d\n", pipe);
 		return -EINVAL;
 	}

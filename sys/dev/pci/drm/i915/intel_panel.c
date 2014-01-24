@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_panel.c,v 1.5 2014/01/24 03:21:17 jsg Exp $	*/
+/*	$OpenBSD: intel_panel.c,v 1.6 2014/01/24 04:05:06 jsg Exp $	*/
 /*
  * Copyright © 2006-2010 Intel Corporation
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -341,7 +341,7 @@ void intel_panel_enable_backlight(struct drm_device *dev,
 		if (tmp & BLM_PWM_ENABLE)
 			goto set_level;
 
-		if (dev_priv->num_pipe == 3)
+		if (INTEL_INFO(dev)->num_pipes == 3)
 			tmp &= ~BLM_PIPE_SELECT_IVB;
 		else
 			tmp &= ~BLM_PIPE_SELECT;
