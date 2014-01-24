@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_irq.c,v 1.52 2013/10/29 06:30:57 jsg Exp $	*/
+/*	$OpenBSD: drm_irq.c,v 1.53 2014/01/24 04:43:56 jsg Exp $	*/
 /**
  * \file drm_irq.c
  * IRQ support
@@ -1075,7 +1075,7 @@ void drm_vblank_off(struct drm_device *dev, int crtc)
  */
 void drm_vblank_pre_modeset(struct drm_device *dev, int crtc)
 {
-	/* vblank is not initialized (IRQ not installed ?) */
+	/* vblank is not initialized (IRQ not installed ?), or has been freed */
 	if (!dev->num_crtcs)
 		return;
 	/*
@@ -1095,6 +1095,10 @@ EXPORT_SYMBOL(drm_vblank_pre_modeset);
 
 void drm_vblank_post_modeset(struct drm_device *dev, int crtc)
 {
+	/* vblank is not initialized (IRQ not installed ?), or has been freed */
+	if (!dev->num_crtcs)
+		return;
+
 	if (dev->vblank_inmodeset[crtc]) {
 		mtx_enter(&dev->vbl_lock);
 		dev->vblank_disable_allowed = 1;
