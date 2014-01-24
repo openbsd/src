@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.106 2014/01/20 00:51:07 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.107 2014/01/24 22:54:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 20 2014 $
+.Dd $Mdocdate: January 24 2014 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -2372,115 +2372,243 @@ and
 .Sx \&Sx .
 .Ss \&St
 Replace an abbreviation for a standard with the full form.
-The following standards are recognised:
+The following standards are recognised.
+Where multiple lines are given without a blank line in between,
+they all refer to the same standard, and using the first form
+is recommended.
+.Bl -tag -width 1n
+.It C language standards
 .Pp
-.Bl -tag -width "-p1003.1g-2000X" -compact
-.It \-p1003.1-88
-.St -p1003.1-88
-.It \-p1003.1-90
-.St -p1003.1-90
-.It \-p1003.1-96
-.St -p1003.1-96
-.It \-p1003.1-2001
-.St -p1003.1-2001
-.It \-p1003.1-2004
-.St -p1003.1-2004
-.It \-p1003.1-2008
-.St -p1003.1-2008
-.It \-p1003.1-2013
-.St -p1003.1-2013
-.It \-p1003.1
-.St -p1003.1
-.It \-p1003.1b
-.St -p1003.1b
-.It \-p1003.1b-93
-.St -p1003.1b-93
-.It \-p1003.1c-95
-.St -p1003.1c-95
-.It \-p1003.1d-99
-.St -p1003.1d-99
-.It \-p1003.1g-2000
-.St -p1003.1g-2000
-.It \-p1003.1i-95
-.St -p1003.1i-95
-.It \-p1003.1j-2000
-.St -p1003.1j-2000
-.It \-p1003.1q-2000
-.St -p1003.1q-2000
-.It \-p1003.2
-.St -p1003.2
-.It \-p1003.2-92
-.St -p1003.2-92
-.It \-p1003.2a-92
-.St -p1003.2a-92
-.It \-p1387.2
-.St -p1387.2
-.It \-p1387.2-95
-.St -p1387.2-95
-.It \-isoC
-.St -isoC
-.It \-isoC-90
-.St -isoC-90
-.It \-isoC-amd1
-.St -isoC-amd1
-.It \-isoC-tcor1
-.St -isoC-tcor1
-.It \-isoC-tcor2
-.St -isoC-tcor2
-.It \-isoC-99
-.St -isoC-99
-.It \-isoC-2011
-.St -isoC-2011
-.It \-iso9945-1-90
-.St -iso9945-1-90
-.It \-iso9945-1-96
-.St -iso9945-1-96
-.It \-iso9945-2-93
-.St -iso9945-2-93
+.Bl -tag -width "-p1003.1g-2000" -compact
 .It \-ansiC
 .St -ansiC
 .It \-ansiC-89
 .St -ansiC-89
+.It \-isoC
+.St -isoC
+.It \-isoC-90
+.St -isoC-90
+.br
+The original C standard.
+.Pp
+.It \-isoC-amd1
+.St -isoC-amd1
+.Pp
+.It \-isoC-tcor1
+.St -isoC-tcor1
+.Pp
+.It \-isoC-tcor2
+.St -isoC-tcor2
+.Pp
+.It \-isoC-99
+.St -isoC-99
 .It \-ansiC-99
 .St -ansiC-99
-.It \-ieee754
-.St -ieee754
-.It \-iso8802-3
-.St -iso8802-3
-.It \-iso8601
-.St -iso8601
-.It \-ieee1275-94
-.St -ieee1275-94
+.br
+The second major version of the C language standard.
+.Pp
+.It \-isoC-2011
+.St -isoC-2011
+.br
+The third major version of the C language standard.
+.El
+.It POSIX.1 before the Single UNIX Specification
+.Pp
+.Bl -tag -width "-p1003.1g-2000" -compact
+.It \-p1003.1-88
+.St -p1003.1-88
+.It \-p1003.1
+.St -p1003.1
+.br
+The original POSIX standard, based on ANSI C.
+.Pp
+.It \-p1003.1-90
+.St -p1003.1-90
+.It \-iso9945-1-90
+.St -iso9945-1-90
+.br
+The first update of POSIX.1.
+.Pp
+.It \-p1003.1b-93
+.St -p1003.1b-93
+.It \-p1003.1b
+.St -p1003.1b
+.br
+Real-time extensions.
+.Pp
+.It \-p1003.1c-95
+.St -p1003.1c-95
+.br
+POSIX thread interfaces.
+.Pp
+.It \-p1003.1i-95
+.St -p1003.1i-95
+.br
+Technical Corrigendum.
+.Pp
+.It \-p1003.1-96
+.St -p1003.1-96
+.It \-iso9945-1-96
+.St -iso9945-1-96
+.br
+Includes POSIX.1-1990, 1b, 1c, and 1i.
+.El
+.It X/Open Portability Guide version 4 and related standards
+.Pp
+.Bl -tag -width "-p1003.1g-2000" -compact
 .It \-xpg3
 .St -xpg3
+.br
+An XPG4 precursor, published in 1989.
+.Pp
+.It \-p1003.2
+.St -p1003.2
+.It \-p1003.2-92
+.St -p1003.2-92
+.It \-iso9945-2-93
+.St -iso9945-2-93
+.br
+An XCU4 precursor.
+.Pp
+.It \-p1003.2a-92
+.St -p1003.2a-92
+.br
+Updates to POSIX.2.
+.Pp
 .It \-xpg4
 .St -xpg4
+.br
+Based on POSIX.1 and POSIX.2, published in 1992.
+.El
+.It Single UNIX Specification version 1 and related standards
+.Pp
+.Bl -tag -width "-p1003.1g-2000" -compact
 .It \-xpg4.2
 .St -xpg4.2
-.It \-xpg4.3
-.St -xpg4.3
-.It \-xbd5
-.St -xbd5
-.It \-xcu5
-.St -xcu5
+.br
+This standard was published in 1994 and is also called SUSv1.
+It was used as the basis for UNIX 95 certification.
+The following three refer to parts of it.
+.Pp
 .It \-xsh4.2
 .St -xsh4.2
-.It \-xsh5
-.St -xsh5
-.It \-xns5
-.St -xns5
-.It \-xns5.2
-.St -xns5.2
-.It \-xns5.2d2.0
-.St -xns5.2d2.0
+.Pp
 .It \-xcurses4.2
 .St -xcurses4.2
+.Pp
+.It \-p1003.1g-2000
+.St -p1003.1g-2000
+.br
+Networking APIs, including sockets.
+.Pp
+.It \-xpg4.3
+.St -xpg4.3
+.Pp
+.It \-svid4
+.St -svid4 ,
+.br
+Published in 1995.
+.El
+.It Single UNIX Specification version 2 and related standards
+.Pp
+.Bl -tag -width "-p1003.1g-2000" -compact
 .It \-susv2
 .St -susv2
+This Standard was published in 1997
+and is also called X/Open Portability Guide version 5.
+It was used as the basis for UNIX 98 certification.
+The following refer to parts of it.
+.Pp
+.It \-xbd5
+.St -xbd5
+.Pp
+.It \-xsh5
+.St -xsh5
+.Pp
+.It \-xcu5
+.St -xcu5
+.Pp
+.It \-xns5
+.St -xns5
+.It \-xns5.2d2.0
+.St -xns5.2d2.0
+.It \-xns5.2
+.St -xns5.2
+.Pp
+.It \-p1387.2
+.St -p1387.2
+.It \-p1387.2-95
+.St -p1387.2-95
+.br
+POSIX software administration.
+.El
+.It Single UNIX Specification version 3 and related standards
+.Pp
+.Bl -tag -width "-p1003.1g-2000X" -compact
+.It \-p1003.1d-99
+.St -p1003.1d-99
+.br
+Additional real-time extensions.
+.Pp
+.It \-p1003.1j-2000
+.St -p1003.1j-2000
+.br
+Advanced real-time extensions.
+.Pp
+.It \-p1003.1q-2000
+.St -p1003.1q-2000
+.br
+Amendment 7: Tracing [C Language].
+.Pp
+.It \-p1003.1-2001
+.St -p1003.1-2001
 .It \-susv3
 .St -susv3
-.It \-svid4
-.St -svid4
+.br
+This standard is based on C99, SUSv2, POSIX.1-1996, 1d, and 1j.
+It is also called X/Open Portability Guide version 6.
+It is used as the basis for UNIX 03 certification.
+.Pp
+.It \-p1003.1-2004
+.St -p1003.1-2004
+.br
+The second and last Technical Corrigendum.
+.El
+.It Single UNIX Specification version 4
+.Pp
+.Bl -tag -width "-p1003.1g-2000" -compact
+.It \-p1003.1-2008
+.St -p1003.1-2008
+.br
+This standard is also called SUSv4 and
+X/Open Portability Guide version 7.
+.Pp
+.It \-p1003.1-2013
+.St -p1003.1-2013
+.br
+This is the first Technical Corrigendum.
+.El
+.It Other standards
+.Pp
+.Bl -tag -width "-p1003.1g-2000" -compact
+.It \-ieee754
+.St -ieee754
+.br
+Floating-point arithmetic.
+.Pp
+.It \-iso8601
+.St -iso8601
+.br
+Representation of dates and times, published in 1988.
+.Pp
+.It \-iso8802-3
+.St -iso8802-3
+.br
+Ethernet local area networks.
+.Pp
+.It \-ieee1275-94
+.St -ieee1275-94
+.El
 .El
 .Ss \&Sx
 Reference a section or subsection in the same manual page.
