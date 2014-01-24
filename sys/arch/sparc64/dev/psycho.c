@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.69 2011/07/06 23:43:14 kettenis Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.70 2014/01/24 09:36:23 kettenis Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -1279,6 +1279,9 @@ found:
 	DPRINTF(PDB_INTR, (
 	    "\ninstalling handler %p arg %p with number %x pil %u",
 	    ih->ih_fun, ih->ih_arg, ih->ih_number, ih->ih_pil));
+
+	if (flags & BUS_INTR_ESTABLISH_MPSAFE)
+		ih->ih_mpsafe = 1;
 
 	intr_establish(ih->ih_pil, ih);
 
