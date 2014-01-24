@@ -1,4 +1,4 @@
-/*	$OpenBSD: sid.h,v 1.2 2013/09/01 10:39:39 jsg Exp $	*/
+/*	$OpenBSD: sid.h,v 1.3 2014/01/24 04:57:35 jsg Exp $	*/
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -201,7 +201,7 @@
 #define		NOOFGROUPS_SHIFT				12
 #define		NOOFGROUPS_MASK					0x00001000
 
-#define	MC_SEQ_TRAIN_WAKEUP_CNTL			0x2808
+#define	MC_SEQ_TRAIN_WAKEUP_CNTL			0x28e8
 #define		TRAIN_DONE_D0      			(1 << 30)
 #define		TRAIN_DONE_D1      			(1 << 31)
 
