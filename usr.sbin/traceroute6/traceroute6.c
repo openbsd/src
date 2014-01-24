@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.52 2013/11/12 19:36:30 deraadt Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.53 2014/01/24 15:12:29 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -288,7 +288,7 @@ struct opacket	*outpacket;	/* last output (udp) packet */
 
 int	main(int, char *[]);
 int	wait_for_reply(int, struct msghdr *);
-void	send_probe(int, u_long);
+void	send_probe(int, u_int8_t);
 struct udphdr *get_udphdr(struct ip6_hdr *, u_char *);
 int	get_hoplim(struct msghdr *);
 double	deltaT(struct timeval *, struct timeval *);
@@ -319,8 +319,8 @@ char *source = 0;
 char *hostname;
 
 u_long nprobes = 3;
-u_long first_hop = 1;
-u_long max_hops = 30;
+u_int8_t max_hops = IPV6_DEFHLIM;
+u_int8_t first_hop = 1;
 u_int16_t srcport;
 u_int16_t port = 32768+666;	/* start udp dest port # for probe packets */
 u_int16_t ident;
@@ -340,9 +340,11 @@ main(int argc, char *argv[])
 	int ch, i, on = 1, seq, rcvcmsglen, error, minlen;
 	struct addrinfo hints, *res;
 	static u_char *rcvcmsgbuf;
-	u_long probe, hops, lport;
+	u_long probe, lport;
 	struct hostent *hp;
 	size_t size;
+	u_int8_t hops;
+	long l;
 	uid_t uid;
 	int rtableid = -1;
 	const char *errstr;
@@ -385,14 +387,12 @@ main(int argc, char *argv[])
 			options |= SO_DEBUG;
 			break;
 		case 'f':
-			ep = NULL;
 			errno = 0;
-			first_hop = strtoul(optarg, &ep, 0);
-			if (errno || !*optarg || *ep|| first_hop > 255) {
-				fprintf(stderr,
-				    "traceroute6: invalid min hoplimit.\n");
-				exit(1);
-			}
+			ep = NULL;
+			l = strtol(optarg, &ep, 10);
+			if (errno || !*optarg || *ep || l < 1 || l > max_hops)
+				errx(1, "firsthop must be 1 to %u.", max_hops);
+			first_hop = (u_int8_t)l;
 			break;
 		case 'g':
 			hp = getipnodebyname(optarg, AF_INET6, 0, &h_errno);
@@ -431,14 +431,14 @@ main(int argc, char *argv[])
 			lflag++;
 			break;
 		case 'm':
-			ep = NULL;
 			errno = 0;
-			max_hops = strtoul(optarg, &ep, 0);
-			if (errno || !*optarg || *ep || max_hops > 255) {
-				fprintf(stderr,
-				    "traceroute6: invalid max hoplimit.\n");
-				exit(1);
-			}
+			ep = NULL;
+			l = strtol(optarg, &ep, 10);
+			if (errno || !*optarg || *ep || l < first_hop ||
+			    l > IPV6_MAXHLIM)
+				errx(1, "hoplimit must be %u to %u.", first_hop,
+				    IPV6_MAXHLIM);
+			max_hops = (u_int8_t)l;
 			break;
 		case 'n':
 			nflag++;
@@ -516,12 +516,6 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
-
-	if (max_hops < first_hop) {
-		fprintf(stderr,
-		    "traceroute6: max hoplimit must be larger than first hoplimit.\n");
-		exit(1);
-	}
 
 	if (argc < 1 || argc > 2)
 		usage();
@@ -737,12 +731,12 @@ main(int argc, char *argv[])
 	fprintf(stderr, " to %s (%s)", hostname, hbuf);
 	if (source)
 		fprintf(stderr, " from %s", source);
-	fprintf(stderr, ", %lu hops max, %lu byte packets\n",
+	fprintf(stderr, ", %u hops max, %lu byte packets\n",
 	    max_hops, datalen);
 	(void) fflush(stderr);
 
 	if (first_hop > 1)
-		printf("Skipping %lu intermediate hops\n", first_hop - 1);
+		printf("Skipping %u intermediate hops\n", first_hop - 1);
 
 	/*
 	 * Main loop
@@ -752,7 +746,7 @@ main(int argc, char *argv[])
 		int got_there = 0;
 		int unreachable = 0;
 
-		printf("%2lu ", hops);
+		printf("%2u ", hops);
 		bzero(&lastaddr, sizeof(lastaddr));
 		for (probe = 0; probe < nprobes; ++probe) {
 			int cc;
@@ -828,7 +822,7 @@ wait_for_reply(int sock, struct msghdr *mhdr)
 
 
 void
-send_probe(int seq, u_long hops)
+send_probe(int seq, u_int8_t hops)
 {
 	struct timeval tv;
 	struct tv32 tv32;
