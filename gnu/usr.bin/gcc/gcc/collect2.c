@@ -964,6 +964,10 @@ main (argc, argv)
   if (signal (SIGBUS, SIG_IGN) != SIG_IGN)
     signal (SIGBUS, handler);
 #endif
+#ifdef SIGPIPE
+  if (signal (SIGPIPE, SIG_IGN) != SIG_IGN)
+    signal (SIGPIPE, handler);
+#endif
 
   /* Extract COMPILER_PATH and PATH into our prefix list.  */
   prefix_from_env ("COMPILER_PATH", &cpath);
