@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.9 2014/01/23 22:06:29 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.10 2014/01/24 05:21:19 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2003/05/21 18:04:44 thorpej Exp $	*/
 
 /*
@@ -101,8 +101,6 @@
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) ARM_KERNEL_BASE)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
 
-#ifdef _KERNEL
-
 /*
  * pmap-specific data store in the vm_page structure.
  */
@@ -130,7 +128,5 @@ do {									\
 	(pg)->mdpage.urw_mappings = 0;					\
 	(pg)->mdpage.k_mappings = 0;					\
 } while (/*CONSTCOND*/0)
-
-#endif /* _KERNEL */
 
 #endif /* _ARM_VMPARAM_H_ */

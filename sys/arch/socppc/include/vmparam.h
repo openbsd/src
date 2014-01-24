@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.6 2014/01/23 22:06:29 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.7 2014/01/24 05:21:19 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 1996/09/30 16:34:38 ws Exp $	*/
 
 /*-
@@ -97,8 +97,6 @@ extern vaddr_t ppc_kvm_stolen;
 #define	VM_PHYSSEG_NOADD
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
 
-#ifdef _KERNEL
-
 struct pv_entry;
 struct vm_page_md {
 	LIST_HEAD(,pte_desc) pv_list;
@@ -107,8 +105,5 @@ struct vm_page_md {
 #define VM_MDPAGE_INIT(pg) do {                 \
 	LIST_INIT(&((pg)->mdpage.pv_list)); 	\
 } while (0)
-
-#endif
-
 
 #endif
