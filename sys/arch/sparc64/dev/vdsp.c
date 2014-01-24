@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.23 2014/01/23 23:53:33 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.24 2014/01/24 09:58:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
@@ -1131,8 +1131,8 @@ vdsp_read_desc(struct vdsp_softc *sc, struct vdsk_desc_msg *dm)
 			    dm->cookie[i].addr + off, pa, nbytes, &nbytes);
 			if (err != H_EOK) {
 				printf("%s: hv_ldc_copy: %d\n", __func__, err);
-				free(buf, M_DEVBUF);
-				return;
+				dm->status = EIO;
+				goto fail;
 			}
 			va += nbytes;
 			size -= nbytes;
@@ -1144,6 +1144,7 @@ vdsp_read_desc(struct vdsp_softc *sc, struct vdsk_desc_msg *dm)
 		}
 	}
 
+fail:
 	free(buf, M_DEVBUF);
 
 	/* ACK the descriptor. */
@@ -1201,8 +1202,8 @@ vdsp_read_dring(void *arg1, void *arg2)
 			    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
 			if (err != H_EOK) {
 				printf("%s: hv_ldc_copy: %d\n", __func__, err);
-				free(buf, M_DEVBUF);
-				return;
+				vd->status = EIO;
+				goto fail;
 			}
 			va += nbytes;
 			size -= nbytes;
@@ -1214,6 +1215,7 @@ vdsp_read_dring(void *arg1, void *arg2)
 		}
 	}
 
+fail:
 	free(buf, M_DEVBUF);
 
 	/* ACK the descriptor. */
@@ -1254,8 +1256,8 @@ vdsp_write_dring(void *arg1, void *arg2)
 		    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
 		if (err != H_EOK) {
 			printf("%s: hv_ldc_copy: %d\n", __func__, err);
-			free(buf, M_DEVBUF);
-			return;
+			vd->status = EIO;
+			goto fail;
 		}
 		va += nbytes;
 		size -= nbytes;
@@ -1280,6 +1282,7 @@ vdsp_write_dring(void *arg1, void *arg2)
 	vd->status = VOP_WRITE(sc->sc_vp, &uio, 0, p->p_ucred);
 	VOP_UNLOCK(sc->sc_vp, 0, p);
 
+fail:
 	free(buf, M_DEVBUF);
 
 	/* ACK the descriptor. */
@@ -1378,8 +1381,8 @@ vdsp_get_vtoc(void *arg1, void *arg2)
 		    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
 		if (err != H_EOK) {
 			printf("%s: hv_ldc_copy: %d\n", __func__, err);
-			free(vt, M_DEVBUF);
-			return;
+			vd->status = EIO;
+			goto fail;
 		}
 		va += nbytes;
 		size -= nbytes;
@@ -1390,10 +1393,12 @@ vdsp_get_vtoc(void *arg1, void *arg2)
 		}
 	}
 
+	vd->status = 0;
+
+fail:
 	free(vt, M_DEVBUF);
 
 	/* ACK the descriptor. */
-	vd->status = 0;
 	vd->hdr.dstate = VIO_DESC_DONE;
 	vdsp_ack_desc(sc, vd);
 }
@@ -1427,8 +1432,8 @@ vdsp_set_vtoc(void *arg1, void *arg2)
 		    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
 		if (err != H_EOK) {
 			printf("%s: hv_ldc_copy: %d\n", __func__, err);
-			free(vt, M_DEVBUF);
-			return;
+			vd->status = EIO;
+			goto fail;
 		}
 		va += nbytes;
 		size -= nbytes;
@@ -1561,8 +1566,8 @@ vdsp_get_diskgeom(void *arg1, void *arg2)
 		    vd->cookie[i].addr + off, pa, nbytes, &nbytes);
 		if (err != H_EOK) {
 			printf("%s: hv_ldc_copy: %d\n", __func__, err);
-			free(vg, M_DEVBUF);
-			return;
+			vd->status = EIO;
+			goto fail;
 		}
 		va += nbytes;
 		size -= nbytes;
@@ -1573,10 +1578,12 @@ vdsp_get_diskgeom(void *arg1, void *arg2)
 		}
 	}
 
+	vd->status = 0;
+
+fail:
 	free(vg, M_DEVBUF);
 
 	/* ACK the descriptor. */
-	vd->status = 0;
 	vd->hdr.dstate = VIO_DESC_DONE;
 	vdsp_ack_desc(sc, vd);
 }
