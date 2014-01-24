@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.33 2013/10/26 16:55:12 kettenis Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.34 2014/01/24 21:20:23 kettenis Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -105,6 +105,12 @@ void
 lapic_enable(void)
 {
 	i82489_writereg(LAPIC_SVR, LAPIC_SVR_ENABLE | LAPIC_SPURIOUS_VECTOR);
+}
+
+void
+lapic_disable(void)
+{
+	i82489_writereg(LAPIC_SVR, 0);
 }
 
 void

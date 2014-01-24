@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489var.h,v 1.13 2011/06/25 19:20:41 jsg Exp $	*/
+/*	$OpenBSD: i82489var.h,v 1.14 2014/01/24 21:20:23 kettenis Exp $	*/
 /*	$NetBSD: i82489var.h,v 1.1.2.2 2000/02/21 18:46:14 sommerfeld Exp $	*/
 
 /*-
@@ -121,6 +121,7 @@ extern void lapic_initclocks(void);
 extern void lapic_set_lvt(void);
 extern void lapic_set_softvectors(void);
 extern void lapic_enable(void);
+extern void lapic_disable(void);
 extern void lapic_calibrate_timer(struct cpu_info *);
 
 #define lapic_cpu_number() 	(i82489_readreg(LAPIC_ID)>>LAPIC_ID_SHIFT)

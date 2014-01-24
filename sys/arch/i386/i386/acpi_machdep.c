@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.50 2013/12/19 21:30:02 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.51 2014/01/24 21:20:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -254,8 +254,10 @@ void
 acpi_sleep_clocks(struct acpi_softc *sc, int state)
 {
 	rtcstop();
+
 #if NLAPIC > 0
 	save_lapic_tpr = lapic_tpr;
+	lapic_disable();
 #endif
 }
 
