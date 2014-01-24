@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.132 2014/01/21 06:22:37 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.133 2014/01/24 04:26:51 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -318,6 +318,7 @@ exit1(struct proc *p, int rv, int flags)
 
 	/* add thread's accumulated rusage into the process's total */
 	ruadd(rup, &p->p_ru);
+	tuagg(pr, p);
 
 	/*
 	 * clear %cpu usage during swap
@@ -493,6 +494,10 @@ sys_wait4(struct proc *q, void *v, register_t *retval)
 	}
 	if (error == 0 && SCARG(uap, rusage)) {
 		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
+#ifdef KTRACE
+		if (error == 0 && KTRPOINT(q, KTR_STRUCT))
+			ktrrusage(q, &ru);
+#endif
 	}
 	return (error);
 }

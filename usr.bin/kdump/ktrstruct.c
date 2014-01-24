@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.2 2013/09/09 05:10:32 guenther Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.3 2014/01/24 04:26:51 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -208,12 +208,18 @@ ktrtimespec(const struct timespec *tsp, int relative)
 }
 
 static void
-ktrtimeval(const struct timeval *tvp, int relative)
+print_timeval(const struct timeval *tvp, int relative)
 {
-	printf("struct timeval { ");
 	print_time(tvp->tv_sec, relative);
 	if (tvp->tv_usec != 0)
 		printf(".%06ld", tvp->tv_usec);
+}
+
+static void
+ktrtimeval(const struct timeval *tvp, int relative)
+{
+	printf("struct timeval { ");
+	print_timeval(tvp, relative);
 	printf(" }\n");
 }
 
@@ -294,6 +300,23 @@ ktrfdset(const struct fd_set *fds, int len)
 	printf(" }\n");
 }
 
+static void
+ktrrusage(const struct rusage *rup)
+{
+	printf("struct rusage { utime=");
+	print_timeval(&rup->ru_utime, 1);
+	printf(", stime=");
+	print_timeval(&rup->ru_stime, 1);
+	printf(", maxrss=%ld, ixrss=%ld, idrss=%ld, isrss=%ld,"
+	    " minflt=%ld, majflt=%ld, nswap=%ld, inblock=%ld,"
+	    " oublock=%ld, msgsnd=%ld, msgrcv=%ld, nsignals=%ld,"
+	    " nvcsw=%ld, nivcsw=%ld }\n",
+	    rup->ru_maxrss, rup->ru_ixrss, rup->ru_idrss, rup->ru_isrss,
+	    rup->ru_minflt, rup->ru_majflt, rup->ru_nswap, rup->ru_inblock,
+	    rup->ru_oublock, rup->ru_msgsnd, rup->ru_msgrcv, rup->ru_nsignals,
+	    rup->ru_nvcsw, rup->ru_nivcsw);
+}
+
 void
 ktrstruct(char *buf, size_t buflen)
 {
@@ -363,6 +386,13 @@ ktrstruct(char *buf, size_t buflen)
 			goto invalid;
 		memcpy(&lim, data, datalen);
 		ktrrlimit(&lim);
+	} else if (strcmp(name, "rusage") == 0) {
+		struct rusage ru;
+
+		if (datalen != sizeof(ru))
+			goto invalid;
+		memcpy(&ru, data, datalen);
+		ktrrusage(&ru);
 	} else if (strcmp(name, "tfork") == 0) {
 		struct __tfork tf;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.17 2013/09/14 02:28:02 guenther Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.18 2014/01/24 04:26:51 guenther Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -224,6 +224,8 @@ void    ktrstruct(struct proc *, const char *, const void *, size_t);
 	ktrstruct((p), "sigaction", (s), sizeof(struct sigaction))
 #define ktrrlimit(p, s) \
 	ktrstruct((p), "rlimit", (s), sizeof(struct rlimit))
+#define ktrrusage(p, s) \
+	ktrstruct((p), "rusage", (s), sizeof(struct rusage))
 #define ktrfdset(p, s, l) \
 	ktrstruct((p), "fdset", (s), l)
 

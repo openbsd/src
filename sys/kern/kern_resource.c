@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.48 2014/01/21 01:48:44 tedu Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.49 2014/01/24 04:26:51 guenther Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -53,7 +53,6 @@
 #include <uvm/uvm_extern.h>
 
 void	tuagg_sub(struct tusage *, struct proc *);
-void	tuagg(struct process *, struct proc *);
 
 /*
  * Patchable maximum data and stack limits.
@@ -428,8 +427,13 @@ sys_getrusage(struct proc *p, void *v, register_t *retval)
 	int error;
 
 	error = dogetrusage(p, SCARG(uap, who), &ru);
-	if (error == 0)
+	if (error == 0) {
 		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
+#ifdef KTRACE
+		if (error == 0 && KTRPOINT(p, KTR_STRUCT))
+			ktrrusage(p, &ru);
+#endif
+	}
 	return (error);
 }
 
