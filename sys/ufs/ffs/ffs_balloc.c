@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.39 2013/06/11 16:42:18 deraadt Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.40 2014/01/25 23:31:12 guenther Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -835,7 +835,7 @@ fail:
 
 		if (DOINGSOFTDEP(vp) && unwindidx == 0) {
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			ffs_update(ip, NULL, NULL, MNT_WAIT);
+			ffs_update(ip, MNT_WAIT);
 		}
 
 		/*
@@ -846,7 +846,7 @@ fail:
 			*allocib = 0;
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (DOINGSOFTDEP(vp))
-				ffs_update(ip, NULL, NULL, MNT_WAIT);
+				ffs_update(ip, MNT_WAIT);
 		} else {
 			r = bread(vp, indirs[unwindidx].in_lbn,
 			    (int)fs->fs_bsize, &bp);

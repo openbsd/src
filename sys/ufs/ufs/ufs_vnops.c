@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.111 2013/12/12 19:00:10 tedu Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.112 2014/01/25 23:31:13 guenther Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -109,6 +109,51 @@ static struct odirtemplate omastertemplate = {
 };
 
 /*
+ * Update the times in the inode
+ */
+void
+ufs_itimes(struct vnode *vp)
+{
+	struct inode *ip;
+	struct timespec ts;
+
+	ip = VTOI(vp);
+	if ((ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE)) == 0)
+		return;
+
+	if (vp->v_mount->mnt_flag & MNT_RDONLY)
+		goto out;
+
+#ifdef EXT2FS
+	if (IS_EXT2_VNODE(ip->i_vnode)) {
+		EXT2FS_ITIMES(ip);
+		goto out;
+	}
+#endif
+
+	ip->i_flag |= IN_MODIFIED;
+
+	getnanotime(&ts);
+	if (ip->i_flag & IN_ACCESS) {
+		DIP_ASSIGN(ip, atime, ts.tv_sec);
+		DIP_ASSIGN(ip, atimensec, ts.tv_nsec);
+	}
+	if (ip->i_flag & IN_UPDATE) {
+		DIP_ASSIGN(ip, mtime, ts.tv_sec);
+		DIP_ASSIGN(ip, mtimensec, ts.tv_nsec);
+	}
+	if (ip->i_flag & IN_CHANGE) {
+		DIP_ASSIGN(ip, ctime, ts.tv_sec);
+		DIP_ASSIGN(ip, ctimensec, ts.tv_nsec);
+		ip->i_modrev++;
+	}
+
+ out:
+	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);
+}
+
+
+/*
  * Create a regular file
  */
 int
@@ -198,14 +243,9 @@ ufs_close(void *v)
 {
 	struct vop_close_args *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct inode *ip = VTOI(vp);
 
-	if (vp->v_usecount > 1) {
-		struct timeval tv;
-
-		getmicrotime(&tv);
-		ITIMES(ip, &tv, &tv);
-	}
+	if (vp->v_usecount > 1)
+		ufs_itimes(vp);
 	return (0);
 }
 
@@ -260,10 +300,9 @@ ufs_getattr(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct vattr *vap = ap->a_vap;
-	struct timeval tv;
 
-	getmicrotime(&tv);
-	ITIMES(ip, &tv, &tv);
+	ufs_itimes(vp);
+
 	/*
 	 * Copy from inode table
 	 */
@@ -393,7 +432,16 @@ ufs_setattr(void *v)
 			    (ip->i_flag & (IN_CHANGE | IN_UPDATE)))
 				ip->i_flag |= IN_ACCESS;
 		}
-		error = UFS_UPDATE2(ip, &vap->va_atime, &vap->va_mtime, 0);
+		ufs_itimes(vp);
+		if (vap->va_mtime.tv_sec != VNOVAL) {
+			DIP_ASSIGN(ip, mtime, vap->va_mtime.tv_sec);
+			DIP_ASSIGN(ip, mtimensec, vap->va_mtime.tv_nsec);
+		}
+		if (vap->va_atime.tv_sec != VNOVAL) {
+			DIP_ASSIGN(ip, atime, vap->va_atime.tv_sec);
+			DIP_ASSIGN(ip, atimensec, vap->va_atime.tv_nsec);
+		}
+		error = UFS_UPDATE(ip, 0);
 		if (error)
 			return (error);
 	}
@@ -1641,14 +1689,9 @@ ufsspec_close(void *v)
 {
 	struct vop_close_args *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct inode *ip = VTOI(vp);
 
-	if (ap->a_vp->v_usecount > 1) {
-		struct timeval tv;
-
-		getmicrotime(&tv);
-		ITIMES(ip, &tv, &tv);
-	}
+	if (vp->v_usecount > 1)
+		ufs_itimes(vp);
 	return (spec_close(ap));
 }
 
@@ -1693,14 +1736,9 @@ ufsfifo_close(void *v)
 {
 	struct vop_close_args *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct inode *ip = VTOI(vp);
 
-	if (ap->a_vp->v_usecount > 1) {
-		struct timeval tv;
-
-		getmicrotime(&tv);
-		ITIMES(ip, &tv, &tv);
-	}
+	if (vp->v_usecount > 1)
+		ufs_itimes(vp);
 	return (fifo_close(ap));
 }
 #endif /* FIFO */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.63 2013/12/12 19:00:09 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.64 2014/01/25 23:31:12 guenther Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -167,10 +167,8 @@ ext2fs_getattr(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct vattr *vap = ap->a_vap;
-	struct timeval tv;
 
-	getmicrotime(&tv);
-	EXT2FS_ITIMES(ip, &tv, &tv);
+	EXT2FS_ITIMES(ip);
 	/*
 	 * Copy from inode table
 	 */
@@ -307,7 +305,12 @@ ext2fs_setattr(void *v)
 			    (ip->i_flag & (IN_CHANGE | IN_UPDATE)))
 				ip->i_flag |= IN_ACCESS;
 		}
-		error = ext2fs_update(ip, &vap->va_atime, &vap->va_mtime, 1);
+		EXT2FS_ITIMES(ip);
+		if (vap->va_mtime.tv_sec != VNOVAL)
+			ip->i_e2fs_mtime = vap->va_mtime.tv_sec;
+		if (vap->va_atime.tv_sec != VNOVAL)
+			ip->i_e2fs_atime = vap->va_atime.tv_sec;
+		error = ext2fs_update(ip, 1);
 		if (error)
 			return (error);
 	}
@@ -460,7 +463,7 @@ ext2fs_link(void *v)
 	}
 	ip->i_e2fs_nlink++;
 	ip->i_flag |= IN_CHANGE;
-	error = ext2fs_update(ip, NULL, NULL, 1);
+	error = ext2fs_update(ip, 1);
 	if (!error)
 		error = ext2fs_direnter(ip, dvp, cnp);
 	if (error) {
@@ -633,7 +636,7 @@ abortit:
 	 */
 	ip->i_e2fs_nlink++;
 	ip->i_flag |= IN_CHANGE;
-	if ((error = ext2fs_update(ip, NULL, NULL, 1)) != 0) {
+	if ((error = ext2fs_update(ip, 1)) != 0) {
 		VOP_UNLOCK(fvp, 0, p);
 		goto bad;
 	}
@@ -691,7 +694,7 @@ abortit:
 			}
 			dp->i_e2fs_nlink++;
 			dp->i_flag |= IN_CHANGE;
-			if ((error = ext2fs_update(dp, NULL, NULL, 1)) != 0)
+			if ((error = ext2fs_update(dp, 1)) != 0)
 				goto bad;
 		}
 		error = ext2fs_direnter(ip, tdvp, tcnp);
@@ -699,7 +702,7 @@ abortit:
 			if (doingdirectory && newparent) {
 				dp->i_e2fs_nlink--;
 				dp->i_flag |= IN_CHANGE;
-				(void)ext2fs_update(dp, NULL, NULL, 1);
+				(void)ext2fs_update(dp, 1);
 			}
 			goto bad;
 		}
@@ -917,7 +920,7 @@ ext2fs_mkdir(void *v)
 	ip->i_e2fs_mode = dmode;
 	tvp->v_type = VDIR;	/* Rest init'd in getnewvnode(). */
 	ip->i_e2fs_nlink = 2;
-	error = ext2fs_update(ip, NULL, NULL, 1);
+	error = ext2fs_update(ip, 1);
 
 	/*
 	 * Bump link count in parent directory
@@ -927,7 +930,7 @@ ext2fs_mkdir(void *v)
 	 */
 	dp->i_e2fs_nlink++;
 	dp->i_flag |= IN_CHANGE;
-	if ((error = ext2fs_update(dp, NULL, NULL, 1)) != 0)
+	if ((error = ext2fs_update(dp, 1)) != 0)
 		goto bad;
 
 	/* Initialize directory with "." and ".." from static template. */
@@ -1194,7 +1197,7 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	/*
 	 * Make sure inode goes to disk before directory entry.
 	 */
-	if ((error = ext2fs_update(ip, NULL, NULL, 1)) != 0)
+	if ((error = ext2fs_update(ip, 1)) != 0)
 		goto bad;
 	error = ext2fs_direnter(ip, dvp, cnp);
 	if (error != 0)
@@ -1230,8 +1233,7 @@ ext2fs_fsync(void *v)
 	struct vnode *vp = ap->a_vp;
 
 	vflushbuf(vp, ap->a_waitfor == MNT_WAIT);
-	return (ext2fs_update(VTOI(ap->a_vp), NULL, NULL, 
-		    ap->a_waitfor == MNT_WAIT));
+	return (ext2fs_update(VTOI(ap->a_vp), ap->a_waitfor == MNT_WAIT));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.40 2013/06/11 16:42:19 deraadt Exp $	*/
+/*	$OpenBSD: inode.h,v 1.41 2014/01/25 23:31:13 guenther Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -129,8 +129,7 @@ struct inode {
 struct inode_vtbl {
 	int (* iv_truncate)(struct inode *, off_t, int, 
 	    struct ucred *);
-	int (* iv_update)(struct inode *, struct timespec *, struct timespec *,
-	    int waitfor);
+	int (* iv_update)(struct inode *, int waitfor);
 	int (* iv_inode_alloc)(struct inode *, mode_t mode, 
 	    struct ucred *, struct vnode **);
 	int (* iv_inode_free)(struct inode *, ufsino_t ino, mode_t mode);
@@ -144,10 +143,7 @@ struct inode_vtbl {
     ((ip)->i_vtbl->iv_truncate)((ip), (off), (flags), (cred))
 
 #define UFS_UPDATE(ip, sync) \
-    ((ip)->i_vtbl->iv_update)((ip), NULL, NULL, (sync))
-
-#define UFS_UPDATE2(ip, atime, mtime, sync) \
-    ((ip)->i_vtbl->iv_update)((ip), (atime), (mtime), (sync))
+    ((ip)->i_vtbl->iv_update)((ip), (sync))
 
 #define UFS_INODE_ALLOC(pip, mode, cred, vpp) \
     ((pip)->i_vtbl->iv_inode_alloc)((pip), (mode), (cred), (vpp))
@@ -314,44 +310,6 @@ struct indir {
 /* Convert between inode pointers and vnode pointers. */
 #define	VTOI(vp)	((struct inode *)(vp)->v_data)
 #define	ITOV(ip)	((ip)->i_vnode)
-
-#define	FFS_ITIMES(ip, t1, t2) {					\
-	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE)) {	\
-		(ip)->i_flag |= IN_MODIFIED;				\
-		if ((ip)->i_flag & IN_ACCESS)				\
-			DIP_ASSIGN((ip), atime, (t1)->tv_sec);		\
-		if ((ip)->i_flag & IN_UPDATE) {				\
-			DIP_ASSIGN((ip), mtime, (t2)->tv_sec);		\
-			(ip)->i_modrev++;				\
-		}							\
-		if ((ip)->i_flag & IN_CHANGE)				\
-			DIP_ASSIGN((ip), ctime, time_second);		\
-		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);	\
-	}								\
-}
-
-#define	EXT2FS_ITIMES(ip, t1, t2) {					\
-	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE)) {	\
-		(ip)->i_flag |= IN_MODIFIED;				\
-		if ((ip)->i_flag & IN_ACCESS)				\
-			(ip)->i_e2fs_atime = (t1)->tv_sec;		\
-		if ((ip)->i_flag & IN_UPDATE) {				\
-			(ip)->i_e2fs_mtime = (t2)->tv_sec;		\
-			(ip)->i_modrev++;				\
-		}							\
-		if ((ip)->i_flag & IN_CHANGE)				\
-			(ip)->i_e2fs_ctime = time_second;		\
-		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);	\
-	}								\
-}
-
-#define ITIMES(ip, t1, t2) {						\
-	if (IS_EXT2_VNODE((ip)->i_vnode)) {				\
-		EXT2FS_ITIMES(ip, t1, t2);				\
-	} else {							\
-		FFS_ITIMES(ip, t1, t2);					\
-	}								\
-}
 
 /* Determine if soft dependencies are being done */
 #ifdef FFS_SOFTUPDATES

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.46 2013/12/12 19:00:09 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.47 2014/01/25 23:31:12 guenther Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ ext2fs_inactive(void *v)
 		ext2fs_inode_free(ip, ip->i_number, ip->i_e2fs_mode);
 	}
 	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) {
-		ext2fs_update(ip, NULL, NULL, 0);
+		ext2fs_update(ip, 0);
 	}
 out:
 	VOP_UNLOCK(vp, 0, p);
@@ -159,21 +159,16 @@ out:
  * complete.
  */
 int
-ext2fs_update(struct inode *ip, struct timespec *atime, struct timespec *mtime,
-    int waitfor)
+ext2fs_update(struct inode *ip, int waitfor)
 {
 	struct m_ext2fs *fs;
 	struct buf *bp;
 	int error;
-	struct timespec ts;
 	caddr_t cp;
 
 	if (ITOV(ip)->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
-	getnanotime(&ts);
-	EXT2FS_ITIMES(ip,
-	    atime ? atime : &ts,
-	    mtime ? mtime : &ts);
+	EXT2FS_ITIMES(ip);
 	if ((ip->i_flag & IN_MODIFIED) == 0)
 		return (0);
 	ip->i_flag &= ~IN_MODIFIED;
@@ -249,12 +244,12 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		memset(&oip->i_e2din->e2di_shortlink, 0, ext2fs_size(oip));
 		(void)ext2fs_setsize(oip, 0);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (ext2fs_update(oip, NULL, NULL, 1));
+		return (ext2fs_update(oip, 1));
 	}
 	
 	if (ext2fs_size(oip) == length) {
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (ext2fs_update(oip, NULL, NULL, 0));
+		return (ext2fs_update(oip, 0));
 	}
 	fs = oip->i_e2fs;
 	osize = ext2fs_size(oip);
@@ -285,7 +280,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		else
 			bawrite(bp);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (ext2fs_update(oip, NULL, NULL, 1));
+		return (ext2fs_update(oip, 1));
 	}
 	/*
 	 * Shorten the size of the file. If the file is not being
@@ -343,7 +338,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	for (i = NDADDR - 1; i > lastblock; i--)
 		oip->i_e2fs_blocks[i] = 0;
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if ((error = ext2fs_update(oip, NULL, NULL, 1)) != 0)
+	if ((error = ext2fs_update(oip, 1)) != 0)
 		allerror = error;
 	/*
 	 * Having written the new inode to disk, save its new configuration

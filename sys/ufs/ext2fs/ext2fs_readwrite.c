@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.26 2013/09/14 02:28:03 guenther Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.27 2014/01/25 23:31:12 guenther Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -273,7 +273,7 @@ ext2fs_write(void *v)
 			uio->uio_resid = resid;
 		}
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC)) {
-		error = ext2fs_update(ip, NULL, NULL, 1);
+		error = ext2fs_update(ip, 1);
 	}
 	/* correct the result for writes clamped by vn_fsizechk() */
 	uio->uio_resid += overrun;

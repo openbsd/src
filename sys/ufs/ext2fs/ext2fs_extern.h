@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_extern.h,v 1.32 2013/06/11 16:42:18 deraadt Exp $	*/
+/*	$OpenBSD: ext2fs_extern.h,v 1.33 2014/01/25 23:31:12 guenther Exp $	*/
 /*	$NetBSD: ext2fs_extern.h,v 1.1 1997/06/11 09:33:55 bouyer Exp $	*/
 
 /*-
@@ -79,8 +79,7 @@ int ext2fs_bmap(void *);
 int ext2fs_init(struct vfsconf *);
 u_int64_t ext2fs_size(struct inode *);
 int ext2fs_setsize(struct inode *, u_int64_t);
-int ext2fs_update(struct inode *ip, struct timespec *atime,
-    struct timespec *mtime, int waitfor);
+int ext2fs_update(struct inode *ip, int waitfor);
 int ext2fs_truncate(struct inode *, off_t, int, struct ucred *);
 int ext2fs_inactive(void *);
 

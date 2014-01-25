@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.98 2013/12/12 19:00:09 tedu Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.99 2014/01/25 23:31:12 guenther Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -741,7 +741,7 @@ ffs2_reallocblks(void *v)
 	} else {
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		if (!doasyncfree)
-			ffs_update(ip, NULL, NULL, MNT_WAIT);
+			ffs_update(ip, MNT_WAIT);
 	}
 
 	if (ssize < len) {
