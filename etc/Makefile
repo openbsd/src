@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.344 2014/01/24 03:36:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.345 2014/01/25 20:23:53 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -176,8 +176,6 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 600 chap-secrets \
 		    ${DESTDIR}/etc/ppp; \
 		${INSTALL} -c -o root -g wheel -m 600 options \
-		    ${DESTDIR}/etc/ppp; \
-		${INSTALL} -c -o root -g wheel -m 600 options.leaf \
 		    ${DESTDIR}/etc/ppp; \
 		${INSTALL} -c -o root -g wheel -m 600 options.sample \
 		    ${DESTDIR}/etc/ppp; \
