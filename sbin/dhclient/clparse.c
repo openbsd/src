@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.82 2014/01/21 05:17:45 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.83 2014/01/25 05:21:23 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -265,10 +265,12 @@ parse_client_statement(FILE *cfile)
 		config->server_name = string;
 		break;
 	case TOK_FIXED_ADDR:
-		parse_ip_addr(cfile, &config->address);
+		if (parse_ip_addr(cfile, &config->address))
+			parse_semi(cfile);
 		break;
 	case TOK_NEXT_SERVER:
-		parse_ip_addr(cfile, &config->next_server);
+		if (parse_ip_addr(cfile, &config->next_server))
+			parse_semi(cfile);
 		break;
 	default:
 		parse_warn("expecting a statement.");
