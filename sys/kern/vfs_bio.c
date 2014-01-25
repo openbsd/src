@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.153 2013/12/09 17:16:35 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.154 2014/01/25 04:23:31 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -93,11 +93,10 @@ void bread_cluster_callback(struct buf *);
 struct bcachestats bcstats;  /* counters */
 long lodirtypages;      /* dirty page count low water mark */
 long hidirtypages;      /* dirty page count high water mark */
-long lopages;	      	/* page recycling low water mark */
-long hipages;   	/* page recycling high water mark */
-long buflowpages;	/* bufpages absolute low water mark */
-long bufhighpages; 	/* bufpages absolute high water mark */
-long bufbackpages; 	/* number of pages we back off when asked to shrink */
+long targetpages;   	/* target number of pages for cache size */
+long buflowpages;	/* smallest size cache allowed */
+long bufhighpages; 	/* largerst size cache allowed */
+long bufbackpages; 	/* minimum number of pages we shrink when asked to */
 
 vsize_t bufkvm;
 
@@ -254,11 +253,9 @@ bufinit(void)
 	lodirtypages = buflowpages / 2;
 
 	/*
-	 * We are allowed to use up to the reserve. When we hit it,
-	 * we free 10% of the cache size to allow room to recycle.
+	 * We are allowed to use up to the reserve.
 	 */
-	hipages = bufpages - RESERVE_PAGES;
-	lopages = hipages - (hipages / 10);
+	targetpages = bufpages - RESERVE_PAGES;
 }
 
 /*
@@ -268,30 +265,26 @@ void
 bufadjust(int newbufpages)
 {
 	struct buf *bp;
-	int s, growing = 0;
+	int s;
 
 	if (newbufpages < buflowpages)
 		newbufpages = buflowpages;
 
 	s = splbio();
-	if (newbufpages >= bufpages)
-		growing = 1;
 	bufpages = newbufpages;
 
 	/*
-	 * We are allowed to use up to the reserve. When we hit it,
-	 * we free 10% of the cache size to allow room to recycle.
+	 * We are allowed to use up to the reserve
 	 */
-	hipages = bufpages - RESERVE_PAGES;
-	lopages = hipages - (hipages / 10);
+	targetpages = bufpages - RESERVE_PAGES;
 
 	/*
-	 * If we are shrinking the cache we are under some memory pressure.
-	 * If we have more buffers allocated than our new low water mark,
-	 * immediately free them.
+	 * Shrinking the cache happens here only if someone has manually
+	 * adjusted bufcachepercent - or the pagedaemon has told us
+	 * to give back memory *now* - so we give it all back.
 	 */
-	while (!growing && (bp = TAILQ_FIRST(&bufqueues[BQ_CLEAN])) &&
-	    (bcstats.numbufpages > lopages)) {
+	while ((bp = TAILQ_FIRST(&bufqueues[BQ_CLEAN])) &&
+	    (bcstats.numbufpages > targetpages)) {
 		bremfree(bp);
 		if (bp->b_vp) {
 			RB_REMOVE(buf_rb_bufs,
@@ -305,8 +298,8 @@ bufadjust(int newbufpages)
 	 * Wake up the cleaner if we have lots of dirty pages,
 	 * or if we are getting low on buffer cache kva.
 	 */
-	if (!growing && (UNCLEAN_PAGES >= hidirtypages ||
-	    bcstats.kvaslots_avail <= 2 * RESERVE_SLOTS))
+	if ((UNCLEAN_PAGES >= hidirtypages) ||
+	    bcstats.kvaslots_avail <= 2 * RESERVE_SLOTS)
 		wakeup(&bd_req);
 
 	splx(s);
@@ -829,7 +822,7 @@ brelse(struct buf *bp)
 	}
 
 	/* Wake up any processes waiting for any buffer to become free. */
-	if (needbuffer && bcstats.numbufpages < hipages &&
+	if (needbuffer && bcstats.numbufpages < targetpages &&
 	    bcstats.kvaslots_avail > RESERVE_SLOTS) {
 		needbuffer = 0;
 		wakeup(&needbuffer);
@@ -956,33 +949,27 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 		npages = atop(round_page(size));
 
 		/*
-		 * If our allocation would take us over the
-		 * high water mark, see if we can grow the
-		 * cache.
+		 * if our cache has been previously shrunk,
+		 * allow it to grow again with use up to
+		 * bufhighpages (cachepercent)
 		 */
-		if (bcstats.numbufpages + npages > hipages &&
-		    bufpages < bufhighpages) {
-			int i = bufbackpages;
-			if (bufpages + i > bufhighpages)
-				i = bufhighpages - bufpages;
-			bufadjust(bufpages + i);
-		}
+		if (bufpages < bufhighpages)
+			bufadjust(bufhighpages);
 
 		/*
-		 * If we're still above the high water mark for pages,
-		 * free down to the low water mark.
+		 * If would go over the page target with our
+		 * new allocation, free enough buffers first
+		 * to stay at the target with our new allocation.
 		 */
-		if (bcstats.numbufpages + npages > hipages) {
-			while ((bcstats.numbufpages > lopages) &&
-			    (bp = TAILQ_FIRST(&bufqueues[BQ_CLEAN]))) {
-				bremfree(bp);
-				if (bp->b_vp) {
-					RB_REMOVE(buf_rb_bufs,
-					    &bp->b_vp->v_bufs_tree, bp);
-					brelvp(bp);
-				}
-				buf_put(bp);
+		while ((bcstats.numbufpages + npages > targetpages) &&
+		    (bp = TAILQ_FIRST(&bufqueues[BQ_CLEAN]))) {
+			bremfree(bp);
+			if (bp->b_vp) {
+				RB_REMOVE(buf_rb_bufs,
+				    &bp->b_vp->v_bufs_tree, bp);
+				brelvp(bp);
 			}
+			buf_put(bp);
 		}
 
 		/*
@@ -990,7 +977,7 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 		 * above, and couldn't get down - Wake the cleaner
 		 * and wait for it to push some buffers out.
 		 */
-		if ((bcstats.numbufpages + npages > hipages ||
+		if ((bcstats.numbufpages + npages > targetpages ||
 		    bcstats.kvaslots_avail <= RESERVE_SLOTS) &&
 		    curproc != syncerproc && curproc != cleanerproc) {
 			wakeup(&bd_req);
