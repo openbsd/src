@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.3 2013/11/16 18:37:26 rpe Exp $
+#       $OpenBSD: install.md,v 1.4 2014/01/25 17:55:57 miod Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -48,7 +48,7 @@ Do you want to install the OpenBSD boot blocks on ${_disk}? If you intend
 to share the disk with DG/UX, you are advised to keep the existing DG/UX
 boot blocks and put the OpenBSD boot blocks on the DG/UX root partition.
 
-If you no longer intend to boot DG/UX from this disk, ansewr `yes'.
+If you no longer intend to boot DG/UX from this disk, answer `yes'.
 
 __EOT
 		ask_yn "Install OpenBSD boot blocks?" "yes"
