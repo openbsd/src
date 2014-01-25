@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSign.pm,v 1.5 2014/01/23 22:57:06 espie Exp $
+# $OpenBSD: PkgSign.pm,v 1.6 2014/01/25 10:18:38 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -99,7 +99,7 @@ sub sign_existing_package
 	if (defined $pkg->{length} and 
 	    $url =~ s/^file:// and open($fh, "<", $url) and
 	    $fh->seek($pkg->{length}, 0) and $fh->read($buffer, 2)
-	    and $buffer eq "\x1f\x8b") {
+	    and $buffer eq "\x1f\x8b" and $fh->seek($pkg->{length}, 0)) {
 	    	#$state->say("FAST #1", $plist->pkgname);
 		$wrarc->destdir($pkg->info);
 		my $e = $wrarc->prepare('+CONTENTS');
@@ -109,7 +109,6 @@ sub sign_existing_package
 
 		open(my $fh2, ">>", $tmp) or 
 		    $state->fatal("Can't append to #1", $tmp);
-		print $fh2 "\x1f\x8b";
 		require File::Copy;
 		File::Copy::copy($fh, $fh2) or 
 		    $state->fatal("Error in copy #1", $!);
