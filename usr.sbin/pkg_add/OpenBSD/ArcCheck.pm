@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.23 2014/01/17 15:46:16 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.24 2014/01/25 13:23:15 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -87,7 +87,8 @@ sub verify_modes
 	    }
 	}
 	if (!defined $item->{mode} && $o->isFile) {
-	    if (($o->{mode} & (S_ISUID | S_ISGID | S_IWOTH)) != 0) {
+	    if (($o->{mode} & (S_ISUID | S_ISGID | S_IWOTH)) != 0 ||
+	    	($o->{mode} & S_IROTH) == 0 || ($o->{mode} & S_IRGRP) == 0) {
 		    $o->errsay("Error: weird mode for #1: #2",
 			$item->fullname,
 			sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)));
