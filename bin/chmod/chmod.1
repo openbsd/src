@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.1,v 1.37 2014/01/21 15:17:25 jmc Exp $
+.\"	$OpenBSD: chmod.1,v 1.38 2014/01/25 15:43:40 jmc Exp $
 .\"	$NetBSD: chmod.1,v 1.8 1995/03/21 09:02:07 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)chmod.1	8.4 (Berkeley) 3/31/94
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: January 25 2014 $
 .Dt CHMOD 1
 .Os
 .Sh NAME
@@ -374,6 +374,14 @@ specification.
 The flags
 .Op Fl HLP
 are extensions to that specification.
+.Pp
+The
+.Sq t
+perm symbol (sticky bit) is marked by
+.St -p1003.1-2008
+as being an
+X/Open System Interfaces
+option.
 .Sh HISTORY
 A
 .Nm
