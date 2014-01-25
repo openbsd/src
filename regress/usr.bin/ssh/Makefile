@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.67 2013/12/06 13:52:46 markus Exp $
+#	$OpenBSD: Makefile,v 1.68 2014/01/25 04:35:32 dtucker Exp $
 
 REGRESS_FAIL_EARLY= yes
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7 t8 t9
@@ -16,6 +16,7 @@ LTESTS= 	connect \
 		transfer \
 		banner \
 		rekey \
+		dhgex \
 		stderr-data \
 		stderr-after-eof \
 		broken-pipe \
