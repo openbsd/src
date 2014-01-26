@@ -96,7 +96,6 @@
 ./etc/pf.os
 ./etc/ppp/chap-secrets
 ./etc/ppp/options
-./etc/ppp/options.leaf
 ./etc/ppp/pap-secrets
 ./etc/printcap
 ./etc/protocols
