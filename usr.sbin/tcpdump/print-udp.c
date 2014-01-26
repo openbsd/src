@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.34 2010/01/12 06:10:33 naddy Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.35 2014/01/26 18:03:27 naddy Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -581,7 +581,9 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 	if (ip->ip_v == 6 && ip6->ip6_plen && vflag) {
 		int sum = up->uh_sum;
 		/* for IPv6, UDP checksum is mandatory */
-		if (TTEST2(cp[0], length)) {
+		if (sum == 0) {
+			(void)printf(" [invalid cksum 0]");
+		} else if (TTEST2(cp[0], length)) {
 			sum = udp6_cksum(ip6, up, length + sizeof(struct udphdr));
 			if (sum != 0)
 				(void)printf(" [bad udp cksum %x!]", sum);
