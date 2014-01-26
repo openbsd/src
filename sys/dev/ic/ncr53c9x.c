@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.56 2014/01/18 23:09:04 dlg Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.57 2014/01/26 17:26:55 miod Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -275,6 +275,7 @@ ncr53c9x_attach(sc)
 	sc->sc_link.adapter = &ncr53c9x_adapter;
 	sc->sc_link.openings = 2;
 	sc->sc_link.adapter_buswidth = sc->sc_ntarg;
+	sc->sc_link.pool = &ecb_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
