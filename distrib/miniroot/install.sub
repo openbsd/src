@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.734 2014/01/26 19:01:03 rpe Exp $
+#	$OpenBSD: install.sub,v 1.735 2014/01/26 21:54:32 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1159,7 +1159,7 @@ enable_network() {
 # user will know to try again.
 install_files() {
 	local _src=$1 _files=$2 _f _sets _get_sets _n _col=$COLUMNS \
-		_tmpsrc _cfile _fsrc _unver _t
+		_tmpfs _tmpsrc _cfile _fsrc _unver _t _issue _srclocal
 
 	# Initialize _sets to the list of sets found in _src, and initialize
 	# _get_sets to the intersection of _sets and DEFAULTSETS.
@@ -1193,10 +1193,9 @@ install_files() {
 		return
 	fi
 
-	resp=y
 	isin INSTALL.$ARCH $_files ||
-		ask_yn "INSTALL.$ARCH not found. Use sets found here anyway?"
-	[[ $resp = n ]] && return
+		ask_yn "INSTALL.$ARCH not found. Use sets found here anyway?" ||
+		return
 
 	select_sets "$_sets" "$_get_sets"
 
@@ -1210,43 +1209,93 @@ install_files() {
 	_unver=$_get_sets
 
 	# Try to prefetch and control checksum files
-	if df | grep -q ' /mnt/home$' && isin SHA256.sig $_files &&
-		_tmpsrc=$(tmpdir /mnt/home/sets); then
+	# use dummy for loop as combined assignment and do { ... } while(0)
+	for _issue in ''; do
+		! isin SHA256.sig $_files &&
+			_issue="Directory does not contain SHA256.sig" && break
 
-		# Fetch signed checksum file and check signature
+		# Find the filesystem with the most available space,
+		# excluding filesystems that are populated by the
+		# sets, in order not to ruin the set extraction. If
+		# /tmp, /var/tmp or /home, in that order, is found
+		# to have more than 500M free space, that one is used.
+		_tmpfs=$( (
+			df -k /mnt/{{,var/}tmp,home} 2>/dev/null; df -k
+		) | (
+			amax=0 mmax=
+			while read a a a a m m; do
+				[[ $m == /mnt/@(@(|var/)tmp|home|usr/@(src,obj,xobj))@(|/*) ]] ||
+					continue
+				((a > 512000)) && echo $m && exit
+				((a > amax)) && amax=$a mmax=$m
+			done
+			echo $mmax
+		) )
+
+		if [[ -d $_tmpfs ]]; then
+			! _tmpsrc=$(tmpdir "$_tmpfs/sets") &&
+			_issue="Cannot create prefetch area" && break
+		else
+			_issue="Cannot determine prefetch area" && break	
+		fi
+
 		_cfile=$_tmpsrc/SHA256
-		[[ $_src == file://* ]] && _t=Verifying || _t='Get/Verify'
-		ftp -D $_t -Vmo "$_cfile.sig" "$_src/SHA256.sig" &&
-		signify -Vep /etc/signify/${VERSION}base.pub \
+		_srclocal=false
+		_t=Get/Verify
+		[[ $_src == file://* ]] && _srclocal=true _t=Verifying
+
+		# Fetch signature file
+		! ftp -D $_t -Vmo "$_cfile.sig" "$_src/SHA256.sig" &&
+			_issue="Cannot fetch SHA256.sig" && break
+
+		# Verify signature file with public keys
+		! signify -Vep /etc/signify/${VERSION}base.pub \
 			-x "$_cfile.sig" -m "$_cfile" &&
+			_issue="Signature check of SHA256.sig failed" && break
+
 		for _f in $_get_sets; do
-			rm -f $_tmpsrc/h
-			if [[ $_src == file://* ]]; then
-				ln -s "${_src#file://}/$_f" "$_tmpsrc/$_f" &&
-				ftp -D Verifying -Vmo - "$_src/$_f" |
-					sha256 -ph $_tmpsrc/h >/dev/null
-			else
-				ftp -D 'Get/Verify' -Vmo - "$_src/$_f" |
-					sha256 -ph $_tmpsrc/h >"$_tmpsrc/$_f"
-			fi || {
-				echo "Fetching of $_f failed."
+			rm -f "$_tmpsrc/h" "$_tmpsrc/fail"
+
+			# Fetch set and create checksum by pipe through sha256
+			# Create a flag file in case ftp failed. Sets from net
+			# are written to prefetch area, the output of local sets
+			# is discarded.
+			( ftp -D $_t -Vmo - "$_src/$_f" || >"$_tmpsrc/fail" ) |
+			( $_srclocal && sha256 >$_tmpsrc/h ||
+				sha256 -ph "$_tmpsrc/h" >"$_tmpsrc/$_f" )
+
+			# Handle failed transfer.
+			if [[ -f $_tmpsrc/fail ]]; then
 				rm -f "$_tmpsrc/$_f"
-				$auto && rm -rf "$_tmpsrc" && exit 1
+				if ! ask_yn "Fetching of $_f failed. Continue anyway?"; then
+					[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
+					$auto && exit 1
+					return
+				fi
 				continue
-			}
-			_h=$(sed -En '/\('$_f'\)/s/^.*= (.*)$/\1/p' $_cfile)
-			if [[ -s $_tmpsrc/h && $(<$_tmpsrc/h) == "$_h" ]] ; then
+			fi
+
+			# Verify sets by comparing its checksum with SHA256.
+			if fgrep -qx "SHA256 ($_f) = $(<$_tmpsrc/h)" "$_cfile"; then
 				_unver=$(rmel $_f $_unver)
 			else
-				echo "Checksum for $_f failed!"
+				if ! ask_yn "Checksum test for $_f failed. Continue anyway?"; then
+					[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
+					$auto && exit 1
+					return
+				fi
 			fi
 		done
+	done
+
+	[[ -n $_unver ]] && : ${_issue:="Unverified sets:" ${_unver% }}
+	if [[ -n $_issue ]] &&
+		! ask_yn "$_issue. Continue without verifcation?"; then
+		[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
+		$auto && exit 1
+		return
 	fi
 
-	resp=y
-	[[ -n $_unver ]] && echo "Unverified sets:" ${_unver% }. && \
-		ask_yn "Install sets anyway?" no
-	[[ $resp == y ]] &&
 	for _f in $_get_sets; do
 		_fsrc="$_src/$_f"
 		[[ -f $_tmpsrc/$_f ]] && _fsrc="file://$_tmpsrc/$_f"
@@ -1255,16 +1304,16 @@ install_files() {
 		*)	ftp -D Installing -Vmo "/mnt/$_f" "$_fsrc";;
 		esac
 		if (($?)); then
-			echo "'$_f' did not install correctly."
-			if $auto; then
+			if ! ask_yn "Installation of $_f failed. Continue anyway?"; then
 				[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
-				exit 1
+				$auto && exit 1
+				return
 			fi
 		else
 			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
 			GOTSETS="$GOTSETS $_f"
 		fi
-		rm -f "$_tmpsrc/$_f"
+		[[ -d $_tmpsrc ]] && rm -f "$_tmpsrc/$_f"
 	done
 	[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
 }
