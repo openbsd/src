@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.41 2014/01/25 23:31:13 guenther Exp $	*/
+/*	$OpenBSD: inode.h,v 1.42 2014/01/26 02:02:26 tedu Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -310,6 +310,15 @@ struct indir {
 /* Convert between inode pointers and vnode pointers. */
 #define	VTOI(vp)	((struct inode *)(vp)->v_data)
 #define	ITOV(ip)	((ip)->i_vnode)
+
+#define	EXT2FS_ITIMES(ip) do {						\
+	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE)) {	\
+		(ip)->i_flag |= IN_MODIFIED;				\
+		if ((ip)->i_flag & IN_CHANGE)				\
+			(ip)->i_e2fs_ctime = time_second;		\
+		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);	\
+	}								\
+} while (0)
 
 /* Determine if soft dependencies are being done */
 #ifdef FFS_SOFTUPDATES
