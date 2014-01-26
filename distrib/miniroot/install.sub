@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.733 2014/01/24 01:12:10 halex Exp $
+#	$OpenBSD: install.sub,v 1.734 2014/01/26 19:01:03 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -436,6 +436,7 @@ function ask_until {
 #    $2    = the default answer (assumed to be 'n' if empty).
 #
 # Return 'y' or 'n' in $resp.
+# Exit code: yes => 0, no => 1
 ask_yn() {
 	local _q=$1 _a=${2:-no}
 	typeset -l _resp
@@ -444,8 +445,8 @@ ask_yn() {
 		ask "$_q" "$_a"
 		_resp=$resp
 		case $_resp in
-		y|yes)	resp=y ; return ;;
-		n|no)	resp=n ; return ;;
+		y|yes)	resp=y; return 0;;
+		n|no)	resp=n; return 1;;
 		esac
 		echo "'$resp' is not a valid choice."
 		$auto && exit 1
