@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.99 2013/12/04 23:20:19 jmc Exp $
+dnl	$OpenBSD: m4.common,v 1.100 2014/01/26 04:35:09 tedu Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -477,8 +477,8 @@ dnl Describes MBR partitioning. So much to save four lines of text
 dnl duplicated 5 times.
 dnl
 define({:-OpenBSDInstallMBRPart1-:},
-{:-	Disks on OpenBSD/MACHINE are partitioned using the so-called
-	``MBR'' partitioning scheme.  You will need to create one
+{:-	Disks on OpenBSD/MACHINE are partitioned using the ``MBR''
+	partitioning scheme.  You will need to create one
 	MBR partition, in which all the real OpenBSD partitions will
 	be created.-:})dnl
 dnl

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.24 2013/12/04 23:20:19 jmc Exp $
+dnl	$OpenBSD: install,v 1.25 2014/01/26 04:35:09 tedu Exp $
 dnl lots of texts coming from {mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -47,7 +47,7 @@ Booting from Network:
   reasonably portable to other UN*X-like operating systems. More information
   on diskless booting can be found in the OpenBSD diskless(8) manual page.
 
-  Your MACHINE expects to be able to download a so-called LIF (``Logical
+  Your MACHINE expects to be able to download a LIF (``Logical
   Interchange Format'') image, containing both the boot code and the kernel,
   via the HP rboot protocol, for older firmware, or via the bootp protocol,
   for more recent firmware.
