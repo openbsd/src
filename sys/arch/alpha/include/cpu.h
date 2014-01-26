@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.50 2013/05/31 17:00:57 tedu Exp $ */
+/* $OpenBSD: cpu.h,v 1.51 2014/01/26 17:40:11 miod Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -98,6 +98,7 @@ typedef union alpha_t_float {
 #include <machine/frame.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <sys/cdefs.h>
 #include <sys/device.h>
 #include <sys/sched.h>
 
@@ -155,6 +156,8 @@ struct cpu_info;
 int	cpu_iccb_send(cpuid_t, const char *);
 void	cpu_iccb_receive(void);
 void	cpu_hatch(struct cpu_info *);
+__dead
+void	cpu_halt(void);
 void	cpu_halt_secondary(unsigned long);
 void	cpu_spinup_trampoline(void);				/* MAGIC */
 void	cpu_pause(unsigned long);
@@ -169,7 +172,12 @@ struct mchkinfo {
 };
 
 struct cpu_info {
-	struct device *ci_dev;		/* pointer to our device */
+	/*
+	 * Private members accessed in assembly with 8 bit offsets.
+	 */
+	struct proc *ci_curproc;	/* current owner of the processor */
+	paddr_t ci_curpcb;		/* PA of current HW PCB */
+
 	/*
 	 * Public members.
 	 */
@@ -177,55 +185,54 @@ struct cpu_info {
 #ifdef DIAGNOSTIC
 	int	ci_mutex_level;
 #endif
-	struct proc *ci_curproc;	/* current owner of the processor */
 	struct simplelock ci_slock;	/* lock on this data structure */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	struct cpu_info *ci_next;
+	u_int32_t ci_randseed;
 
 	/*
 	 * Private members.
 	 */
 	struct mchkinfo ci_mcinfo;	/* machine check info */
 	struct proc *ci_fpcurproc;	/* current owner of the FPU */
-	paddr_t ci_curpcb;		/* PA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* our idle PCB */
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
-	struct cpu_softc *ci_softc;	/* pointer to our device */
+	struct device *ci_dev;		/* pointer to our device */
 	u_long ci_want_resched;		/* preempt current process */
 	u_long ci_intrdepth;		/* interrupt trap depth */
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
+
 #if defined(MULTIPROCESSOR)
-	u_long ci_flags;		/* flags; see below */
-	u_long ci_ipis;			/* interprocessor interrupts pending */
+	__volatile u_long ci_flags;	/* flags; see below */
+	__volatile u_long ci_ipis;	/* interprocessor interrupts pending */
 #endif
-	u_int32_t ci_randseed;
 #ifdef GPROF
 	struct gmonparam *ci_gmon;
 #endif
 };
 
 #define	CPUF_PRIMARY	0x01		/* CPU is primary CPU */
-#define	CPUF_PRESENT	0x02		/* CPU is present */
-#define	CPUF_RUNNING	0x04		/* CPU is running */
-#define	CPUF_PAUSED	0x08		/* CPU is paused */
-#define	CPUF_FPUSAVE	0x10		/* CPU is currently in fpusave_cpu() */
+#define	CPUF_RUNNING	0x02		/* CPU is running */
+#define	CPUF_PAUSED	0x04		/* CPU is paused */
+#define	CPUF_FPUSAVE	0x08		/* CPU is currently in fpusave_cpu() */
 
 void	fpusave_cpu(struct cpu_info *, int);
 void	fpusave_proc(struct proc *, int);
 
+extern	struct cpu_info cpu_info_primary;
+extern	struct cpu_info *cpu_info_list;
+
 #define	CPU_INFO_UNIT(ci)	((ci)->ci_dev ? (ci)->ci_dev->dv_unit : 0)
 #define	CPU_INFO_ITERATOR		int
-#define	CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = curcpu(); \
+#define	CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = cpu_info_list; \
 					    ci != NULL; ci = ci->ci_next)
 
 #define MAXCPUS	ALPHA_MAXPROCS
 
-#define cpu_unidle(ci)
-
 #if defined(MULTIPROCESSOR)
 extern	__volatile u_long cpus_running;
 extern	__volatile u_long cpus_paused;
-extern	struct cpu_info cpu_info[];
+extern	struct cpu_info *cpu_info[];
 
 #define	curcpu()			((struct cpu_info *)alpha_pal_rdval())
 #define	CPU_IS_PRIMARY(ci)		((ci)->ci_flags & CPUF_PRIMARY)
@@ -234,11 +241,14 @@ void	cpu_boot_secondary_processors(void);
 
 void	cpu_pause_resume(unsigned long, int);
 void	cpu_pause_resume_all(int);
-#else /* ! MULTIPROCESSOR */
-extern	struct cpu_info cpu_info_store;
+void	cpu_unidle(struct cpu_info *);
 
-#define	curcpu()	(&cpu_info_store)
-#define	CPU_IS_PRIMARY(ci)	1
+#else /* ! MULTIPROCESSOR */
+
+#define	curcpu()			(&cpu_info_primary)
+#define	CPU_IS_PRIMARY(ci)		1
+#define cpu_unidle(ci)			do { /* nothing */ } while (0)
+
 #endif /* MULTIPROCESSOR */
 
 #define	curproc		curcpu()->ci_curproc
@@ -305,12 +315,6 @@ do {									\
 #define signotify(p)	aston(p)
 #endif
 
-/*
- * XXXSMP
- * Should we send an AST IPI?  Or just let it handle it next time
- * it sees a normal kernel entry?  I guess letting it happen later
- * follows the `asynchronous' part of the name...
- */
 #define	aston(p)	(p)->p_md.md_astpending = 1
 #endif /* _KERNEL */
 

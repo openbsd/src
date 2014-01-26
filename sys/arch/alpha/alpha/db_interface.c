@@ -1,4 +1,4 @@
-/* $OpenBSD: db_interface.c,v 1.17 2010/11/27 19:57:23 miod Exp $ */
+/* $OpenBSD: db_interface.c,v 1.18 2014/01/26 17:40:09 miod Exp $ */
 /* $NetBSD: db_interface.c,v 1.8 1999/10/12 17:08:57 jdolecek Exp $ */
 
 /* 
@@ -81,6 +81,17 @@ extern int trap_types;
 
 db_regs_t ddb_regs;
 
+#if defined(MULTIPROCESSOR)
+void	db_mach_cpu(db_expr_t, int, db_expr_t, char *);
+#endif
+
+struct db_command db_machine_command_table[] = {
+#if defined(MULTIPROCESSOR)
+	{ "ddbcpu",	db_mach_cpu,	0,	NULL },
+#endif
+	{ NULL,		NULL,		0,	NULL }
+};
+
 int	db_active = 0;
 
 struct db_variable db_regs[] = {
@@ -130,6 +141,7 @@ ddb_trap(a0, a1, a2, entry, regs)
 	unsigned long a0, a1, a2, entry;
 	db_regs_t *regs;
 {
+	struct cpu_info *ci = curcpu();
 	int s;
 
 	if (entry != ALPHA_KENTRY_IF ||
@@ -151,6 +163,7 @@ ddb_trap(a0, a1, a2, entry, regs)
 	 * alpha_debug() switches us to the debugger stack.
 	 */
 
+	ci->ci_db_regs = regs;
 	ddb_regs = *regs;
 
 	s = splhigh();
@@ -484,4 +497,56 @@ next_instr_address(pc, branch)
 	if (!branch)
 		return (pc + sizeof(int));
 	return (branch_taken(*(u_int *)pc, pc, getreg_val, DDB_REGS));
+}
+
+#if defined(MULTIPROCESSOR)
+void
+db_mach_cpu(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	if (have_addr == 0) {
+		db_printf("addr               dev   id flags    ipis "
+		    "curproc            fpcurproc\n");
+		CPU_INFO_FOREACH(cii, ci)
+			db_printf("%p %-5s %02lu %08lx %04lx %p %p\n",
+			    ci, ci->ci_dev->dv_xname, ci->ci_cpuid,
+			    ci->ci_flags, ci->ci_ipis, ci->ci_curproc,
+			    ci->ci_fpcurproc);
+		return;
+	}
+
+	if (addr < 0 || addr >= ALPHA_MAXPROCS) {
+		db_printf("CPU %ld out of range\n", addr);
+		return;
+	}
+
+	ci = cpu_info[addr];
+	if (ci == NULL) {
+		db_printf("CPU %ld is not configured\n", addr);
+		return;
+	}
+
+	if (ci != curcpu()) {
+		if ((ci->ci_flags & CPUF_PAUSED) == 0) {
+			db_printf("CPU %ld not paused\n", addr);
+			return;
+		}
+	}
+
+	if (ci->ci_db_regs == NULL) {
+		db_printf("CPU %ld has no register state\n", addr);
+		return;
+	}
+
+	db_printf("Using CPU %ld\n", addr);
+	ddb_regs = *ci->ci_db_regs;	/* struct copy */
+}
+#endif /* MULTIPROCESSOR */
+
+void
+db_machine_init()
+{
+	db_machine_commands_install(db_machine_command_table);
 }

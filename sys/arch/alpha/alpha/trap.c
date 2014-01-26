@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.65 2014/01/06 20:27:44 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.66 2014/01/26 17:40:09 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -239,7 +239,7 @@ trap(a0, a1, a2, entry, framep)
 	vm_prot_t ftype;
 	unsigned long onfault;
 
-	uvmexp.traps++;
+	atomic_add_int(&uvmexp.traps, 1);
 	p = curproc;
 	ucode = 0;
 	v = 0;
@@ -256,7 +256,10 @@ trap(a0, a1, a2, entry, framep)
 		 */
 		if (user) {
 #ifndef SMALL_KERNEL
-			if ((i = unaligned_fixup(a0, a1, a2, p)) == 0)
+			KERNEL_LOCK();
+			i = unaligned_fixup(a0, a1, a2, p);
+			KERNEL_UNLOCK();
+			if (i == 0)
 				goto out;
 #endif
 
@@ -343,7 +346,10 @@ trap(a0, a1, a2, entry, framep)
 			break;
 
 		case ALPHA_IF_CODE_OPDEC:
-			if ((i = handle_opdec(p, &ucode)) == 0)
+			KERNEL_LOCK();
+			i = handle_opdec(p, &ucode);
+			KERNEL_UNLOCK();
+			if (i == 0)
 				goto out;
 			break;
 
@@ -364,15 +370,17 @@ trap(a0, a1, a2, entry, framep)
 		case ALPHA_MMCSR_FOR:
 		case ALPHA_MMCSR_FOE:
 		case ALPHA_MMCSR_FOW:
+			KERNEL_LOCK();
 			if (pmap_emulate_reference(p, a0, user, a1)) {
 				ftype = VM_PROT_EXECUTE;
 				goto do_fault;
 			}
+			KERNEL_UNLOCK();
 			goto out;
 
 		case ALPHA_MMCSR_INVALTRANS:
 		case ALPHA_MMCSR_ACCESS:
-	    	{
+	    	    {
 			vaddr_t va;
 			struct vmspace *vm = NULL;
 			struct vm_map *map;
@@ -391,6 +399,7 @@ trap(a0, a1, a2, entry, framep)
 				break;
 			}
 	
+			KERNEL_LOCK();
 do_fault:
 			/*
 			 * It is only a kernel address space fault iff:
@@ -433,6 +442,7 @@ do_fault:
 					rv = EFAULT;
 			}
 			if (rv == 0) {
+				KERNEL_UNLOCK();
 				goto out;
 			}
 
@@ -443,10 +453,13 @@ do_fault:
 					framep->tf_regs[FRAME_PC] =
 					    p->p_addr->u_pcb.pcb_onfault;
 					p->p_addr->u_pcb.pcb_onfault = 0;
+					KERNEL_UNLOCK();
 					goto out;
 				}
+				KERNEL_UNLOCK();
 				goto dopanic;
 			}
+			KERNEL_UNLOCK();
 			ucode = ftype;
 			v = (caddr_t)a0;
 			typ = SEGV_MAPERR;
@@ -476,7 +489,9 @@ do_fault:
 	printtrap(a0, a1, a2, entry, framep, 1, user);
 #endif
 	sv.sival_ptr = v;
+	KERNEL_LOCK();
 	trapsignal(p, i, ucode, typ, sv);
+	KERNEL_UNLOCK();
 out:
 	if (user) {
 		/* Do any deferred user pmap operations. */
@@ -530,7 +545,7 @@ syscall(code, framep)
 	u_long args[10];					/* XXX */
 	u_int hidden, nargs;
 
-	uvmexp.syscalls++;
+	atomic_add_int(&uvmexp.syscalls, 1);
 	p = curproc;
 	p->p_md.md_tf = framep;
 	opc = framep->tf_regs[FRAME_PC] - 4;
@@ -628,6 +643,8 @@ child_return(arg)
 	framep->tf_regs[FRAME_A4] = 0;
 	framep->tf_regs[FRAME_A3] = 0;
 
+	KERNEL_UNLOCK();
+
 	/* Do any deferred user pmap operations. */
 	PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
 
@@ -643,6 +660,9 @@ void
 alpha_enable_fp(struct proc *p, int check)
 {
 	struct cpu_info *ci = curcpu();
+#if defined(MULTIPROCESSOR)
+	int s;
+#endif
 
 	if (check && ci->ci_fpcurproc == p) {
 		alpha_pal_wrfen(1);
@@ -663,9 +683,16 @@ alpha_enable_fp(struct proc *p, int check)
 	KDASSERT(p->p_addr->u_pcb.pcb_fpcpu == NULL);
 #endif
 
+#if defined(MULTIPROCESSOR)
+	/* Need to block IPIs */
+	s = splhigh();
+#endif
 	p->p_addr->u_pcb.pcb_fpcpu = ci;
 	ci->ci_fpcurproc = p;
-	uvmexp.fpswtch++;
+#if defined(MULTIPROCESSOR)
+	splx(s);
+#endif
+	atomic_add_int(&uvmexp.fpswtch, 1);
 
 	p->p_md.md_flags |= MDP_FPUSED;
 	alpha_pal_wrfen(1);
@@ -691,10 +718,12 @@ ast(framep)
 		panic("ast and not user");
 #endif
 
-	uvmexp.softs++;
+	atomic_add_int(&uvmexp.softs, 1);
 
 	if (p->p_flag & P_OWEUPC) {
+		KERNEL_LOCK();
 		ADDUPROF(p);
+		KERNEL_UNLOCK();
 	}
 
 	if (ci->ci_want_resched)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.11 2005/12/12 19:44:30 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.12 2014/01/26 17:40:09 miod Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.7 1996/07/11 20:14:21 cgd Exp $	*/
 
 /*-
@@ -112,11 +112,8 @@ process_read_fpregs(p, regs)
 	struct fpreg *regs;
 {
 
-	if (p == fpcurproc) {
-		alpha_pal_wrfen(1);
-		savefpstate(process_fpframe(p));
-		alpha_pal_wrfen(0);
-	}
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_proc(p, 1);
 
 	bcopy(process_fpframe(p), regs, sizeof(struct fpreg));
 	return (0);
@@ -154,7 +151,7 @@ process_write_fpregs(p, regs)
 {
 
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_proc(p, 1);
+		fpusave_proc(p, 0);
 
 	bcopy(regs, process_fpframe(p), sizeof(struct fpreg));
 	return (0);

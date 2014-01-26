@@ -1,4 +1,4 @@
-/* $OpenBSD: debug.s,v 1.6 2010/06/06 11:25:37 miod Exp $ */
+/* $OpenBSD: debug.s,v 1.7 2014/01/26 17:40:09 miod Exp $ */
 /* $NetBSD: debug.s,v 1.5 1999/06/18 18:11:56 thorpej Exp $ */
 
 /*-
@@ -80,9 +80,9 @@ NESTED_NOPROFILE(alpha_debug, 5, 32, ra, IM_RA|IM_S0, 0)
 	mov	sp, s0
 
 #if defined(MULTIPROCESSOR)
-	/*
-	 * XXX PAUSE ALL OTHER CPUs.
-	 */
+	/* Pause all other CPUs. */
+	ldiq	a0, 1
+	CALL(cpu_pause_resume_all)
 #endif
 
 	/*
@@ -105,9 +105,13 @@ NESTED_NOPROFILE(alpha_debug, 5, 32, ra, IM_RA|IM_S0, 0)
 	mov	s0, sp
 
 #if defined(MULTIPROCESSOR)
-	/*
-	 * XXX RESUME ALL OTHER CPUs.
-	 */
+	mov	v0, s0
+
+	/* Resume all other CPUs. */
+	mov	zero, a0
+	CALL(cpu_pause_resume_all)
+
+	mov	s0, v0
 #endif
 
 	ldq	ra, (32-8)(sp)		/* restore ra */

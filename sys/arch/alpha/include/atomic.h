@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.10 2011/11/25 05:25:00 miod Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.11 2014/01/26 17:40:11 miod Exp $	*/
 /* $NetBSD: atomic.h,v 1.7 2001/12/17 23:34:57 thorpej Exp $ */
 
 /*-
@@ -221,6 +221,32 @@ atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
 		"	# END atomic_clearbits_int"
 		: "=&r" (t0), "=m" (*uip)
 		: "r" (~v)
+		: "memory");
+}
+
+/*
+ * atomic_add_int:
+ *
+ *	Atomically add a value to an `int'.
+ */
+static __inline void
+atomic_add_int(__volatile int *ulp, int v)
+{
+	unsigned long t0;
+
+	__asm __volatile(
+		"# BEGIN atomic_add_int\n"
+		"1:	ldl_l	%0, %1		\n"
+		"	addl	%0, %2, %0	\n"
+		"	stl_c	%0, %1		\n"
+		"	beq	%0, 2f		\n"
+		"	mb			\n"
+		"	br	3f		\n"
+		"2:	br	1b		\n"
+		"3:				\n"
+		"	# END atomic_add_ulong"
+		: "=&r" (t0), "=m" (*ulp)
+		: "r" (v)
 		: "memory");
 }
 

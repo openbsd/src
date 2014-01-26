@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.21 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.22 2014/01/26 17:40:11 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -98,5 +98,7 @@ db_addr_t next_instr_address(db_addr_t, int);
 #define inst_branch db_inst_branch
 #define inst_call db_inst_call
 #endif
+
+#define	DB_MACHINE_COMMANDS
 
 #endif	/* _MACHINE_DB_MACHDEP_H_ */

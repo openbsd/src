@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.40 2013/05/17 19:38:51 kettenis Exp $ */
+/* $OpenBSD: intr.h,v 1.41 2014/01/26 17:40:11 miod Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -118,6 +118,7 @@ struct scbvec {
 #define	IPL_VM		ALPHA_PSL_IPL_IO
 #define	IPL_CLOCK	ALPHA_PSL_IPL_CLOCK
 #define	IPL_SCHED	ALPHA_PSL_IPL_HIGH
+#define	IPL_IPI		ALPHA_PSL_IPL_HIGH	/* occur on _IO, though */
 #define	IPL_HIGH	ALPHA_PSL_IPL_HIGH
 
 #define	IPL_SOFTSERIAL	0	/* serial software interrupts */
@@ -173,15 +174,16 @@ int _splraise(int);
 #define splsoftserial()		splsoft()
 #define splsoftclock()		splsoft()
 #define splsoftnet()		splsoft()
-#define splnet()                _splraise(IPL_NET)
-#define splbio()                _splraise(IPL_BIO)
-#define spltty()                _splraise(IPL_TTY)
-#define splserial()             _splraise(IPL_SERIAL)
+#define splnet()		_splraise(IPL_NET)
+#define splbio()		_splraise(IPL_BIO)
+#define spltty()		_splraise(IPL_TTY)
+#define splserial()		_splraise(IPL_SERIAL)
 #define splaudio()		_splraise(IPL_AUDIO)
 #define splvm()			_splraise(IPL_VM)
-#define splclock()              _splraise(IPL_CLOCK)
-#define splstatclock()          _splraise(IPL_CLOCK)
-#define splhigh()               _splraise(IPL_HIGH)
+#define splclock()		_splraise(IPL_CLOCK)
+#define splstatclock()		_splraise(IPL_CLOCK)
+#define splipi()		_splraise(IPL_IPI)
+#define splhigh()		_splraise(IPL_HIGH)
 
 #define spllock()		splhigh()
 #define splsched()		splhigh()
@@ -189,21 +191,20 @@ int _splraise(int);
 /*
  * Interprocessor interrupts.  In order how we want them processed.
  */
-#define	ALPHA_IPI_HALT		0x0000000000000001UL
-#define	ALPHA_IPI_TBIA		0x0000000000000002UL
-#define	ALPHA_IPI_TBIAP		0x0000000000000004UL
-#define	ALPHA_IPI_SHOOTDOWN	0x0000000000000008UL
-#define	ALPHA_IPI_IMB		0x0000000000000010UL
-#define	ALPHA_IPI_AST		0x0000000000000020UL
-#define	ALPHA_IPI_SYNCH_FPU	0x0000000000000040UL
-#define	ALPHA_IPI_DISCARD_FPU	0x0000000000000080UL
-#define	ALPHA_IPI_PAUSE		0x0000000000000100UL
+#define	ALPHA_IPI_HALT			(1UL << 0)
+#define	ALPHA_IPI_SHOOTDOWN		(1UL << 1)
+#define	ALPHA_IPI_IMB			(1UL << 2)
+#define	ALPHA_IPI_AST			(1UL << 3)
+#define	ALPHA_IPI_SYNCH_FPU		(1UL << 4)
+#define	ALPHA_IPI_DISCARD_FPU		(1UL << 5)
+#define	ALPHA_IPI_PAUSE			(1UL << 6)
 
-#define	ALPHA_NIPIS		6	/* must not exceed 64 */
+#define	ALPHA_NIPIS		7	/* must not exceed 64 */
 
-typedef void (*ipifunc_t)(void);
-extern	ipifunc_t ipifuncs[ALPHA_NIPIS];
+struct cpu_info;
+struct trapframe;
 
+void	alpha_ipi_process(struct cpu_info *, struct trapframe *);
 void	alpha_send_ipi(unsigned long, unsigned long);
 void	alpha_broadcast_ipi(unsigned long);
 void	alpha_multicast_ipi(unsigned long, unsigned long);

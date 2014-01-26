@@ -1,4 +1,4 @@
-/* $OpenBSD: multiproc.s,v 1.4 2008/06/26 05:42:08 ray Exp $ */
+/* $OpenBSD: multiproc.s,v 1.5 2014/01/26 17:40:09 miod Exp $ */
 /* $NetBSD: multiproc.s,v 1.5 1999/12/16 20:17:23 thorpej Exp $ */
 
 /*-
@@ -55,18 +55,26 @@ NESTED_NOPROFILE(cpu_spinup_trampoline,0,0,ra,0,0)
 	br	pv, 1f			/* compute new GP */
 1:	LDGP(pv)
 
+	/* Write new KGP. */
+	mov	gp, a0
+	call_pal PAL_OSF1_wrkgp		/* clobbers a0, t0, t8-t11 */
+
+	/* Store our CPU info in SysValue. */
+	mov	s0, a0
+	call_pal PAL_OSF1_wrval
+
+	/* Switch to this CPU's idle thread. */
+	ldq	a0, CPU_INFO_IDLE_PCB_PADDR(s0)
+	SWITCH_CONTEXT
+
 	/* Invalidate TLB and I-stream. */
 	ldiq	a0, -2			/* TBIA */
 	call_pal PAL_OSF1_tbi
 	call_pal PAL_imb
 
-	/* Load KGP with current GP. */
-	mov	gp, a0
-	call_pal PAL_OSF1_wrkgp		/* clobbers a0, t0, t8-t11 */
-
-	/* Restore argument and write it in SysValue. */
-	mov	s0, a0
-	call_pal PAL_OSF1_wrval
+	/* Make sure the FPU is turned off. */
+	mov	zero, a0
+	call_pal PAL_OSF1_wrfen
 
 	/* Restore argument and call cpu_hatch() */
 	mov	s0, a0

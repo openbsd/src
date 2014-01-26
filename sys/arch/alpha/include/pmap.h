@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.30 2014/01/05 14:37:08 miod Exp $ */
+/* $OpenBSD: pmap.h,v 1.31 2014/01/26 17:40:11 miod Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -90,27 +90,37 @@
  * The kernel pmap is a special case; it gets statically-allocated
  * arrays which hold enough for ALPHA_MAXPROCS.
  */
+struct pmap_asn_info {
+	unsigned int		pma_asn;	/* address space number */
+	unsigned long		pma_asngen;	/* ASN generation number */
+};
+
 struct pmap {
 	TAILQ_ENTRY(pmap)	pm_list;	/* list of all pmaps */
 	pt_entry_t		*pm_lev1map;	/* level 1 map */
 	int			pm_count;	/* pmap reference count */
 	struct simplelock	pm_slock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	long			pm_nlev2;	/* level 2 pt page count */
-	long			pm_nlev3;	/* level 3 pt page count */
-	unsigned int		*pm_asn;	/* address space number */
-	unsigned long		*pm_asngen;	/* ASN generation number */
 	unsigned long		pm_cpus;	/* mask of CPUs using pmap */
 	unsigned long		pm_needisync;	/* mask of CPUs needing isync */
+	struct pmap_asn_info	pm_asni[1];	/* ASN information */
+			/*	variable length		*/
 };
-
 typedef struct pmap	*pmap_t;
+
+/*
+ * Compute the sizeof of a pmap structure.  Subtract one because one
+ * ASN info structure is already included in the pmap structure itself.
+ */
+#define PMAP_SIZEOF(x)							\
+	(ALIGN(sizeof(struct pmap) +					\
+	       (sizeof(struct pmap_asn_info) * ((x) - 1))))
 
 #define	PMAP_ASN_RESERVED	0	/* reserved for Lev1map users */
 
-extern struct pmap	kernel_pmap_store;
+extern struct pmap	kernel_pmap_store[];
 
-#define pmap_kernel()	(&kernel_pmap_store)
+#define pmap_kernel()	kernel_pmap_store
 
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
@@ -150,18 +160,25 @@ typedef struct pv_entry {
 #endif /* NEW_SCC_DRIVER */
 
 #if defined(MULTIPROCESSOR)
-void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t);
+void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t, u_long *);
+void	pmap_tlb_shootnow(u_long);
 void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
-void	pmap_tlb_shootdown_q_drain(u_long, boolean_t);
+#define	PMAP_TLB_SHOOTDOWN_CPUSET_DECL		u_long shootset = 0;
 #define	PMAP_TLB_SHOOTDOWN(pm, va, pte)					\
-	pmap_tlb_shootdown((pm), (va), (pte))
+	pmap_tlb_shootdown((pm), (va), (pte), &shootset)
+#define	PMAP_TLB_SHOOTNOW()						\
+	pmap_tlb_shootnow(shootset)
 #else
+#define	PMAP_TLB_SHOOTDOWN_CPUSET_DECL		/* nothing */
 #define	PMAP_TLB_SHOOTDOWN(pm, va, pte)		/* nothing */
+#define	PMAP_TLB_SHOOTNOW()			/* nothing */
 #endif /* MULTIPROCESSOR */
 #endif /* _LKM */
  
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
+
+#define pmap_copy(dp, sp, da, l, sa)	/* nothing */
 #define pmap_update(pmap)		/* nothing (yet) */
 
 #define pmap_proc_iflush(p, va, len)	/* nothing */

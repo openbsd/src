@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.31 2011/04/15 20:40:03 deraadt Exp $ */
+/* $OpenBSD: interrupt.c,v 1.32 2014/01/26 17:40:09 miod Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -84,16 +84,10 @@
 #include <machine/frame.h>
 #include <machine/cpuconf.h>
 
-#if defined(MULTIPROCESSOR)
-#include <sys/device.h>
-#endif
-
 #include "apecs.h"
 #include "cia.h"
 #include "lca.h"
 #include "tcasic.h"
-
-static u_int schedclk2;
 
 extern struct evcount clk_count;
 
@@ -204,32 +198,15 @@ void
 interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
     struct trapframe *framep)
 {
-	struct proc *p;
 	struct cpu_info *ci = curcpu();
 	extern int schedhz;
 
 	switch (a0) {
 	case ALPHA_INTR_XPROC:	/* interprocessor interrupt */
 #if defined(MULTIPROCESSOR)
-	    {
-		u_long pending_ipis, bit;
+		atomic_add_ulong(&ci->ci_intrdepth, 1);
 
-#if 0
-		printf("CPU %lu got IPI\n", cpu_id);
-#endif
-
-#ifdef DIAGNOSTIC
-		if (ci->ci_dev == NULL) {
-			/* XXX panic? */
-			printf("WARNING: no device for ID %lu\n", ci->ci_cpuid);
-			return;
-		}
-#endif
-
-		pending_ipis = atomic_loadlatch_ulong(&ci->ci_ipis, 0);
-		for (bit = 0; bit < ALPHA_NIPIS; bit++)
-			if (pending_ipis & (1UL << bit))
-				(*ipifuncs[bit])();
+		alpha_ipi_process(ci, framep);
 
 		/*
 		 * Handle inter-console messages if we're the primary
@@ -238,20 +215,17 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		if (ci->ci_cpuid == hwrpb->rpb_primary_cpu_id &&
 		    hwrpb->rpb_txrdy != 0)
 			cpu_iccb_receive();
-	    }
+
+		atomic_sub_ulong(&ci->ci_intrdepth, 1);
 #else
 		printf("WARNING: received interprocessor interrupt!\n");
 #endif /* MULTIPROCESSOR */
 		break;
 		
 	case ALPHA_INTR_CLOCK:	/* clock interrupt */
-#if defined(MULTIPROCESSOR)
-		/* XXX XXX XXX */
-		if (CPU_IS_PRIMARY(ci) == 0)
-			return;
-#endif
-		uvmexp.intrs++;
-		clk_count.ec_count++;
+		atomic_add_int(&uvmexp.intrs, 1);
+		if (CPU_IS_PRIMARY(ci))
+			clk_count.ec_count++;
 		if (platform.clockintr) {
 			/*
 			 * Call hardclock().  This will also call
@@ -264,18 +238,20 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 			 * If it's time to call the scheduler clock,
 			 * do so.
 			 */
-			if ((++schedclk2 & 0x3f) == 0 &&
-			    (p = ci->ci_curproc) != NULL && schedhz != 0)
-				schedclock(p);
+			if ((++ci->ci_schedstate.spc_schedticks & 0x3f) == 0 &&
+			    schedhz != 0)
+				schedclock(ci->ci_curproc);
 		}
 		break;
 
 	case ALPHA_INTR_ERROR:	/* Machine Check or Correctable Error */
+		atomic_add_ulong(&ci->ci_intrdepth, 1);
 		a0 = alpha_pal_rdmces();
 		if (platform.mcheck_handler)
 			(*platform.mcheck_handler)(a0, framep, a1, a2);
 		else
 			machine_check(a0, framep, a1, a2);
+		atomic_sub_ulong(&ci->ci_intrdepth, 1);
 		break;
 
 	case ALPHA_INTR_DEVICE:	/* I/O device interrupt */
@@ -284,15 +260,24 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 
 		KDASSERT(a1 >= SCB_IOVECBASE && a1 < SCB_SIZE);
 
+		atomic_add_ulong(&ci->ci_intrdepth, 1);
 #if defined(MULTIPROCESSOR)
-		/* XXX XXX XXX */
-		if (CPU_IS_PRIMARY(ci) == 0)
-			return;
+		/*
+		 * XXX Need to support IPL_MPSAFE eventually. Acquiring the
+		 * XXX kernel lock could be done deeper, as most of the
+		 * XXX scb handlers end up invoking
+		 * XXX alpha_shared_intr_dispatch().
+		 */
+		__mp_lock(&kernel_lock);
 #endif
-		uvmexp.intrs++;
+		atomic_add_int(&uvmexp.intrs, 1);
 
 		scb = &scb_iovectab[SCB_VECTOIDX(a1 - SCB_IOVECBASE)];
 		(*scb->scb_func)(scb->scb_arg, a1);
+#if defined(MULTIPROCESSOR)
+		__mp_unlock(&kernel_lock);
+#endif
+		atomic_sub_ulong(&ci->ci_intrdepth, 1);
 		break;
 	    }
 
@@ -497,6 +482,10 @@ softintr_dispatch()
 	struct alpha_soft_intrhand *sih;
 	u_int64_t n, i;
 
+#if defined(MULTIPROCESSOR)
+	__mp_lock(&kernel_lock);
+#endif
+
 	while ((n = atomic_loadlatch_ulong(&ssir, 0)) != 0) {
 		for (i = 0; i < SI_NSOFT; i++) {
 			if ((n & (1 << i)) == 0)
@@ -515,7 +504,7 @@ softintr_dispatch()
 				TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
 				sih->sih_pending = 0;
 
-				uvmexp.softs++;
+				atomic_add_int(&uvmexp.softs, 1);
 
 				mtx_leave(&asi->softintr_mtx);
 
@@ -523,6 +512,10 @@ softintr_dispatch()
 			}
 		}
 	}
+
+#if defined(MULTIPROCESSOR)
+	__mp_unlock(&kernel_lock);
+#endif
 }
 
 static int

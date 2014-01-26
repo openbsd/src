@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.31 2014/01/19 12:45:35 deraadt Exp $ */
+/* $OpenBSD: cpu.c,v 1.32 2014/01/26 17:40:09 miod Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -74,22 +74,24 @@
 #include <machine/rpb.h>
 #include <machine/prom.h>
 
+struct cpu_info cpu_info_primary;
+struct cpu_info *cpu_info_list = &cpu_info_primary;
+
 #if defined(MULTIPROCESSOR)
 #include <sys/malloc.h>
-#include <sys/kthread.h>
 
 /*
  * Array of CPU info structures.  Must be statically-allocated because
  * curproc, etc. are used early.
  */
-struct cpu_info cpu_info[ALPHA_MAXPROCS];
+struct cpu_info *cpu_info[ALPHA_MAXPROCS];
 
-/* Bitmask of CPUs currently running. */
+/* Bitmask of CPUs booted, currently running, and paused. */
+__volatile u_long cpus_booted;
 __volatile u_long cpus_running;
+__volatile u_long cpus_paused;
 
 void	cpu_boot_secondary(struct cpu_info *);
-#else /* MULTIPROCESSOR */
-struct cpu_info cpu_info_store;
 #endif /* MULTIPROCESSOR */
 
 /*
@@ -113,6 +115,8 @@ struct cfattach cpu_ca = {
 struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL
 };
+
+void	cpu_announce_extensions(struct cpu_info *);
 
 static const char *ev4minor[] = {
 	"pass 2 or 2.1", "pass 3", 0
@@ -145,7 +149,6 @@ static const char *ev4minor[] = {
 	"", "", "", "", "", "",
 	"pass 4.0", 0
 };
-
 
 struct cputable_struct {
 	int	cpu_major_code;
@@ -195,10 +198,7 @@ struct cputable_struct {
  */
 
 int
-cpumatch(parent, cfdata, aux)
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+cpumatch(struct device *parent, void *cfdata, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -216,12 +216,10 @@ cpumatch(parent, cfdata, aux)
 }
 
 void
-cpuattach(parent, dev, aux)
-	struct device *parent;
-	struct device *dev;
-	void *aux;
+cpuattach(struct device *parent, struct device *dev, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
+	struct cpu_info *ci;
 	int i;
 	const char **s;
 	struct pcs *p;
@@ -232,7 +230,6 @@ cpuattach(parent, dev, aux)
 #if defined(MULTIPROCESSOR)
 	extern paddr_t avail_start, avail_end;
 	struct pcb *pcb;
-	struct cpu_info *ci;
 	struct pglist mlist;
 	int error;
 #endif
@@ -263,17 +260,6 @@ cpuattach(parent, dev, aux)
 recognized:
 	printf("\n");
 
-	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id) {
-		cpu_implver = alpha_implver();
-		if (cpu_implver >= ALPHA_IMPLVER_EV5)
-			cpu_amask =
-			    (~alpha_amask(ALPHA_AMASK_ALL)) & ALPHA_AMASK_ALL;
-		if (cpu_amask) {
-			printf("%s: architecture extensions: %b\n",
-			    dev->dv_xname, cpu_amask, ALPHA_AMASK_BITS);
-		}
-	}
-
 #ifdef DEBUG
 	if (p->pcs_proc_var != 0) {
 		printf("%s: ", dev->dv_xname);
@@ -303,19 +289,21 @@ recognized:
 		printf("%s: processor ID too large, ignoring\n", dev->dv_xname);
 		return;
 	}
-
-	ci = &cpu_info[ma->ma_slot];
-	simple_lock_init(&ci->ci_slock);
-	ci->ci_cpuid = ma->ma_slot;
-	ci->ci_dev = dev;
 #endif /* MULTIPROCESSOR */
 
-	/*
-	 * Though we could (should?) attach the LCA cpus' PCI
-	 * bus here there is no good reason to do so, and
-	 * the bus attachment code is easier to understand
-	 * and more compact if done the 'normal' way.
-	 */
+#if defined(MULTIPROCESSOR)
+	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id)
+		ci = &cpu_info_primary;
+	else
+		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK | M_ZERO);
+
+	cpu_info[ma->ma_slot] = ci;
+	simple_lock_init(&ci->ci_slock);
+#else
+	ci = &cpu_info_primary;
+#endif
+	ci->ci_cpuid = ma->ma_slot;
+	ci->ci_dev = dev;
 
 #if defined(MULTIPROCESSOR)
 	/*
@@ -360,56 +348,104 @@ recognized:
 	 * Initialize the idle stack pointer, reserving space for an
 	 * (empty) trapframe (XXX is the trapframe really necessary?)
 	 */
-	pcb->pcb_hw.apcb_ksp =
+	pcb->pcb_hw.apcb_ksp = pcb->pcb_hw.apcb_backup_ksp =
 	    (u_int64_t)pcb + USPACE - sizeof(struct trapframe);
 
 	/*
 	 * Initialize the idle PCB.
 	 */
-	pcb->pcb_hw.apcb_backup_ksp = pcb->pcb_hw.apcb_ksp;
 	pcb->pcb_hw.apcb_asn = proc0.p_addr->u_pcb.pcb_hw.apcb_asn;
 	pcb->pcb_hw.apcb_ptbr = proc0.p_addr->u_pcb.pcb_hw.apcb_ptbr;
 #if 0
-	printf("%s: hwpcb ksp = 0x%lx\n", sc->sc_dev.dv_xname,
+	printf("%s: hwpcb ksp = 0x%lx\n", dev->dv_xname,
 	    pcb->pcb_hw.apcb_ksp);
-	printf("%s: hwpcb ptbr = 0x%lx\n", sc->sc_dev.dv_xname,
+	printf("%s: hwpcb ptbr = 0x%lx\n", dev->dv_xname,
 	    pcb->pcb_hw.apcb_ptbr);
 #endif
+#endif /* MULTIPROCESSOR */
 
 	/*
 	 * If we're the primary CPU, no more work to do; we're already
 	 * running!
 	 */
 	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id) {
-		ci->ci_flags |= CPUF_PRIMARY;
+		cpu_announce_extensions(ci);
+#if defined(MULTIPROCESSOR)
+		ci->ci_flags |= CPUF_PRIMARY | CPUF_RUNNING;
+		atomic_setbits_ulong(&cpus_booted, (1UL << ma->ma_slot));
 		atomic_setbits_ulong(&cpus_running, (1UL << ma->ma_slot));
-	}
 #endif /* MULTIPROCESSOR */
+	} else {
+#if defined(MULTIPROCESSOR)
+		/*
+		 * Boot the secondary processor.  It will announce its
+		 * extensions, and then spin up until we tell it to go
+		 * on its merry way.
+		 */
+		cpu_boot_secondary(ci);
+#endif /* MULTIPROCESSOR */
+	}
+}
+
+void
+cpu_announce_extensions(struct cpu_info *ci)
+{
+	u_long implver, amask = 0;
+
+	implver = alpha_implver();
+	if (implver >= ALPHA_IMPLVER_EV5)
+		amask = (~alpha_amask(ALPHA_AMASK_ALL)) & ALPHA_AMASK_ALL;
+
+	if (ci->ci_cpuid == hwrpb->rpb_primary_cpu_id) {
+		cpu_implver = implver;
+		cpu_amask = amask;
+	} else {
+		if (implver < cpu_implver)
+			printf("%s: WARNING: IMPLVER %lu < %lu\n",
+			    ci->ci_dev->dv_xname, implver, cpu_implver);
+
+		/*
+		 * Cap the system architecture mask to the intersection
+		 * of features supported by all processors in the system.
+		 */
+		cpu_amask &= amask;
+	}
+
+	if (amask) {
+		printf("%s: architecture extensions: %b\n",
+		    ci->ci_dev->dv_xname, amask, ALPHA_AMASK_BITS);
+	}
 }
 
 #if defined(MULTIPROCESSOR)
 void
-cpu_boot_secondary_processors()
+cpu_boot_secondary_processors(void)
 {
 	struct cpu_info *ci;
 	u_long i;
 
 	for (i = 0; i < ALPHA_MAXPROCS; i++) {
-		ci = &cpu_info[i];
-		if (ci->ci_idle_pcb == NULL)
+		ci = cpu_info[i];
+		if (ci == NULL || ci->ci_idle_pcb == NULL)
 			continue;
 		if (ci->ci_flags & CPUF_PRIMARY)
 			continue;
-		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
+		if ((cpus_booted & (1UL << i)) == 0)
+			continue;
 
-		/* This processor is all set up; boot it! */
-		cpu_boot_secondary(ci);
+		/*
+		 * Link the processor into the list, and launch it.
+		 */
+		ci->ci_next = cpu_info_list->ci_next;
+		cpu_info_list->ci_next = ci;
+		atomic_setbits_ulong(&ci->ci_flags, CPUF_RUNNING);
+		atomic_setbits_ulong(&cpus_running, (1UL << i));
+		ncpus++;
 	}
 }
 
 void
-cpu_boot_secondary(ci)
-	struct cpu_info *ci;
+cpu_boot_secondary(struct cpu_info *ci)
 {
 	long timeout;
 	struct pcs *pcsp, *primary_pcsp;
@@ -439,10 +475,8 @@ cpu_boot_secondary(ci)
 	 * the primary CPU's PALcode revision info to the secondary
 	 * CPUs PCS.
 	 */
-
 	memcpy(&pcsp->pcs_pal_rev, &primary_pcsp->pcs_pal_rev,
 	    sizeof(pcsp->pcs_pal_rev));
-
 	pcsp->pcs_flags |= (PCS_CV|PCS_RC);
 	pcsp->pcs_flags &= ~PCS_BIP;
 
@@ -472,7 +506,7 @@ cpu_boot_secondary(ci)
 	 */
 	for (timeout = 10000; timeout != 0; timeout--) {
 		alpha_mb();
-		if (cpus_running & cpumask)
+		if (cpus_booted & cpumask)
 			break;
 		delay(1000);
 	}
@@ -481,48 +515,59 @@ cpu_boot_secondary(ci)
 }
 
 void
-cpu_halt_secondary(cpu_id)
-	u_long cpu_id;
+cpu_pause_resume(u_long cpu_id, int pause)
 {
-	long timeout;
-	u_long cpumask = (1UL << cpu_id);
+	u_long cpu_mask = (1UL << cpu_id);
 
-#ifdef DIAGNOSTIC
-	if (cpu_id >= hwrpb->rpb_pcs_cnt ||
-	    cpu_info[cpu_id].ci_dev == NULL)
-		panic("cpu_halt_secondary: bogus cpu_id");
-#endif
-
-	alpha_mb();
-	if ((cpus_running & cpumask) == 0) {
-		/* Processor not running. */
-		return;
-	}
-
-	/* Send the HALT IPI to the secondary. */
-	alpha_send_ipi(cpu_id, ALPHA_IPI_HALT);
-
-	/* ...and wait for it to shut down. */
-	for (timeout = 10000; timeout != 0; timeout--) {
-		alpha_mb();
-		if ((cpus_running & cpumask) == 0)
-			return;
-		delay(1000);
-	}
-
-	/* Erk, secondary failed to halt. */
-	printf("WARNING: %s (ID %lu) failed to halt\n",
-	    cpu_info[cpu_id].ci_dev->dv_xname, cpu_id);
+	if (pause) {
+		atomic_setbits_ulong(&cpus_paused, cpu_mask);
+		alpha_send_ipi(cpu_id, ALPHA_IPI_PAUSE);
+	} else
+		atomic_clearbits_ulong(&cpus_paused, cpu_mask);
 }
 
 void
-cpu_hatch(ci)
-	struct cpu_info *ci;
+cpu_pause_resume_all(int pause)
 {
-	u_long cpumask = (1UL << ci->ci_cpuid);
+	struct cpu_info *ci, *self = curcpu();
+	CPU_INFO_ITERATOR cii;
 
-	/* Set our `curpcb' to reflect our context. */
-	curpcb = ci->ci_idle_pcb_paddr;
+	CPU_INFO_FOREACH(cii, ci) {
+		if (ci == self)
+			continue;
+		cpu_pause_resume(ci->ci_cpuid, pause);
+	}
+}
+
+void
+cpu_halt(void)
+{
+#if 0
+	struct cpu_info *ci = curcpu();
+#endif
+	u_long cpu_id = cpu_number();
+	struct pcs *pcsp = LOCATE_PCS(hwrpb, cpu_id);
+
+#if 0
+	printf("%s: shutting down...\n", ci->ci_dev->dv_xname);
+#endif
+
+	pcsp->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ);
+	pcsp->pcs_flags |= PCS_HALT_STAY_HALTED;
+
+	atomic_clearbits_ulong(&cpus_running, (1UL << cpu_id));
+	atomic_clearbits_ulong(&cpus_booted, (1U << cpu_id));
+
+	alpha_pal_halt();
+	/* NOTREACHED */
+}
+
+void
+cpu_hatch(struct cpu_info *ci)
+{
+	u_long cpu_id = cpu_number();
+	u_long cpumask = (1UL << cpu_id);
+	int s;
 
 	/* Mark the kernel pmap active on this processor. */
 	atomic_setbits_ulong(&pmap_kernel()->pm_cpus, cpumask);
@@ -531,27 +576,38 @@ cpu_hatch(ci)
 	trap_init();
 
 	/* Yahoo!  We're running kernel code!  Announce it! */
-	printf("%s: processor ID %lu running\n", ci->ci_dev->dv_xname,
-	    alpha_pal_whami());
-	atomic_setbits_ulong(&cpus_running, cpumask);
+	cpu_announce_extensions(ci);
+
+	atomic_setbits_ulong(&cpus_booted, cpumask);
 
 	/*
-	 * Lower interrupt level so that we can get IPIs.  Don't use
-	 * spl0() because we don't want to hassle w/ software interrupts
-	 * right now.  Note that interrupt() prevents the secondaries
-	 * from servicing DEVICE and CLOCK interrupts.
+	 * Spin here until we're told we can start.
 	 */
-	(void) alpha_pal_swpipl(ALPHA_PSL_IPL_0);
+	while ((cpus_running & cpumask) == 0)
+		/* spin */ ;
 
-	/* Ok, so all we do is spin for now... */
-	for (;;)
-		/* nothing */ ;
+	/*
+	 * Invalidate the TLB and sync the I-stream before we
+	 * jump into the kernel proper.  We have to do this
+	 * because we haven't been getting IPIs while we've
+	 * been spinning.
+	 */
+	ALPHA_TBIA();
+	alpha_pal_imb();
+
+	sched_init_cpu(ci);
+	nanouptime(&ci->ci_schedstate.spc_runtime);
+	ci->ci_curproc = ci->ci_fpcurproc = NULL;
+	ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
+
+	(void) alpha_pal_swpipl(ALPHA_PSL_IPL_0);
+	SCHED_LOCK(s);
+	cpu_switchto(NULL, sched_chooseproc());
+	/* NOTREACHED */
 }
 
 int
-cpu_iccb_send(cpu_id, msg)
-	cpuid_t cpu_id;
-	const char *msg;
+cpu_iccb_send(cpuid_t cpu_id, const char *msg)
 {
 	struct pcs *pcsp = LOCATE_PCS(hwrpb, cpu_id);
 	int timeout;
@@ -576,6 +632,7 @@ cpu_iccb_send(cpu_id, msg)
 	pcsp->pcs_iccb.iccb_rxlen = strlen(msg);
 	/* XXX cast to __volatile */
 	atomic_setbits_ulong((__volatile u_long *)&hwrpb->rpb_rxrdy, cpumask);
+	alpha_mb();
 
 	/* Wait for the message to be received. */
 	for (timeout = 10000; timeout != 0; timeout--) {
@@ -591,7 +648,7 @@ cpu_iccb_send(cpu_id, msg)
 }
 
 void
-cpu_iccb_receive()
+cpu_iccb_receive(void)
 {
 #if 0	/* Don't bother... we don't get any important messages anyhow. */
 	u_int64_t txrdy;
@@ -628,5 +685,12 @@ cpu_iccb_receive()
 #endif /* 0 */
 	hwrpb->rpb_txrdy = 0;
 	alpha_mb();
+}
+
+void
+cpu_unidle(struct cpu_info *ci)
+{
+	if (ci != curcpu())
+		alpha_send_ipi(ci->ci_cpuid, ALPHA_IPI_AST);
 }
 #endif /* MULTIPROCESSOR */

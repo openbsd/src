@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.3 2012/11/01 21:09:17 miod Exp $	*/
+/* $OpenBSD: ipifuncs.c,v 1.4 2014/01/26 17:40:09 miod Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.9 1999/12/02 01:09:11 thorpej Exp $ */
 
 /*-
@@ -38,6 +38,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -45,41 +46,71 @@
 #include <machine/alpha_cpu.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/prom.h>
 #include <machine/rpb.h>
 
-void	alpha_ipi_halt(void);
-void	alpha_ipi_tbia(void);
-void	alpha_ipi_tbiap(void);
-void	alpha_ipi_imb(void);
-void	alpha_ipi_ast(void);
+typedef void (*ipifunc_t)(struct cpu_info *, struct trapframe *);
+
+void	alpha_ipi_halt(struct cpu_info *, struct trapframe *);
+void	alpha_ipi_imb(struct cpu_info *, struct trapframe *);
+void	alpha_ipi_ast(struct cpu_info *, struct trapframe *);
+void	alpha_ipi_synch_fpu(struct cpu_info *, struct trapframe *);
+void	alpha_ipi_discard_fpu(struct cpu_info *, struct trapframe *);
+void	alpha_ipi_pause(struct cpu_info *, struct trapframe *);
 
 /*
  * NOTE: This table must be kept in order with the bit definitions
  * in <machine/intr.h>.
  */
-ipifunc_t ipifuncs[ALPHA_NIPIS] = {
+const ipifunc_t ipifuncs[ALPHA_NIPIS] = {
 	alpha_ipi_halt,
-	alpha_ipi_tbia,
-	alpha_ipi_tbiap,
+	pmap_do_tlb_shootdown,
 	alpha_ipi_imb,
 	alpha_ipi_ast,
+	alpha_ipi_synch_fpu,
+	alpha_ipi_discard_fpu,
+	alpha_ipi_pause
 };
+
+/*
+ * Process IPIs for a CPU.
+ */
+void
+alpha_ipi_process(struct cpu_info *ci, struct trapframe *framep)
+{
+	u_long pending_ipis, bit;
+
+	for (;;) {
+		pending_ipis = ci->ci_ipis;
+		if (pending_ipis == 0)
+			break;
+
+		atomic_clearbits_ulong(&ci->ci_ipis, pending_ipis);
+
+		for (bit = 0; bit < ALPHA_NIPIS; bit++) {
+			if (pending_ipis & (1UL << bit)) {
+				(*ipifuncs[bit])(ci, framep);
+			}
+		}
+	}
+}
 
 /*
  * Send an interprocessor interrupt.
  */
 void
-alpha_send_ipi(cpu_id, ipimask)
-	u_long cpu_id, ipimask;
+alpha_send_ipi(u_long cpu_id, u_long ipimask)
 {
 
 #ifdef DIAGNOSTIC
 	if (cpu_id >= hwrpb->rpb_pcs_cnt ||
-	    cpu_info[cpu_id].ci_dev == NULL)
-		panic("alpha_sched_ipi: bogus cpu_id");
+	    cpu_info[cpu_id] == NULL)
+		panic("alpha_send_ipi: bogus cpu_id");
+	if (((1UL << cpu_id) & cpus_running) == 0)
+		panic("alpha_send_ipi: CPU %ld not running", cpu_id);
 #endif
 
-	atomic_setbits_ulong(&cpu_info[cpu_id].ci_ipis, ipimask);
+	atomic_setbits_ulong(&cpu_info[cpu_id]->ci_ipis, ipimask);
 	alpha_pal_wripir(cpu_id);
 }
 
@@ -87,15 +118,21 @@ alpha_send_ipi(cpu_id, ipimask)
  * Broadcast an IPI to all but ourselves.
  */
 void
-alpha_broadcast_ipi(ipimask)
-	u_long ipimask;
+alpha_broadcast_ipi(u_long ipimask)
 {
-	u_long i;
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+	u_long cpu_id = cpu_number();
+	u_long cpumask;
 
-	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
-		if (cpu_info[i].ci_dev == NULL)
+	cpumask = cpus_running & ~(1UL << cpu_id);
+	if (cpumask == 0)
+		return;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if ((cpumask & (1UL << ci->ci_cpuid)) == 0)
 			continue;
-		alpha_send_ipi(i, ipimask);
+		alpha_send_ipi(ci->ci_cpuid, ipimask);
 	}
 }
 
@@ -103,71 +140,88 @@ alpha_broadcast_ipi(ipimask)
  * Send an IPI to all in the list but ourselves.
  */
 void
-alpha_multicast_ipi(cpumask, ipimask)
-	u_long cpumask, ipimask;
+alpha_multicast_ipi(u_long cpumask, u_long ipimask)
 {
-	u_long i;
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+	u_long cpu_id = cpu_number();
 
 	cpumask &= cpus_running;
-	cpumask &= ~(1UL << cpu_number());
+	cpumask &= ~(1UL << cpu_id);
 	if (cpumask == 0)
 		return;
 
-	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
-		if ((cpumask & (1UL << i)) == 0)
+	CPU_INFO_FOREACH(cii, ci) {
+		if ((cpumask & (1UL << ci->ci_cpuid)) == 0)
 			continue;
-		alpha_send_ipi(i, ipimask);
+		alpha_send_ipi(ci->ci_cpuid, ipimask);
 	}
 }
 
 void
-alpha_ipi_halt()
+alpha_ipi_halt(struct cpu_info *ci, struct trapframe *framep)
 {
-	u_long cpu_id = alpha_pal_whami();
-	struct pcs *pcsp = LOCATE_PCS(hwrpb, cpu_id);
-
 	/* Disable interrupts. */
 	(void) splhigh();
 
-	printf("%s: shutting down...\n", cpu_info[cpu_id].ci_dev->dv_xname);
-	atomic_clearbits_ulong(&cpus_running, (1UL << cpu_id));
-
-	pcsp->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ);
-	pcsp->pcs_flags |= PCS_HALT_STAY_HALTED;
-	alpha_pal_halt();
+	cpu_halt();
 	/* NOTREACHED */
 }
 
 void
-alpha_ipi_tbia()
+alpha_ipi_imb(struct cpu_info *ci, struct trapframe *framep)
 {
-	u_long cpu_id = alpha_pal_whami();
-
-	/* If we're doing a TBIA, we don't need to do a TBIAP or a SHOOTDOWN. */
-	atomic_clearbits_ulong(&cpu_info[cpu_id].ci_ipis,
-	    ALPHA_IPI_TBIAP|ALPHA_IPI_SHOOTDOWN);
-
-	ALPHA_TBIA();
-}
-
-void
-alpha_ipi_tbiap()
-{
-
-	/* Can't clear SHOOTDOWN here; might have PG_ASM mappings. */
-
-	ALPHA_TBIAP();
-}
-
-void
-alpha_ipi_imb()
-{
-
 	alpha_pal_imb();
 }
 
 void
-alpha_ipi_ast()
+alpha_ipi_ast(struct cpu_info *ci, struct trapframe *framep)
 {
-	cpu_unidle(curcpu());
+#if 0 /* useless */
+	cpu_unidle(ci);
+#endif
+}
+
+void
+alpha_ipi_synch_fpu(struct cpu_info *ci, struct trapframe *framep)
+{
+	if (ci->ci_flags & CPUF_FPUSAVE)
+		return;
+	fpusave_cpu(ci, 1);
+}
+
+void
+alpha_ipi_discard_fpu(struct cpu_info *ci, struct trapframe *framep)
+{
+	if (ci->ci_flags & CPUF_FPUSAVE)
+		return;
+	fpusave_cpu(ci, 0);
+}
+
+void
+alpha_ipi_pause(struct cpu_info *ci, struct trapframe *framep)
+{
+	u_long cpumask = (1UL << ci->ci_cpuid);
+	int s;
+
+	s = splhigh();
+
+	/* Point debuggers at our trapframe for register state. */
+	ci->ci_db_regs = framep;
+
+	atomic_setbits_ulong(&ci->ci_flags, CPUF_PAUSED);
+
+	/* Spin with interrupts disabled until we're resumed. */
+	do {
+		alpha_mb();
+	} while (cpus_paused & cpumask);
+
+	atomic_clearbits_ulong(&ci->ci_flags, CPUF_PAUSED);
+
+	ci->ci_db_regs = NULL;
+
+	splx(s);
+
+	/* Do an IMB on the way out, in case the kernel text was changed. */
+	alpha_pal_imb();
 }

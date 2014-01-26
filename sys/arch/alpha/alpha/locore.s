@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.37 2013/06/13 02:27:23 deraadt Exp $ */
+/* $OpenBSD: locore.s,v 1.38 2014/01/26 17:40:09 miod Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -92,18 +92,18 @@
 
 #else	/* if not MULTIPROCESSOR... */
 
-IMPORT(cpu_info_store, CPU_INFO_SIZEOF)
+IMPORT(cpu_info_primary, CPU_INFO_SIZEOF)
 
-#define	GET_CPUINFO		lda v0, cpu_info_store
+#define	GET_CPUINFO		lda v0, cpu_info_primary
 
-#define	GET_CURPROC		lda v0, cpu_info_store + CPU_INFO_CURPROC
+#define	GET_CURPROC		lda v0, cpu_info_primary + CPU_INFO_CURPROC
 
-#define	GET_FPCURPROC		lda v0, cpu_info_store + CPU_INFO_FPCURPROC
+#define	GET_FPCURPROC		lda v0, cpu_info_primary + CPU_INFO_FPCURPROC
 
-#define	GET_CURPCB		lda v0, cpu_info_store + CPU_INFO_CURPCB
+#define	GET_CURPCB		lda v0, cpu_info_primary + CPU_INFO_CURPCB
 
 #define	GET_IDLE_PCB(reg)						\
-	lda	reg, cpu_info_store				;	\
+	lda	reg, cpu_info_primary				;	\
 	ldq	reg, CPU_INFO_IDLE_PCB_PADDR(reg)
 #endif
 
@@ -289,20 +289,6 @@ BSS(ssir, 8)
 LEAF(exception_return, 1)			/* XXX should be NESTED */
 	br	pv, 1f
 1:	LDGP(pv)
-
-#if defined(MULTIPROCESSOR)
-	/* XXX XXX XXX */
-	/*
-	 * Check the current processor ID.  If we're not the primary
-	 * CPU, then just restore registers and bail out.
-	 */
-	call_pal PAL_OSF1_whami
-	lda	t0, hwrpb
-	ldq	t0, 0(t0)
-	ldq	t1, RPB_PRIMARY_CPU_ID(t0)
-	cmpeq	t1, v0, t0
-	beq	t0, 4f				/* == 0: bail out now */
-#endif
 
 	ldq	s1, (FRAME_PS * 8)(sp)		/* get the saved PS */
 	and	s1, ALPHA_PSL_IPL_MASK, t0	/* look at the saved IPL */

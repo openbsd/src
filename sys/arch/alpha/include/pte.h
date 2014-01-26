@@ -1,4 +1,4 @@
-/* $OpenBSD: pte.h,v 1.11 2014/01/06 20:27:44 miod Exp $ */
+/* $OpenBSD: pte.h,v 1.12 2014/01/26 17:40:11 miod Exp $ */
 /* $NetBSD: pte.h,v 1.26 1999/04/09 00:38:11 thorpej Exp $ */
 
 /*-
@@ -98,7 +98,7 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 #define	PG_WIRED	0x0000000000010000	/* Wired. [SOFTWARE] */
 #define	PG_PVLIST	0x0000000000020000	/* on pv list [SOFTWARE] */
 #define	PG_EXEC		0x0000000000040000	/* execute perms [SOFTWARE] */
-#define	PG_FRAME	ALPHA_PTE_RAME
+#define	PG_FRAME	ALPHA_PTE_PFN
 #define	PG_SHIFT	32
 #define	PG_PFNUM(x)	ALPHA_PTE_TO_PFN(x)
 
