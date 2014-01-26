@@ -1,4 +1,4 @@
-#	$OpenBSD: cert-hostkey.sh,v 1.8 2013/12/06 13:52:46 markus Exp $
+#	$OpenBSD: cert-hostkey.sh,v 1.9 2014/01/26 10:22:10 djm Exp $
 #	Placed in the Public Domain.
 
 tid="certified host keys"
@@ -72,30 +72,10 @@ done
 	printf '@cert-authority '
 	printf "$HOSTS "
 	cat $OBJ/host_ca_key.pub
-	printf '@revoked '
-	printf "* "
-	cat $OBJ/cert_host_key_rsa.pub
-	printf '@revoked '
-	printf "* "
-	cat $OBJ/cert_host_key_ecdsa-sha2-nistp256.pub
-	printf '@revoked '
-	printf "* "
-	cat $OBJ/cert_host_key_ecdsa-sha2-nistp384.pub
-	printf '@revoked '
-	printf "* "
-	cat $OBJ/cert_host_key_ecdsa-sha2-nistp521.pub
-	printf '@revoked '
-	printf "* "
-	cat $OBJ/cert_host_key_ed25519.pub
-	printf '@revoked '
-	printf "* "
-	cat $OBJ/cert_host_key_dsa.pub
-	printf '@revoked '
-	printf "* "
-	cat $OBJ/cert_host_key_rsa_v00.pub
-	printf '@revoked '
-	printf "* "
-	cat $OBJ/cert_host_key_dsa_v00.pub
+	for ktype in $PLAIN_TYPES rsa_v00 dsa_v00; do
+		test -f "$OBJ/cert_host_key_${ktype}.pub" || fatal "no pubkey"
+		printf "@revoked * `cat $OBJ/cert_host_key_${ktype}.pub`\n"
+	done
 ) > $OBJ/known_hosts-cert
 for privsep in yes no ; do
 	for ktype in $PLAIN_TYPES rsa_v00 dsa_v00; do 
