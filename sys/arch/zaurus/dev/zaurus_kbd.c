@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.33 2011/11/09 14:22:37 shadchin Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.34 2014/01/26 17:48:08 miod Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -151,7 +151,7 @@ struct wskbd_consops zkbd_consops = {
 
 struct wskbd_mapdata zkbd_keymapdata = {
         zkbd_keydesctab,   
-        KB_US,
+        KB_US | KB_DEFAULT,
 };
 
 

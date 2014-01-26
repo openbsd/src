@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.4 2012/04/29 09:01:38 miod Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.5 2014/01/26 17:48:07 miod Exp $	*/
 /*	$NetBSD: zs_kbd.c,v 1.8 2008/03/29 19:15:35 tsutsui Exp $	*/
 
 /*
@@ -163,7 +163,7 @@ static struct zsops zskbd_zsops = {
 extern const struct wscons_keydesc wssgi_keydesctab[];
 const struct wskbd_mapdata sgikbd_wskbd_keymapdata = {
 	wssgi_keydesctab,
-	KB_US
+	KB_US | KB_DEFAULT
 };
 
 const struct wskbd_accessops zskbd_wskbd_accessops = {

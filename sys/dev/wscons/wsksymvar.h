@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymvar.h,v 1.7 2008/06/26 05:42:19 ray Exp $	*/
+/*	$OpenBSD: wsksymvar.h,v 1.8 2014/01/26 17:48:08 miod Exp $	*/
 /*	$NetBSD: wsksymvar.h,v 1.8.4.1 2000/07/07 09:50:21 hannken Exp $ */
 
 /*-
@@ -60,7 +60,7 @@ struct wskbd_mapdata {
 };
 
 /* layout variant bits ignored by mapping code */
-#define KB_HANDLEDBYWSKBD KB_METAESC
+#define KB_HANDLEDBYWSKBD	(KB_METAESC | KB_DEFAULT)
 
 /*
  * Utility functions.
@@ -68,7 +68,7 @@ struct wskbd_mapdata {
 void	wskbd_get_mapentry(const struct wskbd_mapdata *, int,
                                 struct wscons_keymap *);
 void	wskbd_init_keymap(int, struct wscons_keymap **, int *);
-int	wskbd_load_keymap(const struct wskbd_mapdata *,
+int	wskbd_load_keymap(const struct wskbd_mapdata *, kbd_t,
                                struct wscons_keymap **, int *);
 keysym_t wskbd_compose_value(keysym_t *);
 

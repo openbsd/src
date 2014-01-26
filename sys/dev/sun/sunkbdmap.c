@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbdmap.c,v 1.5 2012/11/29 14:51:27 shadchin Exp $	*/
+/*	$OpenBSD: sunkbdmap.c,v 1.6 2014/01/26 17:48:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.
@@ -1162,7 +1162,7 @@ struct wskbd_mapdata sunkbd_keymapdata = {
 #ifdef SUNKBD_LAYOUT
 	SUNKBD_LAYOUT,
 #else
-	KB_US,
+	KB_US | KB_DEFAULT,
 #endif
 };
 
@@ -1171,6 +1171,6 @@ struct wskbd_mapdata sunkbd5_keymapdata = {
 #ifdef SUNKBD5_LAYOUT
 	SUNKBD5_LAYOUT,
 #else
-	KB_US,
+	KB_US | KB_DEFAULT,
 #endif
 };

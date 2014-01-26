@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.25 2013/12/02 02:36:22 krw Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.26 2014/01/26 17:48:08 miod Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -519,13 +519,8 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		if (!error)
 			ok = 1;
 	}
-	if (ok) {
+	if (ok)
 		error = 0;
-		if (cmd == WSKBDIO_SETENCODING) {
-			sc->sc_kbd_layout = *((kbd_t *)data);
-		}
-
-	}
 
 	return (error);
 }
@@ -633,10 +628,6 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 				(void)wsevsrc_ioctl(me, WSKBDIO_SETMODE,
 						    &sc->sc_rawkbd, FWRITE, 0);
 #endif
-				if (sc->sc_kbd_layout != KB_NONE)
-					(void)wsevsrc_ioctl(me,
-					    WSKBDIO_SETENCODING,
-					    &sc->sc_kbd_layout, FWRITE, 0);
 			}
 		}
 	}
@@ -821,3 +812,16 @@ wsmux_set_display(struct wsmux_softc *sc, struct device *displaydv)
 	return (error);
 }
 #endif /* NWSDISPLAY > 0 */
+
+uint32_t
+wsmux_get_layout(struct wsmux_softc *sc)
+{
+	return sc->sc_kbd_layout;
+}
+
+void
+wsmux_set_layout(struct wsmux_softc *sc, uint32_t layout)
+{
+	if ((layout & KB_DEFAULT) == 0)
+		sc->sc_kbd_layout = layout;
+}

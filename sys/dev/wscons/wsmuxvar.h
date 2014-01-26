@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmuxvar.h,v 1.9 2013/12/02 02:36:22 krw Exp $	*/
+/*	$OpenBSD: wsmuxvar.h,v 1.10 2014/01/26 17:48:08 miod Exp $	*/
 /*      $NetBSD: wsmuxvar.h,v 1.10 2005/04/30 03:47:12 augustss Exp $   */
 
 /*
@@ -93,6 +93,8 @@ struct	wsmux_softc *wsmux_create(const char *, int);
 int	wsmux_attach_sc(struct wsmux_softc *, struct wsevsrc *);
 void	wsmux_detach_sc(struct wsevsrc *);
 int	wsmux_set_display(struct wsmux_softc *, struct device *);
+uint32_t wsmux_get_layout(struct wsmux_softc *);
+void	wsmux_set_layout(struct wsmux_softc *, uint32_t);
 
 int	wskbd_add_mux(int, struct wsmux_softc *);
 int	wsmouse_add_mux(int, struct wsmux_softc *);

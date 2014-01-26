@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_kpc.c,v 1.2 2013/02/09 20:36:14 miod Exp $	*/
+/*	$OpenBSD: pxa27x_kpc.c,v 1.3 2014/01/26 17:48:07 miod Exp $	*/
 /*
  * Copyright (c) 2009 Marek Vasut <marex@openbsd.org>
  *
@@ -50,7 +50,7 @@ struct wscons_keydesc pxa27x_kpc_keydesctab[] = {
 };
 
 struct wskbd_mapdata pxa27x_kpc_mapdata = {
-	pxa27x_kpc_keydesctab, KB_US,
+	pxa27x_kpc_keydesctab, KB_US | KB_DEFAULT,
 };
 
 void pxa27x_kpc_cngetc(void *, u_int *, int *);

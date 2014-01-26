@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_remote.c,v 1.1 2005/11/17 05:26:31 uwe Exp $	*/
+/*	$OpenBSD: zaurus_remote.c,v 1.2 2014/01/26 17:48:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -153,7 +153,7 @@ static const struct wscons_keydesc zrc_keydesctab[] = {
 };
 
 struct wskbd_mapdata zrc_keymapdata = {
-	zrc_keydesctab, KB_US
+	zrc_keydesctab, KB_US | KB_DEFAULT
 };
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.62 2013/11/15 08:17:44 pirofti Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.63 2014/01/26 17:48:08 miod Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -265,7 +265,7 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 #ifdef UKBD_LAYOUT
 		layout = UKBD_LAYOUT;
 #else
-		layout = KB_US;
+		layout = KB_US | KB_DEFAULT;
 #endif
 	}
 

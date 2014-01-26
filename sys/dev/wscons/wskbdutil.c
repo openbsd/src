@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdutil.c,v 1.10 2012/12/05 23:20:22 deraadt Exp $	*/
+/*	$OpenBSD: wskbdutil.c,v 1.11 2014/01/26 17:48:08 miod Exp $	*/
 /*	$NetBSD: wskbdutil.c,v 1.7 1999/12/21 11:59:13 drochner Exp $	*/
 
 /*-
@@ -395,7 +395,7 @@ wskbd_init_keymap(int newlen, struct wscons_keymap **map, int *maplen)
 }
 
 int
-wskbd_load_keymap(const struct wskbd_mapdata *mapdata,
+wskbd_load_keymap(const struct wskbd_mapdata *mapdata, kbd_t layout,
     struct wscons_keymap **map, int *maplen)
 {
 	int i, s, kc, stack_ptr;
@@ -404,7 +404,7 @@ wskbd_load_keymap(const struct wskbd_mapdata *mapdata,
 	kbd_t cur;
 	keysym_t ksg;
 
-	for (cur = mapdata->layout & ~KB_HANDLEDBYWSKBD, stack_ptr = 0;
+	for (cur = layout & ~KB_HANDLEDBYWSKBD, stack_ptr = 0;
 	     cur != 0; stack_ptr++) {
 		mp = mapdata->keydesc;
 		while (mp->map_size > 0) {
