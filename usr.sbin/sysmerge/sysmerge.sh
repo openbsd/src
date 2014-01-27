@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.114 2014/01/27 17:06:56 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.115 2014/01/27 17:16:53 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -20,7 +20,7 @@
 
 umask 0022
 
-unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE ETCSUM NEED_NEWALIASES
+unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE EDIT ETCSUM NEED_NEWALIASES
 unset NEWGRP NEWUSR NEED_REBOOT NOSIGCHECK RELINT SRCDIR SRCSUM TGZ
 unset XETCSUM XTGZ
 
@@ -28,6 +28,11 @@ unset XETCSUM XTGZ
 WRKDIR=$(mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXXXXXXX) || exit 1
 SWIDTH=$(stty size | awk '{w=$2} END {if (w==0) {w=80} print w}')
 RELINT=$(uname -r | tr -d '.')
+if [ -z "${VISUAL}" ]; then
+	EDIT="${EDITOR:=/usr/bin/vi}"
+else
+	EDIT="${VISUAL}"
+fi
 
 # sysmerge specific variables (overridable)
 MERGE_CMD="${MERGE_CMD:=sdiff -as -w ${SWIDTH} -o}"
@@ -322,11 +327,6 @@ merge_loop() {
 			case "${INSTALL_MERGED}" in
 			[eE])
 				echo "editing merged file...\n"
-				if [ -z "${VISUAL}" ]; then
-					EDIT="${EDITOR:=/usr/bin/vi}"
-				else
-					EDIT="${VISUAL}"
-				fi
 				${EDIT} ${COMPFILE}.merged
 				INSTALL_MERGED=v
 				;;
