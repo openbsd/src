@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.209 2014/01/18 02:42:30 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.210 2014/01/27 23:44:40 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -284,14 +284,14 @@ scsi_iopool_destroy(struct scsi_iopool *iopl)
 void *
 scsi_default_get(void *iocookie)
 {
-	return (iocookie);
+	return (SCSI_IOPOOL_POISON);
 }
 
 void
 scsi_default_put(void *iocookie, void *io)
 {
 #ifdef DIAGNOSTIC
-	if (iocookie != io)
+	if (io != SCSI_IOPOOL_POISON)
 		panic("unexpected opening returned");
 #endif
 }
