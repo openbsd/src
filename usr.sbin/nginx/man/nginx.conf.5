@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nginx.conf.5,v 1.7 2014/01/20 20:34:22 schwarze Exp $
+.\"	$OpenBSD: nginx.conf.5,v 1.8 2014/01/27 12:43:58 jmc Exp $
 .\"
 .\" Copyright (C) 2002-2012 Igor Sysoev
 .\" Copyright (C) 2011-2013 Nginx, Inc.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 20 2014 $
+.Dd $Mdocdate: January 27 2014 $
 .Dt NGINX.CONF 5
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@ It is known for its high performance, stability, rich feature set, simple
 configuration, and low resource consumption.
 .Pp
 The configuration file consists of a list of configuration directives:
-.Bd -offset indent -ragged
+.Bd -ragged -offset indent
 .Ar list
 .Li ::=
 .Op Ar directive
@@ -55,7 +55,7 @@ directives.
 Such whitespace is semantically insignificant.
 .Pp
 The syntax of a configuration directive is:
-.Bd -offset indent -ragged
+.Bd -ragged -offset indent
 .Ar directive
 .Li ::=
 .Ar keyword
@@ -74,7 +74,7 @@ directive, a semicolon is required, even at the end of a list.
 .Pp
 As a special cases of a configuration directive, the syntax of a
 configuration context is:
-.Bd -offset indent -ragged
+.Bd -ragged -offset indent
 .Ar context
 .Li ::=
 .Ar keyword
@@ -88,13 +88,13 @@ Contexts may be nested, and they freely intermix with other directives
 on each nesting level.
 .Pp
 The syntax of whitespace is:
-.Bd -offset indent -ragged
+.Bd -ragged -offset indent
 .Ar ws
 .Li ::=
 .Ar ws-char
 .Op Ar opt-ws
 .Ed
-.Bd -offset indent -ragged
+.Bd -ragged -offset indent
 .Ar ws-char
 .Li ::=
 .Aq space
@@ -103,13 +103,13 @@ The syntax of whitespace is:
 .Li \&|
 .Aq newline
 .Ed
-.Bd -offset indent -ragged
+.Bd -ragged -offset indent
 .Ar opt-ws
 .Li ::=
 .Pq Ar comment | ws-char
 .Op Ar opt-ws
 .Ed
-.Bd -offset indent -ragged
+.Bd -ragged -offset indent
 .Ar comment
 .Li ::=
 .Qq #
@@ -274,7 +274,7 @@ Facility can be one of
 .Cm audit ,
 .Cm alert ,
 .Cm cron ,
-.Cm local0 No .. Cm local7.
+.Cm local0 No .. Cm local7 .
 Default is
 .Cm local7 .
 .It Cm tag Ns = Ns Ar string
@@ -931,7 +931,7 @@ flag (Mac OS X), or the
 .Fn directio
 function (Solaris), when reading files that are larger than or equal to the
 specified
-.Ar size.
+.Ar size .
 The directive automatically disables (0.7.15) the use of
 .Ic sendfile
 for a given request.
@@ -950,7 +950,7 @@ on Linux.
 .El
 .Pp
 Sets the alignment for
-.Ic directio.
+.Ic directio .
 In most cases, a 512-byte alignment is enough.
 However, when using XFS under Linux, it needs to be increased to 4K.
 .It Ic disable_symlinks Cm off
@@ -1530,7 +1530,7 @@ sets the name of accept filter (the
 .Dv SO_ACCEPTFILTER
 option) for the listening socket that filters incoming connections before
 passing them to
-.Fn accept.
+.Fn accept .
 This works only on FreeBSD and NetBSD_5.0+.
 Possible values are
 .Cm dataready
@@ -2184,7 +2184,7 @@ server {
 }
 .Ed
 .Pp
-It is also possible to use regular expressions in server names, preceeding the
+It is also possible to use regular expressions in server names, preceding the
 name with a tilde
 .Pq Ic ~ :
 .Bd -literal -offset indent
@@ -2570,7 +2570,7 @@ client address in a binary form, value's length is always 4 bytes
 .It Va $body_bytes_sent
 number of bytes sent to a client, not counting the response header; this
 variable is compatible with the
-.Qq %B
+.Qq \&%B
 parameter of the mod_log_config Apache module
 .It Va $bytes_sent
 number of bytes sent to a client (1.3.8, 1.2.5)
@@ -4308,7 +4308,7 @@ determining if clients support gzip:
 .Ic gzip_http_version ,
 .Ic gzip_proxied ,
 and
-.Ic gzip_disable.
+.Ic gzip_disable .
 See also the
 .Ic gzip_vary
 directive.
@@ -4439,7 +4439,7 @@ enables compression for all proxied requests.
 .El
 .Pp
 Enables gzipping of responses for the specified MIME types in addition to
-.Ar text/html.
+.Ar text/html .
 The special value
 .Qq *
 matches any MIME type (0.8.29).
@@ -5075,7 +5075,7 @@ Facility can be one of
 .Cm audit ,
 .Cm alert ,
 .Cm cron ,
-.Cm local0 No .. Cm local7.
+.Cm local0 No .. Cm local7 .
 Default is
 .Cm local7 .
 .It Cm severity Ns = Ns Ar string
@@ -5312,7 +5312,7 @@ The details of setting up hash tables are provided in a separate document.
 .Pp
 Makes outgoing connections to a memcached server originate from the specified
 local IP
-.Ar address.
+.Ar address .
 Parameter value can contain variables (1.3.12).
 The special value
 .Cm off
@@ -5379,7 +5379,7 @@ That is, if an error or timeout occurs in the middle of the transferring of a
 response, fixing this is impossible.
 The directive also defines what is considered an unsuccessful attempt of
 communication with a
-.Ic server.
+.Ic server .
 The cases of
 .Cm error ,
 .Cm timeout
@@ -5476,7 +5476,7 @@ log the following message:
 Enables or disables rate limiting based on the average bitrate of the MP4 file
 served.
 To calculate the rate, the bitrate is multiplied by the specified
-.Ar factor.
+.Ar factor .
 The special value
 .Cm on
 corresponds to the factor of 1.1.
@@ -5535,7 +5535,7 @@ Installs a Perl handler for the specified variable.
 .Pp
 Makes outgoing connections to a proxied server originate from the specified
 local IP
-.Ar address.
+.Ar address .
 Parameter value can contain variables (1.3.12).
 The special value
 .Cm off
@@ -5870,7 +5870,7 @@ Sets a text that should be changed in the
 .Ar domain
 attribute of the Set-Cookie header fields of a proxied server response.
 Suppose a proxied server returned the Set-Cookie header field with the attribute
-.Ar domain Ns = Ns localhost.
+.Ar domain Ns = Ns localhost .
 The directive
 .Bd -literal -offset indent
 proxy_cookie_domain localhost example.org;
@@ -5937,7 +5937,7 @@ Sets a text that should be changed in the
 .Ar path
 attribute of the Set-Cookie header fields of a proxied server response.
 Suppose a proxied server returned the Set-Cookie header field with the attribute
-.Ar path Ns = Ns /two/some/uri/.
+.Ar path Ns = Ns /two/some/uri/ .
 The directive
 .Bd -literal -offset indent
 proxy_cookie_path /two/ /;
@@ -6160,7 +6160,7 @@ That is, if an error or timeout occurs in the middle of the transferring of a
 response, fixing this is impossible.
 The directive also defines what is considered an unsuccessful attempt of
 communication with a
-.Ic server.
+.Ic server .
 The cases of
 .Cm error ,
 .Cm timeout
@@ -6591,7 +6591,7 @@ The
 parameter saves files with paths corresponding to the directives
 .Ic alias
 or
-.Ic root.
+.Ic root .
 The
 .Cm off
 parameter disables saving of files.
@@ -6807,7 +6807,7 @@ at the beginning or end.
 During the checking, the server's port in the Referer field is ignored;
 .It Ar regular expression
 the first symbol should be a
-.Qq ~.
+.Qq ~ .
 It should be noted that an expression will be matched against the text starting
 after the
 .Qq http://
@@ -7771,7 +7771,7 @@ Indicates whether to look for a string to replace once or several times.
 .Pp
 Enables string replacement in responses with the specified MIME types in
 addition to
-.Ar text/html.
+.Ar text/html .
 The special value
 .Qq *
 matches any MIME type (0.8.29).
@@ -7860,7 +7860,8 @@ sets the
 .Ar time
 during which the server will recover its weight from zero to a nominal value,
 when unhealthy server becomes healthy, or when the server becomes available
-after a period of time it was considered unavailable. Default value is zero,
+after a period of time it was considered unavailable.
+Default value is zero,
 i.e. slow start is disabled.
 .Pp
 .Em This option is only available in the commercial version of nginx.
@@ -8686,7 +8687,7 @@ If a parameter includes the
 character, it should be escaped as
 .Qq %3A .
 Also,
-.Lb libxslt
+libxslt
 requires to enclose parameters that contain non-alphanumeric characters into
 single or double quotes, for example:
 .Bd -literal -offset indent
@@ -8725,7 +8726,7 @@ text/html.
 .Sh EXAMPLES
 The following is a valid configuration file, but such creative use
 of whitespace is not recommended:
-.Bd -offset indent -literal
+.Bd -literal -offset indent
 worker_processes #whitespace is required here
 auto
 #a comment is allowed here
