@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.735 2014/01/26 21:54:32 rpe Exp $
+#	$OpenBSD: install.sub,v 1.736 2014/01/27 23:18:53 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -103,9 +103,9 @@ set_term() {
 		while :; do
 			ask "Choose your keyboard layout ('?' or 'L' for list)" "default"
 			case $resp in
-			"?"|L|l) echo "Available layouts: $_layouts" ;;
-			default) return ;;
-			*)	kbd $resp && { echo $resp >/tmp/kbdtype ; return ; } ;;
+			"?"|L|l) echo "Available layouts: $_layouts";;
+			default) return;;
+			*)	kbd $resp && { echo $resp >/tmp/kbdtype; return; };;
 			esac
 		done
 	fi
@@ -182,7 +182,7 @@ mount_mnt2() {
 
 	_parts=$(sed -e 's/^  \(.\): .*/\1/' $_file)
 	set -- $_parts
-	(($# == 0)) && { echo "No filesystems found on $_dev." ; return 1 ; }
+	(($# == 0)) && { echo "No filesystems found on $_dev."; return 1; }
 
 	if isin "c" $_parts; then
 		# Don't ask questions if 'c' contains a filesystem.
@@ -377,13 +377,13 @@ user_setup() {
 	while :; do
 		ask "$_q" no
 		case $resp in
-		n|no)	return ;;
+		n|no)	return;;
 		y|yes)	_q="No really, what is the lower-case loginname, or 'no'?"
-			continue ;;
+			continue;;
 		root|daemon|operator|bin|smmsp|popa3d) ;;
 		sshd|uucp|www|named|proxy|nobody|ftp) ;;
 		[a-z]*([a-z0-9_]))
-			((${#resp} <= 31)) && break ;;
+			((${#resp} <= 31)) && break;;
 		esac
 		echo "$resp is not a useable loginname."
 	done
@@ -392,10 +392,10 @@ user_setup() {
 		ask "Full name for user $user?" $user
 		case $resp in
 		*[:\&,]*)
-			echo "':', '&' or ',' are not allowed." ;;
+			echo "':', '&' or ',' are not allowed.";;
 		*)
 			((${#resp} <= 100)) && break
-			echo "Too long." ;;
+			echo "Too long.";;
 		esac
 	done
 	username=$resp
@@ -536,8 +536,8 @@ bsort() {
 
 	shift
 	for _b; do
-		if [[ $_a != $_b ]] ; then
-			if [[ $_a > $_b ]] ; then
+		if [[ $_a != $_b ]]; then
+			if [[ $_a > $_b ]]; then
 				_l="$_a $_l"; _a=$_b
 			else
 				_l="$_b $_l"
@@ -617,10 +617,10 @@ __EOT
 		set -o noglob
 		for resp in $resp; do
 			case $resp in
-			abort)	_selected=; break 2 ;;
-			done)	break 2 ;;
-			-*)	_action=rmel ;;
-			*)	_action=addel ;;
+			abort)	_selected=; break 2;;
+			done)	break 2;;
+			-*)	_action=rmel;;
+			*)	_action=addel;;
 			esac
 			resp=${resp#[+-]}
 			[[ $resp = all ]] && resp=*
@@ -860,7 +860,7 @@ ieee80211_config() {
 				sed -n 's/^\([^ ]*\) chan .* bssid \([^ ]*\) .*$/	\1 (\2)/p' |
 				less -XEN
 			;;
-		*)	_nwid=$resp ;;
+		*)	_nwid=$resp;;
 		esac
 	done
 
@@ -924,7 +924,7 @@ v4_config() {
 	none)	;;
 	dhcp)	if [[ ! -x /sbin/dhclient ]]; then
 			echo "DHCP not possible - no /sbin/dhclient."
-		elif dhcp_request $_ifs "$_name" || dhcp_request $_ifs ; then
+		elif dhcp_request $_ifs "$_name" || dhcp_request $_ifs; then
 			echo "dhcp" >>$_hn
 			# Create a new bpf in case we start another dhclient
 			makedev bpf$(ls /dev | grep -c "^bpf[0-9]")
@@ -933,7 +933,7 @@ v4_config() {
 	*)	_addr=$resp
 		ask_until "Netmask?" "${_mask:=255.255.255.0}"
 		ifconfig $_ifs -group dhcp >/dev/null 2>&1
-		if ifconfig $_ifs inet $_addr netmask $resp up ; then
+		if ifconfig $_ifs inet $_addr netmask $resp up; then
 			addhostent "$_addr" "$_name"
 			echo "inet $_addr $resp" >>$_hn
 		fi
@@ -956,7 +956,7 @@ v6_config() {
 	case $resp in
 	none)	return
 		;;
-	rtsol)	[[ ! -x /sbin/rtsol ]] && { echo "No /sbin/rtsol." ; return ; }
+	rtsol)	[[ ! -x /sbin/rtsol ]] && { echo "No /sbin/rtsol."; return; }
 		ifconfig $_ifs up
 		if rtsol -F $_ifs; then
 			echo "up\nrtsol" >>$_hn
@@ -993,7 +993,7 @@ v4_defroute() {
 		ask_until "$_prompt" "$_dr"
 		[[ $resp == @(none|dhcp) ]] && break
 		route delete -inet default >/dev/null 2>&1
-		route -n add -inet -host default "$resp" && { echo "$resp" >/tmp/mygate ; break ; }
+		route -n add -inet -host default "$resp" && { echo "$resp" >/tmp/mygate; break; }
 		# Put the old default route back. The new one did not work.
 		route -n add -inet -host default $_dr >/dev/null 2>&1
 	done
@@ -1446,7 +1446,7 @@ install_url() {
 	while :; do
 		ask_until "$_prompt" "$_server_ip"
 		case $resp in
-		done)	return ;;
+		done)	return;;
 		"?")	[[ -s $SERVERLIST ]] || continue
 			less -XEN < $SERVERLIST
 			;;
@@ -1455,7 +1455,7 @@ install_url() {
 			# as a line number in $SERVERLIST.
 			[[ -s $SERVERLIST ]] || continue
 			set -- $(sed -n "${resp}p" $SERVERLIST)
-			(($# < 1)) && { echo "There is no line $resp." ; continue ; }
+			(($# < 1)) && { echo "There is no line $resp."; continue; }
 			_server_ip=${1%%/*}
 			# Repeat loop to get user to confirm server address.
 			;;
@@ -1497,7 +1497,7 @@ install_url() {
 			_passwd=root@`hostname`
 		else
 			resp=
-			while [[ -z $resp ]] ; do
+			while [[ -z $resp ]]; do
 				askpass "Password? (will not echo)"
 			done
 			_passwd=$resp
@@ -1512,7 +1512,7 @@ install_url() {
 	_url_base=$_url_base$_server_ip/$_server_dir
 
 	# Get list of files from the server.
-	if [[ $_url_type == ftp && -z $ftp_proxy ]] ; then
+	if [[ $_url_type == ftp && -z $ftp_proxy ]]; then
 		_file_list=$(ftp -V "$_url_base/")
 		ftp_error "Login failed." "$_file_list" && return
 		ftp_error "No such file or directory." "$_file_list" && return
@@ -1545,10 +1545,10 @@ install_mounted_fs() {
 		ask_until "Pathname to the sets? (or 'done')" "$SETDIR"
 		[[ $resp == done ]] && return
 		# Accept a valid /mnt2 or /mnt relative path.
-		[[ -d /mnt2/$resp ]] && { _dir=/mnt2/$resp ; break ; }
-		[[ -d /mnt/$resp ]] && { _dir=/mnt/$resp ; break ; }
+		[[ -d /mnt2/$resp ]] && { _dir=/mnt2/$resp; break; }
+		[[ -d /mnt/$resp ]] && { _dir=/mnt/$resp; break; }
 		# Accept a valid absolute path.
-		[[ -d /$resp ]] && { _dir=/$resp ; break ; }
+		[[ -d /$resp ]] && { _dir=/$resp; break; }
 		echo "The directory '$resp' does not exist."
 	done
 
@@ -1622,7 +1622,7 @@ install_tape() {
 			echo "done."
 		elif [[ -n $_bs ]]; then
 			# Dance to start of next file.
-			mt bsf ; mt fsf
+			mt bsf; mt fsf
 		fi
 
 		unset _z
@@ -1670,9 +1670,9 @@ set_timezone() {
 		ask "What timezone are you in? ('?' for list)" "$TZ"
 		_zonepath=${resp%%*(/)}
 		case $_zonepath in
-		"")	continue ;;
+		"")	continue;;
 		"?")	grep -v /. $_zonefile | showcols
-			continue ;;
+			continue;;
 		esac
 
 		while isin "$_zonepath/" $(cat $_zonefile); do
@@ -1681,8 +1681,8 @@ set_timezone() {
 			resp=${resp%%*(/)}
 			case $resp in
 			"")	;;
-			"?")	sed -n "/^$_zsed/{s/$_zsed//;/\/./!p;}" $_zonefile | showcols ;;
-			*)	_zonepath=$_zonepath/$resp ;;
+			"?")	sed -n "/^$_zsed/{s/$_zsed//;/\/./!p;}" $_zonefile | showcols;;
+			*)	_zonepath=$_zonepath/$resp;;
 			esac
 		done
 
@@ -1724,7 +1724,7 @@ install_sets() {
 		_d=$(sed -ne '/^method=/s/method=//p' $SERVERLISTALL)
 
 	ifconfig netboot >/dev/null 2>&1 && : ${_d:=http}
-	[[ -n $(get_cddevs) ]] && { _locs="cd $_locs" ; : ${_d:=cd} ; }
+	[[ -n $(get_cddevs) ]] && { _locs="cd $_locs"; : ${_d:=cd}; }
 	[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
 	[[ -n $MTDEVS && -x /bin/mt ]] && _locs="$_locs tape"
 	: ${_d:=http}
@@ -1743,13 +1743,13 @@ install_sets() {
 
 		ask "Location of sets? ($_locs or 'done')" "$_d"
 		case $resp in
-		done)	sane_install && return ;;
-		c*|C*)	isin cd $_locs && install_cdrom && method=cd ;;
-		d*|D*)	install_disk && method=disk ;;
-		f*|F*)	isin ftp $_locs && install_url ftp && method=ftp ;;
-		h*|H*)	isin http $_locs && install_url http && method=http ;;
-		n*|N*)	isin nfs $_locs && install_nfs && method=nfs ;;
-		t*|T*)	isin tape $_locs && install_tape && method=tape ;;
+		done)	sane_install && return;;
+		c*|C*)	isin cd $_locs && install_cdrom && method=cd;;
+		d*|D*)	install_disk && method=disk;;
+		f*|F*)	isin ftp $_locs && install_url ftp && method=ftp;;
+		h*|H*)	isin http $_locs && install_url http && method=http;;
+		n*|N*)	isin nfs $_locs && install_nfs && method=nfs;;
+		t*|T*)	isin tape $_locs && install_tape && method=tape;;
 		esac
 
 		# Install sets only once, in non-interactive installations.
@@ -2041,8 +2041,8 @@ questions() {
 			ask_which "speed" "should $_d use" \
 				"9600 19200 38400 57600 115200" $CSPEED
 			case $resp in
-			done)	defcons=n ;;
-			*)	CSPEED=$resp ;;
+			done)	defcons=n;;
+			*)	CSPEED=$resp;;
 			esac
 		fi
 	fi
@@ -2101,7 +2101,7 @@ finish_up() {
 	(cd /mnt/dev; sh MAKEDEV all
 		# Make sure any devices we found during probe are created in the
 		# installed system.
-		for _dev in $(get_dkdevs) $(get_cddevs) $MTDEVS ; do
+		for _dev in $(get_dkdevs) $(get_cddevs) $MTDEVS; do
 			sh MAKEDEV $_dev
 		done
 	)
@@ -2207,7 +2207,7 @@ md_consoleinfo
 # the contents of the other sets, not the other way around.
 THESETS="bsd bsd.rd bsd.mp $MDSETS"
 : ${DEFAULTSETS:="bsd bsd.rd"}
-for _set in base etc comp man game xbase xetc xshare xfont xserv site ; do
+for _set in base etc comp man game xbase xetc xshare xfont xserv site; do
 	[[ $MODE == upgrade && ( $_set == etc || $_set == xetc ) ]] && continue
 	THESETS="$THESETS ${_set}${VERSION}.tgz"
 	isin $_set site && continue
