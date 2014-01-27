@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nginx.8,v 1.8 2013/07/16 11:13:33 schwarze Exp $
+.\"	$OpenBSD: nginx.8,v 1.9 2014/01/27 12:30:21 jmc Exp $
 .\"
 .\" Copyright (c) 2010 Sergey A. Osokin
 .\" Copyright (c) 2011,2012 Nginx, Inc.
@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: January 27 2014 $
 .Dt NGINX 8
 .Os
 .Sh NAME
@@ -192,11 +192,10 @@ nginx -t -c ~/mynginx.conf \e
 	-g "pid /var/run/mynginx.pid; worker_processes 2;"
 .Ed
 .Sh SEE ALSO
-.\"Xr nginx.conf 5
-.\"Pp
+.Xr nginx.conf 5
+.Pp
 Documentation at
 .Lk http://nginx.org/en/docs/ .
-.Pp
 For questions and technical support, please refer to
 .Lk http://nginx.org/en/support.html .
 .Sh HISTORY
