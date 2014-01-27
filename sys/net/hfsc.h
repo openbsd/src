@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.h,v 1.4 2013/11/01 23:00:02 pelikan Exp $	*/
+/*	$OpenBSD: hfsc.h,v 1.5 2014/01/27 15:41:06 pelikan Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -57,7 +57,8 @@ struct hfsc_sc {
 
 /* special class handles */
 #define	HFSC_NULLCLASS_HANDLE	0
-#define	HFSC_MAX_CLASSES	64
+#define	HFSC_DEFAULT_CLASSES	64
+#define	HFSC_MAX_CLASSES	65535
 
 /* service curve types */
 #define	HFSC_REALTIMESC		1
@@ -236,9 +237,10 @@ struct hfsc_if {
 	struct ifqueue		*hif_ifq;	/* backpointer to ifq */
 	struct hfsc_class	*hif_rootclass;		/* root class */
 	struct hfsc_class	*hif_defaultclass;	/* default class */
-	struct hfsc_class	*hif_class_tbl[HFSC_MAX_CLASSES];
+	struct hfsc_class	**hif_class_tbl;
 	struct hfsc_class	*hif_pollcache;	/* cache for poll operation */
 
+	u_int	hif_allocated;			/* # of slots in hif_class_tbl */
 	u_int	hif_classes;			/* # of classes in the tree */
 	u_int	hif_packets;			/* # of packets in the tree */
 	u_int	hif_classid;			/* class id sequence number */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.7 2014/01/03 19:58:54 pelikan Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.8 2014/01/27 15:41:06 pelikan Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -130,10 +130,36 @@ hfsc_microuptime(void)
 	    HFSC_CLK_SHIFT);
 }
 
+static inline u_int
+hfsc_more_slots(u_int current)
+{
+	u_int want = current * 2;
+
+	return (want > HFSC_MAX_CLASSES ? HFSC_MAX_CLASSES : want);
+}
+
+static void
+hfsc_grow_class_tbl(struct hfsc_if *hif, u_int howmany)
+{
+	struct hfsc_class **newtbl, **old;
+
+	newtbl = malloc(howmany * sizeof(void *), M_DEVBUF, M_WAITOK | M_ZERO);
+	old = hif->hif_class_tbl;
+
+	memcpy(newtbl, old, hif->hif_allocated * sizeof(void *));
+	hif->hif_class_tbl = newtbl;
+	hif->hif_allocated = howmany;
+
+	free(old, M_DEVBUF);
+}
+
 int
 hfsc_attach(struct ifnet *ifp)
 {
 	struct hfsc_if *hif;
+	size_t tblsize;
+
+	tblsize = HFSC_DEFAULT_CLASSES * sizeof(void *);
 
 	if (ifp->if_snd.ifq_hfsc != NULL)
 		return (0);
@@ -142,6 +168,10 @@ hfsc_attach(struct ifnet *ifp)
 	hif->hif_eligible = hfsc_ellist_alloc();
 	hif->hif_ifq = (struct ifqueue *)&ifp->if_snd; /* XXX cast temp */
 	ifp->if_snd.ifq_hfsc = hif;
+
+	hif->hif_class_tbl = malloc(tblsize, M_DEVBUF, M_WAITOK | M_ZERO);
+	hif->hif_allocated = HFSC_DEFAULT_CLASSES;
+
 	timeout_set(&hif->hif_defer, hfsc_deferred, ifp);
 	/* XXX HRTIMER don't schedule it yet, only when some packets wait. */
 	timeout_add(&hif->hif_defer, 1);
@@ -158,6 +188,7 @@ hfsc_detach(struct ifnet *ifp)
 	ifp->if_snd.ifq_hfsc = NULL;
 
 	hfsc_ellist_destroy(hif->hif_eligible);
+	free(hif->hif_class_tbl, M_DEVBUF);
 	free(hif, M_DEVBUF);
 
 	return (0);
@@ -263,8 +294,13 @@ hfsc_class_create(struct hfsc_if *hif, struct hfsc_sc *rsc,
 	struct hfsc_class *cl, *p;
 	int i, s;
 
-	if (hif->hif_classes >= HFSC_MAX_CLASSES)
-		return (NULL);
+	if (hif->hif_classes >= hif->hif_allocated) {
+		u_int newslots = hfsc_more_slots(hif->hif_allocated);
+
+		if (newslots == hif->hif_allocated)
+			return (NULL);
+		hfsc_grow_class_tbl(hif, newslots);
+	}
 
 	cl = pool_get(&hfsc_class_pl, PR_WAITOK | PR_ZERO);
 	cl->cl_q = pool_get(&hfsc_classq_pl, PR_WAITOK | PR_ZERO);
@@ -336,16 +372,16 @@ hfsc_class_create(struct hfsc_if *hif, struct hfsc_sc *rsc,
 	 * the lower bits of qid is free, use this slot.  otherwise,
 	 * use the first free slot.
 	 */
-	i = qid % HFSC_MAX_CLASSES;
+	i = qid % hif->hif_allocated;
 	if (hif->hif_class_tbl[i] == NULL)
 		hif->hif_class_tbl[i] = cl;
 	else {
-		for (i = 0; i < HFSC_MAX_CLASSES; i++)
+		for (i = 0; i < hif->hif_allocated; i++)
 			if (hif->hif_class_tbl[i] == NULL) {
 				hif->hif_class_tbl[i] = cl;
 				break;
 			}
-		if (i == HFSC_MAX_CLASSES) {
+		if (i == hif->hif_allocated) {
 			splx(s);
 			goto err_ret;
 		}
@@ -420,7 +456,7 @@ hfsc_class_destroy(struct hfsc_class *cl)
 		} while ((p = p->cl_siblings) != NULL);
 	}
 
-	for (i = 0; i < HFSC_MAX_CLASSES; i++)
+	for (i = 0; i < cl->cl_hif->hif_allocated; i++)
 		if (cl->cl_hif->hif_class_tbl[i] == cl) {
 			cl->cl_hif->hif_class_tbl[i] = NULL;
 			break;
@@ -1476,10 +1512,10 @@ hfsc_clh2cph(struct hfsc_if *hif, u_int32_t chandle)
 	 * first, try the slot corresponding to the lower bits of the handle.
 	 * if it does not match, do the linear table search.
 	 */
-	i = chandle % HFSC_MAX_CLASSES;
+	i = chandle % hif->hif_allocated;
 	if ((cl = hif->hif_class_tbl[i]) != NULL && cl->cl_handle == chandle)
 		return (cl);
-	for (i = 0; i < HFSC_MAX_CLASSES; i++)
+	for (i = 0; i < hif->hif_allocated; i++)
 		if ((cl = hif->hif_class_tbl[i]) != NULL &&
 		    cl->cl_handle == chandle)
 			return (cl);
