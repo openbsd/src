@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.46 2014/01/26 21:18:16 jmc Exp $
+.\"	$OpenBSD: compress.1,v 1.47 2014/01/27 16:57:55 sobrado Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)compress.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: January 26 2014 $
+.Dd $Mdocdate: January 27 2014 $
 .Dt COMPRESS 1
 .Os
 .Sh NAME
@@ -44,13 +44,13 @@
 .Nd compress and expand data (compress mode)
 .Sh SYNOPSIS
 .Nm compress
-.Op Fl 123456789cdfghLlNnOqrtVv
+.Op Fl 123456789cdfghlNnOqrtv
 .Op Fl b Ar bits
 .Op Fl o Ar filename
 .Op Fl S Ar suffix
 .Op Ar
 .Nm uncompress
-.Op Fl cfhlNnqrtVv
+.Op Fl cfhlNnqrtv
 .Op Fl o Ar filename
 .Op Ar
 .Nm zcat
@@ -192,8 +192,6 @@ Use the deflate scheme, which reportedly provides better compression rates
 mode).
 .It Fl h
 Print a short help message.
-.It Fl L
-Print the license.
 .It Fl l
 List information for the specified compressed files.
 The following information is listed:
@@ -250,10 +248,6 @@ will descend into specified directories.
 Set the suffix for compressed files.
 .It Fl t
 Test the integrity of each file leaving any files intact.
-.It Fl V
-Display the program version
-.Pq RCS IDs of the source files
-and exit.
 .It Fl v
 Print the percentage reduction of each file and other information.
 .El
@@ -362,10 +356,10 @@ specification.
 The
 .Nm
 flags
-.Op Fl 123456789dghLlNnOoqrStV ,
+.Op Fl 123456789dghlNnOoqrSt ,
 .Nm uncompress
 flags
-.Op Fl hlNnoqrtV ,
+.Op Fl hlNnoqrt ,
 and the
 .Nm zcat
 flags
