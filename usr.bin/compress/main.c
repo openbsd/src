@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.80 2013/04/17 17:43:55 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.81 2014/01/27 17:13:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,6 +41,7 @@
 #include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -53,19 +54,44 @@ int cat, decomp, pipin, force, verbose, testmode, list, recurse, storename;
 extern char *__progname;
 
 const struct compressor {
-	char *name;
-	char *suffix;
-	u_char *magic;
+	const char *name;
+	const char *suffix;
+	const u_char *magic;
+	const char *comp_opts;
+	const char *decomp_opts;
+	const char *cat_opts;
 	void *(*open)(int, const char *, char *, int, u_int32_t, int);
 	int (*read)(void *, char *, int);
 	int (*write)(void *, const char *, int);
 	int (*close)(void *, struct z_info *, const char *, struct stat *);
 } c_table[] = {
 #define M_DEFLATE (&c_table[0])
-  { "deflate", ".gz", "\037\213", gz_open, gz_read, gz_write, gz_close },
+	{
+		"deflate",
+		".gz",
+		"\037\213",
+		"123456789ab:cdfhLlNnOo:qrS:tVv",
+		"cfhLlNno:qrtVv",
+		"fhqr",
+		gz_open,
+		gz_read,
+		gz_write,
+		gz_close
+	},
 #define M_COMPRESS (&c_table[1])
 #ifndef SMALL
-  { "compress", ".Z", "\037\235", z_open,  zread,   zwrite,   z_close },
+	{
+		"compress",
+		".Z",
+		"\037\235",
+		"123456789ab:cdfghlNnOo:qrS:tv",
+		"cfhlNno:qrtv",
+		"fghqr",
+		z_open,
+		zread,
+		zwrite,
+		z_close
+	},
 #endif /* SMALL */
 #if 0
 #define M_LZH (&c_table[2])
@@ -79,8 +105,18 @@ const struct compressor {
 };
 
 #ifndef SMALL
-const struct compressor null_method =
-{ "null", ".nul", "XX", null_open, null_read, null_write, null_close };
+const struct compressor null_method = {
+	"null",
+	".nul",
+	"XX",
+	"123456789ab:cdfghlNnOo:qrS:tv",
+	"cfhlNno:qrtv",
+	"fghqr",
+	null_open,
+	null_read,
+	null_write,
+	null_close
+};
 #endif /* SMALL */
 
 int permission(const char *);
@@ -126,15 +162,10 @@ main(int argc, char *argv[])
 	FTS *ftsp;
 	FTSENT *entry;
 	const struct compressor *method;
-	const char *s;
+	const char *optstr, *s;
 	char *p, *infile;
 	char outfile[MAXPATHLEN], _infile[MAXPATHLEN], suffix[16];
 	int bits, ch, error, rc, cflag, oflag;
-	static const char *optstr[3] = {
-		"123456789ab:cdfghLlNnOo:qrS:tVv",
-		"cfhlNno:qrtVv",
-		"fghqr"
-	};
 
 	bits = cflag = oflag = 0;
 	storename = -1;
@@ -143,12 +174,14 @@ main(int argc, char *argv[])
 		method = M_DEFLATE;
 		bits = 6;
 		p++;
-	} else
+	} else {
 #ifdef SMALL
 		method = M_DEFLATE;
 #else
 		method = M_COMPRESS;
 #endif /* SMALL */
+	}
+	optstr = method->comp_opts;
 
 	decomp = 0;
 	pmode = MODE_COMP;
@@ -196,7 +229,8 @@ main(int argc, char *argv[])
 		}
 	}
 
-	while ((ch = getopt_long(argc, argv, optstr[pmode], longopts, NULL)) != -1)
+	optstr += pmode;
+	while ((ch = getopt_long(argc, argv, optstr, longopts, NULL)) != -1)
 		switch (ch) {
 		case '1':
 		case '2':
@@ -894,19 +928,24 @@ verbose_info(const char *file, off_t compressed, off_t uncompressed,
 __dead void
 usage(int status)
 {
+	const bool gzip = (__progname[0] == 'g');
+
 	switch (pmode) {
 	case MODE_COMP:
-		fprintf(stderr, "usage: %s [-123456789cdfghLlNnOqrtVv] "
+		fprintf(stderr, "usage: %s [-123456789cdf%sh%slNnOqrt%sv] "
 		    "[-b bits] [-o filename] [-S suffix]\n"
-		    "       %*s [file ...]\n",
-		    __progname, (int)strlen(__progname), "");
+		    "       %*s [file ...]\n", __progname,
+		    !gzip ? "g" : "", gzip ? "L" : "", gzip ? "V" : "",
+		    (int)strlen(__progname), "");
 		break;
 	case MODE_DECOMP:
-		fprintf(stderr, "usage: %s [-cfhlNnqrtVv] [-o filename] "
-		    "[file ...]\n", __progname);
+		fprintf(stderr, "usage: %s [-cfh%slNnqrt%sv] [-o filename] "
+		    "[file ...]\n", __progname,
+		    gzip ? "L" : "", gzip ? "V" : "");
 		break;
 	case MODE_CAT:
-		fprintf(stderr, "usage: %s [-fghqr] [file ...]\n", __progname);
+		fprintf(stderr, "usage: %s [-f%shqr] [file ...]\n",
+		    __progname, gzip ? "" : "g");
 		break;
 	}
 	exit(status);
