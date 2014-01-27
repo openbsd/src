@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.113 2014/01/23 22:05:59 rpe Exp $
+# $OpenBSD: sysmerge.sh,v 1.114 2014/01/27 17:06:56 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -21,16 +21,21 @@
 umask 0022
 
 unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE ETCSUM NEED_NEWALIASES
-unset NEWGRP NEWUSR NEED_REBOOT NOSIGCHECK SRCDIR SRCSUM TGZ XETCSUM
-unset XTGZ
+unset NEWGRP NEWUSR NEED_REBOOT NOSIGCHECK RELINT SRCDIR SRCSUM TGZ
+unset XETCSUM XTGZ
 
+# forced variables
 WRKDIR=$(mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXXXXXXX) || exit 1
 SWIDTH=$(stty size | awk '{w=$2} END {if (w==0) {w=80} print w}')
+RELINT=$(uname -r | tr -d '.')
+
+# sysmerge specific variables (overridable)
 MERGE_CMD="${MERGE_CMD:=sdiff -as -w ${SWIDTH} -o}"
 FETCH_CMD="${FETCH_CMD:=/usr/bin/ftp -V -m -k ${FTP_KEEPALIVE:-0}}"
 REPORT="${REPORT:=${WRKDIR}/sysmerge.log}"
 DBDIR="${DBDIR:=/var/db/sysmerge}"
 
+# system-wide variables (overridable)
 PAGER="${PAGER:=/usr/bin/more}"
 
 # clean leftovers created by make in src
@@ -80,7 +85,7 @@ trap "restore_sum; clean_src; rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
 
 if (($(id -u) != 0)); then
 	usage
-	error_rm_wrkdir "need root privileges to run this script"
+	error_rm_wrkdir "need root privileges"
 fi
 
 # extract and verify (x)etcXX.tgz and create cksum file;
@@ -94,7 +99,7 @@ extract_set() {
 	(cd ${TEMPROOT} && tar -xzphf "${_tgz}" && \
 		tar -tzf "${_tgz}" | while read _f; do
 			[ ! -h ${_f} ] && cksum ${_f} >> ${WRKDIR}/${_set}sum; done) || \
-				error_rm_wrkdir "extract/cksum of ${_tgz} failed"
+				error_rm_wrkdir "failed to extract/cksum ${_tgz}"
 	rm "${_tgz}"
 }
 
@@ -108,16 +113,18 @@ get_set() {
 	[ -f "${_url}" ] && _url="file://$(readlink -f ${_url})"
 	if [[ ${_url} == @(file|ftp|http|https)://*/*[!/] ]]; then
 		echo "===> Fetching ${_url}"
-		${FETCH_CMD} -o ${_tgz} "${_url}" >/dev/null 2>&1 || \
-			error_rm_wrkdir "could not retrieve ${_url}"
+		${FETCH_CMD} -o ${_tgz} "${_url}" >/dev/null || \
+			error_rm_wrkdir "could not retrieve ${_url##*/}"
+	else
+			error_rm_wrkdir "${_url}: no such file"
 	fi
 	[[ ${_set} == etc ]] && TGZ=${_tgz} || XTGZ=${_tgz}
-	tar -tzf "${_tgz}" ./var/db/sysmerge/${_set}sum >/dev/null 2>&1 || \
-		error_rm_wrkdir "${_tgz} is not a valid ${_set}XX.tgz set"
+	tar -tzf "${_tgz}" ./var/db/sysmerge/${_set}sum >/dev/null || \
+		error_rm_wrkdir "${_tgz##*/}: badly formed \"${_set}\" set, lacks ./var/db/sysmerge/${_set}sum"
 	if [ -z "${NOSIGCHECK}" ]; then
 		echo "===> Fetching ${_url%/*}/SHA256.sig"
-		${FETCH_CMD} -o "${_sigfile}.sig" "${_url%/*}/SHA256.sig" >/dev/null 2>&1 || \
-			error_rm_wrkdir "could not retrieve ${_url%/*}/SHA256.sig"
+		${FETCH_CMD} -o "${_sigfile}.sig" "${_url%/*}/SHA256.sig" >/dev/null || \
+			error_rm_wrkdir "could not retrieve SHA256.sig"
 		check_sig "${_sigfile}" "${_tgz}"
 	fi
 }
@@ -126,29 +133,30 @@ get_set() {
 # takes the signature file and set as arguments
 check_sig() {
 	local _sigfile=${1##*/} _tgz=${2##*/}
-	local _key="/etc/signify/$(uname -r | tr -d '.')base.pub"
+	local _key="/etc/signify/${RELINT}base.pub"
 	echo "===> Verifying ${_tgz} signature and checksum"
 	(cd ${WRKDIR} && \
 		signify -V -e -p ${_key} -x "${_sigfile}.sig" -m ${_sigfile} >/dev/null) || \
-		error_rm_wrkdir "signature check failed for ${_sigfile}.sig"
+		error_rm_wrkdir "${_sigfile}.sig: signature check failed"
 	(cd ${WRKDIR} && \
-		sha256 -C "${_sigfile}" "${_tgz}" >/dev/null 2>&1) || \
-		error_rm_wrkdir "bad checksum for ${_tgz}"
+		sha256 -C "${_sigfile}" "${_tgz}" >/dev/null) || \
+			error_rm_wrkdir "${_tgz}: bad checksum"
 }
 
 # prepare TEMPROOT content from a src dir and create cksum file 
 prepare_src() {
 	[[ -z ${SRCDIR} ]] && return
 	SRCSUM=srcsum
+	# 2>/dev/null: distribution-etc-root-var complains /var/tmp is world writable
 	(cd ${SRCDIR}/etc && \
 	 make DESTDIR=${TEMPROOT} distribution-etc-root-var >/dev/null 2>&1 && \
 	 cd ${TEMPROOT} && find . -type f -and ! -type l | xargs cksum > ${WRKDIR}/${SRCSUM}) || \
-		error_rm_wrkdir "prepare/cksum of ${SRCDIR} failed"
+		error_rm_wrkdir "failed to populate and checksum from ${SRCDIR}"
 }
 
 sm_populate() {
 	local cf i _array _d _r _D _R CF_DIFF CF_FILES CURSUM IGNORE_FILES
-	mkdir -p ${DESTDIR}/${DBDIR} || error_rm_wrkdir
+	mkdir -p ${DESTDIR}/${DBDIR} || error_rm_wrkdir "cannot create ${DESTDIR}/${DBDIR}"
 	echo "===> Populating temporary root under ${TEMPROOT}"
 	mkdir -p ${TEMPROOT}
 
@@ -162,7 +170,7 @@ sm_populate() {
 			# and is present in current installation
 			if [ -z "${DIFFMODE}" ]; then
 				_R=$(cd ${TEMPROOT} && \
-					cksum -c ${DESTDIR}/${DBDIR}/${i} 2>/dev/null | awk '/OK/ { print $2 }' | sed 's/[:]//')
+					cksum -c ${DESTDIR}/${DBDIR}/${i} | awk '/OK/ { print $2 }' | sed 's/[:]//')
 				for _r in ${_R}; do
 					if [ -f ${DESTDIR}/${_r} -a -f ${TEMPROOT}/${_r} ]; then
 						# sanity check: _always_ compare master.passwd(5) and group(5)
@@ -176,7 +184,7 @@ sm_populate() {
 			# set auto-upgradable files
 			_D=$(diff -u ${WRKDIR}/${i} ${DESTDIR}/${DBDIR}/${i} | grep -E '^\+' | sed '1d' | awk '{print $3}')
 			for _d in ${_D}; do
-				CURSUM=$(cd ${DESTDIR:=/} && cksum ${_d} 2>/dev/null)
+				CURSUM=$(cd ${DESTDIR:=/} && cksum ${_d})
 				[ -n "$(grep "${CURSUM}" ${DESTDIR}/${DBDIR}/${i})" -a -z "$(grep "${CURSUM}" ${WRKDIR}/${i})" ] && \
 					_array="${_array} ${_d}"
 			done
@@ -219,7 +227,7 @@ install_and_rm() {
 		cp ${5}/${4##*/} ${BKPDIR}/${4%/*}
 	fi
 
-	if ! install -m "${1}" -o "${2}" -g "${3}" "${4}" "${5}" 2>/dev/null; then
+	if ! install -m "${1}" -o "${2}" -g "${3}" "${4}" "${5}"; then
 		rm -f ${BKPDIR}/${4%/*}/${4##*/}
 		return 1
 	fi
@@ -554,7 +562,7 @@ sm_compare() {
 	local _c1 _c2 _c3 COMPFILE CVSID1 CVSID2
 	echo "===> Starting comparison"
 
-	cd ${TEMPROOT} || error_rm_wrkdir
+	cd ${TEMPROOT} || error_rm_wrkdir "cannot enter ${TEMPROOT}"
 
 	# group and master.passwd need to be handled first in case
 	# install_file needs a new user/group;
@@ -607,7 +615,7 @@ sm_compare() {
 
 		if [ -f "${COMPFILE}" -a -z "${IS_LINK}" ]; then
 			# make sure files are different; if not, delete the one in temproot
-			if diff -q "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" >/dev/null 2>&1; then
+			if diff -q "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" >/dev/null; then
 				rm "${COMPFILE}"
 			# xetcXX.tgz contains binary files; set IS_BINFILE to disable sdiff
 			elif diff -q "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" | grep -q Binary; then
@@ -623,8 +631,8 @@ sm_compare() {
 sm_post() {
 	local FILES_IN_TEMPROOT FILES_IN_BKPDIR
 
-	FILES_IN_TEMPROOT=$(find ${TEMPROOT} -type f ! -name \*.merged -size +0 2>/dev/null)
-	FILES_IN_BKPDIR=$(find ${BKPDIR} -type f -size +0 2>/dev/null)
+	FILES_IN_TEMPROOT=$(find ${TEMPROOT} -type f ! -name \*.merged -size +0)
+	[ -d "${BKPDIR}" ] && FILES_IN_BKPDIR=$(find ${BKPDIR} -type f -size +0)
 
 	if [ -n "${NEED_NEWALIASES}" ]; then
 		report "===> A new ${DESTDIR}/etc/mail/aliases file was installed."
@@ -671,7 +679,7 @@ sm_post() {
 
 	if [ -e "${REPORT}" ]; then
 		echo "===> Output log available at ${REPORT}"
-		find ${TEMPROOT} -type f -empty 2>/dev/null | xargs -r rm
+		find ${TEMPROOT} -type f -empty | xargs -r rm
 		find ${TEMPROOT} -type d | sort -r | xargs -r rmdir 2>/dev/null
 	else
 		echo "===> Removing ${WRKDIR}"
@@ -697,7 +705,7 @@ while getopts bds:Sx: arg; do
 		if [ -d "${OPTARG}" ]; then
 			SRCDIR=${OPTARG}
 			[ -f "${SRCDIR}/etc/Makefile" ] || \
-				error_rm_wrkdir "${SRCDIR} is not a valid path to src"
+				error_rm_wrkdir "${SRCDIR}: invalid \"src\" tree, missing ${SRCDIR}/etc/Makefile"
 			continue
 		fi
 		get_set "${OPTARG}" etc
@@ -723,10 +731,9 @@ fi
 
 if [ -z "${SRCDIR}" -a -z "${TGZ}" -a -z "${XTGZ}" ]; then
 	if [ -n "${SM_PATH}" ]; then
-		_relint=$(uname -r | tr -d '.')
-		get_set "${SM_PATH}/etc${_relint}.tgz" etc
+		get_set "${SM_PATH}/etc${RELINT}.tgz" etc
 		if [ -d ${DESTDIR}/etc/X11 ]; then
-			get_set "${SM_PATH}/xetc${_relint}.tgz" xetc
+			get_set "${SM_PATH}/xetc${RELINT}.tgz" xetc
 		fi
 	elif [ -f "/usr/src/etc/Makefile" ]; then
 		SRCDIR=/usr/src
