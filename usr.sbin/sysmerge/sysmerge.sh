@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.115 2014/01/27 17:16:53 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.116 2014/01/27 17:40:42 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -576,7 +576,8 @@ sm_compare() {
 		# only process them (i.e. install) if they don't exist on the target system
 		if [ ! -s "${COMPFILE}" ]; then
 			if [ -f "${DESTDIR}${COMPFILE#.}" ]; then
-				rm "${COMPFILE}"
+				# group and master.passwd are always in the _c1 list
+				[ -f "${COMPFILE}" ] && rm "${COMPFILE}"
 			else
 				IS_BINFILE=1
 			fi
