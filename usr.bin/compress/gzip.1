@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gzip.1,v 1.12 2014/01/28 14:18:28 jmc Exp $
+.\"	$OpenBSD: gzip.1,v 1.13 2014/01/28 17:49:05 sobrado Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -314,12 +314,29 @@ automatically.
 .El
 .Sh EXIT STATUS
 The
-.Nm gzip ,
-.Nm gunzip ,
+.Nm gzip
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It 0
+Success.
+.It 1
+An error occurred.
+.It 2
+At least one of the specified files was not compressed since
+.Fl f
+was not specified and compression would have resulted in a size
+increase.
+.It \*(Gt2
+An error occurred.
+.El
+.Pp
+The
+.Nm gunzip
 and
 .Nm gzcat
-utilities exit with 0 on success; 1 if an error occurred;
-or 2 if a warning occurred.
+utilities exit 0 on success,
+and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr compress 1 ,
 .Xr gzexe 1 ,
