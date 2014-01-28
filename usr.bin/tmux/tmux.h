@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.433 2014/01/09 14:20:55 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.434 2014/01/28 22:19:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1028,6 +1028,8 @@ struct layout_cell {
 	u_int		 yoff;
 
 	struct window_pane *wp;
+	struct window_pane *lastwp;
+
 	struct layout_cells cells;
 
 	TAILQ_ENTRY(layout_cell) entry;
