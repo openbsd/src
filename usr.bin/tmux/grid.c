@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.33 2014/01/15 11:44:18 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.34 2014/01/28 23:07:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -37,7 +37,6 @@
 
 /* Default grid cell data. */
 const struct grid_cell grid_default_cell = { 0, 0, 8, 8, (1 << 4) | 1, " " };
-const struct grid_cell grid_marker_cell = { 0, 0, 8, 8, (1 << 4) | 1, "_" };
 
 #define grid_put_cell(gd, px, py, gc) do {			\
 	memcpy(&gd->linedata[py].celldata[px], 			\

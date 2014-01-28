@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.163 2013/10/20 09:37:50 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.164 2014/01/28 23:07:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1354,8 +1354,7 @@ tty_attributes(struct tty *tty, const struct grid_cell *gc)
 		tty_putcode(tty, TTYC_BOLD);
 	if (changed & GRID_ATTR_DIM)
 		tty_putcode(tty, TTYC_DIM);
-	if (changed & GRID_ATTR_ITALICS)
-	{
+	if (changed & GRID_ATTR_ITALICS) {
 		if (tty_term_has(tty->term, TTYC_SITM))
 			tty_putcode(tty, TTYC_SITM);
 		else
