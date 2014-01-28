@@ -1,4 +1,4 @@
-.\"	$OpenBSD: worm.6,v 1.12 2009/10/22 18:07:31 sobrado Exp $
+.\"	$OpenBSD: worm.6,v 1.13 2014/01/28 14:28:44 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)worm.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: October 22 2009 $
+.Dd $Mdocdate: January 28 2014 $
 .Dt WORM 6
 .Os
 .Sh NAME
@@ -61,4 +61,8 @@ The current score
 .Pq how much the worm has grown
 is kept in the upper right corner of the screen.
 .Pp
-The optional argument, if present, is the initial length of the worm.
+The optional argument,
+.Ar size ,
+is the initial length of the worm's body.
+The specified length will be rejected if it causes the worm to cover
+more than roughly one third of the screen.

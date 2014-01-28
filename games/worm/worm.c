@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.24 2013/08/29 20:22:21 naddy Exp $	*/
+/*	$OpenBSD: worm.c,v 1.25 2014/01/28 14:28:44 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -89,6 +89,7 @@ main(int argc, char **argv)
 	struct timeval t, tod;
 	struct timezone tz;
 	fd_set rset;
+	const char *errstr;
 
 	FD_ZERO(&rset);
 	setbuf(stdout, outbuf);
@@ -105,10 +106,14 @@ main(int argc, char **argv)
 		endwin();
 		errx(1, "screen too small");
 	}
-	if (argc == 2)
-		start_len = atoi(argv[1]);
-	if ((start_len <= 0) || (start_len > ((LINES-3) * (COLS-2)) / 3))
-		start_len = LENGTH;
+	if (argc >= 2) {
+		start_len = strtonum(argv[1], 1, ((LINES-3) * (COLS-2)) / 3,
+		    &errstr);
+		if (errstr) {
+			endwin();
+			errx(1, "length argument is %s.", errstr);
+		}
+	}
 	stw = newwin(1, COLS-1, 0, 0);
 	tv = newwin(LINES-1, COLS-1, 1, 0);
 	box(tv, '*', '*');
