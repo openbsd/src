@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.116 2014/01/27 17:40:42 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.117 2014/01/28 09:25:22 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -36,7 +36,6 @@ fi
 
 # sysmerge specific variables (overridable)
 MERGE_CMD="${MERGE_CMD:=sdiff -as -w ${SWIDTH} -o}"
-FETCH_CMD="${FETCH_CMD:=/usr/bin/ftp -V -m -k ${FTP_KEEPALIVE:-0}}"
 REPORT="${REPORT:=${WRKDIR}/sysmerge.log}"
 DBDIR="${DBDIR:=/var/db/sysmerge}"
 
@@ -93,6 +92,11 @@ if (($(id -u) != 0)); then
 	error_rm_wrkdir "need root privileges"
 fi
 
+# takes 2 arguments: output file and URL
+fetch() {
+	/usr/bin/ftp -V -m -k "${FTP_KEEPALIVE-0}" -o "$1" "$2" >/dev/null
+}
+
 # extract and verify (x)etcXX.tgz and create cksum file;
 # stores sum filename in ETCSUM or XETCSUM (see eval);
 # takes file and setname ('etc' or 'xetc') as arguments
@@ -104,7 +108,7 @@ extract_set() {
 	(cd ${TEMPROOT} && tar -xzphf "${_tgz}" && \
 		tar -tzf "${_tgz}" | while read _f; do
 			[ ! -h ${_f} ] && cksum ${_f} >> ${WRKDIR}/${_set}sum; done) || \
-				error_rm_wrkdir "failed to extract/cksum ${_tgz}"
+				error_rm_wrkdir "failed to extract ${_tgz} and create checksum file"
 	rm "${_tgz}"
 }
 
@@ -118,7 +122,7 @@ get_set() {
 	[ -f "${_url}" ] && _url="file://$(readlink -f ${_url})"
 	if [[ ${_url} == @(file|ftp|http|https)://*/*[!/] ]]; then
 		echo "===> Fetching ${_url}"
-		${FETCH_CMD} -o ${_tgz} "${_url}" >/dev/null || \
+		fetch "${_tgz}" "${_url}" || \
 			error_rm_wrkdir "could not retrieve ${_url##*/}"
 	else
 			error_rm_wrkdir "${_url}: no such file"
@@ -128,7 +132,7 @@ get_set() {
 		error_rm_wrkdir "${_tgz##*/}: badly formed \"${_set}\" set, lacks ./var/db/sysmerge/${_set}sum"
 	if [ -z "${NOSIGCHECK}" ]; then
 		echo "===> Fetching ${_url%/*}/SHA256.sig"
-		${FETCH_CMD} -o "${_sigfile}.sig" "${_url%/*}/SHA256.sig" >/dev/null || \
+		fetch "${_sigfile}.sig" "${_url%/*}/SHA256.sig" || \
 			error_rm_wrkdir "could not retrieve SHA256.sig"
 		check_sig "${_sigfile}" "${_tgz}"
 	fi
@@ -142,10 +146,10 @@ check_sig() {
 	echo "===> Verifying ${_tgz} signature and checksum"
 	(cd ${WRKDIR} && \
 		signify -V -e -p ${_key} -x "${_sigfile}.sig" -m ${_sigfile} >/dev/null) || \
-		error_rm_wrkdir "${_sigfile}.sig: signature check failed"
+			error_rm_wrkdir "${_sigfile}.sig: signature check failed"
 	(cd ${WRKDIR} && \
 		sha256 -C "${_sigfile}" "${_tgz}" >/dev/null) || \
-			error_rm_wrkdir "${_tgz}: bad checksum"
+			error_rm_wrkdir "${_tgz}: bad SHA256 checksum"
 }
 
 # prepare TEMPROOT content from a src dir and create cksum file 
@@ -156,7 +160,7 @@ prepare_src() {
 	(cd ${SRCDIR}/etc && \
 	 make DESTDIR=${TEMPROOT} distribution-etc-root-var >/dev/null 2>&1 && \
 	 cd ${TEMPROOT} && find . -type f -and ! -type l | xargs cksum > ${WRKDIR}/${SRCSUM}) || \
-		error_rm_wrkdir "failed to populate and checksum from ${SRCDIR}"
+		error_rm_wrkdir "failed to populate from ${SRCDIR} and create checksum file"
 }
 
 sm_populate() {

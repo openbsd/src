@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.42 2014/01/27 17:05:37 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.43 2014/01/28 09:25:22 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 27 2014 $
+.Dd $Mdocdate: January 28 2014 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -64,8 +64,9 @@ directory inside the work directory.
 .Pp
 If no source is specified on the command line,
 .Nm
-uses ${FETCH_CMD} to fetch the required sets from the URI pointed
-to by the
+uses
+.Xr ftp 1
+to fetch the required sets from the URL pointed to by the
 .Ev SM_PATH
 environment variable, and falls back to
 .Pa /usr/src
@@ -144,13 +145,15 @@ Do not verify signatures for tgz sets.
 Specify a path to an
 .Ox
 top src directory or an etcXX.tgz tarball.
-A tarball path specified as an FTP or HTTP URL will be passed
-to ${FETCH_CMD}.
+A tarball path specified as a URL will be passed
+to
+.Xr ftp 1 .
 .It Fl x Ar xetcXX.tgz
 Specify a path to an
 xetcXX.tgz tarball.
-A tarball path specified as an FTP or HTTP URL will be passed
-to ${FETCH_CMD}.
+A tarball path specified as a URL will be passed
+to
+.Xr ftp 1 .
 .El
 .Pp
 Files and directories can be excluded from comparison
@@ -206,10 +209,6 @@ nor
 are set,
 the default is
 .Xr vi 1 .
-.It Ev FETCH_CMD
-Command used to fetch remote files.
-Defaults to
-.Xr ftp 1 .
 .It Ev FTP_KEEPALIVE
 Have
 .Xr ftp 1
@@ -235,7 +234,7 @@ updating.
 Defaults to
 .Pa ${WRKDIR}/sysmerge.log .
 .It Ev SM_PATH
-A URI, specifying the directory to search for sets matching the
+A URL, specifying the directory to search for sets matching the
 currently running release if none are specified on the command line.
 .It Ev TMPDIR
 Directory in which the work directory is created.
@@ -257,19 +256,8 @@ Default log file.
 Files and directories to ignore from comparison.
 .El
 .Sh SEE ALSO
-.Xr cap_mkdb 1 ,
-.Xr chpass 1 ,
-.Xr diff 1 ,
-.Xr mktemp 1 ,
 .Xr more 1 ,
 .Xr sdiff 1 ,
-.Xr signify 1 ,
-.Xr groupadd 8 ,
-.Xr MAKEDEV 8 ,
-.Xr makemap 8 ,
-.Xr mtree 8 ,
-.Xr newaliases 8 ,
-.Xr pwd_mkdb 8
 .Pp
 .Pa /usr/src/etc/Makefile
 .Pp
