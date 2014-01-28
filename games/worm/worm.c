@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.25 2014/01/28 14:28:44 jmc Exp $	*/
+/*	$OpenBSD: worm.c,v 1.26 2014/01/28 14:30:28 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -126,6 +126,8 @@ main(int argc, char **argv)
 	wrefresh(tv);
 	life();			/* Create the worm */
 	prize();		/* Put up a goal */
+	wmove(tv, head->y, head->x);    /* Leave cursor on worm */
+	wrefresh(tv);
 	while(1)
 	{
 		if (wantleave) {
