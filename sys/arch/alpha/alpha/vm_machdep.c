@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.39 2013/01/16 19:04:43 miod Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.40 2014/01/28 20:23:36 miod Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -107,7 +107,7 @@ cpu_exit(p)
 	/*
 	 * Deactivate the exiting address space before the vmspace
 	 * is freed.  Note that we will continue to run on this
-	 * vmspace's context until the switch to proc0 in switch_exit().
+	 * vmspace's context until the switch to idle in switch_exit().
 	 */
 	pmap_deactivate(p);
 	sched_exit(p);
@@ -201,8 +201,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		 */
 		p2tf = p2->p_md.md_tf = (struct trapframe *)
 		    ((char *)p2->p_addr + USPACE - sizeof(struct trapframe));
-		bcopy(p1->p_md.md_tf, p2->p_md.md_tf,
-		    sizeof(struct trapframe));
+		bcopy(p1->p_md.md_tf, p2->p_md.md_tf, sizeof(struct trapframe));
 
 		/*
 		 * Set up return-value registers as fork() libc stub expects.
@@ -223,7 +222,13 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		up->u_pcb.pcb_context[2] = (u_int64_t)arg;
 		up->u_pcb.pcb_context[7] =
 		    (u_int64_t)switch_trampoline;	/* ra: assembly magic */
-		up->u_pcb.pcb_context[8] = ALPHA_PSL_IPL_0; /* ps: IPL */
+#ifdef MULTIPROCESSOR
+		up->u_pcb.pcb_context[8] =
+		    ALPHA_PSL_IPL_HIGH;			/* ps: IPL */
+#else
+		up->u_pcb.pcb_context[8] =
+		    ALPHA_PSL_IPL_0;			/* ps: IPL */
+#endif
 	}
 }
 
