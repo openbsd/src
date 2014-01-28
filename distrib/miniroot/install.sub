@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.736 2014/01/27 23:18:53 rpe Exp $
+#	$OpenBSD: install.sub,v 1.737 2014/01/28 21:34:44 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1697,19 +1697,17 @@ set_timezone() {
 }
 
 # Check that missing required sets were deliberately skipped.
+# Care is taken to make sure the return value is correct.
 sane_install() {
-	local _q=$1 _s _m
+	local _q=$1 _s
 
 	for _s in $SANESETS; do
 		isin $_s $DEFAULTSETS || continue
 		# If sane_install has no argument, harass the user.
-		resp=n
-		[[ -z $_q ]] && ask_yn "Are you *SURE* your $MODE is complete without '$_s'?"
-		[[ $resp == n ]] && _m="$_m $_s"
+		[[ -z $_q ]] &&
+			ask_yn "Are you *SURE* your $MODE is complete without '$_s'?" ||
+			return
 	done
-
-	[[ -n $_m ]] && return 1
-	return 0
 }
 
 # Ask the user for locations of sets, and then install whatever sets the
