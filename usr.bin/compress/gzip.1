@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gzip.1,v 1.11 2014/01/27 17:13:10 millert Exp $
+.\"	$OpenBSD: gzip.1,v 1.12 2014/01/28 14:18:28 jmc Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)compress.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: January 27 2014 $
+.Dd $Mdocdate: January 28 2014 $
 .Dt GZIP 1
 .Os
 .Sh NAME
@@ -184,7 +184,8 @@ behave as
 .It Fl h
 Print a short help message.
 .It Fl L
-In other compatible programs, this displays program license.
+A no-op which exists for compatibility only.
+On GNU gzip, it displays the program's license.
 .It Fl l
 List information for the specified compressed files.
 The following information is listed:
@@ -243,7 +244,8 @@ Set the suffix for compressed files.
 .It Fl t
 Test the integrity of each file leaving any files intact.
 .It Fl V
-In other compatible programs, this displays version information.
+A no-op which exists for compatibility only.
+On GNU gzip, it displays version information.
 .It Fl v
 Print the percentage reduction of each file and other information.
 .El
