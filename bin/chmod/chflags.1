@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.1,v 1.13 2010/09/03 09:53:20 jmc Exp $
+.\"	$OpenBSD: chflags.1,v 1.14 2014/01/28 14:15:03 jmc Exp $
 .\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)chflags.1	8.4 (Berkeley) 5/2/95
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: January 28 2014 $
 .Dt CHFLAGS 1
 .Os
 .Sh NAME
@@ -71,7 +71,7 @@ The options are as follows:
 If the
 .Fl R
 option is also specified, symbolic links on the command line are followed.
-(Symbolic links encountered in the tree traversal are not followed.)
+Symbolic links encountered in the tree traversal are not followed.
 .It Fl L
 If the
 .Fl R
@@ -81,9 +81,12 @@ If the
 .Fl R
 option is also specified, no symbolic links are followed.
 .It Fl R
-Recursively descend through any specified directory arguments.
-Change the flags of the file hierarchies rooted
-in the files instead of just the files themselves.
+Recurse.
+Where
+.Ar file
+is a directory,
+change the flags of the directory and all the files and directories
+in the file hierarchy below it.
 .El
 .Pp
 Flags are a comma separated list of keywords.
