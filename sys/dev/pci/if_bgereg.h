@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.119 2014/01/07 06:25:33 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.120 2014/01/28 00:39:22 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -329,6 +329,7 @@
 #define	BGE_ASICREV_BCM5719		0x5719
 #define	BGE_ASICREV_BCM5720		0x5720
 #define	BGE_ASICREV_BCM5761		0x5761
+#define	BGE_ASICREV_BCM5762		0x5762
 #define	BGE_ASICREV_BCM5784		0x5784
 #define	BGE_ASICREV_BCM5785		0x5785
 #define	BGE_ASICREV_BCM57765		0x57785
@@ -349,6 +350,7 @@
 #define	BGE_CHIPREV_5717_AX		0x57170
 #define	BGE_CHIPREV_5717_BX		0x57171
 #define	BGE_CHIPREV_5761_AX		0x57611
+#define	BGE_CHIPREV_57765_AX		0x577850
 #define	BGE_CHIPREV_5784_AX		0x57841
 
 /* PCI DMA Read/Write Control register */
@@ -764,6 +766,7 @@
 #define	BGE_RXMODE_RX_NO_CRC_CHECK	0x00000200
 #define	BGE_RXMODE_RX_KEEP_VLAN_DIAG	0x00000400
 #define	BGE_RXMODE_IPV6_ENABLE          0x01000000
+#define	BGE_RXMODE_IPV4_FRAG_FIX	0x02000000
 
 /* Receive MAC status register */
 #define	BGE_RXSTAT_REMOTE_XOFFED	0x00000001
@@ -1324,6 +1327,7 @@
 #define	BGE_CPMU_MUTEX_REQ		0x365C
 #define	BGE_CPMU_MUTEX_GNT		0x3660
 #define	BGE_CPMU_PHY_STRAP		0x3664
+#define	BGE_CPMU_PADRNG_CTL		0x3668
 
 /* Central Power Management Unit (CPMU) register */
 #define	BGE_CPMU_CTRL_LINK_IDLE_MODE	0x00000200
@@ -1362,6 +1366,9 @@
 
 /* CPMU GPHY Strap register */
 #define	BGE_CPMU_PHY_STRAP_IS_SERDES	0x00000020
+
+/* CPMU Padring Control register */
+#define	BGE_CPMU_PADRNG_CTL_RDIV2	0x00040000
 
 /*
  * Mbuf Cluster Free registers (has nothing to do with BSD mbufs)
@@ -1574,6 +1581,8 @@
  */
 #define	BGE_RDMA_MODE			0x4800
 #define	BGE_RDMA_STATUS			0x4804
+#define	BGE_RDMA_RSRVCTRL_REG2		0x4890
+#define	BGE_RDMA_LSO_CRPTEN_CTRL_REG2	0x48A0
 #define	BGE_RDMA_RSRVCTRL		0x4900
 #define	BGE_RDMA_LSO_CRPTEN_CTRL	0x4910
 
@@ -1621,6 +1630,27 @@
 #define	BGE_RDMA_LSO_CRPTEN_CTRL_BLEN_BD_512	0x00020000
 #define	BGE_RDMA_LSO_CRPTEN_CTRL_BLEN_BD_4K	0x00030000
 #define	BGE_RDMA_LSO_CRPTEN_CTRL_BLEN_LSO_4K	0x000C0000
+#define	BGE_RDMA_TX_LENGTH_WA_5719		0x02000000
+#define	BGE_RDMA_TX_LENGTH_WA_5720		0x00200000
+
+/* BD Read DMA Mode register */
+#define	BGE_RDMA_BD_MODE		0x4A00
+/* BD Read DMA Mode status register */
+#define	BGE_RDMA_BD_STATUS		0x4A04
+
+#define	BGE_RDMA_BD_MODE_RESET		0x00000001
+#define	BGE_RDMA_BD_MODE_ENABLE		0x00000002
+
+/* Non-LSO Read DMA Mode register */
+#define	BGE_RDMA_NON_LSO_MODE		0x4B00
+/* Non-LSO Read DMA Mode status register */
+#define	BGE_RDMA_NON_LSO_STATUS		0x4B04
+
+#define	BGE_RDMA_NON_LSO_MODE_RESET	0x00000001
+#define	BGE_RDMA_NON_LSO_MODE_ENABLE	0x00000002
+
+#define	BGE_RDMA_LENGTH			0x4BE0
+#define	BGE_NUM_RDMA_CHANNELS		4
 
 /*
  * Write DMA control registers
