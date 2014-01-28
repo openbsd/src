@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.103 2013/11/12 06:47:34 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.104 2014/01/28 06:20:51 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 12 2013 $
+.Dd $Mdocdate: January 28 2014 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -61,7 +61,7 @@ join stereo or split mono.
 Control the per-file playback volume.
 .It
 Monitor the sound being played, allowing to playback mix
-to be record.
+to be recorded.
 .El
 .Pp
 Finally,
@@ -75,17 +75,6 @@ Volume control.
 Start, stop and relocate playback and recording.
 .El
 .Pp
-For historic reasons
-.Nm
-has the same audio server capability as
-.Xr sndiod 1 ,
-enabled when no files to play or record are provided.
-Both operate the same way, except that the former processes audio data stored
-in files, while the latter processes audio data provided or consumed by
-programs.
-Hence it has the same server-centric options described in
-.Xr sndiod 1 .
-.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Xo
@@ -94,7 +83,9 @@ The options are as follows:
 .Xc
 The range of stream channel numbers for recording and playback directions,
 respectively.
-The default is 0:1, i.e. stereo.
+The default is
+.Cm 0:1 ,
+i.e. stereo.
 .It Fl d
 Increase log verbosity.
 .It Fl e Ar enc
@@ -114,7 +105,8 @@ Device mode and parameters are determined from streams
 attached to it.
 .It Fl h Ar fmt
 File format of the playback or record stream (see below).
-The default is auto.
+The default is
+.Cm auto .
 .It Fl i Ar file
 Add this file to the list of streams to play.
 If the option argument is
@@ -124,17 +116,17 @@ then standard input will be used.
 Control whether stream channels are joined or expanded if
 the stream number of channels is not equal to the device number of channels.
 If the flag is
-.Va off
+.Cm off
 then stream channels are routed to the corresponding
 device channel, possibly discarding channels not present in the device.
 If the flag is
-.Va on ,
+.Cm on ,
 then a single stream channel may be sent on multiple device channels,
 or multiple stream channels may be sent to a single device channel.
 For instance, this feature could be used to request mono streams to
 be sent on multiple outputs or to record a stereo input into a mono stream.
 The default is
-.Ar on .
+.Cm on .
 .It Fl M
 Create a MIDI thru box
 .Pq i.e. MIDI-only pseudo device .
@@ -169,21 +161,22 @@ Control (MMC) slave mode
 .Pq Fl t .
 .It Fl r Ar rate
 Sample rate in Hertz of the stream.
-The default is 48000.
+The default is
+.Cm 48000 .
 .It Fl t Ar mode
 Select the way streams are controlled by MIDI Machine Control (MMC)
 messages.
 If the mode is
-.Va off
+.Cm off
 (the default), then streams are not affected by MMC messages.
 If the mode is
-.Va slave ,
+.Cm slave ,
 then streams are started synchronously by MMC start messages.
 .It Fl v Ar volume
 Software volume attenuation of the playback stream.
 The value must be between 1 and 127,
 corresponding to \-42dB and \-0dB attenuation in 1/3dB steps.
-The default is 127 i.e. no attenuation.
+The default is 127, i.e. no attenuation.
 .It Fl w Ar flag
 Control
 .Nm
@@ -202,32 +195,31 @@ Using
 makes sense when all streams are recorded or produced with properly lowered
 volumes.
 The default is
-.Va on .
+.Cm on .
 .It Fl x Ar policy
 Action when the output stream cannot accept
 recorded data fast enough or the input stream
 cannot provide data to play fast enough.
-If the policy
-is
-.Dq ignore
+If the policy is
+.Cm ignore
 (the default) then samples that cannot be written are discarded
 and samples that cannot be read are replaced by silence.
 If the policy is
-.Dq sync
+.Cm sync
 then recorded samples are discarded,
 but the same amount of silence will be written
 once the stream is unblocked, in order to reach the right position in time.
 Similarly silence is played, but the same amount of samples will be discarded
 once the stream is unblocked.
 If the policy is
-.Dq error
+.Cm error
 then the stream is closed permanently.
 .Pp
 If a stream is created with the
 .Fl t
 option,
 the
-.Dq ignore
+.Cm ignore
 action is disabled for any stream connected to it
 to ensure proper synchronization.
 .El
