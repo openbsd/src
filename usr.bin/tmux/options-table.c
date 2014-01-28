@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.43 2014/01/28 23:07:09 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.44 2014/01/28 23:11:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -856,7 +856,7 @@ options_table_populate_tree(
 			options_set_string(oo, oe->name, "%s", oe->default_str);
 			break;
 		case OPTIONS_TABLE_STYLE:
-			options_set_style(oo, oe->name, oe->default_str);
+			options_set_style(oo, oe->name, oe->default_str, 0);
 			break;
 		default:
 			options_set_number(oo, oe->name, oe->default_num);
