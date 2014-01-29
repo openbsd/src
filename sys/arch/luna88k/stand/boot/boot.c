@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.2 2013/10/29 18:51:37 miod Exp $	*/
+/*	$OpenBSD: boot.c,v 1.3 2014/01/29 11:22:13 aoyama Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -92,6 +92,8 @@ static int get_boot_device(const char *, int *, int *, int *);
 void (*cpu_boot)(uint32_t, uint32_t);
 uint32_t cpu_bootarg1;
 uint32_t cpu_bootarg2;
+
+char rnddata[BOOTRANDOM_MAX];	/* XXX dummy */
 
 #if 0
 int
