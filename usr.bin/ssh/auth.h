@@ -1,4 +1,4 @@
-/* $OpenBSD: auth.h,v 1.76 2013/07/19 07:37:48 markus Exp $ */
+/* $OpenBSD: auth.h,v 1.77 2014/01/29 06:18:35 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -56,7 +56,6 @@ struct Authctxt {
 	char		*style;
 	void		*kbdintctxt;
 	char		*info;		/* Extra info for next auth_log */
-	void		*jpake_ctx;
 	auth_session_t	*as;
 	char		**auth_methods;	/* modified from server config */
 	u_int		 num_auth_methods;
@@ -151,9 +150,6 @@ int	bsdauth_query(void *, char **, char **, u_int *, char ***, u_int **);
 int	bsdauth_respond(void *, u_int, char **);
 int	skey_query(void *, char **, char **, u_int *, char ***, u_int **);
 int	skey_respond(void *, u_int, char **);
-
-void	auth2_jpake_get_pwdata(Authctxt *, BIGNUM **, char **, char **);
-void	auth2_jpake_stop(Authctxt *);
 
 int	allowed_user(struct passwd *);
 struct passwd * getpwnamallow(const char *user);

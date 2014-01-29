@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.80 2013/11/02 21:59:15 markus Exp $
+#	$OpenBSD: Makefile,v 1.81 2014/01/29 06:18:35 djm Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -12,7 +12,7 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	sshpty.c sshlogin.c servconf.c serverloop.c \
 	auth.c auth1.c auth2.c auth-options.c session.c \
 	auth-chall.c auth2-chall.c groupaccess.c \
-	auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c auth2-jpake.c \
+	auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c \
 	monitor_mm.c monitor.c monitor_wrap.c \
 	kexdhs.c kexgexs.c kexecdhs.c sftp-server.c sftp-common.c \

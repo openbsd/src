@@ -1,20 +1,39 @@
-#	$OpenBSD: Makefile.inc,v 1.41 2014/01/18 05:54:51 martynas Exp $
+#	$OpenBSD: Makefile.inc,v 1.42 2014/01/29 06:18:35 djm Exp $
 
 CFLAGS+=	-I${.CURDIR}/..
 
 CDIAGFLAGS=	-Wall
-#CDIAGFLAGS+=	-Werror
-CDIAGFLAGS+=	-Wpointer-arith
-CDIAGFLAGS+=	-Wuninitialized
-CDIAGFLAGS+=	-Wstrict-prototypes
+CDIAGFLAGS+=	-Wchar-subscripts
+CDIAGFLAGS+=	-Wcomment
+CDIAGFLAGS+=	-Wextra
+CDIAGFLAGS+=	-Wformat
+CDIAGFLAGS+=	-Wformat-security
+CDIAGFLAGS+=	-Wimplicit
+CDIAGFLAGS+=	-Winline
+CDIAGFLAGS+=	-Wmissing-declarations
 CDIAGFLAGS+=	-Wmissing-prototypes
-CDIAGFLAGS+=	-Wunused
-CDIAGFLAGS+=	-Wsign-compare
+CDIAGFLAGS+=	-Wparentheses
+CDIAGFLAGS+=	-Wpointer-arith
+CDIAGFLAGS+=	-Wreturn-type
 CDIAGFLAGS+=	-Wshadow
+CDIAGFLAGS+=	-Wsign-compare
+CDIAGFLAGS+=	-Wstrict-aliasing
+CDIAGFLAGS+=	-Wstrict-prototypes
+CDIAGFLAGS+=	-Wswitch
+CDIAGFLAGS+=	-Wtrigraphs
+CDIAGFLAGS+=	-Wuninitialized
+CDIAGFLAGS+=	-Wunused
+CDIAGFLAGS+=	-Wold-style-definition
+CDIAGFLAGS+=	-Wno-unused-parameter # Not clean for this yet
+#CDIAGFLAGS+=	-Wwrite-strings # XXX too messy; needs libc changes
+#CDIAGFLAGS+=	-Wcast-qual # XXX not clean
+#CDIAGFLAGS+=	-Wcast-align # XXX can't be clean with sockaddr casts?
 
+#CDIAGFLAGS+=	-Werror
 #DEBUG=-g
 
-#CFLAGS+=	-DJPAKE
+WARNINGS=yes
+INSTALL_STRIP=
 
 CFLAGS+=	-DENABLE_PKCS11
 .include <bsd.own.mk>
