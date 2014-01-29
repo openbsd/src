@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.96 2014/01/06 12:15:40 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.97 2014/01/29 23:53:20 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -942,7 +942,7 @@ bad_dynamic_variable(int idx)
 	case IMPSRC_INDEX:
 		if (origin.fname)
 			Fatal(ERRMSG1  "(%s:%lu)", 
-			    origin.lineno, origin.fname);
+			    origin.fname, origin.lineno);
 		else if (current_node)
 			Fatal(ERRMSG1 "(prereq of %s)", current_node->name);
 		else
@@ -951,7 +951,7 @@ bad_dynamic_variable(int idx)
 	default:
 		if (origin.fname)
 			Error(ERRMSG2 "(%s:%lu)", varnames[idx], 
-			    origin.lineno, origin.fname);
+			    origin.fname, origin.lineno);
 		else if (current_node)
 			Error(ERRMSG2 "(prereq of %s)", varnames[idx], 
 			    current_node->name);
