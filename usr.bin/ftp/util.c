@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.65 2014/01/23 00:39:15 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.66 2014/01/29 16:58:21 dcoppa Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -811,7 +811,7 @@ progressmeter(int flag, const char *filename)
 		    dotdot);
 		overhead += l + 1;
 	} else
-		snprintf(buf, sizeof(buf), "");
+		snprintf(buf, sizeof(buf), "\r");
 
 	if (!verbose && title != NULL) {
 		int l = strlen(title);
