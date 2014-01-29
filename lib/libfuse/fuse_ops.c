@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.22 2014/01/23 12:29:38 syl Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.23 2014/01/29 20:37:18 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -64,8 +64,6 @@ update_vattr(struct fuse *f, struct vattr *attr, const char *realname,
 		st.st_blksize = 512;
 	if (st.st_blocks == 0)
 		st.st_blocks = 4;
-	if (st.st_size == 0)
-		st.st_size = 512;
 
 	st.st_ino = vn->ino;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.13 2014/01/16 09:31:44 syl Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.14 2014/01/29 20:37:18 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -23,6 +23,7 @@
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/poll.h>
+#include <sys/proc.h>
 #include <sys/specdev.h>
 #include <sys/statvfs.h>
 #include <sys/vnode.h>
@@ -1011,6 +1012,9 @@ fusefs_write(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
 	struct proc *p = uio->uio_procp;
+	struct ucred *cred = p->p_ucred;
+	struct vattr vattr;
+	int ioflag = ap->a_ioflag;
 	struct fusefs_node *ip;
 	struct fusefs_mnt *fmp;
 	struct fusebuf *fbuf = NULL;
@@ -1024,6 +1028,13 @@ fusefs_write(void *v)
 		return (ENXIO);
 	if (uio->uio_resid == 0)
 		return (error);
+
+	if (ioflag & IO_APPEND) {
+		if ((error = VOP_GETATTR(vp, &vattr, cred, p)) != 0)
+			return (error);
+
+		uio->uio_offset = vattr.va_size;
+	}
 
 	while (uio->uio_resid > 0) {
 		len = MIN(uio->uio_resid, FUSEBUFMAXSIZE);
