@@ -1,4 +1,4 @@
-/* $OpenBSD: schnorr.c,v 1.9 2014/01/09 23:20:00 djm Exp $ */
+/* $OpenBSD: schnorr.c,v 1.10 2014/01/29 00:21:41 djm Exp $ */
 /*
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
  *
@@ -452,6 +452,9 @@ hash_buffer(const u_char *buf, u_int len, int hash_alg,
 {
 	u_char digest[SSH_DIGEST_MAX_LENGTH];
 	u_int digest_len = ssh_digest_bytes(hash_alg);
+
+	*digestp = NULL;
+	*lenp = 0;
 
 	if (digest_len == 0) {
 		error("%s: invalid hash", __func__);
