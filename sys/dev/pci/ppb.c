@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.56 2013/12/06 21:03:04 deraadt Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.57 2014/01/29 18:30:39 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -35,8 +35,8 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/task.h>
 #include <sys/timeout.h>
-#include <sys/workq.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -70,6 +70,9 @@ struct ppb_softc {
 	struct extent *sc_pmemex;
 	struct device *sc_psc;
 	int sc_cap_off;
+	struct task sc_insert_task;
+	struct task sc_rescan_task;
+	struct task sc_remove_task;
 	struct timeout sc_to;
 
 	bus_addr_t sc_iobase, sc_iolimit;
@@ -173,6 +176,11 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	/* Check for PCI Express capabilities and setup hotplug support. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
 	    &sc->sc_cap_off, &reg) && (reg & PCI_PCIE_XCAP_SI)) {
+		task_set(&sc->sc_insert_task, ppb_hotplug_insert, sc, NULL);
+		task_set(&sc->sc_rescan_task, ppb_hotplug_rescan, sc, NULL);
+		task_set(&sc->sc_remove_task, ppb_hotplug_remove, sc, NULL);
+		timeout_set(&sc->sc_to, ppb_hotplug_insert_finish, sc);
+
 #ifdef __i386__
 		if (pci_intr_map(pa, &ih) == 0)
 			sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_BIO,
@@ -193,8 +201,6 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 			reg |= (PCI_PCIE_SLCSR_HPE | PCI_PCIE_SLCSR_PDE);
 			pci_conf_write(pc, pa->pa_tag,
 			    sc->sc_cap_off + PCI_PCIE_SLCSR, reg);
-
-			timeout_set(&sc->sc_to, ppb_hotplug_insert_finish, sc);
 		}
 	}
 
@@ -646,9 +652,9 @@ ppb_intr(void *arg)
 	    sc->sc_cap_off + PCI_PCIE_SLCSR);
 	if (reg & PCI_PCIE_SLCSR_PDC) {
 		if (reg & PCI_PCIE_SLCSR_PDS)
-			workq_add_task(NULL, 0, ppb_hotplug_insert, sc, NULL);
+			task_add(systq, &sc->sc_insert_task);
 		else
-			workq_add_task(NULL, 0, ppb_hotplug_remove, sc, NULL);
+			task_add(systq, &sc->sc_remove_task);
 
 		/* Clear interrupts. */
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
@@ -686,7 +692,9 @@ ppb_hotplug_insert(void *arg1, void *arg2)
 void
 ppb_hotplug_insert_finish(void *arg)
 {
-	workq_add_task(NULL, 0, ppb_hotplug_rescan, arg, NULL);
+	struct ppb_softc *sc = arg;
+
+	task_add(systq, &sc->sc_rescan_task);
 }
 
 int
