@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.63 2013/11/11 09:15:35 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.64 2014/01/29 00:50:56 dlg Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -141,6 +141,17 @@ ip6_forward(struct mbuf *m, int srcrt)
 	}
 	ip6->ip6_hlim -= IPV6_HLIMDEC;
 
+	/*
+	 * Save at most ICMPV6_PLD_MAXLEN (= the min IPv6 MTU -
+	 * size of IPv6 + ICMPv6 headers) bytes of the packet in case
+	 * we need to generate an ICMP6 message to the src.
+	 * Thanks to M_EXT, in most cases copy will not occur.
+	 *
+	 * It is important to save it before IPsec processing as IPsec
+	 * processing may modify the mbuf.
+	 */
+	mcopy = m_copy(m, 0, imin(m->m_pkthdr.len, ICMPV6_PLD_MAXLEN));
+
 #if NPF > 0
 reroute:
 #endif
@@ -224,17 +235,6 @@ reroute:
 #if NPF > 0
 	rtableid = m->m_pkthdr.rdomain;
 #endif
-
-	/*
-	 * Save at most ICMPV6_PLD_MAXLEN (= the min IPv6 MTU -
-	 * size of IPv6 + ICMPv6 headers) bytes of the packet in case
-	 * we need to generate an ICMP6 message to the src.
-	 * Thanks to M_EXT, in most cases copy will not occur.
-	 *
-	 * It is important to save it before IPsec processing as IPsec
-	 * processing may modify the mbuf.
-	 */
-	mcopy = m_copy(m, 0, imin(m->m_pkthdr.len, ICMPV6_PLD_MAXLEN));
 
 	dst = &ip6_forward_rt.ro_dst;
 	if (!srcrt) {
