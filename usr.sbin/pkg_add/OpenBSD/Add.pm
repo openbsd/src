@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.143 2014/01/17 15:54:06 espie Exp $
+# $OpenBSD: Add.pm,v 1.144 2014/01/30 13:12:50 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -91,7 +91,7 @@ sub record_partial_installation
 				    $last->{d}->stringize);
 			}
 		} else {
-			undef $last->{d};
+			delete $last->{d};
 		}
 	}
 	register_installation($n, $state);
@@ -102,6 +102,7 @@ sub perform_installation
 {
 	my ($handle, $state) = @_;
 
+	$state->{partial} = $handle->{partial};
 	$state->progress->visit_with_size($handle->{plist}, 'install', $state);
 	$handle->{location}->finish_and_close;
 }
@@ -184,7 +185,7 @@ sub prepare_for_addition
 sub extract
 {
 	my ($self, $state) = @_;
-	$state->{partial}->{$self} = 1;
+	$state->{partial}{$self} = 1;
 	if ($state->{interrupted}) {
 		die "Interrupted";
 	}
@@ -193,7 +194,9 @@ sub extract
 sub install
 {
 	my ($self, $state) = @_;
-	$state->{partial}->{$self} = 1;
+	# XXX "normal" items are already in partial, but NOT stuff
+	# that's install-only, like symlinks and dirs...
+	$state->{partial}{$self} = 1;
 	if ($state->{interrupted}) {
 		die "Interrupted";
 	}
@@ -525,7 +528,7 @@ sub install
 		$state->say("moving #1 -> #2",
 		    $self->{tempname}, $destdir.$fullname)
 			if $state->verbose >= 5;
-		undef $self->{tempname};
+		delete $self->{tempname};
 	}
 	$self->set_modes($state, $destdir.$fullname);
 }

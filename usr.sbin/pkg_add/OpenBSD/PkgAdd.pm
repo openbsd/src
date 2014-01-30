@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.47 2014/01/23 15:46:39 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.48 2014/01/30 13:12:50 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -805,6 +805,7 @@ sub really_add
 			$plist->get(DISPLAY)->prepare($state);
 		}
 	}
+	delete $state->{partial};
 	$set->{solver}->register_dependencies($state);
 	if ($replacing) {
 		$set->{forward}->adjust($state);
