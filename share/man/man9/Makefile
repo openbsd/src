@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.196 2014/01/30 00:44:20 dlg Exp $
+#	$OpenBSD: Makefile,v 1.197 2014/01/30 09:45:36 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -46,7 +46,7 @@ MLINKS+=atomic_dec.9 atomic_dec_int.9 atomic_dec.9 atomic_dec_long.9 \
 MLINKS+=atomic_inc.9 atomic_inc_int.9 atomic_inc.9 atomic_inc_long.9 \
 	atomic_inc.9 atomic_inc_int_nv.9 atomic_inc.9 atomic_inc_long_nv.9
 MLINKS+=atomic_sub.9 atomic_sub_int.9 atomic_sub.9 atomic_sub_long.9 \
-	atomic_sub.9 atomic_sub_int_nv.9 atomic_sub.9 atomic_sub_long_nv.9 \
+	atomic_sub.9 atomic_sub_int_nv.9 atomic_sub.9 atomic_sub_long_nv.9
 MLINKS+=atomic_swap.9 atomic_swap_uint.9 atomic_swap.9 atomic_swap_ulong.9 \
 	atomic_swap.9 atomic_swap_ptr.9
 MLINKS+=autoconf.9 config_init.9 autoconf.9 config_search.9 \
