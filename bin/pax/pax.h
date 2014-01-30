@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.h,v 1.17 2005/11/09 19:59:06 otto Exp $	*/
+/*	$OpenBSD: pax.h,v 1.18 2014/01/30 13:30:11 espie Exp $	*/
 /*	$NetBSD: pax.h,v 1.3 1995/03/21 09:07:41 cgd Exp $	*/
 
 /*-
@@ -207,10 +207,6 @@ typedef struct {
 				/* CAUTION: parameters to this function are */
 				/* different for trailers inside or outside */
 				/* of headers. See get_head() for details */
-	int (*rd_data)(ARCHD *,	/* read/process file data from the archive */
-	    int, off_t *);
-	int (*wr_data)(ARCHD *,	/* write/process file data to the archive */
-	    int, off_t *);
 	int (*options)(void);	/* process format specific options (-o) */
 } FSUB;
 

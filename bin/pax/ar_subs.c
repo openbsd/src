@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.36 2014/01/08 06:41:49 guenther Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.37 2014/01/30 13:30:11 espie Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -100,7 +100,7 @@ list(void)
 			 * we need to read, to get the real filename
 			 */
 			off_t cnt;
-			if (!(*frmt->rd_data)(arcn, arcn->type == PAX_GLF
+			if (!rd_wrfile(arcn, arcn->type == PAX_GLF
 			    ? -1 : -2, &cnt))
 				(void)rd_skip(cnt + arcn->pad);
 			continue;
@@ -193,7 +193,7 @@ extract(void)
 			/*
 			 * we need to read, to get the real filename
 			 */
-			if (!(*frmt->rd_data)(arcn, arcn->type == PAX_GLF
+			if (!rd_wrfile(arcn, arcn->type == PAX_GLF
 			    ? -1 : -2, &cnt))
 				(void)rd_skip(cnt + arcn->pad);
 			continue;
@@ -333,7 +333,7 @@ extract(void)
 		 * extract the file from the archive and skip over padding and
 		 * any unprocessed data
 		 */
-		res = (*frmt->rd_data)(arcn, fd, &cnt);
+		res = rd_wrfile(arcn, fd, &cnt);
 		file_close(arcn, fd);
 		if (vflag && vfpart) {
 			(void)putc('\n', listf);
@@ -525,7 +525,7 @@ wr_archive(ARCHD *arcn, int is_app)
 		 * which FOLLOWS this one will not be where we expect it to
 		 * be).
 		 */
-		res = (*frmt->wr_data)(arcn, fd, &cnt);
+		res = wr_rdfile(arcn, fd, &cnt);
 		rdfile_close(arcn, &fd);
 		if (vflag && vfpart) {
 			(void)putc('\n', listf);
