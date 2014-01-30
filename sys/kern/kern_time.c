@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.86 2014/01/22 00:48:36 guenther Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.87 2014/01/30 21:01:59 kettenis Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 #include <sys/syscallargs.h>
 
 
-struct timeval adjtimedelta;		/* unapplied time correction */
+int64_t adjtimedelta;		/* unapplied time correction (microseconds) */
 
 /* 
  * Time of day and interval timer support.
@@ -68,8 +68,7 @@ settime(struct timespec *ts)
 	 * Adjtime in progress is meaningless or harmful after
 	 * setting the clock. Cancel adjtime and then set new time.
 	 */
-	adjtimedelta.tv_usec = 0;
-	adjtimedelta.tv_sec = 0;
+	adjtimedelta = 0;
 
 	/*
 	 * Don't allow the time to be set forward so far it will wrap
@@ -428,37 +427,35 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 		syscallarg(const struct timeval *) delta;
 		syscallarg(struct timeval *) olddelta;
 	} */ *uap = v;
-	struct timeval newdelta;
 	const struct timeval *delta = SCARG(uap, delta);
 	struct timeval *olddelta = SCARG(uap, olddelta);
+	struct timeval atv;
 	int error;
 
-	if (olddelta)
-		if ((error = copyout(&adjtimedelta, olddelta,
-		    sizeof(struct timeval))))
+	if (olddelta) {
+		memset(&atv, 0, sizeof(atv));
+		atv.tv_sec = adjtimedelta / 1000000;
+		atv.tv_usec = adjtimedelta % 1000000;
+		if (atv.tv_usec < 0) {
+			atv.tv_usec += 1000000;
+			atv.tv_sec--;
+		}
+
+		if ((error = copyout(&atv, olddelta, sizeof(struct timeval))))
 			return (error);
+	}
 
 	if (delta) {
 		if ((error = suser(p, 0)))
 			return (error);
 
-		if ((error = copyin(delta, &newdelta,
-		    sizeof(struct timeval))))
+		if ((error = copyin(delta, &atv, sizeof(struct timeval))))
 			return (error);
 
-		/* Normalize the correction. */
-		while (newdelta.tv_usec >= 1000000) {
-			newdelta.tv_usec -= 1000000;
-			newdelta.tv_sec += 1;
-		}
-		while (newdelta.tv_usec < 0) {
-			newdelta.tv_usec += 1000000;
-			newdelta.tv_sec -= 1;
-		}
-
-		adjtimedelta.tv_sec  = newdelta.tv_sec;
-		adjtimedelta.tv_usec = newdelta.tv_usec;
+		/* XXX Check for overflow? */
+		adjtimedelta = (int64_t)atv.tv_sec * 1000000 + atv.tv_usec;
 	}
+
 	return (0);
 }
 
