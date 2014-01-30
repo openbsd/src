@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.5,v 1.32 2014/01/30 17:49:40 jmc Exp $
+.\" $OpenBSD: crontab.5,v 1.33 2014/01/30 20:02:42 jmc Exp $
 .\"
 .Dd $Mdocdate: January 30 2014 $
 .Dt CRONTAB 5
@@ -320,6 +320,8 @@ Ranges may include
 .Dq steps .
 .It
 Months or days of the week can be specified by name.
+.It
+Environment variables can be set in a crontab.
 .It
 Command output can be mailed to a person other than the crontab
 owner, or the feature can be turned off and no mail will be sent
