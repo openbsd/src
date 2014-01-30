@@ -1,4 +1,4 @@
-.\" $OpenBSD: atomic_cas.9,v 1.1 2014/01/30 00:44:20 dlg Exp $
+.\" $OpenBSD: atomic_cas.9,v 1.2 2014/01/30 08:16:56 jmc Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\" All rights reserved.
@@ -42,11 +42,10 @@ The value referenced by the pointer
 .Fa p
 is compared against
 .Fa expected .
-If the these values are equal then
+If these values are equal then
 .Fa new
 replaces the value stored at
 .Fa p .
-.Ed
 .Sh RETURN VALUES
 These functions return the value at
 .Fa p
