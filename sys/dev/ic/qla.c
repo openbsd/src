@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.8 2014/01/22 21:42:18 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.9 2014/01/30 19:39:23 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -1015,6 +1015,10 @@ qla_scsi_probe(struct scsi_link *link)
 	else if (!ISSET(sc->sc_targets[link->target]->flags,
 	    QLA_PORT_FLAG_IS_TARGET))
 		rv = ENXIO;
+	else {
+		link->port_wwn = sc->sc_targets[link->target]->port_name;
+		link->node_wwn = sc->sc_targets[link->target]->node_name;
+	}
 	mtx_leave(&sc->sc_port_mtx);
 
 	return (rv);
