@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.8 2014/01/30 00:51:13 dlg Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.9 2014/01/30 12:27:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -98,7 +98,7 @@ def_atomic_op_nv(_atomic_add_int_nv, unsigned int, atomic_cas_uint, +)
 def_atomic_op_nv(_atomic_add_long_nv, unsigned long, atomic_cas_ulong, +)
 def_atomic_op_nv(_atomic_sub_int_nv, unsigned int, atomic_cas_uint, -)
 def_atomic_op_nv(_atomic_sub_long_nv, unsigned long, atomic_cas_ulong, -)
-#undef def_atomic_opf
+#undef def_atomic_op_nv
 
 #define atomic_add_int_nv(_p, _v)  _atomic_add_int_nv(_p, _v)
 #define atomic_add_long_nv(_p, _v)  _atomic_add_long_nv(_p, _v)
