@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.128 2014/01/30 12:38:20 espie Exp $
+# $OpenBSD: Delete.pm,v 1.129 2014/01/30 13:23:51 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -60,7 +60,7 @@ sub manpages_unindex
 			}
 		}
 	}
-	undef $state->{mandirs};
+	delete $state->{mandirs};
 }
 
 sub validate_plist
