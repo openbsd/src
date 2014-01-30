@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.10 2014/01/30 23:43:53 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.11 2014/01/30 23:58:41 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -453,7 +453,7 @@ qla_attach(struct qla_softc *sc)
 
 	/* adjust firmware options a bit */
 	icb->icb_fw_options |= htole16(QLA_ICB_FW_EXTENDED_INIT_CB);
-	icb->icb_xfwoptions &= htole16(~QLA_ICB_FW_FAST_POST);
+	icb->icb_fw_options &= ~htole16(QLA_ICB_FW_FAST_POST);
 
 	sc->sc_mbox[0] = QLA_MBOX_INIT_FIRMWARE;
 	sc->sc_mbox[4] = 0;
