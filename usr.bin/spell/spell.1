@@ -1,4 +1,4 @@
-.\" $OpenBSD: spell.1,v 1.11 2010/10/28 21:32:54 jmc Exp $
+.\" $OpenBSD: spell.1,v 1.12 2014/01/30 17:18:46 sobrado Exp $
 .\"
 .\" Copyright (C) 1985, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)spell.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: October 28 2010 $
+.Dd $Mdocdate: January 30 2014 $
 .Dt SPELL 1
 .Os
 .Sh NAME
@@ -198,17 +198,17 @@ The extra word list must be sorted as specified above.
 .Sh FILES
 .Bl -tag -width /usr/local/share/dict/wordsxx -compact
 .It Pa /usr/share/dict/words
-Default spelling list
+Default spelling list.
 .It Pa /usr/share/dict/american
-American spelling of certain words
+American spelling of certain words.
 .It Pa /usr/share/dict/british
-British spelling of certain words
+British spelling of certain words.
 .It Pa /usr/share/dict/stop
 Default stop list.
 .It Pa /usr/local/share/dict/words
-Local spelling list (optional)
+Local spelling list (optional).
 .It Pa /usr/local/share/dict/stop
-Local stop list (optional)
+Local stop list (optional).
 .It Pa /usr/libexec/spellprog
 Binary executed by the shell script
 .Pa /usr/bin/spell .
