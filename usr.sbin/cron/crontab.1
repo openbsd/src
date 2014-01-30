@@ -17,9 +17,9 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.1,v 1.30 2013/07/16 11:13:33 schwarze Exp $
+.\" $OpenBSD: crontab.1,v 1.31 2014/01/30 13:28:59 jmc Exp $
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: January 30 2014 $
 .Dt CRONTAB 1
 .Os
 .Sh NAME
@@ -166,5 +166,17 @@ specification.
 The flag
 .Op Fl u
 is an extension to that specification.
+.Pp
+The flag
+.Op Fl e
+is marked by
+.St -p1003.1-2008
+as being optional.
+.Pp
+The cron.allow/deny mechanism is marked by
+.St -p1003.1-2008
+as being an
+X/Open System Interfaces
+option.
 .Sh AUTHORS
 .An Paul Vixie Aq Mt vixie@isc.org
