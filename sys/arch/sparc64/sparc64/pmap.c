@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.80 2013/09/21 10:04:42 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.81 2014/01/30 00:51:13 dlg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -27,6 +27,7 @@
  *
  */
 
+#include <sys/atomic.h>
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -303,10 +304,10 @@ tsb_invalidate(int ctx, vaddr_t va)
 	i = ptelookup_va(va);
 	tag = TSB_TAG(0, ctx, va);
 	if (tsb_dmmu[i].tag == tag)
-		sparc64_casx((volatile unsigned long *)&tsb_dmmu[i].tag,
+		atomic_cas_ulong((volatile unsigned long *)&tsb_dmmu[i].tag,
 		    tag, TSB_TAG_INVALID);
 	if (tsb_immu[i].tag == tag)
-		sparc64_casx((volatile unsigned long *)&tsb_immu[i].tag,
+		atomic_cas_ulong((volatile unsigned long *)&tsb_immu[i].tag,
 		    tag, TSB_TAG_INVALID);
 }
 

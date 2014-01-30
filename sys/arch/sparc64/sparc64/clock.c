@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.49 2013/07/05 20:30:56 guenther Exp $	*/
+/*	$OpenBSD: clock.c,v 1.50 2014/01/30 00:51:13 dlg Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -777,7 +777,7 @@ tickintr(cap)
 	while (ci->ci_tick < tick()) {
 		ci->ci_tick += tick_increment;
 		hardclock((struct clockframe *)cap);
-		atomic_add_ulong((unsigned long *)&level0.ih_count.ec_count, 1);
+		atomic_add_long((unsigned long *)&level0.ih_count.ec_count, 1);
 	}
 
 	/* Reset the interrupt. */
@@ -801,7 +801,7 @@ sys_tickintr(cap)
 	while (ci->ci_tick < sys_tick()) {
 		ci->ci_tick += tick_increment;
 		hardclock((struct clockframe *)cap);
-		atomic_add_ulong((unsigned long *)&level0.ih_count.ec_count, 1);
+		atomic_add_long((unsigned long *)&level0.ih_count.ec_count, 1);
 	}
 
 	/* Reset the interrupt. */
@@ -825,7 +825,7 @@ stickintr(cap)
 	while (ci->ci_tick < stick()) {
 		ci->ci_tick += tick_increment;
 		hardclock((struct clockframe *)cap);
-		atomic_add_ulong((unsigned long *)&level0.ih_count.ec_count, 1);
+		atomic_add_long((unsigned long *)&level0.ih_count.ec_count, 1);
 	}
 
 	/* Reset the interrupt. */
