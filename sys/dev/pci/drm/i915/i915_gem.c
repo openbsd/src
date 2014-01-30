@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.66 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.67 2014/01/30 15:10:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1473,20 +1473,11 @@ i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 		uvmfault_unlockall(ufi, NULL, &obj->base.uobj, NULL);
 		DRM_LOCK();
 		locked = uvmfault_relock(ufi);
-		if (locked)
-			drm_lock_obj(&obj->base);
 	}
-	if (locked)
-		drm_hold_object_locked(&obj->base);
-	else { /* obj already unlocked */
+	if (!locked) {
 		dev_priv->entries--;
 		return (VM_PAGER_REFAULT);
 	}
-
-	/* we have a hold set on the object now, we can unlock so that we can
-	 * sleep in binding and flushing.
-	 */
-	drm_unlock_obj(&obj->base);
 
 	/* Now bind it into the GTT if needed */
 	ret = i915_gem_object_pin(obj, 0, true, false);
@@ -1526,7 +1517,6 @@ i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 		if (pmap_enter(ufi->orig_map->pmap, vaddr, paddr,
 		    mapprot, PMAP_CANFAIL | mapprot) != 0) {
 			i915_gem_object_unpin(obj);
-			drm_unhold_object(&obj->base);
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
 			    NULL, NULL);
 			DRM_UNLOCK();
@@ -1538,7 +1528,6 @@ i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 unpin:
 	i915_gem_object_unpin(obj);
 unlock:
-	drm_unhold_object(&obj->base);
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL, NULL);
 	DRM_UNLOCK();
 	dev_priv->entries--;
@@ -1785,14 +1774,10 @@ i915_gem_mmap_gtt_ioctl(struct drm_device *dev, void *data,
 static void
 i915_gem_object_truncate(struct drm_i915_gem_object *obj)
 {
-	DRM_ASSERT_HELD(&obj->base);
-
 	i915_gem_object_free_mmap_offset(obj);
 
-	simple_lock(&obj->base.uao->vmobjlock);
 	obj->base.uao->pgops->pgo_flush(obj->base.uao, 0, obj->base.size,
 	    PGO_ALLPAGES | PGO_FREE);
-	simple_unlock(&obj->base.uao->vmobjlock);
 
 	obj->madv = __I915_MADV_PURGED;
 }
@@ -3280,8 +3265,6 @@ i915_gem_object_set_to_gtt_domain(struct drm_i915_gem_object *obj, bool write)
 	uint32_t old_write_domain, old_read_domains;
 	int ret;
 
-	DRM_ASSERT_HELD(&obj->base);
-
 	/* Not valid to be called on unbound objects. */
 	if (obj->gtt_space == NULL)
 		return -EINVAL;
@@ -3548,8 +3531,6 @@ i915_gem_object_set_to_cpu_domain(struct drm_i915_gem_object *obj, bool write)
 	uint32_t old_write_domain, old_read_domains;
 	int ret;
 
-	DRM_ASSERT_HELD(obj);
-
 	if (obj->base.write_domain == I915_GEM_DOMAIN_CPU)
 		return 0;
 
@@ -3714,8 +3695,6 @@ i915_gem_pin_ioctl(struct drm_device *dev, void *data,
 		goto unlock;
 	}
 
-	drm_hold_object(&obj->base);
-
 	if (obj->madv != I915_MADV_WILLNEED) {
 		DRM_ERROR("Attempting to pin a purgeable buffer\n");
 		ret = -EINVAL;
@@ -3744,7 +3723,7 @@ i915_gem_pin_ioctl(struct drm_device *dev, void *data,
 	i915_gem_object_flush_cpu_write_domain(obj);
 	args->offset = obj->gtt_offset;
 out:
-	drm_unhold_and_unref(&obj->base);
+	drm_gem_object_unreference(&obj->base);
 unlock:
 	DRM_UNLOCK();
 	return ret;
@@ -3768,8 +3747,6 @@ i915_gem_unpin_ioctl(struct drm_device *dev, void *data,
 		goto unlock;
 	}
 
-	drm_hold_object(&obj->base);
-
 	if (obj->pin_filp != file) {
 		DRM_ERROR("Not pinned by caller in i915_gem_pin_ioctl(): %d\n",
 			  args->handle);
@@ -3783,7 +3760,7 @@ i915_gem_unpin_ioctl(struct drm_device *dev, void *data,
 	}
 
 out:
-	drm_unhold_and_unref(&obj->base);
+	drm_gem_object_unreference(&obj->base);
 unlock:
 	DRM_UNLOCK();
 	return ret;
@@ -3861,8 +3838,6 @@ i915_gem_madvise_ioctl(struct drm_device *dev, void *data,
 		goto unlock;
 	}
 
-	drm_hold_object(&obj->base);
-
 	if (obj->pin_count) {
 		ret = -EINVAL;
 		goto out;
@@ -3878,7 +3853,7 @@ i915_gem_madvise_ioctl(struct drm_device *dev, void *data,
 	args->retained = obj->madv != __I915_MADV_PURGED;
 
 out:
-	drm_unhold_and_unref(&obj->base);
+	drm_gem_object_unreference(&obj->base);
 unlock:
 	DRM_UNLOCK();
 	return ret;
@@ -3958,8 +3933,6 @@ void i915_gem_free_object(struct drm_gem_object *gem_obj)
 	struct drm_i915_gem_object *obj = to_intel_bo(gem_obj);
 	struct drm_device *dev = obj->base.dev;
 	drm_i915_private_t *dev_priv = dev->dev_private;
-
-	DRM_ASSERT_HELD(&obj->base);
 
 	if (obj->phys_obj)
 		i915_gem_detach_phys_object(dev, obj);

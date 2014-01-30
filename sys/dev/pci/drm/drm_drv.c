@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.121 2014/01/20 09:20:49 deraadt Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.122 2014/01/30 15:10:47 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -1282,123 +1282,24 @@ struct uvm_pagerops drm_pgops = {
 	drm_flush,
 };
 
-
 void
-drm_hold_object_locked(struct drm_gem_object *obj)
-{
-	while (obj->do_flags & DRM_BUSY) {
-		atomic_setbits_int(&obj->do_flags, DRM_WANTED);
-		simple_unlock(&uobj->vmobjlock);
-#ifdef DRMLOCKDEBUG
-		{
-		int ret = 0;
-		ret = tsleep(obj, PVM, "drm_hold", 3 * hz); /* XXX msleep */
-		if (ret)
-			printf("still waiting for obj %p, owned by %p\n",
-			    obj, obj->holding_proc);
-		}
-#else
-		tsleep(obj, PVM, "drm_hold", 0); /* XXX msleep */
-#endif
-		simple_lock(&uobj->vmobjlock);
-	}
-#ifdef DRMLOCKDEBUG
-	obj->holding_proc = curproc;
-#endif
-	atomic_setbits_int(&obj->do_flags, DRM_BUSY);
-}
-
-void
-drm_hold_object(struct drm_gem_object *obj)
-{
-	simple_lock(&obj->uobj->vmobjlock);
-	drm_hold_object_locked(obj);
-	simple_unlock(&obj->uobj->vmobjlock);
-}
-
-int
-drm_try_hold_object(struct drm_gem_object *obj)
-{
-	simple_lock(&obj->uobj->vmobjlock);
-	/* if the object is free, grab it */
-	if (obj->do_flags & (DRM_BUSY | DRM_WANTED))
-		return (0);
-	atomic_setbits_int(&obj->do_flags, DRM_BUSY);
-#ifdef DRMLOCKDEBUG
-	obj->holding_proc = curproc;
-#endif
-	simple_unlock(&obj->uobj->vmobjlock);
-	return (1);
-}
-
-
-void
-drm_unhold_object_locked(struct drm_gem_object *obj)
-{
-	if (obj->do_flags & DRM_WANTED)
-		wakeup(obj);
-#ifdef DRMLOCKDEBUG
-	obj->holding_proc = NULL;
-#endif
-	atomic_clearbits_int(&obj->do_flags, DRM_WANTED | DRM_BUSY);	
-}
-
-void
-drm_unhold_object(struct drm_gem_object *obj)
-{
-	simple_lock(&obj->uobj->vmobjlock);
-	drm_unhold_object_locked(obj);
-	simple_unlock(&obj->uobj->vmobjlock);
-}
-
-void
-drm_ref_locked(struct uvm_object *uobj)
+drm_ref(struct uvm_object *uobj)
 {
 	uobj->uo_refs++;
 }
 
 void
-drm_ref(struct uvm_object *uobj)
-{
-	simple_lock(&uobj->vmobjlock);
-	drm_ref_locked(uobj);
-	simple_unlock(&uobj->vmobjlock);
-}
-
-void
 drm_unref(struct uvm_object *uobj)
 {
-	simple_lock(&uobj->vmobjlock);
-	drm_unref_locked(uobj);
-}
+	struct drm_gem_object *obj = (struct drm_gem_object *)uobj;
+	struct drm_device *dev = obj->dev;
 
-void
-drm_unref_locked(struct uvm_object *uobj)
-{
-	struct drm_gem_object	*obj = (struct drm_gem_object *)uobj;
-	struct drm_device	*dev = obj->dev;
-
-again:
 	if (uobj->uo_refs > 1) {
 		uobj->uo_refs--;
-		simple_unlock(&uobj->vmobjlock);
 		return;
 	}
 
-	/* inlined version of drm_hold because we want to trylock then sleep */
-	if (obj->do_flags & DRM_BUSY) {
-		atomic_setbits_int(&obj->do_flags, DRM_WANTED);
-		simple_unlock(&uobj->vmobjlock);
-		tsleep(obj, PVM, "drm_unref", 0); /* XXX msleep */
-		simple_lock(&uobj->vmobjlock);
-		goto again;
-	}
-#ifdef DRMLOCKDEBUG
-	obj->holding_proc = curproc;
-#endif
-	atomic_setbits_int(&obj->do_flags, DRM_BUSY);
-	simple_unlock(&obj->vmobjlock);
-	/* We own this thing now. it is on no queues, though it may still
+	/* We own this thing now. It is on no queues, though it may still
 	 * be bound to the aperture (and on the inactive list, in which case
 	 * idling the buffer is what triggered the free. Since we know no one 
 	 * else can grab it now, we can nuke with impunity.
@@ -1407,24 +1308,11 @@ again:
 		dev->driver->gem_free_object(obj);
 }
 
-/*
- * convenience function to unreference and unhold an object.
- */
-void
-drm_unhold_and_unref(struct drm_gem_object *obj)
-{
-	drm_lock_obj(obj);
-	drm_unhold_object_locked(obj);
-	drm_unref_locked(&obj->uobj);
-}
-
-
 boolean_t	
 drm_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 {
 	return (TRUE);
 }
-
 
 int
 drm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
@@ -1832,7 +1720,6 @@ udv_attach_drm(void *arg, vm_prot_t accessprot, voff_t off, vsize_t size)
 	if (dev->driver->mmap)
 		return dev->driver->mmap(dev, off, size);
 
-again:
 	DRM_LOCK();
 	TAILQ_FOREACH(map, &dev->maplist, link) {
 		if (off >= map->ext && off + size <= map->ext + map->size)
@@ -1845,21 +1732,7 @@ again:
 	}
 
 	obj = (struct drm_gem_object *)map->handle;
-	simple_lock(&uobj->vmobjlock);
-	if (obj->do_flags & DRM_BUSY) {
-		atomic_setbits_int(&obj->do_flags, DRM_WANTED);
-		simple_unlock(&uobj->vmobjlock);
-		DRM_UNLOCK();
-		tsleep(obj, PVM, "udv_drm", 0); /* XXX msleep */
-		goto again;
-	}
-#ifdef DRMLOCKDEBUG
-	obj->holding_proc = curproc;
-#endif
-	atomic_setbits_int(&obj->do_flags, DRM_BUSY);
-	simple_unlock(&obj->vmobjlock);
 	drm_ref(&obj->uobj);
-	drm_unhold_object(obj);
 	DRM_UNLOCK();
 	return &obj->uobj;
 }

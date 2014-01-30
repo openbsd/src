@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_tiling.c,v 1.13 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_tiling.c,v 1.14 2014/01/30 15:10:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -329,17 +329,16 @@ i915_gem_set_tiling(struct drm_device *dev, void *data,
 	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
 	if (&obj->base == NULL)
 		return -ENOENT;
-	drm_hold_object(&obj->base);
 
 	if (!i915_tiling_ok(dev,
 			    args->stride, obj->base.size, args->tiling_mode)) {
-		ret = -EINVAL;
-		goto out;
+		drm_gem_object_unreference_unlocked(&obj->base);
+		return -EINVAL;
 	}
 
 	if (obj->pin_count) {
-		ret = -EBUSY;
-		goto out;
+		drm_gem_object_unreference_unlocked(&obj->base);
+		return -EBUSY;
 	}
 
 	if (args->tiling_mode == I915_TILING_NONE) {
@@ -417,9 +416,8 @@ i915_gem_set_tiling(struct drm_device *dev, void *data,
 	/* we have to maintain this existing ABI... */
 	args->stride = obj->stride;
 	args->tiling_mode = obj->tiling_mode;
+	drm_gem_object_unreference(&obj->base);
 	DRM_UNLOCK();
-out:
-	drm_unhold_and_unref(&obj->base);
 
 	return ret;
 }
@@ -438,7 +436,6 @@ i915_gem_get_tiling(struct drm_device *dev, void *data,
 	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
 	if (&obj->base == NULL)
 		return -ENOENT;
-	drm_hold_object(&obj->base);
 
 	DRM_LOCK();
 
@@ -463,8 +460,8 @@ i915_gem_get_tiling(struct drm_device *dev, void *data,
 	if (args->swizzle_mode == I915_BIT_6_SWIZZLE_9_10_17)
 		args->swizzle_mode = I915_BIT_6_SWIZZLE_9_10;
 
+	drm_gem_object_unreference(&obj->base);
 	DRM_UNLOCK();
-	drm_unhold_and_unref(&obj->base);
 
 	return 0;
 }
