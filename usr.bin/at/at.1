@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.48 2014/01/13 23:18:57 millert Exp $
+.\" $OpenBSD: at.1,v 1.49 2014/01/30 13:31:28 jmc Exp $
 .\"
 .\" Copyright (C) 1993, 1994  Thomas Koenig
 .\" Copyright (C) 1993  David Parsons
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 13 2014 $
+.Dd $Mdocdate: January 30 2014 $
 .Dt AT 1
 .Os
 .Sh NAME
@@ -368,6 +368,12 @@ argument.
 The
 .Sy teatime
 keyword is an extension to the specification.
+.Pp
+The at.allow/deny mechanism is marked by
+.St -p1003.1-2008
+as being an
+X/Open System Interfaces
+option.
 .Sh AUTHORS
 .An -nosplit
 .Nm at
