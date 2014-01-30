@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.32 2014/01/24 23:18:34 jmc Exp $
+.\"	$OpenBSD: cksum.1,v 1.33 2014/01/30 05:12:29 lteo Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)cksum.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: January 24 2014 $
+.Dd $Mdocdate: January 30 2014 $
 .Dt CKSUM 1
 .Os
 .Sh NAME
@@ -149,7 +149,7 @@ options become checklists.
 Each checklist should contain hash results in the normal format,
 which will be verified against the specified paths.
 Output consists of the digest used, the file name,
-and an OK or FAILED for the result of the comparison.
+and an OK, FAILED, or MISSING for the result of the comparison.
 This will validate any of the supported checksums.
 If no file is given, stdin is used.
 The
