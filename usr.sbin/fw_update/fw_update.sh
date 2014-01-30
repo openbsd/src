@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $OpenBSD: fw_update.sh,v 1.18 2014/01/03 14:58:54 espie Exp $
+# $OpenBSD: fw_update.sh,v 1.19 2014/01/30 00:12:09 halex Exp $
 # Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -20,9 +20,10 @@ DRIVERS="acx athn bwi ipw iwi iwn malo otus pgt radeondrm rsu uath
 	upgt urtwn uvideo wpi"
 
 PKG_ADD="pkg_add -I -D repair -DFW_UPDATE"
+PKG_DELETE="pkg_delete -I -DFW_UPDATE"
 
 usage() {
-	echo "usage: ${0##*/} [-anv] [driver ...]" >&2
+	echo "usage: ${0##*/} [-adnv] [driver ...]" >&2
 	exit 1
 }
 
@@ -51,9 +52,11 @@ perform() {
 all=false
 verbose=
 nop=
-while getopts 'anv' s "$@" 2>/dev/null; do
+delete=false
+while getopts 'adnv' s "$@" 2>/dev/null; do
 	case "$s" in
 	a)	all=true;;
+	d)	delete=true;;
 	v)	verbose=${verbose:--}v ;;
 	n)	nop=-n ;;
 	*)	usage ;;
@@ -65,6 +68,11 @@ shift $((OPTIND - 1))
 if $all; then
 	[ $# != 0 ] && usage
 	set -- $DRIVERS
+fi
+
+if $delete && [ $# == 0 ]; then
+	echo "Driver specification required for delete operation" >&2
+	exit 1
 fi
 
 setpath
@@ -97,22 +105,30 @@ for driver; do
 	fi
 done
 
-if [ -z "$install$update" ]; then
+if ! $delete && [ -z "$install$update" ]; then
 	verbose "No devices found which need firmware files to be downloaded."
+	exit 0
+elif $delete && [ -z "$update" ]; then
+	verbose "No firmware to delete."
 	exit 0
 fi
 
 [ "$nop" ] || [ 0 = $(id -u) ] ||
 	{ echo "${0##*/} must be run as root" >&2; exit 1; }
 
-# Install missing firmware
-if [ "$install" ]; then
-	verbose "Installing firmware files:$install."
-	perform $PKG_ADD $nop $verbose $install
+# Install missing firmware packages
+if ! $delete && [ "$install" ]; then
+	verbose "Installing firmware files:$update $install."
+	perform $PKG_ADD $nop $verbose $update $install
 fi
 
-# Update installed firmware
+# Update or delete installed firmware packages
 if [ "$update" ]; then
-	verbose "Updating firmware files:$update."
-	perform $PKG_ADD $extra $nop $verbose -u $update
+	if $delete; then
+		verbose "Deleting firmware files:$update."
+		perform $PKG_DELETE $nop $verbose $update
+	else
+		verbose "Updating firmware files:$update."
+		perform $PKG_ADD $extra $nop $verbose -u $update
+	fi
 fi
