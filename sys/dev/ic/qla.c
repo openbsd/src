@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.9 2014/01/30 19:39:23 kettenis Exp $ */
+/*	$OpenBSD: qla.c,v 1.10 2014/01/30 23:43:53 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -272,20 +272,6 @@ qla_attach(struct qla_softc *sc)
 	    qla_read_mbox(sc, 3) != 0x2020) {
 		/* try releasing the risc processor */
 		qla_host_cmd(sc, QLA_HOST_CMD_RELEASE);
-	}
-
-	sc->sc_mbox[0] = QLA_MBOX_REGISTER_TEST;
-	sc->sc_mbox[1] = 0x1234;
-	sc->sc_mbox[2] = 0x4321;
-	sc->sc_mbox[3] = 0xaaa5;
-	sc->sc_mbox[4] = 0xbbbb;
-	if (qla_mbox(sc, 0x001f, 0x001f)) {
-		printf("register test command failed\n");
-		return (ENXIO);
-	} else if (sc->sc_mbox[1] != 0x1234 || sc->sc_mbox[2] != 0x4321 ||
-		    sc->sc_mbox[3] != 0xaaa5 || sc->sc_mbox[4] != 0xbbbb) {
-		printf("register test command failed\n");
-		return (ENXIO);
 	}
 
 	qla_host_cmd(sc, QLA_HOST_CMD_PAUSE);
