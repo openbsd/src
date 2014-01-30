@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.54 2013/12/14 09:48:04 yuo Exp $ */
+/*	$OpenBSD: umodem.c,v 1.55 2014/01/30 20:37:03 mpi Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ const struct cfattach umodem_ca = {
 
 void
 umodem_get_caps(struct usb_attach_arg *uaa, int ctl_iface_no,
-    int *data_iface_no, int *cm_cap, int *acm_cap)
+    int *data_iface_idx, int *cm_cap, int *acm_cap)
 {
 	const usb_descriptor_t *desc;
 	const usb_interface_descriptor_t *id;
@@ -168,8 +168,10 @@ umodem_get_caps(struct usb_attach_arg *uaa, int ctl_iface_no,
 	const struct usb_cdc_union_descriptor *uniond;
 	struct usbd_desc_iter iter;
 	int current_iface_no = -1;
+	int data_iface_no = -1;
+	int i;
 
-	*data_iface_no = -1;
+	*data_iface_idx = -1;
 	*cm_cap = *acm_cap = 0;
 	usbd_desc_iter_init(uaa->device, &iter);
 	desc = usbd_desc_iter_next(&iter);
@@ -180,8 +182,8 @@ umodem_get_caps(struct usb_attach_arg *uaa, int ctl_iface_no,
 			if (current_iface_no != ctl_iface_no &&
 			    id->bInterfaceClass == UICLASS_CDC_DATA &&
 			    id->bInterfaceSubClass == UISUBCLASS_DATA &&
-			    *data_iface_no == -1)
-				*data_iface_no = current_iface_no;
+			    data_iface_no == -1)
+				data_iface_no = current_iface_no;
 		}
 		if (current_iface_no == ctl_iface_no &&
 		    desc->bDescriptorType == UDESC_CS_INTERFACE) {
@@ -189,7 +191,7 @@ umodem_get_caps(struct usb_attach_arg *uaa, int ctl_iface_no,
 			case UDESCSUB_CDC_CM:
 				cmd = (struct usb_cdc_cm_descriptor *)desc;
 				*cm_cap = cmd->bmCapabilities;
-				*data_iface_no = cmd->bDataInterface;
+				data_iface_no = cmd->bDataInterface;
 				break;
 			case UDESCSUB_CDC_ACM:
 				acmd = (struct usb_cdc_acm_descriptor *)desc;
@@ -198,11 +200,30 @@ umodem_get_caps(struct usb_attach_arg *uaa, int ctl_iface_no,
 			case UDESCSUB_CDC_UNION:
 				uniond =
 				    (struct usb_cdc_union_descriptor *)desc;
-				*data_iface_no = uniond->bSlaveInterface[0];
+				data_iface_no = uniond->bSlaveInterface[0];
 				break;
 			}
 		}
 		desc = usbd_desc_iter_next(&iter);
+	}
+
+	/*
+	 * If we got a data interface number, make sure the corresponding
+	 * interface exists and is not already claimed.
+	 */
+	if (data_iface_no != -1) {
+		for (i = 0; i < uaa->nifaces; i++) {
+			id = usbd_get_interface_descriptor(uaa->ifaces[i]);
+
+			if (id == NULL)
+				continue;
+
+			if (id->bInterfaceNumber == data_iface_no) {
+				if (!usbd_iface_claimed(uaa->device, i))
+					*data_iface_idx = i;
+				break;
+			}
+		}
 	}
 }
 
@@ -212,7 +233,7 @@ umodem_match(struct device *parent, void *match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
 	usb_device_descriptor_t *dd;
-	int data_iface_no, cm_cap, acm_cap, ret = UMATCH_NONE;
+	int data_iface_idx, cm_cap, acm_cap, ret = UMATCH_NONE;
 
 	if (uaa->iface == NULL)
 		return (ret);
@@ -244,9 +265,9 @@ umodem_match(struct device *parent, void *match, void *aux)
 		return (ret);
 
 	/* umodem doesn't support devices without a data iface */
-	umodem_get_caps(uaa, id->bInterfaceNumber, &data_iface_no,
+	umodem_get_caps(uaa, id->bInterfaceNumber, &data_iface_idx,
 	    &cm_cap, &acm_cap);
-	if (data_iface_no == -1)
+	if (data_iface_idx == -1)
 		ret = UMATCH_NONE;
 
 	return (ret);
@@ -261,7 +282,7 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	usbd_status err;
-	int data_iface_no = 0;
+	int data_iface_idx = -1;
 	int i;
 	struct ucom_attach_args uca;
 
@@ -274,34 +295,17 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ctl_iface_no = id->bInterfaceNumber;
 
 	/* Get the capabilities. */
-	umodem_get_caps(uaa, id->bInterfaceNumber, &data_iface_no,
+	umodem_get_caps(uaa, id->bInterfaceNumber, &data_iface_idx,
 	    &sc->sc_cm_cap, &sc->sc_acm_cap);
-	if (data_iface_no == -1) {
-		printf("%s: no data interface\n",
-		       sc->sc_dev.dv_xname);
-		goto bad;
-	}
+
+	usbd_claim_iface(sc->sc_udev, data_iface_idx);
+	sc->sc_data_iface = uaa->ifaces[data_iface_idx];
+	id = usbd_get_interface_descriptor(sc->sc_data_iface);
 
 	printf("%s: data interface %d, has %sCM over data, has %sbreak\n",
-	       sc->sc_dev.dv_xname, data_iface_no,
+	       sc->sc_dev.dv_xname, id->bInterfaceNumber,
 	       sc->sc_cm_cap & USB_CDC_CM_OVER_DATA ? "" : "no ",
 	       sc->sc_acm_cap & USB_CDC_ACM_HAS_BREAK ? "" : "no ");
-
-	/* Get the data interface too. */
-	for (i = 0; i < uaa->nifaces; i++) {
-		if (!usbd_iface_claimed(sc->sc_udev, i)) {
-			id = usbd_get_interface_descriptor(uaa->ifaces[i]);
-			if (id != NULL &&
-                            id->bInterfaceNumber == data_iface_no) {
-				sc->sc_data_iface = uaa->ifaces[i];
-				usbd_claim_iface(sc->sc_udev, i);
-			}
-		}
-	}
-	if (sc->sc_data_iface == NULL) {
-		printf("%s: no data interface\n", sc->sc_dev.dv_xname);
-		goto bad;
-	}
 
 	/*
 	 * Find the bulk endpoints.
@@ -309,7 +313,6 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	uca.bulkin = uca.bulkout = -1;
 
-	id = usbd_get_interface_descriptor(sc->sc_data_iface);
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_data_iface, i);
 		if (ed == NULL) {
