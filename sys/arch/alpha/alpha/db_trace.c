@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.15 2010/11/27 19:57:23 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.16 2014/01/30 20:11:14 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -310,8 +310,10 @@ trapframe:
 		else
 			break;
 
-		/* Advance to the next frame.  */
+		/* Advance to the next frame, if any.  */
 		frame += framesize;
+		if (ra == pc)
+			break;
 		pc = ra;
 	}
 }
