@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.13 2014/01/23 22:06:29 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.14 2014/01/30 18:16:41 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -85,31 +85,5 @@
 #define	VM_PHYSSEG_MAX		1
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
 #define	VM_PHYSSEG_NOADD
-
-#ifndef _LOCORE
-/*
- * pmap-specific data stored in the vm_physmem[] array.
- */
-
-/* XXX - belongs in pmap.h, but put here because of ordering issues */
-struct pv_entry {
-	struct pv_entry	*pv_next;	/* next pv_entry */
-	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vaddr_t		pv_va;		/* virtual address for mapping */
-	int		pv_flags;
-};
-
-struct vm_page_md {
-	struct pv_entry pvent;
-};
-
-#define	VM_MDPAGE_INIT(pg) do {			\
-	(pg)->mdpage.pvent.pv_next = NULL;	\
-	(pg)->mdpage.pvent.pv_pmap = NULL;	\
-	(pg)->mdpage.pvent.pv_va = 0;		\
-	(pg)->mdpage.pvent.pv_flags = 0;	\
-} while (0)
-
-#endif /* _LOCORE */
 
 #endif /* _MACHINE_VM_PARAM_ */

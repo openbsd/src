@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.23 2013/11/02 23:10:30 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.24 2014/01/30 18:16:41 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -82,5 +82,26 @@ int	pmap_translation_info(pmap_t, vaddr_t, paddr_t *, uint32_t *);
 #define	PMAP_STEAL_MEMORY
 
 #endif	/* _KERNEL */
+
+#ifndef _LOCORE
+struct pv_entry {
+	struct pv_entry	*pv_next;	/* next pv_entry */
+	struct pmap	*pv_pmap;	/* pmap where mapping lies */
+	vaddr_t		pv_va;		/* virtual address for mapping */
+	int		pv_flags;
+};
+
+struct vm_page_md {
+	struct pv_entry pvent;
+};
+
+#define	VM_MDPAGE_INIT(pg) do {			\
+	(pg)->mdpage.pvent.pv_next = NULL;	\
+	(pg)->mdpage.pvent.pv_pmap = NULL;	\
+	(pg)->mdpage.pvent.pv_va = 0;		\
+	(pg)->mdpage.pvent.pv_flags = 0;	\
+} while (0)
+
+#endif /* _LOCORE */
 
 #endif /* _M88K_PMAP_H_ */

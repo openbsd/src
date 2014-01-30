@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.24 2014/01/23 22:06:30 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.25 2014/01/30 18:16:41 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2001/05/01 02:19:19 thorpej Exp $ */
 
 /*
@@ -114,30 +114,6 @@
 #define VM_PHYSSEG_MAX          32       /* up to 32 segments */
 #define VM_PHYSSEG_STRAT        VM_PSTRAT_BSEARCH
 #define VM_PHYSSEG_NOADD                /* can't add RAM after vm_mem_init */
-
-/*
- * For each struct vm_page, there is a list of all currently valid virtual
- * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
- *
- * XXX - this doesn't belong here, but for now we have to keep it here
- *       because of include ordering issues.
- */
-typedef struct pv_entry {
-	struct pv_entry	*pv_next;	/* next pv_entry */
-	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vaddr_t	pv_va;		/* virtual address for mapping */
-} *pv_entry_t;
-/* PV flags encoded in the low bits of the VA of the first pv_entry */
-
-struct vm_page_md {
-	struct pv_entry pvent;
-};
-
-#define VM_MDPAGE_INIT(pg) do {			\
-	(pg)->mdpage.pvent.pv_next = NULL;	\
-	(pg)->mdpage.pvent.pv_pmap = NULL;	\
-	(pg)->mdpage.pvent.pv_va = 0;		\
-} while (0)
 
 #if defined (_KERNEL) && !defined(_LOCORE)
 struct vm_map;

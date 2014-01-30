@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.7 2013/03/21 02:10:37 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.8 2014/01/30 18:16:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -91,5 +91,23 @@ void		pmap_virtual_space(vaddr_t *, vaddr_t *);
 void		pmap_writetext(unsigned char *, int);
 
 #endif /* _KERNEL */
+
+struct pvlist {
+	struct		pvlist *pv_next;	/* next pvlist, if any */
+	struct		pmap *pv_pmap;		/* pmap of this va */
+	vaddr_t		pv_va;			/* virtual address */
+	int		pv_flags;		/* flags (below) */
+};
+
+struct vm_page_md {
+	struct pvlist pv_head;
+};
+
+#define VM_MDPAGE_INIT(pg) do {			\
+	(pg)->mdpage.pv_head.pv_next = NULL;	\
+	(pg)->mdpage.pv_head.pv_pmap = NULL;	\
+	(pg)->mdpage.pv_head.pv_va = 0;		\
+	(pg)->mdpage.pv_head.pv_flags = 0;	\
+} while (0)
 
 #endif /* _MACHINE_PMAP_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.12 2014/01/23 22:06:29 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.13 2014/01/30 18:16:41 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -113,43 +113,5 @@
  * Constants which control the way the VM system deals with memory segments.
  */
 #define	VM_PHYSSEG_NOADD
-
-#ifndef _LOCORE
-
-#include <machine/pte.h>	/* st_entry_t */
-
-/* XXX - belongs in pmap.h, but put here because of ordering issues */
-struct pv_entry {
-	struct pv_entry	*pv_next;	/* next pv_entry */
-	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vaddr_t		pv_va;		/* virtual address for mapping */
-	st_entry_t	*pv_ptste;	/* non-zero if VA maps a PT page */
-	struct pmap	*pv_ptpmap;	/* if pv_ptste, pmap for PT page */
-	int		pv_flags;	/* flags */
-};
-
-/*
- * pv_flags carries some PTE permission bits as well - make sure extra flags
- * values are > (1 << PG_SHIFT)
- */
-/* header: all entries are cache inhibited */
-#define	PV_CI		(0x01 << PG_SHIFT)
-/* header: entry maps a page table page */
-#define PV_PTPAGE	(0x02 << PG_SHIFT)
-
-struct vm_page_md {
-	struct pv_entry pvent;
-};
-
-#define	VM_MDPAGE_INIT(pg) do {			\
-	(pg)->mdpage.pvent.pv_next = NULL;	\
-	(pg)->mdpage.pvent.pv_pmap = NULL;	\
-	(pg)->mdpage.pvent.pv_va = 0;		\
-	(pg)->mdpage.pvent.pv_ptste = NULL;	\
-	(pg)->mdpage.pvent.pv_ptpmap = NULL;	\
-	(pg)->mdpage.pvent.pv_flags = 0;	\
-} while (0)
-
-#endif	/* _LOCORE */
 
 #endif /* !_M68K_VMPARAM_H_ */

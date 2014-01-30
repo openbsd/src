@@ -188,7 +188,28 @@ void		switchexit(struct proc *);
 int	ctx_alloc(struct pmap*);
 void	ctx_free(struct pmap*);
 
-
 #endif	/* _KERNEL */
+
+/*
+ * For each struct vm_page, there is a list of all currently valid virtual
+ * mappings of that page.
+ */
+typedef struct pv_entry {
+	struct pv_entry	*pv_next;	/* next pv_entry */
+	struct pmap	*pv_pmap;	/* pmap where mapping lies */
+	vaddr_t	pv_va;		/* virtual address for mapping */
+} *pv_entry_t;
+/* PV flags encoded in the low bits of the VA of the first pv_entry */
+
+struct vm_page_md {
+	struct pv_entry pvent;
+};
+
+#define VM_MDPAGE_INIT(pg) do {			\
+	(pg)->mdpage.pvent.pv_next = NULL;	\
+	(pg)->mdpage.pvent.pv_pmap = NULL;	\
+	(pg)->mdpage.pvent.pv_va = 0;		\
+} while (0)
+
 #endif	/* _LOCORE */
 #endif	/* _MACHINE_PMAP_H_ */

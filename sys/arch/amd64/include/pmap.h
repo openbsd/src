@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.41 2013/03/31 17:07:02 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.42 2014/01/30 18:16:41 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -567,4 +567,16 @@ kvtopte(vaddr_t va)
 #define __HAVE_PMAP_DIRECT
 
 #endif /* _KERNEL && !_LOCORE */
+
+#ifndef _LOCORE
+struct pv_entry;
+struct vm_page_md {
+	struct pv_entry *pv_list;
+};
+
+#define VM_MDPAGE_INIT(pg) do {		\
+	(pg)->mdpage.pv_list = NULL;	\
+} while (0)
+#endif	/* !_LOCORE */
+
 #endif	/* _MACHINE_PMAP_H_ */

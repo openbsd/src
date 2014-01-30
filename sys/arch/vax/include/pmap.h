@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.37 2013/11/24 22:08:23 miod Exp $     */
+/*      $OpenBSD: pmap.h,v 1.38 2014/01/30 18:16:41 miod Exp $     */
 /*	$NetBSD: pmap.h,v 1.37 1999/08/01 13:48:07 ragge Exp $	   */
 
 /* 
@@ -134,5 +134,16 @@ vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, int);
 void	pmap_pinit(pmap_t);
 
 #endif	/* _KERNEL */
+
+struct vm_page_md {
+	struct pv_entry *pv_head;
+	int		 pv_attr;	/* write/modified bits */
+};
+
+#define	VM_MDPAGE_INIT(pg) \
+	do { \
+		(pg)->mdpage.pv_head = NULL; \
+		(pg)->mdpage.pv_attr = 0; \
+	} while (0)
 
 #endif /* _MACHINE_PMAP_H_ */

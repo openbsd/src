@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.h,v 1.26 2011/11/01 21:20:55 miod Exp $	*/
+/*	$OpenBSD: pmap_motorola.h,v 1.27 2014/01/30 18:16:41 miod Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -39,10 +39,13 @@
 #ifndef	_M68K_M68K_PMAP_MOTOROLA_H_
 #define	_M68K_M68K_PMAP_MOTOROLA_H_
 
+#if !defined(_LOCORE)
+#include <machine/pte.h>
+#endif
+
 #ifdef	_KERNEL
 
 #include <machine/cpu.h>
-#include <machine/pte.h>
 
 /*
  * Pmap stuff
@@ -116,5 +119,40 @@ void	pmap_kenter_cache(vaddr_t, paddr_t, pt_entry_t);
 #define PMAP_GROWKERNEL			/* turn on pmap_growkernel interface */
 
 #endif	/* _KERNEL */
+
+#ifndef _LOCORE
+
+struct pv_entry {
+	struct pv_entry	*pv_next;	/* next pv_entry */
+	struct pmap	*pv_pmap;	/* pmap where mapping lies */
+	vaddr_t		pv_va;		/* virtual address for mapping */
+	st_entry_t	*pv_ptste;	/* non-zero if VA maps a PT page */
+	struct pmap	*pv_ptpmap;	/* if pv_ptste, pmap for PT page */
+	int		pv_flags;	/* flags */
+};
+
+/*
+ * pv_flags carries some PTE permission bits as well - make sure extra flags
+ * values are > (1 << PG_SHIFT)
+ */
+/* header: all entries are cache inhibited */
+#define	PV_CI		(0x01 << PG_SHIFT)
+/* header: entry maps a page table page */
+#define PV_PTPAGE	(0x02 << PG_SHIFT)
+
+struct vm_page_md {
+	struct pv_entry pvent;
+};
+
+#define	VM_MDPAGE_INIT(pg) do {			\
+	(pg)->mdpage.pvent.pv_next = NULL;	\
+	(pg)->mdpage.pvent.pv_pmap = NULL;	\
+	(pg)->mdpage.pvent.pv_va = 0;		\
+	(pg)->mdpage.pvent.pv_ptste = NULL;	\
+	(pg)->mdpage.pvent.pv_ptpmap = NULL;	\
+	(pg)->mdpage.pvent.pv_flags = 0;	\
+} while (0)
+
+#endif	/* _LOCORE */
 
 #endif /* !_M68K_M68K_PMAP_MOTOROLA_H_ */

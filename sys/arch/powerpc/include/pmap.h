@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.49 2013/03/23 16:12:26 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.50 2014/01/30 18:16:41 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -167,5 +167,15 @@ int reserve_dumppages(caddr_t p);
 #define PMAP_NOCACHE	0x1		/* map uncached */
 
 #endif	/* _KERNEL */
+
+struct vm_page_md {
+	LIST_HEAD(,pte_desc) pv_list;
+};
+
+#define VM_MDPAGE_INIT(pg) do {                 \
+	LIST_INIT(&((pg)->mdpage.pv_list)); 	\
+} while (0)
+
 #endif	/* _LOCORE */
+
 #endif	/* _POWERPC_PMAP_H_ */

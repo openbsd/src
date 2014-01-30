@@ -1,4 +1,4 @@
-/* $OpenBSD: vmparam.h,v 1.24 2014/01/23 22:06:29 miod Exp $ */
+/* $OpenBSD: vmparam.h,v 1.25 2014/01/30 18:16:41 miod Exp $ */
 /* $NetBSD: vmparam.h,v 1.18 2000/05/22 17:13:54 thorpej Exp $ */
 
 /*
@@ -124,19 +124,5 @@
 #define	VM_PHYSSEG_MAX		16		/* XXX */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define	VM_PHYSSEG_NOADD			/* no more after vm_mem_init */
-
-/*
- * pmap-specific data stored in the vm_page structure.
- */
-struct vm_page_md {
-	struct pv_entry *pvh_list;	/* pv entry list */
-	int pvh_attrs;			/* page attributes */
-};
-
-#define	VM_MDPAGE_INIT(pg)						\
-do {									\
-	(pg)->mdpage.pvh_list = NULL;					\
-	(pg)->mdpage.pvh_attrs = 0;					\
-} while (0)
 
 #endif	/* ! _MACHINE_VMPARAM_H_ */

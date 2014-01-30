@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.29 2013/05/29 20:36:12 pirofti Exp $ */
+/*      $OpenBSD: pmap.h,v 1.30 2014/01/30 18:16:41 miod Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -175,5 +175,25 @@ vm_page_t pmap_unmap_direct(vaddr_t);
 #define PMAP_PA_MASK	~((paddr_t)PAGE_MASK)
 
 #endif	/* _KERNEL */
+
+#if !defined(_LOCORE)
+typedef struct pv_entry {
+	struct pv_entry	*pv_next;	/* next pv_entry */
+	struct pmap	*pv_pmap;	/* pmap where mapping lies */
+	vaddr_t		pv_va;		/* virtual address for mapping */
+} *pv_entry_t;
+
+struct vm_page_md {
+	struct pv_entry pv_ent;		/* pv list of this seg */
+};
+
+#define	VM_MDPAGE_INIT(pg) \
+	do { \
+		(pg)->mdpage.pv_ent.pv_next = NULL; \
+		(pg)->mdpage.pv_ent.pv_pmap = NULL; \
+		(pg)->mdpage.pv_ent.pv_va = 0; \
+	} while (0)
+
+#endif	/* !_LOCORE */
 
 #endif	/* !_MIPS64_PMAP_H_ */

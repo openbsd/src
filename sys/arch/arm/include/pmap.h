@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.24 2013/05/18 18:06:05 patrick Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.25 2014/01/30 18:16:41 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -68,6 +68,8 @@
 
 #ifndef	_ARM_PMAP_H_
 #define	_ARM_PMAP_H_
+
+#include <sys/lock.h>		/* struct simplelock */ 
 
 #ifdef _KERNEL
 
@@ -712,5 +714,35 @@ extern uint32_t pmap_alias_bits;
 #endif /* _LOCORE */
 
 #endif /* _KERNEL */
+
+#ifndef _LOCORE
+/*
+ * pmap-specific data store in the vm_page structure.
+ */
+struct vm_page_md {
+	struct pv_entry *pvh_list;		/* pv_entry list */
+	struct simplelock pvh_slock;		/* lock on this head */
+	int pvh_attrs;				/* page attributes */
+	u_int uro_mappings;
+	u_int urw_mappings;
+	union {
+		u_short s_mappings[2];	/* Assume kernel count <= 65535 */
+		u_int i_mappings;
+	} k_u;
+#define	kro_mappings	k_u.s_mappings[0]
+#define	krw_mappings	k_u.s_mappings[1]
+#define	k_mappings	k_u.i_mappings
+};
+
+#define	VM_MDPAGE_INIT(pg)						\
+do {									\
+	(pg)->mdpage.pvh_list = NULL;					\
+	simple_lock_init(&(pg)->mdpage.pvh_slock);			\
+	(pg)->mdpage.pvh_attrs = 0;					\
+	(pg)->mdpage.uro_mappings = 0;					\
+	(pg)->mdpage.urw_mappings = 0;					\
+	(pg)->mdpage.k_mappings = 0;					\
+} while (/*CONSTCOND*/0)
+#endif /* _LOCORE */
 
 #endif	/* _ARM_PMAP_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.26 2014/01/24 05:21:19 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.27 2014/01/30 18:16:41 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -108,30 +108,5 @@
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
-
-#if !defined(_LOCORE)
-/*
- * pmap-specific data
- */
-
-/* XXX - belongs in pmap.h, but put here because of ordering issues */
-typedef struct pv_entry {
-	struct pv_entry	*pv_next;	/* next pv_entry */
-	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vaddr_t		pv_va;		/* virtual address for mapping */
-} *pv_entry_t;
-
-struct vm_page_md {
-	struct pv_entry pv_ent;		/* pv list of this seg */
-};
-
-#define	VM_MDPAGE_INIT(pg) \
-	do { \
-		(pg)->mdpage.pv_ent.pv_next = NULL; \
-		(pg)->mdpage.pv_ent.pv_pmap = NULL; \
-		(pg)->mdpage.pv_ent.pv_va = 0; \
-	} while (0)
-
-#endif	/* _KERNEL && !_LOCORE */
 
 #endif /* !_MIPS64_VMPARAM_H_ */

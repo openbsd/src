@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.40 2014/01/23 22:06:29 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.41 2014/01/30 18:16:41 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -104,30 +104,6 @@
 #define VM_PHYSSEG_MAX		32	/* we only have one "hole" */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
-
-/*
- * pmap specific data stored in the vm_physmem[] array
- */
-
-
-/* XXX - belongs in pmap.h, but put here because of ordering issues */
-struct pvlist {
-	struct		pvlist *pv_next;	/* next pvlist, if any */
-	struct		pmap *pv_pmap;		/* pmap of this va */
-	vaddr_t		pv_va;			/* virtual address */
-	int		pv_flags;		/* flags (below) */
-};
-
-struct vm_page_md {
-	struct pvlist pv_head;
-};
-
-#define VM_MDPAGE_INIT(pg) do {			\
-	(pg)->mdpage.pv_head.pv_next = NULL;	\
-	(pg)->mdpage.pv_head.pv_pmap = NULL;	\
-	(pg)->mdpage.pv_head.pv_va = 0;		\
-	(pg)->mdpage.pv_head.pv_flags = 0;	\
-} while (0)
 
 #if defined (_KERNEL) && !defined(_LOCORE)
 struct vm_map;

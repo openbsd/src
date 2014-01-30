@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.63 2014/01/06 14:29:25 sf Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.64 2014/01/30 18:16:41 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -477,4 +477,14 @@ void	pmap_ldt_cleanup(struct proc *);
 #endif /* USER_LDT */
 
 #endif /* _KERNEL */
+
+struct pv_entry;
+struct vm_page_md {
+	struct pv_entry *pv_list;
+};
+
+#define VM_MDPAGE_INIT(pg) do {			\
+	(pg)->mdpage.pv_list = NULL;	\
+} while (0)
+
 #endif	/* _MACHINE_PMAP_H_ */

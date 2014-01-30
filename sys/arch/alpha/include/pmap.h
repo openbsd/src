@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.31 2014/01/26 17:40:11 miod Exp $ */
+/* $OpenBSD: pmap.h,v 1.32 2014/01/30 18:16:41 miod Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -310,5 +310,19 @@ do {									\
 } while (0)
 
 #endif /* _KERNEL */
+
+/*
+ * pmap-specific data stored in the vm_page structure.
+ */
+struct vm_page_md {
+	struct pv_entry *pvh_list;	/* pv entry list */
+	int pvh_attrs;			/* page attributes */
+};
+
+#define	VM_MDPAGE_INIT(pg)						\
+do {									\
+	(pg)->mdpage.pvh_list = NULL;					\
+	(pg)->mdpage.pvh_attrs = 0;					\
+} while (0)
 
 #endif /* _PMAP_MACHINE_ */
