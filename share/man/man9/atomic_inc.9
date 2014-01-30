@@ -1,0 +1,68 @@
+.\" $OpenBSD: atomic_inc.9,v 1.1 2014/01/30 00:44:20 dlg Exp $
+.\"
+.\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: January 30 2014 $
+.Dt ATOMIC_INC 9
+.Os
+.Sh NAME
+.Nm atomic_inc_int ,
+.Nm atomic_inc_int_nv ,
+.Nm atomic_inc_long ,
+.Nm atomic_inc_long_nv
+.Nd atomic increment operations
+.Sh SYNOPSIS
+.In sys/atomic.h
+.Ft void
+.Fn atomic_inc_int "volatile unsigned int *p"
+.Ft unsigned int
+.Fn atomic_inc_int_nv "volatile unsigned int *p"
+.Ft void
+.Fn atomic_inc_long "volatile unsigned long *p "
+.Ft unsigned long
+.Fn atomic_inc_long_nv "volatile unsigned long *p"
+.Sh DESCRIPTION
+The
+.Nm atomic_inc
+set of functions provide an interface for atomically performing
+increment and increment-and-fetch operations
+with respect to interrupts and multiple processors in the system.
+.Pp
+The value referenced by the pointer
+.Fa p
+is incremented by 1.
+.Sh RETURN VALUES
+.Nm atomic_inc_int
+and
+.Nm atomic_inc_long
+perform the increment without returning any knowledge of the value at the
+.Fa p .
+.Pp
+.Nm atomic_inc_int_nv
+and
+.Nm atomic_inc_long_nv
+return the value at
+.Fa p
+after the increment was performed.
+.Sh SEE ALSO
+.Xr atomic 9 ,
+.Xr atomic_add 9 ,
+.Xr atomic_dec 9
+.Sh HISTORY
+The
+.Nm atomic_add
+functions first appeared in
+.Ox 5.5 .

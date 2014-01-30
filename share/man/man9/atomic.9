@@ -1,4 +1,4 @@
-.\" $OpenBSD: atomic.9,v 1.5 2013/06/04 19:27:03 schwarze Exp $
+.\" $OpenBSD: atomic.9,v 1.6 2014/01/30 00:44:20 dlg Exp $
 .\"
 .\" Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: January 30 2014 $
 .Dt ATOMIC 9
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Nm atomic_clearbits_int
 .Nd interface to perform atomic operations on data
 .Sh SYNOPSIS
-.In machine/atomic.h
+.In sys/atomic.h
 .Ft void
 .Fn atomic_setbits_int "unsigned int *p" "unsigned int b"
 .Ft void
@@ -34,6 +34,23 @@ The
 .Nm
 set of functions provide an interface for changing data atomically with
 respect to interrupts and multiple processors in the system.
+.Pp
+There are several sets of atomic memory operations available:
+.Pp
+.Bl -tag -width "atomic_swap(9)" -offset indent
+.It Xr atomic_add 9
+These functions perform atomic addition operations.
+.It Xr atomic_cas 9
+These functions perform atomic compare-and-swap operations.
+.It Xr atomic_dec 9
+These functions perform atomic decrement operations.
+.It Xr atomic_inc 9
+These functions perform atomic increment operations.
+.It Xr atomic_sub 9
+These functions perform atomic subtraction operations.
+.It Xr atomic_swap 9
+These functions perform atomic swap operations.
+.El
 .Pp
 The
 .Fn atomic_setbits_int
@@ -56,6 +73,13 @@ It is equivalent to
 .Bd -literal -offset indent
 *p &= ~b;
 .Ed
+.Sh SEE ALSO
+.Xr atomic_add 9 ,
+.Xr atomic_cas 9 ,
+.Xr atomic_dec 9 ,
+.Xr atomic_inc 9 ,
+.Xr atomic_sub 9 ,
+.Xr atomic_swap 9
 .Sh HISTORY
 The
 .Nm

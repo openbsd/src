@@ -1,11 +1,12 @@
-#	$OpenBSD: Makefile,v 1.195 2014/01/22 00:09:02 tedu Exp $
+#	$OpenBSD: Makefile,v 1.196 2014/01/30 00:44:20 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
-MAN=	altq.9 aml_evalnode.9 atomic.9 audio.9 autoconf.9 bio_register.9 \
-	boot.9 \
-	buffercache.9 bus_dma.9 bus_space.9 copy.9 crypto.9 delay.9 \
+MAN=	altq.9 aml_evalnode.9 atomic.9 atomic_add.9 atomic_cas.9 atomic_dec.9 \
+	atomic_inc.9 atomic_sub.9 atomic_swap.9 audio.9 autoconf.9 \
+	bio_register.9 boot.9 buffercache.9 bus_dma.9 bus_space.9 \
+	copy.9 crypto.9 delay.9 \
 	disk.9 disklabel.9 dma_alloc.9 dohooks.9 dopowerhooks.9 \
 	domountroothooks.9 doshutdownhooks.9 dostartuphooks.9 \
 	evcount.9 extent.9 fb_setup.9 file.9 fork1.9 \
@@ -17,7 +18,7 @@ MAN=	altq.9 aml_evalnode.9 atomic.9 audio.9 autoconf.9 bio_register.9 \
 	iic.9 intro.9 inittodr.9 \
 	kern.9 km_alloc.9 knote.9 kthread.9 ktrace.9 \
 	loadfirmware.9 lock.9 log.9 \
-	malloc.9 mbuf.9 mbuf_tags.9 md5.9 mi_switch.9 microtime.9 \
+	malloc.9 membar.9 mbuf.9 mbuf_tags.9 md5.9 mi_switch.9 microtime.9 \
 	mountroothook_establish.9 mutex.9 namei.9 \
 	panic.9 pci_conf_read.9 pci_intr_map.9 pfind.9 physio.9 pmap.9 \
 	pool.9 powerhook_establish.9 ppsratecheck.9 printf.9 psignal.9 \
@@ -36,6 +37,18 @@ MAN=	altq.9 aml_evalnode.9 atomic.9 audio.9 autoconf.9 bio_register.9 \
 MLINKS+=aml_evalnode.9 aml_evalname.9 aml_evalnode.9 aml_find_node.9 \
 	aml_evalnode.9 aml_freevalue.9 aml_evalnode.9 aml_val2int.9
 MLINKS+=atomic.9 atomic_setbits_int.9 atomic.9 atomic_clearbits_int.9
+MLINKS+=atomic_add.9 atomic_add_int.9 atomic_add.9 atomic_add_long.9 \
+	atomic_add.9 atomic_add_int_nv.9 atomic_add.9 atomic_add_long_nv.9
+MLINKS+=atomic_cas.9 atomic_cas_uint.9 atomic_cas.9 atomic_cas_ulong.9 \
+	atomic_cas.9 atomic_cas_ptr.9
+MLINKS+=atomic_dec.9 atomic_dec_int.9 atomic_dec.9 atomic_dec_long.9 \
+	atomic_dec.9 atomic_dec_int_nv.9 atomic_dec.9 atomic_dec_long_nv.9
+MLINKS+=atomic_inc.9 atomic_inc_int.9 atomic_inc.9 atomic_inc_long.9 \
+	atomic_inc.9 atomic_inc_int_nv.9 atomic_inc.9 atomic_inc_long_nv.9
+MLINKS+=atomic_sub.9 atomic_sub_int.9 atomic_sub.9 atomic_sub_long.9 \
+	atomic_sub.9 atomic_sub_int_nv.9 atomic_sub.9 atomic_sub_long_nv.9 \
+MLINKS+=atomic_swap.9 atomic_swap_uint.9 atomic_swap.9 atomic_swap_ulong.9 \
+	atomic_swap.9 atomic_swap_ptr.9
 MLINKS+=autoconf.9 config_init.9 autoconf.9 config_search.9 \
 	autoconf.9 config_rootsearch.9 autoconf.9 config_found_sm.9 \
 	autoconf.9 config_found.9 autoconf.9 config_rootfound.9 \
@@ -211,6 +224,9 @@ MLINKS+=lock.9 lockinit.9 lock.9 lockmgr.9 lock.9 lockstatus.9 \
 	lock.9 simple_lock_try.9 lock.9 simple_unlock.9
 MLINKS+=log.9 addlog.9
 MLINKS+=malloc.9 free.9
+MLINKS+=membar.9 membar_enter.9 membar.9 membar_exit.9 \
+	membar.9 membar_producer.9 membar.9 membar_consumer.9 \
+	membar.9 membar_sync.9
 MLINKS+=mbuf.9 m_copym2.9 mbuf.9 m_copym.9 mbuf.9 m_free.9 mbuf.9 MFREE.9 \
 	mbuf.9 m_get.9 mbuf.9 MGET.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 \
 	mbuf.9 MGETHDR.9 mbuf.9 m_prepend.9 mbuf.9 M_PREPEND.9 \
