@@ -1,4 +1,4 @@
-/* $OpenBSD: db_interface.c,v 1.18 2014/01/26 17:40:09 miod Exp $ */
+/* $OpenBSD: db_interface.c,v 1.19 2014/01/30 20:10:24 miod Exp $ */
 /* $NetBSD: db_interface.c,v 1.8 1999/10/12 17:08:57 jdolecek Exp $ */
 
 /* 
@@ -507,13 +507,13 @@ db_mach_cpu(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	CPU_INFO_ITERATOR cii;
 
 	if (have_addr == 0) {
-		db_printf("addr               dev   id flags    ipis "
+		db_printf("addr               dev   id flg mtx ipis "
 		    "curproc            fpcurproc\n");
 		CPU_INFO_FOREACH(cii, ci)
-			db_printf("%p %-5s %02lu %08lx %04lx %p %p\n",
+			db_printf("%p %-5s %02lu %03lx %03d %04lx %p %p\n",
 			    ci, ci->ci_dev->dv_xname, ci->ci_cpuid,
-			    ci->ci_flags, ci->ci_ipis, ci->ci_curproc,
-			    ci->ci_fpcurproc);
+			    ci->ci_flags, ci->ci_mutex_level, ci->ci_ipis,
+			    ci->ci_curproc, ci->ci_fpcurproc);
 		return;
 	}
 
