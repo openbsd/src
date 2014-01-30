@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.33 2013/06/04 22:17:34 tedu Exp $	*/
+/*	$OpenBSD: sched.h,v 1.34 2014/01/30 20:14:27 miod Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -185,7 +185,11 @@ void remrunqueue(struct proc *);
  */
 extern struct __mp_lock sched_lock;
 
-#define	SCHED_ASSERT_LOCKED()	KASSERT(__mp_lock_held(&sched_lock))
+#define	SCHED_ASSERT_LOCKED()						\
+do {									\
+	splassert(IPL_SCHED);						\
+	KASSERT(__mp_lock_held(&sched_lock));				\
+} while (0)
 #define	SCHED_ASSERT_UNLOCKED()	KASSERT(__mp_lock_held(&sched_lock) == 0)
 
 #define	SCHED_LOCK_INIT()	__mp_lock_init(&sched_lock)
