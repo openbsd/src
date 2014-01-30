@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.34 2014/01/30 13:16:58 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.35 2014/01/30 18:54:34 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -207,6 +207,10 @@ sub wipe_info
 {
 	my $self = shift;
 	$self->{repository}->wipe_info($self);
+	delete $self->{contents};
+	$self->deref;
+	delete $self->{_current_name};
+	delete $self->{update_info};
 }
 
 sub info
@@ -273,11 +277,11 @@ sub close_with_client_error
 sub deref
 {
 	my $self = shift;
-	$self->{fh} = undef;
-	$self->{pid} = undef;
-	$self->{pid2} = undef;
-	$self->{_archive} = undef;
-	$self->{_current} = undef;
+	delete $self->{fh};
+	delete $self->{pid};
+	delete $self->{pid2};
+	delete $self->{_archive};
+	delete $self->{_current};
 }
 
 # proxy for archive operations
