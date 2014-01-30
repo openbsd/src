@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.33 2014/01/23 22:57:06 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.34 2014/01/30 13:16:58 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -28,7 +28,7 @@ sub new
 {
 	my ($class, $repository, $name) = @_;
 
-	my $self = { repository => $repository, name => $repository->canonicalize($name), state => $repository->{state} };
+	my $self = { repository => $repository, name => $repository->canonicalize($name) };
 	bless $self, $class;
 	return $self;
 
@@ -81,7 +81,7 @@ sub _opened
 		return;
 	}
 	require OpenBSD::Ustar;
-	my $archive = OpenBSD::Ustar->new($fh, $self->{state});
+	my $archive = OpenBSD::Ustar->new($fh, $self->{repository}{state});
 	$archive->set_description($self->{repository}->url($self->{name}));
 	$self->{_archive} = $archive;
 
@@ -171,7 +171,7 @@ sub grab_info
 			if ($@) {
 				unlink($e->{name});
 				$@ =~ s/\s+at.*//o;
-				$self->{state}->errprint('#1', $@);
+				$self->{repository}{state}->errprint('#1', $@);
 				return 0;
 			}
 		} else {
