@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.348 2014/01/28 21:50:57 naddy Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.349 2014/01/31 01:16:10 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3240,6 +3240,17 @@ bge_reset(struct bge_softc *sc)
 		}
 	}
 
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
+		val = CSR_READ_4(sc, BGE_VCPU_STATUS);
+		CSR_WRITE_4(sc, BGE_VCPU_STATUS,
+		    val | BGE_VCPU_STATUS_DRV_RESET);
+                val = CSR_READ_4(sc, BGE_VCPU_EXT_CTRL);
+                CSR_WRITE_4(sc, BGE_VCPU_EXT_CTRL,
+                    val & ~BGE_VCPU_EXT_CTRL_HALT_CPU);
+
+                sc->bge_flags |= BGE_NO_EEPROM;
+        }
+
 	/*
 	 * Set GPHY Power Down Override to leave GPHY
 	 * powered up in D0 uninitialized.
@@ -3255,19 +3266,6 @@ bge_reset(struct bge_softc *sc)
 		DELAY(100 * 1000);
 	else
 		DELAY(1000);
-
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
-		u_int32_t status, ctrl;
-
-		status = CSR_READ_4(sc, BGE_VCPU_STATUS);
-		CSR_WRITE_4(sc, BGE_VCPU_STATUS,
-		    status | BGE_VCPU_STATUS_DRV_RESET);
-		ctrl = CSR_READ_4(sc, BGE_VCPU_EXT_CTRL);
-		CSR_WRITE_4(sc, BGE_VCPU_EXT_CTRL,
-		    ctrl & ~BGE_VCPU_EXT_CTRL_HALT_CPU);
-
-		sc->bge_flags |= BGE_NO_EEPROM;
-	}
 
 	if (sc->bge_flags & BGE_PCIE) {
 		if (sc->bge_chipid == BGE_CHIPID_BCM5750_A0) {
