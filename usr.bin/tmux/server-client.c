@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.114 2013/11/13 20:43:37 benno Exp $ */
+/* $OpenBSD: server-client.c,v 1.115 2014/01/31 14:19:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -743,7 +743,7 @@ server_client_check_redraw(struct client *c)
 	}
 
 	if (c->flags & CLIENT_REDRAW) {
-		screen_redraw_screen(c, 0, 0);
+		screen_redraw_screen(c, 1, 1, 1);
 		c->flags &= ~(CLIENT_STATUS|CLIENT_BORDERS);
 	} else if (c->flags & CLIENT_REDRAWWINDOW) {
 		TAILQ_FOREACH(wp, &c->session->curw->window->panes, entry)
@@ -757,10 +757,10 @@ server_client_check_redraw(struct client *c)
 	}
 
 	if (c->flags & CLIENT_BORDERS)
-		screen_redraw_screen(c, 0, 1);
+		screen_redraw_screen(c, 0, 0, 1);
 
 	if (c->flags & CLIENT_STATUS)
-		screen_redraw_screen(c, 1, 0);
+		screen_redraw_screen(c, 0, 1, 0);
 
 	c->tty.flags |= flags;
 
