@@ -1,11 +1,11 @@
 #! /usr/bin/perl
-# $OpenBSD: check-cfl,v 1.1 2014/01/31 10:13:13 espie Exp $
+# $OpenBSD: check-cfl,v 1.2 2014/01/31 10:18:35 espie Exp $
 # Written by Marc Espie
 # Public domain
 
 use strict;
 use warnings;
-use Test::Simple tests => 2;
+use Test::Simple tests => 3;
 
 use OpenBSD::PkgCfl;
 use OpenBSD::PackingList;
@@ -14,17 +14,18 @@ use OpenBSD::PackingElement;
 sub check_list
 {
 	my $expected = shift;
+	my @r = sort(@$expected);
 	@_ = sort(@_);
-	if (@$expected != @_) {
-		print STDERR "length: ", scalar(@$expected)," vs. ", 
+	if (@r != @_) {
+		print STDERR "length: ", scalar(@r)," vs. ", 
 		    scalar(@_), "\n";
-		    print STDERR join(',', @$expected), "\n";
+		    print STDERR join(',', @r), "\n";
 		    print STDERR join(',', @_), "\n";
 		return 0;
 	}
 	for my $i (0 .. @_ -1) {
-		if ($expected->[$i] ne $_[$i]) {
-			print STDERR "$expected->[$i] vs. $_[$i]\n";
+		if ($r[$i] ne $_[$i]) {
+			print STDERR "$r[$i] vs. $_[$i]\n";
 			return 0;
 		}
 	}
@@ -42,7 +43,7 @@ sub check_conflict
 my $p1 = OpenBSD::PackingList->new;
 OpenBSD::PackingElement::Name->add($p1, "foo-1.0");
 
-my @l1 = qw(foo-2.0 partial-foo-2.5 bar-2.0 bar-1.5);
+my @l1 = qw(foo-2.0 partial-foo-2.5 bar-2.0 bar-1.5 buz-1.0 .libs-buz-0.0);
 my @r1 = qw(foo-2.0 partial-foo-2.5);
 ok(check_list(\@r1, check_conflict($p1, @l1)));
 
@@ -51,3 +52,14 @@ OpenBSD::PackingElement::Name->add($p2, "bar-2.0");
 OpenBSD::PackingElement::NoDefaultConflict->add($p2);
 my @r2 = qw(bar-2.0);
 ok(check_list(\@r2, check_conflict($p2, @l1)));
+
+my $p3 = OpenBSD::PackingList->new;
+OpenBSD::PackingElement::Name->add($p3, "buz-2.5");
+OpenBSD::PackingElement::Conflict->add($p3, "bar->=2");
+
+my @r3 = qw(bar-2.0 buz-1.0 .libs-buz-0.0);
+ok(check_list(\@r3, check_conflict($p3, @l1)));
+
+my @l2 = qw(partial-foo-2.5 partial-partial-foo-2.10 bar-2.0 bar-1.5 buz-1.0 .libs-buz-0.0);
+my @r4 = qw(partial-foo-2.5 partial-partial-foo-2.10);
+ok(check_list(\@r4, check_conflict($p1, @l2)));
