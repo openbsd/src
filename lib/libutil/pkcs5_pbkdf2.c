@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkcs5_pbkdf2.c,v 1.5 2014/01/18 07:12:04 jsing Exp $	*/
+/*	$OpenBSD: pkcs5_pbkdf2.c,v 1.6 2014/01/31 16:56:32 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -111,11 +111,11 @@ pkcs5_pbkdf2(const char *pass, size_t pass_len, const uint8_t *salt,
 		key += r;
 		key_len -= r;
 	};
-	bzero(asalt, salt_len + 4);
+	explicit_bzero(asalt, salt_len + 4);
 	free(asalt);
-	bzero(d1, sizeof(d1));
-	bzero(d2, sizeof(d2));
-	bzero(obuf, sizeof(obuf));
+	explicit_bzero(d1, sizeof(d1));
+	explicit_bzero(d2, sizeof(d2));
+	explicit_bzero(obuf, sizeof(obuf));
 
 	return 0;
 }
