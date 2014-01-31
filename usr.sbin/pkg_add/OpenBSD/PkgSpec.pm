@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.41 2014/01/31 10:30:48 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.42 2014/01/31 10:49:53 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -309,8 +309,8 @@ sub new
 		    }, $class;
 
 		if ($with_partial) {
-			$o->{exactstem} = qr{^(partial\-)*$stemspec$};
-			$o->{fuzzystem} = qr{^(partial\-)*$stemspec\-\d.*$};
+			$o->{exactstem} = qr{^(?:partial\-)*$stemspec$};
+			$o->{fuzzystem} = qr{^(?:partial\-)*$stemspec\-\d.*$};
 		} else {
 			$o->{exactstem} = qr{^$stemspec$};
 			$o->{fuzzystem} = qr{^$stemspec\-\d.*$};
