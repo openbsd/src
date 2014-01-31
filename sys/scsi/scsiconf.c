@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.185 2013/12/06 21:03:02 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.186 2014/01/31 02:53:41 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -77,6 +77,7 @@ int	scsi_probedev(struct scsibus_softc *, int, int);
 void	scsi_devid(struct scsi_link *);
 int	scsi_devid_pg80(struct scsi_link *);
 int	scsi_devid_pg83(struct scsi_link *);
+int	scsi_devid_wwn(struct scsi_link *);
 
 int	scsibusmatch(struct device *, void *, void *);
 void	scsibusattach(struct device *, struct device *, void *);
@@ -778,6 +779,9 @@ scsibus_printlink(struct scsi_link *link)
 		case DEVID_SERIAL:
 			printf(" serial.");
 			break;
+		case DEVID_WWN:
+			printf(" wwn.");
+			break;
 		}
 
 		if (ISSET(link->id->d_flags, DEVID_F_PRINT)) {
@@ -1133,7 +1137,7 @@ scsi_devid(struct scsi_link *link)
 	if (SCSISPC(link->inqdata.version) >= 2) {
 		if (scsi_inquire_vpd(link, pg, sizeof(*pg), SI_PG_SUPPORTED,
 		    scsi_autoconf) != 0)
-			goto done;
+			goto wwn;
 
 		len = MIN(sizeof(pg->list), _2btol(pg->hdr.page_length));
 		for (i = 0; i < len; i++) {
@@ -1152,6 +1156,9 @@ scsi_devid(struct scsi_link *link)
 		if (pg80 && scsi_devid_pg80(link) == 0)
 			goto done;
 	}
+
+wwn:
+	scsi_devid_wwn(link);
 done:
 	dma_free(pg, sizeof(*pg));
 }
@@ -1299,6 +1306,20 @@ free:
 freehdr:
 	dma_free(hdr, sizeof(*hdr));
 	return (rv);
+}
+
+int
+scsi_devid_wwn(struct scsi_link *link)
+{
+	u_int64_t wwnn;
+
+	if (link->lun != 0 || link->node_wwn == 0)
+		return (EOPNOTSUPP);
+
+	wwnn = htobe64(link->node_wwn);
+	link->id = devid_alloc(DEVID_WWN, 0, sizeof(wwnn), (u_int8_t *)&wwnn);
+
+	return (0);
 }
 
 /*
