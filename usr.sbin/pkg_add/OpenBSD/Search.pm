@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.27 2011/07/02 12:12:58 espie Exp $
+# $OpenBSD: Search.pm,v 1.28 2014/01/31 10:30:48 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -57,10 +57,11 @@ sub filter_locations
 
 sub new
 {
-	my ($class, $pattern) = @_;
+	my ($class, $pattern, $with_partial) = @_;
 	require OpenBSD::PkgSpec;
 
-	bless { spec => $class->spec_class->new($pattern)}, $class;
+	bless { spec => $class->spec_class->new($pattern, $with_partial)}, 
+	    $class;
 }
 
 sub add_pkgpath_hint

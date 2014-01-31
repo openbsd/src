@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.40 2014/01/30 13:17:42 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.41 2014/01/31 10:30:48 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -295,7 +295,7 @@ sub add_flavor_constraints
 
 sub new
 {
-	my ($class, $p) = @_;
+	my ($class, $p, $with_partial) = @_;
 
 	my $r = $class->parse($p);
 	if (defined $r) {
@@ -305,10 +305,16 @@ sub new
 		$class->add_flavor_constraints($constraints, $r->{flavorspec});
 
 		my $o = bless {
-			exactstem => qr{^$stemspec$},
-			fuzzystem => qr{^$stemspec\-\d.*$},
 			libstem => qr{^\.libs\d*\-$stemspec\-\d.*$},
 		    }, $class;
+
+		if ($with_partial) {
+			$o->{exactstem} = qr{^(partial\-)*$stemspec$};
+			$o->{fuzzystem} = qr{^(partial\-)*$stemspec\-\d.*$};
+		} else {
+			$o->{exactstem} = qr{^$stemspec$};
+			$o->{fuzzystem} = qr{^$stemspec\-\d.*$};
+		}
 		if (@$constraints != 0) {
 			$o->{constraints} = $constraints;
 		}
@@ -382,8 +388,8 @@ sub subpattern_class
 { "OpenBSD::PkgSpec::SubPattern" }
 sub new
 {
-	my ($class, $pattern) = @_;
-	my @l = map { $class->subpattern_class->new($_) }
+	my ($class, $pattern, $with_partial) = @_;
+	my @l = map { $class->subpattern_class->new($_, $with_partial) }
 		(split /\|/o, $pattern);
 	if (@l == 1) {
 		return $l[0];
