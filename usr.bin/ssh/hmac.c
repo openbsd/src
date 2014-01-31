@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.c,v 1.9 2014/01/27 18:58:14 markus Exp $ */
+/* $OpenBSD: hmac.c,v 1.10 2014/01/31 16:39:19 tedu Exp $ */
 /*
  * Copyright (c) 2014 Markus Friedl.  All rights reserved.
  *
@@ -79,7 +79,7 @@ ssh_hmac_init(struct ssh_hmac_ctx *ctx, const void *key, size_t klen)
 			ctx->buf[i] ^= 0x36 ^ 0x5c;
 		if (ssh_digest_update(ctx->octx, ctx->buf, ctx->buf_len) < 0)
 			return -1;
-		bzero(ctx->buf, ctx->buf_len);
+		explicit_bzero(ctx->buf, ctx->buf_len);
 	}
 	/* start with ictx */
 	if (ssh_digest_copy_state(ctx->ictx, ctx->digest) < 0)
@@ -124,10 +124,10 @@ ssh_hmac_free(struct ssh_hmac_ctx *ctx)
 		ssh_digest_free(ctx->octx);
 		ssh_digest_free(ctx->digest);
 		if (ctx->buf) {
-			bzero(ctx->buf, ctx->buf_len);
+			explicit_bzero(ctx->buf, ctx->buf_len);
 			free(ctx->buf);
 		}
-		bzero(ctx, sizeof(*ctx));
+		explicit_bzero(ctx, sizeof(*ctx));
 		free(ctx);
 	}
 }
