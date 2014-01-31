@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.144 2014/01/30 13:12:50 espie Exp $
+# $OpenBSD: Add.pm,v 1.145 2014/01/31 10:29:54 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -52,12 +52,15 @@ sub manpages_index
 sub register_installation
 {
 	my ($plist, $state) = @_;
-	return if $state->{not};
-	my $dest = installed_info($plist->pkgname);
-	mkdir($dest);
-	$plist->copy_info($dest, $state);
-	$plist->set_infodir($dest);
-	$plist->to_installation;
+	if ($state->{not}) {
+		$plist->to_cache;
+	} else {
+		my $dest = installed_info($plist->pkgname);
+		mkdir($dest);
+		$plist->copy_info($dest, $state);
+		$plist->set_infodir($dest);
+		$plist->to_installation;
+	}
 }
 
 sub validate_plist
