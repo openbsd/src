@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: md5.pm,v 1.15 2011/06/27 12:14:25 espie Exp $
+# $OpenBSD: md5.pm,v 1.16 2014/01/31 15:48:44 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -72,46 +72,6 @@ sub equals
 {
 	my ($a, $b) = @_;
 	return ref($a) eq ref($b) && $$a eq $$b;
-}
-
-package OpenBSD::md5;
-our @ISA=(qw(OpenBSD::digest));
-
-sub fromfile
-{
-	my $fname = shift;
-	return OpenBSD::md5->digest_file($fname);
-}
-
-sub fromfh
-{
-	my $file = shift;
-	return OpenBSD::md5->digest_fh($file);
-}
-
-sub algo
-{
-	my $self = shift;
-	require Digest::MD5;
-
-	return Digest::MD5->new;
-}
-
-sub stringize
-{
-	my $self = shift;
-	return unpack('H*', $$self);
-}
-
-sub unstringize
-{
-	my ($class, $arg) = @_;
-	return pack('H*', $arg);
-}
-
-sub keyword
-{
-	return "md5";
 }
 
 package OpenBSD::sha;

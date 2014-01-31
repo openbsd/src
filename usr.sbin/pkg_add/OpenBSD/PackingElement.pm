@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.227 2014/01/11 11:51:01 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.228 2014/01/31 15:48:44 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -710,21 +710,6 @@ our @ISA=qw(OpenBSD::PackingElement::Meta);
 sub keyword() { 'comment' }
 
 sub category() { 'cvstags'}
-
-package OpenBSD::PackingElement::md5;
-our @ISA=qw(OpenBSD::PackingElement::Annotation);
-
-__PACKAGE__->register_with_factory('md5');
-
-sub add
-{
-	my ($class, $plist, $args) = @_;
-
-	require OpenBSD::md5;
-
-	$plist->{state}->{lastchecksummable}->add_digest(OpenBSD::md5->fromstring($args));
-	return;
-}
 
 package OpenBSD::PackingElement::sha;
 our @ISA=qw(OpenBSD::PackingElement::Annotation);
@@ -1839,7 +1824,7 @@ sub register_old_keyword
 }
 
 for my $k (qw(src display mtree ignore_inst dirrm pkgcfl pkgdep newdepend
-    libdepend endfake ignore vendor incompatibility)) {
+    libdepend endfake ignore vendor incompatibility md5)) {
 	__PACKAGE__->register_old_keyword($k);
 }
 
