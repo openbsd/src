@@ -1,0 +1,53 @@
+#! /usr/bin/perl
+# $OpenBSD: check-cfl,v 1.1 2014/01/31 10:13:13 espie Exp $
+# Written by Marc Espie
+# Public domain
+
+use strict;
+use warnings;
+use Test::Simple tests => 2;
+
+use OpenBSD::PkgCfl;
+use OpenBSD::PackingList;
+use OpenBSD::PackingElement;
+
+sub check_list
+{
+	my $expected = shift;
+	@_ = sort(@_);
+	if (@$expected != @_) {
+		print STDERR "length: ", scalar(@$expected)," vs. ", 
+		    scalar(@_), "\n";
+		    print STDERR join(',', @$expected), "\n";
+		    print STDERR join(',', @_), "\n";
+		return 0;
+	}
+	for my $i (0 .. @_ -1) {
+		if ($expected->[$i] ne $_[$i]) {
+			print STDERR "$expected->[$i] vs. $_[$i]\n";
+			return 0;
+		}
+	}
+	return 1;
+}
+
+sub check_conflict
+{
+	my ($plist, @list) = @_;
+	my $cfl = OpenBSD::PkgCfl->make_conflict_list($plist);
+	return $cfl->conflicts_with(@list);
+}
+
+
+my $p1 = OpenBSD::PackingList->new;
+OpenBSD::PackingElement::Name->add($p1, "foo-1.0");
+
+my @l1 = qw(foo-2.0 partial-foo-2.5 bar-2.0 bar-1.5);
+my @r1 = qw(foo-2.0 partial-foo-2.5);
+ok(check_list(\@r1, check_conflict($p1, @l1)));
+
+my $p2 = OpenBSD::PackingList->new;
+OpenBSD::PackingElement::Name->add($p2, "bar-2.0");
+OpenBSD::PackingElement::NoDefaultConflict->add($p2);
+my @r2 = qw(bar-2.0);
+ok(check_list(\@r2, check_conflict($p2, @l1)));

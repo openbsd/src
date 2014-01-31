@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.50 2012/08/17 23:40:02 espie Exp $
+# $OpenBSD: Makefile,v 1.51 2014/01/31 10:13:13 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames \
-	update-check1 \
+	pkgcfl update-check1 \
 	collision-check3 collision-check5 partial-update-test conflict-update \
 	merge-update split-update big-merge family-circus missing \
 	lib-report1 lib-report2 lib-report3 loop1 \
@@ -33,6 +33,9 @@ DEST$i ?= ${D$i}/usr/local
 # current maxes (used): D33, SRC23, plist21
 pkgnames:
 	perl ${.CURDIR}/check-name
+
+pkgcfl:
+	perl ${.CURDIR}/check-cfl
 
 pkgpaths:
 	perl ${.CURDIR}/check-path
@@ -612,6 +615,10 @@ rep1/ol-1.tgz: plist21
 	@mkdir -p ${SRC23}/lib/subdir
 	@touch ${SRC23}/lib/subdir/libol.so.1.0
 	@${CREATE_PKG} -B src23 -DLIBol_VERSION=1.0 -f plist21 $@
+
+keys:
+	mkdir signify
+	signify -G -n -s signify/test-pkg.sec -p signify/test-pkg.pub
 
 # some extra tests do not yet pass correctly
 .PHONY: ${REGRESS_TARGETS} \
