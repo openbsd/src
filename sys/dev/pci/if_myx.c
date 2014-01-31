@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.52 2014/01/23 01:54:02 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.53 2014/01/31 00:50:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -153,7 +153,6 @@ struct myx_softc {
 	struct myx_buf_list	 sc_tx_buf_list;
 	u_int			 sc_tx_ring_idx;
 
-	u_int8_t		 sc_lladdr[ETHER_ADDR_LEN];
 	struct ifmedia		 sc_media;
 
 	volatile u_int8_t	 sc_linkdown;
