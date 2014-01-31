@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tlreg.h,v 1.9 2005/12/17 07:31:27 miod Exp $	*/
+/*	$OpenBSD: if_tlreg.h,v 1.10 2014/01/31 06:05:40 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -127,7 +127,6 @@ struct tl_softc {
 	bus_dma_tag_t		sc_dmat;
 	struct tl_type		*tl_dinfo;	/* ThunderLAN adapter info */
 	struct tl_type		*tl_pinfo;	/* PHY info struct */
-	int			tl_if_flags;
 	u_int8_t		tl_ctlr;	/* chip number */
 	u_int8_t		tl_eeaddr;
 	struct tl_list_data	*tl_ldata;	/* TX/RX lists and mbufs */

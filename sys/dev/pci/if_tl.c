@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.57 2013/11/26 09:50:33 mpi Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.58 2014/01/31 06:05:40 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -277,10 +277,8 @@ void tl_miibus_writereg(struct device *, int, int, int);
 void tl_miibus_statchg(struct device *);
 
 void tl_setmode(struct tl_softc *, int);
-#if 0
 int tl_calchash(caddr_t);
-#endif
-void tl_setmulti(struct tl_softc *);
+void tl_iff(struct tl_softc *);
 void tl_setfilt(struct tl_softc *, caddr_t, int);
 void tl_softreset(struct tl_softc *, int);
 void tl_hardreset(struct device *);
@@ -744,7 +742,6 @@ tl_setmode(struct tl_softc *sc, int media)
 	}
 }
 
-#if 0
 /*
  * Calculate the hash of a MAC address for programming the multicast hash
  * table.  This hash is simply the address split into 6-bit chunks
@@ -763,7 +760,6 @@ tl_calchash(caddr_t addr)
 		(addr[2] ^ addr[5]);
 	return ((t >> 18) ^ (t >> 12) ^ (t >> 6) ^ t) & 0x3f;
 }
-#endif
 
 /*
  * The ThunderLAN has a perfect MAC address filter in addition to
@@ -801,36 +797,41 @@ tl_setfilt(struct tl_softc *sc, caddr_t addr, int slot)
  * update the multicast filter.
  */
 void
-tl_setmulti(struct tl_softc *sc)
+tl_iff(struct tl_softc *sc)
 {
-	struct ifnet		*ifp;
-	u_int32_t		hashes[2] = { 0, 0 };
-	int			h;
-	struct arpcom *ac = &sc->arpcom;
+	struct ifnet		*ifp = &sc->arpcom.ac_if;
+	struct arpcom		*ac = &sc->arpcom;
 	struct ether_multistep step;
 	struct ether_multi *enm;
-	ifp = &sc->arpcom.ac_if;
+	u_int32_t		hashes[2];
+	int			h = 0;
 
-	tl_dio_write32(sc, TL_HASH1, 0);
-	tl_dio_write32(sc, TL_HASH2, 0);
-
+	tl_dio_clrbit(sc, TL_NETCMD, (TL_CMD_CAF | TL_CMD_NOBRX));
+	bzero(hashes, sizeof(hashes));
 	ifp->if_flags &= ~IFF_ALLMULTI;
-	ETHER_FIRST_MULTI(step, ac, enm);
-	h = 0;
-	while (enm != NULL) {
-		h++;
-		ETHER_NEXT_MULTI(step, enm);
-	}
-	if (h) {
-		hashes[0] = hashes[1] = 0xffffffff;
+
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
-	} else
-		hashes[0] = hashes[1] = 0x00000000;
+		if (ifp->if_flags & IFF_PROMISC)
+			tl_dio_setbit(sc, TL_NETCMD, TL_CMD_CAF);
+		else
+			hashes[0] = hashes[1] = 0xffffffff;
+	} else {
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			h = tl_calchash(enm->enm_addrlo);
+
+			if (h < 32)
+				hashes[0] |= (1 << h);
+			else
+				hashes[1] |= (1 << (h - 32));
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
+	}
 
 	tl_dio_write32(sc, TL_HASH1, hashes[0]);
 	tl_dio_write32(sc, TL_HASH2, hashes[1]);
-
-	return;
 }
 
 /*
@@ -1569,29 +1570,13 @@ tl_init(void *xsc)
 	/* Set PCI burst size */
 	tl_dio_write8(sc, TL_BSIZEREG, TL_RXBURST_16LONG|TL_TXBURST_16LONG);
 
-	/*
-	 * Set 'capture all frames' bit for promiscuous mode.
-	 */
-	if (ifp->if_flags & IFF_PROMISC)
-		tl_dio_setbit(sc, TL_NETCMD, TL_CMD_CAF);
-	else
-		tl_dio_clrbit(sc, TL_NETCMD, TL_CMD_CAF);
-
-	/*
-	 * Set capture broadcast bit to capture broadcast frames.
-	 */
-	if (ifp->if_flags & IFF_BROADCAST)
-		tl_dio_clrbit(sc, TL_NETCMD, TL_CMD_NOBRX);
-	else
-		tl_dio_setbit(sc, TL_NETCMD, TL_CMD_NOBRX);
-
 	tl_dio_write16(sc, TL_MAXRX, MCLBYTES);
 
 	/* Init our MAC address */
 	tl_setfilt(sc, (caddr_t)&sc->arpcom.ac_enaddr, 0);
 
-	/* Init multicast filter, if needed. */
-	tl_setmulti(sc);
+	/* Program promiscuous mode and multicast filters. */
+	tl_iff(sc);
 
 	/* Init circular RX list. */
 	if (tl_list_rx_init(sc) == ENOBUFS) {
@@ -1688,40 +1673,24 @@ tl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			tl_init(sc);
 #ifdef INET
-		case AF_INET:
-			tl_init(sc);
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-			break;
-#endif /* INET */
-		default:
-			tl_init(sc);
-			break;
-		}
+#endif
 		break;
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->tl_if_flags & IFF_PROMISC)) {
-				tl_dio_setbit(sc, TL_NETCMD, TL_CMD_CAF);
-				tl_setmulti(sc);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->tl_if_flags & IFF_PROMISC) {
-				tl_dio_clrbit(sc, TL_NETCMD, TL_CMD_CAF);
-				tl_setmulti(sc);
-			} else
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
 				tl_init(sc);
 		} else {
-			if (ifp->if_flags & IFF_RUNNING) {
+			if (ifp->if_flags & IFF_RUNNING)
 				tl_stop(sc);
-			}
 		}
-		sc->tl_if_flags = ifp->if_flags;
-		error = 0;
 		break;
 
 	case SIOCSIFMEDIA:
@@ -1739,7 +1708,7 @@ tl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			tl_setmulti(sc);
+			tl_iff(sc);
 		error = 0;
 	}
 
