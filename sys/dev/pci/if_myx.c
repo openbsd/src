@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.53 2014/01/31 00:50:45 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.54 2014/01/31 00:52:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -106,7 +106,6 @@ struct myx_softc {
 	pci_chipset_tag_t	 sc_pc;
 	pci_intr_handle_t	 sc_ih;
 	pcitag_t		 sc_tag;
-	u_int			 sc_function;
 
 	bus_dma_tag_t		 sc_dmat;
 	bus_space_tag_t		 sc_memt;
@@ -268,7 +267,6 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
-	sc->sc_function = pa->pa_function;
 
 	myx_ring_lock_init(&sc->sc_rx_ring_lock[MYX_RXSMALL]);
 	myx_bufs_init(&sc->sc_rx_buf_free[MYX_RXSMALL]);
