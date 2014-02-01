@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.32 2014/01/26 17:40:09 miod Exp $ */
+/* $OpenBSD: cpu.c,v 1.33 2014/02/01 21:17:32 miod Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -442,6 +442,13 @@ cpu_boot_secondary_processors(void)
 		atomic_setbits_ulong(&cpus_running, (1UL << i));
 		ncpus++;
 	}
+
+	/*
+	 * Reset the HWRPB to prevent processors resetting from
+	 * running through the hatching code again.
+	 */
+	hwrpb->rpb_restart = 0;
+	hwrpb->rpb_checksum = hwrpb_checksum();
 }
 
 void
