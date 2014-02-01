@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.40 2014/01/28 20:23:36 miod Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.41 2014/02/01 21:19:35 miod Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -223,11 +223,13 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		up->u_pcb.pcb_context[7] =
 		    (u_int64_t)switch_trampoline;	/* ra: assembly magic */
 #ifdef MULTIPROCESSOR
-		up->u_pcb.pcb_context[8] =
-		    ALPHA_PSL_IPL_HIGH;			/* ps: IPL */
+		/*
+		 * MULTIPROCESSOR kernels will reuse the IPL of the parent
+		 * process, and will lower to IPL_NONE in proc_trampoline_mp().
+		 */
+		up->u_pcb.pcb_context[8] = IPL_SCHED;	/* ps: IPL */
 #else
-		up->u_pcb.pcb_context[8] =
-		    ALPHA_PSL_IPL_0;			/* ps: IPL */
+		up->u_pcb.pcb_context[8] = IPL_NONE;	/* ps: IPL */
 #endif
 	}
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.42 2014/02/01 21:18:24 miod Exp $ */
+/* $OpenBSD: intr.h,v 1.43 2014/02/01 21:19:39 miod Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -117,8 +117,8 @@ struct scbvec {
 #define	IPL_AUDIO	ALPHA_PSL_IPL_IO
 #define	IPL_VM		ALPHA_PSL_IPL_IO
 #define	IPL_CLOCK	ALPHA_PSL_IPL_CLOCK
-#define	IPL_SCHED	ALPHA_PSL_IPL_HIGH
-#define	IPL_IPI		ALPHA_PSL_IPL_HIGH	/* occur on _IO, though */
+#define	IPL_SCHED	ALPHA_PSL_IPL_CLOCK
+#define	IPL_IPI		ALPHA_PSL_IPL_HIGH	/* occur on _CLOCK, though */
 #define	IPL_HIGH	ALPHA_PSL_IPL_HIGH
 
 #define	IPL_SOFTSERIAL	0	/* serial software interrupts */
@@ -182,11 +182,11 @@ int _splraise(int);
 #define splvm()			_splraise(IPL_VM)
 #define splclock()		_splraise(IPL_CLOCK)
 #define splstatclock()		_splraise(IPL_CLOCK)
+#define splsched()		_splraise(IPL_SCHED)
 #define splipi()		_splraise(IPL_IPI)
 #define splhigh()		_splraise(IPL_HIGH)
 
 #define spllock()		splhigh()
-#define splsched()		splhigh()
 
 /*
  * Interprocessor interrupts.  In order how we want them processed.
