@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.103 2013/12/28 03:30:40 deraadt Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.104 2014/02/01 01:51:27 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -215,7 +215,7 @@ brgphy_attach(struct device *parent, struct device *self, void *aux)
 	if (strcmp(devname, "bge") == 0) {
 		bge_sc = mii->mii_ifp->if_softc;
 
-		if (bge_sc->bge_flags & BGE_10_100_ONLY)
+		if (bge_sc->bge_phy_flags & BGE_PHY_10_100_ONLY)
 			fast_ether = 1;
 	} else if (strcmp(devname, "bnx") == 0)
 		bnx_sc = mii->mii_ifp->if_softc;
@@ -821,17 +821,17 @@ brgphy_reset_bge(struct mii_softc *sc)
 		}
 	}
 
-	if (bge_sc->bge_flags & BGE_PHY_ADC_BUG)
+	if (bge_sc->bge_phy_flags & BGE_PHY_ADC_BUG)
 		brgphy_adc_bug(sc);
-	if (bge_sc->bge_flags & BGE_PHY_5704_A0_BUG)
+	if (bge_sc->bge_phy_flags & BGE_PHY_5704_A0_BUG)
 		brgphy_5704_a0_bug(sc);
-	if (bge_sc->bge_flags & BGE_PHY_BER_BUG)
+	if (bge_sc->bge_phy_flags & BGE_PHY_BER_BUG)
 		brgphy_ber_bug(sc);
-	else if (bge_sc->bge_flags & BGE_PHY_JITTER_BUG) {
+	else if (bge_sc->bge_phy_flags & BGE_PHY_JITTER_BUG) {
 	    PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0c00);
 		PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG, 0x000a);
 
-		if (bge_sc->bge_flags & BGE_PHY_ADJUST_TRIM) {
+		if (bge_sc->bge_phy_flags & BGE_PHY_ADJUST_TRIM) {
 			PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT, 0x110b);
 			PHY_WRITE(sc, BRGPHY_TEST1, BRGPHY_TEST1_TRIM_EN |
 			    0x4);
@@ -841,7 +841,7 @@ brgphy_reset_bge(struct mii_softc *sc)
 		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0400);
 	}
 
-	if (bge_sc->bge_flags & BGE_PHY_CRC_BUG)
+	if (bge_sc->bge_phy_flags & BGE_PHY_CRC_BUG)
 		brgphy_crc_bug(sc);
 
 	/* Set Jumbo frame settings in the PHY. */
@@ -854,11 +854,11 @@ brgphy_reset_bge(struct mii_softc *sc)
 		PHY_WRITE(sc, BRGPHY_MII_EPHY_PTEST, 0x12);
 
 	/* Enable Ethernet@Wirespeed */
-	if (!(bge_sc->bge_flags & BGE_NO_ETH_WIRE_SPEED))
+	if (!(bge_sc->bge_phy_flags & BGE_PHY_NO_WIRESPEED))
 		brgphy_eth_wirespeed(sc);
 
 	/* Enable Link LED on Dell boxes */
-	if (bge_sc->bge_flags & BGE_NO_3LED) {
+	if (bge_sc->bge_phy_flags & BGE_PHY_NO_3LED) {
 		PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL,
 		    PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL)
 		    & ~BRGPHY_PHY_EXTCTL_3_LED);

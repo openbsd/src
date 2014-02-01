@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.349 2014/01/31 01:16:10 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.350 2014/02/01 01:51:27 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2257,9 +2257,9 @@ bge_blockinit(struct bge_softc *sc)
 	    BGE_MACMODE_RX_STATS_ENB | BGE_MACMODE_TX_STATS_ENB |
 	    BGE_MACMODE_FRMHDR_DMA_ENB;
 
-	if (sc->bge_flags & BGE_PHY_FIBER_TBI)
+	if (sc->bge_flags & BGE_FIBER_TBI)
 	    val |= BGE_PORTMODE_TBI;
-	else if (sc->bge_flags & BGE_PHY_FIBER_MII)
+	else if (sc->bge_flags & BGE_FIBER_MII)
 	    val |= BGE_PORTMODE_GMII;
 	else
 	    val |= BGE_PORTMODE_MII;
@@ -2441,7 +2441,7 @@ bge_blockinit(struct bge_softc *sc)
 	    BGE_MACSTAT_LINK_CHANGED);
 
 	/* Enable PHY auto polling (for MII/GMII only) */
-	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
+	if (sc->bge_flags & BGE_FIBER_TBI) {
 		CSR_WRITE_4(sc, BGE_MI_STS, BGE_MISTS_LINK);
  	} else {
 		if ((sc->bge_flags & BGE_CPMU_PRESENT) != 0)
@@ -2748,7 +2748,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701) &&
 	    PCI_VENDOR(subid) == DELL_VENDORID)
-		sc->bge_flags |= BGE_NO_3LED;
+		sc->bge_phy_flags |= BGE_PHY_NO_3LED;
 
 	misccfg = CSR_READ_4(sc, BGE_MISC_CFG);
 	misccfg &= BGE_MISCCFG_BOARD_ID_MASK;
@@ -2773,23 +2773,23 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57791 ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57795 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
-		sc->bge_flags |= BGE_10_100_ONLY;
+		sc->bge_phy_flags |= BGE_PHY_10_100_ONLY;
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
 	    (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705 &&
 	     (sc->bge_chipid != BGE_CHIPID_BCM5705_A0 &&
 	      sc->bge_chipid != BGE_CHIPID_BCM5705_A1)) ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
-		sc->bge_flags |= BGE_NO_ETH_WIRE_SPEED;
+		sc->bge_phy_flags |= BGE_PHY_NO_WIRESPEED;
 
 	if (sc->bge_chipid == BGE_CHIPID_BCM5701_A0 ||
 	    sc->bge_chipid == BGE_CHIPID_BCM5701_B0)
-		sc->bge_flags |= BGE_PHY_CRC_BUG;
+		sc->bge_phy_flags |= BGE_PHY_CRC_BUG;
 	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5703_AX ||
 	    BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_AX)
-		sc->bge_flags |= BGE_PHY_ADC_BUG;
+		sc->bge_phy_flags |= BGE_PHY_ADC_BUG;
 	if (sc->bge_chipid == BGE_CHIPID_BCM5704_A0)
-		sc->bge_flags |= BGE_PHY_5704_A0_BUG;
+		sc->bge_phy_flags |= BGE_PHY_5704_A0_BUG;
 
 	if ((BGE_IS_5705_PLUS(sc)) &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906 &&
@@ -2802,11 +2802,11 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787) {
 			if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BROADCOM_BCM5722 &&
 			    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BROADCOM_BCM5756)
-				sc->bge_flags |= BGE_PHY_JITTER_BUG;
+				sc->bge_phy_flags |= BGE_PHY_JITTER_BUG;
 			if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5755M)
-				sc->bge_flags |= BGE_PHY_ADJUST_TRIM;
+				sc->bge_phy_flags |= BGE_PHY_ADJUST_TRIM;
 		} else
-			sc->bge_flags |= BGE_PHY_BER_BUG;
+			sc->bge_phy_flags |= BGE_PHY_BER_BUG;
 	}
 
 	/* Identify chips with APE processor. */
@@ -3057,9 +3057,9 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	if (PCI_PRODUCT(subid) == SK_SUBSYSID_9D41 ||
 	    (hwcfg & BGE_HWCFG_MEDIA) == BGE_MEDIA_FIBER) {
 		if (BGE_IS_5700_FAMILY(sc))
-		    sc->bge_flags |= BGE_PHY_FIBER_TBI;
+		    sc->bge_flags |= BGE_FIBER_TBI;
 		else
-		    sc->bge_flags |= BGE_PHY_FIBER_MII;
+		    sc->bge_flags |= BGE_FIBER_MII;
 	}
 
 	/* Take advantage of single-shot MSI. */
@@ -3085,7 +3085,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s, address %s\n", intrstr,
 	    ether_sprintf(sc->arpcom.ac_enaddr));
 
-	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
+	if (sc->bge_flags & BGE_FIBER_TBI) {
 		ifmedia_init(&sc->bge_ifmedia, IFM_IMASK, bge_ifmedia_upd,
 		    bge_ifmedia_sts);
 		ifmedia_add(&sc->bge_ifmedia, IFM_ETHER|IFM_1000_SX, 0, NULL);
@@ -3103,7 +3103,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		ifmedia_init(&sc->bge_mii.mii_media, 0, bge_ifmedia_upd,
 			     bge_ifmedia_sts);
 		mii_flags = MIIF_DOPAUSE;
-		if (sc->bge_flags & BGE_PHY_FIBER_MII)
+		if (sc->bge_flags & BGE_FIBER_MII)
 			mii_flags |= MIIF_HAVEFIBER;
 		mii_attach(&sc->bge_dev, &sc->bge_mii, 0xffffffff,
 		    sc->bge_phy_addr, MII_OFFSET_ANY, mii_flags);
@@ -3370,7 +3370,7 @@ bge_reset(struct bge_softc *sc)
 	 * adjustment to ensure the SERDES drive level is set
 	 * to 1.2V.
 	 */
-	if (sc->bge_flags & BGE_PHY_FIBER_TBI &&
+	if (sc->bge_flags & BGE_FIBER_TBI &&
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704) {
 		val = CSR_READ_4(sc, BGE_SERDES_CFG);
 		val = (val & ~0xFFF) | 0x880;
@@ -3718,7 +3718,7 @@ bge_tick(void *xsc)
 	else
 		bge_stats_update(sc);
 
-	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
+	if (sc->bge_flags & BGE_FIBER_TBI) {
 		/*
 		 * Since in TBI mode auto-polling can't be used we should poll
 		 * link status manually. Here we register pending link event
@@ -4302,7 +4302,7 @@ bge_ifmedia_upd(struct ifnet *ifp)
 	struct ifmedia *ifm = &sc->bge_ifmedia;
 
 	/* If this is a 1000baseX NIC, enable the TBI port. */
-	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
+	if (sc->bge_flags & BGE_FIBER_TBI) {
 		if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
 			return (EINVAL);
 		switch(IFM_SUBTYPE(ifm->ifm_media)) {
@@ -4379,7 +4379,7 @@ bge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 	struct bge_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->bge_mii;
 
-	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
+	if (sc->bge_flags & BGE_FIBER_TBI) {
 		ifmr->ifm_status = IFM_AVALID;
 		ifmr->ifm_active = IFM_ETHER;
 		if (CSR_READ_4(sc, BGE_MAC_STS) &
@@ -4439,7 +4439,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	case SIOCSIFMEDIA:
 		/* XXX Flow control is not supported for 1000BASE-SX */
-		if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
+		if (sc->bge_flags & BGE_FIBER_TBI) {
 			ifr->ifr_media &= ~IFM_ETH_FMASK;
 			sc->bge_flowflags = 0;
 		}
@@ -4459,7 +4459,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		/* FALLTHROUGH */
 	case SIOCGIFMEDIA:
-		if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
+		if (sc->bge_flags & BGE_FIBER_TBI) {
 			error = ifmedia_ioctl(ifp, ifr, &sc->bge_ifmedia,
 			    command);
 		} else {
@@ -4603,7 +4603,7 @@ bge_stop(struct bge_softc *sc)
 	 * unchanged so that things will be put back to normal when
 	 * we bring the interface back up.
 	 */
-	if (!(sc->bge_flags & BGE_PHY_FIBER_TBI)) {
+	if (!(sc->bge_flags & BGE_FIBER_TBI)) {
 		mii = &sc->bge_mii;
 		itmp = ifp->if_flags;
 		ifp->if_flags |= IFF_UP;
@@ -4669,7 +4669,7 @@ bge_link_upd(struct bge_softc *sc)
 		return;
 	}
 
-	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
+	if (sc->bge_flags & BGE_FIBER_TBI) {
 		status = CSR_READ_4(sc, BGE_MAC_STS);
 		if (status & BGE_MACSTAT_TBI_PCS_SYNCHED) {
 			if (!BGE_STS_BIT(sc, BGE_STS_LINK)) {
