@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.51 2014/02/01 11:18:27 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.52 2014/02/01 18:50:58 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -277,61 +277,64 @@ sub setup_header
 	}
 }
 
-sub complete
+sub find_kept_handle
+{
+	my ($set, $n,  $state) = @_;
+	unless (defined $n->{location} && defined $n->{location}{update_info}) {
+		$n->complete($state);
+	}
+	my $plist = $n->dependency_info;
+	return if !defined $plist;
+	my $pkgname = $plist->pkgname;
+	# condition for no update
+	unless (is_installed($pkgname) &&
+	    (!$state->{allow_replacing} ||
+	      !$state->defines('installed') &&
+	      !$plist->has_different_sig($state) &&
+	      !$plist->uses_old_libs)) {
+	      	return;
+	}
+	my $o = $set->{older}{$pkgname};
+	if (!defined $o) {
+		$o = OpenBSD::Handle->create_old($pkgname, $state);
+		if (!defined $o->pkgname) {
+			$state->{bad}++;
+			$set->cleanup(OpenBSD::Handle::CANT_INSTALL, 
+			    "Bogus package already installed");
+		    	return;
+		}
+		$set->add_older($o);
+	} else {
+		$o->complete_old;
+	}
+	$o->{update_found} = $o;
+	$set->move_kept($o);
+	$o->{tweaked} =
+	    OpenBSD::Add::tweak_package_status($pkgname, $state);
+	$state->updater->progress_message($state, "No change in $pkgname");
+	delete $set->{newer}{$pkgname};
+	$n->cleanup;
+}
+
+sub figure_out_kept
 {
 	my ($set, $state) = @_;
 
 	for my $n ($set->newer) {
-		if (defined $n->{location} && defined $n->{location}{update_info}) {
-			my $plist = $n->{location}{update_info};
-			my $pkgname = $plist->pkgname;
-			if (is_installed($pkgname) &&
-			    (!$state->{allow_replacing} ||
-			      !$state->defines('installed') &&
-			      !$plist->has_different_sig($state) &&
-			      !$plist->uses_old_libs)) {
-				my $o = $set->{older}->{$pkgname};
-				if (!defined $o) {
-					$o = OpenBSD::Handle->create_old($pkgname, $state);
-					$set->add_older($o);
-				}
-				$o->{update_found} = $o;
-				$set->move_kept($o);
-				$o->{tweaked} =
-				    OpenBSD::Add::tweak_package_status($pkgname, $state);
-				$state->updater->progress_message($state, "No change in $pkgname");
-				delete $set->{newer}->{$pkgname};
-				$n->cleanup;
-				next;
-			}
-		}
+		$set->find_kept_handle($n, $state);
+	}
+}
+
+sub complete
+{
+	my ($set, $state) = @_;
+
+	$set->figure_out_kept($state);
+
+	for my $n ($set->newer) {
 		$n->complete($state);
-		my $pkgname = $n->pkgname;
 		my $plist = $n->plist;
 		return 1 if !defined $plist;
-		if (is_installed($pkgname) &&
-		    (!$state->{allow_replacing} ||
-		      !$state->defines('installed') &&
-		      !$plist->has_different_sig($state) &&
-		      !$plist->uses_old_libs)) {
-		      	my $o = $set->{older}->{$pkgname};
-			if (!defined $o) {
-				$o = OpenBSD::Handle->create_old($pkgname, $state);
-				if (!defined $o->pkgname) {
-					$state->{bad}++;
-					$set->cleanup(OpenBSD::Handle::CANT_INSTALL, "Bogus package already installed");
-					return 1;
-				}
-				$set->add_older($o);
-			}
-			$o->{update_found} = $o;
-			$set->move_kept($o);
-			$o->{tweaked} =
-			    OpenBSD::Add::tweak_package_status($pkgname, $state);
-			$state->updater->progress_message($state, "No change in $pkgname");
-			delete $set->{newer}->{$pkgname};
-			$n->cleanup;
-		}
 		return 1 if $n->has_error;
 	}
 	for my $o ($set->older) {
