@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.50 2014/02/01 11:00:57 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.51 2014/02/01 11:18:27 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -568,10 +568,10 @@ use OpenBSD::Error;
 
 sub failed_message
 {
-	my ($base_msg, $interrupted, @l) = @_;
+	my ($base_msg, $received, @l) = @_;
 	my $msg = $base_msg;
-	if ($interrupted) {
-		$msg = "Caught SIG$interrupted. $msg";
+	if ($received) {
+		$msg = "Caught SIG$received. $msg";
 	}
 	if (@l > 0) {
 		$msg.= ", partial installation recorded as ".join(',', @l);
@@ -595,7 +595,7 @@ sub save_partial_set
 sub partial_install
 {
 	my ($base_msg, $set, $state) = @_;
-	return failed_message($base_msg, $state->{interrupted}, save_partial_set($set, $state));
+	return failed_message($base_msg, $state->{received}, save_partial_set($set, $state));
 }
 
 sub build_before
@@ -726,13 +726,21 @@ sub really_add
 	$state->{replacing} = $replacing;
 
 	my $handler = sub {
-		$state->{interrupted} = shift;
+		$state->{received} = shift;
+		$state->errsay("Interrupted");
+		if ($state->{hardkill}) {
+			delete $state->{hardkill};
+			return;
+		}
+		$state->{interrupted}++;
 	};
 	local $SIG{'INT'} = $handler;
 	local $SIG{'QUIT'} = $handler;
 	local $SIG{'HUP'} = $handler;
 	local $SIG{'KILL'} = $handler;
 	local $SIG{'TERM'} = $handler;
+
+	$state->{hardkill} = $state->{delete_first};
 
 	if ($replacing) {
 		require OpenBSD::OldLibs;
@@ -762,6 +770,7 @@ sub really_add
 		}
 	}
 	if (!$state->{delete_first}) {
+		$state->{hardkill} = 1;
 		delete_old_packages($set, $state);
 	}
 
@@ -814,6 +823,9 @@ sub really_add
 	}
 	delete $state->{delete_first};
 	$state->syslog("Added #1", $set->print);
+	if ($state->{received}) {
+		die "interrupted";
+	}
 }
 
 sub newer_has_errors
