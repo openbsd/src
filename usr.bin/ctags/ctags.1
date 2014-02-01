@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctags.1,v 1.26 2012/01/15 20:06:40 schwarze Exp $
+.\"	$OpenBSD: ctags.1,v 1.27 2014/02/01 23:36:30 jmc Exp $
 .\"	$NetBSD: ctags.1,v 1.4 1995/03/26 20:14:04 glass Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ctags.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 15 2012 $
+.Dd $Mdocdate: February 1 2014 $
 .Dt CTAGS 1
 .Os
 .Sh NAME
@@ -186,6 +186,18 @@ though its presence is optional.
 The flags
 .Op Fl BdFuvw
 are extensions to that specification.
+.Pp
+Support for Pascal, YACC, lex, and Lisp source files
+is an
+.St -p1003.1-2008
+extension.
+The standard notes that
+.Nm
+is
+.Qo
+not required to accommodate these languages,
+although implementors are encouraged to do so
+.Qc .
 .Sh HISTORY
 The
 .Nm
