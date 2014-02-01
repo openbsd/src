@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.11 2014/01/30 23:58:41 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.12 2014/02/01 09:11:30 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -325,8 +325,16 @@ qla_attach(struct qla_softc *sc)
 		return (ENXIO);
 	}
 
-	if (qla_read_nvram(sc) == 0)
+	if (qla_read_nvram(sc) == 0) {
 		sc->sc_nvram_valid = 1;
+		if (sc->sc_port_name == 0)
+			sc->sc_port_name = betoh64(sc->sc_nvram.port_name);
+		if (sc->sc_node_name == 0)
+			sc->sc_node_name = betoh64(sc->sc_nvram.node_name);
+	}
+
+	if (sc->sc_port_name == 0)
+		sc->sc_port_name = QLA_DEFAULT_PORT_NAME;
 
 	switch (sc->sc_isp_gen) {
 	case QLA_GEN_ISP2100:
@@ -406,6 +414,9 @@ qla_attach(struct qla_softc *sc)
 	icb = (struct qla_init_cb *)QLA_DMA_KVA(sc->sc_scratch);
 	memset(icb, 0, sizeof(*icb));
 	icb->icb_version = QLA_ICB_VERSION;
+	/* port and node names are big-endian in the icb */
+	icb->icb_portname = htobe64(sc->sc_port_name);
+	icb->icb_nodename = htobe64(sc->sc_node_name);
 	if (sc->sc_nvram_valid) {
 		icb->icb_fw_options = sc->sc_nvram.fw_options;
 		icb->icb_max_frame_len = sc->sc_nvram.frame_payload_size;
@@ -413,11 +424,9 @@ qla_attach(struct qla_softc *sc)
 		icb->icb_exec_throttle = sc->sc_nvram.execution_throttle;
 		icb->icb_retry_count = sc->sc_nvram.retry_count;
 		icb->icb_retry_delay = sc->sc_nvram.retry_delay;
-		icb->icb_portname = sc->sc_nvram.port_name;
 		icb->icb_hardaddr = sc->sc_nvram.hard_address;
 		icb->icb_inquiry_data = sc->sc_nvram.inquiry_data;
 		icb->icb_login_timeout = sc->sc_nvram.login_timeout;
-		icb->icb_nodename = sc->sc_nvram.node_name;
 		icb->icb_xfwoptions = sc->sc_nvram.add_fw_options;
 		icb->icb_zfwoptions = sc->sc_nvram.special_options;
 	} else {
@@ -427,10 +436,6 @@ qla_attach(struct qla_softc *sc)
 		icb->icb_exec_throttle = htole16(16);
 		icb->icb_max_alloc = htole16(256);
 		icb->icb_max_frame_len = htole16(1024);
-		/* port name is big-endian in the icb */
-		icb->icb_portname = htobe64(QLA_DEFAULT_PORT_NAME);
-		icb->icb_nodename = 0;
-
 		icb->icb_fw_options = htole16(QLA_ICB_FW_FAIRNESS |
 		    QLA_ICB_FW_ENABLE_PDB_CHANGED | QLA_ICB_FW_HARD_ADDR |
 		    QLA_ICB_FW_FULL_DUPLEX);
@@ -723,13 +728,8 @@ qla_attach(struct qla_softc *sc)
 	sc->sc_link.adapter_buswidth = QLA_MAX_TARGETS;
 	sc->sc_link.openings = sc->sc_maxcmds; /* / sc->sc_buswidth? */
 	sc->sc_link.pool = &sc->sc_iopool;
-	if (sc->sc_nvram_valid) {
-		sc->sc_link.port_wwn = betoh64(sc->sc_nvram.port_name);
-		sc->sc_link.node_wwn = betoh64(sc->sc_nvram.node_name);
-	} else {
-		sc->sc_link.port_wwn = QLA_DEFAULT_PORT_NAME;
-		sc->sc_link.node_wwn = 0;
-	}
+	sc->sc_link.port_wwn = sc->sc_port_name;
+	sc->sc_link.node_wwn = sc->sc_node_name;
 	if (sc->sc_link.node_wwn == 0) {
 		/*
 		 * mask out the port number from the port name to get
