@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.151 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.152 2014/02/01 11:37:58 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -139,7 +139,7 @@ sub find_elsewhere
 	my ($self, $solver, $state, $obj) = @_;
 
 	for my $n ($solver->{set}->newer) {
-		for my $dep (@{$n->{plist}->{depend}}) {
+		for my $dep (@{$n->dependency_info->{depend}}) {
 			my $r = $solver->find_old_lib($state,
 			    $solver->{localbase}, $dep->{pattern}, $obj);
 			if ($r) {
@@ -384,7 +384,7 @@ sub solve_depends
 
 	for my $package ($self->{set}->newer, $self->{set}->kept) {
 		$package->{before} = [];
-		for my $dep (@{$package->{plist}->{depend}}) {
+		for my $dep (@{$package->dependency_info->{depend}}) {
 			my $v = $self->solve_dependency($state, $dep, $package);
 			# XXX
 			next if !defined $v;
