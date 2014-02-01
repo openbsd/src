@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.146 2014/01/26 17:40:09 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.147 2014/02/01 21:25:06 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1766,7 +1766,7 @@ fpusave_cpu(struct cpu_info *ci, int save)
 
 #if defined(MULTIPROCESSOR)
 	/* Need to block IPIs */
-	s = splhigh();
+	s = splipi();
 	atomic_setbits_ulong(&ci->ci_flags, CPUF_FPUSAVE);
 #endif
 
@@ -1802,47 +1802,53 @@ fpusave_proc(struct proc *p, int save)
 	struct cpu_info *oci;
 #if defined(MULTIPROCESSOR)
 	u_long ipi = save ? ALPHA_IPI_SYNCH_FPU : ALPHA_IPI_DISCARD_FPU;
-	int s, spincount;
+	int s;
 #endif
 
 	KDASSERT(p->p_addr != NULL);
 
+	for (;;) {
+
 #if defined(MULTIPROCESSOR)
-	/* Need to block IPIs */
-	s = splhigh();
+		/* Need to block IPIs */
+		s = splipi();
 #endif
 
-	oci = p->p_addr->u_pcb.pcb_fpcpu;
-	if (oci == NULL) {
+		oci = p->p_addr->u_pcb.pcb_fpcpu;
+		if (oci == NULL) {
 #if defined(MULTIPROCESSOR)
-		splx(s);
+			splx(s);
 #endif
-		return;
-	}
+			return;
+		}
 
 #if defined(MULTIPROCESSOR)
-	if (oci == ci) {
-		KASSERT(ci->ci_fpcurproc == p);
+		if (oci == ci) {
+			KASSERT(ci->ci_fpcurproc == p);
+			splx(s);
+			fpusave_cpu(ci, save);
+			return;
+		}
+
+		/*
+		 * The other cpu may still be running and could have
+		 * discarded the fpu context on its own.
+		 */
+		if (oci->ci_fpcurproc != p)
+			continue;
+
+		alpha_send_ipi(oci->ci_cpuid, ipi);
 		splx(s);
-		fpusave_cpu(ci, save);
-		return;
-	}
 
-	KASSERT(oci->ci_fpcurproc == p);
-	alpha_send_ipi(oci->ci_cpuid, ipi);
-	splx(s);
-
-	spincount = 0;
-	while (p->p_addr->u_pcb.pcb_fpcpu != NULL) {
-		spincount++;
-		delay(1000);    /* XXX */
-		if (spincount > 10000)
-			panic("fpsave ipi didn't");
-	}
+		while (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+			SPINLOCK_SPIN_HOOK;
 #else
-	KASSERT(ci->ci_fpcurproc == p);
-	fpusave_cpu(ci, save);
+		KASSERT(ci->ci_fpcurproc == p);
+		fpusave_cpu(ci, save);
 #endif /* MULTIPROCESSOR */
+
+		break;
+	}
 }
 
 int
