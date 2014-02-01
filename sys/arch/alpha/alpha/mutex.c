@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.8 2014/01/26 17:40:09 miod Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.9 2014/02/01 21:22:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -46,9 +46,8 @@ try_lock(struct mutex *mtx)
 		"	mb			\n"
 		"	bis	$31, 1, %1	\n"	/* v0 = 1 */
 		"	br	4f		\n"
-		"2:	bis	$31, $31, %1	\n"	/* v0 = 0 */
-		"	br	4f		\n"
 		"3:	br	1b		\n"	/* update failed */
+		"2:	bis	$31, $31, %1	\n"	/* v0 = 0 */
 		"4:				\n"
 		: "=&r" (t0), "=r" (v0), "=m" (mtx->mtx_lock)
 		: "m" (mtx->mtx_lock)
@@ -67,6 +66,9 @@ mtx_init(struct mutex *mtx, int wantipl)
 	mtx->mtx_oldipl = IPL_NONE;
 	mtx->mtx_wantipl = wantipl;
 	mtx->mtx_lock = 0;
+#ifdef MULTIPROCESSOR
+	mtx->mtx_owner = NULL;
+#endif
 }
 
 void
