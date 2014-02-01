@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.41 2014/01/26 17:40:11 miod Exp $ */
+/* $OpenBSD: intr.h,v 1.42 2014/02/01 21:18:24 miod Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -205,6 +205,11 @@ struct cpu_info;
 struct trapframe;
 
 void	alpha_ipi_process(struct cpu_info *, struct trapframe *);
+#ifdef MP_LOCKDEBUG
+void	alpha_ipi_process_with_frame(struct cpu_info *);
+#else
+#define	alpha_ipi_process_with_frame(ci) alpha_ipi_process((ci), NULL)
+#endif
 void	alpha_send_ipi(unsigned long, unsigned long);
 void	alpha_broadcast_ipi(unsigned long);
 void	alpha_multicast_ipi(unsigned long, unsigned long);

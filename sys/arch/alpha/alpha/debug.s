@@ -1,4 +1,4 @@
-/* $OpenBSD: debug.s,v 1.7 2014/01/26 17:40:09 miod Exp $ */
+/* $OpenBSD: debug.s,v 1.8 2014/02/01 21:18:19 miod Exp $ */
 /* $NetBSD: debug.s,v 1.5 1999/06/18 18:11:56 thorpej Exp $ */
 
 /*-
@@ -119,3 +119,54 @@ NESTED_NOPROFILE(alpha_debug, 5, 32, ra, IM_RA|IM_S0, 0)
 	lda	sp, 32(sp)		/* pop stack frame */
 	RET
 	END(alpha_debug)
+
+#ifdef MP_LOCKDEBUG
+NESTED(alpha_ipi_process_with_frame, 2, 8 * FRAME_SIZE, ra, IM_RA, 0)
+	.set noat
+	lda	sp, -(8 * FRAME_SIZE)(sp)		/* set up stack frame */
+
+	stq	v0,(FRAME_V0*8)(sp)
+	stq	t0,(FRAME_T0*8)(sp)
+	stq	t1,(FRAME_T1*8)(sp)
+	stq	t2,(FRAME_T2*8)(sp)
+	stq	t3,(FRAME_T3*8)(sp)
+	stq	t4,(FRAME_T4*8)(sp)
+	stq	t5,(FRAME_T5*8)(sp)
+	stq	t6,(FRAME_T6*8)(sp)
+	stq	t7,(FRAME_T7*8)(sp)
+	stq	s0,(FRAME_S0*8)(sp)
+	stq	s1,(FRAME_S1*8)(sp)
+	stq	s2,(FRAME_S2*8)(sp)
+	stq	s3,(FRAME_S3*8)(sp)
+	stq	s4,(FRAME_S4*8)(sp)
+	stq	s5,(FRAME_S5*8)(sp)
+	stq	s6,(FRAME_S6*8)(sp)
+	stq	a3,(FRAME_A3*8)(sp)
+	stq	a4,(FRAME_A4*8)(sp)
+	stq	a5,(FRAME_A5*8)(sp)
+	stq	t8,(FRAME_T8*8)(sp)
+	stq	t9,(FRAME_T9*8)(sp)
+	stq	t10,(FRAME_T10*8)(sp)
+	stq	t11,(FRAME_T11*8)(sp)
+	stq	ra,(FRAME_RA*8)(sp)
+	stq	t12,(FRAME_T12*8)(sp)
+	stq	at_reg,(FRAME_AT*8)(sp)
+	lda	a1,(8*FRAME_SIZE)(sp)
+	stq	a1,(FRAME_SP*8)(sp)
+
+	stq	zero,(FRAME_PS*8)(sp)
+	stq	zero,(FRAME_PC*8)(sp)
+	stq	zero,(FRAME_GP*8)(sp)
+	stq	zero,(FRAME_A0*8)(sp)
+	stq	zero,(FRAME_A1*8)(sp)
+	stq	zero,(FRAME_A2*8)(sp)
+
+	mov	sp, a1
+	CALL(alpha_ipi_process)
+
+	ldq	ra,(FRAME_RA*8)(sp)
+	lda	sp, (8 * FRAME_SIZE)(sp)		/* pop stack frame */
+	RET
+	END(alpha_ipi_process_with_frame)
+	.set at
+#endif
