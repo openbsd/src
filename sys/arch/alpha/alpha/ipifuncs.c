@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.4 2014/01/26 17:40:09 miod Exp $	*/
+/* $OpenBSD: ipifuncs.c,v 1.5 2014/02/01 21:19:02 miod Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.9 1999/12/02 01:09:11 thorpej Exp $ */
 
 /*-
@@ -80,13 +80,7 @@ alpha_ipi_process(struct cpu_info *ci, struct trapframe *framep)
 {
 	u_long pending_ipis, bit;
 
-	for (;;) {
-		pending_ipis = ci->ci_ipis;
-		if (pending_ipis == 0)
-			break;
-
-		atomic_clearbits_ulong(&ci->ci_ipis, pending_ipis);
-
+	while ((pending_ipis = atomic_loadlatch_ulong(&ci->ci_ipis, 0)) != 0) {
 		for (bit = 0; bit < ALPHA_NIPIS; bit++) {
 			if (pending_ipis & (1UL << bit)) {
 				(*ipifuncs[bit])(ci, framep);
