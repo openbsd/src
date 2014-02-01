@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.72 2014/01/31 11:54:24 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.73 2014/02/01 18:54:01 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -255,9 +255,9 @@ sub move_kept
 {
 	my $self = shift;
 	for my $h (@_) {
-		delete $self->{older}->{$h->pkgname};
-		delete $self->{newer}->{$h->pkgname};
-		$self->{kept}->{$h->pkgname} = $h;
+		delete $self->{older}{$h->pkgname};
+		delete $self->{newer}{$h->pkgname};
+		$self->{kept}{$h->pkgname} = $h;
 	}
 	return $self;
 }
