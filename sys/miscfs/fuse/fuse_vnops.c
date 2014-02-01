@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.14 2014/01/29 20:37:18 syl Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.15 2014/02/01 09:30:38 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -280,12 +280,15 @@ fusefs_access(void *v)
 	struct fusefs_node *ip;
 	struct fusefs_mnt *fmp;
 	struct fusebuf *fbuf;
+	struct ucred *cred;
+	struct vattr vattr;
 	struct proc *p;
 	uint32_t mask = 0;
 	int error = 0;
 
 	ap = v;
 	p = ap->a_p;
+	cred = p->p_ucred;
 	ip = VTOI(ap->a_vp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
@@ -330,8 +333,11 @@ fusefs_access(void *v)
 	return (error);
 
 system_check:
-	return (vaccess(ap->a_vp->v_type, ip->cached_attrs.va_mode & ALLPERMS,
-	    ip->cached_attrs.va_uid, ip->cached_attrs.va_gid, ap->a_mode,
+	if ((error = VOP_GETATTR(ap->a_vp, &vattr, cred, p)) != 0)
+		return (error);
+
+	return (vaccess(ap->a_vp->v_type, vattr.va_mode & ALLPERMS,
+	    vattr.va_uid, vattr.va_gid, ap->a_mode,
 	    ap->a_cred));
 }
 
@@ -363,7 +369,6 @@ fusefs_getattr(void *v)
 
 	update_vattr(fmp->mp, &fbuf->fb_vattr);
 	memcpy(vap, &fbuf->fb_vattr, sizeof(*vap));
-	memcpy(&ip->cached_attrs, vap, sizeof(*vap));
 	fb_delete(fbuf);
 	return (error);
 fake:
@@ -693,9 +698,11 @@ fusefs_inactive(void *v)
 	struct vop_inactive_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct proc *p = ap->a_p;
+	struct ucred *cred = p->p_ucred;
 	struct fusefs_node *ip = VTOI(vp);
 	struct fusefs_filehandle *fufh = NULL;
 	struct fusefs_mnt *fmp;
+	struct vattr vattr;
 	int error = 0;
 	int type;
 
@@ -708,13 +715,14 @@ fusefs_inactive(void *v)
 			    (ip->vtype == VDIR), ap->a_p);
 	}
 
+	error = VOP_GETATTR(vp, &vattr, cred, p);
+
 	VOP_UNLOCK(vp, 0, p);
 
-	/* not sure if it is ok to do like that ...*/
-	if (ip->cached_attrs.va_mode == 0)
+	if (error)
 		vrecycle(vp, p);
 
-	return (error);
+	return (0);
 }
 
 int

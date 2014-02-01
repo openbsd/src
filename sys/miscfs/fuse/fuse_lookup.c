@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.7 2013/12/03 09:32:23 syl Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.8 2014/02/01 09:30:38 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -187,8 +187,6 @@ fusefs_lookup(void *v)
 		}
 
 		update_vattr(fmp->mp, &fbuf->fb_vattr);
-		memcpy(&(VTOI(tdp)->cached_attrs), &fbuf->fb_vattr,
-		    sizeof(struct vattr));
 
 		if (error) {
 			fb_delete(fbuf);

@@ -1,4 +1,4 @@
-/* $OpenBSD: fusefs_node.h,v 1.1 2013/06/03 15:50:56 tedu Exp $ */
+/* $OpenBSD: fusefs_node.h,v 1.2 2014/02/01 09:30:38 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -45,7 +45,6 @@ struct fusefs_node {
 	struct     fusefs_filehandle fufh[FUFH_MAXTYPE];
 
 	/** meta **/
-	struct vattr      cached_attrs;
 	off_t             filesize;
 	uint64_t          nlookup;
 	enum vtype        vtype;
