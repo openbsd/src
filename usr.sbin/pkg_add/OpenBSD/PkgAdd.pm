@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.49 2014/01/31 10:29:54 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.50 2014/02/01 11:00:57 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -211,7 +211,7 @@ sub add
 	my ($self, $handle, $state) = @_;
 	return if $self->{done}{$handle};
 	$self->{done}{$handle} = 1;
-	for my $conflict (OpenBSD::PkgCfl::find_all($handle->plist, $state)) {
+	for my $conflict (OpenBSD::PkgCfl::find_all($handle, $state)) {
 		$self->{c}{$conflict} = 1;
 	}
 }
@@ -378,7 +378,7 @@ sub updates
 	if (!$n->location->update_info->match_pkgpath($plist)) {
 		return 0;
 	}
-	if (!$n->plist->conflict_list->conflicts_with($plist->pkgname)) {
+	if (!$n->conflict_list->conflicts_with($plist->pkgname)) {
 		return 0;
 	}
 	my $r = OpenBSD::PackageName->from_string($n->pkgname)->compare(
@@ -439,8 +439,8 @@ sub install_issues
 			return "replacing just installed";
 		}
 
-		next if defined $set->{older}->{$toreplace};
-		next if defined $set->{kept}->{$toreplace};
+		next if defined $set->{older}{$toreplace};
+		next if defined $set->{kept}{$toreplace};
 
 		$later = 1;
 		my $s = $state->tracker->is_to_update($toreplace);
@@ -542,7 +542,7 @@ sub recheck_conflicts
 	for my $h ($set->newer, $set->kept) {
 		for my $h2 ($set->newer, $set->kept) {
 			next if $h2 == $h;
-			if ($h->plist->conflict_list->conflicts_with($h2->pkgname)) {
+			if ($h->conflict_list->conflicts_with($h2->pkgname)) {
 				$state->errsay("#1: internal conflict between #2 and #3",
 				    $set->print, $h->pkgname, $h2->pkgname);
 				return 0;
@@ -692,7 +692,7 @@ sub delete_old_packages
 		if (defined $state->{updatedepends}) {
 			delete $state->{updatedepends}->{$oldname};
 		}
-		OpenBSD::PkgCfl::unregister($o->plist, $state);
+		OpenBSD::PkgCfl::unregister($o, $state);
 	});
 	$set->cleanup_old_shared($state);
 	# Here there should be code to handle old libs
@@ -799,7 +799,7 @@ sub really_add
 		OpenBSD::Add::register_installation($plist, $state);
 		add_installed($pkgname);
 		delete $handle->{partial};
-		OpenBSD::PkgCfl::register($plist, $state);
+		OpenBSD::PkgCfl::register($handle, $state);
 		if ($plist->has(DISPLAY)) {
 			$plist->get(DISPLAY)->prepare($state);
 		}
