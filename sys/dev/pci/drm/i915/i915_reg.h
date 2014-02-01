@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_reg.h,v 1.5 2014/01/24 01:47:51 jsg Exp $	*/
+/*	$OpenBSD: i915_reg.h,v 1.6 2014/02/01 09:32:05 jsg Exp $	*/
 /* Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  *
@@ -598,6 +598,8 @@
 					will not assert AGPBUSY# and will only
 					be delivered when out of C3. */
 #define   INSTPM_FORCE_ORDERING				(1<<7) /* GEN6+ */
+#define   INSTPM_TLB_INVALIDATE	(1<<9)
+#define   INSTPM_SYNC_FLUSH	(1<<5)
 #define ACTHD	        0x020c8
 #define FW_BLC		0x020d8
 #define FW_BLC2		0x020dc
