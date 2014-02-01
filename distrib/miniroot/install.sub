@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.737 2014/01/28 21:34:44 halex Exp $
+#	$OpenBSD: install.sub,v 1.738 2014/02/01 23:16:16 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -145,12 +145,12 @@ tmpdir() {
 }
 
 scan_dmesg() {
-	bsort $(sed -ne "$1" /var/run/dmesg.boot)
+	bsort $(sed -n "$1" /var/run/dmesg.boot)
 }
 
 scan_disknames() {
 	local IFS=,
-	bsort $(for _n in $(sysctl -n hw.disknames); do echo "${_n%%:*} "; done | sed -ne "$1")
+	bsort $(for _n in $(sysctl -n hw.disknames); do echo "${_n%%:*} "; done | sed -n "$1")
 }
 
 get_dkdevs () {
@@ -164,7 +164,7 @@ get_cddevs () {
 get_ifdevs() {
 	ifconfig "$@" 2>/dev/null |
 		egrep -v '^[[:space:]]|(bridge|enc|gif|gre|lo|pflog|pfsync|ppp|sl|tun)[[:digit:]]+:' |
-		sed -ne 's/^\(.*\):.*/\1/p'
+		sed -n 's/^\(.*\):.*/\1/p'
 }
 
 get_drive() {
@@ -180,7 +180,7 @@ mount_mnt2() {
 	disklabel $_dev 2>/dev/null | grep '^  [a-p]: '	|
 		egrep -v "swap|unused" >$_file
 
-	_parts=$(sed -e 's/^  \(.\): .*/\1/' $_file)
+	_parts=$(sed 's/^  \(.\): .*/\1/' $_file)
 	set -- $_parts
 	(($# == 0)) && { echo "No filesystems found on $_dev."; return 1; }
 
@@ -978,7 +978,7 @@ v4_defroute() {
 	local _dr _prompt=" or 'none'"
 
 	# Get/Confirm an IPv4 default route if an IPv4 address was configured.
-	[[ -n $(ifconfig | sed -ne '/[ 	]inet .* broadcast /p') ]] || return
+	[[ -n $(ifconfig | sed -n '/[ 	]inet .* broadcast /p') ]] || return
 
 	# If only one interface, and it is running dhclient, ask nothing
 	[[ -f /tmp/dhclient.conf && $nifs == 1 ]] && return
@@ -986,7 +986,7 @@ v4_defroute() {
 	[[ -x /sbin/dhclient ]] && _prompt=", 'dhcp'$_prompt"
 	_prompt="Default IPv4 route? (IPv4 address$_prompt)"
 
-	_dr=$(route -n show -inet | sed -ne '/^default */{s///; s/ .*//; p;}')
+	_dr=$(route -n show -inet | sed -n '/^default */{s///; s/ .*//; p;}')
 	[[ -f /tmp/dhclient.conf ]] && _dr=dhcp
 
 	while :; do
@@ -1005,8 +1005,8 @@ v6_defroute() {
 	route -n show -inet6 | egrep -q '^default[[:space:]]' && return
 
 	_routers=$(bsort $(ping6 -n -c 2 ff02::2%$_if 2>/dev/null |
-		sed -ne '/bytes from/{s/^.*from //;s/,.*$//;p;}' |
-		sed -ne 'G;s/\n/&&/;/^\(.*\n\).*\n\1/d;h;P'))
+		sed -n '/bytes from/{s/^.*from //;s/,.*$//;p;}' |
+		sed -n 'G;s/\n/&&/;/^\(.*\n\).*\n\1/d;h;P'))
 
 	local PS3="IPv6 default router? (${_routers:+list #, }IPv6 address or 'none'): "
 	select _resp in $_routers; do
@@ -1181,7 +1181,7 @@ install_files() {
 	if [[ -z $_sets ]]; then
 		# Show $_src, but delete any ftp password.
 		echo -n "Looked at "
-		echo $_src | sed -e 's/\(^ftp:\/\/[^/]*\)\(:[^/]*\)\(@.*\)/\1\3/'
+		echo $_src | sed 's/\(^ftp:\/\/[^/]*\)\(:[^/]*\)\(@.*\)/\1\3/'
 		echo "and found no $OBSD sets.  The set names looked for were:"
 
 		let COLUMNS=_col-8
@@ -1329,7 +1329,7 @@ install_files() {
 #	   embedded blanks in usercodes and passwords.
 #	2) substitute '%' FIRST so it doesn't eliminate '%' chars we insert.
 encode_for_url() {
-	echo "$1" | sed -e "
+	echo "$1" | sed "
 s/%/%25/g
 s/ /%20/g
 s/!/%21/g
@@ -1520,7 +1520,7 @@ install_url() {
 		# Assumes index file is "index.txt" for http (or proxy)
 		# We can't use index.html since the format is server-dependent
 		_file_list=$(ftp -Vo - "$_url_base/index.txt" |
-			sed -e 's/^.* //' | sed -e 's///')
+			sed 's/^.* //' | sed 's///')
 	fi
 
 	install_files "$_url_base" "$_file_list"
@@ -1658,7 +1658,7 @@ set_timezone() {
 
 	waitftplist
 	if [[ -s $SERVERLISTALL ]]; then
-		_tz=$(sed -ne '/^TZ=/s/TZ=//p' <$SERVERLISTALL)
+		_tz=$(sed -n '/^TZ=/s/TZ=//p' <$SERVERLISTALL)
 		[[ -n $_tz ]] && isin "$_tz" `cat $_zonefile` && TZ=$_tz
 	fi
 
@@ -1719,7 +1719,7 @@ install_sets() {
 	echo
 
 	[[ -s $SERVERLISTALL ]] &&
-		_d=$(sed -ne '/^method=/s/method=//p' $SERVERLISTALL)
+		_d=$(sed -n '/^method=/s/method=//p' $SERVERLISTALL)
 
 	ifconfig netboot >/dev/null 2>&1 && : ${_d:=http}
 	[[ -n $(get_cddevs) ]] && { _locs="cd $_locs"; : ${_d:=cd}; }
@@ -1789,14 +1789,14 @@ munge_fstab() {
 
 		# Remove any softdep options, as soft updates are not
 		# available in the ramdisk kernels.
-		_opt=$(echo $_opt | sed -e 's/softdep//')
+		_opt=$(echo $_opt | sed 's/softdep//')
 
 		# Change read-only ffs to read-write since we'll potentially
 		# write to these filesystems.
-		[[ $_fstype == ffs ]] && _opt=$(echo $_opt | sed -e 's/ro/rw/')
+		[[ $_fstype == ffs ]] && _opt=$(echo $_opt | sed 's/ro/rw/')
 
 		# Mount non-ffs filesystems read only.
-		[[ $_fstype == ffs ]] || _opt=$(echo $_opt | sed -e 's/rw/ro/')
+		[[ $_fstype == ffs ]] || _opt=$(echo $_opt | sed 's/rw/ro/')
 
 		# Write fs entry in fstab.
 		# 1) prepend '/mnt' to the mount point.
@@ -1825,7 +1825,7 @@ mount_fs() {
 		# Mount the filesystem. Remember any failure.
 		_msg=$(mount -v -t $_fstype $_async -o $_opt $_dev $_mp) ||
 			_fail="$_fail\n$_mp ($_dev)"
-		echo $_msg | sed -e 's/, ctime=[^,)]*//'
+		echo $_msg | sed 's/, ctime=[^,)]*//'
 	done </etc/fstab
 
 	if [[ -n $_fail ]]; then
@@ -1962,7 +1962,7 @@ apply()
 			>>/mnt/etc/rc.conf.local
 	fi
 	if [[ $sshd_disableroot == y ]]; then
-		sed -e "/^#\(PermitRootLogin\) yes/s//\1 no/" \
+		sed "/^#\(PermitRootLogin\) yes/s//\1 no/" \
 			< /mnt/etc/ssh/sshd_config > /tmp/sshd_config
 		cp /tmp/sshd_config /mnt/etc/ssh/sshd_config
 	fi
@@ -1974,7 +1974,7 @@ apply()
 			# 'servers' line with the first token in $resp as the
 			# server.
 			set -- $ntpd_server
-			sed -e "s/^servers /#&/;/#server /a\\
+			sed "s/^servers /#&/;/#server /a\\
 servers $1
 " /mnt/etc/ntpd.conf >/tmp/ntpd.conf
 			cp /tmp/ntpd.conf /mnt/etc/ntpd.conf
@@ -1982,7 +1982,7 @@ servers $1
 	fi
 
 	if [[ $x11 == y ]]; then
-		sed -e "/^#\(machdep\.allowaperture=${MDXAPERTURE}\)/s//\1	/" \
+		sed "/^#\(machdep\.allowaperture=${MDXAPERTURE}\)/s//\1	/" \
 			/mnt/etc/sysctl.conf >/tmp/sysctl.conf
 		cp /tmp/sysctl.conf /mnt/etc/sysctl.conf
 	fi
@@ -2178,7 +2178,7 @@ for _opt in d f l m n p s; do
 done
 
 # Extract and save one boot's worth of dmesg
-dmesg | sed -ne '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' >/var/run/dmesg.boot
+dmesg | sed -n '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' >/var/run/dmesg.boot
 
 # Are we in a real release, or a snapshot?  If this is a snapshot
 # install media, default us to a snapshot directory.
