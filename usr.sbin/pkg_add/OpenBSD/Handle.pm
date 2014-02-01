@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.32 2014/01/30 13:18:34 espie Exp $
+# $OpenBSD: Handle.pm,v 1.33 2014/02/01 10:54:11 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -24,6 +24,7 @@ use warnings;
 package OpenBSD::Handle;
 
 use OpenBSD::PackageInfo;
+use OpenBSD::Error;
 
 use constant {
 	BAD_PACKAGE => 1,
@@ -51,6 +52,7 @@ sub cleanup
 		$self->location->wipe_info;
 	}
 	delete $self->{plist};
+	delete $self->{conflict_list};
 }
 
 sub new
@@ -93,6 +95,24 @@ sub plist
 {
 	return shift->{plist};
 }
+
+sub dependency_info
+{
+	my $self = shift;
+	if (defined $self->{plist}) {
+		return $self->{plist};
+	} elsif (defined $self->{location}{update_info}) {
+		return $self->{location}{update_info};
+	} else {
+		return undef;
+	}
+}
+
+OpenBSD::Auto::cache(conflict_list,
+    sub {
+    	require OpenBSD::PkgCfl;
+	return OpenBSD::PkgCfl->make_conflict_list(shift->dependency_info);
+    });
 
 sub set_error
 {
