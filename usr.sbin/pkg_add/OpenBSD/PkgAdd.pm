@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.52 2014/02/01 18:50:58 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.53 2014/02/02 09:11:27 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -322,6 +322,9 @@ sub figure_out_kept
 
 	for my $n ($set->newer) {
 		$set->find_kept_handle($n, $state);
+	}
+	for my $n ($set->kept) {
+		$n->complete_old;
 	}
 }
 
