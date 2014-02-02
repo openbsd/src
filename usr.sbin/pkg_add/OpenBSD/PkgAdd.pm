@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.54 2014/02/02 11:19:31 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.55 2014/02/02 15:22:36 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -303,11 +303,7 @@ sub find_kept_handle
 			    "Bogus package already installed");
 		    	return;
 		}
-		$set->add_older($o);
-	} else {
-		$o->complete_old;
 	}
-	$o->{update_found} = $o;
 	$set->move_kept($o);
 	$o->{tweaked} =
 	    OpenBSD::Add::tweak_package_status($pkgname, $state);
@@ -322,9 +318,6 @@ sub figure_out_kept
 
 	for my $n ($set->newer) {
 		$set->find_kept_handle($n, $state);
-	}
-	for my $n ($set->kept) {
-		$n->complete_old;
 	}
 }
 

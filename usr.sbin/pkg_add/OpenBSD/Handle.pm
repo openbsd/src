@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.33 2014/02/01 10:54:11 espie Exp $
+# $OpenBSD: Handle.pm,v 1.34 2014/02/02 15:22:36 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -170,6 +170,24 @@ sub complete_old
 	}
 }
 
+sub complete_dependency_info
+{
+	my $self = shift;
+	my $location = $self->{location};
+
+	if (!defined $location) {
+		$self->set_error(NOT_FOUND);
+    	}
+	if (!defined $location) {
+		$self->set_error(NOT_FOUND);
+	} else {
+		if (!defined $self->{plist}) {
+			# trigger build
+			$location->update_info;
+		}
+	}
+}
+
 sub create_old
 {
 
@@ -181,7 +199,7 @@ sub create_old
 	if (defined $location) {
 		$self->{location} = $location;
 	}
-	$self->complete_old;
+	$self->complete_dependency_info;
 
 	return $self;
 }

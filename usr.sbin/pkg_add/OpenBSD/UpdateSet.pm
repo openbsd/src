@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.73 2014/02/01 18:54:01 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.74 2014/02/02 15:22:36 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -258,6 +258,8 @@ sub move_kept
 		delete $self->{older}{$h->pkgname};
 		delete $self->{newer}{$h->pkgname};
 		$self->{kept}{$h->pkgname} = $h;
+		$h->complete_dependency_info;
+		$h->{update_found} = $h;
 	}
 	return $self;
 }

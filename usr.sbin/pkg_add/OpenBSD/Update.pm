@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.160 2014/02/01 10:55:37 espie Exp $
+# $OpenBSD: Update.pm,v 1.161 2014/02/02 15:22:36 espie Exp $
 #
 # Copyright (c) 2004-2014 Marc Espie <espie@openbsd.org>
 #
@@ -109,7 +109,6 @@ sub process_handle
 	}
 
 	if ($plist->has('firmware') && !$state->defines('FW_UPDATE')) {
-		$h->{update_found} = $h;
 		$set->move_kept($h);
 		return 0;
 	}
@@ -202,9 +201,7 @@ sub process_handle
 
 	if (@$l == 0) {
 		if ($oldfound) {
-			$h->{update_found} = $h;
 			$set->move_kept($h);
-
 			$self->progress_message($state,
 			    "No need to update #1", $pkgname);
 
