@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.35 2014/01/30 18:54:34 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.36 2014/02/02 23:09:56 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -112,7 +112,7 @@ sub find_contents
 {
 	my ($self, $extra) = @_;
 
-	while (my $e = $self->_next) {
+	while (my $e = $self->next) {
 		if ($e->isFile && is_info_name($e->{name})) {
 			if ($e->{name} eq CONTENTS ) {
 				my $v = $e->contents($extra);
@@ -162,7 +162,7 @@ sub grab_info
 		close $fh;
 	}
 
-	while (my $e = $self->_next) {
+	while (my $e = $self->next) {
 		if ($e->isFile && is_info_name($e->{name})) {
 			$e->{name} = $dir.$e->{name};
 			undef $e->{mtime};
@@ -286,16 +286,6 @@ sub deref
 
 # proxy for archive operations
 sub next
-{
-	my $self = shift;
-
-	if (!defined $self->{dir}) {
-		$self->grabInfoFiles;
-	}
-	return $self->_next;
-}
-
-sub _next
 {
 	my $self = shift;
 
