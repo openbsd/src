@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.12 2013/01/05 11:20:56 miod Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.13 2014/02/02 20:31:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -35,7 +35,7 @@
 /*
  * void mtx_init(struct mutex *mtx, int ipl)
  */
-ENTRY(mtx_init)
+ENTRY(__mtx_init)
 	st	%r0, %r2, MTX_LOCK	/* mtx->mtx_lock = 0 */
 	st	%r0, %r2, MTX_OLDIPL	/* mtx->mtx_oldipl = IPL_NONE */
 	st	%r3, %r2, MTX_WANTIPL	/* mtx->mtx_wantipl = ipl */
