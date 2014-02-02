@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.12 2014/02/01 09:11:30 kettenis Exp $ */
+/*	$OpenBSD: qla.c,v 1.13 2014/02/02 06:28:18 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -1296,11 +1296,6 @@ qla_read_isr(struct qla_softc *sc, u_int16_t *isr, u_int16_t *info)
 
 	switch (sc->sc_isp_gen) {
 	case QLA_GEN_ISP2200:
-		int_status = qla_read(sc, QLA_INT_STATUS);
-		if ((int_status & QLA_INT_REQ) == 0) {
-			return (0);
-		}
-
 		if (qla_read(sc, QLA_SEMA) & QLA_SEMA_LOCK) {
 			*info = qla_read_mbox(sc, 0);
 			if (*info & QLA_MBOX_HAS_STATUS)
@@ -1308,6 +1303,10 @@ qla_read_isr(struct qla_softc *sc, u_int16_t *isr, u_int16_t *info)
 			else
 				*isr = QLA_INT_TYPE_ASYNC;
 		} else {
+			int_status = qla_read(sc, QLA_INT_STATUS);
+			if ((int_status & QLA_INT_REQ) == 0)
+				return (0);
+
 			*isr = QLA_INT_TYPE_IO;
 		}
 		return (1);
