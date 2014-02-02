@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.164 2014/02/02 00:58:35 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.165 2014/02/02 03:53:05 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -254,6 +254,17 @@ static inline void
 kfree(void *objp)
 {
 	free(objp, M_DRM);
+}
+
+#define min_t(t, a, b) ({ \
+	t __min_a = (a); \
+	t __min_b = (b); \
+	__min_a < __min_b ? __min_a : __min_b; })
+
+static inline uint64_t
+div_u64(uint64_t x, uint32_t y)
+{
+	return (x / y);
 }
 
 /* DRM_READMEMORYBARRIER() prevents reordering of reads.
