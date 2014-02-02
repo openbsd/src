@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.378 2014/01/28 23:07:09 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.379 2014/02/02 08:48:48 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 28 2014 $
+.Dd $Mdocdate: February 2 2014 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -783,7 +783,7 @@ With
 .Fl t ,
 display the log for
 .Ar target-client .
-.Fl I,
+.Fl I ,
 .Fl J
 and
 .Fl T
@@ -2499,7 +2499,7 @@ Display
 will be passed through
 .Xr strftime 3
 and formats (see
-.Sx FORMATS Ns )
+.Sx FORMATS )
 will be expanded.
 It may also contain any of the following special character sequences:
 .Bl -column "Character pair" "Replaced with" -offset indent
