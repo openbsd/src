@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.100 2014/01/23 22:57:06 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.101 2014/02/02 15:35:52 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -878,6 +878,12 @@ sub pkgname
 	my $self = shift;
 
 	return $self->{plist}->pkgname;
+}
+
+sub dependency_info
+{
+	my $self = shift;
+	return $self->{plist};
 }
 
 package OpenBSD::PseudoSet;
