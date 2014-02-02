@@ -1655,6 +1655,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/ataio.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sys/atomic.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/audioio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/buf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/cdefs.ph

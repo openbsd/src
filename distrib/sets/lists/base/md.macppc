@@ -2210,6 +2210,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/ataio.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/atomic.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/audioio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/buf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/cdefs.ph

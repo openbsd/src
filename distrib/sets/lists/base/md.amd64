@@ -2193,6 +2193,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/ataio.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/sys/atomic.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/audioio.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/buf.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/cdefs.ph

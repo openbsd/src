@@ -2199,6 +2199,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/ataio.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/atomic.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/audioio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/buf.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/cdefs.ph

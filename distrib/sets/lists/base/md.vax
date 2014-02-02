@@ -1452,6 +1452,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/ataio.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sys/atomic.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/audioio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/buf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/cdefs.ph

@@ -2060,6 +2060,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/ataio.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sys/atomic.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/audioio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/buf.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/cdefs.ph

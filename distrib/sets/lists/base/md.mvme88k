@@ -2081,6 +2081,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/ataio.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/atomic.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/audioio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/buf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/cdefs.ph
