@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Log.pm,v 1.6 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: Log.pm,v 1.7 2014/02/02 23:10:41 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -31,8 +31,18 @@ sub set_context
 {
 	my ($self, $context) = @_;
 	$self->{context} = $context;
-	$self->{output} = $self->{messages}->{$context} //= [];
-	$self->{erroutput} = $self->{errmessages}->{$context} //= [];
+}
+
+sub messages
+{
+	my $self = shift;
+	return $self->{messages}{$self->{context}} //= [];
+}
+
+sub errmessages
+{
+	my $self = shift;
+	return $self->{errmessages}{$self->{context}} //= [];
 }
 
 sub f
@@ -44,25 +54,25 @@ sub f
 sub print
 {
 	my $self = shift;
-	push(@{$self->{output}}, $self->f(@_));
+	push(@{$self->messages}, $self->f(@_));
 }
 
 sub say
 {
 	my $self = shift;
-	push(@{$self->{output}}, $self->f(@_)."\n");
+	push(@{$self->messages}, $self->f(@_)."\n");
 }
 
 sub errprint
 {
 	my $self = shift;
-	push(@{$self->{erroutput}}, $self->f(@_));
+	push(@{$self->errmessages}, $self->f(@_));
 }
 
 sub errsay
 {
 	my $self = shift;
-	push(@{$self->{erroutput}}, $self->f(@_)."\n");
+	push(@{$self->errmessages}, $self->f(@_)."\n");
 }
 
 sub specialsort
@@ -75,7 +85,7 @@ sub dump
 {
 	my $self = shift;
 	for my $ctxt (specialsort keys %{$self->{errmessages}}) {
-		my $msgs = $self->{errmessages}->{$ctxt};
+		my $msgs = $self->{errmessages}{$ctxt};
 		if (@$msgs > 0) {
 			$self->{p}->errsay("--- #1 -------------------", $ctxt);
 			$self->{p}->_errprint(@$msgs);
@@ -83,7 +93,7 @@ sub dump
 	}
 	$self->{errmessages} = {};
 	for my $ctxt (specialsort keys %{$self->{messages}}) {
-		my $msgs = $self->{messages}->{$ctxt};
+		my $msgs = $self->{messages}{$ctxt};
 		if (@$msgs > 0) {
 			$self->{p}->say("--- #1 -------------------", $ctxt);
 			$self->{p}->_print(@$msgs);
