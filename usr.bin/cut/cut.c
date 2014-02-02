@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.17 2014/02/01 23:34:49 sobrado Exp $	*/
+/*	$OpenBSD: cut.c,v 1.18 2014/02/02 11:44:01 sobrado Exp $	*/
 /*	$NetBSD: cut.c,v 1.9 1995/09/02 05:59:23 jtc Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ main(int argc, char *argv[])
 {
 	FILE *fp;
 	void (*fcn)(FILE *, char *);
-	int ch, eval = 0;
+	int ch, rval;
 
 	setlocale (LC_ALL, "");
 
@@ -102,6 +102,7 @@ main(int argc, char *argv[])
 	} else if (!cflag || dflag || sflag)
 		usage();
 
+	rval = 0;
 	if (*argv)
 		for (; *argv; ++argv) {
 			if (strcmp(*argv, "-") == 0)
@@ -111,14 +112,14 @@ main(int argc, char *argv[])
 					fcn(fp, *argv);
 					(void)fclose(fp);
 				} else {
-					eval = 1;
+					rval = 1;
 					warn("%s", *argv);
 				}
 			}
 		}
 	else
 		fcn(stdin, "stdin");
-	exit(eval);
+	exit(rval);
 }
 
 int autostart, autostop, maxval;
