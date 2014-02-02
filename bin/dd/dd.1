@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.25 2011/10/18 09:37:35 nicm Exp $
+.\"	$OpenBSD: dd.1,v 1.26 2014/02/02 22:43:40 jmc Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)dd.1	8.2 (Berkeley) 1/13/94
 .\"
-.Dd $Mdocdate: October 18 2011 $
+.Dd $Mdocdate: February 2 2014 $
 .Dt DD 1
 .Os
 .Sh NAME
@@ -365,9 +365,10 @@ The conversions
 .Cm ebcdic ,
 and
 .Cm ibm
-are compliant with the
-.St -xpg4
-specification.
+are marked by
+.St -p1003.1-2008
+as being an
+X/Open System Interfaces option.
 .Pp
 The
 .Cm files
@@ -378,10 +379,15 @@ the conversions
 .Cm oldibm ,
 and
 .Cm osync ,
-and the size multipliers
+the size multipliers
 .Sq K ,
 .Sq m ,
 .Sq M ,
 and
-.Sq w
-are all extensions to those specifications.
+.Sq w ,
+and
+.Dv SIGINFO
+handling
+are all extensions to the
+.St -p1003.1-2008
+specification.
