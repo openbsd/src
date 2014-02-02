@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.739 2014/02/02 17:10:33 rpe Exp $
+#	$OpenBSD: install.sub,v 1.740 2014/02/02 17:37:24 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -177,8 +177,8 @@ get_drive() {
 mount_mnt2() {
 	local _dev=$1 _opts _file=/tmp/parts.$1 _parts
 
-	disklabel $_dev 2>/dev/null | grep '^  [a-p]: '	|
-		egrep -v "swap|unused" >$_file
+	disklabel $_dev 2>/dev/null |
+		sed -En '/swap|unused/d;/^  [a-p]: /p' >$_file
 
 	_parts=$(sed 's/^  \(.\): .*/\1/' $_file)
 	set -- $_parts
@@ -192,11 +192,10 @@ mount_mnt2() {
 		resp=$1
 	else
 		# Display partitions with filesystems and ask which to use.
-		cat /tmp/parts.$_dev
+		cat $_file
 		ask_which "$_dev partition" "has the $MODE sets" \
-			'$(disklabel '$_dev' 2>/dev/null | grep "^  [a-p]: " |
-			egrep -v "swap|unused" |
-			sed '\''s/^  \(.\): .*/\1/'\'')'
+			'$(disklabel '$_dev' 2>/dev/null |
+			sed -En '\''/swap|unused/d;/^  ([a-p]): .*/s//\1/p'\'')'
 		[[ $resp == done ]] && return 1
 	fi
 
