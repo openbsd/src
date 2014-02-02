@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.100 2014/01/26 04:35:09 tedu Exp $
+dnl	$OpenBSD: m4.common,v 1.101 2014/02/02 11:56:26 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -33,7 +33,12 @@ out as follows:
 
 	SHA256		Output of the sum(1) program using the option
 			-a sha256, usable for verification of the
-			correctness of downloaded files.')dnl
+			correctness of downloaded files.
+
+	SHA256.sig	The above file, signed with the OpenBSD signing key
+			for the OSREV release, usable for verification of the
+			integrity of the above file, and thus of the
+		        downloaded files.')dnl
 dnl
 dnl Change the quote.  There were too many `word' situations that would
 dnl have to have been changed to ``word''.  The quote gets changed to
