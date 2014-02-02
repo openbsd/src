@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.67 2014/01/30 15:10:47 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.68 2014/02/02 10:54:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1475,6 +1475,7 @@ i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 		locked = uvmfault_relock(ufi);
 	}
 	if (!locked) {
+		DRM_UNLOCK();
 		dev_priv->entries--;
 		return (VM_PAGER_REFAULT);
 	}
