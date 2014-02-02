@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.5 2014/02/01 21:19:02 miod Exp $	*/
+/* $OpenBSD: ipifuncs.c,v 1.6 2014/02/02 22:49:38 miod Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.9 1999/12/02 01:09:11 thorpej Exp $ */
 
 /*-
@@ -155,8 +155,9 @@ alpha_multicast_ipi(u_long cpumask, u_long ipimask)
 void
 alpha_ipi_halt(struct cpu_info *ci, struct trapframe *framep)
 {
-	/* Disable interrupts. */
-	(void) splhigh();
+	SCHED_ASSERT_UNLOCKED();
+	fpusave_cpu(ci, 1);
+	(void)splhigh();
 
 	cpu_halt();
 	/* NOTREACHED */
