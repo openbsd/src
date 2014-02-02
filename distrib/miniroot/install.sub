@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.738 2014/02/01 23:16:16 rpe Exp $
+#	$OpenBSD: install.sub,v 1.739 2014/02/02 17:10:33 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1290,7 +1290,7 @@ install_files() {
 
 	[[ -n $_unver ]] && : ${_issue:="Unverified sets:" ${_unver% }}
 	if [[ -n $_issue ]] &&
-		! ask_yn "$_issue. Continue without verifcation?"; then
+		! ask_yn "$_issue. Continue without verification?"; then
 		[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
 		$auto && exit 1
 		return
