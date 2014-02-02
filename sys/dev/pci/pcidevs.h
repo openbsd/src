@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1713 2014/01/27 06:31:54 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1714 2014/02/02 19:16:10 miod Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -230,6 +230,7 @@
 #define	PCI_VENDOR_SIIG	0x131f		/* SIIG */
 #define	PCI_VENDOR_DTCTECH	0x134a		/* DTC Tech */
 #define	PCI_VENDOR_PCTEL	0x134d		/* PCTEL */
+#define	PCI_VENDOR_BRAINBOXES	0x135a		/* Brainboxes */
 #define	PCI_VENDOR_MEINBERG	0x1360		/* Meinberg Funkuhren */
 #define	PCI_VENDOR_CNET	0x1371		/* CNet */
 #define	PCI_VENDOR_SILICOM	0x1374		/* Silicom */
@@ -4429,6 +4430,9 @@
 #define	PCI_PRODUCT_MATROX_MYST_G200_SD	0xff02		/* MGA Mystique G200 SD */
 #define	PCI_PRODUCT_MATROX_MILL_G200_SG	0xff03		/* MGA Millennium G200 SG */
 #define	PCI_PRODUCT_MATROX_MARV_G200_SD	0xff04		/* MGA Marvel G200 SD */
+
+/* Brainboxes */
+#define	PCI_PRODUCT_BRAINBOXES_IS200_BB16PCI958	0x0d80		/* IS200 BB16PCI958 */
 
 /* Meinberg Funkuhren */
 #define	PCI_PRODUCT_MEINBERG_PCI32	0x0101		/* PCI32 */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1713 2014/01/27 06:31:54 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1714 2014/02/02 19:16:10 miod Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -15088,6 +15088,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MGA Marvel G200 SD",
 	},
 	{
+	    PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_IS200_BB16PCI958,
+	    "IS200 BB16PCI958",
+	},
+	{
 	    PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI32,
 	    "PCI32",
 	},
@@ -23562,6 +23566,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_PCTEL,
 	    "PCTEL",
+	},
+	{
+	    PCI_VENDOR_BRAINBOXES,
+	    "Brainboxes",
 	},
 	{
 	    PCI_VENDOR_MEINBERG,
