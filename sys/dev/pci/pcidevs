@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1713 2014/01/27 06:31:54 brad Exp $
+$OpenBSD: pcidevs,v 1.1714 2014/02/02 19:16:10 miod Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -225,6 +225,7 @@ vendor	FORTEMEDIA	0x1319	Forte Media
 vendor	SIIG		0x131f	SIIG
 vendor	DTCTECH		0x134a	DTC Tech
 vendor	PCTEL		0x134d	PCTEL
+vendor	BRAINBOXES	0x135a	Brainboxes
 vendor	MEINBERG	0x1360	Meinberg Funkuhren
 vendor	CNET		0x1371	CNet
 vendor	SILICOM		0x1374	Silicom
@@ -4424,6 +4425,9 @@ product MATROX PROD_G100_SD	0xff01	MGA Produktiva G100 SD
 product MATROX MYST_G200_SD	0xff02	MGA Mystique G200 SD
 product MATROX MILL_G200_SG	0xff03	MGA Millennium G200 SG
 product MATROX MARV_G200_SD	0xff04	MGA Marvel G200 SD
+
+/* Brainboxes */
+product	BRAINBOXES IS200_BB16PCI958	0x0d80	IS200 BB16PCI958
 
 /* Meinberg Funkuhren */
 product MEINBERG PCI32		0x0101	PCI32
