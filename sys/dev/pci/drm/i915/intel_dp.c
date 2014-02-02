@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_dp.c,v 1.14 2014/01/23 10:42:57 jsg Exp $	*/
+/*	$OpenBSD: intel_dp.c,v 1.15 2014/02/02 01:06:21 jsg Exp $	*/
 /*
  * Copyright © 2008 Intel Corporation
  *
@@ -629,7 +629,18 @@ intel_dp_i2c_aux_ch(struct i2c_controller *adapter, int mode,
 			DRM_DEBUG_KMS("aux_ch native nack\n");
 			return -EIO;
 		case AUX_NATIVE_REPLY_DEFER:
-			udelay(100);
+			/*
+			 * For now, just give more slack to branch devices. We
+			 * could check the DPCD for I2C bit rate capabilities,
+			 * and if available, adjust the interval. We could also
+			 * be more careful with DP-to-Legacy adapters where a
+			 * long legacy cable may force very low I2C bit rates.
+			 */
+			if (intel_dp->dpcd[DP_DOWNSTREAMPORT_PRESENT] &
+			    DP_DWN_STRM_PORT_PRESENT)
+				usleep_range(500, 600);
+			else
+				usleep_range(300, 400);
 			continue;
 		default:
 			DRM_ERROR("aux_ch invalid native reply 0x%02x\n",
