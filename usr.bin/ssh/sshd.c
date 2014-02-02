@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.417 2014/01/31 16:39:19 tedu Exp $ */
+/* $OpenBSD: sshd.c,v 1.418 2014/02/02 03:44:32 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -558,7 +558,7 @@ destroy_sensitive_data(void)
 		}
 	}
 	sensitive_data.ssh1_host_key = NULL;
-	memset(sensitive_data.ssh1_cookie, 0, SSH_SESSION_KEY_LENGTH);
+	explicit_bzero(sensitive_data.ssh1_cookie, SSH_SESSION_KEY_LENGTH);
 }
 
 /* Demote private to public keys for network child */
@@ -608,7 +608,7 @@ privsep_preauth_child(void)
 	if ((pw = getpwnam(SSH_PRIVSEP_USER)) == NULL)
 		fatal("Privilege separation user %s does not exist",
 		    SSH_PRIVSEP_USER);
-	memset(pw->pw_passwd, 0, strlen(pw->pw_passwd));
+	explicit_bzero(pw->pw_passwd, strlen(pw->pw_passwd));
 	endpwent();
 
 	/* Change our root directory */
@@ -2195,7 +2195,7 @@ do_ssh1_kex(void)
 			    get_remote_ipaddr(), len, (u_long)sizeof(session_key));
 			rsafail++;
 		} else {
-			memset(session_key, 0, sizeof(session_key));
+			explicit_bzero(session_key, sizeof(session_key));
 			BN_bn2bin(session_key_int,
 			    session_key + sizeof(session_key) - len);
 
@@ -2233,7 +2233,7 @@ do_ssh1_kex(void)
 		    sizeof(session_key) - 16) < 0)
 			fatal("%s: md5 failed", __func__);
 		ssh_digest_free(md);
-		memset(buf, 0, bytes);
+		explicit_bzero(buf, bytes);
 		free(buf);
 		for (i = 0; i < 16; i++)
 			session_id[i] = session_key[i] ^ session_key[i + 16];
@@ -2251,7 +2251,7 @@ do_ssh1_kex(void)
 	packet_set_encryption_key(session_key, SSH_SESSION_KEY_LENGTH, cipher_type);
 
 	/* Destroy our copy of the session key.  It is no longer needed. */
-	memset(session_key, 0, sizeof(session_key));
+	explicit_bzero(session_key, sizeof(session_key));
 
 	debug("Received session key; encryption turned on.");
 
