@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.33 2014/02/01 21:17:32 miod Exp $ */
+/* $OpenBSD: cpu.c,v 1.34 2014/02/03 18:42:05 miod Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -602,10 +602,12 @@ cpu_hatch(struct cpu_info *ci)
 	ALPHA_TBIA();
 	alpha_pal_imb();
 
+	KERNEL_LOCK();
 	sched_init_cpu(ci);
 	nanouptime(&ci->ci_schedstate.spc_runtime);
 	ci->ci_curproc = ci->ci_fpcurproc = NULL;
 	ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
+	KERNEL_UNLOCK();
 
 	(void) alpha_pal_swpipl(ALPHA_PSL_IPL_0);
 	SCHED_LOCK(s);
