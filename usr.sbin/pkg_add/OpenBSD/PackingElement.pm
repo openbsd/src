@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.230 2014/02/03 16:13:13 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.231 2014/02/03 16:18:05 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -560,6 +560,7 @@ __PACKAGE__->register_with_factory;
 sub register_manpage
 {
 	my ($self, $state, $key) = @_;
+	# XXX don't bother register stuff from partial packages
 	return if defined $self->{tempname};
 	my $fname = $self->fullname;
 	if ($fname =~ m,^(.*/man)/((?:man|cat).*),) {
