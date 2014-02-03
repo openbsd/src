@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.14 2014/02/02 07:53:33 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.15 2014/02/03 14:16:34 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -38,9 +38,10 @@
 #include <dev/ic/qlareg.h>
 #include <dev/ic/qlavar.h>
 
-/* firmware */
+#ifndef ISP_NOFIRMWARE
 #include <dev/microcode/isp/asm_2200.h>
 #include <dev/microcode/isp/asm_2300.h>
+#endif
 
 struct cfdriver qla_cd = {
 	NULL,
@@ -1736,6 +1737,22 @@ qla_put_cmd_cont(struct qla_softc *sc, void *buf, struct scsi_xfer *xs,
 }
 #endif
 
+#ifdef ISP_NOFIRMWARE
+
+int
+qla_load_firmware_2200(struct qla_softc *sc)
+{
+	return (0);
+}
+
+int
+qla_load_firmware_2300(struct qla_softc *sc)
+{
+	return (0);
+}
+
+#else
+
 int
 qla_load_firmware_2200(struct qla_softc *sc)
 {
@@ -1837,6 +1854,8 @@ qla_load_firmware_2300(struct qla_softc *sc)
 	qla_dmamem_free(sc, mem);
 	return (0);
 }
+
+#endif	/* ISP_NOFIRMWARE */
 
 int
 qla_read_nvram(struct qla_softc *sc)
