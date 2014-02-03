@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.107 2013/08/20 14:27:24 ajacoutot Exp $
+dnl	$OpenBSD: hardware,v 1.108 2014/02/03 05:35:40 miod Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run OpenBSD,
 or if you are able to run OpenBSD on hardware not listed here, please
@@ -16,8 +16,7 @@ Supported hardware:
 		Floppy drive.
 
     XP900, XP1000, CS20, DS10, DS20, DS20L, ES40, 264DP, and other EV6
-    machines using the Tsunami chipset (only one processor on multiprocessor
-    models will be used)
+    machines using the Tsunami chipset
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in DEC21143 Ethernet.
@@ -171,8 +170,6 @@ dnl move to PCMCIA section once Multia PCMCIA has been tested
 	EB64+ based systems
 	Samsung 164BX and 164UX (no SRM)
 	VME Alpha systems (AXPvme, ALPHAvme)
-	Multiprocessor Alpha systems (though they will run fine using one
-	    processor only, if the model is listed as supported above)
 
 Supported Peripherals:
 

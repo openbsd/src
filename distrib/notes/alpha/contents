@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.54 2013/07/26 20:07:29 miod Exp $
+dnl	$OpenBSD: contents,v 1.55 2014/02/03 05:35:40 miod Exp $
 TopPart
 
 OpenBSDfloppy
@@ -33,6 +33,8 @@ OpenBSDfloppy
 OpenBSDdistsets
 
 OpenBSDbsd
+
+OpenBSDbsdmp
 
 OpenBSDrd
 

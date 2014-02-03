@@ -1,4 +1,4 @@
-dnl	$OpenBSD: features,v 1.1 2009/05/12 21:06:50 miod Exp $
+dnl	$OpenBSD: features,v 1.2 2014/02/03 05:35:40 miod Exp $
 dnl
 dnl This file lists almost all the conditional features of this port,
 dnl which are used to provide accurate installation notes.
@@ -21,7 +21,7 @@ dnl (i.e. md_consoleinfo is not empty)
 define({:-MDSERCONS-:},1)dnl
 dnl
 dnl define if SMP kernels are provided
-define({:-MDSMP-:},)dnl
+define({:-MDSMP-:},1)dnl
 dnl
 dnl define if shared libraries are provided
 define({:-MDSO-:},1)dnl
