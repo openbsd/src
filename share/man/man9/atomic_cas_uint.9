@@ -1,4 +1,4 @@
-.\" $OpenBSD: atomic_cas.9,v 1.2 2014/01/30 08:16:56 jmc Exp $
+.\" $OpenBSD: atomic_cas_uint.9,v 1.1 2014/02/03 07:03:04 dlg Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 30 2014 $
+.Dd $Mdocdate: February 3 2014 $
 .Dt ATOMIC_CAS 9
 .Os
 .Sh NAME
@@ -32,11 +32,9 @@
 .Ft void *
 .Fn atomic_cas_ptr "volatile void **p" "void *expected" "void *new"
 .Sh DESCRIPTION
-The
-.Nm atomic_cas
-set of functions provide an interface for atomically performing
-compare-and-swap operations with respect to interrupts and multiple
-processors in the system.
+The atomic_cas set of functions provide an interface for atomically
+performing compare-and-swap operations with respect to interrupts
+and multiple processors in the system.
 .Pp
 The value referenced by the pointer
 .Fa p
@@ -52,9 +50,7 @@ These functions return the value at
 as it was before the attempt to swap it.
 .Sh SEE ALSO
 .Xr atomic 9 ,
-.Xr atomic_swap 9
+.Xr atomic_swap_uint 9
 .Sh HISTORY
-The
-.Nm atomic_cas
-functions first appeared in
+The atomic_cas functions first appeared in
 .Ox 5.5 .
