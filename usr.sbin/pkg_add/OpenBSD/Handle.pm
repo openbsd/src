@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.35 2014/02/03 13:28:43 espie Exp $
+# $OpenBSD: Handle.pm,v 1.36 2014/02/03 13:47:20 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -166,6 +166,7 @@ sub complete_old
 			$self->set_error(BAD_PACKAGE);
 		} else {
 			$self->{plist} = $plist;
+			delete $location->{contents};
 		}
 	}
 }

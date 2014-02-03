@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.56 2014/02/03 11:35:44 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.57 2014/02/03 13:47:20 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -961,6 +961,7 @@ sub process_set
 	if ($set->newer > 0 || $set->older_to_do > 0) {
 		for my $h ($set->newer) {
 			$h->plist->set_infodir($h->location->info);
+			delete $h->location->{contents};
 		}
 
 		if (!$set->validate_plists($state)) {
