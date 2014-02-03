@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.229 2014/02/03 15:57:13 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.230 2014/02/03 16:13:13 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -736,8 +736,6 @@ sub add
 
 	if ($args eq 'no checksum') {
 		$plist->{state}{lastfile}{nochecksum} = 1;
-	} elsif ($args eq 'no shadow') {
-		$plist->{state}{lastdir}{noshadow} = 1;
 	} else {
 		my $object = $plist->{state}{lastfileobject};
 		$object->{tags}{$args} = 1;
@@ -1371,9 +1369,6 @@ sub write
 {
 	my ($self, $fh) = @_;
 	$self->SUPER::write($fh);
-	if (defined $self->{noshadow}) {
-		print $fh "\@tag no shadow\n";
-	}
 }
 
 package OpenBSD::PackingElement::Dir;

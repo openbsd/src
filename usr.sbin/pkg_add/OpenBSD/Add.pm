@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.146 2014/02/03 15:57:13 espie Exp $
+# $OpenBSD: Add.pm,v 1.147 2014/02/03 16:13:13 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -359,14 +359,6 @@ sub install
 	$state->vsystem(OpenBSD::Paths->sysctl, '--', $name.'='.$self->{value});
 }
 
-package OpenBSD::PackingElement::DirBase;
-sub prepare_for_addition
-{
-	my ($self, $state, $pkgname) = @_;
-	return unless $self->{noshadow};
-	$state->{noshadow}{$state->{destdir}.$self->fullname} = 1;
-}
-
 package OpenBSD::PackingElement::FileBase;
 use OpenBSD::Error;
 use File::Basename;
@@ -460,7 +452,7 @@ sub extract
 	my $d = dirname($file->{destdir}.$file->name);
 	# we go back up until we find an existing directory.
 	# hopefully this will be on the same file system.
-	while (!-d $d && -e _ || defined $state->{noshadow}{$d}) {
+	while (!-d $d && -e _) {
 		$d = dirname($d);
 	}
 	if ($state->{not}) {
