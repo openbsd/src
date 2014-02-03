@@ -1,4 +1,4 @@
-.\" $OpenBSD: membar.9,v 1.1 2014/01/30 00:44:20 dlg Exp $
+.\" $OpenBSD: membar_sync.9,v 1.1 2014/02/03 06:51:22 dlg Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 30 2014 $
+.Dd $Mdocdate: February 3 2014 $
 .Dt MEMBAR 9
 .Os
 .Sh NAME
@@ -50,9 +50,7 @@
 .Ft void
 .Fn membar_sync "void"
 .Sh DESCRIPTION
-The
-.Nm membar
-set of functions provide an interface for issuing memory barrier
+The membar set of functions provide an interface for issuing memory barrier
 access operations with respect to multiple processors in the system.
 .Bl -tag -width "mem"
 .It Fn membar_enter
@@ -85,9 +83,7 @@ barrier complete and reach global visibility.
 .Sh SEE ALSO
 .Xr atomic 9
 .Sh HISTORY
-The
-.Nm membar_ops
-functions first appeared in
+The membar functions first appeared in
 .Nx 5.0
 and
 .Ox 5.5 .
