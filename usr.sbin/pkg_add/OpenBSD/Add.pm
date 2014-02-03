@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.145 2014/01/31 10:29:54 espie Exp $
+# $OpenBSD: Add.pm,v 1.146 2014/02/03 15:57:13 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -28,12 +28,12 @@ use File::Copy;
 sub manpages_index
 {
 	my ($state) = @_;
-	return unless defined $state->{mandirs};
+	return unless defined $state->{addman};
 	my $destdir = $state->{destdir};
 	require OpenBSD::Makewhatis;
 
-	while (my ($k, $v) = each %{$state->{mandirs}}) {
-		my @l = map { $destdir.$_ } @$v;
+	while (my ($k, $v) = each %{$state->{addman}}) {
+		my @l = map { "$destdir$k/$_" } @$v;
 		if ($state->{not}) {
 			$state->say("Merging manpages in #1: #2",
 			    $destdir.$k, join(' ', @l))
@@ -47,6 +47,7 @@ sub manpages_index
 			};
 		}
 	}
+	delete $state->{addman};
 }
 
 sub register_installation
@@ -363,7 +364,7 @@ sub prepare_for_addition
 {
 	my ($self, $state, $pkgname) = @_;
 	return unless $self->{noshadow};
-	$state->{noshadow}->{$state->{destdir}.$self->fullname} = 1;
+	$state->{noshadow}{$state->{destdir}.$self->fullname} = 1;
 }
 
 package OpenBSD::PackingElement::FileBase;
@@ -459,7 +460,7 @@ sub extract
 	my $d = dirname($file->{destdir}.$file->name);
 	# we go back up until we find an existing directory.
 	# hopefully this will be on the same file system.
-	while (!-d $d && -e _ || defined $state->{noshadow}->{$d}) {
+	while (!-d $d && -e _ || defined $state->{noshadow}{$d}) {
 		$d = dirname($d);
 	}
 	if ($state->{not}) {
@@ -644,7 +645,7 @@ sub install
 {
 	my ($self, $state) = @_;
 	$self->SUPER::install($state);
-	$self->register_manpage($state);
+	$self->register_manpage($state, 'addman');
 }
 
 package OpenBSD::PackingElement::InfoFile;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.228 2014/01/31 15:48:44 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.229 2014/02/03 15:57:13 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -559,12 +559,11 @@ __PACKAGE__->register_with_factory;
 
 sub register_manpage
 {
-	my ($self, $state) = @_;
+	my ($self, $state, $key) = @_;
 	return if defined $self->{tempname};
 	my $fname = $self->fullname;
-	if ($fname =~ m,^(.*/man)/(?:man|cat).*?/,) {
-		my $d = $1;
-		push(@{$state->{mandirs}->{$d}}, $fname);
+	if ($fname =~ m,^(.*/man)/((?:man|cat).*),) {
+		push(@{$state->{$key}{$1}}, $2);
     	}
 }
 
@@ -736,13 +735,13 @@ sub add
 	my ($class, $plist, $args) = @_;
 
 	if ($args eq 'no checksum') {
-		$plist->{state}->{lastfile}->{nochecksum} = 1;
+		$plist->{state}{lastfile}{nochecksum} = 1;
 	} elsif ($args eq 'no shadow') {
-		$plist->{state}->{lastdir}->{noshadow} = 1;
+		$plist->{state}{lastdir}{noshadow} = 1;
 	} else {
-		my $object = $plist->{state}->{lastfileobject};
-		$object->{tags}->{$args} = 1;
-		push(@{$plist->{tags}->{$args}}, $object);
+		my $object = $plist->{state}{lastfileobject};
+		$object->{tags}{$args} = 1;
+		push(@{$plist->{tags}{$args}}, $object);
 	}
 	return undef;
 }
