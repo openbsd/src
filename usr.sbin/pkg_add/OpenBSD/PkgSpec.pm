@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.42 2014/01/31 10:49:53 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.43 2014/02/03 12:03:01 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -309,10 +309,8 @@ sub new
 		    }, $class;
 
 		if ($with_partial) {
-			$o->{exactstem} = qr{^(?:partial\-)*$stemspec$};
 			$o->{fuzzystem} = qr{^(?:partial\-)*$stemspec\-\d.*$};
 		} else {
-			$o->{exactstem} = qr{^$stemspec$};
 			$o->{fuzzystem} = qr{^$stemspec\-\d.*$};
 		}
 		if (@$constraints != 0) {
@@ -335,7 +333,6 @@ sub match_ref
 LOOP1:
 	for my $s (grep(/$o->{fuzzystem}/, @$list)) {
 		my $name = OpenBSD::PackageName->from_string($s);
-		next unless $name->{stem} =~ m/^$o->{exactstem}$/;
 		if (defined $o->{constraints}) {
 			for my $c (@{$o->{constraints}}) {
 				next LOOP1 unless $c->match($name);
@@ -366,7 +363,6 @@ sub match_locations
 LOOP2:
 	for my $s (grep { $_->name =~ m/$o->{fuzzystem}/} @$list) {
 		my $name = $s->pkgname;
-		next unless $name->{stem} =~ m/^$o->{exactstem}$/;
 		if (defined $o->{constraints}) {
 			for my $c (@{$o->{constraints}}) {
 				next LOOP2 unless $c->match($name);
