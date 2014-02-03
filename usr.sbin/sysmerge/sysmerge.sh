@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.117 2014/01/28 09:25:22 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.118 2014/02/03 09:11:14 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -41,6 +41,7 @@ DBDIR="${DBDIR:=/var/db/sysmerge}"
 
 # system-wide variables (overridable)
 PAGER="${PAGER:=/usr/bin/more}"
+SIGHASH=SHA256
 
 # clean leftovers created by make in src
 clean_src() {
@@ -79,7 +80,7 @@ error_rm_wrkdir() {
 	(($#)) && echo "**** ERROR: $@"
 	# do not remove the entire WRKDIR in case sysmerge stopped half
 	# way since it contains our backup files
-	rm -f ${WRKDIR}/*SHA256*
+	rm -f ${WRKDIR}/{,x}etc-${SIGHASH}{,.sig}
 	rm -f ${WRKDIR}/*.tgz
 	rmdir ${WRKDIR} 2>/dev/null
 	exit 1
@@ -118,7 +119,7 @@ extract_set() {
 # takes url or filename and setname ('etc' or 'xetc') as arguments
 get_set() {
 	local _tgz=${WRKDIR}/${1##*/} _url=$1 _set=$2
-	local _sigfile=${WRKDIR}/${_set}-SHA256
+	local _sigfile=${WRKDIR}/${_set}-${SIGHASH}
 	[ -f "${_url}" ] && _url="file://$(readlink -f ${_url})"
 	if [[ ${_url} == @(file|ftp|http|https)://*/*[!/] ]]; then
 		echo "===> Fetching ${_url}"
@@ -131,14 +132,14 @@ get_set() {
 	tar -tzf "${_tgz}" ./var/db/sysmerge/${_set}sum >/dev/null || \
 		error_rm_wrkdir "${_tgz##*/}: badly formed \"${_set}\" set, lacks ./var/db/sysmerge/${_set}sum"
 	if [ -z "${NOSIGCHECK}" ]; then
-		echo "===> Fetching ${_url%/*}/SHA256.sig"
-		fetch "${_sigfile}.sig" "${_url%/*}/SHA256.sig" || \
-			error_rm_wrkdir "could not retrieve SHA256.sig"
+		echo "===> Fetching ${_url%/*}/${SIGHASH}.sig"
+		fetch "${_sigfile}.sig" "${_url%/*}/${SIGHASH}.sig" || \
+			error_rm_wrkdir "could not retrieve ${SIGHASH}.sig"
 		check_sig "${_sigfile}" "${_tgz}"
 	fi
 }
 
-# verify SHA256.sig and write ${WRKDIR}/(x)etc-SHA256, abort on failure;
+# verify ${SIGHASH}.sig and write ${WRKDIR}/(x)etc-${SIGHASH}, abort on failure;
 # takes the signature file and set as arguments
 check_sig() {
 	local _sigfile=${1##*/} _tgz=${2##*/}
@@ -149,7 +150,8 @@ check_sig() {
 			error_rm_wrkdir "${_sigfile}.sig: signature check failed"
 	(cd ${WRKDIR} && \
 		sha256 -C "${_sigfile}" "${_tgz}" >/dev/null) || \
-			error_rm_wrkdir "${_tgz}: bad SHA256 checksum"
+			error_rm_wrkdir "${_tgz}: bad ${SIGHASH} checksum"
+	rm ${WRKDIR}/${_sigfile}{,.sig}
 }
 
 # prepare TEMPROOT content from a src dir and create cksum file 
@@ -178,8 +180,9 @@ sm_populate() {
 			# delete file in temproot if it has not changed since last release
 			# and is present in current installation
 			if [ -z "${DIFFMODE}" ]; then
+				# 2>/dev/null: if file got removed manually but is still in the sum file
 				_R=$(cd ${TEMPROOT} && \
-					cksum -c ${DESTDIR}/${DBDIR}/${i} | awk '/OK/ { print $2 }' | sed 's/[:]//')
+					cksum -c ${DESTDIR}/${DBDIR}/${i} 2>/dev/null | awk '/OK/ { print $2 }' | sed 's/[:]//')
 				for _r in ${_R}; do
 					if [ -f ${DESTDIR}/${_r} -a -f ${TEMPROOT}/${_r} ]; then
 						# sanity check: _always_ compare master.passwd(5) and group(5)
@@ -193,7 +196,8 @@ sm_populate() {
 			# set auto-upgradable files
 			_D=$(diff -u ${WRKDIR}/${i} ${DESTDIR}/${DBDIR}/${i} | grep -E '^\+' | sed '1d' | awk '{print $3}')
 			for _d in ${_D}; do
-				CURSUM=$(cd ${DESTDIR:=/} && cksum ${_d})
+				# 2>/dev/null: if file got removed manually but is still in the sum file
+				CURSUM=$(cd ${DESTDIR:=/} && cksum ${_d} 2>/dev/null)
 				[ -n "$(grep "${CURSUM}" ${DESTDIR}/${DBDIR}/${i})" -a -z "$(grep "${CURSUM}" ${WRKDIR}/${i})" ] && \
 					_array="${_array} ${_d}"
 			done
