@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.55 2014/02/02 15:22:36 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.56 2014/02/03 11:35:44 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -949,13 +949,13 @@ sub process_set
 		}
 	}
 	if ($set->newer > 0 && $set->older_to_do > 0 && !$state->defines('donttie')) {
-		$set->{sha} = {};
+		my $sha = {};
 
 		for my $o ($set->older_to_do) {
-			$o->{plist}->hash_files($set->{sha}, $state);
+			$o->{plist}->hash_files($sha, $state);
 		}
 		for my $n ($set->newer) {
-			$n->{plist}->tie_files($set->{sha}, $state);
+			$n->{plist}->tie_files($sha, $state);
 		}
 	}
 	if ($set->newer > 0 || $set->older_to_do > 0) {
