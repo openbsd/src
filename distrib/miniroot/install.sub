@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.741 2014/02/02 19:33:23 rpe Exp $
+#	$OpenBSD: install.sub,v 1.742 2014/02/03 23:28:00 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -663,7 +663,7 @@ configure_ifs() {
 
 		ask_which "network interface" "do you wish to configure" \
 			'$(get_ifdevs)' \
-			${_p:-'$( (ifconfig netboot 2>/dev/null | sed -n '\''1s/:.*//p'\''; get_ifdevs) | sed q )'}
+			${_p:-'$( (get_ifdevs netboot; get_ifdevs) | sed q )'}
 		[[ $resp == done ]] && break
 
 		_ifs=$resp
