@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.62 2013/11/15 08:25:31 pirofti Exp $ */
+/*	$OpenBSD: ucom.c,v 1.63 2014/02/03 20:59:05 mpi Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -491,6 +491,12 @@ ucom_do_open(dev_t dev, int flag, int mode, struct proc *p)
 				SET(tp->t_state, TS_WOPEN);
 				error = ttysleep(tp, &tp->t_rawq,
 				    TTIPRI | PCATCH, ttopen, 0);
+
+				if (usbd_is_dying(sc->sc_uparent)) {
+					splx(s);
+					return (EIO);
+				}
+
 				/*
 				 * If TS_WOPEN has been reset, that means the
 				 * cua device has been closed.  We don't want
