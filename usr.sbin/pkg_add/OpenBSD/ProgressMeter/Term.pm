@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.20 2014/01/30 13:23:51 espie Exp $
+# $OpenBSD: Term.pm,v 1.21 2014/02/03 19:56:53 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -82,11 +82,12 @@ sub visit_with_size
 	my ($progress, $plist, $method, $state, @r) = @_;
 	$plist->{totsize} //= compute_size($plist);
 	my $donesize = 0;
-	$progress->show($donesize, $plist->{totsize});
+	my $totsize = $plist->{totsize};
+	$progress->show($donesize, $totsize);
 	if (defined $state->{archive}) {
 		$state->{archive}{callback} = sub {
 		    my $done = shift;
-		    $progress->show($donesize + $done, $plist->{totsize});
+		    $progress->show($donesize + $done, $totsize);
 		};
 	}
 	$plist->size_and($progress, \$donesize, $plist->{totsize},
