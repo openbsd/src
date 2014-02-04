@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.51 2014/02/04 09:50:31 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.52 2014/02/04 13:44:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -195,7 +195,7 @@ mta_session(struct mta_relay *relay, struct mta_route *route)
 
 	if (relay->flags & RELAY_SSL && relay->flags & RELAY_AUTH)
 		s->flags |= MTA_USE_AUTH;
-	if (relay->cert)
+	if (relay->pki_name)
 		s->flags |= MTA_USE_CERT;
 	if (relay->flags & RELAY_LMTP)
 		s->flags |= MTA_LMTP;
@@ -318,7 +318,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 
 		if (resp_ca_cert->status == CA_FAIL) {
-			if (s->relay->cert) {
+			if (s->relay->pki_name) {
 				log_info("smtp-out: Disconnecting session %016"PRIx64
 				    ": CA failure", s->id);
 				mta_free(s);
@@ -1498,8 +1498,8 @@ mta_start_tls(struct mta_session *s)
 	struct ca_cert_req_msg	req_ca_cert;
 	const char	       *certname;
 
-	if (s->relay->cert)
-		certname = s->relay->cert;
+	if (s->relay->pki_name)
+		certname = s->relay->pki_name;
 	else
 		certname = s->helo;
 
@@ -1540,8 +1540,8 @@ mta_verify_certificate(struct mta_session *s)
 
 	/* Send the client certificate */
 	memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
-	if (s->relay->cert)
-		pkiname = s->relay->cert;
+	if (s->relay->pki_name)
+		pkiname = s->relay->pki_name;
 	else
 		pkiname = s->helo;
 	if (strlcpy(req_ca_vrfy.pkiname, pkiname, sizeof req_ca_vrfy.pkiname)

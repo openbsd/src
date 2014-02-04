@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.163 2014/02/04 09:50:31 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.164 2014/02/04 13:44:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -59,16 +59,10 @@ static int lka_X509_verify(struct ca_vrfy_req_msg *, const char *, const char *)
 static void
 lka_imsg(struct mproc *p, struct imsg *imsg)
 {
-	struct rule		*rule;
 	struct table		*table;
-	void			*tmp;
 	int			 ret;
-	const char		*key, *val;
-	struct ssl		*ssl;
+	struct pki		*pki;
 	struct iovec		iov[3];
-	static struct dict	*ssl_dict;
-	static struct dict	*tables_dict;
-	static struct table	*table_last;
 	static struct ca_vrfy_req_msg	*req_ca_vrfy_smtp = NULL;
 	static struct ca_vrfy_req_msg	*req_ca_vrfy_mta = NULL;
 	struct ca_vrfy_req_msg		*req_ca_vrfy_chain;
@@ -130,29 +124,27 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 
 			xlowercase(buf, req_ca_cert->name, sizeof(buf));
 			log_debug("debug: lka: looking up pki \"%s\"", buf);
-			ssl = dict_get(env->sc_ssl_dict, buf);
-			if (ssl == NULL) {
+			pki = dict_get(env->sc_pki_dict, buf);
+			if (pki == NULL) {
 				resp_ca_cert.status = CA_FAIL;
 				m_compose(p, IMSG_LKA_SSL_INIT, 0, 0, -1, &resp_ca_cert,
 				    sizeof(resp_ca_cert));
 				return;
 			}
 			resp_ca_cert.status = CA_OK;
-			resp_ca_cert.cert_len = ssl->ssl_cert_len;
-			resp_ca_cert.key_len = ssl->ssl_key_len;
+			resp_ca_cert.cert_len = pki->pki_cert_len;
+			resp_ca_cert.key_len = pki->pki_key_len;
 			iov[0].iov_base = &resp_ca_cert;
 			iov[0].iov_len = sizeof(resp_ca_cert);
-			iov[1].iov_base = ssl->ssl_cert;
-			iov[1].iov_len = ssl->ssl_cert_len;
-			iov[2].iov_base = ssl->ssl_key;
-			iov[2].iov_len = ssl->ssl_key_len;
+			iov[1].iov_base = pki->pki_cert;
+			iov[1].iov_len = pki->pki_cert_len;
+			iov[2].iov_base = pki->pki_key;
+			iov[2].iov_len = pki->pki_key_len;
 			m_composev(p, IMSG_LKA_SSL_INIT, 0, 0, -1, iov, nitems(iov));
 			return;
 
 		case IMSG_LKA_SSL_VERIFY_CERT:
 			req_ca_vrfy_smtp = xmemdup(imsg->data, sizeof *req_ca_vrfy_smtp, "lka:ca_vrfy");
-			if (req_ca_vrfy_smtp == NULL)
-				fatal(NULL);
 			req_ca_vrfy_smtp->cert = xmemdup((char *)imsg->data +
 			    sizeof *req_ca_vrfy_smtp, req_ca_vrfy_smtp->cert_len, "lka:ca_vrfy");
 			req_ca_vrfy_smtp->chain_cert = xcalloc(req_ca_vrfy_smtp->n_chain,
@@ -176,10 +168,10 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 				fatalx("lka:ca_vrfy: verify without a certificate");
 
 			resp_ca_vrfy.reqid = req_ca_vrfy_smtp->reqid;
-			ssl = dict_xget(env->sc_ssl_dict, req_ca_vrfy_smtp->pkiname);
+			pki = dict_xget(env->sc_pki_dict, req_ca_vrfy_smtp->pkiname);
 			cafile = CA_FILE;
-			if (ssl->ssl_ca_file)
-				cafile = ssl->ssl_ca_file;
+			if (pki->pki_ca_file)
+				cafile = pki->pki_ca_file;
 			if (! lka_X509_verify(req_ca_vrfy_smtp, cafile, NULL))
 				resp_ca_vrfy.status = CA_FAIL;
 			else
@@ -254,29 +246,27 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 
 			xlowercase(buf, req_ca_cert->name, sizeof(buf));
 			log_debug("debug: lka: looking up pki \"%s\"", buf);
-			ssl = dict_get(env->sc_ssl_dict, buf);
-			if (ssl == NULL) {
+			pki = dict_get(env->sc_pki_dict, buf);
+			if (pki == NULL) {
 				resp_ca_cert.status = CA_FAIL;
 				m_compose(p, IMSG_LKA_SSL_INIT, 0, 0, -1, &resp_ca_cert,
 				    sizeof(resp_ca_cert));
 				return;
 			}
 			resp_ca_cert.status = CA_OK;
-			resp_ca_cert.cert_len = ssl->ssl_cert_len;
-			resp_ca_cert.key_len = ssl->ssl_key_len;
+			resp_ca_cert.cert_len = pki->pki_cert_len;
+			resp_ca_cert.key_len = pki->pki_key_len;
 			iov[0].iov_base = &resp_ca_cert;
 			iov[0].iov_len = sizeof(resp_ca_cert);
-			iov[1].iov_base = ssl->ssl_cert;
-			iov[1].iov_len = ssl->ssl_cert_len;
-			iov[2].iov_base = ssl->ssl_key;
-			iov[2].iov_len = ssl->ssl_key_len;
+			iov[1].iov_base = pki->pki_cert;
+			iov[1].iov_len = pki->pki_cert_len;
+			iov[2].iov_base = pki->pki_key;
+			iov[2].iov_len = pki->pki_key_len;
 			m_composev(p, IMSG_LKA_SSL_INIT, 0, 0, -1, iov, nitems(iov));
 			return;
 
 		case IMSG_LKA_SSL_VERIFY_CERT:
 			req_ca_vrfy_mta = xmemdup(imsg->data, sizeof *req_ca_vrfy_mta, "lka:ca_vrfy");
-			if (req_ca_vrfy_mta == NULL)
-				fatal(NULL);
 			req_ca_vrfy_mta->cert = xmemdup((char *)imsg->data +
 			    sizeof *req_ca_vrfy_mta, req_ca_vrfy_mta->cert_len, "lka:ca_vrfy");
 			req_ca_vrfy_mta->chain_cert = xcalloc(req_ca_vrfy_mta->n_chain,
@@ -301,11 +291,11 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 				fatalx("lka:ca_vrfy: verify without a certificate");
 
 			resp_ca_vrfy.reqid = req_ca_vrfy_mta->reqid;
-			ssl = dict_get(env->sc_ssl_dict, req_ca_vrfy_mta->pkiname);
+			pki = dict_get(env->sc_pki_dict, req_ca_vrfy_mta->pkiname);
 
 			cafile = CA_FILE;
-			if (ssl && ssl->ssl_ca_file)
-				cafile = ssl->ssl_ca_file;
+			if (pki && pki->pki_ca_file)
+				cafile = pki->pki_ca_file;
 			if (! lka_X509_verify(req_ca_vrfy_mta, cafile, NULL))
 				resp_ca_vrfy.status = CA_FAIL;
 			else
@@ -392,148 +382,12 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	if (p->proc == PROC_PARENT) {
 		switch (imsg->hdr.type) {
 		case IMSG_CONF_START:
-			env->sc_rules_reload = xcalloc(1,
-			    sizeof *env->sc_rules, "lka:sc_rules_reload");
-			tables_dict = xcalloc(1,
-			    sizeof *tables_dict, "lka:tables_dict");
-
-			ssl_dict = calloc(1, sizeof *ssl_dict);
-			if (ssl_dict == NULL)
-				fatal(NULL);
-			dict_init(ssl_dict);
-			dict_init(tables_dict);
-			TAILQ_INIT(env->sc_rules_reload);
-
-			return;
-
-		case IMSG_CONF_SSL:
-			ssl = calloc(1, sizeof *ssl);
-			if (ssl == NULL)
-				fatal(NULL);
-			*ssl = *(struct ssl *)imsg->data;
-			ssl->ssl_cert = xstrdup((char *)imsg->data +
-			    sizeof *ssl, "smtp:ssl_cert");
-			ssl->ssl_key = xstrdup((char *)imsg->data +
-			    sizeof *ssl + ssl->ssl_cert_len, "smtp:ssl_key");
-			if (ssl->ssl_dhparams_len) {
-				ssl->ssl_dhparams = xstrdup((char *)imsg->data
-				    + sizeof *ssl + ssl->ssl_cert_len +
-				    ssl->ssl_key_len, "smtp:ssl_dhparams");
-			}
-			if (ssl->ssl_ca_len) {
-				ssl->ssl_ca = xstrdup((char *)imsg->data
-				    + sizeof *ssl + ssl->ssl_cert_len +
-				    ssl->ssl_key_len + ssl->ssl_dhparams_len,
-				    "smtp:ssl_ca");
-			}
-			dict_set(ssl_dict, ssl->ssl_name, ssl);
-			return;
-
-		case IMSG_CONF_RULE:
-			rule = xmemdup(imsg->data, sizeof *rule, "lka:rule");
-			TAILQ_INSERT_TAIL(env->sc_rules_reload, rule, r_entry);
-			return;
-
-		case IMSG_CONF_TABLE:
-			table_last = table = xmemdup(imsg->data, sizeof *table,
-			    "lka:table");
-			dict_init(&table->t_dict);
-			dict_set(tables_dict, table->t_name, table);
-			return;
-
-		case IMSG_CONF_RULE_SOURCE:
-			rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
-			tmp = env->sc_tables_dict;
-			env->sc_tables_dict = tables_dict;
-			rule->r_sources = table_find(imsg->data, NULL);
-			if (rule->r_sources == NULL)
-				fatalx("lka: tables inconsistency");
-			env->sc_tables_dict = tmp;
-			return;
-
-		case IMSG_CONF_RULE_SENDER:
-			rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
-			tmp = env->sc_tables_dict;
-			env->sc_tables_dict = tables_dict;
-			rule->r_senders = table_find(imsg->data, NULL);
-			if (rule->r_senders == NULL)
-				fatalx("lka: tables inconsistency");
-			env->sc_tables_dict = tmp;
-			return;
-
-		case IMSG_CONF_RULE_RECIPIENT:
-			rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
-			tmp = env->sc_tables_dict;
-			env->sc_tables_dict = tables_dict;
-			rule->r_recipients = table_find(imsg->data, NULL);
-			if (rule->r_recipients == NULL)
-				fatalx("lka: tables inconsistency");
-			env->sc_tables_dict = tmp;
-			return;
-
-		case IMSG_CONF_RULE_DESTINATION:
-			rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
-			tmp = env->sc_tables_dict;
-			env->sc_tables_dict = tables_dict;
-			rule->r_destination = table_find(imsg->data, NULL);
-			if (rule->r_destination == NULL)
-				fatalx("lka: tables inconsistency");
-			env->sc_tables_dict = tmp;
-			return;
-
-		case IMSG_CONF_RULE_MAPPING:
-			rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
-			tmp = env->sc_tables_dict;
-			env->sc_tables_dict = tables_dict;
-			rule->r_mapping = table_find(imsg->data, NULL);
-			if (rule->r_mapping == NULL)
-				fatalx("lka: tables inconsistency");
-			env->sc_tables_dict = tmp;
-			return;
-
-		case IMSG_CONF_RULE_USERS:
-			rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
-			tmp = env->sc_tables_dict;
-			env->sc_tables_dict = tables_dict;
-			rule->r_userbase = table_find(imsg->data, NULL);
-			if (rule->r_userbase == NULL)
-				fatalx("lka: tables inconsistency");
-			env->sc_tables_dict = tmp;
-			return;
-
-		case IMSG_CONF_TABLE_CONTENT:
-			table = table_last;
-			if (table == NULL)
-				fatalx("lka: tables inconsistency");
-
-			key = imsg->data;
-			if (table->t_type == T_HASH)
-				val = key + strlen(key) + 1;
-			else
-				val = NULL;
-
-			dict_set(&table->t_dict, key,
-			    val ? xstrdup(val, "lka:dict_set") : NULL);
 			return;
 
 		case IMSG_CONF_END:
-
-			if (env->sc_rules)
-				purge_config(PURGE_RULES);
-			if (env->sc_tables_dict) {
-				table_close_all();
-				purge_config(PURGE_TABLES);
-			}
-			env->sc_rules = env->sc_rules_reload;
-			env->sc_ssl_dict = ssl_dict;
-			env->sc_tables_dict = tables_dict;
 			if (verbose & TRACE_TABLES)
 				table_dump_all();
 			table_open_all();
-
-			ssl_dict = NULL;
-			table_last = NULL;
-			tables_dict = NULL;
 
 			/* Start fulfilling requests */
 			mproc_enable(p_mda);
@@ -629,7 +483,7 @@ lka(void)
 		return (pid);
 	}
 
-	purge_config(PURGE_EVERYTHING);
+	purge_config(PURGE_LISTENERS);
 
 	if ((pw = getpwnam(SMTPD_USER)) == NULL)
 		fatalx("unknown user " SMTPD_USER);

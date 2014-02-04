@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.193 2014/02/04 09:50:31 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.194 2014/02/04 13:44:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -112,9 +112,11 @@ struct smtp_session {
 	struct iobuf		 iobuf;
 	struct io		 io;
 	struct listener		*listener;
+	void			*ssl_ctx;
 	struct sockaddr_storage	 ss;
 	char			 hostname[SMTPD_MAXHOSTNAMELEN];
 	char			 smtpname[SMTPD_MAXHOSTNAMELEN];
+	char			 sni[SMTPD_MAXHOSTNAMELEN];
 
 	int			 flags;
 	int			 phase;
@@ -154,6 +156,7 @@ struct smtp_session {
 
 static int smtp_mailaddr(struct mailaddr *, char *, int, char **, const char *);
 static void smtp_session_init(void);
+static int smtp_lookup_servername(struct smtp_session *);
 static void smtp_connected(struct smtp_session *);
 static void smtp_send_banner(struct smtp_session *);
 static void smtp_mfa_response(struct smtp_session *, int, uint32_t,
@@ -174,6 +177,7 @@ static const char *smtp_strstate(int);
 static int smtp_verify_certificate(struct smtp_session *);
 static void smtp_auth_failure_pause(struct smtp_session *);
 static void smtp_auth_failure_resume(int, short, void *);
+static int smtp_sni_callback(SSL *, int *, void *);
 
 static struct { int code; const char *cmd; } commands[] = {
 	{ CMD_HELO,		"HELO" },
@@ -260,7 +264,8 @@ smtp_session(struct listener *listener, int sock,
 		if (!strcmp(hostname, "localhost"))
 			s->flags |= SF_BOUNCE;
 		strlcpy(s->hostname, hostname, sizeof(s->hostname));
-		smtp_connected(s);
+		if (smtp_lookup_servername(s))
+			smtp_connected(s);
 	} else {
 		dns_query_ptr(s->id, (struct sockaddr *)&s->ss);
 		tree_xset(&wait_lka_ptr, s->id, s);
@@ -284,6 +289,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 	uint32_t			 code, msgid;
 	int				 status, success, dnserror;
 	X509				*x;
+	void				*ssl_ctx;
 
 	switch (imsg->hdr.type) {
 	case IMSG_DNS_PTR:
@@ -297,7 +303,8 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		m_end(&m);
 		s = tree_xpop(&wait_lka_ptr, reqid);
 		strlcpy(s->hostname, line, sizeof s->hostname);
-		smtp_connected(s);
+		if (smtp_lookup_servername(s))
+			smtp_connected(s);
 		return;
 
 	case IMSG_LKA_EXPAND_RCPT:
@@ -335,8 +342,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			strlcpy(s->smtpname, helo, sizeof(s->smtpname));
 		}
 		m_end(&m);
-		smtp_reply(s, SMTPD_BANNER, s->smtpname, SMTPD_NAME);
-		io_reload(&s->io);
+		smtp_connected(s);
 		return;
 
 	case IMSG_MFA_SMTP_RESPONSE:
@@ -579,9 +585,15 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		    sizeof *resp_ca_cert + resp_ca_cert->cert_len,
 		    "smtp:ca_key");
 
-		ssl = ssl_smtp_init(s->listener->ssl_ctx,
+		if (s->listener->pki_name[0])
+			ssl_ctx = dict_get(env->sc_ssl_dict, s->listener->pki_name);
+		else
+			ssl_ctx = dict_get(env->sc_ssl_dict, s->smtpname);
+
+		ssl = ssl_smtp_init(ssl_ctx,
 		    resp_ca_cert->cert, resp_ca_cert->cert_len,
-		    resp_ca_cert->key, resp_ca_cert->key_len);
+		    resp_ca_cert->key, resp_ca_cert->key_len,
+		    smtp_sni_callback, s);
 		io_set_read(&s->io);
 		io_start_tls(&s->io, ssl);
 
@@ -641,7 +653,7 @@ smtp_mfa_response(struct smtp_session *s, int status, uint32_t code,
 
 		if (s->listener->flags & F_SMTPS) {
 			req_ca_cert.reqid = s->id;
-			strlcpy(req_ca_cert.name, s->listener->ssl_cert_name,
+			strlcpy(req_ca_cert.name, s->smtpname,
 			    sizeof req_ca_cert.name);
 			m_compose(p_lka, IMSG_LKA_SSL_INIT, 0, 0, -1,
 			    &req_ca_cert, sizeof(req_ca_cert));
@@ -881,11 +893,10 @@ smtp_io(struct io *io, int evt)
 			break;
 		}
 
-
 		/* Wait for the client to start tls */
 		if (s->state == STATE_TLS) {
 			req_ca_cert.reqid = s->id;
-			strlcpy(req_ca_cert.name, s->listener->ssl_cert_name,
+			strlcpy(req_ca_cert.name, s->smtpname,
 			    sizeof req_ca_cert.name);
 			m_compose(p_lka, IMSG_LKA_SSL_INIT, 0, 0, -1,
 			    &req_ca_cert, sizeof(req_ca_cert));
@@ -1335,6 +1346,32 @@ smtp_parse_mail_args(struct smtp_session *s, char *args)
 	return (0);
 }
 
+static int
+smtp_lookup_servername(struct smtp_session *s)
+{
+	struct sockaddr		*sa;
+	socklen_t		 sa_len;
+	struct sockaddr_storage	 ss;
+
+	if (s->listener->hostnametable[0]) {
+		sa_len = sizeof(ss);
+		sa = (struct sockaddr *)&ss;
+		if (getsockname(s->io.sock, sa, &sa_len) == -1) {
+			log_warn("warn: getsockname()");
+		}
+		else {
+			m_create(p_lka, IMSG_LKA_HELO, 0, 0, -1);
+			m_add_id(p_lka, s->id);
+			m_add_string(p_lka, s->listener->hostnametable);
+			m_add_sockaddr(p_lka, sa);
+			m_close(p_lka);
+			tree_xset(&wait_lka_helo, s->id, s);
+			return 0;
+		}
+	}
+	return 1;
+}
+
 static void
 smtp_connected(struct smtp_session *s)
 {
@@ -1365,27 +1402,6 @@ smtp_connected(struct smtp_session *s)
 static void
 smtp_send_banner(struct smtp_session *s)
 {
-	struct sockaddr_storage	 ss;
-	struct sockaddr		*sa;
-	socklen_t		 sa_len;
-
-	if (s->listener->hostnametable[0]) {
-		sa_len = sizeof(ss);
-		sa = (struct sockaddr *)&ss;
-		if (getsockname(s->io.sock, sa, &sa_len) == -1) {
-			log_warn("warn: getsockname()");
-		}
-		else {
-			m_create(p_lka, IMSG_LKA_HELO, 0, 0, -1);
-			m_add_id(p_lka, s->id);
-			m_add_string(p_lka, s->listener->hostnametable);
-			m_add_sockaddr(p_lka, sa);
-			m_close(p_lka);
-			tree_xset(&wait_lka_helo, s->id, s);
-			return;
-		}
-	}
-
 	smtp_reply(s, SMTPD_BANNER, s->smtpname, SMTPD_NAME);
 	io_reload(&s->io);
 }
@@ -1636,6 +1652,7 @@ smtp_verify_certificate(struct smtp_session *s)
 	X509		       *x;
 	STACK_OF(X509)	       *xchain;
 	int			i;
+	const char	       *pkiname;
 
 	x = SSL_get_peer_certificate(s->io.ssl);
 	if (x == NULL)
@@ -1654,7 +1671,12 @@ smtp_verify_certificate(struct smtp_session *s)
 
 	/* Send the client certificate */
 	memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
-	if (strlcpy(req_ca_vrfy.pkiname, s->listener->ssl_cert_name, sizeof req_ca_vrfy.pkiname)
+	if (s->listener->pki_name[0])
+		pkiname = s->listener->pki_name;
+	else
+		pkiname = s->smtpname;
+
+	if (strlcpy(req_ca_vrfy.pkiname, pkiname, sizeof req_ca_vrfy.pkiname)
 	    >= sizeof req_ca_vrfy.pkiname)
 		return 0;
 
@@ -1720,6 +1742,28 @@ smtp_auth_failure_pause(struct smtp_session *s)
 	evtimer_add(&s->pause, &tv);
 }
 
+static int
+smtp_sni_callback(SSL *ssl, int *ad, void *arg)
+{
+	const char		*sn;
+	struct smtp_session	*s = arg;
+	void			*ssl_ctx;
+
+	sn = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+	if (sn == NULL)
+		return SSL_TLSEXT_ERR_NOACK;
+	if (strlcpy(s->sni, sn, sizeof s->sni) >= sizeof s->sni) {
+		log_warnx("warn: client SNI exceeds max hostname length");
+		return SSL_TLSEXT_ERR_NOACK;
+	}
+	ssl_ctx = dict_get(env->sc_ssl_dict, sn);
+	if (ssl_ctx == NULL) {
+		log_warnx("warn: SNI name not found in PKI");
+		return SSL_TLSEXT_ERR_NOACK;
+	}
+	SSL_set_SSL_CTX(ssl, ssl_ctx);
+	return SSL_TLSEXT_ERR_OK;
+}
 
 #define CASE(x) case x : return #x
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.58 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.59 2014/02/04 13:44:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -62,7 +62,7 @@ ssl_init(void)
 }
 
 int
-ssl_setup(SSL_CTX **ctxp, struct ssl *ssl)
+ssl_setup(SSL_CTX **ctxp, struct pki *pki)
 {
 	DH	*dh;
 	SSL_CTX	*ctx;
@@ -70,28 +70,28 @@ ssl_setup(SSL_CTX **ctxp, struct ssl *ssl)
 	ctx = ssl_ctx_create();
 
 	if (!ssl_ctx_use_certificate_chain(ctx,
-		ssl->ssl_cert, ssl->ssl_cert_len))
+		pki->pki_cert, pki->pki_cert_len))
 		goto err;
 	if (!ssl_ctx_use_private_key(ctx,
-		ssl->ssl_key, ssl->ssl_key_len))
+		pki->pki_key, pki->pki_key_len))
 		goto err;
 
 	if (!SSL_CTX_check_private_key(ctx))
 		goto err;
 	if (!SSL_CTX_set_session_id_context(ctx,
-		(const unsigned char *)ssl->ssl_name,
-		strlen(ssl->ssl_name) + 1))
+		(const unsigned char *)pki->pki_name,
+		strlen(pki->pki_name) + 1))
 		goto err;
 
-	if (ssl->ssl_dhparams_len == 0)
+	if (pki->pki_dhparams_len == 0)
 		dh = get_dh1024();
 	else
-		dh = get_dh_from_memory(ssl->ssl_dhparams,
-		    ssl->ssl_dhparams_len);
+		dh = get_dh_from_memory(pki->pki_dhparams,
+		    pki->pki_dhparams_len);
 	ssl_set_ephemeral_key_exchange(ctx, dh);
 	DH_free(dh);
 
-	ssl_set_ecdh_curve(ctx);
+	ssl_set_ecdh_curve(ctx, SSL_ECDH_CURVE);
 
 	*ctxp = ctx;
 	return 1;
@@ -184,7 +184,7 @@ end:
 char *
 ssl_load_key(const char *name, off_t *len, char *pass, mode_t perm, const char *pkiname)
 {
-	FILE		*fp;
+	FILE		*fp = NULL;
 	EVP_PKEY	*key = NULL;
 	BIO		*bio = NULL;
 	long		 size;
@@ -220,6 +220,7 @@ ssl_load_key(const char *name, off_t *len, char *pass, mode_t perm, const char *
 	(void)snprintf(prompt, sizeof prompt, "passphrase for %s: ", pkiname);
 	key = PEM_read_PrivateKey(fp, NULL, ssl_getpass_cb, prompt);
 	fclose(fp);
+	fp = NULL;
 	if (key == NULL)
 		goto fail;
 	/*
@@ -244,11 +245,12 @@ fail:
 	free(buf);
 	if (bio != NULL)
 		BIO_free_all(bio);
+	fclose(fp);
 	return (NULL);
 }
 
 SSL_CTX *
-ssl_ctx_create(void)
+ssl_ctx_create()
 {
 	SSL_CTX	*ctx;
 
@@ -274,39 +276,39 @@ ssl_ctx_create(void)
 }
 
 int
-ssl_load_certificate(struct ssl *s, const char *pathname)
+ssl_load_certificate(struct pki *p, const char *pathname)
 {
-	s->ssl_cert = ssl_load_file(pathname, &s->ssl_cert_len, 0755);
-	if (s->ssl_cert == NULL)
+	p->pki_cert = ssl_load_file(pathname, &p->pki_cert_len, 0755);
+	if (p->pki_cert == NULL)
 		return 0;
 	return 1;
 }
 
 int
-ssl_load_keyfile(struct ssl *s, const char *pathname, const char *pkiname)
+ssl_load_keyfile(struct pki *p, const char *pathname, const char *pkiname)
 {
 	char	pass[1024];
 
-	s->ssl_key = ssl_load_key(pathname, &s->ssl_key_len, pass, 0700, pkiname);
-	if (s->ssl_key == NULL)
+	p->pki_key = ssl_load_key(pathname, &p->pki_key_len, pass, 0700, pkiname);
+	if (p->pki_key == NULL)
 		return 0;
 	return 1;
 }
 
 int
-ssl_load_cafile(struct ssl *s, const char *pathname)
+ssl_load_cafile(struct pki *p, const char *pathname)
 {
-	s->ssl_ca = ssl_load_file(pathname, &s->ssl_ca_len, 0755);
-	if (s->ssl_ca == NULL)
+	p->pki_ca = ssl_load_file(pathname, &p->pki_ca_len, 0755);
+	if (p->pki_ca == NULL)
 		return 0;
 	return 1;
 }
 
 int
-ssl_load_dhparams(struct ssl *s, const char *pathname)
+ssl_load_dhparams(struct pki *p, const char *pathname)
 {
-	s->ssl_dhparams = ssl_load_file(pathname, &s->ssl_dhparams_len, 0755);
-	if (s->ssl_dhparams == NULL) {
+	p->pki_dhparams = ssl_load_file(pathname, &p->pki_dhparams_len, 0755);
+	if (p->pki_dhparams == NULL) {
 		if (errno == EACCES)
 			return 0;
 		log_info("info: No DH parameters found in %s: "
@@ -422,12 +424,14 @@ ssl_set_ephemeral_key_exchange(SSL_CTX *ctx, DH *dh)
 }
 
 void
-ssl_set_ecdh_curve(SSL_CTX *ctx)
+ssl_set_ecdh_curve(SSL_CTX *ctx, const char *curve)
 {
 	int	nid;
 	EC_KEY *ecdh;
 
-	if ((nid = OBJ_sn2nid(SSL_ECDH_CURVE)) == 0) {
+	if (curve == NULL)
+		curve = SSL_ECDH_CURVE;
+	if ((nid = OBJ_sn2nid(curve)) == 0) {
 		ssl_error("ssl_set_ecdh_curve");
 		fatal("ssl_set_ecdh_curve: unknown curve name "
 		    SSL_ECDH_CURVE);

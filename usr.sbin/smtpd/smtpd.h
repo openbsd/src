@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.444 2014/02/04 10:38:06 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.445 2014/02/04 13:44:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -107,7 +107,7 @@ struct relayhost {
 	uint16_t flags;
 	char hostname[SMTPD_MAXHOSTNAMELEN];
 	uint16_t port;
-	char cert[SMTPD_MAXPATHLEN];
+	char pki_name[SMTPD_MAXPATHLEN];
 	char authtable[SMTPD_MAXPATHLEN];
 	char authlabel[SMTPD_MAXPATHLEN];
 	char sourcetable[SMTPD_MAXPATHLEN];
@@ -474,7 +474,7 @@ struct listener {
 	in_port_t		 port;
 	struct timeval		 timeout;
 	struct event		 ev;
-	char			 ssl_cert_name[SMTPD_MAXPATHLEN];
+	char			 pki_name[SMTPD_MAXPATHLEN];
 	struct ssl		*ssl;
 	void			*ssl_ctx;
 	char			 tag[MAX_TAG_SIZE];
@@ -492,15 +492,14 @@ struct smtpd {
 #define SMTPD_OPT_NOACTION		0x00000002
 	uint32_t			sc_opts;
 
-#define SMTPD_CONFIGURING		0x00000001
-#define SMTPD_EXITING			0x00000002
-#define SMTPD_MDA_PAUSED		0x00000004
-#define SMTPD_MTA_PAUSED		0x00000008
-#define SMTPD_SMTP_PAUSED		0x00000010
-#define SMTPD_MDA_BUSY			0x00000020
-#define SMTPD_MTA_BUSY			0x00000040
-#define SMTPD_BOUNCE_BUSY		0x00000080
-#define SMTPD_SMTP_DISABLED		0x00000100
+#define SMTPD_EXITING			0x00000001
+#define SMTPD_MDA_PAUSED		0x00000002
+#define SMTPD_MTA_PAUSED		0x00000004
+#define SMTPD_SMTP_PAUSED		0x00000008
+#define SMTPD_MDA_BUSY			0x00000010
+#define SMTPD_MTA_BUSY			0x00000020
+#define SMTPD_BOUNCE_BUSY		0x00000040
+#define SMTPD_SMTP_DISABLED		0x00000080
 	uint32_t			sc_flags;
 
 #define QUEUE_COMPRESSION      		0x00000001
@@ -534,8 +533,9 @@ struct smtpd {
 
 	TAILQ_HEAD(listenerlist, listener)	*sc_listeners;
 
-	TAILQ_HEAD(rulelist, rule)		*sc_rules, *sc_rules_reload;
+	TAILQ_HEAD(rulelist, rule)		*sc_rules;
 	
+	struct dict			       *sc_pki_dict;
 	struct dict			       *sc_ssl_dict;
 
 	struct dict			       *sc_tables_dict;		/* keyed lookup	*/
@@ -722,7 +722,7 @@ struct mta_relay {
 	int			 backuppref;
 	char			*sourcetable;
 	uint16_t		 port;
-	char			*cert;
+	char			*pki_name;
 	char			*authtable;
 	char			*authlabel;
 	char			*helotable;
@@ -1039,7 +1039,7 @@ int	uncompress_file(FILE *, FILE *);
 #define PURGE_LISTENERS		0x01
 #define PURGE_TABLES		0x02
 #define PURGE_RULES		0x04
-#define PURGE_SSL		0x08
+#define PURGE_PKI		0x08
 #define PURGE_EVERYTHING	0xff
 void purge_config(uint8_t);
 void init_pipes(void);
@@ -1269,7 +1269,7 @@ const char *imsg_to_str(int);
 
 /* ssl_smtpd.c */
 void   *ssl_mta_init(char *, off_t, char *, off_t);
-void   *ssl_smtp_init(void *, char *, off_t, char *, off_t);
+void   *ssl_smtp_init(void *, char *, off_t, char *, off_t, void *, void *);
 
 
 /* stat_backend.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.26 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.27 2014/02/04 13:44:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -458,8 +458,8 @@ ascii_load_field(const char *field, struct envelope *ep, char *buf)
 		    sizeof ep->agent.mta.relay.authtable);
 
 	if (strcasecmp("mta-relay-cert", field) == 0)
-		return ascii_load_string(ep->agent.mta.relay.cert, buf,
-		    sizeof ep->agent.mta.relay.cert);
+		return ascii_load_string(ep->agent.mta.relay.pki_name, buf,
+		    sizeof ep->agent.mta.relay.pki_name);
 
 	if (strcasecmp("mta-relay-flags", field) == 0)
 		return ascii_load_mta_relay_flags(&ep->agent.mta.relay.flags, buf);
@@ -742,7 +742,7 @@ ascii_dump_field(const char *field, const struct envelope *ep,
 		    buf, len);
 
 	if (strcasecmp(field, "mta-relay-cert") == 0)
-		return ascii_dump_string(ep->agent.mta.relay.cert,
+		return ascii_dump_string(ep->agent.mta.relay.pki_name,
 		    buf, len);
 
 	if (strcasecmp(field, "mta-relay-flags") == 0)

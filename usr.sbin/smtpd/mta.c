@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.178 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.179 2014/02/04 13:44:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1604,9 +1604,9 @@ mta_relay(struct envelope *e)
 
 	key.flags |= e->agent.mta.relay.flags;
 	key.port = e->agent.mta.relay.port;
-	key.cert = e->agent.mta.relay.cert;
-	if (!key.cert[0])
-		key.cert = NULL;
+	key.pki_name = e->agent.mta.relay.pki_name;
+	if (!key.pki_name[0])
+		key.pki_name = NULL;
 	key.authtable = e->agent.mta.relay.authtable;
 	if (!key.authtable[0])
 		key.authtable = NULL;
@@ -1633,7 +1633,7 @@ mta_relay(struct envelope *e)
 		    xstrdup(key.backupname, "mta: backupname") : NULL;
 		r->backuppref = -1;
 		r->port = key.port;
-		r->cert = key.cert ? xstrdup(key.cert, "mta: cert") : NULL;
+		r->pki_name = key.pki_name ? xstrdup(key.pki_name, "mta: pki_name") : NULL;
 		if (key.authtable)
 			r->authtable = xstrdup(key.authtable, "mta: authtable");
 		if (key.authlabel)
@@ -1688,7 +1688,7 @@ mta_relay_unref(struct mta_relay *relay)
 	free(relay->authlabel);
 	free(relay->authtable);
 	free(relay->backupname);
-	free(relay->cert);
+	free(relay->pki_name);
 	free(relay->helotable);
 	free(relay->heloname);
 	free(relay->secret);
@@ -1732,10 +1732,10 @@ mta_relay_to_text(struct mta_relay *relay)
 		strlcat(buf, relay->authlabel, sizeof buf);
 	}
 
-	if (relay->cert) {
+	if (relay->pki_name) {
 		strlcat(buf, sep, sizeof buf);
-		strlcat(buf, "cert=", sizeof buf);
-		strlcat(buf, relay->cert, sizeof buf);
+		strlcat(buf, "pki_name=", sizeof buf);
+		strlcat(buf, relay->pki_name, sizeof buf);
 	}
 
 	if (relay->flags & RELAY_MX) {
@@ -1911,11 +1911,11 @@ mta_relay_cmp(const struct mta_relay *a, const struct mta_relay *b)
 	if (a->heloname && ((r = strcmp(a->heloname, b->heloname))))
 		return (r);
 
-	if (a->cert == NULL && b->cert)
+	if (a->pki_name == NULL && b->pki_name)
 		return (-1);
-	if (a->cert && b->cert == NULL)
+	if (a->pki_name && b->pki_name == NULL)
 		return (1);
-	if (a->cert && ((r = strcmp(a->cert, b->cert))))
+	if (a->pki_name && ((r = strcmp(a->pki_name, b->pki_name))))
 		return (r);
 
 	if (a->backupname && ((r = strcmp(a->backupname, b->backupname))))
