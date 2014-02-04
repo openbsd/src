@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.14 2014/02/04 13:55:34 eric Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.15 2014/02/04 14:56:03 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -164,7 +164,6 @@ struct scheduler_info {
 	time_t			lasttry;
 	time_t			lastbounce;
 	time_t			nexttry;
-	uint8_t			penalty;
 };
 
 #define SCHED_NONE		0x00
@@ -177,6 +176,7 @@ struct scheduler_info {
 #define SCHED_MTA		0x40
 
 struct scheduler_batch {
+	int		 mask;
 	int		 type;
 	time_t		 delay;
 	size_t		 evpcount;

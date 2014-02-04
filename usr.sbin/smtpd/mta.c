@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.179 2014/02/04 13:44:41 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.180 2014/02/04 14:56:03 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -604,6 +604,7 @@ mta_source_error(struct mta_relay *relay, struct mta_route *route, const char *e
 void
 mta_route_error(struct mta_relay *relay, struct mta_route *route)
 {
+#if 0
 	route->nerror += 1;
 
 	if (route->nerror > MAXERROR_PER_ROUTE) {
@@ -611,6 +612,7 @@ mta_route_error(struct mta_relay *relay, struct mta_route *route)
 		    "disabling for a while", mta_route_to_text(route));
 		mta_route_disable(route, 2, ROUTE_DISABLED_SMTP);
 	}
+#endif
 }
 
 void
@@ -634,7 +636,9 @@ mta_route_ok(struct mta_relay *relay, struct mta_route *route)
 void
 mta_route_down(struct mta_relay *relay, struct mta_route *route)
 {
+#if 0
 	mta_route_disable(route, 2, ROUTE_DISABLED_SMTP);
+#endif
 }
 
 void
@@ -709,7 +713,7 @@ mta_delivery_flush_event(int fd, short event, void *arg)
 		if (e->delivery == IMSG_DELIVERY_OK)
 			queue_ok(e->id);
 		else if (e->delivery == IMSG_DELIVERY_TEMPFAIL)
-			queue_tempfail(e->id, e->penalty, e->status);
+			queue_tempfail(e->id, e->status);
 		else if (e->delivery == IMSG_DELIVERY_PERMFAIL)
 			queue_permfail(e->id, e->status);
 		else if (e->delivery == IMSG_DELIVERY_LOOP)
@@ -756,11 +760,10 @@ mta_delivery_log(struct mta_envelope *e, const char *source, const char *relay,
 }
 
 void
-mta_delivery_notify(struct mta_envelope *e, uint32_t penalty)
+mta_delivery_notify(struct mta_envelope *e)
 {
 	struct timeval	tv;
 
-	e->penalty = penalty;
 	tree_xset(&flush_evp, e->id, e);
 	if (tree_count(&flush_evp) == 1) {
 		tv.tv_sec = 0;
@@ -1352,7 +1355,7 @@ mta_flush(struct mta_relay *relay, int fail, const char *error)
 			}
 
 			mta_delivery_log(e, NULL, relay->domain->name, fail, error);
-			mta_delivery_notify(e, 0);
+			mta_delivery_notify(e);
 
 			n++;
 		}

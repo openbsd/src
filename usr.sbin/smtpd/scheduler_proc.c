@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_proc.c,v 1.3 2013/11/20 09:22:42 eric Exp $	*/
+/*	$OpenBSD: scheduler_proc.c,v 1.4 2014/02/04 14:56:03 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>

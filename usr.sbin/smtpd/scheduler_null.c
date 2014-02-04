@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_null.c,v 1.6 2013/11/20 09:22:42 eric Exp $	*/
+/*	$OpenBSD: scheduler_null.c,v 1.7 2014/02/04 14:56:03 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>

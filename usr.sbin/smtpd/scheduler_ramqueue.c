@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.36 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.37 2014/02/04 14:56:03 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -472,12 +472,12 @@ scheduler_ram_batch(int typemask, struct scheduler_batch *ret)
 			ret->delay = evp->sched - currtime;
 		else
 			ret->delay = evp->expire - currtime;
-		return (1);
+		goto done;
 	}
 	else {
 		ret->type = SCHED_NONE;
 		ret->evpcount = 0;
-		return (0);
+		goto done;
 	}
 
 	for (n = 0; (evp = TAILQ_FIRST(q)) && n < ret->evpcount; n++) {
@@ -514,7 +514,25 @@ scheduler_ram_batch(int typemask, struct scheduler_batch *ret)
 
 	ret->evpcount = n;
 
-	return (1);
+   done:
+
+	ret->mask = 0;
+	if (TAILQ_FIRST(&ramqueue.q_removed))
+		ret->mask |= SCHED_REMOVE;
+	if (TAILQ_FIRST(&ramqueue.q_expired))
+		ret->mask |= SCHED_EXPIRE;
+	if (TAILQ_FIRST(&ramqueue.q_update))
+		ret->mask |= SCHED_UPDATE;
+	if (TAILQ_FIRST(&ramqueue.q_bounce))
+		ret->mask |= SCHED_BOUNCE;
+	if (TAILQ_FIRST(&ramqueue.q_mda))
+		ret->mask |= SCHED_MDA;
+	if (TAILQ_FIRST(&ramqueue.q_mta))
+		ret->mask |= SCHED_MTA;
+	if (TAILQ_FIRST(&ramqueue.q_pending))
+		ret->mask |= SCHED_DELAY;
+
+	return ((ret->type == SCHED_NONE) ? 0 : 1);
 }
 
 static size_t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.157 2014/02/04 09:05:06 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.158 2014/02/04 14:56:03 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -67,7 +67,6 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 	const char		*reason;
 	uint64_t		 reqid, evpid, holdq;
 	uint32_t		 msgid;
-	uint32_t		 penalty;
 	time_t			 nexttry;
 	int			 fd, ret, v, flags;
 
@@ -346,7 +345,6 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 		case IMSG_DELIVERY_TEMPFAIL:
 			m_msg(&m, imsg);
 			m_get_evpid(&m, &evpid);
-			m_get_u32(&m, &penalty);
 			m_get_string(&m, &reason);
 			m_end(&m);
 			if (queue_envelope_load(evpid, &evp) == 0) {
@@ -363,7 +361,6 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 				log_warnx("warn: could not update envelope %016"PRIx64, evpid);
 			m_create(p_scheduler, IMSG_DELIVERY_TEMPFAIL, 0, 0, -1);
 			m_add_envelope(p_scheduler, &evp);
-			m_add_u32(p_scheduler, penalty);
 			m_close(p_scheduler);
 			return;
 
@@ -660,11 +657,10 @@ queue_ok(uint64_t evpid)
 }
 
 void
-queue_tempfail(uint64_t evpid, uint32_t penalty, const char *reason)
+queue_tempfail(uint64_t evpid, const char *reason)
 {
 	m_create(p_queue, IMSG_DELIVERY_TEMPFAIL, 0, 0, -1);
 	m_add_evpid(p_queue, evpid);
-	m_add_u32(p_queue, penalty);
 	m_add_string(p_queue, reason);
 	m_close(p_queue);
 }

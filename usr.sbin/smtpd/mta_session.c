@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.52 2014/02/04 13:44:41 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.53 2014/02/04 14:56:03 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -97,7 +97,6 @@ enum mta_state {
 #define MTA_EXT_AUTH_PLAIN     	0x08
 #define MTA_EXT_AUTH_LOGIN     	0x10
 
-
 struct mta_session {
 	uint64_t		 id;
 	struct mta_relay	*relay;
@@ -126,9 +125,7 @@ struct mta_session {
 	struct mta_envelope	*currevp;
 	FILE			*datafp;
 
-#define	MAX_FAILED_ENVELOPES	15
-	struct mta_envelope	*failed[MAX_FAILED_ENVELOPES];
-	int			 failedcount;
+	size_t			 failures;
 };
 
 static void mta_session_init(void);
@@ -149,7 +146,7 @@ static int mta_check_loop(FILE *);
 static void mta_start_tls(struct mta_session *);
 static int mta_verify_certificate(struct mta_session *);
 static struct mta_session *mta_tree_pop(struct tree *, uint64_t);
-static void mta_flush_failedqueue(struct mta_session *);
+
 void mta_hoststat_update(const char *, const char *);
 void mta_hoststat_reschedule(const char *);
 void mta_hoststat_cache(const char *, uint64_t);
@@ -333,10 +330,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			}
 		}
 
-		resp_ca_cert = xmemdup(imsg->data, sizeof *resp_ca_cert,
-		    "mta:ca_cert");
-		if (resp_ca_cert == NULL)
-			fatal(NULL);
+		resp_ca_cert = xmemdup(imsg->data, sizeof *resp_ca_cert, "mta:ca_cert");
 		resp_ca_cert->cert = xstrdup((char *)imsg->data +
 		    sizeof *resp_ca_cert, "mta:ca_cert");
 		resp_ca_cert->key = xstrdup((char *)imsg->data +
@@ -434,8 +428,6 @@ mta_free(struct mta_session *s)
 		log_debug("debug: mta: %p: cancelling hangon timer", s);
 		runq_cancel(hangon, NULL, s);
 	}
-
-	mta_flush_failedqueue(s);
 
 	io_clear(&s->io);
 	iobuf_clear(&s->iobuf);
@@ -965,7 +957,7 @@ mta_response(struct mta_session *s, char *line)
 
 		s->currevp = TAILQ_NEXT(s->currevp, entry);
 		if (line[0] == '2') {
-			mta_flush_failedqueue(s);
+			s->failures = 0;
 			/*
 			 * this host is up, reschedule envelopes that
 			 * were cached for reschedule.
@@ -978,6 +970,7 @@ mta_response(struct mta_session *s, char *line)
 				delivery = IMSG_DELIVERY_PERMFAIL;
 			else
 				delivery = IMSG_DELIVERY_TEMPFAIL;
+			s->failures++;
 
 			/* remove failed envelope from task list */
 			TAILQ_REMOVE(&s->task->envelopes, e, entry);
@@ -1001,24 +994,17 @@ mta_response(struct mta_session *s, char *line)
 				mta_delivery_log(e, sa_to_text(sa),
 				    buf, delivery, line);
 
-			/* push failed envelope to the session fail queue */
-			s->failed[s->failedcount] = e;
-			s->failedcount++;
+			if (domain)
+				mta_hoststat_update(domain + 1, e->status);
+			mta_delivery_notify(e);
 
-			/*
-			 * if session fail queue is full:
-			 * - flush failed queue (failure w/ penalty)
-			 * - flush remaining tasks with TempFail
-			 * - mark route down
-			 */
-			if (s->failedcount == MAX_FAILED_ENVELOPES) {
-				mta_flush_failedqueue(s);
-				mta_flush_task(s, IMSG_DELIVERY_TEMPFAIL,
-				    "Host temporarily disabled", 0, 1);
-				mta_route_down(s->relay, s->route);
-				mta_enter_state(s, MTA_QUIT);
-				break;
-			}
+			if (s->relay->limits->max_failures_per_session &&
+			    s->failures == s->relay->limits->max_failures_per_session) {
+					mta_flush_task(s, IMSG_DELIVERY_TEMPFAIL,
+					    "Too many consecutive errors, closing connection", 0, 1);
+					mta_enter_state(s, MTA_QUIT);
+					break;
+				}
 
 			/*
 			 * if no more envelopes, flush failed queue
@@ -1038,7 +1024,6 @@ mta_response(struct mta_session *s, char *line)
 		break;
 
 	case MTA_DATA:
-		mta_flush_failedqueue(s);
 		if (line[0] == '2' || line[0] == '3') {
 			mta_enter_state(s, MTA_BODY);
 			break;
@@ -1083,7 +1068,6 @@ mta_response(struct mta_session *s, char *line)
 		break;
 
 	case MTA_RSET:
-		mta_flush_failedqueue(s);
 		s->rcptcount = 0;
 		if (s->relay->limits->sessdelay_transaction) {
 			log_debug("debug: mta: waiting for %llds after reset",
@@ -1364,7 +1348,7 @@ mta_flush_task(struct mta_session *s, int delivery, const char *error, size_t co
 			mta_delivery_log(e, sa_to_text(sa),
 			    relay, delivery, error);
 
-		mta_delivery_notify(e, 0);
+		mta_delivery_notify(e);
 
 		domain = strchr(e->dest, '@');
 		if (domain) {
@@ -1388,28 +1372,6 @@ mta_flush_task(struct mta_session *s, int delivery, const char *error, size_t co
 	stat_decrement("mta.envelope", n);
 	stat_decrement("mta.task.running", 1);
 	stat_decrement("mta.task", 1);
-}
-
-static void
-mta_flush_failedqueue(struct mta_session *s)
-{
-	int			 i;
-	struct mta_envelope	*e;
-	const char		*domain;
-	uint32_t		 penalty;
-
-	penalty = s->failedcount == MAX_FAILED_ENVELOPES ? 1 : 0;
-	for (i = 0; i < s->failedcount; ++i) {
-		e = s->failed[i];
-
-		domain = strchr(e->dest, '@');
-		if (domain)
-			mta_hoststat_update(domain + 1, e->status);
-
-		mta_delivery_notify(e, penalty);
-	}
-
-	s->failedcount = 0;
 }
 
 static void
@@ -1586,7 +1548,6 @@ mta_verify_certificate(struct mta_session *s)
 
 	return 1;
 }
-
 
 #define CASE(x) case x : return #x
 

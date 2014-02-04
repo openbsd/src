@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.41 2014/02/04 09:05:06 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.42 2014/02/04 14:56:03 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -75,7 +75,6 @@ scheduler_imsg(struct mproc *p, struct imsg *imsg)
 	uint64_t		 evpid, id, holdq;
 	uint32_t		 msgid;
 	uint32_t       		 inflight;
-	uint32_t       		 penalty;
 	size_t			 n, i;
 	time_t			 timestamp;
 	int			 v, r, type;
@@ -88,7 +87,7 @@ scheduler_imsg(struct mproc *p, struct imsg *imsg)
 		m_end(&m);
 		log_trace(TRACE_SCHEDULER,
 		    "scheduler: inserting evp:%016" PRIx64, evp.id);
-		scheduler_info(&si, &evp, 0);
+		scheduler_info(&si, &evp);
 		stat_increment("scheduler.envelope.incoming", 1);
 		backend->insert(&si);
 		return;
@@ -153,11 +152,10 @@ scheduler_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_DELIVERY_TEMPFAIL:
 		m_msg(&m, imsg);
 		m_get_envelope(&m, &evp);
-		m_get_u32(&m, &penalty);
 		m_end(&m);
 		log_trace(TRACE_SCHEDULER,
 		    "scheduler: updating evp:%016" PRIx64, evp.id);
-		scheduler_info(&si, &evp, penalty);
+		scheduler_info(&si, &evp);
 		backend->update(&si);
 		ninflight -= 1;
 		stat_increment("scheduler.delivery.tempfail", 1);
@@ -460,7 +458,7 @@ scheduler_timeout(int fd, short event, void *p)
 {
 	struct timeval		tv;
 	struct scheduler_batch	batch;
-	int			typemask;
+	int			typemask, left;
 
 	log_trace(TRACE_SCHEDULER, "scheduler: getting next batch");
 
@@ -475,22 +473,18 @@ scheduler_timeout(int fd, short event, void *p)
 	    !(env->sc_flags & SMTPD_MTA_PAUSED))
 		typemask |= SCHED_MTA;
 
+	left = typemask;
+
+    again:
+
+	log_trace(TRACE_SCHEDULER, "scheduler: typemask=0x%x", left);
+
 	memset(&batch, 0, sizeof (batch));
 	batch.evpids = evpids;
 	batch.evpcount = env->sc_scheduler_max_schedule;
-	backend->batch(typemask, &batch);
+	backend->batch(left, &batch);
 
 	switch (batch.type) {
-	case SCHED_NONE:
-		log_trace(TRACE_SCHEDULER, "scheduler: SCHED_NONE");
-		return;
-
-	case SCHED_DELAY:
-		tv.tv_sec = batch.delay;
-		log_trace(TRACE_SCHEDULER,
-		    "scheduler: SCHED_DELAY %s", duration_to_text(tv.tv_sec));
-		break;
-
 	case SCHED_REMOVE:
 		log_trace(TRACE_SCHEDULER, "scheduler: SCHED_REMOVE %zu",
 		    batch.evpcount);
@@ -528,9 +522,37 @@ scheduler_timeout(int fd, short event, void *p)
 		break;
 
 	default:
-		fatalx("scheduler_timeout: unknown batch type");
+		break;
 	}
-	evtimer_add(&ev, &tv);
+
+	log_trace(TRACE_SCHEDULER, "scheduler: mask=0x%x", batch.mask);
+
+	left &= batch.mask;
+	left &= ~batch.type;
+
+	/* We can still schedule something immediatly. */
+	if (left)
+		goto again;
+
+	/* We can schedule in the next event frame */
+	if (batch.mask & typemask ||
+	    (batch.mask & SCHED_DELAY && batch.type != SCHED_DELAY)) {
+		tv.tv_sec = 0;
+		tv.tv_usec = 0;
+		evtimer_add(&ev, &tv);
+		return;
+	}
+
+	if (batch.type == SCHED_DELAY) {
+		tv.tv_sec = batch.delay;
+		tv.tv_usec = 0;
+		log_trace(TRACE_SCHEDULER,
+		    "scheduler: SCHED_DELAY %s", duration_to_text(tv.tv_sec));
+		evtimer_add(&ev, &tv);
+		return;
+	}
+
+	log_trace(TRACE_SCHEDULER, "scheduler: SCHED_NONE");
 }
 
 static void
