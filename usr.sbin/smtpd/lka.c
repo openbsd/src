@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.162 2014/02/04 09:05:06 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.163 2014/02/04 09:50:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -733,7 +733,7 @@ lka_credentials(const char *tablename, const char *label, char *dst, size_t sz)
 			return (LKA_TEMPFAIL);
 		}
 
-		r = __b64_ntop((unsigned char *)buf, buflen, dst, sz);
+		r = base64_encode((unsigned char *)buf, buflen, dst, sz);
 		free(buf);
 		
 		if (r == -1) {

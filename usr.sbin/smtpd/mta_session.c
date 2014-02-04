@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.50 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.51 2014/02/04 09:50:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -677,14 +677,15 @@ mta_enter_state(struct mta_session *s, int newstate)
 
 	case MTA_AUTH_LOGIN_USER:
 		memset(ibuf, 0, sizeof ibuf);
-		if (__b64_pton(s->relay->secret, (unsigned char *)ibuf, sizeof(ibuf)-1) == -1) {
+		if (base64_decode(s->relay->secret, (unsigned char *)ibuf,
+				  sizeof(ibuf)-1) == -1) {
 			log_debug("debug: mta: %p: credentials too large on session", s);
 			mta_error(s, "Credentials too large");
 			break;
 		}
 
 		memset(obuf, 0, sizeof obuf);
-		__b64_ntop((unsigned char *)ibuf + 1, strlen(ibuf + 1), obuf, sizeof obuf);
+		base64_encode((unsigned char *)ibuf + 1, strlen(ibuf + 1), obuf, sizeof obuf);
 		mta_send(s, "%s", obuf);
 
 		memset(ibuf, 0, sizeof ibuf);
@@ -693,7 +694,8 @@ mta_enter_state(struct mta_session *s, int newstate)
 
 	case MTA_AUTH_LOGIN_PASS:
 		memset(ibuf, 0, sizeof ibuf);
-		if (__b64_pton(s->relay->secret, (unsigned char *)ibuf, sizeof(ibuf)-1) == -1) {
+		if (base64_decode(s->relay->secret, (unsigned char *)ibuf,
+				  sizeof(ibuf)-1) == -1) {
 			log_debug("debug: mta: %p: credentials too large on session", s);
 			mta_error(s, "Credentials too large");
 			break;
@@ -701,7 +703,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 
 		offset = strlen(ibuf+1)+2;
 		memset(obuf, 0, sizeof obuf);
-		__b64_ntop((unsigned char *)ibuf + offset, strlen(ibuf + offset), obuf, sizeof obuf);
+		base64_encode((unsigned char *)ibuf + offset, strlen(ibuf + offset), obuf, sizeof obuf);
 		mta_send(s, "%s", obuf);
 
 		memset(ibuf, 0, sizeof ibuf);

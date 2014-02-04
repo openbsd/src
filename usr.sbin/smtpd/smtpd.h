@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.442 2014/02/04 09:05:06 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.443 2014/02/04 09:50:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1362,6 +1362,8 @@ void session_socket_blockmode(int, enum blockmodes);
 void session_socket_no_linger(int);
 int session_socket_error(int);
 int getmailname(char *, size_t);
+int base64_encode(unsigned char const *, size_t, char *, size_t);
+int base64_decode(char const *, unsigned char *, size_t);
 
 
 /* waitq.c */

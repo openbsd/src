@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.192 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.193 2014/02/04 09:50:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1223,7 +1223,7 @@ smtp_rfc4954_auth_plain(struct smtp_session *s, char *arg)
 
 	case STATE_AUTH_INIT:
 		/* String is not NUL terminated, leave room. */
-		if ((len = __b64_pton(arg, (unsigned char *)buf,
+		if ((len = base64_decode(arg, (unsigned char *)buf,
 			    sizeof(buf) - 1)) == -1)
 			goto abort;
 		/* buf is a byte string, NUL terminate. */
@@ -1276,8 +1276,8 @@ smtp_rfc4954_auth_login(struct smtp_session *s, char *arg)
 
 	case STATE_AUTH_USERNAME:
 		memset(s->username, 0, sizeof(s->username));
-		if (__b64_pton(arg, (unsigned char *)s->username,
-		    sizeof(s->username) - 1) == -1)
+		if (base64_decode(arg, (unsigned char *)s->username,
+				  sizeof(s->username) - 1) == -1)
 			goto abort;
 
 		smtp_enter_state(s, STATE_AUTH_PASSWORD);
@@ -1286,7 +1286,8 @@ smtp_rfc4954_auth_login(struct smtp_session *s, char *arg)
 
 	case STATE_AUTH_PASSWORD:
 		memset(buf, 0, sizeof(buf));
-		if (__b64_pton(arg, (unsigned char *)buf, sizeof(buf)-1) == -1)
+		if (base64_decode(arg, (unsigned char *)buf,
+				  sizeof(buf)-1) == -1)
 			goto abort;
 
 		m_create(p_lka,  IMSG_LKA_AUTHENTICATE, 0, 0, -1);
