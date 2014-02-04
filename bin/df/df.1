@@ -1,4 +1,4 @@
-.\"	$OpenBSD: df.1,v 1.44 2010/09/03 09:53:20 jmc Exp $
+.\"	$OpenBSD: df.1,v 1.45 2014/02/04 13:25:37 jmc Exp $
 .\"	$NetBSD: df.1,v 1.12 1995/12/05 02:42:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)df.1	8.2 (Berkeley) 1/13/92
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: February 4 2014 $
 .Dt DF 1
 .Os
 .Sh NAME
@@ -54,15 +54,13 @@ or on the file system of which
 .Ar file
 is a part.
 By default, values are displayed as 512-byte block counts.
-If neither a file nor a
-.Ar file_system
-operand is specified,
+If no operands are specified,
 statistics for all mounted file systems are displayed
 (subject to the
 .Fl l
 and
 .Fl t
-options below).
+options, below).
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -164,10 +162,13 @@ The flags
 .Op Fl hiln
 are extensions to that specification.
 .Pp
-Behaviour for the
+This implementation requires the traditional
+.Bx
 .Fl t
-flag differs between this implementation and
-.St -p1003.1-2008 .
+behaviour,
+which differs from the
+X/Open System Interfaces option
+specification.
 .Sh HISTORY
 A
 .Nm
