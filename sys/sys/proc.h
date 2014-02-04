@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.174 2014/01/20 21:19:27 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.175 2014/02/04 00:33:43 tedu Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -279,34 +279,32 @@ struct proc {
 
 	int	p_dupfd;	 /* Sideways return value from filedescopen. XXX */
 
-	long 	p_thrslpid;	/* for thrsleep syscall */
 	int	p_sigwait;	/* signal handled by sigwait() */
+	long 	p_thrslpid;	/* for thrsleep syscall */
 
 	/* scheduling */
 	u_int	p_estcpu;	 /* Time averaged value of p_cpticks. */
 	int	p_cpticks;	 /* Ticks of cpu time. */
-	fixpt_t	p_pctcpu;	 /* %cpu for this thread during p_swtime */
 	const volatile void *p_wchan;/* Sleep address. */
 	struct	timeout p_sleep_to;/* timeout for tsleep() */
 	const char *p_wmesg;	 /* Reason for sleep. */
+	fixpt_t	p_pctcpu;	 /* %cpu for this thread during p_swtime */
 	u_int	p_swtime;	 /* Time swapped in or out. */
 	u_int	p_slptime;	 /* Time since last blocked. */
+	u_int	p_uticks;		/* Statclock hits in user mode. */
+	u_int	p_sticks;		/* Statclock hits in system mode. */
+	u_int	p_iticks;		/* Statclock hits processing intr. */
 	struct	cpu_info * __volatile p_cpu; /* CPU we're running on. */
 
 	struct	rusage p_ru;		/* Statistics */
 	struct	tusage p_tu;		/* accumulated times. */
 	struct	timespec p_rtime;	/* Real time. */
-	u_int	p_uticks;		/* Statclock hits in user mode. */
-	u_int	p_sticks;		/* Statclock hits in system mode. */
-	u_int	p_iticks;		/* Statclock hits processing intr. */
 
 	void	*p_systrace;		/* Back pointer to systrace */
 
-	int	p_siglist;		/* Signals arrived but not delivered. */
-
 	void	*p_emuldata;		/* Per-process emulation data, or */
 					/* NULL. Malloc type M_EMULDATA */
-
+	int	 p_siglist;		/* Signals arrived but not delivered. */
 	sigset_t p_sigdivert;		/* Signals to be diverted to thread. */
 
 /* End area that is zeroed on creation. */
@@ -341,10 +339,10 @@ struct proc {
 	struct	mdproc p_md;	/* Any machine-dependent fields. */
 
 	sigset_t p_oldmask;	/* Saved mask from before sigpause */
-	union sigval p_sigval;	/* For core dump/debugger XXX */
 	int	p_sisig;	/* For core dump/debugger XXX */
-	int	p_sicode;	/* For core dump/debugger XXX */
+	union sigval p_sigval;	/* For core dump/debugger XXX */
 	long	p_sitrapno;	/* For core dump/debugger XXX */
+	int	p_sicode;	/* For core dump/debugger XXX */
 
 	u_short	p_xstat;	/* Exit status for wait; also stop signal. */
 };
