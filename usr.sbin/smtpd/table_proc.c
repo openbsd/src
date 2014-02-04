@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_proc.c,v 1.1 2013/07/19 19:53:33 eric Exp $	*/
+/*	$OpenBSD: table_proc.c,v 1.2 2014/02/04 13:55:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -120,9 +120,9 @@ static void *
 table_proc_open(struct table *table)
 {
 	int			 sp[2];
-	uint32_t		 version;
 	struct table_proc_priv	*priv;
 	char			*environ_new[2];
+	struct table_open_params op;
 
 	errno = 0;
 
@@ -130,7 +130,7 @@ table_proc_open(struct table *table)
 		log_warn("warn: table-proc: socketpair");
 		return (NULL);
 	}
-	priv = calloc(1, sizeof(*priv));
+	priv = xcalloc(1, sizeof(*priv), "table_proc_open");
 
 	if ((priv->pid = fork()) == -1) {
 		log_warn("warn: table-proc: fork");
@@ -155,9 +155,10 @@ table_proc_open(struct table *table)
 	close(sp[0]);
 	imsg_init(&priv->ibuf, sp[1]);
 
-	version = PROC_TABLE_API_VERSION;
-	imsg_compose(&priv->ibuf, PROC_TABLE_OPEN, 0, 0, -1,
-	    &version, sizeof(version));
+	memset(&op, 0, sizeof op);
+	op.version = PROC_TABLE_API_VERSION;
+	(void)strlcpy(op.name, table->t_name, sizeof op.name);
+	imsg_compose(&priv->ibuf, PROC_TABLE_OPEN, 0, 0, -1, &op, sizeof op);
 
 	table_proc_call(priv);
 	table_proc_end();
