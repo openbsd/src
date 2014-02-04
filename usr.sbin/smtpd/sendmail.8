@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sendmail.8,v 1.1 2014/02/04 16:32:36 eric Exp $
+.\"	$OpenBSD: sendmail.8,v 1.2 2014/02/04 17:47:02 jmc Exp $
 .\"
 .\" Copyright (C) 2013 Ryan Kavanagh <rak@debian.org>
 .\" All rights reserved.
@@ -34,7 +34,7 @@ utility is a local enqueuer for the
 .Xr smtpd 8
 daemon,
 compatible with
-.Xr mailwrapper 5 .
+.Xr mailwrapper 8 .
 The message is read on standard input (stdin) until
 .Nm
 encounters an end-of-file.
@@ -50,9 +50,9 @@ one or more recipients must be specified on the command line.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl F
+.It Fl F Ar name
 Set the sender's full name.
-.It Fl f
+.It Fl f Ar from
 Set the sender's address.
 .It Fl t
 Read the message's To:, Cc:, and Bcc: fields for recipients.
