@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.156 2013/11/20 09:22:42 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.157 2014/02/04 09:05:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -589,8 +589,6 @@ queue(void)
 	signal_add(&ev_sigterm, NULL);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
-
-	fdlimit(1.0);
 
 	config_peer(PROC_PARENT);
 	config_peer(PROC_CONTROL);

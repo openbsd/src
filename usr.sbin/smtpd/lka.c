@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.161 2013/11/20 09:22:42 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.162 2014/02/04 09:05:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -652,12 +652,6 @@ lka(void)
 	signal_add(&ev_sigchld, NULL);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
-
-	/*
-	 * lka opens all kinds of files and sockets, so bump the limit to max.
-	 * XXX: need to analyse the exact hard limit.
-	 */
-	fdlimit(1.0);
 
 	config_peer(PROC_PARENT);
 	config_peer(PROC_QUEUE);

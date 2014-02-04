@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.131 2013/12/05 15:05:53 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.132 2014/02/04 09:05:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -273,8 +273,6 @@ smtp(void)
 	signal_add(&ev_sigterm, NULL);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
-
-	fdlimit(1.0);
 
 	config_peer(PROC_CONTROL);
 	config_peer(PROC_PARENT);

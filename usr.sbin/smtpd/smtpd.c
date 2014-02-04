@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.208 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.209 2014/02/04 09:05:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -851,21 +851,6 @@ static void
 fork_peers(void)
 {
 	tree_init(&children);
-
-	/*
-	 * Pick descriptor limit that will guarantee impossibility of fd
-	 * starvation condition.  The logic:
-	 *
-	 * Treat hardlimit as 100%.
-	 * Limit smtp to 50% (inbound connections)
-	 * Limit mta to 50% (outbound connections)
-	 * Limit mda to 50% (local deliveries)
-	 * In all three above, compute max session limit by halving the fd
-	 * limit (50% -> 25%), because each session costs two fds.
-	 * Limit queue to 100% to cover the extreme case when tons of fds are
-	 * opened for all four possible purposes (smtp, mta, mda, bounce)
-	 */
-	fdlimit(0.5);
 
 	init_pipes();
 

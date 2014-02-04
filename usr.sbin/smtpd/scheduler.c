@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.40 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.41 2014/02/04 09:05:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -415,8 +415,6 @@ scheduler(void)
 		fatalx("unknown user " SMTPD_USER);
 
 	config_process(PROC_SCHEDULER);
-
-	fdlimit(1.0);
 
 	backend->init();
 
