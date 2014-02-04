@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.165 2014/02/02 03:53:05 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.166 2014/02/04 22:19:53 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -167,6 +167,16 @@ do {									\
 	int __ret = !!(condition);					\
 	if (__ret)							\
 		printf(fmt);						\
+	unlikely(__ret);						\
+})
+
+#define WARN_ONCE(condition, fmt...) ({					\
+	static int __warned;						\
+	int __ret = !!(condition);					\
+	if (__ret && !__warned) {					\
+		printf(fmt);						\
+		__warned = 1;						\
+	}								\
 	unlikely(__ret);						\
 })
 
