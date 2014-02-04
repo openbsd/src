@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.210 2014/02/04 13:44:41 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.211 2014/02/04 15:22:39 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1332,6 +1332,9 @@ imsg_to_str(int type)
 	CASE(IMSG_CTL_MTA_SHOW_RELAYS);
 	CASE(IMSG_CTL_MTA_SHOW_ROUTES);
 	CASE(IMSG_CTL_MTA_SHOW_HOSTSTATS);
+	CASE(IMSG_CTL_MTA_BLOCK);
+	CASE(IMSG_CTL_MTA_UNBLOCK);
+	CASE(IMSG_CTL_MTA_SHOW_BLOCK);
 
 	CASE(IMSG_CONF_START);
 	CASE(IMSG_CONF_SSL);

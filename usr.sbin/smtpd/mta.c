@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.180 2014/02/04 14:56:03 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.181 2014/02/04 15:22:39 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -125,11 +125,25 @@ static const char *mta_route_to_text(struct mta_route *);
 static int mta_route_cmp(const struct mta_route *, const struct mta_route *);
 SPLAY_PROTOTYPE(mta_route_tree, mta_route, entry, mta_route_cmp);
 
+struct mta_block {
+	SPLAY_ENTRY(mta_block)	 entry;
+	struct mta_source	*source;
+	char			*domain;
+};
+
+SPLAY_HEAD(mta_block_tree, mta_block);
+void mta_block(struct mta_source *, char *);
+void mta_unblock(struct mta_source *, char *);
+int mta_is_blocked(struct mta_source *, char *);
+static int mta_block_cmp(const struct mta_block *, const struct mta_block *);
+SPLAY_PROTOTYPE(mta_block_tree, mta_block, entry, mta_block_cmp);
+
 static struct mta_relay_tree		relays;
 static struct mta_domain_tree		domains;
 static struct mta_host_tree		hosts;
 static struct mta_source_tree		sources;
 static struct mta_route_tree		routes;
+static struct mta_block_tree		blocks;
 
 static struct tree wait_mx;
 static struct tree wait_preference;
@@ -170,7 +184,9 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 	struct mta_domain	*domain;
 	struct mta_host		*host;
 	struct mta_route	*route;
+	struct mta_block	*block;
 	struct mta_mx		*mx, *imx;
+	struct mta_source	*source;
 	struct hoststat		*hs;
 	struct mta_envelope	*e;
 	struct sockaddr_storage	 ss;
@@ -178,6 +194,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 	struct msg		 m;
 	const char		*secret;
 	const char		*hostname;
+	const char		*dom;
 	uint64_t		 reqid;
 	time_t			 t;
 	char			 buf[SMTPD_MAXLINESIZE];
@@ -479,6 +496,50 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			    imsg->hdr.peerid,
 			    0, -1, NULL, 0);
 			return;
+
+		case IMSG_CTL_MTA_BLOCK:
+			m_msg(&m, imsg);
+			m_get_sockaddr(&m, (struct sockaddr*)&ss);
+			m_get_string(&m, &dom);
+			m_end(&m);
+			source = mta_source((struct sockaddr*)&ss);
+			if (strlen(dom)) {
+				strlcpy(buf, dom, sizeof(buf));
+				mta_block(source, buf);
+			}
+			else
+				mta_block(source, NULL);
+			mta_source_unref(source);
+			m_compose(p, IMSG_CTL_OK, imsg->hdr.peerid, 0, -1, NULL, 0);
+			return;
+
+		case IMSG_CTL_MTA_UNBLOCK:
+			m_msg(&m, imsg);
+			m_get_sockaddr(&m, (struct sockaddr*)&ss);
+			m_get_string(&m, &dom);
+			m_end(&m);
+			source = mta_source((struct sockaddr*)&ss);
+			if (strlen(dom)) {
+				strlcpy(buf, dom, sizeof(buf));
+				mta_unblock(source, buf);
+			}
+			else
+				mta_unblock(source, NULL);
+			mta_source_unref(source);
+			m_compose(p, IMSG_CTL_OK, imsg->hdr.peerid, 0, -1, NULL, 0);
+			return;
+
+		case IMSG_CTL_MTA_SHOW_BLOCK:
+			SPLAY_FOREACH(block, mta_block_tree, &blocks) {
+				snprintf(buf, sizeof(buf), "%s -> %s",
+				    mta_source_to_text(block->source),
+				    block->domain ? block->domain : "*");
+				m_compose(p, IMSG_CTL_MTA_SHOW_BLOCK,
+				    imsg->hdr.peerid, 0, -1, buf, strlen(buf) + 1);
+			}
+			m_compose(p, IMSG_CTL_MTA_SHOW_BLOCK, imsg->hdr.peerid,
+			    0, -1, NULL, 0);
+			return;
 		}
 	}
 
@@ -545,6 +606,7 @@ mta(void)
 	SPLAY_INIT(&hosts);
 	SPLAY_INIT(&sources);
 	SPLAY_INIT(&routes);
+	SPLAY_INIT(&blocks);
 
 	tree_init(&wait_secret);
 	tree_init(&wait_mx);
@@ -1010,6 +1072,8 @@ mta_on_source(struct mta_relay *relay, struct mta_source *source)
 			relay->failstr = "No MX found for destination";
 		else if (errmask & CONNECTOR_ERROR_FAMILY)
 			relay->failstr = "Address family mismatch on destination MXs";
+		else if (errmask & CONNECTOR_ERROR_BLOCKED)
+			relay->failstr = "All routes to destination blocked";
 		else
 			relay->failstr = "No valid route to destination";	
 	}
@@ -1027,6 +1091,12 @@ mta_connect(struct mta_connector *c)
 	struct mta_limits	*l = c->relay->limits;
 	int			 limits;
 	time_t			 nextconn, now;
+
+	/* toggle the block flag */
+	if (mta_is_blocked(c->source, c->relay->domain->name))
+		c->flags |= CONNECTOR_ERROR_BLOCKED;
+	else
+		c->flags &= ~CONNECTOR_ERROR_BLOCKED;
 
     again:
 
@@ -1843,6 +1913,7 @@ mta_relay_show(struct mta_relay *r, struct mproc *p, uint32_t id, time_t t)
 		SHOWFLAG(CONNECTOR_ERROR_MX,		"ERROR_MX");
 		SHOWFLAG(CONNECTOR_ERROR_ROUTE_NET,	"ERROR_ROUTE_NET");
 		SHOWFLAG(CONNECTOR_ERROR_ROUTE_SMTP,	"ERROR_ROUTE_SMTP");
+		SHOWFLAG(CONNECTOR_ERROR_BLOCKED,	"ERROR_BLOCKED");
 
 		SHOWFLAG(CONNECTOR_LIMIT_HOST,		"LIMIT_HOST");
 		SHOWFLAG(CONNECTOR_LIMIT_ROUTE,		"LIMIT_ROUTE");
@@ -2301,6 +2372,79 @@ mta_route_cmp(const struct mta_route *a, const struct mta_route *b)
 
 SPLAY_GENERATE(mta_route_tree, mta_route, entry, mta_route_cmp);
 
+void
+mta_block(struct mta_source *src, char *dom)
+{
+	struct mta_block key, *b;
+
+	key.source = src;
+	key.domain = dom;
+
+	b = SPLAY_FIND(mta_block_tree, &blocks, &key);
+	if (b != NULL)
+		return;
+
+	b = xcalloc(1, sizeof(*b), "mta_block");
+	if (dom)
+		b->domain = xstrdup(dom, "mta_block");
+	b->source = src;
+	mta_source_ref(src);
+	SPLAY_INSERT(mta_block_tree, &blocks, b);
+}
+
+void
+mta_unblock(struct mta_source *src, char *dom)
+{
+	struct mta_block key, *b;
+
+	key.source = src;
+	key.domain = dom;
+
+	b = SPLAY_FIND(mta_block_tree, &blocks, &key);
+	if (b == NULL)
+		return;
+
+	SPLAY_REMOVE(mta_block_tree, &blocks, b);
+
+	mta_source_unref(b->source);
+	free(b->domain);
+	free(b);
+}
+
+int
+mta_is_blocked(struct mta_source *src, char *dom)
+{
+	struct mta_block key;
+
+	key.source = src;
+	key.domain = dom;
+
+	if (SPLAY_FIND(mta_block_tree, &blocks, &key))
+		return (1);
+
+	return (0);
+}
+
+static
+int
+mta_block_cmp(const struct mta_block *a, const struct mta_block *b)
+{
+	if (a->source < b->source)
+		return (-1);
+	if (a->source > b->source)
+		return (1);
+	if (!a->domain && b->domain)
+		return (-1);
+	if (a->domain && !b->domain)
+		return (1);
+	if (a->domain == b->domain)
+		return (0);
+	return (strcmp(a->domain, b->domain));
+}
+
+SPLAY_GENERATE(mta_block_tree, mta_block, entry, mta_block_cmp);
+
+
 
 /* hoststat errors are not critical, we do best effort */
 void
@@ -2316,8 +2460,7 @@ mta_hoststat_update(const char *host, const char *error)
 	tm = time(NULL);
 	hs = dict_get(&hoststat, buf);
 	if (hs == NULL) {
-		hs = calloc(1, sizeof *hs);
-		if (hs == NULL)
+		if ((hs = calloc(1, sizeof *hs)) == NULL)
 			return;
 		tree_init(&hs->deferred);
 		runq_schedule(runq_hoststat, tm+HOSTSTAT_EXPIRE_DELAY, NULL, hs);

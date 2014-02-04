@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.95 2014/02/04 13:44:41 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.96 2014/02/04 15:22:39 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -121,10 +121,13 @@ control_imsg(struct mproc *p, struct imsg *imsg)
 	}
 	if (p->proc == PROC_MTA) {
 		switch (imsg->hdr.type) {
+		case IMSG_CTL_OK:
+		case IMSG_CTL_FAIL:
 		case IMSG_CTL_MTA_SHOW_HOSTS:
 		case IMSG_CTL_MTA_SHOW_RELAYS:
 		case IMSG_CTL_MTA_SHOW_ROUTES:
 		case IMSG_CTL_MTA_SHOW_HOSTSTATS:
+		case IMSG_CTL_MTA_SHOW_BLOCK:
 			c = tree_get(&ctl_conns, imsg->hdr.peerid);
 			if (c == NULL)
 				return;
@@ -424,6 +427,7 @@ control_digest_update(const char *key, size_t value, int incr)
 static void
 control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 {
+	struct sockaddr_storage	 ss;
 	struct ctl_conn		*c;
 	int			 v;
 	struct stat_kv		*kvp;
@@ -709,11 +713,26 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 	case IMSG_CTL_MTA_SHOW_RELAYS:
 	case IMSG_CTL_MTA_SHOW_ROUTES:
 	case IMSG_CTL_MTA_SHOW_HOSTSTATS:
+	case IMSG_CTL_MTA_SHOW_BLOCK:
 		if (c->euid)
 			goto badcred;
 
 		imsg->hdr.peerid = c->id;
 		m_forward(p_mta, imsg);
+		return;
+
+	case IMSG_CTL_MTA_BLOCK:
+	case IMSG_CTL_MTA_UNBLOCK:
+		if (c->euid)
+			goto badcred;
+
+		if (imsg->hdr.len - IMSG_HEADER_SIZE <= sizeof(ss))
+			goto invalid;
+		memmove(&ss, imsg->data, sizeof(ss));
+		m_create(p_mta, imsg->hdr.type, c->id, 0, -1);
+		m_add_sockaddr(p_mta, (struct sockaddr *)&ss);
+		m_add_string(p_mta, (char *)imsg->data + sizeof(ss));
+		m_close(p_mta);
 		return;
 
 	case IMSG_CTL_SCHEDULE:

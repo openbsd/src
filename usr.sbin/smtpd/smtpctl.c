@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.114 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.115 2014/02/04 15:22:39 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -119,8 +119,7 @@ srv_connect(void)
 		return (0);
 	}
 
-	if ((ibuf = calloc(1, sizeof(struct imsgbuf))) == NULL)
-		err(1, "calloc");
+	ibuf = xcalloc(1, sizeof(struct imsgbuf), "smtpctl:srv_connect");
 	imsg_init(ibuf, ctl_sock);
 
 	return (1);
@@ -815,6 +814,51 @@ do_encrypt(int argc, struct parameter *argv)
 	errx(1, "execl");
 }
 
+static int
+do_block_mta(int argc, struct parameter *argv)
+{
+	struct ibuf *m;
+
+	if (ibuf == NULL && !srv_connect())
+		errx(1, "smtpd doesn't seem to be running");
+	m = imsg_create(ibuf, IMSG_CTL_MTA_BLOCK, IMSG_VERSION, 0,
+	    sizeof(argv[0].u.u_ss) + strlen(argv[1].u.u_str) + 1);
+	if (imsg_add(m, &argv[0].u.u_ss, sizeof(argv[0].u.u_ss)) == -1)
+		errx(1, "imsg_add");
+	if (imsg_add(m, argv[1].u.u_str, strlen(argv[1].u.u_str) + 1) == -1)
+		errx(1, "imsg_add");
+	imsg_close(ibuf, m);
+
+	return srv_check_result(1);
+}
+
+static int
+do_unblock_mta(int argc, struct parameter *argv)
+{
+	struct ibuf *m;
+
+	if (ibuf == NULL && !srv_connect())
+		errx(1, "smtpd doesn't seem to be running");
+
+	m = imsg_create(ibuf, IMSG_CTL_MTA_UNBLOCK, IMSG_VERSION, 0,
+	    sizeof(argv[0].u.u_ss) + strlen(argv[1].u.u_str) + 1);
+	if (imsg_add(m, &argv[0].u.u_ss, sizeof(argv[0].u.u_ss)) == -1)
+		errx(1, "imsg_add");
+	if (imsg_add(m, argv[1].u.u_str, strlen(argv[1].u.u_str) + 1) == -1)
+		errx(1, "imsg_add");
+	imsg_close(ibuf, m);
+
+	return srv_check_result(1);
+}
+
+static int
+do_show_mta_block(int argc, struct parameter *argv)
+{
+	srv_show_cmd(IMSG_CTL_MTA_SHOW_BLOCK, NULL, 0);
+
+	return (0);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -831,6 +875,9 @@ main(int argc, char **argv)
 
 	cmd_install("encrypt",			do_encrypt);
 	cmd_install("encrypt <str>",		do_encrypt);
+	cmd_install("pause mta from <addr> for <str>", do_block_mta);
+	cmd_install("resume mta from <addr> for <str>", do_unblock_mta);
+	cmd_install("show mta paused",		do_show_mta_block);
 	cmd_install("log brief",		do_log_brief);
 	cmd_install("log verbose",		do_log_verbose);
 	cmd_install("monitor",			do_monitor);

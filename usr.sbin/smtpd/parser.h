@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.28 2013/07/19 13:41:23 eric Exp $	*/
+/*	$OpenBSD: parser.h,v 1.29 2014/02/04 15:22:39 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot	<eric@openbsd.org>
@@ -23,6 +23,7 @@ enum {
 	P_MSGID,
 	P_EVPID,
 	P_ROUTEID,
+	P_ADDR,
 };
 
 struct parameter {
@@ -33,6 +34,7 @@ struct parameter {
 		uint32_t	 u_msgid;
 		uint64_t	 u_evpid;
 		uint64_t	 u_routeid;
+		struct sockaddr_storage u_ss;
 	} u;
 };
 
