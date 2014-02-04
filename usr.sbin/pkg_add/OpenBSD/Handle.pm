@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.36 2014/02/03 13:47:20 espie Exp $
+# $OpenBSD: Handle.pm,v 1.37 2014/02/04 00:14:27 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -101,7 +101,8 @@ sub dependency_info
 	my $self = shift;
 	if (defined $self->{plist}) {
 		return $self->{plist};
-	} elsif (defined $self->{location}{update_info}) {
+	} elsif (defined $self->{location} && 
+	    defined $self->{location}{update_info}) {
 		return $self->{location}{update_info};
 	} else {
 		return undef;
