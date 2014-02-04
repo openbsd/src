@@ -445,7 +445,7 @@ xfrd_write_state(struct xfrd_state* xfrd)
 		fprintf(out, "\tnext_timeout: %d",
 			(zone->zone_handler_flags&EV_TIMEOUT)?(int)zone->timeout.tv_sec:0);
 		if((zone->zone_handler_flags&EV_TIMEOUT)) {
-			neato_timeout(out, "\t# =", zone->timeout.tv_sec - xfrd_time());
+			neato_timeout(out, "\t# =", zone->timeout.tv_sec);
 		}
 		fprintf(out, "\n");
 		xfrd_write_state_soa(out, "soa_nsd", &zone->soa_nsd,

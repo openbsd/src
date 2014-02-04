@@ -503,13 +503,19 @@ main(int argc, char *argv[])
 				/* can only be given once */
 				break;
 			}
-			if (strlen(optarg) % 2 != 0) {
-				error("the NSID must be a hex string of an even length.");
-			}
-			nsd.nsid = xalloc(strlen(optarg) / 2);
-			nsd.nsid_len = strlen(optarg) / 2;
-			if (hex_pton(optarg, nsd.nsid, nsd.nsid_len) == -1) {
-				error("hex string cannot be parsed '%s' in NSID.", optarg);
+			if (strncasecmp(optarg, "ascii_", 6) == 0) {
+				nsd.nsid = xalloc(strlen(optarg+6));
+				nsd.nsid_len = strlen(optarg+6);
+				memmove(nsd.nsid, optarg+6, nsd.nsid_len);
+			} else {
+				if (strlen(optarg) % 2 != 0) {
+					error("the NSID must be a hex string of an even length.");
+				}
+				nsd.nsid = xalloc(strlen(optarg) / 2);
+				nsd.nsid_len = strlen(optarg) / 2;
+				if (hex_pton(optarg, nsd.nsid, nsd.nsid_len) == -1) {
+					error("hex string cannot be parsed '%s' in NSID.", optarg);
+				}
 			}
 			break;
 		case 'l':

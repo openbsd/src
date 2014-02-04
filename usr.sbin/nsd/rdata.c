@@ -98,9 +98,9 @@ rdata_dns_name_to_string(buffer_type *output, rdata_atom_type rdata,
 
 			if (ch=='.' || ch==';' || ch=='(' || ch==')' || ch=='\\') {
 				buffer_printf(output, "\\%c", (char) ch);
-			} else if (!isgraph((int) ch)) {
+			} else if (!isgraph((int)(unsigned char) ch)) {
 				buffer_printf(output, "\\%03u", (unsigned int) ch);
-			} else if (isprint((int) ch)) {
+			} else if (isprint((int)(unsigned char) ch)) {
 				buffer_printf(output, "%c", (char) ch);
 			} else {
 				buffer_printf(output, "\\%03u", (unsigned int) ch);
@@ -127,7 +127,7 @@ rdata_text_to_string(buffer_type *output, rdata_atom_type rdata,
 	buffer_printf(output, "\"");
 	for (i = 1; i <= length; ++i) {
 		char ch = (char) data[i];
-		if (isprint((int)ch)) {
+		if (isprint((int)(unsigned char)ch)) {
 			if (ch == '"' || ch == '\\') {
 				buffer_printf(output, "\\");
 			}
@@ -153,7 +153,7 @@ rdata_texts_to_string(buffer_type *output, rdata_atom_type rdata,
 		buffer_printf(output, "\"");
 		for (i = 1; i <= data[pos]; ++i) {
 			char ch = (char) data[pos + i];
-			if (isprint((int)ch)) {
+			if (isprint((int)(unsigned char)ch)) {
 				if (ch == '"' || ch == '\\') {
 					buffer_printf(output, "\\");
 				}
@@ -164,6 +164,46 @@ rdata_texts_to_string(buffer_type *output, rdata_atom_type rdata,
 		}
 		pos += data[pos]+1;
 		buffer_printf(output, pos < length?"\" ":"\"");
+	}
+	return 1;
+}
+
+static int
+rdata_long_text_to_string(buffer_type *output, rdata_atom_type rdata,
+	rr_type* ATTR_UNUSED(rr))
+{
+	const uint8_t *data = rdata_atom_data(rdata);
+	uint16_t length = rdata_atom_size(rdata);
+	size_t i;
+
+	buffer_printf(output, "\"");
+	for (i = 0; i < length; ++i) {
+		char ch = (char) data[i];
+		if (isprint((int)(unsigned char)ch)) {
+			if (ch == '"' || ch == '\\') {
+				buffer_printf(output, "\\");
+			}
+			buffer_printf(output, "%c", ch);
+		} else {
+			buffer_printf(output, "\\%03u", (unsigned) data[i]);
+		}
+	}
+	buffer_printf(output, "\"");
+	return 1;
+}
+
+static int
+rdata_tag_to_string(buffer_type *output, rdata_atom_type rdata,
+	rr_type* ATTR_UNUSED(rr))
+{
+	const uint8_t *data = rdata_atom_data(rdata);
+	uint8_t length = data[0];
+	size_t i;
+	for (i = 1; i <= length; ++i) {
+		char ch = (char) data[i];
+		if (isdigit((int)ch) || islower((int)ch))
+			buffer_printf(output, "%c", ch);
+		else	return 0;
 	}
 	return 1;
 }
@@ -235,7 +275,6 @@ rdata_ilnp64_to_string(buffer_type *output, rdata_atom_type rdata,
 	return 1;
 }
 
-#ifdef DRAFT_RRTYPES
 static int
 rdata_eui48_to_string(buffer_type *output, rdata_atom_type rdata,
 	rr_type* ATTR_UNUSED(rr))
@@ -271,7 +310,6 @@ rdata_eui64_to_string(buffer_type *output, rdata_atom_type rdata,
 		a1, a2, a3, a4, a5, a6, a7, a8);
 	return 1;
 }
-#endif
 
 static int
 rdata_rrtype_to_string(buffer_type *output, rdata_atom_type rdata,
@@ -631,10 +669,10 @@ static rdata_to_string_type rdata_to_string_table[RDATA_ZF_UNKNOWN + 1] = {
 	rdata_nsec_to_string,
 	rdata_loc_to_string,
 	rdata_ilnp64_to_string,
-#ifdef DRAFT_RRTYPES
 	rdata_eui48_to_string,
 	rdata_eui64_to_string,
-#endif
+	rdata_long_text_to_string,
+	rdata_tag_to_string,
 	rdata_unknown_to_string
 };
 
@@ -694,7 +732,8 @@ rdata_wireformat_to_rdata_atoms(region_type *region,
 			length = sizeof(uint32_t);
 			break;
 		case RDATA_WF_TEXTS:
-			length = data_size;
+		case RDATA_WF_LONG_TEXT:
+			length = end - buffer_position(packet);
 			break;
 		case RDATA_WF_TEXT:
 		case RDATA_WF_BINARYWITHLENGTH:
@@ -713,13 +752,12 @@ rdata_wireformat_to_rdata_atoms(region_type *region,
 		case RDATA_WF_ILNP64:
 			length = IP6ADDRLEN/2;
 			break;
-#ifdef DRAFT_RRTYPES
 		case RDATA_WF_EUI48:
 			length = EUI48ADDRLEN;
+			break;
 		case RDATA_WF_EUI64:
 			length = EUI64ADDRLEN;
 			break;
-#endif
 		case RDATA_WF_BINARY:
 			/* Remaining RDATA is binary.  */
 			length = end - buffer_position(packet);

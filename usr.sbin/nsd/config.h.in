@@ -19,9 +19,6 @@
 /* Pathname to the NSD database */
 #undef DBFILE
 
-/* Define this to enable draft RRtypes. */
-#undef DRAFT_RRTYPES
-
 /* Define to the default maximum message length with EDNS. */
 #undef EDNS_MAX_MESSAGE_LEN
 

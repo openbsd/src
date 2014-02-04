@@ -143,11 +143,8 @@ typedef enum nsd_rc nsd_rc_type;
 #define TYPE_L32        105     /* RFC 6742 */
 #define TYPE_L64        106     /* RFC 6742 */
 #define TYPE_LP         107     /* RFC 6742 */
-
-#ifdef DRAFT_RRTYPES
-#define TYPE_EUI48      108     /* draft-jabley-dnsext-eui48-eui64-rrtypes */
-#define TYPE_EUI64      109     /* draft-jabley-dnsext-eui48-eui64-rrtypes */
-#endif
+#define TYPE_EUI48      108     /* RFC 7043 */
+#define TYPE_EUI64      109     /* RFC 7043 */
 
 #define TYPE_TSIG	250
 #define TYPE_IXFR	251
@@ -155,6 +152,8 @@ typedef enum nsd_rc nsd_rc_type;
 #define TYPE_MAILB	253	/* A request for mailbox-related records (MB, MG or MR) */
 #define TYPE_MAILA	254	/* A request for mail agent RRs (Obsolete - see MX) */
 #define TYPE_ANY	255	/* any type (wildcard) */
+
+#define TYPE_CAA	257	/* RFC 6844 */
 
 #define TYPE_DLV	32769	/* RFC 4431 */
 #define PSEUDO_TYPE_DLV	RRTYPE_DESCRIPTORS_LENGTH
@@ -171,10 +170,8 @@ typedef enum nsd_rc nsd_rc_type;
 
 #define IP4ADDRLEN	(32/8)
 #define IP6ADDRLEN	(128/8)
-#ifdef DRAFT_RRTYPES
 #define EUI48ADDRLEN	(48/8)
 #define EUI64ADDRLEN	(64/8)
-#endif
 
 #define NSEC3_HASH_LEN 20
 
@@ -197,13 +194,10 @@ enum rdata_wireformat
 	RDATA_WF_BINARYWITHLENGTH,   /* Binary data preceded by 1 byte length */
 	RDATA_WF_APL,                /* APL data.  */
 	RDATA_WF_IPSECGATEWAY,       /* IPSECKEY gateway ip4, ip6 or dname. */
-#ifdef DRAFT_RRTYPES
 	RDATA_WF_ILNP64,             /* 64-bit uncompressed IPv6 address.  */
 	RDATA_WF_EUI48,	             /* 48-bit address.  */
-	RDATA_WF_EUI64               /* 64-bit address.  */
-#else
-	RDATA_WF_ILNP64              /* 64-bit uncompressed IPv6 address.  */
-#endif
+	RDATA_WF_EUI64,              /* 64-bit address.  */
+	RDATA_WF_LONG_TEXT           /* Long (>255) text string. */
 };
 typedef enum rdata_wireformat rdata_wireformat_type;
 
@@ -238,10 +232,10 @@ enum rdata_zoneformat
 	RDATA_ZF_NSEC,		/* NSEC type bitmap.  */
 	RDATA_ZF_LOC,		/* Location data.  */
 	RDATA_ZF_ILNP64,	/* 64-bit uncompressed IPv6 address.  */
-#ifdef DRAFT_RRTYPES
 	RDATA_ZF_EUI48,		/* EUI48 address.  */
 	RDATA_ZF_EUI64,		/* EUI64 address.  */
-#endif
+	RDATA_ZF_LONG_TEXT,	/* Long (>255) text string. */
+	RDATA_ZF_TAG,		/* Text string without quotes. */
 	RDATA_ZF_UNKNOWN	/* Unknown data.  */
 };
 typedef enum rdata_zoneformat rdata_zoneformat_type;
@@ -262,13 +256,9 @@ typedef struct rrtype_descriptor rrtype_descriptor_type;
  * Indexed by type.  The special type "0" can be used to get a
  * descriptor for unknown types (with one binary rdata).
  *
- * EUI64 + 1
+ * CAA + 1
  */
-#ifdef DRAFT_RRTYPES
-#define RRTYPE_DESCRIPTORS_LENGTH  (TYPE_EUI64 + 1)
-#else
-#define RRTYPE_DESCRIPTORS_LENGTH  (TYPE_LP + 1)
-#endif
+#define RRTYPE_DESCRIPTORS_LENGTH  (TYPE_CAA + 1)
 rrtype_descriptor_type *rrtype_descriptor_by_name(const char *name);
 rrtype_descriptor_type *rrtype_descriptor_by_type(uint16_t type);
 

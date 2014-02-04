@@ -4,7 +4,7 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,4.0.0,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.0.1,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 AC_AIX
@@ -488,6 +488,9 @@ else
 fi
 if test "$srcdir" != "."; then
 	CPPFLAGS="$CPPFLAGS -I$srcdir"
+	if test -f $srcdir/config.h; then
+		AC_ERROR([$srcdir/config.h is in the way, please remove it])
+	fi
 fi
 
 dnl LIBGTOP_CHECK_TYPE
@@ -787,15 +790,6 @@ case "$enable_minimal_responses" in
         yes|*)
 		AC_DEFINE_UNQUOTED([MINIMAL_RESPONSES], [], [Define this to enable response minimalization to reduce truncation.])
                 ;;
-esac
-
-AC_ARG_ENABLE(draft-rrtypes, AC_HELP_STRING([--enable-draft-rrtypes], [Enable draft RRtypes.]))
-case "$enable_draft_rrtypes" in
-        yes)
-		AC_DEFINE_UNQUOTED([DRAFT_RRTYPES], [], [Define this to enable draft RRtypes.])
-                ;;
-        no|*)
-		;;
 esac
 
 AC_ARG_ENABLE(mmap, AC_HELP_STRING([--enable-mmap], [Use mmap instead of malloc. Experimental.]))

@@ -756,6 +756,10 @@ conn_read(xfrd_tcp_t* tcp)
 		assert(tcp->total_bytes == sizeof(tcp->msglen));
 		tcp->msglen = ntohs(tcp->msglen);
 
+		if(tcp->msglen == 0) {
+			buffer_set_limit(tcp->packet, tcp->msglen);
+			return 1;
+		}
 		if(tcp->msglen > buffer_capacity(tcp->packet)) {
 			log_msg(LOG_ERR, "buffer too small, dropping connection");
 			return 0;

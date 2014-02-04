@@ -236,7 +236,7 @@ zparser_conv_services(region_type *region, const char *protostr,
 	r = alloc_rdata(region, sizeof(uint8_t) + max_port / 8 + 1);
 	p = (uint8_t *) (r + 1);
 	*p = proto->p_proto;
-	memcpy(p + 1, bitmap, *r);
+	memcpy(p + 1, bitmap, *r-1);
 
 	return r;
 }
@@ -451,7 +451,6 @@ zparser_conv_ilnp64(region_type *region, const char *text)
 	return r;
 }
 
-#ifdef DRAFT_RRTYPES
 static uint16_t *
 zparser_conv_eui48(region_type *region, const char *text)
 {
@@ -541,7 +540,6 @@ zparser_conv_eui(region_type *region, const char *text, size_t len)
 	}
 	return r;
 }
-#endif
 
 uint16_t *
 zparser_conv_text(region_type *region, const char *text, size_t len)
@@ -558,6 +556,50 @@ zparser_conv_text(region_type *region, const char *text, size_t len)
 	p = (uint8_t *) (r + 1);
 	*p = len;
 	memcpy(p + 1, text, len);
+	return r;
+}
+
+/* for CAA Value [RFC 6844] */
+uint16_t *
+zparser_conv_long_text(region_type *region, const char *text, size_t len)
+{
+	uint16_t *r = NULL;
+	if (len > MAX_RDLENGTH) {
+		zc_error_prev_line("text string is longer than max rdlen");
+		return NULL;
+	}
+	r = alloc_rdata_init(region, text, len);
+	return r;
+}
+
+/* for CAA Tag [RFC 6844] */
+uint16_t *
+zparser_conv_tag(region_type *region, const char *text, size_t len)
+{
+	uint16_t *r = NULL;
+	uint8_t *p;
+	const char* ptr;
+
+	if (len < 1) {
+		zc_error_prev_line("invalid tag: zero length");
+		return NULL;
+	}
+	if (len > 15) {
+		zc_error_prev_line("invalid tag %s: longer than 15 characters (%u)",
+			text, (unsigned) len);
+		return NULL;
+	}
+	for (ptr = text; *ptr; ptr++) {
+		if (!isdigit(*ptr) && !islower(*ptr)) {
+			zc_error_prev_line("invalid tag %s: contains invalid char %c",
+				text, *ptr);
+			return NULL;
+		}
+	}
+	r = alloc_rdata(region, len + 1);
+	p = (uint8_t *) (r + 1);
+	*p = len;
+	memmove(p + 1, text, len);
 	return r;
 }
 

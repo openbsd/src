@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Oct 29, 2013" "NLnet Labs" "nsd 4.0.0"
+.TH "nsd.conf" "5" "Jan 27, 2014" "NLnet Labs" "nsd 4.0.1"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -116,6 +116,9 @@ to bind multiple ip\-addresses. Optionally, a port number can be given.
 If none are given NSD listens to the wildcard interface. Same as commandline option 
 .BR \-a.
 .TP
+.B interface:\fR <ip4 or ip6>[@port]
+Same as ip\-address (for easy of compatibility with unbound.conf).
+.TP
 .B ip\-transparent:\fR <yes or no>
 Allows NSD to bind to non local addresses. Default is no.
 .TP
@@ -153,7 +156,8 @@ commandline option
 .TP
 .B nsid:\fR <string>
 Add the specified nsid to the EDNS section of the answer when queried
-with an NSID EDNS enabled packet. Same as commandline option
+with an NSID EDNS enabled packet.  As a sequence of hex characters or
+with ascii_ prefix and then an ascii string.  Same as commandline option
 .BR \-I .
 .TP
 .B logfile:\fR <filename>

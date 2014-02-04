@@ -674,7 +674,7 @@ server_prepare(struct nsd *nsd)
 	/* NULL for taskudb because we send soainfo in a moment, batched up,
 	 * for all zones */
 	if(nsd->options->zonefiles_check)
-		namedb_check_zonefiles(nsd->db, nsd->options, NULL, NULL);
+		namedb_check_zonefiles(nsd, nsd->options, NULL, NULL);
 
 	compression_table_capacity = 0;
 	initialize_dname_compression_tables(nsd);
@@ -866,7 +866,7 @@ add_all_soa_to_task(struct nsd* nsd, struct udb_base* taskudb)
 	/* add all SOA INFO to mytask */
 	udb_ptr_init(&task_last, taskudb);
 	for(n=radix_first(nsd->db->zonetree); n; n=radix_next(n)) {
-		task_new_soainfo(taskudb, &task_last, (zone_type*)n->elem);
+		task_new_soainfo(taskudb, &task_last, (zone_type*)n->elem, 0);
 	}
 	udb_ptr_unlink(&task_last, taskudb);
 }
@@ -1826,7 +1826,10 @@ handle_udp(int fd, short event, void* arg)
 	while(i<recvcount) {
 		sent = sendmmsg(fd, &msgs[i], recvcount-i, 0);
 		if(sent == -1) {
-			log_msg(LOG_ERR, "sendmmsg failed: %s", strerror(errno));
+			const char* es = strerror(errno);
+			char a[48];
+			addr2str(&queries[i]->addr, a, sizeof(a));
+			log_msg(LOG_ERR, "sendmmsg [0]=%s count=%d failed: %s", a, (int)(recvcount-i), es);
 #ifdef BIND8_STATS
 			data->nsd->st.txerr += recvcount-i;
 #endif /* BIND8_STATS */
@@ -1937,7 +1940,10 @@ handle_udp(int fd, short event, void* arg)
 				      (struct sockaddr *) &q->addr,
 				      q->addrlen);
 			if (sent == -1) {
-				log_msg(LOG_ERR, "sendto failed: %s", strerror(errno));
+				const char* es = strerror(errno);
+				char a[48];
+				addr2str(&q->addr, a, sizeof(a));
+				log_msg(LOG_ERR, "sendto %s failed: %s", a, es);
 				STATUP(data->nsd, txerr);
 			} else if ((size_t) sent != buffer_remaining(q->packet)) {
 				log_msg(LOG_ERR, "sent %d in place of %d bytes", sent, (int) buffer_remaining(q->packet));

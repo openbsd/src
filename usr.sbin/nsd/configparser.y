@@ -208,7 +208,11 @@ server_nsid: VAR_NSID STRING
 
 		OUTYY(("P(server_nsid:%s)\n", $2));
 
-		if (strlen($2) % 2 != 0) {
+		if (strncasecmp($2, "ascii_", 6) == 0) {
+			nsid_len = strlen($2+6);
+			cfg_parser->opt->nsid = region_alloc(cfg_parser->opt->region, nsid_len*2+1);
+			hex_ntop((uint8_t*)$2+6, nsid_len, (char*)cfg_parser->opt->nsid, nsid_len*2+1);
+		} else if (strlen($2) % 2 != 0) {
 			yyerror("the NSID must be a hex string of an even length.");
 		} else {
 			nsid_len = strlen($2) / 2;

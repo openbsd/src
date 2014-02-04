@@ -243,8 +243,11 @@ xalloc(size_t size)
 void *
 xalloc_zero(size_t size)
 {
-	void *result = xalloc(size);
-	memset(result, 0, size);
+	void *result = calloc(1, size);
+	if (!result) {
+		log_msg(LOG_ERR, "calloc failed: %s", strerror(errno));
+		exit(1);
+	}
 	return result;
 }
 
