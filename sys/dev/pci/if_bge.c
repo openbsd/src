@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.350 2014/02/01 01:51:27 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.351 2014/02/04 05:20:47 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2455,8 +2455,7 @@ bge_blockinit(struct bge_softc *sc)
 		}
 		mimode |= BGE_MIMODE_PHYADDR(sc->bge_phy_addr);
 		CSR_WRITE_4(sc, BGE_MI_MODE, mimode);
-		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 &&
-		    sc->bge_chipid != BGE_CHIPID_BCM5700_B2)
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700)
 			CSR_WRITE_4(sc, BGE_MAC_EVT_ENB,
 			    BGE_EVTENB_MI_INTERRUPT);
 	}
