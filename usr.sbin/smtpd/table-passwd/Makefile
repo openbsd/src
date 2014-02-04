@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2014/01/18 05:54:51 martynas Exp $
+#	$OpenBSD: Makefile,v 1.3 2014/02/04 16:32:36 eric Exp $
 
 .PATH: ${.CURDIR}/..
 
@@ -9,7 +9,7 @@ SRCS+=	table_api.c
 SRCS+=	dict.c
 SRCS+=	log.c
 
-NOMAN=	noman
+MAN=	table_passwd.5
 
 BINDIR=	/usr/libexec/smtpd
 

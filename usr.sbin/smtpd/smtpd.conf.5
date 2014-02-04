@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.115 2013/12/13 21:48:28 jca Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.116 2014/02/04 16:32:36 eric Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 13 2013 $
+.Dd $Mdocdate: February 4 2014 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@ the comment is effective until the end of the entire block.
 Argument names not beginning with a letter, digit, or underscore
 must be quoted.
 Arguments containing whitespace should be surrounded by double quotes
-.Pq \(dq .
+.Pq \&" .
 .Pp
 Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, digit, or underscore,
@@ -516,10 +516,10 @@ The relay URL must specify TLS for this option to be valid.
 .Pp
 Additional per-rule adjustments available:
 .Bl -tag -width Ds
-.It Ic expire Ar n Brq Ar s\*(Bam\*(Bah\*(Bad
+.It Ic expire Ar n Brq Ar s|m|h|d
 Specify how long a message that matched this rule can stay in the queue.
 .El
-.It Ic bounce-warn Ar n Bro Ar s\*(Bam\*(Bah\*(Bad Brc Bq , Ar ...
+.It Ic bounce-warn Ar n Bro Ar s|m|h|d Brc Bq , Ar ...
 Specify the delays for which temporary failure reports must be generated
 when messages are stuck in the queue.
 For example:
@@ -530,7 +530,7 @@ bounce-warn	1h, 6h, 2d
 will generate a failure report when an envelope is in the queue for more
 than one hour, six hours and two days.
 The default is 4h.
-.It Ic expire Ar n Brq Ar s\*(Bam\*(Bah\*(Bad
+.It Ic expire Ar n Brq Ar s|m|h|d
 Specify how long a message can stay in the queue.
 The default value is 4 days.
 For example:
@@ -728,7 +728,7 @@ It can be obtained using the
 .Xr openssl 1
 utility as follow:
 .Bd -literal -offset indent
-$ openssl rand -hex 16
+$ openssl rand \-hex 16
 .Ed
 .Pp
 If the
@@ -891,7 +891,7 @@ A secrets file is needed to specify a username and password:
 # touch /etc/mail/secrets
 # chmod 640 /etc/mail/secrets
 # chown root:_smtpd /etc/mail/secrets
-# echo "label username:password" \*(Gt /etc/mail/secrets
+# echo "label username:password" > /etc/mail/secrets
 # makemap /etc/mail/secrets
 .Ed
 .Pp
@@ -914,9 +914,9 @@ The mail server listens on all interfaces the default route(s) point to.
 Mail with a local destination should be sent to an external mda.
 First, the RSA certificate is created:
 .Bd -literal -offset indent
-# openssl genrsa -out /etc/ssl/private/mail.example.com.key 4096
-# openssl req -new -x509 -key /etc/ssl/private/mail.example.com.key \e
-	-out /etc/ssl/mail.example.com.crt -days 365
+# openssl genrsa \-out /etc/ssl/private/mail.example.com.key 4096
+# openssl req \-new \-x509 \-key /etc/ssl/private/mail.example.com.key \e
+	\-out /etc/ssl/mail.example.com.crt \-days 365
 # chmod 600 /etc/ssl/mail.example.com.crt
 # chmod 600 /etc/ssl/private/mail.example.com.key
 .Ed
@@ -933,9 +933,9 @@ listen on egress tls pki mail.example.com auth
 
 table aliases db:/etc/mail/aliases.db
 
-accept for local alias <aliases> deliver to mda "/path/to/mda -f -"
+accept for local alias <aliases> deliver to mda "/path/to/mda \-f \-"
 accept from any for domain example.org \e
-	deliver to mda "/path/to/mda -f -"
+	deliver to mda "/path/to/mda \-f \-"
 accept for any relay
 .Ed
 .Sh SEE ALSO
