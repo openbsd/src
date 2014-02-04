@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.181 2014/02/04 15:22:39 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.182 2014/02/04 15:44:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -266,6 +266,16 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			if (strcmp(buf, e->dest))
 				e->rcpt = xstrdup(buf, "mta_envelope:rcpt");
 			e->task = task;
+			if (evp.dsn_orcpt.user[0] && evp.dsn_orcpt.domain[0]) {
+				snprintf(buf, sizeof buf, "%s@%s",
+			    	    evp.dsn_orcpt.user, evp.dsn_orcpt.domain);
+				e->dsn_orcpt = xstrdup(buf,
+				    "mta_envelope:dsn_orcpt");
+			}
+			strlcpy(e->dsn_envid, evp.dsn_envid,
+			    sizeof e->dsn_envid);
+			e->dsn_notify = evp.dsn_notify;
+			e->dsn_ret = evp.dsn_ret;
 
 			TAILQ_INSERT_TAIL(&task->envelopes, e, entry);
 			log_debug("debug: mta: received evp:%016" PRIx64
@@ -772,12 +782,15 @@ mta_delivery_flush_event(int fd, short event, void *arg)
 
 	if (tree_poproot(&flush_evp, NULL, (void**)(&e))) {
 
-		if (e->delivery == IMSG_DELIVERY_OK)
-			queue_ok(e->id);
-		else if (e->delivery == IMSG_DELIVERY_TEMPFAIL)
-			queue_tempfail(e->id, e->status);
+		if (e->delivery == IMSG_DELIVERY_OK) {
+			m_create(p_queue, IMSG_DELIVERY_OK, 0, 0, -1);
+			m_add_evpid(p_queue, e->id);
+			m_add_int(p_queue, e->ext);
+			m_close(p_queue);
+		} else if (e->delivery == IMSG_DELIVERY_TEMPFAIL)
+			queue_tempfail(e->id, e->status, ESC_OTHER_STATUS);
 		else if (e->delivery == IMSG_DELIVERY_PERMFAIL)
-			queue_permfail(e->id, e->status);
+			queue_permfail(e->id, e->status, ESC_OTHER_STATUS);
 		else if (e->delivery == IMSG_DELIVERY_LOOP)
 			queue_loop(e->id);
 		else {
@@ -790,6 +803,7 @@ mta_delivery_flush_event(int fd, short event, void *arg)
 
 		free(e->dest);
 		free(e->rcpt);
+		free(e->dsn_orcpt);
 		free(e);
 
 		tv.tv_sec = 0;

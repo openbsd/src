@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.74 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.75 2014/02/04 15:44:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -107,6 +107,9 @@ struct {
 	char	 *from;
 	char	 *fromname;
 	char	**rcpts;
+	char	 *dsn_notify;
+	char	 *dsn_ret;
+	char	 *dsn_envid;
 	int	  rcpt_cnt;
 	int	  need_linesplit;
 	int	  saw_date;
@@ -163,9 +166,9 @@ enqueue(int argc, char *argv[])
 	char			*fake_from = NULL, *buf;
 	struct passwd		*pw;
 	FILE			*fp, *fout;
+	size_t			 len, envid_sz = 0;
 	int			 fd;
 	char			 sfn[] = "/tmp/smtpd.XXXXXXXXXX";
-	size_t			 len;
 	char			*line;
 	int			 dotted;
 	int			 inheaders = 0;
@@ -179,7 +182,7 @@ enqueue(int argc, char *argv[])
 	save_argv = argv;
 
 	while ((ch = getopt(argc, argv,
-	    "A:B:b:E::e:F:f:iJ::L:mN:o:p:qR:tvx")) != -1) {
+	    "A:B:b:E::e:F:f:iJ::L:mN:o:p:qR:tvV:x")) != -1) {
 		switch (ch) {
 		case 'f':
 			fake_from = optarg;
@@ -187,11 +190,20 @@ enqueue(int argc, char *argv[])
 		case 'F':
 			msg.fromname = optarg;
 			break;
+		case 'N':
+			msg.dsn_notify = optarg;
+			break;
+		case 'R':
+			msg.dsn_ret = optarg;
+			break;
 		case 't':
 			tflag = 1;
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		case 'V':
+			msg.dsn_envid = optarg;
 			break;
 		/* all remaining: ignored, sendmail compat */
 		case 'A':
@@ -202,10 +214,8 @@ enqueue(int argc, char *argv[])
 		case 'i':
 		case 'L':
 		case 'm':
-		case 'N': /* XXX: DSN */
 		case 'o':
 		case 'p':
-		case 'R':
 		case 'x':
 			break;
 		case 'q':
@@ -275,11 +285,22 @@ enqueue(int argc, char *argv[])
 	send_line(fout, verbose, "EHLO localhost\n");
 	get_responses(fout, 1);
 
-	send_line(fout, verbose, "MAIL FROM:<%s>\n", msg.from);
+	if (msg.dsn_envid != NULL)
+		envid_sz = strlen(msg.dsn_envid);
+
+	send_line(fout, verbose, "MAIL FROM:<%s> %s%s %s%s\n",
+	    msg.from,
+	    msg.dsn_ret ? "RET=" : "",
+	    msg.dsn_ret ? msg.dsn_ret : "",
+	    envid_sz ? "ENVID=" : "",
+	    envid_sz ? msg.dsn_envid : "");
 	get_responses(fout, 1);
 
 	for (i = 0; i < msg.rcpt_cnt; i++) {
-		send_line(fout, verbose, "RCPT TO:<%s>\n", msg.rcpts[i]);
+		send_line(fout, verbose, "RCPT TO:<%s> %s%s\n",
+		    msg.rcpts[i],
+		    msg.dsn_notify ? "NOTIFY=" : "",
+		    msg.dsn_notify ? msg.dsn_notify : "");
 		get_responses(fout, 1);
 	}
 

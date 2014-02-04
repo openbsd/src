@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.27 2014/02/04 13:44:41 eric Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.28 2014/02/04 15:44:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -65,6 +65,18 @@ envelope_set_errormsg(struct envelope *e, char *fmt, ...)
 
 	if ((size_t)ret >= sizeof(e->errorline))
 		strlcpy(e->errorline + (sizeof(e->errorline) - 4), "...", 4);
+}
+
+void
+envelope_set_esc_class(struct envelope *e, enum enhanced_status_class class)
+{
+	e->esc_class = class;
+}
+
+void
+envelope_set_esc_code(struct envelope *e, enum enhanced_status_code code)
+{
+	e->esc_code = code;
 }
 
 static int
@@ -188,6 +200,12 @@ envelope_dump_buffer(const struct envelope *ep, char *dest, size_t len)
 	envelope_ascii_dump(ep, &dest, &len, "expire");
 	envelope_ascii_dump(ep, &dest, &len, "retry");
 	envelope_ascii_dump(ep, &dest, &len, "flags");
+	envelope_ascii_dump(ep, &dest, &len, "dsn-notify");
+	envelope_ascii_dump(ep, &dest, &len, "dsn-ret");
+	envelope_ascii_dump(ep, &dest, &len, "dsn-envid");
+	envelope_ascii_dump(ep, &dest, &len, "dsn-orcpt");
+	envelope_ascii_dump(ep, &dest, &len, "esc-class");
+	envelope_ascii_dump(ep, &dest, &len, "esc-code");
 
 	switch (ep->type) {
 	case D_MDA:
@@ -218,6 +236,17 @@ envelope_dump_buffer(const struct envelope *ep, char *dest, size_t len)
 		return (0);
 
 	return (dest - p);
+}
+
+static int
+ascii_load_uint8(uint8_t *dest, char *buf)
+{
+	const char *errstr;
+
+	*dest = strtonum(buf, 0, 0xff, &errstr);
+	if (errstr)
+		return 0;
+	return 1;
 }
 
 static int
@@ -382,6 +411,20 @@ ascii_load_bounce_type(enum bounce_type *dest, char *buf)
 		*dest = B_ERROR;
 	else if (strcasecmp(buf, "warn") == 0)
 		*dest = B_WARNING;
+	else if (strcasecmp(buf, "dsn") == 0)
+		*dest = B_DSN;
+	else
+		return 0;
+	return 1;
+}
+
+static int
+ascii_load_dsn_ret(enum dsn_ret *ret, char *buf)
+{
+	if (strcasecmp(buf, "HDRS") == 0)
+		*ret = DSN_RETHDRS;
+	else if (strcasecmp(buf, "FULL") == 0)
+		*ret = DSN_RETFULL;
 	else
 		return 0;
 	return 1;
@@ -500,6 +543,24 @@ ascii_load_field(const char *field, struct envelope *ep, char *buf)
 	if (strcasecmp("version", field) == 0)
 		return ascii_load_uint32(&ep->version, buf);
 
+	if (strcasecmp("dsn-notify", field) == 0)
+		return ascii_load_uint8(&ep->dsn_notify, buf);
+
+	if (strcasecmp("dsn-orcpt", field) == 0)
+		return ascii_load_mailaddr(&ep->dsn_orcpt, buf);
+
+	if (strcasecmp("dsn-ret", field) == 0)
+		return ascii_load_dsn_ret(&ep->dsn_ret, buf);
+
+	if (strcasecmp("dsn-envid", field) == 0)
+		return ascii_load_string(ep->dsn_envid, buf, sizeof(ep->dsn_envid));
+
+	if (strcasecmp("esc-class", field) == 0)
+		return ascii_load_uint8(&ep->esc_class, buf);
+
+	if (strcasecmp("esc-code", field) == 0)
+		return ascii_load_uint8(&ep->esc_code, buf);
+
 	return (0);
 }
 
@@ -522,6 +583,12 @@ err:
 	return (0);
 }
 
+
+static int
+ascii_dump_uint8(uint8_t src, char *dest, size_t len)
+{
+	return bsnprintf(dest, len, "%d", src);
+}
 
 static int
 ascii_dump_uint16(uint16_t src, char *dest, size_t len)
@@ -667,10 +734,28 @@ ascii_dump_bounce_type(enum bounce_type type, char *dest, size_t len)
 	case B_WARNING:
 		p = "warn";
 		break;
+	case B_DSN:
+		p = "dsn";
+		break;
 	default:
 		return 0;
 	}
 	return bsnprintf(dest, len, "%s", p);
+}
+
+
+static int
+ascii_dump_dsn_ret(enum dsn_ret flag, char *dest, size_t len)
+{
+        size_t cpylen = 0;
+
+        dest[0] = '\0';
+        if (flag == DSN_RETFULL)
+                cpylen = strlcat(dest, "FULL", len);
+        else if (flag == DSN_RETHDRS)
+                cpylen = strlcat(dest, "HDRS", len);
+
+        return cpylen < len ? 1 : 0;
 }
 
 static int
@@ -784,6 +869,33 @@ ascii_dump_field(const char *field, const struct envelope *ep,
 
 	if (strcasecmp(field, "version") == 0)
 		return ascii_dump_uint32(SMTPD_ENVELOPE_VERSION, buf, len);
+
+	if (strcasecmp(field, "dsn-notify") == 0)
+		return ascii_dump_uint8(ep->dsn_notify, buf, len);
+
+	if (strcasecmp(field, "dsn-ret") == 0)
+		return ascii_dump_dsn_ret(ep->dsn_ret, buf, len);
+
+	if (strcasecmp(field, "dsn-orcpt") == 0) {
+		if (ep->dsn_orcpt.user[0] && ep->dsn_orcpt.domain[0])
+			return ascii_dump_mailaddr(&ep->dsn_orcpt, buf, len);
+		return 1;
+	}
+
+	if (strcasecmp(field, "dsn-envid") == 0)
+		return ascii_dump_string(ep->dsn_envid, buf, len);
+
+	if (strcasecmp(field, "esc-class") == 0) {
+		if (ep->esc_class)
+			return ascii_dump_uint8(ep->esc_class, buf, len);
+		return 1;
+	}
+
+	if (strcasecmp(field, "esc-code") == 0) {
+		if (ep->esc_class)
+			return ascii_dump_uint8(ep->esc_code, buf, len);
+		return 1;
+	}
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.447 2014/02/04 15:22:39 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.448 2014/02/04 15:44:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -90,6 +90,8 @@
 #define RELAY_MX		0x20
 #define RELAY_LMTP		0x80
 #define	RELAY_TLS_VERIFY	0x200
+
+#define MTA_EXT_DSN		0x400
 
 struct userinfo {
 	char username[SMTPD_MAXLOGNAME];
@@ -386,12 +388,20 @@ struct delivery_mta {
 enum bounce_type {
 	B_ERROR,
 	B_WARNING,
+	B_DSN
+};
+
+enum dsn_ret {
+	DSN_RETFULL = 1,
+	DSN_RETHDRS
 };
 
 struct delivery_bounce {
 	enum bounce_type	type;
 	time_t			delay;
 	time_t			expire;
+	enum dsn_ret		dsn_ret;
+        int			mta_without_dsn;
 };
 
 enum expand_type {
@@ -435,6 +445,13 @@ struct expand {
 	struct expandnode		*parent;
 };
 
+#define DSN_SUCCESS 0x01
+#define DSN_FAILURE 0x02
+#define DSN_DELAY   0x04
+#define DSN_NEVER   0x08
+
+#define	DSN_ENVID_LEN	100
+
 #define	SMTPD_ENVELOPE_VERSION		2
 struct envelope {
 	TAILQ_ENTRY(envelope)		entry;
@@ -468,6 +485,14 @@ struct envelope {
 	time_t				lasttry;
 	time_t				nexttry;
 	time_t				lastbounce;
+
+	struct mailaddr			dsn_orcpt;
+	char				dsn_envid[DSN_ENVID_LEN+1];
+	uint8_t				dsn_notify;
+	enum dsn_ret			dsn_ret;
+
+	uint8_t				esc_class;
+	uint8_t				esc_code;
 };
 
 struct listener {
@@ -769,6 +794,13 @@ struct mta_envelope {
 	char				*rcpt;
 	struct mta_task			*task;
 	int				 delivery;
+
+	int				 ext;
+	char				*dsn_orcpt;
+	char				dsn_envid[DSN_ENVID_LEN+1];
+	uint8_t				dsn_notify;
+	enum dsn_ret			dsn_ret;
+
 	char				 status[SMTPD_MAXLINESIZE];
 };
 
@@ -1082,6 +1114,8 @@ int		 enqueue(int, char **);
 
 /* envelope.c */
 void envelope_set_errormsg(struct envelope *, char *, ...);
+void envelope_set_esc_class(struct envelope *, enum enhanced_status_class);
+void envelope_set_esc_code(struct envelope *, enum enhanced_status_code);
 int envelope_load_buffer(struct envelope *, const char *, size_t);
 int envelope_dump_buffer(const struct envelope *, char *, size_t);
 
@@ -1214,8 +1248,8 @@ int cmdline_symset(char *);
 /* queue.c */
 pid_t queue(void);
 void queue_ok(uint64_t);
-void queue_tempfail(uint64_t, const char *);
-void queue_permfail(uint64_t, const char *);
+void queue_tempfail(uint64_t, const char *, enum enhanced_status_code);
+void queue_permfail(uint64_t, const char *, enum enhanced_status_code);
 void queue_loop(uint64_t);
 void queue_flow_control(void);
 

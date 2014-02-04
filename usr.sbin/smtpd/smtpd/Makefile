@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.68 2014/01/18 05:54:51 martynas Exp $
+#	$OpenBSD: Makefile,v 1.69 2014/02/04 15:44:06 eric Exp $
 
 .PATH:		${.CURDIR}/..
 
 PROG=		smtpd
 
 SRCS=		aliases.c bounce.c ca.c compress_backend.c config.c		\
-		control.c crypto.c delivery.c dict.c dns.c envelope.c		\
+		control.c crypto.c delivery.c dict.c dns.c envelope.c esc.c	\
 		expand.c forward.c iobuf.c ioev.c limit.c lka.c	lka_session.c	\
 		log.c mda.c mfa.c mfa_session.c mproc.c				\
 		mta.c mta_session.c parse.y queue.c queue_backend.c		\

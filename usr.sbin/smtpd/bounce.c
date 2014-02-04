@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.61 2014/02/04 14:56:03 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.62 2014/02/04 15:44:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -95,6 +95,7 @@ static void bounce_status(struct bounce_session *, const char *, ...);
 static void bounce_io(struct io *, int);
 static void bounce_timeout(int, short, void *);
 static void bounce_free(struct bounce_session *);
+static const char *bounce_strtype(enum bounce_type);
 
 static struct tree			wait_fd;
 static struct bounce_message_tree	messages;
@@ -328,6 +329,12 @@ const char *notice_warning2 =
     "    The message is kept in the queue for up to %s.\n"
     "    You DO NOT NEED to re-send the message to these recipients.\n\n";
 
+const char *notice_success =
+    "    Your message was successfully delivered to these recipients.\n\n";
+
+const char *notice_relay =
+    "    Your message was relayed to these recipients.\n\n";
+
 static int
 bounce_next_message(struct bounce_session *s)
 {
@@ -420,18 +427,29 @@ bounce_next(struct bounce_session *s)
 		    "\n"
 		    NOTICE_INTRO
 		    "\n",
-		    (s->msg->bounce.type == B_ERROR) ? "error" : "warning",
+		    bounce_strtype(s->msg->bounce.type),
 		    s->smtpname,
 		    s->msg->to,
 		    time_to_text(time(NULL)));
 
-		if (s->msg->bounce.type == B_ERROR)
+		switch (s->msg->bounce.type) {
+		case B_ERROR:
 			iobuf_xfqueue(&s->iobuf, "bounce_next: BODY",
 			    notice_error);
-		else
+			break;
+		case B_WARNING:
 			iobuf_xfqueue(&s->iobuf, "bounce_next: BODY",
 			    notice_warning,
 			    bounce_duration(s->msg->bounce.delay));
+			break;
+		case B_DSN:
+			iobuf_xfqueue(&s->iobuf, "bounce_next: BODY",
+			    s->msg->bounce.mta_without_dsn ?
+			    notice_relay : notice_success);
+			break;
+		default:
+			log_warn("warn: bounce: unknown bounce_type");
+		}
 
 		TAILQ_FOREACH(evp, &s->msg->envelopes, entry) {
 			iobuf_xfqueue(&s->iobuf,
@@ -463,6 +481,15 @@ bounce_next(struct bounce_session *s)
 			line = fgetln(s->msgfp, &len);
 			if (line == NULL)
 				break;
+			if (len == 1 && line[0] == '\n' && /* end of headers */
+			    s->msg->bounce.type == B_DSN &&
+			    s->msg->bounce.dsn_ret ==  DSN_RETHDRS) {
+				fclose(s->msgfp);
+				s->msgfp = NULL;
+				bounce_send(s, ".");
+				s->state = BOUNCE_DATA_END;
+				return (0);
+			}
 			line[len - 1] = '\0';
 			iobuf_xfqueue(&s->iobuf,
 			    "bounce_next: DATA_MESSAGE", "%s%s\n",
@@ -691,6 +718,22 @@ bounce_message_cmp(const struct bounce_message *a,
 		return (r);
 
 	return memcmp(&a->bounce, &b->bounce, sizeof (a->bounce));
+}
+
+static const char *
+bounce_strtype(enum bounce_type t)
+{
+	switch (t) {
+	case B_ERROR:
+		return ("error");
+	case B_WARNING:
+		return ("warning");
+	case B_DSN:
+		return ("dsn");
+	default:
+		log_warn("warn: bounce: unknown bounce_type");
+		return ("");
+	}
 }
 
 SPLAY_GENERATE(bounce_message_tree, bounce_message, sp_entry,

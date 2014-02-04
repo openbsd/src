@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.101 2014/02/04 14:56:03 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.102 2014/02/04 15:44:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -90,7 +90,7 @@ static void mda_sig_handler(int, short, void *);
 static int mda_check_loop(FILE *, struct mda_envelope *);
 static int mda_getlastline(int, char *, size_t);
 static void mda_done(struct mda_session *);
-static void mda_fail(struct mda_user *, int, const char *);
+static void mda_fail(struct mda_user *, int, const char *, enum enhanced_status_code);
 static void mda_drain(void);
 static void mda_log(const struct mda_envelope *, const char *, const char *);
 static struct mda_user *mda_user(const struct envelope *);
@@ -137,10 +137,12 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 
 			if (status == LKA_TEMPFAIL)
 				mda_fail(u, 0,
-				    "Temporary failure in user lookup");
+				    "Temporary failure in user lookup",
+				    ESC_OTHER_ADDRESS_STATUS);
 			else if (status == LKA_PERMFAIL)
 				mda_fail(u, 1,
-				    "Permanent failure in user lookup");
+				    "Permanent failure in user lookup",
+				    ESC_DESTINATION_MAILBOX_HAS_MOVED);
 			else {
 				memmove(&u->userinfo, data, sz);
 				u->flags &= ~USER_WAITINFO;
@@ -204,7 +206,8 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 
 			if (imsg->fd == -1) {
 				log_debug("debug: mda: cannot get message fd");
-				queue_tempfail(e->id, "Cannot get message fd");
+				queue_tempfail(e->id, "Cannot get message fd",
+				    ESC_OTHER_MAIL_SYSTEM_STATUS);
 				mda_log(e, "TempFail", "Cannot get message fd");
 				mda_done(s);
 				return;
@@ -217,7 +220,8 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			if ((s->datafp = fdopen(imsg->fd, "r")) == NULL) {
 				log_warn("warn: mda: fdopen");
 				close(imsg->fd);
-				queue_tempfail(e->id, "fdopen failed");
+				queue_tempfail(e->id, "fdopen failed",
+				    ESC_OTHER_MAIL_SYSTEM_STATUS);
 				mda_log(e, "TempFail", "fdopen failed");
 				mda_done(s);
 				return;
@@ -245,7 +249,8 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			if (n == -1) {
 				log_warn("warn: mda: "
 				    "fail to write delivery info");
-				queue_tempfail(e->id, "Out of memory");
+				queue_tempfail(e->id, "Out of memory",
+				    ESC_OTHER_MAIL_SYSTEM_STATUS);
 				mda_log(e, "TempFail", "Out of memory");
 				mda_done(s);
 				return;
@@ -336,7 +341,8 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			e = s->evp;
 			if (imsg->fd == -1) {
 				log_warn("warn: mda: fail to retrieve mda fd");
-				queue_tempfail(e->id, "Cannot get mda fd");
+				queue_tempfail(e->id, "Cannot get mda fd",
+				    ESC_OTHER_MAIL_SYSTEM_STATUS);
 				mda_log(e, "TempFail", "Cannot get mda fd");
 				mda_done(s);
 				return;
@@ -379,7 +385,8 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 
 			/* update queue entry */
 			if (error) {
-				queue_tempfail(e->id, error);
+				queue_tempfail(e->id, error,
+				    ESC_OTHER_MAIL_SYSTEM_STATUS);
 				snprintf(buf, sizeof buf, "Error (%s)", error);
 				mda_log(e, "TempFail", buf);
 			}
@@ -662,7 +669,7 @@ mda_getlastline(int fd, char *dst, size_t dstsz)
 }
 
 static void
-mda_fail(struct mda_user *user, int permfail, const char *error)
+mda_fail(struct mda_user *user, int permfail, const char *error, enum enhanced_status_code code)
 {
 	struct mda_envelope	*e;
 
@@ -670,11 +677,11 @@ mda_fail(struct mda_user *user, int permfail, const char *error)
 		TAILQ_REMOVE(&user->envelopes, e, entry);
 		if (permfail) {
 			mda_log(e, "PermFail", error);
-			queue_permfail(e->id, error);
+			queue_permfail(e->id, error, code);
 		}
 		else {
 			mda_log(e, "TempFail", error);
-			queue_tempfail(e->id, error);
+			queue_tempfail(e->id, error, code);
 		}
 		mda_envelope_free(e);
 	}

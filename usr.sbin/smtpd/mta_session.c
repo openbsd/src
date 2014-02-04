@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.53 2014/02/04 14:56:03 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.54 2014/02/04 15:44:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -146,6 +146,8 @@ static int mta_check_loop(FILE *);
 static void mta_start_tls(struct mta_session *);
 static int mta_verify_certificate(struct mta_session *);
 static struct mta_session *mta_tree_pop(struct tree *, uint64_t);
+static const char * dsn_strret(enum dsn_ret);
+static const char * dsn_strnotify(uint8_t);
 
 void mta_hoststat_update(const char *, const char *);
 void mta_hoststat_reschedule(const char *);
@@ -576,6 +578,8 @@ mta_connect(struct mta_session *s)
 static void
 mta_enter_state(struct mta_session *s, int newstate)
 {
+	struct mta_envelope	 *e;
+	size_t			 envid_sz;
 	int			 oldstate;
 	ssize_t			 q;
 	char			 ibuf[SMTPD_MAXLINESIZE];
@@ -760,15 +764,39 @@ mta_enter_state(struct mta_session *s, int newstate)
 		break;
 
 	case MTA_MAIL:
+		if (s->currevp == NULL)
+			s->currevp = TAILQ_FIRST(&s->task->envelopes);
+
+		e = s->currevp;
 		s->hangon = 0;
 		s->msgtried++;
-		mta_send(s, "MAIL FROM:<%s>", s->task->sender);
+		envid_sz = strlen(e->dsn_envid);
+		if (s->ext & MTA_EXT_DSN) {
+			mta_send(s, "MAIL FROM:<%s> %s%s %s%s",
+			    s->task->sender,
+			    e->dsn_ret ? "RET=" : "",
+			    e->dsn_ret ? dsn_strret(e->dsn_ret) : "",
+			    envid_sz ? "ENVID=" : "",
+			    envid_sz ? e->dsn_envid : "");
+		} else
+			mta_send(s, "MAIL FROM:<%s>", s->task->sender);
 		break;
 
 	case MTA_RCPT:
 		if (s->currevp == NULL)
 			s->currevp = TAILQ_FIRST(&s->task->envelopes);
-		mta_send(s, "RCPT TO:<%s>", s->currevp->dest);
+
+		e = s->currevp;
+		if (s->ext & MTA_EXT_DSN) {
+			mta_send(s, "RCPT TO:<%s> %s%s %s%s",
+			    e->dest,
+			    e->dsn_notify ? "NOTIFY=" : "",
+			    e->dsn_notify ? dsn_strnotify(e->dsn_notify) : "",
+			    e->dsn_orcpt ? "ORCPT=" : "",
+			    e->dsn_orcpt ? e->dsn_orcpt : "");
+		} else
+			mta_send(s, "RCPT TO:<%s>", e->dest);
+
 		s->rcptcount++;
 		break;
 
@@ -1179,6 +1207,8 @@ mta_io(struct io *io, int evt)
 			}
 			else if (strcmp(msg, "PIPELINING") == 0)
 				s->ext |= MTA_EXT_PIPELINING;
+			else if (strcmp(msg, "DSN") == 0)
+				s->ext |= MTA_EXT_DSN;
 		}
 
 		if (cont)
@@ -1334,6 +1364,7 @@ mta_flush_task(struct mta_session *s, int delivery, const char *error, size_t co
 
 		/* we're about to log, associate session to envelope */
 		e->session = s->id;
+		e->ext = s->ext;
 
 		/* XXX */
 		/*
@@ -1547,6 +1578,45 @@ mta_verify_certificate(struct mta_session *s)
 	    &req_ca_vrfy, sizeof req_ca_vrfy);
 
 	return 1;
+}
+
+static const char *
+dsn_strret(enum dsn_ret ret)
+{
+	if (ret == DSN_RETHDRS)
+		return "HDRS";
+	else if (ret == DSN_RETFULL)
+		return "FULL";
+	else {
+		log_debug("mta: invalid ret %d", ret);
+		return "???";
+	}
+}
+
+static const char *
+dsn_strnotify(uint8_t arg)
+{
+	static char	buf[32];
+	size_t		sz;
+
+	if (arg & DSN_SUCCESS)
+		strlcat(buf, "SUCCESS,", sizeof(buf));
+
+	if (arg & DSN_FAILURE)
+		strlcat(buf, "FAILURE,", sizeof(buf));
+
+	if (arg & DSN_DELAY)
+		strlcat(buf, "DELAY,", sizeof(buf));
+
+	if (arg & DSN_NEVER)
+		strlcat(buf, "NEVER,", sizeof(buf));
+
+	/* trim trailing comma */
+	sz = strlen(buf);
+	if (sz)
+		buf[sz - 1] = '\0';
+
+	return (buf);
 }
 
 #define CASE(x) case x : return #x
