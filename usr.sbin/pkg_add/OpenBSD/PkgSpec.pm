@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.43 2014/02/03 12:03:01 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.44 2014/02/04 07:59:40 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -189,67 +189,11 @@ sub is_valid
 package OpenBSD::PkgSpec::SubPattern;
 use OpenBSD::PackageName;
 
-my $exception = {
-	"db-3.*" => "db->=3,<4",
-	"db-4.*" => "db->=4,<5",
-	"db-java-4.*" => "db-java->=4,<5",
-	"emacs-21.*" => "emacs->=21,<22",
-	"emacs-21.4*" => "emacs->=21.4,<21.5",
-	"emacs-22.2*" => "emacs->=22.2,<22.3",
-	"enlightenment-0.16*" => "enlightenment->=0.16,<0.17",
-	"gimp-2.*" => "gimp->=2,<3",
-	"gnupg->=1.4.*" => "gnupg->=1.4",
-	"gstreamer-0.10.*" => "gstreamer->=0.10,<0.11",
-	"gtksourceview-2.*" => "gtksourceview->=2,<3",
-	"hydra-5.4*" => "hydra->=5.4,<5.5",
-	"jdk->=1.5.0.*" => "jdk->=1.5.0",
-	"jdk->=1.6.0.*" => "jdk->=1.6.0",
-	"jre->=1.5.0.*" => "jre->=1.5.0",
-	"libggi->=0.9*" => "libggi->=0.9",
-	"libnet-1.0*" => "libnet->=1.0,<1.1",
-	"libnet-1.0.*" => "libnet->=1.0,<1.1",
-	"libnet-1.1*" => "libnet->=1.1,<1.2",
-	"libsigc++-1.*" => "libsigc++->=1,<2",
-	"libsigc++-2.*" => "libsigc++->=2,<3",
-	"mysql-client-5.0.*" => "mysql-client->=5.0,<5.1",
-	"ocaml-3.09.3*" => "ocaml->=3.09.3,<3.09.4",
-	"openldap-client-2.*" => "openldap-client->=2,<3",
-	"pgp-5.*" => "pgp->=5,<6",
-	"postgresql-client-8.3.*" => "postgresql-client->=8.3,<8.4",
-	"python-2.4*" => "python->=2.4,<2.5",
-	"python-2.4.*" => "python->=2.4,<2.5",
-	"python-2.5*" => "python->=2.5,<2.6",
-	"python-2.5.*" => "python->=2.5,<2.6",
-	"python-2.6.*" => "python->=2.6,<2.7",
-	"python-bsddb-2.5*" => "python-bsddb->=2.5,<2.6",
-	"python-tkinter-2.4*" => "python-tkinter->=2.4,<2.5",
-	"python-tkinter-2.5*" => "python-tkinter->=2.5,<2.6",
-	"rrdtool-1.2.*" => "rrdtool->=1.2,<1.3",
-	"swt-3.2.2*" => "swt->=3.2.2,<3.2.3",
-	"swt-browser-3.2.2*" => "swt-browser->=3.2.2,<3.2.3",
-	"tcl-8.4.*" => "tcl->=8.4,<8.5",
-	"tcl-8.5.*" => "tcl->=8.5,<8.6",
-	"tk-8.4*" => "tk->=8.4,<8.5",
-	"tk-8.4.*" => "tk->=8.4,<8.5",
-	"tk-8.5*" => "tk->=8.5,<8.6",
-	"tomcat-4.*" => "tomcat->=4,<5",
-	"tomcat-5.*" => "tomcat->=5,<6",
-	"tomcat-6.*" => "tomcat->=6,<7",
-	"tomcat-admin-4.*" => "tomcat-admin->=4,<5",
-	"tomcat-admin-5.*" => "tomcat-admin->=5,<6",
-	"xmms-1.2.11*" => "xmms->=1.2.11,<1.2.12"
-};
-
 sub parse
 {
 	my ($class, $p) = @_;
 
 	my $r = {};
-
-	if (defined $exception->{$p}) {
-		$p = $exception->{$p};
-		$r->{e} = 1;
-	}
 
 	# let's try really hard to find the stem and the flavors
 	unless ($p =~ m/^(.*?)\-((?:(?:\>|\>\=|\<\=|\<|\=)?\d|\*)[^-]*)(.*)$/) {
@@ -376,7 +320,7 @@ LOOP2:
 
 sub is_valid
 {
-	return !defined shift->{e};
+	return 1;
 }
 
 package OpenBSD::PkgSpec;
