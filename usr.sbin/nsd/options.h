@@ -18,6 +18,7 @@ struct query;
 struct dname;
 struct tsig_key;
 struct buffer;
+struct nsd;
 
 typedef struct nsd_options nsd_options_t;
 typedef struct pattern_options pattern_options_t;
@@ -322,7 +323,7 @@ int acl_equal(acl_options_t* p, acl_options_t* q);
 /* see if a zone is a slave or a master zone */
 int zone_is_slave(zone_options_t* opt);
 /* create zonefile name, returns static pointer (perhaps to options data) */
-const char* config_make_zonefile(zone_options_t* zone);
+const char* config_make_zonefile(zone_options_t* zone, struct nsd* nsd);
 
 #define ZONEC_PCT_TIME 5 /* seconds, then it starts to print pcts */
 #define ZONEC_PCT_COUNT 100000 /* elements before pct check is done */

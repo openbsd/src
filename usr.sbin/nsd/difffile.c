@@ -472,6 +472,7 @@ nsec3_rrsets_changed_remove_prehash(domain_type* domain, zone_type* zone)
 	}
 	if(domain != zone->apex && domain->nsec3 &&
 		domain->nsec3->dshash_node.key &&
+		(!domain->parent || nsec3_domain_part_of_zone(domain->parent, zone)) &&
 		!nsec3_condition_dshash(domain, zone)) {
 		/* remove precompile */
 		domain->nsec3->nsec3_ds_parent_cover = NULL;
@@ -606,7 +607,7 @@ int
 delete_RR(namedb_type* db, const dname_type* dname,
 	uint16_t type, uint16_t klass,
 	buffer_type* packet, size_t rdatalen, zone_type *zone,
-	region_type* temp_region, udb_ptr* udbz)
+	region_type* temp_region, udb_ptr* udbz, int* softfail)
 {
 	domain_type *domain;
 	rrset_type *rrset;
@@ -615,6 +616,7 @@ delete_RR(namedb_type* db, const dname_type* dname,
 		log_msg(LOG_WARNING, "diff: domain %s does not exist",
 			dname_to_string(dname,0));
 		buffer_skip(packet, rdatalen);
+		*softfail = 1;
 		return 1; /* not fatal error */
 	}
 	rrset = domain_find_rrset(domain, zone, type);
@@ -622,6 +624,7 @@ delete_RR(namedb_type* db, const dname_type* dname,
 		log_msg(LOG_WARNING, "diff: rrset %s does not exist",
 			dname_to_string(dname,0));
 		buffer_skip(packet, rdatalen);
+		*softfail = 1;
 		return 1; /* not fatal error */
 	} else {
 		/* find the RR in the rrset */
@@ -641,9 +644,13 @@ delete_RR(namedb_type* db, const dname_type* dname,
 			return 0;
 		}
 		rrnum = find_rr_num(rrset, type, klass, rdatas, rdata_num, 0);
+		if(rrnum == -1 && type == TYPE_SOA && domain == zone->apex
+			&& rrset->rr_count != 0)
+			rrnum = 0; /* replace existing SOA if no match */
 		if(rrnum == -1) {
 			log_msg(LOG_WARNING, "diff: RR <%s, %s> does not exist",
 				dname_to_string(dname,0), rrtype_to_string(type));
+			*softfail = 1;
 			return 1; /* not fatal error */
 		}
 		/* delete the normalized RR from the udb */
@@ -713,7 +720,8 @@ delete_RR(namedb_type* db, const dname_type* dname,
 int
 add_RR(namedb_type* db, const dname_type* dname,
 	uint16_t type, uint16_t klass, uint32_t ttl,
-	buffer_type* packet, size_t rdatalen, zone_type *zone, udb_ptr* udbz)
+	buffer_type* packet, size_t rdatalen, zone_type *zone, udb_ptr* udbz,
+	int* softfail)
 {
 	domain_type* domain;
 	rrset_type* rrset;
@@ -757,6 +765,7 @@ add_RR(namedb_type* db, const dname_type* dname,
 		DEBUG(DEBUG_XFRD, 2, (LOG_ERR, "diff: RR <%s, %s> already exists",
 			dname_to_string(dname,0), rrtype_to_string(type)));
 		/* ignore already existing RR: lenient accepting of messages */
+		*softfail = 1;
 		return 1;
 	}
 
@@ -899,7 +908,8 @@ static int
 apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 	nsd_options_t* opt, uint32_t seq_nr, uint32_t seq_total,
 	int* is_axfr, int* delete_mode, int* rr_count,
-	udb_ptr* udbz, struct zone** zone_res, const char* patname, int* bytes)
+	udb_ptr* udbz, struct zone** zone_res, const char* patname, int* bytes,
+	int* softfail)
 {
 	uint32_t msglen, checklen, pkttype;
 	int qcount, ancount, counter;
@@ -1114,7 +1124,7 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 			 * previously (by check_for_bad_serial) if it exists */
 			if(!*is_axfr && !domain_find_rrset(zone_db->apex,
 				zone_db, TYPE_SOA)) {
-				log_msg(LOG_ERR, "%s SOA serial %d is not "
+				log_msg(LOG_ERR, "%s SOA serial %u is not "
 					"in memory, skip IXFR", zone, serialno);
 				region_destroy(region);
 				/* break out and stop the IXFR, ignore it */
@@ -1146,7 +1156,7 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 				continue; /* do not delete final SOA RR for IXFR */
 			}
 			if(!delete_RR(db, dname, type, klass, packet,
-				rrlen, zone_db, region, udbz)) {
+				rrlen, zone_db, region, udbz, softfail)) {
 				region_destroy(region);
 				return 0;
 			}
@@ -1155,7 +1165,7 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 		{
 			/* add this rr */
 			if(!add_RR(db, dname, type, klass, ttl, packet,
-				rrlen, zone_db, udbz)) {
+				rrlen, zone_db, udbz, softfail)) {
 				region_destroy(region);
 				return 0;
 			}
@@ -1256,7 +1266,7 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 
 	if(committed)
 	{
-		int is_axfr=0, delete_mode=0, rr_count=0;
+		int is_axfr=0, delete_mode=0, rr_count=0, softfail=0;
 		const dname_type* apex = zonedb->apex->dname;
 		udb_ptr z;
 
@@ -1286,7 +1296,8 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 			DEBUG(DEBUG_XFRD,2, (LOG_INFO, "processing xfr: apply part %d", (int)i));
 			ret = apply_ixfr(nsd->db, in, zone_buf, new_serial, opt,
 				i, num_parts, &is_axfr, &delete_mode,
-				&rr_count, &z, &zonedb, patname_buf, &num_bytes);
+				&rr_count, &z, &zonedb, patname_buf, &num_bytes,
+				&softfail);
 			if(ret == 0) {
 				log_msg(LOG_ERR, "bad ixfr packet part %d in diff file for %s", (int)i, zone_buf);
 				xfrd_unlink_xfrfile(nsd, xfrfilenr);
@@ -1311,7 +1322,17 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 		ZONE(&z)->mtime = time_end_0;
 		udb_zone_set_log_str(nsd->db->udb, &z, log_buf);
 		udb_ptr_unlink(&z, nsd->db->udb);
-		if(taskudb) task_new_soainfo(taskudb, last_task, zonedb);
+		if(softfail && taskudb && !is_axfr) {
+			log_msg(LOG_ERR, "Failed to apply IXFR cleanly "
+				"(deletes nonexistent RRs, adds existing RRs). "
+				"Zone %s contents is different from master, "
+				"starting AXFR. Transfer %s", zone_buf, log_buf);
+			/* add/del failures in IXFR, get an AXFR */
+			task_new_soainfo(taskudb, last_task, zonedb, 1);
+		} else {
+			if(taskudb)
+				task_new_soainfo(taskudb, last_task, zonedb, 0);
+		}
 
 		if(1 <= verbosity) {
 			double elapsed = (double)(time_end_0 - time_start_0)+
@@ -1359,7 +1380,8 @@ task_create_new_elem(struct udb_base* udb, udb_ptr* last, udb_ptr* e,
 	return 1;
 }
 
-void task_new_soainfo(struct udb_base* udb, udb_ptr* last, struct zone* z)
+void task_new_soainfo(struct udb_base* udb, udb_ptr* last, struct zone* z,
+	int gone)
 {
 	/* calculate size */
 	udb_ptr e;
@@ -1372,7 +1394,7 @@ void task_new_soainfo(struct udb_base* udb, udb_ptr* last, struct zone* z)
 		domain_to_string(z->apex)));
 	apex = domain_dname(z->apex);
 	sz = sizeof(struct task_list_d) + dname_total_size(apex);
-	if(z->soa_rrset) {
+	if(z->soa_rrset && !gone) {
 		ns = domain_dname(rdata_atom_domain(
 			z->soa_rrset->rrs[0].rdatas[0]));
 		em = domain_dname(rdata_atom_domain(
@@ -1391,7 +1413,7 @@ void task_new_soainfo(struct udb_base* udb, udb_ptr* last, struct zone* z)
 	}
 	TASKLIST(&e)->task_type = task_soa_info;
 
-	if(z->soa_rrset) {
+	if(z->soa_rrset && !gone) {
 		uint32_t ttl = htonl(z->soa_rrset->rrs[0].ttl);
 		uint8_t* p = (uint8_t*)TASKLIST(&e)->zname;
 		p += dname_total_size(apex);
@@ -1729,10 +1751,10 @@ task_process_checkzones(struct nsd* nsd, udb_base* udb, udb_ptr* last_task,
 		zone_options_t* zo = zone_options_find(nsd->options,
 			task->zname);
 		if(zo)
-			namedb_check_zonefile(nsd->db, udb, last_task, zo);
+			namedb_check_zonefile(nsd, udb, last_task, zo);
 	} else {
 		/* check all zones */
-		namedb_check_zonefiles(nsd->db, nsd->options, udb, last_task);
+		namedb_check_zonefiles(nsd, nsd->options, udb, last_task);
 	}
 }
 
@@ -1743,9 +1765,9 @@ task_process_writezones(struct nsd* nsd, struct task_list_d* task)
 		zone_options_t* zo = zone_options_find(nsd->options,
 			task->zname);
 		if(zo)
-			namedb_write_zonefile(nsd->db, zo);
+			namedb_write_zonefile(nsd, zo);
 	} else {
-		namedb_write_zonefiles(nsd->db, nsd->options);
+		namedb_write_zonefiles(nsd, nsd->options);
 	}
 }
 
@@ -1773,7 +1795,7 @@ task_process_add_zone(struct nsd* nsd, udb_base* udb, udb_ptr* last_task,
 	}
 	/* if zone is empty, attempt to read the zonefile from disk (if any) */
 	if(!z->soa_rrset && z->opts->pattern->zonefile) {
-		namedb_read_zonefile(nsd->db, z, udb, last_task);
+		namedb_read_zonefile(nsd, z, udb, last_task);
 	}
 }
 

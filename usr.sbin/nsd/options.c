@@ -1543,12 +1543,20 @@ replace_str(char* str, size_t len, const char* one, const char* two)
 }
 
 const char*
-config_make_zonefile(zone_options_t* zone)
+config_make_zonefile(zone_options_t* zone, struct nsd* nsd)
 {
 	static char f[1024];
 	/* if not a template, return as-is */
-	if(!strchr(zone->pattern->zonefile, '%'))
+	if(!strchr(zone->pattern->zonefile, '%')) {
+		if (nsd->chrootdir && nsd->chrootdir[0] && 
+			zone->pattern->zonefile &&
+			zone->pattern->zonefile[0] == '/' &&
+			strncmp(zone->pattern->zonefile, nsd->chrootdir,
+			strlen(nsd->chrootdir)) == 0)
+			/* -1 because chrootdir ends in trailing slash */
+			return zone->pattern->zonefile + strlen(nsd->chrootdir) - 1;
 		return zone->pattern->zonefile;
+	}
 	strlcpy(f, zone->pattern->zonefile, sizeof(f));
 	if(strstr(f, "%1"))
 		replace_str(f, sizeof(f), "%1", get_char(zone->name, 0));
@@ -1564,6 +1572,10 @@ config_make_zonefile(zone_options_t* zone)
 		replace_str(f, sizeof(f), "%x", get_end_label(zone, 3));
 	if(strstr(f, "%s"))
 		replace_str(f, sizeof(f), "%s", zone->name);
+	if (nsd->chrootdir && nsd->chrootdir[0] && f[0] == '/' &&
+		strncmp(f, nsd->chrootdir, strlen(nsd->chrootdir)) == 0)
+		/* -1 because chrootdir ends in trailing slash */
+		return f + strlen(nsd->chrootdir) - 1;
 	return f;
 }
 

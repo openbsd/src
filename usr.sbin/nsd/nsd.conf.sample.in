@@ -78,7 +78,7 @@ server:
 	# identify the server (CH TXT ID.SERVER entry).
 	# identity: "unidentified server"
 
-	# NSID identity (hex string). default disabled.
+	# NSID identity (hex string, or "ascii_somestring"). default disabled.
 	# nsid: "aabbccdd"
 
 	# Maximum number of concurrent TCP connections per server.

@@ -192,6 +192,7 @@ static void
 check_zone_mem(const char* tf, const char* df, zone_options_t* zo,
 	nsd_options_t* opt, struct tot_mem* totmem)
 {
+	struct nsd nsd;
 	struct namedb* db;
 	const dname_type* dname = (const dname_type*)zo->node.key;
 	zone_type* zone;
@@ -203,14 +204,15 @@ check_zone_mem(const char* tf, const char* df, zone_options_t* zo,
 
 	/* init*/
 	memset(&zmem, 0, sizeof(zmem));
-	db = namedb_open(df, opt);
+	memset(&nsd, 0, sizeof(nsd));
+	nsd.db = db = namedb_open(df, opt);
 	if(!db) error("cannot open %s: %s", df, strerror(errno));
 	zone = namedb_zone_create(db, dname, zo);
 	taskudb = udb_base_create_new(tf, &namedb_walkfunc, NULL);
 	udb_ptr_init(&last_task, taskudb);
 
 	/* read the zone */
-	namedb_read_zonefile(db, zone, taskudb, &last_task);
+	namedb_read_zonefile(&nsd, zone, taskudb, &last_task);
 
 	/* account the memory for this zone */
 	account_zone(db, &zmem);

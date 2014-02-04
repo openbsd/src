@@ -46,12 +46,12 @@ void delete_zone_rrs(namedb_type* db, zone_type* zone);
 int delete_RR(namedb_type* db, const dname_type* dname,
 	uint16_t type, uint16_t klass,
 	buffer_type* packet, size_t rdatalen, zone_type *zone,
-	region_type* temp_region, struct udb_ptr* udbz);
+	region_type* temp_region, struct udb_ptr* udbz, int* softfail);
 /* add an RR */
 int add_RR(namedb_type* db, const dname_type* dname,
 	uint16_t type, uint16_t klass, uint32_t ttl,
 	buffer_type* packet, size_t rdatalen, zone_type *zone,
-	struct udb_ptr* udbz);
+	struct udb_ptr* udbz, int* softfail);
 
 /* task udb structure */
 struct task_list_d {
@@ -104,7 +104,7 @@ struct udb_base* task_file_create(const char* file);
 void task_remap(udb_base* udb);
 void task_process_sync(udb_base* udb);
 void task_clear(udb_base* udb);
-void task_new_soainfo(udb_base* udb, udb_ptr* last, struct zone* z);
+void task_new_soainfo(udb_base* udb, udb_ptr* last, struct zone* z, int gone);
 void task_new_expire(udb_base* udb, udb_ptr* last,
 	const struct dname* z, int expired);
 void* task_new_stat_info(udb_base* udb, udb_ptr* last, struct nsdst* stat,

@@ -51,6 +51,9 @@
 #ifdef HAVE_OPENSSL_ERR_H
 #include <openssl/err.h>
 #endif
+#ifdef HAVE_OPENSSL_RAND_H
+#include <openssl/rand.h>
+#endif
 #include <ctype.h>
 #include <unistd.h>
 #include <assert.h>
@@ -233,6 +236,20 @@ daemon_remote_create(nsd_options_t* cfg)
 	ERR_load_SSL_strings();
 	OpenSSL_add_all_algorithms();
 	(void)SSL_library_init();
+
+	if(!RAND_status()) {
+		/* try to seed it */
+		unsigned char buf[256];
+		unsigned int v, seed=(unsigned)time(NULL) ^ (unsigned)getpid();
+		size_t i;
+		v = seed;
+		for(i=0; i<256/sizeof(v); i++) {
+			memmove(buf+i*sizeof(v), &v, sizeof(v));
+			v = v*seed + (unsigned int)i;
+		}
+		RAND_seed(buf, 256);
+		log_msg(LOG_WARNING, "warning: no entropy, seeding openssl PRNG with time");
+	}
 
 	rc->ctx = SSL_CTX_new(SSLv23_server_method());
 	if(!rc->ctx) {

@@ -22,6 +22,7 @@
 #include "udbradtree.h"
 #include "udbzone.h"
 #include "options.h"
+#include "nsd.h"
 
 /* pathname directory separator character */
 #define PATHSEP '/'
@@ -44,6 +45,8 @@ add_rdata(rr_type* rr, unsigned i, uint8_t* buf, size_t buflen)
 		default:
 			break;
 	}
+	if(rdata_atom_size(rr->rdatas[i]) > buflen)
+		return 0;
 	memmove(buf, rdata_atom_data(rr->rdatas[i]),
 		rdata_atom_size(rr->rdatas[i]));
 	return rdata_atom_size(rr->rdatas[i]);
@@ -313,7 +316,7 @@ create_path_components(const char* path, int* notexist)
 }
 
 void
-namedb_write_zonefile(namedb_type* db, zone_options_t* zopt)
+namedb_write_zonefile(struct nsd* nsd, zone_options_t* zopt)
 {
 	const char* zfile;
 	int notexist = 0;
@@ -322,12 +325,12 @@ namedb_write_zonefile(namedb_type* db, zone_options_t* zopt)
 	 * configured, then no need to write data to disk */
 	if(!zopt->pattern->zonefile)
 		return;
-	zone = namedb_find_zone(db, (const dname_type*)zopt->node.key);
+	zone = namedb_find_zone(nsd->db, (const dname_type*)zopt->node.key);
 	if(!zone || !zone->apex)
 		return;
 	/* write if file does not exist, or if changed */
 	/* so, determine filename, create directory components, check exist*/
-	zfile = config_make_zonefile(zopt);
+	zfile = config_make_zonefile(zopt, nsd);
 	if(!create_path_components(zfile, &notexist)) {
 		log_msg(LOG_ERR, "could not write zone %s to file %s because "
 			"the path could not be created", zopt->name, zfile);
@@ -339,7 +342,7 @@ namedb_write_zonefile(namedb_type* db, zone_options_t* zopt)
 		char logs[4096];
 		char bakfile[4096];
 		udb_ptr zudb;
-		if(!udb_zone_search(db->udb, &zudb,
+		if(!udb_zone_search(nsd->db->udb, &zudb,
 			dname_name(domain_dname(zone->apex)),
 			domain_dname(zone->apex)->name_size))
 			return; /* zone does not exist in db */
@@ -347,33 +350,33 @@ namedb_write_zonefile(namedb_type* db, zone_options_t* zopt)
 		snprintf(bakfile, sizeof(bakfile), "%s~", zfile);
 		if(ZONE(&zudb)->log_str.data) {
 			udb_ptr s;
-			udb_ptr_new(&s, db->udb, &ZONE(&zudb)->log_str);
+			udb_ptr_new(&s, nsd->db->udb, &ZONE(&zudb)->log_str);
 			strlcpy(logs, (char*)udb_ptr_data(&s), sizeof(logs));
-			udb_ptr_unlink(&s, db->udb);
+			udb_ptr_unlink(&s, nsd->db->udb);
 		} else logs[0] = 0;
 		if(!write_to_zonefile(zone, bakfile, logs)) {
-			udb_ptr_unlink(&zudb, db->udb);
+			udb_ptr_unlink(&zudb, nsd->db->udb);
 			return; /* error already printed */
 		}
 		if(rename(bakfile, zfile) == -1) {
 			log_msg(LOG_ERR, "rename(%s to %s) failed: %s",
 				bakfile, zfile, strerror(errno));
-			udb_ptr_unlink(&zudb, db->udb);
+			udb_ptr_unlink(&zudb, nsd->db->udb);
 			return;
 		}
 		zone->is_changed = 0;
 		ZONE(&zudb)->mtime = (uint64_t)time(0);
 		ZONE(&zudb)->is_changed = 0;
-		udb_zone_set_log_str(db->udb, &zudb, NULL);
-		udb_ptr_unlink(&zudb, db->udb);
+		udb_zone_set_log_str(nsd->db->udb, &zudb, NULL);
+		udb_ptr_unlink(&zudb, nsd->db->udb);
 	}
 }
 
 void
-namedb_write_zonefiles(namedb_type* db, nsd_options_t* options)
+namedb_write_zonefiles(struct nsd* nsd, nsd_options_t* options)
 {
 	zone_options_t* zo;
 	RBTREE_FOR(zo, zone_options_t*, options->zone_options) {
-		namedb_write_zonefile(db, zo);
+		namedb_write_zonefile(nsd, zo);
 	}
 }

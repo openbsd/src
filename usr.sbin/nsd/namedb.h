@@ -20,6 +20,7 @@ struct zone_options;
 struct nsd_options;
 struct udb_base;
 struct udb_ptr;
+struct nsd;
 
 typedef union rdata_atom rdata_atom_type;
 typedef struct rrset rrset_type;
@@ -342,20 +343,20 @@ int namedb_lookup (struct namedb* db,
 struct namedb *namedb_open(const char *filename, struct nsd_options* opt);
 void namedb_close_udb(struct namedb* db);
 void namedb_close(struct namedb* db);
-void namedb_check_zonefiles(struct namedb* db, struct nsd_options* opt,
+void namedb_check_zonefiles(struct nsd* nsd, struct nsd_options* opt,
 	struct udb_base* taskudb, struct udb_ptr* last_task);
-void namedb_check_zonefile(struct namedb* db, struct udb_base* taskudb,
+void namedb_check_zonefile(struct nsd* nsd, struct udb_base* taskudb,
 	struct udb_ptr* last_task, struct zone_options* zo);
 /** zone one zonefile into memory and revert on parse error, write to udb */
-void namedb_read_zonefile(struct namedb* db, struct zone* zone,
+void namedb_read_zonefile(struct nsd* nsd, struct zone* zone,
 	struct udb_base* taskudb, struct udb_ptr* last_task);
 void apex_rrset_checks(struct namedb* db, rrset_type* rrset,
 	domain_type* domain);
 zone_type* namedb_zone_create(namedb_type* db, const dname_type* dname,
         struct zone_options* zopt);
 void namedb_zone_delete(namedb_type* db, zone_type* zone);
-void namedb_write_zonefile(namedb_type* db, struct zone_options* zopt);
-void namedb_write_zonefiles(namedb_type* db, struct nsd_options* options);
+void namedb_write_zonefile(struct nsd* nsd, struct zone_options* zopt);
+void namedb_write_zonefiles(struct nsd* nsd, struct nsd_options* options);
 int create_dirs(const char* path);
 void allocate_domain_nsec3(domain_table_type *table, domain_type *result);
 

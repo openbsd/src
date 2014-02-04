@@ -116,6 +116,7 @@ ANY     [^\"\n\r\\]|\\.
 server{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_SERVER;}
 name{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_NAME;}
 ip-address{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IP_ADDRESS;}
+interface{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IP_ADDRESS;}
 ip-transparent{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IP_TRANSPARENT;}
 debug-mode{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DEBUG_MODE;}
 hide-version{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_HIDE_VERSION;}

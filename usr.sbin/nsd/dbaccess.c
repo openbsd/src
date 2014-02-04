@@ -29,6 +29,7 @@
 #include "zonec.h"
 #include "nsec3.h"
 #include "difffile.h"
+#include "nsd.h"
 
 static time_t udb_time = 0;
 static unsigned udb_rrsets = 0;
@@ -471,16 +472,16 @@ file_get_mtime(const char* file, time_t* mtime, int* nonexist)
 }
 
 void
-namedb_read_zonefile(struct namedb* db, struct zone* zone, udb_base* taskudb,
+namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 	udb_ptr* last_task)
 {
 	time_t mtime = 0;
 	int nonexist = 0;
 	unsigned int errors;
 	const char* fname;
-	if(!db || !db->udb || !zone || !zone->opts || !zone->opts->pattern->zonefile)
+	if(!nsd->db || !nsd->db->udb || !zone || !zone->opts || !zone->opts->pattern->zonefile)
 		return;
-	fname = config_make_zonefile(zone->opts);
+	fname = config_make_zonefile(zone->opts, nsd);
 	if(!file_get_mtime(fname, &mtime, &nonexist)) {
 		if(nonexist) {
 			VERBOSITY(2, (LOG_INFO, "zonefile %s does not exist",
@@ -488,11 +489,11 @@ namedb_read_zonefile(struct namedb* db, struct zone* zone, udb_base* taskudb,
 		} else
 			log_msg(LOG_ERR, "zonefile %s: %s",
 				fname, strerror(errno));
-		if(taskudb) task_new_soainfo(taskudb, last_task, zone);
+		if(taskudb) task_new_soainfo(taskudb, last_task, zone, 0);
 		return;
 	} else {
 		/* check the mtime */
-		if(udb_zone_get_mtime(db->udb, dname_name(domain_dname(
+		if(udb_zone_get_mtime(nsd->db->udb, dname_name(domain_dname(
 			zone->apex)), domain_dname(zone->apex)->name_size)
 			>= (uint64_t)mtime) {
 			VERBOSITY(3, (LOG_INFO, "zonefile %s is not modified",
@@ -506,9 +507,9 @@ namedb_read_zonefile(struct namedb* db, struct zone* zone, udb_base* taskudb,
 #ifdef NSEC3
 	nsec3_hash_tree_clear(zone);
 #endif
-	delete_zone_rrs(db, zone);
+	delete_zone_rrs(nsd->db, zone);
 #ifdef NSEC3
-	nsec3_clear_precompile(db, zone);
+	nsec3_clear_precompile(nsd->db, zone);
 	zone->nsec3_param = NULL;
 #endif /* NSEC3 */
 	errors = zonec_read(zone->opts->name, fname, zone);
@@ -522,16 +523,16 @@ namedb_read_zonefile(struct namedb* db, struct zone* zone, udb_base* taskudb,
 #ifdef NSEC3
 		nsec3_hash_tree_clear(zone);
 #endif
-		delete_zone_rrs(db, zone);
+		delete_zone_rrs(nsd->db, zone);
 #ifdef NSEC3
-		nsec3_clear_precompile(db, zone);
+		nsec3_clear_precompile(nsd->db, zone);
 		zone->nsec3_param = NULL;
 #endif /* NSEC3 */
 		/* see if we can revert to the udb stored version */
-		if(!udb_zone_search(db->udb, &z, dname_name(domain_dname(
+		if(!udb_zone_search(nsd->db->udb, &z, dname_name(domain_dname(
 			zone->apex)), domain_dname(zone->apex)->name_size)) {
 			/* tell that zone contents has been lost */
-			if(taskudb) task_new_soainfo(taskudb, last_task, zone);
+			if(taskudb) task_new_soainfo(taskudb, last_task, zone, 0);
 			return;
 		}
 		/* read from udb */
@@ -539,47 +540,47 @@ namedb_read_zonefile(struct namedb* db, struct zone* zone, udb_base* taskudb,
 		udb_rrsets = 0;
 		udb_rrset_count = ZONE(&z)->rrset_count;
 		udb_time = time(NULL);
-		read_zone_data(db->udb, db, dname_region, &z, zone);
+		read_zone_data(nsd->db->udb, nsd->db, dname_region, &z, zone);
 		region_destroy(dname_region);
-		udb_ptr_unlink(&z, db->udb);
+		udb_ptr_unlink(&z, nsd->db->udb);
 	} else {
 		VERBOSITY(1, (LOG_INFO, "zone %s read with no errors",
 			zone->opts->name));
 		zone->is_ok = 1;
 		zone->is_changed = 0;
 		/* store zone into udb */
-		if(!write_zone_to_udb(db->udb, zone, mtime)) {
+		if(!write_zone_to_udb(nsd->db->udb, zone, mtime)) {
 			log_msg(LOG_ERR, "failed to store zone in db");
 		} else {
 			VERBOSITY(2, (LOG_INFO, "zone %s written to db",
 				zone->opts->name));
 		}
 	}
-	if(taskudb) task_new_soainfo(taskudb, last_task, zone);
+	if(taskudb) task_new_soainfo(taskudb, last_task, zone, 0);
 #ifdef NSEC3
-	prehash_zone_complete(db, zone);
+	prehash_zone_complete(nsd->db, zone);
 #endif
 }
 
-void namedb_check_zonefile(struct namedb* db, udb_base* taskudb,
+void namedb_check_zonefile(struct nsd* nsd, udb_base* taskudb,
 	udb_ptr* last_task, zone_options_t* zopt)
 {
 	zone_type* zone;
 	const dname_type* dname = (const dname_type*)zopt->node.key;
 	/* find zone to go with it, or create it */
-	zone = namedb_find_zone(db, dname);
+	zone = namedb_find_zone(nsd->db, dname);
 	if(!zone) {
-		zone = namedb_zone_create(db, dname, zopt);
+		zone = namedb_zone_create(nsd->db, dname, zopt);
 	}
-	namedb_read_zonefile(db, zone, taskudb, last_task);
+	namedb_read_zonefile(nsd, zone, taskudb, last_task);
 }
 
-void namedb_check_zonefiles(struct namedb* db, nsd_options_t* opt,
+void namedb_check_zonefiles(struct nsd* nsd, nsd_options_t* opt,
 	udb_base* taskudb, udb_ptr* last_task)
 {
 	zone_options_t* zo;
 	/* check all zones in opt, create if not exist in main db */
 	RBTREE_FOR(zo, zone_options_t*, opt->zone_options) {
-		namedb_check_zonefile(db, taskudb, last_task, zo);
+		namedb_check_zonefile(nsd, taskudb, last_task, zo);
 	}
 }
