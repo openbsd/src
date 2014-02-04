@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.130 2014/02/01 11:03:50 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.131 2014/02/04 18:11:36 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -63,6 +63,7 @@ sub match
 
 package OpenBSD::Composite;
 
+# convert call to $self->sub(@args) into $self->visit(sub, @args)
 sub AUTOLOAD
 {
 	our $AUTOLOAD;
@@ -113,7 +114,7 @@ sub make_shallow_copy
 {
 	my ($plist, $h) = @_;
 
-	my $copy = OpenBSD::PackingList->new;
+	my $copy = ref($plist)->new;
 	$copy->set_infodir($plist->infodir);
 	$plist->copy_shallow_if($copy, $h);
 	return $copy;
@@ -123,7 +124,7 @@ sub make_deep_copy
 {
 	my ($plist, $h) = @_;
 
-	my $copy = OpenBSD::PackingList->new;
+	my $copy = ref($plist)->new;
 	$copy->set_infodir($plist->infodir);
 	$plist->copy_deep_if($copy, $h);
 	return $copy;
@@ -154,6 +155,8 @@ sub conflict_list
 	return OpenBSD::PkgCfl->make_conflict_list($self);
 }
 
+my $subclass;
+
 sub read
 {
 	my ($a, $u, $code) = @_;
@@ -163,6 +166,9 @@ sub read
 		$plist = $a;
 	} else {
 		$plist = new $a;
+	}
+	if (defined $subclass->{$code}) {
+		bless $plist, "OpenBSD::PackingList::".$subclass->{$code};
 	}
 	&$code($u,
 		sub {
@@ -511,7 +517,7 @@ sub to_cache
 {
 	my ($self) = @_;
 	return if defined $plist_cache->{$self->pkgname};
-	my $plist = new OpenBSD::PackingList;
+	my $plist = OpenBSD::PackingList::Depend->new;
 	for my $c (@cache_categories) {
 		if (defined $self->{$c}) {
 			$plist->{$c} = $self->{$c};
@@ -551,8 +557,6 @@ sub forget
 {
 }
 
-# convert call to $self->sub(@args) into $self->visit(sub, @args)
-
 sub signature
 {
 	my $self = shift;
@@ -560,5 +564,38 @@ sub signature
 	require OpenBSD::Signature;
 	return OpenBSD::Signature->from_plist($self);
 }
+
+$subclass =  {
+	\&defaultCode => 'Full',
+	\&SharedItemsOnly => 'SharedItems',
+	\&DirrmOnly => 'SharedItems',
+	\&LibraryOnly => 'Libraries',
+	\&FilesOnly => 'Files',
+	\&PrelinkStuffOnly => 'Prelink',
+	\&DependOnly => 'Depend',
+	\&ExtraInfoOnly => 'ExtraInfo',
+	\&UpdateInfoOnly => 'UpdateInfo',
+	\&ConflictOnly => 'Conflict' };
+
+package OpenBSD::PackingList::OldLibs;
+our @ISA = qw(OpenBSD::PackingList);
+package OpenBSD::PackingList::Full;
+our @ISA = qw(OpenBSD::PackingList::OldLibs);
+package OpenBSD::PackingList::SharedItems;
+our @ISA = qw(OpenBSD::PackingList);
+package OpenBSD::PackingList::Libraries;
+our @ISA = qw(OpenBSD::PackingList);
+package OpenBSD::PackingList::Files;
+our @ISA = qw(OpenBSD::PackingList);
+package OpenBSD::PackingList::Prelink;
+our @ISA = qw(OpenBSD::PackingList);
+package OpenBSD::PackingList::Depend;
+our @ISA = qw(OpenBSD::PackingList);
+package OpenBSD::PackingList::ExtraInfo;
+our @ISA = qw(OpenBSD::PackingList);
+package OpenBSD::PackingList::UpdateInfo;
+our @ISA = qw(OpenBSD::PackingList);
+package OpenBSD::PackingList::Conflict;
+our @ISA = qw(OpenBSD::PackingList);
 
 1;
