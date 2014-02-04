@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.58 2014/02/04 00:14:27 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.59 2014/02/04 23:39:16 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -461,7 +461,8 @@ sub install_issues
 			$state->fatal("can't find #1 in installation", $name);
 		}
 		if ($old->has_error(OpenBSD::Handle::BAD_PACKAGE)) {
-			$state->fatal("couldn't find packing-list for #1", $name);
+			$state->fatal("couldn't find packing-list for #1", 
+			    $name);
 		}
 
 		if ($old->plist->has('manual-installation')) {
@@ -1006,7 +1007,8 @@ sub inform_user_of_problems
 			$quirks->filter_obsolete(\@cantupdate, $state);
 		    });
 
-		$state->say("Couldn't find updates for #1", join(', ', @cantupdate));
+		$state->say("Couldn't find updates for #1", 
+		    join(', ', sort @cantupdate));
 	}
 	if (defined $state->{issues}) {
 		$state->say("There were some ambiguities. ".
