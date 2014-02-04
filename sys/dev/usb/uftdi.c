@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.70 2014/02/03 20:53:32 mpi Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.71 2014/02/04 12:03:12 mpi Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -799,6 +799,8 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 
 	DPRINTFN(10,("\nuftdi_attach: sc=%p\n", sc));
 
+	sc->sc_udev = dev;
+
 	if (uaa->iface == NULL) {
 		/* Move the device into the configured state. */
 		err = usbd_set_config_index(dev, UFTDI_CONFIG_INDEX, 1);
@@ -819,7 +821,6 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 
 	id = usbd_get_interface_descriptor(iface);
 
-	sc->sc_udev = dev;
 	sc->sc_iface = iface;
 
 	if (uaa->release < 0x0200) {
@@ -891,7 +892,7 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 
 bad:
 	DPRINTF(("uftdi_attach: ATTACH ERROR\n"));
-	usbd_deactivate(dev);
+	usbd_deactivate(sc->sc_udev);
 }
 
 int
