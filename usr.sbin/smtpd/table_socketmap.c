@@ -1,7 +1,7 @@
-/*	$OpenBSD: table_socketmap.c,v 1.1 2014/02/04 13:55:34 eric Exp $	*/
+/*	$OpenBSD: table_socketmap.c,v 1.2 2014/02/04 16:41:08 eric Exp $	*/
 
 /*
- * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
+ * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -132,7 +132,7 @@ err:
 	return 0;
 }
 
-enum socketmap_reply
+static enum socketmap_reply
 table_socketmap_query(const char *name, const char *key)
 {
 	char   *buf, *lbuf = NULL;
@@ -167,9 +167,9 @@ table_socketmap_query(const char *name, const char *key)
 	lbuf = NULL;
 
 	if (strlcpy(repbuffer, buf, sizeof repbuffer) >= sizeof repbuffer) {
-		log_warnx("warn: table-socketmap: socketmap reply too large (>%d bytes)",
+		log_warnx("warn: table-socketmap: socketmap reply too large (>%zu bytes)",
 			sizeof repbuffer);
-		strlcpy(repbuffer, "socketmap reply too large (>%d bytes)", sizeof repbuffer);
+		strlcpy(repbuffer, "socketmap reply too large", sizeof repbuffer);
 		ret = SM_PERM;
 		goto err;
 	}
