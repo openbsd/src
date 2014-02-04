@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.15 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.16 2014/02/04 09:59:21 eric Exp $	*/
 /*      
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -263,7 +263,8 @@ io_clear(struct io *io)
 	}
 #endif
 
-	event_del(&io->ev);
+	if (event_initialized(&io->ev))
+		event_del(&io->ev);
 	if (io->sock != -1) {
 		close(io->sock);
 		io->sock = -1;
@@ -408,7 +409,8 @@ io_reset(struct io *io, short events, void (*dispatch)(int, short, void*))
 	 */
 	io->flags |= IO_RESET;
 
-	event_del(&io->ev);
+	if (event_initialized(&io->ev))
+		event_del(&io->ev);
 
 	/*
 	 * The io is paused by the user, so we don't want the timeout to be
