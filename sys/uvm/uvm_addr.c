@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.5 2012/07/18 20:28:18 matthew Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.6 2014/02/04 01:04:03 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -295,7 +295,7 @@ uvm_addr_init()
 	pool_init(&uaddr_hint_pool, sizeof(struct uaddr_hint_state),
 	    0, 0, 0, "uaddrhint", &pool_allocator_nointr);
 	pool_init(&uaddr_bestfit_pool, sizeof(struct uaddr_bestfit_state),
-	    0, 0, 0, "uaddrbestfit", &pool_allocator_nointr);
+	    0, 0, 0, "uaddrbest", &pool_allocator_nointr);
 	pool_init(&uaddr_pivot_pool, sizeof(struct uaddr_pivot_state),
 	    0, 0, 0, "uaddrpivot", &pool_allocator_nointr);
 	pool_init(&uaddr_rnd_pool, sizeof(struct uaddr_rnd_state),

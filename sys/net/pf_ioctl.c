@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.268 2014/01/20 02:57:50 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.269 2014/02/04 01:04:03 tedu Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -161,24 +161,24 @@ pfattach(int num)
 {
 	u_int32_t *timeout = pf_default_rule.timeout;
 
-	pool_init(&pf_rule_pl, sizeof(struct pf_rule), 0, 0, 0, "pfrulepl",
+	pool_init(&pf_rule_pl, sizeof(struct pf_rule), 0, 0, 0, "pfrule",
 	    &pool_allocator_nointr);
 	pool_init(&pf_src_tree_pl, sizeof(struct pf_src_node), 0, 0, 0,
-	    "pfsrctrpl", NULL);
+	    "pfsrctr", NULL);
 	pool_init(&pf_sn_item_pl, sizeof(struct pf_sn_item), 0, 0, 0,
-	    "pfsnitempl", NULL);
-	pool_init(&pf_state_pl, sizeof(struct pf_state), 0, 0, 0, "pfstatepl",
+	    "pfsnitem", NULL);
+	pool_init(&pf_state_pl, sizeof(struct pf_state), 0, 0, 0, "pfstate",
 	    NULL);
 	pool_init(&pf_state_key_pl, sizeof(struct pf_state_key), 0, 0, 0,
-	    "pfstatekeypl", NULL);
+	    "pfstkey", NULL);
 	pool_init(&pf_state_item_pl, sizeof(struct pf_state_item), 0, 0, 0,
-	    "pfstateitempl", NULL);
+	    "pfstitem", NULL);
 	pool_init(&pf_rule_item_pl, sizeof(struct pf_rule_item), 0, 0, 0,
-	    "pfruleitempl", NULL);
-	pool_init(&pf_altq_pl, sizeof(struct pf_altq), 0, 0, 0, "pfaltqpl",
+	    "pfruleitem", NULL);
+	pool_init(&pf_altq_pl, sizeof(struct pf_altq), 0, 0, 0, "pfaltq",
 	    &pool_allocator_nointr);
 	pool_init(&pf_queue_pl, sizeof(struct pf_queuespec), 0, 0, 0, 
-	    "pfqueuepl", NULL);
+	    "pfqueue", NULL);
 	pool_init(&hfsc_class_pl, sizeof(struct hfsc_class), 0, 0, PR_WAITOK,
 	    "hfscclass", NULL);
 	pool_init(&hfsc_classq_pl, sizeof(struct hfsc_classq), 0, 0, PR_WAITOK,

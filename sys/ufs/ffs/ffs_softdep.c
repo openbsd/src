@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.124 2013/12/12 19:00:10 tedu Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.125 2014/02/04 01:04:03 tedu Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -1165,33 +1165,33 @@ softdep_initialize(void)
 	sema_init(&newblk_in_progress, "newblk", PRIBIO, 0);
 	timeout_set(&proc_waiting_timeout, pause_timer, NULL);
 	pool_init(&pagedep_pool, sizeof(struct pagedep), 0, 0, 0,
-	    "pagedeppl", &pool_allocator_nointr);
+	    "pagedep", &pool_allocator_nointr);
 	pool_init(&inodedep_pool, sizeof(struct inodedep), 0, 0, 0,
-	    "inodedeppl", &pool_allocator_nointr);
+	    "inodedep", &pool_allocator_nointr);
 	pool_init(&newblk_pool, sizeof(struct newblk), 0, 0, 0,
-	    "newblkpl", &pool_allocator_nointr);
+	    "newblk", &pool_allocator_nointr);
 	pool_init(&bmsafemap_pool, sizeof(struct bmsafemap), 0, 0, 0,
-	    "bmsafemappl", &pool_allocator_nointr);
+	    "bmsafemap", &pool_allocator_nointr);
 	pool_init(&allocdirect_pool, sizeof(struct allocdirect), 0, 0, 0,
-	    "allocdirectpl", &pool_allocator_nointr);
+	    "allocdir", &pool_allocator_nointr);
 	pool_init(&indirdep_pool, sizeof(struct indirdep), 0, 0, 0,
-	    "indirdeppl", &pool_allocator_nointr);
+	    "indirdep", &pool_allocator_nointr);
 	pool_init(&allocindir_pool, sizeof(struct allocindir), 0, 0, 0,
-	    "allocindirpl", &pool_allocator_nointr);
+	    "allocindir", &pool_allocator_nointr);
 	pool_init(&freefrag_pool, sizeof(struct freefrag), 0, 0, 0,
-	    "freefragpl", &pool_allocator_nointr);
+	    "freefrag", &pool_allocator_nointr);
 	pool_init(&freeblks_pool, sizeof(struct freeblks), 0, 0, 0,
-	    "freeblkspl", &pool_allocator_nointr);
+	    "freeblks", &pool_allocator_nointr);
 	pool_init(&freefile_pool, sizeof(struct freefile), 0, 0, 0,
-	    "freefilepl", &pool_allocator_nointr);
+	    "freefile", &pool_allocator_nointr);
 	pool_init(&diradd_pool, sizeof(struct diradd), 0, 0, 0,
-	    "diraddpl", &pool_allocator_nointr);
+	    "diradd", &pool_allocator_nointr);
 	pool_init(&mkdir_pool, sizeof(struct mkdir), 0, 0, 0,
-	    "mkdirpl", &pool_allocator_nointr);
+	    "mkdir", &pool_allocator_nointr);
 	pool_init(&dirrem_pool, sizeof(struct dirrem), 0, 0, 0,
-	    "dirrempl", &pool_allocator_nointr);
+	    "dirrem", &pool_allocator_nointr);
 	pool_init(&newdirblk_pool, sizeof(struct newdirblk), 0, 0, 0,
-	    "newdirblkpl", &pool_allocator_nointr);
+	    "newdirblk", &pool_allocator_nointr);
 }
 
 /*
