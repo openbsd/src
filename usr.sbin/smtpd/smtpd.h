@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.443 2014/02/04 09:50:31 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.444 2014/02/04 10:38:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -58,6 +58,15 @@
 
 #define	PATH_FILTERS		"/usr/libexec/smtpd"
 #define	PATH_TABLES		"/usr/libexec/smtpd"
+
+
+/*
+ * RFC 5322 defines these characters as valid, some of them are
+ * potentially dangerous and need to be escaped.
+ */
+#define	MAILADDR_ALLOWED       	"!#$%&'*/?^`{|}~+-=_"
+#define	MAILADDR_ESCAPE		"!#$%&'*/?^`{|}~"
+
 
 #define F_STARTTLS		0x01
 #define F_SMTPS			0x02

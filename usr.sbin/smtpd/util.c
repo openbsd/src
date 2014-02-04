@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.107 2014/02/04 09:50:31 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.108 2014/02/04 10:38:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -444,11 +444,7 @@ hostname_match(const char *hostname, const char *pattern)
 int
 valid_localpart(const char *s)
 {
-/*
- * RFC 5322 defines theses characters as valid: !#$%&'*+-/=?^_`{|}~
- * some of them are potentially dangerous, and not so used after all.
- */
-#define IS_ATEXT(c) (isalnum((unsigned char)(c)) || strchr("*!%+-/=_", (c)))
+#define IS_ATEXT(c) (isalnum((unsigned char)(c)) || strchr(MAILADDR_ALLOWED, (c)))
 nextatom:
 	if (! IS_ATEXT(*s) || *s == '\0')
 		return 0;

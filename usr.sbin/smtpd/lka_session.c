@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.62 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.63 2014/02/04 10:38:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -85,7 +85,7 @@ struct modifiers {
 	{ "strip",	mod_strip },
 	{ "raw",	NULL },		/* special case, must stay last */
 };
-static const char	*unsafe = "*?";
+static const char	*unsafe = MAILADDR_ESCAPE;
 
 
 static int		init;
