@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.121 2013/11/15 16:15:42 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.122 2014/02/05 08:44:21 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -457,8 +457,6 @@ ip6_input(struct mbuf *m)
 		    &ip6->ip6_src.s6_addr32[0]);
 	}
 
-#define rt6_key(r) ((struct sockaddr_in6 *)((r)->rt_nodes->rn_key))
-
 	/*
 	 * Accept the packet if the forwarding interface to the destination
 	 * according to the routing table is the loopback interface,
@@ -471,15 +469,6 @@ ip6_input(struct mbuf *m)
 	if (ip6_forward_rt.ro_rt &&
 	    (ip6_forward_rt.ro_rt->rt_flags &
 	     (RTF_HOST|RTF_GATEWAY)) == RTF_HOST &&
-#if 0
-	    /*
-	     * The check below is redundant since the comparison of
-	     * the destination and the key of the rtentry has
-	     * already done through looking up the routing table.
-	     */
-	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
-	    &rt6_key(ip6_forward_rt.ro_rt)->sin6_addr) &&
-#endif
 	    ip6_forward_rt.ro_rt->rt_ifp->if_type == IFT_LOOP) {
 		struct in6_ifaddr *ia6 =
 			ifatoia6(ip6_forward_rt.ro_rt->rt_ifa);
