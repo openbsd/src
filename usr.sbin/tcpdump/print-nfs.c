@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-nfs.c,v 1.16 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-nfs.c,v 1.17 2014/02/05 21:12:19 florian Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -34,6 +34,10 @@ struct rtentry;
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
+
+#ifdef INET6
+#include <netinet/ip6.h>
+#endif /*INET6*/
 
 #include <rpc/rpc.h>
 
@@ -746,8 +750,13 @@ nfs_printfh(register const u_int32_t *dp, const u_int len)
 struct xid_map_entry {
 	u_int32_t	xid;		/* transaction ID (net order) */
 	int ipver;			/* IP version (4 or 6) */
+#ifdef INET6
+	struct in6_addr	client;		/* client IP address (net order) */
+	struct in6_addr	server;		/* server IP address (net order) */
+#else
 	struct in_addr	client;		/* client IP address (net order) */
 	struct in_addr	server;		/* server IP address (net order) */
+#endif /*INET6*/
 	u_int32_t	proc;		/* call proc number (host order) */
 	u_int32_t	vers;		/* program version (host order) */
 };
@@ -769,6 +778,9 @@ static void
 xid_map_enter(const struct rpc_msg *rp, const u_char *bp)
 {
 	struct ip *ip = NULL;
+#ifdef INET6
+	struct ip6_hdr *ip6 = NULL;
+#endif /*INET6*/
 	struct xid_map_entry *xmep;
 
 	ip = (struct ip *)bp;
@@ -779,9 +791,23 @@ xid_map_enter(const struct rpc_msg *rp, const u_char *bp)
 		xid_map_next = 0;
 
 	xmep->xid = rp->rm_xid;
-	xmep->ipver = 4;
-	memcpy(&xmep->client, &ip->ip_src, sizeof(ip->ip_src));
-	memcpy(&xmep->server, &ip->ip_dst, sizeof(ip->ip_dst));
+	xmep->ipver = ip->ip_v;
+
+	switch (xmep->ipver) {
+	case 4:
+		memcpy(&xmep->client, &ip->ip_src, sizeof(ip->ip_src));
+		memcpy(&xmep->server, &ip->ip_dst, sizeof(ip->ip_dst));
+		break;
+#ifdef INET6
+	case 6:
+		ip6 = (struct ip6_hdr *)bp;
+		memcpy(&xmep->client, &ip6->ip6_src, sizeof(ip6->ip6_src));
+		memcpy(&xmep->server, &ip6->ip6_dst, sizeof(ip6->ip6_dst));
+		break;
+	default:
+		return;
+#endif /*INET6*/
+	}
 	xmep->proc = ntohl(rp->rm_call.cb_proc);
 	xmep->vers = ntohl(rp->rm_call.cb_vers);
 }
@@ -798,6 +824,9 @@ xid_map_find(const struct rpc_msg *rp, const u_char *bp, u_int32_t *proc,
 	struct xid_map_entry *xmep;
 	u_int32_t xid = rp->rm_xid;
 	struct ip *ip = (struct ip *)bp;
+#ifdef INET6
+	struct ip6_hdr *ip6 = (struct ip6_hdr *)bp;
+#endif /*INET6*/
 	int cmp;
 
 	/* Start searching from where we last left off */
@@ -816,6 +845,16 @@ xid_map_find(const struct rpc_msg *rp, const u_char *bp, u_int32_t *proc,
 				cmp = 0;
 			}
 			break;
+#ifdef INET6
+		case 6:
+			if (memcmp(&ip6->ip6_src, &xmep->server,
+				   sizeof(ip6->ip6_src)) != 0 ||
+			    memcmp(&ip6->ip6_dst, &xmep->client,
+				   sizeof(ip6->ip6_dst)) != 0) {
+				cmp = 0;
+			}
+			break;
+#endif /*INET6*/
 		default:
 			cmp = 0;
 			break;

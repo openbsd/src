@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tcp.c,v 1.28 2010/01/12 06:10:33 naddy Exp $	*/
+/*	$OpenBSD: print-tcp.c,v 1.29 2014/02/05 21:12:19 florian Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -297,13 +297,11 @@ tcp_print(register const u_char *bp, register u_int length,
 		u_int len = length - hlen;
 		if ((u_char *)tp + 4 + sizeof(struct rpc_msg) <= snapend &&
 		    dport == NFS_PORT) {
-			nfsreq_print((u_char *)tp + hlen + 4, len,
-				     (u_char *)ip);
+			nfsreq_print((u_char *)tp + hlen + 4, len, bp2);
 			return;
 		} else if ((u_char *)tp + 4 + 
 		    sizeof(struct rpc_msg) <= snapend && sport == NFS_PORT) {
-			nfsreply_print((u_char *)tp + hlen + 4, len,
-				       (u_char *)ip);
+			nfsreply_print((u_char *)tp + hlen + 4, len, bp2);
 			return;
 		}
 	}
