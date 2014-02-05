@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.15 2014/02/03 14:16:34 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.16 2014/02/05 07:56:10 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -725,6 +725,9 @@ qla_handle_intr(struct qla_softc *sc, u_int16_t isr, u_int16_t info)
 			printf("%s: nonsense interrupt (%x)\n", DEVNAME(sc),
 			    rspin);
 		} else {
+			if (sc->sc_responses == NULL)
+				break;
+
 			while (sc->sc_last_resp_id != rspin) {
 				ccb = qla_handle_resp(sc, sc->sc_last_resp_id);
 				if (ccb)
