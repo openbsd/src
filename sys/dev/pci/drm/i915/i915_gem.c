@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.68 2014/02/02 10:54:10 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.69 2014/02/05 10:41:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1522,6 +1522,7 @@ i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 			    NULL, NULL);
 			DRM_UNLOCK();
 			dev_priv->entries--;
+			pmap_update(ufi->orig_map->pmap);
 			uvm_wait("intelflt");
 			return (VM_PAGER_REFAULT);
 		}
@@ -1533,18 +1534,42 @@ unlock:
 	DRM_UNLOCK();
 	dev_priv->entries--;
 	pmap_update(ufi->orig_map->pmap);
-	if (ret == -EIO) {
-		/*
-		 * EIO means we're wedged, so upon resetting the gpu we'll
-		 * be alright and can refault. XXX only on resettable chips.
+
+	switch (ret) {
+	case -EIO:
+		/* If this -EIO is due to a gpu hang, give the reset code a
+		 * chance to clean up the mess. Otherwise return the proper
+		 * SIGBUS. */
+		if (!atomic_read(&dev_priv->mm.wedged))
+			return VM_PAGER_ERROR;
+	case -EAGAIN:
+		/* Give the error handler a chance to run and move the
+		 * objects off the GPU active list. Next time we service the
+		 * fault, we should be able to transition the page into the
+		 * GTT without touching the GPU (and so avoid further
+		 * EIO/EGAIN). If the GPU is wedged, then there is no issue
+		 * with coherency, just lost writes.
 		 */
-		ret = VM_PAGER_REFAULT;
-	} else if (ret) {
-		ret = VM_PAGER_ERROR;
-	} else {
-		ret = VM_PAGER_OK;
+#if 0
+		set_need_resched();
+#endif
+	case 0:
+	case -ERESTART:
+	case -EINTR:
+	case -EBUSY:
+		/*
+		 * EBUSY is ok: this just means that another thread
+		 * already did the job.
+		 */
+		return VM_PAGER_OK;
+	case -ENOMEM:
+		return VM_PAGER_ERROR;
+	case -ENOSPC:
+		return VM_PAGER_ERROR;
+	default:
+		WARN_ONCE(ret, "unhandled error in i915_gem_fault: %i\n", ret);
+		return VM_PAGER_ERROR;
 	}
-	return ret;
 }
 
 /**
