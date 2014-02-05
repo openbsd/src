@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.154 2014/01/22 03:24:42 jsing Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.155 2014/02/05 05:54:58 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -805,7 +805,7 @@ randomclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 randomread(dev_t dev, struct uio *uio, int ioflag)
 {
-	u_char lbuf[KEYSZ+IVSZ];
+	u_char		lbuf[KEYSZ+IVSZ];
 	chacha_ctx	lctx;
 	size_t		total = uio->uio_resid;
 	u_char		*buf;
@@ -828,12 +828,12 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 
 		if (myctx) {
 #ifndef KEYSTREAM_ONLY
-			bzero(buf, n);
+			memset(buf, 0, n);
 #endif
 			chacha_encrypt_bytes(&lctx, buf, buf, n);
 		} else
 			arc4random_buf(buf, n);
-		ret = uiomove((caddr_t)buf, n, uio);
+		ret = uiomove(buf, n, uio);
 		if (ret == 0 && uio->uio_resid > 0)
 			yield();
 	}
@@ -855,16 +855,16 @@ randomwrite(dev_t dev, struct uio *uio, int flags)
 
 	buf = malloc(POOLBYTES, M_TEMP, M_WAITOK);
 
-	while (!ret && uio->uio_resid > 0) {
+	while (ret == 0 && uio->uio_resid > 0) {
 		int	n = min(POOLBYTES, uio->uio_resid);
 
 		ret = uiomove(buf, n, uio);
-		if (ret)
+		if (ret != 0)
 			break;
 		while (n % sizeof(u_int32_t))
 			((u_int8_t *)buf)[n++] = 0;
 		add_entropy_words(buf, n / 4);
-		if (ret == 0 && uio->uio_resid > 0)
+		if (uio->uio_resid > 0)
 			yield();
 		newdata = 1;
 	}
