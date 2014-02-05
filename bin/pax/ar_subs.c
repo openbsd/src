@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.37 2014/01/30 13:30:11 espie Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.38 2014/02/05 20:35:42 halex Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -1159,7 +1159,7 @@ get_arc(void)
 	 * to read the archive.
 	 */
 	for (i = 0; ford[i] >= 0; ++i) {
-		if (fsub[ford[i]].hsz < minhd)
+		if (fsub[ford[i]].name != NULL && fsub[ford[i]].hsz < minhd)
 			minhd = fsub[ford[i]].hsz;
 	}
 	if (rd_start() < 0)
@@ -1210,7 +1210,8 @@ get_arc(void)
 		 * important).
 		 */
 		for (i = 0; ford[i] >= 0; ++i) {
-			if ((*fsub[ford[i]].id)(hdbuf, hdsz) < 0)
+			if (fsub[ford[i]].name == NULL ||
+			    (*fsub[ford[i]].id)(hdbuf, hdsz) < 0)
 				continue;
 			frmt = &(fsub[ford[i]]);
 			/*
