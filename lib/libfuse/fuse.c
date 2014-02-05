@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.19 2014/02/05 20:13:58 syl Exp $ */
+/* $OpenBSD: fuse.c,v 1.20 2014/02/05 20:47:38 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -337,7 +337,8 @@ dump_version(void)
 }
 
 static int
-ifuse_process_opt(void *data, const char *arg, int key, struct fuse_args *args)
+ifuse_process_opt(void *data, const char *arg, int key,
+    unused struct fuse_args *args)
 {
 	struct fuse_core_opt *opt = data;
 	struct stat st;
@@ -429,7 +430,7 @@ fuse_teardown(struct fuse *fuse, char *mp)
 }
 
 int
-fuse_invalidate(struct fuse *f, const char *path)
+fuse_invalidate(unused struct fuse *f, unused const char *path)
 {
 	return (EINVAL);
 }
