@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_ntop.c,v 1.8 2008/12/09 19:38:38 otto Exp $	*/
+/*	$OpenBSD: inet_ntop.c,v 1.9 2014/02/05 14:20:43 millert Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -34,7 +34,7 @@
 static const char *inet_ntop4(const u_char *src, char *dst, size_t size);
 static const char *inet_ntop6(const u_char *src, char *dst, size_t size);
 
-/* char *
+/* const char *
  * inet_ntop(af, src, dst, size)
  *	convert a network format address to presentation format.
  * return:
@@ -148,16 +148,20 @@ inet_ntop6(const u_char *src, char *dst, size_t size)
 		if (best.base != -1 && i >= best.base &&
 		    i < (best.base + best.len)) {
 			if (i == best.base) {
-				if (tp + 1 >= ep)
+				if (tp + 1 >= ep) {
+					errno = ENOSPC;
 					return (NULL);
+				}
 				*tp++ = ':';
 			}
 			continue;
 		}
 		/* Are we following an initial run of 0x00s or any real hex? */
 		if (i != 0) {
-			if (tp + 1 >= ep)
+			if (tp + 1 >= ep) {
+				errno = ENOSPC;
 				return (NULL);
+			}
 			*tp++ = ':';
 		}
 		/* Is this address an encapsulated IPv4? */
@@ -169,18 +173,24 @@ inet_ntop6(const u_char *src, char *dst, size_t size)
 			break;
 		}
 		advance = snprintf(tp, ep - tp, "%x", words[i]);
-		if (advance <= 0 || advance >= ep - tp)
+		if (advance <= 0 || advance >= ep - tp) {
+			errno = ENOSPC;
 			return (NULL);
+		}
 		tp += advance;
 	}
 	/* Was it a trailing run of 0x00's? */
 	if (best.base != -1 && (best.base + best.len) == (IN6ADDRSZ / INT16SZ)) {
-		if (tp + 1 >= ep)
+		if (tp + 1 >= ep) {
+			errno = ENOSPC;
 			return (NULL);
+		}
 		*tp++ = ':';
 	}
-	if (tp + 1 >= ep)
+	if (tp + 1 >= ep) {
+		errno = ENOSPC;
 		return (NULL);
+	}
 	*tp++ = '\0';
 
 	/*
