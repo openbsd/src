@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.1 2013/06/03 16:00:50 tedu Exp $	*/
+/*	$OpenBSD: tree.c,v 1.2 2014/02/05 20:13:58 syl Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <stdlib.h>
+#include <errno.h>
 
 #include "fuse_private.h"
 
@@ -64,8 +65,10 @@ tree_get(struct tree *t, uint64_t id)
 	struct treeentry	key, *entry;
 
 	key.id = id;
-	if ((entry = SPLAY_FIND(tree, t, &key)) == NULL)
+	if ((entry = SPLAY_FIND(tree, t, &key)) == NULL) {
+		errno = ENOENT;
 		return (NULL);
+	}
 
 	return (entry->data);
 }

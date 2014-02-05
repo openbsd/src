@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_subr.c,v 1.6 2013/12/03 09:59:40 syl Exp $ */
+/* $OpenBSD: fuse_subr.c,v 1.7 2014/02/05 20:13:58 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -124,12 +124,14 @@ get_vn_by_name_and_parent(struct fuse *f, uint8_t *xpath, ino_t parent)
 	vn_head = dict_get(&f->name_tree, path);
 
 	if (vn_head == NULL)
-		return (NULL);
+		goto fail;
 
 	SIMPLEQ_FOREACH(v, vn_head, node)
 		if (v->parent == parent)
 			return (v);
 
+fail:
+	errno = ENOENT;
 	return (NULL);
 }
 
