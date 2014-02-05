@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.351 2014/02/04 05:20:47 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.352 2014/02/05 05:59:42 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -397,6 +397,7 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5755_C0, "BCM5755 C0" },
 	{ BGE_CHIPID_BCM5761_A0, "BCM5761 A0" },
 	{ BGE_CHIPID_BCM5761_A1, "BCM5761 A1" },
+	{ BGE_CHIPID_BCM5762_A0, "BCM5762 A0" },
 	{ BGE_CHIPID_BCM5784_A0, "BCM5784 A0" },
 	{ BGE_CHIPID_BCM5784_A1, "BCM5784 A1" },
 	/* the 5754 and 5787 share the same ASIC ID */
@@ -3752,24 +3753,23 @@ bge_stats_update_regs(struct bge_softc *sc)
 
 	/*
 	 * XXX
-	 * Unlike other controllers, BGE_RXLP_LOCSTAT_IFIN_DROPS
-	 * counter of BCM5717, BCM5718, BCM5719 A0 and BCM5720 A0
-	 * includes number of unwanted multicast frames. This comes
-	 * from silicon bug and known workaround to get rough(not
-	 * exact) counter is to enable interrupt on MBUF low water
-	 * attention. This can be accomplished by setting
-	 * BGE_HCCMODE_ATTN bit of BGE_HCC_MODE,
-	 * BGE_BMANMODE_LOMBUF_ATTN bit of BGE_BMAN_MODE and
-	 * BGE_MODECTL_FLOWCTL_ATTN_INTR bit of BGE_MODE_CTL.
-	 * However that change would generate more interrupts and
-	 * there are still possibilities of losing multiple frames
-	 * during BGE_MODECTL_FLOWCTL_ATTN_INTR interrupt handling.
-	 * Given that the workaround still would not get correct
-	 * counter I don't think it's worth to implement it. So
-	 * ignore reading the counter on controllers that have the
-	 * silicon bug.
+	 * Unlike other controllers, the BGE_RXLP_LOCSTAT_IFIN_DROPS counter
+	 * of the BCM5717, BCM5718, BCM5762, BCM5719 A0 and BCM5720 A0
+	 * controllers includes the number of unwanted multicast frames.
+	 * This comes from a silicon bug and known workaround to get rough
+	 * (not exact) counter is to enable interrupt on MBUF low watermark
+	 * attention. This can be accomplished by setting BGE_HCCMODE_ATTN
+	 * bit of BGE_HDD_MODE, BGE_BMANMODE_LOMBUF_ATTN bit of BGE_BMAN_MODE
+	 * and BGE_MODECTL_FLOWCTL_ATTN_INTR bit of BGE_MODE_CTL. However
+	 * that change would generate more interrupts and there are still
+	 * possibilities of losing multiple frames during 
+	 * BGE_MODECTL_FLOWCTL_ATTN_INTR interrupt handling. Given that
+	 * the workaround still would not get correct counter I don't think
+	 * it's worth to implement it. So ignore reading the counter on
+	 * controllers that have the silicon bug.
 	 */
 	if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717 &&
+	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5762 &&
 	    sc->bge_chipid != BGE_CHIPID_BCM5719_A0 &&
 	    sc->bge_chipid != BGE_CHIPID_BCM5720_A0)
 		sc->bge_rx_discards += CSR_READ_4(sc, BGE_RXLP_LOCSTAT_IFIN_DROPS);
