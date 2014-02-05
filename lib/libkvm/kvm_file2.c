@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.33 2014/01/20 21:19:28 guenther Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.34 2014/02/05 03:49:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -169,7 +169,7 @@ kvm_getfiles(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			return (NULL);
 		}
 		*cnt = size / esize;
-		return ((struct kinfo_file *)kd->filebase);
+		return (kd->filebase);
 	} else {
 		if (esize > sizeof(struct kinfo_file)) {
 			_kvm_syserr(kd, kd->program,
@@ -253,7 +253,7 @@ kvm_deadfile_byfile(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		return (NULL);
 	}
 	*cnt = n;
-	return ((struct kinfo_file *)kd->filebase);
+	return (kd->filebase);
 }
 
 static struct kinfo_file *
@@ -269,13 +269,12 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 	struct filedesc0 filed0;
 #define filed	filed0.fd_fd
 	struct processlist allprocess;
-	struct proc proc, proc2;
+	struct proc proc;
 	struct process *pr, process;
 	struct pcred pcred;
 	struct ucred ucred;
 	char *filebuf = NULL;
 	int i, nfiles;
-	pid_t pid;
 
 	nl[0].n_name = "_filehead";
 	nl[1].n_name = "_nfiles";
@@ -391,7 +390,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			if (buflen < esize)
 				goto done;
 			if (fill_file(kd, &kf, NULL, 0, process.ps_textvp,
-			    &proc, KERN_FILE_TEXT, pid) == -1)
+			    &proc, KERN_FILE_TEXT, proc.p_pid) == -1)
 				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
@@ -402,7 +401,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			if (buflen < esize)
 				goto done;
 			if (fill_file(kd, &kf, NULL, 0, filed.fd_cdir, &proc,
-			    KERN_FILE_CDIR, pid) == -1)
+			    KERN_FILE_CDIR, proc.p_pid) == -1)
 				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
@@ -413,7 +412,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			if (buflen < esize)
 				goto done;
 			if (fill_file(kd, &kf, NULL, 0, filed.fd_rdir, &proc,
-			    KERN_FILE_RDIR, pid) == -1)
+			    KERN_FILE_RDIR, proc.p_pid) == -1)
 				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
@@ -424,7 +423,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 			if (buflen < esize)
 				goto done;
 			if (fill_file(kd, &kf, NULL, 0, process.ps_tracevp,
-			    &proc, KERN_FILE_TRACE, pid) == -1)
+			    &proc, KERN_FILE_TRACE, proc.p_pid) == -1)
 				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
@@ -451,7 +450,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 				goto cleanup;
 			}
 			if (fill_file(kd, &kf, &file, (u_long)fp, NULL,
-			    &proc, i, pid) == -1)
+			    &proc, i, proc.p_pid) == -1)
 				goto cleanup;
 			memcpy(where, &kf, esize);
 			where += esize;
@@ -462,7 +461,7 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 done:
 	*cnt = n;
 	free(filebuf);
-	return ((struct kinfo_file *)kd->filebase);
+	return (kd->filebase);
 cleanup:
 	free(filebuf);
 	return (NULL);
