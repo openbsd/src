@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_tmpfs.8,v 1.2 2013/06/02 14:38:11 jmc Exp $
+.\"	$OpenBSD: mount_tmpfs.8,v 1.3 2014/02/05 15:32:26 nick Exp $
 .\"	$NetBSD: mount_tmpfs.8,v 1.14 2008/04/30 13:10:53 martin Exp $
 .\"
 .\" Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 2 2013 $
+.Dd $Mdocdate: February 5 2014 $
 .Dt MOUNT_TMPFS 8
 .Os
 .Sh NAME
@@ -118,6 +118,12 @@ user and belonging to the
 group, with a restricted 0700 mode:
 .Pp
 .Dl # mount -t tmpfs -o -s20M -o -ujoe -o -gusers -o -m0700 tmpfs /mnt
+.Pp
+A corresponding
+.Xr fstab 5
+entry, using "swap" as a place holder:
+.Pp
+.Dl swap /mnt tmpfs rw,-s20M,-ujoe,-gusers,-m0700 0 0
 .Sh SEE ALSO
 .Xr fstab 5 ,
 .Xr mount 8
