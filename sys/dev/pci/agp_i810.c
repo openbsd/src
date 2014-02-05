@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.80 2013/12/09 19:52:11 kettenis Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.81 2014/02/05 11:52:49 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -694,39 +694,6 @@ agp_i810_configure(struct agp_i810_softc *isc)
 	 */
 	agp_flush_cache();
 }
-
-#if 0
-int
-agp_i810_detach(struct agp_softc *sc)
-{
-	int error;
-	struct agp_i810_softc *isc = sc->sc_chipc;
-
-	error = agp_generic_detach(sc);
-	if (error)
-		return (error);
-
-	/* Clear the GATT base. */
-	if (sc->chiptype == CHIP_I810) {
-		WRITE4(AGP_I810_PGTBL_CTL, 0);
-	} else {
-		unsigned int pgtblctl;
-		pgtblctl = READ4(AGP_I810_PGTBL_CTL);
-		pgtblctl &= ~1;
-		WRITE4(AGP_I810_PGTBL_CTL, pgtblctl);
-	}
-
-	if (sc->chiptype == CHIP_I810) {
-		bus_dmamem_unmap(pa->pa_dmat, isc->gatt->ag_virtual,
-		    gatt->ag_size);
-		agp_free_dmamem(sc->sc_dmat, gatt->ag_size, gatt->ag_dmamap,
-		    &gatt->ag_dmaseg);
-	}
-	free(sc->gatt, M_AGP);
-
-	return (0);
-}
-#endif
 
 void
 agp_i810_bind_page(void *sc, bus_addr_t offset, paddr_t physical, int flags)
