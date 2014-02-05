@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.16 2014/02/05 07:56:10 kettenis Exp $ */
+/*	$OpenBSD: qla.c,v 1.17 2014/02/05 07:58:05 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -904,8 +904,9 @@ qla_scsi_cmd_poll(struct qla_softc *sc)
 	while (ccb == NULL) {
 		u_int16_t isr, info;
 
+		delay(100);
+
 		if (qla_read_isr(sc, &isr, &info) == 0) {
-			delay(1000);
 			continue;
 		}
 
@@ -924,8 +925,6 @@ qla_scsi_cmd_poll(struct qla_softc *sc)
 
 			qla_write_queue_ptr(sc, QLA_RESP_QUEUE_OUT,
 			    sc->sc_last_resp_id);
-		} else {
-			delay(1000);
 		}
 
 		qla_clear_isr(sc, isr);
