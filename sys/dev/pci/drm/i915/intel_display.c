@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.28 2014/02/02 13:55:31 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.29 2014/02/05 10:58:48 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -7498,9 +7498,7 @@ static int intel_gen7_queue_flip(struct drm_device *dev,
 		plane_bit = MI_DISPLAY_FLIP_IVB_PLANE_C;
 		break;
 	default:
-#ifdef notyet
 		WARN_ONCE(1, "unknown plane in flip command\n");
-#endif
 		ret = -ENODEV;
 		goto err_unpin;
 	}

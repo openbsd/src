@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.10 2014/01/24 04:05:06 jsg Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.11 2014/02/05 10:58:48 kettenis Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -874,7 +874,7 @@ static void i915_get_extra_instdone(struct drm_device *dev,
 		instdone[1] = I915_READ(INSTDONE1);
 		break;
 	default:
-//		WARN_ONCE(1, "Unsupported platform\n");
+		WARN_ONCE(1, "Unsupported platform\n");
 	case 7:
 		instdone[0] = I915_READ(GEN7_INSTDONE_1);
 		instdone[1] = I915_READ(GEN7_SC_INSTDONE);
