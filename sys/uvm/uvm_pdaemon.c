@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.65 2014/02/06 16:32:40 tedu Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.66 2014/02/06 16:40:40 tedu Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -117,6 +117,9 @@ uvm_wait(const char *wmsg)
 	 */
 
 	if (curproc == uvm.pagedaemon_proc) {
+		printf("uvm_wait emergency bufbackoff\n");
+		if (bufbackoff(NULL, 4) == 0)
+			return;
 		/*
 		 * now we have a problem: the pagedaemon wants to go to
 		 * sleep until it frees more memory.   but how can it

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.36 2013/01/29 19:55:48 beck Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.37 2014/02/06 16:40:40 tedu Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -22,6 +22,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>		/* XXX for atomic */
 #include <sys/kernel.h>
+#include <sys/mount.h>
 
 /*
  * 2 trees: addr tree and size tree.
@@ -1883,6 +1884,20 @@ uvm_wait_pla(paddr_t low, paddr_t high, paddr_t size, int failok)
 	const char *wmsg = "pmrwait";
 
 	if (curproc == uvm.pagedaemon_proc) {
+		/*
+		 * This is not that uncommon when the pagedaemon is trying
+		 * to flush out a large mmapped file. VOP_WRITE will circle
+		 * back through the buffer cache and try to get more memory.
+		 * The pagedaemon starts by calling bufbackoff, but we can
+		 * easily use up that reserve in a single scan iteration.
+		 */
+		uvm_unlock_fpageq();
+		if (bufbackoff(NULL, atop(size)) == 0) {
+			uvm_lock_fpageq();
+			return 0;
+		}
+		uvm_lock_fpageq();
+
 		/*
 		 * XXX detect pagedaemon deadlock - see comment in
 		 * uvm_wait(), as this is exactly the same issue.
