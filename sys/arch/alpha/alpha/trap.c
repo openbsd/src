@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.68 2014/02/04 21:52:43 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.69 2014/02/06 05:14:12 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -355,7 +355,6 @@ trap(a0, a1, a2, entry, framep)
 
 		case ALPHA_IF_CODE_FEN:
 			alpha_enable_fp(p, 0);
-			alpha_pal_wrfen(0);
 			goto out;
 
 		default:
@@ -689,14 +688,16 @@ alpha_enable_fp(struct proc *p, int check)
 #endif
 	p->p_addr->u_pcb.pcb_fpcpu = ci;
 	ci->ci_fpcurproc = p;
-#if defined(MULTIPROCESSOR)
-	alpha_pal_swpipl(s);
-#endif
 	atomic_add_int(&uvmexp.fpswtch, 1);
 
 	p->p_md.md_flags |= MDP_FPUSED;
 	alpha_pal_wrfen(1);
 	restorefpstate(&p->p_addr->u_pcb.pcb_fp);
+	alpha_pal_wrfen(0);
+
+#if defined(MULTIPROCESSOR)
+	alpha_pal_swpipl(s);
+#endif
 }
 
 /*

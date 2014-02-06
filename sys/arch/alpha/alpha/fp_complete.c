@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_complete.c,v 1.8 2008/10/07 22:06:29 martynas Exp $	*/
+/*	$OpenBSD: fp_complete.c,v 1.9 2014/02/06 05:14:12 miod Exp $	*/
 /*	$NetBSD: fp_complete.c,v 1.5 2002/01/18 22:15:56 ross Exp $	*/
 
 /*-
@@ -398,6 +398,7 @@ alpha_write_fp_c(struct proc *p, u_int64_t fp_c)
 		return;
 	p->p_md.md_flags = (md_flags & ~MDP_FP_C) | fp_c;
 	alpha_enable_fp(p, 1);
+	alpha_pal_wrfen(1);
 	fp_c_to_fpcr(p);
 	alpha_pal_wrfen(0);
 }
@@ -574,6 +575,7 @@ alpha_fp_complete_at(alpha_instruction *trigger_pc, struct proc *p,
 		return SIGSEGV;
 	}
 	alpha_enable_fp(p, 1);
+	alpha_pal_wrfen(1);
 	/*
 	 * If necessary, lie about the dynamic rounding mode so emulation
 	 * software need go to only one place for it, and so we don't have to
