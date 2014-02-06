@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlareg.h,v 1.3 2014/01/21 02:40:02 jmatthew Exp $ */
+/*	$OpenBSD: qlareg.h,v 1.4 2014/02/06 21:05:54 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 /* firmware loading */
+#define QLA_2100_CODE_ORG		0x1000
 #define QLA_2200_CODE_ORG		0x1000
 #define QLA_2300_CODE_ORG		0x0800
 
