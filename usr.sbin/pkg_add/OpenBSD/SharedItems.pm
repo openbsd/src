@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.30 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.31 2014/02/06 16:55:01 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -75,7 +75,7 @@ sub wipe_directory
 	if (!rmdir $realname) {
 		$state->log("Error deleting directory #1: #2",
 		    $realname, $!)
-			unless $state->{dirs_okay}->{$d};
+			unless $state->{dirs_okay}{$d};
 		return 0;
 	}
 	return 1;
@@ -102,7 +102,7 @@ sub cleanup
 	for my $d (sort {$b cmp $a} keys %$h) {
 		$state->progress->show($done, $total);
 		my $realname = $state->{destdir}.$d;
-		if ($remaining->{dirs}->{$realname}) {
+		if (defined $remaining->{dirs}{$realname}) {
 			for my $i (@{$h->{$d}}) {
 				$state->log->set_context('-'.$i->{pkgname});
 				$i->reload($state);
@@ -114,7 +114,7 @@ sub cleanup
 	}
 	while (my ($user, $pkgname) = each %$u) {
 		$state->progress->show($done, $total);
-		next if $remaining->{users}->{$user};
+		next if $remaining->{users}{$user};
 		if ($state->{extra}) {
 			$state->system(OpenBSD::Paths->userdel, '--',
 			    $user);
@@ -126,7 +126,7 @@ sub cleanup
 	}
 	while (my ($group, $pkgname) = each %$g) {
 		$state->progress->show($done, $total);
-		next if $remaining->{groups}->{$group};
+		next if $remaining->{groups}{$group};
 		if ($state->{extra}) {
 			$state->system(OpenBSD::Paths->groupdel, '--',
 			    $group);

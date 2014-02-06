@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.131 2014/02/03 16:13:13 espie Exp $
+# $OpenBSD: Delete.pm,v 1.132 2014/02/06 16:55:01 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -28,7 +28,7 @@ use File::Basename;
 sub keep_old_files
 {
 	my ($state, $plist) = @_;
-	my $p = new OpenBSD::PackingList;
+	my $p = OpenBSD::PackingList->new;
 	my $borked = borked_package($plist->pkgname);
 	$p->set_infodir(installed_info($borked));
 	mkdir($p->infodir);
@@ -219,7 +219,7 @@ sub mark_directory
 {
 	my ($self, $state, $dir) = @_;
 
-	$state->{dirs_okay}->{$dir} = 1;
+	$state->{dirs_okay}{$dir} = 1;
 	my $d2 = dirname($dir);
 	if ($d2 ne $dir) {
 		$self->mark_directory($state, $d2);
@@ -288,7 +288,7 @@ sub delete
 sub record_shared
 {
 	my ($self, $recorder, $pkgname) = @_;
-	$recorder->{users}->{$self->name} = $pkgname;
+	$recorder->{users}{$self->name} = $pkgname;
 }
 
 package OpenBSD::PackingElement::NewGroup;
@@ -306,7 +306,7 @@ sub delete
 sub record_shared
 {
 	my ($self, $recorder, $pkgname) = @_;
-	$recorder->{groups}->{$self->name} = $pkgname;
+	$recorder->{groups}{$self->name} = $pkgname;
 }
 
 package OpenBSD::PackingElement::DirBase;
@@ -331,8 +331,27 @@ sub delete
 sub record_shared
 {
 	my ($self, $recorder, $pkgname) = @_;
+	# enough for the entry to exist, we only record interesting
+	# entries more thoroughly
+	$recorder->{dirs}{$self->fullname} //= [];
+}
+
+package OpenBSD::PackingElement::Mandir;
+sub record_shared
+{
+	my ($self, $recorder, $pkgname) = @_;
 	$self->{pkgname} = $pkgname;
-	push(@{$recorder->{dirs}->{$self->fullname}} , $self);
+	push(@{$recorder->{dirs}{$self->fullname}} , $self);
+}
+package OpenBSD::PackingElement::Fontdir;
+sub record_shared
+{
+	&OpenBSD::PackingElement::Mandir::record_shared;
+}
+package OpenBSD::PackingElement::Infodir;
+sub record_shared
+{
+	&OpenBSD::PackingElement::Mandir::record_shared;
 }
 
 package OpenBSD::PackingElement::Unexec;
