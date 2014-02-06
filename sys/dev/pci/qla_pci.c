@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla_pci.c,v 1.4 2014/02/01 09:11:30 kettenis Exp $ */
+/*	$OpenBSD: qla_pci.c,v 1.5 2014/02/06 09:51:42 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -69,7 +69,7 @@ struct cfattach qla_pci_ca = {
 #define PWRITE(s, r, v)	pci_conf_write((s)->psc_pc, (s)->psc_tag, (r), (v))
 
 static const struct pci_matchid qla_devices[] = {
-	/* { PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP2100 }, */
+	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP2100 },
 	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP2200 },
 	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP2300 },
 	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP2312 },
@@ -153,7 +153,6 @@ qla_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_QLOGIC_ISP2100:
-		/* not supported yet */
 		sc->sc_isp_gen = QLA_GEN_ISP2100;
 		sc->sc_isp_type = QLA_ISP2100;
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.17 2014/02/05 07:58:05 kettenis Exp $ */
+/*	$OpenBSD: qla.c,v 1.18 2014/02/06 09:51:42 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -39,6 +39,7 @@
 #include <dev/ic/qlavar.h>
 
 #ifndef ISP_NOFIRMWARE
+#include <dev/microcode/isp/asm_2100.h>
 #include <dev/microcode/isp/asm_2200.h>
 #include <dev/microcode/isp/asm_2300.h>
 #endif
@@ -100,6 +101,9 @@ void		qla_fabric_plogo(struct qla_softc *, struct qla_fc_port *);
 void		qla_update_start(struct qla_softc *, int);
 int		qla_async(struct qla_softc *, u_int16_t);
 
+int		qla_load_firmware_words(struct qla_softc *, const u_int16_t *,
+		    u_int16_t);
+int		qla_load_firmware_2100(struct qla_softc *);
 int		qla_load_firmware_2200(struct qla_softc *);
 int		qla_load_fwchunk_2300(struct qla_softc *,
 		    struct qla_dmamem *, const u_int16_t *, u_int32_t);
@@ -261,8 +265,8 @@ qla_attach(struct qla_softc *sc)
 
 	switch (sc->sc_isp_gen) {
 	case QLA_GEN_ISP2100:
-		printf("not supported yet\n");
-		return (ENXIO);
+		sc->sc_mbox_base = QLA_MBOX_BASE_2100;
+		break;
 
 	case QLA_GEN_ISP2200:
 		sc->sc_mbox_base = QLA_MBOX_BASE_2200;
@@ -304,7 +308,10 @@ qla_attach(struct qla_softc *sc)
 
 	switch (sc->sc_isp_gen) {
 	case QLA_GEN_ISP2100:
-		panic("not yet");
+		if (qla_load_firmware_2100(sc)) {
+			printf("firmware load failed\n");
+			return (ENXIO);
+		}
 		break;
 
 	case QLA_GEN_ISP2200:
@@ -1086,6 +1093,7 @@ qla_read_isr(struct qla_softc *sc, u_int16_t *isr, u_int16_t *info)
 	u_int32_t v;
 
 	switch (sc->sc_isp_gen) {
+	case QLA_GEN_ISP2100:
 	case QLA_GEN_ISP2200:
 		if (qla_read(sc, QLA_SEMA) & QLA_SEMA_LOCK) {
 			*info = qla_read_mbox(sc, 0);
@@ -1190,7 +1198,20 @@ qla_queue_reg(struct qla_softc *sc, enum qla_qptr queue)
 u_int16_t
 qla_read_queue_ptr(struct qla_softc *sc, enum qla_qptr queue)
 {
-	return (qla_read(sc, qla_queue_reg(sc, queue)));
+	u_int16_t a, b, i;
+	switch (sc->sc_isp_gen) {
+	case QLA_GEN_ISP2100:
+		do {
+			a = qla_read(sc, qla_queue_reg(sc, queue));
+			b = qla_read(sc, qla_queue_reg(sc, queue));
+		} while (a != b && ++i < 1000);
+		if (i == 1000)
+			printf("%s: queue ptr unstable\n", DEVNAME(sc));
+		return (a);
+
+	default:
+		return (qla_read(sc, qla_queue_reg(sc, queue)));
+	}
 }
 
 void
@@ -1742,6 +1763,18 @@ qla_put_cmd_cont(struct qla_softc *sc, void *buf, struct scsi_xfer *xs,
 #ifdef ISP_NOFIRMWARE
 
 int
+qla_load_firmware_words(struct qla_softc *sc, const u_int16_t *)
+{
+	return (0);
+}
+
+int
+qla_load_firmware_2100(struct qla_softc *sc)
+{
+	return (0);
+}
+
+int
 qla_load_firmware_2200(struct qla_softc *sc)
 {
 	return (0);
@@ -1756,14 +1789,14 @@ qla_load_firmware_2300(struct qla_softc *sc)
 #else
 
 int
-qla_load_firmware_2200(struct qla_softc *sc)
+qla_load_firmware_words(struct qla_softc *sc, const u_int16_t *src,
+    u_int16_t dest)
 {
-	const u_int16_t *src = isp_2200_risc_code;
 	u_int16_t i;
 
 	for (i = 0; i < src[3]; i++) {
 		sc->sc_mbox[0] = QLA_MBOX_WRITE_RAM_WORD;
-		sc->sc_mbox[1] = i + QLA_2200_CODE_ORG;
+		sc->sc_mbox[1] = i + dest;
 		sc->sc_mbox[2] = src[i];
 		if (qla_mbox(sc, 0x07, 0x01)) {
 			printf("firmware load failed\n");
@@ -1772,14 +1805,28 @@ qla_load_firmware_2200(struct qla_softc *sc)
 	}
 
 	sc->sc_mbox[0] = QLA_MBOX_VERIFY_CSUM;
-	sc->sc_mbox[1] = QLA_2200_CODE_ORG;
+	sc->sc_mbox[1] = dest;
 	if (qla_mbox(sc, 0x0003, 0x0003)) {
 		printf("verification of chunk at %x failed: %x\n",
-		    QLA_2200_CODE_ORG, sc->sc_mbox[1]);
+		    dest, sc->sc_mbox[1]);
 		return (1);
 	}
 
 	return (0);
+}
+
+int
+qla_load_firmware_2100(struct qla_softc *sc)
+{
+	return qla_load_firmware_words(sc, isp_2100_risc_code,
+	    QLA_2100_CODE_ORG);
+}
+
+int
+qla_load_firmware_2200(struct qla_softc *sc)
+{
+	return qla_load_firmware_words(sc, isp_2200_risc_code,
+	    QLA_2200_CODE_ORG);
 }
 
 int
