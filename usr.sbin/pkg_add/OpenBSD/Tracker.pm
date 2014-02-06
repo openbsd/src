@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.26 2011/07/12 10:30:29 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.27 2014/02/06 17:13:05 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -48,9 +48,9 @@ sub sets_todo
 sub handle_set
 {
 	my ($self, $set) = @_;
-	$self->{total}->{$set} = 1;
+	$self->{total}{$set} = 1;
 	if ($set->{finished}) {
-		$self->{done}->{$set} = 1;
+		$self->{done}{$set} = 1;
 	}
 }
 
@@ -58,7 +58,7 @@ sub known
 {
 	my ($self, $set) = @_;
 	for my $n ($set->newer, $set->older, $set->hints) {
-		$self->{known}->{$n->pkgname} = 1;
+		$self->{known}{$n->pkgname} = 1;
 	}
 }
 
@@ -66,14 +66,14 @@ sub add_set
 {
 	my ($self, $set) = @_;
 	for my $n ($set->newer) {
-		$self->{to_install}->{$n->pkgname} = $set;
+		$self->{to_install}{$n->pkgname} = $set;
 	}
 	for my $n ($set->older, $set->hints) {
-		$self->{to_update}->{$n->pkgname} = $set;
+		$self->{to_update}{$n->pkgname} = $set;
 	}
 	for my $n ($set->kept) {
-		delete $self->{to_update}->{$n->pkgname};
-		$self->{uptodate}->{$n->pkgname} = 1;
+		delete $self->{to_update}{$n->pkgname};
+		$self->{uptodate}{$n->pkgname} = 1;
 	}
 	$self->known($set);
 	$self->handle_set($set);
@@ -93,12 +93,12 @@ sub remove_set
 {
 	my ($self, $set) = @_;
 	for my $n ($set->newer) {
-		delete $self->{to_install}->{$n->pkgname};
-		delete $self->{cant_install}->{$n->pkgname};
+		delete $self->{to_install}{$n->pkgname};
+		delete $self->{cant_install}{$n->pkgname};
 	}
 	for my $n ($set->kept, $set->older, $set->hints) {
-		delete $self->{to_update}->{$n->pkgname};
-		delete $self->{cant_update}->{$n->pkgname};
+		delete $self->{to_update}{$n->pkgname};
+		delete $self->{cant_update}{$n->pkgname};
 	}
 	$self->handle_set($set);
 }
@@ -109,7 +109,7 @@ sub uptodate
 	$set->{finished} = 1;
 	$self->remove_set($set);
 	for my $n ($set->older, $set->kept) {
-		$self->{uptodate}->{$n->pkgname} = 1;
+		$self->{uptodate}{$n->pkgname} = 1;
 	}
 }
 
@@ -120,13 +120,13 @@ sub cant
 	$self->remove_set($set);
 	$self->known($set);
 	for my $n ($set->older) {
-		$self->{cant_update}->{$n->pkgname} = 1;
+		$self->{cant_update}{$n->pkgname} = 1;
 	}
 	for my $n ($set->newer) {
-		$self->{cant_install}->{$n->pkgname} = 1;
+		$self->{cant_install}{$n->pkgname} = 1;
 	}
 	for my $n ($set->kept) {
-		$self->{uptodate}->{$n->pkgname} = 1;
+		$self->{uptodate}{$n->pkgname} = 1;
 	}
 }
 
@@ -139,11 +139,11 @@ sub done
 	$self->known($set);
 
 	for my $n ($set->newer) {
-		$self->{uptodate}->{$n->pkgname} = 1;
-		$self->{installed}->{$n->pkgname} = 1;
+		$self->{uptodate}{$n->pkgname} = 1;
+		$self->{installed}{$n->pkgname} = 1;
 	}
 	for my $n ($set->kept) {
-		$self->{uptodate}->{$n->pkgname} = 1;
+		$self->{uptodate}{$n->pkgname} = 1;
 	}
 }
 
@@ -151,7 +151,7 @@ sub is
 {
 	my ($self, $k, $pkg) = @_;
 
-	my $set = $self->{$k}->{$pkg};
+	my $set = $self->{$k}{$pkg};
 	if (ref $set) {
 		return $set->real_set;
 	} else {
