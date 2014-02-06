@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.4 2014/01/22 06:00:22 jcs Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.5 2014/02/06 16:43:04 jcs Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -599,6 +599,7 @@ ubcmtp_ioctl(void *v, unsigned long cmd, caddr_t data, int flag, struct proc *p)
 int
 ubcmtp_raw_mode(struct ubcmtp_softc *sc, int enable)
 {
+	usb_device_request_t r;
 	usbd_status err;
 	uint8_t buf[8];
 
@@ -606,8 +607,13 @@ ubcmtp_raw_mode(struct ubcmtp_softc *sc, int enable)
 	if (sc->dev_type->type >= UBCMTP_TYPE3)
 		return (0);
 
-	err = uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT, buf,
-	    UBCMTP_WELLSPRING_MODE_LEN);
+	r.bRequest = UR_GET_REPORT;
+	r.bmRequestType = UT_READ_CLASS_INTERFACE;
+	USETW2(r.wValue, UHID_FEATURE_REPORT, 0);
+	USETW(r.wIndex, 0);
+	USETW(r.wLength, UBCMTP_WELLSPRING_MODE_LEN);
+
+	err = usbd_do_request(sc->sc_udev, &r, buf);
 	if (err != USBD_NORMAL_COMPLETION) {
 		printf("%s: %s: failed to get feature report\n",
 		    sc->sc_dev.dv_xname, __func__);
@@ -618,8 +624,13 @@ ubcmtp_raw_mode(struct ubcmtp_softc *sc, int enable)
 	buf[0] = (enable ? UBCMTP_WELLSPRING_MODE_RAW :
 	    UBCMTP_WELLSPRING_MODE_HID);
 
-	err = uhidev_set_report(&sc->sc_hdev, UHID_FEATURE_REPORT, buf,
-	    UBCMTP_WELLSPRING_MODE_LEN);
+	r.bRequest = UR_SET_REPORT;
+	r.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+	USETW2(r.wValue, UHID_FEATURE_REPORT, 0);
+	USETW(r.wIndex, 0);
+	USETW(r.wLength, UBCMTP_WELLSPRING_MODE_LEN);
+
+	err = usbd_do_request(sc->sc_udev, &r, buf);
 	if (err != USBD_NORMAL_COMPLETION) {
 		printf("%s: %s: failed to toggle raw mode\n",
 		    sc->sc_dev.dv_xname, __func__);
