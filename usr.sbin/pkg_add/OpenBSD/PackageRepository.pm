@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.105 2014/02/02 23:09:56 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.106 2014/02/06 22:58:26 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -598,7 +598,8 @@ sub try_until_success
 		if (defined $o) {
 			return $o;
 		}
-		if (defined $self->{lasterror} && $self->{lasterror} == 550) {
+		if (defined $self->{lasterror} && 
+		    ($self->{lasterror} == 550 || $self->{lasterror} == 404)) {
 			last;
 		}
 		if ($self->should_have($pkgname)) {
@@ -669,6 +670,10 @@ sub parse_problems
 		    m/^ftp: connect: Connection timed out/o ||
 		    m/^ftp: Can't connect or login to host/o) {
 			$self->{lasterror} = 421;
+		}
+		# http error
+		if (m/^ftp: Error retrieving file: 404/o) {
+		    	$self->{lasterror} = 404;
 		}
 		if (m/^550\s+/o) {
 			$self->{lasterror} = 550;
