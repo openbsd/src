@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.83 2014/02/05 20:35:42 halex Exp $	*/
+/*	$OpenBSD: options.c,v 1.84 2014/02/06 20:51:55 guenther Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -384,6 +384,7 @@ pax_options(int argc, char **argv)
 				    strcmp(fsub[i].name, optarg) == 0)
 					break;
 			if (i < sizeof(fsub)/sizeof(FSUB)) {
+				frmt = &fsub[i];
 				flg |= XF;
 				break;
 			}
@@ -1232,12 +1233,17 @@ cpio_options(int argc, char **argv)
 				for (i = 0; i < sizeof(fsub)/sizeof(FSUB); ++i)
 					if (fsub[i].name != NULL &&
 					    strcmp(fsub[i].name, optarg) == 0)
-				if (i < sizeof(fsub)/sizeof(FSUB))
+						break;
+				if (i < sizeof(fsub)/sizeof(FSUB)) {
+					frmt = &fsub[i];
 					break;
+				}
 				paxwarn(1, "Unknown -H format: %s", optarg);
 				(void)fputs("cpio: Known -H formats are:", stderr);
 				for (i = 0; i < (sizeof(fsub)/sizeof(FSUB)); ++i)
-					(void)fprintf(stderr, " %s", fsub[i].name);
+					if (fsub[i].name != NULL)
+						(void)fprintf(stderr, " %s",
+						    fsub[i].name);
 				(void)fputs("\n\n", stderr);
 				cpio_usage();
 				break;
