@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.51 2014/01/20 19:52:45 tobias Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.52 2014/02/07 23:06:21 millert Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -909,6 +909,10 @@ sendfile(int type, char *file)
 		PRIV_START;
 		f = safe_open(file, O_RDONLY|O_NOFOLLOW, 0);
 		PRIV_END;
+		if (fstat(f, &stb) == -1) {
+			close(f);
+			f = -1;
+		}
 	}
 	if (f == -1)
 		return(ERROR);
