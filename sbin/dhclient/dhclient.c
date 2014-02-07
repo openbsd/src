@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.288 2014/01/25 05:21:23 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.289 2014/02/07 13:38:55 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -64,7 +64,6 @@
 #include <pwd.h>
 #include <resolv.h>
 
-#define	CLIENT_PATH 		"PATH=/usr/bin:/usr/sbin:/bin:/sbin"
 #define DEFAULT_LEASE_TIME	43200	/* 12 hours. */
 #define TIME_MAX		2147483647
 
