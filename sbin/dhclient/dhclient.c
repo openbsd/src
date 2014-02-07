@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.290 2014/02/07 18:12:17 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.291 2014/02/07 18:42:17 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1733,7 +1733,7 @@ rewrite_option_db(struct client_lease *offered, struct client_lease *effective)
 
 	write_file(path_option_db,
 	    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK | O_NOFOLLOW,
-	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0, db, strlen(db));
+	    0, 0, 0, db, strlen(db));
 }
 
 char *
