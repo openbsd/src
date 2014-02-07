@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.7 2003/08/20 19:36:59 miod Exp $
+#	$OpenBSD: Makefile,v 1.8 2014/02/07 10:13:00 miod Exp $
 
 MAN=	installboot.8
 MANSUBDIR=mvme88k
 
 .if ${MACHINE} == "mvme88k"
+SRCS=	installboot.c nlist.c
 PROG=	installboot
 BINDIR=/usr/mdec
 DPADD=${LIBUTIL}
