@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.119 2014/02/05 15:49:15 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.120 2014/02/07 18:15:27 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -21,8 +21,8 @@
 umask 0022
 
 unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE EDIT ETCSUM NEED_NEWALIASES
-unset NEWGRP NEWUSR NEED_REBOOT NOSIGCHECK RELINT SRCDIR SRCSUM TGZ
-unset XETCSUM XTGZ
+unset NEWGRP NEWUSR NEED_REBOOT NOSIGCHECK RELINT SIGFETCHED SRCDIR SRCSUM
+unset TGZ XETCSUM XTGZ
 
 # forced variables
 WRKDIR=$(mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXXXXXXX) || exit 1
@@ -119,7 +119,9 @@ extract_set() {
 # takes url or filename and setname ('etc' or 'xetc') as arguments
 get_set() {
 	local _tgz=${WRKDIR}/${1##*/} _url=$1 _set=$2
-	local _sigfile=${WRKDIR}/${_set}-${SIGHASH}
+	[ -n "${SM_PATH}" ] && \
+		local _sigfile=${WRKDIR}/${SIGHASH} || \
+		local _sigfile=${WRKDIR}/${_set}-${SIGHASH} 
 	[ -f "${_url}" ] && _url="file://$(readlink -f ${_url})"
 	if [[ ${_url} == @(file|ftp|http|https)://*/*[!/] ]]; then
 		echo "===> Fetching ${_url}"
@@ -132,9 +134,11 @@ get_set() {
 	tar -tzf "${_tgz}" ./var/db/sysmerge/${_set}sum >/dev/null || \
 		error_rm_wrkdir "${_tgz##*/}: badly formed \"${_set}\" set, lacks ./var/db/sysmerge/${_set}sum"
 	if [ -z "${NOSIGCHECK}" ]; then
-		echo "===> Fetching ${_url%/*}/${SIGHASH}.sig"
-		fetch "${_sigfile}.sig" "${_url%/*}/${SIGHASH}.sig" || \
-			error_rm_wrkdir "could not retrieve ${SIGHASH}.sig"
+		if [ -z "${SIGFETCHED}" ]; then
+			echo "===> Fetching ${_url%/*}/${SIGHASH}.sig"
+			fetch "${_sigfile}.sig" "${_url%/*}/${SIGHASH}.sig" || \
+				error_rm_wrkdir "could not retrieve ${SIGHASH}.sig"
+		fi
 		check_sig "${_sigfile}" "${_tgz}"
 	fi
 }
@@ -151,6 +155,7 @@ check_sig() {
 	(cd ${WRKDIR} && \
 		sha256 -C "${_sigfile}" "${_tgz}" >/dev/null) || \
 			error_rm_wrkdir "${_tgz}: bad ${SIGHASH} checksum"
+	[ -n "${SM_PATH}" -a -d ${DESTDIR}/etc/X11 -a -z "${SIGFETCHED}" ] && SIGFETCHED=1 && return
 	rm ${WRKDIR}/${_sigfile}{,.sig}
 }
 
@@ -717,12 +722,14 @@ while getopts bdSs:x: arg; do
 				error_rm_wrkdir "${SRCDIR}: invalid \"src\" tree, missing ${SRCDIR}/etc/Makefile"
 			continue
 		fi
+		unset SM_PATH
 		get_set "${OPTARG}" etc
 		;;
 	S)	
 		NOSIGCHECK=1
 		;;
 	x)
+		unset SM_PATH
 		get_set "${OPTARG}" xetc
 		;;
 	*)
