@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.9 2011/08/29 20:21:44 drahn Exp $	*/
+/*	$OpenBSD: clock.c,v 1.10 2014/02/07 23:44:25 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -79,20 +79,22 @@ inittodr(time_t base)
 	struct timeval tv;
 	struct timespec ts;
 
-        if (base < 5 * SECYR) {
-                /*
-                 * If base is 0, assume filesystem time is just unknown
-                 * instead of preposterous. Don't bark.
-                 */
-                if (base != 0)
-                        printf("WARNING: preposterous time in file system\n");
-                /* not going to use it anyway, if the chip is readable */
-                base = 21*SECYR + 186*SECDAY + SECDAY/2;
-                badbase = 1;
-        }
+	tv.tv_sec = tv.tv_usec = 0;
 
-	if (todr_handle != NULL && todr_gettime(todr_handle, &tv) != 0)
-		tv.tv_sec = tv.tv_usec = 0;
+	if (base < 5 * SECYR) {
+		/*
+		 * If base is 0, assume filesystem time is just unknown
+		 * instead of preposterous. Don't bark.
+		 */
+		if (base != 0)
+			printf("WARNING: preposterous time in file system\n");
+		/* not going to use it anyway, if the chip is readable */
+		base = 21*SECYR + 186*SECDAY + SECDAY/2;
+		badbase = 1;
+	}
+
+	if (todr_handle != NULL)
+		todr_gettime(todr_handle, &tv);
 
 	if (tv.tv_sec == 0) {
 		/*
@@ -105,7 +107,7 @@ inittodr(time_t base)
 		if (!badbase)
 			resettodr();
 	} else {
-		int deltat;
+		time_t deltat;
 
 		tv.tv_sec += tz.tz_minuteswest * 60;
 		if (tz.tz_dsttime)
@@ -116,8 +118,9 @@ inittodr(time_t base)
 		if (deltat < 0)
 			deltat = -deltat;
 		if (!(waszero || deltat < 2 * SECDAY)) {
-			printf("WARNING: clock %s %d days",
-			    tv.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
+			printf("WARNING: clock %s %lld days",
+			    tv.tv_sec < base ? "lost" : "gained",
+			    (long long)(deltat / SECDAY));
 			bad = "";
 
 			if (tv.tv_sec < base && deltat > 1000 * SECDAY) {
