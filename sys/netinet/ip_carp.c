@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.220 2014/01/22 09:35:20 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.221 2014/02/07 22:22:37 stsp Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1352,7 +1352,8 @@ carp_send_na(struct carp_softc *sc)
 
 		in6 = &ifatoia6(ifa)->ia_addr.sin6_addr;
 		nd6_na_output(sc->sc_carpdev, &mcast, in6,
-		    ND_NA_FLAG_OVERRIDE, 1, NULL);
+		    ND_NA_FLAG_OVERRIDE |
+		    (ip6_forwarding ? ND_NA_FLAG_ROUTER : 0), 1, NULL);
 		DELAY(1000);	/* XXX */
 	}
 	splx(s);
