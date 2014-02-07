@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.21 2014/02/03 19:56:53 espie Exp $
+# $OpenBSD: Term.pm,v 1.22 2014/02/07 11:20:58 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -90,7 +90,7 @@ sub visit_with_size
 		    $progress->show($donesize + $done, $totsize);
 		};
 	}
-	$plist->size_and($progress, \$donesize, $plist->{totsize},
+	$plist->size_and($progress, \$donesize, $totsize,
 	    $method, $state, @r);
 }
 
@@ -123,14 +123,14 @@ sub init
 	return unless defined $ENV{TERM} || defined $ENV{TERMCAP};
 	my $termios = POSIX::Termios->new;
 	$termios->getattr(0);
-	$self->{terminal} = Term::Cap->Tgetent({ OSPEED =>
+	my $terminal = Term::Cap->Tgetent({ OSPEED =>
 	    $termios->getospeed});
-	$self->{glitch} = $self->{terminal}->Tputs("xn", 1);
-	$self->{cleareol} = $self->{terminal}->Tputs("ce", 1);
-	$self->{hpa} = $self->{terminal}->Tputs("ch", 1);
+	$self->{glitch} = $terminal->Tputs("xn", 1);
+	$self->{cleareol} = $terminal->Tputs("ce", 1);
+	$self->{hpa} = $terminal->Tputs("ch", 1);
 	if (!defined $self->{hpa}) {
 		# XXX this works with screen and tmux
-		$self->{cuf} = $self->{terminal}->Tputs("RI", 1);
+		$self->{cuf} = $terminal->Tputs("RI", 1);
 		if (defined $self->{cuf}) {
 			$self->{hpa} = "\r".$self->{cuf};
 		}
