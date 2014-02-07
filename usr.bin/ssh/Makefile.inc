@@ -1,4 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.42 2014/01/29 06:18:35 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.43 2014/02/07 21:14:24 miod Exp $
+
+.include <bsd.own.mk>
 
 CFLAGS+=	-I${.CURDIR}/..
 
@@ -23,7 +25,9 @@ CDIAGFLAGS+=	-Wswitch
 CDIAGFLAGS+=	-Wtrigraphs
 CDIAGFLAGS+=	-Wuninitialized
 CDIAGFLAGS+=	-Wunused
+.if ${COMPILER_VERSION} == "gcc4"
 CDIAGFLAGS+=	-Wold-style-definition
+.endif
 CDIAGFLAGS+=	-Wno-unused-parameter # Not clean for this yet
 #CDIAGFLAGS+=	-Wwrite-strings # XXX too messy; needs libc changes
 #CDIAGFLAGS+=	-Wcast-qual # XXX not clean
@@ -36,7 +40,6 @@ WARNINGS=yes
 INSTALL_STRIP=
 
 CFLAGS+=	-DENABLE_PKCS11
-.include <bsd.own.mk>
 .ifndef NOPIC
 CFLAGS+=	-DHAVE_DLOPEN
 .endif
