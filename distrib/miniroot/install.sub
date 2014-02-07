@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.742 2014/02/03 23:28:00 rpe Exp $
+#	$OpenBSD: install.sub,v 1.743 2014/02/07 23:28:21 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -771,6 +771,15 @@ v6_info() {
 		/inet6/s///p'
 }
 
+# Run dhclient, making sure there is a free bpf first
+dhclient() {
+	local _i=0
+	while makedev bpf$_i && ! </dev/bpf$_i; do
+		((++_i < 50)) || return
+	done 2>/dev/null
+	/sbin/dhclient "$@"
+}
+
 # Construct etc/dhclient.conf and issue DHCP request. Return FALSE if
 # no IP address assigned to $1.
 #
@@ -926,8 +935,6 @@ v4_config() {
 			echo "DHCP not possible - no /sbin/dhclient."
 		elif dhcp_request $_ifs "$_name" || dhcp_request $_ifs; then
 			echo "dhcp" >>$_hn
-			# Create a new bpf in case we start another dhclient
-			makedev bpf$(ls /dev | grep -c "^bpf[0-9]")
 		fi
 		;;
 	*)	_addr=$resp
@@ -1078,8 +1085,6 @@ enable_network() {
 				else
 					cmd="$cmd; echo /sbin/dhclient missing - skipping dhcp request."
 				fi
-				# Create a new bpf in case we start another dhclient
-				makedev bpf$(ls /dev | grep -c "^bpf[0-9]")
 				;;
 			"rtsol")
 				rtsolif="$rtsolif $if"
@@ -2238,9 +2243,7 @@ done
 # Fetch a response file from a http server.
 #
 # Select a network interface for an initial dhcp request to get the IP
-# from the lease file via the next-server attribute. Kill a dhclient
-# from a previous attempt by taking down that interface first and so
-# free up the only bpf which exists at this point.
+# from the lease file via the next-server attribute.
 #
 get_responsefile() {
 	local _f _ifdev _mac _mode _server _lf
@@ -2263,7 +2266,6 @@ get_responsefile() {
 	fi
 	[[ -n $_ifdev ]] || return
 
-	ifconfig $_ifdev down
 	dhclient $_ifdev
 
 	_lf=/var/db/dhclient.leases.$_ifdev
