@@ -10,7 +10,7 @@ SRCS=	assert.c debug.c errstring.c exc.c heap.c match.c rpool.c strdup.c \
 	vsnprintf.c wbuf.c wsetup.c string.c stringf.c \
 	xtrap.c strto.c test.c path.c strcasecmp.c strrevcmp.c signal.c \
 	clock.c config.c shm.c sem.c mbdb.c strexit.c cf.c ldap.c niprop.c \
-	memstat.c util.c
+	memstat.c util.c inet6_ntop.c
 ENVDEF=	-DNOT_SENDMAIL
 
 # This is not a library that gets installed so only build the .a version
