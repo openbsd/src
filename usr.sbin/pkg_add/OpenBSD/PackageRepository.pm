@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.106 2014/02/06 22:58:26 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.107 2014/02/07 14:06:43 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -158,7 +158,9 @@ sub wipe_info
 
 	my $dir = $pkg->{dir};
 	if (defined $dir) {
+		require OpenBSD::Temp;
 		OpenBSD::Error->rmtree($dir);
+		OpenBSD::Temp->reclaim($dir);
 		delete $pkg->{dir};
 	}
 }
@@ -256,6 +258,7 @@ sub grabPlist
 sub parse_problems
 {
 	my ($self, $filename, $hint, $object) = @_;
+	OpenBSD::Temp->reclaim($filename);
 	unlink $filename;
 }
 
