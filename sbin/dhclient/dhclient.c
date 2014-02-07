@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.289 2014/02/07 13:38:55 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.290 2014/02/07 18:12:17 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2449,8 +2449,12 @@ priv_write_file(struct imsg_write_file *imsg)
 		note("Short contents write to '%s' (%zd vs %zd)", imsg->path,
 		    n, imsg->len);
 
-	fchmod(fd, imsg->mode);
-	fchown(fd, imsg->uid, imsg->gid);
+	if (fchmod(fd, imsg->mode) == -1)
+		note("fchmod(fd, 0x%x) of '%s' failed (%s)", imsg->mode,
+		    imsg->path, strerror(errno));
+	if (fchown(fd, imsg->uid, imsg->gid) == -1)
+		note("fchown(fd, %d, %d) of '%s' failed (%s)", imsg->uid,
+		    imsg->gid, imsg->path, strerror(errno));
 
 	close(fd);
 }
