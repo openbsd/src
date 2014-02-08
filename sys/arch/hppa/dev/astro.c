@@ -1,4 +1,4 @@
-/*	$OpenBSD: astro.c,v 1.13 2011/04/07 15:30:15 miod Exp $	*/
+/*	$OpenBSD: astro.c,v 1.14 2014/02/08 20:41:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -21,6 +21,7 @@
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 #include <sys/reboot.h>
 #include <sys/tree.h>
 
@@ -119,6 +120,8 @@ struct astro_softc {
 
 	char sc_dvmamapname[20];
 	struct extent *sc_dvmamap;
+	struct mutex sc_dvmamtx;
+
 	struct hppa_bus_dma_tag sc_dmatag;
 };
 
@@ -146,6 +149,7 @@ struct iommu_map_state {
 	struct astro_softc *ims_sc;
 	bus_addr_t ims_dvmastart;
 	bus_size_t ims_dvmasize;
+	struct extent_region ims_er;
 	struct iommu_page_map ims_map;	/* map must be last (array at end) */
 };
 
@@ -314,8 +318,10 @@ astro_attach(struct device *parent, struct device *self, void *aux)
          */
 	snprintf(sc->sc_dvmamapname, sizeof(sc->sc_dvmamapname),
 	    "%s_dvma", sc->sc_dv.dv_xname);
-        sc->sc_dvmamap = extent_create(sc->sc_dvmamapname, 0, (1 << iova_bits),
-            M_DEVBUF, 0, 0, EX_NOWAIT);
+	sc->sc_dvmamap = extent_create(sc->sc_dvmamapname, 0, (1 << iova_bits),
+	    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_NOCOALESCE);
+	KASSERT(sc->sc_dvmamap);
+	mtx_init(&sc->sc_dvmamtx, IPL_HIGH);
 
 	sc->sc_dmatag = astro_dmat;
 	sc->sc_dmatag._cookie = sc;
@@ -378,7 +384,7 @@ iommu_iomap_load_map(struct astro_softc *sc, bus_dmamap_t map, int flags)
 	struct iommu_map_state *ims = map->_dm_cookie;
 	struct iommu_page_map *ipm = &ims->ims_map;
 	struct iommu_page_entry *e;
-	int err, seg, s;
+	int err, seg;
 	paddr_t pa, paend;
 	vaddr_t va;
 	bus_size_t sgsize;
@@ -410,10 +416,10 @@ iommu_iomap_load_map(struct astro_softc *sc, bus_dmamap_t map, int flags)
 	}
 
 	sgsize = ims->ims_map.ipm_pagecnt * PAGE_SIZE;
-	s = splhigh();
-	err = extent_alloc(sc->sc_dvmamap, sgsize, align, 0, boundary,
-	    EX_NOWAIT | EX_BOUNDZERO, &dvmaddr);
-	splx(s);
+	mtx_enter(&sc->sc_dvmamtx);
+	err = extent_alloc_with_descr(sc->sc_dvmamap, sgsize, align, 0,
+	    boundary, EX_NOWAIT | EX_BOUNDZERO, &ims->ims_er, &dvmaddr);
+	mtx_leave(&sc->sc_dvmamtx);
 	if (err)
 		return (err);
 
@@ -490,7 +496,7 @@ iommu_dvmamap_unload(void *v, bus_dmamap_t map)
 	struct iommu_map_state *ims = map->_dm_cookie;
 	struct iommu_page_map *ipm = &ims->ims_map;
 	struct iommu_page_entry *e;
-	int err, i, s;
+	int err, i;
 
 	/* Remove the IOMMU entries. */
 	for (i = 0, e = ipm->ipm_map; i < ipm->ipm_pagecnt; ++i, ++e)
@@ -501,12 +507,12 @@ iommu_dvmamap_unload(void *v, bus_dmamap_t map)
 
 	bus_dmamap_unload(sc->sc_dmat, map);
 
-	s = splhigh();
+	mtx_enter(&sc->sc_dvmamtx);
 	err = extent_free(sc->sc_dvmamap, ims->ims_dvmastart,
 	    ims->ims_dvmasize, EX_NOWAIT);
 	ims->ims_dvmastart = 0;
 	ims->ims_dvmasize = 0;
-	splx(s);
+	mtx_leave(&sc->sc_dvmamtx);
 	if (err)
 		printf("warning: %ld of DVMA space lost\n", ims->ims_dvmasize);
 }
