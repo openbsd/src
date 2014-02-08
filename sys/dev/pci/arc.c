@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.100 2014/02/08 15:58:01 chris Exp $ */
+/*	$OpenBSD: arc.c,v 1.101 2014/02/08 16:02:42 chris Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1730,7 +1730,7 @@ arc_chipD_firmware(struct arc_softc *sc)
 		return (1);
 	}
 
-	sc->sc_req_count = letoh32(fwinfo.queue_len);
+	sc->sc_req_count = letoh32(fwinfo.queue_len) - 1;
 
 	if (arc_msg0(sc, ARC_RD_INB_MSG0_START_BGRB) != 0) {
 		printf("%s: timeout waiting to start bg rebuild\n",
