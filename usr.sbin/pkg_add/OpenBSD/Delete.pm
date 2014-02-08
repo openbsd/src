@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.132 2014/02/06 16:55:01 espie Exp $
+# $OpenBSD: Delete.pm,v 1.133 2014/02/08 10:43:25 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -46,20 +46,25 @@ sub manpages_unindex
 	my $destdir = $state->{destdir};
 	require OpenBSD::Makewhatis;
 
+	# fudge verbose for API differences
+	my $v = $state->{v};
+	$state->{v} = $state->verbose >= 2;
 	while (my ($k, $v) = each %{$state->{rmman}}) {
 		my @l = map { "$destdir$k/$_" } @$v;
 		if ($state->{not}) {
 			$state->say("Removing manpages in #1: #2",
-			    $destdir.$k, join(' ', @l))
-				 if $state->verbose >= 2;
+			    $destdir.$k, join(' ', @l)) if $state->verbose;
 		} else {
-			eval { OpenBSD::Makewhatis::remove($destdir.$k, \@l,
-			    $state); };
+			eval {
+				OpenBSD::Makewhatis::remove($destdir.$k, \@l,
+				    $state);
+			};
 			if ($@) {
-				$state->errsay("Error in makewhatis: #1", $@);
-			}
+				$state->errsay("Error in makewhatis: #1", $_);
+			};
 		}
 	}
+	$state->{v} = $v;
 	delete $state->{rmman};
 }
 
