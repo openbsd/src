@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.131 2014/02/04 18:11:36 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.132 2014/02/08 15:07:12 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -400,8 +400,8 @@ sub is_signed
 sub fullpkgpath
 {
 	my $self = shift;
-	if (defined $self->{extrainfo} && $self->{extrainfo}->{subdir} ne '') {
-		return $self->{extrainfo}->{subdir};
+	if (defined $self->{extrainfo} && $self->{extrainfo}{subdir} ne '') {
+		return $self->{extrainfo}{subdir};
 	} else {
 		return undef;
 	}
@@ -410,8 +410,8 @@ sub fullpkgpath
 sub fullpkgpath2
 {
 	my $self = shift;
-	if (defined $self->{extrainfo} && $self->{extrainfo}->{subdir} ne '') {
-		return $self->{extrainfo}->{path};
+	if (defined $self->{extrainfo} && $self->{extrainfo}{subdir} ne '') {
+		return $self->{extrainfo}{path};
 	} else {
 		return undef;
 	}
@@ -429,7 +429,7 @@ sub pkgpath
 		}
 		if (defined $self->{pkgpath}) {
 			for my $i (@{$self->{pkgpath}}) {
-				push(@{$h->{$i->{path}->{dir}}}, $i->{path});
+				push(@{$h->{$i->{path}{dir}}}, $i->{path});
 			}
 		}
 	}
