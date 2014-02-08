@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.38 2014/02/06 16:55:01 espie Exp $
+# $OpenBSD: Handle.pm,v 1.39 2014/02/08 16:11:02 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -169,6 +169,7 @@ sub complete_old
 		} else {
 			$self->{plist} = $plist;
 			delete $location->{contents};
+			delete $location->{update_info};
 		}
 	}
 }
@@ -240,6 +241,7 @@ sub get_plist
 		$handle->set_error(BAD_PACKAGE);
 		return;
 	}
+	delete $location->{update_info};
 	unless ($plist->has('url')) {
 		OpenBSD::PackingElement::Url->add($plist, $location->url);
 	}
