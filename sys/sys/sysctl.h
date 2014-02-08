@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.139 2013/10/22 16:40:26 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.140 2014/02/08 00:51:13 tedu Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -557,11 +557,8 @@ do {									\
 		(kp)->p_holdcnt = 1;					\
 		(kp)->p_priority = (p)->p_priority;			\
 		(kp)->p_usrpri = (p)->p_usrpri;				\
-		if ((p)->p_wmesg)					\
+		if ((p)->p_wchan && (p)->p_wmesg)			\
 			copy_str((kp)->p_wmesg, (p)->p_wmesg,		\
-			    sizeof((kp)->p_wmesg));			\
-		else							\
-			copy_str((kp)->p_wmesg, "",			\
 			    sizeof((kp)->p_wmesg));			\
 		if (show_addresses)					\
 			(kp)->p_wchan = PTRTOINT64((p)->p_wchan);	\
