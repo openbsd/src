@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip32_machdep.c,v 1.21 2012/10/03 22:46:09 miod Exp $ */
+/*	$OpenBSD: ip32_machdep.c,v 1.22 2014/02/08 22:20:15 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -114,6 +114,37 @@ void
 ip32_setup()
 {
 	u_long cpuspeed;
+
+	/*
+	 * IP32 PROM version 4.18:
+	 *	PROM Monitor (BE)
+	 *	Tue Oct 22 10:58:00 PDT 2002
+	 *	VERSION 4.18
+	 *	O2 R5K/R7K/R10K/R12K
+	 *	IRIX 6.5.x IP32prom IP32PROM-v4
+	 * has incorrect function pointers for all ARCBios calls running in
+	 * CKSEG1 (all the reboot/restart routines).
+	 *
+	 * We attempt to detect this and fix the function pointers here.
+	 *
+	 * XXX 4.16 and 4.17 might need similar fixes. 4.15 is sane.
+	 */
+
+	if ((vaddr_t)bios_halt == RESET_EXC_VEC + 0x161c &&
+	    (vaddr_t)bios_powerdown == RESET_EXC_VEC + 0x1648 &&
+	    (vaddr_t)bios_restart == RESET_EXC_VEC + 0x1674 &&
+	    (vaddr_t)bios_reboot == RESET_EXC_VEC + 0x16a0 &&
+	    (vaddr_t)bios_eim == RESET_EXC_VEC + 0x15f0 &&
+	    *(uint32_t *)bios_halt == 0xafbf0014 &&
+	    *(uint32_t *)bios_powerdown == 0xafbf0014 &&
+	    *(uint32_t *)bios_restart == 0xafb1001c &&
+	    *(uint32_t *)bios_eim == 0xafbf0014) {
+		bios_halt = (void (*)(void))(RESET_EXC_VEC + 0x15bc);
+		bios_powerdown = (void (*)(void))(RESET_EXC_VEC + 0x15e8);
+		bios_restart = (void (*)(void))(RESET_EXC_VEC + 0x1614);
+		bios_reboot = (void (*)(void))(RESET_EXC_VEC + 0x1640);
+		bios_eim = (void (*)(void))(RESET_EXC_VEC + 0x1590);
+	}
 
 	crime_configure_memory();
 
