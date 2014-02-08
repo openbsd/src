@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.8 2013/12/31 12:24:55 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.9 2014/02/08 15:15:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -616,7 +616,9 @@ sock_setpar(struct sock *f)
 	struct slot *s = f->slot;
 	struct dev *d = s->dev;
 	struct amsg_par *p = &f->rmsg.u.par;
-	unsigned int min, max, rate, pchan, rchan, appbufsz;
+	unsigned int min, max;
+	uint32_t rate, appbufsz;
+	uint16_t pchan, rchan;
 
 	rchan = ntohs(p->rchan);
 	pchan = ntohs(p->pchan);
