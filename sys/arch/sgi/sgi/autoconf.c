@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.36 2012/09/29 21:46:02 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.37 2014/02/08 09:35:07 miod Exp $	*/
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
  *
@@ -194,6 +194,8 @@ memrange_register(uint64_t startpfn, uint64_t endpfn, uint64_t bmask)
 			return 0;
 	}
 #endif
+
+#ifndef MIPS_PTE64
 	/*
 	 * Prevent use of memory above 16GB physical, until pmap can support
 	 * this.
@@ -202,6 +204,7 @@ memrange_register(uint64_t startpfn, uint64_t endpfn, uint64_t bmask)
 		return 0;
 	if (endpfn >= atop(16UL * 1024 * 1024 * 1024))
 		endpfn = atop(16UL * 1024 * 1024 * 1024);
+#endif
 	
 	for (i = 0, cur = mem_layout; i < MAXMEMSEGS; i++, cur++) {
 		if (cur->mem_last_page == 0) {
@@ -443,7 +446,7 @@ arcs_device_register(struct device *dev, void *aux)
 #endif
 #if defined(TGT_INDIGO) || defined(TGT_INDY) || defined(TGT_INDIGO2)
 			/*
-			 * On Ind{igo,y,igo2} systems, the bootpath
+			 * On Ind{igo,y,igo^2} systems, the bootpath
 			 * starts at scsi().
 			 */
 			case SGI_IP20:
