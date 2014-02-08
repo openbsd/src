@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.105 2014/01/28 06:25:57 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.106 2014/02/08 15:18:54 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 28 2014 $
+.Dd $Mdocdate: February 8 2014 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -187,11 +187,11 @@ are not properly set using the
 .Fl v
 option.
 If the flag is
-.Va on ,
+.Cm on ,
 then the master volume (corresponding to the mix of all playback streams)
 is automatically adjusted to avoid clipping.
 Using
-.Va off
+.Cm off
 makes sense when all streams are recorded or produced with properly lowered
 volumes.
 The default is
