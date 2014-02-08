@@ -1,4 +1,4 @@
-.\"	$OpenBSD: extent.9,v 1.17 2014/01/21 21:46:54 kettenis Exp $
+.\"	$OpenBSD: extent.9,v 1.18 2014/02/08 20:29:01 kettenis Exp $
 .\"	$NetBSD: extent.9,v 1.15 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -28,13 +28,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: February 8 2014 $
 .Dt EXTENT 9
 .Os
 .Sh NAME
 .Nm extent_create ,
 .Nm extent_destroy ,
 .Nm extent_alloc ,
+.Nm extent_alloc_with_descr ,
 .Nm extent_alloc_subregion ,
 .Nm extent_alloc_subregion_with_descr ,
 .Nm extent_alloc_region ,
@@ -50,6 +51,8 @@
 .Fn extent_destroy "struct extent *ex"
 .Ft int
 .Fn extent_alloc "struct extent *ex" "u_long size" "u_long alignment" "u_long skew" "u_long boundary" "int flags" "u_long *result"
+.Ft int
+.Fn extent_alloc_with_descr "struct extent *ex" "u_long size" "u_long alignment" "u_long skew" "u_long boundary" "int flags" "struct extent_region *rp" "u_long *result"
 .Ft int
 .\" too many arguments for a single .Fn
 .Fo extent_alloc_subregion
@@ -243,24 +246,28 @@ Upon successful completion,
 .Fa *result
 will contain the start of the allocated region.
 .Pp
-.Fn extent_alloc_subregion
-is a generalized version of
-.Fn extent_alloc
-that also allows the caller to specify that the allocated region must
-fall within the subregion from
-.Fa substart
-to
-.Fa subend
-inclusive.
-.Pp
-.Fn extent_alloc_subregion_with_descr
+.Fn extent_alloc_with_descr
 is similar to
-.Fn extent_alloc_subregion
+.Fn extent_alloc
 but allows the caller to provide a pre-allocated region descriptor instead
 of having the function allocate one.
 This function can only be used with extents that have the
 .Dv EX_NOCOALESCE
 property.
+.Pp
+.Fn extent_alloc_subregion
+and
+.Fn extent_alloc_subregion_with_descr
+are generalized versions of
+.Fn extent_alloc
+and
+.Fn extent_alloc_with_descr
+that allow the caller to specify that the allocated region must fall
+within the subregion from
+.Fa substart
+to
+.Fa subend
+inclusive.
 .Pp
 .Fn extent_alloc_region
 allocates the specific region in the extent map

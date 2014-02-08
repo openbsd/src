@@ -1,4 +1,4 @@
-/*	$OpenBSD: extent.h,v 1.13 2014/01/21 21:45:58 kettenis Exp $	*/
+/*	$OpenBSD: extent.h,v 1.14 2014/02/08 20:29:01 kettenis Exp $	*/
 /*	$NetBSD: extent.h,v 1.6 1997/10/09 07:43:05 jtc Exp $	*/
 
 /*-
@@ -118,6 +118,13 @@ void	extent_print(struct extent *);
 		_flags, _result) \
 	extent_alloc_subregion((_ex), (_ex)->ex_start, (_ex)->ex_end,  \
 	(_size), (_alignment), (_skew), (_boundary), (_flags), (_result))
+
+/* Simple case of extent_alloc_subregion_with_descr() */
+#define extent_alloc_with_descr(_ex, _size, _alignment, _skew, _boundary, \
+		_flags, _region, _result) \
+	extent_alloc_subregion_with_descr((_ex), (_ex)->ex_start, \
+	(_ex)->ex_end, (_size), (_alignment), (_skew), (_boundary), \
+	(_flags), (_region), (_result))
 #endif /* _KERNEL || _EXTENT_TESTING */
 
 #endif /* ! _SYS_EXTENT_H_ */
