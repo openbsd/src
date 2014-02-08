@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.23 2012/09/29 21:39:28 miod Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.24 2014/02/08 22:13:45 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -386,18 +386,18 @@ typedef struct arc_param_blk_32
 	u_int32_t	length;		/* Length of parameter block */
 	u_int16_t	version;	/* ?? */
 	u_int16_t	revision;	/* ?? */
-	u_int32_t	restart_block;	/* ?? */
-	u_int32_t	debug_block;	/* Debugging info -- unused */
-	u_int32_t	general_exp_vect; /* ?? */
-	u_int32_t	tlb_miss_exp_vect; /* ?? */
+	int32_t		restart_block;	/* ?? */
+	int32_t		debug_block;	/* Debugging info -- unused */
+	int32_t		general_exp_vect; /* ?? */
+	int32_t		tlb_miss_exp_vect; /* ?? */
 	u_int32_t	firmware_length; /* Size of Firmware jumptable in bytes */
-	u_int32_t	firmware_vect;	/* Firmware jumptable */
-	u_int32_t	vendor_length;	/* Size of Vendor specific jumptable */
+	int32_t		firmware_vect;	/* Firmware jumptable */
+	int32_t		vendor_length;	/* Size of Vendor specific jumptable */
 	u_int32_t	vendor_vect;	/* Vendor specific jumptable */
 	u_int32_t	adapter_count;	/* ?? */
 	u_int32_t	adapter0_type;	/* ?? */
 	u_int32_t	adapter0_length; /* ?? */
-	u_int32_t	adapter0_vect;	/* ?? */
+	int32_t		adapter0_vect;	/* ?? */
 } arc_param_blk_32_t;
 
 typedef struct arc_param_blk_64
@@ -406,18 +406,18 @@ typedef struct arc_param_blk_64
 	u_int64_t	length;		/* Length of parameter block */
 	u_int16_t	version;	/* ?? */
 	u_int16_t	revision;	/* ?? */
-	u_int64_t	restart_block;	/* ?? */
-	u_int64_t	debug_block;	/* Debugging info -- unused */
-	u_int64_t	general_exp_vect; /* ?? */
-	u_int64_t	tlb_miss_exp_vect; /* ?? */
+	int64_t		restart_block;	/* ?? */
+	int64_t		debug_block;	/* Debugging info -- unused */
+	int64_t		general_exp_vect; /* ?? */
+	int64_t		tlb_miss_exp_vect; /* ?? */
 	u_int64_t	firmware_length; /* Size of Firmware jumptable in bytes */
-	u_int64_t	firmware_vect;	/* Firmware jumptable */
+	int64_t		firmware_vect;	/* Firmware jumptable */
 	u_int64_t	vendor_length;	/* Size of Vendor specific jumptable */
-	u_int64_t	vendor_vect;	/* Vendor specific jumptable */
+	int64_t		vendor_vect;	/* Vendor specific jumptable */
 	u_int64_t	adapter_count;	/* ?? */
 	u_int64_t	adapter0_type;	/* ?? */
 	u_int64_t	adapter0_length; /* ?? */
-	u_int64_t	adapter0_vect;	/* ?? */
+	int64_t		adapter0_vect;	/* ?? */
 } arc_param_blk_64_t;
 
 #define	ARCBIOS_BASE	0x0000001000	/* physical */
@@ -433,6 +433,12 @@ extern char bios_enaddr[20];
 extern char bios_console[30];
 extern char bios_graphics[6];
 extern char bios_keyboard[6];
+
+extern void (*bios_halt)(void);
+extern void (*bios_powerdown)(void);
+extern void (*bios_restart)(void);
+extern void (*bios_reboot)(void);
+extern void (*bios_eim)(void);
 
 int  bios_getchar(void);
 void bios_putchar(char);

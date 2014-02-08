@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.33 2012/09/29 21:39:30 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.34 2014/02/08 22:13:45 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -56,6 +56,12 @@ int bios_consrate;			/* Serial console speed. */
 char bios_console[30];			/* Primary console. */
 char bios_graphics[6];			/* Graphics state. */
 char bios_keyboard[6];			/* Keyboard layout. */
+
+void (*bios_halt)(void);
+void (*bios_powerdown)(void);
+void (*bios_restart)(void);
+void (*bios_reboot)(void);
+void (*bios_eim)(void);
 
 extern int	physmem;		/* Total physical memory size */
 extern int	rsvdmem;		/* Total reserved memory size */
@@ -120,11 +126,12 @@ __asm__("\n"			\
 "	.end	" #Name "\n"	);
 
 /*
- * Same, which also forces the stack to be in CKSEG0 (actually, whatever area
- * proc0 stack was allocated in), used for restart functions, which aren't
- * supposed to return.
+ * Invoke an ARC routine through a function pointer (set up in bios_ident()),
+ * also forcing the stack to be in CKSEG0 (actually, whatever area proc0 stack
+ * was allocated in) if this is a 32-bit ARCBios; used by restart functions,
+ * which aren't supposed to return anyway.
  */
-#define ARC_Call2(Name,Offset)	\
+#define ARC_Call_Via_Pointer(Name,fnptr) \
 __asm__("\n"	\
 "	.text\n"		\
 "	.ent	" #Name "\n"	\
@@ -133,21 +140,14 @@ __asm__("\n"	\
 "	.globl	" #Name "\n"	\
 #Name":\n"			\
 "	lw	$3, bios_is_32bit\n"\
-"	ld	$2, bios_base\n"\
 "	beqz	$3, 1f\n"	\
-"	nop\n"			\
+"	 nop\n"			\
 "	ld	$3, proc0paddr\n" \
-"	addi	$29, $3, 16384 - 64\n" \
-"2:\n"				\
-"	lw	$3, 0x20($2)\n"	\
-"       lw      $2," #Offset "($3)\n"\
-"	jr	$2\n"		\
-"	nop\n"			\
+"	addi	$29, $3, 16384 - 64\n"		/* assumes USPACE >= 16384 */ \
 "1:\n"				\
-"	ld	$3, 2*0x20($2)\n"\
-"	ld	$2, 2*" #Offset "($3)\n"\
+"	ld	$2, " #fnptr "\n"\
 "	jr	$2\n"		\
-"	nop\n"			\
+"	 nop\n"			\
 "	.end	" #Name "\n");
 
 #if 0
@@ -155,11 +155,11 @@ ARC_Call(Bios_Load,			0x00);
 ARC_Call(Bios_Invoke,			0x04);
 ARC_Call(Bios_Execute,			0x08);
 #endif
-ARC_Call2(Bios_Halt,			0x0c);
-ARC_Call2(Bios_PowerDown,		0x10);
-ARC_Call2(Bios_Restart,			0x14);
-ARC_Call2(Bios_Reboot,			0x18);
-ARC_Call2(Bios_EnterInteractiveMode,	0x1c);
+ARC_Call_Via_Pointer(Bios_Halt,			bios_halt);
+ARC_Call_Via_Pointer(Bios_PowerDown,		bios_powerdown);
+ARC_Call_Via_Pointer(Bios_Restart,		bios_restart);
+ARC_Call_Via_Pointer(Bios_Reboot,		bios_reboot);
+ARC_Call_Via_Pointer(Bios_EnterInteractiveMode,	bios_eim);
 #if 0
 ARC_Call(Bios_Unused1,			0x20);
 #endif
@@ -533,6 +533,27 @@ void
 bios_ident()
 {
 	sys_config.system_type = bios_get_system_type();
+
+	if (bios_is_32bit) {
+#define bios_fnptr(slot) \
+    (int64_t)*(int32_t *)((int64_t)ArcBiosBase32->firmware_vect + (slot) * 4)
+		bios_halt = (void (*)(void))bios_fnptr(3);
+		bios_powerdown = (void (*)(void))bios_fnptr(4);
+		bios_restart = (void (*)(void))bios_fnptr(5);
+		bios_reboot = (void (*)(void))bios_fnptr(6);
+		bios_eim = (void (*)(void))bios_fnptr(7);
+#undef bios_fnptr
+	} else {
+#define bios_fnptr(slot) \
+    *(int64_t *)(ArcBiosBase64->firmware_vect + (slot) * 8)
+		bios_halt = (void (*)(void))bios_fnptr(3);
+		bios_powerdown = (void (*)(void))bios_fnptr(4);
+		bios_restart = (void (*)(void))bios_fnptr(5);
+		bios_reboot = (void (*)(void))bios_fnptr(6);
+		bios_eim = (void (*)(void))bios_fnptr(7);
+#undef bios_fnptr
+	}
+
 	bios_configure_memory();
 #ifdef __arc__
 	displayinfo = *(arc_dsp_stat_t *)Bios_GetDisplayStatus(1);
