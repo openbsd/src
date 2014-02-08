@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.50 2014/01/30 00:51:13 dlg Exp $	*/
+/*	$OpenBSD: clock.c,v 1.51 2014/02/08 11:04:50 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -899,13 +899,14 @@ int sparc_clock_time_is_ok;
  * Set up the system's time, given a `reasonable' time value.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	int badbase = 0, waszero = base == 0;
 	char *bad = NULL;
 	struct timeval tv;
 	struct timespec ts;
+
+	tv.tv_sec = tv.tv_usec = 0;
 
 	if (base < 5 * SECYR) {
 		/*
@@ -919,8 +920,10 @@ inittodr(base)
 		badbase = 1;
 	}
 
-	if (todr_handle && (todr_gettime(todr_handle, &tv) != 0 ||
-	    tv.tv_sec == 0)) {
+	if (todr_handle != NULL)
+		todr_gettime(todr_handle, &tv);
+
+	if (tv.tv_sec == 0) {
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the clock.
