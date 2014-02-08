@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.123 2014/02/08 13:17:40 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.124 2014/02/08 23:49:20 miod Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -1651,9 +1651,11 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 
 	msgbuf_addr = pmap_steal_avail(MSGBUFSIZE,4);
 
+#ifdef DEBUG
 	for (mp = pmap_avail; mp->size; mp++) {
 		bzero((void *)mp->start, mp->size);
 	}
+#endif
 
 #define HTABENTS_32 1024
 #define HTABENTS_64 2048
