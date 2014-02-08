@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.51 2012/10/03 11:18:23 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.52 2014/02/08 09:34:04 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -40,6 +40,16 @@
 #endif
 
 #include "assym.h"
+
+#ifdef MIPS_PTE64
+#define	PTE_LOG		3
+#define	PTE_LOAD	ld
+#define	PTE_OFFS	8
+#else
+#define	PTE_LOG		2
+#define	PTE_LOAD	lw
+#define	PTE_OFFS	4
+#endif
 
 	.set	mips3
 	.set	noreorder		# Noreorder is default style!
@@ -191,7 +201,7 @@ NON_LEAF(cpu_switchto_asm, FRAMESZ(CF_SZ), ra)
 	TLB_HAZARD
 	tlbp
 	TLB_HAZARD			# necessary?
-	PTR_SLL	t2, 3
+	PTR_SLL	t2, PTE_LOG + 1
 	PTR_ADDU t1, t2				# t1 now points at ptes.
 	mfc0	t0, COP_0_TLB_INDEX
 	nop
@@ -208,8 +218,8 @@ NON_LEAF(cpu_switchto_asm, FRAMESZ(CF_SZ), ra)
 ctx1:
 	mtc0	zero, COP_0_TLB_INDEX
 	dmtc0	v0, COP_0_TLB_HI
-	lw	ta0, 0(t1)
-	lw	ta1, 4(t1)
+	PTE_LOAD ta0, 0(t1)
+	PTE_LOAD ta1, PTE_OFFS(t1)
 	dsll	ta0, ta0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
 	dsrl	ta0, ta0, (64 - PG_FRAMEBITS)
 	dsll	ta1, ta1, (64 - PG_FRAMEBITS)
@@ -223,8 +233,8 @@ ctx1:
 
 #if UPAGES > 2	/* { */
 	dmtc0	v0, COP_0_TLB_HI		# init high entry (tlbid)
-	lw	ta0, 8(t1)
-	lw	ta1, 12(t1)
+	PTE_LOAD ta0, (2*PTE_OFFS)(t1)
+	PTE_LOAD ta1, (3*PTE_OFFS)(t1)
 	dsll	ta0, ta0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
 	dsrl	ta0, ta0, (64 - PG_FRAMEBITS)
 	TLB_HAZARD

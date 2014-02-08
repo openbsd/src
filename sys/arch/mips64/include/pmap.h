@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.30 2014/01/30 18:16:41 miod Exp $ */
+/*      $OpenBSD: pmap.h,v 1.31 2014/02/08 09:34:04 miod Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -46,10 +46,18 @@
  * The user address space is currently limited to 2Gb (0x0 - 0x80000000).
  *
  * The user address space is mapped using a two level structure where
- * virtual address bits 30..22 are used to index into a segment table which
- * points to a page worth of PTEs (4096 page can hold 1024 PTEs).
- * Bits 21..12 are then used to index a PTE which describes a page within
- * a segment.
+ * the virtual addresses bits are split in three groups:
+ *   segment:page:offset
+ * where:
+ * - offset are the in-page offsets (PAGE_SHIFT bits)
+ * - page are the second level page table index
+ *   (PMAP_L2SHIFT - Log2(pt_entry_t) bits)
+ * - segment are the first level page table (segment) index
+ *   (PMAP_L2SHIFT - Log2(void *) bits)
+ *
+ * This scheme allows Segment and page tables have the same size
+ * (1 << PMAP_L2SHIFT bytes, regardless of the pt_entry_t size) to be able to
+ * share the same allocator.
  *
  * Note: The kernel doesn't use the same data structures as user programs.
  * All the PTE entries are stored in a single array in Sysmap which is
@@ -61,15 +69,24 @@
  * by this pmap.
  */
 
+#ifdef MIPS_PTE64
+#define	PMAP_L2SHIFT		14
+#else
 #define	PMAP_L2SHIFT		12
+#endif
 #define	PMAP_L2SIZE		(1UL << PMAP_L2SHIFT)
+
+#define	NPTEPG			(PMAP_L2SIZE / sizeof(pt_entry_t))
 
 /*
  * Segment sizes
  */
 
-/* -2 below is for log2(sizeof pt_entry_t) */
+#ifdef MIPS_PTE64
+#define	SEGSHIFT		(PAGE_SHIFT + PMAP_L2SHIFT - 3)
+#else
 #define	SEGSHIFT		(PAGE_SHIFT + PMAP_L2SHIFT - 2)
+#endif
 #define NBSEG			(1UL << SEGSHIFT)
 #define	SEGOFSET		(NBSEG - 1)
 
@@ -77,6 +94,7 @@
 #define mips_round_seg(x)	(((vaddr_t)(x) + SEGOFSET) & ~SEGOFSET)
 #define pmap_segmap(m, v)	((m)->pm_segtab->seg_tab[((v) >> SEGSHIFT)])
 
+/* number of segments entries */
 #define PMAP_SEGTABSIZE		(PMAP_L2SIZE / sizeof(void *))
 
 struct segtab {
@@ -173,6 +191,15 @@ vm_page_t pmap_unmap_direct(vaddr_t);
  */
 
 #define PMAP_PA_MASK	~((paddr_t)PAGE_MASK)
+
+/* Kernel virtual address to page table entry */
+#define	kvtopte(va) \
+	(Sysmap + (((vaddr_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PAGE_SHIFT))
+/* User virtual address to pte page entry */
+#define uvtopte(va)	(((va) >> PAGE_SHIFT) & (NPTEPG -1))
+
+extern	pt_entry_t *Sysmap;		/* kernel pte table */
+extern	u_int Sysmapsize;		/* number of pte's in Sysmap */
 
 #endif	/* _KERNEL */
 

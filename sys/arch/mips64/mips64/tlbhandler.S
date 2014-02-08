@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.39 2013/12/19 20:15:08 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.40 2014/02/08 09:34:04 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -42,6 +42,16 @@
 #endif
 
 #include "assym.h"
+
+#ifdef MIPS_PTE64
+#define	PTE_LOG		3
+#define	PTE_LOAD	ld
+#define	PTE_OFFS	8
+#else
+#define	PTE_LOG		2
+#define	PTE_LOAD	lw
+#define	PTE_OFFS	4
+#endif
 
 	.set	mips3
 
@@ -137,12 +147,12 @@ xtlb_miss:
 	PTR_ADDU k1, k1, k0
 	PTR_L	k1, 0(k1)		# get pointer to page table
 	dmfc0	k0, COP_0_BAD_VADDR
-	PTR_SRL	k0, k0, PGSHIFT - 2
-	andi	k0, k0, ((NPTEPG/2) - 1) << 3
+	PTR_SRL	k0, k0, PGSHIFT - PTE_LOG
 	beqz	k1, _inv_seg
+	andi	k0, k0, ((NPTEPG >> 1) - 1) << (PTE_LOG + 1)
 	PTR_ADDU k1, k1, k0
-	lw	k0, 0(k1)
-	lw	k1, 4(k1)
+	PTE_LOAD	k0, 0(k1)
+	PTE_LOAD	k1, PTE_OFFS(k1)
 	dsll	k0, k0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
 	dsrl	k0, k0, (64 - PG_FRAMEBITS)
 	dmtc0	k0, COP_0_TLB_LO0
@@ -161,15 +171,14 @@ xtlb_miss:
 	ERET
 
 _k_miss:
-	b	k_tlb_miss		# kernel tlbmiss.
 	dmfc0	k0, COP_0_BAD_VADDR	# must reload.
+	b	k_tlb_miss		# kernel tlbmiss.
+	nop
 
 _inv_seg:				# No page table for this segment.
 	mfc0	k0, COP_0_STATUS_REG
 	andi	k0, SR_KSU_USER
 	bne	k0, zero, go_u_general
-	nop
-	b	go_k_general
 	nop
 
 go_k_general:
@@ -199,7 +208,7 @@ go_u_general:
 NLEAF(k_tlb_inv, 0)
 	.set	noat
 	LA	k1, (VM_MIN_KERNEL_ADDRESS)	# compute index
-	dmfc0	k0, COP_0_BAD_VADDR	# get the fault address
+	dmfc0	k0, COP_0_BAD_VADDR		# get the fault address
 	PTR_SUBU k0, k0, k1
 	lw	k1, Sysmapsize			# index within range?
 	PTR_SRL	k0, k0, PGSHIFT
@@ -208,25 +217,25 @@ NLEAF(k_tlb_inv, 0)
 	nop
 
 	PTR_L	k1, Sysmap
-	PTR_SLL	k0, k0, 2			# compute offset from index
+	PTR_SLL	k0, k0, PTE_LOG			# compute offset from index
 	TLB_HAZARD
 	tlbp					# Probe the invalid entry
 	TLB_HAZARD				# necessary?
 	PTR_ADDU k1, k1, k0
-	and	k0, k0, 4			# check even/odd page
+	and	k0, k0, PTE_OFFS		# check even/odd page
 	bne	k0, zero, k_tlb_inv_odd
 	nop
 
 	mfc0	k0, COP_0_TLB_INDEX
 	bltz	k0, sys_stk_chk			# probe fail
-	lw	k0, 0(k1)			# get PTE entry
+	PTE_LOAD k0, 0(k1)			# get PTE entry
 
 	dsll	k0, k0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
 	dsrl	k0, k0, (64 - PG_FRAMEBITS)
 	dmtc0	k0, COP_0_TLB_LO0		# load PTE entry
 	and	k0, k0, PG_V			# check for valid entry
 	beq	k0, zero, go_k_general		# PTE invalid
-	lw	k0, 4(k1)			# get odd PTE entry
+	PTE_LOAD k0, PTE_OFFS(k1)		# get odd PTE entry
 	dsll	k0, k0, (64 - PG_FRAMEBITS)
 	dsrl	k0, k0, (64 - PG_FRAMEBITS)
 	dmtc0	k0, COP_0_TLB_LO1		# load PTE entry
@@ -244,14 +253,14 @@ NLEAF(k_tlb_inv, 0)
 k_tlb_inv_odd:
 	mfc0	k0, COP_0_TLB_INDEX
 	bltz	k0, sys_stk_chk			# probe fail
-	lw	k0, 0(k1)			# get PTE entry
+	PTE_LOAD k0, 0(k1)			# get PTE entry
 
 	dsll	k0, k0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
 	dsrl	k0, k0, (64 - PG_FRAMEBITS)
 	dmtc0	k0, COP_0_TLB_LO1		# save PTE entry
 	and	k0, k0, PG_V			# check for valid entry
 	beq	k0, zero, go_k_general		# PTE invalid
-	lw	k0, -4(k1)			# get even PTE entry
+	PTE_LOAD k0, -PTE_OFFS(k1)		# get even PTE entry
 	dsll	k0, k0, (64 - PG_FRAMEBITS)
 	dsrl	k0, k0, (64 - PG_FRAMEBITS)
 	dmtc0	k0, COP_0_TLB_LO0		# save PTE entry
@@ -288,10 +297,10 @@ NLEAF(k_tlb_miss, 0)
 	beq	k1, zero, sys_stk_chk		# No. check for valid stack
 	PTR_SRL	k0, k0, 1
 	PTR_L	k1, Sysmap
-	PTR_SLL	k0, k0, 3			# compute offset from index
+	PTR_SLL	k0, k0, (PTE_LOG + 1)		# compute offset from index
 	PTR_ADDU k1, k1, k0
-	lw	k0, 0(k1)			# get PTE entry
-	lw	k1, 4(k1)			# get odd PTE entry
+	PTE_LOAD k0, 0(k1)			# get PTE entry
+	PTE_LOAD k1, PTE_OFFS(k1)		# get odd PTE entry
 	dsll	k0, k0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
 	dsrl	k0, k0, (64 - PG_FRAMEBITS)
 	dmtc0	k0, COP_0_TLB_LO0		# load PTE entry
@@ -329,12 +338,12 @@ sys_stk_chk:
 	REG_S	a3, CF_ARGSZ+1*REGSZ(sp)
 	PTR_S	sp, CF_ARGSZ+2*REGSZ(a0)
 #endif
-	move	sp, a0
-	dmfc0	a1, COP_0_EXC_PC
+	dmfc0	a3, COP_0_BAD_VADDR
 	move	a2, ra
+	dmfc0	a1, COP_0_EXC_PC
 	LA	a0, 1f
 	jal	printf
-	dmfc0	a3, COP_0_BAD_VADDR
+	move	sp, a0
 
 	LA	sp, start-FRAMESZ(CF_SZ)	# set sp to a valid place
 
@@ -476,9 +485,9 @@ LEAF(tlb_update, 0)
 	tlbp				# Probe for the entry.
 	TLB_HAZARD			# necessary?
 	dsll	a1, a1, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
-	dsrl	a1, a1, (64 - PG_FRAMEBITS)
-	bne	ta1, zero, 2f		# Decide even odd
 	mfc0	v0, COP_0_TLB_INDEX	# See what we got
+	bne	ta1, zero, 2f		# Decide even odd
+	dsrl	a1, a1, (64 - PG_FRAMEBITS)
 # EVEN
 	bltz	v0, 1f			# index < 0 => !found
 	nop

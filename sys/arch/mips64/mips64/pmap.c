@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.67 2014/01/08 17:12:18 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.68 2014/02/08 09:34:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -977,18 +977,17 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	/*
 	 *  User space mapping. Do table build.
 	 */
-	if (!(pte = pmap_segmap(pmap, va))) {
-		pt_entry_t *ptepg;
+	if ((pte = pmap_segmap(pmap, va)) == NULL) {
 		unsigned int wflags = PR_WAITOK | PR_ZERO;
 
 		if (flags & PMAP_CANFAIL)
 			wflags |= PR_LIMITFAIL;
 	
-		ptepg = (pt_entry_t *)pool_get(&pmap_pg_pool, wflags);
-		if (ptepg == NULL)
+		pte = (pt_entry_t *)pool_get(&pmap_pg_pool, wflags);
+		if (pte == NULL)
 			return ENOMEM;	/* can only happen if PMAP_CANFAIL */
 
-		pmap_segmap(pmap, va) = pte = ptepg;
+		pmap_segmap(pmap, va) = pte;
 	}
 
 	if (pg != NULL) {
@@ -1415,7 +1414,7 @@ pmap_is_modified(struct vm_page *pg)
 int
 pmap_is_page_ro(pmap_t pmap, vaddr_t va, pt_entry_t entry)
 {
-	return (entry & PG_RO);
+	return ((entry & PG_RO) != 0);
 }
 
 

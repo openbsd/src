@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.16 2013/03/25 19:57:41 deraadt Exp $	*/
+/*	$OpenBSD: pte.h,v 1.17 2014/02/08 09:34:04 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,8 +56,11 @@ struct tlb_entry {
 u_int	tlb_get_pid(void);
 void	tlb_read(unsigned int, struct tlb_entry *);
 
-typedef u_int32_t pt_entry_t;	/* Mips page table entry */
-#define	NPTEPG		(PMAP_L2SIZE / sizeof(pt_entry_t))
+#ifdef MIPS_PTE64
+typedef u_int64_t pt_entry_t;
+#else
+typedef u_int32_t pt_entry_t;
+#endif
 
 #endif /* _LOCORE */
 
@@ -89,8 +92,13 @@ typedef u_int32_t pt_entry_t;	/* Mips page table entry */
 #define	PG_M		0x00000100
 #define	PG_CCA_SHIFT	9
 #else
+#ifdef MIPS_PTE64
+#define	PG_WIRED	0x8000000000000000ULL	/* SW */
+#define PG_RO		0x4000000000000000ULL	/* SW */
+#else
 #define	PG_WIRED	0x80000000	/* SW */
 #define PG_RO		0x40000000	/* SW */
+#endif
 #define	PG_G		0x00000001	/* HW */
 #define	PG_V		0x00000002
 #define	PG_M		0x00000004
@@ -115,8 +123,13 @@ typedef u_int32_t pt_entry_t;	/* Mips page table entry */
 #define	PG_FRAME	0xfffff000
 #define PG_SHIFT	0
 #else
+#ifdef MIPS_PTE64
+#define	PG_FRAME	0x3fffffffffffffc0ULL
+#define	PG_FRAMEBITS	62
+#else
 #define	PG_FRAME	0x3fffffc0
 #define	PG_FRAMEBITS	30
+#endif
 #define PG_SHIFT	6
 #endif
 
@@ -137,15 +150,3 @@ typedef u_int32_t pt_entry_t;	/* Mips page table entry */
 #define	TLB_PAGE_MASK	PG_SIZE_16K
 #endif
 #endif	/* !R8000 */
-
-#if defined(_KERNEL) && !defined(_LOCORE)
-
-/* Kernel virtual address to page table entry */
-#define	kvtopte(va) \
-	(Sysmap + (((vaddr_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PAGE_SHIFT))
-/* User virtual address to pte page entry */
-#define uvtopte(adr)	(((adr) >> PAGE_SHIFT) & (NPTEPG -1))
-
-extern	pt_entry_t *Sysmap;		/* kernel pte table */
-extern	u_int Sysmapsize;		/* number of pte's in Sysmap */
-#endif
