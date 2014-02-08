@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.291 2014/02/07 18:42:17 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.292 2014/02/08 18:12:17 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -563,7 +563,7 @@ main(int argc, char *argv[])
 	imsg_init(unpriv_ibuf, socket_fd[1]);
 
 	if ((fd = open(path_dhclient_db,
-	    O_RDONLY|O_EXLOCK|O_CREAT|O_NOFOLLOW, 0)) == -1)
+	    O_RDONLY|O_EXLOCK|O_CREAT|O_NOFOLLOW, 0640)) == -1)
 		error("can't open and lock %s: %s", path_dhclient_db,
 		    strerror(errno));
 	read_client_leases();
@@ -1733,7 +1733,7 @@ rewrite_option_db(struct client_lease *offered, struct client_lease *effective)
 
 	write_file(path_option_db,
 	    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK | O_NOFOLLOW,
-	    0, 0, 0, db, strlen(db));
+	    S_IRUSR | S_IWUSR | S_IRGRP, 0, 0, db, strlen(db));
 }
 
 char *
