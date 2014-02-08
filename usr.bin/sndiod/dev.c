@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.9 2013/12/31 12:27:49 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.10 2014/02/08 15:17:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -603,22 +603,18 @@ play_filt_resamp(struct slot *s, void *res_in, void *out, int todo)
 	} else
 		in = res_in;
 
-	nch = s->mix.slot_cmax - s->mix.slot_cmin + 1;
+	nch = s->mix.cmap.nch;
 	vol = ADATA_MUL(s->mix.weight, s->mix.vol) / s->mix.join;
 	cmap_add(&s->mix.cmap, in, out, vol, todo);
 
 	offs = 0;
 	for (i = s->mix.join - 1; i > 0; i--) {
 		offs += nch;
-		if (offs > s->mix.cmap.inext)
-			break;
 		cmap_add(&s->mix.cmap, (adata_t *)in + offs, out, vol, todo);
 	}
 	offs = 0;
 	for (i = s->mix.expand - 1; i > 0; i--) {
 		offs += nch;
-		if (offs > s->mix.cmap.onext)
-			break;
 		cmap_add(&s->mix.cmap, in, (adata_t *)out + offs, vol, todo);
 	}
 	return todo;
@@ -821,7 +817,7 @@ rec_filt_resamp(struct slot *s, void *in, void *res_out, int todo)
 
 	out = (s->sub.resampbuf) ? s->sub.resampbuf : res_out;
 
-	nch = s->sub.slot_cmax - s->sub.slot_cmin + 1;
+	nch = s->sub.cmap.nch;
 	vol = ADATA_UNIT / s->sub.join;
 	cmap_copy(&s->sub.cmap, in, out, vol, todo);
 
