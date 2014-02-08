@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.59 2014/02/04 23:39:16 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.60 2014/02/08 12:18:14 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -648,20 +648,31 @@ sub check_digital_signature
 	for my $handle ($set->newer) {
 		$state->set_name_from_handle($handle, '+');
 		my $plist = $handle->plist;
+		my $pkgname = $plist->pkgname;
 		if ($plist->is_signed) {
 			if ($state->defines('nosig')) {
 				$state->errsay("NOT CHECKING DIGITAL SIGNATURE FOR #1",
-				    $plist->pkgname);
+				    $pkgname);
 			} else {
 				if (!$plist->check_signature($state)) {
 					$state->fatal("#1 is corrupted",
-					    $plist->pkgname);
+					    $pkgname);
 				}
 				$plist->{check_digest} = 1;
 				$state->{packages_with_sig}++;
 			}
 		} else {
-			$state->{packages_without_sig}{$plist->pkgname} = 1;
+			$state->{packages_without_sig}{$pkgname} = 1;
+			return if $state->defines('unsigned');
+			my $okay = 0;
+			if ($state->{interactive}) {
+				$state->errprint('UNSIGNED PACKAGE #1: ', 
+				    $pkgname);
+				$okay = $state->confirm("install anyways", 0);
+			}
+			if (!$okay) {
+				$state->fatal("Unsigned package #1", $pkgname);
+			}
 		}
 	}
 }
