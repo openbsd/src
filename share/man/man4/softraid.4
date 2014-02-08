@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.35 2014/01/18 09:11:12 jsing Exp $
+.\"	$OpenBSD: softraid.4,v 1.36 2014/02/08 17:05:15 chris Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 18 2014 $
+.Dd $Mdocdate: February 8 2014 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -165,7 +165,7 @@ Install
 .Xr boot 8
 on the RAID volume:
 .Bd -literal -offset indent
-# /usr/mdec/installboot /usr/mdec/boot /usr/mdec/biosboot sd0
+# installboot sd0
 .Ed
 .Pp
 At the
