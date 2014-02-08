@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.15 2011/08/29 20:21:44 drahn Exp $	*/
+/*	$OpenBSD: ipic.c,v 1.16 2014/02/08 10:58:17 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -149,23 +149,11 @@ ipic_attach(struct device *parent, struct device *self, void *aux)
 		iq = &ipic_handler[ivec];
 		if (!TAILQ_EMPTY(&iq->iq_list)) {
 			int level = TAILQ_FIRST(&iq->iq_list)->ih_level;
-			uint32_t mask;
 
 			sc->sc_simsr_h[level] |= ipic_simsr_h(ivec);
 			sc->sc_simsr_l[level] |= ipic_simsr_l(ivec);
 			sc->sc_semsr[level] |= ipic_semsr(ivec);
 			ipic_calc_masks();
-
-			/* Unmask the interrupt. */
-			mask = ipic_read(sc, IPIC_SIMSR_H);
-			mask |= ipic_simsr_h(ivec);
-			ipic_write(sc, IPIC_SIMSR_H, mask);
-			mask = ipic_read(sc, IPIC_SIMSR_L);
-			mask |= ipic_simsr_l(ivec);
-			ipic_write(sc, IPIC_SIMSR_L, mask);
-			mask = ipic_read(sc, IPIC_SEMSR);
-			mask |= ipic_semsr(ivec);
-			ipic_write(sc, IPIC_SEMSR, mask);
 		}
 	}
 
@@ -278,7 +266,6 @@ intr_establish(int ivec, int type, int level,
 	struct ipic_softc *sc = ipic_sc;
 	struct intrhand *ih;
 	struct intrq *iq;
-	uint32_t mask;
 	int s;
 
 	if (ipic_preinit_done == 0)
@@ -296,6 +283,7 @@ intr_establish(int ivec, int type, int level,
 		sc->sc_simsr_h[level] |= ipic_simsr_h(ivec);
 		sc->sc_simsr_l[level] |= ipic_simsr_l(ivec);
 		sc->sc_semsr[level] |= ipic_semsr(ivec);
+		ipic_calc_masks();
 	}
 
 	ih->ih_fun = ih_fun;
@@ -309,24 +297,12 @@ intr_establish(int ivec, int type, int level,
 	 * Append handler to end of list
 	 */
 	s = ppc_intr_disable();
-
 	TAILQ_INSERT_TAIL(&iq->iq_list, ih, ih_list);
-	ipic_calc_masks();
-
 	ppc_intr_enable(s);
 
 	/* Unmask the interrupt. */
-	if (sc) {
-		mask = ipic_read(sc, IPIC_SIMSR_H);
-		mask |= ipic_simsr_h(ivec);
-		ipic_write(sc, IPIC_SIMSR_H, mask);
-		mask = ipic_read(sc, IPIC_SIMSR_L);
-		mask |= ipic_simsr_l(ivec);
-		ipic_write(sc, IPIC_SIMSR_L, mask);
-		mask = ipic_read(sc, IPIC_SEMSR);
-		mask |= ipic_semsr(ivec);
-		ipic_write(sc, IPIC_SEMSR, mask);
-	}
+	if (sc)
+		ipic_setipl(curcpu()->ci_cpl);
 
 	return (ih);
 }
