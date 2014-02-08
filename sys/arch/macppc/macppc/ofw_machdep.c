@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.44 2014/01/04 20:28:24 miod Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.45 2014/02/08 13:17:38 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -88,6 +88,13 @@ struct firmware ofw_firmware = {
 #define	OFMEM_REGIONS	32
 static struct mem_region OFmem[OFMEM_REGIONS + 1], OFavail[OFMEM_REGIONS + 3];
 
+struct mem_region64 {
+	uint64_t start;
+	uint32_t size;
+};
+
+static struct mem_region64 OFmem64[OFMEM_REGIONS + 1];
+
 #if NWSDISPLAY > 0
 struct ofwfb {
 	struct rasops_info	ofw_ri;
@@ -108,9 +115,11 @@ static struct ofwfb ofwfb;
 void
 ofw_mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
-	int phandle;
+	int phandle, rhandle;
 	int nreg, navail;
 	int i, j;
+	uint32_t address_cells, size_cells;
+	uint physpages;
 
 	/*
 	 * Get memory.
@@ -118,25 +127,67 @@ ofw_mem_regions(struct mem_region **memp, struct mem_region **availp)
 	phandle = OF_finddevice("/memory");
 	if (phandle == -1)
 		panic("no memory?");
+	rhandle = OF_parent(phandle);
 
-	nreg = OF_getprop(phandle, "reg", OFmem,
-	    sizeof(OFmem[0]) * OFMEM_REGIONS) / sizeof(OFmem[0]);
+	if (OF_getprop(phandle, "#address-cells", &address_cells, 4) <= 0)
+		address_cells = 1;
+	if (OF_getprop(phandle, "#size-cells", &size_cells, 4) <= 0)
+		size_cells = 1;
+
+	if (size_cells != 1)
+		panic("unexpected memory layout %d:%d",
+		    address_cells, size_cells);
+
+	switch (address_cells) {
+	default:
+	case 1:
+		nreg = OF_getprop(phandle, "reg", OFmem,
+		    sizeof(OFmem[0]) * OFMEM_REGIONS) / sizeof(OFmem[0]);
+		break;
+	case 2:
+		nreg = OF_getprop(phandle, "reg", OFmem,
+		    sizeof(OFmem64[0]) * OFMEM_REGIONS) / sizeof(OFmem64[0]);
+		break;
+	}
+
 	navail = OF_getprop(phandle, "available", OFavail,
 	    sizeof(OFavail[0]) * OFMEM_REGIONS) / sizeof(OFavail[0]);
 	if (nreg <= 0 || navail <= 0)
 		panic("no memory?");
 
-	/* Eliminate empty regions. */
-	for (i = 0, j = 0; i < nreg; i++) {
-		if (OFmem[i].size == 0)
-			continue;
-		if (i != j) {
-			OFmem[j].start = OFmem[i].start;
-			OFmem[j].size = OFmem[i].size;
-			OFmem[i].start = 0;
-			OFmem[i].size = 0;
+	/* Eliminate empty or unreachable regions. */
+	switch (address_cells) {
+	default:
+	case 1:
+		for (i = 0, j = 0; i < nreg; i++) {
+			if (OFmem[i].size == 0)
+				continue;
+			if (i != j) {
+				OFmem[j].start = OFmem[i].start;
+				OFmem[j].size = OFmem[i].size;
+				OFmem[i].start = 0;
+				OFmem[i].size = 0;
+			}
+			j++;
 		}
-		j++;
+		break;
+	case 2:
+		physpages = 0;
+		for (i = 0, j = 0; i < nreg; i++) {
+			if (OFmem64[i].size == 0)
+				continue;
+			physpages += atop(OFmem64[i].size);
+			if (OFmem64[i].start >= 1ULL << 32)
+				continue;
+			OFmem[j].start = OFmem64[i].start;
+			if (OFmem64[i].start + OFmem64[i].size >= 1ULL << 32)
+				OFmem[j].size = (1ULL << 32) - OFmem64[i].start;
+			else
+				OFmem[j].size = OFmem64[i].size;
+			j++;
+		}
+		physmem = physpages;
+		break;
 	}
 
 	*memp = OFmem;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.143 2014/01/06 16:17:33 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.144 2014/02/08 13:17:38 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -451,8 +451,9 @@ cpu_startup()
 
 	printf("%s", version);
 
-	printf("real mem = %u (%uMB)\n", ptoa(physmem),
-	    ptoa(physmem)/1024/1024);
+	printf("real mem = %llu (%lluMB)\n",
+	    (unsigned long long)ptoa((psize_t)physmem),
+	    (unsigned long long)ptoa((psize_t)physmem)/1024U/1024U);
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

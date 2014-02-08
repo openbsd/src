@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.122 2013/12/29 19:09:21 brad Exp $ */
+/*	$OpenBSD: pmap.c,v 1.123 2014/02/08 13:17:40 miod Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -1396,17 +1396,21 @@ void
 pmap_avail_setup(void)
 {
 	struct mem_region *mp;
+	int pmap_physmem;
 
 	(fw->mem_regions) (&pmap_mem, &pmap_avail);
 	pmap_cnt_avail = 0;
-	physmem = 0;
+	pmap_physmem = 0;
 
 	ndumpmem = 0;
 	for (mp = pmap_mem; mp->size !=0; mp++, ndumpmem++) {
-		physmem += atop(mp->size);
+		pmap_physmem += atop(mp->size);
 		dumpmem[ndumpmem].start = atop(mp->start);
 		dumpmem[ndumpmem].end = atop(mp->start + mp->size);
 	}
+
+	if (physmem == 0)
+		physmem = pmap_physmem;
 
 	for (mp = pmap_avail; mp->size !=0 ; mp++) {
 		if (physmaxaddr <  mp->start + mp->size)
