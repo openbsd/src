@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.30 2013/01/07 10:50:41 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.31 2014/02/08 16:21:54 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -227,8 +227,9 @@ sub process_parameters
 				$l = $inst->find($pkgname);
 			}
 			if (!defined $l) {
-				$state->say("Problem finding #1", $pkgname);
 				unless ($state->{exclude}) {
+					$state->say("Problem finding #1", 
+					    $pkgname);
 					$state->{bad}++;
 				}
 			} else {
