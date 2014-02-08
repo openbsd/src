@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.122 2014/01/22 01:29:33 juanfra Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.123 2014/02/08 08:54:26 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: January 22 2014 $
+.Dd $Mdocdate: February 8 2014 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -312,6 +312,11 @@ Defaults to any key matching
 for packages, and any key matching
 .Sq *fw
 for firmwares.
+.It Ar unsigned
+allow the installation of unsigned packages without warnings/errors
+(necessary for
+.Xr ports 7 ,
+automatically set by the build infrastructure).
 .It Ar updatedepends
 force update even if forward dependencies no longer match.
 .El
