@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.120 2014/02/07 18:15:27 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.121 2014/02/08 23:58:06 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -172,9 +172,12 @@ prepare_src() {
 
 sm_populate() {
 	local cf i _array _d _r _D _R CF_DIFF CF_FILES CURSUM IGNORE_FILES
-	mkdir -p ${DESTDIR}/${DBDIR} || error_rm_wrkdir "cannot create ${DESTDIR}/${DBDIR}"
 	echo "===> Populating temporary root under ${TEMPROOT}"
 	mkdir -p ${TEMPROOT}
+
+	if [ ! -d ${DESTDIR}/${DBDIR} ]; then
+		mkdir -p ${DESTDIR}/${DBDIR} || exit 1
+	fi
 
 	prepare_src
 	extract_set "${TGZ}" etc
