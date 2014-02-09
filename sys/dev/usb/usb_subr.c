@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.96 2014/01/15 11:10:40 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.97 2014/02/09 11:47:01 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -603,9 +603,6 @@ usbd_set_config_no(struct usbd_device *dev, int no, int msg)
 	int index;
 	usb_config_descriptor_t cd;
 	usbd_status err;
-
-	if (no == USB_UNCONFIG_NO)
-		return (usbd_set_config_index(dev, USB_UNCONFIG_INDEX, msg));
 
 	DPRINTFN(5,("usbd_set_config_no: %d\n", no));
 	/* Figure out what config index to use. */
