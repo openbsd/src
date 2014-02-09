@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.37 2014/02/09 11:13:59 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.38 2014/02/09 12:18:26 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -210,6 +210,7 @@ sub wipe_info
 	$self->{repository}->close_now($self);
 	delete $self->{contents};
 	$self->deref;
+	delete $self->{_current_name};
 	delete $self->{update_info};
 }
 
@@ -281,7 +282,6 @@ sub deref
 	delete $self->{pid2};
 	delete $self->{_archive};
 	delete $self->{_current};
-	delete $self->{_current_name};
 	delete $self->{_unput};
 }
 
