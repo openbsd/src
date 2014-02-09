@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.175 2014/02/04 00:33:43 tedu Exp $	*/
+/*	$OpenBSD: proc.h,v 1.176 2014/02/09 11:17:19 kettenis Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -518,10 +518,12 @@ int	groupmember(gid_t, struct ucred *);
 
 enum single_thread_mode {
 	SINGLE_SUSPEND,		/* other threads to stop wherever they are */
+	SINGLE_PTRACE,		/* other threads to stop but don't wait */
 	SINGLE_UNWIND,		/* other threads to unwind and stop */
 	SINGLE_EXIT		/* other threads to unwind and then exit */
 };
 int	single_thread_set(struct proc *, enum single_thread_mode, int);
+void	single_thread_wait(struct process *);
 void	single_thread_clear(struct proc *, int);
 int	single_thread_check(struct proc *, int);
 

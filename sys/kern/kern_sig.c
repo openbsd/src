@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.157 2014/01/21 01:48:44 tedu Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.158 2014/02/09 11:17:19 kettenis Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1071,6 +1071,9 @@ out:
  *
  *	while (signum = CURSIG(curproc))
  *		postsig(signum);
+ *
+ * Assumes that if the P_SINTR flag is set, we're holding both the
+ * kernel and scheduler locks.
  */
 int
 issignal(struct proc *p)
@@ -1105,9 +1108,11 @@ issignal(struct proc *p)
 			 */
 			p->p_xstat = signum;
 
-			KERNEL_LOCK();
-			single_thread_set(p, SINGLE_SUSPEND, 0);
-			KERNEL_UNLOCK();
+			if (dolock)
+				KERNEL_LOCK();
+			single_thread_set(p, SINGLE_PTRACE, 0);
+			if (dolock)
+				KERNEL_UNLOCK();
 
 			if (dolock)
 				SCHED_LOCK(s);
@@ -1115,9 +1120,11 @@ issignal(struct proc *p)
 			if (dolock)
 				SCHED_UNLOCK(s);
 
-			KERNEL_LOCK();
+			if (dolock)
+				KERNEL_LOCK();
 			single_thread_clear(p, 0);
-			KERNEL_UNLOCK();
+			if (dolock)
+				KERNEL_UNLOCK();
 
 			/*
 			 * If we are no longer being traced, or the parent
@@ -1829,6 +1836,8 @@ single_thread_check(struct proc *p, int deep)
  * where the other threads should stop:
  *  - SINGLE_SUSPEND: stop wherever they are, will later either be told to exit
  *    (by setting to SINGLE_EXIT) or be released (via single_thread_clear())
+ *  - SINGLE_PTRACE: stop wherever they are, will wait for them to stop
+ *    later (via single_thread_wait()) and released as with SINGLE_SUSPEND
  *  - SINGLE_UNWIND: just unwind to kernel boundary, will be told to exit
  *    or released as with SINGLE_SUSPEND
  *  - SINGLE_EXIT: unwind to kernel boundary and exit
@@ -1840,11 +1849,16 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 	struct proc *q;
 	int error;
 
+#ifdef MULTIPROCESSOR
+	KASSERT(__mp_lock_held(&kernel_lock));
+#endif
+
 	if ((error = single_thread_check(p, deep)))
 		return error;
 
 	switch (mode) {
 	case SINGLE_SUSPEND:
+	case SINGLE_PTRACE:
 		break;
 	case SINGLE_UNWIND:
 		atomic_setbits_int(&pr->ps_flags, PS_SINGLEUNWIND);
@@ -1887,7 +1901,8 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 			/* if it's not interruptible, then just have to wait */
 			if (q->p_flag & P_SINTR) {
 				/* merely need to suspend?  just stop it */
-				if (mode == SINGLE_SUSPEND) {
+				if (mode == SINGLE_SUSPEND ||
+				    mode == SINGLE_PTRACE) {
 					q->p_stat = SSTOP;
 					break;
 				}
@@ -1913,10 +1928,18 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 		SCHED_UNLOCK(s);
 	}
 
+	if (mode != SINGLE_PTRACE)
+		single_thread_wait(pr);
+
+	return 0;
+}
+
+void
+single_thread_wait(struct process *pr)
+{
 	/* wait until they're all suspended */
 	while (pr->ps_singlecount > 0)
 		tsleep(&pr->ps_singlecount, PUSER, "suspend", 0);
-	return 0;
 }
 
 void
@@ -1926,7 +1949,10 @@ single_thread_clear(struct proc *p, int flag)
 	struct proc *q;
 
 	KASSERT(pr->ps_single == p);
-	
+#ifdef MULTIPROCESSOR
+	KASSERT(__mp_lock_held(&kernel_lock));
+#endif
+
 	pr->ps_single = NULL;
 	atomic_clearbits_int(&pr->ps_flags, PS_SINGLEUNWIND | PS_SINGLEEXIT);
 	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
