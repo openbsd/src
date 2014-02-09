@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.60 2014/01/20 02:54:07 deraadt Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.61 2014/02/09 20:08:25 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -471,12 +471,12 @@ sendhup(struct client_lease *active)
 	rslt = imsg_compose(unpriv_ibuf, IMSG_HUP, 0, 0, -1,
 	    &imsg, sizeof(imsg));
 	if (rslt == -1)
-		warning("cleanup: imsg_compose: %s", strerror(errno));
+		warning("sendhup: imsg_compose: %s", strerror(errno));
 
 	/* Do flush so cleanup message gets through immediately. */
 	rslt = imsg_flush(unpriv_ibuf);
 	if (rslt == -1 && errno != EPIPE)
-		warning("cleanup: imsg_flush: %s", strerror(errno));
+		warning("sendhup: imsg_flush: %s", strerror(errno));
 }
 
 /*
