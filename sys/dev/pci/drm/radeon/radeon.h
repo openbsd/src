@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon.h,v 1.5 2014/01/23 03:15:09 kettenis Exp $	*/
+/*	$OpenBSD: radeon.h,v 1.6 2014/02/09 23:57:04 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -392,6 +392,7 @@ struct radeon_sa_manager {
 	uint64_t		gpu_addr;
 	void			*cpu_ptr;
 	uint32_t		domain;
+	uint32_t		align;
 };
 
 struct radeon_sa_bo;

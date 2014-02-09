@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_sa.c,v 1.3 2014/02/09 23:50:36 jsg Exp $	*/
+/*	$OpenBSD: radeon_sa.c,v 1.4 2014/02/09 23:57:04 jsg Exp $	*/
 /*
  * Copyright 2011 Red Hat Inc.
  * All Rights Reserved.
@@ -55,7 +55,7 @@ bool	 radeon_sa_bo_next_hole(struct radeon_sa_manager *, struct radeon_fence **,
 
 int radeon_sa_bo_manager_init(struct radeon_device *rdev,
 			      struct radeon_sa_manager *sa_manager,
-			      unsigned size, u32 domain)
+			      unsigned size, u32 align, u32 domain)
 {
 	int i, r;
 
@@ -66,13 +66,14 @@ int radeon_sa_bo_manager_init(struct radeon_device *rdev,
 	sa_manager->bo = NULL;
 	sa_manager->size = size;
 	sa_manager->domain = domain;
+	sa_manager->align = align;
 	sa_manager->hole = &sa_manager->olist;
 	INIT_LIST_HEAD(&sa_manager->olist);
 	for (i = 0; i < RADEON_NUM_RINGS; ++i) {
 		INIT_LIST_HEAD(&sa_manager->flist[i]);
 	}
 
-	r = radeon_bo_create(rdev, size, RADEON_GPU_PAGE_SIZE, true,
+	r = radeon_bo_create(rdev, size, align, true,
 			     domain, NULL, &sa_manager->bo);
 	if (r) {
 		dev_err(rdev->dev, "(%d) failed to allocate bo for manager\n", r);
@@ -329,7 +330,7 @@ int radeon_sa_bo_new(struct radeon_device *rdev,
 	unsigned tries[RADEON_NUM_RINGS];
 	int i, r, error;
 
-	BUG_ON(align > RADEON_GPU_PAGE_SIZE);
+	BUG_ON(align > sa_manager->align);
 	BUG_ON(size > sa_manager->size);
 
 	*sa_bo = kmalloc(sizeof(struct radeon_sa_bo), GFP_KERNEL);

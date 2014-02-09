@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_gart.c,v 1.3 2014/02/09 13:07:10 jsg Exp $	*/
+/*	$OpenBSD: radeon_gart.c,v 1.4 2014/02/09 23:57:04 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -464,6 +464,7 @@ int radeon_vm_manager_init(struct radeon_device *rdev)
 		size *= 2;
 		r = radeon_sa_bo_manager_init(rdev, &rdev->vm_manager.sa_manager,
 					      RADEON_GPU_PAGE_ALIGN(size),
+					      RADEON_GPU_PAGE_SIZE,
 					      RADEON_GEM_DOMAIN_VRAM);
 		if (r) {
 			dev_err(rdev->dev, "failed to allocate vm bo (%dKB)\n",

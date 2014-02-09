@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_object.h,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_object.h,v 1.2 2014/02/09 23:57:04 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -161,7 +161,7 @@ static inline void * radeon_sa_bo_cpu_addr(struct radeon_sa_bo *sa_bo)
 
 extern int radeon_sa_bo_manager_init(struct radeon_device *rdev,
 				     struct radeon_sa_manager *sa_manager,
-				     unsigned size, u32 domain);
+				     unsigned size, u32 align, u32 domain);
 extern void radeon_sa_bo_manager_fini(struct radeon_device *rdev,
 				      struct radeon_sa_manager *sa_manager);
 extern int radeon_sa_bo_manager_start(struct radeon_device *rdev,
