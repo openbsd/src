@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.166 2014/02/04 22:19:53 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.167 2014/02/09 10:50:43 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -247,6 +247,14 @@ kmalloc(size_t size, int flags)
 }
 
 static inline void *
+kmalloc_array(size_t n, size_t size, int flags)
+{
+	if (n == 0 || SIZE_MAX / n < size)
+		return NULL;
+	return malloc(n * size, M_DRM, flags);
+}
+
+static inline void *
 kcalloc(size_t n, size_t size, int flags)
 {
 	if (n == 0 || SIZE_MAX / n < size)
@@ -262,6 +270,18 @@ kzalloc(size_t size, int flags)
 
 static inline void
 kfree(void *objp)
+{
+	free(objp, M_DRM);
+}
+
+static inline void *
+vzalloc(unsigned long size)
+{
+	return malloc(size, M_DRM, M_WAITOK | M_CANFAIL | M_ZERO);
+}
+
+static inline void
+vfree(void *objp)
 {
 	free(objp, M_DRM);
 }
