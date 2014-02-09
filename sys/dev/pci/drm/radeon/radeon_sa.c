@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_sa.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
+/*	$OpenBSD: radeon_sa.c,v 1.3 2014/02/09 23:50:36 jsg Exp $	*/
 /*
  * Copyright 2011 Red Hat Inc.
  * All Rights Reserved.
@@ -73,7 +73,7 @@ int radeon_sa_bo_manager_init(struct radeon_device *rdev,
 	}
 
 	r = radeon_bo_create(rdev, size, RADEON_GPU_PAGE_SIZE, true,
-			     RADEON_GEM_DOMAIN_CPU, NULL, &sa_manager->bo);
+			     domain, NULL, &sa_manager->bo);
 	if (r) {
 		dev_err(rdev->dev, "(%d) failed to allocate bo for manager\n", r);
 		return r;
