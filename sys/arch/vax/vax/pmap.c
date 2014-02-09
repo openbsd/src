@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.62 2013/11/24 22:08:25 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.63 2014/02/09 20:58:49 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
@@ -164,8 +164,8 @@ ptpinuse(pt_entry_t *pte)
 	pt_entry_t *pve = (pt_entry_t *)vax_trunc_page(pte);
 	uint i;
 
-	for (i = 0; i < NPTEPG; i += 8)
-		if (pve[i] != 0)
+	for (i = 0; i < NPTEPG; i += LTOHPN)
+		if (pve[i] != PG_NV)
 			return 1;
 	return 0;
 }
@@ -419,7 +419,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	 * A vax only has one segment of memory.
 	 */
 
-	v = (vm_physmem[0].avail_start << PGSHIFT) | KERNBASE;
+	v = (vm_physmem[0].avail_start << PAGE_SHIFT) | KERNBASE;
 	vm_physmem[0].avail_start += npgs;
 	vm_physmem[0].start += npgs;
 	if (vstartp)
@@ -561,7 +561,7 @@ rmspace(struct pmap *pm)
 	lr = pm->pm_p0lr / NPTEPG;
 	for (i = 0; i < lr; i++) {
 		ptpp = kvtopte((vaddr_t)&pm->pm_p0br[i * NPTEPG]);
-		if (*ptpp == 0)
+		if (*ptpp == PG_NV)
 			continue;
 		br = &pm->pm_p0br[i * NPTEPG];
 		for (j = 0; j < NPTEPG; j += LTOHPN) {
@@ -570,12 +570,12 @@ rmspace(struct pmap *pm)
 			rmpage(pm, &br[j]);
 		}
 		free_ptp((*ptpp & PG_FRAME) << VAX_PGSHIFT);
-		*ptpp = 0;
+		*ptpp = PG_NV;
 	}
 	lr = pm->pm_p1lr / NPTEPG;
 	for (i = lr; i < NPTEPERREG / NPTEPG; i++) {
 		ptpp = kvtopte((vaddr_t)&pm->pm_p1br[i * NPTEPG]);
-		if (*ptpp == 0)
+		if (*ptpp == PG_NV)
 			continue;
 		br = &pm->pm_p1br[i * NPTEPG];
 		for (j = 0; j < NPTEPG; j += LTOHPN) {
@@ -584,7 +584,7 @@ rmspace(struct pmap *pm)
 			rmpage(pm, &br[j]);
 		}
 		free_ptp((*ptpp & PG_FRAME) << VAX_PGSHIFT);
-		*ptpp = 0;
+		*ptpp = PG_NV;
 	}
 
 	if (pm->pm_p0lr != 0)
@@ -727,7 +727,7 @@ rmptep(pt_entry_t *pte)
 #endif
 
 	free_ptp((*ptpp & PG_FRAME) << VAX_PGSHIFT);
-	*ptpp = 0;
+	*ptpp = PG_NV;
 }
 
 boolean_t 
@@ -809,7 +809,8 @@ grow_p1(struct pmap *pm, u_long len, int canfail)
 
 	bzero(to, vax_btop(nlen - olen) * PPTESZ);
 	if (optespc)
-		memcpy((char *)to + nlen - olen, from, vax_btop(olen) * PPTESZ);
+		memcpy(kvtopte(nptespc + nlen - olen), from,
+		    vax_btop(olen) * PPTESZ);
 
 	pm->pm_p1ap = (pt_entry_t *)nptespc;
 	pm->pm_p1br = (pt_entry_t *)(nptespc + nlen - (NPTEPERREG * PPTESZ));
@@ -1003,7 +1004,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	 * Check if any pages are on the pv list.
 	 * This shouldn't happen anymore.
 	 */
-	len >>= PGSHIFT;
+	len >>= PAGE_SHIFT;
 	for (i = 0; i < len; i++) {
 		if ((*pte & PG_FRAME) == 0)
 			continue;
@@ -1015,10 +1016,10 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		pte += LTOHPN;
 	}
 #else
-	len >>= VAX_PGSHIFT;
+	len >>= PAGE_SHIFT;
 	pmap_kernel()->pm_stats.resident_count -= len;
 	pmap_kernel()->pm_stats.wired_count -= len;
-	bzero(pte, len * sizeof(pt_entry_t));
+	bzero(pte, len * LTOHPN * sizeof(pt_entry_t));
 #endif
 	mtpr(0, PR_TBIA);
 }
@@ -1078,7 +1079,7 @@ pmap_enter(struct pmap *pmap, vaddr_t v, paddr_t p, vm_prot_t prot, int flags)
 		 */
 		ptpptr = kvtopte((vaddr_t)pteptr);
 
-		if (*ptpptr == 0) {
+		if (*ptpptr == PG_NV) {
 			paddr_t pa;
 
 			pa = get_ptp((flags & PMAP_CANFAIL) != 0);
@@ -1278,7 +1279,7 @@ pmap_protect(struct pmap *pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
 			start = pmap->pm_p1lr * VAX_NBPG;
 		pt = pmap->pm_p1br;
 		start &= 0x3fffffff;
-		end = (end == KERNBASE ? end >> 1 : end & 0x3fffffff);
+		end = (end == KERNBASE ? 0x40000000 : end & 0x3fffffff);
 		pr = (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
 		break;
 
@@ -1353,7 +1354,7 @@ pmap_simulref(int bits, vaddr_t va)
 	struct vm_page *pg;
 	paddr_t	pa;
 
-	PMDEBUG(("pmap_simulref: bits %x addr %x\n", bits, addr));
+	PMDEBUG(("pmap_simulref: bits %x addr %x\n", bits, va));
 #ifdef DEBUG
 	if (bits & 1)
 		panic("pte trans len");
@@ -1523,7 +1524,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	struct	pv_entry *pv, *npv;
 	int	s;
 
-	PMDEBUG(("pmap_page_protect: pg %p, prot %x, ", pg, prot));
+	PMDEBUG(("pmap_page_protect: pg %p, prot %x\n", pg, prot));
 
 	if (pg->mdpage.pv_head == NULL)
 		return;
