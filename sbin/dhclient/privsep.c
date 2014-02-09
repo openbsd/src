@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.35 2014/01/20 09:16:36 deraadt Exp $ */
+/*	$OpenBSD: privsep.c,v 1.36 2014/02/09 14:21:17 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -75,9 +75,10 @@ dispatch_imsg(struct imsgbuf *ibuf)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct imsg_hup))
 				warning("bad IMSG_HUP");
-			else
+			else {
 				ifi->flags |= IFI_HUP;
 				quit = SIGHUP;
+			}
 			break;
 
 		case IMSG_WRITE_FILE:
