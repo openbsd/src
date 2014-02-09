@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.124 2014/02/08 23:49:20 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.125 2014/02/09 11:25:58 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -2011,13 +2011,11 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
  * sync instruction cache for user virtual address.
  * The address WAS JUST MAPPED, so we have a VALID USERSPACE mapping
  */
-#define CACHELINESIZE   32		/* For now XXX*/
 void
 pmap_syncicache_user_virt(pmap_t pm, vaddr_t va)
 {
-	vaddr_t p, start;
+	vaddr_t start;
 	int oldsr;
-	int l;
 
 	if (pm != pmap_kernel()) {
 		start = ((u_int)PPC_USER_ADDR + ((u_int)va &
@@ -2029,19 +2027,8 @@ pmap_syncicache_user_virt(pmap_t pm, vaddr_t va)
 	} else {
 		start = va; /* flush mapped page */
 	}
-	p = start;
-	l = PAGE_SIZE;
-	do {
-		__asm__ __volatile__ ("dcbst 0,%0" :: "r"(p));
-		p += CACHELINESIZE;
-	} while ((l -= CACHELINESIZE) > 0);
-	p = start;
-	l = PAGE_SIZE;
-	do {
-		__asm__ __volatile__ ("icbi 0,%0" :: "r"(p));
-		p += CACHELINESIZE;
-	} while ((l -= CACHELINESIZE) > 0);
 
+	syncicache((void *)start, PAGE_SIZE);
 
 	if (pm != pmap_kernel()) {
 		pmap_popusr(oldsr);
