@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_gart.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
+/*	$OpenBSD: radeon_gart.c,v 1.3 2014/02/09 13:07:10 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1206,11 +1206,13 @@ int radeon_vm_bo_update_pte(struct radeon_device *rdev,
 int radeon_vm_bo_rmv(struct radeon_device *rdev,
 		     struct radeon_bo_va *bo_va)
 {
-	int r;
+	int r = 0;
 
 	rw_enter_write(&rdev->vm_manager.lock);
 	rw_enter_write(&bo_va->vm->rwlock);
-	r = radeon_vm_bo_update_pte(rdev, bo_va->vm, bo_va->bo, NULL);
+	if (bo_va->soffset) {
+		r = radeon_vm_bo_update_pte(rdev, bo_va->vm, bo_va->bo, NULL);
+	}
 	rw_exit_write(&rdev->vm_manager.lock);
 	list_del(&bo_va->vm_list);
 	rw_exit_write(&bo_va->vm->rwlock);
