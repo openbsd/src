@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.61 2014/02/09 20:08:25 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.62 2014/02/09 20:23:22 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -188,7 +188,6 @@ add_route(int rdomain, struct in_addr dest, struct in_addr netmask,
 
 	rslt = imsg_compose(unpriv_ibuf, IMSG_ADD_ROUTE, 0, 0, -1,
 	    &imsg, sizeof(imsg));
-
 	if (rslt == -1)
 		warning("add_route: imsg_compose: %s", strerror(errno));
 }
@@ -399,7 +398,6 @@ add_address(char *ifname, int rdomain, struct in_addr addr,
 
 	rslt = imsg_compose(unpriv_ibuf, IMSG_ADD_ADDRESS, 0, 0, -1, &imsg,
 	    sizeof(imsg));
-
 	if (rslt == -1)
 		warning("add_address: imsg_compose: %s", strerror(errno));
 }
